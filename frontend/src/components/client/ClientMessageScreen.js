@@ -5,14 +5,13 @@ import StandardizedApi from '../../utils/standardizedApi';
 import UnifiedLoading from '../../components/common/UnifiedLoading';
 import notificationManager from '../../utils/notification';
 import ClientWebPageShell from './ClientWebPageShell';
-import { ContentArea, ContentHeader } from '../dashboard-v2/content';
 import MGButton from '../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import UnifiedModal from '../common/modals/UnifiedModal';
 import SafeText from '../common/SafeText';
 import { toDisplayString } from '../../utils/safeDisplay';
+import { CLIENT_WEB_SUITE_COPY } from '../../constants/clientWebSuiteConstants';
 import '../../styles/unified-design-tokens.css';
-import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import '../../styles/themes/client-theme.css';
 import './ClientMessageScreen.css';
 import { useTranslation } from 'react-i18next';
@@ -220,20 +219,17 @@ const ClientMessageScreen = () => {
     : '';
 
   const pageShell = (body) => (
-    <ClientWebPageShell>
-      <div className="mg-v2-ad-b0kla" data-testid="client-messages-page">
-        <div className="mg-v2-ad-b0kla__container">
-          <ContentArea ariaLabel="상담사 메시지">
-            <ContentHeader
-              title="상담사 메시지"
-              subtitle="상담사로부터 받은 메시지를 확인하고 답장할 수 있습니다."
-              titleId={CLIENT_MESSAGE_TITLE_ID}
-            />
-            <main aria-labelledby={CLIENT_MESSAGE_TITLE_ID}>
-              {body}
-            </main>
-          </ContentArea>
-        </div>
+    <ClientWebPageShell
+      title={CLIENT_WEB_SUITE_COPY.MESSAGES_TITLE}
+      titleId={CLIENT_MESSAGE_TITLE_ID}
+    >
+      <div data-testid="client-messages-page">
+        <p className="client-message-screen-header-subtitle">
+          {CLIENT_WEB_SUITE_COPY.MESSAGES_SUBTITLE}
+        </p>
+        <main aria-labelledby={CLIENT_MESSAGE_TITLE_ID}>
+          {body}
+        </main>
       </div>
     </ClientWebPageShell>
   );
@@ -371,7 +367,7 @@ const ClientMessageScreen = () => {
         showCloseButton={true}
         closeButtonDataTestId="client-message-detail-close"
         loading={replying}
-        className="mg-v2-ad-b0kla"
+        className="client-message-screen-detail-modal"
         actions={renderMessageModalActions()}
         data-testid="client-message-detail-modal"
       >

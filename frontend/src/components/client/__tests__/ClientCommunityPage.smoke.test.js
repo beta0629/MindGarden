@@ -38,6 +38,14 @@ jest.mock('../../../contexts/SessionContext', () => ({
   })
 }));
 
+jest.mock('../../../contexts/NotificationContext', () => ({
+  useNotification: () => ({
+    unreadCount: 0,
+    unreadMessageCount: 0,
+    unreadSystemCount: 0
+  })
+}));
+
 jest.mock('../../../hooks/useBranding', () => ({
   useBranding: () => ({
     brandingInfo: {

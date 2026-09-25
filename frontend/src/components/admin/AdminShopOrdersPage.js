@@ -31,6 +31,8 @@ import {
   ADMIN_SHOP_ORDER_POINTS_LABEL,
   ADMIN_SHOP_ORDER_STATUS_LABELS,
   ADMIN_SHOP_ORDER_STATUS_PAID,
+  ADMIN_SHOP_ORDERS_DEFAULT_PAGE,
+  ADMIN_SHOP_ORDERS_DEFAULT_PAGE_SIZE,
   ADMIN_SHOP_REFUND_PG_HINT,
   ADMIN_SHOP_REFUND_REASON_CODES,
   ADMIN_SHOP_REFUND_REASON_OPTIONS,
@@ -72,8 +74,14 @@ function normalizeListPayload(raw) {
   if (Array.isArray(raw)) {
     return raw;
   }
+  if (raw && Array.isArray(raw.orders)) {
+    return raw.orders;
+  }
   if (raw && raw.success === true && Array.isArray(raw.data)) {
     return raw.data;
+  }
+  if (raw && Array.isArray(raw.data?.orders)) {
+    return raw.data.orders;
   }
   if (raw && Array.isArray(raw.data)) {
     return raw.data;
@@ -187,8 +195,11 @@ const AdminShopOrdersPage = () => {
   const loadOrders = useCallback(async(options = {}) => {
     try {
       await runResourceLoad(options, setLoading, async() => {
-        const list = await listAdminShopOrders();
-        setRows(normalizeListPayload(list));
+        const result = await listAdminShopOrders({
+          page: ADMIN_SHOP_ORDERS_DEFAULT_PAGE,
+          size: ADMIN_SHOP_ORDERS_DEFAULT_PAGE_SIZE
+        });
+        setRows(normalizeListPayload(result));
       });
     } catch (e) {
       setRows([]);

@@ -2,7 +2,9 @@ package com.coresolution.consultation.controller;
 
 import com.coresolution.consultation.constant.ShopAdminOrderConstants;
 import com.coresolution.consultation.constant.ShopOrderReconcileConstants;
+import com.coresolution.consultation.dto.AdminListPageResult;
 import com.coresolution.consultation.dto.shop.admin.ShopOrderAdminDetailResponse;
+import com.coresolution.consultation.dto.shop.admin.ShopOrderAdminListResponse;
 import com.coresolution.consultation.dto.shop.admin.ShopOrderAdminSummaryItem;
 import com.coresolution.consultation.dto.shop.admin.ShopOrderReconcilePaymentRequest;
 import com.coresolution.consultation.dto.shop.admin.ShopOrderReconcilePaymentResponse;
@@ -11,14 +13,15 @@ import com.coresolution.consultation.dto.shop.admin.ShopOrderRefundResponse;
 import com.coresolution.consultation.service.AdminShopOrderReconcileService;
 import com.coresolution.consultation.service.AdminShopOrderRefundService;
 import com.coresolution.consultation.service.AdminShopOrderService;
-import java.util.List;
 import com.coresolution.core.constant.PlatformComponentCodes;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.controller.BaseApiController;
 import com.coresolution.core.dto.ApiResponse;
 import com.coresolution.core.service.TenantComponentActivationService;
+import com.coresolution.core.util.PaginationUtils;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -52,20 +55,60 @@ public class AdminShopOrderController extends BaseApiController {
     private final TenantComponentActivationService tenantComponentActivationService;
 
     /**
-     * 테넌트 최근 온라인 주문 목록.
+     * 테넌트 최근 온라인 주문 목록 (page/size 페이징).
      *
-     * @param limit 최대 건수 (기본 {@link ShopAdminOrderConstants#DEFAULT_LIST_LIMIT}, 상한 적용)
-     * @return 주문 요약 목록
+     * <p>{@code page}/{@code size} 우선. 둘 다 없으면 legacy {@code limit} 을 size 로 사용(page=0).
+     * 모두 없으면 기본 page={@link ShopAdminOrderConstants#DEFAULT_LIST_PAGE},
+     * size={@link ShopAdminOrderConstants#DEFAULT_LIST_LIMIT}.
+     * 상한은 {@link PaginationUtils#createPageable}.</p>
+     *
+     * @param page  0-based 페이지 (선택)
+     * @param size  페이지 크기 (선택)
+     * @param limit legacy 최대 건수 (page/size 미지정 시에만 사용)
+     * @return orders + totalElements + page + size
      */
     @GetMapping
-    public ResponseEntity<ApiResponse<List<ShopOrderAdminSummaryItem>>> list(
-            @RequestParam(defaultValue = "" + ShopAdminOrderConstants.DEFAULT_LIST_LIMIT) int limit) {
+    public ResponseEntity<ApiResponse<ShopOrderAdminListResponse>> list(
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer size,
+            @RequestParam(required = false) Integer limit) {
         String tenantId = TenantContextHolder.getRequiredTenantId();
-        ResponseEntity<ApiResponse<List<ShopOrderAdminSummaryItem>>> denied = requireAdminShopCatalog(tenantId);
+        ResponseEntity<ApiResponse<ShopOrderAdminListResponse>> denied = requireAdminShopCatalog(tenantId);
         if (denied != null) {
             return denied;
         }
-        return success(adminShopOrderService.listRecentOrders(tenantId, limit));
+        Pageable pageable = resolveListPageable(page, size, limit);
+        AdminListPageResult<ShopOrderAdminSummaryItem> pageResult =
+                adminShopOrderService.listRecentOrders(tenantId, pageable);
+        ShopOrderAdminListResponse body = ShopOrderAdminListResponse.builder()
+                .orders(pageResult.getContent())
+                .totalElements(pageResult.getTotalCount())
+                .page(pageable.getPageNumber())
+                .size(pageable.getPageSize())
+                .build();
+        return success(body);
+    }
+
+    /**
+     * page/size 우선, 없으면 legacy limit → page 0 + size=limit, 모두 없으면 기본값.
+     *
+     * @param page  페이지
+     * @param size  크기
+     * @param limit legacy limit
+     * @return 검증된 Pageable
+     */
+    static Pageable resolveListPageable(Integer page, Integer size, Integer limit) {
+        if (page != null || size != null) {
+            int effectivePage = page != null ? page : ShopAdminOrderConstants.DEFAULT_LIST_PAGE;
+            int effectiveSize = size != null ? size : ShopAdminOrderConstants.DEFAULT_LIST_LIMIT;
+            return PaginationUtils.createPageable(effectivePage, effectiveSize);
+        }
+        if (limit != null) {
+            return PaginationUtils.createPageable(ShopAdminOrderConstants.DEFAULT_LIST_PAGE, limit);
+        }
+        return PaginationUtils.createPageable(
+                ShopAdminOrderConstants.DEFAULT_LIST_PAGE,
+                ShopAdminOrderConstants.DEFAULT_LIST_LIMIT);
     }
 
     /**

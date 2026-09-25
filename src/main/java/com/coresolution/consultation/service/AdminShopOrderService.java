@@ -1,8 +1,9 @@
 package com.coresolution.consultation.service;
 
+import com.coresolution.consultation.dto.AdminListPageResult;
 import com.coresolution.consultation.dto.shop.admin.ShopOrderAdminDetailResponse;
 import com.coresolution.consultation.dto.shop.admin.ShopOrderAdminSummaryItem;
-import java.util.List;
+import org.springframework.data.domain.Pageable;
 
 /**
  * 테넌트 어드민 — 온라인 주문 조회·삭제.
@@ -13,13 +14,13 @@ import java.util.List;
 public interface AdminShopOrderService {
 
     /**
-     * 테넌트 최근 주문 목록.
+     * 테넌트 최근 주문 목록 (페이징).
      *
      * @param tenantId 테넌트 ID
-     * @param limit    최대 건수 (상한 적용)
-     * @return 목록 (최신순)
+     * @param pageable 페이지 (상한은 호출측 {@code PaginationUtils} 적용)
+     * @return content + totalCount
      */
-    List<ShopOrderAdminSummaryItem> listRecentOrders(String tenantId, int limit);
+    AdminListPageResult<ShopOrderAdminSummaryItem> listRecentOrders(String tenantId, Pageable pageable);
 
     /**
      * 주문 상세(라인·이행 이벤트 요약).

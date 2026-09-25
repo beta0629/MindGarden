@@ -112,6 +112,11 @@ import ShopSkuDetailPage from './pages/client/shop/ShopSkuDetailPage';
 import ClientTenantComponentGate from './components/shop/templates/ClientTenantComponentGate';
 import AdminTenantComponentGate from './components/shop/templates/AdminTenantComponentGate';
 import { PLATFORM_COMPONENT_CODES } from './constants/tenantComponentApi';
+import {
+  CLIENT_DASHBOARD_ROUTES,
+  CLIENT_LEGACY_ROUTE_REDIRECTS
+} from './constants/clientDashboardRoutes';
+import { CLIENT_SHOP_ROUTES } from './constants/clientShopConstants';
 import ConsultantAvailabilityRenewal from './components/consultant/ConsultantAvailabilityRenewal';
 import MeditationGuide from './components/wellness/MeditationGuide';
 import PsychoEducation from './components/wellness/PsychoEducation';
@@ -153,6 +158,7 @@ import { SUPER_ADMIN_ROLE, SUPER_ADMIN_ROUTES } from './constants/superAdminRout
 import { MypageRedirect, SettingsRedirect } from './components/common/MypageSettingsRedirects';
 import ConsultantAppShell from './components/layout/ConsultantAppShell';
 import ClientAppShell from './components/layout/ClientAppShell';
+import ClientLegacyRedirect from './components/client/ClientLegacyRedirect';
 import MobileLogin from './components/auth/MobileLogin';
 import SessionGuard from './components/common/SessionGuard';
 import { SessionProvider, useSession } from './contexts/SessionContext';
@@ -470,51 +476,6 @@ function AppContent() {
               <Route path="mood-journal" element={<MoodJournal />} />
               <Route path="self-assessment" element={<SelfAssessment />} />
               <Route path="session-payment" element={<ClientSessionPaymentRenewal />} />
-              <Route path="shop" element={
-                <ClientTenantComponentGate componentCode={PLATFORM_COMPONENT_CODES.CLIENT_SHOP}>
-                  <ShopCatalogPage />
-                </ClientTenantComponentGate>
-              } />
-              <Route path="shop/cart" element={
-                <ClientTenantComponentGate componentCode={PLATFORM_COMPONENT_CODES.CLIENT_SHOP}>
-                  <ShopCartPage />
-                </ClientTenantComponentGate>
-              } />
-              <Route path="shop/checkout" element={
-                <ClientTenantComponentGate componentCode={PLATFORM_COMPONENT_CODES.CLIENT_SHOP}>
-                  <ShopCheckoutPage />
-                </ClientTenantComponentGate>
-              } />
-              <Route path="shop/points" element={
-                <ClientTenantComponentGate componentCode={PLATFORM_COMPONENT_CODES.CLIENT_SHOP}>
-                  <ClientTenantComponentGate componentCode={PLATFORM_COMPONENT_CODES.CLIENT_REWARD}>
-                    <ShopPointsPage />
-                  </ClientTenantComponentGate>
-                </ClientTenantComponentGate>
-              } />
-              <Route path="shop/orders" element={
-                <ClientTenantComponentGate componentCode={PLATFORM_COMPONENT_CODES.CLIENT_SHOP}>
-                  <ShopOrdersPage />
-                </ClientTenantComponentGate>
-              } />
-              <Route path="shop/orders/:orderPublicId" element={
-                <ClientTenantComponentGate componentCode={PLATFORM_COMPONENT_CODES.CLIENT_SHOP}>
-                  <ShopOrderDetailPage />
-                </ClientTenantComponentGate>
-              } />
-              <Route path="shop/payment-return" element={
-                <ClientTenantComponentGate componentCode={PLATFORM_COMPONENT_CODES.CLIENT_SHOP}>
-                  <ShopPaymentReturnPage />
-                </ClientTenantComponentGate>
-              } />
-              <Route path="shop/sku/:skuCode" element={
-                <ClientTenantComponentGate componentCode={PLATFORM_COMPONENT_CODES.CLIENT_SHOP}>
-                  <ShopSkuDetailPage />
-                </ClientTenantComponentGate>
-              } />
-              <Route path="shop-catalog" element={<Navigate to="/client/shop" replace />} />
-              <Route path="shop-checkout" element={<Navigate to="/client/shop/checkout" replace />} />
-              <Route path="shop-points" element={<Navigate to="/client/shop/points" replace />} />
               <Route path="meditation" element={<MeditationGuide />} />
               <Route path="psycho-education" element={<PsychoEducation />} />
               <Route
@@ -522,7 +483,7 @@ function AppContent() {
                 element={(
                   <CommunityMenuRouteGuard
                     menuCode={MENU_PERMISSION_CODES.CLT_COMMUNITY}
-                    fallbackPath="/client/dashboard"
+                    fallbackPath={CLIENT_DASHBOARD_ROUTES.DASHBOARD}
                   >
                     <CommunityFeed primaryColor="var(--mg-client-primary)" />
                   </CommunityMenuRouteGuard>
@@ -533,13 +494,123 @@ function AppContent() {
                 element={(
                   <CommunityMenuRouteGuard
                     menuCode={MENU_PERMISSION_CODES.CLT_COMMUNITY}
-                    fallbackPath="/client/dashboard"
+                    fallbackPath={CLIENT_DASHBOARD_ROUTES.DASHBOARD}
                   >
                     <CommunityPostDetail primaryColor="var(--mg-client-primary)" />
                   </CommunityMenuRouteGuard>
                 )}
               />
+              {/* 미매칭 /client/* → 대시보드 (정상 라우트보다 뒤) */}
+              <Route
+                path="*"
+                element={<Navigate to={CLIENT_DASHBOARD_ROUTES.DASHBOARD} replace />}
+              />
             </Route>
+
+            {/*
+              Shop — ClientAppShell 밖 (대시보드/스케줄과 동일).
+              ShopClientLayout 만 ClientWebPageShell 담당 → 이중 크롬 제거.
+              /client/shop · sku 는 공개 카탈로그; cart/checkout 등은 CLIENT 보호.
+            */}
+            <Route
+              path={CLIENT_SHOP_ROUTES.CATALOG}
+              element={(
+                <ClientTenantComponentGate componentCode={PLATFORM_COMPONENT_CODES.CLIENT_SHOP}>
+                  <ShopCatalogPage />
+                </ClientTenantComponentGate>
+              )}
+            />
+            <Route
+              path={`${CLIENT_SHOP_ROUTES.SKU_DETAIL}/:skuCode`}
+              element={(
+                <ClientTenantComponentGate componentCode={PLATFORM_COMPONENT_CODES.CLIENT_SHOP}>
+                  <ShopSkuDetailPage />
+                </ClientTenantComponentGate>
+              )}
+            />
+            <Route
+              path={CLIENT_SHOP_ROUTES.CART}
+              element={(
+                <ProtectedRoute requiredRoles={[USER_ROLES.CLIENT]}>
+                  <ClientTenantComponentGate componentCode={PLATFORM_COMPONENT_CODES.CLIENT_SHOP}>
+                    <ShopCartPage />
+                  </ClientTenantComponentGate>
+                </ProtectedRoute>
+              )}
+            />
+            <Route
+              path={CLIENT_SHOP_ROUTES.CHECKOUT}
+              element={(
+                <ProtectedRoute requiredRoles={[USER_ROLES.CLIENT]}>
+                  <ClientTenantComponentGate componentCode={PLATFORM_COMPONENT_CODES.CLIENT_SHOP}>
+                    <ShopCheckoutPage />
+                  </ClientTenantComponentGate>
+                </ProtectedRoute>
+              )}
+            />
+            <Route
+              path={CLIENT_SHOP_ROUTES.POINTS}
+              element={(
+                <ProtectedRoute requiredRoles={[USER_ROLES.CLIENT]}>
+                  <ClientTenantComponentGate componentCode={PLATFORM_COMPONENT_CODES.CLIENT_SHOP}>
+                    <ClientTenantComponentGate componentCode={PLATFORM_COMPONENT_CODES.CLIENT_REWARD}>
+                      <ShopPointsPage />
+                    </ClientTenantComponentGate>
+                  </ClientTenantComponentGate>
+                </ProtectedRoute>
+              )}
+            />
+            <Route
+              path={CLIENT_SHOP_ROUTES.ORDERS}
+              element={(
+                <ProtectedRoute requiredRoles={[USER_ROLES.CLIENT]}>
+                  <ClientTenantComponentGate componentCode={PLATFORM_COMPONENT_CODES.CLIENT_SHOP}>
+                    <ShopOrdersPage />
+                  </ClientTenantComponentGate>
+                </ProtectedRoute>
+              )}
+            />
+            <Route
+              path={`${CLIENT_SHOP_ROUTES.ORDERS}/:orderPublicId`}
+              element={(
+                <ProtectedRoute requiredRoles={[USER_ROLES.CLIENT]}>
+                  <ClientTenantComponentGate componentCode={PLATFORM_COMPONENT_CODES.CLIENT_SHOP}>
+                    <ShopOrderDetailPage />
+                  </ClientTenantComponentGate>
+                </ProtectedRoute>
+              )}
+            />
+            <Route
+              path={CLIENT_SHOP_ROUTES.PAYMENT_RETURN}
+              element={(
+                <ProtectedRoute requiredRoles={[USER_ROLES.CLIENT]}>
+                  <ClientTenantComponentGate componentCode={PLATFORM_COMPONENT_CODES.CLIENT_SHOP}>
+                    <ShopPaymentReturnPage />
+                  </ClientTenantComponentGate>
+                </ProtectedRoute>
+              )}
+            />
+            <Route
+              path="/client/shop-catalog"
+              element={<Navigate to={CLIENT_SHOP_ROUTES.CATALOG} replace />}
+            />
+            <Route
+              path="/client/shop-checkout"
+              element={<Navigate to={CLIENT_SHOP_ROUTES.CHECKOUT} replace />}
+            />
+            <Route
+              path="/client/shop-points"
+              element={<Navigate to={CLIENT_SHOP_ROUTES.POINTS} replace />}
+            />
+
+            {/* 레거시 → v4 Redirect (SSOT: CLIENT_LEGACY_ROUTE_REDIRECTS) */}
+            {CLIENT_LEGACY_ROUTE_REDIRECTS.map(({ from, to }) => (
+              <Route
+                key={from}
+                path={from}
+                element={<ClientLegacyRedirect to={to} />}
+              />
+            ))}
             
             {/* 일반 대시보드 라우트 (동적 대시보드 우선) */}
             <Route path="/dashboard" element={<DynamicDashboard user={user} />} />
@@ -955,21 +1026,34 @@ function AppContent() {
             <Route path="/system-notifications" element={<SystemNotifications />} />
             
             {/* 내담자 전용 라우트 */}
-            <Route path="/client/messages" element={<ClientMessageScreen />} />
-            <Route path="/client/booking" element={<Navigate to="/client/schedule" replace />} />
-            <Route path="/client/schedule" element={
+            <Route
+              path={CLIENT_DASHBOARD_ROUTES.MESSAGES}
+              element={(
+                <ProtectedRoute requiredRoles={[USER_ROLES.CLIENT]}>
+                  <ClientMessageScreen />
+                </ProtectedRoute>
+              )}
+            />
+            <Route path="/client/booking" element={<Navigate to={CLIENT_DASHBOARD_ROUTES.SCHEDULE} replace />} />
+            <Route path={CLIENT_DASHBOARD_ROUTES.SCHEDULE} element={
               <ProtectedRoute requiredRoles={[USER_ROLES.CLIENT]}>
                 <ClientSchedule />
               </ProtectedRoute>
             } />
-            <Route path="/client/records" element={<Navigate to="/client/session-management" replace />} />
-            <Route path="/client/session-management" element={<ClientSessionManagement />} />
-            <Route path="/client/payment-history" element={<ClientPaymentHistory />} />
-            <Route path="/client/settings" element={<ClientSettings />} />
+            <Route path="/client/records" element={<Navigate to={CLIENT_DASHBOARD_ROUTES.SESSION_MANAGEMENT} replace />} />
+            <Route path={CLIENT_DASHBOARD_ROUTES.SESSION_MANAGEMENT} element={<ClientSessionManagement />} />
+            <Route path={CLIENT_DASHBOARD_ROUTES.PAYMENT_HISTORY} element={<ClientPaymentHistory />} />
+            <Route path={CLIENT_DASHBOARD_ROUTES.SETTINGS} element={<ClientSettings />} />
             <Route path="/client/activity-history" element={<ActivityHistory />} />
-            <Route path="/client/wellness" element={<WellnessNotificationList />} />
-            <Route path="/client/wellness/:id" element={<WellnessNotificationDetail />} />
+            <Route path={CLIENT_DASHBOARD_ROUTES.WELLNESS} element={<WellnessNotificationList />} />
+            <Route path={`${CLIENT_DASHBOARD_ROUTES.WELLNESS}/:id`} element={<WellnessNotificationDetail />} />
             <Route path="/client/mindfulness-guide" element={<MindfulnessGuide />} />
+
+            {/* 미매칭 /client/* 절대 경로 catch-all (정상 라우트·레거시 Redirect 보다 뒤) */}
+            <Route
+              path="/client/*"
+              element={<Navigate to={CLIENT_DASHBOARD_ROUTES.DASHBOARD} replace />}
+            />
             
             {/* 개인정보 및 약관 관련 라우트 */}
             <Route path="/privacy" element={<PrivacyPolicy />} />

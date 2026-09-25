@@ -539,5 +539,181 @@ class TenantPgConfigurationControllerIntegrationTest {
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.storeId").value("store-1"));
     }
+
+    @Test
+    @DisplayName("PG 설정 생성 - CONSULTANT 403")
+    @WithMockUser(roles = {"CONSULTANT"})
+    void testCreateConfiguration_ConsultantForbidden() throws Exception {
+        TenantPgConfigurationRequest request = TenantPgConfigurationRequest.builder()
+                .pgProvider(PgProvider.TOSS)
+                .pgName("토스페이먼츠")
+                .apiKey("test-api-key")
+                .secretKey("test-secret-key")
+                .testMode(false)
+                .build();
+
+        mockMvc.perform(post("/api/v1/tenants/{tenantId}/pg-configurations", testTenantId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .header("X-Tenant-Id", testTenantId)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isForbidden());
+
+        verify(pgConfigurationService, never())
+                .createConfiguration(anyString(), any(), anyString());
+    }
+
+    @Test
+    @DisplayName("PG 설정 수정 - CLIENT 403")
+    @WithMockUser(roles = {"CLIENT"})
+    void testUpdateConfiguration_ClientForbidden() throws Exception {
+        TenantPgConfigurationRequest request = TenantPgConfigurationRequest.builder()
+                .pgProvider(PgProvider.TOSS)
+                .pgName("토스페이먼츠")
+                .apiKey("test-api-key")
+                .secretKey("test-secret-key")
+                .testMode(false)
+                .build();
+
+        mockMvc.perform(put("/api/v1/tenants/{tenantId}/pg-configurations/{configId}",
+                        testTenantId, testConfigId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .header("X-Tenant-Id", testTenantId)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isForbidden());
+
+        verify(pgConfigurationService, never())
+                .updateConfiguration(anyString(), anyString(), any());
+    }
+
+    @Test
+    @DisplayName("PG 설정 수정 - CONSULTANT 403")
+    @WithMockUser(roles = {"CONSULTANT"})
+    void testUpdateConfiguration_ConsultantForbidden() throws Exception {
+        TenantPgConfigurationRequest request = TenantPgConfigurationRequest.builder()
+                .pgProvider(PgProvider.TOSS)
+                .pgName("토스페이먼츠")
+                .apiKey("test-api-key")
+                .secretKey("test-secret-key")
+                .testMode(false)
+                .build();
+
+        mockMvc.perform(put("/api/v1/tenants/{tenantId}/pg-configurations/{configId}",
+                        testTenantId, testConfigId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .header("X-Tenant-Id", testTenantId)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isForbidden());
+
+        verify(pgConfigurationService, never())
+                .updateConfiguration(anyString(), anyString(), any());
+    }
+
+    @Test
+    @DisplayName("PG 설정 삭제 - CLIENT 403")
+    @WithMockUser(roles = {"CLIENT"})
+    void testDeleteConfiguration_ClientForbidden() throws Exception {
+        mockMvc.perform(delete("/api/v1/tenants/{tenantId}/pg-configurations/{configId}",
+                        testTenantId, testConfigId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .header("X-Tenant-Id", testTenantId))
+                .andExpect(status().isForbidden());
+
+        verify(pgConfigurationService, never())
+                .deleteConfiguration(anyString(), anyString());
+    }
+
+    @Test
+    @DisplayName("PG 설정 삭제 - CONSULTANT 403")
+    @WithMockUser(roles = {"CONSULTANT"})
+    void testDeleteConfiguration_ConsultantForbidden() throws Exception {
+        mockMvc.perform(delete("/api/v1/tenants/{tenantId}/pg-configurations/{configId}",
+                        testTenantId, testConfigId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .header("X-Tenant-Id", testTenantId))
+                .andExpect(status().isForbidden());
+
+        verify(pgConfigurationService, never())
+                .deleteConfiguration(anyString(), anyString());
+    }
+
+    @Test
+    @DisplayName("PG 연결 테스트 - CLIENT 403")
+    @WithMockUser(roles = {"CLIENT"})
+    void testTestConnection_ClientForbidden() throws Exception {
+        mockMvc.perform(post("/api/v1/tenants/{tenantId}/pg-configurations/{configId}/test-connection",
+                        testTenantId, testConfigId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .header("X-Tenant-Id", testTenantId))
+                .andExpect(status().isForbidden());
+
+        verify(pgConfigurationService, never())
+                .testConnection(anyString(), anyString());
+    }
+
+    @Test
+    @DisplayName("PG 연결 테스트 - CONSULTANT 403")
+    @WithMockUser(roles = {"CONSULTANT"})
+    void testTestConnection_ConsultantForbidden() throws Exception {
+        mockMvc.perform(post("/api/v1/tenants/{tenantId}/pg-configurations/{configId}/test-connection",
+                        testTenantId, testConfigId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .header("X-Tenant-Id", testTenantId))
+                .andExpect(status().isForbidden());
+
+        verify(pgConfigurationService, never())
+                .testConnection(anyString(), anyString());
+    }
+
+    @Test
+    @DisplayName("PG 키 복호화 - CLIENT 403")
+    @WithMockUser(roles = {"CLIENT"})
+    void testDecryptKeys_ClientForbidden() throws Exception {
+        mockMvc.perform(post("/api/v1/tenants/{tenantId}/pg-configurations/{configId}/decrypt-keys",
+                        testTenantId, testConfigId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .header("X-Tenant-Id", testTenantId))
+                .andExpect(status().isForbidden());
+
+        verify(decryptionService, never())
+                .decryptKeys(anyString(), anyString(), anyString());
+    }
+
+    @Test
+    @DisplayName("PG 키 복호화 - CONSULTANT 403")
+    @WithMockUser(roles = {"CONSULTANT"})
+    void testDecryptKeys_ConsultantForbidden() throws Exception {
+        mockMvc.perform(post("/api/v1/tenants/{tenantId}/pg-configurations/{configId}/decrypt-keys",
+                        testTenantId, testConfigId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .header("X-Tenant-Id", testTenantId))
+                .andExpect(status().isForbidden());
+
+        verify(decryptionService, never())
+                .decryptKeys(anyString(), anyString(), anyString());
+    }
+
+    @Test
+    @DisplayName("PG 설정 생성 - ADMIN + malformed JSON → 400 고정 문구")
+    @WithMockUser(roles = {"ADMIN"})
+    void testCreateConfiguration_MalformedJson_BadRequestFixedMessage() throws Exception {
+        mockMvc.perform(post("/api/v1/tenants/{tenantId}/pg-configurations", testTenantId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .header("X-Tenant-Id", testTenantId)
+                        .content("{not-json"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value(
+                        com.coresolution.consultation.constant.ApiRequestErrorMessages.INVALID_REQUEST_BODY))
+                .andExpect(jsonPath("$.errorCode").value(
+                        com.coresolution.consultation.constant.ApiRequestErrorMessages.CODE_INVALID_REQUEST_BODY))
+                .andExpect(content().string(org.hamcrest.Matchers.not(
+                        org.hamcrest.Matchers.containsString("Unexpected"))))
+                .andExpect(content().string(org.hamcrest.Matchers.not(
+                        org.hamcrest.Matchers.containsString("JSON parse"))));
+
+        verify(pgConfigurationService, never())
+                .createConfiguration(anyString(), any(), anyString());
+    }
+
+
 }
 

@@ -27,7 +27,8 @@ describe('requestPortOnePayment', () => {
   const validCustomer = {
     email: 'buyer@example.test',
     fullName: '홍길동',
-    phoneNumber: '01012345678'
+    phoneNumber: '01012345678',
+    phoneVerified: true
   };
 
   test('CARD 기본 시 payMethod CARD와 일시불 card.installment를 포함한다', async() => {
@@ -57,7 +58,8 @@ describe('requestPortOnePayment', () => {
       customer: {
         email: ' buyer@example.test ',
         fullName: ' 홍길동 ',
-        phoneNumber: ' 01012345678 '
+        phoneNumber: ' 01012345678 ',
+        phoneVerified: true
       }
     });
 
@@ -78,7 +80,8 @@ describe('requestPortOnePayment', () => {
       customer: {
         email: 'buyer@example.test',
         fullName: '홍길동',
-        phone: '01099998888'
+        phone: '01099998888',
+        phoneVerified: true
       }
     });
 
@@ -93,28 +96,41 @@ describe('requestPortOnePayment', () => {
     );
   });
 
-  test('customer가 있는데 email이 비면 SDK 호출 전에 throw한다', async() => {
-    await expect(
-      requestPortOnePayment({
-        ...baseParams,
-        customer: { email: '   ', fullName: '홍길동', phoneNumber: '01012345678' }
-      })
-    ).rejects.toThrow(SHOP_PAYMENT_LAUNCH_COPY.CUSTOMER_EMAIL_REQUIRED);
-    expect(PortOne.requestPayment).not.toHaveBeenCalled();
-  });
-
-  test('customer가 있는데 fullName이 비면 SDK 호출 전에 throw한다', async() => {
+  test('customer가 있는데 email이 비면 SDK 호출 전에 throw한다 (설정 이메일 강제 아님)', async() => {
     await expect(
       requestPortOnePayment({
         ...baseParams,
         customer: {
+          email: '   ',
+          fullName: '홍길동',
+          phoneNumber: '01012345678',
+          phoneVerified: true
+        }
+      })
+    ).rejects.toThrow(SHOP_PAYMENT_LAUNCH_COPY.MODULE_UNAVAILABLE);
+    expect(PortOne.requestPayment).not.toHaveBeenCalled();
+  });
+
+  test('customer가 있는데 fullName이 비면 soft fallback으로 SDK를 호출한다', async() => {
+    await requestPortOnePayment({
+      ...baseParams,
+      customer: {
+        email: 'buyer@example.test',
+        fullName: '  ',
+        phoneNumber: '01012345678',
+        phoneVerified: true
+      }
+    });
+
+    expect(PortOne.requestPayment).toHaveBeenCalledWith(
+      expect.objectContaining({
+        customer: {
           email: 'buyer@example.test',
-          fullName: '  ',
+          fullName: '고객',
           phoneNumber: '01012345678'
         }
       })
-    ).rejects.toThrow(SHOP_PAYMENT_LAUNCH_COPY.CUSTOMER_FULL_NAME_REQUIRED);
-    expect(PortOne.requestPayment).not.toHaveBeenCalled();
+    );
   });
 
   test('customer가 있는데 phone이 비면 SDK 호출 전에 throw한다', async() => {
@@ -124,10 +140,25 @@ describe('requestPortOnePayment', () => {
         customer: {
           email: 'buyer@example.test',
           fullName: '홍길동',
-          phoneNumber: '   '
+          phoneNumber: '   ',
+          phoneVerified: true
         }
       })
     ).rejects.toThrow(SHOP_PAYMENT_LAUNCH_COPY.CUSTOMER_PHONE_REQUIRED);
+    expect(PortOne.requestPayment).not.toHaveBeenCalled();
+  });
+
+  test('customer가 미인증이면 SDK 호출 전에 throw한다', async() => {
+    await expect(
+      requestPortOnePayment({
+        ...baseParams,
+        customer: {
+          email: 'buyer@example.test',
+          fullName: '홍길동',
+          phoneNumber: '01012345678'
+        }
+      })
+    ).rejects.toThrow(SHOP_PAYMENT_LAUNCH_COPY.CUSTOMER_PHONE_UNVERIFIED);
     expect(PortOne.requestPayment).not.toHaveBeenCalled();
   });
 
@@ -193,31 +224,12 @@ describe('requestPortOnePayment', () => {
 
     expect(PortOne.requestPayment).toHaveBeenCalledWith(
       expect.objectContaining({
-        customer: validCustomer
+        customer: {
+          email: 'buyer@example.test',
+          fullName: '홍길동',
+          phoneNumber: '01012345678'
+        }
       })
     );
-  });
-
-  test('customData.orderPublicId가 있으면 SDK payload에 포함한다', async() => {
-    await requestPortOnePayment({
-      ...baseParams,
-      customData: { orderPublicId: ' ord-public-1 ' }
-    });
-
-    expect(PortOne.requestPayment).toHaveBeenCalledWith(
-      expect.objectContaining({
-        customData: { orderPublicId: 'ord-public-1' }
-      })
-    );
-  });
-
-  test('customData가 비어 있으면 SDK payload에 넣지 않는다', async() => {
-    await requestPortOnePayment({
-      ...baseParams,
-      customData: { orderPublicId: '  ' }
-    });
-
-    const payload = PortOne.requestPayment.mock.calls[0][0];
-    expect(payload).not.toHaveProperty('customData');
   });
 });

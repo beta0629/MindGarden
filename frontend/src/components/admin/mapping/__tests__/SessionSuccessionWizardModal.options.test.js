@@ -39,8 +39,8 @@ describe('mapSessionSuccessionConsultantOptions', () => {
       count: 2
     };
     expect(mapSessionSuccessionConsultantOptions(payload)).toEqual([
-      { value: '7', label: '김상담', vehiclePlate: null },
-      { value: '8', label: '이상담', vehiclePlate: null }
+      { value: '7', label: '김상담' },
+      { value: '8', label: '이상담' }
     ]);
   });
 });

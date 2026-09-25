@@ -9,6 +9,8 @@ import StandardizedApi from '../utils/standardizedApi';
 import {
   ADMIN_SHOP_API,
   ADMIN_SHOP_ORDERS_DEFAULT_LIMIT,
+  ADMIN_SHOP_ORDERS_DEFAULT_PAGE,
+  ADMIN_SHOP_ORDERS_DEFAULT_PAGE_SIZE,
   buildAdminShopOrderPath,
   buildAdminShopOrderFulfillRetryPath,
   buildAdminShopOrderReconcilePaymentPath,
@@ -29,13 +31,52 @@ function unwrapData(raw) {
 }
 
 /**
- * @param {number} [limit]
- * @returns {Promise<Array>}
+ * 어드민 온라인 주문 목록 (page/size).
+ *
+ * @param {Object|number} [optionsOrLimit]
+ *   number 이면 legacy limit (page=0, size=limit).
+ *   object 이면 `{ page, size, limit }`.
+ * @returns {Promise<{ orders: Array, totalElements: number, page: number, size: number }>}
  */
-export async function listAdminShopOrders(limit = ADMIN_SHOP_ORDERS_DEFAULT_LIMIT) {
-  const raw = await StandardizedApi.get(ADMIN_SHOP_API.ORDERS, { limit });
+export async function listAdminShopOrders(optionsOrLimit = {}) {
+  let page = ADMIN_SHOP_ORDERS_DEFAULT_PAGE;
+  let size = ADMIN_SHOP_ORDERS_DEFAULT_PAGE_SIZE;
+
+  if (typeof optionsOrLimit === 'number') {
+    size = optionsOrLimit > 0 ? optionsOrLimit : ADMIN_SHOP_ORDERS_DEFAULT_LIMIT;
+  } else if (optionsOrLimit && typeof optionsOrLimit === 'object') {
+    if (optionsOrLimit.page != null && Number.isFinite(Number(optionsOrLimit.page))) {
+      page = Number(optionsOrLimit.page);
+    }
+    if (optionsOrLimit.size != null && Number.isFinite(Number(optionsOrLimit.size))) {
+      size = Number(optionsOrLimit.size);
+    } else if (optionsOrLimit.limit != null && Number.isFinite(Number(optionsOrLimit.limit))) {
+      size = Number(optionsOrLimit.limit);
+    }
+  }
+
+  const raw = await StandardizedApi.get(ADMIN_SHOP_API.ORDERS, { page, size });
   const data = unwrapData(raw);
-  return Array.isArray(data) ? data : [];
+
+  if (Array.isArray(data)) {
+    return {
+      orders: data,
+      totalElements: data.length,
+      page,
+      size
+    };
+  }
+
+  const orders = Array.isArray(data?.orders) ? data.orders : [];
+  const totalRaw = data?.totalElements ?? data?.count;
+  const totalElements = Number.isFinite(Number(totalRaw)) ? Number(totalRaw) : orders.length;
+
+  return {
+    orders,
+    totalElements,
+    page: data?.page != null && Number.isFinite(Number(data.page)) ? Number(data.page) : page,
+    size: data?.size != null && Number.isFinite(Number(data.size)) ? Number(data.size) : size
+  };
 }
 
 /**

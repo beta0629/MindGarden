@@ -103,6 +103,12 @@ export const ADMIN_SHOP_ORDER_DELETABLE_STATUSES = Object.freeze([
 /** 목록 기본 조회 건수 (백엔드 ShopAdminOrderConstants.DEFAULT_LIST_LIMIT) */
 export const ADMIN_SHOP_ORDERS_DEFAULT_LIMIT = 50;
 
+/** 목록 기본 페이지 (0-based, adminListFetch 정합) */
+export const ADMIN_SHOP_ORDERS_DEFAULT_PAGE = 0;
+
+/** 목록 기본 페이지 크기 — DEFAULT_LIMIT 과 동일 */
+export const ADMIN_SHOP_ORDERS_DEFAULT_PAGE_SIZE = ADMIN_SHOP_ORDERS_DEFAULT_LIMIT;
+
 /** 어드민 주문 상세·환불 — paymentId / PG 안내 카피 */
 export const ADMIN_SHOP_ORDER_PAYMENT_ID_LABEL = '결제 ID';
 export const ADMIN_SHOP_ORDER_PAYMENT_STATUS_LABEL = '결제 상태';

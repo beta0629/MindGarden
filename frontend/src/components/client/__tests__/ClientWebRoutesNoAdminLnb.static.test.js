@@ -94,4 +94,13 @@ describe('ClientWebRoutesNoAdminLnb — static source gate', () => {
     expect(src).not.toMatch(/CLT_COMMUNITY/);
     expect(src).toMatch(/ClientWebPageShell/);
   });
+
+  test('ClientMessageScreen uses shell title · no ContentHeader / B0KlA duplicate', () => {
+    const src = stripComments(read('components/client/ClientMessageScreen.js'));
+    expect(src).toMatch(/ClientWebPageShell/);
+    expect(src).toMatch(/MESSAGES_TITLE/);
+    expect(src).not.toMatch(/ContentHeader/);
+    expect(src).not.toMatch(/mg-v2-ad-b0kla/);
+    expect(src).not.toMatch(/AdminDashboardB0KlA/);
+  });
 });

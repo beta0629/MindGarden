@@ -3,6 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { Megaphone } from 'lucide-react';
 
 import { ICONS } from '../../constants/icons';
+import { ADMIN_ROUTES } from '../../constants/adminRoutes';
+import { CLIENT_DASHBOARD_ROUTES } from '../../constants/clientDashboardRoutes';
+import { CONSULTANT_DASHBOARD_ROUTES } from '../../constants/consultantDashboardRoutes';
 import { useNotification } from '../../contexts/NotificationContext';
 import { useSession } from '../../contexts/SessionContext';
 import UnifiedModal from './modals/UnifiedModal';
@@ -12,6 +15,26 @@ import { useTranslation } from 'react-i18next';
 const BellIcon = ICONS.BELL;
 const MessageCircleIcon = ICONS.MESSAGE_CIRCLE;
 const ChevronRightIcon = ICONS.CHEVRON_RIGHT;
+
+/** 역할별 알림·메시지 딥링크 SSOT (화면별 하드코드 금지) */
+const NOTIFICATION_DEEP_LINKS_BY_ROLE = Object.freeze({
+  ADMIN: Object.freeze({
+    message: ADMIN_ROUTES.MESSAGES,
+    system: CLIENT_DASHBOARD_ROUTES.NOTIFICATIONS
+  }),
+  STAFF: Object.freeze({
+    message: ADMIN_ROUTES.MESSAGES,
+    system: CLIENT_DASHBOARD_ROUTES.NOTIFICATIONS
+  }),
+  CONSULTANT: Object.freeze({
+    message: CONSULTANT_DASHBOARD_ROUTES.MESSAGES,
+    system: CLIENT_DASHBOARD_ROUTES.NOTIFICATIONS
+  }),
+  CLIENT: Object.freeze({
+    message: CLIENT_DASHBOARD_ROUTES.MESSAGES,
+    system: CLIENT_DASHBOARD_ROUTES.NOTIFICATIONS
+  })
+});
 
 /**
  * 알림 배지 컴포넌트 (레거시 - 모달·컨텍스트 연동형)
@@ -68,13 +91,8 @@ const NotificationBadge = ({
       return;
     }
 
-    const routes = {
-      ADMIN: { message: '/admin/messages', system: '/notifications' },
-      STAFF: { message: '/admin/messages', system: '/notifications' },
-      CONSULTANT: { message: '/consultant/messages', system: '/notifications' },
-      CLIENT: { message: '/client/messages', system: '/notifications' }
-    };
-    const userRoutes = routes[user.role] || routes.CLIENT;
+    const userRoutes = NOTIFICATION_DEEP_LINKS_BY_ROLE[user.role]
+      || NOTIFICATION_DEEP_LINKS_BY_ROLE.CLIENT;
 
     if (userRoutes && userRoutes[type]) {
       navigate(userRoutes[type]);

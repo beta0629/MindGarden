@@ -2,6 +2,7 @@ package com.coresolution.consultation.config;
 
 import java.util.Arrays;
 import java.util.List;
+import com.coresolution.core.constants.SecurityRoleConstants;
 import com.coresolution.core.filter.TenantContextFilter;
 import com.coresolution.consultation.config.filter.JwtAuthenticationFilter;
 import com.coresolution.consultation.config.security.BearerTokenAuthCsrfMatcher;
@@ -194,6 +195,21 @@ public class SecurityConfig {
                         .permitAll()
                     .requestMatchers(HttpMethod.GET, "/api/files/shop-catalog-thumbnails/**")
                         .permitAll()
+                    // Tenant PG mutating — ROLE_ADMIN (URL-level; controller @PreAuthorize 와 이중 방어)
+                    .requestMatchers(HttpMethod.POST, "/api/v1/tenants/*/pg-configurations")
+                        .hasAuthority(SecurityRoleConstants.ROLE_ADMIN)
+                    .requestMatchers(HttpMethod.PUT, "/api/v1/tenants/*/pg-configurations/*")
+                        .hasAuthority(SecurityRoleConstants.ROLE_ADMIN)
+                    .requestMatchers(HttpMethod.PATCH, "/api/v1/tenants/*/pg-configurations/*/test-mode")
+                        .hasAuthority(SecurityRoleConstants.ROLE_ADMIN)
+                    .requestMatchers(HttpMethod.PATCH, "/api/v1/tenants/*/pg-configurations/*/webhook-secret")
+                        .hasAuthority(SecurityRoleConstants.ROLE_ADMIN)
+                    .requestMatchers(HttpMethod.DELETE, "/api/v1/tenants/*/pg-configurations/*")
+                        .hasAuthority(SecurityRoleConstants.ROLE_ADMIN)
+                    .requestMatchers(HttpMethod.POST, "/api/v1/tenants/*/pg-configurations/*/test-connection")
+                        .hasAuthority(SecurityRoleConstants.ROLE_ADMIN)
+                    .requestMatchers(HttpMethod.POST, "/api/v1/tenants/*/pg-configurations/*/decrypt-keys")
+                        .hasAuthority(SecurityRoleConstants.ROLE_ADMIN)
                     // ===== 명시적 .authenticated() 매처 (2중 방어선; 컨트롤러 가드와 정합) =====
                     .requestMatchers("/api/system-notifications/**").authenticated()
                     .requestMatchers("/api/v1/notifications/**").authenticated()
@@ -309,6 +325,21 @@ public class SecurityConfig {
                         .permitAll()
                     .requestMatchers(HttpMethod.GET, "/api/files/shop-catalog-thumbnails/**")
                         .permitAll()
+                    // Tenant PG mutating — ROLE_ADMIN (URL-level; controller @PreAuthorize 와 이중 방어)
+                    .requestMatchers(HttpMethod.POST, "/api/v1/tenants/*/pg-configurations")
+                        .hasAuthority(SecurityRoleConstants.ROLE_ADMIN)
+                    .requestMatchers(HttpMethod.PUT, "/api/v1/tenants/*/pg-configurations/*")
+                        .hasAuthority(SecurityRoleConstants.ROLE_ADMIN)
+                    .requestMatchers(HttpMethod.PATCH, "/api/v1/tenants/*/pg-configurations/*/test-mode")
+                        .hasAuthority(SecurityRoleConstants.ROLE_ADMIN)
+                    .requestMatchers(HttpMethod.PATCH, "/api/v1/tenants/*/pg-configurations/*/webhook-secret")
+                        .hasAuthority(SecurityRoleConstants.ROLE_ADMIN)
+                    .requestMatchers(HttpMethod.DELETE, "/api/v1/tenants/*/pg-configurations/*")
+                        .hasAuthority(SecurityRoleConstants.ROLE_ADMIN)
+                    .requestMatchers(HttpMethod.POST, "/api/v1/tenants/*/pg-configurations/*/test-connection")
+                        .hasAuthority(SecurityRoleConstants.ROLE_ADMIN)
+                    .requestMatchers(HttpMethod.POST, "/api/v1/tenants/*/pg-configurations/*/decrypt-keys")
+                        .hasAuthority(SecurityRoleConstants.ROLE_ADMIN)
                     // ===== 명시적 .authenticated() 매처 (2중 방어선; 컨트롤러 가드와 정합) =====
                     .requestMatchers("/api/v1/payments/**").authenticated()
                     .requestMatchers("/api/v1/admin/session-extensions/**").authenticated()

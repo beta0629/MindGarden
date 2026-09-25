@@ -21,6 +21,7 @@ import SafeText from '../../common/SafeText';
 import { toDisplayString } from '../../../utils/safeDisplay';
 import { RoleUtils, USER_ROLES } from '../../../constants/roles';
 import { DASHBOARD_API, SCHEDULE_API } from '../../../constants/api';
+import { CLIENT_DASHBOARD_ROUTES } from '../../../constants/clientDashboardRoutes';
 import { apiGet } from '../../../utils/ajax';
 import ConsultantListModal from '../../common/ConsultantListModal';
 import ConsultationGuideModal from '../../common/ConsultationGuideModal';
@@ -307,7 +308,7 @@ const PersonalizedMessagesWidget = ({ widget, user }) => {
         setTimeout(() => setIsLoading(false), 100);
         break;
       case 'messages':
-        navigate('/client/messages');
+        navigate(CLIENT_DASHBOARD_ROUTES.MESSAGES);
         setTimeout(() => setIsLoading(false), 100);
         break;
       case 'session-status':

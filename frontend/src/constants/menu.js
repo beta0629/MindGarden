@@ -13,6 +13,8 @@
  * 메인메뉴와 서브메뉴를 명확하게 분리하여 관리
  */
 
+import { CLIENT_DASHBOARD_ROUTES } from './clientDashboardRoutes';
+
 // 공통 메뉴 아이템
 export const COMMON_MENU_ITEMS = {
   DASHBOARD: {
@@ -132,7 +134,7 @@ export const CLIENT_MENU_ITEMS = {
   },
   SUB: {
     messages: [
-      { id: 'client-messages', label: '상담사 메시지', path: '/client/messages', icon: 'bi-chat-dots' }
+      { id: 'client-messages', label: '상담사 메시지', path: CLIENT_DASHBOARD_ROUTES.MESSAGES, icon: 'bi-chat-dots' }
     ]
   }
 };

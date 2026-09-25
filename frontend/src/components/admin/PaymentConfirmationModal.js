@@ -7,6 +7,18 @@ import MGButton from '../common/MGButton';
 import BadgeSelect from '../common/BadgeSelect';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import { TABLET_LOGIN_CONSTANTS } from '../../constants/css-variables';
+import {
+  MIN_PAYMENT_AMOUNT,
+  MAX_PAYMENT_AMOUNT,
+  formatPaymentAmountForDisplay,
+  isBelowMinPaymentAmount
+} from '../../constants/paymentAmountConstants';
+import {
+  PAYMENT_MIN_CARD_AMOUNT_I18N_KEY,
+  PAYMENT_MIN_CARD_AMOUNT_TITLE_I18N_KEY,
+  buildMinCardPaymentAmountMessage
+} from '../../utils/minPaymentAmountMessage';
+import { useAlert } from '../../hooks/useAlert';
 import './PaymentConfirmationModal.css';
 import { useTranslation } from 'react-i18next';
 
@@ -50,6 +62,7 @@ const PaymentConfirmationModal = ({
   onPaymentConfirmed 
 }) => {
   const { t } = useTranslation();
+  const [alert, AlertModal] = useAlert();
   // notificationManager가 제대로 import되었는지 확인
   if (typeof notificationManager === 'undefined') {
     console.error('notificationManager가 정의되지 않았습니다. import를 확인해주세요.');
@@ -90,8 +103,8 @@ const PaymentConfirmationModal = ({
   };
   
   const VALIDATION = {
-    MIN_AMOUNT: 1000,
-    MAX_AMOUNT: 100000000,
+    MIN_AMOUNT: MIN_PAYMENT_AMOUNT,
+    MAX_AMOUNT: MAX_PAYMENT_AMOUNT,
     MAX_NOTE_LENGTH: 500
   };
   
@@ -203,8 +216,13 @@ const PaymentConfirmationModal = ({
       newErrors.mappings = '결제할 매핑을 선택해주세요.';
     }
     
-    if (!paymentData.amount || paymentData.amount < VALIDATION.MIN_AMOUNT) {
+    if (!paymentData.amount || paymentData.amount <= 0) {
       newErrors.amount = MESSAGES.INVALID_AMOUNT;
+    } else if (isBelowMinPaymentAmount(paymentData.amount)) {
+      newErrors.amount = t(PAYMENT_MIN_CARD_AMOUNT_I18N_KEY, {
+        amount: formatPaymentAmountForDisplay(MIN_PAYMENT_AMOUNT),
+        defaultValue: buildMinCardPaymentAmountMessage()
+      });
     }
     
     if (paymentData.amount > VALIDATION.MAX_AMOUNT) {
@@ -226,7 +244,16 @@ const PaymentConfirmationModal = ({
     }
     
     if (!validateForm()) {
-      notificationManager.error(MESSAGES.REQUIRED_FIELDS);
+      if (isBelowMinPaymentAmount(paymentData.amount)) {
+        await alert({
+          variant: 'warning',
+          titleKey: PAYMENT_MIN_CARD_AMOUNT_TITLE_I18N_KEY,
+          messageKey: PAYMENT_MIN_CARD_AMOUNT_I18N_KEY,
+          interpolation: { amount: formatPaymentAmountForDisplay(MIN_PAYMENT_AMOUNT) }
+        });
+      } else {
+        notificationManager.error(MESSAGES.REQUIRED_FIELDS);
+      }
       return;
     }
 
@@ -307,7 +334,9 @@ const PaymentConfirmationModal = ({
   if (!isOpen) return null;
 
   return (
-    <UnifiedModal
+    <>
+      <AlertModal />
+      <UnifiedModal
       isOpen={isOpen}
       onClose={onClose}
       title={t('admin.actions.paymentConfirm')}
@@ -452,6 +481,7 @@ const PaymentConfirmationModal = ({
           </div>
         </div>
     </UnifiedModal>
+    </>
   );
 };
 

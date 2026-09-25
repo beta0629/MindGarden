@@ -21,6 +21,7 @@ import {
   CLIENT_WEB_SUITE_TEST_IDS
 } from '../../../constants/clientWebSuiteConstants';
 import ClientWebPageShell from '../ClientWebPageShell';
+import ShopClientLayout from '../../shop/templates/ShopClientLayout';
 
 const mockUseSession = jest.fn();
 const mockUseBranding = jest.fn();
@@ -41,6 +42,11 @@ jest.mock('../../../contexts/SessionContext', () => ({
 
 jest.mock('../../../hooks/useBranding', () => ({
   useBranding: (...args) => mockUseBranding(...args)
+}));
+
+jest.mock('../../../services/clientShopService', () => ({
+  fetchShopCart: jest.fn().mockResolvedValue({ lines: [], subtotalMinor: 0 }),
+  mergeGuestShopCartIntoServer: jest.fn().mockResolvedValue({ merged: false, lines: [] })
 }));
 
 jest.mock(
@@ -137,7 +143,21 @@ describe('ClientWeb suite — TopChrome · nav 5 · zero LNB', () => {
     expect(screen.queryByTestId(CLIENT_WEB_SUITE_TEST_IDS.ASIDE)).not.toBeInTheDocument();
   });
 
-  // ShopClientLayout v4 셸 정렬은 suite 전면 포트 범위 밖 — 로비 랜딩 PASS만 검증
+  test('ShopClientLayout uses shared shell stage · no shop 5-tab · no LNB', () => {
+    const { container } = render(
+      <MemoryRouter>
+        <ShopClientLayout title={CLIENT_WEB_SUITE_COPY.CART_TITLE}>
+          <p>cart-body</p>
+        </ShopClientLayout>
+      </MemoryRouter>
+    );
+    expect(screen.getByTestId(CLIENT_WEB_TOP_CHROME_TEST_ID)).toBeInTheDocument();
+    expect(screen.getByTestId(CLIENT_WEB_SUITE_TEST_IDS.STAGE)).toBeInTheDocument();
+    expect(container.querySelector('.client-shop__stage')).toBeTruthy();
+    expect(container.querySelector('.client-shop__nav')).toBeNull();
+    expect(container.querySelector('.mg-v2-desktop-lnb')).toBeNull();
+    expect(screen.getByRole('heading', { name: CLIENT_WEB_SUITE_COPY.CART_TITLE })).toBeInTheDocument();
+  });
 
   test('schedule face copy forbids booking CTA strings', () => {
     expect(CLIENT_WEB_SUITE_COPY.SCHEDULE_TITLE).toBe('다가오는 상담');

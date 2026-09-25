@@ -58,6 +58,13 @@ jest.mock('../../../../utils/notification', () => ({
   }
 }));
 
+const mockAlert = jest.fn().mockResolvedValue(undefined);
+jest.mock('../../../../hooks/useAlert', () => ({
+  __esModule: true,
+  useAlert: () => [mockAlert, () => null],
+  default: () => [mockAlert, () => null]
+}));
+
 const mockGetTenantCodes = jest.fn();
 jest.mock('../../../../utils/commonCodeApi', () => ({
   __esModule: true,
@@ -261,6 +268,28 @@ describe('CheckoutSameDayModal — 옵션 B 당일 카드 결제 모달', () => 
 
     expect(mockStandardizedApi.post).not.toHaveBeenCalled();
     expect(mockNotificationManager.error).toHaveBeenCalled();
+  });
+
+  test('금액이 MIN_PAYMENT_AMOUNT 미만이면 UnifiedModal alert + API 미호출', async () => {
+    mockAlert.mockClear();
+    render(
+      <CheckoutSameDayModal isOpen onClose={jest.fn()} mapping={baseMapping} onCheckoutCompleted={jest.fn()} />
+    );
+    await waitFor(() => {
+      expect(screen.getByDisplayValue('CREDIT_CARD')).toBeInTheDocument();
+    });
+    const amountInput = screen.getByLabelText('admin:mapping.checkout.sameDay.paymentAmount.label');
+    fireEvent.change(amountInput, { target: { value: '999' } });
+
+    const submitButton = screen.getByText('admin:mapping.checkout.sameDay.submit');
+    await act(async () => {
+      fireEvent.click(submitButton);
+    });
+    expect(mockStandardizedApi.post).not.toHaveBeenCalled();
+    expect(mockNotificationManager.error).not.toHaveBeenCalled();
+    expect(mockAlert).toHaveBeenCalled();
+    const alertArg = mockAlert.mock.calls[0][0];
+    expect(alertArg.interpolation.amount).toBe('1,000');
   });
 
   test('금액 0 이하 submit 시 에러 + API 호출 0회', async () => {

@@ -15,38 +15,58 @@ import SafeText from '../common/SafeText';
 import UnifiedModal from '../common/modals/UnifiedModal';
 import ModalFormActions from '../common/modals/ModalFormActions';
 import BadgeSelect from '../common/BadgeSelect';
+import Badge from '../common/Badge';
 import MGButton from '../common/MGButton';
 import UnifiedLoading from '../common/UnifiedLoading';
 import { buildErpMgButtonClassName } from '../erp/common/erpMgButtonProps';
 import {
+  PACKAGE_PAYMENT_HISTORY_UI,
+  resolvePackagePaymentSourceLabel,
+  resolvePackagePaymentSourceBadgeVariant
+} from '../../constants/packagePaymentHistory';
+import {
+  ADMIN_SHOP_ORDER_DETAIL_PORTONE_HINT,
+  ADMIN_SHOP_ORDER_PAYMENT_ID_LABEL,
+  ADMIN_SHOP_ORDER_CASH_DUE_LABEL,
+  ADMIN_SHOP_ORDER_POINTS_LABEL,
   ADMIN_SHOP_ORDER_STATUS_LABELS,
+  ADMIN_SHOP_ORDER_STATUS_PAID,
+  ADMIN_SHOP_REFUND_PG_HINT,
   ADMIN_SHOP_REFUND_REASON_CODES,
-  ADMIN_SHOP_REFUND_REASON_OPTIONS
+  ADMIN_SHOP_REFUND_REASON_OPTIONS,
+  ADMIN_SHOP_RECONCILE_REFUND_COPY,
+  canAdminShopOrderPrimaryRefund,
+  isAdminShopOrderDeletable,
+  resolveAdminShopOrderAmount,
+  resolveAdminShopRefundErrorCopy
 } from '../../constants/adminShopApi';
 import { RoleUtils } from '../../constants/roles';
 import { useSession } from '../../contexts/SessionContext';
+import useConfirm from '../../hooks/useConfirm';
 import notificationManager from '../../utils/notification';
 import { toDisplayString } from '../../utils/safeDisplay';
 import { formatShopDateTime, formatShopMoney, formatShopPoints } from '../../utils/clientShopFormat';
 import {
-  cancelAdminShopOrder,
+  hasShopFulfillmentRetryableLine,
+  resolveShopFulfillmentLines,
+  SHOP_FULFILLMENT_RETRY_COPY
+} from '../../constants/clientShopConstants';
+import {
+  deleteAdminShopOrder,
   getAdminShopOrder,
   listAdminShopOrders,
-  refundAdminShopOrder
+  refundAdminShopOrder,
+  reconcileShopOrderRefund,
+  retryAdminShopOrderFulfillment
 } from '../../services/adminShopOrderService';
 import { runResourceLoad, softRefresh } from '../../utils/softRefresh';
+import AdminShopOrderDetailModal from './shop/AdminShopOrderDetailModal';
 import '../../styles/unified-design-tokens.css';
+import '../../styles/shop/AdminShopClinicOs.css';
 import './AdminDashboard/AdminDashboardB0KlA.css';
 import { useTranslation } from 'react-i18next';
 
 const PAGE_TITLE_ID = 'admin-shop-orders-title';
-const ORDER_STATUS_PAID = 'PAID';
-const ORDER_STATUS_CREATED = 'CREATED';
-const ORDER_STATUS_PENDING_PAYMENT = 'PENDING_PAYMENT';
-
-function isUnpaidCancellableStatus(status) {
-  return status === ORDER_STATUS_CREATED || status === ORDER_STATUS_PENDING_PAYMENT;
-}
 
 function normalizeListPayload(raw) {
   if (Array.isArray(raw)) {
@@ -66,94 +86,45 @@ function statusLabel(status) {
   return ADMIN_SHOP_ORDER_STATUS_LABELS[key] || key || '-';
 }
 
+function paymentStatusLabel(paymentStatus) {
+  const key = toDisplayString(paymentStatus, '');
+  if (!key) {
+    return '';
+  }
+  return ADMIN_SHOP_ORDER_STATUS_LABELS[key] || key;
+}
+
+/**
+ * 목록 표시 금액: pgAmount → cashDueMinor → subtotalMinor.
+ *
+ * @param {object} row
+ * @returns {number|null}
+ */
+function resolveAdminShopOrderListAmount(row) {
+  return resolveAdminShopOrderAmount(row);
+}
+
+/**
+ * 주문 상태 + 결제 상태(환불 등) 표시.
+ *
+ * @param {object} row
+ * @returns {string}
+ */
+function resolveAdminShopOrderStatusDisplay(row) {
+  const orderPart = statusLabel(row?.status);
+  const payPart = paymentStatusLabel(row?.paymentStatus);
+  if (payPart && payPart !== orderPart) {
+    return `${orderPart} · ${payPart}`;
+  }
+  return orderPart;
+}
+
 function shortenPublicId(id) {
   const s = toDisplayString(id, '');
   if (s.length <= 12) {
     return s;
   }
   return `${s.slice(0, 8)}…${s.slice(-4)}`;
-}
-
-function OrderDetailBody({ detail, detailLines, detailEvents, onRefund, onCancelUnpaid, refunding, cancelling }) {
-  return (
-    <div className="mg-v2-form-stack">
-      <p>
-        <SafeText>{`주문 ID: ${toDisplayString(detail.orderPublicId, '')}`}</SafeText>
-      </p>
-      <p>
-        <SafeText>
-          {`상태: ${statusLabel(detail.status)} · 내담자 ID: ${detail.clientId != null ? String(detail.clientId) : '-'}`}
-        </SafeText>
-      </p>
-      <p>
-        <SafeText>
-          {`합계 ${formatShopMoney(detail.subtotalMinor)} · 현금 ${formatShopMoney(detail.cashDueMinor)} · 포인트 ${formatShopPoints(detail.pointsRedeemMinor)}`}
-        </SafeText>
-      </p>
-      <p className="mg-v2-muted">
-        <SafeText>{formatShopDateTime(detail.createdAt) || '-'}</SafeText>
-      </p>
-      {detail.paymentId ? (
-        <p>
-          <SafeText>
-            {`결제 ID: ${toDisplayString(detail.paymentId, '')} · 결제 상태: ${toDisplayString(detail.paymentStatus, '')}`}
-          </SafeText>
-        </p>
-      ) : null}
-      {detail.status === ORDER_STATUS_PAID ? (
-        <MGButton
-          type="button"
-          className={buildErpMgButtonClassName({ variant: 'primary', size: 'md' })}
-          disabled={refunding || cancelling}
-          onClick={onRefund}
-        >
-          전액 환불
-        </MGButton>
-      ) : null}
-      {isUnpaidCancellableStatus(detail.status) ? (
-        <MGButton
-          type="button"
-          className={buildErpMgButtonClassName({ variant: 'secondary', size: 'md' })}
-          disabled={refunding || cancelling}
-          onClick={onCancelUnpaid}
-        >
-          미결제 취소
-        </MGButton>
-      ) : null}
-      <section>
-        <h3 className="mg-v2-section-title">주문 라인</h3>
-        {detailLines.length === 0 ? (
-          <p className="mg-v2-muted">라인 없음</p>
-        ) : (
-          <ul className="mg-v2-list-plain">
-            {detailLines.map((line) => (
-              <li key={`line-${line.lineNo}-${line.skuCode}`}>
-                <SafeText>
-                  {`${line.title || line.skuCode} × ${line.quantity} — ${formatShopMoney(line.lineTotalMinor)}`}
-                </SafeText>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
-      <section>
-        <h3 className="mg-v2-section-title">이행 이벤트</h3>
-        {detailEvents.length === 0 ? (
-          <p className="mg-v2-muted">이행 이벤트 없음</p>
-        ) : (
-          <ul className="mg-v2-list-plain">
-            {detailEvents.map((ev) => (
-              <li key={`fulfill-${ev.skuCode}-${ev.status}`}>
-                <SafeText>
-                  {`${ev.skuCode} · ${ev.category}/${ev.status}${ev.message ? ` — ${ev.message}` : ''}`}
-                </SafeText>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
-    </div>
-  );
 }
 
 function RefundModalBody({ baseId, refundTarget, refundReason, onReasonChange }) {
@@ -164,10 +135,15 @@ function RefundModalBody({ baseId, refundTarget, refundReason, onReasonChange })
           {`주문 ${shortenPublicId(refundTarget?.orderPublicId)} — ${statusLabel(refundTarget?.status)}`}
         </SafeText>
       </p>
+      {refundTarget?.paymentId ? (
+        <p data-testid="admin-shop-refund-payment-id">
+          <SafeText>
+            {`${ADMIN_SHOP_ORDER_PAYMENT_ID_LABEL}: ${toDisplayString(refundTarget.paymentId, '')}`}
+          </SafeText>
+        </p>
+      ) : null}
       <p className="mg-v2-muted">
-        <SafeText>
-          전액 환불 시 포인트 복원·적립 회수와 함께 PG(포트원) 실환불이 연동됩니다.
-        </SafeText>
+        <SafeText>{ADMIN_SHOP_REFUND_PG_HINT}</SafeText>
       </p>
       <label className="mg-v2-label" htmlFor={`${baseId}-refund-reason`}>
         환불 사유
@@ -189,6 +165,7 @@ const AdminShopOrdersPage = () => {
   const baseId = useId();
   const { user, isLoggedIn, isLoading: sessionLoading } = useSession();
   const allowed = RoleUtils.isAdmin(user) || RoleUtils.isStaff(user);
+  const [confirm, ConfirmModal] = useConfirm();
 
   const [loading, setLoading] = useState(true);
   const [rows, setRows] = useState([]);
@@ -199,9 +176,9 @@ const AdminShopOrdersPage = () => {
   const [refundTarget, setRefundTarget] = useState(null);
   const [refundReason, setRefundReason] = useState(ADMIN_SHOP_REFUND_REASON_CODES.CUSTOMER_REQUEST);
   const [refunding, setRefunding] = useState(false);
-  const [cancelUnpaidOpen, setCancelUnpaidOpen] = useState(false);
-  const [cancelUnpaidTarget, setCancelUnpaidTarget] = useState(null);
-  const [cancellingUnpaid, setCancellingUnpaid] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [fulfillRetrying, setFulfillRetrying] = useState(false);
+  const [reconcileRefunding, setReconcileRefunding] = useState(false);
 
   /**
    * @param {{ silent?: boolean }} [options]
@@ -271,7 +248,8 @@ const AdminShopOrdersPage = () => {
       ev.stopPropagation();
     }
     const raw = row?.__raw ?? row;
-    if (raw?.status !== ORDER_STATUS_PAID) {
+    // 목록은 pgStatus 없을 수 있음 — helper는 null pgStatus + PAID 를 허용
+    if (!canAdminShopOrderPrimaryRefund(raw)) {
       return;
     }
     setRefundTarget(raw);
@@ -310,66 +288,148 @@ const AdminShopOrdersPage = () => {
       }
       await softRefresh(loadOrders);
     } catch (e) {
-      notificationManager.error(e?.message != null ? String(e.message) : '환불 처리에 실패했습니다.');
+      const dedicated = resolveAdminShopRefundErrorCopy(e);
+      notificationManager.error(
+        dedicated
+          || (e?.message != null ? String(e.message) : '환불 처리에 실패했습니다.')
+      );
     } finally {
       setRefunding(false);
     }
   };
 
-  const openCancelUnpaid = (row, ev) => {
+  const handleFulfillRetry = async() => {
+    const orderPublicId = detail?.orderPublicId;
+    if (!orderPublicId || fulfillRetrying) {
+      return;
+    }
+    setFulfillRetrying(true);
+    try {
+      const updated = await retryAdminShopOrderFulfillment(orderPublicId);
+      let nextDetail = updated;
+      if (updated) {
+        setDetail(updated);
+      } else {
+        const refreshed = await getAdminShopOrder(orderPublicId);
+        setDetail(refreshed);
+        nextDetail = refreshed;
+      }
+      const events = resolveShopFulfillmentLines(nextDetail);
+      // 여전히 FAILED+retryable 이면 SUCCESS 토스트 금지 — 버튼은 canFulfillRetry 로 재노출
+      if (hasShopFulfillmentRetryableLine(events)) {
+        notificationManager.error(SHOP_FULFILLMENT_RETRY_COPY.FAILED);
+      } else {
+        notificationManager.success(SHOP_FULFILLMENT_RETRY_COPY.SUCCESS);
+      }
+      await softRefresh(loadOrders);
+    } catch (e) {
+      notificationManager.error(
+        e?.message != null ? String(e.message) : SHOP_FULFILLMENT_RETRY_COPY.FAILED
+      );
+      try {
+        const refreshed = await getAdminShopOrder(orderPublicId);
+        setDetail(refreshed);
+      } catch {
+        // 상태 동기화 실패는 무시 (이미 오류 알림 표시)
+      }
+    } finally {
+      setFulfillRetrying(false);
+    }
+  };
+
+  const handleReconcileRefund = async(force = false) => {
+    const orderPublicId = detail?.orderPublicId;
+    if (!orderPublicId || reconcileRefunding) {
+      return;
+    }
+    const confirmed = await confirm({
+      title: force
+        ? ADMIN_SHOP_RECONCILE_REFUND_COPY.FORCE_BUTTON
+        : ADMIN_SHOP_RECONCILE_REFUND_COPY.BUTTON,
+      message: force
+        ? ADMIN_SHOP_RECONCILE_REFUND_COPY.FORCE_HINT
+        : ADMIN_SHOP_RECONCILE_REFUND_COPY.HINT,
+      confirmLabel: force
+        ? ADMIN_SHOP_RECONCILE_REFUND_COPY.FORCE_BUTTON
+        : ADMIN_SHOP_RECONCILE_REFUND_COPY.BUTTON,
+      cancelLabel: t('admin.actions.cancel'),
+      variant: force ? 'danger' : 'primary'
+    });
+    if (!confirmed) {
+      return;
+    }
+    setReconcileRefunding(true);
+    try {
+      const result = await reconcileShopOrderRefund(orderPublicId, { force: force === true });
+      notificationManager.success(
+        `${ADMIN_SHOP_RECONCILE_REFUND_COPY.SUCCESS}`
+          + (result?.orderStatus ? ` (${result.orderStatus})` : '')
+      );
+      const refreshed = await getAdminShopOrder(orderPublicId);
+      setDetail(refreshed);
+      await softRefresh(loadOrders);
+    } catch (e) {
+      notificationManager.error(
+        e?.message != null ? String(e.message) : ADMIN_SHOP_RECONCILE_REFUND_COPY.FAILED
+      );
+    } finally {
+      setReconcileRefunding(false);
+    }
+  };
+
+  const handleDeleteOrder = async(row, ev) => {
     if (ev) {
       ev.stopPropagation();
     }
     const raw = row?.__raw ?? row;
-    if (!isUnpaidCancellableStatus(raw?.status)) {
-      return;
-    }
-    setCancelUnpaidTarget(raw);
-    setCancelUnpaidOpen(true);
-  };
-
-  const closeCancelUnpaid = () => {
-    if (cancellingUnpaid) {
-      return;
-    }
-    setCancelUnpaidOpen(false);
-    setCancelUnpaidTarget(null);
-  };
-
-  const handleCancelUnpaid = async() => {
-    const orderPublicId = cancelUnpaidTarget?.orderPublicId;
+    const orderPublicId = raw?.orderPublicId;
     if (!orderPublicId) {
       return;
     }
-    setCancellingUnpaid(true);
+    if (!isAdminShopOrderDeletable(raw.status, raw.deletable)) {
+      notificationManager.show('현재 상태의 주문은 삭제할 수 없습니다.', 'warning');
+      return;
+    }
+    const confirmed = await confirm({
+      title: '주문 삭제',
+      message: `주문 ${shortenPublicId(orderPublicId)} (${statusLabel(raw.status)})을(를) 삭제할까요? 목록에서 숨겨지며 복구할 수 없습니다.`,
+      confirmLabel: '삭제',
+      cancelLabel: t('admin.actions.cancel'),
+      variant: 'danger'
+    });
+    if (!confirmed) {
+      return;
+    }
+    setDeleting(true);
     try {
-      await cancelAdminShopOrder(orderPublicId);
-      notificationManager.show('미결제 주문이 취소되었습니다.', 'success');
-      setCancelUnpaidOpen(false);
-      setCancelUnpaidTarget(null);
+      await deleteAdminShopOrder(orderPublicId);
+      notificationManager.show('주문이 삭제되었습니다.', 'success');
       if (detailOpen && detail?.orderPublicId === orderPublicId) {
         setDetailOpen(false);
         setDetail(null);
       }
       await softRefresh(loadOrders);
     } catch (e) {
-      notificationManager.error(e?.message != null ? String(e.message) : '주문 취소에 실패했습니다.');
+      notificationManager.error(e?.message != null ? String(e.message) : '주문 삭제에 실패했습니다.');
     } finally {
-      setCancellingUnpaid(false);
+      setDeleting(false);
     }
   };
 
   const tableRows = useMemo(() => {
     return (Array.isArray(rows) ? rows : []).map((row, idx) => {
-      const subtotal = row.subtotalMinor != null ? formatShopMoney(row.subtotalMinor) : '';
+      const listAmount = resolveAdminShopOrderListAmount(row);
+      const amountText = listAmount != null ? formatShopMoney(listAmount) : '';
       const cash = row.cashDueMinor != null ? formatShopMoney(row.cashDueMinor) : '';
       const points = row.pointsRedeemMinor != null ? formatShopPoints(row.pointsRedeemMinor) : '';
       return {
         __rowKey: row.orderPublicId != null ? `order-${String(row.orderPublicId)}` : `order-idx-${idx}`,
         colId: shortenPublicId(row.orderPublicId),
-        colStatus: statusLabel(row.status),
-        colAmount: subtotal ? `합계 ${subtotal}` : '',
-        colPay: cash || points ? `현금 ${cash || '0원'} · 포인트 ${points || '0 P'}` : '',
+        colStatus: resolveAdminShopOrderStatusDisplay(row),
+        colAmount: amountText,
+        colPay: cash || points
+          ? `${ADMIN_SHOP_ORDER_CASH_DUE_LABEL} ${cash || '0원'} · ${ADMIN_SHOP_ORDER_POINTS_LABEL} ${points || '0 P'}`
+          : '',
         colDate: formatShopDateTime(row.createdAt) || '-',
         __raw: row
       };
@@ -386,48 +446,71 @@ const AdminShopOrdersPage = () => {
   ];
 
   const renderCell = (columnKey, item) => {
+    if (columnKey === 'colStatus') {
+      const raw = item.__raw ?? item;
+      const statusText = resolveAdminShopOrderStatusDisplay(raw);
+      const source = raw.paymentSource || 'ONLINE';
+      const sourceLabel = resolvePackagePaymentSourceLabel(source) || PACKAGE_PAYMENT_HISTORY_UI.SOURCE_LABELS.ONLINE;
+      const sourceVariant = resolvePackagePaymentSourceBadgeVariant(source) || 'success';
+      return (
+        <span className="admin-shop-orders__status-cell" data-testid="admin-shop-order-source">
+          <SafeText>{statusText}</SafeText>
+          {' '}
+          <Badge variant="status" statusVariant={sourceVariant} size="sm">
+            {sourceLabel}
+          </Badge>
+        </span>
+      );
+    }
     if (columnKey !== 'colActions') {
       const value = item[columnKey];
       return value != null && value !== '' ? String(value) : '-';
     }
     const raw = item.__raw ?? item;
-    if (raw.status === ORDER_STATUS_PAID) {
-      return (
-        <MGButton
-          type="button"
-          className={buildErpMgButtonClassName({ variant: 'secondary', size: 'md' })}
-          disabled={refunding || cancellingUnpaid}
-          onClick={(ev) => openRefund(raw, ev)}
-        >
-          전액 환불
-        </MGButton>
-      );
+    // 목록에 pgStatus 없으면 PAID만으로 허용; 있으면 helper로 PG 기취소 게이트
+    const canRefund = (raw.pgStatus != null && String(raw.pgStatus).trim() !== '')
+      ? canAdminShopOrderPrimaryRefund(raw)
+      : raw.status === ADMIN_SHOP_ORDER_STATUS_PAID;
+    const canDelete = isAdminShopOrderDeletable(raw.status, raw.deletable);
+    if (!canRefund && !canDelete) {
+      return '-';
     }
-    if (isUnpaidCancellableStatus(raw.status)) {
-      return (
-        <MGButton
-          type="button"
-          className={buildErpMgButtonClassName({ variant: 'secondary', size: 'md' })}
-          disabled={refunding || cancellingUnpaid}
-          onClick={(ev) => openCancelUnpaid(raw, ev)}
-        >
-          미결제 취소
-        </MGButton>
-      );
-    }
-    return '-';
+    return (
+      <div className="mg-v2-button-group">
+        {canRefund ? (
+          <MGButton
+            type="button"
+            className={buildErpMgButtonClassName('secondary')}
+            disabled={refunding || deleting}
+            onClick={(ev) => openRefund(raw, ev)}
+          >
+            전액 환불
+          </MGButton>
+        ) : null}
+        {canDelete ? (
+          <MGButton
+            type="button"
+            className={buildErpMgButtonClassName({ variant: 'danger' })}
+            disabled={refunding || deleting}
+            onClick={(ev) => handleDeleteOrder(raw, ev)}
+          >
+            삭제
+          </MGButton>
+        ) : null}
+      </div>
+    );
   };
 
   const detailLines = Array.isArray(detail?.lines) ? detail.lines : [];
-  const detailEvents = Array.isArray(detail?.fulfillmentEvents) ? detail.fulfillmentEvents : [];
+  const detailEvents = resolveShopFulfillmentLines(detail);
 
   return (
     <AdminCommonLayout title="온라인 주문" loading={loading && rows.length === 0}>
-      <ContentArea>
+      <ContentArea className="admin-shop-clinic-os" ariaLabel="온라인 주문">
         <ContentHeader
           titleId={PAGE_TITLE_ID}
           title="온라인 주문"
-          description="테넌트 내담자 온라인 주문을 조회하고, 결제 완료(PAID) 전액 환불 및 미결제 취소를 처리합니다."
+          description="테넌트 내담자 온라인 주문을 조회하고, 결제 완료(PAID) 건 전액 환불 및 허용 상태 주문을 삭제합니다."
           actions={(
             <MGButton
               type="button"
@@ -473,20 +556,22 @@ const AdminShopOrdersPage = () => {
         {detailLoading ? (
           <UnifiedLoading type="inline" />
         ) : detail ? (
-          <OrderDetailBody
+          <AdminShopOrderDetailModal
             detail={detail}
             detailLines={detailLines}
             detailEvents={detailEvents}
+            portOneHint={ADMIN_SHOP_ORDER_DETAIL_PORTONE_HINT}
             onRefund={(ev) => {
               closeDetail();
               openRefund(detail, ev);
             }}
-            onCancelUnpaid={(ev) => {
-              closeDetail();
-              openCancelUnpaid(detail, ev);
-            }}
+            onDelete={(ev) => handleDeleteOrder(detail, ev)}
+            onFulfillRetry={handleFulfillRetry}
+            onReconcileRefund={handleReconcileRefund}
             refunding={refunding}
-            cancelling={cancellingUnpaid}
+            deleting={deleting}
+            fulfillRetrying={fulfillRetrying}
+            reconcileRefunding={reconcileRefunding}
           />
         ) : (
           <p className="mg-v2-muted">상세 정보가 없습니다.</p>
@@ -518,38 +603,7 @@ const AdminShopOrdersPage = () => {
           onReasonChange={setRefundReason}
         />
       </UnifiedModal>
-
-      <UnifiedModal
-        isOpen={cancelUnpaidOpen}
-        onClose={closeCancelUnpaid}
-        title="미결제 주문 취소"
-        size="small"
-        actions={(
-          <ModalFormActions
-            cancelText={t('admin.actions.cancel')}
-            submitText="취소 실행"
-            onCancel={closeCancelUnpaid}
-            onSubmit={handleCancelUnpaid}
-            loading={cancellingUnpaid}
-            disabled={cancellingUnpaid}
-            cancelVariant="ghost"
-            submitVariant="primary"
-          />
-        )}
-      >
-        <div className="mg-v2-form-stack">
-          <p>
-            <SafeText>
-              {`주문 ${shortenPublicId(cancelUnpaidTarget?.orderPublicId)} — ${statusLabel(cancelUnpaidTarget?.status)}`}
-            </SafeText>
-          </p>
-          <p className="mg-v2-muted">
-            <SafeText>
-              미결제 주문을 취소합니다. PENDING 결제가 있으면 DB 취소와 포트원 취소를 함께 시도합니다.
-            </SafeText>
-          </p>
-        </div>
-      </UnifiedModal>
+      <ConfirmModal />
     </AdminCommonLayout>
   );
 };

@@ -109,3 +109,22 @@ export const maskPortoneChannelKey = (value) => {
   }
   return `${s.slice(0, 6)}…${s.slice(-4)}`;
 };
+
+/**
+ * 포트원 웹훅 시크릿 설정 여부.
+ * API 의 {@code portoneWebhookSecretConfigured} 를 우선하고,
+ * 없으면 settings_json 키 존재만으로 판별한다(값은 노출하지 않음).
+ *
+ * @param {{ portoneWebhookSecretConfigured?: boolean, settingsJson?: string }|null|undefined} config
+ * @returns {boolean}
+ */
+export const isPortoneWebhookSecretConfigured = (config) => {
+  if (config == null || typeof config !== 'object') {
+    return false;
+  }
+  if (typeof config.portoneWebhookSecretConfigured === 'boolean') {
+    return config.portoneWebhookSecretConfigured;
+  }
+  const parsed = parsePortoneSettingsJson(config.settingsJson);
+  return Boolean(parsed.webhookSecret && String(parsed.webhookSecret).trim());
+};

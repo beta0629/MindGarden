@@ -1,30 +1,52 @@
 /**
  * ShopCheckoutPage — 체크아웃·포인트 사용·상담 매핑 선택·결제 준비
+ * Clinic-OS · shot-client-cart-tobe
  *
  * @author MindGarden
  * @since 2026-05-19
  */
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import ShopClientLayout from '../../../components/shop/templates/ShopClientLayout';
 import ShopClientSessionLoading from '../../../components/shop/templates/ShopClientSessionLoading';
+import SessionCountTicket from '../../../components/shop/atoms/SessionCountTicket';
 import PointInput from '../../../components/shop/molecules/PointInput';
 import CheckoutSummary from '../../../components/shop/organisms/CheckoutSummary';
+import MGButton from '../../../components/common/MGButton';
+import SafeText from '../../../components/common/SafeText';
 import { formatShopMoney, formatShopPoints } from '../../../utils/clientShopFormat';
 import {
   SHOP_CHECKOUT_AGREEMENT_LABEL,
-  SHOP_CHECKOUT_EMAIL_COPY,
   SHOP_CHECKOUT_ERROR_COPY,
-  SHOP_CHECKOUT_FULL_NAME_COPY,
   SHOP_CHECKOUT_MAPPING_COPY,
-  SHOP_CHECKOUT_PHONE_COPY,
   SHOP_CATALOG_CATEGORY,
   CLIENT_SHOP_ROUTES,
-  SHOP_PAYMENT_LAUNCH_COPY
+  SHOP_PAYMENT_VERIFY_ERROR_PHASE,
+  buildShopOrderDetailPath
 } from '../../../constants/clientShopConstants';
-import { useClientShopAuth } from '../../../hooks/useClientShopAuth';
 import {
+  CLIENT_WEB_SUITE_COPY,
+  CLIENT_WEB_SUITE_TEST_IDS
+} from '../../../constants/clientWebSuiteConstants';
+import {
+  CONSULTATION_PACKAGE_PAYMENT_TYPE_NOTE,
+  CONSULTATION_PACKAGE_USAGE_PERIOD_NOTE
+} from '../../../constants/legalPublic';
+import {
+  MIN_PAYMENT_AMOUNT,
+  formatPaymentAmountForDisplay,
+  isBelowMinCardCashDue
+} from '../../../constants/paymentAmountConstants';
+import {
+  PAYMENT_MIN_CARD_AMOUNT_I18N_KEY,
+  PAYMENT_MIN_CARD_AMOUNT_TITLE_I18N_KEY
+} from '../../../utils/minPaymentAmountMessage';
+import { useAlert } from '../../../hooks/useAlert';
+import { useClientShopAuth } from '../../../hooks/useClientShopAuth';
+import { useSession } from '../../../contexts/SessionContext';
+import {
+  cancelShopOrder,
   fetchConsultantMappings,
   fetchPointBalance,
   fetchShopCart,
@@ -32,46 +54,24 @@ import {
   postShopCheckout,
   prepareShopPayment
 } from '../../../services/clientShopService';
+import { assertPortOneCustomerReadyBeforeCheckout } from '../../../utils/clientShopPaymentCustomer';
+import { runShopCheckoutWithPortOneGuard } from '../../../utils/shopCheckoutPortOneGuard';
+import { runShopPortOnePaymentIfReady } from '../../../utils/shopPortOneCheckout';
 import {
-  isPortOneCustomerEmailFormat,
-  isPortOneCustomerPhoneFormat,
-  launchShopPaymentFromPrepare,
-  resolvePortOneCustomer,
-  resolveSessionEmail,
-  resolveSessionFullName,
-  resolveSessionPhoneNumber
-} from '../../../utils/clientShopPaymentLaunch';
+  buildConsultantPickerOptions,
+  collectCartConsultationTitles,
+  resolveInitialMappingId,
+  shouldShowConsultantMappingPicker,
+  findUniquePreselectedMapping,
+  resolveBestMappingRowForConsultant,
+  distinctConsultantKey
+} from '../../../utils/clientShopCheckoutMapping';
 
 const createIdempotencyKey = () => {
   if (typeof crypto !== 'undefined' && crypto.randomUUID) {
     return crypto.randomUUID();
   }
   return `idem-${Date.now()}`;
-};
-
-/**
- * Error / string / {message} / 빈 메시지를 사용자용 문자열로 정규화한다.
- *
- * @param {*} error
- * @param {string} fallback
- * @returns {string}
- */
-const toUserErrorMessage = (error, fallback) => {
-  if (error instanceof Error) {
-    const msg = typeof error.message === 'string' ? error.message.trim() : '';
-    return msg || fallback;
-  }
-  if (typeof error === 'string') {
-    const msg = error.trim();
-    return msg || fallback;
-  }
-  if (error && typeof error === 'object') {
-    const msg = typeof error.message === 'string' ? error.message.trim() : '';
-    if (msg) {
-      return msg;
-    }
-  }
-  return fallback;
 };
 
 /**
@@ -88,7 +88,13 @@ const cartHasConsultationSku = (cartLines, catalog) => {
 };
 
 const ShopCheckoutPage = () => {
-  const { sessionLoading, isLoggedIn, user } = useClientShopAuth();
+  const [alert, AlertModal] = useAlert();
+  const { sessionLoading, isLoggedIn, user } = useClientShopAuth({
+    requireLogin: false,
+    loginRedirectPath: CLIENT_SHOP_ROUTES.CHECKOUT
+  });
+  const navigate = useNavigate();
+  const { checkSession } = useSession();
   const [cart, setCart] = useState({ lines: [], subtotalMinor: 0 });
   const [catalog, setCatalog] = useState([]);
   const [balance, setBalance] = useState({ availableMinor: 0, heldMinor: 0 });
@@ -96,22 +102,26 @@ const ShopCheckoutPage = () => {
   const [selectedMappingId, setSelectedMappingId] = useState('');
   const [pointsInput, setPointsInput] = useState('0');
   const [agreed, setAgreed] = useState(false);
-  const [checkoutEmail, setCheckoutEmail] = useState('');
-  const [checkoutFullName, setCheckoutFullName] = useState('');
-  const [checkoutPhone, setCheckoutPhone] = useState('');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [checkoutResult, setCheckoutResult] = useState(null);
 
-  const sessionEmail = useMemo(() => resolveSessionEmail(user), [user]);
-  const sessionFullName = useMemo(() => resolveSessionFullName(user), [user]);
-  const sessionPhoneNumber = useMemo(() => resolveSessionPhoneNumber(user), [user]);
-  const needsCheckoutEmail = !sessionEmail;
-  const needsCheckoutFullName = !sessionFullName;
-  const needsCheckoutPhone = !sessionPhoneNumber;
+  const showMinCardPaymentAlert = useCallback(async() => {
+    await alert({
+      variant: 'warning',
+      titleKey: PAYMENT_MIN_CARD_AMOUNT_TITLE_I18N_KEY,
+      messageKey: PAYMENT_MIN_CARD_AMOUNT_I18N_KEY,
+      interpolation: { amount: formatPaymentAmountForDisplay(MIN_PAYMENT_AMOUNT) }
+    });
+  }, [alert]);
 
   const hasConsultationInCart = useMemo(
     () => cartHasConsultationSku(cart.lines, catalog),
+    [cart.lines, catalog]
+  );
+
+  const cartConsultationTitles = useMemo(
+    () => collectCartConsultationTitles(cart.lines, catalog),
     [cart.lines, catalog]
   );
 
@@ -132,11 +142,12 @@ const ShopCheckoutPage = () => {
       if (needsMapping) {
         const mappings = await fetchConsultantMappings();
         setConsultantMappings(mappings);
-        if (mappings.length === 1) {
-          setSelectedMappingId(String(mappings[0].mappingId));
-        } else {
-          setSelectedMappingId('');
-        }
+        setSelectedMappingId(
+          resolveInitialMappingId(
+            mappings,
+            collectCartConsultationTitles(cartData.lines, catalogData)
+          )
+        );
       } else {
         setConsultantMappings([]);
         setSelectedMappingId('');
@@ -153,6 +164,31 @@ const ShopCheckoutPage = () => {
       loadData();
     }
   }, [sessionLoading, isLoggedIn, loadData]);
+
+  // /client/settings 복귀 후 게이트가 동일 useSession().user 를 읽도록 soft refresh
+  useEffect(() => {
+    if (sessionLoading || !isLoggedIn || typeof checkSession !== 'function') {
+      return undefined;
+    }
+    let cancelled = false;
+    const refreshGateUser = () => {
+      if (!cancelled) {
+        // silent — isLoading 토글로 이 effect 가 재진입하지 않게 함
+        void checkSession(true, { silent: true });
+      }
+    };
+    refreshGateUser();
+    const onFocus = () => refreshGateUser();
+    if (typeof window !== 'undefined') {
+      window.addEventListener('focus', onFocus);
+    }
+    return () => {
+      cancelled = true;
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('focus', onFocus);
+      }
+    };
+  }, [sessionLoading, isLoggedIn, checkSession]);
 
   const subtotalMinor = cart.subtotalMinor || 0;
   const availableMinor = balance.availableMinor || 0;
@@ -185,21 +221,37 @@ const ShopCheckoutPage = () => {
     if (consultantMappings.length === 0) {
       return SHOP_CHECKOUT_MAPPING_COPY.NO_MAPPING;
     }
-    if (consultantMappings.length > 1 && !selectedMappingId) {
+    if (shouldShowConsultantMappingPicker(consultantMappings) && !selectedMappingId) {
       return SHOP_CHECKOUT_MAPPING_COPY.REQUIRED;
     }
     return '';
-  }, [hasConsultationInCart, consultantMappings.length, selectedMappingId]);
+  }, [hasConsultationInCart, consultantMappings, selectedMappingId]);
 
-  const singleMappingLabel = useMemo(() => {
-    if (consultantMappings.length !== 1) {
+  const portOneCustomerGate = useMemo(
+    () => assertPortOneCustomerReadyBeforeCheckout(user),
+    [user]
+  );
+
+  const consultantPickerOptions = useMemo(
+    () => buildConsultantPickerOptions(consultantMappings, cartConsultationTitles),
+    [consultantMappings, cartConsultationTitles]
+  );
+
+  const assignedMappingLabel = useMemo(() => {
+    if (consultantMappings.length === 0) {
       return '';
     }
-    const row = consultantMappings[0];
-    const name = row.consultantDisplayName || '';
-    const suffix = row.label ? ` (${row.label})` : '';
-    return `${SHOP_CHECKOUT_MAPPING_COPY.AUTO_PREFIX}: ${name}${suffix}`;
-  }, [consultantMappings]);
+    const key = distinctConsultantKey(consultantMappings[0]);
+    const bucket = consultantMappings.filter((row) => distinctConsultantKey(row) === key);
+    const row =
+      resolveBestMappingRowForConsultant(bucket, cartConsultationTitles)
+      || findUniquePreselectedMapping(consultantMappings)
+      || consultantMappings[0];
+    const name = row?.consultantDisplayName || '';
+    return `${SHOP_CHECKOUT_MAPPING_COPY.AUTO_PREFIX}: ${name}`;
+  }, [consultantMappings, cartConsultationTitles]);
+
+  const showMappingPicker = shouldShowConsultantMappingPicker(consultantMappings);
 
   const handleUseAllPoints = () => {
     setPointsInput(String(Math.min(availableMinor, subtotalMinor)));
@@ -218,121 +270,150 @@ const ShopCheckoutPage = () => {
       setMessage(mappingError);
       return;
     }
-    if (needsCheckoutEmail) {
-      const trimmedCheckoutEmail = checkoutEmail.trim();
-      if (!trimmedCheckoutEmail) {
-        setMessage(SHOP_CHECKOUT_EMAIL_COPY.REQUIRED);
-        return;
-      }
-      if (!isPortOneCustomerEmailFormat(trimmedCheckoutEmail)) {
-        setMessage(SHOP_CHECKOUT_EMAIL_COPY.INVALID);
-        return;
-      }
-    }
-    if (needsCheckoutFullName) {
-      const trimmedCheckoutFullName = checkoutFullName.trim();
-      if (!trimmedCheckoutFullName) {
-        setMessage(SHOP_CHECKOUT_FULL_NAME_COPY.REQUIRED);
-        return;
-      }
-    }
-    if (needsCheckoutPhone) {
-      const trimmedCheckoutPhone = checkoutPhone.trim();
-      if (!trimmedCheckoutPhone) {
-        setMessage(SHOP_CHECKOUT_PHONE_COPY.REQUIRED);
-        return;
-      }
-      if (!isPortOneCustomerPhoneFormat(trimmedCheckoutPhone)) {
-        setMessage(SHOP_CHECKOUT_PHONE_COPY.INVALID);
-        return;
-      }
-    }
     const lines = cart.lines || [];
     if (lines.length === 0) {
       setMessage('장바구니가 비어 있습니다.');
       return;
     }
-    const mappingIdForCheckout =
-      hasConsultationInCart && selectedMappingId ? selectedMappingId : null;
-
-    let result;
+    if (isBelowMinCardCashDue(cashDueMinor)) {
+      await showMinCardPaymentAlert();
+      return;
+    }
+    if (!portOneCustomerGate.ready) {
+      // 동일 문구는 CHECKOUT_PHONE_GATE 배너에 이미 표시 — setMessage 중복 방지
+      const gateEl = document.querySelector(
+        `[data-testid="${CLIENT_WEB_SUITE_TEST_IDS.CHECKOUT_PHONE_GATE}"]`
+      );
+      if (gateEl && typeof gateEl.scrollIntoView === 'function') {
+        gateEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+      return;
+    }
+    const mappingIdForCheckout = hasConsultationInCart
+      ? (selectedMappingId || resolveInitialMappingId(consultantMappings, cartConsultationTitles))
+      : null;
     try {
       setLoading(true);
       setMessage('');
       setCheckoutResult(null);
-      result = await postShopCheckout(
-        createIdempotencyKey(),
+      const flow = await runShopCheckoutWithPortOneGuard({
+        user,
         pointsRedeemMinor,
-        mappingIdForCheckout
-      );
-      setCheckoutResult(result);
-    } catch (e) {
-      setMessage(toUserErrorMessage(e, SHOP_CHECKOUT_ERROR_COPY.CHECKOUT_FAILED));
-      setLoading(false);
-      return;
-    }
-
-    if (result?.nextStep === 'PAYMENT' && result.orderPublicId) {
-      try {
-        const prepareResult = await prepareShopPayment(result.orderPublicId);
-        try {
-          const customer = resolvePortOneCustomer({
-            user,
-            checkoutEmail,
-            checkoutFullName,
-            checkoutPhone
-          });
-          await launchShopPaymentFromPrepare(prepareResult, { customer });
-        } catch (launchError) {
-          setMessage(
-            toUserErrorMessage(
-              launchError,
-              SHOP_PAYMENT_LAUNCH_COPY.MODULE_UNAVAILABLE
-            )
-          );
-          setLoading(false);
+        mappingIdForCheckout,
+        createIdempotencyKey,
+        postShopCheckout,
+        prepareShopPayment,
+        runShopPortOnePaymentIfReady,
+        cancelShopOrder
+      });
+      if (flow.status === 'PAYMENT_VERIFIED') {
+        const orderId = flow.checkoutResult?.orderPublicId;
+        if (orderId) {
+          navigate(buildShopOrderDetailPath(orderId), { replace: true });
           return;
         }
-      } catch (prepareError) {
-        setMessage(
-          toUserErrorMessage(prepareError, SHOP_CHECKOUT_ERROR_COPY.PREPARE_FAILED)
-        );
-        setLoading(false);
+        navigate(CLIENT_SHOP_ROUTES.ORDERS, { replace: true });
         return;
       }
-    }
-
-    try {
-      setMessage('주문이 접수되었습니다. 결제 안내에 따라 진행해 주세요.');
+      if (flow.checkoutResult && flow.status !== 'ORPHAN_CANCELLED') {
+        setCheckoutResult(flow.checkoutResult);
+      } else {
+        setCheckoutResult(null);
+      }
+      setMessage(flow.message);
       await loadData();
     } catch (e) {
-      setMessage(toUserErrorMessage(e, '결제 정보를 불러오지 못했습니다.'));
+      const errMsg = e.message || '';
+      const verifyOrderId =
+        e &&
+        e.shopPaymentPhase === SHOP_PAYMENT_VERIFY_ERROR_PHASE &&
+        e.orderPublicId != null &&
+        String(e.orderPublicId).trim()
+          ? String(e.orderPublicId).trim()
+          : '';
+      // PortOne SDK 성공 후 최종 verify 실패 → 주문 상세 「결제 확인」 경로로 유도
+      if (verifyOrderId) {
+        navigate(buildShopOrderDetailPath(verifyOrderId), {
+          replace: true,
+          state: {
+            shopCheckoutMessage:
+              errMsg || SHOP_CHECKOUT_ERROR_COPY.VERIFY_FAILED_USE_ORDER_CONFIRM
+          }
+        });
+        return;
+      }
+      if (
+        isBelowMinCardCashDue(cashDueMinor)
+        || errMsg.includes('최소 금액')
+        || errMsg.includes('카드 결제는')
+        || errMsg.includes(String(MIN_PAYMENT_AMOUNT))
+        || errMsg.includes(formatPaymentAmountForDisplay(MIN_PAYMENT_AMOUNT))
+      ) {
+        await showMinCardPaymentAlert();
+      } else {
+        setMessage(errMsg || SHOP_CHECKOUT_ERROR_COPY.CHECKOUT_FAILED);
+      }
     } finally {
       setLoading(false);
     }
   };
 
-  if (sessionLoading || !isLoggedIn) {
-    return <ShopClientSessionLoading title="결제하기" />;
+  if (sessionLoading) {
+    return <ShopClientSessionLoading title={CLIENT_WEB_SUITE_COPY.CHECKOUT_TITLE} />;
+  }
+
+  const loginRedirect = `/login?redirect=${encodeURIComponent(CLIENT_SHOP_ROUTES.CHECKOUT)}`;
+
+  if (!isLoggedIn) {
+    return (
+      <ShopClientLayout
+        title={CLIENT_WEB_SUITE_COPY.CHECKOUT_TITLE}
+        testId="client-shop-checkout"
+        aside={(
+          <div className="client-web-page-shell__card client-shop-checkout-receipt">
+            <p className="client-shop-checkout-receipt__note">
+              {CLIENT_WEB_SUITE_COPY.CHECKOUT_LOGIN_GATE_BODY}
+            </p>
+            <button
+              type="button"
+              className="client-web-page-shell__cta"
+              disabled
+              aria-disabled="true"
+            >
+              {CLIENT_WEB_SUITE_COPY.CHECKOUT_PAY_CTA}
+            </button>
+          </div>
+        )}
+      >
+        <section
+          className="client-web-page-shell__card client-shop-checkout-gate"
+          data-testid={CLIENT_WEB_SUITE_TEST_IDS.CHECKOUT_LOGIN_GATE}
+          aria-label={CLIENT_WEB_SUITE_COPY.CHECKOUT_LOGIN_GATE_TITLE}
+        >
+          <h2 className="client-shop-checkout-gate__title">
+            {CLIENT_WEB_SUITE_COPY.CHECKOUT_LOGIN_GATE_TITLE}
+          </h2>
+          <p className="client-shop-checkout-gate__body">
+            {CLIENT_WEB_SUITE_COPY.CHECKOUT_LOGIN_GATE_BODY}
+          </p>
+          <Link className="client-web-page-shell__cta" to={loginRedirect}>
+            {CLIENT_WEB_SUITE_COPY.CHECKOUT_LOGIN_CTA}
+          </Link>
+        </section>
+      </ShopClientLayout>
+    );
   }
 
   const lines = cart.lines || [];
-  const checkoutEmailBlocked =
-    needsCheckoutEmail && !checkoutEmail.trim();
-  const checkoutFullNameBlocked =
-    needsCheckoutFullName && !checkoutFullName.trim();
-  const checkoutPhoneBlocked =
-    needsCheckoutPhone && !checkoutPhone.trim();
   const checkoutBlocked =
     Boolean(pointsError) ||
     Boolean(mappingError) ||
-    checkoutEmailBlocked ||
-    checkoutFullNameBlocked ||
-    checkoutPhoneBlocked ||
-    (hasConsultationInCart && consultantMappings.length === 0);
+    (hasConsultationInCart && consultantMappings.length === 0) ||
+    !portOneCustomerGate.ready;
 
   return (
-    <ShopClientLayout title="결제하기" testId="client-shop-checkout">
+    <ShopClientLayout title={CLIENT_WEB_SUITE_COPY.CHECKOUT_TITLE} testId="client-shop-checkout">
+      <AlertModal />
       {lines.length === 0 ? (
         <p className="client-shop__empty">
           장바구니가 비어 있습니다.{' '}
@@ -343,12 +424,22 @@ const ShopCheckoutPage = () => {
           <section className="client-shop__section" aria-label="주문 상품">
             <h2 className="client-shop__section-title">주문 상품</h2>
             {lines.map((line) => (
-              <p key={line.skuCode} className="client-shop__summary-row">
-                <span>
-                  {line.title} × {line.quantity}
+              <div key={line.skuCode} className="client-shop__checkout-line">
+                <div className="client-shop__checkout-line-main">
+                  <p className="client-shop__checkout-line-title">
+                    <SafeText>{line.title}</SafeText>
+                    {' × '}
+                    {line.quantity}
+                  </p>
+                  <SessionCountTicket
+                    sessionCount={line.sessionCount}
+                    testId={`checkout-session-ticket-${line.skuCode}`}
+                  />
+                </div>
+                <span className="client-shop__checkout-line-total">
+                  {formatShopMoney(line.lineTotalMinor)}
                 </span>
-                <span>{formatShopMoney(line.lineTotalMinor)}</span>
-              </p>
+              </div>
             ))}
           </section>
 
@@ -361,9 +452,7 @@ const ShopCheckoutPage = () => {
                 <p className="client-shop__message client-shop__message--error" role="alert">
                   {SHOP_CHECKOUT_MAPPING_COPY.NO_MAPPING}
                 </p>
-              ) : consultantMappings.length === 1 ? (
-                <p className="client-shop__message">{singleMappingLabel}</p>
-              ) : (
+              ) : showMappingPicker ? (
                 <>
                   <label className="client-shop__field-label" htmlFor="shop-consultant-mapping">
                     {SHOP_CHECKOUT_MAPPING_COPY.SECTION_TITLE}
@@ -377,15 +466,11 @@ const ShopCheckoutPage = () => {
                     aria-required="true"
                   >
                     <option value="">{SHOP_CHECKOUT_MAPPING_COPY.SELECT_PLACEHOLDER}</option>
-                    {consultantMappings.map((row) => {
-                      const labelSuffix = row.label ? ` — ${row.label}` : '';
-                      return (
-                        <option key={row.mappingId} value={String(row.mappingId)}>
-                          {row.consultantDisplayName}
-                          {labelSuffix}
-                        </option>
-                      );
-                    })}
+                    {consultantPickerOptions.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
                   </select>
                   {mappingError ? (
                     <p className="client-shop__message client-shop__message--error" role="alert">
@@ -393,82 +478,9 @@ const ShopCheckoutPage = () => {
                     </p>
                   ) : null}
                 </>
+              ) : (
+                <p className="client-shop__message">{assignedMappingLabel}</p>
               )}
-            </section>
-          ) : null}
-
-          {needsCheckoutEmail ? (
-            <section className="client-shop__section" aria-label={SHOP_CHECKOUT_EMAIL_COPY.SECTION_TITLE}>
-              <h2 className="client-shop__section-title">
-                {SHOP_CHECKOUT_EMAIL_COPY.SECTION_TITLE}
-              </h2>
-              <p className="client-shop__message">{SHOP_CHECKOUT_EMAIL_COPY.HELP}</p>
-              <label className="client-shop__field-label" htmlFor="shop-checkout-email">
-                {SHOP_CHECKOUT_EMAIL_COPY.LABEL}
-              </label>
-              <input
-                id="shop-checkout-email"
-                type="email"
-                className="client-shop__input"
-                value={checkoutEmail}
-                onChange={(e) => setCheckoutEmail(e.target.value)}
-                placeholder={SHOP_CHECKOUT_EMAIL_COPY.PLACEHOLDER}
-                disabled={loading}
-                autoComplete="email"
-                aria-required="true"
-              />
-            </section>
-          ) : null}
-
-          {needsCheckoutFullName ? (
-            <section
-              className="client-shop__section"
-              aria-label={SHOP_CHECKOUT_FULL_NAME_COPY.SECTION_TITLE}
-            >
-              <h2 className="client-shop__section-title">
-                {SHOP_CHECKOUT_FULL_NAME_COPY.SECTION_TITLE}
-              </h2>
-              <p className="client-shop__message">{SHOP_CHECKOUT_FULL_NAME_COPY.HELP}</p>
-              <label className="client-shop__field-label" htmlFor="shop-checkout-full-name">
-                {SHOP_CHECKOUT_FULL_NAME_COPY.LABEL}
-              </label>
-              <input
-                id="shop-checkout-full-name"
-                type="text"
-                className="client-shop__input"
-                value={checkoutFullName}
-                onChange={(e) => setCheckoutFullName(e.target.value)}
-                placeholder={SHOP_CHECKOUT_FULL_NAME_COPY.PLACEHOLDER}
-                disabled={loading}
-                autoComplete="name"
-                aria-required="true"
-              />
-            </section>
-          ) : null}
-
-          {needsCheckoutPhone ? (
-            <section
-              className="client-shop__section"
-              aria-label={SHOP_CHECKOUT_PHONE_COPY.SECTION_TITLE}
-            >
-              <h2 className="client-shop__section-title">
-                {SHOP_CHECKOUT_PHONE_COPY.SECTION_TITLE}
-              </h2>
-              <p className="client-shop__message">{SHOP_CHECKOUT_PHONE_COPY.HELP}</p>
-              <label className="client-shop__field-label" htmlFor="shop-checkout-phone">
-                {SHOP_CHECKOUT_PHONE_COPY.LABEL}
-              </label>
-              <input
-                id="shop-checkout-phone"
-                type="tel"
-                className="client-shop__input"
-                value={checkoutPhone}
-                onChange={(e) => setCheckoutPhone(e.target.value)}
-                placeholder={SHOP_CHECKOUT_PHONE_COPY.PLACEHOLDER}
-                disabled={loading}
-                autoComplete="tel"
-                aria-required="true"
-              />
             </section>
           ) : null}
 
@@ -500,6 +512,19 @@ const ShopCheckoutPage = () => {
             cashDueMinor={cashDueMinor}
           />
 
+          <p
+            className="client-shop__message"
+            data-testid="shop-checkout-usage-period-note"
+          >
+            {CONSULTATION_PACKAGE_USAGE_PERIOD_NOTE}
+          </p>
+          <p
+            className="client-shop__message"
+            data-testid="shop-checkout-payment-type-note"
+          >
+            {CONSULTATION_PACKAGE_PAYMENT_TYPE_NOTE}
+          </p>
+
           <label className="client-shop__checkbox-row">
             <input
               type="checkbox"
@@ -509,20 +534,38 @@ const ShopCheckoutPage = () => {
             <span>{SHOP_CHECKOUT_AGREEMENT_LABEL}</span>
           </label>
 
+          {!portOneCustomerGate.ready && portOneCustomerGate.message ? (
+            <div
+              className="client-shop__message client-shop__message--error"
+              role="alert"
+              data-testid={CLIENT_WEB_SUITE_TEST_IDS.CHECKOUT_PHONE_GATE}
+            >
+              <p>{portOneCustomerGate.message}</p>
+              <Link className="client-web-page-shell__cta client-web-page-shell__cta--ghost" to="/client/settings">
+                {CLIENT_WEB_SUITE_COPY.CHECKOUT_SETTINGS_LINK}
+              </Link>
+            </div>
+          ) : null}
+
           {message ? (
             <p className="client-shop__message" role="status">
               {message}
             </p>
           ) : null}
 
-          <button
+          <MGButton
             type="button"
-            className="client-shop__cta"
+            variant="primary"
+            size="large"
+            fullWidth
+            className="client-shop__cta-mg"
             disabled={loading || !agreed || checkoutBlocked}
+            loading={loading}
+            preventDoubleClick
             onClick={handleCheckout}
           >
             {formatShopMoney(cashDueMinor)} 결제하기
-          </button>
+          </MGButton>
 
           {checkoutResult?.orderPublicId ? (
             <p className="client-shop__message">

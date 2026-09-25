@@ -55,4 +55,57 @@ class MappingAssignmentStatusTest {
             assertThat(assigned).as("%s", status).isEqualTo(expected);
         }
     }
+
+    @ParameterizedTest
+    @EnumSource(value = MappingStatus.class, names = {
+            "ACTIVE", "PENDING_PAYMENT", "PAYMENT_CONFIRMED", "SESSIONS_EXHAUSTED"
+    })
+    @DisplayName("쇼핑 체크아웃 eligible — 회기 소진 포함")
+    void isShopCheckoutEligible_trueForCheckoutStatuses(MappingStatus status) {
+        assertThat(MappingAssignmentStatus.isShopCheckoutEligible(status)).isTrue();
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = MappingStatus.class, names = {
+            "TERMINATED", "CANCELLED", "INACTIVE", "SUSPENDED",
+            "DEPOSIT_PENDING", "DEPOSIT_CONFIRMED"
+    })
+    @DisplayName("쇼핑 체크아웃 ineligible — 종료·비활성·입금 전용")
+    void isShopCheckoutEligible_falseForNonCheckoutStatuses(MappingStatus status) {
+        assertThat(MappingAssignmentStatus.isShopCheckoutEligible(status)).isFalse();
+    }
+
+    @ParameterizedTest
+    @NullSource
+    @DisplayName("null 은 쇼핑 체크아웃 ineligible")
+    void isShopCheckoutEligible_falseForNull(MappingStatus status) {
+        assertThat(MappingAssignmentStatus.isShopCheckoutEligible(status)).isFalse();
+    }
+
+    @Test
+    @DisplayName("SESSIONS_EXHAUSTED — shop eligible true, isAssigned false")
+    void sessionsExhausted_shopEligibleButNotAssigned() {
+        assertThat(MappingAssignmentStatus.isShopCheckoutEligible(MappingStatus.SESSIONS_EXHAUSTED))
+                .isTrue();
+        assertThat(MappingAssignmentStatus.isAssigned(MappingStatus.SESSIONS_EXHAUSTED)).isFalse();
+    }
+
+    @Test
+    @DisplayName("TERMINATED — shop eligible false")
+    void terminated_notShopCheckoutEligible() {
+        assertThat(MappingAssignmentStatus.isShopCheckoutEligible(MappingStatus.TERMINATED)).isFalse();
+    }
+
+    @Test
+    @DisplayName("isShopCheckoutEligible enum 전 값 커버")
+    void isShopCheckoutEligible_coversAllEnumValuesExplicitly() {
+        for (MappingStatus status : MappingStatus.values()) {
+            boolean eligible = MappingAssignmentStatus.isShopCheckoutEligible(status);
+            boolean expected = status == MappingStatus.ACTIVE
+                    || status == MappingStatus.PENDING_PAYMENT
+                    || status == MappingStatus.PAYMENT_CONFIRMED
+                    || status == MappingStatus.SESSIONS_EXHAUSTED;
+            assertThat(eligible).as("%s", status).isEqualTo(expected);
+        }
+    }
 }

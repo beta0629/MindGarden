@@ -24,13 +24,9 @@ import com.coresolution.consultation.service.ConsultationMessageService;
 import com.coresolution.consultation.service.MobilePushDispatchService;
 import com.coresolution.consultation.service.NotificationService;
 import com.coresolution.consultation.service.erp.financial.FinancialTransactionService;
-import com.coresolution.consultation.constant.ShopClientOrderStatus;
-import com.coresolution.consultation.constant.ShopRefundConstants;
-import com.coresolution.consultation.entity.ShopClientOrder;
 import com.coresolution.consultation.service.ClientShopCheckoutService;
 import com.coresolution.consultation.service.PaymentService;
 import com.coresolution.consultation.service.ReserveFundService;
-import com.coresolution.consultation.service.ShopOrderFulfillmentService;
 import com.coresolution.consultation.service.StatisticsService;
 import com.coresolution.consultation.service.portone.PortOneV2PaymentVerifyService;
 import com.coresolution.consultation.util.ConsultationMessageTypeCodes;
@@ -74,7 +70,6 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
     private final CommonCodeService commonCodeService;
     private final MobilePushDispatchService mobilePushDispatchService;
     private final ClientShopCheckoutService clientShopCheckoutService;
-    private final ShopOrderFulfillmentService shopOrderFulfillmentService;
     private final ShopClientOrderRepository shopClientOrderRepository;
     private final NotificationService notificationService;
     private final UserRepository userRepository;
@@ -94,8 +89,7 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
             NotificationService notificationService,
             UserRepository userRepository,
             PortOneV2PaymentVerifyService portOneV2PaymentVerifyService,
-            @Lazy ClientShopCheckoutService clientShopCheckoutService,
-            @Lazy ShopOrderFulfillmentService shopOrderFulfillmentService) {
+            @Lazy ClientShopCheckoutService clientShopCheckoutService) {
         super(paymentRepository, accessControlService);
         this.paymentRepository = paymentRepository;
         this.financialTransactionService = financialTransactionService;
@@ -110,7 +104,6 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
         this.userRepository = userRepository;
         this.portOneV2PaymentVerifyService = portOneV2PaymentVerifyService;
         this.clientShopCheckoutService = clientShopCheckoutService;
-        this.shopOrderFulfillmentService = shopOrderFulfillmentService;
     }
     
     
@@ -230,6 +223,13 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
         }
         
         validateStatusTransition(payment.getStatus(), status);
+
+        // fail-closed: IAMPORT shop 결제는 PortOne 취소 증거 없이 CANCELLED/REFUNDED 전환 금지
+        if ((status == Payment.PaymentStatus.CANCELLED || status == Payment.PaymentStatus.REFUNDED)
+                && isShopOrderPayment(payment)
+                && portOneV2PaymentVerifyService.isIamportPayment(payment)) {
+            requirePortOneCancelEvidence(tenantId, payment);
+        }
         
         payment.setStatus(status);
         
@@ -302,50 +302,54 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
                         log.error("통계 업데이트 실패: {}", e.getMessage(), e);
                     }
                     
-                    try {
-                        // P0 보안·역할 분리(2026-06-03): 결제 금액이 상담사 인앱 메시지함에 노출되지 않도록
-                        // sendSystemThreadMessage 로 결제자(client) 단독 수신 처리.
-                        String paymentMessage = String.format(
-                            PaymentNotificationCopy.INAPP_BODY_PAYMENT_COMPLETED_FMT,
-                            payment.getAmount(),
-                            LocalDateTime.now().format(
-                                java.time.format.DateTimeFormatter.ofPattern(
-                                    PaymentNotificationCopy.DATE_TIME_PATTERN)),
-                            payment.getDescription()
-                        );
+                    if (!isShopOrderPayment(payment)) {
+                        try {
+                            // P0 보안·역할 분리(2026-06-03): 결제 금액이 상담사 인앱 메시지함에 노출되지 않도록
+                            // sendSystemThreadMessage 로 결제자(client) 단독 수신 처리.
+                            String paymentMessage = String.format(
+                                PaymentNotificationCopy.INAPP_BODY_PAYMENT_COMPLETED_FMT,
+                                payment.getAmount(),
+                                LocalDateTime.now().format(
+                                    java.time.format.DateTimeFormatter.ofPattern(
+                                        PaymentNotificationCopy.DATE_TIME_PATTERN)),
+                                payment.getDescription()
+                            );
 
-                        Long clientUserId = payment.getPayerId();
-                        Long consultantUserId = payment.getRecipientId();
-                        if (clientUserId != null && consultantUserId != null) {
-                            consultationMessageService.sendSystemThreadMessage(
-                                    consultantUserId,
-                                    clientUserId,
-                                    clientUserId,
-                                    null,
-                                    PaymentNotificationCopy.INAPP_TITLE_PAYMENT_COMPLETED,
-                                    paymentMessage,
-                                    getMessageTypeFromCommonCode("PAYMENT_COMPLETION"),
-                                    false,
-                                    false);
-                        } else {
-                            log.warn("결제 완료 인앱 알림 생략: payer/recipient 없음 paymentId={}", paymentId);
+                            Long clientUserId = payment.getPayerId();
+                            Long consultantUserId = payment.getRecipientId();
+                            if (clientUserId != null && consultantUserId != null) {
+                                consultationMessageService.sendSystemThreadMessage(
+                                        consultantUserId,
+                                        clientUserId,
+                                        clientUserId,
+                                        null,
+                                        PaymentNotificationCopy.INAPP_TITLE_PAYMENT_COMPLETED,
+                                        paymentMessage,
+                                        getMessageTypeFromCommonCode("PAYMENT_COMPLETION"),
+                                        false,
+                                        false);
+                            } else {
+                                log.warn("결제 완료 인앱 알림 생략: payer/recipient 없음 paymentId={}", paymentId);
+                            }
+
+                            log.info("🔔 결제 완료 알림 자동 발송(시스템 발화·내담자 단독): PaymentID={}", paymentId);
+                        } catch (Exception e) {
+                            log.error("결제 완료 알림 발송 실패: {}", e.getMessage(), e);
                         }
 
-                        log.info("🔔 결제 완료 알림 자동 발송(시스템 발화·내담자 단독): PaymentID={}", paymentId);
-                    } catch (Exception e) {
-                        log.error("결제 완료 알림 발송 실패: {}", e.getMessage(), e);
-                    }
+                        try {
+                            mobilePushDispatchService.dispatchPaymentCompleted(tenantId, payment);
+                        } catch (Exception ex) {
+                            log.warn("결제 완료 푸시 실패: {}", ex.getMessage());
+                        }
 
-                    try {
-                        mobilePushDispatchService.dispatchPaymentCompleted(tenantId, payment);
-                    } catch (Exception ex) {
-                        log.warn("결제 완료 푸시 실패: {}", ex.getMessage());
-                    }
-
-                    try {
-                        trySendPaymentCompletedExternalNotification(tenantId, payment);
-                    } catch (Exception ex) {
-                        log.warn("결제 완료 알림톡/SMS 실패: {}", ex.getMessage());
+                        try {
+                            trySendPaymentCompletedExternalNotification(tenantId, payment);
+                        } catch (Exception ex) {
+                            log.warn("결제 완료 알림톡/SMS 실패: {}", ex.getMessage());
+                        }
+                    } else {
+                        log.debug("쇼핑 주문 PG: generic payment_completed 알림 스킵 paymentId={}", paymentId);
                     }
 
                     try {
@@ -503,8 +507,12 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
                     clientShopCheckoutService.completeOrderOnPaymentApproved(tenantId, orderPublicId);
                     break;
                 case FAILED:
-                case CANCELLED:
                     clientShopCheckoutService.releaseOrderHoldOnPaymentFailure(tenantId, orderPublicId);
+                    break;
+                case CANCELLED:
+                case REFUNDED:
+                    // PAID+이행 후 취소·환불: 회기 원복·ERP EXPENSE·주문 REFUNDED (멱등)
+                    clientShopCheckoutService.reconcileOrderOnPaymentCancelOrRefund(tenantId, orderPublicId);
                     break;
                 default:
                     break;
@@ -545,7 +553,23 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
         payment = paymentRepository.save(payment);
         log.info("결제 취소 완료: {}", paymentId);
         cancelRelatedPaymentIncomeTransactions(payment);
-        
+
+        // 쇼핑 주문: PENDING_PAYMENT 고아 방지 — hold 해제·CREATED 복귀 (멱등·tenant fail-closed)
+        if (isShopOrderPayment(payment)) {
+            String orderPublicId = payment.getOrderId();
+            try {
+                clientShopCheckoutService.releaseOrderHoldOnPaymentFailure(tenantId, orderPublicId);
+            } catch (RuntimeException e) {
+                log.error(
+                        "결제 취소 후 쇼핑 주문 hold 해제 실패: tenantId={}, orderPublicId={}, paymentId={}",
+                        tenantId,
+                        orderPublicId,
+                        paymentId,
+                        e);
+                throw e;
+            }
+        }
+
         return buildPaymentResponse(payment, null);
     }
     
@@ -558,11 +582,13 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
                 amount,
                 reason,
                 reverseShopFulfillment);
-
+        
+        // 표준화 2025-12-06: deprecated 메서드 대체
         String tenantId = TenantContextHolder.getRequiredTenantId();
         Payment payment = paymentRepository.findByTenantIdAndPaymentIdAndIsDeletedFalse(tenantId, paymentId)
                 .orElseThrow(() -> new RuntimeException("결제를 찾을 수 없습니다."));
-
+        
+        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
         if (payment.getStatus() != Payment.PaymentStatus.APPROVED) {
             throw new RuntimeException("환불할 수 없는 결제 상태입니다.");
         }
@@ -573,13 +599,13 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
         if (shopOrder && portOneV2PaymentVerifyService.isIamportPayment(payment)) {
             requirePortOneCancelEvidence(tenantId, payment);
         }
-
+        
         BigDecimal refundAmount = amount != null ? amount : payment.getAmount();
         if (refundAmount.compareTo(payment.getAmount()) > 0) {
             throw new RuntimeException("환불 금액이 결제 금액을 초과할 수 없습니다.");
         }
 
-        // shop 주문: 부분 환불 시 Payment REFUNDED + reverse 스킵 불일치 금지 — fail-closed
+        // shop 주문(특히 IAMPORT): 부분 환불 시 Payment REFUNDED + reverse 스킵 불일치 금지 — fail-closed
         if (shopOrder && refundAmount.compareTo(payment.getAmount()) != 0) {
             log.error(
                     "fail-closed: 쇼핑 주문 부분 환불 거부 paymentId={}, refundAmount={}, paymentAmount={}",
@@ -588,19 +614,22 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
                     payment.getAmount());
             throw new IllegalArgumentException(
                     String.format(
-                            ShopRefundConstants.MSG_SHOP_PARTIAL_REFUND_NOT_ALLOWED_FMT,
+                            com.coresolution.consultation.constant.ShopRefundConstants
+                                    .MSG_SHOP_PARTIAL_REFUND_NOT_ALLOWED_FMT,
                             refundAmount,
                             payment.getAmount()));
         }
-
+        
         payment.setStatus(Payment.PaymentStatus.REFUNDED);
         payment.setRefundedAt(LocalDateTime.now());
         payment.setFailureReason(reason);
-
+        
         payment = paymentRepository.save(payment);
         log.info("결제 환불 완료: {}", paymentId);
 
-        // 전액 환불: Path A 결제 연동 INCOME CANCEL. Path B 쇼핑은 EXPENSE 를 clinic reverse 경로에서 생성.
+        // 전액 환불 시: Path A 는 결제 연동 INCOME CANCEL.
+        // Path B 쇼핑 매핑 입금 INCOME 은 유지하고 EXPENSE 는 clinic reverse 경로에서 생성한다.
+        // (shop 은 위에서 전액만 통과 — 여기선 항상 전액)
         if (refundAmount.compareTo(payment.getAmount()) == 0) {
             if (!shopOrder) {
                 cancelRelatedPaymentIncomeTransactions(payment);
@@ -611,6 +640,7 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
                         payment.getOrderId());
                 // Admin refundPaidOrder 는 reverseShopFulfillment=false 로 Payment 상태만 갱신 후
                 // reversePaidOrderFulfillment 를 단독 호출한다 (이중 clinic reverse 방지).
+                // Webhook/Reconcile/Controller 기본값 true → reverseShopOrderOnFullRefund.
                 if (reverseShopFulfillment) {
                     reverseShopOrderOnFullRefund(payment);
                 } else {
@@ -621,12 +651,14 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
                 }
             }
         }
-
+        
         return buildPaymentResponse(payment, null);
     }
 
     /**
-     * IAMPORT shop 결제 fail-closed 가드: PortOne CANCELLED/PARTIAL_CANCELLED 또는 Payment.cancelledAt.
+     * IAMPORT shop 결제 fail-closed 가드: PortOne 상태가 CANCELLED/PARTIAL_CANCELLED 이거나
+     * Payment 엔티티에 {@code cancelledAt}이 존재할 때만 통과.
+     * PG 취소 증거 없이 Payment CANCELLED/REFUNDED 전환을 차단한다.
      */
     private void requirePortOneCancelEvidence(String tenantId, Payment payment) {
         if (payment.getCancelledAt() == null) {
@@ -634,12 +666,14 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
                     .isCancelledOrPartialCancelled(tenantId, payment.getPaymentId());
             if (!hasCancelEvidence) {
                 log.error(
-                        "fail-closed: IAMPORT shop 결제 PortOne 취소 증거 없음 tenantId={}, paymentId={}",
+                        "fail-closed: IAMPORT shop 결제 PortOne 취소 증거 없음 "
+                                + "tenantId={}, paymentId={}",
                         tenantId,
                         payment.getPaymentId());
                 throw new IllegalStateException(
                         String.format(
-                                ShopRefundConstants.MSG_PG_CANCEL_NO_EVIDENCE_FMT,
+                                com.coresolution.consultation.constant.ShopRefundConstants
+                                        .MSG_PG_CANCEL_NO_EVIDENCE_FMT,
                                 payment.getPaymentId()));
             }
             payment.setCancelledAt(LocalDateTime.now());
@@ -652,9 +686,12 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
     }
 
     /**
-     * 쇼핑 주문 전액 환불 시 이행 원복 SSOT (webhook/기본 reverseShopFulfillment=true 경로).
+     * 쇼핑 주문 전액 환불 시 이행 원복 SSOT.
      *
-     * <p>prod ClientShopCheckout 에 reconcile API 가 없으므로 fulfillment reverse + REFUNDED 를 직접 수행한다.</p>
+     * <p>어드민 전액 환불이 선호출한 뒤에도 멱등하다.
+     * Path B 입금 INCOME 은 유지하고 EXPENSE 는 reverse 경로에서 생성한다.</p>
+     *
+     * @param payment 환불된 결제(order_id = shop public id)
      */
     private void reverseShopOrderOnFullRefund(Payment payment) {
         String orderPublicId = payment.getOrderId();
@@ -665,21 +702,10 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
         if (tenantId == null || tenantId.isBlank()) {
             return;
         }
-        Optional<ShopClientOrder> orderOpt =
-                shopClientOrderRepository.findByTenantIdAndPublicId(tenantId, orderPublicId);
-        if (orderOpt.isEmpty()) {
+        if (!shopClientOrderRepository.findByTenantIdAndPublicId(tenantId, orderPublicId).isPresent()) {
             return;
         }
-        ShopClientOrder order = orderOpt.get();
-        shopOrderFulfillmentService.reversePaidOrderFulfillment(tenantId, order);
-        if (order.getStatus() != ShopClientOrderStatus.REFUNDED) {
-            order.setStatus(ShopClientOrderStatus.REFUNDED);
-            shopClientOrderRepository.save(order);
-            log.info(
-                    "PG 환불 후 주문 REFUNDED·회기 원복: tenantId={}, orderPublicId={}",
-                    tenantId,
-                    orderPublicId);
-        }
+        clientShopCheckoutService.reconcileOrderOnPaymentCancelOrRefund(tenantId, orderPublicId);
     }
 
     /**
@@ -753,7 +779,14 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
                 paymentRepository.save(payment);
             });
             if (payment.getStatus() != Payment.PaymentStatus.APPROVED) {
-                updatePaymentStatus(paymentId, Payment.PaymentStatus.APPROVED);
+                if (isShopOrderPayment(payment)) {
+                    approveShopOrderPayment(paymentId);
+                } else {
+                    updatePaymentStatus(paymentId, Payment.PaymentStatus.APPROVED);
+                }
+            } else if (isShopOrderPayment(payment)) {
+                // APPROVED 멱등이어도 주문 SSOT(EXPIRED→PAID 복구 등)를 shop-safe 경로로 재동기화
+                approveShopOrderPayment(paymentId);
             }
             return true;
         }
@@ -1057,6 +1090,7 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
                 .status(payment.getStatus().toString())
                 .method(payment.getMethod())
                 .provider(payment.getProvider())
+                .paymentSource(com.coresolution.consultation.util.PaymentSourceResolver.fromPaymentEntity(payment))
                 .payerId(payment.getPayerId())
                 .recipientId(payment.getRecipientId())
                 .branchId(payment.getBranchId())

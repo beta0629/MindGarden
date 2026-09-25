@@ -32,6 +32,14 @@ public class ShopOrderAdminDetailResponse {
     private String paymentId;
     /** Payment.PaymentStatus name (APPROVED 등, 없으면 null) */
     private String paymentStatus;
+    /** PortOne/Payment.amount SSOT (없으면 null) */
+    private Long pgAmount;
+    /**
+     * PortOne live status (CANCELLED/PAID/…); null if unknown/unavailable.
+     */
+    private String pgStatus;
     private List<ShopOrderLineResponse> lines;
     private List<ShopOrderFulfillmentEventSummary> fulfillmentEvents;
+    /** 어드민 soft-delete 가능 여부 (상태·환불 진행 가드 반영) */
+    private boolean deletable;
 }

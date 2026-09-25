@@ -52,6 +52,8 @@ class ClientShopCatalogServiceImplTest {
         assertEquals(1, list.size());
         assertEquals(THUMB, list.get(0).getThumbnailUrl());
         assertEquals("SKU-01", list.get(0).getSkuCode());
+        assertEquals(10, list.get(0).getSessionCount());
+        assertEquals("PACKAGE", list.get(0).getPackageType());
     }
 
     @Test
@@ -89,6 +91,7 @@ class ClientShopCatalogServiceImplTest {
         row.setThumbnailUrl(THUMB);
         row.setCatalogVisible(true);
         row.setActive(true);
+        row.setSessionCount(10);
         return row;
     }
 }

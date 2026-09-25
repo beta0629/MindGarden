@@ -914,3 +914,5 @@ export const sessionManager = new SessionManager();
 if (typeof window !== 'undefined') {
   window.sessionManager = sessionManager;
 }
+
+export default sessionManager;

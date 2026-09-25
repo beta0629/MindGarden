@@ -1,163 +1,184 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { 
-  CreditCard, 
-  DollarSign, 
-  CalendarCheck, 
-  CheckCircle, 
-  Clock,
-  AlertTriangle,
-  Package,
-  User,
-  Calendar,
-  FileText,
-  Phone
-} from 'lucide-react';
+/**
+ * 내담자 결제 내역 — suite: payment rows · aside period/status filter
+ * 매핑 결제 + 쇼핑 PortOne(ONLINE/PAID) 주문을 함께 표시한다.
+ *
+ * @author CoreSolution
+ * @since 2026-09-18
+ */
+
+import React, { useCallback, useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import StandardizedApi from '../../utils/standardizedApi';
-import { getDashboardPath } from '../../utils/session';
-import { useSession } from '../../contexts/SessionContext';
-import AdminCommonLayout from '../layout/AdminCommonLayout';
-import ContentArea from '../dashboard-v2/content/ContentArea';
-import ContentHeader from '../dashboard-v2/content/ContentHeader';
-import MGButton from '../common/MGButton';
-import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
-import UnifiedLoading from '../../components/common/UnifiedLoading';
-import notificationManager from '../../utils/notification';
 import { isApiGetNullFailure, normalizeMappingsListPayload } from '../../utils/apiResponseNormalize';
 import { isClientMappingPaymentSettled } from '../../constants/mapping';
-import '../../styles/unified-design-tokens.css';
-import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
+import {
+  resolveClientPaymentHistoryAmount,
+  resolveClientPaymentHistoryMethodLabel,
+  resolveClientPaymentHistoryStatus,
+  resolveClientPaymentHistoryTitle,
+  shouldIncludeInClientPaymentHistoryTotals
+} from '../../utils/clientPaymentHistoryDisplay';
+import {
+  PACKAGE_PAYMENT_HISTORY_SOURCE,
+  resolvePackagePaymentSourceLabel,
+  resolvePackagePaymentSourceBadgeVariant
+} from '../../constants/packagePaymentHistory';
+import {
+  buildShopOrderDetailPath,
+  CLIENT_SHOP_ROUTES,
+  SHOP_ORDER_STATUS_LABELS
+} from '../../constants/clientShopConstants';
+import { fetchShopOrders } from '../../services/clientShopService';
+import { toSafeNumber } from '../../utils/safeDisplay';
+import SafeText from '../common/SafeText';
+import Badge from '../common/Badge';
+import UnifiedLoading from '../common/UnifiedLoading';
+import ClientWebPageShell from './ClientWebPageShell';
+import {
+  CLIENT_WEB_SUITE_COPY,
+  CLIENT_WEB_SUITE_TEST_IDS
+} from '../../constants/clientWebSuiteConstants';
 import './ClientPaymentHistory.css';
-import { useTranslation } from 'react-i18next';
 
-// T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_AUTH_CURRENT_USER = '/api/v1/auth/current-user';
 const API_ADMIN_MAPPINGS_CLIENT = '/api/v1/admin/mappings/client';
-// TODO(P1, 2026-07-28): TERMINATED·회기추가 누락 해소 — API_ENDPOINTS.ADMIN.CLIENTS.PACKAGE_PAYMENT_HISTORY
-//   + PackagePaymentHistoryList(showAdminDetails=false) 로 교체. 현재는 mappings/client(TERMINATED 제외) 축.
-
-
 const CLIENT_PAYMENT_HISTORY_TITLE_ID = 'client-payment-history-title';
+const SHOP_ROW_KIND = 'SHOP_ORDER';
+
+const FILTER_OPTIONS = Object.freeze([
+  { id: 'all', labelKey: 'PAYMENT_FILTER_ALL' },
+  { id: 'completed', labelKey: 'PAYMENT_FILTER_COMPLETED' },
+  { id: 'pending', labelKey: 'PAYMENT_FILTER_PENDING' },
+  { id: 'refunded', labelKey: 'PAYMENT_FILTER_REFUNDED' }
+]);
 
 /**
- * 내담자 결제 내역 페이지
-/**
- * 디자인 시스템 적용 버전
+ * 클라이언트 쇼핑 주문(PAID/REFUNDED + 현금) → 결제 내역 행.
+ * recipientId=null PortOne 결제가 매핑 목록에 누락되는 문제를 보완한다.
+ *
+ * @param {object} order
+ * @returns {object|null}
  */
+const mapShopOrderToPaymentRow = (order) => {
+  if (!order || typeof order !== 'object') {
+    return null;
+  }
+  const status = order.status != null ? String(order.status).trim().toUpperCase() : '';
+  if (status !== 'PAID' && status !== 'REFUNDED') {
+    return null;
+  }
+  const cashDue = Number(order.cashDueMinor ?? order.cashDue ?? 0);
+  if (!Number.isFinite(cashDue) || cashDue <= 0) {
+    return null;
+  }
+  const orderPublicId =
+    order.orderPublicId != null && String(order.orderPublicId).trim()
+      ? String(order.orderPublicId).trim()
+      : null;
+  if (!orderPublicId) {
+    return null;
+  }
+  return {
+    kind: SHOP_ROW_KIND,
+    id: `shop-${orderPublicId}`,
+    orderPublicId,
+    packageName:
+      order.title
+      || order.orderName
+      || CLIENT_WEB_SUITE_COPY.PAYMENT_SHOP_PRODUCT_FALLBACK,
+    paymentAmount: cashDue,
+    amount: cashDue,
+    paymentMethod: CLIENT_WEB_SUITE_COPY.PAYMENT_SHOP_METHOD_PORTONE,
+    paymentProvider: 'IAMPORT',
+    paymentSource: PACKAGE_PAYMENT_HISTORY_SOURCE.ONLINE,
+    paymentStatus: status === 'REFUNDED' ? 'REFUNDED' : 'CONFIRMED',
+    paymentDate: order.paidAt || order.updatedAt || order.createdAt,
+    createdAt: order.createdAt || order.paidAt || order.updatedAt
+  };
+};
+
 const ClientPaymentHistory = () => {
   const { t } = useTranslation();
-  const navigate = useNavigate();
-  const { user } = useSession();
   const [paymentData, setPaymentData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [retryLoading, setRetryLoading] = useState(false);
   const [filter, setFilter] = useState('all');
+
+  const loadPaymentData = useCallback(async() => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const userResponse = await StandardizedApi.get(API_AUTH_CURRENT_USER);
+      if (!userResponse || !userResponse.id) {
+        throw new Error(CLIENT_WEB_SUITE_COPY.PAYMENT_ERROR_TITLE);
+      }
+      const [mappingsResponse, shopOrders] = await Promise.all([
+        StandardizedApi.get(API_ADMIN_MAPPINGS_CLIENT, {
+          clientId: userResponse.id
+        }),
+        fetchShopOrders(0, 50).catch(() => [])
+      ]);
+      if (isApiGetNullFailure(mappingsResponse)) {
+        throw new Error(CLIENT_WEB_SUITE_COPY.PAYMENT_ERROR_TITLE);
+      }
+      const mappings = normalizeMappingsListPayload(mappingsResponse).map((row) => ({
+        ...row,
+        kind: 'MAPPING'
+      }));
+      const shopRows = (Array.isArray(shopOrders) ? shopOrders : [])
+        .map(mapShopOrderToPaymentRow)
+        .filter(Boolean);
+
+      const combined = [...mappings, ...shopRows].sort(
+        (a, b) => new Date(b.paymentDate || b.createdAt) - new Date(a.paymentDate || a.createdAt)
+      );
+      const totalsEligible = combined.filter((row) => {
+        if (row.kind === SHOP_ROW_KIND) {
+          return row.paymentStatus === 'CONFIRMED';
+        }
+        return shouldIncludeInClientPaymentHistoryTotals(row);
+      });
+      setPaymentData({
+        mappings: combined,
+        totalAmount: totalsEligible.reduce((sum, row) => {
+          if (row.kind === SHOP_ROW_KIND) {
+            return sum + toSafeNumber(row.paymentAmount, 0);
+          }
+          return sum + resolveClientPaymentHistoryAmount(row);
+        }, 0)
+      });
+    } catch (err) {
+      setError(err.message || CLIENT_WEB_SUITE_COPY.PAYMENT_ERROR_TITLE);
+      setPaymentData(null);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
     loadPaymentData();
-  }, []);
-
-  const loadPaymentData = async(opts = {}) => {
-    const fromErrorRetry = opts.fromErrorRetry === true;
-    try {
-      if (fromErrorRetry) {
-        setRetryLoading(true);
-      } else {
-        setIsLoading(true);
-      }
-      setError(null);
-
-      const userResponse = await StandardizedApi.get(API_AUTH_CURRENT_USER);
-      if (!userResponse || !userResponse.id) {
-        throw new Error(t('common:client.ClientPaymentHistory.t_5271ee34'));
-      }
-
-      const userId = userResponse.id;
-      // 표준화 2025-12-08: /api/v1/admin 경로로 통일
-      const mappingsResponse = await StandardizedApi.get(API_ADMIN_MAPPINGS_CLIENT, {
-        clientId: userId
-      });
-      if (isApiGetNullFailure(mappingsResponse)) {
-        throw new Error(t('common:client.ClientPaymentHistory.t_3642c6bf'));
-      }
-      const mappings = normalizeMappingsListPayload(mappingsResponse);
-
-      const totalAmount = mappings.reduce((sum, mapping) => sum + (mapping.packagePrice || 0), 0);
-      const totalSessions = mappings.reduce((sum, mapping) => sum + (mapping.totalSessions || 0), 0);
-      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-      const completedPayments = mappings.filter((mapping) => isClientMappingPaymentSettled(mapping.paymentStatus)).length;
-      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-      const pendingPayments = mappings.filter(mapping => mapping.paymentStatus === 'PENDING').length;
-
-      setPaymentData({
-        totalAmount,
-        totalSessions,
-        completedPayments,
-        pendingPayments,
-        mappings: mappings.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-      });
-
-    } catch (err) {
-      console.error('결제 데이터 로드 실패:', err);
-      setError(err.message || t('common:client.ClientPaymentHistory.t_4e27bdaa'));
-    } finally {
-      if (fromErrorRetry) {
-        setRetryLoading(false);
-      } else {
-        setIsLoading(false);
-      }
-    }
-  };
+  }, [loadPaymentData]);
 
   const getStatusText = (status) => {
     const statusMap = {
-      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-      'CONFIRMED': t('common:client.ClientPaymentHistory.t_cd79fb92'),
-      'PAY': t('common:client.ClientPaymentHistory.t_f8e2bb71'),
-      'DEP': t('common:client.ClientPaymentHistory.t_a1b8faac'),
-      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-      'PENDING': t('common:client.ClientPaymentHistory.t_ffc400e0'),
-      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-      'REJECTED': t('common:client.ClientPaymentHistory.t_13b9aa71'),
-      'REFUNDED': t('common:client.ClientPaymentHistory.t_43aa0bad')
+      CONFIRMED: t('common:client.ClientPaymentHistory.t_cd79fb92'),
+      PAY: t('common:client.ClientPaymentHistory.t_f8e2bb71'),
+      DEP: t('common:client.ClientPaymentHistory.t_a1b8faac'),
+      PENDING: t('common:client.ClientPaymentHistory.t_ffc400e0'),
+      REJECTED: t('common:client.ClientPaymentHistory.t_13b9aa71'),
+      REFUNDED: t('common:client.ClientPaymentHistory.t_43aa0bad'),
+      CANCELLED: t('common:client.ClientPaymentHistory.t_b6dcb84f')
     };
     return statusMap[status] || t('common:client.ClientPaymentHistory.t_8c5d2272');
   };
 
-  const getStatusClass = (status) => {
-    const classMap = {
-      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-      'CONFIRMED': 'success',
-      'PAY': 'success',
-      'DEP': 'success',
-      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-      'PENDING': 'warning',
-      // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-      'REJECTED': 'danger',
-      'REFUNDED': 'secondary'
-    };
-    return classMap[status] || 'secondary';
-  };
-
-  const getMethodText = (method) => {
-    const methodMap = {
-      'CARD': t('common:client.ClientPaymentHistory.t_7dedeb82'),
-      'CASH': t('common:client.ClientPaymentHistory.t_6102409b'),
-      'BANK_TRANSFER': t('common:client.ClientPaymentHistory.t_72cb76b3')
-    };
-    return methodMap[method] || t('common:client.ClientPaymentHistory.t_5c1a705c');
-  };
-
-  const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('ko-KR', {
-      style: 'currency',
-      currency: 'KRW'
-    }).format(amount);
-  };
+  const formatCurrency = (amount) =>
+    new Intl.NumberFormat('ko-KR', { style: 'currency', currency: 'KRW' })
+      .format(toSafeNumber(amount, 0));
 
   const formatDate = (dateString) => {
-    if (!dateString) return t('common:client.ClientPaymentHistory.t_8916b639');
+    if (!dateString) return '—';
     const date = new Date(dateString);
     return date.toLocaleDateString('ko-KR', {
       year: 'numeric',
@@ -166,272 +187,196 @@ const ClientPaymentHistory = () => {
     });
   };
 
-  const pageShell = (body) => (
-    <div className="mg-v2-ad-b0kla" data-testid="client-payment-history-page">
-      <div className="mg-v2-ad-b0kla__container">
-        <ContentArea ariaLabel="결제 내역">
-          <ContentHeader
-            title={t('common:client.ClientPaymentHistory.t_42e677b1')}
-            subtitle="결제 내역과 패키지 정보를 확인하세요"
-            titleId={CLIENT_PAYMENT_HISTORY_TITLE_ID}
-          />
-          <main aria-labelledby={CLIENT_PAYMENT_HISTORY_TITLE_ID}>
-            {body}
-          </main>
-        </ContentArea>
-      </div>
-    </div>
+  const filteredMappings = (paymentData?.mappings || []).filter((row) => {
+    if (filter === 'all') return true;
+    if (row.kind === SHOP_ROW_KIND) {
+      if (filter === 'completed') return row.paymentStatus === 'CONFIRMED';
+      if (filter === 'pending') return false;
+      if (filter === 'refunded') return row.paymentStatus === 'REFUNDED';
+      return true;
+    }
+    const status = resolveClientPaymentHistoryStatus(row);
+    if (filter === 'completed') return isClientMappingPaymentSettled(status);
+    if (filter === 'pending') return status === 'PENDING';
+    if (filter === 'refunded') return status === 'REFUNDED';
+    return true;
+  });
+
+  const mainSlot = (
+    <>
+      {isLoading ? (
+        <div aria-busy="true" aria-live="polite">
+          <UnifiedLoading type="inline" text={CLIENT_WEB_SUITE_COPY.PAYMENT_LOADING} />
+        </div>
+      ) : null}
+
+      {!isLoading && error ? (
+        <div className="client-web-page-shell__card" role="alert">
+          <h3 className="client-payment-suite__title">{CLIENT_WEB_SUITE_COPY.PAYMENT_ERROR_TITLE}</h3>
+          <p className="client-payment-suite__mute">
+            <SafeText>{error}</SafeText>
+          </p>
+          <button type="button" className="client-web-page-shell__cta" onClick={loadPaymentData}>
+            {CLIENT_WEB_SUITE_COPY.PAYMENT_RETRY}
+          </button>
+        </div>
+      ) : null}
+
+      {!isLoading && !error && (!paymentData || paymentData.mappings.length === 0) ? (
+        <div className="client-web-page-shell__card">
+          <h3 className="client-payment-suite__title">{CLIENT_WEB_SUITE_COPY.PAYMENT_EMPTY_TITLE}</h3>
+          <p className="client-payment-suite__mute">{CLIENT_WEB_SUITE_COPY.PAYMENT_EMPTY_BODY}</p>
+          <p className="client-payment-suite__mute">
+            <Link to={CLIENT_SHOP_ROUTES.ORDERS}>
+              {CLIENT_WEB_SUITE_COPY.PAYMENT_SHOP_ORDERS_LINK}
+            </Link>
+          </p>
+        </div>
+      ) : null}
+
+      {!isLoading && !error && paymentData && paymentData.mappings.length > 0 ? (
+        <section className="client-web-page-shell__card client-payment-rows" aria-label={CLIENT_WEB_SUITE_COPY.PAYMENT_TITLE}>
+          <div className="client-payment-rows__head" aria-hidden="true">
+            <span>{CLIENT_WEB_SUITE_COPY.PAYMENT_COL_DATE}</span>
+            <span>{CLIENT_WEB_SUITE_COPY.PAYMENT_COL_PRODUCT}</span>
+            <span>{CLIENT_WEB_SUITE_COPY.PAYMENT_COL_AMOUNT}</span>
+            <span>{CLIENT_WEB_SUITE_COPY.PAYMENT_COL_METHOD}</span>
+            <span>{CLIENT_WEB_SUITE_COPY.PAYMENT_COL_STATUS}</span>
+          </div>
+          {filteredMappings.map((mapping, index) => {
+            if (mapping.kind === SHOP_ROW_KIND) {
+              const sourceLabel = resolvePackagePaymentSourceLabel(mapping.paymentSource);
+              const sourceVariant = resolvePackagePaymentSourceBadgeVariant(mapping.paymentSource);
+              const statusLabel =
+                mapping.paymentStatus === 'REFUNDED'
+                  ? CLIENT_WEB_SUITE_COPY.PAYMENT_SHOP_STATUS_REFUNDED
+                  : CLIENT_WEB_SUITE_COPY.PAYMENT_SHOP_STATUS_PAID;
+              return (
+                <article key={mapping.id || index} className="client-payment-rows__item">
+                  <span className="client-payment-rows__date">
+                    <SafeText>{formatDate(mapping.paymentDate || mapping.createdAt)}</SafeText>
+                  </span>
+                  <span className="client-payment-rows__product">
+                    <Link to={buildShopOrderDetailPath(mapping.orderPublicId)}>
+                      <SafeText>{mapping.packageName}</SafeText>
+                    </Link>
+                  </span>
+                  <span className="client-payment-rows__amount">
+                    <SafeText>{formatCurrency(mapping.paymentAmount)}</SafeText>
+                  </span>
+                  <span className="client-payment-rows__method">
+                    <SafeText>{mapping.paymentMethod}</SafeText>
+                    {sourceLabel && sourceVariant ? (
+                      <>
+                        {' '}
+                        <Badge
+                          variant="status"
+                          statusVariant={sourceVariant}
+                          size="sm"
+                          data-testid="client-payment-source"
+                        >
+                          {sourceLabel}
+                        </Badge>
+                      </>
+                    ) : null}
+                  </span>
+                  <span className="client-payment-rows__status">
+                    <SafeText>
+                      {SHOP_ORDER_STATUS_LABELS[mapping.paymentStatus === 'REFUNDED' ? 'REFUNDED' : 'PAID']
+                        || statusLabel}
+                    </SafeText>
+                  </span>
+                </article>
+              );
+            }
+
+            const status = resolveClientPaymentHistoryStatus(mapping);
+            const sourceLabel = resolvePackagePaymentSourceLabel(mapping.paymentSource);
+            const sourceVariant = resolvePackagePaymentSourceBadgeVariant(mapping.paymentSource);
+            return (
+              <article key={mapping.id || index} className="client-payment-rows__item">
+                <span className="client-payment-rows__date">
+                  <SafeText>{formatDate(mapping.paymentDate || mapping.createdAt)}</SafeText>
+                </span>
+                <span className="client-payment-rows__product">
+                  <SafeText>
+                    {resolveClientPaymentHistoryTitle(
+                      mapping,
+                      t('common:client.ClientPaymentHistory.t_17cef764')
+                    )}
+                  </SafeText>
+                </span>
+                <span className="client-payment-rows__amount">
+                  <SafeText>{formatCurrency(resolveClientPaymentHistoryAmount(mapping))}</SafeText>
+                </span>
+                <span className="client-payment-rows__method">
+                  <SafeText>
+                    {resolveClientPaymentHistoryMethodLabel(
+                      mapping.paymentMethod,
+                      mapping.paymentProvider,
+                      t('common:client.ClientPaymentHistory.t_5c1a705c')
+                    )}
+                  </SafeText>
+                  {sourceLabel && sourceVariant ? (
+                    <>
+                      {' '}
+                      <Badge
+                        variant="status"
+                        statusVariant={sourceVariant}
+                        size="sm"
+                        data-testid="client-payment-source"
+                      >
+                        {sourceLabel}
+                      </Badge>
+                    </>
+                  ) : null}
+                </span>
+                <span className="client-payment-rows__status">
+                  <SafeText>{getStatusText(status)}</SafeText>
+                </span>
+              </article>
+            );
+          })}
+        </section>
+      ) : null}
+    </>
   );
 
-  const filteredMappings = paymentData?.mappings?.filter(mapping => {
-    if (filter === 'all') return true;
-    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-    if (filter === 'completed') return isClientMappingPaymentSettled(mapping.paymentStatus);
-    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-    if (filter === 'pending') return mapping.paymentStatus === 'PENDING';
-    if (filter === 'refunded') return mapping.paymentStatus === 'REFUNDED';
-    return true;
-  }) || [];
-
-  if (isLoading) {
-    return (
-      <AdminCommonLayout title={t('common:client.ClientPaymentHistory.t_42e677b1')} className="mg-v2-dashboard-layout">
-        {pageShell(
-          <div aria-busy="true" aria-live="polite">
-            <UnifiedLoading type="inline" text={t('common:client.ClientPaymentHistory.t_c721f3cb')} />
-          </div>
-        )}
-      </AdminCommonLayout>
-    );
-  }
-
-  if (error) {
-    return (
-      <AdminCommonLayout title={t('common:client.ClientPaymentHistory.t_42e677b1')} className="mg-v2-dashboard-layout">
-        {pageShell(
-          <div className="client-payment-history">
-            <div className="payment-error">
-              <div className="payment-error__icon">
-                <AlertTriangle size={48} />
-              </div>
-              <h3 className="payment-error__title">{t('common:client.ClientPaymentHistory.t_11d2f578')}</h3>
-              <p className="payment-error__message">{error}</p>
-              <MGButton
-                variant="primary"
-                className={buildErpMgButtonClassName({ variant: 'primary', loading: retryLoading })}
-                onClick={() => loadPaymentData({ fromErrorRetry: true })}
-                loading={retryLoading}
-                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                preventDoubleClick={false}
-              >
-                {t('common.labels.retry')}
-              </MGButton>
-            </div>
-          </div>
-        )}
-      </AdminCommonLayout>
-    );
-  }
-
-  if (!paymentData || paymentData.mappings.length === 0) {
-    return (
-      <AdminCommonLayout title={t('common:client.ClientPaymentHistory.t_42e677b1')} className="mg-v2-dashboard-layout">
-        {pageShell(
-          <div className="client-payment-history">
-            <div className="payment-empty">
-              <div className="payment-empty__icon">
-                <CreditCard size={48} />
-              </div>
-              <h3 className="payment-empty__title">{t('common:client.ClientPaymentHistory.t_2a891787')}</h3>
-              <p className="payment-empty__text">{t('common:client.ClientPaymentHistory.t_9c4f45b8')}</p>
-              <MGButton
-                variant="primary"
-                className={buildErpMgButtonClassName({ variant: 'primary', loading: false })}
-                onClick={() => {
-                  const dashboardPath = getDashboardPath(user?.role);
-                  navigate(dashboardPath || '/dashboard');
-                }}
-                preventDoubleClick={false}
-              >
-                {t('common:client.ClientPaymentHistory.t_3898de91')}
-              </MGButton>
-            </div>
-          </div>
-        )}
-      </AdminCommonLayout>
-    );
-  }
+  const asideSlot = (
+    <section className="client-web-page-shell__card client-payment-filter-aside">
+      <h2 className="client-payment-filter-aside__title">
+        {CLIENT_WEB_SUITE_COPY.PAYMENT_FILTER_TITLE}
+      </h2>
+      <div className="client-payment-filter-aside__list" role="group" aria-label={CLIENT_WEB_SUITE_COPY.PAYMENT_FILTER_TITLE}>
+        {FILTER_OPTIONS.map((opt) => (
+          <button
+            key={opt.id}
+            type="button"
+            className={`client-payment-filter-aside__btn${filter === opt.id ? ' is-active' : ''}`}
+            onClick={() => setFilter(opt.id)}
+            aria-pressed={filter === opt.id}
+          >
+            {CLIENT_WEB_SUITE_COPY[opt.labelKey]}
+          </button>
+        ))}
+      </div>
+      <p className="client-payment-suite__mute">
+        <Link to={CLIENT_SHOP_ROUTES.ORDERS}>
+          {CLIENT_WEB_SUITE_COPY.PAYMENT_SHOP_ORDERS_LINK}
+        </Link>
+      </p>
+    </section>
+  );
 
   return (
-    <AdminCommonLayout title={t('common:client.ClientPaymentHistory.t_42e677b1')} className="mg-v2-dashboard-layout">
-      {pageShell(
-        <div className="client-payment-history">
-        {/* 통계 카드 */}
-        <div className="payment-stats">
-          <div className="payment-stat-card payment-stat-card--total">
-            <div className="payment-stat-icon">
-              <DollarSign size={20} />
-            </div>
-            <div className="payment-stat-content">
-              <div className="payment-stat-label">{t('common:client.ClientPaymentHistory.t_8594df96')}</div>
-              <div className="payment-stat-value">{formatCurrency(paymentData.totalAmount)}</div>
-            </div>
-          </div>
-
-          <div className="payment-stat-card payment-stat-card--sessions">
-            <div className="payment-stat-icon">
-              <CalendarCheck size={20} />
-            </div>
-            <div className="payment-stat-content">
-              <div className="payment-stat-label">{t('common:client.ClientPaymentHistory.t_7a0890a2')}</div>
-              <div className="payment-stat-value">{paymentData.totalSessions}회</div>
-            </div>
-          </div>
-
-          <div className="payment-stat-card payment-stat-card--completed">
-            <div className="payment-stat-icon">
-              <CheckCircle size={20} />
-            </div>
-            <div className="payment-stat-content">
-              <div className="payment-stat-label">{t('common:client.ClientPaymentHistory.t_cd79fb92')}</div>
-              <div className="payment-stat-value">{paymentData.completedPayments}건</div>
-            </div>
-          </div>
-
-          <div className="payment-stat-card payment-stat-card--pending">
-            <div className="payment-stat-icon">
-              <Clock size={20} />
-            </div>
-            <div className="payment-stat-content">
-              <div className="payment-stat-label">{t('common:client.ClientPaymentHistory.t_ffc400e0')}</div>
-              <div className="payment-stat-value">{paymentData.pendingPayments}건</div>
-            </div>
-          </div>
-        </div>
-
-        {/* 필터 섹션 */}
-        <div className="payment-filter">
-          <h3 className="payment-filter__title">{t('common:client.ClientPaymentHistory.t_42e677b1')}</h3>
-          <div className="payment-filter__buttons">
-            <MGButton
-              type="button"
-              variant="outline"
-              className={`${buildErpMgButtonClassName({ variant: 'outline', loading: false })} payment-filter__button ${filter === 'all' ? 'active' : ''}`}
-              onClick={() => setFilter('all')}
-              preventDoubleClick={false}
-            >
-              {t('common.labels.all')}
-            </MGButton>
-            <MGButton
-              type="button"
-              variant="outline"
-              className={`${buildErpMgButtonClassName({ variant: 'outline', loading: false })} payment-filter__button ${filter === 'completed' ? 'active' : ''}`}
-              onClick={() => setFilter('completed')}
-              preventDoubleClick={false}
-            >
-              {t('common:client.ClientPaymentHistory.t_cd79fb92')}
-            </MGButton>
-            <MGButton
-              type="button"
-              variant="outline"
-              className={`${buildErpMgButtonClassName({ variant: 'outline', loading: false })} payment-filter__button ${filter === 'pending' ? 'active' : ''}`}
-              onClick={() => setFilter('pending')}
-              preventDoubleClick={false}
-            >
-              {t('common:client.ClientPaymentHistory.t_ffc400e0')}
-            </MGButton>
-            <MGButton
-              type="button"
-              variant="outline"
-              className={`${buildErpMgButtonClassName({ variant: 'outline', loading: false })} payment-filter__button ${filter === 'refunded' ? 'active' : ''}`}
-              onClick={() => setFilter('refunded')}
-              preventDoubleClick={false}
-            >
-              {t('common:client.ClientPaymentHistory.t_43aa0bad')}
-            </MGButton>
-          </div>
-        </div>
-
-        {/* 결제 내역 목록 */}
-        <div className="payment-list">
-          {filteredMappings.map((mapping, index) => (
-            <div key={mapping.id || index} className="payment-item">
-              <div className="payment-item__header">
-                <div className="payment-item__title">
-                  <Package size={20} />
-                  <h4>{mapping.packageName || t('common:client.ClientPaymentHistory.t_17cef764')}</h4>
-                </div>
-                <div className="payment-item__amount">
-                  {formatCurrency(mapping.packagePrice || 0)}
-                </div>
-              </div>
-
-              <div className="payment-item__body">
-                <div className="payment-item__detail">
-                  <CalendarCheck size={16} />
-                  <span className="payment-item__detail-label">{t('common:client.ClientPaymentHistory.t_389ebf64')}</span>
-                  <span className="payment-item__detail-value">{mapping.totalSessions || 0}회</span>
-                </div>
-                <div className="payment-item__detail">
-                  <User size={16} />
-                  <span className="payment-item__detail-label">{t('common:client.ClientPaymentHistory.t_a30d6da9')}</span>
-                  <span className="payment-item__detail-value">{mapping.consultant?.consultantName || t('common:client.ClientPaymentHistory.t_5c1a705c')}</span>
-                </div>
-                <div className="payment-item__detail">
-                  <Calendar size={16} />
-                  <span className="payment-item__detail-label">{t('common:client.ClientPaymentHistory.t_58548549')}</span>
-                  <span className="payment-item__detail-value">{formatDate(mapping.paymentDate)}</span>
-                </div>
-                <div className="payment-item__detail">
-                  <CreditCard size={16} />
-                  <span className="payment-item__detail-label">{t('common:client.ClientPaymentHistory.t_bbf114f3')}</span>
-                  <span className="payment-item__detail-value">{getMethodText(mapping.paymentMethod)}</span>
-                </div>
-                {mapping.paymentReference && (
-                  <div className="payment-item__detail">
-                    <FileText size={16} />
-                    <span className="payment-item__detail-label">{t('common:client.ClientPaymentHistory.t_9b0be667')}</span>
-                    <span className="payment-item__detail-value">{mapping.paymentReference}</span>
-                  </div>
-                )}
-              </div>
-
-              <div className="payment-item__footer">
-                <span className={`mg-badge mg-badge-${getStatusClass(mapping.paymentStatus)}`}>
-                  {getStatusText(mapping.paymentStatus)}
-                </span>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* 환불 정책 */}
-        <div className="payment-policy">
-          <h3 className="payment-policy__title">{t('common:client.ClientPaymentHistory.t_e84a4b85')}</h3>
-          <div className="payment-policy__list">
-            <div className="payment-policy__item">
-              <div className="payment-policy__icon">
-                <CheckCircle size={20} />
-              </div>
-              <span>{t('common:client.ClientPaymentHistory.t_6ae660ec')}</span>
-            </div>
-            <div className="payment-policy__item">
-              <div className="payment-policy__icon">
-                <Clock size={20} />
-              </div>
-              <span>{t('common:client.ClientPaymentHistory.t_36cdd21f')}</span>
-            </div>
-            <div className="payment-policy__item">
-              <div className="payment-policy__icon">
-                <Phone size={20} />
-              </div>
-              <span>{t('common:client.ClientPaymentHistory.t_76dd1d3d')}</span>
-            </div>
-          </div>
-        </div>
-        </div>
-      )}
-    </AdminCommonLayout>
+    <ClientWebPageShell
+      activeNavId="payment"
+      title={CLIENT_WEB_SUITE_COPY.PAYMENT_TITLE}
+      titleId={CLIENT_PAYMENT_HISTORY_TITLE_ID}
+      testId={CLIENT_WEB_SUITE_TEST_IDS.PAYMENT_PAGE}
+      main={mainSlot}
+      aside={asideSlot}
+    />
   );
 };
 

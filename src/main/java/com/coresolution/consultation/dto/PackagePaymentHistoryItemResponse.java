@@ -70,11 +70,17 @@ public class PackagePaymentHistoryItemResponse {
     /** 추가 패키지 타깃 ACTIVE 매핑 ID */
     private Long targetActiveMappingId;
 
-    /** 결제 수단(관리자) */
+    /** 결제 수단(관리자) — 채널과 분리. CARD만으로 온라인 판정 금지 */
     private String paymentMethod;
 
-    /** 결제 참조(관리자) */
+    /** 결제 참조(관리자) — payments.orderId 조인 키 */
     private String paymentReference;
+
+    /**
+     * 결제 채널(소스). method와 분리.
+     * <p>SSOT: docs/project-management/PAYMENT_SOURCE_ONLINE_MANUAL_MAPPING_RULES_20260318.md</p>
+     */
+    private PaymentSource paymentSource;
 
     /** 정렬·디버그용 생성 시각 */
     private LocalDateTime createdAt;

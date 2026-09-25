@@ -1,11 +1,13 @@
 package com.coresolution.consultation.repository.auth;
 
 import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import com.coresolution.consultation.entity.auth.PhoneOtpAttempt;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
+
 
 /**
  * {@link PhoneOtpAttempt} 시도 추적 / 한도 검사 / 검증 조회용 Repository.
@@ -48,4 +50,48 @@ public interface PhoneOtpAttemptRepository extends JpaRepository<PhoneOtpAttempt
      * 만료된 row 청소 cron 용 — status=PENDING 이면서 expires_at &lt; now 인 row.
      */
     List<PhoneOtpAttempt> findByStatusAndExpiresAtLessThan(String status, LocalDateTime threshold);
+
+    /**
+     * 결제 게이트용 — PROFILE provider + userId 스코프의 최신 VERIFIED(verified_at 존재) 행.
+     *
+     * <p>레거시/좁은 조회용. 결제 SSOT 는
+     * {@link #findFirstByTenantIdAndPhoneHashAndStatusAndVerifiedAtIsNotNullAndProviderUserIdInOrderByVerifiedAtDesc}
+     * 를 사용한다.</p>
+     *
+     * @param tenantId 테넌트
+     * @param provider {@link PhoneOtpAttempt#PROVIDER_PROFILE}
+     * @param providerUserId {@code String.valueOf(userId)}
+     * @param phoneHash 정규화 번호 SHA-256 hex
+     * @param status {@link PhoneOtpAttempt#STATUS_VERIFIED}
+     * @return 최신 VERIFIED 행 또는 empty
+     */
+    Optional<PhoneOtpAttempt>
+        findFirstByTenantIdAndProviderAndProviderUserIdAndPhoneHashAndStatusAndVerifiedAtIsNotNullOrderByVerifiedAtDesc(
+            String tenantId, String provider, String providerUserId, String phoneHash, String status);
+
+    /**
+     * 결제 게이트 SSOT — tenant + phone_hash + VERIFIED + verified_at 존재 + 본인 providerUserId 후보.
+     *
+     * <p>후보 ID 는 보통 {@code String.valueOf(userId)} 와 (있으면) Apple sub / 소셜 provider user id 이다.
+     * 동일 phone_hash 라도 다른 사용자의 VERIFIED 행은 매칭하지 않는다.
+     * 번호 변경 시 phone_hash 불일치로 fail-closed.</p>
+     *
+     * @param tenantId 테넌트
+     * @param phoneHash 정규화 번호 SHA-256 hex
+     * @param status {@link PhoneOtpAttempt#STATUS_VERIFIED}
+     * @param providerUserIds 현재 사용자에 귀속되는 provider_user_id 후보 (blank 제외)
+     * @return 최신 VERIFIED 행 또는 empty
+     */
+    Optional<PhoneOtpAttempt>
+        findFirstByTenantIdAndPhoneHashAndStatusAndVerifiedAtIsNotNullAndProviderUserIdInOrderByVerifiedAtDesc(
+            String tenantId, String phoneHash, String status, Collection<String> providerUserIds);
+
+    /**
+     * @deprecated 결제 게이트는 provider_user_id 스코프 조회를 사용한다.
+     *             {@link #findFirstByTenantIdAndPhoneHashAndStatusAndVerifiedAtIsNotNullAndProviderUserIdInOrderByVerifiedAtDesc}
+     */
+    @Deprecated
+    Optional<PhoneOtpAttempt>
+        findFirstByTenantIdAndPhoneHashAndStatusAndVerifiedAtIsNotNullOrderByVerifiedAtDesc(
+            String tenantId, String phoneHash, String status);
 }

@@ -34,4 +34,34 @@ describe('resolvePackagePaymentHistoryDateLabel', () => {
   it('TYPE_LABELS.INITIAL_MAPPING stays 최초 배정 (assignment, not consultation)', () => {
     expect(PACKAGE_PAYMENT_HISTORY_UI.TYPE_LABELS.INITIAL_MAPPING).toBe('최초 배정');
   });
+
+  it('SOURCE_LABELS separates channel from method (온라인 / 수동/센터 / 미확인)', () => {
+    expect(PACKAGE_PAYMENT_HISTORY_UI.SOURCE_LABELS.ONLINE).toBe('온라인');
+    expect(PACKAGE_PAYMENT_HISTORY_UI.SOURCE_LABELS.MANUAL).toBe('수동/센터');
+    expect(PACKAGE_PAYMENT_HISTORY_UI.SOURCE_LABELS.UNKNOWN).toBe('미확인');
+  });
+});
+
+describe('resolvePackagePaymentSourceLabel', () => {
+  const {
+    resolvePackagePaymentSourceLabel,
+    resolvePackagePaymentSourceBadgeVariant,
+    PACKAGE_PAYMENT_HISTORY_SOURCE
+  } = require('../packagePaymentHistory');
+
+  it('maps ONLINE/MANUAL/UNKNOWN labels', () => {
+    expect(resolvePackagePaymentSourceLabel(PACKAGE_PAYMENT_HISTORY_SOURCE.ONLINE)).toBe('온라인');
+    expect(resolvePackagePaymentSourceLabel('MANUAL')).toBe('수동/센터');
+    expect(resolvePackagePaymentSourceLabel('UNKNOWN')).toBe('미확인');
+  });
+
+  it('hideUnknown returns null for UNKNOWN', () => {
+    expect(resolvePackagePaymentSourceLabel('UNKNOWN', { hideUnknown: true })).toBeNull();
+  });
+
+  it('badge variants are distinct per source', () => {
+    expect(resolvePackagePaymentSourceBadgeVariant('ONLINE')).toBe('success');
+    expect(resolvePackagePaymentSourceBadgeVariant('MANUAL')).toBe('neutral');
+    expect(resolvePackagePaymentSourceBadgeVariant('UNKNOWN')).toBe('warning');
+  });
 });

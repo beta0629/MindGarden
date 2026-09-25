@@ -82,22 +82,43 @@ export const updatePgConfiguration = async(tenantId, configId, request) => {
 };
 
 /**
- * 포트원(IAMPORT) 채널 키·테스트모드 부분 수정 (재승인 없음).
+ * PG 설정 테스트 모드만 즉시 반영 (승인 리셋 없음).
  *
  * @param {string} tenantId - 테넌트 ID
  * @param {string} configId - PG 설정 ID
- * @param {Object} payload - { testMode?, portoneChannelKey?, portoneChannelKeyTest?, portoneWebhookSecret? }
- * @returns {Promise<Object>} 수정된 PG 설정 정보
+ * @param {boolean} testMode - 테스트 모드 여부
+ * @returns {Promise<Object>} 갱신된 PG 설정 응답
  */
-export const updatePortonePgSettings = async(tenantId, configId, payload) => {
+export const patchPgConfigurationTestMode = async(tenantId, configId, testMode) => {
   try {
     const response = await StandardizedApi.patch(
-      `${getTenantPgBase(tenantId)}/${configId}/portone-settings`,
-      payload || {}
+      `${getTenantPgBase(tenantId)}/${configId}/test-mode`,
+      { testMode: Boolean(testMode) }
     );
     return response;
   } catch (error) {
-    console.error('포트원 채널 키/테스트모드 수정 실패:', error);
+    console.error('PG 테스트 모드 변경 실패:', error);
+    throw error;
+  }
+};
+
+/**
+ * PG 설정 포트원 웹훅 시크릿만 즉시 반영 (승인 리셋 없음).
+ *
+ * @param {string} tenantId - 테넌트 ID
+ * @param {string} configId - PG 설정 ID
+ * @param {string} webhookSecret - 웹훅 시크릿 평문
+ * @returns {Promise<Object>} 갱신된 PG 설정 응답 (시크릿 마스킹)
+ */
+export const patchPgConfigurationWebhookSecret = async(tenantId, configId, webhookSecret) => {
+  try {
+    const response = await StandardizedApi.patch(
+      `${getTenantPgBase(tenantId)}/${configId}/webhook-secret`,
+      { webhookSecret }
+    );
+    return response;
+  } catch (error) {
+    console.error('PG 웹훅 시크릿 변경 실패:', error);
     throw error;
   }
 };

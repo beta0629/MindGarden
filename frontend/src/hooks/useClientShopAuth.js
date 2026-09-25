@@ -10,8 +10,10 @@ import { useNavigate } from 'react-router-dom';
 import { useSession } from '../contexts/SessionContext';
 
 /**
- * 세션 확인 중·미로그인 시에도 호출 페이지는 `ShopClientSessionLoading` 등으로 DOM을 유지한다.
- *
+ * @param {{
+ *   requireLogin?: boolean,
+ *   loginRedirectPath?: string
+ * }} [options]
  * @returns {{
  *   sessionLoading: boolean,
  *   isLoggedIn: boolean,
@@ -19,20 +21,29 @@ import { useSession } from '../contexts/SessionContext';
  *   isAwaitingSession: boolean
  * }}
  */
-export const useClientShopAuth = () => {
+export const useClientShopAuth = (options = {}) => {
+  const { requireLogin = true, loginRedirectPath } = options;
   const navigate = useNavigate();
   const { isLoggedIn, isLoading, hasCheckedSession, user } = useSession();
   const sessionLoading = !hasCheckedSession || isLoading;
-  const isAwaitingSession = sessionLoading || !isLoggedIn;
+  const isAwaitingSession = requireLogin
+    ? sessionLoading || !isLoggedIn
+    : sessionLoading;
 
   useEffect(() => {
+    if (!requireLogin) {
+      return;
+    }
     if (sessionLoading) {
       return;
     }
     if (!isLoggedIn) {
-      navigate('/login', { replace: true });
+      const redirectQuery = loginRedirectPath
+        ? `?redirect=${encodeURIComponent(loginRedirectPath)}`
+        : '';
+      navigate(`/login${redirectQuery}`, { replace: true });
     }
-  }, [sessionLoading, isLoggedIn, navigate]);
+  }, [sessionLoading, isLoggedIn, navigate, requireLogin, loginRedirectPath]);
 
   return { sessionLoading, isLoggedIn, user, isAwaitingSession };
 };

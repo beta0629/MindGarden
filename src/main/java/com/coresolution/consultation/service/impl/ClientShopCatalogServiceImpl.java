@@ -1,6 +1,7 @@
 package com.coresolution.consultation.service.impl;
 
 import com.coresolution.consultation.constant.ShopCatalogCategory;
+import com.coresolution.consultation.constant.ShopSessionCountConstants;
 import com.coresolution.consultation.dto.shop.ShopCatalogOffer;
 import com.coresolution.consultation.dto.shop.ShopCatalogSkuResponse;
 import com.coresolution.consultation.entity.ShopCatalogSku;
@@ -61,6 +62,7 @@ public class ClientShopCatalogServiceImpl implements ClientShopCatalogService {
         if (offer.linked() && !offer.sellable()) {
             return null;
         }
+        int sessionCount = offer.sessionCount();
         return ShopCatalogSkuResponse.builder()
                 .skuCode(sku.getSkuCode())
                 .title(offer.title())
@@ -69,6 +71,8 @@ public class ClientShopCatalogServiceImpl implements ClientShopCatalogService {
                 .currency(sku.getCurrency())
                 .catalogCategory(resolveCatalogCategory(sku))
                 .thumbnailUrl(sku.getThumbnailUrl())
+                .sessionCount(sessionCount)
+                .packageType(ShopSessionCountConstants.resolvePackageType(sessionCount))
                 .build();
     }
 

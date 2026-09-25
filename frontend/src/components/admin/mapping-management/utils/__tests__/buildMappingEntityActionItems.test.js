@@ -58,16 +58,45 @@ describe('buildMappingEntityActionItems', () => {
     expect(items.find((item) => item.id === 'payment')).toBeUndefined();
   });
 
-  it('PENDING_PAYMENT + SAME_DAY_CARD → checkout-same-day primary', () => {
+  it('PENDING_PAYMENT + SAME_DAY_CARD + rem>0 → checkout-same-day primary', () => {
     const onCheckoutSameDay = jest.fn();
 
     const items = buildMappingEntityActionItems({
-      mapping: { ...baseMapping, status: 'PENDING_PAYMENT', paymentTiming: 'SAME_DAY_CARD' },
+      mapping: {
+        ...baseMapping,
+        status: 'PENDING_PAYMENT',
+        paymentTiming: 'SAME_DAY_CARD',
+        remainingSessions: 2
+      },
       t,
       onCheckoutSameDay
     });
 
     expect(items[0]).toMatchObject({ id: 'checkout-same-day', label: '당일 결제' });
+  });
+
+  it('PENDING_PAYMENT + SAME_DAY_CARD + rem=0 → checkoutSameDayPayment 숨김', () => {
+    const onCheckoutSameDay = jest.fn();
+
+    const items = buildMappingEntityActionItems({
+      mapping: {
+        ...baseMapping,
+        status: 'PENDING_PAYMENT',
+        paymentTiming: 'SAME_DAY_CARD',
+        remainingSessions: 0
+      },
+      t,
+      onCheckoutSameDay,
+      onChangePendingPackage: jest.fn(),
+      onCancelPendingMapping: jest.fn()
+    });
+
+    expect(items.find((item) => item.id === 'checkout-same-day')).toBeUndefined();
+    expect(items.find((item) => item.id === 'confirm-and-activate')).toBeUndefined();
+    expect(items.map((item) => item.id)).toEqual([
+      'change-pending-package',
+      'cancel-pending'
+    ]);
   });
 
   it('includes payment confirm escape when only onPayment (no one-shot callback)', () => {

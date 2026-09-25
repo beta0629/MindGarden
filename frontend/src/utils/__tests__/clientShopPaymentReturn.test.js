@@ -11,9 +11,11 @@ import {
 import {
   parseShopPaymentReturnQuery,
   resolveCashAmountFromOrder,
+  resolveShopPaymentReturnPaymentId,
   resolveShopPaymentVerifyAmount
 } from '../clientShopPaymentReturn';
 import { verifyShopPayment } from '../../services/clientShopService';
+import { verifyShopPaymentWithRetry } from '../shopPaymentVerifyRetry';
 
 jest.mock('../../services/clientShopService', () => ({
   verifyShopPayment: jest.fn()
@@ -40,6 +42,65 @@ describe('parseShopPaymentReturnQuery', () => {
       code: null,
       message: null
     });
+  });
+});
+
+describe('resolveShopPaymentReturnPaymentId', () => {
+  beforeEach(() => {
+    sessionStorage.clear();
+  });
+
+  afterEach(() => {
+    clearShopPendingPaymentVerify();
+  });
+
+  test('query paymentId가 있으면 그대로 사용한다', () => {
+    stashShopPendingPaymentVerify({
+      paymentId: 'pay-stash',
+      orderPublicId: 'ord-1',
+      cashAmount: 1000
+    });
+    expect(
+      resolveShopPaymentReturnPaymentId({
+        paymentId: 'pay-query',
+        orderPublicId: 'ord-1'
+      })
+    ).toBe('pay-query');
+  });
+
+  test('query paymentId 없고 stash orderPublicId 일치 시 stash paymentId', () => {
+    stashShopPendingPaymentVerify({
+      paymentId: 'pay-from-stash',
+      orderPublicId: 'ord-match',
+      cashAmount: 15000
+    });
+    expect(
+      resolveShopPaymentReturnPaymentId({
+        paymentId: null,
+        orderPublicId: 'ord-match'
+      })
+    ).toBe('pay-from-stash');
+  });
+
+  test('orderPublicId 불일치·stash 없으면 null (fail-closed)', () => {
+    stashShopPendingPaymentVerify({
+      paymentId: 'pay-x',
+      orderPublicId: 'ord-a',
+      cashAmount: 1000
+    });
+    expect(
+      resolveShopPaymentReturnPaymentId({
+        paymentId: null,
+        orderPublicId: 'ord-b'
+      })
+    ).toBeNull();
+    clearShopPendingPaymentVerify();
+    expect(
+      resolveShopPaymentReturnPaymentId({
+        paymentId: null,
+        orderPublicId: 'ord-a'
+      })
+    ).toBeNull();
   });
 });
 
@@ -98,6 +159,34 @@ describe('resolveShopPaymentVerifyAmount + verify 경로', () => {
         fetchOrder: jest.fn()
       })
     ).rejects.toThrow(SHOP_CHECKOUT_ERROR_COPY.INVALID_CASH_AMOUNT);
+  });
+
+  test('paymentId query 없고 stash에 있으면 verify 호출; retry 후 성공', async() => {
+    stashShopPendingPaymentVerify({
+      paymentId: 'pay-v',
+      orderPublicId: 'ord-v',
+      cashAmount: 15000
+    });
+    verifyShopPayment
+      .mockRejectedValueOnce(new Error('pending'))
+      .mockResolvedValueOnce({ isValid: true });
+
+    const query = parseShopPaymentReturnQuery(
+      new URLSearchParams('orderPublicId=ord-v')
+    );
+    const paymentId = resolveShopPaymentReturnPaymentId(query);
+    expect(paymentId).toBe('pay-v');
+    expect(query.code).toBeNull();
+
+    const amount = await resolveShopPaymentVerifyAmount({
+      paymentId,
+      orderPublicId: query.orderPublicId,
+      fetchOrder: jest.fn()
+    });
+    const sleepFn = jest.fn().mockResolvedValue(undefined);
+    await verifyShopPaymentWithRetry(paymentId, amount, { sleepFn, maxAttempts: 3 });
+    expect(verifyShopPayment).toHaveBeenCalledTimes(2);
+    expect(verifyShopPayment).toHaveBeenCalledWith('pay-v', 15000);
   });
 
   test('파싱된 paymentId와 금액으로 verifyShopPayment를 호출하는 흐름', async() => {

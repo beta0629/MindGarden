@@ -1,511 +1,121 @@
-/* ClientPaymentHistory.css - 내담자 결제 내역 페이지 스타일 */
+/* ClientPaymentHistory.css — suite payment rows + filter aside */
 
-.client-payment-history {
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: var(--spacing-xl);
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-xl);
-}
-
-/* 페이지 헤더 */
-.payment-header {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-lg);
-  padding: var(--spacing-xl);
-  background: var(--bg-gradient-warm);
-  border: var(--border-width-thin) solid var(--border-pink-light);
-  border-radius: var(--border-radius-lg);
-  box-shadow: var(--shadow-sm);
-}
-
-.payment-header__icon {
-  width: 64px;
-  height: 64px;
-  border-radius: var(--border-radius-md);
-  background: var(--gradient-gold);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  box-shadow: var(--shadow-gold);
-}
-
-.payment-header__icon svg {
-  color: var(--color-white);
-}
-
-.payment-header__content {
-  flex: 1;
-}
-
-.payment-header__title {
-  font-size: var(--font-size-xxl);
-  font-weight: var(--font-weight-bold);
-  color: var(--color-text-primary);
-  margin: 0 0 var(--spacing-xs) 0;
-}
-
-.payment-header__subtitle {
-  font-size: var(--font-size-base);
-  color: var(--color-text-secondary);
-  margin: 0;
-}
-
-/* 통계 카드 */
-.payment-stats {
+.client-payment-rows__head,
+.client-payment-rows__item {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: var(--spacing-lg);
-}
-
-.payment-stat-card {
-  background: var(--glass-bg-light);
-  backdrop-filter: blur(var(--blur-md));
-  border: var(--border-width-thin) solid var(--glass-border-light);
-  border-radius: var(--border-radius-lg);
-  padding: var(--spacing-lg);
-  display: flex;
+  grid-template-columns: 6.5rem minmax(0, 1.4fr) 6rem 5.5rem 4.5rem;
+  gap: var(--mg-v2-space-3, 0.75rem);
   align-items: center;
-  gap: var(--spacing-md);
-  transition: all var(--transition-normal);
-  box-shadow: var(--shadow-sm);
 }
 
-.payment-stat-card:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
+.client-payment-rows__head {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--client-web-mute);
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--client-web-line);
 }
 
-.payment-stat-icon {
-  width: 48px;
-  height: 48px;
-  border-radius: var(--border-radius-md);
+.client-payment-rows__item {
+  padding: 0.85rem 0;
+  border-bottom: 1px solid var(--client-web-line);
+  font-size: 0.875rem;
+  color: var(--client-web-ink);
+}
+
+.client-payment-rows__item:last-child {
+  border-bottom: none;
+}
+
+.client-payment-rows__product {
+  font-weight: 600;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.client-payment-rows__amount {
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.client-payment-rows__method,
+.client-payment-rows__status,
+.client-payment-rows__date {
+  color: var(--client-web-slate);
+  font-size: 0.8125rem;
+}
+
+.client-payment-filter-aside__title {
+  margin: 0 0 var(--mg-v2-space-4, 1rem);
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: var(--client-web-ink);
+}
+
+.client-payment-filter-aside__list {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
+  flex-direction: column;
+  gap: 0.5rem;
 }
 
-.payment-stat-icon svg {
-  color: var(--color-white);
-}
-
-.payment-stat-card--total .payment-stat-icon {
-  background: var(--gradient-gold);
-  box-shadow: var(--shadow-gold-sm);
-}
-
-.payment-stat-card--sessions .payment-stat-icon {
-  background: var(--gradient-sky);
-  box-shadow: var(--shadow-sky-sm);
-}
-
-.payment-stat-card--completed .payment-stat-icon {
-  background: var(--gradient-mint);
-  box-shadow: var(--shadow-mint-sm);
-}
-
-.payment-stat-card--pending .payment-stat-icon {
-  background: var(--gradient-pink);
-  box-shadow: var(--shadow-pink-sm);
-}
-
-.payment-stat-content {
-  flex: 1;
-}
-
-.payment-stat-label {
-  font-size: var(--font-size-sm);
-  color: var(--color-text-secondary);
-  margin-bottom: var(--spacing-xxs);
-  font-weight: var(--font-weight-medium);
-}
-
-.payment-stat-value {
-  font-size: var(--font-size-xxl);
-  font-weight: var(--font-weight-bold);
-  color: var(--color-text-primary);
-}
-
-/* 필터 섹션 */
-.payment-filter {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: var(--spacing-lg);
-  flex-wrap: wrap;
-}
-
-.payment-filter__title {
-  font-size: var(--font-size-xl);
-  font-weight: var(--font-weight-bold);
-  color: var(--color-text-primary);
+.client-payment-filter-aside__btn {
+  appearance: none;
   margin: 0;
-}
-
-.payment-filter__buttons {
-  display: flex;
-  gap: var(--spacing-sm);
-  flex-wrap: wrap;
-}
-
-.payment-filter__button {
-  padding: var(--spacing-sm) var(--spacing-lg);
-  border: var(--border-width-thin) solid var(--color-border-light);
-  border-radius: var(--border-radius-md);
-  background: var(--color-white);
-  color: var(--color-text-secondary);
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-medium);
+  width: 100%;
+  text-align: left;
+  padding: 0.65rem 0.85rem;
+  border: 1px solid var(--client-web-line);
+  border-radius: var(--client-web-radius-btn, 0.625rem);
+  background: var(--client-web-surface);
+  color: var(--client-web-slate);
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
   cursor: pointer;
-  transition: all var(--transition-fast);
 }
 
-.payment-filter__button:hover {
-  border-color: var(--color-primary);
-  color: var(--color-primary);
+.client-payment-filter-aside__btn.is-active {
+  border-color: var(--client-web-ink);
+  color: var(--client-web-ink);
+  background: var(--client-web-chip-bg);
 }
 
-.payment-filter__button.active {
-  background: var(--gradient-sky);
-  border-color: transparent;
-  color: var(--color-white);
-  box-shadow: var(--shadow-sky-sm);
+.client-payment-filter-aside__btn:focus-visible {
+  outline: 2px solid var(--client-web-line);
+  outline-offset: 2px;
 }
 
-.payment-filter__buttons .mg-button.payment-filter__button.active {
-  background: var(--gradient-sky);
-  border-color: transparent;
-  color: var(--color-white);
-  box-shadow: var(--shadow-sky-sm);
+.client-payment-suite__title {
+  margin: 0 0 0.5rem;
+  font-size: 1.0625rem;
+  font-weight: 700;
+  color: var(--client-web-ink);
 }
 
-/* 결제 내역 목록 */
-.payment-list {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-lg);
+.client-payment-suite__mute {
+  margin: 0 0 var(--mg-v2-space-4, 1rem);
+  color: var(--client-web-mute);
+  font-size: 0.875rem;
 }
 
-.payment-item {
-  background: var(--bg-gradient-warm-light);
-  border: var(--border-width-thin) solid var(--border-pink-light);
-  border-radius: var(--border-radius-lg);
-  padding: var(--spacing-xl);
-  transition: all var(--transition-normal);
-  box-shadow: var(--shadow-sm);
-}
-
-.payment-item:hover {
-  transform: translateX(4px);
-  box-shadow: var(--shadow-md);
-  border-color: var(--border-pink-medium);
-}
-
-.payment-item__header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: var(--spacing-md);
-  margin-bottom: var(--spacing-lg);
-  padding-bottom: var(--spacing-md);
-  border-bottom: var(--border-width-thin) solid var(--color-border-light);
-}
-
-.payment-item__title {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-sm);
-}
-
-.payment-item__title svg {
-  color: var(--color-primary);
-}
-
-.payment-item__title h4 {
-  font-size: var(--font-size-lg);
-  font-weight: var(--font-weight-bold);
-  color: var(--color-text-primary);
-  margin: 0;
-}
-
-.payment-item__amount {
-  font-size: var(--font-size-xl);
-  font-weight: var(--font-weight-bold);
-  color: var(--color-primary);
-}
-
-.payment-item__body {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-md);
-  margin-bottom: var(--spacing-lg);
-}
-
-.payment-item__detail {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-sm);
-  font-size: var(--font-size-sm);
-}
-
-.payment-item__detail svg {
-  color: var(--color-primary);
-  flex-shrink: 0;
-}
-
-.payment-item__detail-label {
-  color: var(--color-text-secondary);
-  font-weight: var(--font-weight-medium);
-  min-width: 80px;
-}
-
-.payment-item__detail-value {
-  color: var(--color-text-primary);
-  font-weight: var(--font-weight-semibold);
-}
-
-.payment-item__footer {
-  display: flex;
-  justify-content: flex-end;
-}
-
-/* 환불 정책 */
-.payment-policy {
-  background: var(--bg-gradient-cool);
-  border: var(--border-width-thin) solid var(--border-sky-light);
-  border-radius: var(--border-radius-lg);
-  padding: var(--spacing-xl);
-  box-shadow: var(--shadow-sm);
-}
-
-.payment-policy__title {
-  font-size: var(--font-size-lg);
-  font-weight: var(--font-weight-bold);
-  color: var(--color-text-primary);
-  margin: 0 0 var(--spacing-lg) 0;
-}
-
-.payment-policy__list {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-md);
-}
-
-.payment-policy__item {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-md);
-  font-size: var(--font-size-sm);
-  color: var(--color-text-secondary);
-  line-height: 1.6;
-}
-
-.payment-policy__icon {
-  width: 32px;
-  height: 32px;
-  border-radius: var(--border-radius-full);
-  background: var(--gradient-sky);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.payment-policy__icon svg {
-  color: var(--color-white);
-}
-
-/* 에러 상태 */
-.payment-error {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: var(--spacing-lg);
-  padding: var(--spacing-xxxl);
-  text-align: center;
-  min-height: 400px;
-}
-
-.payment-error__icon {
-  width: 80px;
-  height: 80px;
-  border-radius: var(--border-radius-full);
-  background: var(--gradient-peach);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: var(--shadow-peach);
-}
-
-.payment-error__icon svg {
-  color: var(--color-white);
-}
-
-.payment-error__title {
-  font-size: var(--font-size-xl);
-  font-weight: var(--font-weight-bold);
-  color: var(--color-text-primary);
-  margin: 0;
-}
-
-.payment-error__message {
-  font-size: var(--font-size-base);
-  color: var(--color-text-secondary);
-  margin: 0;
-}
-
-/* 빈 상태 */
-.payment-empty {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: var(--spacing-lg);
-  padding: var(--spacing-xxxl);
-  text-align: center;
-  min-height: 400px;
-}
-
-.payment-empty__icon {
-  width: 80px;
-  height: 80px;
-  border-radius: var(--border-radius-full);
-  background: var(--gradient-gold);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: var(--shadow-gold);
-}
-
-.payment-empty__icon svg {
-  color: var(--color-white);
-}
-
-.payment-empty__title {
-  font-size: var(--font-size-xl);
-  font-weight: var(--font-weight-bold);
-  color: var(--color-text-primary);
-  margin: 0;
-}
-
-.payment-empty__text {
-  font-size: var(--font-size-base);
-  color: var(--color-text-secondary);
-  margin: 0;
-}
-
-/* 반응형 디자인 */
 @media (max-width: 768px) {
-  .client-payment-history {
-    padding: var(--spacing-md);
-    gap: var(--spacing-lg);
+  .client-payment-rows__head {
+    display: none;
   }
 
-  .payment-header {
-    flex-direction: column;
-    align-items: flex-start;
-    padding: var(--spacing-lg);
-    gap: var(--spacing-md);
+  .client-payment-rows__item {
+    grid-template-columns: 1fr 1fr;
+    grid-template-areas:
+      'date status'
+      'product product'
+      'amount method';
   }
 
-  .payment-header__icon {
-    width: 56px;
-    height: 56px;
-  }
-
-  .payment-header__icon svg {
-    width: 28px;
-    height: 28px;
-  }
-
-  .payment-header__title {
-    font-size: var(--font-size-xl);
-  }
-
-  .payment-stats {
-    grid-template-columns: 1fr;
-    gap: var(--spacing-md);
-  }
-
-  .payment-stat-card {
-    padding: var(--spacing-md);
-  }
-
-  .payment-filter {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .payment-filter__buttons {
-    width: 100%;
-  }
-
-  .payment-filter__button {
-    flex: 1;
-    text-align: center;
-  }
-
-  .payment-item {
-    padding: var(--spacing-lg);
-  }
-
-  .payment-item__header {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .payment-item__amount {
-    font-size: var(--font-size-lg);
-  }
-
-  .payment-policy {
-    padding: var(--spacing-lg);
-  }
+  .client-payment-rows__date { grid-area: date; }
+  .client-payment-rows__product { grid-area: product; white-space: normal; }
+  .client-payment-rows__amount { grid-area: amount; }
+  .client-payment-rows__method { grid-area: method; }
+  .client-payment-rows__status { grid-area: status; text-align: right; }
 }
-
-@media (min-width: 769px) and (max-width: 1024px) {
-  .payment-stats {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-/* 애니메이션 */
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.payment-header,
-.payment-stats,
-.payment-filter,
-.payment-list,
-.payment-policy {
-  animation: fadeInUp 0.3s ease-out;
-}
-
-.payment-header { animation-delay: 0s; }
-.payment-stats { animation-delay: 0.1s; }
-.payment-filter { animation-delay: 0.2s; }
-.payment-list { animation-delay: 0.3s; }
-.payment-policy { animation-delay: 0.4s; }
-
-.payment-item {
-  animation: fadeInUp 0.3s ease-out;
-}
-
-.payment-item:nth-child(1) { animation-delay: 0s; }
-.payment-item:nth-child(2) { animation-delay: 0.05s; }
-.payment-item:nth-child(3) { animation-delay: 0.1s; }
-.payment-item:nth-child(4) { animation-delay: 0.15s; }
-.payment-item:nth-child(5) { animation-delay: 0.2s; }

@@ -91,7 +91,11 @@ public enum AuditAction {
 
     /** 운영자가 본인 급여 계산 지급을 처리한 경우 (solo dual-role self-pay). */
     SALARY_SELF_PAY(
-            "SALARY_SELF_PAY", "enums.AuditAction.SALARY_SELF_PAY");
+            "SALARY_SELF_PAY", "enums.AuditAction.SALARY_SELF_PAY"),
+
+    /** 어드민 온라인 주문 soft-delete (허용 상태만). */
+    SHOP_ORDER_SOFT_DELETE(
+            "SHOP_ORDER_SOFT_DELETE", "enums.AuditAction.SHOP_ORDER_SOFT_DELETE");
 
     private final String code;
     private final String messageKey;

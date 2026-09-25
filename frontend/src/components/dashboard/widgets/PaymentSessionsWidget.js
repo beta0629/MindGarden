@@ -23,6 +23,12 @@ import { RoleUtils } from '../../../constants/roles';
 import { useWidget } from '../../../hooks/useWidget';
 import { apiGet } from '../../../utils/ajax';
 import { normalizeMappingsListPayload } from '../../../utils/apiResponseNormalize';
+import {
+  resolveClientPaymentHistoryAmount,
+  resolveClientPaymentHistoryStatus,
+  resolveClientPaymentHistoryTitle,
+  shouldIncludeInClientPaymentHistoryTotals
+} from '../../../utils/clientPaymentHistoryDisplay';
 import './PaymentSessionsWidget.css';
 import '../ClientPaymentSessionsSection.css';
 import { useTranslation } from 'react-i18next';
@@ -33,8 +39,59 @@ const API_ADMIN_MAPPINGS_CLIENT = '/api/v1/admin/mappings/client';
 const PAYMENT_KPI_ICON_SIZE = 22;
 const PAYMENT_ITEM_ICON_SIZE = 20;
 const PAYMENT_STATE_ICON_SIZE = 40;
+const PAYMENT_TITLE_EMPTY_FALLBACK = '';
 
 const MAPPINGS_WIDGET_FETCH_ERROR = '목록을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.';
+
+/**
+ * 매핑 목록 → 위젯 결제/회기 표시 모델 (PortOne/order SSOT 표시 리졸버).
+ *
+ * @param {*} mappingsData API raw / 정규화 전 페이로드
+ * @returns {{ totalSessions: number, usedSessions: number, remainingSessions: number, totalAmount: number, recentPayments: object[] }}
+ */
+const transformPaymentData = (mappingsData) => {
+  const mappings = normalizeMappingsListPayload(mappingsData);
+  if (mappings.length === 0) {
+    return {
+      totalSessions: 0,
+      usedSessions: 0,
+      remainingSessions: 0,
+      totalAmount: 0,
+      recentPayments: []
+    };
+  }
+
+  // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
+  const activeMappings = mappings.filter(mapping => mapping.status === 'ACTIVE');
+  const totalSessions = activeMappings.reduce((sum, mapping) => sum + (mapping.totalSessions || 0), 0);
+  const usedSessions = activeMappings.reduce((sum, mapping) => sum + (mapping.usedSessions || 0), 0);
+  const remainingSessions = activeMappings.reduce((sum, mapping) => sum + (mapping.remainingSessions || 0), 0);
+  const totalAmount = mappings
+    .filter(shouldIncludeInClientPaymentHistoryTotals)
+    .reduce((sum, mapping) => sum + resolveClientPaymentHistoryAmount(mapping), 0);
+
+  const recentPayments = mappings
+    .filter(mapping => mapping.paymentDate)
+    .sort((a, b) => new Date(b.paymentDate) - new Date(a.paymentDate))
+    .slice(0, 5)
+    .map(mapping => ({
+      id: mapping.id,
+      packageName: resolveClientPaymentHistoryTitle(mapping, PAYMENT_TITLE_EMPTY_FALLBACK),
+      amount: resolveClientPaymentHistoryAmount(mapping),
+      sessions: mapping.totalSessions,
+      paymentDate: mapping.paymentDate,
+      paymentMethod: mapping.paymentMethod,
+      status: resolveClientPaymentHistoryStatus(mapping)
+    }));
+
+  return {
+    totalSessions,
+    usedSessions,
+    remainingSessions,
+    totalAmount,
+    recentPayments
+  };
+};
 
 const PaymentSessionsWidget = ({ widget, user }) => {
   const { t } = useTranslation();
@@ -82,48 +139,6 @@ const PaymentSessionsWidget = ({ widget, user }) => {
   if (!RoleUtils.isClient(user)) {
     return null;
   }
-
-  const transformPaymentData = (mappingsData) => {
-    const mappings = normalizeMappingsListPayload(mappingsData);
-    if (mappings.length === 0) {
-      return {
-        totalSessions: 0,
-        usedSessions: 0,
-        remainingSessions: 0,
-        totalAmount: 0,
-        recentPayments: []
-      };
-    }
-    
-    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-    const activeMappings = mappings.filter(mapping => mapping.status === 'ACTIVE');
-    const totalSessions = activeMappings.reduce((sum, mapping) => sum + (mapping.totalSessions || 0), 0);
-    const usedSessions = activeMappings.reduce((sum, mapping) => sum + (mapping.usedSessions || 0), 0);
-    const remainingSessions = activeMappings.reduce((sum, mapping) => sum + (mapping.remainingSessions || 0), 0);
-    const totalAmount = mappings.reduce((sum, mapping) => sum + (mapping.packagePrice || 0), 0);
-
-    const recentPayments = mappings
-      .filter(mapping => mapping.paymentDate)
-      .sort((a, b) => new Date(b.paymentDate) - new Date(a.paymentDate))
-      .slice(0, 5)
-      .map(mapping => ({
-        id: mapping.id,
-        packageName: mapping.packageName,
-        amount: mapping.packagePrice,
-        sessions: mapping.totalSessions,
-        paymentDate: mapping.paymentDate,
-        paymentMethod: mapping.paymentMethod,
-        status: mapping.paymentStatus
-      }));
-
-    return {
-      totalSessions,
-      usedSessions,
-      remainingSessions,
-      totalAmount,
-      recentPayments
-    };
-  };
 
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('ko-KR', {
@@ -279,14 +294,18 @@ const PaymentSessionsWidget = ({ widget, user }) => {
                   <div className="payment-item__content">
                     <div className="payment-item__header">
                       <h4 className="payment-item__package">
-                        
-                        {formatCurrency(payment.amount)}
+                        {payment.packageName
+                          ? payment.packageName
+                          : formatCurrency(payment.amount)}
                       </h4>
                       <span className={`mg-badge mg-badge-${getStatusClass(payment.status)}`}>
                         {getStatusText(payment.status)}
                       </span>
                     </div>
                     <div className="payment-item__details">
+                      <span className="payment-item__amount">
+                        {formatCurrency(payment.amount)}
+                      </span>
                       <span className="payment-item__sessions">
                         
                         {payment.sessions}회

@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import StandardizedApi from '../../utils/standardizedApi';
 import { useSession } from '../../contexts/SessionContext';
 import notificationManager from '../../utils/notification';
-import AdminCommonLayout from '../layout/AdminCommonLayout';
+import ClientWebPageShell from '../client/ClientWebPageShell';
 import { ContentArea, ContentHeader } from '../dashboard-v2/content';
 import UnifiedLoading from '../../components/common/UnifiedLoading';
 import SafeText from '../common/SafeText';
@@ -150,127 +150,117 @@ const WellnessNotificationDetail = () => {
   );
 
   const pageShell = (headerTitle, headerSubtitle, body, actions = null) => (
-    <div className="mg-v2-ad-b0kla" data-testid="client-wellness-detail-page">
-      <div className="mg-v2-ad-b0kla__container">
-        <ContentArea ariaLabel="웰니스 알림 상세">
-          <ContentHeader
-            title={headerTitle}
-            subtitle={headerSubtitle}
-            titleId={WELLNESS_NOTIFICATION_DETAIL_TITLE_ID}
-            actions={actions}
-          />
-          <main aria-labelledby={WELLNESS_NOTIFICATION_DETAIL_TITLE_ID}>
-            {body}
-          </main>
-        </ContentArea>
+    <ClientWebPageShell>
+      <div className="mg-v2-ad-b0kla" data-testid="client-wellness-detail-page">
+        <div className="mg-v2-ad-b0kla__container">
+          <ContentArea ariaLabel="웰니스 알림 상세">
+            <ContentHeader
+              title={headerTitle}
+              subtitle={headerSubtitle}
+              titleId={WELLNESS_NOTIFICATION_DETAIL_TITLE_ID}
+              actions={actions}
+            />
+            <main aria-labelledby={WELLNESS_NOTIFICATION_DETAIL_TITLE_ID}>
+              {body}
+            </main>
+          </ContentArea>
+        </div>
       </div>
-    </div>
+    </ClientWebPageShell>
   );
 
   if (loading) {
-    return (
-      <AdminCommonLayout title="알림 상세" className="mg-v2-dashboard-layout">
-        {pageShell(
-          '웰니스 알림',
-          '상세 내용을 불러오는 중입니다.',
-          <div aria-busy="true" aria-live="polite">
-            <UnifiedLoading type="inline" text="웰니스 알림을 불러오는 중..." />
-          </div>,
-          backAction
-        )}
-      </AdminCommonLayout>
+    return pageShell(
+      '웰니스 알림',
+      '상세 내용을 불러오는 중입니다.',
+      <div aria-busy="true" aria-live="polite">
+        <UnifiedLoading type="inline" text="웰니스 알림을 불러오는 중..." />
+      </div>,
+      backAction
     );
   }
 
   if (error || !notification) {
-    return (
-      <AdminCommonLayout title="알림 상세" className="mg-v2-dashboard-layout">
-        {pageShell(
-          '웰니스 알림',
-          '요청하신 알림을 찾을 수 없습니다.',
-          <div className="wellness-notification-detail">
-            <div className="wellness-notification-error">
-              <div className="error-icon" aria-hidden="true">
-                {t('common.labels.notification')}
-              </div>
-              <h2 className="error-title">알림을 찾을 수 없습니다</h2>
-              <p className="error-message">
-                <SafeText fallback="요청하신 알림을 찾을 수 없습니다.">{error}</SafeText>
-              </p>
-              <MGButton
-                type="button"
-                variant="primary"
-                className={buildErpMgButtonClassName({
-                  variant: 'primary',
-                  size: 'md',
-                  loading: false,
-                  className: 'mg-btn mg-btn--primary'
-                })}
-                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                onClick={handleBack}
-                preventDoubleClick={false}
-              >
-                <span>← 돌아가기</span>
-              </MGButton>
-            </div>
-          </div>,
-          backAction
-        )}
-      </AdminCommonLayout>
+    return pageShell(
+      '웰니스 알림',
+      '요청하신 알림을 찾을 수 없습니다.',
+      <div className="wellness-notification-detail">
+        <div className="wellness-notification-error">
+          <div className="error-icon" aria-hidden="true">
+            {t('common.labels.notification')}
+          </div>
+          <h2 className="error-title">알림을 찾을 수 없습니다</h2>
+          <p className="error-message">
+            <SafeText fallback="요청하신 알림을 찾을 수 없습니다.">{error}</SafeText>
+          </p>
+          <MGButton
+            type="button"
+            variant="primary"
+            className={buildErpMgButtonClassName({
+              variant: 'primary',
+              size: 'md',
+              loading: false,
+              className: 'mg-btn mg-btn--primary'
+            })}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+            onClick={handleBack}
+            preventDoubleClick={false}
+          >
+            <span>← 돌아가기</span>
+          </MGButton>
+        </div>
+      </div>,
+      backAction
     );
   }
 
-  return (
-    <AdminCommonLayout title="알림 상세" className="mg-v2-dashboard-layout">
-      {pageShell(
-        toDisplayString(notification.title, '웰니스 알림'),
-        getMetaSubtitle(notification),
-        <div className="wellness-notification-detail">
-          <div className="wellness-notification-header wellness-notification-header--badges-only">
-            <div className="header-badges">
-              {notification.isImportant && (
-                <span className="badge badge-important">
-                  <span>중요</span>
-                </span>
-              )}
-              {notification.isUrgent && (
-                <span className="badge badge-urgent">
-                  <span>{t('admin.labels.urgent')}</span>
-                </span>
-              )}
-              <span className={`badge badge-type ${getNotificationTypeClass(notification.notificationType)}`}>
-                <SafeText>{getNotificationTypeLabel(notification.notificationType)}</SafeText>
-              </span>
-            </div>
-          </div>
+  return pageShell(
+    toDisplayString(notification.title, '웰니스 알림'),
+    getMetaSubtitle(notification),
+    <div className="wellness-notification-detail">
+      <div className="wellness-notification-header wellness-notification-header--badges-only">
+        <div className="header-badges">
+          {notification.isImportant && (
+            <span className="badge badge-important">
+              <span>중요</span>
+            </span>
+          )}
+          {notification.isUrgent && (
+            <span className="badge badge-urgent">
+              <span>{t('admin.labels.urgent')}</span>
+            </span>
+          )}
+          <span className={`badge badge-type ${getNotificationTypeClass(notification.notificationType)}`}>
+            <SafeText>{getNotificationTypeLabel(notification.notificationType)}</SafeText>
+          </span>
+        </div>
+      </div>
 
-          <div className="wellness-notification-content">
-            <div className="content-body">
-              {formatWellnessContent(notification.content)}
-            </div>
-          </div>
+      <div className="wellness-notification-content">
+        <div className="content-body">
+          {formatWellnessContent(notification.content)}
+        </div>
+      </div>
 
-          <div className="wellness-notification-actions">
-            <MGButton
-              type="button"
-              variant="secondary"
-              className={buildErpMgButtonClassName({
-                variant: 'secondary',
-                size: 'md',
-                loading: false,
-                className: 'mg-btn mg-btn--secondary'
-              })}
-              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-              onClick={handleBack}
-              preventDoubleClick={false}
-            >
-              <span>← 목록으로 돌아가기</span>
-            </MGButton>
-          </div>
-        </div>,
-        backAction
-      )}
-    </AdminCommonLayout>
+      <div className="wellness-notification-actions">
+        <MGButton
+          type="button"
+          variant="secondary"
+          className={buildErpMgButtonClassName({
+            variant: 'secondary',
+            size: 'md',
+            loading: false,
+            className: 'mg-btn mg-btn--secondary'
+          })}
+          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+          onClick={handleBack}
+          preventDoubleClick={false}
+        >
+          <span>← 목록으로 돌아가기</span>
+        </MGButton>
+      </div>
+    </div>,
+    backAction
   );
 };
 

@@ -16,8 +16,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  * {@link Payment#getExternalResponse()}·{@link Payment#getWebhookData()} JSON 에서
  * 카드 가맹점(PG) 수수료 금액(D5)을 추출합니다.
  * <p>
- * 토스페이먼츠: 정산/결제 연동 시 {@code settlement.fees[].fee} 합산,
- * 또는 동일 객체의 {@code amount - payOutAmount}(문서상 지급액 정의).
+ * CARD + 모든 provider: 정산 객체({@code settlement})가 있으면
+ * {@code settlement.fees[].fee} 합산 또는 {@code amount - payOutAmount}(지급액 정의)를 사용합니다.
+ * (TOSS·PortOne/IAMPORT 등 정산내역이 동일 스키마로 들어오는 경우 공통 적용. 요율 추정 금지.)
  * 그 외 PG·중계층이 넣는 {@code merchantFee}, {@code pgFee} 등 명시 필드를 시도합니다.
  * KICC 등 별도 스키마는 동일 범용 키 또는 추후 키 확장으로 수용합니다.
  * </p>
@@ -36,6 +37,7 @@ public final class CardMerchantFeeFromPaymentJsonUtil {
 
     /**
      * 카드 결제이고 JSON 에서 수수료를 읽을 수 있을 때만 양수 금액을 반환합니다.
+     * 요율·추정은 하지 않으며, 정산·명시 수수료 필드가 없으면 0입니다.
      *
      * @param payment 결제
      * @param log     SLF4J 로거(민감정보·응답 전문 로깅 금지)
@@ -66,12 +68,10 @@ public final class CardMerchantFeeFromPaymentJsonUtil {
             if (node == null || node.isMissingNode() || !node.isObject()) {
                 continue;
             }
-            if (provider == Payment.PaymentProvider.TOSS) {
-                BigDecimal fromToss = tryTossSettlement(node);
-                BigDecimal normalized = normalizeFee(fromToss, cap);
-                if (normalized.compareTo(BigDecimal.ZERO) > 0) {
-                    return normalized;
-                }
+            BigDecimal fromSettlement = trySettlementInflow(node);
+            BigDecimal normalizedSettlement = normalizeFee(fromSettlement, cap);
+            if (normalizedSettlement.compareTo(BigDecimal.ZERO) > 0) {
+                return normalizedSettlement;
             }
             BigDecimal generic = tryGenericExplicitFee(node);
             BigDecimal normalizedGen = normalizeFee(generic, cap);
@@ -104,7 +104,14 @@ public final class CardMerchantFeeFromPaymentJsonUtil {
         return list;
     }
 
-    private static BigDecimal tryTossSettlement(JsonNode node) {
+    /**
+     * 정산(settlement) 유입 수수료 — provider 무관.
+     * {@code fees[].fee} 합산 우선, 없으면 {@code amount - payOutAmount}.
+     *
+     * @param node 후보 JSON 객체
+     * @return 수수료 또는 null(정산 객체/필드 없음)
+     */
+    private static BigDecimal trySettlementInflow(JsonNode node) {
         JsonNode settlement = node.get(PaymentExternalResponseJsonKeys.SETTLEMENT);
         if (settlement == null || !settlement.isObject()) {
             return null;

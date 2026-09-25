@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.Optional;
 import com.coresolution.consultation.constant.ShopCatalogSkuConstants;
 import com.coresolution.consultation.constant.ShopCheckoutConstants;
+import com.coresolution.consultation.constant.ShopSessionCountConstants;
 import com.coresolution.consultation.dto.shop.ShopCatalogOffer;
 import com.coresolution.consultation.dto.shop.ShopCartLineRequest;
 import com.coresolution.consultation.dto.shop.ShopCartLineResponse;
@@ -59,12 +60,15 @@ public class ClientShopCartServiceImpl implements ClientShopCartService {
             long unit = offer.unitPriceMinor();
             long lineTotal = unit * line.getQuantity();
             subtotal += lineTotal;
+            int sessionCount = offer.sessionCount();
             dtos.add(ShopCartLineResponse.builder()
                     .skuCode(sku.getSkuCode())
                     .title(offer.title())
                     .quantity(line.getQuantity())
                     .unitPriceMinor(unit)
                     .lineTotalMinor(lineTotal)
+                    .sessionCount(sessionCount)
+                    .packageType(ShopSessionCountConstants.resolvePackageType(sessionCount))
                     .build());
         }
         return ShopCartResponse.builder().lines(dtos).subtotalMinor(subtotal).build();

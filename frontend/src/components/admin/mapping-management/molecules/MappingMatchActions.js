@@ -13,7 +13,8 @@ import ActionBarButton from '../../../common/ActionBarButton';
 import { useTranslation } from 'react-i18next';
 import {
   MAPPING_STATUS_PENDING_PAYMENT,
-  PAYMENT_TIMING_SAME_DAY_CARD
+  PAYMENT_TIMING_SAME_DAY_CARD,
+  shouldShowUnpaidSoftCheckoutCta
 } from '../constants/integratedScheduleSidebarFilterConstants';
 
 // testid 는 RTL 회귀 0 유지를 위해 기존 `mapping-cancel-pending-trigger` 그대로 사용.
@@ -48,7 +49,10 @@ const MappingMatchActions = ({
     && paymentTiming === PAYMENT_TIMING_SAME_DAY_CARD;
   // 정상 경로: PENDING_PAYMENT 결제 원샷 모달 (onCheckoutSameDay).
   // stepwise 「결제 확인」은 onCheckoutSameDay 미전달 시에만 escape.
-  const showCheckoutSameDay = isSameDayCardPending && onCheckoutSameDay;
+  // rem≤0 unpaid soft 는 당일결제 CTA 숨김 (드래그 허용과 분리).
+  const showCheckoutSameDay = isSameDayCardPending
+    && onCheckoutSameDay
+    && shouldShowUnpaidSoftCheckoutCta(mapping);
   const showConfirmAndActivate = isPendingPayment && !isSameDayCardPending && onCheckoutSameDay;
   const showPayment = isPendingPayment && !onCheckoutSameDay && onPayment;
   const showDeposit = status === 'PAYMENT_CONFIRMED' && onDeposit;

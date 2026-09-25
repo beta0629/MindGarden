@@ -36,6 +36,12 @@
   font-size: var(--mg-font-size-md);
 }
 
+.admin-shop-sku-editor__hint {
+  margin: calc(var(--mg-spacing-xs) * -1) 0 var(--mg-spacing-sm);
+  color: var(--mg-color-text-secondary);
+  font-size: var(--mg-font-size-sm);
+}
+
 .admin-shop-sku-editor__category-fieldset {
   border: none;
   margin: 0;
@@ -54,4 +60,10 @@
   object-fit: cover;
   border-radius: var(--mg-radius-sm);
   background: var(--mg-color-background-main);
+}
+
+.admin-shop-sku-editor__hint {
+  margin: calc(var(--mg-spacing-xs) * -1) 0 var(--mg-spacing-sm);
+  color: var(--mg-color-text-secondary);
+  font-size: var(--mg-font-size-sm);
 }

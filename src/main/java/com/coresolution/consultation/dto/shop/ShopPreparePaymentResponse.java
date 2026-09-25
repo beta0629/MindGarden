@@ -38,4 +38,15 @@ public class ShopPreparePaymentResponse {
 
     /** 포트원 클라이언트 결제 모듈 호출 가능 여부 */
     private Boolean pgReady;
+
+    /**
+     * PG/PortOne customer.email — 세션 실이메일이 없으면 서버 합성 이메일.
+     * FE는 이 값을 SDK에 그대로 사용한다 (FE에서 도메인 발명 금지).
+     */
+    private String customerEmail;
+
+    /**
+     * PG/PortOne customer 표시명 — 없으면 {@link com.coresolution.consultation.constant.ShopCheckoutConstants#DEFAULT_PAYMENT_CUSTOMER_NAME}.
+     */
+    private String customerName;
 }

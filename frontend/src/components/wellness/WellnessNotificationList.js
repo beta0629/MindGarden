@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import StandardizedApi from '../../utils/standardizedApi';
 import { useSession } from '../../contexts/SessionContext';
 import notificationManager from '../../utils/notification';
-import AdminCommonLayout from '../layout/AdminCommonLayout';
+import ClientWebPageShell from '../client/ClientWebPageShell';
 import { ContentArea, ContentHeader } from '../dashboard-v2/content';
 import UnifiedLoading from '../../components/common/UnifiedLoading';
 import Badge from '../common/Badge';
@@ -92,139 +92,129 @@ const WellnessNotificationList = () => {
   };
 
   const pageShell = (body) => (
-    <div className="mg-v2-ad-b0kla" data-testid="client-wellness-list-page">
-      <div className="mg-v2-ad-b0kla__container">
-        <ContentArea ariaLabel="웰니스 알림">
-          <ContentHeader
-            title="웰니스 알림"
-            subtitle="마음 건강을 위한 유용한 정보와 팁을 확인하세요"
-            titleId={WELLNESS_NOTIFICATION_LIST_TITLE_ID}
-          />
-          <main aria-labelledby={WELLNESS_NOTIFICATION_LIST_TITLE_ID}>
-            {body}
-          </main>
-        </ContentArea>
+    <ClientWebPageShell>
+      <div className="mg-v2-ad-b0kla" data-testid="client-wellness-list-page">
+        <div className="mg-v2-ad-b0kla__container">
+          <ContentArea ariaLabel="웰니스 알림">
+            <ContentHeader
+              title="웰니스 알림"
+              subtitle="마음 건강을 위한 유용한 정보와 팁을 확인하세요"
+              titleId={WELLNESS_NOTIFICATION_LIST_TITLE_ID}
+            />
+            <main aria-labelledby={WELLNESS_NOTIFICATION_LIST_TITLE_ID}>
+              {body}
+            </main>
+          </ContentArea>
+        </div>
       </div>
-    </div>
+    </ClientWebPageShell>
   );
 
   if (loading) {
-    return (
-      <AdminCommonLayout title="웰니스 알림" className="mg-v2-dashboard-layout">
-        {pageShell(
-          <div aria-busy="true" aria-live="polite">
-            <UnifiedLoading type="inline" text="웰니스 알림을 불러오는 중..." />
-          </div>
-        )}
-      </AdminCommonLayout>
+    return pageShell(
+      <div aria-busy="true" aria-live="polite">
+        <UnifiedLoading type="inline" text="웰니스 알림을 불러오는 중..." />
+      </div>
     );
   }
 
   if (error) {
-    return (
-      <AdminCommonLayout title="웰니스 알림" className="mg-v2-dashboard-layout">
-        {pageShell(
-          <div className="wellness-notification-list">
-            <div className="wellness-notification-empty">
-              <div className="empty-icon" aria-hidden="true">
-                오류
-              </div>
-              <h2 className="empty-title">알림을 불러올 수 없습니다</h2>
-              <p className="empty-message"><SafeText>{error}</SafeText></p>
-              <MGButton
-                variant="primary"
-                className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: false })}
-                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                onClick={loadNotifications}
-              >
-                {t('common.labels.retry')}
-              </MGButton>
-            </div>
+    return pageShell(
+      <div className="wellness-notification-list">
+        <div className="wellness-notification-empty">
+          <div className="empty-icon" aria-hidden="true">
+            오류
           </div>
-        )}
-      </AdminCommonLayout>
+          <h2 className="empty-title">알림을 불러올 수 없습니다</h2>
+          <p className="empty-message"><SafeText>{error}</SafeText></p>
+          <MGButton
+            variant="primary"
+            className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: false })}
+            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+            onClick={loadNotifications}
+          >
+            {t('common.labels.retry')}
+          </MGButton>
+        </div>
+      </div>
     );
   }
 
-  return (
-    <AdminCommonLayout title="웰니스 알림" className="mg-v2-dashboard-layout">
-      {pageShell(
-        <div className="wellness-notification-list">
-          {notifications.length === 0 ? (
-            <div className="wellness-notification-empty">
-              <div className="empty-icon" aria-hidden="true">
-                웰니스
+  return pageShell(
+    <div className="wellness-notification-list">
+      {notifications.length === 0 ? (
+        <div className="wellness-notification-empty">
+          <div className="empty-icon" aria-hidden="true">
+            웰니스
+          </div>
+          <h2 className="empty-title">등록된 웰니스 알림이 없습니다</h2>
+          <p className="empty-message">
+            새로운 웰니스 알림이 등록되면 여기에 표시됩니다.
+          </p>
+        </div>
+      ) : (
+        <div className="wellness-notification-grid">
+          {notifications.map((notification) => (
+            <div
+              key={notification.id}
+              className={`wellness-notification-card ${
+                notification.isImportant ? 'card-important' : ''
+              } ${notification.isUrgent ? 'card-urgent' : ''} ${
+                notification.isRead ? 'card-read' : 'card-unread'
+              }`}
+              onClick={() => handleNotificationClick(notification)}
+            >
+              <div className="card-badges">
+                {notification.isImportant && (
+                  <Badge variant="status" statusVariant="warning" label="중요" size="sm" />
+                )}
+                {notification.isUrgent && (
+                  <Badge variant="status" statusVariant="danger" label={t('admin.labels.urgent')} size="sm" />
+                )}
+                {!notification.isRead && (
+                  <Badge variant="status" statusVariant="info" label="신규" size="sm" />
+                )}
               </div>
-              <h2 className="empty-title">등록된 웰니스 알림이 없습니다</h2>
-              <p className="empty-message">
-                새로운 웰니스 알림이 등록되면 여기에 표시됩니다.
-              </p>
-            </div>
-          ) : (
-            <div className="wellness-notification-grid">
-              {notifications.map((notification) => (
+
+              <div className="card-icon" aria-hidden="true">
+                {getNotificationIconLabel(notification)}
+              </div>
+
+              <div className="card-content">
+                <h3 className="card-title"><SafeText>{notification.title}</SafeText></h3>
                 <div
-                  key={notification.id}
-                  className={`wellness-notification-card ${
-                    notification.isImportant ? 'card-important' : ''
-                  } ${notification.isUrgent ? 'card-urgent' : ''} ${
-                    notification.isRead ? 'card-read' : 'card-unread'
-                  }`}
-                  onClick={() => handleNotificationClick(notification)}
-                >
-                  <div className="card-badges">
-                    {notification.isImportant && (
-                      <Badge variant="status" statusVariant="warning" label="중요" size="sm" />
-                    )}
-                    {notification.isUrgent && (
-                      <Badge variant="status" statusVariant="danger" label={t('admin.labels.urgent')} size="sm" />
-                    )}
-                    {!notification.isRead && (
-                      <Badge variant="status" statusVariant="info" label="신규" size="sm" />
-                    )}
-                  </div>
-
-                  <div className="card-icon" aria-hidden="true">
-                    {getNotificationIconLabel(notification)}
-                  </div>
-
-                  <div className="card-content">
-                    <h3 className="card-title"><SafeText>{notification.title}</SafeText></h3>
-                    <div
-                      className="card-description"
-                      dangerouslySetInnerHTML={{
-                        __html: (() => {
-                          const textOnly = stripHtmlToPreview(notification.content);
-                          return textOnly.length > 100
-                            ? `${textOnly.substring(0, 100)}...`
-                            : textOnly;
-                        })()
-                      }}
-                    />
-                    <div className="card-meta">
-                      <div className="meta-item">
-                        <span className="meta-label">게시</span>
-                        <span>
-                          {toDisplayString(
-                            new Date(
-                              notification.publishedAt || notification.createdAt
-                            ).toLocaleDateString('ko-KR')
-                          )}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="card-arrow" aria-hidden="true">
-                    상세
+                  className="card-description"
+                  dangerouslySetInnerHTML={{
+                    __html: (() => {
+                      const textOnly = stripHtmlToPreview(notification.content);
+                      return textOnly.length > 100
+                        ? `${textOnly.substring(0, 100)}...`
+                        : textOnly;
+                    })()
+                  }}
+                />
+                <div className="card-meta">
+                  <div className="meta-item">
+                    <span className="meta-label">게시</span>
+                    <span>
+                      {toDisplayString(
+                        new Date(
+                          notification.publishedAt || notification.createdAt
+                        ).toLocaleDateString('ko-KR')
+                      )}
+                    </span>
                   </div>
                 </div>
-              ))}
+              </div>
+
+              <div className="card-arrow" aria-hidden="true">
+                상세
+              </div>
             </div>
-          )}
+          ))}
         </div>
       )}
-    </AdminCommonLayout>
+    </div>
   );
 };
 

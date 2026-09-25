@@ -158,7 +158,7 @@ class TenantPgConfigurationControllerIntegrationTest {
     
     @Test
     @DisplayName("PG 설정 생성 - 성공")
-    @WithMockUser
+    @WithMockUser(roles = {"ADMIN"})
     void testCreateConfiguration_Success() throws Exception {
         // Given
         TenantPgConfigurationRequest request = TenantPgConfigurationRequest.builder()
@@ -184,7 +184,7 @@ class TenantPgConfigurationControllerIntegrationTest {
     
     @Test
     @DisplayName("PG 설정 생성 - 필수 필드 누락")
-    @WithMockUser
+    @WithMockUser(roles = {"ADMIN"})
     void testCreateConfiguration_MissingRequiredFields() throws Exception {
         // Given
         TenantPgConfigurationRequest request = TenantPgConfigurationRequest.builder()
@@ -202,7 +202,7 @@ class TenantPgConfigurationControllerIntegrationTest {
     
     @Test
     @DisplayName("PG 설정 수정 - 성공")
-    @WithMockUser
+    @WithMockUser(roles = {"ADMIN"})
     void testUpdateConfiguration_Success() throws Exception {
         // Given
         TenantPgConfigurationRequest request = TenantPgConfigurationRequest.builder()
@@ -228,7 +228,7 @@ class TenantPgConfigurationControllerIntegrationTest {
     
     @Test
     @DisplayName("PG 설정 삭제 - 성공")
-    @WithMockUser
+    @WithMockUser(roles = {"ADMIN"})
     void testDeleteConfiguration_Success() throws Exception {
         // Given
         // 삭제는 void 반환이므로 Mockito.doNothing() 사용
@@ -247,7 +247,7 @@ class TenantPgConfigurationControllerIntegrationTest {
     
     @Test
     @DisplayName("PG 연결 테스트 - 성공")
-    @WithMockUser
+    @WithMockUser(roles = {"ADMIN"})
     void testTestConnection_Success() throws Exception {
         // Given
         ConnectionTestResponse testResponse = ConnectionTestResponse.builder()
@@ -275,7 +275,7 @@ class TenantPgConfigurationControllerIntegrationTest {
     
     @Test
     @DisplayName("PG 연결 테스트 - 실패")
-    @WithMockUser
+    @WithMockUser(roles = {"ADMIN"})
     void testTestConnection_Failed() throws Exception {
         // Given
         ConnectionTestResponse testResponse = ConnectionTestResponse.builder()
@@ -301,7 +301,7 @@ class TenantPgConfigurationControllerIntegrationTest {
     
     @Test
     @DisplayName("PG 연결 테스트 - PG 설정 없음")
-    @WithMockUser
+    @WithMockUser(roles = {"ADMIN"})
     void testTestConnection_NotFound() throws Exception {
         // Given
         when(pgConfigurationService.testConnection(testTenantId, testConfigId))
@@ -345,7 +345,7 @@ class TenantPgConfigurationControllerIntegrationTest {
 
     @Test
     @DisplayName("웹훅 시크릿 PATCH - 성공 (마스킹·configured·승인 유지)")
-    @WithMockUser
+    @WithMockUser(roles = {"ADMIN"})
     void testPatchWebhookSecret_Success() throws Exception {
         TenantPgConfigurationResponse maskedResponse = TenantPgConfigurationResponse.builder()
                 .configId(testConfigId)
@@ -388,7 +388,7 @@ class TenantPgConfigurationControllerIntegrationTest {
 
     @Test
     @DisplayName("웹훅 시크릿 PATCH - 타 테넌트 403")
-    @WithMockUser
+    @WithMockUser(roles = {"ADMIN"})
     void testPatchWebhookSecret_OtherTenantForbidden() throws Exception {
         doThrow(new AccessDeniedException("해당 테넌트에 대한 접근 권한이 없습니다"))
                 .when(tenantAccessControlService).validateTenantAccess(eq(testTenantId));
@@ -406,6 +406,146 @@ class TenantPgConfigurationControllerIntegrationTest {
 
         verify(pgConfigurationService, never())
                 .patchWebhookSecret(anyString(), anyString(), anyString());
+    }
+
+    @Test
+    @DisplayName("웹훅 시크릿 PATCH - CLIENT 403")
+    @WithMockUser(roles = {"CLIENT"})
+    void testPatchWebhookSecret_ClientForbidden() throws Exception {
+        PgConfigurationWebhookSecretPatchRequest request = PgConfigurationWebhookSecretPatchRequest.builder()
+                .webhookSecret("whsec_patch")
+                .build();
+
+        mockMvc.perform(patch("/api/v1/tenants/{tenantId}/pg-configurations/{configId}/webhook-secret",
+                        testTenantId, testConfigId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .header("X-Tenant-Id", testTenantId)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isForbidden());
+
+        verify(pgConfigurationService, never())
+                .patchWebhookSecret(anyString(), anyString(), anyString());
+    }
+
+    @Test
+    @DisplayName("웹훅 시크릿 PATCH - CONSULTANT 403")
+    @WithMockUser(roles = {"CONSULTANT"})
+    void testPatchWebhookSecret_ConsultantForbidden() throws Exception {
+        PgConfigurationWebhookSecretPatchRequest request = PgConfigurationWebhookSecretPatchRequest.builder()
+                .webhookSecret("whsec_patch")
+                .build();
+
+        mockMvc.perform(patch("/api/v1/tenants/{tenantId}/pg-configurations/{configId}/webhook-secret",
+                        testTenantId, testConfigId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .header("X-Tenant-Id", testTenantId)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isForbidden());
+
+        verify(pgConfigurationService, never())
+                .patchWebhookSecret(anyString(), anyString(), anyString());
+    }
+
+    @Test
+    @DisplayName("테스트 모드 PATCH - ADMIN 성공")
+    @WithMockUser(roles = {"ADMIN"})
+    void testPatchTestMode_Success() throws Exception {
+        when(pgConfigurationService.patchTestMode(eq(testTenantId), eq(testConfigId), eq(true)))
+                .thenReturn(testResponse);
+
+        PgConfigurationTestModePatchRequest request = PgConfigurationTestModePatchRequest.builder()
+                .testMode(true)
+                .build();
+
+        mockMvc.perform(patch("/api/v1/tenants/{tenantId}/pg-configurations/{configId}/test-mode",
+                        testTenantId, testConfigId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .header("X-Tenant-Id", testTenantId)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.configId").value(testConfigId));
+    }
+
+    @Test
+    @DisplayName("테스트 모드 PATCH - CLIENT 403")
+    @WithMockUser(roles = {"CLIENT"})
+    void testPatchTestMode_ClientForbidden() throws Exception {
+        PgConfigurationTestModePatchRequest request = PgConfigurationTestModePatchRequest.builder()
+                .testMode(true)
+                .build();
+
+        mockMvc.perform(patch("/api/v1/tenants/{tenantId}/pg-configurations/{configId}/test-mode",
+                        testTenantId, testConfigId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .header("X-Tenant-Id", testTenantId)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isForbidden());
+
+        verify(pgConfigurationService, never())
+                .patchTestMode(anyString(), anyString(), any());
+    }
+
+    @Test
+    @DisplayName("테스트 모드 PATCH - CONSULTANT 403")
+    @WithMockUser(roles = {"CONSULTANT"})
+    void testPatchTestMode_ConsultantForbidden() throws Exception {
+        PgConfigurationTestModePatchRequest request = PgConfigurationTestModePatchRequest.builder()
+                .testMode(true)
+                .build();
+
+        mockMvc.perform(patch("/api/v1/tenants/{tenantId}/pg-configurations/{configId}/test-mode",
+                        testTenantId, testConfigId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .header("X-Tenant-Id", testTenantId)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isForbidden());
+
+        verify(pgConfigurationService, never())
+                .patchTestMode(anyString(), anyString(), any());
+    }
+
+    @Test
+    @DisplayName("PG 설정 생성 - CLIENT 403")
+    @WithMockUser(roles = {"CLIENT"})
+    void testCreateConfiguration_ClientForbidden() throws Exception {
+        TenantPgConfigurationRequest request = TenantPgConfigurationRequest.builder()
+                .pgProvider(PgProvider.TOSS)
+                .pgName("토스페이먼츠")
+                .apiKey("test-api-key")
+                .secretKey("test-secret-key")
+                .testMode(false)
+                .build();
+
+        mockMvc.perform(post("/api/v1/tenants/{tenantId}/pg-configurations", testTenantId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .header("X-Tenant-Id", testTenantId)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isForbidden());
+
+        verify(pgConfigurationService, never())
+                .createConfiguration(anyString(), any(), anyString());
+    }
+
+    @Test
+    @DisplayName("포트원 클라이언트 설정 GET - CLIENT 허용(인증만)")
+    @WithMockUser(roles = {"CLIENT"})
+    void testGetActivePortOneClientConfig_ClientAllowed() throws Exception {
+        PortOneClientConfigResponse clientConfig = PortOneClientConfigResponse.builder()
+                .storeId("store-1")
+                .channelKey("channel-key-1")
+                .testMode(true)
+                .build();
+        when(pgConfigurationService.getActivePortOneClientConfig(testTenantId))
+                .thenReturn(clientConfig);
+
+        mockMvc.perform(get("/api/v1/tenants/{tenantId}/pg-configurations/active/portone-client-config",
+                        testTenantId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .header("X-Tenant-Id", testTenantId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.storeId").value("store-1"));
     }
 }
 

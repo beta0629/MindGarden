@@ -42,7 +42,7 @@ class DeploySlotReadinessControllerTest {
     @Test
     @DisplayName("DB·Redis 가 준비되면 200")
     void checkDeployReadiness_ready_returns200() {
-        when(readinessProbe.probe()).thenReturn(new Snapshot(true, true));
+        when(readinessProbe.probe()).thenReturn(new Snapshot(true, true, 5));
 
         ResponseEntity<Map<String, Object>> response = controller.checkDeployReadiness();
 
@@ -52,13 +52,14 @@ class DeploySlotReadinessControllerTest {
         assertEquals("healthy", body.get("status"));
         assertEquals("up", body.get("database"));
         assertEquals("up", body.get("redis"));
-        assertEquals("DB 연결과 Redis 가 준비되었습니다", body.get("message"));
+        assertEquals(5, body.get("warmedConnections"));
+        assertEquals("DB 풀이 SELECT 1 에 빠르게 응답하고 Redis 가 준비되었습니다", body.get("message"));
     }
 
     @Test
     @DisplayName("DB 가 내려가 있으면 503 이고 전환 신호가 아니다")
     void checkDeployReadiness_databaseDown_returns503() {
-        when(readinessProbe.probe()).thenReturn(new Snapshot(false, true));
+        when(readinessProbe.probe()).thenReturn(new Snapshot(false, true, 0));
 
         ResponseEntity<Map<String, Object>> response = controller.checkDeployReadiness();
 
@@ -73,7 +74,7 @@ class DeploySlotReadinessControllerTest {
     @Test
     @DisplayName("Redis 가 내려가 있으면 503")
     void checkDeployReadiness_redisDown_returns503() {
-        when(readinessProbe.probe()).thenReturn(new Snapshot(true, false));
+        when(readinessProbe.probe()).thenReturn(new Snapshot(true, false, 0));
 
         ResponseEntity<Map<String, Object>> response = controller.checkDeployReadiness();
 

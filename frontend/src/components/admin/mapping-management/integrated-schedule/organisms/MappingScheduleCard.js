@@ -20,9 +20,9 @@ import MappingPartiesRow from '../molecules/MappingPartiesRow';
 import CardMeta from '../molecules/CardMeta';
 import CardBillingProgress from '../molecules/CardBillingProgress';
 import CardActionGroup from '../molecules/CardActionGroup';
-import { toSafeNumber } from '../../../../../utils/safeDisplay';
 import { isInstitutionLinkEngagement } from '../../../../../constants/mappingEngagementType';
 import {
+  resolveBillingProgressCounts,
   resolveClientCompletedConsultationCount,
   resolveConsultationSchedulesForCard
 } from '../utils/cardBillingProgressDisplay';
@@ -39,8 +39,9 @@ const resolveTicketFillPercent = (mapping, institutionLink) => {
   if (institutionLink) {
     return 0;
   }
-  const used = Math.max(0, toSafeNumber(mapping?.usedSessions, 0) ?? 0);
-  const total = Math.max(0, toSafeNumber(mapping?.totalSessions, 0) ?? 0);
+  const progressCounts = resolveBillingProgressCounts(mapping);
+  const used = progressCounts.used;
+  const total = progressCounts.total;
   if (total <= 0) {
     return 0;
   }

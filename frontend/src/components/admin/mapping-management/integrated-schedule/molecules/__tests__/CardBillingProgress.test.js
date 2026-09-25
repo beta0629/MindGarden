@@ -119,6 +119,22 @@ describe('CardBillingProgress', () => {
     );
   });
 
+  it('shows progress 1 remaining 0 for a completed single-session package', () => {
+    render(
+      <CardBillingProgress
+        usedSessions={0}
+        totalSessions={1}
+        remainingSessions={1}
+        consultationSchedules={[
+          { id: 1, date: '2026-09-20', status: 'COMPLETED' }
+        ]}
+      />
+    );
+    expect(screen.getByTestId('mapping-card-billing-progress')).toHaveTextContent(
+      '누적 진행 1회 / 총 1회 · 잔여 0'
+    );
+  });
+
   it('shows used-only progress when total is zero', () => {
     render(
       <CardBillingProgress

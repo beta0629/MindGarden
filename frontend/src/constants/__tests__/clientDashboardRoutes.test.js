@@ -9,8 +9,10 @@ import {
   CLIENT_DASHBOARD_KPI_ROUTES,
   CLIENT_DASHBOARD_QUICK_MENU_ITEMS,
   CLIENT_DASHBOARD_ROUTES,
+  CLIENT_LEGACY_ROUTE_REDIRECTS,
   buildClientDashboardQuickMenuItemTestId
 } from '../clientDashboardRoutes';
+import { CLIENT_SHOP_ROUTES } from '../clientShopConstants';
 
 describe('clientDashboardRoutes web-native SSOT', () => {
   test('routes align with web LNB (CLIENT_MENU_ITEMS)', () => {
@@ -20,6 +22,21 @@ describe('clientDashboardRoutes web-native SSOT', () => {
     expect(CLIENT_DASHBOARD_ROUTES.PAYMENT_HISTORY).toBe('/client/payment-history');
     expect(CLIENT_DASHBOARD_ROUTES.SETTINGS).toBe('/client/settings');
     expect(CLIENT_DASHBOARD_ROUTES.COMMUNITY).toBe('/client/community');
+    expect(CLIENT_DASHBOARD_ROUTES.MESSAGES).toBe('/client/messages');
+    expect(CLIENT_DASHBOARD_ROUTES.NOTIFICATIONS).toBe('/notifications');
+  });
+
+  test('legacy → v4 redirects SSOT', () => {
+    const map = Object.fromEntries(
+      CLIENT_LEGACY_ROUTE_REDIRECTS.map(({ from, to }) => [from, to])
+    );
+    expect(map['/client/sessions']).toBe(CLIENT_DASHBOARD_ROUTES.SESSION_MANAGEMENT);
+    expect(map['/client/payments']).toBe(CLIENT_DASHBOARD_ROUTES.PAYMENT_HISTORY);
+    expect(map['/client/orders']).toBe(CLIENT_SHOP_ROUTES.ORDERS);
+    expect(map['/client/profile']).toBe(CLIENT_DASHBOARD_ROUTES.SETTINGS);
+    expect(map['/client/notifications']).toBe(CLIENT_DASHBOARD_ROUTES.NOTIFICATIONS);
+    expect(map['/shop']).toBe(CLIENT_SHOP_ROUTES.CATALOG);
+    expect(map['/client/messages']).toBeUndefined();
   });
 
   test('community SSOT stays outside ClientAppShell more hub', () => {

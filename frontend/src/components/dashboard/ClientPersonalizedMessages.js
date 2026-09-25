@@ -6,6 +6,7 @@ import ConsultantListModal from '../common/ConsultantListModal';
 import ConsultationGuideModal from '../common/ConsultationGuideModal';
 import notificationManager from '../../utils/notification';
 import { getLucideIcon } from '../../utils/iconUtils';
+import { CLIENT_DASHBOARD_ROUTES } from '../../constants/clientDashboardRoutes';
 import '../../styles/unified-design-tokens.css';
 import './ClientPersonalizedMessages.css';
 import { useTranslation } from 'react-i18next';
@@ -88,7 +89,7 @@ const ClientPersonalizedMessages = ({ user, consultationData, clientStatus }) =>
         setTimeout(() => setIsLoading(false), 100);
         break;
       case 'messages':
-        navigate('/client/messages');
+        navigate(CLIENT_DASHBOARD_ROUTES.MESSAGES);
         setTimeout(() => setIsLoading(false), 100);
         break;
       case 'session-status':

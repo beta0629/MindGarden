@@ -468,3 +468,43 @@ export function mergeUnpaidSoftWithScheduleMappingIds(mergedMappings, schedulesR
 
   return Array.from(cardById.values());
 }
+
+/**
+ * Tip schedule shell compat (IntegratedMatchingSchedule EXCLUDE 유지).
+ * destin tip 은 mergeUnpaidSoftWithScheduleMappingIds 만 쓰지만,
+ * prod tip 스케줄 UX 는 status soft-paint 후 merge 한다.
+ * TENTATIVE_PENDING_PAYMENT 스케줄 mappingId 에 unpaid soft status 를 입힌다.
+ * 행을 발명하지 않으며, 이미 unpaid soft status 인 행은 그대로 둔다.
+ *
+ * @param {unknown} mergedMappings
+ * @param {unknown} schedulesRaw
+ * @returns {Array<object>}
+ */
+export function applyUnpaidSoftStatusFromSchedules(mergedMappings, schedulesRaw) {
+  if (!Array.isArray(mergedMappings)) {
+    return [];
+  }
+  const softIds = selectScheduleSoftUnpaidMappingIds(
+    unwrapAdminSchedulesList(schedulesRaw)
+  );
+  if (softIds.size === 0) {
+    return mergedMappings;
+  }
+  return mergedMappings.map((row) => {
+    if (row == null || typeof row !== 'object') {
+      return row;
+    }
+    const id = resolveUnpaidSoftMappingId(row);
+    if (id == null || !softIds.has(String(id))) {
+      return row;
+    }
+    if (isUnpaidSoftMappingStatus(row.status)) {
+      return row;
+    }
+    return {
+      ...row,
+      status: MAPPING_STATUS.PENDING_PAYMENT
+    };
+  });
+}
+

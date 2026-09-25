@@ -24,6 +24,7 @@ import {
 } from '../../utils/communityAuthorDisplay';
 import ReportModal from './ReportModal';
 import BlockConfirmModal from './BlockConfirmModal';
+import { CLIENT_DASHBOARD_ROUTES } from '../../constants/clientDashboardRoutes';
 import './CommunityFeed.css';
 
 const TABS = [
@@ -169,7 +170,7 @@ const CommunityFeed = ({ primaryColor }) => {
   const openPostDetail = (post) => {
     const basePath = window.location.pathname.includes('/consultant')
       ? '/consultant/more/community'
-      : '/client/more/community';
+      : CLIENT_DASHBOARD_ROUTES.COMMUNITY;
     navigate(`${basePath}/${post.id}`, { state: { post, posts, likedPosts } });
   };
 

@@ -576,6 +576,58 @@ describe('normalizeLnbTree — ADMIN 대시보드 랜딩 SSOT', () => {
   });
 });
 
+describe('normalizeLnbTree — CLIENT LNB 커뮤니티 드롭', () => {
+  test('CLIENT 역할에서 CLT_COMMUNITY 노드는 드롭한다 (경로 rewrite 없음)', () => {
+    const tree = normalizeLnbTree(
+      [
+        {
+          menuPath: '/client/dashboard',
+          menuName: '대시보드',
+          menuCode: 'CLT_DASHBOARD',
+          icon: 'LAYOUT_DASHBOARD',
+          children: []
+        },
+        {
+          menuPath: '/client/more/community',
+          menuName: '커뮤니티',
+          menuCode: 'CLT_COMMUNITY',
+          icon: 'USERS',
+          children: []
+        },
+        {
+          menuPath: '/client/settings',
+          menuName: '설정',
+          menuCode: 'CLT_SETTINGS',
+          icon: 'SETTINGS',
+          children: []
+        }
+      ],
+      { userRole: USER_ROLES.CLIENT }
+    );
+    expect(tree).toHaveLength(2);
+    expect(tree.map((n) => n.menuCode)).toEqual(['CLT_DASHBOARD', 'CLT_SETTINGS']);
+    expect(tree.every((n) => n.menuCode !== 'CLT_COMMUNITY')).toBe(true);
+  });
+
+  test('비 CLIENT 역할에서는 CLT_COMMUNITY 를 드롭하지 않는다', () => {
+    const tree = normalizeLnbTree(
+      [
+        {
+          menuPath: '/client/more/community',
+          menuName: '커뮤니티',
+          menuCode: 'CLT_COMMUNITY',
+          icon: 'USERS',
+          children: []
+        }
+      ],
+      { userRole: USER_ROLES.ADMIN }
+    );
+    expect(tree).toHaveLength(1);
+    expect(tree[0].menuCode).toBe('CLT_COMMUNITY');
+    expect(tree[0].to).toBe('/client/more/community');
+  });
+});
+
 describe('filterStaffErpLnbItems', () => {
   test('ADM_ERP menuCode 및 /erp/* 노드를 제거한다', () => {
     const items = [

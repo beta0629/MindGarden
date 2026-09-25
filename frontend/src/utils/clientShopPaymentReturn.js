@@ -23,6 +23,33 @@ const nonBlankTrimmed = (value) => {
 };
 
 /**
+ * 복귀 쿼리 paymentId가 없으면 stash(orderPublicId 일치)에서 폴백한다.
+ * stash도 없거나 주문 불일치면 null (fail-closed).
+ *
+ * @param {{ paymentId?: string|null, orderPublicId?: string|null }} [query]
+ * @returns {string|null}
+ */
+export const resolveShopPaymentReturnPaymentId = (query = {}) => {
+  const fromQuery = nonBlankTrimmed(query.paymentId);
+  if (fromQuery) {
+    return fromQuery;
+  }
+  const stash = readShopPendingPaymentVerify();
+  if (!stash || !stash.paymentId) {
+    return null;
+  }
+  const oid = nonBlankTrimmed(query.orderPublicId);
+  if (
+    oid &&
+    stash.orderPublicId &&
+    stash.orderPublicId === oid
+  ) {
+    return stash.paymentId;
+  }
+  return null;
+};
+
+/**
  * URLSearchParams / query 유사 객체에서 복귀 쿼리를 파싱한다.
  *
  * @param {URLSearchParams|{ get?: (key: string) => string|null }|null|undefined} searchParams

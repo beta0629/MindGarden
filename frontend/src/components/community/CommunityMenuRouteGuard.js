@@ -1,5 +1,7 @@
 /**
- * 커뮤니티 라우트 가드 — LNB menuCode 없으면 더보기로 replace
+ * 커뮤니티 라우트 가드 — LNB menuCode 없으면 fallbackPath 로 replace.
+ * CLIENT `/client/community` 는 LNB 비탭 deep-link 이므로 이 가드를 쓰지 않는다.
+ * CONSULTANT: 더보기 허브 등 역할별 fallbackPath 를 prop 으로 전달.
  *
  * @author MindGarden
  * @since 2026-09-11

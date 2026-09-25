@@ -59,6 +59,8 @@ export const countsTowardClientRemainingSessions = (status) => {
 export const MAPPING_STATUS_LABELS = {
     [MAPPING_STATUS.PENDING_PAYMENT]: '결제 대기',
     [MAPPING_STATUS.PAYMENT_CONFIRMED]: '결제 확인',
+    [MAPPING_STATUS.DEPOSIT_PENDING]: '입금 대기',
+    [MAPPING_STATUS.DEPOSIT_CONFIRMED]: '입금 확인',
     // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
     [MAPPING_STATUS.ACTIVE]: '활성',
     // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용

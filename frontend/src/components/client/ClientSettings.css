@@ -1,150 +1,188 @@
-/* ============================================
-   내담자 설정 페이지 스타일
-   ============================================ */
+/* ClientSettings.css — suite account form / notification groups */
 
-.client-settings-container {
-  padding: var(--spacing-lg);
-  background: linear-gradient(135deg, var(--mg-color-info-bg) 0%, #e8f2ff 100%);
-  min-height: 100vh;
-}
-
-.client-settings-card {
-  max-width: calc(var(--container-max-width) * 0.8);
-  margin: 0 auto;
-  background: rgba(255, 255, 255, 0.95);
-  border-radius: var(--border-radius-2xl);
-  padding: var(--spacing-xxl);
-  box-shadow: var(--shadow-xl);
-  backdrop-filter: blur(var(--blur-lg));
-  border: var(--border-width) solid var(--mg-glass-bg-medium);
-}
-
-.client-settings-header {
-  margin-bottom: var(--spacing-xxl);
-}
-
-.client-settings-title {
-  font-size: var(--font-size-xxl);
-  font-weight: var(--font-weight-bold);
-  color: var(--color-text-primary);
-  margin-bottom: var(--spacing-sm);
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-md);
-}
-
-.client-settings-title i {
-  color: var(--color-primary);
-  font-size: var(--font-size-xxxl);
-}
-
-.client-settings-subtitle {
-  font-size: var(--font-size-base);
-  color: var(--color-text-secondary);
+.client-settings-suite__message {
   margin: 0;
+  padding: 0.65rem 0.85rem;
+  border-radius: var(--client-web-radius-btn, 0.625rem);
+  background: var(--client-web-chip-bg);
+  border: 1px solid var(--client-web-line);
+  color: var(--client-web-ink);
+  font-size: 0.875rem;
+  font-weight: 500;
 }
 
-.client-settings-message {
-  padding: var(--spacing-sm) var(--spacing-md);
-  margin-bottom: var(--spacing-lg);
-  border-radius: var(--border-radius-md);
-  background: var(--color-success-light);
-  color: var(--color-success-dark);
-  border: var(--border-width) solid var(--color-success);
+.client-settings-suite__group-title {
+  margin: 0 0 var(--mg-v2-space-4, 1rem);
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: var(--client-web-ink);
 }
 
-.client-settings-content {
+.client-settings-suite__hint {
+  margin: 0 0 var(--mg-v2-space-4, 1rem);
+  font-size: 0.8125rem;
+  color: var(--client-web-mute);
+  line-height: 1.45;
+}
+
+.client-settings-suite__form {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-lg);
+  gap: var(--mg-v2-space-4, 1rem);
 }
 
-.client-settings-section {
-  padding: var(--spacing-lg);
-  background: var(--color-bg-secondary);
-  border-radius: var(--border-radius-xl);
-  border: var(--border-width) solid var(--color-border-light);
-}
-
-.client-settings-section-title {
-  font-size: var(--font-size-xl);
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-text-secondary);
-  margin-bottom: var(--spacing-lg);
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-sm);
-}
-
-.client-settings-section-title i {
-  color: var(--color-primary);
-}
-
-.client-settings-options {
+.client-settings-suite__field {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-md);
+  gap: 0.35rem;
 }
 
-.client-settings-option {
+.client-settings-suite__email-row {
+  display: flex;
+  align-items: stretch;
+  gap: var(--mg-v2-space-3, 0.75rem);
+}
+
+.client-settings-suite__email-row .client-settings-suite__input {
+  flex: 1;
+  min-width: 0;
+}
+
+.client-settings-suite__email-row .client-web-page-shell__cta {
+  flex-shrink: 0;
+  min-height: 2.5rem;
+  padding: 0 var(--mg-v2-space-4, 1rem);
+}
+
+.client-settings-suite__input {
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 2.5rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--client-web-line);
+  border-radius: var(--client-web-radius-btn, 0.625rem);
+  background: var(--client-web-surface);
+  color: var(--client-web-ink);
+  font-size: 0.875rem;
+}
+
+.client-settings-suite__input:focus-visible {
+  outline: 2px solid var(--client-web-teal);
+  outline-offset: 2px;
+}
+
+.client-settings-suite__input[readonly] {
+  background: var(--client-web-chip-bg);
+  color: var(--client-web-slate);
+  cursor: default;
+}
+
+.client-settings-suite__field-hint {
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--client-web-mute);
+}
+
+.client-settings-suite__verified {
+  margin: 0;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--client-web-teal);
+  line-height: 1.4;
+}
+
+.client-settings-suite__error {
+  margin: 0;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--mg-v2-color-error, var(--client-web-ink));
+}
+
+.client-settings-suite__actions {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: var(--mg-v2-space-2, 0.5rem);
+}
+
+.client-settings-suite__rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.client-settings-suite__row {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: var(--spacing-md) 0;
-  border-bottom: var(--border-width) solid var(--color-border);
+  gap: var(--mg-v2-space-4, 1rem);
+  padding: 0.85rem 0;
+  border-bottom: 1px solid var(--client-web-line);
 }
 
-.client-settings-option:last-child {
+.client-settings-suite__row:last-child {
   border-bottom: none;
+  padding-bottom: 0;
 }
 
-.client-settings-option h4 {
-  margin: 0;
-  font-size: var(--font-size-base);
-  color: var(--color-text-secondary);
+.client-settings-suite__row:first-child {
+  padding-top: 0;
 }
 
-.client-settings-option p {
-  margin: var(--spacing-xxs) 0 0 0;
-  font-size: var(--font-size-sm);
-  color: var(--color-text-tertiary);
+.client-settings-suite__row--password {
+  border-bottom: none;
+  padding: 0.5rem 0 0;
 }
 
-.client-settings-switch {
-  transform: scale(1.2);
+.client-settings-suite__label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--client-web-ink);
 }
 
-.client-settings-select {
-  max-width: calc(var(--spacing-xl) * 5);
-  padding: var(--spacing-sm);
-  border: var(--border-width) solid var(--color-border);
-  border-radius: var(--border-radius-md);
-  font-size: var(--font-size-base);
+.client-settings-suite__value {
+  font-size: 0.875rem;
+  color: var(--client-web-slate);
+  text-align: right;
 }
 
-.client-settings-footer {
-  text-align: center;
-  margin-top: var(--spacing-xxl);
+.client-settings-suite__row--toggle {
+  align-items: flex-start;
 }
 
-.client-settings-save-btn {
-  padding: var(--spacing-md) var(--spacing-xxl);
-  font-size: var(--font-size-base);
-  font-weight: var(--font-weight-semibold);
-  border-radius: var(--border-radius-lg);
+.client-settings-suite__toggle-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
 }
 
-/* 반응형 디자인 */
-@media (max-width: 768px) {
-  .client-settings-container {
-    padding: var(--spacing-md);
+.client-settings-suite__desc {
+  font-size: 0.8125rem;
+  color: var(--client-web-mute);
+}
+
+.client-settings-suite__switch {
+  width: 2.5rem;
+  height: 1.35rem;
+  accent-color: var(--client-web-teal);
+  cursor: pointer;
+  flex-shrink: 0;
+  margin-top: 0.15rem;
+}
+
+.client-settings-suite__switch:focus-visible {
+  outline: 2px solid var(--client-web-line);
+  outline-offset: 2px;
+}
+
+@media (max-width: 40rem) {
+  .client-settings-suite__email-row {
+    flex-direction: column;
   }
-  
-  .client-settings-card {
-    padding: var(--spacing-lg);
-  }
-  
-  .client-settings-title {
-    font-size: var(--font-size-xl);
+
+  .client-settings-suite__email-row .client-web-page-shell__cta {
+    width: 100%;
   }
 }

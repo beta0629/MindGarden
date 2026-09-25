@@ -15,8 +15,8 @@ export const CLIENT_DASHBOARD_ROUTES = {
   PAYMENT_HISTORY: '/client/payment-history',
   SETTINGS: '/client/settings',
   /**
-   * 웹 커뮤니티 SSOT — v4 로비 크롬 상수 참조용.
-   * 이 배치에서는 Community 페이지·App 라우트 등록 없음 (nav 미포함).
+   * 웹 커뮤니티 SSOT — v4 로비 크롬 (`ClientCommunityPage`).
+   * ClientAppShell(`/client/more/community`) 에 묶지 않음. Expo scheme 금지.
    */
   COMMUNITY: '/client/community',
   /** 웹 대시보드 KPI·코어 블록 전용 (LNB 미포함) */

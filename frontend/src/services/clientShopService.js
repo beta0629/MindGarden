@@ -11,6 +11,11 @@ import {
   normalizeShopCatalogCategory,
   SHOP_CHECKOUT_ERROR_COPY
 } from '../constants/clientShopConstants';
+import { ensurePublicShopTenantContext } from '../utils/ensurePublicShopTenantContext';
+import {
+  clearGuestShopCart,
+  getGuestShopCartLines
+} from '../utils/guestShopCart';
 import { toDisplayString } from '../utils/safeDisplay';
 
 /**
@@ -55,8 +60,14 @@ const mapCatalogRow = (row) => {
   };
 };
 
+/**
+ * 공개 카탈로그 목록 (로그인 불필요).
+ *
+ * @returns {Promise<object[]>}
+ */
 export const fetchShopCatalog = async() => {
-  const res = await StandardizedApi.get(CLIENT_SHOP_API.CATALOG);
+  await ensurePublicShopTenantContext();
+  const res = await StandardizedApi.get(CLIENT_SHOP_API.PUBLIC_CATALOG);
   const data = unwrap(res);
   return Array.isArray(data) ? data.map(mapCatalogRow) : [];
 };
@@ -68,9 +79,8 @@ export const fetchShopCart = async() => {
 
 export const replaceShopCart = async(lines) => {
   const res = await StandardizedApi.put(CLIENT_SHOP_API.CART, { lines });
-  // apiPut: data=null 이면 envelope 전체 반환. success===false 만 실패로 본다.
-  if (res != null && typeof res === 'object' && 'success' in res && res.success === false) {
-    throw new Error(res.message || '장바구니 갱신에 실패했습니다.');
+  if (!res || !res.success) {
+    throw new Error(res?.message || '장바구니 갱신에 실패했습니다.');
   }
 };
 
@@ -101,20 +111,45 @@ export const fetchShopOrder = async(orderPublicId) => {
 };
 
 /**
- * 카탈로그에서 SKU 1건 조회 (PDP — 별도 단건 API 없음).
+ * 공개 카탈로그에서 SKU 1건 조회 (PDP).
  *
  * @param {string} skuCode
  * @returns {Promise<object|null>}
  */
 export const fetchShopCatalogSku = async(skuCode) => {
-  const catalog = await fetchShopCatalog();
-  return catalog.find((row) => row.skuCode === skuCode) || null;
+  if (!skuCode) {
+    return null;
+  }
+  await ensurePublicShopTenantContext();
+  const res = await StandardizedApi.get(CLIENT_SHOP_API.publicCatalogSku(skuCode));
+  const data = unwrap(res);
+  return data ? mapCatalogRow(data) : null;
 };
 
 export const fetchConsultantMappings = async() => {
   const res = await StandardizedApi.get(CLIENT_SHOP_API.CONSULTANT_MAPPINGS);
   const data = unwrap(res);
   return Array.isArray(data) ? data : [];
+};
+
+/**
+ * 실패 엔벨로프에서 비어 있지 않은 message를 꺼낸다.
+ *
+ * @param {*} res
+ * @param {string} fallback
+ * @returns {string}
+ */
+const failureMessage = (res, fallback) => {
+  if (
+    res
+    && typeof res === 'object'
+    && res.success === false
+    && typeof res.message === 'string'
+    && res.message.trim()
+  ) {
+    return res.message;
+  }
+  return fallback;
 };
 
 /**
@@ -135,34 +170,23 @@ export const postShopCheckout = async(
     body.consultantClientMappingId = Number(consultantClientMappingId);
   }
   const res = await StandardizedApi.post(CLIENT_SHOP_API.CHECKOUT, body);
-  // apiPost 401 리다이렉트 시 StandardizedApi가 null을 throw 없이 반환할 수 있다.
-  if (res == null) {
-    throw new Error(SHOP_CHECKOUT_ERROR_COPY.SESSION_EXPIRED);
-  }
-  // StandardizedApi.post는 성공 시 data만 반환한다. envelope success 재검사 금지.
-  if (typeof res === 'object' && 'success' in res && res.success === false) {
-    throw new Error(res.message || SHOP_CHECKOUT_ERROR_COPY.CHECKOUT_FAILED);
-  }
   const data = unwrap(res);
-  if (!data || !data.orderPublicId) {
-    throw new Error(SHOP_CHECKOUT_ERROR_COPY.CHECKOUT_ORDER_ID_MISSING);
+  if (data == null || !data.orderPublicId) {
+    throw new Error(failureMessage(res, '체크아웃에 실패했습니다.'));
   }
   return data;
 };
 
 export const prepareShopPayment = async(orderPublicId) => {
   const res = await StandardizedApi.post(CLIENT_SHOP_API.preparePayment(orderPublicId), {});
-  // apiPost 401 리다이렉트 시 StandardizedApi가 null을 throw 없이 반환할 수 있다.
-  if (res == null) {
-    throw new Error(SHOP_CHECKOUT_ERROR_COPY.SESSION_EXPIRED);
-  }
-  // StandardizedApi.post는 성공 시 data만 반환한다. envelope success 재검사 금지.
-  if (typeof res === 'object' && 'success' in res && res.success === false) {
-    throw new Error(res.message || SHOP_CHECKOUT_ERROR_COPY.PREPARE_FAILED);
-  }
   const data = unwrap(res);
-  if (!data) {
-    throw new Error(SHOP_CHECKOUT_ERROR_COPY.PREPARE_FAILED);
+  if (
+    data == null
+    || !data.paymentId
+    || !data.storeId
+    || !data.channelKey
+  ) {
+    throw new Error(failureMessage(res, SHOP_CHECKOUT_ERROR_COPY.PREPARE_FAILED));
   }
   return data;
 };
@@ -203,19 +227,40 @@ export const verifyShopPayment = async(paymentId, amount) => {
 };
 
 /**
- * 미결제(CREATED/PENDING_PAYMENT) 주문 취소.
+ * 결제 전 주문 취소 (CREATED / PENDING_PAYMENT).
+ * PortOne 미기동 시 고아 미결제 주문 정리용.
+ * Void 성공 시 data가 null이어도 엔벨로프 success 또는 unwrap(null)을 성공으로 본다.
  *
  * @param {string} orderPublicId
- * @returns {Promise<void>}
+ * @returns {Promise<*>}
  */
 export const cancelShopOrder = async(orderPublicId) => {
+  if (!orderPublicId) {
+    throw new Error('주문 번호가 없습니다.');
+  }
   const res = await StandardizedApi.post(CLIENT_SHOP_API.cancelOrder(orderPublicId), {});
-  if (res == null) {
-    throw new Error(SHOP_CHECKOUT_ERROR_COPY.SESSION_EXPIRED);
+  if (res && typeof res === 'object' && 'success' in res && res.success === false) {
+    throw new Error(failureMessage(res, '주문 취소에 실패했습니다.'));
   }
-  if (typeof res === 'object' && 'success' in res && res.success === false) {
-    throw new Error(res.message || '주문 취소에 실패했습니다.');
+  return unwrap(res);
+};
+
+/**
+ * PAID 주문 이행 재시도 (FAILED·retryable). 내담자: 성공 재이행 1회 소진(서버 플래그).
+ * Anti double-tap 은 FE retrying + preventDoubleClick. FAILED+retryable 이면 버튼 재노출.
+ *
+ * @param {string} orderPublicId
+ * @returns {Promise<object|null>}
+ */
+export const retryShopOrderFulfillment = async(orderPublicId) => {
+  if (!orderPublicId) {
+    throw new Error('주문 번호가 없습니다.');
   }
+  const res = await StandardizedApi.post(CLIENT_SHOP_API.fulfillRetry(orderPublicId), {});
+  if (res && typeof res === 'object' && 'success' in res && res.success === false) {
+    throw new Error(failureMessage(res, '재이행에 실패했습니다.'));
+  }
+  return unwrap(res);
 };
 
 export const buildCartLinesPayload = (lines) =>
@@ -223,6 +268,42 @@ export const buildCartLinesPayload = (lines) =>
     skuCode: l.skuCode,
     quantity: l.quantity
   }));
+
+/**
+ * 두 장바구니 라인을 skuCode 기준 합산(수량 0–99).
+ *
+ * @param {{ skuCode: string, quantity: number }[]} a
+ * @param {{ skuCode: string, quantity: number }[]} b
+ * @returns {{ skuCode: string, quantity: number }[]}
+ */
+export const mergeCartLines = (a, b) => {
+  const next = (a || []).map((l) => ({
+    skuCode: l.skuCode,
+    quantity: l.quantity
+  }));
+  (b || []).forEach((line) => {
+    if (!line?.skuCode) {
+      return;
+    }
+    const idx = next.findIndex((l) => l.skuCode === line.skuCode);
+    const addQty = Number(line.quantity);
+    if (!Number.isFinite(addQty) || addQty <= 0) {
+      return;
+    }
+    if (idx >= 0) {
+      next[idx] = {
+        skuCode: line.skuCode,
+        quantity: Math.min(99, next[idx].quantity + Math.floor(addQty))
+      };
+    } else {
+      next.push({
+        skuCode: line.skuCode,
+        quantity: Math.min(99, Math.floor(addQty))
+      });
+    }
+  });
+  return next.filter((l) => l.quantity > 0);
+};
 
 export const mergeCartLine = (currentLines, skuCode, delta) => {
   const next = (currentLines || []).map((l) => ({
@@ -241,4 +322,21 @@ export const mergeCartLine = (currentLines, skuCode, delta) => {
     next.push({ skuCode, quantity: Math.min(99, delta) });
   }
   return next;
+};
+
+/**
+ * 게스트 localStorage 카트를 서버 카트에 합친 뒤 게스트 저장소를 비운다(멱등).
+ *
+ * @returns {Promise<{ merged: boolean, lines: { skuCode: string, quantity: number }[] }>}
+ */
+export const mergeGuestShopCartIntoServer = async() => {
+  const guestLines = getGuestShopCartLines();
+  if (!guestLines.length) {
+    return { merged: false, lines: [] };
+  }
+  const cart = await fetchShopCart();
+  const merged = mergeCartLines(cart.lines, guestLines);
+  await replaceShopCart(merged);
+  clearGuestShopCart();
+  return { merged: true, lines: merged };
 };

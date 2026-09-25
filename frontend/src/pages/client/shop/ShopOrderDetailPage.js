@@ -5,55 +5,99 @@
  * @since 2026-05-19
  */
 
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import ShopClientLayout from '../../../components/shop/templates/ShopClientLayout';
 import ShopClientSessionLoading from '../../../components/shop/templates/ShopClientSessionLoading';
 import FulfillmentLineList from '../../../components/shop/molecules/FulfillmentLineList';
 import CheckoutSummary from '../../../components/shop/organisms/CheckoutSummary';
 import {
+  canClientShopFulfillRetry,
+  canConfirmShopPayment,
   CLIENT_SHOP_ROUTES,
+  CLIENT_SHOP_TEST_IDS,
+  formatShopSessionCountDisplay,
   isShopOrderAwaitingPayment,
-  SHOP_CHECKOUT_EMAIL_COPY,
-  SHOP_CHECKOUT_FULL_NAME_COPY,
-  SHOP_CHECKOUT_PHONE_COPY,
-  SHOP_ORDER_STATUS_LABELS
+  resolveShopFulfillmentLines,
+  SHOP_CHECKOUT_ERROR_COPY,
+  SHOP_FULFILLMENT_RETRY_COPY,
+  SHOP_ORDER_STATUS_LABELS,
+  SHOP_PAYMENT_LAUNCH_COPY
 } from '../../../constants/clientShopConstants';
+import {
+  CLIENT_WEB_SUITE_COPY,
+  CLIENT_WEB_SUITE_TEST_IDS
+} from '../../../constants/clientWebSuiteConstants';
+import SafeText from '../../../components/common/SafeText';
 import { useClientShopAuth } from '../../../hooks/useClientShopAuth';
-import { cancelShopOrder, fetchShopOrder, prepareShopPayment } from '../../../services/clientShopService';
+import {
+  fetchShopOrder,
+  prepareShopPayment,
+  retryShopOrderFulfillment
+} from '../../../services/clientShopService';
+import { requestClientHomeMappingsSoftRefresh } from '../../../utils/clientHomeSoftRefresh';
+import {
+  assertPortOneCustomerReadyBeforeCheckout,
+  buildPortOneCustomerFromUser,
+  resolvePortOneCustomerFailMessage
+} from '../../../utils/clientShopPaymentCustomer';
+import { runShopPortOnePaymentIfReady } from '../../../utils/shopPortOneCheckout';
+import { verifyShopPaymentWithRetry } from '../../../utils/shopPaymentVerifyRetry';
 import { formatShopMoney } from '../../../utils/clientShopFormat';
 import {
-  isPortOneCustomerEmailFormat,
-  isPortOneCustomerPhoneFormat,
-  launchShopPaymentFromPrepare,
-  resolvePortOneCustomer,
-  resolveSessionEmail,
-  resolveSessionFullName,
-  resolveSessionPhoneNumber
-} from '../../../utils/clientShopPaymentLaunch';
+  MIN_PAYMENT_AMOUNT,
+  formatPaymentAmountForDisplay,
+  isBelowMinCardCashDue
+} from '../../../constants/paymentAmountConstants';
+import {
+  PAYMENT_MIN_CARD_AMOUNT_I18N_KEY,
+  PAYMENT_MIN_CARD_AMOUNT_TITLE_I18N_KEY
+} from '../../../utils/minPaymentAmountMessage';
+import { useAlert } from '../../../hooks/useAlert';
 import { useTranslation } from 'react-i18next';
-import UnifiedModal from '../../../components/common/modals/UnifiedModal';
+
+/**
+ * checkout → 주문 상세 navigate state 메시지를 1회만 읽는다.
+ * @param {unknown} state
+ * @returns {string}
+ */
+const readShopCheckoutMessageOnce = (state) => {
+  if (!state || state.shopCheckoutMessage == null) {
+    return '';
+  }
+  return String(state.shopCheckoutMessage).trim();
+};
 
 const ShopOrderDetailPage = () => {
   const { t } = useTranslation();
+  const [alert, AlertModal] = useAlert();
   const { orderPublicId } = useParams();
+  const location = useLocation();
+  const navigate = useNavigate();
   const { sessionLoading, isLoggedIn, user } = useClientShopAuth();
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [retrying, setRetrying] = useState(false);
   const [message, setMessage] = useState('');
   const [paymentUrl, setPaymentUrl] = useState('');
-  const [checkoutEmail, setCheckoutEmail] = useState('');
-  const [checkoutFullName, setCheckoutFullName] = useState('');
-  const [checkoutPhone, setCheckoutPhone] = useState('');
-  const [cancelOpen, setCancelOpen] = useState(false);
-  const [cancelling, setCancelling] = useState(false);
+  const pendingCheckoutMessageRef = useRef(
+    readShopCheckoutMessageOnce(location.state)
+  );
+  const checkoutStateClearedRef = useRef(false);
 
-  const sessionEmail = useMemo(() => resolveSessionEmail(user), [user]);
-  const sessionFullName = useMemo(() => resolveSessionFullName(user), [user]);
-  const sessionPhoneNumber = useMemo(() => resolveSessionPhoneNumber(user), [user]);
-  const needsCheckoutEmail = !sessionEmail;
-  const needsCheckoutFullName = !sessionFullName;
-  const needsCheckoutPhone = !sessionPhoneNumber;
+  const portOneCustomerGate = useMemo(
+    () => assertPortOneCustomerReadyBeforeCheckout(user),
+    [user]
+  );
+
+  const consumePendingCheckoutMessage = useCallback(() => {
+    const pending = pendingCheckoutMessageRef.current;
+    if (!pending) {
+      return;
+    }
+    pendingCheckoutMessageRef.current = '';
+    setMessage(pending);
+  }, []);
 
   const loadOrder = useCallback(async() => {
     if (!orderPublicId) {
@@ -69,13 +113,14 @@ const ShopOrderDetailPage = () => {
         return;
       }
       setOrder(data);
+      consumePendingCheckoutMessage();
     } catch (e) {
       setMessage(e.message || '주문 상세를 불러오지 못했습니다.');
       setOrder(null);
     } finally {
       setLoading(false);
     }
-  }, [orderPublicId]);
+  }, [orderPublicId, consumePendingCheckoutMessage]);
 
   useEffect(() => {
     if (!sessionLoading && isLoggedIn) {
@@ -83,77 +128,151 @@ const ShopOrderDetailPage = () => {
     }
   }, [sessionLoading, isLoggedIn, loadOrder]);
 
-  const handlePreparePayment = async() => {
-    if (!orderPublicId) {
+  useEffect(() => {
+    if (checkoutStateClearedRef.current) {
       return;
     }
-    if (needsCheckoutEmail) {
-      const trimmedCheckoutEmail = checkoutEmail.trim();
-      if (!trimmedCheckoutEmail) {
-        setMessage(SHOP_CHECKOUT_EMAIL_COPY.REQUIRED);
-        return;
-      }
-      if (!isPortOneCustomerEmailFormat(trimmedCheckoutEmail)) {
-        setMessage(SHOP_CHECKOUT_EMAIL_COPY.INVALID);
-        return;
-      }
+    const raw = readShopCheckoutMessageOnce(location.state);
+    if (!raw) {
+      return;
     }
-    if (needsCheckoutFullName) {
-      const trimmedCheckoutFullName = checkoutFullName.trim();
-      if (!trimmedCheckoutFullName) {
-        setMessage(SHOP_CHECKOUT_FULL_NAME_COPY.REQUIRED);
-        return;
-      }
+    pendingCheckoutMessageRef.current = raw;
+    checkoutStateClearedRef.current = true;
+    navigate(`${location.pathname}${location.search || ''}`, {
+      replace: true,
+      state: {}
+    });
+  }, [location.state, location.pathname, location.search, navigate]);
+
+  const showMinCardPaymentAlert = async() => {
+    await alert({
+      variant: 'warning',
+      titleKey: PAYMENT_MIN_CARD_AMOUNT_TITLE_I18N_KEY,
+      messageKey: PAYMENT_MIN_CARD_AMOUNT_I18N_KEY,
+      interpolation: { amount: formatPaymentAmountForDisplay(MIN_PAYMENT_AMOUNT) }
+    });
+  };
+
+  const handleConfirmPendingPayment = async() => {
+    const paymentId = order?.paymentId && String(order.paymentId).trim();
+    const cashDue = order?.cashDueMinor;
+    if (!paymentId) {
+      setMessage(SHOP_CHECKOUT_ERROR_COPY.VERIFY_FAILED);
+      return;
     }
-    if (needsCheckoutPhone) {
-      const trimmedCheckoutPhone = checkoutPhone.trim();
-      if (!trimmedCheckoutPhone) {
-        setMessage(SHOP_CHECKOUT_PHONE_COPY.REQUIRED);
-        return;
-      }
-      if (!isPortOneCustomerPhoneFormat(trimmedCheckoutPhone)) {
-        setMessage(SHOP_CHECKOUT_PHONE_COPY.INVALID);
-        return;
-      }
+    if (cashDue == null || !Number.isFinite(Number(cashDue))) {
+      setMessage(SHOP_CHECKOUT_ERROR_COPY.INVALID_CASH_AMOUNT);
+      return;
     }
     try {
       setLoading(true);
-      setMessage('');
-      const result = await prepareShopPayment(orderPublicId);
-      const customer = resolvePortOneCustomer({
-        user,
-        checkoutEmail,
-        checkoutFullName,
-        checkoutPhone
-      });
-      const launch = await launchShopPaymentFromPrepare(result, { customer });
-      if (launch.mode === 'url' && launch.paymentUrl) {
-        setPaymentUrl(launch.paymentUrl);
+      setMessage(SHOP_PAYMENT_LAUNCH_COPY.CONFIRM_PENDING_PAYMENT_VERIFYING);
+      await verifyShopPaymentWithRetry(paymentId, Number(cashDue));
+      setMessage(SHOP_PAYMENT_LAUNCH_COPY.PAYMENT_COMPLETED);
+      const refreshed = await fetchShopOrder(orderPublicId);
+      if (!refreshed) {
+        throw new Error(SHOP_CHECKOUT_ERROR_COPY.VERIFY_FAILED);
       }
-      setMessage('결제 페이지를 열었습니다. 완료 후 이 화면을 새로고침해 주세요.');
-      await loadOrder();
+      setOrder(refreshed);
     } catch (e) {
-      setMessage(e.message || '결제 준비에 실패했습니다.');
+      setMessage((e && e.message) || SHOP_CHECKOUT_ERROR_COPY.VERIFY_FAILED);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleCancelOrder = async() => {
+  const handlePreparePayment = async() => {
     if (!orderPublicId) {
       return;
     }
+    if (isBelowMinCardCashDue(order?.cashDueMinor)) {
+      await showMinCardPaymentAlert();
+      return;
+    }
     try {
-      setCancelling(true);
+      setLoading(true);
       setMessage('');
-      await cancelShopOrder(orderPublicId);
-      setCancelOpen(false);
-      setMessage('주문이 취소되었습니다.');
+      const customer = buildPortOneCustomerFromUser(user);
+      if (!customer || !portOneCustomerGate.ready) {
+        setMessage(
+          portOneCustomerGate.message
+            || resolvePortOneCustomerFailMessage(user)
+            || SHOP_PAYMENT_LAUNCH_COPY.CUSTOMER_PHONE_REQUIRED
+        );
+        return;
+      }
+      const result = await prepareShopPayment(orderPublicId);
+      const portoneFlow = await runShopPortOnePaymentIfReady(result, {
+        orderName: `주문 ${orderPublicId}`,
+        customer
+      });
+      if (portoneFlow.skipped) {
+        if (result?.paymentUrl) {
+          setPaymentUrl(result.paymentUrl);
+          window.open(result.paymentUrl, '_blank', 'noopener,noreferrer');
+        }
+        setMessage('결제 페이지를 열었습니다. 완료 후 이 화면을 새로고침해 주세요.');
+      } else if (portoneFlow.verified) {
+        setMessage('결제가 완료되었습니다.');
+      } else {
+        setMessage('결제 모듈 호출이 완료되었습니다. 승인 반영까지 잠시 후 새로고침해 주세요.');
+      }
       await loadOrder();
     } catch (e) {
-      setMessage(e.message || '주문 취소에 실패했습니다.');
+      const errMsg = e.message || '';
+      if (
+        isBelowMinCardCashDue(order?.cashDueMinor)
+        || errMsg.includes('최소 금액')
+        || errMsg.includes('카드 결제는')
+        || errMsg.includes(String(MIN_PAYMENT_AMOUNT))
+        || errMsg.includes(formatPaymentAmountForDisplay(MIN_PAYMENT_AMOUNT))
+      ) {
+        await showMinCardPaymentAlert();
+      } else {
+        setMessage(errMsg || '결제 준비에 실패했습니다.');
+      }
     } finally {
-      setCancelling(false);
+      setLoading(false);
+    }
+  };
+
+  const handleFulfillRetry = async() => {
+    if (!orderPublicId || retrying) {
+      return;
+    }
+    try {
+      setRetrying(true);
+      setMessage('');
+      const updated = await retryShopOrderFulfillment(orderPublicId);
+      let nextOrder = updated;
+      if (updated) {
+        setOrder(updated);
+      } else {
+        const refreshed = await fetchShopOrder(orderPublicId);
+        if (refreshed) {
+          setOrder(refreshed);
+          nextOrder = refreshed;
+        }
+      }
+      // API 200 이어도 FAILED+retryable 이면 버튼 유지·SUCCESS 메시지 금지
+      if (canClientShopFulfillRetry(nextOrder)) {
+        setMessage(SHOP_FULFILLMENT_RETRY_COPY.FAILED);
+      } else {
+        setMessage(SHOP_FULFILLMENT_RETRY_COPY.SUCCESS);
+        requestClientHomeMappingsSoftRefresh();
+      }
+    } catch (e) {
+      setMessage((e && e.message) || SHOP_FULFILLMENT_RETRY_COPY.FAILED);
+      try {
+        const refreshed = await fetchShopOrder(orderPublicId);
+        if (refreshed) {
+          setOrder(refreshed);
+        }
+      } catch {
+        // 상태 동기화 실패는 무시 (이미 오류 메시지 표시)
+      }
+    } finally {
+      setRetrying(false);
     }
   };
 
@@ -162,14 +281,18 @@ const ShopOrderDetailPage = () => {
   }
 
   const awaitingPayment = isShopOrderAwaitingPayment(order);
+  const canConfirmPendingPayment = canConfirmShopPayment(order);
+  // FAILED+retryable only; hide when SUCCESS/COMPLETED or non-retryable / server success-consumed
+  const showFulfillRetry = canClientShopFulfillRetry(order);
+  const displayPaymentId =
+    order?.paymentId != null && String(order.paymentId).trim()
+      ? String(order.paymentId).trim()
+      : '';
   const lines = order?.lines || [];
-  const payBlocked =
-    (needsCheckoutEmail && !checkoutEmail.trim()) ||
-    (needsCheckoutFullName && !checkoutFullName.trim()) ||
-    (needsCheckoutPhone && !checkoutPhone.trim());
 
   return (
     <ShopClientLayout title="주문 상세" testId="client-shop-order-detail">
+      <AlertModal />
       <p className="client-shop__message">
         <Link to={CLIENT_SHOP_ROUTES.ORDERS}>← 내 구매 목록</Link>
       </p>
@@ -201,9 +324,21 @@ const ShopOrderDetailPage = () => {
               <span>주문 번호</span>
               <span>{order.orderPublicId}</span>
             </p>
+            {displayPaymentId ? (
+              <p className="client-shop__summary-row">
+                <span>{SHOP_PAYMENT_LAUNCH_COPY.PAYMENT_ID_LABEL}</span>
+                <span>{displayPaymentId}</span>
+              </p>
+            ) : null}
           </section>
 
-          <FulfillmentLineList fulfillmentLines={order.fulfillmentLines} />
+          <FulfillmentLineList
+            fulfillmentLines={resolveShopFulfillmentLines(order)}
+            showRetry={showFulfillRetry}
+            retrying={retrying}
+            retryDisabled={retrying}
+            onRetry={handleFulfillRetry}
+          />
 
           <section className="client-shop__section" aria-label="주문 상품">
             <h2 className="client-shop__section-title">주문 상품</h2>
@@ -213,7 +348,11 @@ const ShopOrderDetailPage = () => {
               lines.map((line) => (
                 <p key={`${line.lineNo}-${line.skuCode}`} className="client-shop__summary-row">
                   <span>
-                    {line.title} × {line.quantity}
+                    <SafeText>{line.title}</SafeText>
+                    {' × '}
+                    {line.quantity}
+                    {' · '}
+                    <SafeText>{formatShopSessionCountDisplay(line.sessionCount)}</SafeText>
                   </span>
                   <span>{formatShopMoney(line.lineTotalMinor)}</span>
                 </p>
@@ -227,101 +366,42 @@ const ShopOrderDetailPage = () => {
             cashDueMinor={order.cashDueMinor}
           />
 
-          {awaitingPayment ? (
+          {canConfirmPendingPayment ? (
+            <button
+              type="button"
+              className="client-shop__cta"
+              disabled={loading}
+              data-testid={CLIENT_SHOP_TEST_IDS.ORDER_DETAIL_CONFIRM_PAYMENT}
+              onClick={handleConfirmPendingPayment}
+            >
+              {SHOP_PAYMENT_LAUNCH_COPY.CONFIRM_PENDING_PAYMENT}
+            </button>
+          ) : null}
+
+          {awaitingPayment && !canConfirmPendingPayment ? (
             <>
-              {needsCheckoutEmail ? (
-                <section
-                  className="client-shop__section"
-                  aria-label={SHOP_CHECKOUT_EMAIL_COPY.SECTION_TITLE}
+              {!portOneCustomerGate.ready && portOneCustomerGate.message ? (
+                <div
+                  className="client-shop__message client-shop__message--error"
+                  role="alert"
+                  data-testid={CLIENT_WEB_SUITE_TEST_IDS.ORDER_DETAIL_PHONE_GATE}
                 >
-                  <h2 className="client-shop__section-title">
-                    {SHOP_CHECKOUT_EMAIL_COPY.SECTION_TITLE}
-                  </h2>
-                  <p className="client-shop__message">{SHOP_CHECKOUT_EMAIL_COPY.HELP}</p>
-                  <label className="client-shop__field-label" htmlFor="shop-order-checkout-email">
-                    {SHOP_CHECKOUT_EMAIL_COPY.LABEL}
-                  </label>
-                  <input
-                    id="shop-order-checkout-email"
-                    type="email"
-                    className="client-shop__input"
-                    value={checkoutEmail}
-                    onChange={(e) => setCheckoutEmail(e.target.value)}
-                    placeholder={SHOP_CHECKOUT_EMAIL_COPY.PLACEHOLDER}
-                    disabled={loading}
-                    autoComplete="email"
-                    aria-required="true"
-                  />
-                </section>
-              ) : null}
-              {needsCheckoutFullName ? (
-                <section
-                  className="client-shop__section"
-                  aria-label={SHOP_CHECKOUT_FULL_NAME_COPY.SECTION_TITLE}
-                >
-                  <h2 className="client-shop__section-title">
-                    {SHOP_CHECKOUT_FULL_NAME_COPY.SECTION_TITLE}
-                  </h2>
-                  <p className="client-shop__message">{SHOP_CHECKOUT_FULL_NAME_COPY.HELP}</p>
-                  <label
-                    className="client-shop__field-label"
-                    htmlFor="shop-order-checkout-full-name"
+                  <p>{portOneCustomerGate.message}</p>
+                  <Link
+                    className="client-web-page-shell__cta client-web-page-shell__cta--ghost"
+                    to="/client/settings"
                   >
-                    {SHOP_CHECKOUT_FULL_NAME_COPY.LABEL}
-                  </label>
-                  <input
-                    id="shop-order-checkout-full-name"
-                    type="text"
-                    className="client-shop__input"
-                    value={checkoutFullName}
-                    onChange={(e) => setCheckoutFullName(e.target.value)}
-                    placeholder={SHOP_CHECKOUT_FULL_NAME_COPY.PLACEHOLDER}
-                    disabled={loading}
-                    autoComplete="name"
-                    aria-required="true"
-                  />
-                </section>
-              ) : null}
-              {needsCheckoutPhone ? (
-                <section
-                  className="client-shop__section"
-                  aria-label={SHOP_CHECKOUT_PHONE_COPY.SECTION_TITLE}
-                >
-                  <h2 className="client-shop__section-title">
-                    {SHOP_CHECKOUT_PHONE_COPY.SECTION_TITLE}
-                  </h2>
-                  <p className="client-shop__message">{SHOP_CHECKOUT_PHONE_COPY.HELP}</p>
-                  <label className="client-shop__field-label" htmlFor="shop-order-checkout-phone">
-                    {SHOP_CHECKOUT_PHONE_COPY.LABEL}
-                  </label>
-                  <input
-                    id="shop-order-checkout-phone"
-                    type="tel"
-                    className="client-shop__input"
-                    value={checkoutPhone}
-                    onChange={(e) => setCheckoutPhone(e.target.value)}
-                    placeholder={SHOP_CHECKOUT_PHONE_COPY.PLACEHOLDER}
-                    disabled={loading}
-                    autoComplete="tel"
-                    aria-required="true"
-                  />
-                </section>
+                    {CLIENT_WEB_SUITE_COPY.CHECKOUT_SETTINGS_LINK}
+                  </Link>
+                </div>
               ) : null}
               <button
                 type="button"
                 className="client-shop__cta"
-                disabled={loading || payBlocked}
+                disabled={loading || !portOneCustomerGate.ready}
                 onClick={handlePreparePayment}
               >
                 {formatShopMoney(order.cashDueMinor)} 결제하기
-              </button>
-              <button
-                type="button"
-                className="client-shop__cta client-shop__cta--secondary"
-                disabled={loading || cancelling}
-                onClick={() => setCancelOpen(true)}
-              >
-                주문 취소
               </button>
               {paymentUrl ? (
                 <p className="client-shop__message">
@@ -334,41 +414,6 @@ const ShopOrderDetailPage = () => {
           ) : null}
         </>
       ) : null}
-
-      <UnifiedModal
-        isOpen={cancelOpen}
-        onClose={() => {
-          if (!cancelling) {
-            setCancelOpen(false);
-          }
-        }}
-        title="주문 취소"
-        size="small"
-        footer={(
-          <>
-            <button
-              type="button"
-              className="client-shop__cta client-shop__cta--secondary"
-              disabled={cancelling}
-              onClick={() => setCancelOpen(false)}
-            >
-              닫기
-            </button>
-            <button
-              type="button"
-              className="client-shop__cta"
-              disabled={cancelling}
-              onClick={handleCancelOrder}
-            >
-              {cancelling ? '취소 중…' : '취소 확인'}
-            </button>
-          </>
-        )}
-      >
-        <p className="client-shop__message">
-          미결제 주문을 취소합니다. 진행 중인 결제가 있으면 함께 취소됩니다.
-        </p>
-      </UnifiedModal>
     </ShopClientLayout>
   );
 };

@@ -1,7 +1,8 @@
-import { API_BASE_URL } from '../constants/api';
+import { API_BASE_URL, AUTH_API } from '../constants/api';
 import {
   SESSION_CHECK_INTERVAL,
   SESSION_CHECK_TIMEOUT,
+  SESSION_CHECK_CALLER_CAP_MS,
   SESSION_CHECK_COOLDOWN_MS,
   SESSION_TERMINATED_DUPLICATE_ERROR_CODE,
   DUPLICATE_LOGIN_REDIRECT_SEARCH
@@ -15,7 +16,7 @@ import {
 import { isTransientNetworkError, notifyTransientNetworkIssue } from './networkErrorUtils';
 import { redirectToLoginPageOnce } from './sessionRedirect';
 import { clearStoredSessionExpiry, syncStoredSessionExpiry } from './sessionExpiryDisplay';
-import { isPublicSpaPath } from './publicSpaPaths';
+import { clearJustRefreshed, hasStoredAccessToken, hasStoredRefreshToken, isWithinAuthGraceWindow } from './sessionAuthPolicy';
 
 /**
  * current-user / session-info 등: `{ success, data }` 래퍼면 `data`만 사용.
@@ -72,6 +73,47 @@ function normalizeSessionInfoForClient(sessionData) {
     lastAccessedTime,
     clientReceivedAt
   };
+}
+
+/**
+ * 로그인·랜딩 등 인증 없이 머무는 경로.
+ * 세션 확인을 이 경로에서 시작했으면, 응답 전에 대시보드로 넘어가도 /login 으로 되돌리지 않는다.
+ *
+ * @param {string} pathname
+ * @returns {boolean}
+ */
+function isPublicAuthPage(pathname) {
+  const currentPath = pathname || '';
+  return currentPath === '/login' ||
+    currentPath.startsWith('/login/') ||
+    currentPath === '/landing' ||
+    currentPath === '/' ||
+    currentPath.startsWith('/register') ||
+    currentPath.startsWith('/tablet/register') ||
+    currentPath.startsWith('/forgot-password') ||
+    currentPath.startsWith('/reset-password') ||
+    currentPath.startsWith('/auth/oauth2/callback');
+}
+
+/**
+ * current-user 가 멈추거나 refresh 가 안 끝나도 호출자(로그인 버튼)를 상한 시간만 붙잡는다.
+ * 진행 중 확인 자체는 그대로 두고, 이 promise 만 풀어 준다.
+ *
+ * @param {SessionManager} sessionManager
+ * @param {Promise<boolean>} promise
+ * @returns {Promise<boolean>}
+ */
+function awaitSessionCheckWithCap(sessionManager, promise) {
+  let timer;
+  const cap = new Promise((resolve) => {
+    timer = setTimeout(() => {
+      console.warn('세션 확인 호출 상한 초과 — 로그인 버튼을 더 기다리지 않음');
+      resolve(sessionManager.user !== null);
+    }, SESSION_CHECK_CALLER_CAP_MS);
+  });
+  return Promise.race([promise, cap]).finally(() => {
+    clearTimeout(timer);
+  });
 }
 
 /** hung fetch가 inflightCheckPromise를 영구 차단하지 않도록 AbortSignal 생성 */
@@ -137,13 +179,15 @@ class SessionManager {
         const method = (args[1]?.method || args[0]?.method || 'GET').toUpperCase();
         const reqUrl = typeof args[0] === 'string' ? args[0] : (args[0]?.url || '');
         // 로그아웃·세션 무효화는 폼 훅에서 제외 — endFormSubmit → checkSession(true) 가
-        // 서버 세션이 아직 남은 경우 current-user 로 사용자를 되살리는 부작용 방지
+        // 서버 세션이 아직 남은 경우 current-user 로 사용자를 되살리는 부작용 방지.
+        // refresh-token 은 세션 확인·401 재시도 내부에서 호출되므로 훅이 또 확인을 걸지 않게 제외.
         const skipFormSessionHook =
           typeof reqUrl === 'string' &&
           (reqUrl.includes('/api/v1/auth/logout') ||
             reqUrl.includes('/api/auth/logout') ||
             reqUrl.includes('/api/v1/auth/clear-session') ||
-            reqUrl.includes('/api/auth/clear-session'));
+            reqUrl.includes('/api/auth/clear-session') ||
+            reqUrl.includes(AUTH_API.REFRESH_TOKEN));
 
         if (['POST', 'PUT', 'DELETE', 'PATCH'].includes(method) && !skipFormSessionHook) {
           this.startFormSubmit();
@@ -161,8 +205,21 @@ class SessionManager {
     }
   }
 
-  // 세션 상태 확인 (강제 확인 옵션 추가)
-  async checkSession(force = false) {
+  /**
+   * 세션 상태 확인.
+   *
+   * @param {boolean} [force=false] 쿨다운·중복 방지 무시
+   * @param {{ background?: boolean, idleExpiry?: boolean }} [options]
+   *   background=true: 주기 폴·폼 훅·로그인 직후 확인. current-user 401 이어도
+   *   사용자를 유지하고 /login 으로 보내지 않는다(중복 로그인 종료 401 만 예외).
+   *   idleExpiry=true: 유휴 경고 모달 만료 재확인. grace·토큰 갱신·background 유지로
+   *   세션을 되살리지 않는다. 리다이렉트는 모달 logout() → /login?logout=success.
+   * @returns {Promise<boolean>} 세션 유효 여부
+   */
+  async checkSession(force = false, options = {}) {
+    const idleExpiry = options.idleExpiry === true;
+    // 유휴 만료는 백그라운드 401 유지 대상이 아니다. background 플래그가 같이 와도 끈다.
+    const background = idleExpiry ? false : options.background === true;
     const now = Date.now();
 
     // 프로필 수정 중이면 세션 체크 스킵
@@ -192,16 +249,20 @@ class SessionManager {
     // P0 hotfix 2026-06-12: force=true 동시 호출 시에도 진행 중 promise 공유 (current-user 9회 중복 호출 제거)
     // SessionProvider mount / MyPage loadUserInfo+loadSocialAccounts+loadWithdrawalStatus / ProfileSection /
     // UnifiedHeader / SessionIdleWarning 등이 force=true 로 동시에 호출해도 실제 fetch 는 1회로 합쳐짐.
-    if (this.inflightCheckPromise) {
+    // 유휴 만료 재확인은 진행 중인 background 확인(refresh 로 세션을 되살릴 수 있음)에 합류하지 않는다.
+    if (this.inflightCheckPromise && !idleExpiry) {
       console.log('🔄 세션 체크 dedup (진행 중 promise 공유)');
-      return this.inflightCheckPromise;
+      return awaitSessionCheckWithCap(this, this.inflightCheckPromise);
     }
 
-    this.inflightCheckPromise = this._performCheckSession(now);
+    const pending = this._performCheckSession(now, { background, idleExpiry });
+    this.inflightCheckPromise = pending;
     try {
-      return await this.inflightCheckPromise;
+      return await awaitSessionCheckWithCap(this, pending);
     } finally {
-      this.inflightCheckPromise = null;
+      if (this.inflightCheckPromise === pending) {
+        this.inflightCheckPromise = null;
+      }
     }
   }
 
@@ -209,12 +270,19 @@ class SessionManager {
    * 실제 current-user / session-info 호출 본문. 동시 force 호출 dedup 은 {@link checkSession} 에서 처리한다.
    *
    * @param {number} now 호출 시각(ms epoch)
+   * @param {{ background?: boolean, idleExpiry?: boolean }} [options] {@link checkSession} 과 동일
    * @returns {Promise<boolean>} 세션 유효 여부
    */
-  async _performCheckSession(now) {
+  async _performCheckSession(now, { background = false, idleExpiry = false } = {}) {
     this.checkInProgress = true;
     this.isLoading = true;
     this.notifyListeners(); // 로딩 시작 알림
+    // 응답이 오기 전에 대시보드로 이동해도, 로그인 화면에서 시작한 확인이 /login 으로 되돌리지 않게 한다.
+    const startedOnPublicPage = typeof window !== 'undefined'
+      && isPublicAuthPage(window.location.pathname);
+    // 응답이 TTL 뒤에 와도 요청 시작 시점의 grace 를 유지한다.
+    // 첫 current-user 200 이 grace 플래그를 지우므로 fetch 전에 읽어 둔다.
+    const authGraceAtStart = isWithinAuthGraceWindow(now);
 
     try {
       console.log('🔍 세션 확인 시작...');
@@ -248,39 +316,94 @@ class SessionManager {
         return false;
       }
 
-      // 401 오류 시 — refresh 재시도 후 current-user 재확인. 실패 시에만 로그인 리다이렉트.
-      if (userResponse.status === 401) {
-        const { refreshAccessTokenPair } = await import('./authTokenRefresh');
-        const refreshed = await refreshAccessTokenPair();
-        if (refreshed) {
-          try {
-            const retryHeaders = getDefaultApiHeaders();
-            userResponse = await fetch(`${API_BASE_URL}/api/v1/auth/current-user`, {
-              credentials: 'include',
-              method: 'GET',
-              mode: 'cors',
-              cache: 'no-store',
-              signal: createSessionCheckAbortSignal(),
-              headers: retryHeaders
-            });
-          } catch (retryFetchError) {
-            console.log('🔍 토큰 갱신 후 세션 재확인 fetch 실패:', retryFetchError.message);
-            userResponse = { status: 401, ok: false };
+      // 401 오류 시 — 중복 로그인 종료는 항상 킥. 그 외 grace·백그라운드는 사용자 유지.
+      // 일반 401 은 grace soft-skip, 아니면 refresh + explicit Bearer 재확인. post-refresh 401 만 킥.
+      let duplicateTerminated = false;
+      const readDuplicateTerminated = async(response) => {
+        try {
+          if (response && typeof response.json === 'function') {
+            const unauthorizedBody = await response.json();
+            return isDuplicateLoginTerminatedResponse(unauthorizedBody);
           }
+        } catch (parseError) {
+          console.log('🔍 401 본문 파싱 스킵:', parseError?.message);
+        }
+        return false;
+      };
+
+      if (userResponse.status === 401) {
+        duplicateTerminated = await readDuplicateTerminated(userResponse);
+        // 유휴 모달 카운트다운 만료 재확인. 연장 버튼을 누르지 않은 401 은
+        // 로그인 직후 grace·refresh 부활·background 사용자 유지 대상이 아니다.
+        // 사용자 정리는 하지 않는다. 모달이 logout() 으로 /login?logout=success 에 보낸다.
+        // 중복 로그인 종료는 아래 확정 킥으로 보낸다.
+        if (idleExpiry && !duplicateTerminated) {
+          console.log('🔍 유휴 만료 재확인 401 - grace/refresh/background 유지 없음');
+          this.lastCheckTime = now;
+          this.notifyListeners();
+          return false;
+        }
+        // 중복 로그인 종료는 grace·백그라운드보다 우선해 /login?reason=duplicate-login 으로 보낸다.
+        if (!duplicateTerminated && (authGraceAtStart || isWithinAuthGraceWindow())) {
+          console.log('🔍 auth grace TTL 창 - 리다이렉트 스킵 (토큰 유지)');
+          this.lastCheckTime = now;
+          this.notifyListeners();
+          return false;
+        }
+
+        if (!duplicateTerminated && (hasStoredAccessToken() || hasStoredRefreshToken())) {
+          const { refreshAccessTokenPair } = await import('./authTokenRefresh');
+          const refreshed = await refreshAccessTokenPair();
+          if (refreshed) {
+            try {
+              userResponse = await fetch(`${API_BASE_URL}/api/v1/auth/current-user`, {
+                credentials: 'include',
+                method: 'GET',
+                mode: 'cors',
+                cache: 'no-store',
+                signal: createSessionCheckAbortSignal(),
+                headers: {
+                  ...getDefaultApiHeaders(),
+                  Authorization: `Bearer ${refreshed.accessToken}`
+                }
+              });
+            } catch (retryFetchError) {
+              console.log('🔍 토큰 갱신 후 세션 재확인 fetch 실패:', retryFetchError.message);
+              if (isTransientNetworkError(retryFetchError)) {
+                this.lastCheckTime = now;
+                notifyTransientNetworkIssue();
+                this.notifyListeners();
+                return this.user !== null;
+              }
+              userResponse = { status: 401, ok: false };
+            }
+            if (userResponse.status >= 500) {
+              console.warn('🔍 refresh 후 current-user 서버 오류:', userResponse.status);
+              this.lastCheckTime = now;
+              notifyTransientNetworkIssue();
+              this.notifyListeners();
+              return this.user !== null;
+            }
+            if (userResponse.status === 401) {
+              duplicateTerminated = await readDuplicateTerminated(userResponse);
+            }
+          }
+          // refreshed == null → 아래 401 킥 (grace 밖·비중복). justRefreshed 창으로 soft-skip 하지 않는다.
         }
       }
 
       if (userResponse.status === 401) {
         console.log('🔍 세션 확인 실패: 401 Unauthorized');
-        let duplicateTerminated = false;
-        try {
-          if (typeof userResponse.json === 'function') {
-            const unauthorizedBody = await userResponse.json();
-            duplicateTerminated = isDuplicateLoginTerminatedResponse(unauthorizedBody);
-          }
-        } catch (parseError) {
-          console.log('🔍 401 본문 파싱 스킵:', parseError?.message);
+
+        // 백그라운드 확인은 이미 무효화된 HttpSession 을 본 것만으로 앱 전체를 /login 으로 보내지 않는다.
+        // 실제 만료는 사용자 요청(ajax 재검증)·유휴 모달·새로고침(foreground 확인)에서 판정된다.
+        if (background && !duplicateTerminated) {
+          console.log('🔍 백그라운드 세션 확인 401 - 사용자 유지, 리다이렉트 없음');
+          this.lastCheckTime = now;
+          this.notifyListeners();
+          return false;
         }
+
         this.user = null;
         this.sessionInfo = null;
         clearStoredSessionExpiry();
@@ -296,19 +419,13 @@ class SessionManager {
           return false;
         }
 
-        // 현재 페이지가 공개 페이지가 아닐 때만 리다이렉트
+        // 확인을 시작한 경로가 공개 페이지면, 그 사이 대시보드로 넘어갔어도 여기서 킥하지 않는다.
         const currentPath = window.location.pathname;
-        const isPublicPage = isPublicSpaPath(currentPath);
+        const isPublicPage = isPublicAuthPage(currentPath);
 
-        // 로그인 직후에는 리다이렉트하지 않음 (세션이 아직 설정되지 않았을 수 있음)
-        const isJustAfterLogin = sessionStorage.getItem('justLoggedIn') === 'true';
-        if (isJustAfterLogin) {
-          console.log('🔍 로그인 직후 - 리다이렉트 스킵 (세션 설정 대기 중)');
-          sessionStorage.removeItem('justLoggedIn');
-          return false;
-        }
-
-        if (!isPublicPage) {
+        // post-refresh retry 401 / refresh 실패 / 토큰 없음 — grace 재검사 없이 확정 킥
+        // (방금 markJustRefreshed 된 창으로 soft-skip 하면 안 됨)
+        if (!isPublicPage && !startedOnPublicPage) {
           console.log('🔍 로그인 페이지로 리다이렉트 (서브도메인 유지)');
           // 401(유휴 만료 등): 강제 연장 없이 클라이언트 인증 상태 정리 후 이동
           this.applyClientLogoutCleanupPreserveSubdomain();
@@ -324,10 +441,13 @@ class SessionManager {
       }
 
       if (userResponse.ok) {
+        // justLoggedIn 은 TTL(20초)까지 유지한다. 여기서 지우면 직후 대시보드 병렬 401 이
+        // 방금 성공한 로그인을 /login 으로 보낸다. justRefreshed 만 성공 확인 후 제거한다.
+        clearJustRefreshed();
         const userResponseData = await userResponse.json();
         const newUser = unwrapApiResponseData(userResponseData);
 
-        // 기존 사용자 정보가 있으면 role/permissionGroupCodes·휴대폰 게이트 필드 보존 (서버 미반환 시)
+        // 기존 사용자 정보가 있으면 role/permissionGroupCodes 보존 (서버 미반환 시)
         if (this.user) {
           if (this.user.role && !newUser.role) {
             newUser.role = this.user.role;
@@ -347,8 +467,6 @@ class SessionManager {
           if (this.user.hasCounselorRole != null && newUser.hasCounselorRole == null) {
             newUser.hasCounselorRole = this.user.hasCounselorRole;
           }
-          // PortOne soft-refresh: current-user 가 phone 필드를 빼먹으면 게이트가 stale 로 막힘
-          this._preservePhoneGateFieldsFromPreviousUser(this.user, newUser);
         }
         if (!Array.isArray(newUser.permissionGroupCodes)) {
           newUser.permissionGroupCodes = [];
@@ -407,7 +525,7 @@ class SessionManager {
         const isLocalEnv = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
         if (!(isLocalEnv && !ENABLE_AUTH_REDIRECT)) {
           const currentPath = window.location.pathname;
-          const isPublicPage = isPublicSpaPath(currentPath);
+          const isPublicPage = isPublicAuthPage(currentPath) || startedOnPublicPage;
           if (!isPublicPage) {
             notifyTransientNetworkIssue();
           }
@@ -693,47 +811,6 @@ class SessionManager {
     });
   }
 
-  /**
-   * current-user 응답이 phone·verified 를 null/undefined 로 주면 이전 세션 값을 유지한다.
-   * 서버 true 우선. 서버가 명시적 false 를 주면 존중한다 (OAuth VERIFIED SSOT 반영 후
-   * FE/BE 역전으로 CTA 가 숨겨지거나 prepare 가 실패하는 desync 방지).
-   * 보존은 서버가 verified 필드를 생략(null/undefined)한 경우에만.
-   *
-   * @param {object} previousUser
-   * @param {object} newUser
-   * @returns {void}
-   */
-  _preservePhoneGateFieldsFromPreviousUser(previousUser, newUser) {
-    if (!previousUser || !newUser || typeof previousUser !== 'object' || typeof newUser !== 'object') {
-      return;
-    }
-    const phoneKeys = ['phone', 'phoneNumber', 'mobile', 'phoneVerifiedAt'];
-    phoneKeys.forEach((key) => {
-      if (newUser[key] == null && previousUser[key] != null) {
-        newUser[key] = previousUser[key];
-      }
-    });
-
-    const serverVerifiedTrue =
-      newUser.isPhoneVerified === true || newUser.phoneVerified === true;
-    const serverVerifiedAbsent =
-      newUser.isPhoneVerified == null && newUser.phoneVerified == null;
-    const previousVerifiedTrue =
-      previousUser.isPhoneVerified === true || previousUser.phoneVerified === true;
-
-    if (serverVerifiedTrue) {
-      newUser.isPhoneVerified = true;
-      newUser.phoneVerified = true;
-      return;
-    }
-    if (serverVerifiedAbsent && previousVerifiedTrue) {
-      newUser.isPhoneVerified = true;
-      newUser.phoneVerified = true;
-      return;
-    }
-    // 서버 명시적 false — 덮어쓰지 않음 (truthful isPhoneVerified SSOT)
-  }
-
   // 사용자 정보 설정 (로그인 시 사용)
   setUser(user, tokens = null) {
     this.user = user;
@@ -744,11 +821,16 @@ class SessionManager {
       localStorage.setItem('userInfo', JSON.stringify(user));
     }
 
-    // 토큰이 있으면 localStorage에 저장
-    if (tokens) {
-      localStorage.setItem('accessToken', tokens.accessToken);
-      if (tokens.refreshToken) {
+    // 토큰·세션ID: 비어 있지 않은 문자열만 기록 (sessionId만 넘긴 호출이 "undefined" 문자열을 쓰지 않도록)
+    if (tokens && typeof tokens === 'object') {
+      if (typeof tokens.accessToken === 'string' && tokens.accessToken.length > 0) {
+        localStorage.setItem('accessToken', tokens.accessToken);
+      }
+      if (typeof tokens.refreshToken === 'string' && tokens.refreshToken.length > 0) {
         localStorage.setItem('refreshToken', tokens.refreshToken);
+      }
+      if (typeof tokens.sessionId === 'string' && tokens.sessionId.length > 0) {
+        localStorage.setItem('sessionId', tokens.sessionId);
       }
     }
 
@@ -796,7 +878,7 @@ class SessionManager {
     this.isProfileEditing = false;
     console.log('✅ 프로필 수정 종료 - 세션 체크 재개');
     // 프로필 수정 완료 후 즉시 세션 체크
-    this.checkSession(true);
+    this.checkSession(true, { background: true });
   }
 
   // 폼 제출 시작 (자동 감지)
@@ -812,8 +894,8 @@ class SessionManager {
     if (this.formSubmitCount === 0) {
       this.isFormSubmitting = false;
       console.log('✅ 모든 폼 제출 완료 - 세션 체크 재개');
-      // 폼 제출 완료 후 즉시 세션 체크
-      this.checkSession(true);
+      // 폼 제출 완료 후 즉시 세션 체크 (로그인 POST 직후 401 로 /login 하드 킥 금지)
+      this.checkSession(true, { background: true });
     } else {
       console.log(`⏳ 폼 제출 진행 중 (${this.formSubmitCount}개 남음)`);
     }
@@ -827,9 +909,10 @@ class SessionManager {
 
 // 싱글톤 인스턴스
 export const sessionManager = new SessionManager();
-export default sessionManager;
 
 // apiHeaders·대시보드 등 동기 경로에서 window.sessionManager를 참조함
 if (typeof window !== 'undefined') {
   window.sessionManager = sessionManager;
 }
+
+export default sessionManager;

@@ -1,3 +1,5 @@
+import { SESSION_CHECK_INTERVAL_MS } from './clientPollingIntervals';
+
 /**
  * 세션 관리 상수 — 세션 확인 간격, 타임아웃, idle 경고 임계값 등.
  *
@@ -7,7 +9,7 @@
  */
 
 // 세션 확인 간격 (밀리초)
-export const SESSION_CHECK_INTERVAL = 5 * 60 * 1000; // 5분
+export const SESSION_CHECK_INTERVAL = SESSION_CHECK_INTERVAL_MS;
 
 /**
  * HTTP 세션 **만료 시각** 기준 idle 경고: 모달은

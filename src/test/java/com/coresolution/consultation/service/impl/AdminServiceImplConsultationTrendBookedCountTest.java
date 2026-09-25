@@ -5,6 +5,8 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -16,7 +18,6 @@ import java.util.UUID;
 import com.coresolution.consultation.constant.ScheduleStatus;
 import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.entity.Consultant;
-import com.coresolution.consultation.entity.Schedule;
 import com.coresolution.consultation.repository.ClientRepository;
 import com.coresolution.consultation.repository.CommonCodeRepository;
 import com.coresolution.consultation.repository.ConsultantClientMappingRepository;
@@ -55,6 +56,7 @@ import com.coresolution.consultation.service.UserPersonalDataCacheService;
 import com.coresolution.consultation.service.UserService;
 import com.coresolution.consultation.service.erp.financial.CardMerchantFeeResolutionService;
 import com.coresolution.consultation.service.erp.financial.FinancialTransactionService;
+import com.coresolution.consultation.util.DashboardTrendPeriodUtils;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.repository.TenantRoleRepository;
@@ -231,15 +233,10 @@ class AdminServiceImplConsultationTrendBookedCountTest {
     @Test
     @DisplayName("booked-then-completed: COMPLETED만 있어도 bookedCount >= completedCount 이고 예약>0")
     void getConsultationMonthlyTrend_bookedThenCompleted_includesCompletedInBookedCount() {
-        Schedule completed1 = new Schedule();
-        completed1.setId(1L);
-        Schedule completed2 = new Schedule();
-        completed2.setId(2L);
-        List<Schedule> completedSchedules = List.of(completed1, completed2);
-
-        when(scheduleRepository.findByTenantIdAndConsultantIdAndStatusAndDateBetween(
-                eq(TEST_TENANT_ID), eq(CONSULTANT_ID), eq(ScheduleStatus.COMPLETED), any(), any()))
-                .thenReturn(completedSchedules);
+        when(scheduleRepository.countCompletedByDateForConsultantIds(
+                eq(TEST_TENANT_ID), eq(ScheduleStatus.COMPLETED), any(), any(), any()))
+                .thenReturn(List.<Object[]>of(new Object[] {
+                        DashboardTrendPeriodUtils.todayInTrendZone(), 2L }));
         when(scheduleRepository.countByDateBetweenAndStatuses(
                 eq(TEST_TENANT_ID), any(), any(), any()))
                 .thenReturn(2L);
@@ -254,6 +251,10 @@ class AdminServiceImplConsultationTrendBookedCountTest {
         assertThat(bookedCount.longValue()).isGreaterThan(0L);
         assertThat(bookedCount.longValue()).isGreaterThanOrEqualTo(completedCount.longValue());
 
+        verify(scheduleRepository, times(1)).countCompletedByDateForConsultantIds(
+                eq(TEST_TENANT_ID), eq(ScheduleStatus.COMPLETED), any(), any(), any());
+        verify(scheduleRepository, never()).findByTenantIdAndConsultantIdAndStatusAndDateBetween(
+                any(), any(), any(), any(), any());
         verify(scheduleRepository, atLeastOnce()).countByDateBetweenAndStatuses(
                 eq(TEST_TENANT_ID),
                 any(),
@@ -272,8 +273,8 @@ class AdminServiceImplConsultationTrendBookedCountTest {
     @Test
     @DisplayName("열린 예약만 있는 달: bookedCount > 0, completedCount == 0")
     void getConsultationMonthlyTrend_openBookingsOnly_bookedPositiveCompletedZero() {
-        when(scheduleRepository.findByTenantIdAndConsultantIdAndStatusAndDateBetween(
-                eq(TEST_TENANT_ID), eq(CONSULTANT_ID), eq(ScheduleStatus.COMPLETED), any(), any()))
+        when(scheduleRepository.countCompletedByDateForConsultantIds(
+                eq(TEST_TENANT_ID), eq(ScheduleStatus.COMPLETED), any(), any(), any()))
                 .thenReturn(Collections.emptyList());
         when(scheduleRepository.countByDateBetweenAndStatuses(
                 eq(TEST_TENANT_ID), any(), any(), any()))

@@ -89,6 +89,7 @@ import com.coresolution.consultation.repository.ConsultationRecordRepository;
 import com.coresolution.consultation.repository.ScheduleRepository;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.AdminService;
+import com.coresolution.consultation.service.statistics.ConsultationCompletionCountIndex;
 import com.coresolution.consultation.service.AmountManagementService;
 import com.coresolution.consultation.service.BatchNotificationDispatchService;
 import com.coresolution.consultation.service.BranchService;
@@ -9697,28 +9698,43 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             log.info("📊 상담사별 상담 완료 건수 통계 조회: period={}", period);
             // 표준화 2025-12-05: BaseTenantAwareService 상속으로 getTenantId() 사용
             String tenantId = getTenantId();
-            
+            if (tenantId == null || tenantId.isEmpty()) {
+                log.warn("⚠️ getConsultationCompletionStatistics: tenantId 없음");
+                return new ArrayList<>();
+            }
+
             List<User> consultants = mergeConsultantActorsForTenant(tenantId);
-            
+            LocalDate startDate;
+            LocalDate endDate;
+            if (period != null && !period.isEmpty()) {
+                String[] parts = period.split("-");
+                int year = Integer.parseInt(parts[0]);
+                int month = Integer.parseInt(parts[1]);
+                startDate = LocalDate.of(year, month, 1);
+                endDate = startDate.withDayOfMonth(startDate.lengthOfMonth());
+            } else {
+                startDate = LocalDate.of(LocalDate.now().getYear(), 1, 1);
+                endDate = LocalDate.of(LocalDate.now().getYear(), 12, 31);
+            }
+            List<Long> consultantIds = consultantActorIds(consultants);
+            Map<Long, Long> completedByConsultant = consultantIds.isEmpty()
+                    ? Map.of()
+                    : ConsultationCompletionCountIndex.byConsultant(
+                            scheduleRepository.countCompletedByConsultantIdsAndDateBetween(
+                                    tenantId, ScheduleStatus.COMPLETED, consultantIds, startDate, endDate));
+            Map<Long, Long> totalByConsultant = consultantIds.isEmpty()
+                    ? Map.of()
+                    : ConsultationCompletionCountIndex.byConsultant(
+                            scheduleRepository.countSchedulesByConsultantIds(tenantId, consultantIds));
+
             List<Map<String, Object>> statistics = new ArrayList<>();
-            
+
             for (User consultant : consultants) {
                 try {
-                    LocalDate startDate, endDate;
-                    if (period != null && !period.isEmpty()) {
-                        String[] parts = period.split("-");
-                        int year = Integer.parseInt(parts[0]);
-                        int month = Integer.parseInt(parts[1]);
-                        startDate = LocalDate.of(year, month, 1);
-                        endDate = startDate.withDayOfMonth(startDate.lengthOfMonth());
-                    } else {
-                        startDate = LocalDate.of(LocalDate.now().getYear(), 1, 1);
-                        endDate = LocalDate.of(LocalDate.now().getYear(), 12, 31);
-                    }
-                    
-                    int completedCount = getCompletedScheduleCount(consultant.getId(), startDate, endDate);
-                    
-                    long totalCount = getTotalScheduleCount(consultant.getId());
+                    int completedCount = (int) ConsultationCompletionCountIndex.countOf(
+                            completedByConsultant, consultant.getId());
+                    long totalCount = ConsultationCompletionCountIndex.countOf(
+                            totalByConsultant, consultant.getId());
                     
                     // 표준화: with-vacation과 동일하게 복호화된 상담사명 사용 (순위 목록 3·4위 실명 표시)
                     String consultantName = null;
@@ -9788,13 +9804,16 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             List<Map<String, Object>> monthlyData = new ArrayList<>();
             LocalDate now = DashboardTrendPeriodUtils.todayInTrendZone();
             List<LocalDate> monthStarts = DashboardTrendPeriodUtils.rollingMonthStarts(lastMonths, now);
+            Map<LocalDate, Long> completedByDate = loadCompletedCountsByDate(
+                    tenantId, consultants, monthStarts.get(0), now);
             for (LocalDate monthStart : monthStarts) {
                 LocalDate monthEnd = monthStart.withDayOfMonth(monthStart.lengthOfMonth());
                 if (monthEnd.isAfter(now)) {
                     monthEnd = now;
                 }
                 String period = monthStart.format(DateTimeFormatter.ofPattern("yyyy-MM"));
-                monthlyData.add(buildConsultationTrendRow(tenantId, consultants, monthStart, monthEnd, period));
+                monthlyData.add(buildConsultationTrendRow(
+                        tenantId, consultants, monthStart, monthEnd, period, completedByDate));
             }
             log.info("✅ 월별 상담 완료 추이 조회 완료: {}개월 (rolling, KST)", monthlyData.size());
             return monthlyData;
@@ -9816,11 +9835,15 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             List<Map<String, Object>> weeklyData = new ArrayList<>();
             LocalDate now = DashboardTrendPeriodUtils.todayInTrendZone();
             int weeks = lastWeeks > 0 ? lastWeeks : 1;
+            LocalDate weeklyRangeStart = now.minusWeeks(weeks - 1L).minusDays(6);
+            Map<LocalDate, Long> completedByDate = loadCompletedCountsByDate(
+                    tenantId, consultants, weeklyRangeStart, now);
             for (int i = weeks - 1; i >= 0; i--) {
                 LocalDate weekEnd = now.minusWeeks(i);
                 LocalDate weekStart = weekEnd.minusDays(6);
                 String period = weekEnd.format(DateTimeFormatter.ofPattern("MM/dd"));
-                weeklyData.add(buildConsultationTrendRow(tenantId, consultants, weekStart, weekEnd, period));
+                weeklyData.add(buildConsultationTrendRow(
+                        tenantId, consultants, weekStart, weekEnd, period, completedByDate));
             }
             log.info("✅ 주간 상담 완료 추이 조회 완료: {}주 (KPI와 동일 집계)", weeklyData.size());
             return weeklyData;
@@ -9842,9 +9865,12 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             List<Map<String, Object>> dailyData = new ArrayList<>();
             LocalDate now = DashboardTrendPeriodUtils.todayInTrendZone();
             List<LocalDate> days = DashboardTrendPeriodUtils.rollingDays(lastDays, now);
+            Map<LocalDate, Long> completedByDate = loadCompletedCountsByDate(
+                    tenantId, consultants, days.get(0), days.get(days.size() - 1));
             for (LocalDate day : days) {
                 String period = day.format(DateTimeFormatter.ofPattern("MM/dd"));
-                dailyData.add(buildConsultationTrendRow(tenantId, consultants, day, day, period));
+                dailyData.add(buildConsultationTrendRow(
+                        tenantId, consultants, day, day, period, completedByDate));
             }
             log.info("✅ 일별 상담 추이 조회 완료: {}일 (rolling, KST)", dailyData.size());
             return dailyData;
@@ -9866,13 +9892,16 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             List<Map<String, Object>> yearlyData = new ArrayList<>();
             LocalDate now = DashboardTrendPeriodUtils.todayInTrendZone();
             List<LocalDate> yearStarts = DashboardTrendPeriodUtils.rollingYearStarts(lastYears, now);
+            Map<LocalDate, Long> completedByDate = loadCompletedCountsByDate(
+                    tenantId, consultants, yearStarts.get(0), now);
             for (LocalDate yearStart : yearStarts) {
                 LocalDate yearEnd = yearStart.withDayOfYear(yearStart.lengthOfYear());
                 if (yearEnd.isAfter(now)) {
                     yearEnd = now;
                 }
                 String period = yearStart.format(DateTimeFormatter.ofPattern("yyyy"));
-                yearlyData.add(buildConsultationTrendRow(tenantId, consultants, yearStart, yearEnd, period));
+                yearlyData.add(buildConsultationTrendRow(
+                        tenantId, consultants, yearStart, yearEnd, period, completedByDate));
             }
             log.info("✅ 연별 상담 추이 조회 완료: {}년 (rolling, KST)", yearlyData.size());
             return yearlyData;
@@ -9899,11 +9928,12 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
      *
      * <p>산술: {@code bookedCount == cancelledCount + BOOKED/CONFIRMED/COMPLETED 합계}.</p>
      *
-     * @param tenantId    테넌트 ID
-     * @param consultants 상담사 목록
-     * @param start       기간 시작
-     * @param end         기간 종료
-     * @param periodLabel period 라벨
+     * @param tenantId         테넌트 ID
+     * @param consultants      상담사 목록
+     * @param start            기간 시작
+     * @param end              기간 종료
+     * @param periodLabel      period 라벨
+     * @param completedByDate  테넌트·상담사 범위의 일자별 완료 건수
      * @return period, bookedCount, cancelledCount, inProgressCount, completedCount
      */
     private Map<String, Object> buildConsultationTrendRow(
@@ -9911,11 +9941,11 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             List<User> consultants,
             LocalDate start,
             LocalDate end,
-            String periodLabel) {
-        int completedSum = 0;
-        for (User consultant : consultants) {
-            completedSum += getCompletedScheduleCount(consultant.getId(), start, end);
-        }
+            String periodLabel,
+            Map<LocalDate, Long> completedByDate) {
+        int completedSum = (consultants == null || consultants.isEmpty())
+                ? 0
+                : (int) ConsultationCompletionCountIndex.sumBetween(completedByDate, start, end);
         long cancelledSum = scheduleRepository.countByStatusAndDateBetween(
                 tenantId, ScheduleStatus.CANCELLED, start, end);
         long bookedBaseSum = scheduleRepository.countByDateBetweenAndStatuses(
@@ -10674,6 +10704,46 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         }
     }
     
+    /**
+     * 상담 완료 추이에 쓸 일자별 완료 건수. 상담사 수만큼 쿼리하지 않는다.
+     *
+     * @param tenantId 테넌트 ID. 없으면 조회하지 않는다
+     * @param consultants 집계 대상 상담사
+     * @param start 시작일(포함)
+     * @param end 종료일(포함)
+     * @return 일자 → 완료 건수
+     */
+    private Map<LocalDate, Long> loadCompletedCountsByDate(
+            String tenantId, List<User> consultants, LocalDate start, LocalDate end) {
+        if (tenantId == null || tenantId.isEmpty() || start == null || end == null) {
+            return Map.of();
+        }
+        List<Long> consultantIds = consultantActorIds(consultants);
+        if (consultantIds.isEmpty()) {
+            return Map.of();
+        }
+        return ConsultationCompletionCountIndex.byDate(
+                scheduleRepository.countCompletedByDateForConsultantIds(
+                        tenantId, ScheduleStatus.COMPLETED, consultantIds, start, end));
+    }
+
+    /**
+     * @param consultants 상담사 목록
+     * @return null ID 를 뺀 상담사 ID
+     */
+    private List<Long> consultantActorIds(List<User> consultants) {
+        if (consultants == null || consultants.isEmpty()) {
+            return List.of();
+        }
+        List<Long> ids = new ArrayList<>();
+        for (User consultant : consultants) {
+            if (consultant != null && consultant.getId() != null) {
+                ids.add(consultant.getId());
+            }
+        }
+        return ids;
+    }
+
      /**
      * 상담사별 완료된 스케줄 건수 조회 (기간별)
      */

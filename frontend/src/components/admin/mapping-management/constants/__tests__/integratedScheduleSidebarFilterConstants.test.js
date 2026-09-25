@@ -6,7 +6,9 @@ import {
   excludeUnpaidSoftFromAssignmentQueues,
   isActiveAssignableMapping,
   isAssignmentQueueMapping,
+  isCompletedSingleSessionExhausted,
   isOngoingMapping,
+  isSessionsExhaustedListMapping,
   isPaymentConfirmed,
   isSameDayCardPending,
   isUnpaidSoftMapping,
@@ -18,7 +20,9 @@ import {
   MAPPING_STATUS_DEPOSIT_PENDING,
   MAPPING_STATUS_PENDING_PAYMENT,
   MAPPING_STATUS_PAYMENT_CONFIRMED,
+  MAPPING_STATUS_SESSIONS_EXHAUSTED,
   PAYMENT_TIMING_ADVANCE,
+  PAYMENT_TIMING_VOUCHER,
   PAYMENT_TIMING_INSTITUTION_LINK,
   PAYMENT_TIMING_SAME_DAY_CARD,
   SIDEBAR_CARD_DRAGGABLE_CLASS,
@@ -115,6 +119,69 @@ describe('integratedScheduleSidebarFilterConstants', () => {
           remainingSessions: 0
         })
       ).toBe(false);
+    });
+
+    it('완료 일정이 있는 단회기는 ACTIVE·잔여 1 이어도 신규배정에서 빠지고 회기 소진에 남는다', () => {
+      const mapping = {
+        status: MAPPING_STATUS_ACTIVE,
+        totalSessions: 1,
+        usedSessions: 0,
+        remainingSessions: 1,
+        paymentTiming: PAYMENT_TIMING_ADVANCE,
+        consultationSchedules: [{ id: 11, status: 'COMPLETED' }]
+      };
+      expect(isCompletedSingleSessionExhausted(mapping)).toBe(true);
+      expect(isOngoingMapping(mapping)).toBe(false);
+      expect(isSessionsExhaustedListMapping(mapping)).toBe(true);
+    });
+
+    it('예약만 있는 단회기는 신규배정에 남고 회기 소진 목록에 넣지 않는다', () => {
+      const mapping = {
+        status: MAPPING_STATUS_ACTIVE,
+        totalSessions: 1,
+        usedSessions: 0,
+        remainingSessions: 1,
+        consultationSchedules: [{ id: 12, status: 'BOOKED' }]
+      };
+      expect(isCompletedSingleSessionExhausted(mapping)).toBe(false);
+      expect(isOngoingMapping(mapping)).toBe(true);
+      expect(isSessionsExhaustedListMapping(mapping)).toBe(false);
+    });
+
+    it('다회기는 완료 일정이 있어도 신규배정에 남는다', () => {
+      const mapping = {
+        status: MAPPING_STATUS_ACTIVE,
+        totalSessions: 10,
+        usedSessions: 1,
+        remainingSessions: 9,
+        consultationSchedules: [{ id: 13, status: 'COMPLETED' }]
+      };
+      expect(isCompletedSingleSessionExhausted(mapping)).toBe(false);
+      expect(isOngoingMapping(mapping)).toBe(true);
+      expect(isSessionsExhaustedListMapping(mapping)).toBe(false);
+    });
+
+    it('기관연동·바우처 단회기는 완료 일정이 있어도 신규배정 규칙을 바꾸지 않는다', () => {
+      const institutionLink = {
+        status: MAPPING_STATUS_ACTIVE,
+        paymentTiming: PAYMENT_TIMING_INSTITUTION_LINK,
+        totalSessions: 1,
+        remainingSessions: 1,
+        consultationSchedules: [{ id: 14, status: 'COMPLETED' }]
+      };
+      const voucher = {
+        status: MAPPING_STATUS_ACTIVE,
+        paymentTiming: PAYMENT_TIMING_VOUCHER,
+        totalSessions: 1,
+        remainingSessions: 1,
+        consultationSchedules: [{ id: 15, status: 'COMPLETED' }]
+      };
+      expect(isCompletedSingleSessionExhausted(institutionLink)).toBe(false);
+      expect(isOngoingMapping(institutionLink)).toBe(true);
+      expect(isSessionsExhaustedListMapping(institutionLink)).toBe(false);
+      expect(isCompletedSingleSessionExhausted(voucher)).toBe(false);
+      expect(isOngoingMapping(voucher)).toBe(true);
+      expect(isSessionsExhaustedListMapping(voucher)).toBe(false);
     });
   });
 

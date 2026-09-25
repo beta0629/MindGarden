@@ -5735,6 +5735,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         if (pageMappings == null || pageMappings.isEmpty()) {
             return;
         }
+        alignCompletedSingleSessionsForList(pageMappings, getTenantIdOrNull());
         for (ConsultantClientMapping m : pageMappings) {
             if (m == null) {
                 continue;
@@ -5746,6 +5747,103 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             }
             Hibernate.initialize(m.getConsultant());
             Hibernate.initialize(m.getClient());
+        }
+    }
+
+    /**
+     * 목록 조회에서 완료 일정이 있는 단회기만 소진 상태로 맞춘다.
+     *
+     * <p>{@code totalSessions == 1} 이고 이 매핑에 COMPLETED 상담 일정이 있으면,
+     * 저장된 status 가 ACTIVE 여도 used=1, remaining=0, status=SESSIONS_EXHAUSTED 로 저장한다.
+     * 이미 소진된 행은 다시 쓰지 않는다. tenantId 가 없으면 갱신하지 않는다.
+     * 다회기·기관연동·바우처·예약만 있는 단회기와 패키지 금액은 바꾸지 않는다.</p>
+     *
+     * @param pageMappings 목록 페이지
+     * @param tenantId 현재 테넌트. blank 이면 갱신하지 않음
+     */
+    private void alignCompletedSingleSessionsForList(List<ConsultantClientMapping> pageMappings,
+            String tenantId) {
+        if (tenantId == null || tenantId.isBlank() || pageMappings == null || pageMappings.isEmpty()) {
+            return;
+        }
+        List<ConsultantClientMapping> candidates = new ArrayList<>();
+        for (ConsultantClientMapping mapping : pageMappings) {
+            if (isCompletedSingleSessionExhaustionCandidate(mapping, tenantId)) {
+                candidates.add(mapping);
+            }
+        }
+        if (candidates.isEmpty()) {
+            return;
+        }
+        List<Long> mappingIds = new ArrayList<>(candidates.size());
+        for (ConsultantClientMapping mapping : candidates) {
+            mappingIds.add(mapping.getId());
+        }
+        List<Schedule> completedSchedules = scheduleRepository.findOccupyingSchedulesByMappingIds(
+                tenantId, mappingIds, List.of(ScheduleStatus.COMPLETED));
+        Set<Long> completedMappingIds = new HashSet<>();
+        if (completedSchedules != null) {
+            for (Schedule schedule : completedSchedules) {
+                if (schedule == null || schedule.getMappingId() == null
+                        || schedule.getStatus() != ScheduleStatus.COMPLETED) {
+                    continue;
+                }
+                completedMappingIds.add(schedule.getMappingId());
+            }
+        }
+        for (ConsultantClientMapping mapping : candidates) {
+            if (!completedMappingIds.contains(mapping.getId())) {
+                continue;
+            }
+            if (mapping.getStatus() == ConsultantClientMapping.MappingStatus.SESSIONS_EXHAUSTED) {
+                continue;
+            }
+            applyCompletedSingleSessionExhaustion(mapping);
+            mappingRepository.save(mapping);
+            log.info("완료 단회기 소진 정합: mappingId={}, usedSessions={}, remainingSessions={}, status={}",
+                    mapping.getId(), mapping.getUsedSessions(), mapping.getRemainingSessions(),
+                    mapping.getStatus());
+        }
+    }
+
+    /**
+     * 완료 단회기 소진 정합 후보. COMPLETED 일정 존재는 호출부에서 확인한다.
+     *
+     * @param mapping 매핑
+     * @param tenantId 현재 테넌트
+     * @return ACTIVE 단회기 회기권이고 매핑 tenantId 가 현재 테넌트와 같으면 true
+     */
+    private boolean isCompletedSingleSessionExhaustionCandidate(ConsultantClientMapping mapping,
+            String tenantId) {
+        if (mapping == null || mapping.getId() == null || tenantId == null || tenantId.isBlank()) {
+            return false;
+        }
+        String mappingTenantId = mapping.getTenantId();
+        if (mappingTenantId == null || mappingTenantId.isBlank() || !tenantId.equals(mappingTenantId)) {
+            return false;
+        }
+        if (mapping.getStatus() != ConsultantClientMapping.MappingStatus.ACTIVE) {
+            return false;
+        }
+        if (!PaymentTimingConstants.usesSessionPackRemainingGate(mapping.getPaymentTiming())) {
+            return false;
+        }
+        Integer totalSessions = mapping.getTotalSessions();
+        int total = totalSessions == null ? 0 : totalSessions;
+        return ShopSessionCountConstants.isSingleSession(total);
+    }
+
+    /**
+     * 단회기 사용·잔여·상태만 소진 값으로 맞춘다. 패키지 금액은 변경하지 않는다.
+     *
+     * @param mapping 정합 대상 매핑
+     */
+    private void applyCompletedSingleSessionExhaustion(ConsultantClientMapping mapping) {
+        mapping.setUsedSessions(ShopSessionCountConstants.SINGLE_SESSION_COUNT);
+        mapping.setRemainingSessions(0);
+        mapping.setStatus(ConsultantClientMapping.MappingStatus.SESSIONS_EXHAUSTED);
+        if (mapping.getEndDate() == null) {
+            mapping.setEndDate(LocalDateTime.now());
         }
     }
 

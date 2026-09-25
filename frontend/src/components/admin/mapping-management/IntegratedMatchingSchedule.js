@@ -79,8 +79,11 @@ import {
   VIEW_FILTER_ALL,
   PAYMENT_TIMING_SAME_DAY_CARD,
   MAPPING_STATUS_PENDING_PAYMENT,
+  MAPPING_STATUS_SESSIONS_EXHAUSTED,
   excludeUnpaidSoftFromAssignmentQueues,
   isInstitutionLinkMapping,
+  isCompletedSingleSessionExhausted,
+  isSessionsExhaustedListMapping,
   isOngoingMapping,
   getMappingDate
 } from './constants/integratedScheduleSidebarFilterConstants';
@@ -830,12 +833,13 @@ const IntegratedMatchingSchedule = () => {
       const withinDays = created >= cutoff;
       // unpaid soft(PENDING_PAYMENT) 는 가예약 카드 전용 — actionNeeded 에 넣지 않음
       const actionNeeded = m.status === 'DEPOSIT_PENDING';
-      return withinDays || actionNeeded;
+      return (withinDays || actionNeeded) && !isCompletedSingleSessionExhausted(m);
     });
   } else if (viewFilter === VIEW_FILTER_REMAINING) {
     // rem=0 unpaid soft 는 이 게이트와 무관하나, soft 자체는 배정 큐에 넣지 않는다
     byView = mappings.filter((m) =>
-      isInstitutionLinkMapping(m) || (m.remainingSessions ?? 0) > 0
+      !isCompletedSingleSessionExhausted(m)
+      && (isInstitutionLinkMapping(m) || (m.remainingSessions ?? 0) > 0)
     );
   } else {
     byView = mappings;
@@ -854,6 +858,10 @@ const IntegratedMatchingSchedule = () => {
     filteredMappings = [];
   } else if (statusFilter === 'ongoing') {
     filteredMappings = sortedByView.filter(isOngoingMapping);
+  } else if (statusFilter === MAPPING_STATUS_SESSIONS_EXHAUSTED) {
+    filteredMappings = [...mappings]
+      .filter(isSessionsExhaustedListMapping)
+      .sort((a, b) => getMappingDate(b) - getMappingDate(a));
   } else if (statusFilter) {
     filteredMappings = sortedByView.filter((m) => m.status === statusFilter);
   } else {
@@ -890,6 +898,9 @@ const IntegratedMatchingSchedule = () => {
     if (value === '') return byView.length;
     if (value === MAPPING_STATUS_PENDING_PAYMENT) {
       return countPendingPaymentMappings(mappings);
+    }
+    if (value === MAPPING_STATUS_SESSIONS_EXHAUSTED) {
+      return mappings.filter(isSessionsExhaustedListMapping).length;
     }
     return byView.filter((m) => m.status === value).length;
   };

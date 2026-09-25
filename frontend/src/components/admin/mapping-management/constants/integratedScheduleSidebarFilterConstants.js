@@ -13,6 +13,8 @@
  *   unpaid soft 는 가예약 카드(`gareyarkCard`) 전용 — 배정 3큐(오늘/신규/회기남음)에 넣지 않는다.
  * - `isAssignmentQueueMapping` / `excludeUnpaidSoftFromAssignmentQueues`: soft 와 배정 큐 분리 SSOT.
  * - `shouldShowUnpaidSoftCheckoutCta`: unpaid soft + rem&gt;0 일 때만 당일결제 CTA.
+ * - 완료 상담 일정이 있는 단회기는 저장된 status 가 ACTIVE 여도 신규배정에서 빼고
+ *   회기 소진(종료) 목록으로 본다. 다회기·기관연동·바우처·예약만 있는 단회기는 그대로.
  * - `isPaymentConfirmed`: PENDING_PAYMENT 이전 상태는 결제 미확인으로 차단.
  *
  * @author CoreSolution
@@ -25,6 +27,7 @@ import {
   isUnpaidSoftMappingStatus,
   PENDING_PAYMENT_KPI_LABEL
 } from '../../../../utils/pendingPaymentAggregation';
+import { SHOP_SINGLE_SESSION_COUNT } from '../../../../utils/shopSessionCount';
 
 export { isUnpaidSoftMapping, isUnpaidSoftMappingStatus };
 
@@ -99,6 +102,15 @@ export const PAYMENT_TIMING_SAME_DAY_CARD = 'SAME_DAY_CARD';
 
 /** 백엔드 paymentTiming — 타기관 연계. 회기권·바우처와 별 파이프라인. 결제 주기는 후속(고정 월 단위 아님). */
 export const PAYMENT_TIMING_INSTITUTION_LINK = 'INSTITUTION_LINK';
+
+/** 백엔드 paymentTiming — 바우처. 회기 소진 정합 대상이 아님. */
+export const PAYMENT_TIMING_VOUCHER = 'VOUCHER';
+
+/** 백엔드 MappingStatus — 회기 소진. 통합 스케줄 「회기 소진」목록. */
+export const MAPPING_STATUS_SESSIONS_EXHAUSTED = 'SESSIONS_EXHAUSTED';
+
+/** 이 매핑 상담 일정 완료 상태. 형제 매핑 일정은 보지 않는다. */
+const SCHEDULE_STATUS_COMPLETED = 'COMPLETED';
 
 /** 사이드바·카드 — 기관연계는 회기 「잔여」로 표시하지 않음. 결제 주기는 표시하지 않음. */
 export const INSTITUTION_LINK_LABEL = '기관연계';
@@ -299,12 +311,99 @@ export const shouldShowUnpaidSoftCheckoutCta = (mapping) => {
   return normalizedRemainingSessions(mapping) > 0;
 };
 
+/**
+ * 결제·승인 액션이 남은 상태. 완료 단회기 소진 판정에서 제외한다.
+ *
+ * @param {object} [mapping]
+ * @returns {boolean}
+ */
+const isActionNeededPaymentStatus = (mapping) => {
+  const status = mapping?.status;
+  return status === MAPPING_STATUS_PENDING_PAYMENT
+    || status === MAPPING_STATUS_DEPOSIT_PENDING;
+};
+
+/**
+ * 바우처 paymentTiming 여부.
+ *
+ * @param {object} [mapping]
+ * @returns {boolean}
+ */
+const isVoucherMapping = (mapping) => {
+  const paymentTiming = mapping?.paymentTiming;
+  if (paymentTiming == null || paymentTiming === '') {
+    return false;
+  }
+  return String(paymentTiming).toUpperCase() === PAYMENT_TIMING_VOUCHER;
+};
+
+/**
+ * 이 매핑 consultationSchedules 의 COMPLETED 건수.
+ *
+ * @param {object} [mapping]
+ * @returns {number}
+ */
+const countCompletedSchedulesOnMapping = (mapping) => {
+  const schedules = mapping?.consultationSchedules;
+  if (!Array.isArray(schedules)) {
+    return 0;
+  }
+  return schedules.filter((item) => {
+    const status = item?.status == null ? '' : String(item.status).trim().toUpperCase();
+    return status === SCHEDULE_STATUS_COMPLETED;
+  }).length;
+};
+
+/**
+ * 완료 상담 일정이 있는 단회기.
+ * 저장된 status 가 ACTIVE 이고 remaining 이 1 이어도 true.
+ * 다회기·기관연동·바우처·완료 일정이 없는 단회기는 false.
+ *
+ * @param {object} [mapping]
+ * @returns {boolean}
+ */
+export const isCompletedSingleSessionExhausted = (mapping) => {
+  if (!mapping || typeof mapping !== 'object') {
+    return false;
+  }
+  if (isInstitutionLinkMapping(mapping) || isVoucherMapping(mapping)) {
+    return false;
+  }
+  if (isActionNeededPaymentStatus(mapping)) {
+    return false;
+  }
+  const total = Number(mapping.totalSessions);
+  if (total !== SHOP_SINGLE_SESSION_COUNT) {
+    return false;
+  }
+  return countCompletedSchedulesOnMapping(mapping) >= SHOP_SINGLE_SESSION_COUNT;
+};
+
+/**
+ * 「회기 소진」목록(종료 회기)에 보일지.
+ *
+ * @param {object} [mapping]
+ * @returns {boolean}
+ */
+export const isSessionsExhaustedListMapping = (mapping) => {
+  if (!mapping || typeof mapping !== 'object') {
+    return false;
+  }
+  if (mapping.status === MAPPING_STATUS_SESSIONS_EXHAUSTED) {
+    return true;
+  }
+  return isCompletedSingleSessionExhausted(mapping);
+};
+
 export const isOngoingMapping = (m) => {
   if (!m?.status) {
     return false;
   }
   // unpaid soft 는 가예약 카드 전용 — 배정 ongoing 큐에서 제외
   if (isUnpaidSoftMapping(m)) {
+    return false;
+  }
+  if (isCompletedSingleSessionExhausted(m)) {
     return false;
   }
   if (m.status === MAPPING_STATUS_CANCELLED) {

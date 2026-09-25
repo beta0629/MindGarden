@@ -12,10 +12,13 @@ import {
   CLIENT_WEB_LOGOUT,
   CLIENT_WEB_LOGOUT_CANCEL,
   CLIENT_WEB_LOGOUT_CONFIRM,
+  CLIENT_WEB_MESSAGES_LINK_TEST_ID,
   CLIENT_WEB_NAV,
+  CLIENT_WEB_NOTIFICATIONS_LINK_TEST_ID,
   CLIENT_WEB_TOP_CHROME_TEST_ID,
   CLIENT_WEB_TOP_NAV_TEST_ID
 } from '../../../../constants/clientWebChromeConstants';
+import { CLIENT_DASHBOARD_ROUTES } from '../../../../constants/clientDashboardRoutes';
 import { CLIENT_SHOP_ROUTES } from '../../../../constants/clientShopConstants';
 import ShopClientLayout from '../ShopClientLayout';
 
@@ -46,6 +49,14 @@ jest.mock('../../../common/ConfirmModal', () => ({
 
 jest.mock('../../../../contexts/SessionContext', () => ({
   useSession: () => mockUseSession()
+}));
+
+jest.mock('../../../../contexts/NotificationContext', () => ({
+  useNotification: () => ({
+    unreadCount: 0,
+    unreadMessageCount: 0,
+    unreadSystemCount: 0
+  })
 }));
 
 jest.mock('../../../../hooks/useBranding', () => ({
@@ -126,6 +137,15 @@ describe('ShopClientLayout shared top chrome', () => {
 
     const cartBadge = await screen.findByTestId('client-shop-cart-badge');
     expect(cartBadge).toHaveAttribute('href', CLIENT_SHOP_ROUTES.CART);
+
+    expect(screen.getByTestId(CLIENT_WEB_NOTIFICATIONS_LINK_TEST_ID)).toHaveAttribute(
+      'href',
+      CLIENT_DASHBOARD_ROUTES.NOTIFICATIONS
+    );
+    expect(screen.getByTestId(CLIENT_WEB_MESSAGES_LINK_TEST_ID)).toHaveAttribute(
+      'href',
+      CLIENT_DASHBOARD_ROUTES.MESSAGES
+    );
 
     const end = chrome.querySelector('.client-web-topchrome__end');
     expect(end).toBeTruthy();

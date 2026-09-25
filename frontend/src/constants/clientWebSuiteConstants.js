@@ -87,6 +87,8 @@ export const CLIENT_WEB_SUITE_COPY = Object.freeze({
   SETTINGS_NOTIFY_SAVE_ERROR: '알림 설정을 저장하지 못했습니다.',
   CHECKOUT_SETTINGS_LINK: '설정에서 인증하기',
   COMMUNITY_TITLE: '센터의 이야기',
+  MESSAGES_TITLE: '상담사 메시지',
+  MESSAGES_SUBTITLE: '상담사로부터 받은 메시지를 확인하고 답장할 수 있습니다.',
   SHOP_CATALOG_TITLE: '필요한 회기를 고르세요',
   CART_TITLE: '담은 회기 확인',
   CHECKOUT_TITLE: '주문 마무리',

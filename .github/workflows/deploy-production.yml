@@ -10,8 +10,12 @@ concurrency:
   cancel-in-progress: false
 
 #
-# 백엔드(배포 슬롯): 단일 호스트 블루그린 — 비활성 슬롯에 JAR 반영 → 기동·localhost 헬스 →
-# /etc/nginx/snippets/mindgarden-core-backend-upstream.conf 갱신 → nginx -t && reload → /etc/mindgarden/active-backend 갱신.
+# 백엔드(배포 슬롯): 단일 호스트 블루그린 — 비활성 슬롯에 JAR 반영 → 기동·localhost 헬스(최대 10회) →
+# minimum-idle SELECT 1 이 빠른 /api/v1/health/readiness 통과 후에만 upstream 기록.
+# 느리거나 실패하면 upstream 유지, 슬롯 추가 재시작 없음.
+# nginx reload 는 HTTP/2 스트림을 끊을 수 있어(main.*.js ERR_HTTP2_PROTOCOL_ERROR)
+# 설정이 실제로 바뀌고 로그인 번들이 완전할 때만 한다. 같으면 reload 하지 않아 열린 연결을 유지한다.
+# 통과 후 nginx -t && reload → /etc/mindgarden/active-backend 갱신.
 # 클라우드 이전: 세션 저장소는 Spring Session Redis 다. 쿠키 형식은 바꾸지 않는다.
 # 이전 시 Redis·DB URL(REDIS_HOST, DB_HOST, DB_PORT, DB_NAME)만 바꾸면 세션 저장소는 유지된다.
 # 슬롯 위치 기본값(미설정 시 현재 운영과 같음): MG_BACKEND_BIND_HOST=127.0.0.1,
@@ -1002,6 +1006,19 @@ jobs:
 
     # prod.env 존재 시 SESSION_COOKIE_DOMAIN 미설정 → 테넌트 서브도메인에서 세션 쿠키 불일치·401 가능.
     # 운영 담당: /etc/mindgarden/prod.env 에 SESSION_COOKIE_DOMAIN=core-solution.co.kr (RFC 6265, 선행 점 없음) — deployment/mindgarden.prod-env.example 과 동일.
+    - name: 📤 전환 게이트 스크립트 업로드
+      uses: appleboy/scp-action@v0.1.7
+      with:
+        host: ${{ secrets.PRODUCTION_HOST }}
+        username: ${{ secrets.PRODUCTION_USER }}
+        key: ${{ secrets.PRODUCTION_SSH_KEY }}
+        port: 22
+        timeout: 60s
+        source: "scripts/deployment/prod-readiness-cutover-gate.sh"
+        target: "/var/www/mindgarden/"
+        strip_components: 2
+        overwrite: true
+
     - name: 🔄 블루그린 백엔드·Nginx 적용
       uses: appleboy/ssh-action@master
       env:
@@ -1027,6 +1044,13 @@ jobs:
         envs: APPLE_CLIENT_ID,APPLE_TEAM_ID,APPLE_KEY_ID,APPLE_PRIVATE_KEY,APPLE_REDIRECT_URI,APPLE_ALLOWED_AUDIENCES,GOOGLE_CLIENT_ID,GOOGLE_CLIENT_SECRET,GOOGLE_REDIRECT_URI,KAKAO_REGISTERED_URLS,NAVER_REGISTERED_URLS,GOOGLE_REGISTERED_URLS,APPLE_REGISTERED_URLS,PRODUCTION_DB_PASSWORD,BACKEND_CHANGED
         script: |
           cd /var/www/mindgarden
+          GATE_LIB=/var/www/mindgarden/prod-readiness-cutover-gate.sh
+          if [ ! -f "$GATE_LIB" ]; then
+            echo "::error::전환 게이트 스크립트 없음: $GATE_LIB"
+            exit 1
+          fi
+          # shellcheck disable=SC1091
+          . "$GATE_LIB"
           
           # /etc/mindgarden/prod.env 가 있을 때만 검사 (grep/test 는 이 SSH 블록 안에서만)
 
@@ -1054,6 +1078,8 @@ jobs:
           BACKEND_CHANGED="${BACKEND_CHANGED:-false}"
           ACTIVE_FILE="$MG_ACTIVE_BACKEND_FILE"
           UPSTREAM_SNIP=/etc/nginx/snippets/mindgarden-core-backend-upstream.conf
+          UPSTREAM_CHANGED=0
+          UPSTREAM_BACKUP=""
           # systemd 유닛명은 deployment/systemd/mindgarden-core-{blue,green}.service.example 과 동일
           UNIT_BLUE=mindgarden-core-blue.service
           UNIT_GREEN=mindgarden-core-green.service
@@ -1327,42 +1353,26 @@ jobs:
               exit 1
             fi
 
-            # /actuator/health 는 프로세스 생존만 본다. 전환 전에 DB 연결 1회와 Redis 를 확인한다.
-            # 실패하면 upstream 을 쓰지 않고, 이 슬롯을 추가로 재시작하지 않는다.
-            # curl 상한 45초는 Hikari connection-timeout 30000ms 를 넘기 위한 대기다. 풀·nginx 타임아웃은 바꾸지 않는다.
-            echo "🏥 비활성 슬롯 전환 레디니스 (DB 연결 1회 + Redis, ${INACTIVE_PORT}/api/v1/health/readiness)"
-            READINESS_BODY_FILE=$(mktemp)
-            READINESS_CODE_FILE="${READINESS_BODY_FILE}.code"
-            READINESS_CODE="000"
-            if curl -sS -o "$READINESS_BODY_FILE" -w "%{http_code}" --connect-timeout 5 --max-time 45 \
-              "http://${MG_BACKEND_BIND_HOST}:${INACTIVE_PORT}/api/v1/health/readiness" > "$READINESS_CODE_FILE" 2>/dev/null; then
-              READINESS_CODE=$(tr -cd '0-9' < "$READINESS_CODE_FILE")
+            # /actuator/health 는 프로세스 생존만 본다.
+            # 전환 전에는 minimum-idle 연결을 동시에 연 SELECT 1 이 빠르게 끝나야 한다.
+            # 한 번 연결하고 isValid 만 통과한 상태로는 upstream 을 바꾸지 않는다.
+            # 느리거나 실패하면 파일을 쓰지 않고, 이 슬롯을 추가로 재시작하지 않는다.
+            # 대기 횟수는 위 헬스 루프와 같은 10회·6초. Hikari connection-timeout·nginx /api/ 60초는 바꾸지 않는다.
+            # CF520: 단일 active server + keepalive 32 만 기록 (듀얼 server/proxy_next_upstream 금지 — POST 이중 위험).
+            UPSTREAM_BACKUP=$(mktemp)
+            if [ -f "$UPSTREAM_SNIP" ]; then
+              sudo cp "$UPSTREAM_SNIP" "$UPSTREAM_BACKUP"
             fi
-            rm -f "$READINESS_CODE_FILE"
-            echo "레디니스 HTTP ${READINESS_CODE}"
-            head -c 400 "$READINESS_BODY_FILE" 2>/dev/null || true
-            echo ""
-            rm -f "$READINESS_BODY_FILE"
-            if [ "$READINESS_CODE" != "200" ]; then
-              echo "::error::비활성 슬롯 레디니스 실패 (HTTP ${READINESS_CODE}) — DB 또는 Redis 미준비. nginx 전환 안 함. 슬롯 추가 재시작 안 함."
+            if ! prod_apply_readiness_gate \
+              "http://${MG_BACKEND_BIND_HOST}:${INACTIVE_PORT}/api/v1/health/readiness" \
+              "$UPSTREAM_SNIP" \
+              "$MG_BACKEND_BIND_HOST" \
+              "$INACTIVE_PORT"; then
+              echo "::error::풀 워밍 전 nginx upstream 유지. 기존 슬롯이 계속 받는다. 슬롯 추가 재시작 안 함."
               exit 1
             fi
-            echo "✅ 레디니스 통과 — nginx upstream 전환"
-          
-            echo "🌐 Nginx upstream 을 비활성 슬롯 포트로 전환 (reload 만, 방화벽 미변경)"
-            # CF520: 단일 active server + keepalive 32 만 기록 (듀얼 server/proxy_next_upstream 금지 — POST 이중 위험).
-            # location 쪽 Connection "" · timeout 은 mindgarden-core-proxy-params.conf 가 담당.
-            sudo mkdir -p /etc/nginx/snippets
-            {
-              echo '# CF520: single active + keepalive; do not dual-server live BG'
-              echo 'upstream mindgarden_core_backend {'
-              echo "    server ${MG_BACKEND_BIND_HOST}:${INACTIVE_PORT};"
-              echo '    keepalive 32;'
-              echo '}'
-            } | sudo tee "$UPSTREAM_SNIP" > /dev/null
-          
-            echo "$INACTIVE" | sudo tee "$ACTIVE_FILE" > /dev/null
-            echo "✅ active-backend → $INACTIVE (트래픽은 이제 포트 $INACTIVE_PORT)"
+            UPSTREAM_CHANGED=1
+            echo "✅ 풀 워밍 통과 — upstream 파일만 갱신. active-backend 와 reload 는 정적 번들 확인 후."
           
             # 🔁 [post-cutover safety net] 새 idle 슬롯(=직전 active)에 신규 JAR 자동 동기화
             # 배경: cutover 직후 PREVIOUS_ACTIVE 슬롯에는 이전 빌드 JAR 이 그대로 남아 있어,
@@ -1399,6 +1409,8 @@ jobs:
                 IDLE_AFTER_STAT=$(sudo stat -c 'inode=%i mtime=%y size=%s' "${NEW_IDLE_HOME}/app.jar" 2>/dev/null || echo "(stat 실패)")
                 if [ "$IDLE_AFTER_SHA" != "$NEW_SHA" ]; then
                   echo "::error::idle 슬롯 JAR 동기화 검증 실패 — SHA256 불일치 (active=$NEW_SHA, idle=$IDLE_AFTER_SHA)"
+                  prod_restore_upstream
+                  UPSTREAM_CHANGED=0
                   exit 1
                 fi
                 echo "✅ [B1] idle 슬롯 JAR atomic mv 완료: $IDLE_AFTER_STAT (SHA-256=${NEW_SHA})"
@@ -1415,35 +1427,13 @@ jobs:
             echo "⏭️ 백엔드 변경 없음 — 블루그린 슬롯·upstream 전환 스킵"
           fi
           
-          # Nginx 통합 vhost (upstream 스니펫은 백엔드 배포 시 갱신; 없으면 최초 기본값 생성)
+          # Nginx 통합 vhost. reload(SIGHUP)는 진행 중인 HTTP/2 본문(main.*.js)을 끊을 수 있다.
+          # 설정이 같으면 reload 하지 않고, 바꿔야 하면 정적 번들이 완전한 뒤에만 reload 한다.
           # CF520: proxy-params 스니펫을 /etc/nginx/snippets/ 에 설치 후 vhost include 가 유효해야 nginx -t 통과.
           if [ -f /var/www/mindgarden/core-solution-prod.conf ]; then
-            echo "🌐 Nginx 통합 설정 적용 (nginx -t 후 reload 만)"
-            sudo mkdir -p /etc/nginx/snippets
-            if [ -f /var/www/mindgarden/mindgarden-core-proxy-params.conf ]; then
-              sudo cp /var/www/mindgarden/mindgarden-core-proxy-params.conf /etc/nginx/snippets/mindgarden-core-proxy-params.conf
-              echo "✅ Core proxy-params → /etc/nginx/snippets/mindgarden-core-proxy-params.conf"
-            else
-              echo "::warning::mindgarden-core-proxy-params.conf 업로드 없음 — vhost include 실패 가능(CF520 스니펫)"
-            fi
-            if [ ! -f "$UPSTREAM_SNIP" ]; then
-              echo "::warning::upstream 스니펫 없음 — 기본 ${MG_BLUE_PORT} 생성(최초 서버 또는 마이그레이션)"
-              {
-                echo '# CF520: single active + keepalive; do not dual-server live BG'
-                echo 'upstream mindgarden_core_backend {'
-                echo "    server ${MG_BACKEND_BIND_HOST}:${MG_BLUE_PORT};"
-                echo '    keepalive 32;'
-                echo '}'
-              } | sudo tee "$UPSTREAM_SNIP" > /dev/null
-            fi
-            sudo cp /var/www/mindgarden/core-solution-prod.conf /etc/nginx/sites-available/core-solution
-            sudo ln -sf /etc/nginx/sites-available/core-solution /etc/nginx/sites-enabled/core-solution
-            if sudo nginx -t 2>&1; then
-              sudo systemctl reload nginx
-              echo "✅ Nginx reload 완료"
-            else
-              echo "::error::nginx -t 실패 — 설정 롤백 필요"
-              sudo nginx -t || true
+            echo "🌐 Nginx 통합 설정 적용 (번들 확인 후, 변경이 있을 때만 reload)"
+            if ! prod_nginx_switch_preserving_connections; then
+              echo "::error::nginx 전환 보류 — upstream 유지, reload 없음, 슬롯 추가 재시작 없음"
               exit 1
             fi
           fi

@@ -4,6 +4,7 @@
  * 하드코딩된 숫자들을 의미있는 상수로 변환
  */
 
+import { UNREAD_POLLING_INTERVAL_MS } from './clientPollingIntervals';
 import { SESSION_DURATION } from './session';
 
 // 시간 관련 상수 (밀리초)
@@ -37,7 +38,7 @@ export const TIME_CONSTANTS = {
   SLIDE_DURATION: 400,
   
   // 폴링 간격
-  POLLING_INTERVAL: 10000,
+  POLLING_INTERVAL: UNREAD_POLLING_INTERVAL_MS,
   QUICK_POLLING_INTERVAL: 2000,
   LONG_POLLING_INTERVAL: 60000
 };

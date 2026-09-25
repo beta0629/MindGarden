@@ -698,6 +698,58 @@ public interface ScheduleRepository extends BaseRepository<Schedule, Long> {
     List<Object[]> countSchedulesByConsultantIds(
             @Param("tenantId") String tenantId,
             @Param("consultantIds") List<Long> consultantIds);
+
+    /**
+     * 상담사 목록의 기간 내 상태별 건수를 한 번에 집계한다.
+     *
+     * <p>{@code findByTenantIdAndConsultantIdAndStatusAndDateBetween} 와 같이
+     * {@code isDeleted} 조건은 두지 않는다. tenantId 는 필수다.</p>
+     *
+     * @param tenantId 테넌트 ID
+     * @param status 집계 상태
+     * @param consultantIds 상담사 ID. 비어 있으면 호출하지 않는다
+     * @param startDate 시작일(포함)
+     * @param endDate 종료일(포함)
+     * @return [0]=consultantId, [1]=count
+     */
+    @Query("SELECT s.consultantId, COUNT(s) FROM Schedule s "
+            + "WHERE s.tenantId = :tenantId "
+            + "AND s.status = :status "
+            + "AND s.consultantId IN :consultantIds "
+            + "AND s.date BETWEEN :startDate AND :endDate "
+            + "GROUP BY s.consultantId")
+    List<Object[]> countCompletedByConsultantIdsAndDateBetween(
+            @Param("tenantId") String tenantId,
+            @Param("status") ScheduleStatus status,
+            @Param("consultantIds") List<Long> consultantIds,
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate);
+
+    /**
+     * 상담사 목록의 기간 내 상태별 건수를 일자 단위로 한 번에 집계한다.
+     *
+     * <p>추이 {@code completedCount} 의 상담사별 반복 조회를 대체한다.
+     * {@code isDeleted} 조건은 두지 않는다. tenantId 는 필수다.</p>
+     *
+     * @param tenantId 테넌트 ID
+     * @param status 집계 상태
+     * @param consultantIds 상담사 ID. 비어 있으면 호출하지 않는다
+     * @param startDate 시작일(포함)
+     * @param endDate 종료일(포함)
+     * @return [0]=date, [1]=count
+     */
+    @Query("SELECT s.date, COUNT(s) FROM Schedule s "
+            + "WHERE s.tenantId = :tenantId "
+            + "AND s.status = :status "
+            + "AND s.consultantId IN :consultantIds "
+            + "AND s.date BETWEEN :startDate AND :endDate "
+            + "GROUP BY s.date")
+    List<Object[]> countCompletedByDateForConsultantIds(
+            @Param("tenantId") String tenantId,
+            @Param("status") ScheduleStatus status,
+            @Param("consultantIds") List<Long> consultantIds,
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate);
     
     /**
      * @Deprecated - 🚨 위험: tenantId 필터링 없이 스케줄 접근!

@@ -5,6 +5,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -16,7 +17,6 @@ import java.util.UUID;
 import com.coresolution.consultation.constant.ScheduleStatus;
 import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.entity.Consultant;
-import com.coresolution.consultation.entity.Schedule;
 import com.coresolution.consultation.repository.ClientRepository;
 import com.coresolution.consultation.repository.CommonCodeRepository;
 import com.coresolution.consultation.repository.ConsultantClientMappingRepository;
@@ -55,6 +55,7 @@ import com.coresolution.consultation.service.UserPersonalDataCacheService;
 import com.coresolution.consultation.service.UserService;
 import com.coresolution.consultation.service.erp.financial.CardMerchantFeeResolutionService;
 import com.coresolution.consultation.service.erp.financial.FinancialTransactionService;
+import com.coresolution.consultation.util.DashboardTrendPeriodUtils;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.repository.TenantRoleRepository;
@@ -238,22 +239,19 @@ class AdminServiceImplConsultationTrendCancelledCountTest {
     @Test
     @DisplayName("cancelledCount 분리: bookedCount는 CANCELLED + BOOKED/CONFIRMED/COMPLETED")
     void getConsultationMonthlyTrend_cancelledSeparates_bookedCountMath() {
-        Schedule completed1 = new Schedule();
-        completed1.setId(1L);
-        List<Schedule> completedSchedules = List.of(completed1);
-
         long bookedBaseCount = 3L;
         long cancelledCount = 2L;
         int completedCount = 1;
 
-        // completedCount는 기존 로직(ScheduleStatus.COMPLETED, Schedule.date 기준) 그대로 유지돼야 한다.
-        when(scheduleRepository.findByTenantIdAndConsultantIdAndStatusAndDateBetween(
+        // completedCount는 Schedule.date 기준 COMPLETED 집계 한 번이다.
+        when(scheduleRepository.countCompletedByDateForConsultantIds(
                 eq(TEST_TENANT_ID),
-                eq(CONSULTANT_ID),
                 eq(ScheduleStatus.COMPLETED),
                 any(),
+                any(),
                 any()))
-                .thenReturn(completedSchedules);
+                .thenReturn(List.<Object[]>of(new Object[] {
+                        DashboardTrendPeriodUtils.todayInTrendZone(), (long) completedCount }));
 
         // bookedBaseCount는 reservationStatusesForVolumeCount(= BOOKED/CONFIRMED/COMPLETED)에서만 집계된다.
         when(scheduleRepository.countByDateBetweenAndStatuses(

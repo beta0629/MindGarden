@@ -9,7 +9,7 @@
 
 ## 트래픽·용량
 
-- **[PROD_TRAFFIC_AND_TENANT_GROWTH_RISKS_20260924.md](./PROD_TRAFFIC_AND_TENANT_GROWTH_RISKS_20260924.md)** — 2026-09-24 배포 후 로그인 지연, 테넌트 증가 시 풀·헬스·대시보드·폴링 병목과 해결 방향 (구현 없음)
+- **[PROD_TRAFFIC_AND_TENANT_GROWTH_RISKS_20260924.md](./PROD_TRAFFIC_AND_TENANT_GROWTH_RISKS_20260924.md)** — 2026-09-24 배포 후 로그인 지연과 테넌트 증가 병목. 완료와 추후를 나눈다. 다음 작업은 문서의 추후 절
 
 ## 배포 후속 운영 가이드 (배포일별)
 

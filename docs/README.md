@@ -87,7 +87,7 @@
 - **[상담센터 홍보용 화면 촬영 스크립트](./marketing/CORE_SOLUTION_COUNSELING_CENTER_VIDEO_SHOOTING_SCRIPT.md)** — 개발·익명화 데이터 기준 Cmd+Shift+5 + Expo 컷리스트·내레이션 (운영 실데이터 촬영 금지)
 
 ### 기타
-- **[운영 트래픽·테넌트 증가 병목 (2026-09-24)](./운영반영/PROD_TRAFFIC_AND_TENANT_GROWTH_RISKS_20260924.md)** — 배포 후 로그인 지연, 풀·헬스·대시보드·폴링. 목차: [운영반영/README.md](./운영반영/README.md)
+- **[운영 트래픽·테넌트 증가 병목 (2026-09-24)](./운영반영/PROD_TRAFFIC_AND_TENANT_GROWTH_RISKS_20260924.md)** — 배포 후 로그인 지연, 풀·헬스·대시보드·폴링. 완료와 추후. 목차: [운영반영/README.md](./운영반영/README.md)
 - **Trinity CI·E2E·배포 구분**: [TRINITY_CI_AND_E2E](./guides/development/TRINITY_CI_AND_E2E.md) — ERP 스모크(`frontend/`) vs Trinity 빌드 스모크(`frontend-trinity/`) vs Trinity 배포 워크플로
 - **루트에서 이동한 문서**: [QUICK_START](./guides/quick-start/QUICK_START.md), [DEPLOYMENT_CHECKLIST](./guides/deployment/DEPLOYMENT_CHECKLIST.md), [PROJECT_STRUCTURE](./architecture/PROJECT_STRUCTURE.md), [KOREAN_ENCODING_SETUP](./guides/development/KOREAN_ENCODING_SETUP.md)
 - **문서 작성·정리 규칙**: [.cursor/skills/core-solution-documentation/SKILL.md](../.cursor/skills/core-solution-documentation/SKILL.md)

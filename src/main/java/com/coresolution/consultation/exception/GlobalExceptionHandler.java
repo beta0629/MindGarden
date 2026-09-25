@@ -5,6 +5,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import com.coresolution.consultation.constant.ApiRequestErrorMessages;
 import com.coresolution.consultation.constant.LifecycleState;
 import com.coresolution.consultation.constant.ShopRefundConstants;
 import com.coresolution.core.dto.ErrorResponse;
@@ -14,6 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.security.access.AccessDeniedException;
@@ -22,7 +24,10 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.core.NestedExceptionUtils;
 import org.springframework.transaction.TransactionSystemException;
+import org.springframework.web.HttpMediaTypeNotSupportedException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
@@ -615,6 +620,76 @@ public class GlobalExceptionHandler {
             request.getMethod()
         );
         return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(error);
+    }
+
+
+    /**
+     * HttpMessageNotReadableException — malformed JSON 등 요청 본문 파싱 실패.
+     * 파서/Jackson 상세는 로그에만 남기고 고정 문구만 응답.
+     */
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ErrorResponse> handleHttpMessageNotReadable(
+            HttpMessageNotReadableException e, HttpServletRequest request) {
+        log.warn("HttpMessageNotReadable: path={}, message={}", request.getRequestURI(), e.getMessage());
+        ErrorResponse error = ErrorResponse.of(
+                ApiRequestErrorMessages.INVALID_REQUEST_BODY,
+                ApiRequestErrorMessages.CODE_INVALID_REQUEST_BODY,
+                HttpStatus.BAD_REQUEST.value(),
+                request.getRequestURI(),
+                request.getMethod()
+        );
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+    }
+
+    /**
+     * HttpMediaTypeNotSupportedException — 지원하지 않는 Content-Type.
+     */
+    @ExceptionHandler(HttpMediaTypeNotSupportedException.class)
+    public ResponseEntity<ErrorResponse> handleHttpMediaTypeNotSupported(
+            HttpMediaTypeNotSupportedException e, HttpServletRequest request) {
+        log.warn("HttpMediaTypeNotSupported: path={}, message={}", request.getRequestURI(), e.getMessage());
+        ErrorResponse error = ErrorResponse.of(
+                ApiRequestErrorMessages.UNSUPPORTED_MEDIA_TYPE,
+                ApiRequestErrorMessages.CODE_UNSUPPORTED_MEDIA_TYPE,
+                HttpStatus.BAD_REQUEST.value(),
+                request.getRequestURI(),
+                request.getMethod()
+        );
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+    }
+
+    /**
+     * MissingServletRequestParameterException — 필수 요청 파라미터 누락.
+     */
+    @ExceptionHandler(MissingServletRequestParameterException.class)
+    public ResponseEntity<ErrorResponse> handleMissingServletRequestParameter(
+            MissingServletRequestParameterException e, HttpServletRequest request) {
+        log.warn("MissingServletRequestParameter: path={}, message={}", request.getRequestURI(), e.getMessage());
+        ErrorResponse error = ErrorResponse.of(
+                ApiRequestErrorMessages.MISSING_REQUEST_PARAMETER,
+                ApiRequestErrorMessages.CODE_MISSING_REQUEST_PARAMETER,
+                HttpStatus.BAD_REQUEST.value(),
+                request.getRequestURI(),
+                request.getMethod()
+        );
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+    }
+
+    /**
+     * MethodArgumentTypeMismatchException — 파라미터 타입 불일치.
+     */
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ErrorResponse> handleMethodArgumentTypeMismatch(
+            MethodArgumentTypeMismatchException e, HttpServletRequest request) {
+        log.warn("MethodArgumentTypeMismatch: path={}, message={}", request.getRequestURI(), e.getMessage());
+        ErrorResponse error = ErrorResponse.of(
+                ApiRequestErrorMessages.INVALID_PARAMETER_TYPE,
+                ApiRequestErrorMessages.CODE_INVALID_PARAMETER_TYPE,
+                HttpStatus.BAD_REQUEST.value(),
+                request.getRequestURI(),
+                request.getMethod()
+        );
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
     }
 
     /**

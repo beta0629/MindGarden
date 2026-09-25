@@ -211,6 +211,61 @@ describe('sessionManager.checkSession — background 401', () => {
     expect(sessionStorage.getItem(JUST_LOGGED_IN_KEY)).toBe('true');
   });
 
+  it('idleExpiry 401 은 grace·refresh·background 유지와 리다이렉트를 하지 않는다', async() => {
+    const { redirectToLoginPageOnce } = require('../sessionRedirect');
+    const { refreshAccessTokenPair } = require('../authTokenRefresh');
+    const { markJustLoggedIn } = require('../sessionAuthPolicy');
+    markJustLoggedIn();
+    localStorage.setItem(SESSION_KEYS.ACCESS_TOKEN, 'old-access');
+    localStorage.setItem(SESSION_KEYS.REFRESH_TOKEN, 'old-refresh');
+    refreshAccessTokenPair.mockResolvedValue({ accessToken: 'new-access', refreshToken: 'new-refresh' });
+    global.fetch = jest.fn().mockResolvedValue(unauthorizedResponse());
+
+    const ok = await sessionManager.checkSession(true, { background: true, idleExpiry: true });
+
+    expect(ok).toBe(false);
+    expect(refreshAccessTokenPair).not.toHaveBeenCalled();
+    expect(sessionManager.getUser()).toEqual(LOGGED_IN_USER);
+    expect(sessionManager.getSessionInfo()).not.toBeNull();
+    expect(redirectToLoginPageOnce).not.toHaveBeenCalled();
+    expect(sessionManager.applyClientLogoutCleanupPreserveSubdomain).not.toHaveBeenCalled();
+    expect(global.fetch).toHaveBeenCalledTimes(1);
+  });
+
+  it('idleExpiry 여도 중복 로그인 종료 401 은 reason=duplicate-login 으로 이동', async() => {
+    const { redirectToLoginPageOnce } = require('../sessionRedirect');
+    const { refreshAccessTokenPair } = require('../authTokenRefresh');
+    localStorage.setItem(SESSION_KEYS.REFRESH_TOKEN, 'old-refresh');
+    global.fetch = jest.fn().mockResolvedValue(duplicateTerminatedResponse());
+
+    const ok = await sessionManager.checkSession(true, { idleExpiry: true });
+
+    expect(ok).toBe(false);
+    expect(refreshAccessTokenPair).not.toHaveBeenCalled();
+    expect(sessionManager.getUser()).toBeNull();
+    expect(redirectToLoginPageOnce).toHaveBeenCalledWith({
+      search: DUPLICATE_LOGIN_REDIRECT_SEARCH
+    });
+  });
+
+  it('idleExpiry 는 진행 중인 background 확인 promise 에 합류하지 않는다', async() => {
+    let releaseBackground;
+    const backgroundPromise = new Promise((resolve) => {
+      releaseBackground = () => resolve(false);
+    });
+    sessionManager.inflightCheckPromise = backgroundPromise;
+    global.fetch = jest.fn().mockResolvedValue(unauthorizedResponse());
+
+    const idlePromise = sessionManager.checkSession(true, { idleExpiry: true });
+    expect(global.fetch).toHaveBeenCalledTimes(1);
+
+    releaseBackground();
+    const ok = await idlePromise;
+
+    expect(ok).toBe(false);
+    expect(sessionManager.getUser()).toEqual(LOGGED_IN_USER);
+  });
+
   it('endFormSubmit 은 background 확인을 건다', () => {
     const checkSpy = jest.spyOn(sessionManager, 'checkSession').mockResolvedValue(true);
     sessionManager.formSubmitCount = 1;

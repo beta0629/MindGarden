@@ -106,9 +106,29 @@ describe('SessionContext — sessionManager 가 유지한 사용자는 Context �
     });
 
     expect(result).toBe(false);
-    expect(sessionManager.checkSession).toHaveBeenLastCalledWith(false, { background: true });
+    expect(sessionManager.checkSession).toHaveBeenLastCalledWith(false, {
+      background: true,
+      idleExpiry: false
+    });
     expect(screen.getByTestId('dashboard')).toBeInTheDocument();
     expect(screen.queryByTestId('login-page')).not.toBeInTheDocument();
+  });
+
+  it('idleExpiry 확인은 silent 여도 background 로 올리지 않는다', async() => {
+    sessionManager.checkSession.mockResolvedValue(true);
+    sessionManager.getUser.mockReturnValue(ADMIN_USER);
+    renderDashboard();
+    await screen.findByTestId('dashboard');
+
+    await act(async() => {
+      await sessionApi.checkSession(true, { silent: true, idleExpiry: true });
+    });
+
+    expect(sessionManager.checkSession).toHaveBeenLastCalledWith(true, {
+      background: false,
+      idleExpiry: true
+    });
+    expect(screen.getByTestId('dashboard')).toBeInTheDocument();
   });
 
   it('비 silent 확인은 foreground 로 위임', async() => {
@@ -121,7 +141,10 @@ describe('SessionContext — sessionManager 가 유지한 사용자는 Context �
       await sessionApi.checkSession(true);
     });
 
-    expect(sessionManager.checkSession).toHaveBeenLastCalledWith(true, { background: false });
+    expect(sessionManager.checkSession).toHaveBeenLastCalledWith(true, {
+      background: false,
+      idleExpiry: false
+    });
   });
 
   it('sessionManager 가 사용자를 비운 확정 만료는 /login 으로 이동', async() => {

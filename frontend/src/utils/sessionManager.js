@@ -209,13 +209,17 @@ class SessionManager {
    * 세션 상태 확인.
    *
    * @param {boolean} [force=false] 쿨다운·중복 방지 무시
-   * @param {{ background?: boolean }} [options]
+   * @param {{ background?: boolean, idleExpiry?: boolean }} [options]
    *   background=true: 주기 폴·폼 훅·로그인 직후 확인. current-user 401 이어도
    *   사용자를 유지하고 /login 으로 보내지 않는다(중복 로그인 종료 401 만 예외).
+   *   idleExpiry=true: 유휴 경고 모달 만료 재확인. grace·토큰 갱신·background 유지로
+   *   세션을 되살리지 않는다. 리다이렉트는 모달 logout() → /login?logout=success.
    * @returns {Promise<boolean>} 세션 유효 여부
    */
   async checkSession(force = false, options = {}) {
-    const background = options.background === true;
+    const idleExpiry = options.idleExpiry === true;
+    // 유휴 만료는 백그라운드 401 유지 대상이 아니다. background 플래그가 같이 와도 끈다.
+    const background = idleExpiry ? false : options.background === true;
     const now = Date.now();
 
     // 프로필 수정 중이면 세션 체크 스킵
@@ -245,12 +249,13 @@ class SessionManager {
     // P0 hotfix 2026-06-12: force=true 동시 호출 시에도 진행 중 promise 공유 (current-user 9회 중복 호출 제거)
     // SessionProvider mount / MyPage loadUserInfo+loadSocialAccounts+loadWithdrawalStatus / ProfileSection /
     // UnifiedHeader / SessionIdleWarning 등이 force=true 로 동시에 호출해도 실제 fetch 는 1회로 합쳐짐.
-    if (this.inflightCheckPromise) {
+    // 유휴 만료 재확인은 진행 중인 background 확인(refresh 로 세션을 되살릴 수 있음)에 합류하지 않는다.
+    if (this.inflightCheckPromise && !idleExpiry) {
       console.log('🔄 세션 체크 dedup (진행 중 promise 공유)');
       return awaitSessionCheckWithCap(this, this.inflightCheckPromise);
     }
 
-    const pending = this._performCheckSession(now, { background });
+    const pending = this._performCheckSession(now, { background, idleExpiry });
     this.inflightCheckPromise = pending;
     try {
       return await awaitSessionCheckWithCap(this, pending);
@@ -265,10 +270,10 @@ class SessionManager {
    * 실제 current-user / session-info 호출 본문. 동시 force 호출 dedup 은 {@link checkSession} 에서 처리한다.
    *
    * @param {number} now 호출 시각(ms epoch)
-   * @param {{ background?: boolean }} [options] {@link checkSession} 과 동일
+   * @param {{ background?: boolean, idleExpiry?: boolean }} [options] {@link checkSession} 과 동일
    * @returns {Promise<boolean>} 세션 유효 여부
    */
-  async _performCheckSession(now, { background = false } = {}) {
+  async _performCheckSession(now, { background = false, idleExpiry = false } = {}) {
     this.checkInProgress = true;
     this.isLoading = true;
     this.notifyListeners(); // 로딩 시작 알림
@@ -328,6 +333,16 @@ class SessionManager {
 
       if (userResponse.status === 401) {
         duplicateTerminated = await readDuplicateTerminated(userResponse);
+        // 유휴 모달 카운트다운 만료 재확인. 연장 버튼을 누르지 않은 401 은
+        // 로그인 직후 grace·refresh 부활·background 사용자 유지 대상이 아니다.
+        // 사용자 정리는 하지 않는다. 모달이 logout() 으로 /login?logout=success 에 보낸다.
+        // 중복 로그인 종료는 아래 확정 킥으로 보낸다.
+        if (idleExpiry && !duplicateTerminated) {
+          console.log('🔍 유휴 만료 재확인 401 - grace/refresh/background 유지 없음');
+          this.lastCheckTime = now;
+          this.notifyListeners();
+          return false;
+        }
         // 중복 로그인 종료는 grace·백그라운드보다 우선해 /login?reason=duplicate-login 으로 보낸다.
         if (!duplicateTerminated && (authGraceAtStart || isWithinAuthGraceWindow())) {
           console.log('🔍 auth grace TTL 창 - 리다이렉트 스킵 (토큰 유지)');

@@ -200,10 +200,13 @@ export const SessionProvider = ({ children }) => {
    * 세션 체크 (useCallback 메모이제이션).
    * options.silent: 로딩 오버레이 없음 + 백그라운드 확인(401 이어도 /login 리다이렉트 없음).
    * options.background: 오버레이는 유지하되 백그라운드 확인.
+   * options.idleExpiry: 유휴 경고 만료 재확인. silent 여도 background 로 올리지 않는다.
    */
   const checkSession = useCallback(async(force = false, options = {}) => {
     const silent = options.silent === true;
-    const background = silent || options.background === true;
+    const idleExpiry = options.idleExpiry === true;
+    // 주기 폴·활동 ping 의 silent 는 background. 유휴 만료 재확인은 그 유지 정책에 넣지 않는다.
+    const background = idleExpiry ? false : (silent || options.background === true);
     const now = Date.now();
 
     // 강제가 아니면: sessionManager 최근 체크 후 3초 이내면 무조건 스킵 (무한루프 근본 방지)
@@ -235,7 +238,7 @@ export const SessionProvider = ({ children }) => {
     dispatch({ type: SessionActionTypes.SET_LAST_CHECK_TIME, payload: now });
 
     try {
-      const isLoggedIn = await sessionManager.checkSession(force, { background });
+      const isLoggedIn = await sessionManager.checkSession(force, { background, idleExpiry });
       const user = sessionManager.getUser();
       const sessionInfo = sessionManager.getSessionInfo();
 

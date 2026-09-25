@@ -2,12 +2,14 @@ package com.coresolution.consultation.service.impl;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -26,7 +28,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 /**
- * phone_otp_attempts VERIFIED 장부 SSOT — PROFILE·OAuth(APPLE/KAKAO) OTP 성공 행 모두 결제 게이트 허용.
+ * phone_otp_attempts VERIFIED 장부 SSOT — 본인 providerUserId 스코프의 PROFILE·OAuth 행만 결제 게이트 허용.
  *
  * @author MindGarden
  * @since 2026-09-18
@@ -37,8 +39,11 @@ class ClientProfilePhoneVerificationServiceImplTest {
 
     private static final String TENANT = "tpf-" + UUID.randomUUID().toString().replace("-", "").substring(0, 32);
     private static final Long USER_ID = 77L;
+    private static final String USER_ID_STR = String.valueOf(USER_ID);
     private static final String PHONE = "01012345678";
     private static final String PHONE_HASH = PhoneHashUtils.sha256Hex(PHONE);
+    private static final String APPLE_SUB = "apple.sub.001";
+    private static final String KAKAO_PROVIDER_USER_ID = "kakao-uid-9";
 
     @Mock
     private PhoneOtpAttemptRepository phoneOtpAttemptRepository;
@@ -58,7 +63,7 @@ class ClientProfilePhoneVerificationServiceImplTest {
         PhoneOtpAttempt row = captor.getValue();
         assertThat(row.getTenantId()).isEqualTo(TENANT);
         assertThat(row.getProvider()).isEqualTo(PhoneOtpAttempt.PROVIDER_PROFILE);
-        assertThat(row.getProviderUserId()).isEqualTo(String.valueOf(USER_ID));
+        assertThat(row.getProviderUserId()).isEqualTo(USER_ID_STR);
         assertThat(row.getPhoneHash()).isEqualTo(PHONE_HASH);
         assertThat(row.getStatus()).isEqualTo(PhoneOtpAttempt.STATUS_VERIFIED);
         assertThat(row.getVerifiedAt()).isNotNull();
@@ -70,17 +75,19 @@ class ClientProfilePhoneVerificationServiceImplTest {
     }
 
     @Test
-    @DisplayName("isPhoneVerifiedForPayment — PROFILE VERIFIED + 동일 phone_hash 이면 true")
-    void isVerified_whenProfileRowMatches() {
+    @DisplayName("isPhoneVerifiedForPayment — PROFILE providerUserId=USER_ID 이면 true")
+    void isVerified_whenProfileRowMatchesOwnUserId() {
         User user = buildUser(PHONE);
         when(encryptionUtil.safeDecrypt("enc-" + PHONE)).thenReturn(PHONE);
         when(phoneOtpAttemptRepository
-                .findFirstByTenantIdAndPhoneHashAndStatusAndVerifiedAtIsNotNullOrderByVerifiedAtDesc(
+                .findFirstByTenantIdAndPhoneHashAndStatusAndVerifiedAtIsNotNullAndProviderUserIdInOrderByVerifiedAtDesc(
                         eq(TENANT),
                         eq(PHONE_HASH),
-                        eq(PhoneOtpAttempt.STATUS_VERIFIED)))
+                        eq(PhoneOtpAttempt.STATUS_VERIFIED),
+                        argThat(ids -> containsExactlyUserId(ids))))
                 .thenReturn(Optional.of(PhoneOtpAttempt.builder()
                         .provider(PhoneOtpAttempt.PROVIDER_PROFILE)
+                        .providerUserId(USER_ID_STR)
                         .status(PhoneOtpAttempt.STATUS_VERIFIED)
                         .phoneHash(PHONE_HASH)
                         .verifiedAt(LocalDateTime.now())
@@ -91,17 +98,39 @@ class ClientProfilePhoneVerificationServiceImplTest {
     }
 
     @Test
-    @DisplayName("isPhoneVerifiedForPayment — APPLE VERIFIED + 동일 phone_hash 이면 true")
-    void isVerified_whenAppleOAuthRowMatches() {
+    @DisplayName("isPhoneVerifiedForPayment — 타 userId VERIFIED(동일 phoneHash)만 있으면 false")
+    void isVerified_rejectsWhenOnlyOtherUserVerifiedRowExists() {
         User user = buildUser(PHONE);
         when(encryptionUtil.safeDecrypt("enc-" + PHONE)).thenReturn(PHONE);
         when(phoneOtpAttemptRepository
-                .findFirstByTenantIdAndPhoneHashAndStatusAndVerifiedAtIsNotNullOrderByVerifiedAtDesc(
+                .findFirstByTenantIdAndPhoneHashAndStatusAndVerifiedAtIsNotNullAndProviderUserIdInOrderByVerifiedAtDesc(
                         eq(TENANT),
                         eq(PHONE_HASH),
-                        eq(PhoneOtpAttempt.STATUS_VERIFIED)))
+                        eq(PhoneOtpAttempt.STATUS_VERIFIED),
+                        argThat(ids -> containsExactlyUserId(ids))))
+                .thenReturn(Optional.empty());
+
+        assertThat(service.isPhoneVerifiedForPayment(user)).isFalse();
+        verify(phoneOtpAttemptRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("isPhoneVerifiedForPayment — APPLE appleSub 후보로 매칭되면 true")
+    void isVerified_whenAppleSubInCandidatesMatches() {
+        User user = buildUser(PHONE);
+        user.setAppleSub(APPLE_SUB);
+        when(encryptionUtil.safeDecrypt("enc-" + PHONE)).thenReturn(PHONE);
+        when(phoneOtpAttemptRepository
+                .findFirstByTenantIdAndPhoneHashAndStatusAndVerifiedAtIsNotNullAndProviderUserIdInOrderByVerifiedAtDesc(
+                        eq(TENANT),
+                        eq(PHONE_HASH),
+                        eq(PhoneOtpAttempt.STATUS_VERIFIED),
+                        argThat(ids -> ids != null
+                                && ids.contains(USER_ID_STR)
+                                && ids.contains(APPLE_SUB))))
                 .thenReturn(Optional.of(PhoneOtpAttempt.builder()
                         .provider(PhoneOtpAttempt.PROVIDER_APPLE)
+                        .providerUserId(APPLE_SUB)
                         .status(PhoneOtpAttempt.STATUS_VERIFIED)
                         .phoneHash(PHONE_HASH)
                         .verifiedAt(LocalDateTime.now())
@@ -112,17 +141,22 @@ class ClientProfilePhoneVerificationServiceImplTest {
     }
 
     @Test
-    @DisplayName("isPhoneVerifiedForPayment — KAKAO VERIFIED + 동일 phone_hash 이면 true")
-    void isVerified_whenKakaoOAuthRowMatches() {
+    @DisplayName("isPhoneVerifiedForPayment — KAKAO socialProviderUserId 후보로 매칭되면 true")
+    void isVerified_whenKakaoSocialProviderUserIdMatches() {
         User user = buildUser(PHONE);
+        user.setSocialProviderUserId(KAKAO_PROVIDER_USER_ID);
         when(encryptionUtil.safeDecrypt("enc-" + PHONE)).thenReturn(PHONE);
         when(phoneOtpAttemptRepository
-                .findFirstByTenantIdAndPhoneHashAndStatusAndVerifiedAtIsNotNullOrderByVerifiedAtDesc(
+                .findFirstByTenantIdAndPhoneHashAndStatusAndVerifiedAtIsNotNullAndProviderUserIdInOrderByVerifiedAtDesc(
                         eq(TENANT),
                         eq(PHONE_HASH),
-                        eq(PhoneOtpAttempt.STATUS_VERIFIED)))
+                        eq(PhoneOtpAttempt.STATUS_VERIFIED),
+                        argThat(ids -> ids != null
+                                && ids.contains(USER_ID_STR)
+                                && ids.contains(KAKAO_PROVIDER_USER_ID))))
                 .thenReturn(Optional.of(PhoneOtpAttempt.builder()
                         .provider("KAKAO")
+                        .providerUserId(KAKAO_PROVIDER_USER_ID)
                         .status(PhoneOtpAttempt.STATUS_VERIFIED)
                         .phoneHash(PHONE_HASH)
                         .verifiedAt(LocalDateTime.now())
@@ -137,10 +171,11 @@ class ClientProfilePhoneVerificationServiceImplTest {
         User user = buildUser(PHONE);
         when(encryptionUtil.safeDecrypt("enc-" + PHONE)).thenReturn(PHONE);
         when(phoneOtpAttemptRepository
-                .findFirstByTenantIdAndPhoneHashAndStatusAndVerifiedAtIsNotNullOrderByVerifiedAtDesc(
+                .findFirstByTenantIdAndPhoneHashAndStatusAndVerifiedAtIsNotNullAndProviderUserIdInOrderByVerifiedAtDesc(
                         eq(TENANT),
                         eq(PHONE_HASH),
-                        eq(PhoneOtpAttempt.STATUS_VERIFIED)))
+                        eq(PhoneOtpAttempt.STATUS_VERIFIED),
+                        argThat(ClientProfilePhoneVerificationServiceImplTest::containsExactlyUserId)))
                 .thenReturn(Optional.empty());
 
         assertThat(service.isPhoneVerifiedForPayment(user)).isFalse();
@@ -154,13 +189,18 @@ class ClientProfilePhoneVerificationServiceImplTest {
         when(encryptionUtil.safeDecrypt("enc-01099998888")).thenReturn("01099998888");
         String newHash = PhoneHashUtils.sha256Hex("01099998888");
         when(phoneOtpAttemptRepository
-                .findFirstByTenantIdAndPhoneHashAndStatusAndVerifiedAtIsNotNullOrderByVerifiedAtDesc(
+                .findFirstByTenantIdAndPhoneHashAndStatusAndVerifiedAtIsNotNullAndProviderUserIdInOrderByVerifiedAtDesc(
                         eq(TENANT),
                         eq(newHash),
-                        eq(PhoneOtpAttempt.STATUS_VERIFIED)))
+                        eq(PhoneOtpAttempt.STATUS_VERIFIED),
+                        argThat(ClientProfilePhoneVerificationServiceImplTest::containsExactlyUserId)))
                 .thenReturn(Optional.empty());
 
         assertThat(service.isPhoneVerifiedForPayment(user)).isFalse();
+    }
+
+    private static boolean containsExactlyUserId(Collection<String> ids) {
+        return ids != null && ids.size() == 1 && ids.contains(USER_ID_STR);
     }
 
     private User buildUser(String plainPhone) {

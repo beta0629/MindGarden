@@ -1,6 +1,8 @@
 package com.coresolution.consultation.service.impl;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.entity.auth.PhoneOtpAttempt;
@@ -20,7 +22,8 @@ import lombok.extern.slf4j.Slf4j;
  *
  * <p>OTP 발송·검증은 기존 {@code SmsOtpVerificationService} + CHANGE_PHONE / OAuth PhoneOtp 경로를 그대로 쓰고,
  * CHANGE_PHONE 성공 시에만 본 서비스가 PROFILE VERIFIED 장부 행을 남긴다.
- * 결제 게이트 조회는 provider 무관하게 {@code tenantId + phoneHash + VERIFIED + verifiedAt} 로 매칭한다.
+ * 결제 게이트 조회는 {@code tenantId + phoneHash + VERIFIED + verifiedAt + 본인 providerUserId 후보} 로 매칭한다.
+ * PROFILE 은 {@code String.valueOf(userId)}, OAuth 는 Apple sub / socialProviderUserId 를 후보에 포함한다.
  * 별도 OTP 스택·users 컬럼을 만들지 않는다.</p>
  *
  * @author MindGarden
@@ -32,8 +35,8 @@ import lombok.extern.slf4j.Slf4j;
 public class ClientProfilePhoneVerificationServiceImpl implements ClientProfilePhoneVerificationService {
 
     /**
-     * OTP 본문은 SmsOtpVerificationService 에서 이미 소비됨 — 장부 NOT NULL 용 마커.
-     * 결제 게이트는 status/verified_at/phone_hash 만 조회하며 code_hash 로 OTP 를 재검증하지 않는다.
+     * OTP 본문은 SmsOtpVerificationService 에서 이미 소비됨 — 장부 NOT NULL 용 플레이스홀더.
+     * 결제 게이트는 status/verified_at/phone_hash/provider_user_id 만 조회하며 code_hash 로 OTP 를 재검증하지 않는다.
      */
     private static final String PROFILE_LEDGER_CODE_HASH = "PROFILE_CHANGE_PHONE_LEDGER";
 
@@ -102,12 +105,38 @@ public class ClientProfilePhoneVerificationServiceImpl implements ClientProfileP
             return Optional.empty();
         }
         String phoneHash = PhoneHashUtils.sha256Hex(normalized);
-        // OTP 성공 SSOT: PROFILE(CHANGE_PHONE) 및 OAuth(APPLE/KAKAO/…) VERIFIED 행 모두 허용
+        List<String> providerUserIds = resolveProviderUserIdCandidates(user);
+        if (providerUserIds.isEmpty()) {
+            return Optional.empty();
+        }
+        // OTP 성공 SSOT: PROFILE(CHANGE_PHONE) 및 OAuth(APPLE/KAKAO/…) VERIFIED 행 — 본인 ID 스코프만
         return phoneOtpAttemptRepository
-                .findFirstByTenantIdAndPhoneHashAndStatusAndVerifiedAtIsNotNullOrderByVerifiedAtDesc(
+                .findFirstByTenantIdAndPhoneHashAndStatusAndVerifiedAtIsNotNullAndProviderUserIdInOrderByVerifiedAtDesc(
                         user.getTenantId(),
                         phoneHash,
-                        PhoneOtpAttempt.STATUS_VERIFIED);
+                        PhoneOtpAttempt.STATUS_VERIFIED,
+                        providerUserIds);
+    }
+
+    /**
+     * 결제 게이트 매칭용 provider_user_id 후보.
+     *
+     * <p>PROFILE 장부는 {@code String.valueOf(userId)}, APPLE 은 {@code appleSub},
+     * KAKAO 등 소셜은 {@code socialProviderUserId} 로 저장된다.</p>
+     *
+     * @param user 테넌트 스코프 사용자
+     * @return blank 제외 후보 목록 (최소 userId 문자열)
+     */
+    private List<String> resolveProviderUserIdCandidates(User user) {
+        List<String> candidates = new ArrayList<>(3);
+        candidates.add(String.valueOf(user.getId()));
+        if (StringUtils.hasText(user.getAppleSub())) {
+            candidates.add(user.getAppleSub().trim());
+        }
+        if (StringUtils.hasText(user.getSocialProviderUserId())) {
+            candidates.add(user.getSocialProviderUserId().trim());
+        }
+        return candidates;
     }
 
     private String resolveNormalizedPhone(User user) {

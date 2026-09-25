@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Optional;
 import com.coresolution.consultation.constant.ShopClientOrderStatus;
 import com.coresolution.consultation.entity.ShopClientOrder;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -52,9 +53,16 @@ public interface ShopClientOrderRepository extends BaseRepository<ShopClientOrde
             @Param("clientId") Long clientId,
             Pageable pageable);
 
+    /**
+     * 테넌트 최근 주문 페이지 (최신순).
+     *
+     * @param tenantId 테넌트 ID
+     * @param pageable 페이지
+     * @return 주문 페이지 (totalElements 포함)
+     */
     @Query("SELECT o FROM ShopClientOrder o WHERE o.tenantId = :tenantId AND o.isDeleted = false "
             + "ORDER BY o.createdAt DESC")
-    List<ShopClientOrder> findRecentByTenant(
+    Page<ShopClientOrder> findRecentByTenant(
             @Param("tenantId") String tenantId,
             Pageable pageable);
 

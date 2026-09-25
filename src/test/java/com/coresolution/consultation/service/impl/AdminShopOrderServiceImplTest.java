@@ -14,6 +14,7 @@ import static org.mockito.Mockito.when;
 import com.coresolution.consultation.constant.AuditAction;
 import com.coresolution.consultation.constant.ShopAdminOrderConstants;
 import com.coresolution.consultation.constant.ShopClientOrderStatus;
+import com.coresolution.consultation.dto.AdminListPageResult;
 import com.coresolution.consultation.dto.shop.admin.ShopOrderAdminDetailResponse;
 import com.coresolution.consultation.dto.shop.admin.ShopOrderAdminSummaryItem;
 import com.coresolution.consultation.entity.AuditLog;
@@ -40,7 +41,9 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 /**
  * {@link AdminShopOrderServiceImpl} soft-delete·목록 deletable 가드 단위 검증.
@@ -283,8 +286,11 @@ class AdminShopOrderServiceImplTest {
         created.setPublicId("created-1");
         created.setId(8L);
 
-        when(shopClientOrderRepository.findRecentByTenant(eq(TENANT), any(PageRequest.class)))
-                .thenReturn(List.of(paid, created));
+        when(shopClientOrderRepository.findRecentByTenant(eq(TENANT), any(Pageable.class)))
+                .thenAnswer(inv -> {
+                    Pageable p = inv.getArgument(1);
+                    return new PageImpl<>(List.of(paid, created), p, 2);
+                });
         when(paymentRepository.findFirstByTenantIdAndOrderIdAndStatusAndIsDeletedFalseOrderByIdDesc(
                         eq(TENANT), eq("paid-1"), eq(Payment.PaymentStatus.APPROVED)))
                 .thenReturn(Optional.empty());
@@ -302,9 +308,12 @@ class AdminShopOrderServiceImplTest {
                         eq(TENANT), eq("created-1"), eq(Payment.PaymentStatus.REFUNDED)))
                 .thenReturn(Optional.empty());
 
-        List<ShopOrderAdminSummaryItem> items = service.listRecentOrders(TENANT, 50);
+        AdminListPageResult<ShopOrderAdminSummaryItem> pageResult =
+                service.listRecentOrders(TENANT, PageRequest.of(0, 50));
+        List<ShopOrderAdminSummaryItem> items = pageResult.getContent();
 
         assertEquals(2, items.size());
+        assertEquals(2L, pageResult.getTotalCount());
         assertFalse(items.get(0).isDeletable());
         assertTrue(items.get(1).isDeletable());
     }
@@ -315,12 +324,17 @@ class AdminShopOrderServiceImplTest {
         ShopClientOrder cancelled = orderWithStatus(ShopClientOrderStatus.CANCELLED);
         cancelled.setPublicId("cancelled-approved-1");
 
-        when(shopClientOrderRepository.findRecentByTenant(eq(TENANT), any(PageRequest.class)))
-                .thenReturn(List.of(cancelled));
+        when(shopClientOrderRepository.findRecentByTenant(eq(TENANT), any(Pageable.class)))
+                .thenAnswer(inv -> {
+                    Pageable p = inv.getArgument(1);
+                    return new PageImpl<>(List.of(cancelled), p, 1);
+                });
         when(paymentRepository.findByTenantIdAndOrderIdAndIsDeletedFalse(TENANT, "cancelled-approved-1"))
                 .thenReturn(List.of(paymentWithStatus(Payment.PaymentStatus.APPROVED)));
 
-        List<ShopOrderAdminSummaryItem> items = service.listRecentOrders(TENANT, 50);
+        AdminListPageResult<ShopOrderAdminSummaryItem> pageResult =
+                service.listRecentOrders(TENANT, PageRequest.of(0, 50));
+        List<ShopOrderAdminSummaryItem> items = pageResult.getContent();
 
         assertEquals(1, items.size());
         assertFalse(items.get(0).isDeletable());
@@ -346,8 +360,11 @@ class AdminShopOrderServiceImplTest {
         refundedPayment.setId(900L);
         refundedPayment.setTenantId(TENANT);
 
-        when(shopClientOrderRepository.findRecentByTenant(eq(TENANT), any(PageRequest.class)))
-                .thenReturn(List.of(refunded));
+        when(shopClientOrderRepository.findRecentByTenant(eq(TENANT), any(Pageable.class)))
+                .thenAnswer(inv -> {
+                    Pageable p = inv.getArgument(1);
+                    return new PageImpl<>(List.of(refunded), p, 1);
+                });
         when(paymentRepository.findFirstByTenantIdAndOrderIdAndStatusAndIsDeletedFalseOrderByIdDesc(
                         eq(TENANT), eq("refunded-ssot-1"), eq(Payment.PaymentStatus.APPROVED)))
                 .thenReturn(Optional.empty());
@@ -357,7 +374,9 @@ class AdminShopOrderServiceImplTest {
         when(paymentRepository.findByTenantIdAndOrderIdAndIsDeletedFalse(TENANT, "refunded-ssot-1"))
                 .thenReturn(List.of(refundedPayment));
 
-        List<ShopOrderAdminSummaryItem> items = service.listRecentOrders(TENANT, 50);
+        AdminListPageResult<ShopOrderAdminSummaryItem> pageResult =
+                service.listRecentOrders(TENANT, PageRequest.of(0, 50));
+        List<ShopOrderAdminSummaryItem> items = pageResult.getContent();
 
         assertEquals(1, items.size());
         assertEquals(ShopClientOrderStatus.REFUNDED, items.get(0).getStatus());

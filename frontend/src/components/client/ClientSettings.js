@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import AdminCommonLayout from '../layout/AdminCommonLayout';
-import ContentArea from '../dashboard-v2/content/ContentArea';
-import ContentHeader from '../dashboard-v2/content/ContentHeader';
+import { CLIENT_WEB_SUITE_COPY } from '../../constants/clientWebSuiteConstants';
+import ClientWebPageShell from './ClientWebPageShell';
 import MGButton from '../common/MGButton';
 import { buildErpMgButtonClassName } from '../erp/common/erpMgButtonProps';
 import { useSession } from '../../contexts/SessionContext';
@@ -49,20 +48,15 @@ const ClientSettings = () => {
   };
 
   const pageShell = (body) => (
-    <div className="mg-v2-ad-b0kla" data-testid="client-settings-page">
-      <div className="mg-v2-ad-b0kla__container">
-        <ContentArea ariaLabel={t('settings:client.pageArea')}>
-          <ContentHeader
-            title={t('settings:client.title')}
-            subtitle={t('settings:client.subtitle')}
-            titleId={CLIENT_SETTINGS_TITLE_ID}
-          />
-          <main aria-labelledby={CLIENT_SETTINGS_TITLE_ID}>
-            {body}
-          </main>
-        </ContentArea>
-      </div>
-    </div>
+    <ClientWebPageShell
+      title={CLIENT_WEB_SUITE_COPY.SETTINGS_TITLE}
+      titleId={CLIENT_SETTINGS_TITLE_ID}
+      testId="client-settings-page"
+    >
+      <main aria-labelledby={CLIENT_SETTINGS_TITLE_ID}>
+        {body}
+      </main>
+    </ClientWebPageShell>
   );
 
   const handleSettingChange = async(key, value) => {
@@ -84,20 +78,14 @@ const ClientSettings = () => {
   };
 
   if (loading) {
-    return (
-      <AdminCommonLayout title={t('settings:page.title')} className="mg-v2-dashboard-layout">
-        {pageShell(
+    return pageShell(
           <div aria-busy="true" aria-live="polite">
             <UnifiedLoading type="inline" text={t('common.status.loading')} />
           </div>
-        )}
-      </AdminCommonLayout>
-    );
+        );
   }
 
-  return (
-    <AdminCommonLayout title={t('settings:page.title')} className="mg-v2-dashboard-layout">
-      {pageShell(
+  return pageShell(
       <div className="client-settings-container">
         <div className="client-settings-card">
           {message && (
@@ -214,9 +202,7 @@ const ClientSettings = () => {
           </div>
         </div>
       </div>
-      )}
-    </AdminCommonLayout>
-  );
+      );
 };
 
 export default ClientSettings;

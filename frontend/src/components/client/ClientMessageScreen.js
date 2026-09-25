@@ -1,11 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useSession } from '../../contexts/SessionContext';
 import StandardizedApi from '../../utils/standardizedApi';
 import UnifiedLoading from '../../components/common/UnifiedLoading';
 import notificationManager from '../../utils/notification';
-import AdminCommonLayout from '../layout/AdminCommonLayout';
-import { ContentArea, ContentHeader } from '../dashboard-v2/content';
+import ClientWebPageShell from './ClientWebPageShell';
 import MGButton from '../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import UnifiedModal from '../common/modals/UnifiedModal';
@@ -16,6 +15,7 @@ import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import '../../styles/themes/client-theme.css';
 import './ClientMessageScreen.css';
 import { useTranslation } from 'react-i18next';
+import { CLIENT_DASHBOARD_ROUTES } from '../../constants/clientDashboardRoutes';
 
 const CLIENT_MESSAGE_TITLE_ID = 'client-message-screen-title';
 
@@ -26,6 +26,7 @@ const CLIENT_MESSAGE_TITLE_ID = 'client-message-screen-title';
 const ClientMessageScreen = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, isLoading: sessionLoading, isLoggedIn } = useSession();
 
   const [loading, setLoading] = useState(true);
@@ -48,12 +49,13 @@ const ClientMessageScreen = () => {
     if (isLoggedIn && user && user.id) {
       loadMessages();
     } else if (!isLoggedIn) {
-      navigate('/login');
+      const returnTo = `${location.pathname}${location.search || ''}` || CLIENT_DASHBOARD_ROUTES.MESSAGES;
+      navigate(`/login?redirect=${encodeURIComponent(returnTo)}`);
     } else {
       console.warn('⚠️ 로그인되어 있지만 사용자 정보가 없습니다.');
       setLoading(false);
     }
-  }, [user, sessionLoading, isLoggedIn, navigate]);
+  }, [user, sessionLoading, isLoggedIn, navigate, location.pathname, location.search]);
 
   const loadMessages = async() => {
     if (!user || !user.id) {
@@ -220,20 +222,15 @@ const ClientMessageScreen = () => {
     : '';
 
   const pageShell = (body) => (
-    <div className="mg-v2-ad-b0kla" data-testid="client-messages-page">
-      <div className="mg-v2-ad-b0kla__container">
-        <ContentArea ariaLabel="상담사 메시지">
-          <ContentHeader
-            title="상담사 메시지"
-            subtitle="상담사로부터 받은 메시지를 확인하고 답장할 수 있습니다."
-            titleId={CLIENT_MESSAGE_TITLE_ID}
-          />
-          <main aria-labelledby={CLIENT_MESSAGE_TITLE_ID}>
-            {body}
-          </main>
-        </ContentArea>
-      </div>
-    </div>
+    <ClientWebPageShell
+      title="상담사 메시지"
+      titleId={CLIENT_MESSAGE_TITLE_ID}
+      testId="client-messages-page"
+    >
+      <main aria-labelledby={CLIENT_MESSAGE_TITLE_ID}>
+        {body}
+      </main>
+    </ClientWebPageShell>
   );
 
   const renderMessageModalActions = () => (
@@ -264,24 +261,18 @@ const ClientMessageScreen = () => {
   );
 
   if (loading) {
-    return (
-      <AdminCommonLayout title={t('admin.labels.message')}>
-        {pageShell(
-          <div
-            className="client-message-screen-loading"
-            aria-busy="true"
-            aria-live="polite"
-          >
-            <UnifiedLoading type="inline" text="로딩중..." />
-          </div>
-        )}
-      </AdminCommonLayout>
+    return pageShell(
+      <div
+        className="client-message-screen-loading"
+        aria-busy="true"
+        aria-live="polite"
+      >
+        <UnifiedLoading type="inline" text="로딩중..." />
+      </div>
     );
   }
 
-  return (
-    <AdminCommonLayout title={t('admin.labels.message')} className="mg-v2-dashboard-layout">
-      {pageShell(
+  return pageShell(
         <div className="client-message-screen-container">
           <div className="client-message-screen-stats-card">
             <div className="client-message-screen-stats-grid">
@@ -399,8 +390,6 @@ const ClientMessageScreen = () => {
             )}
           </UnifiedModal>
         </div>
-      )}
-    </AdminCommonLayout>
   );
 };
 

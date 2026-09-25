@@ -16,9 +16,7 @@ import {
 import StandardizedApi from '../../utils/standardizedApi';
 import { getDashboardPath } from '../../utils/session';
 import { useSession } from '../../contexts/SessionContext';
-import AdminCommonLayout from '../layout/AdminCommonLayout';
-import ContentArea from '../dashboard-v2/content/ContentArea';
-import ContentHeader from '../dashboard-v2/content/ContentHeader';
+import ClientWebPageShell from './ClientWebPageShell';
 import MGButton from '../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import UnifiedLoading from '../../components/common/UnifiedLoading';
@@ -29,6 +27,7 @@ import '../../styles/unified-design-tokens.css';
 import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import './ClientPaymentHistory.css';
 import { useTranslation } from 'react-i18next';
+import { CLIENT_WEB_SUITE_COPY } from '../../constants/clientWebSuiteConstants';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_AUTH_CURRENT_USER = '/api/v1/auth/current-user';
@@ -167,20 +166,16 @@ const ClientPaymentHistory = () => {
   };
 
   const pageShell = (body) => (
-    <div className="mg-v2-ad-b0kla" data-testid="client-payment-history-page">
-      <div className="mg-v2-ad-b0kla__container">
-        <ContentArea ariaLabel="결제 내역">
-          <ContentHeader
-            title={t('common:client.ClientPaymentHistory.t_42e677b1')}
-            subtitle="결제 내역과 패키지 정보를 확인하세요"
-            titleId={CLIENT_PAYMENT_HISTORY_TITLE_ID}
-          />
-          <main aria-labelledby={CLIENT_PAYMENT_HISTORY_TITLE_ID}>
-            {body}
-          </main>
-        </ContentArea>
-      </div>
-    </div>
+    <ClientWebPageShell
+      activeNavId="payment"
+      title={CLIENT_WEB_SUITE_COPY.PAYMENT_TITLE}
+      titleId={CLIENT_PAYMENT_HISTORY_TITLE_ID}
+      testId="client-payment-history-page"
+    >
+      <main aria-labelledby={CLIENT_PAYMENT_HISTORY_TITLE_ID}>
+        {body}
+      </main>
+    </ClientWebPageShell>
   );
 
   const filteredMappings = paymentData?.mappings?.filter(mapping => {
@@ -194,21 +189,15 @@ const ClientPaymentHistory = () => {
   }) || [];
 
   if (isLoading) {
-    return (
-      <AdminCommonLayout title={t('common:client.ClientPaymentHistory.t_42e677b1')} className="mg-v2-dashboard-layout">
-        {pageShell(
+    return pageShell(
           <div aria-busy="true" aria-live="polite">
             <UnifiedLoading type="inline" text={t('common:client.ClientPaymentHistory.t_c721f3cb')} />
           </div>
-        )}
-      </AdminCommonLayout>
-    );
+        );
   }
 
   if (error) {
-    return (
-      <AdminCommonLayout title={t('common:client.ClientPaymentHistory.t_42e677b1')} className="mg-v2-dashboard-layout">
-        {pageShell(
+    return pageShell(
           <div className="client-payment-history">
             <div className="payment-error">
               <div className="payment-error__icon">
@@ -228,15 +217,11 @@ const ClientPaymentHistory = () => {
               </MGButton>
             </div>
           </div>
-        )}
-      </AdminCommonLayout>
-    );
+        );
   }
 
   if (!paymentData || paymentData.mappings.length === 0) {
-    return (
-      <AdminCommonLayout title={t('common:client.ClientPaymentHistory.t_42e677b1')} className="mg-v2-dashboard-layout">
-        {pageShell(
+    return pageShell(
           <div className="client-payment-history">
             <div className="payment-empty">
               <div className="payment-empty__icon">
@@ -257,14 +242,10 @@ const ClientPaymentHistory = () => {
               </MGButton>
             </div>
           </div>
-        )}
-      </AdminCommonLayout>
-    );
+        );
   }
 
-  return (
-    <AdminCommonLayout title={t('common:client.ClientPaymentHistory.t_42e677b1')} className="mg-v2-dashboard-layout">
-      {pageShell(
+  return pageShell(
         <div className="client-payment-history">
         {/* 통계 카드 */}
         <div className="payment-stats">
@@ -430,9 +411,7 @@ const ClientPaymentHistory = () => {
           </div>
         </div>
         </div>
-      )}
-    </AdminCommonLayout>
-  );
+      );
 };
 
 export default ClientPaymentHistory;

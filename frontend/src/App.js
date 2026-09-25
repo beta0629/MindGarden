@@ -94,6 +94,7 @@ import SalaryManagement from './components/erp/SalaryManagement';
 import RefundManagement from './components/erp/RefundManagement';
 import ClientSchedule from './components/client/ClientSchedule';
 import ClientSessionManagement from './components/client/ClientSessionManagement';
+import ClientUnknownRoutePage from './components/client/ClientUnknownRoutePage';
 import ClientHomeRenewal from './components/client/ClientHomeRenewal';
 import ClientBookingRenewal from './components/client/ClientBookingRenewal';
 import ClientConsultationsRenewal from './components/client/ClientConsultationsRenewal';
@@ -122,6 +123,10 @@ import { MENU_PERMISSION_CODES } from './utils/menuAccessUtils';
 import ClientPaymentHistory from './components/client/ClientPaymentHistory';
 import HelpPage from './components/common/HelpPage';
 import ClientSettings from './components/client/ClientSettings';
+import {
+  CLIENT_LEGACY_NESTED_REDIRECTS,
+  CLIENT_LEGACY_ROOT_REDIRECTS
+} from './constants/clientLegacyRouteRedirects';
 import WellnessNotificationList from './components/wellness/WellnessNotificationList';
 import WellnessNotificationDetail from './components/wellness/WellnessNotificationDetail';
 import WellnessManagement from './components/admin/WellnessManagement';
@@ -539,7 +544,23 @@ function AppContent() {
                   </CommunityMenuRouteGuard>
                 )}
               />
+              {CLIENT_LEGACY_NESTED_REDIRECTS.map(({ path, to }) => (
+                <Route
+                  key={`client-legacy-${path}`}
+                  path={path}
+                  element={<RedirectWithSearch to={to} />}
+                />
+              ))}
+              <Route path="*" element={<ClientUnknownRoutePage />} />
             </Route>
+
+            {CLIENT_LEGACY_ROOT_REDIRECTS.map(({ path, to }) => (
+              <Route
+                key={`client-legacy-root-${path}`}
+                path={path}
+                element={<RedirectWithSearch to={to} />}
+              />
+            ))}
             
             {/* 일반 대시보드 라우트 (동적 대시보드 우선) */}
             <Route path="/dashboard" element={<DynamicDashboard user={user} />} />

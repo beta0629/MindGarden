@@ -135,6 +135,20 @@
   color: var(--client-web-chrome-ink);
 }
 
+.client-web-topchrome__util {
+  text-decoration: none;
+  color: var(--client-web-chrome-slate);
+  font-size: var(--mg-v2-font-size-body-sm, 0.8125rem);
+  font-weight: var(--mg-v2-font-weight-medium, 500);
+  padding: var(--mg-v2-space-1, 0.25rem) var(--mg-v2-space-2, 0.5rem);
+  border-radius: var(--client-web-chrome-radius);
+  white-space: nowrap;
+}
+
+.client-web-topchrome__util:hover {
+  color: var(--client-web-chrome-ink);
+}
+
 .client-web-topchrome__cart-label {
   font-size: var(--mg-v2-font-size-body-sm, 0.8125rem);
 }

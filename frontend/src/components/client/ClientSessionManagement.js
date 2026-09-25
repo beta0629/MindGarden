@@ -4,9 +4,7 @@ import { apiGet } from '../../utils/ajax';
 import { redirectToDynamicDashboard } from '../../utils/dashboardUtils';
 import { sessionManager } from '../../utils/sessionManager';
 import { useSession } from '../../contexts/SessionContext';
-import AdminCommonLayout from '../layout/AdminCommonLayout';
-import ContentArea from '../dashboard-v2/content/ContentArea';
-import ContentHeader from '../dashboard-v2/content/ContentHeader';
+import ClientWebPageShell from './ClientWebPageShell';
 import MGButton from '../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import UnifiedLoading from '../common/UnifiedLoading';
@@ -22,6 +20,7 @@ import {
 } from '../../utils/apiResponseNormalize';
 import { calculateClientSessionTotalsFromMappings } from '../../utils/clientSessionTotals';
 import { useTranslation } from 'react-i18next';
+import { CLIENT_WEB_SUITE_COPY } from '../../constants/clientWebSuiteConstants';
 import i18n from '../../i18n';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
@@ -145,38 +144,28 @@ const ClientSessionManagement = () => {
   };
 
   const pageShell = (body) => (
-    <div className="mg-v2-ad-b0kla" data-testid="client-session-management-page">
-      <div className="mg-v2-ad-b0kla__container">
-        <ContentArea ariaLabel="회기 관리">
-          <ContentHeader
-            title={t('common:client.ClientSessionManagement.t_be89c264')}
-            subtitle="상담 회기 현황과 사용 내역을 확인하세요"
-            titleId={CLIENT_SESSION_MGMT_TITLE_ID}
-          />
-          <main aria-labelledby={CLIENT_SESSION_MGMT_TITLE_ID}>
-            {body}
-          </main>
-        </ContentArea>
-      </div>
-    </div>
+    <ClientWebPageShell
+      activeNavId="sessions"
+      title={CLIENT_WEB_SUITE_COPY.SESSIONS_TITLE}
+      titleId={CLIENT_SESSION_MGMT_TITLE_ID}
+      testId="client-session-management-page"
+    >
+      <main aria-labelledby={CLIENT_SESSION_MGMT_TITLE_ID}>
+        {body}
+      </main>
+    </ClientWebPageShell>
   );
 
   if (isLoading) {
-    return (
-      <AdminCommonLayout title={t('common:client.ClientSessionManagement.t_be89c264')} className="mg-v2-dashboard-layout">
-        {pageShell(
+    return pageShell(
           <div aria-busy="true" aria-live="polite">
             <UnifiedLoading type="inline" text={t('common:client.ClientSessionManagement.t_0810a0e8')} />
           </div>
-        )}
-      </AdminCommonLayout>
-    );
+        );
   }
 
   if (error) {
-    return (
-      <AdminCommonLayout title={t('common:client.ClientSessionManagement.t_be89c264')} className="mg-v2-dashboard-layout">
-        {pageShell(
+    return pageShell(
           <div className="client-session-management">
             <div className="error-container">
               <div className="error-icon">
@@ -196,15 +185,11 @@ const ClientSessionManagement = () => {
               </MGButton>
             </div>
           </div>
-        )}
-      </AdminCommonLayout>
-    );
+        );
   }
 
   if (!sessionData || sessionData.mappings.length === 0) {
-    return (
-      <AdminCommonLayout title={t('common:client.ClientSessionManagement.t_be89c264')} className="mg-v2-dashboard-layout">
-        {pageShell(
+    return pageShell(
           <div className="client-session-management">
             <div className="no-data-container">
               <div className="no-data-icon">
@@ -222,14 +207,10 @@ const ClientSessionManagement = () => {
               </MGButton>
             </div>
           </div>
-        )}
-      </AdminCommonLayout>
-    );
+        );
   }
 
-  return (
-    <AdminCommonLayout title={t('common:client.ClientSessionManagement.t_be89c264')} className="mg-v2-dashboard-layout">
-      {pageShell(
+  return pageShell(
         <div className="client-session-management">
         {/* 햄버거 메뉴 드롭다운 */}
         {isMenuOpen && (
@@ -418,9 +399,7 @@ const ClientSessionManagement = () => {
           )}
         </div>
         </div>
-      )}
-    </AdminCommonLayout>
-  );
+      );
 };
 
 export default ClientSessionManagement;

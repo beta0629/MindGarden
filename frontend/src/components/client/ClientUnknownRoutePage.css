@@ -1,0 +1,46 @@
+/**
+ * ClientUnknownRoutePage — catch-all empty-state styles (token-only)
+ *
+ * @author CoreSolution
+ * @since 2026-09-25
+ */
+
+.client-unknown-route {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--mg-v2-space-4, var(--mg-spacing-md));
+  max-width: 36rem;
+}
+
+.client-unknown-route__lead {
+  margin: 0;
+  color: var(--mg-v2-color-text-secondary, var(--mg-color-text-secondary));
+  font-size: var(--mg-v2-font-size-body-md, 0.875rem);
+  line-height: 1.5;
+}
+
+.client-unknown-route__path {
+  margin: 0;
+  font-family: var(--mg-v2-font-family-mono, ui-monospace, monospace);
+  font-size: var(--mg-v2-font-size-body-sm, 0.8125rem);
+  color: var(--mg-v2-color-text-secondary, var(--mg-color-text-secondary));
+  word-break: break-all;
+}
+
+.client-unknown-route__cta {
+  display: inline-flex;
+  align-items: center;
+  margin-top: var(--mg-v2-space-2, var(--mg-spacing-xs));
+  padding: var(--mg-v2-space-2, 0.5rem) var(--mg-v2-space-4, 1rem);
+  border: 1px solid var(--mg-v2-color-border-light, var(--mg-color-border-light));
+  border-radius: var(--mg-v2-radius-sm, var(--mg-radius-sm));
+  color: var(--mg-v2-color-text-primary, var(--mg-color-text-primary));
+  text-decoration: none;
+  font-size: var(--mg-v2-font-size-body-md, 0.875rem);
+  font-weight: var(--mg-v2-font-weight-medium, 500);
+}
+
+.client-unknown-route__cta:hover {
+  border-color: var(--mg-v2-color-primary-solid, var(--mg-color-primary-main));
+}

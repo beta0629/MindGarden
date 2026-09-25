@@ -1,28 +1,27 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { AlertTriangle } from 'lucide-react';
 import { useSession } from '../../contexts/SessionContext';
-import AdminCommonLayout from '../layout/AdminCommonLayout';
-import ContentArea from '../dashboard-v2/content/ContentArea';
-import ContentHeader from '../dashboard-v2/content/ContentHeader';
+import ClientWebPageShell from './ClientWebPageShell';
 import MGButton from '../common/MGButton';
 import { buildErpMgButtonClassName } from '../erp/common/erpMgButtonProps';
 import UnifiedScheduleComponent from '../schedule/UnifiedScheduleComponent';
 import UnifiedLoading from '../common/UnifiedLoading';
 import '../../styles/unified-design-tokens.css';
-import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import './ClientSchedule.css';
 import { USER_ROLES } from '../../constants/roles';
+import { CLIENT_WEB_SUITE_COPY } from '../../constants/clientWebSuiteConstants';
 import { useTranslation } from 'react-i18next';
 
 const CLIENT_SCHEDULE_TITLE_ID = 'client-schedule-page-title';
 
 /**
- * 내담자 일정 페이지 (디자인 시스템 적용)
+ * 내담자 일정 페이지 — ClientWebPageShell (v4)
  */
 const ClientSchedule = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, isLoggedIn, isLoading: sessionLoading, checkSession } = useSession();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -43,92 +42,75 @@ const ClientSchedule = () => {
 
   useEffect(() => {
     if (!sessionLoading && !isLoggedIn) {
-      navigate('/login', { replace: true });
+      const returnTo = `${location.pathname}${location.search || ''}`;
+      navigate(`/login?redirect=${encodeURIComponent(returnTo)}`, { replace: true });
       return;
     }
 
     if (user) {
       setLoading(false);
     }
-  }, [user, isLoggedIn, sessionLoading, navigate]);
+  }, [user, isLoggedIn, sessionLoading, navigate, location.pathname, location.search]);
 
-  /**
-   * AdminCommonLayout → DesktopLayout main 직계 자식은 ContentArea만 둔다.
-   * (ClientDashboard와 동일) 중첩 mg-v2-ad-b0kla 래퍼는 main > * flex·min-height 규칙과 충돌해
-   * 일정 영역이 높이 0에 가깝게 접히는 현상(빈 화면)을 유발할 수 있음.
-   */
   const pageShell = (body) => (
-    <ContentArea ariaLabel="내담자 일정">
-      <ContentHeader
-        title="내 일정"
-        subtitle="예약된 상담 일정을 확인하고 관리할 수 있습니다."
-        titleId={CLIENT_SCHEDULE_TITLE_ID}
-      />
+    <ClientWebPageShell
+      activeNavId="schedule"
+      title={CLIENT_WEB_SUITE_COPY.SCHEDULE_TITLE}
+      titleId={CLIENT_SCHEDULE_TITLE_ID}
+      testId="client-schedule-page"
+    >
       <main
         className="client-schedule__main"
-        data-testid="client-schedule-page"
         aria-labelledby={CLIENT_SCHEDULE_TITLE_ID}
       >
         {body}
       </main>
-    </ContentArea>
+    </ClientWebPageShell>
   );
 
   if (sessionLoading || loading) {
-    return (
-      <AdminCommonLayout title={t('common.labels.schedule')} className="mg-v2-dashboard-layout">
-        {pageShell(
-          <div aria-busy="true" aria-live="polite">
-            <UnifiedLoading type="inline" text="로딩중..." />
-          </div>
-        )}
-      </AdminCommonLayout>
+    return pageShell(
+      <div aria-busy="true" aria-live="polite">
+        <UnifiedLoading type="inline" text="로딩중..." />
+      </div>
     );
   }
 
   if (error) {
-    return (
-      <AdminCommonLayout title={t('common.labels.schedule')} className="mg-v2-dashboard-layout">
-        {pageShell(
-          <div className="client-schedule-error">
-            <div className="client-schedule-error__icon">
-              <AlertTriangle size={48} />
-            </div>
-            <h3 className="client-schedule-error__title">오류가 발생했습니다</h3>
-            <p className="client-schedule-error__message">{error}</p>
-            <MGButton
-              variant="primary"
-              className={buildErpMgButtonClassName({ variant: 'primary', loading: false })}
-              onClick={handleRetry}
-              preventDoubleClick={false}
-            >
-              {t('common.labels.retry')}
-            </MGButton>
-          </div>
-        )}
-      </AdminCommonLayout>
+    return pageShell(
+      <div className="client-schedule-error">
+        <div className="client-schedule-error__icon">
+          <AlertTriangle size={48} />
+        </div>
+        <h3 className="client-schedule-error__title">오류가 발생했습니다</h3>
+        <p className="client-schedule-error__message">{error}</p>
+        <MGButton
+          variant="primary"
+          className={buildErpMgButtonClassName({ variant: 'primary', loading: false })}
+          onClick={handleRetry}
+          preventDoubleClick={false}
+        >
+          {t('common.labels.retry')}
+        </MGButton>
+      </div>
     );
   }
 
-  return (
-    <AdminCommonLayout title={t('common.labels.schedule')} className="mg-v2-dashboard-layout">
-      {pageShell(
-        <div
-          className="client-schedule-calendar-wrapper"
-          data-calendar-skin="integrated"
-          data-layout-context="client-schedule"
-        >
-          <UnifiedScheduleComponent
-            key={calendarKey}
-            userRole={user?.role || USER_ROLES.CLIENT}
-            userId={user?.id || null}
-            integratedMonthEventLayout
-            calendarSkin="integrated"
-            hideScheduleTitle
-          />
-        </div>
-      )}
-    </AdminCommonLayout>
+  return pageShell(
+    <div
+      className="client-schedule-calendar-wrapper"
+      data-calendar-skin="integrated"
+      data-layout-context="client-schedule"
+    >
+      <UnifiedScheduleComponent
+        key={calendarKey}
+        userRole={user?.role || USER_ROLES.CLIENT}
+        userId={user?.id || null}
+        integratedMonthEventLayout
+        calendarSkin="integrated"
+        hideScheduleTitle
+      />
+    </div>
   );
 };
 

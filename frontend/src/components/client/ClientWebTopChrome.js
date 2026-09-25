@@ -17,7 +17,15 @@ import { CLIENT_DASHBOARD_ROUTES } from '../../constants/clientDashboardRoutes';
 import {
   CLIENT_WEB_LOGIN,
   CLIENT_WEB_LOGOUT,
+  CLIENT_WEB_MESSAGES_ARIA,
+  CLIENT_WEB_MESSAGES_HREF,
+  CLIENT_WEB_MESSAGES_LABEL,
+  CLIENT_WEB_MESSAGES_LINK_TEST_ID,
   CLIENT_WEB_NAV,
+  CLIENT_WEB_NOTIFICATIONS_ARIA,
+  CLIENT_WEB_NOTIFICATIONS_HREF,
+  CLIENT_WEB_NOTIFICATIONS_LABEL,
+  CLIENT_WEB_NOTIFICATIONS_LINK_TEST_ID,
   CLIENT_WEB_PROFILE_LINK_TEST_ID,
   CLIENT_WEB_SETTINGS_ARIA,
   CLIENT_WEB_TOP_CHROME_TEST_ID,
@@ -165,6 +173,26 @@ const ClientWebTopChrome = ({
           </Link>
         ) : null}
         {endMeta}
+        {showUserMeta ? (
+          <Link
+            className="client-web-topchrome__util"
+            to={CLIENT_WEB_NOTIFICATIONS_HREF}
+            data-testid={CLIENT_WEB_NOTIFICATIONS_LINK_TEST_ID}
+            aria-label={CLIENT_WEB_NOTIFICATIONS_ARIA}
+          >
+            {CLIENT_WEB_NOTIFICATIONS_LABEL}
+          </Link>
+        ) : null}
+        {showUserMeta ? (
+          <Link
+            className="client-web-topchrome__util"
+            to={CLIENT_WEB_MESSAGES_HREF}
+            data-testid={CLIENT_WEB_MESSAGES_LINK_TEST_ID}
+            aria-label={CLIENT_WEB_MESSAGES_ARIA}
+          >
+            {CLIENT_WEB_MESSAGES_LABEL}
+          </Link>
+        ) : null}
         {showUserMeta ? (
           <Link
             className="client-web-topchrome__profile"

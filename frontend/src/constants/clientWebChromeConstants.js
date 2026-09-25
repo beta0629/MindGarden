@@ -31,6 +31,16 @@ export const CLIENT_WEB_PROFILE_LINK_TEST_ID = 'client-web-profile-settings-link
 /** ClientWebTopChrome — profile link aria (header-right → settings) */
 export const CLIENT_WEB_SETTINGS_ARIA = '설정';
 
+/** Header utility entries — notifications · messages (SSOT href) */
+export const CLIENT_WEB_NOTIFICATIONS_HREF = '/notifications';
+export const CLIENT_WEB_MESSAGES_HREF = CLIENT_DASHBOARD_ROUTES.MESSAGES;
+export const CLIENT_WEB_NOTIFICATIONS_ARIA = '알림';
+export const CLIENT_WEB_MESSAGES_ARIA = '메시지';
+export const CLIENT_WEB_NOTIFICATIONS_LINK_TEST_ID = 'client-web-notifications-link';
+export const CLIENT_WEB_MESSAGES_LINK_TEST_ID = 'client-web-messages-link';
+export const CLIENT_WEB_NOTIFICATIONS_LABEL = '알림';
+export const CLIENT_WEB_MESSAGES_LABEL = '메시지';
+
 /**
  * Clinic-OS client web editorial nav (header SSOT)
  * 「회기 고르기」= shop catalog entrance

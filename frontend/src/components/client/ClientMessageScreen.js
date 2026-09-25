@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useSession } from '../../contexts/SessionContext';
 import StandardizedApi from '../../utils/standardizedApi';
 import UnifiedLoading from '../../components/common/UnifiedLoading';
@@ -16,6 +16,7 @@ import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import '../../styles/themes/client-theme.css';
 import './ClientMessageScreen.css';
 import { useTranslation } from 'react-i18next';
+import { CLIENT_DASHBOARD_ROUTES } from '../../constants/clientDashboardRoutes';
 
 const CLIENT_MESSAGE_TITLE_ID = 'client-message-screen-title';
 
@@ -26,6 +27,7 @@ const CLIENT_MESSAGE_TITLE_ID = 'client-message-screen-title';
 const ClientMessageScreen = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, isLoading: sessionLoading, isLoggedIn } = useSession();
 
   const [loading, setLoading] = useState(true);
@@ -48,12 +50,13 @@ const ClientMessageScreen = () => {
     if (isLoggedIn && user && user.id) {
       loadMessages();
     } else if (!isLoggedIn) {
-      navigate('/login');
+      const returnTo = `${location.pathname}${location.search || ''}` || CLIENT_DASHBOARD_ROUTES.MESSAGES;
+      navigate(`/login?redirect=${encodeURIComponent(returnTo)}`);
     } else {
       console.warn('⚠️ 로그인되어 있지만 사용자 정보가 없습니다.');
       setLoading(false);
     }
-  }, [user, sessionLoading, isLoggedIn, navigate]);
+  }, [user, sessionLoading, isLoggedIn, navigate, location.pathname, location.search]);
 
   const loadMessages = async() => {
     if (!user || !user.id) {

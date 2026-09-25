@@ -5,8 +5,10 @@ import {
   canTentativeBeforeDepositScheduleForMapping,
   isActiveAssignableMapping,
   isActionNeededPaymentStatus,
+  isCompletedSingleSessionExhausted,
   isEligibleForAssignmentQueues,
   isOngoingMapping,
+  isSessionsExhaustedListMapping,
   isPaymentConfirmed,
   isSameDayCardPending,
   normalizedRemainingSessions,
@@ -17,9 +19,11 @@ import {
   MAPPING_STATUS_DEPOSIT_PENDING,
   MAPPING_STATUS_PENDING_PAYMENT,
   MAPPING_STATUS_PAYMENT_CONFIRMED,
+  MAPPING_STATUS_SESSIONS_EXHAUSTED,
   PAYMENT_TIMING_ADVANCE,
   PAYMENT_TIMING_INSTITUTION_LINK,
   PAYMENT_TIMING_SAME_DAY_CARD,
+  PAYMENT_TIMING_VOUCHER,
   SIDEBAR_CARD_DRAGGABLE_CLASS,
   SIDEBAR_CARD_DRAGGABLE_SELECTOR,
   STATUS_FILTER_OPTIONS
@@ -150,6 +154,92 @@ describe('integratedScheduleSidebarFilterConstants', () => {
         status: MAPPING_STATUS_DEPOSIT_PENDING,
         remainingSessions: 0
       })).toBe(false);
+    });
+
+    it('완료 일정이 있는 단회기는 ACTIVE·잔여 1 이어도 신규배정에서 빠지고 회기 소진에 남는다', () => {
+      const mapping = {
+        status: MAPPING_STATUS_ACTIVE,
+        totalSessions: 1,
+        usedSessions: 0,
+        remainingSessions: 1,
+        paymentTiming: PAYMENT_TIMING_ADVANCE,
+        consultationSchedules: [{ id: 11, status: 'COMPLETED' }]
+      };
+      expect(isCompletedSingleSessionExhausted(mapping)).toBe(true);
+      expect(shouldExcludeFromAssignmentQueues(mapping)).toBe(true);
+      expect(isEligibleForAssignmentQueues(mapping)).toBe(false);
+      expect(isOngoingMapping(mapping)).toBe(false);
+      expect(isSessionsExhaustedListMapping(mapping)).toBe(true);
+    });
+
+    it('예약만 있는 단회기는 신규배정에 남고 회기 소진 목록에 넣지 않는다', () => {
+      const mapping = {
+        status: MAPPING_STATUS_ACTIVE,
+        totalSessions: 1,
+        usedSessions: 0,
+        remainingSessions: 1,
+        consultationSchedules: [{ id: 12, status: 'BOOKED' }]
+      };
+      expect(isCompletedSingleSessionExhausted(mapping)).toBe(false);
+      expect(isEligibleForAssignmentQueues(mapping)).toBe(true);
+      expect(isSessionsExhaustedListMapping(mapping)).toBe(false);
+    });
+
+    it('다회기는 완료 일정이 있어도 신규배정에 남는다', () => {
+      const mapping = {
+        status: MAPPING_STATUS_ACTIVE,
+        totalSessions: 10,
+        usedSessions: 1,
+        remainingSessions: 9,
+        consultationSchedules: [{ id: 13, status: 'COMPLETED' }]
+      };
+      expect(isCompletedSingleSessionExhausted(mapping)).toBe(false);
+      expect(isEligibleForAssignmentQueues(mapping)).toBe(true);
+      expect(isSessionsExhaustedListMapping(mapping)).toBe(false);
+    });
+
+    it('기관연동·바우처 단회기는 완료 일정이 있어도 신규배정 규칙을 바꾸지 않는다', () => {
+      const institutionLink = {
+        status: MAPPING_STATUS_ACTIVE,
+        paymentTiming: PAYMENT_TIMING_INSTITUTION_LINK,
+        totalSessions: 1,
+        remainingSessions: 1,
+        consultationSchedules: [{ id: 14, status: 'COMPLETED' }]
+      };
+      const voucher = {
+        status: MAPPING_STATUS_ACTIVE,
+        paymentTiming: PAYMENT_TIMING_VOUCHER,
+        totalSessions: 1,
+        remainingSessions: 1,
+        consultationSchedules: [{ id: 15, status: 'COMPLETED' }]
+      };
+      expect(isEligibleForAssignmentQueues(institutionLink)).toBe(true);
+      expect(isSessionsExhaustedListMapping(institutionLink)).toBe(false);
+      expect(isEligibleForAssignmentQueues(voucher)).toBe(true);
+      expect(isSessionsExhaustedListMapping(voucher)).toBe(false);
+    });
+
+    it('형제 매핑 완료 일정만으로는 단회기를 소진으로 보지 않는다', () => {
+      const mapping = {
+        status: MAPPING_STATUS_ACTIVE,
+        totalSessions: 1,
+        remainingSessions: 1,
+        consultationSchedules: [{ id: 16, status: 'BOOKED' }],
+        clientConsultationSchedules: [{ id: 17, status: 'COMPLETED' }]
+      };
+      expect(isCompletedSingleSessionExhausted(mapping)).toBe(false);
+      expect(isEligibleForAssignmentQueues(mapping)).toBe(true);
+    });
+
+    it('이미 회기 소진인 행은 종료 목록에 포함한다', () => {
+      const mapping = {
+        status: MAPPING_STATUS_SESSIONS_EXHAUSTED,
+        totalSessions: 1,
+        usedSessions: 1,
+        remainingSessions: 0
+      };
+      expect(isSessionsExhaustedListMapping(mapping)).toBe(true);
+      expect(isEligibleForAssignmentQueues(mapping)).toBe(false);
     });
 
     it('타기관 연계 rem=0 은 제외하지 않음', () => {

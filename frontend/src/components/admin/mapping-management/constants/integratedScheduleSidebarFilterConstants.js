@@ -12,7 +12,10 @@
  *   일정 취소 동기 잔여 배정으로 포함한다. ACTIVE rem=0 / fully-consumed 는
  *   `shouldExcludeFromAssignmentQueues` 로 「오늘 처리할 배정」에서도 제외.
  * - `shouldExcludeFromAssignmentQueues` / `isEligibleForAssignmentQueues`:
- *   NEW·ongoing 공통 제외(rem&lt;=0, 비-IL, 비-액션필요). REMAINING 은 rem&gt;0 또는 IL.
+ *   NEW·ongoing 공통 제외(rem&lt;=0, 비-IL, 비-액션필요).
+ *   단회기이고 이 매핑 consultationSchedules 에 COMPLETED 가 있으면
+ *   저장된 status 가 ACTIVE·remaining 이 1 이어도 신규배정에서 제외한다.
+ *   REMAINING 은 rem&gt;0 또는 IL. 회기 소진(종료) 목록은 status=SESSIONS_EXHAUSTED.
  * - `isPaymentConfirmed`: PENDING_PAYMENT 이전 상태는 결제 미확인으로 차단.
  *
  * @author CoreSolution
@@ -21,6 +24,7 @@
 
 import { isInstitutionLinkEngagement } from '../../../../constants/clientEngagementType';
 import { PENDING_PAYMENT_KPI_LABEL } from '../../../../utils/pendingPaymentAggregation';
+import { SHOP_SINGLE_SESSION_COUNT } from '../../../../utils/shopSessionCount';
 
 /** 신규 배정 필터 기간(일) — 운영 피드백으로 조정 가능 */
 export const NEW_DAYS = 7;
@@ -93,6 +97,15 @@ export const PAYMENT_TIMING_SAME_DAY_CARD = 'SAME_DAY_CARD';
 
 /** 백엔드 paymentTiming — 타기관 연계. 회기권·바우처와 별 파이프라인. 결제 주기는 후속(고정 월 단위 아님). */
 export const PAYMENT_TIMING_INSTITUTION_LINK = 'INSTITUTION_LINK';
+
+/** 백엔드 paymentTiming — 바우처. 회기 소진 정합 대상이 아님. */
+export const PAYMENT_TIMING_VOUCHER = 'VOUCHER';
+
+/** 백엔드 MappingStatus — 회기 소진. 통합 스케줄 「회기 소진」목록. */
+export const MAPPING_STATUS_SESSIONS_EXHAUSTED = 'SESSIONS_EXHAUSTED';
+
+/** 이 매핑 상담 일정 완료 상태. 형제 매핑 일정은 보지 않는다. */
+const SCHEDULE_STATUS_COMPLETED = 'COMPLETED';
 
 /** 사이드바·카드 — 기관연계는 회기 「잔여」로 표시하지 않음. 결제 주기는 표시하지 않음. */
 export const INSTITUTION_LINK_LABEL = '기관연계';
@@ -266,6 +279,80 @@ export const isActionNeededPaymentStatus = (mapping) => {
 };
 
 /**
+ * 바우처 paymentTiming 여부.
+ *
+ * @param {object} [mapping]
+ * @returns {boolean}
+ */
+export const isVoucherMapping = (mapping) => {
+  const paymentTiming = mapping?.paymentTiming;
+  if (paymentTiming == null || paymentTiming === '') {
+    return false;
+  }
+  return String(paymentTiming).toUpperCase() === PAYMENT_TIMING_VOUCHER;
+};
+
+/**
+ * 이 매핑 consultationSchedules 의 COMPLETED 건수.
+ * clientConsultationSchedules(형제 매핑)는 세지 않는다.
+ *
+ * @param {object} [mapping]
+ * @returns {number}
+ */
+const countCompletedSchedulesOnMapping = (mapping) => {
+  const schedules = mapping?.consultationSchedules;
+  if (!Array.isArray(schedules)) {
+    return 0;
+  }
+  return schedules.filter((item) => {
+    const status = item?.status == null ? '' : String(item.status).trim().toUpperCase();
+    return status === SCHEDULE_STATUS_COMPLETED;
+  }).length;
+};
+
+/**
+ * 완료 상담 일정이 있는 단회기.
+ * 저장된 status 가 ACTIVE 이고 remaining 이 1 이어도 true.
+ * 다회기·기관연동·바우처·완료 일정이 없는 단회기는 false.
+ *
+ * @param {object} [mapping]
+ * @returns {boolean}
+ */
+export const isCompletedSingleSessionExhausted = (mapping) => {
+  if (!mapping || typeof mapping !== 'object') {
+    return false;
+  }
+  if (isInstitutionLinkMapping(mapping) || isVoucherMapping(mapping)) {
+    return false;
+  }
+  if (isActionNeededPaymentStatus(mapping)) {
+    return false;
+  }
+  const total = Number(mapping.totalSessions);
+  if (total !== SHOP_SINGLE_SESSION_COUNT) {
+    return false;
+  }
+  return countCompletedSchedulesOnMapping(mapping) >= SHOP_SINGLE_SESSION_COUNT;
+};
+
+/**
+ * 「회기 소진」목록(종료 회기)에 보일지.
+ * status 가 SESSIONS_EXHAUSTED 이거나, 완료 일정이 있는 단회기이면 true.
+ *
+ * @param {object} [mapping]
+ * @returns {boolean}
+ */
+export const isSessionsExhaustedListMapping = (mapping) => {
+  if (!mapping || typeof mapping !== 'object') {
+    return false;
+  }
+  if (mapping.status === MAPPING_STATUS_SESSIONS_EXHAUSTED) {
+    return true;
+  }
+  return isCompletedSingleSessionExhausted(mapping);
+};
+
+/**
  * 배정 큐(신규·오늘 처리·회기 남은)에서 제외할지 여부.
  *
  * <p>SSOT rem clamp 이후 {@code remainingSessions &lt;= 0} 이면, 타기관 연계·액션 필요 상태가
@@ -286,6 +373,10 @@ export const shouldExcludeFromAssignmentQueues = (mapping) => {
   // 결제/승인 액션이 남았으면 rem=0이어도 NEW·ongoing에 노출.
   if (isActionNeededPaymentStatus(mapping)) {
     return false;
+  }
+  // 완료 단회기는 저장된 ACTIVE·remaining 1 이어도 신규배정에서 제외.
+  if (isCompletedSingleSessionExhausted(mapping)) {
+    return true;
   }
   return normalizedRemainingSessions(mapping) <= 0;
 };

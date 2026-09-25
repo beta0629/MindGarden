@@ -113,6 +113,7 @@ public interface AdminService {
 
     /**
      * mappings LIST 응답용 — 슬라이스된 페이지에만 reopenIfLeftover + Hibernate.initialize.
+     * 완료 상담 일정이 있는 단회기(ACTIVE)는 같은 경로에서 회기 소진으로 맞춘다.
      *
      * @param pageMappings 이미 슬라이스된 매핑 목록 (null/empty 무시)
      * @author CoreSolution

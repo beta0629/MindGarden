@@ -79,8 +79,11 @@ import {
   VIEW_FILTER_ALL,
   PAYMENT_TIMING_SAME_DAY_CARD,
   MAPPING_STATUS_PENDING_PAYMENT,
+  MAPPING_STATUS_SESSIONS_EXHAUSTED,
   isInstitutionLinkMapping,
   isEligibleForAssignmentQueues,
+  isCompletedSingleSessionExhausted,
+  isSessionsExhaustedListMapping,
   isOngoingMapping,
   getMappingDate,
   normalizedRemainingSessions
@@ -891,7 +894,8 @@ const IntegratedMatchingSchedule = () => {
     });
   } else if (viewFilter === VIEW_FILTER_REMAINING) {
     byView = mappings.filter((m) =>
-      isInstitutionLinkMapping(m) || normalizedRemainingSessions(m) > 0
+      !isCompletedSingleSessionExhausted(m)
+      && (isInstitutionLinkMapping(m) || normalizedRemainingSessions(m) > 0)
     );
   } else {
     byView = mappings;
@@ -909,6 +913,11 @@ const IntegratedMatchingSchedule = () => {
     );
   } else if (statusFilter === 'ongoing') {
     filteredMappings = sortedByView.filter(isOngoingMapping);
+  } else if (statusFilter === MAPPING_STATUS_SESSIONS_EXHAUSTED) {
+    // 신규배정(rem) 뷰와 교집합하지 않는다. 완료 단회기·소진 status 가 종료(회기 소진)에 남는다.
+    filteredMappings = [...mappings]
+      .filter(isSessionsExhaustedListMapping)
+      .sort((a, b) => getMappingDate(b) - getMappingDate(a));
   } else if (statusFilter) {
     filteredMappings = sortedByView.filter((m) => m.status === statusFilter);
   } else {
@@ -942,6 +951,9 @@ const IntegratedMatchingSchedule = () => {
     if (value === '') return byView.length;
     if (value === MAPPING_STATUS_PENDING_PAYMENT) {
       return countPendingPaymentMappings(unpaidSoftForCard);
+    }
+    if (value === MAPPING_STATUS_SESSIONS_EXHAUSTED) {
+      return mappings.filter(isSessionsExhaustedListMapping).length;
     }
     return byView.filter((m) => m.status === value).length;
   };

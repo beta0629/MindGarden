@@ -12,6 +12,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.coresolution.consultation.constant.ShopClientOrderStatus;
 import com.coresolution.consultation.constant.ShopRefundConstants;
+import com.coresolution.consultation.dto.AdminListPageResult;
 import com.coresolution.consultation.dto.shop.admin.ShopOrderAdminDetailResponse;
 import com.coresolution.consultation.dto.shop.admin.ShopOrderAdminSummaryItem;
 import com.coresolution.consultation.dto.shop.admin.ShopOrderRefundResponse;
@@ -33,6 +34,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.data.domain.Pageable;
+import org.mockito.ArgumentMatchers;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
@@ -81,13 +84,13 @@ class AdminShopOrderControllerMvcTest {
     }
 
     @Test
-    @DisplayName("GET 목록 — ADMIN·컴포넌트 활성 시 200")
+    @DisplayName("GET 목록 — ADMIN·컴포넌트 활성 시 200 · page/size · totalElements")
     @WithMockUser(roles = {"ADMIN"})
     void list_whenAdminAndComponentActive_returns200() throws Exception {
         when(tenantComponentActivationService.isComponentActive(tenantId, PlatformComponentCodes.ADMIN_SHOP_CATALOG))
                 .thenReturn(true);
-        when(adminShopOrderService.listRecentOrders(tenantId, 50))
-                .thenReturn(List.of(ShopOrderAdminSummaryItem.builder()
+        when(adminShopOrderService.listRecentOrders(eq(tenantId), ArgumentMatchers.any(Pageable.class)))
+                .thenReturn(new AdminListPageResult<>(List.of(ShopOrderAdminSummaryItem.builder()
                         .orderPublicId(ORDER_ID)
                         .status(ShopClientOrderStatus.PAID)
                         .subtotalMinor(10_000L)
@@ -96,16 +99,39 @@ class AdminShopOrderControllerMvcTest {
                         .clientId(42L)
                         .createdAt(LocalDateTime.parse("2026-05-19T10:00:00"))
                         .paymentSource(com.coresolution.consultation.dto.PaymentSource.ONLINE)
-                        .build()));
+                        .build()), 1L));
 
-        mockMvc.perform(get(LIST_PATH))
+        mockMvc.perform(get(LIST_PATH).param("page", "0").param("size", "20"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data[0].orderPublicId").value(ORDER_ID))
-                .andExpect(jsonPath("$.data[0].status").value("PAID"))
-                .andExpect(jsonPath("$.data[0].paymentSource").value("ONLINE"));
+                .andExpect(jsonPath("$.data.orders[0].orderPublicId").value(ORDER_ID))
+                .andExpect(jsonPath("$.data.orders[0].status").value("PAID"))
+                .andExpect(jsonPath("$.data.orders[0].paymentSource").value("ONLINE"))
+                .andExpect(jsonPath("$.data.totalElements").value(1))
+                .andExpect(jsonPath("$.data.page").value(0))
+                .andExpect(jsonPath("$.data.size").value(20));
 
-        verify(adminShopOrderService).listRecentOrders(tenantId, 50);
+        verify(adminShopOrderService).listRecentOrders(eq(tenantId), ArgumentMatchers.any(Pageable.class));
+    }
+
+    @Test
+    @DisplayName("GET 목록 — legacy limit 호환 (page=0, size=limit)")
+    @WithMockUser(roles = {"ADMIN"})
+    void list_whenLegacyLimit_returnsPagedEnvelope() throws Exception {
+        when(tenantComponentActivationService.isComponentActive(tenantId, PlatformComponentCodes.ADMIN_SHOP_CATALOG))
+                .thenReturn(true);
+        when(adminShopOrderService.listRecentOrders(eq(tenantId), ArgumentMatchers.any(Pageable.class)))
+                .thenReturn(new AdminListPageResult<>(List.of(), 0L));
+
+        mockMvc.perform(get(LIST_PATH).param("limit", "30"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.orders").isArray())
+                .andExpect(jsonPath("$.data.totalElements").value(0))
+                .andExpect(jsonPath("$.data.page").value(0))
+                .andExpect(jsonPath("$.data.size").value(30));
+
+        verify(adminShopOrderService).listRecentOrders(eq(tenantId), ArgumentMatchers.any(Pageable.class));
     }
 
     @Test

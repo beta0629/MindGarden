@@ -13,11 +13,32 @@ import java.util.Set;
  */
 public final class ShopAdminOrderConstants {
 
-    /** 목록 기본 건수 */
+    /** 목록 기본 페이지 번호 (0-based) */
+    public static final int DEFAULT_LIST_PAGE = 0;
+
+    /**
+     * 목록 기본 페이지 크기 (page/size 및 legacy {@code limit} 미지정 시).
+     * <p>{@link com.coresolution.core.util.PaginationUtils#MAX_PAGE_SIZE} 이하.</p>
+     */
     public static final int DEFAULT_LIST_LIMIT = 50;
 
-    /** 목록 최대 건수 */
-    public static final int MAX_LIST_LIMIT = 100;
+    /**
+     * 목록 최대 페이지 크기 — {@link com.coresolution.core.util.PaginationUtils#MAX_PAGE_SIZE} 와 동일.
+     * <p>legacy {@code limit} 도 동일 상한으로 캡.</p>
+     */
+    public static final int MAX_LIST_LIMIT = 50;
+
+    /** 응답 키 — 주문 배열 */
+    public static final String RESPONSE_KEY_ORDERS = "orders";
+
+    /** 응답 키 — 전체 건수 */
+    public static final String RESPONSE_KEY_TOTAL_ELEMENTS = "totalElements";
+
+    /** 응답 키 — 페이지 */
+    public static final String RESPONSE_KEY_PAGE = "page";
+
+    /** 응답 키 — 페이지 크기 */
+    public static final String RESPONSE_KEY_SIZE = "size";
 
     /** 감사 로그 entityType — shop_client_orders */
     public static final String AUDIT_ENTITY_TYPE = "SHOP_CLIENT_ORDER";

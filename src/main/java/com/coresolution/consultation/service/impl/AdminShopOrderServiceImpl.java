@@ -5,6 +5,7 @@ import com.coresolution.consultation.constant.ShopAdminOrderConstants;
 import com.coresolution.consultation.constant.ShopClientOrderStatus;
 import com.coresolution.consultation.constant.ShopOrderFulfillmentRetryConstants;
 import com.coresolution.consultation.constant.ShopSessionCountConstants;
+import com.coresolution.consultation.dto.AdminListPageResult;
 import com.coresolution.consultation.dto.shop.ShopOrderLineResponse;
 import com.coresolution.consultation.dto.shop.admin.ShopOrderAdminDetailResponse;
 import com.coresolution.consultation.dto.shop.admin.ShopOrderAdminSummaryItem;
@@ -25,6 +26,7 @@ import com.coresolution.consultation.service.AuditLogService;
 import com.coresolution.consultation.service.ShopOrderFulfillmentService;
 import com.coresolution.consultation.service.portone.PortOneV2PaymentVerifyService;
 import com.coresolution.consultation.utils.SessionUtils;
+import com.coresolution.core.util.PaginationUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.ArrayList;
@@ -35,7 +37,8 @@ import java.util.Map;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -61,17 +64,15 @@ public class AdminShopOrderServiceImpl implements AdminShopOrderService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<ShopOrderAdminSummaryItem> listRecentOrders(String tenantId, int limit) {
-        int capped = Math.min(
-                Math.max(1, limit),
-                ShopAdminOrderConstants.MAX_LIST_LIMIT);
-        List<ShopClientOrder> orders = shopClientOrderRepository.findRecentByTenant(
-                tenantId, PageRequest.of(0, capped));
+    public AdminListPageResult<ShopOrderAdminSummaryItem> listRecentOrders(
+            String tenantId, Pageable pageable) {
+        Pageable applied = PaginationUtils.validatePageable(pageable);
+        Page<ShopClientOrder> orderPage = shopClientOrderRepository.findRecentByTenant(tenantId, applied);
         List<ShopOrderAdminSummaryItem> result = new ArrayList<>();
-        for (ShopClientOrder order : orders) {
+        for (ShopClientOrder order : orderPage.getContent()) {
             result.add(toSummaryItem(tenantId, order, isOrderDeletable(tenantId, order)));
         }
-        return result;
+        return new AdminListPageResult<>(result, orderPage.getTotalElements());
     }
 
     @Override

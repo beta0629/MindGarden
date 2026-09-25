@@ -19,6 +19,7 @@ import com.zaxxer.hikari.HikariDataSource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.connection.RedisConnection;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.stereotype.Component;
@@ -62,9 +63,13 @@ public class DeploySlotReadinessProbe implements DisposableBean {
     private final AtomicBoolean warmupRunning = new AtomicBoolean(false);
 
     /**
+     * 테스트용 생성자가 더 있어 {@code @Autowired} 로 이 생성자를 고른다.
+     * 없으면 Spring 이 기본 생성자를 찾다 슬롯 기동이 실패한다.
+     *
      * @param dataSource             풀에서 minimum-idle 만큼 연결을 빌릴 데이터소스
      * @param redisConnectionFactory 없으면 Redis 미준비로 본다
      */
+    @Autowired
     public DeploySlotReadinessProbe(DataSource dataSource,
                                      ObjectProvider<RedisConnectionFactory> redisConnectionFactory) {
         this(dataSource, redisConnectionFactory, Duration.ofSeconds(CONNECTION_VALIDATION_TIMEOUT_SECONDS),

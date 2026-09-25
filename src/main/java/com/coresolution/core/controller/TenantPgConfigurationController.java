@@ -1,5 +1,6 @@
 package com.coresolution.core.controller;
 
+import com.coresolution.core.constants.SecurityRoleConstants;
 import com.coresolution.core.controller.BaseApiController;
 import com.coresolution.core.domain.enums.ApprovalStatus;
 import com.coresolution.core.domain.enums.PgConfigurationStatus;
@@ -122,6 +123,7 @@ public class TenantPgConfigurationController extends BaseApiController {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "409", description = "이미 활성화된 PG 설정 존재")
     })
     @PostMapping
+    @PreAuthorize("hasAuthority('" + SecurityRoleConstants.ROLE_ADMIN + "')")
     public ResponseEntity<ApiResponse<TenantPgConfigurationResponse>> createConfiguration(
             @Parameter(description = "테넌트 ID", required = true) @PathVariable String tenantId,
             @Valid @RequestBody TenantPgConfigurationRequest request) {
@@ -156,6 +158,7 @@ public class TenantPgConfigurationController extends BaseApiController {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "PG 설정을 찾을 수 없음")
     })
     @PutMapping("/{configId}")
+    @PreAuthorize("hasAuthority('" + SecurityRoleConstants.ROLE_ADMIN + "')")
     public ResponseEntity<ApiResponse<TenantPgConfigurationResponse>> updateConfiguration(
             @Parameter(description = "테넌트 ID", required = true) @PathVariable String tenantId,
             @Parameter(description = "PG 설정 ID", required = true) @PathVariable String configId,
@@ -187,6 +190,7 @@ public class TenantPgConfigurationController extends BaseApiController {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "PG 설정을 찾을 수 없음")
     })
     @PatchMapping("/{configId}/test-mode")
+    @PreAuthorize("hasAuthority('" + SecurityRoleConstants.ROLE_ADMIN + "')")
     public ResponseEntity<ApiResponse<TenantPgConfigurationResponse>> patchTestMode(
             @Parameter(description = "테넌트 ID", required = true) @PathVariable String tenantId,
             @Parameter(description = "PG 설정 ID", required = true) @PathVariable String configId,
@@ -220,6 +224,7 @@ public class TenantPgConfigurationController extends BaseApiController {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "PG 설정을 찾을 수 없음")
     })
     @PatchMapping("/{configId}/webhook-secret")
+    @PreAuthorize("hasAuthority('" + SecurityRoleConstants.ROLE_ADMIN + "')")
     public ResponseEntity<ApiResponse<TenantPgConfigurationResponse>> patchWebhookSecret(
             @Parameter(description = "테넌트 ID", required = true) @PathVariable String tenantId,
             @Parameter(description = "PG 설정 ID", required = true) @PathVariable String configId,
@@ -249,6 +254,7 @@ public class TenantPgConfigurationController extends BaseApiController {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "PG 설정을 찾을 수 없음")
     })
     @DeleteMapping("/{configId}")
+    @PreAuthorize("hasAuthority('" + SecurityRoleConstants.ROLE_ADMIN + "')")
     public ResponseEntity<ApiResponse<Void>> deleteConfiguration(
             @Parameter(description = "테넌트 ID", required = true) @PathVariable String tenantId,
             @Parameter(description = "PG 설정 ID", required = true) @PathVariable String configId) {
@@ -276,6 +282,7 @@ public class TenantPgConfigurationController extends BaseApiController {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "PG 설정을 찾을 수 없음")
     })
     @PostMapping("/{configId}/test-connection")
+    @PreAuthorize("hasAuthority('" + SecurityRoleConstants.ROLE_ADMIN + "')")
     public ResponseEntity<ApiResponse<ConnectionTestResponse>> testConnection(
             @Parameter(description = "테넌트 ID", required = true) @PathVariable String tenantId,
             @Parameter(description = "PG 설정 ID", required = true) @PathVariable String configId) {
@@ -312,7 +319,7 @@ public class TenantPgConfigurationController extends BaseApiController {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "PG 설정을 찾을 수 없음")
     })
     @PostMapping("/{configId}/decrypt-keys")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('" + SecurityRoleConstants.ROLE_ADMIN + "')")
     public ResponseEntity<ApiResponse<PgConfigurationKeysResponse>> decryptKeys(
             @Parameter(description = "테넌트 ID", required = true) @PathVariable String tenantId,
             @Parameter(description = "PG 설정 ID", required = true) @PathVariable String configId) {

@@ -39,7 +39,8 @@ const CardBillingProgress = ({
     : buildBillingProgressSentence({
       usedSessions,
       totalSessions,
-      remainingSessions
+      remainingSessions,
+      consultationSchedules
     });
 
   return (

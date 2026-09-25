@@ -8,6 +8,7 @@
 import {
   CARD_BILLING_SCHEDULE_LIMIT,
   buildBillingProgressSentence,
+  resolveBillingProgressCounts,
   buildBillingScheduleGlanceSummary,
   buildBillingScheduleRowLabel,
   buildBillingScheduleRowParts,
@@ -27,6 +28,45 @@ describe('cardBillingProgressDisplay', () => {
       usedSessions: 2,
       totalSessions: 10,
       remainingSessions: 8
+    })).toBe('누적 진행 2회 / 총 10회 · 잔여 8');
+  });
+
+  it('single session with a completed schedule shows progress 1 and remaining 0', () => {
+    const mapping = {
+      usedSessions: 0,
+      totalSessions: 1,
+      remainingSessions: 1,
+      consultationSchedules: [
+        { id: 1, date: '2026-09-20', status: 'COMPLETED' }
+      ]
+    };
+    expect(resolveBillingProgressCounts(mapping)).toEqual({
+      used: 1,
+      total: 1,
+      remaining: 0
+    });
+    expect(buildBillingProgressSentence(mapping)).toBe('누적 진행 1회 / 총 1회 · 잔여 0');
+  });
+
+  it('single session without a completed schedule keeps stored remaining', () => {
+    expect(buildBillingProgressSentence({
+      usedSessions: 0,
+      totalSessions: 1,
+      remainingSessions: 1,
+      consultationSchedules: [
+        { id: 1, date: '2026-09-20', status: 'BOOKED' }
+      ]
+    })).toBe('누적 진행 0회 / 총 1회 · 잔여 1');
+  });
+
+  it('multi-session package does not rewrite counts from a completed schedule', () => {
+    expect(buildBillingProgressSentence({
+      usedSessions: 2,
+      totalSessions: 10,
+      remainingSessions: 8,
+      consultationSchedules: [
+        { id: 1, date: '2026-09-07', status: 'COMPLETED' }
+      ]
     })).toBe('누적 진행 2회 / 총 10회 · 잔여 8');
   });
 

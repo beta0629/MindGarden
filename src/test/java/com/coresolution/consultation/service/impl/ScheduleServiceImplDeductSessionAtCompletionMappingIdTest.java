@@ -7,6 +7,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.coresolution.consultation.constant.PaymentTimingConstants;
 import com.coresolution.consultation.constant.ScheduleStatus;
 import com.coresolution.consultation.entity.ConsultantClientMapping;
 import com.coresolution.consultation.entity.ConsultantClientMapping.MappingStatus;
@@ -154,6 +155,67 @@ class ScheduleServiceImplDeductSessionAtCompletionMappingIdTest {
         verify(mappingRepository, never()).save(any(ConsultantClientMapping.class));
         assertThat(mapping.getRemainingSessions()).isZero();
         assertThat(mapping.getStatus()).isEqualTo(MappingStatus.SESSIONS_EXHAUSTED);
+    }
+
+    @Test
+    @DisplayName("단회기 회차만 있고 used=0 remaining=1 이면 일지 완료 시 잔여 0")
+    void oneSession_labeledSequence_unconsumed_deductsOnCompletion() {
+        Schedule schedule = consultationWithoutSequence();
+        schedule.setSessionSequence(1);
+        ConsultantClientMapping mapping = oneSessionActiveMapping();
+
+        when(mappingRepository.findByTenantIdAndId(eq(tenantId), eq(mappingId)))
+                .thenReturn(Optional.of(mapping));
+        when(mappingRepository.save(any(ConsultantClientMapping.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        scheduleService.deductSessionAtCompletionIfNeeded(schedule);
+
+        ArgumentCaptor<ConsultantClientMapping> captor = ArgumentCaptor.forClass(ConsultantClientMapping.class);
+        verify(mappingRepository).save(captor.capture());
+        ConsultantClientMapping saved = captor.getValue();
+        assertThat(saved.getRemainingSessions()).isZero();
+        assertThat(saved.getUsedSessions()).isEqualTo(1);
+        assertThat(saved.getTotalSessions()).isEqualTo(1);
+        assertThat(saved.getStatus()).isEqualTo(MappingStatus.SESSIONS_EXHAUSTED);
+    }
+
+    @Test
+    @DisplayName("다회기 패키지는 회차가 있어도 완료 시 잔여를 다시 깎지 않는다")
+    void multiSession_labeledSequence_doesNotDeductAgain() {
+        Schedule schedule = consultationWithoutSequence();
+        schedule.setSessionSequence(2);
+        ConsultantClientMapping mapping = oneSessionActiveMapping();
+        mapping.setTotalSessions(10);
+        mapping.setUsedSessions(1);
+        mapping.setRemainingSessions(9);
+
+        when(mappingRepository.findByTenantIdAndId(eq(tenantId), eq(mappingId)))
+                .thenReturn(Optional.of(mapping));
+
+        scheduleService.deductSessionAtCompletionIfNeeded(schedule);
+
+        verify(mappingRepository, never()).save(any(ConsultantClientMapping.class));
+        assertThat(mapping.getRemainingSessions()).isEqualTo(9);
+        assertThat(mapping.getUsedSessions()).isEqualTo(1);
+        assertThat(mapping.getStatus()).isEqualTo(MappingStatus.ACTIVE);
+    }
+
+    @Test
+    @DisplayName("기관연동 단회기 표기는 일지 완료로 회기 잔여를 깎지 않는다")
+    void institutionLink_singleSessionLabel_doesNotDeduct() {
+        Schedule schedule = consultationWithoutSequence();
+        schedule.setSessionSequence(1);
+        ConsultantClientMapping mapping = oneSessionActiveMapping();
+        mapping.setPaymentTiming(PaymentTimingConstants.INSTITUTION_LINK);
+
+        when(mappingRepository.findByTenantIdAndId(eq(tenantId), eq(mappingId)))
+                .thenReturn(Optional.of(mapping));
+
+        scheduleService.deductSessionAtCompletionIfNeeded(schedule);
+
+        verify(mappingRepository, never()).save(any(ConsultantClientMapping.class));
+        assertThat(mapping.getRemainingSessions()).isEqualTo(1);
+        assertThat(mapping.getUsedSessions()).isZero();
     }
 
     private Schedule consultationWithoutSequence() {

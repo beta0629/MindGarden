@@ -25,6 +25,7 @@ import com.coresolution.consultation.constant.MappingHistoryEventType;
 import com.coresolution.consultation.constant.PaymentTimingConstants;
 import com.coresolution.consultation.constant.ScheduleServiceUserFacingMessages;
 import com.coresolution.consultation.constant.ScheduleStatus;
+import com.coresolution.consultation.constant.ShopSessionCountConstants;
 import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.constant.admin.AdminServiceUserFacingMessages;
 import com.coresolution.consultation.constant.consultation.ConsultationServiceUserFacingMessages;
@@ -2940,8 +2941,10 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
      * 매핑이 활성·결제 승인이 아닌 경우 {@link IllegalStateException} 을 던지지 않고 silent skip
      * (배치 잡의 다음 사이클이 정상 처리하므로 부모 트랜잭션을 막을 필요 없음).</p>
      *
-     * <p>{@code sessionSequence}가 있으면 일반 회기 차감은 건너뛰고,
-     * 승계 leftover occupying 완료 소진만 {@link LeftoverOccupyingCompleteExhaust}로 처리한다.</p>
+     * <p>{@code sessionSequence}가 있으면 다회기 일반 차감은 건너뛰고,
+     * 승계 leftover occupying 완료 소진만 {@link LeftoverOccupyingCompleteExhaust}로 처리한다.
+     * 단회기({@code totalSessions == 1})는 가예약 회차만 부여된 채 잔여가 남아 있으면
+     * 일지 완료 시 1회 소진한다. 기관연동·바우처·다회기 패키지는 이 분기에서 바꾸지 않는다.</p>
      */
     @Override
     public void deductSessionAtCompletionIfNeeded(Schedule schedule) {
@@ -2953,6 +2956,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         }
         if (schedule.getSessionSequence() != null) {
             exhaustLeftoverOccupyingAtCompletion(schedule);
+            deductUnconsumedSingleSessionAtCompletion(schedule);
             return;
         }
         try {
@@ -3013,6 +3017,57 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         } catch (RuntimeException ex) {
             log.warn("leftover occupying exhaust skipped: scheduleId={}, reason={}",
                     schedule.getId(), ex.getMessage());
+        }
+    }
+
+    /**
+     * 단회기 매핑에 회차만 있고 잔여가 남은 채 일지가 완료되면 1회 소진한다.
+     *
+     * <p>가예약은 {@code sessionSequence} 를 차감 없이 부여한다. 완료 경로는 회차가 있으면
+     * 일반 차감을 건너뛰므로, 입금 후 라벨 차감이 빠지면 used=0·remaining=1 로 남는다.
+     * {@code totalSessions == 1} 이고 회기 잔여 게이트 대상(기관연동·바우처 제외)일 때만
+     * {@link #deductRemainingForLabeledScheduleIfStillUnpaid} 를 호출한다.
+     * tenantId 가 없으면 차감하지 않는다. 다회기 패키지 잔여·금액은 변경하지 않는다.</p>
+     *
+     * @param schedule 회차가 이미 있는 완료 대상 일정
+     */
+    private void deductUnconsumedSingleSessionAtCompletion(Schedule schedule) {
+        if (schedule == null || schedule.getId() == null || schedule.getSessionSequence() == null) {
+            return;
+        }
+        if (schedule.getMappingId() == null
+                || schedule.getConsultantId() == null
+                || schedule.getClientId() == null) {
+            return;
+        }
+        String tenantId = resolveTenantIdForLeftoverOccupyingExhaust(schedule);
+        if (tenantId == null) {
+            return;
+        }
+        Optional<ConsultantClientMapping> mappingOpt = mappingRepository.findByTenantIdAndId(
+                tenantId, schedule.getMappingId());
+        if (mappingOpt.isEmpty()) {
+            return;
+        }
+        ConsultantClientMapping mapping = mappingOpt.get();
+        if (!PaymentTimingConstants.usesSessionPackRemainingGate(mapping.getPaymentTiming())) {
+            return;
+        }
+        Integer totalSessions = mapping.getTotalSessions();
+        int total = totalSessions == null ? 0 : totalSessions;
+        if (!ShopSessionCountConstants.isSingleSession(total)) {
+            return;
+        }
+        try {
+            deductRemainingForLabeledScheduleIfStillUnpaid(
+                    tenantId,
+                    schedule.getMappingId(),
+                    schedule.getConsultantId(),
+                    schedule.getClientId(),
+                    schedule);
+        } catch (RuntimeException ex) {
+            log.warn("단회기 일지 완료 소진 skip: scheduleId={}, mappingId={}, reason={}",
+                    schedule.getId(), schedule.getMappingId(), ex.getMessage());
         }
     }
 

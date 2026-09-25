@@ -7,6 +7,7 @@
  */
 
 import { toDisplayString, toSafeNumber } from '../../../../../utils/safeDisplay';
+import { SHOP_SINGLE_SESSION_COUNT } from '../../../../../utils/shopSessionCount';
 
 export const CARD_BILLING_PROGRESS_TEST_ID = 'mapping-card-billing-progress';
 /** @deprecated 카드 접이식 제거 — Side Peek 아코디언 test id 사용 */
@@ -113,11 +114,38 @@ export const buildInstitutionLinkCumulativeSentence = (mappingOrCount) => {
 };
 
 /**
+ * 회기권 카드 누적 진행 수치.
+ * 단회기(total=1)이고 이 매핑 {@code consultationSchedules} 에 COMPLETED 가 있으면
+ * 저장된 used=0·remaining=1 이어도 진행 1·잔여 0.
+ * 다회기·완료 일정이 없는 단회기는 매핑 필드 그대로.
+ *
+ * @param {object|null|undefined} mappingOrCounts
+ * @returns {{ used: number, total: number, remaining: number }}
+ */
+export const resolveBillingProgressCounts = (mappingOrCounts) => {
+  const base = resolveMappingSessionCounts(mappingOrCounts);
+  if (base.total !== SHOP_SINGLE_SESSION_COUNT) {
+    return base;
+  }
+  const completed = countCompletedConsultationSchedules(
+    mappingOrCounts?.consultationSchedules
+  );
+  if (completed < SHOP_SINGLE_SESSION_COUNT) {
+    return base;
+  }
+  return {
+    used: SHOP_SINGLE_SESSION_COUNT,
+    total: base.total,
+    remaining: 0
+  };
+};
+
+/**
  * @param {object|null|undefined} mappingOrCounts used/total/remainingSessions
  * @returns {string}
  */
 export const buildBillingProgressSentence = (mappingOrCounts) => {
-  const { used, total, remaining } = resolveMappingSessionCounts(mappingOrCounts);
+  const { used, total, remaining } = resolveBillingProgressCounts(mappingOrCounts);
   if (total > 0) {
     return `${LABEL_PROGRESS_PREFIX} ${used}${LABEL_USED_SUFFIX}${LABEL_TOTAL_MID}${total}${LABEL_USED_SUFFIX}${LABEL_REMAINING_SEP}${remaining}`;
   }

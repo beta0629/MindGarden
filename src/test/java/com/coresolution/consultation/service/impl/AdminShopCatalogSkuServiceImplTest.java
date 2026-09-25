@@ -10,6 +10,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.coresolution.consultation.constant.ShopCatalogCategory;
+import com.coresolution.consultation.constant.ShopSessionCountConstants;
 import com.coresolution.consultation.dto.shop.ShopCatalogPackageIdentity;
 import com.coresolution.consultation.dto.shop.admin.ShopCatalogPackageContentRequest;
 import com.coresolution.consultation.dto.shop.admin.ShopCatalogPackageFeeItem;
@@ -28,6 +29,9 @@ import java.util.Optional;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.NullSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -67,6 +71,13 @@ class AdminShopCatalogSkuServiceImplTest {
     private static ShopCatalogSkuUpsertRequest upsert(
             String skuCode,
             long unitPriceMinor) {
+        return upsert(skuCode, unitPriceMinor, 10);
+    }
+
+    private static ShopCatalogSkuUpsertRequest upsert(
+            String skuCode,
+            long unitPriceMinor,
+            Integer sessionCount) {
         return new ShopCatalogSkuUpsertRequest(
                 skuCode,
                 "패키지",
@@ -77,7 +88,24 @@ class AdminShopCatalogSkuServiceImplTest {
                 THUMB,
                 true,
                 true,
-                0);
+                0,
+                sessionCount);
+    }
+
+    private static ShopCatalogSku existingSku(Long id) {
+        ShopCatalogSku row = new ShopCatalogSku();
+        row.setId(id);
+        row.setTenantId(TENANT);
+        row.setSkuCode("PKG-01");
+        row.setTitle("패키지");
+        row.setUnitPriceMinor(10000L);
+        row.setCurrency("KRW");
+        row.setCatalogVisible(true);
+        row.setActive(true);
+        row.setSortOrder(0);
+        row.setThumbnailUrl(THUMB);
+        row.setSessionCount(ShopSessionCountConstants.MIN_SESSION_COUNT);
+        return row;
     }
 
     @Test
@@ -102,6 +130,40 @@ class AdminShopCatalogSkuServiceImplTest {
                 () -> adminShopCatalogSkuService.create(TENANT, request));
     }
 
+    @ParameterizedTest
+    @NullSource
+    @ValueSource(ints = {0, -1})
+    @DisplayName("create — sessionCount null/0/음수이면 IllegalArgumentException·저장 안 함")
+    void create_whenSessionCountInvalid_throwsAndNeverSaves(Integer sessionCount) {
+        when(shopCatalogSkuRepository.existsByTenantIdAndSkuCodeAndIsDeletedFalse(TENANT, "PKG-SC"))
+                .thenReturn(false);
+
+        ShopCatalogSkuUpsertRequest request = upsert("PKG-SC", 10000L, sessionCount);
+
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                () -> adminShopCatalogSkuService.create(TENANT, request));
+        assertEquals(ShopSessionCountConstants.MSG_SESSION_COUNT_REQUIRED, ex.getMessage());
+        verify(shopCatalogSkuRepository, never()).save(any());
+        verify(shopCatalogSkuPriceHistoryRepository, never()).save(any());
+    }
+
+    @ParameterizedTest
+    @NullSource
+    @ValueSource(ints = {0, -1})
+    @DisplayName("update — sessionCount null/0/음수이면 IllegalArgumentException·저장 안 함")
+    void update_whenSessionCountInvalid_throwsAndNeverSaves(Integer sessionCount) {
+        when(shopCatalogSkuRepository.findByIdAndTenantIdAndIsDeletedFalse(7L, TENANT))
+                .thenReturn(Optional.of(existingSku(7L)));
+
+        ShopCatalogSkuUpsertRequest request = upsert("PKG-01", 10000L, sessionCount);
+
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                () -> adminShopCatalogSkuService.update(TENANT, 7L, request));
+        assertEquals(ShopSessionCountConstants.MSG_SESSION_COUNT_REQUIRED, ex.getMessage());
+        verify(shopCatalogSkuRepository, never()).save(any());
+        verify(shopCatalogSkuPriceHistoryRepository, never()).save(any());
+    }
+
     @Test
     @DisplayName("create — skuCode 생략 시 서버 자동 발급")
     void create_whenSkuCodeAbsent_generatesCode() {
@@ -124,6 +186,8 @@ class AdminShopCatalogSkuServiceImplTest {
         verify(shopCatalogSkuRepository).save(captor.capture());
         assertEquals("SHOP-20260523-001", captor.getValue().getSkuCode());
         assertEquals(THUMB, captor.getValue().getThumbnailUrl());
+        assertEquals(10, captor.getValue().getSessionCount());
+        assertEquals(10, detail.sessionCount());
     }
 
     @Test
@@ -141,7 +205,7 @@ class AdminShopCatalogSkuServiceImplTest {
 
         ShopCatalogSkuUpsertRequest request = new ShopCatalogSkuUpsertRequest(
                 "PKG-99", "패키지", null, 10000L, "KRW", ShopCatalogCategory.CONSULTATION,
-                null, false, true, 0);
+                null, false, true, 0, 5);
 
         ShopCatalogSkuAdminDetail detail = adminShopCatalogSkuService.create(TENANT, request);
 

@@ -23,7 +23,10 @@
  */
 
 import { isInstitutionLinkEngagement } from '../../../../constants/clientEngagementType';
-import { PENDING_PAYMENT_KPI_LABEL } from '../../../../utils/pendingPaymentAggregation';
+import {
+  isUnpaidSoftMapping,
+  PENDING_PAYMENT_KPI_LABEL
+} from '../../../../utils/pendingPaymentAggregation';
 import { SHOP_SINGLE_SESSION_COUNT } from '../../../../utils/shopSessionCount';
 
 /** 신규 배정 필터 기간(일) — 운영 피드백으로 조정 가능 */
@@ -389,6 +392,23 @@ export const shouldExcludeFromAssignmentQueues = (mapping) => {
  */
 export const isEligibleForAssignmentQueues = (mapping) =>
   !shouldExcludeFromAssignmentQueues(mapping);
+
+/**
+ * unpaid soft 당일결제(checkoutSameDayPayment) CTA 노출 여부.
+ * PENDING_PAYMENT 이고 remainingSessions > 0 일 때만 true. rem≤0 → 숨김.
+ * destin payment action SSOT (tip schedule shell 유지용 최소 포트).
+ *
+ * @param {object} [mapping]
+ * @returns {boolean}
+ */
+export const shouldShowUnpaidSoftCheckoutCta = (mapping) => {
+  if (!isUnpaidSoftMapping(mapping)) {
+    return false;
+  }
+  return normalizedRemainingSessions(mapping) > 0;
+};
+
+
 
 export const isOngoingMapping = (m) => {
   if (!m?.status) {

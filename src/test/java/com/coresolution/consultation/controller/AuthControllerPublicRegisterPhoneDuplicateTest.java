@@ -77,6 +77,9 @@ class AuthControllerPublicRegisterPhoneDuplicateTest {
     private PermissionGroupService permissionGroupService;
     @Mock
     private Environment environment;
+    @Mock
+    private com.coresolution.consultation.service.ClientProfilePhoneVerificationService
+            clientProfilePhoneVerificationService;
 
     @InjectMocks
     private AuthController authController;

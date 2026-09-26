@@ -5,15 +5,21 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 import com.coresolution.consultation.config.SessionCookieSupport;
-import com.coresolution.consultation.constant.SessionManagementConstants;
+import com.coresolution.consultation.constant.SessionConstants;
+import com.coresolution.consultation.constant.UserRole;
+import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.repository.UserSocialAccountRepository;
 import com.coresolution.consultation.service.AuthService;
 import com.coresolution.consultation.service.BranchService;
+import com.coresolution.consultation.service.ClientProfilePhoneVerificationService;
 import com.coresolution.consultation.service.DynamicPermissionService;
 import com.coresolution.consultation.service.JwtService;
 import com.coresolution.consultation.service.OtpDeliveryService;
@@ -25,6 +31,7 @@ import com.coresolution.consultation.service.UserPersonalDataCacheService;
 import com.coresolution.consultation.service.UserService;
 import com.coresolution.consultation.service.UserSessionService;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
+import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.dto.ApiResponse;
 import com.coresolution.core.repository.TenantRepository;
 import com.coresolution.core.repository.TenantRoleRepository;
@@ -44,24 +51,25 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 import org.springframework.core.env.Environment;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 
 /**
- * current-user — 중복 로그인으로 기존 세션이 종료된 피해 세션 401 본문 검증.
+ * current-user 응답에 결제 soft-refresh 용 phone / isPhoneVerified 필드가 포함되는지 검증.
  *
  * @author MindGarden
- * @since 2026-04-25
+ * @since 2026-09-26
  */
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
-@DisplayName("AuthController — current-user 중복 로그인 세션 종료")
-class AuthControllerCurrentUserDuplicateTerminateTest {
+@DisplayName("AuthController — current-user 휴대폰 게이트 필드")
+class AuthControllerGetCurrentUserPhoneFieldsTest {
 
-    private static final String EXPIRED_COOKIE_HEADER =
-            "JSESSIONID=; Path=/; Max-Age=0; HttpOnly; SameSite=Lax";
+    private static final String TENANT = "tph-" + UUID.randomUUID().toString().replace("-", "").substring(0, 32);
+    private static final Long USER_ID = 77L;
+    private static final String PLAIN_PHONE = "01012345678";
+    private static final LocalDateTime VERIFIED_AT = LocalDateTime.of(2026, 9, 18, 12, 0);
 
     @Mock private RoleCommonCodeAuthorizationService roleCommonCodeAuthorizationService;
     @Mock private PersonalDataEncryptionUtil encryptionUtil;
@@ -84,8 +92,7 @@ class AuthControllerCurrentUserDuplicateTerminateTest {
     @Mock private SmsOtpVerificationService smsOtpVerificationService;
     @Mock private OtpDeliveryService otpDeliveryService;
     @Mock private SessionCookieSupport sessionCookieSupport;
-    @Mock private com.coresolution.consultation.service.ClientProfilePhoneVerificationService
-            clientProfilePhoneVerificationService;
+    @Mock private ClientProfilePhoneVerificationService clientProfilePhoneVerificationService;
 
     @Mock private HttpSession session;
     @Mock private HttpServletRequest httpRequest;
@@ -96,53 +103,65 @@ class AuthControllerCurrentUserDuplicateTerminateTest {
 
     @BeforeEach
     void setUp() {
-        when(session.getId()).thenReturn("sess-" + UUID.randomUUID());
-        when(sessionCookieSupport.buildExpiredJsessionSetCookieHeader(any()))
-                .thenReturn(EXPIRED_COOKIE_HEADER);
+        TenantContextHolder.setTenantId(TENANT);
         SecurityContextHolder.clearContext();
+        when(session.getId()).thenReturn("sess-" + USER_ID);
+        when(session.getAttribute(SessionConstants.USER_OBJECT)).thenReturn(buildUser());
+        when(userRepository.findByTenantIdAndId(TENANT, USER_ID)).thenReturn(Optional.of(buildUser()));
+        when(encryptionUtil.safeDecrypt(any())).thenAnswer(inv -> {
+            String v = inv.getArgument(0);
+            if ("enc-phone".equals(v)) {
+                return PLAIN_PHONE;
+            }
+            return v;
+        });
+        when(userSocialAccountRepository.findByTenantIdAndUserIdAndIsDeletedFalse(TENANT, USER_ID))
+                .thenReturn(Collections.emptyList());
+        when(branchService.getAllActiveBranches()).thenReturn(Collections.emptyList());
+        when(clientProfilePhoneVerificationService.isPhoneVerifiedForPayment(any())).thenReturn(true);
+        when(clientProfilePhoneVerificationService.findPhoneVerifiedAt(any()))
+                .thenReturn(Optional.of(VERIFIED_AT));
+        when(tenantRepository.findByTenantIdAndIsDeletedFalse(TENANT)).thenReturn(Optional.empty());
     }
 
     @AfterEach
     void tearDown() {
+        TenantContextHolder.clear();
         SecurityContextHolder.clearContext();
     }
 
     @Test
-    @DisplayName("필터 요청 속성이 있으면 401 + SESSION_TERMINATED_DUPLICATE + 쿠키 만료")
-    void currentUser_duplicateTerminated_returnsErrorCodeAndExpiresCookie() {
-        when(httpRequest.getAttribute(
-                SessionManagementConstants.REQUEST_ATTR_SESSION_TERMINATED_DUPLICATE))
-                .thenReturn(Boolean.TRUE);
-        when(session.getAttribute(any())).thenReturn(null);
-
+    @DisplayName("인증 사용자 current-user 에 phone·isPhoneVerified·phoneVerifiedAt 포함")
+    void currentUser_includesPhoneGateFields() {
         ResponseEntity<ApiResponse<Map<String, Object>>> response =
                 authController.getCurrentUser(session, httpRequest, httpResponse, null);
 
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody().isSuccess()).isFalse();
-        assertThat(response.getBody().getMessage())
-                .isEqualTo(SessionManagementConstants.SESSION_TERMINATED_MESSAGE);
-        assertThat(response.getBody().getData())
-                .containsEntry("errorCode",
-                        SessionManagementConstants.ERROR_CODE_SESSION_TERMINATED_DUPLICATE);
-        verify(httpResponse).addHeader(HttpHeaders.SET_COOKIE, EXPIRED_COOKIE_HEADER);
+        assertThat(response.getBody().isSuccess()).isTrue();
+        Map<String, Object> data = response.getBody().getData();
+        assertThat(data)
+                .containsEntry("phone", PLAIN_PHONE)
+                .containsEntry("phoneNumber", PLAIN_PHONE)
+                .containsEntry("isPhoneVerified", true)
+                .containsEntry("phoneVerifiedAt", VERIFIED_AT);
+
+        verify(clientProfilePhoneVerificationService).isPhoneVerifiedForPayment(any(User.class));
+        verify(clientProfilePhoneVerificationService).findPhoneVerifiedAt(any(User.class));
     }
 
-    @Test
-    @DisplayName("일반 미인증(속성 없음)은 기존 401 메시지 유지")
-    void currentUser_anonymous_keepsGenericUnauthorized() {
-        when(httpRequest.getAttribute(
-                SessionManagementConstants.REQUEST_ATTR_SESSION_TERMINATED_DUPLICATE))
-                .thenReturn(null);
-        when(session.getAttribute(any())).thenReturn(null);
-
-        ResponseEntity<ApiResponse<Map<String, Object>>> response =
-                authController.getCurrentUser(session, httpRequest, httpResponse, null);
-
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
-        assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody().getMessage()).isEqualTo("인증이 필요합니다.");
-        assertThat(response.getBody().getData()).isNull();
+    private User buildUser() {
+        User u = User.builder()
+                .userId("u" + USER_ID)
+                .email("user@example.com")
+                .name("홍길동")
+                .role(UserRole.CLIENT)
+                .phone("enc-phone")
+                .isActive(true)
+                .build();
+        u.setId(USER_ID);
+        u.setTenantId(TENANT);
+        u.setIsDeleted(false);
+        return u;
     }
 }

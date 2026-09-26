@@ -21,6 +21,7 @@ import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.repository.UserSocialAccountRepository;
 import com.coresolution.consultation.service.AuthService;
 import com.coresolution.consultation.service.BranchService;
+import com.coresolution.consultation.service.ClientProfilePhoneVerificationService;
 import com.coresolution.consultation.service.JwtService;
 import com.coresolution.consultation.service.RefreshTokenService;
 import com.coresolution.consultation.service.RoleCommonCodeAuthorizationService;
@@ -99,6 +100,7 @@ public class AuthController extends BaseApiController {
     private final SmsOtpVerificationService smsOtpVerificationService;
     private final OtpDeliveryService otpDeliveryService;
     private final SessionCookieSupport sessionCookieSupport;
+    private final ClientProfilePhoneVerificationService clientProfilePhoneVerificationService;
     
     // 로컬 개발 환경용 기본 테넌트 ID (서브도메인이 없을 때 사용)
     @org.springframework.beans.factory.annotation.Value("${local.default-tenant-id:${LOCAL_DEFAULT_TENANT_ID:}}")
@@ -258,6 +260,24 @@ public class AuthController extends BaseApiController {
         userInfo.put("nickname", decryptedNickname);
         userInfo.put("role", user.getRole());
         userInfo.put("counselingEnabled", Boolean.TRUE.equals(user.getCounselingEnabled()));
+
+        // 휴대폰·소유 확인 — soft refresh 시 PortOne 게이트가 세션에서 읽음 (SNS claim ≠ verified)
+        String decryptedPhone = null;
+        try {
+            if (user.getPhone() != null && !user.getPhone().trim().isEmpty()) {
+                decryptedPhone = encryptionUtil.safeDecrypt(user.getPhone());
+            }
+        } catch (Exception e) {
+            log.warn("휴대폰 복호화 실패: {}", e.getMessage());
+            decryptedPhone = user.getPhone();
+        }
+        userInfo.put("phone", decryptedPhone);
+        userInfo.put("phoneNumber", decryptedPhone);
+        // 결제 soft-refresh — phone_otp_attempts PROFILE verified_at 에서 계산 (users 컬럼 없음)
+        boolean phoneVerified = clientProfilePhoneVerificationService.isPhoneVerifiedForPayment(user);
+        userInfo.put("isPhoneVerified", phoneVerified);
+        userInfo.put("phoneVerifiedAt",
+                clientProfilePhoneVerificationService.findPhoneVerifiedAt(user).orElse(null));
         
         // 테넌트 정보 추가
         userInfo.put("tenantId", user.getTenantId());

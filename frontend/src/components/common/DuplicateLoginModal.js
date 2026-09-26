@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { AlertTriangle, XCircle, Check } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useSession } from '../../contexts/SessionContext';
 import { authAPI } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
+import { markJustLoggedIn } from '../../utils/sessionAuthPolicy';
 import { sessionManager } from '../../utils/sessionManager';
 import UnifiedModal from './modals/UnifiedModal';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
@@ -12,6 +14,7 @@ import { useTranslation } from 'react-i18next';
 
 const DuplicateLoginModal = () => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const { duplicateLoginModal, setDuplicateLoginModal, checkSession } = useSession();
   const [confirmLoading, setConfirmLoading] = useState(false);
 
@@ -42,10 +45,13 @@ const DuplicateLoginModal = () => {
 
         console.log('🔐 중복 로그인 성공 - 세션에 사용자 정보 설정 시작:', response.user);
         sessionManager.setUser(response.user, {
+          accessToken: response.accessToken,
+          refreshToken: response.refreshToken,
           sessionId: response.sessionId || null
         });
-        // SessionContext 동기화 (로그인 직후 공통코드 등에서 user 사용 가능하도록)
-        await checkSession(true);
+        // UnifiedLogin 과 동일 — 쿠키 반영 전 401 레이스로 튕기지 않게
+        markJustLoggedIn();
+        await checkSession(true, { background: true });
         console.log('✅ 세션 설정 완료 - 사용자 정보 저장됨');
 
         notificationManager.show('로그인에 성공했습니다.', 'success');
@@ -54,15 +60,15 @@ const DuplicateLoginModal = () => {
           user: response.user,
           currentTenantRole: response.currentTenantRole || null
         };
-        console.log('🎯 중복 로그인 성공 후 동적 대시보드 리다이렉트');
+        console.log('🎯 중복 로그인 성공 후 SPA navigate (hard reload 금지)');
 
         setTimeout(async() => {
           try {
-            const { resolvePostLoginLandingPath } = await import('../../utils/dashboardUtils');
-            window.location.href = resolvePostLoginLandingPath(response.user);
+            const { redirectToDynamicDashboard } = await import('../../utils/dashboardUtils');
+            await redirectToDynamicDashboard(authResponse, navigate);
           } catch (error) {
             console.error('대시보드 리다이렉트 실패:', error);
-            window.location.href = '/dashboard';
+            navigate('/dashboard', { replace: true });
           }
         }, 500);
       } else {

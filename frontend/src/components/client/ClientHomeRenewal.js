@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { useSession } from '../../contexts/SessionContext';
 import TenantAwareApiClient from '../../utils/TenantAwareApiClient';
+import { runResourceLoad, softRefresh } from '../../utils/softRefresh';
 import './ClientHomeRenewal.css';
 import { USER_ROLES } from '../../constants/roles';
 import { SCHEDULE_API } from '../../constants/api';
@@ -76,50 +77,59 @@ const ClientHomeRenewal = () => {
   const [wellnessTip, setWellnessTip] = useState(null);
   const [recentActivities, setRecentActivities] = useState([]);
 
-  const loadHomeData = useCallback(async() => {
+  const loadHomeData = useCallback(async(options = {}) => {
     if (!user?.id) return;
     try {
-      setLoading(true);
-      const [schedulesRes, healingRes, activitiesRes] = await Promise.allSettled([
-        TenantAwareApiClient.get(SCHEDULE_API.SCHEDULES, {
-          userId: user.id,
-          userRole: USER_ROLES.CLIENT
-        }),
-        TenantAwareApiClient.get(API_HEALING_CONTENT, { page: 0, size: 1 }),
-        TenantAwareApiClient.get(API_ACTIVITIES, { userId: user.id, size: 3 })
-      ]);
+      await runResourceLoad(options, setLoading, async() => {
+        const [schedulesRes, healingRes, activitiesRes] = await Promise.allSettled([
+          TenantAwareApiClient.get(SCHEDULE_API.SCHEDULES, {
+            userId: user.id,
+            userRole: USER_ROLES.CLIENT
+          }),
+          TenantAwareApiClient.get(API_HEALING_CONTENT, { page: 0, size: 1 }),
+          TenantAwareApiClient.get(API_ACTIVITIES, { userId: user.id, size: 3 })
+        ]);
 
-      if (schedulesRes.status === 'fulfilled') {
-        const schedules = Array.isArray(schedulesRes.value)
-          ? schedulesRes.value
-          : schedulesRes.value?.data || schedulesRes.value?.content || [];
+        if (schedulesRes.status === 'fulfilled') {
+          const schedules = Array.isArray(schedulesRes.value)
+            ? schedulesRes.value
+            : schedulesRes.value?.data || schedulesRes.value?.content || [];
 
-        const upcoming = selectClientUpcomingSchedules(schedules, { limit: 1 });
-        setNextConsultation(upcoming[0] || null);
-      }
+          const upcoming = selectClientUpcomingSchedules(schedules, { limit: 1 });
+          setNextConsultation(upcoming[0] || null);
+        }
 
-      if (healingRes.status === 'fulfilled') {
-        const content = Array.isArray(healingRes.value)
-          ? healingRes.value
-          : healingRes.value?.data || healingRes.value?.content || [];
-        setWellnessTip(content[0] || null);
-      }
+        if (healingRes.status === 'fulfilled') {
+          const content = Array.isArray(healingRes.value)
+            ? healingRes.value
+            : healingRes.value?.data || healingRes.value?.content || [];
+          setWellnessTip(content[0] || null);
+        }
 
-      if (activitiesRes.status === 'fulfilled') {
-        const acts = Array.isArray(activitiesRes.value)
-          ? activitiesRes.value
-          : activitiesRes.value?.data || activitiesRes.value?.content || [];
-        setRecentActivities(acts.slice(0, 3));
-      }
+        if (activitiesRes.status === 'fulfilled') {
+          const acts = Array.isArray(activitiesRes.value)
+            ? activitiesRes.value
+            : activitiesRes.value?.data || activitiesRes.value?.content || [];
+          setRecentActivities(acts.slice(0, 3));
+        }
+      });
     } catch (err) {
       console.error('홈 데이터 로드 실패:', err);
-    } finally {
-      setLoading(false);
     }
   }, [user?.id]);
 
   useEffect(() => {
     loadHomeData();
+  }, [loadHomeData]);
+
+  useEffect(() => {
+    const handler = () => {
+      if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
+        softRefresh(loadHomeData);
+      }
+    };
+    document.addEventListener('visibilitychange', handler);
+    return () => document.removeEventListener('visibilitychange', handler);
   }, [loadHomeData]);
 
   const countdown = useMemo(

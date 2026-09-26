@@ -542,7 +542,7 @@ const TabletLogin = () => {
     // OAuth2 콜백 처리
     if (code && state && provider) {
       try {
-        const result = await socialHandleOAuthCallback(provider, code, state);
+        const result = await socialHandleOAuthCallback(provider, code, state, navigate);
         if (result?.requiresSignup) {
           setSocialUserInfo(result.socialUserInfo);
           setShowSocialSignupModal(true);
@@ -617,13 +617,12 @@ const TabletLogin = () => {
           navigate
         );
       } else {
-        // HttpOnly·세션 직후 타이밍 한계로 클라 동기화가 비면 풀리드(쿠키·번들·스토어 일치)
+        // HttpOnly·세션 직후 타이밍 한계로 클라 동기화가 비면 SPA navigate (hard reload 금지)
         notificationManager.show(
           toDisplayString(OAUTH_POST_SIGNUP_LOGIN_REMINDER, OAUTH_POST_SIGNUP_LOGIN_REMINDER),
           'success'
         );
-        // eslint-disable-next-line no-restricted-globals
-        window.location.reload();
+        navigate('/dashboard', { replace: true });
       }
     }
   };

@@ -80,12 +80,13 @@ import {
   PAYMENT_TIMING_SAME_DAY_CARD,
   MAPPING_STATUS_PENDING_PAYMENT,
   MAPPING_STATUS_SESSIONS_EXHAUSTED,
-  excludeUnpaidSoftFromAssignmentQueues,
   isInstitutionLinkMapping,
+  isEligibleForAssignmentQueues,
   isCompletedSingleSessionExhausted,
   isSessionsExhaustedListMapping,
   isOngoingMapping,
-  getMappingDate
+  getMappingDate,
+  normalizedRemainingSessions
 } from './constants/integratedScheduleSidebarFilterConstants';
 import {
   assertExternalMappingDropAllowed,
@@ -110,6 +111,7 @@ import {
   countPendingPaymentMappings,
   mergeUnpaidSoftMappings,
   mergeUnpaidSoftWithScheduleMappingIds,
+  applyUnpaidSoftStatusFromSchedules,
   PENDING_PAYMENT_DIRTY_DEFAULT_AGE_HOURS,
   selectPendingPaymentMappings,
   sumPendingPaymentAmount
@@ -121,7 +123,7 @@ import {
 import { filterMappingsByClientSearch } from './integrated-schedule/utils/filterMappingsByClientSearch';
 import { toErrorMessage } from '../../../utils/safeDisplay';
 import {
-  adminClientsWithMappingGet,
+  adminClientsWithMappingGetAll,
   adminMappingsListGet,
   adminMappingsListGetAll,
   adminSchedulesListGetAll
@@ -154,6 +156,13 @@ const isAdminLikeScheduleUserRole = (role) => {
   const normalized = mapLegacyRole(role);
   return normalized === USER_ROLES.ADMIN || normalized === USER_ROLES.STAFF;
 };
+
+/**
+ * 통합 스케줄 상단 내담자 다중 필터 옵션 소스.
+ * 필터용 id/name/phone/email만 필요하므로 view=summary 사용 (풀페치 금지 — P0).
+ * 응답: { success: true, data: { clients: [{ id, name, email, phone, ... }], count } }
+ * URL/fetch 는 adminListFetch SSOT (page+size 강제).
+ */
 
 const readStoredBoolean = (key) => {
   if (typeof window === 'undefined' || !window.localStorage) {
@@ -188,6 +197,11 @@ const IntegratedMatchingSchedule = () => {
   const [mappings, setMappings] = useState([]);
   /** 가예약 카드 전용 SSOT — pending-payment(+dirty merge) 직접 소스 (mappings 경로 실패 대비) */
   const [unpaidSoftForCard, setUnpaidSoftForCard] = useState([]);
+  /** first-paint chrome KPI — STATS SSOT; null = 미수신/실패 시 mappings 폴백 */
+  const [mappingsChromeStats, setMappingsChromeStats] = useState({
+    totalMappings: null,
+    activeMappings: null
+  });
   const [loading, setLoading] = useState(true);
   const [scheduleModalOpen, setScheduleModalOpen] = useState(false);
   const [preFilledMapping, setPreFilledMapping] = useState(null);
@@ -289,8 +303,14 @@ const IntegratedMatchingSchedule = () => {
 
   // R6 (2026-06-06) Phase 3-B: 월별 카운트·누락 일지 fetch+캐시는 공통 hook 으로 위임.
   // 컴포넌트 스코프 useRef 캐시 + tenantId 리셋 + cancelled race 패턴은 hook 내부에 동일하게 보존.
-  const { counts: consultantCounts } = useMonthlyConsultantCounts(currentYear, currentMonth);
-  const { items: missingConsultationLogs } = useMissingConsultationLogs(currentYear, currentMonth);
+  const {
+    counts: consultantCounts,
+    isLoading: consultantCountsLoading
+  } = useMonthlyConsultantCounts(currentYear, currentMonth);
+  const {
+    items: missingConsultationLogs,
+    isLoading: missingConsultationLogsLoading
+  } = useMissingConsultationLogs(currentYear, currentMonth);
 
   // 통합 스케줄 한정 — 상단 컴팩트 내담자 다중 필터.
   // 빈 배열 = 필터 비활성. UnifiedScheduleComponent 가 events 를 그대로 통과시킨다.
@@ -325,7 +345,7 @@ const IntegratedMatchingSchedule = () => {
     const loadClientOptions = async() => {
       try {
         setClientFilterLoading(true);
-        const response = await adminClientsWithMappingGet();
+        const response = await adminClientsWithMappingGetAll();
         let payload = response;
         if (response && typeof response === 'object' && response.success === true && response.data) {
           payload = response.data;
@@ -655,9 +675,6 @@ const IntegratedMatchingSchedule = () => {
 
     /**
      * mappings 목록 + unpaid soft overlay 를 state 에 반영.
-     * release/dev unpaid-soft SSOT (#1221): mergeUnpaidSoftMappings +
-     * mergeUnpaidSoftWithScheduleMappingIds(merged, schedulesRaw) 2-arg.
-     *
      * @param {*} response
      * @param {*} pendingRaw
      * @param {*} dirtyRaw
@@ -690,14 +707,20 @@ const IntegratedMatchingSchedule = () => {
       const rawExtensions = extensionData?.requests
         ?? extensionData?.data?.requests
         ?? (Array.isArray(extensionData) ? extensionData : []);
-      const merged = mergeUnpaidSoftMappings(list, pendingRaw, dirtyRaw);
+      // base merge 유지: soft 카드는 overlay 전 행으로 ACTIVE(rem>0) 신호 게이트
+      const baseMerged = mergeUnpaidSoftMappings(list, pendingRaw, dirtyRaw);
+      const merged = applyUnpaidSoftStatusFromSchedules(baseMerged, schedulesRaw);
       setMappings(attachPendingSessionExtensions(
         merged,
         Array.isArray(rawExtensions) ? rawExtensions : []
       ));
 
       // 가예약 카드 SSOT: pending∪dirty ∪ TENTATIVE_PENDING_PAYMENT 스케줄→기존 매핑 (발명 금지)
-      let unpaidSoftCard = mergeUnpaidSoftWithScheduleMappingIds(merged, schedulesRaw);
+      // ACTIVE 는 unpaid 신호 id 집합에 있을 때만 포함 (PENDING 강제 발명 금지)
+      let unpaidSoftCard = mergeUnpaidSoftWithScheduleMappingIds(baseMerged, schedulesRaw, {
+        pendingRaw,
+        dirtyRaw
+      });
       if (unpaidSoftCard.length === 0) {
         unpaidSoftCard = selectPendingPaymentMappings(
           mergeUnpaidSoftMappings([], pendingRaw, dirtyRaw)
@@ -719,9 +742,16 @@ const IntegratedMatchingSchedule = () => {
         // 표시 월만 schedules drain — unbounded GetAll 금지 (캘린더와 동일 startDate/endDate)
         const { startDate, endDate } = buildMonthDateRangeYmd(currentYear, currentMonth);
 
-        // unpaid 소스별 best-effort: 한 API 실패가 dirty·schedules 카드 SSOT 를 지우지 않음
-        // 첫 paint: mappings 1페이지 + unpaid + 월 스코프 schedules (full mappings GetAll 대기 금지)
-        const [response, pendingRaw, dirtyRaw, schedulesRaw, extensionData] = await Promise.all([
+        // unpaid 소스별 best-effort: 한 API 실패가 dirty·schedules 카드/필터 SSOT 를 지우지 않음
+        // 첫 paint: mappings 1페이지 + unpaid + 월 스코프 schedules + STATS (full mappings GetAll 대기 금지)
+        const [
+          response,
+          pendingRaw,
+          dirtyRaw,
+          schedulesRaw,
+          extensionData,
+          mappingsStatsRaw
+        ] = await Promise.all([
           adminMappingsListGet().catch(() => null),
           StandardizedApi.get(API_ENDPOINTS.ADMIN.MAPPINGS.PENDING_PAYMENT).catch(() => null),
           StandardizedApi.get(API_ENDPOINTS.ADMIN.MAPPINGS.PENDING_PAYMENT_DIRTY, {
@@ -731,11 +761,24 @@ const IntegratedMatchingSchedule = () => {
           }).catch(() => null),
           adminSchedulesListGetAll({ startDate, endDate }).catch(() => null),
           StandardizedApi.get(API_ENDPOINTS.ADMIN.SESSION_EXTENSIONS.PENDING_PAYMENT)
-            .catch(() => null)
+            .catch(() => null),
+          StandardizedApi.get(API_ENDPOINTS.ADMIN.MAPPINGS.STATS).catch(() => null)
         ]);
 
         if (isStale()) {
           return;
+        }
+
+        if (mappingsStatsRaw != null) {
+          const statsData = mappingsStatsRaw?.data != null
+            ? mappingsStatsRaw.data
+            : mappingsStatsRaw;
+          const totalRaw = Number(statsData?.totalMappings);
+          const activeRaw = Number(statsData?.activeMappings);
+          setMappingsChromeStats({
+            totalMappings: Number.isFinite(totalRaw) ? totalRaw : null,
+            activeMappings: Number.isFinite(activeRaw) ? activeRaw : null
+          });
         }
 
         applyMappingsPaint(
@@ -747,9 +790,12 @@ const IntegratedMatchingSchedule = () => {
           { notifyOnHardFail: true }
         );
 
-        // 사이드바 완전성용 mappings 잔여 페이지 — overlay 해제 후 백그라운드 merge
-        // schedules 는 재drain 하지 않음(월 스코프 결과 재사용)
-        void (async() => {
+        // 사이드바 완전성용 mappings 잔여 페이지 — idle defer 후 백그라운드 merge
+        // (캘린더 배지 hook 대역폭 확보). schedules 는 재drain 하지 않음(월 스코프 재사용).
+        const runBackgroundMappingsGetAll = async() => {
+          if (isStale()) {
+            return;
+          }
           const fullResponse = await adminMappingsListGetAll().catch(() => null);
           if (isStale() || fullResponse == null) {
             return;
@@ -762,7 +808,17 @@ const IntegratedMatchingSchedule = () => {
             extensionData,
             { notifyOnHardFail: false }
           );
-        })();
+        };
+
+        if (typeof window !== 'undefined' && typeof window.requestIdleCallback === 'function') {
+          window.requestIdleCallback(() => {
+            void runBackgroundMappingsGetAll();
+          }, { timeout: CLIENT_FILTER_IDLE_FALLBACK_MS * 4 });
+        } else {
+          setTimeout(() => {
+            void runBackgroundMappingsGetAll();
+          }, CLIENT_FILTER_IDLE_FALLBACK_MS);
+        }
       });
     } catch (error) {
       if (isStale()) {
@@ -831,34 +887,34 @@ const IntegratedMatchingSchedule = () => {
     byView = mappings.filter((m) => {
       const created = getMappingDate(m);
       const withinDays = created >= cutoff;
-      // unpaid soft(PENDING_PAYMENT) 는 가예약 카드 전용 — actionNeeded 에 넣지 않음
-      const actionNeeded = m.status === 'DEPOSIT_PENDING';
-      return (withinDays || actionNeeded) && !isCompletedSingleSessionExhausted(m);
+      const actionNeeded =
+        m.status === 'PENDING_PAYMENT' || m.status === 'DEPOSIT_PENDING';
+      // ACTIVE rem=0 / fully-consumed 는 공통 헬퍼로 제외. 액션 필요 상태는 헬퍼가 유지.
+      return (withinDays || actionNeeded) && isEligibleForAssignmentQueues(m);
     });
   } else if (viewFilter === VIEW_FILTER_REMAINING) {
-    // rem=0 unpaid soft 는 이 게이트와 무관하나, soft 자체는 배정 큐에 넣지 않는다
     byView = mappings.filter((m) =>
       !isCompletedSingleSessionExhausted(m)
-      && (isInstitutionLinkMapping(m) || (m.remainingSessions ?? 0) > 0)
+      && (isInstitutionLinkMapping(m) || normalizedRemainingSessions(m) > 0)
     );
   } else {
     byView = mappings;
   }
-
-  // soft 와 배정 3큐 분리 SSOT — byView 단계부터 unpaid soft 제외
-  byView = excludeUnpaidSoftFromAssignmentQueues(byView);
 
   const sortedByView = [...byView].sort(
     (a, b) => getMappingDate(b) - getMappingDate(a)
   );
   let filteredMappings;
   if (statusFilter === MAPPING_STATUS_PENDING_PAYMENT) {
-    // PENDING 칩 카운트는 countPendingPaymentMappings(mappings) 유지.
-    // soft 목록은 gareyarkCard/unpaidSoftForCard 전용 — filteredMappings(배정 큐)에 덤프하지 않음.
-    filteredMappings = [];
+    // rem=0 unpaid soft 는 VIEW_FILTER_REMAINING 게이트를 거치지 않는다.
+    const pendingFromFull = selectPendingPaymentMappings(mappings);
+    filteredMappings = [...pendingFromFull].sort(
+      (a, b) => getMappingDate(b) - getMappingDate(a)
+    );
   } else if (statusFilter === 'ongoing') {
     filteredMappings = sortedByView.filter(isOngoingMapping);
   } else if (statusFilter === MAPPING_STATUS_SESSIONS_EXHAUSTED) {
+    // 신규배정(rem) 뷰와 교집합하지 않는다. 완료 단회기·소진 status 가 종료(회기 소진)에 남는다.
     filteredMappings = [...mappings]
       .filter(isSessionsExhaustedListMapping)
       .sort((a, b) => getMappingDate(b) - getMappingDate(a));
@@ -867,9 +923,6 @@ const IntegratedMatchingSchedule = () => {
   } else {
     filteredMappings = sortedByView;
   }
-
-  // 방어: 어떤 statusFilter 경로든 unpaid soft 가 배정 리스트에 섞이지 않도록
-  filteredMappings = excludeUnpaidSoftFromAssignmentQueues(filteredMappings);
 
   if (Array.isArray(selectedClientIds) && selectedClientIds.length > 0) {
     const allowedClientIds = new Set(selectedClientIds.map((id) => String(id)));
@@ -897,7 +950,7 @@ const IntegratedMatchingSchedule = () => {
     if (value === 'ongoing') return byView.filter(isOngoingMapping).length;
     if (value === '') return byView.length;
     if (value === MAPPING_STATUS_PENDING_PAYMENT) {
-      return countPendingPaymentMappings(mappings);
+      return countPendingPaymentMappings(unpaidSoftForCard);
     }
     if (value === MAPPING_STATUS_SESSIONS_EXHAUSTED) {
       return mappings.filter(isSessionsExhaustedListMapping).length;
@@ -905,10 +958,12 @@ const IntegratedMatchingSchedule = () => {
     return byView.filter((m) => m.status === value).length;
   };
 
-  const summaryTotalCount = mappings.length;
-  const summaryOngoingCount = mappings.filter(isOngoingMapping).length;
-  const summaryPendingPaymentCount = countPendingPaymentMappings(mappings);
-  const summaryPendingPaymentAmount = sumPendingPaymentAmount(mappings);
+  // chrome KPI: STATS first-paint SSOT — GetAll 부분 목록으로 회귀하지 않음
+  const summaryTotalCount = mappingsChromeStats.totalMappings ?? mappings.length;
+  const summaryOngoingCount = mappingsChromeStats.activeMappings
+    ?? mappings.filter(isOngoingMapping).length;
+  const summaryPendingPaymentCount = countPendingPaymentMappings(unpaidSoftForCard);
+  const summaryPendingPaymentAmount = sumPendingPaymentAmount(unpaidSoftForCard);
   // 가예약 사이드바 카드: unpaidSoftForCard SSOT (mappings 필터/뷰와 무관, count===0 이어도 chrome 유지)
   const gareyarkCardCount = unpaidSoftForCard.length;
   const gareyarkCardFirstPending = unpaidSoftForCard[0] || null;
@@ -1459,7 +1514,6 @@ const IntegratedMatchingSchedule = () => {
           sidebarDensity={sidebarDensity}
           onSidebarDensityChange={setSidebarDensity}
           gareyarkCard={{
-            mappings: unpaidSoftForCard,
             count: gareyarkCardCount,
             firstPending: gareyarkCardFirstPending,
             onOpenList: handlePendingPaymentSummaryClick,
@@ -1528,11 +1582,13 @@ const IntegratedMatchingSchedule = () => {
               onMonthChange={handleCalendarMonthChange}
               consultantCounts={consultantCounts}
               consultantCountsMonth={currentMonth}
+              consultantCountsLoading={consultantCountsLoading}
               showClientFilter
               clients={clientFilterOptions}
               selectedClientIds={selectedClientIds}
               onClientFilterChange={setSelectedClientIds}
               missingConsultationLogs={missingConsultationLogs}
+              missingConsultationLogsLoading={missingConsultationLogsLoading}
               onScheduleEventsChange={handleScheduleEventsChange}
               onAfterScheduleUpdated={() => softRefresh(loadMappings)}
               headerToolbarEnd={(

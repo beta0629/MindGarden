@@ -77,7 +77,8 @@ const useMissingConsultationLogs = (year, month) => {
     const tenantId = user?.tenantId ?? null;
 
     const [items, setItems] = useState(null);
-    const [isLoading, setIsLoading] = useState(false);
+    // year/month 가 있으면 첫 paint 부터 loading — items=null 섹션 숨김 flash 방지
+    const [isLoading, setIsLoading] = useState(() => year != null && month != null);
     const [error, setError] = useState(null);
     const cacheRef = useRef(new Map());
     const lastTenantIdRef = useRef(tenantId);

@@ -104,6 +104,22 @@
     padding: var(--mg-spacing-xs, 4px) 0;
 }
 
+/* first-paint 배지 스켈레톤 — mg-skeleton 토큰 애니메이션 재사용 */
+.mg-v2-legend-skeleton,
+.mg-v2-legend-missing-logs__skeleton {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--mg-spacing-sm, 8px);
+}
+
+.mg-v2-legend-skeleton-chip {
+    display: inline-block;
+    width: var(--mg-spacing-3xl, 48px);
+    height: var(--mg-spacing-xl, 20px);
+    border-radius: var(--mg-radius-pill, 999px);
+}
+
 @media (max-width: 480px) {
     .mg-v2-legend-missing-logs__dates {
         width: 100%;

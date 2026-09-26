@@ -1021,65 +1021,50 @@
   }
 }
 
-/* ===== 가예약 섹션 — MappingScheduleCard family (Clinic-OS v2.1), not warning alert ===== */
-.integrated-schedule__gareyark-section {
+/* ===== 옵션 B (예약 우선 매칭) — unpaid soft(가예약) 알림 카드 ===== */
+.integrated-schedule__pending-payment-alert {
   display: flex;
-  flex-direction: column;
-  gap: var(--mg-v2-space-2);
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mg-v2-space-3);
+  margin: 0;
+  padding: var(--mg-v2-space-3) var(--mg-v2-space-4);
+  border: 1px solid var(--mg-v2-color-semantic-warning);
+  border-radius: var(--mg-v2-radius-md);
+  background: var(--mg-v2-color-semantic-warning-light);
+  color: var(--mg-v2-color-text-primary);
+  flex-shrink: 0;
+}
+
+/* 사이드바 본문 상단 — 필터 탭 위 고정 chrome */
+.integrated-schedule__pending-payment-alert--sidebar {
   width: 100%;
   box-sizing: border-box;
   margin: 0;
-  padding: 0;
-  flex-shrink: 0;
-  color: var(--mg-v2-color-text-primary);
 }
 
-.integrated-schedule__gareyark-section-header {
+.integrated-schedule__pending-payment-alert-text {
   display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: var(--mg-v2-space-2);
+  flex-direction: column;
+  gap: var(--mg-v2-space-1);
   min-width: 0;
 }
 
-.integrated-schedule__gareyark-section-title {
-  margin: 0;
-  font-weight: var(--mg-v2-font-weight-semibold, 600);
+.integrated-schedule__pending-payment-alert-title {
+  font-weight: 600;
   font-size: var(--mg-v2-font-size-body-md);
-  color: var(--mg-v2-color-text-primary);
 }
 
-.integrated-schedule__gareyark-section-count {
+.integrated-schedule__pending-payment-alert-count {
   font-size: var(--mg-v2-font-size-body-sm);
   color: var(--mg-v2-color-text-secondary);
 }
 
-.integrated-schedule__gareyark-section-filter {
-  margin-inline-start: auto;
-  padding: 0;
-  border: none;
-  background: transparent;
-  cursor: pointer;
-  font-size: var(--mg-v2-font-size-body-sm);
-  color: var(--mg-v2-color-text-secondary);
-  text-decoration: underline;
-}
-
-.integrated-schedule__gareyark-section-filter:hover,
-.integrated-schedule__gareyark-section-filter:focus-visible {
-  color: var(--mg-v2-color-text-primary);
-}
-
-.integrated-schedule__gareyark-section-body {
-  min-width: 0;
-}
-
-/* 중첩 MatchingScheduleList — flex 붕괴(height:0) 방지, 섹션 내부 스크롤 */
-.integrated-schedule__gareyark-section .integrated-schedule__list-scroll {
-  height: auto;
-  flex: 0 1 auto;
-  min-height: 0;
-  max-height: 50vh;
+.integrated-schedule__pending-payment-alert-actions {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: var(--mg-v2-space-2);
 }
 
 /* ===== 옵션 B (예약 우선 매칭) — 당일결제 가예약 캘린더 이벤트 시각 구분 ===== */
@@ -1104,25 +1089,21 @@
  *      ScheduleCalendarView.js renderEventContent (inner <div> SSOT).
  */
 .integrated-schedule__event--same-day-pending,
-.fc-event.integrated-schedule__event--same-day-pending,
-.mg-v2-schedule-calendar-view .fc-event.integrated-schedule__event--same-day-pending {
-  background: var(--mg-v2-color-semantic-warning-light) !important;
-  color: var(--mg-v2-color-semantic-warning) !important;
-  border: 2px dashed var(--mg-v2-color-semantic-warning) !important;
+.fc-event.integrated-schedule__event--same-day-pending {
+  background: var(--mg-v2-color-semantic-warning-light);
+  color: var(--mg-v2-color-semantic-warning);
+  border: 2px dashed var(--mg-v2-color-semantic-warning);
   font-style: italic;
 }
 
 /* v2.0 cascade 보강: inner <div.mg-v2-ad-calendar-event> 까지 점선·배경 전파 */
 .fc-event.integrated-schedule__event--same-day-pending .mg-v2-ad-calendar-event,
 .fc-event.integrated-schedule__event--same-day-pending .mg-v2-ad-calendar-event--compact,
-.fc-event.integrated-schedule__event--same-day-pending .mg-v2-ad-calendar-event--integrated-month,
-.mg-v2-schedule-calendar-view .fc-event.integrated-schedule__event--same-day-pending .mg-v2-ad-calendar-event,
-.mg-v2-schedule-calendar-view .fc-event.integrated-schedule__event--same-day-pending .mg-v2-ad-calendar-event--compact,
-.mg-v2-schedule-calendar-view .fc-event.integrated-schedule__event--same-day-pending .mg-v2-ad-calendar-event--integrated-month {
-  background-color: var(--mg-v2-color-semantic-warning-light) !important;
-  color: var(--mg-v2-color-semantic-warning) !important;
-  border: 2px dashed var(--mg-v2-color-semantic-warning) !important;
-  border-left-color: var(--mg-v2-color-semantic-warning) !important;
+.fc-event.integrated-schedule__event--same-day-pending .mg-v2-ad-calendar-event--integrated-month {
+  background-color: var(--mg-v2-color-semantic-warning-light);
+  color: var(--mg-v2-color-semantic-warning);
+  border: 2px dashed var(--mg-v2-color-semantic-warning);
+  border-left-color: var(--mg-v2-color-semantic-warning);
   font-style: italic;
 }
 

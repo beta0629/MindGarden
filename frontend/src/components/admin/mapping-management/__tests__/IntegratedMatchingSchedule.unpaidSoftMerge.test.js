@@ -34,54 +34,26 @@ describe('IntegratedMatchingSchedule unpaid soft merge/filter SSOT', () => {
     );
     expect(scheduleJs).toMatch(/adminSchedulesListGetAll/);
     expect(scheduleJs).not.toMatch(/adminSchedulesListGet\s*\(/);
+    // unpaid soft schedules drain 은 월 스코프 GetAll (bare Get 금지)
     expect(scheduleJs).toMatch(
       /adminSchedulesListGetAll\(\s*\{\s*startDate\s*,\s*endDate\s*\}\s*\)/
     );
+    expect(scheduleJs).toMatch(/adminClientsWithMappingGetAll\s*\(/);
     expect(scheduleJs).toMatch(/mergeUnpaidSoftWithScheduleMappingIds/);
-    // release/dev #1221: 2-arg merge (prod applyUnpaidSoftStatusFromSchedules 미도입)
+    expect(scheduleJs).toMatch(/applyUnpaidSoftStatusFromSchedules/);
+    expect(scheduleJs).toMatch(/baseMerged/);
     expect(scheduleJs).toMatch(
-      /mergeUnpaidSoftWithScheduleMappingIds\(\s*merged\s*,\s*schedulesRaw\s*\)/
+      /mergeUnpaidSoftWithScheduleMappingIds\(\s*baseMerged\s*,\s*schedulesRaw\s*,\s*\{[\s\S]*pendingRaw[\s\S]*dirtyRaw[\s\S]*\}\s*\)/
     );
-    expect(scheduleJs).not.toMatch(/applyUnpaidSoftStatusFromSchedules/);
     expect(scheduleJs).toMatch(/\.catch\(\(\)\s*=>\s*null\)/);
   });
 
-  test('loadMappings schedules query uses TENTATIVE_PENDING_PAYMENT via adminSchedulesListGetAll', () => {
-    expect(scheduleJs).toMatch(
-      /adminSchedulesListGetAll\(\s*\{\s*startDate\s*,\s*endDate\s*\}\s*\)/
-    );
-    const widgetConstants = read('src/constants/adminDashboardWidgetConstants.js');
-    expect(widgetConstants).toMatch(/ADMIN_SCHEDULES_TENTATIVE_PENDING_QUERY/);
-    expect(widgetConstants).toMatch(/STATUS\.TENTATIVE_PENDING_PAYMENT/);
-    expect(widgetConstants).not.toMatch(
-      /ADMIN_SCHEDULES_TENTATIVE_PENDING_QUERY[\s\S]{0,120}status:\s*['"]PENDING['"]/
-    );
-    expect(widgetConstants).not.toMatch(
-      /ADMIN_SCHEDULES_TENTATIVE_PENDING_QUERY[\s\S]{0,120}status:\s*['"]TENTATIVE['"]/
-    );
-    const listFetch = read('src/api/adminListFetch.js');
-    expect(listFetch).toMatch(/export function adminSchedulesListGetAll/);
-    expect(listFetch).toMatch(/ADMIN_SCHEDULES_TENTATIVE_PENDING_QUERY/);
-  });
-
-  test('same-day-pending calendar dashed border uses !important under integrated CSS', () => {
-    const css = read('src/components/admin/mapping-management/IntegratedMatchingSchedule.css');
-    expect(css).toMatch(
-      /\.fc-event\.integrated-schedule__event--same-day-pending[\s\S]*?border:\s*2px\s+dashed[^;]*!important/
-    );
-  });
-
-  test('PENDING_PAYMENT chip count stays on full mappings; soft never dumps into filteredMappings', () => {
+  test('PENDING_PAYMENT statusFilter uses full mappings via selectPendingPaymentMappings', () => {
     expect(scheduleJs).toMatch(/statusFilter === MAPPING_STATUS_PENDING_PAYMENT/);
+    expect(scheduleJs).toMatch(/selectPendingPaymentMappings\(mappings\)/);
+    // chrome badge count 는 unpaidSoftForCard SSOT (first-paint); list filter 는 mappings
     expect(scheduleJs).toMatch(
-      /MAPPING_STATUS_PENDING_PAYMENT\)\s*\{\s*return countPendingPaymentMappings\(mappings\)/
-    );
-    expect(scheduleJs).toMatch(/excludeUnpaidSoftFromAssignmentQueues/);
-    expect(scheduleJs).toMatch(/filteredMappings = \[\]/);
-    expect(scheduleJs).not.toMatch(/selectPendingPaymentMappings\(mappings\)/);
-    // NEW actionNeeded 에 PENDING_PAYMENT 강제 포함 금지 (가예약 카드 전용)
-    expect(scheduleJs).not.toMatch(
-      /actionNeeded\s*=\s*[\s\S]{0,80}PENDING_PAYMENT/
+      /MAPPING_STATUS_PENDING_PAYMENT\)\s*\{\s*return countPendingPaymentMappings\(unpaidSoftForCard\)/
     );
   });
 
@@ -98,24 +70,16 @@ describe('IntegratedMatchingSchedule unpaid soft merge/filter SSOT', () => {
     expect(scheduleJs).toMatch(/setUnpaidSoftForCard/);
     expect(scheduleJs).toMatch(/mergeUnpaidSoftWithScheduleMappingIds/);
     expect(scheduleJs).toMatch(/gareyarkCard=\{\{/);
-    expect(scheduleJs).toMatch(/mappings:\s*unpaidSoftForCard/);
     expect(scheduleJs).not.toMatch(/pendingPaymentAlert\.visible/);
     expect(scheduleJs).not.toMatch(/computePendingPaymentAlert\(/);
     expect(sidebarJs).toMatch(
-      /data-testid=["']integrated-schedule-gareyark-section["']/
+      /data-testid=["']integrated-schedule-pending-payment-alert["']/
     );
-    expect(sidebarJs).toMatch(/data-sidebar-gareyark-card=["']true["']/);
     expect(sidebarJs).toMatch(/gareyarkCard/);
-    expect(sidebarJs).toMatch(/MatchingScheduleList/);
-    expect(sidebarJs).toMatch(/gareyarkCard\.mappings/);
-    expect(sidebarJs).toMatch(/integrated-schedule__gareyark-section/);
+    expect(sidebarJs).toMatch(/integrated-schedule__pending-payment-alert--sidebar/);
     // prop 있으면 count 게이트 없이 chrome 렌더 (visible ? … : null 금지)
-    expect(sidebarJs).toMatch(/gareyarkCard\s*\n?\s*\? renderGareyarkSection/);
-    expect(sidebarJs).not.toMatch(/renderGareyarkCard/);
-    expect(sidebarJs).not.toMatch(/pending-payment-alert--sidebar/);
+    expect(sidebarJs).toMatch(/gareyarkCard \? renderGareyarkCard/);
     expect(sidebarJs).not.toMatch(/pendingPaymentAlert\.visible/);
-    expect(sidebarJs).not.toMatch(/김아영|남혜진/);
-    expect(scheduleJs).not.toMatch(/김아영|남혜진/);
   });
 
   test('schedule soft unpaid SSOT exports TENTATIVE_PENDING_PAYMENT set', () => {

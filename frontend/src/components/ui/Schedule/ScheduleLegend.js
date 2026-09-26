@@ -21,6 +21,9 @@ import './ScheduleLegend.css';
 
 const LEGEND_COLLAPSED_STORAGE_KEY = 'mg.integratedSchedule.legendCollapsed';
 
+/** first-paint 배지 스켈레톤 칩 개수 */
+const LEGEND_SKELETON_CHIP_COUNT = 3;
+
 /**
  * R2 (2026-06-09): 좁은 폭(≤1024px) 통합 스케줄에서 초기 접힘 보장.
  * 사용자 명시 선호(localStorage) 가 있으면 그대로 우선. media query 미지원 환경
@@ -103,7 +106,17 @@ const ScheduleLegend = ({
      * number (1-12) 또는 null/undefined. 미지정 시 기존 「상담사」 라벨 유지(회귀 0).
      * hasCounts 가 false 면 라벨 분기에 영향이 없으므로 month 만 전달돼도 안전.
      */
-    consultantCountsMonth = null
+    consultantCountsMonth = null,
+    /**
+     * first-paint 스켈레톤 — 월별 카운트 로딩 중 name-only 리스트 대신 placeholder.
+     * 미전달/false → 기존 동작 (회귀 0).
+     */
+    consultantCountsLoading = false,
+    /**
+     * first-paint 스켈레톤 — 누락 일지 로딩 중 섹션 title+skeleton 유지.
+     * 미전달/false + items=null → 섹션 미노출 (회귀 0).
+     */
+    missingConsultationLogsLoading = false
 }) => {
     const { t } = useTranslation();
     const isIntegrated = calendarSkin === 'integrated';
@@ -247,6 +260,23 @@ const ScheduleLegend = ({
                             consultantCountsMonth={consultantCountsMonth}
                             mode="monthly"
                         />
+                    ) : consultantCountsLoading ? (
+                        <>
+                            <div className="mg-v2-legend-title">{t('common.labels.consultant')}</div>
+                            <div
+                                className="mg-v2-legend-items mg-v2-consultant-legend mg-v2-legend-skeleton"
+                                role="status"
+                                aria-busy="true"
+                                aria-live="polite"
+                            >
+                                {Array.from({ length: LEGEND_SKELETON_CHIP_COUNT }).map((_, index) => (
+                                    <span
+                                        key={`consultant-count-skeleton-${index}`}
+                                        className="mg-skeleton mg-v2-legend-skeleton-chip"
+                                    />
+                                ))}
+                            </div>
+                        </>
                     ) : (
                         <>
                             <div className="mg-v2-legend-title">{t('common.labels.consultant')}</div>
@@ -302,6 +332,7 @@ const ScheduleLegend = ({
             {isIntegrated && (
                 <MissingConsultationLogsList
                     items={missingConsultationLogs}
+                    isLoading={missingConsultationLogsLoading}
                     variant="integrated"
                     onDateChipClick={onMissingLogDateChipClick || undefined}
                 />

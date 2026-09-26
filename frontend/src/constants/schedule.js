@@ -21,7 +21,10 @@ export const STATUS = {
   COMPLETED: 'COMPLETED',     // 완료
   // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
   CANCELLED: 'CANCELLED',     // 취소됨
-  /** 입금 전 가예약(soft unpaid) — mapping PENDING_PAYMENT 과 축이 다름 */
+  /**
+   * 가예약 — 결제 대기(입금 전). Admin 목록 필터 SSOT.
+   * mapping PENDING_PAYMENT(결제 대기 사이드바 merge)와 축이 다름.
+   */
   TENTATIVE_PENDING_PAYMENT: 'TENTATIVE_PENDING_PAYMENT'
 };
 
@@ -122,7 +125,6 @@ export const SCHEDULE_STATUSES_OCCUPYING_TIME_SLOT_FOR_CONFLICT = new Set([
   'IN_PROGRESS',
   STATUS.TENTATIVE_PENDING_PAYMENT
 ]);
-
 export function isScheduleStatusOccupyingTimeSlotForConflict(status) {
   if (status == null || status === '') {
     return false;
@@ -364,6 +366,9 @@ export function normalizeCalendarSessionStatusCode(status) {
   }
   if (/취소|취소됨/.test(s)) {
     return STATUS.CANCELLED;
+  }
+  if (/가예약|TENTATIVE_PENDING_PAYMENT|결제\s*대기\s*\(가예약\)/.test(s)) {
+    return STATUS.TENTATIVE_PENDING_PAYMENT;
   }
   if (/완료|완료됨/.test(s)) {
     return STATUS.COMPLETED;

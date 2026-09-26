@@ -8,14 +8,16 @@
  * - `canScheduleForMapping`: remainingSessions > 0이면 드래그 허용, 0이면 불가.
  *   타기관 연계(INSTITUTION_LINK)는 회기권이 아니므로 rem=0이어도 허용.
  *   남은 회기수만큼 다중 스케줄 생성을 허용하며, 확정 예약 또는 가예약 경로 중 하나를 만족해야 함.
- * - `isOngoingMapping`: 기본 ongoing에서 소진/종료/취소·unpaid soft(PENDING_PAYMENT) 제외.
- *   CANCELLED라도 rem>0이면 일정 취소 동기 잔여 배정으로 포함한다.
- *   unpaid soft 는 가예약 카드(`gareyarkCard`) 전용 — 배정 3큐(오늘/신규/회기남음)에 넣지 않는다.
- * - `isAssignmentQueueMapping` / `excludeUnpaidSoftFromAssignmentQueues`: soft 와 배정 큐 분리 SSOT.
- * - `shouldShowUnpaidSoftCheckoutCta`: unpaid soft 이면 당일결제 CTA (입금 전 rem=0 이어도 표시).
- * - 완료 상담 일정이 있는 단회기는 저장된 status 가 ACTIVE 여도 신규배정에서 빼고
- *   회기 소진(종료) 목록으로 본다. 다회기·기관연동·바우처·예약만 있는 단회기는 그대로.
- *   입금 전(PENDING_PAYMENT, PAYMENT_CONFIRMED)은 COMPLETED 일정이 있어도 소진으로 보지 않는다.
+ * - `isOngoingMapping`: 기본 ongoing에서 소진/종료/취소 제외. CANCELLED라도 rem>0이면
+ *   일정 취소 동기 잔여 배정으로 포함한다. ACTIVE rem=0 / fully-consumed 는
+ *   `shouldExcludeFromAssignmentQueues` 로 「오늘 처리할 배정」에서도 제외.
+ * - `shouldExcludeFromAssignmentQueues` / `isEligibleForAssignmentQueues`:
+ *   NEW·ongoing 공통 제외(rem&lt;=0, 비-IL, 비-액션필요).
+ *   단회기이고 이 매핑 consultationSchedules 에 COMPLETED 가 있으면
+ *   저장된 status 가 ACTIVE·remaining 이 1 이어도 신규배정에서 제외한다.
+ *   입금 전(PENDING_PAYMENT, PAYMENT_CONFIRMED)은 잔여 0·COMPLETED 일정이 있어도
+ *   소진·신규배정 제외 대상이 아니다.
+ *   REMAINING 은 rem&gt;0 또는 IL. 회기 소진(종료) 목록은 status=SESSIONS_EXHAUSTED.
  * - `isPaymentConfirmed`: PENDING_PAYMENT 이전 상태는 결제 미확인으로 차단.
  *
  * @author CoreSolution
@@ -25,12 +27,9 @@
 import { isInstitutionLinkEngagement } from '../../../../constants/clientEngagementType';
 import {
   isUnpaidSoftMapping,
-  isUnpaidSoftMappingStatus,
   PENDING_PAYMENT_KPI_LABEL
 } from '../../../../utils/pendingPaymentAggregation';
 import { SHOP_SINGLE_SESSION_COUNT } from '../../../../utils/shopSessionCount';
-
-export { isUnpaidSoftMapping, isUnpaidSoftMappingStatus };
 
 /** 신규 배정 필터 기간(일) — 운영 피드백으로 조정 가능 */
 export const NEW_DAYS = 7;
@@ -272,49 +271,13 @@ export const canScheduleForMapping = (mapping) => {
 export const ONGOING_EXCLUDED_STATUSES = new Set(['SESSIONS_EXHAUSTED', 'TERMINATED', 'CANCELLED']);
 
 /**
- * 배정 3큐(오늘 처리할 배정 / 신규 / 회기남음)에 넣을 매핑인지.
- * unpaid soft(PENDING_PAYMENT) 는 가예약 카드 전용 — 항상 false.
- *
- * @param {object} [m]
- * @returns {boolean}
- */
-export const isAssignmentQueueMapping = (m) => {
-  if (!m || typeof m !== 'object') {
-    return false;
-  }
-  return !isUnpaidSoftMapping(m);
-};
-
-/**
- * 배정 큐 목록에서 unpaid soft 를 제거한다 (가예약 카드와 이중 노출 방지).
- *
- * @param {unknown} list
- * @returns {Array<object>}
- */
-export const excludeUnpaidSoftFromAssignmentQueues = (list) => {
-  if (!Array.isArray(list)) {
-    return [];
-  }
-  return list.filter(isAssignmentQueueMapping);
-};
-
-/**
- * unpaid soft 당일결제 CTA. 가예약 카드의 입금 확인 원샷(confirmDeposit 포함).
- * 신규 매칭은 입금 전까지 remainingSessions 가 0 이다. 잔여 0 으로 숨기지 않는다.
- * 입금·일지 완료 단회기(ACTIVE)는 unpaid soft 가 아니므로 false.
+ * 어드민 액션이 필요한 결제 상태 — rem=0이어도 「신규 배정」큐에 유지.
+ * PENDING_PAYMENT(결제 대기), DEPOSIT_PENDING(승인 대기).
  *
  * @param {object} [mapping]
  * @returns {boolean}
  */
-export const shouldShowUnpaidSoftCheckoutCta = (mapping) => isUnpaidSoftMapping(mapping);
-
-/**
- * 결제·승인 액션이 남은 상태. 완료 단회기 소진 판정에서 제외한다.
- *
- * @param {object} [mapping]
- * @returns {boolean}
- */
-const isActionNeededPaymentStatus = (mapping) => {
+export const isActionNeededPaymentStatus = (mapping) => {
   const status = mapping?.status;
   return status === MAPPING_STATUS_PENDING_PAYMENT
     || status === MAPPING_STATUS_DEPOSIT_PENDING;
@@ -341,7 +304,7 @@ export const isPreDepositMappingStatus = (mapping) => {
  * @param {object} [mapping]
  * @returns {boolean}
  */
-const isVoucherMapping = (mapping) => {
+export const isVoucherMapping = (mapping) => {
   const paymentTiming = mapping?.paymentTiming;
   if (paymentTiming == null || paymentTiming === '') {
     return false;
@@ -351,6 +314,7 @@ const isVoucherMapping = (mapping) => {
 
 /**
  * 이 매핑 consultationSchedules 의 COMPLETED 건수.
+ * clientConsultationSchedules(형제 매핑)는 세지 않는다.
  *
  * @param {object} [mapping]
  * @returns {number}
@@ -393,6 +357,7 @@ export const isCompletedSingleSessionExhausted = (mapping) => {
 
 /**
  * 「회기 소진」목록(종료 회기)에 보일지.
+ * status 가 SESSIONS_EXHAUSTED 이거나, 완료 일정이 있는 단회기이면 true.
  *
  * @param {object} [mapping]
  * @returns {boolean}
@@ -407,21 +372,72 @@ export const isSessionsExhaustedListMapping = (mapping) => {
   return isCompletedSingleSessionExhausted(mapping);
 };
 
+/**
+ * 배정 큐(신규·오늘 처리·회기 남은)에서 제외할지 여부.
+ *
+ * <p>SSOT rem clamp 이후 {@code remainingSessions &lt;= 0} 이면, 타기관 연계·액션 필요 상태가
+ * 아닌 매핑은 NEW / ongoing(오늘 패널)에서 제외한다. 완전 소비(COMPLETED 소진)도 rem=0 으로
+ * 내려오므로 동일 규칙으로 가려진다.</p>
+ *
+ * @param {object} [mapping]
+ * @returns {boolean} true 이면 배정 큐에서 제외
+ */
+export const shouldExcludeFromAssignmentQueues = (mapping) => {
+  if (!mapping || typeof mapping !== 'object') {
+    return true;
+  }
+  // 타기관 연계는 회기권이 아님 — rem=0이어도 remaining 뷰 예외와 동일하게 큐 유지.
+  if (isInstitutionLinkMapping(mapping)) {
+    return false;
+  }
+  // 결제/승인 액션이 남았으면 rem=0이어도 NEW·ongoing에 노출.
+  if (isActionNeededPaymentStatus(mapping)) {
+    return false;
+  }
+  // 입금 전(가예약 PENDING_PAYMENT, 미수금 PAYMENT_CONFIRMED)은 잔여 0이 기본값이다.
+  if (isPreDepositMappingStatus(mapping)) {
+    return false;
+  }
+  // 완료 단회기는 저장된 ACTIVE·remaining 1 이어도 신규배정에서 제외.
+  if (isCompletedSingleSessionExhausted(mapping)) {
+    return true;
+  }
+  return normalizedRemainingSessions(mapping) <= 0;
+};
+
+/**
+ * 배정 큐(신규·오늘 처리) 노출 가능 여부 — {@link shouldExcludeFromAssignmentQueues} 의 역.
+ *
+ * @param {object} [mapping]
+ * @returns {boolean}
+ */
+export const isEligibleForAssignmentQueues = (mapping) =>
+  !shouldExcludeFromAssignmentQueues(mapping);
+
+/**
+ * unpaid soft 당일결제 CTA. 가예약 카드의 입금 확인 원샷(confirmDeposit 포함).
+ * 신규 매칭은 입금 전까지 remainingSessions 가 0 이다. 잔여 0 으로 숨기지 않는다.
+ * 입금·일지 완료 단회기(ACTIVE)는 unpaid soft 가 아니므로 false.
+ *
+ * @param {object} [mapping]
+ * @returns {boolean}
+ */
+export const shouldShowUnpaidSoftCheckoutCta = (mapping) => isUnpaidSoftMapping(mapping);
+
+
+
 export const isOngoingMapping = (m) => {
   if (!m?.status) {
-    return false;
-  }
-  // unpaid soft 는 가예약 카드 전용 — 배정 ongoing 큐에서 제외
-  if (isUnpaidSoftMapping(m)) {
-    return false;
-  }
-  if (isCompletedSingleSessionExhausted(m)) {
     return false;
   }
   if (m.status === MAPPING_STATUS_CANCELLED) {
     return normalizedRemainingSessions(m) > 0;
   }
-  return !ONGOING_EXCLUDED_STATUSES.has(m.status);
+  if (ONGOING_EXCLUDED_STATUSES.has(m.status)) {
+    return false;
+  }
+  // ACTIVE rem=0 / fully-consumed 등 — 「오늘 처리할 배정」패널에서도 제외.
+  return isEligibleForAssignmentQueues(m);
 };
 
 /** 매칭 정렬·신규 판별용 타임스탬프 (createdAt → assignedAt → startDate) */

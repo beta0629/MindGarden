@@ -3,18 +3,18 @@ import {
   canConfirmedScheduleForMapping,
   canScheduleForMapping,
   canTentativeBeforeDepositScheduleForMapping,
-  excludeUnpaidSoftFromAssignmentQueues,
   isActiveAssignableMapping,
-  isAssignmentQueueMapping,
+  isActionNeededPaymentStatus,
   isCompletedSingleSessionExhausted,
+  isEligibleForAssignmentQueues,
   isOngoingMapping,
   isSessionsExhaustedListMapping,
   isPaymentConfirmed,
   isSameDayCardPending,
-  isUnpaidSoftMapping,
   normalizedRemainingSessions,
   isInstitutionLinkMapping,
   isPreDepositMappingStatus,
+  shouldExcludeFromAssignmentQueues,
   shouldShowUnpaidSoftCheckoutCta,
   MAPPING_STATUS_ACTIVE,
   MAPPING_STATUS_CANCELLED,
@@ -23,9 +23,9 @@ import {
   MAPPING_STATUS_PAYMENT_CONFIRMED,
   MAPPING_STATUS_SESSIONS_EXHAUSTED,
   PAYMENT_TIMING_ADVANCE,
-  PAYMENT_TIMING_VOUCHER,
   PAYMENT_TIMING_INSTITUTION_LINK,
   PAYMENT_TIMING_SAME_DAY_CARD,
+  PAYMENT_TIMING_VOUCHER,
   SIDEBAR_CARD_DRAGGABLE_CLASS,
   SIDEBAR_CARD_DRAGGABLE_SELECTOR,
   STATUS_FILTER_OPTIONS
@@ -89,8 +89,12 @@ describe('integratedScheduleSidebarFilterConstants', () => {
   });
 
   describe('isOngoingMapping', () => {
-    it('ACTIVE는 ongoing', () => {
+    it('ACTIVE + rem>0 는 ongoing', () => {
       expect(isOngoingMapping({ status: MAPPING_STATUS_ACTIVE, remainingSessions: 1 })).toBe(true);
+    });
+
+    it('ACTIVE + rem=0 은 배정 큐 제외(오늘 패널)', () => {
+      expect(isOngoingMapping({ status: MAPPING_STATUS_ACTIVE, remainingSessions: 0 })).toBe(false);
     });
 
     it('CANCELLED + rem>0 는 회기 남은 배정으로 ongoing', () => {
@@ -106,20 +110,52 @@ describe('integratedScheduleSidebarFilterConstants', () => {
       expect(isOngoingMapping({ status: 'SESSIONS_EXHAUSTED', remainingSessions: 0 })).toBe(false);
     });
 
-    it('PENDING_PAYMENT(unpaid soft) 는 ongoing 제외 — 가예약 카드 전용', () => {
+    it('PENDING_PAYMENT rem=0 은 액션 필요로 ongoing 유지', () => {
+      expect(isOngoingMapping({ status: MAPPING_STATUS_PENDING_PAYMENT, remainingSessions: 0 })).toBe(true);
+    });
+
+    it('타기관 연계 ACTIVE rem=0 은 ongoing 유지', () => {
       expect(
         isOngoingMapping({
-          status: MAPPING_STATUS_PENDING_PAYMENT,
-          paymentTiming: PAYMENT_TIMING_SAME_DAY_CARD,
-          remainingSessions: 3
-        })
-      ).toBe(false);
-      expect(
-        isOngoingMapping({
-          status: MAPPING_STATUS_PENDING_PAYMENT,
+          status: MAPPING_STATUS_ACTIVE,
+          paymentTiming: PAYMENT_TIMING_INSTITUTION_LINK,
           remainingSessions: 0
         })
-      ).toBe(false);
+      ).toBe(true);
+    });
+  });
+
+  describe('shouldExcludeFromAssignmentQueues / isEligibleForAssignmentQueues', () => {
+    it('ACTIVE rem=0 은 제외', () => {
+      expect(shouldExcludeFromAssignmentQueues({
+        status: MAPPING_STATUS_ACTIVE,
+        remainingSessions: 0
+      })).toBe(true);
+      expect(isEligibleForAssignmentQueues({
+        status: MAPPING_STATUS_ACTIVE,
+        remainingSessions: 0
+      })).toBe(false);
+    });
+
+    it('ACTIVE rem>0 은 포함', () => {
+      expect(isEligibleForAssignmentQueues({
+        status: MAPPING_STATUS_ACTIVE,
+        remainingSessions: 1
+      })).toBe(true);
+    });
+
+    it('PENDING_PAYMENT rem=0 은 NEW 액션 필요로 포함', () => {
+      expect(shouldExcludeFromAssignmentQueues({
+        status: MAPPING_STATUS_PENDING_PAYMENT,
+        remainingSessions: 0
+      })).toBe(false);
+    });
+
+    it('DEPOSIT_PENDING rem=0 은 승인 액션 필요로 포함', () => {
+      expect(shouldExcludeFromAssignmentQueues({
+        status: MAPPING_STATUS_DEPOSIT_PENDING,
+        remainingSessions: 0
+      })).toBe(false);
     });
 
     it('완료 일정이 있는 단회기는 ACTIVE·잔여 1 이어도 신규배정에서 빠지고 회기 소진에 남는다', () => {
@@ -132,6 +168,8 @@ describe('integratedScheduleSidebarFilterConstants', () => {
         consultationSchedules: [{ id: 11, status: 'COMPLETED' }]
       };
       expect(isCompletedSingleSessionExhausted(mapping)).toBe(true);
+      expect(shouldExcludeFromAssignmentQueues(mapping)).toBe(true);
+      expect(isEligibleForAssignmentQueues(mapping)).toBe(false);
       expect(isOngoingMapping(mapping)).toBe(false);
       expect(isSessionsExhaustedListMapping(mapping)).toBe(true);
     });
@@ -145,7 +183,7 @@ describe('integratedScheduleSidebarFilterConstants', () => {
         consultationSchedules: [{ id: 12, status: 'BOOKED' }]
       };
       expect(isCompletedSingleSessionExhausted(mapping)).toBe(false);
-      expect(isOngoingMapping(mapping)).toBe(true);
+      expect(isEligibleForAssignmentQueues(mapping)).toBe(true);
       expect(isSessionsExhaustedListMapping(mapping)).toBe(false);
     });
 
@@ -158,7 +196,7 @@ describe('integratedScheduleSidebarFilterConstants', () => {
         consultationSchedules: [{ id: 13, status: 'COMPLETED' }]
       };
       expect(isCompletedSingleSessionExhausted(mapping)).toBe(false);
-      expect(isOngoingMapping(mapping)).toBe(true);
+      expect(isEligibleForAssignmentQueues(mapping)).toBe(true);
       expect(isSessionsExhaustedListMapping(mapping)).toBe(false);
     });
 
@@ -177,11 +215,9 @@ describe('integratedScheduleSidebarFilterConstants', () => {
         remainingSessions: 1,
         consultationSchedules: [{ id: 15, status: 'COMPLETED' }]
       };
-      expect(isCompletedSingleSessionExhausted(institutionLink)).toBe(false);
-      expect(isOngoingMapping(institutionLink)).toBe(true);
+      expect(isEligibleForAssignmentQueues(institutionLink)).toBe(true);
       expect(isSessionsExhaustedListMapping(institutionLink)).toBe(false);
-      expect(isCompletedSingleSessionExhausted(voucher)).toBe(false);
-      expect(isOngoingMapping(voucher)).toBe(true);
+      expect(isEligibleForAssignmentQueues(voucher)).toBe(true);
       expect(isSessionsExhaustedListMapping(voucher)).toBe(false);
     });
 
@@ -194,10 +230,10 @@ describe('integratedScheduleSidebarFilterConstants', () => {
         clientConsultationSchedules: [{ id: 17, status: 'COMPLETED' }]
       };
       expect(isCompletedSingleSessionExhausted(mapping)).toBe(false);
-      expect(isOngoingMapping(mapping)).toBe(true);
+      expect(isEligibleForAssignmentQueues(mapping)).toBe(true);
     });
 
-    it('가예약 + 예약 확정 + 입금 미확인 + 잔여 0 은 소진이 아니고 CTA 유지', () => {
+    it('가예약 + 예약 확정 + 입금 미확인 + 잔여 0 은 소진이 아니고 신규배정에 남는다', () => {
       const mapping = {
         status: MAPPING_STATUS_PENDING_PAYMENT,
         paymentStatus: 'PENDING',
@@ -211,6 +247,7 @@ describe('integratedScheduleSidebarFilterConstants', () => {
       expect(isPreDepositMappingStatus(mapping)).toBe(true);
       expect(shouldShowUnpaidSoftCheckoutCta(mapping)).toBe(true);
       expect(isCompletedSingleSessionExhausted(mapping)).toBe(false);
+      expect(shouldExcludeFromAssignmentQueues(mapping)).toBe(false);
       expect(isSessionsExhaustedListMapping(mapping)).toBe(false);
     });
 
@@ -225,10 +262,11 @@ describe('integratedScheduleSidebarFilterConstants', () => {
         consultationSchedules: [{ id: 22, status: 'COMPLETED' }]
       };
       expect(isCompletedSingleSessionExhausted(mapping)).toBe(false);
-      expect(isSessionsExhaustedListMapping(mapping)).toBe(false);
+      expect(shouldExcludeFromAssignmentQueues(mapping)).toBe(false);
+      expect(isEligibleForAssignmentQueues(mapping)).toBe(true);
     });
 
-    it('PAYMENT_CONFIRMED 잔여 0 은 입금 확인 전이라 소진이 아니다', () => {
+    it('PAYMENT_CONFIRMED 잔여 0 은 입금 확인 전이라 소진·신규배정 제외가 아니다', () => {
       const mapping = {
         status: MAPPING_STATUS_PAYMENT_CONFIRMED,
         paymentStatus: 'CONFIRMED',
@@ -240,76 +278,40 @@ describe('integratedScheduleSidebarFilterConstants', () => {
       expect(isPreDepositMappingStatus(mapping)).toBe(true);
       expect(shouldShowUnpaidSoftCheckoutCta(mapping)).toBe(false);
       expect(isCompletedSingleSessionExhausted(mapping)).toBe(false);
+      expect(shouldExcludeFromAssignmentQueues(mapping)).toBe(false);
+    });
+
+    it('이미 회기 소진인 행은 종료 목록에 포함한다', () => {
+      const mapping = {
+        status: MAPPING_STATUS_SESSIONS_EXHAUSTED,
+        totalSessions: 1,
+        usedSessions: 1,
+        remainingSessions: 0
+      };
+      expect(isSessionsExhaustedListMapping(mapping)).toBe(true);
+      expect(isEligibleForAssignmentQueues(mapping)).toBe(false);
+    });
+
+    it('타기관 연계 rem=0 은 제외하지 않음', () => {
+      expect(shouldExcludeFromAssignmentQueues({
+        status: MAPPING_STATUS_ACTIVE,
+        paymentTiming: PAYMENT_TIMING_INSTITUTION_LINK,
+        remainingSessions: 0
+      })).toBe(false);
+    });
+
+    it('mapping 없으면 제외', () => {
+      expect(shouldExcludeFromAssignmentQueues(null)).toBe(true);
+      expect(isEligibleForAssignmentQueues(undefined)).toBe(false);
     });
   });
 
-  describe('assignment queue Soft 분리 SSOT', () => {
-    const softA = {
-      id: 'A',
-      status: MAPPING_STATUS_PENDING_PAYMENT,
-      paymentTiming: PAYMENT_TIMING_SAME_DAY_CARD,
-      remainingSessions: 0
-    };
-    const activeB = {
-      id: 'B',
-      status: MAPPING_STATUS_ACTIVE,
-      remainingSessions: 2
-    };
-
-    it('isUnpaidSoftMapping / isAssignmentQueueMapping 분리', () => {
-      expect(isUnpaidSoftMapping(softA)).toBe(true);
-      expect(isUnpaidSoftMapping(activeB)).toBe(false);
-      expect(isAssignmentQueueMapping(softA)).toBe(false);
-      expect(isAssignmentQueueMapping(activeB)).toBe(true);
-    });
-
-    it('soft A + active B → 배정 큐에는 B만 (가예약 카드와 id 겹침 없음)', () => {
-      const assignmentList = excludeUnpaidSoftFromAssignmentQueues([softA, activeB]);
-      expect(assignmentList.map((m) => m.id)).toEqual(['B']);
-      const softIds = new Set([softA.id]);
-      assignmentList.forEach((m) => {
-        expect(softIds.has(m.id)).toBe(false);
-      });
-      // default NEW+ongoing 경로와 동일: ongoing 필터 후 soft 없음
-      const ongoing = assignmentList.filter(isOngoingMapping);
-      expect(ongoing.map((m) => m.id)).toEqual(['B']);
-    });
-  });
-
-  describe('shouldShowUnpaidSoftCheckoutCta', () => {
-    it('PENDING_PAYMENT + rem>0 → true', () => {
-      expect(
-        shouldShowUnpaidSoftCheckoutCta({
-          status: MAPPING_STATUS_PENDING_PAYMENT,
-          paymentTiming: PAYMENT_TIMING_SAME_DAY_CARD,
-          remainingSessions: 1
-        })
-      ).toBe(true);
-    });
-
-    it('PENDING_PAYMENT + rem≤0 → true (입금 전 rem=0 이어도 CTA 유지)', () => {
-      expect(
-        shouldShowUnpaidSoftCheckoutCta({
-          status: MAPPING_STATUS_PENDING_PAYMENT,
-          paymentTiming: PAYMENT_TIMING_SAME_DAY_CARD,
-          remainingSessions: 0
-        })
-      ).toBe(true);
-      expect(
-        shouldShowUnpaidSoftCheckoutCta({
-          status: MAPPING_STATUS_PENDING_PAYMENT,
-          remainingSessions: null
-        })
-      ).toBe(true);
-    });
-
-    it('ACTIVE 등 non-soft → false', () => {
-      expect(
-        shouldShowUnpaidSoftCheckoutCta({
-          status: MAPPING_STATUS_ACTIVE,
-          remainingSessions: 5
-        })
-      ).toBe(false);
+  describe('isActionNeededPaymentStatus', () => {
+    it('PENDING_PAYMENT / DEPOSIT_PENDING 만 true', () => {
+      expect(isActionNeededPaymentStatus({ status: MAPPING_STATUS_PENDING_PAYMENT })).toBe(true);
+      expect(isActionNeededPaymentStatus({ status: MAPPING_STATUS_DEPOSIT_PENDING })).toBe(true);
+      expect(isActionNeededPaymentStatus({ status: MAPPING_STATUS_ACTIVE })).toBe(false);
+      expect(isActionNeededPaymentStatus({ status: MAPPING_STATUS_PAYMENT_CONFIRMED })).toBe(false);
     });
   });
 

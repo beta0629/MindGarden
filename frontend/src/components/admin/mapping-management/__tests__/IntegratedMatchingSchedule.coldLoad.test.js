@@ -1,9 +1,8 @@
 /**
  * IntegratedMatchingSchedule — cold-load month-scoped schedules + early mappings paint SSOT
  *
- * RCA: adminListFetch page/size 강제 후 cold load 가 schedules·mappings 를
+ * RCA: #1235 이후 softRefresh 는 가벼워졌으나 cold load 가 schedules·mappings 를
  * 무제한 drain 하고 clients/with-mapping 이 마운트에서 대역폭을 점유함.
- * release/dev unpaid-soft (#1221) merge helpers 유지.
  *
  * @author CoreSolution
  * @since 2026-09-23
@@ -61,19 +60,76 @@ describe('IntegratedMatchingSchedule cold-load month scope SSOT', () => {
     expect(promiseAllBlock[0]).toMatch(
       /adminSchedulesListGetAll\(\s*\{\s*startDate\s*,\s*endDate\s*\}\s*\)/
     );
+    // chrome KPI: STATS 는 first-paint Promise.all 에 포함 (best-effort)
+    expect(promiseAllBlock[0]).toMatch(/ADMIN\.MAPPINGS\.STATS/);
+  });
+
+  test('pending chrome KPIs use unpaidSoftForCard (not full mappings list)', () => {
+    expect(scheduleJs).toMatch(
+      /countPendingPaymentMappings\(\s*unpaidSoftForCard\s*\)/
+    );
+    expect(scheduleJs).toMatch(
+      /sumPendingPaymentAmount\(\s*unpaidSoftForCard\s*\)/
+    );
+    expect(scheduleJs).toMatch(
+      /MAPPING_STATUS_PENDING_PAYMENT\)\s*\{\s*return countPendingPaymentMappings\(unpaidSoftForCard\)/
+    );
+  });
+
+  test('badge hooks declare before first-paint Promise.all; GetAll call is later', () => {
+    expect(scheduleJs).toMatch(
+      /useMonthlyConsultantCounts\(\s*currentYear\s*,\s*currentMonth\s*\)/
+    );
+    expect(scheduleJs).toMatch(
+      /useMissingConsultationLogs\(\s*currentYear\s*,\s*currentMonth\s*\)/
+    );
+
+    const consultantIdx = scheduleJs.indexOf(
+      'useMonthlyConsultantCounts(currentYear, currentMonth)'
+    );
+    const missingIdx = scheduleJs.indexOf(
+      'useMissingConsultationLogs(currentYear, currentMonth)'
+    );
+    const promiseAllIdx = scheduleJs.indexOf('await Promise.all([');
+    const getAllCallIdx = scheduleJs.indexOf('adminMappingsListGetAll()');
+
+    expect(consultantIdx).toBeGreaterThan(-1);
+    expect(missingIdx).toBeGreaterThan(-1);
+    expect(promiseAllIdx).toBeGreaterThan(-1);
+    expect(getAllCallIdx).toBeGreaterThan(-1);
+
+    // structural order: badge hooks → first-paint Promise.all → idle GetAll
+    expect(Math.max(consultantIdx, missingIdx)).toBeLessThan(promiseAllIdx);
+    expect(promiseAllIdx).toBeLessThan(getAllCallIdx);
+
+    // pending chrome still unpaidSoftForCard SSOT (not mappings GetAll)
+    expect(scheduleJs).toMatch(
+      /countPendingPaymentMappings\(\s*unpaidSoftForCard\s*\)/
+    );
+  });
+
+  test('background mappings GetAll is idle-deferred (requestIdleCallback)', () => {
+    expect(scheduleJs).toMatch(/CLIENT_FILTER_IDLE_FALLBACK_MS/);
+    expect(scheduleJs).toMatch(/runBackgroundMappingsGetAll/);
+    expect(scheduleJs).toMatch(/adminMappingsListGetAll\s*\(\s*\)/);
+    // GetAll 은 idle defer 후 실행 (client filter 와 동일 requestIdleCallback 패턴)
+    expect(scheduleJs).toMatch(
+      /requestIdleCallback\(\(\)\s*=>\s*\{\s*void runBackgroundMappingsGetAll\(\);/
+    );
+    expect(scheduleJs).toMatch(
+      /runBackgroundMappingsGetAll[\s\S]*?adminMappingsListGetAll\s*\(\s*\)/
+    );
   });
 
   test('clients/with-mapping-info is idle-deferred (not mount-blocking)', () => {
     expect(scheduleJs).toMatch(/requestIdleCallback/);
     expect(scheduleJs).toMatch(/CLIENT_FILTER_IDLE_FALLBACK_MS/);
-    expect(scheduleJs).toMatch(/adminClientsWithMappingGet\s*\(/);
+    expect(scheduleJs).toMatch(/adminClientsWithMappingGetAll\s*\(/);
   });
 
-  test('unpaid soft merge wiring remains after early-paint split (#1221 2-arg)', () => {
+  test('unpaid soft merge wiring remains after early-paint split', () => {
     expect(scheduleJs).toMatch(/mergeUnpaidSoftMappings/);
-    expect(scheduleJs).toMatch(
-      /mergeUnpaidSoftWithScheduleMappingIds\(\s*merged\s*,\s*schedulesRaw\s*\)/
-    );
-    expect(scheduleJs).not.toMatch(/applyUnpaidSoftStatusFromSchedules/);
+    expect(scheduleJs).toMatch(/applyUnpaidSoftStatusFromSchedules/);
+    expect(scheduleJs).toMatch(/mergeUnpaidSoftWithScheduleMappingIds/);
   });
 });

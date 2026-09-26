@@ -43,6 +43,8 @@ class AdminServiceImplCompletedSingleSessionExhaustTest {
     private static final Long COMPLETED_SINGLE_ID = 4101L;
     private static final Long BOOKED_SINGLE_ID = 4102L;
     private static final Long MULTI_SESSION_ID = 4103L;
+    private static final Long PROVISIONAL_SINGLE_ID = 4104L;
+    private static final Long PAYMENT_CONFIRMED_SINGLE_ID = 4105L;
     private static final Long COMPLETED_PACKAGE_PRICE = 80_000L;
     private static final Long BOOKED_PACKAGE_PRICE = 100_000L;
     private static final Long MULTI_PACKAGE_PRICE = 300_000L;
@@ -209,6 +211,49 @@ class AdminServiceImplCompletedSingleSessionExhaustTest {
         verify(scheduleRepository, never()).findOccupyingSchedulesByMappingIds(any(), any(), any());
         assertThat(completedSingle.getStatus()).isEqualTo(MappingStatus.ACTIVE);
         assertThat(completedSingle.getPackagePrice()).isEqualTo(COMPLETED_PACKAGE_PRICE);
+    }
+
+    @Test
+    @DisplayName("가예약 입금 미확인은 예약 확정·완료 일정이 있어도 회기 소진으로 바꾸지 않는다")
+    void provisionalBeforeDeposit_isNotExhausted() {
+        ConsultantClientMapping provisional = activeSingle(PROVISIONAL_SINGLE_ID, COMPLETED_PACKAGE_PRICE);
+        provisional.setStatus(MappingStatus.PENDING_PAYMENT);
+        provisional.setPaymentStatus(ConsultantClientMapping.PaymentStatus.PENDING);
+        provisional.setPaymentTiming(PaymentTimingConstants.SAME_DAY_CARD);
+        provisional.setDepositConfirmed(false);
+        provisional.setRemainingSessions(0);
+        provisional.setUsedSessions(0);
+
+        ConsultantClientMapping paymentConfirmed = activeSingle(
+                PAYMENT_CONFIRMED_SINGLE_ID, BOOKED_PACKAGE_PRICE);
+        paymentConfirmed.setStatus(MappingStatus.PAYMENT_CONFIRMED);
+        paymentConfirmed.setPaymentStatus(ConsultantClientMapping.PaymentStatus.CONFIRMED);
+        paymentConfirmed.setDepositConfirmed(false);
+        paymentConfirmed.setRemainingSessions(0);
+        paymentConfirmed.setUsedSessions(0);
+
+        Schedule confirmed = new Schedule();
+        confirmed.setId(902L);
+        confirmed.setMappingId(PROVISIONAL_SINGLE_ID);
+        confirmed.setStatus(ScheduleStatus.CONFIRMED);
+        Schedule completed = new Schedule();
+        completed.setId(903L);
+        completed.setMappingId(PAYMENT_CONFIRMED_SINGLE_ID);
+        completed.setStatus(ScheduleStatus.COMPLETED);
+
+        TenantContextHolder.setTenantId(TENANT_ID);
+        adminService.prepareMappingsPageForListResponse(List.of(provisional, paymentConfirmed));
+
+        verify(mappingRepository, never()).save(any(ConsultantClientMapping.class));
+        verify(scheduleRepository, never()).findOccupyingSchedulesByMappingIds(any(), any(), any());
+        assertThat(provisional.getStatus()).isEqualTo(MappingStatus.PENDING_PAYMENT);
+        assertThat(provisional.getRemainingSessions()).isZero();
+        assertThat(provisional.getUsedSessions()).isZero();
+        assertThat(provisional.getPackagePrice()).isEqualTo(COMPLETED_PACKAGE_PRICE);
+        assertThat(paymentConfirmed.getStatus()).isEqualTo(MappingStatus.PAYMENT_CONFIRMED);
+        assertThat(paymentConfirmed.getRemainingSessions()).isZero();
+        assertThat(confirmed.getStatus()).isEqualTo(ScheduleStatus.CONFIRMED);
+        assertThat(completed.getStatus()).isEqualTo(ScheduleStatus.COMPLETED);
     }
 
     @Test

@@ -94,16 +94,36 @@ describe('CardActionGroup — 옵션 B SAME_DAY_CARD 분기', () => {
     expect(onPayment).not.toHaveBeenCalled();
   });
 
-  test('PENDING_PAYMENT + SAME_DAY_CARD + rem=0 → 당일결제 CTA 숨김', () => {
+  test('가예약 + 예약 확정 + 입금 미확인 + 잔여 0 → 당일 결제(입금 확인 원샷) 표시', () => {
     const onCheckoutSameDay = jest.fn();
+    const mapping = {
+      id: 80,
+      status: 'PENDING_PAYMENT',
+      paymentStatus: 'PENDING',
+      paymentTiming: 'SAME_DAY_CARD',
+      depositConfirmed: false,
+      totalSessions: 1,
+      usedSessions: 0,
+      remainingSessions: 0,
+      consultationSchedules: [{ id: 1, status: 'CONFIRMED' }]
+    };
     render(
       <CardActionGroup
-        mapping={{ ...SAME_DAY_CARD, remainingSessions: 0 }}
+        mapping={mapping}
         onCheckoutSameDay={onCheckoutSameDay}
+        onDeposit={jest.fn()}
+        onScheduleFromCard={jest.fn()}
+        onChangePendingPackage={jest.fn()}
+        onCancelPendingMapping={jest.fn()}
       />
     );
-    expect(screen.queryByLabelText('admin:mapping.card.actions.checkoutSameDayPayment')).toBeNull();
-    expect(screen.queryByLabelText('admin:mapping.card.actions.confirmAndActivate')).toBeNull();
+    const checkoutBtn = screen.getByLabelText('admin:mapping.card.actions.checkoutSameDayPayment');
+    expect(checkoutBtn).toBeInTheDocument();
+    fireEvent.click(checkoutBtn);
+    expect(onCheckoutSameDay).toHaveBeenCalledWith(mapping);
+    expect(screen.getByLabelText('일정 등록')).toBeInTheDocument();
+    expect(screen.getByLabelText('admin:mapping.card.actions.changePackage')).toBeInTheDocument();
+    expect(screen.getByLabelText('admin:mapping.card.actions.cancel')).toBeInTheDocument();
   });
 
   test('PENDING_PAYMENT + ADVANCE → "입금 확인 후 활성화" + onCheckoutSameDay 호출', () => {
@@ -161,7 +181,7 @@ describe('CardActionGroup — 옵션 B SAME_DAY_CARD 분기', () => {
     const onDeposit = jest.fn();
     render(
       <CardActionGroup
-        mapping={{ id: 14, status: 'PAYMENT_CONFIRMED' }}
+        mapping={{ id: 14, status: 'PAYMENT_CONFIRMED', remainingSessions: 0, totalSessions: 1 }}
         onDeposit={onDeposit}
       />
     );

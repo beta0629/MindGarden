@@ -14,6 +14,7 @@ import {
   isUnpaidSoftMapping,
   normalizedRemainingSessions,
   isInstitutionLinkMapping,
+  isPreDepositMappingStatus,
   shouldShowUnpaidSoftCheckoutCta,
   MAPPING_STATUS_ACTIVE,
   MAPPING_STATUS_CANCELLED,
@@ -183,6 +184,63 @@ describe('integratedScheduleSidebarFilterConstants', () => {
       expect(isOngoingMapping(voucher)).toBe(true);
       expect(isSessionsExhaustedListMapping(voucher)).toBe(false);
     });
+
+    it('형제 매핑 완료 일정만으로는 단회기를 소진으로 보지 않는다', () => {
+      const mapping = {
+        status: MAPPING_STATUS_ACTIVE,
+        totalSessions: 1,
+        remainingSessions: 1,
+        consultationSchedules: [{ id: 16, status: 'BOOKED' }],
+        clientConsultationSchedules: [{ id: 17, status: 'COMPLETED' }]
+      };
+      expect(isCompletedSingleSessionExhausted(mapping)).toBe(false);
+      expect(isOngoingMapping(mapping)).toBe(true);
+    });
+
+    it('가예약 + 예약 확정 + 입금 미확인 + 잔여 0 은 소진이 아니고 CTA 유지', () => {
+      const mapping = {
+        status: MAPPING_STATUS_PENDING_PAYMENT,
+        paymentStatus: 'PENDING',
+        paymentTiming: PAYMENT_TIMING_SAME_DAY_CARD,
+        depositConfirmed: false,
+        totalSessions: 1,
+        usedSessions: 0,
+        remainingSessions: 0,
+        consultationSchedules: [{ id: 21, status: 'CONFIRMED' }]
+      };
+      expect(isPreDepositMappingStatus(mapping)).toBe(true);
+      expect(shouldShowUnpaidSoftCheckoutCta(mapping)).toBe(true);
+      expect(isCompletedSingleSessionExhausted(mapping)).toBe(false);
+      expect(isSessionsExhaustedListMapping(mapping)).toBe(false);
+    });
+
+    it('가예약에 COMPLETED 일정이 있어도 입금 전이면 소진으로 보지 않는다', () => {
+      const mapping = {
+        status: MAPPING_STATUS_PENDING_PAYMENT,
+        paymentStatus: 'PENDING',
+        paymentTiming: PAYMENT_TIMING_SAME_DAY_CARD,
+        totalSessions: 1,
+        usedSessions: 0,
+        remainingSessions: 0,
+        consultationSchedules: [{ id: 22, status: 'COMPLETED' }]
+      };
+      expect(isCompletedSingleSessionExhausted(mapping)).toBe(false);
+      expect(isSessionsExhaustedListMapping(mapping)).toBe(false);
+    });
+
+    it('PAYMENT_CONFIRMED 잔여 0 은 입금 확인 전이라 소진이 아니다', () => {
+      const mapping = {
+        status: MAPPING_STATUS_PAYMENT_CONFIRMED,
+        paymentStatus: 'CONFIRMED',
+        totalSessions: 1,
+        usedSessions: 0,
+        remainingSessions: 0,
+        consultationSchedules: [{ id: 23, status: 'COMPLETED' }]
+      };
+      expect(isPreDepositMappingStatus(mapping)).toBe(true);
+      expect(shouldShowUnpaidSoftCheckoutCta(mapping)).toBe(false);
+      expect(isCompletedSingleSessionExhausted(mapping)).toBe(false);
+    });
   });
 
   describe('assignment queue Soft 분리 SSOT', () => {
@@ -229,20 +287,20 @@ describe('integratedScheduleSidebarFilterConstants', () => {
       ).toBe(true);
     });
 
-    it('PENDING_PAYMENT + rem≤0 → false (당일결제 CTA 숨김)', () => {
+    it('PENDING_PAYMENT + rem≤0 → true (입금 전 rem=0 이어도 CTA 유지)', () => {
       expect(
         shouldShowUnpaidSoftCheckoutCta({
           status: MAPPING_STATUS_PENDING_PAYMENT,
           paymentTiming: PAYMENT_TIMING_SAME_DAY_CARD,
           remainingSessions: 0
         })
-      ).toBe(false);
+      ).toBe(true);
       expect(
         shouldShowUnpaidSoftCheckoutCta({
           status: MAPPING_STATUS_PENDING_PAYMENT,
           remainingSessions: null
         })
-      ).toBe(false);
+      ).toBe(true);
     });
 
     it('ACTIVE 등 non-soft → false', () => {

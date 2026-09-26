@@ -12,9 +12,10 @@
  *   CANCELLED라도 rem>0이면 일정 취소 동기 잔여 배정으로 포함한다.
  *   unpaid soft 는 가예약 카드(`gareyarkCard`) 전용 — 배정 3큐(오늘/신규/회기남음)에 넣지 않는다.
  * - `isAssignmentQueueMapping` / `excludeUnpaidSoftFromAssignmentQueues`: soft 와 배정 큐 분리 SSOT.
- * - `shouldShowUnpaidSoftCheckoutCta`: unpaid soft + rem&gt;0 일 때만 당일결제 CTA.
+ * - `shouldShowUnpaidSoftCheckoutCta`: unpaid soft 이면 당일결제 CTA (입금 전 rem=0 이어도 표시).
  * - 완료 상담 일정이 있는 단회기는 저장된 status 가 ACTIVE 여도 신규배정에서 빼고
  *   회기 소진(종료) 목록으로 본다. 다회기·기관연동·바우처·예약만 있는 단회기는 그대로.
+ *   입금 전(PENDING_PAYMENT, PAYMENT_CONFIRMED)은 COMPLETED 일정이 있어도 소진으로 보지 않는다.
  * - `isPaymentConfirmed`: PENDING_PAYMENT 이전 상태는 결제 미확인으로 차단.
  *
  * @author CoreSolution
@@ -298,18 +299,14 @@ export const excludeUnpaidSoftFromAssignmentQueues = (list) => {
 };
 
 /**
- * unpaid soft 당일결제(checkoutSameDayPayment) CTA 노출 여부.
- * PENDING_PAYMENT 이고 remainingSessions &gt; 0 일 때만 true. rem≤0 → 숨김.
+ * unpaid soft 당일결제 CTA. 가예약 카드의 입금 확인 원샷(confirmDeposit 포함).
+ * 신규 매칭은 입금 전까지 remainingSessions 가 0 이다. 잔여 0 으로 숨기지 않는다.
+ * 입금·일지 완료 단회기(ACTIVE)는 unpaid soft 가 아니므로 false.
  *
  * @param {object} [mapping]
  * @returns {boolean}
  */
-export const shouldShowUnpaidSoftCheckoutCta = (mapping) => {
-  if (!isUnpaidSoftMapping(mapping)) {
-    return false;
-  }
-  return normalizedRemainingSessions(mapping) > 0;
-};
+export const shouldShowUnpaidSoftCheckoutCta = (mapping) => isUnpaidSoftMapping(mapping);
 
 /**
  * 결제·승인 액션이 남은 상태. 완료 단회기 소진 판정에서 제외한다.
@@ -321,6 +318,21 @@ const isActionNeededPaymentStatus = (mapping) => {
   const status = mapping?.status;
   return status === MAPPING_STATUS_PENDING_PAYMENT
     || status === MAPPING_STATUS_DEPOSIT_PENDING;
+};
+
+/**
+ * 입금 확인 전 매핑.
+ * <p>{@code PENDING_PAYMENT}: 가예약. 결제상태 확인 전 값은 {@code PENDING}.
+ * 일정 「예약 확정」은 스케줄만 {@code CONFIRMED} 로 바꾸고 매핑은 여기 남는다.</p>
+ * <p>{@code PAYMENT_CONFIRMED}: 결제만 확인된 미수금. 카드 「입금 확인」버튼 상태.</p>
+ *
+ * @param {object} [mapping]
+ * @returns {boolean}
+ */
+export const isPreDepositMappingStatus = (mapping) => {
+  const status = mapping?.status;
+  return status === MAPPING_STATUS_PENDING_PAYMENT
+    || status === MAPPING_STATUS_PAYMENT_CONFIRMED;
 };
 
 /**
@@ -357,7 +369,7 @@ const countCompletedSchedulesOnMapping = (mapping) => {
 /**
  * 완료 상담 일정이 있는 단회기.
  * 저장된 status 가 ACTIVE 이고 remaining 이 1 이어도 true.
- * 다회기·기관연동·바우처·완료 일정이 없는 단회기는 false.
+ * 다회기·기관연동·바우처·완료 일정이 없는 단회기·입금 전 가예약은 false.
  *
  * @param {object} [mapping]
  * @returns {boolean}
@@ -369,7 +381,7 @@ export const isCompletedSingleSessionExhausted = (mapping) => {
   if (isInstitutionLinkMapping(mapping) || isVoucherMapping(mapping)) {
     return false;
   }
-  if (isActionNeededPaymentStatus(mapping)) {
+  if (isActionNeededPaymentStatus(mapping) || isPreDepositMappingStatus(mapping)) {
     return false;
   }
   const total = Number(mapping.totalSessions);

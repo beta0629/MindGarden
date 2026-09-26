@@ -49,7 +49,7 @@ const MappingMatchActions = ({
     && paymentTiming === PAYMENT_TIMING_SAME_DAY_CARD;
   // 정상 경로: PENDING_PAYMENT 결제 원샷 모달 (onCheckoutSameDay).
   // stepwise 「결제 확인」은 onCheckoutSameDay 미전달 시에만 escape.
-  // rem≤0 unpaid soft 는 당일결제 CTA 숨김 (드래그 허용과 분리).
+  // 입금 전 가예약은 remaining 0 이어도 당일 결제(입금 확인 원샷)를 숨기지 않는다.
   const showCheckoutSameDay = isSameDayCardPending
     && onCheckoutSameDay
     && shouldShowUnpaidSoftCheckoutCta(mapping);

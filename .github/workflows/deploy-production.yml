@@ -1544,6 +1544,48 @@ jobs:
     # ============================================================================
 
     # ============================================================================
+    # [shop-catalog / logos shared upload 2026-09-26]
+    # blue/green 슬롯 WD 상대경로 저장 → 재기동 후 404 재발 방지.
+    # PROFILE_IMAGE_UPLOAD_DIR 와 동일 composite sync + mkdir/chown 패턴.
+    # ============================================================================
+    - name: 🖼️ Shop Catalog Thumbnail Upload env 자동 주입 + 검증
+      uses: ./.github/actions/sync-prod-env-key
+      env:
+        SHOP_CATALOG_THUMBNAIL_UPLOAD_DIR: ${{ secrets.SHOP_CATALOG_THUMBNAIL_UPLOAD_DIR }}
+      with:
+        step_name: 'SHOP_CATALOG_THUMBNAIL_UPLOAD_DIR'
+        keys: 'SHOP_CATALOG_THUMBNAIL_UPLOAD_DIR'
+        env_path: '/etc/mindgarden/prod.env'
+        ssh_host: ${{ secrets.PRODUCTION_HOST }}
+        ssh_user: ${{ secrets.PRODUCTION_USER }}
+        ssh_key: ${{ secrets.PRODUCTION_SSH_KEY }}
+        skip_when: 'any_missing'
+        default_value: '/var/mindgarden/uploads/shop-catalog-thumbnails/'
+        noop_compare: 'true'
+        mkdir_value_keys: 'SHOP_CATALOG_THUMBNAIL_UPLOAD_DIR'
+        mkdir_chown_user: 'mindgarden:mindgarden'
+
+    - name: 🖼️ Tenant Logo Upload env 자동 주입 + 검증
+      uses: ./.github/actions/sync-prod-env-key
+      env:
+        TENANT_LOGO_UPLOAD_DIR: ${{ secrets.TENANT_LOGO_UPLOAD_DIR }}
+      with:
+        step_name: 'TENANT_LOGO_UPLOAD_DIR'
+        keys: 'TENANT_LOGO_UPLOAD_DIR'
+        env_path: '/etc/mindgarden/prod.env'
+        ssh_host: ${{ secrets.PRODUCTION_HOST }}
+        ssh_user: ${{ secrets.PRODUCTION_USER }}
+        ssh_key: ${{ secrets.PRODUCTION_SSH_KEY }}
+        skip_when: 'any_missing'
+        default_value: '/var/mindgarden/uploads/logos/'
+        noop_compare: 'true'
+        mkdir_value_keys: 'TENANT_LOGO_UPLOAD_DIR'
+        mkdir_chown_user: 'mindgarden:mindgarden'
+    # ============================================================================
+    # [/shop-catalog / logos shared upload 2026-09-26]
+    # ============================================================================
+
+    # ============================================================================
     # [B-3 P0 보안 2026-06-13] JWT_SECRET env 자동 주입 + 검증 (운영)
     # 배경: 운영 unit Environment= 평문 placeholder(`JWT_SECRET=changeme` 등) 회귀 방지.
     #       Apple/Google/URLs/PROFILE_IMAGE_UPLOAD_DIR sync step 과 동일 패턴.

@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 
 import com.coresolution.consultation.service.ProfileImageStorageService;
+import com.coresolution.consultation.service.ShopCatalogSkuThumbnailService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -31,6 +32,9 @@ class FileControllerProfileImageServingTest {
 
     @Mock
     private ProfileImageStorageService profileImageStorageService;
+
+    @Mock
+    private ShopCatalogSkuThumbnailService shopCatalogSkuThumbnailService;
 
     @InjectMocks
     private FileController controller;

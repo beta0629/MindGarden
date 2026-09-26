@@ -20,9 +20,14 @@ public final class ShopCatalogSkuConstants {
     /** 자동 발급 충돌 시 최대 재시도. */
     public static final int SKU_CODE_GENERATION_MAX_ATTEMPTS = 5;
 
-    public static final String THUMBNAIL_UPLOAD_DIR = "uploads/shop-catalog-thumbnails/";
-
+    /**
+     * 서빙 URL 접두사. 저장 디렉터리는 상대경로 상수가 아니라
+     * {@code mindgarden.upload.shop-catalog-thumbnail.base-dir}
+     * (env {@code SHOP_CATALOG_THUMBNAIL_UPLOAD_DIR}) 로 주입한다.
+     */
     public static final String THUMBNAIL_URL_PREFIX_V1 = "/api/v1/files/shop-catalog-thumbnails/";
+
+    public static final String THUMBNAIL_INVALID_FILE_NAME_MESSAGE = "잘못된 파일 경로입니다.";
 
     public static final long THUMBNAIL_MAX_FILE_SIZE_BYTES = 5L * 1024L * 1024L;
 

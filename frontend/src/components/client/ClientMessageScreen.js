@@ -1,6 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSession } from '../../contexts/SessionContext';
+import { useStableUserId } from '../../hooks/useStableUserId';
+import { useUserIdScopedLoad } from '../../hooks/useUserIdScopedLoad';
+import { useSoftResourceLoad } from '../../hooks/useSoftResourceLoad';
 import StandardizedApi from '../../utils/standardizedApi';
 import UnifiedLoading from '../../components/common/UnifiedLoading';
 import notificationManager from '../../utils/notification';
@@ -26,6 +29,7 @@ const ClientMessageScreen = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { user, isLoading: sessionLoading, isLoggedIn } = useSession();
+  const { userId, userRef } = useStableUserId(user);
 
   const [loading, setLoading] = useState(true);
   const [messages, setMessages] = useState([]);
@@ -38,68 +42,75 @@ const ClientMessageScreen = () => {
     setReplyContent('');
   }, []);
 
-  // 데이터 로드
+  const fetchMessages = useCallback(async() => {
+    const sessionUser = userRef.current;
+    if (!sessionUser?.id) {
+      setMessages([]);
+      return;
+    }
+
+    const response = await StandardizedApi.get(`/api/v1/consultation-messages/client/${sessionUser.id}`, {
+      page: 0,
+      size: 100,
+      sort: 'createdAt,desc'
+    });
+
+    console.log('📨 메시지 API 응답:', response);
+
+    if (response && response.success) {
+      let messageData = [];
+      if (response.data) {
+        if (Array.isArray(response.data)) {
+          messageData = response.data;
+        } else if (response.data.messages && Array.isArray(response.data.messages)) {
+          messageData = response.data.messages;
+        }
+      }
+      setMessages(messageData);
+      console.log('✅ 메시지 로드 성공:', messageData.length, '개');
+    } else if (Array.isArray(response)) {
+      setMessages(response);
+    } else if (response === null || response === undefined) {
+      console.warn('⚠️ 메시지 API 응답이 null입니다. 권한이 없을 수 있습니다.');
+      setMessages([]);
+    } else if (response?.messages && Array.isArray(response.messages)) {
+      setMessages(response.messages);
+    } else {
+      console.warn('⚠️ 메시지 API 응답 실패:', response);
+      setMessages([]);
+    }
+  }, [userRef]);
+
+  const { load: loadMessages, softRefresh: softRefreshMessages } = useSoftResourceLoad(
+    setLoading,
+    async() => {
+      try {
+        await fetchMessages();
+      } catch (error) {
+        console.error('메시지 로드 오류:', error);
+        if (error.status !== 403 && error.message?.includes('접근 권한') === false) {
+          notificationManager.show('메시지를 불러오는 중 오류가 발생했습니다.', 'error');
+        }
+        setMessages([]);
+      }
+    }
+  );
+
   useEffect(() => {
     if (sessionLoading) {
       return;
     }
-
-    if (isLoggedIn && user && user.id) {
-      loadMessages();
-    } else if (!isLoggedIn) {
+    if (!isLoggedIn) {
       navigate('/login');
-    } else {
-      console.warn('⚠️ 로그인되어 있지만 사용자 정보가 없습니다.');
-      setLoading(false);
     }
-  }, [user, sessionLoading, isLoggedIn, navigate]);
+  }, [sessionLoading, isLoggedIn, navigate]);
 
-  const loadMessages = async() => {
-    if (!user || !user.id) {
-      console.warn('사용자 정보가 없어 메시지를 로드할 수 없습니다.');
-      setLoading(false);
-      return;
-    }
-
-    try {
-      setLoading(true);
-
-      const response = await StandardizedApi.get(`/api/v1/consultation-messages/client/${user.id}`, {
-        page: 0,
-        size: 100,
-        sort: 'createdAt,desc'
-      });
-
-      console.log('📨 메시지 API 응답:', response);
-
-      if (response && response.success) {
-        let messageData = [];
-        if (response.data) {
-          if (Array.isArray(response.data)) {
-            messageData = response.data;
-          } else if (response.data.messages && Array.isArray(response.data.messages)) {
-            messageData = response.data.messages;
-          }
-        }
-        setMessages(messageData);
-        console.log('✅ 메시지 로드 성공:', messageData.length, '개');
-      } else if (response === null || response === undefined) {
-        console.warn('⚠️ 메시지 API 응답이 null입니다. 권한이 없을 수 있습니다.');
-        setMessages([]);
-      } else {
-        console.warn('⚠️ 메시지 API 응답 실패:', response);
-        setMessages([]);
-      }
-    } catch (error) {
-      console.error('메시지 로드 오류:', error);
-      if (error.status !== 403 && error.message?.includes('접근 권한') === false) {
-        notificationManager.show('메시지를 불러오는 중 오류가 발생했습니다.', 'error');
-      }
-      setMessages([]);
-    } finally {
-      setLoading(false);
-    }
-  };
+  useUserIdScopedLoad({
+    userId,
+    loadFn: loadMessages,
+    enabled: !sessionLoading && isLoggedIn,
+    onMissingUserId: () => setLoading(false)
+  });
 
   const handleMessageClick = async(message) => {
     setReplyContent('');
@@ -146,7 +157,7 @@ const ClientMessageScreen = () => {
       if (response.success) {
         notificationManager.show('답장이 전송되었습니다.', 'success');
         handleCloseMessageModal();
-        loadMessages();
+        await softRefreshMessages();
       } else {
         throw new Error(response.message || '답장 전송에 실패했습니다.');
       }

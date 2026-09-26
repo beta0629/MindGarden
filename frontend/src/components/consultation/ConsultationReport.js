@@ -2,7 +2,10 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 import { useSession } from '../../contexts/SessionContext';
-import { apiGet } from '../../utils/ajax';
+import { useStableUserId } from '../../hooks/useStableUserId';
+import { useUserIdScopedLoad } from '../../hooks/useUserIdScopedLoad';
+import { useSoftResourceLoad } from '../../hooks/useSoftResourceLoad';
+import StandardizedApi from '../../utils/standardizedApi';
 import { DASHBOARD_API } from '../../constants/api';
 import { USER_ROLES, RoleUtils } from '../../constants/roles';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
@@ -22,6 +25,7 @@ const ConsultationReport = () => {
   const { t } = useTranslation(['report', 'common']);
   const navigate = useNavigate();
   const { user, isLoggedIn, isLoading: sessionLoading } = useSession();
+  const { userId, userRef } = useStableUserId(user);
   const [reportData, setReportData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -61,7 +65,7 @@ const ConsultationReport = () => {
   const loadPeriodCodes = useCallback(async() => {
     try {
       setLoadingCodes(true);
-      const response = await apiGet(API_COMMON_CODES);
+      const response = await StandardizedApi.get(API_COMMON_CODES);
       if (response && response.length > 0) {
         const uniqueCodes = response.reduce((acc, code) => {
           if (!acc.find(item => item.codeValue === code.codeValue)) {
@@ -79,8 +83,8 @@ const ConsultationReport = () => {
         }));
         setPeriodOptions(options);
       }
-    } catch (error) {
-      console.error('보고서 기간 코드 로드 실패:', error);
+    } catch (err) {
+      console.error('보고서 기간 코드 로드 실패:', err);
     } finally {
       setLoadingCodes(false);
     }
@@ -89,7 +93,7 @@ const ConsultationReport = () => {
   const loadYearCodes = useCallback(async() => {
     try {
       setLoadingYearCodes(true);
-      const response = await apiGet(API_COMMON_CODES_2);
+      const response = await StandardizedApi.get(API_COMMON_CODES_2);
       if (response && response.length > 0) {
         const uniqueCodes = response.reduce((acc, code) => {
           if (!acc.find(item => item.codeValue === code.codeValue)) {
@@ -106,8 +110,8 @@ const ConsultationReport = () => {
           description: code.codeDescription
         })));
       }
-    } catch (error) {
-      console.error('년도 코드 로드 실패:', error);
+    } catch (err) {
+      console.error('년도 코드 로드 실패:', err);
     } finally {
       setLoadingYearCodes(false);
     }
@@ -116,7 +120,7 @@ const ConsultationReport = () => {
   const loadMonthCodes = useCallback(async() => {
     try {
       setLoadingMonthCodes(true);
-      const response = await apiGet(API_COMMON_CODES_3);
+      const response = await StandardizedApi.get(API_COMMON_CODES_3);
       if (response && response.length > 0) {
         const uniqueCodes = response.reduce((acc, code) => {
           if (!acc.find(item => item.codeValue === code.codeValue)) {
@@ -133,69 +137,15 @@ const ConsultationReport = () => {
           description: code.codeDescription
         })));
       }
-    } catch (error) {
-      console.error('월 코드 로드 실패:', error);
+    } catch (err) {
+      console.error('월 코드 로드 실패:', err);
     } finally {
       setLoadingMonthCodes(false);
     }
   }, []);
 
-  useEffect(() => {
-    if (!sessionLoading && !isLoggedIn) {
-      navigate('/login', { replace: true });
-      return;
-    }
-
-    if (user) {
-      loadReportData();
-      loadPeriodCodes();
-      loadYearCodes();
-      loadMonthCodes();
-    }
-  }, [user, sessionLoading, isLoggedIn, selectedPeriod, selectedYear, selectedMonth, loadPeriodCodes, loadYearCodes, loadMonthCodes]);
-
-  const loadReportData = async() => {
-    try {
-      setLoading(true);
-      setError(null);
-
-      console.log('📊 상담 리포트 로드 시작 - 사용자 ID:', user.id, '역할:', user.role);
-
-      let response;
-      if (RoleUtils.isClient(user)) {
-        response = await apiGet(DASHBOARD_API.CLIENT_SCHEDULES, {
-          userId: user.id,
-          userRole: USER_ROLES.CLIENT
-        });
-      } else if (RoleUtils.isConsultant(user)) {
-        response = await apiGet(DASHBOARD_API.CONSULTANT_SCHEDULES, {
-          userId: user.id,
-          userRole: USER_ROLES.CONSULTANT
-        });
-      } else if (RoleUtils.isAdmin(user)) {
-        response = await apiGet(DASHBOARD_API.ADMIN_STATS, {
-          userRole: USER_ROLES.ADMIN
-        });
-      }
-
-      if (response?.success && response?.data) {
-        const consultations = response.data;
-        const processedData = processReportData(consultations);
-        setReportData(processedData);
-        console.log('✅ 상담 리포트 로드 완료');
-      } else {
-        setReportData(null);
-        console.log('⚠️ 상담 리포트 데이터 없음');
-      }
-    } catch (error) {
-      console.error('❌ 상담 리포트 로드 오류:', error);
-      setError(t('report:consultation.loadFail'));
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const processReportData = (consultations) => {
+  const processReportData = useCallback((consultations) => {
+    const sessionUser = userRef.current;
     const now = new Date();
     const currentMonth = now.getMonth() + 1;
     
@@ -223,7 +173,7 @@ const ConsultationReport = () => {
     const cancelledConsultations = filteredConsultations.filter(c => c.status === 'CANCELLED').length;
     
     const consultantStats = {};
-    if (RoleUtils.isClient(user)) {
+    if (RoleUtils.isClient(sessionUser)) {
       filteredConsultations.forEach(consultation => {
         const consultantName = consultation.consultantName || t('report:consultation.unknownClient');
         if (!consultantStats[consultantName]) {
@@ -245,7 +195,7 @@ const ConsultationReport = () => {
     }
 
     const clientStats = {};
-    if (RoleUtils.isConsultant(user)) {
+    if (RoleUtils.isConsultant(sessionUser)) {
       filteredConsultations.forEach(consultation => {
         const clientName = consultation.clientName || t('report:consultation.unknownClient');
         if (!clientStats[clientName]) {
@@ -300,7 +250,84 @@ const ConsultationReport = () => {
       year: selectedYear,
       month: selectedMonth
     };
-  };
+  }, [selectedPeriod, selectedYear, selectedMonth, userRef, t]);
+
+  const fetchReportData = useCallback(async() => {
+    const sessionUser = userRef.current;
+    if (!sessionUser?.id) {
+      setReportData(null);
+      return;
+    }
+
+    setError(null);
+    console.log('📊 상담 리포트 로드 시작 - 사용자 ID:', sessionUser.id, '역할:', sessionUser.role);
+
+    let response;
+    if (RoleUtils.isClient(sessionUser)) {
+      response = await StandardizedApi.get(DASHBOARD_API.CLIENT_SCHEDULES, {
+        userId: sessionUser.id,
+        userRole: USER_ROLES.CLIENT
+      });
+    } else if (RoleUtils.isConsultant(sessionUser)) {
+      response = await StandardizedApi.get(DASHBOARD_API.CONSULTANT_SCHEDULES, {
+        userId: sessionUser.id,
+        userRole: USER_ROLES.CONSULTANT
+      });
+    } else if (RoleUtils.isAdmin(sessionUser)) {
+      response = await StandardizedApi.get(DASHBOARD_API.ADMIN_STATS, {
+        userRole: USER_ROLES.ADMIN
+      });
+    }
+
+    let consultations = [];
+    if (Array.isArray(response)) {
+      consultations = response;
+    } else if (response?.success && Array.isArray(response?.data)) {
+      consultations = response.data;
+    } else if (Array.isArray(response?.data)) {
+      consultations = response.data;
+    }
+
+    if (consultations.length > 0) {
+      setReportData(processReportData(consultations));
+      console.log('✅ 상담 리포트 로드 완료');
+    } else {
+      setReportData(null);
+      console.log('⚠️ 상담 리포트 데이터 없음');
+    }
+  }, [userRef, processReportData]);
+
+  const { load: loadReportData } = useSoftResourceLoad(setLoading, async() => {
+    try {
+      await fetchReportData();
+    } catch (err) {
+      console.error('❌ 상담 리포트 로드 오류:', err);
+      setError(t('report:consultation.loadFail'));
+      setReportData(null);
+    }
+  });
+
+  useEffect(() => {
+    if (!sessionLoading && !isLoggedIn) {
+      navigate('/login', { replace: true });
+    }
+  }, [sessionLoading, isLoggedIn, navigate]);
+
+  useEffect(() => {
+    if (!sessionLoading && isLoggedIn && userId) {
+      void loadPeriodCodes();
+      void loadYearCodes();
+      void loadMonthCodes();
+    }
+  }, [sessionLoading, isLoggedIn, userId, loadPeriodCodes, loadYearCodes, loadMonthCodes]);
+
+  useUserIdScopedLoad({
+    userId,
+    loadFn: loadReportData,
+    enabled: !sessionLoading && isLoggedIn,
+    onMissingUserId: () => setLoading(false),
+    extraDeps: [selectedPeriod, selectedYear, selectedMonth]
+  });
 
   const getPeriodLabel = () => {
     if (selectedPeriod === 'MONTH') {

@@ -22,8 +22,8 @@ describe('ClientSettings soft-refresh wiring (no hard reload loop)', () => {
   });
 
   test('initial load depends on userId, not full user object (silent checkSession remount guard)', () => {
-    expect(SRC).toMatch(/const userId = user\?\.id/);
-    expect(SRC).toMatch(/\[userId,\s*loadSettings\]/);
+    expect(SRC).toMatch(/useStableUserId|const userId = user\?\.id/);
+    expect(SRC).toMatch(/useUserIdScopedLoad|\[userId,\s*loadSettings\]/);
     expect(SRC).not.toMatch(/\}, \[user,\s*applyProfileFields\]\)/);
   });
 

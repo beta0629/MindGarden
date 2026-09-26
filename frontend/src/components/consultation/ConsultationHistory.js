@@ -1,10 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import UnifiedLoading from '../../components/common/UnifiedLoading';
 import StatusBadge from '../../components/common/StatusBadge';
 import { useNavigate } from 'react-router-dom';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 import { useSession } from '../../contexts/SessionContext';
-import { apiGet } from '../../utils/ajax';
+import { useStableUserId } from '../../hooks/useStableUserId';
+import { useUserIdScopedLoad } from '../../hooks/useUserIdScopedLoad';
+import { useSoftResourceLoad } from '../../hooks/useSoftResourceLoad';
+import StandardizedApi from '../../utils/standardizedApi';
 import { getCommonCodes } from '../../utils/commonCodeApi';
 import { DASHBOARD_API } from '../../constants/api';
 import { USER_ROLES, RoleUtils } from '../../constants/roles';
@@ -26,6 +29,7 @@ const ConsultationHistory = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { user, isLoggedIn, isLoading: sessionLoading } = useSession();
+  const { userId, userRef } = useStableUserId(user);
   const [consultations, setConsultations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -34,25 +38,79 @@ const ConsultationHistory = () => {
   const [statusOptions, setStatusOptions] = useState([]);
   const [loadingCodes, setLoadingCodes] = useState(false);
 
-  useEffect(() => {
-    if (!sessionLoading && !isLoggedIn) {
-      navigate('/login', { replace: true });
+  const fetchHistory = useCallback(async() => {
+    const sessionUser = userRef.current;
+    if (!sessionUser?.id) {
+      setConsultations([]);
       return;
     }
 
-    if (user) {
-      loadConsultationHistory();
+    setError(null);
+    console.log('📊 상담 내역 로드 시작 - 사용자 ID:', sessionUser.id, '역할:', sessionUser.role);
+
+    let response;
+    if (RoleUtils.isClient(sessionUser)) {
+      response = await StandardizedApi.get(DASHBOARD_API.CLIENT_SCHEDULES, {
+        userId: sessionUser.id,
+        userRole: USER_ROLES.CLIENT
+      });
+    } else if (RoleUtils.isConsultant(sessionUser)) {
+      response = await StandardizedApi.get(DASHBOARD_API.CONSULTANT_SCHEDULES, {
+        userId: sessionUser.id,
+        userRole: USER_ROLES.CONSULTANT
+      });
+    } else if (RoleUtils.isAdmin(sessionUser) || RoleUtils.isStaff(sessionUser)) {
+      response = await StandardizedApi.get(DASHBOARD_API.ADMIN_STATS, {
+        userRole: USER_ROLES.ADMIN
+      });
     }
-  }, [user, sessionLoading, isLoggedIn]);
+
+    if (response?.success && response?.data) {
+      setConsultations(response.data);
+      console.log('✅ 상담 내역 로드 완료:', response.data.length, '건');
+    } else if (Array.isArray(response)) {
+      setConsultations(response);
+    } else if (response?.data && Array.isArray(response.data)) {
+      setConsultations(response.data);
+    } else {
+      setConsultations([]);
+      console.log('⚠️ 상담 내역 데이터 없음');
+    }
+  }, [userRef]);
+
+  const { load: loadConsultationHistory, softRefresh: softRefreshHistory } = useSoftResourceLoad(
+    setLoading,
+    async() => {
+      try {
+        await fetchHistory();
+      } catch (err) {
+        console.error('❌ 상담 내역 로드 오류:', err);
+        setError('상담 내역을 불러오는데 실패했습니다.');
+        setConsultations([]);
+      }
+    }
+  );
+
+  useUserIdScopedLoad({
+    userId,
+    loadFn: loadConsultationHistory,
+    enabled: !sessionLoading && isLoggedIn,
+    onMissingUserId: () => setLoading(false)
+  });
+
+  useEffect(() => {
+    if (!sessionLoading && !isLoggedIn) {
+      navigate('/login', { replace: true });
+    }
+  }, [sessionLoading, isLoggedIn, navigate]);
 
   // 상담 상태 코드 로드 (공통코드 기반)
   useEffect(() => {
     const loadStatusCodes = async() => {
       try {
         setLoadingCodes(true);
-        // 공통코드 API 사용 (표준화된 방법)
         const codes = await getCommonCodes('CONSULTATION_STATUS');
-        
+
         if (codes && Array.isArray(codes) && codes.length > 0) {
           const options = codes.map(code => ({
             value: code.codeValue,
@@ -63,11 +121,10 @@ const ConsultationHistory = () => {
           setStatusOptions(options);
         } else {
           console.warn('📋 상담 상태 코드 데이터가 없습니다. 공통코드에서 조회하세요.');
-          setStatusOptions([]); // 하드코딩된 fallback 제거
+          setStatusOptions([]);
         }
-      } catch (error) {
-        console.error('상담 상태 코드 로드 실패:', error);
-        // 하드코딩된 fallback 제거 - 공통코드에서만 조회
+      } catch (err) {
+        console.error('상담 상태 코드 로드 실패:', err);
         setStatusOptions([]);
         notificationManager.error('상담 상태 코드를 불러올 수 없습니다. 관리자에게 문의하세요.');
       } finally {
@@ -77,46 +134,6 @@ const ConsultationHistory = () => {
 
     loadStatusCodes();
   }, []);
-
-  const loadConsultationHistory = async() => {
-    try {
-      setLoading(true);
-      setError(null);
-
-      console.log('📊 상담 내역 로드 시작 - 사용자 ID:', user.id, '역할:', user.role);
-
-      // 사용자 역할에 따라 다른 API 호출 (표준화 2025-12-05: 상수 활용)
-      let response;
-      if (RoleUtils.isClient(user)) {
-        response = await apiGet(DASHBOARD_API.CLIENT_SCHEDULES, {
-          userId: user.id,
-          userRole: USER_ROLES.CLIENT
-        });
-      } else if (RoleUtils.isConsultant(user)) {
-        response = await apiGet(DASHBOARD_API.CONSULTANT_SCHEDULES, {
-          userId: user.id,
-          userRole: USER_ROLES.CONSULTANT
-        });
-      } else if (RoleUtils.isAdmin(user) || RoleUtils.isStaff(user)) {
-        response = await apiGet(DASHBOARD_API.ADMIN_STATS, {
-          userRole: USER_ROLES.ADMIN
-        });
-      }
-
-      if (response?.success && response?.data) {
-        setConsultations(response.data);
-        console.log('✅ 상담 내역 로드 완료:', response.data.length, '건');
-      } else {
-        setConsultations([]);
-        console.log('⚠️ 상담 내역 데이터 없음');
-      }
-    } catch (error) {
-      console.error('❌ 상담 내역 로드 오류:', error);
-      setError('상담 내역을 불러오는데 실패했습니다.');
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const statusToVariant = (s) => {
     const v = (s || '').toUpperCase();
@@ -289,7 +306,7 @@ const ConsultationHistory = () => {
                     className: 'retry-btn'
                   })}
                   loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                  onClick={loadConsultationHistory}
+                  onClick={() => softRefreshHistory()}
                   preventDoubleClick={false}
                 >
                   {t('common.labels.retry')}

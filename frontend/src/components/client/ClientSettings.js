@@ -7,9 +7,11 @@
  * @since 2026-09-18
  */
 
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSession } from '../../contexts/SessionContext';
+import { useStableUserId } from '../../hooks/useStableUserId';
+import { useUserIdScopedLoad } from '../../hooks/useUserIdScopedLoad';
 import { CLIENT_SETTINGS_API, MYPAGE_API } from '../../constants/api';
 import {
   CLIENT_WEB_SUITE_COPY,
@@ -83,9 +85,7 @@ const buildNotifyPutBody = (notify) => ({
 const ClientSettings = () => {
   const { t } = useTranslation(['settings']);
   const { user, checkSession } = useSession();
-  const userId = user?.id ?? null;
-  const userRef = useRef(user);
-  userRef.current = user;
+  const { userId, userRef } = useStableUserId(user);
   const [loading, setLoading] = useState(true);
   const [savingProfile, setSavingProfile] = useState(false);
   const [fullName, setFullName] = useState('');
@@ -156,14 +156,11 @@ const ClientSettings = () => {
     });
   }, [applyProfileFields]);
 
-  useEffect(() => {
-    if (!userId) {
-      setLoading(false);
-      return undefined;
-    }
-    void loadSettings({ silent: false });
-    return undefined;
-  }, [userId, loadSettings]);
+  useUserIdScopedLoad({
+    userId,
+    loadFn: loadSettings,
+    onMissingUserId: () => setLoading(false)
+  });
 
   const refreshSessionAfterProfileSave = useCallback(
     async({

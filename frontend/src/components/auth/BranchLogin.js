@@ -1,3 +1,12 @@
+/**
+ * @deprecated 브랜치 로그인 제거 정책 — App.js 라우트 미등록.
+ * 로그인 랜딩은 UnifiedLogin + redirectToDynamicDashboard(navigate) 를 사용한다.
+ * 파일은 레거시 참조·배선 테스트용으로만 유지한다.
+ *
+ * @author Core Solution
+ * @version 1.0.0
+ * @since 2025-09-12
+ */
 import React, { useState, useEffect } from 'react';
 import { Eye, EyeOff, Store, XCircle } from 'lucide-react';
 // import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
@@ -18,15 +27,7 @@ import './BranchLogin.css';
 import { useTranslation } from 'react-i18next';
 
 /**
- * 지점별 로그인 컴포넌트
-/**
- * 
-/**
- * @author Core Solution
-/**
- * @version 1.0.0
-/**
- * @since 2025-09-12
+ * 지점별 로그인 컴포넌트 (deprecated)
  */
 const BranchLogin = () => {
   const { t } = useTranslation();
@@ -44,6 +45,11 @@ const BranchLogin = () => {
   const [branches, setBranches] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+
+  // deprecated: 마운트 시 통합 로그인으로 SPA 이동 (hard href 금지)
+  useEffect(() => {
+    navigate('/login', { replace: true });
+  }, [navigate]);
 
   // === 초기 로딩 ===
   useEffect(() => {

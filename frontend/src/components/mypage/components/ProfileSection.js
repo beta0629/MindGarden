@@ -5,6 +5,7 @@ import PhoneChangeModal from './PhoneChangeModal';
 import EmailChangeModal from './EmailChangeModal';
 import StandardizedApi from '../../../utils/standardizedApi';
 import { sessionManager } from '../../../utils/sessionManager';
+import { redirectToLoginPageOnce } from '../../../utils/sessionRedirect';
 import { resolveAvatarSourceUri } from '../../../utils/resolveAvatarSourceUri';
 import MGButton from '../../common/MGButton';
 import Avatar from '../../common/Avatar';
@@ -106,9 +107,7 @@ const ProfileSection = ({
     } catch (logoutError) {
       console.warn('이메일 변경 후 로그아웃 처리 중 오류 — 안전 리다이렉트로 진행:', logoutError);
     }
-    if (typeof window !== 'undefined') {
-      window.location.assign('/login');
-    }
+    redirectToLoginPageOnce();
   }, []);
 
   useEffect(() => {

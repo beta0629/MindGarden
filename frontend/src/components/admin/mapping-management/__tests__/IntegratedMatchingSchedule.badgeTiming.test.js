@@ -1,11 +1,8 @@
 /**
- * IntegratedMatchingSchedule — badge hook fetch vs mappings GetAll idle order.
+ * IntegratedMatchingSchedule — 신규 배정·오늘 처리 배정은 mappings GetAll.
  *
- * Measures call order on mount:
- *  1. First paint: monthly-consultant-counts + monthly-missing-consultation-logs fire
- *  2. adminMappingsListGetAll stays idle-deferred (not yet called)
- *  3. After flushing requestIdleCallback: GetAll runs once
- *  4. Call-order log: badge endpoints appear before GetAll
+ * page size 20 단일 조회(adminMappingsListGet)로 목록을 끝내지 않는다.
+ * total 21 이상이면 사이드바 건수도 21 이상이고, 기간이 지난 과거 건은 기존 필터로 빠진다.
  *
  * @author CoreSolution
  * @since 2026-09-23
@@ -182,8 +179,6 @@ class FixedDate extends RealDate {
   }
 }
 
-/** Captured idle callbacks — flush manually to assert GetAll deferral. */
-const idleCallbacks = [];
 let idleHandleSeq = 0;
 let callOrder = [];
 
@@ -214,17 +209,6 @@ const endpointLabel = (endpoint) => {
   return `api:${path}`;
 };
 
-const flushIdleCallbacks = async() => {
-  const pending = idleCallbacks.splice(0, idleCallbacks.length);
-  for (const cb of pending) {
-    // eslint-disable-next-line no-await-in-loop
-    await act(async() => {
-      cb({ didTimeout: false, timeRemaining: () => 50 });
-      await Promise.resolve();
-    });
-  }
-};
-
 beforeAll(() => {
   global.Date = FixedDate;
 });
@@ -235,11 +219,9 @@ afterAll(() => {
 
 beforeEach(() => {
   callOrder = [];
-  idleCallbacks.length = 0;
   idleHandleSeq = 0;
 
-  window.requestIdleCallback = jest.fn((cb) => {
-    idleCallbacks.push(cb);
+  window.requestIdleCallback = jest.fn(() => {
     idleHandleSeq += 1;
     return idleHandleSeq;
   });
@@ -294,13 +276,45 @@ afterEach(() => {
   cleanup();
 });
 
-describe('IntegratedMatchingSchedule — badge fetch vs mappings GetAll idle order', () => {
-  test('badge endpoints fire on first paint; GetAll waits until idle flush', async() => {
+const buildCurrentMapping = (id) => ({
+  id,
+  clientId: id,
+  clientName: `현재${id}`,
+  consultantName: '상담사',
+  status: 'ACTIVE',
+  remainingSessions: 1,
+  totalSessions: 8,
+  createdAt: FIXED_DATE_ISO
+});
+
+describe('IntegratedMatchingSchedule — assignment lists drain past page size 20', () => {
+  test('loads mappings via GetAll and keeps 21 current rows, dropping a past row', async() => {
+    const current = Array.from({ length: 21 }, (_, index) => buildCurrentMapping(index + 1));
+    const past = {
+      id: 900,
+      clientId: 900,
+      clientName: '과거건',
+      consultantName: '상담사',
+      status: 'TERMINATED',
+      remainingSessions: 0,
+      totalSessions: 8,
+      createdAt: '2020-01-01T00:00:00.000Z'
+    };
+    adminMappingsListGetAll.mockImplementation(() => {
+      pushOrder('adminMappingsListGetAll');
+      return Promise.resolve({ mappings: [...current, past], count: 22 });
+    });
+
     await act(async() => {
       render(<IntegratedMatchingSchedule />);
     });
 
-    // 1) Badge hooks request on / shortly after mount (not gated on GetAll)
+    await waitFor(() => {
+      expect(adminMappingsListGetAll).toHaveBeenCalledTimes(1);
+    });
+    expect(adminMappingsListGet).not.toHaveBeenCalled();
+    expect(adminSchedulesListGetAll).toHaveBeenCalled();
+
     await waitFor(() => {
       expect(
         StandardizedApi.get.mock.calls.some(
@@ -314,37 +328,12 @@ describe('IntegratedMatchingSchedule — badge fetch vs mappings GetAll idle ord
       ).toBe(true);
     });
 
-    // First-paint mappings page Get should resolve; GetAll still idle-deferred
     await waitFor(() => {
-      expect(adminMappingsListGet).toHaveBeenCalled();
-      expect(adminSchedulesListGetAll).toHaveBeenCalled();
+      const count = document.querySelector('.integrated-schedule__sidebar-count');
+      expect(count).not.toBeNull();
+      expect(Number(count.textContent)).toBeGreaterThanOrEqual(21);
     });
-
-    // client-filter idle + post-Promise.all GetAll idle (≥2)
-    await waitFor(() => {
-      expect(idleCallbacks.length).toBeGreaterThanOrEqual(2);
-    });
-
-    // 2) GetAll not called yet — still waiting for idle flush
-    expect(adminMappingsListGetAll).not.toHaveBeenCalled();
-    expect(callOrder).not.toContain('adminMappingsListGetAll');
-
-    const badgeCountIdx = callOrder.indexOf('monthly-consultant-counts');
-    const badgeMissingIdx = callOrder.indexOf('monthly-missing-consultation-logs');
-    expect(badgeCountIdx).toBeGreaterThan(-1);
-    expect(badgeMissingIdx).toBeGreaterThan(-1);
-
-    // 3) Flush requestIdleCallback → GetAll once
-    await flushIdleCallbacks();
-
-    await waitFor(() => {
-      expect(adminMappingsListGetAll).toHaveBeenCalledTimes(1);
-    });
-
-    // 4) Call-order evidence: badge endpoints before GetAll
-    const getAllIdx = callOrder.indexOf('adminMappingsListGetAll');
-    expect(getAllIdx).toBeGreaterThan(-1);
-    expect(Math.min(badgeCountIdx, badgeMissingIdx)).toBeLessThan(getAllIdx);
-    expect(Math.max(badgeCountIdx, badgeMissingIdx)).toBeLessThan(getAllIdx);
+    expect(document.body.textContent).not.toContain('과거건');
+    expect(document.querySelectorAll('[data-mapping-id]').length).toBeGreaterThanOrEqual(21);
   });
 });

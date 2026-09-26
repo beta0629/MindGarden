@@ -124,7 +124,6 @@ import { filterMappingsByClientSearch } from './integrated-schedule/utils/filter
 import { toErrorMessage } from '../../../utils/safeDisplay';
 import {
   adminClientsWithMappingGetAll,
-  adminMappingsListGet,
   adminMappingsListGetAll,
   adminSchedulesListGetAll
 } from '../../../api/adminListFetch';
@@ -743,7 +742,8 @@ const IntegratedMatchingSchedule = () => {
         const { startDate, endDate } = buildMonthDateRangeYmd(currentYear, currentMonth);
 
         // unpaid 소스별 best-effort: 한 API 실패가 dirty·schedules 카드/필터 SSOT 를 지우지 않음
-        // 첫 paint: mappings 1페이지 + unpaid + 월 스코프 schedules + STATS (full mappings GetAll 대기 금지)
+        // 신규 배정·오늘 처리 배정은 page size 20 에서 끝내지 않는다.
+        // 목록 SSOT: adminMappingsListGetAll (마지막 페이지까지 drain).
         const [
           response,
           pendingRaw,
@@ -752,7 +752,7 @@ const IntegratedMatchingSchedule = () => {
           extensionData,
           mappingsStatsRaw
         ] = await Promise.all([
-          adminMappingsListGet().catch(() => null),
+          adminMappingsListGetAll().catch(() => null),
           StandardizedApi.get(API_ENDPOINTS.ADMIN.MAPPINGS.PENDING_PAYMENT).catch(() => null),
           StandardizedApi.get(API_ENDPOINTS.ADMIN.MAPPINGS.PENDING_PAYMENT_DIRTY, {
             ageHours: PENDING_PAYMENT_DIRTY_DEFAULT_AGE_HOURS,
@@ -789,36 +789,6 @@ const IntegratedMatchingSchedule = () => {
           extensionData,
           { notifyOnHardFail: true }
         );
-
-        // 사이드바 완전성용 mappings 잔여 페이지 — idle defer 후 백그라운드 merge
-        // (캘린더 배지 hook 대역폭 확보). schedules 는 재drain 하지 않음(월 스코프 재사용).
-        const runBackgroundMappingsGetAll = async() => {
-          if (isStale()) {
-            return;
-          }
-          const fullResponse = await adminMappingsListGetAll().catch(() => null);
-          if (isStale() || fullResponse == null) {
-            return;
-          }
-          applyMappingsPaint(
-            fullResponse,
-            pendingRaw,
-            dirtyRaw,
-            schedulesRaw,
-            extensionData,
-            { notifyOnHardFail: false }
-          );
-        };
-
-        if (typeof window !== 'undefined' && typeof window.requestIdleCallback === 'function') {
-          window.requestIdleCallback(() => {
-            void runBackgroundMappingsGetAll();
-          }, { timeout: CLIENT_FILTER_IDLE_FALLBACK_MS * 4 });
-        } else {
-          setTimeout(() => {
-            void runBackgroundMappingsGetAll();
-          }, CLIENT_FILTER_IDLE_FALLBACK_MS);
-        }
       });
     } catch (error) {
       if (isStale()) {

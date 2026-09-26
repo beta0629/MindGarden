@@ -2835,12 +2835,8 @@ public class OAuth2Controller extends BaseApiController {
                                 .build();
                     }
                 } else {
-                    // 로그인 모드 (기존 로직)
-                    // OAuth2 로그인 시 기존 세션 완전 초기화
-                    SessionUtils.clearSession(session);
-
-                    // 새로운 세션 생성
-                    session = request.getSession(true);
+                    // 로그인 모드. 세션은 무효화하지 않고 ID 만 회전한다 (Spring Session 쿠키 유지).
+                    session = rotateWebOAuthSession(request, session);
 
                     // 모바일 클라이언트 정보를 새 세션에 다시 저장 (중요!)
                     if (savedClientType != null) {
@@ -2943,18 +2939,10 @@ public class OAuth2Controller extends BaseApiController {
                                 .header("Content-Type", "text/html; charset=UTF-8").body(html);
                     }
 
-                    // 웹 클라이언트: SessionCookieSupport 로 필터·SESSION_COOKIE_DOMAIN 과 동일 속성 발급
-                    String sessionId = session.getId();
-                    String cookieValue = sessionCookieSupport.buildJsessionSetCookieHeader(
-                            sessionId,
-                            sessionTimeoutProperties.getTimeoutSeconds(),
-                            request);
-
-                    log.info("세션 쿠키 설정: {}", cookieValue);
+                    // JSESSIONID 는 Spring Session 필터가 Base64 로 쓴다. raw Set-Cookie 는 덮어쓰지 않는다.
                     logOAuthRedirectLocationSummary("네이버 웹 OAuth", redirectUrl);
 
-                    return ResponseEntity.status(302).header("Location", redirectUrl)
-                            .header("Set-Cookie", cookieValue).build();
+                    return ResponseEntity.status(302).header("Location", redirectUrl).build();
                 }
             } else if (response.isRequiresSignup()) {
                 // 간편 회원가입이 필요한 경우
@@ -3518,12 +3506,8 @@ public class OAuth2Controller extends BaseApiController {
                                 .build();
                     }
                 } else {
-                    // 로그인 모드 (기존 로직)
-                    // OAuth2 로그인 시 기존 세션 완전 초기화
-                    SessionUtils.clearSession(session);
-
-                    // 새로운 세션 생성
-                    session = request.getSession(true);
+                    // 로그인 모드. 세션은 무효화하지 않고 ID 만 회전한다 (Spring Session 쿠키 유지).
+                    session = rotateWebOAuthSession(request, session);
 
                     // 모바일 클라이언트 정보를 새 세션에 다시 저장 (중요!)
                     if (savedClientType != null) {
@@ -3617,18 +3601,10 @@ public class OAuth2Controller extends BaseApiController {
                             + buildOAuthWebCallbackQueryString(user, provider, tenantId,
                                     providerUserIdForCallback);
 
-                    // 세션 쿠키: SessionCookieSupport (필터·SESSION_COOKIE_DOMAIN 정합)
-                    String sessionId = session.getId();
-                    String cookieValue = sessionCookieSupport.buildJsessionSetCookieHeader(
-                            sessionId,
-                            sessionTimeoutProperties.getTimeoutSeconds(),
-                            request);
-
-                    log.info("세션 쿠키 설정: {}", cookieValue);
+                    // JSESSIONID 는 Spring Session 필터가 Base64 로 쓴다. raw Set-Cookie 는 덮어쓰지 않는다.
                     logOAuthRedirectLocationSummary("카카오 웹 OAuth", redirectUrl);
 
-                    return ResponseEntity.status(302).header("Location", redirectUrl)
-                            .header("Set-Cookie", cookieValue).build();
+                    return ResponseEntity.status(302).header("Location", redirectUrl).build();
                 }
             } else if (response.isRequiresSignup()) {
                 // 간편 회원가입이 필요한 경우
@@ -4074,8 +4050,7 @@ public class OAuth2Controller extends BaseApiController {
                                 .build();
                     }
                 } else {
-                    SessionUtils.clearSession(session);
-                    session = request.getSession(true);
+                    session = rotateWebOAuthSession(request, session);
 
                     User user = loadUserByTenantScopedId(userInfo.getId(), session, state)
                             .orElseThrow(() -> new RuntimeException(
@@ -4111,15 +4086,9 @@ public class OAuth2Controller extends BaseApiController {
                             + buildOAuthWebCallbackQueryString(user, "GOOGLE", tenantId,
                                     providerUserIdForCallback);
 
-                    String sessionId = session.getId();
-                    String cookieValue = sessionCookieSupport.buildJsessionSetCookieHeader(
-                            sessionId,
-                            sessionTimeoutProperties.getTimeoutSeconds(),
-                            request);
-
+                    // JSESSIONID 는 Spring Session 필터가 Base64 로 쓴다. raw Set-Cookie 는 덮어쓰지 않는다.
                     logOAuthRedirectLocationSummary("Google 웹 OAuth", redirectUrl);
-                    return ResponseEntity.status(302).header("Location", redirectUrl)
-                            .header("Set-Cookie", cookieValue).build();
+                    return ResponseEntity.status(302).header("Location", redirectUrl).build();
                 }
             } else if (response.isRequiresSignup()) {
                 log.info("Google OAuth2 간편 회원가입 필요: providerUserId={}",
@@ -4540,11 +4509,7 @@ public class OAuth2Controller extends BaseApiController {
             }
 
             // 세션 사용자 적용 — Google 콜백과 동일 패턴 (HttpSession + DB user_sessions).
-            HttpSession sessionForLogin = session;
-            if (sessionForLogin != null) {
-                SessionUtils.clearSession(sessionForLogin);
-            }
-            sessionForLogin = request.getSession(true);
+            HttpSession sessionForLogin = rotateWebOAuthSession(request, session);
 
             User appleSessionUser = loadUserByTenantScopedId(user.getId(), sessionForLogin, state)
                     .orElseThrow(() -> new RuntimeException(OAuth2UserFacingMessages.MSG_USER_NOT_FOUND));
@@ -4568,16 +4533,9 @@ public class OAuth2Controller extends BaseApiController {
                     + buildOAuthWebCallbackQueryString(appleSessionUser, "APPLE", redirectTenantId,
                             providerUserIdForCallback);
 
-            String sessionId = sessionForLogin.getId();
-            String cookieValue = sessionCookieSupport.buildJsessionSetCookieHeader(
-                    sessionId,
-                    sessionTimeoutProperties.getTimeoutSeconds(),
-                    request);
-
             log.info("Apple OAuth2 로그인 성공: userId={}, role={}", user.getId(), user.getRole());
             logOAuthRedirectLocationSummary("Apple 웹 OAuth", redirectUrl);
-            return ResponseEntity.status(302).header("Location", redirectUrl)
-                    .header("Set-Cookie", cookieValue).build();
+            return ResponseEntity.status(302).header("Location", redirectUrl).build();
         } catch (Exception e) {
             log.error("Apple OAuth2 콜백 처리 실패: {}", e.getMessage(), e);
             String errorMessage = e.getMessage() != null ? e.getMessage()
@@ -4713,6 +4671,30 @@ public class OAuth2Controller extends BaseApiController {
 
         } catch (Exception e) {
             log.error("SpringSecurity 인증 컨텍스트 설정 실패: {}", e.getMessage(), e);
+        }
+    }
+
+    /**
+     * 웹 SNS 성공 시 이미 발급된 브라우저 세션을 유지하고 ID 만 회전한다.
+     * <p>invalidate 후 raw {@code session.getId()} 를 {@code Set-Cookie} 하면
+     * Spring Session Redis({@code useBase64Encoding=true}) 가 다음 요청의 JSESSIONID 를
+     * 풀지 못해 {@code current-user} 가 401 이 된다. 쿠키 값은 세션 필터가 Base64 로 쓴다.</p>
+     *
+     * @param request 현재 요청
+     * @param session 콜백 요청의 HttpSession (nullable)
+     * @return 사용자 속성을 쓸 세션
+     */
+    private HttpSession rotateWebOAuthSession(HttpServletRequest request, HttpSession session) {
+        if (session == null) {
+            return request.getSession(true);
+        }
+        try {
+            request.changeSessionId();
+            HttpSession rotated = request.getSession(false);
+            return rotated != null ? rotated : session;
+        } catch (IllegalStateException ex) {
+            log.warn("OAuth changeSessionId 실패, 요청 세션으로 진행: {}", ex.getMessage());
+            return request.getSession(true);
         }
     }
 

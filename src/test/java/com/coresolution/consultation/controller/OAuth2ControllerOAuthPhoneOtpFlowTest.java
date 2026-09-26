@@ -61,6 +61,8 @@ class OAuth2ControllerOAuthPhoneOtpFlowTest {
     @Mock
     private UserSessionService userSessionService;
     @Mock
+    private com.coresolution.consultation.service.SystemConfigService systemConfigService;
+    @Mock
     private com.coresolution.core.repository.TenantRepository tenantRepository;
     @Mock
     private org.springframework.core.env.Environment environment;

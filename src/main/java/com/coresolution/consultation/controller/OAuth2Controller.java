@@ -13,6 +13,8 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import com.coresolution.consultation.config.SessionCookieSupport;
 import com.coresolution.consultation.config.SessionTimeoutProperties;
+import com.coresolution.consultation.constant.SessionConstants;
+import com.coresolution.consultation.constant.SessionManagementConstants;
 import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.constant.oauth.OAuthAccountSelectionUserFacingStrings;
 import com.coresolution.consultation.constant.oauth.OAuth2UserFacingMessages;
@@ -75,6 +77,7 @@ public class OAuth2Controller extends BaseApiController {
     private final com.coresolution.consultation.service.JwtService jwtService;
     private final com.coresolution.consultation.service.DynamicPermissionService dynamicPermissionService;
     private final UserSessionService userSessionService;
+    private final com.coresolution.consultation.service.SystemConfigService systemConfigService;
     private final com.coresolution.core.repository.TenantRepository tenantRepository;
     private final org.springframework.core.env.Environment environment;
     /** Apple SIWA 서버 사이드 auth-code 흐름(2026-06-11 PR — Google PR #204 패턴 정합) 전용. */
@@ -4588,6 +4591,9 @@ public class OAuth2Controller extends BaseApiController {
      * DB 활성 세션이 없으면 세션을 클리어하므로, 비밀번호 로그인·{@code /social-login} 과 동일하게
      * {@link UserSessionService#createSession} 을 호출해야 한다.</p>
      *
+     * <p>실패 시 더 이상 swallow 하지 않고 예외를 전파한다(팬텀 FE 로그인 방지).
+     * 중복 로그인 비허용 테넌트에서는 현재 sessionId 를 제외한 기존 세션만 정리한다.</p>
+     *
      * @param request  클라이언트 IP·User-Agent 추출용
      * @param session  HttpSession (sessionId)
      * @param user     로그인 사용자
@@ -4602,17 +4608,33 @@ public class OAuth2Controller extends BaseApiController {
                     provider);
             return;
         }
+        String sessionId = session.getId();
+        String socialProvider = provider != null && !provider.isBlank() ? provider : "UNKNOWN";
         try {
+            String tenantId = user.getTenantId();
+            if (tenantId == null || tenantId.isBlank()) {
+                tenantId = com.coresolution.core.context.TenantContextHolder.getTenantId();
+            }
+            if (tenantId != null && !tenantId.isBlank()
+                    && !systemConfigService.isDuplicateLoginAllowedForTenant(tenantId)) {
+                userSessionService.deactivateOtherSessionsForTenantUser(
+                        tenantId.trim(),
+                        user.getId(),
+                        sessionId,
+                        SessionManagementConstants.END_REASON_DUPLICATE_LOGIN);
+            }
             String clientIp = request.getRemoteAddr();
             String userAgent = request.getHeader("User-Agent");
-            String socialProvider = provider != null && !provider.isBlank() ? provider : "UNKNOWN";
-            userSessionService.createSession(user, session.getId(), clientIp, userAgent, "SOCIAL",
-                    socialProvider);
+            userSessionService.createSession(user, sessionId, clientIp, userAgent,
+                    SessionManagementConstants.LOGIN_TYPE_SOCIAL, socialProvider);
+            session.setAttribute(SessionConstants.SESSION_ID, sessionId);
             log.info("✅ OAuth UserSession 생성: sessionId={}, userId={}, provider={}",
-                    session.getId(), user.getId(), socialProvider);
+                    sessionId, user.getId(), socialProvider);
         } catch (Exception e) {
-            log.warn("⚠️ OAuth UserSession 생성 실패 (무시): sessionId={}, provider={}, error={}",
-                    session != null ? session.getId() : null, provider, e.getMessage());
+            log.error("❌ OAuth UserSession 생성 실패: sessionId={}, provider={}, userId={}, error={}",
+                    sessionId, socialProvider, user.getId(), e.getMessage(), e);
+            throw new IllegalStateException(
+                    "OAuth 세션 생성에 실패했습니다. 다시 로그인해 주세요.", e);
         }
     }
 

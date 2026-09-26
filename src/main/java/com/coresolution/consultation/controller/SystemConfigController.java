@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.service.SystemConfigService;
+import com.coresolution.consultation.service.SessionSecurityPolicyService;
 import com.coresolution.consultation.service.ai.AiProviderResolver;
 import com.coresolution.consultation.utils.SessionUtils;
 import com.coresolution.core.context.TenantContextHolder;
@@ -49,6 +50,9 @@ public class SystemConfigController {
 
     /** 트랙 B PR-3: AI provider 키 등록 여부 가드 + 캐시 무효화에 사용 */
     private final AiProviderResolver aiProviderResolver;
+
+    /** 세션 보안 플래그 인메모리 캐시 무효화 */
+    private final SessionSecurityPolicyService sessionSecurityPolicyService;
 
     /**
      * 권한 체크: BRANCH_ADMIN 이상
@@ -174,6 +178,9 @@ public class SystemConfigController {
 
             if (isAiProviderKey) {
                 aiProviderResolver.invalidate(TenantContextHolder.getTenantId());
+            }
+            if (sessionSecurityPolicyService.isSessionSecurityConfigKey(configKey)) {
+                sessionSecurityPolicyService.invalidateCache(TenantContextHolder.getTenantId());
             }
 
             Map<String, Object> response = new HashMap<>();

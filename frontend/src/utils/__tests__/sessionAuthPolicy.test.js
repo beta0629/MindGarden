@@ -20,16 +20,19 @@ import {
   markJustLoggedIn,
   markJustRefreshed
 } from '../sessionAuthPolicy';
+import { resetSessionSecurityFlagsCacheForTests } from '../sessionSecurityFlags';
 
 describe('sessionAuthPolicy', () => {
   beforeEach(() => {
     clearJustLoggedIn();
     clearJustRefreshed();
+    resetSessionSecurityFlagsCacheForTests();
   });
 
   afterEach(() => {
     clearJustLoggedIn();
     clearJustRefreshed();
+    resetSessionSecurityFlagsCacheForTests();
   });
 
   describe('isSessionSoftFailUrl', () => {
@@ -41,6 +44,17 @@ describe('sessionAuthPolicy', () => {
       expect(isSessionSoftFailUrl('/api/v1/consultation-messages/unread-count')).toBe(true);
       expect(isSessionSoftFailUrl('/api/v1/notifications/unread-count?x=1')).toBe(true);
       expect(isSessionSoftFailUrl('/api/v1/admin/consultants')).toBe(false);
+    });
+
+    it('회기·샵·current-user 경로는 soft-fail 아님', () => {
+      expect(isSessionSoftFailUrl('/api/v1/admin/mappings/client')).toBe(false);
+      expect(isSessionSoftFailUrl('/api/v1/tenant/components/active-codes')).toBe(false);
+      expect(isSessionSoftFailUrl('/api/v1/auth/current-user')).toBe(false);
+    });
+
+    it('soft-fail 스위치 off 이면 allowlist 도 false', () => {
+      resetSessionSecurityFlagsCacheForTests({ softFailEnabled: false });
+      expect(isSessionSoftFailUrl('/api/v1/menus/lnb')).toBe(false);
     });
 
     it('SESSION_SOFT_FAIL_URL_PATHS 상수와 정합', () => {

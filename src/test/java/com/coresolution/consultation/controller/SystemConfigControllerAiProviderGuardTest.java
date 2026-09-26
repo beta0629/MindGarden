@@ -52,6 +52,9 @@ class SystemConfigControllerAiProviderGuardTest {
     private AiProviderResolver aiProviderResolver;
 
     @Mock
+    private com.coresolution.consultation.service.SessionSecurityPolicyService sessionSecurityPolicyService;
+
+    @Mock
     private HttpSession session;
 
     @InjectMocks

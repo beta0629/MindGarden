@@ -537,6 +537,19 @@ export const CLIENT_REWARD_UNAVAILABLE_COPY = {
   DESCRIPTION: '현재 센터에서 포인트·리워드 서비스가 제공되지 않습니다.'
 };
 
+/**
+ * active-codes 등 플래그 fetch 실패 — 샵 OFF 와 문구 분리 (세션/네트워크).
+ */
+export const CLIENT_SHOP_FETCH_FAILED_COPY = {
+  TITLE: '쇼핑 정보를 불러오지 못했습니다',
+  DESCRIPTION: '일시적인 오류이거나 로그인이 필요합니다. 다시 로그인한 뒤 시도해 주세요.'
+};
+
+export const CLIENT_REWARD_FETCH_FAILED_COPY = {
+  TITLE: '리워드 정보를 불러오지 못했습니다',
+  DESCRIPTION: '일시적인 오류이거나 로그인이 필요합니다. 다시 로그인한 뒤 시도해 주세요.'
+};
+
 /** E2E·Playwright용 data-testid */
 export const CLIENT_SHOP_TEST_IDS = {
   SESSION_LOADING: 'client-shop-session-loading',

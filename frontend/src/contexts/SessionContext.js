@@ -11,6 +11,11 @@ import {
 } from '../constants/session';
 import { AUTH_MESSAGES } from '../constants/messages';
 import RoleUtils from '../utils/RoleUtils';
+import { markJustLoggedIn } from '../utils/sessionAuthPolicy';
+import {
+  isOAuthRequireServerVerify,
+  loadSessionSecurityFlags
+} from '../utils/sessionSecurityFlags';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_PERMISSIONS_CHECK_PERMISSION = '/api/v1/permissions/check-permission';
@@ -387,22 +392,47 @@ export const SessionProvider = ({ children }) => {
     }
   };
 
-  // 테스트 로그인 함수
-  const testLogin = async(userInfo, tokens = null) => {
+  // 테스트·OAuth 로그인 (토큰·유저 주입). options.requireServerVerify 또는 스위치 true 시
+  // current-user foreground 200 전에는 isLoggedIn 확정하지 않는다.
+  const testLogin = async(userInfo, tokens = null, options = {}) => {
     try {
       dispatch({ type: SessionActionTypes.SET_LOADING, payload: true });
-      
+
       console.log('🧪 테스트 로그인 시작:', userInfo);
-      
-      // sessionManager에 사용자 정보 설정
+
+      await loadSessionSecurityFlags();
+      const requireServerVerify =
+        options.requireServerVerify === true
+        || (options.requireServerVerify !== false && isOAuthRequireServerVerify());
+
+      markJustLoggedIn();
       sessionManager.setUser(userInfo, tokens);
-      
-      // 상태 즉시 업데이트 (테스트 로그인 성공 시)
+
+      if (requireServerVerify) {
+        // foreground 검증 — background keep-user 로 팬텀 유지 금지
+        const verified = await checkSession(true, { background: false });
+        if (!verified || !sessionManager.getUser()) {
+          console.error('❌ OAuth/테스트 로그인 서버 검증 실패 — 세션 클리어');
+          sessionManager.applyClientLogoutCleanupPreserveSubdomain();
+          dispatch({ type: SessionActionTypes.CLEAR_SESSION });
+          dispatch({ type: SessionActionTypes.SET_LOADING, payload: false });
+          dispatch({ type: SessionActionTypes.SET_HAS_CHECKED_SESSION, payload: true });
+          return false;
+        }
+        const verifiedUser = sessionManager.getUser();
+        dispatch({ type: SessionActionTypes.SET_USER, payload: verifiedUser });
+        dispatch({ type: SessionActionTypes.SET_LOGGED_IN, payload: true });
+        dispatch({ type: SessionActionTypes.SET_LOADING, payload: false });
+        dispatch({ type: SessionActionTypes.SET_HAS_CHECKED_SESSION, payload: true });
+        console.log('✅ 테스트 로그인(서버 검증) 완료:', verifiedUser);
+        return true;
+      }
+
+      // 레거시: 즉시 FE 로그인 (require-server-verify=false)
       dispatch({ type: SessionActionTypes.SET_USER, payload: userInfo });
       dispatch({ type: SessionActionTypes.SET_LOGGED_IN, payload: true });
-      dispatch({ type: SessionActionTypes.SET_LOADING, payload: false }); // 로딩 즉시 해제
-      
-      // 잠시 후 서버 세션 확인 (쿠키 설정 시간 확보)
+      dispatch({ type: SessionActionTypes.SET_LOADING, payload: false });
+
       setTimeout(async() => {
         try {
           console.log('🔄 테스트 로그인 후 세션 확인 시작...');
@@ -411,13 +441,14 @@ export const SessionProvider = ({ children }) => {
         } catch (error) {
           console.error('❌ 테스트 로그인 후 세션 확인 실패:', error);
         }
-      }, CONSTANTS.FORM_CONSTANTS.MAX_COMMENT_LENGTH); // CONSTANTS.NOTIFICATION_CONSTANTS.PRIORITY_LOW초 → 500ms로 단축
-      
+      }, CONSTANTS.FORM_CONSTANTS.MAX_COMMENT_LENGTH);
+
       console.log('✅ 테스트 로그인 완료:', userInfo);
       return true;
     } catch (error) {
       console.error('❌ 테스트 로그인 실패:', error);
       dispatch({ type: SessionActionTypes.SET_ERROR, payload: error.message });
+      dispatch({ type: SessionActionTypes.SET_LOADING, payload: false });
       return false;
     }
   };

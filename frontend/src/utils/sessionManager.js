@@ -90,7 +90,9 @@ function awaitSessionCheckWithCap(sessionManager, promise) {
   const cap = new Promise((resolve) => {
     timer = setTimeout(() => {
       console.warn('세션 확인 호출 상한 초과 — 로그인 버튼을 더 기다리지 않음');
-      resolve(sessionManager.user !== null);
+      // setUser 만으로 true 가 되면 OAuth requireServerVerify 팬텀 로그인 발생.
+      // current-user 성공 시에만 본 promise 가 true 를 resolve 한다.
+      resolve(false);
     }, SESSION_CHECK_CALLER_CAP_MS);
   });
   return Promise.race([promise, cap]).finally(() => {
@@ -202,6 +204,7 @@ class SessionManager {
     const idleExpiry = options.idleExpiry === true;
     // 유휴 만료는 백그라운드 401 유지 대상이 아니다. background 플래그가 같이 와도 끈다.
     const background = idleExpiry ? false : options.background === true;
+    const skipAuthGrace = options.skipAuthGrace === true;
     const now = Date.now();
 
     // 프로필 수정 중이면 세션 체크 스킵
@@ -237,7 +240,7 @@ class SessionManager {
       return awaitSessionCheckWithCap(this, this.inflightCheckPromise);
     }
 
-    const pending = this._performCheckSession(now, { background, idleExpiry });
+    const pending = this._performCheckSession(now, { background, idleExpiry, skipAuthGrace });
     this.inflightCheckPromise = pending;
     try {
       return await awaitSessionCheckWithCap(this, pending);
@@ -255,7 +258,7 @@ class SessionManager {
    * @param {{ background?: boolean, idleExpiry?: boolean }} [options] {@link checkSession} 과 동일
    * @returns {Promise<boolean>} 세션 유효 여부
    */
-  async _performCheckSession(now, { background = false, idleExpiry = false } = {}) {
+  async _performCheckSession(now, { background = false, idleExpiry = false, skipAuthGrace = false } = {}) {
     this.checkInProgress = true;
     this.isLoading = true;
     this.notifyListeners(); // 로딩 시작 알림
@@ -264,7 +267,8 @@ class SessionManager {
       && isPublicSpaPath(window.location.pathname);
     // 응답이 TTL 뒤에 와도 요청 시작 시점의 grace 를 유지한다.
     // 첫 current-user 200 이 grace 플래그를 지우므로 fetch 전에 읽어 둔다.
-    const authGraceAtStart = isWithinAuthGraceWindow(now);
+    // OAuth requireServerVerify 는 skipAuthGrace 로 팬텀 soft-skip 을 막는다.
+    const authGraceAtStart = skipAuthGrace ? false : isWithinAuthGraceWindow(now);
 
     try {
       console.log('🔍 세션 확인 시작...');
@@ -326,7 +330,8 @@ class SessionManager {
           return false;
         }
         // 중복 로그인 종료는 grace·백그라운드보다 우선해 /login?reason=duplicate-login 으로 보낸다.
-        if (!duplicateTerminated && (authGraceAtStart || isWithinAuthGraceWindow())) {
+        if (!duplicateTerminated && !skipAuthGrace
+            && (authGraceAtStart || isWithinAuthGraceWindow())) {
           console.log('🔍 auth grace TTL 창 - 리다이렉트 스킵 (토큰 유지)');
           this.lastCheckTime = now;
           this.notifyListeners();
@@ -379,7 +384,8 @@ class SessionManager {
 
         // 백그라운드 확인은 이미 무효화된 HttpSession 을 본 것만으로 앱 전체를 /login 으로 보내지 않는다.
         // 실제 만료는 사용자 요청(ajax 재검증)·유휴 모달·새로고침(foreground 확인)에서 판정된다.
-        // OAuth 팬텀 완화: security.session.background-401.keep-user=false(기본) 이면 user 클리어.
+        // keep-user=true → 유지. keep-user=false → 무토큰 팬텀만 clear+kick (정상 세션·토큰 보유는 킥 안 함).
+        // SessionContext silent 주석(401 이어도 /login 리다이렉트 없음) 과 정합.
         if (background && !duplicateTerminated) {
           await loadSessionSecurityFlags();
           if (isBackground401KeepUser()) {
@@ -388,7 +394,14 @@ class SessionManager {
             this.notifyListeners();
             return false;
           }
-          console.log('🔍 백그라운드 세션 확인 401 - keep-user=false, 사용자 클리어');
+          const hasTokens = hasStoredAccessToken() || hasStoredRefreshToken();
+          if (hasTokens) {
+            console.log('🔍 백그라운드 세션 확인 401 - 토큰 보유, 킥 생략(keep-user=false)');
+            this.lastCheckTime = now;
+            this.notifyListeners();
+            return false;
+          }
+          console.log('🔍 백그라운드 세션 확인 401 - 무토큰 팬텀, 사용자 클리어');
         }
 
         this.user = null;

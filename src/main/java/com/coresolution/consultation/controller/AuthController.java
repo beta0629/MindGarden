@@ -626,8 +626,25 @@ public class AuthController extends BaseApiController {
                     .data(null)
                     .build());
         }
-        // P0-3 hotfix: refresh_token_store 메타데이터(device_id/ip/user_agent) NOT NULL 기록.
-        AuthResponse authResponse = authService.refreshToken(rt.trim(), httpRequest);
+        AuthResponse authResponse;
+        try {
+            // P0-3 hotfix: refresh_token_store 메타데이터(device_id/ip/user_agent) NOT NULL 기록.
+            authResponse = authService.refreshToken(rt.trim(), httpRequest);
+        } catch (IllegalStateException invalidated) {
+            // HttpSession 이 이미 invalidate 된 뒤 refresh 가 세션에 접근하면 치명 오류가 난다.
+            // JWT refresh 자체는 세션 비의존이므로 401 로 비치명 응답한다.
+            if (invalidated.getMessage() != null
+                    && invalidated.getMessage().contains("Session was invalidated")) {
+                log.warn("refresh-token: 무효 세션 — 비치명 401: {}", invalidated.getMessage());
+                return ResponseEntity.status(org.springframework.http.HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.<Map<String, Object>>builder()
+                        .success(false)
+                        .message("세션이 만료되었습니다. 다시 로그인해 주세요.")
+                        .data(null)
+                        .build());
+            }
+            throw invalidated;
+        }
         if (!authResponse.isSuccess()) {
             String msg = authResponse.getMessage() != null ? authResponse.getMessage() : "토큰 갱신에 실패했습니다.";
             return ResponseEntity.status(org.springframework.http.HttpStatus.UNAUTHORIZED)

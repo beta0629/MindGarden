@@ -1,13 +1,16 @@
 /**
  * Client Dashboard — OAuth·localStorage 세션 부트스트랩
  *
+ * <p>레거시 {@code oauth=success} 쿼리·{@code local_token} placeholder 로
+ * setUser 만 호출해 팬텀 로그인하지 않는다. 실제 토큰이 있을 때만 restore 후
+ * checkSession 으로 검증한다.</p>
+ *
  * @author CoreSolution
  * @since 2026-07-07
  */
 
 import { useEffect } from 'react';
 import { sessionManager } from '../../../utils/sessionManager';
-import { USER_ROLES } from '../../../constants/roles';
 
 const SESSION_RESTORE_DELAY_MS = 500;
 
@@ -22,21 +25,10 @@ export function useClientSessionBootstrap(checkSession) {
       const urlParams = new URLSearchParams(window.location.search);
       const oauth = urlParams.get('oauth');
 
+      // 레거시 oauth=success 쿼리만으로 setUser 금지 — JWT 없는 팬텀 세션 차단.
+      // soft SPA: 쿼리만 제거하고 서버 세션이 있으면 checkSession 으로 복원.
       if (oauth === 'success') {
-        const userInfo = {
-          id: parseInt(urlParams.get('userId'), 10) || 0,
-          email: urlParams.get('email') || '',
-          name: decodeURIComponent(urlParams.get('name') || ''),
-          nickname: decodeURIComponent(urlParams.get('nickname') || ''),
-          role: urlParams.get('role') || USER_ROLES.CLIENT,
-          profileImageUrl: decodeURIComponent(urlParams.get('profileImage') || ''),
-          provider: urlParams.get('provider') || 'UNKNOWN'
-        };
-
-        sessionManager.setUser(userInfo, null);
-
         window.history.replaceState({}, document.title, window.location.origin + window.location.pathname);
-
         if (isMounted) {
           await checkSession(true);
         }
@@ -44,13 +36,20 @@ export function useClientSessionBootstrap(checkSession) {
       }
 
       const storedUser = localStorage.getItem('userInfo');
-      if (!storedUser) return;
+      const storedAccess = localStorage.getItem('accessToken');
+      if (!storedUser || !storedAccess || storedAccess === 'local_token') {
+        return;
+      }
 
       try {
         const userInfo = JSON.parse(storedUser);
+        const storedRefresh = localStorage.getItem('refreshToken');
+        if (storedRefresh === 'local_refresh_token') {
+          return;
+        }
         sessionManager.setUser(userInfo, {
-          accessToken: userInfo.accessToken || 'local_token',
-          refreshToken: userInfo.refreshToken || 'local_refresh_token'
+          accessToken: storedAccess,
+          ...(storedRefresh ? { refreshToken: storedRefresh } : {})
         });
         if (isMounted) {
           await checkSession(true);

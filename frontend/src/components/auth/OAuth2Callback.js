@@ -30,9 +30,9 @@ import {
   OAUTH_WEB_LOGIN_SUCCESS_LINKED_ACCOUNT
 } from '../../constants/loginDisplay';
 import { USER_ROLES } from '../../constants/roles';
-import { OAUTH_SERVER_VERIFY_FAILED_MESSAGE } from '../../constants/session';
-import { markJustLoggedIn } from '../../utils/sessionAuthPolicy';
+import { OAUTH_SERVER_VERIFY_FAILED_MESSAGE, OAUTH_ACCESS_TOKEN_REQUIRED_MESSAGE } from '../../constants/session';
 import { loadSessionSecurityFlags } from '../../utils/sessionSecurityFlags';
+import { AUTH_API } from '../../constants/api';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_AUTH_TENANT_CHECK_MULTI = '/api/v1/auth/tenant/check-multi';
@@ -138,8 +138,7 @@ const OAuth2Callback = () => {
         const profileImageUrl = searchParams.get('profileImageUrl');
         const providerUserId = searchParams.get('providerUserId'); // 추가: SNS 사용자 ID
         const tenantId = searchParams.get('tenantId'); // 서브도메인에서 추출한 tenant_id
-        const oauthAccessToken = searchParams.get('accessToken');
-        const oauthRefreshToken = searchParams.get('refreshToken');
+        // JWT 는 URL 쿼리에 두지 않음 — POST /oauth2/web-session-tokens 1회 교환
         // ⚠️ 표준화 2025-12-05: Deprecated - 브랜치 개념 제거
         const branchId = searchParams.get('branchId');
         const branchName = searchParams.get('branchName');
@@ -370,11 +369,6 @@ const OAuth2Callback = () => {
           return;
         }
 
-        notificationManager.show(
-          toDisplayString(OAUTH_WEB_LOGIN_SUCCESS_LINKED_ACCOUNT, OAUTH_WEB_LOGIN_SUCCESS_LINKED_ACCOUNT),
-          'success'
-        );
-
         // 사용자 정보를 중앙 세션에 설정
         const userInfo = {
           id: parsedOAuthUserId,
@@ -409,21 +403,59 @@ const OAuth2Callback = () => {
           return;
         }
 
-        // 중앙 세션에 사용자 정보 설정 (비밀번호 로그인 API 호출 없음)
-        // 웹 카카오/네이버/구글 콜백은 JWT를 쿼리에 넣지 않음 — placeholder 토큰 저장 금지(refresh 401 악화)
+        // JWT 는 credentials 포함 1회 교환 — URL 쿼리·placeholder 금지
         // current-user foreground 200 전에는 isLoggedIn 확정 금지 (팬텀 SNS 세션 차단)
         await loadSessionSecurityFlags();
-        markJustLoggedIn();
-        const oauthSessionTokens = oauthAccessToken
-          ? {
-            accessToken: oauthAccessToken,
-            ...(oauthRefreshToken ? { refreshToken: oauthRefreshToken } : {})
+        let oauthSessionTokens = null;
+        try {
+          const claimRaw = await StandardizedApi.post(
+            AUTH_API.OAUTH2_WEB_SESSION_TOKENS,
+            {},
+            tenantId
+              ? { headers: { 'X-Tenant-Id': tenantId } }
+              : undefined
+          );
+          const claimData =
+            claimRaw && typeof claimRaw === 'object' && 'success' in claimRaw && 'data' in claimRaw
+              ? claimRaw.data
+              : claimRaw;
+          const claimedAccess =
+            claimData && typeof claimData.accessToken === 'string'
+              ? claimData.accessToken.trim()
+              : '';
+          const claimedRefresh =
+            claimData && typeof claimData.refreshToken === 'string'
+              ? claimData.refreshToken.trim()
+              : '';
+          if (!claimedAccess) {
+            throw new Error(OAUTH_ACCESS_TOKEN_REQUIRED_MESSAGE);
           }
-          : null;
+          oauthSessionTokens = {
+            accessToken: claimedAccess,
+            ...(claimedRefresh ? { refreshToken: claimedRefresh } : {})
+          };
+        } catch (claimError) {
+          console.error('❌ OAuth2 웹 세션 JWT 교환 실패:', claimError);
+          setError(OAUTH_ACCESS_TOKEN_REQUIRED_MESSAGE);
+          notificationManager.show(
+            toDisplayString(OAUTH_ACCESS_TOKEN_REQUIRED_MESSAGE, OAUTH_ACCESS_TOKEN_REQUIRED_MESSAGE),
+            'error'
+          );
+          setTimeout(() => navigate('/login'), 3000);
+          return;
+        }
+
         const loginSuccess = await testLogin(userInfo, oauthSessionTokens, {
           requireServerVerify: true
         });
         console.log('✅ OAuth2 중앙 세션에 사용자 정보 설정:', userInfo, 'verified=', loginSuccess);
+
+        if (loginSuccess) {
+          notificationManager.show(
+            toDisplayString(OAUTH_WEB_LOGIN_SUCCESS_LINKED_ACCOUNT, OAUTH_WEB_LOGIN_SUCCESS_LINKED_ACCOUNT),
+            'success'
+          );
+        }
 
         // 멀티 테넌트 사용자 확인 (X-Tenant-Id: 쿼리·사용자 정보 우선)
         const checkMultiTenantAndRedirect = async(userRole) => {
@@ -657,10 +689,26 @@ const OAuth2Callback = () => {
             role: matchedAccount?.role,
             provider: matchedProvider
           };
-          await testLogin(userInfo, {
+          if (!accessToken) {
+            notificationManager.show(
+              toDisplayString(OAUTH_ACCESS_TOKEN_REQUIRED_MESSAGE, OAUTH_ACCESS_TOKEN_REQUIRED_MESSAGE),
+              'error'
+            );
+            navigate('/login');
+            return;
+          }
+          const loginOk = await testLogin(userInfo, {
             accessToken,
             refreshToken: refreshToken || accessToken
           }, { requireServerVerify: true });
+          if (!loginOk) {
+            notificationManager.show(
+              toDisplayString(OAUTH_SERVER_VERIFY_FAILED_MESSAGE, OAUTH_SERVER_VERIFY_FAILED_MESSAGE),
+              'error'
+            );
+            navigate('/login');
+            return;
+          }
           setShowOAuthPhoneVerificationModal(false);
           setOAuthPhoneVerificationPayload(null);
           notificationManager.show(

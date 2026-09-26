@@ -124,7 +124,7 @@ describe('sessionManager.checkSession — background 401', () => {
     expect(redirectToLoginPageOnce).toHaveBeenCalledWith();
   });
 
-  it('background 401 → refresh 실패여도 기본(keep-user=false) 은 사용자 클리어 + /login', async() => {
+  it('background 401 → refresh 실패여도 토큰 보유 시(keep-user=false) 킥하지 않음', async() => {
     const { redirectToLoginPageOnce } = require('../sessionRedirect');
     const { refreshAccessTokenPair } = require('../authTokenRefresh');
     localStorage.setItem(SESSION_KEYS.ACCESS_TOKEN, 'old-access');
@@ -136,9 +136,9 @@ describe('sessionManager.checkSession — background 401', () => {
 
     expect(refreshAccessTokenPair).toHaveBeenCalled();
     expect(ok).toBe(false);
-    expect(sessionManager.getUser()).toBeNull();
-    expect(sessionManager.applyClientLogoutCleanupPreserveSubdomain).toHaveBeenCalled();
-    expect(redirectToLoginPageOnce).toHaveBeenCalledWith();
+    expect(sessionManager.getUser()).toEqual(LOGGED_IN_USER);
+    expect(sessionManager.applyClientLogoutCleanupPreserveSubdomain).not.toHaveBeenCalled();
+    expect(redirectToLoginPageOnce).not.toHaveBeenCalled();
   });
 
   it('keep-user=true 이면 background 401(토큰 없음) 은 사용자 유지 + 리다이렉트 없음', async() => {

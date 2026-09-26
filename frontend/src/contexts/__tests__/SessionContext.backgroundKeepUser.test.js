@@ -108,7 +108,8 @@ describe('SessionContext — sessionManager 가 유지한 사용자는 Context �
     expect(result).toBe(false);
     expect(sessionManager.checkSession).toHaveBeenLastCalledWith(false, {
       background: true,
-      idleExpiry: false
+      idleExpiry: false,
+      skipAuthGrace: false
     });
     expect(screen.getByTestId('dashboard')).toBeInTheDocument();
     expect(screen.queryByTestId('login-page')).not.toBeInTheDocument();
@@ -126,7 +127,8 @@ describe('SessionContext — sessionManager 가 유지한 사용자는 Context �
 
     expect(sessionManager.checkSession).toHaveBeenLastCalledWith(true, {
       background: false,
-      idleExpiry: true
+      idleExpiry: true,
+      skipAuthGrace: false
     });
     expect(screen.getByTestId('dashboard')).toBeInTheDocument();
   });
@@ -143,7 +145,8 @@ describe('SessionContext — sessionManager 가 유지한 사용자는 Context �
 
     expect(sessionManager.checkSession).toHaveBeenLastCalledWith(true, {
       background: false,
-      idleExpiry: false
+      idleExpiry: false,
+      skipAuthGrace: false
     });
   });
 

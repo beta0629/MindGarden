@@ -242,3 +242,9 @@ export const SESSION_SECURITY_FLAGS_PATH = '/api/v1/auth/session-security-flags'
  */
 export const OAUTH_SERVER_VERIFY_FAILED_MESSAGE =
   '로그인 세션을 확인하지 못했습니다. 다시 로그인해 주세요.';
+
+/**
+ * 웹 SNS OAuth 성공 콜백에 accessToken 이 없을 때 (팬텀 로그인 차단).
+ */
+export const OAUTH_ACCESS_TOKEN_REQUIRED_MESSAGE =
+  '로그인 토큰을 받지 못했습니다. 다시 로그인해 주세요.';

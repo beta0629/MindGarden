@@ -210,6 +210,7 @@ export const SessionProvider = ({ children }) => {
   const checkSession = useCallback(async(force = false, options = {}) => {
     const silent = options.silent === true;
     const idleExpiry = options.idleExpiry === true;
+    const skipAuthGrace = options.skipAuthGrace === true;
     // 주기 폴·활동 ping 의 silent 는 background. 유휴 만료 재확인은 그 유지 정책에 넣지 않는다.
     const background = idleExpiry ? false : (silent || options.background === true);
     const now = Date.now();
@@ -243,7 +244,11 @@ export const SessionProvider = ({ children }) => {
     dispatch({ type: SessionActionTypes.SET_LAST_CHECK_TIME, payload: now });
 
     try {
-      const isLoggedIn = await sessionManager.checkSession(force, { background, idleExpiry });
+      const isLoggedIn = await sessionManager.checkSession(force, {
+        background,
+        idleExpiry,
+        skipAuthGrace
+      });
       const user = sessionManager.getUser();
       const sessionInfo = sessionManager.getSessionInfo();
 
@@ -405,12 +410,35 @@ export const SessionProvider = ({ children }) => {
         options.requireServerVerify === true
         || (options.requireServerVerify !== false && isOAuthRequireServerVerify());
 
-      markJustLoggedIn();
+      // JWT 없으면 서버 검증 경로에서도 Bearer 가 없어 팬텀이 된다 — 선제 차단
+      const hasAccessToken =
+        tokens
+        && typeof tokens === 'object'
+        && typeof tokens.accessToken === 'string'
+        && tokens.accessToken.trim().length > 0;
+
+      if (requireServerVerify && !hasAccessToken) {
+        console.error('❌ OAuth/테스트 로그인: accessToken 없음 — 팬텀 로그인 차단');
+        sessionManager.applyClientLogoutCleanupPreserveSubdomain();
+        dispatch({ type: SessionActionTypes.CLEAR_SESSION });
+        dispatch({ type: SessionActionTypes.SET_LOADING, payload: false });
+        dispatch({ type: SessionActionTypes.SET_HAS_CHECKED_SESSION, payload: true });
+        return false;
+      }
+
+      // requireServerVerify 시 markJustLoggedIn 은 current-user 200 이후에만
+      // (grace soft-skip 이 팬텀 isLoggedIn 을 만들지 않도록)
+      if (!requireServerVerify) {
+        markJustLoggedIn();
+      }
       sessionManager.setUser(userInfo, tokens);
 
       if (requireServerVerify) {
-        // foreground 검증 — background keep-user 로 팬텀 유지 금지
-        const verified = await checkSession(true, { background: false });
+        // foreground 검증 — background keep-user·auth grace 로 팬텀 유지 금지
+        const verified = await checkSession(true, {
+          background: false,
+          skipAuthGrace: true
+        });
         if (!verified || !sessionManager.getUser()) {
           console.error('❌ OAuth/테스트 로그인 서버 검증 실패 — 세션 클리어');
           sessionManager.applyClientLogoutCleanupPreserveSubdomain();
@@ -419,6 +447,7 @@ export const SessionProvider = ({ children }) => {
           dispatch({ type: SessionActionTypes.SET_HAS_CHECKED_SESSION, payload: true });
           return false;
         }
+        markJustLoggedIn();
         const verifiedUser = sessionManager.getUser();
         dispatch({ type: SessionActionTypes.SET_USER, payload: verifiedUser });
         dispatch({ type: SessionActionTypes.SET_LOGGED_IN, payload: true });

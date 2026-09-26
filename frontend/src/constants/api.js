@@ -29,6 +29,12 @@ export const AUTH_API = {
   GET_CURRENT_USER: '/api/v1/auth/current-user',
 
   /**
+   * 웹 SNS OAuth 성공 후 HttpSession 에 저장된 JWT 1회 교환.
+   * credentials:include 필수. URL 쿼리 JWT 금지 SSOT.
+   */
+  OAUTH2_WEB_SESSION_TOKENS: '/api/v1/auth/oauth2/web-session-tokens',
+
+  /**
    * 일반 로그인(전화 + 비밀번호) 다중 매치 시 계정 선택 완료 — P1 silent first 차단(2026-06-11).
    *
    * <p>BE `AuthController#selectAccount`. {@code POST /api/v1/auth/login} 응답이

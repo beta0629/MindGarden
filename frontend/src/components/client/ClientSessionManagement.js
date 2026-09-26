@@ -7,7 +7,10 @@
  */
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { useSession } from '../../contexts/SessionContext';
+import { useSoftResourceLoad } from '../../hooks/useSoftResourceLoad';
+import { AUTH_API, DASHBOARD_API } from '../../constants/api';
 import StandardizedApi from '../../utils/standardizedApi';
 import {
   isApiGetNullFailure,
@@ -25,82 +28,144 @@ import {
 import { buildSessionChipAndBalance } from './clientDashboard/lobbyViewModel';
 import './ClientSessionManagement.css';
 
-const API_AUTH_CURRENT_USER = '/api/v1/auth/current-user';
-const API_ADMIN_MAPPINGS_CLIENT = '/api/v1/admin/mappings/client';
 const CLIENT_SESSION_MGMT_TITLE_ID = 'client-session-management-title';
 
+/**
+ * @param {unknown} err
+ * @returns {boolean}
+ */
+const isAuthFailure = (err) => {
+  if (err == null) {
+    return true;
+  }
+  if (typeof err === 'object' && err.status === 401) {
+    return true;
+  }
+  return false;
+};
+
 const ClientSessionManagement = () => {
+  const navigate = useNavigate();
+  const { isLoggedIn, isLoading: sessionLoading, checkSession } = useSession();
   const [sessionData, setSessionData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const loadSessionData = useCallback(async() => {
-    setIsLoading(true);
+  const fetchSessionData = useCallback(async() => {
     setError(null);
+    const userResponse = await StandardizedApi.get(AUTH_API.GET_CURRENT_USER);
+    if (!userResponse || !userResponse.id) {
+      const authErr = new Error(CLIENT_WEB_SUITE_COPY.SESSIONS_ERROR_TITLE);
+      authErr.status = 401;
+      throw authErr;
+    }
+    const mappingsResponse = await StandardizedApi.get(DASHBOARD_API.CLIENT_CONSULTANT_INFO, {
+      clientId: userResponse.id
+    });
+    if (isApiGetNullFailure(mappingsResponse)) {
+      throw new Error(CLIENT_WEB_SUITE_COPY.SESSIONS_ERROR_TITLE);
+    }
+    const mappings = normalizeMappingsListPayload(mappingsResponse);
+    const sessionTotals = calculateClientSessionTotalsFromMappings(mappings);
+    setSessionData({
+      totalSessions: sessionTotals.totalSessions,
+      usedSessions: sessionTotals.usedSessions,
+      remainingSessions: sessionTotals.remainingSessions,
+      mappings: mappings.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+    });
+  }, []);
+
+  const { load: loadSessionData, softRefresh: softRefreshSessions } = useSoftResourceLoad(
+    setIsLoading,
+    async() => {
+      try {
+        await fetchSessionData();
+      } catch (err) {
+        if (isAuthFailure(err)) {
+          navigate('/login', { replace: true });
+          return;
+        }
+        setError(err?.message || CLIENT_WEB_SUITE_COPY.SESSIONS_ERROR_TITLE);
+        setSessionData(null);
+      }
+    }
+  );
+
+  useEffect(() => {
+    if (sessionLoading) {
+      return;
+    }
+    if (!isLoggedIn) {
+      navigate('/login', { replace: true });
+      return;
+    }
+    void loadSessionData({ silent: false });
+  }, [sessionLoading, isLoggedIn, navigate, loadSessionData]);
+
+  /**
+   * 다시 시도: current-user 재검증 → 실세션 없으면 soft navigate /login,
+   * 있으면 softRefresh 로 회기 로드 (hard reload 금지).
+   */
+  const handleRetry = useCallback(async() => {
+    setError(null);
+    setIsLoading(true);
     try {
-      const userResponse = await StandardizedApi.get(API_AUTH_CURRENT_USER);
+      const userResponse = await StandardizedApi.get(AUTH_API.GET_CURRENT_USER);
       if (!userResponse || !userResponse.id) {
-        throw new Error(CLIENT_WEB_SUITE_COPY.SESSIONS_ERROR_TITLE);
+        navigate('/login', { replace: true });
+        return;
       }
-      const mappingsResponse = await StandardizedApi.get(API_ADMIN_MAPPINGS_CLIENT, {
-        clientId: userResponse.id
-      });
-      if (isApiGetNullFailure(mappingsResponse)) {
-        throw new Error(CLIENT_WEB_SUITE_COPY.SESSIONS_ERROR_TITLE);
+      if (typeof checkSession === 'function') {
+        await checkSession(true, { silent: true });
       }
-      const mappings = normalizeMappingsListPayload(mappingsResponse);
-      const sessionTotals = calculateClientSessionTotalsFromMappings(mappings);
-      setSessionData({
-        totalSessions: sessionTotals.totalSessions,
-        usedSessions: sessionTotals.usedSessions,
-        remainingSessions: sessionTotals.remainingSessions,
-        mappings: mappings.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-      });
+      await softRefreshSessions();
     } catch (err) {
-      setError(err.message || CLIENT_WEB_SUITE_COPY.SESSIONS_ERROR_TITLE);
+      if (isAuthFailure(err)) {
+        navigate('/login', { replace: true });
+        return;
+      }
+      setError(err?.message || CLIENT_WEB_SUITE_COPY.SESSIONS_ERROR_TITLE);
       setSessionData(null);
     } finally {
       setIsLoading(false);
     }
-  }, []);
-
-  useEffect(() => {
-    loadSessionData();
-  }, [loadSessionData]);
+  }, [navigate, checkSession, softRefreshSessions]);
 
   const balanceMeta = useMemo(
     () => buildSessionChipAndBalance(sessionData?.mappings),
     [sessionData?.mappings]
   );
 
+  const showLoading = isLoading || sessionLoading;
+
   const mainSlot = (
     <>
-      {isLoading ? (
+      {showLoading ? (
         <div aria-busy="true" aria-live="polite">
           <UnifiedLoading type="inline" text={CLIENT_WEB_SUITE_COPY.SESSIONS_LOADING} />
         </div>
       ) : null}
 
-      {!isLoading && error ? (
+      {!showLoading && error ? (
         <div className="client-web-page-shell__card" role="alert">
           <h3 className="client-sessions__error-title">{CLIENT_WEB_SUITE_COPY.SESSIONS_ERROR_TITLE}</h3>
           <p className="client-sessions__mute">
             <SafeText>{error}</SafeText>
           </p>
-          <button type="button" className="client-web-page-shell__cta" onClick={loadSessionData}>
+          <button type="button" className="client-web-page-shell__cta" onClick={handleRetry}>
             {CLIENT_WEB_SUITE_COPY.SESSIONS_RETRY}
           </button>
         </div>
       ) : null}
 
-      {!isLoading && !error && (!sessionData || sessionData.mappings.length === 0) ? (
+      {!showLoading && !error && (!sessionData || sessionData.mappings.length === 0) ? (
         <div className="client-web-page-shell__card">
           <h3 className="client-sessions__empty-title">{CLIENT_WEB_SUITE_COPY.SESSIONS_EMPTY_TITLE}</h3>
           <p className="client-sessions__mute">{CLIENT_WEB_SUITE_COPY.SESSIONS_EMPTY_BODY}</p>
         </div>
       ) : null}
 
-      {!isLoading && !error && sessionData && sessionData.mappings.length > 0 ? (
+      {!showLoading && !error && sessionData && sessionData.mappings.length > 0 ? (
         <section className="client-web-page-shell__card client-sessions-summary">
           <div className="client-sessions-summary__hero">
             <span className="client-sessions-summary__n">

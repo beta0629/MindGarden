@@ -18,6 +18,7 @@ import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.entity.UserSession;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.UserSessionService;
+import com.coresolution.core.context.TenantContextHolder;
 import jakarta.servlet.FilterChain;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -72,6 +73,8 @@ class SessionBasedAuthenticationFilterSlidingTest {
     @AfterEach
     void tearDown() {
         SecurityContextHolder.clearContext();
+        // 필터가 인증 시 TenantContext 를 세팅하므로 배치 오염 방지
+        TenantContextHolder.clear();
     }
 
     @Test

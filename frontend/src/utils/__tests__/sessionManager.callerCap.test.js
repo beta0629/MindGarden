@@ -56,7 +56,8 @@ describe('sessionManager.checkSession caller cap', () => {
   test('hung current-user releases the caller at the cap and does not redirect', async() => {
     const pending = sessionManager.checkSession(true);
     jest.advanceTimersByTime(SESSION_CHECK_CALLER_CAP_MS);
-    await expect(pending).resolves.toBe(true);
+    // setUser 만으로 true 가 되면 안 됨 — current-user 성공 전엔 false
+    await expect(pending).resolves.toBe(false);
     expect(redirectToLoginPageOnce).not.toHaveBeenCalled();
     expect(sessionManager.user).toEqual({ id: 1, role: 'ADMIN', tenantId: 'tenant-a' });
   });

@@ -82,10 +82,12 @@ describe('post-auth SPA navigate (no dashboard hard reload)', () => {
     expect(src).not.toMatch(/window\.location\.href\s*=\s*['"]\/client\/dashboard['"]/);
   });
 
-  test('OAuth2Callback has single markJustLoggedIn import (no duplicate declaration)', () => {
+  test('OAuth2Callback requires JWT and server verify (no phantom markJustLoggedIn)', () => {
     const src = readSrc('components', 'auth', 'OAuth2Callback.js');
-    const imports = src.match(/import\s*\{\s*markJustLoggedIn\s*\}\s*from/g) || [];
-    expect(imports).toHaveLength(1);
+    expect(src).toMatch(/OAUTH_ACCESS_TOKEN_REQUIRED_MESSAGE/);
+    expect(src).toMatch(/requireServerVerify:\s*true/);
     expect(src).not.toMatch(/location\.reload\s*\(/);
+    // markJustLoggedIn 은 SessionContext.testLogin 검증 성공 후에만 (콜백에서 선행 호출 금지)
+    expect(src).not.toMatch(/import\s*\{\s*markJustLoggedIn\s*\}\s*from/);
   });
 });

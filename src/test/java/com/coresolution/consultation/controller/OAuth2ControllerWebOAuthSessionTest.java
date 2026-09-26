@@ -13,6 +13,7 @@ import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -28,6 +29,7 @@ import com.coresolution.consultation.service.OAuth2FactoryService;
 import com.coresolution.consultation.service.UserSessionService;
 import com.coresolution.consultation.util.OAuth2DomainUtil;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
+import com.coresolution.consultation.utils.SessionUtils;
 import com.coresolution.core.repository.TenantRepository;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
@@ -78,6 +80,8 @@ class OAuth2ControllerWebOAuthSessionTest {
     private DynamicPermissionService dynamicPermissionService;
     @Mock
     private UserSessionService userSessionService;
+    @Mock
+    private com.coresolution.consultation.service.RefreshTokenService refreshTokenService;
     @Mock
     private com.coresolution.consultation.service.SystemConfigService systemConfigService;
     @Mock
@@ -174,7 +178,7 @@ class OAuth2ControllerWebOAuthSessionTest {
     }
 
     @Test
-    @DisplayName("소스 회귀: 카카오/네이버/구글/애플 웹 성공 분기에 persistOAuthDbUserSession 존재")
+    @DisplayName("소스 회귀: 카카오/네이버/구글/애플 웹 성공 분기에 persistOAuthDbUserSession·issueWebOAuthJwtPair 존재")
     void webOAuthSuccessPaths_containPersistOAuthDbUserSession() throws Exception {
         Path controllerSource = Path.of("src/main/java/com/coresolution/consultation/controller/OAuth2Controller.java");
         String source = Files.readString(controllerSource);
@@ -184,8 +188,19 @@ class OAuth2ControllerWebOAuthSessionTest {
         assertThat(source).contains("persistOAuthDbUserSession(request, session, user, \"GOOGLE\")");
         assertThat(source).contains("persistOAuthDbUserSession(request, sessionForLogin, appleSessionUser, \"APPLE\")");
         assertThat(source).contains("rotateWebOAuthSession");
+        assertThat(source).contains("issueWebOAuthJwtPair");
+        assertThat(source).contains("storeWebOAuthJwtPairInSession");
+        assertThat(source).contains("claimWebOAuthSessionTokens");
+        assertThat(source).contains("/oauth2/web-session-tokens");
+        assertThat(source).contains("naverJwtPair");
+        assertThat(source).contains("kakaoJwtPair");
+        assertThat(source).contains("googleJwtPair");
+        assertThat(source).contains("appleJwtPair");
         assertThat(source).doesNotContain("SessionUtils.clearSession");
         assertThat(source).doesNotContain(".header(\"Set-Cookie\", cookieValue)");
+        // URL 쿼리에 JWT 금지 — 세션 1회 교환 SSOT
+        assertThat(source).doesNotContain("sb.append(\"&accessToken=\")");
+        assertThat(source).doesNotContain("sb.append(\"&refreshToken=\")");
     }
 
     @Test
@@ -206,7 +221,7 @@ class OAuth2ControllerWebOAuthSessionTest {
     }
 
     @Test
-    @DisplayName("FE 회귀: OAuth2Callback 에 oauth2_token placeholder 없음")
+    @DisplayName("FE 회귀: OAuth2Callback 는 웹 세션 JWT 교환·서버 검증 후에만 로그인")
     void oauth2Callback_hasNoPlaceholderTokens() throws Exception {
         Path callbackSource = Path.of("frontend/src/components/auth/OAuth2Callback.js");
         String source = Files.readString(callbackSource);
@@ -214,5 +229,51 @@ class OAuth2ControllerWebOAuthSessionTest {
         assertThat(source).doesNotContain("oauth2_token");
         assertThat(source).doesNotContain("oauth2_refresh_token");
         assertThat(source).contains("oauthSessionTokens");
+        assertThat(source).contains("OAUTH_ACCESS_TOKEN_REQUIRED_MESSAGE");
+        assertThat(source).contains("requireServerVerify: true");
+        assertThat(source).contains("OAUTH2_WEB_SESSION_TOKENS");
+        assertThat(source).doesNotContain("searchParams.get('accessToken')");
+        assertThat(source).doesNotContain("accessToken: oauthAccessToken");
+    }
+
+    @Test
+    @DisplayName("claimWebOAuthSessionTokens: 세션 JWT 1회 반환 후 속성 제거")
+    void claimWebOAuthSessionTokens_returnsAndClears() {
+        User user = sampleUser();
+        MockHttpSession session = new MockHttpSession();
+        SessionUtils.setCurrentUser(session, user);
+        session.setAttribute(OAuth2Controller.SESSION_ATTR_WEB_OAUTH_ACCESS_TOKEN, "access-jwt");
+        session.setAttribute(OAuth2Controller.SESSION_ATTR_WEB_OAUTH_REFRESH_TOKEN, "refresh-jwt");
+
+        ResponseEntity<?> response = controller.claimWebOAuthSessionTokens(session);
+
+        assertThat(response.getStatusCode().is2xxSuccessful()).isTrue();
+        @SuppressWarnings("unchecked")
+        com.coresolution.core.dto.ApiResponse<Map<String, Object>> body =
+                (com.coresolution.core.dto.ApiResponse<Map<String, Object>>) response.getBody();
+        assertThat(body).isNotNull();
+        assertThat(body.isSuccess()).isTrue();
+        assertThat(body.getData().get("accessToken")).isEqualTo("access-jwt");
+        assertThat(body.getData().get("refreshToken")).isEqualTo("refresh-jwt");
+        assertThat(session.getAttribute(OAuth2Controller.SESSION_ATTR_WEB_OAUTH_ACCESS_TOKEN)).isNull();
+        assertThat(session.getAttribute(OAuth2Controller.SESSION_ATTR_WEB_OAUTH_REFRESH_TOKEN)).isNull();
+    }
+
+    @Test
+    @DisplayName("issueWebOAuthJwtPair: generateToken·refreshToken·createRefreshToken 호출")
+    void issueWebOAuthJwtPair_issuesAndPersistsTokens() throws Exception {
+        User user = sampleUser();
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        when(dynamicPermissionService.getUserPermissionsAsStringList(any())).thenReturn(List.of());
+        when(jwtService.generateToken(eq(user), any())).thenReturn("access-jwt-web-oauth");
+        when(jwtService.generateRefreshToken(eq(user))).thenReturn("refresh-jwt-web-oauth");
+
+        Method method = OAuth2Controller.class.getDeclaredMethod("issueWebOAuthJwtPair",
+                User.class, HttpServletRequest.class);
+        method.setAccessible(true);
+        String[] pair = (String[]) method.invoke(controller, user, request);
+
+        assertThat(pair).containsExactly("access-jwt-web-oauth", "refresh-jwt-web-oauth");
+        verify(refreshTokenService).createRefreshToken(eq(user), eq("refresh-jwt-web-oauth"), eq(request));
     }
 }

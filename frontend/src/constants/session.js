@@ -21,6 +21,13 @@ export const SESSION_IDLE_WARNING_MS = 60 * 1000;
 // 세션 확인 타임아웃 (밀리초)
 export const SESSION_CHECK_TIMEOUT = 10 * 1000; // 10초
 
+/**
+ * checkSession 호출자가 기다리는 상한.
+ * fetch AbortSignal(SESSION_CHECK_TIMEOUT)이 안 풀리는 경우(중복 in-flight, refresh 대기)에도
+ * 로그인 버튼의 '처리중'이 이 시간 넘게 고정되지 않게 한다.
+ */
+export const SESSION_CHECK_CALLER_CAP_MS = SESSION_CHECK_TIMEOUT + 2 * 1000;
+
 /** 401/403 후 current-user 재확인 fetch 재시도 간격(백오프). 횟수 = 배열 길이만큼 재시도. */
 export const SESSION_VERIFY_FETCH_RETRY_DELAYS_MS = [300, 700];
 
@@ -173,3 +180,42 @@ export const DUPLICATE_LOGIN_REDIRECT_SEARCH = '?reason=duplicate-login';
 
 /** URL searchParam {@code reason} 값 — 중복 로그인 안내 */
 export const DUPLICATE_LOGIN_REASON_VALUE = 'duplicate-login';
+
+/**
+ * 로그인 직후 parallel XHR(브랜딩·LNB·공통코드) 401 레이스 완화용 TTL.
+ * one-shot removeItem 대신 이 창 안에서는 /login 킥을 스킵한다.
+ */
+export const JUST_LOGGED_IN_TTL_MS = 20 * 1000;
+
+/** sessionStorage 키 — 로그인 직후 플래그 */
+export const JUST_LOGGED_IN_KEY = 'justLoggedIn';
+
+/** sessionStorage 키 — justLoggedIn 설정 시각(ms epoch 문자열) */
+export const JUST_LOGGED_IN_AT_KEY = 'justLoggedInAt';
+
+/**
+ * refresh-token 200 직후 burst(current-user 재검증 레이스) 완화용 TTL.
+ * 이 창 안에서는 후속 current-user 401 로 /login 킥하지 않는다.
+ */
+export const JUST_REFRESHED_TTL_MS = 12 * 1000;
+
+/** sessionStorage 키 — 토큰 갱신 직후 플래그 */
+export const JUST_REFRESHED_KEY = 'justRefreshed';
+
+/** sessionStorage 키 — justRefreshed 설정 시각(ms epoch 문자열) */
+export const JUST_REFRESHED_AT_KEY = 'justRefreshedAt';
+
+/**
+ * shell chrome API — 401/403 이어도 /login 으로 리다이렉트하지 않음 (soft-fail).
+ * path substring 매칭, query string 무시. 전체 API 로 확대 금지.
+ */
+export const SESSION_SOFT_FAIL_URL_PATHS = Object.freeze([
+  '/api/v1/admin/branding',
+  '/api/admin/branding',
+  '/api/v1/menus/lnb',
+  '/api/v1/menus/user',
+  '/api/v1/menus/admin',
+  '/api/v1/common-codes',
+  '/api/v1/consultation-messages/unread-count',
+  '/api/v1/notifications/unread-count'
+]);

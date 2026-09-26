@@ -16,7 +16,12 @@ import {
   refreshAccessTokenPair,
   shouldSkipTokenRefreshOn401
 } from './authTokenRefresh';
-import { isPublicSpaPath } from './publicSpaPaths';
+import {
+  hasStoredAccessToken,
+  hasStoredRefreshToken,
+  isSessionSoftFailUrl,
+  isWithinAuthGraceWindow
+} from './sessionAuthPolicy';
 import {
   AJAX_PARSE_RESPONSE_FAILED,
   AJAX_TENANT_INFO_MISSING_RELOGIN,
@@ -110,26 +115,47 @@ const tryRefreshAccessTokenForRetry = async(requestUrl, alreadyRetried) => {
   return tokens != null;
 };
 
-// 세션 체크 및 리다이렉트 공통 함수
-const checkSessionAndRedirect = async(response) => {
+/**
+ * 401/403 시 세션 재확인 후 /login 리다이렉트 여부.
+ * soft-fail URL·auth grace(justLoggedIn/justRefreshed)·refresh 후 explicit Bearer 재검증.
+ *
+ * @param {Response} response
+ * @param {string} [requestUrl=''] 원 요청 URL (soft-fail 매칭용)
+ * @param {{ authGraceAtStart?: boolean }} [options]
+ *   authGraceAtStart: 원 요청 시작 시점의 auth grace 여부. 응답이 TTL 뒤에 도착해도 킥하지 않는다.
+ * @returns {Promise<boolean>} true 이면 로그인으로 리다이렉트됨
+ */
+export const checkSessionAndRedirect = async(response, requestUrl = '', options = {}) => {
+  const authGraceAtStart = options.authGraceAtStart === true;
   const isLocalEnv = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
   if (isLocalEnv) {
     return false;
   }
 
-  // 현재 페이지가 로그인·공개 SPA(카탈로그 등)인지 확인
+  // 현재 페이지가 로그인 페이지인지 확인
   const currentPath = window.location.pathname;
   const isLoginPage = currentPath === '/login' || currentPath.startsWith('/login/');
-  const isPublicPage = isPublicSpaPath(currentPath);
 
   // 401, 403 오류 시에만 세션 체크 (500 오류는 서버 오류이므로 세션 체크하지 않음)
   if (response.status === 401 || response.status === 403) {
-    // 이미 로그인·공개 페이지에 있으면 리다이렉트하지 않음
-    if (isLoginPage || isPublicPage) {
-      console.log('🔐 공개/로그인 페이지 - 리다이렉트 스킵:', currentPath);
+    // shell chrome(브랜딩·LNB·unread-count 등) — 리다이렉트하지 않음
+    if (isSessionSoftFailUrl(requestUrl)) {
+      console.log('🔐 shell chrome soft-fail URL - checkSessionAndRedirect 스킵:', requestUrl);
       return false;
     }
-    
+
+    // justLoggedIn / justRefreshed TTL — 킥 스킵 (병렬 401 레이스, 요청 시작 시점 기준 포함)
+    if (authGraceAtStart || isWithinAuthGraceWindow()) {
+      console.log('🔐 auth grace TTL 창 - checkSessionAndRedirect 스킵');
+      return false;
+    }
+
+    // 이미 로그인 페이지에 있으면 리다이렉트하지 않음
+    if (isLoginPage) {
+      console.log('🔐 이미 로그인 페이지에 있음 - 리다이렉트 스킵');
+      return false;
+    }
+
     const verifyUrl = `${getApiBaseUrl()}/api/v1/auth/current-user`;
     const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
     let lastVerifyError;
@@ -156,6 +182,55 @@ const checkSessionAndRedirect = async(response) => {
           return false;
         }
         if (verifyStatus === 401) {
+          // soft-fail / login / grace — 킥 금지 (동일 burst 후속 401 포함)
+          if (isSessionSoftFailUrl(requestUrl) || isLoginPage || authGraceAtStart || isWithinAuthGraceWindow()) {
+            console.log('🔐 verify 401 soft-skip (soft-fail/login/grace)');
+            return false;
+          }
+
+          if (hasStoredAccessToken() || hasStoredRefreshToken()) {
+            const refreshed = await refreshAccessTokenPair();
+            if (!refreshed) {
+              console.log('🔐 refresh 실패 - 로그인 페이지로 리다이렉트');
+              redirectToLoginPageOnce();
+              return true;
+            }
+
+            // refresh 200 후 explicit Bearer 로만 재검증 — fall-through 킥 금지
+            try {
+              const retryVerify = await fetch(verifyUrl, {
+                credentials: 'include',
+                method: 'GET',
+                mode: 'cors',
+                headers: {
+                  ...getDefaultHeaders(),
+                  Authorization: `Bearer ${refreshed.accessToken}`
+                }
+              });
+              if (retryVerify.ok) {
+                console.log('🔐 refresh 후 세션 확인 성공 - 리다이렉트 스킵');
+                return false;
+              }
+              if (retryVerify.status >= 500) {
+                console.warn('🔐 refresh 후 verify 서버 오류:', retryVerify.status);
+                notifyTransientNetworkIssue();
+                return false;
+              }
+              if (retryVerify.status === 401) {
+                console.log('🔐 refresh 후 verify 401 - 로그인 페이지로 리다이렉트');
+                redirectToLoginPageOnce();
+                return true;
+              }
+              console.log('🔐 refresh 후 verify 비-401:', retryVerify.status);
+              return false;
+            } catch (retryErr) {
+              console.warn('🔐 refresh 후 verify 재시도 실패:', retryErr);
+              notifyTransientNetworkIssue();
+              return false;
+            }
+          }
+
+          // 토큰 없음 + grace 밖 + current-user 401
           console.log('🔐 세션 없음 - 로그인 페이지로 리다이렉트 (서브도메인 유지)');
           redirectToLoginPageOnce();
           return true;
@@ -178,13 +253,13 @@ const checkSessionAndRedirect = async(response) => {
     notifyTransientNetworkIssue();
     return false;
   }
-  
+
   // 500 오류는 서버 오류이므로 세션 체크하지 않음
   if (response.status >= 500) {
     console.log('⚠️ 서버 오류 (500) - 세션 체크 스킵');
     return false;
   }
-  
+
   return false; // 리다이렉트되지 않음
 };
 
@@ -214,7 +289,8 @@ export const apiGet = async(endpoint, params = {}, options = {}) => {
     
     const headers = { ...getDefaultHeaders(), ...optionHeaders };
     console.log('📤 API GET 요청:', { url, headers: { ...headers, 'Authorization': headers['Authorization'] ? 'Bearer ***' : undefined, 'X-Tenant-Id': headers['X-Tenant-Id'] } });
-    
+
+    const authGraceAtStart = isWithinAuthGraceWindow();
     const response = await fetch(url, {
       method: 'GET',
       headers,
@@ -274,7 +350,14 @@ export const apiGet = async(endpoint, params = {}, options = {}) => {
               throw err; // 로컬에서는 빈 목록으로 오인하지 않도록 throw
             }
             const currentPath = window.location.pathname;
-            const isPublicPage = isPublicSpaPath(currentPath);
+            const isPublicPage = currentPath === '/login' ||
+                               currentPath.startsWith('/login/') ||
+                               currentPath === '/landing' ||
+                               currentPath === '/' ||
+                               currentPath.startsWith('/register') ||
+                               currentPath.startsWith('/forgot-password') ||
+                               currentPath.startsWith('/reset-password') ||
+                               currentPath.startsWith('/auth/oauth2/callback');
 
             if (!isPublicPage) {
               console.log('🔐 400 오류 (Tenant ID 부족) - 로그인 페이지로 리다이렉트 (서브도메인 유지)');
@@ -289,7 +372,7 @@ export const apiGet = async(endpoint, params = {}, options = {}) => {
       }
       
       // 세션 체크 및 리다이렉트
-      const redirected = await checkSessionAndRedirect(response);
+      const redirected = await checkSessionAndRedirect(response, url, { authGraceAtStart });
       if (redirected) {
       return null; // 리다이렉트됨
       }
@@ -356,7 +439,14 @@ export const apiGet = async(endpoint, params = {}, options = {}) => {
           throw error;
         }
         const currentPath = window.location.pathname;
-        const isPublicPage = isPublicSpaPath(currentPath);
+        const isPublicPage = currentPath === '/login' ||
+                           currentPath.startsWith('/login/') ||
+                           currentPath === '/landing' ||
+                           currentPath === '/' ||
+                           currentPath.startsWith('/register') ||
+                           currentPath.startsWith('/forgot-password') ||
+                           currentPath.startsWith('/reset-password') ||
+                           currentPath.startsWith('/auth/oauth2/callback');
 
         if (!isPublicPage) {
           console.log('🔐 400 오류 (Tenant ID 부족) - 로그인 페이지로 리다이렉트 (서브도메인 유지)');
@@ -379,7 +469,14 @@ export const apiGet = async(endpoint, params = {}, options = {}) => {
         throw error;
       }
       const currentPath = window.location.pathname;
-      const isPublicPage = isPublicSpaPath(currentPath);
+      const isPublicPage = currentPath === '/login' ||
+                         currentPath.startsWith('/login/') ||
+                         currentPath === '/landing' ||
+                         currentPath === '/' ||
+                         currentPath.startsWith('/register') ||
+                         currentPath.startsWith('/forgot-password') ||
+                         currentPath.startsWith('/reset-password') ||
+                         currentPath.startsWith('/auth/oauth2/callback');
 
       if (!isPublicPage) {
         console.log('🔐 401 오류 - 로그인 페이지로 리다이렉트 (서브도메인 유지)');
@@ -397,7 +494,14 @@ export const apiGet = async(endpoint, params = {}, options = {}) => {
         throw error;
       }
       const currentPath = window.location.pathname;
-      const isPublicPage = isPublicSpaPath(currentPath);
+      const isPublicPage = currentPath === '/login' ||
+                         currentPath.startsWith('/login/') ||
+                         currentPath === '/landing' ||
+                         currentPath === '/' ||
+                         currentPath.startsWith('/register') ||
+                         currentPath.startsWith('/forgot-password') ||
+                         currentPath.startsWith('/reset-password') ||
+                         currentPath.startsWith('/auth/oauth2/callback');
 
       if (isPublicPage) {
         console.log('🔐 네트워크 오류 - 공개 페이지 - 리다이렉트 없음');
@@ -421,6 +525,7 @@ export const apiPost = async(endpoint, data = {}, options = {}) => {
     });
 
     const { _authRetry, ...requestOptions } = options;
+    const authGraceAtStart = isWithinAuthGraceWindow();
     const response = await csrfTokenManager.post(endpoint, data, {
       ...requestOptions,
       headers: { ...getDefaultHeaders(), ...requestOptions.headers }
@@ -438,7 +543,7 @@ export const apiPost = async(endpoint, data = {}, options = {}) => {
       }
 
       // 세션 체크 및 리다이렉트
-      const redirected = await checkSessionAndRedirect(response);
+      const redirected = await checkSessionAndRedirect(response, requestUrl, { authGraceAtStart });
       if (redirected) {
         return null; // 리다이렉트됨
       }
@@ -482,6 +587,7 @@ export const apiPost = async(endpoint, data = {}, options = {}) => {
 export const apiPut = async(endpoint, data = {}, options = {}) => {
   try {
     const { _authRetry, ...requestOptions } = options;
+    const authGraceAtStart = isWithinAuthGraceWindow();
     const response = await csrfTokenManager.put(endpoint, data, {
       ...requestOptions,
       headers: { ...getDefaultHeaders(), ...requestOptions.headers }
@@ -516,7 +622,7 @@ export const apiPut = async(endpoint, data = {}, options = {}) => {
       }
 
       // 세션 체크 및 리다이렉트
-      const redirected = await checkSessionAndRedirect(response);
+      const redirected = await checkSessionAndRedirect(response, requestUrl, { authGraceAtStart });
       if (redirected) {
         return null; // 리다이렉트됨
       }
@@ -551,6 +657,7 @@ export const apiPut = async(endpoint, data = {}, options = {}) => {
 export const apiPatch = async(endpoint, data = {}, options = {}) => {
   try {
     const { _authRetry, ...requestOptions } = options;
+    const authGraceAtStart = isWithinAuthGraceWindow();
     const response = await csrfTokenManager.patch(endpoint, data, {
       ...requestOptions,
       headers: { ...getDefaultHeaders(), ...requestOptions.headers }
@@ -583,7 +690,7 @@ export const apiPatch = async(endpoint, data = {}, options = {}) => {
         return apiPatch(endpoint, data, { ...options, _authRetry: true });
       }
 
-      const redirected = await checkSessionAndRedirect(response);
+      const redirected = await checkSessionAndRedirect(response, requestUrl, { authGraceAtStart });
       if (redirected) {
         return null;
       }
@@ -619,6 +726,7 @@ export const apiPostFormData = async(endpoint, formData, options = {}) => {
     delete mergedHeaders['Content-Type'];
     delete mergedHeaders['content-type'];
 
+    const authGraceAtStart = isWithinAuthGraceWindow();
     const response = await csrfTokenManager.fetchWithCsrfMultipart(endpoint, {
       method: 'POST',
       body: formData,
@@ -648,7 +756,7 @@ export const apiPostFormData = async(endpoint, formData, options = {}) => {
       }
 
       // 세션 체크 및 리다이렉트 (400에서 tenantId 관련이면 리다이렉트할 수 있음)
-      const redirected = await checkSessionAndRedirect(response);
+      const redirected = await checkSessionAndRedirect(response, requestUrl, { authGraceAtStart });
       if (redirected) {
         return null;
       }
@@ -676,6 +784,7 @@ export const apiPostFormData = async(endpoint, formData, options = {}) => {
 export const apiDelete = async(endpoint, options = {}) => {
   try {
     const { _authRetry, ...requestOptions } = options;
+    const authGraceAtStart = isWithinAuthGraceWindow();
     const response = await csrfTokenManager.delete(endpoint, {
       ...requestOptions,
       headers: { ...getDefaultHeaders(), ...requestOptions.headers }
@@ -693,7 +802,7 @@ export const apiDelete = async(endpoint, options = {}) => {
       }
 
       // 세션 체크 및 리다이렉트
-      const redirected = await checkSessionAndRedirect(response);
+      const redirected = await checkSessionAndRedirect(response, requestUrl, { authGraceAtStart });
       if (redirected) {
         return null; // 리다이렉트됨
       }
@@ -737,6 +846,7 @@ export const apiUpload = async(endpoint, formData, options = {}) => {
     const headers = { ...getDefaultHeaders() };
     delete headers['Content-Type']; // multipart/form-data를 위해 제거
 
+    const authGraceAtStart = isWithinAuthGraceWindow();
     const response = await fetch(endpoint, {
       method: 'POST',
       headers: { ...headers, ...requestOptions.headers },
@@ -755,7 +865,7 @@ export const apiUpload = async(endpoint, formData, options = {}) => {
       }
 
       // 세션 체크 및 리다이렉트
-      const redirected = await checkSessionAndRedirect(response);
+      const redirected = await checkSessionAndRedirect(response, requestUrl, { authGraceAtStart });
       if (redirected) {
         return null; // 리다이렉트됨
       }

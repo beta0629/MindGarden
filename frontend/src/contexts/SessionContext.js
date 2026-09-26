@@ -182,6 +182,11 @@ export const SessionProvider = ({ children }) => {
         } else {
           dispatch({ type: SessionActionTypes.CLEAR_SESSION });
         }
+      } else if (sessionManager.getUser()) {
+        // auth grace 창의 401 등 sessionManager 가 사용자를 유지한 false — Context 도 유지 (ProtectedRoute 소프트 킥 방지)
+        console.log('⚠️ SessionProvider: checkSession false 이지만 sessionManager 가 사용자 유지');
+        dispatch({ type: SessionActionTypes.SET_USER, payload: sessionManager.getUser() });
+        dispatch({ type: SessionActionTypes.SET_LOGGED_IN, payload: true });
       } else {
         console.log('❌ SessionProvider: checkSession 실패(401 등), 로그인 상태 없음');
         dispatch({ type: SessionActionTypes.CLEAR_SESSION });
@@ -191,9 +196,17 @@ export const SessionProvider = ({ children }) => {
     return () => { cancelled = true; };
   }, []); // 빈 배열: 마운트 시 한 번만 실행
 
-  // 세션 체크 함수 (useCallback으로 메모이제이션)
+  /**
+   * 세션 체크 (useCallback 메모이제이션).
+   * options.silent: 로딩 오버레이 없음 + 백그라운드 확인(401 이어도 /login 리다이렉트 없음).
+   * options.background: 오버레이는 유지하되 백그라운드 확인.
+   * options.idleExpiry: 유휴 경고 만료 재확인. silent 여도 background 로 올리지 않는다.
+   */
   const checkSession = useCallback(async(force = false, options = {}) => {
     const silent = options.silent === true;
+    const idleExpiry = options.idleExpiry === true;
+    // 주기 폴·활동 ping 의 silent 는 background. 유휴 만료 재확인은 그 유지 정책에 넣지 않는다.
+    const background = idleExpiry ? false : (silent || options.background === true);
     const now = Date.now();
 
     // 강제가 아니면: sessionManager 최근 체크 후 3초 이내면 무조건 스킵 (무한루프 근본 방지)
@@ -225,7 +238,7 @@ export const SessionProvider = ({ children }) => {
     dispatch({ type: SessionActionTypes.SET_LAST_CHECK_TIME, payload: now });
 
     try {
-      const isLoggedIn = await sessionManager.checkSession(force);
+      const isLoggedIn = await sessionManager.checkSession(force, { background, idleExpiry });
       const user = sessionManager.getUser();
       const sessionInfo = sessionManager.getSessionInfo();
 
@@ -247,6 +260,10 @@ export const SessionProvider = ({ children }) => {
         // 지점 매핑 로직 제거됨 - 브랜치 코드 제거 정책
         
         console.log('✅ 중앙 세션 확인 완료:', user);
+      } else if (user) {
+        // sessionManager 가 사용자를 유지한 false(auth grace·백그라운드 401) — Context 도 유지해
+        // ProtectedRoute 가 /login 으로 소프트 킥하지 않게 한다. 확정 만료는 sessionManager 가 user=null 로 정리한다.
+        dispatch({ type: SessionActionTypes.SET_USER, payload: user });
       } else {
         dispatch({ type: SessionActionTypes.CLEAR_SESSION });
       }
@@ -329,7 +346,7 @@ export const SessionProvider = ({ children }) => {
         setTimeout(async() => {
           try {
             console.log('🔄 로그인 후 세션 확인 시작...');
-            const sessionCheckResult = await checkSession(true);
+            const sessionCheckResult = await checkSession(true, { background: true });
             if (sessionCheckResult) {
               console.log('✅ 로그인 후 세션 확인 완료');
             } else {
@@ -389,7 +406,7 @@ export const SessionProvider = ({ children }) => {
       setTimeout(async() => {
         try {
           console.log('🔄 테스트 로그인 후 세션 확인 시작...');
-          await checkSession(true);
+          await checkSession(true, { background: true });
           console.log('✅ 테스트 로그인 후 세션 확인 완료');
         } catch (error) {
           console.error('❌ 테스트 로그인 후 세션 확인 실패:', error);

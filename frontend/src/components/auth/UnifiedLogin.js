@@ -31,6 +31,7 @@ import { LOGIN_SESSION_CHECK_DELAY, DUPLICATE_LOGIN_REASON_VALUE } from '../../c
 import { useSession } from '../../contexts/SessionContext';
 import { authAPI } from '../../utils/ajax';
 import { sessionManager } from '../../utils/sessionManager';
+import { markJustLoggedIn } from '../../utils/sessionAuthPolicy';
 import { appleLogin, googleLogin, kakaoLogin, naverLogin } from '../../utils/socialLogin';
 import {
   OAUTH2_LOGIN_UI,
@@ -278,7 +279,7 @@ const UnifiedLogin = () => {
     if (!user?.id || isLoading || tooltip.show) return;
     let cancelled = false;
     (async() => {
-      const ok = await checkSession(true);
+      const ok = await checkSession(true, { background: true });
       if (cancelled) return;
       if (!ok) return;
       const validatedUser = sessionManager.getUser();
@@ -492,7 +493,7 @@ const UnifiedLogin = () => {
       });
 
       if (response.status === 401 || !response.ok) {
-        await checkSession(true);
+        await checkSession(true, { background: true });
         return;
       }
 
@@ -648,17 +649,20 @@ const UnifiedLogin = () => {
           loginData.user.tenantId = loginData.userResponse.tenantId;
         }
 
-        // sessionManager에 사용자 정보 설정 (세션 기반이므로 토큰 없음)
+        // sessionManager에 사용자 정보 + Bearer용 access/refresh 토큰 설정 (쿠키 세션과 병행)
         sessionManager.setUser(loginData.user, {
+          accessToken: loginData.accessToken,
+          refreshToken: loginData.refreshToken,
           sessionId: loginData.sessionId
         });
-        // SessionContext 동기화 (로그인 직후 공통코드 등에서 user 사용 가능하도록)
-        await checkSession(true);
-
-        // 로그인 직후 플래그 설정 (세션 체크 시 리다이렉트 방지)
-        sessionStorage.setItem('justLoggedIn', 'true');
-
+        // 로그인 직후 플래그 — checkSession 이전 설정(세션 가드 킥 방지)
+        markJustLoggedIn();
+        // 성공 툴팁이 떠 있으면 user-effect 가 같은 확인을 또 기다리지 않는다.
         showTooltip(t('auth:unifiedLogin.msg.loginSuccess'), 'success');
+        // current-user 가 안 끝나도 버튼 문구(처리중)를 붙잡지 않는다. 확인은 백그라운드.
+        void checkSession(true, { background: true }).catch((sessionError) => {
+          console.warn('로그인 직후 세션 확인 실패:', sessionError);
+        });
 
         // 임시 비밀번호로 로그인한 경우 비밀번호 변경 모달 표시
         if (result.data?.requiresPasswordChange || loginData.requiresPasswordChange) {
@@ -791,9 +795,9 @@ const UnifiedLogin = () => {
           accessToken: outcome.accessToken,
           refreshToken: outcome.refreshToken
         });
-        sessionStorage.setItem('justLoggedIn', 'true');
+        markJustLoggedIn();
         showTooltip(t('auth:unifiedLogin.msg.loginSuccess'), 'success');
-        await checkSession(true);
+        await checkSession(true, { background: true });
         const { redirectToDynamicDashboard } = await import('../../utils/dashboardUtils');
         await redirectToDynamicDashboard({ user: outcome.user }, navigate);
         return;
@@ -1221,7 +1225,8 @@ const UnifiedLogin = () => {
             
             // 세션 정보 다시 확인 후 대시보드로 이동
             try {
-              const checkResult = await checkSession(true);
+              markJustLoggedIn();
+              const checkResult = await checkSession(true, { background: true });
               if (checkResult && user) {
                 const { redirectToDynamicDashboard } = await import('../../utils/dashboardUtils');
                 await redirectToDynamicDashboard({ user }, navigate);
@@ -1266,10 +1271,14 @@ const UnifiedLogin = () => {
             const data = response?.data || response || {};
             const userObj = data?.user || data?.userResponse || data;
             if (userObj && userObj.id) {
-              sessionManager.setUser(userObj, { sessionId: data.sessionId });
+              sessionManager.setUser(userObj, {
+                accessToken: data.accessToken,
+                refreshToken: data.refreshToken,
+                sessionId: data.sessionId
+              });
             }
-            sessionStorage.setItem('justLoggedIn', 'true');
-            await checkSession(true);
+            markJustLoggedIn();
+            await checkSession(true, { background: true });
             setAccountSelectionModal({ isOpen: false, candidates: [], selectionToken: null });
             const { redirectToDynamicDashboard } = await import('../../utils/dashboardUtils');
             await redirectToDynamicDashboard({ user: userObj }, navigate);
@@ -1311,10 +1320,10 @@ const UnifiedLogin = () => {
               accessToken,
               refreshToken: refreshToken || accessToken
             });
-            sessionStorage.setItem('justLoggedIn', 'true');
+            markJustLoggedIn();
             setShowOAuthPhoneVerificationModal(false);
             setOAuthPhoneVerificationPayload(null);
-            await checkSession(true);
+            await checkSession(true, { background: true });
             const { redirectToDynamicDashboard } = await import('../../utils/dashboardUtils');
             await redirectToDynamicDashboard({ user: userInfo }, navigate);
           }}

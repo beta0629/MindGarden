@@ -8,6 +8,10 @@
 
 import { toDisplayString, toSafeNumber } from '../../../../../utils/safeDisplay';
 import { SHOP_SINGLE_SESSION_COUNT } from '../../../../../utils/shopSessionCount';
+import {
+  MAPPING_STATUS_PAYMENT_CONFIRMED,
+  MAPPING_STATUS_PENDING_PAYMENT
+} from '../../constants/integratedScheduleSidebarFilterConstants';
 
 export const CARD_BILLING_PROGRESS_TEST_ID = 'mapping-card-billing-progress';
 /** @deprecated 카드 접이식 제거 — Side Peek 아코디언 test id 사용 */
@@ -114,9 +118,22 @@ export const buildInstitutionLinkCumulativeSentence = (mappingOrCount) => {
 };
 
 /**
+ * 입금 확인 전 매핑이면 완료 일정으로 진행·잔여를 다시 쓰지 않는다.
+ *
+ * @param {object|null|undefined} mappingOrCounts
+ * @returns {boolean}
+ */
+const isPreDepositSessionCount = (mappingOrCounts) => {
+  const status = toDisplayString(mappingOrCounts?.status, '').trim();
+  return status === MAPPING_STATUS_PENDING_PAYMENT
+    || status === MAPPING_STATUS_PAYMENT_CONFIRMED;
+};
+
+/**
  * 회기권 카드 누적 진행 수치.
  * 단회기(total=1)이고 이 매핑 {@code consultationSchedules} 에 COMPLETED 가 있으면
  * 저장된 used=0·remaining=1 이어도 진행 1·잔여 0.
+ * 입금 전(PENDING_PAYMENT, PAYMENT_CONFIRMED)은 COMPLETED 가 있어도 저장값을 유지한다.
  * 다회기·완료 일정이 없는 단회기는 매핑 필드 그대로.
  *
  * @param {object|null|undefined} mappingOrCounts
@@ -124,6 +141,9 @@ export const buildInstitutionLinkCumulativeSentence = (mappingOrCount) => {
  */
 export const resolveBillingProgressCounts = (mappingOrCounts) => {
   const base = resolveMappingSessionCounts(mappingOrCounts);
+  if (isPreDepositSessionCount(mappingOrCounts)) {
+    return base;
+  }
   if (base.total !== SHOP_SINGLE_SESSION_COUNT) {
     return base;
   }

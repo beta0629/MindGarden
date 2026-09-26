@@ -48,6 +48,28 @@ describe('cardBillingProgressDisplay', () => {
     expect(buildBillingProgressSentence(mapping)).toBe('누적 진행 1회 / 총 1회 · 잔여 0');
   });
 
+  it('pre-deposit provisional keeps stored counts even with a completed schedule', () => {
+    expect(buildBillingProgressSentence({
+      status: 'PENDING_PAYMENT',
+      paymentStatus: 'PENDING',
+      usedSessions: 0,
+      totalSessions: 1,
+      remainingSessions: 0,
+      consultationSchedules: [
+        { id: 1, date: '2026-09-20', status: 'COMPLETED' }
+      ]
+    })).toBe('누적 진행 0회 / 총 1회 · 잔여 0');
+    expect(resolveBillingProgressCounts({
+      status: 'PAYMENT_CONFIRMED',
+      usedSessions: 0,
+      totalSessions: 1,
+      remainingSessions: 0,
+      consultationSchedules: [
+        { id: 2, date: '2026-09-20', status: 'CONFIRMED' }
+      ]
+    })).toEqual({ used: 0, total: 1, remaining: 0 });
+  });
+
   it('single session without a completed schedule keeps stored remaining', () => {
     expect(buildBillingProgressSentence({
       usedSessions: 0,

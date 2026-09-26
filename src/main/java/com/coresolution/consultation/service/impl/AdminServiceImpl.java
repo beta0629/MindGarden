@@ -5756,6 +5756,8 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
      * <p>{@code totalSessions == 1} 이고 이 매핑에 COMPLETED 상담 일정이 있으면,
      * 저장된 status 가 ACTIVE 여도 used=1, remaining=0, status=SESSIONS_EXHAUSTED 로 저장한다.
      * 이미 소진된 행은 다시 쓰지 않는다. tenantId 가 없으면 갱신하지 않는다.
+     * 입금 전 가예약({@code PENDING_PAYMENT})과 결제만 확인된 미수금({@code PAYMENT_CONFIRMED})은
+     * COMPLETED 일정이 있어도 소진으로 바꾸지 않는다.
      * 다회기·기관연동·바우처·예약만 있는 단회기와 패키지 금액은 바꾸지 않는다.</p>
      *
      * @param pageMappings 목록 페이지
@@ -5811,7 +5813,8 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
      *
      * @param mapping 매핑
      * @param tenantId 현재 테넌트
-     * @return ACTIVE 단회기 회기권이고 매핑 tenantId 가 현재 테넌트와 같으면 true
+     * @return ACTIVE 단회기 회기권이고 매핑 tenantId 가 현재 테넌트와 같으면 true.
+     *         입금 전 {@code PENDING_PAYMENT}/{@code PAYMENT_CONFIRMED} 는 false
      */
     private boolean isCompletedSingleSessionExhaustionCandidate(ConsultantClientMapping mapping,
             String tenantId) {
@@ -5822,7 +5825,13 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         if (mappingTenantId == null || mappingTenantId.isBlank() || !tenantId.equals(mappingTenantId)) {
             return false;
         }
-        if (mapping.getStatus() != ConsultantClientMapping.MappingStatus.ACTIVE) {
+        ConsultantClientMapping.MappingStatus status = mapping.getStatus();
+        // 입금 전: 가예약(PENDING_PAYMENT, 결제상태 PENDING)과 미수금(PAYMENT_CONFIRMED)은 소진하지 않는다.
+        if (status == ConsultantClientMapping.MappingStatus.PENDING_PAYMENT
+                || status == ConsultantClientMapping.MappingStatus.PAYMENT_CONFIRMED) {
+            return false;
+        }
+        if (status != ConsultantClientMapping.MappingStatus.ACTIVE) {
             return false;
         }
         if (!PaymentTimingConstants.usesSessionPackRemainingGate(mapping.getPaymentTiming())) {

@@ -85,7 +85,7 @@ export function buildMappingEntityActionItems({
     && paymentTiming === PAYMENT_TIMING_SAME_DAY_CARD;
 
   // 정상 경로: PENDING_PAYMENT → 원샷 (당일/ADVANCE 모두). stepwise payment 는 onCheckoutSameDay 미전달 시에만 escape.
-  // rem≤0 unpaid soft 는 당일결제(checkout-same-day) CTA 숨김 — confirm-and-activate 로 폴스루하지 않음.
+  // 입금 전 가예약은 remaining 0 이어도 checkout-same-day 를 숨기지 않는다. confirm-and-activate 로 폴스루하지 않음.
   if (isSameDayCardPending && onCheckoutSameDay) {
     if (shouldShowUnpaidSoftCheckoutCta(mapping)) {
       items.push({

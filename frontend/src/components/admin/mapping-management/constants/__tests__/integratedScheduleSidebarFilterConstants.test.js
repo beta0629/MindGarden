@@ -13,7 +13,9 @@ import {
   isSameDayCardPending,
   normalizedRemainingSessions,
   isInstitutionLinkMapping,
+  isPreDepositMappingStatus,
   shouldExcludeFromAssignmentQueues,
+  shouldShowUnpaidSoftCheckoutCta,
   MAPPING_STATUS_ACTIVE,
   MAPPING_STATUS_CANCELLED,
   MAPPING_STATUS_DEPOSIT_PENDING,
@@ -229,6 +231,54 @@ describe('integratedScheduleSidebarFilterConstants', () => {
       };
       expect(isCompletedSingleSessionExhausted(mapping)).toBe(false);
       expect(isEligibleForAssignmentQueues(mapping)).toBe(true);
+    });
+
+    it('가예약 + 예약 확정 + 입금 미확인 + 잔여 0 은 소진이 아니고 신규배정에 남는다', () => {
+      const mapping = {
+        status: MAPPING_STATUS_PENDING_PAYMENT,
+        paymentStatus: 'PENDING',
+        paymentTiming: PAYMENT_TIMING_SAME_DAY_CARD,
+        depositConfirmed: false,
+        totalSessions: 1,
+        usedSessions: 0,
+        remainingSessions: 0,
+        consultationSchedules: [{ id: 21, status: 'CONFIRMED' }]
+      };
+      expect(isPreDepositMappingStatus(mapping)).toBe(true);
+      expect(shouldShowUnpaidSoftCheckoutCta(mapping)).toBe(true);
+      expect(isCompletedSingleSessionExhausted(mapping)).toBe(false);
+      expect(shouldExcludeFromAssignmentQueues(mapping)).toBe(false);
+      expect(isSessionsExhaustedListMapping(mapping)).toBe(false);
+    });
+
+    it('가예약에 COMPLETED 일정이 있어도 입금 전이면 소진으로 보지 않는다', () => {
+      const mapping = {
+        status: MAPPING_STATUS_PENDING_PAYMENT,
+        paymentStatus: 'PENDING',
+        paymentTiming: PAYMENT_TIMING_SAME_DAY_CARD,
+        totalSessions: 1,
+        usedSessions: 0,
+        remainingSessions: 0,
+        consultationSchedules: [{ id: 22, status: 'COMPLETED' }]
+      };
+      expect(isCompletedSingleSessionExhausted(mapping)).toBe(false);
+      expect(shouldExcludeFromAssignmentQueues(mapping)).toBe(false);
+      expect(isEligibleForAssignmentQueues(mapping)).toBe(true);
+    });
+
+    it('PAYMENT_CONFIRMED 잔여 0 은 입금 확인 전이라 소진·신규배정 제외가 아니다', () => {
+      const mapping = {
+        status: MAPPING_STATUS_PAYMENT_CONFIRMED,
+        paymentStatus: 'CONFIRMED',
+        totalSessions: 1,
+        usedSessions: 0,
+        remainingSessions: 0,
+        consultationSchedules: [{ id: 23, status: 'COMPLETED' }]
+      };
+      expect(isPreDepositMappingStatus(mapping)).toBe(true);
+      expect(shouldShowUnpaidSoftCheckoutCta(mapping)).toBe(false);
+      expect(isCompletedSingleSessionExhausted(mapping)).toBe(false);
+      expect(shouldExcludeFromAssignmentQueues(mapping)).toBe(false);
     });
 
     it('이미 회기 소진인 행은 종료 목록에 포함한다', () => {

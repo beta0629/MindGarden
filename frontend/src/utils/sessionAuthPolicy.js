@@ -16,7 +16,7 @@ import {
   SESSION_KEYS,
   SESSION_SOFT_FAIL_URL_PATHS
 } from '../constants/session';
-import { isSoftFailEnabled } from './sessionSecurityFlags';
+import { isSoftFailEnabled } from './sessionSecurityFlagsCache';
 
 /**
  * URL 경로에서 query 를 제거한 pathname 유사 문자열.

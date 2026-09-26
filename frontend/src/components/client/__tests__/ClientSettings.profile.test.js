@@ -35,6 +35,14 @@ jest.mock('../../../contexts/SessionContext', () => ({
   useSession: () => mockUseSession()
 }));
 
+jest.mock('../../../contexts/NotificationContext', () => ({
+  useNotification: () => ({
+    unreadCount: 0,
+    unreadMessageCount: 0,
+    unreadSystemCount: 0
+  })
+}));
+
 jest.mock('../../../hooks/useBranding', () => ({
   useBranding: () => ({
     brandingInfo: { companyName: '햇살상담센터' },
@@ -275,7 +283,7 @@ describe('ClientSettings — profile form · PortOne session fields', () => {
     expect(sessionManager.user.isPhoneVerified).toBe(false);
     expect(sessionManager.setUser).toHaveBeenCalled();
     expect(mockNotifyListeners).toHaveBeenCalled();
-    expect(mockCheckSession).toHaveBeenCalledWith(true);
+    expect(mockCheckSession).toHaveBeenCalledWith(true, { silent: true });
     expect(notificationManager.show).toHaveBeenCalledWith(
       CLIENT_WEB_SUITE_COPY.SETTINGS_SAVE_SUCCESS,
       'success'
@@ -336,7 +344,7 @@ describe('ClientSettings — profile form · PortOne session fields', () => {
     expect(sessionManager.user.phoneNumber).toBe('01055556666');
     expect(sessionManager.user.phoneVerified).toBe(true);
     expect(mockNotifyListeners).toHaveBeenCalled();
-    expect(mockCheckSession).toHaveBeenCalledWith(true);
+    expect(mockCheckSession).toHaveBeenCalledWith(true, { silent: true });
     expect(
       await screen.findByTestId(CLIENT_WEB_SUITE_TEST_IDS.SETTINGS_PHONE_VERIFIED_STATUS)
     ).toHaveTextContent(CLIENT_WEB_SUITE_COPY.SETTINGS_PHONE_VERIFIED_BADGE);

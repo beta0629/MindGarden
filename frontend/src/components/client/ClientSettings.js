@@ -7,7 +7,7 @@
  * @since 2026-09-18
  */
 
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSession } from '../../contexts/SessionContext';
 import { CLIENT_SETTINGS_API, MYPAGE_API } from '../../constants/api';
@@ -23,6 +23,8 @@ import {
   normalizeKoreanMobileDigits
 } from '../../utils/koreanMobilePhone';
 import { toDisplayString } from '../../utils/safeDisplay';
+import { runResourceLoad, softRefresh } from '../../utils/softRefresh';
+import { redirectToLoginPageOnce } from '../../utils/sessionRedirect';
 import SafeText from '../common/SafeText';
 import UnifiedLoading from '../common/UnifiedLoading';
 import EmailChangeModal from '../mypage/components/EmailChangeModal';
@@ -81,6 +83,9 @@ const buildNotifyPutBody = (notify) => ({
 const ClientSettings = () => {
   const { t } = useTranslation(['settings']);
   const { user, checkSession } = useSession();
+  const userId = user?.id ?? null;
+  const userRef = useRef(user);
+  userRef.current = user;
   const [loading, setLoading] = useState(true);
   const [savingProfile, setSavingProfile] = useState(false);
   const [fullName, setFullName] = useState('');
@@ -116,49 +121,49 @@ const ClientSettings = () => {
     setVerifiedPhoneDigits(verified && digits && isValidKoreanMobileDigits(digits) ? digits : null);
   }, []);
 
+  /**
+   * Profile/settings load — SSOT softRefresh.
+   * Initial: silent omitted → setLoading. Post-mutation: softRefresh → silent, no blank.
+   * Dep on userId only so silent checkSession SET_USER does not remount-load.
+   *
+   * @param {{ silent?: boolean }} [options]
+   */
+  const loadSettings = useCallback(async(options = {}) => {
+    const sessionUser = userRef.current;
+    if (!sessionUser?.id) {
+      setLoading(false);
+      return;
+    }
+
+    await runResourceLoad(options, setLoading, async() => {
+      const [profileResult, settingsResult] = await Promise.allSettled([
+        StandardizedApi.get(MYPAGE_API.GET_INFO),
+        StandardizedApi.get(CLIENT_SETTINGS_API.GET)
+      ]);
+
+      if (profileResult.status === 'fulfilled' && profileResult.value) {
+        applyProfileFields(profileResult.value, sessionUser);
+      } else {
+        applyProfileFields(null, sessionUser);
+        if (profileResult.status === 'rejected') {
+          console.error(CLIENT_WEB_SUITE_COPY.SETTINGS_LOAD_ERROR, profileResult.reason);
+        }
+      }
+
+      if (settingsResult.status === 'fulfilled' && settingsResult.value) {
+        setNotify(mapNotifyFromApi(settingsResult.value));
+      }
+    });
+  }, [applyProfileFields]);
+
   useEffect(() => {
-    let cancelled = false;
-
-    const load = async() => {
-      if (!user) {
-        setLoading(false);
-        return;
-      }
-      setLoading(true);
-      try {
-        const [profileResult, settingsResult] = await Promise.allSettled([
-          StandardizedApi.get(MYPAGE_API.GET_INFO),
-          StandardizedApi.get(CLIENT_SETTINGS_API.GET)
-        ]);
-
-        if (cancelled) {
-          return;
-        }
-
-        if (profileResult.status === 'fulfilled' && profileResult.value) {
-          applyProfileFields(profileResult.value, user);
-        } else {
-          applyProfileFields(null, user);
-          if (profileResult.status === 'rejected') {
-            console.error(CLIENT_WEB_SUITE_COPY.SETTINGS_LOAD_ERROR, profileResult.reason);
-          }
-        }
-
-        if (settingsResult.status === 'fulfilled' && settingsResult.value) {
-          setNotify(mapNotifyFromApi(settingsResult.value));
-        }
-      } finally {
-        if (!cancelled) {
-          setLoading(false);
-        }
-      }
-    };
-
-    load();
-    return () => {
-      cancelled = true;
-    };
-  }, [user, applyProfileFields]);
+    if (!userId) {
+      setLoading(false);
+      return undefined;
+    }
+    void loadSettings({ silent: false });
+    return undefined;
+  }, [userId, loadSettings]);
 
   const refreshSessionAfterProfileSave = useCallback(
     async({
@@ -193,8 +198,9 @@ const ClientSettings = () => {
         }
       }
 
+      // silent: 로딩 오버레이·foreground 401 킥 없이 Context 동기화 (background-401 정책 유지)
       if (typeof checkSession === 'function') {
-        await checkSession(true);
+        await checkSession(true, { silent: true });
       }
 
       // OTP 성공 직후 current-user 가 verified/phone 을 비우면 동일 번호로 재병합 후 Context 갱신
@@ -242,7 +248,7 @@ const ClientSettings = () => {
         }
       }
       if (typeof checkSession === 'function') {
-        await checkSession(true);
+        await checkSession(true, { silent: true });
       }
     },
     [checkSession]
@@ -324,6 +330,7 @@ const ClientSettings = () => {
         phoneVerified: effectiveVerified,
         phoneVerifiedAt: effectiveVerified ? response?.phoneVerifiedAt : null
       });
+      await softRefresh(loadSettings);
 
       setMessage(CLIENT_WEB_SUITE_COPY.SETTINGS_SAVE_SUCCESS);
       notificationManager.show(CLIENT_WEB_SUITE_COPY.SETTINGS_SAVE_SUCCESS, 'success');
@@ -356,12 +363,11 @@ const ClientSettings = () => {
 
   const handleEmailChangeSuccess = useCallback(async() => {
     try {
+      // logout() finally 가 서브도메인 유지 1회 replace — assign/reload 금지
       await sessionManager.logout();
     } catch (logoutError) {
-      console.warn('이메일 변경 후 로그아웃 처리 중 오류 — 안전 리다이렉트로 진행:', logoutError);
-    }
-    if (typeof window !== 'undefined') {
-      window.location.assign('/login');
+      console.warn('이메일 변경 후 로그아웃 처리 중 오류 — sessionRedirect 1회:', logoutError);
+      redirectToLoginPageOnce();
     }
   }, []);
 

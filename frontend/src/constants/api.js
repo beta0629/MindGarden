@@ -82,7 +82,7 @@ export const AUTH_API = {
   /**
    * Apple Sign in with Apple (SIWA) server-side auth-code 흐름 — `OAuth2Controller#appleAuthorize`.
    * BE 가 apex 콜백(`/api/v1/auth/apple/callback`) 과 state(base64url(tenantId)+nonce) 를
-   * 포함한 authorize URL 을 반환한다. Google PR #204 패턴과 동일 정합 (2026-06-11).
+   * 포함한 authorize URL 을 반환한다. Google authorize 와 동일 패턴 (2026-06-11).
    *
    * <p>멀티테넌트 와일드카드(`*.core-solution.co.kr`) 환경에서 Apple JS SDK
    * `usePopup=true` 가 강제하는 `response_mode=web_message` 가 popup parent origin 과

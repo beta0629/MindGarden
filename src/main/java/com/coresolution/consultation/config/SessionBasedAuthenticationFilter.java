@@ -12,6 +12,7 @@ import com.coresolution.consultation.constant.SessionManagementConstants;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.UserSessionService;
 import com.coresolution.consultation.util.EmailLogMasking;
+import com.coresolution.consultation.util.SessionIdCookieCodec;
 import com.coresolution.consultation.utils.SessionUtils;
 import com.coresolution.core.context.TenantContextHolder;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -88,40 +89,29 @@ public class SessionBasedAuthenticationFilter extends OncePerRequestFilter {
             // request.getCookies()가 비어있을 수 있음
             String cookieHeader = request.getHeader("Cookie");
             if (cookieHeader != null && cookieHeader.contains("JSESSIONID")) {
-                // iOS에서 Cookie 헤더가 이상하게 파싱될 수 있음 (예: "값,JSESSIONID=값" 형식)
-                // 정규식으로 JSESSIONID= 다음의 값을 추출 (가장 안전한 방법)
-                java.util.regex.Pattern pattern = java.util.regex.Pattern.compile("JSESSIONID=([A-F0-9]{32})");
+                // Spring Session Redis(useBase64Encoding=true) 쿠키는 Base64 — hex-only 패턴 금지
+                java.util.regex.Pattern pattern = java.util.regex.Pattern.compile(
+                        "JSESSIONID=([^;\\s,]+)");
                 java.util.regex.Matcher matcher = pattern.matcher(cookieHeader);
-                
-                // 모든 매칭을 찾아서 마지막 것 사용 (가장 정확한 값)
+
                 String lastMatch = null;
                 while (matcher.find()) {
                     lastMatch = matcher.group(1);
                     log.info("🔍 JSESSIONID 패턴 매칭 발견: {}", lastMatch);
                 }
-                
+
                 if (lastMatch != null) {
                     jsessionIdFromCookie = lastMatch;
                     log.info("🔍 정규식으로 JSESSIONID 최종 추출: {}", jsessionIdFromCookie);
-                    
-                    // iOS 모바일 앱: Cookie 헤더에서 JSESSIONID를 찾았지만 request.getCookies()가 비어있는 경우
-                    // request.getSession(false)가 JSESSIONID를 인식하지 못하므로,
-                    // 쿠키를 수동으로 추가하여 Spring이 세션을 찾을 수 있도록 함
                     if (cookies == null || cookies.length == 0) {
-                        // HttpServletRequest를 래핑하여 쿠키를 추가할 수 없으므로,
-                        // 대신 request.getSession(true)를 호출하여 세션을 생성하고,
-                        // JSESSIONID가 일치하는지 확인
-                        // 하지만 이 방법도 작동하지 않을 수 있으므로, 다른 방법을 시도
                         log.info("🍎 iOS - Cookie 헤더에서 JSESSIONID 발견, 하지만 request.getCookies()가 비어있음");
                     }
                 } else {
-                    // 정규식 실패 시 기존 방식 사용
                     String[] parts = cookieHeader.split(";");
                     for (String part : parts) {
                         part = part.trim();
                         if (part.startsWith("JSESSIONID=")) {
                             String value = part.substring("JSESSIONID=".length()).trim();
-                            // 값에 콤마가 포함되어 있으면 첫 번째 값만 사용
                             if (value.contains(",")) {
                                 value = value.split(",")[0].trim();
                             }
@@ -163,9 +153,9 @@ public class SessionBasedAuthenticationFilter extends OncePerRequestFilter {
                 log.info("🍎 iOS - 래핑된 요청으로 세션 조회 (false): {}", session != null ? session.getId() : "null");
             }
 
-            // 쿠키 JSESSIONID와 컨테이너 세션 ID 불일치 → 잘못된 신규 세션으로 간주 (복원 전)
+            // 쿠키 JSESSIONID(Base64 가능)와 컨테이너 raw 세션 ID 불일치 → 잘못된 신규 세션 (복원 전)
             if (jsessionIdFromCookie != null && session != null
-                    && !session.getId().equals(jsessionIdFromCookie)) {
+                    && !SessionIdCookieCodec.matches(jsessionIdFromCookie, session.getId())) {
                 log.warn("⚠️ 쿠키의 JSESSIONID({})와 현재 세션 ID({})가 일치하지 않음 - 세션 무효 처리 후 DB 복원 시도",
                         jsessionIdFromCookie, session.getId());
                 session = null;
@@ -210,11 +200,12 @@ public class SessionBasedAuthenticationFilter extends OncePerRequestFilter {
                 if (user == null && jsessionIdFromCookie != null && userSessionService != null) {
                     log.warn("⚠️ 세션에 사용자 정보 없음. user_sessions 복원 시도: {}", jsessionIdFromCookie);
                     try {
-                        UserSession userSession = userSessionService.getActiveSession(jsessionIdFromCookie);
+                        UserSession userSession = findActiveUserSession(jsessionIdFromCookie);
                         if (userSession != null && userSession.getUser() != null) {
+                            String dbSessionId = resolveStoredSessionId(userSession, jsessionIdFromCookie);
                             User dbUser = reloadUserFromRepository(
                                     userSession.getUser().getId(), userSession.getUser());
-                            if (dbUser != null && applyHydratedUser(dbUser, session, jsessionIdFromCookie)) {
+                            if (dbUser != null && applyHydratedUser(dbUser, session, dbSessionId)) {
                                 user = dbUser;
                             }
                         }
@@ -328,8 +319,7 @@ public class SessionBasedAuthenticationFilter extends OncePerRequestFilter {
             return false;
         }
         try {
-            UserSession active = userSessionService.getActiveSession(dbSessionId);
-            return active != null;
+            return findActiveUserSession(dbSessionId) != null;
         } catch (Exception e) {
             log.warn("⚠️ user_sessions 활성 검증 실패(통과 처리하지 않음): sessionId={}, error={}",
                 dbSessionId, e.getMessage());
@@ -376,17 +366,51 @@ public class SessionBasedAuthenticationFilter extends OncePerRequestFilter {
             try {
                 Object attr = session.getAttribute(SessionConstants.SESSION_ID);
                 if (attr instanceof String && !((String) attr).isBlank()) {
-                    return (String) attr;
+                    return SessionIdCookieCodec.toCanonicalSessionId((String) attr);
                 }
             } catch (IllegalStateException e) {
                 return null;
             }
             if (jsessionIdFromCookie != null && !jsessionIdFromCookie.isBlank()) {
-                return jsessionIdFromCookie;
+                return SessionIdCookieCodec.toCanonicalSessionId(jsessionIdFromCookie);
             }
             return session.getId();
         }
-        return jsessionIdFromCookie;
+        return SessionIdCookieCodec.toCanonicalSessionId(jsessionIdFromCookie);
+    }
+
+    /**
+     * Base64 쿠키·raw 세션 ID 후보로 {@code user_sessions} 활성 행을 조회한다.
+     *
+     * @param sessionIdHint 쿠키 JSESSIONID 또는 raw 세션 ID
+     * @return 활성 UserSession 또는 null
+     */
+    private UserSession findActiveUserSession(String sessionIdHint) {
+        if (userSessionService == null || sessionIdHint == null || sessionIdHint.isBlank()) {
+            return null;
+        }
+        for (String candidate : SessionIdCookieCodec.lookupCandidates(sessionIdHint)) {
+            UserSession active = userSessionService.getActiveSession(candidate);
+            if (active != null) {
+                return active;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * DB 행의 session_id 를 우선하고, 없으면 쿠키 힌트를 canonical 로 정규화한다.
+     *
+     * @param userSession          조회된 UserSession
+     * @param jsessionIdFromCookie 쿠키 힌트
+     * @return SESSION_ID 속성에 넣을 raw 세션 ID
+     */
+    private String resolveStoredSessionId(UserSession userSession, String jsessionIdFromCookie) {
+        if (userSession != null && userSession.getSessionId() != null
+                && !userSession.getSessionId().isBlank()) {
+            return SessionIdCookieCodec.toCanonicalSessionId(userSession.getSessionId());
+        }
+        return SessionIdCookieCodec.toCanonicalSessionId(jsessionIdFromCookie);
     }
 
     /**
@@ -459,19 +483,20 @@ public class SessionBasedAuthenticationFilter extends OncePerRequestFilter {
             return null;
         }
         try {
-            UserSession userSession = userSessionService.getActiveSession(jsessionId);
+            UserSession userSession = findActiveUserSession(jsessionId);
             if (userSession == null || userSession.getUser() == null
                     || userSession.getUser().getId() == null) {
                 log.warn("⚠️ user_sessions 활성 세션 없음: sessionId={}", jsessionId);
                 return null;
             }
+            String dbSessionId = resolveStoredSessionId(userSession, jsessionId);
             User user = reloadUserFromRepository(userSession.getUser().getId(), userSession.getUser());
             if (user == null) {
                 log.warn("⚠️ user_sessions 복원: 사용자 조회 실패 userId={}", userSession.getUser().getId());
                 return null;
             }
             HttpSession session = createHttpSession ? request.getSession(true) : request.getSession(false);
-            if (!applyHydratedUser(user, session, jsessionId)) {
+            if (!applyHydratedUser(user, session, dbSessionId)) {
                 if (session != null && createHttpSession) {
                     try {
                         session.invalidate();

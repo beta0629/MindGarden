@@ -18,6 +18,7 @@ import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.entity.UserSession;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.UserSessionService;
+import com.coresolution.consultation.util.SessionIdCookieCodec;
 import com.coresolution.core.context.TenantContextHolder;
 import jakarta.servlet.FilterChain;
 import org.junit.jupiter.api.AfterEach;
@@ -138,6 +139,87 @@ class SessionBasedAuthenticationFilterSlidingTest {
         assertThat(httpSession.isInvalid()).isTrue();
         assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
         verify(userSessionService, never()).slideActiveSession(anyString(), anyInt(), anyLong());
+        verify(filterChain).doFilter(request, response);
+    }
+
+    @Test
+    @DisplayName("Base64 JSESSIONID 쿠키 + raw user_sessions: 불일치로 클리어하지 않고 슬라이딩 유지")
+    void base64Cookie_matchesRawDbSession_keepsAuth() throws Exception {
+        User user = consultantUser();
+        String base64Cookie = SessionIdCookieCodec.encodeBase64Utf8(SESSION_ID);
+        UserSession dbSession = UserSession.builder()
+                .sessionId(SESSION_ID)
+                .user(user)
+                .isActive(true)
+                .lastActivityAt(LocalDateTime.now().minusMinutes(10))
+                .expiresAt(LocalDateTime.now().plusHours(2))
+                .build();
+
+        when(userSessionService.getActiveSession(SESSION_ID)).thenReturn(dbSession);
+        when(userSessionService.getActiveSession(base64Cookie)).thenReturn(null);
+        when(userSessionService.slideActiveSession(
+                eq(SESSION_ID),
+                eq(240),
+                eq((long) SessionConstants.SESSION_SLIDING_THROTTLE_SECONDS)))
+                .thenReturn(true);
+
+        MockHttpSession httpSession = new MockHttpSession(null, SESSION_ID);
+        httpSession.setAttribute(SessionConstants.USER_OBJECT, user);
+        httpSession.setAttribute(SessionConstants.SESSION_ID, SESSION_ID);
+
+        MockHttpServletRequest request = new MockHttpServletRequest("GET", REQUEST_PATH);
+        request.setSession(httpSession);
+        request.setCookies(new jakarta.servlet.http.Cookie("JSESSIONID", base64Cookie));
+        MockHttpServletResponse response = new MockHttpServletResponse();
+
+        filter.doFilterInternal(request, response, filterChain);
+
+        assertThat(httpSession.isInvalid()).isFalse();
+        assertThat(SecurityContextHolder.getContext().getAuthentication())
+                .as("Base64 쿠키와 raw DB 세션이 동일로 취급되어야 함")
+                .isNotNull();
+        verify(userSessionService).slideActiveSession(
+                eq(SESSION_ID),
+                eq(240),
+                eq((long) SessionConstants.SESSION_SLIDING_THROTTLE_SECONDS));
+        verify(filterChain).doFilter(request, response);
+    }
+
+    @Test
+    @DisplayName("HttpSession 없음 + Base64 쿠키만 있을 때 user_sessions(raw)로 hydrate")
+    void noHttpSession_base64Cookie_hydratesFromRawDbSession() throws Exception {
+        User user = consultantUser();
+        String base64Cookie = SessionIdCookieCodec.encodeBase64Utf8(SESSION_ID);
+        UserSession dbSession = UserSession.builder()
+                .sessionId(SESSION_ID)
+                .user(user)
+                .isActive(true)
+                .lastActivityAt(LocalDateTime.now().minusMinutes(5))
+                .expiresAt(LocalDateTime.now().plusHours(2))
+                .build();
+
+        when(userSessionService.getActiveSession(base64Cookie)).thenReturn(null);
+        when(userSessionService.getActiveSession(SESSION_ID)).thenReturn(dbSession);
+        when(userRepository.findByTenantIdAndId(eq(user.getTenantId()), eq(user.getId())))
+                .thenReturn(java.util.Optional.of(user));
+        when(userSessionService.slideActiveSession(
+                eq(SESSION_ID),
+                eq(240),
+                eq((long) SessionConstants.SESSION_SLIDING_THROTTLE_SECONDS)))
+                .thenReturn(true);
+
+        MockHttpServletRequest request = new MockHttpServletRequest("GET", REQUEST_PATH);
+        request.setCookies(new jakarta.servlet.http.Cookie("JSESSIONID", base64Cookie));
+        MockHttpServletResponse response = new MockHttpServletResponse();
+
+        filter.doFilterInternal(request, response, filterChain);
+
+        assertThat(SecurityContextHolder.getContext().getAuthentication())
+                .as("Base64 쿠키만으로도 DB raw 세션 hydrate 후 인증되어야 함")
+                .isNotNull();
+        assertThat(request.getSession(false)).isNotNull();
+        assertThat(request.getSession(false).getAttribute(SessionConstants.SESSION_ID))
+                .isEqualTo(SESSION_ID);
         verify(filterChain).doFilter(request, response);
     }
 

@@ -1,7 +1,8 @@
 /**
- * sessionManager.checkSession — 백그라운드 확인(주기 폴·폼 훅·refresh 후)은
- * 무효 HttpSession 401 만으로 사용자를 비우거나 /login 으로 보내지 않는다.
- * 중복 로그인 종료 401·foreground 확정 401 은 기존대로 킥.
+ * sessionManager.checkSession — background 401:
+ * keep-user=false(기본) → user clear + 리다이렉트(foreground 와 동일 킥 경로).
+ * keep-user=true → 사용자 유지·리다이렉트 없음.
+ * 중복 로그인 종료 401·foreground 확정 401 은 항상 킥.
  *
  * @author CoreSolution
  * @since 2026-09-24
@@ -17,6 +18,7 @@ import {
 } from '../../constants/session';
 import { AUTH_API } from '../../constants/api';
 import { clearJustLoggedIn, clearJustRefreshed } from '../sessionAuthPolicy';
+import { resetSessionSecurityFlagsCacheForTests } from '../sessionSecurityFlags';
 
 jest.mock('../sessionRedirect', () => ({
   redirectToLoginPageOnce: jest.fn().mockReturnValue(true)
@@ -36,6 +38,14 @@ jest.mock('../networkErrorUtils', () => ({
   notifyTransientNetworkIssue: jest.fn()
 }));
 
+/** load 가 API 를 치지 않고 캐시(테스트용 reset)만 쓰게 한다 */
+jest.mock('../sessionSecurityFlags', () => {
+  const actual = jest.requireActual('../sessionSecurityFlags');
+  return {
+    ...actual,
+    loadSessionSecurityFlags: jest.fn(async() => actual.getCachedSessionSecurityFlags())
+  };
+});
 const LOGGED_IN_USER = Object.freeze({ id: 7, role: 'ADMIN', tenantId: 'tenant-a' });
 const TENANT_HOST = 'tenant.example.com';
 const DASHBOARD_PATH = '/admin/dashboard';
@@ -74,6 +84,7 @@ describe('sessionManager.checkSession — background 401', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     resetAuthStorage();
+    resetSessionSecurityFlagsCacheForTests();
     originalCleanup = sessionManager.applyClientLogoutCleanupPreserveSubdomain;
     sessionManager.user = { ...LOGGED_IN_USER };
     sessionManager.sessionInfo = { id: 'sess-1', isAuthenticated: true };
@@ -97,22 +108,23 @@ describe('sessionManager.checkSession — background 401', () => {
     global.fetch = originalFetch;
     window.location = originalLocation;
     resetAuthStorage();
+    resetSessionSecurityFlagsCacheForTests();
   });
 
-  it('background 401(토큰 없음) 은 사용자 유지 + 리다이렉트 없음', async() => {
+  it('background 401(토큰 없음) 기본(keep-user=false) 은 사용자 클리어 + /login', async() => {
     const { redirectToLoginPageOnce } = require('../sessionRedirect');
     global.fetch = jest.fn().mockResolvedValue(unauthorizedResponse());
 
     const ok = await sessionManager.checkSession(true, { background: true });
 
     expect(ok).toBe(false);
-    expect(sessionManager.getUser()).toEqual(LOGGED_IN_USER);
-    expect(sessionManager.getSessionInfo()).not.toBeNull();
-    expect(redirectToLoginPageOnce).not.toHaveBeenCalled();
-    expect(sessionManager.applyClientLogoutCleanupPreserveSubdomain).not.toHaveBeenCalled();
+    expect(sessionManager.getUser()).toBeNull();
+    expect(sessionManager.getSessionInfo()).toBeNull();
+    expect(sessionManager.applyClientLogoutCleanupPreserveSubdomain).toHaveBeenCalled();
+    expect(redirectToLoginPageOnce).toHaveBeenCalledWith();
   });
 
-  it('background 401 → refresh 실패여도 사용자 유지 + 리다이렉트 없음', async() => {
+  it('background 401 → refresh 실패여도 기본(keep-user=false) 은 사용자 클리어 + /login', async() => {
     const { redirectToLoginPageOnce } = require('../sessionRedirect');
     const { refreshAccessTokenPair } = require('../authTokenRefresh');
     localStorage.setItem(SESSION_KEYS.ACCESS_TOKEN, 'old-access');
@@ -124,10 +136,42 @@ describe('sessionManager.checkSession — background 401', () => {
 
     expect(refreshAccessTokenPair).toHaveBeenCalled();
     expect(ok).toBe(false);
-    expect(sessionManager.getUser()).toEqual(LOGGED_IN_USER);
-    expect(redirectToLoginPageOnce).not.toHaveBeenCalled();
+    expect(sessionManager.getUser()).toBeNull();
+    expect(sessionManager.applyClientLogoutCleanupPreserveSubdomain).toHaveBeenCalled();
+    expect(redirectToLoginPageOnce).toHaveBeenCalledWith();
   });
 
+  it('keep-user=true 이면 background 401(토큰 없음) 은 사용자 유지 + 리다이렉트 없음', async() => {
+    const { redirectToLoginPageOnce } = require('../sessionRedirect');
+    resetSessionSecurityFlagsCacheForTests({ background401KeepUser: true });
+    global.fetch = jest.fn().mockResolvedValue(unauthorizedResponse());
+
+    const ok = await sessionManager.checkSession(true, { background: true });
+
+    expect(ok).toBe(false);
+    expect(sessionManager.getUser()).toEqual(LOGGED_IN_USER);
+    expect(sessionManager.getSessionInfo()).not.toBeNull();
+    expect(redirectToLoginPageOnce).not.toHaveBeenCalled();
+    expect(sessionManager.applyClientLogoutCleanupPreserveSubdomain).not.toHaveBeenCalled();
+  });
+
+  it('keep-user=true 이면 background 401 → refresh 실패여도 사용자 유지 + 리다이렉트 없음', async() => {
+    const { redirectToLoginPageOnce } = require('../sessionRedirect');
+    const { refreshAccessTokenPair } = require('../authTokenRefresh');
+    resetSessionSecurityFlagsCacheForTests({ background401KeepUser: true });
+    localStorage.setItem(SESSION_KEYS.ACCESS_TOKEN, 'old-access');
+    localStorage.setItem(SESSION_KEYS.REFRESH_TOKEN, 'old-refresh');
+    refreshAccessTokenPair.mockResolvedValue(null);
+    global.fetch = jest.fn().mockResolvedValue(unauthorizedResponse());
+
+    const ok = await sessionManager.checkSession(true, { background: true });
+
+    expect(refreshAccessTokenPair).toHaveBeenCalled();
+    expect(ok).toBe(false);
+    expect(sessionManager.getUser()).toEqual(LOGGED_IN_USER);
+    expect(redirectToLoginPageOnce).not.toHaveBeenCalled();
+    expect(sessionManager.applyClientLogoutCleanupPreserveSubdomain).not.toHaveBeenCalled();
+  });
   it('background 이어도 중복 로그인 종료 401 은 reason=duplicate-login 으로 이동', async() => {
     const { redirectToLoginPageOnce } = require('../sessionRedirect');
     global.fetch = jest.fn().mockResolvedValue(duplicateTerminatedResponse());

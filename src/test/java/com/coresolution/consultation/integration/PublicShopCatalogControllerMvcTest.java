@@ -105,7 +105,7 @@ class PublicShopCatalogControllerMvcTest {
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.success").value(false));
 
-        verify(clientShopCatalogService, never()).listVisibleSkus(org.mockito.ArgumentMatchers.any());
+        verify(clientShopCatalogService, never()).listVisibleSkus(org.mockito.ArgumentMatchers.anyString());
     }
 
     @Test

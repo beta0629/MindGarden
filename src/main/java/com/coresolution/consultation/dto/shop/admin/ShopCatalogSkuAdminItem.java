@@ -21,6 +21,7 @@ public record ShopCatalogSkuAdminItem(
         int sortOrder,
         LocalDateTime updatedAt,
         int sessionCount,
-        String packageType
+        String packageType,
+        String fieldCode
 ) {
 }

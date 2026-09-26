@@ -35,6 +35,14 @@ describe('clientShopService', () => {
       expect(StandardizedApi.get).toHaveBeenCalledWith('/api/v1/shop/catalog');
     });
 
+    test('로그인 내담자는 인증 카탈로그를 호출한다', async() => {
+      StandardizedApi.get.mockResolvedValueOnce([]);
+
+      await fetchShopCatalog({ authenticated: true });
+
+      expect(StandardizedApi.get).toHaveBeenCalledWith('/api/v1/clients/me/shop/catalog');
+    });
+
     test('StandardizedApi가 배열을 직접 반환하면 카탈로그를 파싱한다', async() => {
       StandardizedApi.get.mockResolvedValueOnce([
         { skuCode: 'DEV-CONSULT-DEMO-01', catalogCategory: 'CONSULTATION' }

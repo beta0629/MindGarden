@@ -76,5 +76,13 @@ public class ShopCatalogSku extends BaseEntity {
      */
     @Column(name = "source_package_code", length = 50)
     private String sourcePackageCode;
+
+    /**
+     * 분야 공통코드 값.
+     * <p>CONSULTATION 은 {@code SPECIALTY}, ASSESSMENT 는 {@code ASSESSMENT_TYPE}.
+     * 기존 행은 null.</p>
+     */
+    @Column(name = "field_code", length = 50)
+    private String fieldCode;
 }
 

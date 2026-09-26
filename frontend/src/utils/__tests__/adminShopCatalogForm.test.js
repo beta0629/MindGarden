@@ -5,7 +5,10 @@
  * @since 2026-09-18
  */
 
-import { ADMIN_SHOP_SKU_SESSION_COUNT_REQUIRED_MESSAGE } from '../../constants/adminShopCatalog';
+import {
+  ADMIN_SHOP_FIELD_CODE_REQUIRED_MESSAGE,
+  ADMIN_SHOP_SKU_SESSION_COUNT_REQUIRED_MESSAGE
+} from '../../constants/adminShopCatalog';
 import { SHOP_CATALOG_CATEGORY } from '../../constants/clientShopConstants';
 import { SHOP_SESSION_COUNT_MIN } from '../shopSessionCount';
 import {
@@ -13,6 +16,8 @@ import {
   buildAdminShopPackageContentBody,
   emptyAdminShopCatalogForm,
   mapAdminShopPackageFeeToForm,
+  resolveAdminShopFieldCodeGroup,
+  validateAdminShopCatalogFieldCode,
   validateAdminShopCatalogSessionCount
 } from '../adminShopCatalogForm';
 
@@ -45,7 +50,8 @@ describe('buildAdminShopCatalogUpsertBody', () => {
     title: '테스트 상품',
     unitPriceMinor: '10000',
     catalogCategory: SHOP_CATALOG_CATEGORY.CONSULTATION,
-    sessionCount: String(SHOP_SESSION_COUNT_MIN)
+    sessionCount: String(SHOP_SESSION_COUNT_MIN),
+    fieldCode: 'SPEECH'
   });
 
   test('유효 sessionCount를 body에 전달한다', () => {
@@ -56,6 +62,16 @@ describe('buildAdminShopCatalogUpsertBody', () => {
     expect(body.sessionCount).toBe(10);
     expect(body.title).toBe('테스트 상품');
     expect(body.unitPriceMinor).toBe(10000);
+    expect(body.fieldCode).toBe('SPEECH');
+  });
+
+  test('분야 미선택이면 throw (fail-closed)', () => {
+    expect(() =>
+      buildAdminShopCatalogUpsertBody({
+        ...baseForm(),
+        fieldCode: '  '
+      })
+    ).toThrow(ADMIN_SHOP_FIELD_CODE_REQUIRED_MESSAGE);
   });
 
   test.each([
@@ -73,25 +89,52 @@ describe('buildAdminShopCatalogUpsertBody', () => {
   });
 });
 
+describe('validateAdminShopCatalogFieldCode', () => {
+  test('빈 값이면 submit 을 막는다', () => {
+    const result = validateAdminShopCatalogFieldCode({ fieldCode: '' });
+    expect(result.valid).toBe(false);
+    expect(result.message).toBe(ADMIN_SHOP_FIELD_CODE_REQUIRED_MESSAGE);
+  });
+
+  test('ASSESSMENT 는 검사 종류 그룹을 쓴다', () => {
+    expect(resolveAdminShopFieldCodeGroup(SHOP_CATALOG_CATEGORY.ASSESSMENT)).toBe('ASSESSMENT_TYPE');
+    expect(resolveAdminShopFieldCodeGroup(SHOP_CATALOG_CATEGORY.CONSULTATION)).toBe('SPECIALTY');
+  });
+});
+
 describe('buildAdminShopPackageContentBody', () => {
-  test('설명·노출·정렬만 보내고 상품명·단가·회기는 넣지 않는다', () => {
+  test('설명·노출·정렬·구분·분야를 보내고 상품명·단가·회기는 넣지 않는다', () => {
     const body = buildAdminShopPackageContentBody({
       packageName: '10회기',
       unitPriceMinor: 150000,
       sessionCount: 10,
       descriptionText: '  상담 안내  ',
       catalogVisible: true,
-      sortOrder: '3'
+      sortOrder: '3',
+      catalogCategory: SHOP_CATALOG_CATEGORY.CONSULTATION,
+      fieldCode: 'SPEECH'
     });
     expect(body).toEqual({
       descriptionText: '상담 안내',
       catalogVisible: true,
-      sortOrder: 3
+      sortOrder: 3,
+      catalogCategory: SHOP_CATALOG_CATEGORY.CONSULTATION,
+      fieldCode: 'SPEECH'
     });
     expect(body).not.toHaveProperty('title');
     expect(body).not.toHaveProperty('unitPriceMinor');
     expect(body).not.toHaveProperty('sessionCount');
-    expect(body).not.toHaveProperty('catalogCategory');
+  });
+
+  test('분야 미선택이면 throw', () => {
+    expect(() =>
+      buildAdminShopPackageContentBody({
+        descriptionText: '안내',
+        catalogVisible: false,
+        sortOrder: '0',
+        fieldCode: ''
+      })
+    ).toThrow(ADMIN_SHOP_FIELD_CODE_REQUIRED_MESSAGE);
   });
 
   test('요금 행의 이름과 단가는 읽기 전용 폼에만 남긴다', () => {
@@ -104,14 +147,20 @@ describe('buildAdminShopPackageContentBody', () => {
       descriptionText: '안내',
       catalogVisible: false,
       sortOrder: 1,
-      skuId: 9
+      skuId: 9,
+      catalogCategory: SHOP_CATALOG_CATEGORY.ASSESSMENT,
+      fieldCode: 'MMPI'
     });
     expect(form.packageName).toBe('10회기');
     expect(form.unitPriceMinor).toBe(150000);
     expect(form.sessionCount).toBe(10);
+    expect(form.catalogCategory).toBe(SHOP_CATALOG_CATEGORY.ASSESSMENT);
+    expect(form.fieldCode).toBe('MMPI');
     const body = buildAdminShopPackageContentBody(form);
     expect(body.descriptionText).toBe('안내');
     expect(body.catalogVisible).toBe(false);
+    expect(body.catalogCategory).toBe(SHOP_CATALOG_CATEGORY.ASSESSMENT);
+    expect(body.fieldCode).toBe('MMPI');
     expect(body.title).toBeUndefined();
   });
 });

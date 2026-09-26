@@ -16,6 +16,10 @@ import ShopProductImageUpload from '../shop/organisms/ShopProductImageUpload';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import { ADMIN_SHOP_ROUTES } from '../../constants/adminShopApi';
 import {
+  ADMIN_SHOP_CATALOG_CATEGORY_FIELD_LABEL,
+  ADMIN_SHOP_CATALOG_CATEGORY_LEGEND,
+  ADMIN_SHOP_FIELD_CODE_PLACEHOLDER,
+  ADMIN_SHOP_FIELD_CODE_REQUIRED_MESSAGE,
   ADMIN_SHOP_PACKAGE_FEE_CONTENT_SAVED,
   ADMIN_SHOP_PACKAGE_FEE_DESCRIPTION_LABEL,
   ADMIN_SHOP_PACKAGE_FEE_IDENTITY_HINT,
@@ -36,8 +40,15 @@ import {
 } from '../../services/adminShopCatalogService';
 import {
   buildAdminShopPackageContentBody,
-  mapAdminShopPackageFeeToForm
+  mapAdminShopPackageFeeToForm,
+  resolveAdminShopFieldCodeGroup,
+  validateAdminShopCatalogFieldCode
 } from '../../utils/adminShopCatalogForm';
+import { getTenantCodes } from '../../utils/commonCodeApi';
+import {
+  SHOP_CATALOG_CATEGORY,
+  SHOP_CATEGORY_TABS
+} from '../../constants/clientShopConstants';
 import { formatShopMoney } from '../../utils/clientShopFormat';
 import { toDisplayString } from '../../utils/safeDisplay';
 import {
@@ -65,6 +76,7 @@ const AdminShopCatalogSkuEditorPage = () => {
   const [form, setForm] = useState(mapAdminShopPackageFeeToForm(null));
   const [pendingImageFile, setPendingImageFile] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [fieldOptions, setFieldOptions] = useState([]);
 
   const loadFee = useCallback(async() => {
     if (!packageCode) {
@@ -106,6 +118,48 @@ const AdminShopCatalogSkuEditorPage = () => {
     loadFee();
   }, [sessionLoading, isLoggedIn, user, allowed, navigate, loadFee]);
 
+  const fieldGroup = resolveAdminShopFieldCodeGroup(form.catalogCategory);
+  const fieldLabel = form.catalogCategory === SHOP_CATALOG_CATEGORY.ASSESSMENT
+    ? ADMIN_SHOP_CATALOG_CATEGORY_FIELD_LABEL.ASSESSMENT
+    : ADMIN_SHOP_CATALOG_CATEGORY_FIELD_LABEL.CONSULTATION;
+
+  useEffect(() => {
+    let cancelled = false;
+    getTenantCodes(fieldGroup)
+      .then((rows) => {
+        if (cancelled) {
+          return;
+        }
+        const options = (Array.isArray(rows) ? rows : [])
+          .filter((row) => row && row.isActive !== false)
+          .map((row) => {
+            const codeValue = toDisplayString(row.codeValue, '').trim();
+            const label = toDisplayString(row.koreanName, '').trim()
+              || toDisplayString(row.codeLabel, '').trim()
+              || codeValue;
+            return { codeValue, label };
+          })
+          .filter((row) => row.codeValue);
+        setFieldOptions(options);
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setFieldOptions([]);
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [fieldGroup]);
+
+  const fieldSelectOptions = useMemo(() => {
+    const current = toDisplayString(form.fieldCode, '').trim();
+    if (current && !fieldOptions.some((row) => row.codeValue === current)) {
+      return [{ codeValue: current, label: current }, ...fieldOptions];
+    }
+    return fieldOptions;
+  }, [fieldOptions, form.fieldCode]);
+
   const hasThumbnail = Boolean(
     pendingImageFile || (form.thumbnailUrl && String(form.thumbnailUrl).trim())
   );
@@ -118,6 +172,14 @@ const AdminShopCatalogSkuEditorPage = () => {
     }
     if (wantVisible && !hasThumbnail) {
       notificationManager.show(ADMIN_SHOP_SKU_IMAGE_REQUIRED_MESSAGE, 'warning');
+      return;
+    }
+    const fieldParsed = validateAdminShopCatalogFieldCode(form);
+    if (!fieldParsed.valid) {
+      notificationManager.show(
+        fieldParsed.message || ADMIN_SHOP_FIELD_CODE_REQUIRED_MESSAGE,
+        'warning'
+      );
       return;
     }
     const hasSavedThumb = Boolean(form.thumbnailUrl && String(form.thumbnailUrl).trim());
@@ -261,6 +323,61 @@ const AdminShopCatalogSkuEditorPage = () => {
                   <p className="admin-shop-sku-editor__sku-code-readonly">
                     <SafeText>{sessionLabel}</SafeText>
                   </p>
+
+                  <fieldset
+                    className="admin-shop-sku-editor__category-fieldset"
+                    data-testid={ADMIN_SHOP_SKU_TEST_IDS.CATEGORY_FIELDSET}
+                  >
+                    <legend className="mg-v2-label">
+                      {ADMIN_SHOP_CATALOG_CATEGORY_LEGEND}
+                      <span className="form-input-required">*</span>
+                    </legend>
+                    <div className="admin-shop-sku-editor__category-options">
+                      {SHOP_CATEGORY_TABS.map((tab) => (
+                        <label className="mg-v2-label" key={tab.key} htmlFor={`${baseId}-cat-${tab.key}`}>
+                          <input
+                            id={`${baseId}-cat-${tab.key}`}
+                            type="radio"
+                            name={`${baseId}-catalog-category`}
+                            value={tab.key}
+                            checked={form.catalogCategory === tab.key}
+                            disabled={saving}
+                            onChange={() => setForm((current) => ({
+                              ...current,
+                              catalogCategory: tab.key,
+                              fieldCode: current.catalogCategory === tab.key ? current.fieldCode : ''
+                            }))}
+                          />
+                          {tab.label}
+                        </label>
+                      ))}
+                    </div>
+                  </fieldset>
+
+                  <label className="mg-v2-label" htmlFor={`${baseId}-field`}>
+                    {fieldLabel}
+                    <span className="form-input-required">*</span>
+                  </label>
+                  <select
+                    id={`${baseId}-field`}
+                    className="mg-v2-input"
+                    value={toDisplayString(form.fieldCode, '')}
+                    required
+                    aria-required="true"
+                    disabled={saving}
+                    data-testid={ADMIN_SHOP_SKU_TEST_IDS.FIELD_CODE_SELECT}
+                    onChange={(e) => setForm((current) => ({
+                      ...current,
+                      fieldCode: e.target.value
+                    }))}
+                  >
+                    <option value="">{ADMIN_SHOP_FIELD_CODE_PLACEHOLDER}</option>
+                    {fieldSelectOptions.map((option) => (
+                      <option key={option.codeValue} value={option.codeValue}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
 
                   <label className="mg-v2-label" htmlFor={`${baseId}-desc`}>
                     {ADMIN_SHOP_PACKAGE_FEE_DESCRIPTION_LABEL}

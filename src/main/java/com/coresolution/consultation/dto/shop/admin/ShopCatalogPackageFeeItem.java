@@ -17,6 +17,8 @@ package com.coresolution.consultation.dto.shop.admin;
  * @param thumbnailUrl 대표 이미지 URL
  * @param catalogVisible 온라인 노출
  * @param sortOrder 정렬 순서
+ * @param catalogCategory CONSULTATION 또는 ASSESSMENT
+ * @param fieldCode 분야 공통코드. 없으면 null
  * @author MindGarden
  * @since 2026-09-24
  */
@@ -32,6 +34,8 @@ public record ShopCatalogPackageFeeItem(
         String descriptionText,
         String thumbnailUrl,
         boolean catalogVisible,
-        int sortOrder
+        int sortOrder,
+        String catalogCategory,
+        String fieldCode
 ) {
 }

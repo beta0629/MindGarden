@@ -80,6 +80,23 @@ export const ADMIN_SHOP_SKU_SESSION_COUNT_LABEL = '회기수';
 export const ADMIN_SHOP_SKU_SESSION_COUNT_HINT = '결제 완료 시 매핑에 가산되는 회기수(양의 정수)';
 export const ADMIN_SHOP_SKU_SESSION_COUNT_REQUIRED_MESSAGE =
   '회기수는 1 이상의 양의 정수여야 합니다.';
+
+/** 상품 분야 공통코드 그룹. CONSULTATION=SPECIALTY, ASSESSMENT=ASSESSMENT_TYPE. */
+export const ADMIN_SHOP_FIELD_CODE_GROUP = Object.freeze({
+  CONSULTATION: 'SPECIALTY',
+  ASSESSMENT: 'ASSESSMENT_TYPE'
+});
+
+export const ADMIN_SHOP_CATALOG_CATEGORY_LEGEND = '구분';
+
+export const ADMIN_SHOP_CATALOG_CATEGORY_FIELD_LABEL = Object.freeze({
+  CONSULTATION: '상담 분야',
+  ASSESSMENT: '검사 종류'
+});
+
+export const ADMIN_SHOP_FIELD_CODE_PLACEHOLDER = '선택';
+
+export const ADMIN_SHOP_FIELD_CODE_REQUIRED_MESSAGE = '분야를 선택해 주세요.';
 export const ADMIN_SHOP_SKU_PACKAGE_TYPE_SINGLE_LABEL = '단회기';
 export const ADMIN_SHOP_SKU_PACKAGE_TYPE_PACKAGE_LABEL = '패키지';
 export const ADMIN_SHOP_SKU_LIST_SESSION_COUNT_COLUMN = '회기수';
@@ -97,5 +114,7 @@ export const ADMIN_SHOP_SKU_TEST_IDS = {
   SESSION_COUNT_INPUT: 'admin-sku-session-count-input',
   IMAGE_UPLOAD: 'admin-sku-image-upload',
   SAVE_BUTTON: 'admin-sku-save-button',
-  SKU_CODE_READONLY: 'admin-sku-code-readonly'
+  SKU_CODE_READONLY: 'admin-sku-code-readonly',
+  FIELD_CODE_SELECT: 'admin-sku-field-code-select',
+  CATEGORY_FIELDSET: 'admin-sku-category-fieldset'
 };

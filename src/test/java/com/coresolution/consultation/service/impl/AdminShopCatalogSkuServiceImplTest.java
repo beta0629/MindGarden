@@ -5,12 +5,16 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.coresolution.consultation.constant.ShopCatalogCategory;
+import com.coresolution.consultation.constant.ShopCatalogSkuConstants;
 import com.coresolution.consultation.constant.ShopSessionCountConstants;
+import com.coresolution.consultation.entity.CommonCode;
+import com.coresolution.consultation.repository.CommonCodeRepository;
 import com.coresolution.consultation.dto.shop.ShopCatalogPackageIdentity;
 import com.coresolution.consultation.dto.shop.admin.ShopCatalogPackageContentRequest;
 import com.coresolution.consultation.dto.shop.admin.ShopCatalogPackageFeeItem;
@@ -26,6 +30,7 @@ import com.coresolution.consultation.service.ShopCatalogSkuCodeGenerator;
 import com.coresolution.consultation.service.ShopCatalogSkuThumbnailService;
 import java.util.List;
 import java.util.Optional;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -49,9 +54,13 @@ class AdminShopCatalogSkuServiceImplTest {
 
     private static final String TENANT = "tenant-admin-shop";
     private static final String THUMB = "/api/v1/files/shop-catalog-thumbnails/test.png";
+    private static final String FIELD_CODE = "GENERAL";
 
     @Mock
     private ShopCatalogSkuRepository shopCatalogSkuRepository;
+
+    @Mock
+    private CommonCodeRepository commonCodeRepository;
 
     @Mock
     private ShopCatalogSkuPriceHistoryRepository shopCatalogSkuPriceHistoryRepository;
@@ -67,6 +76,18 @@ class AdminShopCatalogSkuServiceImplTest {
 
     @InjectMocks
     private AdminShopCatalogSkuServiceImpl adminShopCatalogSkuService;
+
+    @BeforeEach
+    void stubSpecialtyCode() {
+        CommonCode code = new CommonCode();
+        code.setCodeValue(FIELD_CODE);
+        code.setCodeGroup(ShopCatalogSkuConstants.FIELD_CODE_GROUP_CONSULTATION);
+        code.setIsActive(true);
+        code.setIsDeleted(false);
+        lenient().when(commonCodeRepository.findByTenantIdAndCodeGroupAndCodeValue(
+                TENANT, ShopCatalogSkuConstants.FIELD_CODE_GROUP_CONSULTATION, FIELD_CODE))
+                .thenReturn(Optional.of(code));
+    }
 
     private static ShopCatalogSkuUpsertRequest upsert(
             String skuCode,
@@ -89,7 +110,8 @@ class AdminShopCatalogSkuServiceImplTest {
                 true,
                 true,
                 0,
-                sessionCount);
+                sessionCount,
+                FIELD_CODE);
     }
 
     private static ShopCatalogSku existingSku(Long id) {
@@ -205,7 +227,7 @@ class AdminShopCatalogSkuServiceImplTest {
 
         ShopCatalogSkuUpsertRequest request = new ShopCatalogSkuUpsertRequest(
                 "PKG-99", "패키지", null, 10000L, "KRW", ShopCatalogCategory.CONSULTATION,
-                null, false, true, 0, 5);
+                null, false, true, 0, 5, FIELD_CODE);
 
         ShopCatalogSkuAdminDetail detail = adminShopCatalogSkuService.create(TENANT, request);
 
@@ -353,7 +375,8 @@ class AdminShopCatalogSkuServiceImplTest {
         ShopCatalogPackageFeeItem item = adminShopCatalogSkuService.updatePackageContent(
                 TENANT,
                 "PACKAGE_001",
-                new ShopCatalogPackageContentRequest("상담 안내", false, 2));
+                new ShopCatalogPackageContentRequest(
+                        "상담 안내", false, 2, ShopCatalogCategory.CONSULTATION, FIELD_CODE));
 
         ArgumentCaptor<ShopCatalogSku> captor = ArgumentCaptor.forClass(ShopCatalogSku.class);
         verify(shopCatalogSkuRepository).save(captor.capture());
@@ -382,7 +405,8 @@ class AdminShopCatalogSkuServiceImplTest {
         assertThrows(IllegalArgumentException.class, () -> adminShopCatalogSkuService.updatePackageContent(
                 TENANT,
                 "PACKAGE_001",
-                new ShopCatalogPackageContentRequest("상담 안내", true, 0)));
+                new ShopCatalogPackageContentRequest(
+                        "상담 안내", true, 0, ShopCatalogCategory.CONSULTATION, FIELD_CODE)));
         verify(shopCatalogSkuRepository, never()).save(any());
     }
 }

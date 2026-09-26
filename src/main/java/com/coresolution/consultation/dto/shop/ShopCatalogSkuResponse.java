@@ -33,4 +33,10 @@ public class ShopCatalogSkuResponse {
 
     /** {@code SINGLE} | {@code PACKAGE} — 회기수 기반 구분. */
     private String packageType;
+
+    /**
+     * 분야 공통코드 값.
+     * CONSULTATION 은 SPECIALTY, ASSESSMENT 는 ASSESSMENT_TYPE. 없으면 null.
+     */
+    private String fieldCode;
 }

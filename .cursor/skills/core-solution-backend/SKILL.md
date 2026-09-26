@@ -42,9 +42,18 @@ Java/Spring Boot 코드를 작성·수정할 때 이 스킬을 적용하세요.
 
 ### 공통
 
-- **하드코딩 금지**. 코드값·상수는 공통코드 테이블 또는 환경변수·설정에서 조회. **검색·CI 하드코딩 검사에 노출되면 운영 반영 전까지 전부 정리**한다. 게이트·범례: `docs/project-management/ADMIN_LNB_LAYOUT_UNIFICATION_MEETING_HANDOFF.md` **§17**, `/core-solution-standardization`.
+- **하드코딩 절대 금지** (지속 제거 중 · 신규 추가 금지). 코드값·상수는 공통코드 또는 env·설정. 호스트·경로·테넌트·시크릿 소스 박기 금지 (`.cursor/rules/mindgarden-no-hardcode-cloud.mdc`). 스캔 노출 시 **같은 PR에서 전부** 정리. §17·`/core-solution-standardization`.
 - JavaDoc: 클래스·public 메서드에 `@param` `@return` `@throws`. `@author CoreSolution` 또는 `@author MindGarden`, `@since` 날짜
 - 로깅: `log.info` 등 적절히 사용
+
+### 화면·서버 한 세트 (필수)
+
+같은 기능의 **API**와 **관리자·내담자 화면**은 한 변경 세트다. 서버만 고치고 끝내지 않는다.
+
+- 배포도 한 세트다. 서버 커밋과 화면 커밋을 서로 다른 시점에 운영에 올리지 않는다. **한 커밋(또는 같은 SHA)** 에 화면과 서버가 같이 들어가야 한다.
+- 프론트 전용 워크플로가 먼저 성공한 같은 SHA에서, 백엔드 배포가 그 화면을 **다른 빌드로 덮어쓰지 않게** 한다. 백엔드 워크플로의 **프론트 업로드 스킵 가드**(같은 SHA의 프론트 운영 배포가 이미 success면 업로드하지 않음)를 깨지 말 것.
+- 사용자 트래픽이 받는 슬롯은 세트 배포 중 재시작으로 **로그인 이탈**을 만들지 않는다. **비활성 슬롯 헬스 통과 후**에만 전환한다.
+- 분야·테넌트·호스트 하드코딩 금지. 공통코드·env.
 
 ## Reference
 

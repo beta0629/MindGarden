@@ -22,6 +22,7 @@ import {
   CONSULTATION_PACKAGE_PAYMENT_TYPE_NOTE,
   CONSULTATION_PACKAGE_USAGE_PERIOD_NOTE
 } from '../../../constants/legalPublic';
+import { RoleUtils } from '../../../constants/roles';
 import { useClientShopAuth } from '../../../hooks/useClientShopAuth';
 import {
   fetchShopCart,
@@ -38,7 +39,8 @@ import {
 const ShopSkuDetailPage = () => {
   const { skuCode } = useParams();
   const navigate = useNavigate();
-  const { sessionLoading, isLoggedIn } = useClientShopAuth({ requireLogin: false });
+  const { sessionLoading, isLoggedIn, user } = useClientShopAuth({ requireLogin: false });
+  const authenticatedCatalog = isLoggedIn && RoleUtils.isClient(user);
   const [sku, setSku] = useState(null);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
@@ -51,7 +53,9 @@ const ShopSkuDetailPage = () => {
     try {
       setLoading(true);
       setMessage('');
-      const row = await fetchShopCatalogSku(decodeURIComponent(skuCode));
+      const row = await fetchShopCatalogSku(decodeURIComponent(skuCode), {
+        authenticated: authenticatedCatalog
+      });
       if (!row) {
         setMessage('상품을 찾을 수 없거나 노출되지 않습니다.');
         setSku(null);
@@ -64,7 +68,7 @@ const ShopSkuDetailPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [skuCode]);
+  }, [skuCode, authenticatedCatalog]);
 
   useEffect(() => {
     if (!sessionLoading) {

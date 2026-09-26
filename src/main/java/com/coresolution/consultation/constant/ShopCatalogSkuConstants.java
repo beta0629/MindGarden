@@ -1,5 +1,7 @@
 package com.coresolution.consultation.constant;
 
+import com.coresolution.core.constant.OnboardingConstants;
+
 /**
  * 카탈로그 SKU 코드·썸네일 업로드 상수.
  *
@@ -78,6 +80,21 @@ public final class ShopCatalogSkuConstants {
     /** OPS 시드·QA용 상대 썸네일 URL (업로드 없을 때 classpath placeholder 서빙). */
     public static final String SEED_PLACEHOLDER_THUMBNAIL_PATH =
             THUMBNAIL_URL_PREFIX_V1 + SEED_PLACEHOLDER_THUMBNAIL_FILE_NAME;
+
+    /** 상담 상품 분야 — 테넌트 공통코드 그룹 SPECIALTY. */
+    public static final String FIELD_CODE_GROUP_CONSULTATION =
+            OnboardingConstants.TENANT_COMMON_CODE_GROUP_SPECIALTY;
+
+    /** 검사 상품 종류 — 테넌트 공통코드 그룹 ASSESSMENT_TYPE. */
+    public static final String FIELD_CODE_GROUP_ASSESSMENT = "ASSESSMENT_TYPE";
+
+    /** common_codes.code_value 길이와 동일. */
+    public static final int FIELD_CODE_MAX_LENGTH = 50;
+
+    public static final String FIELD_CODE_REQUIRED_MESSAGE = "분야를 선택해 주세요.";
+
+    public static final String FIELD_CODE_UNKNOWN_MESSAGE =
+            "선택한 분야 코드가 공통코드에 없습니다.";
 
     private ShopCatalogSkuConstants() {
     }

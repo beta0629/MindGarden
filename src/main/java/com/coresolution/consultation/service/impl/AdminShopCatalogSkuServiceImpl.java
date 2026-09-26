@@ -14,9 +14,11 @@ import com.coresolution.consultation.dto.shop.admin.ShopCatalogSkuAdminDetail;
 import com.coresolution.consultation.dto.shop.admin.ShopCatalogSkuAdminItem;
 import com.coresolution.consultation.dto.shop.admin.ShopCatalogSkuPriceHistoryItem;
 import com.coresolution.consultation.dto.shop.admin.ShopCatalogSkuUpsertRequest;
+import com.coresolution.consultation.entity.CommonCode;
 import com.coresolution.consultation.entity.ShopCatalogSku;
 import com.coresolution.consultation.entity.ShopCatalogSkuPriceHistory;
 import com.coresolution.consultation.exception.EntityNotFoundException;
+import com.coresolution.consultation.repository.CommonCodeRepository;
 import com.coresolution.consultation.repository.ShopCatalogSkuPriceHistoryRepository;
 import com.coresolution.consultation.repository.ShopCatalogSkuRepository;
 import com.coresolution.consultation.service.AdminShopCatalogSkuService;
@@ -53,6 +55,7 @@ public class AdminShopCatalogSkuServiceImpl implements AdminShopCatalogSkuServic
 
     private final ShopCatalogSkuRepository shopCatalogSkuRepository;
     private final ShopCatalogSkuPriceHistoryRepository shopCatalogSkuPriceHistoryRepository;
+    private final CommonCodeRepository commonCodeRepository;
     private final ShopCatalogSkuCodeGenerator shopCatalogSkuCodeGenerator;
     private final ShopCatalogSkuThumbnailService shopCatalogSkuThumbnailService;
     private final ShopCatalogPackageOfferResolver shopCatalogPackageOfferResolver;
@@ -124,6 +127,13 @@ public class AdminShopCatalogSkuServiceImpl implements AdminShopCatalogSkuServic
                 StringUtils.hasText(request.descriptionText()) ? request.descriptionText().trim() : null);
         row.setSortOrder(request.sortOrder());
         row.setCatalogVisible(request.catalogVisible());
+        String category = normalizeCatalogCategory(
+                StringUtils.hasText(request.catalogCategory())
+                        ? request.catalogCategory()
+                        : row.getCatalogCategory(),
+                row.getSkuCode());
+        row.setCatalogCategory(category);
+        row.setFieldCode(requireFieldCode(tid, category, request.fieldCode()));
         if (request.catalogVisible()) {
             requireThumbnailUrl(row);
         }
@@ -360,7 +370,11 @@ public class AdminShopCatalogSkuServiceImpl implements AdminShopCatalogSkuServic
                 row != null ? row.getDescriptionText() : null,
                 row != null ? row.getThumbnailUrl() : null,
                 row != null && Boolean.TRUE.equals(row.getCatalogVisible()),
-                row != null && row.getSortOrder() != null ? row.getSortOrder() : 0);
+                row != null && row.getSortOrder() != null ? row.getSortOrder() : 0,
+                row != null && StringUtils.hasText(row.getCatalogCategory())
+                        ? row.getCatalogCategory()
+                        : ShopCatalogCategory.CONSULTATION,
+                row != null ? row.getFieldCode() : null);
     }
 
     private static String requireTenant(String tenantId) {
@@ -382,7 +396,9 @@ public class AdminShopCatalogSkuServiceImpl implements AdminShopCatalogSkuServic
         row.setCatalogVisible(request.catalogVisible());
         row.setActive(request.active());
         row.setSortOrder(request.sortOrder());
-        row.setCatalogCategory(normalizeCatalogCategory(request.catalogCategory(), row.getSkuCode()));
+        String category = normalizeCatalogCategory(request.catalogCategory(), row.getSkuCode());
+        row.setCatalogCategory(category);
+        row.setFieldCode(requireFieldCode(row.getTenantId(), category, request.fieldCode()));
 
         if (StringUtils.hasText(request.thumbnailUrl())) {
             row.setThumbnailUrl(request.thumbnailUrl().trim());
@@ -443,7 +459,8 @@ public class AdminShopCatalogSkuServiceImpl implements AdminShopCatalogSkuServic
                 row.getSortOrder() != null ? row.getSortOrder() : 0,
                 row.getUpdatedAt(),
                 sessionCount,
-                ShopSessionCountConstants.resolvePackageType(sessionCount));
+                ShopSessionCountConstants.resolvePackageType(sessionCount),
+                row.getFieldCode());
     }
 
     private static ShopCatalogSkuAdminDetail toDetail(ShopCatalogSku row) {
@@ -461,7 +478,37 @@ public class AdminShopCatalogSkuServiceImpl implements AdminShopCatalogSkuServic
                 Boolean.TRUE.equals(row.getActive()),
                 row.getSortOrder() != null ? row.getSortOrder() : 0,
                 sessionCount,
-                ShopSessionCountConstants.resolvePackageType(sessionCount));
+                ShopSessionCountConstants.resolvePackageType(sessionCount),
+                row.getFieldCode());
+    }
+
+    /**
+     * 카테고리에 맞는 공통코드 그룹에서 분야 코드를 확인한다.
+     *
+     * @param tenantId 테넌트 ID
+     * @param catalogCategory CONSULTATION 또는 ASSESSMENT
+     * @param fieldCode 요청 코드
+     * @return 저장된 code_value
+     * @throws IllegalArgumentException 비어 있거나 테넌트 공통코드에 없을 때
+     */
+    private String requireFieldCode(String tenantId, String catalogCategory, String fieldCode) {
+        if (!StringUtils.hasText(fieldCode)) {
+            throw new IllegalArgumentException(ShopCatalogSkuConstants.FIELD_CODE_REQUIRED_MESSAGE);
+        }
+        String code = fieldCode.trim();
+        if (code.length() > ShopCatalogSkuConstants.FIELD_CODE_MAX_LENGTH) {
+            throw new IllegalArgumentException(ShopCatalogSkuConstants.FIELD_CODE_UNKNOWN_MESSAGE);
+        }
+        String group = ShopCatalogCategory.ASSESSMENT.equals(catalogCategory)
+                ? ShopCatalogSkuConstants.FIELD_CODE_GROUP_ASSESSMENT
+                : ShopCatalogSkuConstants.FIELD_CODE_GROUP_CONSULTATION;
+        CommonCode matched = commonCodeRepository
+                .findByTenantIdAndCodeGroupAndCodeValue(tenantId, group, code)
+                .filter(item -> !Boolean.TRUE.equals(item.getIsDeleted()))
+                .filter(item -> item.getIsActive() == null || Boolean.TRUE.equals(item.getIsActive()))
+                .orElseThrow(() -> new IllegalArgumentException(
+                        ShopCatalogSkuConstants.FIELD_CODE_UNKNOWN_MESSAGE));
+        return matched.getCodeValue().trim();
     }
 
     private static ShopCatalogSkuPriceHistoryItem toPriceHistoryItem(ShopCatalogSkuPriceHistory row) {

@@ -9,12 +9,16 @@ import jakarta.validation.constraints.Size;
  * @param descriptionText 카탈로그 설명
  * @param catalogVisible 온라인 노출
  * @param sortOrder 정렬 순서
+ * @param catalogCategory CONSULTATION 또는 ASSESSMENT
+ * @param fieldCode 분야 공통코드. CONSULTATION 은 SPECIALTY, ASSESSMENT 는 ASSESSMENT_TYPE
  * @author MindGarden
  * @since 2026-09-24
  */
 public record ShopCatalogPackageContentRequest(
         @Size(max = 4000) String descriptionText,
         boolean catalogVisible,
-        @PositiveOrZero int sortOrder
+        @PositiveOrZero int sortOrder,
+        @Size(max = 32) String catalogCategory,
+        @Size(max = 50) String fieldCode
 ) {
 }

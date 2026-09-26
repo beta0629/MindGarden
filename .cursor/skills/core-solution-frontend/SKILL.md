@@ -72,6 +72,30 @@ const data = await apiGet('/api/v1/...');
 
 메인 페이지와 모달·버튼·위젯이 동일한 디자인 시스템으로 일관되게 표시되어야 합니다.
 
+### 화면·서버 한 세트 (필수)
+
+같은 기능의 **관리자·내담자 화면**과 그 화면이 부르는 **API**는 한 변경 세트다. 화면만 고치고 끝내지 않는다.
+
+- 배포도 한 세트다. 화면 커밋과 서버 커밋을 서로 다른 시점에 운영에 올리지 않는다. **한 커밋(또는 같은 SHA)** 에 화면과 서버가 같이 들어가야 한다.
+- 프론트 전용 워크플로만 먼저 성공시키고, 같은 SHA의 백엔드 배포가 그 화면을 **다른 빌드로 덮어쓰지 않게** 한다. 백엔드 워크플로의 **프론트 업로드 스킵 가드**(같은 SHA의 프론트 운영 배포가 이미 success면 업로드하지 않음)를 깨지 말 것.
+- 사용자 트래픽이 받는 슬롯은 세트 배포 중 재시작으로 **로그인 이탈**을 만들지 않는다. **비활성 슬롯 헬스 통과 후**에만 전환한다.
+- 분야·테넌트·호스트 하드코딩 금지. 공통코드·env.
+
+### Soft refresh · SPA 네비 (필수 — 전체 리로드 금지)
+
+페이지·대시보드·설정에서 **문서 전체 리로드로 인증/데이터를 맞추지 않는다.** 양이 많으면 페이지별 복붙 금지 → **공통 모듈 먼저**.
+
+| 용도 | SSOT |
+|------|------|
+| mutation·focus·visibility·헤더 새로고침 후 재조회 | `utils/softRefresh` (`runResourceLoad`, `softRefresh`) · `hooks/useSoftRefresh` |
+| userId 스코프 초기 로드·silent 재조회 | `hooks/useStableUserId` · `hooks/useUserIdScopedLoad` · `hooks/useSoftResourceLoad` |
+| 내담자 홈 결제 후 매핑 갱신 | `utils/clientHomeSoftRefresh` |
+| 로그인·테넌트·중복로그인 후 랜딩 | `redirectToDynamicDashboard` + `navigate` (hard `location.href` 금지) |
+| 세션 ping 후 페이지 리로드 루프 | deps는 **`userId`만** (`useStableUserId` / `useUserIdScopedLoad`). `useEffect([user])` 풀리로드 금지 |
+
+허용 hard nav: IdP OAuth **시작**, logout, `sessionRedirect` 로그인 킥(1회).  
+참조: `/core-solution-encapsulation-modularization`, `adminSoftRefreshSweep.wiring.test.js`.
+
 ### 공통 컴포넌트 모듈화 (필수)
 
 **버튼·배지·카드 등 공통 UI는 반드시 `common/` 모듈을 사용한다. 새로 만들지 않는다.**
@@ -100,11 +124,12 @@ const data = await apiGet('/api/v1/...');
 - 컴포넌트: PascalCase. 함수/변수: camelCase. 상수: UPPER_SNAKE_CASE
 - 들여쓰기 2칸, 세미콜론 사용, 문자열 작은따옴표 우선
 
-## 운영 반영 준비 — 하드코딩 (core-coder 필수)
+## 운영 반영 준비 — 하드코딩 (core-coder 필수 · 절대 금지)
 
-- **원칙**: **검색(ripgrep 등)·CI/BI 하드코딩 검사·`check-hardcode`에 걸리면 전부 수정**한다. 운영(go-live) 직전에는 **위반 0건**을 목표로 한다.
-- **금지**: “훅이 커밋은 허용했으니 나중에” — 운영 반영 브랜치/릴리스에는 **스캔 통과 + 문서 §17 게이트**를 적용한다.
-- **상세**: `docs/project-management/ADMIN_LNB_LAYOUT_UNIFICATION_MEETING_HANDOFF.md` **§17**, `/core-solution-standardization` 스킬 동일 절.
+- **하드코딩 절대 금지.** 지속 제거 중 · 신규 추가 금지 · 유예 없음. (`.cursor/rules/mindgarden-no-hardcode-cloud.mdc`)
+- **원칙**: 검색·CI/BI·`check-hardcode`에 걸리면 **같은 작업에서 전부** 수정. 운영·클라우드 이전 게이트 = **위반 0건**.
+- **금지**: “훅이 허용했으니 나중에” — 릴리스에는 **스캔 통과 + §17** 필수.
+- **상세**: `docs/project-management/ADMIN_LNB_LAYOUT_UNIFICATION_MEETING_HANDOFF.md` **§17**, `/core-solution-standardization`.
 
 ## Reference
 

@@ -8,6 +8,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
 import com.coresolution.consultation.constant.SessionConstants;
+import com.coresolution.consultation.util.SessionIdCookieCodec;
 
 /**
  * JSESSIONID {@code Set-Cookie} 속성 SSOT.
@@ -49,9 +50,11 @@ public class SessionCookieSupport {
         boolean secure = resolveSecure(request);
         String sameSite = resolveSameSite();
         String domain = resolveDomain();
+        // Spring Session Redis(useBase64Encoding=true) 와 동일 포맷 — raw 값으로 덮어쓰면 Domain 갱신 후 claim 401
+        String cookieValue = encodeSessionIdForCookie(sessionId != null ? sessionId : "");
 
         ResponseCookie.ResponseCookieBuilder builder = ResponseCookie
-                .from(SessionConstants.SESSION_COOKIE_NAME, sessionId)
+                .from(SessionConstants.SESSION_COOKIE_NAME, cookieValue)
                 .path("/")
                 .httpOnly(httpOnly)
                 .secure(secure)
@@ -63,6 +66,31 @@ public class SessionCookieSupport {
         }
 
         return builder.build();
+    }
+
+    /**
+     * 수동 {@code Set-Cookie} 값용 세션 ID.
+     * {@code spring.session.store-type=redis} 이면 Base64(UTF-8), 아니면 raw.
+     *
+     * @param rawSessionId {@link jakarta.servlet.http.HttpSession#getId()}
+     * @return 쿠키에 넣을 값
+     */
+    public String encodeSessionIdForCookie(String rawSessionId) {
+        if (rawSessionId == null) {
+            return "";
+        }
+        if (isSpringSessionRedisStore()) {
+            return SessionIdCookieCodec.encodeBase64Utf8(rawSessionId);
+        }
+        return rawSessionId;
+    }
+
+    /**
+     * @return {@code spring.session.store-type=redis} 이면 true
+     */
+    public boolean isSpringSessionRedisStore() {
+        return "redis".equalsIgnoreCase(
+                environment.getProperty("spring.session.store-type", "").trim());
     }
 
     /**
@@ -135,15 +163,32 @@ public class SessionCookieSupport {
 
     /**
      * {@code SESSION_COOKIE_DOMAIN}. 공백/미설정이면 null (호스트 전용).
+     * <p>RFC 6265: 선행 {@code .} 은 제거한다(Chrome invalid Domain 방지).</p>
      *
      * @return 도메인 또는 null
      * @see com.coresolution.core.config.SessionCookieDomainWebServerCustomizer
      */
     public String resolveDomain() {
-        String domain = environment.getProperty("SESSION_COOKIE_DOMAIN");
+        return normalizeSessionCookieDomain(environment.getProperty("SESSION_COOKIE_DOMAIN"));
+    }
+
+    /**
+     * 세션 쿠키 Domain 정규화 (trim · 선행 점 제거). 공백/미설정이면 null.
+     *
+     * @param raw {@code SESSION_COOKIE_DOMAIN} 원본
+     * @return 정규화된 Domain 또는 null
+     */
+    public static String normalizeSessionCookieDomain(String raw) {
+        if (!StringUtils.hasText(raw)) {
+            return null;
+        }
+        String domain = raw.trim();
+        while (domain.startsWith(".")) {
+            domain = domain.substring(1).trim();
+        }
         if (!StringUtils.hasText(domain)) {
             return null;
         }
-        return domain.trim();
+        return domain;
     }
 }

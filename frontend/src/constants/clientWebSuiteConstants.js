@@ -82,6 +82,9 @@ export const CLIENT_WEB_SUITE_COPY = Object.freeze({
   SETTINGS_EMAIL_CHANGE_CTA: '변경',
   SETTINGS_EMAIL_EMPTY_HINT: '이메일이 없습니다. 변경으로 등록해 주세요.',
   SETTINGS_LOAD_ERROR: '프로필을 불러오지 못했습니다.',
+  SETTINGS_LOADING: '불러오는 중…',
+  SETTINGS_ERROR_TITLE: '설정을 불러오지 못했습니다',
+  SETTINGS_RETRY: '다시 시도',
   SETTINGS_NOTIFY_GROUP: '알림',
   SETTINGS_NOTIFY_SAVE_SUCCESS: '알림 설정이 저장되었습니다.',
   SETTINGS_NOTIFY_SAVE_ERROR: '알림 설정을 저장하지 못했습니다.',
@@ -134,6 +137,8 @@ export const CLIENT_WEB_SUITE_TEST_IDS = Object.freeze({
   SETTINGS_SAVE: 'client-settings-save',
   SETTINGS_EMAIL_CHANGE: 'client-settings-email-change',
   SETTINGS_PROFILE_ERROR: 'client-settings-profile-error',
+  SETTINGS_LOAD_ERROR: 'client-settings-load-error',
+  SETTINGS_RETRY: 'client-settings-retry',
   CHECKOUT_LOGIN_GATE: 'client-shop-checkout-login-gate',
   CHECKOUT_PHONE_GATE: 'client-shop-checkout-phone-gate',
   ORDER_DETAIL_PHONE_GATE: 'client-shop-order-detail-phone-gate'

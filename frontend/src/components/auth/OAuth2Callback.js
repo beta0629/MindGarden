@@ -139,6 +139,8 @@ const OAuth2Callback = () => {
         const providerUserId = searchParams.get('providerUserId'); // 추가: SNS 사용자 ID
         const tenantId = searchParams.get('tenantId'); // 서브도메인에서 추출한 tenant_id
         // JWT 는 URL 쿼리에 두지 않음 — POST /oauth2/web-session-tokens 1회 교환
+        // (옵션) oauthExchangeCode: 쿠키 Domain 불일치 대비 일회용 opaque 코드
+        const oauthExchangeCode = searchParams.get('oauthExchangeCode');
         // ⚠️ 표준화 2025-12-05: Deprecated - 브랜치 개념 제거
         const branchId = searchParams.get('branchId');
         const branchName = searchParams.get('branchName');
@@ -405,15 +407,22 @@ const OAuth2Callback = () => {
 
         // JWT 는 credentials 포함 1회 교환 — URL 쿼리·placeholder 금지
         // current-user foreground 200 전에는 isLoggedIn 확정 금지 (팬텀 SNS 세션 차단)
+        // oauthExchangeCode 가 있으면 쿠키 세션 실패 시 서버 일회용 코드로 폴백
         await loadSessionSecurityFlags();
         let oauthSessionTokens = null;
         try {
+          // force checkSession 금지 — claim 전 세션 갱신이 JSESSIONID/토큰 속성을 깨뜨리면 401
+          const claimBody =
+            oauthExchangeCode && String(oauthExchangeCode).trim() !== ''
+              ? { exchangeCode: String(oauthExchangeCode).trim() }
+              : {};
           const claimRaw = await StandardizedApi.post(
             AUTH_API.OAUTH2_WEB_SESSION_TOKENS,
-            {},
-            tenantId
-              ? { headers: { 'X-Tenant-Id': tenantId } }
-              : undefined
+            claimBody,
+            {
+              skipSessionRefresh: true,
+              ...(tenantId ? { headers: { 'X-Tenant-Id': tenantId } } : {})
+            }
           );
           const claimData =
             claimRaw && typeof claimRaw === 'object' && 'success' in claimRaw && 'data' in claimRaw

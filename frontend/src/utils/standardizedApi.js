@@ -63,11 +63,14 @@ class StandardizedApi {
     static async post(endpoint, data = {}, options = {}) {
         try {
             StandardizedApi.validateEndpoint(endpoint);
-            
-            const headers = await getDefaultApiHeadersAsync({}, true);
+
+            // skipSessionRefresh: OAuth web-session-tokens 등 — claim 직전 force checkSession 이
+            // 쿠키 세션/토큰 속성을 건드리지 않도록 헤더만 동기 조립한다.
+            const { skipSessionRefresh = false, headers: optionHeaders, ...restOptions } = options || {};
+            const headers = await getDefaultApiHeadersAsync({}, skipSessionRefresh !== true);
             const finalOptions = {
-                ...options,
-                headers: { ...headers, ...(options.headers || {}) }
+                ...restOptions,
+                headers: { ...headers, ...(optionHeaders || {}) }
             };
             
             console.log('📤 [표준화 API] POST', endpoint, { data, tenantId: headers['X-Tenant-Id'] });

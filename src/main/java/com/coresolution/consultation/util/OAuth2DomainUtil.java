@@ -8,17 +8,22 @@ import jakarta.annotation.PostConstruct;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
+import java.util.stream.Collectors;
 
 /**
  * OAuth2 도메인 변환 유틸리티
  * 서브도메인을 메인 도메인으로 변환하여 OAuth2 redirect_uri 일치 문제 해결
- * 
+ *
+ * <p>호스트·apex 문자열은 env({@code OAUTH2_MAIN_DOMAINS}, {@code OAUTH2_SUBDOMAIN_PATTERNS},
+ * {@code OAUTH2_TENANT_PARENT_DOMAIN_SUFFIXES}) / Spring 설정만 사용한다. Java 소스에 도메인 하드코딩 금지.</p>
+ *
  * @author MindGarden
  * @version 1.0.0
  * @since 2025-12-16
@@ -31,13 +36,6 @@ public class OAuth2DomainUtil {
      * 프론트 {@code subdomainUtils.DEFAULT_SUBDOMAINS} 과 동기: 테넌트가 아닌 인프라용 1단 라벨.
      */
     private static final Set<String> OAUTH_INFRA_SUBDOMAIN_LABELS;
-
-    /** TenantContextFilter 와 동일 순서 — 긴 suffix 우선 */
-    private static final String[] TENANT_PARENT_DOMAIN_SUFFIXES = {
-            ".dev.core-solution.co.kr",
-            ".staging.core-solution.co.kr",
-            ".core-solution.co.kr"
-    };
 
     /** TenantContextFilter 예약 라벨 + 온보딩 reserved (admin, ops, apply) */
     private static final Set<String> NON_TENANT_SUBDOMAIN_LABELS;
@@ -52,47 +50,77 @@ public class OAuth2DomainUtil {
         NON_TENANT_SUBDOMAIN_LABELS = Collections.unmodifiableSet(nonTenantLabels);
     }
 
-    @Value("${spring.security.oauth2.domain.main-domains:dev.core-solution.co.kr}")
+    @Value("${spring.security.oauth2.domain.main-domains:${OAUTH2_MAIN_DOMAINS:}}")
     private String mainDomainsConfig;
 
-    @Value("${spring.security.oauth2.domain.subdomain-patterns:^dev\\.core-solution\\.co\\.kr$,.*\\.dev\\.core-solution\\.co\\.kr,.*\\.core-solution\\.co\\.kr}")
+    @Value("${spring.security.oauth2.domain.subdomain-patterns:${OAUTH2_SUBDOMAIN_PATTERNS:}}")
     private String subdomainPatternsConfig;
+
+    @Value("${spring.security.oauth2.domain.tenant-parent-suffixes:${OAUTH2_TENANT_PARENT_DOMAIN_SUFFIXES:}}")
+    private String tenantParentSuffixesConfig;
 
     @Value("${spring.security.oauth2.domain.remove-regex-pattern:true}")
     private boolean removeRegexPattern;
 
     private List<String> mainDomains;
     private List<Pattern> subdomainPatterns;
+    /** 긴 suffix 우선 — {@code .{mainDomain}} 또는 env 명시 목록 */
+    private List<String> tenantParentDomainSuffixes;
 
     @PostConstruct
     public void init() {
-        log.info("OAuth2 도메인 변환 설정 초기화 시작: mainDomainsConfig={}, subdomainPatternsConfig={}",
-                mainDomainsConfig, subdomainPatternsConfig);
-        // 메인 도메인 목록 초기화
-        mainDomains = Arrays.asList(mainDomainsConfig.split(","));
-        // 서브도메인 패턴 초기화 (잘못된 정규식 시 로그 후 예외)
+        log.info("OAuth2 도메인 변환 설정 초기화 시작: mainDomainsConfig 길이={}, subdomainPatternsConfig 길이={}",
+                mainDomainsConfig != null ? mainDomainsConfig.length() : 0,
+                subdomainPatternsConfig != null ? subdomainPatternsConfig.length() : 0);
+        mainDomains = Arrays.stream(mainDomainsConfig != null ? mainDomainsConfig.split(",") : new String[0])
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .collect(Collectors.toList());
         List<Pattern> patterns = new ArrayList<>();
-        for (String part : subdomainPatternsConfig.split(",")) {
-            String trimmed = part.trim();
-            if (trimmed.isEmpty()) {
-                continue;
-            }
-            try {
-                patterns.add(Pattern.compile(trimmed));
-            } catch (PatternSyntaxException e) {
-                log.error("OAuth2 subdomain 패턴 오류: property=spring.security.oauth2.domain.subdomain-patterns, value={}, error={}",
-                        subdomainPatternsConfig, e.getMessage(), e);
-                throw new IllegalStateException("OAuth2 subdomain 패턴 설정 오류: " + e.getMessage(), e);
+        if (subdomainPatternsConfig != null) {
+            for (String part : subdomainPatternsConfig.split(",")) {
+                String trimmed = part.trim();
+                if (trimmed.isEmpty()) {
+                    continue;
+                }
+                try {
+                    patterns.add(Pattern.compile(trimmed));
+                } catch (PatternSyntaxException e) {
+                    log.error("OAuth2 subdomain 패턴 오류: property=spring.security.oauth2.domain.subdomain-patterns, error={}",
+                            e.getMessage(), e);
+                    throw new IllegalStateException("OAuth2 subdomain 패턴 설정 오류: " + e.getMessage(), e);
+                }
             }
         }
         subdomainPatterns = patterns;
-        log.info("OAuth2 도메인 변환 설정 로드: mainDomains={}, subdomainPatterns={}, removeRegexPattern={}",
-                mainDomains, subdomainPatternsConfig, removeRegexPattern);
+        tenantParentDomainSuffixes = resolveTenantParentSuffixes();
+        if (mainDomains.isEmpty()) {
+            log.warn("OAuth2 main-domains 미설정(OAUTH2_MAIN_DOMAINS) — convertToMainDomain 은 호스트 그대로 반환");
+        }
+        log.info("OAuth2 도메인 변환 설정 로드: mainDomainCount={}, subdomainPatternCount={}, tenantSuffixCount={}, removeRegexPattern={}",
+                mainDomains.size(), subdomainPatterns.size(), tenantParentDomainSuffixes.size(), removeRegexPattern);
+    }
+
+    private List<String> resolveTenantParentSuffixes() {
+        List<String> fromEnv = Arrays.stream(
+                        tenantParentSuffixesConfig != null ? tenantParentSuffixesConfig.split(",") : new String[0])
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .map(s -> s.startsWith(".") ? s : "." + s)
+                .sorted(Comparator.comparingInt(String::length).reversed())
+                .collect(Collectors.toList());
+        if (!fromEnv.isEmpty()) {
+            return fromEnv;
+        }
+        return mainDomains.stream()
+                .map(d -> "." + d)
+                .sorted(Comparator.comparingInt(String::length).reversed())
+                .collect(Collectors.toList());
     }
 
     /**
      * 서브도메인을 메인 도메인으로 변환
-     * 
+     *
      * @param host 호스트명 (포트 포함 가능)
      * @return 변환된 메인 도메인 또는 원본 호스트
      */
@@ -104,7 +132,6 @@ public class OAuth2DomainUtil {
         String hostWithoutPort = host.split(":")[0];
         String originalHost = hostWithoutPort;
 
-        // 정규식 패턴 제거 (Nginx 서브도메인 정규식 패턴이 포함된 경우)
         if (removeRegexPattern && hostWithoutPort.contains("~")) {
             hostWithoutPort = removeRegexPattern(hostWithoutPort);
             if (!hostWithoutPort.equals(originalHost)) {
@@ -112,7 +139,13 @@ public class OAuth2DomainUtil {
             }
         }
 
-        // 서브도메인 패턴 매칭 및 메인 도메인 변환 (프로필별 spring.security.oauth2.domain.* 로 분기)
+        // 이미 설정된 apex(main-domains) 이면 변환하지 않음
+        for (String apex : mainDomains) {
+            if (apex != null && hostWithoutPort.equals(apex.trim())) {
+                return hostWithoutPort;
+            }
+        }
+
         for (Pattern pattern : subdomainPatterns) {
             if (pattern.matcher(hostWithoutPort).matches()) {
                 String mainDomain = resolveOAuthApexHost(hostWithoutPort, pattern);
@@ -126,13 +159,11 @@ public class OAuth2DomainUtil {
             }
         }
 
-        // 변환되지 않은 경우 원본 반환
         return hostWithoutPort;
     }
 
     /**
-     * OAuth 콜백이 {@code app.*} / {@code api.*} 등 인프라 호스트로 유입된 뒤, 테넌트 서브도메인을 붙일 때
-     * parent 가 {@code tenant.app.core-solution.co.kr} 형이 되지 않도록 apex 로 수렴한다.
+     * OAuth 콜백이 인프라 호스트로 유입된 뒤 테넌트 서브도메인을 붙일 때 parent 를 apex 로 수렴한다.
      *
      * @param parentDomain 테넌트 라벨 제거 후(또는 원본) 부모 호스트, 포트 없음
      * @return 정규화된 parent (변경 없으면 입력과 동일)
@@ -166,8 +197,6 @@ public class OAuth2DomainUtil {
 
     /**
      * 요청 Host 기준 테넌트 parent 도메인 (온보딩 subdomain 미리보기 등).
-     * 예: mindgarden.core-solution.co.kr → core-solution.co.kr,
-     * app.dev.core-solution.co.kr → dev.core-solution.co.kr
      *
      * @param requestHost X-Forwarded-Host / Host (포트 포함 가능), null 이면 설정 fallback
      * @return parent FQDN
@@ -231,7 +260,7 @@ public class OAuth2DomainUtil {
         if (hostWithoutPort == null || hostWithoutPort.isEmpty()) {
             return null;
         }
-        for (String suffix : TENANT_PARENT_DOMAIN_SUFFIXES) {
+        for (String suffix : tenantParentDomainSuffixes) {
             if (!hostWithoutPort.endsWith(suffix)) {
                 continue;
             }
@@ -272,7 +301,7 @@ public class OAuth2DomainUtil {
     private String findConfiguredStagingApexHost() {
         return mainDomains.stream()
                 .map(String::trim)
-                .filter(s -> !s.isEmpty() && s.contains("staging.core-solution"))
+                .filter(s -> !s.isEmpty() && hostHasDnsLabel(s, "staging"))
                 .findFirst()
                 .orElse(null);
     }
@@ -284,7 +313,7 @@ public class OAuth2DomainUtil {
     private String findConfiguredDevApexHost() {
         return mainDomains.stream()
                 .map(String::trim)
-                .filter(s -> !s.isEmpty() && s.contains("dev.core-solution"))
+                .filter(s -> !s.isEmpty() && hostHasDnsLabel(s, "dev"))
                 .findFirst()
                 .orElse(null);
     }
@@ -292,46 +321,40 @@ public class OAuth2DomainUtil {
     private String findConfiguredProdApexHost() {
         return mainDomains.stream()
                 .map(String::trim)
-                .filter(s -> !s.isEmpty() && isCoreSolutionProdApexCandidate(s))
+                .filter(s -> !s.isEmpty() && isProdApexCandidate(s))
                 .findFirst()
                 .orElse(null);
     }
 
-    /**
-     * 정규식 패턴 제거
-     */
     private String removeRegexPattern(String host) {
-        // 정규식 패턴에서 도메인 추출 시도
         for (String mainDomain : mainDomains) {
             if (host.contains(mainDomain)) {
                 return mainDomain;
             }
         }
-        
-        // 추출 실패 시 첫 번째 메인 도메인 사용
+
         if (!mainDomains.isEmpty()) {
             return mainDomains.get(0);
         }
-        
+
         return host;
     }
 
     /**
-     * 매칭된 패턴이 "개발 파이프라인"(호스트에 .dev. 세그먼트를 요구하는 정규식)인지에 따라
+     * 매칭된 패턴이 개발 파이프라인(호스트에 {@code .dev.} DNS 라벨을 요구하는 정규식)인지에 따라
      * {@code main-domains} 목록에서 OAuth 콜백용 apex 호스트를 고른다.
-     * 운영: 보통 첫 패턴은 {@code .*\\.dev\\.core-solution\\.co\\.kr}, 둘째는 {@code .*\\.core-solution\\.co\\.kr}.
      */
     private String resolveOAuthApexHost(String hostWithoutPort, Pattern pattern) {
         if (pattern == null || mainDomains.isEmpty()) {
             return hostWithoutPort;
         }
         final String patternStr = pattern.pattern();
-        boolean devPipelinePattern = patternStr.contains("\\.dev\\.") || patternStr.contains("dev\\.core-solution");
+        boolean devPipelinePattern = patternStr.contains("\\.dev\\.") || patternStr.contains(".dev.");
 
         if (devPipelinePattern) {
             Optional<String> devApex = mainDomains.stream()
                     .map(String::trim)
-                    .filter(s -> !s.isEmpty() && s.contains("dev.core-solution"))
+                    .filter(s -> !s.isEmpty() && hostHasDnsLabel(s, "dev"))
                     .findFirst();
             if (devApex.isPresent()) {
                 return devApex.get();
@@ -339,7 +362,7 @@ public class OAuth2DomainUtil {
         } else {
             Optional<String> prodApex = mainDomains.stream()
                     .map(String::trim)
-                    .filter(s -> !s.isEmpty() && isCoreSolutionProdApexCandidate(s))
+                    .filter(s -> !s.isEmpty() && isProdApexCandidate(s))
                     .findFirst();
             if (prodApex.isPresent()) {
                 return prodApex.get();
@@ -349,16 +372,25 @@ public class OAuth2DomainUtil {
         return findMainDomainForPatternLegacy(hostWithoutPort, pattern);
     }
 
-    /** {@code dev.core-solution.co.kr} 같은 개발용 apex 은 제외한 core-solution 운영 apex 후보 */
-    private static boolean isCoreSolutionProdApexCandidate(String domain) {
-        if (!domain.contains("core-solution")) {
+    /** DNS 라벨에 {@code dev}/{@code staging} 이 없는 apex 후보 */
+    private static boolean isProdApexCandidate(String domain) {
+        return !hostHasDnsLabel(domain, "dev") && !hostHasDnsLabel(domain, "staging");
+    }
+
+    private static boolean hostHasDnsLabel(String host, String label) {
+        if (host == null || label == null || label.isEmpty()) {
             return false;
         }
-        return !domain.contains("dev.core-solution");
+        for (String part : host.split("\\.")) {
+            if (label.equalsIgnoreCase(part)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
-     * 레거시·다른 TLD(m-garden 등): 패턴 문자열과 main-domains 문자열 매칭
+     * 레거시·다른 TLD: 패턴 문자열과 main-domains 문자열 매칭
      */
     private String findMainDomainForPatternLegacy(String host, Pattern pattern) {
         if (pattern == null) {
@@ -381,22 +413,6 @@ public class OAuth2DomainUtil {
             }
         }
 
-        if (patternStr.contains("m-garden") || patternStr.contains("m\\-garden")) {
-            for (String mainDomain : mainDomains) {
-                if (mainDomain != null && mainDomain.contains("m-garden")) {
-                    return mainDomain.trim();
-                }
-            }
-        }
-        if (patternStr.contains("core-solution") || patternStr.contains("core\\-solution")) {
-            for (String mainDomain : mainDomains) {
-                if (mainDomain != null && mainDomain.contains("core-solution")) {
-                    return mainDomain.trim();
-                }
-            }
-        }
-
         return mainDomains.isEmpty() ? host : mainDomains.get(0).trim();
     }
 }
-

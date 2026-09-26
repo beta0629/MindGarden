@@ -58,6 +58,40 @@ describe('useUserIdScopedLoad', () => {
     expect(onMissingUserId).toHaveBeenCalledTimes(1);
     expect(loadFn).not.toHaveBeenCalled();
   });
+
+  it('인라인 onMissingUserId / loadFn 리렌더만으로는 loadFn 을 재호출하지 않는다', () => {
+    const loadFn = jest.fn().mockResolvedValue(undefined);
+    const { rerender } = renderHook(
+      ({ userId }) =>
+        useUserIdScopedLoad({
+          userId,
+          loadFn: () => loadFn({ silent: false }),
+          enabled: true,
+          onMissingUserId: () => {}
+        }),
+      { initialProps: { userId: 10 } }
+    );
+    expect(loadFn).toHaveBeenCalledTimes(1);
+
+    rerender({ userId: 10 });
+    rerender({ userId: 10 });
+    expect(loadFn).toHaveBeenCalledTimes(1);
+  });
+
+  it('enabled=false 이면 loadFn / onMissingUserId 를 호출하지 않는다', () => {
+    const loadFn = jest.fn();
+    const onMissingUserId = jest.fn();
+    renderHook(() =>
+      useUserIdScopedLoad({
+        userId: 10,
+        loadFn,
+        enabled: false,
+        onMissingUserId
+      })
+    );
+    expect(loadFn).not.toHaveBeenCalled();
+    expect(onMissingUserId).not.toHaveBeenCalled();
+  });
 });
 
 describe('useSoftResourceLoad', () => {

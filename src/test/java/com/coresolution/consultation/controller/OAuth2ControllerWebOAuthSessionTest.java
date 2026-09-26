@@ -27,6 +27,7 @@ import com.coresolution.consultation.service.DynamicPermissionService;
 import com.coresolution.consultation.service.JwtService;
 import com.coresolution.consultation.service.OAuth2FactoryService;
 import com.coresolution.consultation.service.UserSessionService;
+import com.coresolution.consultation.service.OAuthWebSessionExchangeCodeService;
 import com.coresolution.consultation.util.OAuth2DomainUtil;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.consultation.utils.SessionUtils;
@@ -94,6 +95,8 @@ class OAuth2ControllerWebOAuthSessionTest {
     private SessionTimeoutProperties sessionTimeoutProperties;
     @Mock
     private SessionCookieSupport sessionCookieSupport;
+    @Mock
+    private OAuthWebSessionExchangeCodeService oauthWebSessionExchangeCodeService;
 
     private final MeterRegistry meterRegistry = new SimpleMeterRegistry();
 
@@ -104,6 +107,11 @@ class OAuth2ControllerWebOAuthSessionTest {
     void setUp() {
         when(sessionTimeoutProperties.getTimeoutSeconds()).thenReturn(TIMEOUT_SECONDS);
         when(systemConfigService.isDuplicateLoginAllowedForTenant(any())).thenReturn(true);
+        when(oauthWebSessionExchangeCodeService.isEnabled()).thenReturn(false);
+        when(oauthWebSessionExchangeCodeService.issue(anyString(), anyString(), any(), any()))
+                .thenReturn(java.util.Optional.empty());
+        when(oauthWebSessionExchangeCodeService.consume(anyString()))
+                .thenReturn(java.util.Optional.empty());
     }
 
     private User sampleUser() {
@@ -196,9 +204,11 @@ class OAuth2ControllerWebOAuthSessionTest {
         assertThat(source).contains("kakaoJwtPair");
         assertThat(source).contains("googleJwtPair");
         assertThat(source).contains("appleJwtPair");
+        assertThat(source).contains("oauthExchangeCode");
+        assertThat(source).contains("OAuthWebSessionExchangeCodeService");
         assertThat(source).doesNotContain("SessionUtils.clearSession");
         assertThat(source).doesNotContain(".header(\"Set-Cookie\", cookieValue)");
-        // URL 쿼리에 JWT 금지 — 세션 1회 교환 SSOT
+        // URL 쿼리에 JWT 금지 — 세션/일회용 코드 1회 교환 SSOT
         assertThat(source).doesNotContain("sb.append(\"&accessToken=\")");
         assertThat(source).doesNotContain("sb.append(\"&refreshToken=\")");
     }
@@ -231,6 +241,8 @@ class OAuth2ControllerWebOAuthSessionTest {
         assertThat(source).contains("oauthSessionTokens");
         assertThat(source).contains("OAUTH_ACCESS_TOKEN_REQUIRED_MESSAGE");
         assertThat(source).contains("requireServerVerify: true");
+        assertThat(source).contains("oauthExchangeCode");
+        assertThat(source).contains("exchangeCode");
         assertThat(source).contains("OAUTH2_WEB_SESSION_TOKENS");
         assertThat(source).doesNotContain("searchParams.get('accessToken')");
         assertThat(source).doesNotContain("accessToken: oauthAccessToken");
@@ -245,7 +257,7 @@ class OAuth2ControllerWebOAuthSessionTest {
         session.setAttribute(OAuth2Controller.SESSION_ATTR_WEB_OAUTH_ACCESS_TOKEN, "access-jwt");
         session.setAttribute(OAuth2Controller.SESSION_ATTR_WEB_OAUTH_REFRESH_TOKEN, "refresh-jwt");
 
-        ResponseEntity<?> response = controller.claimWebOAuthSessionTokens(session);
+        ResponseEntity<?> response = controller.claimWebOAuthSessionTokens(null, session);
 
         assertThat(response.getStatusCode().is2xxSuccessful()).isTrue();
         @SuppressWarnings("unchecked")
@@ -257,6 +269,73 @@ class OAuth2ControllerWebOAuthSessionTest {
         assertThat(body.getData().get("refreshToken")).isEqualTo("refresh-jwt");
         assertThat(session.getAttribute(OAuth2Controller.SESSION_ATTR_WEB_OAUTH_ACCESS_TOKEN)).isNull();
         assertThat(session.getAttribute(OAuth2Controller.SESSION_ATTR_WEB_OAUTH_REFRESH_TOKEN)).isNull();
+    }
+
+    @Test
+    @DisplayName("claimWebOAuthSessionTokens: 세션 없이 exchangeCode 로 JWT 수령")
+    void claimWebOAuthSessionTokens_exchangeCodeFallback() {
+        MockHttpSession session = new MockHttpSession();
+        when(oauthWebSessionExchangeCodeService.consume("once-code")).thenReturn(
+                java.util.Optional.of(new OAuthWebSessionExchangeCodeService.StashEntry(
+                        "access-via-code",
+                        "refresh-via-code",
+                        USER_ID,
+                        TENANT_ID,
+                        java.time.Instant.now().plusSeconds(60))));
+
+        Map<String, Object> reqBody = new HashMap<>();
+        reqBody.put("exchangeCode", "once-code");
+        ResponseEntity<?> response = controller.claimWebOAuthSessionTokens(reqBody, session);
+
+        assertThat(response.getStatusCode().is2xxSuccessful()).isTrue();
+        @SuppressWarnings("unchecked")
+        com.coresolution.core.dto.ApiResponse<Map<String, Object>> body =
+                (com.coresolution.core.dto.ApiResponse<Map<String, Object>>) response.getBody();
+        assertThat(body.getData().get("accessToken")).isEqualTo("access-via-code");
+        assertThat(body.getData().get("refreshToken")).isEqualTo("refresh-via-code");
+    }
+
+    @Test
+    @DisplayName("claimWebOAuthSessionTokens: (A) sessionUser null → 401 + reasonCode NO_SESSION_USER")
+    void claimWebOAuthSessionTokens_noSessionUser_returns401() {
+        MockHttpSession session = new MockHttpSession();
+
+        ResponseEntity<?> response = controller.claimWebOAuthSessionTokens(null, session);
+
+        assertThat(response.getStatusCode().value()).isEqualTo(401);
+        assertThat(OAuth2Controller.WEB_OAUTH_CLAIM_REASON_NO_SESSION_USER)
+                .isEqualTo("WEB_OAUTH_CLAIM_NO_SESSION_USER");
+    }
+
+    @Test
+    @DisplayName("claimWebOAuthSessionTokens: (B) User 있으나 JWT 스태시 없음 → 401")
+    void claimWebOAuthSessionTokens_noJwtStash_returns401() {
+        User user = sampleUser();
+        MockHttpSession session = new MockHttpSession();
+        SessionUtils.setCurrentUser(session, user);
+
+        ResponseEntity<?> response = controller.claimWebOAuthSessionTokens(null, session);
+
+        assertThat(response.getStatusCode().value()).isEqualTo(401);
+        assertThat(OAuth2Controller.WEB_OAUTH_CLAIM_REASON_NO_JWT_STASH)
+                .isEqualTo("WEB_OAUTH_CLAIM_NO_JWT_STASH");
+    }
+
+    @Test
+    @DisplayName("소스 회귀: claim 실패 reasonCode (A)/(B) 구조화 로그")
+    void claimFailure_hasStructuredReasonCodes() throws Exception {
+        Path controllerSource = Path.of(
+                "src/main/java/com/coresolution/consultation/controller/OAuth2Controller.java");
+        String source = Files.readString(controllerSource);
+        assertThat(source).contains("WEB_OAUTH_CLAIM_NO_SESSION_USER");
+        assertThat(source).contains("WEB_OAUTH_CLAIM_NO_JWT_STASH");
+        assertThat(source).contains("reasonCode=");
+
+        Path serializerConfig = Path.of(
+                "src/main/java/com/coresolution/consultation/config/SessionCookieSerializerConfig.java");
+        assertThat(Files.readString(serializerConfig)).contains("SESSION_COOKIE_DOMAIN");
+        assertThat(Files.readString(serializerConfig)).contains("setDomainName");
+        assertThat(Files.readString(serializerConfig)).contains("setUseBase64Encoding(true)");
     }
 
     @Test

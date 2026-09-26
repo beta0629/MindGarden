@@ -1043,7 +1043,14 @@ function AppContent() {
             <Route path="/client/records" element={<Navigate to={CLIENT_DASHBOARD_ROUTES.SESSION_MANAGEMENT} replace />} />
             <Route path={CLIENT_DASHBOARD_ROUTES.SESSION_MANAGEMENT} element={<ClientSessionManagement />} />
             <Route path={CLIENT_DASHBOARD_ROUTES.PAYMENT_HISTORY} element={<ClientPaymentHistory />} />
-            <Route path={CLIENT_DASHBOARD_ROUTES.SETTINGS} element={<ClientSettings />} />
+            <Route
+              path={CLIENT_DASHBOARD_ROUTES.SETTINGS}
+              element={(
+                <ProtectedRoute requiredRoles={[USER_ROLES.CLIENT]}>
+                  <ClientSettings />
+                </ProtectedRoute>
+              )}
+            />
             <Route path="/client/activity-history" element={<ActivityHistory />} />
             <Route path={CLIENT_DASHBOARD_ROUTES.WELLNESS} element={<WellnessNotificationList />} />
             <Route path={`${CLIENT_DASHBOARD_ROUTES.WELLNESS}/:id`} element={<WellnessNotificationDetail />} />

@@ -94,6 +94,11 @@ public class OAuth2Controller extends BaseApiController {
     private final SessionTimeoutProperties sessionTimeoutProperties;
     /** JSESSIONID Set-Cookie 속성 SSOT (필터 갱신과 Domain/HttpOnly/SameSite/Secure 정합). */
     private final SessionCookieSupport sessionCookieSupport;
+    /**
+     * 쿠키 Domain 불일치 대비 웹 OAuth JWT 일회용 교환 코드 (쿼리에 JWT 금지).
+     */
+    private final com.coresolution.consultation.service.OAuthWebSessionExchangeCodeService
+            oauthWebSessionExchangeCodeService;
 
     /**
      * OAuth 콜백 tenant 미해결 분기 카운터 이름 (P3 진단). 태그: provider, reason.
@@ -111,7 +116,7 @@ public class OAuth2Controller extends BaseApiController {
     static final String OAUTH2_TENANT_UNRESOLVED_REASON_SESSION_ONLY_PATH_MISSING =
             "session_only_path_missing";
 
-    @Value("${spring.security.oauth2.client.registration.kakao.client-id:${security.oauth2.client.registration.kakao.client-id:cbb457cfb5f9351fd495be4af2b11a34}}")
+    @Value("${spring.security.oauth2.client.registration.kakao.client-id:${security.oauth2.client.registration.kakao.client-id:${KAKAO_CLIENT_ID:}}}")
     private String kakaoClientId;
 
     @Value("${spring.security.oauth2.client.registration.kakao.redirect-uri:${KAKAO_REDIRECT_URI:}}")
@@ -120,7 +125,7 @@ public class OAuth2Controller extends BaseApiController {
     @Value("${spring.security.oauth2.client.registration.kakao.scope:profile_nickname,account_email,phone_number}")
     private String kakaoScope;
 
-    @Value("${spring.security.oauth2.client.registration.naver.client-id:${security.oauth2.client.registration.naver.client-id:vTKNlxYKIfo1uCCXaDfk}}")
+    @Value("${spring.security.oauth2.client.registration.naver.client-id:${security.oauth2.client.registration.naver.client-id:${NAVER_CLIENT_ID:}}}")
     private String naverClientId;
 
     @Value("${spring.security.oauth2.client.registration.naver.redirect-uri:${NAVER_REDIRECT_URI:}}")
@@ -211,6 +216,16 @@ public class OAuth2Controller extends BaseApiController {
 
     /** Apple SIWA server-side auth-code authorize 단계에서 설정, 콜백에서 1회 소비. */
     private static final String SESSION_ATTR_OAUTH2_APPLE_MODE = "oauth2_apple_mode";
+
+    /**
+     * claimWebOAuthSessionTokens 실패 (A): 세션에 User 없음 (쿠키 Domain 단절·빈 세션).
+     */
+    static final String WEB_OAUTH_CLAIM_REASON_NO_SESSION_USER = "WEB_OAUTH_CLAIM_NO_SESSION_USER";
+
+    /**
+     * claimWebOAuthSessionTokens 실패 (B): User 는 있으나 JWT 스태시·교환 코드 없음.
+     */
+    static final String WEB_OAUTH_CLAIM_REASON_NO_JWT_STASH = "WEB_OAUTH_CLAIM_NO_JWT_STASH";
 
     /**
      * 웹 OAuth 성공 직후 발급된 access JWT — FE 가 credentials 포함 1회 교환으로만 수령.
@@ -1113,17 +1128,18 @@ public class OAuth2Controller extends BaseApiController {
     /**
      * 웹 OAuth 로그인 성공 후 프론트 공통 콜백({@code /auth/oauth2/callback})용 쿼리.
      * {@code success=true}는 {@code OAuth2Callback}과 정합. 프로필 이미지는 Location 길이·민감도상 제외.
-     * <p>access/refresh JWT 는 URL 에 넣지 않는다 — HttpSession 에 저장 후
-     * {@code POST /oauth2/web-session-tokens} 1회 교환으로만 전달한다.</p>
+     * <p>access/refresh JWT 는 URL 에 넣지 않는다 — HttpSession 및(옵션) 일회용
+     * {@code oauthExchangeCode} 후 {@code POST /oauth2/web-session-tokens} 1회 교환.</p>
      *
      * @param user 로그인 사용자
      * @param provider SNS 제공자 식별 문자열
      * @param tenantIdForQuery 세션·헤더 정합용 테넌트 ID(없으면 생략)
      * @param providerUserIdOrNull SNS 측 사용자 ID(없으면 생략)
+     * @param oauthExchangeCodeOrNull 일회용 교환 코드(없으면 생략). JWT 아님.
      * @return 선행 {@code ?} 없는 쿼리스트링
      */
     private String buildOAuthWebCallbackQueryString(User user, String provider, String tenantIdForQuery,
-            String providerUserIdOrNull) {
+            String providerUserIdOrNull, String oauthExchangeCodeOrNull) {
         String email = user.getEmail() != null ? user.getEmail() : "";
         String name = user.getName() != null ? user.getName() : "";
         String nickname = user.getNickname() != null ? user.getNickname() : "";
@@ -1143,17 +1159,24 @@ public class OAuth2Controller extends BaseApiController {
             sb.append("&providerUserId=").append(
                     URLEncoder.encode(providerUserIdOrNull.trim(), StandardCharsets.UTF_8));
         }
+        if (oauthExchangeCodeOrNull != null && !oauthExchangeCodeOrNull.isBlank()) {
+            sb.append("&oauthExchangeCode=").append(
+                    URLEncoder.encode(oauthExchangeCodeOrNull.trim(), StandardCharsets.UTF_8));
+        }
         return sb.toString();
     }
 
     /**
-     * 웹 OAuth JWT 쌍을 HttpSession 에 저장한다(URL 쿼리 미사용). FE 1회 교환 후 제거된다.
+     * 웹 OAuth JWT 쌍을 HttpSession 에 저장하고, 활성 시 일회용 교환 코드를 발급한다.
      *
      * @param session      로그인 세션
      * @param accessToken  앱 access JWT
      * @param refreshToken 앱 refresh JWT
+     * @param user         로그인 사용자 (교환 코드용)
+     * @return 일회용 교환 코드(없으면 null). JWT 가 아님.
      */
-    private void storeWebOAuthJwtPairInSession(HttpSession session, String accessToken, String refreshToken) {
+    private String storeWebOAuthJwtPairInSession(HttpSession session, String accessToken, String refreshToken,
+            User user) {
         if (session == null) {
             throw new IllegalStateException("OAuth JWT 세션 저장 실패: session null");
         }
@@ -1162,39 +1185,91 @@ public class OAuth2Controller extends BaseApiController {
         }
         session.setAttribute(SESSION_ATTR_WEB_OAUTH_ACCESS_TOKEN, accessToken);
         session.setAttribute(SESSION_ATTR_WEB_OAUTH_REFRESH_TOKEN, refreshToken);
+        if (user == null || user.getId() == null) {
+            return null;
+        }
+        return oauthWebSessionExchangeCodeService
+                .issue(accessToken, refreshToken, user.getId(), user.getTenantId())
+                .orElse(null);
     }
 
     /**
      * 웹 SNS 로그인 성공 후 SPA 가 credentials 포함으로 JWT 쌍을 1회 수령한다.
-     * <p>SSOT: 카카오/네이버/구글/애플 웹 콜백이 발급한 토큰. URL 쿼리 JWT 금지.</p>
+     * <p>SSOT: 카카오/네이버/구글/애플 웹 콜백이 발급한 토큰. URL 쿼리 JWT 금지.
+     * 쿠키 세션 또는(옵션) {@code exchangeCode} 일회용 코드.</p>
      *
+     * @param body    optional {@code exchangeCode}
      * @param session 브라우저 세션(쿠키)
-     * @return accessToken·refreshToken (성공 시 세션 속성 제거)
+     * @return accessToken·refreshToken (성공 시 세션 속성·코드 제거)
      */
     @PostMapping("/oauth2/web-session-tokens")
-    public ResponseEntity<ApiResponse<Map<String, Object>>> claimWebOAuthSessionTokens(HttpSession session) {
-        User sessionUser = SessionUtils.getCurrentUser(session);
-        if (sessionUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ApiResponse.<Map<String, Object>>builder()
-                            .success(false)
-                            .message(OAuth2UserFacingMessages.ERR_LOGIN_SESSION_EXPIRED)
-                            .data(null)
-                            .build());
+    public ResponseEntity<ApiResponse<Map<String, Object>>> claimWebOAuthSessionTokens(
+            @RequestBody(required = false) Map<String, Object> body,
+            HttpSession session) {
+        String exchangeCode = null;
+        if (body != null) {
+            Object rawCode = body.get("exchangeCode");
+            if (rawCode instanceof String s && !s.isBlank()) {
+                exchangeCode = s.trim();
+            }
         }
-        Object accessAttr = session.getAttribute(SESSION_ATTR_WEB_OAUTH_ACCESS_TOKEN);
-        Object refreshAttr = session.getAttribute(SESSION_ATTR_WEB_OAUTH_REFRESH_TOKEN);
-        session.removeAttribute(SESSION_ATTR_WEB_OAUTH_ACCESS_TOKEN);
-        session.removeAttribute(SESSION_ATTR_WEB_OAUTH_REFRESH_TOKEN);
+        String maskedSessionId = maskSessionIdForLog(session != null ? session.getId() : null);
 
-        String accessToken = accessAttr instanceof String ? ((String) accessAttr).trim() : "";
-        String refreshToken = refreshAttr instanceof String ? ((String) refreshAttr).trim() : "";
+        User sessionUser = SessionUtils.getCurrentUser(session);
+        String accessToken = "";
+        String refreshToken = "";
+        Long userId = null;
+        String tenantId = null;
+
+        if (sessionUser != null && session != null) {
+            Object accessAttr = session.getAttribute(SESSION_ATTR_WEB_OAUTH_ACCESS_TOKEN);
+            Object refreshAttr = session.getAttribute(SESSION_ATTR_WEB_OAUTH_REFRESH_TOKEN);
+            // 토큰이 있을 때만 제거 — 없으면 교환 코드 폴백을 위해 스태시를 건드리지 않음
+            accessToken = accessAttr instanceof String ? ((String) accessAttr).trim() : "";
+            refreshToken = refreshAttr instanceof String ? ((String) refreshAttr).trim() : "";
+            if (!accessToken.isEmpty() && !refreshToken.isEmpty()) {
+                session.removeAttribute(SESSION_ATTR_WEB_OAUTH_ACCESS_TOKEN);
+                session.removeAttribute(SESSION_ATTR_WEB_OAUTH_REFRESH_TOKEN);
+                userId = sessionUser.getId();
+                tenantId = sessionUser.getTenantId();
+                // 세션으로 성공하면 교환 코드도 소비(재사용 방지)
+                if (exchangeCode != null) {
+                    oauthWebSessionExchangeCodeService.consume(exchangeCode);
+                }
+            }
+        }
+
         if (accessToken.isEmpty() || refreshToken.isEmpty()) {
-            log.warn("웹 OAuth JWT 교환 실패: 세션에 토큰 없음 userId={}", sessionUser.getId());
+            if (exchangeCode != null) {
+                var stash = oauthWebSessionExchangeCodeService.consume(exchangeCode);
+                if (stash.isPresent()) {
+                    var entry = stash.get();
+                    accessToken = entry.accessToken();
+                    refreshToken = entry.refreshToken();
+                    userId = entry.userId();
+                    tenantId = entry.tenantId();
+                    log.info("웹 OAuth JWT 교환: 일회용 코드 경로 sessionIdMasked={}", maskedSessionId);
+                }
+            }
+        }
+
+        if (accessToken.isEmpty() || refreshToken.isEmpty() || userId == null) {
+            // (A) sessionUser null = JSESSIONID Domain 단절·빈 세션 / (B) User 있으나 JWT 스태시 없음
+            String reasonCode = sessionUser == null
+                    ? WEB_OAUTH_CLAIM_REASON_NO_SESSION_USER
+                    : WEB_OAUTH_CLAIM_REASON_NO_JWT_STASH;
+            log.warn(
+                    "웹 OAuth JWT 교환 실패: reasonCode={}, sessionUserPresent={}, hasExchangeCode={}, sessionIdMasked={}",
+                    reasonCode,
+                    sessionUser != null,
+                    exchangeCode != null,
+                    maskedSessionId);
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ApiResponse.<Map<String, Object>>builder()
                             .success(false)
-                            .message(OAuth2UserFacingMessages.MSG_AUTH_PROCESSING_FAILED)
+                            .message(sessionUser == null && exchangeCode == null
+                                    ? OAuth2UserFacingMessages.ERR_LOGIN_SESSION_EXPIRED
+                                    : OAuth2UserFacingMessages.MSG_AUTH_PROCESSING_FAILED)
                             .data(null)
                             .build());
         }
@@ -1202,11 +1277,11 @@ public class OAuth2Controller extends BaseApiController {
         Map<String, Object> data = new HashMap<>();
         data.put("accessToken", accessToken);
         data.put("refreshToken", refreshToken);
-        data.put("userId", sessionUser.getId());
-        if (sessionUser.getTenantId() != null && !sessionUser.getTenantId().isBlank()) {
-            data.put("tenantId", sessionUser.getTenantId());
+        data.put("userId", userId);
+        if (tenantId != null && !tenantId.isBlank()) {
+            data.put("tenantId", tenantId);
         }
-        log.info("웹 OAuth JWT 1회 교환 완료: userId={}", sessionUser.getId());
+        log.info("웹 OAuth JWT 1회 교환 완료: userId={}, sessionIdMasked={}", userId, maskedSessionId);
         return success(data);
     }
 
@@ -2911,10 +2986,11 @@ public class OAuth2Controller extends BaseApiController {
 
                     String providerUserIdForCallback = userInfo.getProviderUserId();
                     String[] naverJwtPair = issueWebOAuthJwtPair(user, request);
-                    storeWebOAuthJwtPairInSession(session, naverJwtPair[0], naverJwtPair[1]);
+                    String naverExchangeCode = storeWebOAuthJwtPairInSession(
+                            session, naverJwtPair[0], naverJwtPair[1], user);
                     String redirectUrl = frontendUrl + "/auth/oauth2/callback?"
                             + buildOAuthWebCallbackQueryString(user, provider, tenantId,
-                                    providerUserIdForCallback);
+                                    providerUserIdForCallback, naverExchangeCode);
 
                     // 모바일 클라이언트인 경우 Deep Link로 리다이렉트
                     if ("mobile".equals(savedClientType)) {
@@ -3596,10 +3672,11 @@ public class OAuth2Controller extends BaseApiController {
 
                     String providerUserIdForCallback = userInfo.getProviderUserId();
                     String[] kakaoJwtPair = issueWebOAuthJwtPair(user, request);
-                    storeWebOAuthJwtPairInSession(session, kakaoJwtPair[0], kakaoJwtPair[1]);
+                    String kakaoExchangeCode = storeWebOAuthJwtPairInSession(
+                            session, kakaoJwtPair[0], kakaoJwtPair[1], user);
                     String redirectUrl = frontendUrl + "/auth/oauth2/callback?"
                             + buildOAuthWebCallbackQueryString(user, provider, tenantId,
-                                    providerUserIdForCallback);
+                                    providerUserIdForCallback, kakaoExchangeCode);
 
                     // JSESSIONID 는 Spring Session 필터가 Base64 로 쓴다. raw Set-Cookie 는 덮어쓰지 않는다.
                     logOAuthRedirectLocationSummary("카카오 웹 OAuth", redirectUrl);
@@ -4081,10 +4158,11 @@ public class OAuth2Controller extends BaseApiController {
                     String frontendUrl = getTenantAwareFrontendBaseUrl(request, tenantId);
                     String providerUserIdForCallback = userInfo.getProviderUserId();
                     String[] googleJwtPair = issueWebOAuthJwtPair(user, request);
-                    storeWebOAuthJwtPairInSession(session, googleJwtPair[0], googleJwtPair[1]);
+                    String googleExchangeCode = storeWebOAuthJwtPairInSession(
+                            session, googleJwtPair[0], googleJwtPair[1], user);
                     String redirectUrl = frontendUrl + "/auth/oauth2/callback?"
                             + buildOAuthWebCallbackQueryString(user, "GOOGLE", tenantId,
-                                    providerUserIdForCallback);
+                                    providerUserIdForCallback, googleExchangeCode);
 
                     logOAuthRedirectLocationSummary("Google 웹 OAuth", redirectUrl);
                     return ResponseEntity.status(302).header("Location", redirectUrl).build();
@@ -4527,10 +4605,11 @@ public class OAuth2Controller extends BaseApiController {
                     ? response.getSocialUserInfo().getProviderUserId()
                     : "";
             String[] appleJwtPair = issueWebOAuthJwtPair(appleSessionUser, request);
-            storeWebOAuthJwtPairInSession(sessionForLogin, appleJwtPair[0], appleJwtPair[1]);
+            String appleExchangeCode = storeWebOAuthJwtPairInSession(
+                    sessionForLogin, appleJwtPair[0], appleJwtPair[1], appleSessionUser);
             String redirectUrl = frontendUrl + "/auth/oauth2/callback?"
                     + buildOAuthWebCallbackQueryString(appleSessionUser, "APPLE", redirectTenantId,
-                            providerUserIdForCallback);
+                            providerUserIdForCallback, appleExchangeCode);
 
             log.info("Apple OAuth2 로그인 성공: userId={}, role={}", user.getId(), user.getRole());
             logOAuthRedirectLocationSummary("Apple 웹 OAuth", redirectUrl);

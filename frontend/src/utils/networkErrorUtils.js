@@ -1,4 +1,4 @@
-import { API_ERROR_MESSAGES } from '../constants/api';
+import { API_ERROR_MESSAGES, API_STATUS } from '../constants/api';
 
 /**
  * fetch 실패 등 일시적 네트워크 오류 여부 (HTTP 401 응답과 구분).
@@ -7,6 +7,10 @@ import { API_ERROR_MESSAGES } from '../constants/api';
  */
 export const isTransientNetworkError = (err) => {
   if (!err || typeof err !== 'object') {
+    return false;
+  }
+  const status = err.status;
+  if (typeof status === 'number' && status >= API_STATUS.INTERNAL_SERVER_ERROR) {
     return false;
   }
   const name = err.name || '';

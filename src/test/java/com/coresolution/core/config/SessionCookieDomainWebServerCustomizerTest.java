@@ -43,4 +43,14 @@ class SessionCookieDomainWebServerCustomizerTest {
         customizer.customize(factory);
         assertEquals("core-solution.co.kr", factory.getSession().getCookie().getDomain());
     }
+
+    @Test
+    void customizeWhenLeadingDot_stripsDotPerRfc6265() {
+        MockEnvironment env = new MockEnvironment();
+        env.setProperty("SESSION_COOKIE_DOMAIN", ".core-solution.co.kr");
+        SessionCookieDomainWebServerCustomizer customizer = new SessionCookieDomainWebServerCustomizer(env);
+        TomcatServletWebServerFactory factory = new TomcatServletWebServerFactory();
+        customizer.customize(factory);
+        assertEquals("core-solution.co.kr", factory.getSession().getCookie().getDomain());
+    }
 }

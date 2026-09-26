@@ -9,6 +9,7 @@ import org.springframework.mock.env.MockEnvironment;
 import org.springframework.mock.web.MockHttpServletRequest;
 
 import com.coresolution.consultation.constant.SessionConstants;
+import com.coresolution.consultation.util.SessionIdCookieCodec;
 
 /**
  * {@link SessionCookieSupport} — Domain/HttpOnly/SameSite/Secure/Max-Age SSOT 단위 검증.
@@ -103,5 +104,48 @@ class SessionCookieSupportTest {
 
         assertThat(cookie.getDomain()).isNull();
         assertThat(support.resolveDomain()).isNull();
+    }
+
+    @Test
+    @DisplayName("SESSION_COOKIE_DOMAIN 선행 점 제거(RFC 6265)")
+    void build_leadingDot_stripped() {
+        MockEnvironment env = new MockEnvironment();
+        env.setProperty("SESSION_COOKIE_DOMAIN", ".core-solution.co.kr");
+        SessionCookieSupport support = new SessionCookieSupport(env);
+
+        assertThat(support.resolveDomain()).isEqualTo("core-solution.co.kr");
+        assertThat(support.buildJsessionSetCookieHeader(
+                SESSION_ID, MAX_AGE, new MockHttpServletRequest()))
+                .contains("Domain=core-solution.co.kr");
+    }
+
+    @Test
+    @DisplayName("spring.session.store-type=redis 이면 쿠키 값은 Base64(UTF-8)")
+    void build_redisStore_encodesSessionIdBase64() {
+        MockEnvironment env = new MockEnvironment();
+        env.setProperty("spring.session.store-type", "redis");
+        env.setProperty("SESSION_COOKIE_DOMAIN", "cookie-domain.test");
+        SessionCookieSupport support = new SessionCookieSupport(env);
+
+        String header = support.buildJsessionSetCookieHeader(
+                SESSION_ID, MAX_AGE, new MockHttpServletRequest());
+        String expected = SessionIdCookieCodec.encodeBase64Utf8(SESSION_ID);
+
+        assertThat(header).contains(SessionConstants.SESSION_COOKIE_NAME + "=" + expected);
+        assertThat(header).contains("Domain=cookie-domain.test");
+        assertThat(header).doesNotContain(SessionConstants.SESSION_COOKIE_NAME + "=" + SESSION_ID + ";");
+    }
+
+    @Test
+    @DisplayName("store-type 미설정(서블릿 세션)이면 쿠키 값은 raw sessionId")
+    void build_nonRedis_keepsRawSessionId() {
+        MockEnvironment env = new MockEnvironment();
+        SessionCookieSupport support = new SessionCookieSupport(env);
+
+        String header = support.buildJsessionSetCookieHeader(
+                SESSION_ID, MAX_AGE, new MockHttpServletRequest());
+
+        assertThat(header).contains(SessionConstants.SESSION_COOKIE_NAME + "=" + SESSION_ID);
+        assertThat(support.isSpringSessionRedisStore()).isFalse();
     }
 }

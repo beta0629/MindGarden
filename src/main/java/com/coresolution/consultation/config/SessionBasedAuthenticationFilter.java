@@ -657,6 +657,11 @@ public class SessionBasedAuthenticationFilter extends OncePerRequestFilter {
         
         // 정적 리소스와 공개 API만 필터링하지 않음
         // Ops Portal API는 JWT 토큰으로만 인증하므로 세션 기반 인증 필터 제외
+        // 웹 OAuth JWT 1회 교환: 필터가 빈/불일치 JSESSION 으로 invalidate·hydrate 하면
+        // 세션 JWT 스태시가 유실될 수 있어 스킵(Security 는 permitAll + CSRF ignore).
+        if (isWebOAuthSessionTokenClaimPath(path)) {
+            return true;
+        }
         return path.startsWith("/static/") ||
                path.startsWith("/css/") ||
                path.startsWith("/js/") ||
@@ -673,6 +678,20 @@ public class SessionBasedAuthenticationFilter extends OncePerRequestFilter {
                path.startsWith("/api/health/") ||
                path.equals("/error") ||
                path.startsWith("/actuator/");
+    }
+
+    /**
+     * {@code POST /api/v1/auth/oauth2/web-session-tokens} (레거시 {@code /api/auth/...} 포함).
+     *
+     * @param path request URI
+     * @return 클레임 경로 여부
+     */
+    static boolean isWebOAuthSessionTokenClaimPath(String path) {
+        if (path == null || path.isEmpty()) {
+            return false;
+        }
+        return "/api/v1/auth/oauth2/web-session-tokens".equals(path)
+                || "/api/auth/oauth2/web-session-tokens".equals(path);
     }
     
     /**

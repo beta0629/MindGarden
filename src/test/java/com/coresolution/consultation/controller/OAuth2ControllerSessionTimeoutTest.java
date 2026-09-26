@@ -78,6 +78,9 @@ class OAuth2ControllerSessionTimeoutTest {
     private SessionTimeoutProperties sessionTimeoutProperties;
     @Mock
     private com.coresolution.consultation.config.SessionCookieSupport sessionCookieSupport;
+    @Mock
+    private com.coresolution.consultation.service.OAuthWebSessionExchangeCodeService
+            oauthWebSessionExchangeCodeService;
 
     private final MeterRegistry meterRegistry = new SimpleMeterRegistry();
 

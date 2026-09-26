@@ -311,36 +311,23 @@ export const redirectToDashboardWithFallback = (userRole, navigate = null) => {
       role: userRole,
       path: dashboardPath
     });
-    
-    // 1차: React Router navigate (navigate 함수가 있는 경우)
+
+    // SPA navigate 우선 — 전체 문서 리로드(쿠키/세션 레이스) 금지
     if (navigate && typeof navigate === 'function') {
-      try {
-        navigate(dashboardPath, { replace: true });
-        console.log('✅ React Router navigate 실행됨');
-      } catch (error) {
-        console.error('❌ React Router navigate 실패:', error);
-      }
+      navigate(dashboardPath, { replace: true });
+      console.log('✅ React Router navigate 실행됨');
+      return;
     }
-    
-    // 2차: window.location (즉시 실행)
-    setTimeout(() => {
-      console.log('🎯 window.location 리다이렉트 실행:', dashboardPath);
-      window.location.href = dashboardPath;
-    }, 100);
-    
-    // 3차: 강제 리다이렉트 (최종 백업)
-    setTimeout(() => {
-      console.log('🎯 강제 리다이렉트 실행:', dashboardPath);
-      window.location.replace(dashboardPath);
-    }, 1000);
-    
+
+    // navigate 미전달 호출부만 최후 폴백 (호출부는 navigate 전달 권장)
+    console.warn('⚠️ redirectToDashboardWithFallback: navigate 없음 — location.assign 폴백');
+    window.location.assign(dashboardPath);
   } catch (error) {
     console.error('❌ 공통 리다이렉션 오류:', error);
-    // 기본 경로로 리다이렉트
     if (navigate && typeof navigate === 'function') {
       navigate('/client/dashboard', { replace: true });
     } else {
-      window.location.href = '/client/dashboard';
+      window.location.assign('/client/dashboard');
     }
   }
 };

@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { useSession } from '../../contexts/SessionContext';
 import TenantAwareApiClient from '../../utils/TenantAwareApiClient';
+import { runResourceLoad, softRefresh } from '../../utils/softRefresh';
 import './ConsultantDashboardRenewal.css';
 import { SCHEDULE_API } from '../../constants/api';
 import { useTranslation } from 'react-i18next';
@@ -195,61 +196,62 @@ const ConsultantDashboardRenewal = () => {
 
   const userName = user?.name || user?.username || '선생님';
 
-  const fetchDashboardData = useCallback(async() => {
+  const fetchDashboardData = useCallback(async(options = {}) => {
     if (!user?.id) return;
     try {
       setError(null);
-      const today = new Date().toISOString().split('T')[0];
+      await runResourceLoad(options, setLoading, async() => {
+        const today = new Date().toISOString().split('T')[0];
 
-      const [schedulesRes, recordsRes] = await Promise.allSettled([
-        TenantAwareApiClient.get(`${API_ENDPOINTS.SCHEDULES}`, {
-          consultantId: user.id,
-          startDate: today,
-          endDate: today
-        }),
-        TenantAwareApiClient.get(
-          `${API_ENDPOINTS.RECORDS}/${user.id}/consultation-records`,
-          { status: 'PENDING' }
-        )
-      ]);
+        const [schedulesRes, recordsRes] = await Promise.allSettled([
+          TenantAwareApiClient.get(`${API_ENDPOINTS.SCHEDULES}`, {
+            consultantId: user.id,
+            startDate: today,
+            endDate: today
+          }),
+          TenantAwareApiClient.get(
+            `${API_ENDPOINTS.RECORDS}/${user.id}/consultation-records`,
+            { status: 'PENDING' }
+          )
+        ]);
 
-      if (schedulesRes.status === 'fulfilled') {
-        const schedules = Array.isArray(schedulesRes.value)
-          ? schedulesRes.value
-          : schedulesRes.value?.data || schedulesRes.value?.content || [];
-        const sorted = schedules.sort(
-          (a, b) => new Date(a.startTime) - new Date(b.startTime)
-        );
-        setTodaySchedules(sorted);
-      }
-
-      if (recordsRes.status === 'fulfilled') {
-        const records = recordsRes.value;
-        if (typeof records === 'number') {
-          setIncompleteCount(records);
-        } else if (Array.isArray(records)) {
-          setIncompleteCount(records.length);
-        } else if (records?.totalElements != null) {
-          setIncompleteCount(records.totalElements);
-        } else if (records?.count != null) {
-          setIncompleteCount(records.count);
+        if (schedulesRes.status === 'fulfilled') {
+          const schedules = Array.isArray(schedulesRes.value)
+            ? schedulesRes.value
+            : schedulesRes.value?.data || schedulesRes.value?.content || [];
+          const sorted = schedules.sort(
+            (a, b) => new Date(a.startTime) - new Date(b.startTime)
+          );
+          setTodaySchedules(sorted);
         }
-      }
 
-      try {
-        const urgentRes = await TenantAwareApiClient.get(
-          `${API_ENDPOINTS.DASHBOARD}/${user.id}/urgent-clients`
-        );
-        const urgents = Array.isArray(urgentRes) ? urgentRes : urgentRes?.data || [];
-        setUrgentClients(urgents);
-      } catch {
-        setUrgentClients([]);
-      }
+        if (recordsRes.status === 'fulfilled') {
+          const records = recordsRes.value;
+          if (typeof records === 'number') {
+            setIncompleteCount(records);
+          } else if (Array.isArray(records)) {
+            setIncompleteCount(records.length);
+          } else if (records?.totalElements != null) {
+            setIncompleteCount(records.totalElements);
+          } else if (records?.count != null) {
+            setIncompleteCount(records.count);
+          }
+        }
+
+        try {
+          const urgentRes = await TenantAwareApiClient.get(
+            `${API_ENDPOINTS.DASHBOARD}/${user.id}/urgent-clients`
+          );
+          const urgents = Array.isArray(urgentRes) ? urgentRes : urgentRes?.data || [];
+          setUrgentClients(urgents);
+        } catch {
+          setUrgentClients([]);
+        }
+      });
     } catch (err) {
       console.error('[대시보드] 데이터 로드 실패:', err);
       setError('대시보드 데이터를 불러올 수 없습니다.');
     } finally {
-      setLoading(false);
       setRefreshing(false);
     }
   }, [user?.id]);
@@ -269,9 +271,20 @@ const ConsultantDashboardRenewal = () => {
     return () => clearInterval(interval);
   }, []);
 
+  /** 탭 복귀 silent 재조회 */
+  useEffect(() => {
+    const handler = () => {
+      if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
+        softRefresh(fetchDashboardData);
+      }
+    };
+    document.addEventListener('visibilitychange', handler);
+    return () => document.removeEventListener('visibilitychange', handler);
+  }, [fetchDashboardData]);
+
   const handleRefresh = () => {
     setRefreshing(true);
-    fetchDashboardData();
+    softRefresh(fetchDashboardData).finally(() => setRefreshing(false));
   };
 
   const handleOpenLog = (schedule) => {

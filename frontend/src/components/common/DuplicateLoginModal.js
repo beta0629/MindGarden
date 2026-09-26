@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { AlertTriangle, XCircle, Check } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useSession } from '../../contexts/SessionContext';
 import { authAPI } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
@@ -13,6 +14,7 @@ import { useTranslation } from 'react-i18next';
 
 const DuplicateLoginModal = () => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const { duplicateLoginModal, setDuplicateLoginModal, checkSession } = useSession();
   const [confirmLoading, setConfirmLoading] = useState(false);
 
@@ -58,15 +60,19 @@ const DuplicateLoginModal = () => {
 
         notificationManager.show('로그인에 성공했습니다.', 'success');
 
-        console.log('🎯 중복 로그인 성공 후 동적 대시보드 리다이렉트');
+        const authResponse = {
+          user: loggedInUser,
+          currentTenantRole: loginPayload.currentTenantRole || response?.currentTenantRole || null
+        };
+        console.log('🎯 중복 로그인 성공 후 SPA navigate (hard reload 금지)');
 
         setTimeout(async() => {
           try {
-            const { resolvePostLoginLandingPath } = await import('../../utils/dashboardUtils');
-            window.location.href = resolvePostLoginLandingPath(loggedInUser);
+            const { redirectToDynamicDashboard } = await import('../../utils/dashboardUtils');
+            await redirectToDynamicDashboard(authResponse, navigate);
           } catch (error) {
             console.error('대시보드 리다이렉트 실패:', error);
-            window.location.href = '/dashboard';
+            navigate('/dashboard', { replace: true });
           }
         }, 500);
       } else {

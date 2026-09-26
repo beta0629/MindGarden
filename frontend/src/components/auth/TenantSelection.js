@@ -89,9 +89,9 @@ const TenantSelection = ({ tenants, onSelect, onCancel }) => {
             console.log('🎯 테넌트 선택 후 동적 대시보드로 리다이렉트');
             await redirectToDynamicDashboard(authResponse, navigate);
           } else {
-            // 사용자 정보가 없어도 대시보드로 이동 시도
+            // 사용자 정보가 없어도 SPA navigate (hard reload 금지)
             console.log('⚠️ 사용자 정보 없음, 기본 대시보드로 이동');
-            window.location.href = '/client/dashboard';
+            navigate('/client/dashboard', { replace: true });
           }
         } else {
           throw new Error(data.message || '테넌트 전환 실패');

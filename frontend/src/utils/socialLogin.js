@@ -473,8 +473,12 @@ export const facebookLogin = () => {
 
 /**
  * OAuth2 콜백 처리
+ * @param {string} provider
+ * @param {string} code
+ * @param {string} state
+ * @param {Function|null} [navigate] React Router navigate — 전달 시 SPA 이동 (hard reload 금지)
  */
-export const handleOAuthCallback = async(provider, code, state) => {
+export const handleOAuthCallback = async(provider, code, state, navigate = null) => {
   try {
     const savedState = sessionStorage.get('oauth_state');
     if (state !== savedState) {
@@ -521,14 +525,22 @@ export const handleOAuthCallback = async(provider, code, state) => {
       });
       
       if (sessionSet) {
-        // 세션 정보 로깅
         logSessionInfo();
-        
-        // 역할에 따른 대시보드로 리다이렉트
-        redirectToDashboard(result.userInfo);
+
+        if (navigate && typeof navigate === 'function') {
+          const { redirectToDynamicDashboard } = await import('./dashboardUtils');
+          await redirectToDynamicDashboard(
+            {
+              user: result.userInfo,
+              currentTenantRole: result.currentTenantRole || null
+            },
+            navigate
+          );
+        } else {
+          redirectToDashboard(result.userInfo);
+        }
       } else {
         console.error('세션 설정에 실패했습니다.');
-        // 세션 설정 실패 시에도 로그인 페이지로 이동하지 않음
         throw new Error(i18n.t('common:utils.socialLogin.t_53ec68ef'));
       }
     } else if (result.requiresSignup) {
@@ -539,7 +551,6 @@ export const handleOAuthCallback = async(provider, code, state) => {
     }
   } catch (error) {
     console.error('OAuth2 콜백 처리 오류:', error);
-    // 에러 발생 시 로그인 페이지로 리다이렉트하지 않고 에러를 던짐
     throw error;
   }
 };

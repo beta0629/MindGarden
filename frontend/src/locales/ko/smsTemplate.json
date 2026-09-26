@@ -50,5 +50,26 @@
     "deleteSubtitle": "삭제 후에는 글로벌 본문이 사용됩니다.",
     "confirmDelete": "삭제하기",
     "deleteBody": "테넌트 override 본문을 삭제하시겠습니까? 이후에는 글로벌 본문이 사용됩니다."
+  },
+  "templateDispatch": {
+    "label": "자동 발송",
+    "disabledByGlobal": "글로벌 토글이 OFF 입니다"
+  },
+  "reminderDn": {
+    "d1ListLabel": "D-1·D-0 리마인더 (LATE)",
+    "d2ListLabel": "D-2 리마인더"
+  },
+  "dispatch": {
+    "badge": {
+      "on": "발송 ON",
+      "off": "발송 OFF"
+    }
+  },
+  "banner": {
+    "gateNotice": "자동 SMS 발송은 글로벌 + 종목별 2단계 토글로 제어됩니다. 수동 발송·인증 OTP 는 영향 없음."
+  },
+  "action": {
+    "dispatchUpdated": "발송 플래그가 갱신되었습니다.",
+    "dispatchUpdateFailed": "발송 플래그 갱신에 실패했습니다."
   }
 }

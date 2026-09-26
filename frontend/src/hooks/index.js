@@ -8,3 +8,4 @@ export { useSoftRefresh } from './useSoftRefresh';
 export { useStableUserId } from './useStableUserId';
 export { useSoftResourceLoad } from './useSoftResourceLoad';
 export { useUserIdScopedLoad } from './useUserIdScopedLoad';
+export { useReservationReminderDispatchFlags } from './useReservationReminderDispatchFlags';

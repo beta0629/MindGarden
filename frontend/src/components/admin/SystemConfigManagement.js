@@ -17,7 +17,7 @@ import { Database, Cpu, ExternalLink, BellRing, Shield } from 'lucide-react';
 import StandardizedApi from '../../utils/standardizedApi';
 import { getCommonCodes } from '../../utils/commonCodeApi';
 import { useSession } from '../../contexts/SessionContext';
-import { useConfirm, useSettingToggleSave } from '../../hooks';
+import { useConfirm, useSettingToggleSave, useReservationReminderDispatchFlags } from '../../hooks';
 import notificationManager from '../../utils/notification';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import ContentArea from '../dashboard-v2/content/ContentArea';
@@ -612,7 +612,7 @@ const SystemConfigManagement = () => {
               subtitle={t('systemConfig.pageSubtitle')}
             />
 
-            {/* PR-2 (2026-05-25): 알림 자동 발송 스케줄러 4 종 토글 (DB SSOT) */}
+            {/* PR-2 (2026-05-25): 알림 자동 발송 스케줄러 4 종 토글 (DB SSOT) + D-1/D-2 종목 게이트 */}
             <NotificationSchedulerSection
               t={t}
               flags={schedulerFlags}
@@ -879,7 +879,7 @@ const NotificationSchedulerSection = ({
       labelKey: 'systemConfig.notificationScheduler.reservationReminder',
       labelFallback: '예약 D-1·D-2 리마인더',
       hintKey: 'systemConfig.notificationScheduler.reservationReminderHint',
-      hintFallback: '매일 09:00 KST 예약 D-2 안내를 일괄 발송합니다.'
+      hintFallback: '스케줄러 엔진(배치) ON/OFF. 끄면 D-2·D-1·D-0 일괄 발송이 함께 중단됩니다. 종목별 발송은 아래 개별 토글을 사용하세요.'
     }
   ];
   const orderedItems = NOTIFICATION_SCHEDULER_FLAG_ORDER
@@ -940,7 +940,176 @@ const NotificationSchedulerSection = ({
           })}
         </ul>
       )}
+      <ReservationReminderDnDispatchSection t={t} />
     </section>
+  );
+};
+
+/**
+ * 예약 D-1·D-2 종목별 발송 게이트 — SMS 템플릿 dispatch_enabled SSOT.
+ * 스케줄러 마스터 플래그와 동기화하지 않는다.
+ *
+ * @param {{ t: Function }} props
+ */
+const ReservationReminderDnDispatchSection = ({ t }) => {
+  const handleLoadError = useCallback((error) => {
+    console.error('예약 리마인더 종목 발송 상태 로드 실패:', error);
+    notificationManager.show(
+      t(
+        'systemConfig.notificationScheduler.error.loadDn',
+        '예약 리마인더 종목 발송 상태를 불러오지 못했습니다.'
+      ),
+      'error'
+    );
+  }, [t]);
+
+  const {
+    flags,
+    loading,
+    softReload,
+    patchD1,
+    patchD2
+  } = useReservationReminderDispatchFlags({
+    enabled: true,
+    onLoadError: handleLoadError
+  });
+
+  return (
+    <div
+      className="mg-v2-notification-scheduler__dn"
+      data-testid="reservation-reminder-dn-section"
+    >
+      <h3 className="mg-v2-notification-scheduler__dn-title">
+        {t(
+          'systemConfig.notificationScheduler.reservationReminderDnSection',
+          '종목별 리마인더 발송'
+        )}
+      </h3>
+      <p className="mg-v2-notification-scheduler__dn-desc">
+        {t(
+          'systemConfig.notificationScheduler.reservationReminderDnSectionHint',
+          'SMS 템플릿 dispatch_enabled SSOT입니다. SMS 템플릿 관리 화면과 동일하며, 재시작 없이 즉시 반영됩니다.'
+        )}
+      </p>
+      {loading ? (
+        <UnifiedLoading
+          type="inline"
+          text={t('systemConfig.notificationScheduler.loading')}
+        />
+      ) : (
+        <ul className="mg-v2-notification-scheduler__list mg-v2-notification-scheduler__dn-list">
+          <li className="mg-v2-notification-scheduler__item">
+            <ReservationReminderDnFlagRow
+              t={t}
+              label={t(
+                'systemConfig.notificationScheduler.reservationReminderD1',
+                'D-1 리마인더 발송'
+              )}
+              hint={t(
+                'systemConfig.notificationScheduler.reservationReminderD1Hint',
+                '템플릿 RESERVATION_IMMEDIATE_LATE. D-1(내일)과 D-0(당일) 배치가 동일 템플릿을 사용합니다.'
+              )}
+              value={flags.d1Enabled}
+              found={flags.d1Found}
+              save={patchD1}
+              softReload={softReload}
+              testId="reservation-reminder-d1-toggle"
+            />
+          </li>
+          <li className="mg-v2-notification-scheduler__item">
+            <ReservationReminderDnFlagRow
+              t={t}
+              label={t(
+                'systemConfig.notificationScheduler.reservationReminderD2',
+                'D-2 리마인더 발송'
+              )}
+              hint={t(
+                'systemConfig.notificationScheduler.reservationReminderD2Hint',
+                '템플릿 RESERVATION_REMINDER_D2. 상담 2일 전 일괄 안내입니다.'
+              )}
+              value={flags.d2Enabled}
+              found={flags.d2Found}
+              save={patchD2}
+              softReload={softReload}
+              testId="reservation-reminder-d2-toggle"
+            />
+          </li>
+        </ul>
+      )}
+    </div>
+  );
+};
+
+/**
+ * D-n 종목 발송 Switch 행 — patchTemplateDispatchFlag + softReload.
+ *
+ * @param {object} props
+ */
+const ReservationReminderDnFlagRow = ({
+  t,
+  label,
+  hint,
+  value,
+  found,
+  save,
+  softReload,
+  testId
+}) => {
+  const meta = found
+    ? null
+    : t(
+      'systemConfig.notificationScheduler.reservationReminderDnMissing',
+      '해당 SMS 템플릿이 목록에 없습니다. 시드·테넌트 템플릿을 확인하세요.'
+    );
+
+  const { busy, disabled, onCheckedChange } = useSettingToggleSave({
+    value,
+    onValueChange: () => {},
+    save,
+    optimistic: false,
+    onSuccess: async() => {
+      notificationManager.show(
+        t('systemConfig.notificationScheduler.success.saveDn', '예약 리마인더 종목 발송이 저장되었습니다.'),
+        'success'
+      );
+      try {
+        await softReload();
+      } catch (error) {
+        console.error('예약 리마인더 종목 플래그 soft 재조회 실패:', error);
+      }
+    },
+    onError: (error) => {
+      console.error('예약 리마인더 종목 발송 저장 실패:', error);
+      const backendMsg = error?.response?.data?.message || error?.data?.message;
+      notificationManager.show(
+        backendMsg
+          || t('systemConfig.notificationScheduler.error.saveDn', '예약 리마인더 종목 발송 저장에 실패했습니다.'),
+        'error'
+      );
+    },
+    isEnabled: found
+  });
+
+  const statusLabel = value
+    ? t('systemConfig.notificationScheduler.status.on')
+    : t('systemConfig.notificationScheduler.status.off');
+  const ariaLabel = value
+    ? t('systemConfig.notificationScheduler.toggleAriaOff', { label })
+    : t('systemConfig.notificationScheduler.toggleAriaOn', { label });
+
+  return (
+    <SettingSwitchRow
+      label={label}
+      hint={hint}
+      meta={meta}
+      statusLabel={statusLabel}
+      checked={value}
+      disabled={disabled || !found}
+      isPending={busy}
+      ariaLabel={ariaLabel}
+      onCheckedChange={onCheckedChange}
+      data-testid={testId}
+    />
   );
 };
 

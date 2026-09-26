@@ -348,6 +348,17 @@ public interface AdminService {
     void terminateMapping(Long id, String reason);
 
     /**
+     * 회기가 아직 ACTIVE에 합산되지 않은 추가 패키지 행인지 여부.
+     *
+     * <p>notes에 추가 매칭 마커가 있고 병합 완료 마커가 없으며, 상태가 PENDING_PAYMENT·PAYMENT_CONFIRMED·
+     * DEPOSIT_PENDING 중 하나일 때 true. 이 행의 환불은 회기 차감 없이 추가 회기 수입 전표 취소(무효)로 처리한다.</p>
+     *
+     * @param mapping 매핑 (null 허용)
+     * @return 미병합 추가 패키지면 true
+     */
+    boolean isAdditionalPackagePendingMerge(ConsultantClientMapping mapping);
+
+    /**
      * desync-cleanup — 매핑 상태와 무관하게 미래 점유 일정만 CANCELLED 전이.
      * terminate/환불을 호출하지 않는다. 이미 TERMINATED여도 스케줄만 정리한다.
      *

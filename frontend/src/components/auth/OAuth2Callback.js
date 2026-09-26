@@ -3,7 +3,6 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import notificationManager from '../../utils/notification';
 import { sessionManager } from '../../utils/sessionManager';
-import { markJustLoggedIn } from '../../utils/sessionAuthPolicy';
 import { useSession } from '../../contexts/SessionContext';
 import { redirectToDynamicDashboard } from '../../utils/dashboardUtils';
 import SocialSignupModal from './SocialSignupModal';

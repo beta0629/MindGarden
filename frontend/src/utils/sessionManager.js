@@ -17,6 +17,7 @@ import { isTransientNetworkError, notifyTransientNetworkIssue } from './networkE
 import { redirectToLoginPageOnce } from './sessionRedirect';
 import { clearStoredSessionExpiry, syncStoredSessionExpiry } from './sessionExpiryDisplay';
 import { clearJustRefreshed, hasStoredAccessToken, hasStoredRefreshToken, isWithinAuthGraceWindow } from './sessionAuthPolicy';
+import { isBackground401KeepUser, loadSessionSecurityFlags } from './sessionSecurityFlags';
 import { isPublicSpaPath } from './publicSpaPaths';
 
 /**
@@ -378,11 +379,16 @@ class SessionManager {
 
         // 백그라운드 확인은 이미 무효화된 HttpSession 을 본 것만으로 앱 전체를 /login 으로 보내지 않는다.
         // 실제 만료는 사용자 요청(ajax 재검증)·유휴 모달·새로고침(foreground 확인)에서 판정된다.
+        // OAuth 팬텀 완화: security.session.background-401.keep-user=false(기본) 이면 user 클리어.
         if (background && !duplicateTerminated) {
-          console.log('🔍 백그라운드 세션 확인 401 - 사용자 유지, 리다이렉트 없음');
-          this.lastCheckTime = now;
-          this.notifyListeners();
-          return false;
+          await loadSessionSecurityFlags();
+          if (isBackground401KeepUser()) {
+            console.log('🔍 백그라운드 세션 확인 401 - 사용자 유지(keep-user=true)');
+            this.lastCheckTime = now;
+            this.notifyListeners();
+            return false;
+          }
+          console.log('🔍 백그라운드 세션 확인 401 - keep-user=false, 사용자 클리어');
         }
 
         this.user = null;

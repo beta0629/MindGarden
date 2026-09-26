@@ -10,6 +10,7 @@ import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import ClientTenantComponentGate from '../ClientTenantComponentGate';
 import {
+  CLIENT_SHOP_FETCH_FAILED_COPY,
   CLIENT_SHOP_SESSION_LOADING_COPY,
   CLIENT_SHOP_TEST_IDS,
   CLIENT_SHOP_UNAVAILABLE_COPY
@@ -36,7 +37,7 @@ describe('ClientTenantComponentGate', () => {
     });
   });
 
-  test('fetchFailed shows unavailable (not session-loading skeleton)', () => {
+  test('fetchFailed shows fetch-failed copy (not shop-OFF copy)', () => {
     mockUseTenantComponentFlags.mockReturnValue({
       loading: false,
       fetchFailed: true,
@@ -54,7 +55,9 @@ describe('ClientTenantComponentGate', () => {
 
     expect(screen.queryByTestId(CLIENT_SHOP_TEST_IDS.SESSION_LOADING)).not.toBeInTheDocument();
     expect(screen.queryByText(CLIENT_SHOP_SESSION_LOADING_COPY)).not.toBeInTheDocument();
-    expect(screen.getByText(CLIENT_SHOP_UNAVAILABLE_COPY.TITLE)).toBeInTheDocument();
+    expect(screen.getByText(CLIENT_SHOP_FETCH_FAILED_COPY.TITLE)).toBeInTheDocument();
+    expect(screen.getByText(CLIENT_SHOP_FETCH_FAILED_COPY.DESCRIPTION)).toBeInTheDocument();
+    expect(screen.queryByText(CLIENT_SHOP_UNAVAILABLE_COPY.TITLE)).not.toBeInTheDocument();
     expect(screen.queryByText('shop-body')).not.toBeInTheDocument();
   });
 

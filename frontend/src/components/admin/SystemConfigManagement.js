@@ -41,16 +41,28 @@ const API_ADMIN_SYSTEM_CONFIG_WELLNESS_TARGET_ROLES = '/api/v1/admin/system-conf
  * 세션 보안 플래그 키 SSOT — 백엔드 {@code SessionSecurityFlagKeys} 와 1:1.
  */
 const SESSION_SECURITY_FLAG_KEYS = Object.freeze({
-  DUPLICATE_LOGIN_ALLOWED: 'security.session.duplicate-login.allowed'
+  DUPLICATE_LOGIN_ALLOWED: 'security.session.duplicate-login.allowed',
+  OAUTH_REQUIRE_SERVER_VERIFY: 'security.session.oauth.require-server-verify',
+  BACKGROUND_401_KEEP_USER: 'security.session.background-401.keep-user',
+  SOFT_FAIL_ENABLED: 'security.session.soft-fail.enabled'
 });
 
 const SESSION_SECURITY_CATEGORY = 'SECURITY';
 
 const API_ADMIN_SYSTEM_CONFIG_DUPLICATE_LOGIN_ALLOWED =
   `/api/v1/admin/system-config/${encodeURIComponent(SESSION_SECURITY_FLAG_KEYS.DUPLICATE_LOGIN_ALLOWED)}`;
+const API_ADMIN_SYSTEM_CONFIG_OAUTH_REQUIRE_SERVER_VERIFY =
+  `/api/v1/admin/system-config/${encodeURIComponent(SESSION_SECURITY_FLAG_KEYS.OAUTH_REQUIRE_SERVER_VERIFY)}`;
+const API_ADMIN_SYSTEM_CONFIG_BACKGROUND_401_KEEP_USER =
+  `/api/v1/admin/system-config/${encodeURIComponent(SESSION_SECURITY_FLAG_KEYS.BACKGROUND_401_KEEP_USER)}`;
+const API_ADMIN_SYSTEM_CONFIG_SOFT_FAIL_ENABLED =
+  `/api/v1/admin/system-config/${encodeURIComponent(SESSION_SECURITY_FLAG_KEYS.SOFT_FAIL_ENABLED)}`;
 
-/** 테넌트 행 없을 때 UI 기본값 — 백엔드 DEFAULT_ALLOWED=false 와 정합 */
+/** 테넌트 행 없을 때 UI 기본값 — 백엔드 DEFAULT 와 정합 */
 const DEFAULT_DUPLICATE_LOGIN_ALLOWED = false;
+const DEFAULT_OAUTH_REQUIRE_SERVER_VERIFY = true;
+const DEFAULT_BACKGROUND_401_KEEP_USER = false;
+const DEFAULT_SOFT_FAIL_ENABLED = true;
 
 /**
  * PR-2 (2026-05-25): 알림 자동 발송 스케줄러 4 종 어드민 토글 API 베이스 경로.
@@ -149,6 +161,9 @@ const SystemConfigManagement = () => {
   const [saving, setSaving] = useState(false);
   const [wellness, setWellness] = useState(DEFAULT_WELLNESS);
   const [duplicateLoginAllowed, setDuplicateLoginAllowed] = useState(DEFAULT_DUPLICATE_LOGIN_ALLOWED);
+  const [oauthRequireServerVerify, setOauthRequireServerVerify] = useState(DEFAULT_OAUTH_REQUIRE_SERVER_VERIFY);
+  const [background401KeepUser, setBackground401KeepUser] = useState(DEFAULT_BACKGROUND_401_KEEP_USER);
+  const [softFailEnabled, setSoftFailEnabled] = useState(DEFAULT_SOFT_FAIL_ENABLED);
   const [roleCodes, setRoleCodes] = useState([]);
   const [rolesLoading, setRolesLoading] = useState(true);
 
@@ -338,11 +353,14 @@ const SystemConfigManagement = () => {
   const loadConfigs = useCallback(async() => {
     try {
       setLoading(true);
-      const [wEnabled, wTime, wRoles, dupLogin] = await Promise.all([
+      const [wEnabled, wTime, wRoles, dupLogin, oauthVerify, bgKeep, softFail] = await Promise.all([
         StandardizedApi.get(API_ADMIN_SYSTEM_CONFIG_WELLNESS_AUTO_SEND_ENABLED).catch(() => null),
         StandardizedApi.get(API_ADMIN_SYSTEM_CONFIG_WELLNESS_SEND_TIME).catch(() => null),
         StandardizedApi.get(API_ADMIN_SYSTEM_CONFIG_WELLNESS_TARGET_ROLES).catch(() => null),
-        StandardizedApi.get(API_ADMIN_SYSTEM_CONFIG_DUPLICATE_LOGIN_ALLOWED).catch(() => null)
+        StandardizedApi.get(API_ADMIN_SYSTEM_CONFIG_DUPLICATE_LOGIN_ALLOWED).catch(() => null),
+        StandardizedApi.get(API_ADMIN_SYSTEM_CONFIG_OAUTH_REQUIRE_SERVER_VERIFY).catch(() => null),
+        StandardizedApi.get(API_ADMIN_SYSTEM_CONFIG_BACKGROUND_401_KEEP_USER).catch(() => null),
+        StandardizedApi.get(API_ADMIN_SYSTEM_CONFIG_SOFT_FAIL_ENABLED).catch(() => null)
       ]);
       setWellness({
         wellnessAutoSendEnabled: wEnabled?.success ? wEnabled.configValue === 'true' : DEFAULT_WELLNESS.wellnessAutoSendEnabled,
@@ -353,6 +371,21 @@ const SystemConfigManagement = () => {
         dupLogin?.success && typeof dupLogin.configValue === 'string' && dupLogin.configValue.length > 0
           ? dupLogin.configValue === 'true'
           : DEFAULT_DUPLICATE_LOGIN_ALLOWED
+      );
+      setOauthRequireServerVerify(
+        oauthVerify?.success && typeof oauthVerify.configValue === 'string' && oauthVerify.configValue.length > 0
+          ? oauthVerify.configValue === 'true'
+          : DEFAULT_OAUTH_REQUIRE_SERVER_VERIFY
+      );
+      setBackground401KeepUser(
+        bgKeep?.success && typeof bgKeep.configValue === 'string' && bgKeep.configValue.length > 0
+          ? bgKeep.configValue === 'true'
+          : DEFAULT_BACKGROUND_401_KEEP_USER
+      );
+      setSoftFailEnabled(
+        softFail?.success && typeof softFail.configValue === 'string' && softFail.configValue.length > 0
+          ? softFail.configValue === 'true'
+          : DEFAULT_SOFT_FAIL_ENABLED
       );
     } catch (error) {
       console.error('설정 로드 실패:', error);
@@ -371,6 +404,30 @@ const SystemConfigManagement = () => {
     });
   }, [t]);
 
+  const saveOauthRequireServerVerify = useCallback(async(next) => {
+    await StandardizedApi.post(API_ADMIN_SYSTEM_CONFIG_OAUTH_REQUIRE_SERVER_VERIFY, {
+      configValue: String(next),
+      description: t('systemConfig.sessionSecurity.descOauthRequireServerVerify'),
+      category: SESSION_SECURITY_CATEGORY
+    });
+  }, [t]);
+
+  const saveBackground401KeepUser = useCallback(async(next) => {
+    await StandardizedApi.post(API_ADMIN_SYSTEM_CONFIG_BACKGROUND_401_KEEP_USER, {
+      configValue: String(next),
+      description: t('systemConfig.sessionSecurity.descBackground401KeepUser'),
+      category: SESSION_SECURITY_CATEGORY
+    });
+  }, [t]);
+
+  const saveSoftFailEnabled = useCallback(async(next) => {
+    await StandardizedApi.post(API_ADMIN_SYSTEM_CONFIG_SOFT_FAIL_ENABLED, {
+      configValue: String(next),
+      description: t('systemConfig.sessionSecurity.descSoftFailEnabled'),
+      category: SESSION_SECURITY_CATEGORY
+    });
+  }, [t]);
+
   const {
     busy: duplicateLoginBusy,
     disabled: duplicateLoginDisabled,
@@ -379,6 +436,60 @@ const SystemConfigManagement = () => {
     value: duplicateLoginAllowed,
     onValueChange: setDuplicateLoginAllowed,
     save: saveDuplicateLoginAllowed,
+    optimistic: true,
+    onSuccess: () => {
+      notificationManager.show(t('systemConfig.sessionSecurity.toggleSaveSuccess'), 'success');
+    },
+    onError: (error) => {
+      const backendMsg = error?.response?.data?.message || error?.data?.message || error?.message;
+      notificationManager.show(backendMsg || t('systemConfig.error.save'), 'error');
+    }
+  });
+
+  const {
+    busy: oauthVerifyBusy,
+    disabled: oauthVerifyDisabled,
+    onCheckedChange: onOauthVerifyCheckedChange
+  } = useSettingToggleSave({
+    value: oauthRequireServerVerify,
+    onValueChange: setOauthRequireServerVerify,
+    save: saveOauthRequireServerVerify,
+    optimistic: true,
+    onSuccess: () => {
+      notificationManager.show(t('systemConfig.sessionSecurity.toggleSaveSuccess'), 'success');
+    },
+    onError: (error) => {
+      const backendMsg = error?.response?.data?.message || error?.data?.message || error?.message;
+      notificationManager.show(backendMsg || t('systemConfig.error.save'), 'error');
+    }
+  });
+
+  const {
+    busy: background401Busy,
+    disabled: background401Disabled,
+    onCheckedChange: onBackground401CheckedChange
+  } = useSettingToggleSave({
+    value: background401KeepUser,
+    onValueChange: setBackground401KeepUser,
+    save: saveBackground401KeepUser,
+    optimistic: true,
+    onSuccess: () => {
+      notificationManager.show(t('systemConfig.sessionSecurity.toggleSaveSuccess'), 'success');
+    },
+    onError: (error) => {
+      const backendMsg = error?.response?.data?.message || error?.data?.message || error?.message;
+      notificationManager.show(backendMsg || t('systemConfig.error.save'), 'error');
+    }
+  });
+
+  const {
+    busy: softFailBusy,
+    disabled: softFailDisabled,
+    onCheckedChange: onSoftFailCheckedChange
+  } = useSettingToggleSave({
+    value: softFailEnabled,
+    onValueChange: setSoftFailEnabled,
+    save: saveSoftFailEnabled,
     optimistic: true,
     onSuccess: () => {
       notificationManager.show(t('systemConfig.sessionSecurity.toggleSaveSuccess'), 'success');
@@ -539,6 +650,69 @@ const SystemConfigManagement = () => {
                       })
                       : t('systemConfig.notificationScheduler.toggleAriaOn', {
                         label: t('systemConfig.sessionSecurity.duplicateLoginAllowed')
+                      })}
+                  />
+                </div>
+                <div className="config-item">
+                  <SettingSwitchRow
+                    label={t('systemConfig.sessionSecurity.oauthRequireServerVerify')}
+                    hint={t('systemConfig.sessionSecurity.oauthRequireServerVerifyHint')}
+                    statusLabel={oauthRequireServerVerify
+                      ? t('systemConfig.notificationScheduler.status.on')
+                      : t('systemConfig.notificationScheduler.status.off')}
+                    checked={oauthRequireServerVerify}
+                    onCheckedChange={onOauthVerifyCheckedChange}
+                    disabled={oauthVerifyDisabled}
+                    isPending={oauthVerifyBusy}
+                    data-testid="oauth-require-server-verify-toggle"
+                    ariaLabel={oauthRequireServerVerify
+                      ? t('systemConfig.notificationScheduler.toggleAriaOff', {
+                        label: t('systemConfig.sessionSecurity.oauthRequireServerVerify')
+                      })
+                      : t('systemConfig.notificationScheduler.toggleAriaOn', {
+                        label: t('systemConfig.sessionSecurity.oauthRequireServerVerify')
+                      })}
+                  />
+                </div>
+                <div className="config-item">
+                  <SettingSwitchRow
+                    label={t('systemConfig.sessionSecurity.background401KeepUser')}
+                    hint={t('systemConfig.sessionSecurity.background401KeepUserHint')}
+                    statusLabel={background401KeepUser
+                      ? t('systemConfig.notificationScheduler.status.on')
+                      : t('systemConfig.notificationScheduler.status.off')}
+                    checked={background401KeepUser}
+                    onCheckedChange={onBackground401CheckedChange}
+                    disabled={background401Disabled}
+                    isPending={background401Busy}
+                    data-testid="background-401-keep-user-toggle"
+                    ariaLabel={background401KeepUser
+                      ? t('systemConfig.notificationScheduler.toggleAriaOff', {
+                        label: t('systemConfig.sessionSecurity.background401KeepUser')
+                      })
+                      : t('systemConfig.notificationScheduler.toggleAriaOn', {
+                        label: t('systemConfig.sessionSecurity.background401KeepUser')
+                      })}
+                  />
+                </div>
+                <div className="config-item">
+                  <SettingSwitchRow
+                    label={t('systemConfig.sessionSecurity.softFailEnabled')}
+                    hint={t('systemConfig.sessionSecurity.softFailEnabledHint')}
+                    statusLabel={softFailEnabled
+                      ? t('systemConfig.notificationScheduler.status.on')
+                      : t('systemConfig.notificationScheduler.status.off')}
+                    checked={softFailEnabled}
+                    onCheckedChange={onSoftFailCheckedChange}
+                    disabled={softFailDisabled}
+                    isPending={softFailBusy}
+                    data-testid="soft-fail-enabled-toggle"
+                    ariaLabel={softFailEnabled
+                      ? t('systemConfig.notificationScheduler.toggleAriaOff', {
+                        label: t('systemConfig.sessionSecurity.softFailEnabled')
+                      })
+                      : t('systemConfig.notificationScheduler.toggleAriaOn', {
+                        label: t('systemConfig.sessionSecurity.softFailEnabled')
                       })}
                   />
                 </div>

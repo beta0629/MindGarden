@@ -67,6 +67,8 @@ class OAuth2ControllerSessionTimeoutTest {
     @Mock
     private UserSessionService userSessionService;
     @Mock
+    private com.coresolution.consultation.service.SystemConfigService systemConfigService;
+    @Mock
     private TenantRepository tenantRepository;
     @Mock
     private Environment environment;

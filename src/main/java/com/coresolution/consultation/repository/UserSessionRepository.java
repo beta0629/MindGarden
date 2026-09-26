@@ -59,6 +59,21 @@ public interface UserSessionRepository extends JpaRepository<UserSession, Long> 
     @Modifying
     @Query("UPDATE UserSession us SET us.isActive = false, us.endedAt = :now, us.endReason = :reason WHERE us.tenantId = :tenantId AND us.user.id = :userId AND us.isActive = true")
     int deactivateAllUserSessionsByTenantId(@Param("tenantId") String tenantId, @Param("userId") Long userId, @Param("now") LocalDateTime now, @Param("reason") String reason);
+
+    /**
+     * 테넌트별 사용자 활성 세션 중 현재 HttpSession 을 제외하고 비활성화.
+     * OAuth {@code createSession} 직전 중복 로그인 정리 시 신규 세션이 즉시 비활성되는 것을 막는다.
+     */
+    @Modifying
+    @Query("UPDATE UserSession us SET us.isActive = false, us.endedAt = :now, us.endReason = :reason "
+            + "WHERE us.tenantId = :tenantId AND us.user.id = :userId AND us.isActive = true "
+            + "AND us.sessionId <> :excludeSessionId")
+    int deactivateOtherUserSessionsByTenantId(
+            @Param("tenantId") String tenantId,
+            @Param("userId") Long userId,
+            @Param("excludeSessionId") String excludeSessionId,
+            @Param("now") LocalDateTime now,
+            @Param("reason") String reason);
     
     /**
      * 테넌트별 특정 세션을 비활성화 (tenantId 필터링)

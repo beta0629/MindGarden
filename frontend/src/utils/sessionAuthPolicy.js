@@ -16,6 +16,7 @@ import {
   SESSION_KEYS,
   SESSION_SOFT_FAIL_URL_PATHS
 } from '../constants/session';
+import { isSoftFailEnabled } from './sessionSecurityFlags';
 
 /**
  * URL 경로에서 query 를 제거한 pathname 유사 문자열.
@@ -40,11 +41,15 @@ function normalizeUrlPath(url) {
 /**
  * shell chrome(브랜딩·LNB·공통코드·unread-count 등) URL 이면 401/403 시 /login 리다이렉트하지 않음.
  * path substring 매칭, query string 무시.
+ * soft-fail 스위치 off 이거나 회기/샵 경로는 해당 없음.
  *
  * @param {string} url
  * @returns {boolean}
  */
 export function isSessionSoftFailUrl(url) {
+  if (!isSoftFailEnabled()) {
+    return false;
+  }
   const path = normalizeUrlPath(url);
   if (!path) {
     return false;

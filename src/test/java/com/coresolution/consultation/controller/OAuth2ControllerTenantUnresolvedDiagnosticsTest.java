@@ -70,6 +70,8 @@ class OAuth2ControllerTenantUnresolvedDiagnosticsTest {
     @Mock private com.coresolution.consultation.service.JwtService jwtService;
     @Mock private com.coresolution.consultation.service.DynamicPermissionService dynamicPermissionService;
     @Mock private UserSessionService userSessionService;
+    @Mock
+    private com.coresolution.consultation.service.SystemConfigService systemConfigService;
     @Mock private com.coresolution.core.repository.TenantRepository tenantRepository;
     @Mock private org.springframework.core.env.Environment environment;
     @Mock private com.coresolution.consultation.service.AppleSignInService appleSignInService;

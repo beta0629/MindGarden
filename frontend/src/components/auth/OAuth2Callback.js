@@ -30,6 +30,9 @@ import {
   OAUTH_WEB_LOGIN_SUCCESS_LINKED_ACCOUNT
 } from '../../constants/loginDisplay';
 import { USER_ROLES } from '../../constants/roles';
+import { OAUTH_SERVER_VERIFY_FAILED_MESSAGE } from '../../constants/session';
+import { markJustLoggedIn } from '../../utils/sessionAuthPolicy';
+import { loadSessionSecurityFlags } from '../../utils/sessionSecurityFlags';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_AUTH_TENANT_CHECK_MULTI = '/api/v1/auth/tenant/check-multi';
@@ -42,7 +45,7 @@ const OAUTH2_ERROR_QUERY_DISPLAY_MAX_LEN = 200;
 const OAuth2Callback = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { checkSession, testLogin } = useSession();
+  const { testLogin } = useSession();
   const [isProcessing, setIsProcessing] = useState(true);
   const [error, setError] = useState(null);
   const [showSignupModal, setShowSignupModal] = useState(false);
@@ -90,10 +93,13 @@ const OAuth2Callback = () => {
         tenantId: data.tenantId,
         provider: phoneSelectionProvider
       };
-      await testLogin(userInfo, {
+      const loginOk = await testLogin(userInfo, {
         accessToken: data.accessToken,
         refreshToken: data.refreshToken
-      });
+      }, { requireServerVerify: true });
+      if (!loginOk) {
+        throw new Error(OAUTH_SERVER_VERIFY_FAILED_MESSAGE);
+      }
       setShowPhoneAccountSelectionModal(false);
       notificationManager.show(
         toDisplayString(OAUTH_WEB_LOGIN_SUCCESS_LINKED_ACCOUNT, OAUTH_WEB_LOGIN_SUCCESS_LINKED_ACCOUNT),
@@ -405,14 +411,19 @@ const OAuth2Callback = () => {
 
         // 중앙 세션에 사용자 정보 설정 (비밀번호 로그인 API 호출 없음)
         // 웹 카카오/네이버/구글 콜백은 JWT를 쿼리에 넣지 않음 — placeholder 토큰 저장 금지(refresh 401 악화)
+        // current-user foreground 200 전에는 isLoggedIn 확정 금지 (팬텀 SNS 세션 차단)
+        await loadSessionSecurityFlags();
+        markJustLoggedIn();
         const oauthSessionTokens = oauthAccessToken
           ? {
             accessToken: oauthAccessToken,
             ...(oauthRefreshToken ? { refreshToken: oauthRefreshToken } : {})
           }
           : null;
-        const loginSuccess = await testLogin(userInfo, oauthSessionTokens);
-        console.log('✅ OAuth2 중앙 세션에 사용자 정보 설정:', userInfo);
+        const loginSuccess = await testLogin(userInfo, oauthSessionTokens, {
+          requireServerVerify: true
+        });
+        console.log('✅ OAuth2 중앙 세션에 사용자 정보 설정:', userInfo, 'verified=', loginSuccess);
 
         // 멀티 테넌트 사용자 확인 (X-Tenant-Id: 쿼리·사용자 정보 우선)
         const checkMultiTenantAndRedirect = async(userRole) => {
@@ -503,23 +514,13 @@ const OAuth2Callback = () => {
           console.log('✅ 중앙 세션 로그인 성공, 멀티 테넌트 확인 후 대시보드로 리다이렉트 시작');
           redirectToDashboard(role);
         } else {
-          console.error('❌ OAuth2 중앙 세션 로그인 실패, 재시도...');
-          setTimeout(async() => {
-            try {
-              console.log('🔄 OAuth2 세션 재확인 시도...');
-              const isLoggedIn = await checkSession(true);
-              if (isLoggedIn && role) {
-                console.log('✅ 세션 재확인 성공, 대시보드로 리다이렉트');
-                redirectToDashboard(role);
-              } else {
-                console.error('❌ 세션 재확인 실패, 강제 리다이렉트 시도');
-                redirectToDashboard(role);
-              }
-            } catch (retryErr) {
-              console.error('❌ OAuth2 세션 재확인 실패:', retryErr);
-              redirectToDashboard(role);
-            }
-          }, 500);
+          console.error('❌ OAuth2 서버 세션 검증 실패 — 강제 대시보드 리다이렉트 없음');
+          setError(OAUTH_SERVER_VERIFY_FAILED_MESSAGE);
+          notificationManager.show(
+            toDisplayString(OAUTH_SERVER_VERIFY_FAILED_MESSAGE, OAUTH_SERVER_VERIFY_FAILED_MESSAGE),
+            'error'
+          );
+          setTimeout(() => navigate('/login'), 3000);
         }
 
         sessionStorage.setItem('oauth2_user', JSON.stringify(userInfo));
@@ -659,7 +660,7 @@ const OAuth2Callback = () => {
           await testLogin(userInfo, {
             accessToken,
             refreshToken: refreshToken || accessToken
-          });
+          }, { requireServerVerify: true });
           setShowOAuthPhoneVerificationModal(false);
           setOAuthPhoneVerificationPayload(null);
           notificationManager.show(

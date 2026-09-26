@@ -72,6 +72,7 @@ class AuthControllerCurrentUserDuplicateTerminateTest {
     @Mock private BranchService branchService;
     @Mock private UserSessionService userSessionService;
     @Mock private SystemConfigService systemConfigService;
+    @Mock private com.coresolution.consultation.service.SessionSecurityPolicyService sessionSecurityPolicyService;
     @Mock private DynamicPermissionService dynamicPermissionService;
     @Mock private UserService userService;
     @Mock private UserRoleQueryService userRoleQueryService;

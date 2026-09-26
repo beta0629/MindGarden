@@ -208,6 +208,7 @@ export const JUST_REFRESHED_AT_KEY = 'justRefreshedAt';
 /**
  * shell chrome API — 401/403 이어도 /login 으로 리다이렉트하지 않음 (soft-fail).
  * path substring 매칭, query string 무시. 전체 API 로 확대 금지.
+ * 회기(mappings)·샵(active-codes)·current-user 는 절대 포함하지 않는다.
  */
 export const SESSION_SOFT_FAIL_URL_PATHS = Object.freeze([
   '/api/v1/admin/branding',
@@ -219,3 +220,25 @@ export const SESSION_SOFT_FAIL_URL_PATHS = Object.freeze([
   '/api/v1/consultation-messages/unread-count',
   '/api/v1/notifications/unread-count'
 ]);
+
+/**
+ * BE SessionSecurityFlagKeys 기본값과 정합 (로드 실패·캐시 전).
+ * require-server-verify=true, background-401.keep-user=false, soft-fail=true.
+ */
+export const SESSION_SECURITY_FLAG_DEFAULTS = Object.freeze({
+  oauthRequireServerVerify: true,
+  background401KeepUser: false,
+  softFailEnabled: true
+});
+
+/** FE 세션 보안 플래그 캐시 TTL — BE CACHE_TTL_MS(30s) 와 정합 */
+export const SESSION_SECURITY_FLAGS_CACHE_TTL_MS = 30 * 1000;
+
+/** 세션 보안 플래그 API (permitAll) */
+export const SESSION_SECURITY_FLAGS_PATH = '/api/v1/auth/session-security-flags';
+
+/**
+ * OAuth 콜백 서버 검증 실패 시 사용자 안내.
+ */
+export const OAUTH_SERVER_VERIFY_FAILED_MESSAGE =
+  '로그인 세션을 확인하지 못했습니다. 다시 로그인해 주세요.';

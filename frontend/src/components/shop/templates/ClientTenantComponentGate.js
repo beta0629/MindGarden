@@ -13,7 +13,9 @@ import React, { useMemo } from 'react';
 import PropTypes from 'prop-types';
 import { Link, useLocation } from 'react-router-dom';
 import {
+  CLIENT_REWARD_FETCH_FAILED_COPY,
   CLIENT_REWARD_UNAVAILABLE_COPY,
+  CLIENT_SHOP_FETCH_FAILED_COPY,
   CLIENT_SHOP_SESSION_LOADING_COPY,
   CLIENT_SHOP_TEST_IDS,
   CLIENT_SHOP_UNAVAILABLE_COPY
@@ -66,8 +68,8 @@ const ClientTenantComponentGate = ({ componentCode, children }) => {
   if (flagsFetchFailed) {
     const copy =
       componentCode === PLATFORM_COMPONENT_CODES.CLIENT_REWARD
-        ? CLIENT_REWARD_UNAVAILABLE_COPY
-        : CLIENT_SHOP_UNAVAILABLE_COPY;
+        ? CLIENT_REWARD_FETCH_FAILED_COPY
+        : CLIENT_SHOP_FETCH_FAILED_COPY;
     return (
       <ShopComponentUnavailablePage
         title={copy.TITLE}

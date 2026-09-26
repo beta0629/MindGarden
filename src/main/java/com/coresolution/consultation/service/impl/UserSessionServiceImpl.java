@@ -265,6 +265,28 @@ public class UserSessionServiceImpl implements UserSessionService {
             return 0;
         }
     }
+
+    @Override
+    public int deactivateOtherSessionsForTenantUser(String tenantId, Long userId,
+            String excludeSessionId, String reason) {
+        if (tenantId == null || tenantId.isBlank() || userId == null
+                || excludeSessionId == null || excludeSessionId.isBlank()) {
+            log.warn("⚠️ deactivateOtherSessionsForTenantUser 스킵: 필수값 없음 tenantId={}, userId={}, exclude={}",
+                    tenantId, userId, excludeSessionId);
+            return 0;
+        }
+        try {
+            int updatedCount = userSessionRepository.deactivateOtherUserSessionsByTenantId(
+                    tenantId.trim(), userId, excludeSessionId, LocalDateTime.now(), reason);
+            log.info("✅ 타 세션 비활성화(현재 제외): tenantId={}, userId={}, exclude={}, reason={}, count={}",
+                    tenantId, userId, excludeSessionId, reason, updatedCount);
+            return updatedCount;
+        } catch (Exception e) {
+            log.error("❌ 타 세션 비활성화 실패: tenantId={}, userId={}, exclude={}, reason={}, error={}",
+                    tenantId, userId, excludeSessionId, reason, e.getMessage(), e);
+            return 0;
+        }
+    }
     
     @Override
     public boolean updateLastActivity(String sessionId) {

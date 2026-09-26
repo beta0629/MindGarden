@@ -96,6 +96,19 @@ public interface UserSessionService {
      * @return 비활성화된 행 수
      */
     int deactivateAllSessionsForTenantUser(String tenantId, Long userId, String reason);
+
+    /**
+     * 테넌트·사용자 활성 세션 중 현재 HttpSession ID 를 제외하고 비활성화.
+     * OAuth createSession 직전 호출 — 신규 SOCIAL 세션이 즉시 비활성되는 레이스를 완화한다.
+     *
+     * @param tenantId 테넌트 ID
+     * @param userId 사용자 PK
+     * @param excludeSessionId 유지할 HttpSession ID
+     * @param reason 종료 사유
+     * @return 비활성화된 행 수
+     */
+    int deactivateOtherSessionsForTenantUser(String tenantId, Long userId,
+            String excludeSessionId, String reason);
     
     /**
      * 세션 활동 시간 업데이트

@@ -79,6 +79,8 @@ class OAuth2ControllerWebOAuthSessionTest {
     @Mock
     private UserSessionService userSessionService;
     @Mock
+    private com.coresolution.consultation.service.SystemConfigService systemConfigService;
+    @Mock
     private TenantRepository tenantRepository;
     @Mock
     private Environment environment;
@@ -97,6 +99,7 @@ class OAuth2ControllerWebOAuthSessionTest {
     @BeforeEach
     void setUp() {
         when(sessionTimeoutProperties.getTimeoutSeconds()).thenReturn(TIMEOUT_SECONDS);
+        when(systemConfigService.isDuplicateLoginAllowedForTenant(any())).thenReturn(true);
     }
 
     private User sampleUser() {

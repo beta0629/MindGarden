@@ -34,7 +34,9 @@ import com.coresolution.consultation.service.SmsOtpVerificationService;
 import com.coresolution.consultation.service.UserPersonalDataCacheService;
 import com.coresolution.consultation.service.UserService;
 import com.coresolution.consultation.service.SystemConfigService;
+import com.coresolution.consultation.service.SessionSecurityPolicyService;
 import com.coresolution.consultation.service.UserSessionService;
+import com.coresolution.consultation.dto.response.SessionSecurityFlagsResponse;
 import com.coresolution.consultation.util.EmailLogMasking;
 import com.coresolution.consultation.util.LoginIdentifierUtils;
 import com.coresolution.consultation.util.UserRoleCapabilityUtils;
@@ -88,6 +90,7 @@ public class AuthController extends BaseApiController {
     private final BranchService branchService;
     private final UserSessionService userSessionService;
     private final SystemConfigService systemConfigService;
+    private final SessionSecurityPolicyService sessionSecurityPolicyService;
     private final DynamicPermissionService dynamicPermissionService;
     private final UserService userService;
     private final UserRoleQueryService userRoleQueryService;
@@ -145,6 +148,21 @@ public class AuthController extends BaseApiController {
         log.info("세션 강제 초기화 요청");
         SessionUtils.clearSession(session);
         return success("세션이 초기화되었습니다.");
+    }
+
+    /**
+     * FE 세션 보안 스위치 스냅샷 (재시작 없이 system_config 반영, 캐시 TTL 포함).
+     * permitAll — OAuth 콜백 전에도 조회 가능.
+     *
+     * @return oauthRequireServerVerify / background401KeepUser / softFailEnabled
+     * @author MindGarden
+     * @since 2026-09-26
+     */
+    @GetMapping("/session-security-flags")
+    public ResponseEntity<ApiResponse<SessionSecurityFlagsResponse>> getSessionSecurityFlags() {
+        String tenantId = TenantContextHolder.getTenantId();
+        SessionSecurityFlagsResponse flags = sessionSecurityPolicyService.resolveFlags(tenantId);
+        return success(flags);
     }
 
     @GetMapping("/current-user")

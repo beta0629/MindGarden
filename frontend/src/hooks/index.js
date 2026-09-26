@@ -5,3 +5,6 @@ export { useConfirm } from './useConfirm';
 export { useAlert } from './useAlert';
 export { useSettingToggleSave } from './useSettingToggleSave';
 export { useSoftRefresh } from './useSoftRefresh';
+export { useStableUserId } from './useStableUserId';
+export { useSoftResourceLoad } from './useSoftResourceLoad';
+export { useUserIdScopedLoad } from './useUserIdScopedLoad';

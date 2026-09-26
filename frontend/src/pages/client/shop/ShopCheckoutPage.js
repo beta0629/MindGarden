@@ -54,7 +54,11 @@ import {
   postShopCheckout,
   prepareShopPayment
 } from '../../../services/clientShopService';
-import { assertPortOneCustomerReadyBeforeCheckout } from '../../../utils/clientShopPaymentCustomer';
+import {
+  assertPortOneCustomerReadyBeforeCheckout,
+  resolveSessionPhoneNumber,
+  resolveSessionPhoneVerified
+} from '../../../utils/clientShopPaymentCustomer';
 import { runShopCheckoutWithPortOneGuard } from '../../../utils/shopCheckoutPortOneGuard';
 import { runShopPortOnePaymentIfReady } from '../../../utils/shopPortOneCheckout';
 import {
@@ -229,7 +233,12 @@ const ShopCheckoutPage = () => {
 
   const portOneCustomerGate = useMemo(
     () => assertPortOneCustomerReadyBeforeCheckout(user),
-    [user]
+    // userId + phone gate 필드만 — silent SET_USER 참조 변경으로 불필요 재계산 방지
+    [
+      user?.id ?? null,
+      resolveSessionPhoneNumber(user),
+      resolveSessionPhoneVerified(user)
+    ]
   );
 
   const consultantPickerOptions = useMemo(

@@ -14,7 +14,7 @@ import { kakaoLogin, naverLogin, handleOAuthCallback as socialHandleOAuthCallbac
 import { sessionManager } from '../../utils/sessionManager';
 import { useSession } from '../../contexts/SessionContext';
 import { LOGIN_SESSION_CHECK_DELAY, EXISTING_SESSION_CHECK_DELAY } from '../../constants/session';
-import { redirectToDynamicDashboard, resolvePostLoginLandingPath } from '../../utils/dashboardUtils';
+import { redirectToDynamicDashboard } from '../../utils/dashboardUtils';
 import notificationManager from '../../utils/notification';
 import {
   shouldRedirectWrongPath,
@@ -23,7 +23,6 @@ import {
 } from '../../utils/subdomainUtils';
 import { TABLET_LOGIN_CSS } from '../../constants/css';
 import csrfTokenManager from '../../utils/csrfTokenManager';
-import { redirectToLoginPageOnce } from '../../utils/sessionRedirect';
 import { toDisplayString } from '../../utils/safeDisplay';
 import { formatPhoneNumber } from '../../utils/common';
 import { TABLET_LOGIN_CONSTANTS } from '../../constants/css-variables';
@@ -378,18 +377,19 @@ const TabletLogin = () => {
         console.log('✅ SMS 인증 로그인 성공:', data);
         showTooltip(t('auth:tabletLogin.msg.smsLoginSuccess'), 'success');
         
-        // 로그인 성공 후 리다이렉트
+        // 로그인 성공 후 SPA 랜딩 (hard location.href 금지)
         if (data.user) {
-          // 사용자 정보 저장
           sessionStorage.setItem('user', JSON.stringify(data.user));
           sessionStorage.setItem('accessToken', data.accessToken);
           
-          // 로그인 랜딩 SSOT (navigate 없음 → resolvePostLoginLandingPath)
           try {
-            window.location.href = resolvePostLoginLandingPath(data.user);
+            await redirectToDynamicDashboard(
+              { user: data.user, accessToken: data.accessToken },
+              navigate
+            );
           } catch (error) {
             console.error('대시보드 리다이렉트 실패:', error);
-            window.location.href = '/dashboard';
+            navigate('/dashboard', { replace: true });
           }
         }
       } else {
@@ -689,17 +689,12 @@ const TabletLogin = () => {
       }
       
       console.log(`👤 프로필 페이지로 이동: ${profileUrl}`);
-      window.location.href = profileUrl;
+      navigate(profileUrl);
       
     } else {
-      // 로그인되지 않은 사용자의 경우 로그인 페이지로 이동
-      console.log('👤 로그인되지 않은 사용자 - 로그인 페이지로 이동');
+      // 로그인되지 않은 사용자의 경우 안내 (이미 /login 이면 hard 킥 불필요)
+      console.log('👤 로그인되지 않은 사용자 - 로그인 안내');
       showTooltip(t('auth:common.needLoginInfo'), 'info');
-      
-      // 현재 페이지가 이미 로그인 페이지인지 확인
-      if (!window.location.pathname.includes('/login')) {
-        redirectToLoginPageOnce();
-      }
     }
   };
 

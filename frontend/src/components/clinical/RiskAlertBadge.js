@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { apiGet } from '../../utils/ajax';
 import { CLINICAL_CSS } from '../../constants/clinicalCss';
 import MGButton from '../common/MGButton';
@@ -20,6 +21,7 @@ const API_CONSULTATION_RECORD_ALERTS_HIGH_RISK = '/api/v1/consultation-record-al
  */
 const RiskAlertBadge = ({ tenantId }) => {
     const { t } = useTranslation();
+    const navigate = useNavigate();
     const [alerts, setAlerts] = useState([]);
     const [isOpen, setIsOpen] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
@@ -72,12 +74,10 @@ const RiskAlertBadge = ({ tenantId }) => {
      * 알림 클릭 (상담 기록으로 이동)
      */
     const handleAlertClick = (alert) => {
-        // TODO: 상담 기록 상세 페이지로 이동
         console.log('알림 클릭:', alert);
 
-        // 상담 기록 ID가 있으면 해당 페이지로 이동
         if (alert.consultationRecordId) {
-            window.location.href = `/consultant/records/${alert.consultationRecordId}`;
+            navigate(`/consultant/records/${alert.consultationRecordId}`);
         }
 
         setIsOpen(false);
@@ -246,7 +246,7 @@ const RiskAlertBadge = ({ tenantId }) => {
                                     })}
                                     loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                     onClick={() => {
-                                        window.location.href = '/consultant/alerts';
+                                        navigate('/consultant/alerts');
                                         setIsOpen(false);
                                     }}
                                     variant="primary"

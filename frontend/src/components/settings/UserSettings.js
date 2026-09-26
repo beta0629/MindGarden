@@ -8,6 +8,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { useTheme } from '../../hooks/useTheme';
+import { useStableUserId } from '../../hooks/useStableUserId';
 import SimpleLayout from '../layout/SimpleLayout';
 import MGButton from '../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
@@ -31,6 +32,7 @@ const UserSettings = ({ user, onSettingsUpdate }) => {
     error,
     themeColors } = useTheme();
   const navigate = useNavigate();
+  const { userId } = useStableUserId(user);
   
   const [activeTab, setActiveTab] = useState('theme');
   const [showThemeSelector, setShowThemeSelector] = useState(false);
@@ -39,12 +41,18 @@ const UserSettings = ({ user, onSettingsUpdate }) => {
     smsNotifications: false,
     marketingEmails: false });
 
-  // 사용자 정보가 변경되면 설정 업데이트
-  useEffect(() => {if (user) {// 알림 설정 로드 (실제로는 API에서 가져와야 함)
-      setNotificationSettings({ emailNotifications: user.emailNotifications ?? true,
-        pushNotifications: user.pushNotifications ?? true,
-        smsNotifications: user.smsNotifications ?? false,
-        marketingEmails: user.marketingEmails ?? false });}}, [user]);
+  // userId 변경 시에만 알림 설정 동기화 (silent checkSession 재적용 방지)
+  useEffect(() => {
+    if (!userId || !user) {
+      return;
+    }
+    setNotificationSettings({
+      emailNotifications: user.emailNotifications ?? true,
+      pushNotifications: user.pushNotifications ?? true,
+      smsNotifications: user.smsNotifications ?? false,
+      marketingEmails: user.marketingEmails ?? false
+    });
+  }, [userId]); // eslint-disable-line react-hooks/exhaustive-deps -- intentional: sync once per userId
 
   const handleThemeChange = async(newTheme) => {try {const result = await changeToTheme(newTheme.type);
       if (result.success) {onSettingsUpdate?.({ theme: newTheme });

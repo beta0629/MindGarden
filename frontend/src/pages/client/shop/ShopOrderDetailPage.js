@@ -39,7 +39,9 @@ import { requestClientHomeMappingsSoftRefresh } from '../../../utils/clientHomeS
 import {
   assertPortOneCustomerReadyBeforeCheckout,
   buildPortOneCustomerFromUser,
-  resolvePortOneCustomerFailMessage
+  resolvePortOneCustomerFailMessage,
+  resolveSessionPhoneNumber,
+  resolveSessionPhoneVerified
 } from '../../../utils/clientShopPaymentCustomer';
 import { runShopPortOnePaymentIfReady } from '../../../utils/shopPortOneCheckout';
 import { verifyShopPaymentWithRetry } from '../../../utils/shopPaymentVerifyRetry';
@@ -87,7 +89,11 @@ const ShopOrderDetailPage = () => {
 
   const portOneCustomerGate = useMemo(
     () => assertPortOneCustomerReadyBeforeCheckout(user),
-    [user]
+    [
+      user?.id ?? null,
+      resolveSessionPhoneNumber(user),
+      resolveSessionPhoneVerified(user)
+    ]
   );
 
   const consumePendingCheckoutMessage = useCallback(() => {

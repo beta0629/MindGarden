@@ -15,13 +15,28 @@ import lombok.extern.slf4j.Slf4j;
 /**
  * 테넌트 로고 업로드 디렉터리·URL 해석 유틸.
  *
+ * <p>운영 저장소(blue/green 공용)는 절대경로로 환경변수 {@code TENANT_LOGO_UPLOAD_DIR}
+ * (예: {@code /var/mindgarden/uploads/logos/}) → property
+ * {@code mindgarden.upload.logo.base-dir} 로 주입한다. 개발 기본값은
+ * {@code ./uploads/logos/}. Spring 부트 시
+ * {@code TenantLogoUploadPathConfigurer} 가 {@link #configureBaseDir(String)} 을 호출한다.</p>
+ *
  * @author CoreSolution
  * @since 2026-05-19
  */
 @Slf4j
 public final class TenantLogoFileUtils {
 
-    public static final String LOGO_UPLOAD_DIR = "uploads/logos/";
+    /**
+     * 개발 기본 저장 디렉터리. 런타임 경로는 {@link #uploadBasePath()} 를 사용한다.
+     */
+    public static final String DEFAULT_LOGO_BASE_DIR = "./uploads/logos/";
+
+    /**
+     * 하위 호환·문서용 기본값. 실제 저장·서빙은 {@link #uploadBasePath()} 기준.
+     */
+    public static final String LOGO_UPLOAD_DIR = DEFAULT_LOGO_BASE_DIR;
+
     public static final String LOGO_URL_PREFIX = "/api/files/logos/";
     public static final String LOGO_URL_PREFIX_V1 = "/api/v1/files/logos/";
     public static final String DEFAULT_LOGO_URL = "/images/core-solution-logo.png";
@@ -29,7 +44,28 @@ public final class TenantLogoFileUtils {
     private static final Pattern LOGO_FILE_NAME_PATTERN = Pattern.compile(
             "^(.+)_[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\\.[^.]+$");
 
+    private static volatile String configuredBaseDir = DEFAULT_LOGO_BASE_DIR;
+
     private TenantLogoFileUtils() {
+    }
+
+    /**
+     * Spring 설정에서 주입된 base-dir 을 적용한다.
+     *
+     * @param baseDir 절대경로(운영) 또는 상대경로(개발)
+     */
+    public static void configureBaseDir(String baseDir) {
+        if (baseDir == null || baseDir.isBlank()) {
+            return;
+        }
+        configuredBaseDir = baseDir.trim();
+    }
+
+    /**
+     * 단위테스트 격리를 위해 기본 base-dir 으로 되돌린다.
+     */
+    public static void resetBaseDirForTests() {
+        configuredBaseDir = DEFAULT_LOGO_BASE_DIR;
     }
 
     /**
@@ -86,10 +122,10 @@ public final class TenantLogoFileUtils {
     /**
      * 업로드 디렉터리 기준 절대 경로를 반환합니다.
      *
-     * @return uploads/logos 절대 경로
+     * @return logos 업로드 base 절대 경로
      */
     public static Path uploadBasePath() {
-        return Paths.get(LOGO_UPLOAD_DIR).toAbsolutePath().normalize();
+        return Paths.get(configuredBaseDir).toAbsolutePath().normalize();
     }
 
     /**
@@ -100,6 +136,9 @@ public final class TenantLogoFileUtils {
      */
     public static Optional<Path> resolveExistingLogoFile(String fileName) {
         if (fileName == null || fileName.isBlank()) {
+            return Optional.empty();
+        }
+        if (fileName.contains("..") || fileName.contains("/") || fileName.contains("\\")) {
             return Optional.empty();
         }
         Path uploadBase = uploadBasePath();

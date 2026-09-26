@@ -17,7 +17,6 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.Base64;
 import java.util.Optional;
@@ -40,8 +39,6 @@ public class BrandingService {
     private final TenantRepository tenantRepository;
     private final ObjectMapper objectMapper;
     
-    // 로고 저장 경로 (실제 환경에서는 S3 등 클라우드 스토리지 사용 권장)
-    private static final String LOGO_UPLOAD_DIR = TenantLogoFileUtils.LOGO_UPLOAD_DIR;
     private static final String LOGO_URL_PREFIX = TenantLogoFileUtils.LOGO_URL_PREFIX;
 
     /**
@@ -412,21 +409,21 @@ public class BrandingService {
      * 로고 파일 저장
      */
     private String saveLogoFile(String tenantId, MultipartFile file) throws IOException {
-        // 업로드 디렉토리 생성
-        Path uploadDir = Paths.get(LOGO_UPLOAD_DIR);
+        Path uploadDir = TenantLogoFileUtils.uploadBasePath();
         if (!Files.exists(uploadDir)) {
             Files.createDirectories(uploadDir);
         }
-        
-        // 파일명 생성 (테넌트ID_UUID.확장자)
+
         String originalFileName = file.getOriginalFilename();
         String extension = getFileExtension(originalFileName);
         String savedFileName = tenantId + "_" + UUID.randomUUID().toString() + "." + extension;
-        
-        // 파일 저장
-        Path filePath = uploadDir.resolve(savedFileName);
+
+        Path filePath = uploadDir.resolve(savedFileName).normalize();
+        if (!filePath.startsWith(uploadDir)) {
+            throw new IllegalArgumentException("잘못된 파일 경로입니다.");
+        }
         Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
-        
+
         return savedFileName;
     }
     

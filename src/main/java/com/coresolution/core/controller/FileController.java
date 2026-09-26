@@ -14,12 +14,12 @@ import org.springframework.web.bind.annotation.*;
 
 import com.coresolution.consultation.constant.ShopCatalogSkuConstants;
 import com.coresolution.consultation.service.ProfileImageStorageService;
+import com.coresolution.consultation.service.ShopCatalogSkuThumbnailService;
 import com.coresolution.core.util.TenantLogoFileUtils;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 
@@ -39,6 +39,7 @@ import lombok.RequiredArgsConstructor;
 public class FileController {
 
     private final ProfileImageStorageService profileImageStorageService;
+    private final ShopCatalogSkuThumbnailService shopCatalogSkuThumbnailService;
 
     /**
      * 로고 파일 서빙
@@ -100,38 +101,34 @@ public class FileController {
 
     /**
      * 쇼핑 카탈로그 SKU 썸네일 서빙.
+     *
+     * <p>저장·서빙 base-dir 은 {@link ShopCatalogSkuThumbnailService} 와 동일
+     * ({@code mindgarden.upload.shop-catalog-thumbnail.base-dir}).</p>
      */
     @GetMapping("/shop-catalog-thumbnails/{fileName}")
     @Operation(summary = "카탈로그 썸네일 조회", description = "업로드된 SKU 썸네일 이미지를 조회합니다")
     public ResponseEntity<Resource> getShopCatalogThumbnail(
             @Parameter(description = "파일명") @PathVariable String fileName) {
-        try {
-            Path uploadBase = Paths.get(ShopCatalogSkuConstants.THUMBNAIL_UPLOAD_DIR).toAbsolutePath().normalize();
-            Path filePath = uploadBase.resolve(fileName).normalize();
-            if (!filePath.startsWith(uploadBase)) {
-                log.warn("썸네일 파일 경로가 허용 범위를 벗어남: fileName={}", fileName);
-                return ResponseEntity.badRequest().build();
-            }
-            Resource resource = new UrlResource(filePath.toUri());
-            if (!resource.exists() || !resource.isReadable()) {
-                Resource placeholder = resolveShopCatalogPlaceholderThumbnail(fileName);
-                if (placeholder != null) {
-                    resource = placeholder;
-                } else {
-                    log.warn("썸네일 파일을 찾을 수 없음: fileName={}", fileName);
-                    return ResponseEntity.notFound().build();
-                }
-            }
-            String contentType = getContentType(fileName);
-            log.debug("썸네일 파일 서빙: fileName={}, contentType={}", fileName, contentType);
-            return ResponseEntity.ok()
-                    .contentType(MediaType.parseMediaType(contentType))
-                    .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + fileName + "\"")
-                    .body(resource);
-        } catch (MalformedURLException e) {
-            log.error("썸네일 파일 경로 오류: fileName={}", fileName, e);
+        if (!isSafeUploadFileName(fileName)) {
+            log.warn("썸네일 파일 경로가 허용 범위를 벗어남: fileName={}", fileName);
             return ResponseEntity.badRequest().build();
         }
+        Resource resource = shopCatalogSkuThumbnailService.loadAsResource(fileName);
+        if (resource == null) {
+            Resource placeholder = resolveShopCatalogPlaceholderThumbnail(fileName);
+            if (placeholder != null) {
+                resource = placeholder;
+            } else {
+                log.warn("썸네일 파일을 찾을 수 없음: fileName={}", fileName);
+                return ResponseEntity.notFound().build();
+            }
+        }
+        String contentType = getContentType(fileName);
+        log.debug("썸네일 파일 서빙: fileName={}, contentType={}", fileName, contentType);
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(contentType))
+                .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + fileName + "\"")
+                .body(resource);
     }
     
     /**
@@ -145,7 +142,7 @@ public class FileController {
     @Operation(summary = "프로필 이미지 조회", description = "업로드된 사용자 프로필 이미지를 조회합니다")
     public ResponseEntity<Resource> getProfileImage(
             @Parameter(description = "파일명") @PathVariable String fileName) {
-        if (!isSafeProfileImageFileName(fileName)) {
+        if (!isSafeUploadFileName(fileName)) {
             log.warn("프로필 이미지 잘못된 파일명: fileName={}", fileName);
             return ResponseEntity.badRequest().build();
         }
@@ -163,9 +160,9 @@ public class FileController {
     }
 
     /**
-     * 프로필 이미지 파일명 화이트리스트 — path traversal 차단.
+     * 업로드 파일명 화이트리스트 — path traversal 차단.
      */
-    private static boolean isSafeProfileImageFileName(String fileName) {
+    private static boolean isSafeUploadFileName(String fileName) {
         if (fileName == null || fileName.isBlank()) {
             return false;
         }

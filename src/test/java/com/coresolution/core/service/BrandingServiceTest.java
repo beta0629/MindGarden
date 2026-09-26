@@ -49,6 +49,7 @@ class BrandingServiceTest {
 
     @BeforeEach
     void setUp() throws IOException {
+        TenantLogoFileUtils.resetBaseDirForTests();
         brandingService = new BrandingService(tenantRepository, objectMapper);
         uploadDir = TenantLogoFileUtils.uploadBasePath();
         Files.createDirectories(uploadDir);
@@ -58,6 +59,7 @@ class BrandingServiceTest {
     void tearDown() throws IOException {
         deleteIfExists(MISSING_FILE);
         deleteIfExists(LATEST_FILE);
+        TenantLogoFileUtils.resetBaseDirForTests();
     }
 
     @Test

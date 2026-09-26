@@ -930,11 +930,53 @@ jobs:
         default_value: '/var/mindgarden/uploads/profile-images/'
         # 무변경 배포 시 재시작 생략 (배포 비용 최소화)
         noop_compare: 'true'
-        # 디렉터리 존재·소유권 보장 (no-op 경로에서도 실행)
+        // 디렉터리 존재·소유권 보장 (no-op 경로에서도 실행)
         mkdir_value_keys: 'PROFILE_IMAGE_UPLOAD_DIR'
         mkdir_chown_user: 'mindgarden:mindgarden'
     # ============================================================================
     # [/P0 후속 강화 2026-06-09]
+    # ============================================================================
+
+    # ============================================================================
+    # [shop-catalog / logos shared upload 2026-09-26]
+    # blue/green 슬롯 WD 상대경로 저장 → 재기동 후 404 재발 방지.
+    # PROFILE_IMAGE_UPLOAD_DIR 와 동일 composite sync + mkdir/chown 패턴.
+    # ============================================================================
+    - name: 🖼️ Shop Catalog Thumbnail Upload env 자동 주입 + 검증
+      uses: ./.github/actions/sync-prod-env-key
+      env:
+        SHOP_CATALOG_THUMBNAIL_UPLOAD_DIR: ${{ secrets.SHOP_CATALOG_THUMBNAIL_UPLOAD_DIR }}
+      with:
+        step_name: 'SHOP_CATALOG_THUMBNAIL_UPLOAD_DIR'
+        keys: 'SHOP_CATALOG_THUMBNAIL_UPLOAD_DIR'
+        env_path: '/etc/mindgarden/prod.env'
+        ssh_host: ${{ secrets.PRODUCTION_HOST }}
+        ssh_user: ${{ secrets.PRODUCTION_USER }}
+        ssh_key: ${{ secrets.PRODUCTION_SSH_KEY }}
+        skip_when: 'any_missing'
+        default_value: '/var/mindgarden/uploads/shop-catalog-thumbnails/'
+        noop_compare: 'true'
+        mkdir_value_keys: 'SHOP_CATALOG_THUMBNAIL_UPLOAD_DIR'
+        mkdir_chown_user: 'mindgarden:mindgarden'
+
+    - name: 🖼️ Tenant Logo Upload env 자동 주입 + 검증
+      uses: ./.github/actions/sync-prod-env-key
+      env:
+        TENANT_LOGO_UPLOAD_DIR: ${{ secrets.TENANT_LOGO_UPLOAD_DIR }}
+      with:
+        step_name: 'TENANT_LOGO_UPLOAD_DIR'
+        keys: 'TENANT_LOGO_UPLOAD_DIR'
+        env_path: '/etc/mindgarden/prod.env'
+        ssh_host: ${{ secrets.PRODUCTION_HOST }}
+        ssh_user: ${{ secrets.PRODUCTION_USER }}
+        ssh_key: ${{ secrets.PRODUCTION_SSH_KEY }}
+        skip_when: 'any_missing'
+        default_value: '/var/mindgarden/uploads/logos/'
+        noop_compare: 'true'
+        mkdir_value_keys: 'TENANT_LOGO_UPLOAD_DIR'
+        mkdir_chown_user: 'mindgarden:mindgarden'
+    # ============================================================================
+    # [/shop-catalog / logos shared upload 2026-09-26]
     # ============================================================================
 
     # ============================================================================

@@ -194,6 +194,16 @@ mindgarden:
   upload:
     profile-image:
       base-dir: ${PROFILE_IMAGE_UPLOAD_DIR:./uploads/profile-images/}
+    # 쇼핑 카탈로그 SKU 썸네일 (blue/green 공용 — 슬롯 WD 상대경로 금지).
+    # 운영: /var/mindgarden/uploads/shop-catalog-thumbnails/
+    # 개발 기본값: ./uploads/shop-catalog-thumbnails/
+    shop-catalog-thumbnail:
+      base-dir: ${SHOP_CATALOG_THUMBNAIL_UPLOAD_DIR:./uploads/shop-catalog-thumbnails/}
+    # 테넌트 로고 (blue/green 공용).
+    # 운영: /var/mindgarden/uploads/logos/
+    # 개발 기본값: ./uploads/logos/
+    logo:
+      base-dir: ${TENANT_LOGO_UPLOAD_DIR:./uploads/logos/}
   # KICC 이지페이 온라인 API 호스트 기본값(테넌트 settings_json 으로 오버라이드 가능). 비밀 아님.
   pg:
     kicc:

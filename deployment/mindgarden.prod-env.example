@@ -138,6 +138,14 @@ SMS_SENDER_NUMBER=
 #   docs/project-management/2026-06-09/PROFILE_IMAGE_UPLOAD_OPS_GUIDE.md
 PROFILE_IMAGE_UPLOAD_DIR=/var/mindgarden/uploads/profile-images/
 
+# 쇼핑 카탈로그 SKU 썸네일 (blue/green 공용 — release 슬롯 WD 상대경로 저장 금지).
+# 권장: /var/mindgarden/uploads/shop-catalog-thumbnails/  (소유자: mindgarden, mode 755)
+SHOP_CATALOG_THUMBNAIL_UPLOAD_DIR=/var/mindgarden/uploads/shop-catalog-thumbnails/
+
+# 테넌트 로고 업로드 (blue/green 공용).
+# 권장: /var/mindgarden/uploads/logos/  (소유자: mindgarden, mode 755)
+TENANT_LOGO_UPLOAD_DIR=/var/mindgarden/uploads/logos/
+
 # 블루그린(듀얼 systemd) 사용 시: 포트는 각 유닛의 Environment=SERVER_PORT 로만 두고, 여기서는 비워 두는 것을 권장.
 # 단일 mindgarden.service 만 쓸 때만 필요 시 설정.
 SERVER_PORT=

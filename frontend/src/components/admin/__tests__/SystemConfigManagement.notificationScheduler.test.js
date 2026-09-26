@@ -242,6 +242,27 @@ describe('SystemConfigManagement — PR-2 알림 자동 발송 스케줄러 토�
           typeof flagsPayload === 'function' ? flagsPayload() : flagsPayload
         );
       }
+      if (typeof url === 'string' && url.includes('/admin/sms-templates')) {
+        return Promise.resolve({
+          success: true,
+          data: [
+            {
+              key: 'RESERVATION_IMMEDIATE_LATE',
+              label: '예약 임박',
+              tenantDispatchEnabled: true,
+              effectiveDispatchEnabled: true,
+              globalDispatchEnabled: true
+            },
+            {
+              key: 'RESERVATION_REMINDER_D2',
+              label: '예약 2일 전',
+              tenantDispatchEnabled: false,
+              effectiveDispatchEnabled: false,
+              globalDispatchEnabled: true
+            }
+          ]
+        });
+      }
       return Promise.resolve({ success: true, configValue: '' });
     });
   };
@@ -277,11 +298,18 @@ describe('SystemConfigManagement — PR-2 알림 자동 발송 스케줄러 토�
     expect(screen.getByText('상담 기록 미작성 알림')).toBeInTheDocument();
     expect(screen.getByText('워크플로우 자동화')).toBeInTheDocument();
     expect(screen.getByText('예약 D-1·D-2 리마인더')).toBeInTheDocument();
+    expect(screen.getByText('D-1 리마인더 발송')).toBeInTheDocument();
+    expect(screen.getByText('D-2 리마인더 발송')).toBeInTheDocument();
 
     const wellnessSwitch = await findToggleByLabel('웰니스 일일 팁');
     expect(wellnessSwitch).toHaveAttribute('aria-checked', 'true');
     const recordSwitch = await findToggleByLabel('상담 기록 미작성 알림');
     expect(recordSwitch).toHaveAttribute('aria-checked', 'false');
+
+    const d1Switch = await findToggleByLabel('D-1 리마인더 발송');
+    expect(d1Switch).toHaveAttribute('aria-checked', 'true');
+    const d2Switch = await findToggleByLabel('D-2 리마인더 발송');
+    expect(d2Switch).toHaveAttribute('aria-checked', 'false');
   });
 
   it('마지막 변경자/시각이 켜짐 항목에 포함되고, 변경 이력 없을 때는 fallback 표시', async() => {
@@ -324,6 +352,23 @@ describe('SystemConfigManagement — PR-2 알림 자동 발송 스케줄러 토�
             [FLAG_KEY_RECORD]: { value: true, updatedAt: '2026-05-25T10:00:00' }
           })
         );
+      }
+      if (typeof url === 'string' && url.includes('/admin/sms-templates')) {
+        return Promise.resolve({
+          success: true,
+          data: [
+            {
+              key: 'RESERVATION_IMMEDIATE_LATE',
+              tenantDispatchEnabled: true,
+              effectiveDispatchEnabled: true
+            },
+            {
+              key: 'RESERVATION_REMINDER_D2',
+              tenantDispatchEnabled: false,
+              effectiveDispatchEnabled: false
+            }
+          ]
+        });
       }
       return Promise.resolve({ success: true, configValue: '' });
     });
@@ -441,6 +486,28 @@ describe('SystemConfigManagement — PR-2 알림 자동 발송 스케줄러 토�
     const wellnessSwitch = await findToggleByLabel('웰니스 일일 팁');
     expect(wellnessSwitch).toHaveAttribute('aria-checked', 'false');
   });
+
+  it('D-2 종목 토글 시 PATCH sms-templates/{key}/dispatch 를 호출한다 (system_config 미사용)', async() => {
+    mockStandardizedApi.patch.mockResolvedValue({ success: true });
+
+    renderPage();
+    await waitForLoaded();
+
+    const d2Switch = await findToggleByLabel('D-2 리마인더 발송');
+    expect(d2Switch).toHaveAttribute('aria-checked', 'false');
+    fireEvent.click(d2Switch);
+
+    await waitFor(() => {
+      expect(mockStandardizedApi.patch).toHaveBeenCalledWith(
+        '/api/v1/admin/sms-templates/RESERVATION_REMINDER_D2/dispatch',
+        { enabled: true }
+      );
+    });
+    expect(notificationShow).toHaveBeenCalledWith(
+      '예약 리마인더 종목 발송이 저장되었습니다.',
+      'success'
+    );
+  });
 });
 
 describe('SystemConfigManagement — 세션/웰니스 SettingSwitchRow (checkbox 아님)', () => {
@@ -452,6 +519,9 @@ describe('SystemConfigManagement — 세션/웰니스 SettingSwitchRow (checkbox
     mockStandardizedApi.get.mockImplementation((url) => {
       if (typeof url === 'string' && url.includes('notification-scheduler')) {
         return Promise.resolve(buildFlagsResponse());
+      }
+      if (typeof url === 'string' && url.includes('/admin/sms-templates')) {
+        return Promise.resolve({ success: true, data: [] });
       }
       if (typeof url === 'string' && url.includes('duplicate-login')) {
         return Promise.resolve({ success: true, configValue: 'true' });

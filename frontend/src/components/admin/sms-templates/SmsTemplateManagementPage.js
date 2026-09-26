@@ -41,6 +41,11 @@ import {
   patchGlobalDispatchFlag,
   patchTemplateDispatchFlag
 } from '../../../api/admin/smsTemplateApi';
+import { getReservationReminderDnListLabel } from '../../../constants/batchNotificationCodes';
+import {
+  getTemplateDispatchEnabled,
+  unwrapSmsTemplateResponse
+} from '../../../utils/smsDispatchHelpers';
 import './SmsTemplateManagementPage.css';
 
 const ALLOWED_ROLES = [USER_ROLES.ADMIN, USER_ROLES.STAFF];
@@ -74,11 +79,21 @@ const audienceVariantOf = (audience) => {
  * @param {*} response API 응답
  * @returns {*} 데이터 본문
  */
-const unwrapData = (response) => {
-  if (response && typeof response === 'object' && 'data' in response) {
-    return response.data;
+const unwrapData = unwrapSmsTemplateResponse;
+
+/**
+ * 목록·에디터 표시 라벨 — D-1/D-2 는 Dn 역할 라벨 우선.
+ *
+ * @param {object} item
+ * @param {(key: string, fallback?: string) => string} t
+ * @returns {string}
+ */
+const resolveSmsTemplateDisplayLabel = (item, t) => {
+  if (!item) {
+    return '';
   }
-  return response;
+  const dnLabel = getReservationReminderDnListLabel(item.key, t);
+  return dnLabel || item.label || item.key || '';
 };
 
 const SmsTemplateManagementPage = () => {
@@ -169,12 +184,14 @@ const SmsTemplateManagementPage = () => {
       if (!lower) {
         return true;
       }
+      const displayLabel = resolveSmsTemplateDisplayLabel(item, t).toLowerCase();
       return (
         (item.key && item.key.toLowerCase().includes(lower)) ||
-        (item.label && item.label.toLowerCase().includes(lower))
+        (item.label && item.label.toLowerCase().includes(lower)) ||
+        displayLabel.includes(lower)
       );
     });
-  }, [items, searchTerm, categoryFilter]);
+  }, [items, searchTerm, categoryFilter, t]);
 
   const selectedItem = useMemo(
     () => items.find((item) => item.key === selectedKey) || null,
@@ -442,7 +459,7 @@ const SmsTemplateManagementPage = () => {
                           data-testid={`sms-template-item-${item.key}`}
                         >
                           <span className="mg-admin-sms-template__item-label">
-                            {item.label || item.key}
+                            {resolveSmsTemplateDisplayLabel(item, t)}
                           </span>
                           <span className="mg-admin-sms-template__item-key">
                             {item.key}
@@ -494,8 +511,7 @@ const SmsTemplateManagementPage = () => {
                         >
                           <SmsTemplateDispatchToggle
                             templateKey={item.key}
-                            checked={Boolean(item.tenantDispatchEnabled
-                                ?? item.effectiveDispatchEnabled)}
+                            checked={getTemplateDispatchEnabled(item)}
                             disabled={
                               !isAdmin || submitting || !globalDispatchEnabled
                             }
@@ -525,7 +541,7 @@ const SmsTemplateManagementPage = () => {
                     <header className="mg-admin-sms-template__editor-header">
                       <div className="mg-admin-sms-template__editor-title-row">
                         <h3 className="mg-admin-sms-template__editor-title">
-                          {selectedItem.label || selectedItem.key}
+                          {resolveSmsTemplateDisplayLabel(selectedItem, t)}
                         </h3>
                         <span
                           className={`mg-admin-sms-template__audience-badge mg-admin-sms-template__audience-badge--${audienceVariantOf(selectedItem.audience)} mg-admin-sms-template__audience-badge--lg`}

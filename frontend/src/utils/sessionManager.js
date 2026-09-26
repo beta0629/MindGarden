@@ -17,6 +17,7 @@ import { isTransientNetworkError, notifyTransientNetworkIssue } from './networkE
 import { redirectToLoginPageOnce } from './sessionRedirect';
 import { clearStoredSessionExpiry, syncStoredSessionExpiry } from './sessionExpiryDisplay';
 import { clearJustRefreshed, hasStoredAccessToken, hasStoredRefreshToken, isWithinAuthGraceWindow } from './sessionAuthPolicy';
+import { isPublicSpaPath } from './publicSpaPaths';
 
 /**
  * current-user / session-info 등: `{ success, data }` 래퍼면 `data`만 사용.
@@ -73,26 +74,6 @@ function normalizeSessionInfoForClient(sessionData) {
     lastAccessedTime,
     clientReceivedAt
   };
-}
-
-/**
- * 로그인·랜딩 등 인증 없이 머무는 경로.
- * 세션 확인을 이 경로에서 시작했으면, 응답 전에 대시보드로 넘어가도 /login 으로 되돌리지 않는다.
- *
- * @param {string} pathname
- * @returns {boolean}
- */
-function isPublicAuthPage(pathname) {
-  const currentPath = pathname || '';
-  return currentPath === '/login' ||
-    currentPath.startsWith('/login/') ||
-    currentPath === '/landing' ||
-    currentPath === '/' ||
-    currentPath.startsWith('/register') ||
-    currentPath.startsWith('/tablet/register') ||
-    currentPath.startsWith('/forgot-password') ||
-    currentPath.startsWith('/reset-password') ||
-    currentPath.startsWith('/auth/oauth2/callback');
 }
 
 /**
@@ -279,7 +260,7 @@ class SessionManager {
     this.notifyListeners(); // 로딩 시작 알림
     // 응답이 오기 전에 대시보드로 이동해도, 로그인 화면에서 시작한 확인이 /login 으로 되돌리지 않게 한다.
     const startedOnPublicPage = typeof window !== 'undefined'
-      && isPublicAuthPage(window.location.pathname);
+      && isPublicSpaPath(window.location.pathname);
     // 응답이 TTL 뒤에 와도 요청 시작 시점의 grace 를 유지한다.
     // 첫 current-user 200 이 grace 플래그를 지우므로 fetch 전에 읽어 둔다.
     const authGraceAtStart = isWithinAuthGraceWindow(now);
@@ -421,7 +402,7 @@ class SessionManager {
 
         // 확인을 시작한 경로가 공개 페이지면, 그 사이 대시보드로 넘어갔어도 여기서 킥하지 않는다.
         const currentPath = window.location.pathname;
-        const isPublicPage = isPublicAuthPage(currentPath);
+        const isPublicPage = isPublicSpaPath(currentPath);
 
         // post-refresh retry 401 / refresh 실패 / 토큰 없음 — grace 재검사 없이 확정 킥
         // (방금 markJustRefreshed 된 창으로 soft-skip 하면 안 됨)
@@ -447,7 +428,7 @@ class SessionManager {
         const userResponseData = await userResponse.json();
         const newUser = unwrapApiResponseData(userResponseData);
 
-        // 기존 사용자 정보가 있으면 role/permissionGroupCodes 보존 (서버 미반환 시)
+        // 기존 사용자 정보가 있으면 role/permissionGroupCodes·휴대폰 게이트 필드 보존 (서버 미반환 시)
         if (this.user) {
           if (this.user.role && !newUser.role) {
             newUser.role = this.user.role;
@@ -467,6 +448,8 @@ class SessionManager {
           if (this.user.hasCounselorRole != null && newUser.hasCounselorRole == null) {
             newUser.hasCounselorRole = this.user.hasCounselorRole;
           }
+          // PortOne soft-refresh: current-user 가 phone 필드를 빼먹으면 게이트가 stale 로 막힘
+          this._preservePhoneGateFieldsFromPreviousUser(this.user, newUser);
         }
         if (!Array.isArray(newUser.permissionGroupCodes)) {
           newUser.permissionGroupCodes = [];
@@ -525,7 +508,7 @@ class SessionManager {
         const isLocalEnv = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
         if (!(isLocalEnv && !ENABLE_AUTH_REDIRECT)) {
           const currentPath = window.location.pathname;
-          const isPublicPage = isPublicAuthPage(currentPath) || startedOnPublicPage;
+          const isPublicPage = isPublicSpaPath(currentPath) || startedOnPublicPage;
           if (!isPublicPage) {
             notifyTransientNetworkIssue();
           }
@@ -809,6 +792,47 @@ class SessionManager {
     this.listeners.forEach(callback => {
       callback(currentState);
     });
+  }
+
+  /**
+   * current-user 응답이 phone·verified 를 null/undefined 로 주면 이전 세션 값을 유지한다.
+   * 서버 true 우선. 서버가 명시적 false 를 주면 존중한다 (OAuth VERIFIED SSOT 반영 후
+   * FE/BE 역전으로 CTA 가 숨겨지거나 prepare 가 실패하는 desync 방지).
+   * 보존은 서버가 verified 필드를 생략(null/undefined)한 경우에만.
+   *
+   * @param {object} previousUser
+   * @param {object} newUser
+   * @returns {void}
+   */
+  _preservePhoneGateFieldsFromPreviousUser(previousUser, newUser) {
+    if (!previousUser || !newUser || typeof previousUser !== 'object' || typeof newUser !== 'object') {
+      return;
+    }
+    const phoneKeys = ['phone', 'phoneNumber', 'mobile', 'phoneVerifiedAt'];
+    phoneKeys.forEach((key) => {
+      if (newUser[key] == null && previousUser[key] != null) {
+        newUser[key] = previousUser[key];
+      }
+    });
+
+    const serverVerifiedTrue =
+      newUser.isPhoneVerified === true || newUser.phoneVerified === true;
+    const serverVerifiedAbsent =
+      newUser.isPhoneVerified == null && newUser.phoneVerified == null;
+    const previousVerifiedTrue =
+      previousUser.isPhoneVerified === true || previousUser.phoneVerified === true;
+
+    if (serverVerifiedTrue) {
+      newUser.isPhoneVerified = true;
+      newUser.phoneVerified = true;
+      return;
+    }
+    if (serverVerifiedAbsent && previousVerifiedTrue) {
+      newUser.isPhoneVerified = true;
+      newUser.phoneVerified = true;
+      return;
+    }
+    // 서버 명시적 false — 덮어쓰지 않음 (truthful isPhoneVerified SSOT)
   }
 
   // 사용자 정보 설정 (로그인 시 사용)

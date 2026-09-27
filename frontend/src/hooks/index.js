@@ -8,4 +8,6 @@ export { useSoftRefresh } from './useSoftRefresh';
 export { useStableUserId } from './useStableUserId';
 export { useSoftResourceLoad } from './useSoftResourceLoad';
 export { useUserIdScopedLoad } from './useUserIdScopedLoad';
+export { useInitialOnlyBlockingLoading } from './useInitialOnlyBlockingLoading';
+export { usePreservedEditorForm } from './usePreservedEditorForm';
 export { useReservationReminderDispatchFlags } from './useReservationReminderDispatchFlags';

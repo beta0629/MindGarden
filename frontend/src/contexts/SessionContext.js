@@ -16,6 +16,7 @@ import {
   isOAuthRequireServerVerify,
   loadSessionSecurityFlags
 } from '../utils/sessionSecurityFlags';
+import { isEquivalentSessionUser } from '../utils/sessionUserIdentity';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_PERMISSIONS_CHECK_PERMISSION = '/api/v1/permissions/check-permission';
@@ -65,13 +66,28 @@ const sessionReducer = (state, action) => {
         error: null
       };
     
-    case SessionActionTypes.SET_USER:
+    case SessionActionTypes.SET_USER: {
+      const nextUser = action.payload;
+      // 같은 세션 페이로드면 참조를 유지해 [user] 로드 effect 가 ping 마다 다시 돌지 않게 한다.
+      if (isEquivalentSessionUser(state.user, nextUser)) {
+        const loggedIn = nextUser !== null;
+        if (state.isLoggedIn === loggedIn && state.error == null) {
+          return state;
+        }
+        return {
+          ...state,
+          user: state.user,
+          isLoggedIn: loggedIn,
+          error: null
+        };
+      }
       return {
         ...state,
-        user: action.payload,
-        isLoggedIn: action.payload !== null,
+        user: nextUser,
+        isLoggedIn: nextUser !== null,
         error: null
       };
+    }
     
     case SessionActionTypes.SET_SESSION_INFO:
       return {

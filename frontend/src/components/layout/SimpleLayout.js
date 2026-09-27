@@ -10,6 +10,7 @@ import { useSession } from '../../contexts/SessionContext';
 import '../../styles/main.css';
 import './SimpleLayout.css';
 import { useTranslation } from 'react-i18next';
+import { useInitialOnlyBlockingLoading } from '../../hooks/useInitialOnlyBlockingLoading';
 
 // 역할별 알림 페이지 경로 상수
 const NOTIFICATION_ROUTES = {
@@ -41,6 +42,7 @@ const SimpleLayout = ({
   const navigate = useNavigate();
   const { user } = useSession();
   const { unreadCount } = useNotification();
+  const blockContent = useInitialOnlyBlockingLoading(loading);
 
   // 알림 아이콘 클릭 핸들러
   const handleNotificationClick = () => {
@@ -101,7 +103,7 @@ const SimpleLayout = ({
             </header>
           )}
           
-          {loading ? (
+          {blockContent ? (
             <div className="loading-container" role="status" aria-live="polite">
               <UnifiedLoading type="inline" text={loadingText} />
             </div>

@@ -37,6 +37,7 @@ import {
 import { USER_ROLES } from '../../constants/roles';
 import RoleUtils from '../../utils/RoleUtils';
 import { resolvePostLoginLandingPath } from '../../utils/dashboardUtils';
+import { useInitialOnlyBlockingLoading } from '../../hooks/useInitialOnlyBlockingLoading';
 
 /** LNB 사이드바 헤더 — 페이지 title 미전달(G-14) 시 역할별 기본 문구 */
 const LNB_HEADER_TITLE_COUNSELOR = '상담';
@@ -60,6 +61,7 @@ const AdminCommonLayoutPassthrough = ({
   loadingText = DEFAULT_LOADING_TEXT
 }) => {
   const shell = useAdminShell();
+  const blockContent = useInitialOnlyBlockingLoading(loading);
 
   useLayoutEffect(() => {
     if (!shell?.setShellMeta) {
@@ -85,7 +87,7 @@ const AdminCommonLayoutPassthrough = ({
     onLogout
   ]);
 
-  if (loading) {
+  if (blockContent) {
     return (
       <div className="mg-v2-loading-container" aria-busy="true" aria-live="polite">
         <UnifiedLoading type="inline" text={loadingText} />

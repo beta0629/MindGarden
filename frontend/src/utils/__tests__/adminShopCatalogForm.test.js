@@ -232,4 +232,26 @@ describe('mapTenantConsultantSelectOptions', () => {
       { id: 5, name: '중지', role: 'CONSULTANT', isActive: false }
     ])).toEqual([{ id: '3', label: '표시명' }]);
   });
+
+  test('with-stats 중첩 consultant 의 users.id 와 이름을 옵션으로 만든다', () => {
+    expect(mapTenantConsultantSelectOptions([
+      {
+        consultant: {
+          id: 8,
+          name: '김상담',
+          role: 'CONSULTANT',
+          isActive: true
+        },
+        currentClients: 1
+      },
+      {
+        consultant: {
+          id: 9,
+          name: '내담자',
+          role: 'CLIENT',
+          isActive: true
+        }
+      }
+    ])).toEqual([{ id: '8', label: '김상담' }]);
+  });
 });

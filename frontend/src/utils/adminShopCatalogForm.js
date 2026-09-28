@@ -130,8 +130,26 @@ export function validateAdminShopCatalogConsultant(form) {
 }
 
 /**
+ * with-stats 행은 `{ consultant: { id, name, role } }` 중첩이다.
+ * 평탄한 `{ id, name }` 도 그대로 받는다.
+ *
+ * @param {object|null|undefined} row
+ * @returns {object|null}
+ */
+function resolveTenantConsultantSelectSource(row) {
+  if (!row || typeof row !== 'object') {
+    return null;
+  }
+  const nested = row.consultant;
+  if (nested && typeof nested === 'object') {
+    return nested;
+  }
+  return row;
+}
+
+/**
  * 테넌트 상담사 목록(with-stats)을 셀렉트 옵션으로 만든다.
- * 이름 문자열은 저장하지 않고 표시에만 쓴다.
+ * 이름 문자열은 저장하지 않고 표시에만 쓴다. 저장 값은 users.id.
  *
  * @param {Array<object>|null|undefined} rows
  * @returns {Array<{ id: string, label: string }>}
@@ -140,14 +158,15 @@ export function mapTenantConsultantSelectOptions(rows) {
   const options = [];
   const seen = new Set();
   (Array.isArray(rows) ? rows : []).forEach((row) => {
-    if (!row || row.isDeleted === true || row.isActive === false) {
+    const source = resolveTenantConsultantSelectSource(row);
+    if (!source || source.isDeleted === true || source.isActive === false) {
       return;
     }
-    const role = toDisplayString(row.role, '').trim().toUpperCase();
+    const role = toDisplayString(source.role, '').trim().toUpperCase();
     if (role && role !== ADMIN_SHOP_CONSULTANT_LIST_ROLE) {
       return;
     }
-    const idNumber = Number(row.id);
+    const idNumber = Number(source.id);
     if (!Number.isFinite(idNumber) || idNumber <= 0) {
       return;
     }
@@ -155,8 +174,8 @@ export function mapTenantConsultantSelectOptions(rows) {
     if (seen.has(id)) {
       return;
     }
-    const label = toDisplayString(row.name, '').trim()
-      || toDisplayString(row.email, '').trim();
+    const label = toDisplayString(source.name, '').trim()
+      || toDisplayString(source.email, '').trim();
     if (!label) {
       return;
     }

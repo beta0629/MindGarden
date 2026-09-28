@@ -461,9 +461,9 @@ const AdminShopCatalogSkuEditorPage = () => {
                     </div>
                   </fieldset>
 
-                  {isConsultation ? (
-                    <div className="mg-v2-form-row">
-                      {fieldSelect}
+                  <div className="admin-shop-sku-editor__choice-stack">
+                    {fieldSelect}
+                    {isConsultation ? (
                       <ShopCatalogCodeSelect
                         id={`${baseId}-consultant`}
                         label={ADMIN_SHOP_CONSULTANT_LABEL}
@@ -479,8 +479,8 @@ const AdminShopCatalogSkuEditorPage = () => {
                           consultantId: e.target.value
                         }))}
                       />
-                    </div>
-                  ) : fieldSelect}
+                    ) : null}
+                  </div>
 
                   <label className="mg-v2-label" htmlFor={`${baseId}-desc`}>
                     {ADMIN_SHOP_PACKAGE_FEE_DESCRIPTION_LABEL}

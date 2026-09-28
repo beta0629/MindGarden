@@ -107,6 +107,7 @@ import {
   extractSparklineValues
 } from './utils/dashboardKpiSparklineUtils';
 import { aggregateConsultantSessionBurnRates } from './utils/aggregateConsultantSessionBurnRates';
+import { resolveSessionBurnMappingList } from './utils/resolveSessionBurnMappingList';
 import { DASHBOARD_CHART_ROLLING_MONTHS } from './utils/dashboardChartPeriodUtils';
 import '../../styles/main.css';
 import '../../styles/unified-design-tokens.css';
@@ -127,6 +128,7 @@ import {
 } from '../../constants/adminDashboardWidgetConstants';
 import {
   adminClientsWithMappingGet,
+  adminMappingsListGetAll,
   adminSchedulesListGet,
   buildAdminListUrl
 } from '../../api/adminListFetch';
@@ -146,7 +148,8 @@ const buildAdminDashboardClientsWithMappingUrl = () => buildAdminListUrl(
   API_ENDPOINTS.ADMIN.CLIENTS.WITH_MAPPING_INFO,
   ADMIN_DASHBOARD_CLIENTS_WITH_MAPPING_QUERY
 );
-// KPI: API_ENDPOINTS.ADMIN.MAPPINGS.STATS (LIST full-fetch 금지)
+// KPI 건수: API_ENDPOINTS.ADMIN.MAPPINGS.STATS
+// 회기 소진율 목록: adminMappingsListGetAll (통합스케줄과 동일 전체 drain)
 const API_ADMIN_CONSULTANT_RATING_STATS = '/api/v1/admin/consultant-rating-stats';
 const API_ADMIN_STATISTICS_CONSULTATION_COMPLETION = '/api/v1/admin/statistics/consultation-completion';
 const API_ADMIN_STATISTICS_NEW_CLIENTS = API_ENDPOINTS.ADMIN.STATISTICS.NEW_CLIENTS;
@@ -265,8 +268,8 @@ const AdminDashboardV2 = ({ user: propUser }) => {
   const [integratedDataRankDownSet, setIntegratedDataRankDownSet] = useState(() => new Set());
   const previousRankByConsultantIdRef = useRef(new Map());
   /**
-   * §D 회기 소진율 — P0: dashboard load는 STATS만 사용.
-   * session-burn LIST(full/slim)는 full-fetch 금지로 로드 비활성; 빈 배열 유지.
+   * §D 회기 소진율 — adminMappingsListGetAll 로 받은 배정 전체.
+   * 건수 KPI(mappings/stats)와 분리. 집계 전에는 빈 배열.
    */
   const [mappingsListForSessionBurn, setMappingsListForSessionBurn] = useState([]);
 
@@ -540,7 +543,8 @@ const AdminDashboardV2 = ({ user: propUser }) => {
         fetch(API_ADMIN_CONSULTANT_RATING_STATS, { headers, credentials: 'include' }),
         StandardizedApi.get(API_ADMIN_STATISTICS_CONSULTATION_COMPLETION),
         StandardizedApi.get(API_ADMIN_STATISTICS_NEW_CLIENTS, { months: DASHBOARD_CHART_ROLLING_MONTHS }),
-        StandardizedApi.get(API_ADMIN_STATISTICS_CONSULTATIONS_BY_DOW, { months: DASHBOARD_CHART_ROLLING_MONTHS })
+        StandardizedApi.get(API_ADMIN_STATISTICS_CONSULTATIONS_BY_DOW, { months: DASHBOARD_CHART_ROLLING_MONTHS }),
+        adminMappingsListGetAll()
       ]);
       const consultantsRes = settled[0].status === 'fulfilled' ? settled[0].value : dummyFailedResponse();
       const clientsRes = settled[1].status === 'fulfilled' ? settled[1].value : dummyFailedResponse();
@@ -553,6 +557,8 @@ const AdminDashboardV2 = ({ user: propUser }) => {
         settled[5].status === 'fulfilled' ? settled[5].value : null;
       const dowPayload =
         settled[6].status === 'fulfilled' ? settled[6].value : null;
+      const mappingsListPayload =
+        settled[7].status === 'fulfilled' ? settled[7].value : null;
 
       // [Dashboard Charts] consultation-completion 호출 결과(상담 현황 추이/예약 vs 완료 차트용)
       if (settled[4].status === 'rejected') {
@@ -607,8 +613,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
         totalMappings = Number(statsData?.totalMappings) || 0;
         activeMappings = Number(statsData?.activeMappings) || 0;
       }
-      // P0 — dashboard load uses STATS only; session-burn LIST deferred/disabled to ban full-fetch.
-      setMappingsListForSessionBurn([]);
+      setMappingsListForSessionBurn(resolveSessionBurnMappingList(mappingsListPayload));
       if (ratingRes.ok) {
         const d = await ratingRes.json();
         if (d.success && d.data) {
@@ -1666,7 +1671,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
 
           {/*
             §D 회기 소진율 (2026-07-29) — ACTIVE 매핑 used/total 가중 집계.
-            P0: load path는 STATS만; session-burn LIST는 full-fetch 금지로 비활성(빈 스냅샷).
+            목록은 adminMappingsListGetAll. 건수 KPI는 mappings/stats.
           */}
           <SessionBurnRateSection items={sessionBurnRateItems} />
         </div>

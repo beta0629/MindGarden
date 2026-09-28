@@ -54,13 +54,51 @@
   gap: var(--mg-spacing-md);
 }
 
-.admin-shop-sku-editor .mg-v2-form-row {
-  align-items: start;
-  gap: var(--mg-spacing-md);
+.admin-shop-sku-editor .mg-v2-content-section,
+.admin-shop-sku-editor .mg-v2-content-section__body,
+.admin-shop-sku-editor__choice-stack,
+.admin-shop-sku-editor__choice-stack .mg-v2-form-group {
+  overflow: visible;
 }
 
-.admin-shop-sku-editor .mg-v2-form-group {
+.admin-shop-sku-editor__choice-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-md);
+  width: 100%;
+  min-width: 0;
+}
+
+.admin-shop-sku-editor__choice-stack .mg-v2-form-group {
   margin-bottom: 0;
+  width: 100%;
+  min-width: 0;
+}
+
+.admin-shop-sku-editor__choice-stack select.mg-v2-input {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  min-height: var(--mg-v2-component-height-md, 2.5rem);
+  height: auto;
+  max-height: none;
+  line-height: var(--mg-v2-font-line-height-body, 1.5);
+  overflow: visible;
+  text-overflow: clip;
+  white-space: normal;
+  position: static;
+  transform: none;
+  contain: none;
+}
+
+.admin-shop-sku-editor__choice-stack select.mg-v2-input option {
+  position: static;
+  overflow: visible;
+  white-space: normal;
+  height: auto;
+  max-height: none;
+  transform: none;
+  contain: none;
 }
 
 .admin-shop-catalog-list__thumb {

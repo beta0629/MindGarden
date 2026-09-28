@@ -22,6 +22,7 @@ public record ShopCatalogSkuAdminItem(
         LocalDateTime updatedAt,
         int sessionCount,
         String packageType,
-        String fieldCode
+        String fieldCode,
+        Long consultantId
 ) {
 }

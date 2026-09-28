@@ -163,7 +163,18 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
         order.setTenantId(tenantId);
         order = shopClientOrderRepository.save(order);
 
-        Long consultationMappingId = resolveConsultationMappingIdForCheckout(tenantId, clientUserId, request, cartLines);
+        boolean hasUnboundConsultation = cartLines.stream()
+                .map(ShopCartLine::getSku)
+                .anyMatch(ClientShopCheckoutServiceImpl::isUnboundConsultationSku);
+        boolean hasBoundConsultation = cartLines.stream()
+                .map(ShopCartLine::getSku)
+                .anyMatch(ClientShopCheckoutServiceImpl::isBoundConsultationSku);
+        Long consultationMappingId = hasUnboundConsultation
+                ? resolveConsultationMappingIdForCheckout(tenantId, clientUserId, request, cartLines)
+                : null;
+        List<ConsultantClientMapping> boundEligible = hasBoundConsultation
+                ? clientShopConsultantMappingService.listActiveMappings(tenantId, clientUserId)
+                : List.of();
 
         int lineNo = 1;
         for (PricedCartLine priced : pricedLines) {
@@ -172,7 +183,13 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
             ShopCatalogOffer offer = priced.offer();
             long lineTotal = offer.unitPriceMinor() * cl.getQuantity();
             Long lineMappingId = null;
-            if (ShopCatalogCategory.CONSULTATION.equals(sku.getCatalogCategory())) {
+            if (isBoundConsultationSku(sku)) {
+                lineMappingId = resolveBoundConsultantMappingId(
+                        boundEligible,
+                        sku.getConsultantId(),
+                        request.getConsultantClientMappingId(),
+                        offer.title());
+            } else if (ShopCatalogCategory.CONSULTATION.equals(sku.getCatalogCategory())) {
                 lineMappingId = consultationMappingId;
             }
             ShopClientOrderLine ol = ShopClientOrderLine.builder()
@@ -211,10 +228,64 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
     }
 
     /**
+     * 상품에 묶인 상담사와 같은 활성 배정의 mapping id.
+     * 다른 상담사 배정이 같이 있어도 그 상담사를 고르지 않는다.
+     *
+     * @param eligible 내담자 활성 배정
+     * @param consultantId 상품의 상담사 users.id
+     * @param requestedMappingId 결제 요청의 배정 id. 같은 상담사일 때만 사용
+     * @param offerTitle 상품 제목
+     * @return 배정 id. 없으면 null
+     */
+    private static Long resolveBoundConsultantMappingId(
+            List<ConsultantClientMapping> eligible,
+            Long consultantId,
+            Long requestedMappingId,
+            String offerTitle) {
+        if (eligible == null || consultantId == null) {
+            return null;
+        }
+        List<ConsultantClientMapping> forConsultant = eligible.stream()
+                .filter(mapping -> mapping.getConsultant() != null
+                        && consultantId.equals(mapping.getConsultant().getId()))
+                .toList();
+        if (requestedMappingId != null) {
+            for (ConsultantClientMapping mapping : forConsultant) {
+                if (requestedMappingId.equals(mapping.getId())) {
+                    return mapping.getId();
+                }
+            }
+        }
+        if (forConsultant.isEmpty()) {
+            return null;
+        }
+        List<String> titles = StringUtils.hasText(offerTitle) ? List.of(offerTitle) : List.of();
+        ConsultantClientMapping best = ShopConsultantMappingBindUtil.resolveBestMappingForConsultant(
+                forConsultant, titles);
+        if (best == null) {
+            best = ShopConsultantMappingBindUtil.resolveBestMappingForConsultant(forConsultant, List.of());
+        }
+        return best != null ? best.getId() : null;
+    }
+
+    private static boolean isBoundConsultationSku(ShopCatalogSku sku) {
+        return sku != null
+                && ShopCatalogCategory.CONSULTATION.equals(sku.getCatalogCategory())
+                && sku.getConsultantId() != null;
+    }
+
+    private static boolean isUnboundConsultationSku(ShopCatalogSku sku) {
+        return sku != null
+                && ShopCatalogCategory.CONSULTATION.equals(sku.getCatalogCategory())
+                && sku.getConsultantId() == null;
+    }
+
+    /**
      * 체크아웃 시 CONSULTATION 라인에 붙일 매핑 ID.
      *
      * <p>요청 오버라이드 우선. 없으면 distinct 상담사 1명이면 장바구니 상품명으로 최적 매핑 자동.
-     * distinct 상담사 2명 이상이면 선택 필수.</p>
+     * distinct 상담사 2명 이상이면 선택 필수.
+     * 상품에 상담사 id 가 있으면 {@link #resolveBoundConsultantMappingId} 가 그 배정만 쓴다.</p>
      */
     private Long resolveConsultationMappingIdForCheckout(
             String tenantId,

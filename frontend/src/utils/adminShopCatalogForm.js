@@ -6,6 +6,8 @@
  */
 
 import {
+  ADMIN_SHOP_CONSULTANT_LIST_ROLE,
+  ADMIN_SHOP_CONSULTANT_REQUIRED_MESSAGE,
   ADMIN_SHOP_DESCRIPTION_MAX_LENGTH,
   ADMIN_SHOP_FIELD_CODE_GROUP,
   ADMIN_SHOP_FIELD_CODE_REQUIRED_MESSAGE,
@@ -33,7 +35,8 @@ export const emptyAdminShopCatalogForm = () => ({
   thumbnailUrl: '',
   skuCode: '',
   sessionCount: String(SHOP_SESSION_COUNT_MIN),
-  fieldCode: ''
+  fieldCode: '',
+  consultantId: ''
 });
 
 /**
@@ -61,7 +64,8 @@ export function mapAdminShopCatalogRowToForm(row) {
     sortOrder: row.sortOrder != null ? String(row.sortOrder) : '0',
     thumbnailUrl: toDisplayString(row.thumbnailUrl || row.heroImageUrl, ''),
     sessionCount: String(normalizeShopSessionCount(row.sessionCount)),
-    fieldCode: toDisplayString(row.fieldCode, '')
+    fieldCode: toDisplayString(row.fieldCode, ''),
+    consultantId: row.consultantId != null ? String(row.consultantId) : ''
   };
 }
 
@@ -107,6 +111,62 @@ export function validateAdminShopCatalogFieldCode(form) {
 }
 
 /**
+ * CONSULTATION 은 상담사 users.id 가 필수다. ASSESSMENT 는 저장하지 않는다.
+ *
+ * @param {object|null|undefined} form
+ * @returns {{ valid: boolean, message?: string, consultantId: number|null }}
+ */
+export function validateAdminShopCatalogConsultant(form) {
+  const categoryRaw = toDisplayString(form?.catalogCategory, '').toUpperCase();
+  if (categoryRaw === SHOP_CATALOG_CATEGORY.ASSESSMENT) {
+    return { valid: true, consultantId: null };
+  }
+  const raw = toDisplayString(form?.consultantId, '').trim();
+  const consultantId = Number.parseInt(raw, 10);
+  if (!Number.isFinite(consultantId) || consultantId <= 0) {
+    return { valid: false, message: ADMIN_SHOP_CONSULTANT_REQUIRED_MESSAGE, consultantId: null };
+  }
+  return { valid: true, consultantId };
+}
+
+/**
+ * 테넌트 상담사 목록(with-stats)을 셀렉트 옵션으로 만든다.
+ * 이름 문자열은 저장하지 않고 표시에만 쓴다.
+ *
+ * @param {Array<object>|null|undefined} rows
+ * @returns {Array<{ id: string, label: string }>}
+ */
+export function mapTenantConsultantSelectOptions(rows) {
+  const options = [];
+  const seen = new Set();
+  (Array.isArray(rows) ? rows : []).forEach((row) => {
+    if (!row || row.isDeleted === true || row.isActive === false) {
+      return;
+    }
+    const role = toDisplayString(row.role, '').trim().toUpperCase();
+    if (role && role !== ADMIN_SHOP_CONSULTANT_LIST_ROLE) {
+      return;
+    }
+    const idNumber = Number(row.id);
+    if (!Number.isFinite(idNumber) || idNumber <= 0) {
+      return;
+    }
+    const id = String(idNumber);
+    if (seen.has(id)) {
+      return;
+    }
+    const label = toDisplayString(row.name, '').trim()
+      || toDisplayString(row.email, '').trim();
+    if (!label) {
+      return;
+    }
+    seen.add(id);
+    options.push({ id, label });
+  });
+  return options;
+}
+
+/**
  * @param {ReturnType<typeof emptyAdminShopCatalogForm>} form
  * @returns {object}
  * @throws {Error} sessionCount가 유효하지 않으면 fail-closed
@@ -122,6 +182,10 @@ export function buildAdminShopCatalogUpsertBody(form) {
   if (!fieldParsed.valid) {
     throw new Error(ADMIN_SHOP_FIELD_CODE_REQUIRED_MESSAGE);
   }
+  const consultantParsed = validateAdminShopCatalogConsultant(form);
+  if (!consultantParsed.valid) {
+    throw new Error(ADMIN_SHOP_CONSULTANT_REQUIRED_MESSAGE);
+  }
   return {
     title: form.title.trim(),
     descriptionText: form.descriptionText.trim() || null,
@@ -132,7 +196,8 @@ export function buildAdminShopCatalogUpsertBody(form) {
     active: Boolean(form.active),
     sortOrder: Number.isFinite(sortOrder) ? sortOrder : 0,
     sessionCount: sessionParsed.sessionCount,
-    fieldCode: fieldParsed.fieldCode
+    fieldCode: fieldParsed.fieldCode,
+    consultantId: consultantParsed.consultantId
   };
 }
 
@@ -164,7 +229,8 @@ export function mapAdminShopPackageFeeToForm(row) {
       thumbnailUrl: '',
       skuId: null,
       catalogCategory: SHOP_CATALOG_CATEGORY.CONSULTATION,
-      fieldCode: ''
+      fieldCode: '',
+      consultantId: ''
     };
   }
   const categoryRaw = toDisplayString(row.catalogCategory, '').toUpperCase();
@@ -184,7 +250,10 @@ export function mapAdminShopPackageFeeToForm(row) {
     thumbnailUrl: toDisplayString(row.thumbnailUrl, ''),
     skuId: row.skuId != null ? row.skuId : null,
     catalogCategory,
-    fieldCode: toDisplayString(row.fieldCode, '')
+    fieldCode: toDisplayString(row.fieldCode, ''),
+    consultantId: catalogCategory === SHOP_CATALOG_CATEGORY.ASSESSMENT || row.consultantId == null
+      ? ''
+      : String(row.consultantId)
   };
 }
 
@@ -193,21 +262,28 @@ export function mapAdminShopPackageFeeToForm(row) {
  * 구분과 분야 코드는 포함한다.
  *
  * @param {object} form
- * @returns {{ descriptionText: string|null, catalogVisible: boolean, sortOrder: number, catalogCategory: string, fieldCode: string }}
- * @throws {Error} 분야 코드가 없으면 fail-closed
+ * @returns {{ descriptionText: string|null, catalogVisible: boolean, sortOrder: number, catalogCategory: string, fieldCode: string, consultantId: number|null }}
+ * @throws {Error} 분야 코드 또는 상담 상품의 상담사가 없으면 fail-closed
  */
 export function buildAdminShopPackageContentBody(form) {
   const fieldParsed = validateAdminShopCatalogFieldCode(form);
   if (!fieldParsed.valid) {
     throw new Error(ADMIN_SHOP_FIELD_CODE_REQUIRED_MESSAGE);
   }
-  const sortOrder = Number.parseInt(String(form?.sortOrder ?? ''), 10);
-  const description = String(form?.descriptionText ?? '').trim();
   const categoryRaw = toDisplayString(form?.catalogCategory, '').toUpperCase();
   const catalogCategory =
     categoryRaw === SHOP_CATALOG_CATEGORY.ASSESSMENT
       ? SHOP_CATALOG_CATEGORY.ASSESSMENT
       : SHOP_CATALOG_CATEGORY.CONSULTATION;
+  const consultantParsed = validateAdminShopCatalogConsultant({
+    ...form,
+    catalogCategory
+  });
+  if (!consultantParsed.valid) {
+    throw new Error(ADMIN_SHOP_CONSULTANT_REQUIRED_MESSAGE);
+  }
+  const sortOrder = Number.parseInt(String(form?.sortOrder ?? ''), 10);
+  const description = String(form?.descriptionText ?? '').trim();
   return {
     descriptionText: description
       ? description.slice(0, ADMIN_SHOP_DESCRIPTION_MAX_LENGTH)
@@ -215,6 +291,7 @@ export function buildAdminShopPackageContentBody(form) {
     catalogVisible: form?.catalogVisible === true,
     sortOrder: Number.isFinite(sortOrder) && sortOrder >= 0 ? sortOrder : 0,
     catalogCategory,
-    fieldCode: fieldParsed.fieldCode
+    fieldCode: fieldParsed.fieldCode,
+    consultantId: consultantParsed.consultantId
   };
 }

@@ -20,6 +20,7 @@ public record ShopCatalogSkuAdminDetail(
         int sortOrder,
         int sessionCount,
         String packageType,
-        String fieldCode
+        String fieldCode,
+        Long consultantId
 ) {
 }

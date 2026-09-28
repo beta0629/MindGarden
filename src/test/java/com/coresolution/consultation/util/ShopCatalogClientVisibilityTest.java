@@ -45,8 +45,32 @@ class ShopCatalogClientVisibilityTest {
                 "FAMILY", List.of("가족권"), List.of(), List.of(mapping)));
     }
 
+    @Test
+    @DisplayName("상담사 id 가 있으면 같은 배정만 보이고 다른 상담사 상품은 숨긴다")
+    void boundConsultant_matchesAssignedConsultantOnly() {
+        ConsultantClientMapping assigned = mapping("언어치료", "SPEECH", 11L);
+        ConsultantClientMapping other = mapping("가족상담", "FAMILY", 22L);
+        assertTrue(ShopCatalogClientVisibility.isConsultationVisible(
+                "FAMILY", List.of("가족권"), List.of(), List.of(assigned, other), 22L));
+        assertFalse(ShopCatalogClientVisibility.isConsultationVisible(
+                "SPEECH", List.of("언어치료"), List.of("언어치료"), List.of(assigned), 99L));
+    }
+
+    @Test
+    @DisplayName("상담사 id 가 없으면 기존 분야·패키지 매칭을 유지한다")
+    void unboundConsultant_keepsSpecialtyMatch() {
+        ConsultantClientMapping mapping = mapping("단회기", "SPEECH", 11L);
+        assertTrue(ShopCatalogClientVisibility.isConsultationVisible(
+                "SPEECH", List.of("회기권"), List.of(), List.of(mapping), null));
+    }
+
     private static ConsultantClientMapping mapping(String packageName, String specialty) {
+        return mapping(packageName, specialty, null);
+    }
+
+    private static ConsultantClientMapping mapping(String packageName, String specialty, Long consultantId) {
         User consultant = new User();
+        consultant.setId(consultantId);
         consultant.setSpecialty(specialty);
         ConsultantClientMapping mapping = new ConsultantClientMapping();
         mapping.setPackageName(packageName);

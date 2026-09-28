@@ -54,6 +54,15 @@
   gap: var(--mg-spacing-md);
 }
 
+.admin-shop-sku-editor .mg-v2-form-row {
+  align-items: start;
+  gap: var(--mg-spacing-md);
+}
+
+.admin-shop-sku-editor .mg-v2-form-group {
+  margin-bottom: 0;
+}
+
 .admin-shop-catalog-list__thumb {
   width: 2.5rem;
   height: 2.5rem;

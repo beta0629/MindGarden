@@ -84,5 +84,13 @@ public class ShopCatalogSku extends BaseEntity {
      */
     @Column(name = "field_code", length = 50)
     private String fieldCode;
+
+    /**
+     * 상담 상품에 묶는 상담사 {@code users.id}.
+     * <p>{@code consultant_client_mappings.consultant_id} 와 같은 식별자.
+     * 검사 상품과 기존 상담 상품은 null.</p>
+     */
+    @Column(name = "consultant_id")
+    private Long consultantId;
 }
 

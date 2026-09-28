@@ -97,6 +97,13 @@ export const ADMIN_SHOP_CATALOG_CATEGORY_FIELD_LABEL = Object.freeze({
 export const ADMIN_SHOP_FIELD_CODE_PLACEHOLDER = '선택';
 
 export const ADMIN_SHOP_FIELD_CODE_REQUIRED_MESSAGE = '분야를 선택해 주세요.';
+
+export const ADMIN_SHOP_CONSULTANT_LABEL = '상담 선생님';
+
+export const ADMIN_SHOP_CONSULTANT_REQUIRED_MESSAGE = '상담 선생님을 선택해 주세요.';
+
+/** 상담사 목록. GET /api/v1/admin/consultants/with-stats */
+export const ADMIN_SHOP_CONSULTANT_LIST_ROLE = 'CONSULTANT';
 export const ADMIN_SHOP_SKU_PACKAGE_TYPE_SINGLE_LABEL = '단회기';
 export const ADMIN_SHOP_SKU_PACKAGE_TYPE_PACKAGE_LABEL = '패키지';
 export const ADMIN_SHOP_SKU_LIST_SESSION_COUNT_COLUMN = '회기수';
@@ -116,5 +123,6 @@ export const ADMIN_SHOP_SKU_TEST_IDS = {
   SAVE_BUTTON: 'admin-sku-save-button',
   SKU_CODE_READONLY: 'admin-sku-code-readonly',
   FIELD_CODE_SELECT: 'admin-sku-field-code-select',
+  CONSULTANT_SELECT: 'admin-sku-consultant-select',
   CATEGORY_FIELDSET: 'admin-sku-category-fieldset'
 };

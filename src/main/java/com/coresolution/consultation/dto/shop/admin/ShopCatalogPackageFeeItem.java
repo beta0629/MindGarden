@@ -19,6 +19,7 @@ package com.coresolution.consultation.dto.shop.admin;
  * @param sortOrder 정렬 순서
  * @param catalogCategory CONSULTATION 또는 ASSESSMENT
  * @param fieldCode 분야 공통코드. 없으면 null
+ * @param consultantId 상담사 users.id. 없으면 null
  * @author MindGarden
  * @since 2026-09-24
  */
@@ -36,6 +37,7 @@ public record ShopCatalogPackageFeeItem(
         boolean catalogVisible,
         int sortOrder,
         String catalogCategory,
-        String fieldCode
+        String fieldCode,
+        Long consultantId
 ) {
 }

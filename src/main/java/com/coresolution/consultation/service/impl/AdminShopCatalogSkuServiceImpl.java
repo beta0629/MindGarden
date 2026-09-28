@@ -17,10 +17,12 @@ import com.coresolution.consultation.dto.shop.admin.ShopCatalogSkuUpsertRequest;
 import com.coresolution.consultation.entity.CommonCode;
 import com.coresolution.consultation.entity.ShopCatalogSku;
 import com.coresolution.consultation.entity.ShopCatalogSkuPriceHistory;
+import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.exception.EntityNotFoundException;
 import com.coresolution.consultation.repository.CommonCodeRepository;
 import com.coresolution.consultation.repository.ShopCatalogSkuPriceHistoryRepository;
 import com.coresolution.consultation.repository.ShopCatalogSkuRepository;
+import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.AdminShopCatalogSkuService;
 import com.coresolution.consultation.service.ShopCatalogPackageOfferResolver;
 import com.coresolution.consultation.service.ShopCatalogSkuCodeGenerator;
@@ -56,6 +58,7 @@ public class AdminShopCatalogSkuServiceImpl implements AdminShopCatalogSkuServic
     private final ShopCatalogSkuRepository shopCatalogSkuRepository;
     private final ShopCatalogSkuPriceHistoryRepository shopCatalogSkuPriceHistoryRepository;
     private final CommonCodeRepository commonCodeRepository;
+    private final UserRepository userRepository;
     private final ShopCatalogSkuCodeGenerator shopCatalogSkuCodeGenerator;
     private final ShopCatalogSkuThumbnailService shopCatalogSkuThumbnailService;
     private final ShopCatalogPackageOfferResolver shopCatalogPackageOfferResolver;
@@ -134,6 +137,7 @@ public class AdminShopCatalogSkuServiceImpl implements AdminShopCatalogSkuServic
                 row.getSkuCode());
         row.setCatalogCategory(category);
         row.setFieldCode(requireFieldCode(tid, category, request.fieldCode()));
+        row.setConsultantId(resolveBoundConsultantId(tid, category, request.consultantId()));
         if (request.catalogVisible()) {
             requireThumbnailUrl(row);
         }
@@ -374,7 +378,8 @@ public class AdminShopCatalogSkuServiceImpl implements AdminShopCatalogSkuServic
                 row != null && StringUtils.hasText(row.getCatalogCategory())
                         ? row.getCatalogCategory()
                         : ShopCatalogCategory.CONSULTATION,
-                row != null ? row.getFieldCode() : null);
+                row != null ? row.getFieldCode() : null,
+                row != null ? row.getConsultantId() : null);
     }
 
     private static String requireTenant(String tenantId) {
@@ -399,6 +404,7 @@ public class AdminShopCatalogSkuServiceImpl implements AdminShopCatalogSkuServic
         String category = normalizeCatalogCategory(request.catalogCategory(), row.getSkuCode());
         row.setCatalogCategory(category);
         row.setFieldCode(requireFieldCode(row.getTenantId(), category, request.fieldCode()));
+        row.setConsultantId(resolveBoundConsultantId(row.getTenantId(), category, request.consultantId()));
 
         if (StringUtils.hasText(request.thumbnailUrl())) {
             row.setThumbnailUrl(request.thumbnailUrl().trim());
@@ -460,7 +466,8 @@ public class AdminShopCatalogSkuServiceImpl implements AdminShopCatalogSkuServic
                 row.getUpdatedAt(),
                 sessionCount,
                 ShopSessionCountConstants.resolvePackageType(sessionCount),
-                row.getFieldCode());
+                row.getFieldCode(),
+                row.getConsultantId());
     }
 
     private static ShopCatalogSkuAdminDetail toDetail(ShopCatalogSku row) {
@@ -479,7 +486,33 @@ public class AdminShopCatalogSkuServiceImpl implements AdminShopCatalogSkuServic
                 row.getSortOrder() != null ? row.getSortOrder() : 0,
                 sessionCount,
                 ShopSessionCountConstants.resolvePackageType(sessionCount),
-                row.getFieldCode());
+                row.getFieldCode(),
+                row.getConsultantId());
+    }
+
+    /**
+     * CONSULTATION 은 테넌트 상담사 users.id 를 필수로 저장한다.
+     * ASSESSMENT 는 상담사를 저장하지 않는다.
+     *
+     * @param tenantId 테넌트 ID
+     * @param catalogCategory CONSULTATION 또는 ASSESSMENT
+     * @param consultantId 요청 상담사 users.id
+     * @return 저장할 상담사 id. 검사 상품이면 null
+     * @throws IllegalArgumentException 상담 상품인데 없거나 테넌트 상담사가 아닐 때
+     */
+    private Long resolveBoundConsultantId(String tenantId, String catalogCategory, Long consultantId) {
+        if (ShopCatalogCategory.ASSESSMENT.equals(catalogCategory)) {
+            return null;
+        }
+        if (consultantId == null || consultantId <= 0L) {
+            throw new IllegalArgumentException(ShopCatalogSkuConstants.CONSULTANT_REQUIRED_MESSAGE);
+        }
+        User consultant = userRepository.findByTenantIdAndId(tenantId, consultantId)
+                .filter(user -> user.getRole() != null && user.getRole().isConsultant())
+                .filter(user -> user.getIsActive() == null || Boolean.TRUE.equals(user.getIsActive()))
+                .orElseThrow(() -> new IllegalArgumentException(
+                        ShopCatalogSkuConstants.CONSULTANT_UNKNOWN_MESSAGE));
+        return consultant.getId();
     }
 
     /**

@@ -96,6 +96,11 @@ public final class ShopCatalogSkuConstants {
     public static final String FIELD_CODE_UNKNOWN_MESSAGE =
             "선택한 분야 코드가 공통코드에 없습니다.";
 
+    public static final String CONSULTANT_REQUIRED_MESSAGE = "상담 선생님을 선택해 주세요.";
+
+    public static final String CONSULTANT_UNKNOWN_MESSAGE =
+            "선택한 상담사를 이 테넌트에서 찾을 수 없습니다.";
+
     private ShopCatalogSkuConstants() {
     }
 }

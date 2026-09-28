@@ -178,7 +178,7 @@ public class ClientShopCatalogServiceImpl implements ClientShopCatalogService {
                 aliases = specialtyAliases.getOrDefault(fieldCode.trim(), List.of());
             }
             return ShopCatalogClientVisibility.isConsultationVisible(
-                    fieldCode, packageCandidates(sku, offer), aliases, mappings);
+                    fieldCode, packageCandidates(sku, offer), aliases, mappings, sku.getConsultantId());
         }
     }
 

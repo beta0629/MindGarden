@@ -29,6 +29,7 @@ import {
   lookupMissingLogIdsForDate,
   resolveMissingLogSchedule
 } from '../../../utils/missingConsultationLogNavigation';
+import { resolveSessionNumberFromSchedule } from '../../../utils/consultationRecordSessionNumber';
 import {
   CONSULTANT_DASHBOARD_TITLE_ID,
   CONSULTANT_DASHBOARD_PAGE_TEST_ID,
@@ -749,13 +750,16 @@ const ConsultantDashboardV2 = ({ user }) => {
     const clientIdParsed = rawClientId != null && rawClientId !== ''
       ? (typeof rawClientId === 'number' ? rawClientId : parseInt(String(rawClientId), 10))
       : null;
+    const sessionNumber = resolveSessionNumberFromSchedule(firstSchedule);
     setSelectedSchedule({
+      ...firstSchedule,
       id: String(sid).startsWith('schedule-') ? String(sid) : `schedule-${sid}`,
-      consultantId: user?.id,
+      consultantId: firstSchedule.consultantId ?? user?.id,
       clientId: Number.isFinite(clientIdParsed) ? clientIdParsed : undefined,
       clientName: firstSchedule.clientName,
       sessionDate: sessionDateStr || firstSchedule.sessionDate || undefined,
-      sessionNumber: firstSchedule.sessionNumber
+      sessionSequence: firstSchedule.sessionSequence ?? sessionNumber ?? undefined,
+      sessionNumber
     });
     setShowConsultationLogModal(true);
     return true;

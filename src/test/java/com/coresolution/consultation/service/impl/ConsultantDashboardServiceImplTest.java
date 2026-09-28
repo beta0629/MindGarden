@@ -85,6 +85,7 @@ class ConsultantDashboardServiceImplTest {
         schedule.setStartTime(LocalTime.of(10, 0));
         schedule.setEndTime(LocalTime.of(11, 0));
         schedule.setStatus(ScheduleStatus.COMPLETED);
+        schedule.setSessionSequence(4);
         
         User client = User.builder()
             .name("홍길동")
@@ -113,6 +114,7 @@ class ConsultantDashboardServiceImplTest {
         assertEquals(TEST_CLIENT_ID, result.get(0).getClientId());
         assertEquals("홍길동", result.get(0).getClientName());
         assertEquals(schedule.getDate(), result.get(0).getSessionDate());
+        assertEquals(schedule.getSessionSequence(), result.get(0).getSessionNumber());
         
         verify(scheduleRepository).findIncompleteRecords(
                 eq(TEST_TENANT_ID),

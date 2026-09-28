@@ -1,5 +1,6 @@
 import React from 'react';
 import { CONSULTATION_LOG_SESSION_NUMBER_STRINGS } from '../../../constants/consultationLogAutosaveStrings';
+import { CONSULTATION_LOG_BASE_REQUIRED_LABELS } from '../../../utils/consultationLogFormValidation';
 import { toDisplayString } from '../../../utils/safeDisplay';
 
 /**
@@ -12,7 +13,7 @@ const ConsultationLogRequiredFieldsNotice = ({ sessionNumberMissing = false }) =
     CONSULTATION_LOG_SESSION_NUMBER_STRINGS.REQUIRED_FIELD_LABEL,
     '회기'
   );
-  const baseRequired = '세션 시간, 내담자 상태, 주요 이슈, 개입 방법, 내담자 반응, 위험도 평가, 진행 평가';
+  const baseRequired = CONSULTATION_LOG_BASE_REQUIRED_LABELS;
   const requiredList = sessionNumberMissing
     ? `${sessionLabel}, ${baseRequired}`
     : baseRequired;

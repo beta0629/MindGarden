@@ -44,9 +44,9 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  /* Screen-local amber — 할 일 필 전용 (tobe v2: #FEF3C7/#92400E, amber border 없음) */
-  background-color: #FEF3C7;
-  color: #92400E;
+  /* amber 할 일 필 — warning-100 surface / warning-800 text, border 없음 */
+  background-color: var(--mg-warning-100);
+  color: var(--mg-warning-800);
   border: 0;
 }
 

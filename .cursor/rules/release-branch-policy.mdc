@@ -1,0 +1,47 @@
+---
+description: release/prod 브랜치 보호 및 운영 반영 절차 (head=release/dev 머지 PR 하나로만)
+alwaysApply: true
+---
+
+# MindGarden — 릴리스 브랜치 정책 (필수)
+
+## 1. release/prod 브랜치 보호
+
+- `release/prod` 브랜치 보호가 켜져 있다. **관리자도 예외 없음.**
+- `release/prod`에 **직접 push, force push, 체리픽 PR, 기능 브랜치 PR은 전부 금지.** 시도하지 말 것.
+
+## 2. 운영 반영 방법
+
+- 운영 반영은 **head=`release/dev`, base=`release/prod`** 인 **머지 PR 하나로만** 한다.
+- 필수 검사 **"Prod PR head must be release/dev"** 가 통과해야 머지할 수 있다.
+
+## 3. 작업 시작·종료
+
+- 모든 작업은 `release/dev`에서 **새 브랜치를 따서** 시작한다.
+- 작업이 끝나면 `release/dev`에 머지하고 **.dev 배포 SUCCESS를 확인**한다.
+- 로컬이 `release/prod`에 체크아웃돼 있으면 **먼저 `release/dev`로 바꾼다.**
+
+## 4. 긴급 핫픽스
+
+- 긴급 핫픽스도 같다. `release/dev` 머지와 .dev 확인을 **먼저** 하고, 그다음 dev에서 prod로 올리는 PR을 연다.
+
+## 5. 운영 PR 생성 시점
+
+- 운영 PR(`release/dev` → `release/prod`)은 **검증 PASS 후 사용자가 요청할 때만** 연다.
+
+## 예시
+
+```bash
+# ❌ 금지
+git push origin HEAD:release/prod
+git push --force origin release/prod
+gh pr create --base release/prod --head fix/some-feature   # 기능 브랜치 PR
+gh pr create --base release/prod --head cherry-pick/xxx    # 체리픽 PR
+
+# ✅ 허용 (검증 PASS + 사용자 요청 시에만)
+gh pr create --base release/prod --head release/dev
+```
+
+## 우선순위
+
+- 기존 배포 스킬의 "운영은 세트로"와 모순되면, 운영으로 올리는 방법은 **이 파일(머지 PR 하나, head=`release/dev`)을 우선**한다.

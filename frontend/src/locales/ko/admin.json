@@ -3037,7 +3037,9 @@
       "densityComfortableAria": "목록 압축 보기 끄기",
       "compactRemainingSessions": "남은 {{count}}회",
       "clientSearchPlaceholder": "내담자 이름·연락처 검색",
-      "clientSearchAria": "사이드바 내담자 검색"
+      "clientSearchAria": "사이드바 내담자 검색",
+      "filterSummary": "필터",
+      "filterSummaryAria": "보기·상태 필터 ({{selection}})"
     },
     "legend": {
       "heading": "안내",

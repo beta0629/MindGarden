@@ -116,7 +116,12 @@ const ScheduleLegend = ({
      * first-paint 스켈레톤 — 누락 일지 로딩 중 섹션 title+skeleton 유지.
      * 미전달/false + items=null → 섹션 미노출 (회귀 0).
      */
-    missingConsultationLogsLoading = false
+    missingConsultationLogsLoading = false,
+    /**
+     * 카운트 도착 시 통합 스킨 기본 접힘을 강제 펼침할지 여부.
+     * 미전달/true → 기존 동작 (회귀 0). false → 사용자가 펼친 경우에만 펼침.
+     */
+    autoExpandOnCounts = true
 }) => {
     const { t } = useTranslation();
     const isIntegrated = calendarSkin === 'integrated';
@@ -154,10 +159,10 @@ const ScheduleLegend = ({
     // - 변경: [hasCounts] 만 유지 → hasCounts 변경 시에만 한 번 강제 펼침 시도.
     //   prev 가 이미 false 면 functional updater 가 동일 값 반환 → 불필요 re-render 회피.
     useEffect(() => {
-        if (hasCounts && !userOverrideRef.current) {
+        if (autoExpandOnCounts && hasCounts && !userOverrideRef.current) {
             setIsCollapsed((prev) => (prev ? false : prev));
         }
-    }, [hasCounts]);
+    }, [hasCounts, autoExpandOnCounts]);
 
     // 2026-06-09 P0 hotfix: userOverrideRef 세팅을 setState updater 밖으로 분리.
     // React StrictMode 에서 updater 가 이중 실행될 수 있고, concurrent rendering 시 부수효과 순서가

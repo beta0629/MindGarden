@@ -1,6 +1,7 @@
 /**
  * ShopPaymentCompletePage — 「결제가 완료됐어요」 (추가된 회기 · 사용 기한 · 금액·결제 수단 · 주문번호 · 옆 「내 회기」)
  * primary 「내 회기 보기」 하나 · secondary 「결제 내역 보기」(좁은 화면은 텍스트 링크) · 예약/일정 버튼 없음.
+ * 좁은 화면은 버튼을 카드 밖 하단 바로 빼서 primary · 도움말 · 링크 순서로 둔다.
  * 결제 확정이 아니거나 이행 재시도가 필요하면 주문 상세로 넘긴다.
  *
  * @author MindGarden
@@ -174,6 +175,40 @@ const ShopPaymentCompletePage = () => {
     </div>
   ) : null;
   const goPaymentHistory = () => navigate(CLIENT_MALL_ROUTES.PAYMENT_HISTORY);
+  const primaryAction = (
+    <MGButton
+      variant="primary"
+      size="large"
+      preventDoubleClick={false}
+      className="client-mall-btn client-mall-btn--primary"
+      onClick={() => navigate(CLIENT_MALL_ROUTES.SESSIONS)}
+      data-testid={CLIENT_MALL_TEST_IDS.COMPLETE_PRIMARY}
+    >
+      {CLIENT_MALL_COMPLETE_COPY.PRIMARY}
+    </MGButton>
+  );
+  const secondaryAction = isNarrow ? (
+    <button
+      type="button"
+      className="client-mall-link-btn client-mall-complete__link"
+      onClick={goPaymentHistory}
+      data-testid={CLIENT_MALL_TEST_IDS.COMPLETE_SECONDARY}
+    >
+      {CLIENT_MALL_COMPLETE_COPY.SECONDARY}
+    </button>
+  ) : (
+    <MGButton
+      variant="outline"
+      size="large"
+      preventDoubleClick={false}
+      className="client-mall-btn client-mall-btn--ink-line"
+      onClick={goPaymentHistory}
+      data-testid={CLIENT_MALL_TEST_IDS.COMPLETE_SECONDARY}
+    >
+      {CLIENT_MALL_COMPLETE_COPY.SECONDARY}
+    </MGButton>
+  );
+  const helpText = <p className="client-mall-complete__help">{CLIENT_MALL_COMPLETE_COPY.HELP}</p>;
 
   return (
     <ShopClientLayout
@@ -206,41 +241,25 @@ const ShopPaymentCompletePage = () => {
             {CLIENT_MALL_COMPLETE_COPY.SESSIONS_ADDED_SUFFIX}
           </p>
           <MallInfoRows rows={rows} className="client-mall-rows--wide" />
-          <div className="client-mall-complete__actions">
-            <MGButton
-              variant="primary"
-              size="large"
-              preventDoubleClick={false}
-              className="client-mall-btn client-mall-btn--primary"
-              onClick={() => navigate(CLIENT_MALL_ROUTES.SESSIONS)}
-              data-testid={CLIENT_MALL_TEST_IDS.COMPLETE_PRIMARY}
-            >
-              {CLIENT_MALL_COMPLETE_COPY.PRIMARY}
-            </MGButton>
-            {isNarrow ? (
-              <button
-                type="button"
-                className="client-mall-link-btn client-mall-complete__link"
-                onClick={goPaymentHistory}
-                data-testid={CLIENT_MALL_TEST_IDS.COMPLETE_SECONDARY}
-              >
-                {CLIENT_MALL_COMPLETE_COPY.SECONDARY}
-              </button>
-            ) : (
-              <MGButton
-                variant="outline"
-                size="large"
-                preventDoubleClick={false}
-                className="client-mall-btn client-mall-btn--ink-line"
-                onClick={goPaymentHistory}
-                data-testid={CLIENT_MALL_TEST_IDS.COMPLETE_SECONDARY}
-              >
-                {CLIENT_MALL_COMPLETE_COPY.SECONDARY}
-              </MGButton>
-            )}
-          </div>
-          <p className="client-mall-complete__help">{CLIENT_MALL_COMPLETE_COPY.HELP}</p>
+          {isNarrow ? null : (
+            <>
+              <div className="client-mall-complete__actions">
+                {primaryAction}
+                {secondaryAction}
+              </div>
+              {helpText}
+            </>
+          )}
         </section>
+      ) : null}
+      {order && isNarrow ? (
+        <div className="client-mall-complete-bar" data-testid={CLIENT_MALL_TEST_IDS.COMPLETE_BAR}>
+          <div className="client-mall-complete__actions">
+            {primaryAction}
+            {helpText}
+            {secondaryAction}
+          </div>
+        </div>
       ) : null}
     </ShopClientLayout>
   );

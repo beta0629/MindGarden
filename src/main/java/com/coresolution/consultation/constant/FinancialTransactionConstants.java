@@ -97,6 +97,17 @@ public final class FinancialTransactionConstants {
             "CONSULTANT_CLIENT_MAPPING_PARTIAL_REFUND";
 
     /**
+     * 동일 매핑 2번째 이후 부분 환불 EXPENSE relatedEntityType 접두사.
+     * 전체 값: {@code CONSULTANT_CLIENT_MAPPING_PARTIAL_REFUND_n} (n≥{@link #PARTIAL_REFUND_RELATED_ENTITY_SEQ_START}).
+     * {@code uk_financial_transactions_dedupe} 가 (매핑, relatedEntityType)당 활성 1건이므로 부분 환불 건마다 슬롯을 나눈다.
+     */
+    public static final String RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING_PARTIAL_REFUND_SEQ_PREFIX =
+            RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING_PARTIAL_REFUND + "_";
+
+    /** 부분 환불 순번 relatedEntityType 시작 번호 (1번째는 접미사 없는 기본 타입). */
+    public static final int PARTIAL_REFUND_RELATED_ENTITY_SEQ_START = 2;
+
+    /**
      * amount-info / 일관성 검사용 — 매핑 ID로 묶는 relatedEntityType 집합.
      * INCOME({@link #RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING}·ADDITIONAL) +
      * Path B/전액·부분 환불 EXPENSE.

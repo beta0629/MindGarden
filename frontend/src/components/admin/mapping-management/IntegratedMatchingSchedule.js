@@ -1559,6 +1559,7 @@ const IntegratedMatchingSchedule = () => {
               onClientFilterChange={setSelectedClientIds}
               missingConsultationLogs={missingConsultationLogs}
               missingConsultationLogsLoading={missingConsultationLogsLoading}
+              legendAutoExpandOnCounts={false}
               onScheduleEventsChange={handleScheduleEventsChange}
               onAfterScheduleUpdated={() => softRefresh(loadMappings)}
               headerToolbarEnd={(

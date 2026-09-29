@@ -1044,9 +1044,9 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: var(--mg-v2-space-12, 3rem);
-  height: var(--mg-v2-space-12, 3rem);
-  border: 1px solid var(--client-mall-line);
+  width: 3.5rem;
+  height: 3.5rem;
+  border: 1px solid var(--client-mall-hair);
   border-radius: var(--mg-v2-radius-pill, var(--mg-radius-full));
   background: var(--client-mall-chip-bg);
 }
@@ -1251,6 +1251,25 @@
     display: flex;
   }
 
+  /* 장바구니: 요약 카드는 목록과 이용기간 안내 사이 (마크업 순서는 그대로 두고 표시 순서만) */
+  .client-mall--cart .client-web-page-shell__main > .client-mall-notice {
+    order: 1;
+  }
+
+  .client-mall--cart .client-web-page-shell__main > .client-mall-bar-spacer {
+    order: 2;
+  }
+
+  /* 결제 완료: 카드 밖 하단 바 — primary · 도움말 · 링크 */
+  .client-mall-complete-bar {
+    position: sticky;
+    bottom: 0;
+    z-index: var(--client-mall-bar-z);
+    padding: var(--mg-v2-space-3, 0.75rem) 0 calc(var(--mg-v2-space-3, 0.75rem) + env(safe-area-inset-bottom, 0));
+    background: var(--client-mall-surface);
+    border-top: 1px solid var(--client-mall-line);
+  }
+
   /* 결제 완료: 전폭 primary 하나 + 그 아래 텍스트 링크 */
   .client-mall-complete__actions {
     flex-direction: column;
@@ -1290,7 +1309,7 @@
   width: 100%;
   max-width: 100%;
   margin: 0;
-  border-radius: var(--client-web-radius-card) var(--client-web-radius-card) 0 0;
+  border-radius: 1.25rem 1.25rem 0 0;
   padding-bottom: env(safe-area-inset-bottom, 0);
 }
 
@@ -1322,9 +1341,27 @@
   align-items: flex-start;
 }
 
+.client-mall-sheet .mg-modal__title {
+  font-size: var(--cs-text-lg);
+  font-weight: var(--font-weight-extrabold);
+}
+
+.client-mall-sheet .mg-modal__subtitle {
+  color: var(--client-web-mute);
+  font-size: 0.8125rem;
+}
+
 .client-mall-sheet .mg-modal__close {
   flex: 0 0 auto;
   width: auto;
+}
+
+/* MGButton outline 은 border-width/style 을 !important 로 고정 — 색만 투명으로 */
+.client-mall-sheet .mg-modal__close.mg-button {
+  border-color: transparent;
+  background: transparent;
+  box-shadow: none;
+  color: var(--client-web-slate);
 }
 
 .client-mall-phone--sheet {
@@ -1350,7 +1387,7 @@
 
 /* 공통 .mg-modal__body p 가 문구 색·크기를 덮으므로 시트 범위에서 다시 잇는다 — (c) 오답 문구는 에러 토큰 */
 .client-mall-phone--sheet .client-mall-phone__error {
-  color: var(--cs-error-600, var(--mg-v2-color-error-main));
+  color: var(--cs-error-500, var(--mg-v2-color-error-main));
   font-size: var(--mg-v2-font-size-body-sm, 0.8125rem);
 }
 
@@ -1366,4 +1403,16 @@
 
 .client-mall-phone--sheet .client-mall-field__input--error {
   border-color: var(--cs-error-500, var(--mg-v2-color-error-main));
+}
+
+/* (b)(e) 안내 줄 왼쪽 · 「다시 받기」 오른쪽 */
+.client-mall-phone--sheet .client-mall-phone__help-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mg-v2-space-2, 0.5rem);
+}
+
+.client-mall-phone--sheet .client-mall-phone__help-row > .client-mall-link-btn {
+  flex-shrink: 0;
 }

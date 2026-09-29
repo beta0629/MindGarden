@@ -1,7 +1,7 @@
 /**
  * MallPayFailedAlert — 카드 거절 등 결제 실패 시 결제 화면 상단 빨간 「결제가 완료되지 않았어요」+ 사유.
  * 좁은 화면에서는 결제 패널이 본문 아래에 있으므로 본문 첫머리에 두고, 표시 시 페이지 맨 위로 올린다
- * (sticky 상단 바에 가리지 않도록 페이지 top 우선, 다음 프레임에도 화면 밖이면 요소 scrollIntoView 보정).
+ * (sticky 상단 바에 가리지 않도록 페이지 top 으로만 이동, 다음 프레임에도 화면 밖이면 top 재시도).
  *
  * @author MindGarden
  * @since 2026-09-29
@@ -12,8 +12,11 @@ import PropTypes from 'prop-types';
 import SafeText from '../../common/SafeText';
 import { CLIENT_MALL_CHECKOUT_COPY, CLIENT_MALL_TEST_IDS } from '../../../constants/clientMallConstants';
 
-/** smooth 는 모바일에서 중간에 멈춰 사유가 화면 밖에 남는 경우가 있어 즉시 이동만 사용 */
-const PAY_FAILED_SCROLL_BEHAVIOR = 'auto';
+/**
+ * 전역 html { scroll-behavior: smooth } 에서는 'auto' 도 smooth 로 동작하므로 'instant' 로 고정.
+ * scrollIntoView(block:'start') 는 알림을 top 0 에 붙여 sticky 상단 바(좁은 화면은 높이 auto) 밑에 깔리므로 쓰지 않는다.
+ */
+const PAY_FAILED_SCROLL_BEHAVIOR = 'instant';
 
 const scrollPageTop = () => {
   if (typeof window.scrollTo === 'function') {
@@ -46,9 +49,6 @@ const MallPayFailedAlert = ({ reason }) => {
         return;
       }
       scrollPageTop();
-      if (!isAlertInViewport(el) && typeof el.scrollIntoView === 'function') {
-        el.scrollIntoView({ block: 'start', behavior: PAY_FAILED_SCROLL_BEHAVIOR });
-      }
     });
     return () => {
       if (typeof window.cancelAnimationFrame === 'function') {

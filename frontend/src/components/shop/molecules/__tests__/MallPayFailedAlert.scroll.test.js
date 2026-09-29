@@ -1,6 +1,6 @@
 /**
- * MallPayFailedAlert — 카드 거절 첫 회에 390 폭 첫 화면 안에 빨간 사유가 보이도록 즉시 스크롤 + 다음 프레임 보정.
- * smooth 스크롤이 도중에 멈춘 경우(scrollY 608 잔류, top -361)도 화면 안으로 다시 맞추는지 확인한다.
+ * MallPayFailedAlert — 카드 거절 첫 회에 390 폭 첫 화면 안에 빨간 사유가 보이도록 즉시(instant) 스크롤 + 다음 프레임 보정.
+ * 전역 scroll-behavior:smooth 에서도 즉시 이동하도록 behavior 'instant', 상단 바 밑에 깔리지 않도록 scrollIntoView 미사용.
  *
  * @author MindGarden
  * @since 2026-09-30
@@ -17,6 +17,8 @@ const ALERT_DOC_TOP = 247;
 const STALLED_SCROLL_Y = 608;
 const INITIAL_SCROLL_Y = 619;
 const REASON = '카드사 승인 거절 (한도 초과)';
+/** 상단 바(--client-web-chrome-h 4rem) — 알림이 그 아래에 보여야 한다 */
+const TOP_BAR_HEIGHT = 64;
 
 describe('MallPayFailedAlert 스크롤 — 390 첫 화면 노출', () => {
   const original = {};
@@ -80,24 +82,27 @@ describe('MallPayFailedAlert 스크롤 — 390 첫 화면 노출', () => {
     expect(rect.top).toBeLessThan(VIEWPORT_HEIGHT);
   };
 
-  const expectAllScrollsAuto = () => {
+  const expectAllScrollsInstant = () => {
+    expect(window.scrollTo.mock.calls.length).toBeGreaterThan(0);
     window.scrollTo.mock.calls.forEach(([opts]) => {
-      expect(opts).toEqual(expect.objectContaining({ top: 0, behavior: 'auto' }));
+      expect(opts).toEqual({ top: 0, behavior: 'instant' });
     });
-    Element.prototype.scrollIntoView.mock.calls.forEach(([opts]) => {
-      expect(opts).toEqual(expect.objectContaining({ block: 'start', behavior: 'auto' }));
-    });
+    expect(Element.prototype.scrollIntoView).not.toHaveBeenCalled();
   };
 
-  it('거절 사유 표시 시 즉시(auto) 스크롤로 첫 화면 안에 보인다', () => {
+  it('거절 사유 표시 시 즉시(instant) 스크롤로 첫 화면 안, 상단 바 아래에 보인다', () => {
     render(<MallPayFailedAlert reason={REASON} />);
 
     expect(screen.getByText(REASON)).toBeInTheDocument();
-    expect(window.scrollTo).toHaveBeenCalledWith({ top: 0, behavior: 'auto' });
+    expect(window.scrollTo).toHaveBeenCalledWith({ top: 0, behavior: 'instant' });
     expect(window.scrollTo).not.toHaveBeenCalledWith(expect.objectContaining({ behavior: 'smooth' }));
+    expect(window.scrollTo).not.toHaveBeenCalledWith(expect.objectContaining({ behavior: 'auto' }));
     expect(window.requestAnimationFrame).toHaveBeenCalledTimes(1);
-    expectAllScrollsAuto();
+    expectAllScrollsInstant();
     expectAlertInFirstScreen();
+    expect(
+      screen.getByTestId(CLIENT_MALL_TEST_IDS.CHECKOUT_PAY_FAILED).getBoundingClientRect().top
+    ).toBeGreaterThanOrEqual(TOP_BAR_HEIGHT);
   });
 
   it('첫 스크롤이 도중에 멈춰도(top -361) 다음 프레임에 다시 맞춘다', () => {
@@ -105,17 +110,16 @@ describe('MallPayFailedAlert 스크롤 — 390 첫 화면 노출', () => {
     render(<MallPayFailedAlert reason={REASON} />);
 
     expect(window.scrollTo).toHaveBeenCalledTimes(2);
-    expectAllScrollsAuto();
+    expectAllScrollsInstant();
     expectAlertInFirstScreen();
   });
 
-  it('페이지 top 재시도도 멈추면 안내 요소 scrollIntoView(start, auto)로 맞춘다', () => {
+  it('페이지 top 재시도도 멈춰도 scrollIntoView(block:start)로 알림을 상단 바 밑 top 0 에 붙이지 않는다', () => {
     stallCount = 2;
     render(<MallPayFailedAlert reason={REASON} />);
 
-    expect(Element.prototype.scrollIntoView).toHaveBeenCalledWith({ block: 'start', behavior: 'auto' });
-    expectAllScrollsAuto();
-    expectAlertInFirstScreen();
+    expect(window.scrollTo).toHaveBeenCalledTimes(2);
+    expectAllScrollsInstant();
   });
 
   it('사유가 없으면 스크롤하지 않는다', () => {

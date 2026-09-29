@@ -345,5 +345,6 @@ export const CLIENT_MALL_TEST_IDS = Object.freeze({
   COMPLETE_CART_KEPT: 'client-mall-complete-cart-kept',
   COMPLETE: 'client-mall-complete',
   COMPLETE_PRIMARY: 'client-mall-complete-primary',
-  COMPLETE_SECONDARY: 'client-mall-complete-secondary'
+  COMPLETE_SECONDARY: 'client-mall-complete-secondary',
+  COMPLETE_BAR: 'client-mall-complete-bar'
 });

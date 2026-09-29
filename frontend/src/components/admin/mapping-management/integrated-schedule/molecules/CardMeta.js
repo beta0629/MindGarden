@@ -15,6 +15,7 @@ import SafeText from '../../../../common/SafeText';
 import StatusBadge from '../../../../common/StatusBadge';
 import EngagementTypeBadge from '../../../../common/EngagementTypeBadge';
 import { toDisplayString } from '../../../../../utils/safeDisplay';
+import { shouldRenderEngagementTypeBadge } from '../../../../../constants/mappingEngagementType';
 import { resolveCardTodoPill } from '../utils/resolveCardTodoPill';
 import { resolveScheduleReminderSmsDisplay } from '../utils/scheduleReminderSmsDisplay';
 import {
@@ -68,6 +69,16 @@ const CardMeta = ({
     && shouldShowInstitutionLinkInitialPaymentUi(mappingLike);
   const hasReminderSms = resolveScheduleReminderSmsDisplay(clientReminderSms) != null;
   const showBadgeRow = Boolean(todoLabel) || hasReminderSms;
+  const showEngagementBadge = shouldRenderEngagementTypeBadge({
+    paymentTiming,
+    engagementType,
+    clientEngagementType
+  });
+
+  // 빈 래퍼도 카드 본문 flex gap 을 한 번 더 먹으므로 표시할 내용이 없으면 그리지 않는다.
+  if (!showEngagementBadge && !showInitialPaymentCompleted && !showBadgeRow) {
+    return null;
+  }
 
   return (
     <div className="integrated-schedule__card-meta">

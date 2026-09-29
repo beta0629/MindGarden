@@ -525,7 +525,7 @@
 
 .pg-config-form__panel {
   background: var(--mg-v2-color-surface-card, var(--mg-white));
-  border: 1px solid var(--cs-slate-200, #E2E8F0);
+  border: 1px solid var(--cs-slate-200);
   border-radius: var(--mg-v2-radius-lg);
   padding: var(--mg-v2-space-4, 1rem) var(--mg-v2-space-5, 1.125rem);
 }

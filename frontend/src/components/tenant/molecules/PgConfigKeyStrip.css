@@ -17,13 +17,13 @@
     var(--mg-v2-color-surface-card, var(--mg-white)) 0%,
     var(--mg-v2-color-neutral-100) 100%
   );
-  border: 1px solid var(--cs-slate-200, #E2E8F0);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  border: 1px solid var(--cs-slate-200);
+  box-shadow: inset 0 1px 0 var(--cs-glass-white-80);
 }
 
 .pg-config-key-strip__cell {
   background: var(--mg-v2-color-surface-card, var(--mg-white));
-  border: 1px solid var(--cs-slate-200, #E2E8F0);
+  border: 1px solid var(--cs-slate-200);
   border-radius: var(--mg-v2-radius-md);
   padding: var(--mg-v2-space-3, 0.75rem) var(--mg-v2-space-4, 0.875rem);
   min-height: 5.75rem;

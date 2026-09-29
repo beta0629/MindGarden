@@ -1,17 +1,18 @@
 # 개발(release/dev)에 있고 운영(release/prod)에 없는 변경 목록
 
-- 기준: `origin/release/dev` = `f13b5fdde`, `origin/release/prod` = `99a746f68` (2026-09-30, 동기화 PR [#1312](https://github.com/beta0629/MindGarden/pull/1312) 머지 직후)
+- 기준: `origin/release/dev` = `f89547805`, `origin/release/prod` = `99a746f68` (2026-09-30, 동기화 PR [#1312](https://github.com/beta0629/MindGarden/pull/1312) 머지 후 release/dev tip)
 - `release/prod` 는 `release/dev` 의 조상이다 (`git merge-base --is-ancestor origin/release/prod origin/release/dev` = 0).
-- 대상 커밋: `git rev-list --no-merges origin/release/prod..origin/release/dev` = 270건 → release/dev 첫 부모 이력 기준으로 PR 126건 + PR 없는 직접 커밋 40건으로 묶음.
+- 대상 커밋: `git rev-list --no-merges origin/release/prod..origin/release/dev` = 271건 → release/dev 첫 부모 이력 기준으로 PR 127건 + PR 없는 직접 커밋 40건으로 묶음.
 - `git cherry -v origin/release/prod origin/release/dev` 는 동기화 이후 운영 쪽 비교 대상이 없어 전부 `+` 로 나온다. 그래서 "운영에 다른 형태로 들어감"은 **운영 이력(2025-06-01 이후) 전체 커밋의 `git patch-id --stable` 과 일치하는지**로 판정했다.
 - 분류: BE = `src/**`(마이그레이션 제외)·`pom.xml`, FE = `frontend/**`, DB = `src/main/resources/db/migration/**`. 워크플로·문서만 바꾼 PR 은 셋 다 `-`.
 - "운영 메시지 언급" = 운영 커밋 메시지에 해당 PR 번호(`#N`)가 나옴. 파일 일부만 운영에 옮긴 경우(예: 프론트만 반영) patch-id 가 달라 여기서만 드러난다. 수동 확인 필요.
 - 운영 반영은 화면+서버 세트로만 (`/.cursor/skills/core-solution-deployment/SKILL.md` 「운영 배포는 세트로만」). 이 표는 목록일 뿐 반영 순서·묶음을 정하지 않는다.
 
-## 1. 운영 patch-id 가 없는 PR (114건)
+## 1. 운영 patch-id 가 없는 PR (115건)
 
 | PR | 제목 | BE | FE | DB 마이그레이션 | 운영에 같은 patch-id | 운영 메시지 언급 |
 |----|------|----|----|----------------|---------------------|-----------------|
+| [#1313](https://github.com/beta0629/MindGarden/pull/1313) | fix(client-mall): 휴대폰 인증 타이머 시작 5:01 → 5:00 | - | O | - | 없음 | - |
 | [#1310](https://github.com/beta0629/MindGarden/pull/1310) | fix(erp): 부분환불 시 전액 CONSULTATION_REFUND 전표 중복 생성 제거 | O | - | - | 없음 | - |
 | [#1309](https://github.com/beta0629/MindGarden/pull/1309) | fix(client-mall): 결제 거절 안내 스크롤 간헐 FAIL 수정 (#1304 추가) | - | O | - | 없음 | - |
 | [#1308](https://github.com/beta0629/MindGarden/pull/1308) | fix(integrated-schedule): 가예약 헤더 목록·당일 결제 버튼 세로 정렬 (CSS only) | - | O | - | 없음 | - |

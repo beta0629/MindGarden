@@ -761,7 +761,6 @@ jobs:
           echo "✅ 프론트엔드 파일 권한 설정 완료"
         
     # 참고: 메뉴 구조 업데이트는 필요할 때만 수동으로 실행
-    # sudo mysql -u root -p'!QAZ2wsx#EDC4rfv' mindgarden < /tmp/update_all_role_menus.sql
         
     # ============================================================================
     # [ops-portal-migration Phase 1 fix 2026-06-15] MINDGARDEN_HQ_TENANT_ID env 자동 주입 + 검증 (운영)

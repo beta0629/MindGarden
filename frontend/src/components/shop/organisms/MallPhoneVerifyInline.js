@@ -39,14 +39,20 @@ const NeedsVerifyBadge = () => (
 
 /**
  * 인증 입력 본문 (b 보냄 · c 틀림 · d 만료 · e 다시 보냄 · f 잠김).
+ * 시트에서는 버튼이 입력칸 아래 전폭 primary 이고, 잠기면 확인·다시 받기 대신 「닫기」만 남는다.
  *
- * @param {{ flow: object }} props
+ * @param {{ flow: object, sheet?: boolean, onClose?: () => void }} props
  */
-const PhoneVerifyPanel = ({ flow }) => {
+const PhoneVerifyPanel = ({ flow, sheet = false, onClose = null }) => {
   const { step } = flow;
   const errorText = flow.error?.message || '';
   const expired = step === PHONE_VERIFY_STEP.EXPIRED;
   const locked = step === PHONE_VERIFY_STEP.LOCKED;
+  const lockedSheet = sheet && locked;
+  const actionVariant = sheet ? 'primary' : 'outline';
+  const actionClassName = sheet
+    ? 'client-mall-btn client-mall-btn--primary'
+    : 'client-mall-btn client-mall-btn--ink-line';
   const codeStep = step === PHONE_VERIFY_STEP.SENT || expired || locked;
   const codeDisabled = expired || locked || flow.confirming;
   const sentText = flow.deliveryChannel === PUSH_CHANNEL
@@ -74,9 +80,9 @@ const PhoneVerifyPanel = ({ flow }) => {
               disabled={flow.sending}
             />
             <MGButton
-              variant="outline"
+              variant={actionVariant}
               preventDoubleClick={false}
-              className="client-mall-btn client-mall-btn--ink-line"
+              className={actionClassName}
               disabled={flow.sending || !flow.phoneDigits}
               loading={flow.sending}
               onClick={flow.send}
@@ -150,39 +156,53 @@ const PhoneVerifyPanel = ({ flow }) => {
                 </span>
               ) : null}
             </div>
-            <MGButton
-              variant="outline"
-              preventDoubleClick={false}
-              className="client-mall-btn client-mall-btn--ink-line"
-              disabled={codeDisabled || flow.code.length !== CLIENT_MALL_LIMITS.OTP_LENGTH}
-              loading={flow.confirming}
-              onClick={flow.confirm}
-              data-testid={CLIENT_MALL_TEST_IDS.PHONE_CONFIRM}
-            >
-              {CLIENT_MALL_PHONE_COPY.CONFIRM}
-            </MGButton>
+            {lockedSheet ? null : (
+              <MGButton
+                variant={actionVariant}
+                preventDoubleClick={false}
+                className={actionClassName}
+                disabled={codeDisabled || flow.code.length !== CLIENT_MALL_LIMITS.OTP_LENGTH}
+                loading={flow.confirming}
+                onClick={flow.confirm}
+                data-testid={CLIENT_MALL_TEST_IDS.PHONE_CONFIRM}
+              >
+                {CLIENT_MALL_PHONE_COPY.CONFIRM}
+              </MGButton>
+            )}
           </div>
           {step === PHONE_VERIFY_STEP.SENT ? (
             <p className="client-mall-phone__sub" data-testid="client-mall-phone-sent-help">
               {flow.resent ? CLIENT_MALL_PHONE_COPY.RESENT_HELP : CLIENT_MALL_PHONE_COPY.SENT_HELP}
             </p>
           ) : null}
-          <button
-            type="button"
-            className="client-mall-link-btn"
-            disabled={locked || flow.sending || (!expired && flow.resendWaitSeconds != null)}
-            onClick={flow.resend}
-            data-testid={CLIENT_MALL_TEST_IDS.PHONE_RESEND}
-          >
-            {CLIENT_MALL_PHONE_COPY.RESEND}
-            {!expired && !locked && flow.resendWaitSeconds != null ? (
-              <>
-                {CLIENT_MALL_PHONE_COPY.RESEND_WAIT_SEPARATOR}
-                {flow.resendWaitSeconds}
-                {CLIENT_MALL_PHONE_COPY.RESEND_WAIT_SUFFIX}
-              </>
-            ) : null}
-          </button>
+          {lockedSheet ? (
+            <MGButton
+              variant="outline"
+              preventDoubleClick={false}
+              className="client-mall-btn client-mall-btn--ink-line client-mall-phone__close"
+              onClick={onClose}
+              data-testid={CLIENT_MALL_TEST_IDS.PHONE_LOCKED_CLOSE}
+            >
+              {CLIENT_MALL_PHONE_COPY.CLOSE}
+            </MGButton>
+          ) : (
+            <button
+              type="button"
+              className="client-mall-link-btn"
+              disabled={locked || flow.sending || (!expired && flow.resendWaitSeconds != null)}
+              onClick={flow.resend}
+              data-testid={CLIENT_MALL_TEST_IDS.PHONE_RESEND}
+            >
+              {CLIENT_MALL_PHONE_COPY.RESEND}
+              {!expired && !locked && flow.resendWaitSeconds != null ? (
+                <>
+                  {CLIENT_MALL_PHONE_COPY.RESEND_WAIT_SEPARATOR}
+                  {flow.resendWaitSeconds}
+                  {CLIENT_MALL_PHONE_COPY.RESEND_WAIT_SUFFIX}
+                </>
+              ) : null}
+            </button>
+          )}
         </>
       ) : null}
 
@@ -196,7 +216,9 @@ const PhoneVerifyPanel = ({ flow }) => {
 };
 
 PhoneVerifyPanel.propTypes = {
-  flow: PropTypes.object.isRequired
+  flow: PropTypes.object.isRequired,
+  sheet: PropTypes.bool,
+  onClose: PropTypes.func
 };
 
 /**
@@ -253,19 +275,20 @@ const MallPhoneVerifyInline = ({ flow }) => {
   );
 
   if (isNarrow) {
+    const closeSheet = () => setOpen(false);
     return (
       <div className="client-mall-phone client-mall-phone--idle" data-testid={CLIENT_MALL_TEST_IDS.PHONE_VERIFY}>
         <NeedsVerifyBadge />
         {startButton}
         <UnifiedModal
           isOpen={open}
-          onClose={() => setOpen(false)}
+          onClose={closeSheet}
           title={CLIENT_MALL_PHONE_COPY.SHEET_TITLE}
           subtitle={step === PHONE_VERIFY_STEP.SENT ? CLIENT_MALL_PHONE_COPY.SHEET_SENT_SUBTITLE : CLIENT_MALL_PHONE_COPY.SECTION_HINT}
           className="client-mall-sheet"
         >
           <div className="client-mall client-mall-phone client-mall-phone--sheet" data-testid={CLIENT_MALL_TEST_IDS.PHONE_SHEET}>
-            <PhoneVerifyPanel flow={flow} />
+            <PhoneVerifyPanel flow={flow} sheet onClose={closeSheet} />
           </div>
         </UnifiedModal>
       </div>

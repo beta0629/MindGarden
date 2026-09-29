@@ -53,6 +53,24 @@ describe('Clinic-OS client cart/checkout chrome', () => {
     expect(cart.indexOf('<MallUsageBanner')).toBeGreaterThan(cart.indexOf('cart.lines.map((line) => {'));
   });
 
+  test('cart: 「결제 금액」 카드 머리에도 「N개」 · 「빼기」는 수량 옆 · 좁은 화면 요약 카드는 하단 바 위', () => {
+    const mallCss = read('src/styles/shop/ClientMall.css');
+    expect(cart).toMatch(/client-mall-cart__head[\s\S]*CART_PAGE_SUMMARY_TITLE[\s\S]*CART_PAGE_ASIDE_COUNT/);
+    expect(mallCss).toMatch(/\.client-mall-line--cart \.client-mall-line__controls\s*\{[^}]*justify-content:\s*flex-start/);
+    expect(cart.indexOf('CART_PAGE_MOBILE_SUMMARY')).toBeGreaterThan(cart.indexOf('<MallUsageBanner'));
+    expect(cart.indexOf('CART_PAGE_MOBILE_SUMMARY')).toBeLessThan(cart.indexOf('<MallCartBar'));
+    expect(mallCss).toMatch(/\.client-mall-cart-sum\s*\{\s*display:\s*none/);
+  });
+
+  test('complete: 원형 체크 · 바로 구매 안내는 오른쪽 카드 아래 · 좁은 화면 전폭 primary + 텍스트 링크', () => {
+    const complete = read('src/pages/client/shop/ShopPaymentCompletePage.js');
+    const mallCss = read('src/styles/shop/ClientMall.css');
+    expect(complete).toMatch(/client-mall-complete__icon-ring/);
+    expect(complete).toMatch(/client-mall-complete-side[\s\S]*\{asideCard\}[\s\S]*\{cartKeptNote\}/);
+    expect(complete).toMatch(/isNarrow \?[\s\S]*client-mall-link-btn/);
+    expect(mallCss).toMatch(/\.client-mall-complete__actions > \.mg-button\s*\{\s*width:\s*100%/);
+  });
+
   test('complete: 왼쪽 정렬 · 버튼 가로 배치 (fullWidth 없음) · 기존 primary 클래스 유지', () => {
     const complete = read('src/pages/client/shop/ShopPaymentCompletePage.js');
     const mallCss = read('src/styles/shop/ClientMall.css');

@@ -1,12 +1,12 @@
 /**
- * MallPhoneVerifyInline — 인증 상태별 표시 (b 보냄 · d 만료 · e 다시 보냄 · f 잠김)
+ * MallPhoneVerifyInline — 인증 상태별 표시 (b 보냄 · c 틀림 · d 만료 · e 다시 보냄 · f 잠김)
  *
  * @author MindGarden
  * @since 2026-09-29
  */
 
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import MallPhoneVerifyInline from '../organisms/MallPhoneVerifyInline';
 import { CLIENT_MALL_PHONE_COPY, CLIENT_MALL_TEST_IDS } from '../../../constants/clientMallConstants';
 import { PHONE_VERIFY_STEP } from '../../../utils/clientMallPhoneVerify';
@@ -68,5 +68,45 @@ describe('MallPhoneVerifyInline states', () => {
     expect(screen.getByTestId(CLIENT_MALL_TEST_IDS.PHONE_CODE)).toBeDisabled();
     expect(screen.getByTestId(CLIENT_MALL_TEST_IDS.PHONE_CONFIRM)).toBeDisabled();
     expect(screen.getByTestId(CLIENT_MALL_TEST_IDS.PHONE_RESEND)).toBeDisabled();
+  });
+
+  describe('좁은 화면 바텀시트', () => {
+    const originalMatchMedia = window.matchMedia;
+
+    beforeEach(() => {
+      window.matchMedia = jest.fn().mockImplementation((query) => ({
+        matches: true,
+        media: query,
+        addEventListener: jest.fn(),
+        removeEventListener: jest.fn()
+      }));
+    });
+
+    afterEach(() => {
+      window.matchMedia = originalMatchMedia;
+    });
+
+    const openSheet = (flow) => {
+      render(<MallPhoneVerifyInline flow={flow} />);
+      fireEvent.click(screen.getByTestId(CLIENT_MALL_TEST_IDS.PHONE_OPEN));
+    };
+
+    test('(c) 틀림 — 확인은 입력칸 아래 primary · 오답 문구 alert', () => {
+      openSheet(flowFor({ code: '111111', error: { kind: 'WRONG_CODE', message: '인증번호가 맞지 않아요.' } }));
+      const confirm = screen.getByTestId(CLIENT_MALL_TEST_IDS.PHONE_CONFIRM);
+      expect(confirm).toHaveClass('client-mall-btn--primary');
+      expect(screen.getByTestId(CLIENT_MALL_TEST_IDS.PHONE_ERROR)).toHaveClass('client-mall-phone__error');
+      expect(screen.getByTestId(CLIENT_MALL_TEST_IDS.PHONE_CODE)).toHaveClass('client-mall-field__input--error');
+    });
+
+    test('(f) 잠김 — 확인·다시 받기 대신 「닫기」 · 누르면 시트 닫힘', () => {
+      openSheet(flowFor({ step: PHONE_VERIFY_STEP.LOCKED, lockedMessage: '10분 뒤에 다시 시도해 주세요.' }));
+      expect(screen.queryByTestId(CLIENT_MALL_TEST_IDS.PHONE_CONFIRM)).not.toBeInTheDocument();
+      expect(screen.queryByTestId(CLIENT_MALL_TEST_IDS.PHONE_RESEND)).not.toBeInTheDocument();
+      const close = screen.getByTestId(CLIENT_MALL_TEST_IDS.PHONE_LOCKED_CLOSE);
+      expect(close).toHaveTextContent(CLIENT_MALL_PHONE_COPY.CLOSE);
+      fireEvent.click(close);
+      expect(screen.queryByTestId(CLIENT_MALL_TEST_IDS.PHONE_SHEET)).not.toBeInTheDocument();
+    });
   });
 });

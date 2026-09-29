@@ -77,7 +77,13 @@ const ShopCartPage = () => {
 
   const aside = summary.isEmpty ? null : (
     <section className="client-mall-cart" data-testid={CLIENT_MALL_TEST_IDS.CART_PAGE_ASIDE}>
-      <h2 className="client-mall-cart__title">{CLIENT_MALL_COPY.CART_PAGE_SUMMARY_TITLE}</h2>
+      <header className="client-mall-cart__head">
+        <h2 className="client-mall-cart__title">{CLIENT_MALL_COPY.CART_PAGE_SUMMARY_TITLE}</h2>
+        <span className="client-mall-cart__count" data-testid={CLIENT_MALL_TEST_IDS.CART_PAGE_ASIDE_COUNT}>
+          {summary.quantity}
+          {CLIENT_MALL_COPY.CART_COUNT_SUFFIX}
+        </span>
+      </header>
       <dl className="client-mall-pay__rows">
         {cart.lines.map((line) => (
           <div key={line.skuCode} className="client-mall-pay__row">
@@ -195,6 +201,22 @@ const ShopCartPage = () => {
             })}
           </section>
           <MallUsageBanner text={CLIENT_MALL_USAGE_BANNER} example={CLIENT_MALL_USAGE_BANNER_EXAMPLE} />
+          <section
+            className="client-mall-box client-mall-cart-sum"
+            aria-label={CLIENT_MALL_COPY.CART_PAGE_SUMMARY_TITLE}
+            data-testid={CLIENT_MALL_TEST_IDS.CART_PAGE_MOBILE_SUMMARY}
+          >
+            <dl className="client-mall-pay__rows client-mall-cart-sum__rows">
+              <div className="client-mall-pay__row">
+                <dt>{CLIENT_MALL_COPY.CART_PAGE_ITEMS_AMOUNT}</dt>
+                <dd>{formatMallWon(summary.subtotalMinor)}</dd>
+              </div>
+              <div className="client-mall-pay__row">
+                <dt>{CLIENT_MALL_COPY.CART_PAGE_SESSIONS}</dt>
+                <dd>{formatMallSessionLabel(summary.totalSessions)}</dd>
+              </div>
+            </dl>
+          </section>
           <div className="client-mall-bar-spacer" aria-hidden="true" />
           <MallCartBar
             quantity={summary.quantity}

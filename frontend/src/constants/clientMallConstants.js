@@ -88,6 +88,7 @@ export const CLIENT_MALL_COPY = Object.freeze({
   CART_PAGE_SUBTITLE: '수량을 바꾸거나 빼고 결제하세요',
   CART_PAGE_LIST_TITLE: '담은 상품',
   CART_PAGE_SESSIONS: '받는 회기',
+  CART_PAGE_ITEMS_AMOUNT: '상품 금액',
   CART_PAGE_VALIDITY_SUFFIX: '개월 안에 사용',
   LINE_TIMES: ' × ',
   BAR_LABEL: '장바구니',
@@ -326,10 +327,14 @@ export const CLIENT_MALL_TEST_IDS = Object.freeze({
   PHONE_VERIFIED: 'client-mall-phone-verified',
   PHONE_SHEET: 'client-mall-phone-sheet',
   PHONE_OPEN: 'client-mall-phone-open',
+  PHONE_LOCKED_CLOSE: 'client-mall-phone-locked-close',
   CART_PAGE_ASIDE: 'client-mall-cart-page-aside',
+  CART_PAGE_ASIDE_COUNT: 'client-mall-cart-page-aside-count',
   CART_PAGE_LIST_COUNT: 'client-mall-cart-page-list-count',
+  CART_PAGE_MOBILE_SUMMARY: 'client-mall-cart-page-mobile-summary',
   COMPLETE_ASIDE: 'client-mall-complete-aside',
   COMPLETE_CART_KEPT: 'client-mall-complete-cart-kept',
   COMPLETE: 'client-mall-complete',
-  COMPLETE_PRIMARY: 'client-mall-complete-primary'
+  COMPLETE_PRIMARY: 'client-mall-complete-primary',
+  COMPLETE_SECONDARY: 'client-mall-complete-secondary'
 });

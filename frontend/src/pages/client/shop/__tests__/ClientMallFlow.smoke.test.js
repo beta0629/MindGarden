@@ -126,6 +126,8 @@ const sessionFor = (userPatch = {}) => ({
   setModalOpen: jest.fn()
 });
 
+const PHONE_TIMER_FIXED_NOW_MS = Date.UTC(2026, 8, 30);
+
 beforeEach(() => {
   jest.clearAllMocks();
   window.sessionStorage.clear();
@@ -137,6 +139,10 @@ beforeEach(() => {
   mockService.fetchPointBalance.mockResolvedValue({ availableMinor: 0, heldMinor: 0 });
   mockService.fetchConsultantMappings.mockResolvedValue([]);
   delete window.matchMedia;
+});
+
+afterEach(() => {
+  jest.useRealTimers();
 });
 
 describe('ShopCatalogPage (TO-BE)', () => {
@@ -369,6 +375,8 @@ describe('ShopCheckoutPage (TO-BE)', () => {
   });
 
   test('좁은 화면 — 「휴대폰 인증」 바텀시트 · 보낸 뒤 「문자가 안 오면…」', async() => {
+    jest.useFakeTimers();
+    jest.setSystemTime(PHONE_TIMER_FIXED_NOW_MS);
     mockMatchMedia(true);
     mockUseSession.mockReturnValue(sessionFor({ phone: '', isPhoneVerified: false }));
     mockService.fetchShopCart.mockResolvedValue(cartWithPkg);

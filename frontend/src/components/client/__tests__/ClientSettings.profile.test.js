@@ -13,7 +13,7 @@ import {
   CLIENT_WEB_SUITE_COPY,
   CLIENT_WEB_SUITE_TEST_IDS
 } from '../../../constants/clientWebSuiteConstants';
-import { CLIENT_SETTINGS_API, MYPAGE_API } from '../../../constants/api';
+import { API_ERROR_MESSAGES, API_STATUS, CLIENT_SETTINGS_API, MYPAGE_API } from '../../../constants/api';
 import { SHOP_PAYMENT_LAUNCH_COPY } from '../../../constants/clientShopConstants';
 import ClientSettings from '../ClientSettings';
 
@@ -385,6 +385,37 @@ describe('ClientSettings — profile form · PortOne session fields', () => {
     expect(
       screen.getByText(CLIENT_WEB_SUITE_COPY.SETTINGS_PHONE_UNVERIFIED_HINT)
     ).toBeInTheDocument();
+  });
+
+  test('5xx settings load shows loadError once, not spinner or login', async() => {
+    const serverErr = new Error(API_ERROR_MESSAGES.SERVER_ERROR);
+    serverErr.status = API_STATUS.INTERNAL_SERVER_ERROR;
+    StandardizedApi.get.mockImplementation((url) => {
+      if (url === MYPAGE_API.GET_INFO) {
+        return Promise.resolve({
+          name: '이재학',
+          email: 'lee@example.com',
+          phone: '01011112222'
+        });
+      }
+      if (url === CLIENT_SETTINGS_API.GET) {
+        return Promise.reject(serverErr);
+      }
+      return Promise.resolve({});
+    });
+
+    renderPage();
+
+    expect(
+      await screen.findByTestId(CLIENT_WEB_SUITE_TEST_IDS.SETTINGS_LOAD_ERROR)
+    ).toBeInTheDocument();
+    expect(screen.queryByTestId('unified-loading')).not.toBeInTheDocument();
+    expect(screen.getByTestId(CLIENT_WEB_SUITE_TEST_IDS.SETTINGS_RETRY)).toBeInTheDocument();
+    expect(StandardizedApi.get).toHaveBeenCalledWith(CLIENT_SETTINGS_API.GET);
+    const settingsGets = StandardizedApi.get.mock.calls.filter(
+      (call) => call[0] === CLIENT_SETTINGS_API.GET
+    );
+    expect(settingsGets).toHaveLength(1);
   });
 
   test('PortOne customer copy points to /client/settings; email copy is not a checkout gate', () => {

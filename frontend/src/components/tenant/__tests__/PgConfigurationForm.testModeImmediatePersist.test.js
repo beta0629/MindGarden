@@ -212,11 +212,13 @@ describe('PgConfigurationForm — testMode immediate PATCH', () => {
 
     const switches = screen.getAllByRole('switch', { name: '테스트 모드' });
     expect(switches.length).toBeGreaterThan(0);
+    // create 기본값은 testMode ON
+    expect(switches[0]).toHaveAttribute('aria-checked', 'true');
     fireEvent.click(switches[0]);
 
     await waitFor(() => {
       expect(screen.getByRole('switch', { name: '테스트 모드' }))
-        .toHaveAttribute('aria-checked', 'true');
+        .toHaveAttribute('aria-checked', 'false');
     });
     expect(patchPgConfigurationTestMode).not.toHaveBeenCalled();
   });

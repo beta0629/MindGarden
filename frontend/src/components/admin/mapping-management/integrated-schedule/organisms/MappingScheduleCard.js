@@ -143,6 +143,7 @@ const MappingScheduleCard = ({
         initialConsultationPayment={mapping?.initialConsultationPayment}
         institutionLinkBillingComposition={mapping?.institutionLinkBillingComposition}
         institutionLinkInitialBillingMode={mapping?.institutionLinkInitialBillingMode}
+        clientReminderSms={mapping?.clientReminderSms}
       />
       <CardBillingProgress
         usedSessions={mapping?.usedSessions}

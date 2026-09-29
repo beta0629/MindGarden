@@ -43,6 +43,7 @@ import {
   PAYMENT_MIN_CARD_AMOUNT_TITLE_I18N_KEY
 } from '../../../utils/minPaymentAmountMessage';
 import { useAlert } from '../../../hooks/useAlert';
+import { RoleUtils } from '../../../constants/roles';
 import { useClientShopAuth } from '../../../hooks/useClientShopAuth';
 import { useSession } from '../../../contexts/SessionContext';
 import {
@@ -129,12 +130,14 @@ const ShopCheckoutPage = () => {
     [cart.lines, catalog]
   );
 
+  const authenticatedCatalog = RoleUtils.isClient(user);
+
   const loadData = useCallback(async() => {
     try {
       setLoading(true);
       setMessage('');
       const [catalogData, cartData, balanceData] = await Promise.all([
-        fetchShopCatalog(),
+        fetchShopCatalog({ authenticated: authenticatedCatalog }),
         fetchShopCart(),
         fetchPointBalance()
       ]);
@@ -161,7 +164,7 @@ const ShopCheckoutPage = () => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [authenticatedCatalog]);
 
   useEffect(() => {
     if (!sessionLoading && isLoggedIn) {

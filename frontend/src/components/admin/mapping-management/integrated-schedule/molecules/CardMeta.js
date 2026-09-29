@@ -21,6 +21,7 @@ import {
   shouldShowInstitutionLinkInitialPaymentUi
 } from '../utils/institutionLinkBillingDisplay';
 import { CARD_INITIAL_PAYMENT_COMPLETED_BADGE_TEST_ID } from '../constants/institutionLinkBillingReminderConstants';
+import ScheduleReminderSmsBadge from './ScheduleReminderSmsBadge';
 import './CardMeta.css';
 
 const CardMeta = ({
@@ -35,7 +36,8 @@ const CardMeta = ({
   hasInstitutionLinkInitialPayment,
   initialConsultationPayment,
   institutionLinkBillingComposition,
-  institutionLinkInitialBillingMode
+  institutionLinkInitialBillingMode,
+  clientReminderSms
 }) => {
   const { t } = useTranslation(['admin']);
   const todoPill = resolveCardTodoPill({
@@ -86,6 +88,7 @@ const CardMeta = ({
           <SafeText>{todoLabel}</SafeText>
         </span>
       ) : null}
+      <ScheduleReminderSmsBadge sms={clientReminderSms} />
     </div>
   );
 };
@@ -106,7 +109,13 @@ CardMeta.propTypes = {
   hasInstitutionLinkInitialPayment: PropTypes.bool,
   initialConsultationPayment: PropTypes.object,
   institutionLinkBillingComposition: PropTypes.string,
-  institutionLinkInitialBillingMode: PropTypes.string
+  institutionLinkInitialBillingMode: PropTypes.string,
+  clientReminderSms: PropTypes.shape({
+    status: PropTypes.string,
+    fireAt: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
+    sentAt: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
+    failureReason: PropTypes.string
+  })
 };
 
 CardMeta.defaultProps = {
@@ -122,7 +131,8 @@ CardMeta.defaultProps = {
   hasInstitutionLinkInitialPayment: false,
   initialConsultationPayment: null,
   institutionLinkBillingComposition: undefined,
-  institutionLinkInitialBillingMode: undefined
+  institutionLinkInitialBillingMode: undefined,
+  clientReminderSms: null
 };
 
 export default CardMeta;

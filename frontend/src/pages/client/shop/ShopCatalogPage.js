@@ -23,6 +23,7 @@ import {
   buildShopSkuDetailPath
 } from '../../../constants/clientShopConstants';
 import { CLIENT_WEB_SUITE_COPY } from '../../../constants/clientWebSuiteConstants';
+import { RoleUtils } from '../../../constants/roles';
 import { useClientShopAuth } from '../../../hooks/useClientShopAuth';
 import {
   fetchShopCatalog,
@@ -35,6 +36,7 @@ import { mergeGuestCartLine } from '../../../utils/guestShopCart';
 const ShopCatalogPage = () => {
   const navigate = useNavigate();
   const { sessionLoading, isLoggedIn, user } = useClientShopAuth({ requireLogin: false });
+  const authenticatedCatalog = isLoggedIn && RoleUtils.isClient(user);
   const [catalog, setCatalog] = useState([]);
   const [activeCategory, setActiveCategory] = useState(SHOP_CATALOG_CATEGORY.CONSULTATION);
   const [loading, setLoading] = useState(false);
@@ -46,7 +48,7 @@ const ShopCatalogPage = () => {
       setLoading(true);
       setCatalogLoaded(false);
       setMessage('');
-      setCatalog(await fetchShopCatalog());
+      setCatalog(await fetchShopCatalog({ authenticated: authenticatedCatalog }));
     } catch (e) {
       setCatalog([]);
       setMessage(e.message || '카탈로그를 불러오지 못했습니다.');
@@ -54,7 +56,7 @@ const ShopCatalogPage = () => {
       setLoading(false);
       setCatalogLoaded(true);
     }
-  }, []);
+  }, [authenticatedCatalog]);
 
   useEffect(() => {
     if (!sessionLoading) {

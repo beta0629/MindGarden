@@ -113,7 +113,6 @@ const buildAdminDashboardClientsWithMappingUrl = () => buildAdminListUrl(
   API_ENDPOINTS.ADMIN.CLIENTS.WITH_MAPPING_INFO,
   ADMIN_DASHBOARD_CLIENTS_WITH_MAPPING_QUERY
 );
-
 const API_ADMIN_CONSULTANT_RATING_STATS = '/api/v1/admin/consultant-rating-stats';
 const API_ADMIN_VACATION_STATISTICS = '/api/v1/admin/vacation-statistics?period=month';
 const API_ADMIN_STATISTICS_CONSULTATION_COMPLETION = '/api/v1/admin/statistics/consultation-completion';
@@ -312,7 +311,7 @@ const AdminDashboard = ({ user: propUser }) => {
     const loadStats = useCallback(async() => {
         setLoading(true);
         try {
-            const [consultantsRes, clientsRes, mappingsStatsRes, ratingRes, consultationRes] = await Promise.all([
+            const [consultantsRes, clientsRes, mappingStatsRes, ratingRes, consultationRes] = await Promise.all([
                 fetch(`/api/v1/admin/consultants/with-vacation?date=${new Date().toISOString().split('T')[0]}`),
                 fetch(buildAdminDashboardClientsWithMappingUrl()),
                 fetch(API_ENDPOINTS.ADMIN.MAPPINGS.STATS),
@@ -348,13 +347,15 @@ const AdminDashboard = ({ user: propUser }) => {
                 totalClients = clientsData?.data?.count || clientsData?.count || 0;
             }
 
-            if (mappingsStatsRes.ok) {
-                const mappingsStatsData = await mappingsStatsRes.json();
-                const statsPayload = (mappingsStatsData && typeof mappingsStatsData === 'object' && 'success' in mappingsStatsData && 'data' in mappingsStatsData)
-                    ? mappingsStatsData.data
-                    : mappingsStatsData;
-                totalMappings = statsPayload?.totalMappings ?? 0;
-                activeMappings = statsPayload?.activeMappings ?? 0;
+            if (mappingStatsRes.ok) {
+                const mappingStatsData = await mappingStatsRes.json();
+                // ApiResponse 구조: { success: true, data: { totalMappings, activeMappings, ... } }
+                const mappingStatsPayload = (mappingStatsData && typeof mappingStatsData === 'object'
+                    && 'success' in mappingStatsData && 'data' in mappingStatsData)
+                    ? mappingStatsData.data
+                    : mappingStatsData;
+                totalMappings = Number(mappingStatsPayload?.totalMappings) || 0;
+                activeMappings = Number(mappingStatsPayload?.activeMappings) || 0;
             }
 
             if (ratingRes.ok) {
@@ -971,7 +972,7 @@ const AdminDashboard = ({ user: propUser }) => {
               loading={matchingQueueLoading}
             />
 
-            {/* 입금 확인 대기 / 스케줄 등록 대기 (파이프라인 하단) */}
+            {/* 입금 확인 대기 / 가예약 (파이프라인 하단) */}
             <div className="mg-dashboard-pipeline-detail">
               <DepositPendingList
                 items={pendingDepositList.map((m) => ({

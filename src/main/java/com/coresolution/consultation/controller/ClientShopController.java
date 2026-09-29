@@ -93,7 +93,7 @@ public class ClientShopController extends BaseApiController {
             if (denied != null) {
                 return denied;
             }
-            return success(clientShopCatalogService.getVisibleSkuByCode(tenantId, skuCode));
+            return success(clientShopCatalogService.getVisibleSkuByCode(tenantId, skuCode, user.getId()));
         } finally {
             TenantContextHolder.clear();
         }
@@ -109,7 +109,7 @@ public class ClientShopController extends BaseApiController {
             if (denied != null) {
                 return denied;
             }
-            return success(clientShopCatalogService.listVisibleSkus(tenantId));
+            return success(clientShopCatalogService.listVisibleSkus(tenantId, user.getId()));
         } finally {
             TenantContextHolder.clear();
         }

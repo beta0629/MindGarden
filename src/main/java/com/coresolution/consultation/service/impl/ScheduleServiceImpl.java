@@ -2792,6 +2792,9 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
     /**
      * 회기 차감 직전 부여할 sessionSequence.
      *
+     * <p><b>정책 A (회기 재사용·gap-fill)</b> — CANCELLED 복원 후 재예약 시 비-CANCELLED 점유 집합에서
+     * 최저 빈 순번을 재사용한다. 정책 B(항상 seq+1)가 아니다.</p>
+     *
      * <p>카운터식({@code totalSessions - remainingSessions + 1})만으로 끝내지 않는다.
      * 동일 tenant+mapping의 비-CANCELLED(이력 점유) 일정이 이미 쓰는 순번을 피하고,
      * 1..totalSessions 중 비어 있는 최소 양의 정수를 고른다.
@@ -2883,6 +2886,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
 
     /**
      * 점유 집합에 없는 다음 가용 순번(1-based 최소 양의 정수).
+     * <b>정책 A (회기 재사용·gap-fill)</b> — 1..totalSessions 중 최저 빈 칸을 고른다(정책 B 아님).
      * 1..totalSessions 에 없으면 max(used)+1 을 반환한다(total null이면 상한 없음).
      *
      * @param occupied 이미 점유한 순번
@@ -2956,12 +2960,27 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             return;
         }
         try {
-            useSessionForMapping(schedule.getConsultantId(), schedule.getClientId(), schedule);
+            // mappingId 가 있으면 특정 매핑 우선 — consultant+client 최신 매핑 오인 차감 방지.
+            // leftover occupying / sessionSequence 멱등은 위 early-return 으로 유지.
+            if (schedule.getMappingId() != null) {
+                String tenantId = resolveTenantIdForLeftoverOccupyingExhaust(schedule);
+                if (tenantId == null) {
+                    return;
+                }
+                useSessionForSpecificMapping(
+                        tenantId,
+                        schedule.getMappingId(),
+                        schedule.getConsultantId(),
+                        schedule.getClientId(),
+                        schedule);
+            } else {
+                useSessionForMapping(schedule.getConsultantId(), schedule.getClientId(), schedule);
+            }
         } catch (IllegalStateException ex) {
             log.warn("session deduction at completion skipped: scheduleId={}, reason={}",
                     schedule.getId(), ex.getMessage());
         } catch (RuntimeException ex) {
-            // useSessionForMapping 은 내부에서 RuntimeException 으로 래핑한다.
+            // useSessionForMapping / useSessionForSpecificMapping 은 내부에서 RuntimeException 으로 래핑한다.
             // 본 시점에 부모 트랜잭션(상담 완료·자동 완료)을 막지 않기 위해 swallow + 로그.
             log.warn("session deduction at completion failed (will be retried by batch): scheduleId={}, reason={}",
                     schedule.getId(), ex.getMessage());

@@ -13,7 +13,7 @@
  */
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, Navigate } from 'react-router-dom';
 import UnifiedLoading from '../common/UnifiedLoading';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import { DEFAULT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
@@ -241,6 +241,11 @@ const DynamicDashboard = ({ user: propUser, dashboard: propDashboard }) => {
       loadDashboard();
     }
   }, [propDashboard, dashboardIdFromQuery, currentUser?.id, isAdminPreview, navigate, loadDashboard]);
+
+  // CLIENT가 /dashboard(DynamicDashboard)에 들어오면 v4 로비로 고정 리다이렉트
+  if (currentUser && RoleUtils.isClient(currentUser)) {
+    return <Navigate to="/client/dashboard" replace />;
+  }
 
   if (isLoading) {
     return (

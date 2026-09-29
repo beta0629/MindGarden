@@ -91,7 +91,7 @@ class ClientShopControllerMvcTest {
         String tenantId = UUID.randomUUID().toString();
         when(tenantComponentActivationService.isComponentActive(tenantId, PlatformComponentCodes.CLIENT_SHOP))
                 .thenReturn(true);
-        when(clientShopCatalogService.listVisibleSkus(tenantId)).thenReturn(Collections.emptyList());
+        when(clientShopCatalogService.listVisibleSkus(tenantId, 1L)).thenReturn(Collections.emptyList());
 
         mockMvc.perform(get(BASE + "/catalog").session(clientSession(tenantId, 1L)))
                 .andExpect(status().isOk())
@@ -116,7 +116,7 @@ class ClientShopControllerMvcTest {
 
         when(tenantComponentActivationService.isComponentActive(tenantId, PlatformComponentCodes.CLIENT_SHOP))
                 .thenReturn(true);
-        when(clientShopCatalogService.listVisibleSkus(tenantId)).thenReturn(List.of(sku));
+        when(clientShopCatalogService.listVisibleSkus(tenantId, 2L)).thenReturn(List.of(sku));
 
         mockMvc.perform(get(BASE + "/catalog").session(clientSession(tenantId, 2L)))
                 .andExpect(status().isOk())
@@ -141,7 +141,7 @@ class ClientShopControllerMvcTest {
 
         when(tenantComponentActivationService.isComponentActive(tenantId, PlatformComponentCodes.CLIENT_SHOP))
                 .thenReturn(true);
-        when(clientShopCatalogService.getVisibleSkuByCode(tenantId, "SKU-PDP")).thenReturn(sku);
+        when(clientShopCatalogService.getVisibleSkuByCode(tenantId, "SKU-PDP", 3L)).thenReturn(sku);
 
         mockMvc.perform(get(BASE + "/catalog/SKU-PDP").session(clientSession(tenantId, 3L)))
                 .andExpect(status().isOk())
@@ -162,7 +162,7 @@ class ClientShopControllerMvcTest {
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.success").value(false));
 
-        verify(clientShopCatalogService, never()).listVisibleSkus(tenantId);
+        verify(clientShopCatalogService, never()).listVisibleSkus(tenantId, 1L);
     }
 
     @Test

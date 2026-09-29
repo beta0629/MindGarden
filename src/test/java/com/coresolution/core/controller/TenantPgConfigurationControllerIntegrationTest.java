@@ -4,6 +4,7 @@ import com.coresolution.core.domain.enums.ApprovalStatus;
 import com.coresolution.core.domain.enums.PgConfigurationStatus;
 import com.coresolution.core.domain.enums.PgProvider;
 import com.coresolution.core.dto.*;
+import com.coresolution.consultation.health.DeploySlotReadinessProbe;
 import com.coresolution.core.service.TenantPgConfigurationDecryptionService;
 import com.coresolution.core.service.TenantPgConfigurationService;
 import com.coresolution.core.security.TenantAccessControlService;
@@ -65,6 +66,13 @@ class TenantPgConfigurationControllerIntegrationTest {
 
     @MockBean
     private TenantPgConfigurationDecryptionService decryptionService;
+
+    /**
+     * 본 브랜치의 idle-pool DeploySlotReadinessProbe 는 SpringBootTest 컨텍스트에서
+     * 생성자 매칭이 깨지므로 IT 범위에서 mock 한다 (#1259 무관 선행 이슈).
+     */
+    @MockBean
+    private DeploySlotReadinessProbe deploySlotReadinessProbe;
 
     @MockBean
     private TenantAccessControlService tenantAccessControlService;

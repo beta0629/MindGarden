@@ -20,6 +20,7 @@ class OAuth2DomainUtilTest {
         ReflectionTestUtils.setField(util, "mainDomainsConfig", "core-solution.co.kr,dev.core-solution.co.kr");
         ReflectionTestUtils.setField(util, "subdomainPatternsConfig",
                 "^dev\\.core-solution\\.co\\.kr$,.*\\.dev\\.core-solution\\.co\\.kr,.*\\.core-solution\\.co\\.kr");
+        ReflectionTestUtils.setField(util, "tenantParentSuffixesConfig", "");
         ReflectionTestUtils.setField(util, "removeRegexPattern", true);
         util.init();
     }
@@ -63,6 +64,7 @@ class OAuth2DomainUtilTest {
         ReflectionTestUtils.setField(devUtil, "mainDomainsConfig", "dev.core-solution.co.kr,core-solution.co.kr");
         ReflectionTestUtils.setField(devUtil, "subdomainPatternsConfig",
                 "^dev\\.core-solution\\.co\\.kr$,.*\\.dev\\.core-solution\\.co\\.kr,.*\\.core-solution\\.co\\.kr");
+        ReflectionTestUtils.setField(devUtil, "tenantParentSuffixesConfig", "");
         ReflectionTestUtils.setField(devUtil, "removeRegexPattern", true);
         devUtil.init();
         assertEquals("dev.core-solution.co.kr", devUtil.convertToMainDomain("tenant.dev.core-solution.co.kr"));
@@ -88,6 +90,7 @@ class OAuth2DomainUtilTest {
                 "staging.core-solution.co.kr,core-solution.co.kr,dev.core-solution.co.kr");
         ReflectionTestUtils.setField(stagingUtil, "subdomainPatternsConfig",
                 "^dev\\.core-solution\\.co\\.kr$,.*\\.dev\\.core-solution\\.co\\.kr,.*\\.core-solution\\.co\\.kr");
+        ReflectionTestUtils.setField(stagingUtil, "tenantParentSuffixesConfig", "");
         ReflectionTestUtils.setField(stagingUtil, "removeRegexPattern", true);
         stagingUtil.init();
 

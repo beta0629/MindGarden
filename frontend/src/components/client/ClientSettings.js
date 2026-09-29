@@ -7,12 +7,14 @@
  * @since 2026-09-18
  */
 
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useSession } from '../../contexts/SessionContext';
 import { useStableUserId } from '../../hooks/useStableUserId';
 import { useUserIdScopedLoad } from '../../hooks/useUserIdScopedLoad';
-import { CLIENT_SETTINGS_API, MYPAGE_API } from '../../constants/api';
+import { useSoftResourceLoad } from '../../hooks/useSoftResourceLoad';
+import { API_STATUS, CLIENT_SETTINGS_API, MYPAGE_API } from '../../constants/api';
 import {
   CLIENT_WEB_SUITE_COPY,
   CLIENT_WEB_SUITE_TEST_IDS
@@ -25,7 +27,6 @@ import {
   normalizeKoreanMobileDigits
 } from '../../utils/koreanMobilePhone';
 import { toDisplayString } from '../../utils/safeDisplay';
-import { runResourceLoad, softRefresh } from '../../utils/softRefresh';
 import { redirectToLoginPageOnce } from '../../utils/sessionRedirect';
 import SafeText from '../common/SafeText';
 import UnifiedLoading from '../common/UnifiedLoading';
@@ -42,6 +43,24 @@ const DEFAULT_NOTIFY = Object.freeze({
   sms: false,
   push: true
 });
+
+/**
+ * @param {unknown} err
+ * @returns {boolean}
+ */
+const isAuthFailure = (err) => {
+  if (err == null || typeof err !== 'object') {
+    return false;
+  }
+  const status = err.status;
+  if (typeof status !== 'number') {
+    return false;
+  }
+  if (status >= API_STATUS.INTERNAL_SERVER_ERROR) {
+    return false;
+  }
+  return status === API_STATUS.UNAUTHORIZED || status === API_STATUS.FORBIDDEN;
+};
 
 /**
  * @param {object|null|undefined} source
@@ -84,9 +103,16 @@ const buildNotifyPutBody = (notify) => ({
 
 const ClientSettings = () => {
   const { t } = useTranslation(['settings']);
-  const { user, checkSession } = useSession();
+  const navigate = useNavigate();
+  const {
+    user,
+    checkSession,
+    isLoggedIn,
+    hasCheckedSession
+  } = useSession();
   const { userId, userRef } = useStableUserId(user);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
   const [savingProfile, setSavingProfile] = useState(false);
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
@@ -122,45 +148,126 @@ const ClientSettings = () => {
   }, []);
 
   /**
-   * Profile/settings load — SSOT softRefresh.
-   * Initial: silent omitted → setLoading. Post-mutation: softRefresh → silent, no blank.
-   * Dep on userId only so silent checkSession SET_USER does not remount-load.
-   *
-   * @param {{ silent?: boolean }} [options]
+   * Profile/settings fetch body — partial API failure ≠ blank page.
+   * Auth failure → soft navigate /login (hard reload 금지).
+   * Loading toggle is owned by useSoftResourceLoad / runResourceLoad finally.
    */
-  const loadSettings = useCallback(async(options = {}) => {
+  const fetchSettings = useCallback(async() => {
     const sessionUser = userRef.current;
     if (!sessionUser?.id) {
-      setLoading(false);
       return;
     }
 
-    await runResourceLoad(options, setLoading, async() => {
+    setLoadError('');
+    try {
       const [profileResult, settingsResult] = await Promise.allSettled([
         StandardizedApi.get(MYPAGE_API.GET_INFO),
         StandardizedApi.get(CLIENT_SETTINGS_API.GET)
       ]);
 
+      const profileRejected =
+        profileResult.status === 'rejected' ? profileResult.reason : null;
+      const settingsRejected =
+        settingsResult.status === 'rejected' ? settingsResult.reason : null;
+
+      if (isAuthFailure(profileRejected) || isAuthFailure(settingsRejected)) {
+        navigate('/login', { replace: true });
+        return;
+      }
+
+      const bothNull =
+        profileResult.status === 'fulfilled'
+        && profileResult.value == null
+        && settingsResult.status === 'fulfilled'
+        && settingsResult.value == null;
+      if (bothNull && !sessionManager.getUser()?.id) {
+        navigate('/login', { replace: true });
+        return;
+      }
+
       if (profileResult.status === 'fulfilled' && profileResult.value) {
         applyProfileFields(profileResult.value, sessionUser);
       } else {
         applyProfileFields(null, sessionUser);
-        if (profileResult.status === 'rejected') {
-          console.error(CLIENT_WEB_SUITE_COPY.SETTINGS_LOAD_ERROR, profileResult.reason);
+        if (profileRejected) {
+          console.error(CLIENT_WEB_SUITE_COPY.SETTINGS_LOAD_ERROR, profileRejected);
+          setLoadError(CLIENT_WEB_SUITE_COPY.SETTINGS_LOAD_ERROR);
         }
       }
 
       if (settingsResult.status === 'fulfilled' && settingsResult.value) {
         setNotify(mapNotifyFromApi(settingsResult.value));
+      } else if (settingsRejected && !profileRejected) {
+        console.error(CLIENT_WEB_SUITE_COPY.SETTINGS_LOAD_ERROR, settingsRejected);
+        setLoadError(CLIENT_WEB_SUITE_COPY.SETTINGS_LOAD_ERROR);
       }
-    });
-  }, [applyProfileFields]);
+    } catch (err) {
+      if (isAuthFailure(err)) {
+        navigate('/login', { replace: true });
+        return;
+      }
+      console.error(CLIENT_WEB_SUITE_COPY.SETTINGS_LOAD_ERROR, err);
+      setLoadError(err?.message || CLIENT_WEB_SUITE_COPY.SETTINGS_LOAD_ERROR);
+      applyProfileFields(null, sessionUser);
+    }
+  }, [applyProfileFields, navigate, userRef]);
+
+  const { load: loadSettings, softRefresh: softRefreshSettings } = useSoftResourceLoad(
+    setLoading,
+    fetchSettings
+  );
+
+  // hasCheckedSession 전에 !isLoggedIn 으로 soft kick 하면 마운트 레이스 → 스피너/로그인 루프.
+  // sessionLoading 고착에 enabled 를 묶지 않는다 (로드 스킵 + loading true 고착 방지).
+  useEffect(() => {
+    if (!hasCheckedSession) {
+      return;
+    }
+    if (!isLoggedIn) {
+      setLoading(false);
+      navigate('/login', { replace: true });
+    }
+  }, [hasCheckedSession, isLoggedIn, navigate]);
 
   useUserIdScopedLoad({
     userId,
     loadFn: loadSettings,
-    onMissingUserId: () => setLoading(false)
+    enabled: Boolean(hasCheckedSession && isLoggedIn),
+    onMissingUserId: () => {
+      setLoading(false);
+      setLoadError('');
+    }
   });
+
+  /**
+   * 다시 시도: silent checkSession → softRefresh (hard reload 금지).
+   */
+  const handleRetry = useCallback(async() => {
+    setLoadError('');
+    setLoading(true);
+    try {
+      if (typeof checkSession === 'function') {
+        const ok = await checkSession(true, { silent: true });
+        if (!ok && !sessionManager.getUser()?.id) {
+          navigate('/login', { replace: true });
+          return;
+        }
+      }
+      if (!userRef.current?.id && !sessionManager.getUser()?.id) {
+        navigate('/login', { replace: true });
+        return;
+      }
+      await softRefreshSettings();
+    } catch (err) {
+      if (isAuthFailure(err)) {
+        navigate('/login', { replace: true });
+        return;
+      }
+      setLoadError(err?.message || CLIENT_WEB_SUITE_COPY.SETTINGS_LOAD_ERROR);
+    } finally {
+      setLoading(false);
+    }
+  }, [checkSession, softRefreshSettings, navigate, userRef]);
 
   const refreshSessionAfterProfileSave = useCallback(
     async({
@@ -327,7 +434,7 @@ const ClientSettings = () => {
         phoneVerified: effectiveVerified,
         phoneVerifiedAt: effectiveVerified ? response?.phoneVerifiedAt : null
       });
-      await softRefresh(loadSettings);
+      await softRefreshSettings();
 
       setMessage(CLIENT_WEB_SUITE_COPY.SETTINGS_SAVE_SUCCESS);
       notificationManager.show(CLIENT_WEB_SUITE_COPY.SETTINGS_SAVE_SUCCESS, 'success');
@@ -424,11 +531,47 @@ const ClientSettings = () => {
     }
   ];
 
-  const mainSlot = loading ? (
-    <div aria-busy="true" aria-live="polite">
-      <UnifiedLoading type="inline" text={t('common.status.loading')} />
-    </div>
-  ) : (
+  const pageBusy = !hasCheckedSession || loading;
+
+  let mainSlot;
+  if (pageBusy) {
+    mainSlot = (
+      <div aria-busy="true" aria-live="polite">
+        <UnifiedLoading
+          type="inline"
+          text={CLIENT_WEB_SUITE_COPY.SETTINGS_LOADING}
+        />
+      </div>
+    );
+  } else if (loadError) {
+    mainSlot = (
+      <div
+        className="client-web-page-shell__card"
+        role="alert"
+        data-testid={CLIENT_WEB_SUITE_TEST_IDS.SETTINGS_LOAD_ERROR}
+      >
+        <h2 className="client-settings-suite__group-title">
+          {CLIENT_WEB_SUITE_COPY.SETTINGS_ERROR_TITLE}
+        </h2>
+        <p className="client-settings-suite__hint">
+          <SafeText>{loadError}</SafeText>
+        </p>
+        <div className="client-settings-suite__actions">
+          <button
+            type="button"
+            className="client-web-page-shell__cta"
+            data-testid={CLIENT_WEB_SUITE_TEST_IDS.SETTINGS_RETRY}
+            onClick={() => {
+              void handleRetry();
+            }}
+          >
+            {CLIENT_WEB_SUITE_COPY.SETTINGS_RETRY}
+          </button>
+        </div>
+      </div>
+    );
+  } else {
+    mainSlot = (
     <>
       {message ? (
         <p className="client-settings-suite__message" role="status">
@@ -627,7 +770,8 @@ const ClientSettings = () => {
         onSuccess={handlePhoneChangeSuccess}
       />
     </>
-  );
+    );
+  }
 
   return (
     <ClientWebPageShell

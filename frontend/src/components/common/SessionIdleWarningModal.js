@@ -9,8 +9,10 @@
  * maxInactiveInterval, lastAccessedTime, serverNow 포함 확인 →
  * 만료 `SESSION_IDLE_WARNING_MS` 전 모달 표시 → 연장 시 세션 갱신(checkSession(true))·모달 닫힘 →
  * 로그아웃 시 SessionContext.logout 재사용.
- * 카운트다운 remainingMs≤0 이면 logout 직전 silent checkSession으로 서버 session-info를 재확인.
- * 재확인 후 remainingMs>0 이면 연장으로 보고 모달만 닫고, ≤0·세션 무효일 때만 logout()(토큰·스토리지 정리).
+ * 카운트다운 remainingMs≤0 이면 logout 직전 checkSession(idleExpiry)으로 서버를 재확인한다.
+ * silent 주기 폴과 달리 이 재확인은 background 401 유지·로그인 직후 grace·토큰 갱신 부활을 타지 않는다.
+ * 재확인이 유효하고 remainingMs>0 이면 연장으로 보고 모달만 닫고,
+ * 무효·≤0 이면 logout() → /login?logout=success (토큰·스토리지 정리).
  * 남은 시간은 `lastAccessedTime`(ms) + `maxInactiveInterval`(s)×1000 만료 시각 기준이며,
  * 서버 `ApiResponse`는 sessionManager에서 `data` 언랩됨(미언랩 시 toSafeNumber가 -1로 떨어져 타이머가 비활성).
  * lastAccessedTime / maxInactiveInterval = Servlet HttpSession(밀리초/초), serverNow = 서버 now(ms),
@@ -87,6 +89,8 @@ const SessionIdleWarningModal = () => {
   const warnPollIntervalRef = useRef(null);
   /** 카운트다운 0 도달 시 logout 1회만 (중복 호출 방지) */
   const expiryLogoutStartedRef = useRef(false);
+  /** 연장 클릭이 진행 중이면, 그 확인이 성공한 경우에만 만료 logout 을 건너뛴다 */
+  const extendInFlightRef = useRef(false);
 
   const isLoginPath = isSessionPublicPath(pathname);
   const sessionInfoRef = useRef(sessionInfo);
@@ -241,8 +245,9 @@ const SessionIdleWarningModal = () => {
   }, [isOpen, sessionInfo]);
 
   /**
-   * 만료(remainingMs≤0) 직전 silent checkSession으로 서버 재확인.
-   * Context stale로 서버는 유효한데 끊기는 레이스를 막고, 중복 logout은 ref로 1회만.
+   * 만료(remainingMs≤0) 직전 idleExpiry 재확인.
+   * 연장으로 서버 세션이 살아 있으면 모달만 닫고, 아니면 logout() → /login?logout=success.
+   * 중복 로그인 킥은 sessionManager 가 이미 이동시키므로 logout 으로 쿼리를 덮지 않는다.
    */
   useEffect(() => {
     if (!isOpen) {
@@ -262,14 +267,30 @@ const SessionIdleWarningModal = () => {
     expiryLogoutStartedRef.current = true;
 
     void (async() => {
+      // 이미 연장 클릭이 진행 중이면 그 foreground 확인에 맡긴다.
+      // (만료 재확인이 연장 요청보다 먼저 로그아웃하지 않게)
+      if (extendInFlightRef.current) {
+        expiryLogoutStartedRef.current = false;
+        return;
+      }
+      let stillValid = false;
       try {
-        await checkSession(true, { silent: true });
+        // silent 만 넘기면 SessionContext 가 background 로 올려 401 에도 사용자를 유지한다.
+        // 유휴 만료는 그 경로가 아니므로 idleExpiry 로 grace·refresh·background 유지를 끈다.
+        stillValid = await checkSession(true, { silent: true, idleExpiry: true }) === true;
       } catch {
         // checkSession 내부에서 처리. 아래 스냅샷으로 최종 판정.
+        stillValid = false;
       }
-      // 연장 버튼 등으로 이미 닫혔으면 logout 하지 않음
-      if (!isOpenRef.current) {
+      // 연장 클릭의 확인이 세션을 살렸으면 logout 하지 않음 (모달을 닫는 쪽은 handleExtend)
+      if (extendInFlightRef.current && stillValid) {
         expiryLogoutStartedRef.current = false;
+        return;
+      }
+      // 중복 로그인 종료는 sessionManager 가 user 를 비우고 redirect 까지 끝낸다.
+      if (!stillValid && !sessionManager.getUser()) {
+        expiryLogoutStartedRef.current = false;
+        setIsOpen(false);
         return;
       }
       const freshSi = pickFresherSessionInfo(
@@ -280,7 +301,7 @@ const SessionIdleWarningModal = () => {
       const rem = computeSessionExpiryState(freshSi, Date.now(), {
         allowFallback: false
       }).remainingMs;
-      if (stillAuth && rem != null && rem > 0) {
+      if (stillValid && stillAuth && rem != null && rem > 0) {
         expiryLogoutStartedRef.current = false;
         setIsOpen(false);
         return;
@@ -336,8 +357,13 @@ const SessionIdleWarningModal = () => {
   }, [user, isLoginPath, sessionInfo, armWarnTimer, tryOpenIdleWarningFromRefs]);
 
   const handleExtend = async() => {
-    await checkSession(true);
-    setIsOpen(false);
+    extendInFlightRef.current = true;
+    try {
+      await checkSession(true);
+      setIsOpen(false);
+    } finally {
+      extendInFlightRef.current = false;
+    }
   };
 
   const handleLogout = async() => {

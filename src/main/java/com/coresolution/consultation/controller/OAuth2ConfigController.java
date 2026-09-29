@@ -26,16 +26,16 @@ public class OAuth2ConfigController {
 
     private final OAuth2DomainUtil oauth2DomainUtil;
 
-    @Value("${spring.security.oauth2.client.registration.kakao.client-id:${security.oauth2.client.registration.kakao.client-id:cbb457cfb5f9351fd495be4af2b11a34}}")
+    @Value("${spring.security.oauth2.client.registration.kakao.client-id:${security.oauth2.client.registration.kakao.client-id:${KAKAO_CLIENT_ID:}}}")
     private String kakaoClientId;
 
-    @Value("${spring.security.oauth2.client.registration.kakao.redirect-uri:https://dev.core-solution.co.kr/api/auth/kakao/callback}")
+    @Value("${spring.security.oauth2.client.registration.kakao.redirect-uri:${KAKAO_REDIRECT_URI:}}")
     private String kakaoRedirectUri;
 
-    @Value("${spring.security.oauth2.client.registration.naver.client-id:${security.oauth2.client.registration.naver.client-id:vTKNlxYKIfo1uCCXaDfk}}")
+    @Value("${spring.security.oauth2.client.registration.naver.client-id:${security.oauth2.client.registration.naver.client-id:${NAVER_CLIENT_ID:}}}")
     private String naverClientId;
 
-    @Value("${spring.security.oauth2.client.registration.naver.redirect-uri:https://dev.core-solution.co.kr/api/auth/naver/callback}")
+    @Value("${spring.security.oauth2.client.registration.naver.redirect-uri:${NAVER_REDIRECT_URI:}}")
     private String naverRedirectUri;
 
     @Value("${server.port:8080}")
@@ -79,12 +79,17 @@ public class OAuth2ConfigController {
         } catch (Exception e) {
             log.error("❌ OAuth2 설정 조회 실패", e);
             // 기본값 반환 (오류 시에도 프론트엔드가 동작하도록)
-            // 환경 변수나 설정에서 baseUrl 확인, 없으면 localhost 사용 (로컬 환경)
-            String fallbackBaseUrl = "http://localhost:8080";
-            if (oauth2BaseUrl != null && !oauth2BaseUrl.isEmpty()) {
-                fallbackBaseUrl = oauth2BaseUrl;
+            // baseUrl 은 env(oauth2.base-url / OAUTH2_BASE_URL) 만 사용 — 호스트 하드코딩 금지
+            String fallbackBaseUrl = (oauth2BaseUrl != null && !oauth2BaseUrl.isEmpty())
+                    ? oauth2BaseUrl
+                    : "";
+            if (fallbackBaseUrl.isEmpty()) {
+                return ResponseEntity.status(org.springframework.http.HttpStatus.SERVICE_UNAVAILABLE)
+                        .body(Map.of(
+                                "error", "oauth2_config_unavailable",
+                                "message", "OAuth2 base URL is not configured"));
             }
-            
+
             Map<String, Object> fallbackConfig = Map.of(
                 "kakao", Map.of(
                     "clientId", "dummy",

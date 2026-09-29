@@ -2,13 +2,16 @@
  * userId 변경 시에만 initial resource load.
  * silent checkSession 으로 user 객체가 갱신돼도 userId 가 같으면 재로드하지 않는다.
  *
+ * loadFn / onMissingUserId 는 ref 로 두어 인라인 콜백이 effect 를 재실행하지 않게 한다
+ * (세션 ping → 리렌더 → setLoading(true) 무한 스피너 방지).
+ *
  * ClientSettings / softRefresh SSOT 패턴 캡슐화.
  *
  * @author CoreSolution
  * @since 2026-09-26
  */
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 
 /**
  * @param {object} params
@@ -26,20 +29,25 @@ export function useUserIdScopedLoad({
   onMissingUserId,
   extraDeps = []
 }) {
+  const loadFnRef = useRef(loadFn);
+  loadFnRef.current = loadFn;
+  const onMissingUserIdRef = useRef(onMissingUserId);
+  onMissingUserIdRef.current = onMissingUserId;
+
   useEffect(() => {
     if (!enabled) {
       return undefined;
     }
     if (userId == null || userId === '') {
-      if (typeof onMissingUserId === 'function') {
-        onMissingUserId();
+      if (typeof onMissingUserIdRef.current === 'function') {
+        onMissingUserIdRef.current();
       }
       return undefined;
     }
-    void loadFn({ silent: false });
+    void loadFnRef.current({ silent: false });
     return undefined;
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- extraDeps 는 호출자가 명시
-  }, [userId, loadFn, enabled, onMissingUserId, ...extraDeps]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- loadFn/onMissingUserId 는 ref; extraDeps 만 호출자 명시
+  }, [userId, enabled, ...extraDeps]);
 }
 
 export default useUserIdScopedLoad;

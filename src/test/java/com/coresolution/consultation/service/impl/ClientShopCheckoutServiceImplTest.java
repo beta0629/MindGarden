@@ -710,6 +710,43 @@ class ClientShopCheckoutServiceImplTest {
     }
 
     @Test
+    @DisplayName("상담사에 묶인 상품은 그 배정 id 만 붙이고 다른 선생님은 고르지 않는다")
+    void checkout_boundConsultantSku_usesMatchingMappingWithoutSelection() {
+        String idemKey = "idem-consult-bound";
+        long subtotal = 30_000L;
+        ShopCartLine line = consultationCartLine(subtotal);
+        line.getSku().setConsultantId(201L);
+        ShopCart cart = line.getCart();
+
+        when(shopClientOrderRepository.findByTenantClientAndCheckoutKey(TENANT, CLIENT_ID, idemKey))
+                .thenReturn(Optional.empty());
+        when(shopCartRepository.findByTenantIdAndClientId(TENANT, CLIENT_ID)).thenReturn(Optional.of(cart));
+        when(shopCartLineRepository.findByCart_IdAndIsDeletedFalse(cart.getId()))
+                .thenReturn(List.of(line));
+        stubPolicies(true, true, 0L, 0L);
+        when(clientPointWalletService.getBalance(TENANT, CLIENT_ID))
+                .thenReturn(ShopPointBalanceResponse.builder().availableMinor(0L).heldMinor(0L).build());
+        when(clientShopConsultantMappingService.listActiveMappings(TENANT, CLIENT_ID))
+                .thenReturn(List.of(
+                        eligibleMapping(21L, ConsultantClientMapping.MappingStatus.ACTIVE, consultantUser(201L), "상품"),
+                        eligibleMapping(22L, ConsultantClientMapping.MappingStatus.ACTIVE, consultantUser(202L), "상품")));
+
+        ArgumentCaptor<ShopClientOrder> orderCaptor = ArgumentCaptor.forClass(ShopClientOrder.class);
+        when(shopClientOrderRepository.save(orderCaptor.capture())).thenAnswer(inv -> inv.getArgument(0));
+        ArgumentCaptor<ShopClientOrderLine> lineCaptor = ArgumentCaptor.forClass(ShopClientOrderLine.class);
+        when(shopClientOrderLineRepository.save(lineCaptor.capture())).thenAnswer(inv -> inv.getArgument(0));
+        when(shopClientOrderRepository.findByTenantIdAndPublicId(eq(TENANT), anyString()))
+                .thenAnswer(inv -> Optional.of(orderCaptor.getValue()));
+
+        service.checkout(
+                TENANT,
+                CLIENT_ID,
+                ShopCheckoutRequest.builder().idempotencyKey(idemKey).pointsToRedeemMinor(0L).build());
+
+        assertEquals(21L, lineCaptor.getValue().getConsultantClientMappingId());
+    }
+
+    @Test
     @DisplayName("CONSULTATION 라인 — 동일 상담사 매핑 2건·요청 id 없으면 자동 resolve")
     void checkout_consultationLine_sameConsultantTwoMappings_autoResolves() {
         String idemKey = "idem-consult-same-consultant";

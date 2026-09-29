@@ -43,8 +43,8 @@ jest.mock('../../../utils/ajax', () => ({
 
 jest.mock('../../../api/adminListFetch', () => ({
   __esModule: true,
-  adminClientsWithMappingGet: jest.fn().mockResolvedValue({ clients: [] }),
-  adminMappingsListGet: jest.fn().mockResolvedValue({ mappings: [] }),
+  adminClientsWithMappingGetAll: jest.fn().mockResolvedValue({ clients: [] }),
+  adminMappingsListGetAll: jest.fn().mockResolvedValue({ mappings: [] }),
   adminListGet: jest.fn(),
   buildAdminListParams: jest.fn(),
   buildAdminListUrl: jest.fn()
@@ -165,8 +165,8 @@ import { getAllConsultantsWithStats } from '../../../utils/consultantHelper';
 import { getTenantCodes } from '../../../utils/commonCodeApi';
 import { apiPost } from '../../../utils/ajax';
 import {
-  adminClientsWithMappingGet,
-  adminMappingsListGet
+  adminClientsWithMappingGetAll,
+  adminMappingsListGetAll
 } from '../../../api/adminListFetch';
 import notificationManager from '../../../utils/notification';
 
@@ -213,10 +213,10 @@ describe('MappingCreationModal — P0 핫픽스 + STEP swap', () => {
   beforeEach(() => {
     getAllConsultantsWithStats.mockReset();
     getAllConsultantsWithStats.mockResolvedValue(consultantFixture);
-    adminClientsWithMappingGet.mockReset();
-    adminClientsWithMappingGet.mockResolvedValue({ clients: clientFixture });
-    adminMappingsListGet.mockReset();
-    adminMappingsListGet.mockResolvedValue({ mappings: [] });
+    adminClientsWithMappingGetAll.mockReset();
+    adminClientsWithMappingGetAll.mockResolvedValue({ clients: clientFixture });
+    adminMappingsListGetAll.mockReset();
+    adminMappingsListGetAll.mockResolvedValue({ mappings: [] });
     apiPost.mockReset();
     apiPost.mockResolvedValue({ data: { id: 9001 } });
     getTenantCodes.mockReset();
@@ -369,8 +369,8 @@ describe('MappingCreationModal — P0 핫픽스 + STEP swap', () => {
   });
 
   test('step 3 진입 시 settled 이력 있으면 이전 패키지 자동 선택 + 다음 버튼 enabled', async () => {
-    adminClientsWithMappingGet.mockResolvedValue({ clients: clientFixture });
-    adminMappingsListGet.mockResolvedValue({
+    adminClientsWithMappingGetAll.mockResolvedValue({ clients: clientFixture });
+    adminMappingsListGetAll.mockResolvedValue({
       data: [{
         id: 501,
         clientId: 22,
@@ -400,8 +400,8 @@ describe('MappingCreationModal — P0 핫픽스 + STEP swap', () => {
   });
 
   test('step 3 진입 시 단종 패키지 이력이면 자동 선택 없음 + discontinued 안내', async () => {
-    adminClientsWithMappingGet.mockResolvedValue({ clients: clientFixture });
-    adminMappingsListGet.mockResolvedValue({
+    adminClientsWithMappingGetAll.mockResolvedValue({ clients: clientFixture });
+    adminMappingsListGetAll.mockResolvedValue({
       data: [{
         id: 502,
         clientId: 22,
@@ -542,7 +542,7 @@ describe('MappingCreationModal — P0 핫픽스 + STEP swap', () => {
   });
 
   test('타기관 내담자는 기관연계만 배정하고 가예약 라디오가 없다', async () => {
-    adminClientsWithMappingGet.mockResolvedValue({
+    adminClientsWithMappingGetAll.mockResolvedValue({
       clients: [{
         id: 33,
         name: '타기관내담자',
@@ -551,7 +551,7 @@ describe('MappingCreationModal — P0 핫픽스 + STEP swap', () => {
         engagementType: 'INSTITUTION_LINK'
       }]
     });
-    adminMappingsListGet.mockResolvedValue({ mappings: [] });
+    adminMappingsListGetAll.mockResolvedValue({ mappings: [] });
 
     renderModal();
 
@@ -597,8 +597,8 @@ describe('MappingCreationModal — P0 핫픽스 + STEP swap', () => {
       profileImageUrl: null,
       engagementType: 'INSTITUTION_LINK'
     };
-    adminClientsWithMappingGet.mockResolvedValue({ clients: [institutionClient] });
-    adminMappingsListGet.mockResolvedValue({ mappings: [] });
+    adminClientsWithMappingGetAll.mockResolvedValue({ clients: [institutionClient] });
+    adminMappingsListGetAll.mockResolvedValue({ mappings: [] });
 
     renderModal();
 
@@ -748,8 +748,8 @@ describe('MappingCreationModal — P0 핫픽스 + STEP swap', () => {
   });
 
   test('ACTIVE 배정 존재 시 합산 안내 배너 표시 (생성은 차단하지 않음)', async () => {
-    adminClientsWithMappingGet.mockResolvedValue({ clients: clientFixture });
-    adminMappingsListGet.mockResolvedValue({
+    adminClientsWithMappingGetAll.mockResolvedValue({ clients: clientFixture });
+    adminMappingsListGetAll.mockResolvedValue({
       data: [{
         id: 75,
         consultantId: 11,
@@ -781,10 +781,10 @@ describe('MappingCreationModal — person picker cards', () => {
   beforeEach(() => {
     getAllConsultantsWithStats.mockReset();
     getAllConsultantsWithStats.mockResolvedValue(consultantFixture);
-    adminClientsWithMappingGet.mockReset();
-    adminClientsWithMappingGet.mockResolvedValue({ clients: clientFixture });
-    adminMappingsListGet.mockReset();
-    adminMappingsListGet.mockResolvedValue({ mappings: [] });
+    adminClientsWithMappingGetAll.mockReset();
+    adminClientsWithMappingGetAll.mockResolvedValue({ clients: clientFixture });
+    adminMappingsListGetAll.mockReset();
+    adminMappingsListGetAll.mockResolvedValue({ mappings: [] });
     getTenantCodes.mockReset();
     getTenantCodes.mockResolvedValue(packageCodeFixture);
   });
@@ -828,5 +828,32 @@ describe('MappingCreationModal — person picker cards', () => {
     expect(card).toBeTruthy();
     expect(card.className).not.toMatch(/mg-button/);
     expect(card.querySelector('.mg-v2-mapping-creation-modal__card-info')).toHaveTextContent('c@example.com');
+  });
+
+  it('내담자 피커는 21명 이상에서 20명에서 멈추지 않고 21번째를 검색한다', async() => {
+    const manyClients = Array.from({ length: 21 }, (_, index) => ({
+      id: index + 1,
+      name: `내담자${index + 1}`,
+      email: `c${index + 1}@example.com`,
+      profileImageUrl: null
+    }));
+    adminClientsWithMappingGetAll.mockResolvedValue({ clients: manyClients, count: 21 });
+    adminMappingsListGetAll.mockResolvedValue({ mappings: [], count: 0 });
+
+    renderModal();
+    await waitFor(() => expect(screen.getByText('상담사A')).toBeInTheDocument());
+    fireEvent.click(screen.getByText('상담사A'));
+    await act(async() => {
+      fireEvent.click(screen.getByText('common:action.next'));
+    });
+
+    await waitFor(() => expect(screen.getByText('내담자21')).toBeInTheDocument());
+    expect(adminClientsWithMappingGetAll).toHaveBeenCalled();
+    expect(screen.getAllByText(/^내담자\d+$/).length).toBeGreaterThanOrEqual(21);
+
+    const search = screen.getByPlaceholderText('admin:mappingCreation.searchClientPlaceholder');
+    fireEvent.change(search, { target: { value: '내담자21' } });
+    await waitFor(() => expect(screen.getByText('내담자21')).toBeInTheDocument());
+    expect(screen.queryByText('내담자20')).not.toBeInTheDocument();
   });
 });

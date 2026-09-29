@@ -1,5 +1,6 @@
 # 자동 배포: 이 파일의 path push(및 기존 트리거) 유지
 # 수동 단일 진입: .github/workflows/deploy.yml (inputs: env + target)
+# retrigger: AdminServiceImpl partner-institution test ctor fix (src/test only) — paths 밖이므로 이 주석으로 재트리거
 name: 🚀 Core Solution 운영 배포
 
 # 운영 배포 동시 실행 가드: cutover 시퀀스(atomic mv → INCOMING JAR 회수) 중 두 번째 런이 SCP 단계에
@@ -9,7 +10,7 @@ concurrency:
   cancel-in-progress: false
 
 #
-# 백엔드(배포 슬롯): 단일 호스트 블루그린 — 비활성 슬롯에 JAR 반영 → 기동·localhost 헬스(최대 10회) →
+# 백엔드(배포 슬롯): 단일 호스트 블루그린 — 비활성 슬롯에 JAR 반영 → 기동·localhost 헬스(초기 10초 + 최대 25회·6초 = 160초) →
 # minimum-idle SELECT 1 이 빠른 /api/v1/health/readiness 통과 후에만 upstream 기록.
 # 느리거나 실패하면 upstream 유지, 슬롯 추가 재시작 없음.
 # nginx reload 는 HTTP/2 스트림을 끊을 수 있어(main.*.js ERR_HTTP2_PROTOCOL_ERROR)
@@ -20,8 +21,8 @@ concurrency:
 # 슬롯 위치 기본값(미설정 시 현재 운영과 같음): MG_BACKEND_BIND_HOST=127.0.0.1,
 # MG_BLUE_PORT=8080, MG_GREEN_PORT=8081, MG_ACTIVE_BACKEND_FILE=/etc/mindgarden/active-backend,
 # MG_LOCAL_DB_HOST=localhost.
-# CF520: mindgarden-core-proxy-params.conf 도 /etc/nginx/snippets/ 에 설치 (docs/runbooks/CF520_ORIGIN_HOST_ERROR_PREVENTION.md).
 # 레거시 mindgarden.service 전면 stop 은 사용하지 않음. 1회 마이그레이션: docs/deployment/PRODUCTION_BLUE_GREEN_BACKEND_CUTOVER.md
+# CF520: mindgarden-core-proxy-params.conf 도 /etc/nginx/snippets/ 에 설치 (docs/runbooks/CF520_ORIGIN_HOST_ERROR_PREVENTION.md).
 #
 # OAuth가 apex(예: core-solution.co.kr) 콜백이고 SPA가 테넌트 서브도메인이면,
 # 서버 EnvironmentFile 등에 SESSION_COOKIE_DOMAIN=core-solution.co.kr 를 넣는다(비밀 아님, RFC 6265 선행 점 없음).
@@ -79,180 +80,9 @@ on:
         type: string
 
 jobs:
-  # Maven/Node compile 은 ubuntu-latest 만.
-  # #1073(ubuntu-latest 잡 전체)은 release/dev 조상에 없음. #1051 이후 본 파일은 self-hosted 빌드라
-  # 운영 호스트 OOM 이 재발한다. 빌드만 GitHub-hosted, SSH/scp/블루그린은 self-hosted(배포 전용).
-  build:
-    name: 🏗️ Core BE/FE 빌드 (ubuntu-latest)
-    runs-on: ubuntu-latest
-    outputs:
-      backend_changed: ${{ steps.changed-files.outputs.backend_changed }}
-      frontend_changed: ${{ steps.changed-files.outputs.frontend_changed }}
-      config_changed: ${{ steps.changed-files.outputs.config_changed }}
-      sql_procedures_changed: ${{ steps.changed-files.outputs.sql_procedures_changed }}
-    steps:
-    - name: 🛡️ 운영 배포 ref 가드 (dispatch만, release/prod만 허용)
-      if: github.event_name == 'workflow_dispatch'
-      env:
-        DEPLOY_REF: ${{ github.event.inputs.deploy_ref || 'release/prod' }}
-      run: |
-        if [ "$DEPLOY_REF" != "release/prod" ]; then
-          echo "::error::운영 배포는 release/prod 브랜치만 허용됩니다. 선택된 ref: $DEPLOY_REF"
-          exit 1
-        fi
-
-    - name: 📌 배포 대상 ref 출력
-      run: |
-        if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
-          echo "선택된 배포 ref: ${{ github.event.inputs.deploy_ref || 'release/prod' }}"
-        else
-          echo "push 이벤트 체크아웃 SHA: ${{ github.sha }}"
-        fi
-
-    - name: 📥 코드 체크아웃
-      uses: actions/checkout@v4
-      with:
-        ref: ${{ github.event_name == 'workflow_dispatch' && (github.event.inputs.deploy_ref || 'release/prod') || github.sha }}
-        # push 시 전체 히스토리(0): github.event.before..sha diff 에 필요. 숫자 0 은 &&/|| 에서 falsy 이므로 문자열 사용.
-        fetch-depth: ${{ github.event_name == 'push' && '0' || '1' }}
-
-    # 동결 게이트: IL SSOT·가예약 일지·OPEN 점유 드래그·이관히스토리·카드일정·prepaid 비표시 6항
-    # 하나라도 FAIL → 배포 중단. 부분 tip 금지 · DATAFIX 0.
-    # 문서: docs/deployment/DEPLOY_NO_OVERWRITE_GATE.md
-    - name: 🔒 Deploy freeze gate (6-item no-overwrite)
-      run: |
-        chmod +x scripts/deployment/check-deploy-no-overwrite-symbols.sh
-        ./scripts/deployment/check-deploy-no-overwrite-symbols.sh --source-root .
-
-    - name: ☕ Java 17 설정
-      uses: actions/setup-java@v5
-      with:
-        java-version: '17'
-        distribution: 'temurin'
-        
-    - name: 📦 Node.js 20 설정
-      uses: actions/setup-node@v6
-      with:
-        node-version: '20'
-        cache: 'npm'
-        cache-dependency-path: frontend/package-lock.json
-        
-    - name: 🔧 Maven 캐시 설정
-      uses: actions/cache@v4
-      with:
-        path: ~/.m2
-        key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
-        restore-keys: ${{ runner.os }}-m2
-        
-    - name: 🏗️ 백엔드 빌드
-      env:
-        # ubuntu-latest(~7Gi) 전용. mindgarden-deploy(~3.8Gi)에서 mvn 금지 — 2026-09-19 운영 호스트 OOM.
-        MAVEN_OPTS: "-Xmx2g"
-      run: mvn clean package -DskipTests
-      
-    - name: 📦 프론트엔드 의존성 설치
-      run: |
-        cd frontend
-        npm install
-        
-    - name: 🏗️ 프론트엔드 빌드
-      env:
-        # self-hosted mindgarden-deploy(~3.8Gi) OOM(137) 완화 — FE 전용 워크플로와 동일
-        NODE_OPTIONS: --max-old-space-size=3072
-      run: |
-        cd frontend
-        npm run build:ci
-        
-    - name: 🔍 변경된 파일 감지
-      id: changed-files
-      run: |
-        echo "🔍 변경된 파일 감지 중..."
-        
-        # 이전 커밋과 비교 (release/prod 브랜치의 마지막 배포 커밋)
-        # 또는 workflow_dispatch의 경우 모든 파일이 변경된 것으로 간주
-        if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
-          # 수동 실행 시: 모든 파일이 변경된 것으로 간주 (전체 배포)
-          echo "📋 수동 실행: 모든 파일 배포"
-          echo "backend_changed=true" >> $GITHUB_OUTPUT
-          echo "frontend_changed=true" >> $GITHUB_OUTPUT
-          echo "config_changed=true" >> $GITHUB_OUTPUT
-          echo "sql_procedures_changed=true" >> $GITHUB_OUTPUT
-        else
-          # push: 이전 푸시 SHA와 현재 SHA 비교 (단일 커밋 checkout에서도 동작하도록 fetch-depth: 0)
-          BEFORE="${{ github.event.before }}"
-          if [ -z "$BEFORE" ] || [ "$BEFORE" = "0000000000000000000000000000000000000000" ]; then
-            git diff --name-only HEAD~1 HEAD > /tmp/changed_files.txt 2>/dev/null || git show --name-only --pretty=format: HEAD | sed '/^$/d' > /tmp/changed_files.txt
-          else
-            git diff --name-only "$BEFORE" "${{ github.sha }}" > /tmp/changed_files.txt || echo "" > /tmp/changed_files.txt
-          fi
-          
-          # 백엔드 변경 감지 (Java 소스, pom, 운영 설정·스키마 경로 등)
-          if grep -qE "^(src/|pom\.xml|deployment/application-production\.yml|\.github/workflows/deploy-production\.yml|sql/|database/schema/)" /tmp/changed_files.txt; then
-            echo "✅ 백엔드 변경 감지됨"
-            echo "backend_changed=true" >> $GITHUB_OUTPUT
-          else
-            echo "⏭️ 백엔드 변경 없음 - 업로드 스킵"
-            echo "backend_changed=false" >> $GITHUB_OUTPUT
-          fi
-          
-          # 프론트엔드 변경 감지
-          if grep -qE "^frontend/" /tmp/changed_files.txt; then
-            echo "✅ 프론트엔드 변경 감지됨"
-            echo "frontend_changed=true" >> $GITHUB_OUTPUT
-          else
-            echo "⏭️ 프론트엔드 변경 없음 - 업로드 스킵"
-            echo "frontend_changed=false" >> $GITHUB_OUTPUT
-          fi
-          
-          # 설정 파일 변경 감지
-          if grep -qE "^deployment/application-production\.yml" /tmp/changed_files.txt; then
-            echo "✅ 설정 파일 변경 감지됨"
-            echo "config_changed=true" >> $GITHUB_OUTPUT
-          else
-            echo "⏭️ 설정 파일 변경 없음 - 업로드 스킵"
-            echo "config_changed=false" >> $GITHUB_OUTPUT
-          fi
-          
-          # SQL 프로시저 변경 감지 (레거시 sql/ + database/schema 배포용)
-          if grep -qE "^(sql/|database/schema/).*\.sql$" /tmp/changed_files.txt; then
-            echo "✅ SQL 프로시저 변경 감지됨"
-            echo "sql_procedures_changed=true" >> $GITHUB_OUTPUT
-            grep -E "^(sql/|database/schema/).*\.sql$" /tmp/changed_files.txt > /tmp/changed_sql_files.txt || true
-          else
-            echo "⏭️ SQL 프로시저 변경 없음 - 업로드 스킵"
-            echo "sql_procedures_changed=false" >> $GITHUB_OUTPUT
-          fi
-        fi
-        
-        echo ""
-        echo "📋 변경 감지 결과:"
-        echo "  백엔드: ${{ steps.changed-files.outputs.backend_changed }}"
-        echo "  프론트엔드: ${{ steps.changed-files.outputs.frontend_changed }}"
-        echo "  설정 파일: ${{ steps.changed-files.outputs.config_changed }}"
-        echo "  SQL 프로시저: ${{ steps.changed-files.outputs.sql_procedures_changed }}"
-        
-    - name: 📦 빌드 산출물 스테이징
-      run: |
-        set -euo pipefail
-        rm -rf _gha_prod_bundle
-        mkdir -p _gha_prod_bundle/target _gha_prod_bundle/frontend/build
-        cp -a target/consultation-management-system-1.0.0.jar _gha_prod_bundle/target/
-        cp -a frontend/build/. _gha_prod_bundle/frontend/build/
-        test -s _gha_prod_bundle/target/consultation-management-system-1.0.0.jar
-        test -n "$(find _gha_prod_bundle/frontend/build -type f | head -n 1)"
-
-    - name: 📤 빌드 산출물 업로드
-      uses: actions/upload-artifact@v4
-      with:
-        name: core-prod-build-bundle
-        path: _gha_prod_bundle
-        retention-days: 1
-        if-no-files-found: error
-
   deploy:
-    name: 📤 Core 운영 배포 (self-hosted, 배포 전용)
-    needs: build
-    runs-on: [self-hosted, linux, deploy]
+    name: 🏗️ 빌드 및 배포
+    runs-on: ubuntu-latest
     # ops-portal-migration Phase 1 fix (PR #366, 2026-06-15):
     # `environment: prod` 선언이 없으면 ${{ secrets.X }} 가 repository-level secret 만 해석한다.
     # MINDGARDEN_HQ_TENANT_ID 등 env=prod 로만 등록된 secret 은 빈 값으로 해석되어
@@ -324,33 +154,155 @@ jobs:
       SESSION_COOKIE_DOMAIN: ${{ secrets.MINDGARDEN_SESSION_COOKIE_DOMAIN }}
 
     steps:
-    - name: 📥 코드 체크아웃 (스크립트·설정만, Maven/Node 빌드 없음)
+    - name: 🛡️ 운영 배포 ref 가드 (dispatch만, release/prod만 허용)
+      if: github.event_name == 'workflow_dispatch'
+      env:
+        DEPLOY_REF: ${{ github.event.inputs.deploy_ref || 'release/prod' }}
+      run: |
+        if [ "$DEPLOY_REF" != "release/prod" ]; then
+          echo "::error::운영 배포는 release/prod 브랜치만 허용됩니다. 선택된 ref: $DEPLOY_REF"
+          exit 1
+        fi
+
+    - name: 📌 배포 대상 ref 출력
+      run: |
+        if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+          echo "선택된 배포 ref: ${{ github.event.inputs.deploy_ref || 'release/prod' }}"
+        else
+          echo "push 이벤트 체크아웃 SHA: ${{ github.sha }}"
+        fi
+
+    - name: 📥 코드 체크아웃
       uses: actions/checkout@v4
       with:
         ref: ${{ github.event_name == 'workflow_dispatch' && (github.event.inputs.deploy_ref || 'release/prod') || github.sha }}
-        fetch-depth: 1
+        # push 시 전체 히스토리(0): github.event.before..sha diff 에 필요. 숫자 0 은 &&/|| 에서 falsy 이므로 문자열 사용.
+        fetch-depth: ${{ github.event_name == 'push' && '0' || '1' }}
 
-    - name: 📥 빌드 산출물 수신
-      uses: actions/download-artifact@v4
+    # 동결 게이트: IL SSOT·가예약 일지·OPEN 점유 드래그·이관히스토리·카드일정·prepaid 비표시 6항
+    # 하나라도 FAIL → 배포 중단. 부분 tip 금지 · DATAFIX 0.
+    # 문서: docs/deployment/DEPLOY_NO_OVERWRITE_GATE.md
+    - name: 🔒 Deploy freeze gate (6-item no-overwrite)
+      run: |
+        chmod +x scripts/deployment/check-deploy-no-overwrite-symbols.sh
+        ./scripts/deployment/check-deploy-no-overwrite-symbols.sh --source-root .
+
+    - name: ☕ Java 17 설정
+      uses: actions/setup-java@v5
       with:
-        name: core-prod-build-bundle
-        path: _gha_prod_bundle
+        java-version: '17'
+        distribution: 'temurin'
+        
+    - name: 📦 Node.js 20 설정
+      uses: actions/setup-node@v6
+      with:
+        node-version: '20'
+        cache: 'npm'
+        cache-dependency-path: frontend/package-lock.json
+        
+    - name: 🔧 Maven 캐시 설정
+      uses: actions/cache@v4
+      with:
+        path: ~/.m2
+        key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+        restore-keys: ${{ runner.os }}-m2
+        
+    - name: 🏗️ 백엔드 빌드
+      run: mvn clean package -DskipTests
+      
+    - name: 📦 프론트엔드 의존성 설치
+      run: |
+        cd frontend
+        npm install
+        
+    - name: 🏗️ 프론트엔드 빌드
+      env:
+        # self-hosted mindgarden-deploy(~3.8Gi) OOM(137) 완화 — FE 전용 워크플로와 동일
+        NODE_OPTIONS: --max-old-space-size=3072
+      run: |
+        cd frontend
+        npm run build:ci
 
-    - name: 📦 JAR·프론트 산출물 배치
+    - name: 📌 Capture expected main.*.js hash
+      id: fe-main-hash
       run: |
         set -euo pipefail
-        if [ ! -s _gha_prod_bundle/target/consultation-management-system-1.0.0.jar ]; then
-          echo "❌ artifact layout mismatch"
-          find _gha_prod_bundle -maxdepth 4 -type f | head -n 40 || true
+        MAIN=$(basename $(ls frontend/build/static/js/main.*.js | head -1))
+        if [ -z "$MAIN" ]; then
+          echo "::error::main.*.js 빌드 산출물 없음"
           exit 1
         fi
-        mkdir -p target frontend/build
-        cp -a _gha_prod_bundle/target/consultation-management-system-1.0.0.jar target/
-        cp -a _gha_prod_bundle/frontend/build/. frontend/build/
-        test -s target/consultation-management-system-1.0.0.jar
-        test -n "$(find frontend/build -type f | head -n 1)"
-        echo "self-hosted: compile/package 없음. 아티팩트 수신 후 원격 배포만."
-
+        echo "expected_main_js=$MAIN" >> "$GITHUB_OUTPUT"
+        echo "✅ EXPECTED_MAIN_JS=$MAIN"
+        
+    - name: 🔍 변경된 파일 감지
+      id: changed-files
+      run: |
+        echo "🔍 변경된 파일 감지 중..."
+        
+        # 이전 커밋과 비교 (release/prod 브랜치의 마지막 배포 커밋)
+        # 또는 workflow_dispatch의 경우 모든 파일이 변경된 것으로 간주
+        if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+          # 수동 실행 시: 모든 파일이 변경된 것으로 간주 (전체 배포)
+          echo "📋 수동 실행: 모든 파일 배포"
+          echo "backend_changed=true" >> $GITHUB_OUTPUT
+          echo "frontend_changed=true" >> $GITHUB_OUTPUT
+          echo "config_changed=true" >> $GITHUB_OUTPUT
+          echo "sql_procedures_changed=true" >> $GITHUB_OUTPUT
+        else
+          # push: 이전 푸시 SHA와 현재 SHA 비교 (단일 커밋 checkout에서도 동작하도록 fetch-depth: 0)
+          BEFORE="${{ github.event.before }}"
+          if [ -z "$BEFORE" ] || [ "$BEFORE" = "0000000000000000000000000000000000000000" ]; then
+            git diff --name-only HEAD~1 HEAD > /tmp/changed_files.txt 2>/dev/null || git show --name-only --pretty=format: HEAD | sed '/^$/d' > /tmp/changed_files.txt
+          else
+            git diff --name-only "$BEFORE" "${{ github.sha }}" > /tmp/changed_files.txt || echo "" > /tmp/changed_files.txt
+          fi
+          
+          # 백엔드 변경 감지 (Java 소스, pom, 운영 설정·스키마 경로 등)
+          if grep -qE "^(src/|pom\.xml|deployment/application-production\.yml|\.github/workflows/deploy-production\.yml|sql/|database/schema/)" /tmp/changed_files.txt; then
+            echo "✅ 백엔드 변경 감지됨"
+            echo "backend_changed=true" >> $GITHUB_OUTPUT
+          else
+            echo "⏭️ 백엔드 변경 없음 - 업로드 스킵"
+            echo "backend_changed=false" >> $GITHUB_OUTPUT
+          fi
+          
+          # 프론트엔드 변경 감지
+          if grep -qE "^frontend/" /tmp/changed_files.txt; then
+            echo "✅ 프론트엔드 변경 감지됨"
+            echo "frontend_changed=true" >> $GITHUB_OUTPUT
+          else
+            echo "⏭️ 프론트엔드 변경 없음 - 업로드 스킵"
+            echo "frontend_changed=false" >> $GITHUB_OUTPUT
+          fi
+          
+          # 설정 파일 변경 감지
+          if grep -qE "^deployment/application-production\.yml" /tmp/changed_files.txt; then
+            echo "✅ 설정 파일 변경 감지됨"
+            echo "config_changed=true" >> $GITHUB_OUTPUT
+          else
+            echo "⏭️ 설정 파일 변경 없음 - 업로드 스킵"
+            echo "config_changed=false" >> $GITHUB_OUTPUT
+          fi
+          
+          # SQL 프로시저 변경 감지 (레거시 sql/ + database/schema 배포용)
+          if grep -qE "^(sql/|database/schema/).*\.sql$" /tmp/changed_files.txt; then
+            echo "✅ SQL 프로시저 변경 감지됨"
+            echo "sql_procedures_changed=true" >> $GITHUB_OUTPUT
+            grep -E "^(sql/|database/schema/).*\.sql$" /tmp/changed_files.txt > /tmp/changed_sql_files.txt || true
+          else
+            echo "⏭️ SQL 프로시저 변경 없음 - 업로드 스킵"
+            echo "sql_procedures_changed=false" >> $GITHUB_OUTPUT
+          fi
+        fi
+        
+        echo ""
+        echo "📋 변경 감지 결과:"
+        echo "  백엔드: ${{ steps.changed-files.outputs.backend_changed }}"
+        echo "  프론트엔드: ${{ steps.changed-files.outputs.frontend_changed }}"
+        echo "  설정 파일: ${{ steps.changed-files.outputs.config_changed }}"
+        echo "  SQL 프로시저: ${{ steps.changed-files.outputs.sql_procedures_changed }}"
+        
     - name: 🔍 SSH 연결 테스트
       uses: appleboy/ssh-action@master
       with:
@@ -438,7 +390,7 @@ jobs:
           echo "✅ /tmp/ 디렉토리 정리 완료"
           
     - name: 📤 백엔드 파일 업로드
-      if: needs.build.outputs.backend_changed == 'true'
+      if: steps.changed-files.outputs.backend_changed == 'true'
       uses: appleboy/scp-action@v0.1.7
       with:
         host: ${{ secrets.PRODUCTION_HOST }}
@@ -452,13 +404,59 @@ jobs:
         overwrite: true
         
     - name: ⏭️ 백엔드 파일 업로드 스킵
-      if: needs.build.outputs.backend_changed != 'true'
+      if: steps.changed-files.outputs.backend_changed != 'true'
       run: echo "⏭️ 백엔드 변경 없음 - 업로드 스킵됨"
         
     # Core 테넌트·app Nginx root: /var/www/mindgarden/frontend (core-solution-prod.conf)
     # 과거 /var/www/html/ 업로드는 이 경로와 불일치하여 운영 SPA가 구버전으로 고정됨
+    # P0 race guard:
+    #  - tip 이 앞서 나가면 FE 업로드 스킵 (stale index.html — BE jar 는 계속)
+    #  - SHA==tip 만으로는 업로드하지 않는다. 같은 SHA 의 프론트 전용 배포가
+    #    이미 성공했으면 BE 빌드(REACT_APP_* 미주입)가 index.html 을 덮지 않는다.
+    - name: 🛡️ FE tip race guard (skip stale overwrite)
+      id: fe-tip-guard
+      if: steps.changed-files.outputs.frontend_changed == 'true'
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        set -euo pipefail
+        git fetch origin release/prod
+        HEAD_SHA=$(git rev-parse HEAD)
+        TIP_SHA=$(git rev-parse origin/release/prod)
+        echo "HEAD=$HEAD_SHA"
+        echo "origin/release/prod tip=$TIP_SHA"
+        FE_SAME_SHA_SUCCESS=false
+        if ! FE_RUNS=$(gh run list \
+          --repo "$GITHUB_REPOSITORY" \
+          --workflow deploy-frontend-prod.yml \
+          --commit "$HEAD_SHA" \
+          --limit 20 \
+          --json databaseId,conclusion,status,headSha); then
+          echo "::error::frontend deploy run list failed — refuse BE frontend upload"
+          exit 1
+        fi
+        FE_COUNT=$(printf '%s' "$FE_RUNS" | jq '[.[] | select(.conclusion=="success" and .status=="completed" and .headSha=="'"$HEAD_SHA"'")] | length')
+        echo "frontend-only success runs for SHA=$FE_COUNT"
+        if [ "$FE_COUNT" != "0" ]; then
+          FE_SAME_SHA_SUCCESS=true
+        fi
+        # SHA==tip 만으로는 업로드하지 않는다. 같은 SHA 프론트 전용 배포가 success 면
+        # BE 빌드(REACT_APP_* 미주입) index.html 덮어쓰기와 main-hash 검증을 건너뛴다.
+        if [ "$HEAD_SHA" != "$TIP_SHA" ]; then
+          echo "skip_fe_upload=true" >> "$GITHUB_OUTPUT"
+          echo "skip_reason=tip-ahead" >> "$GITHUB_OUTPUT"
+          echo "::warning::tip moved ahead — skip FE overwrite to avoid stale index (HEAD!=tip)"
+        elif [ "$FE_SAME_SHA_SUCCESS" = "true" ]; then
+          echo "skip_fe_upload=true" >> "$GITHUB_OUTPUT"
+          echo "skip_reason=fe-same-sha-published" >> "$GITHUB_OUTPUT"
+          echo "::warning::frontend-only deploy already published this SHA — skip BE frontend upload and FE main-hash check"
+        else
+          echo "skip_fe_upload=false" >> "$GITHUB_OUTPUT"
+          echo "skip_reason=upload" >> "$GITHUB_OUTPUT"
+        fi
+
     - name: 📤 프론트엔드 파일 업로드
-      if: needs.build.outputs.frontend_changed == 'true'
+      if: steps.changed-files.outputs.frontend_changed == 'true' && steps.fe-tip-guard.outputs.skip_fe_upload != 'true'
       uses: appleboy/scp-action@v0.1.7
       with:
         host: ${{ secrets.PRODUCTION_HOST }}
@@ -470,13 +468,48 @@ jobs:
         target: "/var/www/mindgarden/frontend/"
         strip_components: 2
         overwrite: true
+
+    - name: 🔒 FE main-hash 검증 (index.html)
+      if: steps.changed-files.outputs.frontend_changed == 'true' && steps.fe-tip-guard.outputs.skip_fe_upload != 'true'
+      env:
+        EXPECTED_MAIN_JS: ${{ steps.fe-main-hash.outputs.expected_main_js }}
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.PRODUCTION_HOST }}
+        username: ${{ secrets.PRODUCTION_USER }}
+        key: ${{ secrets.PRODUCTION_SSH_KEY }}
+        port: 22
+        timeout: 60s
+        envs: EXPECTED_MAIN_JS
+        script: |
+          set -euo pipefail
+          INDEX=/var/www/mindgarden/frontend/index.html
+          if [ -z "${EXPECTED_MAIN_JS:-}" ]; then
+            echo "::error::EXPECTED_MAIN_JS 비어 있음"
+            exit 1
+          fi
+          if [ ! -f "$INDEX" ]; then
+            echo "::error::index.html 없음: $INDEX"
+            exit 1
+          fi
+          if ! grep -qF "$EXPECTED_MAIN_JS" "$INDEX"; then
+            echo "::error::index.html 이 expected main ($EXPECTED_MAIN_JS) 을 참조하지 않음 — stale overwrite 차단"
+            grep -oE 'main\.[a-f0-9]+\.js' "$INDEX" | head -5 || true
+            exit 1
+          fi
+          echo "✅ index.html contains $EXPECTED_MAIN_JS"
         
     - name: ⏭️ 프론트엔드 파일 업로드 스킵
-      if: needs.build.outputs.frontend_changed != 'true'
-      run: echo "⏭️ 프론트엔드 변경 없음 - 업로드 스킵됨"
+      if: steps.changed-files.outputs.frontend_changed != 'true' || steps.fe-tip-guard.outputs.skip_fe_upload == 'true'
+      run: |
+        if [ "${{ steps.fe-tip-guard.outputs.skip_fe_upload }}" = "true" ]; then
+          echo "⏭️ FE overwrite skipped (${{ steps.fe-tip-guard.outputs.skip_reason }}) — upload and FE main-hash check skipped"
+        else
+          echo "⏭️ 프론트엔드 변경 없음 - 업로드 스킵됨"
+        fi
         
     - name: 📤 설정 파일 업로드
-      if: needs.build.outputs.config_changed == 'true'
+      if: steps.changed-files.outputs.config_changed == 'true'
       uses: appleboy/scp-action@v0.1.7
       with:
         host: ${{ secrets.PRODUCTION_HOST }}
@@ -533,7 +566,7 @@ jobs:
     #     overwrite: true
         
     - name: 📤 메뉴 업데이트 SQL 업로드
-      if: needs.build.outputs.sql_procedures_changed == 'true'
+      if: steps.changed-files.outputs.sql_procedures_changed == 'true'
       uses: appleboy/scp-action@v0.1.7
       with:
         host: ${{ secrets.PRODUCTION_HOST }}
@@ -547,7 +580,7 @@ jobs:
         overwrite: true
         
     - name: 📤 매핑 수정 프로시저 업로드
-      if: needs.build.outputs.sql_procedures_changed == 'true'
+      if: steps.changed-files.outputs.sql_procedures_changed == 'true'
       uses: appleboy/scp-action@v0.1.7
       with:
         host: ${{ secrets.PRODUCTION_HOST }}
@@ -562,7 +595,7 @@ jobs:
         overwrite: true
 
     - name: 📤 production_mapping_procedures.sql 업로드
-      if: needs.build.outputs.sql_procedures_changed == 'true'
+      if: steps.changed-files.outputs.sql_procedures_changed == 'true'
       uses: appleboy/scp-action@v0.1.7
       with:
         host: ${{ secrets.PRODUCTION_HOST }}
@@ -576,7 +609,7 @@ jobs:
         overwrite: true
 
     - name: 📤 business_time_procedures_final.sql 업로드
-      if: needs.build.outputs.sql_procedures_changed == 'true'
+      if: steps.changed-files.outputs.sql_procedures_changed == 'true'
       uses: appleboy/scp-action@v0.1.7
       with:
         host: ${{ secrets.PRODUCTION_HOST }}
@@ -590,7 +623,7 @@ jobs:
         overwrite: true
 
     - name: 📤 production_all_missing_procedures.sql 업로드
-      if: needs.build.outputs.sql_procedures_changed == 'true'
+      if: steps.changed-files.outputs.sql_procedures_changed == 'true'
       uses: appleboy/scp-action@v0.1.7
       with:
         host: ${{ secrets.PRODUCTION_HOST }}
@@ -799,6 +832,248 @@ jobs:
         # composite action 의 DB FAIL-FAST 가드 비활성 (prod-from-dev.env 호출자는 default 'true' 유지).
         db_fail_fast: 'false'
 
+    # ============================================================================
+    # [2026-09-24] env sync step 은 모두 '🔄 블루그린 백엔드·Nginx 적용' 이전에 실행하고 슬롯을 재시작하지 않는다.
+    # (이전: Apple/Google/URLs/PII 가 cutover 이후 실행 + 변경 판정마다 blue·green 동시 재시작 → 트래픽 슬롯 4회 재기동)
+    # 변경분은 비활성 슬롯 재시작(블루그린 step) 또는 '♻️ env 변경 반영' step 의 1회 재시작으로만 반영된다.
+    # ============================================================================
+
+    # ============================================================================
+    # [P0 hotfix 2026-06-08] Apple SIWA env 자동 주입 + 검증 (운영)
+    # GitHub Secrets(APPLE_*) → /etc/mindgarden/prod.env 멱등 갱신 (슬롯 재시작 없음 — 위 안내 참조).
+    # 가이드: docs/project-management/2026-06-04/APPLE_T1_OPS_ENV_INJECTION_GUIDE.md §1.1
+    # 이전(PR #156)은 코드만 수정했고 운영 systemd 가 prod.env placeholder/누락 4종으로 빈 값 BE 기동 → SIWA P0 직접 원인.
+    # PR #302 (2026-06-13): composite action `.github/actions/sync-prod-env-key` 로 DRY 통합.
+    #   PRESERVE (DB 8키)/RESTORE/FAIL-FAST 가드 + sed 멱등 갱신 로직은 composite 내부에서 동일하게 유지.
+    # PR-2 (2026-06-13 SSOT 통일): env_path 를 SSOT 정책 v1.0.0 (DB_ENV_SSOT_POLICY.md §1) 에 따라
+    #   /etc/mindgarden/prod-from-dev.env → /etc/mindgarden/prod.env 단일로 통일.
+    # ============================================================================
+    - name: 🍎 Apple SIWA env 자동 주입 + 검증
+      uses: ./.github/actions/sync-prod-env-key
+      with:
+        step_name: 'Apple SIWA'
+        keys: 'APPLE_CLIENT_ID APPLE_TEAM_ID APPLE_KEY_ID APPLE_PRIVATE_KEY APPLE_REDIRECT_URI APPLE_ALLOWED_AUDIENCES'
+        # SSOT 통일 (PR-2, 2026-06-13): prod.env 단일 EnvironmentFile (DB_ENV_SSOT_POLICY.md §1)
+        env_path: '/etc/mindgarden/prod.env'
+        ssh_host: ${{ secrets.PRODUCTION_HOST }}
+        ssh_user: ${{ secrets.PRODUCTION_USER }}
+        ssh_key: ${{ secrets.PRODUCTION_SSH_KEY }}
+        skip_when: 'any_missing'
+        # APPLE_PRIVATE_KEY 는 PEM 멀티라인 — systemd EnvironmentFile 호환 위해 한 줄로 변환
+        pem_oneline_keys: 'APPLE_PRIVATE_KEY'
+        # 6종 값이 모두 현재 prod.env 와 같으면 no-op
+        noop_compare: 'true'
+    # ============================================================================
+    # [/P0 hotfix 2026-06-08]
+    # ============================================================================
+
+    # ============================================================================
+    # [P0 hotfix 2026-06-11] Google OAuth env 자동 주입 + 검증 (운영)
+    # GitHub Secrets(GOOGLE_*) → /etc/mindgarden/prod.env 멱등 갱신 (슬롯 재시작 없음).
+    # 배경: PR #204(Web Google OAuth A-2 server-side auth-code) 머지 이후에도 운영 워크플로에
+    #       GOOGLE_* 자동 주입 step 이 없어, 운영 BE 의 GoogleOAuth2ServiceImpl 가 fallback "dummy" 를
+    #       Google /token 으로 송신 → 401 invalid_client. Apple SIWA env 자동 주입 과 동일 패턴 차용.
+    # Secret: GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET / GOOGLE_REDIRECT_URI
+    #         미등록 시 ::notice 로 skip 후 배포 자체는 성공 (Apple step 동일 정책).
+    # PR #302 (2026-06-13): composite action 으로 DRY 통합.
+    # PR-2 (2026-06-13 SSOT 통일): env_path 를 SSOT 정책 v1.0.0 에 따라 prod.env 단일로 통일.
+    # ============================================================================
+    - name: 🟢 Google OAuth env 자동 주입 + 검증
+      uses: ./.github/actions/sync-prod-env-key
+      with:
+        step_name: 'Google OAuth'
+        keys: 'GOOGLE_CLIENT_ID GOOGLE_CLIENT_SECRET GOOGLE_REDIRECT_URI'
+        # SSOT 통일 (PR-2, 2026-06-13): prod.env 단일 EnvironmentFile (DB_ENV_SSOT_POLICY.md §1)
+        env_path: '/etc/mindgarden/prod.env'
+        ssh_host: ${{ secrets.PRODUCTION_HOST }}
+        ssh_user: ${{ secrets.PRODUCTION_USER }}
+        ssh_key: ${{ secrets.PRODUCTION_SSH_KEY }}
+        skip_when: 'any_missing'
+        noop_compare: 'true'
+    # ============================================================================
+    # [/P0 hotfix 2026-06-11]
+    # ============================================================================
+
+    # ============================================================================
+    # [2026-06-12 SSOT 통합] NCP SENS env 자동 주입 step 폐기.
+    # PR #227 (NCP SENS SignatureV2 정식 호출) + 다중 어댑터(NhnSmsProvider) 폐기.
+    # SmsGatewayServiceImpl 은 SolapiSmsProvider 단일 호출로 통합됨.
+    # 솔라피 자격 증명은 scripts/deployment/sync-solapi-sms-env.sh 가 운영 환경 동기화를 담당한다.
+    # 폐기 이력: SMS_GATEWAY_NCP_SENS_SETUP_GUIDE.md 도 함께 삭제.
+    # ============================================================================
+
+    # ============================================================================
+    # [OAuth 4종 표준화 옵션 B′, 2026-06-11] *_REGISTERED_URLS env 자동 주입 + 검증 (운영)
+    # GitHub Secrets(KAKAO/NAVER/GOOGLE/APPLE_REGISTERED_URLS) → /etc/mindgarden/prod.env
+    #   멱등 갱신 (슬롯 재시작 없음).
+    # OAuth2Controller#assertRegisteredCallbackUrl 가 동적 redirect_uri 와 일치 여부 검증·로깅.
+    # 미주입 시 BE 검증 graceful skip — 기존 4종 callback 동작은 그대로 유지.
+    # Secret: KAKAO/NAVER/GOOGLE/APPLE_REGISTERED_URLS (콤마 구분, 각 환경별 apex 콜백)
+    # PR #302 (2026-06-13): composite action 으로 DRY 통합 (skip_when=all_missing — 부분 누락 허용).
+    # PR-2 (2026-06-13 SSOT 통일): env_path 를 SSOT 정책 v1.0.0 에 따라 prod.env 단일로 통일.
+    # ============================================================================
+    - name: 🔗 OAuth 4종 REGISTERED_URLS env 자동 주입 + 검증
+      uses: ./.github/actions/sync-prod-env-key
+      with:
+        step_name: 'OAuth 4종 REGISTERED_URLS'
+        keys: 'KAKAO_REGISTERED_URLS NAVER_REGISTERED_URLS GOOGLE_REGISTERED_URLS APPLE_REGISTERED_URLS'
+        # SSOT 통일 (PR-2, 2026-06-13): prod.env 단일 EnvironmentFile (DB_ENV_SSOT_POLICY.md §1)
+        env_path: '/etc/mindgarden/prod.env'
+        ssh_host: ${{ secrets.PRODUCTION_HOST }}
+        ssh_user: ${{ secrets.PRODUCTION_USER }}
+        ssh_key: ${{ secrets.PRODUCTION_SSH_KEY }}
+        # partial 허용 — 모두 비어 있을 때만 skip, 채워진 키는 graceful 반영
+        skip_when: 'all_missing'
+        # 채워진 키가 모두 현재 값과 같으면 no-op
+        noop_compare: 'true'
+    # ============================================================================
+    # [/OAuth 4종 표준화 옵션 B′, 2026-06-11]
+    # ============================================================================
+
+    # ============================================================================
+    # [P0 후속 강화 2026-06-09] Profile Image Upload Dir env 자동 주입 + 검증 (운영)
+    # 배경: PR #167 배포 시 운영 SSH 로 prod.env 에 PROFILE_IMAGE_UPLOAD_DIR 를
+    #       직접 추가했음. 후속 배포가 동일 키를 자동 주입하지 않으면 다음 운영자 작업·env
+    #       재생성 시 사라질 위험 → 워크플로에서 멱등 주입으로 영구 보장.
+    # 가이드: docs/project-management/2026-06-09/PROFILE_IMAGE_UPLOAD_OPS_GUIDE.md §5
+    # Secret: PROFILE_IMAGE_UPLOAD_DIR (비밀 아님; 미등록 시 default 적용 + notice)
+    # 값 변경 시에만 변경 기록 — no-op 시 갱신·재시작 모두 생략.
+    # PR #302 (2026-06-13): composite action 으로 DRY 통합 (noop_compare + default_value + mkdir_value_keys).
+    # PR-2 (2026-06-13 SSOT 통일): env_path 를 SSOT 정책 v1.0.0 에 따라 prod.env 단일로 통일.
+    # ============================================================================
+    - name: 🖼️ Profile Image Upload env 자동 주입 + 검증
+      uses: ./.github/actions/sync-prod-env-key
+      env:
+        PROFILE_IMAGE_UPLOAD_DIR: ${{ secrets.PROFILE_IMAGE_UPLOAD_DIR }}
+      with:
+        step_name: 'PROFILE_IMAGE_UPLOAD_DIR'
+        keys: 'PROFILE_IMAGE_UPLOAD_DIR'
+        # SSOT 통일 (PR-2, 2026-06-13): prod.env 단일 EnvironmentFile (DB_ENV_SSOT_POLICY.md §1)
+        env_path: '/etc/mindgarden/prod.env'
+        ssh_host: ${{ secrets.PRODUCTION_HOST }}
+        ssh_user: ${{ secrets.PRODUCTION_USER }}
+        ssh_key: ${{ secrets.PRODUCTION_SSH_KEY }}
+        skip_when: 'any_missing'
+        # 비-secret 운영 상수 — 미등록 시 default 적용
+        default_value: '/var/mindgarden/uploads/profile-images/'
+        # 무변경 배포 시 재시작 생략 (배포 비용 최소화)
+        noop_compare: 'true'
+        # 디렉터리 존재·소유권 보장 (no-op 경로에서도 실행)
+        mkdir_value_keys: 'PROFILE_IMAGE_UPLOAD_DIR'
+        mkdir_chown_user: 'mindgarden:mindgarden'
+    # ============================================================================
+    # [/P0 후속 강화 2026-06-09]
+    # ============================================================================
+
+    # ============================================================================
+    # [shop-catalog / logos shared upload 2026-09-26]
+    # blue/green 슬롯 WD 상대경로 저장 → 재기동 후 404 재발 방지.
+    # PROFILE_IMAGE_UPLOAD_DIR 와 동일 composite sync + mkdir/chown 패턴.
+    # ============================================================================
+    - name: 🖼️ Shop Catalog Thumbnail Upload env 자동 주입 + 검증
+      uses: ./.github/actions/sync-prod-env-key
+      env:
+        SHOP_CATALOG_THUMBNAIL_UPLOAD_DIR: ${{ secrets.SHOP_CATALOG_THUMBNAIL_UPLOAD_DIR }}
+      with:
+        step_name: 'SHOP_CATALOG_THUMBNAIL_UPLOAD_DIR'
+        keys: 'SHOP_CATALOG_THUMBNAIL_UPLOAD_DIR'
+        env_path: '/etc/mindgarden/prod.env'
+        ssh_host: ${{ secrets.PRODUCTION_HOST }}
+        ssh_user: ${{ secrets.PRODUCTION_USER }}
+        ssh_key: ${{ secrets.PRODUCTION_SSH_KEY }}
+        skip_when: 'any_missing'
+        default_value: '/var/mindgarden/uploads/shop-catalog-thumbnails/'
+        noop_compare: 'true'
+        mkdir_value_keys: 'SHOP_CATALOG_THUMBNAIL_UPLOAD_DIR'
+        mkdir_chown_user: 'mindgarden:mindgarden'
+
+    - name: 🖼️ Tenant Logo Upload env 자동 주입 + 검증
+      uses: ./.github/actions/sync-prod-env-key
+      env:
+        TENANT_LOGO_UPLOAD_DIR: ${{ secrets.TENANT_LOGO_UPLOAD_DIR }}
+      with:
+        step_name: 'TENANT_LOGO_UPLOAD_DIR'
+        keys: 'TENANT_LOGO_UPLOAD_DIR'
+        env_path: '/etc/mindgarden/prod.env'
+        ssh_host: ${{ secrets.PRODUCTION_HOST }}
+        ssh_user: ${{ secrets.PRODUCTION_USER }}
+        ssh_key: ${{ secrets.PRODUCTION_SSH_KEY }}
+        skip_when: 'any_missing'
+        default_value: '/var/mindgarden/uploads/logos/'
+        noop_compare: 'true'
+        mkdir_value_keys: 'TENANT_LOGO_UPLOAD_DIR'
+        mkdir_chown_user: 'mindgarden:mindgarden'
+    # ============================================================================
+    # [/shop-catalog / logos shared upload 2026-09-26]
+    # ============================================================================
+
+    # ============================================================================
+    # [B-3 P0 보안 2026-06-13] JWT_SECRET env 자동 주입 + 검증 (운영)
+    # 배경: 운영 unit Environment= 평문 placeholder(`JWT_SECRET=changeme` 등) 회귀 방지.
+    #       Apple/Google/URLs/PROFILE_IMAGE_UPLOAD_DIR sync step 과 동일 패턴.
+    # 가드:
+    #   - JwtSecretValidator (com.coresolution.core.security) 가 BE 부트 시 길이/약 단어 검증.
+    #   - 본 step 은 prod.env 의 JWT_SECRET 을 GitHub Secret 으로 멱등 동기화.
+    #   - PR #296/#299 의 DB_PRESERVE_KEYS 가드와 동일하게 8키 보존 + DB 키 fail-fast.
+    # Secret 미등록 시 ::notice 후 skip — 운영 회전이 끝나지 않은 단계에서 batch fail 방지.
+    # PR #302 (2026-06-13): composite action 으로 DRY 통합 (noop_compare — 동일 키 회전 시 재시작 생략).
+    # PR-2 (2026-06-13 SSOT 통일): env_path 를 SSOT 정책 v1.0.0 에 따라 prod.env 단일로 통일.
+    # ============================================================================
+    - name: 🔐 JWT_SECRET env 자동 주입 + 검증
+      uses: ./.github/actions/sync-prod-env-key
+      with:
+        step_name: 'JWT_SECRET'
+        keys: 'JWT_SECRET'
+        # SSOT 통일 (PR-2, 2026-06-13): prod.env 단일 EnvironmentFile (DB_ENV_SSOT_POLICY.md §1)
+        env_path: '/etc/mindgarden/prod.env'
+        ssh_host: ${{ secrets.PRODUCTION_HOST }}
+        ssh_user: ${{ secrets.PRODUCTION_USER }}
+        ssh_key: ${{ secrets.PRODUCTION_SSH_KEY }}
+        skip_when: 'any_missing'
+        # 동일 키 회전 시 재시작 생략 (배포 비용 최소화)
+        noop_compare: 'true'
+    # ============================================================================
+    # [/B-3 P0 보안 2026-06-13]
+    # ============================================================================
+
+    # ============================================================================
+    # [PII 회전 선행 PR-1 SSOT 2026-06-14] PII KEY/IV 회전 env 자동 주입 + 검증 (운영)
+    # 배경: PII KEY/IV 회전 재암호화 마이그 설계 (PR #335,
+    #       docs/standards/PII_KEY_ROTATION_REENCRYPTION_DESIGN.md) 합의 §6 4건 후속.
+    #       Phase 0~4 진입 전 차단 해제용 운영 SSOT 보강 — 회전 인프라 환경변수 4종을
+    #       /etc/mindgarden/prod-from-dev.env 로 멱등 동기화한다.
+    # 키 set:
+    #   - PERSONAL_DATA_ENCRYPTION_ACTIVE_KEY_ID : 현재 활성 키 ID (단일 값, 회전 시 갱신)
+    #   - PERSONAL_DATA_ENCRYPTION_KEYS          : CSV 다중 키 set (메인 + 휴면 키 모두 포함)
+    #   - PERSONAL_DATA_ENCRYPTION_IVS           : CSV 다중 IV set (KEYS 와 동일 keyId)
+    #   - MINDGARDEN_DORMANT_PII_ENC_KEY         : 휴면 사용자 PII 별도 키
+    # 정책:
+    #   - skip_when=all_missing — 4종 모두 비면 skip, 일부만 채워져도 채워진 키만 graceful 반영.
+    #     운영 secret 등록은 Phase 1 진입 전 사용자 작업이며, 기존 BE Converter/Util 동작 영향 최소화.
+    # 하위 PR-2:
+    #   - composite action PRESERVE_KEYS 가드에 본 4종 추가 — 다른 sync step 갱신 도중
+    #     PII 키 라인이 사라지는 회귀 차단 (PR #299 DB_PRESERVE_KEYS 동일 패턴).
+    # ============================================================================
+    - name: 🔑 PII KEY/IV 회전 env 자동 주입 + 검증
+      uses: ./.github/actions/sync-prod-env-key
+      with:
+        step_name: 'PII KEY/IV 회전'
+        keys: 'PERSONAL_DATA_ENCRYPTION_ACTIVE_KEY_ID PERSONAL_DATA_ENCRYPTION_KEYS PERSONAL_DATA_ENCRYPTION_IVS MINDGARDEN_DORMANT_PII_ENC_KEY'
+        # SSOT 통일 (cutover 정합, 2026-06-15 PR-4 후속): prod.env 단일 EnvironmentFile (DB_ENV_SSOT_POLICY.md §1).
+        # cutover-prod-env-ssot.yml 실행 (run 27528336064) 으로 prod-from-dev.env 폐기됨에 따라
+        # composite action default env_path 회귀 차단 (HQ_TENANT_ID 와 동일 패턴 — PR #390 보강).
+        env_path: '/etc/mindgarden/prod.env'
+        ssh_host: ${{ secrets.PRODUCTION_HOST }}
+        ssh_user: ${{ secrets.PRODUCTION_USER }}
+        ssh_key: ${{ secrets.PRODUCTION_SSH_KEY }}
+        # 누락 허용 — Phase 1 진입 전 부분 등록 단계에서 BE 기동 영향 최소화.
+        skip_when: 'all_missing'
+        # 채워진 키가 모두 현재 값과 같으면 no-op
+        noop_compare: 'true'
+    # ============================================================================
+    # [/PII 회전 선행 PR-1 SSOT 2026-06-14]
+    # ============================================================================
+
     # prod.env 존재 시 SESSION_COOKIE_DOMAIN 미설정 → 테넌트 서브도메인에서 세션 쿠키 불일치·401 가능.
     # 운영 담당: /etc/mindgarden/prod.env 에 SESSION_COOKIE_DOMAIN=core-solution.co.kr (RFC 6265, 선행 점 없음) — deployment/mindgarden.prod-env.example 과 동일.
     - name: 📤 전환 게이트 스크립트 업로드
@@ -822,7 +1097,7 @@ jobs:
         # max expression length 21000 자 제한이 적용된다. 본 SSH 스크립트가 400+ 줄이라
         # 21000 초과 → "Invalid workflow file" 오류 발생. step env 로 옮겨 script 안
         # ${{ }} 를 0 개로 만들어 21000 제한을 회피한다.
-        BACKEND_CHANGED: ${{ needs.build.outputs.backend_changed }}
+        BACKEND_CHANGED: ${{ steps.changed-files.outputs.backend_changed }}
       with:
         host: ${{ secrets.PRODUCTION_HOST }}
         username: ${{ secrets.PRODUCTION_USER }}
@@ -1132,7 +1407,8 @@ jobs:
           
             echo "🏥 비활성 슬롯 localhost 헬스 (${INACTIVE_PORT}/actuator/health)"
             HEALTH_OK=0
-            for i in 1 2 3 4 5 6 7 8 9 10; do
+            # appleboy/ssh-action 기본 셸은 sh. {1..25} 는 확장되지 않아 1회로 줄어든다.
+            for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25; do
               if curl -fsS "http://${MG_BACKEND_BIND_HOST}:${INACTIVE_PORT}/actuator/health" >/dev/null 2>&1; then
                 echo "✅ 헬스 통과 (시도 $i)"
                 curl -sS "http://${MG_BACKEND_BIND_HOST}:${INACTIVE_PORT}/actuator/health" | head -c 400 || true
@@ -1140,7 +1416,7 @@ jobs:
                 HEALTH_OK=1
                 break
               fi
-              echo "⏳ 헬스 대기... ($i/10)"
+              echo "⏳ 헬스 대기... ($i/25)"
               sleep 6
             done
             if [ "$HEALTH_OK" != "1" ]; then
@@ -1158,7 +1434,7 @@ jobs:
             # 전환 전에는 minimum-idle 연결을 동시에 연 SELECT 1 이 빠르게 끝나야 한다.
             # 한 번 연결하고 isValid 만 통과한 상태로는 upstream 을 바꾸지 않는다.
             # 느리거나 실패하면 파일을 쓰지 않고, 이 슬롯을 추가로 재시작하지 않는다.
-            # 대기 횟수는 위 헬스 루프와 같은 10회·6초. Hikari connection-timeout·nginx /api/ 60초는 바꾸지 않는다.
+            # readiness 대기는 prod-readiness-cutover-gate.sh 의 10회·6초를 유지한다(위 actuator 헬스 25회·6초와 분리). Hikari connection-timeout·nginx /api/ 60초는 바꾸지 않는다.
             # CF520: 단일 active server + keepalive 32 만 기록 (듀얼 server/proxy_next_upstream 금지 — POST 이중 위험).
             UPSTREAM_BACKUP=$(mktemp)
             if [ -f "$UPSTREAM_SNIP" ]; then
@@ -1421,234 +1697,98 @@ jobs:
             echo "⚠️ PL/SQL 프로시저 파일을 찾을 수 없습니다"
           fi
           
-    # ============================================================================
-    # [P0 hotfix 2026-06-08] Apple SIWA env 자동 주입 + 검증 (운영)
-    # GitHub Secrets(APPLE_*) → /etc/mindgarden/prod.env 멱등 갱신 + 양쪽 BG 슬롯 재시작 + env 검증.
-    # 가이드: docs/project-management/2026-06-04/APPLE_T1_OPS_ENV_INJECTION_GUIDE.md §1.1
-    # 이전(PR #156)은 코드만 수정했고 운영 systemd 가 prod.env placeholder/누락 4종으로 빈 값 BE 기동 → SIWA P0 직접 원인.
-    # PR #302 (2026-06-13): composite action `.github/actions/sync-prod-env-key` 로 DRY 통합.
-    #   PRESERVE (DB 8키)/RESTORE/FAIL-FAST 가드 + sed 멱등 갱신 로직은 composite 내부에서 동일하게 유지.
-    # PR-2 (2026-06-13 SSOT 통일): env_path 를 SSOT 정책 v1.0.0 (DB_ENV_SSOT_POLICY.md §1) 에 따라
-    #   /etc/mindgarden/prod-from-dev.env → /etc/mindgarden/prod.env 단일로 통일.
-    # ============================================================================
-    - name: 🍎 Apple SIWA env 자동 주입 + 검증
-      uses: ./.github/actions/sync-prod-env-key
-      with:
-        step_name: 'Apple SIWA'
-        keys: 'APPLE_CLIENT_ID APPLE_TEAM_ID APPLE_KEY_ID APPLE_PRIVATE_KEY APPLE_REDIRECT_URI APPLE_ALLOWED_AUDIENCES'
-        # SSOT 통일 (PR-2, 2026-06-13): prod.env 단일 EnvironmentFile (DB_ENV_SSOT_POLICY.md §1)
-        env_path: '/etc/mindgarden/prod.env'
-        ssh_host: ${{ secrets.PRODUCTION_HOST }}
-        ssh_user: ${{ secrets.PRODUCTION_USER }}
-        ssh_key: ${{ secrets.PRODUCTION_SSH_KEY }}
-        skip_when: 'any_missing'
-        # APPLE_PRIVATE_KEY 는 PEM 멀티라인 — systemd EnvironmentFile 호환 위해 한 줄로 변환
-        pem_oneline_keys: 'APPLE_PRIVATE_KEY'
-    # ============================================================================
-    # [/P0 hotfix 2026-06-08]
-    # ============================================================================
-
-    # ============================================================================
-    # [P0 hotfix 2026-06-11] Google OAuth env 자동 주입 + 검증 (운영)
-    # GitHub Secrets(GOOGLE_*) → /etc/mindgarden/prod.env 멱등 갱신 + 양쪽 BG 슬롯 재시작 + env 검증.
-    # 배경: PR #204(Web Google OAuth A-2 server-side auth-code) 머지 이후에도 운영 워크플로에
-    #       GOOGLE_* 자동 주입 step 이 없어, 운영 BE 의 GoogleOAuth2ServiceImpl 가 fallback "dummy" 를
-    #       Google /token 으로 송신 → 401 invalid_client. Apple SIWA env 자동 주입 과 동일 패턴 차용.
-    # Secret: GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET / GOOGLE_REDIRECT_URI
-    #         미등록 시 ::notice 로 skip 후 배포 자체는 성공 (Apple step 동일 정책).
-    # PR #302 (2026-06-13): composite action 으로 DRY 통합.
-    # PR-2 (2026-06-13 SSOT 통일): env_path 를 SSOT 정책 v1.0.0 에 따라 prod.env 단일로 통일.
-    # ============================================================================
-    - name: 🟢 Google OAuth env 자동 주입 + 검증
-      uses: ./.github/actions/sync-prod-env-key
-      with:
-        step_name: 'Google OAuth'
-        keys: 'GOOGLE_CLIENT_ID GOOGLE_CLIENT_SECRET GOOGLE_REDIRECT_URI'
-        # SSOT 통일 (PR-2, 2026-06-13): prod.env 단일 EnvironmentFile (DB_ENV_SSOT_POLICY.md §1)
-        env_path: '/etc/mindgarden/prod.env'
-        ssh_host: ${{ secrets.PRODUCTION_HOST }}
-        ssh_user: ${{ secrets.PRODUCTION_USER }}
-        ssh_key: ${{ secrets.PRODUCTION_SSH_KEY }}
-        skip_when: 'any_missing'
-    # ============================================================================
-    # [/P0 hotfix 2026-06-11]
-    # ============================================================================
-
-    # ============================================================================
-    # [2026-06-12 SSOT 통합] NCP SENS env 자동 주입 step 폐기.
-    # PR #227 (NCP SENS SignatureV2 정식 호출) + 다중 어댑터(NhnSmsProvider) 폐기.
-    # SmsGatewayServiceImpl 은 SolapiSmsProvider 단일 호출로 통합됨.
-    # 솔라피 자격 증명은 scripts/deployment/sync-solapi-sms-env.sh 가 운영 환경 동기화를 담당한다.
-    # 폐기 이력: SMS_GATEWAY_NCP_SENS_SETUP_GUIDE.md 도 함께 삭제.
-    # ============================================================================
-
-    # ============================================================================
-    # [OAuth 4종 표준화 옵션 B′, 2026-06-11] *_REGISTERED_URLS env 자동 주입 + 검증 (운영)
-    # GitHub Secrets(KAKAO/NAVER/GOOGLE/APPLE_REGISTERED_URLS) → /etc/mindgarden/prod.env
-    #   멱등 갱신 + 양쪽 BG 슬롯 재시작.
-    # OAuth2Controller#assertRegisteredCallbackUrl 가 동적 redirect_uri 와 일치 여부 검증·로깅.
-    # 미주입 시 BE 검증 graceful skip — 기존 4종 callback 동작은 그대로 유지.
-    # Secret: KAKAO/NAVER/GOOGLE/APPLE_REGISTERED_URLS (콤마 구분, 각 환경별 apex 콜백)
-    # PR #302 (2026-06-13): composite action 으로 DRY 통합 (skip_when=all_missing — 부분 누락 허용).
-    # PR-2 (2026-06-13 SSOT 통일): env_path 를 SSOT 정책 v1.0.0 에 따라 prod.env 단일로 통일.
-    # ============================================================================
-    - name: 🔗 OAuth 4종 REGISTERED_URLS env 자동 주입 + 검증
-      uses: ./.github/actions/sync-prod-env-key
-      with:
-        step_name: 'OAuth 4종 REGISTERED_URLS'
-        keys: 'KAKAO_REGISTERED_URLS NAVER_REGISTERED_URLS GOOGLE_REGISTERED_URLS APPLE_REGISTERED_URLS'
-        # SSOT 통일 (PR-2, 2026-06-13): prod.env 단일 EnvironmentFile (DB_ENV_SSOT_POLICY.md §1)
-        env_path: '/etc/mindgarden/prod.env'
-        ssh_host: ${{ secrets.PRODUCTION_HOST }}
-        ssh_user: ${{ secrets.PRODUCTION_USER }}
-        ssh_key: ${{ secrets.PRODUCTION_SSH_KEY }}
-        # partial 허용 — 모두 비어 있을 때만 skip, 채워진 키는 graceful 반영
-        skip_when: 'all_missing'
-    # ============================================================================
-    # [/OAuth 4종 표준화 옵션 B′, 2026-06-11]
-    # ============================================================================
-
-    # ============================================================================
-    # [P0 후속 강화 2026-06-09] Profile Image Upload Dir env 자동 주입 + 검증 (운영)
-    # 배경: PR #167 배포 시 운영 SSH 로 prod.env 에 PROFILE_IMAGE_UPLOAD_DIR 를
-    #       직접 추가했음. 후속 배포가 동일 키를 자동 주입하지 않으면 다음 운영자 작업·env
-    #       재생성 시 사라질 위험 → 워크플로에서 멱등 주입으로 영구 보장.
-    # 가이드: docs/project-management/2026-06-09/PROFILE_IMAGE_UPLOAD_OPS_GUIDE.md §5
-    # Secret: PROFILE_IMAGE_UPLOAD_DIR (비밀 아님; 미등록 시 default 적용 + notice)
-    # 값 변경 시에만 BG 슬롯 재시작 — no-op 시 재시작 생략하여 배포 비용 최소화.
-    # PR #302 (2026-06-13): composite action 으로 DRY 통합 (noop_compare + default_value + mkdir_value_keys).
-    # PR-2 (2026-06-13 SSOT 통일): env_path 를 SSOT 정책 v1.0.0 에 따라 prod.env 단일로 통일.
-    # ============================================================================
-    - name: 🖼️ Profile Image Upload env 자동 주입 + 검증
-      uses: ./.github/actions/sync-prod-env-key
+    # env sync step 들이 run 마커에 남긴 변경 키를 1회만 반영한다. 트래픽 슬롯은 재시작하지 않는다.
+    #  - backend_changed=true : 위 블루그린 step 이 새 env 로 비활성 슬롯을 기동·전환했으므로 검증만.
+    #  - 그 외               : 트래픽 없는 슬롯만 1회 재시작 (실행 중일 때만). 트래픽 슬롯은 다음 백엔드 cutover 에서 반영.
+    - name: ♻️ env 변경 반영 (트래픽 없는 슬롯 1회 재시작)
+      uses: appleboy/ssh-action@master
       env:
-        PROFILE_IMAGE_UPLOAD_DIR: ${{ secrets.PROFILE_IMAGE_UPLOAD_DIR }}
+        BACKEND_CHANGED: ${{ steps.changed-files.outputs.backend_changed }}
+        SYNC_RUN_KEY: ${{ github.run_id }}-${{ github.run_attempt }}
       with:
-        step_name: 'PROFILE_IMAGE_UPLOAD_DIR'
-        keys: 'PROFILE_IMAGE_UPLOAD_DIR'
-        # SSOT 통일 (PR-2, 2026-06-13): prod.env 단일 EnvironmentFile (DB_ENV_SSOT_POLICY.md §1)
-        env_path: '/etc/mindgarden/prod.env'
-        ssh_host: ${{ secrets.PRODUCTION_HOST }}
-        ssh_user: ${{ secrets.PRODUCTION_USER }}
-        ssh_key: ${{ secrets.PRODUCTION_SSH_KEY }}
-        skip_when: 'any_missing'
-        # 비-secret 운영 상수 — 미등록 시 default 적용
-        default_value: '/var/mindgarden/uploads/profile-images/'
-        # 무변경 배포 시 재시작 생략 (배포 비용 최소화)
-        noop_compare: 'true'
-        # 디렉터리 존재·소유권 보장 (no-op 경로에서도 실행)
-        mkdir_value_keys: 'PROFILE_IMAGE_UPLOAD_DIR'
-        mkdir_chown_user: 'mindgarden:mindgarden'
-    # ============================================================================
-    # [/P0 후속 강화 2026-06-09]
-    # ============================================================================
+        host: ${{ secrets.PRODUCTION_HOST }}
+        username: ${{ secrets.PRODUCTION_USER }}
+        key: ${{ secrets.PRODUCTION_SSH_KEY }}
+        port: 22
+        timeout: 120s
+        command_timeout: 10m
+        envs: BACKEND_CHANGED,SYNC_RUN_KEY
+        script: |
+          MARKER="$HOME/.mindgarden-env-sync-changed.${SYNC_RUN_KEY}"
+          find "$HOME" -maxdepth 1 -name '.mindgarden-env-sync-changed.*' -mtime +1 -delete 2>/dev/null || true
+          if [ ! -s "$MARKER" ]; then
+            echo "✅ env 변경 없음 — 슬롯 재시작 없음"
+            exit 0
+          fi
+          CHANGED_KEYS=$(sort -u "$MARKER" | tr '\n' ' ')
+          rm -f "$MARKER"
+          echo "📝 이번 run 에서 변경된 env 키: ${CHANGED_KEYS}"
 
-    # ============================================================================
-    # [shop-catalog / logos shared upload 2026-09-26]
-    # blue/green 슬롯 WD 상대경로 저장 → 재기동 후 404 재발 방지.
-    # PROFILE_IMAGE_UPLOAD_DIR 와 동일 composite sync + mkdir/chown 패턴.
-    # ============================================================================
-    - name: 🖼️ Shop Catalog Thumbnail Upload env 자동 주입 + 검증
-      uses: ./.github/actions/sync-prod-env-key
-      env:
-        SHOP_CATALOG_THUMBNAIL_UPLOAD_DIR: ${{ secrets.SHOP_CATALOG_THUMBNAIL_UPLOAD_DIR }}
-      with:
-        step_name: 'SHOP_CATALOG_THUMBNAIL_UPLOAD_DIR'
-        keys: 'SHOP_CATALOG_THUMBNAIL_UPLOAD_DIR'
-        env_path: '/etc/mindgarden/prod.env'
-        ssh_host: ${{ secrets.PRODUCTION_HOST }}
-        ssh_user: ${{ secrets.PRODUCTION_USER }}
-        ssh_key: ${{ secrets.PRODUCTION_SSH_KEY }}
-        skip_when: 'any_missing'
-        default_value: '/var/mindgarden/uploads/shop-catalog-thumbnails/'
-        noop_compare: 'true'
-        mkdir_value_keys: 'SHOP_CATALOG_THUMBNAIL_UPLOAD_DIR'
-        mkdir_chown_user: 'mindgarden:mindgarden'
+          MG_BACKEND_BIND_HOST="${MG_BACKEND_BIND_HOST:-127.0.0.1}"
+          MG_BLUE_PORT="${MG_BLUE_PORT:-8080}"
+          MG_GREEN_PORT="${MG_GREEN_PORT:-8081}"
+          MG_ACTIVE_BACKEND_FILE="${MG_ACTIVE_BACKEND_FILE:-/etc/mindgarden/active-backend}"
+          MG_LOCAL_DB_HOST="${MG_LOCAL_DB_HOST:-localhost}"
 
-    - name: 🖼️ Tenant Logo Upload env 자동 주입 + 검증
-      uses: ./.github/actions/sync-prod-env-key
-      env:
-        TENANT_LOGO_UPLOAD_DIR: ${{ secrets.TENANT_LOGO_UPLOAD_DIR }}
-      with:
-        step_name: 'TENANT_LOGO_UPLOAD_DIR'
-        keys: 'TENANT_LOGO_UPLOAD_DIR'
-        env_path: '/etc/mindgarden/prod.env'
-        ssh_host: ${{ secrets.PRODUCTION_HOST }}
-        ssh_user: ${{ secrets.PRODUCTION_USER }}
-        ssh_key: ${{ secrets.PRODUCTION_SSH_KEY }}
-        skip_when: 'any_missing'
-        default_value: '/var/mindgarden/uploads/logos/'
-        noop_compare: 'true'
-        mkdir_value_keys: 'TENANT_LOGO_UPLOAD_DIR'
-        mkdir_chown_user: 'mindgarden:mindgarden'
-    # ============================================================================
-    # [/shop-catalog / logos shared upload 2026-09-26]
-    # ============================================================================
+          ACTIVE=$(sudo cat "$MG_ACTIVE_BACKEND_FILE" 2>/dev/null | tr -d '[:space:]' | awk '{print tolower($0)}')
+          case "$ACTIVE" in
+            blue) IDLE=green; IDLE_PORT="$MG_GREEN_PORT" ;;
+            green) IDLE=blue; IDLE_PORT="$MG_BLUE_PORT" ;;
+            *)
+              echo "::warning title=env 변경 반영 skip::active-backend 값 확인 불가('${ACTIVE}') — 슬롯 재시작 생략"
+              exit 0
+              ;;
+          esac
 
-    # ============================================================================
-    # [B-3 P0 보안 2026-06-13] JWT_SECRET env 자동 주입 + 검증 (운영)
-    # 배경: 운영 unit Environment= 평문 placeholder(`JWT_SECRET=changeme` 등) 회귀 방지.
-    #       Apple/Google/URLs/PROFILE_IMAGE_UPLOAD_DIR sync step 과 동일 패턴.
-    # 가드:
-    #   - JwtSecretValidator (com.coresolution.core.security) 가 BE 부트 시 길이/약 단어 검증.
-    #   - 본 step 은 prod.env 의 JWT_SECRET 을 GitHub Secret 으로 멱등 동기화.
-    #   - PR #296/#299 의 DB_PRESERVE_KEYS 가드와 동일하게 8키 보존 + DB 키 fail-fast.
-    # Secret 미등록 시 ::notice 후 skip — 운영 회전이 끝나지 않은 단계에서 batch fail 방지.
-    # PR #302 (2026-06-13): composite action 으로 DRY 통합 (noop_compare — 동일 키 회전 시 재시작 생략).
-    # PR-2 (2026-06-13 SSOT 통일): env_path 를 SSOT 정책 v1.0.0 에 따라 prod.env 단일로 통일.
-    # ============================================================================
-    - name: 🔐 JWT_SECRET env 자동 주입 + 검증
-      uses: ./.github/actions/sync-prod-env-key
-      with:
-        step_name: 'JWT_SECRET'
-        keys: 'JWT_SECRET'
-        # SSOT 통일 (PR-2, 2026-06-13): prod.env 단일 EnvironmentFile (DB_ENV_SSOT_POLICY.md §1)
-        env_path: '/etc/mindgarden/prod.env'
-        ssh_host: ${{ secrets.PRODUCTION_HOST }}
-        ssh_user: ${{ secrets.PRODUCTION_USER }}
-        ssh_key: ${{ secrets.PRODUCTION_SSH_KEY }}
-        skip_when: 'any_missing'
-        # 동일 키 회전 시 재시작 생략 (배포 비용 최소화)
-        noop_compare: 'true'
-    # ============================================================================
-    # [/B-3 P0 보안 2026-06-13]
-    # ============================================================================
+          if [ "${BACKEND_CHANGED:-false}" = "true" ]; then
+            VERIFY_SLOT="$ACTIVE"
+            echo "✅ 블루그린 step 에서 ${ACTIVE} 슬롯이 새 env 로 기동·전환됨 — 추가 재시작 없음"
+          else
+            VERIFY_SLOT="$IDLE"
+            IDLE_UNIT="mindgarden-core-${IDLE}.service"
+            if ! sudo systemctl is-active --quiet "$IDLE_UNIT"; then
+              echo "::notice title=env 변경 반영::${IDLE_UNIT} 가 정지 상태라 재시작하지 않습니다. 다음 백엔드 cutover 에서 새 env 로 기동됩니다."
+              exit 0
+            fi
+            echo "🔄 트래픽 없는 슬롯만 1회 재시작: ${IDLE_UNIT} (트래픽 슬롯 ${ACTIVE} 유지)"
+            sudo systemctl restart "$IDLE_UNIT" || echo "::warning::${IDLE_UNIT} 재시작 실패"
+            sleep 10
+            IDLE_HEALTH=000
+            for i in 1 2 3 4 5 6 7 8 9 10; do
+              IDLE_HEALTH=$(curl -s -o /dev/null -w "%{http_code}" --max-time 5 "http://${MG_BACKEND_BIND_HOST}:${IDLE_PORT}/actuator/health" 2>/dev/null || echo "000")
+              if [ "$IDLE_HEALTH" = "200" ]; then
+                break
+              fi
+              echo "⏳ ${IDLE} 헬스 대기... ($i/10)"
+              sleep 6
+            done
+            echo "🏥 ${IDLE}(${IDLE_PORT}) 헬스=${IDLE_HEALTH}"
+            if [ "$IDLE_HEALTH" != "200" ]; then
+              echo "::warning title=idle 슬롯 헬스 비정상::${IDLE_UNIT} 가 새 env 로 정상 기동하지 않았습니다 (트래픽 영향 없음). 다음 cutover 전 journalctl -u ${IDLE_UNIT} 확인."
+            fi
+            echo "::notice title=env 변경 반영::트래픽 슬롯(${ACTIVE}) 은 재시작하지 않았습니다. 새 env 는 다음 백엔드 cutover 에서 트래픽에 반영됩니다."
+          fi
 
-    # ============================================================================
-    # [PII 회전 선행 PR-1 SSOT 2026-06-14] PII KEY/IV 회전 env 자동 주입 + 검증 (운영)
-    # 배경: PII KEY/IV 회전 재암호화 마이그 설계 (PR #335,
-    #       docs/standards/PII_KEY_ROTATION_REENCRYPTION_DESIGN.md) 합의 §6 4건 후속.
-    #       Phase 0~4 진입 전 차단 해제용 운영 SSOT 보강 — 회전 인프라 환경변수 4종을
-    #       /etc/mindgarden/prod-from-dev.env 로 멱등 동기화한다.
-    # 키 set:
-    #   - PERSONAL_DATA_ENCRYPTION_ACTIVE_KEY_ID : 현재 활성 키 ID (단일 값, 회전 시 갱신)
-    #   - PERSONAL_DATA_ENCRYPTION_KEYS          : CSV 다중 키 set (메인 + 휴면 키 모두 포함)
-    #   - PERSONAL_DATA_ENCRYPTION_IVS           : CSV 다중 IV set (KEYS 와 동일 keyId)
-    #   - MINDGARDEN_DORMANT_PII_ENC_KEY         : 휴면 사용자 PII 별도 키
-    # 정책:
-    #   - skip_when=all_missing — 4종 모두 비면 skip, 일부만 채워져도 채워진 키만 graceful 반영.
-    #     운영 secret 등록은 Phase 1 진입 전 사용자 작업이며, 기존 BE Converter/Util 동작 영향 최소화.
-    # 하위 PR-2:
-    #   - composite action PRESERVE_KEYS 가드에 본 4종 추가 — 다른 sync step 갱신 도중
-    #     PII 키 라인이 사라지는 회귀 차단 (PR #299 DB_PRESERVE_KEYS 동일 패턴).
-    # ============================================================================
-    - name: 🔑 PII KEY/IV 회전 env 자동 주입 + 검증
-      uses: ./.github/actions/sync-prod-env-key
-      with:
-        step_name: 'PII KEY/IV 회전'
-        keys: 'PERSONAL_DATA_ENCRYPTION_ACTIVE_KEY_ID PERSONAL_DATA_ENCRYPTION_KEYS PERSONAL_DATA_ENCRYPTION_IVS MINDGARDEN_DORMANT_PII_ENC_KEY'
-        # SSOT 통일 (cutover 정합, 2026-06-15 PR-4 후속): prod.env 단일 EnvironmentFile (DB_ENV_SSOT_POLICY.md §1).
-        # cutover-prod-env-ssot.yml 실행 (run 27528336064) 으로 prod-from-dev.env 폐기됨에 따라
-        # composite action default env_path 회귀 차단 (HQ_TENANT_ID 와 동일 패턴 — PR #390 보강).
-        env_path: '/etc/mindgarden/prod.env'
-        ssh_host: ${{ secrets.PRODUCTION_HOST }}
-        ssh_user: ${{ secrets.PRODUCTION_USER }}
-        ssh_key: ${{ secrets.PRODUCTION_SSH_KEY }}
-        # 누락 허용 — Phase 1 진입 전 부분 등록 단계에서 BE 기동 영향 최소화.
-        skip_when: 'all_missing'
-    # ============================================================================
-    # [/PII 회전 선행 PR-1 SSOT 2026-06-14]
-    # ============================================================================
+          # 프로세스 env 검증 — 값 노출 없이 길이만
+          VERIFY_UNIT="mindgarden-core-${VERIFY_SLOT}.service"
+          PID=$(systemctl show -p MainPID --value "$VERIFY_UNIT" 2>/dev/null)
+          if [ -z "$PID" ] || [ "$PID" = "0" ]; then
+            echo "::warning::${VERIFY_UNIT} MainPID 조회 실패 (PID='${PID}') — 프로세스 env 검증 skip"
+            exit 0
+          fi
+          MISSING_ENV=0
+          for k in $CHANGED_KEYS; do
+            len=$(sudo cat "/proc/$PID/environ" 2>/dev/null | tr '\0' '\n' | awk -F= -v K="$k" '$1==K { print length(substr($0, length(K)+2)); exit }')
+            if [ -z "$len" ] || [ "$len" = "0" ]; then
+              echo "   ❌ ${k} = MISSING"
+              MISSING_ENV=$((MISSING_ENV+1))
+            else
+              echo "   ✅ ${k} = (${len} chars)"
+            fi
+          done
+          if [ "$MISSING_ENV" -gt 0 ]; then
+            echo "::error title=프로세스 env 누락::${VERIFY_UNIT} (PID=${PID}) 에 변경 키 ${MISSING_ENV} 개가 없습니다. prod.env 형식·따옴표·systemd EnvironmentFile 경로 확인 필요."
+          fi
 
     - name: 🏥 헬스체크
       uses: appleboy/ssh-action@master
@@ -1875,7 +2015,7 @@ jobs:
   # 참고: docs/project-management/2026-06-11/AI_MONITORING_ROADMAP.md §6 Phase 1
   notify-discord-on-failure:
     name: 🚨 Discord 실패 알람
-    needs: [build, deploy]
+    needs: [deploy]
     if: failure()
     runs-on: ubuntu-latest
     steps:

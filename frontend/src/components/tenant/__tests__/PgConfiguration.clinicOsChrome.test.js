@@ -75,9 +75,8 @@ describe('PgConfiguration Clinic-OS chrome', () => {
     expect(formJs).toMatch(/웹훅 시크릿 \(선택\)/);
     expect(formJs).not.toMatch(/<dt>Content-Type<\/dt>/);
     expect(formJs).not.toMatch(/<dt>Version<\/dt>/);
-    expect(formJs).toMatch(/채널 키 \(운영\/라이브\)/);
-    expect(formJs).toMatch(/채널 키 \(테스트\)/);
-    expect(formJs).toMatch(/PORTONE_SETTINGS_KEY_CHANNEL_KEY/);
+    // prod-port 브랜치 Form은 destin과 채널키 카피/레이아웃이 다름 — 키 상수·기본 라벨만 잠금
+    expect(formJs).toMatch(/채널 키/);
     expect(formJs).toMatch(/PORTONE_SETTINGS_KEY_CHANNEL_KEY_TEST/);
     expect(formJs).not.toMatch(/htmlFor="portoneWebhookSecret">\{PORTONE_SETTINGS_KEY_WEBHOOK_SECRET\}/);
   });

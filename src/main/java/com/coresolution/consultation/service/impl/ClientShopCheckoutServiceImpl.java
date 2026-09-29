@@ -45,6 +45,7 @@ import com.coresolution.consultation.repository.ShopOrderFulfillmentEventReposit
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.ClientPointWalletService;
 import com.coresolution.consultation.service.ClientProfilePhoneVerificationService;
+import com.coresolution.consultation.service.ClientShopCatalogService;
 import com.coresolution.consultation.service.ClientShopCheckoutService;
 import com.coresolution.consultation.service.ShopCatalogPackageOfferResolver;
 import com.coresolution.consultation.service.ClientShopConsultantMappingService;
@@ -59,9 +60,12 @@ import com.coresolution.core.dto.TenantPgConfigurationDetailResponse;
 import com.coresolution.core.service.TenantPgConfigurationService;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
+import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.util.StringUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -93,6 +97,9 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
     private final ShopNotificationHelper shopNotificationHelper;
     private final TenantPgConfigurationService tenantPgConfigurationService;
     private final ShopCatalogPackageOfferResolver shopCatalogPackageOfferResolver;
+    private final ClientShopCatalogService clientShopCatalogService;
+    /** afterCommit 이행을 부모 트랜잭션과 분리된 REQUIRES_NEW 로 실행 */
+    private final PlatformTransactionManager transactionManager;
 
     @Override
     @Transactional
@@ -150,6 +157,43 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
             throw new IllegalArgumentException(ShopCheckoutConstants.msgCashBelowMinPayment());
         }
 
+        boolean hasConsultation = cartLines.stream()
+                .map(ShopCartLine::getSku)
+                .anyMatch(ClientShopCheckoutServiceImpl::isConsultationSku);
+        List<ConsultantClientMapping> activeMappings = hasConsultation
+                ? clientShopConsultantMappingService.listActiveMappings(tenantId, clientUserId)
+                : List.of();
+        for (ShopCartLine cl : cartLines) {
+            if (isConsultationSku(cl.getSku())) {
+                requireConsultationVisibleForClient(tenantId, cl.getSku(), activeMappings);
+            }
+        }
+        boolean hasUnboundConsultation = cartLines.stream()
+                .map(ShopCartLine::getSku)
+                .anyMatch(ClientShopCheckoutServiceImpl::isUnboundConsultationSku);
+        Long consultationMappingId = hasUnboundConsultation
+                ? resolveConsultationMappingIdForCheckout(tenantId, request, cartLines, activeMappings)
+                : null;
+
+        List<Long> lineMappingIds = new ArrayList<>();
+        for (PricedCartLine priced : pricedLines) {
+            ShopCatalogSku sku = priced.line().getSku();
+            Long lineMappingId = null;
+            if (isBoundConsultationSku(sku)) {
+                lineMappingId = resolveBoundConsultantMappingId(
+                        activeMappings,
+                        sku.getConsultantId(),
+                        request.getConsultantClientMappingId(),
+                        priced.offer().title());
+            } else if (isConsultationSku(sku)) {
+                lineMappingId = consultationMappingId;
+            }
+            if (isConsultationSku(sku) && lineMappingId == null) {
+                throw new IllegalArgumentException(ShopCheckoutConstants.MSG_CONSULTANT_MAPPING_REQUIRED_FOR_PURCHASE);
+            }
+            lineMappingIds.add(lineMappingId);
+        }
+
         String publicId = UUID.randomUUID().toString();
         ShopClientOrder order = ShopClientOrder.builder()
                 .publicId(publicId)
@@ -163,35 +207,14 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
         order.setTenantId(tenantId);
         order = shopClientOrderRepository.save(order);
 
-        boolean hasUnboundConsultation = cartLines.stream()
-                .map(ShopCartLine::getSku)
-                .anyMatch(ClientShopCheckoutServiceImpl::isUnboundConsultationSku);
-        boolean hasBoundConsultation = cartLines.stream()
-                .map(ShopCartLine::getSku)
-                .anyMatch(ClientShopCheckoutServiceImpl::isBoundConsultationSku);
-        Long consultationMappingId = hasUnboundConsultation
-                ? resolveConsultationMappingIdForCheckout(tenantId, clientUserId, request, cartLines)
-                : null;
-        List<ConsultantClientMapping> boundEligible = hasBoundConsultation
-                ? clientShopConsultantMappingService.listActiveMappings(tenantId, clientUserId)
-                : List.of();
-
         int lineNo = 1;
-        for (PricedCartLine priced : pricedLines) {
+        for (int i = 0; i < pricedLines.size(); i++) {
+            PricedCartLine priced = pricedLines.get(i);
             ShopCartLine cl = priced.line();
             ShopCatalogSku sku = cl.getSku();
             ShopCatalogOffer offer = priced.offer();
             long lineTotal = offer.unitPriceMinor() * cl.getQuantity();
-            Long lineMappingId = null;
-            if (isBoundConsultationSku(sku)) {
-                lineMappingId = resolveBoundConsultantMappingId(
-                        boundEligible,
-                        sku.getConsultantId(),
-                        request.getConsultantClientMappingId(),
-                        offer.title());
-            } else if (ShopCatalogCategory.CONSULTATION.equals(sku.getCatalogCategory())) {
-                lineMappingId = consultationMappingId;
-            }
+            Long lineMappingId = lineMappingIds.get(i);
             ShopClientOrderLine ol = ShopClientOrderLine.builder()
                     .clientOrder(order)
                     .lineNo(lineNo++)
@@ -268,16 +291,61 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
         return best != null ? best.getId() : null;
     }
 
+    private static boolean isConsultationSku(ShopCatalogSku sku) {
+        return sku != null && ShopCatalogCategory.CONSULTATION.equals(sku.getCatalogCategory());
+    }
+
     private static boolean isBoundConsultationSku(ShopCatalogSku sku) {
-        return sku != null
-                && ShopCatalogCategory.CONSULTATION.equals(sku.getCatalogCategory())
-                && sku.getConsultantId() != null;
+        return isConsultationSku(sku) && sku.getConsultantId() != null;
     }
 
     private static boolean isUnboundConsultationSku(ShopCatalogSku sku) {
-        return sku != null
-                && ShopCatalogCategory.CONSULTATION.equals(sku.getCatalogCategory())
-                && sku.getConsultantId() == null;
+        return isConsultationSku(sku) && sku.getConsultantId() == null;
+    }
+
+    /**
+     * 카탈로그 노출 규칙({@code ShopCatalogClientVisibility})과 같은 조건으로 상담 상품 구매 가능 여부를 재검사한다.
+     *
+     * @param tenantId 테넌트 ID
+     * @param sku 상담 SKU
+     * @param activeMappings 같은 테넌트 내담자 활성 매핑
+     * @throws IllegalArgumentException 쓸 수 있는 활성 상담사 매핑이 없을 때
+     */
+    private void requireConsultationVisibleForClient(
+            String tenantId, ShopCatalogSku sku, List<ConsultantClientMapping> activeMappings) {
+        if (activeMappings == null || activeMappings.isEmpty()
+                || !clientShopCatalogService.isVisibleForClientMappings(tenantId, sku, activeMappings)) {
+            throw new IllegalArgumentException(ShopCheckoutConstants.MSG_CONSULTANT_MAPPING_REQUIRED_FOR_PURCHASE);
+        }
+    }
+
+    /**
+     * 결제 요청 전 상담 라인 매핑 재확인. 매핑이 비었거나 더 이상 활성이 아니면 PG 결제를 만들지 않는다.
+     *
+     * @param tenantId 테넌트 ID
+     * @param clientUserId 내담자 ID
+     * @param order 결제할 주문
+     * @throws IllegalArgumentException 상담 라인에 쓸 활성 매핑이 없을 때
+     */
+    private void requireConsultationMappingsForPayment(String tenantId, Long clientUserId, ShopClientOrder order) {
+        List<ShopClientOrderLine> consultationLines =
+                shopClientOrderLineRepository.findByClientOrder_IdAndIsDeletedFalseOrderByLineNoAsc(order.getId())
+                        .stream()
+                        .filter(line -> isConsultationSku(line.getSku()))
+                        .toList();
+        if (consultationLines.isEmpty()) {
+            return;
+        }
+        List<Long> activeIds = clientShopConsultantMappingService.listActiveMappings(tenantId, clientUserId)
+                .stream()
+                .map(ConsultantClientMapping::getId)
+                .toList();
+        for (ShopClientOrderLine line : consultationLines) {
+            Long mappingId = line.getConsultantClientMappingId();
+            if (mappingId == null || !activeIds.contains(mappingId)) {
+                throw new IllegalArgumentException(ShopCheckoutConstants.MSG_CONSULTANT_MAPPING_REQUIRED_FOR_PURCHASE);
+            }
+        }
     }
 
     /**
@@ -289,17 +357,9 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
      */
     private Long resolveConsultationMappingIdForCheckout(
             String tenantId,
-            Long clientUserId,
             ShopCheckoutRequest request,
-            List<ShopCartLine> cartLines) {
-        boolean hasConsultation = cartLines.stream()
-                .map(ShopCartLine::getSku)
-                .anyMatch(sku -> ShopCatalogCategory.CONSULTATION.equals(sku.getCatalogCategory()));
-        if (!hasConsultation) {
-            return null;
-        }
-        List<ConsultantClientMapping> eligible =
-                clientShopConsultantMappingService.listActiveMappings(tenantId, clientUserId);
+            List<ShopCartLine> cartLines,
+            List<ConsultantClientMapping> eligible) {
         List<Long> activeIds = eligible.stream().map(ConsultantClientMapping::getId).toList();
         if (request.getConsultantClientMappingId() != null) {
             Long requested = request.getConsultantClientMappingId();
@@ -408,6 +468,7 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
         if (order.getCashDueMinor() < ShopCheckoutConstants.MIN_CASH_FOR_PAYMENT_GATEWAY) {
             throw new IllegalArgumentException(ShopCheckoutConstants.msgCashBelowMinPayment());
         }
+        requireConsultationMappingsForPayment(tenantId, clientUserId, order);
 
         User user = userRepository.findByTenantIdAndId(tenantId, clientUserId)
                 .orElseThrow(() -> new IllegalStateException("사용자를 찾을 수 없습니다."));
@@ -920,17 +981,23 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
                     String previousTenantId = TenantContextHolder.peekTenantId();
                     try {
                         TenantContextHolder.setTenantId(tid);
-                        ShopClientOrder fresh = shopClientOrderRepository
-                                .findByTenantIdAndPublicId(tid, orderPublicId)
-                                .orElse(null);
-                        if (fresh == null) {
-                            log.warn(
-                                    "afterCommit fulfill 스킵 — 주문 없음: tenantId={}, orderPublicId={}",
-                                    tid,
-                                    orderPublicId);
-                            return;
-                        }
-                        shopOrderFulfillmentService.fulfillPaidOrder(tid, fresh);
+                        // afterCommit 시점에는 부모 리소스가 아직 바인딩되어 있어 REQUIRED 는 이미 커밋된
+                        // 트랜잭션에 합류하고 FAILED 이벤트가 영속되지 않는다 → REQUIRES_NEW 로 분리.
+                        TransactionTemplate requiresNew = new TransactionTemplate(transactionManager);
+                        requiresNew.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
+                        requiresNew.executeWithoutResult(status -> {
+                            ShopClientOrder fresh = shopClientOrderRepository
+                                    .findByTenantIdAndPublicId(tid, orderPublicId)
+                                    .orElse(null);
+                            if (fresh == null) {
+                                log.warn(
+                                        "afterCommit fulfill 스킵 — 주문 없음: tenantId={}, orderPublicId={}",
+                                        tid,
+                                        orderPublicId);
+                                return;
+                            }
+                            shopOrderFulfillmentService.fulfillPaidOrder(tid, fresh);
+                        });
                     } catch (RuntimeException ex) {
                         // 결제·PAID 는 이미 커밋됨. fulfill 내부는 라인 FAILED 로 흡수하지만
                         // 예외 전파 시 webhook/approve 호출부를 깨지 않도록 기록만 한다.

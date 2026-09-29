@@ -11,12 +11,14 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -27,6 +29,9 @@ import com.coresolution.consultation.constant.PointTenantPolicyKeys;
 import com.coresolution.consultation.constant.ShopCatalogCategory;
 import com.coresolution.consultation.constant.ShopCheckoutConstants;
 import com.coresolution.consultation.constant.ShopClientOrderStatus;
+import com.coresolution.consultation.constant.ShopOrderFulfillmentMessages;
+import com.coresolution.consultation.constant.ShopOrderFulfillmentRetryConstants;
+import com.coresolution.consultation.constant.ShopOrderFulfillmentStatus;
 import com.coresolution.consultation.dto.PaymentRequest;
 import com.coresolution.consultation.dto.shop.EffectivePointTenantPolicies;
 import com.coresolution.consultation.dto.shop.ShopCheckoutRequest;
@@ -43,6 +48,7 @@ import com.coresolution.consultation.entity.ShopCatalogSku;
 import com.coresolution.consultation.entity.ShopClientOrder;
 import com.coresolution.consultation.entity.ShopClientOrderLine;
 import com.coresolution.consultation.entity.User;
+import com.coresolution.consultation.repository.ConsultantClientMappingRepository;
 import com.coresolution.consultation.repository.PaymentRepository;
 import com.coresolution.consultation.repository.ShopCartLineRepository;
 import com.coresolution.consultation.repository.ShopCartRepository;
@@ -50,16 +56,20 @@ import com.coresolution.consultation.repository.ShopClientOrderLineRepository;
 import com.coresolution.consultation.repository.ShopClientOrderRepository;
 import com.coresolution.consultation.repository.ShopOrderFulfillmentEventRepository;
 import com.coresolution.consultation.repository.UserRepository;
+import com.coresolution.consultation.service.AdminService;
 import com.coresolution.consultation.service.ClientPointWalletService;
 import com.coresolution.consultation.service.ClientProfilePhoneVerificationService;
+import com.coresolution.consultation.service.ClientShopCatalogService;
 import com.coresolution.consultation.service.ClientShopConsultantMappingService;
 import com.coresolution.consultation.service.PaymentService;
 import com.coresolution.consultation.service.PointTenantPolicyService;
 import com.coresolution.consultation.service.ShopCatalogPackageOfferResolver;
 import com.coresolution.consultation.service.ShopNotificationHelper;
 import com.coresolution.consultation.service.ShopOrderFulfillmentService;
+import com.coresolution.consultation.service.shop.ShopConsultationFulfillmentHook;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.service.TenantPgConfigurationService;
+import com.coresolution.core.util.StatusCodeHelper;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -68,6 +78,11 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
+import org.springframework.transaction.support.AbstractPlatformTransactionManager;
+import org.springframework.transaction.support.DefaultTransactionStatus;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
@@ -120,6 +135,12 @@ class ClientShopCheckoutServiceImplTest {
 
     @Mock
     private ShopCatalogPackageOfferResolver shopCatalogPackageOfferResolver;
+
+    @Mock
+    private ClientShopCatalogService clientShopCatalogService;
+
+    @Mock
+    private PlatformTransactionManager transactionManager;
 
     @InjectMocks
     private ClientShopCheckoutServiceImpl service;
@@ -515,6 +536,74 @@ class ClientShopCheckoutServiceImplTest {
     }
 
     @Test
+    @DisplayName("매핑 없는 PAID 주문 — afterCommit 이행이 REQUIRES_NEW 로 FAILED(retryable) 이벤트를 커밋")
+    void completeOrderOnPaymentApproved_noMapping_afterCommitCommitsFailedEventInRequiresNew() {
+        RecordingTransactionManager txManager = new RecordingTransactionManager();
+        ShopOrderFulfillmentEventRepository eventRepository = mock(ShopOrderFulfillmentEventRepository.class);
+        ShopOrderFulfillmentServiceImpl realFulfillment = new ShopOrderFulfillmentServiceImpl(
+                eventRepository,
+                shopClientOrderLineRepository,
+                shopClientOrderRepository,
+                mock(ShopConsultationFulfillmentHook.class),
+                shopNotificationHelper,
+                mock(ConsultantClientMappingRepository.class),
+                mock(StatusCodeHelper.class),
+                mock(AdminService.class),
+                paymentRepository,
+                txManager);
+        ReflectionTestUtils.setField(service, "shopOrderFulfillmentService", realFulfillment);
+        ReflectionTestUtils.setField(service, "transactionManager", txManager);
+
+        ShopClientOrder order = pendingOrder(0L);
+        order.setId(888L);
+        ShopClientOrderLine orderLine = ShopClientOrderLine.builder()
+                .clientOrder(order)
+                .lineNo(1)
+                .sku(consultationCartLine(10_000L).getSku())
+                .skuCodeSnapshot("SKU-1")
+                .quantity(1)
+                .consultantClientMappingId(null)
+                .build();
+        when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID)).thenReturn(Optional.of(order));
+        stubDefaultPolicies();
+        when(shopClientOrderLineRepository.findByClientOrder_IdAndIsDeletedFalseOrderByLineNoAsc(888L))
+                .thenReturn(List.of(orderLine));
+        when(eventRepository.findByTenantIdAndOrderPublicIdAndIsDeletedFalseOrderBySkuCodeAsc(TENANT, ORDER_ID))
+                .thenReturn(List.of());
+        List<ShopOrderFulfillmentEvent> savedInNewTransaction = new ArrayList<>();
+        when(eventRepository.save(any(ShopOrderFulfillmentEvent.class))).thenAnswer(inv -> {
+            if (txManager.insideNewTransaction) {
+                savedInNewTransaction.add(inv.getArgument(0));
+            }
+            return inv.getArgument(0);
+        });
+        TransactionSynchronizationManager.initSynchronization();
+
+        assertTrue(service.completeOrderOnPaymentApproved(TENANT, ORDER_ID));
+        assertEquals(ShopClientOrderStatus.PAID, order.getStatus());
+        verify(eventRepository, never()).save(any());
+
+        // afterCommit 시점에도 부모 트랜잭션 리소스는 바인딩된 상태 (Spring 커밋 후 정리 전)
+        txManager.outerBound = true;
+        for (TransactionSynchronization sync : TransactionSynchronizationManager.getSynchronizations()) {
+            sync.afterCommit();
+        }
+
+        assertEquals(1, savedInNewTransaction.size());
+        ShopOrderFulfillmentEvent saved = savedInNewTransaction.get(0);
+        assertEquals(ShopOrderFulfillmentStatus.FAILED, saved.getStatus());
+        assertEquals(ShopOrderFulfillmentMessages.CONSULTATION_MAPPING_MISSING_FAILED, saved.getMessage());
+        assertEquals(TENANT, saved.getTenantId());
+        assertTrue(ShopOrderFulfillmentRetryConstants.isRetryableFailed(saved.getStatus(), saved.getMessage()));
+        assertEquals(TransactionDefinition.PROPAGATION_REQUIRES_NEW, txManager.lastBeginPropagation);
+        assertEquals(1, txManager.suspends);
+        assertEquals(1, txManager.begins);
+        assertEquals(1, txManager.commits);
+        assertEquals(0, txManager.rollbacks);
+        assertTrue(txManager.outerBound);
+    }
+
+    @Test
     @DisplayName("PENDING_PAYMENT PG 취소 — hold 해제·CREATED (기존 release 경로)")
     void reconcileOrderOnPaymentCancelOrRefund_pending_releasesHold() {
         ShopClientOrder order = pendingOrder(2_000L);
@@ -548,6 +637,7 @@ class ClientShopCheckoutServiceImplTest {
         stubPolicies(true, true, 0L, 0L);
         when(clientPointWalletService.getBalance(TENANT, CLIENT_ID))
                 .thenReturn(ShopPointBalanceResponse.builder().availableMinor(0L).heldMinor(0L).build());
+        stubConsultationVisible();
         when(clientShopConsultantMappingService.listActiveMappings(TENANT, CLIENT_ID))
                 .thenReturn(List.of(eligibleMapping(
                         mappingId, ConsultantClientMapping.MappingStatus.ACTIVE, null, "상품")));
@@ -570,38 +660,99 @@ class ClientShopCheckoutServiceImplTest {
     }
 
     @Test
-    @DisplayName("CONSULTATION 라인 — 활성 매핑 없으면 consultantClientMappingId null")
-    void checkout_consultationLine_noActiveMapping_leavesNull() {
+    @DisplayName("CONSULTATION 라인 — 활성 매핑 없는 내담자 체크아웃은 주문 저장 전 거부")
+    void checkout_consultationLine_noActiveMapping_rejectsBeforeOrderSave() {
         String idemKey = "idem-consult-no-mapping";
-        long subtotal = 30_000L;
-        ShopCartLine line = consultationCartLine(subtotal);
-        ShopCart cart = line.getCart();
-
-        when(shopClientOrderRepository.findByTenantClientAndCheckoutKey(TENANT, CLIENT_ID, idemKey))
-                .thenReturn(Optional.empty());
-        when(shopCartRepository.findByTenantIdAndClientId(TENANT, CLIENT_ID)).thenReturn(Optional.of(cart));
-        when(shopCartLineRepository.findByCart_IdAndIsDeletedFalse(cart.getId()))
-                .thenReturn(List.of(line));
-        stubPolicies(true, true, 0L, 0L);
-        when(clientPointWalletService.getBalance(TENANT, CLIENT_ID))
-                .thenReturn(ShopPointBalanceResponse.builder().availableMinor(0L).heldMinor(0L).build());
+        ShopCartLine line = consultationCartLine(30_000L);
+        stubCheckoutUpToMappings(idemKey, line);
         when(clientShopConsultantMappingService.listActiveMappings(TENANT, CLIENT_ID))
                 .thenReturn(List.of());
 
-        ArgumentCaptor<ShopClientOrder> orderCaptor = ArgumentCaptor.forClass(ShopClientOrder.class);
-        when(shopClientOrderRepository.save(orderCaptor.capture())).thenAnswer(inv -> inv.getArgument(0));
-        ArgumentCaptor<ShopClientOrderLine> lineCaptor = ArgumentCaptor.forClass(ShopClientOrderLine.class);
-        when(shopClientOrderLineRepository.save(lineCaptor.capture())).thenAnswer(inv -> inv.getArgument(0));
-        when(shopClientOrderRepository.findByTenantIdAndPublicId(eq(TENANT), anyString()))
-                .thenAnswer(inv -> Optional.of(orderCaptor.getValue()));
+        ShopCheckoutRequest request = ShopCheckoutRequest.builder()
+                .idempotencyKey(idemKey)
+                .pointsToRedeemMinor(0L)
+                .build();
 
-        service.checkout(
-                TENANT,
-                CLIENT_ID,
-                ShopCheckoutRequest.builder().idempotencyKey(idemKey).pointsToRedeemMinor(0L).build());
+        IllegalArgumentException ex = assertThrows(
+                IllegalArgumentException.class, () -> service.checkout(TENANT, CLIENT_ID, request));
+        assertEquals("담당 상담사 연결 후 구매할 수 있어요", ex.getMessage());
+        assertEquals(ShopCheckoutConstants.MSG_CONSULTANT_MAPPING_REQUIRED_FOR_PURCHASE, ex.getMessage());
+        verify(shopClientOrderRepository, never()).save(any());
+        verify(shopClientOrderLineRepository, never()).save(any());
+        verify(clientPointWalletService, never()).hold(any(), any(), any(), anyLong(), any());
+        verify(clientShopCatalogService, never()).isVisibleForClientMappings(any(), any(), any());
+    }
 
-        assertEquals(1, lineCaptor.getAllValues().size());
-        assertEquals(null, lineCaptor.getValue().getConsultantClientMappingId());
+    @Test
+    @DisplayName("CONSULTATION 라인 — 활성 매핑이 있어도 카탈로그 노출 규칙에 안 맞으면 거부")
+    void checkout_consultationLine_notVisibleForMappings_rejects() {
+        String idemKey = "idem-consult-not-visible";
+        ShopCartLine line = consultationCartLine(30_000L);
+        stubCheckoutUpToMappings(idemKey, line);
+        List<ConsultantClientMapping> mappings = List.of(eligibleMapping(
+                51L, ConsultantClientMapping.MappingStatus.ACTIVE, consultantUser(501L), "다른 패키지"));
+        when(clientShopConsultantMappingService.listActiveMappings(TENANT, CLIENT_ID)).thenReturn(mappings);
+        when(clientShopCatalogService.isVisibleForClientMappings(TENANT, line.getSku(), mappings))
+                .thenReturn(false);
+
+        ShopCheckoutRequest request = ShopCheckoutRequest.builder()
+                .idempotencyKey(idemKey)
+                .pointsToRedeemMinor(0L)
+                .build();
+
+        IllegalArgumentException ex = assertThrows(
+                IllegalArgumentException.class, () -> service.checkout(TENANT, CLIENT_ID, request));
+        assertEquals(ShopCheckoutConstants.MSG_CONSULTANT_MAPPING_REQUIRED_FOR_PURCHASE, ex.getMessage());
+        verify(shopClientOrderRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("상담사 묶인 상품 — 그 상담사 배정이 없으면 다른 상담사 배정이 있어도 거부")
+    void checkout_boundConsultantSku_noMappingForConsultant_rejects() {
+        String idemKey = "idem-consult-bound-missing";
+        ShopCartLine line = consultationCartLine(30_000L);
+        line.getSku().setConsultantId(601L);
+        stubCheckoutUpToMappings(idemKey, line);
+        when(clientShopConsultantMappingService.listActiveMappings(TENANT, CLIENT_ID))
+                .thenReturn(List.of(eligibleMapping(
+                        61L, ConsultantClientMapping.MappingStatus.ACTIVE, consultantUser(602L), "상품")));
+        stubConsultationVisible();
+
+        ShopCheckoutRequest request = ShopCheckoutRequest.builder()
+                .idempotencyKey(idemKey)
+                .pointsToRedeemMinor(0L)
+                .build();
+
+        IllegalArgumentException ex = assertThrows(
+                IllegalArgumentException.class, () -> service.checkout(TENANT, CLIENT_ID, request));
+        assertEquals(ShopCheckoutConstants.MSG_CONSULTANT_MAPPING_REQUIRED_FOR_PURCHASE, ex.getMessage());
+        verify(shopClientOrderRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("preparePayment — 상담 라인 매핑 없음(기존 주문)이면 PG 결제 생성 전 거부")
+    void preparePayment_consultationLineWithoutMapping_rejectsBeforePayment() {
+        ShopClientOrder order = pendingOrder(0L);
+        order.setId(777L);
+        order.setStatus(ShopClientOrderStatus.CREATED);
+        ShopClientOrderLine orderLine = ShopClientOrderLine.builder()
+                .clientOrder(order)
+                .lineNo(1)
+                .sku(consultationCartLine(10_000L).getSku())
+                .skuCodeSnapshot("SKU-1")
+                .quantity(1)
+                .consultantClientMappingId(null)
+                .build();
+        when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID)).thenReturn(Optional.of(order));
+        when(shopClientOrderLineRepository.findByClientOrder_IdAndIsDeletedFalseOrderByLineNoAsc(777L))
+                .thenReturn(List.of(orderLine));
+        when(clientShopConsultantMappingService.listActiveMappings(TENANT, CLIENT_ID)).thenReturn(List.of());
+
+        IllegalArgumentException ex = assertThrows(
+                IllegalArgumentException.class,
+                () -> service.preparePayment(TENANT, CLIENT_ID, ORDER_ID, new ShopPreparePaymentRequest()));
+        assertEquals(ShopCheckoutConstants.MSG_CONSULTANT_MAPPING_REQUIRED_FOR_PURCHASE, ex.getMessage());
+        verify(paymentService, never()).createPayment(any());
     }
 
     @Test
@@ -623,6 +774,7 @@ class ClientShopCheckoutServiceImplTest {
         when(clientPointWalletService.getBalance(TENANT, CLIENT_ID))
                 .thenReturn(ShopPointBalanceResponse.builder().availableMinor(0L).heldMinor(0L).build());
         User consultant = consultantUser(100L);
+        stubConsultationVisible();
         when(clientShopConsultantMappingService.listActiveMappings(TENANT, CLIENT_ID))
                 .thenReturn(List.of(
                         eligibleMapping(assignedId, ConsultantClientMapping.MappingStatus.ACTIVE, consultant,
@@ -662,6 +814,7 @@ class ClientShopCheckoutServiceImplTest {
         stubPolicies(true, true, 0L, 0L);
         when(clientPointWalletService.getBalance(TENANT, CLIENT_ID))
                 .thenReturn(ShopPointBalanceResponse.builder().availableMinor(0L).heldMinor(0L).build());
+        stubConsultationVisible();
         when(clientShopConsultantMappingService.listActiveMappings(TENANT, CLIENT_ID))
                 .thenReturn(List.of(
                         eligibleMapping(11L, ConsultantClientMapping.MappingStatus.SESSIONS_EXHAUSTED),
@@ -693,6 +846,7 @@ class ClientShopCheckoutServiceImplTest {
         stubPolicies(true, true, 0L, 0L);
         when(clientPointWalletService.getBalance(TENANT, CLIENT_ID))
                 .thenReturn(ShopPointBalanceResponse.builder().availableMinor(0L).heldMinor(0L).build());
+        stubConsultationVisible();
         when(clientShopConsultantMappingService.listActiveMappings(TENANT, CLIENT_ID))
                 .thenReturn(List.of(
                         eligibleMapping(21L, ConsultantClientMapping.MappingStatus.ACTIVE, consultantUser(201L)),
@@ -726,6 +880,7 @@ class ClientShopCheckoutServiceImplTest {
         stubPolicies(true, true, 0L, 0L);
         when(clientPointWalletService.getBalance(TENANT, CLIENT_ID))
                 .thenReturn(ShopPointBalanceResponse.builder().availableMinor(0L).heldMinor(0L).build());
+        stubConsultationVisible();
         when(clientShopConsultantMappingService.listActiveMappings(TENANT, CLIENT_ID))
                 .thenReturn(List.of(
                         eligibleMapping(21L, ConsultantClientMapping.MappingStatus.ACTIVE, consultantUser(201L), "상품"),
@@ -770,6 +925,7 @@ class ClientShopCheckoutServiceImplTest {
         ConsultantClientMapping newer = eligibleMapping(32L, ConsultantClientMapping.MappingStatus.ACTIVE, consultant,
                 "E2E-1125");
         newer.setStartDate(LocalDateTime.of(2026, 2, 1, 9, 0));
+        stubConsultationVisible();
         when(clientShopConsultantMappingService.listActiveMappings(TENANT, CLIENT_ID))
                 .thenReturn(List.of(older, newer));
 
@@ -806,6 +962,7 @@ class ClientShopCheckoutServiceImplTest {
         stubPolicies(true, true, 0L, 0L);
         when(clientPointWalletService.getBalance(TENANT, CLIENT_ID))
                 .thenReturn(ShopPointBalanceResponse.builder().availableMinor(0L).heldMinor(0L).build());
+        stubConsultationVisible();
         when(clientShopConsultantMappingService.listActiveMappings(TENANT, CLIENT_ID))
                 .thenReturn(List.of(
                         eligibleMapping(41L, ConsultantClientMapping.MappingStatus.ACTIVE, consultant, "무료1회"),
@@ -1643,6 +1800,77 @@ class ClientShopCheckoutServiceImplTest {
         assertEquals(
                 "포인트와 카드 결제를 동시에 사용할 수 없습니다. 포인트 전액 또는 카드 전액으로 결제해 주세요.",
                 ex.getMessage());
+    }
+
+    /**
+     * JDBC 없이 전파 동작만 기록. {@code outerBound} 는 afterCommit 중 아직 바인딩된 부모 트랜잭션을 흉내낸다.
+     * REQUIRED 는 부모에 합류(begin/commit 없음), REQUIRES_NEW 는 suspend → begin → commit → resume.
+     */
+    private static final class RecordingTransactionManager extends AbstractPlatformTransactionManager {
+        private boolean outerBound;
+        private boolean insideNewTransaction;
+        private int suspends;
+        private int begins;
+        private int commits;
+        private int rollbacks;
+        private int lastBeginPropagation = -1;
+
+        @Override
+        protected Object doGetTransaction() {
+            return new Object();
+        }
+
+        @Override
+        protected boolean isExistingTransaction(Object transaction) {
+            return outerBound;
+        }
+
+        @Override
+        protected Object doSuspend(Object transaction) {
+            suspends++;
+            outerBound = false;
+            return Boolean.TRUE;
+        }
+
+        @Override
+        protected void doResume(Object transaction, Object suspendedResources) {
+            outerBound = true;
+        }
+
+        @Override
+        protected void doBegin(Object transaction, TransactionDefinition definition) {
+            begins++;
+            lastBeginPropagation = definition.getPropagationBehavior();
+            insideNewTransaction = true;
+        }
+
+        @Override
+        protected void doCommit(DefaultTransactionStatus status) {
+            commits++;
+            insideNewTransaction = false;
+        }
+
+        @Override
+        protected void doRollback(DefaultTransactionStatus status) {
+            rollbacks++;
+            insideNewTransaction = false;
+        }
+    }
+
+    private void stubConsultationVisible() {
+        when(clientShopCatalogService.isVisibleForClientMappings(eq(TENANT), any(), any())).thenReturn(true);
+    }
+
+    private void stubCheckoutUpToMappings(String idemKey, ShopCartLine line) {
+        ShopCart cart = line.getCart();
+        when(shopClientOrderRepository.findByTenantClientAndCheckoutKey(TENANT, CLIENT_ID, idemKey))
+                .thenReturn(Optional.empty());
+        when(shopCartRepository.findByTenantIdAndClientId(TENANT, CLIENT_ID)).thenReturn(Optional.of(cart));
+        when(shopCartLineRepository.findByCart_IdAndIsDeletedFalse(cart.getId()))
+                .thenReturn(List.of(line));
+        stubPolicies(true, true, 0L, 0L);
+        when(clientPointWalletService.getBalance(TENANT, CLIENT_ID))
+                .thenReturn(ShopPointBalanceResponse.builder().availableMinor(0L).heldMinor(0L).build());
     }
 
     private void stubDefaultPolicies() {

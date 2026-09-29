@@ -1258,9 +1258,9 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 DEPOSIT_INCOME_CLAIM.remove();
             }
 
-            // 현재 주문 귀속 INCOME 만 SSOT — claim 없으면 매핑 전체(레거시)
+            // 현재 주문 귀속 + 결제 이후 생성 INCOME 만 SSOT — claim 없으면 매핑 전체(레거시)
             PostedDepositIncomeSummary incomeSummary =
-                    summarizePostedDepositIncomeForCurrentOrder(tenantId, mappingId, mapping);
+                    summarizeRefundableDepositIncomeForCurrentOrder(tenantId, mappingId, mapping);
             boolean incomeExists = incomeSummary.postedIncomeCount > 0;
 
             long refundAmount = 0L;
@@ -1319,7 +1319,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 repairConsultationDepositIncomeInCurrentTx(mapping, tenantId, expectedIncomeSsot);
 
                 PostedDepositIncomeSummary repaired =
-                        summarizePostedDepositIncomeForCurrentOrder(tenantId, mappingId, mapping);
+                        summarizeRefundableDepositIncomeForCurrentOrder(tenantId, mappingId, mapping);
                 if (repaired.postedIncomeCount <= 0
                         || repaired.incomeAmountSum.compareTo(BigDecimal.ZERO) <= 0) {
                     throw new IllegalStateException(String.format(
@@ -1681,6 +1681,15 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         // healPostedDepositIncomeAmount 는 현재 주문 귀속 행만 보므로,
         // orphan 단건을 임시로 귀속 판정 통과시키기 전에 직접 update-in-place 한다.
         FinancialTransaction tx = orphans.get(0);
+        if (isMappingSourcedDepositIncome(tx)
+                || !isCreatedAtOrAfterPaymentApproval(tx, resolveCurrentOrderPaymentApprovedAt(tenantId))) {
+            throw new IllegalStateException(String.format(
+                    "Path B PAID ERP: 매핑 출처·결제 전 INCOME 은 현재 주문으로 heal 불가: "
+                            + "tenantId=%s, mappingId=%s, txId=%s",
+                    tenantId,
+                    mapping.getId(),
+                    tx.getId()));
+        }
         BigDecimal paidBd = BigDecimal.valueOf(paidAmount);
         BigDecimal vatRate = salaryTaxRateLookupService.getVatRate(tenantId);
         TaxCalculationUtil.TaxCalculationResult tax =
@@ -1942,6 +1951,16 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             return false;
         }
         ShopOrderIncomeClaim claim = DEPOSIT_INCOME_CLAIM.get();
+        // 주문 스코프 claim: 매핑 본전표 출처·결제 승인 전 생성·시각 미확인 INCOME 은 이번 주문에 귀속하지 않는다
+        if (claim != null && StringUtils.hasText(claim.getOrderPublicId())) {
+            if (isMappingSourcedDepositIncome(postedIncome)) {
+                return false;
+            }
+            if (!isCreatedAtOrAfterPaymentApproval(
+                    postedIncome, resolveCurrentOrderPaymentApprovedAt(tenantId))) {
+                return false;
+            }
+        }
         ShopOrderRefundDisplayContext shopCtx =
                 resolveShopOrderRefundDisplayContext(tenantId, mapping.getId());
         boolean hasShopIdentity = StringUtils.hasText(shopCtx.orderPublicId)
@@ -2160,6 +2179,54 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 findAttributedPostedDepositIncomeForCurrentOrder(tenantId, mappingId, mapping));
     }
 
+    /**
+     * 환불 가드용 — 현재 주문 귀속 INCOME 중 결제 승인 이후 생성된 행만 요약.
+     * 주문 claim 이 있고 결제 승인 시각을 알면 생성 시각이 없거나 승인 전인 행은 환불 대상에서 제외한다.
+     * claim 이 없으면(레거시) 또는 승인 시각 미확인이면 귀속 판정 결과를 그대로 사용한다.
+     *
+     * @param tenantId 테넌트 ID
+     * @param mappingId 매핑 ID
+     * @param mapping 매핑
+     * @return 환불 대상 INCOME 요약
+     */
+    private PostedDepositIncomeSummary summarizeRefundableDepositIncomeForCurrentOrder(
+            String tenantId, Long mappingId, ConsultantClientMapping mapping) {
+        List<FinancialTransaction> attributed =
+                findAttributedPostedDepositIncomeForCurrentOrder(tenantId, mappingId, mapping);
+        ShopOrderIncomeClaim claim = DEPOSIT_INCOME_CLAIM.get();
+        if (claim == null || !StringUtils.hasText(claim.getOrderPublicId())) {
+            return summarizePostedDepositIncomeList(attributed);
+        }
+        LocalDateTime paymentApprovedAt = resolveCurrentOrderPaymentApprovedAt(tenantId);
+        if (paymentApprovedAt == null) {
+            log.warn(
+                    "🛒 쇼핑 환불 — 주문 결제 승인 시각 미확인, 귀속 INCOME 기준 진행: "
+                            + "tenantId={}, mappingId={}, orderPublicId={}",
+                    tenantId,
+                    mappingId,
+                    claim.getOrderPublicId());
+            return summarizePostedDepositIncomeList(attributed);
+        }
+        List<FinancialTransaction> refundable = new ArrayList<>();
+        for (FinancialTransaction tx : attributed) {
+            if (isCreatedAtOrAfterPaymentApproval(tx, paymentApprovedAt)) {
+                refundable.add(tx);
+            } else {
+                log.warn(
+                        "🛒 쇼핑 환불 — 결제 승인 전/생성시각 미확인 INCOME 은 환불 대상 제외: "
+                                + "tenantId={}, mappingId={}, orderPublicId={}, txId={}, "
+                                + "createdAt={}, paymentApprovedAt={}",
+                        tenantId,
+                        mappingId,
+                        claim.getOrderPublicId(),
+                        tx.getId(),
+                        tx.getCreatedAt(),
+                        paymentApprovedAt);
+            }
+        }
+        return summarizePostedDepositIncomeList(refundable);
+    }
+
     private PostedDepositIncomeSummary summarizePostedDepositIncomeList(
             List<FinancialTransaction> posted) {
         BigDecimal incomeAmountSum = BigDecimal.ZERO;
@@ -2216,6 +2283,11 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
 
     /**
      * remarks 에 orderPublicId 가 없는 orphan posted INCOME (heal 후보).
+     * <p>
+     * 매핑 본전표({@code CONSULTANT_CLIENT_MAPPING}) 출처 INCOME·현재 주문 결제 승인 전에 생성된 행·
+     * 결제 승인 시각/생성 시각을 확인할 수 없는 행은 제외한다(기존 입금확인 INCOME 덮어쓰기 금지).
+     * 제외된 행은 그대로 두고 호출부는 주문 스코프 신규 INCOME 생성으로 진행한다.
+     * </p>
      *
      * @param tenantId 테넌트 ID
      * @param mappingId 매핑 ID
@@ -2224,13 +2296,93 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
     private List<FinancialTransaction> findOrphanPostedDepositIncomes(
             String tenantId, Long mappingId) {
         List<FinancialTransaction> all = findPostedDepositIncomeTransactions(tenantId, mappingId);
+        LocalDateTime paymentApprovedAt = resolveCurrentOrderPaymentApprovedAt(tenantId);
         List<FinancialTransaction> orphans = new ArrayList<>();
         for (FinancialTransaction tx : all) {
-            if (!remarksContainShopOrderPublicId(tx)) {
-                orphans.add(tx);
+            if (remarksContainShopOrderPublicId(tx)) {
+                continue;
             }
+            if (isMappingSourcedDepositIncome(tx)
+                    || !isCreatedAtOrAfterPaymentApproval(tx, paymentApprovedAt)) {
+                log.info(
+                        "Path B PAID ERP: orphan heal 후보 제외(매핑 출처 또는 결제 전/시각 미확인): "
+                                + "tenantId={}, mappingId={}, txId={}, relatedEntityType={}, "
+                                + "createdAt={}, paymentApprovedAt={}",
+                        tenantId,
+                        mappingId,
+                        tx.getId(),
+                        tx.getRelatedEntityType(),
+                        tx.getCreatedAt(),
+                        paymentApprovedAt);
+                continue;
+            }
+            orphans.add(tx);
         }
         return orphans;
+    }
+
+    /**
+     * 현재 claim 주문의 결제 승인 시각. claim.paymentId 우선, 없으면 주문의 결제 중 최신 승인 시각.
+     *
+     * @param tenantId 테넌트 ID
+     * @return 결제 승인 시각, 확인 불가 시 null
+     */
+    private LocalDateTime resolveCurrentOrderPaymentApprovedAt(String tenantId) {
+        ShopOrderIncomeClaim claim = DEPOSIT_INCOME_CLAIM.get();
+        if (claim == null || !StringUtils.hasText(tenantId) || paymentRepository == null) {
+            return null;
+        }
+        if (StringUtils.hasText(claim.getPaymentId())) {
+            Optional<Payment> byPaymentId = paymentRepository.findByTenantIdAndPaymentIdAndIsDeletedFalse(
+                    tenantId, claim.getPaymentId().trim());
+            if (byPaymentId != null && byPaymentId.isPresent() && byPaymentId.get().getApprovedAt() != null) {
+                return byPaymentId.get().getApprovedAt();
+            }
+        }
+        if (!StringUtils.hasText(claim.getOrderPublicId())) {
+            return null;
+        }
+        List<Payment> payments = paymentRepository.findByTenantIdAndOrderIdAndIsDeletedFalse(
+                tenantId, claim.getOrderPublicId().trim());
+        LocalDateTime latestApprovedAt = null;
+        if (payments != null) {
+            for (Payment payment : payments) {
+                if (payment == null || payment.getApprovedAt() == null) {
+                    continue;
+                }
+                if (latestApprovedAt == null || payment.getApprovedAt().isAfter(latestApprovedAt)) {
+                    latestApprovedAt = payment.getApprovedAt();
+                }
+            }
+        }
+        return latestApprovedAt;
+    }
+
+    /**
+     * 매핑 본전표(입금확인 등) 출처 INCOME 인지.
+     *
+     * @param tx 재무 거래
+     * @return relatedEntityType 이 CONSULTANT_CLIENT_MAPPING 이면 true
+     */
+    private static boolean isMappingSourcedDepositIncome(FinancialTransaction tx) {
+        return tx != null
+                && FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING
+                        .equals(tx.getRelatedEntityType());
+    }
+
+    /**
+     * 결제 승인 시각·생성 시각을 모두 알고, 생성이 승인 시각 이후(같거나 늦음)인지.
+     *
+     * @param tx 재무 거래
+     * @param paymentApprovedAt 결제 승인 시각
+     * @return 확인된 결제 이후 생성이면 true (시각 미확인은 false)
+     */
+    private static boolean isCreatedAtOrAfterPaymentApproval(
+            FinancialTransaction tx, LocalDateTime paymentApprovedAt) {
+        return tx != null
+                && paymentApprovedAt != null
+                && tx.getCreatedAt() != null
+                && !tx.getCreatedAt().isBefore(paymentApprovedAt);
     }
 
     /**

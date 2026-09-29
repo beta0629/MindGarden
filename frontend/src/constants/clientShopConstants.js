@@ -18,8 +18,17 @@ export const CLIENT_SHOP_ROUTES = {
   ORDERS: '/client/shop/orders',
   SKU_DETAIL: '/client/shop/sku',
   /** PortOne redirectUrl 복귀 → BE verify */
-  PAYMENT_RETURN: '/client/shop/payment-return'
+  PAYMENT_RETURN: '/client/shop/payment-return',
+  /** 결제 완료 (verify 성공 후) */
+  COMPLETE: '/client/shop/complete'
 };
+
+/**
+ * @param {string} orderPublicId
+ * @returns {string}
+ */
+export const buildShopPaymentCompletePath = (orderPublicId) =>
+  `${CLIENT_SHOP_ROUTES.COMPLETE}/${encodeURIComponent(orderPublicId)}`;
 
 /**
  * @param {string} orderPublicId

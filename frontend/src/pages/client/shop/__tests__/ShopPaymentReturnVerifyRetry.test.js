@@ -32,9 +32,9 @@ describe('ShopPaymentReturnPage verify retry + stash paymentId', () => {
     expect(SOURCE).toContain('resolveShopFulfillmentLines');
     expect(SOURCE).toContain('SHOP_PAYMENT_RETURN_COPY.PAID_FULFILLMENT_RETRY');
     expect(SOURCE).toMatch(/canClientShopFulfillRetry\(paidOrder\)/);
-    // retryable 이면 navigate 하지 않고 return; 비-retryable 만 detail navigate
+    // retryable 이면 navigate 하지 않고 return; 비-retryable 만 결제 완료 화면 navigate
     expect(SOURCE).toMatch(
-      /if \(canClientShopFulfillRetry\(paidOrder\)\)[\s\S]*?return;[\s\S]*?navigate\(buildShopOrderDetailPath/
+      /if \(canClientShopFulfillRetry\(paidOrder\)\)[\s\S]*?return;[\s\S]*?navigate\(buildShopPaymentCompletePath/
     );
   });
 });

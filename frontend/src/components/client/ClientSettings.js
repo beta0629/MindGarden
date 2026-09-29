@@ -8,7 +8,7 @@
  */
 
 import React, { useCallback, useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useSession } from '../../contexts/SessionContext';
 import { useStableUserId } from '../../hooks/useStableUserId';
@@ -28,6 +28,7 @@ import {
 } from '../../utils/koreanMobilePhone';
 import { toDisplayString } from '../../utils/safeDisplay';
 import { redirectToLoginPageOnce } from '../../utils/sessionRedirect';
+import { readReturnToFromSearch } from '../../utils/clientSettingsReturnTo';
 import SafeText from '../common/SafeText';
 import UnifiedLoading from '../common/UnifiedLoading';
 import EmailChangeModal from '../mypage/components/EmailChangeModal';
@@ -104,6 +105,7 @@ const buildNotifyPutBody = (notify) => ({
 const ClientSettings = () => {
   const { t } = useTranslation(['settings']);
   const navigate = useNavigate();
+  const location = useLocation();
   const {
     user,
     checkSession,
@@ -506,8 +508,13 @@ const ClientSettings = () => {
         'success'
       );
       setTimeout(() => setMessage(null), 3000);
+
+      const returnTo = readReturnToFromSearch(location.search);
+      if (returnTo) {
+        navigate(returnTo, { replace: true });
+      }
     },
-    [email, fullName, phone, refreshSessionAfterProfileSave]
+    [email, fullName, phone, refreshSessionAfterProfileSave, location.search, navigate]
   );
 
   const notifyRows = [

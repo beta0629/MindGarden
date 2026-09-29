@@ -11,7 +11,10 @@ import ConfirmModal from '../common/ConfirmModal';
 import MGButton from '../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import { CONSULTATION_LOG_AUTOSAVE_STRINGS, CONSULTATION_LOG_SESSION_NUMBER_STRINGS } from '../../constants/consultationLogAutosaveStrings';
-import { CONSULTATION_LOG_CLIENT_CONDITION_MAX_LENGTH } from '../../constants/consultationLogAutosaveConstants';
+import {
+  buildConsultationLogFormMessages,
+  validateConsultationLogForm
+} from '../../utils/consultationLogFormValidation';
 import {
   removeConsultationLogLocalDraft,
   writeConsultationLogLocalDraft
@@ -959,65 +962,33 @@ const ConsultationLogModal = ({
   };
 
   const validateForm = () => {
-    const errors = {};
-
-    // 타기관 연계: sessionNumber 미요구. 일반/가예약 신규는 BE 회차 부여 허용, 수정만 필수.
-    if (!isInstitutionLinkLog) {
-      const lockedSessionNumber = resolveLockedSessionNumber();
-      if (shouldBlockSaveForMissingSessionNumber(
-        lockedSessionNumber ?? formData.sessionNumber,
-        isEditMode
-      )) {
-        errors.sessionNumber = t('common:consultant.ConsultationLogModal.t_sessionNumberRequired',
-          CONSULTATION_LOG_SESSION_NUMBER_STRINGS.REQUIRED_FOR_SAVE);
-      }
-    }
-    
-    if (!formData.sessionDurationMinutes || formData.sessionDurationMinutes < 1) {
-      errors.sessionDurationMinutes = t('common:consultant.ConsultationLogModal.t_7f40290f');
-    }
-    
-    if (!formData.clientCondition || formData.clientCondition.trim() === '') {
-      errors.clientCondition = t('common:consultant.ConsultationLogModal.t_d431db7c');
-    } else if (String(formData.clientCondition).length > CONSULTATION_LOG_CLIENT_CONDITION_MAX_LENGTH) {
-      errors.clientCondition = t('common:consultant.ConsultationLogModal.t_82f32b59');
-    }
-    
-    if (!formData.mainIssues || formData.mainIssues.trim() === '') {
-      errors.mainIssues = t('common:consultant.ConsultationLogModal.t_27da1035');
-    }
-    
-    if (!formData.interventionMethods || formData.interventionMethods.trim() === '') {
-      errors.interventionMethods = t('common:consultant.ConsultationLogModal.t_8b0e82cb');
-    }
-    
-    if (!formData.clientResponse || formData.clientResponse.trim() === '') {
-      errors.clientResponse = t('common:consultant.ConsultationLogModal.t_4b56e38c');
-    }
-    
-    if (!isInstitutionLinkLog
-        && (!formData.riskAssessment || formData.riskAssessment === '')) {
-      errors.riskAssessment = t('common:consultant.ConsultationLogModal.t_213f1150');
-    }
-    
-    if (!formData.progressEvaluation || formData.progressEvaluation.trim() === '') {
-      errors.progressEvaluation = t('common:consultant.ConsultationLogModal.t_784bce95');
-    }
-    
+    const lockedSessionNumber = resolveLockedSessionNumber();
+    const errors = validateConsultationLogForm({
+      formData,
+      sessionNumber: lockedSessionNumber ?? formData.sessionNumber,
+      isEditMode,
+      isInstitutionLinkLog,
+      messages: buildConsultationLogFormMessages(t)
+    });
     setValidationErrors(errors);
     return Object.keys(errors).length === 0;
   };
 
+  const notifyValidationFailure = () => {
+    const lockedSessionNumber = resolveLockedSessionNumber();
+    if (shouldBlockSaveForMissingSessionNumber(
+      lockedSessionNumber ?? formData.sessionNumber,
+      isEditMode
+    ) && !isInstitutionLinkLog) {
+      notificationManager.error(CONSULTATION_LOG_SESSION_NUMBER_STRINGS.REQUIRED_FOR_COMPLETE);
+      return;
+    }
+    notificationManager.error(buildConsultationLogFormMessages(t).summary);
+  };
+
   const handleSave = async() => {
     if (!validateForm()) {
-      if (!isInstitutionLinkLog) {
-        const lockedSessionNumber = resolveLockedSessionNumber();
-        if (lockedSessionNumber == null) {
-          notificationManager.error(CONSULTATION_LOG_SESSION_NUMBER_STRINGS.REQUIRED_FOR_COMPLETE);
-          return;
-        }
-      }
-      notificationManager.error(t('common:consultant.ConsultationLogModal.t_bad7173d'));
+      notifyValidationFailure();
       return;
     }
 
@@ -1116,14 +1087,7 @@ const ConsultationLogModal = ({
 
   const handleComplete = async() => {
     if (!validateForm()) {
-      if (!isInstitutionLinkLog) {
-        const lockedSessionNumber = resolveLockedSessionNumber();
-        if (lockedSessionNumber == null) {
-          notificationManager.error(CONSULTATION_LOG_SESSION_NUMBER_STRINGS.REQUIRED_FOR_COMPLETE);
-          return;
-        }
-      }
-      notificationManager.error(t('common:consultant.ConsultationLogModal.t_bad7173d'));
+      notifyValidationFailure();
       return;
     }
 

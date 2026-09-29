@@ -12,6 +12,15 @@ import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/co
 import MGButton from '../common/MGButton';
 import PsychClientContextSummaryBlock from '../psych-context/organisms/PsychClientContextSummaryBlock';
 import { useTranslation } from 'react-i18next';
+import { isInstitutionLinkConsultationLogContext } from '../../utils/consultationLogInstitutionContext';
+import {
+  buildConsultationLogFormMessages,
+  validateConsultationLogForm
+} from '../../utils/consultationLogFormValidation';
+import {
+  resolveSessionNumberFromSchedule,
+  shouldBlockSaveForMissingSessionNumber
+} from '../../utils/consultationRecordSessionNumber';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_COMMON_CODES = '/api/v1/common-codes?codeGroup=PRIORITY';
@@ -451,18 +460,42 @@ const ConsultationRecordScreen = () => {
     }));
   };
 
+  const institutionLinkLog = isInstitutionLinkConsultationLogContext(consultation, client);
+
+  const rejectInvalidConsultationLog = () => {
+    const sessionNumber = resolveSessionNumberFromSchedule(consultation) ?? formData.sessionNumber;
+    const messages = buildConsultationLogFormMessages(t);
+    const errors = validateConsultationLogForm({
+      formData,
+      sessionNumber,
+      isEditMode,
+      isInstitutionLinkLog: institutionLinkLog,
+      messages
+    });
+    if (Object.keys(errors).length === 0) {
+      return false;
+    }
+    if (errors.sessionNumber && shouldBlockSaveForMissingSessionNumber(sessionNumber, isEditMode)) {
+      notificationManager.show(errors.sessionNumber, 'error');
+      return true;
+    }
+    notificationManager.show(messages.summary, 'error');
+    return true;
+  };
+
   const handleSave = async() => {
     try {
-      if (formData.sessionNumber == null || formData.sessionNumber === ''
-          || Number.isNaN(Number(formData.sessionNumber))) {
-        notificationManager.show('회기수(sessionNumber)는 필수입니다.', 'error');
+      if (rejectInvalidConsultationLog()) {
         return;
       }
       setSaving(true);
       
+      const lockedSessionNumber = resolveSessionNumberFromSchedule(consultation) ?? formData.sessionNumber;
       const recordData = {
         ...formData,
-        sessionNumber: Number(formData.sessionNumber),
+        sessionNumber: lockedSessionNumber == null || lockedSessionNumber === ''
+          ? null
+          : Number(lockedSessionNumber),
         consultationId: parseInt(scheduleId),
         clientId: client?.id,
         consultantId: user.id
@@ -495,16 +528,17 @@ const ConsultationRecordScreen = () => {
 
   const handleComplete = async() => {
     try {
-      if (formData.sessionNumber == null || formData.sessionNumber === ''
-          || Number.isNaN(Number(formData.sessionNumber))) {
-        notificationManager.show('회기수(sessionNumber)는 필수입니다.', 'error');
+      if (rejectInvalidConsultationLog()) {
         return;
       }
       setSaving(true);
       
+      const lockedSessionNumber = resolveSessionNumberFromSchedule(consultation) ?? formData.sessionNumber;
       const recordData = {
         ...formData,
-        sessionNumber: Number(formData.sessionNumber),
+        sessionNumber: lockedSessionNumber == null || lockedSessionNumber === ''
+          ? null
+          : Number(lockedSessionNumber),
         consultationId: parseInt(scheduleId),
         clientId: client?.id,
         consultantId: user.id,
@@ -683,6 +717,7 @@ const ConsultationRecordScreen = () => {
               min="1"
               max="180"
               style={styles.formInput}
+              required
             />
           </div>
 
@@ -798,7 +833,7 @@ const ConsultationRecordScreen = () => {
               value={formData.riskAssessment}
               onChange={handleInputChange}
               style={styles.formSelect}
-              required
+              required={!institutionLinkLog}
               disabled={loadingCodes}
             >
               <option value="">{t('common:consultant.ConsultationRecordScreen.t_39150dda')}</option>
@@ -847,6 +882,7 @@ const ConsultationRecordScreen = () => {
               onChange={handleInputChange}
               placeholder={t('common:consultant.ConsultationRecordScreen.t_c7df43de')}
               style={styles.formTextarea}
+              required
             />
           </div>
 

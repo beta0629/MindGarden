@@ -83,7 +83,7 @@ public class ConsultantDashboardServiceImpl implements ConsultantDashboardServic
                     .clientName(clientName)
                     .sessionDate(schedule.getDate())
                     .elapsedHours(elapsedHours)
-                    .sessionNumber(null)
+                    .sessionNumber(schedule.getSessionSequence())
                     .build();
             })
             .collect(Collectors.toList());

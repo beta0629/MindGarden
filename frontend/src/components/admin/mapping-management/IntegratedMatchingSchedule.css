@@ -1338,11 +1338,15 @@
 }
 
 .integrated-schedule__pending-payment-alert--sidebar .integrated-schedule__pending-payment-alert-actions {
+  display: flex;
+  align-items: center;
   flex-shrink: 0;
   flex-wrap: nowrap;
 }
 
+/* 전역 .mg-v2-button-primary(UnifiedLogin.css) margin-top 누수 차단 — 목록·당일 결제 세로 정렬 */
 .integrated-schedule__pending-payment-alert--sidebar .integrated-schedule__pending-payment-alert-actions .mg-button {
+  margin-top: 0;
   width: auto;
   height: var(--integrated-schedule-chrome-control-height);
   min-height: var(--integrated-schedule-chrome-control-height);

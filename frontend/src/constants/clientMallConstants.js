@@ -215,7 +215,6 @@ export const CLIENT_MALL_PHONE_COPY = Object.freeze({
   LOCKED_BODY_MINUTES_SUFFIX: '분 뒤에 다시 시도해 주세요. 담은 상품과 동의 내용은 그대로 있어요.',
   LOCKED_BODY_FALLBACK: '잠시 뒤에 다시 시도해 주세요. 담은 상품과 동의 내용은 그대로 있어요.',
   VERIFIED_PREFIX: '인증 완료 · ',
-  CHANGE: '변경',
   SEND_FAILED: '인증번호를 보내지 못했어요. 잠시 후 다시 시도해 주세요.',
   INVALID_PHONE: '휴대폰 번호를 확인해 주세요.',
   CONFIRM_FAILED: '인증을 마치지 못했어요. 잠시 후 다시 시도해 주세요.'
@@ -336,6 +335,7 @@ export const CLIENT_MALL_TEST_IDS = Object.freeze({
   PHONE_VERIFIED: 'client-mall-phone-verified',
   PHONE_SHEET: 'client-mall-phone-sheet',
   PHONE_OPEN: 'client-mall-phone-open',
+  PHONE_CHANGE: 'client-mall-phone-change',
   PHONE_LOCKED_CLOSE: 'client-mall-phone-locked-close',
   CART_PAGE_ASIDE: 'client-mall-cart-page-aside',
   CART_PAGE_ASIDE_COUNT: 'client-mall-cart-page-aside-count',

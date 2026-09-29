@@ -281,8 +281,9 @@ const MallPhoneVerifyInline = ({ flow }) => {
             setOpen(true);
             flow.changeNumber();
           }}
+          data-testid={CLIENT_MALL_TEST_IDS.PHONE_CHANGE}
         >
-          {CLIENT_MALL_PHONE_COPY.CHANGE}
+          {CLIENT_MALL_PHONE_COPY.CHANGE_NUMBER}
         </button>
       </div>
     );
@@ -302,7 +303,12 @@ const MallPhoneVerifyInline = ({ flow }) => {
   );
 
   if (isNarrow) {
-    const closeSheet = () => setOpen(false);
+    const closeSheet = () => {
+      setOpen(false);
+      if (typeof flow.cancelChange === 'function') {
+        flow.cancelChange();
+      }
+    };
     return (
       <div className="client-mall-phone client-mall-phone--idle" data-testid={CLIENT_MALL_TEST_IDS.PHONE_VERIFY}>
         <NeedsVerifyBadge />
@@ -359,7 +365,8 @@ MallPhoneVerifyInline.propTypes = {
     send: PropTypes.func.isRequired,
     resend: PropTypes.func.isRequired,
     confirm: PropTypes.func.isRequired,
-    changeNumber: PropTypes.func.isRequired
+    changeNumber: PropTypes.func.isRequired,
+    cancelChange: PropTypes.func
   }).isRequired
 };
 

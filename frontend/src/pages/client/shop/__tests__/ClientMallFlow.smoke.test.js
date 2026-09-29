@@ -430,4 +430,67 @@ describe('ShopCheckoutPage (TO-BE)', () => {
     expect(screen.getByText(`10${CLIENT_MALL_PHONE_COPY.LOCKED_BODY_MINUTES_SUFFIX}`)).toBeInTheDocument();
     expect(screen.getByTestId(CLIENT_MALL_TEST_IDS.PHONE_CODE)).toBeDisabled();
   });
+
+  describe('서버 인증 완료자 — 재인증 시트 없음', () => {
+    const closeSheet = async() => {
+      await act(async() => {
+        fireEvent.click(document.querySelector('.mg-modal__close'));
+      });
+    };
+
+    test('좁은 화면 — 인증 완료·마스킹·「번호 변경」만 · 결제 눌러도 시트 없음', async() => {
+      mockMatchMedia(true);
+      mockUseSession.mockReturnValue(sessionFor({ phone: '01012341234', isPhoneVerified: true }));
+      mockService.fetchShopCart.mockResolvedValue(cartWithPkg);
+      render(<MemoryRouter initialEntries={['/client/shop/checkout']}><ShopCheckoutPage /></MemoryRouter>);
+
+      const verified = await screen.findByTestId(CLIENT_MALL_TEST_IDS.PHONE_VERIFIED);
+      expect(verified).toHaveTextContent(`${CLIENT_MALL_PHONE_COPY.VERIFIED_PREFIX}010-****-1234`);
+      expect(within(verified).getByTestId(CLIENT_MALL_TEST_IDS.PHONE_CHANGE)).toHaveTextContent(CLIENT_MALL_PHONE_COPY.CHANGE_NUMBER);
+      expect(screen.queryByTestId(CLIENT_MALL_TEST_IDS.PHONE_OPEN)).not.toBeInTheDocument();
+
+      fireEvent.click(screen.getByTestId(CLIENT_MALL_TEST_IDS.CHECKOUT_AGREE_ALL));
+      await act(async() => {
+        fireEvent.click(screen.getByTestId(CLIENT_MALL_TEST_IDS.CHECKOUT_PAY));
+      });
+      await waitFor(() => expect(mockService.postShopCheckout).toHaveBeenCalled());
+      expect(screen.queryByTestId(CLIENT_MALL_TEST_IDS.PHONE_SHEET)).not.toBeInTheDocument();
+      expect(screen.getByTestId(CLIENT_MALL_TEST_IDS.PHONE_VERIFIED)).toBeInTheDocument();
+    });
+
+    test('「번호 변경」 때만 시트 · 닫으면 인증 완료로 복귀(「인증하기」로 떨어지지 않음)', async() => {
+      mockMatchMedia(true);
+      mockUseSession.mockReturnValue(sessionFor({ phone: '01012341234', isPhoneVerified: true }));
+      mockService.fetchShopCart.mockResolvedValue(cartWithPkg);
+      render(<MemoryRouter initialEntries={['/client/shop/checkout']}><ShopCheckoutPage /></MemoryRouter>);
+
+      await screen.findByTestId(CLIENT_MALL_TEST_IDS.PHONE_VERIFIED);
+      expect(screen.queryByTestId(CLIENT_MALL_TEST_IDS.PHONE_SHEET)).not.toBeInTheDocument();
+
+      fireEvent.click(screen.getByTestId(CLIENT_MALL_TEST_IDS.PHONE_CHANGE));
+      const sheet = await screen.findByTestId(CLIENT_MALL_TEST_IDS.PHONE_SHEET);
+      expect(within(sheet).getByLabelText(CLIENT_MALL_PHONE_COPY.PHONE_INPUT_LABEL)).toBeInTheDocument();
+
+      await closeSheet();
+      expect(screen.queryByTestId(CLIENT_MALL_TEST_IDS.PHONE_SHEET)).not.toBeInTheDocument();
+      expect(screen.queryByTestId(CLIENT_MALL_TEST_IDS.PHONE_OPEN)).not.toBeInTheDocument();
+      expect(screen.getByTestId(CLIENT_MALL_TEST_IDS.PHONE_VERIFIED)).toHaveTextContent('010-****-1234');
+
+      fireEvent.click(screen.getByTestId(CLIENT_MALL_TEST_IDS.PHONE_CHANGE));
+      expect(await screen.findByTestId(CLIENT_MALL_TEST_IDS.PHONE_SHEET)).toBeInTheDocument();
+    });
+
+    test('미인증자 — 기존대로 「인증하기」 → 시트 · 닫아도 「인증하기」 유지', async() => {
+      mockMatchMedia(true);
+      mockUseSession.mockReturnValue(sessionFor({ phone: '01012341234', isPhoneVerified: false }));
+      mockService.fetchShopCart.mockResolvedValue(cartWithPkg);
+      render(<MemoryRouter initialEntries={['/client/shop/checkout']}><ShopCheckoutPage /></MemoryRouter>);
+
+      fireEvent.click(await screen.findByTestId(CLIENT_MALL_TEST_IDS.PHONE_OPEN));
+      expect(await screen.findByTestId(CLIENT_MALL_TEST_IDS.PHONE_SHEET)).toBeInTheDocument();
+      await closeSheet();
+      expect(screen.queryByTestId(CLIENT_MALL_TEST_IDS.PHONE_VERIFIED)).not.toBeInTheDocument();
+      expect(screen.getByTestId(CLIENT_MALL_TEST_IDS.PHONE_OPEN)).toBeInTheDocument();
+    });
+  });
 });

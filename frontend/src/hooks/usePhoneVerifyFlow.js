@@ -180,6 +180,23 @@ const usePhoneVerifyFlow = ({ initialPhoneDigits = '', initiallyVerified = false
     setError(null);
   }, []);
 
+  /** 「번호 변경」을 마치지 않고 닫음 → 서버가 인증 완료로 준 번호면 인증 완료 표시로 복귀 */
+  const cancelChange = useCallback(() => {
+    if (!initiallyVerified) {
+      return;
+    }
+    const digits = normalizeKoreanMobileDigits(initialPhoneDigits) || '';
+    userTouchedRef.current = false;
+    setVerifiedDigits(digits);
+    setPhoneDigitsState(digits);
+    setCodeState('');
+    setSentTo('');
+    setExpiresAt(null);
+    setResendAt(null);
+    setError(null);
+    setStep(PHONE_VERIFY_STEP.VERIFIED);
+  }, [initiallyVerified, initialPhoneDigits]);
+
   return {
     step,
     phoneDigits,
@@ -203,7 +220,8 @@ const usePhoneVerifyFlow = ({ initialPhoneDigits = '', initiallyVerified = false
     send,
     resend,
     confirm,
-    changeNumber
+    changeNumber,
+    cancelChange
   };
 };
 

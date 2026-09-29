@@ -1,5 +1,6 @@
 package com.coresolution.consultation.service.impl;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -77,6 +78,7 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -544,6 +546,85 @@ class AdminServiceImplPartialRefundExhaustedScheduleCancelTest {
         assertThat(requests.get(1).getRelatedEntityType())
                 .isEqualTo(FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING_REFUND);
         assertThat(mapping.getStatus()).isEqualTo(ConsultantClientMapping.MappingStatus.CANCELLED);
+    }
+
+    @Test
+    @DisplayName("#1310 후속: 10만원/10회·5회 사용·부분 20,000 후 전액환불 = 30,000 (37,500 과다 금지)")
+    void partialRefundThenTerminate_fullRefundAmountExcludesUsedAndAlreadyRefunded() {
+        Long mappingId = 613L;
+        Long consultantId = 53L;
+        Long clientId = 63L;
+        ConsultantClientMapping mapping = buildMappingWithRemaining(mappingId, consultantId, clientId, 5, 5, 10);
+        List<FinancialTransaction> ledger = new ArrayList<>();
+        stubPartialRefundFlow(mapping, ledger);
+        stubTerminateFlow(consultantId, clientId);
+
+        adminService.partialRefundMapping(mappingId, 2, "부분 환불 20,000");
+        adminService.terminateMapping(mappingId, "잔여 전액 환불");
+
+        List<FinancialTransactionRequest> requests = captureCreatedRequests(2);
+        assertThat(requests.get(0).getSubcategory()).isEqualTo(SUBCATEGORY_PARTIAL_REFUND);
+        assertThat(requests.get(0).getAmount()).isEqualByComparingTo(BigDecimal.valueOf(20000L));
+        assertThat(requests.get(1).getSubcategory()).isEqualTo(SUBCATEGORY_FULL_REFUND);
+        assertThat(requests.get(1).getAmount()).isEqualByComparingTo(BigDecimal.valueOf(30000L));
+        assertThat(requests.stream().map(FinancialTransactionRequest::getAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add))
+                .as("총 환불액은 결제액 - 사용분(5회 50,000) 을 넘지 않아야 한다")
+                .isEqualByComparingTo(BigDecimal.valueOf(50000L));
+        verify(financialTransactionService, never()).cancelRelatedPostedIncomeTransactions(anyLong(), anyString());
+    }
+
+    @Test
+    @DisplayName("#1310 후속: 부분환불 2회 → 두 번째 부분환불 금액도 원 단가 기준 (20,000 + 20,000)")
+    void partialRefundTwice_secondAmountUsesOriginalUnitPrice() {
+        Long mappingId = 614L;
+        ConsultantClientMapping mapping = buildMappingWithRemaining(mappingId, 54L, 64L, 5, 5, 10);
+        List<FinancialTransaction> ledger = new ArrayList<>();
+        stubPartialRefundFlow(mapping, ledger);
+
+        adminService.partialRefundMapping(mappingId, 2, "부분 환불 1차");
+        adminService.partialRefundMapping(mappingId, 2, "부분 환불 2차");
+
+        List<FinancialTransactionRequest> requests = captureCreatedRequests(2);
+        assertThat(requests).extracting(FinancialTransactionRequest::getRelatedEntityType)
+                .containsExactly(RELATED_TYPE_PARTIAL_REFUND,
+                        FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING_PARTIAL_REFUND_SEQ_PREFIX
+                                + FinancialTransactionConstants.PARTIAL_REFUND_RELATED_ENTITY_SEQ_START);
+        assertThat(requests.get(0).getAmount()).isEqualByComparingTo(BigDecimal.valueOf(20000L));
+        assertThat(requests.get(1).getAmount()).isEqualByComparingTo(BigDecimal.valueOf(20000L));
+        assertThat(mapping.getRemainingSessions()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("#1310 후속: 미사용 매핑 부분 20,000 후 전액 취소 → INCOME 취소 없이 EXPENSE 80,000 (이중 차감 금지)")
+    void unusedMappingPartialRefundThenTerminate_doesNotCancelIncomeAndRefundsRemainder() {
+        Long mappingId = 615L;
+        Long consultantId = 55L;
+        Long clientId = 65L;
+        ConsultantClientMapping mapping = buildMappingWithRemaining(mappingId, consultantId, clientId, 10, 0, 10);
+        List<FinancialTransaction> ledger = new ArrayList<>();
+        stubPartialRefundFlow(mapping, ledger);
+        stubTerminateFlow(consultantId, clientId);
+
+        adminService.partialRefundMapping(mappingId, 2, "미사용 부분 환불");
+        assertThat(mapping.getRemainingSessions()).isEqualTo(mapping.getTotalSessions());
+        adminService.terminateMapping(mappingId, "미사용 잔여 전액 취소");
+
+        verify(financialTransactionService, never()).cancelRelatedPostedIncomeTransactions(anyLong(), anyString());
+        List<FinancialTransactionRequest> requests = captureCreatedRequests(2);
+        assertThat(requests.get(0).getAmount()).isEqualByComparingTo(BigDecimal.valueOf(20000L));
+        assertThat(requests.get(1).getSubcategory()).isEqualTo(SUBCATEGORY_FULL_REFUND);
+        assertThat(requests.get(1).getAmount()).isEqualByComparingTo(BigDecimal.valueOf(80000L));
+        assertThat(mapping.getStatus()).isEqualTo(ConsultantClientMapping.MappingStatus.CANCELLED);
+    }
+
+    private void stubTerminateFlow(Long consultantId, Long clientId) {
+        org.mockito.Mockito.lenient().when(statusCodeHelper.getStatusCodeValue(anyString(), anyString()))
+                .thenAnswer(inv -> inv.getArgument(1));
+        org.mockito.Mockito.lenient()
+                .when(scheduleRepository.findByTenantIdAndConsultantIdAndClientIdAndDateGreaterThanEqual(
+                        eq(TEST_TENANT_ID), eq(consultantId), eq(clientId), any(LocalDate.class)))
+                .thenReturn(List.of());
     }
 
     /**

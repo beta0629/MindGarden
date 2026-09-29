@@ -202,6 +202,7 @@ export function mergeShopAdminLnbItems(items, options = {}) {
     return items;
   }
   const shopPaths = new Set([
+    ADMIN_ROUTES.SHOP_PRODUCTS,
     ADMIN_ROUTES.SHOP_CATALOG_SKUS,
     ADMIN_ROUTES.SHOP_POINT_POLICIES,
     ADMIN_ROUTES.SHOP_ORDERS
@@ -221,21 +222,102 @@ export function mergeShopAdminLnbItems(items, options = {}) {
   return [
     ...items,
     {
-      to: ADMIN_ROUTES.SHOP_CATALOG_SKUS,
+      to: ADMIN_ROUTES.SHOP_ORDERS,
       icon: 'SHOPPING_BAG',
       label: SHOP_ADMIN_LNB_GROUP_LABEL,
       end: false,
       children: [
-        { to: ADMIN_ROUTES.SHOP_CATALOG_SKUS, icon: 'PACKAGE', label: '상품(SKU) 관리', end: true },
-        { to: ADMIN_ROUTES.SHOP_POINT_POLICIES, icon: 'GIFT', label: '리워드 정책', end: true },
-        { to: ADMIN_ROUTES.SHOP_ORDERS, icon: 'RECEIPT', label: '온라인 주문', end: true }
+        { to: ADMIN_ROUTES.SHOP_ORDERS, icon: 'RECEIPT', label: SHOP_ADMIN_LNB_CHILD_LABELS.ORDERS, end: true },
+        { to: ADMIN_ROUTES.SHOP_PRODUCTS, icon: 'PACKAGE', label: SHOP_ADMIN_LNB_CHILD_LABELS.PRODUCTS, end: false },
+        { to: ADMIN_ROUTES.SHOP_POINT_POLICIES, icon: 'GIFT', label: SHOP_ADMIN_LNB_CHILD_LABELS.REWARDS, end: true }
       ]
     }
   ];
 }
 
+/** 쇼핑 스위트 LNB 하위 라벨 (주문 → 상품 → 리워드 순) */
+export const SHOP_ADMIN_LNB_CHILD_LABELS = Object.freeze({
+  ORDERS: '온라인 주문',
+  PRODUCTS: '상품',
+  REWARDS: '리워드 정책'
+});
+
+export const PG_CONFIGURATION_LNB_PATH = '/tenant/pg-configurations';
+export const PG_CONFIGURATION_LNB_LABEL = '결제 연결';
+
+const SHOP_LNB_CHILD_ORDER = Object.freeze([
+  ADMIN_ROUTES.SHOP_ORDERS,
+  ADMIN_ROUTES.SHOP_PRODUCTS,
+  ADMIN_ROUTES.SHOP_POINT_POLICIES
+]);
+
+/**
+ * @param {string|undefined|null} path
+ * @returns {string}
+ */
+function normalizeLnbPath(path) {
+  return typeof path === 'string' ? path.split('?')[0] : '';
+}
+
+/**
+ * DB·폴백 LNB의 쇼핑 스위트 노드 정규화 (메뉴 시드 변경 없이 FE에서만).
+ * - 구 SKU 경로 → 「상품」(`/admin/shop/products`)
+ * - 쇼핑 그룹 하위 순서: 온라인 주문 · 상품 · 리워드 정책
+ * - 「PG 설정」 → 「결제 연결」
+ *
+ * @param {Array<{ to?: string, label?: string, end?: boolean, children?: Array }>} items
+ * @returns {typeof items}
+ */
+export function normalizeShopSuiteLnbItems(items) {
+  if (!Array.isArray(items)) {
+    return items;
+  }
+  const rewriteLeaf = (item) => {
+    const path = normalizeLnbPath(item.to);
+    if (path === ADMIN_ROUTES.SHOP_CATALOG_SKUS || path === ADMIN_ROUTES.SHOP_PRODUCTS) {
+      return { ...item, to: ADMIN_ROUTES.SHOP_PRODUCTS, label: SHOP_ADMIN_LNB_CHILD_LABELS.PRODUCTS, end: false };
+    }
+    if (path === ADMIN_ROUTES.SHOP_ORDERS) {
+      return { ...item, label: SHOP_ADMIN_LNB_CHILD_LABELS.ORDERS };
+    }
+    if (path === ADMIN_ROUTES.SHOP_POINT_POLICIES) {
+      return { ...item, label: SHOP_ADMIN_LNB_CHILD_LABELS.REWARDS };
+    }
+    if (path === PG_CONFIGURATION_LNB_PATH) {
+      return { ...item, label: PG_CONFIGURATION_LNB_LABEL };
+    }
+    return item;
+  };
+  const rank = (child) => {
+    const index = SHOP_LNB_CHILD_ORDER.indexOf(normalizeLnbPath(child.to));
+    return index === -1 ? SHOP_LNB_CHILD_ORDER.length : index;
+  };
+  const normalizeNode = (item) => {
+    if (!item || typeof item !== 'object') {
+      return item;
+    }
+    if (!Array.isArray(item.children) || item.children.length === 0) {
+      return rewriteLeaf(item);
+    }
+    const children = item.children.map(normalizeNode);
+    const isShopGroup = children.some((c) => SHOP_LNB_CHILD_ORDER.includes(normalizeLnbPath(c?.to)));
+    if (!isShopGroup) {
+      return { ...item, children };
+    }
+    const ordered = children
+      .map((child, index) => ({ child, index }))
+      .sort((a, b) => (rank(a.child) - rank(b.child)) || (a.index - b.index))
+      .map(({ child }) => child);
+    const parentPath = normalizeLnbPath(item.to);
+    const to = parentPath === ADMIN_ROUTES.SHOP_CATALOG_SKUS ? ADMIN_ROUTES.SHOP_ORDERS : item.to;
+    return { ...item, to, children: ordered };
+  };
+  return items.map(normalizeNode);
+}
+
 /** LNB에서 노출하지 않는 어드민 설정 경로 (라우트·API 유지, 메뉴만 숨김) */
 const HIDDEN_ADMIN_LNB_PATHS = new Set([
+  ADMIN_ROUTES.PACKAGE_PRICING,
   ADMIN_ROUTES.KAKAO_ALIMTALK_SETTINGS,
   ADMIN_ROUTES.TENANT_SMS_SETTINGS,
   // 미사용 조달·재고·구매요청 LNB 숨김(라우트·페이지 유지)
@@ -330,7 +412,7 @@ export function filterHiddenAdminLnbItems(items) {
     return { ...item, children };
   };
 
-  return items.map(filterNode).filter(Boolean);
+  return normalizeShopSuiteLnbItems(items.map(filterNode).filter(Boolean));
 }
 
 export function filterBranchAdminLnbItems(items) {

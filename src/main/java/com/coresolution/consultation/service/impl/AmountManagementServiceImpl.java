@@ -329,6 +329,16 @@ public class AmountManagementServiceImpl implements AmountManagementService {
                         tenantId,
                         mappingId,
                         FinancialTransactionConstants.MAPPING_AMOUNT_INFO_RELATED_ENTITY_TYPES));
+        if (tenantId != null && !tenantId.isBlank() && mappingId != null) {
+            String partialRefundSeqPrefix =
+                    FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING_PARTIAL_REFUND_SEQ_PREFIX;
+            List<FinancialTransaction> sequencedPartialRefunds = financialTransactionRepository
+                    .findByTenantIdAndRelatedEntityIdAndRelatedEntityTypeStartingWithAndIsDeletedFalse(
+                            tenantId, mappingId, partialRefundSeqPrefix);
+            if (sequencedPartialRefunds != null) {
+                related.addAll(sequencedPartialRefunds);
+            }
+        }
         if (tenantId == null || tenantId.isBlank() || mappingId == null || shopClientOrderLineRepository == null) {
             return related;
         }

@@ -197,6 +197,10 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
     private static final String RELATED_ENTITY_TYPE_MAPPING_PARTIAL_REFUND =
             "CONSULTANT_CLIENT_MAPPING_PARTIAL_REFUND";
 
+    /** 2번째 이후 부분 환불 FT relatedEntityType 접두사 ({@code 기본_n}). */
+    private static final String RELATED_ENTITY_TYPE_MAPPING_PARTIAL_REFUND_SEQ_PREFIX =
+            FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING_PARTIAL_REFUND_SEQ_PREFIX;
+
     private final UserRepository userRepository;
     private final ConsultantRepository consultantRepository;
     private final ClientRepository clientRepository;
@@ -3758,6 +3762,11 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 if (!FinancialTransaction.TransactionType.EXPENSE.equals(existing.getTransactionType())) {
                     continue;
                 }
+                // 전액 전표 멱등은 CONSULTATION_REFUND 만 판정 — 부분환불 전표는 매칭·슬롯 해제 대상 아님
+                if (StringUtils.hasText(existing.getSubcategory())
+                        && !REFUND_SUBCATEGORY_FULL.equals(existing.getSubcategory())) {
+                    continue;
+                }
                 FinancialTransaction.TransactionStatus st = existing.getStatus();
                 boolean terminalStatus = st == FinancialTransaction.TransactionStatus.CANCELLED
                         || st == FinancialTransaction.TransactionStatus.REJECTED;
@@ -4020,16 +4029,6 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         if (tenantIdForPartial == null || tenantIdForPartial.isEmpty()) {
             tenantIdForPartial = TenantContextHolder.getTenantId();
         }
-        if (tenantIdForPartial != null && !tenantIdForPartial.isEmpty() && mapping.getId() != null) {
-            boolean existsPartial = financialTransactionRepository
-                    .existsByTenantIdAndRelatedEntityIdAndRelatedEntityTypeAndTransactionTypeAndIsDeletedFalse(
-                            tenantIdForPartial, mapping.getId(), RELATED_ENTITY_TYPE_MAPPING_PARTIAL_REFUND,
-                            FinancialTransaction.TransactionType.EXPENSE);
-            if (existsPartial) {
-                log.warn("🚫 중복 부분환불 거래 방지: MappingID={} 부분환불 FT 이미 존재", mapping.getId());
-                return;
-            }
-        }
         BigDecimal grossPartialBd = BigDecimal.valueOf(refundAmount);
         BigDecimal vatRateForPartial = salaryTaxRateLookupService.getVatRate(tenantIdForPartial);
         TaxCalculationUtil.TaxCalculationResult partialRefundTax =
@@ -4048,6 +4047,30 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 AdminServiceUserFacingMessages.DESC_TAX_SPLIT_SUFFIX_FMT,
                 partialRefundTax.getAmountExcludingTax().longValue(),
                 partialRefundTax.getVatAmount().longValue());
+
+        // 멱등 키 = 부분 환불 건(회기 수·금액·사유·잔여회기 → 적요/금액). 매핑 단위로 막으면 2번째 부분환불 누락.
+        // uk_financial_transactions_dedupe 는 (매핑, 타입)당 활성 1건 → 2번째부터 순번 relatedEntityType 슬롯 사용.
+        String partialRelatedEntityType = RELATED_ENTITY_TYPE_MAPPING_PARTIAL_REFUND;
+        if (tenantIdForPartial != null && !tenantIdForPartial.isEmpty() && mapping.getId() != null) {
+            boolean baseSlotOccupied = financialTransactionRepository
+                    .existsByTenantIdAndRelatedEntityIdAndRelatedEntityTypeAndTransactionTypeAndIsDeletedFalse(
+                            tenantIdForPartial, mapping.getId(), RELATED_ENTITY_TYPE_MAPPING_PARTIAL_REFUND,
+                            FinancialTransaction.TransactionType.EXPENSE);
+            if (baseSlotOccupied) {
+                List<FinancialTransaction> existingPartials =
+                        findActivePartialRefundExpenses(tenantIdForPartial, mapping.getId());
+                BigDecimal partialAmount = partialRefundTax.getAmountIncludingTax();
+                String descriptionKey = partialRefundDescription;
+                boolean sameRequestExists = existingPartials.stream()
+                        .anyMatch(ft -> isSamePartialRefundRequest(ft, partialAmount, descriptionKey));
+                if (existingPartials.isEmpty() || sameRequestExists) {
+                    log.warn("🚫 중복 부분환불 거래 방지: MappingID={} 동일 부분환불 건 FT 이미 존재 (회기={}, 금액={})",
+                            mapping.getId(), refundSessions, refundAmount);
+                    return;
+                }
+                partialRelatedEntityType = resolveNextPartialRefundRelatedEntityType(existingPartials);
+            }
+        }
         
         FinancialTransactionRequest request = FinancialTransactionRequest.builder()
                 .transactionType("EXPENSE") // 환불은 지출
@@ -4059,7 +4082,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 .description(partialRefundDescription)
                 .transactionDate(java.time.LocalDate.now())
                 .relatedEntityId(mapping.getId())
-                .relatedEntityType(RELATED_ENTITY_TYPE_MAPPING_PARTIAL_REFUND)
+                .relatedEntityType(partialRelatedEntityType)
                 .tenantId(tenantIdForPartial)
                 .branchCode(null) // 표준화 2025-12-06: 브랜치 코드 사용 금지
                 .taxIncluded(true)
@@ -4089,6 +4112,83 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         
         log.info("✅ [중앙화] 부분 환불 거래 생성 완료: MappingID={}, RefundSessions={}, RefundAmount={}원", 
             mapping.getId(), refundSessions, refundAmount);
+    }
+
+    /**
+     * 매핑의 활성(비삭제) 부분 환불 EXPENSE — 기본 슬롯 + 순번 슬롯 전체 (tenantId 필수).
+     *
+     * @param tenantId  테넌트 ID
+     * @param mappingId 매핑 ID
+     * @return 부분 환불 EXPENSE 목록 (없으면 빈 목록)
+     */
+    private List<FinancialTransaction> findActivePartialRefundExpenses(String tenantId, Long mappingId) {
+        List<FinancialTransaction> rows = financialTransactionRepository
+                .findByTenantIdAndRelatedEntityIdAndRelatedEntityTypeStartingWithAndIsDeletedFalse(
+                        tenantId, mappingId, RELATED_ENTITY_TYPE_MAPPING_PARTIAL_REFUND);
+        if (rows == null || rows.isEmpty()) {
+            return List.of();
+        }
+        return rows.stream()
+                .filter(java.util.Objects::nonNull)
+                .filter(ft -> FinancialTransaction.TransactionType.EXPENSE.equals(ft.getTransactionType()))
+                .filter(ft -> isPartialRefundRelatedEntityType(ft.getRelatedEntityType()))
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * 부분 환불 relatedEntityType(기본 또는 순번 슬롯) 여부.
+     *
+     * @param relatedEntityType relatedEntityType
+     * @return 기본 타입 또는 {@code 기본_숫자} 형식이면 true
+     */
+    private static boolean isPartialRefundRelatedEntityType(String relatedEntityType) {
+        if (RELATED_ENTITY_TYPE_MAPPING_PARTIAL_REFUND.equals(relatedEntityType)) {
+            return true;
+        }
+        if (relatedEntityType == null
+                || !relatedEntityType.startsWith(RELATED_ENTITY_TYPE_MAPPING_PARTIAL_REFUND_SEQ_PREFIX)) {
+            return false;
+        }
+        String seq = relatedEntityType.substring(RELATED_ENTITY_TYPE_MAPPING_PARTIAL_REFUND_SEQ_PREFIX.length());
+        return !seq.isEmpty() && seq.chars().allMatch(Character::isDigit);
+    }
+
+    /**
+     * 동일 부분 환불 건(금액·적요 일치) 여부. 적요에 상품·회기 수·사유·잔여회기가 포함된다.
+     *
+     * @param existing    기존 부분 환불 EXPENSE
+     * @param amount      이번 부분 환불 금액(부가세 포함)
+     * @param description 이번 부분 환불 적요
+     * @return 동일 건이면 true
+     */
+    private static boolean isSamePartialRefundRequest(
+            FinancialTransaction existing, BigDecimal amount, String description) {
+        if (existing == null || existing.getAmount() == null || amount == null) {
+            return false;
+        }
+        return existing.getAmount().compareTo(amount) == 0
+                && description != null
+                && description.equals(existing.getDescription());
+    }
+
+    /**
+     * 비어 있는 다음 부분 환불 순번 relatedEntityType ({@code 기본_n}, n≥2).
+     *
+     * @param existingPartials 활성 부분 환불 EXPENSE
+     * @return 사용 중이 아닌 순번 relatedEntityType
+     */
+    private static String resolveNextPartialRefundRelatedEntityType(List<FinancialTransaction> existingPartials) {
+        java.util.Set<String> usedTypes = existingPartials.stream()
+                .map(FinancialTransaction::getRelatedEntityType)
+                .filter(java.util.Objects::nonNull)
+                .collect(Collectors.toSet());
+        int seq = FinancialTransactionConstants.PARTIAL_REFUND_RELATED_ENTITY_SEQ_START;
+        String candidate = RELATED_ENTITY_TYPE_MAPPING_PARTIAL_REFUND_SEQ_PREFIX + seq;
+        while (usedTypes.contains(candidate)) {
+            seq++;
+            candidate = RELATED_ENTITY_TYPE_MAPPING_PARTIAL_REFUND_SEQ_PREFIX + seq;
+        }
+        return candidate;
     }
 
      /**
@@ -8316,10 +8416,16 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         try {
             // 부분환불: ERP 페이로드만 전송. 전액 CONSULTATION_REFUND FT 는 생성하지 않음
             // (createPartialConsultationRefundTransaction 단일 write + existsBy 멱등).
-            runInNewTransaction(tenantIdForErp, () -> sendRefundToErp(
-                    mappingForRefund, finalRefundSessions, finalRefundAmount, finalReason, false));
-            log.info("💚 부분 환불 ERP 전송 성공: MappingID={}, RefundSessions={}, RefundAmount={}", 
-                id, refundSessions, refundAmount);
+            runInNewTransaction(tenantIdForErp, () -> {
+                boolean erpSent = sendRefundPayloadToErp(
+                        mappingForRefund, finalRefundSessions, finalRefundAmount, finalReason, false);
+                if (erpSent) {
+                    log.info("💚 부분 환불 ERP 전송 성공: MappingID={}, RefundSessions={}, RefundAmount={}",
+                            id, finalRefundSessions, finalRefundAmount);
+                } else {
+                    log.warn("⚠️ 부분 환불 ERP 전송 실패: MappingID={}", id);
+                }
+            });
         } catch (Exception e) {
             log.error("❌ ERP 환불 데이터 전송 실패: MappingID={}", id, e);
         }
@@ -9304,32 +9410,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
     private void sendRefundToErp(ConsultantClientMapping mapping, int refundedSessions, long refundAmount,
             String reason, boolean unusedFullVoid) {
         try {
-            log.info("🔄 ERP 환불 데이터 전송 시작: MappingID={}, unusedFullVoid={}", mapping.getId(), unusedFullVoid);
-            
-            Map<String, Object> erpData = new HashMap<>();
-            erpData.put("refundType", unusedFullVoid ? "CONSULTATION_VOID" : "CONSULTATION_REFUND");
-            erpData.put("mappingId", mapping.getId());
-            erpData.put("clientId", mapping.getClient().getId());
-            erpData.put("clientName", mapping.getClient().getName());
-            erpData.put("consultantId", mapping.getConsultant().getId());
-            erpData.put("consultantName", mapping.getConsultant().getName());
-            // Path A shop-linked: titleSnapshot SSOT (mapping.packageName stale 금지)
-            String erpPackageName = resolveIncomePackageDisplayName(mapping);
-            erpData.put("packageName", erpPackageName);
-            erpData.put("originalAmount", mapping.getPackagePrice());
-            erpData.put("totalSessions", mapping.getTotalSessions());
-            erpData.put("usedSessions", mapping.getUsedSessions());
-            erpData.put("refundSessions", refundedSessions);
-            erpData.put("refundAmount", refundAmount);
-            erpData.put("refundReason", reason);
-            erpData.put("refundDate", LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
-            erpData.put("branchCode", null); // 표준화 2025-12-07: 브랜치 개념 제거됨
-            erpData.put("requestId", "REF_" + mapping.getId() + "_" + System.currentTimeMillis());
-            
-            String erpUrl = getErpRefundApiUrl();
-            Map<String, String> headers = getErpHeaders();
-            
-            boolean success = sendToErpSystem(erpUrl, erpData, headers);
+            boolean success = sendRefundPayloadToErp(mapping, refundedSessions, refundAmount, reason, unusedFullVoid);
             
             if (success) {
                 log.info("✅ ERP 환불 데이터 전송 성공: MappingID={}, Amount={}", mapping.getId(), refundAmount);
@@ -9353,6 +9434,48 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             throw new RuntimeException(String.format(
                     AdminServiceUserFacingMessages.MSG_ERP_REFUND_SEND_FAILED_FMT, e.getMessage()));
         }
+    }
+
+    /**
+     * ERP 환불 페이로드 전송만 수행한다 (재무 전표 생성 없음).
+     * <p>부분 환불은 본 메서드만 호출하고 전표는 {@code createPartialConsultationRefundTransaction} 단일 write.
+     * 전액 {@code CONSULTATION_REFUND} 전표는 {@code terminateMapping} 경로의 {@code sendRefundToErp} 에서만 생성.</p>
+     *
+     * @param mapping          대상 매핑
+     * @param refundedSessions 환불 회기 수
+     * @param refundAmount     환불 금액
+     * @param reason           사유
+     * @param unusedFullVoid   미사용 전액 무효 여부
+     * @return ERP 전송 성공 여부
+     */
+    private boolean sendRefundPayloadToErp(ConsultantClientMapping mapping, int refundedSessions, long refundAmount,
+            String reason, boolean unusedFullVoid) {
+        log.info("🔄 ERP 환불 데이터 전송 시작: MappingID={}, unusedFullVoid={}", mapping.getId(), unusedFullVoid);
+
+        Map<String, Object> erpData = new HashMap<>();
+        erpData.put("refundType", unusedFullVoid ? "CONSULTATION_VOID" : "CONSULTATION_REFUND");
+        erpData.put("mappingId", mapping.getId());
+        erpData.put("clientId", mapping.getClient().getId());
+        erpData.put("clientName", mapping.getClient().getName());
+        erpData.put("consultantId", mapping.getConsultant().getId());
+        erpData.put("consultantName", mapping.getConsultant().getName());
+        // Path A shop-linked: titleSnapshot SSOT (mapping.packageName stale 금지)
+        String erpPackageName = resolveIncomePackageDisplayName(mapping);
+        erpData.put("packageName", erpPackageName);
+        erpData.put("originalAmount", mapping.getPackagePrice());
+        erpData.put("totalSessions", mapping.getTotalSessions());
+        erpData.put("usedSessions", mapping.getUsedSessions());
+        erpData.put("refundSessions", refundedSessions);
+        erpData.put("refundAmount", refundAmount);
+        erpData.put("refundReason", reason);
+        erpData.put("refundDate", LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
+        erpData.put("branchCode", null); // 표준화 2025-12-07: 브랜치 개념 제거됨
+        erpData.put("requestId", "REF_" + mapping.getId() + "_" + System.currentTimeMillis());
+
+        String erpUrl = getErpRefundApiUrl();
+        Map<String, String> headers = getErpHeaders();
+
+        return sendToErpSystem(erpUrl, erpData, headers);
     }
 
     /**

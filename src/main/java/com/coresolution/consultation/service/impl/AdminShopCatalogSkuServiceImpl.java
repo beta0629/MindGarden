@@ -138,6 +138,7 @@ public class AdminShopCatalogSkuServiceImpl implements AdminShopCatalogSkuServic
         row.setCatalogCategory(category);
         row.setFieldCode(requireFieldCode(tid, category, request.fieldCode()));
         row.setConsultantId(resolveBoundConsultantId(tid, category, request.consultantId()));
+        row.setValidityMonths(request.validityMonths());
         if (request.catalogVisible()) {
             requireThumbnailUrl(row);
         }
@@ -359,7 +360,7 @@ public class AdminShopCatalogSkuServiceImpl implements AdminShopCatalogSkuServic
         }
     }
 
-    private static ShopCatalogPackageFeeItem toFeeItem(
+    static ShopCatalogPackageFeeItem toFeeItem(
             ShopCatalogPackageIdentity identity,
             ShopCatalogSku row) {
         return new ShopCatalogPackageFeeItem(
@@ -379,7 +380,8 @@ public class AdminShopCatalogSkuServiceImpl implements AdminShopCatalogSkuServic
                         ? row.getCatalogCategory()
                         : ShopCatalogCategory.CONSULTATION,
                 row != null ? row.getFieldCode() : null,
-                row != null ? row.getConsultantId() : null);
+                row != null ? row.getConsultantId() : null,
+                row != null ? row.getValidityMonths() : null);
     }
 
     private static String requireTenant(String tenantId) {

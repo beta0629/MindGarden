@@ -9,39 +9,50 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import SafeText from '../../common/SafeText';
 import {
+  ADMIN_SHOP_EXPIRING_SOON_CHIP,
   ADMIN_SHOP_LEDGER_CHIP,
+  ADMIN_SHOP_LEDGER_STATE,
   ADMIN_SHOP_ORDERS_COPY,
   ADMIN_SHOP_SUITE_TEST_IDS,
-  ADMIN_SHOP_TOAST_DURATION_MS
+  ADMIN_SHOP_TOAST_DURATION_MS,
+  formatAdminShopCopy
 } from '../../../constants/adminShopSuite';
 import { ADMIN_SHOP_SESSION_DELTA_KIND } from '../../../utils/adminShopSuite';
 
 const SKELETON_ROW_COUNT = 5;
 
 /**
- * 쌍장부 상태 칩.
+ * 쌍장부 상태 칩. 만료 임박은 `만료 임박 D-{n}`.
  *
- * @param {{ state: string }} props
+ * @param {{ state: string, daysLeft?: number|null }} props
  * @returns {JSX.Element|null}
  */
-export function AdminShopLedgerChip({ state }) {
+export function AdminShopLedgerChip({ state, daysLeft }) {
   const chip = ADMIN_SHOP_LEDGER_CHIP[state];
   if (!chip) {
     return null;
   }
+  const label = state === ADMIN_SHOP_LEDGER_STATE.EXPIRING_SOON && daysLeft != null
+    ? formatAdminShopCopy(ADMIN_SHOP_EXPIRING_SOON_CHIP, { days: daysLeft })
+    : chip.label;
   return (
     <span className={`admin-shop-suite__chip admin-shop-suite__chip--${chip.modifier}`}>
-      <SafeText>{chip.label}</SafeText>
+      <SafeText>{label}</SafeText>
     </span>
   );
 }
 
 AdminShopLedgerChip.propTypes = {
-  state: PropTypes.string.isRequired
+  state: PropTypes.string.isRequired,
+  daysLeft: PropTypes.number
+};
+
+AdminShopLedgerChip.defaultProps = {
+  daysLeft: null
 };
 
 /**
- * 회기 변화 텍스트 (+N회기 · −N원복 · (+N) 대기/미반영 · —).
+ * 회기 변화 텍스트 (+N회기 · −N원복 · (+N) 대기/미반영 · (N) 만료 · —).
  *
  * @param {{ kind: string, count: number|null }} delta
  * @returns {string}
@@ -60,6 +71,8 @@ export function formatAdminShopSessionDelta(delta) {
       return `(+${count}) ${ADMIN_SHOP_ORDERS_COPY.SESSION_WAITING}`;
     case ADMIN_SHOP_SESSION_DELTA_KIND.UNREFLECTED:
       return `(+${count}) ${ADMIN_SHOP_ORDERS_COPY.SESSION_UNREFLECTED}`;
+    case ADMIN_SHOP_SESSION_DELTA_KIND.EXPIRED:
+      return `(${count}) ${ADMIN_SHOP_ORDERS_COPY.SESSION_EXPIRED}`;
     default:
       return '—';
   }

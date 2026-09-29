@@ -30,7 +30,10 @@ import {
 import {
   ADMIN_SHOP_PG_BADGE,
   ADMIN_SHOP_PG_COPY,
+  ADMIN_SHOP_PG_HISTORY_CHANGE_SEPARATOR,
   ADMIN_SHOP_PG_HISTORY_PREVIEW,
+  ADMIN_SHOP_PG_HISTORY_STATUS_LABELS,
+  ADMIN_SHOP_PG_HISTORY_TYPE_LABELS,
   ADMIN_SHOP_SUITE_TEST_IDS,
   formatAdminShopCopy
 } from '../../constants/adminShopSuite';
@@ -68,6 +71,37 @@ const resolvePgBadge = (config) => {
     return { label: ADMIN_SHOP_PG_BADGE.INACTIVE, tone: 'expired' };
   }
   return { label: ADMIN_SHOP_PG_BADGE.ACTIVE, tone: 'paid' };
+};
+
+/**
+ * @param {string|null|undefined} status
+ * @returns {string}
+ */
+const formatHistoryStatus = (status) => {
+  const key = toDisplayString(status, '').toUpperCase();
+  return ADMIN_SHOP_PG_HISTORY_STATUS_LABELS[key] || toDisplayString(status, '');
+};
+
+/**
+ * 변경 이력 한 줄 — 서버 필드 changeType · oldStatus/newStatus · notes.
+ *
+ * @param {object} item
+ * @returns {{ label: string, change: string }}
+ */
+const describeHistoryItem = (item) => {
+  const type = toDisplayString(item?.changeType, '').toUpperCase();
+  const before = formatHistoryStatus(item?.oldStatus);
+  const after = formatHistoryStatus(item?.newStatus);
+  let change = toDisplayString(item?.notes, '');
+  if (before && after && before !== after) {
+    change = `${before}${ADMIN_SHOP_PG_HISTORY_CHANGE_SEPARATOR}${after}`;
+  } else if (!change && after) {
+    change = after;
+  }
+  return {
+    label: ADMIN_SHOP_PG_HISTORY_TYPE_LABELS[type] || toDisplayString(item?.changeType, ''),
+    change
+  };
 };
 
 /**
@@ -335,7 +369,7 @@ const PgConfigurationDetail = () => {
               )}
               subtitle={isPortone ? ADMIN_SHOP_PG_COPY.SUBTITLE_PORTONE : toDisplayString(config.pgName, '')}
               actions={(
-                <div className="admin-shop-suite__header-actions">
+                <div className="admin-shop-suite__header-actions admin-shop-suite__header-actions--nowrap">
                   {showSmoke ? (
                     <MGButton
                       type="button"
@@ -712,14 +746,17 @@ const PgConfigurationDetail = () => {
                       </tr>
                     </thead>
                     <tbody>
-                      {visibleHistory.map((item, index) => (
-                        <tr key={`${item.changedAt || ''}-${index}`}>
-                          <td className="admin-shop-suite__num">{formatDateTime(item.changedAt)}</td>
-                          <td><SafeText fallback={EMPTY}>{item.changedBy}</SafeText></td>
-                          <td><strong><SafeText fallback={EMPTY}>{item.action}</SafeText></strong></td>
-                          <td className="admin-shop-suite__muted"><SafeText fallback={EMPTY}>{item.description}</SafeText></td>
-                        </tr>
-                      ))}
+                      {visibleHistory.map((item, index) => {
+                        const row = describeHistoryItem(item);
+                        return (
+                          <tr key={item.id != null ? `pg-history-${item.id}` : `${item.changedAt || ''}-${index}`}>
+                            <td className="admin-shop-suite__num">{formatDateTime(item.changedAt)}</td>
+                            <td><SafeText fallback={EMPTY}>{item.changedBy}</SafeText></td>
+                            <td><strong><SafeText fallback={EMPTY}>{row.label}</SafeText></strong></td>
+                            <td className="admin-shop-suite__muted"><SafeText fallback={EMPTY}>{row.change}</SafeText></td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>

@@ -29,4 +29,7 @@ public class ShopOrderLineResponse {
 
     /** {@code SINGLE} | {@code PACKAGE} */
     private String packageType;
+
+    /** 주문 당시 유효기간(개월) 스냅샷. null = 기한 없음 */
+    private Integer validityMonths;
 }

@@ -1,6 +1,7 @@
 package com.coresolution.consultation.repository;
 
 import com.coresolution.consultation.entity.ShopOrderFulfillmentEvent;
+import java.util.Collection;
 import java.util.List;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -34,6 +35,16 @@ public interface ShopOrderFulfillmentEventRepository extends BaseRepository<Shop
      */
     List<ShopOrderFulfillmentEvent> findByTenantIdAndOrderPublicIdAndIsDeletedFalseOrderBySkuCodeAsc(
             String tenantId, String orderPublicId);
+
+    /**
+     * 여러 주문의 이행 이벤트 (어드민 장부 목록 판정용 일괄 조회).
+     *
+     * @param tenantId       테넌트 ID
+     * @param orderPublicIds 주문 공개 ID 목록
+     * @return 이행 이벤트 목록
+     */
+    List<ShopOrderFulfillmentEvent> findByTenantIdAndOrderPublicIdInAndIsDeletedFalse(
+            String tenantId, Collection<String> orderPublicIds);
 
     /**
      * 상담 회기 grant 원복 rem-restored claim (COMPLETED 또는 INCOME_SYNC FAILED만).

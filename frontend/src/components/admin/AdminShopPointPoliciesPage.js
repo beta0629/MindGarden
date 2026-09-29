@@ -297,9 +297,9 @@ const AdminShopPointPoliciesPage = () => {
             title={ADMIN_SHOP_REWARD_COPY.TITLE}
             subtitle={ADMIN_SHOP_REWARD_COPY.SUBTITLE}
             actions={(
-              <div className="admin-shop-suite__header-actions">
+              <div className="admin-shop-suite__header-actions admin-shop-suite__header-actions--nowrap">
                 {changes > 0 ? (
-                  <span className="admin-shop-suite__muted">
+                  <span className="admin-shop-suite__muted admin-shop-suite__changes-count">
                     {formatAdminShopCopy(ADMIN_SHOP_REWARD_COPY.CHANGES, { count: changes })}
                   </span>
                 ) : null}

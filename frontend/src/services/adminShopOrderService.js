@@ -12,6 +12,7 @@ import {
   ADMIN_SHOP_ORDERS_DEFAULT_PAGE,
   ADMIN_SHOP_ORDERS_DEFAULT_PAGE_SIZE,
   buildAdminShopOrderPath,
+  buildAdminShopOrderExpiryExtensionsPath,
   buildAdminShopOrderFulfillRetryPath,
   buildAdminShopOrderReconcilePaymentPath,
   buildAdminShopOrderReconcileRefundPath,
@@ -30,13 +31,16 @@ function unwrapData(raw) {
   return raw;
 }
 
+const LIST_FILTER_KEYS = Object.freeze(['segment', 'from', 'to', 'q']);
+
 /**
- * 어드민 온라인 주문 목록 (page/size).
+ * 어드민 온라인 주문 목록 (서버 page/size · 세그먼트 · 기간 · 검색).
  *
  * @param {Object|number} [optionsOrLimit]
  *   number 이면 legacy limit (page=0, size=limit).
- *   object 이면 `{ page, size, limit }`.
- * @returns {Promise<{ orders: Array, totalElements: number, page: number, size: number }>}
+ *   object 이면 `{ page, size, limit, segment, from, to, q }`.
+ * @returns {Promise<{ orders: Array, totalElements: number, page: number, size: number,
+ *   counts: Record<string, number>, summary: object|null }>}
  */
 export async function listAdminShopOrders(optionsOrLimit = {}) {
   let page = ADMIN_SHOP_ORDERS_DEFAULT_PAGE;
@@ -55,7 +59,16 @@ export async function listAdminShopOrders(optionsOrLimit = {}) {
     }
   }
 
-  const raw = await StandardizedApi.get(ADMIN_SHOP_API.ORDERS, { page, size });
+  const params = { page, size };
+  if (optionsOrLimit && typeof optionsOrLimit === 'object') {
+    LIST_FILTER_KEYS.forEach((key) => {
+      const value = optionsOrLimit[key];
+      if (value != null && String(value).trim() !== '') {
+        params[key] = String(value).trim();
+      }
+    });
+  }
+  const raw = await StandardizedApi.get(ADMIN_SHOP_API.ORDERS, params);
   const data = unwrapData(raw);
 
   if (Array.isArray(data)) {
@@ -63,7 +76,9 @@ export async function listAdminShopOrders(optionsOrLimit = {}) {
       orders: data,
       totalElements: data.length,
       page,
-      size
+      size,
+      counts: {},
+      summary: null
     };
   }
 
@@ -75,8 +90,41 @@ export async function listAdminShopOrders(optionsOrLimit = {}) {
     orders,
     totalElements,
     page: data?.page != null && Number.isFinite(Number(data.page)) ? Number(data.page) : page,
-    size: data?.size != null && Number.isFinite(Number(data.size)) ? Number(data.size) : size
+    size: data?.size != null && Number.isFinite(Number(data.size)) ? Number(data.size) : size,
+    counts: data?.counts && typeof data.counts === 'object' ? data.counts : {},
+    summary: data?.summary && typeof data.summary === 'object' ? data.summary : null
   };
+}
+
+/**
+ * 사용 기한 연장 (센터 관리자). 이력 INSERT 만 — 결제·회기 행은 바뀌지 않는다.
+ *
+ * @param {string} orderPublicId
+ * @param {{ newExpireDate: string, reason: string }} body
+ * @returns {Promise<Array<object>>} 연장 이력 (최신 먼저)
+ */
+export async function extendAdminShopOrderExpiry(orderPublicId, { newExpireDate, reason }) {
+  if (!orderPublicId || !String(orderPublicId).trim()) {
+    throw new Error('주문 번호가 없습니다.');
+  }
+  const raw = await StandardizedApi.post(buildAdminShopOrderExpiryExtensionsPath(orderPublicId), {
+    newExpireDate,
+    reason: String(reason || '').trim()
+  });
+  const data = unwrapData(raw);
+  return Array.isArray(data) ? data : [];
+}
+
+/**
+ * 사용 기한 연장 이력.
+ *
+ * @param {string} orderPublicId
+ * @returns {Promise<Array<object>>}
+ */
+export async function listAdminShopOrderExpiryExtensions(orderPublicId) {
+  const raw = await StandardizedApi.get(buildAdminShopOrderExpiryExtensionsPath(orderPublicId));
+  const data = unwrapData(raw);
+  return Array.isArray(data) ? data : [];
 }
 
 /**

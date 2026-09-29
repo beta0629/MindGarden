@@ -223,6 +223,7 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
                     .titleSnapshot(offer.title())
                     .unitPriceMinor(offer.unitPriceMinor())
                     .sessionCountSnapshot(offer.sessionCount())
+                    .validityMonthsSnapshot(sku.getValidityMonths())
                     .quantity(cl.getQuantity())
                     .lineTotalMinor(lineTotal)
                     .consultantClientMappingId(lineMappingId)

@@ -25,11 +25,14 @@ export function buildAdminShopProductEditRoute(id) {
 /** 목록 한 페이지 행 수 */
 export const ADMIN_SHOP_SUITE_PAGE_SIZE = 20;
 
-/** 주문 목록 1회 조회 건수 — 기간·세그먼트는 클라이언트에서 거른다 */
-export const ADMIN_SHOP_ORDERS_FETCH_SIZE = 100;
+/** CSV 내보내기 — 서버 페이지 1회 조회 건수 */
+export const ADMIN_SHOP_ORDERS_EXPORT_PAGE_SIZE = 100;
 
-/** 주문 행 상세(상품·회기) 보강 동시 호출 수 */
-export const ADMIN_SHOP_ORDER_ENRICH_CONCURRENCY = 4;
+/** 주문·상품 검색 입력 → 서버 조회 지연(ms) */
+export const ADMIN_SHOP_SEARCH_DEBOUNCE_MS = 300;
+
+/** 기한 연장 빠른 선택 (개월) */
+export const ADMIN_SHOP_EXTEND_MONTH_OPTIONS = Object.freeze([1, 2, 3]);
 
 /** 토스트 노출 시간(ms) */
 export const ADMIN_SHOP_TOAST_DURATION_MS = 4000;
@@ -43,35 +46,58 @@ export const ADMIN_SHOP_PRODUCT_DESCRIPTION_MAX = 500;
 /** 회기 수 최소값(저장 가능) */
 export const ADMIN_SHOP_PRODUCT_SESSION_MIN = 1;
 
+/** 유효기간(개월) 최소값 — 상한 없음, 비우면 기한 없음 */
+export const ADMIN_SHOP_PRODUCT_VALIDITY_MIN = 1;
+
 /** 금액 입력 — 퍼센트 ↔ basis points */
 export const ADMIN_SHOP_BPS_PER_PERCENT = 100;
 
-/** 쌍장부 행 상태 */
+/**
+ * 쌍장부 행 상태 (서버 ledgerState 와 동일). 한 주문 = 상태 하나.
+ * EXPIRED = 사용 기한 만료, UNPAID = 결제 시간 초과·취소 (「만료」는 사용 기한에만 쓴다).
+ */
 export const ADMIN_SHOP_LEDGER_STATE = Object.freeze({
   PAID: 'PAID',
+  EXPIRING_SOON: 'EXPIRING_SOON',
+  EXPIRED: 'EXPIRED',
   PENDING: 'PENDING',
   RECONCILE: 'RECONCILE',
   REFUNDED: 'REFUNDED',
+  UNPAID: 'UNPAID'
+});
+
+/** 사용 기한 판정 (서버 expiryState) */
+export const ADMIN_SHOP_EXPIRY_STATE = Object.freeze({
+  NONE: 'NONE',
+  ACTIVE: 'ACTIVE',
+  EXPIRING_SOON: 'EXPIRING_SOON',
   EXPIRED: 'EXPIRED'
 });
 
 /** 상태 칩 — 녹색 없음. variant 는 StatusBadge, modifier 는 스위트 토큰 */
 export const ADMIN_SHOP_LEDGER_CHIP = Object.freeze({
   [ADMIN_SHOP_LEDGER_STATE.PAID]: { label: '결제 완료', variant: 'neutral', modifier: 'paid' },
+  [ADMIN_SHOP_LEDGER_STATE.EXPIRING_SOON]: { label: '만료 임박', variant: 'warning', modifier: 'amber' },
+  [ADMIN_SHOP_LEDGER_STATE.EXPIRED]: { label: '기한 만료', variant: null, modifier: 'term-expired' },
   [ADMIN_SHOP_LEDGER_STATE.PENDING]: { label: '결제 대기', variant: 'warning', modifier: 'amber' },
   [ADMIN_SHOP_LEDGER_STATE.RECONCILE]: { label: '정합 필요', variant: 'warning', modifier: 'amber' },
   [ADMIN_SHOP_LEDGER_STATE.REFUNDED]: { label: '환불 완료', variant: 'info', modifier: 'refunded' },
-  [ADMIN_SHOP_LEDGER_STATE.EXPIRED]: { label: '미결제 · 시간 초과', variant: null, modifier: 'expired' }
+  [ADMIN_SHOP_LEDGER_STATE.UNPAID]: { label: '미결제 · 시간 초과', variant: null, modifier: 'unpaid' }
 });
 
-/** 주문 목록 세그먼트 */
+/** 만료 임박 칩 — `만료 임박 D-{n}` */
+export const ADMIN_SHOP_EXPIRING_SOON_CHIP = '만료 임박 D-{days}';
+
+/** 주문 목록 세그먼트 (한 주문 = 세그먼트 하나, 합 = 전체) */
 export const ADMIN_SHOP_ORDER_SEGMENTS = Object.freeze([
   { value: 'ALL', label: '전체' },
   { value: ADMIN_SHOP_LEDGER_STATE.PAID, label: '결제 완료' },
+  { value: ADMIN_SHOP_LEDGER_STATE.EXPIRING_SOON, label: '만료 임박(7일 이내)' },
+  { value: ADMIN_SHOP_LEDGER_STATE.EXPIRED, label: '만료' },
   { value: ADMIN_SHOP_LEDGER_STATE.PENDING, label: '결제 대기' },
   { value: ADMIN_SHOP_LEDGER_STATE.RECONCILE, label: '정합 필요' },
   { value: ADMIN_SHOP_LEDGER_STATE.REFUNDED, label: '환불 완료' },
-  { value: ADMIN_SHOP_LEDGER_STATE.EXPIRED, label: '미결제' }
+  { value: ADMIN_SHOP_LEDGER_STATE.UNPAID, label: '미결제' }
 ]);
 
 /** 주문 기간 필터 */
@@ -91,8 +117,15 @@ export const ADMIN_SHOP_ORDER_PERIOD_OPTIONS = Object.freeze([
 
 /** 삭제 가능(목록 ⋯) — 미결제(결제 시간 초과)·환불 완료만 */
 export const ADMIN_SHOP_ORDER_DELETE_VISIBLE_STATES = Object.freeze([
-  ADMIN_SHOP_LEDGER_STATE.EXPIRED,
+  ADMIN_SHOP_LEDGER_STATE.UNPAID,
   ADMIN_SHOP_LEDGER_STATE.REFUNDED
+]);
+
+/** 기한 연장 가능 상태 (결제 완료 계열) */
+export const ADMIN_SHOP_ORDER_EXTENDABLE_STATES = Object.freeze([
+  ADMIN_SHOP_LEDGER_STATE.PAID,
+  ADMIN_SHOP_LEDGER_STATE.EXPIRING_SOON,
+  ADMIN_SHOP_LEDGER_STATE.EXPIRED
 ]);
 
 export const ADMIN_SHOP_ORDERS_COPY = Object.freeze({
@@ -106,9 +139,11 @@ export const ADMIN_SHOP_ORDERS_COPY = Object.freeze({
   STRIP_OUT_LABEL: '나간 돈 · 환불',
   STRIP_CHECK_LABEL: '확인할 주문',
   STRIP_IN_CAPTION: '건 · 포인트 사용',
+  STRIP_IN_EXPIRED_CAPTION: '만료 {count}회 별도',
   STRIP_OUT_CAPTION: '건 · PortOne 취소 완료',
   STRIP_CHECK_CAPTION_PENDING: '결제 대기',
   STRIP_CHECK_CAPTION_RECONCILE: '정합 필요',
+  STRIP_CHECK_CAPTION_EXPIRING: '만료 임박',
   STRIP_CHECK_VIEW: '보기',
   SEGMENT_ARIA: '주문 상태',
   SEARCH_PLACEHOLDER: '주문번호·내담자 검색',
@@ -123,12 +158,17 @@ export const ADMIN_SHOP_ORDERS_COPY = Object.freeze({
   COL_STATUS: '상태',
   COL_MENU: '메뉴',
   TOTAL_LABEL: '이 기간 합계',
-  TOTAL_CAPTION: '결제 완료·환불만 합산 · 결제 대기·정합 필요·미결제 제외',
+  TOTAL_CAPTION: '돈은 만료 주문 포함 · 만료 회기는 활성에서 빼요',
+  TOTAL_EXPIRED_SESSIONS: '({count}) 만료 별도',
   SESSION_UNIT: '회기',
   SESSION_GRANTED: '회기',
   SESSION_RESTORED: '원복',
   SESSION_WAITING: '대기',
   SESSION_UNREFLECTED: '미반영',
+  SESSION_EXPIRED: '만료',
+  SESSION_UNTIL: '{date}까지',
+  EXTENDABLE: '연장 가능',
+  EXTENDABLE_TITLE: '센터에서 기한을 늘릴 수 있어요',
   MENU_DETAIL: '주문 상세',
   MENU_COPY_ID: '주문번호 복사',
   MENU_DELETE: '주문 기록 삭제',
@@ -162,9 +202,12 @@ export const ADMIN_SHOP_ORDER_MODAL_COPY = Object.freeze({
   CONSULTANT: '담당 상담사',
   MAPPING: '배정',
   PAY_METHOD: '결제 수단',
-  EXPIRES_AT: '사용 기한',
+  EXPIRES_AT: '사용 기한 · 당일 포함',
   EXPIRES_AT_VALUE: '{date}까지',
+  EXPIRES_AT_EXPIRED: '{date} 만료',
+  EXPIRES_AT_NONE: '기한 없음',
   EXTEND_INFO: '{count}회 연장 · 원래 {date}',
+  EXTEND_BUTTON: '기한 연장',
   PAID_AT: '결제 일시',
   LINES_HINT: '회기 상품 · 줄 금액',
   LINE_COL_PRODUCT: '상품',
@@ -172,7 +215,9 @@ export const ADMIN_SHOP_ORDER_MODAL_COPY = Object.freeze({
   LINE_COL_QTY: '수량',
   LINE_COL_AMOUNT: '금액',
   EVENTS_TITLE: '처리 기록',
-  EVENTS_HINT: '결제 · 회기 · 회계',
+  EVENTS_HINT: '결제 · 회기 · 회계 · 기한',
+  EVENT_EXTENDED: '기한 연장',
+  EVENT_EXTENDED_NOTE: '만료일 {previous}에서 {next}로',
   USED_WARNING_LEAD: '이미 쓴 {usedCount}회도 함께 빠져요.',
   USED_WARNING_TAIL: '환불 후 남는 회기는 0회예요.',
   RECONCILE_BOX: '환불 정합을 누르면 PortOne 결제 상태를 다시 읽고 회기를 맞춰요.',
@@ -207,6 +252,36 @@ export const ADMIN_SHOP_PAY_METHOD_LABELS = Object.freeze({
   TRANSFER: '계좌이체',
   VIRTUAL_ACCOUNT: '가상계좌',
   POINTS: '포인트'
+});
+
+/** 기한 연장 창 (3.3b) */
+export const ADMIN_SHOP_EXTEND_COPY = Object.freeze({
+  TITLE: '기한 연장',
+  CURRENT: '현재 만료일',
+  CURRENT_CAPTION: '당일 포함 · {count}회 연장됨',
+  CURRENT_CAPTION_NONE: '당일 포함',
+  NEXT: '새 만료일',
+  NEXT_CAPTION: '{days}일 늘어나요 · 당일 포함',
+  NEXT_EMPTY: '날짜를 고르세요',
+  DATE_LABEL: '새 만료일',
+  QUICK_ARIA: '빠른 선택',
+  QUICK_MONTH: '{months}개월',
+  QUICK_CUSTOM: '직접 선택',
+  REASON_LABEL: '사유',
+  REASON_PLACEHOLDER: '예: 입원으로 상담을 잠시 쉬어요',
+  REASON_HINT: '사유를 적어야 저장할 수 있어요 · 연장 이력과 처리 기록에 남아요',
+  HISTORY_TITLE: '연장 이력',
+  HISTORY_AT: '처리일',
+  HISTORY_PREVIOUS: '이전 만료일',
+  HISTORY_NEXT: '새 만료일',
+  HISTORY_BY: '처리자',
+  HISTORY_REASON: '사유',
+  HISTORY_EMPTY: '아직 연장한 적이 없어요',
+  FOOTER_NOTE: '연장해도 결제 금액과 회기 수는 그대로예요',
+  CANCEL: '취소',
+  SAVE: '저장',
+  SAVED: '기한을 {date}까지 늘렸어요',
+  FAILED: '기한을 늘리지 못했어요.'
 });
 
 /** 주문 처리 기록 — 이행 이벤트 상태 → 한글 이벤트 */
@@ -272,13 +347,20 @@ export const ADMIN_SHOP_PRODUCTS_COPY = Object.freeze({
   STOP_IMPACT: '판매 중지하면 홈·몰에서 숨겨지고, 기존 구매분은 유지돼요.',
   STOP_CONFIRM: '판매 중지',
   STOP_DONE: '판매를 중지했어요',
+  STOP_KEPT_TOAST: '기존 구매분은 유지돼요',
+  RESUME_DONE: '판매를 다시 시작했어요 · 홈 공개와 몰 노출은 꺼져 있어요',
+  STATUS_TOGGLE_ARIA: '판매 상태',
+  STATUS_FAILED: '판매 상태를 바꾸지 못했어요.',
+  COL_VALIDITY: '유효기간',
+  VALIDITY_VALUE: '결제일부터 {months}개월',
+  VALIDITY_NONE: '기간 없음',
   STOPPED_LABEL: '판매 중지',
   EMPTY_TITLE: '아직 상품이 없어요',
   EMPTY_DESC: '상품명·가격·회기 수만 있으면 바로 몰에 올릴 수 있어요.',
   EMPTY_FILTERED: '조건에 맞는 상품이 없어요',
   LOAD_FAILED_TITLE: '상품을 불러오지 못했어요.',
   PAGINATION_UNIT: '개',
-  USAGE_PERIOD_NOTICE: '이용기간 — 단회기와 10회기 패키지 모두 결제일부터 3개월 안에 사용해야 합니다. 무제한 유효기간은 없습니다.',
+  USAGE_PERIOD_NOTICE: '이용기간 — 상품마다 결제일부터 쓸 수 있는 개월 수를 정할 수 있어요. 비워 두면 기한 없이 쓸 수 있어요.',
   USAGE_PERIOD_EXPIRY_NOTE: '기한이 지나면 남은 회기는 만료되며, 센터 사정에 따라 연장될 수 있어요.'
 });
 
@@ -302,6 +384,11 @@ export const ADMIN_SHOP_PRODUCT_EDITOR_COPY = Object.freeze({
   PRICE_ERROR: '가격을 0원 이상으로 넣어 주세요.',
   PER_SESSION: '회당 단가',
   PER_SESSION_HINT: '자동 계산',
+  VALIDITY: '유효기간',
+  VALIDITY_PREFIX: '결제일부터',
+  VALIDITY_SUFFIX: '개월',
+  VALIDITY_HINT: '1 이상 정수 · 비워 두면 기한 없음 · 저장한 뒤 결제한 주문부터 적용돼요',
+  VALIDITY_ERROR: '유효기간은 1 이상의 정수로 넣어 주세요.',
   SECTION_BASIC: '기본 정보',
   NAME: '상품명',
   NAME_ERROR: '상품명을 넣어 주세요.',
@@ -391,6 +478,30 @@ export const ADMIN_SHOP_REWARD_COPY = Object.freeze({
 });
 
 export const ADMIN_SHOP_PG_HISTORY_PREVIEW = 5;
+
+/** PG 변경 이력 changeType → 항목 */
+export const ADMIN_SHOP_PG_HISTORY_TYPE_LABELS = Object.freeze({
+  CREATED: '등록',
+  UPDATED: '설정 수정',
+  STATUS_CHANGED: '상태 변경',
+  APPROVED: '승인',
+  REJECTED: '거부',
+  ACTIVATED: '사용 시작',
+  DEACTIVATED: '사용 중지'
+});
+
+/** PG 변경 이력 상태 값 → 표시 */
+export const ADMIN_SHOP_PG_HISTORY_STATUS_LABELS = Object.freeze({
+  ACTIVE: '사용중',
+  INACTIVE: '사용 안 함',
+  PENDING: '승인 대기',
+  APPROVED: '승인됨',
+  REJECTED: '거부',
+  SUSPENDED: '일시 중지'
+});
+
+/** 이전·이후 사이 구분 (열 머리 「이전 → 이후」와 맞춤) */
+export const ADMIN_SHOP_PG_HISTORY_CHANGE_SEPARATOR = ' → ';
 
 export const ADMIN_SHOP_PG_BADGE = Object.freeze({
   ACTIVE: '사용중',
@@ -524,6 +635,16 @@ export const ADMIN_SHOP_SUITE_TEST_IDS = Object.freeze({
   REFUND_CONFIRM_SUBMIT: 'admin-shop-refund-confirm-submit',
   REFUND_CONFIRM_REASON: 'admin-shop-refund-confirm-reason',
   REFUND_CONFIRM_USED_CHECK: 'admin-shop-refund-confirm-used-check',
+  ORDER_EXPIRY_CELL: 'admin-shop-order-expiry-cell',
+  ORDER_EXTEND_BUTTON: 'admin-shop-order-extend-button',
+  ORDER_EXTENDABLE_LINK: 'admin-shop-order-extendable-link',
+  EXTEND_DIALOG: 'admin-shop-extend-dialog',
+  EXTEND_DATE: 'admin-shop-extend-date',
+  EXTEND_REASON: 'admin-shop-extend-reason',
+  EXTEND_SAVE: 'admin-shop-extend-save',
+  EXTEND_HISTORY: 'admin-shop-extend-history',
+  PRODUCT_SALE_TOGGLE: 'admin-shop-product-sale-toggle',
+  PRODUCT_EDITOR_VALIDITY: 'admin-shop-product-editor-validity',
   PRODUCTS_PAGE: 'admin-shop-products-page',
   PRODUCTS_TABLE: 'admin-shop-products-table',
   PRODUCTS_UNSET_RAIL: 'admin-shop-products-unset-rail',

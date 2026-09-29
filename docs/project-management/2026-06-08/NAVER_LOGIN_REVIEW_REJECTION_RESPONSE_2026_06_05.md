@@ -263,9 +263,9 @@ https://mindgarden.core-solution.co.kr/ 또는 https://mindgarden.dev.core-solut
 
 | 역할 | ID | 비밀번호 |
 |---|---|---|
-| 일반 회원 (내담자) | client@maindgarden.co.kr | Test2026! |
-| 상담사 | consultant@maindgarden.co.kr | Test2026! |
-| 운영자 (스태프) | staff@mindgarden.co.kr | Test2026! |
+| 일반 회원 (내담자) | client@maindgarden.co.kr | (별도 채널로 전달 · 문서 미기재) |
+| 상담사 | consultant@maindgarden.co.kr | (별도 채널로 전달 · 문서 미기재) |
+| 운영자 (스태프) | staff@mindgarden.co.kr | (별도 채널로 전달 · 문서 미기재) |
 
 > 위 계정은 이메일/비밀번호 로그인 전용. 네이버 로그인 검수는 검수원이 본인 네이버 ID 로 시도해 정상 동작 확인.
 

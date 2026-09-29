@@ -17,6 +17,7 @@ import {
   ADMIN_SHOP_TOAST_DURATION_MS,
   formatAdminShopCopy
 } from '../../../constants/adminShopSuite';
+import { resolveAdminPaymentStatusLabel } from '../../../constants/adminShopApi';
 import { ADMIN_SHOP_SESSION_DELTA_KIND } from '../../../utils/adminShopSuite';
 
 const SKELETON_ROW_COUNT = 5;
@@ -49,6 +50,32 @@ AdminShopLedgerChip.propTypes = {
 
 AdminShopLedgerChip.defaultProps = {
   daysLeft: null
+};
+
+/**
+ * 결제 행 상태 칩 — 라벨이 정의된 서버 상태(예: REFUND_REQUIRED → 환불 필요)만 표시.
+ *
+ * @param {{ paymentStatus?: string|null }} props
+ * @returns {JSX.Element|null}
+ */
+export function AdminShopPaymentStatusChip({ paymentStatus }) {
+  const label = resolveAdminPaymentStatusLabel(paymentStatus);
+  if (!label) {
+    return null;
+  }
+  return (
+    <span className="admin-shop-suite__chip admin-shop-suite__chip--amber">
+      <SafeText>{label}</SafeText>
+    </span>
+  );
+}
+
+AdminShopPaymentStatusChip.propTypes = {
+  paymentStatus: PropTypes.string
+};
+
+AdminShopPaymentStatusChip.defaultProps = {
+  paymentStatus: null
 };
 
 /**

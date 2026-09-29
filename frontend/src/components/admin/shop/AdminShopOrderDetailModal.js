@@ -51,7 +51,12 @@ import {
   resolveAdminShopOrderSessionCount,
   resolveAdminShopSessionDelta
 } from '../../../utils/adminShopSuite';
-import { AdminShopLedgerChip, AdminShopNotice, AdminShopPairPanel } from './AdminShopSuiteParts';
+import {
+  AdminShopLedgerChip,
+  AdminShopNotice,
+  AdminShopPairPanel,
+  AdminShopPaymentStatusChip
+} from './AdminShopSuiteParts';
 
 const EMPTY = ADMIN_SHOP_ORDER_MODAL_COPY.EMPTY_VALUE;
 const EVENT_NOTE_SEPARATOR = ' · ';
@@ -378,6 +383,7 @@ function AdminShopOrderDetailModal({
         </InfoCard>
         <InfoCard label={ADMIN_SHOP_ORDER_DETAIL_COPY.ORDER_STATUS}>
           <AdminShopLedgerChip state={state} daysLeft={detail.daysLeft != null ? Number(detail.daysLeft) : null} />
+          <AdminShopPaymentStatusChip paymentStatus={detail.paymentStatus} />
         </InfoCard>
         <InfoCard label={ADMIN_SHOP_ORDER_MODAL_COPY.EXPIRES_AT} wide testId={ADMIN_SHOP_SUITE_TEST_IDS.ORDER_EXPIRY_CELL}>
           <span className="admin-shop-suite__expiry-cell">

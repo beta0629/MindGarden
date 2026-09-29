@@ -132,7 +132,8 @@ class ShopLatePaymentRaceScenarioTest {
                 paymentRepository,
                 clientPointWalletService,
                 portOneV2PaymentVerifyService,
-                transactionManager);
+                transactionManager,
+                guard);
 
         order = ShopClientOrder.builder()
                 .publicId(ORDER_PUBLIC_ID)

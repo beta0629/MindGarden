@@ -43,7 +43,6 @@ import { requestPortOnePayment } from '../../utils/portonePayment';
 import { AdminShopNotice } from '../admin/shop/AdminShopSuiteParts';
 
 const PG_LIST_PATH = '/tenant/pg-configurations';
-const PG_LIST_STATE_STAY = Object.freeze({ stayOnList: true });
 const EMPTY = '—';
 
 /**
@@ -137,7 +136,7 @@ const PgConfigurationDetail = () => {
       setDeleting(true);
       await deletePgConfiguration(tenantId, configId);
       showNotification(ADMIN_SHOP_PG_COPY.DELETED, 'success');
-      navigate(PG_LIST_PATH, { state: PG_LIST_STATE_STAY });
+      navigate(PG_LIST_PATH);
     } catch (err) {
       console.error('PG 설정 삭제 실패:', err);
       showNotification(ADMIN_SHOP_PG_COPY.DELETE_FAILED, 'error');
@@ -274,7 +273,7 @@ const PgConfigurationDetail = () => {
               type="button"
               variant="secondary"
               className={buildErpMgButtonClassName({ variant: 'secondary', size: 'sm' })}
-              onClick={() => navigate(PG_LIST_PATH, { state: PG_LIST_STATE_STAY })}
+              onClick={() => navigate(PG_LIST_PATH)}
               preventDoubleClick={false}
             >
               {ADMIN_SHOP_PG_COPY.BACK_TO_LIST}
@@ -372,7 +371,7 @@ const PgConfigurationDetail = () => {
                       {
                         id: 'list',
                         label: ADMIN_SHOP_PG_COPY.MENU_LIST,
-                        onClick: () => navigate(PG_LIST_PATH, { state: PG_LIST_STATE_STAY })
+                        onClick: () => navigate(PG_LIST_PATH)
                       },
                       {
                         id: 'delete',

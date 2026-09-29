@@ -369,6 +369,36 @@
     flex-direction: column;
     gap: 8px;
   }
+
+  /* 보기/숨기기 텍스트 버튼이 입력칸 우측 패딩보다 넓어 덮이므로 절대배치 대신 인라인 행 */
+  .pg-config-form .input-with-icon {
+    gap: var(--mg-v2-space-2);
+  }
+
+  .pg-config-form .input-with-icon .mg-form__input,
+  .pg-config-form .input-with-icon .form-input {
+    padding-right: var(--mg-v2-space-3);
+  }
+
+  .pg-config-form .input-with-icon .icon-button {
+    position: static;
+    flex: 0 0 auto;
+  }
+
+  /* flex 이면 텍스트 노드마다 flex item 이 되어 좁은 폭에서 한 글자씩 세로로 쪼개짐 */
+  .pg-config-form .help-text {
+    display: block;
+  }
+
+  .pg-config-form .help-text svg {
+    display: inline-block;
+    vertical-align: middle;
+    margin-right: var(--mg-v2-space-1);
+  }
+
+  .pg-config-form .pg-config-portone-v2-code {
+    overflow-wrap: anywhere;
+  }
 }
 
 /* 포트원 결제모듈 V2 전용 (디자인 토큰만 사용) */
@@ -499,16 +529,6 @@
   
   .mg-form__group {
     gap: 6px;
-  }
-  
-  .input-with-icon .mg-form__input,
-  .input-with-icon .form-input {
-    padding-right: 40px;
-  }
-  
-  .icon-button {
-    right: 8px;
-    padding: 2px;
   }
 }
 

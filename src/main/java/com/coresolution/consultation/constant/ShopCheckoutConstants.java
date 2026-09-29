@@ -60,6 +60,9 @@ public final class ShopCheckoutConstants {
     /** 요청 mappingId가 내담자 ACTIVE 매핑이 아님 */
     public static final String MSG_CONSULTANT_MAPPING_INVALID = "유효하지 않은 상담 연결입니다.";
 
+    /** 상담 상품 라인에 쓸 활성 상담사 매핑이 없음 — 주문 저장·결제 요청 전 거부 */
+    public static final String MSG_CONSULTANT_MAPPING_REQUIRED_FOR_PURCHASE = "담당 상담사 연결 후 구매할 수 있어요";
+
     /**
      * 쇼핑 회기 가산(Path A) 또는 미결제 패키지 활성화(Path B)에 허용되지 않는 매핑 상태.
      * 허용: ACTIVE / SESSIONS_EXHAUSTED / PENDING_PAYMENT / PAYMENT_CONFIRMED /

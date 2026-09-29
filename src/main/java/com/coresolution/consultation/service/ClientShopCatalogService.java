@@ -2,6 +2,8 @@ package com.coresolution.consultation.service;
 
 import java.util.List;
 import com.coresolution.consultation.dto.shop.ShopCatalogSkuResponse;
+import com.coresolution.consultation.entity.ConsultantClientMapping;
+import com.coresolution.consultation.entity.ShopCatalogSku;
 
 /**
  * 내담자 카탈로그 조회.
@@ -49,4 +51,17 @@ public interface ClientShopCatalogService {
      * @throws com.coresolution.consultation.exception.EntityNotFoundException 없거나 이 내담자에게 숨긴 SKU
      */
     ShopCatalogSkuResponse getVisibleSkuByCode(String tenantId, String skuCode, Long clientUserId);
+
+    /**
+     * 로그인 내담자 카탈로그 노출 규칙과 같은 조건으로 SKU 가 보이는지 판단한다.
+     * <p>체크아웃에서 상담 상품 구매 가능 여부를 재검사할 때 쓴다.
+     * 활성 매핑이 없으면 false.</p>
+     *
+     * @param tenantId 테넌트 ID
+     * @param sku 카탈로그 SKU
+     * @param activeMappings 같은 테넌트 내담자의 활성 매핑
+     * @return 보이면 true
+     */
+    boolean isVisibleForClientMappings(
+            String tenantId, ShopCatalogSku sku, List<ConsultantClientMapping> activeMappings);
 }

@@ -6,7 +6,7 @@
  * @since 2026-05-12
  * @see docs/design-system/v2/CONSULTANT_CLIENT_SCREEN_WIREFRAMES.md §2
  */
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -29,8 +29,22 @@ import { Chip } from '@/components/atoms/Chip';
 import { SkeletonLoader } from '@/components/atoms/SkeletonLoader';
 import { CONSULTANT_RECORDS_COPY } from '@/constants/consultantRecordsCopy';
 import { resolveSessionNumberFromSchedule } from '@/utils/consultationRecordSessionNumber';
+import {
+  findMissingConsultationRecordFields,
+  resolveDefaultSessionDurationMinutes,
+} from '@/utils/consultationRecordCreateBody';
+import { extractApiErrorMessage } from '@/utils/extractApiErrorMessage';
 
 const TAG_OPTIONS = ['우울', '불안', '가족', '학업', '직장', '관계', '자아', '기타'];
+const FIELD_LABELS = CONSULTANT_RECORDS_COPY.CREATE_FIELD_LABELS;
+const FIELD_PLACEHOLDERS = CONSULTANT_RECORDS_COPY.CREATE_FIELD_PLACEHOLDERS;
+
+function parseDurationInput(raw: string): number | null {
+  const trimmed = raw.trim();
+  if (!trimmed) return null;
+  const n = Number(trimmed);
+  return Number.isFinite(n) ? n : null;
+}
 
 export default function ConsultantRecordCreate() {
   const theme = useTheme();
@@ -46,6 +60,21 @@ export default function ConsultantRecordCreate() {
   const [expertMemo, setExpertMemo] = useState('');
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [nextSessionMemo, setNextSessionMemo] = useState('');
+  const [sessionDuration, setSessionDuration] = useState('');
+  const [mainIssues, setMainIssues] = useState('');
+  const [interventionMethods, setInterventionMethods] = useState('');
+  const [clientResponse, setClientResponse] = useState('');
+  const [riskAssessment, setRiskAssessment] = useState('');
+  const [progressEvaluation, setProgressEvaluation] = useState('');
+
+  useEffect(() => {
+    if (!schedule) return;
+    setSessionDuration((prev) =>
+      prev !== ''
+        ? prev
+        : String(resolveDefaultSessionDurationMinutes(schedule.startTime, schedule.endTime)),
+    );
+  }, [schedule]);
 
   const toggleTag = (tag: string) => {
     setSelectedTags((prev) =>
@@ -58,8 +87,22 @@ export default function ConsultantRecordCreate() {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     }
 
-    if (status === 'COMPLETED' && !summary.trim()) {
-      Alert.alert('알림', '상담 요약을 입력해주세요.');
+    const sessionDurationMinutes = parseDurationInput(sessionDuration);
+    const missing = findMissingConsultationRecordFields({
+      sessionDurationMinutes,
+      clientCondition: summary,
+      mainIssues,
+      interventionMethods,
+      clientResponse,
+      riskAssessment,
+      progressEvaluation,
+    });
+    if (missing.length > 0) {
+      Alert.alert(
+        CONSULTANT_RECORDS_COPY.CREATE_REQUIRED_TITLE,
+        CONSULTANT_RECORDS_COPY.CREATE_REQUIRED_MISSING_PREFIX +
+          missing.map((key) => FIELD_LABELS[key]).join(', '),
+      );
       return;
     }
 
@@ -85,6 +128,12 @@ export default function ConsultantRecordCreate() {
         tags: selectedTags,
         nextSessionMemo: nextSessionMemo.trim() || undefined,
         status,
+        sessionDurationMinutes,
+        mainIssues,
+        interventionMethods,
+        clientResponse,
+        riskAssessment,
+        progressEvaluation,
       },
       {
         onSuccess: () => {
@@ -94,12 +143,64 @@ export default function ConsultantRecordCreate() {
             [{ text: '확인', onPress: () => router.back() }],
           );
         },
-        onError: () => {
-          Alert.alert('오류', '저장에 실패했습니다. 다시 시도해주세요.');
+        onError: (error) => {
+          Alert.alert(
+            '오류',
+            extractApiErrorMessage(error, CONSULTANT_RECORDS_COPY.CREATE_SAVE_FAILED),
+          );
         },
       },
     );
   };
+
+  const renderSectionLabel = (label: string) => (
+    <Text
+      style={[
+        styles.sectionLabel,
+        {
+          color: theme.colors.textMain,
+          fontFamily: theme.fontFamily.semibold,
+          fontSize: theme.fontSize.base,
+          marginTop: theme.spacing.xl,
+        },
+      ]}
+    >
+      {label}
+    </Text>
+  );
+
+  const renderRequiredTextField = (
+    label: string,
+    value: string,
+    onChangeText: (text: string) => void,
+    placeholder: string,
+  ) => (
+    <>
+      {renderSectionLabel(label)}
+      <TextInput
+        style={[
+          styles.textInput,
+          {
+            backgroundColor: theme.colors.surface,
+            borderColor: theme.colors.border,
+            borderRadius: theme.borderRadius.lg,
+            color: theme.colors.textMain,
+            fontFamily: theme.fontFamily.regular,
+            fontSize: theme.fontSize.sm,
+            padding: theme.spacing.md,
+            marginTop: theme.spacing.sm,
+          },
+        ]}
+        value={value}
+        onChangeText={onChangeText}
+        placeholder={placeholder}
+        placeholderTextColor={theme.colors.gray[400]}
+        multiline
+        textAlignVertical="top"
+        accessibilityLabel={label}
+      />
+    </>
+  );
 
   return (
     <SafeAreaView
@@ -258,6 +359,67 @@ export default function ConsultantRecordCreate() {
             textAlignVertical="top"
             accessibilityLabel="전문가 메모"
           />
+
+          {/* 서버·웹 공통 필수값 */}
+          {renderSectionLabel(FIELD_LABELS.sessionDurationMinutes)}
+          <TextInput
+            style={[
+              styles.numberInput,
+              {
+                backgroundColor: theme.colors.surface,
+                borderColor: theme.colors.border,
+                borderRadius: theme.borderRadius.lg,
+                color: theme.colors.textMain,
+                fontFamily: theme.fontFamily.regular,
+                fontSize: theme.fontSize.sm,
+                padding: theme.spacing.md,
+                marginTop: theme.spacing.sm,
+              },
+            ]}
+            value={sessionDuration}
+            onChangeText={setSessionDuration}
+            placeholder={FIELD_PLACEHOLDERS.sessionDurationMinutes}
+            placeholderTextColor={theme.colors.gray[400]}
+            keyboardType="number-pad"
+            accessibilityLabel={FIELD_LABELS.sessionDurationMinutes}
+          />
+          {renderRequiredTextField(
+            FIELD_LABELS.mainIssues,
+            mainIssues,
+            setMainIssues,
+            FIELD_PLACEHOLDERS.mainIssues,
+          )}
+          {renderRequiredTextField(
+            FIELD_LABELS.interventionMethods,
+            interventionMethods,
+            setInterventionMethods,
+            FIELD_PLACEHOLDERS.interventionMethods,
+          )}
+          {renderRequiredTextField(
+            FIELD_LABELS.clientResponse,
+            clientResponse,
+            setClientResponse,
+            FIELD_PLACEHOLDERS.clientResponse,
+          )}
+          {renderSectionLabel(FIELD_LABELS.riskAssessment)}
+          <View style={[styles.tagRow, { marginTop: theme.spacing.sm }]}>
+            {CONSULTANT_RECORDS_COPY.CREATE_RISK_OPTIONS.map((option) => (
+              <Chip
+                key={option.value}
+                label={option.label}
+                selected={riskAssessment === option.value}
+                onPress={() =>
+                  setRiskAssessment((prev) => (prev === option.value ? '' : option.value))
+                }
+              />
+            ))}
+          </View>
+          {renderRequiredTextField(
+            FIELD_LABELS.progressEvaluation,
+            progressEvaluation,
+            setProgressEvaluation,
+            FIELD_PLACEHOLDERS.progressEvaluation,
+          )}
 
           {/* 태그 */}
           <Text
@@ -421,6 +583,9 @@ const styles = StyleSheet.create({
   textInputLarge: {
     borderWidth: 1,
     minHeight: 160,
+  },
+  numberInput: {
+    borderWidth: 1,
   },
   tagRow: {
     flexDirection: 'row',

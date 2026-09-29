@@ -49,6 +49,8 @@ const usePhoneVerifyFlow = ({ initialPhoneDigits = '', initiallyVerified = false
   const [error, setError] = useState(null);
   const [sending, setSending] = useState(false);
   const [confirming, setConfirming] = useState(false);
+  /** 서버 인증 성공 응답 횟수 — 성공 토스트는 이 값이 늘 때만 */
+  const [verifySuccessSeq, setVerifySuccessSeq] = useState(0);
   const [now, setNow] = useState(() => Date.now());
   const onVerifiedRef = useRef(onVerified);
   onVerifiedRef.current = onVerified;
@@ -83,7 +85,15 @@ const usePhoneVerifyFlow = ({ initialPhoneDigits = '', initiallyVerified = false
     const digits = String(raw || '').replace(/\D/g, '').slice(0, CLIENT_MALL_LIMITS.PHONE_DIGITS_MAX);
     setPhoneDigitsState(digits);
     setError(null);
-  }, []);
+    if (verifiedDigits && normalizeKoreanMobileDigits(digits) === verifiedDigits) {
+      // 인증된 번호로 되돌림 → 새로고침 없이 즉시 인증 완료 (재인증·토스트 없음)
+      setCodeState('');
+      setSentTo('');
+      setExpiresAt(null);
+      setResendAt(null);
+      setStep(PHONE_VERIFY_STEP.VERIFIED);
+    }
+  }, [verifiedDigits]);
 
   const setCode = useCallback((raw) => {
     setCodeState(String(raw || '').replace(/\D/g, '').slice(0, CLIENT_MALL_LIMITS.OTP_LENGTH));
@@ -144,6 +154,7 @@ const usePhoneVerifyFlow = ({ initialPhoneDigits = '', initiallyVerified = false
       setResendAt(null);
       setCodeState('');
       setStep(PHONE_VERIFY_STEP.VERIFIED);
+      setVerifySuccessSeq((n) => n + 1);
       return true;
     } catch (err) {
       const classified = classifyPhoneConfirmError(err);
@@ -182,20 +193,20 @@ const usePhoneVerifyFlow = ({ initialPhoneDigits = '', initiallyVerified = false
 
   /** 「번호 변경」을 마치지 않고 닫음 → 서버가 인증 완료로 준 번호면 인증 완료 표시로 복귀 */
   const cancelChange = useCallback(() => {
-    if (!initiallyVerified) {
+    if (!verifiedDigits) {
       return;
     }
-    const digits = normalizeKoreanMobileDigits(initialPhoneDigits) || '';
     userTouchedRef.current = false;
-    setVerifiedDigits(digits);
-    setPhoneDigitsState(digits);
+    setPhoneDigitsState(verifiedDigits);
     setCodeState('');
     setSentTo('');
     setExpiresAt(null);
     setResendAt(null);
     setError(null);
     setStep(PHONE_VERIFY_STEP.VERIFIED);
-  }, [initiallyVerified, initialPhoneDigits]);
+  }, [verifiedDigits]);
+
+  const matchesVerified = Boolean(verifiedDigits) && normalizeKoreanMobileDigits(phoneDigits) === verifiedDigits;
 
   return {
     step,
@@ -214,7 +225,9 @@ const usePhoneVerifyFlow = ({ initialPhoneDigits = '', initiallyVerified = false
     error,
     sending,
     confirming,
-    isVerified: step === PHONE_VERIFY_STEP.VERIFIED,
+    verifySuccessSeq,
+    /** 현재 입력 번호 == 서버 인증 번호 (번호 변경 중이어도 같은 번호면 인증 완료) */
+    isVerified: matchesVerified && (step === PHONE_VERIFY_STEP.VERIFIED || step === PHONE_VERIFY_STEP.INPUT),
     setPhoneDigits,
     setCode,
     send,

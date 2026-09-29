@@ -119,6 +119,9 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
         if (existed.isPresent()) {
             return toCheckoutResponse(existed.get());
         }
+        // 주문 생성·포인트 전액 즉시 PAID 경로 전에 preparePayment 와 같은 규칙으로 차단 (우회 불가)
+        requireVerifiedKoreanMobileForPayment(userRepository.findByTenantIdAndId(tenantId, clientUserId)
+                .orElseThrow(() -> new IllegalStateException("사용자를 찾을 수 없습니다.")));
 
         boolean buyNow = request.getLines() != null && !request.getLines().isEmpty();
         List<CheckoutLine> cartLines = buyNow

@@ -1,5 +1,7 @@
 package com.coresolution.consultation.constant.consultation;
 
+import java.util.List;
+
 /**
  * 상담일지 작성(POST) 서버 필수값 검증 문구·한도.
  * 프론트 {@code validateConsultationLogForm} 과 같은 규칙·문구를 쓴다.
@@ -21,6 +23,16 @@ public final class ConsultationRecordCreateValidationMessages {
     public static final String FIELD_CLIENT_RESPONSE = "clientResponse";
     public static final String FIELD_RISK_ASSESSMENT = "riskAssessment";
     public static final String FIELD_PROGRESS_EVALUATION = "progressEvaluation";
+
+    /** 앱 기존 페이로드 판별용. 이 키가 하나도 없으면 필수값 폼이 없던 앱 빌드로 본다. */
+    public static final List<String> REQUIRED_FIELDS = List.of(
+            FIELD_SESSION_DURATION_MINUTES,
+            FIELD_CLIENT_CONDITION,
+            FIELD_MAIN_ISSUES,
+            FIELD_INTERVENTION_METHODS,
+            FIELD_CLIENT_RESPONSE,
+            FIELD_RISK_ASSESSMENT,
+            FIELD_PROGRESS_EVALUATION);
 
     public static final String MSG_SUMMARY = "필수 항목을 모두 입력해주세요.";
     public static final String MSG_SESSION_DURATION_MINUTES = "세션 시간을 입력해주세요 (최소 1분)";

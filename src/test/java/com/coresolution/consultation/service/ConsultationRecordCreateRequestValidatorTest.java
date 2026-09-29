@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.Map;
 import com.coresolution.consultation.constant.consultation.ConsultationRecordCreateValidationMessages;
 import com.coresolution.consultation.exception.ValidationException;
+import com.coresolution.core.domain.ClientPlatform;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -120,5 +121,45 @@ class ConsultationRecordCreateRequestValidatorTest {
         payload.remove("clientResponse");
 
         assertThat(errorsOf(payload, true)).containsOnlyKeys("clientResponse");
+    }
+
+    @Test
+    @DisplayName("앱 채널에서 필수값 키가 하나도 없으면 기존 앱 페이로드로 통과")
+    void appChannel_legacyPayload_skipsValidation() {
+        Map<String, Object> legacy = new HashMap<>();
+        legacy.put("consultationId", 30L);
+        legacy.put("consultantObservations", "메모");
+
+        assertThat(validator.isLegacyAppPayload(legacy, ClientPlatform.IOS)).isTrue();
+        assertThatCode(() -> validator.validate(legacy, false, ClientPlatform.IOS)).doesNotThrowAnyException();
+        assertThatCode(() -> validator.validate(legacy, false, ClientPlatform.ANDROID))
+                .doesNotThrowAnyException();
+    }
+
+    @Test
+    @DisplayName("웹 채널은 같은 본문이어도 검증한다")
+    void webChannel_alwaysValidates() {
+        Map<String, Object> legacy = new HashMap<>();
+        legacy.put("consultationId", 30L);
+
+        assertThat(validator.isLegacyAppPayload(legacy, ClientPlatform.WEB)).isFalse();
+        assertThat(catchThrowableOfType(
+                () -> validator.validate(legacy, false, ClientPlatform.WEB), ValidationException.class))
+                .isNotNull();
+    }
+
+    @Test
+    @DisplayName("앱 채널이라도 필수값 키를 하나라도 보내면 웹과 같은 검증")
+    void appChannel_withRequiredKey_validatesLikeWeb() {
+        Map<String, Object> payload = validPayload();
+        payload.put("mainIssues", "");
+
+        assertThat(validator.isLegacyAppPayload(payload, ClientPlatform.ANDROID)).isFalse();
+        ValidationException ex = catchThrowableOfType(
+                () -> validator.validate(payload, false, ClientPlatform.ANDROID), ValidationException.class);
+        assertThat(ex).isNotNull();
+        assertThat(ex.getFieldErrors()).containsOnlyKeys("mainIssues");
+        assertThatCode(() -> validator.validate(validPayload(), false, ClientPlatform.IOS))
+                .doesNotThrowAnyException();
     }
 }

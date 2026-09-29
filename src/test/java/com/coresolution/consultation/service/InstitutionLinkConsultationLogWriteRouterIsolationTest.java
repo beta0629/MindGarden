@@ -24,6 +24,7 @@ import com.coresolution.consultation.repository.ClientRepository;
 import com.coresolution.consultation.repository.ConsultantClientMappingRepository;
 import com.coresolution.consultation.repository.InstitutionLinkContractRepository;
 import com.coresolution.core.context.TenantContextHolder;
+import com.coresolution.core.domain.ClientPlatform;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -193,7 +194,8 @@ class InstitutionLinkConsultationLogWriteRouterIsolationTest {
         Map<String, Object> payload = new HashMap<>();
         payload.put("paymentTiming", PaymentTimingConstants.ADVANCE);
         doThrow(new ValidationException("필수 항목을 모두 입력해주세요."))
-                .when(consultationRecordCreateRequestValidator).validate(eq(payload), anyBoolean());
+                .when(consultationRecordCreateRequestValidator)
+                .validate(eq(payload), anyBoolean(), eq(ClientPlatform.WEB));
 
         assertThatThrownBy(() -> router.create(payload))
                 .isInstanceOf(ValidationException.class);
@@ -208,12 +210,24 @@ class InstitutionLinkConsultationLogWriteRouterIsolationTest {
         Map<String, Object> institutionPayload = new HashMap<>();
         institutionPayload.put("engagementType", PaymentTimingConstants.INSTITUTION_LINK);
         router.create(institutionPayload);
-        verify(consultationRecordCreateRequestValidator).validate(institutionPayload, true);
+        verify(consultationRecordCreateRequestValidator).validate(institutionPayload, true, ClientPlatform.WEB);
 
         Map<String, Object> sessionPayload = new HashMap<>();
         sessionPayload.put("paymentTiming", PaymentTimingConstants.ADVANCE);
         router.create(sessionPayload);
-        verify(consultationRecordCreateRequestValidator).validate(sessionPayload, false);
+        verify(consultationRecordCreateRequestValidator).validate(sessionPayload, false, ClientPlatform.WEB);
+    }
+
+    @Test
+    @DisplayName("요청 클라이언트 채널을 검증기에 그대로 넘긴다")
+    void clientPlatform_passedToValidator() {
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("paymentTiming", PaymentTimingConstants.ADVANCE);
+
+        router.create(payload, ClientPlatform.ANDROID);
+
+        verify(consultationRecordCreateRequestValidator).validate(payload, false, ClientPlatform.ANDROID);
+        verify(consultationRecordService).createConsultationRecord(payload);
     }
 
     @Test

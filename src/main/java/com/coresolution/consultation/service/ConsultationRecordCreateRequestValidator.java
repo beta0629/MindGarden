@@ -4,6 +4,8 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import com.coresolution.consultation.constant.consultation.ConsultationRecordCreateValidationMessages;
 import com.coresolution.consultation.exception.ValidationException;
+import com.coresolution.core.domain.ClientPlatform;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 /**
@@ -15,8 +17,47 @@ import org.springframework.stereotype.Component;
  * @author CoreSolution
  * @since 2026-09-29
  */
+@Slf4j
 @Component
 public class ConsultationRecordCreateRequestValidator {
+
+    /**
+     * 클라이언트 채널({@code X-Client-Platform})을 고려해 검증한다.
+     *
+     * <p>웹(헤더 없음 포함)은 항상 검증한다. 앱(ios/android)은 필수값 키가 하나도 없는 기존 앱 페이로드만
+     * 검증 없이 통과시키고, 필수값 키를 하나라도 보내는 앱 빌드부터는 웹과 같은 검증을 탄다.
+     * 스토어 배포는 백엔드와 같이 나가지 않으므로 기존 앱 작성이 400 이 되지 않게 하기 위함이다.</p>
+     *
+     * @param recordData 상담일지 본문
+     * @param institutionLink 타기관 연계 일지 여부
+     * @param platform 요청 클라이언트 채널
+     * @throws ValidationException 필수값 누락·한도 초과
+     */
+    public void validate(Map<String, Object> recordData, boolean institutionLink, ClientPlatform platform) {
+        if (isLegacyAppPayload(recordData, platform)) {
+            log.warn("상담일지 작성: 필수값 폼 이전 앱 페이로드 통과 platform={}", platform);
+            return;
+        }
+        validate(recordData, institutionLink);
+    }
+
+    /**
+     * 앱 채널이면서 필수값 키를 하나도 보내지 않은 기존 앱 페이로드인지.
+     *
+     * @param recordData 상담일지 본문
+     * @param platform 요청 클라이언트 채널
+     * @return 기존 앱 페이로드면 true
+     */
+    public boolean isLegacyAppPayload(Map<String, Object> recordData, ClientPlatform platform) {
+        if (platform != ClientPlatform.IOS && platform != ClientPlatform.ANDROID) {
+            return false;
+        }
+        if (recordData == null) {
+            return true;
+        }
+        return ConsultationRecordCreateValidationMessages.REQUIRED_FIELDS.stream()
+                .noneMatch(recordData::containsKey);
+    }
 
     /**
      * 필수값이 비었으면 필드별 오류와 함께 {@link ValidationException} 을 던진다.

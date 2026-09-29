@@ -194,12 +194,25 @@
   padding-top: var(--mg-v2-space-3, 0.75rem);
 }
 
-.client-mall-card__actions,
-.client-mall-complete__actions {
+.client-mall-card__actions {
   display: flex;
   flex-direction: column;
   gap: var(--mg-v2-space-2, 0.5rem);
   margin-top: auto;
+}
+
+.client-mall-complete__actions {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--mg-v2-space-2, 0.5rem);
+}
+
+/* 좁은 화면 공통 .mg-button { width: 100% } 를 끊고 가로 배치 유지 */
+.client-mall-complete__actions > .mg-button {
+  flex: 0 0 auto;
+  width: auto;
 }
 
 /* ---------- chip (회기) — slate · 아이콘 + 「N회기」 ---------- */
@@ -679,8 +692,18 @@
   min-width: 0;
 }
 
+/* 좁은 화면 공통 .mg-button { width: 100% } 가 입력칸 폭을 0 으로 밀어내지 않게 */
+.client-mall-phone__row > .mg-button {
+  flex: 0 0 auto;
+  width: auto;
+}
+
 .client-mall-phone__code-wrap {
   position: relative;
+}
+
+.client-mall-phone__code-wrap > .client-mall-field__input--code {
+  padding-right: var(--mg-v2-space-20, 5rem);
 }
 
 .client-mall-phone__timer {
@@ -949,13 +972,13 @@
 }
 
 .client-mall-complete__icon {
-  align-self: center;
+  align-self: flex-start;
   color: var(--client-mall-primary);
 }
 
 .client-mall-complete__eyebrow {
   margin: 0;
-  text-align: center;
+  text-align: left;
   color: var(--client-mall-primary);
   font-size: var(--mg-v2-font-size-caption, 0.75rem);
   font-weight: var(--mg-v2-font-weight-semibold, 600);
@@ -963,7 +986,7 @@
 
 .client-mall-complete__title {
   margin: 0;
-  text-align: center;
+  text-align: left;
   font-size: var(--mg-v2-font-size-h2, 1.5rem);
   font-weight: var(--mg-v2-font-weight-bold, 700);
   color: var(--client-mall-ink);
@@ -972,7 +995,7 @@
 .client-mall-complete__lead,
 .client-mall-complete__help {
   margin: 0;
-  text-align: center;
+  text-align: left;
   color: var(--client-mall-mute);
   font-size: var(--mg-v2-font-size-body-sm, 0.875rem);
 }
@@ -1133,8 +1156,10 @@
 }
 
 /* ---------- 휴대폰 인증 바텀시트 (UnifiedModal 포털 — 셸 밖이라 같은 역할 토큰을 전역 토큰으로 다시 이음) ---------- */
+/* 공통 .mg-modal-overlay 가 align-items: center !important 라서 아래 붙이기는 !important 로만 이길 수 있다 */
 .mg-modal-overlay.client-mall-sheet {
-  align-items: flex-end;
+  align-items: flex-end !important;
+  padding: 0;
   --client-web-ink: var(--cs-ink);
   --client-web-slate: var(--cs-slate-600);
   --client-web-mute: var(--cs-slate-500);
@@ -1155,6 +1180,11 @@
   margin: 0;
   border-radius: var(--client-web-radius-card) var(--client-web-radius-card) 0 0;
   padding-bottom: env(safe-area-inset-bottom, 0);
+}
+
+.client-mall-sheet .mg-modal__close {
+  flex: 0 0 auto;
+  width: auto;
 }
 
 .client-mall-phone--sheet {

@@ -150,14 +150,13 @@ const ShopCartPage = () => {
       ) : null}
       {!summary.isEmpty ? (
         <>
-          <MallUsageBanner text={CLIENT_MALL_USAGE_BANNER} example={CLIENT_MALL_USAGE_BANNER_EXAMPLE} />
           <section className="client-mall-box" aria-label={CLIENT_MALL_COPY.CART_TITLE}>
             <header className="client-mall-box__head">
-              <h2 className="client-mall-box__title">
-                {CLIENT_MALL_COPY.CART_PAGE_LIST_PREFIX}
+              <h2 className="client-mall-box__title">{CLIENT_MALL_COPY.CART_PAGE_LIST_TITLE}</h2>
+              <span className="client-mall-box__caption" data-testid={CLIENT_MALL_TEST_IDS.CART_PAGE_LIST_COUNT}>
                 {summary.quantity}
                 {CLIENT_MALL_COPY.CART_COUNT_SUFFIX}
-              </h2>
+              </span>
             </header>
             {cart.lines.map((line) => {
               const months = resolveValidityMonths(bySku.get(line.skuCode));
@@ -195,6 +194,7 @@ const ShopCartPage = () => {
               );
             })}
           </section>
+          <MallUsageBanner text={CLIENT_MALL_USAGE_BANNER} example={CLIENT_MALL_USAGE_BANNER_EXAMPLE} />
           <div className="client-mall-bar-spacer" aria-hidden="true" />
           <MallCartBar
             quantity={summary.quantity}

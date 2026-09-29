@@ -8,6 +8,7 @@
 
 import {
   CLIENT_MALL_HTTP_TOO_MANY_REQUESTS,
+  CLIENT_MALL_OTP_INVALID_ERROR_CODE,
   CLIENT_MALL_OTP_MISMATCH_MARKER,
   CLIENT_MALL_PHONE_COPY,
   CLIENT_MALL_TIMING
@@ -49,7 +50,8 @@ const toPositiveInt = (value) => {
  *   expiresInSeconds: number|null,
  *   resendCooldownSeconds: number|null,
  *   remainingAttempts: number|null,
- *   retryAfterSeconds: number|null
+ *   retryAfterSeconds: number|null,
+ *   locked: boolean
  * }}
  */
 export const parseOtpServerMeta = (source) => {
@@ -58,7 +60,8 @@ export const parseOtpServerMeta = (source) => {
     expiresInSeconds: toPositiveInt(s.expiresInSeconds),
     resendCooldownSeconds: toPositiveInt(s.resendCooldownSeconds),
     remainingAttempts: toNonNegativeInt(s.remainingAttempts),
-    retryAfterSeconds: toPositiveInt(s.retryAfterSeconds)
+    retryAfterSeconds: toPositiveInt(s.retryAfterSeconds),
+    locked: s.locked === true
   };
 };
 
@@ -81,13 +84,14 @@ const readErrorBody = (err) => {
  * @returns {{ locked: boolean, kind: string, message: string, meta: ReturnType<typeof parseOtpServerMeta> }}
  */
 export const classifyPhoneConfirmError = (err) => {
-  const meta = parseOtpServerMeta(readErrorBody(err));
+  const body = readErrorBody(err);
+  const meta = parseOtpServerMeta(body);
   const status = Number(err?.status);
   const message = typeof err?.message === 'string' ? err.message.trim() : '';
-  if (status === CLIENT_MALL_HTTP_TOO_MANY_REQUESTS || meta.remainingAttempts === 0) {
+  if (status === CLIENT_MALL_HTTP_TOO_MANY_REQUESTS || meta.locked || meta.remainingAttempts === 0) {
     return { locked: true, kind: PHONE_VERIFY_ERROR.OTHER, message, meta };
   }
-  if (message.includes(CLIENT_MALL_OTP_MISMATCH_MARKER)) {
+  if (body?.errorCode === CLIENT_MALL_OTP_INVALID_ERROR_CODE || message.includes(CLIENT_MALL_OTP_MISMATCH_MARKER)) {
     return { locked: false, kind: PHONE_VERIFY_ERROR.WRONG_CODE, message, meta };
   }
   return { locked: false, kind: PHONE_VERIFY_ERROR.OTHER, message, meta };

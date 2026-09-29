@@ -14,6 +14,7 @@ import com.coresolution.consultation.dto.MyPageUpdateRequest;
 import com.coresolution.consultation.entity.AuditLog;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.entity.UserAddress;
+import com.coresolution.consultation.exception.SmsOtpVerificationFailedException;
 import com.coresolution.consultation.repository.UserAddressRepository;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.AuditLogService;
@@ -380,8 +381,11 @@ public class MyPageServiceImpl implements MyPageService {
         boolean otpValid = smsOtpVerificationService.verifyAndConsume(
                 normalizedPhone, request.getVerificationCode());
         if (!otpValid) {
-            log.warn("마이페이지 휴대전화 변경 OTP 검증 실패: userId={}, phone={}", userId, normalizedPhone);
-            throw new IllegalArgumentException("인증 코드가 올바르지 않거나 만료되었습니다. 다시 받아 주세요.");
+            SmsOtpVerificationFailedException failure = SmsOtpVerificationFailedException.fromStatus(
+                    smsOtpVerificationService.getSendStatus(normalizedPhone));
+            log.warn("마이페이지 휴대전화 변경 OTP 검증 실패: userId={}, phone={}, locked={}, remainingAttempts={}",
+                    userId, normalizedPhone, failure.isLocked(), failure.getRemainingAttempts());
+            throw failure;
         }
 
         // 4. tenant 내 중복 검사 (본인 제외) — 같은 테넌트에 동일 번호 가진 다른 사용자가 있으면 차단.

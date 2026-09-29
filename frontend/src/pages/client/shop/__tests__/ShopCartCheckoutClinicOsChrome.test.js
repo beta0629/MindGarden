@@ -48,6 +48,26 @@ describe('Clinic-OS client cart/checkout chrome', () => {
     expect(ticket).toMatch(/client-shop__session-ticket/);
   });
 
+  test('cart: 「N개」는 목록 머리 오른쪽 캡션 · 이용기간 안내는 상품 목록 아래', () => {
+    expect(cart).toMatch(/client-mall-box__caption[^>]*CART_PAGE_LIST_COUNT/);
+    expect(cart.indexOf('<MallUsageBanner')).toBeGreaterThan(cart.indexOf('cart.lines.map((line) => {'));
+  });
+
+  test('complete: 왼쪽 정렬 · 버튼 가로 배치 (fullWidth 없음) · 기존 primary 클래스 유지', () => {
+    const complete = read('src/pages/client/shop/ShopPaymentCompletePage.js');
+    const mallCss = read('src/styles/shop/ClientMall.css');
+    expect(complete).not.toMatch(/fullWidth/);
+    expect(complete).toMatch(/client-mall-btn--primary/);
+    expect(mallCss).toMatch(/\.client-mall-complete__actions\s*\{[^}]*flex-direction:\s*row/);
+    expect(mallCss).toMatch(/\.client-mall-complete__title\s*\{[^}]*text-align:\s*left/);
+  });
+
+  test('mobile verify sheet: 아래 붙는 시트 · 입력칸 폭을 버튼이 밀어내지 않음', () => {
+    const mallCss = read('src/styles/shop/ClientMall.css');
+    expect(mallCss).toMatch(/\.mg-modal-overlay\.client-mall-sheet\s*\{[^}]*align-items:\s*flex-end\s*!important/);
+    expect(mallCss).toMatch(/\.client-mall-phone__row > \.mg-button\s*\{[^}]*width:\s*auto/);
+  });
+
   test('checkout CTA uses MGButton primary', () => {
     expect(cart).toMatch(/MGButton/);
     expect(checkout).toMatch(/MallPayPanel/);

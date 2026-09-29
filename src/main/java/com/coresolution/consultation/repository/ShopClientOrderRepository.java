@@ -8,7 +8,9 @@ import com.coresolution.consultation.constant.ShopClientOrderStatus;
 import com.coresolution.consultation.entity.ShopClientOrder;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
@@ -19,7 +21,7 @@ import org.springframework.stereotype.Repository;
  * @since 2026-05-14
  */
 @Repository
-public interface ShopClientOrderRepository extends BaseRepository<ShopClientOrder, Long> {
+public interface ShopClientOrderRepository extends BaseRepository<ShopClientOrder, Long>, ShopClientOrderLockRepository {
 
     @Query("SELECT o FROM ShopClientOrder o WHERE o.tenantId = :tenantId AND o.publicId = :publicId AND o.isDeleted = false")
     Optional<ShopClientOrder> findByTenantIdAndPublicId(
@@ -48,12 +50,14 @@ public interface ShopClientOrderRepository extends BaseRepository<ShopClientOrde
 
     /**
      * 내담자 미결제 주문 (최신 먼저) — 재결제 시 같은 내용 주문 재사용 판정용.
+     * 재사용 판정 중 취소·승인이 같은 주문을 바꾸지 못하게 행을 잠근다 (트랜잭션 필수).
      *
      * @param tenantId 테넌트 ID
      * @param clientId 내담자 users.id
      * @param statuses 대상 상태 (CREATED, PENDING_PAYMENT)
      * @return 주문 목록
      */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT o FROM ShopClientOrder o WHERE o.tenantId = :tenantId AND o.clientId = :clientId "
             + "AND o.status IN :statuses AND o.isDeleted = false ORDER BY o.createdAt DESC, o.id DESC")
     List<ShopClientOrder> findOpenOrdersByTenantAndClient(

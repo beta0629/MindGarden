@@ -19,6 +19,8 @@ import com.coresolution.consultation.repository.PaymentRepository;
 import com.coresolution.consultation.repository.ShopClientOrderRepository;
 import com.coresolution.consultation.service.ClientShopCheckoutService;
 import com.coresolution.consultation.service.PaymentService;
+import com.coresolution.consultation.service.ShopLatePaymentOutcome;
+import com.coresolution.consultation.service.ShopLatePaymentRefundService;
 import com.coresolution.consultation.service.portone.PortOneV2PaymentLookupService;
 import com.coresolution.consultation.service.portone.PortOneV2PaymentVerifyService;
 import java.math.BigDecimal;
@@ -67,45 +69,82 @@ class AdminShopOrderReconcileServiceImplTest {
     @Mock
     private ClientShopCheckoutService clientShopCheckoutService;
 
+    @Mock
+    private ShopLatePaymentRefundService shopLatePaymentRefundService;
+
     @InjectMocks
     private AdminShopOrderReconcileServiceImpl service;
 
     @Test
-    @DisplayName("행복한 경로 — EXPIRED 주문 + PortOne 검증 성공 → APPROVED/PAID·recovered")
-    void reconcilePayment_expiredOrder_happyPath_recoversToPaid() {
+    @DisplayName("EXPIRED 주문 + PortOne PAID(늦은 결제) → 주문은 되살리지 않고 PG 자동 환불(REFUNDED), recovered=false")
+    void reconcilePayment_expiredOrder_latePayment_autoRefundedNotRevived() {
         ShopClientOrder order = orderWithStatus(ShopClientOrderStatus.EXPIRED);
-        Payment pending = pendingIamportPayment("PAY_INTERNAL_OLD");
+        Payment late = pendingIamportPayment(PORTONE_PAYMENT_ID);
         when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID))
                 .thenReturn(Optional.of(order));
         when(portOneV2PaymentVerifyService.verifyPaidAmountBody(
                         eq(TENANT), eq(PORTONE_PAYMENT_ID), eq(BigDecimal.valueOf(CASH_DUE))))
                 .thenReturn(Optional.of(VERIFY_BODY));
         when(paymentRepository.findByTenantIdAndPaymentIdAndIsDeletedFalse(TENANT, PORTONE_PAYMENT_ID))
-                .thenReturn(Optional.empty())
-                .thenReturn(Optional.of(pending));
-        when(paymentRepository.findByTenantIdAndOrderIdAndIsDeletedFalse(TENANT, ORDER_ID))
-                .thenReturn(List.of(pending));
-        when(paymentRepository.save(any(Payment.class))).thenAnswer(inv -> inv.getArgument(0));
-        when(clientShopCheckoutService.completeOrderOnPaymentApproved(TENANT, ORDER_ID)).thenAnswer(inv -> {
-            order.setStatus(ShopClientOrderStatus.PAID);
-            pending.setStatus(Payment.PaymentStatus.APPROVED);
-            return true;
-        });
+                .thenReturn(Optional.of(late));
+        when(shopLatePaymentRefundService.refundIfOrderClosed(TENANT, PORTONE_PAYMENT_ID))
+                .thenReturn(ShopLatePaymentOutcome.REFUNDED);
 
         ShopOrderReconcilePaymentResponse response =
                 service.reconcilePayment(TENANT, ORDER_ID, PORTONE_PAYMENT_ID, null);
 
-        assertEquals(ORDER_ID, response.getOrderPublicId());
-        assertEquals(PORTONE_PAYMENT_ID, response.getPaymentId());
-        assertEquals(ShopClientOrderStatus.PAID, response.getOrderStatus());
-        assertEquals(Payment.PaymentStatus.APPROVED, response.getPaymentStatus());
-        assertTrue(response.isRecovered());
-        assertEquals(PORTONE_PAYMENT_ID, pending.getPaymentId());
-        assertEquals(VERIFY_BODY, pending.getExternalResponse());
-        verify(paymentService).approveShopOrderPayment(PORTONE_PAYMENT_ID);
-        verify(clientShopCheckoutService).completeOrderOnPaymentApproved(TENANT, ORDER_ID);
-        verify(portOneV2PaymentLookupService, never())
-                .findPaidPaymentIdByCardApprovalNumber(any(), any(), any(), any());
+        assertEquals(ShopClientOrderStatus.EXPIRED, response.getOrderStatus());
+        assertEquals(Payment.PaymentStatus.REFUNDED, response.getPaymentStatus());
+        assertFalse(response.isRecovered());
+        assertEquals(ShopClientOrderStatus.EXPIRED, order.getStatus());
+        verify(paymentService, never()).approveShopOrderPayment(any());
+        verify(clientShopCheckoutService, never()).completeOrderOnPaymentApproved(any(), any());
+        verify(paymentRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("CANCELLED 주문 + 결제 REFUND_REQUIRED → 관리자 재처리는 자동 환불 재시도만(PortOne 재검증·주문 복구 없음)")
+    void reconcilePayment_cancelledOrder_refundRequired_retriesAutoRefundOnly() {
+        ShopClientOrder order = orderWithStatus(ShopClientOrderStatus.CANCELLED);
+        Payment refundRequired = pendingIamportPayment(PORTONE_PAYMENT_ID);
+        refundRequired.setStatus(Payment.PaymentStatus.REFUND_REQUIRED);
+        when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID))
+                .thenReturn(Optional.of(order));
+        when(paymentRepository.findByTenantIdAndPaymentIdAndIsDeletedFalse(TENANT, PORTONE_PAYMENT_ID))
+                .thenReturn(Optional.of(refundRequired));
+        when(shopLatePaymentRefundService.refundIfOrderClosed(TENANT, PORTONE_PAYMENT_ID))
+                .thenReturn(ShopLatePaymentOutcome.REFUNDED);
+
+        ShopOrderReconcilePaymentResponse response =
+                service.reconcilePayment(TENANT, ORDER_ID, PORTONE_PAYMENT_ID, null);
+
+        assertEquals(ShopClientOrderStatus.CANCELLED, response.getOrderStatus());
+        assertEquals(Payment.PaymentStatus.REFUNDED, response.getPaymentStatus());
+        assertFalse(response.isRecovered());
+        verify(portOneV2PaymentVerifyService, never()).verifyPaidAmountBody(any(), any(), any());
+        verify(paymentService, never()).approveShopOrderPayment(any());
+        verify(clientShopCheckoutService, never()).completeOrderOnPaymentApproved(any(), any());
+    }
+
+    @Test
+    @DisplayName("CANCELLED 주문 + PortOne 미승인 → 기존처럼 취소 주문 거부, 자동 환불 호출 없음")
+    void reconcilePayment_cancelledOrder_notPaid_throwsOrderCancelled() {
+        ShopClientOrder order = orderWithStatus(ShopClientOrderStatus.CANCELLED);
+        Payment cancelled = pendingIamportPayment(PORTONE_PAYMENT_ID);
+        cancelled.setStatus(Payment.PaymentStatus.CANCELLED);
+        when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID))
+                .thenReturn(Optional.of(order));
+        when(paymentRepository.findByTenantIdAndPaymentIdAndIsDeletedFalse(TENANT, PORTONE_PAYMENT_ID))
+                .thenReturn(Optional.of(cancelled));
+        when(portOneV2PaymentVerifyService.verifyPaidAmountBody(
+                        eq(TENANT), eq(PORTONE_PAYMENT_ID), eq(BigDecimal.valueOf(CASH_DUE))))
+                .thenReturn(Optional.empty());
+
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                () -> service.reconcilePayment(TENANT, ORDER_ID, PORTONE_PAYMENT_ID, null));
+
+        assertEquals(ShopOrderReconcileConstants.MSG_ORDER_CANCELLED, ex.getMessage());
+        verify(shopLatePaymentRefundService, never()).refundIfOrderClosed(any(), any());
     }
 
     @Test

@@ -182,7 +182,9 @@ export const SHOP_USER_CANCEL_OUTCOME = Object.freeze({
   CANCELLED: 'CANCELLED',
   PAID: 'PAID',
   UNVERIFIED: 'UNVERIFIED',
-  NOT_CANCELLABLE: 'NOT_CANCELLABLE'
+  NOT_CANCELLABLE: 'NOT_CANCELLABLE',
+  /** PortOne 결제 진행 중(READY 등) — 주문은 PENDING 으로 남음, 재결제 시 같은 주문 재사용 */
+  NOT_CANCELLABLE_IN_PROGRESS: 'NOT_CANCELLABLE_IN_PROGRESS'
 });
 
 /** 취소 후 돌아간 화면에 amber 안내를 띄우는 router state 키 */

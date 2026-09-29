@@ -52,6 +52,15 @@ public interface ShopNotificationHelper {
     void notifyOrderRefunded(String tenantId, ShopClientOrder order);
 
     /**
+     * 취소·만료된 주문에 늦게 승인된 결제를 PG 전액 취소했음을 내담자에게 알린다
+     * (「주문이 이미 닫혀 결제가 자동 취소됐어요」).
+     *
+     * @param tenantId 테넌트 ID
+     * @param order    닫힌 주문 (CANCELLED/EXPIRED)
+     */
+    void notifyLatePaymentAutoCancelled(String tenantId, ShopClientOrder order);
+
+    /**
      * CONSULTATION fulfillment COMPLETED 시 내담자(·선택 상담사) 알림.
      *
      * @param tenantId 테넌트 ID

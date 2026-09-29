@@ -348,6 +348,20 @@ describe('runShopCheckoutWithPortOneGuard', () => {
       expect(cancelShopOrder).not.toHaveBeenCalled();
     });
 
+    test('PortOne 결제 진행 중(READY) → USER_CANCELLED 복귀 흐름 유지 · 주문은 닫히지 않은 outcome 그대로 전달', async() => {
+      runShopPortOnePaymentIfReady.mockRejectedValue(portoneError({ code: PORTONE_USER_CANCEL_CODE }));
+      const cancelShopPaymentByUser = jest.fn().mockResolvedValue({
+        outcome: SHOP_USER_CANCEL_OUTCOME.NOT_CANCELLABLE_IN_PROGRESS, orderStatus: 'PENDING_PAYMENT'
+      });
+
+      const result = await runWith(cancelShopPaymentByUser);
+
+      expect(result.status).toBe('USER_CANCELLED');
+      expect(result.cancelOutcome).toBe(SHOP_USER_CANCEL_OUTCOME.NOT_CANCELLABLE_IN_PROGRESS);
+      expect(result.cancelOutcome).not.toBe(SHOP_USER_CANCEL_OUTCOME.CANCELLED);
+      expect(cancelShopOrder).not.toHaveBeenCalled();
+    });
+
     test('사용자 취소인데 PortOne PAID → PAID_AFTER_CANCEL (정상 결제 확인으로)', async() => {
       runShopPortOnePaymentIfReady.mockRejectedValue(portoneError({ code: PORTONE_USER_CANCEL_CODE }));
       const cancelShopPaymentByUser = jest.fn().mockResolvedValue({ outcome: SHOP_USER_CANCEL_OUTCOME.PAID, paymentId: 'pay-1' });

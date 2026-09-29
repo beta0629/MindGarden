@@ -14,9 +14,11 @@ import com.coresolution.consultation.constant.ShopCatalogCategory;
 import com.coresolution.consultation.constant.ShopCatalogSkuConstants;
 import com.coresolution.consultation.constant.ShopCheckoutConstants;
 import com.coresolution.consultation.constant.ShopClientOrderStatus;
+import com.coresolution.consultation.constant.ShopLatePaymentConstants;
 import com.coresolution.consultation.constant.ShopOrderFulfillmentRetryConstants;
 import com.coresolution.consultation.constant.ShopSessionCountConstants;
 import com.coresolution.consultation.constant.ShopUserPaymentCancelConstants;
+import com.coresolution.consultation.exception.ShopOrderClosedForPaymentException;
 import com.coresolution.consultation.dto.shop.EffectivePointTenantPolicies;
 import com.coresolution.consultation.dto.PaymentRequest;
 import com.coresolution.consultation.dto.PaymentResponse;
@@ -110,6 +112,8 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
     @Override
     @Transactional
     public ShopCheckoutResponse checkout(String tenantId, Long clientUserId, ShopCheckoutRequest request) {
+        // 동일 내담자 체크아웃 직렬화 — 동시 2회 체크아웃이 미결제 주문을 2건 만들지 않게 한다
+        shopClientOrderRepository.lockClientForCheckout(tenantId, clientUserId);
         Optional<ShopClientOrder> existed = shopClientOrderRepository.findByTenantClientAndCheckoutKey(
                 tenantId, clientUserId, request.getIdempotencyKey());
         if (existed.isPresent()) {
@@ -887,7 +891,7 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
     @Override
     @Transactional
     public void cancelOrder(String tenantId, Long clientUserId, String orderPublicId) {
-        ShopClientOrder order = shopClientOrderRepository.findByTenantIdAndPublicId(tenantId, orderPublicId)
+        ShopClientOrder order = shopClientOrderRepository.lockByTenantIdAndPublicId(tenantId, orderPublicId)
                 .orElseThrow(() -> new IllegalArgumentException("주문을 찾을 수 없습니다."));
         if (!order.getClientId().equals(clientUserId)) {
             throw new IllegalArgumentException("주문에 접근할 수 없습니다.");
@@ -919,9 +923,12 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
             fulfillPaidOrderAfterPaymentCommit(tenantId, order);
             return true;
         }
+        if (ShopLatePaymentConstants.isClosedOrder(order.getStatus())) {
+            // 취소·만료 주문은 되살리지 않는다 — 늦은 결제는 ShopLatePaymentRefundService 가 PG 자동 취소
+            throw new ShopOrderClosedForPaymentException(orderPublicId, order.getStatus());
+        }
         if (order.getStatus() != ShopClientOrderStatus.CREATED
-                && order.getStatus() != ShopClientOrderStatus.PENDING_PAYMENT
-                && order.getStatus() != ShopClientOrderStatus.EXPIRED) {
+                && order.getStatus() != ShopClientOrderStatus.PENDING_PAYMENT) {
             log.warn(
                     "PG 승인 후 PAID 전이 불가 상태: tenantId={}, orderPublicId={}, status={}",
                     tenantId,
@@ -1039,7 +1046,7 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
     @Transactional
     public boolean expireOrderHold(String tenantId, String orderPublicId) {
         Optional<ShopClientOrder> orderOpt =
-                shopClientOrderRepository.findByTenantIdAndPublicId(tenantId, orderPublicId);
+                shopClientOrderRepository.lockByTenantIdAndPublicId(tenantId, orderPublicId);
         if (orderOpt.isEmpty()) {
             return false;
         }
@@ -1074,7 +1081,7 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
 
     /**
      * 이번에 EXPIRED 로 전이한 주문의 대기 결제 건(PENDING/PROCESSING)을 EXPIRED 로 닫는다.
-     * 늦게 온 PG 승인은 기존처럼 EXPIRED 결제·주문에서 PAID 로 복구된다.
+     * 늦게 온 PG 승인은 주문을 되살리지 않고 PG 자동 취소된다({@code ShopLatePaymentRefundService}).
      *
      * @param tenantId      테넌트 ID
      * @param orderPublicId 주문 공개 ID

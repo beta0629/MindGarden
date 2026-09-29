@@ -164,7 +164,9 @@ public class Payment extends BaseEntity {
         FAILED("실패"),
         CANCELLED("취소됨"),
         REFUNDED("환불됨"),
-        EXPIRED("만료됨");
+        EXPIRED("만료됨"),
+        /** 닫힌(취소·만료) 주문에 늦게 승인된 결제 — PG 자동 취소 실패, 관리자 재처리 필요 */
+        REFUND_REQUIRED("환불 필요");
         
         private final String description;
         

@@ -32,6 +32,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.transaction.PlatformTransactionManager;
 
 /**
  * {@link ClientShopPaymentCancelServiceImpl} 결제창 사용자 취소 정리 단위 검증.
@@ -61,6 +62,8 @@ class ClientShopPaymentCancelServiceImplTest {
     private ClientPointWalletService clientPointWalletService;
     @Mock
     private PortOneV2PaymentVerifyService portOneV2PaymentVerifyService;
+    @Mock
+    private PlatformTransactionManager transactionManager;
 
     @InjectMocks
     private ClientShopPaymentCancelServiceImpl service;
@@ -71,6 +74,7 @@ class ClientShopPaymentCancelServiceImplTest {
         ShopClientOrder order = order(ShopClientOrderStatus.PENDING_PAYMENT, 2_000L);
         Payment payment = payment(Payment.PaymentStatus.PENDING);
         stubOrder(order);
+        stubLockedOrder(order);
         stubLines();
         when(paymentRepository.findByTenantIdAndOrderIdAndIsDeletedFalse(TENANT, ORDER_ID))
                 .thenReturn(List.of(payment));
@@ -181,6 +185,7 @@ class ClientShopPaymentCancelServiceImplTest {
         ShopClientOrder order = order(ShopClientOrderStatus.PENDING_PAYMENT, 2_000L);
         Payment payment = payment(Payment.PaymentStatus.PENDING);
         stubOrder(order);
+        stubLockedOrder(order);
         stubLines();
         when(paymentRepository.findByTenantIdAndOrderIdAndIsDeletedFalse(TENANT, ORDER_ID))
                 .thenReturn(List.of(payment));
@@ -214,8 +219,92 @@ class ClientShopPaymentCancelServiceImplTest {
         verify(shopClientOrderRepository, never()).save(any());
     }
 
+    @Test
+    @DisplayName("PortOne READY(결제 진행 중) → 주문·결제 변경 없음, outcome=NOT_CANCELLABLE_IN_PROGRESS, 주문 PENDING 유지")
+    void cancelByUser_portOneReady_inProgress_noChange() {
+        ShopClientOrder order = order(ShopClientOrderStatus.PENDING_PAYMENT, 2_000L);
+        Payment payment = payment(Payment.PaymentStatus.PENDING);
+        stubOrder(order);
+        stubLines();
+        when(paymentRepository.findByTenantIdAndOrderIdAndIsDeletedFalse(TENANT, ORDER_ID))
+                .thenReturn(List.of(payment));
+        when(portOneV2PaymentVerifyService.isIamportPayment(payment)).thenReturn(true);
+        when(portOneV2PaymentVerifyService.resolvePaidState(TENANT, PAYMENT_ID))
+                .thenReturn(PortOnePaymentPaidState.IN_PROGRESS);
+
+        ShopUserCancelPaymentResponse res = service.cancelByUser(TENANT, CLIENT_ID, ORDER_ID);
+
+        assertEquals(ShopUserPaymentCancelConstants.OUTCOME_NOT_CANCELLABLE_IN_PROGRESS, res.getOutcome());
+        assertEquals(ShopClientOrderStatus.PENDING_PAYMENT, res.getOrderStatus());
+        assertEquals(ShopClientOrderStatus.PENDING_PAYMENT, order.getStatus());
+        assertEquals(Payment.PaymentStatus.PENDING, payment.getStatus());
+        verify(shopClientOrderRepository, never()).lockByTenantIdAndPublicId(any(), any());
+        verify(shopClientOrderRepository, never()).save(any());
+        verify(paymentRepository, never()).save(any());
+        verify(clientPointWalletService, never()).releaseHold(any(), any(), any(), anyLong(), any());
+    }
+
+    @Test
+    @DisplayName("조회는 미승인이었지만 잠금 후 재확인 시 APPROVED → 닫지 않음, outcome=PAID")
+    void cancelByUser_approvedAfterLookup_recheckUnderLock_noChange() {
+        ShopClientOrder order = order(ShopClientOrderStatus.PENDING_PAYMENT, 2_000L);
+        Payment beforeLookup = payment(Payment.PaymentStatus.PENDING);
+        beforeLookup.setId(1L);
+        Payment afterApproval = payment(Payment.PaymentStatus.APPROVED);
+        afterApproval.setId(1L);
+        stubOrder(order);
+        stubLockedOrder(order);
+        stubLines();
+        when(paymentRepository.findByTenantIdAndOrderIdAndIsDeletedFalse(TENANT, ORDER_ID))
+                .thenReturn(List.of(beforeLookup))
+                .thenReturn(List.of(afterApproval));
+        when(portOneV2PaymentVerifyService.isIamportPayment(beforeLookup)).thenReturn(true);
+        when(portOneV2PaymentVerifyService.resolvePaidState(TENANT, PAYMENT_ID))
+                .thenReturn(PortOnePaymentPaidState.NOT_PAID);
+
+        ShopUserCancelPaymentResponse res = service.cancelByUser(TENANT, CLIENT_ID, ORDER_ID);
+
+        assertEquals(ShopUserPaymentCancelConstants.OUTCOME_PAID, res.getOutcome());
+        assertEquals(ShopClientOrderStatus.PENDING_PAYMENT, order.getStatus());
+        verify(shopClientOrderRepository, never()).save(any());
+        verify(paymentRepository, never()).save(any());
+        verify(clientPointWalletService, never()).releaseHold(any(), any(), any(), anyLong(), any());
+    }
+
+    @Test
+    @DisplayName("조회 이후 새 결제 시도가 붙음 → 닫지 않음, outcome=NOT_CANCELLABLE_IN_PROGRESS")
+    void cancelByUser_newAttemptAfterLookup_inProgress() {
+        ShopClientOrder order = order(ShopClientOrderStatus.PENDING_PAYMENT, 0L);
+        Payment looked = payment(Payment.PaymentStatus.FAILED);
+        looked.setId(1L);
+        Payment newAttempt = payment(Payment.PaymentStatus.PENDING);
+        newAttempt.setId(2L);
+        newAttempt.setPaymentId(PAYMENT_ID + "-retry");
+        stubOrder(order);
+        stubLockedOrder(order);
+        stubLines();
+        when(paymentRepository.findByTenantIdAndOrderIdAndIsDeletedFalse(TENANT, ORDER_ID))
+                .thenReturn(List.of(looked))
+                .thenReturn(List.of(looked, newAttempt));
+        when(portOneV2PaymentVerifyService.isIamportPayment(looked)).thenReturn(true);
+        when(portOneV2PaymentVerifyService.resolvePaidState(TENANT, PAYMENT_ID))
+                .thenReturn(PortOnePaymentPaidState.NOT_PAID);
+
+        ShopUserCancelPaymentResponse res = service.cancelByUser(TENANT, CLIENT_ID, ORDER_ID);
+
+        assertEquals(ShopUserPaymentCancelConstants.OUTCOME_NOT_CANCELLABLE_IN_PROGRESS, res.getOutcome());
+        assertEquals(ShopClientOrderStatus.PENDING_PAYMENT, order.getStatus());
+        assertEquals(Payment.PaymentStatus.PENDING, newAttempt.getStatus());
+        verify(shopClientOrderRepository, never()).save(any());
+        verify(paymentRepository, never()).save(any());
+    }
+
     private void stubOrder(ShopClientOrder order) {
         when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID)).thenReturn(Optional.of(order));
+    }
+
+    private void stubLockedOrder(ShopClientOrder order) {
+        when(shopClientOrderRepository.lockByTenantIdAndPublicId(TENANT, ORDER_ID)).thenReturn(Optional.of(order));
     }
 
     private void stubLines() {

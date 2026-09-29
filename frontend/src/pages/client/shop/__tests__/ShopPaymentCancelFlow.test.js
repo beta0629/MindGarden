@@ -211,6 +211,27 @@ describe('결제창 사용자 취소 (PAY_PROCESS_CANCELED)', () => {
     expect(screen.queryByTestId(CLIENT_MALL_TEST_IDS.PAY_CANCEL_NOTICE)).not.toBeInTheDocument();
   });
 
+  test('PortOne 결제 진행 중(READY) → 주문은 PENDING 으로 남지만 화면은 같은 amber 안내로 장바구니 복귀', async() => {
+    runShopPortOnePaymentIfReady.mockRejectedValue(portoneError({ code: PORTONE_USER_CANCEL_CODE }));
+    mockService.cancelShopPaymentByUser.mockResolvedValue({
+      orderPublicId: 'ord-1',
+      outcome: SHOP_USER_CANCEL_OUTCOME.NOT_CANCELLABLE_IN_PROGRESS,
+      orderStatus: 'PENDING_PAYMENT',
+      checkoutSource: 'CART',
+      skuCodes: ['PKG10']
+    });
+    renderMall(CLIENT_SHOP_ROUTES.CHECKOUT);
+
+    await payFromCheckout();
+
+    await waitFor(() => expect(screen.getByTestId('location-probe')).toHaveTextContent(CLIENT_SHOP_ROUTES.CART));
+    const notice = await screen.findByTestId(CLIENT_MALL_TEST_IDS.PAY_CANCEL_NOTICE);
+    expect(notice).toHaveTextContent(CLIENT_MALL_PAY_CANCEL_COPY.NOTICE);
+    expect(notice).not.toHaveTextContent('주문');
+    expect(mockService.cancelShopOrder).not.toHaveBeenCalled();
+    expect(screen.queryByTestId(CLIENT_MALL_TEST_IDS.CHECKOUT_PAY_FAILED)).not.toBeInTheDocument();
+  });
+
   test('PortOne 이 이미 PAID 면 취소하지 않고 정상 결제 확인 경로로', async() => {
     runShopPortOnePaymentIfReady.mockRejectedValue(portoneError({ code: PORTONE_USER_CANCEL_CODE }));
     mockService.cancelShopPaymentByUser.mockResolvedValue({ outcome: SHOP_USER_CANCEL_OUTCOME.PAID, paymentId: 'pay-1' });
@@ -268,6 +289,20 @@ describe('redirect 복귀 (ShopPaymentReturnPage)', () => {
     await waitFor(() => expect(screen.getByTestId('location-probe')).toHaveTextContent(CLIENT_SHOP_ROUTES.CART));
     expect(mockService.cancelShopPaymentByUser).toHaveBeenCalledWith('ord-1');
     expect(await screen.findByTestId(CLIENT_MALL_TEST_IDS.PAY_CANCEL_NOTICE)).toBeInTheDocument();
+  });
+
+  test('redirect 복귀 + PortOne 결제 진행 중 → 주문 PENDING 유지, 같은 amber 안내로 장바구니', async() => {
+    mockService.cancelShopPaymentByUser.mockResolvedValue({
+      outcome: SHOP_USER_CANCEL_OUTCOME.NOT_CANCELLABLE_IN_PROGRESS,
+      orderStatus: 'PENDING_PAYMENT',
+      checkoutSource: 'CART',
+      skuCodes: ['PKG10']
+    });
+    renderMall(`${CLIENT_SHOP_ROUTES.PAYMENT_RETURN}?orderPublicId=ord-1&paymentId=pay-1&code=${PORTONE_USER_CANCEL_CODE}`);
+
+    await waitFor(() => expect(screen.getByTestId('location-probe')).toHaveTextContent(CLIENT_SHOP_ROUTES.CART));
+    expect(await screen.findByTestId(CLIENT_MALL_TEST_IDS.PAY_CANCEL_NOTICE)).toHaveTextContent(CLIENT_MALL_PAY_CANCEL_COPY.NOTICE);
+    expect(screen.queryByTestId(CLIENT_MALL_TEST_IDS.CHECKOUT_PAY_FAILED)).not.toBeInTheDocument();
   });
 
   test('바로 구매 주문 취소 → 상품 상세로', async() => {

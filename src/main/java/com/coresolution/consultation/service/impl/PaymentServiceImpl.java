@@ -2,19 +2,26 @@ package com.coresolution.consultation.service.impl;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import com.coresolution.consultation.constant.FinancialTransactionConstants;
 import com.coresolution.consultation.constant.PaymentConstants;
 import com.coresolution.consultation.constant.PaymentNotificationCopy;
+import com.coresolution.consultation.constant.ShopLatePaymentConstants;
 import com.coresolution.consultation.dto.PaymentRequest;
 import com.coresolution.consultation.dto.PaymentResponse;
 import com.coresolution.consultation.dto.PaymentWebhookRequest;
 import com.coresolution.consultation.entity.Payment;
+import com.coresolution.consultation.entity.ShopClientOrder;
 import com.coresolution.consultation.entity.User;
+import com.coresolution.consultation.exception.ShopOrderClosedForPaymentException;
+import com.coresolution.consultation.service.ShopLatePaymentOutcome;
+import com.coresolution.consultation.service.ShopLatePaymentRefundService;
 import com.coresolution.consultation.repository.PaymentRepository;
 import com.coresolution.consultation.repository.ShopClientOrderRepository;
 import com.coresolution.consultation.repository.UserRepository;
@@ -74,6 +81,7 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
     private final NotificationService notificationService;
     private final UserRepository userRepository;
     private final PortOneV2PaymentVerifyService portOneV2PaymentVerifyService;
+    private final ShopLatePaymentRefundService shopLatePaymentRefundService;
     
     public PaymentServiceImpl(
             PaymentRepository paymentRepository,
@@ -89,7 +97,8 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
             NotificationService notificationService,
             UserRepository userRepository,
             PortOneV2PaymentVerifyService portOneV2PaymentVerifyService,
-            @Lazy ClientShopCheckoutService clientShopCheckoutService) {
+            @Lazy ClientShopCheckoutService clientShopCheckoutService,
+            @Lazy ShopLatePaymentRefundService shopLatePaymentRefundService) {
         super(paymentRepository, accessControlService);
         this.paymentRepository = paymentRepository;
         this.financialTransactionService = financialTransactionService;
@@ -104,6 +113,7 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
         this.userRepository = userRepository;
         this.portOneV2PaymentVerifyService = portOneV2PaymentVerifyService;
         this.clientShopCheckoutService = clientShopCheckoutService;
+        this.shopLatePaymentRefundService = shopLatePaymentRefundService;
     }
     
     
@@ -417,6 +427,15 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
             throw new IllegalArgumentException(PaymentConstants.ERROR_NOT_SHOP_ORDER_PAYMENT);
         }
 
+        // 주문 행 잠금 — 사용자 취소·만료와 승인 직렬화. 닫힌 주문은 되살리지 않는다(늦은 결제는 가드가 PG 취소).
+        Optional<ShopClientOrder> lockedOrder =
+                shopClientOrderRepository.lockByTenantIdAndPublicId(tenantId, payment.getOrderId());
+        if (lockedOrder.isPresent()
+                && (ShopLatePaymentConstants.isClosedOrder(lockedOrder.get().getStatus())
+                        || NON_APPROVABLE_SHOP_PAYMENT_STATUSES.contains(payment.getStatus()))) {
+            throw new ShopOrderClosedForPaymentException(payment.getOrderId(), lockedOrder.get().getStatus());
+        }
+
         if (payment.getStatus() != Payment.PaymentStatus.APPROVED) {
             validateStatusTransition(payment.getStatus(), Payment.PaymentStatus.APPROVED);
             payment.setStatus(Payment.PaymentStatus.APPROVED);
@@ -437,6 +456,13 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
         log.info("쇼핑 주문 결제 승인 완료: paymentId={}, orderPublicId={}", paymentId, orderPublicId);
         return buildPaymentResponse(payment, null);
     }
+
+    /** 쇼핑 결제 — 이 상태에서 APPROVED 로 뒤집지 않는다 */
+    private static final Set<Payment.PaymentStatus> NON_APPROVABLE_SHOP_PAYMENT_STATUSES = EnumSet.of(
+            Payment.PaymentStatus.CANCELLED,
+            Payment.PaymentStatus.EXPIRED,
+            Payment.PaymentStatus.REFUNDED,
+            Payment.PaymentStatus.REFUND_REQUIRED);
 
     private static final String FALLBACK_CONSULTANT_NAME = "상담사";
     private static final String FALLBACK_PACKAGE_NAME = "상담 패키지";
@@ -774,6 +800,15 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
                 log.warn("포트원 REST 검증 실패: paymentId={}, amount={}", paymentId, amount);
                 return false;
             }
+            // 닫힌 주문 늦은 결제: 결제 행을 이 트랜잭션에서 수정하기 전에 PG 자동 취소(가드는 별도 트랜잭션)
+            if (isShopOrderPayment(payment)) {
+                ShopLatePaymentOutcome lateOutcome =
+                        shopLatePaymentRefundService.refundIfOrderClosed(tenantId, paymentId);
+                if (lateOutcome != null && lateOutcome != ShopLatePaymentOutcome.NOT_APPLICABLE) {
+                    log.warn("결제 검증: 닫힌 주문 늦은 결제 outcome={}, paymentId={}", lateOutcome, paymentId);
+                    return false;
+                }
+            }
             verifiedBody.ifPresent(body -> {
                 payment.setExternalResponse(body);
                 paymentRepository.save(payment);
@@ -785,7 +820,7 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
                     updatePaymentStatus(paymentId, Payment.PaymentStatus.APPROVED);
                 }
             } else if (isShopOrderPayment(payment)) {
-                // APPROVED 멱등이어도 주문 SSOT(EXPIRED→PAID 복구 등)를 shop-safe 경로로 재동기화
+                // APPROVED 멱등이어도 주문 SSOT 를 shop-safe 경로로 재동기화 (닫힌 주문은 되살리지 않음)
                 approveShopOrderPayment(paymentId);
             }
             return true;

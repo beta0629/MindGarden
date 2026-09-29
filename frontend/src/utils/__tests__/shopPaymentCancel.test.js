@@ -104,6 +104,15 @@ describe('settleShopPaymentReturnCancel', () => {
       .resolves.toEqual({ destination: buildShopSkuDetailPath('PKG10') });
   });
 
+  test('PortOne 결제 진행 중(주문 PENDING 유지) → 닫힌 경우와 같은 출처로 복귀', async() => {
+    const cancel = jest.fn().mockResolvedValue({
+      outcome: SHOP_USER_CANCEL_OUTCOME.NOT_CANCELLABLE_IN_PROGRESS, orderStatus: 'PENDING_PAYMENT',
+      checkoutSource: 'CART', skuCodes: ['PKG10']
+    });
+    await expect(settleShopPaymentReturnCancel({ orderPublicId: 'o1', cancelShopPaymentByUser: cancel, fetchShopOrder: jest.fn() }))
+      .resolves.toEqual({ destination: CLIENT_SHOP_ROUTES.CART });
+  });
+
   test('PortOne PAID → paidPaymentId', async() => {
     const cancel = jest.fn().mockResolvedValue({ outcome: SHOP_USER_CANCEL_OUTCOME.PAID, paymentId: 'pay-9' });
     await expect(settleShopPaymentReturnCancel({ orderPublicId: 'o1', cancelShopPaymentByUser: cancel, fetchShopOrder: jest.fn() }))

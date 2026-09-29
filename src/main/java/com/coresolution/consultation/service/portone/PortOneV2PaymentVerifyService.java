@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.Optional;
+import com.coresolution.consultation.config.RestTemplateConfig;
 import com.coresolution.consultation.entity.Payment;
 import com.coresolution.core.domain.TenantPgConfiguration;
 import com.coresolution.core.domain.enums.ApprovalStatus;
@@ -13,8 +14,8 @@ import com.coresolution.core.repository.TenantPgConfigurationRepository;
 import com.coresolution.consultation.service.PersonalDataEncryptionService;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -37,7 +38,6 @@ import org.springframework.web.util.UriComponentsBuilder;
  */
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class PortOneV2PaymentVerifyService {
 
     /** 포트원 V2 REST 결제 조회 베이스 URL (공개 API 호스트). */
@@ -70,7 +70,18 @@ public class PortOneV2PaymentVerifyService {
     private final TenantPgConfigurationRepository tenantPgConfigurationRepository;
     private final PersonalDataEncryptionService encryptionService;
     private final ObjectMapper objectMapper;
-    private final RestTemplate restTemplate = new RestTemplate();
+    private final RestTemplate restTemplate;
+
+    public PortOneV2PaymentVerifyService(
+            TenantPgConfigurationRepository tenantPgConfigurationRepository,
+            PersonalDataEncryptionService encryptionService,
+            ObjectMapper objectMapper,
+            @Qualifier(RestTemplateConfig.PORTONE_REST_TEMPLATE) RestTemplate restTemplate) {
+        this.tenantPgConfigurationRepository = tenantPgConfigurationRepository;
+        this.encryptionService = encryptionService;
+        this.objectMapper = objectMapper;
+        this.restTemplate = restTemplate;
+    }
 
     /** 단위 테스트에서 지연을 0으로 줄이기 위한 필드 (기본값 = 운영 상수). */
     private int transientStatusMaxAttempts = TRANSIENT_STATUS_MAX_ATTEMPTS;
@@ -228,8 +239,8 @@ public class PortOneV2PaymentVerifyService {
 
     /**
      * 사용자 취소 정리용 승인 여부 판정 (fail-safe: 확실히 미승인일 때만 NOT_PAID).
-     * <p>404(결제 건 없음)·READY·FAILED → NOT_PAID. PAID → PAID. 그 외(조회 실패, PAY_PENDING,
-     * VIRTUAL_ACCOUNT_ISSUED, CANCELLED 등) → UNKNOWN.</p>
+     * <p>404(결제 건 없음)·FAILED → NOT_PAID. PAID → PAID. READY(다른 탭 인증 중 등)·PAY_PENDING·
+     * VIRTUAL_ACCOUNT_ISSUED·CANCELLED 등 그 밖의 상태 → IN_PROGRESS. 조회 실패·설정 없음 → UNKNOWN.</p>
      *
      * @param tenantId  테넌트 ID
      * @param paymentId 포트원 결제 ID
@@ -271,13 +282,16 @@ public class PortOneV2PaymentVerifyService {
         }
         try {
             String status = text(objectMapper.readTree(body), "status");
+            if (status == null || status.isBlank()) {
+                return PortOnePaymentPaidState.UNKNOWN;
+            }
             if (STATUS_PAID.equalsIgnoreCase(status)) {
                 return PortOnePaymentPaidState.PAID;
             }
-            if (STATUS_READY.equalsIgnoreCase(status) || STATUS_FAILED.equalsIgnoreCase(status)) {
+            if (STATUS_FAILED.equalsIgnoreCase(status)) {
                 return PortOnePaymentPaidState.NOT_PAID;
             }
-            return PortOnePaymentPaidState.UNKNOWN;
+            return PortOnePaymentPaidState.IN_PROGRESS;
         } catch (Exception e) {
             log.warn("포트원 승인 여부 조회: JSON 파싱 실패 paymentId={}: {}", paymentId, e.getMessage());
             return PortOnePaymentPaidState.UNKNOWN;

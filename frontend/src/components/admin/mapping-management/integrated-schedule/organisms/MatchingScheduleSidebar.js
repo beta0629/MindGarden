@@ -129,6 +129,16 @@ const MatchingScheduleSidebar = ({
     'integratedSchedule.sidebar.clientSearchPlaceholder',
     { defaultValue: '내담자 이름·연락처 검색' }
   );
+  const viewFilterLabelByValue = {
+    [VIEW_FILTER_NEW]: VIEW_FILTER_NEW_LABEL,
+    [VIEW_FILTER_REMAINING]: '회기 남은 배정',
+    [VIEW_FILTER_ALL]: t('admin.labels.all')
+  };
+  const selectedStatusOption = STATUS_FILTER_OPTIONS.find((opt) => opt.value === statusFilter);
+  const filterSelectionSummary = [
+    viewFilterLabelByValue[viewFilter],
+    selectedStatusOption ? toDisplayString(selectedStatusOption.label) : null
+  ].filter(Boolean).join(' · ');
 
   return (
     <aside
@@ -186,101 +196,118 @@ const MatchingScheduleSidebar = ({
         hidden={isCollapsed}
       >
         {gareyarkCard ? renderGareyarkCard(gareyarkCard, t) : null}
-        {savedViewControls ? (
-          <details className="integrated-schedule__saved-view-details">
-            <summary className="integrated-schedule__saved-view-summary">
-              저장된 뷰
-            </summary>
-            <div className="integrated-schedule__saved-view-controls">
-              {savedViewControls}
-            </div>
-          </details>
-        ) : null}
-        <div className="integrated-schedule__filter-toolbar">
-          <fieldset className="integrated-schedule__filter" aria-label="배정 목록 보기 필터">
-            <legend className="integrated-schedule__filter-legend">{t('admin.actions.view')}</legend>
-          <label
-            className={`integrated-schedule__filter-label ${
-              viewFilter === VIEW_FILTER_NEW ? 'integrated-schedule__filter-label--selected' : ''
-            }`}
-          >
-            <input
-              type="radio"
-              name="viewFilter"
-              value={VIEW_FILTER_NEW}
-              checked={viewFilter === VIEW_FILTER_NEW}
-              onChange={() => onViewFilterChange(VIEW_FILTER_NEW)}
-              aria-label={VIEW_FILTER_NEW_LABEL}
-            />
-            <span className="integrated-schedule__filter-text">{VIEW_FILTER_NEW_LABEL}</span>
-          </label>
-          <label
-            className={`integrated-schedule__filter-label ${
-              viewFilter === VIEW_FILTER_REMAINING ? 'integrated-schedule__filter-label--selected' : ''
-            }`}
-          >
-            <input
-              type="radio"
-              name="viewFilter"
-              value={VIEW_FILTER_REMAINING}
-              checked={viewFilter === VIEW_FILTER_REMAINING}
-              onChange={() => onViewFilterChange(VIEW_FILTER_REMAINING)}
-              aria-label="회기 남은 배정"
-            />
-            <span className="integrated-schedule__filter-text">회기 남은 배정</span>
-          </label>
-          <label
-            className={`integrated-schedule__filter-label ${
-              viewFilter === VIEW_FILTER_ALL ? 'integrated-schedule__filter-label--selected' : ''
-            }`}
-          >
-            <input
-              type="radio"
-              name="viewFilter"
-              value={VIEW_FILTER_ALL}
-              checked={viewFilter === VIEW_FILTER_ALL}
-              onChange={() => onViewFilterChange(VIEW_FILTER_ALL)}
-              aria-label={t('admin.labels.all')}
-            />
-            <span className="integrated-schedule__filter-text">{t('admin.labels.all')}</span>
-          </label>
-          </fieldset>
-          <DensityToggle
-            density={sidebarDensity}
-            onDensityChange={onSidebarDensityChange}
-          />
-        </div>
-        <fieldset
-          className="integrated-schedule__filter integrated-schedule__filter--status"
-          aria-label="상태별 필터"
-        >
-          <legend className="integrated-schedule__filter-legend">{t('admin.labels.status')}</legend>
-          <div className="integrated-schedule__status-btns">
-            {STATUS_FILTER_OPTIONS.map((opt) => {
-              const count = getStatusCount(opt.value);
-              const isSelected = statusFilter === opt.value;
-              return (
-                <button
-                  key={opt.value || 'all'}
-                  type="button"
-                  className={`integrated-schedule__status-btn${
-                    isSelected ? ' integrated-schedule__status-btn--selected' : ''
-                  }`}
-                  onClick={() => onStatusFilterChange(opt.value)}
-                  aria-pressed={isSelected}
-                  aria-label={`${toDisplayString(opt.label)} (${count}건)`}
-                >
-                  <span className="integrated-schedule__status-btn-text">
-                    {toDisplayString(opt.label)}
-                  </span>
-                  <span className="integrated-schedule__status-badge" aria-hidden="true">
-                    {count}
-                  </span>
-                </button>
-              );
+        <details className="integrated-schedule__filter-details">
+          <summary
+            className="integrated-schedule__filter-details-summary"
+            aria-label={t('integratedSchedule.sidebar.filterSummaryAria', {
+              selection: filterSelectionSummary
             })}
+          >
+            <span className="integrated-schedule__filter-details-title">
+              {t('integratedSchedule.sidebar.filterSummary')}
+            </span>
+            <span className="integrated-schedule__filter-details-selection">
+              {filterSelectionSummary}
+            </span>
+          </summary>
+          <div className="integrated-schedule__filter-details-body">
+            {savedViewControls ? (
+              <details className="integrated-schedule__saved-view-details">
+                <summary className="integrated-schedule__saved-view-summary">
+                  저장된 뷰
+                </summary>
+                <div className="integrated-schedule__saved-view-controls">
+                  {savedViewControls}
+                </div>
+              </details>
+            ) : null}
+            <div className="integrated-schedule__filter-toolbar">
+              <fieldset className="integrated-schedule__filter" aria-label="배정 목록 보기 필터">
+                <legend className="integrated-schedule__filter-legend">{t('admin.actions.view')}</legend>
+              <label
+                className={`integrated-schedule__filter-label ${
+                  viewFilter === VIEW_FILTER_NEW ? 'integrated-schedule__filter-label--selected' : ''
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="viewFilter"
+                  value={VIEW_FILTER_NEW}
+                  checked={viewFilter === VIEW_FILTER_NEW}
+                  onChange={() => onViewFilterChange(VIEW_FILTER_NEW)}
+                  aria-label={VIEW_FILTER_NEW_LABEL}
+                />
+                <span className="integrated-schedule__filter-text">{VIEW_FILTER_NEW_LABEL}</span>
+              </label>
+              <label
+                className={`integrated-schedule__filter-label ${
+                  viewFilter === VIEW_FILTER_REMAINING ? 'integrated-schedule__filter-label--selected' : ''
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="viewFilter"
+                  value={VIEW_FILTER_REMAINING}
+                  checked={viewFilter === VIEW_FILTER_REMAINING}
+                  onChange={() => onViewFilterChange(VIEW_FILTER_REMAINING)}
+                  aria-label="회기 남은 배정"
+                />
+                <span className="integrated-schedule__filter-text">회기 남은 배정</span>
+              </label>
+              <label
+                className={`integrated-schedule__filter-label ${
+                  viewFilter === VIEW_FILTER_ALL ? 'integrated-schedule__filter-label--selected' : ''
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="viewFilter"
+                  value={VIEW_FILTER_ALL}
+                  checked={viewFilter === VIEW_FILTER_ALL}
+                  onChange={() => onViewFilterChange(VIEW_FILTER_ALL)}
+                  aria-label={t('admin.labels.all')}
+                />
+                <span className="integrated-schedule__filter-text">{t('admin.labels.all')}</span>
+              </label>
+              </fieldset>
+              <DensityToggle
+                density={sidebarDensity}
+                onDensityChange={onSidebarDensityChange}
+              />
+            </div>
+            <fieldset
+              className="integrated-schedule__filter integrated-schedule__filter--status"
+              aria-label="상태별 필터"
+            >
+              <legend className="integrated-schedule__filter-legend">{t('admin.labels.status')}</legend>
+              <div className="integrated-schedule__status-btns">
+                {STATUS_FILTER_OPTIONS.map((opt) => {
+                  const count = getStatusCount(opt.value);
+                  const isSelected = statusFilter === opt.value;
+                  return (
+                    <button
+                      key={opt.value || 'all'}
+                      type="button"
+                      className={`integrated-schedule__status-btn${
+                        isSelected ? ' integrated-schedule__status-btn--selected' : ''
+                      }`}
+                      onClick={() => onStatusFilterChange(opt.value)}
+                      aria-pressed={isSelected}
+                      aria-label={`${toDisplayString(opt.label)} (${count}건)`}
+                    >
+                      <span className="integrated-schedule__status-btn-text">
+                        {toDisplayString(opt.label)}
+                      </span>
+                      <span className="integrated-schedule__status-badge" aria-hidden="true">
+                        {count}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </fieldset>
           </div>
-        </fieldset>
+        </details>
         {typeof onClientSearchChange === 'function' ? (
           <div
             className="integrated-schedule__client-search"

@@ -1210,12 +1210,6 @@
  * @since 2026-06-09
  * ==================================================================== */
 
-@media (max-width: 1366px) {
-  .integrated-schedule.integrated-schedule--clinic-os .mg-v2-content-area {
-    padding: var(--mg-v2-space-4);
-  }
-}
-
 @media (max-width: 767px) {
   .integrated-schedule-summary {
     grid-template-columns: 1fr;
@@ -1226,6 +1220,281 @@
     border-inline-start: none;
     border-top: 1px solid var(--mg-v2-color-border-main, var(--mg-color-border-main));
     padding-top: var(--mg-v2-space-3);
+  }
+}
+
+/* ====================================================================
+ * 배정 목록 세로 공간 확보 — 통합 스케줄 한정
+ *
+ * 원인: 사이드바 본문의 가예약 카드·저장 뷰·보기 탭·상태 필터(2열×5행)·검색이 모두
+ * flex-shrink:0 이고, 그 위에 페이지 헤더·요약·스테이지/사이드바 중첩 패딩이 쌓여
+ * 목록(.integrated-schedule__list-scroll, flex:1)이 받을 높이가 0 이하 → min-height
+ * 안전망(--mg-spacing-2xl)만 남았다.
+ *
+ * 수정:
+ *  - 보기·상태·저장 뷰 필터를 단일 disclosure(.integrated-schedule__filter-details)로 접음
+ *  - 가예약 카드 1행 압축, 사이드바·콘텐츠 중첩 패딩 축소
+ *  - ≥768px: 사이드바가 헤더·요약 옆 전체 높이를 사용 (stage/content 는 display:contents)
+ *  - ≤767px: 사이드바 펼침 = 목록 전체 폭·높이, 접힘 = 상단 바 + 캘린더
+ *  - 스크롤은 목록(.integrated-schedule__list-scroll)만. 페이지·main 은 overflow:hidden
+ * ==================================================================== */
+
+.integrated-schedule__filter-details {
+  flex-shrink: 0;
+  border: var(--mg-v2-border-width-thin, 1px) solid var(--mg-v2-color-neutral-300, var(--mg-color-border-main));
+  border-radius: var(--mg-v2-radius-sm, var(--mg-radius-sm));
+  background-color: var(--integrated-schedule-status-surface, var(--mg-v2-color-surface-card));
+}
+
+.integrated-schedule__filter-details-summary {
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: var(--mg-v2-space-2);
+  min-height: var(--integrated-schedule-chrome-control-height);
+  padding: 0 var(--mg-v2-space-3);
+  font-size: var(--font-size-xs);
+  color: var(--mg-v2-color-text-secondary);
+  cursor: pointer;
+  user-select: none;
+}
+
+.integrated-schedule__filter-details-summary::-webkit-details-marker {
+  display: none;
+}
+
+.integrated-schedule__filter-details-summary::after {
+  content: '';
+  flex-shrink: 0;
+  width: var(--mg-v2-space-2);
+  height: var(--mg-v2-space-2);
+  border-right: var(--mg-v2-border-width-thin, 1px) solid currentColor;
+  border-bottom: var(--mg-v2-border-width-thin, 1px) solid currentColor;
+  transform: rotate(45deg);
+  opacity: 0.7;
+  transition: transform 0.15s ease;
+}
+
+.integrated-schedule__filter-details[open] > .integrated-schedule__filter-details-summary::after {
+  transform: rotate(-135deg);
+}
+
+.integrated-schedule__filter-details-summary:focus-visible {
+  outline: var(--mg-v2-border-width-thick, 2px) solid var(--integrated-schedule-selection-ink, var(--cs-ink, var(--cs-slate-900)));
+  outline-offset: 2px;
+  border-radius: var(--mg-v2-radius-sm, var(--mg-radius-sm));
+}
+
+.integrated-schedule__filter-details-title {
+  flex-shrink: 0;
+  font-weight: var(--mg-font-weight-semibold, 600);
+  color: var(--mg-v2-color-text-primary);
+}
+
+.integrated-schedule__filter-details-selection {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.integrated-schedule__filter-details-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-v2-space-2);
+  padding: 0 var(--mg-v2-space-2) var(--mg-v2-space-2);
+}
+
+.integrated-schedule__filter-details-body .integrated-schedule__saved-view-details,
+.integrated-schedule__filter-details-body .integrated-schedule__filter-toolbar,
+.integrated-schedule__filter-details-body .integrated-schedule__filter--status {
+  margin-bottom: 0;
+}
+
+.integrated-schedule__filter-details-body .integrated-schedule__filter--status {
+  padding: 0;
+}
+
+.integrated-schedule--clinic-os .integrated-schedule__sidebar:not(.integrated-schedule__sidebar--collapsed) {
+  padding: var(--mg-v2-space-3);
+}
+
+.integrated-schedule--clinic-os .integrated-schedule__sidebar-body {
+  gap: var(--mg-v2-space-2);
+}
+
+/* 가예약 카드 — 사이드바에서는 제목·건수 | 액션 1행 */
+.integrated-schedule__pending-payment-alert--sidebar {
+  flex-wrap: nowrap;
+  gap: var(--mg-v2-space-2);
+  padding: var(--mg-v2-space-1) var(--mg-v2-space-3);
+}
+
+.integrated-schedule__pending-payment-alert--sidebar .integrated-schedule__pending-payment-alert-text {
+  flex-direction: row;
+  align-items: baseline;
+  gap: var(--mg-v2-space-2);
+}
+
+.integrated-schedule__pending-payment-alert--sidebar .integrated-schedule__pending-payment-alert-actions {
+  flex-shrink: 0;
+  flex-wrap: nowrap;
+}
+
+.integrated-schedule__pending-payment-alert--sidebar .integrated-schedule__pending-payment-alert-actions .mg-button {
+  width: auto;
+  height: var(--integrated-schedule-chrome-control-height);
+  min-height: var(--integrated-schedule-chrome-control-height);
+}
+
+.integrated-schedule.integrated-schedule--clinic-os .mg-v2-content-area {
+  padding: 0;
+}
+
+.mg-v2-desktop-layout__main:has(> .integrated-schedule--clinic-os) {
+  overflow: hidden;
+  padding-block: var(--mg-v2-space-3);
+}
+
+@media (min-width: 768px) {
+  .integrated-schedule.integrated-schedule--clinic-os .mg-v2-content-area {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-rows: auto auto minmax(0, 1fr);
+    column-gap: var(--mg-v2-space-4);
+    row-gap: var(--mg-v2-space-3);
+  }
+
+  .integrated-schedule--clinic-os .mg-v2-content-area > .mg-v2-content-header {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .integrated-schedule--clinic-os .mg-v2-content-area > .integrated-schedule-summary {
+    grid-column: 2;
+    grid-row: 2;
+  }
+
+  .integrated-schedule--clinic-os .integrated-schedule__stage,
+  .integrated-schedule--clinic-os .integrated-schedule__content {
+    display: contents;
+  }
+
+  .integrated-schedule--clinic-os .integrated-schedule__sidebar {
+    grid-column: 1;
+    grid-row: 1 / -1;
+    height: auto;
+    max-height: none;
+    min-height: 0;
+  }
+
+  .integrated-schedule--clinic-os .integrated-schedule__main-region {
+    grid-column: 2;
+    grid-row: 3;
+    max-height: none;
+  }
+}
+
+/* ≤767px (MobileLayout): viewport-bound + 목록/캘린더 전환 */
+.mg-v2-ad-dashboard-v2:has(.integrated-schedule--clinic-os) > .mg-v2-mobile-layout {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.mg-v2-mobile-layout__main:has(> .integrated-schedule--clinic-os) {
+  overflow: hidden;
+  padding-block: var(--mg-v2-space-2);
+}
+
+@media (max-width: 767px) {
+  .integrated-schedule.integrated-schedule--clinic-os .mg-v2-content-area {
+    gap: var(--mg-v2-space-2);
+  }
+
+  .integrated-schedule--clinic-os .integrated-schedule-summary {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--mg-v2-space-2);
+    padding: var(--mg-v2-space-1) var(--mg-v2-space-2);
+  }
+
+  .integrated-schedule--clinic-os .integrated-schedule-summary__cell {
+    gap: 0;
+    padding-inline: var(--mg-v2-space-2);
+  }
+
+  .integrated-schedule--clinic-os .integrated-schedule-summary__amount .mg-v2-kpi-numeral {
+    font-size: var(--font-size-lg);
+  }
+
+  .integrated-schedule--clinic-os .integrated-schedule-summary__cell + .integrated-schedule-summary__cell {
+    border-top: none;
+    border-inline-start: var(--mg-v2-border-width-thin, 1px) solid var(--mg-v2-color-border-main, var(--mg-color-border-main));
+    padding-top: 0;
+  }
+
+  .integrated-schedule--clinic-os .integrated-schedule-summary__label {
+    font-size: var(--mg-v2-font-size-body-sm);
+  }
+
+  .integrated-schedule--clinic-os .integrated-schedule-summary__caption {
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  .integrated-schedule--clinic-os .integrated-schedule__stage,
+  .integrated-schedule--clinic-os .integrated-schedule__content {
+    display: contents;
+  }
+
+  .integrated-schedule--clinic-os .integrated-schedule__sidebar,
+  .integrated-schedule--clinic-os .integrated-schedule__sidebar:not(.integrated-schedule__sidebar--collapsed) {
+    --integrated-schedule-sidebar-width: 100%;
+    width: 100%;
+    min-width: 0;
+    height: auto;
+    max-height: none;
+    padding: 0;
+    border: none;
+    background-color: transparent;
+  }
+
+  .integrated-schedule--clinic-os .integrated-schedule__sidebar:not(.integrated-schedule__sidebar--collapsed) {
+    flex: 1 1 0%;
+    min-height: 0;
+  }
+
+  .integrated-schedule--clinic-os .integrated-schedule__sidebar--collapsed {
+    flex: 0 0 auto;
+  }
+
+  .integrated-schedule--clinic-os .integrated-schedule__sidebar--collapsed .integrated-schedule__sidebar-header {
+    flex-direction: row;
+    justify-content: space-between;
+  }
+
+  .integrated-schedule--clinic-os .integrated-schedule__sidebar-header {
+    margin-bottom: var(--mg-v2-space-1);
+  }
+
+  .integrated-schedule--clinic-os .integrated-schedule__sidebar--collapsed .integrated-schedule__sidebar-title {
+    flex-direction: row;
+    font-size: var(--mg-v2-font-size-h2);
+    gap: var(--mg-v2-space-2);
+  }
+
+  .integrated-schedule--clinic-os .integrated-schedule__main-region {
+    flex: 1 1 0%;
+    min-height: 0;
+    max-height: none;
+  }
+
+  .integrated-schedule--clinic-os
+    .integrated-schedule__content:not(.integrated-schedule__content--peek-open)
+    > .integrated-schedule__sidebar:not(.integrated-schedule__sidebar--collapsed)
+    ~ .integrated-schedule__main-region {
+    display: none;
   }
 }
 

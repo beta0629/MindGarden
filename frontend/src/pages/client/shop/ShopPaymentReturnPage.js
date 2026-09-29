@@ -9,6 +9,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import FulfillmentLineList from '../../../components/shop/molecules/FulfillmentLineList';
+import MallPayFailedAlert from '../../../components/shop/molecules/MallPayFailedAlert';
 import ShopClientLayout from '../../../components/shop/templates/ShopClientLayout';
 import ShopClientSessionLoading from '../../../components/shop/templates/ShopClientSessionLoading';
 import {
@@ -22,11 +23,19 @@ import {
   SHOP_FULFILLMENT_RETRY_COPY,
   SHOP_PAYMENT_RETURN_COPY
 } from '../../../constants/clientShopConstants';
+import { CLIENT_MALL_CHECKOUT_COPY } from '../../../constants/clientMallConstants';
 import { useClientShopAuth } from '../../../hooks/useClientShopAuth';
 import {
+  cancelShopPaymentByUser,
   fetchShopOrder,
   retryShopOrderFulfillment
 } from '../../../services/clientShopService';
+import {
+  buildShopPaymentCancelNavigationState,
+  isPortOneUserCancel,
+  resolvePortOneFailureReason,
+  settleShopPaymentReturnCancel
+} from '../../../utils/shopPaymentCancel';
 import {
   parseShopPaymentReturnQuery,
   resolveShopPaymentReturnPaymentId,
@@ -41,6 +50,7 @@ const ShopPaymentReturnPage = () => {
   const { sessionLoading, isLoggedIn } = useClientShopAuth();
   const [message, setMessage] = useState('');
   const [error, setError] = useState(false);
+  const [payFailureReason, setPayFailureReason] = useState('');
   const [orderPublicId, setOrderPublicId] = useState(null);
   const [order, setOrder] = useState(null);
   const [retrying, setRetrying] = useState(false);
@@ -56,16 +66,30 @@ const ShopPaymentReturnPage = () => {
       const query = parseShopPaymentReturnQuery(searchParams);
       setOrderPublicId(query.orderPublicId);
 
-      if (query.code) {
+      let paidAfterCancelPaymentId = null;
+      if (isPortOneUserCancel({ code: query.code, pgCode: searchParams.get('pgCode'), message: query.message })) {
+        const settled = await settleShopPaymentReturnCancel({
+          orderPublicId: query.orderPublicId,
+          cancelShopPaymentByUser,
+          fetchShopOrder
+        });
+        if (!settled.paidPaymentId) {
+          navigate(settled.destination, { replace: true, state: buildShopPaymentCancelNavigationState() });
+          return;
+        }
+        paidAfterCancelPaymentId = settled.paidPaymentId;
+      } else if (query.code) {
         setError(true);
-        setMessage(
-          query.message ||
-            `결제 모듈 오류: ${query.code}`
+        setPayFailureReason(
+          resolvePortOneFailureReason(
+            { message: query.message, pgMessage: searchParams.get('pgMessage') },
+            CLIENT_MALL_CHECKOUT_COPY.PAY_FAILED_REASON_FALLBACK
+          )
         );
         return;
       }
 
-      const paymentId = resolveShopPaymentReturnPaymentId(query);
+      const paymentId = paidAfterCancelPaymentId || resolveShopPaymentReturnPaymentId(query);
       if (!paymentId) {
         setError(true);
         setMessage(SHOP_PAYMENT_RETURN_COPY.MISSING_PAYMENT_ID);
@@ -165,6 +189,7 @@ const ShopPaymentReturnPage = () => {
       title={SHOP_PAYMENT_RETURN_COPY.TITLE}
       testId="client-shop-payment-return"
     >
+      <MallPayFailedAlert reason={payFailureReason} />
       {message ? (
         <p
           className={`client-shop__message${error ? ' client-shop__message--error' : ''}`}

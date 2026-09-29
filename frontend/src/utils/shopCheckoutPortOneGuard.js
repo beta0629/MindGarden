@@ -7,10 +7,48 @@
  * @since 2026-09-18
  */
 
-import { SHOP_PAYMENT_LAUNCH_COPY } from '../constants/clientShopConstants';
+import { SHOP_PAYMENT_LAUNCH_COPY, SHOP_USER_CANCEL_OUTCOME } from '../constants/clientShopConstants';
 import { assertPortOneCustomerReadyBeforeCheckout } from './clientShopPaymentCustomer';
+import { isPortOneUserCancel } from './shopPaymentCancel';
 
-/** @typedef {'BLOCKED_CUSTOMER'|'NON_PAYMENT'|'PORTONE_READY'|'ORPHAN_CANCELLED'|'PAYMENT_VERIFIED'|'PAYMENT_LAUNCHED'} ShopCheckoutPortOneStatus */
+/** @typedef {'BLOCKED_CUSTOMER'|'NON_PAYMENT'|'PORTONE_READY'|'ORPHAN_CANCELLED'|'PAYMENT_VERIFIED'|'PAYMENT_LAUNCHED'|'USER_CANCELLED'|'PAID_AFTER_CANCEL'} ShopCheckoutPortOneStatus */
+
+/**
+ * 사용자 취소 후 서버 정리. 서버 호출이 실패해도 취소 흐름(들어온 곳으로 복귀)은 유지한다 —
+ * 남은 미결제 주문은 재결제 시 같은 내용이면 재사용된다.
+ * PortOne 이 이미 PAID 면 PAID_AFTER_CANCEL 로 정상 결제 확인에 넘긴다.
+ *
+ * @param {object} params
+ * @returns {Promise<object>}
+ */
+const settleUserCancel = async({ cancelShopPaymentByUser, orderPublicId, checkoutResult, customer }) => {
+  let cancelResult = null;
+  if (typeof cancelShopPaymentByUser === 'function') {
+    try {
+      cancelResult = await cancelShopPaymentByUser(orderPublicId);
+    } catch (e) {
+      console.warn('결제창 취소 후 주문 정리 실패:', orderPublicId, e);
+    }
+  }
+  if (cancelResult?.outcome === SHOP_USER_CANCEL_OUTCOME.PAID && cancelResult.paymentId) {
+    return {
+      status: 'PAID_AFTER_CANCEL',
+      message: '',
+      posted: true,
+      checkoutResult,
+      customer,
+      paymentId: String(cancelResult.paymentId)
+    };
+  }
+  return {
+    status: 'USER_CANCELLED',
+    message: '',
+    posted: true,
+    checkoutResult,
+    customer,
+    cancelOutcome: cancelResult?.outcome ?? null
+  };
+};
 
 /**
  * prepare 응답으로 PortOne SDK를 열 수 있는지.
@@ -61,6 +99,8 @@ export const cancelOrphanShopOrderQuietly = async(cancelShopOrderFn, orderPublic
  * @param {(orderPublicId: string) => Promise<object>} deps.prepareShopPayment
  * @param {(prepared: object, options: object) => Promise<object>} deps.runShopPortOnePaymentIfReady
  * @param {(orderPublicId: string) => Promise<*>} deps.cancelShopOrder
+ * @param {(orderPublicId: string) => Promise<{ outcome: string, paymentId?: string }>} [deps.cancelShopPaymentByUser]
+ *   PAY_PROCESS_CANCELED(사용자 취소)일 때만 호출 — 서버가 PortOne 미승인 확인 후 주문 정리
  * @returns {Promise<{
  *   status: ShopCheckoutPortOneStatus,
  *   message: string,
@@ -68,7 +108,9 @@ export const cancelOrphanShopOrderQuietly = async(cancelShopOrderFn, orderPublic
  *   checkoutResult?: object|null,
  *   cancelled?: boolean,
  *   customer?: object,
- *   portoneFlow?: object
+ *   portoneFlow?: object,
+ *   cancelOutcome?: string|null,
+ *   paymentId?: string
  * }>}
  */
 export const runShopCheckoutWithPortOneGuard = async({
@@ -79,7 +121,8 @@ export const runShopCheckoutWithPortOneGuard = async({
   postShopCheckout,
   prepareShopPayment,
   runShopPortOnePaymentIfReady,
-  cancelShopOrder
+  cancelShopOrder,
+  cancelShopPaymentByUser
 }) => {
   const gate = assertPortOneCustomerReadyBeforeCheckout(user);
   if (!gate.ready) {
@@ -150,7 +193,15 @@ export const runShopCheckoutWithPortOneGuard = async({
       customer: raceGate.customer
     });
   } catch (portoneError) {
-    // prepare까지 성공·SDK 호출 단계 오류는 재결제 경로 유지 — cancel하지 않음
+    if (isPortOneUserCancel(portoneError?.portoneResult)) {
+      return settleUserCancel({
+        cancelShopPaymentByUser,
+        orderPublicId,
+        checkoutResult,
+        customer: raceGate.customer
+      });
+    }
+    // 카드 거절 등 실패는 결제 화면에 머묾 — 주문은 재결제용으로 유지
     throw portoneError;
   }
 

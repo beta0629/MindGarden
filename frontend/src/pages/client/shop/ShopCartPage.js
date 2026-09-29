@@ -11,6 +11,7 @@ import ShopClientLayout from '../../../components/shop/templates/ShopClientLayou
 import ShopClientSessionLoading from '../../../components/shop/templates/ShopClientSessionLoading';
 import MallSessionChip from '../../../components/shop/atoms/MallSessionChip';
 import MallEmptyState from '../../../components/shop/molecules/MallEmptyState';
+import MallPaymentCancelNotice from '../../../components/shop/molecules/MallPaymentCancelNotice';
 import MallQtyStepper from '../../../components/shop/molecules/MallQtyStepper';
 import MallUsageBanner from '../../../components/shop/molecules/MallUsageBanner';
 import MallCartBar from '../../../components/shop/organisms/MallCartBar';
@@ -27,6 +28,7 @@ import { CLIENT_SHOP_ROUTES, CLIENT_SHOP_TEST_IDS } from '../../../constants/cli
 import { RoleUtils } from '../../../constants/roles';
 import { useClientShopAuth } from '../../../hooks/useClientShopAuth';
 import useClientMallCart from '../../../hooks/useClientMallCart';
+import useShopPaymentCancelNotice from '../../../hooks/useShopPaymentCancelNotice';
 import { fetchShopCatalog } from '../../../services/clientShopService';
 import {
   formatMallNumber,
@@ -44,6 +46,7 @@ const ShopCartPage = () => {
   });
   const [catalog, setCatalog] = useState([]);
   const [catalogLoaded, setCatalogLoaded] = useState(false);
+  const payCancelNotice = useShopPaymentCancelNotice();
 
   const loadCatalog = useCallback(async() => {
     try {
@@ -137,6 +140,7 @@ const ShopCartPage = () => {
       cartQty={summary.quantity}
       className="client-mall--cart"
     >
+      <MallPaymentCancelNotice visible={payCancelNotice.visible} onClose={payCancelNotice.dismiss} />
       {mall.error ? <p className="client-mall-page__error" role="alert">{mall.error}</p> : null}
       {mall.loaded && summary.isEmpty ? (
         <MallEmptyState

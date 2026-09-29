@@ -163,6 +163,31 @@ export const clearShopPendingPaymentVerify = () => {
 export const buildShopSkuDetailPath = (skuCode) =>
   `${CLIENT_SHOP_ROUTES.SKU_DETAIL}/${encodeURIComponent(skuCode)}`;
 
+/**
+ * 앱 내부 결제 확인 경로 (verify 후 결제 완료로 이동).
+ *
+ * @param {string} orderPublicId
+ * @param {string} paymentId
+ * @returns {string}
+ */
+export const buildShopPaymentReturnPath = (orderPublicId, paymentId) =>
+  `${CLIENT_SHOP_ROUTES.PAYMENT_RETURN}?orderPublicId=${encodeURIComponent(orderPublicId)}`
+  + `&paymentId=${encodeURIComponent(paymentId)}`;
+
+/** PortOne 사용자 결제창 취소 코드 — 이 코드만 「취소」로 본다 (카드 거절 등은 실패) */
+export const PORTONE_USER_CANCEL_CODE = 'PAY_PROCESS_CANCELED';
+
+/** POST …/user-cancel 결과 — BE ShopUserPaymentCancelConstants 와 같은 값 */
+export const SHOP_USER_CANCEL_OUTCOME = Object.freeze({
+  CANCELLED: 'CANCELLED',
+  PAID: 'PAID',
+  UNVERIFIED: 'UNVERIFIED',
+  NOT_CANCELLABLE: 'NOT_CANCELLABLE'
+});
+
+/** 취소 후 돌아간 화면에 amber 안내를 띄우는 router state 키 */
+export const SHOP_PAYMENT_CANCEL_NOTICE_STATE_KEY = 'shopPaymentCancelled';
+
 /** API ShopClientOrderStatus → UI 라벨 */
 export const SHOP_ORDER_STATUS_LABELS = {
   CREATED: '생성',

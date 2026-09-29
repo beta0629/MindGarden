@@ -285,6 +285,29 @@ export const cancelShopOrder = async(orderPublicId) => {
 };
 
 /**
+ * 결제창 사용자 취소 — 미결제이고 PortOne 미승인일 때만 서버가 주문·결제 건을 CANCELLED 로 닫는다 (멱등).
+ * PortOne 이 PAID 면 서버는 아무것도 바꾸지 않고 outcome=PAID 를 준다.
+ *
+ * @param {string} orderPublicId
+ * @returns {Promise<{ outcome: string, orderStatus?: string, paymentId?: string|null,
+ *   checkoutSource?: string, skuCodes?: string[] }>}
+ */
+export const cancelShopPaymentByUser = async(orderPublicId) => {
+  if (!orderPublicId) {
+    throw new Error('주문 번호가 없습니다.');
+  }
+  const res = await StandardizedApi.post(CLIENT_SHOP_API.userCancelPayment(orderPublicId), {});
+  if (res && typeof res === 'object' && 'success' in res && res.success === false) {
+    throw new Error(failureMessage(res, '결제 취소 처리에 실패했습니다.'));
+  }
+  const data = unwrap(res);
+  if (!data || typeof data !== 'object' || !data.outcome) {
+    throw new Error('결제 취소 처리에 실패했습니다.');
+  }
+  return data;
+};
+
+/**
  * PAID 주문 이행 재시도 (FAILED·retryable). 내담자: 성공 재이행 1회 소진(서버 플래그).
  * Anti double-tap 은 FE retrying + preventDoubleClick. FAILED+retryable 이면 버튼 재노출.
  *

@@ -13,6 +13,7 @@ import ShopClientSessionLoading from '../../../components/shop/templates/ShopCli
 import MallSessionChip from '../../../components/shop/atoms/MallSessionChip';
 import MallEmptyState from '../../../components/shop/molecules/MallEmptyState';
 import MallInfoRows from '../../../components/shop/molecules/MallInfoRows';
+import MallPaymentCancelNotice from '../../../components/shop/molecules/MallPaymentCancelNotice';
 import MallPrice from '../../../components/shop/molecules/MallPrice';
 import MallQtyStepper from '../../../components/shop/molecules/MallQtyStepper';
 import MallToast from '../../../components/shop/molecules/MallToast';
@@ -29,6 +30,7 @@ import { CLIENT_SHOP_ROUTES, CLIENT_SHOP_TEST_IDS } from '../../../constants/cli
 import { RoleUtils } from '../../../constants/roles';
 import { useClientShopAuth } from '../../../hooks/useClientShopAuth';
 import useClientMallCart from '../../../hooks/useClientMallCart';
+import useShopPaymentCancelNotice from '../../../hooks/useShopPaymentCancelNotice';
 import { fetchShopCatalog, fetchShopCatalogSku } from '../../../services/clientShopService';
 import {
   buildMallCardDescription,
@@ -51,6 +53,7 @@ const ShopSkuDetailPage = () => {
   const [catalog, setCatalog] = useState([]);
   const [loaded, setLoaded] = useState(false);
   const [quantity, setQuantity] = useState(1);
+  const payCancelNotice = useShopPaymentCancelNotice();
 
   const loadSku = useCallback(async() => {
     if (!skuCode) {
@@ -138,6 +141,7 @@ const ShopSkuDetailPage = () => {
       cartPulse={mall.pulse}
       className="client-mall--detail"
     >
+      <MallPaymentCancelNotice visible={payCancelNotice.visible} onClose={payCancelNotice.dismiss} />
       <nav className="client-mall-crumb">
         <Link to={CLIENT_SHOP_ROUTES.CATALOG}>{CLIENT_MALL_COPY.PAGE_TITLE}</Link>
         {sku ? (

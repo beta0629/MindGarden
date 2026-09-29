@@ -12,11 +12,14 @@ import com.coresolution.consultation.dto.shop.ShopPointBalanceResponse;
 import com.coresolution.consultation.dto.shop.ShopPointLedgerEntryResponse;
 import com.coresolution.consultation.dto.shop.ShopPreparePaymentRequest;
 import com.coresolution.consultation.dto.shop.ShopPreparePaymentResponse;
+import com.coresolution.consultation.dto.shop.ShopUserCancelPaymentResponse;
 import com.coresolution.consultation.entity.User;
+import com.coresolution.consultation.exception.ForbiddenException;
 import com.coresolution.consultation.service.ClientShopCartService;
 import com.coresolution.consultation.service.ClientShopCatalogService;
 import com.coresolution.consultation.service.ClientShopCheckoutService;
 import com.coresolution.consultation.service.ClientShopConsultantMappingService;
+import com.coresolution.consultation.service.ClientShopPaymentCancelService;
 import com.coresolution.consultation.service.ClientPointWalletService;
 import com.coresolution.consultation.utils.SessionUtils;
 import com.coresolution.core.constant.PlatformComponentCodes;
@@ -65,6 +68,7 @@ public class ClientShopController extends BaseApiController {
     private final ClientShopCartService clientShopCartService;
     private final ClientShopCheckoutService clientShopCheckoutService;
     private final ClientShopConsultantMappingService clientShopConsultantMappingService;
+    private final ClientShopPaymentCancelService clientShopPaymentCancelService;
     private final ClientPointWalletService clientPointWalletService;
     private final TenantComponentActivationService tenantComponentActivationService;
 
@@ -307,6 +311,32 @@ public class ClientShopController extends BaseApiController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ApiResponse.error(e.getMessage()));
         } catch (IllegalStateException e) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(ApiResponse.error(e.getMessage()));
+        } finally {
+            TenantContextHolder.clear();
+        }
+    }
+
+    /**
+     * 결제창 사용자 취소 — 미결제이고 PortOne 미승인일 때만 주문·결제 건을 CANCELLED 로 닫는다 (멱등, PG 취소 없음).
+     *
+     * @param session       HTTP 세션
+     * @param orderPublicId 주문 공개 ID
+     * @return 처리 결과 (타인 주문 403)
+     */
+    @PostMapping("/orders/{orderPublicId}/user-cancel")
+    public ResponseEntity<ApiResponse<ShopUserCancelPaymentResponse>> cancelPaymentByUser(
+            HttpSession session,
+            @PathVariable String orderPublicId) {
+
+        User user = requireClient(session);
+        String tenantId = requireTenant(user);
+        try {
+            TenantContextHolder.setTenantId(tenantId);
+            return success(clientShopPaymentCancelService.cancelByUser(tenantId, user.getId(), orderPublicId));
+        } catch (ForbiddenException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.error(e.getMessage()));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ApiResponse.error(e.getMessage()));
         } finally {
             TenantContextHolder.clear();
         }

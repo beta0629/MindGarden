@@ -189,7 +189,6 @@ const ShopPaymentCompletePage = () => {
             <MGButton
               variant="primary"
               size="large"
-              fullWidth
               preventDoubleClick={false}
               className="client-mall-btn client-mall-btn--primary"
               onClick={() => navigate(CLIENT_MALL_ROUTES.SESSIONS)}
@@ -200,7 +199,6 @@ const ShopPaymentCompletePage = () => {
             <MGButton
               variant="outline"
               size="large"
-              fullWidth
               preventDoubleClick={false}
               className="client-mall-btn client-mall-btn--ink-line"
               onClick={() => navigate(CLIENT_MALL_ROUTES.PAYMENT_HISTORY)}

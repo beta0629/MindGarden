@@ -385,4 +385,41 @@ describe('ShopCheckoutPage (TO-BE)', () => {
     expect(within(sheet).getByText(CLIENT_MALL_PHONE_COPY.SENT_HELP)).toBeInTheDocument();
     expect(within(sheet).getByTestId(CLIENT_MALL_TEST_IDS.PHONE_TIMER)).toHaveTextContent('5:00');
   });
+
+  test('오답 → (c) 「n회 남았어요」 · 5번째 오답(429 잠김) → (c) 없이 (f) 잠김', async() => {
+    mockUseSession.mockReturnValue(sessionFor({ phone: '', isPhoneVerified: false }));
+    mockService.fetchShopCart.mockResolvedValue(cartWithPkg);
+    mockSendCode.mockResolvedValue({ deliveryChannel: 'SMS', meta: { expiresInSeconds: 300, resendCooldownSeconds: null, remainingAttempts: 5, retryAfterSeconds: null } });
+    const wrong = Object.assign(new Error('인증 코드가 올바르지 않거나 만료되었습니다. 다시 받아 주세요.'), {
+      status: 400,
+      response: { data: { success: false, errorCode: 'SMS_OTP_INVALID', data: { locked: false, remainingAttempts: 4 } } }
+    });
+    const locked = Object.assign(new Error('인증 시도 횟수를 넘었습니다. 잠시 뒤에 다시 시도해 주세요.'), {
+      status: 429,
+      response: { data: { success: false, errorCode: 'SMS_OTP_LOCKED', data: { locked: true, remainingAttempts: 0, retryAfterSeconds: 600 } } }
+    });
+    mockConfirmCode.mockRejectedValueOnce(wrong).mockRejectedValueOnce(locked);
+    render(<MemoryRouter initialEntries={['/client/shop/checkout']}><ShopCheckoutPage /></MemoryRouter>);
+
+    fireEvent.click(await screen.findByRole('button', { name: CLIENT_MALL_PHONE_COPY.START }));
+    fireEvent.change(screen.getByLabelText(CLIENT_MALL_PHONE_COPY.PHONE_INPUT_LABEL), { target: { value: '01055551234' } });
+    await act(async() => {
+      fireEvent.click(screen.getByTestId(CLIENT_MALL_TEST_IDS.PHONE_SEND));
+    });
+
+    fireEvent.change(screen.getByTestId(CLIENT_MALL_TEST_IDS.PHONE_CODE), { target: { value: '111111' } });
+    await act(async() => {
+      fireEvent.click(screen.getByTestId(CLIENT_MALL_TEST_IDS.PHONE_CONFIRM));
+    });
+    expect(screen.getByTestId(CLIENT_MALL_TEST_IDS.PHONE_ERROR)).toHaveTextContent('4회 남았어요');
+
+    fireEvent.change(screen.getByTestId(CLIENT_MALL_TEST_IDS.PHONE_CODE), { target: { value: '222222' } });
+    await act(async() => {
+      fireEvent.click(screen.getByTestId(CLIENT_MALL_TEST_IDS.PHONE_CONFIRM));
+    });
+    expect(screen.queryByTestId(CLIENT_MALL_TEST_IDS.PHONE_ERROR)).not.toBeInTheDocument();
+    expect(screen.getByText(CLIENT_MALL_PHONE_COPY.LOCKED_TITLE)).toBeInTheDocument();
+    expect(screen.getByText(`10${CLIENT_MALL_PHONE_COPY.LOCKED_BODY_MINUTES_SUFFIX}`)).toBeInTheDocument();
+    expect(screen.getByTestId(CLIENT_MALL_TEST_IDS.PHONE_CODE)).toBeDisabled();
+  });
 });

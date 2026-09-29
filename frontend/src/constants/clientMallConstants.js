@@ -86,7 +86,7 @@ export const CLIENT_MALL_COPY = Object.freeze({
   CART_NEXT_HINT: '다음 화면에서 인증·동의 후 바로 결제해요',
   CART_PAGE_SUMMARY_TITLE: '결제 금액',
   CART_PAGE_SUBTITLE: '수량을 바꾸거나 빼고 결제하세요',
-  CART_PAGE_LIST_PREFIX: '담은 상품 ',
+  CART_PAGE_LIST_TITLE: '담은 상품',
   CART_PAGE_SESSIONS: '받는 회기',
   CART_PAGE_VALIDITY_SUFFIX: '개월 안에 사용',
   LINE_TIMES: ' × ',
@@ -206,8 +206,8 @@ export const CLIENT_MALL_PHONE_COPY = Object.freeze({
   RESEND_WAIT_SEPARATOR: ' · ',
   RESEND_WAIT_SUFFIX: '초',
   WRONG_CODE: '인증번호가 맞지 않아요. 다시 입력해 주세요.',
-  WRONG_CODE_ATTEMPTS_PREFIX: ' (남은 횟수 ',
-  WRONG_CODE_ATTEMPTS_SUFFIX: '회)',
+  WRONG_CODE_ATTEMPTS_PREFIX: ' ',
+  WRONG_CODE_ATTEMPTS_SUFFIX: '회 남았어요.',
   EXPIRED_TITLE: '인증 시간이 지났어요',
   EXPIRED_BODY: '인증번호를 다시 받아 주세요.',
   LOCKED_TITLE: '인증 시도 횟수를 넘었어요',
@@ -286,6 +286,9 @@ export const CLIENT_MALL_MIN_AMOUNT_ERROR_MARKERS = Object.freeze(['최소 금�
 /** BE 가 OTP 불일치·만료 시 내려주는 문구 식별 조각 */
 export const CLIENT_MALL_OTP_MISMATCH_MARKER = '인증 코드';
 
+/** BE SmsOtpVerificationFailedException 오답·만료 코드 (400 + data.remainingAttempts) */
+export const CLIENT_MALL_OTP_INVALID_ERROR_CODE = 'SMS_OTP_INVALID';
+
 /** 주문 생성 경로 — BE ShopCheckoutConstants.CHECKOUT_SOURCE_BUY_NOW */
 export const CLIENT_MALL_CHECKOUT_SOURCE_BUY_NOW = 'BUY_NOW';
 
@@ -324,6 +327,7 @@ export const CLIENT_MALL_TEST_IDS = Object.freeze({
   PHONE_SHEET: 'client-mall-phone-sheet',
   PHONE_OPEN: 'client-mall-phone-open',
   CART_PAGE_ASIDE: 'client-mall-cart-page-aside',
+  CART_PAGE_LIST_COUNT: 'client-mall-cart-page-list-count',
   COMPLETE_ASIDE: 'client-mall-complete-aside',
   COMPLETE_CART_KEPT: 'client-mall-complete-cart-kept',
   COMPLETE: 'client-mall-complete',

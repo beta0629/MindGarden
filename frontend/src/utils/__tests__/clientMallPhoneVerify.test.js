@@ -28,7 +28,8 @@ describe('clientMallPhoneVerify', () => {
       expiresInSeconds: null,
       resendCooldownSeconds: null,
       remainingAttempts: null,
-      retryAfterSeconds: null
+      retryAfterSeconds: null,
+      locked: false
     });
     expect(parseOtpServerMeta({ expiresInSeconds: 300, remainingAttempts: 0 })).toMatchObject({
       expiresInSeconds: 300,
@@ -60,6 +61,31 @@ describe('clientMallPhoneVerify', () => {
     expect(classifyPhoneSendError(apiError(500, 'x', {})).locked).toBe(false);
     expect(buildLockedMessage(540).startsWith('9')).toBe(true);
     expect(buildLockedMessage(null)).toBe(CLIENT_MALL_PHONE_COPY.LOCKED_BODY_FALLBACK);
+  });
+
+  test('BE phone/change 오답(400 + data.remainingAttempts) → (c) 「n회 남았어요」', () => {
+    const c = classifyPhoneConfirmError(apiError(400, '인증 코드가 올바르지 않거나 만료되었습니다. 다시 받아 주세요.', {
+      success: false,
+      errorCode: 'SMS_OTP_INVALID',
+      data: { locked: false, remainingAttempts: 4 }
+    }));
+    expect(c.locked).toBe(false);
+    expect(c.kind).toBe(PHONE_VERIFY_ERROR.WRONG_CODE);
+    expect(c.meta.remainingAttempts).toBe(4);
+    expect(buildWrongCodeMessage(c.meta.remainingAttempts))
+      .toBe(`${CLIENT_MALL_PHONE_COPY.WRONG_CODE} 4회 남았어요.`);
+  });
+
+  test('BE phone/change 5번째 오답(429 + locked · retryAfterSeconds) → (f) 잠김, (c) 아님', () => {
+    const c = classifyPhoneConfirmError(apiError(429, '인증 시도 횟수를 넘었습니다. 잠시 뒤에 다시 시도해 주세요.', {
+      success: false,
+      errorCode: 'SMS_OTP_LOCKED',
+      data: { locked: true, remainingAttempts: 0, retryAfterSeconds: 600 }
+    }));
+    expect(c.locked).toBe(true);
+    expect(c.kind).not.toBe(PHONE_VERIFY_ERROR.WRONG_CODE);
+    expect(buildLockedMessage(c.meta.retryAfterSeconds).startsWith('10')).toBe(true);
+    expect(classifyPhoneConfirmError(apiError(400, 'x', { data: { locked: true } })).locked).toBe(true);
   });
 
   test('그 외 서버 오류는 서버 메시지 유지', () => {

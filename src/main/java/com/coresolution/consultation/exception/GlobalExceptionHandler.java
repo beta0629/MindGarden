@@ -13,6 +13,7 @@ import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -601,6 +602,45 @@ public class GlobalExceptionHandler {
         body.put("method", request.getMethod());
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);
+    }
+
+    /**
+     * SMS OTP 확인 실패 — 틀림·만료는 400 + {@code data.remainingAttempts},
+     * 실패 누적 잠김은 429 + {@code data.locked} · {@code data.retryAfterSeconds} (+ Retry-After 헤더).
+     *
+     * @since 2026-09-29
+     */
+    @ExceptionHandler(SmsOtpVerificationFailedException.class)
+    public ResponseEntity<Map<String, Object>> handleSmsOtpVerificationFailed(
+            SmsOtpVerificationFailedException e, HttpServletRequest request) {
+        HttpStatus status = e.isLocked() ? HttpStatus.TOO_MANY_REQUESTS : HttpStatus.BAD_REQUEST;
+        log.info("[{}] path={} remainingAttempts={} retryAfterSeconds={}",
+            e.getErrorCode(), request.getRequestURI(), e.getRemainingAttempts(), e.getRetryAfterSeconds());
+
+        Map<String, Object> data = new LinkedHashMap<>();
+        data.put("locked", e.isLocked());
+        if (e.getRemainingAttempts() >= 0) {
+            data.put("remainingAttempts", e.getRemainingAttempts());
+        }
+        if (e.getRetryAfterSeconds() != null) {
+            data.put("retryAfterSeconds", e.getRetryAfterSeconds());
+        }
+
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("success", false);
+        body.put("message", e.getMessage());
+        body.put("errorCode", e.getErrorCode());
+        body.put("status", status.value());
+        body.put("data", data);
+        body.put("timestamp", java.time.LocalDateTime.now().toString());
+        body.put("path", request.getRequestURI());
+        body.put("method", request.getMethod());
+
+        ResponseEntity.BodyBuilder builder = ResponseEntity.status(status);
+        if (e.getRetryAfterSeconds() != null) {
+            builder.header(HttpHeaders.RETRY_AFTER, String.valueOf(e.getRetryAfterSeconds()));
+        }
+        return builder.body(body);
     }
 
     /**

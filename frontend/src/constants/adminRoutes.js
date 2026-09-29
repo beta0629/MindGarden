@@ -59,7 +59,7 @@ export const ADMIN_ROUTES = {
     COMMON_CODES: '/admin/common-codes',
     /** 테넌트 전용 공통코드 — `App.js` 중첩 Route는 `path="tenant-common-codes"` 문자열(verify-quick-action-routes.mjs) */
     TENANT_COMMON_CODES: '/admin/tenant-common-codes',
-    /** 패키지 요금(가격) 관리 */
+    /** @deprecated 「상품」 통합 — App.js redirects to SHOP_PRODUCTS */
     PACKAGE_PRICING: '/admin/package-pricing',
     /** 통합 알림·메시지 관리 (단일 페이지) */
     NOTIFICATIONS: '/admin/notifications',
@@ -104,8 +104,10 @@ export const ADMIN_ROUTES = {
     MIND_WEATHER_OBSERVABILITY: '/admin/wellness/mind-weather-observability',
     /** BW-6 마음 정원 관측(읽기 전용) */
     MIND_GARDEN_OBSERVABILITY: '/admin/wellness/mind-garden-observability',
-    /** P2-admin 온라인 카탈로그 SKU 관리 */
+    /** @deprecated 「상품」 통합 — App.js redirects to SHOP_PRODUCTS */
     SHOP_CATALOG_SKUS: '/admin/shop/catalog-skus',
+    /** 상품(가격·회기·노출·몰 내용) 단일 화면 */
+    SHOP_PRODUCTS: '/admin/shop/products',
     /** P2-admin 포인트·리워드 정책(MVP) */
     SHOP_POINT_POLICIES: '/admin/shop/point-policies',
     /** P2-admin 온라인 주문·환불 */

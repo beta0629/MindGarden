@@ -1,19 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ICONS } from '../../constants/icons';
-
-const CheckCircleIcon = ICONS.CHECK_CIRCLE;
-const XCircleIcon = ICONS.X_CIRCLE;
-const ClockIcon = ICONS.CLOCK;
-const AlertCircleIcon = ICONS.ALERT_CIRCLE;
-const InfoIcon = ICONS.INFO;
-const HistoryIcon = ICONS.HISTORY;
-const KeyIcon = ICONS.KEY;
-const ExternalLinkIcon = ICONS.EXTERNAL_LINK;
+import { Info } from 'lucide-react';
 import { useSession } from '../../contexts/SessionContext';
-import { 
-  getPgConfigurationDetail, 
-  deletePgConfiguration, 
+import {
+  getPgConfigurationDetail,
+  deletePgConfiguration,
   testPgConnection,
   decryptPgKeys,
   getPortOneClientConfig,
@@ -22,42 +13,83 @@ import {
 import { showNotification } from '../../utils/notification';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import MGButton from '../common/MGButton';
+import EntityRowActions from '../common/molecules/EntityRowActions';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import ContentArea from '../dashboard-v2/content/ContentArea';
 import ContentHeader from '../dashboard-v2/content/ContentHeader';
 import UnifiedModal from '../common/modals/UnifiedModal';
 import '../../styles/unified-design-tokens.css';
+import '../../styles/shop/AdminShopSuite.css';
 import './PgConfigurationDetail.css';
 import { toDisplayString } from '../../utils/safeDisplay';
 import SafeText from '../common/SafeText';
-import { useTranslation } from 'react-i18next';
 import {
   PG_PROVIDER_IAMPORT,
-  PORTONE_REVIEW_SMOKE_AMOUNT_KRW,
-  PORTONE_SETTINGS_KEY_CHANNEL_KEY,
-  PORTONE_SETTINGS_KEY_CHANNEL_KEY_TEST
+  PORTONE_REVIEW_SMOKE_AMOUNT_KRW
 } from '../../constants/portonePgConfiguration';
+import {
+  ADMIN_SHOP_PG_BADGE,
+  ADMIN_SHOP_PG_COPY,
+  ADMIN_SHOP_PG_HISTORY_PREVIEW,
+  ADMIN_SHOP_SUITE_TEST_IDS,
+  formatAdminShopCopy
+} from '../../constants/adminShopSuite';
 import {
   isPortoneWebhookSecretConfigured,
   maskPortoneChannelKey,
   parsePortoneSettingsJson
 } from '../../utils/portonePgSettingsJson';
 import { requestPortOnePayment } from '../../utils/portonePayment';
+import { AdminShopNotice } from '../admin/shop/AdminShopSuiteParts';
+
+const PG_LIST_PATH = '/tenant/pg-configurations';
+const PG_LIST_STATE_STAY = Object.freeze({ stayOnList: true });
+const EMPTY = '—';
 
 /**
- * PG 설정 상세 페이지
- * 테넌트 포털에서 PG 설정의 상세 정보를 조회
+ * @param {string|number|null|undefined} value
+ * @returns {string}
+ */
+const formatDateTime = (value) => (value ? new Date(value).toLocaleString('ko-KR') : EMPTY);
+
+/**
+ * 배지 1개: 거부 > 승인 대기 > 사용중 > 사용 안 함.
+ *
+ * @param {object} config
+ * @returns {{ label: string, tone: string }}
+ */
+const resolvePgBadge = (config) => {
+  if (config.approvalStatus === 'REJECTED' || config.status === 'REJECTED') {
+    return { label: ADMIN_SHOP_PG_BADGE.REJECTED, tone: 'amber' };
+  }
+  if (config.approvalStatus === 'PENDING' || config.status === 'PENDING') {
+    return { label: ADMIN_SHOP_PG_BADGE.PENDING, tone: 'amber' };
+  }
+  if (config.status === 'INACTIVE') {
+    return { label: ADMIN_SHOP_PG_BADGE.INACTIVE, tone: 'expired' };
+  }
+  return { label: ADMIN_SHOP_PG_BADGE.ACTIVE, tone: 'paid' };
+};
+
+/**
+ * @param {Array<object>|undefined} history
+ * @returns {Array<object>}
+ */
+const sortHistoryDesc = (history) => (Array.isArray(history) ? [...history] : [])
+  .sort((a, b) => new Date(b?.changedAt || 0) - new Date(a?.changedAt || 0));
+
+/**
+ * 결제 연결 (PG 설정 상세) — 열쇠 스트립 + 연결 정보 + 상태·승인·체크리스트 + 변경 이력
  *
  * @author CoreSolution
- * @version 1.0.0
+ * @version 2.0.0
  * @since 2025-01-XX
  */
 const PgConfigurationDetail = () => {
-  const { t } = useTranslation();
   const navigate = useNavigate();
   const { id: configId } = useParams();
   const { user, isLoggedIn, isLoading: sessionLoading } = useSession();
-  
+
   const [config, setConfig] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -72,91 +104,85 @@ const PgConfigurationDetail = () => {
   const [smokeResultMessage, setSmokeResultMessage] = useState('');
   const [webhookSecretInput, setWebhookSecretInput] = useState('');
   const [savingWebhookSecret, setSavingWebhookSecret] = useState(false);
-  
+  const [historyExpanded, setHistoryExpanded] = useState(false);
+  const [reloadKey, setReloadKey] = useState(0);
+
   const tenantId = user?.tenantId || user?.tenant_id;
-  
+
   useEffect(() => {
     if (!tenantId || !configId) return;
-    
+
     const loadDetail = async() => {
       try {
         setLoading(true);
         setError(null);
-        
         const detail = await getPgConfigurationDetail(tenantId, configId);
         setConfig(detail);
       } catch (err) {
         console.error('PG 설정 상세 로드 실패:', err);
-        setError('PG 설정 정보를 불러오는 중 오류가 발생했습니다.');
-        showNotification('PG 설정 정보 로드 실패', 'error');
+        setError(ADMIN_SHOP_PG_COPY.LOAD_FAILED);
       } finally {
         setLoading(false);
       }
     };
-    
+
     if (!sessionLoading && isLoggedIn && user && tenantId) {
       loadDetail();
     }
-  }, [tenantId, configId, sessionLoading, isLoggedIn, user]);
-  
+  }, [tenantId, configId, sessionLoading, isLoggedIn, user, reloadKey]);
+
   const handleDelete = async() => {
     if (!tenantId || !configId) return;
-    
     try {
       setDeleting(true);
       await deletePgConfiguration(tenantId, configId);
-      showNotification('PG 설정이 삭제되었습니다.', 'success');
-      navigate('/tenant/pg-configurations');
+      showNotification(ADMIN_SHOP_PG_COPY.DELETED, 'success');
+      navigate(PG_LIST_PATH, { state: PG_LIST_STATE_STAY });
     } catch (err) {
       console.error('PG 설정 삭제 실패:', err);
-      showNotification('PG 설정 삭제 중 오류가 발생했습니다.', 'error');
+      showNotification(ADMIN_SHOP_PG_COPY.DELETE_FAILED, 'error');
     } finally {
       setDeleting(false);
     }
   };
-  
+
   const handleTestConnection = async() => {
     if (!tenantId || !configId) return;
-    
     try {
       setTestingConnection(true);
       const result = await testPgConnection(tenantId, configId);
-      
       if (result.success) {
-        showNotification('연결 테스트 성공', 'success');
+        showNotification(ADMIN_SHOP_PG_COPY.TEST_OK, 'success');
       } else {
-        showNotification(`연결 테스트 실패: ${result.message}`, 'error');
+        showNotification(`${ADMIN_SHOP_PG_COPY.TEST_FAIL} ${toDisplayString(result.message, '')}`, 'error');
       }
-      
       const detail = await getPgConfigurationDetail(tenantId, configId);
       setConfig(detail);
     } catch (err) {
       console.error('연결 테스트 실패:', err);
-      showNotification('연결 테스트 중 오류가 발생했습니다.', 'error');
+      showNotification(ADMIN_SHOP_PG_COPY.TEST_FAIL, 'error');
     } finally {
       setTestingConnection(false);
     }
   };
-  
+
   const handleDecryptKeys = async() => {
     if (!tenantId || !configId) return;
-    
     try {
       setLoadingKeys(true);
       const keys = await decryptPgKeys(tenantId, configId);
       setDecryptedKeys(keys);
       setShowKeys(true);
-      showNotification('키 복호화 완료', 'success');
     } catch (err) {
       console.error('키 복호화 실패:', err);
-      showNotification('키 복호화 중 오류가 발생했습니다.', 'error');
+      showNotification(ADMIN_SHOP_PG_COPY.LOAD_FAILED, 'error');
     } finally {
       setLoadingKeys(false);
     }
   };
 
   /**
-   * PG/카드사 심사용 — 포트원 결제 모듈 호출 스모크 (주문 없이 100원).
+   * PG/카드사 심사용 — 포트원 결제 모듈 호출 스모크 (주문 없이 소액).
    */
   const handlePortOneSmokePayment = async() => {
     if (!tenantId) {
@@ -170,14 +196,12 @@ const PgConfigurationDetail = () => {
         storeId: clientConfig.storeId,
         channelKey: clientConfig.channelKey,
         paymentId,
-        orderName: '포트원 테스트 결제',
+        orderName: ADMIN_SHOP_PG_COPY.SMOKE_ORDER_NAME,
         totalAmount: PORTONE_REVIEW_SMOKE_AMOUNT_KRW,
         currency: 'KRW'
       });
       if (result?.code) {
-        setSmokeResultMessage(
-          `모듈 호출 결과(오류): ${result.code} — ${result.message || ''}`
-        );
+        setSmokeResultMessage(`모듈 호출 결과(오류): ${result.code} — ${result.message || ''}`);
         showNotification('테스트 결제 모듈에서 오류가 반환되었습니다.', 'error');
       } else {
         setSmokeResultMessage(
@@ -206,7 +230,7 @@ const PgConfigurationDetail = () => {
     }
     const trimmed = webhookSecretInput != null ? String(webhookSecretInput).trim() : '';
     if (!trimmed) {
-      showNotification('웹훅 시크릿을 입력해 주세요.', 'error');
+      showNotification(ADMIN_SHOP_PG_COPY.WEBHOOK_EMPTY, 'error');
       return;
     }
     try {
@@ -215,707 +239,557 @@ const PgConfigurationDetail = () => {
       const detail = await getPgConfigurationDetail(tenantId, configId);
       setConfig(detail);
       setWebhookSecretInput('');
-      showNotification('웹훅 시크릿이 저장되었습니다.', 'success');
+      showNotification(ADMIN_SHOP_PG_COPY.WEBHOOK_SAVED, 'success');
     } catch (err) {
       console.error('웹훅 시크릿 저장 실패:', err);
-      showNotification('웹훅 시크릿 저장 중 오류가 발생했습니다.', 'error');
+      showNotification(ADMIN_SHOP_PG_COPY.WEBHOOK_FAILED, 'error');
     } finally {
       setSavingWebhookSecret(false);
     }
   };
-  
-  const renderStatusBadge = (status) => {
-    const statusConfig = {
-      PENDING: { label: '대기 중', icon: ClockIcon, color: 'warning' },
-      APPROVED: { label: '승인됨', icon: CheckCircleIcon, color: 'success' },
-      REJECTED: { label: '거부됨', icon: XCircleIcon, color: 'danger' },
-      ACTIVE: { label: '활성화', icon: CheckCircleIcon, color: 'success' },
-      INACTIVE: { label: '비활성화', icon: XCircleIcon, color: 'secondary' }
-    };
-    const config = statusConfig[status] || statusConfig.PENDING;
-    const Icon = config.icon;
-    
-    return (
-      <span className={`status-badge status-badge--${config.color}`}>
-        <Icon size={14} />
-        {toDisplayString(config.label)}
-      </span>
-    );
-  };
-  
-  const renderApprovalBadge = (approvalStatus) => {
-    const statusConfig = {
-      PENDING: { label: '승인 대기', icon: ClockIcon, color: 'warning' },
-      APPROVED: { label: '승인됨', icon: CheckCircleIcon, color: 'success' },
-      REJECTED: { label: '거부됨', icon: XCircleIcon, color: 'danger' }
-    };
-    const config = statusConfig[approvalStatus] || statusConfig.PENDING;
-    const Icon = config.icon;
-    
-    return (
-      <span className={`status-badge status-badge--${config.color}`}>
-        <Icon size={14} />
-        {toDisplayString(config.label)}
-      </span>
-    );
-  };
-  
-  if (sessionLoading || loading) {
-    return (
-      <AdminCommonLayout
-        title={t('admin.labels.pgSettingsDetail')}
-        loading
-        loadingText={t('common:tenant.PgConfigurationDetail.t_f7022e97')}
-      />
-    );
-  }
-  
-  if (!isLoggedIn || !user) {
-    return (
-      <AdminCommonLayout title={t('admin.labels.pgSettingsDetail')}>
-        <ContentArea ariaLabel="PG 설정 상세" className="mg-v2-pg-config-detail">
-          <div className="error-message">
-            <AlertCircleIcon size={24} />
-            <p>{t('common:tenant.PgConfigurationDetail.t_5271ee34')}</p>
-          </div>
-        </ContentArea>
-      </AdminCommonLayout>
-    );
-  }
 
-  if (!tenantId) {
-    return (
-      <AdminCommonLayout title={t('admin.labels.pgSettingsDetail')}>
-        <ContentArea ariaLabel="PG 설정 상세" className="mg-v2-pg-config-detail">
-          <div className="error-message">
-            <AlertCircleIcon size={24} />
-            <p>{t('common:tenant.PgConfigurationDetail.t_8f990fec')}</p>
-          </div>
-        </ContentArea>
-      </AdminCommonLayout>
-    );
-  }
+  const copyKey = (value) => {
+    navigator.clipboard.writeText(value || '');
+    showNotification(ADMIN_SHOP_PG_COPY.KEYS_COPIED, 'success');
+  };
 
-  if (error || !config) {
-    return (
-      <AdminCommonLayout title={t('admin.labels.pgSettingsDetail')}>
-        <ContentArea ariaLabel="PG 설정 상세 오류" className="mg-v2-pg-config-detail">
-          <div className="error-message">
-            <AlertCircleIcon size={24} />
-            <p>{error || 'PG 설정을 찾을 수 없습니다.'}</p>
+  const renderMessage = (message, withRetry) => (
+    <AdminCommonLayout title={ADMIN_SHOP_PG_COPY.TITLE}>
+      <ContentArea ariaLabel={ADMIN_SHOP_PG_COPY.TITLE} className="mg-v2-pg-config-detail pg-config-detail--clinic-os admin-shop-suite">
+        <AdminShopNotice tone="error">
+          <p>{message}</p>
+          <span className="admin-shop-suite__header-actions">
+            {withRetry ? (
+              <MGButton
+                type="button"
+                variant="secondary"
+                className={buildErpMgButtonClassName({ variant: 'secondary', size: 'sm' })}
+                onClick={() => setReloadKey((k) => k + 1)}
+                preventDoubleClick={false}
+              >
+                {ADMIN_SHOP_PG_COPY.RETRY}
+              </MGButton>
+            ) : null}
             <MGButton
               type="button"
               variant="secondary"
-              className={buildErpMgButtonClassName({ variant: 'secondary', size: 'md', loading: false })}
-              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-              onClick={() => navigate('/tenant/pg-configurations')}
+              className={buildErpMgButtonClassName({ variant: 'secondary', size: 'sm' })}
+              onClick={() => navigate(PG_LIST_PATH, { state: PG_LIST_STATE_STAY })}
               preventDoubleClick={false}
             >
-              {t('common:tenant.PgConfigurationDetail.t_6305eb23')}
+              {ADMIN_SHOP_PG_COPY.BACK_TO_LIST}
             </MGButton>
-          </div>
-        </ContentArea>
-      </AdminCommonLayout>
-    );
+          </span>
+        </AdminShopNotice>
+      </ContentArea>
+    </AdminCommonLayout>
+  );
+
+  if (sessionLoading || loading) {
+    return <AdminCommonLayout title={ADMIN_SHOP_PG_COPY.TITLE} loading loadingText={ADMIN_SHOP_PG_COPY.LOADING} />;
   }
-  
+  if (!isLoggedIn || !user) {
+    return renderMessage(ADMIN_SHOP_PG_COPY.LOGIN_REQUIRED, false);
+  }
+  if (!tenantId) {
+    return renderMessage(ADMIN_SHOP_PG_COPY.TENANT_REQUIRED, false);
+  }
+  if (error || !config) {
+    return renderMessage(error || ADMIN_SHOP_PG_COPY.LOAD_FAILED, true);
+  }
+
+  const isPortone = config.pgProvider === PG_PROVIDER_IAMPORT;
+  const parsed = isPortone ? parsePortoneSettingsJson(config.settingsJson) : {};
+  const liveKeyMissing = isPortone && !toDisplayString(parsed.channelKey, '').trim();
+  const webhookConfigured = isPortone && isPortoneWebhookSecretConfigured(config);
+  const badge = resolvePgBadge(config);
+  const canEdit = config.approvalStatus === 'PENDING';
+  const canTest = config.status === 'APPROVED' || config.status === 'ACTIVE';
+  const showSmoke = isPortone && Boolean(config.testMode)
+    && (config.status === 'ACTIVE' || config.status === 'APPROVED' || config.approvalStatus === 'APPROVED');
+  const history = sortHistoryDesc(config.history);
+  const visibleHistory = historyExpanded ? history : history.slice(0, ADMIN_SHOP_PG_HISTORY_PREVIEW);
+  const providerLabel = isPortone ? ADMIN_SHOP_PG_COPY.PROVIDER_PORTONE : toDisplayString(config.pgProvider, EMPTY);
+  const channelShown = config.testMode ? parsed.channelKeyTest : parsed.channelKey;
+
+  const checklist = [
+    { key: 'live', label: ADMIN_SHOP_PG_COPY.CHECKLIST_LIVE_KEY, done: !liveKeyMissing, blocking: true },
+    { key: 'webhook', label: ADMIN_SHOP_PG_COPY.CHECKLIST_WEBHOOK, done: webhookConfigured, blocking: true },
+    { key: 'test-off', label: ADMIN_SHOP_PG_COPY.CHECKLIST_TEST_OFF, done: !config.testMode, blocking: false }
+  ];
+
   return (
-    <AdminCommonLayout title={t('admin.labels.pgSettingsDetail')}>
+    <AdminCommonLayout title={ADMIN_SHOP_PG_COPY.TITLE}>
       <>
         <ContentArea
-          ariaLabel="PG 설정 상세 정보"
-          className="mg-v2-pg-config-detail pg-config-detail--clinic-os"
+          ariaLabel={ADMIN_SHOP_PG_COPY.TITLE}
+          className="mg-v2-pg-config-detail pg-config-detail--clinic-os admin-shop-suite"
         >
+          <div className="admin-shop-suite" data-testid={ADMIN_SHOP_SUITE_TEST_IDS.PG_DETAIL}>
             <ContentHeader
-              title={toDisplayString(config.pgName ?? config.pgProvider, 'PG')}
-              subtitle={toDisplayString(config.pgProvider, 'PG 제공자')}
               titleId="pg-config-detail-title"
-              actions={
-                <div className="mg-v2-pg-config-detail__header-toolbar">
-                  <div className="pg-config-detail__header-badges">
-                    {renderStatusBadge(config.status)}
-                    {renderApprovalBadge(config.approvalStatus)}
-                    {config.testMode && (
-                      <span className="status-badge status-badge--info">{t('common:tenant.PgConfigurationDetail.t_cfd49442')}</span>
-                    )}
-                  </div>
-                  <div className="pg-config-detail__header-buttons">
+              title={(
+                <span className="admin-shop-suite__modal-title">
+                  {ADMIN_SHOP_PG_COPY.TITLE}
+                  <span className={`admin-shop-suite__chip admin-shop-suite__chip--${badge.tone}`}>{badge.label}</span>
+                </span>
+              )}
+              subtitle={isPortone ? ADMIN_SHOP_PG_COPY.SUBTITLE_PORTONE : toDisplayString(config.pgName, '')}
+              actions={(
+                <div className="admin-shop-suite__header-actions">
+                  {showSmoke ? (
                     <MGButton
                       type="button"
                       variant="secondary"
-                      size="small"
-                      className={buildErpMgButtonClassName({ variant: 'secondary', size: 'sm', loading: false })}
+                      className={buildErpMgButtonClassName({ variant: 'secondary', size: 'md', loading: smokePaymentLoading })}
                       loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                      onClick={() => navigate('/tenant/pg-configurations')}
+                      onClick={handlePortOneSmokePayment}
+                      disabled={smokePaymentLoading || config.status !== 'ACTIVE'}
+                      loading={smokePaymentLoading}
+                      title={config.status !== 'ACTIVE' ? ADMIN_SHOP_PG_COPY.SMOKE_NEEDS_ACTIVE : undefined}
                       preventDoubleClick={false}
                     >
-                      {t('common:tenant.PgConfigurationDetail.t_6305eb23')}
+                      {ADMIN_SHOP_PG_COPY.SMOKE_OPEN}
                     </MGButton>
-                    {config.approvalStatus === 'PENDING' && (
+                  ) : null}
+                  {canTest ? (
+                    <MGButton
+                      type="button"
+                      variant="secondary"
+                      className={buildErpMgButtonClassName({ variant: 'secondary', size: 'md', loading: testingConnection })}
+                      loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                      onClick={handleTestConnection}
+                      disabled={testingConnection}
+                      loading={testingConnection}
+                      preventDoubleClick={false}
+                    >
+                      {ADMIN_SHOP_PG_COPY.TEST_CONNECTION}
+                    </MGButton>
+                  ) : null}
+                  <EntityRowActions
+                    ariaLabel={ADMIN_SHOP_PG_COPY.MENU_ARIA}
+                    items={[
+                      {
+                        id: 'list',
+                        label: ADMIN_SHOP_PG_COPY.MENU_LIST,
+                        onClick: () => navigate(PG_LIST_PATH, { state: PG_LIST_STATE_STAY })
+                      },
+                      {
+                        id: 'delete',
+                        label: ADMIN_SHOP_PG_COPY.MENU_DELETE,
+                        variant: 'destructive',
+                        hidden: !canEdit,
+                        onClick: () => setShowDeleteModal(true)
+                      }
+                    ]}
+                  />
+                  <MGButton
+                    type="button"
+                    variant="primary"
+                    className={buildErpMgButtonClassName({ variant: 'primary', size: 'md' })}
+                    onClick={() => navigate(`${PG_LIST_PATH}/${configId}/edit`)}
+                    disabled={!canEdit}
+                    title={canEdit ? undefined : ADMIN_SHOP_PG_COPY.EDIT_LOCKED}
+                    preventDoubleClick={false}
+                    data-testid={ADMIN_SHOP_SUITE_TEST_IDS.PG_EDIT}
+                  >
+                    {ADMIN_SHOP_PG_COPY.EDIT}
+                  </MGButton>
+                </div>
+              )}
+            />
+
+            <section className="admin-shop-suite__keystrip" data-testid={ADMIN_SHOP_SUITE_TEST_IDS.PG_KEYSTRIP}>
+              <div>
+                <span className="admin-shop-suite__section-head">
+                  <span className="admin-shop-suite__eyebrow">{ADMIN_SHOP_PG_COPY.KEY_CHANNEL}</span>
+                  {config.testMode ? (
+                    <span className="admin-shop-suite__chip admin-shop-suite__chip--amber">{ADMIN_SHOP_PG_COPY.KEY_TEST_CHIP}</span>
+                  ) : null}
+                </span>
+                <strong className="admin-shop-suite__mono"><SafeText>{maskPortoneChannelKey(channelShown)}</SafeText></strong>
+                {isPortone ? (
+                  <span className={liveKeyMissing ? 'admin-shop-suite__text-amber' : 'admin-shop-suite__muted'}>
+                    {liveKeyMissing ? ADMIN_SHOP_PG_COPY.KEY_LIVE_MISSING : ADMIN_SHOP_PG_COPY.KEY_LIVE_READY}
+                  </span>
+                ) : null}
+              </div>
+              <div>
+                <span className="admin-shop-suite__eyebrow">{ADMIN_SHOP_PG_COPY.KEY_STORE}</span>
+                <strong className="admin-shop-suite__mono"><SafeText>{maskPortoneChannelKey(config.storeId)}</SafeText></strong>
+                <span className="admin-shop-suite__muted">{ADMIN_SHOP_PG_COPY.KEY_STORE_HINT}</span>
+              </div>
+              <div>
+                <span className="admin-shop-suite__eyebrow">{ADMIN_SHOP_PG_COPY.KEY_TEST_MODE}</span>
+                <strong>{config.testMode ? ADMIN_SHOP_PG_COPY.TEST_MODE_ON : ADMIN_SHOP_PG_COPY.TEST_MODE_OFF}</strong>
+                <span className="admin-shop-suite__muted">
+                  {config.testMode ? ADMIN_SHOP_PG_COPY.TEST_MODE_ON_HINT : ADMIN_SHOP_PG_COPY.TEST_MODE_OFF_HINT}
+                </span>
+              </div>
+            </section>
+
+            <div className="admin-shop-suite__layout admin-shop-suite__layout--pg">
+              <div className="admin-shop-suite__stack">
+                <section className="admin-shop-suite__card" aria-labelledby="pg-info-heading">
+                  <div className="admin-shop-suite__card-head">
+                    <h2 id="pg-info-heading" className="admin-shop-suite__card-title">{ADMIN_SHOP_PG_COPY.INFO_TITLE}</h2>
+                    <span className="admin-shop-suite__card-hint">{ADMIN_SHOP_PG_COPY.INFO_HINT}</span>
+                  </div>
+                  <dl className="admin-shop-suite__kv">
+                    <div>
+                      <dt>{ADMIN_SHOP_PG_COPY.INFO_PROVIDER}</dt>
+                      <dd><SafeText>{providerLabel}</SafeText></dd>
+                    </div>
+                    <div>
+                      <dt>{ADMIN_SHOP_PG_COPY.INFO_NAME}</dt>
+                      <dd><SafeText fallback={EMPTY}>{config.pgName}</SafeText></dd>
+                    </div>
+                    <div>
+                      <dt>{ADMIN_SHOP_PG_COPY.INFO_MERCHANT}</dt>
+                      <dd className="admin-shop-suite__mono"><SafeText fallback={EMPTY}>{config.merchantId}</SafeText></dd>
+                    </div>
+                    <div>
+                      <dt>{ADMIN_SHOP_PG_COPY.INFO_API_SECRET}</dt>
+                      <dd>
+                        {ADMIN_SHOP_PG_COPY.INFO_API_SECRET_VALUE}
+                        {' '}
+                        <button
+                          type="button"
+                          className="admin-shop-suite__copy-btn"
+                          onClick={showKeys ? () => { setShowKeys(false); setDecryptedKeys(null); } : handleDecryptKeys}
+                          disabled={loadingKeys}
+                        >
+                          {showKeys ? ADMIN_SHOP_PG_COPY.KEYS_HIDE : ADMIN_SHOP_PG_COPY.MENU_KEYS}
+                        </button>
+                      </dd>
+                    </div>
+                    {isPortone ? (
                       <>
-                        <MGButton
-                          type="button"
-                          variant="secondary"
-                          size="small"
-                          className={buildErpMgButtonClassName({ variant: 'secondary', size: 'sm', loading: false })}
-                          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                          onClick={() => navigate(`/tenant/pg-configurations/${configId}/edit`)}
-                          preventDoubleClick={false}
-                        >
-                          {t('common.actions.edit')}
-                        </MGButton>
-                        <MGButton
-                          type="button"
-                          variant="danger"
-                          size="small"
-                          className={buildErpMgButtonClassName({ variant: 'danger', size: 'sm', loading: false })}
-                          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                          onClick={() => setShowDeleteModal(true)}
-                          preventDoubleClick={false}
-                        >
-                          {t('admin.actions.delete')}
-                        </MGButton>
+                        <div>
+                          <dt>{ADMIN_SHOP_PG_COPY.INFO_CHANNEL_TEST}</dt>
+                          <dd className="admin-shop-suite__mono"><SafeText>{maskPortoneChannelKey(parsed.channelKeyTest)}</SafeText></dd>
+                        </div>
+                        <div>
+                          <dt>{ADMIN_SHOP_PG_COPY.INFO_CHANNEL_LIVE}</dt>
+                          <dd className={liveKeyMissing ? 'admin-shop-suite__text-amber' : 'admin-shop-suite__mono'}>
+                            {liveKeyMissing
+                              ? ADMIN_SHOP_PG_COPY.INFO_MISSING
+                              : <SafeText>{maskPortoneChannelKey(parsed.channelKey)}</SafeText>}
+                          </dd>
+                        </div>
                       </>
-                    )}
-                    {config.status === 'APPROVED' && (
+                    ) : null}
+                    <div>
+                      <dt>{ADMIN_SHOP_PG_COPY.INFO_CREATED}</dt>
+                      <dd>{formatDateTime(config.createdAt)}</dd>
+                    </div>
+                    <div>
+                      <dt>{ADMIN_SHOP_PG_COPY.INFO_NOTES}</dt>
+                      <dd><SafeText fallback={EMPTY}>{config.notes}</SafeText></dd>
+                    </div>
+                    {config.webhookUrl ? (
+                      <div>
+                        <dt>{ADMIN_SHOP_PG_COPY.URL_WEBHOOK}</dt>
+                        <dd className="admin-shop-suite__mono"><SafeText>{config.webhookUrl}</SafeText></dd>
+                      </div>
+                    ) : null}
+                    {config.returnUrl ? (
+                      <div>
+                        <dt>{ADMIN_SHOP_PG_COPY.URL_RETURN}</dt>
+                        <dd className="admin-shop-suite__mono"><SafeText>{config.returnUrl}</SafeText></dd>
+                      </div>
+                    ) : null}
+                    {config.cancelUrl ? (
+                      <div>
+                        <dt>{ADMIN_SHOP_PG_COPY.URL_CANCEL}</dt>
+                        <dd className="admin-shop-suite__mono"><SafeText>{config.cancelUrl}</SafeText></dd>
+                      </div>
+                    ) : null}
+                  </dl>
+                  {showKeys ? (
+                    <dl className="admin-shop-suite__kv">
+                      <div>
+                        <dt>{ADMIN_SHOP_PG_COPY.KEYS_API}</dt>
+                        <dd className="admin-shop-suite__mono">
+                          <SafeText>{decryptedKeys?.apiKey || '***'}</SafeText>
+                          <button type="button" className="admin-shop-suite__copy-btn" onClick={() => copyKey(decryptedKeys?.apiKey)}>
+                            {ADMIN_SHOP_PG_COPY.KEYS_COPY}
+                          </button>
+                        </dd>
+                      </div>
+                      <div>
+                        <dt>{ADMIN_SHOP_PG_COPY.KEYS_SECRET}</dt>
+                        <dd className="admin-shop-suite__mono">
+                          <SafeText>{decryptedKeys?.secretKey || '***'}</SafeText>
+                          <button type="button" className="admin-shop-suite__copy-btn" onClick={() => copyKey(decryptedKeys?.secretKey)}>
+                            {ADMIN_SHOP_PG_COPY.KEYS_COPY}
+                          </button>
+                        </dd>
+                      </div>
+                      {decryptedKeys?.decryptedAt ? (
+                        <div>
+                          <dt>{ADMIN_SHOP_PG_COPY.KEYS_DECRYPTED_AT}</dt>
+                          <dd>{formatDateTime(decryptedKeys.decryptedAt)}</dd>
+                        </div>
+                      ) : null}
+                    </dl>
+                  ) : null}
+                </section>
+
+                {isPortone ? (
+                  <section className="admin-shop-suite__card" aria-labelledby="webhook-secret-heading">
+                    <div className="admin-shop-suite__card-head">
+                      <h2 id="webhook-secret-heading" className="admin-shop-suite__card-title admin-shop-suite__modal-title">
+                        {ADMIN_SHOP_PG_COPY.WEBHOOK_TITLE}
+                        <span className={`admin-shop-suite__chip ${webhookConfigured ? 'admin-shop-suite__chip--paid' : 'admin-shop-suite__chip--amber'}`}>
+                          {webhookConfigured ? ADMIN_SHOP_PG_COPY.WEBHOOK_SET : ADMIN_SHOP_PG_COPY.WEBHOOK_UNSET}
+                        </span>
+                      </h2>
+                      <span className="admin-shop-suite__card-hint">{ADMIN_SHOP_PG_COPY.WEBHOOK_HINT}</span>
+                    </div>
+                    <div className="admin-shop-suite__input-suffix">
+                      <label htmlFor="pg-webhook-secret-input" className="sr-only">
+                        {ADMIN_SHOP_PG_COPY.WEBHOOK_TITLE}
+                      </label>
+                      <input
+                        id="pg-webhook-secret-input"
+                        type="password"
+                        className="admin-shop-suite__input"
+                        value={webhookSecretInput}
+                        onChange={(e) => setWebhookSecretInput(e.target.value)}
+                        placeholder={webhookConfigured
+                          ? ADMIN_SHOP_PG_COPY.WEBHOOK_PLACEHOLDER_REPLACE
+                          : ADMIN_SHOP_PG_COPY.WEBHOOK_PLACEHOLDER}
+                        autoComplete="new-password"
+                        disabled={savingWebhookSecret}
+                      />
                       <MGButton
                         type="button"
                         variant="secondary"
-                        size="small"
-                        className={buildErpMgButtonClassName({
-                          variant: 'secondary',
-                          size: 'sm',
-                          loading: testingConnection
-                        })}
+                        className={buildErpMgButtonClassName({ variant: 'secondary', size: 'md', loading: savingWebhookSecret })}
                         loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                        onClick={handleTestConnection}
-                        disabled={testingConnection}
-                        loading={testingConnection}
+                        onClick={handleSaveWebhookSecret}
+                        disabled={savingWebhookSecret || !String(webhookSecretInput || '').trim()}
+                        loading={savingWebhookSecret}
                         preventDoubleClick={false}
+                        data-testid={ADMIN_SHOP_SUITE_TEST_IDS.PG_WEBHOOK_SAVE}
                       >
-                        {t('common:tenant.PgConfigurationDetail.t_3da5c18d')}
+                        {ADMIN_SHOP_PG_COPY.WEBHOOK_SAVE}
                       </MGButton>
-                    )}
-                  </div>
-                </div>
-              }
-            />
-            <main className="pg-config-detail pg-config-detail__body">
-        {/* 기본 정보 */}
-        <section className="detail-section" aria-labelledby="basic-info-heading">
-          <h2 id="basic-info-heading">{t('common:tenant.PgConfigurationDetail.t_eb7f501b')}</h2>
-          <div className="detail-grid">
-            <div className="detail-item">
-              <label>{t('common:tenant.PgConfigurationDetail.t_491fa1fa')}</label>
-              <div className="detail-value"><SafeText>{config.pgProvider}</SafeText></div>
-            </div>
-            <div className="detail-item">
-              <label>{t('common:tenant.PgConfigurationDetail.t_9be04456')}</label>
-              <div className="detail-value"><SafeText fallback="-">{config.pgName}</SafeText></div>
-            </div>
-            <div className="detail-item">
-              <label>{t('common:tenant.PgConfigurationDetail.t_fd31712d')}</label>
-              <div className="detail-value"><SafeText fallback="-">{config.merchantId}</SafeText></div>
-            </div>
-            <div className="detail-item">
-              <label>{t('common:tenant.PgConfigurationDetail.t_ed6daa8a')}</label>
-              <div className="detail-value"><SafeText fallback="-">{config.storeId}</SafeText></div>
-            </div>
-            <div className="detail-item">
-              <label>{t('common:tenant.PgConfigurationDetail.t_cfd49442')}</label>
-              <div className="detail-value">
-                {config.testMode ? '예' : '아니오'}
-              </div>
-            </div>
-            {config.pgProvider === PG_PROVIDER_IAMPORT && (() => {
-              const parsed = parsePortoneSettingsJson(config.settingsJson);
-              return (
-                <>
-                  <div className="detail-item">
-                    <label>채널 키 (운영)</label>
-                    <div className="detail-value">
-                      <SafeText>
-                        {maskPortoneChannelKey(parsed.channelKey)}
-                      </SafeText>
-                      <span className="sr-only">{PORTONE_SETTINGS_KEY_CHANNEL_KEY}</span>
                     </div>
-                  </div>
-                  <div className="detail-item">
-                    <label>채널 키 (테스트)</label>
-                    <div className="detail-value">
-                      <SafeText>
-                        {maskPortoneChannelKey(parsed.channelKeyTest)}
-                      </SafeText>
-                      <span className="sr-only">{PORTONE_SETTINGS_KEY_CHANNEL_KEY_TEST}</span>
-                    </div>
-                  </div>
-                </>
-              );
-            })()}
-            <div className="detail-item">
-              <label>{t('common:tenant.PgConfigurationDetail.t_6f80446e')}</label>
-              <div className="detail-value">
-                {config.createdAt ? new Date(config.createdAt).toLocaleString('ko-KR') : '-'}
+                    <AdminShopNotice icon={<Info size={14} aria-hidden="true" />}>
+                      <p>{ADMIN_SHOP_PG_COPY.WEBHOOK_NOTICE}</p>
+                    </AdminShopNotice>
+                  </section>
+                ) : null}
               </div>
-            </div>
-          </div>
-        </section>
 
-        {config.pgProvider === PG_PROVIDER_IAMPORT && (
-          <section className="detail-section" aria-labelledby="webhook-secret-heading">
-            <h2 id="webhook-secret-heading">웹훅 시크릿</h2>
-            <p className="help-text">
-              포트원 V2 웹훅 검증용 시크릿입니다. 승인 상태 변경 없이 상세에서만 갱신할 수 있습니다.
-            </p>
-            <div className="pg-config-detail__webhook-secret">
-              <div className="pg-config-detail__webhook-secret-status">
-                <span className="pg-config-detail__webhook-secret-label">설정 상태</span>
-                {isPortoneWebhookSecretConfigured(config) ? (
-                  <span className="status-badge status-badge--success">설정됨</span>
-                ) : (
-                  <span className="status-badge status-badge--warning">미설정</span>
-                )}
-              </div>
-              <div className="pg-config-detail__webhook-secret-form">
-                <label htmlFor="pg-webhook-secret-input" className="sr-only">웹훅 시크릿</label>
-                <input
-                  id="pg-webhook-secret-input"
-                  type="password"
-                  className="form-input pg-config-detail__webhook-secret-input"
-                  value={webhookSecretInput}
-                  onChange={(e) => setWebhookSecretInput(e.target.value)}
-                  placeholder={
-                    isPortoneWebhookSecretConfigured(config)
-                      ? '새 시크릿 입력 (저장 시 교체)'
-                      : '웹훅 시크릿 입력'
-                  }
-                  autoComplete="new-password"
-                  disabled={savingWebhookSecret}
-                />
-                <MGButton
-                  type="button"
-                  variant="primary"
-                  size="small"
-                  className={buildErpMgButtonClassName({
-                    variant: 'primary',
-                    size: 'sm',
-                    loading: savingWebhookSecret
-                  })}
-                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                  onClick={handleSaveWebhookSecret}
-                  disabled={savingWebhookSecret || !String(webhookSecretInput || '').trim()}
-                  loading={savingWebhookSecret}
-                  preventDoubleClick={false}
-                >
-                  저장
-                </MGButton>
-              </div>
-            </div>
-          </section>
-        )}
-
-        {config.pgProvider === PG_PROVIDER_IAMPORT
-          && config.testMode
-          && (config.status === 'ACTIVE' || config.status === 'APPROVED'
-            || config.approvalStatus === 'APPROVED') && (
-          <section className="detail-section" aria-labelledby="portone-smoke-heading">
-            <h2 id="portone-smoke-heading">포트원 테스트 결제</h2>
-            <p className="help-text">
-              PG/카드사 심사용 — ACTIVE 설정의 테스트 채널 키로 결제 모듈만 호출합니다(주문 없음).
-            </p>
-            <MGButton
-              type="button"
-              variant="primary"
-              size="small"
-              className={buildErpMgButtonClassName({
-                variant: 'primary',
-                size: 'sm',
-                loading: smokePaymentLoading
-              })}
-              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-              onClick={handlePortOneSmokePayment}
-              disabled={smokePaymentLoading || config.status !== 'ACTIVE'}
-              loading={smokePaymentLoading}
-              preventDoubleClick={false}
-            >
-              테스트 결제 모듈 호출
-            </MGButton>
-            {config.status !== 'ACTIVE' && (
-              <small className="help-text">
-                Ops에서 승인 후 활성화(ACTIVE)되어야 호출할 수 있습니다.
-              </small>
-            )}
-          </section>
-        )}
-        
-        {/* URL 정보 */}
-        {(config.webhookUrl || config.returnUrl || config.cancelUrl) && (
-          <section className="detail-section" aria-labelledby="url-info-heading">
-            <h2 id="url-info-heading">{t('common:tenant.PgConfigurationDetail.t_bef186e5')}</h2>
-            <div className="detail-grid">
-              {config.webhookUrl && (
-                <div className="detail-item detail-item--full">
-                  <label>{t('common:tenant.PgConfigurationDetail.t_08d56e4c')}</label>
-                  <div className="detail-value detail-value--url">
-                    <a href={toDisplayString(config.webhookUrl, '#')} target="_blank" rel="noopener noreferrer">
-                      <SafeText>{config.webhookUrl}</SafeText>
-                      <ExternalLinkIcon size={14} />
-                    </a>
-                  </div>
-                </div>
-              )}
-              {config.returnUrl && (
-                <div className="detail-item detail-item--full">
-                  <label>{t('common:tenant.PgConfigurationDetail.t_075badce')}</label>
-                  <div className="detail-value detail-value--url">
-                    <a href={toDisplayString(config.returnUrl, '#')} target="_blank" rel="noopener noreferrer">
-                      <SafeText>{config.returnUrl}</SafeText>
-                      <ExternalLinkIcon size={14} />
-                    </a>
-                  </div>
-                </div>
-              )}
-              {config.cancelUrl && (
-                <div className="detail-item detail-item--full">
-                  <label>{t('common:tenant.PgConfigurationDetail.t_73f8dcaf')}</label>
-                  <div className="detail-value detail-value--url">
-                    <a href={toDisplayString(config.cancelUrl, '#')} target="_blank" rel="noopener noreferrer">
-                      <SafeText>{config.cancelUrl}</SafeText>
-                      <ExternalLinkIcon size={14} />
-                    </a>
-                  </div>
-                </div>
-              )}
-            </div>
-          </section>
-        )}
-        
-        {/* 키 정보 */}
-        <section className="detail-section" aria-labelledby="key-info-heading">
-          <h2 id="key-info-heading">{t('common:tenant.PgConfigurationDetail.t_5688ba74')}</h2>
-          <div className="key-info">
-            {!showKeys ? (
-              <div className="key-placeholder">
-                <KeyIcon size={24} />
-                <p>{t('common:tenant.PgConfigurationDetail.t_59ff126a')}</p>
-                <MGButton
-                  type="button"
-                  variant="secondary"
-                  className={buildErpMgButtonClassName({
-                    variant: 'secondary',
-                    size: 'md',
-                    loading: loadingKeys
-                  })}
-                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                  onClick={handleDecryptKeys}
-                  disabled={loadingKeys}
-                  loading={loadingKeys}
-                  preventDoubleClick={false}
-                >
-                  {t('common:tenant.PgConfigurationDetail.t_0086a11b')}
-                </MGButton>
-              </div>
-            ) : (
-              <div className="key-display">
-                <div className="key-item">
-                  <label>{t('common:tenant.PgConfigurationDetail.t_84a0aecd')}</label>
-                  <div className="key-value">
-                    <code>{decryptedKeys?.apiKey || '***'}</code>
-                    <MGButton
-                      type="button"
-                      className={buildErpMgButtonClassName({
-                        variant: 'outline',
-                        size: 'sm',
-                        loading: false,
-                        className: 'key-copy-button'
-                      })}
-                      loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                      onClick={() => {
-                        navigator.clipboard.writeText(decryptedKeys?.apiKey || '');
-                        showNotification('API 키가 복사되었습니다.', 'success');
-                      }}
-                      title={t('common:tenant.PgConfigurationDetail.t_a55b1ecb')}
-                      variant="outline"
-                      size="small"
-                      preventDoubleClick={false}
-                    >
-                      {t('common:tenant.PgConfigurationDetail.t_a55b1ecb')}
-                    </MGButton>
-                  </div>
-                </div>
-                <div className="key-item">
-                  <label>{t('common:tenant.PgConfigurationDetail.t_84414129')}</label>
-                  <div className="key-value">
-                    <code>{decryptedKeys?.secretKey || '***'}</code>
-                    <MGButton
-                      type="button"
-                      className={buildErpMgButtonClassName({
-                        variant: 'outline',
-                        size: 'sm',
-                        loading: false,
-                        className: 'key-copy-button'
-                      })}
-                      loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                      onClick={() => {
-                        navigator.clipboard.writeText(decryptedKeys?.secretKey || '');
-                        showNotification('시크릿 키가 복사되었습니다.', 'success');
-                      }}
-                      title={t('common:tenant.PgConfigurationDetail.t_a55b1ecb')}
-                      variant="outline"
-                      size="small"
-                      preventDoubleClick={false}
-                    >
-                      {t('common:tenant.PgConfigurationDetail.t_a55b1ecb')}
-                    </MGButton>
-                  </div>
-                </div>
-                {decryptedKeys?.decryptedAt && (
-                  <div className="key-info-footer">
-                    <InfoIcon size={14} />
-                    <span>복호화 시각: {new Date(decryptedKeys.decryptedAt).toLocaleString('ko-KR')}</span>
-                  </div>
-                )}
-                <MGButton
-                  type="button"
-                  variant="secondary"
-                  size="small"
-                  className={buildErpMgButtonClassName({ variant: 'secondary', size: 'sm', loading: false })}
-                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                  onClick={() => {
-                    setShowKeys(false);
-                    setDecryptedKeys(null);
-                  }}
-                  preventDoubleClick={false}
-                >
-                  {t('admin.labels.hide')}
-                </MGButton>
-              </div>
-            )}
-          </div>
-        </section>
-        
-        {/* 연결 테스트 결과 */}
-        {config.lastConnectionTestAt && (
-          <div className="detail-section">
-            <h2>{t('common:tenant.PgConfigurationDetail.t_94d2ddf9')}</h2>
-            <div className="connection-test-result">
-              <div className="test-result-header">
-                <div className="test-result-status">
-                  {config.connectionTestResult === 'SUCCESS' ? (
-                    <CheckCircleIcon size={20} className="success" />
-                  ) : (
-                    <XCircleIcon size={20} className="error" />
-                  )}
-                  <span className={`test-result-label ${config.connectionTestResult === 'SUCCESS' ? 'success' : 'error'}`}>
-                    {config.connectionTestResult === 'SUCCESS' ? '성공' : '실패'}
-                  </span>
-                </div>
-                <div className="test-result-time">
-                  {new Date(config.lastConnectionTestAt).toLocaleString('ko-KR')}
-                </div>
-              </div>
-              {config.connectionTestMessage && (
-                <SafeText tag="div" className="test-result-message">{config.connectionTestMessage}</SafeText>
-              )}
-            </div>
-          </div>
-        )}
-        
-        {/* 승인 정보 */}
-        <section className="detail-section" aria-labelledby="approval-info-heading">
-          <h2 id="approval-info-heading">{t('common:tenant.PgConfigurationDetail.t_52de78a8')}</h2>
-          {config.approvalStatus === 'PENDING' && (
-            <div className="approval-status-pending">
-              <ClockIcon size={24} />
-              <div>
-                <h3>{t('common:tenant.PgConfigurationDetail.t_464a0c5d')}</h3>
-                <p>{t('common:tenant.PgConfigurationDetail.t_d53d999d')}</p>
-                {config.requestedAt && (
-                  <div className="request-info">
-                    <span>요청 시각: {new Date(config.requestedAt).toLocaleString('ko-KR')}</span>
-                    {config.requestedBy && <span>{t('common:tenant.PgConfigurationDetail.t_17102fe2')} <SafeText>{config.requestedBy}</SafeText></span>}
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-          {config.approvalStatus === 'APPROVED' && (
-            <div className="approval-status-approved">
-              <CheckCircleIcon size={24} />
-              <div>
-                <h3>{t('common.labels.approved')}</h3>
-                <div className="detail-grid">
-                  {config.approvedBy && (
-                    <div className="detail-item">
-                      <label>{t('common:tenant.PgConfigurationDetail.t_f5c67354')}</label>
-                      <div className="detail-value"><SafeText>{config.approvedBy}</SafeText></div>
-                    </div>
-                  )}
-                  {config.approvedAt && (
-                    <div className="detail-item">
-                      <label>{t('common:tenant.PgConfigurationDetail.t_be138184')}</label>
-                      <div className="detail-value">
-                        {new Date(config.approvedAt).toLocaleString('ko-KR')}
+              <div className="admin-shop-suite__stack">
+                <section className="admin-shop-suite__card" aria-labelledby="pg-status-heading">
+                  <h2 id="pg-status-heading" className="admin-shop-suite__card-title">{ADMIN_SHOP_PG_COPY.STATUS_TITLE}</h2>
+                  {config.lastConnectionTestAt ? (
+                    <>
+                      <div className="admin-shop-suite__row-line">
+                        <span>{ADMIN_SHOP_PG_COPY.STATUS_LAST}</span>
+                        <span className={config.connectionTestResult === 'SUCCESS'
+                          ? 'admin-shop-suite__row-line-value'
+                          : 'admin-shop-suite__text-brick'}
+                        >
+                          {config.connectionTestResult === 'SUCCESS' ? ADMIN_SHOP_PG_COPY.STATUS_OK : ADMIN_SHOP_PG_COPY.STATUS_FAIL}
+                        </span>
                       </div>
-                    </div>
+                      <div className="admin-shop-suite__row-line">
+                        <span>{ADMIN_SHOP_PG_COPY.STATUS_AT}</span>
+                        <span className="admin-shop-suite__row-line-value">{formatDateTime(config.lastConnectionTestAt)}</span>
+                      </div>
+                      {config.connectionTestMessage ? (
+                        <div className="admin-shop-suite__row-line">
+                          <span>{ADMIN_SHOP_PG_COPY.STATUS_RESULT}</span>
+                          <SafeText className="admin-shop-suite__muted">{config.connectionTestMessage}</SafeText>
+                        </div>
+                      ) : null}
+                    </>
+                  ) : (
+                    <p className="admin-shop-suite__muted">{ADMIN_SHOP_PG_COPY.STATUS_NONE}</p>
                   )}
-                </div>
-              </div>
-            </div>
-          )}
-          {config.approvalStatus === 'REJECTED' && (
-            <div className="approval-status-rejected">
-              <XCircleIcon size={24} />
-              <div>
-                <h3>{t('admin.labels.rejected')}</h3>
-                {config.rejectionReason && (
-                  <div className="detail-item detail-item--full">
-                    <label>{t('common:tenant.PgConfigurationDetail.t_9ec8e88f')}</label>
-                    <div className="detail-value detail-value--error">
-                      <SafeText>{config.rejectionReason}</SafeText>
-                    </div>
-                  </div>
-                )}
-                {config.approvedBy && (
-                  <div className="detail-item">
-                    <label>{t('common:tenant.PgConfigurationDetail.t_269206b7')}</label>
-                    <div className="detail-value"><SafeText>{config.approvedBy}</SafeText></div>
-                  </div>
-                )}
-                {config.approvedAt && (
-                  <div className="detail-item">
-                    <label>{t('common:tenant.PgConfigurationDetail.t_e1c71060')}</label>
-                    <div className="detail-value">
-                      {new Date(config.approvedAt).toLocaleString('ko-KR')}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-        </section>
-        
-        {/* 비고 */}
-        {config.notes && (
-          <div className="detail-section">
-            <h2>{t('common:tenant.PgConfigurationDetail.t_75cffa41')}</h2>
-            <SafeText tag="div" className="detail-notes">{config.notes}</SafeText>
-          </div>
-        )}
-        
-        {/* 변경 이력 */}
-        {config.history && config.history.length > 0 && (
-          <div className="detail-section">
-            <h2>
-              <HistoryIcon size={20} />
-              {t('common:tenant.PgConfigurationDetail.t_14bf3e5b')}
-            </h2>
-            <div className="history-list">
-              {config.history.map((item, index) => (
-                <div key={index} className="history-item">
-                  <div className="history-header">
-                    <span className="history-action"><SafeText>{item.action}</SafeText></span>
-                    <span className="history-time">
-                      {new Date(item.changedAt).toLocaleString('ko-KR')}
+                </section>
+
+                <section className="admin-shop-suite__card" aria-labelledby="pg-approval-heading">
+                  <h2 id="pg-approval-heading" className="admin-shop-suite__card-title">{ADMIN_SHOP_PG_COPY.APPROVAL_TITLE}</h2>
+                  <div className="admin-shop-suite__row-line">
+                    <span>{ADMIN_SHOP_PG_COPY.APPROVAL_STATE}</span>
+                    <span className="admin-shop-suite__row-line-value">
+                      {ADMIN_SHOP_PG_COPY.APPROVAL_LABELS[config.approvalStatus] || ADMIN_SHOP_PG_COPY.APPROVAL_LABELS.PENDING}
                     </span>
                   </div>
-                  {item.changedBy && (
-                    <div className="history-user">
-                      {t('common:tenant.PgConfigurationDetail.t_fc272f0f')} <SafeText>{item.changedBy}</SafeText>
+                  {config.approvalStatus === 'PENDING' ? (
+                    <div className="admin-shop-suite__row-line">
+                      <span>{ADMIN_SHOP_PG_COPY.APPROVAL_REQUESTED_AT}</span>
+                      <span className="admin-shop-suite__row-line-value">{formatDateTime(config.requestedAt)}</span>
                     </div>
+                  ) : (
+                    <>
+                      <div className="admin-shop-suite__row-line">
+                        <span>{ADMIN_SHOP_PG_COPY.APPROVAL_BY}</span>
+                        <span className="admin-shop-suite__row-line-value"><SafeText fallback={EMPTY}>{config.approvedBy}</SafeText></span>
+                      </div>
+                      <div className="admin-shop-suite__row-line">
+                        <span>{ADMIN_SHOP_PG_COPY.APPROVAL_AT}</span>
+                        <span className="admin-shop-suite__row-line-value">{formatDateTime(config.approvedAt)}</span>
+                      </div>
+                    </>
                   )}
-                  {item.description && (
-                    <SafeText tag="div" className="history-description">{item.description}</SafeText>
-                  )}
-                </div>
-              ))}
+                  {config.approvalStatus === 'REJECTED' && config.rejectionReason ? (
+                    <AdminShopNotice tone="error">
+                      <p>
+                        <strong>{ADMIN_SHOP_PG_COPY.APPROVAL_REASON}</strong>
+                        {' '}
+                        <SafeText>{config.rejectionReason}</SafeText>
+                      </p>
+                    </AdminShopNotice>
+                  ) : null}
+                </section>
+
+                {isPortone ? (
+                  <section className="admin-shop-suite__card" aria-labelledby="pg-checklist-heading">
+                    <h2 id="pg-checklist-heading" className="admin-shop-suite__card-title">{ADMIN_SHOP_PG_COPY.CHECKLIST_TITLE}</h2>
+                    <ol className="admin-shop-suite__checklist" data-testid={ADMIN_SHOP_SUITE_TEST_IDS.PG_CHECKLIST}>
+                      {checklist.map((step, index) => {
+                        let stateLabel = ADMIN_SHOP_PG_COPY.CHECKLIST_DONE;
+                        let stateClass = 'admin-shop-suite__muted';
+                        if (!step.done) {
+                          stateLabel = step.blocking ? ADMIN_SHOP_PG_COPY.CHECKLIST_NEEDED : ADMIN_SHOP_PG_COPY.CHECKLIST_WAIT;
+                          stateClass = step.blocking ? 'admin-shop-suite__text-brick' : 'admin-shop-suite__muted';
+                        }
+                        return (
+                          <li
+                            key={step.key}
+                            className={step.done ? 'admin-shop-suite__checklist-item--done' : 'admin-shop-suite__checklist-item--todo'}
+                          >
+                            <span className="admin-shop-suite__num">{index + 1}</span>
+                            <span>{step.label}</span>
+                            <span className={stateClass}>{stateLabel}</span>
+                          </li>
+                        );
+                      })}
+                    </ol>
+                  </section>
+                ) : null}
+              </div>
             </div>
+
+            {history.length > 0 ? (
+              <section className="admin-shop-suite__card" aria-labelledby="pg-history-heading">
+                <div className="admin-shop-suite__card-head">
+                  <h2 id="pg-history-heading" className="admin-shop-suite__card-title">{ADMIN_SHOP_PG_COPY.HISTORY_TITLE}</h2>
+                  <span className="admin-shop-suite__card-hint">
+                    {formatAdminShopCopy(ADMIN_SHOP_PG_COPY.HISTORY_PREVIEW, {
+                      count: Math.min(history.length, ADMIN_SHOP_PG_HISTORY_PREVIEW)
+                    })}
+                    {history.length > ADMIN_SHOP_PG_HISTORY_PREVIEW ? (
+                      <>
+                        {' · '}
+                        <button
+                          type="button"
+                          className="admin-shop-suite__copy-btn"
+                          onClick={() => setHistoryExpanded((v) => !v)}
+                        >
+                          {historyExpanded
+                            ? ADMIN_SHOP_PG_COPY.HISTORY_COLLAPSE
+                            : formatAdminShopCopy(ADMIN_SHOP_PG_COPY.HISTORY_ALL, { count: history.length })}
+                        </button>
+                      </>
+                    ) : null}
+                  </span>
+                </div>
+                <div className="admin-shop-suite__table-wrap">
+                  <table className="admin-shop-suite__ledger" data-testid={ADMIN_SHOP_SUITE_TEST_IDS.PG_HISTORY}>
+                    <thead>
+                      <tr>
+                        <th scope="col">{ADMIN_SHOP_PG_COPY.HISTORY_AT}</th>
+                        <th scope="col">{ADMIN_SHOP_PG_COPY.HISTORY_BY}</th>
+                        <th scope="col">{ADMIN_SHOP_PG_COPY.HISTORY_ITEM}</th>
+                        <th scope="col">{ADMIN_SHOP_PG_COPY.HISTORY_CHANGE}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {visibleHistory.map((item, index) => (
+                        <tr key={`${item.changedAt || ''}-${index}`}>
+                          <td className="admin-shop-suite__num">{formatDateTime(item.changedAt)}</td>
+                          <td><SafeText fallback={EMPTY}>{item.changedBy}</SafeText></td>
+                          <td><strong><SafeText fallback={EMPTY}>{item.action}</SafeText></strong></td>
+                          <td className="admin-shop-suite__muted"><SafeText fallback={EMPTY}>{item.description}</SafeText></td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+            ) : null}
           </div>
-        )}
-            </main>
         </ContentArea>
 
-        {/* 삭제 확인 모달 */}
         <UnifiedModal
           isOpen={Boolean(showDeleteModal && config)}
           onClose={() => setShowDeleteModal(false)}
-          title={t('common:tenant.PgConfigurationDetail.t_bb36d692')}
+          title={ADMIN_SHOP_PG_COPY.DELETE_TITLE}
           size="small"
           variant="confirm"
           backdropClick={!deleting}
           loading={deleting}
-          actions={
+          actions={(
             <>
               <MGButton
                 type="button"
                 variant="secondary"
-                className={buildErpMgButtonClassName({
-                  variant: 'secondary',
-                  size: 'md',
-                  loading: false
-                })}
-                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                className={buildErpMgButtonClassName({ variant: 'secondary', size: 'md' })}
                 onClick={() => setShowDeleteModal(false)}
                 disabled={deleting}
                 preventDoubleClick={false}
               >
-                {t('admin.actions.cancel')}
+                {ADMIN_SHOP_PG_COPY.CANCEL}
               </MGButton>
               <MGButton
                 type="button"
                 variant="danger"
-                className={buildErpMgButtonClassName({
-                  variant: 'danger',
-                  size: 'md',
-                  loading: deleting
-                })}
+                className={buildErpMgButtonClassName({ variant: 'danger', size: 'md', loading: deleting })}
                 loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 onClick={handleDelete}
                 disabled={deleting}
                 preventDoubleClick={false}
               >
-                {t('admin.actions.delete')}
+                {ADMIN_SHOP_PG_COPY.DELETE_CONFIRM}
               </MGButton>
             </>
-          }
-        >
-          {config && (
-            <>
-              <p>
-                정말로{' '}
-                <strong>
-                  <SafeText>{config.pgName ?? config.pgProvider}</SafeText>
-                </strong>
-                {' '}설정을 삭제하시겠습니까?
-              </p>
-              <p className="warning-text">{t('common:tenant.PgConfigurationDetail.t_cdfb991d')}</p>
-            </>
           )}
+        >
+          <p>
+            <SafeText>
+              {formatAdminShopCopy(ADMIN_SHOP_PG_COPY.DELETE_BODY, {
+                name: toDisplayString(config.pgName ?? config.pgProvider, EMPTY)
+              })}
+            </SafeText>
+          </p>
         </UnifiedModal>
 
         <UnifiedModal
           isOpen={smokeResultOpen}
           onClose={() => setSmokeResultOpen(false)}
-          title="테스트 결제 모듈 결과"
+          title={ADMIN_SHOP_PG_COPY.SMOKE_RESULT_TITLE}
           size="small"
           variant="info"
           backdropClick
-          actions={
+          actions={(
             <MGButton
               type="button"
               variant="secondary"
-              className={buildErpMgButtonClassName({
-                variant: 'secondary',
-                size: 'md',
-                loading: false
-              })}
-              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+              className={buildErpMgButtonClassName({ variant: 'secondary', size: 'md' })}
               onClick={() => setSmokeResultOpen(false)}
               preventDoubleClick={false}
             >
-              {t('common.actions.close')}
+              {ADMIN_SHOP_PG_COPY.CLOSE}
             </MGButton>
-          }
+          )}
         >
           <p>
             <SafeText>{smokeResultMessage}</SafeText>
@@ -927,4 +801,3 @@ const PgConfigurationDetail = () => {
 };
 
 export default PgConfigurationDetail;
-

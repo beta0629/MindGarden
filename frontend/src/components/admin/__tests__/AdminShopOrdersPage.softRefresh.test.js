@@ -17,7 +17,7 @@ describe('AdminShopOrdersPage soft refresh wiring', () => {
   });
 
   test('header refresh button uses softRefresh (not raw loadOrders)', () => {
-    expect(SOURCE).toMatch(/onClick=\{\(\)\s*=>\s*softRefresh\(loadOrders\)\}/);
+    expect(SOURCE).toMatch(/onClick=\{\(\)\s*=>\s*softRefresh\(loadOrders(,\s*RELOAD_OPTIONS)?\)\}/);
     expect(SOURCE).not.toMatch(/onClick=\{loadOrders\}/);
   });
 

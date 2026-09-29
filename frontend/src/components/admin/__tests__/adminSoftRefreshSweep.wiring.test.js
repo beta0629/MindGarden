@@ -13,9 +13,9 @@ function readAdmin(...parts) {
 describe('admin soft-refresh sweep wiring', () => {
   const cases = [
     {
-      name: 'AdminShopCatalogSkusPage',
-      source: () => readAdmin('AdminShopCatalogSkusPage.js'),
-      loadFn: 'loadSkus'
+      name: 'AdminShopProductsPage',
+      source: () => readAdmin('AdminShopProductsPage.js'),
+      loadFn: 'loadProducts'
     },
     {
       name: 'AdminShopPointPoliciesPage',

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { ICONS } from '../../constants/icons';
 
 const CreditCardIcon = ICONS.CREDIT_CARD;
@@ -25,6 +25,7 @@ import './PgConfigurationList.css';
 import { toDisplayString } from '../../utils/safeDisplay';
 import { useTranslation } from 'react-i18next';
 import { isPgConfigDeletable } from './pgConfigurationListUtils';
+import { ADMIN_SHOP_PG_COPY } from '../../constants/adminShopSuite';
 
 export { isPgConfigDeletable };
 
@@ -39,6 +40,7 @@ export { isPgConfigDeletable };
 const PgConfigurationList = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, isLoggedIn, isLoading: sessionLoading } = useSession();
   
   const [configurations, setConfigurations] = useState([]);
@@ -99,6 +101,19 @@ const PgConfigurationList = () => {
     }
   }, [sessionLoading, isLoggedIn, user, tenantId, loadConfigurations]);
   
+  const filtersActive = Boolean(filters.status || filters.approvalStatus || filters.search);
+  const stayOnList = Boolean(location.state?.stayOnList);
+
+  useEffect(() => {
+    if (loading || error || stayOnList || filtersActive || configurations.length !== 1) {
+      return;
+    }
+    const onlyId = configurations[0]?.configId;
+    if (onlyId != null) {
+      navigate(`/tenant/pg-configurations/${onlyId}`, { replace: true });
+    }
+  }, [loading, error, stayOnList, filtersActive, configurations, navigate]);
+
   const handleDelete = async() => {
     if (!selectedConfig || !tenantId) return;
     
@@ -168,7 +183,7 @@ const PgConfigurationList = () => {
   if (sessionLoading || (loading && configurations.length === 0)) {
     return (
       <AdminCommonLayout
-        title={t('admin.labels.pgSettingsList')}
+        title={ADMIN_SHOP_PG_COPY.TITLE}
         loading
         loadingText={t('common:tenant.PgConfigurationList.t_38760583')}
       />
@@ -177,7 +192,7 @@ const PgConfigurationList = () => {
   
   if (!isLoggedIn || !user) {
     return (
-      <AdminCommonLayout title={t('admin.labels.pgSettingsList')}>
+      <AdminCommonLayout title={ADMIN_SHOP_PG_COPY.TITLE}>
         <ContentArea ariaLabel="PG 설정 목록" className="mg-v2-pg-config-list">
           <div className="error-message">
             <AlertCircleIcon size={24} />
@@ -190,7 +205,7 @@ const PgConfigurationList = () => {
 
   if (!tenantId) {
     return (
-      <AdminCommonLayout title={t('admin.labels.pgSettingsList')}>
+      <AdminCommonLayout title={ADMIN_SHOP_PG_COPY.TITLE}>
         <ContentArea
           ariaLabel="PG 설정 목록"
           className="mg-v2-pg-config-list pg-config-list--clinic-os"
@@ -223,15 +238,15 @@ const PgConfigurationList = () => {
   };
   
   return (
-    <AdminCommonLayout title={t('admin.labels.pgSettingsList')}>
+    <AdminCommonLayout title={ADMIN_SHOP_PG_COPY.TITLE}>
       <>
         <ContentArea
           ariaLabel="PG 설정 목록"
           className="mg-v2-pg-config-list pg-config-list--clinic-os"
         >
             <ContentHeader
-              title={t('common:tenant.PgConfigurationList.t_13162a5e')}
-              subtitle="결제 게이트웨이 설정을 조회·등록·관리합니다."
+              title={ADMIN_SHOP_PG_COPY.TITLE}
+              subtitle={ADMIN_SHOP_PG_COPY.LIST_SUBTITLE}
               titleId="pg-config-list-title"
               actions={
                 <div className="pg-config-list__header-actions">

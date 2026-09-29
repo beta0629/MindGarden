@@ -124,7 +124,7 @@ describe('MappingScheduleCard Clinic-OS v2.1', () => {
     expect(screen.queryByText('잔여 8 · 일정 등록 · 7/20')).not.toBeInTheDocument();
   });
 
-  it('shows amber 결제 대기 pill for PENDING_PAYMENT (not chip cloud)', () => {
+  it('shows amber 가예약 pill for SAME_DAY_CARD PENDING_PAYMENT (not chip cloud)', () => {
     const { container } = render(
       <MappingScheduleCard
         mapping={{
@@ -136,7 +136,7 @@ describe('MappingScheduleCard Clinic-OS v2.1', () => {
       />
     );
     const pill = screen.getByTestId('mapping-card-todo-pill');
-    expect(pill).toHaveTextContent('결제 대기');
+    expect(pill).toHaveTextContent('가예약');
     expect(pill).toHaveClass('integrated-schedule__card-todo-pill');
     expect(container.querySelector('.mg-v2-badge--success')).toBeNull();
     expect(container.querySelector('.integrated-schedule__card-schedule-status--registered')).toBeNull();
@@ -350,5 +350,70 @@ describe('MappingScheduleCard Clinic-OS v2.1', () => {
       />
     );
     expect(container.querySelector('.integrated-schedule__reminder-sms-badge')).toBeNull();
+  });
+
+  describe('status badge row (가예약 → 문자발송됨)', () => {
+    const SAME_DAY_PENDING = {
+      ...MOCK_MAPPING,
+      status: 'PENDING_PAYMENT',
+      paymentTiming: 'SAME_DAY_CARD',
+      remainingSessions: 0
+    };
+    const SENT_SMS = { status: 'SENT', sentAt: '2026-08-01T14:00:00' };
+
+    it('renders 가예약 first and 문자발송됨 second in one badge row', () => {
+      render(
+        <MappingScheduleCard
+          mapping={{ ...SAME_DAY_PENDING, clientReminderSms: SENT_SMS }}
+        />
+      );
+      const row = screen.getByTestId('mapping-card-badge-row');
+      expect(row).toHaveClass('integrated-schedule__card-badge-row');
+      expect(row.children).toHaveLength(2);
+      expect(row.children[0]).toHaveAttribute('data-testid', 'mapping-card-todo-pill');
+      expect(row.children[0]).toHaveTextContent('가예약');
+      expect(row.children[1]).toHaveClass('integrated-schedule__reminder-sms-badge');
+      expect(row.children[1]).toHaveTextContent('문자발송됨');
+      expect(
+        row.children[1].querySelector('.integrated-schedule__reminder-sms-badge__pill')
+      ).toBeTruthy();
+    });
+
+    it('puts 문자발송됨 in the first slot when there is no 가예약 pill', () => {
+      render(
+        <MappingScheduleCard
+          mapping={{ ...MOCK_MAPPING, clientReminderSms: SENT_SMS }}
+        />
+      );
+      const row = screen.getByTestId('mapping-card-badge-row');
+      expect(screen.queryByTestId('mapping-card-todo-pill')).not.toBeInTheDocument();
+      expect(row.children).toHaveLength(1);
+      expect(row.children[0]).toHaveClass('integrated-schedule__reminder-sms-badge');
+      expect(row.children[0]).toHaveTextContent('문자발송됨');
+    });
+
+    it('renders only 가예약 in the row when reminder SMS is hidden', () => {
+      render(
+        <MappingScheduleCard
+          mapping={{ ...SAME_DAY_PENDING, clientReminderSms: { status: 'SKIPPED' } }}
+        />
+      );
+      const row = screen.getByTestId('mapping-card-badge-row');
+      expect(row.children).toHaveLength(1);
+      expect(row.children[0]).toHaveTextContent('가예약');
+    });
+
+    it('does not render the badge row when both badges are absent', () => {
+      const { container, rerender } = render(<MappingScheduleCard mapping={MOCK_MAPPING} />);
+      expect(screen.queryByTestId('mapping-card-badge-row')).not.toBeInTheDocument();
+      expect(container.querySelector('.integrated-schedule__card-badge-row')).toBeNull();
+
+      rerender(
+        <MappingScheduleCard
+          mapping={{ ...MOCK_MAPPING, clientReminderSms: { status: 'SKIPPED' } }}
+        />
+      );
+      expect(container.querySelector('.integrated-schedule__card-badge-row')).toBeNull();
+    });
   });
 });

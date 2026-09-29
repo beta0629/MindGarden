@@ -109,7 +109,7 @@ describe('MappingScheduleCard.clinicOsChrome', () => {
 
     const pills = screen.getAllByTestId('mapping-card-todo-pill');
     expect(pills).toHaveLength(1);
-    expect(pills[0]).toHaveTextContent('결제 대기');
+    expect(pills[0]).toHaveTextContent('가예약');
 
     expect(container.querySelector('.mg-v2-badge--success')).toBeNull();
     expect(container.querySelector('.integrated-schedule__card-schedule-status--registered')).toBeNull();

@@ -108,5 +108,32 @@ describe('MallPhoneVerifyInline states', () => {
       fireEvent.click(close);
       expect(screen.queryByTestId(CLIENT_MALL_TEST_IDS.PHONE_SHEET)).not.toBeInTheDocument();
     });
+
+    test('(c) 틀림 — 오답 문구는 입력칸 바로 아래 · 확인 버튼은 그 아래', () => {
+      openSheet(flowFor({ code: '111111', error: { kind: 'WRONG_CODE', message: '인증번호가 맞지 않아요.' } }));
+      const error = screen.getByTestId(CLIENT_MALL_TEST_IDS.PHONE_ERROR);
+      expect(error.previousElementSibling).toHaveClass('client-mall-phone__code-wrap');
+      expect(error.nextElementSibling).toBe(screen.getByTestId(CLIENT_MALL_TEST_IDS.PHONE_CONFIRM));
+    });
+
+    test('(b) 보냄 — 「다시 받기」는 안내 줄 오른쪽', () => {
+      openSheet(flowFor());
+      const help = screen.getByTestId('client-mall-phone-sent-help');
+      const resend = screen.getByTestId(CLIENT_MALL_TEST_IDS.PHONE_RESEND);
+      expect(help.parentElement).toHaveClass('client-mall-phone__help-row');
+      expect(help.nextElementSibling).toBe(resend);
+    });
+
+    test('(d) 시간 초과 — 확인 자리에 primary 「다시 받기」 하나', () => {
+      const resend = jest.fn();
+      openSheet(flowFor({ step: PHONE_VERIFY_STEP.EXPIRED, remainingSeconds: 0, resend }));
+      expect(screen.queryByTestId(CLIENT_MALL_TEST_IDS.PHONE_CONFIRM)).not.toBeInTheDocument();
+      const buttons = screen.getAllByTestId(CLIENT_MALL_TEST_IDS.PHONE_RESEND);
+      expect(buttons).toHaveLength(1);
+      expect(buttons[0]).toHaveClass('client-mall-btn--primary');
+      expect(buttons[0]).toHaveTextContent(CLIENT_MALL_PHONE_COPY.RESEND);
+      fireEvent.click(buttons[0]);
+      expect(resend).toHaveBeenCalledTimes(1);
+    });
   });
 });

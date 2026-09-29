@@ -40,6 +40,7 @@ const NeedsVerifyBadge = () => (
 /**
  * 인증 입력 본문 (b 보냄 · c 틀림 · d 만료 · e 다시 보냄 · f 잠김).
  * 시트에서는 버튼이 입력칸 아래 전폭 primary 이고, 잠기면 확인·다시 받기 대신 「닫기」만 남는다.
+ * 시트 오류 문구는 입력칸 바로 아래 · 「다시 받기」는 안내 줄 오른쪽 · 만료되면 확인 자리에 primary 「다시 받기」.
  *
  * @param {{ flow: object, sheet?: boolean, onClose?: () => void }} props
  */
@@ -59,6 +60,35 @@ const PhoneVerifyPanel = ({ flow, sheet = false, onClose = null }) => {
     ? CLIENT_MALL_PHONE_COPY.SENT_PUSH
     : `${maskMallPhone(flow.sentTo)}${flow.resent ? CLIENT_MALL_PHONE_COPY.RESENT_SUFFIX : CLIENT_MALL_PHONE_COPY.SENT_SUFFIX}`;
   const timerSeconds = expired ? 0 : flow.remainingSeconds;
+  const expiredSheet = sheet && expired;
+  const errorNode = errorText && !locked ? (
+    <p className="client-mall-phone__error" role="alert" data-testid={CLIENT_MALL_TEST_IDS.PHONE_ERROR}>
+      {errorText}
+    </p>
+  ) : null;
+  const resendLink = (
+    <button
+      type="button"
+      className="client-mall-link-btn"
+      disabled={locked || flow.sending || (!expired && flow.resendWaitSeconds != null)}
+      onClick={flow.resend}
+      data-testid={CLIENT_MALL_TEST_IDS.PHONE_RESEND}
+    >
+      {CLIENT_MALL_PHONE_COPY.RESEND}
+      {!expired && !locked && flow.resendWaitSeconds != null ? (
+        <>
+          {CLIENT_MALL_PHONE_COPY.RESEND_WAIT_SEPARATOR}
+          {flow.resendWaitSeconds}
+          {CLIENT_MALL_PHONE_COPY.RESEND_WAIT_SUFFIX}
+        </>
+      ) : null}
+    </button>
+  );
+  const sentHelp = (
+    <p className="client-mall-phone__sub" data-testid="client-mall-phone-sent-help">
+      {flow.resent ? CLIENT_MALL_PHONE_COPY.RESENT_HELP : CLIENT_MALL_PHONE_COPY.SENT_HELP}
+    </p>
+  );
 
   return (
     <div className="client-mall-phone__panel-body">
@@ -79,6 +109,7 @@ const PhoneVerifyPanel = ({ flow, sheet = false, onClose = null }) => {
               onChange={(e) => flow.setPhoneDigits(e.target.value)}
               disabled={flow.sending}
             />
+            {sheet ? errorNode : null}
             <MGButton
               variant={actionVariant}
               preventDoubleClick={false}
@@ -156,7 +187,21 @@ const PhoneVerifyPanel = ({ flow, sheet = false, onClose = null }) => {
                 </span>
               ) : null}
             </div>
-            {lockedSheet ? null : (
+            {sheet ? errorNode : null}
+            {expiredSheet ? (
+              <MGButton
+                variant="primary"
+                preventDoubleClick={false}
+                className="client-mall-btn client-mall-btn--primary"
+                disabled={flow.sending}
+                loading={flow.sending}
+                onClick={flow.resend}
+                data-testid={CLIENT_MALL_TEST_IDS.PHONE_RESEND}
+              >
+                {CLIENT_MALL_PHONE_COPY.RESEND}
+              </MGButton>
+            ) : null}
+            {lockedSheet || expiredSheet ? null : (
               <MGButton
                 variant={actionVariant}
                 preventDoubleClick={false}
@@ -170,11 +215,13 @@ const PhoneVerifyPanel = ({ flow, sheet = false, onClose = null }) => {
               </MGButton>
             )}
           </div>
-          {step === PHONE_VERIFY_STEP.SENT ? (
-            <p className="client-mall-phone__sub" data-testid="client-mall-phone-sent-help">
-              {flow.resent ? CLIENT_MALL_PHONE_COPY.RESENT_HELP : CLIENT_MALL_PHONE_COPY.SENT_HELP}
-            </p>
+          {step === PHONE_VERIFY_STEP.SENT && sheet ? (
+            <div className="client-mall-phone__help-row">
+              {sentHelp}
+              {resendLink}
+            </div>
           ) : null}
+          {step === PHONE_VERIFY_STEP.SENT && !sheet ? sentHelp : null}
           {lockedSheet ? (
             <MGButton
               variant="outline"
@@ -185,32 +232,12 @@ const PhoneVerifyPanel = ({ flow, sheet = false, onClose = null }) => {
             >
               {CLIENT_MALL_PHONE_COPY.CLOSE}
             </MGButton>
-          ) : (
-            <button
-              type="button"
-              className="client-mall-link-btn"
-              disabled={locked || flow.sending || (!expired && flow.resendWaitSeconds != null)}
-              onClick={flow.resend}
-              data-testid={CLIENT_MALL_TEST_IDS.PHONE_RESEND}
-            >
-              {CLIENT_MALL_PHONE_COPY.RESEND}
-              {!expired && !locked && flow.resendWaitSeconds != null ? (
-                <>
-                  {CLIENT_MALL_PHONE_COPY.RESEND_WAIT_SEPARATOR}
-                  {flow.resendWaitSeconds}
-                  {CLIENT_MALL_PHONE_COPY.RESEND_WAIT_SUFFIX}
-                </>
-              ) : null}
-            </button>
-          )}
+          ) : null}
+          {sheet ? null : resendLink}
         </>
       ) : null}
 
-      {errorText && !locked ? (
-        <p className="client-mall-phone__error" role="alert" data-testid={CLIENT_MALL_TEST_IDS.PHONE_ERROR}>
-          {errorText}
-        </p>
-      ) : null}
+      {sheet ? null : errorNode}
     </div>
   );
 };

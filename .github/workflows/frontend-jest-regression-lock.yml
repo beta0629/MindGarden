@@ -1,0 +1,75 @@
+name: 🧪 FE jest regression lock (PR)
+
+# PR 마다 이미 PASS 된 프론트 동작(로그인 처리중 · 통합스케줄 배지 한 줄 · soft refresh · 내담자 몰)을
+# jest 로 잠근다. 하나라도 FAIL → job fail (머지 차단은 branch protection required check 로 지정).
+# 전체 스위트는 기존 무관 실패가 있어 여기서 돌리지 않는다. 잠금 대상은 아래 목록만.
+# 규칙: .cursor/rules/frontend-no-overwrite.mdc
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: fe-jest-regression-lock-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  fe-jest-regression-lock:
+    name: FE jest (regression lock)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: frontend
+    env:
+      CI: 'true'
+      LOCK_TESTS: |
+        src/components/auth/__tests__/UnifiedLogin.processingButton.test.js
+        src/utils/__tests__/sessionManager.callerCap.test.js
+        src/components/admin/mapping-management/integrated-schedule/molecules/__tests__/CardMeta.test.js
+        src/components/admin/mapping-management/integrated-schedule/molecules/__tests__/CardMeta.badgeRowLock.test.js
+        src/components/admin/mapping-management/integrated-schedule/organisms/__tests__/MappingScheduleCard.test.js
+        src/components/admin/mapping-management/integrated-schedule/organisms/__tests__/MappingScheduleCard.clinicOsChrome.test.js
+        src/components/admin/mapping-management/__tests__/IntegratedMatchingSchedule.test.js
+        src/components/admin/mapping-management/__tests__/IntegratedMatchingSchedule.softRefetchNoRemount.test.js
+        src/contexts/__tests__/SessionContext.heartbeatKeepsEditor.test.js
+        src/components/layout/__tests__/AdminCommonLayout.softRefreshLoading.test.js
+        src/utils/__tests__/sessionUserIdentity.test.js
+        src/components/admin/__tests__/AdminShopOrdersPage.softRefresh.test.js
+        src/components/admin/__tests__/AdminShopOrdersPage.softRefreshRender.test.js
+        src/pages/client/shop/__tests__/ClientMallFlow.smoke.test.js
+        src/pages/client/shop/__tests__/ClientMallBuyNowNoCartPut.test.js
+        src/utils/__tests__/clientMallBuyNow.test.js
+        src/utils/__tests__/clientMall.test.js
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Verify lock test files exist
+        run: |
+          missing=0
+          while IFS= read -r f; do
+            [ -z "$f" ] && continue
+            if [ ! -f "$f" ]; then
+              echo "::error file=frontend/$f::regression lock test missing: $f"
+              missing=1
+            fi
+          done <<< "$LOCK_TESTS"
+          exit "$missing"
+
+      - name: Run regression lock tests
+        run: |
+          printf '%s\n' "$LOCK_TESTS" | sed '/^[[:space:]]*$/d' \
+            | xargs npx craco test --watchAll=false --ci --runTestsByPath

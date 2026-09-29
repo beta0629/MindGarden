@@ -1,0 +1,77 @@
+name: 🧪 Backend mvn test (release PR)
+
+# release/dev · release/prod 대상 PR 에서 백엔드 전체 단위 테스트(mvn test, -DskipTests 없음)를 실행한다.
+# GitHub-hosted ubuntu-latest 전용. self-hosted(mindgarden-deploy) 러너에서 Maven 실행 금지.
+# 배포 워크플로(deploy-*.yml)와 독립 — 배포·헬스·프론트 업로드 단계는 다루지 않는다.
+on:
+  pull_request:
+    branches: [release/dev, release/prod]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: backend-mvn-test-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend-mvn-test:
+    name: Backend unit tests (mvn test, ubuntu-latest)
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+
+    steps:
+      - name: 📥 코드 체크아웃
+        uses: actions/checkout@v4
+
+      - name: ☕ Java 17 설정
+        uses: actions/setup-java@v5
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: 🔧 Maven 캐시 설정
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-m2
+
+      - name: 🧪 mvn test (전체, skipTests 없음)
+        run: mvn -B -ntp test -Dsurefire.printSummary=true
+
+      - name: 📋 surefire 결과 요약
+        if: always()
+        run: |
+          reports=target/surefire-reports
+          if [ ! -d "$reports" ]; then
+            echo "surefire-reports 없음 (컴파일 단계 실패 가능)" | tee -a "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          {
+            echo "### Surefire 요약"
+            echo '```'
+            for f in "$reports"/TEST-*.xml; do
+              name=$(basename "$f" .xml | sed 's/^TEST-//')
+              attrs=$(grep -m1 -o '<testsuite[^>]*>' "$f")
+              tests=$(echo "$attrs" | grep -o ' tests="[0-9]*"' | grep -o '[0-9]*')
+              failures=$(echo "$attrs" | grep -o ' failures="[0-9]*"' | grep -o '[0-9]*')
+              errors=$(echo "$attrs" | grep -o ' errors="[0-9]*"' | grep -o '[0-9]*')
+              skipped=$(echo "$attrs" | grep -o ' skipped="[0-9]*"' | grep -o '[0-9]*')
+              if [ "${failures:-0}" != "0" ] || [ "${errors:-0}" != "0" ] \
+                || echo "$name" | grep -q 'ClientShopCheckoutServiceImplTest'; then
+                echo "$name tests=$tests failures=$failures errors=$errors skipped=$skipped"
+              fi
+            done
+            echo '```'
+          } | tee -a "$GITHUB_STEP_SUMMARY"
+
+      - name: 📤 surefire 리포트 업로드
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-surefire-reports
+          path: target/surefire-reports/
+          if-no-files-found: warn
+          retention-days: 14

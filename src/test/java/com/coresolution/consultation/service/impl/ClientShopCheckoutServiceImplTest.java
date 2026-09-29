@@ -760,6 +760,90 @@ class ClientShopCheckoutServiceImplTest {
     }
 
     @Test
+    @DisplayName("카테고리 null SKU — 활성 매핑 없으면 상담 상품으로 보고 주문 저장 전 거부")
+    void checkout_nullCategorySku_noActiveMapping_rejectsBeforeOrderSave() {
+        String idemKey = "idem-null-category-no-mapping";
+        ShopCartLine line = cartLine(30_000L);
+        line.getSku().setCatalogCategory(null);
+        stubCheckoutUpToMappings(idemKey, line);
+        when(clientShopConsultantMappingService.listActiveMappings(TENANT, CLIENT_ID))
+                .thenReturn(List.of());
+
+        ShopCheckoutRequest request = ShopCheckoutRequest.builder()
+                .idempotencyKey(idemKey)
+                .pointsToRedeemMinor(0L)
+                .build();
+
+        IllegalArgumentException ex = assertThrows(
+                IllegalArgumentException.class, () -> service.checkout(TENANT, CLIENT_ID, request));
+        assertEquals("담당 상담사 연결 후 구매할 수 있어요", ex.getMessage());
+        assertEquals(ShopCheckoutConstants.MSG_CONSULTANT_MAPPING_REQUIRED_FOR_PURCHASE, ex.getMessage());
+        verify(clientShopConsultantMappingService).listActiveMappings(TENANT, CLIENT_ID);
+        verify(shopClientOrderRepository, never()).save(any());
+        verify(shopClientOrderLineRepository, never()).save(any());
+        verify(clientPointWalletService, never()).hold(any(), any(), any(), anyLong(), any());
+    }
+
+    @Test
+    @DisplayName("카테고리 null SKU — 활성 매핑 있으면 기존 상담 상품처럼 매핑 ID 설정 후 진행")
+    void checkout_nullCategorySku_withActiveMapping_setsConsultantClientMappingId() {
+        String idemKey = "idem-null-category-mapping";
+        ShopCartLine line = cartLine(30_000L);
+        line.getSku().setCatalogCategory(null);
+        long mappingId = 43L;
+        stubCheckoutUpToMappings(idemKey, line);
+        stubConsultationVisible();
+        when(clientShopConsultantMappingService.listActiveMappings(TENANT, CLIENT_ID))
+                .thenReturn(List.of(eligibleMapping(
+                        mappingId, ConsultantClientMapping.MappingStatus.ACTIVE, null, "상품")));
+
+        ArgumentCaptor<ShopClientOrder> orderCaptor = ArgumentCaptor.forClass(ShopClientOrder.class);
+        when(shopClientOrderRepository.save(orderCaptor.capture())).thenAnswer(inv -> inv.getArgument(0));
+        ArgumentCaptor<ShopClientOrderLine> lineCaptor = ArgumentCaptor.forClass(ShopClientOrderLine.class);
+        when(shopClientOrderLineRepository.save(lineCaptor.capture())).thenAnswer(inv -> inv.getArgument(0));
+        when(shopClientOrderRepository.findByTenantIdAndPublicId(eq(TENANT), anyString()))
+                .thenAnswer(inv -> Optional.of(orderCaptor.getValue()));
+
+        ShopCheckoutResponse response = service.checkout(
+                TENANT,
+                CLIENT_ID,
+                ShopCheckoutRequest.builder().idempotencyKey(idemKey).pointsToRedeemMinor(0L).build());
+
+        assertEquals("PAYMENT", response.getNextStep());
+        assertEquals(1, lineCaptor.getAllValues().size());
+        assertEquals(mappingId, lineCaptor.getValue().getConsultantClientMappingId());
+        verify(clientShopCatalogService).isVisibleForClientMappings(eq(TENANT), eq(line.getSku()), any());
+    }
+
+    @Test
+    @DisplayName("preparePayment — 카테고리 null 상담 라인 매핑 없음이면 PG 결제 생성 전 거부")
+    void preparePayment_nullCategoryLineWithoutMapping_rejectsBeforePayment() {
+        ShopClientOrder order = pendingOrder(0L);
+        order.setId(778L);
+        order.setStatus(ShopClientOrderStatus.CREATED);
+        ShopCatalogSku sku = cartLine(10_000L).getSku();
+        sku.setCatalogCategory(null);
+        ShopClientOrderLine orderLine = ShopClientOrderLine.builder()
+                .clientOrder(order)
+                .lineNo(1)
+                .sku(sku)
+                .skuCodeSnapshot("SKU-1")
+                .quantity(1)
+                .consultantClientMappingId(null)
+                .build();
+        when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID)).thenReturn(Optional.of(order));
+        when(shopClientOrderLineRepository.findByClientOrder_IdAndIsDeletedFalseOrderByLineNoAsc(778L))
+                .thenReturn(List.of(orderLine));
+        when(clientShopConsultantMappingService.listActiveMappings(TENANT, CLIENT_ID)).thenReturn(List.of());
+
+        IllegalArgumentException ex = assertThrows(
+                IllegalArgumentException.class,
+                () -> service.preparePayment(TENANT, CLIENT_ID, ORDER_ID, new ShopPreparePaymentRequest()));
+        assertEquals(ShopCheckoutConstants.MSG_CONSULTANT_MAPPING_REQUIRED_FOR_PURCHASE, ex.getMessage());
+        verify(paymentService, never()).createPayment(any());
+    }
+
+    @Test
     @DisplayName("CONSULTATION 라인 — N>1 중 assigned 1건이면 요청 id 없이 자동 resolve")
     void checkout_consultationLine_uniqueAssignedAmongMany_autoResolves() {
         String idemKey = "idem-consult-unique-assigned";
@@ -2240,6 +2324,7 @@ class ClientShopCheckoutServiceImplTest {
                 .title("상품")
                 .unitPriceMinor(unitPriceMinor)
                 .sessionCount(10)
+                .catalogCategory(ShopCatalogCategory.ASSESSMENT)
                 .build();
         sku.setId(10L);
         sku.setTenantId(TENANT);

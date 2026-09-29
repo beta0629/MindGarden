@@ -7,7 +7,7 @@
 
 import React from 'react';
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
 import ShopCatalogPage from '../ShopCatalogPage';
 import ShopCheckoutPage from '../ShopCheckoutPage';
 import {
@@ -18,6 +18,8 @@ import {
   CLIENT_REFUND_NOTICE,
   buildClientMallProductUsageNotice
 } from '../../../../constants/clientMallConstants';
+import { CLIENT_SHOP_ROUTES, SHOP_CHECKOUT_MAPPING_COPY } from '../../../../constants/clientShopConstants';
+import { buildBuyNowCheckoutPath } from '../../../../utils/clientMallBuyNow';
 
 const mockUseSession = jest.fn();
 const mockService = {
@@ -50,6 +52,7 @@ jest.mock('../../../../hooks/useAlert', () => ({
 }));
 
 jest.mock('../../../../contexts/SessionContext', () => ({
+  SessionContext: jest.requireActual('react').createContext(null),
   useSession: () => mockUseSession()
 }));
 
@@ -97,6 +100,22 @@ const CATALOG = [
   { skuCode: 'ONE', title: '단회기', unitPriceMinor: 90000, sessionCount: 1, catalogCategory: 'GOODS' }
 ];
 
+const LocationProbe = () => {
+  const location = useLocation();
+  return <div data-testid="location-probe">{`${location.pathname}${location.search}`}</div>;
+};
+
+const mockMatchMedia = (matches) => {
+  window.matchMedia = jest.fn().mockImplementation((query) => ({
+    matches,
+    media: query,
+    addEventListener: jest.fn(),
+    removeEventListener: jest.fn(),
+    addListener: jest.fn(),
+    removeListener: jest.fn()
+  }));
+};
+
 const sessionFor = (userPatch = {}) => ({
   user: { id: 7, name: '김내담', role: 'CLIENT', ...userPatch },
   isLoggedIn: true,
@@ -117,6 +136,7 @@ beforeEach(() => {
   mockService.mergeGuestShopCartIntoServer.mockResolvedValue({ merged: false, lines: [] });
   mockService.fetchPointBalance.mockResolvedValue({ availableMinor: 0, heldMinor: 0 });
   mockService.fetchConsultantMappings.mockResolvedValue([]);
+  delete window.matchMedia;
 });
 
 describe('ShopCatalogPage (TO-BE)', () => {
@@ -132,6 +152,48 @@ describe('ShopCatalogPage (TO-BE)', () => {
     expect(within(cards[1]).queryByText(CLIENT_MALL_COPY.ROW_VALIDITY)).not.toBeInTheDocument();
     expect(screen.getByText(CLIENT_REFUND_NOTICE)).toBeInTheDocument();
     expect(screen.queryByText(/₩/)).not.toBeInTheDocument();
+  });
+
+  test('회기 칩은 「N회기」 · 설명 없으면 「50분 개인상담 N회」 · 회기회기 중복 없음', async() => {
+    mockUseSession.mockReturnValue(sessionFor());
+    render(<MemoryRouter><ShopCatalogPage /></MemoryRouter>);
+
+    expect(await screen.findByTestId('client-mall-chip-PKG10')).toHaveTextContent(/^10회기$/);
+    expect(screen.getByTestId('client-mall-chip-ONE')).toHaveTextContent(/^1회기$/);
+    const cards = screen.getAllByTestId(CLIENT_MALL_TEST_IDS.PRODUCT_CARD);
+    expect(within(cards[1]).getByText(
+      `${CLIENT_MALL_COPY.CARD_DESC_FALLBACK_PREFIX}1${CLIENT_MALL_COPY.CARD_DESC_FALLBACK_SUFFIX}`
+    )).toBeInTheDocument();
+    cards.forEach((card) => expect(card.textContent).not.toMatch(/회기회기/));
+  });
+
+  test('바로 구매 → 장바구니를 건드리지 않고 SKU 한 줄만 결제 전 확인으로', async() => {
+    mockUseSession.mockReturnValue(sessionFor());
+    render(
+      <MemoryRouter initialEntries={[CLIENT_SHOP_ROUTES.CATALOG]}>
+        <Routes>
+          <Route path={CLIENT_SHOP_ROUTES.CATALOG} element={<ShopCatalogPage />} />
+          <Route path={CLIENT_SHOP_ROUTES.CHECKOUT} element={<LocationProbe />} />
+        </Routes>
+      </MemoryRouter>
+    );
+
+    fireEvent.click(await screen.findByTestId(CLIENT_MALL_TEST_IDS.CARD_BUY_NOW));
+    expect(await screen.findByTestId('location-probe')).toHaveTextContent(buildBuyNowCheckoutPath('PKG10', 1));
+    expect(mockService.replaceShopCart).not.toHaveBeenCalled();
+  });
+
+  test('하단 바 — 「장바구니」 줄 + N개 · N원', async() => {
+    mockUseSession.mockReturnValue(sessionFor());
+    render(<MemoryRouter><ShopCatalogPage /></MemoryRouter>);
+
+    const cards = await screen.findAllByTestId(CLIENT_MALL_TEST_IDS.PRODUCT_CARD);
+    await act(async() => {
+      fireEvent.click(within(cards[0]).getByRole('button', { name: CLIENT_MALL_COPY.ADD_TO_CART }));
+    });
+    const bar = screen.getByTestId(CLIENT_MALL_TEST_IDS.CART_BAR);
+    expect(within(bar).getByText(CLIENT_MALL_COPY.BAR_LABEL)).toBeInTheDocument();
+    expect(bar).toHaveTextContent('1개 · 850,000원');
   });
 
   test('담기 → 토스트 · 배지 · 합계 즉시 갱신 · 서버 반영', async() => {
@@ -240,5 +302,87 @@ describe('ShopCheckoutPage (TO-BE)', () => {
       fireEvent.click(screen.getByTestId(CLIENT_MALL_TEST_IDS.PHONE_SEND));
     });
     expect(screen.getByTestId(CLIENT_MALL_TEST_IDS.PHONE_ERROR)).toHaveTextContent(CLIENT_MALL_PHONE_COPY.SEND_FAILED);
+  });
+
+  test('결제 전 확인 — eyebrow · 포인트 0P · 보유 0P · +10회기 · 수량 · 환불 한 문장(예시 없음)', async() => {
+    mockUseSession.mockReturnValue(sessionFor({ phone: '01012341234', isPhoneVerified: false }));
+    mockService.fetchShopCart.mockResolvedValue(cartWithPkg);
+    render(<MemoryRouter initialEntries={['/client/shop/checkout']}><ShopCheckoutPage /></MemoryRouter>);
+
+    await screen.findByTestId(CLIENT_MALL_TEST_IDS.CHECKOUT_PAY);
+    expect(screen.getAllByText(CLIENT_MALL_CHECKOUT_COPY.EYEBROW)).toHaveLength(2);
+    expect(screen.getByTestId('client-mall-pay-points')).toHaveTextContent('0P · 보유 0P');
+    expect(screen.getByTestId('client-mall-pay-sessions')).toHaveTextContent('+10회기');
+    expect(screen.getByText(CLIENT_MALL_CHECKOUT_COPY.BUYER_PHONE_CARD_HINT)).toBeInTheDocument();
+    expect(screen.getByText(CLIENT_MALL_CHECKOUT_COPY.PHONE_NEEDS_VERIFY)).toBeInTheDocument();
+    expect(screen.getByText(CLIENT_MALL_CHECKOUT_COPY.PHONE_NEEDS_VERIFY_HINT)).toBeInTheDocument();
+    const refund = screen.getByTestId(CLIENT_MALL_TEST_IDS.CHECKOUT_REFUND);
+    expect(refund).toHaveTextContent(CLIENT_REFUND_NOTICE);
+    expect(refund.textContent).not.toMatch(/예시/);
+    expect(screen.getByTestId('client-mall-checkout-bar')).toHaveTextContent(CLIENT_MALL_CHECKOUT_COPY.PAY_SECTION);
+  });
+
+  test('바로 구매 체크아웃 — 서버 장바구니를 바꾸지 않고 그 SKU 한 줄만 lines 로 결제', async() => {
+    mockUseSession.mockReturnValue(sessionFor({ phone: '01012341234', isPhoneVerified: true }));
+    mockService.fetchShopCart.mockResolvedValue({
+      lines: [{ skuCode: 'ONE', title: '단회기', quantity: 3, unitPriceMinor: 90000, lineTotalMinor: 270000, sessionCount: 1 }],
+      subtotalMinor: 270000
+    });
+    mockService.postShopCheckout.mockResolvedValue({ orderPublicId: 'ord-1', cashDueMinor: 1700000 });
+    render(
+      <MemoryRouter initialEntries={[buildBuyNowCheckoutPath('PKG10', 2)]}>
+        <ShopCheckoutPage />
+      </MemoryRouter>
+    );
+
+    const pay = await screen.findByTestId(CLIENT_MALL_TEST_IDS.CHECKOUT_PAY);
+    expect(pay).toHaveTextContent('1,700,000원 결제하기');
+    expect(screen.getByText(CLIENT_MALL_CHECKOUT_COPY.BUY_NOW_CAPTION)).toBeInTheDocument();
+    expect(screen.queryByText('단회기')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId(CLIENT_MALL_TEST_IDS.CHECKOUT_AGREE_ALL));
+    await act(async() => {
+      fireEvent.click(pay);
+    });
+    await waitFor(() => expect(mockService.postShopCheckout).toHaveBeenCalled());
+    const args = mockService.postShopCheckout.mock.calls[0];
+    expect(args[3]).toEqual([{ skuCode: 'PKG10', quantity: 2 }]);
+    expect(mockService.replaceShopCart).not.toHaveBeenCalled();
+  });
+
+  test('상담 상품 + 매핑 없음 → 「담당 상담사 연결 후 구매할 수 있어요」 · 결제창 안내 숨김', async() => {
+    mockUseSession.mockReturnValue(sessionFor({ phone: '01012341234', isPhoneVerified: true }));
+    mockService.fetchShopCatalog.mockResolvedValue([{ ...CATALOG[0], catalogCategory: 'CONSULTATION' }]);
+    mockService.fetchShopCart.mockResolvedValue(cartWithPkg);
+    mockService.fetchConsultantMappings.mockResolvedValue([]);
+    render(<MemoryRouter initialEntries={['/client/shop/checkout']}><ShopCheckoutPage /></MemoryRouter>);
+
+    const pay = await screen.findByTestId(CLIENT_MALL_TEST_IDS.CHECKOUT_PAY);
+    await waitFor(() => {
+      expect(screen.getByTestId(CLIENT_MALL_TEST_IDS.CHECKOUT_BLOCK_REASON))
+        .toHaveTextContent(SHOP_CHECKOUT_MAPPING_COPY.NO_MAPPING);
+    });
+    expect(SHOP_CHECKOUT_MAPPING_COPY.NO_MAPPING).toBe('담당 상담사 연결 후 구매할 수 있어요');
+    fireEvent.click(screen.getByTestId(CLIENT_MALL_TEST_IDS.CHECKOUT_AGREE_ALL));
+    expect(pay).toBeDisabled();
+    expect(screen.queryByText(CLIENT_MALL_CHECKOUT_COPY.PAY_WINDOW_HINT)).not.toBeInTheDocument();
+  });
+
+  test('좁은 화면 — 「휴대폰 인증」 바텀시트 · 보낸 뒤 「문자가 안 오면…」', async() => {
+    mockMatchMedia(true);
+    mockUseSession.mockReturnValue(sessionFor({ phone: '', isPhoneVerified: false }));
+    mockService.fetchShopCart.mockResolvedValue(cartWithPkg);
+    mockSendCode.mockResolvedValue({ deliveryChannel: 'SMS', meta: { expiresInSeconds: 300, resendCooldownSeconds: 30, remainingAttempts: 5, retryAfterSeconds: null } });
+    render(<MemoryRouter initialEntries={['/client/shop/checkout']}><ShopCheckoutPage /></MemoryRouter>);
+
+    fireEvent.click(await screen.findByTestId(CLIENT_MALL_TEST_IDS.PHONE_OPEN));
+    const sheet = await screen.findByTestId(CLIENT_MALL_TEST_IDS.PHONE_SHEET);
+    expect(screen.getByText(CLIENT_MALL_PHONE_COPY.SHEET_TITLE)).toBeInTheDocument();
+    fireEvent.change(within(sheet).getByLabelText(CLIENT_MALL_PHONE_COPY.PHONE_INPUT_LABEL), { target: { value: '01055551234' } });
+    await act(async() => {
+      fireEvent.click(within(sheet).getByTestId(CLIENT_MALL_TEST_IDS.PHONE_SEND));
+    });
+    expect(within(sheet).getByText(CLIENT_MALL_PHONE_COPY.SENT_HELP)).toBeInTheDocument();
+    expect(within(sheet).getByTestId(CLIENT_MALL_TEST_IDS.PHONE_TIMER)).toHaveTextContent('5:00');
   });
 });

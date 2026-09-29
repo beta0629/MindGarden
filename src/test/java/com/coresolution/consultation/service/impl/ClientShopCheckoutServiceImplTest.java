@@ -34,6 +34,7 @@ import com.coresolution.consultation.constant.ShopOrderFulfillmentRetryConstants
 import com.coresolution.consultation.constant.ShopOrderFulfillmentStatus;
 import com.coresolution.consultation.dto.PaymentRequest;
 import com.coresolution.consultation.dto.shop.EffectivePointTenantPolicies;
+import com.coresolution.consultation.dto.shop.ShopCartLineRequest;
 import com.coresolution.consultation.dto.shop.ShopCheckoutRequest;
 import com.coresolution.consultation.dto.shop.ShopCheckoutResponse;
 import com.coresolution.consultation.dto.shop.ShopOrderResponse;
@@ -52,6 +53,7 @@ import com.coresolution.consultation.repository.ConsultantClientMappingRepositor
 import com.coresolution.consultation.repository.PaymentRepository;
 import com.coresolution.consultation.repository.ShopCartLineRepository;
 import com.coresolution.consultation.repository.ShopCartRepository;
+import com.coresolution.consultation.repository.ShopCatalogSkuRepository;
 import com.coresolution.consultation.repository.ShopClientOrderLineRepository;
 import com.coresolution.consultation.repository.ShopClientOrderRepository;
 import com.coresolution.consultation.repository.ShopOrderFulfillmentEventRepository;
@@ -104,6 +106,8 @@ class ClientShopCheckoutServiceImplTest {
     private ShopCartRepository shopCartRepository;
     @Mock
     private ShopCartLineRepository shopCartLineRepository;
+    @Mock
+    private ShopCatalogSkuRepository shopCatalogSkuRepository;
     @Mock
     private ShopClientOrderRepository shopClientOrderRepository;
     @Mock
@@ -1235,6 +1239,166 @@ class ClientShopCheckoutServiceImplTest {
     }
 
     @Test
+    @DisplayName("바로 구매 — lines 로만 주문, 장바구니는 읽지도 비우지도 않음, checkoutSource=BUY_NOW")
+    void checkout_buyNow_usesLinesWithoutTouchingCart() {
+        String idemKey = "idem-buy-now";
+        long unitPrice = 45_000L;
+        ShopCatalogSku sku = cartLine(unitPrice).getSku();
+        when(shopClientOrderRepository.findByTenantClientAndCheckoutKey(TENANT, CLIENT_ID, idemKey))
+                .thenReturn(Optional.empty());
+        when(shopCatalogSkuRepository.findActiveByTenantAndSkuCode(TENANT, sku.getSkuCode()))
+                .thenReturn(Optional.of(sku));
+        stubPolicies(true, true, 0L, 0L);
+        when(clientPointWalletService.getBalance(TENANT, CLIENT_ID))
+                .thenReturn(ShopPointBalanceResponse.builder().availableMinor(0L).heldMinor(0L).build());
+        ArgumentCaptor<ShopClientOrder> orderCaptor = ArgumentCaptor.forClass(ShopClientOrder.class);
+        when(shopClientOrderRepository.save(orderCaptor.capture())).thenAnswer(inv -> inv.getArgument(0));
+        ArgumentCaptor<ShopClientOrderLine> lineCaptor = ArgumentCaptor.forClass(ShopClientOrderLine.class);
+        when(shopClientOrderLineRepository.save(lineCaptor.capture())).thenAnswer(inv -> inv.getArgument(0));
+        when(shopClientOrderRepository.findByTenantIdAndPublicId(eq(TENANT), anyString()))
+                .thenAnswer(inv -> Optional.of(orderCaptor.getValue()));
+
+        ShopCheckoutResponse response = service.checkout(
+                TENANT,
+                CLIENT_ID,
+                ShopCheckoutRequest.builder()
+                        .idempotencyKey(idemKey)
+                        .pointsToRedeemMinor(0L)
+                        .lines(List.of(buyNowLine(sku.getSkuCode(), 2)))
+                        .build());
+
+        assertEquals("PAYMENT", response.getNextStep());
+        assertEquals(unitPrice * 2, response.getSubtotalMinor());
+        assertEquals(ShopCheckoutConstants.CHECKOUT_SOURCE_BUY_NOW, orderCaptor.getValue().getCheckoutSource());
+        assertEquals(1, lineCaptor.getAllValues().size());
+        assertEquals(2, lineCaptor.getValue().getQuantity());
+        assertEquals(sku.getSkuCode(), lineCaptor.getValue().getSkuCodeSnapshot());
+        verify(shopCartRepository, never()).findByTenantIdAndClientId(any(), any());
+        verify(shopCartLineRepository, never()).findByCart_IdAndIsDeletedFalse(any());
+        verify(shopCartLineRepository, never()).hardDeleteByCartId(anyLong());
+    }
+
+    @Test
+    @DisplayName("장바구니 체크아웃 — checkoutSource=CART (기존 동작 유지)")
+    void checkout_cart_marksCheckoutSourceCart() {
+        String idemKey = "idem-cart-source";
+        ShopCartLine line = cartLine(50_000L);
+        stubCheckoutUpToMappings(idemKey, line);
+        ArgumentCaptor<ShopClientOrder> orderCaptor = ArgumentCaptor.forClass(ShopClientOrder.class);
+        when(shopClientOrderRepository.save(orderCaptor.capture())).thenAnswer(inv -> inv.getArgument(0));
+        when(shopClientOrderRepository.findByTenantIdAndPublicId(eq(TENANT), anyString()))
+                .thenAnswer(inv -> Optional.of(orderCaptor.getValue()));
+
+        service.checkout(
+                TENANT,
+                CLIENT_ID,
+                ShopCheckoutRequest.builder().idempotencyKey(idemKey).pointsToRedeemMinor(0L).build());
+
+        assertEquals(ShopCheckoutConstants.CHECKOUT_SOURCE_CART, orderCaptor.getValue().getCheckoutSource());
+        verify(shopCatalogSkuRepository, never()).findActiveByTenantAndSkuCode(any(), any());
+    }
+
+    @Test
+    @DisplayName("바로 구매 — 수량 범위 밖·SKU 두 개·없는 SKU 는 주문 저장 전 거부")
+    void checkout_buyNow_invalidLines_rejectBeforeOrderSave() {
+        when(shopClientOrderRepository.findByTenantClientAndCheckoutKey(eq(TENANT), eq(CLIENT_ID), anyString()))
+                .thenReturn(Optional.empty());
+        when(shopCatalogSkuRepository.findActiveByTenantAndSkuCode(TENANT, "NOPE")).thenReturn(Optional.empty());
+
+        IllegalArgumentException zeroQty = assertThrows(IllegalArgumentException.class, () -> service.checkout(
+                TENANT, CLIENT_ID, buyNowRequest("idem-bn-0", List.of(buyNowLine("SKU-1", 0)))));
+        assertEquals(ShopCheckoutConstants.MSG_BUY_NOW_INVALID_QUANTITY, zeroQty.getMessage());
+
+        IllegalArgumentException overQty = assertThrows(IllegalArgumentException.class, () -> service.checkout(
+                TENANT,
+                CLIENT_ID,
+                buyNowRequest("idem-bn-max",
+                        List.of(buyNowLine("SKU-1", ShopCheckoutConstants.MAX_LINE_QUANTITY + 1)))));
+        assertEquals(ShopCheckoutConstants.MSG_BUY_NOW_INVALID_QUANTITY, overQty.getMessage());
+
+        IllegalArgumentException twoSkus = assertThrows(IllegalArgumentException.class, () -> service.checkout(
+                TENANT,
+                CLIENT_ID,
+                buyNowRequest("idem-bn-2", List.of(buyNowLine("SKU-1", 1), buyNowLine("SKU-2", 1)))));
+        assertEquals(ShopCheckoutConstants.MSG_BUY_NOW_SINGLE_SKU_REQUIRED, twoSkus.getMessage());
+
+        IllegalArgumentException unknown = assertThrows(IllegalArgumentException.class, () -> service.checkout(
+                TENANT, CLIENT_ID, buyNowRequest("idem-bn-x", List.of(buyNowLine("NOPE", 1)))));
+        assertEquals(ShopCheckoutConstants.MSG_BUY_NOW_INVALID_SKU, unknown.getMessage());
+
+        verify(shopClientOrderRepository, never()).save(any());
+        verify(shopCartRepository, never()).findByTenantIdAndClientId(any(), any());
+    }
+
+    @Test
+    @DisplayName("바로 구매 — 상담 상품인데 활성 매핑 없으면 정확한 안내 문구로 거부")
+    void checkout_buyNow_consultationWithoutMapping_rejectsWithExactMessage() {
+        String idemKey = "idem-bn-no-mapping";
+        ShopCatalogSku sku = consultationCartLine(30_000L).getSku();
+        when(shopClientOrderRepository.findByTenantClientAndCheckoutKey(TENANT, CLIENT_ID, idemKey))
+                .thenReturn(Optional.empty());
+        when(shopCatalogSkuRepository.findActiveByTenantAndSkuCode(TENANT, sku.getSkuCode()))
+                .thenReturn(Optional.of(sku));
+        stubPolicies(true, true, 0L, 0L);
+        when(clientPointWalletService.getBalance(TENANT, CLIENT_ID))
+                .thenReturn(ShopPointBalanceResponse.builder().availableMinor(0L).heldMinor(0L).build());
+        when(clientShopConsultantMappingService.listActiveMappings(TENANT, CLIENT_ID)).thenReturn(List.of());
+
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> service.checkout(
+                TENANT, CLIENT_ID, buyNowRequest(idemKey, List.of(buyNowLine(sku.getSkuCode(), 1)))));
+
+        assertEquals("담당 상담사 연결 후 구매할 수 있어요", ex.getMessage());
+        verify(shopClientOrderRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("PG 승인(PAID) — 바로 구매 주문은 장바구니를 비우지 않는다")
+    void completeOrderOnPaymentApproved_buyNowOrder_keepsCart() {
+        ShopClientOrder order = pendingOrder(0L);
+        order.setCheckoutSource(ShopCheckoutConstants.CHECKOUT_SOURCE_BUY_NOW);
+        when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID))
+                .thenReturn(Optional.of(order));
+        stubDefaultPolicies();
+
+        assertTrue(service.completeOrderOnPaymentApproved(TENANT, ORDER_ID));
+
+        assertEquals(ShopClientOrderStatus.PAID, order.getStatus());
+        verify(shopCartRepository, never()).findByTenantIdAndClientId(any(), any());
+        verify(shopCartLineRepository, never()).hardDeleteByCartId(anyLong());
+    }
+
+    @Test
+    @DisplayName("getOrder — 라인 validityMonths 는 주문 당시 스냅샷")
+    void getOrder_lineValidityMonthsFromSnapshot() {
+        ShopClientOrder order = pendingOrder(0L);
+        ShopClientOrderLine withValidity = ShopClientOrderLine.builder()
+                .lineNo(1).skuCodeSnapshot("SKU-1").titleSnapshot("상품").quantity(1)
+                .unitPriceMinor(10_000L).lineTotalMinor(10_000L).sessionCountSnapshot(10)
+                .validityMonthsSnapshot(3).build();
+        ShopClientOrderLine noValidity = ShopClientOrderLine.builder()
+                .lineNo(2).skuCodeSnapshot("SKU-2").titleSnapshot("단회기").quantity(1)
+                .unitPriceMinor(10_000L).lineTotalMinor(10_000L).sessionCountSnapshot(1).build();
+        when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID))
+                .thenReturn(Optional.of(order));
+        when(shopClientOrderLineRepository.findByClientOrder_IdAndIsDeletedFalseOrderByLineNoAsc(order.getId()))
+                .thenReturn(List.of(withValidity, noValidity));
+        when(shopOrderFulfillmentEventRepository.findByTenantIdAndOrderPublicIdAndIsDeletedFalseOrderBySkuCodeAsc(
+                        TENANT, ORDER_ID))
+                .thenReturn(List.of());
+        when(paymentRepository.findFirstByTenantIdAndOrderIdAndStatusAndIsDeletedFalseOrderByIdDesc(
+                        eq(TENANT), eq(ORDER_ID), any()))
+                .thenReturn(Optional.empty());
+        when(paymentRepository.findByTenantIdAndOrderIdAndIsDeletedFalse(TENANT, ORDER_ID))
+                .thenReturn(List.of());
+
+        ShopOrderResponse response = service.getOrder(TENANT, CLIENT_ID, ORDER_ID);
+
+        assertEquals(3, response.getLines().get(0).getValidityMonths());
+        assertNull(response.getLines().get(1).getValidityMonths());
+        assertEquals(ShopCheckoutConstants.CHECKOUT_SOURCE_CART, response.getCheckoutSource());
+    }
+
+    @Test
     @DisplayName("빈 장바구니 체크아웃은 fail-closed 메시지")
     void checkout_emptyCart_throwsExactMessage() {
         when(shopClientOrderRepository.findByTenantClientAndCheckoutKey(TENANT, CLIENT_ID, "idem-empty"))
@@ -1958,6 +2122,18 @@ class ClientShopCheckoutServiceImplTest {
         ShopCartLine line = ShopCartLine.builder().cart(cart).sku(sku).quantity(1).build();
         line.setId(100L);
         return line;
+    }
+
+    private static ShopCartLineRequest buyNowLine(String skuCode, int quantity) {
+        return ShopCartLineRequest.builder().skuCode(skuCode).quantity(quantity).build();
+    }
+
+    private static ShopCheckoutRequest buyNowRequest(String idemKey, List<ShopCartLineRequest> lines) {
+        return ShopCheckoutRequest.builder()
+                .idempotencyKey(idemKey)
+                .pointsToRedeemMinor(0L)
+                .lines(lines)
+                .build();
     }
 
     private static ShopClientOrder pendingOrder(long pointsMinor) {

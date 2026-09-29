@@ -1,62 +1,41 @@
 /**
- * clientMallBuyNow — 바로 구매 장바구니 보관·복원
+ * clientMallBuyNow — 바로 구매 주소·체크아웃 라인 (장바구니 미사용)
  *
  * @author MindGarden
  * @since 2026-09-29
  */
 
+import { CLIENT_MALL_LIMITS, CLIENT_MALL_ROUTES } from '../../constants/clientMallConstants';
 import {
-  clearBuyNowStash,
-  hasBuyNowStash,
-  readBuyNowStash,
-  restoreBuyNowCartIfNeeded,
-  startBuyNow
+  buildBuyNowCheckoutPath,
+  clampBuyNowQuantity,
+  parseBuyNowQuery,
+  toBuyNowCheckoutLines
 } from '../clientMallBuyNow';
 
 describe('clientMallBuyNow', () => {
-  beforeEach(() => {
-    window.sessionStorage.clear();
+  test('경로 → 파싱 왕복', () => {
+    const path = buildBuyNowCheckoutPath('PKG10', 2);
+    expect(path.startsWith(`${CLIENT_MALL_ROUTES.CHECKOUT}?`)).toBe(true);
+    const search = path.slice(path.indexOf('?'));
+    expect(parseBuyNowQuery(search)).toEqual({ skuCode: 'PKG10', quantity: 2 });
   });
 
-  test('시작: 현재 장바구니 보관 → 그 상품만 담음', async() => {
-    const replaceCart = jest.fn().mockResolvedValue();
-    await startBuyNow({
-      skuCode: 'A',
-      fetchCart: async() => ({ lines: [{ skuCode: 'B', quantity: 2, title: 'x' }] }),
-      replaceCart
-    });
-    expect(replaceCart).toHaveBeenCalledWith([{ skuCode: 'A', quantity: 1 }]);
-    expect(readBuyNowStash().previousLines).toEqual([{ skuCode: 'B', quantity: 2 }]);
+  test('수량 기본 1 · 범위 밖은 잘라냄', () => {
+    expect(parseBuyNowQuery(buildBuyNowCheckoutPath('A').split('?')[1])).toEqual({ skuCode: 'A', quantity: 1 });
+    expect(clampBuyNowQuantity(0)).toBe(CLIENT_MALL_LIMITS.QTY_MIN);
+    expect(clampBuyNowQuantity('abc')).toBe(CLIENT_MALL_LIMITS.QTY_MIN);
+    expect(clampBuyNowQuantity(CLIENT_MALL_LIMITS.QTY_MAX + 5)).toBe(CLIENT_MALL_LIMITS.QTY_MAX);
   });
 
-  test('이미 보관 중이면 처음 보관분 유지', async() => {
-    const replaceCart = jest.fn().mockResolvedValue();
-    await startBuyNow({ skuCode: 'A', fetchCart: async() => ({ lines: [{ skuCode: 'B', quantity: 1 }] }), replaceCart });
-    const fetchCart = jest.fn();
-    await startBuyNow({ skuCode: 'C', quantity: 2, fetchCart, replaceCart });
-    expect(fetchCart).not.toHaveBeenCalled();
-    expect(replaceCart).toHaveBeenLastCalledWith([{ skuCode: 'C', quantity: 2 }]);
-    expect(readBuyNowStash().previousLines).toEqual([{ skuCode: 'B', quantity: 1 }]);
+  test('바로 구매 주소가 아니거나 상품 코드가 없으면 null', () => {
+    expect(parseBuyNowQuery('')).toBeNull();
+    expect(parseBuyNowQuery('?mode=buyNow')).toBeNull();
+    expect(parseBuyNowQuery('?sku=A&qty=1')).toBeNull();
   });
 
-  test('복원: 보관분으로 되돌리고 비움 · 실패 시 유지', async() => {
-    const replaceCart = jest.fn().mockResolvedValue();
-    await startBuyNow({ skuCode: 'A', fetchCart: async() => ({ lines: [{ skuCode: 'B', quantity: 1 }] }), replaceCart });
-
-    const failing = jest.fn().mockRejectedValue(new Error('x'));
-    await expect(restoreBuyNowCartIfNeeded(failing)).resolves.toBe(false);
-    expect(hasBuyNowStash()).toBe(true);
-
-    const ok = jest.fn().mockResolvedValue();
-    await expect(restoreBuyNowCartIfNeeded(ok)).resolves.toBe(true);
-    expect(ok).toHaveBeenCalledWith([{ skuCode: 'B', quantity: 1 }]);
-    expect(hasBuyNowStash()).toBe(false);
-  });
-
-  test('보관분 없으면 아무것도 안 함', async() => {
-    clearBuyNowStash();
-    const replaceCart = jest.fn();
-    await expect(restoreBuyNowCartIfNeeded(replaceCart)).resolves.toBe(false);
-    expect(replaceCart).not.toHaveBeenCalled();
+  test('체크아웃 lines 는 그 상품 한 줄', () => {
+    expect(toBuyNowCheckoutLines({ skuCode: 'A', quantity: 3 })).toEqual([{ skuCode: 'A', quantity: 3 }]);
+    expect(toBuyNowCheckoutLines(null)).toBeNull();
   });
 });

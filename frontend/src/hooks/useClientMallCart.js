@@ -15,7 +15,6 @@ import {
   replaceShopCart
 } from '../services/clientShopService';
 import { buildCartFromGuestLines, indexCatalogBySku, summarizeMallCart } from '../utils/clientMall';
-import { restoreBuyNowCartIfNeeded, startBuyNow } from '../utils/clientMallBuyNow';
 import { getGuestShopCartLines, setGuestShopCartLines } from '../utils/guestShopCart';
 
 const EMPTY_CART = Object.freeze({ lines: [], subtotalMinor: 0 });
@@ -70,14 +69,12 @@ const toPayload = (lines) => lines.map((l) => ({ skuCode: l.skuCode, quantity: l
  * @param {{
  *   isLoggedIn: boolean,
  *   sessionReady: boolean,
- *   catalog?: Array<object>,
- *   restoreBuyNow?: boolean
+ *   catalog?: Array<object>
  * }} options
  */
-const useClientMallCart = ({ isLoggedIn, sessionReady, catalog = [], restoreBuyNow = true }) => {
+const useClientMallCart = ({ isLoggedIn, sessionReady, catalog = [] }) => {
   const [cart, setCart] = useState(EMPTY_CART);
   const [loaded, setLoaded] = useState(false);
-  const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [toast, setToast] = useState(null);
   const [pulse, setPulse] = useState(false);
@@ -97,9 +94,6 @@ const useClientMallCart = ({ isLoggedIn, sessionReady, catalog = [], restoreBuyN
     try {
       setError('');
       if (isLoggedIn) {
-        if (restoreBuyNow) {
-          await restoreBuyNowCartIfNeeded(replaceShopCart);
-        }
         try {
           await mergeGuestShopCartIntoServer();
         } catch {
@@ -118,7 +112,7 @@ const useClientMallCart = ({ isLoggedIn, sessionReady, catalog = [], restoreBuyN
     } finally {
       setLoaded(true);
     }
-  }, [isLoggedIn, restoreBuyNow, catalog, commit]);
+  }, [isLoggedIn, catalog, commit]);
 
   useEffect(() => {
     if (sessionReady) {
@@ -192,22 +186,6 @@ const useClientMallCart = ({ isLoggedIn, sessionReady, catalog = [], restoreBuyN
     }
   }, [bySku, catalog, commit, persist]);
 
-  /** 로그인 내담자 바로 구매 준비 (장바구니 보관 → 그 상품 1개). 호출 측이 결제 화면으로 이동. */
-  const prepareBuyNow = useCallback(async(skuCode, quantity = 1) => {
-    setBusy(true);
-    try {
-      setError('');
-      await writeChainRef.current;
-      await startBuyNow({ skuCode, quantity, fetchCart: fetchShopCart, replaceCart: replaceShopCart });
-      return true;
-    } catch (e) {
-      setError(e?.message || CLIENT_MALL_COPY.CART_ADD_FAILED);
-      return false;
-    } finally {
-      setBusy(false);
-    }
-  }, []);
-
   const dismissToast = useCallback(() => {
     clearTimeout(toastTimerRef.current);
     setToast(null);
@@ -219,7 +197,6 @@ const useClientMallCart = ({ isLoggedIn, sessionReady, catalog = [], restoreBuyN
     cart,
     summary,
     loaded,
-    busy,
     error,
     toast,
     pulse,
@@ -228,7 +205,6 @@ const useClientMallCart = ({ isLoggedIn, sessionReady, catalog = [], restoreBuyN
     add,
     changeQuantity,
     remove,
-    prepareBuyNow,
     dismissToast
   };
 };

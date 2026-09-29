@@ -9,10 +9,13 @@ import {
   MALL_PAY_BLOCK,
   addMonthsClamped,
   buildCartFromGuestLines,
+  buildMallCardDescription,
   buildValidityExampleText,
   formatMallCountdown,
   formatMallDotDate,
   formatMallPhoneInput,
+  formatMallSessionLabel,
+  formatMallSessionsPlus,
   formatMallWon,
   maskMallPhone,
   resolveMallPayBlock,
@@ -109,5 +112,18 @@ describe('clientMall phone display', () => {
     expect(formatMallPhoneInput('0101234')).toBe('010-1234');
     expect(formatMallPhoneInput('01012341234')).toBe('010-1234-1234');
     expect(formatMallCountdown(272)).toBe('4:32');
+  });
+});
+
+describe('회기·설명 표기', () => {
+  test('칩 「N회기」 · 받는 회기 「+N회기」 — 회기회기 중복 없음', () => {
+    expect(formatMallSessionLabel(10)).toBe('10회기');
+    expect(formatMallSessionsPlus(10)).toBe('+10회기');
+    expect(`결제가 끝나면 ${formatMallSessionLabel(10)}가 바로 추가돼요`).not.toMatch(/회기회기/);
+  });
+
+  test('설명 없으면 「50분 개인상담 N회」, 있으면 그대로', () => {
+    expect(buildMallCardDescription({ descriptionText: '', sessionCount: 10 })).toBe('50분 개인상담 10회');
+    expect(buildMallCardDescription({ descriptionText: '  맞춤 설명 ', sessionCount: 10 })).toBe('맞춤 설명');
   });
 });

@@ -38,4 +38,6 @@ public class ShopOrderResponse {
     private List<ShopOrderFulfillmentLineResponse> fulfillmentEvents;
     /** 내담자 fulfill-retry 성공 1회 소진 여부 (어드민 재시도는 무시; FAILED 잔존 시 false) */
     private Boolean clientFulfillRetryAttempted;
+    /** 주문 생성 경로 {@code CART} | {@code BUY_NOW} */
+    private String checkoutSource;
 }

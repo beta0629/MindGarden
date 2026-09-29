@@ -14,6 +14,24 @@ public final class ShopCheckoutConstants {
     /** 단일 라인 최대 수량 */
     public static final int MAX_LINE_QUANTITY = 99;
 
+    /** 바로 구매 체크아웃 최대 SKU 수 — 한 상품만 */
+    public static final int MAX_BUY_NOW_LINES = 1;
+
+    /** 주문 생성 경로 — 장바구니 */
+    public static final String CHECKOUT_SOURCE_CART = "CART";
+
+    /** 주문 생성 경로 — 바로 구매 (장바구니 미사용) */
+    public static final String CHECKOUT_SOURCE_BUY_NOW = "BUY_NOW";
+
+    /** 바로 구매 라인이 비었거나 SKU 가 두 개 이상 */
+    public static final String MSG_BUY_NOW_SINGLE_SKU_REQUIRED = "바로 구매는 상품 하나만 할 수 있어요.";
+
+    /** 바로 구매 수량 범위 밖 */
+    public static final String MSG_BUY_NOW_INVALID_QUANTITY = "수량이 유효하지 않습니다.";
+
+    /** 바로 구매 SKU 를 찾을 수 없음 */
+    public static final String MSG_BUY_NOW_INVALID_SKU = "유효하지 않은 상품 코드입니다.";
+
     /**
      * PG 결제 생성 시 최소 현금 청구액({@link PaymentConstants#MIN_PAYMENT_AMOUNT})과 동일해야 함.
      * 0원 전액 포인트 결제는 PG 없이 주문만 PAID 처리.

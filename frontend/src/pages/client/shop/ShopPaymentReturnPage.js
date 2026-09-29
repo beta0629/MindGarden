@@ -164,7 +164,6 @@ const ShopPaymentReturnPage = () => {
     <ShopClientLayout
       title={SHOP_PAYMENT_RETURN_COPY.TITLE}
       testId="client-shop-payment-return"
-      restoreBuyNow={false}
     >
       {message ? (
         <p

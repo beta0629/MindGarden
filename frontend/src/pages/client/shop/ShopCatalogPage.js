@@ -19,7 +19,6 @@ import MallCartSummary from '../../../components/shop/organisms/MallCartSummary'
 import MallProductCard from '../../../components/shop/organisms/MallProductCard';
 import {
   CLIENT_MALL_COPY,
-  CLIENT_MALL_ROUTES,
   CLIENT_MALL_TEST_IDS,
   CLIENT_MALL_USAGE_BANNER,
   CLIENT_MALL_USAGE_BANNER_EXAMPLE
@@ -35,7 +34,7 @@ import { RoleUtils } from '../../../constants/roles';
 import { useClientShopAuth } from '../../../hooks/useClientShopAuth';
 import useClientMallCart from '../../../hooks/useClientMallCart';
 import { fetchShopCatalog } from '../../../services/clientShopService';
-import { mergeGuestCartLine } from '../../../utils/guestShopCart';
+import { buildBuyNowCheckoutPath } from '../../../utils/clientMallBuyNow';
 
 const buildLoginPath = (redirect) => `/login?redirect=${encodeURIComponent(redirect)}`;
 
@@ -80,16 +79,10 @@ const ShopCatalogPage = () => {
     navigate(CLIENT_SHOP_ROUTES.CHECKOUT);
   }, [isLoggedIn, navigate]);
 
-  const handleBuyNow = useCallback(async(skuCode) => {
-    if (!isLoggedIn) {
-      mergeGuestCartLine(skuCode, 1);
-      navigate(buildLoginPath(CLIENT_SHOP_ROUTES.CHECKOUT));
-      return;
-    }
-    if (await mall.prepareBuyNow(skuCode)) {
-      navigate(CLIENT_MALL_ROUTES.CHECKOUT_BUY_NOW);
-    }
-  }, [isLoggedIn, mall, navigate]);
+  const handleBuyNow = useCallback((skuCode) => {
+    const path = buildBuyNowCheckoutPath(skuCode);
+    navigate(isLoggedIn ? path : buildLoginPath(path));
+  }, [isLoggedIn, navigate]);
 
   if (sessionLoading) {
     return <ShopClientSessionLoading title={CLIENT_MALL_COPY.PAGE_TITLE} />;
@@ -104,7 +97,6 @@ const ShopCatalogPage = () => {
       summary={summary}
       lastAddedSku={mall.lastAddedSku}
       onCheckout={goCheckout}
-      disabled={mall.busy}
     />
   );
 
@@ -161,7 +153,6 @@ const ShopCatalogPage = () => {
                   sku={sku}
                   addTestId={index === 0 ? SHOP_SKU_ADD_FIRST_TEST_ID : undefined}
                   buyNowTestId={index === 0 ? CLIENT_MALL_TEST_IDS.CARD_BUY_NOW : undefined}
-                  disabled={mall.busy}
                   detailTo={buildShopSkuDetailPath(sku.skuCode)}
                   onAdd={() => mall.add(sku.skuCode)}
                   onBuyNow={() => handleBuyNow(sku.skuCode)}
@@ -177,7 +168,7 @@ const ShopCatalogPage = () => {
         quantity={summary.quantity}
         subtotalMinor={summary.subtotalMinor}
         onAction={goCheckout}
-        disabled={summary.isEmpty || mall.busy}
+        disabled={summary.isEmpty}
       />
       <MallToast toast={mall.toast} />
     </ShopClientLayout>

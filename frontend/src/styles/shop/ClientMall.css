@@ -20,6 +20,11 @@
   --client-mall-sticky-top: 5.5rem;
   --client-mall-bar-h: 4.5rem;
   --client-mall-bar-reserve: 8.75rem;
+  --client-mall-bar-z: 200;
+  --client-mall-bar-cta-w: 9.375rem;
+  --client-mall-primary: var(--client-web-teal);
+  --client-mall-primary-hover: var(--client-web-teal-hover);
+  --client-mall-on-primary: var(--client-web-on);
   --client-mall-gap: var(--mg-v2-space-4, 1rem);
 }
 
@@ -197,12 +202,25 @@
   margin-top: auto;
 }
 
-/* ---------- chip (회기) — slate, stub 제거 ---------- */
+/* ---------- chip (회기) — slate · 아이콘 + 「N회기」 ---------- */
 .client-mall .client-mall-chip {
   align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--mg-v2-space-1, 0.25rem);
+  padding: var(--mg-v2-space-1, 0.25rem) var(--mg-v2-space-2, 0.5rem);
   border: none;
+  border-radius: var(--mg-v2-radius-sm, 0.25rem);
   background: var(--client-mall-chip-bg);
   color: var(--client-mall-ink);
+  font-size: var(--mg-v2-font-size-caption, 0.75rem);
+  font-weight: var(--mg-v2-font-weight-semibold, 600);
+  white-space: nowrap;
+}
+
+.client-mall .client-mall-chip__icon {
+  flex-shrink: 0;
+  color: var(--client-mall-slate);
 }
 
 .client-mall .client-mall-chip .client-shop__session-ticket-stub {
@@ -309,6 +327,23 @@
   background: var(--client-mall-surface);
   color: var(--client-mall-ink);
   border: 1px solid var(--client-mall-ink);
+}
+
+.client-mall .client-mall-btn--primary {
+  background: var(--client-mall-primary);
+  color: var(--client-mall-on-primary);
+  border: 1px solid var(--client-mall-primary);
+}
+
+.client-mall .client-mall-btn--primary:hover:not(:disabled) {
+  background: var(--client-mall-primary-hover);
+  border-color: var(--client-mall-primary-hover);
+}
+
+.client-mall .client-mall-btn--primary:disabled {
+  background: var(--cs-slate-200, var(--client-mall-line));
+  border-color: var(--cs-slate-200, var(--client-mall-line));
+  color: var(--client-mall-mute);
 }
 
 .client-mall .client-mall-btn--line:hover:not(:disabled),
@@ -653,9 +688,38 @@
   right: var(--mg-v2-space-3, 0.75rem);
   top: 50%;
   transform: translateY(-50%);
-  color: var(--cs-error-600, var(--mg-v2-color-error-main));
+  color: var(--client-mall-mute);
   font-size: var(--mg-v2-font-size-caption, 0.75rem);
   font-variant-numeric: tabular-nums;
+}
+
+.client-mall-phone__timer--expired {
+  color: var(--cs-warning-700, var(--client-mall-slate));
+  font-weight: var(--mg-v2-font-weight-semibold, 600);
+}
+
+.client-mall-phone .client-mall-field__input:disabled {
+  background: var(--cs-slate-50, var(--client-mall-surface));
+  color: var(--client-mall-mute);
+  cursor: not-allowed;
+}
+
+.client-mall-phone__needs {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--mg-v2-space-2, 0.5rem);
+}
+
+.client-mall-phone__needs-hint {
+  color: var(--client-mall-mute);
+  font-size: var(--mg-v2-font-size-caption, 0.75rem);
+}
+
+.client-mall-phone__panel-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-v2-space-2, 0.5rem);
 }
 
 .client-mall-phone__hint,
@@ -690,6 +754,10 @@
   margin: 0;
   font-weight: var(--mg-v2-font-weight-semibold, 600);
   color: var(--client-mall-ink);
+}
+
+.client-mall-phone__state--warn .client-mall-phone__state-title {
+  color: var(--cs-warning-800, var(--client-mall-ink));
 }
 
 .client-mall-badge {
@@ -748,6 +816,21 @@
 
 .client-mall-agree__summary::-webkit-details-marker {
   display: none;
+}
+
+.client-mall-agree__label {
+  flex: 1;
+  min-width: 0;
+}
+
+.client-mall-agree__chevron {
+  flex-shrink: 0;
+  color: var(--client-mall-mute);
+  transition: transform var(--mg-v2-transition-fast, 0.15s) ease;
+}
+
+.client-mall-agree__details[open] .client-mall-agree__chevron {
+  transform: rotate(90deg);
 }
 
 .client-mall-agree__tag {
@@ -859,9 +942,6 @@
 }
 
 /* ---------- complete ---------- */
-.client-mall--complete .client-web-page-shell__stage {
-  max-width: 35rem;
-}
 
 .client-mall-complete {
   align-items: stretch;
@@ -870,7 +950,15 @@
 
 .client-mall-complete__icon {
   align-self: center;
-  color: var(--client-mall-ink);
+  color: var(--client-mall-primary);
+}
+
+.client-mall-complete__eyebrow {
+  margin: 0;
+  text-align: center;
+  color: var(--client-mall-primary);
+  font-size: var(--mg-v2-font-size-caption, 0.75rem);
+  font-weight: var(--mg-v2-font-weight-semibold, 600);
 }
 
 .client-mall-complete__title {
@@ -959,7 +1047,8 @@
   .client-mall--catalog .client-web-page-shell__aside,
   .client-mall--cart .client-web-page-shell__aside,
   .client-mall--detail .client-web-page-shell__aside,
-  .client-mall--checkout .client-mall-pay__cta-wrap {
+  .client-mall--checkout .client-mall-pay__cta,
+  .client-mall-list-head__hint {
     display: none;
   }
 
@@ -975,7 +1064,7 @@
     left: 0;
     right: 0;
     bottom: 0;
-    z-index: var(--z-fixed, 1000);
+    z-index: var(--client-mall-bar-z);
     background: var(--client-mall-surface);
     border-top: 1px solid var(--client-mall-line);
     padding-bottom: env(safe-area-inset-bottom, 0);
@@ -983,7 +1072,7 @@
 
   .client-mall-bar__inner {
     box-sizing: border-box;
-    min-height: var(--client-mall-bar-h);
+    height: var(--client-mall-bar-h);
     max-width: var(--client-web-stage-max);
     margin: 0 auto;
     padding: 0 var(--client-web-pad-x);
@@ -995,13 +1084,28 @@
 
   .client-mall-bar__sum {
     display: flex;
+    flex: 1 1 auto;
     flex-direction: column;
     min-width: 0;
+  }
+
+  .client-mall-bar__label,
+  .client-mall-bar__qty,
+  .client-mall-bar__caption {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .client-mall-bar__label {
+    color: var(--client-mall-mute);
+    font-size: var(--mg-v2-font-size-caption, 0.75rem);
   }
 
   .client-mall-bar__qty {
     font-weight: var(--mg-v2-font-weight-bold, 700);
     color: var(--client-mall-ink);
+    font-variant-numeric: tabular-nums;
   }
 
   .client-mall-bar__caption {
@@ -1010,8 +1114,10 @@
   }
 
   .client-mall .client-mall-bar__cta {
-    flex-shrink: 0;
-    min-width: 8.5rem;
+    flex: 0 0 var(--client-mall-bar-cta-w);
+    width: var(--client-mall-bar-cta-w);
+    max-width: var(--client-mall-bar-cta-w);
+    white-space: nowrap;
   }
 
   .client-mall-detail__actions {
@@ -1024,4 +1130,35 @@
   .client-mall-toast {
     bottom: calc(var(--client-mall-bar-h) + env(safe-area-inset-bottom, 0) + var(--mg-v2-space-3, 0.75rem));
   }
+}
+
+/* ---------- 휴대폰 인증 바텀시트 (UnifiedModal 포털 — 셸 밖이라 같은 역할 토큰을 전역 토큰으로 다시 이음) ---------- */
+.mg-modal-overlay.client-mall-sheet {
+  align-items: flex-end;
+  --client-web-ink: var(--cs-ink);
+  --client-web-slate: var(--cs-slate-600);
+  --client-web-mute: var(--cs-slate-500);
+  --client-web-line: var(--cs-slate-200);
+  --client-web-hair: var(--cs-slate-300);
+  --client-web-surface: var(--cs-white);
+  --client-web-chip-bg: var(--cs-slate-100);
+  --client-web-teal: var(--mg-color-primary-main);
+  --client-web-teal-hover: var(--mg-color-primary-light);
+  --client-web-on: var(--cs-white);
+  --client-web-radius-card: var(--mg-v2-radius-xl);
+  --client-web-radius-btn: var(--mg-v2-radius-lg);
+}
+
+.mg-modal.client-mall-sheet {
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  border-radius: var(--client-web-radius-card) var(--client-web-radius-card) 0 0;
+  padding-bottom: env(safe-area-inset-bottom, 0);
+}
+
+.client-mall-phone--sheet {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-v2-space-2, 0.5rem);
 }

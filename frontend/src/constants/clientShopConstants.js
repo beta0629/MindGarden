@@ -373,7 +373,7 @@ export const SHOP_CATALOG_CATEGORY = {
   ASSESSMENT: 'ASSESSMENT'
 };
 
-/** 생성형 SVG placeholder — 400×400, 카테고리별 톤 (디자인 토큰 hex) */
+/** 생성형 SVG placeholder — 400×400, 카테고리별 톤 (디자인 토큰 이름 · 런타임에 계산값으로 풀어 data URI 에 넣음) */
 export const SHOP_CATALOG_PLACEHOLDER_SIZE_PX = 400;
 
 export const SHOP_CATALOG_PLACEHOLDER_TITLE_FALLBACK = '상품';
@@ -381,16 +381,19 @@ export const SHOP_CATALOG_PLACEHOLDER_TITLE_FALLBACK = '상품';
 /** @type {Readonly<Record<string, { background: string, accent: string, text: string }>>} */
 export const SHOP_CATALOG_PLACEHOLDER_SVG_COLORS = {
   [SHOP_CATALOG_CATEGORY.CONSULTATION]: {
-    background: '#F5F3EF',
-    accent: 'var(--mg-color-primary-main)',
-    text: 'var(--mg-color-primary-main)'
+    background: '--mg-color-surface-main',
+    accent: '--mg-color-primary-main',
+    text: '--mg-color-primary-main'
   },
   [SHOP_CATALOG_CATEGORY.ASSESSMENT]: {
-    background: '#EEF4F1',
-    accent: '#5C7A6B',
-    text: 'var(--mg-color-primary-main)'
+    background: '--mg-color-background-main',
+    accent: '--mg-color-primary-light',
+    text: '--mg-color-primary-main'
   }
 };
+
+/** 토큰 계산값을 못 얻을 때(SSR·테스트) SVG 가 쓰는 값 — 색 리터럴 없이 글자색 상속 */
+export const SHOP_CATALOG_PLACEHOLDER_SVG_COLOR_FALLBACK = 'currentColor';
 
 /**
  * PLP 탭 필터용 — API·DB 대소문자·공백 차이 흡수.
@@ -448,8 +451,7 @@ export function formatShopSessionCountDisplay(sessionCount, labels = {}) {
 export const SHOP_CHECKOUT_MAPPING_COPY = {
   SECTION_TITLE: '담당 상담사',
   SELECT_PLACEHOLDER: '상담사를 선택해 주세요',
-  NO_MAPPING:
-    '상담 상품 결제를 위해 센터에 상담 연결을 요청해 주세요. 연결 후 다시 결제해 주세요.',
+  NO_MAPPING: '담당 상담사 연결 후 구매할 수 있어요',
   REQUIRED: '담당 상담사를 선택해 주세요.',
   AUTO_PREFIX: '담당 상담사'
 };

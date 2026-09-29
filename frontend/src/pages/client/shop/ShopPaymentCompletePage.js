@@ -1,5 +1,5 @@
 /**
- * ShopPaymentCompletePage — 「결제가 완료됐어요」 (추가된 회기 · 사용 기한 · 금액 · 주문번호)
+ * ShopPaymentCompletePage — 「결제가 완료됐어요」 (추가된 회기 · 사용 기한 · 금액·결제 수단 · 주문번호 · 옆 「내 회기」)
  * primary 「내 회기 보기」 하나 · secondary 「결제 내역 보기」 · 예약/일정 버튼 없음.
  * 결제 확정이 아니거나 이행 재시도가 필요하면 주문 상세로 넘긴다.
  *
@@ -16,6 +16,7 @@ import MallInfoRows from '../../../components/shop/molecules/MallInfoRows';
 import MGButton from '../../../components/common/MGButton';
 import SafeText from '../../../components/common/SafeText';
 import {
+  CLIENT_MALL_CHECKOUT_SOURCE_BUY_NOW,
   CLIENT_MALL_COMPLETE_COPY,
   CLIENT_MALL_COPY,
   CLIENT_MALL_ROUTES,
@@ -28,15 +29,20 @@ import {
 import { ICONS, ICON_SIZES } from '../../../constants/icons';
 import { RoleUtils } from '../../../constants/roles';
 import { useClientShopAuth } from '../../../hooks/useClientShopAuth';
-import { fetchShopCatalog, fetchShopOrder, replaceShopCart } from '../../../services/clientShopService';
+import {
+  fetchClientRemainingSessions,
+  fetchShopCart,
+  fetchShopCatalog,
+  fetchShopOrder
+} from '../../../services/clientShopService';
 import {
   addMonthsClamped,
   formatMallDotDate,
+  formatMallSessionsPlus,
   formatMallWon,
   indexCatalogBySku,
   resolveValidityMonths
 } from '../../../utils/clientMall';
-import { hasBuyNowStash, restoreBuyNowCartIfNeeded } from '../../../utils/clientMallBuyNow';
 import { normalizeShopSessionCount } from '../../../utils/shopSessionCount';
 import { requestClientHomeMappingsSoftRefresh } from '../../../utils/clientHomeSoftRefresh';
 
@@ -50,7 +56,8 @@ const ShopPaymentCompletePage = () => {
   const [order, setOrder] = useState(null);
   const [catalog, setCatalog] = useState([]);
   const [failed, setFailed] = useState(false);
-  const [wasBuyNow, setWasBuyNow] = useState(false);
+  const [remainingSessions, setRemainingSessions] = useState(null);
+  const [keptCartQty, setKeptCartQty] = useState(null);
   const ranRef = useRef(false);
 
   useEffect(() => {
@@ -72,13 +79,15 @@ const ShopPaymentCompletePage = () => {
         setCatalog(rows);
         setOrder(row);
         requestClientHomeMappingsSoftRefresh();
-        if (hasBuyNowStash()) {
-          setWasBuyNow(true);
-          try {
-            await restoreBuyNowCartIfNeeded(replaceShopCart);
-          } catch {
-            // 보관본 유지 — 다음 쇼핑 화면에서 재시도
-          }
+        const buyNow = row.checkoutSource === CLIENT_MALL_CHECKOUT_SOURCE_BUY_NOW;
+        const [remaining, keptCart] = await Promise.all([
+          fetchClientRemainingSessions(user?.id).catch(() => null),
+          buyNow ? fetchShopCart().catch(() => null) : Promise.resolve(null)
+        ]);
+        setRemainingSessions(remaining);
+        if (keptCart) {
+          const qty = (keptCart.lines || []).reduce((sum, l) => sum + (Number(l.quantity) || 0), 0);
+          setKeptCartQty(qty > 0 ? qty : null);
         }
       } catch {
         setFailed(true);
@@ -98,35 +107,62 @@ const ShopPaymentCompletePage = () => {
     (sum, line) => sum + normalizeShopSessionCount(line.sessionCount) * (Number(line.quantity) || 0),
     0
   );
-  const expiryTexts = Array.from(new Set(
+  const expiryDates = Array.from(new Set(
     lines
-      .map((line) => resolveValidityMonths(bySku.get(line.skuCode)))
+      .map((line) => resolveValidityMonths(line) ?? resolveValidityMonths(bySku.get(line.skuCode)))
       .filter((months) => months != null)
-      .map((months) => `${formatMallDotDate(addMonthsClamped(today, months))}${CLIENT_MALL_COMPLETE_COPY.EXPIRE_SUFFIX}`)
+      .map((months) => formatMallDotDate(addMonthsClamped(today, months)))
   ));
-  const productText = lines.map((line) => `${line.title} × ${line.quantity}`).join(', ');
+  const expiryTexts = expiryDates.map((date) => `${date}${CLIENT_MALL_COMPLETE_COPY.EXPIRE_SUFFIX}`);
+  const productText = lines.map((line) => `${line.title}${CLIENT_MALL_COPY.LINE_TIMES}${line.quantity}`).join(', ');
+  const amountText = order
+    ? `${formatMallWon(order.cashDueMinor)}${Number(order.cashDueMinor) > 0
+      ? CLIENT_MALL_COMPLETE_COPY.AMOUNT_METHOD_SUFFIX
+      : CLIENT_MALL_COMPLETE_COPY.AMOUNT_POINTS_ONLY_SUFFIX}`
+    : '';
 
   const rows = order ? [
     { key: 'product', label: CLIENT_MALL_COMPLETE_COPY.ROW_PRODUCT, value: <SafeText>{productText}</SafeText> },
     {
       key: 'sessions',
       label: CLIENT_MALL_COMPLETE_COPY.ROW_SESSIONS,
-      value: `${totalSessions}${CLIENT_MALL_COPY.SESSION_UNIT}`
+      value: formatMallSessionsPlus(totalSessions)
     },
     ...expiryTexts.map((text, index) => ({
       key: `expire-${index}`,
       label: CLIENT_MALL_COMPLETE_COPY.ROW_EXPIRE,
       value: text
     })),
-    { key: 'amount', label: CLIENT_MALL_COMPLETE_COPY.ROW_AMOUNT, value: formatMallWon(order.cashDueMinor) },
+    { key: 'amount', label: CLIENT_MALL_COMPLETE_COPY.ROW_AMOUNT, value: amountText },
     { key: 'order', label: CLIENT_MALL_COMPLETE_COPY.ROW_ORDER_ID, value: <SafeText>{order.orderPublicId}</SafeText> }
   ] : [];
+
+  const aside = order && (remainingSessions != null || expiryDates.length === 1) ? (
+    <section className="client-mall-cart client-mall-complete-aside" data-testid={CLIENT_MALL_TEST_IDS.COMPLETE_ASIDE}>
+      <h2 className="client-mall-cart__title">{CLIENT_MALL_COMPLETE_COPY.ASIDE_TITLE}</h2>
+      {remainingSessions != null ? (
+        <p className="client-mall-cart__total">
+          <span className="client-mall-cart__total-label">{CLIENT_MALL_COMPLETE_COPY.ASIDE_REMAINING_LABEL}</span>
+          <span className="client-mall-cart__total-amount">
+            <span className="client-mall-cart__total-num">{remainingSessions}</span>
+            {CLIENT_MALL_COMPLETE_COPY.ASIDE_REMAINING_UNIT}
+          </span>
+        </p>
+      ) : null}
+      {expiryDates.length === 1 ? (
+        <p className="client-mall-pay__meta">
+          {expiryDates[0]}
+          {CLIENT_MALL_COMPLETE_COPY.ASIDE_EXPIRE_SUFFIX}
+        </p>
+      ) : null}
+    </section>
+  ) : null;
 
   return (
     <ShopClientLayout
       title=""
       testId="client-shop-payment-complete"
-      restoreBuyNow={false}
+      aside={aside}
       className="client-mall--complete"
     >
       {failed ? (
@@ -142,6 +178,7 @@ const ShopPaymentCompletePage = () => {
       {order ? (
         <section className="client-mall-box client-mall-complete" data-testid={CLIENT_MALL_TEST_IDS.COMPLETE}>
           {CheckIcon ? <CheckIcon size={ICON_SIZES.XXXL} aria-hidden className="client-mall-complete__icon" /> : null}
+          <p className="client-mall-complete__eyebrow">{CLIENT_MALL_COMPLETE_COPY.EYEBROW}</p>
           <h1 className="client-mall-complete__title">{CLIENT_MALL_COMPLETE_COPY.HEADING}</h1>
           <p className="client-mall-complete__lead">
             {totalSessions}
@@ -172,7 +209,13 @@ const ShopPaymentCompletePage = () => {
             </MGButton>
           </div>
           <p className="client-mall-complete__help">{CLIENT_MALL_COMPLETE_COPY.HELP}</p>
-          {wasBuyNow ? <p className="client-mall-complete__help">{CLIENT_MALL_COMPLETE_COPY.BUY_NOW_CART_KEPT}</p> : null}
+          {keptCartQty != null ? (
+            <p className="client-mall-complete__help" data-testid={CLIENT_MALL_TEST_IDS.COMPLETE_CART_KEPT}>
+              {CLIENT_MALL_COMPLETE_COPY.BUY_NOW_CART_KEPT_PREFIX}
+              {keptCartQty}
+              {CLIENT_MALL_COMPLETE_COPY.BUY_NOW_CART_KEPT_SUFFIX}
+            </p>
+          ) : null}
         </section>
       ) : null}
     </ShopClientLayout>

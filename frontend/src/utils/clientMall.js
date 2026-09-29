@@ -56,6 +56,32 @@ export const formatMallSessionLabel = (sessionCount) =>
   `${normalizeShopSessionCount(sessionCount)}${CLIENT_MALL_COPY.SESSION_UNIT}`;
 
 /**
+ * 받는·추가된 회기 — 「+10회기」.
+ *
+ * @param {number|string} totalSessions 이미 합산된 회기 수
+ * @returns {string}
+ */
+export const formatMallSessionsPlus = (totalSessions) => {
+  const n = Math.max(0, Math.floor(Number(totalSessions) || 0));
+  return `${CLIENT_MALL_CHECKOUT_COPY.SESSIONS_PLUS_PREFIX}${n}${CLIENT_MALL_COPY.SESSION_UNIT}`;
+};
+
+/**
+ * 카드·상세 설명 — 상품 설명이 없으면 「50분 개인상담 N회」.
+ *
+ * @param {{ descriptionText?: string|null, sessionCount?: number|string }|null|undefined} sku
+ * @returns {string}
+ */
+export const buildMallCardDescription = (sku) => {
+  const text = typeof sku?.descriptionText === 'string' ? sku.descriptionText.trim() : '';
+  if (text) {
+    return text;
+  }
+  const { CARD_DESC_FALLBACK_PREFIX: prefix, CARD_DESC_FALLBACK_SUFFIX: suffix } = CLIENT_MALL_COPY;
+  return `${prefix}${normalizeShopSessionCount(sku?.sessionCount)}${suffix}`;
+};
+
+/**
  * 상품 설정 이용기간(개월). 양의 정수가 아니면 null (표시 생략).
  *
  * @param {{ validityMonths?: number|string|null }|null|undefined} row

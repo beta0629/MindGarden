@@ -39,10 +39,11 @@ describe('Clinic-OS client cart/checkout chrome', () => {
     expect(css).toMatch(/--mg-v2-color-primary-solid/);
   });
 
-  test('cart and checkout render SessionCountTicket', () => {
-    expect(cart).toMatch(/SessionCountTicket/);
+  test('cart and checkout render the mall session chip (N회기)', () => {
+    expect(cart).toMatch(/MallSessionChip/);
     expect(checkout).toMatch(/MallCheckoutLine/);
-    expect(checkoutLine).toMatch(/SessionCountTicket/);
+    expect(checkoutLine).toMatch(/MallSessionChip/);
+    expect(read('src/components/shop/atoms/MallSessionChip.js')).toMatch(/formatMallSessionLabel/);
     expect(ticket).toMatch(/formatShopSessionCountDisplay/);
     expect(ticket).toMatch(/client-shop__session-ticket/);
   });

@@ -53,6 +53,11 @@ describe('clientMallPhoneVerify', () => {
       locked: true,
       meta: { retryAfterSeconds: 540 }
     });
+    expect(classifyPhoneSendError(apiError(undefined, 'x', {
+      success: false,
+      data: { retryAfterSeconds: 600, remainingAttempts: 0 }
+    }))).toMatchObject({ locked: true, meta: { retryAfterSeconds: 600 } });
+    expect(classifyPhoneSendError(apiError(500, 'x', {})).locked).toBe(false);
     expect(buildLockedMessage(540).startsWith('9')).toBe(true);
     expect(buildLockedMessage(null)).toBe(CLIENT_MALL_PHONE_COPY.LOCKED_BODY_FALLBACK);
   });

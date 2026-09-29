@@ -85,6 +85,14 @@ export const CLIENT_MALL_COPY = Object.freeze({
   CART_BROWSE: '상품 보러 가기',
   CART_NEXT_HINT: '다음 화면에서 인증·동의 후 바로 결제해요',
   CART_PAGE_SUMMARY_TITLE: '결제 금액',
+  CART_PAGE_SUBTITLE: '수량을 바꾸거나 빼고 결제하세요',
+  CART_PAGE_LIST_PREFIX: '담은 상품 ',
+  CART_PAGE_SESSIONS: '받는 회기',
+  CART_PAGE_VALIDITY_SUFFIX: '개월 안에 사용',
+  LINE_TIMES: ' × ',
+  BAR_LABEL: '장바구니',
+  CARD_DESC_FALLBACK_PREFIX: '50분 개인상담 ',
+  CARD_DESC_FALLBACK_SUFFIX: '회',
   QTY_DECREASE: '수량 줄이기',
   QTY_INCREASE: '수량 늘리기',
 
@@ -93,7 +101,7 @@ export const CLIENT_MALL_COPY = Object.freeze({
   TOAST_CART_PREFIX: '장바구니 ',
 
   DETAIL_BACK: '← 상품 목록',
-  DETAIL_ROW_SESSIONS_ADDED_SUFFIX: '회기가 바로 추가돼요',
+  DETAIL_ROW_SESSIONS_ADDED_SUFFIX: '가 바로 추가돼요',
   DETAIL_ROW_SESSIONS_ADDED_PREFIX: '결제가 끝나면 ',
   DETAIL_ROW_SESSIONS_ADDED_LABEL: '회기 추가',
   DETAIL_ROW_REFUND_LABEL: '환불',
@@ -104,6 +112,7 @@ export const CLIENT_MALL_COPY = Object.freeze({
 /** 결제 전 확인 (§5.8) */
 export const CLIENT_MALL_CHECKOUT_COPY = Object.freeze({
   TITLE: '결제 전 확인',
+  EYEBROW: '결제 전 확인',
   SUBTITLE: '이 화면에서 확인·인증·동의까지 마치고 바로 결제해요.',
   BUY_NOW_CAPTION: '바로 구매 · 장바구니는 그대로예요',
   CART_CAPTION_PREFIX: '장바구니 ',
@@ -116,7 +125,9 @@ export const CLIENT_MALL_CHECKOUT_COPY = Object.freeze({
   BUYER_NAME: '이름',
   BUYER_CONSULTANT: '담당 상담사',
   BUYER_PHONE: '휴대폰',
+  BUYER_PHONE_CARD_HINT: '이 화면 안에서 인증해요',
   PHONE_NEEDS_VERIFY: '인증이 필요해요',
+  PHONE_NEEDS_VERIFY_HINT: '결제 전에 한 번만',
   AGREEMENT_SECTION: '약관 동의',
   AGREEMENT_ALL: '전체 동의',
   AGREEMENT_REQUIRED_TAG: '필수',
@@ -126,7 +137,11 @@ export const CLIENT_MALL_CHECKOUT_COPY = Object.freeze({
   PAY_ROW_SUBTOTAL: '상품 금액',
   PAY_ROW_POINTS: '포인트',
   PAY_ROW_POINTS_BALANCE_PREFIX: '보유 ',
+  PAY_ROW_POINTS_SEPARATOR: ' · ',
+  POINT_UNIT: 'P',
   PAY_ROW_SESSIONS: '받는 회기',
+  PAY_ROW_QUANTITY: '수량',
+  SESSIONS_PLUS_PREFIX: '+',
   PAY_TOTAL: '결제 금액',
   PAY_VALIDITY_PREFIX: '이용기간: 결제일부터 ',
   PAY_VALIDITY_SUFFIX: '개월 (당일 포함)',
@@ -169,6 +184,12 @@ export const CLIENT_MALL_PHONE_COPY = Object.freeze({
   SECTION_LABEL: '휴대폰 인증',
   SECTION_HINT: '결제 전에 한 번만 인증해요. 입력한 내용은 그대로 남아요.',
   START: '인증하기',
+  SHEET_TITLE: '휴대폰 인증',
+  SHEET_SENT_SUBTITLE: '문자로 받은 6자리 숫자를 입력해 주세요.',
+  SENT_HELP: '문자가 안 오면 다시 받을 수 있어요',
+  RESENT_HELP: '새 인증번호만 쓸 수 있어요',
+  CLOSE: '닫기',
+  VERIFIED_TOAST: '인증을 마쳤어요',
   PHONE_INPUT_LABEL: '휴대폰 번호',
   PHONE_PLACEHOLDER: '010-0000-0000',
   SEND: '인증번호 받기',
@@ -209,12 +230,19 @@ export const CLIENT_MALL_COMPLETE_COPY = Object.freeze({
   ROW_SESSIONS: '추가된 회기',
   ROW_EXPIRE: '사용 기한',
   ROW_AMOUNT: '결제 금액',
+  AMOUNT_METHOD_SUFFIX: ' · 카드 결제 · 일시불',
+  AMOUNT_POINTS_ONLY_SUFFIX: ' · 포인트 결제',
+  ASIDE_TITLE: '내 회기',
+  ASIDE_REMAINING_LABEL: '남은 회기',
+  ASIDE_REMAINING_UNIT: '회',
+  ASIDE_EXPIRE_SUFFIX: '까지 사용 (당일 포함)',
   ROW_ORDER_ID: '주문번호',
   EXPIRE_SUFFIX: '까지 (당일 포함)',
   PRIMARY: '내 회기 보기',
   SECONDARY: '결제 내역 보기',
   HELP: '상담 일정은 센터에서 연락드려요',
-  BUY_NOW_CART_KEPT: '장바구니는 그대로예요',
+  BUY_NOW_CART_KEPT_PREFIX: '바로 구매였기 때문에 장바구니(',
+  BUY_NOW_CART_KEPT_SUFFIX: '개)는 그대로 남아요',
   LOAD_FAILED: '주문 정보를 불러오지 못했어요.',
   ORDER_LINK: '주문 상세 보기'
 });
@@ -223,13 +251,15 @@ export const CLIENT_MALL_ROUTES = Object.freeze({
   SESSIONS: CLIENT_DASHBOARD_ROUTES.SESSION_MANAGEMENT,
   PAYMENT_HISTORY: CLIENT_DASHBOARD_ROUTES.PAYMENT_HISTORY,
   SETTINGS: CLIENT_DASHBOARD_ROUTES.SETTINGS,
-  CHECKOUT_BUY_NOW: `${CLIENT_SHOP_ROUTES.CHECKOUT}?mode=buyNow`
+  CHECKOUT: CLIENT_SHOP_ROUTES.CHECKOUT
 });
 
 /** 쿼리 키 */
 export const CLIENT_MALL_QUERY = Object.freeze({
   MODE: 'mode',
   MODE_BUY_NOW: 'buyNow',
+  SKU: 'sku',
+  QTY: 'qty',
   RETURN_TO: 'returnTo'
 });
 
@@ -256,12 +286,11 @@ export const CLIENT_MALL_MIN_AMOUNT_ERROR_MARKERS = Object.freeze(['최소 금�
 /** BE 가 OTP 불일치·만료 시 내려주는 문구 식별 조각 */
 export const CLIENT_MALL_OTP_MISMATCH_MARKER = '인증 코드';
 
-/** 바로 구매 장바구니 보관 sessionStorage */
-export const CLIENT_MALL_BUY_NOW_STORAGE = Object.freeze({
-  KEY: 'mg.clientShop.buyNowStash',
-  FIELD_SKU: 'skuCode',
-  FIELD_LINES: 'previousLines'
-});
+/** 주문 생성 경로 — BE ShopCheckoutConstants.CHECKOUT_SOURCE_BUY_NOW */
+export const CLIENT_MALL_CHECKOUT_SOURCE_BUY_NOW = 'BUY_NOW';
+
+/** 좁은 웹(<900px) — ClientMall.css 하단 바·인증 시트 전환점과 같은 값 */
+export const CLIENT_MALL_NARROW_MEDIA_QUERY = '(max-width: 56.25rem)';
 
 export const CLIENT_MALL_TEST_IDS = Object.freeze({
   CATALOG_GRID: 'client-mall-grid',
@@ -292,6 +321,11 @@ export const CLIENT_MALL_TEST_IDS = Object.freeze({
   PHONE_TIMER: 'client-mall-phone-timer',
   PHONE_ERROR: 'client-mall-phone-error',
   PHONE_VERIFIED: 'client-mall-phone-verified',
+  PHONE_SHEET: 'client-mall-phone-sheet',
+  PHONE_OPEN: 'client-mall-phone-open',
+  CART_PAGE_ASIDE: 'client-mall-cart-page-aside',
+  COMPLETE_ASIDE: 'client-mall-complete-aside',
+  COMPLETE_CART_KEPT: 'client-mall-complete-cart-kept',
   COMPLETE: 'client-mall-complete',
   COMPLETE_PRIMARY: 'client-mall-complete-primary'
 });

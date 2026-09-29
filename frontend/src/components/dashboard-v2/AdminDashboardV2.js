@@ -1827,7 +1827,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
             description={t('common:dashboard-v2.AdminDashboardV2.t_7af6ac13')}
           />
           <AdminMgmtNavCard
-            to={ADMIN_ROUTES.PACKAGE_PRICING}
+            to={ADMIN_ROUTES.SHOP_PRODUCTS}
             icon={Package}
             tone="orange"
             label={t('common:dashboard-v2.AdminDashboardV2.t_72264d4a')}

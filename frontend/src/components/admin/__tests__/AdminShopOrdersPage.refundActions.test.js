@@ -9,28 +9,36 @@ const SOURCE = fs.readFileSync(
   'utf8'
 );
 
+const CONFIRM = fs.readFileSync(
+  path.join(__dirname, '..', 'shop', 'AdminShopRefundConfirmModal.js'),
+  'utf8'
+);
+
 const MODAL = fs.readFileSync(
   path.join(__dirname, '..', 'shop', 'AdminShopOrderDetailModal.js'),
   'utf8'
 );
 
 describe('AdminShopOrdersPage refund UX', () => {
-  test('uses UnifiedModal actions with ModalFormActions (not footer)', () => {
-    expect(SOURCE).toMatch(/actions=\{\(/);
-    expect(SOURCE).toMatch(/ModalFormActions/);
+  test('refund confirm uses UnifiedModal actions (not footer)', () => {
+    expect(CONFIRM).toMatch(/UnifiedModal/);
+    expect(CONFIRM).toMatch(/actions=\{\(/);
+    expect(CONFIRM).not.toMatch(/footer=\{\(/);
+    expect(SOURCE).toMatch(/AdminShopRefundConfirmModal/);
     expect(SOURCE).not.toMatch(/footer=\{\(/);
   });
 
   test('exposes paymentId in detail and refund body', () => {
     expect(MODAL).toMatch(/admin-shop-order-payment-id|ADMIN_SHOP_ORDER_DETAIL_TEST_IDS\.PAYMENT_ID/);
-    expect(SOURCE).toMatch(/admin-shop-refund-payment-id/);
-    expect(SOURCE).toMatch(/ADMIN_SHOP_ORDER_PAYMENT_ID_LABEL/);
+    expect(CONFIRM).toMatch(/admin-shop-refund-payment-id/);
+    expect(CONFIRM).toMatch(/ADMIN_SHOP_ORDER_PAYMENT_ID_LABEL/);
     expect(MODAL).toMatch(/ADMIN_SHOP_ORDER_DETAIL_COPY\.PAYMENT_ID/);
   });
 
   test('does not claim PG refund is MVP-unwired', () => {
     expect(SOURCE).not.toMatch(/PG 실환불은 연동되지 않았습니다/);
-    expect(SOURCE).toMatch(/ADMIN_SHOP_REFUND_PG_HINT/);
+    expect(CONFIRM).not.toMatch(/PG 실환불은 연동되지 않았습니다/);
+    expect(CONFIRM).toMatch(/ADMIN_SHOP_REFUND_PG_HINT/);
     expect(MODAL).toMatch(/ADMIN_SHOP_ORDER_DETAIL_PORTONE_HINT|ADMIN_SHOP_REFUND_PG_HINT/);
   });
 });

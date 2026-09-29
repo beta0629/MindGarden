@@ -122,15 +122,15 @@ const DEFAULT_MENU_ITEMS = [
     ]
   },
   {
-    to: ADMIN_ROUTES.SHOP_CATALOG_SKUS,
+    to: ADMIN_ROUTES.SHOP_ORDERS,
     icon: 'SHOPPING_BAG',
     label: '쇼핑·리워드',
     end: false,
     menuCode: 'ADM_SHOP',
     children: [
-      { to: ADMIN_ROUTES.SHOP_CATALOG_SKUS, icon: 'PACKAGE', label: '상품(SKU) 관리', end: true },
-      { to: ADMIN_ROUTES.SHOP_POINT_POLICIES, icon: 'GIFT', label: '리워드 정책', end: true },
-      { to: ADMIN_ROUTES.SHOP_ORDERS, icon: 'RECEIPT', label: '온라인 주문', end: true }
+      { to: ADMIN_ROUTES.SHOP_ORDERS, icon: 'RECEIPT', label: '온라인 주문', end: true },
+      { to: ADMIN_ROUTES.SHOP_PRODUCTS, icon: 'PACKAGE', label: '상품', end: false },
+      { to: ADMIN_ROUTES.SHOP_POINT_POLICIES, icon: 'GIFT', label: '리워드 정책', end: true }
     ]
   },
   {
@@ -160,9 +160,8 @@ const DEFAULT_MENU_ITEMS = [
       { to: '/admin/system-config', icon: 'SLIDERS', label: '시스템 설정', end: true },
       { to: ADMIN_ROUTES.TENANT_COMMON_CODES, icon: 'TAG', label: '센터 코드', end: true },
       { to: '/tenant/merchant-legal', icon: 'FILE_TEXT', label: '사업자·약관', end: true },
-      { to: '/tenant/pg-configurations', icon: 'CREDIT_CARD', label: 'PG 설정', end: true },
+      { to: '/tenant/pg-configurations', icon: 'CREDIT_CARD', label: '결제 연결', end: true },
       { to: ADMIN_ROUTES.AI_PROVIDERS, icon: 'BOT', label: 'AI 프로바이더', end: true },
-      { to: ADMIN_ROUTES.PACKAGE_PRICING, icon: 'TAGS', label: '패키지 요금 관리', end: true },
       { to: ADMIN_ROUTES.MANUAL_NOTIFICATION, icon: 'MEGAPHONE', label: '수동 알림 발송', end: true },
       { to: ADMIN_ROUTES.SMS_TEMPLATES, icon: 'FILE_TEXT', label: 'SMS 템플릿 관리', end: true },
       { to: ADMIN_ROUTES.PUSH_MONITORING, icon: 'SEND', label: '메시지 발송', end: true },
@@ -179,7 +178,7 @@ const ADMIN_LNB_QUICK_NAV_ID_BY_TO = new Map([
   [ADMIN_ROUTES.MAPPING_MANAGEMENT, 'matching-payment-refund'],
   [ADMIN_ROUTES.USER_MANAGEMENT, 'user-management'],
   [ADMIN_ROUTES.COMMUNITY_MODERATION, 'content-community'],
-  [ADMIN_ROUTES.SHOP_CATALOG_SKUS, 'shop-reward'],
+  [ADMIN_ROUTES.SHOP_ORDERS, 'shop-reward'],
   ['/erp/dashboard', 'erp-dashboard']
 ]);
 

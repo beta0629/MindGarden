@@ -1,5 +1,5 @@
 import React, { useEffect, useCallback, lazy, Suspense } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation, useParams } from 'react-router-dom';
 import './i18n'; // i18n Phase 1 부트스트랩 (react-i18next 초기화)
 import './styles/main.css'; // 새로운 통합 디자인 시스템 사용
 import { USER_ROLES } from './constants/roles';
@@ -138,8 +138,9 @@ import AdminContentMasterPage from './components/admin/AdminContentMasterPage';
 import AdminPushMonitoringPage from './components/admin/PushMonitoring/AdminPushMonitoringPage';
 import AdminMindWeatherObservabilityPage from './components/admin/AdminMindWeatherObservabilityPage';
 import AdminMindGardenObservabilityPage from './components/admin/AdminMindGardenObservabilityPage';
-import AdminShopCatalogSkusPage from './components/admin/AdminShopCatalogSkusPage';
-import AdminShopCatalogSkuEditorPage from './components/admin/AdminShopCatalogSkuEditorPage';
+import AdminShopProductsPage from './components/admin/AdminShopProductsPage';
+import { ADMIN_SHOP_PRODUCT_ROUTES, buildAdminShopProductEditRoute } from './constants/adminShopSuite';
+import AdminShopProductEditorPage from './components/admin/AdminShopProductEditorPage';
 import AdminShopPointPoliciesPage from './components/admin/AdminShopPointPoliciesPage';
 import AdminShopOrdersPage from './components/admin/AdminShopOrdersPage';
 import MindfulnessGuide from './components/wellness/MindfulnessGuide';
@@ -198,8 +199,6 @@ import CacheMonitoringDashboard from './components/admin/CacheMonitoringDashboar
 import UnifiedHeader from './components/common/UnifiedHeader';
 import SecurityMonitoringDashboard from './components/admin/SecurityMonitoringDashboard';
 import ApiPerformanceMonitoring from './components/admin/ApiPerformanceMonitoring';
-import PackagePricingListPage from './components/admin/package-pricing/pages/PackagePricingListPage';
-import PackagePricingDetailPage from './components/admin/package-pricing/pages/PackagePricingDetailPage';
 import { ADMIN_ROUTES, toAdminRelativePath } from './constants/adminRoutes';
 import { useTranslation } from 'react-i18next';
 
@@ -234,6 +233,14 @@ function QueryParamHandler({ children, onLoginSuccess }) {
 function RedirectWithSearch({ to }) {
   const { search } = useLocation();
   return <Navigate to={`${to}${search}`} replace />;
+}
+
+/** 구 상품 경로(패키지 요금·SKU) → 「상품」 수정 라우트 */
+function RedirectToShopProductEdit({ paramName }) {
+  const params = useParams();
+  const value = params[paramName];
+  const to = value ? buildAdminShopProductEditRoute(value) : ADMIN_SHOP_PRODUCT_ROUTES.LIST;
+  return <Navigate to={to} replace />;
 }
 
 // 실제 앱 컴포넌트 (SessionProvider 내부에서 사용)
@@ -797,9 +804,9 @@ function AppContent() {
               />
               {/* path 문자열 필수: scripts/verify-quick-action-routes.mjs (ADMIN_ROUTES.TENANT_COMMON_CODES 와 동일 세그먼트) */}
               <Route path="tenant-common-codes" element={<TenantCommonCodeManager />} />
-              <Route path="package-pricing/new" element={<PackagePricingDetailPage isNew />} />
-              <Route path="package-pricing/:id" element={<PackagePricingDetailPage />} />
-              <Route path="package-pricing" element={<PackagePricingListPage />} />
+              <Route path="package-pricing/new" element={<Navigate to={ADMIN_SHOP_PRODUCT_ROUTES.NEW} replace />} />
+              <Route path="package-pricing/:id" element={<RedirectToShopProductEdit paramName="id" />} />
+              <Route path="package-pricing" element={<Navigate to={ADMIN_SHOP_PRODUCT_ROUTES.LIST} replace />} />
               <Route
                 path="menu-permissions"
                 element={
@@ -836,27 +843,31 @@ function AppContent() {
               />
               <Route
                 path={`${toAdminRelativePath(ADMIN_ROUTES.SHOP_CATALOG_SKUS)}/new`}
-                element={<Navigate to={ADMIN_ROUTES.SHOP_CATALOG_SKUS} replace />}
+                element={<Navigate to={ADMIN_SHOP_PRODUCT_ROUTES.NEW} replace />}
               />
               <Route
                 path={`${toAdminRelativePath(ADMIN_ROUTES.SHOP_CATALOG_SKUS)}/package/:packageCode`}
-                element={
-                  <AdminTenantComponentGate componentCode={PLATFORM_COMPONENT_CODES.ADMIN_SHOP_CATALOG}>
-                    <AdminShopCatalogSkuEditorPage />
-                  </AdminTenantComponentGate>
-                }
+                element={<RedirectToShopProductEdit paramName="packageCode" />}
               />
               <Route
-                path={`${toAdminRelativePath(ADMIN_ROUTES.SHOP_CATALOG_SKUS)}/:skuId/edit`}
-                element={<Navigate to={ADMIN_ROUTES.SHOP_CATALOG_SKUS} replace />}
+                path={`${toAdminRelativePath(ADMIN_ROUTES.SHOP_CATALOG_SKUS)}/*`}
+                element={<Navigate to={ADMIN_SHOP_PRODUCT_ROUTES.LIST} replace />}
               />
               <Route
                 path={toAdminRelativePath(ADMIN_ROUTES.SHOP_CATALOG_SKUS)}
-                element={
-                  <AdminTenantComponentGate componentCode={PLATFORM_COMPONENT_CODES.ADMIN_SHOP_CATALOG}>
-                    <AdminShopCatalogSkusPage />
-                  </AdminTenantComponentGate>
-                }
+                element={<Navigate to={ADMIN_SHOP_PRODUCT_ROUTES.LIST} replace />}
+              />
+              <Route
+                path={`${toAdminRelativePath(ADMIN_ROUTES.SHOP_PRODUCTS)}/new`}
+                element={<AdminShopProductEditorPage isNew />}
+              />
+              <Route
+                path={`${toAdminRelativePath(ADMIN_ROUTES.SHOP_PRODUCTS)}/:id/edit`}
+                element={<AdminShopProductEditorPage />}
+              />
+              <Route
+                path={toAdminRelativePath(ADMIN_ROUTES.SHOP_PRODUCTS)}
+                element={<AdminShopProductsPage />}
               />
               <Route
                 path={toAdminRelativePath(ADMIN_ROUTES.SHOP_POINT_POLICIES)}

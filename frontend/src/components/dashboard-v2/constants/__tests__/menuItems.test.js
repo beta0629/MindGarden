@@ -143,15 +143,16 @@ describe('DEFAULT_MENU_ITEMS (LNB IA P0/P1)', () => {
   });
 
   describe('시스템·설정 — 사업자·약관 (merchant-legal)', () => {
-    it('사업자·약관이 PG 설정보다 앞에 있고 path=/tenant/merchant-legal', () => {
+    it('사업자·약관이 결제 연결보다 앞에 있고 path=/tenant/merchant-legal', () => {
       const item = DEFAULT_MENU_ITEMS.find((m) => m.label === '시스템·설정');
       expect(item).toBeDefined();
       const childLabels = item.children.map((c) => c.label);
       expect(childLabels).toContain('사업자·약관');
-      expect(childLabels).toContain('PG 설정');
+      expect(childLabels).toContain('결제 연결');
+      expect(childLabels).not.toContain('패키지 요금 관리');
       const legalLink = item.children.find((c) => c.label === '사업자·약관');
       expect(legalLink.to).toBe('/tenant/merchant-legal');
-      expect(childLabels.indexOf('사업자·약관')).toBeLessThan(childLabels.indexOf('PG 설정'));
+      expect(childLabels.indexOf('사업자·약관')).toBeLessThan(childLabels.indexOf('결제 연결'));
     });
   });
 

@@ -82,13 +82,32 @@ describe('PgConfiguration Clinic-OS chrome', () => {
   });
 
   test('Detail exposes webhook secret section with configured badge and patch save', () => {
-    expect(detailJs).toMatch(/웹훅 시크릿/);
+    expect(detailJs).toMatch(/ADMIN_SHOP_PG_COPY\.WEBHOOK_TITLE/);
     expect(detailJs).toMatch(/isPortoneWebhookSecretConfigured/);
     expect(detailJs).toMatch(/patchPgConfigurationWebhookSecret/);
-    expect(detailJs).toMatch(/설정됨/);
-    expect(detailJs).toMatch(/미설정/);
+    expect(detailJs).toMatch(/ADMIN_SHOP_PG_COPY\.WEBHOOK_SET/);
+    expect(detailJs).toMatch(/ADMIN_SHOP_PG_COPY\.WEBHOOK_UNSET/);
     expect(detailJs).toMatch(/type="password"/);
-    expect(detailCss).toMatch(/pg-config-detail__webhook-secret/);
+  });
+
+  test('Detail (결제 연결): 배지 1개 · 헤더 primary는 수정 하나 · 웹훅 저장은 secondary · IAMPORT 문구 없음', () => {
+    const primaryCount = (detailJs.match(/variant="primary"/g) || []).length;
+    expect(primaryCount).toBe(1);
+    expect(detailJs).toMatch(/ADMIN_SHOP_SUITE_TEST_IDS\.PG_EDIT/);
+    expect(detailJs).toMatch(/variant="secondary"[\s\S]{0,700}ADMIN_SHOP_SUITE_TEST_IDS\.PG_WEBHOOK_SAVE/);
+    expect(detailJs).toMatch(/resolvePgBadge/);
+    expect(detailJs).toMatch(/admin-shop-suite__keystrip/);
+    expect(detailJs).toMatch(/admin-shop-suite__layout--pg/);
+    expect(detailJs).toMatch(/ADMIN_SHOP_PG_HISTORY_PREVIEW/);
+    expect(detailJs).not.toMatch(/['"]IAMPORT['"]/);
+    expect(detailJs).not.toMatch(/className="pg-config-detail pg-config-detail__body"/);
+  });
+
+  test('List (결제 연결): 1건이면 상세로 이동 · 목록 복귀는 stayOnList', () => {
+    expect(listJs).toMatch(/ADMIN_SHOP_PG_COPY\.TITLE/);
+    expect(listJs).toMatch(/configurations\.length !== 1/);
+    expect(listJs).toMatch(/stayOnList/);
+    expect(detailJs).toMatch(/stayOnList: true/);
   });
 
   test('page CSS has no leftover --ad-b0kla or page hex accents', () => {

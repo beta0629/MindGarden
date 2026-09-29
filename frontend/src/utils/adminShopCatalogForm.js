@@ -249,7 +249,8 @@ export function mapAdminShopPackageFeeToForm(row) {
       skuId: null,
       catalogCategory: SHOP_CATALOG_CATEGORY.CONSULTATION,
       fieldCode: '',
-      consultantId: ''
+      consultantId: '',
+      validityMonths: null
     };
   }
   const categoryRaw = toDisplayString(row.catalogCategory, '').toUpperCase();
@@ -272,7 +273,8 @@ export function mapAdminShopPackageFeeToForm(row) {
     fieldCode: toDisplayString(row.fieldCode, ''),
     consultantId: catalogCategory === SHOP_CATALOG_CATEGORY.ASSESSMENT || row.consultantId == null
       ? ''
-      : String(row.consultantId)
+      : String(row.consultantId),
+    validityMonths: row.validityMonths != null ? Number(row.validityMonths) : null
   };
 }
 
@@ -284,6 +286,21 @@ export function mapAdminShopPackageFeeToForm(row) {
  * @returns {{ descriptionText: string|null, catalogVisible: boolean, sortOrder: number, catalogCategory: string, fieldCode: string, consultantId: number|null }}
  * @throws {Error} 분야 코드 또는 상담 상품의 상담사가 없으면 fail-closed
  */
+/**
+ * 사용 기한(개월). 빈 값 = 기한 없음(null). 서버 PUT 은 이 값으로 덮어쓴다.
+ *
+ * @param {string|number|null|undefined} raw
+ * @returns {number|null}
+ */
+export function parseAdminShopValidityMonths(raw) {
+  const text = toDisplayString(raw, '').trim();
+  if (!/^\d+$/.test(text)) {
+    return null;
+  }
+  const months = Number.parseInt(text, 10);
+  return months >= 1 ? months : null;
+}
+
 export function buildAdminShopPackageContentBody(form) {
   const fieldParsed = validateAdminShopCatalogFieldCode(form);
   if (!fieldParsed.valid) {
@@ -311,6 +328,7 @@ export function buildAdminShopPackageContentBody(form) {
     sortOrder: Number.isFinite(sortOrder) && sortOrder >= 0 ? sortOrder : 0,
     catalogCategory,
     fieldCode: fieldParsed.fieldCode,
-    consultantId: consultantParsed.consultantId
+    consultantId: consultantParsed.consultantId,
+    validityMonths: parseAdminShopValidityMonths(form?.validityMonths)
   };
 }

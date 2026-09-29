@@ -76,6 +76,9 @@ public final class ShopAdminOrderConstants {
     public static final String OPS_HEAL_RECONCILE_REFUND_EXAMPLE_ORDER_PUBLIC_ID =
             "21c00712-344e-4713-b25c-60aaceb85729";
 
+    /** 사용 기한 연장 경로 suffix */
+    public static final String EXPIRY_EXTENSIONS_PATH_SUFFIX = "/expiry-extensions";
+
     /** reconcile-refund 경로 suffix (컨트롤러 JavaDoc·Ops 문서 참조용) */
     public static final String RECONCILE_REFUND_PATH_SUFFIX = "/reconcile-refund";
 

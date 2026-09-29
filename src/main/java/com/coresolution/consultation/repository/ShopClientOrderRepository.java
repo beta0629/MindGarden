@@ -74,6 +74,22 @@ public interface ShopClientOrderRepository extends BaseRepository<ShopClientOrde
      * @param cutoff   만료 기준 시각 (미만이면 만료)
      * @return 만료 처리 대상 주문
      */
+    /**
+     * 어드민 장부 목록 — 기간 내 주문 (최신 먼저). from/to 가 null 이면 해당 쪽 제한 없음.
+     *
+     * @param tenantId 테넌트 ID
+     * @param from     시작 (포함, null 가능)
+     * @param to       종료 (미포함, null 가능)
+     * @return 주문 목록
+     */
+    @Query("SELECT o FROM ShopClientOrder o WHERE o.tenantId = :tenantId AND o.isDeleted = false "
+            + "AND (:from IS NULL OR o.createdAt >= :from) AND (:to IS NULL OR o.createdAt < :to) "
+            + "ORDER BY o.createdAt DESC, o.id DESC")
+    List<ShopClientOrder> findLedgerByTenantInRange(
+            @Param("tenantId") String tenantId,
+            @Param("from") LocalDateTime from,
+            @Param("to") LocalDateTime to);
+
     @Query("SELECT o FROM ShopClientOrder o WHERE o.tenantId = :tenantId AND o.isDeleted = false "
             + "AND o.status IN :statuses AND o.createdAt < :cutoff ORDER BY o.createdAt ASC")
     List<ShopClientOrder> findHoldExpiredOrders(

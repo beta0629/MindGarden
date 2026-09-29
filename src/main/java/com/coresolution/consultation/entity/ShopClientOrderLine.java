@@ -51,6 +51,10 @@ public class ShopClientOrderLine extends BaseEntity {
     @Column(name = "session_count_snapshot")
     private Integer sessionCountSnapshot;
 
+    /** 주문 당시 유효기간(개월) 스냅샷. null = 기한 없음(현재 상품 값을 소급하지 않음). */
+    @Column(name = "validity_months_snapshot")
+    private Integer validityMonthsSnapshot;
+
     @Column(name = "quantity", nullable = false)
     private Integer quantity;
 

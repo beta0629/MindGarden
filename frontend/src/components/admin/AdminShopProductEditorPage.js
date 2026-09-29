@@ -121,6 +121,7 @@ function AdminShopProductEditorPage({ isNew }) {
   const [initialForm, setInitialForm] = useState(emptyAdminShopProductForm);
   const [pendingImageFile, setPendingImageFile] = useState(null);
   const [touched, setTouched] = useState(false);
+  const [brokenPreviewUrl, setBrokenPreviewUrl] = useState('');
   const [fieldOptions, setFieldOptions] = useState([]);
   const [consultantOptions, setConsultantOptions] = useState([]);
   const savedRef = useRef(false);
@@ -289,7 +290,9 @@ function AdminShopProductEditorPage({ isNew }) {
     if (!validation.valid) {
       return;
     }
-    const needsContent = hasMallContentInput(form, pendingImageFile);
+    const validityChanged = toDisplayString(form.validityMonths, '').trim()
+      !== toDisplayString(initialForm.validityMonths, '').trim();
+    const needsContent = hasMallContentInput(form, pendingImageFile) || validityChanged;
     if (needsContent) {
       const fieldParsed = validateAdminShopCatalogFieldCode(form);
       if (!fieldParsed.valid) {
@@ -344,7 +347,8 @@ function AdminShopProductEditorPage({ isNew }) {
         const saved = await updateAdminShopPackageFeeContent(packageCode, buildAdminShopPackageContentBody({
           ...form,
           descriptionText: form.descriptionText.slice(0, ADMIN_SHOP_PRODUCT_DESCRIPTION_MAX),
-          catalogVisible: visibleOnFirstPut
+          catalogVisible: visibleOnFirstPut,
+          validityMonths: validation.validityMonths
         }));
         if (pendingImageFile && saved?.skuId != null) {
           await uploadAdminShopCatalogSkuThumbnail(saved.skuId, pendingImageFile);
@@ -370,7 +374,9 @@ function AdminShopProductEditorPage({ isNew }) {
     ? ADMIN_SHOP_CATALOG_CATEGORY_FIELD_LABEL.CONSULTATION
     : ADMIN_SHOP_CATALOG_CATEGORY_FIELD_LABEL.ASSESSMENT;
   const sessionsInvalid = showErrors && validation.errors.sessions;
-  const saveDisabled = saving || loading || Boolean(validation.errors.sessions);
+  const saveDisabled = saving || loading || Boolean(validation.errors.sessions)
+    || Boolean(validation.errors.validityMonths);
+  const validityInvalid = Boolean(validation.errors.validityMonths);
   const priceText = validation.price != null ? formatShopMoney(validation.price) : '—';
   const sessionsText = validation.sessions != null && validation.sessions >= ADMIN_SHOP_PRODUCT_SESSION_MIN
     ? `${validation.sessions}${ADMIN_SHOP_PRODUCTS_COPY.SESSION_UNIT}`
@@ -386,7 +392,7 @@ function AdminShopProductEditorPage({ isNew }) {
               <span className="admin-shop-suite__modal-title">
                 <SafeText>{title}</SafeText>
                 <span
-                  className={`admin-shop-suite__chip ${initialForm.active ? 'admin-shop-suite__chip--paid' : 'admin-shop-suite__chip--stopped'}`}
+                  className={`admin-shop-suite__chip ${initialForm.active ? 'admin-shop-suite__chip--on-sale' : 'admin-shop-suite__chip--stopped'}`}
                 >
                   {initialForm.active ? ADMIN_SHOP_PRODUCTS_COPY.STATUS_ON_SALE : ADMIN_SHOP_PRODUCTS_COPY.STATUS_STOPPED}
                 </span>
@@ -417,7 +423,7 @@ function AdminShopProductEditorPage({ isNew }) {
                         label: ADMIN_SHOP_PRODUCT_EDITOR_COPY.MENU_STOP,
                         variant: 'destructive',
                         hidden: !form.active,
-                        onClick: () => setForm((prev) => ({ ...prev, active: false, mallVisible: false }))
+                        onClick: () => setForm((prev) => ({ ...prev, active: false, homePublic: false, mallVisible: false }))
                       }
                     ]}
                   />
@@ -513,6 +519,34 @@ function AdminShopProductEditorPage({ isNew }) {
                     </span>
                     <span className="admin-shop-suite__hint">{ADMIN_SHOP_PRODUCT_EDITOR_COPY.PER_SESSION_HINT}</span>
                   </div>
+                </div>
+                <div className="admin-shop-suite__field admin-shop-suite__validity-field">
+                  <label className="admin-shop-suite__label" htmlFor={`${baseId}-validity`}>
+                    {ADMIN_SHOP_PRODUCT_EDITOR_COPY.VALIDITY}
+                  </label>
+                  <div className="admin-shop-suite__affix">
+                    <span className="admin-shop-suite__affix-text">{ADMIN_SHOP_PRODUCT_EDITOR_COPY.VALIDITY_PREFIX}</span>
+                    <input
+                      id={`${baseId}-validity`}
+                      className={`admin-shop-suite__input admin-shop-suite__num admin-shop-suite__affix-input${validityInvalid ? ' admin-shop-suite__input--error' : ''}`}
+                      inputMode="numeric"
+                      value={form.validityMonths}
+                      disabled={saving}
+                      aria-invalid={validityInvalid ? true : undefined}
+                      aria-describedby={`${baseId}-validity-hint`}
+                      data-testid={ADMIN_SHOP_SUITE_TEST_IDS.PRODUCT_EDITOR_VALIDITY}
+                      onChange={(e) => setField('validityMonths', e.target.value.replace(/\D/g, ''))}
+                    />
+                    <span className="admin-shop-suite__affix-text">{ADMIN_SHOP_PRODUCT_EDITOR_COPY.VALIDITY_SUFFIX}</span>
+                  </div>
+                  <span
+                    id={`${baseId}-validity-hint`}
+                    className={`admin-shop-suite__hint${validityInvalid ? ' admin-shop-suite__hint--error' : ''}`}
+                  >
+                    {validityInvalid
+                      ? ADMIN_SHOP_PRODUCT_EDITOR_COPY.VALIDITY_ERROR
+                      : ADMIN_SHOP_PRODUCT_EDITOR_COPY.VALIDITY_HINT}
+                  </span>
                 </div>
                 <AdminShopNotice icon={<Info size={14} aria-hidden="true" />}>
                   <p>{ADMIN_SHOP_PRODUCTS_COPY.USAGE_PERIOD_NOTICE}</p>
@@ -650,8 +684,13 @@ function AdminShopProductEditorPage({ isNew }) {
 
             <aside className="admin-shop-suite__card admin-shop-suite__card--paper admin-shop-suite__sticky">
               <span className="admin-shop-suite__eyebrow">{ADMIN_SHOP_PRODUCT_EDITOR_COPY.PREVIEW_EYEBROW}</span>
-              {previewUrl ? (
-                <img className="admin-shop-suite__preview-thumb" src={previewUrl} alt="" />
+              {previewUrl && brokenPreviewUrl !== previewUrl ? (
+                <img
+                  className="admin-shop-suite__preview-thumb"
+                  src={previewUrl}
+                  alt=""
+                  onError={() => setBrokenPreviewUrl(previewUrl)}
+                />
               ) : null}
               <strong><SafeText>{form.name || ADMIN_SHOP_PRODUCT_EDITOR_COPY.TITLE_NEW}</SafeText></strong>
               <div className="admin-shop-suite__row-line">

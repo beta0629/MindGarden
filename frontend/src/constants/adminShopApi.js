@@ -8,11 +8,12 @@
 
 import { ADMIN_ROUTES } from './adminRoutes';
 
-/** @type {Readonly<{ CATALOG_SKUS: string, POINT_POLICIES: string, ORDERS: string }>} */
+/** @type {Readonly<{ CATALOG_SKUS: string, POINT_POLICIES: string, ORDERS: string, PRODUCTS: string }>} */
 export const ADMIN_SHOP_API = {
   CATALOG_SKUS: '/api/v1/admin/shop/catalog-skus',
   POINT_POLICIES: '/api/v1/admin/shop/point-policies',
-  ORDERS: '/api/v1/admin/shop/orders'
+  ORDERS: '/api/v1/admin/shop/orders',
+  PRODUCTS: '/api/v1/admin/shop/products'
 };
 
 export const ADMIN_SHOP_ROUTES = {
@@ -120,7 +121,7 @@ export const ADMIN_SHOP_ORDER_CASH_DUE_LABEL = '실결제';
 /** 포인트 사용액 표시 라벨 */
 export const ADMIN_SHOP_ORDER_POINTS_LABEL = '포인트';
 export const ADMIN_SHOP_REFUND_PG_HINT =
-  '전액 환불 시 PortOne(또는 PG) 결제 취소·회기 원복·포인트 원장·주문 REFUNDED가 함께 반영됩니다.';
+  '환불하면 PortOne 취소, 회기 원복, 포인트 반환이 한 번에 처리돼요.';
 export const ADMIN_SHOP_ORDER_LINE_SESSION_LABEL = '회기';
 
 /**
@@ -340,6 +341,16 @@ export function buildAdminShopOrderRefundPath(orderPublicId) {
  */
 export function buildAdminShopOrderFulfillRetryPath(orderPublicId) {
   return `${buildAdminShopOrderPath(orderPublicId)}/fulfill-retry`;
+}
+
+/**
+ * 사용 기한 연장 (POST 센터 관리자 · GET 이력).
+ *
+ * @param {string} orderPublicId
+ * @returns {string}
+ */
+export function buildAdminShopOrderExpiryExtensionsPath(orderPublicId) {
+  return `${buildAdminShopOrderPath(orderPublicId)}/expiry-extensions`;
 }
 
 /**

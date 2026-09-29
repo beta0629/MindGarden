@@ -35,6 +35,9 @@ export const ADMIN_SHOP_SKU_IMAGE_FORMAT_HINT =
 
 export const ADMIN_SHOP_SKU_IMAGE_SELECTION_NONE = '선택된 파일 없음';
 
+/** 저장된 이미지 URL 이 404 등으로 안 열릴 때 */
+export const ADMIN_SHOP_SKU_IMAGE_BROKEN = '이미지를 불러오지 못했어요 · 다시 올려 주세요';
+
 export const ADMIN_SHOP_SKU_IMAGE_DROP_REJECTED_DEFAULT =
   'JPEG, PNG, WebP만 업로드할 수 있으며 최대 5MB입니다.';
 

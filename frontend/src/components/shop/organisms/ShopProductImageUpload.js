@@ -17,6 +17,7 @@ import {
   ADMIN_SHOP_SKU_IMAGE_UPLOAD_HINT,
   ADMIN_SHOP_SKU_IMAGE_FORMAT_HINT,
   ADMIN_SHOP_SKU_IMAGE_SELECTION_NONE,
+  ADMIN_SHOP_SKU_IMAGE_BROKEN,
   ADMIN_SHOP_SKU_IMAGE_DROP_REJECTED_DEFAULT
 } from '../../../constants/adminShopCatalog';
 import '../../admin/psych-assessment/organisms/PsychUploadSection.css';
@@ -34,8 +35,10 @@ const ShopProductImageUpload = ({
   const [localPreview, setLocalPreview] = useState(null);
   const [selectedFileName, setSelectedFileName] = useState('');
   const [uploadError, setUploadError] = useState('');
+  const [brokenUrl, setBrokenUrl] = useState('');
 
   const displayUrl = localPreview || previewUrl || null;
+  const isBroken = Boolean(displayUrl) && brokenUrl === displayUrl;
 
   useEffect(() => {
     return () => {
@@ -129,15 +132,24 @@ const ShopProductImageUpload = ({
 
       {displayUrl ? (
         <figure className="admin-shop-sku-image-upload__preview-wrap">
-          <img
-            src={displayUrl}
-            alt=""
-            className="admin-shop-sku-image-upload__preview"
-          />
+          {isBroken ? (
+            <div className="admin-shop-sku-image-upload__preview-fallback" role="img" aria-label={ADMIN_SHOP_SKU_IMAGE_BROKEN}>
+              {ADMIN_SHOP_SKU_IMAGE_BROKEN}
+            </div>
+          ) : (
+            <img
+              src={displayUrl}
+              alt=""
+              className="admin-shop-sku-image-upload__preview"
+              onError={() => setBrokenUrl(displayUrl)}
+            />
+          )}
           <div className="admin-shop-sku-image-upload__preview-actions">
             <MGButton
               type="button"
-              className={`${buildErpMgButtonClassName('secondary')} admin-shop-sku-image-upload__action-btn`}
+              variant="outline"
+              size="small"
+              className={`${buildErpMgButtonClassName({ variant: 'outline', size: 'sm' })} admin-shop-sku-image-upload__action-btn`}
               disabled={disabled}
               onClick={handleClear}
             >

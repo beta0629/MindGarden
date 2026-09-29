@@ -2,6 +2,7 @@ package com.coresolution.consultation.dto.shop.admin;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -31,4 +32,11 @@ public class ShopOrderAdminListResponse {
 
     /** 페이지 크기 */
     private int size;
+
+    /** 세그먼트별 건수 (기간·검색 적용) */
+    @Builder.Default
+    private Map<String, Long> counts = Collections.emptyMap();
+
+    /** 요약 스트립·합계 (기간·검색 적용) */
+    private ShopOrderAdminListSummary summary;
 }

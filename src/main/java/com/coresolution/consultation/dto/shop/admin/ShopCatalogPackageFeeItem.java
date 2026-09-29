@@ -38,6 +38,7 @@ public record ShopCatalogPackageFeeItem(
         int sortOrder,
         String catalogCategory,
         String fieldCode,
-        Long consultantId
+        Long consultantId,
+        Integer validityMonths
 ) {
 }

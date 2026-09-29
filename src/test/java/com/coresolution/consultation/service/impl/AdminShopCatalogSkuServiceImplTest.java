@@ -392,12 +392,14 @@ class AdminShopCatalogSkuServiceImplTest {
                 TENANT,
                 "PACKAGE_001",
                 new ShopCatalogPackageContentRequest(
-                        "상담 안내", false, 2, ShopCatalogCategory.CONSULTATION, FIELD_CODE, CONSULTANT_ID));
+                        "상담 안내", false, 2, ShopCatalogCategory.CONSULTATION, FIELD_CODE, CONSULTANT_ID, 3));
 
         ArgumentCaptor<ShopCatalogSku> captor = ArgumentCaptor.forClass(ShopCatalogSku.class);
         verify(shopCatalogSkuRepository).save(captor.capture());
         ShopCatalogSku saved = captor.getValue();
         assertEquals("PACKAGE_001", saved.getSourcePackageCode());
+        assertEquals(3, saved.getValidityMonths());
+        assertEquals(3, item.validityMonths());
         assertEquals("10회기", saved.getTitle());
         assertEquals(150000L, saved.getUnitPriceMinor());
         assertEquals(10, saved.getSessionCount());
@@ -422,7 +424,7 @@ class AdminShopCatalogSkuServiceImplTest {
                 TENANT,
                 "PACKAGE_001",
                 new ShopCatalogPackageContentRequest(
-                        "상담 안내", true, 0, ShopCatalogCategory.CONSULTATION, FIELD_CODE, CONSULTANT_ID)));
+                        "상담 안내", true, 0, ShopCatalogCategory.CONSULTATION, FIELD_CODE, CONSULTANT_ID, null)));
         verify(shopCatalogSkuRepository, never()).save(any());
     }
 
@@ -442,7 +444,7 @@ class AdminShopCatalogSkuServiceImplTest {
                         TENANT,
                         "PACKAGE_001",
                         new ShopCatalogPackageContentRequest(
-                                "상담 안내", false, 0, ShopCatalogCategory.CONSULTATION, FIELD_CODE, null)));
+                                "상담 안내", false, 0, ShopCatalogCategory.CONSULTATION, FIELD_CODE, null, null)));
         assertEquals(ShopCatalogSkuConstants.CONSULTANT_REQUIRED_MESSAGE, ex.getMessage());
         verify(shopCatalogSkuRepository, never()).save(any());
     }
@@ -463,7 +465,7 @@ class AdminShopCatalogSkuServiceImplTest {
                 TENANT,
                 "PACKAGE_001",
                 new ShopCatalogPackageContentRequest(
-                        "상담 안내", false, 0, ShopCatalogCategory.CONSULTATION, FIELD_CODE, CONSULTANT_ID));
+                        "상담 안내", false, 0, ShopCatalogCategory.CONSULTATION, FIELD_CODE, CONSULTANT_ID, null));
 
         ArgumentCaptor<ShopCatalogSku> captor = ArgumentCaptor.forClass(ShopCatalogSku.class);
         verify(shopCatalogSkuRepository).save(captor.capture());
@@ -495,7 +497,7 @@ class AdminShopCatalogSkuServiceImplTest {
                 TENANT,
                 "PACKAGE_EXAM",
                 new ShopCatalogPackageContentRequest(
-                        "검사 안내", false, 0, ShopCatalogCategory.ASSESSMENT, "MMPI", CONSULTANT_ID));
+                        "검사 안내", false, 0, ShopCatalogCategory.ASSESSMENT, "MMPI", CONSULTANT_ID, null));
 
         ArgumentCaptor<ShopCatalogSku> captor = ArgumentCaptor.forClass(ShopCatalogSku.class);
         verify(shopCatalogSkuRepository).save(captor.capture());

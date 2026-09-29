@@ -73,6 +73,11 @@
     align-items: stretch;
   }
 
+  /* column 방향에서 flex-basis 240px 가 높이로 적용되어 빈 공간이 생김 */
+  .mg-v2-setting-switch-row__main {
+    flex: 0 0 auto;
+  }
+
   .mg-v2-setting-switch-row__control {
     justify-content: space-between;
   }

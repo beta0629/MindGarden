@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { ICONS } from '../../constants/icons';
 
 const CreditCardIcon = ICONS.CREDIT_CARD;
@@ -40,7 +40,6 @@ export { isPgConfigDeletable };
 const PgConfigurationList = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const location = useLocation();
   const { user, isLoggedIn, isLoading: sessionLoading } = useSession();
   
   const [configurations, setConfigurations] = useState([]);
@@ -100,19 +99,6 @@ const PgConfigurationList = () => {
       loadConfigurations();
     }
   }, [sessionLoading, isLoggedIn, user, tenantId, loadConfigurations]);
-  
-  const filtersActive = Boolean(filters.status || filters.approvalStatus || filters.search);
-  const stayOnList = Boolean(location.state?.stayOnList);
-
-  useEffect(() => {
-    if (loading || error || stayOnList || filtersActive || configurations.length !== 1) {
-      return;
-    }
-    const onlyId = configurations[0]?.configId;
-    if (onlyId != null) {
-      navigate(`/tenant/pg-configurations/${onlyId}`, { replace: true });
-    }
-  }, [loading, error, stayOnList, filtersActive, configurations, navigate]);
 
   const handleDelete = async() => {
     if (!selectedConfig || !tenantId) return;

@@ -1,25 +1,60 @@
 /**
  * MallPayFailedAlert — 카드 거절 등 결제 실패 시 결제 화면 상단 빨간 「결제가 완료되지 않았어요」+ 사유.
  * 좁은 화면에서는 결제 패널이 본문 아래에 있으므로 본문 첫머리에 두고, 표시 시 페이지 맨 위로 올린다
- * (sticky 상단 바에 가리지 않도록 요소 scrollIntoView 대신 페이지 top).
+ * (sticky 상단 바에 가리지 않도록 페이지 top 우선, 다음 프레임에도 화면 밖이면 요소 scrollIntoView 보정).
  *
  * @author MindGarden
  * @since 2026-09-29
  */
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
 import SafeText from '../../common/SafeText';
 import { CLIENT_MALL_CHECKOUT_COPY, CLIENT_MALL_TEST_IDS } from '../../../constants/clientMallConstants';
+
+/** smooth 는 모바일에서 중간에 멈춰 사유가 화면 밖에 남는 경우가 있어 즉시 이동만 사용 */
+const PAY_FAILED_SCROLL_BEHAVIOR = 'auto';
+
+const scrollPageTop = () => {
+  if (typeof window.scrollTo === 'function') {
+    window.scrollTo({ top: 0, behavior: PAY_FAILED_SCROLL_BEHAVIOR });
+  }
+};
+
+const isAlertInViewport = (el) => {
+  const rect = el.getBoundingClientRect();
+  return rect.top >= 0 && rect.top < window.innerHeight;
+};
 
 /**
  * @param {{ reason: string }} props
  */
 const MallPayFailedAlert = ({ reason }) => {
+  const alertRef = useRef(null);
+
   useEffect(() => {
-    if (reason && typeof window !== 'undefined' && typeof window.scrollTo === 'function') {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+    if (!reason || typeof window === 'undefined') {
+      return undefined;
     }
+    scrollPageTop();
+    if (typeof window.requestAnimationFrame !== 'function') {
+      return undefined;
+    }
+    const frameId = window.requestAnimationFrame(() => {
+      const el = alertRef.current;
+      if (!el || isAlertInViewport(el)) {
+        return;
+      }
+      scrollPageTop();
+      if (!isAlertInViewport(el) && typeof el.scrollIntoView === 'function') {
+        el.scrollIntoView({ block: 'start', behavior: PAY_FAILED_SCROLL_BEHAVIOR });
+      }
+    });
+    return () => {
+      if (typeof window.cancelAnimationFrame === 'function') {
+        window.cancelAnimationFrame(frameId);
+      }
+    };
   }, [reason]);
 
   if (!reason) {
@@ -27,6 +62,7 @@ const MallPayFailedAlert = ({ reason }) => {
   }
   return (
     <div
+      ref={alertRef}
       className="client-mall-alert client-mall-alert--error client-mall-pay-failed"
       role="alert"
       data-testid={CLIENT_MALL_TEST_IDS.CHECKOUT_PAY_FAILED}

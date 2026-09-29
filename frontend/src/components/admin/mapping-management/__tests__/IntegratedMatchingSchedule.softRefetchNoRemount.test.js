@@ -1,7 +1,7 @@
 /**
  * 통합스케줄 soft refetch 회귀 잠금 — 하드 새로고침·폼 언마운트 없음
  *
- * - PR #865: mutation 후 loadMappings silent (로딩 오버레이·전체 리로드 없음)
+ * - PR-865: mutation 후 loadMappings silent (로딩 오버레이·전체 리로드 없음)
  * - 95b8d5539 (PR 번호 미확인, #1283 sync 로 release/dev 반영): 같은 userId silent SET_USER 가
  *   화면을 다시 마운트하거나 목록을 다시 불러오지 않음
  *
@@ -230,7 +230,7 @@ describe('IntegratedMatchingSchedule soft refetch — no hard reload / no remoun
     window.location = originalLocation;
   });
 
-  test('#865 soft refetch — 결제 확인 후 목록만 조용히 다시 받고, 로딩 오버레이·리로드 없이 캘린더 노드 유지', async() => {
+  test('PR-865 soft refetch — 결제 확인 후 목록만 조용히 다시 받고, 로딩 오버레이·리로드 없이 캘린더 노드 유지', async() => {
     await renderLoaded();
     const calendarNode = screen.getByTestId('unified-schedule');
     const getCallsBefore = StandardizedApi.get.mock.calls.length;
@@ -254,7 +254,7 @@ describe('IntegratedMatchingSchedule soft refetch — no hard reload / no remoun
     expect(assignSpy).not.toHaveBeenCalled();
   });
 
-  test('#865 soft refetch — 배정 활성화 후 목록만 조용히 다시 받고, 로딩 오버레이·리로드 없이 캘린더 노드 유지', async() => {
+  test('PR-865 soft refetch — 배정 활성화 후 목록만 조용히 다시 받고, 로딩 오버레이·리로드 없이 캘린더 노드 유지', async() => {
     await renderLoaded();
     const calendarNode = screen.getByTestId('unified-schedule');
     const getCallsBefore = StandardizedApi.get.mock.calls.length;

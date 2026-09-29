@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Set;
 import com.coresolution.consultation.constant.ShopCheckoutConstants;
 import com.coresolution.consultation.constant.ShopClientOrderStatus;
+import com.coresolution.consultation.constant.ShopLatePaymentConstants;
 import com.coresolution.consultation.constant.ShopOrderFulfillmentRetryConstants;
 import com.coresolution.consultation.constant.ShopUserPaymentCancelConstants;
 import com.coresolution.consultation.dto.shop.ShopUserCancelPaymentResponse;
@@ -19,8 +20,10 @@ import com.coresolution.consultation.repository.ShopClientOrderLineRepository;
 import com.coresolution.consultation.repository.ShopClientOrderRepository;
 import com.coresolution.consultation.service.ClientPointWalletService;
 import com.coresolution.consultation.service.ClientShopPaymentCancelService;
+import com.coresolution.consultation.service.ShopLatePaymentRefundService;
 import com.coresolution.consultation.service.portone.PortOnePaymentPaidState;
 import com.coresolution.consultation.service.portone.PortOneV2PaymentVerifyService;
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
@@ -57,12 +60,17 @@ public class ClientShopPaymentCancelServiceImpl implements ClientShopPaymentCanc
     private static final Set<Payment.PaymentStatus> CLOSABLE_PAYMENT_STATUSES =
             EnumSet.of(Payment.PaymentStatus.PENDING, Payment.PaymentStatus.PROCESSING);
 
+    /** 닫힌 주문에서 PG 자동 환불 대상인 결제 건 상태 (실제 승인된 돈이 있는 건만) */
+    private static final Set<Payment.PaymentStatus> LATE_REFUND_PAYMENT_STATUSES =
+            EnumSet.of(Payment.PaymentStatus.APPROVED, Payment.PaymentStatus.REFUND_REQUIRED);
+
     private final ShopClientOrderRepository shopClientOrderRepository;
     private final ShopClientOrderLineRepository shopClientOrderLineRepository;
     private final PaymentRepository paymentRepository;
     private final ClientPointWalletService clientPointWalletService;
     private final PortOneV2PaymentVerifyService portOneV2PaymentVerifyService;
     private final PlatformTransactionManager transactionManager;
+    private final ShopLatePaymentRefundService shopLatePaymentRefundService;
 
     @Override
     public ShopUserCancelPaymentResponse cancelByUser(String tenantId, Long clientUserId, String orderPublicId) {
@@ -113,8 +121,43 @@ public class ClientShopPaymentCancelServiceImpl implements ClientShopPaymentCanc
             verifiedUnpaidPaymentIds.add(payment.getId());
         }
 
-        return new TransactionTemplate(transactionManager).execute(
-                status -> closeIfStillUnpaid(tenantId, orderPublicId, verifiedUnpaidPaymentIds));
+        try {
+            return new TransactionTemplate(transactionManager).execute(
+                    status -> closeIfStillUnpaid(tenantId, orderPublicId, verifiedUnpaidPaymentIds));
+        } catch (OptimisticLockingFailureException conflict) {
+            log.warn("사용자 취소 중 결제 동시 변경(낙관적 락) — 재조회: tenantId={}, orderPublicId={}",
+                    tenantId, orderPublicId);
+            return resolveAfterConcurrentChange(tenantId, orderPublicId);
+        }
+    }
+
+    /**
+     * 사용자 취소와 PAID 웹훅이 겹쳐 낙관적 락 충돌이 난 뒤 재조회.
+     * 주문이 닫혀 있고 승인된(또는 환불 필요) 결제가 있으면 늦은 결제 자동 환불
+     * (PG 취소 → REFUNDED, 실패 시 REFUND_REQUIRED + 관리자 알림). 주문은 되살리지 않는다.
+     */
+    private ShopUserCancelPaymentResponse resolveAfterConcurrentChange(String tenantId, String orderPublicId) {
+        ShopClientOrder order = shopClientOrderRepository.findByTenantIdAndPublicId(tenantId, orderPublicId)
+                .orElseThrow(() -> new IllegalArgumentException(
+                        ShopOrderFulfillmentRetryConstants.MSG_ORDER_NOT_FOUND));
+        List<Payment> current = paymentRepository.findByTenantIdAndOrderIdAndIsDeletedFalse(tenantId, orderPublicId);
+        if (ShopLatePaymentConstants.isClosedOrder(order.getStatus())) {
+            for (Payment payment : current) {
+                if (LATE_REFUND_PAYMENT_STATUSES.contains(payment.getStatus())) {
+                    shopLatePaymentRefundService.refundIfOrderClosed(tenantId, payment.getPaymentId());
+                }
+            }
+            String outcome = order.getStatus() == ShopClientOrderStatus.CANCELLED
+                    ? ShopUserPaymentCancelConstants.OUTCOME_CANCELLED
+                    : ShopUserPaymentCancelConstants.OUTCOME_NOT_CANCELLABLE;
+            return buildResponse(order, outcome, null);
+        }
+        for (Payment payment : current) {
+            if (payment.getStatus() == Payment.PaymentStatus.APPROVED) {
+                return buildResponse(order, ShopUserPaymentCancelConstants.OUTCOME_PAID, payment.getPaymentId());
+            }
+        }
+        return buildResponse(order, ShopUserPaymentCancelConstants.OUTCOME_NOT_CANCELLABLE_IN_PROGRESS, null);
     }
 
     /**

@@ -4,9 +4,10 @@ import com.coresolution.core.domain.TenantPgConfiguration;
 import com.coresolution.core.domain.enums.PgProvider;
 import com.coresolution.core.dto.ConnectionTestResponse;
 import com.coresolution.core.service.PgConnectionTestService;
+import com.coresolution.consultation.config.RestTemplateConfig;
 import com.coresolution.consultation.service.PersonalDataEncryptionService;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -36,11 +37,21 @@ import java.util.Map;
  */
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class IamportConnectionTestServiceImpl implements PgConnectionTestService {
 
     private final RestTemplate restTemplate;
     private final PersonalDataEncryptionService encryptionService;
+
+    /**
+     * @param restTemplate      PortOne 전용 RestTemplate (connect/read 타임아웃 적용)
+     * @param encryptionService 키 복호화 서비스
+     */
+    public IamportConnectionTestServiceImpl(
+            @Qualifier(RestTemplateConfig.PORTONE_REST_TEMPLATE) RestTemplate restTemplate,
+            PersonalDataEncryptionService encryptionService) {
+        this.restTemplate = restTemplate;
+        this.encryptionService = encryptionService;
+    }
 
     private static final String IAMPORT_BASE_URL = "https://api.iamport.kr";
     private static final String IAMPORT_TEST_ENDPOINT = "/users/getToken";

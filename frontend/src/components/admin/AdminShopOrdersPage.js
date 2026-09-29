@@ -87,6 +87,7 @@ import AdminShopRefundConfirmModal from './shop/AdminShopRefundConfirmModal';
 import AdminShopOrderExtendModal from './shop/AdminShopOrderExtendModal';
 import {
   AdminShopLedgerChip,
+  AdminShopPaymentStatusChip,
   AdminShopSessionDelta,
   AdminShopSuiteToast,
   AdminShopTableSkeleton,
@@ -728,7 +729,10 @@ const AdminShopOrdersPage = () => {
               <td className="admin-shop-suite__cell--right admin-shop-suite__num">
                 <SafeText>{item.points > 0 ? formatShopPoints(item.points) : '—'}</SafeText>
               </td>
-              <td><AdminShopLedgerChip state={item.state} daysLeft={item.daysLeft} /></td>
+              <td>
+                <AdminShopLedgerChip state={item.state} daysLeft={item.daysLeft} />
+                <AdminShopPaymentStatusChip paymentStatus={item.raw?.paymentStatus} />
+              </td>
               <td>{renderRowMenu(item)}</td>
             </tr>
           );

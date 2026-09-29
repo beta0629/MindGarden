@@ -10,6 +10,7 @@ import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/co
 import ActionBar from '../common/ActionBar';
 import ActionBarButton from '../common/ActionBarButton';
 import { API_BASE_URL } from '../../constants/api';
+import { resolveAdminPaymentStatusLabel } from '../../constants/adminShopApi';
 import { apiGet } from '../../utils/ajax';
 import './PaymentManagement.css';
 import notificationManager from '../../utils/notification';
@@ -433,7 +434,7 @@ const PaymentManagement = () => {
 
   const getStatusBadge = (status) => {
     const statusOption = paymentStatusOptions.find((option) => option.value === status);
-    const label = statusOption ? statusOption.label : status;
+    const label = statusOption ? statusOption.label : (resolveAdminPaymentStatusLabel(status) || status);
     return <StatusBadge variant={paymentStatusToVariant(status)}>{label}</StatusBadge>;
   };
 

@@ -39,6 +39,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
+import org.springframework.transaction.PlatformTransactionManager;
 
 /**
  * PG 결제 APPROVED 워크플로의 인앱 메시지 발화 회귀 가드.
@@ -80,6 +81,7 @@ class PaymentServiceImplPaymentMessageGuardTest {
     @Mock private ClientShopCheckoutService clientShopCheckoutService;
     @Mock private PortOneV2PaymentVerifyService portOneV2PaymentVerifyService;
     @Mock private ShopLatePaymentRefundService shopLatePaymentRefundService;
+    @Mock private PlatformTransactionManager transactionManager;
 
     private PaymentServiceImpl service;
 
@@ -100,7 +102,8 @@ class PaymentServiceImplPaymentMessageGuardTest {
                 userRepository,
                 portOneV2PaymentVerifyService,
                 clientShopCheckoutService,
-                shopLatePaymentRefundService);
+                shopLatePaymentRefundService,
+                transactionManager);
         TenantContextHolder.setTenantId(TENANT_ID);
         lenient().when(commonCodeService.getCodeValue(anyString(), anyString())).thenReturn(null);
         lenient().when(shopClientOrderRepository.findByTenantIdAndPublicId(eq(TENANT_ID), anyString()))

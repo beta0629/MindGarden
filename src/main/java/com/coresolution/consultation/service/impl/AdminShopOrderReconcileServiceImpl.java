@@ -6,6 +6,7 @@ import com.coresolution.consultation.constant.ShopOrderReconcileConstants;
 import com.coresolution.consultation.dto.shop.admin.ShopOrderReconcilePaymentResponse;
 import com.coresolution.consultation.entity.Payment;
 import com.coresolution.consultation.entity.ShopClientOrder;
+import com.coresolution.consultation.exception.ShopOrderClosedForPaymentException;
 import com.coresolution.consultation.repository.PaymentRepository;
 import com.coresolution.consultation.repository.ShopClientOrderRepository;
 import com.coresolution.consultation.service.AdminShopOrderReconcileService;
@@ -21,7 +22,9 @@ import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
@@ -53,7 +56,7 @@ public class AdminShopOrderReconcileServiceImpl implements AdminShopOrderReconci
     private final ShopLatePaymentRefundService shopLatePaymentRefundService;
 
     @Override
-    @Transactional
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public ShopOrderReconcilePaymentResponse reconcilePayment(
             String tenantId, String orderPublicId, String paymentId, String cardApprovalNumber) {
         requireNonBlank(tenantId, ShopOrderReconcileConstants.MSG_TENANT_REQUIRED);
@@ -111,11 +114,23 @@ public class AdminShopOrderReconcileServiceImpl implements AdminShopOrderReconci
         payment.setExternalResponse(verifiedBody.get());
         paymentRepository.save(payment);
 
-        if (payment.getStatus() != Payment.PaymentStatus.APPROVED) {
-            paymentService.approveShopOrderPayment(trimmedPaymentId);
+        // PortOne 조회는 위에서 트랜잭션 밖에서 끝냄 — 승인은 주문 잠금·재확인을 하는 짧은 트랜잭션(approveShopOrderPayment)
+        try {
+            if (payment.getStatus() != Payment.PaymentStatus.APPROVED) {
+                paymentService.approveShopOrderPayment(trimmedPaymentId);
+            }
+            // 멱등: approveShopOrderPayment 동기화와 별도로 SSOT 재호출 (이미 PAID 면 no-op)
+            clientShopCheckoutService.completeOrderOnPaymentApproved(tenantId, orderPublicId);
+        } catch (ShopOrderClosedForPaymentException | OptimisticLockingFailureException raced) {
+            ShopClientOrder current = shopClientOrderRepository
+                    .findByTenantIdAndPublicId(tenantId, orderPublicId)
+                    .orElseThrow(() -> raced);
+            if (!ShopLatePaymentConstants.isClosedOrder(current.getStatus())) {
+                throw raced;
+            }
+            // 검증 뒤 주문이 닫힘 → 되살리지 않고 늦은 결제 자동 환불
+            return reconcileLatePaymentOnClosedOrder(tenantId, current, trimmedPaymentId, cardApprovalNumber);
         }
-        // 멱등: approveShopOrderPayment 동기화와 별도로 SSOT 재호출 (이미 PAID 면 no-op)
-        clientShopCheckoutService.completeOrderOnPaymentApproved(tenantId, orderPublicId);
 
         ShopClientOrder refreshed = shopClientOrderRepository
                 .findByTenantIdAndPublicId(tenantId, orderPublicId)
@@ -198,7 +213,7 @@ public class AdminShopOrderReconcileServiceImpl implements AdminShopOrderReconci
      * {@inheritDoc}
      */
     @Override
-    @Transactional
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public ShopOrderReconcilePaymentResponse reconcileRefund(
             String tenantId, String orderPublicId, boolean force) {
         requireNonBlank(tenantId, ShopOrderReconcileConstants.MSG_TENANT_REQUIRED);

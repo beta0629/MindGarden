@@ -23,7 +23,7 @@ import org.springframework.stereotype.Repository;
 /**
  * @Deprecated - 표준화 2025-12-07: branchCode 파라미터는 레거시 호환용
  */
-public interface PaymentRepository extends BaseRepository<Payment, Long> {
+public interface PaymentRepository extends BaseRepository<Payment, Long>, PaymentLockRepository {
     
     /**
      * 테넌트별 결제 고유 ID로 결제 조회 (테넌트 필터링)

@@ -77,6 +77,12 @@ public final class PaymentConstants {
     public static final String ERROR_PAYMENT_ALREADY_PROCESSED = "이미 처리된 결제입니다.";
     public static final String ERROR_INSUFFICIENT_PERMISSION = "결제 처리 권한이 없습니다.";
     public static final String ERROR_NOT_SHOP_ORDER_PAYMENT = "쇼핑 주문 결제가 아닙니다.";
+    /** 취소·만료·환불 결제의 승인 전이 거부 — 현재 결제 상태 */
+    public static final String ERROR_APPROVE_FROM_CLOSED_STATUS_FMT =
+            "취소·만료·환불된 결제는 승인 상태로 바꿀 수 없습니다: status=%s";
+    /** 쇼핑 결제 승인 거부 — 결제 금액과 주문 실결제액 불일치 (paymentId, 결제 금액, 주문 실결제액) */
+    public static final String ERROR_SHOP_PAYMENT_AMOUNT_MISMATCH_FMT =
+            "결제 금액이 주문 실결제액과 다릅니다: paymentId=%s, amount=%s, cashDue=%s";
     
     // 성공 메시지
     public static final String SUCCESS_PAYMENT_CREATED = "결제가 생성되었습니다.";

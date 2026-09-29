@@ -64,14 +64,22 @@ public class ShopLatePaymentRefundServiceImpl implements ShopLatePaymentRefundSe
         if (!StringUtils.hasText(tenantId) || !StringUtils.hasText(paymentId)) {
             return ShopLatePaymentOutcome.NOT_APPLICABLE;
         }
-        Claim claim = lockedTx.execute(status -> claim(tenantId, paymentId));
+        // 잠금 트랜잭션 밖 단건 조회로 주문 ID 만 얻는다. 결제 상태는 주문 잠금 뒤 다시 읽는다(주문 → 결제 순서).
+        String orderPublicId = paymentRepository.findByTenantIdAndPaymentIdAndIsDeletedFalse(tenantId, paymentId)
+                .map(Payment::getOrderId)
+                .filter(StringUtils::hasText)
+                .orElse(null);
+        if (orderPublicId == null) {
+            return ShopLatePaymentOutcome.NOT_APPLICABLE;
+        }
+        Claim claim = lockedTx.execute(status -> claim(tenantId, paymentId, orderPublicId));
         if (claim == null || claim.outcome() != null) {
             return claim == null ? ShopLatePaymentOutcome.NOT_APPLICABLE : claim.outcome();
         }
 
         boolean cancelled = callPortOneCancel(tenantId, paymentId, claim.provider());
 
-        Settled settled = lockedTx.execute(status -> settle(tenantId, paymentId, cancelled));
+        Settled settled = lockedTx.execute(status -> settle(tenantId, paymentId, orderPublicId, cancelled));
         if (settled == null) {
             return ShopLatePaymentOutcome.NOT_APPLICABLE;
         }
@@ -79,18 +87,18 @@ public class ShopLatePaymentRefundServiceImpl implements ShopLatePaymentRefundSe
         return settled.outcome();
     }
 
-    private Claim claim(String tenantId, String paymentId) {
-        Optional<Payment> paymentOpt =
-                paymentRepository.findByTenantIdAndPaymentIdAndIsDeletedFalse(tenantId, paymentId);
-        if (paymentOpt.isEmpty() || !StringUtils.hasText(paymentOpt.get().getOrderId())) {
-            return new Claim(ShopLatePaymentOutcome.NOT_APPLICABLE, null);
-        }
-        Payment payment = paymentOpt.get();
+    private Claim claim(String tenantId, String paymentId, String orderPublicId) {
         Optional<ShopClientOrder> orderOpt =
-                shopClientOrderRepository.lockByTenantIdAndPublicId(tenantId, payment.getOrderId());
+                shopClientOrderRepository.lockByTenantIdAndPublicId(tenantId, orderPublicId);
         if (orderOpt.isEmpty() || !ShopLatePaymentConstants.isClosedOrder(orderOpt.get().getStatus())) {
             return new Claim(ShopLatePaymentOutcome.NOT_APPLICABLE, null);
         }
+        Optional<Payment> paymentOpt =
+                paymentRepository.findByTenantIdAndPaymentIdAndIsDeletedFalse(tenantId, paymentId);
+        if (paymentOpt.isEmpty() || !orderPublicId.equals(paymentOpt.get().getOrderId())) {
+            return new Claim(ShopLatePaymentOutcome.NOT_APPLICABLE, null);
+        }
+        Payment payment = paymentOpt.get();
         if (payment.getStatus() == Payment.PaymentStatus.REFUNDED) {
             return new Claim(ShopLatePaymentOutcome.ALREADY_REFUNDED, null);
         }
@@ -117,15 +125,15 @@ public class ShopLatePaymentRefundServiceImpl implements ShopLatePaymentRefundSe
         }
     }
 
-    private Settled settle(String tenantId, String paymentId, boolean cancelled) {
+    private Settled settle(String tenantId, String paymentId, String orderPublicId, boolean cancelled) {
+        ShopClientOrder order = shopClientOrderRepository
+                .lockByTenantIdAndPublicId(tenantId, orderPublicId)
+                .orElse(null);
         Payment payment = paymentRepository.findByTenantIdAndPaymentIdAndIsDeletedFalse(tenantId, paymentId)
                 .orElse(null);
         if (payment == null) {
             return null;
         }
-        ShopClientOrder order = shopClientOrderRepository
-                .lockByTenantIdAndPublicId(tenantId, payment.getOrderId())
-                .orElse(null);
         if (payment.getStatus() == Payment.PaymentStatus.REFUNDED) {
             return new Settled(ShopLatePaymentOutcome.ALREADY_REFUNDED, order);
         }

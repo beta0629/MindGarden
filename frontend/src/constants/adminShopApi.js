@@ -113,6 +113,25 @@ export const ADMIN_SHOP_ORDERS_DEFAULT_PAGE_SIZE = ADMIN_SHOP_ORDERS_DEFAULT_LIM
 /** 어드민 주문 상세·환불 — paymentId / PG 안내 카피 */
 export const ADMIN_SHOP_ORDER_PAYMENT_ID_LABEL = '결제 ID';
 export const ADMIN_SHOP_ORDER_PAYMENT_STATUS_LABEL = '결제 상태';
+
+/** BE {@code Payment.PaymentStatus.REFUND_REQUIRED} — 늦은 결제 PG 자동 취소 실패, 관리자 환불 필요 */
+export const ADMIN_PAYMENT_STATUS_REFUND_REQUIRED = 'REFUND_REQUIRED';
+
+/** 결제 행 상태 한글 라벨 (서버 상태값 키) */
+export const ADMIN_PAYMENT_STATUS_LABELS = Object.freeze({
+  [ADMIN_PAYMENT_STATUS_REFUND_REQUIRED]: '환불 필요'
+});
+
+/**
+ * @param {string|null|undefined} paymentStatus 서버 결제 상태값
+ * @returns {string|null} 한글 라벨, 없으면 null
+ */
+export function resolveAdminPaymentStatusLabel(paymentStatus) {
+  if (paymentStatus == null || paymentStatus === '') {
+    return null;
+  }
+  return ADMIN_PAYMENT_STATUS_LABELS[String(paymentStatus).trim().toUpperCase()] || null;
+}
 /**
  * cashDueMinor 표시 라벨 — PortOne/온라인 실결제액.
  * 「현금」을 결제수단으로 오인하지 않도록 사용. (결제수단은 CREDIT_CARD→신용카드)

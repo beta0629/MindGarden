@@ -12,17 +12,17 @@ const read = (fileName) =>
   fs.readFileSync(path.join(__dirname, '..', fileName), 'utf8');
 
 describe('Shop phone gate settings Link CTA', () => {
-  test('ShopCheckoutPage — 미인증 시 /client/settings Link', () => {
+  test('ShopCheckoutPage — 미인증 시 설정 인증 Link (returnTo 복귀)', () => {
     const src = read('ShopCheckoutPage.js');
-    expect(src).toContain('to="/client/settings"');
+    expect(src).toContain('buildSettingsPathWithReturnTo(');
     expect(src).toContain('CHECKOUT_SETTINGS_LINK');
     expect(src).toContain('assertPortOneCustomerReadyBeforeCheckout');
     expect(src).toContain('portOneCustomerGate');
   });
 
-  test('ShopOrderDetailPage — 미인증 시 /client/settings Link (Leader #3)', () => {
+  test('ShopOrderDetailPage — 미인증 시 설정 인증 Link (returnTo 복귀 · Leader #3)', () => {
     const src = read('ShopOrderDetailPage.js');
-    expect(src).toContain('to="/client/settings"');
+    expect(src).toContain('buildSettingsPathWithReturnTo(');
     expect(src).toContain('CHECKOUT_SETTINGS_LINK');
     expect(src).toContain('assertPortOneCustomerReadyBeforeCheckout');
     expect(src).toContain('ORDER_DETAIL_PHONE_GATE');

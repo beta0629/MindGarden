@@ -39,4 +39,7 @@ public class ShopCatalogSkuResponse {
      * CONSULTATION 은 SPECIALTY, ASSESSMENT 는 ASSESSMENT_TYPE. 없으면 null.
      */
     private String fieldCode;
+
+    /** 사용 기한(개월). 읽기 전용 표시값, 없으면 null(기한 없음). */
+    private Integer validityMonths;
 }

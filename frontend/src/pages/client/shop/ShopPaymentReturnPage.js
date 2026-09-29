@@ -13,6 +13,7 @@ import ShopClientLayout from '../../../components/shop/templates/ShopClientLayou
 import ShopClientSessionLoading from '../../../components/shop/templates/ShopClientSessionLoading';
 import {
   buildShopOrderDetailPath,
+  buildShopPaymentCompletePath,
   canClientShopFulfillRetry,
   clearShopPendingPaymentVerify,
   CLIENT_SHOP_ROUTES,
@@ -92,7 +93,7 @@ const ShopPaymentReturnPage = () => {
             setMessage(SHOP_PAYMENT_RETURN_COPY.PAID_FULFILLMENT_RETRY);
             return;
           }
-          navigate(buildShopOrderDetailPath(detailId), { replace: true });
+          navigate(buildShopPaymentCompletePath(detailId), { replace: true });
           return;
         }
         navigate(CLIENT_SHOP_ROUTES.ORDERS, { replace: true });
@@ -160,7 +161,11 @@ const ShopPaymentReturnPage = () => {
   const showFulfillRetry = canClientShopFulfillRetry(order);
 
   return (
-    <ShopClientLayout title={SHOP_PAYMENT_RETURN_COPY.TITLE} testId="client-shop-payment-return">
+    <ShopClientLayout
+      title={SHOP_PAYMENT_RETURN_COPY.TITLE}
+      testId="client-shop-payment-return"
+      restoreBuyNow={false}
+    >
       {message ? (
         <p
           className={`client-shop__message${error ? ' client-shop__message--error' : ''}`}

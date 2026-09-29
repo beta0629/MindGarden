@@ -135,6 +135,26 @@
   color: var(--client-web-chrome-ink);
 }
 
+.client-web-topchrome__cart-icon {
+  flex-shrink: 0;
+}
+
+.client-web-topchrome__cart--pulse .client-web-topchrome__cart-qty {
+  animation: client-web-topchrome-cart-pulse 0.6s ease-out;
+}
+
+@keyframes client-web-topchrome-cart-pulse {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.25); }
+  100% { transform: scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .client-web-topchrome__cart--pulse .client-web-topchrome__cart-qty {
+    animation: none;
+  }
+}
+
 .client-web-topchrome__icon-link {
   position: relative;
   display: inline-flex;

@@ -18,6 +18,8 @@ describe('Clinic-OS client cart/checkout chrome', () => {
   const cart = read('src/pages/client/shop/ShopCartPage.js');
   const checkout = read('src/pages/client/shop/ShopCheckoutPage.js');
   const ticket = read('src/components/shop/atoms/SessionCountTicket.js');
+  const checkoutLine = read('src/components/shop/organisms/MallCheckoutLine.js');
+  const payPanel = read('src/components/shop/organisms/MallPayPanel.js');
 
   test('layout uses clinic-os shell + design shot id', () => {
     expect(layout).toMatch(/client-shop--clinic-os/);
@@ -39,14 +41,16 @@ describe('Clinic-OS client cart/checkout chrome', () => {
 
   test('cart and checkout render SessionCountTicket', () => {
     expect(cart).toMatch(/SessionCountTicket/);
-    expect(checkout).toMatch(/SessionCountTicket/);
+    expect(checkout).toMatch(/MallCheckoutLine/);
+    expect(checkoutLine).toMatch(/SessionCountTicket/);
     expect(ticket).toMatch(/formatShopSessionCountDisplay/);
     expect(ticket).toMatch(/client-shop__session-ticket/);
   });
 
   test('checkout CTA uses MGButton primary', () => {
     expect(cart).toMatch(/MGButton/);
-    expect(checkout).toMatch(/MGButton/);
-    expect(checkout).toMatch(/variant="primary"/);
+    expect(checkout).toMatch(/MallPayPanel/);
+    expect(payPanel).toMatch(/MGButton/);
+    expect(payPanel).toMatch(/variant="primary"/);
   });
 });

@@ -124,6 +124,7 @@ public class ClientShopCatalogServiceImpl implements ClientShopCatalogService {
                 .sessionCount(sessionCount)
                 .packageType(ShopSessionCountConstants.resolvePackageType(sessionCount))
                 .fieldCode(sku.getFieldCode())
+                .validityMonths(sku.getValidityMonths())
                 .build();
     }
 

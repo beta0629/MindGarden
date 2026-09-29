@@ -14,13 +14,16 @@ import { CLIENT_SHOP_ROUTES } from '../../../constants/clientShopConstants';
 import { useSession } from '../../../contexts/SessionContext';
 import {
   fetchShopCart,
-  mergeGuestShopCartIntoServer
+  mergeGuestShopCartIntoServer,
+  replaceShopCart
 } from '../../../services/clientShopService';
+import { restoreBuyNowCartIfNeeded } from '../../../utils/clientMallBuyNow';
 import {
   getGuestShopCartLines,
   sumCartLineQuantities
 } from '../../../utils/guestShopCart';
 import '../../../styles/shop/ClientShop.css';
+import '../../../styles/shop/ClientMall.css';
 
 /**
  * @param {{
@@ -28,7 +31,12 @@ import '../../../styles/shop/ClientShop.css';
  *   children: import('react').ReactNode,
  *   testId?: string,
  *   aside?: import('react').ReactNode,
- *   activeNavId?: string
+ *   activeNavId?: string,
+ *   cartQty?: number|null,
+ *   cartPulse?: boolean,
+ *   restoreBuyNow?: boolean,
+ *   className?: string,
+ *   meta?: import('react').ReactNode
  * }} props
  */
 const ShopClientLayout = ({
@@ -36,14 +44,20 @@ const ShopClientLayout = ({
   children,
   testId = 'client-shop',
   aside = null,
-  activeNavId = 'shop'
+  activeNavId = 'shop',
+  cartQty = null,
+  cartPulse = false,
+  restoreBuyNow = true,
+  className = '',
+  meta = null
 }) => {
   const { isLoggedIn, isLoading, hasCheckedSession } = useSession();
   const [cartBadgeQty, setCartBadgeQty] = useState(0);
   const sessionReady = hasCheckedSession && !isLoading;
+  const pageOwnsCart = cartQty != null;
 
   useEffect(() => {
-    if (!sessionReady) {
+    if (!sessionReady || pageOwnsCart) {
       return undefined;
     }
     let cancelled = false;
@@ -51,6 +65,13 @@ const ShopClientLayout = ({
     const loadCartQty = async() => {
       try {
         if (isLoggedIn) {
+          if (restoreBuyNow) {
+            try {
+              await restoreBuyNowCartIfNeeded(replaceShopCart);
+            } catch {
+              // 복구 실패 시 보관본 유지 — 다음 화면에서 재시도
+            }
+          }
           try {
             await mergeGuestShopCartIntoServer();
           } catch {
@@ -76,19 +97,21 @@ const ShopClientLayout = ({
     return () => {
       cancelled = true;
     };
-  }, [sessionReady, isLoggedIn]);
+  }, [sessionReady, isLoggedIn, pageOwnsCart, restoreBuyNow]);
 
   return (
     <ClientWebPageShell
       activeNavId={activeNavId}
       title={title}
+      meta={meta}
       testId={testId}
-      className="client-shop client-shop--clinic-os"
+      className={['client-shop client-shop--clinic-os client-mall', className].filter(Boolean).join(' ')}
       stageClassName="client-shop__stage"
       designShot="clinic-os-client-cart"
       aside={aside}
       loginHref="/login"
-      cartBadgeQty={cartBadgeQty}
+      cartBadgeQty={pageOwnsCart ? cartQty : cartBadgeQty}
+      cartBadgePulse={cartPulse}
       cartHref={CLIENT_SHOP_ROUTES.CART}
     >
       {children}
@@ -101,7 +124,12 @@ ShopClientLayout.propTypes = {
   children: PropTypes.node,
   testId: PropTypes.string,
   aside: PropTypes.node,
-  activeNavId: PropTypes.string
+  activeNavId: PropTypes.string,
+  cartQty: PropTypes.number,
+  cartPulse: PropTypes.bool,
+  restoreBuyNow: PropTypes.bool,
+  className: PropTypes.string,
+  meta: PropTypes.node
 };
 
 export default ShopClientLayout;

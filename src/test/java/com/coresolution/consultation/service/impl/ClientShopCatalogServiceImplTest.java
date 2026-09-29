@@ -2,6 +2,7 @@ package com.coresolution.consultation.service.impl;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
@@ -67,6 +68,23 @@ class ClientShopCatalogServiceImplTest {
         assertEquals("SKU-01", list.get(0).getSkuCode());
         assertEquals(10, list.get(0).getSessionCount());
         assertEquals("PACKAGE", list.get(0).getPackageType());
+    }
+
+    @Test
+    @DisplayName("listVisibleSkus — validityMonths 읽기 필드 포함, 없으면 null")
+    void listVisibleSkus_includesValidityMonths() {
+        ShopCatalogSku withValidity = sampleSku();
+        withValidity.setValidityMonths(3);
+        ShopCatalogSku withoutValidity = sampleSku();
+        withoutValidity.setSkuCode("SKU-02");
+        when(shopCatalogSkuRepository.findCatalogForTenant(TENANT))
+                .thenReturn(List.of(withValidity, withoutValidity));
+
+        List<ShopCatalogSkuResponse> list = clientShopCatalogService.listVisibleSkus(TENANT);
+
+        assertEquals(2, list.size());
+        assertEquals(Integer.valueOf(3), list.get(0).getValidityMonths());
+        assertNull(list.get(1).getValidityMonths());
     }
 
     @Test

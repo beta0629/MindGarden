@@ -31,11 +31,13 @@ import com.coresolution.consultation.service.OAuthWebSessionExchangeCodeService;
 import com.coresolution.consultation.util.OAuth2DomainUtil;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.consultation.utils.SessionUtils;
+import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.repository.TenantRepository;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -112,6 +114,12 @@ class OAuth2ControllerWebOAuthSessionTest {
                 .thenReturn(java.util.Optional.empty());
         when(oauthWebSessionExchangeCodeService.consume(anyString()))
                 .thenReturn(java.util.Optional.empty());
+        TenantContextHolder.setTenantId(TENANT_ID);
+    }
+
+    @AfterEach
+    void tearDown() {
+        TenantContextHolder.clear();
     }
 
     private User sampleUser() {

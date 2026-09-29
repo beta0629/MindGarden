@@ -26,10 +26,12 @@ import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.service.UserLifecycleService;
 import com.coresolution.consultation.service.UserService;
 import com.coresolution.consultation.utils.SessionUtils;
+import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.dto.ApiResponse;
 import com.coresolution.core.security.PasswordService;
 
 import jakarta.servlet.http.HttpSession;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -74,6 +76,12 @@ class UserWithdrawalControllerTest {
         currentUser.setPassword("encoded-pw");
         currentUser.setRole(UserRole.CLIENT);
         currentUser.setLifecycleState(LifecycleState.ACTIVE);
+        TenantContextHolder.setTenantId(currentUser.getTenantId());
+    }
+
+    @AfterEach
+    void tearDown() {
+        TenantContextHolder.clear();
     }
 
     // ---------- POST /request ----------

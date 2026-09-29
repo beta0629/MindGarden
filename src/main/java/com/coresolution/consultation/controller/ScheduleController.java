@@ -1245,7 +1245,7 @@ public class ScheduleController extends BaseApiController {
      * POST /api/schedules/consultation-records
      *
      * <p>타기관 연계는 {@link InstitutionLinkConsultationLogWriteRouter} 에 위임만 한다.
-     * 타기관 예외를 catch 하지 않는다. 필수값 검증 채널은 {@code X-Client-Platform} 으로 구분한다(미지정=웹).</p>
+     * 타기관 예외를 catch 하지 않는다. 필수값 키가 하나도 없는 본문은 헤더와 무관하게 기존 앱으로 보고 통과시킨다.</p>
      */
     @PostMapping("/consultation-records")
     public ResponseEntity<ApiResponse<Object>> createConsultationRecord(

@@ -24,7 +24,7 @@ export interface ConsultationRecordRequiredFields {
   mainIssues: string;
   interventionMethods: string;
   clientResponse: string;
-  /** 회기권 일지만 서버 필수. 타기관 연계 여부는 서버가 판별한다. */
+  /** 앱은 항상 선택을 요구한다. 비어 있으면 본문에서 뺀다(빈 문자열 전송 금지). */
   riskAssessment: string;
   progressEvaluation: string;
 }
@@ -41,10 +41,22 @@ export interface ConsultationRecordCreateBodyInput extends ConsultationRecordReq
   nextSessionPlan?: string;
 }
 
+export const CONSULTATION_RECORD_REQUIRED_FIELDS: readonly ConsultationRecordRequiredField[] = [
+  'sessionDurationMinutes',
+  'clientCondition',
+  'mainIssues',
+  'interventionMethods',
+  'clientResponse',
+  'riskAssessment',
+  'progressEvaluation',
+];
+
+export type ConsultationRecordFieldErrors = Partial<Record<ConsultationRecordRequiredField, string>>;
+
 const isBlank = (value: unknown): boolean => value == null || String(value).trim() === '';
 
 /**
- * 서버와 같은 필수값 오류 필드 목록. 위험도는 타기관 연계 판별이 서버에 있으므로 여기서 요구하지 않는다.
+ * 서버와 같은 필수값 오류 필드 목록. 위험도는 앱에서 항상 선택을 요구한다.
  *
  * @param fields 필수값 입력
  * @returns 누락·한도 초과 필드 (비어 있으면 통과)
@@ -67,6 +79,7 @@ export function findMissingConsultationRecordFields(
     'mainIssues',
     'interventionMethods',
     'clientResponse',
+    'riskAssessment',
     'progressEvaluation',
   ];
   for (const key of textFields) {
@@ -78,7 +91,7 @@ export function findMissingConsultationRecordFields(
 }
 
 /**
- * POST 본문. 필수값 키는 비어 있어도 빠뜨리지 않는다.
+ * POST 본문. 위험도 외 필수값 키는 비어 있어도 빠뜨리지 않는다. 위험도는 선택하지 않았으면 키를 뺀다.
  *
  * @param input 본문 입력
  * @returns 요청 본문
@@ -98,13 +111,78 @@ export function buildConsultationRecordCreateBody(
     mainIssues: input.mainIssues.trim(),
     interventionMethods: input.interventionMethods.trim(),
     clientResponse: input.clientResponse.trim(),
-    riskAssessment: input.riskAssessment.trim(),
     progressEvaluation: input.progressEvaluation.trim(),
   };
+  if (!isBlank(input.riskAssessment)) {
+    body.riskAssessment = input.riskAssessment.trim();
+  }
   if (input.nextSessionPlan && input.nextSessionPlan.trim()) {
     body.nextSessionPlan = input.nextSessionPlan.trim();
   }
   return body;
+}
+
+const DETAILS_FIELD_PATTERN_SOURCE = `(?:^|,\\s*)(${CONSULTATION_RECORD_REQUIRED_FIELDS.join('|')}):\\s*`;
+
+/**
+ * 서버 400 {@code details}("필드: 문구, 필드: 문구") 를 필드별 문구로 바꾼다. 필수값 필드만 남긴다.
+ *
+ * @param details 응답 본문 details (문자열 또는 필드→문구 객체)
+ * @returns 필드별 문구
+ */
+export function parseConsultationRecordFieldErrors(details: unknown): ConsultationRecordFieldErrors {
+  const errors: ConsultationRecordFieldErrors = {};
+  const known = CONSULTATION_RECORD_REQUIRED_FIELDS as readonly string[];
+  if (details != null && typeof details === 'object' && !Array.isArray(details)) {
+    for (const [key, value] of Object.entries(details as Record<string, unknown>)) {
+      if (known.includes(key) && typeof value === 'string' && value.trim()) {
+        errors[key as ConsultationRecordRequiredField] = value.trim();
+      }
+    }
+    return errors;
+  }
+  if (typeof details !== 'string' || !details.trim()) {
+    return errors;
+  }
+  const pattern = new RegExp(DETAILS_FIELD_PATTERN_SOURCE, 'g');
+  const matches: { field: string; start: number; valueStart: number }[] = [];
+  let match = pattern.exec(details);
+  while (match) {
+    const field = match[1];
+    if (field) {
+      matches.push({ field, start: match.index, valueStart: match.index + match[0].length });
+    }
+    match = pattern.exec(details);
+  }
+  matches.forEach((current, index) => {
+    const end = matches[index + 1]?.start ?? details.length;
+    const message = details.slice(current.valueStart, end).trim();
+    if (message) {
+      errors[current.field as ConsultationRecordRequiredField] = message;
+    }
+  });
+  return errors;
+}
+
+/**
+ * apiClient 거부 값(ApiClientError.originalError.response.data)에서 필드별 오류를 꺼낸다.
+ *
+ * @param error mutation 오류
+ * @returns 필드별 문구 (400 details 가 없으면 빈 객체)
+ */
+export function extractConsultationRecordFieldErrors(error: unknown): ConsultationRecordFieldErrors {
+  if (error == null || typeof error !== 'object') {
+    return {};
+  }
+  const original = (error as { originalError?: unknown }).originalError;
+  const data =
+    original != null && typeof original === 'object'
+      ? (original as { response?: { data?: unknown } }).response?.data
+      : undefined;
+  if (data == null || typeof data !== 'object') {
+    return {};
+  }
+  return parseConsultationRecordFieldErrors((data as Record<string, unknown>).details);
 }
 
 function parseClockMinutes(value: string | undefined): number | null {

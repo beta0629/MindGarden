@@ -5,6 +5,7 @@ import static org.hamcrest.Matchers.not;
 import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -12,6 +13,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.util.LinkedHashMap;
 import java.util.Map;
+import com.coresolution.consultation.constant.PaymentTimingConstants;
 import com.coresolution.consultation.entity.ConsultationRecord;
 import com.coresolution.consultation.exception.GlobalExceptionHandler;
 import com.coresolution.consultation.repository.ClientRepository;
@@ -183,13 +185,70 @@ class ScheduleControllerConsultationRecordCreateChannelTest {
     }
 
     @Test
-    @DisplayName("웹: 헤더 없이 기존 앱 형태 본문을 보내면 웹으로 보고 400")
-    void noHeader_legacyShape_treatedAsWeb() throws Exception {
+    @DisplayName("레거시 앱: X-Client-Platform 헤더 없이 필수값 키가 하나도 없는 본문은 201")
+    void noHeader_legacyAppPayload_passes() throws Exception {
         mockMvc.perform(postJson(legacyAppPayload(), null))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.success").value(true));
+
+        verify(consultationRecordService).createConsultationRecord(anyMap());
+    }
+
+    @Test
+    @DisplayName("웹: 헤더 없이 필수값 키는 있고 값이 비면 400 VALIDATION_ERROR 와 필드별 details")
+    void noHeader_blankRequiredValues_badRequest() throws Exception {
+        Map<String, Object> payload = webPayload();
+        payload.put("clientCondition", "");
+        payload.put("riskAssessment", "");
+
+        mockMvc.perform(postJson(payload, null))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errorCode").value("VALIDATION_ERROR"));
+                .andExpect(jsonPath("$.errorCode").value("VALIDATION_ERROR"))
+                .andExpect(jsonPath("$.details").value(containsString("clientCondition")))
+                .andExpect(jsonPath("$.details").value(containsString("riskAssessment")))
+                .andExpect(jsonPath("$.details").value(not(containsString("mainIssues"))));
 
         verify(consultationRecordService, never()).createConsultationRecord(anyMap());
+    }
+
+    @Test
+    @DisplayName("신규 앱: 헤더가 있고 riskAssessment 가 비면 400")
+    void app_withHeader_blankRiskAssessment_badRequest() throws Exception {
+        Map<String, Object> payload = fixedAppPayload();
+        payload.put("riskAssessment", "");
+
+        mockMvc.perform(postJson(payload, PLATFORM_IOS))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errorCode").value("VALIDATION_ERROR"))
+                .andExpect(jsonPath("$.details").value(containsString("riskAssessment")))
+                .andExpect(jsonPath("$.details").value(not(containsString("mainIssues"))));
+
+        Map<String, Object> missing = fixedAppPayload();
+        missing.remove("riskAssessment");
+        mockMvc.perform(postJson(missing, PLATFORM_ANDROID))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.details").value(containsString("riskAssessment")));
+
+        verify(consultationRecordService, never()).createConsultationRecord(anyMap());
+    }
+
+    @Test
+    @DisplayName("가예약·후결제(SAME_DAY_CARD) 일정도 필수값을 채우면 웹·앱 모두 201")
+    void tentativeAndPayLaterSchedule_filledPayload_created() throws Exception {
+        Map<String, Object> tentativeWeb = webPayload();
+        tentativeWeb.put("scheduleStatus", "TENTATIVE_PENDING_PAYMENT");
+        tentativeWeb.put("paymentTiming", PaymentTimingConstants.SAME_DAY_CARD);
+        mockMvc.perform(postJson(tentativeWeb, null))
+                .andExpect(status().isCreated());
+
+        Map<String, Object> payLaterApp = fixedAppPayload();
+        payLaterApp.put("scheduleStatus", "TENTATIVE_PENDING_PAYMENT");
+        payLaterApp.put("paymentTiming", PaymentTimingConstants.SAME_DAY_CARD);
+        payLaterApp.remove("sessionNumber");
+        mockMvc.perform(postJson(payLaterApp, PLATFORM_ANDROID))
+                .andExpect(status().isCreated());
+
+        verify(consultationRecordService, times(2)).createConsultationRecord(anyMap());
     }
 
     @Test

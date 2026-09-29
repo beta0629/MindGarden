@@ -30,14 +30,20 @@ import { SkeletonLoader } from '@/components/atoms/SkeletonLoader';
 import { CONSULTANT_RECORDS_COPY } from '@/constants/consultantRecordsCopy';
 import { resolveSessionNumberFromSchedule } from '@/utils/consultationRecordSessionNumber';
 import {
+  extractConsultationRecordFieldErrors,
   findMissingConsultationRecordFields,
   resolveDefaultSessionDurationMinutes,
+  type ConsultationRecordFieldErrors,
+  type ConsultationRecordRequiredField,
 } from '@/utils/consultationRecordCreateBody';
 import { extractApiErrorMessage } from '@/utils/extractApiErrorMessage';
 
 const TAG_OPTIONS = ['우울', '불안', '가족', '학업', '직장', '관계', '자아', '기타'];
 const FIELD_LABELS = CONSULTANT_RECORDS_COPY.CREATE_FIELD_LABELS;
 const FIELD_PLACEHOLDERS = CONSULTANT_RECORDS_COPY.CREATE_FIELD_PLACEHOLDERS;
+const FIELD_ERRORS = CONSULTANT_RECORDS_COPY.CREATE_FIELD_ERRORS;
+
+type RequiredTextField = 'mainIssues' | 'interventionMethods' | 'clientResponse' | 'progressEvaluation';
 
 function parseDurationInput(raw: string): number | null {
   const trimmed = raw.trim();
@@ -66,6 +72,38 @@ export default function ConsultantRecordCreate() {
   const [clientResponse, setClientResponse] = useState('');
   const [riskAssessment, setRiskAssessment] = useState('');
   const [progressEvaluation, setProgressEvaluation] = useState('');
+  const [fieldErrors, setFieldErrors] = useState<ConsultationRecordFieldErrors>({});
+
+  const riskMissing = riskAssessment.trim() === '';
+  const submitDisabled = createMutation.isPending || riskMissing;
+
+  const clearFieldError = (field: ConsultationRecordRequiredField) => {
+    setFieldErrors((prev) => {
+      if (!prev[field]) return prev;
+      const next = { ...prev };
+      delete next[field];
+      return next;
+    });
+  };
+
+  const withClearError =
+    (field: ConsultationRecordRequiredField, setter: (text: string) => void) => (text: string) => {
+      setter(text);
+      clearFieldError(field);
+    };
+
+  const requiredTextValues: Record<RequiredTextField, string> = {
+    mainIssues,
+    interventionMethods,
+    clientResponse,
+    progressEvaluation,
+  };
+  const requiredTextSetters: Record<RequiredTextField, (text: string) => void> = {
+    mainIssues: setMainIssues,
+    interventionMethods: setInterventionMethods,
+    clientResponse: setClientResponse,
+    progressEvaluation: setProgressEvaluation,
+  };
 
   useEffect(() => {
     if (!schedule) return;
@@ -98,6 +136,11 @@ export default function ConsultantRecordCreate() {
       progressEvaluation,
     });
     if (missing.length > 0) {
+      const localErrors: ConsultationRecordFieldErrors = {};
+      for (const key of missing) {
+        localErrors[key] = FIELD_ERRORS[key];
+      }
+      setFieldErrors(localErrors);
       Alert.alert(
         CONSULTANT_RECORDS_COPY.CREATE_REQUIRED_TITLE,
         CONSULTANT_RECORDS_COPY.CREATE_REQUIRED_MISSING_PREFIX +
@@ -117,6 +160,7 @@ export default function ConsultantRecordCreate() {
       return;
     }
 
+    setFieldErrors({});
     createMutation.mutate(
       {
         scheduleId: Number(scheduleId),
@@ -144,6 +188,7 @@ export default function ConsultantRecordCreate() {
           );
         },
         onError: (error) => {
+          setFieldErrors(extractConsultationRecordFieldErrors(error));
           Alert.alert(
             '오류',
             extractApiErrorMessage(error, CONSULTANT_RECORDS_COPY.CREATE_SAVE_FAILED),
@@ -169,20 +214,36 @@ export default function ConsultantRecordCreate() {
     </Text>
   );
 
-  const renderRequiredTextField = (
-    label: string,
-    value: string,
-    onChangeText: (text: string) => void,
-    placeholder: string,
-  ) => (
+  const renderFieldError = (field: ConsultationRecordRequiredField, fallback?: string) => {
+    const message = fieldErrors[field] ?? fallback;
+    if (!message) return null;
+    return (
+      <Text
+        style={{
+          color: theme.colors.error,
+          fontFamily: theme.fontFamily.regular,
+          fontSize: theme.fontSize.xs,
+          marginTop: theme.spacing.xs,
+        }}
+        accessibilityLiveRegion="polite"
+      >
+        {message}
+      </Text>
+    );
+  };
+
+  const fieldBorderColor = (field: ConsultationRecordRequiredField) =>
+    fieldErrors[field] ? theme.colors.error : theme.colors.border;
+
+  const renderRequiredTextField = (field: RequiredTextField) => (
     <>
-      {renderSectionLabel(label)}
+      {renderSectionLabel(FIELD_LABELS[field])}
       <TextInput
         style={[
           styles.textInput,
           {
             backgroundColor: theme.colors.surface,
-            borderColor: theme.colors.border,
+            borderColor: fieldBorderColor(field),
             borderRadius: theme.borderRadius.lg,
             color: theme.colors.textMain,
             fontFamily: theme.fontFamily.regular,
@@ -191,14 +252,15 @@ export default function ConsultantRecordCreate() {
             marginTop: theme.spacing.sm,
           },
         ]}
-        value={value}
-        onChangeText={onChangeText}
-        placeholder={placeholder}
+        value={requiredTextValues[field]}
+        onChangeText={withClearError(field, requiredTextSetters[field])}
+        placeholder={FIELD_PLACEHOLDERS[field]}
         placeholderTextColor={theme.colors.gray[400]}
         multiline
         textAlignVertical="top"
-        accessibilityLabel={label}
+        accessibilityLabel={FIELD_LABELS[field]}
       />
+      {renderFieldError(field)}
     </>
   );
 
@@ -305,7 +367,7 @@ export default function ConsultantRecordCreate() {
               styles.textInput,
               {
                 backgroundColor: theme.colors.surface,
-                borderColor: theme.colors.border,
+                borderColor: fieldBorderColor('clientCondition'),
                 borderRadius: theme.borderRadius.lg,
                 color: theme.colors.textMain,
                 fontFamily: theme.fontFamily.regular,
@@ -315,13 +377,14 @@ export default function ConsultantRecordCreate() {
               },
             ]}
             value={summary}
-            onChangeText={setSummary}
+            onChangeText={withClearError('clientCondition', setSummary)}
             placeholder="내담자에게 공유될 한 줄 요약을 입력하세요..."
             placeholderTextColor={theme.colors.gray[400]}
             multiline
             textAlignVertical="top"
             accessibilityLabel="상담 요약"
           />
+          {renderFieldError('clientCondition')}
 
           {/* 전문가 메모 (비공개) */}
           <Text
@@ -367,7 +430,7 @@ export default function ConsultantRecordCreate() {
               styles.numberInput,
               {
                 backgroundColor: theme.colors.surface,
-                borderColor: theme.colors.border,
+                borderColor: fieldBorderColor('sessionDurationMinutes'),
                 borderRadius: theme.borderRadius.lg,
                 color: theme.colors.textMain,
                 fontFamily: theme.fontFamily.regular,
@@ -377,30 +440,16 @@ export default function ConsultantRecordCreate() {
               },
             ]}
             value={sessionDuration}
-            onChangeText={setSessionDuration}
+            onChangeText={withClearError('sessionDurationMinutes', setSessionDuration)}
             placeholder={FIELD_PLACEHOLDERS.sessionDurationMinutes}
             placeholderTextColor={theme.colors.gray[400]}
             keyboardType="number-pad"
             accessibilityLabel={FIELD_LABELS.sessionDurationMinutes}
           />
-          {renderRequiredTextField(
-            FIELD_LABELS.mainIssues,
-            mainIssues,
-            setMainIssues,
-            FIELD_PLACEHOLDERS.mainIssues,
-          )}
-          {renderRequiredTextField(
-            FIELD_LABELS.interventionMethods,
-            interventionMethods,
-            setInterventionMethods,
-            FIELD_PLACEHOLDERS.interventionMethods,
-          )}
-          {renderRequiredTextField(
-            FIELD_LABELS.clientResponse,
-            clientResponse,
-            setClientResponse,
-            FIELD_PLACEHOLDERS.clientResponse,
-          )}
+          {renderFieldError('sessionDurationMinutes')}
+          {renderRequiredTextField('mainIssues')}
+          {renderRequiredTextField('interventionMethods')}
+          {renderRequiredTextField('clientResponse')}
           {renderSectionLabel(FIELD_LABELS.riskAssessment)}
           <View style={[styles.tagRow, { marginTop: theme.spacing.sm }]}>
             {CONSULTANT_RECORDS_COPY.CREATE_RISK_OPTIONS.map((option) => (
@@ -408,18 +457,15 @@ export default function ConsultantRecordCreate() {
                 key={option.value}
                 label={option.label}
                 selected={riskAssessment === option.value}
-                onPress={() =>
-                  setRiskAssessment((prev) => (prev === option.value ? '' : option.value))
-                }
+                onPress={() => {
+                  setRiskAssessment((prev) => (prev === option.value ? '' : option.value));
+                  clearFieldError('riskAssessment');
+                }}
               />
             ))}
           </View>
-          {renderRequiredTextField(
-            FIELD_LABELS.progressEvaluation,
-            progressEvaluation,
-            setProgressEvaluation,
-            FIELD_PLACEHOLDERS.progressEvaluation,
-          )}
+          {renderFieldError('riskAssessment', riskMissing ? FIELD_ERRORS.riskAssessment : undefined)}
+          {renderRequiredTextField('progressEvaluation')}
 
           {/* 태그 */}
           <Text
@@ -501,14 +547,14 @@ export default function ConsultantRecordCreate() {
         >
           <Pressable
             onPress={() => handleSave('DRAFT')}
-            disabled={createMutation.isPending}
+            disabled={submitDisabled}
             style={[
               styles.secondaryButton,
               {
                 borderColor: theme.colors.border,
                 borderRadius: theme.borderRadius.lg,
                 paddingVertical: theme.spacing.md,
-                opacity: createMutation.isPending ? 0.6 : 1,
+                opacity: submitDisabled ? 0.6 : 1,
               },
             ]}
             accessibilityRole="button"
@@ -528,14 +574,14 @@ export default function ConsultantRecordCreate() {
           <View style={{ width: theme.spacing.md }} />
           <Pressable
             onPress={() => handleSave('COMPLETED')}
-            disabled={createMutation.isPending}
+            disabled={submitDisabled}
             style={[
               styles.primaryButton,
               {
                 backgroundColor: theme.colors.primary,
                 borderRadius: theme.borderRadius.lg,
                 paddingVertical: theme.spacing.md,
-                opacity: createMutation.isPending ? 0.6 : 1,
+                opacity: submitDisabled ? 0.6 : 1,
               },
             ]}
             accessibilityRole="button"

@@ -42,6 +42,16 @@ export const CONSULTANT_RECORDS_COPY = {
     clientResponse: '내담자의 반응을 입력하세요...',
     progressEvaluation: '진행 평가를 입력하세요...',
   },
+  /** 서버 ConsultationRecordCreateValidationMessages 와 같은 필드별 문구 */
+  CREATE_FIELD_ERRORS: {
+    sessionDurationMinutes: '세션 시간을 입력해주세요 (최소 1분)',
+    clientCondition: '내담자 상태를 입력해주세요',
+    mainIssues: '주요 이슈를 입력해주세요',
+    interventionMethods: '개입 방법을 입력해주세요',
+    clientResponse: '내담자 반응을 입력해주세요',
+    riskAssessment: '위험도 평가를 선택해주세요',
+    progressEvaluation: '진행 평가를 입력해주세요',
+  },
   /** 웹 ConsultationLogModal DEFAULT_RISK_LEVEL_OPTIONS 와 같은 값·라벨 */
   CREATE_RISK_OPTIONS: [
     { value: 'LOW', label: '낮음' },

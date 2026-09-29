@@ -1,6 +1,6 @@
 /**
  * ShopPaymentCompletePage — 「결제가 완료됐어요」 (추가된 회기 · 사용 기한 · 금액·결제 수단 · 주문번호 · 옆 「내 회기」)
- * primary 「내 회기 보기」 하나 · secondary 「결제 내역 보기」 · 예약/일정 버튼 없음.
+ * primary 「내 회기 보기」 하나 · secondary 「결제 내역 보기」(좁은 화면은 텍스트 링크) · 예약/일정 버튼 없음.
  * 결제 확정이 아니거나 이행 재시도가 필요하면 주문 상세로 넘긴다.
  *
  * @author MindGarden
@@ -19,6 +19,7 @@ import {
   CLIENT_MALL_CHECKOUT_SOURCE_BUY_NOW,
   CLIENT_MALL_COMPLETE_COPY,
   CLIENT_MALL_COPY,
+  CLIENT_MALL_NARROW_MEDIA_QUERY,
   CLIENT_MALL_ROUTES,
   CLIENT_MALL_TEST_IDS
 } from '../../../constants/clientMallConstants';
@@ -29,6 +30,7 @@ import {
 import { ICONS, ICON_SIZES } from '../../../constants/icons';
 import { RoleUtils } from '../../../constants/roles';
 import { useClientShopAuth } from '../../../hooks/useClientShopAuth';
+import useMediaQuery from '../../../hooks/useMediaQuery';
 import {
   fetchClientRemainingSessions,
   fetchShopCart,
@@ -47,7 +49,7 @@ import { normalizeShopSessionCount } from '../../../utils/shopSessionCount';
 import { requestClientHomeMappingsSoftRefresh } from '../../../utils/clientHomeSoftRefresh';
 
 const PAID_STATUS = 'PAID';
-const CheckIcon = ICONS.CHECK_CIRCLE;
+const CheckIcon = ICONS.CHECK;
 
 const ShopPaymentCompletePage = () => {
   const { orderPublicId } = useParams();
@@ -58,6 +60,7 @@ const ShopPaymentCompletePage = () => {
   const [failed, setFailed] = useState(false);
   const [remainingSessions, setRemainingSessions] = useState(null);
   const [keptCartQty, setKeptCartQty] = useState(null);
+  const isNarrow = useMediaQuery(CLIENT_MALL_NARROW_MEDIA_QUERY);
   const ranRef = useRef(false);
 
   useEffect(() => {
@@ -137,7 +140,7 @@ const ShopPaymentCompletePage = () => {
     { key: 'order', label: CLIENT_MALL_COMPLETE_COPY.ROW_ORDER_ID, value: <SafeText>{order.orderPublicId}</SafeText> }
   ] : [];
 
-  const aside = order && (remainingSessions != null || expiryDates.length === 1) ? (
+  const asideCard = order && (remainingSessions != null || expiryDates.length === 1) ? (
     <section className="client-mall-cart client-mall-complete-aside" data-testid={CLIENT_MALL_TEST_IDS.COMPLETE_ASIDE}>
       <h2 className="client-mall-cart__title">{CLIENT_MALL_COMPLETE_COPY.ASIDE_TITLE}</h2>
       {remainingSessions != null ? (
@@ -157,6 +160,20 @@ const ShopPaymentCompletePage = () => {
       ) : null}
     </section>
   ) : null;
+  const cartKeptNote = order && keptCartQty != null ? (
+    <p className="client-mall-complete__kept" data-testid={CLIENT_MALL_TEST_IDS.COMPLETE_CART_KEPT}>
+      {CLIENT_MALL_COMPLETE_COPY.BUY_NOW_CART_KEPT_PREFIX}
+      {keptCartQty}
+      {CLIENT_MALL_COMPLETE_COPY.BUY_NOW_CART_KEPT_SUFFIX}
+    </p>
+  ) : null;
+  const aside = asideCard || cartKeptNote ? (
+    <div className="client-mall-complete-side">
+      {asideCard}
+      {cartKeptNote}
+    </div>
+  ) : null;
+  const goPaymentHistory = () => navigate(CLIENT_MALL_ROUTES.PAYMENT_HISTORY);
 
   return (
     <ShopClientLayout
@@ -177,7 +194,11 @@ const ShopPaymentCompletePage = () => {
       ) : null}
       {order ? (
         <section className="client-mall-box client-mall-complete" data-testid={CLIENT_MALL_TEST_IDS.COMPLETE}>
-          {CheckIcon ? <CheckIcon size={ICON_SIZES.XXXL} aria-hidden className="client-mall-complete__icon" /> : null}
+          {CheckIcon ? (
+            <span className="client-mall-complete__icon-ring" aria-hidden="true">
+              <CheckIcon size={ICON_SIZES.XXL} aria-hidden className="client-mall-complete__icon" />
+            </span>
+          ) : null}
           <p className="client-mall-complete__eyebrow">{CLIENT_MALL_COMPLETE_COPY.EYEBROW}</p>
           <h1 className="client-mall-complete__title">{CLIENT_MALL_COMPLETE_COPY.HEADING}</h1>
           <p className="client-mall-complete__lead">
@@ -196,24 +217,29 @@ const ShopPaymentCompletePage = () => {
             >
               {CLIENT_MALL_COMPLETE_COPY.PRIMARY}
             </MGButton>
-            <MGButton
-              variant="outline"
-              size="large"
-              preventDoubleClick={false}
-              className="client-mall-btn client-mall-btn--ink-line"
-              onClick={() => navigate(CLIENT_MALL_ROUTES.PAYMENT_HISTORY)}
-            >
-              {CLIENT_MALL_COMPLETE_COPY.SECONDARY}
-            </MGButton>
+            {isNarrow ? (
+              <button
+                type="button"
+                className="client-mall-link-btn client-mall-complete__link"
+                onClick={goPaymentHistory}
+                data-testid={CLIENT_MALL_TEST_IDS.COMPLETE_SECONDARY}
+              >
+                {CLIENT_MALL_COMPLETE_COPY.SECONDARY}
+              </button>
+            ) : (
+              <MGButton
+                variant="outline"
+                size="large"
+                preventDoubleClick={false}
+                className="client-mall-btn client-mall-btn--ink-line"
+                onClick={goPaymentHistory}
+                data-testid={CLIENT_MALL_TEST_IDS.COMPLETE_SECONDARY}
+              >
+                {CLIENT_MALL_COMPLETE_COPY.SECONDARY}
+              </MGButton>
+            )}
           </div>
           <p className="client-mall-complete__help">{CLIENT_MALL_COMPLETE_COPY.HELP}</p>
-          {keptCartQty != null ? (
-            <p className="client-mall-complete__help" data-testid={CLIENT_MALL_TEST_IDS.COMPLETE_CART_KEPT}>
-              {CLIENT_MALL_COMPLETE_COPY.BUY_NOW_CART_KEPT_PREFIX}
-              {keptCartQty}
-              {CLIENT_MALL_COMPLETE_COPY.BUY_NOW_CART_KEPT_SUFFIX}
-            </p>
-          ) : null}
         </section>
       ) : null}
     </ShopClientLayout>

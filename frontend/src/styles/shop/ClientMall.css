@@ -559,6 +559,26 @@
   justify-content: space-between;
 }
 
+/* 장바구니: 「빼기」는 줄 끝이 아니라 수량 조절 바로 옆 */
+.client-mall-line--cart .client-mall-line__controls {
+  justify-content: flex-start;
+  gap: var(--mg-v2-space-3, 0.75rem);
+}
+
+.client-mall-line--cart .client-mall-line__controls > .client-mall-link-btn {
+  align-self: center;
+}
+
+/* 좁은 화면 전용 「상품 금액 · 받는 회기」 요약 (넓은 화면은 오른쪽 「결제 금액」 카드) */
+.client-mall-cart-sum {
+  display: none;
+}
+
+.client-mall-cart-sum .client-mall-cart-sum__rows {
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
 .client-mall-qty {
   display: inline-flex;
   align-items: center;
@@ -971,9 +991,35 @@
   gap: var(--mg-v2-space-4, 1rem);
 }
 
-.client-mall-complete__icon {
+.client-mall-complete__icon-ring {
   align-self: flex-start;
-  color: var(--client-mall-primary);
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--mg-v2-space-12, 3rem);
+  height: var(--mg-v2-space-12, 3rem);
+  border: 1px solid var(--client-mall-line);
+  border-radius: var(--mg-v2-radius-pill, var(--mg-radius-full));
+  background: var(--client-mall-chip-bg);
+}
+
+.client-mall-complete__icon {
+  color: var(--client-mall-ink);
+}
+
+.client-mall-complete-side {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-v2-space-3, 0.75rem);
+  min-width: 0;
+}
+
+.client-mall-complete__kept {
+  margin: 0;
+  padding: 0 var(--mg-v2-space-1, 0.25rem);
+  color: var(--client-mall-mute);
+  font-size: var(--mg-v2-font-size-caption, 0.75rem);
 }
 
 .client-mall-complete__eyebrow {
@@ -1153,6 +1199,25 @@
   .client-mall-toast {
     bottom: calc(var(--client-mall-bar-h) + env(safe-area-inset-bottom, 0) + var(--mg-v2-space-3, 0.75rem));
   }
+
+  .client-mall-cart-sum {
+    display: flex;
+  }
+
+  /* 결제 완료: 전폭 primary 하나 + 그 아래 텍스트 링크 */
+  .client-mall-complete__actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .client-mall-complete__actions > .mg-button {
+    width: 100%;
+  }
+
+  .client-mall-complete__actions > .client-mall-complete__link {
+    align-self: center;
+    padding: var(--mg-v2-space-2, 0.5rem) 0;
+  }
 }
 
 /* ---------- 휴대폰 인증 바텀시트 (UnifiedModal 포털 — 셸 밖이라 같은 역할 토큰을 전역 토큰으로 다시 이음) ---------- */
@@ -1182,6 +1247,34 @@
   padding-bottom: env(safe-area-inset-bottom, 0);
 }
 
+/* 손잡이(grab handle) — 헤더 위 가운데 */
+.mg-modal.client-mall-sheet::before {
+  content: '';
+  display: block;
+  flex-shrink: 0;
+  width: var(--mg-v2-space-10, 2.5rem);
+  height: var(--mg-v2-space-1, 0.25rem);
+  margin: var(--mg-v2-space-2, 0.5rem) auto 0;
+  border-radius: var(--mg-v2-radius-pill, var(--mg-radius-full));
+  background: var(--client-web-hair);
+}
+
+.client-mall-sheet .mg-modal__header {
+  background: var(--client-web-surface);
+  border-bottom: none;
+}
+
+.client-mall-sheet .mg-modal__body {
+  padding-top: 0;
+}
+
+.client-mall-sheet .mg-modal__header-content,
+.client-mall-sheet .mg-modal__title,
+.client-mall-sheet .mg-modal__subtitle {
+  text-align: left;
+  align-items: flex-start;
+}
+
 .client-mall-sheet .mg-modal__close {
   flex: 0 0 auto;
   width: auto;
@@ -1191,4 +1284,39 @@
   display: flex;
   flex-direction: column;
   gap: var(--mg-v2-space-2, 0.5rem);
+}
+
+/* 시트: 버튼은 입력칸 옆이 아니라 아래 전폭 (입력칸은 늘어나지 않고 제 높이) */
+.client-mall-phone--sheet .client-mall-phone__row {
+  flex-direction: column;
+}
+
+.client-mall-phone--sheet .client-mall-phone__row > .client-mall-field__input,
+.client-mall-phone--sheet .client-mall-phone__code-wrap {
+  flex: 0 0 auto;
+}
+
+.client-mall-phone--sheet .client-mall-phone__row > .mg-button,
+.client-mall-phone--sheet .client-mall-phone__close {
+  width: 100%;
+}
+
+/* 공통 .mg-modal__body p 가 문구 색·크기를 덮으므로 시트 범위에서 다시 잇는다 — (c) 오답 문구는 에러 토큰 */
+.client-mall-phone--sheet .client-mall-phone__error {
+  color: var(--cs-error-600, var(--mg-v2-color-error-main));
+  font-size: var(--mg-v2-font-size-body-sm, 0.8125rem);
+}
+
+.client-mall-phone--sheet .client-mall-phone__sub,
+.client-mall-phone--sheet .client-mall-phone__sent {
+  color: var(--client-mall-mute);
+  font-size: var(--mg-v2-font-size-caption, 0.75rem);
+}
+
+.client-mall-phone--sheet .client-mall-phone__state-title {
+  font-size: var(--mg-v2-font-size-body-sm, 0.8125rem);
+}
+
+.client-mall-phone--sheet .client-mall-field__input--error {
+  border-color: var(--cs-error-500, var(--mg-v2-color-error-main));
 }

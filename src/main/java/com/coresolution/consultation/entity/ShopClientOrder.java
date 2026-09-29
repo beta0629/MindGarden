@@ -1,5 +1,6 @@
 package com.coresolution.consultation.entity;
 
+import com.coresolution.consultation.constant.ShopCheckoutConstants;
 import com.coresolution.consultation.constant.ShopClientOrderStatus;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -63,4 +64,12 @@ public class ShopClientOrder extends BaseEntity {
     @Column(name = "client_fulfill_retry_attempted", nullable = false)
     @Builder.Default
     private Boolean clientFulfillRetryAttempted = Boolean.FALSE;
+
+    /**
+     * 주문 생성 경로 ({@link ShopCheckoutConstants#CHECKOUT_SOURCE_CART} |
+     * {@link ShopCheckoutConstants#CHECKOUT_SOURCE_BUY_NOW}). 바로 구매 주문은 PAID 시 장바구니를 비우지 않는다.
+     */
+    @Column(name = "checkout_source", nullable = false, length = 16)
+    @Builder.Default
+    private String checkoutSource = ShopCheckoutConstants.CHECKOUT_SOURCE_CART;
 }

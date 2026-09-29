@@ -17,6 +17,9 @@ import {
   getGuestShopCartLines
 } from '../utils/guestShopCart';
 import { toDisplayString } from '../utils/safeDisplay';
+import { API_CLIENT_MAPPINGS } from '../components/client/clientDashboard/constants';
+import { isApiGetNullFailure, normalizeMappingsListPayload } from '../utils/apiResponseNormalize';
+import { calculateClientSessionTotalsFromMappings } from '../utils/clientSessionTotals';
 
 /**
  * StandardizedApi(apiGet)는 기본적으로 ApiResponse.data를 추출해 반환한다.
@@ -147,6 +150,23 @@ export const fetchConsultantMappings = async() => {
 };
 
 /**
+ * 내담자 남은 회기 합 (홈·회기 상세와 같은 매핑 SSOT). 불러오지 못하면 null.
+ *
+ * @param {number|string} clientId
+ * @returns {Promise<number|null>}
+ */
+export const fetchClientRemainingSessions = async(clientId) => {
+  if (clientId == null || clientId === '') {
+    return null;
+  }
+  const raw = await StandardizedApi.get(API_CLIENT_MAPPINGS(clientId));
+  if (isApiGetNullFailure(raw)) {
+    return null;
+  }
+  return calculateClientSessionTotalsFromMappings(normalizeMappingsListPayload(raw)).remainingSessions;
+};
+
+/**
  * 실패 엔벨로프에서 비어 있지 않은 message를 꺼낸다.
  *
  * @param {*} res
@@ -170,11 +190,13 @@ const failureMessage = (res, fallback) => {
  * @param {string} idempotencyKey
  * @param {number} pointsToRedeemMinor
  * @param {number|null|undefined} consultantClientMappingId
+ * @param {Array<{ skuCode: string, quantity: number }>|null|undefined} [lines] 바로 구매 — 장바구니 대신 이 줄만 결제
  */
 export const postShopCheckout = async(
   idempotencyKey,
   pointsToRedeemMinor,
-  consultantClientMappingId
+  consultantClientMappingId,
+  lines
 ) => {
   const body = {
     idempotencyKey,
@@ -182,6 +204,9 @@ export const postShopCheckout = async(
   };
   if (consultantClientMappingId != null && consultantClientMappingId !== '') {
     body.consultantClientMappingId = Number(consultantClientMappingId);
+  }
+  if (Array.isArray(lines) && lines.length > 0) {
+    body.lines = lines.map((l) => ({ skuCode: l.skuCode, quantity: Number(l.quantity) }));
   }
   const res = await StandardizedApi.post(CLIENT_SHOP_API.CHECKOUT, body);
   const data = unwrap(res);

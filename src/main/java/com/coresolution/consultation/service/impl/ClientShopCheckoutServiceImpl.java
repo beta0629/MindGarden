@@ -17,6 +17,7 @@ import com.coresolution.consultation.constant.ShopSessionCountConstants;
 import com.coresolution.consultation.dto.shop.EffectivePointTenantPolicies;
 import com.coresolution.consultation.dto.PaymentRequest;
 import com.coresolution.consultation.dto.PaymentResponse;
+import com.coresolution.consultation.dto.shop.ShopCartLineRequest;
 import com.coresolution.consultation.dto.shop.ShopCatalogOffer;
 import com.coresolution.consultation.dto.shop.ShopCheckoutRequest;
 import com.coresolution.consultation.dto.shop.ShopCheckoutResponse;
@@ -39,6 +40,7 @@ import com.coresolution.consultation.util.ShopConsultantMappingBindUtil;
 import com.coresolution.consultation.repository.PaymentRepository;
 import com.coresolution.consultation.repository.ShopCartLineRepository;
 import com.coresolution.consultation.repository.ShopCartRepository;
+import com.coresolution.consultation.repository.ShopCatalogSkuRepository;
 import com.coresolution.consultation.repository.ShopClientOrderLineRepository;
 import com.coresolution.consultation.repository.ShopClientOrderRepository;
 import com.coresolution.consultation.repository.ShopOrderFulfillmentEventRepository;
@@ -83,6 +85,7 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
 
     private final ShopCartRepository shopCartRepository;
     private final ShopCartLineRepository shopCartLineRepository;
+    private final ShopCatalogSkuRepository shopCatalogSkuRepository;
     private final ShopClientOrderRepository shopClientOrderRepository;
     private final ShopClientOrderLineRepository shopClientOrderLineRepository;
     private final ClientPointWalletService clientPointWalletService;
@@ -110,22 +113,20 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
             return toCheckoutResponse(existed.get());
         }
 
-        ShopCart cart = shopCartRepository.findByTenantIdAndClientId(tenantId, clientUserId)
-                .orElseThrow(() -> new IllegalArgumentException("장바구니가 비어 있습니다."));
-        List<ShopCartLine> cartLines = shopCartLineRepository.findByCart_IdAndIsDeletedFalse(cart.getId());
-        if (cartLines.isEmpty()) {
-            throw new IllegalArgumentException("장바구니가 비어 있습니다.");
-        }
+        boolean buyNow = request.getLines() != null && !request.getLines().isEmpty();
+        List<CheckoutLine> cartLines = buyNow
+                ? resolveBuyNowLines(tenantId, request.getLines())
+                : loadCartCheckoutLines(tenantId, clientUserId);
 
         List<PricedCartLine> pricedLines = new ArrayList<>();
         long subtotal = 0L;
-        for (ShopCartLine cl : cartLines) {
-            ShopCatalogOffer offer = resolveOffer(tenantId, cl.getSku());
+        for (CheckoutLine cl : cartLines) {
+            ShopCatalogOffer offer = resolveOffer(tenantId, cl.sku());
             if (!offer.sellable()) {
                 throw new IllegalArgumentException(ShopCatalogSkuConstants.PACKAGE_NOT_SELLABLE_MESSAGE);
             }
             pricedLines.add(new PricedCartLine(cl, offer));
-            subtotal += offer.unitPriceMinor() * cl.getQuantity();
+            subtotal += offer.unitPriceMinor() * cl.quantity();
         }
         if (subtotal <= 0L) {
             throw new IllegalArgumentException("주문 금액이 유효하지 않습니다.");
@@ -158,18 +159,18 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
         }
 
         boolean hasConsultation = cartLines.stream()
-                .map(ShopCartLine::getSku)
+                .map(CheckoutLine::sku)
                 .anyMatch(ClientShopCheckoutServiceImpl::isConsultationSku);
         List<ConsultantClientMapping> activeMappings = hasConsultation
                 ? clientShopConsultantMappingService.listActiveMappings(tenantId, clientUserId)
                 : List.of();
-        for (ShopCartLine cl : cartLines) {
-            if (isConsultationSku(cl.getSku())) {
-                requireConsultationVisibleForClient(tenantId, cl.getSku(), activeMappings);
+        for (CheckoutLine cl : cartLines) {
+            if (isConsultationSku(cl.sku())) {
+                requireConsultationVisibleForClient(tenantId, cl.sku(), activeMappings);
             }
         }
         boolean hasUnboundConsultation = cartLines.stream()
-                .map(ShopCartLine::getSku)
+                .map(CheckoutLine::sku)
                 .anyMatch(ClientShopCheckoutServiceImpl::isUnboundConsultationSku);
         Long consultationMappingId = hasUnboundConsultation
                 ? resolveConsultationMappingIdForCheckout(tenantId, request, cartLines, activeMappings)
@@ -177,7 +178,7 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
 
         List<Long> lineMappingIds = new ArrayList<>();
         for (PricedCartLine priced : pricedLines) {
-            ShopCatalogSku sku = priced.line().getSku();
+            ShopCatalogSku sku = priced.line().sku();
             Long lineMappingId = null;
             if (isBoundConsultationSku(sku)) {
                 lineMappingId = resolveBoundConsultantMappingId(
@@ -203,6 +204,9 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
                 .pointsRedeemMinor(points)
                 .cashDueMinor(cashDue)
                 .checkoutIdempotencyKey(request.getIdempotencyKey())
+                .checkoutSource(buyNow
+                        ? ShopCheckoutConstants.CHECKOUT_SOURCE_BUY_NOW
+                        : ShopCheckoutConstants.CHECKOUT_SOURCE_CART)
                 .build();
         order.setTenantId(tenantId);
         order = shopClientOrderRepository.save(order);
@@ -210,10 +214,10 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
         int lineNo = 1;
         for (int i = 0; i < pricedLines.size(); i++) {
             PricedCartLine priced = pricedLines.get(i);
-            ShopCartLine cl = priced.line();
-            ShopCatalogSku sku = cl.getSku();
+            CheckoutLine cl = priced.line();
+            ShopCatalogSku sku = cl.sku();
             ShopCatalogOffer offer = priced.offer();
-            long lineTotal = offer.unitPriceMinor() * cl.getQuantity();
+            long lineTotal = offer.unitPriceMinor() * cl.quantity();
             Long lineMappingId = lineMappingIds.get(i);
             ShopClientOrderLine ol = ShopClientOrderLine.builder()
                     .clientOrder(order)
@@ -224,7 +228,7 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
                     .unitPriceMinor(offer.unitPriceMinor())
                     .sessionCountSnapshot(offer.sessionCount())
                     .validityMonthsSnapshot(sku.getValidityMonths())
-                    .quantity(cl.getQuantity())
+                    .quantity(cl.quantity())
                     .lineTotalMinor(lineTotal)
                     .consultantClientMappingId(lineMappingId)
                     .build();
@@ -247,8 +251,63 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
 
         // 장바구니 비우기는 PAID 이행 경로(markOrderPaidAndCommitPoints)에서만 수행.
         // PG 대기(CREATED/PENDING_PAYMENT) 주문은 결제 실패·뒤로가기 시 카트가 유지되어야 한다.
+        // 바로 구매(BUY_NOW) 주문은 장바구니를 읽지도 비우지도 않는다.
         ShopClientOrder refreshed = shopClientOrderRepository.findByTenantIdAndPublicId(tenantId, publicId).orElse(order);
         return toCheckoutResponse(refreshed);
+    }
+
+    /**
+     * 장바구니 라인을 체크아웃 라인으로 읽는다.
+     *
+     * @param tenantId 테넌트 ID
+     * @param clientUserId 내담자 ID
+     * @return 체크아웃 라인
+     * @throws IllegalArgumentException 장바구니가 비었을 때
+     */
+    private List<CheckoutLine> loadCartCheckoutLines(String tenantId, Long clientUserId) {
+        ShopCart cart = shopCartRepository.findByTenantIdAndClientId(tenantId, clientUserId)
+                .orElseThrow(() -> new IllegalArgumentException("장바구니가 비어 있습니다."));
+        List<ShopCartLine> lines = shopCartLineRepository.findByCart_IdAndIsDeletedFalse(cart.getId());
+        if (lines.isEmpty()) {
+            throw new IllegalArgumentException("장바구니가 비어 있습니다.");
+        }
+        return lines.stream()
+                .map(cl -> new CheckoutLine(cl.getSku(), cl.getQuantity()))
+                .toList();
+    }
+
+    /**
+     * 바로 구매 라인을 체크아웃 라인으로 만든다. 장바구니는 읽지 않는다.
+     * 검증은 장바구니 저장({@code ClientShopCartServiceImpl#replaceCart})과 같다.
+     *
+     * @param tenantId 테넌트 ID
+     * @param requested 요청 라인 (한 SKU)
+     * @return 체크아웃 라인 1개
+     * @throws IllegalArgumentException SKU 가 없거나 둘 이상·수량 범위 밖·판매 중 아님
+     */
+    private List<CheckoutLine> resolveBuyNowLines(String tenantId, List<ShopCartLineRequest> requested) {
+        String skuCode = null;
+        int quantity = 0;
+        for (ShopCartLineRequest line : requested) {
+            String code = line == null || line.getSkuCode() == null ? "" : line.getSkuCode().trim();
+            if (code.isEmpty()) {
+                throw new IllegalArgumentException(ShopCheckoutConstants.MSG_BUY_NOW_INVALID_SKU);
+            }
+            if (skuCode != null && !skuCode.equals(code)) {
+                throw new IllegalArgumentException(ShopCheckoutConstants.MSG_BUY_NOW_SINGLE_SKU_REQUIRED);
+            }
+            skuCode = code;
+            quantity += line.getQuantity();
+        }
+        if (skuCode == null) {
+            throw new IllegalArgumentException(ShopCheckoutConstants.MSG_BUY_NOW_SINGLE_SKU_REQUIRED);
+        }
+        if (quantity < 1 || quantity > ShopCheckoutConstants.MAX_LINE_QUANTITY) {
+            throw new IllegalArgumentException(ShopCheckoutConstants.MSG_BUY_NOW_INVALID_QUANTITY);
+        }
+        ShopCatalogSku sku = shopCatalogSkuRepository.findActiveByTenantAndSkuCode(tenantId, skuCode)
+                .orElseThrow(() -> new IllegalArgumentException(ShopCheckoutConstants.MSG_BUY_NOW_INVALID_SKU));
+        return List.of(new CheckoutLine(sku, quantity));
     }
 
     /**
@@ -359,7 +418,7 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
     private Long resolveConsultationMappingIdForCheckout(
             String tenantId,
             ShopCheckoutRequest request,
-            List<ShopCartLine> cartLines,
+            List<CheckoutLine> cartLines,
             List<ConsultantClientMapping> eligible) {
         List<Long> activeIds = eligible.stream().map(ConsultantClientMapping::getId).toList();
         if (request.getConsultantClientMappingId() != null) {
@@ -373,7 +432,7 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
             return null;
         }
         List<String> cartConsultationTitles = cartLines.stream()
-                .map(ShopCartLine::getSku)
+                .map(CheckoutLine::sku)
                 .filter(sku -> sku != null
                         && ShopCatalogCategory.CONSULTATION.equals(sku.getCatalogCategory()))
                 .map(sku -> resolveOffer(tenantId, sku).title())
@@ -939,7 +998,9 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
         // APPROVED Payment 이 부모 TX 에만 있고 아직 미커밋이면 fulfill 의 REQUIRES_NEW 가
         // APPROVED 를 못 봐 첫 자동 이행이 FAILED 된다 → 커밋 후 이행.
         fulfillPaidOrderAfterPaymentCommit(tenantId, order);
-        clearCartLines(tenantId, order.getClientId());
+        if (!ShopCheckoutConstants.CHECKOUT_SOURCE_BUY_NOW.equals(order.getCheckoutSource())) {
+            clearCartLines(tenantId, order.getClientId());
+        }
         try {
             shopNotificationHelper.notifyOrderPaid(tenantId, order);
         } catch (Exception ex) {
@@ -1113,6 +1174,7 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
                     .lineTotalMinor(l.getLineTotalMinor())
                     .sessionCount(sessionCount)
                     .packageType(ShopSessionCountConstants.resolvePackageType(sessionCount))
+                    .validityMonths(l.getValidityMonthsSnapshot())
                     .build());
         }
         List<ShopOrderFulfillmentEvent> fulfillmentEvents =
@@ -1143,6 +1205,7 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
                 .fulfillmentEvents(fulfillmentLines)
                 .clientFulfillRetryAttempted(
                         Boolean.TRUE.equals(order.getClientFulfillRetryAttempted()))
+                .checkoutSource(order.getCheckoutSource())
                 .build();
     }
 
@@ -1191,7 +1254,11 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
         return shopCatalogPackageOfferResolver.resolveLinked(tenantId, sku);
     }
 
-    private record PricedCartLine(ShopCartLine line, ShopCatalogOffer offer) {
+    /** 체크아웃 입력 한 줄 — 장바구니 라인 또는 바로 구매 라인. */
+    private record CheckoutLine(ShopCatalogSku sku, int quantity) {
+    }
+
+    private record PricedCartLine(CheckoutLine line, ShopCatalogOffer offer) {
     }
 
     private static int resolveSessionCount(ShopCatalogSku sku) {

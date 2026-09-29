@@ -13,13 +13,15 @@ import {
   CLIENT_MALL_COPY,
   CLIENT_MALL_TEST_IDS
 } from '../../../constants/clientMallConstants';
-import { formatMallNumber, formatMallWon } from '../../../utils/clientMall';
+import { formatMallNumber, formatMallSessionsPlus, formatMallWon } from '../../../utils/clientMall';
 
 /**
  * @param {{
  *   subtotalMinor: number,
  *   pointsRedeemMinor: number,
  *   cashDueMinor: number,
+ *   availablePointsMinor?: number,
+ *   quantity?: number,
  *   totalSessions: number,
  *   validityMonths: number|null,
  *   mixedValidity: boolean,
@@ -35,6 +37,8 @@ const MallPayPanel = ({
   subtotalMinor,
   pointsRedeemMinor,
   cashDueMinor,
+  availablePointsMinor = 0,
+  quantity = 0,
   totalSessions,
   validityMonths,
   mixedValidity,
@@ -52,22 +56,30 @@ const MallPayPanel = ({
         <dt>{CLIENT_MALL_CHECKOUT_COPY.PAY_ROW_SUBTOTAL}</dt>
         <dd>{formatMallWon(subtotalMinor)}</dd>
       </div>
-      {pointsRedeemMinor > 0 ? (
+      <div className="client-mall-pay__row" data-testid="client-mall-pay-points">
+        <dt>{CLIENT_MALL_CHECKOUT_COPY.PAY_ROW_POINTS}</dt>
+        <dd>
+          {formatMallNumber(pointsRedeemMinor)}
+          {CLIENT_MALL_CHECKOUT_COPY.POINT_UNIT}
+          {CLIENT_MALL_CHECKOUT_COPY.PAY_ROW_POINTS_SEPARATOR}
+          {CLIENT_MALL_CHECKOUT_COPY.PAY_ROW_POINTS_BALANCE_PREFIX}
+          {formatMallNumber(availablePointsMinor)}
+          {CLIENT_MALL_CHECKOUT_COPY.POINT_UNIT}
+        </dd>
+      </div>
+      <div className="client-mall-pay__row" data-testid="client-mall-pay-sessions">
+        <dt>{CLIENT_MALL_CHECKOUT_COPY.PAY_ROW_SESSIONS}</dt>
+        <dd>{formatMallSessionsPlus(totalSessions)}</dd>
+      </div>
+      {quantity > 0 ? (
         <div className="client-mall-pay__row">
-          <dt>{CLIENT_MALL_CHECKOUT_COPY.PAY_ROW_POINTS}</dt>
+          <dt>{CLIENT_MALL_CHECKOUT_COPY.PAY_ROW_QUANTITY}</dt>
           <dd>
-            {'− '}
-            {formatMallWon(pointsRedeemMinor)}
+            {quantity}
+            {CLIENT_MALL_COPY.CART_COUNT_SUFFIX}
           </dd>
         </div>
       ) : null}
-      <div className="client-mall-pay__row">
-        <dt>{CLIENT_MALL_CHECKOUT_COPY.PAY_ROW_SESSIONS}</dt>
-        <dd>
-          {totalSessions}
-          {CLIENT_MALL_COPY.SESSION_UNIT}
-        </dd>
-      </div>
     </dl>
     <div className="client-mall-pay__total">
       <span>{CLIENT_MALL_CHECKOUT_COPY.PAY_TOTAL}</span>
@@ -121,6 +133,8 @@ MallPayPanel.propTypes = {
   subtotalMinor: PropTypes.number.isRequired,
   pointsRedeemMinor: PropTypes.number.isRequired,
   cashDueMinor: PropTypes.number.isRequired,
+  availablePointsMinor: PropTypes.number,
+  quantity: PropTypes.number,
   totalSessions: PropTypes.number.isRequired,
   validityMonths: PropTypes.number,
   mixedValidity: PropTypes.bool,

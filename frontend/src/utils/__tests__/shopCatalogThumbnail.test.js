@@ -37,6 +37,17 @@ describe('shopCatalogThumbnail', () => {
     expect(decoded).toContain('테스트 상품');
     expect(decoded).toContain('심리 검사');
     expect(decoded).toContain('viewBox="0 0 400 400"');
+    expect(decoded).not.toContain('var(');
+  });
+
+  test('placeholder SVG 는 문서 루트 토큰 계산값을 쓴다', () => {
+    const resolved = 'resolved-primary-token';
+    document.documentElement.style.setProperty('--mg-color-primary-main', resolved);
+    const uri = generateShopCatalogPlaceholderDataUri({ title: 'x', catalogCategory: SHOP_CATALOG_CATEGORY.CONSULTATION });
+    const decoded = decodeURIComponent(uri.replace('data:image/svg+xml;charset=utf-8,', ''));
+    expect(decoded).toContain(`fill="${resolved}"`);
+    expect(decoded).toContain('fill="currentColor"');
+    document.documentElement.style.removeProperty('--mg-color-primary-main');
   });
 
   test('splitShopCatalogPlaceholderTitleLines wraps to at most two lines', () => {

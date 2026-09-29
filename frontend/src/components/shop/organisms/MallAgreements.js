@@ -12,6 +12,9 @@ import {
   CLIENT_MALL_CHECKOUT_COPY,
   CLIENT_MALL_TEST_IDS
 } from '../../../constants/clientMallConstants';
+import { ICONS, ICON_SIZES } from '../../../constants/icons';
+
+const ChevronIcon = ICONS.CHEVRON_RIGHT;
 
 /**
  * @param {{
@@ -54,6 +57,9 @@ const MallAgreements = ({ checked, onToggle, onToggleAll, bodies, disabled = fal
                 />
                 <span className="client-mall-agree__tag">{CLIENT_MALL_CHECKOUT_COPY.AGREEMENT_REQUIRED_TAG}</span>
                 <span className="client-mall-agree__label">{item.label}</span>
+                {ChevronIcon ? (
+                  <ChevronIcon size={ICON_SIZES.MD} aria-hidden className="client-mall-agree__chevron" />
+                ) : null}
               </summary>
               <div className="client-mall-agree__body">{bodies[item.key]}</div>
             </details>

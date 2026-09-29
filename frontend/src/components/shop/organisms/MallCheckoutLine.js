@@ -8,12 +8,13 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import SafeText from '../../common/SafeText';
-import SessionCountTicket from '../atoms/SessionCountTicket';
+import MallSessionChip from '../atoms/MallSessionChip';
 import MallInfoRows from '../molecules/MallInfoRows';
 import MallQtyStepper from '../molecules/MallQtyStepper';
 import MallUsageBanner from '../molecules/MallUsageBanner';
 import {
   CLIENT_MALL_CHECKOUT_COPY,
+  CLIENT_MALL_COPY,
   CLIENT_MALL_TEST_IDS,
   buildClientMallProductUsageNotice
 } from '../../../constants/clientMallConstants';
@@ -58,15 +59,11 @@ const MallCheckoutLine = ({ line, validityMonths, onQuantityChange, disabled = f
         <div className="client-mall-line__name">
           <p className="client-mall-line__title">
             <SafeText>{line.title}</SafeText>
-            <SessionCountTicket
-              sessionCount={line.sessionCount}
-              className="client-mall-chip"
-              testId={`checkout-session-ticket-${line.skuCode}`}
-            />
+            <MallSessionChip sessionCount={line.sessionCount} testId={`checkout-session-ticket-${line.skuCode}`} />
           </p>
           <p className="client-mall-line__unit">
             {formatMallWon(unit)}
-            {' × '}
+            {CLIENT_MALL_COPY.LINE_TIMES}
             {line.quantity}
           </p>
         </div>

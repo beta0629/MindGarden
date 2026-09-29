@@ -9,6 +9,7 @@ import { ADMIN_SHOP_CATALOG_SEED_PLACEHOLDER_THUMBNAIL_PATH } from '../constants
 import {
   SHOP_CATALOG_PLACEHOLDER_SIZE_PX,
   SHOP_CATALOG_PLACEHOLDER_SVG_COLORS,
+  SHOP_CATALOG_PLACEHOLDER_SVG_COLOR_FALLBACK,
   SHOP_CATALOG_PLACEHOLDER_TITLE_FALLBACK,
   SHOP_CATALOG_CATEGORY,
   normalizeShopCatalogCategory,
@@ -91,14 +92,33 @@ export function isShopCatalogPlaceholderUrl(url) {
 }
 
 /**
+ * data URI SVG 안에서는 CSS 변수가 풀리지 않으므로 문서 루트 계산값으로 바꾼다.
+ *
+ * @param {string} tokenName 예: --mg-color-primary-main
+ * @returns {string}
+ */
+function resolveDesignTokenColor(tokenName) {
+  if (typeof window === 'undefined' || typeof document === 'undefined' || !window.getComputedStyle) {
+    return SHOP_CATALOG_PLACEHOLDER_SVG_COLOR_FALLBACK;
+  }
+  const value = window.getComputedStyle(document.documentElement).getPropertyValue(tokenName).trim();
+  return value || SHOP_CATALOG_PLACEHOLDER_SVG_COLOR_FALLBACK;
+}
+
+/**
  * @param {{ title?: string, catalogCategory?: string }} [options]
  * @returns {string} data:image/svg+xml,... URI
  */
 export function generateShopCatalogPlaceholderDataUri(options = {}) {
   const categoryKey = normalizeShopCatalogCategory(options.catalogCategory);
-  const palette =
+  const tokens =
     SHOP_CATALOG_PLACEHOLDER_SVG_COLORS[categoryKey] ||
     SHOP_CATALOG_PLACEHOLDER_SVG_COLORS[SHOP_CATALOG_CATEGORY.CONSULTATION];
+  const palette = {
+    background: resolveDesignTokenColor(tokens.background),
+    accent: resolveDesignTokenColor(tokens.accent),
+    text: resolveDesignTokenColor(tokens.text)
+  };
   const categoryLabel =
     SHOP_CATEGORY_TABS.find((tab) => tab.key === categoryKey)?.label || categoryKey;
   const lines = splitShopCatalogPlaceholderTitleLines(options.title);

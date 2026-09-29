@@ -94,6 +94,21 @@ describe('clientShopService', () => {
       expect(result.orderPublicId).toBe('ord-1');
     });
 
+    test('바로 구매 lines 가 있으면 본문에 넣고, 없으면 넣지 않는다', async() => {
+      StandardizedApi.post.mockResolvedValue({ orderPublicId: 'ord-1' });
+
+      await postShopCheckout('idem-1', 0, 5, [{ skuCode: 'PKG10', quantity: '2' }]);
+      expect(StandardizedApi.post.mock.calls[0][1]).toEqual({
+        idempotencyKey: 'idem-1',
+        pointsToRedeemMinor: 0,
+        consultantClientMappingId: 5,
+        lines: [{ skuCode: 'PKG10', quantity: 2 }]
+      });
+
+      await postShopCheckout('idem-2', 0, null, []);
+      expect(StandardizedApi.post.mock.calls[1][1]).not.toHaveProperty('lines');
+    });
+
     test('성공 래퍼면 data를 반환한다', async() => {
       StandardizedApi.post.mockResolvedValueOnce({
         success: true,

@@ -1,5 +1,7 @@
 package com.coresolution.consultation.service;
 
+import com.coresolution.consultation.dto.auth.SmsOtpSendStatus;
+
 /**
  * SMS OTP 인증 코드 저장·검증 SSOT.
  *
@@ -23,12 +25,21 @@ public interface SmsOtpVerificationService {
 
     /**
      * OTP 검증 후 단일 사용 처리. 일치하면 메모리에서 즉시 삭제한다.
+     * 틀린 코드가 누적되어 한도를 넘으면 그 번호는 잠기고, 잠긴 동안은 항상 false 를 반환한다.
      *
      * @param normalizedPhone 발송 시와 동일한 정규화된 번호
      * @param code            사용자가 입력한 6자리 코드
      * @return 코드가 일치하고 TTL 내였으면 true, 그 외 false
      */
     boolean verifyAndConsume(String normalizedPhone, String code);
+
+    /**
+     * 발송 전·후 안내용 상태 (유효 시간 · 재발송 대기 · 남은 시도 · 잠김).
+     *
+     * @param normalizedPhone 정규화된 번호
+     * @return 현재 발송 상태
+     */
+    SmsOtpSendStatus getSendStatus(String normalizedPhone);
 
     /**
      * 만료된 항목을 정리한다. 스케줄러나 테스트에서 사용. 일반 흐름에서는 verify 시점 lazy 삭제로 충분.

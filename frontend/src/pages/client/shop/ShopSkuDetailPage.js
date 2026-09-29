@@ -10,7 +10,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import ShopClientLayout from '../../../components/shop/templates/ShopClientLayout';
 import ShopClientSessionLoading from '../../../components/shop/templates/ShopClientSessionLoading';
-import SessionCountTicket from '../../../components/shop/atoms/SessionCountTicket';
+import MallSessionChip from '../../../components/shop/atoms/MallSessionChip';
 import MallEmptyState from '../../../components/shop/molecules/MallEmptyState';
 import MallInfoRows from '../../../components/shop/molecules/MallInfoRows';
 import MallPrice from '../../../components/shop/molecules/MallPrice';
@@ -22,7 +22,6 @@ import MGButton from '../../../components/common/MGButton';
 import SafeText from '../../../components/common/SafeText';
 import {
   CLIENT_MALL_COPY,
-  CLIENT_MALL_ROUTES,
   CLIENT_REFUND_NOTICE,
   buildClientMallProductUsageNotice
 } from '../../../constants/clientMallConstants';
@@ -32,13 +31,14 @@ import { useClientShopAuth } from '../../../hooks/useClientShopAuth';
 import useClientMallCart from '../../../hooks/useClientMallCart';
 import { fetchShopCatalog, fetchShopCatalogSku } from '../../../services/clientShopService';
 import {
+  buildMallCardDescription,
   buildValidityExampleText,
   formatMallNumber,
   formatMallSessionLabel,
   formatValidityLabel,
   resolveValidityMonths
 } from '../../../utils/clientMall';
-import { mergeGuestCartLine } from '../../../utils/guestShopCart';
+import { buildBuyNowCheckoutPath } from '../../../utils/clientMallBuyNow';
 
 const buildLoginPath = (redirect) => `/login?redirect=${encodeURIComponent(redirect)}`;
 
@@ -88,18 +88,12 @@ const ShopSkuDetailPage = () => {
     navigate(isLoggedIn ? CLIENT_SHOP_ROUTES.CHECKOUT : buildLoginPath(CLIENT_SHOP_ROUTES.CHECKOUT));
   };
 
-  const handleBuyNow = async() => {
+  const handleBuyNow = () => {
     if (!sku?.skuCode) {
       return;
     }
-    if (!isLoggedIn) {
-      mergeGuestCartLine(sku.skuCode, quantity);
-      navigate(buildLoginPath(CLIENT_SHOP_ROUTES.CHECKOUT));
-      return;
-    }
-    if (await mall.prepareBuyNow(sku.skuCode, quantity)) {
-      navigate(CLIENT_MALL_ROUTES.CHECKOUT_BUY_NOW);
-    }
+    const path = buildBuyNowCheckoutPath(sku.skuCode, quantity);
+    navigate(isLoggedIn ? path : buildLoginPath(path));
   };
 
   if (sessionLoading) {
@@ -131,7 +125,6 @@ const ShopSkuDetailPage = () => {
       summary={mall.summary}
       lastAddedSku={mall.lastAddedSku}
       onCheckout={goCheckout}
-      disabled={mall.busy}
       secondary
     />
   );
@@ -165,15 +158,9 @@ const ShopSkuDetailPage = () => {
       {sku ? (
         <>
           <article className="client-mall-box client-mall-detail" data-testid={CLIENT_SHOP_TEST_IDS.PDP}>
-            <SessionCountTicket
-              sessionCount={sku.sessionCount}
-              className="client-mall-chip"
-              testId="pdp-session-count-ticket"
-            />
+            <MallSessionChip sessionCount={sku.sessionCount} testId="pdp-session-count-ticket" />
             <h1 className="client-mall-detail__title"><SafeText>{sku.title}</SafeText></h1>
-            {sku.descriptionText ? (
-              <p className="client-mall-card__desc"><SafeText>{sku.descriptionText}</SafeText></p>
-            ) : null}
+            <p className="client-mall-card__desc"><SafeText>{buildMallCardDescription(sku)}</SafeText></p>
             <MallPrice amountMinor={unit} sessionCount={sku.sessionCount} />
             <MallInfoRows rows={rows} className="client-mall-rows--wide" />
             <div className="client-mall-detail__qty">
@@ -189,7 +176,6 @@ const ShopSkuDetailPage = () => {
                 size="large"
                 preventDoubleClick={false}
                 className="client-mall-btn client-mall-btn--line"
-                disabled={mall.busy}
                 onClick={() => mall.add(sku.skuCode, quantity)}
                 data-testid={CLIENT_SHOP_TEST_IDS.PDP_ADD_TO_CART}
               >
@@ -199,7 +185,6 @@ const ShopSkuDetailPage = () => {
                 variant="primary"
                 size="large"
                 className="client-mall-btn client-mall-btn--primary"
-                disabled={mall.busy}
                 onClick={handleBuyNow}
               >
                 {CLIENT_MALL_COPY.BUY_NOW}

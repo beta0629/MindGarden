@@ -94,15 +94,18 @@ export const classifyPhoneConfirmError = (err) => {
 };
 
 /**
- * 발송 실패 분류 (429 = 시도 초과 잠김).
+ * 발송 실패 분류 (429 또는 서버 retryAfterSeconds = 시도 초과 잠김).
  *
  * @param {*} err
  * @returns {{ locked: boolean, meta: ReturnType<typeof parseOtpServerMeta> }}
  */
 export const classifyPhoneSendError = (err) => {
   const meta = parseOtpServerMeta(readErrorBody(err));
-  const status = Number(err?.status);
-  return { locked: status === CLIENT_MALL_HTTP_TOO_MANY_REQUESTS, meta };
+  const status = Number(err?.status ?? err?.response?.status);
+  return {
+    locked: status === CLIENT_MALL_HTTP_TOO_MANY_REQUESTS || meta.retryAfterSeconds != null,
+    meta
+  };
 };
 
 /**

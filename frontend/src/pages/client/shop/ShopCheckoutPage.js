@@ -1,6 +1,7 @@
 /**
  * ShopCheckoutPage — 결제 전 확인 (한 화면: 주문 상품 · 구매자/휴대폰 인증 · 전체 동의 · 환불 요약 · 결제)
  * 「N원 결제하기」는 휴대폰 인증 + 전체 동의가 끝나야 활성. PG 실패·닫기 후에도 입력·인증·동의 유지.
+ * 바로 구매(?mode=buyNow&sku=&qty=)는 서버 장바구니를 읽거나 바꾸지 않고 그 SKU 한 줄만 체크아웃 lines 로 보낸다.
  *
  * @author MindGarden
  * @since 2026-05-19
@@ -26,7 +27,6 @@ import {
   CLIENT_MALL_CHECKOUT_COPY,
   CLIENT_MALL_COPY,
   CLIENT_MALL_MIN_AMOUNT_ERROR_MARKERS,
-  CLIENT_MALL_QUERY,
   CLIENT_MALL_TEST_IDS,
   CLIENT_MALL_THIRD_PARTY_BODY,
   CLIENT_REFUND_NOTICE,
@@ -67,7 +67,7 @@ import {
   fetchShopCart,
   fetchShopCatalog,
   mergeCartLine,
-  postShopCheckout,
+  postShopCheckout as postShopCheckoutRequest,
   prepareShopPayment,
   replaceShopCart
 } from '../../../services/clientShopService';
@@ -89,6 +89,7 @@ import {
   distinctConsultantKey
 } from '../../../utils/clientShopCheckoutMapping';
 import {
+  buildCartFromGuestLines,
   formatMallNumber,
   formatMallWon,
   indexCatalogBySku,
@@ -97,7 +98,11 @@ import {
   resolveValidityMonths,
   summarizeMallCart
 } from '../../../utils/clientMall';
-import { hasBuyNowStash, restoreBuyNowCartIfNeeded } from '../../../utils/clientMallBuyNow';
+import {
+  clampBuyNowQuantity,
+  parseBuyNowQuery,
+  toBuyNowCheckoutLines
+} from '../../../utils/clientMallBuyNow';
 import { buildSettingsPathWithReturnTo } from '../../../utils/clientSettingsReturnTo';
 import { applyVerifiedPhoneToSession } from '../../../utils/clientPhoneVerifiedSession';
 
@@ -142,9 +147,11 @@ const ShopCheckoutPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { checkSession } = useSession();
-  const buyNowRequested = new URLSearchParams(location.search).get(CLIENT_MALL_QUERY.MODE)
-    === CLIENT_MALL_QUERY.MODE_BUY_NOW;
-  const [cart, setCart] = useState({ lines: [], subtotalMinor: 0 });
+  const buyNowQuery = useMemo(() => parseBuyNowQuery(location.search), [location.search]);
+  const isBuyNow = buyNowQuery != null;
+  const buyNowSku = buyNowQuery?.skuCode ?? '';
+  const [buyNowQty, setBuyNowQty] = useState(() => buyNowQuery?.quantity ?? 1);
+  const [serverCart, setServerCart] = useState({ lines: [], subtotalMinor: 0 });
   const [catalog, setCatalog] = useState([]);
   const [balance, setBalance] = useState({ availableMinor: 0, heldMinor: 0 });
   const [consultantMappings, setConsultantMappings] = useState([]);
@@ -155,7 +162,22 @@ const ShopCheckoutPage = () => {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [cancelled, setCancelled] = useState(false);
-  const [isBuyNow, setIsBuyNow] = useState(false);
+
+  useEffect(() => {
+    if (buyNowQuery) {
+      setBuyNowQty(buyNowQuery.quantity);
+    }
+  }, [buyNowQuery]);
+
+  const buyNowLines = useMemo(
+    () => (isBuyNow ? toBuyNowCheckoutLines({ skuCode: buyNowSku, quantity: buyNowQty }) : null),
+    [isBuyNow, buyNowSku, buyNowQty]
+  );
+
+  const cart = useMemo(
+    () => (buyNowLines ? buildCartFromGuestLines(buyNowLines, catalog) : serverCart),
+    [buyNowLines, catalog, serverCart]
+  );
 
   const showMinCardPaymentAlert = useCallback(async() => {
     await alert({
@@ -182,31 +204,27 @@ const ShopCheckoutPage = () => {
     try {
       setLoading(true);
       setMessage('');
-      const buyNowActive = buyNowRequested && hasBuyNowStash();
-      if (!buyNowActive) {
-        try {
-          await restoreBuyNowCartIfNeeded(replaceShopCart);
-        } catch {
-          // 보관본 유지 — 다음 진입에서 재시도
-        }
-      }
-      setIsBuyNow(buyNowActive);
       const [catalogData, cartData, balanceData] = await Promise.all([
         fetchShopCatalog({ authenticated: authenticatedCatalog }),
-        fetchShopCart(),
+        isBuyNow ? Promise.resolve(null) : fetchShopCart(),
         fetchPointBalance()
       ]);
       setCatalog(catalogData);
-      setCart(cartData);
+      if (cartData) {
+        setServerCart(cartData);
+      }
       setBalance(balanceData);
 
-      const needsMapping = cartHasConsultationSku(cartData.lines, catalogData);
+      const checkoutLines = isBuyNow
+        ? buildCartFromGuestLines([{ skuCode: buyNowSku, quantity: 1 }], catalogData).lines
+        : cartData.lines;
+      const needsMapping = cartHasConsultationSku(checkoutLines, catalogData);
       if (needsMapping) {
         const mappings = await fetchConsultantMappings();
         setConsultantMappings(mappings);
         setSelectedMappingId((prev) => prev || resolveInitialMappingId(
           mappings,
-          collectCartConsultationTitles(cartData.lines, catalogData)
+          collectCartConsultationTitles(checkoutLines, catalogData)
         ));
       } else {
         setConsultantMappings([]);
@@ -218,7 +236,17 @@ const ShopCheckoutPage = () => {
       setLoading(false);
       setLoaded(true);
     }
-  }, [authenticatedCatalog, buyNowRequested]);
+  }, [authenticatedCatalog, isBuyNow, buyNowSku]);
+
+  const postShopCheckout = useCallback(
+    (idempotencyKey, pointsToRedeemMinor, consultantClientMappingId) => postShopCheckoutRequest(
+      idempotencyKey,
+      pointsToRedeemMinor,
+      consultantClientMappingId,
+      buyNowLines
+    ),
+    [buyNowLines]
+  );
 
   useEffect(() => {
     if (!sessionLoading && isLoggedIn) {
@@ -332,11 +360,14 @@ const ShopCheckoutPage = () => {
   const allAgreed = CLIENT_MALL_AGREEMENT_ITEMS.every((item) => agreements[item.key]);
   const phoneVerified = portOneCustomerGate.ready;
   const payBlock = resolveMallPayBlock({ phoneVerified, allAgreed });
-  const blockMessage = resolveMallPayBlockMessage(payBlock);
+  const noMapping = hasConsultationInCart && consultantMappings.length === 0;
+  const blockMessage = noMapping
+    ? SHOP_CHECKOUT_MAPPING_COPY.NO_MAPPING
+    : resolveMallPayBlockMessage(payBlock);
   const checkoutBlocked =
     Boolean(pointsError) ||
     Boolean(mappingError) ||
-    (hasConsultationInCart && consultantMappings.length === 0);
+    noMapping;
   const payDisabled = loading || Boolean(blockMessage) || checkoutBlocked || summary.isEmpty;
 
   const handleToggleAgreement = (key, value) => {
@@ -350,11 +381,15 @@ const ShopCheckoutPage = () => {
   };
 
   const handleQuantityChange = async(skuCode, delta) => {
+    if (isBuyNow) {
+      setBuyNowQty((prev) => clampBuyNowQuantity(prev + delta));
+      return;
+    }
     try {
       setLoading(true);
       setMessage('');
-      await replaceShopCart(mergeCartLine(cart.lines, skuCode, delta));
-      setCart(await fetchShopCart());
+      await replaceShopCart(mergeCartLine(serverCart.lines, skuCode, delta));
+      setServerCart(await fetchShopCart());
     } catch (e) {
       setMessage(e.message || CLIENT_MALL_CHECKOUT_COPY.LOAD_FAILED);
     } finally {
@@ -448,11 +483,11 @@ const ShopCheckoutPage = () => {
     return <ShopClientSessionLoading title={CLIENT_MALL_CHECKOUT_COPY.TITLE} />;
   }
 
-  const loginRedirect = `/login?redirect=${encodeURIComponent(CLIENT_SHOP_ROUTES.CHECKOUT)}`;
+  const loginRedirect = `/login?redirect=${encodeURIComponent(`${CLIENT_SHOP_ROUTES.CHECKOUT}${location.search}`)}`;
 
   if (!isLoggedIn) {
     return (
-      <ShopClientLayout title={CLIENT_MALL_CHECKOUT_COPY.TITLE} testId="client-shop-checkout" restoreBuyNow={false}>
+      <ShopClientLayout title={CLIENT_MALL_CHECKOUT_COPY.TITLE} testId="client-shop-checkout">
         <section
           className="client-mall-box"
           data-testid={CLIENT_WEB_SUITE_TEST_IDS.CHECKOUT_LOGIN_GATE}
@@ -548,6 +583,8 @@ const ShopCheckoutPage = () => {
       subtotalMinor={subtotalMinor}
       pointsRedeemMinor={pointsRedeemMinor}
       cashDueMinor={cashDueMinor}
+      availablePointsMinor={availableMinor}
+      quantity={summary.quantity}
       totalSessions={summary.totalSessions}
       validityMonths={summary.validityMonths}
       mixedValidity={summary.mixedValidity}
@@ -563,10 +600,10 @@ const ShopCheckoutPage = () => {
   return (
     <ShopClientLayout
       title={CLIENT_MALL_CHECKOUT_COPY.TITLE}
+      eyebrow={CLIENT_MALL_CHECKOUT_COPY.EYEBROW}
       testId="client-shop-checkout"
       meta={<p className="client-mall-page__subtitle">{CLIENT_MALL_CHECKOUT_COPY.SUBTITLE}</p>}
       aside={lines.length > 0 ? payPanel : null}
-      restoreBuyNow={false}
       className="client-mall--checkout"
     >
       <AlertModal />
@@ -604,7 +641,12 @@ const ShopCheckoutPage = () => {
           </section>
 
           <section className="client-mall-box" aria-label={CLIENT_MALL_CHECKOUT_COPY.BUYER_SECTION}>
-            <h2 className="client-mall-box__title">{CLIENT_MALL_CHECKOUT_COPY.BUYER_SECTION}</h2>
+            <header className="client-mall-box__head">
+              <h2 className="client-mall-box__title">{CLIENT_MALL_CHECKOUT_COPY.BUYER_SECTION}</h2>
+              {!phoneVerified ? (
+                <span className="client-mall-box__caption">{CLIENT_MALL_CHECKOUT_COPY.BUYER_PHONE_CARD_HINT}</span>
+              ) : null}
+            </header>
             <MallInfoRows rows={buyerRows} className="client-mall-rows--wide" />
             {!phoneVerified && portOneCustomerGate.message ? (
               <p className="client-mall-page__hint" data-testid={CLIENT_WEB_SUITE_TEST_IDS.CHECKOUT_PHONE_GATE}>
@@ -660,8 +702,8 @@ const ShopCheckoutPage = () => {
           <MallCartBar
             quantity={summary.quantity}
             subtotalMinor={cashDueMinor}
+            heading={CLIENT_MALL_CHECKOUT_COPY.PAY_SECTION}
             label={`${formatMallWon(cashDueMinor)}${CLIENT_MALL_CHECKOUT_COPY.PAY_CTA_SUFFIX}`}
-            caption={blockMessage}
             onAction={handleCheckout}
             disabled={payDisabled}
             testId="client-mall-checkout-bar"

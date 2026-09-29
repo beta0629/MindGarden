@@ -9,7 +9,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ShopClientLayout from '../../../components/shop/templates/ShopClientLayout';
 import ShopClientSessionLoading from '../../../components/shop/templates/ShopClientSessionLoading';
-import SessionCountTicket from '../../../components/shop/atoms/SessionCountTicket';
+import MallSessionChip from '../../../components/shop/atoms/MallSessionChip';
 import MallEmptyState from '../../../components/shop/molecules/MallEmptyState';
 import MallQtyStepper from '../../../components/shop/molecules/MallQtyStepper';
 import MallUsageBanner from '../../../components/shop/molecules/MallUsageBanner';
@@ -17,7 +17,9 @@ import MallCartBar from '../../../components/shop/organisms/MallCartBar';
 import MGButton from '../../../components/common/MGButton';
 import SafeText from '../../../components/common/SafeText';
 import {
+  CLIENT_MALL_CHECKOUT_COPY,
   CLIENT_MALL_COPY,
+  CLIENT_MALL_TEST_IDS,
   CLIENT_MALL_USAGE_BANNER,
   CLIENT_MALL_USAGE_BANNER_EXAMPLE
 } from '../../../constants/clientMallConstants';
@@ -28,6 +30,7 @@ import useClientMallCart from '../../../hooks/useClientMallCart';
 import { fetchShopCatalog } from '../../../services/clientShopService';
 import {
   formatMallNumber,
+  formatMallSessionLabel,
   formatMallWon,
   formatValidityLabel,
   indexCatalogBySku,
@@ -73,8 +76,24 @@ const ShopCartPage = () => {
   const goCheckout = () => navigate(CLIENT_SHOP_ROUTES.CHECKOUT);
 
   const aside = summary.isEmpty ? null : (
-    <section className="client-mall-cart">
+    <section className="client-mall-cart" data-testid={CLIENT_MALL_TEST_IDS.CART_PAGE_ASIDE}>
       <h2 className="client-mall-cart__title">{CLIENT_MALL_COPY.CART_PAGE_SUMMARY_TITLE}</h2>
+      <dl className="client-mall-pay__rows">
+        {cart.lines.map((line) => (
+          <div key={line.skuCode} className="client-mall-pay__row">
+            <dt>
+              <SafeText>{line.title}</SafeText>
+              {CLIENT_MALL_COPY.LINE_TIMES}
+              {line.quantity}
+            </dt>
+            <dd>{formatMallWon((Number(line.unitPriceMinor) || 0) * line.quantity)}</dd>
+          </div>
+        ))}
+        <div className="client-mall-pay__row">
+          <dt>{CLIENT_MALL_COPY.CART_PAGE_SESSIONS}</dt>
+          <dd>{formatMallSessionLabel(summary.totalSessions)}</dd>
+        </div>
+      </dl>
       <p className="client-mall-cart__total" data-testid="client-shop-cart-subtotal">
         <span className="client-mall-cart__total-label">{CLIENT_MALL_COPY.CART_TOTAL}</span>
         <span className="client-mall-cart__total-amount">
@@ -86,13 +105,19 @@ const ShopCartPage = () => {
         variant="primary"
         size="large"
         fullWidth
-        disabled={mall.busy}
         preventDoubleClick={false}
         className="client-mall-btn client-mall-btn--primary"
         onClick={goCheckout}
       >
         {CLIENT_MALL_COPY.CART_CHECKOUT}
       </MGButton>
+      {summary.validityMonths != null ? (
+        <p className="client-mall-pay__meta">
+          {CLIENT_MALL_COPY.VALIDITY_PREFIX}
+          {summary.validityMonths}
+          {CLIENT_MALL_COPY.CART_PAGE_VALIDITY_SUFFIX}
+        </p>
+      ) : null}
       <p className="client-mall-cart__help">{CLIENT_MALL_COPY.CART_NEXT_HINT}</p>
     </section>
   );
@@ -101,6 +126,7 @@ const ShopCartPage = () => {
     <ShopClientLayout
       title={CLIENT_MALL_COPY.CART_TITLE}
       testId={CLIENT_SHOP_TEST_IDS.CART_PAGE}
+      meta={<p className="client-mall-page__subtitle">{CLIENT_MALL_COPY.CART_PAGE_SUBTITLE}</p>}
       aside={aside}
       cartQty={summary.quantity}
       className="client-mall--cart"
@@ -126,6 +152,13 @@ const ShopCartPage = () => {
         <>
           <MallUsageBanner text={CLIENT_MALL_USAGE_BANNER} example={CLIENT_MALL_USAGE_BANNER_EXAMPLE} />
           <section className="client-mall-box" aria-label={CLIENT_MALL_COPY.CART_TITLE}>
+            <header className="client-mall-box__head">
+              <h2 className="client-mall-box__title">
+                {CLIENT_MALL_COPY.CART_PAGE_LIST_PREFIX}
+                {summary.quantity}
+                {CLIENT_MALL_COPY.CART_COUNT_SUFFIX}
+              </h2>
+            </header>
             {cart.lines.map((line) => {
               const months = resolveValidityMonths(bySku.get(line.skuCode));
               return (
@@ -134,15 +167,11 @@ const ShopCartPage = () => {
                     <div className="client-mall-line__name">
                       <p className="client-mall-line__title">
                         <SafeText>{line.title}</SafeText>
-                        <SessionCountTicket
-                          sessionCount={line.sessionCount}
-                          className="client-mall-chip"
-                          testId={`cart-session-ticket-${line.skuCode}`}
-                        />
+                        <MallSessionChip sessionCount={line.sessionCount} testId={`cart-session-ticket-${line.skuCode}`} />
                       </p>
                       <p className="client-mall-line__unit">
                         {formatMallWon(line.unitPriceMinor)}
-                        {months != null ? ` · ${formatValidityLabel(months)}` : ''}
+                        {months != null ? `${CLIENT_MALL_CHECKOUT_COPY.PAY_ROW_POINTS_SEPARATOR}${formatValidityLabel(months)}` : ''}
                       </p>
                     </div>
                     <span className="client-mall-line__total">
@@ -153,13 +182,11 @@ const ShopCartPage = () => {
                     <MallQtyStepper
                       quantity={line.quantity}
                       onChange={(delta) => mall.changeQuantity(line.skuCode, delta)}
-                      disabled={mall.busy}
                     />
                     <button
                       type="button"
                       className="client-mall-link-btn"
                       onClick={() => mall.remove(line.skuCode)}
-                      disabled={mall.busy}
                     >
                       {CLIENT_MALL_COPY.CART_REMOVE}
                     </button>
@@ -173,7 +200,6 @@ const ShopCartPage = () => {
             quantity={summary.quantity}
             subtotalMinor={summary.subtotalMinor}
             onAction={goCheckout}
-            disabled={mall.busy}
           />
         </>
       ) : null}

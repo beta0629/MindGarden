@@ -14,10 +14,8 @@ import { CLIENT_SHOP_ROUTES } from '../../../constants/clientShopConstants';
 import { useSession } from '../../../contexts/SessionContext';
 import {
   fetchShopCart,
-  mergeGuestShopCartIntoServer,
-  replaceShopCart
+  mergeGuestShopCartIntoServer
 } from '../../../services/clientShopService';
-import { restoreBuyNowCartIfNeeded } from '../../../utils/clientMallBuyNow';
 import {
   getGuestShopCartLines,
   sumCartLineQuantities
@@ -34,8 +32,8 @@ import '../../../styles/shop/ClientMall.css';
  *   activeNavId?: string,
  *   cartQty?: number|null,
  *   cartPulse?: boolean,
- *   restoreBuyNow?: boolean,
  *   className?: string,
+ *   eyebrow?: string,
  *   meta?: import('react').ReactNode
  * }} props
  */
@@ -47,8 +45,8 @@ const ShopClientLayout = ({
   activeNavId = 'shop',
   cartQty = null,
   cartPulse = false,
-  restoreBuyNow = true,
   className = '',
+  eyebrow,
   meta = null
 }) => {
   const { isLoggedIn, isLoading, hasCheckedSession } = useSession();
@@ -65,13 +63,6 @@ const ShopClientLayout = ({
     const loadCartQty = async() => {
       try {
         if (isLoggedIn) {
-          if (restoreBuyNow) {
-            try {
-              await restoreBuyNowCartIfNeeded(replaceShopCart);
-            } catch {
-              // 복구 실패 시 보관본 유지 — 다음 화면에서 재시도
-            }
-          }
           try {
             await mergeGuestShopCartIntoServer();
           } catch {
@@ -97,12 +88,13 @@ const ShopClientLayout = ({
     return () => {
       cancelled = true;
     };
-  }, [sessionReady, isLoggedIn, pageOwnsCart, restoreBuyNow]);
+  }, [sessionReady, isLoggedIn, pageOwnsCart]);
 
   return (
     <ClientWebPageShell
       activeNavId={activeNavId}
       title={title}
+      eyebrow={eyebrow}
       meta={meta}
       testId={testId}
       className={['client-shop client-shop--clinic-os client-mall', className].filter(Boolean).join(' ')}
@@ -127,8 +119,8 @@ ShopClientLayout.propTypes = {
   activeNavId: PropTypes.string,
   cartQty: PropTypes.number,
   cartPulse: PropTypes.bool,
-  restoreBuyNow: PropTypes.bool,
   className: PropTypes.string,
+  eyebrow: PropTypes.string,
   meta: PropTypes.node
 };
 

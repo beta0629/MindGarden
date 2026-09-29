@@ -29,6 +29,7 @@ import com.coresolution.consultation.service.DynamicPermissionService;
 import com.coresolution.consultation.constant.OtpDeliveryChannel;
 import com.coresolution.consultation.constant.OtpPurpose;
 import com.coresolution.consultation.dto.OtpDeliveryResult;
+import com.coresolution.consultation.dto.auth.SmsOtpSendStatus;
 import com.coresolution.consultation.service.OtpDeliveryService;
 import com.coresolution.consultation.service.SmsOtpVerificationService;
 import com.coresolution.consultation.service.UserPersonalDataCacheService;
@@ -79,6 +80,9 @@ import lombok.extern.slf4j.Slf4j;
 @RequestMapping("/api/v1/auth") // 표준화 2025-12-05: 레거시 경로 제거
 @RequiredArgsConstructor
 public class AuthController extends BaseApiController {
+
+    /** SMS 인증 실패 한도 초과로 발송이 잠긴 경우 안내 문구. */
+    private static final String SMS_OTP_LOCKED_MESSAGE = "인증 시도 횟수를 넘었어요. 잠시 뒤에 다시 받아 주세요.";
     
     private final RoleCommonCodeAuthorizationService roleCommonCodeAuthorizationService;
 
@@ -1336,6 +1340,22 @@ public class AuthController extends BaseApiController {
         OtpPurpose purpose = resolveOtpPurpose(request.get("purpose"));
         log.info("OTP 인증 코드 전송 요청: phone={} purpose={}", normalizedPhone, purpose.getCode());
 
+        SmsOtpSendStatus sendStatus = smsOtpVerificationService.getSendStatus(normalizedPhone);
+        if (sendStatus.locked()) {
+            log.info("OTP 발송 거부(잠김): phone={} retryAfterSeconds={}",
+                    normalizedPhone, sendStatus.retryAfterSeconds());
+            Map<String, Object> lockedData = new HashMap<>();
+            lockedData.put("retryAfterSeconds", sendStatus.retryAfterSeconds());
+            lockedData.put("remainingAttempts", sendStatus.remainingAttempts());
+            return ResponseEntity.status(org.springframework.http.HttpStatus.TOO_MANY_REQUESTS)
+                .header(HttpHeaders.RETRY_AFTER, String.valueOf(sendStatus.retryAfterSeconds()))
+                .body(ApiResponse.<Map<String, Object>>builder()
+                    .success(false)
+                    .message(SMS_OTP_LOCKED_MESSAGE)
+                    .data(lockedData)
+                    .build());
+        }
+
         String verificationCode = String.format("%06d", (int) (Math.random() * 1000000));
         smsOtpVerificationService.storeCode(normalizedPhone, verificationCode);
 
@@ -1353,6 +1373,9 @@ public class AuthController extends BaseApiController {
         Map<String, Object> data = new HashMap<>();
         data.put("message", buildDeliveryMessage(result.getChannel()));
         data.put("deliveryChannel", result.getChannel().name());
+        data.put("expiresInSeconds", sendStatus.expiresInSeconds());
+        data.put("resendCooldownSeconds", sendStatus.resendCooldownSeconds());
+        data.put("remainingAttempts", sendStatus.remainingAttempts());
         return success(data);
     }
 

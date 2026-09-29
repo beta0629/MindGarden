@@ -29,7 +29,6 @@ import { formatMallNumber, formatMallSessionsPlus, formatMallWon } from '../../.
  *   disabled: boolean,
  *   loading: boolean,
  *   onPay: () => void,
- *   cancelled?: boolean,
  *   message?: string
  * }} props
  */
@@ -46,7 +45,6 @@ const MallPayPanel = ({
   disabled,
   loading,
   onPay,
-  cancelled = false,
   message = ''
 }) => (
   <section className="client-mall-pay" aria-label={CLIENT_MALL_CHECKOUT_COPY.PAY_SECTION}>
@@ -96,12 +94,6 @@ const MallPayPanel = ({
       </p>
     ) : null}
     {mixedValidity ? <p className="client-mall-pay__meta">{CLIENT_MALL_CHECKOUT_COPY.PAY_VALIDITY_MIXED}</p> : null}
-    {cancelled ? (
-      <div className="client-mall-alert client-mall-alert--warn" role="status" data-testid={CLIENT_MALL_TEST_IDS.CHECKOUT_CANCELLED}>
-        <p className="client-mall-alert__title">{CLIENT_MALL_CHECKOUT_COPY.CANCELLED_TITLE}</p>
-        <p className="client-mall-alert__body">{CLIENT_MALL_CHECKOUT_COPY.CANCELLED_BODY}</p>
-      </div>
-    ) : null}
     {message ? <p className="client-mall-pay__message" role="status">{message}</p> : null}
     <div className="client-mall-pay__cta-wrap">
       <MGButton
@@ -142,7 +134,6 @@ MallPayPanel.propTypes = {
   disabled: PropTypes.bool,
   loading: PropTypes.bool,
   onPay: PropTypes.func.isRequired,
-  cancelled: PropTypes.bool,
   message: PropTypes.string
 };
 

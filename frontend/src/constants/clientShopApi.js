@@ -23,6 +23,9 @@ export const CLIENT_SHOP_API = {
   /** 결제 전 CREATED/PENDING_PAYMENT 주문 취소 (고아 미결제 방지) */
   cancelOrder: (orderPublicId) =>
     `/api/v1/clients/me/shop/orders/${encodeURIComponent(orderPublicId)}/cancel`,
+  /** 결제창 사용자 취소 — 미결제·PortOne 미승인일 때만 주문·결제 건 CANCELLED (멱등) */
+  userCancelPayment: (orderPublicId) =>
+    `/api/v1/clients/me/shop/orders/${encodeURIComponent(orderPublicId)}/user-cancel`,
   /** PAID 주문 이행 재시도 (FAILED·retryable; 내담자 성공 재이행 1회 소진) */
   fulfillRetry: (orderPublicId) =>
     `/api/v1/clients/me/shop/orders/${encodeURIComponent(orderPublicId)}/fulfill-retry`,

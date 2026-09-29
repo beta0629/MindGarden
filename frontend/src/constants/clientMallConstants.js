@@ -152,8 +152,8 @@ export const CLIENT_MALL_CHECKOUT_COPY = Object.freeze({
   BLOCK_BOTH: '휴대폰 인증과 전체 동의 후 결제할 수 있어요',
   BLOCK_PHONE: '휴대폰 인증 후 결제할 수 있어요',
   BLOCK_AGREEMENT: '전체 동의 후 결제할 수 있어요',
-  CANCELLED_TITLE: '결제가 취소됐어요',
-  CANCELLED_BODY: '주문 내용, 인증, 동의는 그대로예요. 다시 결제할 수 있어요.',
+  PAY_FAILED_TITLE: '결제가 완료되지 않았어요',
+  PAY_FAILED_REASON_FALLBACK: '카드사에서 결제를 승인하지 않았어요. 다른 카드로 다시 시도해 주세요.',
   EMPTY_TITLE: '결제할 상품이 없어요',
   LOAD_FAILED: '결제 정보를 불러오지 못했어요. 잠시 후 다시 시도해 주세요.',
   POINTS_NEGATIVE: '0 이상 입력해 주세요.',
@@ -264,8 +264,15 @@ export const CLIENT_MALL_QUERY = Object.freeze({
   RETURN_TO: 'returnTo'
 });
 
+/** 결제창 취소 후 돌아간 화면 상단 안내 */
+export const CLIENT_MALL_PAY_CANCEL_COPY = Object.freeze({
+  NOTICE: '결제를 취소했어요. 다시 결제할 수 있어요.',
+  CLOSE: '닫기'
+});
+
 export const CLIENT_MALL_TIMING = Object.freeze({
   TOAST_MS: 3000,
+  PAY_CANCEL_NOTICE_MS: 6000,
   BADGE_PULSE_MS: 600,
   COUNTDOWN_TICK_MS: 1000,
   MS_PER_SECOND: 1000
@@ -314,7 +321,9 @@ export const CLIENT_MALL_TEST_IDS = Object.freeze({
   CHECKOUT_LINE_NOTICE: 'client-mall-checkout-line-notice',
   CHECKOUT_PAY: 'client-mall-checkout-pay',
   CHECKOUT_BLOCK_REASON: 'client-mall-checkout-block-reason',
-  CHECKOUT_CANCELLED: 'client-mall-checkout-cancelled',
+  CHECKOUT_PAY_FAILED: 'client-mall-checkout-pay-failed',
+  PAY_CANCEL_NOTICE: 'client-mall-pay-cancel-notice',
+  PAY_CANCEL_NOTICE_CLOSE: 'client-mall-pay-cancel-notice-close',
   CHECKOUT_AGREE_ALL: 'client-mall-agree-all',
   CHECKOUT_REFUND: 'client-mall-checkout-refund',
   PHONE_VERIFY: 'client-mall-phone-verify',

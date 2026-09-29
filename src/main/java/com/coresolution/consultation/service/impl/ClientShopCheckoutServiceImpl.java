@@ -3,7 +3,9 @@ package com.coresolution.consultation.service.impl;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import com.coresolution.consultation.constant.ClientRegistrationConstants;
@@ -14,6 +16,7 @@ import com.coresolution.consultation.constant.ShopCheckoutConstants;
 import com.coresolution.consultation.constant.ShopClientOrderStatus;
 import com.coresolution.consultation.constant.ShopOrderFulfillmentRetryConstants;
 import com.coresolution.consultation.constant.ShopSessionCountConstants;
+import com.coresolution.consultation.constant.ShopUserPaymentCancelConstants;
 import com.coresolution.consultation.dto.shop.EffectivePointTenantPolicies;
 import com.coresolution.consultation.dto.PaymentRequest;
 import com.coresolution.consultation.dto.PaymentResponse;
@@ -130,6 +133,16 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
         }
         if (subtotal <= 0L) {
             throw new IllegalArgumentException("주문 금액이 유효하지 않습니다.");
+        }
+
+        Optional<ShopClientOrder> reusable = findReusableOpenOrder(
+                tenantId, clientUserId, buyNow, cartLines, subtotal, request);
+        if (reusable.isPresent()) {
+            log.info(
+                    "체크아웃 재결제 — 같은 내용의 미결제 주문 재사용: tenantId={}, orderPublicId={}",
+                    tenantId,
+                    reusable.get().getPublicId());
+            return toCheckoutResponse(reusable.get());
         }
 
         EffectivePointTenantPolicies policies = pointTenantPolicyService.getEffectivePoliciesTyped(tenantId);
@@ -254,6 +267,87 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
         // 바로 구매(BUY_NOW) 주문은 장바구니를 읽지도 비우지도 않는다.
         ShopClientOrder refreshed = shopClientOrderRepository.findByTenantIdAndPublicId(tenantId, publicId).orElse(order);
         return toCheckoutResponse(refreshed);
+    }
+
+    /**
+     * 같은 장바구니 내용(또는 같은 바로 구매 상품)으로 이미 만든 미결제 주문을 찾는다.
+     * <p>재결제 버튼마다 새 주문이 쌓이지 않게 한다. {@code PENDING_PAYMENT} 는 그대로 재사용하고,
+     * {@code CREATED} 는 포인트 hold 가 없을 때만(실패 후 hold 해제된 주문 재사용 금지) 재사용한다.
+     * 사용자 취소로 {@code CANCELLED} 된 주문은 대상이 아니므로 그 뒤에는 새 주문을 만든다.</p>
+     *
+     * @param tenantId 테넌트 ID
+     * @param clientUserId 내담자 ID
+     * @param buyNow 바로 구매 여부
+     * @param lines 이번 체크아웃 라인
+     * @param subtotal 이번 상품 금액
+     * @param request 체크아웃 요청 (포인트·배정)
+     * @return 재사용할 주문 (없으면 empty)
+     */
+    private Optional<ShopClientOrder> findReusableOpenOrder(
+            String tenantId,
+            Long clientUserId,
+            boolean buyNow,
+            List<CheckoutLine> lines,
+            long subtotal,
+            ShopCheckoutRequest request) {
+        String source = buyNow
+                ? ShopCheckoutConstants.CHECKOUT_SOURCE_BUY_NOW
+                : ShopCheckoutConstants.CHECKOUT_SOURCE_CART;
+        long requestedPoints = Math.max(0L, request.getPointsToRedeemMinor());
+        List<ShopClientOrder> candidates = shopClientOrderRepository.findOpenOrdersByTenantAndClient(
+                tenantId,
+                clientUserId,
+                List.of(ShopClientOrderStatus.CREATED, ShopClientOrderStatus.PENDING_PAYMENT));
+        for (ShopClientOrder candidate : candidates) {
+            if (!source.equals(candidate.getCheckoutSource())
+                    || candidate.getSubtotalMinor() == null
+                    || candidate.getSubtotalMinor() != subtotal
+                    || candidate.getPointsRedeemMinor() == null
+                    || candidate.getPointsRedeemMinor() != requestedPoints) {
+                continue;
+            }
+            if (candidate.getStatus() == ShopClientOrderStatus.CREATED && candidate.getPointsRedeemMinor() > 0L) {
+                continue;
+            }
+            List<ShopClientOrderLine> candidateLines =
+                    shopClientOrderLineRepository.findByClientOrder_IdAndIsDeletedFalseOrderByLineNoAsc(
+                            candidate.getId());
+            if (sameCheckoutLines(lines, candidateLines, request.getConsultantClientMappingId())) {
+                return Optional.of(candidate);
+            }
+        }
+        return Optional.empty();
+    }
+
+    /**
+     * SKU·수량이 같고, 요청에 배정 id 가 있으면 상담사 미지정 상담 라인의 배정도 같은지.
+     *
+     * @param lines 이번 체크아웃 라인
+     * @param candidateLines 기존 주문 라인
+     * @param requestedMappingId 요청 배정 id (null 허용)
+     * @return 같은 내용이면 true
+     */
+    private static boolean sameCheckoutLines(
+            List<CheckoutLine> lines, List<ShopClientOrderLine> candidateLines, Long requestedMappingId) {
+        if (candidateLines == null || candidateLines.size() != lines.size()) {
+            return false;
+        }
+        Map<String, Integer> wanted = new HashMap<>();
+        for (CheckoutLine line : lines) {
+            wanted.merge(line.sku().getSkuCode(), line.quantity(), Integer::sum);
+        }
+        for (ShopClientOrderLine existing : candidateLines) {
+            Integer qty = wanted.remove(existing.getSkuCodeSnapshot());
+            if (qty == null || existing.getQuantity() == null || qty.intValue() != existing.getQuantity()) {
+                return false;
+            }
+            if (requestedMappingId != null
+                    && isUnboundConsultationSku(existing.getSku())
+                    && !requestedMappingId.equals(existing.getConsultantClientMappingId())) {
+                return false;
+            }
+        }
+        return wanted.isEmpty();
     }
 
     /**
@@ -968,6 +1062,7 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
         releasePointsHoldIfAny(tenantId, order.getClientId(), orderPublicId, order.getPointsRedeemMinor());
         order.setStatus(ShopClientOrderStatus.EXPIRED);
         shopClientOrderRepository.save(order);
+        expireOpenPaymentsForOrder(tenantId, orderPublicId);
         log.info("쇼핑 주문 hold TTL 만료: tenantId={}, orderPublicId={}", tenantId, orderPublicId);
         try {
             shopNotificationHelper.notifyOrderHoldExpired(tenantId, order);
@@ -975,6 +1070,25 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
             log.warn("쇼핑 주문 만료 알림 실패: orderPublicId={}", orderPublicId, ex);
         }
         return true;
+    }
+
+    /**
+     * 이번에 EXPIRED 로 전이한 주문의 대기 결제 건(PENDING/PROCESSING)을 EXPIRED 로 닫는다.
+     * 늦게 온 PG 승인은 기존처럼 EXPIRED 결제·주문에서 PAID 로 복구된다.
+     *
+     * @param tenantId      테넌트 ID
+     * @param orderPublicId 주문 공개 ID
+     */
+    private void expireOpenPaymentsForOrder(String tenantId, String orderPublicId) {
+        for (Payment payment : paymentRepository.findByTenantIdAndOrderIdAndIsDeletedFalse(tenantId, orderPublicId)) {
+            if (payment.getStatus() != Payment.PaymentStatus.PENDING
+                    && payment.getStatus() != Payment.PaymentStatus.PROCESSING) {
+                continue;
+            }
+            payment.setStatus(Payment.PaymentStatus.EXPIRED);
+            payment.setFailureReason(ShopUserPaymentCancelConstants.PAYMENT_FAILURE_REASON_ORDER_EXPIRED);
+            paymentRepository.save(payment);
+        }
     }
 
     private void markOrderPaidAndCommitPoints(String tenantId, ShopClientOrder order) {

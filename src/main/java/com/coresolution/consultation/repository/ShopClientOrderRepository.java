@@ -46,6 +46,21 @@ public interface ShopClientOrderRepository extends BaseRepository<ShopClientOrde
             @Param("clientId") Long clientId,
             @Param("key") String key);
 
+    /**
+     * 내담자 미결제 주문 (최신 먼저) — 재결제 시 같은 내용 주문 재사용 판정용.
+     *
+     * @param tenantId 테넌트 ID
+     * @param clientId 내담자 users.id
+     * @param statuses 대상 상태 (CREATED, PENDING_PAYMENT)
+     * @return 주문 목록
+     */
+    @Query("SELECT o FROM ShopClientOrder o WHERE o.tenantId = :tenantId AND o.clientId = :clientId "
+            + "AND o.status IN :statuses AND o.isDeleted = false ORDER BY o.createdAt DESC, o.id DESC")
+    List<ShopClientOrder> findOpenOrdersByTenantAndClient(
+            @Param("tenantId") String tenantId,
+            @Param("clientId") Long clientId,
+            @Param("statuses") Collection<ShopClientOrderStatus> statuses);
+
     @Query("SELECT o FROM ShopClientOrder o WHERE o.tenantId = :tenantId AND o.clientId = :clientId "
             + "AND o.isDeleted = false ORDER BY o.createdAt DESC")
     List<ShopClientOrder> findRecentByTenantAndClient(

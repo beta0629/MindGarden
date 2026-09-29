@@ -7,12 +7,13 @@
  * @since 2026-05-19
  */
 
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import ShopClientLayout from '../../../components/shop/templates/ShopClientLayout';
 import ShopClientSessionLoading from '../../../components/shop/templates/ShopClientSessionLoading';
 import MallEmptyState from '../../../components/shop/molecules/MallEmptyState';
 import MallInfoRows from '../../../components/shop/molecules/MallInfoRows';
+import MallPayFailedAlert from '../../../components/shop/molecules/MallPayFailedAlert';
 import PointInput from '../../../components/shop/molecules/PointInput';
 import MallAgreements from '../../../components/shop/organisms/MallAgreements';
 import MallCartBar from '../../../components/shop/organisms/MallCartBar';
@@ -25,6 +26,7 @@ import {
   CLIENT_MALL_AGREEMENT_ITEMS,
   CLIENT_MALL_AGREEMENT_KEYS,
   CLIENT_MALL_CHECKOUT_COPY,
+  CLIENT_MALL_CHECKOUT_SOURCE_BUY_NOW,
   CLIENT_MALL_COPY,
   CLIENT_MALL_MIN_AMOUNT_ERROR_MARKERS,
   CLIENT_MALL_TEST_IDS,
@@ -38,8 +40,10 @@ import {
   SHOP_CATALOG_CATEGORY,
   CLIENT_SHOP_ROUTES,
   SHOP_PAYMENT_VERIFY_ERROR_PHASE,
+  SHOP_USER_CANCEL_OUTCOME,
   buildShopOrderDetailPath,
-  buildShopPaymentCompletePath
+  buildShopPaymentCompletePath,
+  buildShopPaymentReturnPath
 } from '../../../constants/clientShopConstants';
 import {
   CLIENT_WEB_SUITE_COPY,
@@ -62,6 +66,7 @@ import { useClientShopAuth } from '../../../hooks/useClientShopAuth';
 import { useSession } from '../../../contexts/SessionContext';
 import {
   cancelShopOrder,
+  cancelShopPaymentByUser,
   fetchConsultantMappings,
   fetchPointBalance,
   fetchShopCart,
@@ -79,6 +84,13 @@ import {
 } from '../../../utils/clientShopPaymentCustomer';
 import { runShopCheckoutWithPortOneGuard } from '../../../utils/shopCheckoutPortOneGuard';
 import { runShopPortOnePaymentIfReady } from '../../../utils/shopPortOneCheckout';
+import {
+  buildShopCheckoutSignature,
+  buildShopPaymentCancelNavigationState,
+  createShopCheckoutIdempotencyKeyStore,
+  resolvePortOneFailureReason,
+  resolveShopPaymentCancelDestination
+} from '../../../utils/shopPaymentCancel';
 import {
   buildConsultantPickerOptions,
   collectCartConsultationTitles,
@@ -106,13 +118,6 @@ import {
 import { buildSettingsPathWithReturnTo } from '../../../utils/clientSettingsReturnTo';
 import { applyVerifiedPhoneToSession } from '../../../utils/clientPhoneVerifiedSession';
 
-const createIdempotencyKey = () => {
-  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
-    return crypto.randomUUID();
-  }
-  return `idem-${Date.now()}`;
-};
-
 const EMPTY_AGREEMENTS = Object.freeze(
   CLIENT_MALL_AGREEMENT_ITEMS.reduce((acc, item) => ({ ...acc, [item.key]: false }), {})
 );
@@ -129,9 +134,6 @@ const cartHasConsultationSku = (cartLines, catalog) => {
   );
   return (cartLines || []).some((line) => consultationCodes.has(line.skuCode));
 };
-
-/** PortOne 창을 닫거나 결제가 거절된 경우 (SDK 응답 code 존재) */
-const isPortOneUserExit = (e) => Boolean(e && e.portoneResult && e.portoneResult.code);
 
 const isMinAmountError = (errMsg) =>
   CLIENT_MALL_MIN_AMOUNT_ERROR_MARKERS.some((marker) => errMsg.includes(marker))
@@ -161,7 +163,11 @@ const ShopCheckoutPage = () => {
   const [loaded, setLoaded] = useState(false);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
-  const [cancelled, setCancelled] = useState(false);
+  const [payFailureReason, setPayFailureReason] = useState('');
+  const idempotencyStoreRef = useRef(null);
+  if (idempotencyStoreRef.current == null) {
+    idempotencyStoreRef.current = createShopCheckoutIdempotencyKeyStore();
+  }
 
   useEffect(() => {
     if (buyNowQuery) {
@@ -416,20 +422,45 @@ const ShopCheckoutPage = () => {
     const mappingIdForCheckout = hasConsultationInCart
       ? (selectedMappingId || resolveInitialMappingId(consultantMappings, cartConsultationTitles))
       : null;
+    const idempotencyStore = idempotencyStoreRef.current;
+    const checkoutSignature = buildShopCheckoutSignature({
+      isBuyNow,
+      lines: isBuyNow ? buyNowLines : serverCart.lines,
+      pointsRedeemMinor,
+      mappingId: mappingIdForCheckout
+    });
     try {
       setLoading(true);
       setMessage('');
-      setCancelled(false);
+      setPayFailureReason('');
       const flow = await runShopCheckoutWithPortOneGuard({
         user,
         pointsRedeemMinor,
         mappingIdForCheckout,
-        createIdempotencyKey,
+        createIdempotencyKey: () => idempotencyStore.keyFor(checkoutSignature),
         postShopCheckout,
         prepareShopPayment,
         runShopPortOnePaymentIfReady,
-        cancelShopOrder
+        cancelShopOrder,
+        cancelShopPaymentByUser
       });
+      if (flow.status === 'USER_CANCELLED') {
+        if (flow.cancelOutcome === SHOP_USER_CANCEL_OUTCOME.CANCELLED) {
+          idempotencyStore.reset();
+        }
+        navigate(
+          resolveShopPaymentCancelDestination({
+            checkoutSource: isBuyNow ? CLIENT_MALL_CHECKOUT_SOURCE_BUY_NOW : null,
+            skuCode: buyNowSku
+          }),
+          { replace: true, state: buildShopPaymentCancelNavigationState() }
+        );
+        return;
+      }
+      if (flow.status === 'PAID_AFTER_CANCEL' && flow.checkoutResult?.orderPublicId) {
+        navigate(buildShopPaymentReturnPath(flow.checkoutResult.orderPublicId, flow.paymentId), { replace: true });
+        return;
+      }
       if (flow.status === 'PAYMENT_VERIFIED') {
         const orderId = flow.checkoutResult?.orderPublicId;
         if (orderId) {
@@ -465,8 +496,10 @@ const ShopCheckoutPage = () => {
         });
         return;
       }
-      if (isPortOneUserExit(e)) {
-        setCancelled(true);
+      if (e && e.portoneResult) {
+        setPayFailureReason(
+          resolvePortOneFailureReason(e.portoneResult, CLIENT_MALL_CHECKOUT_COPY.PAY_FAILED_REASON_FALLBACK)
+        );
         return;
       }
       if (isBelowMinCardCashDue(cashDueMinor) || isMinAmountError(errMsg)) {
@@ -592,7 +625,6 @@ const ShopCheckoutPage = () => {
       disabled={payDisabled}
       loading={loading}
       onPay={handleCheckout}
-      cancelled={cancelled}
       message={message}
     />
   );
@@ -624,6 +656,7 @@ const ShopCheckoutPage = () => {
       ) : null}
       {lines.length > 0 ? (
         <>
+          <MallPayFailedAlert reason={payFailureReason} />
           <section className="client-mall-box" aria-label={CLIENT_MALL_CHECKOUT_COPY.ORDER_SECTION}>
             <header className="client-mall-box__head">
               <h2 className="client-mall-box__title">{CLIENT_MALL_CHECKOUT_COPY.ORDER_SECTION}</h2>

@@ -1,9 +1,11 @@
 package com.coresolution.consultation.service.portone;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -24,10 +26,13 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
 
 /**
@@ -126,6 +131,39 @@ class PortOneV2PaymentVerifyServiceTest {
 
         assertTrue(service.verifyPaidAmountBody("t1", "pay-1", new BigDecimal("1000")).isEmpty());
         verify(restTemplate, times(1)).exchange(any(), eq(HttpMethod.GET), any(HttpEntity.class), eq(String.class));
+    }
+
+    @Test
+    @DisplayName("resolvePaidState — PAID / READY·FAILED / 404 / 5xx·진행 중 3상태")
+    void resolvePaidState_mapsStatuses() {
+        stubActiveApprovedConfig();
+        when(encryptionService.decrypt("enc-secret")).thenReturn("plain-secret");
+        when(restTemplate.exchange(any(), eq(HttpMethod.GET), any(HttpEntity.class), eq(String.class)))
+                .thenReturn(new ResponseEntity<>("{\"status\":\"PAID\"}", HttpStatus.OK))
+                .thenReturn(new ResponseEntity<>("{\"status\":\"READY\"}", HttpStatus.OK))
+                .thenReturn(new ResponseEntity<>("{\"status\":\"FAILED\"}", HttpStatus.OK))
+                .thenThrow(HttpClientErrorException.create(
+                        HttpStatus.NOT_FOUND, "Not Found", new HttpHeaders(), new byte[0], null))
+                .thenThrow(new ResourceAccessException("timeout"))
+                .thenReturn(new ResponseEntity<>("{\"status\":\"PAY_PENDING\"}", HttpStatus.OK));
+
+        assertEquals(PortOnePaymentPaidState.PAID, service.resolvePaidState("t1", "pay-1"));
+        assertEquals(PortOnePaymentPaidState.NOT_PAID, service.resolvePaidState("t1", "pay-1"));
+        assertEquals(PortOnePaymentPaidState.NOT_PAID, service.resolvePaidState("t1", "pay-1"));
+        assertEquals(PortOnePaymentPaidState.NOT_PAID, service.resolvePaidState("t1", "pay-1"));
+        assertEquals(PortOnePaymentPaidState.UNKNOWN, service.resolvePaidState("t1", "pay-1"));
+        assertEquals(PortOnePaymentPaidState.UNKNOWN, service.resolvePaidState("t1", "pay-1"));
+    }
+
+    @Test
+    @DisplayName("resolvePaidState — PG 설정 없으면 UNKNOWN (HTTP 호출 없음)")
+    void resolvePaidState_noConfig_unknown() {
+        when(tenantPgConfigurationRepository.findByTenantIdAndPgProviderAndStatusAndIsDeletedFalse(
+                eq("t1"), eq(PgProvider.IAMPORT), eq(PgConfigurationStatus.ACTIVE)))
+                .thenReturn(Optional.empty());
+
+        assertEquals(PortOnePaymentPaidState.UNKNOWN, service.resolvePaidState("t1", "pay-1"));
+        verify(restTemplate, never()).exchange(any(), any(HttpMethod.class), any(HttpEntity.class), eq(String.class));
     }
 
     private void stubActiveApprovedConfig() {

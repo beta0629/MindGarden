@@ -2025,6 +2025,131 @@ class ClientShopCheckoutServiceImplTest {
         when(clientShopCatalogService.isVisibleForClientMappings(eq(TENANT), any(), any())).thenReturn(true);
     }
 
+    @Test
+    @DisplayName("재결제 — 같은 장바구니 내용이면 새 멱등 키여도 PENDING_PAYMENT 주문 1건 재사용")
+    void checkout_retrySameCart_reusesPendingOrder() {
+        String idemKey = "idem-retry-2";
+        ShopCartLine line = cartLine(50_000L);
+        ShopCart cart = line.getCart();
+        ShopClientOrder existing = reusableOrder(ShopClientOrderStatus.PENDING_PAYMENT, 50_000L,
+                ShopCheckoutConstants.CHECKOUT_SOURCE_CART);
+        when(shopClientOrderRepository.findByTenantClientAndCheckoutKey(TENANT, CLIENT_ID, idemKey))
+                .thenReturn(Optional.empty());
+        when(shopCartRepository.findByTenantIdAndClientId(TENANT, CLIENT_ID)).thenReturn(Optional.of(cart));
+        when(shopCartLineRepository.findByCart_IdAndIsDeletedFalse(cart.getId())).thenReturn(List.of(line));
+        when(shopClientOrderRepository.findOpenOrdersByTenantAndClient(eq(TENANT), eq(CLIENT_ID), any()))
+                .thenReturn(List.of(existing));
+        when(shopClientOrderLineRepository.findByClientOrder_IdAndIsDeletedFalseOrderByLineNoAsc(existing.getId()))
+                .thenReturn(List.of(orderLine("SKU-1", 1)));
+
+        ShopCheckoutResponse response = service.checkout(
+                TENANT,
+                CLIENT_ID,
+                ShopCheckoutRequest.builder().idempotencyKey(idemKey).pointsToRedeemMinor(0L).build());
+
+        assertEquals(existing.getPublicId(), response.getOrderPublicId());
+        assertEquals("PAYMENT", response.getNextStep());
+        verify(shopClientOrderRepository, never()).save(any());
+        verify(clientPointWalletService, never()).hold(any(), any(), any(), anyLong(), any());
+    }
+
+    @Test
+    @DisplayName("재결제 — 바로 구매 같은 상품이면 기존 BUY_NOW 주문 재사용 (장바구니 주문과는 섞지 않음)")
+    void checkout_retrySameBuyNow_reusesBuyNowOrderOnly() {
+        String idemKey = "idem-retry-buy-now";
+        ShopCatalogSku sku = cartLine(45_000L).getSku();
+        ShopClientOrder cartOrder = reusableOrder(ShopClientOrderStatus.PENDING_PAYMENT, 90_000L,
+                ShopCheckoutConstants.CHECKOUT_SOURCE_CART);
+        ShopClientOrder buyNowOrder = reusableOrder(ShopClientOrderStatus.PENDING_PAYMENT, 90_000L,
+                ShopCheckoutConstants.CHECKOUT_SOURCE_BUY_NOW);
+        buyNowOrder.setId(6L);
+        buyNowOrder.setPublicId("order-buy-now-open");
+        when(shopClientOrderRepository.findByTenantClientAndCheckoutKey(TENANT, CLIENT_ID, idemKey))
+                .thenReturn(Optional.empty());
+        when(shopCatalogSkuRepository.findActiveByTenantAndSkuCode(TENANT, sku.getSkuCode()))
+                .thenReturn(Optional.of(sku));
+        when(shopClientOrderRepository.findOpenOrdersByTenantAndClient(eq(TENANT), eq(CLIENT_ID), any()))
+                .thenReturn(List.of(cartOrder, buyNowOrder));
+        when(shopClientOrderLineRepository.findByClientOrder_IdAndIsDeletedFalseOrderByLineNoAsc(6L))
+                .thenReturn(List.of(orderLine(sku.getSkuCode(), 2)));
+
+        ShopCheckoutResponse response = service.checkout(
+                TENANT, CLIENT_ID, buyNowRequest(idemKey, List.of(buyNowLine(sku.getSkuCode(), 2))));
+
+        assertEquals("order-buy-now-open", response.getOrderPublicId());
+        verify(shopClientOrderRepository, never()).save(any());
+        verify(shopCartRepository, never()).findByTenantIdAndClientId(any(), any());
+    }
+
+    @Test
+    @DisplayName("재결제 — 수량이 바뀌었으면 기존 주문을 쓰지 않고 새 주문 생성")
+    void checkout_changedQuantity_createsNewOrder() {
+        String idemKey = "idem-retry-changed";
+        ShopCartLine line = cartLine(50_000L);
+        stubCheckoutUpToMappings(idemKey, line);
+        ShopClientOrder existing = reusableOrder(ShopClientOrderStatus.PENDING_PAYMENT, 50_000L,
+                ShopCheckoutConstants.CHECKOUT_SOURCE_CART);
+        when(shopClientOrderRepository.findOpenOrdersByTenantAndClient(eq(TENANT), eq(CLIENT_ID), any()))
+                .thenReturn(List.of(existing));
+        when(shopClientOrderLineRepository.findByClientOrder_IdAndIsDeletedFalseOrderByLineNoAsc(existing.getId()))
+                .thenReturn(List.of(orderLine("SKU-OTHER", 1)));
+        ArgumentCaptor<ShopClientOrder> orderCaptor = ArgumentCaptor.forClass(ShopClientOrder.class);
+        when(shopClientOrderRepository.save(orderCaptor.capture())).thenAnswer(inv -> inv.getArgument(0));
+        when(shopClientOrderRepository.findByTenantIdAndPublicId(eq(TENANT), anyString()))
+                .thenAnswer(inv -> Optional.of(orderCaptor.getValue()));
+
+        ShopCheckoutResponse response = service.checkout(
+                TENANT,
+                CLIENT_ID,
+                ShopCheckoutRequest.builder().idempotencyKey(idemKey).pointsToRedeemMinor(0L).build());
+
+        assertTrue(!existing.getPublicId().equals(response.getOrderPublicId()));
+        verify(shopClientOrderRepository, times(1)).save(any());
+    }
+
+    @Test
+    @DisplayName("hold TTL 만료 — 연결 결제 건 PENDING 도 EXPIRED, 이미 FAILED 는 그대로")
+    void expireOrderHold_expiresPendingPayment() {
+        ShopClientOrder order = pendingOrder(0L);
+        when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID))
+                .thenReturn(Optional.of(order));
+        Payment pending = Payment.builder().paymentId("pay-open").orderId(ORDER_ID)
+                .status(Payment.PaymentStatus.PENDING).build();
+        Payment failed = Payment.builder().paymentId("pay-failed").orderId(ORDER_ID)
+                .status(Payment.PaymentStatus.FAILED).build();
+        when(paymentRepository.findByTenantIdAndOrderIdAndIsDeletedFalse(TENANT, ORDER_ID))
+                .thenReturn(List.of(pending, failed));
+
+        assertTrue(service.expireOrderHold(TENANT, ORDER_ID));
+
+        assertEquals(ShopClientOrderStatus.EXPIRED, order.getStatus());
+        assertEquals(Payment.PaymentStatus.EXPIRED, pending.getStatus());
+        assertEquals(Payment.PaymentStatus.FAILED, failed.getStatus());
+        ArgumentCaptor<Payment> savedPayments = ArgumentCaptor.forClass(Payment.class);
+        verify(paymentRepository, times(1)).save(savedPayments.capture());
+        assertEquals("pay-open", savedPayments.getValue().getPaymentId());
+    }
+
+    private static ShopClientOrder reusableOrder(ShopClientOrderStatus status, long subtotal, String source) {
+        ShopClientOrder order = ShopClientOrder.builder()
+                .publicId("order-open-1")
+                .clientId(CLIENT_ID)
+                .status(status)
+                .subtotalMinor(subtotal)
+                .pointsRedeemMinor(0L)
+                .cashDueMinor(subtotal)
+                .checkoutIdempotencyKey("idem-retry-1")
+                .checkoutSource(source)
+                .build();
+        order.setId(5L);
+        order.setTenantId(TENANT);
+        return order;
+    }
+
+    private static ShopClientOrderLine orderLine(String skuCode, int quantity) {
+        return ShopClientOrderLine.builder().skuCodeSnapshot(skuCode).quantity(quantity).build();
+    }
+
     private void stubCheckoutUpToMappings(String idemKey, ShopCartLine line) {
         ShopCart cart = line.getCart();
         when(shopClientOrderRepository.findByTenantClientAndCheckoutKey(TENANT, CLIENT_ID, idemKey))

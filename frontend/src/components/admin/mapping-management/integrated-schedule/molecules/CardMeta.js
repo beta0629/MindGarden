@@ -16,6 +16,7 @@ import StatusBadge from '../../../../common/StatusBadge';
 import EngagementTypeBadge from '../../../../common/EngagementTypeBadge';
 import { toDisplayString } from '../../../../../utils/safeDisplay';
 import { resolveCardTodoPill } from '../utils/resolveCardTodoPill';
+import { resolveScheduleReminderSmsDisplay } from '../utils/scheduleReminderSmsDisplay';
 import {
   isInstitutionLinkMapping,
   shouldShowInstitutionLinkInitialPaymentUi
@@ -23,6 +24,8 @@ import {
 import { CARD_INITIAL_PAYMENT_COMPLETED_BADGE_TEST_ID } from '../constants/institutionLinkBillingReminderConstants';
 import ScheduleReminderSmsBadge from './ScheduleReminderSmsBadge';
 import './CardMeta.css';
+
+export const CARD_BADGE_ROW_TEST_ID = 'mapping-card-badge-row';
 
 const CardMeta = ({
   status,
@@ -63,6 +66,8 @@ const CardMeta = ({
   };
   const showInitialPaymentCompleted = isInstitutionLinkMapping(mappingLike)
     && shouldShowInstitutionLinkInitialPaymentUi(mappingLike);
+  const hasReminderSms = resolveScheduleReminderSmsDisplay(clientReminderSms) != null;
+  const showBadgeRow = Boolean(todoLabel) || hasReminderSms;
 
   return (
     <div className="integrated-schedule__card-meta">
@@ -79,16 +84,23 @@ const CardMeta = ({
           </StatusBadge>
         ) : null}
       </div>
-      {todoLabel ? (
-        <span
-          className="integrated-schedule__card-todo-pill"
-          title={todoTitle}
-          data-testid="mapping-card-todo-pill"
+      {showBadgeRow ? (
+        <div
+          className="integrated-schedule__card-badge-row"
+          data-testid={CARD_BADGE_ROW_TEST_ID}
         >
-          <SafeText>{todoLabel}</SafeText>
-        </span>
+          {todoLabel ? (
+            <span
+              className="integrated-schedule__card-todo-pill"
+              title={todoTitle}
+              data-testid="mapping-card-todo-pill"
+            >
+              <SafeText>{todoLabel}</SafeText>
+            </span>
+          ) : null}
+          {hasReminderSms ? <ScheduleReminderSmsBadge sms={clientReminderSms} /> : null}
+        </div>
       ) : null}
-      <ScheduleReminderSmsBadge sms={clientReminderSms} />
     </div>
   );
 };

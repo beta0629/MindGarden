@@ -24,7 +24,7 @@ import {
 } from '../utils/clientMallPhoneVerify';
 import { isValidKoreanMobileDigits, normalizeKoreanMobileDigits } from '../utils/koreanMobilePhone';
 
-const toDeadline = (seconds) => (seconds != null ? Date.now() + seconds * CLIENT_MALL_TIMING.MS_PER_SECOND : null);
+const toDeadline = (seconds, baseMs) => (seconds != null ? baseMs + seconds * CLIENT_MALL_TIMING.MS_PER_SECOND : null);
 
 /**
  * @param {{
@@ -105,8 +105,8 @@ const usePhoneVerifyFlow = ({ initialPhoneDigits = '', initiallyVerified = false
       setSentTo(digits);
       setResent(Boolean(isResend));
       setDeliveryChannel(result.deliveryChannel);
-      setExpiresAt(toDeadline(result.meta.expiresInSeconds));
-      setResendAt(toDeadline(result.meta.resendCooldownSeconds));
+      setExpiresAt(toDeadline(result.meta.expiresInSeconds, ts));
+      setResendAt(toDeadline(result.meta.resendCooldownSeconds, ts));
       setCodeState('');
       setStep(PHONE_VERIFY_STEP.SENT);
       return true;

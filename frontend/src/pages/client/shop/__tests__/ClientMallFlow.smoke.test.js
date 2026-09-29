@@ -20,6 +20,7 @@ import {
 } from '../../../../constants/clientMallConstants';
 import { CLIENT_SHOP_ROUTES, SHOP_CHECKOUT_MAPPING_COPY } from '../../../../constants/clientShopConstants';
 import { buildBuyNowCheckoutPath } from '../../../../utils/clientMallBuyNow';
+import * as notification from '../../../../utils/notification';
 
 const mockUseSession = jest.fn();
 const mockService = {
@@ -458,8 +459,9 @@ describe('ShopCheckoutPage (TO-BE)', () => {
       expect(screen.getByTestId(CLIENT_MALL_TEST_IDS.PHONE_VERIFIED)).toBeInTheDocument();
     });
 
-    test('「번호 변경」 때만 시트 · 닫으면 인증 완료로 복귀(「인증하기」로 떨어지지 않음)', async() => {
+    test('「번호 변경」만으론 시트 없음 · 다른 번호일 때만 시트 · 닫으면 인증 완료로 복귀(토스트 없음)', async() => {
       mockMatchMedia(true);
+      const toastSpy = jest.spyOn(notification, 'showSuccess');
       mockUseSession.mockReturnValue(sessionFor({ phone: '01012341234', isPhoneVerified: true }));
       mockService.fetchShopCart.mockResolvedValue(cartWithPkg);
       render(<MemoryRouter initialEntries={['/client/shop/checkout']}><ShopCheckoutPage /></MemoryRouter>);
@@ -468,16 +470,111 @@ describe('ShopCheckoutPage (TO-BE)', () => {
       expect(screen.queryByTestId(CLIENT_MALL_TEST_IDS.PHONE_SHEET)).not.toBeInTheDocument();
 
       fireEvent.click(screen.getByTestId(CLIENT_MALL_TEST_IDS.PHONE_CHANGE));
+      expect(screen.queryByTestId(CLIENT_MALL_TEST_IDS.PHONE_SHEET)).not.toBeInTheDocument();
+      expect(screen.queryByText(CLIENT_MALL_CHECKOUT_COPY.PHONE_NEEDS_VERIFY)).not.toBeInTheDocument();
+
+      fireEvent.change(screen.getByLabelText(CLIENT_MALL_PHONE_COPY.PHONE_INPUT_LABEL), { target: { value: '010-9999-8888' } });
       const sheet = await screen.findByTestId(CLIENT_MALL_TEST_IDS.PHONE_SHEET);
       expect(within(sheet).getByLabelText(CLIENT_MALL_PHONE_COPY.PHONE_INPUT_LABEL)).toBeInTheDocument();
+      expect(screen.getByText(CLIENT_MALL_CHECKOUT_COPY.PHONE_NEEDS_VERIFY)).toBeInTheDocument();
 
       await closeSheet();
       expect(screen.queryByTestId(CLIENT_MALL_TEST_IDS.PHONE_SHEET)).not.toBeInTheDocument();
       expect(screen.queryByTestId(CLIENT_MALL_TEST_IDS.PHONE_OPEN)).not.toBeInTheDocument();
       expect(screen.getByTestId(CLIENT_MALL_TEST_IDS.PHONE_VERIFIED)).toHaveTextContent('010-****-1234');
+      expect(toastSpy).not.toHaveBeenCalled();
 
       fireEvent.click(screen.getByTestId(CLIENT_MALL_TEST_IDS.PHONE_CHANGE));
-      expect(await screen.findByTestId(CLIENT_MALL_TEST_IDS.PHONE_SHEET)).toBeInTheDocument();
+      expect(screen.queryByTestId(CLIENT_MALL_TEST_IDS.PHONE_SHEET)).not.toBeInTheDocument();
+      toastSpy.mockRestore();
+    });
+
+    test('좁은 화면 — 다른 번호 → 같은 번호로 되돌리면 즉시 인증 완료 · 시트 닫힘 · 토스트 없음 · 결제 활성', async() => {
+      mockMatchMedia(true);
+      const toastSpy = jest.spyOn(notification, 'showSuccess');
+      mockUseSession.mockReturnValue(sessionFor({ phone: '01012341234', isPhoneVerified: true }));
+      mockService.fetchShopCart.mockResolvedValue(cartWithPkg);
+      render(<MemoryRouter initialEntries={['/client/shop/checkout']}><ShopCheckoutPage /></MemoryRouter>);
+
+      await screen.findByTestId(CLIENT_MALL_TEST_IDS.PHONE_VERIFIED);
+      fireEvent.click(screen.getByTestId(CLIENT_MALL_TEST_IDS.CHECKOUT_AGREE_ALL));
+      const pay = screen.getByTestId(CLIENT_MALL_TEST_IDS.CHECKOUT_PAY);
+      expect(pay).not.toBeDisabled();
+
+      fireEvent.click(screen.getByTestId(CLIENT_MALL_TEST_IDS.PHONE_CHANGE));
+      fireEvent.change(screen.getByLabelText(CLIENT_MALL_PHONE_COPY.PHONE_INPUT_LABEL), { target: { value: '01099998888' } });
+      const sheet = await screen.findByTestId(CLIENT_MALL_TEST_IDS.PHONE_SHEET);
+      expect(pay).toBeDisabled();
+
+      fireEvent.change(within(sheet).getByLabelText(CLIENT_MALL_PHONE_COPY.PHONE_INPUT_LABEL), { target: { value: '010-1234-1234' } });
+      await waitFor(() => expect(screen.queryByTestId(CLIENT_MALL_TEST_IDS.PHONE_SHEET)).not.toBeInTheDocument());
+      expect(screen.getByTestId(CLIENT_MALL_TEST_IDS.PHONE_VERIFIED)).toHaveTextContent('010-****-1234');
+      expect(pay).not.toBeDisabled();
+      expect(mockSendCode).not.toHaveBeenCalled();
+      expect(toastSpy).not.toHaveBeenCalled();
+      toastSpy.mockRestore();
+    });
+
+    test('넓은 화면 인라인 — 같은 번호면 인증 완료 유지 · 다른 번호면 「인증이 필요해요」+결제 비활성 · 되돌리면 즉시 완료', async() => {
+      mockMatchMedia(false);
+      const toastSpy = jest.spyOn(notification, 'showSuccess');
+      mockUseSession.mockReturnValue(sessionFor({ phone: '01012341234', isPhoneVerified: true }));
+      mockService.fetchShopCart.mockResolvedValue(cartWithPkg);
+      render(<MemoryRouter initialEntries={['/client/shop/checkout']}><ShopCheckoutPage /></MemoryRouter>);
+
+      await screen.findByTestId(CLIENT_MALL_TEST_IDS.PHONE_VERIFIED);
+      fireEvent.click(screen.getByTestId(CLIENT_MALL_TEST_IDS.CHECKOUT_AGREE_ALL));
+      const pay = screen.getByTestId(CLIENT_MALL_TEST_IDS.CHECKOUT_PAY);
+
+      fireEvent.click(screen.getByTestId(CLIENT_MALL_TEST_IDS.PHONE_CHANGE));
+      const input = screen.getByLabelText(CLIENT_MALL_PHONE_COPY.PHONE_INPUT_LABEL);
+      expect(screen.queryByText(CLIENT_MALL_CHECKOUT_COPY.PHONE_NEEDS_VERIFY)).not.toBeInTheDocument();
+      expect(screen.getByTestId(CLIENT_MALL_TEST_IDS.PHONE_SEND)).toBeDisabled();
+      expect(pay).not.toBeDisabled();
+
+      fireEvent.change(input, { target: { value: '010-9999-8888' } });
+      expect(screen.getByText(CLIENT_MALL_CHECKOUT_COPY.PHONE_NEEDS_VERIFY)).toBeInTheDocument();
+      expect(pay).toBeDisabled();
+      expect(screen.getByTestId(CLIENT_MALL_TEST_IDS.CHECKOUT_BLOCK_REASON)).toHaveTextContent(CLIENT_MALL_CHECKOUT_COPY.BLOCK_PHONE);
+      expect(screen.getByLabelText(CLIENT_MALL_PHONE_COPY.PHONE_INPUT_LABEL)).toBe(input);
+
+      fireEvent.change(input, { target: { value: '01012341234' } });
+      expect(screen.getByTestId(CLIENT_MALL_TEST_IDS.PHONE_VERIFIED)).toHaveTextContent('010-****-1234');
+      expect(pay).not.toBeDisabled();
+
+      fireEvent.click(screen.getByTestId(CLIENT_MALL_TEST_IDS.PHONE_CHANGE));
+      fireEvent.change(screen.getByLabelText(CLIENT_MALL_PHONE_COPY.PHONE_INPUT_LABEL), { target: { value: '01099998888' } });
+      fireEvent.click(screen.getByTestId(CLIENT_MALL_TEST_IDS.PHONE_CHANGE_CANCEL));
+      expect(screen.getByTestId(CLIENT_MALL_TEST_IDS.PHONE_VERIFIED)).toHaveTextContent('010-****-1234');
+      expect(toastSpy).not.toHaveBeenCalled();
+      toastSpy.mockRestore();
+    });
+
+    test('다른 번호 인증 성공 응답 후에만 「인증을 마쳤어요」 토스트', async() => {
+      mockMatchMedia(false);
+      const toastSpy = jest.spyOn(notification, 'showSuccess');
+      mockUseSession.mockReturnValue(sessionFor({ phone: '01012341234', isPhoneVerified: true }));
+      mockService.fetchShopCart.mockResolvedValue(cartWithPkg);
+      mockSendCode.mockResolvedValue({ deliveryChannel: 'SMS', meta: { expiresInSeconds: null, resendCooldownSeconds: null, remainingAttempts: null, retryAfterSeconds: null } });
+      mockConfirmCode.mockResolvedValueOnce({ phone: '01099998888', phoneVerifiedAt: '2026-09-30T10:00:00' });
+      render(<MemoryRouter initialEntries={['/client/shop/checkout']}><ShopCheckoutPage /></MemoryRouter>);
+
+      await screen.findByTestId(CLIENT_MALL_TEST_IDS.PHONE_VERIFIED);
+      fireEvent.click(screen.getByTestId(CLIENT_MALL_TEST_IDS.PHONE_CHANGE));
+      fireEvent.change(screen.getByLabelText(CLIENT_MALL_PHONE_COPY.PHONE_INPUT_LABEL), { target: { value: '01099998888' } });
+      await act(async() => {
+        fireEvent.click(screen.getByTestId(CLIENT_MALL_TEST_IDS.PHONE_SEND));
+      });
+      expect(toastSpy).not.toHaveBeenCalled();
+      fireEvent.change(screen.getByTestId(CLIENT_MALL_TEST_IDS.PHONE_CODE), { target: { value: '123456' } });
+      await act(async() => {
+        fireEvent.click(screen.getByTestId(CLIENT_MALL_TEST_IDS.PHONE_CONFIRM));
+      });
+      expect(mockConfirmCode).toHaveBeenLastCalledWith('01099998888', '123456');
+      expect(toastSpy).toHaveBeenCalledTimes(1);
+      expect(toastSpy).toHaveBeenCalledWith(CLIENT_MALL_PHONE_COPY.VERIFIED_TOAST);
+      expect(screen.getByTestId(CLIENT_MALL_TEST_IDS.PHONE_VERIFIED)).toHaveTextContent('010-****-8888');
+      toastSpy.mockRestore();
     });
 
     test('미인증자 — 기존대로 「인증하기」 → 시트 · 닫아도 「인증하기」 유지', async() => {

@@ -83,6 +83,7 @@ import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.service.TenantPgConfigurationService;
 import com.coresolution.core.util.StatusCodeHelper;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -158,6 +159,17 @@ class ClientShopCheckoutServiceImplTest {
 
     @InjectMocks
     private ClientShopCheckoutServiceImpl service;
+
+    /** checkout() 휴대폰 인증 게이트 — 기본 픽스처는 인증 완료 내담자(개별 테스트 스텁이 우선) */
+    @BeforeEach
+    void stubVerifiedClientForCheckout() {
+        User verifiedClient = User.builder().name("홍길동").phone("enc-01012345678").build();
+        verifiedClient.setId(CLIENT_ID);
+        verifiedClient.setTenantId(TENANT);
+        lenient().when(userRepository.findByTenantIdAndId(TENANT, CLIENT_ID)).thenReturn(Optional.of(verifiedClient));
+        lenient().when(clientProfilePhoneVerificationService.isPhoneVerifiedForPayment(verifiedClient))
+                .thenReturn(true);
+    }
 
     @AfterEach
     void clearTransactionSynchronization() {
@@ -1474,6 +1486,83 @@ class ClientShopCheckoutServiceImplTest {
         assertEquals("주문을 찾을 수 없습니다.", ex.getMessage());
         verify(paymentService, never()).createPayment(any());
         verify(paymentService, never()).getPayment(any());
+    }
+
+    @Test
+    @DisplayName("checkout — 휴대폰 미인증(주문 시점 프로필 번호 ≠ 인증 장부)이면 주문 생성 전 거부")
+    void checkout_unverifiedPhone_rejectsBeforeOrderSave() {
+        String idemKey = "idem-unverified-cash";
+        when(shopClientOrderRepository.findByTenantClientAndCheckoutKey(TENANT, CLIENT_ID, idemKey))
+                .thenReturn(Optional.empty());
+        User user = unverifiedCheckoutUser();
+
+        IllegalArgumentException ex = assertThrows(
+                IllegalArgumentException.class,
+                () -> service.checkout(
+                        TENANT,
+                        CLIENT_ID,
+                        ShopCheckoutRequest.builder().idempotencyKey(idemKey).pointsToRedeemMinor(0L).build()));
+        assertEquals(ShopCheckoutConstants.MSG_PHONE_VERIFICATION_REQUIRED, ex.getMessage());
+        verify(clientProfilePhoneVerificationService).isPhoneVerifiedForPayment(user);
+        verify(shopClientOrderRepository, never()).save(any());
+        verify(shopCartRepository, never()).findByTenantIdAndClientId(any(), any());
+    }
+
+    @Test
+    @DisplayName("checkout — allowPointsOnly 포인트 전액(cashDue 0)도 미인증이면 PAID 전 거부")
+    void checkout_pointsOnly_unverifiedPhone_rejectsBeforePaid() {
+        String idemKey = "idem-unverified-points";
+        when(shopClientOrderRepository.findByTenantClientAndCheckoutKey(TENANT, CLIENT_ID, idemKey))
+                .thenReturn(Optional.empty());
+        unverifiedCheckoutUser();
+
+        IllegalArgumentException ex = assertThrows(
+                IllegalArgumentException.class,
+                () -> service.checkout(
+                        TENANT,
+                        CLIENT_ID,
+                        ShopCheckoutRequest.builder().idempotencyKey(idemKey).pointsToRedeemMinor(10_000L).build()));
+        assertEquals(ShopCheckoutConstants.MSG_PHONE_VERIFICATION_REQUIRED, ex.getMessage());
+        verify(clientPointWalletService, never()).hold(any(), any(), any(), anyLong(), any());
+        verify(clientPointWalletService, never()).commitHold(any(), any(), any(), anyLong(), any());
+        verify(shopClientOrderRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("checkout — 인증 완료 사용자는 포인트 전액 결제 통과(PAID)")
+    void checkout_verifiedPhone_pointsOnlyPasses() {
+        String idemKey = "idem-verified-points";
+        long subtotal = 10_000L;
+        ShopCartLine line = cartLine(subtotal);
+        ShopCart cart = line.getCart();
+        when(shopClientOrderRepository.findByTenantClientAndCheckoutKey(TENANT, CLIENT_ID, idemKey))
+                .thenReturn(Optional.empty());
+        when(shopCartRepository.findByTenantIdAndClientId(TENANT, CLIENT_ID)).thenReturn(Optional.of(cart));
+        when(shopCartLineRepository.findByCart_IdAndIsDeletedFalse(cart.getId())).thenReturn(List.of(line));
+        stubDefaultPolicies();
+        when(clientPointWalletService.getBalance(TENANT, CLIENT_ID))
+                .thenReturn(ShopPointBalanceResponse.builder().availableMinor(subtotal).heldMinor(0L).build());
+        ArgumentCaptor<ShopClientOrder> orderCaptor = ArgumentCaptor.forClass(ShopClientOrder.class);
+        when(shopClientOrderRepository.save(orderCaptor.capture())).thenAnswer(inv -> inv.getArgument(0));
+        when(shopClientOrderRepository.findByTenantIdAndPublicId(eq(TENANT), anyString()))
+                .thenAnswer(inv -> Optional.of(orderCaptor.getValue()));
+
+        ShopCheckoutResponse response = service.checkout(
+                TENANT,
+                CLIENT_ID,
+                ShopCheckoutRequest.builder().idempotencyKey(idemKey).pointsToRedeemMinor(subtotal).build());
+
+        assertEquals(ShopClientOrderStatus.PAID, response.getStatus());
+        verify(clientProfilePhoneVerificationService).isPhoneVerifiedForPayment(any(User.class));
+    }
+
+    private User unverifiedCheckoutUser() {
+        User user = User.builder().name("홍길동").phone("enc-01099998888").build();
+        user.setId(CLIENT_ID);
+        user.setTenantId(TENANT);
+        when(userRepository.findByTenantIdAndId(TENANT, CLIENT_ID)).thenReturn(Optional.of(user));
+        when(clientProfilePhoneVerificationService.isPhoneVerifiedForPayment(user)).thenReturn(false);
+        return user;
     }
 
     @Test

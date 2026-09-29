@@ -364,7 +364,7 @@ const ShopCheckoutPage = () => {
   const bySku = useMemo(() => indexCatalogBySku(catalog), [catalog]);
   const summary = useMemo(() => summarizeMallCart(cart, catalog), [cart, catalog]);
   const allAgreed = CLIENT_MALL_AGREEMENT_ITEMS.every((item) => agreements[item.key]);
-  const phoneVerified = portOneCustomerGate.ready;
+  const phoneVerified = portOneCustomerGate.ready && phoneFlow.isVerified;
   const payBlock = resolveMallPayBlock({ phoneVerified, allAgreed });
   const noMapping = hasConsultationInCart && consultantMappings.length === 0;
   const blockMessage = noMapping

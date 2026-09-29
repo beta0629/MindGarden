@@ -114,7 +114,7 @@ const PhoneVerifyPanel = ({ flow, sheet = false, onClose = null }) => {
               variant={actionVariant}
               preventDoubleClick={false}
               className={actionClassName}
-              disabled={flow.sending || !flow.phoneDigits}
+              disabled={flow.sending || !flow.phoneDigits || Boolean(flow.isVerified)}
               loading={flow.sending}
               onClick={flow.send}
               data-testid={CLIENT_MALL_TEST_IDS.PHONE_SEND}
@@ -256,15 +256,32 @@ const MallPhoneVerifyInline = ({ flow }) => {
   const isNarrow = useMediaQuery(CLIENT_MALL_NARROW_MEDIA_QUERY);
   const { step } = flow;
   const verified = step === PHONE_VERIFY_STEP.VERIFIED;
+  /** 인증 완료 후 「번호 변경」 중 — 입력 번호가 인증 번호와 다를 때만 「인증이 필요해요」·시트 */
+  const editing = Boolean(flow.verifiedDigits) && !verified;
+  const needsVerify = !flow.isVerified;
+  const verifySuccessSeq = flow.verifySuccessSeq || 0;
   const prevVerifiedRef = useRef(verified);
+  const prevSuccessSeqRef = useRef(verifySuccessSeq);
 
   useEffect(() => {
     if (verified && !prevVerifiedRef.current) {
       setOpen(false);
-      showSuccess(CLIENT_MALL_PHONE_COPY.VERIFIED_TOAST);
     }
     prevVerifiedRef.current = verified;
   }, [verified]);
+
+  useEffect(() => {
+    if (verifySuccessSeq > prevSuccessSeqRef.current) {
+      showSuccess(CLIENT_MALL_PHONE_COPY.VERIFIED_TOAST);
+    }
+    prevSuccessSeqRef.current = verifySuccessSeq;
+  }, [verifySuccessSeq]);
+
+  useEffect(() => {
+    if (isNarrow && editing && needsVerify) {
+      setOpen(true);
+    }
+  }, [isNarrow, editing, needsVerify]);
 
   if (verified) {
     return (
@@ -277,10 +294,7 @@ const MallPhoneVerifyInline = ({ flow }) => {
         <button
           type="button"
           className="client-mall-link-btn"
-          onClick={() => {
-            setOpen(true);
-            flow.changeNumber();
-          }}
+          onClick={flow.changeNumber}
           data-testid={CLIENT_MALL_TEST_IDS.PHONE_CHANGE}
         >
           {CLIENT_MALL_PHONE_COPY.CHANGE_NUMBER}
@@ -302,7 +316,18 @@ const MallPhoneVerifyInline = ({ flow }) => {
     </MGButton>
   );
 
-  if (isNarrow) {
+  const cancelChangeLink = editing && typeof flow.cancelChange === 'function' ? (
+    <button
+      type="button"
+      className="client-mall-link-btn"
+      onClick={flow.cancelChange}
+      data-testid={CLIENT_MALL_TEST_IDS.PHONE_CHANGE_CANCEL}
+    >
+      {CLIENT_MALL_PHONE_COPY.CANCEL_CHANGE}
+    </button>
+  ) : null;
+
+  if (isNarrow && !(editing && !needsVerify)) {
     const closeSheet = () => {
       setOpen(false);
       if (typeof flow.cancelChange === 'function') {
@@ -328,7 +353,7 @@ const MallPhoneVerifyInline = ({ flow }) => {
     );
   }
 
-  if (!open && step === PHONE_VERIFY_STEP.INPUT) {
+  if (!editing && !open && step === PHONE_VERIFY_STEP.INPUT) {
     return (
       <div className="client-mall-phone client-mall-phone--idle" data-testid={CLIENT_MALL_TEST_IDS.PHONE_VERIFY}>
         <NeedsVerifyBadge />
@@ -339,8 +364,9 @@ const MallPhoneVerifyInline = ({ flow }) => {
 
   return (
     <div className="client-mall-phone client-mall-phone--panel" data-testid={CLIENT_MALL_TEST_IDS.PHONE_VERIFY}>
-      <NeedsVerifyBadge />
+      {needsVerify ? <NeedsVerifyBadge /> : null}
       <PhoneVerifyPanel flow={flow} />
+      {cancelChangeLink}
     </div>
   );
 };
@@ -366,7 +392,9 @@ MallPhoneVerifyInline.propTypes = {
     resend: PropTypes.func.isRequired,
     confirm: PropTypes.func.isRequired,
     changeNumber: PropTypes.func.isRequired,
-    cancelChange: PropTypes.func
+    cancelChange: PropTypes.func,
+    isVerified: PropTypes.bool,
+    verifySuccessSeq: PropTypes.number
   }).isRequired
 };
 

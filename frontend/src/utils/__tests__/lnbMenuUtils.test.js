@@ -40,7 +40,8 @@ const buildBaseAdminLnb = () => ([
 
 const hasShopAdminGroup = (items) => Array.isArray(items)
   && items.some((it) => it.label === SHOP_ADMIN_GROUP_LABEL
-    || it.to === ADMIN_ROUTES.SHOP_CATALOG_SKUS);
+    || it.to === ADMIN_ROUTES.SHOP_CATALOG_SKUS
+    || it.to === ADMIN_ROUTES.SHOP_ORDERS);
 
 describe('mergeShopAdminLnbItems', () => {
   describe('비-admin 역할: 폴백 그룹 미삽입 (운영 누출 차단)', () => {
@@ -113,9 +114,9 @@ describe('mergeShopAdminLnbItems', () => {
       expect(group).toBeDefined();
       expect(Array.isArray(group.children)).toBe(true);
       expect(group.children.map((c) => c.to)).toEqual([
-        ADMIN_ROUTES.SHOP_CATALOG_SKUS,
-        ADMIN_ROUTES.SHOP_POINT_POLICIES,
-        ADMIN_ROUTES.SHOP_ORDERS
+        ADMIN_ROUTES.SHOP_ORDERS,
+        ADMIN_ROUTES.SHOP_PRODUCTS,
+        ADMIN_ROUTES.SHOP_POINT_POLICIES
       ]);
     });
 
@@ -357,6 +358,45 @@ describe('filterHiddenAdminLnbItems', () => {
       '/tenant/pg-configurations',
       ADMIN_ROUTES.TEST_NOTIFICATION
     ]);
+  });
+
+  test('쇼핑 스위트: 패키지 요금 관리 숨김 · SKU → 상품 · 주문/상품/리워드 순 · PG 설정 → 결제 연결', () => {
+    const items = [
+      {
+        to: ADMIN_ROUTES.SHOP_CATALOG_SKUS,
+        label: '쇼핑·리워드',
+        icon: 'SHOPPING_BAG',
+        end: false,
+        children: [
+          { to: ADMIN_ROUTES.SHOP_CATALOG_SKUS, label: '상품(SKU) 관리', icon: 'PACKAGE', end: true },
+          { to: ADMIN_ROUTES.SHOP_POINT_POLICIES, label: '포인트 정책', icon: 'GIFT', end: true },
+          { to: ADMIN_ROUTES.SHOP_ORDERS, label: '주문', icon: 'RECEIPT', end: true }
+        ]
+      },
+      {
+        to: '/tenant/profile',
+        label: '시스템·설정',
+        icon: 'SETTINGS',
+        end: false,
+        children: [
+          { to: '/tenant/pg-configurations', label: 'PG 설정', icon: 'CREDIT_CARD', end: true },
+          { to: ADMIN_ROUTES.PACKAGE_PRICING, label: '패키지 요금 관리', icon: 'TAGS', end: true }
+        ]
+      }
+    ];
+
+    const [shop, settings] = filterHiddenAdminLnbItems(items);
+
+    expect(shop.to).toBe(ADMIN_ROUTES.SHOP_ORDERS);
+    expect(shop.children.map((c) => c.to)).toEqual([
+      ADMIN_ROUTES.SHOP_ORDERS,
+      ADMIN_ROUTES.SHOP_PRODUCTS,
+      ADMIN_ROUTES.SHOP_POINT_POLICIES
+    ]);
+    expect(shop.children.map((c) => c.label)).toEqual(['온라인 주문', '상품', '리워드 정책']);
+    expect(shop.children[1].end).toBe(false);
+    expect(settings.children).toHaveLength(1);
+    expect(settings.children[0].label).toBe('결제 연결');
   });
 
   test('루트에 숨김 경로가 있으면 해당 항목 제거', () => {

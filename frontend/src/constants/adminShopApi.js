@@ -44,7 +44,7 @@ export const ADMIN_SHOP_ORDER_STATUS_LABELS = {
   PENDING_PAYMENT: '결제 대기',
   PAID: '결제 완료',
   CANCELLED: '취소',
-  EXPIRED: '만료',
+  EXPIRED: '미결제 · 시간 초과',
   REFUNDED: '환불 완료'
 };
 
@@ -128,7 +128,7 @@ export const ADMIN_SHOP_ORDER_LINE_SESSION_LABEL = '회기';
  * @type {string}
  */
 export const ADMIN_SHOP_ORDER_DETAIL_PORTONE_HINT =
-  'PortOne(또는 PG) 취소·회기 원복·포인트 원장·REFUNDED 동시 반영';
+  '환불하면 PortOne 취소, 회기 원복, 포인트 반환이 한 번에 처리돼요.';
 
 /** 주문 상세 모달 라벨·섹션·CTA 카피 (Clinic-OS SSOT) */
 export const ADMIN_SHOP_ORDER_DETAIL_COPY = Object.freeze({

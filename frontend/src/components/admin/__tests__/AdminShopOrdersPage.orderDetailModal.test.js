@@ -24,6 +24,14 @@ const CSS = fs.readFileSync(
   path.join(__dirname, '..', '..', '..', 'styles', 'shop', 'AdminShopClinicOs.css'),
   'utf8'
 );
+const CONFIRM = fs.readFileSync(
+  path.join(__dirname, '..', 'shop', 'AdminShopRefundConfirmModal.js'),
+  'utf8'
+);
+const SUITE_CSS = fs.readFileSync(
+  path.join(__dirname, '..', '..', '..', 'styles', 'shop', 'AdminShopSuite.css'),
+  'utf8'
+);
 const API = fs.readFileSync(
   path.join(__dirname, '..', '..', '..', 'constants', 'adminShopApi.js'),
   'utf8'
@@ -63,24 +71,22 @@ describe('AdminShopOrdersPage order detail modal Clinic-OS chrome', () => {
     expect(firstDotBlock[0]).not.toMatch(/teal|green|#0[eE]5[fF]5[aA]|primary-solid/i);
   });
 
-  test('action hierarchy: 전액환불 brick primary, 환불 정합 ghost, 강제 환불 정합 muted', () => {
-    expect(MODAL).toMatch(/canAdminShopOrderPrimaryRefund\(detail\)/);
-    expect(MODAL).toMatch(/ADMIN_SHOP_ORDER_DETAIL_COPY\.REFUND_PRIMARY/);
-    expect(MODAL).toMatch(/admin-shop-order-detail__action--refund-primary/);
-    expect(MODAL).toMatch(/variant="danger"/);
-    expect(CSS).toMatch(
-      /\.admin-shop-order-detail__action--refund-primary[\s\S]*--mg-v2-color-semantic-error/
+  test('action hierarchy: 모달 전액 환불 = brick 아웃라인 · solid brick은 확인창에만 · 강제 정합은 링크', () => {
+    expect(MODAL).toMatch(/admin-shop-suite__btn-brick-outline/);
+    expect(MODAL).toMatch(/ADMIN_SHOP_SUITE_TEST_IDS\.ORDER_REFUND_OUTLINE/);
+    expect(MODAL).not.toMatch(/variant="danger"/);
+    expect(MODAL).not.toMatch(/admin-shop-suite__btn-brick-solid/);
+    expect(CONFIRM).toMatch(/variant="danger"/);
+    expect(CONFIRM).toMatch(/admin-shop-suite__btn-brick-solid/);
+    expect(SUITE_CSS).toMatch(
+      /\.admin-shop-suite__btn-brick-outline[\s\S]*--mg-v2-color-semantic-error/
     );
     expect(MODAL).toMatch(/ADMIN_SHOP_RECONCILE_REFUND_COPY\.BUTTON/);
-    expect(MODAL).toMatch(/variant="ghost"/);
     expect(MODAL).toMatch(/admin-shop-order-detail__force-reconcile/);
     expect(MODAL).toMatch(/ADMIN_SHOP_RECONCILE_REFUND_COPY\.FORCE_BUTTON/);
     expect(MODAL).toMatch(/ALREADY_PG_CANCELLED_SYNC/);
     expect(CSS).toMatch(
       /\.admin-shop-order-detail__force-reconcile[\s\S]*--mg-v2-color-semantic-error/
-    );
-    expect(CSS).toMatch(
-      /\.admin-shop-order-detail__actions-force\s*\{[\s\S]*justify-content:\s*flex-end/
     );
   });
 

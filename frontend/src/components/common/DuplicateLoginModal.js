@@ -34,8 +34,11 @@ const DuplicateLoginModal = () => {
         confirmTerminate: true
       });
 
-      if (response && response.user) {
-        console.log('✅ 중복 로그인 확인 후 로그인 성공:', response.user);
+      // apiPost는 보통 data를 언랩하지만, ApiResponse 래퍼가 남는 경우도 방어
+      const loginPayload = response?.data || response || {};
+      const loggedInUser = loginPayload.user || response?.user;
+      if (loggedInUser) {
+        console.log('✅ 중복 로그인 확인 후 로그인 성공:', loggedInUser);
 
         setDuplicateLoginModal({
           isOpen: false,
@@ -43,22 +46,23 @@ const DuplicateLoginModal = () => {
           loginData: null
         });
 
-        console.log('🔐 중복 로그인 성공 - 세션에 사용자 정보 설정 시작:', response.user);
-        sessionManager.setUser(response.user, {
-          accessToken: response.accessToken,
-          refreshToken: response.refreshToken,
-          sessionId: response.sessionId || null
+        console.log('🔐 중복 로그인 성공 - 세션에 사용자 정보 설정 시작:', loggedInUser);
+        sessionManager.setUser(loggedInUser, {
+          accessToken: loginPayload.accessToken,
+          refreshToken: loginPayload.refreshToken,
+          sessionId: loginPayload.sessionId || null
         });
-        // UnifiedLogin 과 동일 — 쿠키 반영 전 401 레이스로 튕기지 않게
+        // UnifiedLogin 과 동일하게 첫 확인 전에 grace 창 시작 — 쿠키 반영 전 401 레이스로 튕기지 않게
         markJustLoggedIn();
+        // 로그인 직후 확인은 백그라운드. 401 이어도 방금 세운 사용자를 지우지 않는다.
         await checkSession(true, { background: true });
         console.log('✅ 세션 설정 완료 - 사용자 정보 저장됨');
 
         notificationManager.show('로그인에 성공했습니다.', 'success');
 
         const authResponse = {
-          user: response.user,
-          currentTenantRole: response.currentTenantRole || null
+          user: loggedInUser,
+          currentTenantRole: loginPayload.currentTenantRole || response?.currentTenantRole || null
         };
         console.log('🎯 중복 로그인 성공 후 SPA navigate (hard reload 금지)');
 

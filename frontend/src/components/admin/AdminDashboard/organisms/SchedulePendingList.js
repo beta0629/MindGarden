@@ -1,5 +1,5 @@
 /**
- * SchedulePendingList — 스케줄 등록 대기 (ListTableView, G1-02)
+ * SchedulePendingList — 가예약 (ListTableView, G1-02)
  *
  * @author Core Solution
  * @since 2025-02-21
@@ -13,7 +13,8 @@ import SafeText from '../../../common/SafeText';
 import { toDisplayString, toSafeNumber } from '../../../../utils/safeDisplay';
 import {
   DASHBOARD_PENDING_LIST_MAX_ROWS,
-  DASHBOARD_PENDING_LIST_VIEW_ALL_LABEL
+  DASHBOARD_PENDING_LIST_VIEW_ALL_LABEL,
+  DASHBOARD_SCHEDULE_PENDING_LIST_TITLE
 } from '../../../../constants/adminDashboardWidgetConstants';
 import './SchedulePendingList.css';
 
@@ -42,7 +43,7 @@ const SchedulePendingList = ({ items = [], viewAllHref = '' }) => {
     <section className="schedule-pending-list" aria-labelledby="schedule-pending-list-title">
       <header className="schedule-pending-list__header">
         <h3 id="schedule-pending-list-title" className="schedule-pending-list__title">
-          스케줄 등록 대기
+          {DASHBOARD_SCHEDULE_PENDING_LIST_TITLE}
         </h3>
         <span className="schedule-pending-list__count">
           {toSafeNumber(items.length, 0)}건

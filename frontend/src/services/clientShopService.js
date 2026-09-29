@@ -61,13 +61,19 @@ const mapCatalogRow = (row) => {
 };
 
 /**
- * 공개 카탈로그 목록 (로그인 불필요).
+ * 카탈로그 목록.
+ * 로그인 내담자는 인증 catalog, 게스트는 공개 catalog.
  *
+ * @param {{ authenticated?: boolean }} [options]
  * @returns {Promise<object[]>}
  */
-export const fetchShopCatalog = async() => {
-  await ensurePublicShopTenantContext();
-  const res = await StandardizedApi.get(CLIENT_SHOP_API.PUBLIC_CATALOG);
+export const fetchShopCatalog = async(options = {}) => {
+  const authenticated = options.authenticated === true;
+  if (!authenticated) {
+    await ensurePublicShopTenantContext();
+  }
+  const path = authenticated ? CLIENT_SHOP_API.CATALOG : CLIENT_SHOP_API.PUBLIC_CATALOG;
+  const res = await StandardizedApi.get(path);
   const data = unwrap(res);
   return Array.isArray(data) ? data.map(mapCatalogRow) : [];
 };
@@ -111,17 +117,25 @@ export const fetchShopOrder = async(orderPublicId) => {
 };
 
 /**
- * 공개 카탈로그에서 SKU 1건 조회 (PDP).
+ * SKU 1건 조회 (PDP).
+ * 로그인 내담자는 인증 catalog, 게스트는 공개 catalog.
  *
  * @param {string} skuCode
+ * @param {{ authenticated?: boolean }} [options]
  * @returns {Promise<object|null>}
  */
-export const fetchShopCatalogSku = async(skuCode) => {
+export const fetchShopCatalogSku = async(skuCode, options = {}) => {
   if (!skuCode) {
     return null;
   }
-  await ensurePublicShopTenantContext();
-  const res = await StandardizedApi.get(CLIENT_SHOP_API.publicCatalogSku(skuCode));
+  const authenticated = options.authenticated === true;
+  if (!authenticated) {
+    await ensurePublicShopTenantContext();
+  }
+  const path = authenticated
+    ? CLIENT_SHOP_API.catalogSku(skuCode)
+    : CLIENT_SHOP_API.publicCatalogSku(skuCode);
+  const res = await StandardizedApi.get(path);
   const data = unwrap(res);
   return data ? mapCatalogRow(data) : null;
 };

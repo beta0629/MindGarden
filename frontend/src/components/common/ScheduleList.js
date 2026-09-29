@@ -178,7 +178,7 @@ const ScheduleList = ({
           userRole: userRole
         };
         const response = await apiGet(url, params);
-        
+
         if (response.success) {
           setSchedules(response.data || []);
           setTotalCount(response.data?.length || 0);

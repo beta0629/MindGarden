@@ -5,20 +5,27 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.coresolution.consultation.constant.ShopCatalogCategory;
+import com.coresolution.consultation.constant.ShopCatalogSkuConstants;
 import com.coresolution.consultation.constant.ShopSessionCountConstants;
+import com.coresolution.consultation.entity.CommonCode;
+import com.coresolution.consultation.repository.CommonCodeRepository;
 import com.coresolution.consultation.dto.shop.ShopCatalogPackageIdentity;
 import com.coresolution.consultation.dto.shop.admin.ShopCatalogPackageContentRequest;
 import com.coresolution.consultation.dto.shop.admin.ShopCatalogPackageFeeItem;
 import com.coresolution.consultation.dto.shop.admin.ShopCatalogSkuAdminDetail;
 import com.coresolution.consultation.dto.shop.admin.ShopCatalogSkuUpsertRequest;
 import com.coresolution.consultation.service.ShopCatalogPackageOfferResolver;
+import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.entity.ShopCatalogSku;
 import com.coresolution.consultation.entity.ShopCatalogSkuPriceHistory;
+import com.coresolution.consultation.entity.User;
+import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.exception.EntityNotFoundException;
 import com.coresolution.consultation.repository.ShopCatalogSkuPriceHistoryRepository;
 import com.coresolution.consultation.repository.ShopCatalogSkuRepository;
@@ -26,6 +33,7 @@ import com.coresolution.consultation.service.ShopCatalogSkuCodeGenerator;
 import com.coresolution.consultation.service.ShopCatalogSkuThumbnailService;
 import java.util.List;
 import java.util.Optional;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -49,9 +57,17 @@ class AdminShopCatalogSkuServiceImplTest {
 
     private static final String TENANT = "tenant-admin-shop";
     private static final String THUMB = "/api/v1/files/shop-catalog-thumbnails/test.png";
+    private static final String FIELD_CODE = "GENERAL";
+    private static final Long CONSULTANT_ID = 42L;
 
     @Mock
     private ShopCatalogSkuRepository shopCatalogSkuRepository;
+
+    @Mock
+    private CommonCodeRepository commonCodeRepository;
+
+    @Mock
+    private UserRepository userRepository;
 
     @Mock
     private ShopCatalogSkuPriceHistoryRepository shopCatalogSkuPriceHistoryRepository;
@@ -67,6 +83,26 @@ class AdminShopCatalogSkuServiceImplTest {
 
     @InjectMocks
     private AdminShopCatalogSkuServiceImpl adminShopCatalogSkuService;
+
+    @BeforeEach
+    void stubSpecialtyCode() {
+        CommonCode code = new CommonCode();
+        code.setCodeValue(FIELD_CODE);
+        code.setCodeGroup(ShopCatalogSkuConstants.FIELD_CODE_GROUP_CONSULTATION);
+        code.setIsActive(true);
+        code.setIsDeleted(false);
+        lenient().when(commonCodeRepository.findByTenantIdAndCodeGroupAndCodeValue(
+                TENANT, ShopCatalogSkuConstants.FIELD_CODE_GROUP_CONSULTATION, FIELD_CODE))
+                .thenReturn(Optional.of(code));
+        User consultant = new User();
+        consultant.setId(CONSULTANT_ID);
+        consultant.setTenantId(TENANT);
+        consultant.setRole(UserRole.CONSULTANT);
+        consultant.setIsActive(true);
+        consultant.setIsDeleted(false);
+        lenient().when(userRepository.findByTenantIdAndId(TENANT, CONSULTANT_ID))
+                .thenReturn(Optional.of(consultant));
+    }
 
     private static ShopCatalogSkuUpsertRequest upsert(
             String skuCode,
@@ -89,7 +125,9 @@ class AdminShopCatalogSkuServiceImplTest {
                 true,
                 true,
                 0,
-                sessionCount);
+                sessionCount,
+                FIELD_CODE,
+                CONSULTANT_ID);
     }
 
     private static ShopCatalogSku existingSku(Long id) {
@@ -205,7 +243,7 @@ class AdminShopCatalogSkuServiceImplTest {
 
         ShopCatalogSkuUpsertRequest request = new ShopCatalogSkuUpsertRequest(
                 "PKG-99", "패키지", null, 10000L, "KRW", ShopCatalogCategory.CONSULTATION,
-                null, false, true, 0, 5);
+                null, false, true, 0, 5, FIELD_CODE, CONSULTANT_ID);
 
         ShopCatalogSkuAdminDetail detail = adminShopCatalogSkuService.create(TENANT, request);
 
@@ -353,7 +391,8 @@ class AdminShopCatalogSkuServiceImplTest {
         ShopCatalogPackageFeeItem item = adminShopCatalogSkuService.updatePackageContent(
                 TENANT,
                 "PACKAGE_001",
-                new ShopCatalogPackageContentRequest("상담 안내", false, 2));
+                new ShopCatalogPackageContentRequest(
+                        "상담 안내", false, 2, ShopCatalogCategory.CONSULTATION, FIELD_CODE, CONSULTANT_ID));
 
         ArgumentCaptor<ShopCatalogSku> captor = ArgumentCaptor.forClass(ShopCatalogSku.class);
         verify(shopCatalogSkuRepository).save(captor.capture());
@@ -382,7 +421,86 @@ class AdminShopCatalogSkuServiceImplTest {
         assertThrows(IllegalArgumentException.class, () -> adminShopCatalogSkuService.updatePackageContent(
                 TENANT,
                 "PACKAGE_001",
-                new ShopCatalogPackageContentRequest("상담 안내", true, 0)));
+                new ShopCatalogPackageContentRequest(
+                        "상담 안내", true, 0, ShopCatalogCategory.CONSULTATION, FIELD_CODE, CONSULTANT_ID)));
         verify(shopCatalogSkuRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("updatePackageContent — CONSULTATION 은 상담사 id 가 없으면 저장하지 않는다")
+    void updatePackageContent_consultationWithoutConsultant_throws() {
+        when(shopCatalogPackageOfferResolver.requireIdentity(TENANT, "PACKAGE_001"))
+                .thenReturn(new ShopCatalogPackageIdentity(
+                        "PACKAGE_001", "10회기", 150000L, 10, true, true));
+        when(shopCatalogSkuRepository
+                .findByTenantIdAndSourcePackageCodeAndIsDeletedFalseOrderByIdAsc(TENANT, "PACKAGE_001"))
+                .thenReturn(List.of());
+        when(shopCatalogSkuCodeGenerator.generateNextCode(TENANT)).thenReturn("SHOP-FEE-1");
+
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                () -> adminShopCatalogSkuService.updatePackageContent(
+                        TENANT,
+                        "PACKAGE_001",
+                        new ShopCatalogPackageContentRequest(
+                                "상담 안내", false, 0, ShopCatalogCategory.CONSULTATION, FIELD_CODE, null)));
+        assertEquals(ShopCatalogSkuConstants.CONSULTANT_REQUIRED_MESSAGE, ex.getMessage());
+        verify(shopCatalogSkuRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("updatePackageContent — CONSULTATION 은 테넌트 상담사 id 를 저장한다")
+    void updatePackageContent_consultation_savesConsultantId() {
+        when(shopCatalogPackageOfferResolver.requireIdentity(TENANT, "PACKAGE_001"))
+                .thenReturn(new ShopCatalogPackageIdentity(
+                        "PACKAGE_001", "10회기", 150000L, 10, true, true));
+        when(shopCatalogSkuRepository
+                .findByTenantIdAndSourcePackageCodeAndIsDeletedFalseOrderByIdAsc(TENANT, "PACKAGE_001"))
+                .thenReturn(List.of());
+        when(shopCatalogSkuCodeGenerator.generateNextCode(TENANT)).thenReturn("SHOP-FEE-1");
+        when(shopCatalogSkuRepository.save(any(ShopCatalogSku.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        ShopCatalogPackageFeeItem item = adminShopCatalogSkuService.updatePackageContent(
+                TENANT,
+                "PACKAGE_001",
+                new ShopCatalogPackageContentRequest(
+                        "상담 안내", false, 0, ShopCatalogCategory.CONSULTATION, FIELD_CODE, CONSULTANT_ID));
+
+        ArgumentCaptor<ShopCatalogSku> captor = ArgumentCaptor.forClass(ShopCatalogSku.class);
+        verify(shopCatalogSkuRepository).save(captor.capture());
+        assertEquals(CONSULTANT_ID, captor.getValue().getConsultantId());
+        assertEquals(CONSULTANT_ID, item.consultantId());
+    }
+
+    @Test
+    @DisplayName("updatePackageContent — ASSESSMENT 는 상담사를 저장하지 않는다")
+    void updatePackageContent_assessment_clearsConsultant() {
+        CommonCode exam = new CommonCode();
+        exam.setCodeValue("MMPI");
+        exam.setCodeGroup(ShopCatalogSkuConstants.FIELD_CODE_GROUP_ASSESSMENT);
+        exam.setIsActive(true);
+        exam.setIsDeleted(false);
+        when(commonCodeRepository.findByTenantIdAndCodeGroupAndCodeValue(
+                TENANT, ShopCatalogSkuConstants.FIELD_CODE_GROUP_ASSESSMENT, "MMPI"))
+                .thenReturn(Optional.of(exam));
+        when(shopCatalogPackageOfferResolver.requireIdentity(TENANT, "PACKAGE_EXAM"))
+                .thenReturn(new ShopCatalogPackageIdentity(
+                        "PACKAGE_EXAM", "검사", 20000L, 1, true, true));
+        when(shopCatalogSkuRepository
+                .findByTenantIdAndSourcePackageCodeAndIsDeletedFalseOrderByIdAsc(TENANT, "PACKAGE_EXAM"))
+                .thenReturn(List.of());
+        when(shopCatalogSkuCodeGenerator.generateNextCode(TENANT)).thenReturn("SHOP-FEE-EXAM");
+        when(shopCatalogSkuRepository.save(any(ShopCatalogSku.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        ShopCatalogPackageFeeItem item = adminShopCatalogSkuService.updatePackageContent(
+                TENANT,
+                "PACKAGE_EXAM",
+                new ShopCatalogPackageContentRequest(
+                        "검사 안내", false, 0, ShopCatalogCategory.ASSESSMENT, "MMPI", CONSULTANT_ID));
+
+        ArgumentCaptor<ShopCatalogSku> captor = ArgumentCaptor.forClass(ShopCatalogSku.class);
+        verify(shopCatalogSkuRepository).save(captor.capture());
+        assertNull(captor.getValue().getConsultantId());
+        assertNull(item.consultantId());
+        verify(userRepository, never()).findByTenantIdAndId(any(), any());
     }
 }

@@ -1,5 +1,8 @@
 # Read-only prod DB spot check — dev-doc password parity + schedule/record counts.
 # Push trigger (workflow_dispatch 403 대안). Secrets: PRODUCTION_DB_* (environment: production).
+#
+# SSOT 2026-09-22: Asia/Seoul 11:00–20:00 예방성 prod DB spot check 금지.
+#   KST 11–19 inclusive → exit 0 skip (push/dispatch). force_incident=true 만 명시 장애 시 우회.
 name: Prod DB read-only spot check
 
 on:
@@ -8,21 +11,52 @@ on:
     paths:
       - 'scripts/ops/triggers/prod_db_spot_check_run.env'
   workflow_dispatch:
+    inputs:
+      force_incident:
+        description: 'KST 11–19 주간 스킵 가드 우회 (명시적 장애 대응만)'
+        type: boolean
+        default: false
 
 jobs:
   spot-check:
     runs-on: ubuntu-latest
     environment: production
     steps:
+      # SSOT 2026-09-22: KST 11–19 inclusive → exit 0 skip unless force_incident=true
+      - name: KST 주간 예방점검 가드 (11–19 skip)
+        id: kst_guard
+        env:
+          FORCE_INCIDENT: ${{ inputs.force_incident || false }}
+        run: |
+          set -euo pipefail
+          HOUR="$(TZ=Asia/Seoul date +%H)"
+          HOUR=$((10#$HOUR))
+          echo "Asia/Seoul hour=${HOUR} force_incident=${FORCE_INCIDENT}"
+          if [ "${FORCE_INCIDENT}" = "true" ]; then
+            echo "force_incident=true — daytime preventive skip bypassed (explicit outage)"
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if [ "$HOUR" -ge 11 ] && [ "$HOUR" -le 19 ]; then
+            echo "::notice::KST ${HOUR}:00 is in 11–19 (preventive ops forbidden until 20:00 KST). Skipping (exit 0)."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "Outside KST 11–19 forbidden window — continuing"
+          echo "skip=false" >> "$GITHUB_OUTPUT"
+
       - name: Checkout
+        if: steps.kst_guard.outputs.skip != 'true'
         uses: actions/checkout@v4
 
       - name: Setup MySQL client
+        if: steps.kst_guard.outputs.skip != 'true'
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y -qq mysql-client
 
       - name: Resolve DB host
+        if: steps.kst_guard.outputs.skip != 'true'
         id: db
         env:
           PRODUCTION_DB_HOST: ${{ secrets.PRODUCTION_DB_HOST }}
@@ -45,6 +79,7 @@ jobs:
           echo "Using host=$HOST user=$USER db=$NAME"
 
       - name: Dev-doc password parity + read-only counts
+        if: steps.kst_guard.outputs.skip != 'true'
         env:
           DB_HOST: ${{ steps.db.outputs.host }}
           DB_USER: ${{ steps.db.outputs.user }}

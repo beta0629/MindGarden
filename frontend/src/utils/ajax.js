@@ -58,8 +58,11 @@ const getDefaultHeaders = () => {
   return getDefaultApiHeaders();
 };
 
-// 에러 메시지 생성
-const getErrorMessage = (status) => {
+// 에러 메시지 생성 — HTTP 5xx 는 전부 SERVER_ERROR (502/503 을 NETWORK_ERROR 로 오분류하지 않음)
+export const getErrorMessage = (status) => {
+  if (typeof status === 'number' && status >= API_STATUS.INTERNAL_SERVER_ERROR) {
+    return API_ERROR_MESSAGES.SERVER_ERROR;
+  }
   switch (status) {
     case API_STATUS.UNAUTHORIZED:
       return API_ERROR_MESSAGES.UNAUTHORIZED;
@@ -67,8 +70,6 @@ const getErrorMessage = (status) => {
       return API_ERROR_MESSAGES.FORBIDDEN;
     case API_STATUS.NOT_FOUND:
       return API_ERROR_MESSAGES.NOT_FOUND;
-    case API_STATUS.SERVER_ERROR:
-      return API_ERROR_MESSAGES.SERVER_ERROR;
     default:
       return API_ERROR_MESSAGES.NETWORK_ERROR;
   }
@@ -263,13 +264,18 @@ export const checkSessionAndRedirect = async(response, requestUrl = '', options 
   return false; // 리다이렉트되지 않음
 };
 
-// 에러 처리
-const handleError = (error, status) => {
+// 에러 처리 — StandardizedApi.handleError 가 5xx 를 구분하도록 status 유지
+export const handleError = (error, status) => {
   const isLocalEnv = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
   if (status === API_STATUS.UNAUTHORIZED && !isLocalEnv) {
     redirectToLoginPageOnce();
   }
-  throw new Error(getErrorMessage(status));
+  const err = new Error(getErrorMessage(status));
+  err.status = status;
+  if (error && typeof error === 'object' && error.response != null) {
+    err.response = error.response;
+  }
+  throw err;
 };
 
 // GET 요청

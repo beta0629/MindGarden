@@ -16,6 +16,10 @@
 
 import { apiGet } from './ajax';
 import { API_ENDPOINTS } from '../constants/apiEndpoints';
+import {
+  adminClientsWithStatsGet,
+  adminConsultantsWithStatsGet
+} from '../api/adminListFetch';
 
 const CONSULTANTS_WITH_STATS = API_ENDPOINTS.ADMIN.CONSULTANTS.WITH_STATS;
 const CLIENTS_WITH_STATS = API_ENDPOINTS.ADMIN.CLIENTS.WITH_STATS;
@@ -214,7 +218,6 @@ export const getConsultantWithStats = async(consultantId) => {
 /**
  * @returns {Promise<Array>} 상담사 목록 + 통계 정보
  */
-import StandardizedApi from './standardizedApi';
 import i18n from '../i18n';
 
 export const getAllConsultantsWithStats = async() => {
@@ -261,8 +264,8 @@ export const getAllConsultantsWithStats = async() => {
             console.log('✅ getAllConsultantsWithStats: tenantId 확인 완료, API 호출:', tenantId);
         }
         
-        // 표준화된 API 호출 사용
-        const response = await StandardizedApi.get(CONSULTANTS_WITH_STATS);
+        // adminListFetch SSOT — page/size 강제
+        const response = await adminConsultantsWithStatsGet();
         
         // 응답 구조: { success: true, data: { consultants: [...], count: N } }
         const consultantsList = response?.consultants || response?.data?.consultants || response?.data || [];
@@ -278,7 +281,7 @@ export const getAllConsultantsWithStats = async() => {
                 if (typeof window !== 'undefined' && window.sessionManager) {
                     await window.sessionManager.checkSession(true);
                     // 재시도
-                    const retryResponse = await StandardizedApi.get(CONSULTANTS_WITH_STATS);
+                    const retryResponse = await adminConsultantsWithStatsGet();
                     const retryList = retryResponse?.consultants || retryResponse?.data?.consultants || retryResponse?.data || [];
                     console.log('✅ 재시도 성공, count:', retryList.length);
                     return Array.isArray(retryList) ? retryList : [];
@@ -398,10 +401,10 @@ export const getClientWithStats = async(clientId) => {
  */
 export const getAllClientsWithStats = async() => {
     try {
-        // 표준화 2025-12-08: API 경로 수정 (/api/v1/admin)
-        const response = await apiGet(CLIENTS_WITH_STATS);
+        // adminListFetch SSOT — page/size 강제 (bare with-stats Validation FAIL 방지)
+        const response = await adminClientsWithStatsGet();
         
-        // apiGet이 ApiResponse의 data만 추출하므로, response는 { clients: [...], count: N } 형태
+        // StandardizedApi가 data를 언랩하면 { clients: [...], count: N } 형태
         if (response && (response.clients || Array.isArray(response))) {
             const clientsList = response.clients || response;
             return Array.isArray(clientsList) ? clientsList : [];

@@ -49,6 +49,15 @@ const list = await apiGet('/api/v1/schedules', { startDate, endDate });
 - Controller는 `BaseApiController` 상속, `success()`/`created()`/`noContent()` 사용
 - 에러는 예외 throw 후 GlobalExceptionHandler에서 일괄 처리
 
+### 화면·API 한 세트 (필수)
+
+같은 기능의 화면(관리자·내담자 UI)과 API는 한 변경 세트다. 호출부만, 또는 엔드포인트만 수정하고 끝내지 않는다.
+
+- 배포도 한 세트다. 화면 커밋과 서버 커밋을 서로 다른 시점에 운영에 올리지 않는다. **한 커밋(또는 같은 SHA)** 에 화면과 서버가 같이 들어가야 한다.
+- 프론트 전용 워크플로만 먼저 성공시키고, 같은 SHA의 백엔드 배포가 그 화면을 다른 빌드로 덮어쓰지 않게 한다. 백엔드 워크플로의 **프론트 업로드 스킵 가드**(같은 SHA의 프론트 운영 배포가 이미 success면 업로드하지 않음)를 깨지 말 것.
+- 사용자 트래픽이 받는 슬롯은 세트 배포 중 재시작으로 로그인 이탈을 만들지 않는다. **비활성 슬롯 헬스 통과 후**에만 전환한다.
+- 분야·테넌트·호스트 하드코딩 금지. 공통코드·env.
+
 ## Reference
 
 `docs/standards/API_CALL_STANDARD.md`, `docs/standards/API_INTEGRATION_STANDARD.md`, `docs/standards/API_DESIGN_STANDARD.md`

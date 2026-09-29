@@ -47,20 +47,19 @@ describe('IntegratedMatchingSchedule cold-load month scope SSOT', () => {
     );
   });
 
-  test('first paint uses adminMappingsListGet; full GetAll is background only', () => {
-    expect(scheduleJs).toMatch(/adminMappingsListGet\s*\(\s*\)/);
+  test('assignment lists use mappings GetAll and do not stop at page size 20', () => {
     expect(scheduleJs).toMatch(/adminMappingsListGetAll\s*\(\s*\)/);
-    // Promise.all 임계 경로에 GetAll 이 직접 들어가지 않음 (1페이지 Get 후 백그라운드)
+    expect(scheduleJs).not.toMatch(/adminMappingsListGet\s*\(/);
+    expect(scheduleJs).not.toMatch(/runBackgroundMappingsGetAll/);
     const promiseAllBlock = scheduleJs.match(
       /await Promise\.all\(\[[\s\S]*?\]\)/
     );
     expect(promiseAllBlock).not.toBeNull();
-    expect(promiseAllBlock[0]).toMatch(/adminMappingsListGet\s*\(/);
-    expect(promiseAllBlock[0]).not.toMatch(/adminMappingsListGetAll\s*\(/);
+    expect(promiseAllBlock[0]).toMatch(/adminMappingsListGetAll\s*\(\s*\)/);
+    expect(promiseAllBlock[0]).not.toMatch(/adminMappingsListGet\s*\(/);
     expect(promiseAllBlock[0]).toMatch(
       /adminSchedulesListGetAll\(\s*\{\s*startDate\s*,\s*endDate\s*\}\s*\)/
     );
-    // chrome KPI: STATS 는 first-paint Promise.all 에 포함 (best-effort)
     expect(promiseAllBlock[0]).toMatch(/ADMIN\.MAPPINGS\.STATS/);
   });
 
@@ -98,7 +97,7 @@ describe('IntegratedMatchingSchedule cold-load month scope SSOT', () => {
     expect(promiseAllIdx).toBeGreaterThan(-1);
     expect(getAllCallIdx).toBeGreaterThan(-1);
 
-    // structural order: badge hooks → first-paint Promise.all → idle GetAll
+    // badge hooks → 목록 Promise.all. 배정 목록 GetAll 은 그 안에서 전체를 받는다.
     expect(Math.max(consultantIdx, missingIdx)).toBeLessThan(promiseAllIdx);
     expect(promiseAllIdx).toBeLessThan(getAllCallIdx);
 
@@ -108,17 +107,10 @@ describe('IntegratedMatchingSchedule cold-load month scope SSOT', () => {
     );
   });
 
-  test('background mappings GetAll is idle-deferred (requestIdleCallback)', () => {
-    expect(scheduleJs).toMatch(/CLIENT_FILTER_IDLE_FALLBACK_MS/);
-    expect(scheduleJs).toMatch(/runBackgroundMappingsGetAll/);
-    expect(scheduleJs).toMatch(/adminMappingsListGetAll\s*\(\s*\)/);
-    // GetAll 은 idle defer 후 실행 (client filter 와 동일 requestIdleCallback 패턴)
-    expect(scheduleJs).toMatch(
-      /requestIdleCallback\(\(\)\s*=>\s*\{\s*void runBackgroundMappingsGetAll\(\);/
-    );
-    expect(scheduleJs).toMatch(
-      /runBackgroundMappingsGetAll[\s\S]*?adminMappingsListGetAll\s*\(\s*\)/
-    );
+  test('mappings GetAll is the list fetch, not an idle follow-up after page size 20', () => {
+    expect(scheduleJs).toMatch(/adminMappingsListGetAll\s*\(\s*\)\.catch/);
+    expect(scheduleJs).not.toMatch(/runBackgroundMappingsGetAll/);
+    expect(scheduleJs).not.toMatch(/adminMappingsListGet\s*\(/);
   });
 
   test('clients/with-mapping-info is idle-deferred (not mount-blocking)', () => {

@@ -10,6 +10,7 @@
 
 import { AUTH_API, getApiBaseUrl } from '../constants/api';
 import { getDefaultApiHeaders } from './apiHeaders';
+import { markJustRefreshed } from './sessionAuthPolicy';
 
 /** 401 시 refresh 재시도하지 않는 URL */
 const AUTH_REFRESH_SKIP_URL_SUBSTRINGS = [
@@ -116,6 +117,7 @@ async function doRefreshAccessTokenPair() {
 
     localStorage.setItem('accessToken', newAccessToken);
     localStorage.setItem('refreshToken', newRefreshToken);
+    markJustRefreshed();
     console.log('🔐 토큰 갱신 성공');
     return { accessToken: newAccessToken, refreshToken: newRefreshToken };
   } catch (error) {

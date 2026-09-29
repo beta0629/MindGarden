@@ -18,6 +18,15 @@ SERVER_BASE_URL=
 # 값: 공유할 상위 호스트만(RFC 6265 Cookie Domain: 선행 점(.) 없이 reg-name 형태, 예 core-solution.co.kr).
 SESSION_COOKIE_DOMAIN=core-solution.co.kr
 
+# 웹 OAuth JWT 1회 교환 — 쿠키 Domain 불일치 대비 일회용 opaque 코드(쿼리에 JWT 금지)
+# OAUTH_WEB_SESSION_EXCHANGE_CODE_ENABLED=true
+# OAUTH_WEB_SESSION_EXCHANGE_CODE_TTL_SECONDS=90
+
+# OAuth apex / 서브도메인 변환 (호스트는 env 만 — Java 하드코딩 금지)
+# OAUTH2_MAIN_DOMAINS=core-solution.co.kr,dev.core-solution.co.kr
+# OAUTH2_SUBDOMAIN_PATTERNS=^dev\.core-solution\.co\.kr$,.*\.dev\.core-solution\.co\.kr,.*\.core-solution\.co\.kr
+# OAUTH2_TENANT_PARENT_DOMAIN_SUFFIXES=.dev.core-solution.co.kr,.staging.core-solution.co.kr,.core-solution.co.kr
+
 DB_USERNAME=
 DB_PASSWORD=
 

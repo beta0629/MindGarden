@@ -6,6 +6,7 @@ import { authAPI, apiGet } from '../../utils/ajax';
 import { sessionManager } from '../../utils/sessionManager';
 import { DASHBOARD_API, API_BASE_URL } from '../../constants/api';
 import { redirectToDynamicDashboard, getLegacyDashboardPath } from '../../utils/dashboardUtils';
+import { getDefaultApiHeaders } from '../../utils/apiHeaders';
 import { RoleUtils, USER_ROLES, LEGACY_USER_ROLES } from '../../constants/roles';
 import { getStatusLabel } from '../../utils/colorUtils';
 import '../../styles/main.css';
@@ -461,17 +462,19 @@ const CommonDashboard = ({ user: propUser }) => {
       let pendingMappings = 0;
       let activeMappings = 0;
       
+      // P0: LIST full-fetch 금지 — KPI는 STATS만 사용
       try {
-        const mappingStatsResponse = await apiGet(API_ENDPOINTS.ADMIN.MAPPINGS.STATS);
-        if (!isApiGetNullFailure(mappingStatsResponse)) {
-          const stats = mappingStatsResponse?.data != null
-            ? mappingStatsResponse.data
-            : mappingStatsResponse;
-          pendingMappings = stats?.pendingMappings ?? 0;
-          activeMappings = stats?.activeMappings ?? 0;
+        const mappingResponse = await apiGet(API_ENDPOINTS.ADMIN.MAPPINGS.STATS);
+        if (!isApiGetNullFailure(mappingResponse)) {
+          const statsPayload = (mappingResponse && typeof mappingResponse === 'object'
+            && 'data' in mappingResponse && mappingResponse.data != null)
+            ? mappingResponse.data
+            : mappingResponse;
+          pendingMappings = Number(statsPayload?.pendingMappings) || 0;
+          activeMappings = Number(statsPayload?.activeMappings) || 0;
         }
       } catch (mappingError) {
-        console.warn('⚠️ 매핑 데이터 로드 실패, 기본값 사용:', mappingError);
+        console.warn('⚠️ 매핑 통계 로드 실패, 기본값 사용:', mappingError);
         pendingMappings = 0;
         activeMappings = 0;
       }
@@ -536,9 +539,9 @@ const CommonDashboard = ({ user: propUser }) => {
                const response = await fetch(`${API_BASE_URL}/api/v1/auth/current-user`, {
                  credentials: 'include',
                  method: 'GET',
-                 headers: {
+                 headers: getDefaultApiHeaders({
                    'Content-Type': 'application/json'
-                 }
+                 })
                });
                
                console.log('🔍 지연된 세션 확인 응답:', response.status, response.statusText);
@@ -556,10 +559,22 @@ const CommonDashboard = ({ user: propUser }) => {
                    return;
                  }
                }
+
+               // 로컬 세션에 user.id 가 있으면 로그인 직후 레이스 — /login 킥 금지
+               const localUser = sessionManager.getUser();
+               if (localUser?.id) {
+                 console.log('🔐 지연된 current-user 실패이나 로컬 세션 유지 — 로그인 킥 스킵');
+                 return;
+               }
                
                console.log('❌ 지연된 세션 확인 실패, 로그인 페이지로 이동');
                navigate('/login', { replace: true });
              } catch (error) {
+               const localUser = sessionManager.getUser();
+               if (localUser?.id) {
+                 console.log('🔐 지연된 세션 확인 오류이나 로컬 세션 유지 — 로그인 킥 스킵:', error);
+                 return;
+               }
                console.log('❌ 지연된 세션 확인 오류, 로그인 페이지로 이동:', error);
                navigate('/login', { replace: true });
              }

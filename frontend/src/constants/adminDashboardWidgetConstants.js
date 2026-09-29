@@ -41,7 +41,7 @@ export const DASHBOARD_PENDING_LIST_VIEW_ALL_LABEL = '전체 보기';
 /** 환불 StatCard 섹션 단일 CTA 라벨 (PR-DASH-01) */
 export const DASHBOARD_REFUND_SECTION_CTA_LABEL = '환불 관리 가기';
 
-/** Admin schedules 목록 API — 가예약 필터와 함께 사용 */
+/** 가예약(TENTATIVE_PENDING_PAYMENT) 목록 API — status 필터와 함께 사용 */
 export const API_ADMIN_SCHEDULES = '/api/v1/admin/schedules';
 
 /**
@@ -51,7 +51,7 @@ export const API_ADMIN_SCHEDULES = '/api/v1/admin/schedules';
 export const API_SCHEDULE_CONTROLLER_ADMIN = '/api/v1/schedules/admin';
 
 /**
- * 가예약(soft unpaid) 스케줄 목록 쿼리 SSOT.
+ * 가예약(soft unpaid) 스케줄 목록 쿼리 SSOT (page/size 강제 — adminListFetch).
  * status 는 반드시 {@link STATUS.TENTATIVE_PENDING_PAYMENT} 만 사용.
  * bare PENDING / TENTATIVE / BOOKED 단독 필터 금지.
  */

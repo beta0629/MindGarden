@@ -1,18 +1,15 @@
 import { redirectToLoginPageOnce } from './sessionRedirect';
 import { isTransientNetworkError, notifyTransientNetworkIssue } from './networkErrorUtils';
 import { isPublicSpaPath } from './publicSpaPaths';
+import { getDefaultApiHeaders } from './apiHeaders';
+import { isSessionSoftFailUrl } from './sessionAuthPolicy';
 
 /**
  * API 호출 캐싱 유틸리티
-/**
  * Rate Limiting 문제 해결을 위한 캐시 시스템
-/**
- * 
-/**
+ *
  * @author Core Solution
-/**
  * @version 1.0.0
-/**
  * @since 2025-01-17
  */
 
@@ -22,11 +19,9 @@ class ApiCache {
         this.defaultTTL = 5 * 60 * 1000; // 5분 기본 TTL
     }
 
-/**
+    /**
      * 캐시에서 데이터 조회
-/**
      * @param {string} key - 캐시 키
-/**
      * @returns {any|null} - 캐시된 데이터 또는 null
      */
     get(key) {
@@ -42,13 +37,10 @@ class ApiCache {
         return item.data;
     }
 
-/**
+    /**
      * 캐시에 데이터 저장
-/**
      * @param {string} key - 캐시 키
-/**
      * @param {any} data - 저장할 데이터
-/**
      * @param {number} ttl - TTL (밀리초), 기본값 5분
      */
     set(key, data, ttl = this.defaultTTL) {
@@ -58,18 +50,16 @@ class ApiCache {
         });
     }
 
-/**
+    /**
      * 캐시 삭제
-/**
      * @param {string} key - 캐시 키
      */
     delete(key) {
         this.cache.delete(key);
     }
 
-/**
+    /**
      * 특정 패턴의 캐시 삭제
-/**
      * @param {string} pattern - 삭제할 패턴 (정규식)
      */
     deletePattern(pattern) {
@@ -81,16 +71,15 @@ class ApiCache {
         }
     }
 
-/**
+    /**
      * 모든 캐시 삭제
      */
     clear() {
         this.cache.clear();
     }
 
-/**
+    /**
      * 캐시 크기 반환
-/**
      * @returns {number} - 캐시 항목 수
      */
     size() {
@@ -103,18 +92,14 @@ const apiCache = new ApiCache();
 
 /**
  * 캐시된 API 호출 함수
-/**
  * @param {string} url - API URL
-/**
  * @param {Object} options - fetch 옵션
-/**
  * @param {number} ttl - 캐시 TTL (밀리초)
-/**
  * @returns {Promise<any>} - API 응답 데이터
  */
 export async function cachedApiCall(url, options = {}, ttl = 5 * 60 * 1000) {
     const cacheKey = `${url}_${JSON.stringify(options)}`;
-    
+
     // 캐시에서 조회
     const cachedData = apiCache.get(cacheKey);
     if (cachedData) {
@@ -123,44 +108,45 @@ export async function cachedApiCall(url, options = {}, ttl = 5 * 60 * 1000) {
     }
 
     try {
-        // API 호출
+        // API 호출 — 기본 인증 헤더 병합 (notificationManager 등 unauthenticated 401 방지)
         console.log(`🌐 API 호출: ${url}`);
         const response = await fetch(url, {
+            credentials: 'include',
             ...options,
             headers: {
-                'Content-Type': 'application/json',
+                ...getDefaultApiHeaders(),
                 ...options.headers
             }
         });
 
         if (!response.ok) {
-            // 401, 403 오류 시 로그인 페이지로 리다이렉트
+            // 401, 403 — shell soft-fail URL 은 리다이렉트하지 않음
             if (response.status === 401 || response.status === 403) {
-                const currentPath = window.location.pathname;
-                const isPublicPage = isPublicSpaPath(currentPath);
-                
-                if (!isPublicPage) {
-                    console.log('🔐 API 캐시 호출 실패 - 로그인 페이지로 리다이렉트 (서브도메인 유지)');
-                    redirectToLoginPageOnce();
+                if (isSessionSoftFailUrl(url)) {
+                    console.log('🔐 API 캐시 soft-fail URL - 로그인 리다이렉트 스킵:', url);
+                } else {
+                    const currentPath = window.location.pathname;
+                    if (!isPublicSpaPath(currentPath)) {
+                        console.log('🔐 API 캐시 호출 실패 - 로그인 페이지로 리다이렉트 (서브도메인 유지)');
+                        redirectToLoginPageOnce();
+                    }
                 }
             }
             throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
 
         const data = await response.json();
-        
+
         // 캐시에 저장
         apiCache.set(cacheKey, data, ttl);
         console.log(`💾 캐시에 저장: ${url}`);
-        
+
         return data;
     } catch (error) {
-        // 네트워크 오류 시 로그인 페이지로 리다이렉트
+        // 네트워크 오류 시 로그인 페이지로 리다이렉트하지 않음
         if (isTransientNetworkError(error)) {
             const currentPath = window.location.pathname;
-            const isPublicPage = isPublicSpaPath(currentPath);
-            
-            if (!isPublicPage) {
+            if (!isPublicSpaPath(currentPath)) {
                 console.warn('🔐 API 캐시 일시적 네트워크 오류 - 로그인으로 이동하지 않음');
                 notifyTransientNetworkIssue();
             }
@@ -172,9 +158,7 @@ export async function cachedApiCall(url, options = {}, ttl = 5 * 60 * 1000) {
 
 /**
  * 특정 API 캐시 무효화
-/**
  * @param {string} url - API URL
-/**
  * @param {Object} options - fetch 옵션
  */
 export function invalidateCache(url, options = {}) {
@@ -185,7 +169,6 @@ export function invalidateCache(url, options = {}) {
 
 /**
  * 패턴별 캐시 무효화
-/**
  * @param {string} pattern - 무효화할 패턴
  */
 export function invalidateCachePattern(pattern) {

@@ -293,4 +293,62 @@ describe('MappingScheduleCard Clinic-OS v2.1', () => {
     expect(screen.queryByText(/100,000/)).not.toBeInTheDocument();
     expect(screen.queryByText(/100000/)).not.toBeInTheDocument();
   });
+
+  it('shows 문자발송됨 on comfortable card when reminder SMS is SENT', () => {
+    render(
+      <MappingScheduleCard
+        mapping={{
+          ...MOCK_MAPPING,
+          clientReminderSms: { status: 'SENT', sentAt: '2026-08-01T14:00:00' }
+        }}
+      />
+    );
+    const badge = screen.getByText('문자발송됨');
+    expect(badge.closest('.integrated-schedule__card-meta')).toBeTruthy();
+  });
+
+  it('shows 대기 on comfortable card when reminder SMS is PENDING', () => {
+    render(
+      <MappingScheduleCard
+        mapping={{
+          ...MOCK_MAPPING,
+          clientReminderSms: { status: 'PENDING', fireAt: '2026-08-02T09:30:00' }
+        }}
+      />
+    );
+    const badge = screen.getByText('대기');
+    expect(badge.closest('.integrated-schedule__card-meta')).toBeTruthy();
+    expect(badge.closest('[title="예정: 09:30"]')).toBeTruthy();
+  });
+
+  it('shows 실패 on comfortable card when reminder SMS is FAILED', () => {
+    render(
+      <MappingScheduleCard
+        mapping={{
+          ...MOCK_MAPPING,
+          clientReminderSms: { status: 'FAILED', failureReason: '발송 실패' }
+        }}
+      />
+    );
+    const badge = screen.getByText('실패');
+    expect(badge.closest('.integrated-schedule__card-meta')).toBeTruthy();
+  });
+
+  it('hides reminder SMS badge on comfortable card when sms is missing or SKIPPED', () => {
+    const { container, rerender } = render(<MappingScheduleCard mapping={MOCK_MAPPING} />);
+    expect(screen.queryByText('문자발송됨')).not.toBeInTheDocument();
+    expect(screen.queryByText('대기')).not.toBeInTheDocument();
+    expect(screen.queryByText('실패')).not.toBeInTheDocument();
+    expect(container.querySelector('.integrated-schedule__reminder-sms-badge')).toBeNull();
+
+    rerender(
+      <MappingScheduleCard
+        mapping={{
+          ...MOCK_MAPPING,
+          clientReminderSms: { status: 'SKIPPED' }
+        }}
+      />
+    );
+    expect(container.querySelector('.integrated-schedule__reminder-sms-badge')).toBeNull();
+  });
 });

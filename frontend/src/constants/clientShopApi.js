@@ -9,8 +9,9 @@ export const CLIENT_SHOP_API = {
   PUBLIC_CATALOG: '/api/v1/shop/catalog',
   /** 공개 PDP */
   publicCatalogSku: (skuCode) => `/api/v1/shop/catalog/${encodeURIComponent(skuCode)}`,
-  /** 인증 카탈로그(레거시·호환) — FE 목록/상세는 PUBLIC_* 사용 */
+  /** 로그인 내담자 카탈로그. 분야 매핑 필터가 적용된다. */
   CATALOG: '/api/v1/clients/me/shop/catalog',
+  catalogSku: (skuCode) => `/api/v1/clients/me/shop/catalog/${encodeURIComponent(skuCode)}`,
   CART: '/api/v1/clients/me/shop/cart',
   POINTS_BALANCE: '/api/v1/clients/me/shop/points/balance',
   POINTS_LEDGER: '/api/v1/clients/me/shop/points/ledger',

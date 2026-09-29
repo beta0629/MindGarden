@@ -19,6 +19,8 @@ public record ShopCatalogSkuAdminDetail(
         boolean active,
         int sortOrder,
         int sessionCount,
-        String packageType
+        String packageType,
+        String fieldCode,
+        Long consultantId
 ) {
 }

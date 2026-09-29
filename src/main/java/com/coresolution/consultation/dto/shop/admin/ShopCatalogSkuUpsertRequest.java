@@ -25,6 +25,8 @@ public record ShopCatalogSkuUpsertRequest(
         boolean catalogVisible,
         boolean active,
         @PositiveOrZero int sortOrder,
-        @NotNull @Min(ShopSessionCountConstants.MIN_SESSION_COUNT) Integer sessionCount
+        @NotNull @Min(ShopSessionCountConstants.MIN_SESSION_COUNT) Integer sessionCount,
+        @Size(max = 50) String fieldCode,
+        Long consultantId
 ) {
 }

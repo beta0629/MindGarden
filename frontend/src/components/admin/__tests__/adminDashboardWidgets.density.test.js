@@ -146,7 +146,7 @@ describe('AdminDashboard G1-02 widgets guard', () => {
     expect(source).toMatch(/if\s*\(isVacationExpanded\)\s*\{[\s\S]*loadVacationStats\(\)/);
   });
 
-  it('AdminDashboardV2가 SchedulePendingList를 schedulePendingList·TENTATIVE API로 와이어링한다 (PR-DASH-02)', () => {
+  it('AdminDashboardV2가 SchedulePendingList를 schedulePendingList·가예약 API로 와이어링한다 (PR-DASH-02)', () => {
     const source = fs.readFileSync(DASHBOARD_PATH, 'utf8');
 
     expect(source).toContain('const [schedulePendingList, setSchedulePendingList]');

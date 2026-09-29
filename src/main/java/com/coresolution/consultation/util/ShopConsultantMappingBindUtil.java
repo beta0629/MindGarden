@@ -123,6 +123,19 @@ public final class ShopConsultantMappingBindUtil {
                 .toList();
     }
 
+    /**
+     * 매핑 packageName 이 후보 중 하나와 같거나 서로 포함하면 true.
+     * <p>점수 규칙은 {@link #resolveBestMappingForConsultant} 와 같다.</p>
+     *
+     * @param mapping 매핑
+     * @param candidates 비교할 상품 제목·코드
+     * @return 매칭되면 true
+     */
+    public static boolean matchesAnyPackageCandidate(
+            ConsultantClientMapping mapping, List<String> candidates) {
+        return packageTitleMatchScore(mapping, candidates == null ? List.of() : candidates) > 0;
+    }
+
     private static int packageTitleMatchScore(ConsultantClientMapping mapping, List<String> cartTitles) {
         String packageName = mapping.getPackageName();
         if (!StringUtils.hasText(packageName) || cartTitles.isEmpty()) {

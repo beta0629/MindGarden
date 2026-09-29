@@ -22,19 +22,19 @@ import org.springframework.stereotype.Component;
 public class ConsultationRecordCreateRequestValidator {
 
     /**
-     * 클라이언트 채널({@code X-Client-Platform})을 고려해 검증한다.
+     * 필수값 폼 이전 앱 페이로드를 걸러낸 뒤 검증한다.
      *
-     * <p>웹(헤더 없음 포함)은 항상 검증한다. 앱(ios/android)은 필수값 키가 하나도 없는 기존 앱 페이로드만
-     * 검증 없이 통과시키고, 필수값 키를 하나라도 보내는 앱 빌드부터는 웹과 같은 검증을 탄다.
-     * 스토어 배포는 백엔드와 같이 나가지 않으므로 기존 앱 작성이 400 이 되지 않게 하기 위함이다.</p>
+     * <p>필수값 키({@link ConsultationRecordCreateValidationMessages#REQUIRED_FIELDS})가 본문에 하나도 없으면
+     * 필수값 폼 이전 앱 빌드로 보고 검증 없이 통과시킨다. 2026-09-12 이전 앱 빌드는 {@code X-Client-Platform}
+     * 헤더를 보내지 않으므로 헤더로는 판별하지 않는다. 필수값 키를 하나라도 보내면(웹·신규 앱) 전체 검증한다.</p>
      *
      * @param recordData 상담일지 본문
      * @param institutionLink 타기관 연계 일지 여부
-     * @param platform 요청 클라이언트 채널
+     * @param platform 요청 클라이언트 채널(로그용)
      * @throws ValidationException 필수값 누락·한도 초과
      */
     public void validate(Map<String, Object> recordData, boolean institutionLink, ClientPlatform platform) {
-        if (isLegacyAppPayload(recordData, platform)) {
+        if (isLegacyAppPayload(recordData)) {
             log.warn("상담일지 작성: 필수값 폼 이전 앱 페이로드 통과 platform={}", platform);
             return;
         }
@@ -42,16 +42,12 @@ public class ConsultationRecordCreateRequestValidator {
     }
 
     /**
-     * 앱 채널이면서 필수값 키를 하나도 보내지 않은 기존 앱 페이로드인지.
+     * 필수값 키를 하나도 보내지 않은 기존 앱 페이로드인지. 채널 헤더와 무관하다.
      *
      * @param recordData 상담일지 본문
-     * @param platform 요청 클라이언트 채널
      * @return 기존 앱 페이로드면 true
      */
-    public boolean isLegacyAppPayload(Map<String, Object> recordData, ClientPlatform platform) {
-        if (platform != ClientPlatform.IOS && platform != ClientPlatform.ANDROID) {
-            return false;
-        }
+    public boolean isLegacyAppPayload(Map<String, Object> recordData) {
         if (recordData == null) {
             return true;
         }

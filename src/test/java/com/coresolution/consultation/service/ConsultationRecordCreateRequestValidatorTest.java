@@ -124,28 +124,33 @@ class ConsultationRecordCreateRequestValidatorTest {
     }
 
     @Test
-    @DisplayName("앱 채널에서 필수값 키가 하나도 없으면 기존 앱 페이로드로 통과")
-    void appChannel_legacyPayload_skipsValidation() {
+    @DisplayName("필수값 키가 하나도 없으면 채널과 무관하게 기존 앱 페이로드로 통과")
+    void legacyPayload_skipsValidationRegardlessOfChannel() {
         Map<String, Object> legacy = new HashMap<>();
         legacy.put("consultationId", 30L);
         legacy.put("consultantObservations", "메모");
 
-        assertThat(validator.isLegacyAppPayload(legacy, ClientPlatform.IOS)).isTrue();
+        assertThat(validator.isLegacyAppPayload(legacy)).isTrue();
         assertThatCode(() -> validator.validate(legacy, false, ClientPlatform.IOS)).doesNotThrowAnyException();
         assertThatCode(() -> validator.validate(legacy, false, ClientPlatform.ANDROID))
+                .doesNotThrowAnyException();
+        assertThatCode(() -> validator.validate(legacy, false, ClientPlatform.WEB)).doesNotThrowAnyException();
+        assertThatCode(() -> validator.validate(legacy, false, ClientPlatform.fromHeader(null)))
                 .doesNotThrowAnyException();
     }
 
     @Test
-    @DisplayName("웹 채널은 같은 본문이어도 검증한다")
-    void webChannel_alwaysValidates() {
-        Map<String, Object> legacy = new HashMap<>();
-        legacy.put("consultationId", 30L);
+    @DisplayName("웹: 필수값 키가 있는데 값이 비면 채널 헤더 없이도 검증한다")
+    void webChannel_blankRequiredValues_validates() {
+        Map<String, Object> payload = validPayload();
+        payload.put("clientResponse", "");
+        payload.put("riskAssessment", null);
 
-        assertThat(validator.isLegacyAppPayload(legacy, ClientPlatform.WEB)).isFalse();
-        assertThat(catchThrowableOfType(
-                () -> validator.validate(legacy, false, ClientPlatform.WEB), ValidationException.class))
-                .isNotNull();
+        assertThat(validator.isLegacyAppPayload(payload)).isFalse();
+        ValidationException ex = catchThrowableOfType(
+                () -> validator.validate(payload, false, ClientPlatform.fromHeader(null)), ValidationException.class);
+        assertThat(ex).isNotNull();
+        assertThat(ex.getFieldErrors()).containsOnlyKeys("clientResponse", "riskAssessment");
     }
 
     @Test
@@ -154,7 +159,7 @@ class ConsultationRecordCreateRequestValidatorTest {
         Map<String, Object> payload = validPayload();
         payload.put("mainIssues", "");
 
-        assertThat(validator.isLegacyAppPayload(payload, ClientPlatform.ANDROID)).isFalse();
+        assertThat(validator.isLegacyAppPayload(payload)).isFalse();
         ValidationException ex = catchThrowableOfType(
                 () -> validator.validate(payload, false, ClientPlatform.ANDROID), ValidationException.class);
         assertThat(ex).isNotNull();

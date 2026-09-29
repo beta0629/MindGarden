@@ -24,7 +24,7 @@ public final class ConsultationRecordCreateValidationMessages {
     public static final String FIELD_RISK_ASSESSMENT = "riskAssessment";
     public static final String FIELD_PROGRESS_EVALUATION = "progressEvaluation";
 
-    /** 앱 기존 페이로드 판별용. 이 키가 하나도 없으면 필수값 폼이 없던 앱 빌드로 본다. */
+    /** 앱 기존 페이로드 판별용. 헤더와 무관하게 이 키가 하나도 없으면 필수값 폼이 없던 앱 빌드로 본다. */
     public static final List<String> REQUIRED_FIELDS = List.of(
             FIELD_SESSION_DURATION_MINUTES,
             FIELD_CLIENT_CONDITION,

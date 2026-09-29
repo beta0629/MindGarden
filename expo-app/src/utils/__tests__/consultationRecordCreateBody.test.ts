@@ -6,7 +6,9 @@
  */
 import {
   buildConsultationRecordCreateBody,
+  extractConsultationRecordFieldErrors,
   findMissingConsultationRecordFields,
+  parseConsultationRecordFieldErrors,
   resolveDefaultSessionDurationMinutes,
   CONSULTATION_RECORD_CLIENT_CONDITION_MAX_LENGTH,
   CONSULTATION_RECORD_DEFAULT_SESSION_DURATION_MINUTES,
@@ -52,7 +54,7 @@ describe('buildConsultationRecordCreateBody', () => {
     expect(body.sessionNumber).toBe(3);
   });
 
-  it('값이 비어도 필수값 키는 빠뜨리지 않는다 (서버가 기존 앱 본문으로 오인하지 않도록)', () => {
+  it('위험도 외 필수값 키는 값이 비어도 빠뜨리지 않고, 위험도는 빈 문자열로 보내지 않는다', () => {
     const body = buildConsultationRecordCreateBody({
       ...validInput(),
       sessionDurationMinutes: null,
@@ -64,11 +66,18 @@ describe('buildConsultationRecordCreateBody', () => {
       progressEvaluation: '',
       nextSessionPlan: '',
     });
-    for (const key of SERVER_REQUIRED_KEYS) {
+    for (const key of SERVER_REQUIRED_KEYS.filter((k) => k !== 'riskAssessment')) {
       expect(body).toHaveProperty(key);
     }
+    expect(body).not.toHaveProperty('riskAssessment');
     expect(body.sessionDurationMinutes).toBe('');
     expect(body).not.toHaveProperty('nextSessionPlan');
+  });
+
+  it('위험도가 공백뿐이어도 키를 뺀다', () => {
+    const body = buildConsultationRecordCreateBody({ ...validInput(), riskAssessment: '  ' });
+    expect(body).not.toHaveProperty('riskAssessment');
+    expect(buildConsultationRecordCreateBody(validInput()).riskAssessment).toBe('LOW');
   });
 });
 
@@ -87,8 +96,61 @@ describe('findMissingConsultationRecordFields', () => {
     expect(missing).toEqual(['sessionDurationMinutes', 'clientCondition', 'mainIssues']);
   });
 
-  it('위험도는 타기관 판별이 서버에 있으므로 앱에서 막지 않는다', () => {
-    expect(findMissingConsultationRecordFields({ ...validInput(), riskAssessment: '' })).toEqual([]);
+  it('위험도를 선택하지 않으면 누락으로 막는다', () => {
+    expect(findMissingConsultationRecordFields({ ...validInput(), riskAssessment: '' })).toEqual([
+      'riskAssessment',
+    ]);
+  });
+});
+
+describe('parseConsultationRecordFieldErrors', () => {
+  it('서버 details 문자열을 필드별 문구로 나눈다', () => {
+    const details =
+      'sessionDurationMinutes: 세션 시간을 입력해주세요 (최소 1분), riskAssessment: 위험도 평가를 선택해주세요, '
+      + 'progressEvaluation: 진행 평가를 입력해주세요';
+    expect(parseConsultationRecordFieldErrors(details)).toEqual({
+      sessionDurationMinutes: '세션 시간을 입력해주세요 (최소 1분)',
+      riskAssessment: '위험도 평가를 선택해주세요',
+      progressEvaluation: '진행 평가를 입력해주세요',
+    });
+  });
+
+  it('필드→문구 객체도 받고 모르는 필드는 버린다', () => {
+    expect(
+      parseConsultationRecordFieldErrors({ mainIssues: '주요 이슈를 입력해주세요', unknown: 'x' }),
+    ).toEqual({ mainIssues: '주요 이슈를 입력해주세요' });
+  });
+
+  it('비었거나 형식이 다르면 빈 객체', () => {
+    expect(parseConsultationRecordFieldErrors(null)).toEqual({});
+    expect(parseConsultationRecordFieldErrors('')).toEqual({});
+    expect(parseConsultationRecordFieldErrors('알 수 없는 오류')).toEqual({});
+  });
+});
+
+describe('extractConsultationRecordFieldErrors', () => {
+  it('ApiClientError.originalError.response.data.details 에서 꺼낸다', () => {
+    const error = Object.assign(new Error('필수 항목을 모두 입력해주세요.'), {
+      status: 400,
+      code: 'VALIDATION_ERROR',
+      originalError: {
+        response: {
+          data: {
+            errorCode: 'VALIDATION_ERROR',
+            details: 'clientResponse: 내담자 반응을 입력해주세요, riskAssessment: 위험도 평가를 선택해주세요',
+          },
+        },
+      },
+    });
+    expect(extractConsultationRecordFieldErrors(error)).toEqual({
+      clientResponse: '내담자 반응을 입력해주세요',
+      riskAssessment: '위험도 평가를 선택해주세요',
+    });
+  });
+
+  it('details 가 없으면 빈 객체', () => {
+    expect(extractConsultationRecordFieldErrors(new Error('network'))).toEqual({});
+    expect(extractConsultationRecordFieldErrors(undefined)).toEqual({});
   });
 });
 

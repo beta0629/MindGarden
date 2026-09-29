@@ -50,7 +50,7 @@ public class InstitutionLinkConsultationLogWriteRouter {
      * 테넌트를 확인하고 필수값을 검증한 뒤, 타기관이면 전용 서비스만, 아니면 회기권 일지 서비스만 호출한다.
      *
      * @param recordData 스케줄 상담일지 본문
-     * @param platform 요청 클라이언트 채널({@code X-Client-Platform})
+     * @param platform 요청 클라이언트 채널({@code X-Client-Platform}, 로그용)
      * @return 저장된 일지
      */
     public Object create(Map<String, Object> recordData, ClientPlatform platform) {

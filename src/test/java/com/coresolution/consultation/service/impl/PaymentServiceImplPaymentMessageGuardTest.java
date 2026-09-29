@@ -15,6 +15,7 @@ import com.coresolution.consultation.entity.Payment;
 import com.coresolution.consultation.repository.PaymentRepository;
 import com.coresolution.consultation.repository.ShopClientOrderRepository;
 import com.coresolution.consultation.repository.UserRepository;
+import com.coresolution.consultation.service.ShopLatePaymentRefundService;
 import com.coresolution.consultation.service.AdminService;
 import com.coresolution.consultation.service.ClientShopCheckoutService;
 import com.coresolution.consultation.service.CommonCodeService;
@@ -78,6 +79,7 @@ class PaymentServiceImplPaymentMessageGuardTest {
     @Mock private UserRepository userRepository;
     @Mock private ClientShopCheckoutService clientShopCheckoutService;
     @Mock private PortOneV2PaymentVerifyService portOneV2PaymentVerifyService;
+    @Mock private ShopLatePaymentRefundService shopLatePaymentRefundService;
 
     private PaymentServiceImpl service;
 
@@ -97,7 +99,8 @@ class PaymentServiceImplPaymentMessageGuardTest {
                 notificationService,
                 userRepository,
                 portOneV2PaymentVerifyService,
-                clientShopCheckoutService);
+                clientShopCheckoutService,
+                shopLatePaymentRefundService);
         TenantContextHolder.setTenantId(TENANT_ID);
         lenient().when(commonCodeService.getCodeValue(anyString(), anyString())).thenReturn(null);
         lenient().when(shopClientOrderRepository.findByTenantIdAndPublicId(eq(TENANT_ID), anyString()))

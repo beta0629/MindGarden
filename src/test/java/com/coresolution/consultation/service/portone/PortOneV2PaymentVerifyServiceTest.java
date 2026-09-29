@@ -57,8 +57,7 @@ class PortOneV2PaymentVerifyServiceTest {
     @BeforeEach
     void setUp() {
         service = new PortOneV2PaymentVerifyService(
-                tenantPgConfigurationRepository, encryptionService, new ObjectMapper());
-        ReflectionTestUtils.setField(service, "restTemplate", restTemplate);
+                tenantPgConfigurationRepository, encryptionService, new ObjectMapper(), restTemplate);
         // 단위 테스트에서 Thread.sleep 제거
         ReflectionTestUtils.setField(service, "transientStatusBaseDelayMs", 0L);
         ReflectionTestUtils.setField(service, "transientStatusDelayStepMs", 0L);
@@ -134,7 +133,7 @@ class PortOneV2PaymentVerifyServiceTest {
     }
 
     @Test
-    @DisplayName("resolvePaidState — PAID / READY·FAILED / 404 / 5xx·진행 중 3상태")
+    @DisplayName("resolvePaidState — PAID / READY·PAY_PENDING=진행 중 / FAILED·404=미승인 / 5xx=불명")
     void resolvePaidState_mapsStatuses() {
         stubActiveApprovedConfig();
         when(encryptionService.decrypt("enc-secret")).thenReturn("plain-secret");
@@ -148,11 +147,12 @@ class PortOneV2PaymentVerifyServiceTest {
                 .thenReturn(new ResponseEntity<>("{\"status\":\"PAY_PENDING\"}", HttpStatus.OK));
 
         assertEquals(PortOnePaymentPaidState.PAID, service.resolvePaidState("t1", "pay-1"));
-        assertEquals(PortOnePaymentPaidState.NOT_PAID, service.resolvePaidState("t1", "pay-1"));
+        // READY: 결제창 인증 중일 수 있음 — 사용자 취소로 닫으면 늦은 승인 레이스
+        assertEquals(PortOnePaymentPaidState.IN_PROGRESS, service.resolvePaidState("t1", "pay-1"));
         assertEquals(PortOnePaymentPaidState.NOT_PAID, service.resolvePaidState("t1", "pay-1"));
         assertEquals(PortOnePaymentPaidState.NOT_PAID, service.resolvePaidState("t1", "pay-1"));
         assertEquals(PortOnePaymentPaidState.UNKNOWN, service.resolvePaidState("t1", "pay-1"));
-        assertEquals(PortOnePaymentPaidState.UNKNOWN, service.resolvePaidState("t1", "pay-1"));
+        assertEquals(PortOnePaymentPaidState.IN_PROGRESS, service.resolvePaidState("t1", "pay-1"));
     }
 
     @Test

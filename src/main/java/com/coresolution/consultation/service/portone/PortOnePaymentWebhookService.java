@@ -6,11 +6,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import com.coresolution.consultation.constant.ShopLatePaymentConstants;
 import com.coresolution.consultation.entity.Payment;
 import com.coresolution.consultation.repository.PaymentRepository;
 import com.coresolution.consultation.service.ClientShopCheckoutService;
 import com.coresolution.consultation.service.PaymentService;
 import com.coresolution.consultation.service.PersonalDataEncryptionService;
+import com.coresolution.consultation.service.ShopLatePaymentOutcome;
+import com.coresolution.consultation.service.ShopLatePaymentRefundService;
 import com.coresolution.core.constants.TenantPgSettingsJsonKeys;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.domain.TenantPgConfiguration;
@@ -57,6 +60,7 @@ public class PortOnePaymentWebhookService {
     private final PaymentRepository paymentRepository;
     private final PaymentService paymentService;
     private final ClientShopCheckoutService clientShopCheckoutService;
+    private final ShopLatePaymentRefundService shopLatePaymentRefundService;
 
     /**
      * 포트원 V2 웹훅을 처리한다. 서명 검증 실패 시 4xx, 일시적 오류 시 5xx.
@@ -168,6 +172,12 @@ public class PortOnePaymentWebhookService {
             }
             Payment.PaymentStatus targetStatus = mapped.get();
             Payment paymentRow = existing.get();
+            // 닫힌 주문 늦은 결제: 결제 행을 이 트랜잭션에서 건드리기 전에 판정(가드가 별도 트랜잭션으로 반영)
+            Optional<ResponseEntity<Map<String, Object>>> lateResponse =
+                    handleLatePaymentOnClosedOrder(tenantId, paymentId, paymentRow, targetStatus, webhookId, body);
+            if (lateResponse.isPresent()) {
+                return lateResponse.get();
+            }
             // 동일 상태 재전송 시 상태 전이·부가 로직(ERP 등)을 반복하지 않음 — 웹훅 페이로드만 최신으로 유지
             if (paymentRow.getStatus() == targetStatus) {
                 paymentRow.setWebhookData(rawUtf8);
@@ -233,6 +243,62 @@ public class PortOnePaymentWebhookService {
                 TenantContextHolder.clear();
             }
         }
+    }
+
+    /**
+     * 취소·만료된 주문에 PAID 가 늦게 오면 승인하지 않고 PortOne 전액 취소한다.
+     * 자동 취소가 실패하면 5xx 로 응답해 포트원 재시도를 받는다.
+     */
+    private Optional<ResponseEntity<Map<String, Object>>> handleLatePaymentOnClosedOrder(
+            String tenantId,
+            String paymentId,
+            Payment paymentRow,
+            Payment.PaymentStatus targetStatus,
+            String webhookId,
+            Map<String, Object> body) {
+        boolean pgCancelEvent = targetStatus == Payment.PaymentStatus.CANCELLED
+                || targetStatus == Payment.PaymentStatus.REFUNDED;
+        boolean lateRefunded = paymentRow.getStatus() == Payment.PaymentStatus.REFUNDED
+                && ShopLatePaymentConstants.FAILURE_REASON_LATE_PAYMENT_ON_CLOSED_ORDER
+                        .equals(paymentRow.getFailureReason());
+        if (lateRefunded && targetStatus != Payment.PaymentStatus.APPROVED) {
+            // 자동 취소로 생긴 Cancelled·지연된 Ready 등 — REFUNDED 를 되돌리지 않는다
+            log.info("포트원 웹훅: 늦은 결제 자동 취소 완료 건 후속 이벤트(멱등) paymentId={}, target={}, webhookId={}",
+                    paymentId, targetStatus, webhookId);
+            body.put("status", ShopLatePaymentConstants.WEBHOOK_STATUS_LATE_PAYMENT_REFUNDED);
+            body.put("paymentId", paymentId);
+            body.put("deduplicated", Boolean.TRUE);
+            return Optional.of(ResponseEntity.ok(body));
+        }
+        boolean refundRequired = paymentRow.getStatus() == Payment.PaymentStatus.REFUND_REQUIRED;
+        if (refundRequired && !pgCancelEvent && targetStatus != Payment.PaymentStatus.APPROVED) {
+            log.info("포트원 웹훅: 환불 필요 건 비대상 이벤트 무시 paymentId={}, target={}, webhookId={}",
+                    paymentId, targetStatus, webhookId);
+            body.put("status", "ignored");
+            body.put("paymentId", paymentId);
+            return Optional.of(ResponseEntity.ok(body));
+        }
+        boolean shouldGuard = targetStatus == Payment.PaymentStatus.APPROVED || (pgCancelEvent && refundRequired);
+        if (!shouldGuard) {
+            return Optional.empty();
+        }
+        ShopLatePaymentOutcome outcome = shopLatePaymentRefundService.refundIfOrderClosed(tenantId, paymentId);
+        if (outcome == null || outcome == ShopLatePaymentOutcome.NOT_APPLICABLE) {
+            return Optional.empty();
+        }
+        if (outcome == ShopLatePaymentOutcome.REFUND_REQUIRED) {
+            log.error("포트원 웹훅: 닫힌 주문 늦은 결제 자동 취소 실패 tenantId={}, paymentId={}, webhookId={}",
+                    tenantId, paymentId, webhookId);
+            body.put("message", ShopLatePaymentConstants.WEBHOOK_MESSAGE_REFUND_REQUIRED);
+            body.put("paymentId", paymentId);
+            return Optional.of(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(body));
+        }
+        log.info("포트원 웹훅: 닫힌 주문 늦은 결제 자동 취소 outcome={}, paymentId={}, webhookId={}",
+                outcome, paymentId, webhookId);
+        body.put("status", ShopLatePaymentConstants.WEBHOOK_STATUS_LATE_PAYMENT_REFUNDED);
+        body.put("paymentId", paymentId);
+        body.put("deduplicated", outcome == ShopLatePaymentOutcome.ALREADY_REFUNDED);
+        return Optional.of(ResponseEntity.ok(body));
     }
 
     private Optional<String> resolveWebhookSecret(TenantPgConfiguration configuration) {

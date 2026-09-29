@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
@@ -635,6 +636,7 @@ public class SecurityConfig {
      * RestTemplate Bean (모든 프로파일에서 사용)
      */
     @Bean
+    @Primary
     public RestTemplate restTemplate() {
         return new RestTemplate();
     }

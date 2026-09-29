@@ -11,6 +11,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -23,6 +24,14 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.locks.ReentrantLock;
 import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.constant.ClientRegistrationConstants;
 import com.coresolution.consultation.constant.PointTenantPolicyKeys;
@@ -49,6 +58,7 @@ import com.coresolution.consultation.entity.ShopCatalogSku;
 import com.coresolution.consultation.entity.ShopClientOrder;
 import com.coresolution.consultation.entity.ShopClientOrderLine;
 import com.coresolution.consultation.entity.User;
+import com.coresolution.consultation.exception.ShopOrderClosedForPaymentException;
 import com.coresolution.consultation.repository.ConsultantClientMappingRepository;
 import com.coresolution.consultation.repository.PaymentRepository;
 import com.coresolution.consultation.repository.ShopCartLineRepository;
@@ -426,24 +436,34 @@ class ClientShopCheckoutServiceImplTest {
     }
 
     @Test
-    @DisplayName("EXPIRED 주문도 PG 승인 후 PAID 복구")
-    void completeOrderOnPaymentApproved_expired_recoversToPaid() {
+    @DisplayName("EXPIRED 주문은 PG 승인이 늦게 와도 PAID 로 되살리지 않는다(늦은 결제는 PG 자동 취소 대상)")
+    void completeOrderOnPaymentApproved_expired_notRevived() {
         ShopClientOrder order = pendingOrder(2_000L);
         order.setStatus(ShopClientOrderStatus.EXPIRED);
         when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID))
                 .thenReturn(Optional.of(order));
-        stubDefaultPolicies();
 
-        assertTrue(service.completeOrderOnPaymentApproved(TENANT, ORDER_ID));
-        assertEquals(ShopClientOrderStatus.PAID, order.getStatus());
-        verify(clientPointWalletService).commitHold(
-                eq(TENANT),
-                eq(CLIENT_ID),
-                eq(ORDER_ID),
-                eq(2_000L),
-                eq(ShopCheckoutConstants.pointCommitKey(ORDER_ID)));
-        verify(shopClientOrderRepository).save(order);
-        verify(shopNotificationHelper).notifyOrderPaid(TENANT, order);
+        assertThrows(ShopOrderClosedForPaymentException.class,
+                () -> service.completeOrderOnPaymentApproved(TENANT, ORDER_ID));
+        assertEquals(ShopClientOrderStatus.EXPIRED, order.getStatus());
+        verify(clientPointWalletService, never()).commitHold(any(), any(), any(), anyLong(), any());
+        verify(shopClientOrderRepository, never()).save(order);
+        verify(shopNotificationHelper, never()).notifyOrderPaid(any(), any());
+    }
+
+    @Test
+    @DisplayName("CANCELLED 주문도 PG 승인이 늦게 와도 PAID 로 되살리지 않는다")
+    void completeOrderOnPaymentApproved_cancelled_notRevived() {
+        ShopClientOrder order = pendingOrder(2_000L);
+        order.setStatus(ShopClientOrderStatus.CANCELLED);
+        when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID))
+                .thenReturn(Optional.of(order));
+
+        assertThrows(ShopOrderClosedForPaymentException.class,
+                () -> service.completeOrderOnPaymentApproved(TENANT, ORDER_ID));
+        assertEquals(ShopClientOrderStatus.CANCELLED, order.getStatus());
+        verify(clientPointWalletService, never()).commitHold(any(), any(), any(), anyLong(), any());
+        verify(shopClientOrderRepository, never()).save(order);
     }
 
     @Test
@@ -1031,7 +1051,7 @@ class ClientShopCheckoutServiceImplTest {
     void expireOrderHold_pendingOrder_expiresAndReleasesHold() {
         ShopClientOrder order = pendingOrder(2_000L);
         order.setStatus(ShopClientOrderStatus.CREATED);
-        when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID))
+        when(shopClientOrderRepository.lockByTenantIdAndPublicId(TENANT, ORDER_ID))
                 .thenReturn(Optional.of(order));
 
         assertTrue(service.expireOrderHold(TENANT, ORDER_ID));
@@ -1051,7 +1071,7 @@ class ClientShopCheckoutServiceImplTest {
     void expireOrderHold_alreadyExpired_idempotentFalse() {
         ShopClientOrder order = pendingOrder(0L);
         order.setStatus(ShopClientOrderStatus.EXPIRED);
-        when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID))
+        when(shopClientOrderRepository.lockByTenantIdAndPublicId(TENANT, ORDER_ID))
                 .thenReturn(Optional.of(order));
 
         assertFalse(service.expireOrderHold(TENANT, ORDER_ID));
@@ -1064,7 +1084,7 @@ class ClientShopCheckoutServiceImplTest {
     void expireOrderHold_paid_skips() {
         ShopClientOrder order = pendingOrder(2_000L);
         order.setStatus(ShopClientOrderStatus.PAID);
-        when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID))
+        when(shopClientOrderRepository.lockByTenantIdAndPublicId(TENANT, ORDER_ID))
                 .thenReturn(Optional.of(order));
 
         assertFalse(service.expireOrderHold(TENANT, ORDER_ID));
@@ -1094,7 +1114,7 @@ class ClientShopCheckoutServiceImplTest {
     @Test
     @DisplayName("다른 tenantId로 취소 시 주문 없음 거부")
     void cancelOrder_crossTenant_throwsNotFound() {
-        when(shopClientOrderRepository.findByTenantIdAndPublicId("tenant-other", ORDER_ID))
+        when(shopClientOrderRepository.lockByTenantIdAndPublicId("tenant-other", ORDER_ID))
                 .thenReturn(Optional.empty());
 
         IllegalArgumentException ex = assertThrows(
@@ -1110,7 +1130,7 @@ class ClientShopCheckoutServiceImplTest {
     void cancelOrder_pendingPayment_releasesHold() {
         ShopClientOrder order = pendingOrder(1_000L);
         order.setStatus(ShopClientOrderStatus.PENDING_PAYMENT);
-        when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID))
+        when(shopClientOrderRepository.lockByTenantIdAndPublicId(TENANT, ORDER_ID))
                 .thenReturn(Optional.of(order));
 
         service.cancelOrder(TENANT, CLIENT_ID, ORDER_ID);
@@ -2108,10 +2128,81 @@ class ClientShopCheckoutServiceImplTest {
     }
 
     @Test
+    @DisplayName("동시 체크아웃 2회(두 탭) — 내담자 행 잠금으로 직렬화되어 미결제 주문은 1건만 생성, 두 번째는 재사용")
+    void checkout_concurrentSameCart_createsSingleOrder() throws Exception {
+        ShopCartLine line = cartLine(50_000L);
+        ShopCart cart = line.getCart();
+        List<ShopClientOrder> store = new CopyOnWriteArrayList<>();
+        AtomicLong ids = new AtomicLong(900L);
+        ReentrantLock clientRowLock = new ReentrantLock();
+        when(shopClientOrderRepository.findByTenantClientAndCheckoutKey(eq(TENANT), eq(CLIENT_ID), anyString()))
+                .thenReturn(Optional.empty());
+        when(shopCartRepository.findByTenantIdAndClientId(TENANT, CLIENT_ID)).thenReturn(Optional.of(cart));
+        when(shopCartLineRepository.findByCart_IdAndIsDeletedFalse(cart.getId())).thenReturn(List.of(line));
+        stubPolicies(true, true, 0L, 0L);
+        lenient().when(clientPointWalletService.getBalance(TENANT, CLIENT_ID))
+                .thenReturn(ShopPointBalanceResponse.builder().availableMinor(0L).heldMinor(0L).build());
+        // SELECT ... FOR UPDATE 대역: 트랜잭션(여기선 checkout 호출) 끝까지 보유
+        doAnswer(inv -> {
+            clientRowLock.lock();
+            return null;
+        }).when(shopClientOrderRepository).lockClientForCheckout(TENANT, CLIENT_ID);
+        when(shopClientOrderRepository.findOpenOrdersByTenantAndClient(eq(TENANT), eq(CLIENT_ID), any()))
+                .thenAnswer(inv -> {
+                    // 조회~생성 사이 간격을 벌려 잠금이 없으면 두 탭 모두 빈 목록을 보게 한다
+                    Thread.sleep(50L);
+                    return List.copyOf(store);
+                });
+        lenient().when(shopClientOrderLineRepository.findByClientOrder_IdAndIsDeletedFalseOrderByLineNoAsc(anyLong()))
+                .thenReturn(List.of(orderLine("SKU-1", 1)));
+        when(shopClientOrderRepository.save(any(ShopClientOrder.class))).thenAnswer(inv -> {
+            ShopClientOrder saved = inv.getArgument(0);
+            if (saved.getId() == null) {
+                saved.setId(ids.incrementAndGet());
+                store.add(saved);
+            }
+            return saved;
+        });
+        lenient().when(shopClientOrderRepository.findByTenantIdAndPublicId(eq(TENANT), anyString()))
+                .thenAnswer(inv -> store.stream()
+                        .filter(o -> o.getPublicId().equals(inv.getArgument(1)))
+                        .findFirst());
+
+        ExecutorService pool = Executors.newFixedThreadPool(2);
+        CountDownLatch start = new CountDownLatch(1);
+        try {
+            List<Future<ShopCheckoutResponse>> tabs = new ArrayList<>();
+            for (String idemKey : List.of("idem-tab-a", "idem-tab-b")) {
+                tabs.add(pool.submit(() -> {
+                    start.await();
+                    try {
+                        return service.checkout(TENANT, CLIENT_ID, ShopCheckoutRequest.builder()
+                                .idempotencyKey(idemKey).pointsToRedeemMinor(0L).build());
+                    } finally {
+                        if (clientRowLock.isHeldByCurrentThread()) {
+                            clientRowLock.unlock();
+                        }
+                    }
+                }));
+            }
+            start.countDown();
+            ShopCheckoutResponse tabA = tabs.get(0).get(10, TimeUnit.SECONDS);
+            ShopCheckoutResponse tabB = tabs.get(1).get(10, TimeUnit.SECONDS);
+
+            assertEquals(1, store.size());
+            assertEquals(tabA.getOrderPublicId(), tabB.getOrderPublicId());
+        } finally {
+            pool.shutdownNow();
+        }
+        verify(shopClientOrderRepository, times(2)).lockClientForCheckout(TENANT, CLIENT_ID);
+        verify(shopClientOrderRepository, times(1)).save(any(ShopClientOrder.class));
+    }
+
+    @Test
     @DisplayName("hold TTL 만료 — 연결 결제 건 PENDING 도 EXPIRED, 이미 FAILED 는 그대로")
     void expireOrderHold_expiresPendingPayment() {
         ShopClientOrder order = pendingOrder(0L);
-        when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID))
+        when(shopClientOrderRepository.lockByTenantIdAndPublicId(TENANT, ORDER_ID))
                 .thenReturn(Optional.of(order));
         Payment pending = Payment.builder().paymentId("pay-open").orderId(ORDER_ID)
                 .status(Payment.PaymentStatus.PENDING).build();

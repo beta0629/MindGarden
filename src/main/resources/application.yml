@@ -377,6 +377,12 @@ payment:
     base-url: ${PAYMENT_IAMPORT_BASE_URL:https://api.iamport.kr}
     simulation-mode: ${PAYMENT_IAMPORT_SIMULATION_MODE:true}
 
+# 포트원 V2 결제 조회·취소 HTTP 타임아웃 (portOneRestTemplate 빈 전용)
+portone:
+  http:
+    connect-timeout-ms: ${PORTONE_HTTP_CONNECT_TIMEOUT_MS:3000}
+    read-timeout-ms: ${PORTONE_HTTP_READ_TIMEOUT_MS:5000}
+
 # 서버 설정
 server:
   port: ${SERVER_PORT:8080}

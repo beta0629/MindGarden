@@ -27,7 +27,6 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
@@ -58,8 +57,7 @@ class PortOneV2PaymentCancelServiceTest {
     @BeforeEach
     void setUp() {
         service = new PortOneV2PaymentCancelService(
-                tenantPgConfigurationRepository, encryptionService, new ObjectMapper());
-        ReflectionTestUtils.setField(service, "restTemplate", restTemplate);
+                tenantPgConfigurationRepository, encryptionService, new ObjectMapper(), restTemplate);
     }
 
     @Test

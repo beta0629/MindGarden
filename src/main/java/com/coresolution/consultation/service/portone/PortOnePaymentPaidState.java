@@ -9,8 +9,10 @@ package com.coresolution.consultation.service.portone;
 public enum PortOnePaymentPaidState {
     /** status=PAID */
     PAID,
-    /** 결제 건 없음(404) 또는 READY/FAILED — 승인되지 않았음이 확인됨 */
+    /** 결제 건 없음(404) 또는 FAILED — 승인되지 않았음이 확인됨 */
     NOT_PAID,
-    /** 조회 실패·설정 없음·진행 중/취소 등 판단 보류 — 주문을 건드리지 않는다 */
+    /** READY(다른 탭에서 인증 중일 수 있음)·PAY_PENDING 등 결제 진행 중이거나 판단이 애매함 — 주문을 건드리지 않는다 */
+    IN_PROGRESS,
+    /** 조회 실패·설정 없음 — 주문을 건드리지 않는다 */
     UNKNOWN
 }

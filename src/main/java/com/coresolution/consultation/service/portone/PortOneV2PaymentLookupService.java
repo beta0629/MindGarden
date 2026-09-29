@@ -9,6 +9,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import com.coresolution.consultation.config.RestTemplateConfig;
 import com.coresolution.consultation.service.PersonalDataEncryptionService;
 import com.coresolution.core.domain.TenantPgConfiguration;
 import com.coresolution.core.domain.enums.ApprovalStatus;
@@ -17,8 +18,8 @@ import com.coresolution.core.domain.enums.PgProvider;
 import com.coresolution.core.repository.TenantPgConfigurationRepository;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -40,7 +41,6 @@ import org.springframework.web.client.RestTemplate;
  */
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class PortOneV2PaymentLookupService {
 
     /** 포트원 V2 REST 결제 다건 조회 베이스 URL (공개 API 호스트). */
@@ -58,7 +58,18 @@ public class PortOneV2PaymentLookupService {
     private final TenantPgConfigurationRepository tenantPgConfigurationRepository;
     private final PersonalDataEncryptionService encryptionService;
     private final ObjectMapper objectMapper;
-    private final RestTemplate restTemplate = new RestTemplate();
+    private final RestTemplate restTemplate;
+
+    public PortOneV2PaymentLookupService(
+            TenantPgConfigurationRepository tenantPgConfigurationRepository,
+            PersonalDataEncryptionService encryptionService,
+            ObjectMapper objectMapper,
+            @Qualifier(RestTemplateConfig.PORTONE_REST_TEMPLATE) RestTemplate restTemplate) {
+        this.tenantPgConfigurationRepository = tenantPgConfigurationRepository;
+        this.encryptionService = encryptionService;
+        this.objectMapper = objectMapper;
+        this.restTemplate = restTemplate;
+    }
 
     /**
      * 카드 승인번호로 PortOne PAID 결제 ID 를 조회한다. fail-closed.

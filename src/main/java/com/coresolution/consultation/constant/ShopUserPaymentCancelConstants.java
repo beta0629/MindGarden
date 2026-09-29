@@ -15,8 +15,14 @@ public final class ShopUserPaymentCancelConstants {
     /** PortOne 조회가 PAID — 아무것도 바꾸지 않고 정상 결제 확인으로 진행 */
     public static final String OUTCOME_PAID = "PAID";
 
-    /** PortOne 조회 실패·진행 중 상태 — 주문을 건드리지 않음 (재결제 시 같은 주문 재사용) */
+    /** PortOne 조회 실패 — 주문을 건드리지 않음 (재결제 시 같은 주문 재사용) */
     public static final String OUTCOME_UNVERIFIED = "UNVERIFIED";
+
+    /**
+     * PortOne 결제 진행 중(READY 등)·애매 — 주문·결제를 닫지 않음(주문은 PENDING 유지).
+     * 늦게 승인되면 정상 결제, 끝내 미승인이면 hold 만료 스케줄러가 정리한다.
+     */
+    public static final String OUTCOME_NOT_CANCELLABLE_IN_PROGRESS = "NOT_CANCELLABLE_IN_PROGRESS";
 
     /** 이미 결제·만료·환불 등 닫을 대상이 아닌 상태 — 변경 없음 */
     public static final String OUTCOME_NOT_CANCELLABLE = "NOT_CANCELLABLE";

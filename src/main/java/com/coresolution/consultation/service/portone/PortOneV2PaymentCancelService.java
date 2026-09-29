@@ -1,5 +1,6 @@
 package com.coresolution.consultation.service.portone;
 
+import com.coresolution.consultation.config.RestTemplateConfig;
 import com.coresolution.consultation.constant.ShopRefundConstants;
 import com.coresolution.consultation.service.PersonalDataEncryptionService;
 import com.coresolution.core.domain.TenantPgConfiguration;
@@ -14,8 +15,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -41,7 +42,6 @@ import org.springframework.web.util.UriComponentsBuilder;
  */
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class PortOneV2PaymentCancelService {
 
     /** 포트원 V2 결제 cancel 베이스 URL. */
@@ -56,7 +56,18 @@ public class PortOneV2PaymentCancelService {
     private final TenantPgConfigurationRepository tenantPgConfigurationRepository;
     private final PersonalDataEncryptionService encryptionService;
     private final ObjectMapper objectMapper;
-    private final RestTemplate restTemplate = new RestTemplate();
+    private final RestTemplate restTemplate;
+
+    public PortOneV2PaymentCancelService(
+            TenantPgConfigurationRepository tenantPgConfigurationRepository,
+            PersonalDataEncryptionService encryptionService,
+            ObjectMapper objectMapper,
+            @Qualifier(RestTemplateConfig.PORTONE_REST_TEMPLATE) RestTemplate restTemplate) {
+        this.tenantPgConfigurationRepository = tenantPgConfigurationRepository;
+        this.encryptionService = encryptionService;
+        this.objectMapper = objectMapper;
+        this.restTemplate = restTemplate;
+    }
 
     /**
      * 테넌트 ACTIVE IAMPORT 설정으로 포트원 V2 전액 취소를 호출한다.

@@ -109,7 +109,7 @@ describe('MappingScheduleCard.clinicOsChrome', () => {
 
     const pills = screen.getAllByTestId('mapping-card-todo-pill');
     expect(pills).toHaveLength(1);
-    expect(pills[0]).toHaveTextContent('결제 대기');
+    expect(pills[0]).toHaveTextContent('가예약');
 
     expect(container.querySelector('.mg-v2-badge--success')).toBeNull();
     expect(container.querySelector('.integrated-schedule__card-schedule-status--registered')).toBeNull();
@@ -213,15 +213,18 @@ describe('MappingScheduleCard.clinicOsChrome', () => {
     );
   });
 
-  it('CardMeta CSS encodes amber pill #FEF3C7/#92400E without #F59E0B border', () => {
+  it('CardMeta CSS encodes amber pill via warning-100/800 tokens without hex or amber border', () => {
     const metaCssPath = path.join(
       __dirname,
       '../../molecules/CardMeta.css'
     );
     const metaCss = fs.readFileSync(metaCssPath, 'utf8');
-    expect(metaCss).toMatch(/#FEF3C7/);
-    expect(metaCss).toMatch(/#92400E/);
-    expect(metaCss).not.toMatch(/#F59E0B/);
+    const todoPillBlock = metaCss.match(/\.integrated-schedule__card-todo-pill,[\s\S]*?\}/);
+    expect(todoPillBlock).toBeTruthy();
+    expect(todoPillBlock[0]).toMatch(/background-color:\s*var\(--mg-warning-100\)/);
+    expect(todoPillBlock[0]).toMatch(/color:\s*var\(--mg-warning-800\)/);
+    expect(todoPillBlock[0]).toMatch(/border:\s*0/);
+    expect(metaCss).not.toMatch(/#[0-9a-fA-F]{3,8}\b/);
   });
 
   it('IntegratedMatchingSchedule.css selected chrome only; status-btn/filter-label blocks untouched in this rule', () => {

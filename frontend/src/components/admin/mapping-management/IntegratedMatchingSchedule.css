@@ -1498,6 +1498,35 @@
   }
 }
 
+/* 캘린더 최소 높이 — 헤더·범례는 줄지 않고, 공간 부족 시 캘린더 카드 안에서만 스크롤 */
+.integrated-schedule.integrated-schedule--clinic-os {
+  --integrated-schedule-calendar-min-height: 25rem;
+}
+
+.integrated-schedule--clinic-os .integrated-schedule__calendar-wrapper .mg-v2-ad-b0kla.mg-v2-schedule-calendar {
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+.integrated-schedule--clinic-os .integrated-schedule__calendar-wrapper .mg-v2-schedule-calendar > * {
+  flex-shrink: 0;
+}
+
+.integrated-schedule--clinic-os .integrated-schedule__calendar-wrapper .mg-v2-schedule-calendar > .mg-v2-schedule-calendar-view {
+  flex: 1 0 auto;
+  height: auto;
+}
+
+.integrated-schedule--clinic-os .integrated-schedule__calendar-wrapper .fc .fc-view-harness {
+  min-height: var(--integrated-schedule-calendar-min-height);
+}
+
+@media (max-width: 767px) {
+  .integrated-schedule.integrated-schedule--clinic-os {
+    --integrated-schedule-calendar-min-height: 17.5rem;
+  }
+}
+
 /* ContentHeader subtitle — 1280px 이하에서 숨김.
    본 페이지 한정 — 다른 라우트 영향 0. */
 .integrated-schedule .mg-v2-content-header__subtitle {

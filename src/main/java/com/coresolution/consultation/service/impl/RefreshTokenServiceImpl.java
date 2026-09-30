@@ -3,6 +3,7 @@ package com.coresolution.consultation.service.impl;
 import com.coresolution.consultation.entity.RefreshToken;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.repository.RefreshTokenRepository;
+import com.coresolution.consultation.service.JwtService;
 import com.coresolution.consultation.service.RefreshTokenService;
 import jakarta.servlet.http.HttpServletRequest;
 import com.coresolution.core.security.PasswordService;
@@ -33,6 +34,7 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
     
     private final RefreshTokenRepository refreshTokenRepository;
     private final PasswordService passwordService;
+    private final JwtService jwtService;
 
     /**
      * Refresh Token DB 만료 TTL (밀리초).
@@ -49,8 +51,8 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
         // Refresh Token 해시 — 정책 없이 BCrypt만 적용
         String refreshTokenHash = passwordService.encodeSecret(refreshToken);
         
-        // Token ID 생성 (UUID)
-        String tokenId = UUID.randomUUID().toString();
+        // Token ID — Refresh JWT tokenId 클레임(= 같은 쌍 Access JWT sid)과 동일하게 저장해 세션 단위 폐기에 사용
+        String tokenId = resolveTokenId(refreshToken);
         
         // 만료 시간 — jwt.refresh-expiration (ms) SSOT
         LocalDateTime expiresAt = LocalDateTime.now().plus(refreshExpirationMs, ChronoUnit.MILLIS);
@@ -172,6 +174,18 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
         return createRefreshToken(user, newRefreshToken, request);
     }
     
+    /**
+     * Refresh JWT 의 tokenId 클레임을 쓰고, 없거나(구 토큰) 이미 저장된 값이면 새 UUID.
+     */
+    private String resolveTokenId(String refreshToken) {
+        String claimTokenId = jwtService != null ? jwtService.extractTokenId(refreshToken) : null;
+        if (claimTokenId != null && !claimTokenId.isBlank()
+                && refreshTokenRepository.findByTokenId(claimTokenId).isEmpty()) {
+            return claimTokenId;
+        }
+        return UUID.randomUUID().toString();
+    }
+
     /**
      * IP 주소 추출
      */

@@ -1,5 +1,7 @@
 package com.coresolution.consultation.service.impl;
 
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -16,14 +18,17 @@ import com.coresolution.consultation.dto.PasswordLoginAccountSelectionClaims;
 import com.coresolution.consultation.util.UserRoleCapabilityUtils;
 import com.coresolution.consultation.dto.UserDto;
 import com.coresolution.consultation.dto.UserResponse;
+import com.coresolution.consultation.dto.auth.CurrentSessionCredentials;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.service.AuthService;
+import com.coresolution.consultation.service.AuthTokenRevocationService;
 import com.coresolution.consultation.service.DynamicPermissionService;
 import com.coresolution.consultation.service.EmailService;
 import com.coresolution.consultation.service.JwtService;
 import com.coresolution.consultation.service.UserService;
 import com.coresolution.consultation.service.UserSessionService;
 import com.coresolution.consultation.util.EmailLogMasking;
+import com.coresolution.consultation.util.JwtTokenCutoffUtils;
 import com.coresolution.consultation.util.LoginIdentifierUtils;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.consultation.util.TokenLogMasking;
@@ -43,6 +48,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 import lombok.extern.slf4j.Slf4j;
 import java.util.Collection;
 
@@ -108,6 +114,13 @@ public class AuthServiceImpl implements AuthService {
     @Autowired(required = false)
     private com.coresolution.consultation.config.DuplicateLoginAccessBlockRegistry
         duplicateLoginAccessBlockRegistry;
+
+    @Autowired(required = false)
+    private AuthTokenRevocationService authTokenRevocationService;
+
+    /** Refresh JWT TTL (ms) — SSOT: {@code jwt.refresh-expiration} (JwtService·RefreshTokenServiceImpl 동일 키). */
+    @Value("${jwt.refresh-expiration:604800000}")
+    private long refreshExpirationMs;
 
     /**
      * 다중 매치 계정 선택 토큰 1회 사용 추적용 in-memory 저장소.
@@ -265,6 +278,11 @@ public class AuthServiceImpl implements AuthService {
             if (!jwtService.isTokenValid(refreshToken, userDetails)) {
                 return AuthResponse.failure("유효하지 않은 리프레시 토큰입니다.");
             }
+
+            if (isRefreshTokenRevoked(user, refreshToken)) {
+                log.warn("Refresh denied (revoked session or account cutoff): userId={}", user.getId());
+                return AuthResponse.failure("유효하지 않은 리프레시 토큰입니다.");
+            }
             
             // Phase 3: 사용자 권한 조회
             List<String> permissions = dynamicPermissionService.getUserPermissionsAsStringList(user);
@@ -291,9 +309,11 @@ public class AuthServiceImpl implements AuthService {
             // 새 Refresh Token 생성 및 저장
             String newRefreshToken;
             try {
-                // tokenId를 먼저 생성하고, 이를 포함한 refreshToken 생성
-                // 1. tokenId 생성 (UUID)
-                String newTokenId = java.util.UUID.randomUUID().toString();
+                // 1. tokenId = 새 Access JWT sid (세션 단위 폐기 연결), 없으면 UUID
+                String newTokenId = jwtService.extractSessionId(newToken);
+                if (!StringUtils.hasText(newTokenId)) {
+                    newTokenId = java.util.UUID.randomUUID().toString();
+                }
                 
                 // 2. tokenId를 포함한 refreshToken JWT 생성 (표준화 2025-12-08: User 객체 사용하여 tenantId, email 포함)
                 newRefreshToken = jwtService.generateRefreshToken(user, newTokenId);
@@ -473,9 +493,117 @@ public class AuthServiceImpl implements AuthService {
     }
     
     @Override
-    public void cleanupUserSessions(User user, String reason) {
+    public void terminateCurrentSession(User user, CurrentSessionCredentials credentials, String reason) {
+        if (user == null || credentials == null) {
+            return;
+        }
+        String tenantId = user.getTenantId();
+        log.info("🔓 현재 세션 종료: userId={}, tenantId={}, reason={}", user.getId(), tenantId, reason);
         try {
-            log.info("🧹 사용자 세션 정리: userId={}, reason={}", user.getId(), reason);
+            String sessionId = credentials.getSessionId();
+            if (StringUtils.hasText(sessionId)) {
+                if (StringUtils.hasText(tenantId)) {
+                    userSessionService.deactivateSessionForTenant(tenantId, sessionId, reason);
+                } else {
+                    log.warn("⚠️ 현재 세션 종료: tenantId 없음 — user_sessions 비활성화 생략 userId={}", user.getId());
+                }
+            }
+            revokeCurrentAccessToken(user, credentials.getAccessToken());
+            revokePresentedRefreshToken(user, credentials.getRefreshToken());
+        } catch (Exception e) {
+            log.error("❌ 현재 세션 종료 실패: userId={}, reason={}, error={}", user.getId(), reason, e.getMessage(), e);
+        }
+    }
+
+    /**
+     * 현재 Access JWT 를 만료 시각까지 거부하고, sid 로 연결된 Refresh 토큰 1개를 폐기한다.
+     * sid 가 없는 구 토큰이면 Access 만 거부한다.
+     */
+    private void revokeCurrentAccessToken(User user, String accessToken) {
+        if (!isSignedTokenOfUser(user, accessToken)) {
+            return;
+        }
+        if (authTokenRevocationService != null) {
+            authTokenRevocationService.revokeAccessToken(accessToken,
+                jwtService.extractExpiration(accessToken).getTime());
+        }
+        String sessionId = jwtService.extractSessionId(accessToken);
+        if (StringUtils.hasText(sessionId)) {
+            revokeRefreshTokenId(user, sessionId, System.currentTimeMillis() + refreshExpirationMs);
+        } else {
+            log.info("현재 세션 종료: Access JWT 에 sid 없음(구 토큰) — Refresh 연결 폐기 생략 userId={}", user.getId());
+        }
+    }
+
+    /**
+     * 요청 본문으로 받은 Refresh JWT 1개만 폐기한다 (sid 연결 없는 구 토큰 포함).
+     */
+    private void revokePresentedRefreshToken(User user, String refreshToken) {
+        if (!isSignedTokenOfUser(user, refreshToken)) {
+            return;
+        }
+        long expiresAtMs = jwtService.extractExpiration(refreshToken).getTime();
+        if (authTokenRevocationService != null) {
+            authTokenRevocationService.revokeRefreshToken(refreshToken, expiresAtMs);
+        }
+        String tokenId = jwtService.extractTokenId(refreshToken);
+        if (StringUtils.hasText(tokenId)) {
+            revokeRefreshTokenId(user, tokenId, expiresAtMs);
+        }
+    }
+
+    private void revokeRefreshTokenId(User user, String tokenId, long expiresAtMs) {
+        if (authTokenRevocationService != null) {
+            authTokenRevocationService.revokeRefreshTokenId(tokenId, expiresAtMs);
+        }
+        refreshTokenService.findByTokenId(tokenId)
+            .filter(row -> user.getId().equals(row.getUserId()))
+            .filter(row -> !StringUtils.hasText(user.getTenantId())
+                || user.getTenantId().equals(row.getTenantId()))
+            .ifPresent(row -> refreshTokenService.revokeRefreshToken(tokenId));
+    }
+
+    /**
+     * 서명·만료가 유효하고 subject·tenant 가 현재 사용자와 일치하는 JWT 인지.
+     */
+    private boolean isSignedTokenOfUser(User user, String token) {
+        if (!StringUtils.hasText(token) || !jwtService.isTokenValid(token)) {
+            return false;
+        }
+        String subject = jwtService.extractUsername(token);
+        if (subject == null || !subject.equals(user.getUserId())) {
+            log.warn("현재 세션 종료: 토큰 subject 불일치 — 폐기 생략 userId={}", user.getId());
+            return false;
+        }
+        String tokenTenantId = jwtService.extractTenantId(token);
+        if (StringUtils.hasText(tokenTenantId) && StringUtils.hasText(user.getTenantId())
+                && !tokenTenantId.equals(user.getTenantId())) {
+            log.warn("현재 세션 종료: 토큰 tenant 불일치 — 폐기 생략 userId={}", user.getId());
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * Refresh JWT 가 계정 단위 기준 시각 이전 발급이거나 현재 세션 로그아웃으로 폐기되었는지.
+     */
+    private boolean isRefreshTokenRevoked(User user, String refreshToken) {
+        if (JwtTokenCutoffUtils.isIssuedBeforeCutoff(user.getTokensInvalidatedAt(),
+                jwtService.extractIssuedAt(refreshToken))) {
+            return true;
+        }
+        if (authTokenRevocationService == null) {
+            return false;
+        }
+        return authTokenRevocationService.isRefreshTokenIdRevoked(jwtService.extractTokenId(refreshToken))
+            || authTokenRevocationService.isRefreshTokenRevoked(refreshToken);
+    }
+
+    @Override
+    public void terminateAllSessionsForUser(User user, String reason) {
+        recordAccountTokenCutoff(user);
+        try {
+            log.info("🧹 사용자 전체 세션 종료: userId={}, reason={}", user.getId(), reason);
 
             // HttpSession invalidate 는 DB deactivate 전에 sessionId 목록을 확보해야 한다.
             java.util.List<com.coresolution.consultation.entity.UserSession> activeSessions =
@@ -494,14 +622,14 @@ public class AuthServiceImpl implements AuthService {
                 cleanedCount = userSessionService.deactivateAllSessionsForTenantUser(
                     tenantId.trim(), user.getId(), reason);
             } else {
-                log.warn("⚠️ cleanupUserSessions: tenantId 없음 — 전역(deprecated) deactivate 사용 userId={}",
+                log.warn("⚠️ terminateAllSessionsForUser: tenantId 없음 — 전역(deprecated) deactivate 사용 userId={}",
                     user.getId());
                 cleanedCount = userSessionService.deactivateAllUserSessions(user, reason);
             }
 
             // P1 hotfix (2026-06-13) — refresh_token_store 도 함께 revoke (모바일 JWT 흐름 정합).
             // PR #293 silent skip 정책의 비대칭 회귀 해소: checkDuplicateLogin 은 user_sessions OR
-            // refresh_token_store 둘 다 검사하지만 cleanupUserSessions 는 user_sessions 만 deactivate
+            // refresh_token_store 둘 다 검사하지만 전체 세션 정리가 user_sessions 만 deactivate
             // 하던 결과 모달 "기존 세션 종료" 가 실효 없고 60초 폴링이 강제 로그아웃 알림을 띄움.
             refreshTokenService.revokeAllUserTokens(user.getId());
 
@@ -515,6 +643,25 @@ public class AuthServiceImpl implements AuthService {
         } catch (Exception e) {
             log.error("❌ 사용자 세션 정리 실패: userId={}, reason={}, error={}", 
                      user.getId(), reason, e.getMessage(), e);
+        }
+    }
+
+    /**
+     * 계정 단위 토큰 폐기 기준 시각 기록. JWT iat 가 초 단위이므로 초로 절삭해 저장한다
+     * (DB 반올림으로 같은 초에 새로 발급한 토큰이 거부되지 않도록).
+     */
+    private void recordAccountTokenCutoff(User user) {
+        if (user == null || user.getId() == null || !StringUtils.hasText(user.getTenantId())) {
+            log.warn("⚠️ 계정 토큰 폐기 기준 시각 기록 생략: tenantId 또는 userId 없음");
+            return;
+        }
+        try {
+            LocalDateTime cutoff = LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS);
+            int updated = userRepository.updateTokensInvalidatedAt(user.getId(), user.getTenantId().trim(), cutoff);
+            log.info("🔒 계정 토큰 폐기 기준 시각 기록: userId={}, tenantId={}, updated={}",
+                user.getId(), user.getTenantId(), updated);
+        } catch (Exception e) {
+            log.error("❌ 계정 토큰 폐기 기준 시각 기록 실패: userId={}, error={}", user.getId(), e.getMessage(), e);
         }
     }
     
@@ -994,7 +1141,7 @@ public class AuthServiceImpl implements AuthService {
                     return AuthResponse.duplicateLoginConfirmation(
                         SessionManagementConstants.DUPLICATE_LOGIN_MESSAGE);
                 } else if (SessionManagementConstants.TERMINATE_EXISTING_SESSION) {
-                    cleanupUserSessions(user, SessionManagementConstants.END_REASON_DUPLICATE_LOGIN);
+                    terminateAllSessionsForUser(user, SessionManagementConstants.END_REASON_DUPLICATE_LOGIN);
                     log.info("🔄 기존 세션 정리 완료: userId={}", user.getId());
                 }
             }

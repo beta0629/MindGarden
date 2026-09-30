@@ -29,6 +29,7 @@ import com.coresolution.consultation.service.DynamicPermissionService;
 import com.coresolution.consultation.constant.OtpDeliveryChannel;
 import com.coresolution.consultation.constant.OtpPurpose;
 import com.coresolution.consultation.dto.OtpDeliveryResult;
+import com.coresolution.consultation.dto.auth.CurrentSessionCredentials;
 import com.coresolution.consultation.dto.auth.SmsOtpSendStatus;
 import com.coresolution.consultation.service.OtpDeliveryService;
 import com.coresolution.consultation.service.SmsOtpVerificationService;
@@ -83,6 +84,12 @@ public class AuthController extends BaseApiController {
 
     /** SMS 인증 실패 한도 초과로 발송이 잠긴 경우 안내 문구. */
     private static final String SMS_OTP_LOCKED_MESSAGE = "인증 시도 횟수를 넘었어요. 잠시 뒤에 다시 받아 주세요.";
+
+    /** Authorization 헤더 Bearer 접두사. */
+    private static final String BEARER_PREFIX = "Bearer ";
+
+    /** 로그아웃·refresh 요청 본문의 Refresh JWT 키 (/refresh-token 과 동일). */
+    private static final String REFRESH_TOKEN_BODY_KEY = "refreshToken";
     
     private final RoleCommonCodeAuthorizationService roleCommonCodeAuthorizationService;
 
@@ -572,31 +579,33 @@ public class AuthController extends BaseApiController {
         return success("CSRF 토큰 조회 성공", data);
     }
     
+    /**
+     * 로그아웃 — 요청을 보낸 현재 세션만 종료한다.
+     *
+     * <p>동일 계정의 다른 기기·탭 세션과 토큰은 유지된다. 계정 전체 종료는 {@code /force-logout}.</p>
+     *
+     * @param session     현재 HttpSession
+     * @param httpRequest Authorization 헤더(Access JWT) 조회용
+     * @param request     선택 본문 — {@code refreshToken} (sid 없는 구 토큰 폐기용)
+     * @return 항상 성공 응답
+     */
     @PostMapping("/logout")
-    public ResponseEntity<ApiResponse<Void>> logout(HttpSession session) {
+    public ResponseEntity<ApiResponse<Void>> logout(HttpSession session,
+            jakarta.servlet.http.HttpServletRequest httpRequest,
+            @RequestBody(required = false) Map<String, String> request) {
         String sessionId = session.getId();
         log.info("🔓 로그아웃 요청: sessionId={}", sessionId);
         
         try {
             User logoutUser = SessionUtils.getCurrentUser(session);
-            if (logoutUser != null && StringUtils.hasText(logoutUser.getTenantId()) && logoutUser.getId() != null) {
-                int deactivated = userSessionService.deactivateAllSessionsForTenantUser(
-                    logoutUser.getTenantId(), logoutUser.getId(), SessionManagementConstants.END_REASON_LOGOUT);
-                log.info("로그아웃: 테넌트·사용자 단위 활성 세션 비활성화 tenantId={}, userId={}, count={}",
-                    logoutUser.getTenantId(), logoutUser.getId(), deactivated);
-            } else if (logoutUser != null) {
-                log.debug("로그아웃: 테넌트 일괄 비활성화 스킵 (tenantId 또는 userId 없음) userId={}",
-                    logoutUser.getId());
-            }
-            // 세션 기반 로그아웃 (중복로그인 방지 포함)
+            // 현재 HttpSession 의 user_sessions 행
             authService.logoutSession(sessionId);
 
-            // P1 hotfix (2026-06-13) — 정상 logout 경로도 SSOT 인 cleanupUserSessions 를 거쳐
-            // user_sessions + refresh_token_store 를 함께 비활성화한다. (PR #295 비대칭 회귀 해소)
-            // checkDuplicateLogin 은 user_sessions OR refresh_token_store 둘 다 검사하므로
-            // refresh_token 잔존 시 재로그인 즉시 "다른 곳에서 로그인" 모달이 잔존한다.
+            // 현재 세션의 Refresh 1개·현재 Access 만 폐기 (동일 계정 다른 세션 유지)
             if (logoutUser != null) {
-                authService.cleanupUserSessions(logoutUser, SessionManagementConstants.END_REASON_LOGOUT);
+                authService.terminateCurrentSession(logoutUser,
+                    buildCurrentSessionCredentials(session, httpRequest, request),
+                    SessionManagementConstants.END_REASON_LOGOUT);
             }
 
             // HTTP 세션 정리
@@ -609,6 +618,26 @@ public class AuthController extends BaseApiController {
         }
         
         return success("로그아웃되었습니다.");
+    }
+
+    /**
+     * 현재 요청의 세션 식별 정보 — DB 세션 ID(없으면 HttpSession ID), Bearer Access JWT, 본문 Refresh JWT.
+     */
+    private CurrentSessionCredentials buildCurrentSessionCredentials(HttpSession session,
+            jakarta.servlet.http.HttpServletRequest httpRequest, Map<String, ?> body) {
+        Object dbSessionId = session.getAttribute(SessionConstants.SESSION_ID);
+        String sessionId = dbSessionId instanceof String s && StringUtils.hasText(s) ? s : session.getId();
+        String accessToken = null;
+        String authHeader = httpRequest != null ? httpRequest.getHeader(HttpHeaders.AUTHORIZATION) : null;
+        if (authHeader != null && authHeader.startsWith(BEARER_PREFIX)) {
+            accessToken = authHeader.substring(BEARER_PREFIX.length()).trim();
+        }
+        Object refreshToken = body != null ? body.get(REFRESH_TOKEN_BODY_KEY) : null;
+        return CurrentSessionCredentials.builder()
+            .sessionId(sessionId)
+            .accessToken(StringUtils.hasText(accessToken) ? accessToken : null)
+            .refreshToken(refreshToken instanceof String rt && StringUtils.hasText(rt) ? rt.trim() : null)
+            .build();
     }
 
     /**
@@ -793,8 +822,11 @@ public class AuthController extends BaseApiController {
             if (user == null) {
                 throw new IllegalArgumentException("사용자를 찾을 수 없습니다.");
             }
-            authService.cleanupUserSessions(user, SessionManagementConstants.END_REASON_USER_CONFIRMED_TERMINATE);
-            log.info("🔄 사용자 확인으로 기존 세션 정리 완료: loginPrincipal={}", loginPrincipal);
+            // 요청한 현재 세션만 종료 — 동일 계정 다른 세션은 유지 (계정 전체 종료는 /force-logout)
+            authService.terminateCurrentSession(user,
+                buildCurrentSessionCredentials(session, httpRequest, request),
+                SessionManagementConstants.END_REASON_USER_CONFIRMED_TERMINATE);
+            log.info("🔄 사용자 확인으로 현재 세션 정리 완료: loginPrincipal={}", loginPrincipal);
         }
         
         // 로그인 재시도
@@ -898,8 +930,8 @@ public class AuthController extends BaseApiController {
         }
         User targetUser = users.get(0);
         
-        // 사용자 세션 강제 종료
-        authService.cleanupUserSessions(targetUser, SessionManagementConstants.END_REASON_ADMIN_FORCE);
+        // 계정 전체 세션·토큰 강제 종료
+        authService.terminateAllSessionsForUser(targetUser, SessionManagementConstants.END_REASON_ADMIN_FORCE);
         
         log.info("🔓 강제 로그아웃 완료: email={}", EmailLogMasking.maskForLog(targetEmail));
         

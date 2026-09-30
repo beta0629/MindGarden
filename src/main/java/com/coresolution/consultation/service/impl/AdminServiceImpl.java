@@ -125,6 +125,7 @@ import com.coresolution.consultation.util.CardMerchantFeeFromPaymentJsonUtil;
 import com.coresolution.consultation.util.EmailLogMasking;
 import com.coresolution.consultation.util.FreelanceWithholdingTaxUtil;
 import com.coresolution.consultation.util.LoginIdentifierUtils;
+import com.coresolution.consultation.util.MappingPartialRefundLedger;
 import com.coresolution.consultation.util.PaymentSourceResolver;
 import com.coresolution.consultation.util.TaxCalculationUtil;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
@@ -211,6 +212,9 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
      * 전액·부분 환불 전표가 같은 금액으로 이 시간(초) 이내에 생성되면 동일 환불 건의 중복 분개(M2)로 본다.
      */
     private static final long REFUND_DUPLICATE_EVENT_WINDOW_SECONDS = 60L;
+
+    private static final java.util.regex.Pattern PARTIAL_REFUND_NOTE_SESSIONS_PATTERN =
+            java.util.regex.Pattern.compile(AdminServiceUserFacingMessages.NOTES_PARTIAL_REFUND_SESSIONS_REGEX);
 
     private final UserRepository userRepository;
     private final ConsultantRepository consultantRepository;
@@ -1360,6 +1364,30 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                         mappingId));
             }
 
+            // 매핑 측 부분 환불로 이미 돌려준 금액은 주문 전액 환불 EXPENSE 에서 제외 (PG 도 잔여만 취소)
+            long alreadyPartialRefunded = sumActivePartialRefundAmount(
+                    tenantId, mappingId, resolvePaymentApprovedAt(tenantId, refundPaymentId));
+            if (alreadyPartialRefunded > 0L) {
+                long remainingRefund = refundAmountForTx - alreadyPartialRefunded;
+                if (remainingRefund <= 0L) {
+                    log.warn(
+                            "🛒 쇼핑 환불 EXPENSE 생략 — 매핑 부분 환불로 결제액 전액 환불됨: tenantId={}, mappingId={}, "
+                                    + "income={}, alreadyPartialRefunded={}, orderPublicId={}",
+                            tenantId,
+                            mappingId,
+                            refundAmountForTx,
+                            alreadyPartialRefunded,
+                            refundOrderPublicId);
+                    return;
+                }
+                if (refundFeeForTx != null && refundFeeForTx.signum() > 0) {
+                    refundFeeForTx = refundFeeForTx
+                            .multiply(BigDecimal.valueOf(remainingRefund))
+                            .divide(BigDecimal.valueOf(refundAmountForTx), 0, java.math.RoundingMode.DOWN);
+                }
+                refundAmountForTx = remainingRefund;
+            }
+
             createConsultationRefundTransaction(
                     mapping,
                     refundedSessions,
@@ -2429,6 +2457,22 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
      * @param orderPublicId 주문 공개 ID
      * @return paymentId 또는 null
      */
+    /**
+     * 결제 승인 시각 (tenantId 스코프). 없으면 null.
+     *
+     * @param tenantId  테넌트 ID
+     * @param paymentId 결제 ID
+     * @return approvedAt 또는 null
+     */
+    private LocalDateTime resolvePaymentApprovedAt(String tenantId, String paymentId) {
+        if (!StringUtils.hasText(tenantId) || !StringUtils.hasText(paymentId) || paymentRepository == null) {
+            return null;
+        }
+        return paymentRepository.findByTenantIdAndPaymentIdAndIsDeletedFalse(tenantId, paymentId.trim())
+                .map(Payment::getApprovedAt)
+                .orElse(null);
+    }
+
     private String resolveApprovedOrLatestPaymentId(String tenantId, String orderPublicId) {
         if (!StringUtils.hasText(tenantId) || !StringUtils.hasText(orderPublicId) || paymentRepository == null) {
             return null;
@@ -4154,16 +4198,23 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
      * @return 이미 환불한 금액 (없으면 0)
      */
     private long sumActivePartialRefundAmount(String tenantId, Long mappingId) {
+        return sumActivePartialRefundAmount(tenantId, mappingId, null);
+    }
+
+    /**
+     * 매핑의 활성 부분 환불 EXPENSE 금액 합 — {@code notBefore} 이전 생성분 제외.
+     *
+     * @param tenantId  테넌트 ID
+     * @param mappingId 매핑 ID
+     * @param notBefore 기준 시각 (null 이면 전체)
+     * @return 이미 환불한 금액 (없으면 0)
+     */
+    private long sumActivePartialRefundAmount(String tenantId, Long mappingId, LocalDateTime notBefore) {
         if (!StringUtils.hasText(tenantId) || mappingId == null) {
             return 0L;
         }
-        return findActivePartialRefundExpenses(tenantId, mappingId).stream()
-                .filter(ft -> ft.getStatus() != FinancialTransaction.TransactionStatus.CANCELLED
-                        && ft.getStatus() != FinancialTransaction.TransactionStatus.REJECTED)
-                .map(FinancialTransaction::getAmount)
-                .filter(java.util.Objects::nonNull)
-                .mapToLong(BigDecimal::longValue)
-                .sum();
+        return MappingPartialRefundLedger.sumActivePartialRefundAmount(
+                findActivePartialRefundExpenses(tenantId, mappingId), notBefore);
     }
 
     /**
@@ -4173,22 +4224,58 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
      * 현재 totalSessions 로 나눈 단가로 계산한다. 기존 비례식(packagePrice/totalSessions)·순결제액을
      * 상한으로 두어 미사용분을 넘지 않는다.</p>
      *
-     * @param packagePrice    결제액(매핑 packagePrice)
-     * @param totalSessions   현재 총 회기(부분 환불 차감 후)
-     * @param refundSessions  환불 회기
-     * @param alreadyRefunded 이미 환불한 금액(활성 부분 환불 EXPENSE 합)
+     * <p>회기 단가는 원래 총 회기({@link #resolveOriginalTotalSessions}) 기준 단가도 상한으로 둔다.
+     * 차감된 totalSessions 로 결제액을 나누면 단가가 부풀어 과다 환불된다.</p>
+     *
+     * @param packagePrice          결제액(매핑 packagePrice)
+     * @param totalSessions         현재 총 회기(부분 환불 차감 후)
+     * @param originalTotalSessions 원래 총 회기(부분 환불 차감 전)
+     * @param refundSessions        환불 회기
+     * @param alreadyRefunded       이미 환불한 금액(활성 부분 환불 EXPENSE 합)
      * @return 환불 가능액 (0 이상)
      */
-    private static long calculateRefundableAmount(Long packagePrice, int totalSessions, int refundSessions,
-            long alreadyRefunded) {
+    private static long calculateRefundableAmount(Long packagePrice, int totalSessions, int originalTotalSessions,
+            int refundSessions, long alreadyRefunded) {
         if (packagePrice == null || packagePrice <= 0 || totalSessions <= 0 || refundSessions <= 0) {
             return 0L;
         }
         int sessions = Math.min(refundSessions, totalSessions);
+        int originalSessions = Math.max(originalTotalSessions, totalSessions);
         long netPaid = Math.max(0L, packagePrice - Math.max(0L, alreadyRefunded));
         long unusedValue = (netPaid * sessions) / totalSessions;
-        long grossProportional = (packagePrice * sessions) / totalSessions;
-        return Math.max(0L, Math.min(unusedValue, Math.min(grossProportional, netPaid)));
+        long originalUnitValue = (packagePrice * sessions) / originalSessions;
+        return Math.max(0L, Math.min(unusedValue, Math.min(originalUnitValue, netPaid)));
+    }
+
+    /**
+     * 부분 환불 차감 전 원래 총 회기.
+     *
+     * <p>원래 회기 수를 저장하는 컬럼은 없다. {@link #partialRefundMapping} 은 totalSessions 를 줄이는
+     * 같은 저장에서 notes 에 {@link AdminServiceUserFacingMessages#NOTES_PARTIAL_REFUND_LINE_FMT} 한 줄을
+     * 남기므로, 현재 totalSessions + notes 부분 환불 줄의 환불 회기 합으로 도출한다.
+     * (ERP 부분 환불 EXPENSE 는 별도 트랜잭션이라 생성 실패 시에도 회기는 이미 차감되어 notes 가 더 정확하다.)</p>
+     *
+     * @param mapping 매핑
+     * @return 원래 총 회기 (부분 환불 이력이 없으면 현재 totalSessions)
+     */
+    static int resolveOriginalTotalSessions(ConsultantClientMapping mapping) {
+        int total = mapping.getTotalSessions() != null ? mapping.getTotalSessions() : 0;
+        String notes = mapping.getNotes();
+        if (!StringUtils.hasText(notes)) {
+            return total;
+        }
+        int refundedSessions = 0;
+        for (String line : notes.split("\n")) {
+            String trimmed = line.trim();
+            if (!trimmed.startsWith(AdminServiceUserFacingMessages.NOTES_PARTIAL_REFUND_LINE_MARKER)) {
+                continue;
+            }
+            java.util.regex.Matcher matcher = PARTIAL_REFUND_NOTE_SESSIONS_PATTERN.matcher(trimmed);
+            if (matcher.find()) {
+                refundedSessions += Integer.parseInt(matcher.group(1));
+            }
+        }
+        return total + refundedSessions;
     }
 
     /**
@@ -4198,15 +4285,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
      * @return 기본 타입 또는 {@code 기본_숫자} 형식이면 true
      */
     private static boolean isPartialRefundRelatedEntityType(String relatedEntityType) {
-        if (RELATED_ENTITY_TYPE_MAPPING_PARTIAL_REFUND.equals(relatedEntityType)) {
-            return true;
-        }
-        if (relatedEntityType == null
-                || !relatedEntityType.startsWith(RELATED_ENTITY_TYPE_MAPPING_PARTIAL_REFUND_SEQ_PREFIX)) {
-            return false;
-        }
-        String seq = relatedEntityType.substring(RELATED_ENTITY_TYPE_MAPPING_PARTIAL_REFUND_SEQ_PREFIX.length());
-        return !seq.isEmpty() && seq.chars().allMatch(Character::isDigit);
+        return MappingPartialRefundLedger.isPartialRefundRelatedEntityType(relatedEntityType);
     }
 
     /**
@@ -7941,8 +8020,8 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         // 기존 부분환불 EXPENSE 가 있으면 INCOME 취소 시 부분환불분이 이중 차감되므로 EXPENSE 경로로 처리한다.
         final boolean unusedFullVoid = totalSessions > 0 && refundedSessions == totalSessions
                 && alreadyPartialRefunded <= 0;
-        long refundAmount = calculateRefundableAmount(
-                mapping.getPackagePrice(), totalSessions, refundedSessions, alreadyPartialRefunded);
+        long refundAmount = calculateRefundableAmount(mapping.getPackagePrice(), totalSessions,
+                resolveOriginalTotalSessions(mapping), refundedSessions, alreadyPartialRefunded);
         final ConsultantClientMapping mappingForErp = mapping;
         final int finalRefundedSessions = refundedSessions;
         final long finalRefundAmount = refundAmount;
@@ -8445,6 +8524,12 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         
         long refundAmount = 0;
         String calculationMethod = "";
+        long alreadyPartialRefunded = sumActivePartialRefundAmount(tenantId, id);
+        if (mapping.getPackagePrice() != null && mapping.getPackagePrice() > 0
+                && alreadyPartialRefunded >= mapping.getPackagePrice()) {
+            throw new RuntimeException(String.format(AdminServiceUserFacingMessages.MSG_REFUND_AMOUNT_EXHAUSTED_FMT,
+                    mapping.getPackagePrice(), alreadyPartialRefunded));
+        }
         
         if (lastAddedSessions > 0 && lastAddedPrice > 0 && refundSessions <= lastAddedSessions) {
             refundAmount = (lastAddedPrice * refundSessions) / lastAddedSessions;
@@ -8453,13 +8538,17 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                     lastAddedPrice, lastAddedSessions, refundSessions, refundAmount);
         } else if (mapping.getPackagePrice() != null && mapping.getTotalSessions() > 0) {
             refundAmount = calculateRefundableAmount(mapping.getPackagePrice(), mapping.getTotalSessions(),
-                    refundSessions, sumActivePartialRefundAmount(tenantId, id));
+                    resolveOriginalTotalSessions(mapping), refundSessions, alreadyPartialRefunded);
             calculationMethod = "전체 패키지 비례 계산";
             log.info("💰 전체 패키지 비례 계산: 전체가격={}, 전체회기={}, 환불회기={}, 환불금액={}", 
                     mapping.getPackagePrice(), mapping.getTotalSessions(), refundSessions, refundAmount);
         } else {
             log.warn("❌ 환불 금액 계산 불가: 패키지 가격 정보 없음");
             throw new RuntimeException(AdminServiceUserFacingMessages.MSG_REFUND_AMOUNT_CALCULATION_IMPOSSIBLE);
+        }
+        if (mapping.getPackagePrice() != null && mapping.getPackagePrice() > 0) {
+            // 누적 환불(기환불 + 이번 환불)은 결제액을 넘지 않는다 — 계산 방식과 무관한 최종 상한
+            refundAmount = Math.min(refundAmount, mapping.getPackagePrice() - alreadyPartialRefunded);
         }
         
         log.info("💰 부분 환불 금액 계산 완료: 환불회기={}, 계산방식={}, 환불금액={}원", 
@@ -12120,8 +12209,11 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                     
                     result.put("sessions", estimatedLastPackage);
                     
-                    if (mapping.getPackagePrice() != null && totalSessions > 0) {
-                        Long estimatedPrice = (mapping.getPackagePrice() * estimatedLastPackage) / totalSessions;
+                    // 단가는 원래 총 회기 기준 — 부분 환불로 줄어든 totalSessions 로 나누면 단가가 부풀어 과다 환불
+                    int originalTotalSessions = Math.max(resolveOriginalTotalSessions(mapping), totalSessions);
+                    if (mapping.getPackagePrice() != null && originalTotalSessions > 0) {
+                        Long estimatedPrice =
+                                (mapping.getPackagePrice() * estimatedLastPackage) / originalTotalSessions;
                         result.put("price", estimatedPrice);
                     }
                     

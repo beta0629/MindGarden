@@ -299,6 +299,71 @@ class AdminServiceImplShopOrderMappingRefundExpenseTest {
     }
 
     @Test
+    @DisplayName("#1318 후속: 매핑 부분 환불 20,000 이 있으면 주문 전액 환불 EXPENSE 는 잔액 80,000 (누적 ≤ 결제액)")
+    void createShopOrderMappingRefundExpense_afterMappingPartialRefund_expenseIsRemainderOnly() {
+        ConsultantClientMapping mapping = buildMapping(MAPPING_ID, 10, 100_000L);
+        FinancialTransaction income = FinancialTransaction.builder()
+                .transactionType(FinancialTransaction.TransactionType.INCOME)
+                .category(FinancialTransactionConstants.CATEGORY_CONSULTATION_FEE)
+                .amount(new BigDecimal("100000"))
+                .status(FinancialTransaction.TransactionStatus.APPROVED)
+                .relatedEntityId(MAPPING_ID)
+                .relatedEntityType(FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING)
+                .build();
+        income.setTenantId(TEST_TENANT_ID);
+        FinancialTransaction partialRefund = FinancialTransaction.builder()
+                .transactionType(FinancialTransaction.TransactionType.EXPENSE)
+                .amount(new BigDecimal("20000"))
+                .status(FinancialTransaction.TransactionStatus.COMPLETED)
+                .relatedEntityId(MAPPING_ID)
+                .relatedEntityType(
+                        FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING_PARTIAL_REFUND)
+                .build();
+        partialRefund.setTenantId(TEST_TENANT_ID);
+
+        when(mappingRepository.findByTenantIdAndId(TEST_TENANT_ID, MAPPING_ID))
+                .thenReturn(Optional.of(mapping));
+        when(financialTransactionRepository.findByTenantIdAndRelatedEntityIdAndRelatedEntityTypeAndIsDeletedFalse(
+                        TEST_TENANT_ID,
+                        MAPPING_ID,
+                        FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING))
+                .thenReturn(List.of(income));
+        lenient().when(financialTransactionRepository
+                        .findByTenantIdAndRelatedEntityIdAndRelatedEntityTypeAndIsDeletedFalse(
+                                TEST_TENANT_ID,
+                                MAPPING_ID,
+                                FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING_ADDITIONAL))
+                .thenReturn(Collections.emptyList());
+        lenient().when(financialTransactionRepository.findByTenantIdAndRelatedEntityIdAndRelatedEntityTypeAndIsDeletedFalse(
+                        TEST_TENANT_ID,
+                        MAPPING_ID,
+                        "CONSULTANT_CLIENT_MAPPING_REFUND"))
+                .thenReturn(Collections.emptyList());
+        when(financialTransactionRepository
+                        .findByTenantIdAndRelatedEntityIdAndRelatedEntityTypeStartingWithAndIsDeletedFalse(
+                                TEST_TENANT_ID,
+                                MAPPING_ID,
+                                FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING_PARTIAL_REFUND))
+                .thenReturn(List.of(partialRefund));
+        lenient().when(salaryTaxRateLookupService.getVatRate(TEST_TENANT_ID)).thenReturn(VAT_RATE);
+        when(financialTransactionService.createTransaction(any(FinancialTransactionRequest.class), isNull()))
+                .thenReturn(null);
+
+        adminService.createShopOrderMappingRefundExpense(
+                TEST_TENANT_ID, MAPPING_ID, "Shop order full refund", "PathB Package", 10);
+
+        ArgumentCaptor<FinancialTransactionRequest> captor =
+                ArgumentCaptor.forClass(FinancialTransactionRequest.class);
+        verify(financialTransactionService).createTransaction(captor.capture(), isNull());
+        FinancialTransactionRequest request = captor.getValue();
+        assertThat(request.getSubcategory()).isEqualTo("CONSULTATION_REFUND");
+        assertThat(request.getAmount()).isEqualByComparingTo(new BigDecimal("80000"));
+        assertThat(request.getAmount().add(partialRefund.getAmount()))
+                .as("매핑 부분 환불 + 주문 환불 EXPENSE ≤ 결제액")
+                .isEqualByComparingTo(new BigDecimal("100000"));
+    }
+
+    @Test
     @DisplayName("ONLINE INCOME fee 합 → EXPENSE amount=gross·cardMerchantFeeAmount=feeSum 정렬")
     void createShopOrderMappingRefundExpense_onlineIncomeFee_alignsExpenseFee() {
         ConsultantClientMapping mapping = buildMapping(MAPPING_ID, 10, 100_000L);

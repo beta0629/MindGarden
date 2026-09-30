@@ -86,6 +86,13 @@ public final class ShopRefundConstants {
     public static final String MSG_SHOP_PARTIAL_REFUND_NOT_ALLOWED_FMT =
             "쇼핑 주문은 전액 환불만 허용됩니다(fail-closed): refundAmount=%s, paymentAmount=%s.";
 
+    /**
+     * 매핑 측 부분 환불·PG 기취소로 결제액 전액이 이미 환불됨 — PG 호출 없이 거부.
+     * 인자: orderPublicId, 결제액, 매핑 측 기환불액, PG 기취소액
+     */
+    public static final String MSG_REFUND_AMOUNT_EXHAUSTED_FMT =
+            "환불 가능 금액이 없습니다(orderPublicId=%s): 결제액 %,d원, 매핑 부분 환불 %,d원, PG 기취소 %,d원.";
+
     private ShopRefundConstants() {
         throw new UnsupportedOperationException("utility");
     }

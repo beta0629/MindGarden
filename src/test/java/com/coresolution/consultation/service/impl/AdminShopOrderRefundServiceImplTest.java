@@ -23,7 +23,9 @@ import com.coresolution.consultation.entity.Payment;
 import com.coresolution.consultation.entity.ShopClientOrder;
 import com.coresolution.consultation.exception.ShopRefundClinicChainException;
 import com.coresolution.consultation.repository.PaymentRepository;
+import com.coresolution.consultation.repository.ShopClientOrderLineRepository;
 import com.coresolution.consultation.repository.ShopClientOrderRepository;
+import com.coresolution.consultation.repository.erp.financial.FinancialTransactionRepository;
 import com.coresolution.consultation.service.ClientPointWalletService;
 import com.coresolution.consultation.service.PaymentGatewayService;
 import com.coresolution.consultation.service.PaymentService;
@@ -32,6 +34,7 @@ import com.coresolution.consultation.service.ShopNotificationHelper;
 import com.coresolution.consultation.service.ShopOrderFulfillmentService;
 import com.coresolution.consultation.service.portone.PortOneV2PaymentCancelService;
 import com.coresolution.consultation.service.portone.PortOneV2PaymentVerifyService;
+import com.coresolution.consultation.service.shop.ShopOrderRefundableAmountResolver;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Optional;
@@ -67,6 +70,8 @@ class AdminShopOrderRefundServiceImplTest {
     @Mock private ShopOrderFulfillmentService shopOrderFulfillmentService;
     @Mock private PortOneV2PaymentCancelService portOneV2PaymentCancelService;
     @Mock private PortOneV2PaymentVerifyService portOneV2PaymentVerifyService;
+    @Mock private ShopClientOrderLineRepository shopClientOrderLineRepository;
+    @Mock private FinancialTransactionRepository financialTransactionRepository;
 
     private AdminShopOrderRefundServiceImpl service;
 
@@ -82,7 +87,16 @@ class AdminShopOrderRefundServiceImplTest {
                 shopOrderFulfillmentService,
                 portOneV2PaymentCancelService,
                 portOneV2PaymentVerifyService,
+                newResolver(),
                 paymentGatewayService);
+    }
+
+    private ShopOrderRefundableAmountResolver newResolver() {
+        return new ShopOrderRefundableAmountResolver(
+                shopClientOrderLineRepository,
+                financialTransactionRepository,
+                portOneV2PaymentCancelService,
+                portOneV2PaymentVerifyService);
     }
 
     // ── happy path ──
@@ -391,7 +405,7 @@ class AdminShopOrderRefundServiceImplTest {
                     shopClientOrderRepository, clientPointWalletService, pointTenantPolicyService,
                     paymentRepository, paymentService, shopNotificationHelper,
                     shopOrderFulfillmentService, portOneV2PaymentCancelService,
-                    portOneV2PaymentVerifyService, null);
+                    portOneV2PaymentVerifyService, newResolver(), null);
 
             ShopClientOrder order = paidOrder(10_000L, 0L, 7_000L);
             Payment payment = approvedPayment(BigDecimal.valueOf(7_000L));

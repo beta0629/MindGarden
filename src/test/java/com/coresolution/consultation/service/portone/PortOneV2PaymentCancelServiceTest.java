@@ -1,5 +1,6 @@
 package com.coresolution.consultation.service.portone;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -15,12 +16,15 @@ import com.coresolution.core.domain.enums.ApprovalStatus;
 import com.coresolution.core.domain.enums.PgConfigurationStatus;
 import com.coresolution.core.domain.enums.PgProvider;
 import com.coresolution.core.repository.TenantPgConfigurationRepository;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.math.BigDecimal;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpEntity;
@@ -135,6 +139,98 @@ class PortOneV2PaymentCancelServiceTest {
     void cancelPayment_blankPaymentId_false() {
         assertFalse(service.cancelPayment(TENANT, " ", "reason"));
         assertFalse(service.cancelPayment(TENANT, null, "reason"));
+    }
+
+    @Test
+    @DisplayName("부분 취소 — POST body 에 amount 포함, PARTIAL_CANCELLED 여도 POST 수행")
+    void cancelPaymentAmount_postsAmount_evenWhenPartialCancelled() throws Exception {
+        stubActiveConfig();
+        when(restTemplate.exchange(any(), eq(HttpMethod.GET), any(HttpEntity.class), eq(String.class)))
+                .thenReturn(new ResponseEntity<>(
+                        "{\"status\":\"PARTIAL_CANCELLED\",\"amount\":{\"total\":100000,\"cancelled\":30000}}",
+                        HttpStatus.OK));
+        when(restTemplate.exchange(any(), eq(HttpMethod.POST), any(HttpEntity.class), eq(String.class)))
+                .thenReturn(new ResponseEntity<>("{}", HttpStatus.OK));
+
+        assertTrue(service.cancelPaymentAmount(TENANT, PAYMENT_ID, "remainder", BigDecimal.valueOf(50_000L)));
+
+        ArgumentCaptor<HttpEntity> captor = ArgumentCaptor.forClass(HttpEntity.class);
+        verify(restTemplate).exchange(any(), eq(HttpMethod.POST), captor.capture(), eq(String.class));
+        JsonNode body = new ObjectMapper().readTree(String.valueOf(captor.getValue().getBody()));
+        assertEquals(50_000L, body.get("amount").asLong());
+        assertEquals("remainder", body.get("reason").asText());
+    }
+
+    @Test
+    @DisplayName("부분 취소 — 이미 CANCELLED 면 POST 없이 true (취소할 잔액 없음)")
+    void cancelPaymentAmount_alreadyCancelled_noPost() {
+        stubActiveConfig();
+        when(restTemplate.exchange(any(), eq(HttpMethod.GET), any(HttpEntity.class), eq(String.class)))
+                .thenReturn(new ResponseEntity<>("{\"status\":\"CANCELLED\"}", HttpStatus.OK));
+
+        assertTrue(service.cancelPaymentAmount(TENANT, PAYMENT_ID, "remainder", BigDecimal.valueOf(50_000L)));
+        verify(restTemplate, never()).exchange(any(), eq(HttpMethod.POST), any(HttpEntity.class), eq(String.class));
+    }
+
+    @Test
+    @DisplayName("부분 취소 POST 실패 — 기존 PARTIAL_CANCELLED 만으로는 성공 처리하지 않음")
+    void cancelPaymentAmount_postFails_existingPartialCancelNotTreatedAsSuccess() {
+        stubActiveConfig();
+        when(restTemplate.exchange(any(), eq(HttpMethod.GET), any(HttpEntity.class), eq(String.class)))
+                .thenReturn(new ResponseEntity<>(
+                        "{\"status\":\"PARTIAL_CANCELLED\",\"amount\":{\"cancelled\":30000}}", HttpStatus.OK));
+        when(restTemplate.exchange(any(), eq(HttpMethod.POST), any(HttpEntity.class), eq(String.class)))
+                .thenThrow(new RestClientException("pg error"));
+
+        assertFalse(service.cancelPaymentAmount(TENANT, PAYMENT_ID, "remainder", BigDecimal.valueOf(50_000L)));
+    }
+
+    @Test
+    @DisplayName("부분 취소 POST 응답 유실 — 누적 취소액이 요청만큼 늘었으면 성공")
+    void cancelPaymentAmount_postFailsButCancelledAmountIncreased_success() {
+        stubActiveConfig();
+        when(restTemplate.exchange(any(), eq(HttpMethod.GET), any(HttpEntity.class), eq(String.class)))
+                .thenReturn(new ResponseEntity<>(
+                        "{\"status\":\"PAID\",\"amount\":{\"cancelled\":0}}", HttpStatus.OK))
+                .thenReturn(new ResponseEntity<>(
+                        "{\"status\":\"PARTIAL_CANCELLED\",\"amount\":{\"cancelled\":50000}}", HttpStatus.OK));
+        when(restTemplate.exchange(any(), eq(HttpMethod.POST), any(HttpEntity.class), eq(String.class)))
+                .thenThrow(new RestClientException("timeout"));
+
+        assertTrue(service.cancelPaymentAmount(TENANT, PAYMENT_ID, "remainder", BigDecimal.valueOf(50_000L)));
+    }
+
+    @Test
+    @DisplayName("부분 취소 금액 0 이하 — 호출 없이 false")
+    void cancelPaymentAmount_nonPositiveAmount_false() {
+        assertFalse(service.cancelPaymentAmount(TENANT, PAYMENT_ID, "r", BigDecimal.ZERO));
+        assertFalse(service.cancelPaymentAmount(TENANT, PAYMENT_ID, "r", null));
+        verify(restTemplate, never()).exchange(any(), any(HttpMethod.class), any(HttpEntity.class), eq(String.class));
+    }
+
+    @Test
+    @DisplayName("누적 취소 금액 조회 — amount.cancelled")
+    void fetchCancelledAmount_readsAmountCancelled() {
+        stubActiveConfig();
+        when(restTemplate.exchange(any(), eq(HttpMethod.GET), any(HttpEntity.class), eq(String.class)))
+                .thenReturn(new ResponseEntity<>(
+                        "{\"status\":\"PARTIAL_CANCELLED\",\"amount\":{\"total\":100000,\"cancelled\":30000}}",
+                        HttpStatus.OK));
+
+        Optional<BigDecimal> cancelled = service.fetchCancelledAmount(TENANT, PAYMENT_ID);
+
+        assertTrue(cancelled.isPresent());
+        assertEquals(0, cancelled.get().compareTo(BigDecimal.valueOf(30_000L)));
+    }
+
+    @Test
+    @DisplayName("누적 취소 금액 조회 실패 — empty")
+    void fetchCancelledAmount_lookupFails_empty() {
+        stubActiveConfig();
+        when(restTemplate.exchange(any(), eq(HttpMethod.GET), any(HttpEntity.class), eq(String.class)))
+                .thenThrow(new RestClientException("down"));
+
+        assertTrue(service.fetchCancelledAmount(TENANT, PAYMENT_ID).isEmpty());
     }
 
     private void stubActiveConfig() {

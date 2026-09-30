@@ -45,6 +45,28 @@ export function buildScheduleDatetimeUpdateBody(newStart, newEnd) {
 }
 
 /**
+ * 이동(드래그) 후 종료 시각 — FullCalendar 가 종료를 주지 않으면(event.end=null) 기존 길이를 유지해 계산.
+ * @param {Date} newStart 이동 후 시작
+ * @param {Date|null|undefined} newEnd 이동 후 종료 (FullCalendar event.end)
+ * @param {Date|null|undefined} originalStart 이동 전 시작
+ * @param {Date|null|undefined} originalEnd 이동 전 종료
+ * @returns {Date|null|undefined} 종료 (계산 불가 시 newEnd 그대로)
+ */
+export function resolveMovedScheduleEnd(newStart, newEnd, originalStart, originalEnd) {
+  if (newEnd instanceof Date && !Number.isNaN(newEnd.getTime())) {
+    return newEnd;
+  }
+  if (!(newStart instanceof Date) || !(originalStart instanceof Date) || !(originalEnd instanceof Date)) {
+    return newEnd;
+  }
+  const durationMs = originalEnd.getTime() - originalStart.getTime();
+  if (!(durationMs > 0)) {
+    return newEnd;
+  }
+  return new Date(newStart.getTime() + durationMs);
+}
+
+/**
  * YYYY-MM-DD + HH:mm 로 로컬 Date 생성
  * @param {string} dateStr YYYY-MM-DD
  * @param {string} timeHm HH:mm

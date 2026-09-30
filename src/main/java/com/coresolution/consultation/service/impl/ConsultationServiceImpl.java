@@ -39,6 +39,7 @@ import com.coresolution.consultation.service.SalaryLateSessionAutoSyncService;
 import com.coresolution.consultation.service.ScheduleChangeNotificationDebounceService;
 import com.coresolution.consultation.service.ScheduleService;
 import com.coresolution.consultation.service.UserPersonalDataCacheService;
+import com.coresolution.consultation.util.ScheduleSlotTimes;
 import com.coresolution.consultation.utils.SessionUtils;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.service.impl.BaseTenantAwareService;
@@ -602,6 +603,8 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
         LocalTime previousEnd = consultation.getEndTime();
         consultation.setConsultationDate(newDateTime.toLocalDate());
         consultation.setStartTime(newDateTime.toLocalTime());
+        consultation.setEndTime(ScheduleSlotTimes.shiftEndPreservingDuration(
+                previousStart, previousEnd, newDateTime.toLocalTime()));
         consultation.setStatus("RESCHEDULED");
         consultation.setUpdatedAt(LocalDateTime.now());
         consultation.setVersion(consultation.getVersion() + 1);

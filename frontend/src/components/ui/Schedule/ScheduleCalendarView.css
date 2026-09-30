@@ -451,7 +451,8 @@
     text-overflow: ellipsis;
 }
 
+/* FullCalendar .fc-timegrid-col-bg(z-index 2, 주말·09시 이전 비영업 오버레이)보다 위여야 일정 클릭 가능 */
 .mg-v2-schedule-calendar-view .fc-timegrid-col-events {
     position: relative;
-    z-index: 1;
+    z-index: 3;
 }

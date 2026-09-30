@@ -89,6 +89,8 @@ public class ShopOrderFulfillmentServiceImpl implements ShopOrderFulfillmentServ
     public void fulfillPaidOrder(String tenantId, ShopClientOrder order) {
         String orderPublicId = order.getPublicId();
         String fulfillKey = ShopCheckoutConstants.orderFulfillKey(orderPublicId);
+        // 중복 웹훅·재시도가 커밋 후 이행을 동시에 돌려도 주문 행 잠금으로 직렬화 — 뒤 요청은 앞 요청의 이행 결과를 보고 건너뛴다
+        shopClientOrderRepository.lockByTenantIdAndPublicId(tenantId, orderPublicId);
         List<ShopOrderFulfillmentEvent> existingEvents =
                 fulfillmentEventRepository.findByTenantIdAndOrderPublicIdAndIsDeletedFalseOrderBySkuCodeAsc(
                         tenantId, orderPublicId);

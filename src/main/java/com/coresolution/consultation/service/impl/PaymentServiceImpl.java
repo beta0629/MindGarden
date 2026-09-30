@@ -19,8 +19,10 @@ import com.coresolution.consultation.dto.PaymentResponse;
 import com.coresolution.consultation.entity.Payment;
 import com.coresolution.consultation.entity.ShopClientOrder;
 import com.coresolution.consultation.entity.User;
+import com.coresolution.consultation.exception.ShopDuplicatePaymentException;
 import com.coresolution.consultation.exception.ShopOrderClosedForPaymentException;
 import com.coresolution.consultation.service.ShopLatePaymentOutcome;
+import com.coresolution.consultation.service.ShopOrderPaymentState;
 import com.coresolution.consultation.service.ShopLatePaymentRefundService;
 import com.coresolution.consultation.repository.PaymentRepository;
 import com.coresolution.consultation.repository.ShopClientOrderRepository;
@@ -444,6 +446,10 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
         if (lockedOrder.isPresent() && !isApprovableOnLockedOrder(payment, lockedOrder.get())) {
             throw new ShopOrderClosedForPaymentException(payment.getOrderId(), lockedOrder.get().getStatus());
         }
+        if (lockedOrder.isPresent() && isDuplicatePaymentOnPaidOrder(tenantId, payment, lockedOrder.get())) {
+            // 이중 결제: 주문은 이미 다른 결제로 PAID — 이 결제는 승인하지 않고 호출측이 PG 자동 취소
+            throw new ShopDuplicatePaymentException(payment.getOrderId(), lockedOrder.get().getStatus());
+        }
 
         if (payment.getStatus() != Payment.PaymentStatus.APPROVED) {
             validateStatusTransition(payment.getStatus(), Payment.PaymentStatus.APPROVED);
@@ -496,6 +502,55 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
             return true;
         }
         return !NON_APPROVABLE_SHOP_PAYMENT_STATUSES.contains(payment.getStatus());
+    }
+
+    /**
+     * 잠근 PAID 주문에 이 결제가 아닌 다른 APPROVED 결제가 이미 있으면 이중 결제.
+     * 이미 APPROVED 인 결제(같은 결제 재전송)는 이중 결제가 아니다.
+     */
+    private boolean isDuplicatePaymentOnPaidOrder(String tenantId, Payment payment, ShopClientOrder order) {
+        if (order.getStatus() != ShopClientOrderStatus.PAID
+                || payment.getStatus() == Payment.PaymentStatus.APPROVED) {
+            return false;
+        }
+        // 주문 잠금 뒤 잠금 읽기 — 트랜잭션 시작 시점 스냅샷이 아닌 최신 커밋 값으로 판정
+        List<Payment> linked = paymentRepository.lockByTenantIdAndOrderId(tenantId, payment.getOrderId());
+        return linked != null && linked.stream().anyMatch(other ->
+                other.getStatus() == Payment.PaymentStatus.APPROVED
+                        && other.getPaymentId() != null
+                        && !other.getPaymentId().equals(payment.getPaymentId()));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void recordWebhookPayload(
+            String tenantId, String paymentId, String webhookData, String externalResponse) {
+        paymentRepository.findByTenantIdAndPaymentIdAndIsDeletedFalse(tenantId, paymentId).ifPresent(payment -> {
+            // 결제 행만 잠근다(주문 잠금 없음) — 주문 → 결제 순서와 충돌하지 않는다
+            paymentRepository.refreshWithLock(payment);
+            payment.setWebhookData(webhookData);
+            payment.setExternalResponse(externalResponse);
+            paymentRepository.save(payment);
+        });
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = true)
+    public Optional<ShopOrderPaymentState> findShopOrderPaymentState(
+            String tenantId, String orderPublicId, String paymentId) {
+        return shopClientOrderRepository.findByTenantIdAndPublicId(tenantId, orderPublicId)
+                .map(order -> new ShopOrderPaymentState(
+                        order.getStatus(),
+                        paymentId == null
+                                ? null
+                                : paymentRepository.findByTenantIdAndPaymentIdAndIsDeletedFalse(tenantId, paymentId)
+                                        .map(Payment::getStatus)
+                                        .orElse(null)));
     }
 
     private static void requireAmountMatchesOrder(Payment payment, ShopClientOrder order) {

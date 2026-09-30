@@ -289,6 +289,10 @@
   align-items: flex-end;
 }
 
+.admin-shop-suite__cell-stack--chips {
+  align-items: flex-start;
+}
+
 .admin-shop-suite__session-sub {
   font-size: var(--mg-v2-font-size-caption);
   font-weight: normal;

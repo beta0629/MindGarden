@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import com.coresolution.consultation.dto.PaymentRequest;
 import com.coresolution.consultation.dto.PaymentResponse;
 import com.coresolution.consultation.entity.Payment;
@@ -91,6 +92,31 @@ public interface PaymentService {
      * @throws RuntimeException 결제 미존재·상태전이 불가·주문 동기화 실패 등
      */
     PaymentResponse approveShopOrderPayment(String paymentId);
+
+    /**
+     * 포트원 웹훅 원문·PG 응답을 결제 건에 기록한다 (상태 전이 없음).
+     * <p>짧은 트랜잭션에서 결제 행을 잠그고 다시 읽어 반영한다 — 호출측이 들고 있던
+     * (승인 전) 엔티티 스냅샷으로 저장하지 않으므로 동시 승인과 낙관적 락 충돌이 나지 않는다.</p>
+     *
+     * @param tenantId         테넌트 ID
+     * @param paymentId        결제 ID
+     * @param webhookData      웹훅 원문
+     * @param externalResponse PG 응답(웹훅 data)
+     */
+    void recordWebhookPayload(String tenantId, String paymentId, String webhookData, String externalResponse);
+
+    /**
+     * 쇼핑 주문·결제 건의 커밋된 최신 상태를 새 읽기 트랜잭션에서 조회한다.
+     * <p>외부 트랜잭션 없이(NOT_SUPPORTED) 도는 호출측의 영속성 컨텍스트에 남은 옛 엔티티가 아니라
+     * DB 최신 값을 돌려준다.</p>
+     *
+     * @param tenantId      테넌트 ID
+     * @param orderPublicId 주문 공개 ID
+     * @param paymentId     결제 ID (null 이면 결제 상태 없이 주문 상태만)
+     * @return 주문이 없으면 empty
+     */
+    Optional<ShopOrderPaymentState> findShopOrderPaymentState(
+            String tenantId, String orderPublicId, String paymentId);
     
     /**
      * 결제 취소

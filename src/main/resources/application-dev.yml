@@ -79,7 +79,7 @@ ops:
   admin:
     userId: ${OPS_ADMIN_USERNAME:ops_core}
     username: ${OPS_ADMIN_USERNAME:ops_core}
-    password: ${OPS_ADMIN_PASSWORD:godgod826!}
+    password: ${OPS_ADMIN_PASSWORD}
     role: ${OPS_ADMIN_ROLE:HQ_ADMIN}
 
 # 심리검사 이미지 OCR (Tesseract) — dev 로컬 예시

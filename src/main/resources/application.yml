@@ -616,8 +616,8 @@ ops:
     # OpsAuthController에서 userId로 사용하므로 userId로 설정
     userId: ${OPS_ADMIN_USERNAME:ops_core}
     username: ${OPS_ADMIN_USERNAME:ops_core}  # 하위 호환성
-    # Ops Portal 관리자 비밀번호 (환경 변수 또는 프로파일별 기본값 사용)
-    password: ${OPS_ADMIN_PASSWORD:godgod826!}
+    # Ops Portal 관리자 비밀번호 — env 전용(기본값 없음). 미설정 시 Ops 로그인 거부
+    password: ${OPS_ADMIN_PASSWORD:}
     # Ops Portal 관리자 역할 (환경 변수 또는 프로파일별 기본값 사용)
     role: ${OPS_ADMIN_ROLE:HQ_ADMIN}
 

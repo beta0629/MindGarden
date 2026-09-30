@@ -28,7 +28,7 @@ public class AuthService {
         JwtTokenService jwtTokenService,
         PasswordEncoder passwordEncoder,
         @Value("${security.ops.username:ops-admin}") String opsUsername,
-        @Value("${security.ops.password:change-me}") String opsPassword,
+        @Value("${security.ops.password:}") String opsPassword,
         @Value("${security.ops.default-role:HQ_ADMIN}") String defaultRole,
         @Value("${security.jwt.expires-in-seconds:3600}") long expirySeconds
     ) {
@@ -74,6 +74,10 @@ public class AuthService {
     }
 
     private boolean passwordMatches(String rawPassword) {
+        if (opsPassword == null || opsPassword.isBlank()) {
+            log.error("Ops 로그인 거부: 환경 변수 OPS_ADMIN_PASSWORD 미설정");
+            return false;
+        }
         if (opsPassword.startsWith("{bcrypt}")) {
             String encoded = opsPassword.substring("{bcrypt}".length());
             return passwordEncoder.matches(rawPassword, encoded);

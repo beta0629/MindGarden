@@ -74,7 +74,7 @@ security:
     expires-in-seconds: ${SECURITY_JWT_EXPIRES:3600}
   ops:
     username: ${OPS_ADMIN_USERNAME:ops_core}
-    password: ${OPS_ADMIN_PASSWORD:godgod826!}
+    password: ${OPS_ADMIN_PASSWORD}
     default-role: ${OPS_ADMIN_ROLE:HQ_ADMIN}
 
 # 로깅 설정

@@ -60,7 +60,6 @@ public final class PaymentConstants {
     // Webhook 관련
     public static final String WEBHOOK_HEADER_SIGNATURE = "X-Payment-Signature";
     public static final String WEBHOOK_HEADER_TIMESTAMP = "X-Payment-Timestamp";
-    public static final String WEBHOOK_SECRET_KEY = "webhook_secret_key";
     
     // API 인증
     public static final String API_KEY_HEADER = "Authorization";
@@ -83,7 +82,6 @@ public final class PaymentConstants {
     public static final String SUCCESS_PAYMENT_APPROVED = "결제가 승인되었습니다.";
     public static final String SUCCESS_PAYMENT_CANCELLED = "결제가 취소되었습니다.";
     public static final String SUCCESS_PAYMENT_REFUNDED = "결제가 환불되었습니다.";
-    public static final String SUCCESS_WEBHOOK_VERIFIED = "Webhook이 검증되었습니다.";
     
     // API 관련
     public static final String WEBHOOK_SIGNATURE_HEADER = "X-Webhook-Signature";

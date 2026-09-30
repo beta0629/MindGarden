@@ -8,7 +8,6 @@ import java.util.Map;
 import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.dto.PaymentRequest;
 import com.coresolution.consultation.dto.PaymentResponse;
-import com.coresolution.consultation.dto.PaymentWebhookRequest;
 import com.coresolution.consultation.entity.Payment;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.service.DynamicPermissionService;
@@ -46,7 +45,7 @@ import lombok.extern.slf4j.Slf4j;
  * {@link #assertClientIsSelf(HttpSession, Long)} 로 소유자 검증을 수행한다.
  *
  * <p>SecurityConfig 매트릭스에도 {@code /api/v1/payments/**} 가 {@code authenticated()} 로 등록되어
- * 2중 방어선(매트릭스 + 메서드 가드)을 구성한다. 웹훅 경로(`/webhook`, `/webhooks/**`)는 매트릭스에서
+ * 2중 방어선(매트릭스 + 메서드 가드)을 구성한다. PG 웹훅 경로(`/webhooks/**`, 포트원 V2)만 매트릭스에서
  * permitAll 로 면제된다.
  *
  * @author MindGarden
@@ -312,26 +311,6 @@ public class PaymentController extends BaseApiController {
         Map<String, Object> statistics = paymentService.getPaymentProviderStatistics(start, end);
 
         return success(statistics);
-    }
-
-    /**
-     * 결제 Webhook 엔드포인트 (PG 콜백, 인증 면제).
-     */
-    @PostMapping("/webhook")
-    @PreAuthorize("permitAll()")
-    public ResponseEntity<ApiResponse<Map<String, Object>>> handleWebhook(@RequestBody PaymentWebhookRequest webhookRequest) {
-        log.info("Webhook 수신: {}", webhookRequest.getPaymentId());
-
-        boolean success = paymentService.processWebhook(webhookRequest);
-
-        if (!success) {
-            throw new RuntimeException("Webhook 처리 실패");
-        }
-
-        Map<String, Object> data = new HashMap<>();
-        data.put("message", "Webhook 처리 완료");
-
-        return success(data);
     }
 
     /**

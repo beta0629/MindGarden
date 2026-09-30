@@ -362,13 +362,17 @@ runs:
             echo "ℹ️ DB FAIL-FAST 가드 비활성 (db_fail_fast=false) — DB 키가 없는 운영 상수 파일(${PROD_ENV_FILE##*/}) 호출 컨텍스트."
           fi
 
-          # 5) 값 노출 없이 길이만 표시 (Secret 보안 — 절대 echo 금지)
-          echo "✅ ${STEP_NAME} 갱신 완료 — 길이만 표시:"
+          # 5) 존재 여부만 표시 (Secret 보안 — 값·길이 echo 금지)
+          echo "✅ ${STEP_NAME} 갱신 완료 — 존재 여부만 표시:"
           for k in $KEYS_STR; do
             _line=$(sudo grep -E "^[[:space:]]*${k}=" "$PROD_ENV_FILE" 2>/dev/null | tail -n1 || true)
             if [ -n "$_line" ]; then
               _val=$(printf '%s' "$_line" | sed -n 's/^[^=]*=//p' | sed -E 's/^"(.*)"$/\1/' | sed -E "s/^'(.*)'$/\1/" | tr -d '\r')
-              printf '   %s = (%d chars)\n' "$k" "${#_val}"
+              if [ -n "$_val" ]; then
+                printf '   %s = SET\n' "$k"
+              else
+                printf '   %s = EMPTY\n' "$k"
+              fi
             fi
           done
 

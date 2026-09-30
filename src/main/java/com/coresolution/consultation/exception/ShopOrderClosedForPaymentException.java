@@ -30,7 +30,17 @@ public class ShopOrderClosedForPaymentException extends IllegalStateException {
      */
     protected ShopOrderClosedForPaymentException(
             String messageFormat, String orderPublicId, ShopClientOrderStatus orderStatus) {
-        super(String.format(messageFormat, orderPublicId, orderStatus));
+        this(orderPublicId, orderStatus, String.format(messageFormat, orderPublicId, orderStatus));
+    }
+
+    /**
+     * @param orderPublicId 주문 공개 ID
+     * @param orderStatus   승인을 거부한 시점의 주문 상태
+     * @param message       완성된 예외 메시지
+     */
+    protected ShopOrderClosedForPaymentException(
+            String orderPublicId, ShopClientOrderStatus orderStatus, String message) {
+        super(message);
         this.orderPublicId = orderPublicId;
         this.orderStatus = orderStatus;
     }

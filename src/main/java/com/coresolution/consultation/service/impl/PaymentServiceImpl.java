@@ -2,11 +2,9 @@ package com.coresolution.consultation.service.impl;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import com.coresolution.consultation.constant.FinancialTransactionConstants;
@@ -21,6 +19,7 @@ import com.coresolution.consultation.entity.ShopClientOrder;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.exception.ShopDuplicatePaymentException;
 import com.coresolution.consultation.exception.ShopOrderClosedForPaymentException;
+import com.coresolution.consultation.exception.ShopPaymentNotApprovableException;
 import com.coresolution.consultation.service.ShopLatePaymentOutcome;
 import com.coresolution.consultation.service.ShopOrderPaymentState;
 import com.coresolution.consultation.service.ShopLatePaymentRefundService;
@@ -38,7 +37,9 @@ import com.coresolution.consultation.service.PaymentService;
 import com.coresolution.consultation.service.ReserveFundService;
 import com.coresolution.consultation.service.StatisticsService;
 import com.coresolution.consultation.service.portone.PortOneV2PaymentVerifyService;
+import com.coresolution.consultation.service.shop.ShopPaymentApprovalPolicy;
 import com.coresolution.consultation.util.ConsultationMessageTypeCodes;
+import com.coresolution.consultation.util.OutsideTransactionScope;
 import com.coresolution.consultation.dto.ConsultantClientMappingCreateRequest;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.security.TenantAccessControlService;
@@ -444,7 +445,13 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
         // 주문 → 결제 순서: 주문을 잠근 뒤 결제 행을 잠그고 최신 커밋 값으로 다시 읽는다
         paymentRepository.refreshWithLock(payment);
         if (lockedOrder.isPresent() && !isApprovableOnLockedOrder(payment, lockedOrder.get())) {
-            throw new ShopOrderClosedForPaymentException(payment.getOrderId(), lockedOrder.get().getStatus());
+            ShopClientOrderStatus lockedStatus = lockedOrder.get().getStatus();
+            if (ShopPaymentApprovalPolicy.isOpenOrder(lockedStatus)) {
+                // H9b: 열린 주문이지만 결제 건이 승인 불가 — 호출측이 PG 자동 취소(주문은 열린 채 유지)
+                throw new ShopPaymentNotApprovableException(
+                        payment.getPaymentId(), payment.getStatus(), payment.getOrderId(), lockedStatus);
+            }
+            throw new ShopOrderClosedForPaymentException(payment.getOrderId(), lockedStatus);
         }
         if (lockedOrder.isPresent() && isDuplicatePaymentOnPaidOrder(tenantId, payment, lockedOrder.get())) {
             // 이중 결제: 주문은 이미 다른 결제로 PAID — 이 결제는 승인하지 않고 호출측이 PG 자동 취소
@@ -472,36 +479,27 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
         return buildPaymentResponse(payment, null);
     }
 
-    /** 쇼핑 결제 — 이 상태에서 APPROVED 로 뒤집지 않는다 */
-    private static final Set<Payment.PaymentStatus> NON_APPROVABLE_SHOP_PAYMENT_STATUSES = EnumSet.of(
-            Payment.PaymentStatus.CANCELLED,
-            Payment.PaymentStatus.EXPIRED,
-            Payment.PaymentStatus.REFUNDED,
-            Payment.PaymentStatus.REFUND_REQUIRED);
-
-    /** 결제 승인을 받을 수 있는 열린 쇼핑 주문 상태 */
-    private static final Set<ShopClientOrderStatus> OPEN_SHOP_ORDER_STATUSES =
-            EnumSet.of(ShopClientOrderStatus.CREATED, ShopClientOrderStatus.PENDING_PAYMENT);
-
     /**
      * 잠근 주문 기준 승인 가능 여부.
      * <p>H9: 주문이 열려 있고 결제 행만 EXPIRED 이면 금액·주문이 일치할 때 주문 열림을 기준으로 승인한다.
-     * 주문이 CANCELLED/EXPIRED 면 승인하지 않는다(늦은 PAID 자동 환불 경로). 닫힌 주문은 되살리지 않는다.</p>
+     * 주문이 CANCELLED/EXPIRED 면 승인하지 않는다(늦은 PAID 자동 환불 경로). 닫힌 주문은 되살리지 않는다.
+     * H9b: EXPIRED + 금액 불일치 등 승인 불가 결제는 false (호출측이 PG 자동 취소).</p>
      */
     private boolean isApprovableOnLockedOrder(Payment payment, ShopClientOrder order) {
         if (ShopLatePaymentConstants.isClosedOrder(order.getStatus())) {
             return false;
         }
-        if (payment.getStatus() == Payment.PaymentStatus.EXPIRED
-                && OPEN_SHOP_ORDER_STATUSES.contains(order.getStatus())
-                && order.getPublicId() != null
-                && order.getPublicId().equals(payment.getOrderId())) {
-            requireAmountMatchesOrder(payment, order);
+        if (ShopPaymentApprovalPolicy.isExpiredPaymentOnOpenOrder(payment, order)) {
+            if (!ShopPaymentApprovalPolicy.amountMatchesOrder(payment, order)) {
+                log.warn(String.format(PaymentConstants.ERROR_SHOP_PAYMENT_AMOUNT_MISMATCH_FMT,
+                        payment.getPaymentId(), payment.getAmount(), order.getCashDueMinor()));
+                return false;
+            }
             log.info("쇼핑 결제 EXPIRED + 주문 열림 — 주문 기준 승인: paymentId={}, orderPublicId={}, orderStatus={}",
                     payment.getPaymentId(), order.getPublicId(), order.getStatus());
             return true;
         }
-        return !NON_APPROVABLE_SHOP_PAYMENT_STATUSES.contains(payment.getStatus());
+        return !ShopPaymentApprovalPolicy.NON_APPROVABLE_PAYMENT_STATUSES.contains(payment.getStatus());
     }
 
     /**
@@ -540,6 +538,22 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
      * {@inheritDoc}
      */
     @Override
+    public void recordPortOneCancelEvidence(String tenantId, String paymentId) {
+        paymentRepository.findByTenantIdAndPaymentIdAndIsDeletedFalse(tenantId, paymentId).ifPresent(payment -> {
+            paymentRepository.refreshWithLock(payment);
+            if (payment.getCancelledAt() == null) {
+                payment.setCancelledAt(LocalDateTime.now());
+                paymentRepository.save(payment);
+                log.info("PortOne 취소 증거(트랜잭션 밖 확인) → cancelledAt 기록: tenantId={}, paymentId={}",
+                        tenantId, paymentId);
+            }
+        });
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = true)
     public Optional<ShopOrderPaymentState> findShopOrderPaymentState(
             String tenantId, String orderPublicId, String paymentId) {
@@ -553,20 +567,10 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
                                         .orElse(null)));
     }
 
-    private static void requireAmountMatchesOrder(Payment payment, ShopClientOrder order) {
-        Long cashDue = order.getCashDueMinor();
-        if (payment.getAmount() == null || cashDue == null
-                || payment.getAmount().compareTo(BigDecimal.valueOf(cashDue)) != 0) {
-            throw new IllegalStateException(String.format(
-                    PaymentConstants.ERROR_SHOP_PAYMENT_AMOUNT_MISMATCH_FMT,
-                    payment.getPaymentId(), payment.getAmount(), cashDue));
-        }
-    }
-
     /** 취소·만료·환불된 결제를 APPROVED 로 되살리지 않는다 (관리자 상태 변경 API·레거시 웹훅 공통) */
     private static void rejectApprovalFromClosedStatus(Payment payment, Payment.PaymentStatus newStatus) {
         if (newStatus == Payment.PaymentStatus.APPROVED
-                && NON_APPROVABLE_SHOP_PAYMENT_STATUSES.contains(payment.getStatus())) {
+                && ShopPaymentApprovalPolicy.NON_APPROVABLE_PAYMENT_STATUSES.contains(payment.getStatus())) {
             throw new IllegalStateException(String.format(
                     PaymentConstants.ERROR_APPROVE_FROM_CLOSED_STATUS_FMT, payment.getStatus()));
         }
@@ -864,6 +868,11 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
     @Override
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public boolean verifyPayment(String paymentId, BigDecimal amount) {
+        // NOT_SUPPORTED 동기화 범위에 EntityManager 가 묶이면 PortOne 조회 동안 커넥션을 쥐므로 범위 밖에서 처리
+        return OutsideTransactionScope.call(() -> doVerifyPayment(paymentId, amount));
+    }
+
+    private boolean doVerifyPayment(String paymentId, BigDecimal amount) {
         log.info("결제 검증: {}, 금액: {}", paymentId, amount);
         
         String tenantId = TenantContextHolder.getRequiredTenantId();
@@ -891,6 +900,12 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
                 if (shopOrder && isLatePaymentHandled(tenantId, paymentId)) {
                     return false;
                 }
+                // H9b: 열린 주문인데 결제 건이 승인 불가 — 주문은 열린 채 이 결제만 PG 자동 취소
+                if (shopOrder && raced instanceof ShopPaymentNotApprovableException
+                        && isHandledOutcome(shopLatePaymentRefundService.refundUnapprovableOnOpenOrder(
+                                tenantId, paymentId), paymentId)) {
+                    return false;
+                }
                 throw raced;
             }
         }
@@ -901,11 +916,14 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
 
     /** 닫힌 주문 늦은 결제면 가드가 PG 자동 취소(별도 짧은 트랜잭션들)하고 true */
     private boolean isLatePaymentHandled(String tenantId, String paymentId) {
-        ShopLatePaymentOutcome lateOutcome = shopLatePaymentRefundService.refundIfOrderClosed(tenantId, paymentId);
+        return isHandledOutcome(shopLatePaymentRefundService.refundIfOrderClosed(tenantId, paymentId), paymentId);
+    }
+
+    private boolean isHandledOutcome(ShopLatePaymentOutcome lateOutcome, String paymentId) {
         if (lateOutcome == null || lateOutcome == ShopLatePaymentOutcome.NOT_APPLICABLE) {
             return false;
         }
-        log.warn("결제 검증: 닫힌 주문 늦은 결제 outcome={}, paymentId={}", lateOutcome, paymentId);
+        log.warn("결제 검증: 늦은·승인 불가 결제 자동 취소 outcome={}, paymentId={}", lateOutcome, paymentId);
         return true;
     }
 

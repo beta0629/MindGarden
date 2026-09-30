@@ -3,11 +3,13 @@ package com.coresolution.consultation.service.impl;
 import com.coresolution.consultation.constant.ShopClientOrderStatus;
 import com.coresolution.consultation.constant.ShopLatePaymentConstants;
 import com.coresolution.consultation.constant.ShopOrderReconcileConstants;
+import com.coresolution.consultation.constant.ShopRefundConstants;
 import com.coresolution.consultation.dto.shop.admin.ShopOrderReconcilePaymentResponse;
 import com.coresolution.consultation.entity.Payment;
 import com.coresolution.consultation.entity.ShopClientOrder;
 import com.coresolution.consultation.exception.ShopDuplicatePaymentException;
 import com.coresolution.consultation.exception.ShopOrderClosedForPaymentException;
+import com.coresolution.consultation.exception.ShopPaymentNotApprovableException;
 import com.coresolution.consultation.repository.PaymentRepository;
 import com.coresolution.consultation.repository.ShopClientOrderRepository;
 import com.coresolution.consultation.service.AdminShopOrderReconcileService;
@@ -18,6 +20,7 @@ import com.coresolution.consultation.service.ShopLatePaymentRefundService;
 import com.coresolution.consultation.service.ShopOrderPaymentState;
 import com.coresolution.consultation.service.portone.PortOneV2PaymentLookupService;
 import com.coresolution.consultation.service.portone.PortOneV2PaymentVerifyService;
+import com.coresolution.consultation.util.OutsideTransactionScope;
 import java.math.BigDecimal;
 import java.util.Comparator;
 import java.util.List;
@@ -60,6 +63,13 @@ public class AdminShopOrderReconcileServiceImpl implements AdminShopOrderReconci
     @Override
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public ShopOrderReconcilePaymentResponse reconcilePayment(
+            String tenantId, String orderPublicId, String paymentId, String cardApprovalNumber) {
+        // NOT_SUPPORTED 동기화 범위에 EntityManager 가 묶이면 PortOne 호출 동안 커넥션을 쥐므로 범위 밖에서 처리
+        return OutsideTransactionScope.call(
+                () -> doReconcilePayment(tenantId, orderPublicId, paymentId, cardApprovalNumber));
+    }
+
+    private ShopOrderReconcilePaymentResponse doReconcilePayment(
             String tenantId, String orderPublicId, String paymentId, String cardApprovalNumber) {
         requireNonBlank(tenantId, ShopOrderReconcileConstants.MSG_TENANT_REQUIRED);
         requireNonBlank(orderPublicId, ShopOrderReconcileConstants.MSG_ORDER_PUBLIC_ID_REQUIRED);
@@ -126,7 +136,14 @@ public class AdminShopOrderReconcileServiceImpl implements AdminShopOrderReconci
             clientShopCheckoutService.completeOrderOnPaymentApproved(tenantId, orderPublicId);
         } catch (ShopDuplicatePaymentException duplicate) {
             // 검증 뒤 다른 결제로 주문이 먼저 PAID → 이 결제는 이중 결제로 PG 자동 취소
-            return reconcileDuplicatePayment(tenantId, orderPublicId, trimmedPaymentId, payment);
+            return reconcileAutoRefundPayment(tenantId, orderPublicId, trimmedPaymentId,
+                    shopLatePaymentRefundService.refundIfOrderClosed(tenantId, trimmedPaymentId),
+                    payment, ShopClientOrderStatus.PAID);
+        } catch (ShopPaymentNotApprovableException notApprovable) {
+            // H9b: 주문은 열려 있으나 결제 건이 승인 불가 — PortOne PAID 확인됨, 이 결제만 PG 자동 취소(주문은 열린 채)
+            return reconcileAutoRefundPayment(tenantId, orderPublicId, trimmedPaymentId,
+                    shopLatePaymentRefundService.refundUnapprovableOnOpenOrder(tenantId, trimmedPaymentId),
+                    payment, notApprovable.getOrderStatus());
         } catch (ShopOrderClosedForPaymentException | OptimisticLockingFailureException raced) {
             ShopClientOrder current = shopClientOrderRepository
                     .findByTenantIdAndPublicId(tenantId, orderPublicId)
@@ -185,22 +202,22 @@ public class AdminShopOrderReconcileServiceImpl implements AdminShopOrderReconci
     }
 
     /**
-     * PAID 주문의 이중 결제 — PortOne PAID 를 확인한 경우에만 PG 자동 취소(REFUNDED / 실패 시 REFUND_REQUIRED).
-     * 주문은 PAID 그대로 두고, 다른(정상) 결제는 건드리지 않는다.
+     * PAID 주문의 이중 결제, 또는 열린 주문의 승인 불가 결제(H9b) — PortOne PAID 를 확인한 경우에만
+     * PG 자동 취소(REFUNDED / 실패 시 REFUND_REQUIRED). 주문 상태는 바꾸지 않고, 다른(정상) 결제는 건드리지 않는다.
      */
-    private ShopOrderReconcilePaymentResponse reconcileDuplicatePayment(
-            String tenantId, String orderPublicId, String paymentId, Payment fallbackPayment) {
-        ShopLatePaymentOutcome outcome = shopLatePaymentRefundService.refundIfOrderClosed(tenantId, paymentId);
+    private ShopOrderReconcilePaymentResponse reconcileAutoRefundPayment(
+            String tenantId, String orderPublicId, String paymentId, ShopLatePaymentOutcome outcome,
+            Payment fallbackPayment, ShopClientOrderStatus fallbackOrderStatus) {
         if (outcome == null || outcome == ShopLatePaymentOutcome.NOT_APPLICABLE) {
             throw new IllegalStateException(ShopOrderReconcileConstants.MSG_ORDER_STATUS_NOT_ALLOWED);
         }
-        log.warn("쇼핑 주문 이중 결제 자동 환불: tenantId={}, orderPublicId={}, paymentId={}, outcome={}",
+        log.warn("쇼핑 주문 이중·승인 불가 결제 자동 환불: tenantId={}, orderPublicId={}, paymentId={}, outcome={}",
                 tenantId, orderPublicId, paymentId, outcome);
         Optional<ShopOrderPaymentState> latest = latestState(tenantId, orderPublicId, paymentId);
         return ShopOrderReconcilePaymentResponse.builder()
                 .orderPublicId(orderPublicId)
                 .paymentId(paymentId)
-                .orderStatus(latest.map(ShopOrderPaymentState::orderStatus).orElse(ShopClientOrderStatus.PAID))
+                .orderStatus(latest.map(ShopOrderPaymentState::orderStatus).orElse(fallbackOrderStatus))
                 .paymentStatus(latest.map(ShopOrderPaymentState::paymentStatus)
                         .orElseGet(() -> outcomeToPaymentStatus(outcome, fallbackPayment)))
                 .recovered(false)
@@ -282,6 +299,12 @@ public class AdminShopOrderReconcileServiceImpl implements AdminShopOrderReconci
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public ShopOrderReconcilePaymentResponse reconcileRefund(
             String tenantId, String orderPublicId, boolean force) {
+        // NOT_SUPPORTED 동기화 범위에 EntityManager 가 묶이면 PortOne 조회 동안 커넥션을 쥐므로 범위 밖에서 처리
+        return OutsideTransactionScope.call(() -> doReconcileRefund(tenantId, orderPublicId, force));
+    }
+
+    private ShopOrderReconcilePaymentResponse doReconcileRefund(
+            String tenantId, String orderPublicId, boolean force) {
         requireNonBlank(tenantId, ShopOrderReconcileConstants.MSG_TENANT_REQUIRED);
         requireNonBlank(orderPublicId, ShopOrderReconcileConstants.MSG_ORDER_PUBLIC_ID_REQUIRED);
 
@@ -311,8 +334,22 @@ public class AdminShopOrderReconcileServiceImpl implements AdminShopOrderReconci
             return buildReconcileRefundResponse(tenantId, orderPublicId, paymentId, false);
         }
 
-        if (!force && !portOneV2PaymentVerifyService.isCancelledOrPartialCancelled(tenantId, paymentId)) {
+        // PortOne 취소 증거는 여기(트랜잭션 밖)에서 한 번만 확인하고 cancelledAt 으로 남긴다 —
+        // 이후 refundPayment/updatePaymentStatus 의 fail-closed 가드가 트랜잭션 안에서 PortOne 을 다시 부르지 않는다.
+        boolean iamportWithoutCancelEvidence = portOneV2PaymentVerifyService.isIamportPayment(payment)
+                && payment.getCancelledAt() == null;
+        boolean cancelledOnPortOne = (!force || iamportWithoutCancelEvidence)
+                && portOneV2PaymentVerifyService.isCancelledOrPartialCancelled(tenantId, paymentId);
+        if (!force && !cancelledOnPortOne) {
             throw new IllegalStateException(ShopOrderReconcileConstants.MSG_PORTONE_NOT_CANCELLED);
+        }
+        if (iamportWithoutCancelEvidence && requiresPgCancelEvidenceGuard(payment)) {
+            if (!cancelledOnPortOne) {
+                // force 라도 IAMPORT 결제는 PortOne 취소 증거 없이 REFUNDED 로 전환하지 않는다(가드와 같은 결과)
+                throw new IllegalStateException(String.format(
+                        ShopRefundConstants.MSG_PG_CANCEL_NO_EVIDENCE_FMT, paymentId));
+            }
+            paymentService.recordPortOneCancelEvidence(tenantId, paymentId);
         }
 
         String refundReason = force
@@ -350,6 +387,15 @@ public class AdminShopOrderReconcileServiceImpl implements AdminShopOrderReconci
                 response.getPaymentStatus(),
                 response.isRecovered());
         return response;
+    }
+
+    /**
+     * 이 결제 상태에서 환불 정합이 {@code refundPayment}/{@code updatePaymentStatus} 를 타는지
+     * (= PortOne 취소 증거 fail-closed 가드 대상인지). CANCELLED/REFUNDED 는 clinic 체인만 맞춘다.
+     */
+    private static boolean requiresPgCancelEvidenceGuard(Payment payment) {
+        return payment.getStatus() != Payment.PaymentStatus.CANCELLED
+                && payment.getStatus() != Payment.PaymentStatus.REFUNDED;
     }
 
     /**
@@ -444,7 +490,9 @@ public class AdminShopOrderReconcileServiceImpl implements AdminShopOrderReconci
                 if (paid.isEmpty()) {
                     throw new IllegalStateException(ShopOrderReconcileConstants.MSG_PORTONE_VERIFY_FAILED);
                 }
-                return reconcileDuplicatePayment(tenantId, order.getPublicId(), payment.getPaymentId(), payment);
+                return reconcileAutoRefundPayment(tenantId, order.getPublicId(), payment.getPaymentId(),
+                        shopLatePaymentRefundService.refundIfOrderClosed(tenantId, payment.getPaymentId()),
+                        payment, ShopClientOrderStatus.PAID);
             }
             payment = paymentRepository
                     .findByTenantIdAndPaymentIdAndIsDeletedFalse(tenantId, payment.getPaymentId())

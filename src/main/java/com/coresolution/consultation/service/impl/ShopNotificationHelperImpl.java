@@ -183,6 +183,31 @@ public class ShopNotificationHelperImpl implements ShopNotificationHelper {
     }
 
     @Override
+    public void notifyUnapprovablePaymentAutoCancelled(
+            String tenantId, ShopClientOrder order, long refundedAmountMinor) {
+        if (!validateOrder(tenantId, order)) {
+            return;
+        }
+        try {
+            sendInAppToClient(
+                    tenantId,
+                    order,
+                    ShopNotificationCopy.INAPP_TITLE_LATE_PAYMENT_AUTO_CANCELLED,
+                    String.format(ShopNotificationCopy.INAPP_BODY_UNAPPROVABLE_PAYMENT_AUTO_CANCELLED_FMT,
+                            order.getPublicId()),
+                    ShopNotificationCopy.MESSAGE_TYPE_PAYMENT);
+        } catch (Exception ex) {
+            log.error("승인 불가 결제 자동 취소 인앱 알림 실패: orderPublicId={}", order.getPublicId(), ex);
+        }
+        try {
+            mobilePushDispatchService.dispatchShopOrderRefunded(
+                    tenantId, order.getClientId(), order.getPublicId(), refundedAmountMinor);
+        } catch (Exception ex) {
+            log.warn("승인 불가 결제 자동 취소 푸시 실패: orderPublicId={}", order.getPublicId(), ex);
+        }
+    }
+
+    @Override
     public void notifyFulfillmentCompleted(
             String tenantId, ShopClientOrder order, Long consultantUserId, String skuCode) {
         if (!validateOrder(tenantId, order)) {

@@ -106,6 +106,15 @@ public interface PaymentService {
     void recordWebhookPayload(String tenantId, String paymentId, String webhookData, String externalResponse);
 
     /**
+     * 트랜잭션 밖에서 확인한 PortOne 취소 증거를 결제 건 {@code cancelledAt} 으로 기록한다 (이미 있으면 유지, 상태 전이 없음).
+     * <p>이후 환불·취소 상태 전이의 fail-closed 가드가 트랜잭션 안에서 PortOne 을 다시 조회하지 않게 한다.</p>
+     *
+     * @param tenantId  테넌트 ID
+     * @param paymentId 결제 ID
+     */
+    void recordPortOneCancelEvidence(String tenantId, String paymentId);
+
+    /**
      * 쇼핑 주문·결제 건의 커밋된 최신 상태를 새 읽기 트랜잭션에서 조회한다.
      * <p>외부 트랜잭션 없이(NOT_SUPPORTED) 도는 호출측의 영속성 컨텍스트에 남은 옛 엔티티가 아니라
      * DB 최신 값을 돌려준다.</p>

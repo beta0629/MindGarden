@@ -46,6 +46,9 @@ public final class ShopNotificationCopy {
     /** 취소·만료된 주문에 늦게 들어온 결제를 PG 전액 취소했을 때 내담자 안내 */
     public static final String INAPP_BODY_LATE_PAYMENT_AUTO_CANCELLED_FMT =
             "주문이 이미 닫혀 결제가 자동 취소됐어요\n주문번호: %s";
+    /** 열린 주문이지만 승인할 수 없는 결제 건에 들어온 PG 승인을 전액 취소했을 때 내담자 안내 */
+    public static final String INAPP_BODY_UNAPPROVABLE_PAYMENT_AUTO_CANCELLED_FMT =
+            "결제를 승인할 수 없어 자동 취소됐어요. 다시 결제해 주세요\n주문번호: %s";
 
     public static final String FALLBACK_ORDER_LABEL = "주문";
 }

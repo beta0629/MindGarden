@@ -86,8 +86,7 @@ import AdminShopOrderDetailModal, {
 import AdminShopRefundConfirmModal from './shop/AdminShopRefundConfirmModal';
 import AdminShopOrderExtendModal from './shop/AdminShopOrderExtendModal';
 import {
-  AdminShopLedgerChip,
-  AdminShopPaymentStatusChip,
+  AdminShopOrderStatusChips,
   AdminShopSessionDelta,
   AdminShopSuiteToast,
   AdminShopTableSkeleton,
@@ -730,8 +729,11 @@ const AdminShopOrdersPage = () => {
                 <SafeText>{item.points > 0 ? formatShopPoints(item.points) : '—'}</SafeText>
               </td>
               <td>
-                <AdminShopLedgerChip state={item.state} daysLeft={item.daysLeft} />
-                <AdminShopPaymentStatusChip paymentStatus={item.raw?.paymentStatus} />
+                <AdminShopOrderStatusChips
+                  state={item.state}
+                  daysLeft={item.daysLeft}
+                  paymentStatus={item.raw?.paymentStatus}
+                />
               </td>
               <td>{renderRowMenu(item)}</td>
             </tr>

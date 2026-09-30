@@ -6,6 +6,7 @@ import com.coresolution.consultation.constant.ShopOrderReconcileConstants;
 import com.coresolution.consultation.dto.shop.admin.ShopOrderReconcilePaymentResponse;
 import com.coresolution.consultation.entity.Payment;
 import com.coresolution.consultation.entity.ShopClientOrder;
+import com.coresolution.consultation.exception.ShopDuplicatePaymentException;
 import com.coresolution.consultation.exception.ShopOrderClosedForPaymentException;
 import com.coresolution.consultation.repository.PaymentRepository;
 import com.coresolution.consultation.repository.ShopClientOrderRepository;
@@ -14,6 +15,7 @@ import com.coresolution.consultation.service.ClientShopCheckoutService;
 import com.coresolution.consultation.service.PaymentService;
 import com.coresolution.consultation.service.ShopLatePaymentOutcome;
 import com.coresolution.consultation.service.ShopLatePaymentRefundService;
+import com.coresolution.consultation.service.ShopOrderPaymentState;
 import com.coresolution.consultation.service.portone.PortOneV2PaymentLookupService;
 import com.coresolution.consultation.service.portone.PortOneV2PaymentVerifyService;
 import java.math.BigDecimal;
@@ -82,7 +84,8 @@ public class AdminShopOrderReconcileServiceImpl implements AdminShopOrderReconci
             return buildIdempotentPaidResponse(tenantId, order, trimmedPaymentId);
         }
         if (ShopLatePaymentConstants.isClosedOrder(order.getStatus())) {
-            return reconcileLatePaymentOnClosedOrder(tenantId, order, trimmedPaymentId, cardApprovalNumber);
+            return reconcileLatePaymentOnClosedOrder(
+                    tenantId, order, order.getStatus(), trimmedPaymentId, cardApprovalNumber);
         }
         if (order.getStatus() == ShopClientOrderStatus.REFUNDED) {
             throw new IllegalArgumentException(ShopOrderReconcileConstants.MSG_ORDER_REFUNDED);
@@ -121,38 +124,98 @@ public class AdminShopOrderReconcileServiceImpl implements AdminShopOrderReconci
             }
             // 멱등: approveShopOrderPayment 동기화와 별도로 SSOT 재호출 (이미 PAID 면 no-op)
             clientShopCheckoutService.completeOrderOnPaymentApproved(tenantId, orderPublicId);
+        } catch (ShopDuplicatePaymentException duplicate) {
+            // 검증 뒤 다른 결제로 주문이 먼저 PAID → 이 결제는 이중 결제로 PG 자동 취소
+            return reconcileDuplicatePayment(tenantId, orderPublicId, trimmedPaymentId, payment);
         } catch (ShopOrderClosedForPaymentException | OptimisticLockingFailureException raced) {
             ShopClientOrder current = shopClientOrderRepository
                     .findByTenantIdAndPublicId(tenantId, orderPublicId)
                     .orElseThrow(() -> raced);
-            if (!ShopLatePaymentConstants.isClosedOrder(current.getStatus())) {
+            // 이 메서드의 영속성 컨텍스트에는 승인 전 주문이 남아 있으므로 닫힘 여부는 커밋된 최신 상태로 판정
+            ShopClientOrderStatus currentStatus = latestState(tenantId, orderPublicId, null)
+                    .map(ShopOrderPaymentState::orderStatus)
+                    .orElse(current.getStatus());
+            if (!ShopLatePaymentConstants.isClosedOrder(currentStatus)) {
                 throw raced;
             }
             // 검증 뒤 주문이 닫힘 → 되살리지 않고 늦은 결제 자동 환불
-            return reconcileLatePaymentOnClosedOrder(tenantId, current, trimmedPaymentId, cardApprovalNumber);
+            return reconcileLatePaymentOnClosedOrder(
+                    tenantId, current, currentStatus, trimmedPaymentId, cardApprovalNumber);
         }
 
-        ShopClientOrder refreshed = shopClientOrderRepository
-                .findByTenantIdAndPublicId(tenantId, orderPublicId)
-                .orElse(order);
-        Payment refreshedPayment = paymentRepository
-                .findByTenantIdAndPaymentIdAndIsDeletedFalse(tenantId, trimmedPaymentId)
-                .orElse(payment);
+        Optional<ShopOrderPaymentState> latest = latestState(tenantId, orderPublicId, trimmedPaymentId);
+        ShopClientOrderStatus orderStatus;
+        Payment.PaymentStatus paymentStatus;
+        if (latest.isPresent()) {
+            orderStatus = latest.get().orderStatus();
+            paymentStatus = latest.get().paymentStatus();
+        } else {
+            orderStatus = shopClientOrderRepository.findByTenantIdAndPublicId(tenantId, orderPublicId)
+                    .orElse(order)
+                    .getStatus();
+            paymentStatus = paymentRepository.findByTenantIdAndPaymentIdAndIsDeletedFalse(tenantId, trimmedPaymentId)
+                    .orElse(payment)
+                    .getStatus();
+        }
 
         log.info(
                 "쇼핑 주문 결제 정합 완료: tenantId={}, orderPublicId={}, paymentId={}, orderStatus={}",
                 tenantId,
                 orderPublicId,
                 trimmedPaymentId,
-                refreshed.getStatus());
+                orderStatus);
 
         return ShopOrderReconcilePaymentResponse.builder()
                 .orderPublicId(orderPublicId)
                 .paymentId(trimmedPaymentId)
-                .orderStatus(refreshed.getStatus())
-                .paymentStatus(refreshedPayment.getStatus())
+                .orderStatus(orderStatus)
+                .paymentStatus(paymentStatus)
                 .recovered(false)
                 .build();
+    }
+
+    /**
+     * 커밋된 최신 주문·결제 상태 (새 읽기 트랜잭션). 이 서비스는 NOT_SUPPORTED 로 도는 동안 영속성 컨텍스트가
+     * 유지돼 리포지토리 재조회가 옛 엔티티를 돌려줄 수 있으므로 응답·판정은 이 값을 우선한다.
+     */
+    private Optional<ShopOrderPaymentState> latestState(String tenantId, String orderPublicId, String paymentId) {
+        Optional<ShopOrderPaymentState> latest =
+                paymentService.findShopOrderPaymentState(tenantId, orderPublicId, paymentId);
+        return latest != null ? latest : Optional.empty();
+    }
+
+    /**
+     * PAID 주문의 이중 결제 — PortOne PAID 를 확인한 경우에만 PG 자동 취소(REFUNDED / 실패 시 REFUND_REQUIRED).
+     * 주문은 PAID 그대로 두고, 다른(정상) 결제는 건드리지 않는다.
+     */
+    private ShopOrderReconcilePaymentResponse reconcileDuplicatePayment(
+            String tenantId, String orderPublicId, String paymentId, Payment fallbackPayment) {
+        ShopLatePaymentOutcome outcome = shopLatePaymentRefundService.refundIfOrderClosed(tenantId, paymentId);
+        if (outcome == null || outcome == ShopLatePaymentOutcome.NOT_APPLICABLE) {
+            throw new IllegalStateException(ShopOrderReconcileConstants.MSG_ORDER_STATUS_NOT_ALLOWED);
+        }
+        log.warn("쇼핑 주문 이중 결제 자동 환불: tenantId={}, orderPublicId={}, paymentId={}, outcome={}",
+                tenantId, orderPublicId, paymentId, outcome);
+        Optional<ShopOrderPaymentState> latest = latestState(tenantId, orderPublicId, paymentId);
+        return ShopOrderReconcilePaymentResponse.builder()
+                .orderPublicId(orderPublicId)
+                .paymentId(paymentId)
+                .orderStatus(latest.map(ShopOrderPaymentState::orderStatus).orElse(ShopClientOrderStatus.PAID))
+                .paymentStatus(latest.map(ShopOrderPaymentState::paymentStatus)
+                        .orElseGet(() -> outcomeToPaymentStatus(outcome, fallbackPayment)))
+                .recovered(false)
+                .build();
+    }
+
+    private static Payment.PaymentStatus outcomeToPaymentStatus(ShopLatePaymentOutcome outcome, Payment fallback) {
+        if (outcome == ShopLatePaymentOutcome.REFUNDED || outcome == ShopLatePaymentOutcome.ALREADY_REFUNDED) {
+            return Payment.PaymentStatus.REFUNDED;
+        }
+        if (outcome == ShopLatePaymentOutcome.REFUND_REQUIRED
+                || outcome == ShopLatePaymentOutcome.REFUND_IN_PROGRESS) {
+            return Payment.PaymentStatus.REFUND_REQUIRED;
+        }
+        return fallback != null ? fallback.getStatus() : null;
     }
 
     /**
@@ -160,9 +223,10 @@ public class AdminShopOrderReconcileServiceImpl implements AdminShopOrderReconci
      * PG 자동 환불을 (재)시도한다. 이 트랜잭션에서는 주문·결제 행을 수정하지 않는다(가드가 별도 트랜잭션으로 반영).
      */
     private ShopOrderReconcilePaymentResponse reconcileLatePaymentOnClosedOrder(
-            String tenantId, ShopClientOrder order, String paymentId, String cardApprovalNumber) {
+            String tenantId, ShopClientOrder order, ShopClientOrderStatus closedStatus, String paymentId,
+            String cardApprovalNumber) {
         String orderPublicId = order.getPublicId();
-        String closedOrderMessage = order.getStatus() == ShopClientOrderStatus.CANCELLED
+        String closedOrderMessage = closedStatus == ShopClientOrderStatus.CANCELLED
                 ? ShopOrderReconcileConstants.MSG_ORDER_CANCELLED
                 : ShopLatePaymentConstants.MSG_RECONCILE_LATE_PAYMENT_NOT_FOUND;
         String targetPaymentId = paymentId != null
@@ -190,20 +254,22 @@ public class AdminShopOrderReconcileServiceImpl implements AdminShopOrderReconci
         if (outcome == null || outcome == ShopLatePaymentOutcome.NOT_APPLICABLE) {
             throw new IllegalStateException(ShopOrderReconcileConstants.MSG_ORDER_STATUS_NOT_ALLOWED);
         }
-        Payment.PaymentStatus paymentStatus = outcome == ShopLatePaymentOutcome.REFUND_REQUIRED
-                ? Payment.PaymentStatus.REFUND_REQUIRED
-                : Payment.PaymentStatus.REFUNDED;
+        // 가드가 별도 트랜잭션에서 확정한 값을 다시 읽어 응답 (최신 상태)
+        Optional<ShopOrderPaymentState> latest = latestState(tenantId, orderPublicId, targetPaymentId);
+        ShopClientOrderStatus orderStatus = latest.map(ShopOrderPaymentState::orderStatus).orElse(closedStatus);
+        Payment.PaymentStatus paymentStatus = latest.map(ShopOrderPaymentState::paymentStatus)
+                .orElseGet(() -> outcomeToPaymentStatus(outcome, payment));
         log.info(
                 "쇼핑 주문 늦은 결제 자동 환불 재처리: tenantId={}, orderPublicId={}, paymentId={}, orderStatus={}, outcome={}",
                 tenantId,
                 orderPublicId,
                 targetPaymentId,
-                order.getStatus(),
+                orderStatus,
                 outcome);
         return ShopOrderReconcilePaymentResponse.builder()
                 .orderPublicId(orderPublicId)
                 .paymentId(targetPaymentId)
-                .orderStatus(order.getStatus())
+                .orderStatus(orderStatus)
                 .paymentStatus(paymentStatus)
                 .recovered(false)
                 .build();
@@ -308,18 +374,28 @@ public class AdminShopOrderReconcileServiceImpl implements AdminShopOrderReconci
 
     private ShopOrderReconcilePaymentResponse buildReconcileRefundResponse(
             String tenantId, String orderPublicId, String paymentId, boolean recovered) {
-        ShopClientOrder refreshed = shopClientOrderRepository
-                .findByTenantIdAndPublicId(tenantId, orderPublicId)
-                .orElseThrow(() -> new IllegalArgumentException(ShopOrderReconcileConstants.MSG_ORDER_NOT_FOUND));
-        Payment refreshedPayment = paymentRepository
-                .findByTenantIdAndPaymentIdAndIsDeletedFalse(tenantId, paymentId)
-                .orElse(null);
+        Optional<ShopOrderPaymentState> latest = latestState(tenantId, orderPublicId, paymentId);
+        ShopClientOrderStatus orderStatus;
+        Payment.PaymentStatus paymentStatus;
+        if (latest.isPresent()) {
+            orderStatus = latest.get().orderStatus();
+            paymentStatus = latest.get().paymentStatus();
+        } else {
+            ShopClientOrder refreshed = shopClientOrderRepository
+                    .findByTenantIdAndPublicId(tenantId, orderPublicId)
+                    .orElseThrow(() -> new IllegalArgumentException(ShopOrderReconcileConstants.MSG_ORDER_NOT_FOUND));
+            orderStatus = refreshed.getStatus();
+            paymentStatus = paymentRepository
+                    .findByTenantIdAndPaymentIdAndIsDeletedFalse(tenantId, paymentId)
+                    .map(Payment::getStatus)
+                    .orElse(null);
+        }
         return ShopOrderReconcilePaymentResponse.builder()
                 .orderPublicId(orderPublicId)
                 .paymentId(paymentId)
-                .orderStatus(refreshed.getStatus())
-                .paymentStatus(refreshedPayment != null ? refreshedPayment.getStatus() : null)
-                .recovered(recovered && refreshed.getStatus() == ShopClientOrderStatus.REFUNDED)
+                .orderStatus(orderStatus)
+                .paymentStatus(paymentStatus)
+                .recovered(recovered && orderStatus == ShopClientOrderStatus.REFUNDED)
                 .build();
     }
 
@@ -359,17 +435,31 @@ public class AdminShopOrderReconcileServiceImpl implements AdminShopOrderReconci
         if (payment != null
                 && payment.getStatus() != Payment.PaymentStatus.APPROVED
                 && paymentId.equals(payment.getPaymentId())) {
-            paymentService.approveShopOrderPayment(payment.getPaymentId());
+            try {
+                paymentService.approveShopOrderPayment(payment.getPaymentId());
+            } catch (ShopDuplicatePaymentException duplicate) {
+                // 주문은 이미 다른 결제로 PAID — PortOne PAID 확인 시에만 이중 결제 자동 취소
+                Optional<String> paid = portOneV2PaymentVerifyService.verifyPaidAmountBody(
+                        tenantId, payment.getPaymentId(), BigDecimal.valueOf(order.getCashDueMinor()));
+                if (paid.isEmpty()) {
+                    throw new IllegalStateException(ShopOrderReconcileConstants.MSG_PORTONE_VERIFY_FAILED);
+                }
+                return reconcileDuplicatePayment(tenantId, order.getPublicId(), payment.getPaymentId(), payment);
+            }
             payment = paymentRepository
                     .findByTenantIdAndPaymentIdAndIsDeletedFalse(tenantId, payment.getPaymentId())
                     .orElse(payment);
         }
 
+        String responsePaymentId = payment != null ? payment.getPaymentId() : paymentId;
+        Optional<ShopOrderPaymentState> latest = latestState(tenantId, order.getPublicId(), responsePaymentId);
+        Payment fallbackPayment = payment;
         return ShopOrderReconcilePaymentResponse.builder()
                 .orderPublicId(order.getPublicId())
-                .paymentId(payment != null ? payment.getPaymentId() : paymentId)
-                .orderStatus(ShopClientOrderStatus.PAID)
-                .paymentStatus(payment != null ? payment.getStatus() : null)
+                .paymentId(responsePaymentId)
+                .orderStatus(latest.map(ShopOrderPaymentState::orderStatus).orElse(ShopClientOrderStatus.PAID))
+                .paymentStatus(latest.map(ShopOrderPaymentState::paymentStatus)
+                        .orElseGet(() -> fallbackPayment != null ? fallbackPayment.getStatus() : null))
                 .recovered(false)
                 .build();
     }

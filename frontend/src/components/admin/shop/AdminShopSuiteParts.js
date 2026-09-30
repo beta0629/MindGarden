@@ -79,6 +79,32 @@ AdminShopPaymentStatusChip.defaultProps = {
 };
 
 /**
+ * 주문 목록 상태 칸 — 장부 칩과 결제 상태 칩(환불 필요 등)을 세로로 쌓아 좁은 칸에서 잘리지 않게 한다.
+ *
+ * @param {{ state: string, daysLeft?: number|null, paymentStatus?: string|null }} props
+ * @returns {JSX.Element}
+ */
+export function AdminShopOrderStatusChips({ state, daysLeft, paymentStatus }) {
+  return (
+    <span className="admin-shop-suite__cell-stack admin-shop-suite__cell-stack--chips">
+      <AdminShopLedgerChip state={state} daysLeft={daysLeft} />
+      <AdminShopPaymentStatusChip paymentStatus={paymentStatus} />
+    </span>
+  );
+}
+
+AdminShopOrderStatusChips.propTypes = {
+  state: PropTypes.string.isRequired,
+  daysLeft: PropTypes.number,
+  paymentStatus: PropTypes.string
+};
+
+AdminShopOrderStatusChips.defaultProps = {
+  daysLeft: null,
+  paymentStatus: null
+};
+
+/**
  * 회기 변화 텍스트 (+N회기 · −N원복 · (+N) 대기/미반영 · (N) 만료 · —).
  *
  * @param {{ kind: string, count: number|null }} delta

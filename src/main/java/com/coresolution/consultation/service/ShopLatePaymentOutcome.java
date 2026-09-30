@@ -14,5 +14,7 @@ public enum ShopLatePaymentOutcome {
     /** 이미 REFUNDED — 취소 API 재호출 없음(멱등) */
     ALREADY_REFUNDED,
     /** PortOne 취소 실패 → 결제 건 REFUND_REQUIRED (웹훅 재시도·관리자 재처리) */
-    REFUND_REQUIRED
+    REFUND_REQUIRED,
+    /** 다른 요청이 PortOne 취소를 선점해 진행 중 — 이번 호출은 취소 API 를 부르지 않음(중복 환불 방지) */
+    REFUND_IN_PROGRESS
 }

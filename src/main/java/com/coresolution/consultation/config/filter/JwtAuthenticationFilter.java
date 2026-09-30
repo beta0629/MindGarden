@@ -1,20 +1,18 @@
 package com.coresolution.consultation.config.filter;
 
 import java.io.IOException;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Date;
 import java.util.List;
 import com.coresolution.consultation.config.DuplicateLoginAccessBlockRegistry;
 import com.coresolution.consultation.constant.LifecycleState;
-import com.coresolution.consultation.constant.SessionManagementConstants;
 import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.repository.UserRepository;
+import com.coresolution.consultation.service.AuthTokenRevocationService;
 import com.coresolution.consultation.service.JwtService;
 import com.coresolution.consultation.service.UserService;
+import com.coresolution.consultation.util.JwtTokenCutoffUtils;
 import com.coresolution.core.constants.SecurityRoleConstants;
 import com.coresolution.core.context.TenantContextHolder;
 import org.springframework.lang.NonNull;
@@ -46,16 +44,19 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final UserService userService;
     private final UserRepository userRepository;
     private final DuplicateLoginAccessBlockRegistry duplicateLoginAccessBlockRegistry;
+    private final AuthTokenRevocationService authTokenRevocationService;
 
     public JwtAuthenticationFilter(
             JwtService jwtService,
             UserService userService,
             UserRepository userRepository,
-            @Nullable DuplicateLoginAccessBlockRegistry duplicateLoginAccessBlockRegistry) {
+            @Nullable DuplicateLoginAccessBlockRegistry duplicateLoginAccessBlockRegistry,
+            @Nullable AuthTokenRevocationService authTokenRevocationService) {
         this.jwtService = jwtService;
         this.userService = userService;
         this.userRepository = userRepository;
         this.duplicateLoginAccessBlockRegistry = duplicateLoginAccessBlockRegistry;
+        this.authTokenRevocationService = authTokenRevocationService;
     }
 
     @Override
@@ -140,10 +141,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                                 filterChain.doFilter(request, response);
                                 return;
                             }
-                            // 중복 로그인 cleanup 후 구 Access JWT 즉시 거부 (Expo·Bearer 피해자 기기)
-                            if (!isOpsApi && isAccessTokenRevokedByDuplicateLogin(user, token)) {
+                            // 계정 전체 종료(강제 로그아웃 등) 이후 발급분이 아니거나, 현재 세션 로그아웃으로 폐기된 Access JWT 거부
+                            if (!isOpsApi && isAccessTokenRevoked(user, token)) {
                                 log.warn(
-                                        "Duplicate-login access rejected: path={}, userId={}",
+                                        "Revoked access token rejected: path={}, userId={}",
                                         requestPath, user.getId());
                                 filterChain.doFilter(request, response);
                                 return;
@@ -236,17 +237,19 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     /**
-     * 중복 로그인 cleanup 이후 발급된 구 Access JWT 여부.
+     * 거부해야 하는 Access JWT 여부.
      * <ol>
-     *   <li>인메모리 {@link DuplicateLoginAccessBlockRegistry} (동일 인스턴스 즉시 차단)</li>
-     *   <li>{@code users.last_login_at} 이후 발급이 아닌 JWT (멀티 인스턴스·재시작 내구성)</li>
+     *   <li>인메모리 {@link DuplicateLoginAccessBlockRegistry} (계정 전체 종료 직후 동일 인스턴스 즉시 차단)</li>
+     *   <li>{@code users.tokens_invalidated_at} 이전 발급 JWT — 계정 전체 종료 시에만 기록되는 기준 시각
+     *       (멀티 인스턴스·재시작 내구성). 신규 로그인({@code last_login_at})은 기존 세션 토큰을 무효화하지 않는다.</li>
+     *   <li>현재 세션 로그아웃으로 폐기된 토큰 ({@link AuthTokenRevocationService})</li>
      * </ol>
      *
      * @param user  DB 사용자
      * @param token Access JWT
      * @return 거부해야 하면 true
      */
-    private boolean isAccessTokenRevokedByDuplicateLogin(User user, String token) {
+    private boolean isAccessTokenRevoked(User user, String token) {
         if (user == null || user.getId() == null || token == null) {
             return false;
         }
@@ -254,18 +257,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 && duplicateLoginAccessBlockRegistry.isBlocked(user.getId())) {
             return true;
         }
-        LocalDateTime lastLoginAt = user.getLastLoginAt();
-        if (lastLoginAt == null) {
-            return false;
+        if (JwtTokenCutoffUtils.isIssuedBeforeCutoff(user.getTokensInvalidatedAt(),
+                jwtService.extractIssuedAt(token))) {
+            return true;
         }
-        Date issuedAt = jwtService.extractIssuedAt(token);
-        if (issuedAt == null) {
-            return false;
-        }
-        long graceSeconds = SessionManagementConstants.ACCESS_TOKEN_LAST_LOGIN_GRACE_SECONDS;
-        long cutoffEpochMs = lastLoginAt.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
-                - (graceSeconds * 1000L);
-        return issuedAt.getTime() < cutoffEpochMs;
+        return authTokenRevocationService != null && authTokenRevocationService.isAccessTokenRevoked(token);
     }
 
     @Override

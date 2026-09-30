@@ -9,9 +9,10 @@ import lombok.extern.slf4j.Slf4j;
 /**
  * 중복 로그인 정리 직후 구 Access JWT 를 짧게 거부하기 위한 인메모리 힌트.
  *
- * <p>refresh_token 은 {@code cleanupUserSessions} 에서 revoke 되지만 Access JWT 는 TTL 끝까지
+ * <p>refresh_token 은 {@code terminateAllSessionsForUser} 에서 revoke 되지만 Access JWT 는 TTL 끝까지
  * 유효할 수 있어, 동일 인스턴스에서 Expo 등 Bearer 요청을 즉시 차단한다.
- * 멀티 인스턴스·재시작 시에는 Access TTL 만료·refresh 거부에 의존한다.</p>
+ * 멀티 인스턴스·재시작 시에는 {@code users.tokens_invalidated_at} 기준 시각에 의존한다.
+ * 현재 세션만 끝내는 일반 로그아웃에서는 사용하지 않는다(계정 단위 차단이므로).</p>
  *
  * @author MindGarden
  * @since 2026-08-07

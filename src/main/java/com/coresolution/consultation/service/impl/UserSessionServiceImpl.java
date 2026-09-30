@@ -231,6 +231,25 @@ public class UserSessionServiceImpl implements UserSessionService {
     }
     
     @Override
+    public boolean deactivateSessionForTenant(String tenantId, String sessionId, String reason) {
+        if (tenantId == null || tenantId.isBlank() || sessionId == null || sessionId.isBlank()) {
+            log.warn("⚠️ deactivateSessionForTenant 스킵: tenantId 또는 sessionId 없음 tenantId={}", tenantId);
+            return false;
+        }
+        try {
+            int updatedCount = userSessionRepository.deactivateSessionByTenantIdAndSessionId(
+                tenantId.trim(), sessionId, LocalDateTime.now(), reason);
+            log.info("✅ 테넌트 세션 비활성화: tenantId={}, sessionId={}, reason={}, count={}",
+                tenantId, sessionId, reason, updatedCount);
+            return updatedCount > 0;
+        } catch (Exception e) {
+            log.error("❌ 테넌트 세션 비활성화 실패: tenantId={}, sessionId={}, reason={}, error={}",
+                tenantId, sessionId, reason, e.getMessage(), e);
+            return false;
+        }
+    }
+
+    @Override
     public int deactivateAllUserSessions(User user, String reason) {
         try {
             int updatedCount = userSessionRepository.deactivateAllUserSessions(user.getId(), LocalDateTime.now(), reason);

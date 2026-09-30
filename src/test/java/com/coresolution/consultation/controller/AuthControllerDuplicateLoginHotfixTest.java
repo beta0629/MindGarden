@@ -209,7 +209,7 @@ class AuthControllerDuplicateLoginHotfixTest {
     }
 
     @Test
-    @DisplayName("U5 통합 — confirmTerminate=true 시 컨트롤러는 authService.cleanupUserSessions 에 위임 (refresh_token revoke 는 서비스 책임)")
+    @DisplayName("U5 통합 — confirmTerminate=true 시 현재 세션만 종료(terminateCurrentSession), 계정 전체 종료 금지")
     void confirmDuplicateLogin_delegatesCleanupToAuthService() {
         AuthResponse serviceResponse = AuthResponse.builder()
             .success(true)
@@ -228,11 +228,14 @@ class AuthControllerDuplicateLoginHotfixTest {
 
         authController.confirmDuplicateLogin(request, session, httpRequest);
 
-        // 컨트롤러는 RefreshTokenService 를 직접 호출하지 않고 authService.cleanupUserSessions 에 위임한다.
-        // 실제 refresh_token revoke 는 AuthServiceImplDuplicateLoginHotfixTest 의 U5 단위 테스트에서 검증.
+        // 컨트롤러는 RefreshTokenService 를 직접 호출하지 않고 authService.terminateCurrentSession 에 위임한다.
+        // 동일 계정 다른 세션은 유지 — 계정 전체 종료는 관리자 강제 로그아웃 전용.
         verify(refreshTokenService, never()).revokeAllUserTokens(anyLong());
         verify(refreshTokenService, never()).revokeRefreshToken(anyString());
-        verify(authService).cleanupUserSessions(any(User.class), eq("USER_CONFIRMED_TERMINATE"));
+        verify(authService).terminateCurrentSession(any(User.class),
+            any(com.coresolution.consultation.dto.auth.CurrentSessionCredentials.class),
+            eq("USER_CONFIRMED_TERMINATE"));
+        verify(authService, never()).terminateAllSessionsForUser(any(User.class), anyString());
         verify(session).setAttribute(eq("sessionId"), eq(SESSION_ID));
     }
 

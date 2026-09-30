@@ -30,13 +30,13 @@ import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 
 /**
- * {@link AuthServiceImpl#checkDuplicateLogin(User)} 및 {@link AuthServiceImpl#cleanupUserSessions(User, String)}
+ * {@link AuthServiceImpl#checkDuplicateLogin(User)} 및 {@link AuthServiceImpl#terminateAllSessionsForUser(User, String)}
  * 의 hotfix 단위 테스트.
  *
  * <p>관련 의제:
  * <ul>
  *   <li>P0-1: 중복 감지 대상 확장 — {@code user_sessions} + {@code refresh_token_store}</li>
- *   <li>P1 회귀 핫픽스 (2026-06-13): {@code cleanupUserSessions} 가
+ *   <li>P1 회귀 핫픽스 (2026-06-13): 계정 전체 세션 종료({@code terminateAllSessionsForUser}) 가
  *       {@code user_sessions} 만 deactivate 하던 비대칭을 해소 — {@code refresh_token_store} 도
  *       함께 revoke 하여 모달 "기존 세션 종료" 와 60초 폴링 강제 로그아웃 회귀를 차단한다.</li>
  * </ul>
@@ -157,21 +157,21 @@ class AuthServiceImplDuplicateLoginHotfixTest {
     }
 
     @Nested
-    @DisplayName("cleanupUserSessions — user_sessions + refresh_token_store 정리 (P1 회귀 핫픽스)")
-    class CleanupUserSessionsRevokesRefreshTokens {
+    @DisplayName("terminateAllSessionsForUser — user_sessions + refresh_token_store 정리 (P1 회귀 핫픽스)")
+    class TerminateAllSessionsRevokesRefreshTokens {
 
         @Test
-        @DisplayName("U5 — confirm 분기에서 user_sessions deactivate 후 refresh_token_store 도 revoke")
+        @DisplayName("U5 — 중복 로그인 불허 정책(계정 전체 종료)에서 user_sessions deactivate 후 refresh_token_store 도 revoke")
         void revokesRefreshTokensAfterDeactivatingSessions() {
             User user = userWithTenant(TENANT_ID);
             when(userSessionService.getActiveSessions(user)).thenReturn(List.of());
             when(userSessionService.deactivateAllSessionsForTenantUser(
                     eq(TENANT_ID), eq(USER_ID), anyString())).thenReturn(0);
 
-            authService.cleanupUserSessions(user, "USER_CONFIRMED_TERMINATE");
+            authService.terminateAllSessionsForUser(user, "DUPLICATE_LOGIN");
 
             verify(userSessionService).deactivateAllSessionsForTenantUser(
-                eq(TENANT_ID), eq(USER_ID), eq("USER_CONFIRMED_TERMINATE"));
+                eq(TENANT_ID), eq(USER_ID), eq("DUPLICATE_LOGIN"));
             verify(refreshTokenService).revokeAllUserTokens(USER_ID);
             verify(refreshTokenService, never()).revokeRefreshToken(anyString());
         }

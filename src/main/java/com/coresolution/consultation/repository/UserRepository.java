@@ -13,6 +13,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * 사용자 관리 Repository
@@ -1582,6 +1583,23 @@ public interface UserRepository extends BaseRepository<User, Long> {
         + "WHERE u.id = :id AND u.tenantId = :tenantId AND u.isDeleted = false")
     int updateLastLoginAt(@Param("id") Long id, @Param("tenantId") String tenantId,
         @Param("lastLoginAt") LocalDateTime lastLoginAt, @Param("updatedAt") LocalDateTime updatedAt);
+
+    /**
+     * 계정 단위 토큰 폐기 기준 시각 기록 (강제 로그아웃·계정 전체 세션 종료 전용).
+     *
+     * <p>엔티티 필드는 읽기 전용이므로 native UPDATE 로만 기록한다(@Version·엔티티 저장 경합 무관).</p>
+     *
+     * @param id                  사용자 PK
+     * @param tenantId            테넌트 ID (격리)
+     * @param tokensInvalidatedAt 기준 시각 — 이전 발급 JWT 거부
+     * @return 갱신된 행 수 (0 이면 대상 없음/테넌트 불일치)
+     */
+    @Transactional
+    @Modifying(clearAutomatically = true)
+    @Query(value = "UPDATE users SET tokens_invalidated_at = :tokensInvalidatedAt "
+        + "WHERE id = :id AND tenant_id = :tenantId", nativeQuery = true)
+    int updateTokensInvalidatedAt(@Param("id") Long id, @Param("tenantId") String tenantId,
+        @Param("tokensInvalidatedAt") LocalDateTime tokensInvalidatedAt);
 
     // ==================== Lifecycle SSOT 쿼리 (USER_LIFECYCLE_TERMINATION_POLICY §3.6) ====================
 

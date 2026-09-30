@@ -11,11 +11,13 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.Map;
 import java.util.UUID;
 
 import com.coresolution.consultation.constant.SessionConstants;
 import com.coresolution.consultation.constant.SessionManagementConstants;
 import com.coresolution.consultation.constant.UserRole;
+import com.coresolution.consultation.dto.auth.CurrentSessionCredentials;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.repository.UserSocialAccountRepository;
@@ -36,12 +38,14 @@ import com.coresolution.core.repository.TenantRepository;
 import com.coresolution.core.repository.TenantRoleRepository;
 import com.coresolution.core.service.PermissionGroupService;
 import com.coresolution.core.service.UserRoleQueryService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InOrder;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -49,25 +53,26 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 import org.springframework.core.env.Environment;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 
 /**
- * AuthController 정상 로그아웃 hotfix 단위 테스트.
+ * AuthController 정상 로그아웃 — 현재 세션만 종료.
  *
- * <p>회귀 배경 — PR #293 ({@code checkDuplicateLogin} 이 {@code user_sessions} OR
- * {@code refresh_token_store} 둘 다 검사) 와 PR #295 ({@code cleanupUserSessions} SSOT 에
- * {@code refresh_token} revoke 통합) 사이의 비대칭. 정상 logout 경로가
- * {@code user_sessions} 만 비활성화하고 {@code refresh_token_store} 를 남겨두면
- * 즉시 재로그인 시 "다른 곳에서 로그인" 모달이 잔존한다.
+ * <p>배경: 동시 로그인이 허용된 계정에서 한 세션의 로그아웃이 계정 전체 세션·refresh 토큰을 폐기해
+ * 다른 기기가 401 + refresh 실패로 튕기던 문제. 로그아웃은 {@code authService.terminateCurrentSession} 에
+ * 현재 요청의 세션 식별 정보(DB 세션 ID, Bearer Access JWT, 선택 본문 Refresh JWT)만 넘긴다.
+ * 계정 전체 종료({@code terminateAllSessionsForUser})는 관리자 강제 로그아웃 전용.</p>
  *
  * <p>시나리오:
  * <ul>
- *   <li>L1 — 로그인 사용자 logout 시 {@code authService.cleanupUserSessions} 가
- *           {@code END_REASON_LOGOUT} 로 호출되어 refresh_token 까지 revoke 위임</li>
- *   <li>L2 — 미인증 세션 logout 시 {@code cleanupUserSessions} 호출 금지 (NPE/회귀 가드)</li>
- *   <li>L3 — 호출 순서: {@code logoutSession → cleanupUserSessions → session.invalidate}</li>
+ *   <li>L1 — 로그인 사용자 logout 시 {@code terminateCurrentSession(END_REASON_LOGOUT)} 호출,
+ *           계정 전체 종료·테넌트 일괄 비활성화는 호출하지 않음</li>
+ *   <li>L2 — 미인증 세션 logout 시 {@code terminateCurrentSession} 호출 금지 (NPE/회귀 가드)</li>
+ *   <li>L3 — 호출 순서: {@code logoutSession → terminateCurrentSession → session.invalidate}</li>
+ *   <li>L4 — 본문 refreshToken·DB 세션 ID 속성 전달</li>
  * </ul>
  *
  * @author MindGarden
@@ -75,13 +80,15 @@ import org.springframework.security.core.context.SecurityContextHolder;
  */
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
-@DisplayName("AuthController — 정상 로그아웃 hotfix (refresh_token SSOT 정합)")
+@DisplayName("AuthController — 로그아웃은 현재 세션만 종료")
 class AuthControllerLogoutHotfixTest {
 
     private static final String TENANT_ID = UUID.randomUUID().toString();
     private static final String LOGIN_PRINCIPAL = "tester@example.com";
     private static final String SESSION_ID = "session-logout-xyz";
     private static final Long USER_PK = 21L;
+    private static final String ACCESS_TOKEN = "current.access.jwt";
+    private static final String REFRESH_TOKEN = "current.refresh.jwt";
 
     @Mock private RoleCommonCodeAuthorizationService roleCommonCodeAuthorizationService;
     @Mock private PersonalDataEncryptionUtil encryptionUtil;
@@ -109,6 +116,7 @@ class AuthControllerLogoutHotfixTest {
             clientProfilePhoneVerificationService;
 
     @Mock private HttpSession session;
+    @Mock private HttpServletRequest httpRequest;
 
     @InjectMocks
     private AuthController authController;
@@ -116,6 +124,7 @@ class AuthControllerLogoutHotfixTest {
     @BeforeEach
     void setUp() {
         lenient().when(session.getId()).thenReturn(SESSION_ID);
+        lenient().when(httpRequest.getHeader(HttpHeaders.AUTHORIZATION)).thenReturn("Bearer " + ACCESS_TOKEN);
         // SecurityContext 잔존 방지 — SessionUtils.getCurrentUser fallback 으로 SecurityContext
         // 를 조회하므로 테스트 간 격리를 위해 명시적으로 초기화한다.
         SecurityContextHolder.clearContext();
@@ -127,28 +136,32 @@ class AuthControllerLogoutHotfixTest {
     }
 
     // ---------------------------------------------------------------- //
-    // L1 — 정상 로그아웃 시 refresh_token 까지 revoke 위임
+    // L1 — 정상 로그아웃은 현재 세션만 종료
     // ---------------------------------------------------------------- //
 
     @Test
-    @DisplayName("L1 — 로그인 사용자 logout 시 cleanupUserSessions(END_REASON_LOGOUT) 호출")
-    void logout_invokesCleanupUserSessionsForLoggedInUser() {
-        // given — 세션에 인증 사용자가 들어있는 정상 로그인 상태
+    @DisplayName("L1 — 로그인 사용자 logout 시 terminateCurrentSession(END_REASON_LOGOUT) 만 호출")
+    void logout_terminatesOnlyCurrentSession() {
         User loggedInUser = userEntity();
         when(session.getAttribute(SessionConstants.USER_OBJECT)).thenReturn(loggedInUser);
 
-        // when
-        ResponseEntity<ApiResponse<Void>> response = authController.logout(session);
+        ResponseEntity<ApiResponse<Void>> response = authController.logout(session, httpRequest, null);
 
-        // then — 응답은 항상 200 (로그아웃은 실패해도 성공으로 처리되는 기존 정책 유지)
+        // 응답은 항상 200 (로그아웃은 실패해도 성공으로 처리되는 기존 정책 유지)
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).isNotNull();
         assertThat(response.getBody().isSuccess()).isTrue();
 
-        // P1 hotfix — 정상 logout 경로도 SSOT (cleanupUserSessions) 를 거쳐야
-        // refresh_token_store 까지 revoke 된다. (PR #295 비대칭 회귀 해소)
-        verify(authService).cleanupUserSessions(eq(loggedInUser),
+        ArgumentCaptor<CurrentSessionCredentials> captor = ArgumentCaptor.forClass(CurrentSessionCredentials.class);
+        verify(authService).terminateCurrentSession(eq(loggedInUser), captor.capture(),
             eq(SessionManagementConstants.END_REASON_LOGOUT));
+        assertThat(captor.getValue().getSessionId()).isEqualTo(SESSION_ID);
+        assertThat(captor.getValue().getAccessToken()).isEqualTo(ACCESS_TOKEN);
+        assertThat(captor.getValue().getRefreshToken()).isNull();
+
+        // 동일 계정 다른 세션 보호 — 계정 전체 종료·테넌트 일괄 비활성화 금지
+        verify(authService, never()).terminateAllSessionsForUser(any(User.class), anyString());
+        verify(userSessionService, never()).deactivateAllSessionsForTenantUser(anyString(), anyLong(), anyString());
     }
 
     @Test
@@ -157,10 +170,8 @@ class AuthControllerLogoutHotfixTest {
         User loggedInUser = userEntity();
         when(session.getAttribute(SessionConstants.USER_OBJECT)).thenReturn(loggedInUser);
 
-        authController.logout(session);
+        authController.logout(session, httpRequest, null);
 
-        // SSOT 위반 가드 — refresh_token revoke 는 AuthServiceImpl.cleanupUserSessions
-        // 안에서만 수행되어야 하며, 컨트롤러가 RefreshTokenService 를 직접 호출하면 안 된다.
         verify(refreshTokenService, never()).revokeAllUserTokens(anyLong());
         verify(refreshTokenService, never()).revokeRefreshToken(anyString());
     }
@@ -170,17 +181,15 @@ class AuthControllerLogoutHotfixTest {
     // ---------------------------------------------------------------- //
 
     @Test
-    @DisplayName("L2 — 미인증 세션 logout 시 cleanupUserSessions 호출 금지 (NPE 가드)")
-    void logout_skipsCleanupWhenUserMissing() {
-        // given — 세션에 사용자 정보 없음 (예: 이미 만료/직접 호출 시나리오)
+    @DisplayName("L2 — 미인증 세션 logout 시 terminateCurrentSession 호출 금지 (NPE 가드)")
+    void logout_skipsTerminationWhenUserMissing() {
         when(session.getAttribute(SessionConstants.USER_OBJECT)).thenReturn(null);
 
-        // when
-        ResponseEntity<ApiResponse<Void>> response = authController.logout(session);
+        ResponseEntity<ApiResponse<Void>> response = authController.logout(session, httpRequest, null);
 
-        // then — 정상 응답은 유지되지만 사용자 식별 불가 → SSOT 호출 금지
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        verify(authService, never()).cleanupUserSessions(any(User.class), anyString());
+        verify(authService, never()).terminateCurrentSession(any(User.class), any(), anyString());
+        verify(authService, never()).terminateAllSessionsForUser(any(User.class), anyString());
     }
 
     // ---------------------------------------------------------------- //
@@ -188,20 +197,39 @@ class AuthControllerLogoutHotfixTest {
     // ---------------------------------------------------------------- //
 
     @Test
-    @DisplayName("L3 — 호출 순서: logoutSession → cleanupUserSessions → session.invalidate")
+    @DisplayName("L3 — 호출 순서: logoutSession → terminateCurrentSession → session.invalidate")
     void logout_invokesInExpectedOrder() {
         User loggedInUser = userEntity();
         when(session.getAttribute(SessionConstants.USER_OBJECT)).thenReturn(loggedInUser);
 
-        authController.logout(session);
+        authController.logout(session, httpRequest, null);
 
-        // 순서 보장 — refresh_token revoke 는 HTTP 세션 무효화 이전에 완료되어야 한다.
-        // (세션 무효화 후에는 SessionUtils.getCurrentUser 가 null 을 반환할 수 있음)
+        // 토큰 폐기는 HTTP 세션 무효화 이전에 완료되어야 한다.
         InOrder order = inOrder(authService, session);
         order.verify(authService).logoutSession(SESSION_ID);
-        order.verify(authService).cleanupUserSessions(eq(loggedInUser),
+        order.verify(authService).terminateCurrentSession(eq(loggedInUser), any(CurrentSessionCredentials.class),
             eq(SessionManagementConstants.END_REASON_LOGOUT));
         order.verify(session).invalidate();
+    }
+
+    // ---------------------------------------------------------------- //
+    // L4 — 본문 refreshToken · DB 세션 ID 전달
+    // ---------------------------------------------------------------- //
+
+    @Test
+    @DisplayName("L4 — 본문 refreshToken 과 세션 속성 DB sessionId 를 현재 세션 식별 정보로 전달")
+    void logout_passesPresentedRefreshTokenAndDbSessionId() {
+        User loggedInUser = userEntity();
+        when(session.getAttribute(SessionConstants.USER_OBJECT)).thenReturn(loggedInUser);
+        when(session.getAttribute(SessionConstants.SESSION_ID)).thenReturn("db-session-1");
+
+        authController.logout(session, httpRequest, Map.of("refreshToken", REFRESH_TOKEN));
+
+        ArgumentCaptor<CurrentSessionCredentials> captor = ArgumentCaptor.forClass(CurrentSessionCredentials.class);
+        verify(authService).terminateCurrentSession(eq(loggedInUser), captor.capture(),
+            eq(SessionManagementConstants.END_REASON_LOGOUT));
+        assertThat(captor.getValue().getSessionId()).isEqualTo("db-session-1");
+        assertThat(captor.getValue().getRefreshToken()).isEqualTo(REFRESH_TOKEN);
     }
 
     // ---------------------------------------------------------------- //

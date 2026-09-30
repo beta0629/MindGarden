@@ -24,6 +24,7 @@ on:
       - ".github/workflows/deploy-ops-backend-prod.yml"
       # composite action: 본 워크플로가 호출하는 sync-prod-env-key 변경도 push 자동 트리거 대상에 포함
       - ".github/actions/sync-prod-env-key/**"
+      - ".github/actions/assert-env-key-nonempty/**"
   workflow_dispatch:
     inputs:
       deploy_ref:
@@ -184,7 +185,7 @@ jobs:
 
       # GitHub Secret 'OPS_ADMIN_PASSWORD' → /etc/ops-backend/prod.env 멱등 동기화 (값 echo 금지, default 없음).
       # 서비스 재시작 전에 실행해 새 값이 재기동 시 로드되도록 한다.
-      # 미등록 시: skip_when=any_missing → ::notice 후 skip, 배포는 계속되고 기존 prod.env 값 유지.
+      # 미등록 시: skip_when=any_missing 로 쓰기는 skip 되지만, 뒤 가드가 prod.env 값이 비어 있으면 배포를 실패시킨다.
       - name: 🔑 OPS_ADMIN_PASSWORD env 자동 주입
         uses: ./.github/actions/sync-prod-env-key
         with:
@@ -198,6 +199,16 @@ jobs:
           noop_compare: 'true'
           # ops-backend prod.env 는 DB_HOST/DB_NAME/DB_USERNAME 대신 MG_DB_* 사용 — DB FAIL-FAST 비활성.
           db_fail_fast: 'false'
+
+      - name: 🛑 OPS_ADMIN_PASSWORD 빈 값 가드 (재시작 전)
+        uses: ./.github/actions/assert-env-key-nonempty
+        with:
+          step_name: 'OPS_ADMIN_PASSWORD'
+          key: 'OPS_ADMIN_PASSWORD'
+          env_path: '/etc/ops-backend/prod.env'
+          ssh_host: ${{ secrets.PRODUCTION_HOST }}
+          ssh_user: ${{ secrets.PRODUCTION_USER }}
+          ssh_key: ${{ secrets.PRODUCTION_SSH_KEY }}
 
       - name: 🔄 JAR를 app.jar 로 정리 및 서비스 재시작
         uses: appleboy/ssh-action@master

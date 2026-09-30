@@ -201,10 +201,10 @@ kakao:
 # 결제 시스템 설정 (로컬 개발용)
 payment:
   toss:
-    # 토스페이먼츠 시크릿 키 (로컬 개발용 테스트 키)
-    secret-key: ${PAYMENT_TOSS_SECRET_KEY:test_sk_ORzdMaqN3w59ZLadepPbr5AkYXQG}
+    # 토스페이먼츠 시크릿 키 (로컬 placeholder, 실제 값은 env)
+    secret-key: ${PAYMENT_TOSS_SECRET_KEY:local-placeholder}
     # 토스페이먼츠 웹훅 시크릿 (로컬 개발용)
-    webhook-secret: ${PAYMENT_TOSS_WEBHOOK_SECRET:09fb9726652b997b8b7f4fe44782cd08f8cda6bb8ed8af243ebe9248d967ba2c}
+    webhook-secret: ${PAYMENT_TOSS_WEBHOOK_SECRET:local-placeholder}
     # 토스페이먼츠 상점 아이디 (선택사항)
     merchant-id: ${PAYMENT_TOSS_MERCHANT_ID:}
     # 토스페이먼츠 API 기본 URL

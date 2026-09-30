@@ -36,7 +36,7 @@ public class OpsAuthController extends BaseApiController {
     @Value("${ops.admin.userId:ops_core}")
     private String opsAdminUsername;
     
-    @Value("${ops.admin.password:godgod826!}")
+    @Value("${ops.admin.password:}")
     private String opsAdminPassword;
     
     @Value("${ops.admin.role:HQ_ADMIN}")
@@ -83,11 +83,16 @@ public class OpsAuthController extends BaseApiController {
             throw new IllegalArgumentException("아이디와 비밀번호를 모두 입력해주세요.");
         }
         
+        if (opsAdminPassword == null || opsAdminPassword.isBlank()) {
+            log.error("Ops Portal 로그인 거부: 환경 변수 OPS_ADMIN_PASSWORD 미설정");
+            throw new org.springframework.security.authentication.BadCredentialsException("아이디 또는 비밀번호가 올바르지 않습니다.");
+        }
+        
         log.info("Ops Portal 로그인 시도: userId={}", userId);
         log.info("Ops Portal 관리자 계정 설정: opsAdminUsername={}, opsAdminPassword={}, opsAdminRole={}", 
             opsAdminUsername, opsAdminPassword != null ? "***" : null, opsAdminRole);
         
-        // 관리자 계정 확인 (환경 변수 또는 기본값)
+        // 관리자 계정 확인 (환경 변수)
         boolean isAdminAccount = userId.equals(opsAdminUsername);
         boolean passwordMatches = password.equals(opsAdminPassword);
         

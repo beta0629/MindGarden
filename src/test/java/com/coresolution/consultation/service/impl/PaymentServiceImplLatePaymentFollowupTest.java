@@ -15,7 +15,6 @@ import com.coresolution.consultation.constant.PaymentConstants;
 import com.coresolution.consultation.constant.ShopCheckoutConstants;
 import com.coresolution.consultation.constant.ShopClientOrderStatus;
 import com.coresolution.consultation.dto.PaymentResponse;
-import com.coresolution.consultation.dto.PaymentWebhookRequest;
 import com.coresolution.consultation.entity.Payment;
 import com.coresolution.consultation.entity.ShopClientOrder;
 import com.coresolution.consultation.exception.ShopOrderClosedForPaymentException;
@@ -38,7 +37,6 @@ import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.security.TenantAccessControlService;
 import java.lang.reflect.Method;
 import java.math.BigDecimal;
-import java.util.Map;
 import java.util.Optional;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -56,7 +54,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 /**
  * #1311 후속 — 결제 서비스 늦은 결제 레이스 보강.
- * H9(주문 열림 + 결제 행만 EXPIRED), 주문 → 결제 잠금 순서, 관리자 API·레거시 웹훅 승인 전이 거부,
+ * H9(주문 열림 + 결제 행만 EXPIRED), 주문 → 결제 잠금 순서, 관리자 API 승인 전이 거부,
  * PortOne 조회 트랜잭션 밖 실행.
  *
  * @author MindGarden
@@ -236,39 +234,6 @@ class PaymentServiceImplLatePaymentFollowupTest {
     }
 
     @Test
-    @DisplayName("레거시 웹훅: CANCELLED 결제에 APPROVED → 승인 거부 + 늦은 PAID 자동 환불(REFUNDED) → true")
-    void legacyWebhook_cancelledPayment_approvedBlocked_autoRefunded() {
-        payment.setStatus(Payment.PaymentStatus.CANCELLED);
-        order.setStatus(ShopClientOrderStatus.CANCELLED);
-        when(shopLatePaymentRefundService.refundIfOrderClosed(TENANT_ID, PAYMENT_PUBLIC_ID))
-                .thenReturn(ShopLatePaymentOutcome.REFUNDED);
-
-        boolean handled = service.processWebhook(legacyApprovedWebhook());
-
-        assertThat(handled).isTrue();
-        assertThat(payment.getStatus()).isEqualTo(Payment.PaymentStatus.CANCELLED);
-        verify(shopLatePaymentRefundService).refundIfOrderClosed(TENANT_ID, PAYMENT_PUBLIC_ID);
-        verify(paymentRepository, never()).save(any());
-        verify(clientShopCheckoutService, never()).completeOrderOnPaymentApproved(any(), any());
-    }
-
-    @Test
-    @DisplayName("레거시 웹훅: EXPIRED 결제에 APPROVED → 승인 거부, PG 취소 실패(REFUND_REQUIRED) → false(재시도)")
-    void legacyWebhook_expiredPayment_approvedBlocked_refundRequired() {
-        payment.setStatus(Payment.PaymentStatus.EXPIRED);
-        order.setStatus(ShopClientOrderStatus.EXPIRED);
-        when(shopLatePaymentRefundService.refundIfOrderClosed(TENANT_ID, PAYMENT_PUBLIC_ID))
-                .thenReturn(ShopLatePaymentOutcome.REFUND_REQUIRED);
-
-        boolean handled = service.processWebhook(legacyApprovedWebhook());
-
-        assertThat(handled).isFalse();
-        assertThat(payment.getStatus()).isEqualTo(Payment.PaymentStatus.EXPIRED);
-        verify(shopLatePaymentRefundService).refundIfOrderClosed(TENANT_ID, PAYMENT_PUBLIC_ID);
-        verify(paymentRepository, never()).save(any());
-    }
-
-    @Test
     @DisplayName("verify: PortOne 조회가 DB 트랜잭션 시작보다 먼저(트랜잭션 밖) 실행")
     void verify_portOneLookupOutsideTransaction() {
         when(portOneV2PaymentVerifyService.verifyPaidAmountBody(TENANT_ID, PAYMENT_PUBLIC_ID, payment.getAmount()))
@@ -306,29 +271,11 @@ class PaymentServiceImplLatePaymentFollowupTest {
     }
 
     @Test
-    @DisplayName("트랜잭션 경계: verify·레거시 웹훅은 외부 트랜잭션 없이(NOT_SUPPORTED) 실행")
-    void verifyAndLegacyWebhook_runWithoutOuterTransaction() throws Exception {
+    @DisplayName("트랜잭션 경계: verify 는 외부 트랜잭션 없이(NOT_SUPPORTED) 실행")
+    void verify_runsWithoutOuterTransaction() throws Exception {
         Method verifyMethod = PaymentServiceImpl.class.getMethod("verifyPayment", String.class, BigDecimal.class);
-        Method webhookMethod = PaymentServiceImpl.class.getMethod("processWebhook", PaymentWebhookRequest.class);
 
         assertThat(verifyMethod.getAnnotation(Transactional.class).propagation())
                 .isEqualTo(Propagation.NOT_SUPPORTED);
-        assertThat(webhookMethod.getAnnotation(Transactional.class).propagation())
-                .isEqualTo(Propagation.NOT_SUPPORTED);
-    }
-
-    private PaymentWebhookRequest legacyApprovedWebhook() {
-        Map<String, Object> externalData = Map.of("paymentId", PAYMENT_PUBLIC_ID);
-        Long timestamp = System.currentTimeMillis() / 1000;
-        String data = externalData.toString() + timestamp + PaymentConstants.WEBHOOK_SECRET_KEY;
-        return PaymentWebhookRequest.builder()
-                .paymentId(PAYMENT_PUBLIC_ID)
-                .orderId(ORDER_PUBLIC_ID)
-                .status(Payment.PaymentStatus.APPROVED.name())
-                .amount(BigDecimal.valueOf(CASH_DUE))
-                .externalData(externalData)
-                .timestamp(timestamp)
-                .signature("sha256=" + Integer.toHexString(data.hashCode()))
-                .build();
     }
 }

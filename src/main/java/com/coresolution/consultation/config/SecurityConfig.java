@@ -109,8 +109,7 @@ public class SecurityConfig {
                         new AntPathRequestMatcher("/api/v1/onboarding/**"),
                         new AntPathRequestMatcher("/api/v1/ops/onboarding/**"),
                         new AntPathRequestMatcher("/api/v1/ops/auth/**"),
-                        new AntPathRequestMatcher("/api/v1/payments/webhooks/**"),
-                        new AntPathRequestMatcher("/api/v1/payments/webhook", HttpMethod.POST.name())
+                        new AntPathRequestMatcher("/api/v1/payments/webhooks/**")
                     )
                 )
                 
@@ -168,8 +167,6 @@ public class SecurityConfig {
                     .requestMatchers("/api/v1/auth/**").permitAll()
                     // 포트원 등 PG 웹훅 (서명 검증, 인증 없음)
                     .requestMatchers("/api/v1/payments/webhooks/**").permitAll()
-                    // 레거시 결제 웹훅 (하위 호환)
-                    .requestMatchers(HttpMethod.POST, "/api/v1/payments/webhook").permitAll()
                     // 계정 통합 API는 허용 (온보딩 이메일 인증 등)
                     .requestMatchers("/api/v1/accounts/integration/**").permitAll()
                     // 공통코드 API는 허용 (온보딩에서 사용)
@@ -304,8 +301,6 @@ public class SecurityConfig {
                     .requestMatchers("/api/v1/auth/**").permitAll()
                     // 포트원 등 PG 웹훅 (서명 검증, 인증 없음)
                     .requestMatchers("/api/v1/payments/webhooks/**").permitAll()
-                    // 레거시 결제 웹훅 (하위 호환)
-                    .requestMatchers(HttpMethod.POST, "/api/v1/payments/webhook").permitAll()
                     // 계정 통합 API는 허용 (온보딩 이메일 인증 등)
                     .requestMatchers("/api/v1/accounts/integration/**").permitAll()
                     // 공통코드 API는 허용 (온보딩에서 사용)

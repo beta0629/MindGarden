@@ -16,7 +16,6 @@ import com.coresolution.consultation.constant.ShopClientOrderStatus;
 import com.coresolution.consultation.constant.ShopLatePaymentConstants;
 import com.coresolution.consultation.dto.PaymentRequest;
 import com.coresolution.consultation.dto.PaymentResponse;
-import com.coresolution.consultation.dto.PaymentWebhookRequest;
 import com.coresolution.consultation.entity.Payment;
 import com.coresolution.consultation.entity.ShopClientOrder;
 import com.coresolution.consultation.entity.User;
@@ -809,62 +808,6 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
     
     @Override
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
-    public boolean processWebhook(PaymentWebhookRequest webhookRequest) {
-        log.info("Webhook 처리: {}", webhookRequest.getPaymentId());
-        
-        try {
-            if (!verifyWebhook(webhookRequest)) {
-                log.warn("Webhook 검증 실패: {}", webhookRequest.getPaymentId());
-                return false;
-            }
-            
-            // 표준화 2025-12-06: deprecated 메서드 대체
-            String tenantId = TenantContextHolder.getRequiredTenantId();
-            String paymentId = webhookRequest.getPaymentId();
-            Payment payment = paymentRepository.findByTenantIdAndPaymentIdAndIsDeletedFalse(tenantId, paymentId)
-                    .orElseThrow(() -> new RuntimeException("결제를 찾을 수 없습니다."));
-            
-            Payment.PaymentStatus newStatus = Payment.PaymentStatus.valueOf(webhookRequest.getStatus());
-            if (newStatus == Payment.PaymentStatus.APPROVED
-                    && NON_APPROVABLE_SHOP_PAYMENT_STATUSES.contains(payment.getStatus())) {
-                return handleBlockedLegacyApproval(tenantId, payment);
-            }
-            shortTx.executeWithoutResult(status -> {
-                updatePaymentStatus(paymentId, newStatus);
-                paymentRepository.findByTenantIdAndPaymentIdAndIsDeletedFalse(tenantId, paymentId).ifPresent(p -> {
-                    p.setExternalResponse(webhookRequest.getExternalData().toString());
-                    p.setWebhookData(webhookRequest.toString());
-                    paymentRepository.save(p);
-                });
-            });
-            
-            log.info("Webhook 처리 완료: {}", paymentId);
-            return true;
-            
-        } catch (Exception e) {
-            log.error("Webhook 처리 실패: {}", e.getMessage(), e);
-            return false;
-        }
-    }
-
-    /**
-     * 레거시 웹훅: 취소·만료·환불 결제에 늦게 온 PAID 는 승인하지 않는다.
-     * 쇼핑 주문 결제면 신규 경로와 같은 가드로 PG 자동 취소(→ REFUNDED, 실패 시 REFUND_REQUIRED + 관리자 알림).
-     */
-    private boolean handleBlockedLegacyApproval(String tenantId, Payment payment) {
-        log.warn("레거시 웹훅: 닫힌 결제 승인 전이 거부 paymentId={}, status={}",
-                payment.getPaymentId(), payment.getStatus());
-        if (!isShopOrderPayment(payment)) {
-            return false;
-        }
-        ShopLatePaymentOutcome outcome =
-                shopLatePaymentRefundService.refundIfOrderClosed(tenantId, payment.getPaymentId());
-        log.warn("레거시 웹훅: 늦은 결제 자동 환불 outcome={}, paymentId={}", outcome, payment.getPaymentId());
-        return outcome == ShopLatePaymentOutcome.REFUNDED || outcome == ShopLatePaymentOutcome.ALREADY_REFUNDED;
-    }
-    
-    @Override
-    @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public boolean verifyPayment(String paymentId, BigDecimal amount) {
         log.info("결제 검증: {}, 금액: {}", paymentId, amount);
         
@@ -1138,49 +1081,6 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
     private String simulateExternalPaymentApi(Map<String, Object> paymentRequest) {
         String paymentId = (String) paymentRequest.get("paymentId");
         return PaymentConstants.EXTERNAL_PAYMENT_BASE_URL + "/pay/" + paymentId;
-    }
-    
-    private boolean verifyWebhook(PaymentWebhookRequest webhookRequest) {
-        log.info("Webhook 서명 검증 시작: paymentId={}", webhookRequest.getPaymentId());
-        
-        try {
-            String receivedSignature = webhookRequest.getSignature();
-            String timestamp = webhookRequest.getTimestamp() != null ? webhookRequest.getTimestamp().toString() : null;
-            String payload = webhookRequest.getExternalData() != null ? webhookRequest.getExternalData().toString() : "";
-            
-            if (receivedSignature == null || timestamp == null || payload == null) {
-                log.warn("Webhook 필수 필드 누락: signature={}, timestamp={}, payload={}", 
-                        receivedSignature != null, timestamp != null, payload != null);
-                return false;
-            }
-            
-            long currentTime = System.currentTimeMillis() / 1000;
-            long webhookTime = Long.parseLong(timestamp);
-            if (Math.abs(currentTime - webhookTime) > 300) { // 5분 = 300초
-                log.warn("Webhook 타임스탬프가 너무 오래됨: current={}, webhook={}", currentTime, webhookTime);
-                return false;
-            }
-            
-            String expectedSignature = generateWebhookSignature(payload, timestamp);
-            boolean isValid = expectedSignature.equals(receivedSignature);
-            
-            if (isValid) {
-                log.info(PaymentConstants.SUCCESS_WEBHOOK_VERIFIED);
-            } else {
-                log.warn("Webhook 서명 검증 실패: expected={}, received={}", expectedSignature, receivedSignature);
-            }
-            
-            return isValid;
-            
-        } catch (Exception e) {
-            log.error("Webhook 검증 중 오류 발생: {}", e.getMessage(), e);
-            return false;
-        }
-    }
-    
-    private String generateWebhookSignature(String payload, String timestamp) {
-        String data = payload + timestamp + PaymentConstants.WEBHOOK_SECRET_KEY;
-        return "sha256=" + Integer.toHexString(data.hashCode());
     }
     
     /**

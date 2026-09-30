@@ -8,7 +8,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import com.coresolution.consultation.dto.PaymentRequest;
-import com.coresolution.consultation.dto.PaymentWebhookRequest;
 import com.coresolution.consultation.entity.Payment;
 import com.coresolution.consultation.service.BankTransferService;
 import com.coresolution.consultation.service.PaymentService;
@@ -203,56 +202,6 @@ public class PaymentTestController extends BaseApiController {
             Map<String, Object> result = new HashMap<>();
             result.put("success", false);
             result.put("message", "결제 상태 변경에 실패했습니다: " + e.getMessage());
-
-            return ResponseEntity.badRequest().body(result);
-        }
-    }
-
-    /**
-     * Webhook 테스트
-     *
-     * @param paymentId 결제 ID
-     * @param status 웹훅 상태
-     * @return 웹훅 처리 결과
-     */
-    @PostMapping("/webhook-test")
-    public ResponseEntity<?> testWebhook(
-            @RequestParam String paymentId,
-            @RequestParam(defaultValue = "APPROVED") String status) {
-
-        ResponseEntity<Map<String, Object>> forbidden = forbidUnlessLocal();
-        if (forbidden != null) {
-            return forbidden;
-        }
-
-        try {
-            PaymentWebhookRequest webhookRequest = PaymentWebhookRequest.builder()
-                    .paymentId(paymentId)
-                    .orderId("TEST_ORDER_" + System.currentTimeMillis())
-                    .status(status)
-                    .amount(BigDecimal.valueOf(100000))
-                    .method("CARD")
-                    .provider("TOSS")
-                    .approvedAt(LocalDateTime.now())
-                    .externalPaymentKey("ext_" + System.currentTimeMillis())
-                    .signature("test_signature")
-                    .timestamp(System.currentTimeMillis())
-                    .build();
-
-            boolean success = paymentService.processWebhook(webhookRequest);
-
-            Map<String, Object> result = new HashMap<>();
-            result.put("success", success);
-            result.put("message", success ? "Webhook 처리가 성공했습니다." : "Webhook 처리가 실패했습니다.");
-
-            return ResponseEntity.ok(result);
-
-        } catch (Exception e) {
-            log.error("Webhook 테스트 실패: {}", e.getMessage(), e);
-
-            Map<String, Object> result = new HashMap<>();
-            result.put("success", false);
-            result.put("message", "Webhook 테스트에 실패했습니다: " + e.getMessage());
 
             return ResponseEntity.badRequest().body(result);
         }

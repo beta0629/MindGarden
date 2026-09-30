@@ -271,7 +271,6 @@ public class TenantContextFilter implements Filter {
                 "/api/health", // 레거시 헬스 경로 (SessionBasedAuthenticationFilter 제외와 정합)
                 "/api/v1/test", // 테스트 API (개발 환경 전용, 비밀번호 재설정 등)
                 "/api/v1/payments/webhooks", // PG 웹훅 (포트원 V2 등, 테넌트 헤더 없음)
-                "/api/v1/payments/webhook", // 레거시 결제 웹훅 (하위 호환)
                 "/api/v1/shop/catalog", // 공개 쇼핑 카탈로그 PLP·PDP (Host/서브도메인·X-Tenant-Id)
                 "/api/v1/files", // 카탈로그 썸네일·로고 (FileController, OPS placeholder)
                 "/actuator/health", // 헬스체크

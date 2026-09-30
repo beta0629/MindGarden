@@ -14,11 +14,15 @@ import static org.mockito.Mockito.when;
 import java.time.LocalDateTime;
 import java.util.Base64;
 import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 
 import com.coresolution.consultation.constant.LifecycleState;
+import com.coresolution.consultation.constant.SessionConstants;
 import com.coresolution.consultation.constant.SessionManagementConstants;
 import com.coresolution.consultation.constant.UserRole;
+import com.coresolution.consultation.controller.AdminSessionForceLogoutController;
+import com.coresolution.consultation.dto.auth.AdminForceLogoutRequest;
 import com.coresolution.consultation.dto.auth.CurrentSessionCredentials;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.repository.UserRepository;
@@ -30,15 +34,20 @@ import com.coresolution.consultation.service.UserService;
 import com.coresolution.consultation.service.UserSessionService;
 import com.coresolution.consultation.service.impl.AuthServiceImpl;
 import com.coresolution.core.context.TenantContextHolder;
+import com.coresolution.core.dto.ApiResponse;
+import jakarta.servlet.http.HttpSession;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.mock.web.MockFilterChain;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
+import org.springframework.mock.web.MockHttpSession;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -189,6 +198,60 @@ class CurrentSessionLogoutScenarioTest {
 
         TokenPair afterForceLogout = login();
         assertThat(isAuthenticated(afterForceLogout.accessToken())).isTrue();
+    }
+
+    @Test
+    @DisplayName("동일 테넌트 관리자 API 강제 로그아웃 → A·B 모두 401, refresh 실패, tokens_invalidated_at 기록")
+    void adminForceLogoutEndpoint_sameTenant_terminatesAllSessions() throws InterruptedException {
+        TokenPair sessionA = login();
+        TokenPair sessionB = login();
+        waitForNextSecond();
+
+        User admin = User.builder().email("admin@example.com").role(UserRole.ADMIN).build();
+        admin.setId(1L);
+        admin.setTenantId(TENANT);
+        HttpSession adminSession = new MockHttpSession();
+        adminSession.setAttribute(SessionConstants.USER_OBJECT, admin);
+        when(userRepository.findAllByTenantIdAndEmail(TENANT, EMAIL)).thenReturn(List.of(user));
+        AdminSessionForceLogoutController controller = new AdminSessionForceLogoutController(userRepository,
+            authService);
+
+        ResponseEntity<ApiResponse<Void>> response = controller.forceLogout(
+            AdminForceLogoutRequest.builder().email(EMAIL).build(), adminSession);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(isAuthenticated(sessionA.accessToken())).isFalse();
+        assertThat(isAuthenticated(sessionB.accessToken())).isFalse();
+        assertThat(authService.refreshToken(sessionA.refreshToken(), null).isSuccess()).isFalse();
+        assertThat(authService.refreshToken(sessionB.refreshToken(), null).isSuccess()).isFalse();
+        assertThat(user.getTokensInvalidatedAt()).isNotNull();
+        verify(userSessionService).deactivateAllSessionsForTenantUser(TENANT, USER_PK,
+            SessionManagementConstants.END_REASON_ADMIN_FORCE);
+        verify(refreshTokenService).revokeAllUserTokens(USER_PK);
+    }
+
+    @Test
+    @DisplayName("다른 테넌트 관리자 API 강제 로그아웃 → 403, 대상 세션 유지")
+    void adminForceLogoutEndpoint_otherTenant_keepsSessions() {
+        TokenPair sessionA = login();
+
+        User otherAdmin = User.builder().email("other-admin@example.com").role(UserRole.ADMIN).build();
+        otherAdmin.setId(2L);
+        otherAdmin.setTenantId(TENANT + "-other");
+        HttpSession adminSession = new MockHttpSession();
+        adminSession.setAttribute(SessionConstants.USER_OBJECT, otherAdmin);
+        AdminSessionForceLogoutController controller = new AdminSessionForceLogoutController(userRepository,
+            authService);
+
+        ResponseEntity<ApiResponse<Void>> response = controller.forceLogout(
+            AdminForceLogoutRequest.builder().email(EMAIL).build(), adminSession);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+        assertThat(isAuthenticated(sessionA.accessToken())).isTrue();
+        assertThat(authService.refreshToken(sessionA.refreshToken(), null).isSuccess()).isTrue();
+        verify(userSessionService, never()).deactivateAllSessionsForTenantUser(anyString(), anyLong(), anyString());
+        verify(refreshTokenService, never()).revokeAllUserTokens(anyLong());
+        verify(userRepository, never()).updateTokensInvalidatedAt(anyLong(), anyString(), any());
     }
 
     @Test

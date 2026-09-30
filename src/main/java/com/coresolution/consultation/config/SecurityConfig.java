@@ -27,6 +27,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.security.web.csrf.CsrfTokenRepository;
 import org.springframework.security.web.csrf.HttpSessionCsrfTokenRepository;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
@@ -97,20 +98,7 @@ public class SecurityConfig {
                 // stateless 인증이므로 CSRF 면제. 웹 프론트(세션 쿠키)는 그대로 보호.
                 .csrf(csrf -> csrf
                     .csrfTokenRepository(csrfTokenRepository())
-                    .ignoringRequestMatchers(
-                        new BearerTokenAuthCsrfMatcher(),
-                        new AntPathRequestMatcher("/api/auth/**"),
-                        new AntPathRequestMatcher("/api/v1/auth/**"),
-                        new AntPathRequestMatcher("/api/admin/mappings/**"),
-                        // 재무 거래 DELETE만 CSRF 제외(SPA가 axios DELETE 시 헤더 미포함 등). v1 실제 경로와 레거시 경로 모두.
-                        new AntPathRequestMatcher("/api/erp/finance/transactions/**", HttpMethod.DELETE.name()),
-                        new AntPathRequestMatcher("/api/v1/erp/finance/transactions/**", HttpMethod.DELETE.name()),
-                        new AntPathRequestMatcher("/api/v1/accounts/integration/**"),
-                        new AntPathRequestMatcher("/api/v1/onboarding/**"),
-                        new AntPathRequestMatcher("/api/v1/ops/onboarding/**"),
-                        new AntPathRequestMatcher("/api/v1/ops/auth/**"),
-                        new AntPathRequestMatcher("/api/v1/payments/webhooks/**")
-                    )
+                    .ignoringRequestMatchers(csrfIgnoredRequestMatchers())
                 )
                 
                 // 세션 관리 활성화 (동시 세션: SessionManagementConstants SSOT, 환경별)
@@ -367,6 +355,28 @@ public class SecurityConfig {
         return http.build();
     }
     
+    /**
+     * 운영 CSRF 면제 매처 목록. 관리자 상태 변경 API({@code /api/v1/admin/**})는 포함하지 않는다.
+     *
+     * @return CSRF 검사에서 제외할 요청 매처
+     */
+    static RequestMatcher[] csrfIgnoredRequestMatchers() {
+        return new RequestMatcher[] {
+            new BearerTokenAuthCsrfMatcher(),
+            new AntPathRequestMatcher("/api/auth/**"),
+            new AntPathRequestMatcher("/api/v1/auth/**"),
+            new AntPathRequestMatcher("/api/admin/mappings/**"),
+            // 재무 거래 DELETE만 CSRF 제외(SPA가 axios DELETE 시 헤더 미포함 등). v1 실제 경로와 레거시 경로 모두.
+            new AntPathRequestMatcher("/api/erp/finance/transactions/**", HttpMethod.DELETE.name()),
+            new AntPathRequestMatcher("/api/v1/erp/finance/transactions/**", HttpMethod.DELETE.name()),
+            new AntPathRequestMatcher("/api/v1/accounts/integration/**"),
+            new AntPathRequestMatcher("/api/v1/onboarding/**"),
+            new AntPathRequestMatcher("/api/v1/ops/onboarding/**"),
+            new AntPathRequestMatcher("/api/v1/ops/auth/**"),
+            new AntPathRequestMatcher("/api/v1/payments/webhooks/**")
+        };
+    }
+
     /**
      * 운영 환경 여부 확인. 활성 Spring 프로파일({@code prod} / {@code production})만 단일 기준으로 사용한다.
      *

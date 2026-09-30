@@ -67,7 +67,8 @@ public final class BatchNotificationTemplateCodes {
             RESERVATION_IMMEDIATE_LATE);
 
     /**
-     * D-2/D-1 배치 리마인드 코드 — 예약 <strong>일시(슬롯)</strong> 변경 시 멱등 UNIQUE 해제 대상.
+     * D-2/D-1 배치 리마인드 코드 — 멱등 키에 예약 <strong>일시(슬롯)</strong> 를 포함하는 대상
+     * ({@link #isSlotScopedReminder}), 슬롯 변경 시 지연 PENDING 취소 대상.
      *
      * <p>{@link #RESERVATION_SCHEDULE_SMS_CODES} 중 D2·LATE만.
      * {@link #RESERVATION_IMMEDIATE_SINGLE} · WELCOME · INITIAL_GUIDE 는 포함하지 않는다.
@@ -76,6 +77,48 @@ public final class BatchNotificationTemplateCodes {
      */
     public static final java.util.List<String> RESERVATION_REMINDER_DN_CODES =
         java.util.List.of(RESERVATION_REMINDER_D2, RESERVATION_IMMEDIATE_LATE);
+
+    /**
+     * 멱등 로그 {@code target_slot_key} — 슬롯 비적용(평생 1회 키) 템플릿 및 V20260930_001 이전 행.
+     *
+     * @since 2026-09-30
+     */
+    public static final String TARGET_SLOT_KEY_NONE = "";
+
+    /** 멱등 로그 {@code target_slot_key} 포맷 — 일정 시작 일시(분 단위). */
+    public static final String TARGET_SLOT_KEY_PATTERN = "yyyy-MM-dd'T'HH:mm";
+
+    private static final java.time.format.DateTimeFormatter TARGET_SLOT_KEY_FORMATTER =
+        java.time.format.DateTimeFormatter.ofPattern(TARGET_SLOT_KEY_PATTERN, java.util.Locale.ROOT);
+
+    /**
+     * 멱등 키를 (스케줄 + 시작 일시) 로 두는 예약 리마인드 템플릿인지.
+     *
+     * <p>{@link #RESERVATION_REMINDER_DN_CODES}(D2·LATE) 만 해당. 일정 일시가 바뀌면 새 일시의
+     * D-2/D-1 리마인드가 다시 발송되고, 일시가 같으면(메모·상담사 변경 등) 재발송하지 않는다.
+     *
+     * @param templateCode 템플릿 코드
+     * @return 슬롯 멱등 대상이면 {@code true}
+     * @since 2026-09-30
+     */
+    public static boolean isSlotScopedReminder(String templateCode) {
+        return templateCode != null && RESERVATION_REMINDER_DN_CODES.contains(templateCode);
+    }
+
+    /**
+     * 예약 리마인드 멱등 슬롯 키 — 일정 시작 일시 {@value #TARGET_SLOT_KEY_PATTERN}.
+     *
+     * @param date      일정 일자
+     * @param startTime 일정 시작 시각
+     * @return 슬롯 키, 일자·시각 중 하나라도 없으면 {@link #TARGET_SLOT_KEY_NONE}
+     * @since 2026-09-30
+     */
+    public static String buildReminderSlotKey(java.time.LocalDate date, java.time.LocalTime startTime) {
+        if (date == null || startTime == null) {
+            return TARGET_SLOT_KEY_NONE;
+        }
+        return TARGET_SLOT_KEY_FORMATTER.format(java.time.LocalDateTime.of(date, startTime));
+    }
 
     /**
      * 마케팅성 템플릿 식별 — SMS 폴백 정책 F2 가드에 사용된다.
@@ -124,6 +167,9 @@ public final class BatchNotificationTemplateCodes {
 
     /** 멱등성 로그 error_code — 발송 대상 엔티티 부재. */
     public static final String ERROR_CODE_TARGET_NOT_FOUND = "TARGET_NOT_FOUND";
+
+    /** 사전 검증 실패 — 예약 리마인드 대상 일정의 시작 일시가 이미 지남(과거로 이동 포함). */
+    public static final String ERROR_CODE_SCHEDULE_SLOT_PAST = "SCHEDULE_SLOT_PAST";
 
     /**
      * 멱등성 로그 error_code — 마케팅 템플릿 알림톡 실패 + F2 정책에 의해 SMS 폴백 미수행.

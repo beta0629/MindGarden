@@ -1,12 +1,14 @@
 package com.coresolution.consultation.entity;
 
 import java.time.LocalDateTime;
+import com.coresolution.consultation.constant.BatchNotificationTemplateCodes;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Index;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -16,9 +18,12 @@ import lombok.experimental.SuperBuilder;
  * 알림 배치/이벤트 발송 멱등성 로그 엔티티.
  *
  * <p>발송 직전 INSERT(success=false) → 결과 UPDATE(success/error/solapi_ids/channel) 패턴으로 사용한다.
- * UNIQUE 키 {@code (tenant_id, template_code, target_type, target_id, recipient_user_id)} 가
+ * UNIQUE 키 {@code (tenant_id, template_code, target_type, target_id, recipient_user_id, target_slot_key)} 가
  * 중복 발송을 차단하므로 호출자({@code BatchNotificationDispatchService}) 는 INSERT 충돌을
  * 멱등성 skip 으로 해석한다.
+ *
+ * <p>{@code target_slot_key} 는 예약 리마인드(D-2/D-1) 에 한해 일정 시작 일시를 담아
+ * "동일 스케줄 + 동일 시작 일시 1통" 멱등을 보장한다. 그 외 템플릿·V20260930_001 이전 행은 빈 문자열.
  *
  * <p>감사로그는 발송 실패 시에도 반드시 남아야 하므로 호출부는
  * {@code Propagation.REQUIRES_NEW} 로 트랜잭션을 분리한다.
@@ -29,8 +34,9 @@ import lombok.experimental.SuperBuilder;
 @Entity
 @Table(name = "notification_batch_send_log",
     uniqueConstraints = {
-        @UniqueConstraint(name = "uq_nbsl_dispatch_idempotency",
-            columnNames = {"tenant_id", "template_code", "target_type", "target_id", "recipient_user_id"})
+        @UniqueConstraint(name = "uq_nbsl_dispatch_idempotency_slot",
+            columnNames = {"tenant_id", "template_code", "target_type", "target_id", "recipient_user_id",
+                "target_slot_key"})
     },
     indexes = {
         @Index(name = "idx_nbsl_tenant_sent", columnList = "tenant_id, sent_at"),
@@ -55,6 +61,10 @@ public class NotificationBatchSendLog extends BaseEntity {
 
     @Column(name = "recipient_user_id", nullable = false)
     private Long recipientUserId;
+
+    @Builder.Default
+    @Column(name = "target_slot_key", nullable = false, length = 32)
+    private String targetSlotKey = BatchNotificationTemplateCodes.TARGET_SLOT_KEY_NONE;
 
     @Column(name = "recipient_phone_masked", nullable = false, length = 20)
     private String recipientPhoneMasked;

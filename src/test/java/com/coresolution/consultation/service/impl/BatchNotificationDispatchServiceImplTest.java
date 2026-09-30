@@ -261,23 +261,26 @@ class BatchNotificationDispatchServiceImplTest {
         givenScheduleAndUsers(SCHEDULE_ID, 3);
         when(sendLogRepository.existsByIdempotencyKeyAnyTemplateAndSentAtRange(
             anyString(), any(), anyString(), anyLong(), anyLong(), any(), any())).thenReturn(false);
-        when(sendLogRepository.existsByIdempotencyKey(
+        // D-1(LATE) 은 (스케줄 + 시작 일시) 슬롯 멱등 키로 검사.
+        when(sendLogRepository.findSlotScopedReminderLogs(
             eq(TENANT_ID),
             eq(BatchNotificationTemplateCodes.RESERVATION_IMMEDIATE_LATE),
             eq(BatchNotificationTemplateCodes.TARGET_TYPE_SCHEDULE),
-            eq(SCHEDULE_ID), eq(CLIENT_ID))).thenReturn(true);
-        when(sendLogRepository.findByIdempotencyKey(
-            eq(TENANT_ID),
-            eq(BatchNotificationTemplateCodes.RESERVATION_IMMEDIATE_LATE),
-            eq(BatchNotificationTemplateCodes.TARGET_TYPE_SCHEDULE),
-            eq(SCHEDULE_ID), eq(CLIENT_ID)))
-            .thenReturn(Optional.of(buildLog()));
+            eq(SCHEDULE_ID), eq(CLIENT_ID),
+            eq(BatchNotificationTemplateCodes.buildReminderSlotKey(
+                LocalDate.now().plusDays(3), LocalTime.of(14, 30))),
+            eq(BatchNotificationTemplateCodes.TARGET_SLOT_KEY_NONE),
+            any(LocalDateTime.class), any(LocalDateTime.class)))
+            .thenReturn(List.of(buildLog()));
 
         DispatchOutcome outcome = service.dispatchReservationImmediateLate(SCHEDULE_ID);
 
         assertThat(outcome.status()).isEqualTo(DispatchOutcome.Status.SKIPPED_DUPLICATE);
+        assertThat(outcome.logId()).isEqualTo(LOG_ID);
         verify(dispatchHelper, never()).dispatchAlimtalk(anyString(), anyString(), anyMap());
         verify(dispatchHelper, never()).dispatchSms(anyString(), anyString());
+        verify(sendLogger, never()).logAttempt(anyString(), anyString(), anyString(),
+            anyLong(), anyLong(), anyString(), anyString());
     }
 
     @Test
@@ -298,6 +301,8 @@ class BatchNotificationDispatchServiceImplTest {
         assertThat(outcome.status()).isEqualTo(DispatchOutcome.Status.SKIPPED_DUPLICATE);
         verify(sendLogger, never()).logAttempt(anyString(), anyString(), anyString(),
             anyLong(), anyLong(), anyString());
+        verify(sendLogger, never()).logAttempt(anyString(), anyString(), anyString(),
+            anyLong(), anyLong(), anyString(), anyString());
         verify(dispatchHelper, never()).dispatchAlimtalk(anyString(), anyString(), anyMap());
         verify(dispatchHelper, never()).dispatchSms(anyString(), anyString());
     }
@@ -457,6 +462,8 @@ class BatchNotificationDispatchServiceImplTest {
         verify(dispatchHelper, never()).dispatchSms(anyString(), anyString());
         verify(sendLogger, never()).logAttempt(anyString(), anyString(), anyString(),
             anyLong(), anyLong(), anyString());
+        verify(sendLogger, never()).logAttempt(anyString(), anyString(), anyString(),
+            anyLong(), anyLong(), anyString(), anyString());
     }
 
     @Test
@@ -798,6 +805,79 @@ class BatchNotificationDispatchServiceImplTest {
             .isEqualTo("[테넌트 override] D-2 예약 안내 SMS 본문");
     }
 
+    @Test
+    @DisplayName("슬롯 멱등 — LATE 발송은 (스케줄 + 시작 일시) 슬롯 키로 INSERT")
+    void dispatch_immediateLate_logsWithReminderSlotKey() {
+        properties.setAlimtalkEnabled(false);
+        givenScheduleAndUsers(SCHEDULE_ID, 1);
+        givenMappingForSchedule(MAPPING_ID, 10, 7);
+        givenIdempotencyNotExists();
+        givenLoggerInsertSucceeds();
+        givenSmsDispatchSuccess();
+
+        DispatchOutcome outcome = service.dispatchReservationImmediateLate(SCHEDULE_ID);
+
+        assertThat(outcome.status()).isEqualTo(DispatchOutcome.Status.SMS_ONLY_SENT);
+        String expectedSlotKey = BatchNotificationTemplateCodes.buildReminderSlotKey(
+            LocalDate.now().plusDays(1), LocalTime.of(14, 30));
+        verify(sendLogger).logAttempt(eq(TENANT_ID),
+            eq(BatchNotificationTemplateCodes.RESERVATION_IMMEDIATE_LATE),
+            eq(BatchNotificationTemplateCodes.TARGET_TYPE_SCHEDULE),
+            eq(SCHEDULE_ID), eq(CLIENT_ID), eq(expectedSlotKey), anyString());
+        verify(sendLogger, never()).logAttempt(anyString(), anyString(), anyString(),
+            anyLong(), anyLong(), anyString());
+        verify(sendLogRepository, never()).existsByIdempotencyKey(
+            anyString(), anyString(), anyString(), anyLong(), anyLong());
+    }
+
+    @Test
+    @DisplayName("슬롯 멱등 비대상 — IMMEDIATE_SINGLE 은 기존 평생 1회 키 유지")
+    void dispatch_immediateSingle_keepsLifetimeIdempotency() {
+        properties.setAlimtalkEnabled(false);
+        givenScheduleAndUsers(SCHEDULE_ID, 0);
+        givenMappingForSchedule(MAPPING_ID, 1, 0);
+        givenIdempotencyNotExists();
+        givenLoggerInsertSucceeds();
+        givenSmsDispatchSuccess();
+
+        DispatchOutcome outcome = service.dispatchReservationImmediateSingle(SCHEDULE_ID);
+
+        assertThat(outcome.status()).isEqualTo(DispatchOutcome.Status.SMS_ONLY_SENT);
+        verify(sendLogRepository).existsByIdempotencyKey(eq(TENANT_ID),
+            eq(BatchNotificationTemplateCodes.RESERVATION_IMMEDIATE_SINGLE),
+            eq(BatchNotificationTemplateCodes.TARGET_TYPE_SCHEDULE),
+            eq(SCHEDULE_ID), eq(CLIENT_ID));
+        verify(sendLogger).logAttempt(eq(TENANT_ID),
+            eq(BatchNotificationTemplateCodes.RESERVATION_IMMEDIATE_SINGLE),
+            eq(BatchNotificationTemplateCodes.TARGET_TYPE_SCHEDULE),
+            eq(SCHEDULE_ID), eq(CLIENT_ID), anyString());
+        verify(sendLogger, never()).logAttempt(anyString(), anyString(), anyString(),
+            anyLong(), anyLong(), anyString(), anyString());
+    }
+
+    @Test
+    @DisplayName("과거 일정 — D-2/LATE 는 SCHEDULE_SLOT_PAST 로 skip, 발송·로그 없음")
+    void dispatch_whenScheduleSlotInPast_skipsReminder() {
+        givenScheduleAndUsers(SCHEDULE_ID, -1);
+        givenMappingForSchedule(MAPPING_ID, 10, 7);
+        givenIdempotencyNotExists();
+        givenLoggerInsertSucceeds();
+
+        DispatchOutcome late = service.dispatchReservationImmediateLate(SCHEDULE_ID);
+        DispatchOutcome d2 = service.dispatchReservationReminderD2(SCHEDULE_ID);
+
+        assertThat(late.status()).isEqualTo(DispatchOutcome.Status.SKIPPED_VALIDATION);
+        assertThat(late.errorCode())
+            .isEqualTo(BatchNotificationTemplateCodes.ERROR_CODE_SCHEDULE_SLOT_PAST);
+        assertThat(d2.status()).isEqualTo(DispatchOutcome.Status.SKIPPED_VALIDATION);
+        assertThat(d2.errorCode())
+            .isEqualTo(BatchNotificationTemplateCodes.ERROR_CODE_SCHEDULE_SLOT_PAST);
+        verify(dispatchHelper, never()).dispatchSms(anyString(), anyString());
+        verify(dispatchHelper, never()).dispatchAlimtalk(anyString(), anyString(), anyMap());
+        verify(sendLogger, never()).logAttempt(anyString(), anyString(), anyString(),
+            anyLong(), anyLong(), anyString(), anyString());
+    }
+
     // ---------------------------------------------------------------- fixtures
 
     private void givenScheduleAndUsers(Long scheduleId, int daysFromToday) {
@@ -846,6 +926,9 @@ class BatchNotificationDispatchServiceImplTest {
         NotificationBatchSendLog logEntry = buildLog();
         when(sendLogger.logAttempt(anyString(), anyString(), anyString(),
             anyLong(), anyLong(), anyString())).thenReturn(logEntry);
+        // D-2/LATE 예약 리마인드는 슬롯 키 포함 오버로드로 INSERT.
+        when(sendLogger.logAttempt(anyString(), anyString(), anyString(),
+            anyLong(), anyLong(), anyString(), anyString())).thenReturn(logEntry);
     }
 
     private void givenAlimtalkMappingResolved() {

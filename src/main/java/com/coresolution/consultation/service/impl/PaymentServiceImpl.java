@@ -12,7 +12,6 @@ import com.coresolution.consultation.constant.PaymentConstants;
 import com.coresolution.consultation.constant.PaymentNotificationCopy;
 import com.coresolution.consultation.dto.PaymentRequest;
 import com.coresolution.consultation.dto.PaymentResponse;
-import com.coresolution.consultation.dto.PaymentWebhookRequest;
 import com.coresolution.consultation.entity.Payment;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.repository.PaymentRepository;
@@ -728,37 +727,6 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
     }
     
     @Override
-    public boolean processWebhook(PaymentWebhookRequest webhookRequest) {
-        log.info("Webhook 처리: {}", webhookRequest.getPaymentId());
-        
-        try {
-            if (!verifyWebhook(webhookRequest)) {
-                log.warn("Webhook 검증 실패: {}", webhookRequest.getPaymentId());
-                return false;
-            }
-            
-            // 표준화 2025-12-06: deprecated 메서드 대체
-            String tenantId = TenantContextHolder.getRequiredTenantId();
-            Payment payment = paymentRepository.findByTenantIdAndPaymentIdAndIsDeletedFalse(tenantId, webhookRequest.getPaymentId())
-                    .orElseThrow(() -> new RuntimeException("결제를 찾을 수 없습니다."));
-            
-            Payment.PaymentStatus newStatus = Payment.PaymentStatus.valueOf(webhookRequest.getStatus());
-            updatePaymentStatus(webhookRequest.getPaymentId(), newStatus);
-            
-            payment.setExternalResponse(webhookRequest.getExternalData().toString());
-            payment.setWebhookData(webhookRequest.toString());
-            paymentRepository.save(payment);
-            
-            log.info("Webhook 처리 완료: {}", webhookRequest.getPaymentId());
-            return true;
-            
-        } catch (Exception e) {
-            log.error("Webhook 처리 실패: {}", e.getMessage(), e);
-            return false;
-        }
-    }
-    
-    @Override
     @Transactional
     public boolean verifyPayment(String paymentId, BigDecimal amount) {
         log.info("결제 검증: {}, 금액: {}", paymentId, amount);
@@ -1006,49 +974,6 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
     private String simulateExternalPaymentApi(Map<String, Object> paymentRequest) {
         String paymentId = (String) paymentRequest.get("paymentId");
         return PaymentConstants.EXTERNAL_PAYMENT_BASE_URL + "/pay/" + paymentId;
-    }
-    
-    private boolean verifyWebhook(PaymentWebhookRequest webhookRequest) {
-        log.info("Webhook 서명 검증 시작: paymentId={}", webhookRequest.getPaymentId());
-        
-        try {
-            String receivedSignature = webhookRequest.getSignature();
-            String timestamp = webhookRequest.getTimestamp() != null ? webhookRequest.getTimestamp().toString() : null;
-            String payload = webhookRequest.getExternalData() != null ? webhookRequest.getExternalData().toString() : "";
-            
-            if (receivedSignature == null || timestamp == null || payload == null) {
-                log.warn("Webhook 필수 필드 누락: signature={}, timestamp={}, payload={}", 
-                        receivedSignature != null, timestamp != null, payload != null);
-                return false;
-            }
-            
-            long currentTime = System.currentTimeMillis() / 1000;
-            long webhookTime = Long.parseLong(timestamp);
-            if (Math.abs(currentTime - webhookTime) > 300) { // 5분 = 300초
-                log.warn("Webhook 타임스탬프가 너무 오래됨: current={}, webhook={}", currentTime, webhookTime);
-                return false;
-            }
-            
-            String expectedSignature = generateWebhookSignature(payload, timestamp);
-            boolean isValid = expectedSignature.equals(receivedSignature);
-            
-            if (isValid) {
-                log.info(PaymentConstants.SUCCESS_WEBHOOK_VERIFIED);
-            } else {
-                log.warn("Webhook 서명 검증 실패: expected={}, received={}", expectedSignature, receivedSignature);
-            }
-            
-            return isValid;
-            
-        } catch (Exception e) {
-            log.error("Webhook 검증 중 오류 발생: {}", e.getMessage(), e);
-            return false;
-        }
-    }
-    
-    private String generateWebhookSignature(String payload, String timestamp) {
-        String data = payload + timestamp + PaymentConstants.WEBHOOK_SECRET_KEY;
-        return "sha256=" + Integer.toHexString(data.hashCode());
     }
     
     /**

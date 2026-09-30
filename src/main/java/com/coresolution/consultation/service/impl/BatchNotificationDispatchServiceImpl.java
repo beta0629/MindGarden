@@ -4,6 +4,7 @@ import java.time.Clock;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -17,9 +18,11 @@ import com.coresolution.consultation.entity.ConsultantClientMapping;
 import com.coresolution.consultation.entity.ConsultantClientMapping.MappingStatus;
 import com.coresolution.consultation.entity.NotificationBatchSendLog;
 import com.coresolution.consultation.entity.Schedule;
+import com.coresolution.consultation.entity.ScheduleChangeNotificationPending;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.repository.ConsultantClientMappingRepository;
 import com.coresolution.consultation.repository.NotificationBatchSendLogRepository;
+import com.coresolution.consultation.repository.ScheduleChangeNotificationPendingRepository;
 import com.coresolution.consultation.repository.ScheduleRepository;
 import com.coresolution.consultation.repository.UserPrivacyConsentRepository;
 import com.coresolution.consultation.repository.UserRepository;
@@ -81,9 +84,56 @@ public class BatchNotificationDispatchServiceImpl implements BatchNotificationDi
     private final BatchNotificationProperties properties;
     private final SmsTemplateService smsTemplateService;
     private final Clock reservationSmsClock;
+    private final ScheduleChangeNotificationPendingRepository scheduleChangeHistoryRepository;
 
     /**
-     * 운영용 생성자 (예약 SMS 당일 가드용 Asia/Seoul 시계).
+     * 운영용 생성자 (예약 SMS 당일 가드용 KST 시계 + 일정 변경 이력).
+     *
+     * @param scheduleRepository              스케줄
+     * @param mappingRepository               매핑
+     * @param userRepository                  사용자
+     * @param userPrivacyConsentRepository    동의
+     * @param sendLogRepository               발송 로그
+     * @param sendLogger                      발송 로거
+     * @param dispatchHelper                  채널 발송
+     * @param templateMappingResolver         알림톡 매핑
+     * @param encryptionUtil                  복호화
+     * @param properties                      배치 설정
+     * @param smsTemplateService              SMS 템플릿
+     * @param scheduleChangeHistoryRepository 일정 변경 이력 (슬롯 미기록 발송 로그의 발송 당시 슬롯 추정)
+     */
+    @Autowired
+    public BatchNotificationDispatchServiceImpl(
+            ScheduleRepository scheduleRepository,
+            ConsultantClientMappingRepository mappingRepository,
+            UserRepository userRepository,
+            UserPrivacyConsentRepository userPrivacyConsentRepository,
+            NotificationBatchSendLogRepository sendLogRepository,
+            NotificationBatchSendLogger sendLogger,
+            NotificationDispatchHelper dispatchHelper,
+            AlimtalkTemplateMappingResolver templateMappingResolver,
+            PersonalDataEncryptionUtil encryptionUtil,
+            BatchNotificationProperties properties,
+            SmsTemplateService smsTemplateService,
+            ScheduleChangeNotificationPendingRepository scheduleChangeHistoryRepository) {
+        this(
+                scheduleRepository,
+                mappingRepository,
+                userRepository,
+                userPrivacyConsentRepository,
+                sendLogRepository,
+                sendLogger,
+                dispatchHelper,
+                templateMappingResolver,
+                encryptionUtil,
+                properties,
+                smsTemplateService,
+                Clock.system(ReservationSmsBusinessHours.ZONE_SEOUL),
+                scheduleChangeHistoryRepository);
+    }
+
+    /**
+     * 일정 변경 이력 없이 생성 (슬롯 미기록 발송 로그는 일정 수정 시각으로만 판정).
      *
      * @param scheduleRepository           스케줄
      * @param mappingRepository            매핑
@@ -97,7 +147,6 @@ public class BatchNotificationDispatchServiceImpl implements BatchNotificationDi
      * @param properties                   배치 설정
      * @param smsTemplateService           SMS 템플릿
      */
-    @Autowired
     public BatchNotificationDispatchServiceImpl(
             ScheduleRepository scheduleRepository,
             ConsultantClientMappingRepository mappingRepository,
@@ -143,6 +192,42 @@ public class BatchNotificationDispatchServiceImpl implements BatchNotificationDi
             BatchNotificationProperties properties,
             SmsTemplateService smsTemplateService,
             Clock reservationSmsClock) {
+        this(
+                scheduleRepository,
+                mappingRepository,
+                userRepository,
+                userPrivacyConsentRepository,
+                sendLogRepository,
+                sendLogger,
+                dispatchHelper,
+                templateMappingResolver,
+                encryptionUtil,
+                properties,
+                smsTemplateService,
+                reservationSmsClock,
+                /* scheduleChangeHistoryRepository */ null);
+    }
+
+    /**
+     * 테스트용 시계 + 일정 변경 이력 주입 생성자.
+     *
+     * @param reservationSmsClock             당일 윈도우 판정용 시계
+     * @param scheduleChangeHistoryRepository 일정 변경 이력 ({@code null} 이면 이력 추정 생략)
+     */
+    BatchNotificationDispatchServiceImpl(
+            ScheduleRepository scheduleRepository,
+            ConsultantClientMappingRepository mappingRepository,
+            UserRepository userRepository,
+            UserPrivacyConsentRepository userPrivacyConsentRepository,
+            NotificationBatchSendLogRepository sendLogRepository,
+            NotificationBatchSendLogger sendLogger,
+            NotificationDispatchHelper dispatchHelper,
+            AlimtalkTemplateMappingResolver templateMappingResolver,
+            PersonalDataEncryptionUtil encryptionUtil,
+            BatchNotificationProperties properties,
+            SmsTemplateService smsTemplateService,
+            Clock reservationSmsClock,
+            ScheduleChangeNotificationPendingRepository scheduleChangeHistoryRepository) {
         this.scheduleRepository = scheduleRepository;
         this.mappingRepository = mappingRepository;
         this.userRepository = userRepository;
@@ -155,6 +240,7 @@ public class BatchNotificationDispatchServiceImpl implements BatchNotificationDi
         this.properties = properties;
         this.smsTemplateService = smsTemplateService;
         this.reservationSmsClock = reservationSmsClock;
+        this.scheduleChangeHistoryRepository = scheduleChangeHistoryRepository;
     }
 
     @Override
@@ -518,17 +604,128 @@ public class BatchNotificationDispatchServiceImpl implements BatchNotificationDi
         return new ReminderSlot(
             BatchNotificationTemplateCodes.buildReminderSlotKey(slotDate, schedule.getStartTime()),
             slotDate.minusDays(properties.getReservationReminderDaysAhead()).atStartOfDay(),
-            slotDate.plusDays(1).atStartOfDay());
+            slotDate.plusDays(1).atStartOfDay(),
+            schedule.getUpdatedAt());
     }
 
     /**
      * 예약 리마인드 슬롯 멱등 정보.
      *
-     * @param key              {@code target_slot_key}
-     * @param legacySentAtFrom 슬롯 미기록 행 매칭 구간 시작 inclusive
-     * @param legacySentAtTo   슬롯 미기록 행 매칭 구간 끝 exclusive
+     * @param key               {@code target_slot_key}
+     * @param legacySentAtFrom  슬롯 미기록 행 매칭 구간 시작 inclusive
+     * @param legacySentAtTo    슬롯 미기록 행 매칭 구간 끝 exclusive
+     * @param scheduleUpdatedAt 일정 최종 수정 시각 (슬롯 미기록 행 판정 폴백)
      */
-    private record ReminderSlot(String key, LocalDateTime legacySentAtFrom, LocalDateTime legacySentAtTo) {
+    private record ReminderSlot(String key, LocalDateTime legacySentAtFrom, LocalDateTime legacySentAtTo,
+            LocalDateTime scheduleUpdatedAt) {
+    }
+
+    /**
+     * 슬롯 멱등 판정 결과.
+     *
+     * @param blockingLogId 중복으로 차단한 로그 PK ({@code null} 이면 발송 진행)
+     * @param attemptKey    이번 시도에 기록할 {@code target_slot_key}
+     */
+    private record SlotAttemptDecision(Long blockingLogId, String attemptKey) {
+
+        boolean blocked() {
+            return attemptKey == null;
+        }
+    }
+
+    /**
+     * 예약 리마인드 슬롯 멱등 판정 — 성공·진행 중 행만 차단, 실패 행은 슬롯당 최대 시도 횟수까지 재시도.
+     *
+     * <ul>
+     *   <li>현재 슬롯 키 행·재시도 행({@code {key}#n})·현재 슬롯으로 판정된 슬롯 미기록 행을 모은다.</li>
+     *   <li>성공({@code success=true}) 또는 결과 미반영({@code channel_used=PENDING}) 행이 있으면 차단.</li>
+     *   <li>실패 행 수가 {@code reservationReminderMaxAttemptsPerSlot} 이상이면 차단(무한 재시도 방지).</li>
+     *   <li>그 외 최초 시도는 {@code key}, 재시도는 {@code key#n} 으로 새 행을 기록(기존 행 무수정).</li>
+     * </ul>
+     */
+    private SlotAttemptDecision decideReminderSlotAttempt(String tenantId, String templateCode,
+            String targetType, Long targetId, Long recipientUserId, ReminderSlot reminderSlot) {
+        List<NotificationBatchSendLog> slotLogs = sendLogRepository.findSlotScopedReminderLogs(
+            tenantId, templateCode, targetType, targetId, recipientUserId,
+            reminderSlot.key(),
+            BatchNotificationTemplateCodes.TARGET_SLOT_KEY_NONE,
+            reminderSlot.legacySentAtFrom(),
+            reminderSlot.legacySentAtTo());
+        List<NotificationBatchSendLog> retryLogs = sendLogRepository.findSlotScopedReminderRetryLogs(
+            tenantId, templateCode, targetType, targetId, recipientUserId,
+            reminderSlot.key() + BatchNotificationTemplateCodes.TARGET_SLOT_KEY_RETRY_SEPARATOR);
+
+        List<NotificationBatchSendLog> attempts = new ArrayList<>();
+        boolean firstAttemptRecorded = false;
+        for (NotificationBatchSendLog slotLog : nullSafe(slotLogs)) {
+            if (BatchNotificationTemplateCodes.TARGET_SLOT_KEY_NONE.equals(slotLog.getTargetSlotKey())) {
+                if (isLegacyLogForCurrentSlot(tenantId, targetId, slotLog, reminderSlot)) {
+                    attempts.add(slotLog);
+                }
+                continue;
+            }
+            firstAttemptRecorded = true;
+            attempts.add(slotLog);
+        }
+        List<NotificationBatchSendLog> retries = nullSafe(retryLogs);
+        attempts.addAll(retries);
+
+        int failedAttempts = 0;
+        Long latestFailedLogId = null;
+        for (NotificationBatchSendLog attempt : attempts) {
+            if (Boolean.TRUE.equals(attempt.getSuccess())
+                    || BatchNotificationTemplateCodes.CHANNEL_PENDING.equals(attempt.getChannelUsed())) {
+                return new SlotAttemptDecision(attempt.getId(), null);
+            }
+            failedAttempts++;
+            if (latestFailedLogId == null) {
+                latestFailedLogId = attempt.getId();
+            }
+        }
+        if (failedAttempts >= properties.getReservationReminderMaxAttemptsPerSlot()) {
+            log.info("슬롯 재시도 한도 도달 skip: tenantId={}, templateCode={}, targetId={}, recipientUserId={}, "
+                    + "targetSlotKey={}, failedAttempts={}",
+                tenantId, templateCode, targetId, recipientUserId, reminderSlot.key(), failedAttempts);
+            return new SlotAttemptDecision(latestFailedLogId, null);
+        }
+        String attemptKey = firstAttemptRecorded
+            ? BatchNotificationTemplateCodes.buildReminderSlotRetryKey(reminderSlot.key(), retries.size() + 2)
+            : reminderSlot.key();
+        return new SlotAttemptDecision(null, attemptKey);
+    }
+
+    /**
+     * 슬롯 미기록(V20260930_001 이전) 행이 현재 슬롯 발송분인지 판정한다. 기존 행은 읽기만 한다.
+     *
+     * <ol>
+     *   <li>발송 이후 첫 일정 변경 이력이 있으면 그 변경 전 일시가 발송 당시 슬롯 → 현재 슬롯과 비교.</li>
+     *   <li>이력이 없고 일정이 발송 이후 수정되지 않았으면 발송 당시 슬롯 = 현재 슬롯.</li>
+     *   <li>이력이 없는데 일정이 발송 이후 수정됐으면 발송 당시 슬롯을 알 수 없으므로 차단하지 않는다.</li>
+     * </ol>
+     */
+    private boolean isLegacyLogForCurrentSlot(String tenantId, Long scheduleId,
+            NotificationBatchSendLog legacyLog, ReminderSlot reminderSlot) {
+        LocalDateTime sentAt = legacyLog.getSentAt();
+        if (sentAt == null) {
+            return true;
+        }
+        if (scheduleChangeHistoryRepository != null) {
+            Optional<ScheduleChangeNotificationPending> firstChangeAfterSend = scheduleChangeHistoryRepository
+                .findFirstByTenantIdAndScheduleIdAndCreatedAtAfterAndIsDeletedFalseOrderByCreatedAtAsc(
+                    tenantId, scheduleId, sentAt);
+            if (firstChangeAfterSend.isPresent()) {
+                ScheduleChangeNotificationPending change = firstChangeAfterSend.get();
+                String slotAtSend = BatchNotificationTemplateCodes.buildReminderSlotKey(
+                    change.getPreviousDate(), change.getPreviousStartTime());
+                return reminderSlot.key().equals(slotAtSend);
+            }
+        }
+        LocalDateTime scheduleUpdatedAt = reminderSlot.scheduleUpdatedAt();
+        return scheduleUpdatedAt == null || !scheduleUpdatedAt.isAfter(sentAt);
+    }
+
+    private static <T> List<T> nullSafe(List<T> values) {
+        return values != null ? values : List.of();
     }
 
     /**
@@ -589,19 +786,17 @@ public class BatchNotificationDispatchServiceImpl implements BatchNotificationDi
         }
 
         // 예약 리마인드 — (스케줄 + 시작 일시) 슬롯 멱등. 일시가 바뀌면 새 슬롯으로 다시 발송된다.
+        String attemptSlotKey = null;
         if (reminderSlot != null) {
-            List<NotificationBatchSendLog> slotLogs = sendLogRepository.findSlotScopedReminderLogs(
-                tenantId, templateCode, targetType, targetId, recipientUserId,
-                reminderSlot.key(),
-                BatchNotificationTemplateCodes.TARGET_SLOT_KEY_NONE,
-                reminderSlot.legacySentAtFrom(),
-                reminderSlot.legacySentAtTo());
-            if (slotLogs != null && !slotLogs.isEmpty()) {
+            SlotAttemptDecision decision = decideReminderSlotAttempt(
+                tenantId, templateCode, targetType, targetId, recipientUserId, reminderSlot);
+            if (decision.blocked()) {
                 log.info("멱등성 검사 skip(슬롯): tenantId={}, templateCode={}, targetType={}, targetId={}, recipientUserId={}, targetSlotKey={}",
                     tenantId, templateCode, targetType, targetId, recipientUserId, reminderSlot.key());
                 return new DispatchOutcome(DispatchOutcome.Status.SKIPPED_DUPLICATE,
-                    null, false, null, null, slotLogs.get(0).getId());
+                    null, false, null, null, decision.blockingLogId());
             }
+            attemptSlotKey = decision.attemptKey();
         }
 
         // 사전 멱등 가드 — 단일 키 또는 코드 묶음 OR 검사 (슬롯 멱등 대상은 위에서 처리).
@@ -629,7 +824,7 @@ public class BatchNotificationDispatchServiceImpl implements BatchNotificationDi
         String maskedPhone = PhoneLogMasking.maskForLog(decryptedPhone);
         NotificationBatchSendLog logEntry = reminderSlot != null
             ? sendLogger.logAttempt(tenantId, templateCode,
-                targetType, targetId, recipientUserId, reminderSlot.key(), maskedPhone)
+                targetType, targetId, recipientUserId, attemptSlotKey, maskedPhone)
             : sendLogger.logAttempt(tenantId, templateCode,
                 targetType, targetId, recipientUserId, maskedPhone);
         if (logEntry == null) {

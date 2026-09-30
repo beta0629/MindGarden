@@ -56,4 +56,20 @@ public interface ScheduleChangeNotificationPendingRepository
      */
     boolean existsByTenantIdAndScheduleIdAndSlotVersionAndStatusAndIsDeletedFalse(
             String tenantId, Long scheduleId, String slotVersion, String status);
+
+    /**
+     * 기준 시각 이후 처음 기록된 일정 변경 행 (상태 무관, 읽기 전용).
+     *
+     * <p>{@code previous_date}/{@code previous_start_time} 이 기준 시각 당시의 일정 일시다.
+     * 슬롯 미기록 예약 리마인드 발송 로그의 발송 당시 슬롯 추정에 사용한다.
+     *
+     * @param tenantId   테넌트 ID
+     * @param scheduleId 스케줄 ID
+     * @param createdAt  기준 시각 exclusive (보통 발송 로그 {@code sent_at})
+     * @return 기준 시각 이후 첫 변경 행 (없으면 empty)
+     * @since 2026-09-30
+     */
+    Optional<ScheduleChangeNotificationPending>
+            findFirstByTenantIdAndScheduleIdAndCreatedAtAfterAndIsDeletedFalseOrderByCreatedAtAsc(
+            String tenantId, Long scheduleId, LocalDateTime createdAt);
 }

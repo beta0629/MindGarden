@@ -74,7 +74,7 @@ public class NotificationBatchSendLogger {
             .targetSlotKey(targetSlotKey != null
                 ? targetSlotKey : BatchNotificationTemplateCodes.TARGET_SLOT_KEY_NONE)
             .recipientPhoneMasked(recipientPhoneMasked)
-            .channelUsed("PENDING")
+            .channelUsed(BatchNotificationTemplateCodes.CHANNEL_PENDING)
             .fallbackToSms(Boolean.FALSE)
             .success(Boolean.FALSE)
             .sentAt(LocalDateTime.now())

@@ -34,6 +34,12 @@ public class BatchNotificationProperties {
     private int reservationReminderDaysAhead = 2;
 
     /**
+     * D-2/D-1 예약 리마인드 — 동일 (스케줄 + 시작 일시) 슬롯당 최대 발송 시도 횟수(실패 포함).
+     * 기본 {@code 2} — 최초 1회 + 실패 시 다음 배치에서 1회 재시도. 성공 행만 중복 차단에 사용한다.
+     */
+    private int reservationReminderMaxAttemptsPerSlot = 2;
+
+    /**
      * 첫 실행 cutoff — {@code SESSION_RENEW_PROMPT} 한정.
      * 매핑의 {@code end_date} 가 본 일자 {@link LocalDate#atStartOfDay()} 이후일 때만 발송.
      * 기본 {@code 2026-05-24} (운영 반영 다음 날 자정).

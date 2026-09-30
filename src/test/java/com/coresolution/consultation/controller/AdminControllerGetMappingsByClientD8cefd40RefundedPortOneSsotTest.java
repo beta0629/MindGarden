@@ -9,7 +9,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.coresolution.consultation.constant.SessionConstants;
+import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.entity.ConsultantClientMapping;
+import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.repository.UserSocialAccountRepository;
 import com.coresolution.consultation.service.AdminService;
@@ -46,6 +49,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.mock.web.MockHttpSession;
 
 /**
  * GET /api/v1/admin/mappings/client — order d8cefd40… PortOne 환불 SSOT JSON 증명.
@@ -135,8 +139,18 @@ class AdminControllerGetMappingsByClientD8cefd40RefundedPortOneSsotTest {
         when(clientMappingListPayloadService.buildPayloads(eq(List.of(mappingEntity))))
                 .thenReturn(List.of(enriched));
 
+        MockHttpSession session = new MockHttpSession();
+        User admin = User.builder()
+                .userId("admin-ssot")
+                .email("admin-ssot@example.com")
+                .role(UserRole.ADMIN)
+                .build();
+        admin.setId(1L);
+        admin.setTenantId("tenant-ssot-fixture");
+        session.setAttribute(SessionConstants.USER_OBJECT, admin);
+
         ResponseEntity<ApiResponse<Map<String, Object>>> response =
-                controller.getMappingsByClient(CLIENT_ID);
+                controller.getMappingsByClient(CLIENT_ID, session);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         ApiResponse<Map<String, Object>> body = response.getBody();

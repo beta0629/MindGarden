@@ -582,7 +582,8 @@ public class AuthController extends BaseApiController {
     /**
      * 로그아웃 — 요청을 보낸 현재 세션만 종료한다.
      *
-     * <p>동일 계정의 다른 기기·탭 세션과 토큰은 유지된다. 계정 전체 종료는 {@code /force-logout}.</p>
+     * <p>동일 계정의 다른 기기·탭 세션과 토큰은 유지된다. 계정 전체 종료는 관리자 전용
+     * {@code POST /api/v1/admin/sessions/force-logout}.</p>
      *
      * @param session     현재 HttpSession
      * @param httpRequest Authorization 헤더(Access JWT) 조회용
@@ -822,7 +823,7 @@ public class AuthController extends BaseApiController {
             if (user == null) {
                 throw new IllegalArgumentException("사용자를 찾을 수 없습니다.");
             }
-            // 요청한 현재 세션만 종료 — 동일 계정 다른 세션은 유지 (계정 전체 종료는 /force-logout)
+            // 요청한 현재 세션만 종료 — 동일 계정 다른 세션은 유지 (계정 전체 종료는 관리자 /api/v1/admin/sessions/force-logout)
             authService.terminateCurrentSession(user,
                 buildCurrentSessionCredentials(session, httpRequest, request),
                 SessionManagementConstants.END_REASON_USER_CONFIRMED_TERMINATE);
@@ -910,32 +911,6 @@ public class AuthController extends BaseApiController {
             log.warn("❌ 중복 로그인 확인 후 로그인 실패: {}", authResponse.getMessage());
             throw new IllegalArgumentException(authResponse.getMessage());
         }
-    }
-    
-    /**
-     * 강제 로그아웃 API (관리자용)
-     */
-    @PostMapping("/force-logout")
-    public ResponseEntity<ApiResponse<Void>> forceLogout(@RequestBody Map<String, String> request) {
-        String targetEmail = request.get("email");
-        if (targetEmail == null || targetEmail.trim().isEmpty()) {
-            throw new IllegalArgumentException("이메일을 입력해주세요.");
-        }
-        
-        // 사용자 조회 (현재 테넌트만 — cross-tenant force logout 금지)
-        String tenantId = TenantContextHolder.getRequiredTenantId();
-        List<User> users = userRepository.findAllByTenantIdAndEmail(tenantId, targetEmail);
-        if (users.isEmpty()) {
-            throw new IllegalArgumentException("사용자를 찾을 수 없습니다.");
-        }
-        User targetUser = users.get(0);
-        
-        // 계정 전체 세션·토큰 강제 종료
-        authService.terminateAllSessionsForUser(targetUser, SessionManagementConstants.END_REASON_ADMIN_FORCE);
-        
-        log.info("🔓 강제 로그아웃 완료: email={}", EmailLogMasking.maskForLog(targetEmail));
-        
-        return success("강제 로그아웃이 완료되었습니다.", null);
     }
     
     @PostMapping("/login")

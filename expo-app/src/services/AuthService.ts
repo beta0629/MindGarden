@@ -77,7 +77,7 @@ export type SocialAuthProvider = 'KAKAO' | 'NAVER' | 'APPLE' | 'GOOGLE';
 /**
  * 중복 로그인 확인 후 강제 재로그인에 필요한 입력값.
  * - credentials: 이메일/비밀번호를 그대로 보내 `/confirm-duplicate-login` 호출
- * - 소셜(KAKAO/NAVER): force-logout 후 동일 accessToken으로 social-login 재호출
+ * - 소셜(KAKAO/NAVER): 동일 accessToken으로 social-login 재호출
  */
 export type DuplicateLoginRetryContext =
   | { provider: 'credentials'; email: string; password: string }
@@ -1845,7 +1845,7 @@ export const AuthService = {
    * 중복 로그인 확인 → 기존 세션 종료 + 동일 자격으로 재로그인.
    *
    * - credentials: `POST /api/v1/auth/confirm-duplicate-login` (`{ email, password, confirmTerminate: true }`)
-   * - 소셜(KAKAO/NAVER): `force-logout` 으로 기존 세션 정리 후 `social-login` 재호출
+   * - 소셜(KAKAO/NAVER): `social-login` 재호출
    *
    * 웹 참조: `frontend/src/utils/duplicateLoginManager.js` 의 `forceLogout` 흐름 정합.
    */
@@ -1911,7 +1911,8 @@ export const AuthService = {
 
   /**
    * 소셜(KAKAO/NAVER) 흐름 재시도.
-   * 이메일이 있으면 force-logout 으로 기존 세션 정리 후 social-login 재호출.
+   * social-login 재호출로 새 세션을 만든다. 계정 전체 세션 종료는 관리자 전용 API 이므로
+   * 로그인 전 클라이언트에서 호출하지 않는다.
    * (백엔드 native social-login 은 모바일 UA 에서 중복 체크를 우회하므로 일반적으로 즉시 성공한다.)
    */
   async confirmDuplicateLoginSocial(retryContext: {
@@ -1922,17 +1923,6 @@ export const AuthService = {
     nickname: string | null;
     profileImage: string | null;
   }): Promise<DuplicateLoginRetryOutcome> {
-    if (retryContext.email) {
-      try {
-        await apiPost(AUTH_API.FORCE_LOGOUT, { email: retryContext.email });
-      } catch (e) {
-        // force-logout 실패는 무시 — social-login 재호출로 새 세션이 생성됨
-        if (__DEV__) {
-          console.warn('[AuthService] force-logout 실패 (무시):', e);
-        }
-      }
-    }
-
     try {
       const response = await apiPost<SocialLoginResponse>(AUTH_API.SOCIAL_LOGIN, {
         provider: retryContext.provider,

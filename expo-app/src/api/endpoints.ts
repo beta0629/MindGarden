@@ -13,8 +13,6 @@ export const AUTH_API = {
   CONFIRM_DUPLICATE_LOGIN: '/api/v1/auth/confirm-duplicate-login',
   /** 웹·Expo 피해자 폴링 — 타 세션 감지 */
   CHECK_DUPLICATE_LOGIN: '/api/v1/auth/check-duplicate-login',
-  /** 관리자 강제 로그아웃 — 소셜 로그인 중복 세션 정리에도 사용 */
-  FORCE_LOGOUT: '/api/v1/auth/force-logout',
   BRANCH_LOGIN: '/api/auth/branch-login',
   LOGOUT: '/api/v1/auth/logout',
   REFRESH_TOKEN: '/api/v1/auth/refresh-token',

@@ -1,13 +1,28 @@
 package com.coresolution.consultation.integration;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 
+import java.util.List;
+
+import com.coresolution.consultation.constant.SessionConstants;
+import com.coresolution.consultation.constant.UserRole;
+import com.coresolution.consultation.controller.AdminSessionForceLogoutController;
+import com.coresolution.consultation.dto.auth.AdminForceLogoutRequest;
+import com.coresolution.consultation.entity.User;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockHttpSession;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
@@ -49,8 +64,15 @@ class SecurityConfigAnyRequestAuthenticatedRegressionIntegrationTest {
     /** TenantContextFilter 통과용 더미 헤더(매트릭스 미정의 경로 호출 시 보안 필터까지 도달시키기 위함). */
     private static final String DUMMY_TENANT_HEADER = "pr3d-regression-guard";
 
+    private static final String ADMIN_FORCE_LOGOUT_PATH = "/api/v1/admin/sessions/force-logout";
+    private static final String LEGACY_FORCE_LOGOUT_PATH = "/api/v1/auth/force-logout";
+    private static final String FORCE_LOGOUT_BODY = "{\"email\":\"probe@example.com\"}";
+
     @Autowired
     private MockMvc mockMvc;
+
+    @Autowired
+    private AdminSessionForceLogoutController adminSessionForceLogoutController;
 
     /**
      * 매트릭스에 정의되지 않은 임의 경로는 인증이 없으면 401 이어야 한다.
@@ -207,5 +229,54 @@ class SecurityConfigAnyRequestAuthenticatedRegressionIntegrationTest {
         assertThat(status)
                 .as("P0: /api/v1/ops/onboarding/** 는 permitAll 이 아니며 미인증 시 401 이어야 합니다.")
                 .isEqualTo(401);
+    }
+
+    @Test
+    @DisplayName("POST /api/v1/admin/sessions/force-logout 미인증 → 401")
+    void adminForceLogout_withoutAuth_returns401() throws Exception {
+        int status = mockMvc.perform(post(ADMIN_FORCE_LOGOUT_PATH)
+                        .header("X-Tenant-Id", DUMMY_TENANT_HEADER)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(FORCE_LOGOUT_BODY))
+                .andReturn().getResponse().getStatus();
+
+        assertThat(status)
+                .as("P0: 관리자 강제 로그아웃은 미인증 시 401 이어야 합니다.")
+                .isEqualTo(401);
+    }
+
+    @Test
+    @DisplayName("관리자 강제 로그아웃 빈(@PreAuthorize) — ROLE_CLIENT 인증 호출 → AccessDenied(403)")
+    void adminForceLogout_asClient_isAccessDenied() {
+        User client = new User();
+        client.setId(900_001L);
+        client.setEmail("client-probe@example.com");
+        client.setRole(UserRole.CLIENT);
+        client.setTenantId(DUMMY_TENANT_HEADER);
+        MockHttpSession clientSession = new MockHttpSession();
+        clientSession.setAttribute(SessionConstants.USER_OBJECT, client);
+        SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(
+                client.getEmail(), null, List.of(new SimpleGrantedAuthority("ROLE_CLIENT"))));
+        try {
+            assertThatThrownBy(() -> adminSessionForceLogoutController.forceLogout(
+                    AdminForceLogoutRequest.builder().email("target@example.com").build(), clientSession))
+                    .as("P0: 관리자 강제 로그아웃은 ADMIN 외 역할에 403(AccessDenied) 이어야 합니다.")
+                    .isInstanceOf(AccessDeniedException.class);
+        } finally {
+            SecurityContextHolder.clearContext();
+        }
+    }
+
+    @Test
+    @DisplayName("구 경로 POST /api/v1/auth/force-logout 미인증 → 2xx 아님 (엔드포인트 삭제)")
+    void legacyAuthForceLogout_withoutAuth_isNotSuccessful() throws Exception {
+        int status = mockMvc.perform(post(LEGACY_FORCE_LOGOUT_PATH)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(FORCE_LOGOUT_BODY))
+                .andReturn().getResponse().getStatus();
+
+        assertThat(status)
+                .as("P0: 구 공개 경로 /api/v1/auth/force-logout 은 제거되어 성공 응답이 나오면 안 됩니다.")
+                .isNotIn(200, 201, 202, 204);
     }
 }

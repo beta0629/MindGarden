@@ -47,7 +47,7 @@ import lombok.extern.slf4j.Slf4j;
  *
  * <p>발송 흐름:
  * <pre>
- * 1. 멱등 가드 (notification_batch_send_log UNIQUE 5튜플 사전 조회)
+ * 1. 멱등 가드 (notification_batch_send_log UNIQUE 사전 조회 — D-2/D-1 리마인드는 (스케줄 + 시작 일시) 슬롯 단위)
  * 2. 대상 엔티티 + 수신자 로드 (User.name/phone 복호화)
  * 3. AlimtalkTemplateMappingResolver 로 codeValue → solapi templateId lookup
  * 4. 매핑이 있으면 알림톡 발송, 실패 시 SMS 폴백
@@ -419,6 +419,13 @@ public class BatchNotificationDispatchServiceImpl implements BatchNotificationDi
                 "schedule status not eligible for reservation SMS: id=" + scheduleId
                     + ", status=" + scheduleStatus);
         }
+        // D-2/D-1 리마인드는 시작 일시가 이미 지난 일정(과거로 이동 포함)에 발송하지 않는다.
+        boolean slotScopedReminder = BatchNotificationTemplateCodes.isSlotScopedReminder(templateCode);
+        if (slotScopedReminder && isScheduleSlotStarted(schedule)) {
+            return validationFailure(BatchNotificationTemplateCodes.ERROR_CODE_SCHEDULE_SLOT_PAST,
+                "schedule slot already started: id=" + scheduleId
+                    + ", date=" + schedule.getDate() + ", startTime=" + schedule.getStartTime());
+        }
 
         User client = userRepository
             .findByTenantIdAndIdIgnoringDeleted(tenantId, schedule.getClientId())
@@ -469,9 +476,59 @@ public class BatchNotificationDispatchServiceImpl implements BatchNotificationDi
                     null, false, null, null, null);
         }
 
+        if (slotScopedReminder) {
+            return dispatchInternal(tenantId, templateCode, /* idempotencyTemplateCodes */ null,
+                BatchNotificationTemplateCodes.TARGET_TYPE_SCHEDULE,
+                scheduleId, client.getId(), resolveReminderSlot(schedule),
+                decryptedPhone, params, smsBody);
+        }
         return dispatchInternal(tenantId, templateCode,
             BatchNotificationTemplateCodes.TARGET_TYPE_SCHEDULE,
             scheduleId, client.getId(), decryptedPhone, params, smsBody);
+    }
+
+    /**
+     * 일정 시작 일시가 현재(Asia/Seoul) 이전·동일인지.
+     *
+     * @param schedule 일정
+     * @return 이미 시작(또는 과거)이면 {@code true}. 일자가 없으면 판정하지 않고 {@code false}
+     */
+    private boolean isScheduleSlotStarted(Schedule schedule) {
+        if (schedule.getDate() == null) {
+            return false;
+        }
+        LocalDateTime now = LocalDateTime.now(reservationSmsClock);
+        if (schedule.getStartTime() == null) {
+            return schedule.getDate().isBefore(now.toLocalDate());
+        }
+        return !LocalDateTime.of(schedule.getDate(), schedule.getStartTime()).isAfter(now);
+    }
+
+    /**
+     * 예약 리마인드 슬롯 멱등 키 + 슬롯 미기록(기존) 행 매칭 구간.
+     *
+     * <p>D-2/D-1 리마인드(배치·등록 즉시 공통)는 상담일 기준 {@code D-N ~ D-0} 일자에만 발송되므로,
+     * 슬롯 미기록 행은 그 구간 안에 발송된 경우에만 현재 슬롯 발송분으로 간주한다.
+     *
+     * @param schedule 일정 (date 필수)
+     * @return 슬롯 정보
+     */
+    private ReminderSlot resolveReminderSlot(Schedule schedule) {
+        LocalDate slotDate = schedule.getDate();
+        return new ReminderSlot(
+            BatchNotificationTemplateCodes.buildReminderSlotKey(slotDate, schedule.getStartTime()),
+            slotDate.minusDays(properties.getReservationReminderDaysAhead()).atStartOfDay(),
+            slotDate.plusDays(1).atStartOfDay());
+    }
+
+    /**
+     * 예약 리마인드 슬롯 멱등 정보.
+     *
+     * @param key              {@code target_slot_key}
+     * @param legacySentAtFrom 슬롯 미기록 행 매칭 구간 시작 inclusive
+     * @param legacySentAtTo   슬롯 미기록 행 매칭 구간 끝 exclusive
+     */
+    private record ReminderSlot(String key, LocalDateTime legacySentAtFrom, LocalDateTime legacySentAtTo) {
     }
 
     /**
@@ -505,6 +562,22 @@ public class BatchNotificationDispatchServiceImpl implements BatchNotificationDi
             Collection<String> idempotencyTemplateCodes,
             String targetType, Long targetId, Long recipientUserId,
             String decryptedPhone, Map<String, String> alimtalkParams, String smsFallbackBody) {
+        return dispatchInternal(tenantId, templateCode, idempotencyTemplateCodes,
+            targetType, targetId, recipientUserId, /* reminderSlot */ null,
+            decryptedPhone, alimtalkParams, smsFallbackBody);
+    }
+
+    /**
+     * 멱등 가드 + 알림톡 발송 + SMS 폴백 + 결과 기록 공통 흐름 (예약 리마인드 슬롯 멱등 포함).
+     *
+     * @param reminderSlot {@code null} 이 아니면 (스케줄 + 시작 일시) 슬롯 멱등 검사·기록.
+     *                     {@code null} 이면 기존 평생 1회 키 검사
+     * @see #dispatchInternal(String, String, Collection, String, Long, Long, String, Map, String)
+     */
+    private DispatchOutcome dispatchInternal(String tenantId, String templateCode,
+            Collection<String> idempotencyTemplateCodes,
+            String targetType, Long targetId, Long recipientUserId, ReminderSlot reminderSlot,
+            String decryptedPhone, Map<String, String> alimtalkParams, String smsFallbackBody) {
 
         // 드라이런 모드 — 발송하지 않고 카운트만 로그.
         if (properties.isDryRun()) {
@@ -515,12 +588,31 @@ public class BatchNotificationDispatchServiceImpl implements BatchNotificationDi
                 null, false, null, null, null);
         }
 
-        // 사전 멱등 가드 — 단일 키 또는 코드 묶음 OR 검사.
-        boolean alreadySent = (idempotencyTemplateCodes != null && !idempotencyTemplateCodes.isEmpty())
-            ? sendLogRepository.existsByIdempotencyKeyAnyTemplate(
-                tenantId, idempotencyTemplateCodes, targetType, targetId, recipientUserId)
-            : sendLogRepository.existsByIdempotencyKey(
-                tenantId, templateCode, targetType, targetId, recipientUserId);
+        // 예약 리마인드 — (스케줄 + 시작 일시) 슬롯 멱등. 일시가 바뀌면 새 슬롯으로 다시 발송된다.
+        if (reminderSlot != null) {
+            List<NotificationBatchSendLog> slotLogs = sendLogRepository.findSlotScopedReminderLogs(
+                tenantId, templateCode, targetType, targetId, recipientUserId,
+                reminderSlot.key(),
+                BatchNotificationTemplateCodes.TARGET_SLOT_KEY_NONE,
+                reminderSlot.legacySentAtFrom(),
+                reminderSlot.legacySentAtTo());
+            if (slotLogs != null && !slotLogs.isEmpty()) {
+                log.info("멱등성 검사 skip(슬롯): tenantId={}, templateCode={}, targetType={}, targetId={}, recipientUserId={}, targetSlotKey={}",
+                    tenantId, templateCode, targetType, targetId, recipientUserId, reminderSlot.key());
+                return new DispatchOutcome(DispatchOutcome.Status.SKIPPED_DUPLICATE,
+                    null, false, null, null, slotLogs.get(0).getId());
+            }
+        }
+
+        // 사전 멱등 가드 — 단일 키 또는 코드 묶음 OR 검사 (슬롯 멱등 대상은 위에서 처리).
+        boolean alreadySent = false;
+        if (reminderSlot == null) {
+            alreadySent = (idempotencyTemplateCodes != null && !idempotencyTemplateCodes.isEmpty())
+                ? sendLogRepository.existsByIdempotencyKeyAnyTemplate(
+                    tenantId, idempotencyTemplateCodes, targetType, targetId, recipientUserId)
+                : sendLogRepository.existsByIdempotencyKey(
+                    tenantId, templateCode, targetType, targetId, recipientUserId);
+        }
         if (alreadySent) {
             log.info("멱등성 검사 skip: tenantId={}, templateCode={} ({}), targetType={}, targetId={}, recipientUserId={}",
                 tenantId, templateCode,
@@ -535,8 +627,11 @@ public class BatchNotificationDispatchServiceImpl implements BatchNotificationDi
         }
 
         String maskedPhone = PhoneLogMasking.maskForLog(decryptedPhone);
-        NotificationBatchSendLog logEntry = sendLogger.logAttempt(tenantId, templateCode,
-            targetType, targetId, recipientUserId, maskedPhone);
+        NotificationBatchSendLog logEntry = reminderSlot != null
+            ? sendLogger.logAttempt(tenantId, templateCode,
+                targetType, targetId, recipientUserId, reminderSlot.key(), maskedPhone)
+            : sendLogger.logAttempt(tenantId, templateCode,
+                targetType, targetId, recipientUserId, maskedPhone);
         if (logEntry == null) {
             // INSERT UNIQUE 충돌 — 동시성 케이스에서 다른 스레드가 먼저 INSERT 한 경우.
             log.info("동시성 멱등 skip: tenantId={}, templateCode={}", tenantId, templateCode);

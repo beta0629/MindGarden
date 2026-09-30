@@ -49,6 +49,7 @@ import com.coresolution.consultation.service.ScheduleMappingContextResolver;
 import com.coresolution.consultation.service.ScheduleMappingContextResolver.ScheduleMappingResponseContext;
 import com.coresolution.consultation.service.ScheduleService;
 import com.coresolution.consultation.util.PermissionCheckUtils;
+import com.coresolution.consultation.util.ScheduleSlotTimes;
 import com.coresolution.consultation.util.UserRoleCapabilityUtils;
 import com.coresolution.consultation.utils.SessionUtils;
 import com.coresolution.core.context.TenantContextHolder;
@@ -825,7 +826,12 @@ public class ScheduleController extends BaseApiController {
         if (updateData.containsKey("startTime")) {
             String startTimeStr = (String) updateData.get("startTime");
             try {
-                existingSchedule.setStartTime(java.time.LocalTime.parse(startTimeStr));
+                LocalTime newStartTime = LocalTime.parse(startTimeStr);
+                existingSchedule.setStartTime(newStartTime);
+                if (!updateData.containsKey("endTime")) {
+                    existingSchedule.setEndTime(ScheduleSlotTimes.shiftEndPreservingDuration(
+                            startBeforeSlotUpdate, endBeforeSlotUpdate, newStartTime));
+                }
                 log.info("📝 스케줄 시작 시간 변경: {}", startTimeStr);
             } catch (Exception e) {
                 log.warn("⚠️ 유효하지 않은 시작 시간 형식: {}", startTimeStr);

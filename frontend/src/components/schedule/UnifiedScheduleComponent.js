@@ -25,6 +25,7 @@ import {
   hasConsultantScheduleTimeOverlap,
   isPastDateOnly,
   isScheduleCalendarDragLocked,
+  resolveMovedScheduleEnd,
   SCHEDULE_DRAG_TO_PAST_DATE_MESSAGE
 } from '../../utils/scheduleRescheduleUtils';
 import {
@@ -1216,7 +1217,7 @@ const UnifiedScheduleComponent = ({
         }
 
         const newStart = event.start;
-        const newEnd = event.end;
+        const newEnd = resolveMovedScheduleEnd(newStart, event.end, originalStart, originalEnd);
 
         if (isPastDateOnly(newStart)) {
             info.revert();

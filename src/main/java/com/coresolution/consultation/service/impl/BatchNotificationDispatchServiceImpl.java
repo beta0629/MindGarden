@@ -605,7 +605,8 @@ public class BatchNotificationDispatchServiceImpl implements BatchNotificationDi
             BatchNotificationTemplateCodes.buildReminderSlotKey(slotDate, schedule.getStartTime()),
             slotDate.minusDays(properties.getReservationReminderDaysAhead()).atStartOfDay(),
             slotDate.plusDays(1).atStartOfDay(),
-            schedule.getUpdatedAt());
+            schedule.getUpdatedAt(),
+            schedule.getSlotChangedAt());
     }
 
     /**
@@ -614,10 +615,11 @@ public class BatchNotificationDispatchServiceImpl implements BatchNotificationDi
      * @param key               {@code target_slot_key}
      * @param legacySentAtFrom  슬롯 미기록 행 매칭 구간 시작 inclusive
      * @param legacySentAtTo    슬롯 미기록 행 매칭 구간 끝 exclusive
-     * @param scheduleUpdatedAt 일정 최종 수정 시각 (슬롯 미기록 행 판정 폴백)
+     * @param scheduleUpdatedAt 일정 최종 수정 시각 (슬롯 미기록 행 판정 최종 폴백)
+     * @param slotChangedAt     일정 일시 마지막 변경 시각 상한 ({@code null} 이면 추적 전)
      */
     private record ReminderSlot(String key, LocalDateTime legacySentAtFrom, LocalDateTime legacySentAtTo,
-            LocalDateTime scheduleUpdatedAt) {
+            LocalDateTime scheduleUpdatedAt, LocalDateTime slotChangedAt) {
     }
 
     /**
@@ -697,10 +699,15 @@ public class BatchNotificationDispatchServiceImpl implements BatchNotificationDi
     /**
      * 슬롯 미기록(V20260930_001 이전) 행이 현재 슬롯 발송분인지 판정한다. 기존 행은 읽기만 한다.
      *
+     * <p>일시(일자·시작 시각)가 실제로 바뀐 경우에만 새 슬롯으로 본다. 메모·상태 등 일시 외 수정은 변경이 아니다.
+     *
      * <ol>
-     *   <li>발송 이후 첫 일정 변경 이력이 있으면 그 변경 전 일시가 발송 당시 슬롯 → 현재 슬롯과 비교.</li>
-     *   <li>이력이 없고 일정이 발송 이후 수정되지 않았으면 발송 당시 슬롯 = 현재 슬롯.</li>
-     *   <li>이력이 없는데 일정이 발송 이후 수정됐으면 발송 당시 슬롯을 알 수 없으므로 차단하지 않는다.</li>
+     *   <li>발송 이후 첫 일정 변경 이력이 있으면 그 변경 전 일시가 발송 당시 슬롯 → 현재 슬롯과 비교
+     *       (다른 시각으로 옮겼다가 원래 시각으로 되돌리면 같은 슬롯 → 재발송 없음).</li>
+     *   <li>이력이 없고 일정 {@code slot_changed_at}(일시 변경 시각 상한)이 있으면, 그 값이 발송 시각 이후일 때만
+     *       일시가 바뀐 것으로 본다. 일시 외 수정은 이 값을 늦추지 않으므로 {@code updated_at} 보다 우선한다.</li>
+     *   <li>둘 다 없으면(추적 전 행) 기존 판정 유지 — 발송 이후 수정되지 않았으면 발송 당시 슬롯 = 현재 슬롯,
+     *       수정됐으면 발송 당시 슬롯을 알 수 없으므로 차단하지 않는다.</li>
      * </ol>
      */
     private boolean isLegacyLogForCurrentSlot(String tenantId, Long scheduleId,
@@ -719,6 +726,10 @@ public class BatchNotificationDispatchServiceImpl implements BatchNotificationDi
                     change.getPreviousDate(), change.getPreviousStartTime());
                 return reminderSlot.key().equals(slotAtSend);
             }
+        }
+        LocalDateTime slotChangedAt = reminderSlot.slotChangedAt();
+        if (slotChangedAt != null) {
+            return !slotChangedAt.isAfter(sentAt);
         }
         LocalDateTime scheduleUpdatedAt = reminderSlot.scheduleUpdatedAt();
         return scheduleUpdatedAt == null || !scheduleUpdatedAt.isAfter(sentAt);

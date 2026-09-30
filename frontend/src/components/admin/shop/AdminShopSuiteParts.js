@@ -9,39 +9,103 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import SafeText from '../../common/SafeText';
 import {
+  ADMIN_SHOP_EXPIRING_SOON_CHIP,
   ADMIN_SHOP_LEDGER_CHIP,
+  ADMIN_SHOP_LEDGER_STATE,
   ADMIN_SHOP_ORDERS_COPY,
   ADMIN_SHOP_SUITE_TEST_IDS,
-  ADMIN_SHOP_TOAST_DURATION_MS
+  ADMIN_SHOP_TOAST_DURATION_MS,
+  formatAdminShopCopy
 } from '../../../constants/adminShopSuite';
+import { resolveAdminPaymentStatusLabel } from '../../../constants/adminShopApi';
 import { ADMIN_SHOP_SESSION_DELTA_KIND } from '../../../utils/adminShopSuite';
 
 const SKELETON_ROW_COUNT = 5;
 
 /**
- * 쌍장부 상태 칩.
+ * 쌍장부 상태 칩. 만료 임박은 `만료 임박 D-{n}`.
  *
- * @param {{ state: string }} props
+ * @param {{ state: string, daysLeft?: number|null }} props
  * @returns {JSX.Element|null}
  */
-export function AdminShopLedgerChip({ state }) {
+export function AdminShopLedgerChip({ state, daysLeft }) {
   const chip = ADMIN_SHOP_LEDGER_CHIP[state];
   if (!chip) {
     return null;
   }
+  const label = state === ADMIN_SHOP_LEDGER_STATE.EXPIRING_SOON && daysLeft != null
+    ? formatAdminShopCopy(ADMIN_SHOP_EXPIRING_SOON_CHIP, { days: daysLeft })
+    : chip.label;
   return (
     <span className={`admin-shop-suite__chip admin-shop-suite__chip--${chip.modifier}`}>
-      <SafeText>{chip.label}</SafeText>
+      <SafeText>{label}</SafeText>
     </span>
   );
 }
 
 AdminShopLedgerChip.propTypes = {
-  state: PropTypes.string.isRequired
+  state: PropTypes.string.isRequired,
+  daysLeft: PropTypes.number
+};
+
+AdminShopLedgerChip.defaultProps = {
+  daysLeft: null
 };
 
 /**
- * 회기 변화 텍스트 (+N회기 · −N원복 · (+N) 대기/미반영 · —).
+ * 결제 행 상태 칩 — 라벨이 정의된 서버 상태(예: REFUND_REQUIRED → 환불 필요)만 표시.
+ *
+ * @param {{ paymentStatus?: string|null }} props
+ * @returns {JSX.Element|null}
+ */
+export function AdminShopPaymentStatusChip({ paymentStatus }) {
+  const label = resolveAdminPaymentStatusLabel(paymentStatus);
+  if (!label) {
+    return null;
+  }
+  return (
+    <span className="admin-shop-suite__chip admin-shop-suite__chip--amber">
+      <SafeText>{label}</SafeText>
+    </span>
+  );
+}
+
+AdminShopPaymentStatusChip.propTypes = {
+  paymentStatus: PropTypes.string
+};
+
+AdminShopPaymentStatusChip.defaultProps = {
+  paymentStatus: null
+};
+
+/**
+ * 주문 목록 상태 칸 — 장부 칩과 결제 상태 칩(환불 필요 등)을 세로로 쌓아 좁은 칸에서 잘리지 않게 한다.
+ *
+ * @param {{ state: string, daysLeft?: number|null, paymentStatus?: string|null }} props
+ * @returns {JSX.Element}
+ */
+export function AdminShopOrderStatusChips({ state, daysLeft, paymentStatus }) {
+  return (
+    <span className="admin-shop-suite__cell-stack admin-shop-suite__cell-stack--chips">
+      <AdminShopLedgerChip state={state} daysLeft={daysLeft} />
+      <AdminShopPaymentStatusChip paymentStatus={paymentStatus} />
+    </span>
+  );
+}
+
+AdminShopOrderStatusChips.propTypes = {
+  state: PropTypes.string.isRequired,
+  daysLeft: PropTypes.number,
+  paymentStatus: PropTypes.string
+};
+
+AdminShopOrderStatusChips.defaultProps = {
+  daysLeft: null,
+  paymentStatus: null
+};
+
+/**
+ * 회기 변화 텍스트 (+N회기 · −N원복 · (+N) 대기/미반영 · (N) 만료 · —).
  *
  * @param {{ kind: string, count: number|null }} delta
  * @returns {string}
@@ -60,6 +124,8 @@ export function formatAdminShopSessionDelta(delta) {
       return `(+${count}) ${ADMIN_SHOP_ORDERS_COPY.SESSION_WAITING}`;
     case ADMIN_SHOP_SESSION_DELTA_KIND.UNREFLECTED:
       return `(+${count}) ${ADMIN_SHOP_ORDERS_COPY.SESSION_UNREFLECTED}`;
+    case ADMIN_SHOP_SESSION_DELTA_KIND.EXPIRED:
+      return `(${count}) ${ADMIN_SHOP_ORDERS_COPY.SESSION_EXPIRED}`;
     default:
       return '—';
   }

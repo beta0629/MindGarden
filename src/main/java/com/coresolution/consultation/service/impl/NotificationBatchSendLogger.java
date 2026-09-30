@@ -5,6 +5,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import com.coresolution.consultation.constant.BatchNotificationTemplateCodes;
 import com.coresolution.consultation.entity.NotificationBatchSendLog;
 import com.coresolution.consultation.repository.NotificationBatchSendLogRepository;
 import lombok.RequiredArgsConstructor;
@@ -43,13 +44,37 @@ public class NotificationBatchSendLogger {
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public NotificationBatchSendLog logAttempt(String tenantId, String templateCode,
             String targetType, Long targetId, Long recipientUserId, String recipientPhoneMasked) {
+        return logAttempt(tenantId, templateCode, targetType, targetId, recipientUserId,
+            BatchNotificationTemplateCodes.TARGET_SLOT_KEY_NONE, recipientPhoneMasked);
+    }
+
+    /**
+     * 발송 직전 로그 행 INSERT — 예약 리마인드 슬롯 키 포함.
+     *
+     * <p>UNIQUE {@code (…, target_slot_key)} 충돌은 멱등 skip 으로 해석하여 {@code null} 을 반환한다.
+     *
+     * @param tenantId             테넌트 ID
+     * @param templateCode         템플릿 코드
+     * @param targetType           대상 타입 (SCHEDULE/MAPPING/USER)
+     * @param targetId             대상 엔티티 PK
+     * @param recipientUserId      수신자 users.id
+     * @param targetSlotKey        일정 시작 일시 슬롯 키 (슬롯 비적용 시 빈 문자열)
+     * @param recipientPhoneMasked 마스킹된 전화번호
+     * @return 저장된 로그 또는 {@code null} (멱등 충돌)
+     */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public NotificationBatchSendLog logAttempt(String tenantId, String templateCode,
+            String targetType, Long targetId, Long recipientUserId, String targetSlotKey,
+            String recipientPhoneMasked) {
         NotificationBatchSendLog entity = NotificationBatchSendLog.builder()
             .templateCode(templateCode)
             .targetType(targetType)
             .targetId(targetId)
             .recipientUserId(recipientUserId)
+            .targetSlotKey(targetSlotKey != null
+                ? targetSlotKey : BatchNotificationTemplateCodes.TARGET_SLOT_KEY_NONE)
             .recipientPhoneMasked(recipientPhoneMasked)
-            .channelUsed("PENDING")
+            .channelUsed(BatchNotificationTemplateCodes.CHANNEL_PENDING)
             .fallbackToSms(Boolean.FALSE)
             .success(Boolean.FALSE)
             .sentAt(LocalDateTime.now())
@@ -58,8 +83,8 @@ public class NotificationBatchSendLogger {
         try {
             return repository.saveAndFlush(entity);
         } catch (DataIntegrityViolationException e) {
-            log.info("멱등성 로그 UNIQUE 충돌 — skip: tenantId={}, templateCode={}, targetType={}, targetId={}, recipientUserId={}",
-                tenantId, templateCode, targetType, targetId, recipientUserId);
+            log.info("멱등성 로그 UNIQUE 충돌 — skip: tenantId={}, templateCode={}, targetType={}, targetId={}, recipientUserId={}, targetSlotKey={}",
+                tenantId, templateCode, targetType, targetId, recipientUserId, targetSlotKey);
             return null;
         }
     }

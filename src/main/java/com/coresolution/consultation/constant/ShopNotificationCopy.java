@@ -27,6 +27,7 @@ public final class ShopNotificationCopy {
     public static final String INAPP_TITLE_HOLD_EXPIRED = "주문 만료";
     public static final String INAPP_TITLE_REFUNDED = "주문 환불";
     public static final String INAPP_TITLE_FULFILLMENT = "주문 처리 완료";
+    public static final String INAPP_TITLE_LATE_PAYMENT_AUTO_CANCELLED = "결제 자동 취소";
 
     public static final String INAPP_BODY_ORDER_PAID_FMT =
             "주문이 결제되었습니다.\n주문번호: %s\n결제금액: %s원";
@@ -42,6 +43,12 @@ public final class ShopNotificationCopy {
             "상담 패키지 주문 처리가 완료되었습니다.\n주문번호: %s";
     public static final String INAPP_BODY_FULFILLMENT_CONSULTANT_FMT =
             "내담자 상담 패키지 주문이 처리되었습니다.\n주문번호: %s";
+    /** 취소·만료된 주문에 늦게 들어온 결제를 PG 전액 취소했을 때 내담자 안내 */
+    public static final String INAPP_BODY_LATE_PAYMENT_AUTO_CANCELLED_FMT =
+            "주문이 이미 닫혀 결제가 자동 취소됐어요\n주문번호: %s";
+    /** 열린 주문이지만 승인할 수 없는 결제 건에 들어온 PG 승인을 전액 취소했을 때 내담자 안내 */
+    public static final String INAPP_BODY_UNAPPROVABLE_PAYMENT_AUTO_CANCELLED_FMT =
+            "결제를 승인할 수 없어 자동 취소됐어요. 다시 결제해 주세요\n주문번호: %s";
 
     public static final String FALLBACK_ORDER_LABEL = "주문";
 }

@@ -6,11 +6,19 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import com.coresolution.consultation.constant.ShopClientOrderStatus;
+import com.coresolution.consultation.constant.ShopLatePaymentConstants;
 import com.coresolution.consultation.entity.Payment;
+import com.coresolution.consultation.exception.ShopOrderClosedForPaymentException;
+import com.coresolution.consultation.exception.ShopPaymentNotApprovableException;
 import com.coresolution.consultation.repository.PaymentRepository;
 import com.coresolution.consultation.service.ClientShopCheckoutService;
 import com.coresolution.consultation.service.PaymentService;
 import com.coresolution.consultation.service.PersonalDataEncryptionService;
+import com.coresolution.consultation.service.ShopLatePaymentOutcome;
+import com.coresolution.consultation.service.ShopLatePaymentRefundService;
+import com.coresolution.consultation.service.ShopOrderPaymentState;
+import com.coresolution.consultation.util.OutsideTransactionScope;
 import com.coresolution.core.constants.TenantPgSettingsJsonKeys;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.domain.TenantPgConfiguration;
@@ -21,9 +29,11 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
@@ -57,6 +67,7 @@ public class PortOnePaymentWebhookService {
     private final PaymentRepository paymentRepository;
     private final PaymentService paymentService;
     private final ClientShopCheckoutService clientShopCheckoutService;
+    private final ShopLatePaymentRefundService shopLatePaymentRefundService;
 
     /**
      * 포트원 V2 웹훅을 처리한다. 서명 검증 실패 시 4xx, 일시적 오류 시 5xx.
@@ -67,8 +78,19 @@ public class PortOnePaymentWebhookService {
      * @param webhookId         webhook-id 헤더 (로깅용, 선택)
      * @return HTTP 응답 엔티티
      */
-    @Transactional
+    // 외부 트랜잭션 없이 실행 — 늦은 결제 PG 취소 동안 DB 커넥션을 잡지 않고, 승인·상태 변경은 각 서비스의 짧은 트랜잭션에서 반영
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public ResponseEntity<Map<String, Object>> handleWebhook(
+            byte[] rawBody,
+            String webhookTimestamp,
+            String webhookSignature,
+            String webhookId) {
+        // NOT_SUPPORTED 동기화 범위에 EntityManager 가 묶이면 커넥션을 끝까지 쥐므로 범위 밖에서 처리
+        return OutsideTransactionScope.call(
+                () -> processWebhook(rawBody, webhookTimestamp, webhookSignature, webhookId));
+    }
+
+    private ResponseEntity<Map<String, Object>> processWebhook(
             byte[] rawBody,
             String webhookTimestamp,
             String webhookSignature,
@@ -168,11 +190,16 @@ public class PortOnePaymentWebhookService {
             }
             Payment.PaymentStatus targetStatus = mapped.get();
             Payment paymentRow = existing.get();
+            // 닫힌 주문 늦은 결제: 결제 행을 이 트랜잭션에서 건드리기 전에 판정(가드가 별도 트랜잭션으로 반영)
+            Optional<ResponseEntity<Map<String, Object>>> lateResponse =
+                    handleLatePaymentOnClosedOrder(tenantId, paymentId, paymentRow, targetStatus, webhookId, body);
+            if (lateResponse.isPresent()) {
+                return lateResponse.get();
+            }
             // 동일 상태 재전송 시 상태 전이·부가 로직(ERP 등)을 반복하지 않음 — 웹훅 페이로드만 최신으로 유지
+            String externalResponse = dataNode != null ? dataNode.toString() : rawUtf8;
             if (paymentRow.getStatus() == targetStatus) {
-                paymentRow.setWebhookData(rawUtf8);
-                paymentRow.setExternalResponse(dataNode != null ? dataNode.toString() : rawUtf8);
-                paymentRepository.save(paymentRow);
+                paymentService.recordWebhookPayload(tenantId, paymentId, rawUtf8, externalResponse);
                 syncShopOrderOnPaymentStatus(tenantId, paymentRow, targetStatus);
                 log.info("포트원 웹훅: 동일 상태 재전송(멱등) paymentId={}, status={}, webhookId={}",
                         paymentId, targetStatus, webhookId);
@@ -195,20 +222,21 @@ public class PortOnePaymentWebhookService {
                     paymentService.approveShopOrderPayment(paymentId);
                 } catch (IllegalArgumentException nonShop) {
                     paymentService.updatePaymentStatus(paymentId, targetStatus);
+                } catch (ShopOrderClosedForPaymentException | OptimisticLockingFailureException raced) {
+                    // 열린 주문으로 판정한 뒤 사용자 취소·만료가 먼저 커밋됨 → 늦은 PAID 로 처리
+                    return handleLatePaidAfterRace(tenantId, paymentId, paymentRow.getOrderId(), webhookId, body, raced);
                 }
             } else {
                 paymentService.updatePaymentStatus(paymentId, targetStatus);
             }
-            paymentRepository.findByTenantIdAndPaymentIdAndIsDeletedFalse(tenantId, paymentId).ifPresent(p -> {
-                p.setWebhookData(rawUtf8);
-                p.setExternalResponse(dataNode != null ? dataNode.toString() : rawUtf8);
-                paymentRepository.save(p);
-                // CANCELLED/REFUNDED: clinic 체인 보강(멱등). PaymentService sync 와 이중 호출 OK.
-                if (targetStatus == Payment.PaymentStatus.CANCELLED
-                        || targetStatus == Payment.PaymentStatus.REFUNDED) {
-                    syncShopOrderOnPaymentStatus(tenantId, p, targetStatus);
-                }
-            });
+            // NOT_SUPPORTED 호출 동안 영속성 컨텍스트가 유지돼 여기서 재조회하면 승인 전 캐시 엔티티가 돌아온다.
+            // 그 스냅샷을 저장하면 승인 커밋과 버전이 충돌하므로 짧은 트랜잭션에서 재조회·기록한다.
+            paymentService.recordWebhookPayload(tenantId, paymentId, rawUtf8, externalResponse);
+            // CANCELLED/REFUNDED: clinic 체인 보강(멱등). PaymentService sync 와 이중 호출 OK.
+            if (targetStatus == Payment.PaymentStatus.CANCELLED
+                    || targetStatus == Payment.PaymentStatus.REFUNDED) {
+                syncShopOrderOnPaymentStatus(tenantId, paymentRow, targetStatus);
+            }
             log.info("포트원 웹훅 처리 완료 paymentId={}, type={}, webhookId={}, testMode={}",
                     paymentId, eventType, webhookId, configuration.getTestMode());
             body.put("status", "ok");
@@ -233,6 +261,121 @@ public class PortOnePaymentWebhookService {
                 TenantContextHolder.clear();
             }
         }
+    }
+
+    /**
+     * 취소·만료된 주문에 PAID 가 늦게 오거나, 이미 다른 결제로 PAID 인 주문에 또 PAID 가 오면(이중 결제)
+     * 승인하지 않고 PortOne 전액 취소한다.
+     * 자동 취소가 실패하면 5xx 로 응답해 포트원 재시도를 받는다.
+     */
+    private Optional<ResponseEntity<Map<String, Object>>> handleLatePaymentOnClosedOrder(
+            String tenantId,
+            String paymentId,
+            Payment paymentRow,
+            Payment.PaymentStatus targetStatus,
+            String webhookId,
+            Map<String, Object> body) {
+        boolean pgCancelEvent = targetStatus == Payment.PaymentStatus.CANCELLED
+                || targetStatus == Payment.PaymentStatus.REFUNDED;
+        boolean lateRefunded = paymentRow.getStatus() == Payment.PaymentStatus.REFUNDED
+                && ShopLatePaymentConstants.isAutoRefundFailureReason(paymentRow.getFailureReason());
+        if (lateRefunded && targetStatus != Payment.PaymentStatus.APPROVED) {
+            // 자동 취소로 생긴 Cancelled·지연된 Ready 등 — REFUNDED 를 되돌리지 않는다
+            log.info("포트원 웹훅: 늦은 결제 자동 취소 완료 건 후속 이벤트(멱등) paymentId={}, target={}, webhookId={}",
+                    paymentId, targetStatus, webhookId);
+            body.put("status", ShopLatePaymentConstants.WEBHOOK_STATUS_LATE_PAYMENT_REFUNDED);
+            body.put("paymentId", paymentId);
+            body.put("deduplicated", Boolean.TRUE);
+            return Optional.of(ResponseEntity.ok(body));
+        }
+        boolean refundRequired = paymentRow.getStatus() == Payment.PaymentStatus.REFUND_REQUIRED;
+        if (refundRequired && !pgCancelEvent && targetStatus != Payment.PaymentStatus.APPROVED) {
+            log.info("포트원 웹훅: 환불 필요 건 비대상 이벤트 무시 paymentId={}, target={}, webhookId={}",
+                    paymentId, targetStatus, webhookId);
+            body.put("status", "ignored");
+            body.put("paymentId", paymentId);
+            return Optional.of(ResponseEntity.ok(body));
+        }
+        boolean shouldGuard = targetStatus == Payment.PaymentStatus.APPROVED || (pgCancelEvent && refundRequired);
+        if (!shouldGuard) {
+            return Optional.empty();
+        }
+        ShopLatePaymentOutcome outcome = shopLatePaymentRefundService.refundIfOrderClosed(tenantId, paymentId);
+        if (outcome == null || outcome == ShopLatePaymentOutcome.NOT_APPLICABLE) {
+            return Optional.empty();
+        }
+        return Optional.of(buildLatePaymentResponse(outcome, tenantId, paymentId, webhookId, body));
+    }
+
+    /**
+     * 승인 트랜잭션의 주문 잠금 재확인에서 닫힌 주문(또는 낙관적 락 충돌)을 만난 경우.
+     * 주문이 닫혔으면 500 대신 늦은 PAID 자동 환불로 처리하고, 열려 있으면 원래 예외를 다시 던진다(재시도).
+     * 열린 주문의 승인 불가 결제({@link ShopPaymentNotApprovableException}, H9b)는 이 결제만 PG 자동 취소한다.
+     */
+    private ResponseEntity<Map<String, Object>> handleLatePaidAfterRace(
+            String tenantId,
+            String paymentId,
+            String orderPublicId,
+            String webhookId,
+            Map<String, Object> body,
+            RuntimeException raced) {
+        log.warn("포트원 웹훅: 승인 중 주문 닫힘/동시 변경 감지 — 늦은 결제 재판정 paymentId={}, webhookId={}, cause={}",
+                paymentId, webhookId, raced.getClass().getSimpleName());
+        // H9b: 열린 주문인데 결제 건이 승인 불가 — 주문은 열린 채 이 결제만 PG 자동 취소
+        ShopLatePaymentOutcome outcome = raced instanceof ShopPaymentNotApprovableException
+                ? shopLatePaymentRefundService.refundUnapprovableOnOpenOrder(tenantId, paymentId)
+                : shopLatePaymentRefundService.refundIfOrderClosed(tenantId, paymentId);
+        if (outcome == null || outcome == ShopLatePaymentOutcome.NOT_APPLICABLE) {
+            if (isAlreadyApprovedByConcurrentWebhook(tenantId, orderPublicId, paymentId)) {
+                // 같은 PAID 의 동시 수신: 다른 요청이 승인·주문 PAID 를 먼저 커밋 — 한 번만 반영된 상태
+                log.info("포트원 웹훅: 동시 중복 수신 — 이미 승인 반영됨(멱등) paymentId={}, webhookId={}",
+                        paymentId, webhookId);
+                body.put("status", "ok");
+                body.put("paymentId", paymentId);
+                body.put("deduplicated", Boolean.TRUE);
+                return ResponseEntity.ok(body);
+            }
+            throw raced;
+        }
+        return buildLatePaymentResponse(outcome, tenantId, paymentId, webhookId, body);
+    }
+
+    private boolean isAlreadyApprovedByConcurrentWebhook(String tenantId, String orderPublicId, String paymentId) {
+        Optional<ShopOrderPaymentState> state =
+                paymentService.findShopOrderPaymentState(tenantId, orderPublicId, paymentId);
+        return state != null
+                && state.isPresent()
+                && state.get().paymentStatus() == Payment.PaymentStatus.APPROVED
+                && state.get().orderStatus() == ShopClientOrderStatus.PAID;
+    }
+
+    private ResponseEntity<Map<String, Object>> buildLatePaymentResponse(
+            ShopLatePaymentOutcome outcome,
+            String tenantId,
+            String paymentId,
+            String webhookId,
+            Map<String, Object> body) {
+        if (outcome == ShopLatePaymentOutcome.REFUND_REQUIRED) {
+            log.error("포트원 웹훅: 닫힌 주문 늦은 결제 자동 취소 실패 tenantId={}, paymentId={}, webhookId={}",
+                    tenantId, paymentId, webhookId);
+            body.put("message", ShopLatePaymentConstants.WEBHOOK_MESSAGE_REFUND_REQUIRED);
+            body.put("paymentId", paymentId);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(body);
+        }
+        if (outcome == ShopLatePaymentOutcome.REFUND_IN_PROGRESS) {
+            // 동시 중복 수신 — 다른 요청이 PG 취소를 진행 중. 취소 API 는 부르지 않고 재시도로 최종 결과를 받는다.
+            log.warn("포트원 웹훅: 늦은·중복 결제 자동 취소 진행 중(중복 수신) tenantId={}, paymentId={}, webhookId={}",
+                    tenantId, paymentId, webhookId);
+            body.put("message", ShopLatePaymentConstants.WEBHOOK_MESSAGE_REFUND_IN_PROGRESS);
+            body.put("paymentId", paymentId);
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(body);
+        }
+        log.info("포트원 웹훅: 닫힌 주문 늦은 결제 자동 취소 outcome={}, paymentId={}, webhookId={}",
+                outcome, paymentId, webhookId);
+        body.put("status", ShopLatePaymentConstants.WEBHOOK_STATUS_LATE_PAYMENT_REFUNDED);
+        body.put("paymentId", paymentId);
+        body.put("deduplicated", outcome == ShopLatePaymentOutcome.ALREADY_REFUNDED);
+        return ResponseEntity.ok(body);
     }
 
     private Optional<String> resolveWebhookSecret(TenantPgConfiguration configuration) {

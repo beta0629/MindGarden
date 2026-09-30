@@ -15,6 +15,7 @@ import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.repository.UserSocialAccountRepository;
 import com.coresolution.consultation.service.AdminService;
 import com.coresolution.consultation.service.BranchService;
+import com.coresolution.consultation.service.ClientMappingListPayloadService;
 import com.coresolution.consultation.service.ClientStatsService;
 import com.coresolution.consultation.service.CommonCodeService;
 import com.coresolution.consultation.service.ConsultantRatingService;
@@ -71,6 +72,7 @@ import org.springframework.security.access.AccessDeniedException;
 class AdminControllerStaffMappingTest {
 
     @Mock private AdminService adminService;
+    @Mock private ClientMappingListPayloadService clientMappingListPayloadService;
     @Mock private BranchService branchService;
     @Mock private ScheduleService scheduleService;
     @Mock private ConsultationRecordService consultationRecordService;
@@ -126,6 +128,8 @@ class AdminControllerStaffMappingTest {
         sessionUtilsStatic.when(() -> SessionUtils.getCurrentUser(session))
                 .thenReturn(userWithRole(UserRole.STAFF));
         lenient().when(adminService.getPendingDepositMappings())
+                .thenReturn(Collections.emptyList());
+        lenient().when(clientMappingListPayloadService.buildPayloads(Collections.emptyList()))
                 .thenReturn(Collections.emptyList());
 
         ResponseEntity<ApiResponse<Map<String, Object>>> response =
@@ -203,6 +207,8 @@ class AdminControllerStaffMappingTest {
         sessionUtilsStatic.when(() -> SessionUtils.getCurrentUser(session))
                 .thenReturn(userWithRole(UserRole.ADMIN));
         lenient().when(adminService.getPendingDepositMappings())
+                .thenReturn(Collections.emptyList());
+        lenient().when(clientMappingListPayloadService.buildPayloads(Collections.emptyList()))
                 .thenReturn(Collections.emptyList());
 
         ResponseEntity<ApiResponse<Map<String, Object>>> response =

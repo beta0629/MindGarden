@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.Optional;
+import com.coresolution.consultation.config.RestTemplateConfig;
 import com.coresolution.consultation.entity.Payment;
 import com.coresolution.core.domain.TenantPgConfiguration;
 import com.coresolution.core.domain.enums.ApprovalStatus;
@@ -13,13 +14,14 @@ import com.coresolution.core.repository.TenantPgConfigurationRepository;
 import com.coresolution.consultation.service.PersonalDataEncryptionService;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -36,7 +38,6 @@ import org.springframework.web.util.UriComponentsBuilder;
  */
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class PortOneV2PaymentVerifyService {
 
     /** 포트원 V2 REST 결제 조회 베이스 URL (공개 API 호스트). */
@@ -51,6 +52,12 @@ public class PortOneV2PaymentVerifyService {
     /** PARTIAL_CANCELLED 상태 문자열 (포트원 V2 Payment.status). */
     static final String STATUS_PARTIAL_CANCELLED = "PARTIAL_CANCELLED";
 
+    /** READY 상태 문자열 — 결제창만 열리고 승인 전 (포트원 V2 Payment.status). */
+    static final String STATUS_READY = "READY";
+
+    /** FAILED 상태 문자열 — 승인 실패·사용자 취소 (포트원 V2 Payment.status). */
+    static final String STATUS_FAILED = "FAILED";
+
     /** status≠PAID 일시적 지연 대비 최대 조회 횟수 (fail-closed). */
     static final int TRANSIENT_STATUS_MAX_ATTEMPTS = 3;
 
@@ -63,7 +70,18 @@ public class PortOneV2PaymentVerifyService {
     private final TenantPgConfigurationRepository tenantPgConfigurationRepository;
     private final PersonalDataEncryptionService encryptionService;
     private final ObjectMapper objectMapper;
-    private final RestTemplate restTemplate = new RestTemplate();
+    private final RestTemplate restTemplate;
+
+    public PortOneV2PaymentVerifyService(
+            TenantPgConfigurationRepository tenantPgConfigurationRepository,
+            PersonalDataEncryptionService encryptionService,
+            ObjectMapper objectMapper,
+            @Qualifier(RestTemplateConfig.PORTONE_REST_TEMPLATE) RestTemplate restTemplate) {
+        this.tenantPgConfigurationRepository = tenantPgConfigurationRepository;
+        this.encryptionService = encryptionService;
+        this.objectMapper = objectMapper;
+        this.restTemplate = restTemplate;
+    }
 
     /** 단위 테스트에서 지연을 0으로 줄이기 위한 필드 (기본값 = 운영 상수). */
     private int transientStatusMaxAttempts = TRANSIENT_STATUS_MAX_ATTEMPTS;
@@ -220,6 +238,67 @@ public class PortOneV2PaymentVerifyService {
     }
 
     /**
+     * 사용자 취소 정리용 승인 여부 판정 (fail-safe: 확실히 미승인일 때만 NOT_PAID).
+     * <p>404(결제 건 없음)·FAILED → NOT_PAID. PAID → PAID. READY(다른 탭 인증 중 등)·PAY_PENDING·
+     * VIRTUAL_ACCOUNT_ISSUED·CANCELLED 등 그 밖의 상태 → IN_PROGRESS. 조회 실패·설정 없음 → UNKNOWN.</p>
+     *
+     * @param tenantId  테넌트 ID
+     * @param paymentId 포트원 결제 ID
+     * @return 승인 여부
+     */
+    public PortOnePaymentPaidState resolvePaidState(String tenantId, String paymentId) {
+        if (tenantId == null || tenantId.isBlank() || paymentId == null || paymentId.isBlank()) {
+            return PortOnePaymentPaidState.UNKNOWN;
+        }
+        TenantPgConfiguration configuration = tenantPgConfigurationRepository
+                .findByTenantIdAndPgProviderAndStatusAndIsDeletedFalse(
+                        tenantId, PgProvider.IAMPORT, PgConfigurationStatus.ACTIVE)
+                .orElse(null);
+        if (configuration == null || configuration.getApprovalStatus() != ApprovalStatus.APPROVED) {
+            log.warn("포트원 승인 여부 조회: 사용 가능한 IAMPORT 설정 없음 tenantId={}", tenantId);
+            return PortOnePaymentPaidState.UNKNOWN;
+        }
+        String apiSecret = decryptSecret(configuration);
+        if (apiSecret == null || apiSecret.isBlank()) {
+            log.warn("포트원 승인 여부 조회: API Secret 복호화 실패 configId={}", configuration.getConfigId());
+            return PortOnePaymentPaidState.UNKNOWN;
+        }
+        String body;
+        try {
+            ResponseEntity<String> response = restTemplate.exchange(
+                    buildPaymentUri(paymentId.trim()),
+                    HttpMethod.GET,
+                    new HttpEntity<>(buildAuthHeaders(apiSecret)),
+                    String.class);
+            if (!response.getStatusCode().is2xxSuccessful() || response.getBody() == null) {
+                return PortOnePaymentPaidState.UNKNOWN;
+            }
+            body = response.getBody();
+        } catch (HttpClientErrorException.NotFound e) {
+            return PortOnePaymentPaidState.NOT_PAID;
+        } catch (RestClientException e) {
+            log.warn("포트원 승인 여부 조회 HTTP 오류 paymentId={}: {}", paymentId, e.getMessage());
+            return PortOnePaymentPaidState.UNKNOWN;
+        }
+        try {
+            String status = text(objectMapper.readTree(body), "status");
+            if (status == null || status.isBlank()) {
+                return PortOnePaymentPaidState.UNKNOWN;
+            }
+            if (STATUS_PAID.equalsIgnoreCase(status)) {
+                return PortOnePaymentPaidState.PAID;
+            }
+            if (STATUS_FAILED.equalsIgnoreCase(status)) {
+                return PortOnePaymentPaidState.NOT_PAID;
+            }
+            return PortOnePaymentPaidState.IN_PROGRESS;
+        } catch (Exception e) {
+            log.warn("포트원 승인 여부 조회: JSON 파싱 실패 paymentId={}: {}", paymentId, e.getMessage());
+            return PortOnePaymentPaidState.UNKNOWN;
+        }
+    }
+
+    /**
      * PortOne 결제가 전액/부분 취소 상태인지 여부.
      *
      * @param tenantId  테넌트 ID
@@ -268,15 +347,24 @@ public class PortOneV2PaymentVerifyService {
         }
     }
 
-    private Optional<String> fetchPaymentBody(String paymentId, String apiSecret) {
-        URI uri = UriComponentsBuilder
+    private static URI buildPaymentUri(String paymentId) {
+        return UriComponentsBuilder
                 .fromHttpUrl(PORTONE_V2_PAYMENTS_BASE_URL)
                 .pathSegment(paymentId)
                 .build()
                 .encode(StandardCharsets.UTF_8)
                 .toUri();
+    }
+
+    private static HttpHeaders buildAuthHeaders(String apiSecret) {
         HttpHeaders headers = new HttpHeaders();
         headers.set(HttpHeaders.AUTHORIZATION, "PortOne " + apiSecret);
+        return headers;
+    }
+
+    private Optional<String> fetchPaymentBody(String paymentId, String apiSecret) {
+        URI uri = buildPaymentUri(paymentId);
+        HttpHeaders headers = buildAuthHeaders(apiSecret);
         try {
             ResponseEntity<String> response = restTemplate.exchange(
                     uri, HttpMethod.GET, new HttpEntity<>(headers), String.class);

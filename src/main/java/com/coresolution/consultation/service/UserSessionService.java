@@ -77,6 +77,16 @@ public interface UserSessionService {
      * @return 처리 성공 여부
      */
     boolean deactivateSession(String sessionId, String reason);
+
+    /**
+     * 테넌트 스코프로 세션 1건 비활성화 (현재 세션 로그아웃용).
+     *
+     * @param tenantId  테넌트 ID
+     * @param sessionId {@code user_sessions.session_id}
+     * @param reason    종료 사유
+     * @return 비활성화된 행이 있으면 true
+     */
+    boolean deactivateSessionForTenant(String tenantId, String sessionId, String reason);
     
     /**
      * 사용자의 모든 세션 비활성화

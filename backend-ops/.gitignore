@@ -1,5 +1,7 @@
 /build/
 /out/
+# Eclipse/VS Code Java 빌드 출력 (application.yml 사본 포함 — 추적 금지)
+/bin/
 /.gradle/
 .gradle/
 !gradle/wrapper/gradle-wrapper.jar

@@ -3,7 +3,12 @@
  * 이메일·이름 부재는 게이트 차단 사유가 아님.
  */
 
-import { SHOP_PAYMENT_LAUNCH_COPY, PORTONE_CUSTOMER_DISPLAY_NAME_FALLBACK } from '../../constants/clientShopConstants';
+import {
+  SHOP_PAYMENT_LAUNCH_COPY,
+  PORTONE_CUSTOMER_DISPLAY_NAME_FALLBACK,
+  PORTONE_USER_CANCEL_CODE,
+  SHOP_USER_CANCEL_OUTCOME
+} from '../../constants/clientShopConstants';
 import { assertPortOneCustomerReadyBeforeCheckout } from '../clientShopPaymentCustomer';
 import {
   cancelOrphanShopOrderQuietly,
@@ -310,6 +315,84 @@ describe('runShopCheckoutWithPortOneGuard', () => {
 
     expect(cancelShopOrder).toHaveBeenCalledWith('ord-prep-fail');
     expect(runShopPortOnePaymentIfReady).not.toHaveBeenCalled();
+  });
+
+  describe('PortOne 결제창 결과', () => {
+    const portoneError = (result) => Object.assign(new Error(result.message || result.code), { portoneResult: result });
+    const runWith = (cancelShopPaymentByUser) => runShopCheckoutWithPortOneGuard({
+      user: validUser,
+      pointsRedeemMinor: 0,
+      mappingIdForCheckout: null,
+      createIdempotencyKey,
+      postShopCheckout,
+      prepareShopPayment,
+      runShopPortOnePaymentIfReady,
+      cancelShopOrder,
+      cancelShopPaymentByUser
+    });
+
+    beforeEach(() => {
+      postShopCheckout.mockResolvedValue({ nextStep: 'PAYMENT', orderPublicId: 'ord-pay' });
+      prepareShopPayment.mockResolvedValue({ paymentId: 'pay-1', storeId: 'store-test', channelKey: 'channel-test' });
+    });
+
+    test('PAY_PROCESS_CANCELED → 사용자 취소 API 호출 · USER_CANCELLED · 고아 cancel 미호출', async() => {
+      runShopPortOnePaymentIfReady.mockRejectedValue(portoneError({ code: PORTONE_USER_CANCEL_CODE }));
+      const cancelShopPaymentByUser = jest.fn().mockResolvedValue({ outcome: SHOP_USER_CANCEL_OUTCOME.CANCELLED });
+
+      const result = await runWith(cancelShopPaymentByUser);
+
+      expect(cancelShopPaymentByUser).toHaveBeenCalledWith('ord-pay');
+      expect(result.status).toBe('USER_CANCELLED');
+      expect(result.cancelOutcome).toBe(SHOP_USER_CANCEL_OUTCOME.CANCELLED);
+      expect(cancelShopOrder).not.toHaveBeenCalled();
+    });
+
+    test('PortOne 결제 진행 중(READY) → USER_CANCELLED 복귀 흐름 유지 · 주문은 닫히지 않은 outcome 그대로 전달', async() => {
+      runShopPortOnePaymentIfReady.mockRejectedValue(portoneError({ code: PORTONE_USER_CANCEL_CODE }));
+      const cancelShopPaymentByUser = jest.fn().mockResolvedValue({
+        outcome: SHOP_USER_CANCEL_OUTCOME.NOT_CANCELLABLE_IN_PROGRESS, orderStatus: 'PENDING_PAYMENT'
+      });
+
+      const result = await runWith(cancelShopPaymentByUser);
+
+      expect(result.status).toBe('USER_CANCELLED');
+      expect(result.cancelOutcome).toBe(SHOP_USER_CANCEL_OUTCOME.NOT_CANCELLABLE_IN_PROGRESS);
+      expect(result.cancelOutcome).not.toBe(SHOP_USER_CANCEL_OUTCOME.CANCELLED);
+      expect(cancelShopOrder).not.toHaveBeenCalled();
+    });
+
+    test('사용자 취소인데 PortOne PAID → PAID_AFTER_CANCEL (정상 결제 확인으로)', async() => {
+      runShopPortOnePaymentIfReady.mockRejectedValue(portoneError({ code: PORTONE_USER_CANCEL_CODE }));
+      const cancelShopPaymentByUser = jest.fn().mockResolvedValue({ outcome: SHOP_USER_CANCEL_OUTCOME.PAID, paymentId: 'pay-1' });
+
+      const result = await runWith(cancelShopPaymentByUser);
+
+      expect(result.status).toBe('PAID_AFTER_CANCEL');
+      expect(result.paymentId).toBe('pay-1');
+    });
+
+    test('사용자 취소 API 실패해도 USER_CANCELLED 로 복귀 흐름 유지', async() => {
+      runShopPortOnePaymentIfReady.mockRejectedValue(portoneError({ code: PORTONE_USER_CANCEL_CODE }));
+      const cancelShopPaymentByUser = jest.fn().mockRejectedValue(new Error('network'));
+      const warn = jest.spyOn(console, 'warn').mockImplementation(() => {});
+
+      const result = await runWith(cancelShopPaymentByUser);
+
+      expect(result.status).toBe('USER_CANCELLED');
+      expect(result.cancelOutcome).toBeNull();
+      warn.mockRestore();
+    });
+
+    test('카드 거절 등 다른 code → 그대로 throw (결제 화면 잔류) · 취소 API 미호출', async() => {
+      runShopPortOnePaymentIfReady.mockRejectedValue(portoneError({ code: 'FAILURE_TYPE_PG', message: '카드 거절' }));
+      const cancelShopPaymentByUser = jest.fn();
+
+      await expect(runWith(cancelShopPaymentByUser)).rejects.toThrow('카드 거절');
+
+      expect(cancelShopPaymentByUser).not.toHaveBeenCalled();
+      expect(cancelShopOrder).not.toHaveBeenCalled();
+    });
   });
 });
 

@@ -3,9 +3,14 @@ package com.coresolution.consultation.service.impl;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Comparator;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -14,19 +19,24 @@ import com.coresolution.consultation.dto.ClientPackagePaymentHistoryResponse;
 import com.coresolution.consultation.dto.PackagePaymentHistoryItemResponse;
 import com.coresolution.consultation.dto.PackagePaymentHistorySummaryResponse;
 import com.coresolution.consultation.dto.PackagePaymentHistoryType;
+import com.coresolution.consultation.dto.PaymentSource;
 import com.coresolution.consultation.entity.ConsultantClientMapping;
+import com.coresolution.consultation.entity.Payment;
 import com.coresolution.consultation.entity.SessionExtensionRequest;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.repository.ConsultantClientMappingRepository;
+import com.coresolution.consultation.repository.PaymentRepository;
 import com.coresolution.consultation.repository.SessionExtensionRequestRepository;
 import com.coresolution.consultation.service.ClientPackagePaymentHistoryService;
 import com.coresolution.consultation.service.UserPersonalDataCacheService;
+import com.coresolution.consultation.util.PaymentSourceResolver;
 import com.coresolution.consultation.util.SessionTransferHistoryMapper;
 import com.coresolution.core.context.TenantContextHolder;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 /**
  * 내담자별 패키지 결제 이력 조회 구현.
@@ -49,6 +59,7 @@ public class ClientPackagePaymentHistoryServiceImpl implements ClientPackagePaym
             Pattern.compile("targetActiveMappingId=(\\d+)");
     private final ConsultantClientMappingRepository mappingRepository;
     private final SessionExtensionRequestRepository sessionExtensionRequestRepository;
+    private final PaymentRepository paymentRepository;
     private final UserPersonalDataCacheService userPersonalDataCacheService;
 
     /**
@@ -72,16 +83,18 @@ public class ClientPackagePaymentHistoryServiceImpl implements ClientPackagePaym
                 mappingRepository.findAllByTenantIdAndClientIdWithDetails(tenantId, clientId);
         List<SessionExtensionRequest> extensions =
                 sessionExtensionRequestRepository.findByTenantIdAndClientIdWithDetails(tenantId, clientId);
+        Map<String, Payment> paymentByOrderId = loadPaymentsByOrderId(
+                tenantId, collectPaymentReferences(mappings, extensions));
 
         List<PackagePaymentHistoryItemResponse> items = new ArrayList<>();
         for (ConsultantClientMapping mapping : mappings) {
             if (isTransferTerminationOnly(mapping)) {
                 continue;
             }
-            items.add(toMappingItem(mapping, mappings, extensions));
+            items.add(toMappingItem(mapping, mappings, extensions, paymentByOrderId));
         }
         for (SessionExtensionRequest extension : extensions) {
-            items.add(toExtensionItem(extension));
+            items.add(toExtensionItem(extension, paymentByOrderId));
         }
 
         if (viewerConsultantId != null) {
@@ -106,7 +119,8 @@ public class ClientPackagePaymentHistoryServiceImpl implements ClientPackagePaym
     private PackagePaymentHistoryItemResponse toMappingItem(
             ConsultantClientMapping mapping,
             List<ConsultantClientMapping> allMappings,
-            List<SessionExtensionRequest> extensions) {
+            List<SessionExtensionRequest> extensions,
+            Map<String, Payment> paymentByOrderId) {
         String notes = mapping.getNotes();
         PackagePaymentHistoryType type = isAdditionalPackageNotes(notes)
                 ? PackagePaymentHistoryType.ADDITIONAL_PACKAGE
@@ -127,6 +141,11 @@ public class ClientPackagePaymentHistoryServiceImpl implements ClientPackagePaym
         boolean mergedIntoActive = type == PackagePaymentHistoryType.ADDITIONAL_PACKAGE
                 && mapping.getStatus() == ConsultantClientMapping.MappingStatus.TERMINATED
                 && targetActiveMappingId != null;
+        PaymentSource paymentSource = resolvePaymentSource(
+                mapping.getPaymentReference(),
+                paymentByOrderId,
+                PaymentSourceResolver.hasAdminPaymentEvidence(
+                        mapping.getPaymentMethod(), mapping.getPaymentStatus()));
 
         return PackagePaymentHistoryItemResponse.builder()
                 .type(type)
@@ -146,6 +165,7 @@ public class ClientPackagePaymentHistoryServiceImpl implements ClientPackagePaym
                 .targetActiveMappingId(targetActiveMappingId)
                 .paymentMethod(mapping.getPaymentMethod())
                 .paymentReference(mapping.getPaymentReference())
+                .paymentSource(paymentSource)
                 .createdAt(mapping.getCreatedAt())
                 .build();
     }
@@ -246,7 +266,9 @@ public class ClientPackagePaymentHistoryServiceImpl implements ClientPackagePaym
         return reason != null && reason.contains("상담사 변경");
     }
 
-    private PackagePaymentHistoryItemResponse toExtensionItem(SessionExtensionRequest extension) {
+    private PackagePaymentHistoryItemResponse toExtensionItem(
+            SessionExtensionRequest extension,
+            Map<String, Payment> paymentByOrderId) {
         ConsultantClientMapping mapping = extension.getMapping();
         User consultant = mapping != null ? mapping.getConsultant() : null;
         Long consultantId = consultant != null ? consultant.getId() : null;
@@ -256,6 +278,10 @@ public class ClientPackagePaymentHistoryServiceImpl implements ClientPackagePaym
         LocalDateTime paymentDate = extension.getPaymentDate() != null
                 ? extension.getPaymentDate()
                 : extension.getCreatedAt();
+        PaymentSource paymentSource = resolvePaymentSource(
+                extension.getPaymentReference(),
+                paymentByOrderId,
+                PaymentSourceResolver.hasAdminPaymentEvidence(extension.getPaymentMethod()));
 
         return PackagePaymentHistoryItemResponse.builder()
                 .type(PackagePaymentHistoryType.SESSION_EXTENSION)
@@ -274,8 +300,63 @@ public class ClientPackagePaymentHistoryServiceImpl implements ClientPackagePaym
                 .targetActiveMappingId(mappingId)
                 .paymentMethod(extension.getPaymentMethod())
                 .paymentReference(extension.getPaymentReference())
+                .paymentSource(paymentSource)
                 .createdAt(extension.getCreatedAt())
                 .build();
+    }
+
+    private static Set<String> collectPaymentReferences(
+            List<ConsultantClientMapping> mappings,
+            List<SessionExtensionRequest> extensions) {
+        Set<String> refs = new HashSet<>();
+        if (mappings != null) {
+            for (ConsultantClientMapping mapping : mappings) {
+                if (mapping != null && StringUtils.hasText(mapping.getPaymentReference())) {
+                    refs.add(mapping.getPaymentReference().trim());
+                }
+            }
+        }
+        if (extensions != null) {
+            for (SessionExtensionRequest extension : extensions) {
+                if (extension != null && StringUtils.hasText(extension.getPaymentReference())) {
+                    refs.add(extension.getPaymentReference().trim());
+                }
+            }
+        }
+        return refs;
+    }
+
+    private Map<String, Payment> loadPaymentsByOrderId(String tenantId, Collection<String> orderIds) {
+        if (!StringUtils.hasText(tenantId) || orderIds == null || orderIds.isEmpty()) {
+            return Collections.emptyMap();
+        }
+        List<Payment> payments =
+                paymentRepository.findByTenantIdAndOrderIdInAndIsDeletedFalse(tenantId, orderIds);
+        Map<String, Payment> byOrderId = new HashMap<>();
+        for (Payment payment : payments) {
+            if (payment == null || !StringUtils.hasText(payment.getOrderId())) {
+                continue;
+            }
+            String key = payment.getOrderId().trim();
+            Payment existing = byOrderId.get(key);
+            if (existing == null
+                    || (payment.getId() != null
+                    && (existing.getId() == null || payment.getId() > existing.getId()))) {
+                byOrderId.put(key, payment);
+            }
+        }
+        return byOrderId;
+    }
+
+    private static PaymentSource resolvePaymentSource(
+            String paymentReference,
+            Map<String, Payment> paymentByOrderId,
+            boolean hasAdminPaymentEvidence) {
+        Payment payment = null;
+        if (StringUtils.hasText(paymentReference) && paymentByOrderId != null) {
+            payment = paymentByOrderId.get(paymentReference.trim());
+        }
+        return PaymentSourceResolver.resolve(payment, hasAdminPaymentEvidence);
     }
 
     private PackagePaymentHistorySummaryResponse buildSummary(

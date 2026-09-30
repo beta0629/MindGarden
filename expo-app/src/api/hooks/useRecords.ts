@@ -21,6 +21,7 @@ import {
 } from '@/utils/scheduleDisplayLabels';
 import { SCHEDULE_QUERY_KEYS } from './useSchedules';
 import { requireSessionNumber } from '@/utils/consultationRecordSessionNumber';
+import { buildConsultationRecordCreateBody } from '@/utils/consultationRecordCreateBody';
 
 export interface ConsultationRecord {
   id: number;
@@ -61,12 +62,20 @@ export interface CreateRecordInput {
   sessionNumber: number;
   clientId: number;
   consultantId: number;
+  /** 상담 요약 — 서버 clientCondition */
   summary: string;
   expertMemo?: string;
   tags: string[];
   nextSessionDate?: string;
   nextSessionMemo?: string;
   status: 'DRAFT' | 'COMPLETED';
+  /** 이하 서버·웹 공통 필수값 */
+  sessionDurationMinutes: number | null;
+  mainIssues: string;
+  interventionMethods: string;
+  clientResponse: string;
+  riskAssessment: string;
+  progressEvaluation: string;
 }
 
 export interface UpdateRecordInput {
@@ -484,18 +493,22 @@ export function useCreateRecord() {
         throw new Error('consultationId(scheduleId)는 필수입니다.');
       }
       const parts = [input.summary, input.expertMemo].filter((s) => s && String(s).trim());
-      const consultantObservations = parts.join('\n\n');
-      const body: Record<string, unknown> = {
+      const body = buildConsultationRecordCreateBody({
         consultationId: input.scheduleId,
         sessionNumber,
         clientId: input.clientId,
         consultantId: input.consultantId,
-        consultantObservations,
+        consultantObservations: parts.join('\n\n'),
         isSessionCompleted: input.status === 'COMPLETED',
-      };
-      if (input.nextSessionMemo && input.nextSessionMemo.trim()) {
-        body.nextSessionPlan = input.nextSessionMemo.trim();
-      }
+        nextSessionPlan: input.nextSessionMemo,
+        sessionDurationMinutes: input.sessionDurationMinutes,
+        clientCondition: input.summary,
+        mainIssues: input.mainIssues,
+        interventionMethods: input.interventionMethods,
+        clientResponse: input.clientResponse,
+        riskAssessment: input.riskAssessment,
+        progressEvaluation: input.progressEvaluation,
+      });
       return apiPost<unknown>(CONSULTATION_RECORD_API.CREATE_RECORD, body);
     },
     onSuccess: (_data, variables) => {

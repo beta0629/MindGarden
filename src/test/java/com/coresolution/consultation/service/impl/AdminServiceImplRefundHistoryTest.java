@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import com.coresolution.consultation.constant.FinancialTransactionConstants;
 import com.coresolution.consultation.entity.ConsultantClientMapping;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.entity.erp.financial.FinancialTransaction;
@@ -105,6 +106,13 @@ class AdminServiceImplRefundHistoryTest {
 
     private static final String TEST_TENANT_ID = "tenant-incheon-counseling-001";
     private static final String OTHER_TENANT_ID = "tenant-other-counseling-002";
+    private static final String PARTIAL_SLOT =
+            FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING_PARTIAL_REFUND;
+    private static final String PARTIAL_SLOT_2 =
+            FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING_PARTIAL_REFUND_SEQ_PREFIX
+                    + FinancialTransactionConstants.PARTIAL_REFUND_RELATED_ENTITY_SEQ_START;
+    private static final String FULL_REFUND_SLOT =
+            FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING_REFUND;
 
     @Mock private UserRepository userRepository;
     @Mock private ConsultantRepository consultantRepository;
@@ -412,6 +420,100 @@ class AdminServiceImplRefundHistoryTest {
                 .containsExactlyInAnyOrder("CONSULTATION_REFUND", "CONSULTATION_PARTIAL_REFUND");
     }
 
+    @Test
+    @DisplayName("#1310 후속: 부분환불 2회(기본·_2 슬롯) + 전액환불 → 3건 모두 반환, 금액 합산 70,000")
+    void partialRefundSlotsAndFullRefund_allRowsSummed() {
+        Long mappingId = 310L;
+        LocalDate today = LocalDate.now();
+        ConsultantClientMapping mapping = buildActiveMapping(mappingId, 140L, 240L);
+        FinancialTransaction partial1 = buildRefundTransaction(3101L, mappingId, today, "CONSULTATION_PARTIAL_REFUND",
+                20000L, "(2)회기 부분 환불", PARTIAL_SLOT, today.atTime(9, 0));
+        FinancialTransaction partial2 = buildRefundTransaction(3102L, mappingId, today, "CONSULTATION_PARTIAL_REFUND",
+                20000L, "(2)회기 부분 환불", PARTIAL_SLOT_2, today.atTime(10, 0));
+        FinancialTransaction full = buildRefundTransaction(3103L, mappingId, today, "CONSULTATION_REFUND",
+                30000L, "전체 환불 처리", FULL_REFUND_SLOT, today.atTime(11, 0));
+
+        stubRepoReturning(List.of(partial1, partial2, full));
+        when(mappingRepository.findByTenantIdAndId(eq(TEST_TENANT_ID), eq(mappingId)))
+                .thenReturn(Optional.of(mapping));
+
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> refundHistory =
+                (List<Map<String, Object>>) invokeRefundHistory().get("refundHistory");
+        assertThat(refundHistory).hasSize(3);
+        assertThat(refundHistory.stream().mapToLong(row -> (Long) row.get("refundAmount")).sum())
+                .isEqualTo(70000L);
+        assertThat(refundHistory).extracting(row -> row.get("refundAmount"))
+                .containsExactlyInAnyOrder(20000L, 20000L, 30000L);
+    }
+
+    @Test
+    @DisplayName("#1310 후속: 환불 통계 합계에 두 번째 부분환불 슬롯(_2) 금액이 포함된다")
+    void refundStatistics_includesSecondPartialRefundSlot() {
+        Long mappingId = 311L;
+        LocalDate today = LocalDate.now();
+        ConsultantClientMapping mapping = buildActiveMapping(mappingId, 141L, 241L);
+        FinancialTransaction partial1 = buildRefundTransaction(3111L, mappingId, today, "CONSULTATION_PARTIAL_REFUND",
+                20000L, "(2)회기 부분 환불", PARTIAL_SLOT, today.atTime(9, 0));
+        FinancialTransaction partial2 = buildRefundTransaction(3112L, mappingId, today, "CONSULTATION_PARTIAL_REFUND",
+                20000L, "(2)회기 부분 환불", PARTIAL_SLOT_2, today.atTime(10, 0));
+
+        stubRepoReturning(List.of(partial1, partial2));
+        when(mappingRepository.findByTenantIdAndId(eq(TEST_TENANT_ID), eq(mappingId)))
+                .thenReturn(Optional.of(mapping));
+
+        Map<String, Object> result = adminService.getRefundStatistics("month");
+
+        @SuppressWarnings("unchecked")
+        Map<String, Object> summary = (Map<String, Object>) result.get("summary");
+        assertThat(summary.get("totalRefundCount")).isEqualTo(2);
+        assertThat(summary.get("totalRefundAmount")).isEqualTo(40000L);
+    }
+
+    @Test
+    @DisplayName("#1310 후속: 전액·부분 전표가 같은 금액으로 동시에 기록된 중복 분개(M2)는 전액 1건만 남긴다")
+    void fullAndPartialSameEvent_dedupedToFullRefund() {
+        Long mappingId = 312L;
+        LocalDate today = LocalDate.now();
+        ConsultantClientMapping mapping = buildActiveMapping(mappingId, 142L, 242L);
+        FinancialTransaction full = buildRefundTransaction(3121L, mappingId, today, "CONSULTATION_REFUND",
+                100000L, "전체 환불 처리", FULL_REFUND_SLOT, today.atTime(10, 0, 0));
+        FinancialTransaction partial = buildRefundTransaction(3122L, mappingId, today, "CONSULTATION_PARTIAL_REFUND",
+                100000L, "(10)회기 부분 환불", PARTIAL_SLOT, today.atTime(10, 0, 5));
+
+        stubRepoReturning(List.of(partial, full));
+        when(mappingRepository.findByTenantIdAndId(eq(TEST_TENANT_ID), eq(mappingId)))
+                .thenReturn(Optional.of(mapping));
+
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> refundHistory =
+                (List<Map<String, Object>>) invokeRefundHistory().get("refundHistory");
+        assertThat(refundHistory).hasSize(1);
+        assertThat((Long) refundHistory.get(0).get("refundAmount")).isEqualTo(100000L);
+    }
+
+    @Test
+    @DisplayName("#1310 후속: 같은 부분환불 슬롯에 같은 건이 두 번 있으면 1건만 남긴다")
+    void samePartialSlotTwice_dedupedToOne() {
+        Long mappingId = 313L;
+        LocalDate today = LocalDate.now();
+        ConsultantClientMapping mapping = buildActiveMapping(mappingId, 143L, 243L);
+        FinancialTransaction first = buildRefundTransaction(3131L, mappingId, today, "CONSULTATION_PARTIAL_REFUND",
+                20000L, "(2)회기 부분 환불", PARTIAL_SLOT_2, today.atTime(9, 0));
+        FinancialTransaction again = buildRefundTransaction(3132L, mappingId, today, "CONSULTATION_PARTIAL_REFUND",
+                20000L, "(2)회기 부분 환불", PARTIAL_SLOT_2, today.atTime(9, 0));
+
+        stubRepoReturning(List.of(again, first));
+        when(mappingRepository.findByTenantIdAndId(eq(TEST_TENANT_ID), eq(mappingId)))
+                .thenReturn(Optional.of(mapping));
+
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> refundHistory =
+                (List<Map<String, Object>>) invokeRefundHistory().get("refundHistory");
+        assertThat(refundHistory).hasSize(1);
+        assertThat((Long) refundHistory.get(0).get("refundAmount")).isEqualTo(20000L);
+    }
+
     /** 컨트롤러 호출 시그니처 (branchCode 5번째 파라미터) 와 동일하게 호출한다. */
     private Map<String, Object> invokeRefundHistory() {
         return adminService.getRefundHistory(0, 10, "month", "all", null);
@@ -445,6 +547,20 @@ class AdminServiceImplRefundHistoryTest {
         tx.setRelatedEntityType("CONSULTANT_CLIENT_MAPPING");
         tx.setTenantId(TEST_TENANT_ID);
         tx.setCreatedAt(LocalDateTime.of(transactionDate, java.time.LocalTime.of(10, 0)));
+        return tx;
+    }
+
+    private FinancialTransaction buildRefundTransaction(Long id,
+                                                        Long mappingId,
+                                                        LocalDate transactionDate,
+                                                        String subcategory,
+                                                        long amount,
+                                                        String description,
+                                                        String relatedEntityType,
+                                                        LocalDateTime createdAt) {
+        FinancialTransaction tx = buildRefundTransaction(id, mappingId, transactionDate, subcategory, amount, description);
+        tx.setRelatedEntityType(relatedEntityType);
+        tx.setCreatedAt(createdAt);
         return tx;
     }
 

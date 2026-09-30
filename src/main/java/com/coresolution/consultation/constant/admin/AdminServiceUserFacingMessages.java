@@ -141,6 +141,10 @@ public final class AdminServiceUserFacingMessages {
     public static final String MSG_REFUND_AMOUNT_CALCULATION_IMPOSSIBLE =
             "환불 금액을 계산할 수 없습니다. 패키지 가격 정보가 없습니다.";
 
+    /** 결제액 전액이 이미 환불됨 (인자: 결제액, 기환불액) */
+    public static final String MSG_REFUND_AMOUNT_EXHAUSTED_FMT =
+            "환불 가능 금액이 없습니다. 결제액 %,d원 중 %,d원이 이미 환불되었습니다.";
+
     public static final String MSG_TRANSFER_CONSULTANT_ACTIVE_MAPPING_ONLY =
             "활성 상태의 매칭만 상담사를 변경할 수 있습니다.";
 
@@ -472,6 +476,12 @@ public final class AdminServiceUserFacingMessages {
      */
     public static final String NOTES_PARTIAL_REFUND_LINE_FMT =
             "[부분 환불] %s - 사유: %s, 환불 회기: %d회, 환불 금액: %,d원, 남은 회기: %d회";
+
+    /** {@link #NOTES_PARTIAL_REFUND_LINE_FMT} 한 줄 시작 표식 */
+    public static final String NOTES_PARTIAL_REFUND_LINE_MARKER = "[부분 환불]";
+
+    /** {@link #NOTES_PARTIAL_REFUND_LINE_FMT} 의 환불 회기 추출 정규식 (group 1 = 회기 수) */
+    public static final String NOTES_PARTIAL_REFUND_SESSIONS_REGEX = "환불 회기: (\\d+)회";
 
     /**
      * 환불 처리로 스케줄 자동 취소 시 notes 접두 (뒤에 사유 문자열 연결).

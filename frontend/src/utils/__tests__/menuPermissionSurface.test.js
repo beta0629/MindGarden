@@ -19,7 +19,7 @@ describe('menuPermissionSurface', () => {
     menuId: 1,
     menuCode: 'CLT_COMMUNITY',
     menuName: '커뮤니티',
-    menuPath: '/client/more/community',
+    menuPath: '/client/community',
     menuLocation: 'CLIENT'
   };
   const adminDash = {

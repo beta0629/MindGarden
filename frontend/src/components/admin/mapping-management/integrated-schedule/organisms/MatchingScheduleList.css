@@ -1,11 +1,10 @@
 /* MatchingScheduleList — Clinic-OS sidebar cards v2.1 (2-row actions + selected) */
 
 .integrated-schedule__list-scroll {
-  flex: 1 1 auto;
-  /* flex 축소는 유지하되 0 붕괴 방지 (ACTIVE 카드 비가시 안전망) */
+  /* 사이드바 본문의 남은 세로 공간 전부 — 고정 높이 없이 flex 로만 결정 */
+  flex: 1 1 0%;
+  /* 0 붕괴 방지 안전망 (ACTIVE 카드 비가시) — 정상 레이아웃에서는 flex 가 이 값보다 크게 배분 */
   min-height: var(--mg-spacing-2xl);
-  max-height: 100%;
-  height: 0;
   overflow-y: auto;
   overflow-x: hidden;
   -webkit-overflow-scrolling: touch;

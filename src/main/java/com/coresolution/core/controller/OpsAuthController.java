@@ -36,7 +36,7 @@ public class OpsAuthController extends BaseApiController {
     @Value("${ops.admin.userId:ops_core}")
     private String opsAdminUsername;
     
-    @Value("${ops.admin.password:godgod826!}")
+    @Value("${ops.admin.password:}")
     private String opsAdminPassword;
     
     @Value("${ops.admin.role:HQ_ADMIN}")
@@ -83,16 +83,19 @@ public class OpsAuthController extends BaseApiController {
             throw new IllegalArgumentException("아이디와 비밀번호를 모두 입력해주세요.");
         }
         
-        log.info("Ops Portal 로그인 시도: userId={}", userId);
-        log.info("Ops Portal 관리자 계정 설정: opsAdminUsername={}, opsAdminPassword={}, opsAdminRole={}", 
-            opsAdminUsername, opsAdminPassword != null ? "***" : null, opsAdminRole);
+        if (opsAdminPassword == null || opsAdminPassword.isBlank()) {
+            log.error("Ops Portal 로그인 거부: 환경 변수 OPS_ADMIN_PASSWORD 미설정");
+            throw new org.springframework.security.authentication.BadCredentialsException("아이디 또는 비밀번호가 올바르지 않습니다.");
+        }
         
-        // 관리자 계정 확인 (환경 변수 또는 기본값)
+        log.info("Ops Portal 로그인 시도: userId={}", userId);
+        log.info("Ops Portal 관리자 계정 설정: opsAdminUsername={}, opsAdminRole={}", opsAdminUsername, opsAdminRole);
+        
+        // 관리자 계정 확인 (환경 변수)
         boolean isAdminAccount = userId.equals(opsAdminUsername);
         boolean passwordMatches = password.equals(opsAdminPassword);
         
-        log.info("Ops Portal 로그인 검증: isAdminAccount={}, passwordMatches={}, passwordLength={}, opsAdminPasswordLength={}", 
-            isAdminAccount, passwordMatches, password != null ? password.length() : 0, opsAdminPassword != null ? opsAdminPassword.length() : 0);
+        log.info("Ops Portal 로그인 검증: isAdminAccount={}, passwordMatches={}", isAdminAccount, passwordMatches);
         
         if (!isAdminAccount || !passwordMatches) {
             log.warn("Ops Portal 로그인 실패: userId={}, expectedUsername={}, isAdminAccount={}, passwordMatches={}", 

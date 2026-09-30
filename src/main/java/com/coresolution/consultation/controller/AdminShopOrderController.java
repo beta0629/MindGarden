@@ -2,17 +2,21 @@ package com.coresolution.consultation.controller;
 
 import com.coresolution.consultation.constant.ShopAdminOrderConstants;
 import com.coresolution.consultation.constant.ShopOrderReconcileConstants;
-import com.coresolution.consultation.dto.AdminListPageResult;
 import com.coresolution.consultation.dto.shop.admin.ShopOrderAdminDetailResponse;
+import com.coresolution.consultation.dto.shop.admin.ShopOrderAdminListQuery;
 import com.coresolution.consultation.dto.shop.admin.ShopOrderAdminListResponse;
-import com.coresolution.consultation.dto.shop.admin.ShopOrderAdminSummaryItem;
+import com.coresolution.consultation.dto.shop.admin.ShopOrderExpiryExtendRequest;
+import com.coresolution.consultation.dto.shop.admin.ShopOrderExpiryExtensionItem;
 import com.coresolution.consultation.dto.shop.admin.ShopOrderReconcilePaymentRequest;
 import com.coresolution.consultation.dto.shop.admin.ShopOrderReconcilePaymentResponse;
 import com.coresolution.consultation.dto.shop.admin.ShopOrderRefundRequest;
 import com.coresolution.consultation.dto.shop.admin.ShopOrderRefundResponse;
+import com.coresolution.consultation.entity.User;
+import com.coresolution.consultation.service.AdminShopOrderLedgerService;
 import com.coresolution.consultation.service.AdminShopOrderReconcileService;
 import com.coresolution.consultation.service.AdminShopOrderRefundService;
 import com.coresolution.consultation.service.AdminShopOrderService;
+import com.coresolution.consultation.utils.SessionUtils;
 import com.coresolution.core.constant.PlatformComponentCodes;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.controller.BaseApiController;
@@ -20,8 +24,11 @@ import com.coresolution.core.dto.ApiResponse;
 import com.coresolution.core.service.TenantComponentActivationService;
 import com.coresolution.core.util.PaginationUtils;
 import jakarta.validation.Valid;
+import java.time.LocalDate;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -52,6 +59,7 @@ public class AdminShopOrderController extends BaseApiController {
     private final AdminShopOrderService adminShopOrderService;
     private final AdminShopOrderRefundService adminShopOrderRefundService;
     private final AdminShopOrderReconcileService adminShopOrderReconcileService;
+    private final AdminShopOrderLedgerService adminShopOrderLedgerService;
     private final TenantComponentActivationService tenantComponentActivationService;
 
     /**
@@ -65,38 +73,32 @@ public class AdminShopOrderController extends BaseApiController {
      * @param page  0-based 페이지 (선택)
      * @param size  페이지 크기 (선택)
      * @param limit legacy 최대 건수 (page/size 미지정 시에만 사용)
-     * @return orders + totalElements + page + size
+     * @param segment 세그먼트 ({@code ALL|PAID|EXPIRING_SOON|EXPIRED|PENDING|RECONCILE|REFUNDED|UNPAID})
+     * @param from  주문 일시 시작일 (포함, 선택)
+     * @param to    주문 일시 종료일 (미포함, 선택)
+     * @param q     주문번호·내담자·상품 검색어 (선택)
+     * @return orders + totalElements + page + size + counts + summary
      */
     @GetMapping
     public ResponseEntity<ApiResponse<ShopOrderAdminListResponse>> list(
             @RequestParam(required = false) Integer page,
             @RequestParam(required = false) Integer size,
-            @RequestParam(required = false) Integer limit) {
+            @RequestParam(required = false) Integer limit,
+            @RequestParam(required = false) String segment,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
+            @RequestParam(required = false) String q) {
         String tenantId = TenantContextHolder.getRequiredTenantId();
         ResponseEntity<ApiResponse<ShopOrderAdminListResponse>> denied = requireAdminShopCatalog(tenantId);
         if (denied != null) {
             return denied;
         }
         Pageable pageable = resolveListPageable(page, size, limit);
-        AdminListPageResult<ShopOrderAdminSummaryItem> pageResult =
-                adminShopOrderService.listRecentOrders(tenantId, pageable);
-        ShopOrderAdminListResponse body = ShopOrderAdminListResponse.builder()
-                .orders(pageResult.getContent())
-                .totalElements(pageResult.getTotalCount())
-                .page(pageable.getPageNumber())
-                .size(pageable.getPageSize())
-                .build();
-        return success(body);
+        ShopOrderAdminListQuery query = new ShopOrderAdminListQuery(
+                pageable.getPageNumber(), pageable.getPageSize(), segment, from, to, q);
+        return success(adminShopOrderLedgerService.listOrders(tenantId, query));
     }
 
-    /**
-     * page/size 우선, 없으면 legacy limit → page 0 + size=limit, 모두 없으면 기본값.
-     *
-     * @param page  페이지
-     * @param size  크기
-     * @param limit legacy limit
-     * @return 검증된 Pageable
-     */
     static Pageable resolveListPageable(Integer page, Integer size, Integer limit) {
         if (page != null || size != null) {
             int effectivePage = page != null ? page : ShopAdminOrderConstants.DEFAULT_LIST_PAGE;
@@ -125,7 +127,8 @@ public class AdminShopOrderController extends BaseApiController {
         if (denied != null) {
             return denied;
         }
-        return success(adminShopOrderService.getOrderDetail(tenantId, orderPublicId));
+        return success(adminShopOrderLedgerService.enrichDetail(
+                tenantId, adminShopOrderService.getOrderDetail(tenantId, orderPublicId)));
     }
 
     /**
@@ -143,7 +146,8 @@ public class AdminShopOrderController extends BaseApiController {
             return denied;
         }
         try {
-            return success(adminShopOrderService.retryOrderFulfillment(tenantId, orderPublicId));
+            return success(adminShopOrderLedgerService.enrichDetail(
+                    tenantId, adminShopOrderService.retryOrderFulfillment(tenantId, orderPublicId)));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ApiResponse.error(e.getMessage()));
         } catch (IllegalStateException e) {
@@ -166,7 +170,8 @@ public class AdminShopOrderController extends BaseApiController {
             return denied;
         }
         try {
-            return success(adminShopOrderService.repairDepositIncome(tenantId, orderPublicId));
+            return success(adminShopOrderLedgerService.enrichDetail(
+                    tenantId, adminShopOrderService.repairDepositIncome(tenantId, orderPublicId)));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ApiResponse.error(e.getMessage()));
         } catch (IllegalStateException e) {
@@ -274,6 +279,53 @@ public class AdminShopOrderController extends BaseApiController {
         ShopOrderReconcilePaymentResponse result =
                 adminShopOrderReconcileService.reconcileRefund(tenantId, orderPublicId, force);
         return success(result);
+    }
+
+    /**
+     * 사용 기한 연장 이력 조회 (최신 먼저).
+     *
+     * @param orderPublicId 주문 공개 ID
+     * @return 연장 이력
+     */
+    @GetMapping("/{orderPublicId}" + ShopAdminOrderConstants.EXPIRY_EXTENSIONS_PATH_SUFFIX)
+    public ResponseEntity<ApiResponse<List<ShopOrderExpiryExtensionItem>>> listExpiryExtensions(
+            @PathVariable String orderPublicId) {
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        ResponseEntity<ApiResponse<List<ShopOrderExpiryExtensionItem>>> denied = requireAdminShopCatalog(tenantId);
+        if (denied != null) {
+            return denied;
+        }
+        try {
+            return success(adminShopOrderLedgerService.listExpiryExtensions(tenantId, orderPublicId));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ApiResponse.error(e.getMessage()));
+        }
+    }
+
+    /**
+     * 사용 기한 연장 — 센터 관리자 전용. 새 만료일·사유 필수, 이력 INSERT 만.
+     *
+     * @param orderPublicId 주문 공개 ID
+     * @param request       새 만료일·사유
+     * @return 연장 후 이력 (최신 먼저)
+     */
+    @PostMapping("/{orderPublicId}" + ShopAdminOrderConstants.EXPIRY_EXTENSIONS_PATH_SUFFIX)
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<List<ShopOrderExpiryExtensionItem>>> extendExpiry(
+            @PathVariable String orderPublicId,
+            @Valid @RequestBody ShopOrderExpiryExtendRequest request) {
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        ResponseEntity<ApiResponse<List<ShopOrderExpiryExtensionItem>>> denied = requireAdminShopCatalog(tenantId);
+        if (denied != null) {
+            return denied;
+        }
+        User actor = SessionUtils.getCurrentUser(null);
+        Long actorUserId = actor != null ? actor.getId() : null;
+        try {
+            return success(adminShopOrderLedgerService.extendExpiry(tenantId, orderPublicId, request, actorUserId));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ApiResponse.error(e.getMessage()));
+        }
     }
 
     private <T> ResponseEntity<ApiResponse<T>> requireAdminShopCatalog(String tenantId) {

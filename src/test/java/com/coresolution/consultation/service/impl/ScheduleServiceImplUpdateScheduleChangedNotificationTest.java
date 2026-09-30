@@ -43,7 +43,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 /**
  * {@link ScheduleServiceImpl#updateSchedule} 일정 변경 시 SCHEDULE_CHANGED
  * 외부 채널은 즉시 발송하지 않고 디바운스 pending 등록만 한다.
- * 슬롯 변경 시 D-2/D-1 배치 멱등 로그만 물리 삭제하고 즉시 리마인드 dispatch 는 하지 않는다.
+ * 슬롯 변경 시 D-2/D-1 지연 PENDING 만 취소하고, 발송 이력(send_log)은 삭제하지 않으며
+ * (리마인드 멱등 키가 스케줄 + 시작 일시 슬롯 단위) 즉시 리마인드 dispatch 는 하지 않는다.
  *
  * @author MindGarden
  * @since 2026-06-02
@@ -142,12 +143,9 @@ class ScheduleServiceImplUpdateScheduleChangedNotificationTest {
                 eq(LocalTime.of(10, 0)));
         verify(notificationService, never())
                 .sendScheduleChanged(any(), any(), any(), any());
-        verify(notificationBatchSendLogRepository)
+        verify(notificationBatchSendLogRepository, never())
                 .deleteByTenantIdAndTargetTypeAndTargetIdAndTemplateCodeIn(
-                        eq(TENANT_ID),
-                        eq(BatchNotificationTemplateCodes.TARGET_TYPE_SCHEDULE),
-                        eq(SCHEDULE_ID),
-                        eq(BatchNotificationTemplateCodes.RESERVATION_REMINDER_DN_CODES));
+                        any(), any(), any(), any());
         verify(immediateReservationSmsDeferralService)
                 .cancelPendingReservationReminders(
                         eq(TENANT_ID),
@@ -234,8 +232,8 @@ class ScheduleServiceImplUpdateScheduleChangedNotificationTest {
     }
 
     @Test
-    @DisplayName("시간만 변경 — SCHEDULE_CHANGED enqueue, D2/LATE send_log 리셋, 즉시 dispatch 없음")
-    void timeOnlyChange_enqueuesDebounce_resetsReminderMarks() {
+    @DisplayName("시간만 변경 — SCHEDULE_CHANGED enqueue, D2/LATE PENDING 취소, send_log 보존, 즉시 dispatch 없음")
+    void timeOnlyChange_enqueuesDebounce_cancelsReminderPending() {
         Schedule existing = existingConfirmed();
         Schedule patch = new Schedule();
         patch.setDate(existing.getDate());
@@ -253,12 +251,9 @@ class ScheduleServiceImplUpdateScheduleChangedNotificationTest {
                 any(Schedule.class),
                 eq(existing.getDate()),
                 eq(LocalTime.of(10, 0)));
-        verify(notificationBatchSendLogRepository)
+        verify(notificationBatchSendLogRepository, never())
                 .deleteByTenantIdAndTargetTypeAndTargetIdAndTemplateCodeIn(
-                        eq(TENANT_ID),
-                        eq(BatchNotificationTemplateCodes.TARGET_TYPE_SCHEDULE),
-                        eq(SCHEDULE_ID),
-                        eq(BatchNotificationTemplateCodes.RESERVATION_REMINDER_DN_CODES));
+                        any(), any(), any(), any());
         verify(immediateReservationSmsDeferralService)
                 .cancelPendingReservationReminders(
                         eq(TENANT_ID),
@@ -269,8 +264,8 @@ class ScheduleServiceImplUpdateScheduleChangedNotificationTest {
     }
 
     @Test
-    @DisplayName("날짜 변경 시 D2·LATE send_log 물리 삭제 — SINGLE 제외, 즉시 dispatch 없음")
-    void slotChange_invalidatesD2AndLateLogs_notSingle_noImmediateDispatch() {
+    @DisplayName("날짜 변경 시 send_log 삭제 없음 — D2·LATE PENDING 만 취소(SINGLE 제외), 즉시 dispatch 없음")
+    void slotChange_keepsSendLogs_cancelsD2AndLatePendingOnly_noImmediateDispatch() {
         Schedule existing = existingConfirmed();
         Schedule patch = new Schedule();
         patch.setDate(existing.getDate().plusDays(12));
@@ -283,12 +278,14 @@ class ScheduleServiceImplUpdateScheduleChangedNotificationTest {
 
         scheduleService.updateSchedule(SCHEDULE_ID, patch);
 
+        verify(notificationBatchSendLogRepository, never())
+                .deleteByTenantIdAndTargetTypeAndTargetIdAndTemplateCodeIn(
+                        any(), any(), any(), any());
         @SuppressWarnings("unchecked")
         ArgumentCaptor<Collection<String>> codesCaptor = ArgumentCaptor.forClass(Collection.class);
-        verify(notificationBatchSendLogRepository)
-                .deleteByTenantIdAndTargetTypeAndTargetIdAndTemplateCodeIn(
+        verify(immediateReservationSmsDeferralService)
+                .cancelPendingReservationReminders(
                         eq(TENANT_ID),
-                        eq(BatchNotificationTemplateCodes.TARGET_TYPE_SCHEDULE),
                         eq(SCHEDULE_ID),
                         codesCaptor.capture());
         assertThat(codesCaptor.getValue())

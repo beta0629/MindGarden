@@ -170,6 +170,17 @@ public class User extends BaseEntity implements Serializable {
     
     @Column(name = "last_login_at")
     private LocalDateTime lastLoginAt;
+
+    /**
+     * 계정 단위 토큰 폐기 기준 시각 — 이 시각(초 단위) 이전에 발급된 Access/Refresh JWT 는 거부.
+     *
+     * <p>관리자 강제 로그아웃·중복 로그인 정책 등 계정 전체 세션 종료 시에만 기록한다(일반 로그인·로그아웃은
+     * 갱신하지 않음). 엔티티 저장 경합으로 덮어쓰이지 않도록 {@code UserRepository#updateTokensInvalidatedAt}
+     * 벌크 UPDATE 로만 기록한다.</p>
+     */
+    @JsonIgnore
+    @Column(name = "tokens_invalidated_at", insertable = false, updatable = false)
+    private LocalDateTime tokensInvalidatedAt;
     
     /**
      * 운영적 정지 플래그.

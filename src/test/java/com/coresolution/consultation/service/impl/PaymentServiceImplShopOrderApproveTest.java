@@ -11,12 +11,16 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.coresolution.consultation.constant.PaymentConstants;
+import com.coresolution.consultation.constant.ShopClientOrderStatus;
 import com.coresolution.consultation.dto.PaymentResponse;
 import com.coresolution.consultation.entity.Payment;
 import com.coresolution.consultation.entity.ShopClientOrder;
+import com.coresolution.consultation.exception.ShopOrderClosedForPaymentException;
 import com.coresolution.consultation.repository.PaymentRepository;
 import com.coresolution.consultation.repository.ShopClientOrderRepository;
 import com.coresolution.consultation.repository.UserRepository;
+import com.coresolution.consultation.service.ShopLatePaymentOutcome;
+import com.coresolution.consultation.service.ShopLatePaymentRefundService;
 import com.coresolution.consultation.service.AdminService;
 import com.coresolution.consultation.service.ClientShopCheckoutService;
 import com.coresolution.consultation.service.CommonCodeService;
@@ -40,6 +44,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
+import org.springframework.transaction.PlatformTransactionManager;
 
 /**
  * 쇼핑 주문 PG APPROVED 경로 — rollback-only 은폐 방지·shop-safe 사이드이펙트 스킵.
@@ -76,6 +81,8 @@ class PaymentServiceImplShopOrderApproveTest {
     @Mock private UserRepository userRepository;
     @Mock private ClientShopCheckoutService clientShopCheckoutService;
     @Mock private PortOneV2PaymentVerifyService portOneV2PaymentVerifyService;
+    @Mock private ShopLatePaymentRefundService shopLatePaymentRefundService;
+    @Mock private PlatformTransactionManager transactionManager;
 
     private PaymentServiceImpl service;
 
@@ -95,7 +102,9 @@ class PaymentServiceImplShopOrderApproveTest {
                 notificationService,
                 userRepository,
                 portOneV2PaymentVerifyService,
-                clientShopCheckoutService);
+                clientShopCheckoutService,
+                shopLatePaymentRefundService,
+                transactionManager);
         TenantContextHolder.setTenantId(TENANT_ID);
         lenient().when(commonCodeService.getCodeValue(anyString(), anyString())).thenReturn(null);
         lenient().when(paymentRepository.save(any(Payment.class))).thenAnswer(inv -> inv.getArgument(0));
@@ -440,6 +449,68 @@ class PaymentServiceImplShopOrderApproveTest {
         assertThatThrownBy(() -> service.cancelPayment(PAYMENT_PUBLIC_ID, "user cancelled"))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("release hold failed");
+    }
+
+    @Test
+    @DisplayName("approveShopOrderPayment — 취소된 주문(행 잠금 조회)이면 APPROVED 로 뒤집지 않고 거부")
+    void approveShopOrderPayment_cancelledOrder_rejectsWithoutApproving() {
+        assertClosedOrderRejected(ShopClientOrderStatus.CANCELLED, Payment.PaymentStatus.CANCELLED);
+    }
+
+    @Test
+    @DisplayName("approveShopOrderPayment — 만료된 주문이면 APPROVED 로 뒤집지 않고 거부")
+    void approveShopOrderPayment_expiredOrder_rejectsWithoutApproving() {
+        assertClosedOrderRejected(ShopClientOrderStatus.EXPIRED, Payment.PaymentStatus.EXPIRED);
+    }
+
+    @Test
+    @DisplayName("approveShopOrderPayment — 결제 건이 CANCELLED 면 주문이 열려 있어도 APPROVED 로 뒤집지 않음")
+    void approveShopOrderPayment_cancelledPayment_rejects() {
+        assertClosedOrderRejected(ShopClientOrderStatus.PENDING_PAYMENT, Payment.PaymentStatus.CANCELLED);
+    }
+
+    @Test
+    @DisplayName("verifyPayment — 닫힌 주문 늦은 결제면 가드가 PG 자동 취소, 승인·결제 행 수정 없이 false")
+    void verifyPayment_closedOrderLatePayment_refundsViaGuard_noApprove() {
+        Payment payment = buildShopProcessingPayment();
+        when(paymentRepository.findByTenantIdAndPaymentIdAndIsDeletedFalse(TENANT_ID, PAYMENT_PUBLIC_ID))
+                .thenReturn(Optional.of(payment));
+        when(shopClientOrderRepository.findByTenantIdAndPublicId(eq(TENANT_ID), eq(ORDER_PUBLIC_ID)))
+                .thenReturn(Optional.of(new ShopClientOrder()));
+        when(portOneV2PaymentVerifyService.isIamportPayment(payment)).thenReturn(true);
+        when(portOneV2PaymentVerifyService.verifyPaidAmountBody(TENANT_ID, PAYMENT_PUBLIC_ID, new BigDecimal("15000")))
+                .thenReturn(Optional.of("{\"status\":\"PAID\"}"));
+        when(shopLatePaymentRefundService.refundIfOrderClosed(TENANT_ID, PAYMENT_PUBLIC_ID))
+                .thenReturn(ShopLatePaymentOutcome.REFUNDED);
+
+        assertThat(service.verifyPayment(PAYMENT_PUBLIC_ID, new BigDecimal("15000"))).isFalse();
+
+        assertThat(payment.getStatus()).isEqualTo(Payment.PaymentStatus.PROCESSING);
+        assertThat(payment.getExternalResponse()).isNull();
+        verify(paymentRepository, never()).save(any(Payment.class));
+        verify(clientShopCheckoutService, never()).completeOrderOnPaymentApproved(any(), any());
+    }
+
+    private void assertClosedOrderRejected(ShopClientOrderStatus orderStatus, Payment.PaymentStatus paymentStatus) {
+        Payment payment = buildShopProcessingPayment();
+        payment.setStatus(paymentStatus);
+        ShopClientOrder order = new ShopClientOrder();
+        order.setPublicId(ORDER_PUBLIC_ID);
+        order.setStatus(orderStatus);
+        when(paymentRepository.findByTenantIdAndPaymentIdAndIsDeletedFalse(TENANT_ID, PAYMENT_PUBLIC_ID))
+                .thenReturn(Optional.of(payment));
+        when(shopClientOrderRepository.findByTenantIdAndPublicId(eq(TENANT_ID), eq(ORDER_PUBLIC_ID)))
+                .thenReturn(Optional.of(order));
+        when(shopClientOrderRepository.lockByTenantIdAndPublicId(TENANT_ID, ORDER_PUBLIC_ID))
+                .thenReturn(Optional.of(order));
+
+        assertThatThrownBy(() -> service.approveShopOrderPayment(PAYMENT_PUBLIC_ID))
+                .isInstanceOf(ShopOrderClosedForPaymentException.class);
+
+        assertThat(payment.getStatus()).isEqualTo(paymentStatus);
+        assertThat(order.getStatus()).isEqualTo(orderStatus);
+        verify(paymentRepository, never()).save(any(Payment.class));
+        verify(clientShopCheckoutService, never()).completeOrderOnPaymentApproved(any(), any());
     }
 
     private void stubShopPaymentLookup(Payment payment) {

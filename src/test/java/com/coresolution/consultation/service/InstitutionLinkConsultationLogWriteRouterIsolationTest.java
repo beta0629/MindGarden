@@ -2,6 +2,9 @@ package com.coresolution.consultation.service;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -21,6 +24,7 @@ import com.coresolution.consultation.repository.ClientRepository;
 import com.coresolution.consultation.repository.ConsultantClientMappingRepository;
 import com.coresolution.consultation.repository.InstitutionLinkContractRepository;
 import com.coresolution.core.context.TenantContextHolder;
+import com.coresolution.core.domain.ClientPlatform;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -56,6 +60,9 @@ class InstitutionLinkConsultationLogWriteRouterIsolationTest {
 
     @Mock
     private ClientRepository clientRepository;
+
+    @Mock
+    private ConsultationRecordCreateRequestValidator consultationRecordCreateRequestValidator;
 
     @InjectMocks
     private InstitutionLinkConsultationLogWriteRouter router;
@@ -179,5 +186,60 @@ class InstitutionLinkConsultationLogWriteRouterIsolationTest {
 
         verify(institutionLinkConsultationLogService).createFromSchedulePayload(payload);
         verifyNoInteractions(consultationRecordService);
+    }
+
+    @Test
+    @DisplayName("필수값 검증 실패 시 회기·타기관 일지 서비스를 모두 호출하지 않는다")
+    void validationFailure_callsNoWriteService() {
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("paymentTiming", PaymentTimingConstants.ADVANCE);
+        doThrow(new ValidationException("필수 항목을 모두 입력해주세요."))
+                .when(consultationRecordCreateRequestValidator)
+                .validate(eq(payload), anyBoolean(), eq(ClientPlatform.WEB));
+
+        assertThatThrownBy(() -> router.create(payload))
+                .isInstanceOf(ValidationException.class);
+
+        verifyNoInteractions(consultationRecordService);
+        verifyNoInteractions(institutionLinkConsultationLogService);
+    }
+
+    @Test
+    @DisplayName("타기관 판별 결과를 검증기에 넘겨 위험도 평가 필수 여부를 가른다")
+    void institutionFlag_passedToValidator() {
+        Map<String, Object> institutionPayload = new HashMap<>();
+        institutionPayload.put("engagementType", PaymentTimingConstants.INSTITUTION_LINK);
+        router.create(institutionPayload);
+        verify(consultationRecordCreateRequestValidator).validate(institutionPayload, true, ClientPlatform.WEB);
+
+        Map<String, Object> sessionPayload = new HashMap<>();
+        sessionPayload.put("paymentTiming", PaymentTimingConstants.ADVANCE);
+        router.create(sessionPayload);
+        verify(consultationRecordCreateRequestValidator).validate(sessionPayload, false, ClientPlatform.WEB);
+    }
+
+    @Test
+    @DisplayName("요청 클라이언트 채널을 검증기에 그대로 넘긴다")
+    void clientPlatform_passedToValidator() {
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("paymentTiming", PaymentTimingConstants.ADVANCE);
+
+        router.create(payload, ClientPlatform.ANDROID);
+
+        verify(consultationRecordCreateRequestValidator).validate(payload, false, ClientPlatform.ANDROID);
+        verify(consultationRecordService).createConsultationRecord(payload);
+    }
+
+    @Test
+    @DisplayName("테넌트 컨텍스트가 없으면 검증·저장 전에 거부한다")
+    void missingTenant_rejectedBeforeValidation() {
+        TenantContextHolder.clear();
+        Map<String, Object> payload = new HashMap<>();
+
+        assertThatThrownBy(() -> router.create(payload)).isInstanceOf(RuntimeException.class);
+
+        verifyNoInteractions(consultationRecordCreateRequestValidator);
+        verifyNoInteractions(consultationRecordService);
+        verifyNoInteractions(institutionLinkConsultationLogService);
     }
 }

@@ -21,6 +21,7 @@ import {
   sumCartLineQuantities
 } from '../../../utils/guestShopCart';
 import '../../../styles/shop/ClientShop.css';
+import '../../../styles/shop/ClientMall.css';
 
 /**
  * @param {{
@@ -28,7 +29,12 @@ import '../../../styles/shop/ClientShop.css';
  *   children: import('react').ReactNode,
  *   testId?: string,
  *   aside?: import('react').ReactNode,
- *   activeNavId?: string
+ *   activeNavId?: string,
+ *   cartQty?: number|null,
+ *   cartPulse?: boolean,
+ *   className?: string,
+ *   eyebrow?: string,
+ *   meta?: import('react').ReactNode
  * }} props
  */
 const ShopClientLayout = ({
@@ -36,14 +42,20 @@ const ShopClientLayout = ({
   children,
   testId = 'client-shop',
   aside = null,
-  activeNavId = 'shop'
+  activeNavId = 'shop',
+  cartQty = null,
+  cartPulse = false,
+  className = '',
+  eyebrow,
+  meta = null
 }) => {
   const { isLoggedIn, isLoading, hasCheckedSession } = useSession();
   const [cartBadgeQty, setCartBadgeQty] = useState(0);
   const sessionReady = hasCheckedSession && !isLoading;
+  const pageOwnsCart = cartQty != null;
 
   useEffect(() => {
-    if (!sessionReady) {
+    if (!sessionReady || pageOwnsCart) {
       return undefined;
     }
     let cancelled = false;
@@ -76,19 +88,22 @@ const ShopClientLayout = ({
     return () => {
       cancelled = true;
     };
-  }, [sessionReady, isLoggedIn]);
+  }, [sessionReady, isLoggedIn, pageOwnsCart]);
 
   return (
     <ClientWebPageShell
       activeNavId={activeNavId}
       title={title}
+      eyebrow={eyebrow}
+      meta={meta}
       testId={testId}
-      className="client-shop client-shop--clinic-os"
+      className={['client-shop client-shop--clinic-os client-mall', className].filter(Boolean).join(' ')}
       stageClassName="client-shop__stage"
       designShot="clinic-os-client-cart"
       aside={aside}
       loginHref="/login"
-      cartBadgeQty={cartBadgeQty}
+      cartBadgeQty={pageOwnsCart ? cartQty : cartBadgeQty}
+      cartBadgePulse={cartPulse}
       cartHref={CLIENT_SHOP_ROUTES.CART}
     >
       {children}
@@ -101,7 +116,12 @@ ShopClientLayout.propTypes = {
   children: PropTypes.node,
   testId: PropTypes.string,
   aside: PropTypes.node,
-  activeNavId: PropTypes.string
+  activeNavId: PropTypes.string,
+  cartQty: PropTypes.number,
+  cartPulse: PropTypes.bool,
+  className: PropTypes.string,
+  eyebrow: PropTypes.string,
+  meta: PropTypes.node
 };
 
 export default ShopClientLayout;

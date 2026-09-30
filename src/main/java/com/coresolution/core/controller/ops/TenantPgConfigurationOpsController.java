@@ -5,6 +5,7 @@ import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.controller.BaseApiController;
 import com.coresolution.core.domain.enums.PgProvider;
 import com.coresolution.core.dto.*;
+import com.coresolution.core.service.TenantPgConfigurationDecryptionService;
 import com.coresolution.core.service.TenantPgConfigurationService;
 import com.coresolution.core.util.LogSanitizer;
 import com.coresolution.core.util.OpsPermissionUtils;
@@ -57,6 +58,7 @@ public class TenantPgConfigurationOpsController extends BaseApiController {
             "PG 승인은 본사(Ops) 테넌트만 호출 가능 — 외부 테넌트 차단";
 
     private final TenantPgConfigurationService pgConfigurationService;
+    private final TenantPgConfigurationDecryptionService decryptionService;
     private final OpsTenantConstants opsTenantConstants;
 
     /**
@@ -262,6 +264,38 @@ public class TenantPgConfigurationOpsController extends BaseApiController {
 
         ConnectionTestResponse response =
                 pgConfigurationService.testConnectionBeforeApproval(configId);
+
+        return success(response);
+    }
+
+    /**
+     * PG 설정 API Key / Secret Key 복호화 (운영 포털).
+     *
+     * <p>민감 키 값을 로그에 남기지 않는다. configId/requestedBy 만 기록한다.</p>
+     *
+     * @param configId PG 설정 ID
+     * @return 복호화된 키 응답
+     */
+    @Operation(
+            summary = "PG 설정 키 복호화",
+            description = "운영 포털에서 PG API Key와 Secret Key를 복호화하여 반환합니다. OPS + HQ 권한이 필요합니다."
+    )
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "복호화 성공",
+                    content = @Content(schema = @Schema(implementation = PgConfigurationKeysResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "권한 없음 (OPS + HQ 필요)"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "PG 설정을 찾을 수 없음")
+    })
+    @PostMapping("/{configId}/decrypt-keys")
+    public ResponseEntity<ApiResponse<PgConfigurationKeysResponse>> decryptKeys(
+            @Parameter(description = "PG 설정 ID", required = true) @PathVariable String configId) {
+        requireOpsAndHq();
+
+        String requestedBy = getCurrentUserId();
+        log.info("PG 설정 키 복호화 요청 (운영 포털): configId={}, requestedBy={}", configId, requestedBy);
+
+        PgConfigurationKeysResponse response =
+                decryptionService.decryptKeysForOps(configId, requestedBy);
 
         return success(response);
     }

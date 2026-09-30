@@ -141,6 +141,16 @@ public class ShopCatalogPackageOfferResolver {
         return code;
     }
 
+    /**
+     * 공통코드 한 행을 요금 식별 값으로 변환 (판매 중지 코드 포함).
+     *
+     * @param row CONSULTATION_PACKAGE 공통코드
+     * @return 요금 식별 값
+     */
+    public ShopCatalogPackageIdentity identityOf(CommonCode row) {
+        return toIdentity(row);
+    }
+
     private static ShopCatalogOffer unsellable(ShopCatalogSku sku) {
         ShopCatalogOffer base = ShopCatalogOffer.unlinked(sku);
         return new ShopCatalogOffer(true, false, base.title(), base.unitPriceMinor(), base.sessionCount());

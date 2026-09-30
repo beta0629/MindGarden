@@ -6,6 +6,8 @@
 #
 # SSOT 2026-09-22: Asia/Seoul 11:00–20:00 예방 점검 금지.
 #   - cron 은 야간만 (20:00 KST 이후). force_incident=true 만 주간 명시 장애 대응 허용.
+# - prod-health-snapshot.sh 가 Hikari / JVM threads / Tomcat / heap (+ optional processlist counts) 를 수집한다.
+# - 스냅샷은 읽기 전용: DELETE / pool close / traffic kill 금지.
 
 name: 🩺 운영 코어·OPS 헬스 스냅샷
 
@@ -134,7 +136,17 @@ jobs:
           timeout: 30s
           script: |
             set -u
-            HEALTH_URL="${MG_HEALTH_URL:-http://127.0.0.1:8080/actuator/health}"
+            # Discord/분기 프로브: 트래픽 슬롯 포트 (active-backend). MG_HEALTH_URL 이 있으면 그대로 사용.
+            # deploy-production.yml 헬스체크와 동일 패턴 — blue→8080, green→8081.
+            if [ -n "${MG_HEALTH_URL:-}" ]; then
+              HEALTH_URL="${MG_HEALTH_URL}"
+            else
+              ACTIVE=$(sudo cat /etc/mindgarden/active-backend 2>/dev/null | tr -d '\r\n' | awk '{print tolower($0)}')
+              if [ -z "$ACTIVE" ]; then ACTIVE=blue; fi
+              if [ "$ACTIVE" = "green" ]; then ACTIVE_PORT=8081; else ACTIVE_PORT=8080; fi
+              HEALTH_URL="http://127.0.0.1:${ACTIVE_PORT}/actuator/health"
+              echo "active-backend=${ACTIVE} → ${HEALTH_URL}"
+            fi
             HTTP_CODE=$(curl -sS -o /tmp/mg-health-body.txt -w '%{http_code}' \
               --connect-timeout 10 "$HEALTH_URL" 2>/dev/null || echo "000")
             echo "HEALTH_HTTP_CODE=${HTTP_CODE}"

@@ -144,7 +144,8 @@ describe('buildAdminShopPackageContentBody', () => {
       sortOrder: 3,
       catalogCategory: SHOP_CATALOG_CATEGORY.CONSULTATION,
       fieldCode: 'SPEECH',
-      consultantId: 15
+      consultantId: 15,
+      validityMonths: null
     });
     expect(body).not.toHaveProperty('title');
     expect(body).not.toHaveProperty('unitPriceMinor');
@@ -201,6 +202,24 @@ describe('buildAdminShopPackageContentBody', () => {
         consultantId: ''
       })
     ).toThrow(ADMIN_SHOP_CONSULTANT_REQUIRED_MESSAGE);
+  });
+
+  test('유효기간(개월)은 1 이상 정수만 보내고, 비우면 null(기한 없음)', () => {
+    const base = {
+      catalogCategory: SHOP_CATALOG_CATEGORY.CONSULTATION,
+      fieldCode: 'SPEECH',
+      consultantId: '15'
+    };
+    expect(buildAdminShopPackageContentBody({ ...base, validityMonths: '6' }).validityMonths).toBe(6);
+    expect(buildAdminShopPackageContentBody({ ...base, validityMonths: 24 }).validityMonths).toBe(24);
+    expect(buildAdminShopPackageContentBody({ ...base, validityMonths: '' }).validityMonths).toBeNull();
+    expect(buildAdminShopPackageContentBody({ ...base, validityMonths: '0' }).validityMonths).toBeNull();
+  });
+
+  test('기존 요금 행을 폼으로 옮길 때 유효기간을 유지해 PUT 이 지우지 않는다', () => {
+    const form = mapAdminShopPackageFeeToForm({ packageCode: 'P1', validityMonths: 3 });
+    expect(form.validityMonths).toBe(3);
+    expect(mapAdminShopPackageFeeToForm({ packageCode: 'P1' }).validityMonths).toBeNull();
   });
 });
 

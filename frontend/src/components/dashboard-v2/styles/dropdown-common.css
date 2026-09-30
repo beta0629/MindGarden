@@ -8,7 +8,9 @@
  * @since 2026-03-09
  */
 
-/* 드롭다운 오버레이 — 데스크톱 완전 숨김, 모바일만 배경 */
+/* 드롭다운 오버레이 — 데스크톱 완전 숨김, 모바일만 배경
+ * GNB portal stack SSOT: overlay (--z-header) < panel (--z-header-dropdown)
+ */
 .mg-v2-dropdown-overlay {
   position: fixed;
   top: 0;
@@ -16,7 +18,7 @@
   right: 0;
   bottom: 0;
   background-color: var(--mg-overlay);
-  z-index: 999;
+  z-index: var(--z-header);
   display: none !important;
   border: none;
   border-radius: 0;
@@ -39,7 +41,9 @@
   }
 }
 
-/* v2 드롭다운 패널: 전역 [role="menu"] 규칙보다 우선, position/top/left는 JS 인라인으로 설정 */
+/* v2 드롭다운 패널: 전역 [role="menu"] 규칙보다 우선, top/left는 JS 인라인
+ * GNB header dropdown — must sit above .mg-v2-dropdown-overlay on mobile
+ */
 .mg-v2-dropdown-panel,
 .mg-v2-dropdown-panel[role="menu"],
 .mg-v2-profile-dropdown__panel,
@@ -51,7 +55,7 @@
   border: 1px solid var(--mg-color-border-main);
   border-radius: var(--mg-radius-xl, 16px);
   box-shadow: var(--mg-shadow-lg);
-  z-index: var(--z-dropdown);
+  z-index: var(--z-header-dropdown);
   opacity: 0;
   transform: translateY(-8px);
   animation: dropdownFadeIn 200ms cubic-bezier(0.4, 0, 0.2, 1) forwards;

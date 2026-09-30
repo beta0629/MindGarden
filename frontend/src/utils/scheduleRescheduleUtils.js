@@ -12,6 +12,7 @@ import {
   resolveScheduleStatusCodeForConflict,
   STATUS
 } from '../constants/schedule';
+import { formatLocalDateYmd } from './erpFinanceDisplay';
 
 /** API·input[type=time] 공통 HH:mm 길이 */
 const HM_LEN = 5;
@@ -37,10 +38,32 @@ export const SCHEDULE_DRAG_TO_PAST_DATE_MESSAGE = '과거 날짜로는 스케줄
 export function buildScheduleDatetimeUpdateBody(newStart, newEnd) {
   const ts = (d) => d.toTimeString().split(' ')[0].slice(0, HM_LEN);
   return {
-    date: newStart.toISOString().split('T')[0],
+    date: formatLocalDateYmd(newStart),
     startTime: ts(newStart),
     endTime: ts(newEnd)
   };
+}
+
+/**
+ * 이동(드래그) 후 종료 시각 — FullCalendar 가 종료를 주지 않으면(event.end=null) 기존 길이를 유지해 계산.
+ * @param {Date} newStart 이동 후 시작
+ * @param {Date|null|undefined} newEnd 이동 후 종료 (FullCalendar event.end)
+ * @param {Date|null|undefined} originalStart 이동 전 시작
+ * @param {Date|null|undefined} originalEnd 이동 전 종료
+ * @returns {Date|null|undefined} 종료 (계산 불가 시 newEnd 그대로)
+ */
+export function resolveMovedScheduleEnd(newStart, newEnd, originalStart, originalEnd) {
+  if (newEnd instanceof Date && !Number.isNaN(newEnd.getTime())) {
+    return newEnd;
+  }
+  if (!(newStart instanceof Date) || !(originalStart instanceof Date) || !(originalEnd instanceof Date)) {
+    return newEnd;
+  }
+  const durationMs = originalEnd.getTime() - originalStart.getTime();
+  if (!(durationMs > 0)) {
+    return newEnd;
+  }
+  return new Date(newStart.getTime() + durationMs);
 }
 
 /**

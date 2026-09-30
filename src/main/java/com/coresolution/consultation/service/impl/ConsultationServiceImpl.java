@@ -7,7 +7,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
+import com.coresolution.consultation.constant.BatchNotificationTemplateCodes;
 import com.coresolution.consultation.constant.EmailConstants;
 import com.coresolution.consultation.constant.ScheduleStatus;
 import com.coresolution.consultation.constant.consultation.ConsultationServiceUserFacingMessages;
@@ -30,12 +32,14 @@ import com.coresolution.consultation.repository.ReviewRepository;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.ConsultationService;
 import com.coresolution.consultation.service.EmailService;
+import com.coresolution.consultation.service.ImmediateReservationSmsDeferralService;
 import com.coresolution.consultation.service.MobilePushDispatchService;
 import com.coresolution.consultation.service.NotificationService;
 import com.coresolution.consultation.service.SalaryLateSessionAutoSyncService;
 import com.coresolution.consultation.service.ScheduleChangeNotificationDebounceService;
 import com.coresolution.consultation.service.ScheduleService;
 import com.coresolution.consultation.service.UserPersonalDataCacheService;
+import com.coresolution.consultation.util.ScheduleSlotTimes;
 import com.coresolution.consultation.utils.SessionUtils;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.service.impl.BaseTenantAwareService;
@@ -124,11 +128,15 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
     private EntityManager entityManager;
     
     
+    private final ImmediateReservationSmsDeferralService immediateReservationSmsDeferralService;
+    
     public ConsultationServiceImpl(
             ConsultationRepository consultationRepository,
-            TenantAccessControlService accessControlService) {
+            TenantAccessControlService accessControlService,
+            ImmediateReservationSmsDeferralService immediateReservationSmsDeferralService) {
         super(consultationRepository, accessControlService);
         this.consultationRepository = consultationRepository;
+        this.immediateReservationSmsDeferralService = immediateReservationSmsDeferralService;
     }
     
     
@@ -595,6 +603,8 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
         LocalTime previousEnd = consultation.getEndTime();
         consultation.setConsultationDate(newDateTime.toLocalDate());
         consultation.setStartTime(newDateTime.toLocalTime());
+        consultation.setEndTime(ScheduleSlotTimes.shiftEndPreservingDuration(
+                previousStart, previousEnd, newDateTime.toLocalTime()));
         consultation.setStatus("RESCHEDULED");
         consultation.setUpdatedAt(LocalDateTime.now());
         consultation.setVersion(consultation.getVersion() + 1);
@@ -2178,12 +2188,46 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
                         consultation.getId());
                 return;
             }
+            tryCancelPendingReservationRemindersIfSlotChanged(tenantId, linked, previousDate, previousStart);
             scheduleChangeNotificationDebounceService.enqueueScheduleChanged(
                     tenantId, linked, previousDate, previousStart);
         } catch (Exception e) {
             log.warn(
                     "일정 변경 디바운스 pending 등록 실패(본 처리 롤백 없음): consultationId={}, {}",
                     consultation.getId(),
+                    e.getMessage());
+        }
+    }
+
+    /**
+     * 상담 재예약으로 연결 일정의 일시(슬롯)가 바뀌면 이전 슬롯 D-2/D-1 PENDING 을 취소한다 (비차단).
+     *
+     * <p>드래그·수정 모달({@code ScheduleServiceImpl#updateSchedule})과 동일한
+     * {@link ImmediateReservationSmsDeferralService#cancelPendingReservationReminders} 를 사용한다.
+     * 새 슬롯 리마인드는 (스케줄 + 시작 일시) 슬롯 멱등으로 다음 09:00 배치가 발송한다.
+     */
+    private void tryCancelPendingReservationRemindersIfSlotChanged(
+            String tenantId, Schedule linked, LocalDate previousDate, LocalTime previousStart) {
+        boolean slotChanged = !Objects.equals(previousDate, linked.getDate())
+                || !Objects.equals(previousStart, linked.getStartTime());
+        if (!slotChanged || linked.getStatus() == ScheduleStatus.CANCELLED) {
+            return;
+        }
+        try {
+            int cancelled = immediateReservationSmsDeferralService.cancelPendingReservationReminders(
+                    tenantId,
+                    linked.getId(),
+                    BatchNotificationTemplateCodes.RESERVATION_REMINDER_DN_CODES);
+            log.info(
+                    "예약 리마인드 PENDING 취소(상담 재예약): scheduleId={}, newDate={}, newStartTime={}, cancelledPending={}",
+                    linked.getId(),
+                    linked.getDate(),
+                    linked.getStartTime(),
+                    cancelled);
+        } catch (Exception e) {
+            log.warn(
+                    "예약 리마인드 PENDING 취소 실패(본 처리 롤백 없음): scheduleId={}, {}",
+                    linked.getId(),
                     e.getMessage());
         }
     }

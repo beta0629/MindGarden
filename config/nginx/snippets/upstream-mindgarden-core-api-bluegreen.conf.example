@@ -2,8 +2,11 @@
 #
 # 운영 SSOT: blue=8080, green=8081 (`deployment/systemd/mindgarden-core-*.service.example`,
 # `.github/workflows/deploy-production.yml` SSH 블록과 동일).
-# GitHub Actions는 헬스 통과 후 **단일 server 줄**로 `/etc/nginx/snippets/mindgarden-core-backend-upstream.conf` 를 덮어쓴다.
+# GitHub Actions는 헬스 통과 후 **단일 server 줄** + keepalive 32 로
+# `/etc/nginx/snippets/mindgarden-core-backend-upstream.conf` 를 덮어쓴다 (CF520 방지: 단일 active).
+# 라이브 BG 에 듀얼 server + proxy_next_upstream 을 쓰지 않음 (POST 이중 실행 위험).
 # 수동·weight 기반 운영 시 아래처럼 두 줄을 쓸 수 있으나, upstream **이름**은 vhost와 같아야 한다.
+# location 은 mindgarden-core-proxy-params.conf (Connection "" · connect 10s · read/send 60s) 를 include.
 #
 # 포함 위치: `http { }` 컨텍스트(예: `/etc/nginx/snippets/mindgarden-core-backend-upstream.conf` 로 복사;
 #            `core-solution-prod.conf` 의 `include` 보다 앞서 로드되도록 배치).
@@ -26,9 +29,5 @@ upstream mindgarden_core_backend {
 # server 블록에서 사용 예:
 #   location /api/ {
 #       proxy_pass http://mindgarden_core_backend;
-#       proxy_set_header Host $host;
-#       proxy_set_header X-Real-IP $remote_addr;
-#       proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-#       proxy_set_header X-Forwarded-Proto $scheme;
-#       proxy_http_version 1.1;
+#       include /etc/nginx/snippets/mindgarden-core-proxy-params.conf;
 #   }

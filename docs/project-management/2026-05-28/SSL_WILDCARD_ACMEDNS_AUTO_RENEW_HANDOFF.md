@@ -1,3 +1,6 @@
+> **⚠️ OBSOLETE (2026-09-22)**: NS가 Cloudflare로 전환되어 가비아+acme-dns 경로는 더 이상 사용되지 않습니다.
+> **SSOT** → [`docs/runbooks/SSL_CERTIFICATE_STATUS.md`](../../runbooks/SSL_CERTIFICATE_STATUS.md)
+
 # acme-dns 셀프호스팅 인프라 설계서 — Let's Encrypt 와일드카드 무인 갱신 정착
 
 ## 0. 배경

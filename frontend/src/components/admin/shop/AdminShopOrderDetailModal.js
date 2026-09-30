@@ -33,6 +33,7 @@ import {
 import {
   ADMIN_SHOP_LEDGER_STATE,
   ADMIN_SHOP_ORDER_EVENT_LABELS,
+  ADMIN_SHOP_ORDER_EXTENDABLE_STATES,
   ADMIN_SHOP_ORDER_MODAL_COPY,
   ADMIN_SHOP_PAY_METHOD_LABELS,
   ADMIN_SHOP_SUITE_TEST_IDS,
@@ -42,6 +43,7 @@ import { toDisplayString } from '../../../utils/safeDisplay';
 import { formatShopDateTime, formatShopMoney } from '../../../utils/clientShopFormat';
 import {
   ADMIN_SHOP_SESSION_DELTA_KIND,
+  formatAdminShopDate,
   formatAdminShopOrderShortId,
   maskAdminShopClientName,
   resolveAdminShopClientName,
@@ -49,9 +51,22 @@ import {
   resolveAdminShopOrderSessionCount,
   resolveAdminShopSessionDelta
 } from '../../../utils/adminShopSuite';
-import { AdminShopLedgerChip, AdminShopNotice, AdminShopPairPanel } from './AdminShopSuiteParts';
+import {
+  AdminShopLedgerChip,
+  AdminShopNotice,
+  AdminShopPairPanel,
+  AdminShopPaymentStatusChip
+} from './AdminShopSuiteParts';
 
 const EMPTY = ADMIN_SHOP_ORDER_MODAL_COPY.EMPTY_VALUE;
+const EVENT_NOTE_SEPARATOR = ' · ';
+
+/** 결제된 돈이 잡히는 상태 (결제 완료·만료 임박·기한 만료) */
+const COLLECTED_STATES = Object.freeze([
+  ADMIN_SHOP_LEDGER_STATE.PAID,
+  ADMIN_SHOP_LEDGER_STATE.EXPIRING_SOON,
+  ADMIN_SHOP_LEDGER_STATE.EXPIRED
+]);
 
 /**
  * 주문 상세에서 파생되는 표시·동작 게이트 (본문·하단 공유).
@@ -73,8 +88,10 @@ export function resolveAdminShopOrderDetailGates(detail, detailEvents) {
   const usedCount = usedRaw != null && Number.isFinite(Number(usedRaw)) ? Number(usedRaw) : null;
   return {
     state,
+    isCollected: COLLECTED_STATES.includes(state),
     isReconcile: state === ADMIN_SHOP_LEDGER_STATE.RECONCILE,
-    canRefund: canRefund && state === ADMIN_SHOP_LEDGER_STATE.PAID,
+    canRefund: canRefund && COLLECTED_STATES.includes(state),
+    canExtend: ADMIN_SHOP_ORDER_EXTENDABLE_STATES.includes(state) && Boolean(detail.expireDate),
     canFulfillRetry,
     canReconcileRefund,
     usedCount
@@ -97,7 +114,10 @@ export function AdminShopOrderDetailTitle({ detail }) {
       <span className="admin-shop-suite__mono">
         <SafeText>{formatAdminShopOrderShortId(detail.orderPublicId)}</SafeText>
       </span>
-      <AdminShopLedgerChip state={resolveAdminShopLedgerState(detail, detail)} />
+      <AdminShopLedgerChip
+        state={resolveAdminShopLedgerState(detail, detail)}
+        daysLeft={detail.daysLeft != null ? Number(detail.daysLeft) : null}
+      />
       <span className="admin-shop-suite__muted">
         <SafeText>{formatShopDateTime(detail.paidAt ?? detail.createdAt) || ''}</SafeText>
       </span>
@@ -200,6 +220,54 @@ function resolveEventLabel(ev) {
 }
 
 /**
+ * 처리 기록 행 — 이행 이벤트(한글 라벨) + 기한 연장 이력.
+ *
+ * @param {Array<object>} detailEvents
+ * @param {Array<object>} extensions 최신 먼저
+ * @returns {Array<{ key: string, at: string, label: string, note: string }>}
+ */
+export function buildAdminShopOrderTimeline(detailEvents, extensions) {
+  const events = (Array.isArray(detailEvents) ? detailEvents : []).map((ev, index) => ({
+    key: `fulfill-${ev.skuCode}-${ev.status}-${index}`,
+    at: formatShopDateTime(ev.createdAt) || EMPTY,
+    label: resolveEventLabel(ev),
+    note: toDisplayString(ev.skuCode, '')
+  }));
+  const extended = (Array.isArray(extensions) ? [...extensions] : []).reverse().map((ext) => ({
+    key: `extend-${ext.id}`,
+    at: formatShopDateTime(ext.extendedAt) || EMPTY,
+    label: ADMIN_SHOP_ORDER_MODAL_COPY.EVENT_EXTENDED,
+    note: [
+      formatAdminShopCopy(ADMIN_SHOP_ORDER_MODAL_COPY.EVENT_EXTENDED_NOTE, {
+        previous: formatAdminShopDate(ext.previousExpireDate) || EMPTY,
+        next: formatAdminShopDate(ext.newExpireDate) || EMPTY
+      }),
+      toDisplayString(ext.extendedByName, ''),
+      toDisplayString(ext.reason, '')
+    ].filter(Boolean).join(EVENT_NOTE_SEPARATOR)
+  }));
+  return [...events, ...extended];
+}
+
+/**
+ * 사용 기한 칸 값.
+ *
+ * @param {object} detail
+ * @param {string} state
+ * @returns {string}
+ */
+function resolveExpiryText(detail, state) {
+  const date = formatAdminShopDate(detail.expireDate);
+  if (!date) {
+    return COLLECTED_STATES.includes(state) ? ADMIN_SHOP_ORDER_MODAL_COPY.EXPIRES_AT_NONE : EMPTY;
+  }
+  const template = state === ADMIN_SHOP_LEDGER_STATE.EXPIRED
+    ? ADMIN_SHOP_ORDER_MODAL_COPY.EXPIRES_AT_EXPIRED
+    : ADMIN_SHOP_ORDER_MODAL_COPY.EXPIRES_AT_VALUE;
+  return formatAdminShopCopy(template, { date });
+}
+
+/**
  * @param {object} props
  * @returns {JSX.Element}
  */
@@ -210,6 +278,8 @@ function AdminShopOrderDetailModal({
   onFulfillRetry,
   onReconcileRefund,
   onCopyOrderId,
+  onExtend,
+  canManageExpiry,
   refunding,
   deleting,
   fulfillRetrying,
@@ -217,7 +287,7 @@ function AdminShopOrderDetailModal({
   refundError,
   portOneHint
 }) {
-  const { state, isReconcile, canFulfillRetry, canReconcileRefund, usedCount } =
+  const { state, isCollected, isReconcile, canExtend, canFulfillRetry, canReconcileRefund, usedCount } =
     resolveAdminShopOrderDetailGates(detail, detailEvents);
   const pgAlreadyCancelled = isAdminShopPgCancelled(detail.pgStatus);
   const anyBusy = refunding || deleting || fulfillRetrying || reconcileRefunding;
@@ -230,17 +300,16 @@ function AdminShopOrderDetailModal({
   const consultant = toDisplayString(detail.consultantName, '') || EMPTY;
   const mapping = detail.mappingId != null ? `#${toDisplayString(detail.mappingId, '')}` : EMPTY;
   const payMethod = resolvePayMethod(detail);
-  const expiresRaw = detail.expireDate ?? detail.expiresAt ?? detail.validUntil;
-  const extendCount = Number(detail.extendCount) || 0;
+  const extendCount = Number(detail.extensionCount) || 0;
   const extendText = extendCount > 0 && detail.originalExpireDate
     ? formatAdminShopCopy(ADMIN_SHOP_ORDER_MODAL_COPY.EXTEND_INFO, {
       count: extendCount,
-      date: formatShopDateTime(detail.originalExpireDate)
+      date: formatAdminShopDate(detail.originalExpireDate)
     })
     : '';
-  const expiresText = expiresRaw
-    ? formatAdminShopCopy(ADMIN_SHOP_ORDER_MODAL_COPY.EXPIRES_AT_VALUE, { date: formatShopDateTime(expiresRaw) })
-    : EMPTY;
+  const expiresText = resolveExpiryText(detail, state);
+  const timeline = buildAdminShopOrderTimeline(detailEvents, detail.expiryExtensions);
+  const showExtend = canManageExpiry && canExtend && typeof onExtend === 'function';
   const quietHint = isReconcile
     ? ADMIN_SHOP_ORDER_MODAL_COPY.RECONCILE_BOX
     : (portOneHint || ADMIN_SHOP_ORDER_DETAIL_PORTONE_HINT);
@@ -278,7 +347,7 @@ function AdminShopOrderDetailModal({
       <AdminShopPairPanel
         amountLabel={ADMIN_SHOP_ORDER_MODAL_COPY.PAIR_AMOUNT}
         amountText={amountText}
-        amountTone={state === ADMIN_SHOP_LEDGER_STATE.PAID ? null : 'dim'}
+        amountTone={isCollected ? null : 'dim'}
         amountCaption={payMethod === EMPTY ? '' : payMethod}
         sessionsLabel={ADMIN_SHOP_ORDER_MODAL_COPY.PAIR_SESSIONS}
         sessionsText={pairSessions.text}
@@ -313,11 +382,28 @@ function AdminShopOrderDetailModal({
           <span className="admin-shop-suite__mono"><SafeText>{paymentIdText}</SafeText></span>
         </InfoCard>
         <InfoCard label={ADMIN_SHOP_ORDER_DETAIL_COPY.ORDER_STATUS}>
-          <AdminShopLedgerChip state={state} />
+          <AdminShopLedgerChip state={state} daysLeft={detail.daysLeft != null ? Number(detail.daysLeft) : null} />
+          <AdminShopPaymentStatusChip paymentStatus={detail.paymentStatus} />
         </InfoCard>
-        <InfoCard label={ADMIN_SHOP_ORDER_MODAL_COPY.EXPIRES_AT} wide>
-          <SafeText>{expiresText}</SafeText>
-          {extendText ? <span className="admin-shop-suite__muted"><SafeText>{extendText}</SafeText></span> : null}
+        <InfoCard label={ADMIN_SHOP_ORDER_MODAL_COPY.EXPIRES_AT} wide testId={ADMIN_SHOP_SUITE_TEST_IDS.ORDER_EXPIRY_CELL}>
+          <span className="admin-shop-suite__expiry-cell">
+            <span className="admin-shop-suite__cell-stack">
+              <SafeText>{expiresText}</SafeText>
+              {extendText ? <span className="admin-shop-suite__muted"><SafeText>{extendText}</SafeText></span> : null}
+            </span>
+            {showExtend ? (
+              <MGButton
+                type="button"
+                variant="secondary"
+                className={buildErpMgButtonClassName({ variant: 'secondary', size: 'sm' })}
+                disabled={anyBusy}
+                onClick={onExtend}
+                data-testid={ADMIN_SHOP_SUITE_TEST_IDS.ORDER_EXTEND_BUTTON}
+              >
+                {ADMIN_SHOP_ORDER_MODAL_COPY.EXTEND_BUTTON}
+              </MGButton>
+            ) : null}
+          </span>
         </InfoCard>
         <InfoCard label={ADMIN_SHOP_ORDER_MODAL_COPY.CONSULTANT}>
           <SafeText>{consultant}</SafeText>
@@ -376,20 +462,18 @@ function AdminShopOrderDetailModal({
           </h3>
           <span className="admin-shop-suite__muted">{ADMIN_SHOP_ORDER_MODAL_COPY.EVENTS_HINT}</span>
         </div>
-        {detailEvents.length === 0 ? (
+        {timeline.length === 0 ? (
           <p className="admin-shop-suite__muted">{ADMIN_SHOP_ORDER_DETAIL_COPY.FULFILLMENT_EMPTY}</p>
         ) : (
           <ol
             className="admin-shop-order-detail__timeline"
             data-testid={ADMIN_SHOP_ORDER_DETAIL_TEST_IDS.TIMELINE}
           >
-            {detailEvents.map((ev, index) => {
+            {timeline.map((row, index) => {
               const isFirst = index === 0;
-              const eventAt = formatShopDateTime(ev.createdAt) || EMPTY;
-              const eventNote = ev.message != null ? toDisplayString(ev.message, '') : '';
               return (
                 <li
-                  key={`fulfill-${ev.skuCode}-${ev.status}-${index}`}
+                  key={row.key}
                   className="admin-shop-order-detail__timeline-item"
                 >
                   <span
@@ -402,12 +486,12 @@ function AdminShopOrderDetailModal({
                     aria-hidden="true"
                   />
                   <div className="admin-shop-suite__events">
-                    <span className="admin-shop-suite__events-at"><SafeText>{eventAt}</SafeText></span>
+                    <span className="admin-shop-suite__events-at"><SafeText>{row.at}</SafeText></span>
                     <span className="admin-shop-order-detail__timeline-type">
-                      <SafeText>{resolveEventLabel(ev)}</SafeText>
+                      <SafeText>{row.label}</SafeText>
                     </span>
                     <span className="admin-shop-suite__events-note">
-                      <SafeText>{eventNote || toDisplayString(ev.skuCode, '')}</SafeText>
+                      <SafeText>{row.note}</SafeText>
                     </span>
                   </div>
                 </li>
@@ -438,7 +522,7 @@ function AdminShopOrderDetailModal({
         </div>
       ) : null}
 
-      {usedCount != null && usedCount > 0 && state === ADMIN_SHOP_LEDGER_STATE.PAID ? (
+      {usedCount != null && usedCount > 0 && isCollected ? (
         <AdminShopNotice tone="amber" icon={<AlertTriangle size={14} aria-hidden="true" />}>
           <p>
             <strong>
@@ -450,7 +534,7 @@ function AdminShopOrderDetailModal({
         </AdminShopNotice>
       ) : null}
 
-      {state === ADMIN_SHOP_LEDGER_STATE.PAID || isReconcile ? (
+      {isCollected || isReconcile ? (
         <div
           className="admin-shop-order-detail__portone"
           data-testid={ADMIN_SHOP_ORDER_DETAIL_TEST_IDS.PORTONE_HINT}
@@ -479,6 +563,8 @@ AdminShopOrderDetailModal.propTypes = {
   onFulfillRetry: PropTypes.func,
   onReconcileRefund: PropTypes.func,
   onCopyOrderId: PropTypes.func,
+  onExtend: PropTypes.func,
+  canManageExpiry: PropTypes.bool,
   refunding: PropTypes.bool,
   deleting: PropTypes.bool,
   fulfillRetrying: PropTypes.bool,
@@ -493,6 +579,8 @@ AdminShopOrderDetailModal.defaultProps = {
   onFulfillRetry: undefined,
   onReconcileRefund: undefined,
   onCopyOrderId: undefined,
+  onExtend: undefined,
+  canManageExpiry: false,
   refunding: false,
   deleting: false,
   fulfillRetrying: false,

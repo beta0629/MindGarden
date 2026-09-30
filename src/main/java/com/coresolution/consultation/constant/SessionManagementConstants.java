@@ -138,10 +138,35 @@ public final class SessionManagementConstants {
     // ===== 세션 보안 상수 =====
     
     /**
-     * Access JWT iat 와 {@code users.last_login_at} 비교 시 허용 오차(초).
-     * 로그인 응답에서 토큰 발급 후 lastLoginAt 갱신 순서·시계 오차로 인한 오탐 방지.
+     * Access JWT 세션 식별 클레임 — 같은 발급 쌍의 Refresh JWT {@code tokenId}
+     * ({@code refresh_token_store.token_id}) 와 동일 값.
      */
-    public static final long ACCESS_TOKEN_LAST_LOGIN_GRACE_SECONDS = 30L;
+    public static final String JWT_CLAIM_SESSION_ID = "sid";
+
+    /**
+     * Refresh JWT 토큰 식별 클레임 — {@code refresh_token_store.token_id} 와 동일 값.
+     */
+    public static final String JWT_CLAIM_REFRESH_TOKEN_ID = "tokenId";
+
+    /**
+     * 동일 요청 안에서 Access 발급 시 생성한 sid 를 Refresh 발급에 넘기기 위한 요청 속성 키.
+     */
+    public static final String REQUEST_ATTR_PENDING_TOKEN_SESSION_IDS = "mg.auth.pending-token-session-ids";
+
+    /**
+     * 현재 세션 로그아웃으로 폐기된 Access JWT (SHA-256) Redis 키 접두사.
+     */
+    public static final String REVOKED_ACCESS_TOKEN_KEY_PREFIX = "auth:revoked:access:";
+
+    /**
+     * 현재 세션 로그아웃으로 폐기된 Refresh JWT (SHA-256) Redis 키 접두사 — sid 연결이 없는 구 토큰용.
+     */
+    public static final String REVOKED_REFRESH_TOKEN_KEY_PREFIX = "auth:revoked:refresh:";
+
+    /**
+     * 현재 세션 로그아웃으로 폐기된 Refresh {@code tokenId} Redis 키 접두사.
+     */
+    public static final String REVOKED_REFRESH_TOKEN_ID_KEY_PREFIX = "auth:revoked:refresh-id:";
 
     /**
      * 세션 ID 최소 길이

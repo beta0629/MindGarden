@@ -103,19 +103,30 @@ describe('PgConfiguration Clinic-OS chrome', () => {
     expect(detailJs).not.toMatch(/className="pg-config-detail pg-config-detail__body"/);
   });
 
-  test('List (결제 연결): 1건이면 상세로 이동 · 목록 복귀는 stayOnList', () => {
+  test('List (결제 연결): 1건이어도 자동 상세 이동 없음 · 행 클릭 시에만 상세', () => {
     expect(listJs).toMatch(/ADMIN_SHOP_PG_COPY\.TITLE/);
-    expect(listJs).toMatch(/configurations\.length !== 1/);
-    expect(listJs).toMatch(/stayOnList/);
-    expect(detailJs).toMatch(/stayOnList: true/);
+    expect(listJs).not.toMatch(/configurations\.length !== 1/);
+    expect(listJs).not.toMatch(/replace:\s*true/);
+    expect(listJs).toMatch(/onClick=\{\(\) => navigate\(`\/tenant\/pg-configurations\/\$\{config\.configId\}`\)\}/);
+    expect(detailJs).not.toMatch(/stayOnList/);
+  });
+
+  test('Form mobile: 보기 버튼 인라인 · 도움말 block · 스위치 행 빈 공간 없음', () => {
+    const switchRowCss = read('src/components/common/molecules/SettingSwitchRow.css');
+    const mobileBlock = formCss.slice(formCss.indexOf('@media (max-width: 768px)'));
+    expect(mobileBlock).toMatch(/\.pg-config-form \.input-with-icon \.icon-button\s*\{[^}]*position:\s*static/);
+    expect(mobileBlock).toMatch(/\.pg-config-form \.help-text\s*\{[^}]*display:\s*block/);
+    expect(formCss).not.toMatch(/max-width:\s*390px/);
+    expect(switchRowCss).toMatch(/@media \(max-width: 640px\)[\s\S]*\.mg-v2-setting-switch-row__main\s*\{[^}]*flex:\s*0 0 auto/);
   });
 
   test('page CSS has no leftover --ad-b0kla or page hex accents', () => {
     expect(listCss).not.toMatch(/--ad-b0kla/);
     expect(detailCss).not.toMatch(/--ad-b0kla/);
     expect(formCss).not.toMatch(/--ad-b0kla/);
-    expect(listCss).not.toMatch(/#155724|#357abd|#e2e3e5|#d1ecf1/);
-    expect(detailCss).not.toMatch(/#155724|#357abd|#e2e3e5|#d1ecf1/);
+    const hexColor = /#[0-9a-fA-F]{3,8}\b/;
+    expect(listCss).not.toMatch(hexColor);
+    expect(detailCss).not.toMatch(hexColor);
     expect(detailCss).toMatch(/border-left:\s*none\s*!important/);
   });
 });

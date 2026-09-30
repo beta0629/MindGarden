@@ -13,6 +13,8 @@
 # JAR 업로드 경로: /var/www/ops-backend/app.jar (restart 시 이 경로 사용)
 
 name: 🔧 Ops 백엔드 운영 배포
+# Gradle/Java 빌드는 ubuntu-latest. self-hosted mindgarden-deploy 는 JAR 수신·SSH 만
+# (운영 호스트에서 Java 빌드 금지, 2026-09-19 OOM).
 
 on:
   push:
@@ -20,6 +22,9 @@ on:
     paths:
       - "backend-ops/**"
       - ".github/workflows/deploy-ops-backend-prod.yml"
+      # composite action: 본 워크플로가 호출하는 sync-prod-env-key 변경도 push 자동 트리거 대상에 포함
+      - ".github/actions/sync-prod-env-key/**"
+      - ".github/actions/assert-env-key-nonempty/**"
   workflow_dispatch:
     inputs:
       deploy_ref:
@@ -29,9 +34,11 @@ on:
         type: string
 
 jobs:
-  deploy-ops-backend-prod:
-    name: 🏗️ Ops 백엔드 Gradle 빌드 및 운영 배포
-    runs-on: [self-hosted, linux, deploy]
+  build:
+    name: 🏗️ Ops 백엔드 Gradle 빌드 (ubuntu-latest)
+    runs-on: ubuntu-latest
+    outputs:
+      jar_path: ${{ steps.jar.outputs.jar_path }}
 
     steps:
       - name: 🛡️ 운영 배포 ref 가드 (release/prod만 허용)
@@ -82,6 +89,53 @@ jobs:
           echo "✅ JAR: backend-ops/$JAR"
           echo "jar_path=backend-ops/$JAR" >> "$GITHUB_OUTPUT"
 
+      - name: 📦 JAR 스테이징
+        run: |
+          set -euo pipefail
+          JAR_PATH="${{ steps.jar.outputs.jar_path }}"
+          rm -rf _gha_ops_bundle
+          mkdir -p "_gha_ops_bundle/$(dirname "$JAR_PATH")"
+          cp -a "$JAR_PATH" "_gha_ops_bundle/$JAR_PATH"
+          test -s "_gha_ops_bundle/$JAR_PATH"
+
+      - name: 📤 JAR 업로드
+        uses: actions/upload-artifact@v4
+        with:
+          name: ops-backend-prod-jar
+          path: _gha_ops_bundle
+          retention-days: 1
+          if-no-files-found: error
+
+  deploy-ops-backend-prod:
+    name: 📤 Ops 백엔드 운영 배포 (self-hosted, 배포 전용)
+    needs: build
+    runs-on: [self-hosted, linux, deploy]
+    env:
+      # OPS_ADMIN_PASSWORD: backend-ops security.ops.password 기본값 없음 → /etc/ops-backend/prod.env 미설정 시 로그인 거부.
+      # 미등록 시 ::notice 후 skip — 기존 prod.env 값 유지.
+      OPS_ADMIN_PASSWORD: ${{ secrets.OPS_ADMIN_PASSWORD }}
+    steps:
+      # 로컬 composite action(./.github/actions/*) 해석용. checkout 의 clean 이 JAR 스테이징을 지우지 않도록 첫 step.
+      - name: 📥 composite action 체크아웃
+        uses: actions/checkout@v4
+        with:
+          sparse-checkout: .github/actions
+
+      - name: 📥 JAR 수신
+        uses: actions/download-artifact@v4
+        with:
+          name: ops-backend-prod-jar
+          path: _gha_ops_bundle
+
+      - name: 📦 JAR 배치 (컴파일 없음)
+        run: |
+          set -euo pipefail
+          JAR_PATH="${{ needs.build.outputs.jar_path }}"
+          mkdir -p "$(dirname "$JAR_PATH")"
+          cp -a "_gha_ops_bundle/$JAR_PATH" "$JAR_PATH"
+          test -s "$JAR_PATH"
+          echo "self-hosted: Gradle/Java 빌드 없음. JAR=$JAR_PATH"
+
       - name: 🔍 운영 서버 SSH 연결 테스트
         uses: appleboy/ssh-action@master
         with:
@@ -124,10 +178,37 @@ jobs:
           key: ${{ secrets.PRODUCTION_SSH_KEY }}
           port: 22
           timeout: 120s
-          source: ${{ steps.jar.outputs.jar_path }}
+          source: ${{ needs.build.outputs.jar_path }}
           target: "/var/www/ops-backend/"
           strip_components: 3
           overwrite: true
+
+      # GitHub Secret 'OPS_ADMIN_PASSWORD' → /etc/ops-backend/prod.env 멱등 동기화 (값 echo 금지, default 없음).
+      # 서비스 재시작 전에 실행해 새 값이 재기동 시 로드되도록 한다.
+      # 미등록 시: skip_when=any_missing 로 쓰기는 skip 되지만, 뒤 가드가 prod.env 값이 비어 있으면 배포를 실패시킨다.
+      - name: 🔑 OPS_ADMIN_PASSWORD env 자동 주입
+        uses: ./.github/actions/sync-prod-env-key
+        with:
+          step_name: 'OPS_ADMIN_PASSWORD'
+          keys: 'OPS_ADMIN_PASSWORD'
+          env_path: '/etc/ops-backend/prod.env'
+          ssh_host: ${{ secrets.PRODUCTION_HOST }}
+          ssh_user: ${{ secrets.PRODUCTION_USER }}
+          ssh_key: ${{ secrets.PRODUCTION_SSH_KEY }}
+          skip_when: 'any_missing'
+          noop_compare: 'true'
+          # ops-backend prod.env 는 DB_HOST/DB_NAME/DB_USERNAME 대신 MG_DB_* 사용 — DB FAIL-FAST 비활성.
+          db_fail_fast: 'false'
+
+      - name: 🛑 OPS_ADMIN_PASSWORD 빈 값 가드 (재시작 전)
+        uses: ./.github/actions/assert-env-key-nonempty
+        with:
+          step_name: 'OPS_ADMIN_PASSWORD'
+          key: 'OPS_ADMIN_PASSWORD'
+          env_path: '/etc/ops-backend/prod.env'
+          ssh_host: ${{ secrets.PRODUCTION_HOST }}
+          ssh_user: ${{ secrets.PRODUCTION_USER }}
+          ssh_key: ${{ secrets.PRODUCTION_SSH_KEY }}
 
       - name: 🔄 JAR를 app.jar 로 정리 및 서비스 재시작
         uses: appleboy/ssh-action@master

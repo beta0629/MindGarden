@@ -22,7 +22,8 @@ public interface AdminShopOrderReconcileService {
     /**
      * PortOne V2 검증 후 결제 APPROVED·주문 PAID 정합.
      * <p>
-     * {@code EXPIRED} 이어도 PortOne 이 PAID 이고 금액이 일치하면 복구한다.
+     * {@code CANCELLED}/{@code EXPIRED} 주문은 되살리지 않는다. PortOne PAID 인 늦은 결제(또는 결제 {@code REFUND_REQUIRED})면
+     * PG 자동 환불만 (재)시도하고 주문 상태는 그대로 응답한다.
      * {@code paymentId} 가 없으면 {@code cardApprovalNumber} 로 PortOne 다건 조회 후 paymentId 를 해석한다.
      * </p>
      *

@@ -97,6 +97,11 @@
   white-space: nowrap;
 }
 
+/* 「입금 확인 후 활성화」 — 2열 그리드 반 칸에서는 모바일 전역 버튼 패딩(!important)에 문구가 잘리므로 한 줄 전체 폭 */
+.integrated-schedule__card-actionbar .integrated-schedule__btn-confirm-activate {
+  grid-column: 1 / -1;
+}
+
 /* Danger CTA — desync 액션 (행 밖 solid) */
 .integrated-schedule__action-danger.mg-button,
 .integrated-schedule__card-actions .integrated-schedule__action-danger {

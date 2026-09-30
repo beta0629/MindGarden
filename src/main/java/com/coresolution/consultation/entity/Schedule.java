@@ -3,16 +3,24 @@ package com.coresolution.consultation.entity;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.Objects;
 import com.coresolution.consultation.constant.ScheduleStatus;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.Index;
+import jakarta.persistence.PostLoad;
+import jakarta.persistence.PostPersist;
+import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+import lombok.AccessLevel;
 import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
 /**
  * 상담 일정 엔티티
@@ -152,6 +160,67 @@ public class Schedule extends BaseEntity {
     @Deprecated
     @Column(name = "branch_code", length = 20)
     private String branchCode;
+
+    /**
+     * 일자·시작 시각(슬롯)이 마지막으로 바뀐 시각의 상한 — 이 시각 이후에는 일시 변경이 없다.
+     *
+     * <p>JPA 수정 시 {@link #trackSlotChange()} 가 기록한다. 일시가 바뀌면 수정 시각, 메모·상태 등
+     * 일시 외 수정이면 값이 없을 때만 직전 {@code updated_at} (일시 변경은 항상 {@code updated_at} 을
+     * 갱신하므로 마지막 일시 변경 시각의 상한)으로 채운다. 예약 리마인드 슬롯 미기록 발송 이력의
+     * 발송 당시 슬롯 판정에 사용한다. {@code null} 이면 추적 전(판정 근거 없음).
+     */
+    @JsonIgnore
+    @Column(name = "slot_changed_at")
+    private LocalDateTime slotChangedAt;
+
+    @Getter(AccessLevel.NONE)
+    @Setter(AccessLevel.NONE)
+    private transient boolean slotSnapshotCaptured;
+
+    @Getter(AccessLevel.NONE)
+    @Setter(AccessLevel.NONE)
+    private transient LocalDate loadedSlotDate;
+
+    @Getter(AccessLevel.NONE)
+    @Setter(AccessLevel.NONE)
+    private transient LocalTime loadedSlotStartTime;
+
+    @Getter(AccessLevel.NONE)
+    @Setter(AccessLevel.NONE)
+    private transient LocalDateTime loadedUpdatedAt;
+
+    /**
+     * 조회·저장 직후 슬롯(일자·시작 시각) 스냅샷 — {@link #trackSlotChange()} 비교 기준.
+     */
+    @PostLoad
+    @PostPersist
+    void captureSlotSnapshot() {
+        this.loadedSlotDate = date;
+        this.loadedSlotStartTime = startTime;
+        this.loadedUpdatedAt = getUpdatedAt() != null ? getUpdatedAt() : getCreatedAt();
+        this.slotSnapshotCaptured = true;
+    }
+
+    /**
+     * 수정 flush 직전 슬롯 변경 추적 — {@link #slotChangedAt} 참고.
+     */
+    @PreUpdate
+    void trackSlotChange() {
+        if (!slotSnapshotCaptured) {
+            return;
+        }
+        LocalDateTime now = LocalDateTime.now();
+        boolean slotChanged = !Objects.equals(loadedSlotDate, date)
+                || !Objects.equals(loadedSlotStartTime, startTime);
+        if (slotChanged) {
+            this.slotChangedAt = now;
+        } else if (this.slotChangedAt == null) {
+            this.slotChangedAt = loadedUpdatedAt;
+        }
+        this.loadedSlotDate = date;
+        this.loadedSlotStartTime = startTime;
+        this.loadedUpdatedAt = now;
+    }
 
     public String getBranchCode() {
         return branchCode;

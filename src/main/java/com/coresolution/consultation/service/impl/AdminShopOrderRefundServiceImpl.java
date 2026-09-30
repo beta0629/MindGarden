@@ -19,6 +19,8 @@ import com.coresolution.consultation.service.ShopNotificationHelper;
 import com.coresolution.consultation.service.ShopOrderFulfillmentService;
 import com.coresolution.consultation.service.portone.PortOneV2PaymentCancelService;
 import com.coresolution.consultation.service.portone.PortOneV2PaymentVerifyService;
+import com.coresolution.consultation.service.shop.ShopOrderRefundableAmountResolver;
+import com.coresolution.consultation.service.shop.ShopOrderRefundableAmountResolver.RefundableAmount;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Optional;
@@ -50,6 +52,7 @@ import lombok.extern.slf4j.Slf4j;
  *   <li>주문 REFUNDED + 회기 원복 + EXPENSE 를 동일 fail-closed 단위로 수행</li>
  *   <li>포인트 복원/clawback 은 PG 성공 증거 확인 이후</li>
  * </ol>
+ * 누적 환불(매핑 측 부분 환불 + PG 취소)은 결제액을 넘지 않는다 — PG 는 잔액만 취소하고, 잔액 0 이면 거부.
  * PG 실패 시 회기·EXPENSE·주문 REFUNDED 를 호출하지 않는다.
  * PG 성공 후 Clinic 체인 실패 시 {@link ShopRefundClinicChainException} 으로
  * 부분 성공을 숨기지 않고 재시도·reconcile-refund 가능하게 한다.
@@ -73,6 +76,7 @@ public class AdminShopOrderRefundServiceImpl implements AdminShopOrderRefundServ
     private final ShopOrderFulfillmentService shopOrderFulfillmentService;
     private final PortOneV2PaymentCancelService portOneV2PaymentCancelService;
     private final PortOneV2PaymentVerifyService portOneV2PaymentVerifyService;
+    private final ShopOrderRefundableAmountResolver shopOrderRefundableAmountResolver;
 
     public AdminShopOrderRefundServiceImpl(
             ShopClientOrderRepository shopClientOrderRepository,
@@ -84,7 +88,9 @@ public class AdminShopOrderRefundServiceImpl implements AdminShopOrderRefundServ
             ShopOrderFulfillmentService shopOrderFulfillmentService,
             PortOneV2PaymentCancelService portOneV2PaymentCancelService,
             PortOneV2PaymentVerifyService portOneV2PaymentVerifyService,
+            ShopOrderRefundableAmountResolver shopOrderRefundableAmountResolver,
             @Autowired(required = false) PaymentGatewayService paymentGatewayService) {
+        this.shopOrderRefundableAmountResolver = shopOrderRefundableAmountResolver;
         this.shopClientOrderRepository = shopClientOrderRepository;
         this.clientPointWalletService = clientPointWalletService;
         this.pointTenantPolicyService = pointTenantPolicyService;
@@ -113,7 +119,7 @@ public class AdminShopOrderRefundServiceImpl implements AdminShopOrderRefundServ
         // 1) PG 취소 + 증거 확인 — 실패 시 회기·EXPENSE·주문 상태 변경 없음
         // PortOne 성공 후 로컬 Payment 반영 실패는 executePgFullRefund 가
         // ShopRefundClinicChainException(pgCancelCompleted=true) 로 표면화한다.
-        String pgRefundStatus = executePgFullRefund(tenantId, orderPublicId, order.getCashDueMinor(), reasonCode);
+        String pgRefundStatus = executePgFullRefund(tenantId, order, reasonCode);
         boolean pgCancelCompleted =
                 ShopRefundConstants.PG_REFUND_STATUS_COMPLETED.equals(pgRefundStatus)
                         || ShopRefundConstants.PG_REFUND_STATUS_NOT_APPLICABLE.equals(pgRefundStatus);
@@ -186,7 +192,7 @@ public class AdminShopOrderRefundServiceImpl implements AdminShopOrderRefundServ
 
         if (ShopRefundConstants.PG_REFUND_STATUS_NOT_APPLICABLE.equals(pgRefundStatus)
                 && order.getCashDueMinor() > 0L) {
-            pgRefundStatus = attemptPgCancelForMissingEvidence(tenantId, orderPublicId);
+            pgRefundStatus = attemptPgCancelForMissingEvidence(tenantId, orderPublicId, order);
         }
 
         try {
@@ -208,7 +214,8 @@ public class AdminShopOrderRefundServiceImpl implements AdminShopOrderRefundServ
      * @return {@link ShopRefundConstants#PG_REFUND_STATUS_COMPLETED} 또는
      *         {@link ShopRefundConstants#PG_REFUND_STATUS_NOT_APPLICABLE}
      */
-    private String attemptPgCancelForMissingEvidence(String tenantId, String orderPublicId) {
+    private String attemptPgCancelForMissingEvidence(
+            String tenantId, String orderPublicId, ShopClientOrder order) {
         Optional<Payment> paymentOpt = paymentRepository
                 .findFirstByTenantIdAndOrderIdAndStatusAndIsDeletedFalseOrderByIdDesc(
                         tenantId, orderPublicId, Payment.PaymentStatus.REFUNDED);
@@ -226,11 +233,18 @@ public class AdminShopOrderRefundServiceImpl implements AdminShopOrderRefundServ
             return ShopRefundConstants.PG_REFUND_STATUS_NOT_APPLICABLE;
         }
 
+        // 이미 REFUNDED 주문의 Clinic 수리 경로 — 잔액이 없으면 PG 호출 없이 수리만 진행한다
+        RefundableAmount refundable = shopOrderRefundableAmountResolver.resolve(tenantId, order, payment);
+        if (refundable.isExhausted()) {
+            log.warn("REFUNDED 주문 PG 취소 생략 — {}", exhaustedMessage(orderPublicId, refundable));
+            return ShopRefundConstants.PG_REFUND_STATUS_NOT_APPLICABLE;
+        }
+
         log.warn("REFUNDED 주문 PG 취소 증거 누락 — PortOne 취소 시도: tenantId={}, orderPublicId={}, paymentId={}",
                 tenantId, orderPublicId, payment.getPaymentId());
 
         String reason = PG_REFUND_REASON_PREFIX + "idempotent retry (missing PG cancel evidence)";
-        cancelViaPortOneWithEvidence(tenantId, payment.getPaymentId(), reason);
+        cancelRemainingViaPortOneWithEvidence(tenantId, payment.getPaymentId(), reason, refundable);
 
         payment.setCancelledAt(LocalDateTime.now());
         paymentRepository.save(payment);
@@ -265,12 +279,15 @@ public class AdminShopOrderRefundServiceImpl implements AdminShopOrderRefundServ
      *       없으면 COMPLETED 반환 금지 → 전체 롤백</li>
      * </ol>
      *
+     * <p><b>누적 환불 상한</b>: 매핑 측 부분 환불·PG 기취소가 있으면 PG 에는 잔액(결제액 − 기환불액)만
+     * 취소한다. 잔액이 0 이면 PG 호출 없이 거부한다. 결제 건은 잔액 취소로 전액 정산되므로 REFUNDED 로 둔다.</p>
+     *
      * @return {@link ShopRefundConstants#PG_REFUND_STATUS_NOT_APPLICABLE} 또는
      *         {@link ShopRefundConstants#PG_REFUND_STATUS_COMPLETED}
      */
-    private String executePgFullRefund(
-            String tenantId, String orderPublicId, long cashDueMinor, String reasonCode) {
-        if (cashDueMinor <= 0L) {
+    private String executePgFullRefund(String tenantId, ShopClientOrder order, String reasonCode) {
+        String orderPublicId = order.getPublicId();
+        if (order.getCashDueMinor() <= 0L) {
             return ShopRefundConstants.PG_REFUND_STATUS_NOT_APPLICABLE;
         }
 
@@ -280,17 +297,27 @@ public class AdminShopOrderRefundServiceImpl implements AdminShopOrderRefundServ
                 .orElseThrow(() -> new IllegalStateException(
                         "승인된 결제를 찾을 수 없습니다. orderPublicId=" + orderPublicId));
 
+        RefundableAmount refundable = shopOrderRefundableAmountResolver.resolve(tenantId, order, payment);
+        if (refundable.isExhausted()) {
+            String message = exhaustedMessage(orderPublicId, refundable);
+            log.warn("쇼핑 주문 환불 거부(PG 호출 없음): tenantId={}, {}", tenantId, message);
+            throw new IllegalArgumentException(message);
+        }
+
         BigDecimal refundAmount = payment.getAmount();
+        BigDecimal pgRefundAmount = refundable.isFullAmount()
+                ? refundAmount
+                : BigDecimal.valueOf(refundable.remainingAmount());
         String pgReason = PG_REFUND_REASON_PREFIX + reasonCode;
         boolean pgCancelSucceeded = false;
 
         try {
             if (portOneV2PaymentVerifyService.isIamportPayment(payment)) {
-                cancelViaPortOneWithEvidence(tenantId, payment.getPaymentId(), pgReason);
+                cancelRemainingViaPortOneWithEvidence(tenantId, payment.getPaymentId(), pgReason, refundable);
                 pgCancelSucceeded = true;
             } else if (paymentGatewayService != null) {
                 boolean pgOk = paymentGatewayService.refundPayment(
-                        payment.getPaymentId(), refundAmount, pgReason);
+                        payment.getPaymentId(), pgRefundAmount, pgReason);
                 if (!pgOk) {
                     throw new IllegalStateException(
                             "PG 환불에 실패했습니다. paymentId=" + payment.getPaymentId());
@@ -323,10 +350,28 @@ public class AdminShopOrderRefundServiceImpl implements AdminShopOrderRefundServ
     }
 
     /**
+     * 기환불이 없으면 PortOne 전액 취소, 있으면 잔액만 부분 취소 + 취소 증거 확인.
+     */
+    private void cancelRemainingViaPortOneWithEvidence(
+            String tenantId, String paymentId, String reason, RefundableAmount refundable) {
+        if (refundable.isFullAmount()) {
+            cancelViaPortOneWithEvidence(tenantId, paymentId, reason);
+            return;
+        }
+        boolean pgOk = portOneV2PaymentCancelService.cancelPaymentAmount(
+                tenantId, paymentId, reason, BigDecimal.valueOf(refundable.remainingAmount()));
+        requirePortOneCancelEvidence(tenantId, paymentId, pgOk);
+    }
+
+    /**
      * PortOne V2 cancel + 취소 증거(PortOne 상태) 확인. 증거 없으면 예외.
      */
     private void cancelViaPortOneWithEvidence(String tenantId, String paymentId, String reason) {
         boolean pgOk = portOneV2PaymentCancelService.cancelPayment(tenantId, paymentId, reason);
+        requirePortOneCancelEvidence(tenantId, paymentId, pgOk);
+    }
+
+    private void requirePortOneCancelEvidence(String tenantId, String paymentId, boolean pgOk) {
         if (!pgOk) {
             throw new IllegalStateException(
                     "PortOne V2 결제 취소에 실패했습니다. paymentId=" + paymentId);
@@ -377,6 +422,15 @@ public class AdminShopOrderRefundServiceImpl implements AdminShopOrderRefundServ
             return ShopRefundConstants.PG_REFUND_STATUS_COMPLETED;
         }
         return ShopRefundConstants.PG_REFUND_STATUS_NOT_APPLICABLE;
+    }
+
+    private static String exhaustedMessage(String orderPublicId, RefundableAmount refundable) {
+        return String.format(
+                ShopRefundConstants.MSG_REFUND_AMOUNT_EXHAUSTED_FMT,
+                orderPublicId,
+                refundable.paidAmount(),
+                refundable.mappingRefundedAmount(),
+                refundable.pgCancelledAmount());
     }
 
     private static ShopOrderRefundResponse buildResponse(

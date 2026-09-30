@@ -1,6 +1,7 @@
 /**
  * 테넌트 어드민 — 온라인 주문 (돈·회기 쌍장부)
- * 요약 스트립 · 상태 세그먼트 · 표(회기 ▸ 금액) · 합계 · 주문 상세 · 전액 환불 2단계
+ * 요약 스트립 · 상태 세그먼트 · 표(회기 ▸ 금액) · 합계 · 주문 상세 · 전액 환불 2단계 · 사용 기한 연장
+ * 목록·세그먼트 건수·요약은 서버 page/size 응답을 그대로 쓴다 (행별 상세 조회 없음).
  *
  * @author CoreSolution
  * @since 2026-05-19
@@ -29,21 +30,24 @@ import {
   resolveAdminShopRefundErrorCopy
 } from '../../constants/adminShopApi';
 import {
+  ADMIN_SHOP_EXTEND_COPY,
   ADMIN_SHOP_LEDGER_CHIP,
   ADMIN_SHOP_LEDGER_STATE,
   ADMIN_SHOP_ORDER_DELETE_VISIBLE_STATES,
-  ADMIN_SHOP_ORDER_ENRICH_CONCURRENCY,
+  ADMIN_SHOP_ORDER_EXTENDABLE_STATES,
   ADMIN_SHOP_ORDER_MODAL_COPY,
   ADMIN_SHOP_ORDER_PERIOD,
   ADMIN_SHOP_ORDER_PERIOD_OPTIONS,
   ADMIN_SHOP_ORDER_SEGMENTS,
   ADMIN_SHOP_ORDERS_COPY,
-  ADMIN_SHOP_ORDERS_FETCH_SIZE,
+  ADMIN_SHOP_ORDERS_EXPORT_PAGE_SIZE,
   ADMIN_SHOP_PRODUCT_ROUTES,
   ADMIN_SHOP_REFUND_CONFIRM_COPY,
+  ADMIN_SHOP_SEARCH_DEBOUNCE_MS,
   ADMIN_SHOP_STATE_COPY,
   ADMIN_SHOP_SUITE_PAGE_SIZE,
-  ADMIN_SHOP_SUITE_TEST_IDS
+  ADMIN_SHOP_SUITE_TEST_IDS,
+  formatAdminShopCopy
 } from '../../constants/adminShopSuite';
 import { RoleUtils } from '../../constants/roles';
 import { useSession } from '../../contexts/SessionContext';
@@ -57,7 +61,9 @@ import {
 } from '../../constants/clientShopConstants';
 import {
   deleteAdminShopOrder,
+  extendAdminShopOrderExpiry,
   getAdminShopOrder,
+  listAdminShopOrderExpiryExtensions,
   listAdminShopOrders,
   refundAdminShopOrder,
   reconcileShopOrderRefund,
@@ -66,13 +72,11 @@ import {
 import {
   buildAdminShopOrderLedgerItem,
   buildAdminShopOrdersCsv,
-  filterAdminShopOrdersByPeriod,
-  matchesAdminShopOrderSearch,
-  needsAdminShopOrderEnrich,
-  paginateAdminShopItems,
-  resolveAdminShopOrderSessionCount,
-  runAdminShopWithConcurrency,
-  summarizeAdminShopOrders
+  formatAdminShopDate,
+  formatAdminShopShortDate,
+  normalizeAdminShopOrderSummary,
+  resolveAdminShopOrderPeriodRange,
+  resolveAdminShopOrderSessionCount
 } from '../../utils/adminShopSuite';
 import { runResourceLoad, softRefresh } from '../../utils/softRefresh';
 import AdminShopOrderDetailModal, {
@@ -80,8 +84,9 @@ import AdminShopOrderDetailModal, {
   AdminShopOrderDetailTitle
 } from './shop/AdminShopOrderDetailModal';
 import AdminShopRefundConfirmModal from './shop/AdminShopRefundConfirmModal';
+import AdminShopOrderExtendModal from './shop/AdminShopOrderExtendModal';
 import {
-  AdminShopLedgerChip,
+  AdminShopOrderStatusChips,
   AdminShopSessionDelta,
   AdminShopSuiteToast,
   AdminShopTableSkeleton,
@@ -99,6 +104,8 @@ const TABLE_COLUMN_COUNT = 9;
 const RELOAD_OPTIONS = Object.freeze({ announce: true });
 const CSV_MIME = 'text/csv;charset=utf-8';
 const CSV_BOM = '\uFEFF';
+const TOTAL_LABEL_COL_SPAN = 4;
+const TOTAL_TAIL_COL_SPAN = 2;
 
 const STATE_LABELS = Object.fromEntries(
   Object.entries(ADMIN_SHOP_LEDGER_CHIP).map(([state, chip]) => [state, chip.label])
@@ -138,7 +145,8 @@ const AdminShopOrdersPage = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { user, isLoggedIn, isLoading: sessionLoading } = useSession();
-  const allowed = RoleUtils.isAdmin(user) || RoleUtils.isStaff(user);
+  const isAdmin = RoleUtils.isAdmin(user);
+  const allowed = isAdmin || RoleUtils.isStaff(user);
   const [confirm, ConfirmModal] = useConfirm();
   const { toast, showToast, hideToast } = useAdminShopSuiteToast();
 
@@ -146,14 +154,24 @@ const AdminShopOrdersPage = () => {
   const [loadError, setLoadError] = useState(false);
   const [reloading, setReloading] = useState(false);
   const [rows, setRows] = useState([]);
-  const [detailMap, setDetailMap] = useState({});
-  const detailCacheRef = useRef(new Set());
+  const [totalElements, setTotalElements] = useState(0);
+  const [counts, setCounts] = useState({});
+  const [summary, setSummary] = useState(() => normalizeAdminShopOrderSummary(null));
+  const [exporting, setExporting] = useState(false);
   const mountedRef = useRef(true);
+  const requestSeqRef = useRef(0);
 
   const [period, setPeriod] = useState(ADMIN_SHOP_ORDER_PERIOD.THIS_MONTH);
   const [segment, setSegment] = useState(SEGMENT_ALL);
   const [query, setQuery] = useState('');
+  const [debouncedQuery, setDebouncedQuery] = useState('');
   const [page, setPage] = useState(1);
+
+  const [extendOpen, setExtendOpen] = useState(false);
+  const [extendTarget, setExtendTarget] = useState(null);
+  const [extendHistory, setExtendHistory] = useState([]);
+  const [extendHistoryLoading, setExtendHistoryLoading] = useState(false);
+  const [extending, setExtending] = useState(false);
 
   const [detailOpen, setDetailOpen] = useState(false);
   const [detailLoading, setDetailLoading] = useState(false);
@@ -176,27 +194,64 @@ const AdminShopOrdersPage = () => {
    * @param {{ silent?: boolean, announce?: boolean }} [options]
    *   silent=true 이면 AdminCommonLayout loading 미사용 (mutation 후 갱신)
    */
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedQuery(query.trim()), ADMIN_SHOP_SEARCH_DEBOUNCE_MS);
+    return () => clearTimeout(timer);
+  }, [query]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [period, segment, debouncedQuery]);
+
+  const listFilters = useMemo(() => {
+    const range = resolveAdminShopOrderPeriodRange(period);
+    return {
+      segment: segment === SEGMENT_ALL ? null : segment,
+      from: range.from,
+      to: range.to,
+      q: debouncedQuery || null
+    };
+  }, [period, segment, debouncedQuery]);
+
+  /**
+   * @param {{ silent?: boolean, announce?: boolean }} [options]
+   *   silent=true 이면 AdminCommonLayout loading 미사용 (mutation 후 갱신)
+   */
   const loadOrders = useCallback(async(options = {}) => {
     if (options.announce) {
       setReloading(true);
     }
+    const seq = requestSeqRef.current + 1;
+    requestSeqRef.current = seq;
     try {
       await runResourceLoad(options, setLoading, async() => {
-        const result = await listAdminShopOrders({ page: 0, size: ADMIN_SHOP_ORDERS_FETCH_SIZE });
+        const result = await listAdminShopOrders({
+          ...listFilters,
+          page: page - 1,
+          size: ADMIN_SHOP_SUITE_PAGE_SIZE
+        });
+        if (!mountedRef.current || seq !== requestSeqRef.current) {
+          return;
+        }
         setRows(Array.isArray(result?.orders) ? result.orders : []);
+        setTotalElements(Number(result?.totalElements) || 0);
+        setCounts(result?.counts || {});
+        setSummary(normalizeAdminShopOrderSummary(result?.summary));
         setLoadError(false);
       });
       if (options.announce) {
         showToast(ADMIN_SHOP_ORDERS_COPY.RELOADED_TOAST);
       }
     } catch (e) {
-      setLoadError(true);
+      if (seq === requestSeqRef.current) {
+        setLoadError(true);
+      }
     } finally {
       if (options.announce) {
         setReloading(false);
       }
     }
-  }, [showToast]);
+  }, [showToast, listFilters, page]);
 
   useEffect(() => {
     if (sessionLoading) {
@@ -214,70 +269,20 @@ const AdminShopOrdersPage = () => {
     loadOrders();
   }, [sessionLoading, isLoggedIn, user?.id, allowed, navigate, loadOrders]);
 
-  const invalidateDetail = useCallback((orderPublicId) => {
-    detailCacheRef.current.delete(orderPublicId);
-    setDetailMap((prev) => {
-      if (!(orderPublicId in prev)) {
-        return prev;
-      }
-      const next = { ...prev };
-      delete next[orderPublicId];
-      return next;
-    });
-  }, []);
-
-  const ledgerItems = useMemo(
-    () => rows.map((row) => buildAdminShopOrderLedgerItem(row, detailMap[row.orderPublicId])),
-    [rows, detailMap]
+  const pageItems = useMemo(
+    () => rows.map((row) => buildAdminShopOrderLedgerItem(row, null)),
+    [rows]
   );
-  const periodItems = useMemo(
-    () => filterAdminShopOrdersByPeriod(ledgerItems, period),
-    [ledgerItems, period]
-  );
-  const summary = useMemo(() => summarizeAdminShopOrders(periodItems), [periodItems]);
+  const periodTotal = Number(counts?.[SEGMENT_ALL]) || 0;
+  const periodEmpty = periodTotal === 0 && !debouncedQuery;
   const segmentItems = useMemo(() => ADMIN_SHOP_ORDER_SEGMENTS.map((seg) => ({
     value: seg.value,
     label: seg.label,
-    badge: seg.value === SEGMENT_ALL
-      ? periodItems.length
-      : periodItems.filter((item) => item.state === seg.value).length
-  })), [periodItems]);
-  const filteredItems = useMemo(() => periodItems.filter((item) => (
-    (segment === SEGMENT_ALL || item.state === segment) && matchesAdminShopOrderSearch(item, query)
-  )), [periodItems, segment, query]);
-  const pageInfo = useMemo(
-    () => paginateAdminShopItems(filteredItems, page, ADMIN_SHOP_SUITE_PAGE_SIZE),
-    [filteredItems, page]
-  );
-
-  useEffect(() => {
-    setPage(1);
-  }, [period, segment, query]);
-
-  const pageEnrichKey = pageInfo.pageItems
-    .filter((item) => needsAdminShopOrderEnrich(item.raw))
-    .map((item) => item.orderPublicId)
-    .join('|');
-
-  useEffect(() => {
-    const ids = pageEnrichKey
-      ? pageEnrichKey.split('|').filter((id) => !detailCacheRef.current.has(id))
-      : [];
-    if (ids.length === 0) {
-      return;
-    }
-    ids.forEach((id) => detailCacheRef.current.add(id));
-    runAdminShopWithConcurrency(ids, ADMIN_SHOP_ORDER_ENRICH_CONCURRENCY, async(id) => {
-      try {
-        const data = await getAdminShopOrder(id);
-        if (mountedRef.current && data) {
-          setDetailMap((prev) => ({ ...prev, [id]: data }));
-        }
-      } catch {
-        detailCacheRef.current.delete(id);
-      }
-    });
-  }, [pageEnrichKey]);
+    badge: Number(counts?.[seg.value]) || 0
+  })), [counts]);
+  const totalPages = Math.max(1, Math.ceil(totalElements / ADMIN_SHOP_SUITE_PAGE_SIZE));
+  const rangeFrom = totalElements === 0 ? 0 : (page - 1) * ADMIN_SHOP_SUITE_PAGE_SIZE + 1;
+  const rangeTo = Math.min(page * ADMIN_SHOP_SUITE_PAGE_SIZE, totalElements);
 
   const copyOrderId = useCallback(async(orderPublicId) => {
     try {
@@ -295,13 +300,10 @@ const AdminShopOrdersPage = () => {
     setRefundError('');
     setDetailOpen(true);
     setDetailLoading(true);
-    setDetail(detailMap[orderPublicId] || null);
+    setDetail(null);
     try {
       const data = await getAdminShopOrder(orderPublicId);
       setDetail(data);
-      if (data) {
-        setDetailMap((prev) => ({ ...prev, [orderPublicId]: data }));
-      }
     } catch (e) {
       notificationManager.error(
         e?.message != null ? String(e.message) : '주문 상세를 불러오지 못했습니다.'
@@ -312,7 +314,77 @@ const AdminShopOrdersPage = () => {
     }
   };
 
-  const busy = refunding || deleting || fulfillRetrying || reconcileRefunding;
+  const busy = refunding || deleting || fulfillRetrying || reconcileRefunding || extending;
+
+  const openExtend = async(orderDetail) => {
+    const orderPublicId = orderDetail?.orderPublicId;
+    if (!isAdmin || !orderPublicId) {
+      return;
+    }
+    setExtendTarget(orderDetail);
+    setExtendHistory(Array.isArray(orderDetail.expiryExtensions) ? orderDetail.expiryExtensions : []);
+    setExtendOpen(true);
+    setExtendHistoryLoading(true);
+    try {
+      const history = await listAdminShopOrderExpiryExtensions(orderPublicId);
+      if (mountedRef.current) {
+        setExtendHistory(Array.isArray(history) ? history : []);
+      }
+    } catch {
+      // 이력은 상세 응답(expiryExtensions)으로 대체 표시
+    } finally {
+      if (mountedRef.current) {
+        setExtendHistoryLoading(false);
+      }
+    }
+  };
+
+  const openExtendFromRow = async(item) => {
+    if (!isAdmin || !item?.orderPublicId) {
+      return;
+    }
+    try {
+      const data = await getAdminShopOrder(item.orderPublicId);
+      if (data) {
+        await openExtend(data);
+      }
+    } catch (e) {
+      notificationManager.error(e?.message != null ? String(e.message) : ADMIN_SHOP_EXTEND_COPY.FAILED);
+    }
+  };
+
+  const closeExtend = () => {
+    if (extending) {
+      return;
+    }
+    setExtendOpen(false);
+    setExtendTarget(null);
+    setExtendHistory([]);
+  };
+
+  const handleExtend = async({ newExpireDate, reason }) => {
+    const orderPublicId = extendTarget?.orderPublicId;
+    if (!orderPublicId || extending) {
+      return;
+    }
+    setExtending(true);
+    try {
+      await extendAdminShopOrderExpiry(orderPublicId, { newExpireDate, reason });
+      setExtendOpen(false);
+      setExtendTarget(null);
+      setExtendHistory([]);
+      showToast(formatAdminShopCopy(ADMIN_SHOP_EXTEND_COPY.SAVED, { date: formatAdminShopDate(newExpireDate) }));
+      if (detailOpen && detail?.orderPublicId === orderPublicId) {
+        const refreshed = await getAdminShopOrder(orderPublicId);
+        setDetail(refreshed);
+      }
+      await softRefresh(loadOrders);
+    } catch (e) {
+      notificationManager.error(e?.message != null ? String(e.message) : ADMIN_SHOP_EXTEND_COPY.FAILED);
+    } finally {
+      setExtending(false);
+    }
+  };
 
   const closeDetail = () => {
     if (detailLoading || busy) {
@@ -346,7 +418,6 @@ const AdminShopOrdersPage = () => {
       setRefundOpen(false);
       setDetailOpen(false);
       setDetail(null);
-      invalidateDetail(orderPublicId);
       showToast(ADMIN_SHOP_REFUND_CONFIRM_COPY.SUCCESS);
       await softRefresh(loadOrders);
     } catch (e) {
@@ -374,7 +445,6 @@ const AdminShopOrdersPage = () => {
         setDetail(refreshed);
         nextDetail = refreshed;
       }
-      invalidateDetail(orderPublicId);
       const events = resolveShopFulfillmentLines(nextDetail);
       // 여전히 FAILED+retryable 이면 SUCCESS 토스트 금지 — 버튼은 canFulfillRetry 로 재노출
       if (hasShopFulfillmentRetryableLine(events)) {
@@ -426,7 +496,6 @@ const AdminShopOrdersPage = () => {
       setRefundError('');
       const refreshed = await getAdminShopOrder(orderPublicId);
       setDetail(refreshed);
-      invalidateDetail(orderPublicId);
       await softRefresh(loadOrders);
     } catch (e) {
       notificationManager.error(
@@ -456,7 +525,6 @@ const AdminShopOrdersPage = () => {
     setDeleting(true);
     try {
       await deleteAdminShopOrder(orderPublicId);
-      invalidateDetail(orderPublicId);
       showToast(ADMIN_SHOP_ORDERS_COPY.DELETE_DONE);
       await softRefresh(loadOrders);
     } catch (e) {
@@ -468,20 +536,65 @@ const AdminShopOrdersPage = () => {
     }
   };
 
-  const handleExportCsv = () => {
-    const csv = buildAdminShopOrdersCsv(filteredItems, {
-      headers: ADMIN_SHOP_ORDERS_COPY.CSV_HEADERS,
-      stateLabels: STATE_LABELS
-    });
-    const stamp = new Date().toISOString().slice(0, 10);
-    downloadCsv(csv, `${ADMIN_SHOP_ORDERS_COPY.CSV_FILENAME_PREFIX}-${stamp}.csv`);
+  const handleExportCsv = async() => {
+    if (exporting) {
+      return;
+    }
+    setExporting(true);
+    try {
+      const collected = [];
+      let exportPage = 0;
+      let total = 0;
+      do {
+        // eslint-disable-next-line no-await-in-loop
+        const result = await listAdminShopOrders({
+          ...listFilters,
+          page: exportPage,
+          size: ADMIN_SHOP_ORDERS_EXPORT_PAGE_SIZE
+        });
+        const orders = Array.isArray(result?.orders) ? result.orders : [];
+        total = Number(result?.totalElements) || 0;
+        collected.push(...orders);
+        exportPage += 1;
+        if (orders.length === 0) {
+          break;
+        }
+      } while (collected.length < total);
+      const csv = buildAdminShopOrdersCsv(collected.map((row) => buildAdminShopOrderLedgerItem(row, null)), {
+        headers: ADMIN_SHOP_ORDERS_COPY.CSV_HEADERS,
+        stateLabels: STATE_LABELS
+      });
+      const stamp = new Date().toISOString().slice(0, 10);
+      downloadCsv(csv, `${ADMIN_SHOP_ORDERS_COPY.CSV_FILENAME_PREFIX}-${stamp}.csv`);
+    } catch (e) {
+      notificationManager.error(e?.message != null ? String(e.message) : ADMIN_SHOP_ORDERS_COPY.LOAD_FAILED_TITLE);
+    } finally {
+      setExporting(false);
+    }
   };
 
-  const checkCount = summary.pendingCount + summary.reconcileCount;
-  const firstReconcile = periodItems.find((item) => item.state === ADMIN_SHOP_LEDGER_STATE.RECONCILE);
+  const checkCount = summary.pendingCount + summary.reconcileCount + summary.expiringSoonCount;
+  const firstReconcile = pageItems.find((item) => item.state === ADMIN_SHOP_LEDGER_STATE.RECONCILE);
+  const openFirstReconcile = () => {
+    if (firstReconcile) {
+      openDetail(firstReconcile.orderPublicId);
+    } else {
+      setSegment(ADMIN_SHOP_LEDGER_STATE.RECONCILE);
+    }
+  };
+  const checkSegment = (() => {
+    if (summary.reconcileCount > 0) {
+      return ADMIN_SHOP_LEDGER_STATE.RECONCILE;
+    }
+    if (summary.pendingCount > 0) {
+      return ADMIN_SHOP_LEDGER_STATE.PENDING;
+    }
+    return ADMIN_SHOP_LEDGER_STATE.EXPIRING_SOON;
+  })();
   const detailEvents = resolveShopFulfillmentLines(detail);
   const detailLines = Array.isArray(detail?.lines) ? detail.lines : [];
   const refundAmountItem = detail ? buildAdminShopOrderLedgerItem(detail, detail) : null;
+  const extendItem = extendTarget ? buildAdminShopOrderLedgerItem(extendTarget, extendTarget) : null;
   const usedRaw = detail?.usedCount ?? detail?.usedSessionCount;
 
   const renderRowMenu = (item) => (
@@ -511,6 +624,44 @@ const AdminShopOrdersPage = () => {
     />
   );
 
+  const renderSessionSubLine = (item) => {
+    if (item.state === ADMIN_SHOP_LEDGER_STATE.EXPIRED) {
+      if (!isAdmin || !ADMIN_SHOP_ORDER_EXTENDABLE_STATES.includes(item.state)) {
+        return null;
+      }
+      return (
+        <button
+          type="button"
+          className="admin-shop-suite__link-btn admin-shop-suite__session-sub"
+          title={ADMIN_SHOP_ORDERS_COPY.EXTENDABLE_TITLE}
+          data-testid={ADMIN_SHOP_SUITE_TEST_IDS.ORDER_EXTENDABLE_LINK}
+          onClick={(e) => {
+            e.stopPropagation();
+            openExtendFromRow(item);
+          }}
+        >
+          {ADMIN_SHOP_ORDERS_COPY.EXTENDABLE}
+        </button>
+      );
+    }
+    const until = formatAdminShopShortDate(item.expireDate);
+    if (!until || !ADMIN_SHOP_ORDER_EXTENDABLE_STATES.includes(item.state)) {
+      return null;
+    }
+    return (
+      <span className="admin-shop-suite__muted admin-shop-suite__session-sub">
+        <SafeText>{formatAdminShopCopy(ADMIN_SHOP_ORDERS_COPY.SESSION_UNTIL, { date: until })}</SafeText>
+      </span>
+    );
+  };
+
+  const renderSessionCell = (item) => (
+    <span className="admin-shop-suite__cell-stack admin-shop-suite__cell-stack--right">
+      <AdminShopSessionDelta delta={item.delta} />
+      {renderSessionSubLine(item)}
+    </span>
+  );
+
   const renderTableBody = () => {
     if (loading && rows.length === 0) {
       return (
@@ -520,17 +671,17 @@ const AdminShopOrdersPage = () => {
         />
       );
     }
-    if (pageInfo.pageItems.length === 0) {
+    if (pageItems.length === 0) {
       return (
         <tbody>
           <tr className="admin-shop-suite__row--static">
             <td colSpan={TABLE_COLUMN_COUNT}>
               <EmptyState
-                title={periodItems.length === 0
+                title={periodEmpty
                   ? ADMIN_SHOP_ORDERS_COPY.EMPTY_TITLE_PERIOD
                   : ADMIN_SHOP_ORDERS_COPY.EMPTY_FILTERED}
-                description={periodItems.length === 0 ? ADMIN_SHOP_ORDERS_COPY.EMPTY_DESC : undefined}
-                action={periodItems.length === 0 ? (
+                description={periodEmpty ? ADMIN_SHOP_ORDERS_COPY.EMPTY_DESC : undefined}
+                action={periodEmpty ? (
                   <MGButton
                     type="button"
                     variant="secondary"
@@ -548,8 +699,8 @@ const AdminShopOrdersPage = () => {
     }
     return (
       <tbody>
-        {pageInfo.pageItems.map((item) => {
-          const dim = item.state === ADMIN_SHOP_LEDGER_STATE.EXPIRED;
+        {pageItems.map((item) => {
+          const dim = item.state === ADMIN_SHOP_LEDGER_STATE.UNPAID;
           return (
             <tr
               key={item.orderPublicId}
@@ -566,7 +717,7 @@ const AdminShopOrdersPage = () => {
               <td><SafeText>{item.clientMasked || '—'}</SafeText></td>
               <td><SafeText>{item.productTitle || '—'}</SafeText></td>
               <td className="admin-shop-suite__cell--right">
-                <AdminShopSessionDelta delta={item.delta} />
+                {renderSessionCell(item)}
               </td>
               <td
                 className="admin-shop-suite__cell--right admin-shop-suite__cell--band admin-shop-suite__num"
@@ -577,7 +728,13 @@ const AdminShopOrdersPage = () => {
               <td className="admin-shop-suite__cell--right admin-shop-suite__num">
                 <SafeText>{item.points > 0 ? formatShopPoints(item.points) : '—'}</SafeText>
               </td>
-              <td><AdminShopLedgerChip state={item.state} /></td>
+              <td>
+                <AdminShopOrderStatusChips
+                  state={item.state}
+                  daysLeft={item.daysLeft}
+                  paymentStatus={item.raw?.paymentStatus}
+                />
+              </td>
               <td>{renderRowMenu(item)}</td>
             </tr>
           );
@@ -611,7 +768,7 @@ const AdminShopOrdersPage = () => {
                   variant="secondary"
                   className={buildErpMgButtonClassName({ variant: 'secondary', size: 'md' })}
                   onClick={handleExportCsv}
-                  disabled={filteredItems.length === 0}
+                  disabled={totalElements === 0 || exporting}
                 >
                   {ADMIN_SHOP_ORDERS_COPY.CSV}
                 </MGButton>
@@ -649,6 +806,13 @@ const AdminShopOrdersPage = () => {
                     <SafeText>
                       {`${summary.inCount}${ADMIN_SHOP_ORDERS_COPY.STRIP_IN_CAPTION} ${formatShopPoints(summary.inPoints)}`}
                     </SafeText>
+                    {summary.expiredSessions > 0 ? (
+                      <span className="admin-shop-suite__strip-note">
+                        <SafeText>
+                          {formatAdminShopCopy(ADMIN_SHOP_ORDERS_COPY.STRIP_IN_EXPIRED_CAPTION, { count: summary.expiredSessions })}
+                        </SafeText>
+                      </span>
+                    ) : null}
                   </span>
                 </div>
                 <div className="admin-shop-suite__strip-cell">
@@ -670,7 +834,7 @@ const AdminShopOrdersPage = () => {
                   </span>
                   <span className="admin-shop-suite__strip-caption">
                     <SafeText>
-                      {`${ADMIN_SHOP_ORDERS_COPY.STRIP_CHECK_CAPTION_PENDING} ${summary.pendingCount} · ${ADMIN_SHOP_ORDERS_COPY.STRIP_CHECK_CAPTION_RECONCILE} ${summary.reconcileCount}`}
+                      {`${ADMIN_SHOP_ORDERS_COPY.STRIP_CHECK_CAPTION_PENDING} ${summary.pendingCount} · ${ADMIN_SHOP_ORDERS_COPY.STRIP_CHECK_CAPTION_RECONCILE} ${summary.reconcileCount} · ${ADMIN_SHOP_ORDERS_COPY.STRIP_CHECK_CAPTION_EXPIRING} ${summary.expiringSoonCount}`}
                     </SafeText>
                     {checkCount > 0 ? (
                       <>
@@ -678,9 +842,7 @@ const AdminShopOrdersPage = () => {
                         <button
                           type="button"
                           className="admin-shop-suite__link-btn"
-                          onClick={() => setSegment(summary.reconcileCount > 0
-                            ? ADMIN_SHOP_LEDGER_STATE.RECONCILE
-                            : ADMIN_SHOP_LEDGER_STATE.PENDING)}
+                          onClick={() => setSegment(checkSegment)}
                         >
                           {ADMIN_SHOP_ORDERS_COPY.STRIP_CHECK_VIEW}
                         </button>
@@ -690,7 +852,7 @@ const AdminShopOrdersPage = () => {
                 </div>
               </div>
 
-              {firstReconcile ? (
+              {summary.reconcileCount > 0 ? (
                 <div className="admin-shop-suite__rail" role="status">
                   <span>
                     <strong>
@@ -702,7 +864,7 @@ const AdminShopOrdersPage = () => {
                   <button
                     type="button"
                     className="admin-shop-suite__link-btn"
-                    onClick={() => openDetail(firstReconcile.orderPublicId)}
+                    onClick={openFirstReconcile}
                   >
                     {ADMIN_SHOP_STATE_COPY.RECONCILE_OPEN}
                   </button>
@@ -771,17 +933,26 @@ const AdminShopOrdersPage = () => {
                     </tr>
                   </thead>
                   {renderTableBody()}
-                  {periodItems.length > 0 ? (
+                  {periodTotal > 0 ? (
                     <tfoot data-testid={ADMIN_SHOP_SUITE_TEST_IDS.ORDERS_TOTAL}>
                       <tr className="admin-shop-suite__row--static">
-                        <td colSpan={4}>
+                        <td colSpan={TOTAL_LABEL_COL_SPAN}>
                           {ADMIN_SHOP_ORDERS_COPY.TOTAL_LABEL}
                           <span className="admin-shop-suite__total-caption">{ADMIN_SHOP_ORDERS_COPY.TOTAL_CAPTION}</span>
                         </td>
                         <td className="admin-shop-suite__cell--right admin-shop-suite__num">
-                          <SafeText>
-                            {`+${summary.inSessions} / −${summary.outSessions}`}
-                          </SafeText>
+                          <span className="admin-shop-suite__cell-stack admin-shop-suite__cell-stack--right">
+                            <SafeText>
+                              {`+${summary.inSessions} / −${summary.outSessions}`}
+                            </SafeText>
+                            {summary.expiredSessions > 0 ? (
+                              <span className="admin-shop-suite__muted">
+                                <SafeText>
+                                  {formatAdminShopCopy(ADMIN_SHOP_ORDERS_COPY.TOTAL_EXPIRED_SESSIONS, { count: summary.expiredSessions })}
+                                </SafeText>
+                              </span>
+                            ) : null}
+                          </span>
                         </td>
                         <td className="admin-shop-suite__cell--right admin-shop-suite__cell--band admin-shop-suite__num admin-shop-suite__total-amount">
                           <SafeText>{formatShopMoney(summary.netAmount)}</SafeText>
@@ -789,25 +960,25 @@ const AdminShopOrdersPage = () => {
                         <td className="admin-shop-suite__cell--right admin-shop-suite__num">
                           <SafeText>{summary.inPoints > 0 ? formatShopPoints(summary.inPoints) : '—'}</SafeText>
                         </td>
-                        <td colSpan={2} />
+                        <td colSpan={TOTAL_TAIL_COL_SPAN} />
                       </tr>
                     </tfoot>
                   ) : null}
                 </table>
               </div>
 
-              {pageInfo.total > 0 ? (
+              {totalElements > 0 ? (
                 <div className="admin-shop-suite__pagination">
                   <span>
                     <SafeText>
-                      {`${pageInfo.from}–${pageInfo.to} / ${pageInfo.total}${ADMIN_SHOP_ORDERS_COPY.PAGINATION_UNIT}`}
+                      {`${rangeFrom}–${rangeTo} / ${totalElements}${ADMIN_SHOP_ORDERS_COPY.PAGINATION_UNIT}`}
                     </SafeText>
                   </span>
-                  {pageInfo.totalPages > 1 ? (
+                  {totalPages > 1 ? (
                     <MGPagination
-                      currentPage={pageInfo.page}
-                      totalPages={pageInfo.totalPages}
-                      totalItems={pageInfo.total}
+                      currentPage={page}
+                      totalPages={totalPages}
+                      totalItems={totalElements}
                       itemsPerPage={ADMIN_SHOP_SUITE_PAGE_SIZE}
                       onPageChange={setPage}
                       showInfo={false}
@@ -827,9 +998,9 @@ const AdminShopOrdersPage = () => {
         onClose={closeDetail}
         title={<AdminShopOrderDetailTitle detail={detail} />}
         size="large"
-        closeOnEscape={!refundOpen && !busy}
-        backdropClick={!refundOpen && !busy}
-        className="admin-shop-suite"
+        closeOnEscape={!refundOpen && !extendOpen && !busy}
+        backdropClick={!refundOpen && !extendOpen && !busy}
+        className="admin-shop-suite admin-shop-order-modal"
         actions={(
           <AdminShopOrderDetailFooter
             detail={detailLoading ? null : detail}
@@ -856,6 +1027,8 @@ const AdminShopOrdersPage = () => {
             onFulfillRetry={handleFulfillRetry}
             onReconcileRefund={handleReconcileRefund}
             onCopyOrderId={copyOrderId}
+            onExtend={() => openExtend(detail)}
+            canManageExpiry={isAdmin}
             refunding={refunding}
             deleting={deleting}
             fulfillRetrying={fulfillRetrying}
@@ -874,6 +1047,15 @@ const AdminShopOrdersPage = () => {
         sessions={detail ? resolveAdminShopOrderSessionCount(detail, detail) : null}
         usedCount={usedRaw != null && Number.isFinite(Number(usedRaw)) ? Number(usedRaw) : null}
         paymentId={detail?.paymentId ? String(detail.paymentId) : ''}
+      />
+      <AdminShopOrderExtendModal
+        isOpen={extendOpen}
+        item={extendItem}
+        history={extendHistory}
+        historyLoading={extendHistoryLoading}
+        onClose={closeExtend}
+        onSubmit={handleExtend}
+        submitting={extending}
       />
       <ConfirmModal />
       <AdminShopSuiteToast toast={toast} onDismiss={hideToast} />

@@ -17,7 +17,8 @@ import org.springframework.transaction.annotation.Transactional;
  * 알림 배치/이벤트 발송 멱등성 로그 Repository.
  *
  * <p>모든 쿼리는 {@code tenant_id} 필터 강제(멀티테넌트 격리).
- * 멱등 키는 {@code (tenant_id, template_code, target_type, target_id, recipient_user_id)} 5튜플.
+ * 멱등 키는 {@code (tenant_id, template_code, target_type, target_id, recipient_user_id, target_slot_key)} 6튜플.
+ * 예약 리마인드(D-2/D-1) 외 템플릿은 {@code target_slot_key} 가 빈 문자열이라 기존 5튜플과 동일하게 동작한다.
  *
  * @author MindGarden
  * @since 2026-05-23
@@ -76,6 +77,84 @@ public interface NotificationBatchSendLogRepository
         @Param("targetType") String targetType,
         @Param("targetId") Long targetId,
         @Param("recipientUserId") Long recipientUserId);
+
+    /**
+     * 예약 리마인드(D-2/D-1) 슬롯 멱등 로그 조회 — 동일 스케줄 + 동일 시작 일시로 이미 시도된 로그.
+     *
+     * <p>매칭 조건 (둘 중 하나):
+     * <ul>
+     *   <li>{@code target_slot_key = :targetSlotKey} — 현재 일정 시작 일시로 기록된 로그</li>
+     *   <li>{@code target_slot_key = :legacySlotKey} (V20260930_001 이전 행) 이면서
+     *       {@code sent_at} 이 현재 슬롯의 리마인드 발송 구간 {@code [legacySentAtFrom, legacySentAtTo)} 안 —
+     *       슬롯 정보가 없는 기존 행은 현재 슬롯 발송분일 수 있으므로 보수적으로 중복 처리</li>
+     * </ul>
+     * 기존 행은 읽기만 하며 수정·삭제하지 않는다.
+     *
+     * @param tenantId         테넌트 ID
+     * @param templateCode     템플릿 코드 (D2 / LATE)
+     * @param targetType       대상 타입 ({@code SCHEDULE})
+     * @param targetId         스케줄 ID
+     * @param recipientUserId  수신자 users.id
+     * @param targetSlotKey    현재 일정 시작 일시 슬롯 키
+     * @param legacySlotKey    슬롯 미기록 행 값 ({@code TARGET_SLOT_KEY_NONE})
+     * @param legacySentAtFrom 기존 행 매칭 구간 시작 inclusive
+     * @param legacySentAtTo   기존 행 매칭 구간 끝 exclusive
+     * @return 최신 발송 시각 순 로그 (없으면 빈 목록)
+     * @since 2026-09-30
+     */
+    @Query("SELECT l FROM NotificationBatchSendLog l "
+            + "WHERE l.tenantId = :tenantId "
+            + "AND l.templateCode = :templateCode "
+            + "AND l.targetType = :targetType "
+            + "AND l.targetId = :targetId "
+            + "AND l.recipientUserId = :recipientUserId "
+            + "AND (l.targetSlotKey = :targetSlotKey "
+            + "OR (l.targetSlotKey = :legacySlotKey "
+            + "AND l.sentAt >= :legacySentAtFrom "
+            + "AND l.sentAt < :legacySentAtTo)) "
+            + "AND (l.isDeleted = false OR l.isDeleted IS NULL) "
+            + "ORDER BY l.sentAt DESC")
+    List<NotificationBatchSendLog> findSlotScopedReminderLogs(
+        @Param("tenantId") String tenantId,
+        @Param("templateCode") String templateCode,
+        @Param("targetType") String targetType,
+        @Param("targetId") Long targetId,
+        @Param("recipientUserId") Long recipientUserId,
+        @Param("targetSlotKey") String targetSlotKey,
+        @Param("legacySlotKey") String legacySlotKey,
+        @Param("legacySentAtFrom") LocalDateTime legacySentAtFrom,
+        @Param("legacySentAtTo") LocalDateTime legacySentAtTo);
+
+    /**
+     * 예약 리마인드(D-2/D-1) 동일 슬롯 재시도 행 조회 — {@code target_slot_key LIKE '{slotKey}#%'}.
+     *
+     * <p>최초 시도 행({@code target_slot_key = slotKey})은 {@link #findSlotScopedReminderLogs} 가 조회한다.
+     *
+     * @param tenantId           테넌트 ID
+     * @param templateCode       템플릿 코드 (D2 / LATE)
+     * @param targetType         대상 타입 ({@code SCHEDULE})
+     * @param targetId           스케줄 ID
+     * @param recipientUserId    수신자 users.id
+     * @param retrySlotKeyPrefix {@code {slotKey}#} (LIKE 접두어)
+     * @return 최신 발송 시각 순 재시도 로그 (없으면 빈 목록)
+     * @since 2026-09-30
+     */
+    @Query("SELECT l FROM NotificationBatchSendLog l "
+            + "WHERE l.tenantId = :tenantId "
+            + "AND l.templateCode = :templateCode "
+            + "AND l.targetType = :targetType "
+            + "AND l.targetId = :targetId "
+            + "AND l.recipientUserId = :recipientUserId "
+            + "AND l.targetSlotKey LIKE CONCAT(:retrySlotKeyPrefix, '%') "
+            + "AND (l.isDeleted = false OR l.isDeleted IS NULL) "
+            + "ORDER BY l.sentAt DESC")
+    List<NotificationBatchSendLog> findSlotScopedReminderRetryLogs(
+        @Param("tenantId") String tenantId,
+        @Param("templateCode") String templateCode,
+        @Param("targetType") String targetType,
+        @Param("targetId") Long targetId,
+        @Param("recipientUserId") Long recipientUserId,
+        @Param("retrySlotKeyPrefix") String retrySlotKeyPrefix);
 
     /**
      * 여러 템플릿 코드 중 하나라도 동일 (target_type, target_id, recipient_user_id) 로 발송된 적이
@@ -277,7 +356,7 @@ public interface NotificationBatchSendLogRepository
     /**
      * 예약 일시(슬롯) 변경 시 D-2/D-1 배치 멱등 로그를 <strong>물리 삭제</strong>한다.
      *
-     * <p>{@code uq_nbsl_dispatch_idempotency} 에 {@code is_deleted} 가 없어 soft-delete 만으로는
+     * <p>(V20260930_001 이전) {@code uq_nbsl_dispatch_idempotency} 에 {@code is_deleted} 가 없어 soft-delete 만으로는
      * 다음 09:00 배치 INSERT 가 UNIQUE 충돌({@code SKIPPED_DUPLICATE}) 한다.
      * 호출자는 {@code RESERVATION_REMINDER_DN_CODES}(D2·LATE)만 넘기고 SINGLE 은 제외한다.
      *
@@ -288,7 +367,10 @@ public interface NotificationBatchSendLogRepository
      * @return 삭제된 row 수
      * @author MindGarden
      * @since 2026-08-19
+     * @deprecated 2026-09-30 — 리마인드 멱등 키가 일정 시작 일시(slot)를 포함하므로 슬롯 변경 시
+     *     발송 이력을 삭제하지 않는다. {@link #findSlotScopedReminderLogs} 참고.
      */
+    @Deprecated(since = "2026-09-30")
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("DELETE FROM NotificationBatchSendLog l "
             + "WHERE l.tenantId = :tenantId "

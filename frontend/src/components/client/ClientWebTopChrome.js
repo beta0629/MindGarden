@@ -37,6 +37,7 @@ import './ClientWebTopChrome.css';
 
 const BellIcon = ICONS.BELL;
 const MessageCircleIcon = ICONS.MESSAGE_CIRCLE;
+const CartIcon = ICONS.SHOPPING_CART;
 
 /**
  * @param {string|undefined} name
@@ -120,6 +121,7 @@ function ClientWebChromeAlerts() {
  * @param {import('react').ReactNode} [props.nav] - optional override; omit for shared CLIENT_WEB_NAV
  * @param {import('react').ReactNode} [props.endMeta]
  * @param {number|null|undefined} [props.cartBadgeQty] - shop cart qty badge (omit/null → hide)
+ * @param {boolean} [props.cartBadgePulse] - 담은 직후 배지 강조
  * @param {string} [props.cartHref]
  * @param {string} [props.loginHref] - guest login CTA path
  * @param {string} [props.loginLabel]
@@ -136,6 +138,7 @@ const ClientWebTopChrome = ({
   nav,
   endMeta = null,
   cartBadgeQty = null,
+  cartBadgePulse = false,
   cartHref,
   loginHref = '/login',
   loginLabel = CLIENT_WEB_LOGIN,
@@ -199,11 +202,17 @@ const ClientWebTopChrome = ({
       <div className="client-web-topchrome__end">
         {showCartBadge ? (
           <Link
-            className="client-web-topchrome__cart"
+            className={[
+              'client-web-topchrome__cart',
+              cartBadgePulse ? 'client-web-topchrome__cart--pulse' : ''
+            ].filter(Boolean).join(' ')}
             to={cartHref}
             data-testid="client-shop-cart-badge"
             aria-label={`장바구니 ${cartQtyDisplay}개`}
           >
+            {CartIcon ? (
+              <CartIcon size={ICON_SIZES.SM} aria-hidden className="client-web-topchrome__cart-icon" />
+            ) : null}
             <span className="client-web-topchrome__cart-label">장바구니</span>
             <span className="client-web-topchrome__cart-qty">{cartQtyDisplay}</span>
           </Link>
@@ -258,6 +267,7 @@ ClientWebTopChrome.propTypes = {
   nav: PropTypes.node,
   endMeta: PropTypes.node,
   cartBadgeQty: PropTypes.number,
+  cartBadgePulse: PropTypes.bool,
   cartHref: PropTypes.string,
   loginHref: PropTypes.string,
   loginLabel: PropTypes.string,

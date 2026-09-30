@@ -1,3 +1,6 @@
+> **⚠️ OBSOLETE (2026-09-22)**: NS가 Cloudflare로 전환되어 가비아 DNS 경로는 더 이상 사용되지 않습니다.
+> **SSOT** → [`docs/runbooks/SSL_CERTIFICATE_STATUS.md`](./SSL_CERTIFICATE_STATUS.md)
+
 # Phase B 사용자 가이드 — 가비아 DNS 등록 (5~10분)
 
 ## 0. 사전 준비

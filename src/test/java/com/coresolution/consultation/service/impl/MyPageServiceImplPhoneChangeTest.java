@@ -9,6 +9,10 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.util.Collections;
 import java.util.Optional;
 import java.util.UUID;
@@ -16,8 +20,10 @@ import java.util.UUID;
 import com.coresolution.consultation.constant.AuditAction;
 import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.dto.MyPagePhoneChangeRequest;
+import com.coresolution.consultation.dto.auth.SmsOtpSendStatus;
 import com.coresolution.consultation.entity.AuditLog;
 import com.coresolution.consultation.entity.User;
+import com.coresolution.consultation.exception.SmsOtpVerificationFailedException;
 import com.coresolution.consultation.repository.UserAddressRepository;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.AuditLogService;
@@ -37,6 +43,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 
 /**
  * {@code MyPageServiceImpl#changePhone} 단위 테스트 — 정규화·OTP 검증·tenant unique·AuditLog 적재.
@@ -61,6 +68,8 @@ class MyPageServiceImplPhoneChangeTest {
     private static final Long USER_ID = 42L;
     private static final String OTP = "123456";
     private static final String NORMALIZED_PHONE = "01012345678";
+    private static final String WRONG_OTP = "000000";
+    private static final long LOCK_ELAPSED_SECONDS = 60L;
 
     @Mock
     private UserRepository userRepository;
@@ -196,7 +205,90 @@ class MyPageServiceImplPhoneChangeTest {
                 .recordVerifiedAfterChangePhone(any(), any(), any());
     }
 
+    @Test
+    @DisplayName("오답: 400 분기 예외에 남은 시도 횟수, 잠김 아님")
+    void wrongCodeCarriesRemainingAttempts() {
+        when(userRepository.findByTenantIdAndId(TENANT, USER_ID)).thenReturn(Optional.of(buildUser()));
+        when(smsOtpVerificationService.verifyAndConsume(NORMALIZED_PHONE, OTP)).thenReturn(false);
+        when(smsOtpVerificationService.getSendStatus(NORMALIZED_PHONE))
+                .thenReturn(SmsOtpSendStatus.available(300L, 30L, 4));
+
+        assertThatThrownBy(() -> myPageService.changePhone(USER_ID, request(NORMALIZED_PHONE, OTP)))
+                .isInstanceOfSatisfying(SmsOtpVerificationFailedException.class, ex -> {
+                    assertThat(ex.isLocked()).isFalse();
+                    assertThat(ex.getRemainingAttempts()).isEqualTo(4);
+                    assertThat(ex.getRetryAfterSeconds()).isNull();
+                    assertThat(ex.getMessage()).contains("인증 코드");
+                });
+        verify(userRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("실제 OTP 저장소: 오답마다 남은 횟수 감소 → 5회째 잠김 + retryAfterSeconds → 잠김 중 재시도도 잠김")
+    void fifthWrongCodeLocksAndRetryWhileLockedStaysLocked() {
+        MutableClock clock = new MutableClock();
+        SmsOtpVerificationServiceImpl realOtp = new SmsOtpVerificationServiceImpl(clock);
+        ReflectionTestUtils.setField(myPageService, "smsOtpVerificationService", realOtp);
+        when(userRepository.findByTenantIdAndId(TENANT, USER_ID)).thenReturn(Optional.of(buildUser()));
+        realOtp.storeCode(NORMALIZED_PHONE, OTP);
+
+        int maxAttempts = SmsOtpVerificationServiceImpl.DEFAULT_MAX_FAILED_ATTEMPTS;
+        for (int attempt = 1; attempt < maxAttempts; attempt++) {
+            int expectedRemaining = maxAttempts - attempt;
+            assertThatThrownBy(() -> myPageService.changePhone(USER_ID, request(NORMALIZED_PHONE, WRONG_OTP)))
+                    .isInstanceOfSatisfying(SmsOtpVerificationFailedException.class, ex -> {
+                        assertThat(ex.isLocked()).isFalse();
+                        assertThat(ex.getRemainingAttempts()).isEqualTo(expectedRemaining);
+                    });
+        }
+
+        assertThatThrownBy(() -> myPageService.changePhone(USER_ID, request(NORMALIZED_PHONE, WRONG_OTP)))
+                .isInstanceOfSatisfying(SmsOtpVerificationFailedException.class, ex -> {
+                    assertThat(ex.isLocked()).isTrue();
+                    assertThat(ex.getRemainingAttempts()).isZero();
+                    assertThat(ex.getRetryAfterSeconds())
+                            .isEqualTo(SmsOtpVerificationServiceImpl.DEFAULT_LOCK_SECONDS);
+                });
+
+        clock.advanceSeconds(LOCK_ELAPSED_SECONDS);
+        assertThatThrownBy(() -> myPageService.changePhone(USER_ID, request(NORMALIZED_PHONE, OTP)))
+                .isInstanceOfSatisfying(SmsOtpVerificationFailedException.class, ex -> {
+                    assertThat(ex.isLocked()).isTrue();
+                    assertThat(ex.getRetryAfterSeconds())
+                            .isEqualTo(SmsOtpVerificationServiceImpl.DEFAULT_LOCK_SECONDS - LOCK_ELAPSED_SECONDS);
+                });
+
+        verify(userRepository, never()).save(any());
+        verify(clientProfilePhoneVerificationService, never())
+                .recordVerifiedAfterChangePhone(any(), any(), any());
+    }
+
     // ---------- helpers ----------
+
+
+    /** 잠김 경과를 흉내 내는 테스트용 시계. */
+    private static final class MutableClock extends Clock {
+        private Instant now = Instant.parse("2026-09-29T00:00:00Z");
+
+        void advanceSeconds(long seconds) {
+            now = now.plusSeconds(seconds);
+        }
+
+        @Override
+        public ZoneId getZone() {
+            return ZoneOffset.UTC;
+        }
+
+        @Override
+        public Clock withZone(ZoneId zone) {
+            return this;
+        }
+
+        @Override
+        public Instant instant() {
+            return now;
+        }
+    }
 
     private void prepareSuccess() {
         when(userRepository.findByTenantIdAndId(TENANT, USER_ID)).thenReturn(Optional.of(buildUser()));

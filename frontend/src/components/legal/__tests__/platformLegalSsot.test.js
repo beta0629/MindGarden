@@ -35,18 +35,23 @@ describe('clinic-os-platform-legal-copy SSOT', () => {
     expect(terms).toContain('상담센터 SaaS');
     expect(terms).toContain('제9조 (청약철회·취소 및 환불)');
     expect(terms).toContain('/legal/refund');
-    expect(terms).toContain('잔여 회기를 모두 소진할 때까지');
-    expect(terms).toContain('달력일수');
+    expect(terms).toContain('단회기: 결제일부터 2개월 내 소진');
+    expect(terms).toContain('패키지(최대 20회기): 결제일부터 1년 내 소진');
+    expect(terms).toContain('무제한 유효기간은 없습니다');
+    expect(terms).toContain('일시불만 가능합니다');
+    expect(terms).not.toContain('달력일수');
     expect(privacy).toContain('개인정보 보호책임자');
     expect(privacy).not.toContain('의료법에 의한 의료기록');
     expect(privacy).not.toContain('전화: 9.');
     expect(refund).toContain('청약철회 기간');
     expect(refund).toContain('LEGAL_PUBLIC_PATHS.REFUND');
     expect(refund).toContain('이용기간과의 관계');
-    expect(refund).toContain('잔여 회기를 모두 소진할 때까지');
+    expect(refund).toContain('단회기는 결제일부터 2개월 내');
+    expect(refund).toContain('1년 내에 소진');
+    expect(refund).toContain('일시불만 가능합니다');
   });
 
-  test('최종 수정일이 2026-09-11 현행이다', () => {
-    expect(markdown).toContain('최종 수정일: 2026년 9월 11일');
+  test('최종 수정일이 2026-09-16 현행이다', () => {
+    expect(markdown).toContain('최종 수정일: 2026년 9월 16일');
   });
 });

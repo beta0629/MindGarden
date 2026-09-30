@@ -8,6 +8,7 @@
  */
 
 import StandardizedApi from '../utils/standardizedApi';
+import { ADMIN_SHOP_API } from '../constants/adminShopApi';
 import { API, CODE_GROUP_CONSULTATION_PACKAGE } from '../constants/packagePricingConstants';
 import { withPublicVisible } from '../utils/packagePricing';
 import {
@@ -15,7 +16,9 @@ import {
   patchAdminShopCatalogVisible,
   patchAdminShopPackageFeeVisible
 } from './adminShopCatalogService';
-import { ADMIN_SHOP_PRODUCT_KIND } from '../utils/adminShopSuite';
+import { ADMIN_SHOP_PRODUCT_KIND, mapAdminShopServerProduct } from '../utils/adminShopSuite';
+
+const SALE_STATUS_PATH = `${ADMIN_SHOP_API.PRODUCTS}/sale-status`;
 
 function unwrapData(raw) {
   if (raw && raw.success === true && raw.data !== undefined) {
@@ -39,6 +42,54 @@ function normalizeCodes(data) {
     return data;
   }
   return [];
+}
+
+/**
+ * 상품 통합 목록 (서버 page/size · 세그먼트 · 검색). 판매 중지 상품 포함.
+ *
+ * @param {{ page?: number, size?: number, segment?: string, q?: string }} [options]
+ * @returns {Promise<{ products: Array<object>, totalElements: number, page: number, size: number,
+ *   counts: Record<string, number> }>}
+ */
+export async function listAdminShopProducts({ page = 0, size, segment, q } = {}) {
+  const params = { page };
+  if (size != null) {
+    params.size = size;
+  }
+  if (segment) {
+    params.segment = segment;
+  }
+  if (q && String(q).trim()) {
+    params.q = String(q).trim();
+  }
+  const data = unwrapData(await StandardizedApi.get(ADMIN_SHOP_API.PRODUCTS, params)) || {};
+  const items = Array.isArray(data.products) ? data.products : [];
+  return {
+    products: items.map(mapAdminShopServerProduct),
+    totalElements: Number.isFinite(Number(data.totalElements)) ? Number(data.totalElements) : items.length,
+    page: Number.isFinite(Number(data.page)) ? Number(data.page) : page,
+    size: Number.isFinite(Number(data.size)) ? Number(data.size) : (size ?? items.length),
+    counts: data.counts && typeof data.counts === 'object' ? data.counts : {}
+  };
+}
+
+/**
+ * 판매 상태 변경. 중지 = 판매 사용·홈 공개·몰 노출 off (서버 한 트랜잭션). 재개 = 판매 사용만 on.
+ * 기존 구매·결제·환불 행은 바뀌지 않는다.
+ *
+ * @param {object} product 상품 행
+ * @param {boolean} onSale
+ * @returns {Promise<object>} 갱신된 상품 행
+ */
+export async function setAdminShopProductSaleStatus(product, onSale) {
+  const body = {
+    kind: product.kind,
+    packageCode: product.kind === ADMIN_SHOP_PRODUCT_KIND.PACKAGE ? product.code : null,
+    skuId: product.kind === ADMIN_SHOP_PRODUCT_KIND.LEGACY ? product.skuId : null,
+    onSale: Boolean(onSale)
+  };
+  const data = unwrapData(await StandardizedApi.patch(SALE_STATUS_PATH, body));
+  return mapAdminShopServerProduct(data);
 }
 
 /**

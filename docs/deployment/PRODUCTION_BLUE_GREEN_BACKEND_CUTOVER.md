@@ -15,7 +15,7 @@
 | 수신 업로드 | `/var/www/mindgarden/releases/incoming/consultation-management-system-1.0.0.jar` → 비활성 슬롯으로 복사 후 삭제 |
 | 포트 | blue **8080**, green **8081** (고정; systemd `Environment=SERVER_PORT`) |
 | systemd | `mindgarden-core-blue.service`, `mindgarden-core-green.service` ([예시](../../deployment/systemd/mindgarden-core-blue.service.example)) |
-| Nginx | `upstream mindgarden_core_backend` 는 **`/etc/nginx/snippets/mindgarden-core-backend-upstream.conf`** 에만 정의. vhost는 `include` 로 참조 ([`core-solution-prod.conf`](../../config/nginx/core-solution-prod.conf)). 전환 시 **`nginx -t` 후 `systemctl reload nginx` 만** (방화벽·`ufw`/`iptables` 변경 없음). |
+| Nginx | `upstream mindgarden_core_backend` 는 **`/etc/nginx/snippets/mindgarden-core-backend-upstream.conf`** 에만 정의. vhost는 `include` 로 참조 ([`core-solution-prod.conf`](../../config/nginx/core-solution-prod.conf)). 전환 시 **`nginx -t` 후 `systemctl reload nginx` 만** (방화벽·`ufw`/`iptables` 변경 없음). CF520: [CF520_ORIGIN_HOST_ERROR_PREVENTION.md](../runbooks/CF520_ORIGIN_HOST_ERROR_PREVENTION.md) (`mindgarden-core-proxy-params.conf`). |
 
 ### 배포 순서 (의사코드)
 

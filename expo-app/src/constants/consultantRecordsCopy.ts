@@ -22,4 +22,42 @@ export const CONSULTANT_RECORDS_COPY = {
   /** 수정 시 consultationId(Schedule.id) 누락 */
   CONSULTATION_ID_REQUIRED:
     '연결된 일정 정보가 없어 수정할 수 없습니다. 목록에서 다시 열어주세요.',
+  /** 작성 화면 — 서버·웹 공통 필수값 */
+  CREATE_REQUIRED_TITLE: '필수 항목',
+  CREATE_REQUIRED_MISSING_PREFIX: '다음 항목을 입력해주세요: ',
+  CREATE_SAVE_FAILED: '저장에 실패했습니다. 다시 시도해주세요.',
+  CREATE_FIELD_LABELS: {
+    sessionDurationMinutes: '세션 시간(분)',
+    clientCondition: '상담 요약',
+    mainIssues: '주요 이슈',
+    interventionMethods: '개입 방법',
+    clientResponse: '내담자 반응',
+    riskAssessment: '위험도 평가',
+    progressEvaluation: '진행 평가',
+  },
+  CREATE_FIELD_PLACEHOLDERS: {
+    sessionDurationMinutes: '예: 50',
+    mainIssues: '이번 회기에 다룬 주요 이슈를 입력하세요...',
+    interventionMethods: '적용한 개입 방법을 입력하세요...',
+    clientResponse: '내담자의 반응을 입력하세요...',
+    progressEvaluation: '진행 평가를 입력하세요...',
+  },
+  /** 서버 ConsultationRecordCreateValidationMessages 와 같은 필드별 문구 */
+  CREATE_FIELD_ERRORS: {
+    sessionDurationMinutes: '세션 시간을 입력해주세요 (최소 1분)',
+    clientCondition: '내담자 상태를 입력해주세요',
+    mainIssues: '주요 이슈를 입력해주세요',
+    interventionMethods: '개입 방법을 입력해주세요',
+    clientResponse: '내담자 반응을 입력해주세요',
+    riskAssessment: '위험도 평가를 선택해주세요',
+    progressEvaluation: '진행 평가를 입력해주세요',
+  },
+  /** 웹 ConsultationLogModal DEFAULT_RISK_LEVEL_OPTIONS 와 같은 값·라벨 */
+  CREATE_RISK_OPTIONS: [
+    { value: 'LOW', label: '낮음' },
+    { value: 'MEDIUM', label: '보통' },
+    { value: 'HIGH', label: '높음' },
+    { value: 'URGENT', label: '긴급' },
+    { value: 'CRITICAL', label: '위험' },
+  ],
 } as const;

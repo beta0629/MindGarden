@@ -22,8 +22,8 @@ describe('ShopCheckoutPage verify failure → order detail', () => {
     expect(SOURCE).toMatch(/replace:\s*true/);
   });
 
-  test('PAYMENT_VERIFIED 성공 시 navigate 유지', () => {
+  test('PAYMENT_VERIFIED 성공 시 결제 완료 화면으로 replace', () => {
     expect(SOURCE).toContain("flow.status === 'PAYMENT_VERIFIED'");
-    expect(SOURCE).toMatch(/navigate\(buildShopOrderDetailPath\(orderId\),\s*\{\s*replace:\s*true\s*\}\)/);
+    expect(SOURCE).toMatch(/navigate\(buildShopPaymentCompletePath\(orderId\),\s*\{\s*replace:\s*true\s*\}\)/);
   });
 });

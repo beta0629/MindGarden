@@ -1,5 +1,6 @@
 # 개발 서버(dev 프로파일) 전용 설정
 # 배포: mindgarden-dev.service, /var/www/mindgarden-dev
+# noop trigger: re-run Core BE .dev deploy after #1050 (2026-09-15)
 # OAuth2 redirect 등 기본값으로 기동 보장 (환경 변수 미설정 시에도 기동)
 # 배포 후 Flyway V20260330_001 적용 및 clients.phone DDL(길이) 확인 권장 — 미적용 시 phone truncation 재발 가능
 
@@ -78,7 +79,7 @@ ops:
   admin:
     userId: ${OPS_ADMIN_USERNAME:ops_core}
     username: ${OPS_ADMIN_USERNAME:ops_core}
-    password: ${OPS_ADMIN_PASSWORD:godgod826!}
+    password: ${OPS_ADMIN_PASSWORD}
     role: ${OPS_ADMIN_ROLE:HQ_ADMIN}
 
 # 심리검사 이미지 OCR (Tesseract) — dev 로컬 예시
@@ -134,3 +135,4 @@ mindgarden:
 monitoring:
   discord:
     webhook-url: ${DISCORD_WEBHOOK_URL:}
+# noop trigger: retrigger Onboarding BE .dev after AdminShop duplicate fix (639203240, 2026-09-17)

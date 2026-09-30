@@ -65,6 +65,17 @@ public class ClientShopCatalogServiceImpl implements ClientShopCatalogService {
         return requireVisible(tenantId, skuCode, clientUserId);
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public boolean isVisibleForClientMappings(
+            String tenantId, ShopCatalogSku sku, List<ConsultantClientMapping> activeMappings) {
+        if (sku == null || activeMappings == null || activeMappings.isEmpty()) {
+            return false;
+        }
+        ClientCatalogScope scope = new ClientCatalogScope(activeMappings, loadSpecialtyAliases(tenantId));
+        return scope.visible(sku, resolveOffer(tenantId, sku));
+    }
+
     private List<ShopCatalogSkuResponse> listVisible(String tenantId, Long clientUserId) {
         ClientCatalogScope scope = scopeFor(tenantId, clientUserId);
         List<ShopCatalogSkuResponse> out = new ArrayList<>();
@@ -113,6 +124,7 @@ public class ClientShopCatalogServiceImpl implements ClientShopCatalogService {
                 .sessionCount(sessionCount)
                 .packageType(ShopSessionCountConstants.resolvePackageType(sessionCount))
                 .fieldCode(sku.getFieldCode())
+                .validityMonths(sku.getValidityMonths())
                 .build();
     }
 

@@ -23,7 +23,9 @@ import {
   resolvePackagePaymentHistoryTypeLabel,
   resolvePackagePaymentHistoryDateLabel,
   resolvePackagePaymentRemainingLabel,
-  resolvePackagePaymentMergedIntoLabel
+  resolvePackagePaymentMergedIntoLabel,
+  resolvePackagePaymentSourceLabel,
+  resolvePackagePaymentSourceBadgeVariant
 } from '../../../constants/packagePaymentHistory';
 import notificationManager from '../../../utils/notification';
 import { toDisplayString, toSafeNumber } from '../../../utils/safeDisplay';
@@ -235,6 +237,24 @@ const PackagePaymentHistoryList = ({
                       <Badge variant="status" statusVariant="info">
                         {resolvePackagePaymentHistoryTypeLabel(item, items)}
                       </Badge>
+                      {(() => {
+                        const sourceLabel = resolvePackagePaymentSourceLabel(item?.paymentSource, {
+                          hideUnknown: false
+                        });
+                        const sourceVariant = resolvePackagePaymentSourceBadgeVariant(item?.paymentSource);
+                        if (!sourceLabel || !sourceVariant) {
+                          return null;
+                        }
+                        return (
+                          <Badge
+                            variant="status"
+                            statusVariant={sourceVariant}
+                            data-testid="pkg-payment-history-source"
+                          >
+                            {sourceLabel}
+                          </Badge>
+                        );
+                      })()}
                       {item?.status && (
                         <StatusBadge status={toDisplayString(item.status, '')} />
                       )}

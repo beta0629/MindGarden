@@ -1,148 +1,234 @@
 /**
- * ShopCartPage — 장바구니 (Clinic-OS · shot-client-cart-tobe)
+ * ShopCartPage — 장바구니 수정 (수량 · 빼기) → 「결제하기」 결제 전 확인 직행
  *
  * @author MindGarden
  * @since 2026-05-19
  */
 
 import React, { useCallback, useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import ShopClientLayout from '../../../components/shop/templates/ShopClientLayout';
 import ShopClientSessionLoading from '../../../components/shop/templates/ShopClientSessionLoading';
-import PriceText from '../../../components/shop/atoms/PriceText';
-import SessionCountTicket from '../../../components/shop/atoms/SessionCountTicket';
+import MallSessionChip from '../../../components/shop/atoms/MallSessionChip';
+import MallEmptyState from '../../../components/shop/molecules/MallEmptyState';
+import MallPaymentCancelNotice from '../../../components/shop/molecules/MallPaymentCancelNotice';
+import MallQtyStepper from '../../../components/shop/molecules/MallQtyStepper';
+import MallUsageBanner from '../../../components/shop/molecules/MallUsageBanner';
+import MallCartBar from '../../../components/shop/organisms/MallCartBar';
 import MGButton from '../../../components/common/MGButton';
 import SafeText from '../../../components/common/SafeText';
-import { CLIENT_SHOP_ROUTES, CLIENT_SHOP_TEST_IDS } from '../../../constants/clientShopConstants';
-import { CLIENT_WEB_SUITE_COPY } from '../../../constants/clientWebSuiteConstants';
-import { useClientShopAuth } from '../../../hooks/useClientShopAuth';
 import {
-  fetchShopCart,
-  mergeCartLine,
-  replaceShopCart
-} from '../../../services/clientShopService';
-import { formatShopMoney } from '../../../utils/clientShopFormat';
+  CLIENT_MALL_CHECKOUT_COPY,
+  CLIENT_MALL_COPY,
+  CLIENT_MALL_TEST_IDS,
+  CLIENT_MALL_USAGE_BANNER,
+  CLIENT_MALL_USAGE_BANNER_EXAMPLE
+} from '../../../constants/clientMallConstants';
+import { CLIENT_SHOP_ROUTES, CLIENT_SHOP_TEST_IDS } from '../../../constants/clientShopConstants';
+import { RoleUtils } from '../../../constants/roles';
+import { useClientShopAuth } from '../../../hooks/useClientShopAuth';
+import useClientMallCart from '../../../hooks/useClientMallCart';
+import useShopPaymentCancelNotice from '../../../hooks/useShopPaymentCancelNotice';
+import { fetchShopCatalog } from '../../../services/clientShopService';
+import {
+  formatMallNumber,
+  formatMallSessionLabel,
+  formatMallWon,
+  formatValidityLabel,
+  indexCatalogBySku,
+  resolveValidityMonths
+} from '../../../utils/clientMall';
 
 const ShopCartPage = () => {
   const navigate = useNavigate();
-  const { sessionLoading, isLoggedIn } = useClientShopAuth();
-  const [cart, setCart] = useState({ lines: [], subtotalMinor: 0 });
-  const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState('');
+  const { sessionLoading, isLoggedIn, user } = useClientShopAuth({
+    loginRedirectPath: CLIENT_SHOP_ROUTES.CART
+  });
+  const [catalog, setCatalog] = useState([]);
+  const [catalogLoaded, setCatalogLoaded] = useState(false);
+  const payCancelNotice = useShopPaymentCancelNotice();
 
-  const loadCart = useCallback(async() => {
+  const loadCatalog = useCallback(async() => {
     try {
-      setLoading(true);
-      setMessage('');
-      setCart(await fetchShopCart());
-    } catch (e) {
-      setMessage(e.message || '장바구니를 불러오지 못했습니다.');
+      setCatalog(await fetchShopCatalog({ authenticated: RoleUtils.isClient(user) }));
+    } catch {
+      setCatalog([]);
     } finally {
-      setLoading(false);
+      setCatalogLoaded(true);
     }
-  }, []);
+  }, [user]);
 
   useEffect(() => {
-    if (!sessionLoading && isLoggedIn) {
-      loadCart();
+    if (!sessionLoading && isLoggedIn && !catalogLoaded) {
+      loadCatalog();
     }
-  }, [sessionLoading, isLoggedIn, loadCart]);
+  }, [sessionLoading, isLoggedIn, catalogLoaded, loadCatalog]);
 
-  const updateQuantity = async(skuCode, delta) => {
-    try {
-      setLoading(true);
-      setMessage('');
-      const lines = mergeCartLine(cart.lines, skuCode, delta);
-      await replaceShopCart(lines);
-      await loadCart();
-    } catch (e) {
-      setMessage(e.message || '수량 변경에 실패했습니다.');
-    } finally {
-      setLoading(false);
-    }
-  };
+  const mall = useClientMallCart({
+    isLoggedIn,
+    sessionReady: !sessionLoading && isLoggedIn && catalogLoaded,
+    catalog
+  });
 
   if (sessionLoading || !isLoggedIn) {
-    return <ShopClientSessionLoading title={CLIENT_WEB_SUITE_COPY.CART_TITLE} />;
+    return <ShopClientSessionLoading title={CLIENT_MALL_COPY.CART_TITLE} />;
   }
 
-  const lines = cart.lines || [];
-  const isEmpty = lines.length === 0;
+  const { cart, summary } = mall;
+  const bySku = indexCatalogBySku(catalog);
+  const goCheckout = () => navigate(CLIENT_SHOP_ROUTES.CHECKOUT);
 
-  return (
-    <ShopClientLayout title={CLIENT_WEB_SUITE_COPY.CART_TITLE} testId={CLIENT_SHOP_TEST_IDS.CART_PAGE}>
-      {message ? (
-        <p className="client-shop__message client-shop__message--error" role="alert">
-          {message}
+  const aside = summary.isEmpty ? null : (
+    <section className="client-mall-cart" data-testid={CLIENT_MALL_TEST_IDS.CART_PAGE_ASIDE}>
+      <header className="client-mall-cart__head">
+        <h2 className="client-mall-cart__title">{CLIENT_MALL_COPY.CART_PAGE_SUMMARY_TITLE}</h2>
+        <span className="client-mall-cart__count" data-testid={CLIENT_MALL_TEST_IDS.CART_PAGE_ASIDE_COUNT}>
+          {summary.quantity}
+          {CLIENT_MALL_COPY.CART_COUNT_SUFFIX}
+        </span>
+      </header>
+      <dl className="client-mall-pay__rows">
+        {cart.lines.map((line) => (
+          <div key={line.skuCode} className="client-mall-pay__row">
+            <dt>
+              <SafeText>{line.title}</SafeText>
+              {CLIENT_MALL_COPY.LINE_TIMES}
+              {line.quantity}
+            </dt>
+            <dd>{formatMallWon((Number(line.unitPriceMinor) || 0) * line.quantity)}</dd>
+          </div>
+        ))}
+        <div className="client-mall-pay__row">
+          <dt>{CLIENT_MALL_COPY.CART_PAGE_SESSIONS}</dt>
+          <dd>{formatMallSessionLabel(summary.totalSessions)}</dd>
+        </div>
+      </dl>
+      <p className="client-mall-cart__total" data-testid="client-shop-cart-subtotal">
+        <span className="client-mall-cart__total-label">{CLIENT_MALL_COPY.CART_TOTAL}</span>
+        <span className="client-mall-cart__total-amount">
+          <span className="client-mall-cart__total-num">{formatMallNumber(summary.subtotalMinor)}</span>
+          {CLIENT_MALL_COPY.WON_UNIT}
+        </span>
+      </p>
+      <MGButton
+        variant="primary"
+        size="large"
+        fullWidth
+        preventDoubleClick={false}
+        className="client-mall-btn client-mall-btn--primary"
+        onClick={goCheckout}
+      >
+        {CLIENT_MALL_COPY.CART_CHECKOUT}
+      </MGButton>
+      {summary.validityMonths != null ? (
+        <p className="client-mall-pay__meta">
+          {CLIENT_MALL_COPY.VALIDITY_PREFIX}
+          {summary.validityMonths}
+          {CLIENT_MALL_COPY.CART_PAGE_VALIDITY_SUFFIX}
         </p>
       ) : null}
-      {isEmpty ? (
-        <p className="client-shop__empty">
-          장바구니가 비어 있습니다.{' '}
-          <Link to={CLIENT_SHOP_ROUTES.CATALOG}>상품 보러 가기</Link>
-        </p>
-      ) : (
+      <p className="client-mall-cart__help">{CLIENT_MALL_COPY.CART_NEXT_HINT}</p>
+    </section>
+  );
+
+  return (
+    <ShopClientLayout
+      title={CLIENT_MALL_COPY.CART_TITLE}
+      testId={CLIENT_SHOP_TEST_IDS.CART_PAGE}
+      meta={<p className="client-mall-page__subtitle">{CLIENT_MALL_COPY.CART_PAGE_SUBTITLE}</p>}
+      aside={aside}
+      cartQty={summary.quantity}
+      className="client-mall--cart"
+    >
+      <MallPaymentCancelNotice visible={payCancelNotice.visible} onClose={payCancelNotice.dismiss} />
+      {mall.error ? <p className="client-mall-page__error" role="alert">{mall.error}</p> : null}
+      {mall.loaded && summary.isEmpty ? (
+        <MallEmptyState
+          title={CLIENT_MALL_COPY.CART_EMPTY_TITLE}
+          body={CLIENT_MALL_COPY.CART_EMPTY_HELP}
+          action={(
+            <MGButton
+              variant="outline"
+              preventDoubleClick={false}
+              className="client-mall-btn client-mall-btn--ink-line"
+              onClick={() => navigate(CLIENT_SHOP_ROUTES.CATALOG)}
+            >
+              {CLIENT_MALL_COPY.CART_BROWSE}
+            </MGButton>
+          )}
+        />
+      ) : null}
+      {!summary.isEmpty ? (
         <>
-          <section className="client-shop__section" aria-label="담은 상품">
-            {lines.map((line) => (
-              <article key={line.skuCode} className="client-shop__cart-line">
-                <div className="client-shop__cart-line-main">
-                  <p className="client-shop__sku-title">
-                    <SafeText>{line.title}</SafeText>
-                  </p>
-                  <SessionCountTicket
-                    sessionCount={line.sessionCount}
-                    testId={`cart-session-ticket-${line.skuCode}`}
-                  />
-                  <PriceText amountMinor={line.unitPriceMinor} />
-                </div>
-                <div className="client-shop__qty-controls">
-                  <button
-                    type="button"
-                    className="client-shop__qty-btn"
-                    aria-label="수량 감소"
-                    disabled={loading}
-                    onClick={() => updateQuantity(line.skuCode, -1)}
-                  >
-                    −
-                  </button>
-                  <span className="client-shop__qty-value">{line.quantity}</span>
-                  <button
-                    type="button"
-                    className="client-shop__qty-btn"
-                    aria-label="수량 증가"
-                    disabled={loading}
-                    onClick={() => updateQuantity(line.skuCode, 1)}
-                  >
-                    +
-                  </button>
-                </div>
-                <span className="client-shop__price client-shop__cart-line-total">
-                  {formatShopMoney(line.lineTotalMinor)}
-                </span>
-              </article>
-            ))}
+          <section className="client-mall-box" aria-label={CLIENT_MALL_COPY.CART_TITLE}>
+            <header className="client-mall-box__head">
+              <h2 className="client-mall-box__title">{CLIENT_MALL_COPY.CART_PAGE_LIST_TITLE}</h2>
+              <span className="client-mall-box__caption" data-testid={CLIENT_MALL_TEST_IDS.CART_PAGE_LIST_COUNT}>
+                {summary.quantity}
+                {CLIENT_MALL_COPY.CART_COUNT_SUFFIX}
+              </span>
+            </header>
+            {cart.lines.map((line) => {
+              const months = resolveValidityMonths(bySku.get(line.skuCode));
+              return (
+                <article key={line.skuCode} className="client-mall-line client-mall-line--cart">
+                  <header className="client-mall-line__head">
+                    <div className="client-mall-line__name">
+                      <p className="client-mall-line__title">
+                        <SafeText>{line.title}</SafeText>
+                        <MallSessionChip sessionCount={line.sessionCount} testId={`cart-session-ticket-${line.skuCode}`} />
+                      </p>
+                      <p className="client-mall-line__unit">
+                        {formatMallWon(line.unitPriceMinor)}
+                        {months != null ? `${CLIENT_MALL_CHECKOUT_COPY.PAY_ROW_POINTS_SEPARATOR}${formatValidityLabel(months)}` : ''}
+                      </p>
+                    </div>
+                    <span className="client-mall-line__total">
+                      {formatMallWon((Number(line.unitPriceMinor) || 0) * line.quantity)}
+                    </span>
+                  </header>
+                  <div className="client-mall-line__controls">
+                    <MallQtyStepper
+                      quantity={line.quantity}
+                      onChange={(delta) => mall.changeQuantity(line.skuCode, delta)}
+                    />
+                    <button
+                      type="button"
+                      className="client-mall-link-btn"
+                      onClick={() => mall.remove(line.skuCode)}
+                    >
+                      {CLIENT_MALL_COPY.CART_REMOVE}
+                    </button>
+                  </div>
+                </article>
+              );
+            })}
           </section>
-          <p
-            className="client-shop__summary-row client-shop__summary-total"
-            data-testid="client-shop-cart-subtotal"
+          <MallUsageBanner text={CLIENT_MALL_USAGE_BANNER} example={CLIENT_MALL_USAGE_BANNER_EXAMPLE} />
+          <section
+            className="client-mall-box client-mall-cart-sum"
+            aria-label={CLIENT_MALL_COPY.CART_PAGE_SUMMARY_TITLE}
+            data-testid={CLIENT_MALL_TEST_IDS.CART_PAGE_MOBILE_SUMMARY}
           >
-            <span>합계</span>
-            <span>{formatShopMoney(cart.subtotalMinor)}</span>
-          </p>
-          <MGButton
-            variant="primary"
-            size="large"
-            fullWidth
-            disabled={loading}
-            preventDoubleClick={false}
-            className="client-shop__cta-mg"
-            onClick={() => navigate(CLIENT_SHOP_ROUTES.CHECKOUT)}
-          >
-            결제하기
-          </MGButton>
+            <dl className="client-mall-pay__rows client-mall-cart-sum__rows">
+              <div className="client-mall-pay__row">
+                <dt>{CLIENT_MALL_COPY.CART_PAGE_ITEMS_AMOUNT}</dt>
+                <dd>{formatMallWon(summary.subtotalMinor)}</dd>
+              </div>
+              <div className="client-mall-pay__row">
+                <dt>{CLIENT_MALL_COPY.CART_PAGE_SESSIONS}</dt>
+                <dd>{formatMallSessionLabel(summary.totalSessions)}</dd>
+              </div>
+            </dl>
+          </section>
+          <div className="client-mall-bar-spacer" aria-hidden="true" />
+          <MallCartBar
+            quantity={summary.quantity}
+            subtotalMinor={summary.subtotalMinor}
+            onAction={goCheckout}
+          />
         </>
-      )}
+      ) : null}
     </ShopClientLayout>
   );
 };

@@ -70,6 +70,13 @@ public class ShopCatalogSku extends BaseEntity {
     private Integer sessionCount = 1;
 
     /**
+     * 유효기간(개월, 결제일부터·당일 포함). 저장만 하며 상한은 두지 않는다.
+     * <p>null = 기한 없음. 체크아웃에서 주문 라인 스냅샷으로 복사한다.</p>
+     */
+    @Column(name = "validity_months")
+    private Integer validityMonths;
+
+    /**
      * 패키지 요금 관리(CONSULTATION_PACKAGE.code_value) 연결 키.
      * <p>값 있으면 상품명·단가·회기수의 원본은 공통코드이고,
      * 이 행은 노출·설명·이미지만 담당한다.</p>

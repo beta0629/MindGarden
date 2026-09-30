@@ -22,6 +22,7 @@ import com.coresolution.consultation.entity.Payment;
 import com.coresolution.consultation.repository.PaymentRepository;
 import com.coresolution.consultation.service.ClientShopCheckoutService;
 import com.coresolution.consultation.service.PaymentService;
+import com.coresolution.consultation.service.ShopLatePaymentRefundService;
 import com.coresolution.consultation.service.PersonalDataEncryptionService;
 import com.coresolution.core.constants.TenantPgSettingsJsonKeys;
 import com.coresolution.core.domain.TenantPgConfiguration;
@@ -66,6 +67,8 @@ class PortOnePaymentWebhookServiceTest {
     private PaymentService paymentService;
     @Mock
     private ClientShopCheckoutService clientShopCheckoutService;
+    @Mock
+    private ShopLatePaymentRefundService shopLatePaymentRefundService;
 
     private PortOnePaymentWebhookService service;
 
@@ -77,7 +80,8 @@ class PortOnePaymentWebhookServiceTest {
                 tenantPgConfigurationRepository,
                 paymentRepository,
                 paymentService,
-                clientShopCheckoutService);
+                clientShopCheckoutService,
+                shopLatePaymentRefundService);
     }
 
     @Test

@@ -1,5 +1,6 @@
 /**
  * AppShell LNB on-fill — CSS 셀렉터/토큰 스냅 (JSDOM hover 한계 보완)
+ * Consultant: sidebar on-fill tokens. Client: no desktop sidebar (SSOT).
  *
  * @author CoreSolution
  * @since 2026-08-26
@@ -15,6 +16,10 @@ describe('AppShell sidebar on-fill CSS', () => {
   );
   const clientCss = fs.readFileSync(
     path.join(__dirname, '../ClientAppShell.css'),
+    'utf8'
+  );
+  const clientJs = fs.readFileSync(
+    path.join(__dirname, '../ClientAppShell.js'),
     'utf8'
   );
 
@@ -34,15 +39,14 @@ describe('AppShell sidebar on-fill CSS', () => {
     );
   });
 
-  it('Client shell 은 coral shell-primary 로 hover/active 라벨을 덮지 않는다', () => {
-    expect(clientCss).toContain('--mg-v2-color-text-on-sidebar-active');
-    expect(clientCss).toContain('--mg-v2-lnb-on-fill');
-    expect(clientCss).toMatch(/color:\s*var\(--mg-v2-lnb-on-fill\)/);
+  it('Client shell 은 데스크톱 사이드바를 마운트하지 않는다 (header SSOT)', () => {
+    expect(clientJs).not.toContain('mg-app-shell__sidebar');
+    expect(clientJs).not.toContain('sidebar-logo-text');
+    expect(clientJs).toContain('ClientWebPageShell');
+    expect(clientJs).not.toMatch(/import\s+AppTopBar\b/);
+    expect(clientJs).not.toMatch(/import\s+BottomNavigation\b/);
     expect(clientCss).not.toMatch(
       /sidebar-item:hover\s*\{[^}]*var\(--shell-primary\)/
-    );
-    expect(clientCss).not.toMatch(
-      /sidebar-item--active\s*\{[^}]*var\(--shell-primary\)/
     );
   });
 });

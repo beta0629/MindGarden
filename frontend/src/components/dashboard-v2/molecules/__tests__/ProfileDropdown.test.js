@@ -195,6 +195,15 @@ describe('ProfileDropdown', () => {
       expect(panel.style.zIndex).toBeDefined();
       expect(panel.style.zIndex).not.toBe('');
     });
+
+    it('열린 패널 zIndex는 --z-header-dropdown 토큰이다 (overlay --z-header 위)', async() => {
+      renderWithProviders(<ProfileDropdown />);
+      await userEvent.click(getProfileMenuTrigger());
+
+      const panel = screen.getByRole('menu');
+      expect(panel.style.zIndex).toBe('var(--z-header-dropdown)');
+      expect(document.querySelector('.mg-v2-dropdown-overlay')).toBeTruthy();
+    });
   });
 
   describe('Escape 키로 닫힘', () => {
@@ -262,6 +271,21 @@ describe('ProfileDropdown', () => {
       await userEvent.click(screen.getByText('로그아웃'));
 
       expect(onLogout).toHaveBeenCalled();
+    });
+
+    it('overlay가 DOM에 있어도 패널 로그아웃 클릭이 onLogout을 호출한다', async() => {
+      const onLogout = jest.fn();
+      renderWithProviders(<ProfileDropdown onLogout={onLogout} />);
+      await userEvent.click(getProfileMenuTrigger());
+
+      const overlay = document.querySelector('.mg-v2-dropdown-overlay');
+      const panel = screen.getByRole('menu');
+      expect(overlay).toBeTruthy();
+      expect(panel).toBeTruthy();
+      expect(panel.style.zIndex).toBe('var(--z-header-dropdown)');
+
+      await userEvent.click(screen.getByText('로그아웃'));
+      expect(onLogout).toHaveBeenCalledTimes(1);
     });
 
     it('상담사는 설정 메뉴가 보이지 않는다', async() => {

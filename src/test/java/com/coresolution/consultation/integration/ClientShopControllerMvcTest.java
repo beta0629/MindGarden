@@ -5,20 +5,26 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.coresolution.consultation.constant.SessionConstants;
+import com.coresolution.consultation.constant.ShopClientOrderStatus;
+import com.coresolution.consultation.constant.ShopUserPaymentCancelConstants;
 import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.dto.shop.ShopCatalogSkuResponse;
 import com.coresolution.consultation.dto.shop.ShopConsultantMappingOption;
 import com.coresolution.consultation.dto.shop.ShopPointLedgerEntryResponse;
+import com.coresolution.consultation.dto.shop.ShopUserCancelPaymentResponse;
 import com.coresolution.consultation.entity.User;
+import com.coresolution.consultation.exception.ForbiddenException;
 import com.coresolution.consultation.service.ClientPointWalletService;
 import com.coresolution.consultation.service.ClientShopCartService;
 import com.coresolution.consultation.service.ClientShopCatalogService;
 import com.coresolution.consultation.service.ClientShopCheckoutService;
 import com.coresolution.consultation.service.ClientShopConsultantMappingService;
+import com.coresolution.consultation.service.ClientShopPaymentCancelService;
 import com.coresolution.core.constant.PlatformComponentCodes;
 import com.coresolution.core.service.TenantComponentActivationService;
 import com.coresolution.integrationtest.shop.ClientShopControllerMvcTestApplication;
@@ -64,6 +70,9 @@ class ClientShopControllerMvcTest {
 
     @MockBean
     private ClientShopConsultantMappingService clientShopConsultantMappingService;
+
+    @MockBean
+    private ClientShopPaymentCancelService clientShopPaymentCancelService;
 
     @MockBean
     private ClientPointWalletService clientPointWalletService;
@@ -262,5 +271,47 @@ class ClientShopControllerMvcTest {
                         get(BASE + "/orders/{orderPublicId}", orderPublicId)
                                 .session(clientSession(tenantId, clientId)))
                 .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("POST orders/{id}/user-cancel — 본인 미결제 주문 200·outcome CANCELLED")
+    @WithMockUser
+    void userCancel_ownOrder_returns200() throws Exception {
+        String tenantId = UUID.randomUUID().toString();
+        long clientId = 8L;
+        String orderPublicId = "order-user-cancel";
+        when(clientShopPaymentCancelService.cancelByUser(tenantId, clientId, orderPublicId))
+                .thenReturn(ShopUserCancelPaymentResponse.builder()
+                        .orderPublicId(orderPublicId)
+                        .outcome(ShopUserPaymentCancelConstants.OUTCOME_CANCELLED)
+                        .orderStatus(ShopClientOrderStatus.CANCELLED)
+                        .checkoutSource("CART")
+                        .skuCodes(List.of("SKU-1"))
+                        .build());
+
+        mockMvc.perform(
+                        post(BASE + "/orders/{orderPublicId}/user-cancel", orderPublicId)
+                                .session(clientSession(tenantId, clientId)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.outcome").value(ShopUserPaymentCancelConstants.OUTCOME_CANCELLED))
+                .andExpect(jsonPath("$.data.checkoutSource").value("CART"));
+    }
+
+    @Test
+    @DisplayName("POST orders/{id}/user-cancel — 타인 주문 403")
+    @WithMockUser
+    void userCancel_otherClientOrder_returns403() throws Exception {
+        String tenantId = UUID.randomUUID().toString();
+        long clientId = 9L;
+        String orderPublicId = "order-of-someone-else";
+        when(clientShopPaymentCancelService.cancelByUser(tenantId, clientId, orderPublicId))
+                .thenThrow(new ForbiddenException("주문에 접근할 수 없습니다."));
+
+        mockMvc.perform(
+                        post(BASE + "/orders/{orderPublicId}/user-cancel", orderPublicId)
+                                .session(clientSession(tenantId, clientId)))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.success").value(false));
     }
 }

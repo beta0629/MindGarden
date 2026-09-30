@@ -7,6 +7,8 @@ import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
 
+import com.coresolution.consultation.dto.auth.SmsOtpSendStatus;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -77,5 +79,71 @@ class SmsOtpVerificationServiceImplTest {
         assertThat(service.verifyAndConsume(PHONE, "12345")).isFalse();
         assertThat(service.verifyAndConsume("", "123456")).isFalse();
         assertThat(service.verifyAndConsume(PHONE, null)).isFalse();
+    }
+
+    @Test
+    @DisplayName("발송 상태 — 유효시간·재발송 대기·남은 시도, 실패할수록 남은 시도 감소")
+    void sendStatus_reportsPolicy_andRemainingAttemptsDecrease() {
+        Clock fixed = Clock.fixed(Instant.parse("2026-06-11T12:00:00Z"), ZoneOffset.UTC);
+        SmsOtpVerificationServiceImpl service = new SmsOtpVerificationServiceImpl(fixed, 30L, 3, 600L);
+
+        SmsOtpSendStatus initial = service.getSendStatus(PHONE);
+        assertThat(initial.locked()).isFalse();
+        assertThat(initial.retryAfterSeconds()).isNull();
+        assertThat(initial.expiresInSeconds()).isEqualTo(SmsOtpVerificationServiceImpl.OTP_TTL_MS / 1000L);
+        assertThat(initial.resendCooldownSeconds()).isEqualTo(30L);
+        assertThat(initial.remainingAttempts()).isEqualTo(3);
+
+        service.storeCode(PHONE, "111111");
+        service.verifyAndConsume(PHONE, "000000");
+        assertThat(service.getSendStatus(PHONE).remainingAttempts()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("실패 한도 도달 → 잠김(코드 폐기·retryAfterSeconds), 잠김 해제 후 다시 사용 가능")
+    void maxFailures_locksPhone_untilLockExpires() {
+        long t0 = Instant.parse("2026-06-11T12:00:00Z").toEpochMilli();
+        long[] now = { t0 };
+        Clock movingClock = new Clock() {
+            @Override
+            public Instant instant() { return Instant.ofEpochMilli(now[0]); }
+            @Override
+            public java.time.ZoneId getZone() { return ZoneOffset.UTC; }
+            @Override
+            public Clock withZone(java.time.ZoneId zone) { return this; }
+            @Override
+            public long millis() { return now[0]; }
+        };
+        SmsOtpVerificationServiceImpl service = new SmsOtpVerificationServiceImpl(movingClock, 30L, 2, 600L);
+        service.storeCode(PHONE, "111111");
+
+        assertThat(service.verifyAndConsume(PHONE, "000000")).isFalse();
+        assertThat(service.verifyAndConsume(PHONE, "000001")).isFalse();
+        assertThat(service.verifyAndConsume(PHONE, "111111")).isFalse();
+
+        SmsOtpSendStatus locked = service.getSendStatus(PHONE);
+        assertThat(locked.locked()).isTrue();
+        assertThat(locked.remainingAttempts()).isZero();
+        assertThat(locked.retryAfterSeconds()).isEqualTo(600L);
+
+        now[0] = t0 + 600_000L + 1L;
+        SmsOtpSendStatus released = service.getSendStatus(PHONE);
+        assertThat(released.locked()).isFalse();
+        assertThat(released.remainingAttempts()).isEqualTo(2);
+
+        service.storeCode(PHONE, "222222");
+        assertThat(service.verifyAndConsume(PHONE, "222222")).isTrue();
+    }
+
+    @Test
+    @DisplayName("성공하면 실패 누적 초기화")
+    void success_resetsFailures() {
+        Clock fixed = Clock.fixed(Instant.parse("2026-06-11T12:00:00Z"), ZoneOffset.UTC);
+        SmsOtpVerificationServiceImpl service = new SmsOtpVerificationServiceImpl(fixed, 30L, 3, 600L);
+        service.storeCode(PHONE, "111111");
+        service.verifyAndConsume(PHONE, "000000");
+        assertThat(service.verifyAndConsume(PHONE, "111111")).isTrue();
+
+        assertThat(service.getSendStatus(PHONE).remainingAttempts()).isEqualTo(3);
     }
 }

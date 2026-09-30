@@ -6,8 +6,10 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import com.coresolution.consultation.entity.Payment;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -23,13 +25,25 @@ import org.springframework.stereotype.Repository;
 /**
  * @Deprecated - 표준화 2025-12-07: branchCode 파라미터는 레거시 호환용
  */
-public interface PaymentRepository extends BaseRepository<Payment, Long> {
+public interface PaymentRepository extends BaseRepository<Payment, Long>, PaymentLockRepository {
     
     /**
      * 테넌트별 결제 고유 ID로 결제 조회 (테넌트 필터링)
      */
     @Query("SELECT p FROM Payment p WHERE p.tenantId = :tenantId AND p.paymentId = :paymentId AND p.isDeleted = false")
     Optional<Payment> findByTenantIdAndPaymentIdAndIsDeletedFalse(@Param("tenantId") String tenantId, @Param("paymentId") String paymentId);
+
+    /**
+     * 주문에 연결된 결제 건을 {@code PESSIMISTIC_WRITE} 로 잠가 최신 커밋 값으로 조회한다.
+     * <p>반드시 주문 행을 먼저 잠근 트랜잭션 안에서 호출한다(주문 → 결제 잠금 순서).</p>
+     *
+     * @param tenantId 테넌트 ID
+     * @param orderId  주문 공개 ID (결제 {@code order_id})
+     * @return 결제 목록
+     */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT p FROM Payment p WHERE p.tenantId = :tenantId AND p.orderId = :orderId AND p.isDeleted = false")
+    List<Payment> lockByTenantIdAndOrderId(@Param("tenantId") String tenantId, @Param("orderId") String orderId);
     
     /**
      * @Deprecated - 🚨 극도로 위험: 모든 테넌트 결제 정보 노출!

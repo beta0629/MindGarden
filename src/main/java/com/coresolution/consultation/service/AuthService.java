@@ -1,6 +1,7 @@
 package com.coresolution.consultation.service;
 
 import com.coresolution.consultation.dto.AuthResponse;
+import com.coresolution.consultation.dto.auth.CurrentSessionCredentials;
 import com.coresolution.consultation.entity.User;
 import jakarta.servlet.http.HttpServletRequest;
 
@@ -106,7 +107,24 @@ public interface AuthService {
     boolean checkDuplicateLogin(User user);
     
     /**
-     * 사용자 세션 정리
+     * 현재 요청의 세션 1개만 종료한다 (일반 로그아웃·중복 로그인 모달 확인).
+     *
+     * <p>{@code user_sessions} 현재 행, 같은 세션의 Refresh 토큰, 현재 Access 토큰만 폐기한다.
+     * 동일 계정의 다른 세션·토큰은 건드리지 않으며, 식별 정보가 없으면 계정 전체 폐기로 대체하지 않는다.</p>
+     *
+     * @param user        현재 사용자 (tenant 스코프)
+     * @param credentials 현재 요청 세션 식별 정보
+     * @param reason      종료 사유
      */
-    void cleanupUserSessions(User user, String reason);
+    void terminateCurrentSession(User user, CurrentSessionCredentials credentials, String reason);
+
+    /**
+     * 계정의 모든 세션·토큰을 종료한다 (관리자 강제 로그아웃·중복 로그인 불허 정책).
+     *
+     * <p>{@code users.tokens_invalidated_at} 을 기록해 이전 발급 Access/Refresh JWT 를 모두 거부한다.</p>
+     *
+     * @param user   대상 사용자
+     * @param reason 종료 사유
+     */
+    void terminateAllSessionsForUser(User user, String reason);
 }

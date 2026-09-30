@@ -8,11 +8,12 @@
 
 import { ADMIN_ROUTES } from './adminRoutes';
 
-/** @type {Readonly<{ CATALOG_SKUS: string, POINT_POLICIES: string, ORDERS: string }>} */
+/** @type {Readonly<{ CATALOG_SKUS: string, POINT_POLICIES: string, ORDERS: string, PRODUCTS: string }>} */
 export const ADMIN_SHOP_API = {
   CATALOG_SKUS: '/api/v1/admin/shop/catalog-skus',
   POINT_POLICIES: '/api/v1/admin/shop/point-policies',
-  ORDERS: '/api/v1/admin/shop/orders'
+  ORDERS: '/api/v1/admin/shop/orders',
+  PRODUCTS: '/api/v1/admin/shop/products'
 };
 
 export const ADMIN_SHOP_ROUTES = {
@@ -112,6 +113,25 @@ export const ADMIN_SHOP_ORDERS_DEFAULT_PAGE_SIZE = ADMIN_SHOP_ORDERS_DEFAULT_LIM
 /** 어드민 주문 상세·환불 — paymentId / PG 안내 카피 */
 export const ADMIN_SHOP_ORDER_PAYMENT_ID_LABEL = '결제 ID';
 export const ADMIN_SHOP_ORDER_PAYMENT_STATUS_LABEL = '결제 상태';
+
+/** BE {@code Payment.PaymentStatus.REFUND_REQUIRED} — 늦은 결제 PG 자동 취소 실패, 관리자 환불 필요 */
+export const ADMIN_PAYMENT_STATUS_REFUND_REQUIRED = 'REFUND_REQUIRED';
+
+/** 결제 행 상태 한글 라벨 (서버 상태값 키) */
+export const ADMIN_PAYMENT_STATUS_LABELS = Object.freeze({
+  [ADMIN_PAYMENT_STATUS_REFUND_REQUIRED]: '환불 필요'
+});
+
+/**
+ * @param {string|null|undefined} paymentStatus 서버 결제 상태값
+ * @returns {string|null} 한글 라벨, 없으면 null
+ */
+export function resolveAdminPaymentStatusLabel(paymentStatus) {
+  if (paymentStatus == null || paymentStatus === '') {
+    return null;
+  }
+  return ADMIN_PAYMENT_STATUS_LABELS[String(paymentStatus).trim().toUpperCase()] || null;
+}
 /**
  * cashDueMinor 표시 라벨 — PortOne/온라인 실결제액.
  * 「현금」을 결제수단으로 오인하지 않도록 사용. (결제수단은 CREDIT_CARD→신용카드)
@@ -120,7 +140,7 @@ export const ADMIN_SHOP_ORDER_CASH_DUE_LABEL = '실결제';
 /** 포인트 사용액 표시 라벨 */
 export const ADMIN_SHOP_ORDER_POINTS_LABEL = '포인트';
 export const ADMIN_SHOP_REFUND_PG_HINT =
-  '전액 환불 시 PortOne(또는 PG) 결제 취소·회기 원복·포인트 원장·주문 REFUNDED가 함께 반영됩니다.';
+  '환불하면 PortOne 취소, 회기 원복, 포인트 반환이 한 번에 처리돼요.';
 export const ADMIN_SHOP_ORDER_LINE_SESSION_LABEL = '회기';
 
 /**
@@ -340,6 +360,16 @@ export function buildAdminShopOrderRefundPath(orderPublicId) {
  */
 export function buildAdminShopOrderFulfillRetryPath(orderPublicId) {
   return `${buildAdminShopOrderPath(orderPublicId)}/fulfill-retry`;
+}
+
+/**
+ * 사용 기한 연장 (POST 센터 관리자 · GET 이력).
+ *
+ * @param {string} orderPublicId
+ * @returns {string}
+ */
+export function buildAdminShopOrderExpiryExtensionsPath(orderPublicId) {
+  return `${buildAdminShopOrderPath(orderPublicId)}/expiry-extensions`;
 }
 
 /**

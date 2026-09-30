@@ -1,3 +1,6 @@
+> **⚠️ OBSOLETE (2026-09-22)**: NS가 Cloudflare로 전환되어 가비아 DNS 경로는 더 이상 사용되지 않습니다.
+> **SSOT** → [`docs/runbooks/SSL_CERTIFICATE_STATUS.md`](../../runbooks/SSL_CERTIFICATE_STATUS.md)
+
 # 가비아 DNS를 사용한 와일드카드 SSL 인증서 자동 발급 가이드
 
 ## 개요

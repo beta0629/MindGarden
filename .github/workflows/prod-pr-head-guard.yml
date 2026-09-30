@@ -1,0 +1,43 @@
+name: 🔒 Prod PR head guard
+
+# 운영(release/prod) 으로 가는 PR 은 release/dev 를 head 로 하는 머지 PR 만 허용한다.
+# 체리픽·기능 브랜치를 release/prod 에 직접 올리는 PR 은 실패시킨다.
+# 트리거를 base=release/prod 로 한정하므로 release/dev 대상 PR 에서는 실행되지 않는다.
+# required check 지정(브랜치 보호)은 이 파일에서 바꾸지 않는다.
+
+on:
+  pull_request:
+    branches: [ 'release/prod' ]
+    types: [ opened, reopened, synchronize, edited ]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: prod-pr-head-guard-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  head-must-be-release-dev:
+    name: Prod PR head must be release/dev
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check head ref and repository
+        env:
+          ALLOWED_HEAD_REF: release/dev
+          HEAD_REF: ${{ github.event.pull_request.head.ref }}
+          HEAD_REPO: ${{ github.event.pull_request.head.repo.full_name }}
+          BASE_REPO: ${{ github.event.pull_request.base.repo.full_name }}
+        run: |
+          echo "base repo: $BASE_REPO"
+          echo "head: $HEAD_REPO:$HEAD_REF"
+          if [ "$HEAD_REPO" != "$BASE_REPO" ]; then
+            echo "::error::release/prod PR 은 같은 저장소의 $ALLOWED_HEAD_REF 만 head 로 허용합니다 (현재 $HEAD_REPO:$HEAD_REF)."
+            exit 1
+          fi
+          if [ "$HEAD_REF" != "$ALLOWED_HEAD_REF" ]; then
+            echo "::error::release/prod PR 의 head 는 $ALLOWED_HEAD_REF 여야 합니다 (현재 $HEAD_REF). 체리픽·기능 브랜치 직접 PR 은 허용하지 않습니다."
+            exit 1
+          fi
+          echo "OK: head=$HEAD_REF"

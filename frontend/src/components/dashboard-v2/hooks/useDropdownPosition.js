@@ -10,7 +10,8 @@ import { useState, useLayoutEffect } from 'react';
 
 const DEFAULT_OFFSET_Y = 8;
 const DEFAULT_VIEWPORT_PADDING = 16;
-const Z_INDEX_DROPDOWN = 'var(--z-dropdown)';
+/** GNB portal panel — must match dropdown-common.css (above overlay --z-header) */
+const Z_INDEX_DROPDOWN = 'var(--z-header-dropdown)';
 
 /** panelEl 없을 때 사용하는 기본 패널 너비 (트리거만 있을 때 fallback) */
 const FALLBACK_PANEL_WIDTH = 280;

@@ -46,7 +46,8 @@ describe('PackagePaymentHistoryList date labels', () => {
           amount: 90000,
           status: 'ACTIVE',
           mappingId: 245,
-          paymentReference: 'TRANSFER_20260901_192607'
+          paymentReference: 'TRANSFER_20260901_192607',
+          paymentSource: 'MANUAL'
         }
       ]
     });
@@ -61,6 +62,7 @@ describe('PackagePaymentHistoryList date labels', () => {
     expect(dateEl).toHaveTextContent('배정·생성일');
     expect(dateEl).not.toHaveTextContent('최초 상담일');
     expect(screen.getByText('최초 배정')).toBeInTheDocument();
+    expect(screen.getByTestId('pkg-payment-history-source')).toHaveTextContent('수동/센터');
     expect(screen.getByText('단회기 90,000원')).toBeInTheDocument();
     expect(screen.getByText('90,000원')).toBeInTheDocument();
     expect(screen.queryByText(/100,?000/)).not.toBeInTheDocument();

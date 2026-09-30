@@ -57,6 +57,7 @@ import {
 } from '../../../utils/minPaymentAmountMessage';
 import { useAlert } from '../../../hooks/useAlert';
 import { useTranslation } from 'react-i18next';
+import { buildSettingsPathWithReturnTo } from '../../../utils/clientSettingsReturnTo';
 
 /**
  * checkout → 주문 상세 navigate state 메시지를 1회만 읽는다.
@@ -395,7 +396,7 @@ const ShopOrderDetailPage = () => {
                   <p>{portOneCustomerGate.message}</p>
                   <Link
                     className="client-web-page-shell__cta client-web-page-shell__cta--ghost"
-                    to="/client/settings"
+                    to={buildSettingsPathWithReturnTo(`${location.pathname}${location.search || ''}`)}
                   >
                     {CLIENT_WEB_SUITE_COPY.CHECKOUT_SETTINGS_LINK}
                   </Link>

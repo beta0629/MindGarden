@@ -7,7 +7,9 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.function.Function;
+import com.coresolution.consultation.constant.SessionManagementConstants;
 import com.coresolution.consultation.constant.oauth.OAuthJwtClaimKeys;
 import com.coresolution.consultation.constant.oauth.OAuthJwtClaimValues;
 import com.coresolution.consultation.dto.OAuthPhoneAccountSelectionClaims;
@@ -21,6 +23,8 @@ import com.coresolution.consultation.entity.auth.OAuthProvider;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
+import org.springframework.web.context.request.RequestAttributes;
+import org.springframework.web.context.request.RequestContextHolder;
 import com.coresolution.consultation.entity.User;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
@@ -117,6 +121,8 @@ public class JwtService {
         if (permissions != null && !permissions.isEmpty()) {
             claims.put("permissions", permissions);
         }
+
+        claims.put(SessionManagementConstants.JWT_CLAIM_SESSION_ID, bindPendingSessionId(user));
         
         log.debug("JWT 토큰 생성: userId={}, tenantId={}, permissions={}", 
             user.getId(), user.getTenantId(), 
@@ -170,31 +176,95 @@ public class JwtService {
     /**
      * 리프레시 토큰 생성 (User 객체 기반, tenantId, email 포함)
      * 표준화 2025-12-08: username = userId이므로 userId 사용
+     *
+     * <p>같은 요청에서 먼저 발급한 Access JWT 의 sid 를 {@code tokenId} 로 사용해 두 토큰을 한 세션으로
+     * 연결한다. 연결할 sid 가 없으면 새 UUID 를 쓴다.</p>
      */
     public String generateRefreshToken(User user) {
-        Map<String, Object> claims = new HashMap<>();
-        claims.put("email", user.getEmail());
-        if (user.getTenantId() != null) {
-            claims.put("tenantId", user.getTenantId());
-        }
-        return buildToken(claims, user.getUserId(), refreshExpiration);
+        return generateRefreshToken(user, null);
     }
     
     /**
      * 리프레시 토큰 생성 (User 객체 기반, tokenId 포함)
      * Phase 3: tokenId를 클레임에 포함하여 토큰 로테이션 시 기존 토큰 무효화 가능
      * 표준화 2025-12-08: username = userId이므로 userId 사용
+     *
+     * @param user    사용자
+     * @param tokenId Refresh Token ID — 비어 있으면 동일 요청 Access sid 또는 새 UUID
+     * @return Refresh JWT
      */
     public String generateRefreshToken(User user, String tokenId) {
+        String pendingSessionId = consumePendingSessionId(user);
+        String resolvedTokenId = tokenId != null && !tokenId.trim().isEmpty()
+            ? tokenId.trim()
+            : (pendingSessionId != null ? pendingSessionId : UUID.randomUUID().toString());
         Map<String, Object> claims = new HashMap<>();
         claims.put("email", user.getEmail());
         if (user.getTenantId() != null) {
             claims.put("tenantId", user.getTenantId());
         }
-        if (tokenId != null && !tokenId.trim().isEmpty()) {
-            claims.put("tokenId", tokenId);
-        }
+        claims.put(SessionManagementConstants.JWT_CLAIM_REFRESH_TOKEN_ID, resolvedTokenId);
         return buildToken(claims, user.getUserId(), refreshExpiration);
+    }
+
+    /**
+     * Access JWT 의 세션 ID(sid) 추출 — 같은 쌍 Refresh JWT 의 {@code tokenId} 와 동일.
+     *
+     * @param token Access JWT
+     * @return sid (sid 도입 전 발급 토큰이거나 파싱 실패 시 null)
+     */
+    public String extractSessionId(String token) {
+        try {
+            Claims claims = extractAllClaims(token);
+            return claims.get(SessionManagementConstants.JWT_CLAIM_SESSION_ID, String.class);
+        } catch (Exception e) {
+            log.debug("JWT 토큰에서 sid 추출 실패 (sid 도입 전 토큰일 수 있음): {}", e.getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * Access 발급 시 새 sid 를 만들어 현재 요청에 (사용자별로) 보관한다.
+     * 요청 컨텍스트 밖이면 보관 없이 sid 만 반환한다.
+     */
+    private String bindPendingSessionId(User user) {
+        String sessionId = UUID.randomUUID().toString();
+        Map<String, String> pending = pendingSessionIds(true);
+        if (pending != null) {
+            pending.put(pendingSessionKey(user), sessionId);
+        }
+        return sessionId;
+    }
+
+    /**
+     * 현재 요청에서 해당 사용자로 보관된 sid 를 꺼내고 제거한다 (1회 사용).
+     */
+    private String consumePendingSessionId(User user) {
+        Map<String, String> pending = pendingSessionIds(false);
+        return pending != null ? pending.remove(pendingSessionKey(user)) : null;
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Map<String, String> pendingSessionIds(boolean create) {
+        RequestAttributes attributes = RequestContextHolder.getRequestAttributes();
+        if (attributes == null) {
+            return null;
+        }
+        String attrName = SessionManagementConstants.REQUEST_ATTR_PENDING_TOKEN_SESSION_IDS;
+        Object existing = attributes.getAttribute(attrName, RequestAttributes.SCOPE_REQUEST);
+        if (existing instanceof Map) {
+            return (Map<String, String>) existing;
+        }
+        if (!create) {
+            return null;
+        }
+        Map<String, String> created = new HashMap<>();
+        attributes.setAttribute(attrName, created, RequestAttributes.SCOPE_REQUEST);
+        return created;
+    }
+
+    private static String pendingSessionKey(User user) {
+        return user.getTenantId() + ":" + user.getUserId();
     }
     
     /**
@@ -207,7 +277,7 @@ public class JwtService {
     public String extractTokenId(String token) {
         try {
             Claims claims = extractAllClaims(token);
-            return claims.get("tokenId", String.class);
+            return claims.get(SessionManagementConstants.JWT_CLAIM_REFRESH_TOKEN_ID, String.class);
         } catch (Exception e) {
             log.debug("JWT 토큰에서 tokenId 추출 실패 (정상일 수 있음 - 구버전 토큰): {}", e.getMessage());
             return null;

@@ -39,6 +39,7 @@ import './ClientWebPageShell.css';
  * @param {string} [props.stageClassName]
  * @param {string} [props.loginHref] - guest header login path
  * @param {number|null|undefined} [props.cartBadgeQty]
+ * @param {boolean} [props.cartBadgePulse]
  * @param {string} [props.cartHref]
  * @param {string} [props.designShot]
  */
@@ -58,6 +59,7 @@ const ClientWebPageShell = ({
   stageClassName = '',
   loginHref,
   cartBadgeQty = null,
+  cartBadgePulse = false,
   cartHref,
   designShot
 }) => {
@@ -147,6 +149,7 @@ const ClientWebPageShell = ({
         logoutLabel={logoutLabel}
         loginHref={!effectiveLoggedIn ? loginHref : undefined}
         cartBadgeQty={cartBadgeQty}
+        cartBadgePulse={cartBadgePulse}
         cartHref={cartHref}
       />
       <div className="client-web-page-shell__body">
@@ -186,6 +189,7 @@ ClientWebPageShell.propTypes = {
   stageClassName: PropTypes.string,
   loginHref: PropTypes.string,
   cartBadgeQty: PropTypes.number,
+  cartBadgePulse: PropTypes.bool,
   cartHref: PropTypes.string,
   designShot: PropTypes.string
 };

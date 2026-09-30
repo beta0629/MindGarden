@@ -86,7 +86,11 @@ const MappingMatchActions = ({
           type="button"
           variant="primary"
           size={ACTION_SIZE}
-          className={[btnClassName, 'integrated-schedule__btn-checkout-primary'].filter(Boolean).join(' ')}
+          className={[
+            btnClassName,
+            'integrated-schedule__btn-checkout-primary',
+            'integrated-schedule__btn-confirm-activate'
+          ].filter(Boolean).join(' ')}
           onClick={() => onCheckoutSameDay(mapping)}
           aria-label={t('admin:mapping.card.actions.confirmAndActivate')}
           data-testid="mapping-confirm-and-activate-trigger"

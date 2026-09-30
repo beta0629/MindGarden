@@ -80,7 +80,7 @@ function AdminShopRefundConfirmModal({
       size="small"
       backdropClick={!submitting}
       closeOnEscape={!submitting}
-      className="admin-shop-suite admin-shop-clinic-os"
+      className="admin-shop-suite admin-shop-clinic-os admin-shop-refund-confirm-modal"
       actions={(
         <>
           <MGButton

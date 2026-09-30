@@ -9,7 +9,7 @@
  */
 
 import React from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router-dom';
 import { useSession } from '../../contexts/SessionContext';
 import RoleUtils from '../../utils/RoleUtils';
 import { resolvePostLoginLandingPath } from '../../utils/dashboardUtils';
@@ -25,6 +25,7 @@ const ProtectedRoute = ({
   requireOps = false
 }) => {
   const { user, isLoading, hasCheckedSession, hasPermissionGroup } = useSession();
+  const location = useLocation();
 
   if (isLoading) {
     return <UnifiedLoading />;
@@ -35,7 +36,13 @@ const ProtectedRoute = ({
   }
 
   if (!user) {
-    return <Navigate to="/login" replace />;
+    const redirectTarget = `${location.pathname}${location.search || ''}`;
+    return (
+      <Navigate
+        to={`/login?redirect=${encodeURIComponent(redirectTarget)}`}
+        replace
+      />
+    );
   }
 
   const roleDashboardPath = getRoleDashboardRedirectPath(user);

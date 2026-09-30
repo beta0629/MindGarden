@@ -19,7 +19,7 @@ import { DUPLICATE_LOGIN_REDIRECT_SEARCH } from '../constants/session';
 
 const AUTH_CHECK_DUPLICATE_LOGIN = '/api/v1/auth/check-duplicate-login';
 const AUTH_SESSION_INFO = '/api/v1/auth/session-info';
-const AUTH_FORCE_LOGOUT = '/api/v1/auth/force-logout';
+const ADMIN_FORCE_LOGOUT = '/api/v1/admin/sessions/force-logout';
 
 class DuplicateLoginManager {
     constructor() {
@@ -193,7 +193,7 @@ class DuplicateLoginManager {
      */
     async forceLogoutUser(email) {
         try {
-            const response = await ajax.post(AUTH_FORCE_LOGOUT, { email });
+            const response = await ajax.post(ADMIN_FORCE_LOGOUT, { email });
             
             if (response.success) {
                 notificationManager.success(`${email} 사용자의 세션이 강제 종료되었습니다.`);

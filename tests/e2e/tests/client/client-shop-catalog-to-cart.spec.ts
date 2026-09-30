@@ -7,7 +7,7 @@
  * 전제: Flyway P2 적용, 백엔드·API 가동, 활성 탭(상담 패키지)에 `catalogVisible=true` SKU ≥1
  * PG·checkout 결제는 범위 외.
  *
- * testid: `client-shop-catalog-page`, `shop-sku-add-first`, `client-shop-cart-page`, `client-shop-cart-subtotal`
+ * testid: `client-shop-catalog-page`, `shop-sku-add-first`, `client-mall-toast`, `client-shop-cart-page`, `client-shop-cart-subtotal`
  *
  * 전제 체크리스트 (R10): `tests/e2e/README.md` §「내담자 쇼핑 (CLIENT_SHOP)」
  * 로컬 검증 (2026-05-19): 8080 미기동 시 `skipWhenLocalBackend8080Down`으로 스킵.
@@ -133,6 +133,11 @@ test.describe('내담자 쇼핑 PLP → 장바구니', () => {
     });
 
     await addFirst.click();
+
+    // TO-BE: 담기 후 목록 유지 + 토스트 3초 → 「보기」로 장바구니 이동
+    const toast = page.getByTestId('client-mall-toast');
+    await expect(toast).toBeVisible({ timeout: 10_000 });
+    await toast.getByRole('link').click();
 
     await expect(page).toHaveURL(/\/client\/shop\/cart/, { timeout: 25_000 });
 

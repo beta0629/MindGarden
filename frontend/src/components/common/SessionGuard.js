@@ -14,6 +14,7 @@ import React, { useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useSession } from '../../contexts/SessionContext';
 import { sessionManager } from '../../utils/sessionManager';
+import { isPublicSpaPath } from '../../utils/publicSpaPaths';
 import { SESSION_CHECK_COOLDOWN_MS } from '../../constants/session';
 
 /**
@@ -30,26 +31,9 @@ const SessionGuard = ({ children }) => {
     /** 같은 path에서 checkSession(true) 후 401로 나갔던 경로. 해당 path에서는 강제 갱신 재시도 안 함. */
     const lastSessionCheckFailedPathRef = useRef(null);
     
-    // 공개 경로 정의 (인증 없이 접근 가능)
-    const publicPaths = [
-        '/',
-        '/landing',
-        '/login',
-        '/register',
-        '/forgot-password',
-        '/reset-password',
-        '/oauth2/callback',
-        '/auth/oauth2/callback',
-        '/test/notifications',
-        '/test/payment',
-        '/test/integration'
-    ];
-    
     useEffect(() => {
         const currentPath = location.pathname;
-        const isPublicPath = publicPaths.some(path => 
-            currentPath === path || currentPath.startsWith(path)
-        );
+        const isPublicPath = isPublicSpaPath(currentPath);
         
         // 공개 경로는 세션 체크 스킵
         if (isPublicPath) {

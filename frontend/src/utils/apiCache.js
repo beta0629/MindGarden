@@ -1,5 +1,6 @@
 import { redirectToLoginPageOnce } from './sessionRedirect';
 import { isTransientNetworkError, notifyTransientNetworkIssue } from './networkErrorUtils';
+import { isPublicSpaPath } from './publicSpaPaths';
 import { getDefaultApiHeaders } from './apiHeaders';
 import { isSessionSoftFailUrl } from './sessionAuthPolicy';
 
@@ -90,22 +91,6 @@ class ApiCache {
 const apiCache = new ApiCache();
 
 /**
- * 공개 경로 여부 (로그인·랜딩 등)
- * @param {string} currentPath
- * @returns {boolean}
- */
-function isPublicPagePath(currentPath) {
-    return currentPath === '/login' ||
-        currentPath.startsWith('/login/') ||
-        currentPath === '/landing' ||
-        currentPath === '/' ||
-        currentPath.startsWith('/register') ||
-        currentPath.startsWith('/forgot-password') ||
-        currentPath.startsWith('/reset-password') ||
-        currentPath.startsWith('/auth/oauth2/callback');
-}
-
-/**
  * 캐시된 API 호출 함수
  * @param {string} url - API URL
  * @param {Object} options - fetch 옵션
@@ -141,7 +126,7 @@ export async function cachedApiCall(url, options = {}, ttl = 5 * 60 * 1000) {
                     console.log('🔐 API 캐시 soft-fail URL - 로그인 리다이렉트 스킵:', url);
                 } else {
                     const currentPath = window.location.pathname;
-                    if (!isPublicPagePath(currentPath)) {
+                    if (!isPublicSpaPath(currentPath)) {
                         console.log('🔐 API 캐시 호출 실패 - 로그인 페이지로 리다이렉트 (서브도메인 유지)');
                         redirectToLoginPageOnce();
                     }
@@ -161,7 +146,7 @@ export async function cachedApiCall(url, options = {}, ttl = 5 * 60 * 1000) {
         // 네트워크 오류 시 로그인 페이지로 리다이렉트하지 않음
         if (isTransientNetworkError(error)) {
             const currentPath = window.location.pathname;
-            if (!isPublicPagePath(currentPath)) {
+            if (!isPublicSpaPath(currentPath)) {
                 console.warn('🔐 API 캐시 일시적 네트워크 오류 - 로그인으로 이동하지 않음');
                 notifyTransientNetworkIssue();
             }

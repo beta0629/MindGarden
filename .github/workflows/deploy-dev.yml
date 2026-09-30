@@ -9,6 +9,8 @@ name: 🧪 MindGarden 개발 서버 배포 (통합 - 모든 프로젝트)
 #
 # 이 워크플로우는 비활성화되었습니다. 수동 실행만 가능합니다.
 # 수동 단일 진입: .github/workflows/deploy.yml (inputs: env + target)
+# workflow_dispatch 여도 Maven/Node 빌드는 ubuntu-latest. self-hosted 는 산출물 수신·SSH 만
+# (운영 호스트 mindgarden-deploy 에서 mvn OOM 금지, 2026-09-19).
 
 on:
   # push 트리거 제거 (개별 워크플로우 사용)
@@ -18,9 +20,9 @@ on:
     # 수동 실행만 가능 (모든 프로젝트를 한 번에 배포하고 싶을 때만 사용)
 
 jobs:
-  deploy:
-    name: 🏗️ 개발 서버 빌드 및 배포
-    runs-on: [self-hosted, linux, deploy]
+  build:
+    name: 🏗️ 개발 서버 빌드 (ubuntu-latest)
+    runs-on: ubuntu-latest
     
     steps:
     - name: 📥 코드 체크아웃
@@ -47,6 +49,8 @@ jobs:
         restore-keys: ${{ runner.os }}-m2
         
     - name: 🏗️ 백엔드 빌드
+      env:
+        MAVEN_OPTS: "-Xmx2g"
       run: |
         mvn clean package -DskipTests
         echo "빌드 완료. 결과 확인:"
@@ -142,6 +146,50 @@ jobs:
           exit 1
         fi
         
+    - name: 📦 배포 번들 스테이징
+      run: |
+        set -euo pipefail
+        rm -rf _gha_dev_bundle
+        mkdir -p _gha_dev_bundle/target _gha_dev_bundle/frontend/build _gha_dev_bundle/frontend-trinity/out _gha_dev_bundle/frontend-ops/out
+        cp -a target/consultation-management-system-1.0.0.jar _gha_dev_bundle/target/
+        cp -a frontend/build/. _gha_dev_bundle/frontend/build/
+        cp -a frontend-trinity/out/. _gha_dev_bundle/frontend-trinity/out/
+        cp -a frontend-ops/out/. _gha_dev_bundle/frontend-ops/out/
+        test -s _gha_dev_bundle/target/consultation-management-system-1.0.0.jar
+
+    - name: 📤 배포 번들 업로드
+      uses: actions/upload-artifact@v4
+      with:
+        name: mindgarden-dev-unified-bundle
+        path: _gha_dev_bundle
+        retention-days: 1
+        if-no-files-found: error
+
+  deploy:
+    name: 📤 개발 서버 배포 (self-hosted, 배포 전용)
+    needs: build
+    runs-on: [self-hosted, linux, deploy]
+    steps:
+    - name: 📥 코드 체크아웃 (설정 파일만, 컴파일 없음)
+      uses: actions/checkout@v4
+
+    - name: 📥 빌드 산출물 수신
+      uses: actions/download-artifact@v4
+      with:
+        name: mindgarden-dev-unified-bundle
+        path: _gha_dev_bundle
+
+    - name: 📦 산출물 배치
+      run: |
+        set -euo pipefail
+        mkdir -p target frontend/build frontend-trinity/out frontend-ops/out
+        cp -a _gha_dev_bundle/target/consultation-management-system-1.0.0.jar target/
+        cp -a _gha_dev_bundle/frontend/build/. frontend/build/
+        cp -a _gha_dev_bundle/frontend-trinity/out/. frontend-trinity/out/
+        cp -a _gha_dev_bundle/frontend-ops/out/. frontend-ops/out/
+        test -s target/consultation-management-system-1.0.0.jar
+        echo "self-hosted: compile/package 없음"
+
     - name: 🔍 개발 서버 SSH 연결 테스트
       uses: appleboy/ssh-action@master
       with:

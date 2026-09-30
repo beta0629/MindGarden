@@ -1,7 +1,10 @@
 package com.coresolution.consultation.service.impl;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 
 import com.coresolution.consultation.constant.ShopCatalogCategory;
@@ -68,6 +71,23 @@ class ClientShopCatalogServiceImplTest {
     }
 
     @Test
+    @DisplayName("listVisibleSkus — validityMonths 읽기 필드 포함, 없으면 null")
+    void listVisibleSkus_includesValidityMonths() {
+        ShopCatalogSku withValidity = sampleSku();
+        withValidity.setValidityMonths(3);
+        ShopCatalogSku withoutValidity = sampleSku();
+        withoutValidity.setSkuCode("SKU-02");
+        when(shopCatalogSkuRepository.findCatalogForTenant(TENANT))
+                .thenReturn(List.of(withValidity, withoutValidity));
+
+        List<ShopCatalogSkuResponse> list = clientShopCatalogService.listVisibleSkus(TENANT);
+
+        assertEquals(2, list.size());
+        assertEquals(Integer.valueOf(3), list.get(0).getValidityMonths());
+        assertNull(list.get(1).getValidityMonths());
+    }
+
+    @Test
     @DisplayName("getVisibleSkuByCode — 노출 SKU 반환")
     void getVisibleSkuByCode_whenFound_returnsSku() {
         ShopCatalogSku row = sampleSku();
@@ -128,6 +148,21 @@ class ClientShopCatalogServiceImplTest {
 
         assertEquals(1, list.size());
         assertEquals("SPEECH-SKU", list.get(0).getSkuCode());
+    }
+
+    @Test
+    @DisplayName("isVisibleForClientMappings — 카탈로그와 같은 패키지 매칭, 활성 매핑 없으면 false")
+    void isVisibleForClientMappings_sameRuleAsCatalog() {
+        ShopCatalogSku speech = catalogSku("SPEECH-PKG", "언어치료", ShopCatalogCategory.CONSULTATION, null);
+        ShopCatalogSku general = catalogSku("GEN-PKG", "일반상담", ShopCatalogCategory.CONSULTATION, null);
+        List<ConsultantClientMapping> mappings = List.of(mapping("언어치료", null));
+        when(commonCodeRepository.findTenantCodesByGroup(
+                TENANT, ShopCatalogSkuConstants.FIELD_CODE_GROUP_CONSULTATION))
+                .thenReturn(List.of());
+
+        assertTrue(clientShopCatalogService.isVisibleForClientMappings(TENANT, speech, mappings));
+        assertFalse(clientShopCatalogService.isVisibleForClientMappings(TENANT, general, mappings));
+        assertFalse(clientShopCatalogService.isVisibleForClientMappings(TENANT, speech, List.of()));
     }
 
     @Test

@@ -1,6 +1,7 @@
 /**
  * 테넌트 어드민 — 「상품」 (패키지 요금 + 온라인 SKU 통합)
- * 판매 중 행이 위, 판매 중지(active=false) 행은 그룹 행 아래. 판매 상태는 기존 active 값만 사용한다.
+ * 판매 중 행이 위, 판매 중지(active=false) 행은 그룹 행 아래. 목록·건수는 서버 page/size.
+ * 판매 상태는 관리자가 행마다 토글 — 중지하면 홈 공개·몰 노출이 꺼지고 잠긴다 (기존 구매분 유지).
  *
  * @author CoreSolution
  * @since 2026-09-29
@@ -24,6 +25,7 @@ import {
   ADMIN_SHOP_PRODUCT_SEGMENT,
   ADMIN_SHOP_PRODUCT_SEGMENTS,
   ADMIN_SHOP_PRODUCTS_COPY,
+  ADMIN_SHOP_SEARCH_DEBOUNCE_MS,
   ADMIN_SHOP_SUITE_PAGE_SIZE,
   ADMIN_SHOP_SUITE_TEST_IDS,
   buildAdminShopProductEditRoute,
@@ -31,22 +33,17 @@ import {
 } from '../../constants/adminShopSuite';
 import { RoleUtils } from '../../constants/roles';
 import { useSession } from '../../contexts/SessionContext';
-import useConfirm from '../../hooks/useConfirm';
 import notificationManager from '../../utils/notification';
 import { formatShopMoney } from '../../utils/clientShopFormat';
 import {
   ADMIN_SHOP_PRODUCT_KIND,
-  countAdminShopProductSegments,
-  filterAdminShopProducts,
-  isAdminShopProductSessionUnset,
-  mergeAdminShopProducts,
-  paginateAdminShopItems
+  isAdminShopProductSessionUnset
 } from '../../utils/adminShopSuite';
 import {
-  listAdminShopProductSources,
-  setAdminShopProductActive,
+  listAdminShopProducts,
   setAdminShopProductHomePublic,
-  setAdminShopProductMallVisible
+  setAdminShopProductMallVisible,
+  setAdminShopProductSaleStatus
 } from '../../services/adminShopProductService';
 import { runResourceLoad, softRefresh } from '../../utils/softRefresh';
 import {
@@ -62,7 +59,7 @@ import './AdminDashboard/AdminDashboardB0KlA.css';
 import { useTranslation } from 'react-i18next';
 
 const PAGE_TITLE_ID = 'admin-shop-products-title';
-const TABLE_COLUMN_COUNT = 9;
+const TABLE_COLUMN_COUNT = 10;
 const TOGGLE = Object.freeze({ HOME: 'home', MALL: 'mall' });
 
 /**
@@ -81,36 +78,58 @@ const AdminShopProductsPage = () => {
   const navigate = useNavigate();
   const { user, isLoggedIn, isLoading: sessionLoading } = useSession();
   const allowed = RoleUtils.isAdmin(user) || RoleUtils.isStaff(user);
-  const [confirm, ConfirmModal] = useConfirm();
   const { toast, showToast, hideToast } = useAdminShopSuiteToast();
 
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
   const [products, setProducts] = useState([]);
+  const [totalElements, setTotalElements] = useState(0);
+  const [counts, setCounts] = useState({});
   const [pendingKey, setPendingKey] = useState('');
   const [segment, setSegment] = useState(ADMIN_SHOP_PRODUCT_SEGMENT.ALL);
   const [query, setQuery] = useState('');
+  const [debouncedQuery, setDebouncedQuery] = useState('');
   const [page, setPage] = useState(1);
   const productsRef = useRef(products);
+  const requestSeqRef = useRef(0);
 
   useEffect(() => {
     productsRef.current = products;
   }, [products]);
 
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedQuery(query.trim()), ADMIN_SHOP_SEARCH_DEBOUNCE_MS);
+    return () => clearTimeout(timer);
+  }, [query]);
+
   /**
    * @param {{ silent?: boolean }} [options]
    */
   const loadProducts = useCallback(async(options = {}) => {
+    const seq = requestSeqRef.current + 1;
+    requestSeqRef.current = seq;
     try {
       await runResourceLoad(options, setLoading, async() => {
-        const sources = await listAdminShopProductSources();
-        setProducts(mergeAdminShopProducts(sources));
+        const result = await listAdminShopProducts({
+          page: page - 1,
+          size: ADMIN_SHOP_SUITE_PAGE_SIZE,
+          segment: segment === ADMIN_SHOP_PRODUCT_SEGMENT.ALL ? null : segment,
+          q: debouncedQuery || null
+        });
+        if (seq !== requestSeqRef.current) {
+          return;
+        }
+        setProducts(Array.isArray(result?.products) ? result.products : []);
+        setTotalElements(Number(result?.totalElements) || 0);
+        setCounts(result?.counts || {});
         setLoadError(false);
       });
     } catch {
-      setLoadError(true);
+      if (seq === requestSeqRef.current) {
+        setLoadError(true);
+      }
     }
-  }, []);
+  }, [page, segment, debouncedQuery]);
 
   useEffect(() => {
     if (sessionLoading) {
@@ -130,23 +149,18 @@ const AdminShopProductsPage = () => {
 
   useEffect(() => {
     setPage(1);
-  }, [segment, query]);
+  }, [segment, debouncedQuery]);
 
-  const counts = useMemo(() => countAdminShopProductSegments(products), [products]);
   const segmentItems = useMemo(() => ADMIN_SHOP_PRODUCT_SEGMENTS.map((seg) => ({
     value: seg.value,
     label: seg.label,
-    badge: counts[seg.value] ?? 0
+    badge: Number(counts?.[seg.value]) || 0
   })), [counts]);
-  const filtered = useMemo(
-    () => filterAdminShopProducts(products, { segment, query }),
-    [products, segment, query]
-  );
-  const pageInfo = useMemo(
-    () => paginateAdminShopItems(filtered, page, ADMIN_SHOP_SUITE_PAGE_SIZE),
-    [filtered, page]
-  );
-  const stoppedCount = counts[ADMIN_SHOP_PRODUCT_SEGMENT.STOPPED] ?? 0;
+  const stoppedCount = Number(counts?.[ADMIN_SHOP_PRODUCT_SEGMENT.STOPPED]) || 0;
+  const catalogEmpty = (Number(counts?.[ADMIN_SHOP_PRODUCT_SEGMENT.ALL]) || 0) === 0 && !debouncedQuery;
+  const totalPages = Math.max(1, Math.ceil(totalElements / ADMIN_SHOP_SUITE_PAGE_SIZE));
+  const rangeFrom = totalElements === 0 ? 0 : (page - 1) * ADMIN_SHOP_SUITE_PAGE_SIZE + 1;
+  const rangeTo = Math.min(page * ADMIN_SHOP_SUITE_PAGE_SIZE, totalElements);
 
   const patchProduct = useCallback((key, patch) => {
     setProducts((prev) => prev.map((p) => (p.key === key ? { ...p, ...patch } : p)));
@@ -189,28 +203,54 @@ const AdminShopProductsPage = () => {
     }
   }, [patchProduct, showToast]);
 
-  const handleStopSale = async(product) => {
-    const confirmed = await confirm({
-      title: formatAdminShopCopy(ADMIN_SHOP_PRODUCTS_COPY.STOP_TITLE, { productName: product.name }),
-      message: ADMIN_SHOP_PRODUCTS_COPY.STOP_IMPACT,
-      confirmLabel: ADMIN_SHOP_PRODUCTS_COPY.STOP_CONFIRM,
-      cancelLabel: t('admin.actions.cancel'),
-      variant: 'warning'
-    });
-    if (!confirmed) {
-      return;
-    }
-    setPendingKey(`${product.key}:stop`);
+  /**
+   * 되돌리기 — 판매 재개 후 중지 직전의 홈 공개·몰 노출 값을 복원한다.
+   */
+  const undoStop = useCallback(async(product, previous) => {
+    setPendingKey(`${product.key}:sale`);
     try {
-      await setAdminShopProductActive(product, false);
-      if (product.mallVisible) {
-        await setAdminShopProductMallVisible(product, false);
+      let current = await setAdminShopProductSaleStatus(product, true);
+      if (previous.homePublic && current?.codeRow) {
+        const codeRow = await setAdminShopProductHomePublic(current, true);
+        current = { ...current, homePublic: true, codeRow };
       }
-      showToast(ADMIN_SHOP_PRODUCTS_COPY.STOP_DONE);
+      if (previous.mallVisible) {
+        await setAdminShopProductMallVisible(current, true);
+      }
       await softRefresh(loadProducts);
     } catch (e) {
       notificationManager.error(
-        e?.message != null ? String(e.message) : ADMIN_SHOP_PRODUCTS_COPY.TOGGLE_FAILED
+        e?.message != null ? String(e.message) : ADMIN_SHOP_PRODUCTS_COPY.STATUS_FAILED
+      );
+    } finally {
+      setPendingKey('');
+    }
+  }, [loadProducts]);
+
+  /**
+   * 판매 상태 토글. 중지 → 홈·몰 off + 잠금, 토스트 「기존 구매분은 유지돼요」 + 되돌리기.
+   * 재개 → 잠금만 해제 (홈·몰은 꺼진 채).
+   */
+  const handleSaleStatus = async(product, onSale) => {
+    const previous = { homePublic: product.homePublic, mallVisible: product.mallVisible };
+    setPendingKey(`${product.key}:sale`);
+    try {
+      const updated = await setAdminShopProductSaleStatus(product, onSale);
+      patchProduct(product.key, updated
+        ? { ...updated, key: product.key }
+        : { active: onSale, ...(onSale ? {} : { homePublic: false, mallVisible: false }) });
+      if (onSale) {
+        showToast(ADMIN_SHOP_PRODUCTS_COPY.RESUME_DONE);
+      } else {
+        showToast(ADMIN_SHOP_PRODUCTS_COPY.STOP_KEPT_TOAST, {
+          label: ADMIN_SHOP_PRODUCTS_COPY.UNDO,
+          onClick: () => undoStop(product, previous)
+        });
+      }
+      await softRefresh(loadProducts);
+    } catch (e) {
+      notificationManager.error(
+        e?.message != null ? String(e.message) : ADMIN_SHOP_PRODUCTS_COPY.STATUS_FAILED
       );
     } finally {
       setPendingKey('');
@@ -220,14 +260,14 @@ const AdminShopProductsPage = () => {
   const goCreate = () => navigate(ADMIN_SHOP_PRODUCT_ROUTES.NEW);
 
   /**
-   * 판매 중지 상품은 켜기 막힘(끄기는 허용). 몰 노출은 회기 미설정일 때도 켜기 막힘.
+   * 판매 중지 상품은 홈·몰 토글 잠금. 몰 노출은 회기 미설정일 때 켜기 막힘.
    */
   const renderToggle = (product, kind) => {
     const isHome = kind === TOGGLE.HOME;
     const checked = isHome ? product.homePublic : product.mallVisible;
     const stopped = product.active === false;
     const unset = !isHome && isAdminShopProductSessionUnset(product.sessions);
-    const blocked = !checked && (stopped || unset);
+    const blocked = stopped || (!checked && unset);
     const toggle = (
       <Switch
         checked={checked}
@@ -290,13 +330,23 @@ const AdminShopProductsPage = () => {
             </span>
           </div>
         </td>
-        <td>
+        <td onClick={(e) => e.stopPropagation()}>
           <div className="admin-shop-suite__cell-stack">
-            <span
-              className={`admin-shop-suite__chip ${stopped ? 'admin-shop-suite__chip--stopped' : 'admin-shop-suite__chip--paid'}`}
-              data-testid={ADMIN_SHOP_SUITE_TEST_IDS.PRODUCT_STATUS_CHIP}
-            >
-              {stopped ? ADMIN_SHOP_PRODUCTS_COPY.STATUS_STOPPED : ADMIN_SHOP_PRODUCTS_COPY.STATUS_ON_SALE}
+            <span className="admin-shop-suite__sale-status">
+              <Switch
+                checked={!stopped}
+                disabled={Boolean(pendingKey) && pendingKey !== `${product.key}:sale`}
+                isPending={pendingKey === `${product.key}:sale`}
+                ariaLabel={`${product.name} ${ADMIN_SHOP_PRODUCTS_COPY.STATUS_TOGGLE_ARIA}`}
+                data-testid={ADMIN_SHOP_SUITE_TEST_IDS.PRODUCT_SALE_TOGGLE}
+                onCheckedChange={(next) => handleSaleStatus(product, next)}
+              />
+              <span
+                className={`admin-shop-suite__chip ${stopped ? 'admin-shop-suite__chip--stopped' : 'admin-shop-suite__chip--on-sale'}`}
+                data-testid={ADMIN_SHOP_SUITE_TEST_IDS.PRODUCT_STATUS_CHIP}
+              >
+                {stopped ? ADMIN_SHOP_PRODUCTS_COPY.STATUS_STOPPED : ADMIN_SHOP_PRODUCTS_COPY.STATUS_ON_SALE}
+              </span>
             </span>
             {unset ? (
               <span
@@ -323,6 +373,13 @@ const AdminShopProductsPage = () => {
         <td className="admin-shop-suite__cell--right admin-shop-suite__num admin-shop-suite__muted">
           <SafeText>{product.perSession != null ? formatShopMoney(product.perSession) : '—'}</SafeText>
         </td>
+        <td className="admin-shop-suite__muted">
+          <SafeText>
+            {product.validityMonths != null
+              ? formatAdminShopCopy(ADMIN_SHOP_PRODUCTS_COPY.VALIDITY_VALUE, { months: product.validityMonths })
+              : ADMIN_SHOP_PRODUCTS_COPY.VALIDITY_NONE}
+          </SafeText>
+        </td>
         <td onClick={(e) => e.stopPropagation()}>
           {product.codeRow ? renderToggle(product, TOGGLE.HOME) : <span className="admin-shop-suite__faint">—</span>}
         </td>
@@ -347,14 +404,6 @@ const AdminShopProductsPage = () => {
                 label: ADMIN_SHOP_PRODUCTS_COPY.MENU_EDIT,
                 hidden: !editId,
                 onClick: openEdit
-              },
-              {
-                id: 'stop',
-                label: ADMIN_SHOP_PRODUCTS_COPY.MENU_STOP,
-                variant: 'destructive',
-                hidden: !product.codeRow || !product.active,
-                disabled: Boolean(pendingKey),
-                onClick: () => handleStopSale(product)
               }
             ]}
           />
@@ -367,12 +416,12 @@ const AdminShopProductsPage = () => {
     if (loading && products.length === 0) {
       return <AdminShopTableSkeleton columnCount={TABLE_COLUMN_COUNT} />;
     }
-    if (pageInfo.pageItems.length === 0) {
+    if (products.length === 0) {
       return (
         <tbody>
           <tr className="admin-shop-suite__row--static">
             <td colSpan={TABLE_COLUMN_COUNT}>
-              {products.length === 0 ? (
+              {catalogEmpty ? (
                 <EmptyState
                   title={ADMIN_SHOP_PRODUCTS_COPY.EMPTY_TITLE}
                   description={ADMIN_SHOP_PRODUCTS_COPY.EMPTY_DESC}
@@ -396,8 +445,8 @@ const AdminShopProductsPage = () => {
       );
     }
     const rows = [];
-    pageInfo.pageItems.forEach((product, index) => {
-      const prev = index > 0 ? pageInfo.pageItems[index - 1] : null;
+    products.forEach((product, index) => {
+      const prev = index > 0 ? products[index - 1] : null;
       const startsStopped = product.active === false && (prev == null || prev.active !== false);
       if (startsStopped && segment === ADMIN_SHOP_PRODUCT_SEGMENT.ALL) {
         rows.push(renderGroupRow());
@@ -479,6 +528,7 @@ const AdminShopProductsPage = () => {
                     <col className="admin-shop-suite__col-sessions" />
                     <col className="admin-shop-suite__col-price" />
                     <col className="admin-shop-suite__col-price" />
+                    <col className="admin-shop-suite__col-validity" />
                     <col className="admin-shop-suite__col-toggle" />
                     <col className="admin-shop-suite__col-toggle" />
                     <col className="admin-shop-suite__col-content" />
@@ -497,6 +547,7 @@ const AdminShopProductsPage = () => {
                         <span className="admin-shop-suite__arrow" aria-hidden="true">▸</span>
                       </th>
                       <th scope="col" className="admin-shop-suite__cell--right">{ADMIN_SHOP_PRODUCTS_COPY.COL_PER_SESSION}</th>
+                      <th scope="col">{ADMIN_SHOP_PRODUCTS_COPY.COL_VALIDITY}</th>
                       <th scope="col">{ADMIN_SHOP_PRODUCTS_COPY.COL_HOME}</th>
                       <th scope="col">{ADMIN_SHOP_PRODUCTS_COPY.COL_MALL}</th>
                       <th scope="col">{ADMIN_SHOP_PRODUCTS_COPY.COL_CONTENT}</th>
@@ -507,18 +558,18 @@ const AdminShopProductsPage = () => {
                 </table>
               </div>
 
-              {pageInfo.total > 0 ? (
+              {totalElements > 0 ? (
                 <div className="admin-shop-suite__pagination">
                   <span>
                     <SafeText>
-                      {`${pageInfo.from}–${pageInfo.to} / ${pageInfo.total}${ADMIN_SHOP_PRODUCTS_COPY.PAGINATION_UNIT}`}
+                      {`${rangeFrom}–${rangeTo} / ${totalElements}${ADMIN_SHOP_PRODUCTS_COPY.PAGINATION_UNIT}`}
                     </SafeText>
                   </span>
-                  {pageInfo.totalPages > 1 ? (
+                  {totalPages > 1 ? (
                     <MGPagination
-                      currentPage={pageInfo.page}
-                      totalPages={pageInfo.totalPages}
-                      totalItems={pageInfo.total}
+                      currentPage={page}
+                      totalPages={totalPages}
+                      totalItems={totalElements}
                       itemsPerPage={ADMIN_SHOP_SUITE_PAGE_SIZE}
                       onPageChange={setPage}
                       showInfo={false}
@@ -532,7 +583,6 @@ const AdminShopProductsPage = () => {
           )}
         </div>
       </ContentArea>
-      <ConfirmModal />
       <AdminShopSuiteToast toast={toast} onDismiss={hideToast} />
     </AdminCommonLayout>
   );

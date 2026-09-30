@@ -25,6 +25,7 @@ import {
   hasConsultantScheduleTimeOverlap,
   isPastDateOnly,
   isScheduleCalendarDragLocked,
+  resolveMovedScheduleEnd,
   SCHEDULE_DRAG_TO_PAST_DATE_MESSAGE
 } from '../../utils/scheduleRescheduleUtils';
 import {
@@ -207,6 +208,10 @@ const UnifiedScheduleComponent = ({
    * 미전달 시 items=null 이면 섹션 미노출(기존) → 회귀 0.
    */
   missingConsultationLogsLoading = false,
+  /**
+   * ScheduleLegend 카운트 도착 시 강제 펼침 여부. 미전달 시 기존 동작(true) — 다른 라우트 회귀 0.
+   */
+  legendAutoExpandOnCounts = true,
   /**
    * 가예약 과거 슬롯 상세 — 「당일 결제 + 활성화」 콜백.
    * 통합 스케줄(IntegratedMatchingSchedule)만 전달. ScheduleDetailModal 로 그대로 전달.
@@ -1212,7 +1217,7 @@ const UnifiedScheduleComponent = ({
         }
 
         const newStart = event.start;
-        const newEnd = event.end;
+        const newEnd = resolveMovedScheduleEnd(newStart, event.end, originalStart, originalEnd);
 
         if (isPastDateOnly(newStart)) {
             info.revert();
@@ -1493,6 +1498,7 @@ const UnifiedScheduleComponent = ({
                 missingConsultationLogs={missingConsultationLogs}
                 missingConsultationLogsLoading={missingConsultationLogsLoading}
                 onMissingLogDateChipClick={handleMissingLogDateChipClick}
+                autoExpandOnCounts={legendAutoExpandOnCounts}
             />
 
             {loading && (

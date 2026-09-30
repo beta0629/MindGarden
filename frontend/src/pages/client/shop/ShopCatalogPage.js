@@ -1,59 +1,60 @@
 /**
- * ShopCatalogPage — PLP (카탈로그 목록)
+ * ShopCatalogPage — 내담자 몰 목록 (보통 쇼핑몰 · 결제 최단 경로)
+ * 판매 중 + 홈 공개 상품 전부 · 관리자 순서 유지 · 오른쪽 sticky 장바구니 · 좁은 웹 하단 바
  *
  * @author MindGarden
  * @since 2026-05-19
  */
 
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import ShopClientLayout from '../../../components/shop/templates/ShopClientLayout';
 import ShopClientSessionLoading from '../../../components/shop/templates/ShopClientSessionLoading';
-import ShopTenantBanner from '../../../components/shop/organisms/ShopTenantBanner';
-import ShopCategoryTabs from '../../../components/shop/molecules/ShopCategoryTabs';
-import SkuCard from '../../../components/shop/molecules/SkuCard';
+import MallEmptyState from '../../../components/shop/molecules/MallEmptyState';
+import MallToast from '../../../components/shop/molecules/MallToast';
+import MallUsageBanner from '../../../components/shop/molecules/MallUsageBanner';
+import MallBeforeBuyCard from '../../../components/shop/organisms/MallBeforeBuyCard';
+import MallCartBar from '../../../components/shop/organisms/MallCartBar';
+import MallCartSummary from '../../../components/shop/organisms/MallCartSummary';
+import MallProductCard from '../../../components/shop/organisms/MallProductCard';
 import {
-  SHOP_CATALOG_CATEGORY,
-  SHOP_CATEGORY_TABS,
+  CLIENT_MALL_COPY,
+  CLIENT_MALL_TEST_IDS,
+  CLIENT_MALL_USAGE_BANNER,
+  CLIENT_MALL_USAGE_BANNER_EXAMPLE
+} from '../../../constants/clientMallConstants';
+import {
+  CLIENT_SHOP_CATALOG_EMPTY_TEST_ID,
   CLIENT_SHOP_ROUTES,
   CLIENT_SHOP_TEST_IDS,
-  CLIENT_SHOP_CATALOG_EMPTY_TEST_ID,
   SHOP_SKU_ADD_FIRST_TEST_ID,
-  normalizeShopCatalogCategory,
   buildShopSkuDetailPath
 } from '../../../constants/clientShopConstants';
-import { CLIENT_WEB_SUITE_COPY } from '../../../constants/clientWebSuiteConstants';
 import { RoleUtils } from '../../../constants/roles';
 import { useClientShopAuth } from '../../../hooks/useClientShopAuth';
-import {
-  fetchShopCatalog,
-  fetchShopCart,
-  mergeCartLine,
-  replaceShopCart
-} from '../../../services/clientShopService';
-import { mergeGuestCartLine } from '../../../utils/guestShopCart';
+import useClientMallCart from '../../../hooks/useClientMallCart';
+import { fetchShopCatalog } from '../../../services/clientShopService';
+import { buildBuyNowCheckoutPath } from '../../../utils/clientMallBuyNow';
+
+const buildLoginPath = (redirect) => `/login?redirect=${encodeURIComponent(redirect)}`;
 
 const ShopCatalogPage = () => {
   const navigate = useNavigate();
   const { sessionLoading, isLoggedIn, user } = useClientShopAuth({ requireLogin: false });
   const authenticatedCatalog = isLoggedIn && RoleUtils.isClient(user);
   const [catalog, setCatalog] = useState([]);
-  const [activeCategory, setActiveCategory] = useState(SHOP_CATALOG_CATEGORY.CONSULTATION);
-  const [loading, setLoading] = useState(false);
   const [catalogLoaded, setCatalogLoaded] = useState(false);
-  const [message, setMessage] = useState('');
+  const [loadError, setLoadError] = useState('');
 
   const loadCatalog = useCallback(async() => {
     try {
-      setLoading(true);
       setCatalogLoaded(false);
-      setMessage('');
+      setLoadError('');
       setCatalog(await fetchShopCatalog({ authenticated: authenticatedCatalog }));
-    } catch (e) {
+    } catch {
       setCatalog([]);
-      setMessage(e.message || '카탈로그를 불러오지 못했습니다.');
+      setLoadError(CLIENT_MALL_COPY.LOAD_FAILED);
     } finally {
-      setLoading(false);
       setCatalogLoaded(true);
     }
   }, [authenticatedCatalog]);
@@ -64,116 +65,112 @@ const ShopCatalogPage = () => {
     }
   }, [sessionLoading, loadCatalog]);
 
-  /** 활성 탭에 SKU 없으면 동기 fallback — useEffect 탭 전환 시 empty testid 1프레임 노출 방지 */
-  const displayCategory = useMemo(() => {
-    if (catalog.length === 0) {
-      return activeCategory;
-    }
-    const hasInActiveTab = catalog.some(
-      (row) => normalizeShopCatalogCategory(row.catalogCategory) === activeCategory
-    );
-    if (hasInActiveTab) {
-      return activeCategory;
-    }
-    const tabWithSkus = SHOP_CATEGORY_TABS.find((tab) =>
-      catalog.some(
-        (row) => normalizeShopCatalogCategory(row.catalogCategory) === tab.key
-      )
-    );
-    return tabWithSkus?.key ?? activeCategory;
-  }, [catalog, activeCategory]);
+  const mall = useClientMallCart({
+    isLoggedIn,
+    sessionReady: !sessionLoading && catalogLoaded,
+    catalog
+  });
 
-  const filteredCatalog = useMemo(
-    () =>
-      catalog.filter(
-        (row) => normalizeShopCatalogCategory(row.catalogCategory) === displayCategory
-      ),
-    [catalog, displayCategory]
-  );
-
-  useEffect(() => {
-    if (displayCategory !== activeCategory && catalog.length > 0) {
-      setActiveCategory(displayCategory);
-    }
-  }, [displayCategory, activeCategory, catalog.length]);
-
-  const handleAddToCart = async(skuCode) => {
+  const goCheckout = useCallback(() => {
     if (!isLoggedIn) {
-      mergeGuestCartLine(skuCode, 1);
-      navigate(
-        `/login?redirect=${encodeURIComponent(CLIENT_SHOP_ROUTES.CART)}`,
-        { replace: true }
-      );
+      navigate(buildLoginPath(CLIENT_SHOP_ROUTES.CHECKOUT));
       return;
     }
-    try {
-      setLoading(true);
-      setMessage('');
-      const cart = await fetchShopCart();
-      const lines = mergeCartLine(cart.lines, skuCode, 1);
-      await replaceShopCart(lines);
-      navigate(CLIENT_SHOP_ROUTES.CART);
-    } catch (e) {
-      setMessage(e.message || '장바구니에 담지 못했습니다.');
-    } finally {
-      setLoading(false);
-    }
-  };
+    navigate(CLIENT_SHOP_ROUTES.CHECKOUT);
+  }, [isLoggedIn, navigate]);
+
+  const handleBuyNow = useCallback((skuCode) => {
+    const path = buildBuyNowCheckoutPath(skuCode);
+    navigate(isLoggedIn ? path : buildLoginPath(path));
+  }, [isLoggedIn, navigate]);
 
   if (sessionLoading) {
-    return <ShopClientSessionLoading title="상품 둘러보기" />;
+    return <ShopClientSessionLoading title={CLIENT_MALL_COPY.PAGE_TITLE} />;
   }
 
-  const tenantLabel =
-    user?.tenantName ||
-    user?.organizationName ||
-    (typeof window !== 'undefined'
-      ? window.sessionStorage.getItem('subdomain_tenant_name')
-      : null) ||
-    null;
+  const { summary } = mall;
+  const showEmpty = catalogLoaded && catalog.length === 0;
+
+  const aside = (
+    <MallCartSummary
+      cart={mall.cart}
+      summary={summary}
+      lastAddedSku={mall.lastAddedSku}
+      onCheckout={goCheckout}
+    />
+  );
 
   return (
-    <ShopClientLayout title={CLIENT_WEB_SUITE_COPY.SHOP_CATALOG_TITLE} testId={CLIENT_SHOP_TEST_IDS.CATALOG_PAGE}>
-      <ShopTenantBanner tenantLabel={tenantLabel} />
+    <ShopClientLayout
+      title={CLIENT_MALL_COPY.PAGE_TITLE}
+      testId={CLIENT_SHOP_TEST_IDS.CATALOG_PAGE}
+      meta={<p className="client-mall-page__subtitle">{CLIENT_MALL_COPY.PAGE_SUBTITLE}</p>}
+      aside={aside}
+      cartQty={summary.quantity}
+      cartPulse={mall.pulse}
+      className="client-mall--catalog"
+    >
+      <MallUsageBanner
+        text={CLIENT_MALL_USAGE_BANNER}
+        example={CLIENT_MALL_USAGE_BANNER_EXAMPLE}
+        testId={CLIENT_MALL_TEST_IDS.USAGE_BANNER}
+      />
       {!isLoggedIn ? (
-        <p className="client-shop__message" data-testid="client-shop-catalog-login-cta">
-          장바구니·결제는{' '}
-          <Link to={`/login?redirect=${encodeURIComponent(CLIENT_SHOP_ROUTES.CHECKOUT)}`}>
-            로그인
-          </Link>
-          이 필요합니다.
+        <p className="client-mall-page__hint" data-testid="client-shop-catalog-login-cta">
+          {CLIENT_MALL_COPY.LOGIN_REQUIRED}{' '}
+          <Link to={buildLoginPath(CLIENT_SHOP_ROUTES.CATALOG)}>{CLIENT_MALL_COPY.LOGIN_LINK}</Link>
         </p>
       ) : null}
-      <ShopCategoryTabs activeKey={displayCategory} onChange={setActiveCategory} />
-      {message ? (
-        <p className="client-shop__message client-shop__message--error" role="alert">
-          {message}
-        </p>
+      {loadError || mall.error ? (
+        <p className="client-mall-page__error" role="alert">{loadError || mall.error}</p>
       ) : null}
-      {loading && !catalogLoaded ? (
-        <p className="client-shop__message" data-testid={CLIENT_SHOP_TEST_IDS.CATALOG_LOADING}>
-          불러오는 중…
-        </p>
+      {!catalogLoaded ? (
+        <p className="client-mall-page__hint" data-testid={CLIENT_SHOP_TEST_IDS.CATALOG_LOADING} aria-busy="true" />
       ) : null}
-      {catalogLoaded && !loading && filteredCatalog.length === 0 ? (
-        <p className="client-shop__empty" data-testid={CLIENT_SHOP_CATALOG_EMPTY_TEST_ID}>
-          이 카테고리에 노출된 상품이 없습니다.
-        </p>
-      ) : null}
-      {filteredCatalog.length > 0 ? (
-        <div className="client-shop__grid" role="list">
-          {filteredCatalog.map((sku, index) => (
-            <SkuCard
-              key={sku.skuCode}
-              sku={sku}
-              loading={loading}
-              detailTo={buildShopSkuDetailPath(sku.skuCode)}
-              onAddToCart={() => handleAddToCart(sku.skuCode)}
-              addButtonTestId={index === 0 ? SHOP_SKU_ADD_FIRST_TEST_ID : null}
-            />
-          ))}
+      {showEmpty ? (
+        <div data-testid={CLIENT_SHOP_CATALOG_EMPTY_TEST_ID}>
+          <MallEmptyState
+            title={CLIENT_MALL_COPY.EMPTY_TITLE}
+            body={CLIENT_MALL_COPY.EMPTY_BODY}
+            testId={CLIENT_MALL_TEST_IDS.CATALOG_EMPTY}
+          />
         </div>
       ) : null}
+      {catalog.length > 0 ? (
+        <>
+          <div className="client-mall-list-head" data-testid={CLIENT_MALL_TEST_IDS.LIST_HEAD}>
+            <span>
+              {CLIENT_MALL_COPY.LIST_HEAD_PREFIX}
+              {catalog.length}
+              {CLIENT_MALL_COPY.LIST_HEAD_SUFFIX}
+            </span>
+            <span className="client-mall-list-head__hint">{CLIENT_MALL_COPY.LIST_HEAD_HINT}</span>
+          </div>
+          <div className="client-mall-grid" role="list" data-testid={CLIENT_MALL_TEST_IDS.CATALOG_GRID}>
+            {catalog.map((sku, index) => (
+              <div key={sku.skuCode} className="client-mall-grid__cell">
+                <MallProductCard
+                  sku={sku}
+                  addTestId={index === 0 ? SHOP_SKU_ADD_FIRST_TEST_ID : undefined}
+                  buyNowTestId={index === 0 ? CLIENT_MALL_TEST_IDS.CARD_BUY_NOW : undefined}
+                  detailTo={buildShopSkuDetailPath(sku.skuCode)}
+                  onAdd={() => mall.add(sku.skuCode)}
+                  onBuyNow={() => handleBuyNow(sku.skuCode)}
+                />
+              </div>
+            ))}
+          </div>
+        </>
+      ) : null}
+      <MallBeforeBuyCard />
+      <div className="client-mall-bar-spacer" aria-hidden="true" />
+      <MallCartBar
+        quantity={summary.quantity}
+        subtotalMinor={summary.subtotalMinor}
+        onAction={goCheckout}
+        disabled={summary.isEmpty}
+      />
+      <MallToast toast={mall.toast} />
     </ShopClientLayout>
   );
 };

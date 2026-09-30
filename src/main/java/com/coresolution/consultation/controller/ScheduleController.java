@@ -49,10 +49,12 @@ import com.coresolution.consultation.service.ScheduleMappingContextResolver;
 import com.coresolution.consultation.service.ScheduleMappingContextResolver.ScheduleMappingResponseContext;
 import com.coresolution.consultation.service.ScheduleService;
 import com.coresolution.consultation.util.PermissionCheckUtils;
+import com.coresolution.consultation.util.ScheduleSlotTimes;
 import com.coresolution.consultation.util.UserRoleCapabilityUtils;
 import com.coresolution.consultation.utils.SessionUtils;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.controller.BaseApiController;
+import com.coresolution.core.domain.ClientPlatform;
 import com.coresolution.core.dto.ApiResponse;
 import com.coresolution.core.util.LogSanitizer;
 import com.coresolution.core.util.PaginationUtils;
@@ -70,6 +72,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -823,7 +826,12 @@ public class ScheduleController extends BaseApiController {
         if (updateData.containsKey("startTime")) {
             String startTimeStr = (String) updateData.get("startTime");
             try {
-                existingSchedule.setStartTime(java.time.LocalTime.parse(startTimeStr));
+                LocalTime newStartTime = LocalTime.parse(startTimeStr);
+                existingSchedule.setStartTime(newStartTime);
+                if (!updateData.containsKey("endTime")) {
+                    existingSchedule.setEndTime(ScheduleSlotTimes.shiftEndPreservingDuration(
+                            startBeforeSlotUpdate, endBeforeSlotUpdate, newStartTime));
+                }
                 log.info("📝 스케줄 시작 시간 변경: {}", startTimeStr);
             } catch (Exception e) {
                 log.warn("⚠️ 유효하지 않은 시작 시간 형식: {}", startTimeStr);
@@ -1243,16 +1251,18 @@ public class ScheduleController extends BaseApiController {
      * POST /api/schedules/consultation-records
      *
      * <p>타기관 연계는 {@link InstitutionLinkConsultationLogWriteRouter} 에 위임만 한다.
-     * 타기관 예외를 catch 하지 않는다.</p>
+     * 타기관 예외를 catch 하지 않는다. 필수값 키가 하나도 없는 본문은 헤더와 무관하게 기존 앱으로 보고 통과시킨다.</p>
      */
     @PostMapping("/consultation-records")
     public ResponseEntity<ApiResponse<Object>> createConsultationRecord(
             @RequestBody Map<String, Object> recordData,
+            @RequestHeader(value = ClientPlatform.HEADER_NAME, required = false) String clientPlatformHeader,
             HttpSession session) {
         
         log.info("📝 상담일지 작성 - 데이터: {}", recordData);
 
-        Object savedRecord = institutionLinkConsultationLogWriteRouter.create(recordData);
+        Object savedRecord = institutionLinkConsultationLogWriteRouter.create(
+                recordData, ClientPlatform.fromHeader(clientPlatformHeader));
         
         return created("상담일지가 성공적으로 작성되었습니다.", savedRecord);
     }

@@ -1,7 +1,7 @@
 /**
  * ClientWebTopChrome — quiet Clinic-OS header (ink/slate tokens)
  * Shared by lobby · shop · cart · checkout. No LNB.
- * Header SSOT: stage rgba(.92)+blur · warm border · ~64px · pad ~48–56px · logout ghost
+ * Header SSOT: stage 92% 불투명+blur · warm border · 높이·좌우 여백은 토큰 · logout ghost
  *
  * @author CoreSolution
  * @since 2026-09-17
@@ -133,6 +133,26 @@
 
 .client-web-topchrome__cart:hover {
   color: var(--client-web-chrome-ink);
+}
+
+.client-web-topchrome__cart-icon {
+  flex-shrink: 0;
+}
+
+.client-web-topchrome__cart--pulse .client-web-topchrome__cart-qty {
+  animation: client-web-topchrome-cart-pulse 0.6s ease-out;
+}
+
+@keyframes client-web-topchrome-cart-pulse {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.25); }
+  100% { transform: scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .client-web-topchrome__cart--pulse .client-web-topchrome__cart-qty {
+    animation: none;
+  }
 }
 
 .client-web-topchrome__icon-link {
@@ -297,8 +317,41 @@
 
   .client-web-topchrome__nav {
     order: 3;
+    flex: 1 0 100%;
     width: 100%;
     justify-content: flex-start;
     overflow-x: auto;
+  }
+}
+
+/* 390px: 헤더 한 줄이 문서 폭을 넘지 않게 — 텍스트 라벨은 아이콘·아바타·aria-label 로 대신 */
+@media (max-width: 480px) {
+  .client-web-topchrome {
+    gap: var(--mg-v2-space-3, 0.75rem);
+    max-width: 100vw;
+  }
+
+  .client-web-topchrome__brand {
+    flex: 1 1 auto;
+  }
+
+  .client-web-topchrome__brand-sep,
+  .client-web-topchrome__brand-center,
+  .client-web-topchrome__cart-label,
+  .client-web-topchrome__user-name {
+    display: none;
+  }
+
+  .client-web-topchrome__end {
+    flex-shrink: 1;
+    min-width: 0;
+    gap: var(--mg-v2-space-2, 0.5rem);
+  }
+
+  .client-web-topchrome__login,
+  .client-web-topchrome__logout {
+    flex-shrink: 0;
+    white-space: nowrap;
+    padding: var(--mg-v2-space-1, 0.25rem) var(--mg-v2-space-2, 0.5rem);
   }
 }

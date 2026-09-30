@@ -35,9 +35,15 @@ import {
   SHOP_CHECKOUT_MAPPING_COPY,
 } from '@/constants/clientShopConstants';
 import {
+  buildConsultantPickerOptions,
   cartHasConsultationSku,
-  formatConsultantMappingLabel,
+  collectCartConsultationTitles,
+  distinctConsultantKey,
+  findUniquePreselectedMapping,
+  resolveBestMappingRowForConsultant,
+  resolveInitialMappingId,
   resolveMappingIdForCheckout,
+  shouldShowConsultantMappingPicker,
   validateCheckoutMapping,
 } from '@/utils/clientShopCheckout';
 import { toDisplayString } from '@/utils/toDisplayString';
@@ -60,6 +66,11 @@ export default function ShopCheckoutScreen() {
 
   const hasConsultationInCart = useMemo(
     () => cartHasConsultationSku(cart.lines, catalog),
+    [cart.lines, catalog],
+  );
+
+  const cartConsultationTitles = useMemo(
+    () => collectCartConsultationTitles(cart.lines, catalog),
     [cart.lines, catalog],
   );
 
@@ -88,41 +99,47 @@ export default function ShopCheckoutScreen() {
     () =>
       validateCheckoutMapping(
         hasConsultationInCart,
-        consultantMappings.length,
+        consultantMappings,
         selectedMappingId,
       ),
-    [hasConsultationInCart, consultantMappings.length, selectedMappingId],
+    [hasConsultationInCart, consultantMappings, selectedMappingId],
   );
 
-  const singleMappingLabel = useMemo(() => {
-    if (consultantMappings.length !== 1) {
+  const showMappingPicker = shouldShowConsultantMappingPicker(consultantMappings);
+
+  const consultantPickerOptions = useMemo(
+    () => buildConsultantPickerOptions(consultantMappings, cartConsultationTitles),
+    [consultantMappings, cartConsultationTitles],
+  );
+
+  const assignedMappingLabel = useMemo(() => {
+    if (consultantMappings.length === 0) {
       return '';
     }
-    const row = consultantMappings[0];
-    if (!row) {
-      return '';
-    }
-    const name = row.consultantDisplayName || '';
-    const suffix = row.label ? ` (${row.label})` : '';
-    return `${SHOP_CHECKOUT_MAPPING_COPY.AUTO_PREFIX}: ${name}${suffix}`;
-  }, [consultantMappings]);
+    const key = distinctConsultantKey(consultantMappings[0]);
+    const bucket = consultantMappings.filter((row) => distinctConsultantKey(row) === key);
+    const row =
+      resolveBestMappingRowForConsultant(bucket, cartConsultationTitles)
+      ?? findUniquePreselectedMapping(consultantMappings)
+      ?? consultantMappings[0];
+    const name = row?.consultantDisplayName ?? '';
+    return `${SHOP_CHECKOUT_MAPPING_COPY.AUTO_PREFIX}: ${name}`;
+  }, [consultantMappings, cartConsultationTitles]);
 
   useEffect(() => {
     if (!hasConsultationInCart) {
       setSelectedMappingId('');
       return;
     }
-    if (consultantMappings.length === 1) {
-      const only = consultantMappings[0];
-      if (only?.mappingId != null) {
-        setSelectedMappingId(String(only.mappingId));
-      }
+    const initial = resolveInitialMappingId(consultantMappings, cartConsultationTitles);
+    if (initial) {
+      setSelectedMappingId(initial);
       return;
     }
     if (consultantMappings.length === 0) {
       setSelectedMappingId('');
     }
-  }, [hasConsultationInCart, consultantMappings]);
+  }, [hasConsultationInCart, consultantMappings, cartConsultationTitles]);
 
   const checkoutBlocked =
     Boolean(pointsError) ||
@@ -161,7 +178,7 @@ export default function ShopCheckoutScreen() {
     }
     const mappingIdForCheckout = resolveMappingIdForCheckout(
       hasConsultationInCart,
-      selectedMappingId,
+      selectedMappingId || resolveInitialMappingId(consultantMappings, cartConsultationTitles),
     );
     try {
       setMessage('');
@@ -298,20 +315,7 @@ export default function ShopCheckoutScreen() {
                 >
                   {SHOP_CHECKOUT_MAPPING_COPY.NO_MAPPING}
                 </Text>
-              ) : consultantMappings.length === 1 ? (
-                <Text
-                  style={[
-                    styles.mappingInfo,
-                    {
-                      color: theme.colors.textSecondary,
-                      fontFamily: theme.fontFamily.regular,
-                      fontSize: theme.fontSize.sm,
-                    },
-                  ]}
-                >
-                  {singleMappingLabel}
-                </Text>
-              ) : (
+              ) : showMappingPicker ? (
                 <>
                   <Text
                     style={[
@@ -325,12 +329,12 @@ export default function ShopCheckoutScreen() {
                   >
                     {SHOP_CHECKOUT_MAPPING_COPY.SELECT_PLACEHOLDER}
                   </Text>
-                  {consultantMappings.map((row) => {
-                    const selected = selectedMappingId === String(row.mappingId);
+                  {consultantPickerOptions.map((option) => {
+                    const selected = selectedMappingId === option.value;
                     return (
                       <Pressable
-                        key={row.mappingId}
-                        onPress={() => setSelectedMappingId(String(row.mappingId))}
+                        key={option.value}
+                        onPress={() => setSelectedMappingId(option.value)}
                         disabled={loading}
                         style={({ pressed }) => [
                           styles.mappingRow,
@@ -342,7 +346,7 @@ export default function ShopCheckoutScreen() {
                         ]}
                         accessibilityRole="radio"
                         accessibilityState={{ selected }}
-                        accessibilityLabel={formatConsultantMappingLabel(row)}
+                        accessibilityLabel={option.label}
                       >
                         <Text
                           style={[
@@ -354,7 +358,7 @@ export default function ShopCheckoutScreen() {
                             },
                           ]}
                         >
-                          {formatConsultantMappingLabel(row)}
+                          {option.label}
                         </Text>
                       </Pressable>
                     );
@@ -371,6 +375,19 @@ export default function ShopCheckoutScreen() {
                     </Text>
                   ) : null}
                 </>
+              ) : (
+                <Text
+                  style={[
+                    styles.mappingInfo,
+                    {
+                      color: theme.colors.textSecondary,
+                      fontFamily: theme.fontFamily.regular,
+                      fontSize: theme.fontSize.sm,
+                    },
+                  ]}
+                >
+                  {assignedMappingLabel}
+                </Text>
               )}
             </View>
           ) : null}

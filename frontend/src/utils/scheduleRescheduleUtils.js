@@ -12,6 +12,7 @@ import {
   resolveScheduleStatusCodeForConflict,
   STATUS
 } from '../constants/schedule';
+import { formatLocalDateYmd } from './erpFinanceDisplay';
 
 /** API·input[type=time] 공통 HH:mm 길이 */
 const HM_LEN = 5;
@@ -37,7 +38,7 @@ export const SCHEDULE_DRAG_TO_PAST_DATE_MESSAGE = '과거 날짜로는 스케줄
 export function buildScheduleDatetimeUpdateBody(newStart, newEnd) {
   const ts = (d) => d.toTimeString().split(' ')[0].slice(0, HM_LEN);
   return {
-    date: newStart.toISOString().split('T')[0],
+    date: formatLocalDateYmd(newStart),
     startTime: ts(newStart),
     endTime: ts(newEnd)
   };

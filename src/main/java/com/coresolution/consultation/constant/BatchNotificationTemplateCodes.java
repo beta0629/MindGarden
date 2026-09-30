@@ -121,6 +121,26 @@ public final class BatchNotificationTemplateCodes {
     }
 
     /**
+     * 동일 슬롯 재시도 행의 {@code target_slot_key} 구분자 — {@code {slotKey}#{attemptNo}} (2회차부터).
+     * 실패 행은 수정하지 않고 재시도 행을 별도로 남겨 UNIQUE(…, target_slot_key) 멱등을 유지한다.
+     *
+     * @since 2026-09-30
+     */
+    public static final String TARGET_SLOT_KEY_RETRY_SEPARATOR = "#";
+
+    /**
+     * 동일 슬롯 재시도 행 슬롯 키.
+     *
+     * @param slotKey   {@link #buildReminderSlotKey} 결과
+     * @param attemptNo 시도 회차 (2 이상)
+     * @return {@code {slotKey}#{attemptNo}}
+     * @since 2026-09-30
+     */
+    public static String buildReminderSlotRetryKey(String slotKey, int attemptNo) {
+        return slotKey + TARGET_SLOT_KEY_RETRY_SEPARATOR + attemptNo;
+    }
+
+    /**
      * 마케팅성 템플릿 식별 — SMS 폴백 정책 F2 가드에 사용된다.
      * 마케팅 메시지(현재 {@link #SESSION_RENEW_PROMPT} 1종)는 알림톡 실패 시에도
      * SMS 폴백을 수행하지 않는다(수신동의/수신거부 구문 운영 복잡도 회피).
@@ -149,6 +169,9 @@ public final class BatchNotificationTemplateCodes {
 
     /** 멱등성 로그 channel_used — SMS 폴백. */
     public static final String CHANNEL_SMS = "SMS";
+
+    /** 멱등성 로그 channel_used — 발송 직전 INSERT 후 결과 미반영(진행 중·결과 불명). */
+    public static final String CHANNEL_PENDING = "PENDING";
 
     /** 멱등성 로그 error_code — 알림톡 매핑이 없어 SMS 폴백만 시도. */
     public static final String ERROR_CODE_TEMPLATE_NOT_MAPPED = "TEMPLATE_NOT_MAPPED";

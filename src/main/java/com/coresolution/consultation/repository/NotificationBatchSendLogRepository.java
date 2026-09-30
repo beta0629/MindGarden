@@ -126,6 +126,37 @@ public interface NotificationBatchSendLogRepository
         @Param("legacySentAtTo") LocalDateTime legacySentAtTo);
 
     /**
+     * 예약 리마인드(D-2/D-1) 동일 슬롯 재시도 행 조회 — {@code target_slot_key LIKE '{slotKey}#%'}.
+     *
+     * <p>최초 시도 행({@code target_slot_key = slotKey})은 {@link #findSlotScopedReminderLogs} 가 조회한다.
+     *
+     * @param tenantId           테넌트 ID
+     * @param templateCode       템플릿 코드 (D2 / LATE)
+     * @param targetType         대상 타입 ({@code SCHEDULE})
+     * @param targetId           스케줄 ID
+     * @param recipientUserId    수신자 users.id
+     * @param retrySlotKeyPrefix {@code {slotKey}#} (LIKE 접두어)
+     * @return 최신 발송 시각 순 재시도 로그 (없으면 빈 목록)
+     * @since 2026-09-30
+     */
+    @Query("SELECT l FROM NotificationBatchSendLog l "
+            + "WHERE l.tenantId = :tenantId "
+            + "AND l.templateCode = :templateCode "
+            + "AND l.targetType = :targetType "
+            + "AND l.targetId = :targetId "
+            + "AND l.recipientUserId = :recipientUserId "
+            + "AND l.targetSlotKey LIKE CONCAT(:retrySlotKeyPrefix, '%') "
+            + "AND (l.isDeleted = false OR l.isDeleted IS NULL) "
+            + "ORDER BY l.sentAt DESC")
+    List<NotificationBatchSendLog> findSlotScopedReminderRetryLogs(
+        @Param("tenantId") String tenantId,
+        @Param("templateCode") String templateCode,
+        @Param("targetType") String targetType,
+        @Param("targetId") Long targetId,
+        @Param("recipientUserId") Long recipientUserId,
+        @Param("retrySlotKeyPrefix") String retrySlotKeyPrefix);
+
+    /**
      * 여러 템플릿 코드 중 하나라도 동일 (target_type, target_id, recipient_user_id) 로 발송된 적이
      * 있는지 — 멱등 키를 코드 묶음(예: INITIAL_GUIDE_OFFLINE ∪ INITIAL_GUIDE_ONLINE) 으로 공유할 때 사용.
      *

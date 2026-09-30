@@ -10,6 +10,7 @@ import com.coresolution.consultation.constant.ShopClientOrderStatus;
 import com.coresolution.consultation.constant.ShopLatePaymentConstants;
 import com.coresolution.consultation.entity.Payment;
 import com.coresolution.consultation.exception.ShopOrderClosedForPaymentException;
+import com.coresolution.consultation.exception.ShopPaymentNotApprovableException;
 import com.coresolution.consultation.repository.PaymentRepository;
 import com.coresolution.consultation.service.ClientShopCheckoutService;
 import com.coresolution.consultation.service.PaymentService;
@@ -17,6 +18,7 @@ import com.coresolution.consultation.service.PersonalDataEncryptionService;
 import com.coresolution.consultation.service.ShopLatePaymentOutcome;
 import com.coresolution.consultation.service.ShopLatePaymentRefundService;
 import com.coresolution.consultation.service.ShopOrderPaymentState;
+import com.coresolution.consultation.util.OutsideTransactionScope;
 import com.coresolution.core.constants.TenantPgSettingsJsonKeys;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.domain.TenantPgConfiguration;
@@ -79,6 +81,16 @@ public class PortOnePaymentWebhookService {
     // 외부 트랜잭션 없이 실행 — 늦은 결제 PG 취소 동안 DB 커넥션을 잡지 않고, 승인·상태 변경은 각 서비스의 짧은 트랜잭션에서 반영
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public ResponseEntity<Map<String, Object>> handleWebhook(
+            byte[] rawBody,
+            String webhookTimestamp,
+            String webhookSignature,
+            String webhookId) {
+        // NOT_SUPPORTED 동기화 범위에 EntityManager 가 묶이면 커넥션을 끝까지 쥐므로 범위 밖에서 처리
+        return OutsideTransactionScope.call(
+                () -> processWebhook(rawBody, webhookTimestamp, webhookSignature, webhookId));
+    }
+
+    private ResponseEntity<Map<String, Object>> processWebhook(
             byte[] rawBody,
             String webhookTimestamp,
             String webhookSignature,
@@ -298,6 +310,7 @@ public class PortOnePaymentWebhookService {
     /**
      * 승인 트랜잭션의 주문 잠금 재확인에서 닫힌 주문(또는 낙관적 락 충돌)을 만난 경우.
      * 주문이 닫혔으면 500 대신 늦은 PAID 자동 환불로 처리하고, 열려 있으면 원래 예외를 다시 던진다(재시도).
+     * 열린 주문의 승인 불가 결제({@link ShopPaymentNotApprovableException}, H9b)는 이 결제만 PG 자동 취소한다.
      */
     private ResponseEntity<Map<String, Object>> handleLatePaidAfterRace(
             String tenantId,
@@ -308,7 +321,10 @@ public class PortOnePaymentWebhookService {
             RuntimeException raced) {
         log.warn("포트원 웹훅: 승인 중 주문 닫힘/동시 변경 감지 — 늦은 결제 재판정 paymentId={}, webhookId={}, cause={}",
                 paymentId, webhookId, raced.getClass().getSimpleName());
-        ShopLatePaymentOutcome outcome = shopLatePaymentRefundService.refundIfOrderClosed(tenantId, paymentId);
+        // H9b: 열린 주문인데 결제 건이 승인 불가 — 주문은 열린 채 이 결제만 PG 자동 취소
+        ShopLatePaymentOutcome outcome = raced instanceof ShopPaymentNotApprovableException
+                ? shopLatePaymentRefundService.refundUnapprovableOnOpenOrder(tenantId, paymentId)
+                : shopLatePaymentRefundService.refundIfOrderClosed(tenantId, paymentId);
         if (outcome == null || outcome == ShopLatePaymentOutcome.NOT_APPLICABLE) {
             if (isAlreadyApprovedByConcurrentWebhook(tenantId, orderPublicId, paymentId)) {
                 // 같은 PAID 의 동시 수신: 다른 요청이 승인·주문 PAID 를 먼저 커밋 — 한 번만 반영된 상태

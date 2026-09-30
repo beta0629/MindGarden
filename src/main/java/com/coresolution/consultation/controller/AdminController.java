@@ -125,6 +125,13 @@ public class AdminController extends BaseApiController {
     private static final int ADMIN_LIST_MAX_PAGE_SIZE = 200;
 
     /**
+     * CLIENT 가 본인 매칭이 아닌 clientId 를 조회할 때의 거부 사유.
+     * {@link com.coresolution.consultation.exception.GlobalExceptionHandler} 가 HTTP 403 으로 매핑한다.
+     */
+    private static final String DENIAL_MESSAGE_CLIENT_MAPPING_OWNERSHIP =
+            "본인 매칭 정보만 조회할 수 있습니다.";
+
+    /**
      * Admin list endpoints: page/size missing → force defaults (never full dump).
      * Hard max = {@link #ADMIN_LIST_MAX_PAGE_SIZE} (not global 50).
      *
@@ -715,22 +722,63 @@ public class AdminController extends BaseApiController {
     }
 
     /**
+     * 매칭 목록 조회에 사용할 내담자 id를 호출자 역할로 정한다.
+     *
+     * <p>CLIENT 는 요청 값을 쓰지 않고 세션 사용자 id만 허용한다.
+     * 불일치이거나 호출자를 식별할 수 없으면 조회 전에 거부한다.</p>
+     *
+     * @param session           현재 세션
+     * @param requestedClientId 쿼리 clientId
+     * @return 조회에 사용할 내담자 id
+     * @throws org.springframework.security.access.AccessDeniedException 본인 외 조회
+     */
+    private Long resolveMappingsClientIdForCaller(HttpSession session, Long requestedClientId) {
+        User currentUser = SessionUtils.getCurrentUser(session);
+        if (currentUser == null || currentUser.getRole() == null) {
+            throw new org.springframework.security.access.AccessDeniedException(
+                    DENIAL_MESSAGE_CLIENT_MAPPING_OWNERSHIP);
+        }
+        if (!currentUser.getRole().isClient()) {
+            return requestedClientId;
+        }
+        Long ownId = currentUser.getId();
+        if (ownId == null || !ownId.equals(requestedClientId)) {
+            log.warn("[security] client mapping ownership denied: userId={}, requestedClientId={}",
+                    ownId, requestedClientId);
+            throw new org.springframework.security.access.AccessDeniedException(
+                    DENIAL_MESSAGE_CLIENT_MAPPING_OWNERSHIP);
+        }
+        return ownId;
+    }
+
+    /**
      * 내담자별 매칭 조회.
+     *
+     * <p>CLIENT 역할은 쿼리 {@code clientId}를 신뢰하지 않는다. 세션 사용자 id와 다르면
+     * 저장소 조회 전에 거부하고, 같으면 세션 id로만 조회한다.
+     * ADMIN·STAFF·CONSULTANT 등 비내담자는 요청 id를 그대로 조회한다.
+     * 다른 테넌트 행은 {@link AdminService#getMappingsByClient(Long)} 가
+     * 호출자 테넌트({@code TenantContextHolder})로만 조회하는 기존 경로를 유지한다.</p>
      *
      * <p>money-path SSOT 보강 필드({@code paymentAmount}, {@code productTitle},
      * {@code lineTotalMinor}, {@code paymentProvider})는
      * {@link ClientMappingListPayloadService} 가 채운다.</p>
      *
-     * @param clientId 내담자 ID
+     * @param clientId 요청 내담자 ID. CLIENT 호출 시 본인 id와 같아야 한다
+     * @param session  현재 세션
      * @return 매핑 목록·건수
+     * @throws org.springframework.security.access.AccessDeniedException
+     *         호출자를 식별할 수 없거나 CLIENT 가 본인이 아닌 id를 요청한 경우
      * @author CoreSolution
      * @since 2026-09-17
      */
     @GetMapping("/mappings/client")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getMappingsByClient(
-            @RequestParam Long clientId) {
-        log.info("🔍 내담자별 매칭 조회: 내담자 ID={}", clientId);
-        List<ConsultantClientMapping> mappings = adminService.getMappingsByClient(clientId);
+            @RequestParam Long clientId,
+            HttpSession session) {
+        Long queryClientId = resolveMappingsClientIdForCaller(session, clientId);
+        log.info("내담자별 매칭 조회: clientId={}", queryClientId);
+        List<ConsultantClientMapping> mappings = adminService.getMappingsByClient(queryClientId);
         List<Map<String, Object>> mappingData = clientMappingListPayloadService.buildPayloads(mappings);
 
         Map<String, Object> data = new HashMap<>();

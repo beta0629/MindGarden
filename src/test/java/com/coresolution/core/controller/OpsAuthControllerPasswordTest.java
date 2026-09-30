@@ -9,9 +9,15 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.test.util.ReflectionTestUtils;
 
@@ -81,5 +87,54 @@ class OpsAuthControllerPasswordTest {
         when(jwtService.generateToken(anyMap(), anyString())).thenReturn("unit-token");
 
         assertThat(controller.login(request(DUMMY_PASSWORD)).getStatusCode().is2xxSuccessful()).isTrue();
+    }
+
+    @Test
+    @DisplayName("OPS_ADMIN_PASSWORD 공백만: 미설정으로 간주해 로그인 거부 (공백 입력으로 우회 불가)")
+    void whitespaceOnlyConfiguredPassword_rejected() {
+        ReflectionTestUtils.setField(controller, "opsAdminPassword", "   ");
+
+        assertThatThrownBy(() -> controller.login(request("   " + DUMMY_PASSWORD)))
+                .isInstanceOf(BadCredentialsException.class);
+        verify(jwtService, never()).generateToken(anyMap(), anyString());
+    }
+
+    @Test
+    @DisplayName("다른 아이디 + 올바른 비밀번호: 로그인 거부")
+    void otherUserIdWithCorrectPassword_rejected() {
+        ReflectionTestUtils.setField(controller, "opsAdminPassword", DUMMY_PASSWORD);
+        OpsAuthController.LoginRequest req = request(DUMMY_PASSWORD);
+        req.setUserId(ADMIN_ID + "-other");
+
+        assertThatThrownBy(() -> controller.login(req)).isInstanceOf(BadCredentialsException.class);
+        verify(jwtService, never()).generateToken(anyMap(), anyString());
+    }
+
+    @Test
+    @DisplayName("로그: 성공·실패 모두 비밀번호 값·길이를 남기지 않음")
+    void login_neverLogsPasswordValueOrLength() {
+        Logger logger = (Logger) LoggerFactory.getLogger(OpsAuthController.class);
+        Level originalLevel = logger.getLevel();
+        ListAppender<ILoggingEvent> appender = new ListAppender<>();
+        appender.start();
+        logger.addAppender(appender);
+        logger.setLevel(Level.DEBUG);
+        try {
+            ReflectionTestUtils.setField(controller, "opsAdminPassword", DUMMY_PASSWORD);
+            when(jwtService.generateToken(anyMap(), anyString())).thenReturn("unit-token");
+            controller.login(request(DUMMY_PASSWORD));
+            assertThatThrownBy(() -> controller.login(request(DUMMY_PASSWORD + "-x")))
+                    .isInstanceOf(BadCredentialsException.class);
+
+            assertThat(appender.list).isNotEmpty();
+            for (ILoggingEvent event : appender.list) {
+                String message = event.getFormattedMessage();
+                assertThat(message).doesNotContain(DUMMY_PASSWORD);
+                assertThat(message.toLowerCase()).doesNotContain("length");
+            }
+        } finally {
+            logger.detachAppender(appender);
+            logger.setLevel(originalLevel);
+        }
     }
 }

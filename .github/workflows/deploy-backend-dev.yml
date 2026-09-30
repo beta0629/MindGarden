@@ -43,6 +43,7 @@ on:
       - 'pom.xml'
       - 'deployment/mindgarden.prod-env.example'
       - '.github/workflows/deploy-backend-dev.yml'
+      - '.github/actions/assert-env-key-nonempty/**'
   workflow_dispatch:
     # 수동 실행 가능
 
@@ -101,6 +102,8 @@ jobs:
       # 운영(deploy-production.yml) 과 동일 set 으로 dev.env 도 동기화한다.
       # 미주입 시 ::notice 후 skip — secret 등록 전 batch fail 방지.
       MINDGARDEN_HQ_TENANT_ID: ${{ secrets.MINDGARDEN_HQ_TENANT_ID }}
+      # OPS_ADMIN_PASSWORD: 운영과 동일 repo secret. application-dev.yml ops.admin.password 는 기본값 없음.
+      OPS_ADMIN_PASSWORD: ${{ secrets.OPS_ADMIN_PASSWORD }}
       # V20260831_004 Flyway success=0 원샷 repair (서비스 재시작 직전) — 표준 프로시저 step 과 동일 Secret
       DEV_DB_HOST: ${{ secrets.DEV_DB_HOST }}
       DEV_DB_USER: ${{ secrets.DEV_DB_USER }}
@@ -227,6 +230,78 @@ jobs:
         script: |
           echo "SSH 연결 테스트 성공: $(date)"
           
+    # ============================================================================
+    # OPS_ADMIN_PASSWORD env 자동 주입 + 빈 값 가드 (개발)
+    # GitHub Secret 'OPS_ADMIN_PASSWORD'(운영과 동일) → /etc/mindgarden/dev.env 멱등 동기화. 값 echo 금지.
+    # 미등록 시 쓰기는 skip, 뒤 가드가 dev.env 값이 비어 있으면 재시작 전에 배포를 실패시킨다.
+    # '🚀 개발 서버 배포 준비'(서비스 stop) 이전에 둔다 — 가드 실패 시 서비스를 멈추지 않고 배포만 중단.
+    # ============================================================================
+    - name: 🔑 OPS_ADMIN_PASSWORD env 자동 주입
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.DEV_SERVER_HOST }}
+        username: ${{ secrets.DEV_SERVER_USER }}
+        key: ${{ secrets.DEV_SERVER_SSH_KEY }}
+        port: 22
+        timeout: 120s
+        command_timeout: 10m
+        envs: OPS_ADMIN_PASSWORD
+        script: |
+          DEV_ENV_FILE=/etc/mindgarden/dev.env
+          KEY=OPS_ADMIN_PASSWORD
+
+          VALUE="${OPS_ADMIN_PASSWORD}"
+          if [ -z "$VALUE" ]; then
+            echo "::notice title=${KEY} secret missing::GitHub Secret ${KEY} 미설정 → dev.env 갱신을 skip 합니다. 다음 빈 값 가드가 dev.env 값을 검사합니다."
+            exit 0
+          fi
+
+          # 1) 파일 존재 보장
+          if [ ! -f "$DEV_ENV_FILE" ]; then
+            echo "::warning title=dev.env 누락::$DEV_ENV_FILE 가 없어 신규 생성합니다."
+            sudo mkdir -p /etc/mindgarden
+            sudo touch "$DEV_ENV_FILE"
+            sudo chmod 600 "$DEV_ENV_FILE"
+            sudo chown root:root "$DEV_ENV_FILE"
+          fi
+
+          # 2) no-op 검사 — 동일 값이면 마커 미작성 (재시작 생략)
+          CURRENT_VALUE=$(sudo grep -E "^[[:space:]]*${KEY}=" "$DEV_ENV_FILE" 2>/dev/null | tail -n1 | sed -n 's/^[^=]*=//p' | sed -E 's/^"(.*)"$/\1/' | sed -E "s/^'(.*)'$/\1/" | tr -d '\r')
+          if [ "$CURRENT_VALUE" = "$VALUE" ]; then
+            echo "✅ ${KEY} 변경 없음 — env 갱신·재시작 생략 (no-op)"
+            exit 0
+          fi
+
+          # 3) 백업
+          BACKUP_FILE="${DEV_ENV_FILE}.bak.$(date +%Y%m%d_%H%M%S)"
+          sudo cp -p "$DEV_ENV_FILE" "$BACKUP_FILE" 2>/dev/null || true
+          echo "📦 백업: $BACKUP_FILE"
+
+          # 4) 멱등 KEY="VALUE" 갱신 (다른 dev sync step 과 동일 로직)
+          escaped_value=$(printf '%s' "$VALUE" | sed -e 's/[\\&|]/\\&/g')
+          if sudo grep -qE "^[[:space:]]*${KEY}=" "$DEV_ENV_FILE" 2>/dev/null; then
+            sudo sed -i "s|^[[:space:]]*${KEY}=.*|${KEY}=\"${escaped_value}\"|" "$DEV_ENV_FILE"
+          else
+            printf '%s="%s"\n' "$KEY" "$VALUE" | sudo tee -a "$DEV_ENV_FILE" >/dev/null
+          fi
+          sudo chmod 600 "$DEV_ENV_FILE"
+          sudo chown root:root "$DEV_ENV_FILE"
+          echo "✅ ${KEY} 갱신 완료 (값 미표시)"
+
+          # 5) 변경 마커 작성 — 통합 restart step 에서 반영·검증
+          sudo touch /tmp/mindgarden-dev-env-pending-restart
+          echo "📝 변경 마커 작성: /tmp/mindgarden-dev-env-pending-restart (통합 restart step 에서 ${KEY} 반영·검증)"
+
+    - name: 🛑 OPS_ADMIN_PASSWORD 빈 값 가드 (재시작 전)
+      uses: ./.github/actions/assert-env-key-nonempty
+      with:
+        step_name: 'OPS_ADMIN_PASSWORD'
+        key: 'OPS_ADMIN_PASSWORD'
+        env_path: '/etc/mindgarden/dev.env'
+        ssh_host: ${{ secrets.DEV_SERVER_HOST }}
+        ssh_user: ${{ secrets.DEV_SERVER_USER }}
+        ssh_key: ${{ secrets.DEV_SERVER_SSH_KEY }}
+
     - name: 🚀 개발 서버 배포 준비
       uses: appleboy/ssh-action@master
       with:

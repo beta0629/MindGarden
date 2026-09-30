@@ -71,6 +71,7 @@ on:
       # composite action: 본 워크플로가 호출하는 sync-prod-env-key 변경도 push 자동 트리거 대상에 포함
       # (PR #385 핫픽스 시 자동 트리거 안 됐던 보조 발견 정정 — 수동 workflow_dispatch 로 우회)
       - '.github/actions/sync-prod-env-key/**'
+      - '.github/actions/assert-env-key-nonempty/**'
   workflow_dispatch:
     inputs:
       deploy_ref:
@@ -152,6 +153,9 @@ jobs:
       # composite action 의 sed 갱신이 그대로 SESSION_COOKIE_DOMAIN="..." 형태로 들어가도록 한다.
       # GitHub Secret 명은 ops 일관성을 위해 MINDGARDEN_ prefix 사용 (HQ_TENANT_ID 와 동일 컨벤션).
       SESSION_COOKIE_DOMAIN: ${{ secrets.MINDGARDEN_SESSION_COOKIE_DOMAIN }}
+      # OPS_ADMIN_PASSWORD: OpsAuthController 기본값 제거(#1331) 후 prod.env 미설정 시 Ops 로그인 거부.
+      # 미등록 시 ::notice 후 skip — 기존 prod.env 값 유지.
+      OPS_ADMIN_PASSWORD: ${{ secrets.OPS_ADMIN_PASSWORD }}
 
     steps:
     - name: 🛡️ 운영 배포 ref 가드 (dispatch만, release/prod만 허용)
@@ -830,6 +834,36 @@ jobs:
         # prod.env 는 SESSION_COOKIE_DOMAIN 등 비-secret 운영 상수만 보유 — DB 키 없음.
         # composite action 의 DB FAIL-FAST 가드 비활성 (prod-from-dev.env 호출자는 default 'true' 유지).
         db_fail_fast: 'false'
+
+    # ============================================================================
+    # OPS_ADMIN_PASSWORD env 자동 주입 + 빈 값 가드 (운영)
+    # 배경: #1331 에서 ops.admin.password 기본값 제거 → prod.env 에 값이 없으면 Ops 로그인 거부.
+    # GitHub Secret 'OPS_ADMIN_PASSWORD' → /etc/mindgarden/prod.env 멱등 동기화 (값 echo 금지, default 없음).
+    # 미등록 시: skip_when=any_missing 로 쓰기는 skip 되지만, 뒤 가드가 prod.env 값이 비어 있으면 배포를 실패시킨다.
+    # ============================================================================
+    - name: 🔑 OPS_ADMIN_PASSWORD env 자동 주입
+      uses: ./.github/actions/sync-prod-env-key
+      with:
+        step_name: 'OPS_ADMIN_PASSWORD'
+        keys: 'OPS_ADMIN_PASSWORD'
+        env_path: '/etc/mindgarden/prod.env'
+        ssh_host: ${{ secrets.PRODUCTION_HOST }}
+        ssh_user: ${{ secrets.PRODUCTION_USER }}
+        ssh_key: ${{ secrets.PRODUCTION_SSH_KEY }}
+        skip_when: 'any_missing'
+        noop_compare: 'true'
+        # prod.env 는 DB 키 없음 — SESSION_COOKIE_DOMAIN step 과 동일하게 DB FAIL-FAST 비활성.
+        db_fail_fast: 'false'
+
+    - name: 🛑 OPS_ADMIN_PASSWORD 빈 값 가드 (재시작 전)
+      uses: ./.github/actions/assert-env-key-nonempty
+      with:
+        step_name: 'OPS_ADMIN_PASSWORD'
+        key: 'OPS_ADMIN_PASSWORD'
+        env_path: '/etc/mindgarden/prod.env'
+        ssh_host: ${{ secrets.PRODUCTION_HOST }}
+        ssh_user: ${{ secrets.PRODUCTION_USER }}
+        ssh_key: ${{ secrets.PRODUCTION_SSH_KEY }}
 
     # ============================================================================
     # [2026-09-24] env sync step 은 모두 '🔄 블루그린 백엔드·Nginx 적용' 이전에 실행하고 슬롯을 재시작하지 않는다.
@@ -1768,7 +1802,7 @@ jobs:
             echo "::notice title=env 변경 반영::트래픽 슬롯(${ACTIVE}) 은 재시작하지 않았습니다. 새 env 는 다음 백엔드 cutover 에서 트래픽에 반영됩니다."
           fi
 
-          # 프로세스 env 검증 — 값 노출 없이 길이만
+          # 프로세스 env 검증 — 값·길이 노출 없이 존재 여부만
           VERIFY_UNIT="mindgarden-core-${VERIFY_SLOT}.service"
           PID=$(systemctl show -p MainPID --value "$VERIFY_UNIT" 2>/dev/null)
           if [ -z "$PID" ] || [ "$PID" = "0" ]; then
@@ -1782,7 +1816,7 @@ jobs:
               echo "   ❌ ${k} = MISSING"
               MISSING_ENV=$((MISSING_ENV+1))
             else
-              echo "   ✅ ${k} = (${len} chars)"
+              echo "   ✅ ${k} = SET"
             fi
           done
           if [ "$MISSING_ENV" -gt 0 ]; then

@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.Map;
 import com.coresolution.consultation.dto.PaymentRequest;
 import com.coresolution.consultation.dto.PaymentResponse;
-import com.coresolution.consultation.dto.PaymentWebhookRequest;
 import com.coresolution.consultation.entity.Payment;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -132,14 +131,6 @@ public interface PaymentService {
      */
     PaymentResponse refundPayment(
             String paymentId, BigDecimal amount, String reason, boolean reverseShopFulfillment);
-    
-    /**
-     * Webhook 처리
-     * 
-     * @param webhookRequest Webhook 요청
-     * @return 처리 결과
-     */
-    boolean processWebhook(PaymentWebhookRequest webhookRequest);
     
     /**
      * 결제 검증

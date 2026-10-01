@@ -49,6 +49,22 @@ description: Core Solution(MindGarden) 배포·CI/CD 전담 서브에이전트. 
 
 **휴리스틱**: 백엔드 변경분을 운영에 반영하려면 → **코어솔루션 운영 배포**(`deploy-production.yml` 등). 저장소 설정상 **수동**이면 Actions에서 **수동 실행** 한 줄 안내. 화면만 바뀌었으면 → **프론트 운영 배포**(`deploy-frontend-prod.yml`, `main`+paths 자동 등). 백엔드만 프론트 워크플로로 올리면 **API는 구버전**임을 한 줄로 명시.
 
+## release/dev 머지 전 필수 — 자체 검증 게이트
+
+절차는 저장소 스킬 `.cursor/skills/core-solution-self-verify/SKILL.md` 를 실행한다. 개인 Cursor 디렉터리 사본으로 대체하지 않는다.
+
+- `release/dev` 머지 전: `.cursor/rules/self-verify.mdc` 체크리스트 **1~4, 6, 7번 전부 PASS**가 PR 본문 **「## 자체 검증」** 섹션에 근거와 함께 기록돼 있어야 한다.
+- `.dev` 배포 후: **5번 스모크**는 동작을 확인한다. `/actuator/info` 커밋 = 머지 커밋, 상태 UP만으로는 부족하다. 주소 200이거나 로그인 없이 index.html이 나오는 것은 PASS가 아니다.
+- 섹션이 없거나 FAIL이 하나라도 있으면 **머지하지 않고** 사용자에게 보고한다.
+- 아래 하드스톱은 FAIL이다. 「남은 위험」으로 적혀 있어도 PASS로 보고 머지하지 않는다. 사용자가 명시적으로 머지하겠다고 하기 전에는 머지하지 않는다.
+
+### 하드스톱 (머지 금지)
+
+1. **다른 사용자 데이터**: 같은 테넌트여도 내담자·일반 사용자가 다른 사용자의 결제·매핑·주문·개인정보를 읽을 수 있으면 머지 금지. "호출은 바꾸지 말고 보고만"이어도 같다 (#1336). `node scripts/verification/check-client-admin-own-id.js --changed /tmp/sv-changed.txt` 가 0이 아니면 머지 금지.
+2. **스모크**: 권한 PR은 .dev에서 환경변수로 받은 테스트 계정으로 본인 조회 200, 다른 사용자 id 조회 403(본문에 타인 데이터 없음)을 각 1회. 계정이 없으면 5번은 FAIL(대기)이고 머지 후 검증 미완을 알린다. 공용 관리자 로그아웃 금지. 돈 PR은 읽기 전용 필드 확인만(실결제·PortOne 금지). 화면 PR은 배포 산출물 `main.*.js` 와 라이브 번들 해시가 같고, 바꾼 문구가 그 안에 있어야 한다.
+3. **커넥션**: PortOne·SMS 호출 시점에 Hikari active==0, EntityManager 미바인딩, synchronization 없음. 트랜잭션 플래그만 있으면 머지 금지 (#1328). `node scripts/verification/check-external-call-connection.js --changed /tmp/sv-changed.txt` 가 0이 아니면 머지 금지.
+4. **추정**: `/tmp/sv-report.md` 없이 돈·권한 경로를 PASS로 적었거나 항목 1에 "추정"이 있으면 머지 금지.
+
 ## 반드시 참조
 
 - `/core-solution-deployment` 스킬 — **「배포 덮어쓰기 금지 · 6항 동결」** (부분 tip 단독 금지·IL/가예약/드래그/히스토리/카드/prepaid)

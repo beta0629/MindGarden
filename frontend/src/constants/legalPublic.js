@@ -41,7 +41,7 @@ export const CONSULTATION_PACKAGE_USAGE_PERIOD_NOTE =
 
 /**
  * 공개 상품·결제 유형 고지 (quiet note)
- * 제품 SSOT (리더 확정): 일시불만 · 정기결제·구독 없음.
+ * 카드 결제. 5만 원 이상은 할부. 정기결제·구독 없음.
  */
 export const CONSULTATION_PACKAGE_PAYMENT_TYPE_NOTE =
-  '결제 — 일시불만 가능합니다(정기결제·구독 없음).';
+  '카드 결제이며, 5만 원 이상은 할부가 가능합니다. 정기결제·구독은 없습니다.';

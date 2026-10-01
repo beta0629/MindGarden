@@ -41,7 +41,11 @@ describe('clinic-os-platform-legal-copy SSOT', () => {
     expect(terms).not.toContain('패키지(최대 20회기): 결제일부터 1년 내 소진');
     expect(terms).not.toContain('1년 내 소진');
     expect(terms).toContain('무제한 유효기간은 없습니다');
-    expect(terms).toContain('일시불만 가능합니다');
+    expect(terms).toContain(
+      '카드 결제이며, 5만 원 이상은 할부가 가능합니다. 정기결제·구독은 없습니다.'
+    );
+    expect(terms).not.toContain('일시불만');
+    expect(terms).toContain('정기결제·구독은 없습니다');
     expect(terms).not.toContain('달력일수');
     expect(privacy).toContain('개인정보 보호책임자');
     expect(privacy).not.toContain('의료법에 의한 의료기록');
@@ -54,7 +58,11 @@ describe('clinic-os-platform-legal-copy SSOT', () => {
     expect(refund).toContain('20회기는 결제일부터 6개월 내');
     expect(refund).not.toContain('1년 내에 소진');
     expect(refund).not.toContain('10회기: 결제일부터 1년');
-    expect(refund).toContain('일시불만 가능합니다');
+    expect(refund).toContain(
+      '카드 결제이며, 5만 원 이상은 할부가 가능합니다. 정기결제·구독은 없습니다.'
+    );
+    expect(refund).not.toContain('일시불만');
+    expect(refund).toContain('정기결제·구독은 없습니다');
   });
 
   test('최종 수정일이 2026-09-16 현행이다', () => {

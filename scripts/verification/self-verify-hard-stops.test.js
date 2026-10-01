@@ -93,6 +93,99 @@ function testUnrelatedSkips() {
   assert.match(res.out, /검사 대상 없음/);
 }
 
+const RESOLVE_HELPER = `
+  private Long resolveMappingsClientIdForCaller(HttpSession session, Long requestedClientId) {
+    User currentUser = SessionUtils.getCurrentUser(session);
+    if (currentUser == null || currentUser.getRole() == null) {
+      throw new org.springframework.security.access.AccessDeniedException("denied");
+    }
+    if (!currentUser.getRole().isClient()) {
+      return requestedClientId;
+    }
+    Long ownId = currentUser.getId();
+    if (ownId == null || !ownId.equals(requestedClientId)) {
+      throw new org.springframework.security.access.AccessDeniedException("denied");
+    }
+    return ownId;
+  }
+`;
+
+const RESOLVE_BEFORE_QUERY = `
+@RestController
+@RequestMapping("/api/v1/admin")
+class AdminController {
+  @GetMapping("/mappings/client")
+  public Object getMappingsByClient(@RequestParam Long clientId, HttpSession session) {
+    Long queryClientId = resolveMappingsClientIdForCaller(session, clientId);
+    return adminService.getMappingsByClient(queryClientId);
+  }
+${RESOLVE_HELPER}
+}
+`;
+
+const RESOLVE_AFTER_QUERY = `
+@RestController
+@RequestMapping("/api/v1/admin")
+class AdminController {
+  @GetMapping("/mappings/client")
+  public Object getMappingsByClient(@RequestParam Long clientId, HttpSession session) {
+    Object data = adminService.getMappingsByClient(clientId);
+    resolveMappingsClientIdForCaller(session, clientId);
+    return data;
+  }
+${RESOLVE_HELPER}
+}
+`;
+
+const RESOLVE_WITHOUT_DENIAL = `
+@RestController
+@RequestMapping("/api/v1/admin")
+class AdminController {
+  @GetMapping("/mappings/client")
+  public Object getMappingsByClient(@RequestParam Long clientId, HttpSession session) {
+    Long queryClientId = resolveMappingsClientIdForCaller(session, clientId);
+    return adminService.getMappingsByClient(queryClientId);
+  }
+
+  private Long resolveMappingsClientIdForCaller(HttpSession session, Long requestedClientId) {
+    User currentUser = SessionUtils.getCurrentUser(session);
+    if (currentUser == null || currentUser.getId() == null) {
+      throw new org.springframework.security.access.AccessDeniedException("denied");
+    }
+    return requestedClientId;
+  }
+}
+`;
+
+function runOwnFixture(controllerSrc) {
+  const dir = fixture();
+  write(path.join(dir, 'frontend/src/components/client/Pay.js'),
+    "export const URL = '/api/v1/admin/mappings/client';\n");
+  write(path.join(dir, 'src/main/java/com/example/AdminController.java'), controllerSrc);
+  const changed = path.join(dir, 'changed.txt');
+  write(changed, 'frontend/src/components/client/Pay.js\n');
+  return run(OWN, ['--root', dir, '--changed', changed]);
+}
+
+function testResolveHelperBeforeQueryPasses() {
+  const res = runOwnFixture(RESOLVE_BEFORE_QUERY);
+  assert.strictEqual(res.code, 0, res.out);
+  assert.match(res.out, /PASS own-id/);
+}
+
+function testResolveHelperAfterQueryFails() {
+  const res = runOwnFixture(RESOLVE_AFTER_QUERY);
+  assert.strictEqual(res.code, 1, res.out);
+  assert.match(res.out, /조회보다 먼저 본인 id를 거부하지 않음/);
+}
+
+function testResolveHelperWithoutCompareFails() {
+  const res = runOwnFixture(RESOLVE_WITHOUT_DENIAL);
+  assert.strictEqual(res.code, 1, res.out);
+  assert.match(res.out, /FAIL own-id/);
+  assert.doesNotMatch(res.out, /PASS own-id/);
+}
+
 function testMissingHandlerFails() {
   const dir = fixture();
   write(path.join(dir, 'frontend/src/components/client/Pay.js'),
@@ -197,10 +290,13 @@ function testNoExternalSkips() {
 
 testLeakFails();
 testOwnIdPasses();
+testResolveHelperBeforeQueryPasses();
+testResolveHelperAfterQueryFails();
+testResolveHelperWithoutCompareFails();
 testUnrelatedSkips();
 testMissingHandlerFails();
 testConnectionMissingFails();
 testConnectionAnswerPasses();
 testConnectionStubFails();
 testNoExternalSkips();
-console.log('self-verify hard-stop scripts: 8 passed');
+console.log('self-verify hard-stop scripts: 11 passed');

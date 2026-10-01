@@ -247,18 +247,78 @@ function listJava(root, pred) {
   return acc;
 }
 
-function provesOwnId(handlerBody, signature, assertBodies) {
-  const combined = [handlerBody, ...assertBodies].join('\n');
-  const readsCaller = /SessionUtils\.getCurrentUser\s*\(/.test(combined)
+function firstDataAccessAt(body) {
+  const re = /\b[A-Za-z_]\w*(?:Service|Repository|Dao)\s*\.\s*[A-Za-z_]\w*\s*\(/;
+  const m = re.exec(body);
+  return m ? m.index : -1;
+}
+
+function bodyProvesOwnIdDenial(body) {
+  const readsCaller = /SessionUtils\.getCurrentUser\s*\(/.test(body)
+    || /\bgetCurrentUserId\s*\(/.test(body)
+    || /SecurityContextHolder\.getContext\s*\(/.test(body);
+  const denies = /AccessDeniedException/.test(body) || /HttpStatus\.FORBIDDEN/.test(body);
+  const compares = /getId\s*\(\s*\)/.test(body) && /\.equals\s*\(/.test(body);
+  if (!readsCaller || !denies || !compares) {
+    return false;
+  }
+  const denyAt = body.search(/throw\s+new\s+[\w.]*AccessDeniedException|HttpStatus\.FORBIDDEN/);
+  if (denyAt < 0) {
+    return false;
+  }
+  const queryAt = firstDataAccessAt(body);
+  return queryAt < 0 || denyAt < queryAt;
+}
+
+const CALL_SKIP = new Set([
+  'if', 'for', 'while', 'switch', 'catch', 'return', 'new', 'throw', 'synchronized', 'super', 'this'
+]);
+
+/**
+ * assert* 가 아닌 헬퍼(예: resolveMappingsClientIdForCaller)도,
+ * 요청 id를 인자로 받고 세션 id와 비교해 조회 전에 403을 던지면 거부 지점으로 본다.
+ */
+function denialHelperCalls(handlerBody, fileText, requestIds) {
+  const found = [];
+  const re = /\b([A-Za-z_]\w*)\s*\(/g;
+  let m;
+  while ((m = re.exec(handlerBody))) {
+    const name = m[1];
+    if (CALL_SKIP.has(name) || /^assert[A-Z]/.test(name)) {
+      continue;
+    }
+    const open = handlerBody.indexOf('(', m.index);
+    const close = open < 0 ? -1 : scan.matchParen(handlerBody, open);
+    if (close < 0) {
+      continue;
+    }
+    const args = handlerBody.slice(open + 1, close);
+    const passesId = requestIds.some((id) => new RegExp('\\b' + id + '\\b').test(args));
+    if (!passesId) {
+      continue;
+    }
+    const local = scan.findDeclaredMethod(fileText, name);
+    if (!local || !bodyProvesOwnIdDenial(local.body)) {
+      continue;
+    }
+    found.push({ index: m.index, body: local.body });
+  }
+  return found;
+}
+
+function readsCallerId(combined) {
+  return /SessionUtils\.getCurrentUser\s*\(/.test(combined)
     || /\bgetCurrentUserId\s*\(/.test(combined)
     || /SecurityContextHolder\.getContext\s*\(/.test(combined);
-  if (!readsCaller) {
-    return { ok: false, reason: '호출자 id를 읽지 않음' };
-  }
+}
+
+function provesOwnId(handlerBody, signature, assertBodies, fileText) {
   const ids = requestIdNames(signature);
-  const denies = /AccessDeniedException/.test(combined) || /HttpStatus\.FORBIDDEN/.test(combined);
-  const compares = /getId\s*\(\s*\)/.test(combined) && /\.equals\s*\(/.test(combined);
   if (ids.length === 0) {
+    const combined = [handlerBody, ...assertBodies].join('\n');
+    if (!readsCallerId(combined)) {
+      return { ok: false, reason: '호출자 id를 읽지 않음' };
+    }
     const usesCaller = /(?:currentUser|caller)\.getId\s*\(\)/.test(combined) || /\bcurrentUserId\b/.test(combined);
     const unscoped = /\b(?:getAll|findAll)[A-Za-z0-9_]*\s*\(/.test(handlerBody);
     if (usesCaller && !unscoped) {
@@ -266,19 +326,31 @@ function provesOwnId(handlerBody, signature, assertBodies) {
     }
     return { ok: false, reason: '조회가 호출자 id로 제한되지 않음' };
   }
+  const helpers = fileText ? denialHelperCalls(handlerBody, fileText, ids) : [];
+  const combined = [handlerBody, ...assertBodies, ...helpers.map((h) => h.body)].join('\n');
+  if (!readsCallerId(combined)) {
+    return { ok: false, reason: '호출자 id를 읽지 않음' };
+  }
+  const denies = /AccessDeniedException/.test(combined) || /HttpStatus\.FORBIDDEN/.test(combined);
+  const compares = /getId\s*\(\s*\)/.test(combined) && /\.equals\s*\(/.test(combined);
   if (!denies || !compares) {
     return { ok: false, reason: '요청 id를 호출자 id와 비교해 거부하지 않음' };
   }
   const assertAt = handlerBody.search(/\bassert[A-Z]\w*\s*\(/);
   const throwAt = handlerBody.search(/throw\s+new\s+[\w.]*AccessDeniedException/);
-  const gates = [assertAt, throwAt].filter((n) => n >= 0).sort((a, b) => a - b);
+  const helperAt = helpers.reduce((min, h) => (min < 0 || h.index < min ? h.index : min), -1);
+  const gates = [assertAt, throwAt, helperAt].filter((n) => n >= 0).sort((a, b) => a - b);
   const gateAt = gates.length ? gates[0] : -1;
   const returnAt = handlerBody.search(/\breturn\b/);
+  const queryAt = firstDataAccessAt(handlerBody);
   if (gateAt < 0) {
     return { ok: false, reason: '핸들러에서 거부 지점을 찾지 못함' };
   }
   if (returnAt !== -1 && returnAt < gateAt) {
     return { ok: false, reason: '본인 확인보다 먼저 응답을 반환함' };
+  }
+  if (queryAt !== -1 && queryAt < gateAt) {
+    return { ok: false, reason: '조회보다 먼저 본인 id를 거부하지 않음' };
   }
   return { ok: true, reason: '요청 id ≠ 호출자 id 이면 거부' };
 }
@@ -429,7 +501,7 @@ function main() {
     }
     for (const h of matches) {
       const extras = assertBodies(h.method.body, h.text, allJava);
-      const verdict = provesOwnId(h.method.body, h.method.signature, extras);
+      const verdict = provesOwnId(h.method.body, h.method.signature, extras, h.text);
       const loc = h.cls + '.' + h.method.name;
       if (!verdict.ok) {
         failed = true;

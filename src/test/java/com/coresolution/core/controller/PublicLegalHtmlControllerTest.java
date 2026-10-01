@@ -33,6 +33,8 @@ import org.springframework.web.util.HtmlUtils;
 class PublicLegalHtmlControllerTest {
 
     private static final String KNOWN_TERMS_PHRASE = "상담센터 SaaS";
+    private static final String PAYMENT_TYPE_NOTE =
+            "카드 결제이며, 5만 원 이상은 할부가 가능합니다. 정기결제·구독은 없습니다.";
 
     @Mock
     private PublicConsultationPackageService publicConsultationPackageService;
@@ -67,7 +69,9 @@ class PublicLegalHtmlControllerTest {
         assertThat(response.getBody()).contains("단회기: 결제일부터 2개월 내 소진");
         assertThat(response.getBody()).contains("10회기: 결제일부터 3개월 내 소진");
         assertThat(response.getBody()).contains("20회기: 결제일부터 6개월 내 소진");
-        assertThat(response.getBody()).contains("일시불만 가능합니다");
+        assertThat(response.getBody()).contains(HtmlUtils.htmlEscape(PAYMENT_TYPE_NOTE));
+        assertThat(response.getBody()).doesNotContain("일시불만");
+        assertThat(response.getBody()).contains(HtmlUtils.htmlEscape("정기결제·구독은 없습니다"));
         assertThat(response.getBody()).doesNotContain("1년 내 소진");
         assertThat(response.getBody()).contains("<article>");
         assertThat(response.getBody()).doesNotContain("MindGarden 이용약관");
@@ -96,7 +100,9 @@ class PublicLegalHtmlControllerTest {
         assertThat(response.getBody()).contains("단회기는 결제일부터 2개월 내");
         assertThat(response.getBody()).contains("10회기는 결제일부터 3개월 내");
         assertThat(response.getBody()).contains("20회기는 결제일부터 6개월 내");
-        assertThat(response.getBody()).contains("일시불만 가능합니다");
+        assertThat(response.getBody()).contains(HtmlUtils.htmlEscape(PAYMENT_TYPE_NOTE));
+        assertThat(response.getBody()).doesNotContain("일시불만");
+        assertThat(response.getBody()).contains(HtmlUtils.htmlEscape("정기결제·구독은 없습니다"));
         assertThat(response.getBody()).doesNotContain("1년 내에 소진");
         assertThat(response.getBody()).contains("청약철회가 제한되는 경우");
         assertThat(response.getBody()).contains("환불");
@@ -195,7 +201,9 @@ class PublicLegalHtmlControllerTest {
         assertThat(html).contains("3개월");
         assertThat(html).contains("6개월");
         assertThat(html).doesNotContain("1년");
-        assertThat(html).contains("일시불");
+        assertThat(html).contains(HtmlUtils.htmlEscape(PAYMENT_TYPE_NOTE));
+        assertThat(html).doesNotContain("일시불만");
+        assertThat(html).contains(HtmlUtils.htmlEscape("정기결제·구독은 없습니다"));
         assertThat(html).contains("무제한");
     }
 }

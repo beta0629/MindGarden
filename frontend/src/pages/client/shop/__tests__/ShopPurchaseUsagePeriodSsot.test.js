@@ -56,8 +56,13 @@ describe('Shop purchase surfaces usage/refund SSOT', () => {
     });
   });
 
-  test('legalPublic 결제유형 상수는 유지되고 clientShopConstants 가 재수출한다', () => {
-    expect(legal).toMatch(/일시불만 가능합니다/);
+  test('legalPublic 결제유형 상수는 할부 고지이고 clientShopConstants 가 재수출한다', () => {
+    const paymentNote = '카드 결제이며, 5만 원 이상은 할부가 가능합니다. 정기결제·구독은 없습니다.';
+    expect(legal).toContain(paymentNote);
+    expect(legal).not.toMatch(/일시불만/);
+    expect(legal).toContain('정기결제·구독은 없습니다');
+    expect(mallConstants).toContain(paymentNote);
+    expect(mallConstants).not.toMatch(/일시불/);
     expect(shopConstants).toMatch(
       /export\s*\{[\s\S]*CONSULTATION_PACKAGE_USAGE_PERIOD_NOTE[\s\S]*\}\s*from\s*['"]\.\/legalPublic['"]/
     );

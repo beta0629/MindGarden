@@ -68,7 +68,8 @@ export const CLIENT_MALL_COPY = Object.freeze({
   BEFORE_BUY_SESSIONS_VALUE: '결제가 끝나면 산 회기가 바로 추가돼요',
   BEFORE_BUY_REFUND_LABEL: '환불',
   BEFORE_BUY_PAYMENT_LABEL: '결제',
-  BEFORE_BUY_PAYMENT_VALUE: '카드 결제 · 일시불',
+  BEFORE_BUY_PAYMENT_VALUE:
+    '카드 결제이며, 5만 원 이상은 할부가 가능합니다. 정기결제·구독은 없습니다.',
 
   CART_TITLE: '장바구니',
   CART_COUNT_SUFFIX: '개',
@@ -231,7 +232,8 @@ export const CLIENT_MALL_COMPLETE_COPY = Object.freeze({
   ROW_SESSIONS: '추가된 회기',
   ROW_EXPIRE: '사용 기한',
   ROW_AMOUNT: '결제 금액',
-  AMOUNT_METHOD_SUFFIX: ' · 카드 결제 · 일시불',
+  AMOUNT_METHOD_SUFFIX:
+    ' · 카드 결제이며, 5만 원 이상은 할부가 가능합니다. 정기결제·구독은 없습니다.',
   AMOUNT_POINTS_ONLY_SUFFIX: ' · 포인트 결제',
   ASIDE_TITLE: '내 회기',
   ASIDE_REMAINING_LABEL: '남은 회기',

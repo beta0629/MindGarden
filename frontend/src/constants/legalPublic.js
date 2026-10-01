@@ -33,11 +33,11 @@ export const CONSULTATION_PACKAGE_EMPTY_MESSAGE = '미등록 / 확인 필요';
  * 공개 상품·가격 이용기간 고지 (quiet note)
  * 근거: docs/project-management/PACKAGE_USAGE_PERIOD_DISCLOSURE_RESEARCH.md
  * — 전상법·상품정보고시·PG 심사는 「기간 명시」가 핵심. 허위 90일 고정 금지.
- * 제품 SSOT (리더 확정): 단회기 결제일부터 2개월 내 소진 · 패키지(최대 20회기) 결제일부터 1년 내 소진.
+ * 단회기 결제일부터 2개월 · 10회기 결제일부터 3개월 · 20회기 결제일부터 6개월 내 소진.
  * 무제한 유효기간 없음.
  */
 export const CONSULTATION_PACKAGE_USAGE_PERIOD_NOTE =
-  '이용기간 — 단회기: 결제일부터 2개월 내 소진. 패키지(최대 20회기): 결제일부터 1년 내 소진. 무제한 유효기간은 없습니다.';
+  '이용기간 — 단회기: 결제일부터 2개월 내 소진. 10회기: 결제일부터 3개월 내 소진. 20회기: 결제일부터 6개월 내 소진. 무제한 유효기간은 없습니다.';
 
 /**
  * 공개 상품·결제 유형 고지 (quiet note)

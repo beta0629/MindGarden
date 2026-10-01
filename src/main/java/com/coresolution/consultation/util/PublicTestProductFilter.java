@@ -11,6 +11,9 @@ import java.util.Map;
  */
 public final class PublicTestProductFilter {
 
+    /** 공개 목록에 올리면 안 되는 테스트 SKU. */
+    public static final String BLOCKED_PUBLIC_SKU = "SHOP-20260929-001";
+
     private PublicTestProductFilter() {
     }
 
@@ -23,10 +26,14 @@ public final class PublicTestProductFilter {
      * @return 제외해야 하면 true
      */
     public static boolean isExcluded(String name, String code, Map<String, Object> extra) {
-        if (isPublicVisibleFalse(extra) || isTestFlag(extra)) {
+        if (isBlockedSku(code) || isPublicVisibleFalse(extra) || isTestFlag(extra)) {
             return true;
         }
         return looksLikeTestLabel(name) || looksLikeTestLabel(code);
+    }
+
+    private static boolean isBlockedSku(String code) {
+        return code != null && BLOCKED_PUBLIC_SKU.equalsIgnoreCase(code.trim());
     }
 
     private static boolean isPublicVisibleFalse(Map<String, Object> extra) {

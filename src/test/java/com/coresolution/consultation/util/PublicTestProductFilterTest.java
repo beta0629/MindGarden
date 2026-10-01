@@ -25,5 +25,7 @@ class PublicTestProductFilterTest {
         assertThat(PublicTestProductFilter.isExcluded("단회기", "PKG", Map.of("isTest", true))).isTrue();
         assertThat(PublicTestProductFilter.isExcluded("단회기", "PKG", Map.of("publicVisible", false))).isTrue();
         assertThat(PublicTestProductFilter.isExcluded("10회 패키지", "PKG10", Map.of("publicVisible", true))).isFalse();
+        assertThat(PublicTestProductFilter.isExcluded("1000원_테스트", "PKG", Map.of())).isTrue();
+        assertThat(PublicTestProductFilter.isExcluded("단회기", "SHOP-20260929-001", Map.of())).isTrue();
     }
 }

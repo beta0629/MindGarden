@@ -7,13 +7,13 @@ import static org.mockito.Mockito.when;
 
 import com.coresolution.consultation.constant.PublicCounselingServiceGuideKeys;
 import com.coresolution.consultation.dto.publicguide.PublicCounselingServiceGuideView;
+import com.coresolution.consultation.dto.shop.ShopCatalogSkuResponse;
 import com.coresolution.consultation.entity.SystemConfig;
 import com.coresolution.consultation.repository.SystemConfigRepository;
 import com.coresolution.core.domain.Tenant;
 import com.coresolution.core.service.PlatformLegalCopyService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -36,7 +36,7 @@ class PublicCounselingServiceGuideServiceTest {
     private SystemConfigRepository systemConfigRepository;
 
     @Mock
-    private PublicConsultationPackageService publicConsultationPackageService;
+    private ClientShopCatalogService clientShopCatalogService;
 
     private PublicCounselingServiceGuideService service;
 
@@ -44,7 +44,7 @@ class PublicCounselingServiceGuideServiceTest {
     void setUp() {
         service = new PublicCounselingServiceGuideService(
                 systemConfigRepository,
-                publicConsultationPackageService,
+                clientShopCatalogService,
                 new ObjectMapper());
     }
 
@@ -52,8 +52,7 @@ class PublicCounselingServiceGuideServiceTest {
     @DisplayName("설정이 없으면 한 줄 폴백·빈 종류·빈 자격·문의 환불")
     void emptyConfigUsesFallbacks() {
         Tenant tenant = Tenant.builder().tenantId("t1").name("마음센터").build();
-        when(publicConsultationPackageService.buildPublicConsultationPackages(eq("t1")))
-                .thenReturn(List.of());
+        when(clientShopCatalogService.listVisibleSkus(eq("t1"))).thenReturn(List.of());
 
         PublicCounselingServiceGuideView view = service.load(tenant, "");
 
@@ -100,8 +99,20 @@ class PublicCounselingServiceGuideServiceTest {
                     }
                     return Optional.empty();
                 });
-        when(publicConsultationPackageService.buildPublicConsultationPackages(eq("t1")))
-                .thenReturn(List.of(Map.of("name", "10회 패키지", "price", 100000, "sessions", 10)));
+        when(clientShopCatalogService.listVisibleSkus(eq("t1"))).thenReturn(List.of(
+                ShopCatalogSkuResponse.builder()
+                        .skuCode("PKG10")
+                        .title("10회 패키지")
+                        .unitPriceMinor(100000L)
+                        .sessionCount(10)
+                        .validityMonths(3)
+                        .build(),
+                ShopCatalogSkuResponse.builder()
+                        .skuCode("SHOP-20260929-001")
+                        .title("1000원_테스트")
+                        .unitPriceMinor(1000L)
+                        .sessionCount(1)
+                        .build()));
 
         PublicCounselingServiceGuideView view = service.load(tenant, "https://example.test/services");
 
@@ -110,6 +121,11 @@ class PublicCounselingServiceGuideServiceTest {
         assertThat(view.getTypes().get(0).getName()).isEqualTo("개인상담");
         assertThat(view.getCounselors()).hasSize(1);
         assertThat(view.getProducts()).hasSize(1);
+        assertThat(view.getProducts().get(0).getName()).isEqualTo("10회 패키지");
+        assertThat(view.getProducts().get(0).getValidityMonths()).isEqualTo(3);
+        assertThat(view.getProducts())
+                .extracting(row -> row.getName())
+                .doesNotContain("1000원_테스트");
         assertThat(view.getRefundBody()).isEqualTo("첫째 문장입니다. 둘째 문장이에요.");
         assertThat(PublicCounselingServiceGuideService.sharedMinutes(view.getTypes())).isEqualTo(50);
     }

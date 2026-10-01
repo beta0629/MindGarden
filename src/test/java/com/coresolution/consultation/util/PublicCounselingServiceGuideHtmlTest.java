@@ -29,7 +29,23 @@ class PublicCounselingServiceGuideHtmlTest {
         assertThat(html).contains("<h2>센터 소개</h2>");
         assertThat(html).contains("<h2>상담 종류</h2>");
         assertThat(html).contains("<h2>진행 절차</h2>");
-        assertThat(html).contains("<h2>상담사 자격</h2>");
+        assertThat(html).contains("<h2>상담사 소개</h2>");
+        assertThat(html).contains("15년 이상 임상 경험을 갖춘 센터장이 직접 상담합니다.");
+        assertThat(html).doesNotContain("임상심리사");
+        assertThat(html).doesNotContain("TODO");
+        assertThat(html).contains("마인드가든 심리상담센터");
+        assertThat(html).contains("인천 연수구 해돋이로120번길 23 아크리아2 2층 204호");
+        assertThat(html).contains("032-724-8501");
+        assertThat(html).contains(HtmlUtils.htmlEscape("아동·청소년·성인 1:1 개인상담"));
+        assertThat(html).contains(HtmlUtils.htmlEscape(
+                "예약 신청 → 센터 확인 전화로 예약 확정"));
+        assertThat(html).contains("결제일부터 3개월");
+        assertThat(html).contains("상품명");
+        assertThat(html).contains("회기");
+        assertThat(html).contains("이용기간");
+        assertThat(html).contains("svc-product-card");
+        assertThat(html).contains("max-width:24.375rem");
+        assertThat(html).doesNotContain("—");
         assertThat(html).contains("<h2>상품·가격</h2>");
         assertThat(html).contains("<h2>환불·개인정보</h2>");
         assertThat(html).contains("href=\"/legal/terms#refund\"");
@@ -56,12 +72,58 @@ class PublicCounselingServiceGuideHtmlTest {
 
         String html = PublicCounselingServiceGuideHtml.render(view);
 
-        assertThat(html).doesNotContain("id=\"types\"");
-        assertThat(html).doesNotContain("id=\"counselors\"");
-        assertThat(html).doesNotContain("id=\"center\"");
+        assertThat(html).contains("id=\"types\"");
+        assertThat(html).contains("id=\"counselors\"");
+        assertThat(html).contains("id=\"center\"");
         assertThat(html).contains("id=\"process\"");
-        assertThat(html).contains("정해진 시간 동안");
+        assertThat(html).contains("예약 신청");
         assertThat(html).contains("구매할 수 있는 상품이 없어요");
+        assertThat(html).doesNotContain("—");
+        assertThat(html).doesNotContain("TODO");
+    }
+
+    @Test
+    @DisplayName("이용기간이 없으면 1·10·20회기만 개월로 폴백하고 행은 남긴다")
+    void usagePeriodFallbackKeepsRow() {
+        PublicCounselingServiceGuideView view = new PublicCounselingServiceGuideView();
+        view.setPaymentNote(PlatformLegalCopyService.CONSULTATION_PACKAGE_PAYMENT_TYPE_NOTE);
+        view.setRefundBody("환불");
+        view.setPageTitle("상담 서비스 안내");
+        view.setPageDescription("설명");
+        addProduct(view, "단회기", 1, null, 90000L);
+        addProduct(view, "열회기", 10, null, 850000L);
+        addProduct(view, "스무회기", 20, null, 1600000L);
+        addProduct(view, "다섯회기", 5, null, 40000L);
+        addProduct(view, "지정개월", 8, 4, 80000L);
+
+        String html = PublicCounselingServiceGuideHtml.render(view);
+
+        assertThat(html).contains("단회기");
+        assertThat(html).contains("다섯회기");
+        assertThat(html).contains("결제일부터 2개월");
+        assertThat(html).contains("결제일부터 3개월");
+        assertThat(html).contains("결제일부터 6개월");
+        assertThat(html).contains("결제일부터 4개월");
+        assertThat(html).contains(">5회기<");
+        assertThat(html).doesNotContain("결제일부터 5개월");
+        assertThat(html).doesNotContain("—");
+        assertThat(html).contains("max-width:24.375rem");
+        assertThat(html).contains("상품명");
+        assertThat(html).contains("이용기간");
+    }
+
+    private static void addProduct(
+            PublicCounselingServiceGuideView view,
+            String name,
+            int sessions,
+            Integer validityMonths,
+            long price) {
+        ProductRow product = new ProductRow();
+        product.setName(name);
+        product.setSessions(sessions);
+        product.setValidityMonths(validityMonths);
+        product.setPrice(price);
+        view.getProducts().add(product);
     }
 
     private static PublicCounselingServiceGuideView filled() {

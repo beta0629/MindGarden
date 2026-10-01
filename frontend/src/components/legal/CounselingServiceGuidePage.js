@@ -16,10 +16,16 @@ import {
 } from '../../constants/legalPublic';
 import { fetchTenantPublicHomeMeta } from '../../utils/tenantPublicHomeMeta';
 import {
+  PUBLIC_GUIDE_COPY,
+  PUBLIC_GUIDE_PROCESS,
+  PUBLIC_GUIDE_TYPES
+} from '../../constants/publicCounselingGuideCopy';
+import {
   GUIDE_COPY,
   buildGuideView,
   formatGuideComposition,
   formatGuidePrice,
+  formatGuideSessions,
   formatGuideValidity,
   sharedGuideMinutes
 } from '../../utils/counselingServiceGuide';
@@ -91,9 +97,6 @@ const CounselingServiceGuidePage = () => {
   }, [view.pageTitle, view.pageDescription]);
 
   const minutes = sharedGuideMinutes(view.types);
-  const sessionCopy = minutes === null
-    ? GUIDE_COPY.SESSION_WITHOUT_MINUTES
-    : GUIDE_COPY.SESSION_WITH_MINUTES.replace('%s', String(minutes));
   const productsEmpty = view.businessLandline
     ? GUIDE_COPY.PRODUCTS_EMPTY_WITH_PHONE.replace('%s', view.businessLandline)
     : GUIDE_COPY.PRODUCTS_EMPTY;
@@ -137,81 +140,62 @@ const CounselingServiceGuidePage = () => {
                 </p>
               ) : null}
               <nav className="mg-svc__nav" aria-label="페이지 안 이동">
-                {view.showCenter ? <a href="#center">센터 소개</a> : null}
-                {view.showTypes ? <a href="#types">상담 종류</a> : null}
+                <a href="#center">센터 소개</a>
+                <a href="#types">상담 종류</a>
                 <a href="#process">진행 절차</a>
-                {view.showCounselors ? <a href="#counselors">상담사</a> : null}
+                <a href="#counselors">상담사</a>
                 <a href="#products">상품·가격</a>
                 <a href="#policy">환불·개인정보</a>
               </nav>
 
-              {view.showCenter ? (
-                <section id="center">
-                  <h2>센터 소개</h2>
-                  {view.centerIntro ? <p>{view.centerIntro}</p> : null}
-                  <dl>
-                    {view.centerName ? (<><dt>상호</dt><dd>{view.centerName}</dd></>) : null}
-                    {view.representativeName ? (<><dt>대표</dt><dd>{view.representativeName}</dd></>) : null}
-                    {view.businessRegistrationNumber ? (
-                      <><dt>사업자등록번호</dt><dd>{view.businessRegistrationNumber}</dd></>
-                    ) : null}
-                    {view.mailOrderReportNumber ? (
-                      <><dt>통신판매신고번호</dt><dd>{view.mailOrderReportNumber}</dd></>
-                    ) : null}
-                    {view.businessAddress ? (<><dt>주소</dt><dd>{view.businessAddress}</dd></>) : null}
-                    {view.businessLandline ? (
-                      <><dt>연락처</dt><dd>{view.businessLandline}</dd></>
-                    ) : null}
-                  </dl>
-                </section>
-              ) : null}
+              <section id="center">
+                <h2>센터 소개</h2>
+                {view.centerIntro ? <p>{view.centerIntro}</p> : null}
+                <dl>
+                  <dt>센터명</dt>
+                  <dd>{PUBLIC_GUIDE_COPY.CENTER_NAME}</dd>
+                  <dt>주소</dt>
+                  <dd>{PUBLIC_GUIDE_COPY.CENTER_ADDRESS}</dd>
+                  <dt>전화</dt>
+                  <dd>{PUBLIC_GUIDE_COPY.CENTER_PHONE}</dd>
+                  <dt>운영시간</dt>
+                  <dd>{PUBLIC_GUIDE_COPY.CENTER_HOURS}</dd>
+                  {view.representativeName ? (
+                    <><dt>대표</dt><dd>{view.representativeName}</dd></>
+                  ) : null}
+                  {view.businessRegistrationNumber ? (
+                    <><dt>사업자등록번호</dt><dd>{view.businessRegistrationNumber}</dd></>
+                  ) : null}
+                  {view.mailOrderReportNumber ? (
+                    <><dt>통신판매신고번호</dt><dd>{view.mailOrderReportNumber}</dd></>
+                  ) : null}
+                </dl>
+              </section>
 
-              {view.showTypes ? (
-                <section id="types">
-                  <h2>상담 종류</h2>
-                  <p>{GUIDE_COPY.TYPES_LEAD}</p>
-                  <div className="mg-svc__grid">
-                    {view.types.map((type) => (
-                      <article key={type.name}>
-                        <h3>{type.name}</h3>
-                        {type.description ? <p>{type.description}</p> : null}
-                        <dl>
-                          {type.audience ? (<><dt>대상</dt><dd>{type.audience}</dd></>) : null}
-                          {type.modality ? (<><dt>방식</dt><dd>{type.modality}</dd></>) : null}
-                          {type.minutes ? (<><dt>1회 시간</dt><dd>{`${type.minutes}분`}</dd></>) : null}
-                        </dl>
-                      </article>
-                    ))}
-                  </div>
-                </section>
-              ) : null}
+              <section id="types">
+                <h2>상담 종류</h2>
+                <ul>
+                  {PUBLIC_GUIDE_TYPES.map((line) => (
+                    <li key={line}>{line}</li>
+                  ))}
+                </ul>
+                <p>{PUBLIC_GUIDE_COPY.COMMON_NOTICE}</p>
+              </section>
 
               <section id="process">
                 <h2>진행 절차</h2>
+                <p>{PUBLIC_GUIDE_COPY.PROCESS_LINE}</p>
                 <ol>
-                  <li><h3>1. 상담 신청</h3><p>{GUIDE_COPY.PROCESS_APPLY}</p></li>
-                  <li><h3>2. 초기 면담</h3><p>{GUIDE_COPY.PROCESS_INTAKE}</p></li>
-                  <li><h3>3. 상담 회기</h3><p>{sessionCopy}</p></li>
-                  <li><h3>4. 종결</h3><p>{GUIDE_COPY.PROCESS_CLOSE}</p></li>
+                  {PUBLIC_GUIDE_PROCESS.map((step, index) => (
+                    <li key={step}><h3>{`${index + 1}. ${step}`}</h3></li>
+                  ))}
                 </ol>
               </section>
 
-              {view.showCounselors ? (
-                <section id="counselors">
-                  <h2>상담사 자격</h2>
-                  <p>{GUIDE_COPY.COUNSELOR_LEAD}</p>
-                  <article>
-                    {view.counselors.map((row) => (
-                      <div key={row.name || row.lines?.join('|')}>
-                        {row.name ? <p><strong>{row.name}</strong></p> : null}
-                        {(row.lines || []).map((line) => (
-                          <p key={line}>{line}</p>
-                        ))}
-                      </div>
-                    ))}
-                  </article>
-                </section>
-              ) : null}
+              <section id="counselors">
+                <h2>{PUBLIC_GUIDE_COPY.SECTION_COUNSELOR}</h2>
+                <p>{PUBLIC_GUIDE_COPY.COUNSELOR_INTRO}</p>
+              </section>
 
               <section id="products">
                 <h2>상품·가격</h2>
@@ -219,32 +203,51 @@ const CounselingServiceGuidePage = () => {
                 {view.products.length === 0 ? (
                   <p>{productsEmpty}</p>
                 ) : (
-                  <table>
-                    <caption className="sr-only">
-                      {`${view.centerName || '상담 서비스'} 상담 상품과 가격`}
-                    </caption>
-                    <thead>
-                      <tr>
-                        <th scope="col">상품</th>
-                        <th scope="col">구성</th>
-                        <th scope="col">이용기간</th>
-                        <th scope="col">가격</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {view.products.map((row) => (
-                        <tr key={row.name}>
-                          <td>
-                            <strong>{row.name}</strong>
-                            {row.description ? <><br />{row.description}</> : null}
-                          </td>
-                          <td>{formatGuideComposition(row)}</td>
-                          <td>{formatGuideValidity(row)}</td>
-                          <td>{formatGuidePrice(row.price)}</td>
+                  <>
+                    <table className="svc-product-table">
+                      <caption className="sr-only">
+                        {`${view.centerName || '상담 서비스'} 상담 상품과 가격`}
+                      </caption>
+                      <thead>
+                        <tr>
+                          <th scope="col">상품</th>
+                          <th scope="col">구성</th>
+                          <th scope="col">이용기간</th>
+                          <th scope="col">가격</th>
                         </tr>
+                      </thead>
+                      <tbody>
+                        {view.products.map((row) => (
+                          <tr key={row.name}>
+                            <td>
+                              <strong>{row.name}</strong>
+                              {row.description ? <><br />{row.description}</> : null}
+                            </td>
+                            <td>{formatGuideComposition(row)}</td>
+                            <td>{formatGuideValidity(row)}</td>
+                            <td>{formatGuidePrice(row.price)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                    <div className="svc-product-cards">
+                      {view.products.map((row) => (
+                        <article className="svc-product-card" key={`card-${row.name}`}>
+                          <h3>{row.name}</h3>
+                          <dl>
+                            <dt>{PUBLIC_GUIDE_COPY.LABEL_PRODUCT_NAME}</dt>
+                            <dd>{row.name}</dd>
+                            <dt>{PUBLIC_GUIDE_COPY.LABEL_SESSIONS}</dt>
+                            <dd>{formatGuideSessions(row)}</dd>
+                            <dt>{PUBLIC_GUIDE_COPY.LABEL_PRICE}</dt>
+                            <dd>{formatGuidePrice(row.price)}</dd>
+                            <dt>{PUBLIC_GUIDE_COPY.LABEL_PERIOD}</dt>
+                            <dd>{formatGuideValidity(row)}</dd>
+                          </dl>
+                        </article>
                       ))}
-                    </tbody>
-                  </table>
+                    </div>
+                  </>
                 )}
                 <p>{view.paymentNote}</p>
                 <p>

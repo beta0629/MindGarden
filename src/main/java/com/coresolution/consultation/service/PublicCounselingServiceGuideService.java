@@ -5,8 +5,10 @@ import com.coresolution.consultation.dto.publicguide.PublicCounselingServiceGuid
 import com.coresolution.consultation.dto.publicguide.PublicCounselingServiceGuideView.CounselorRow;
 import com.coresolution.consultation.dto.publicguide.PublicCounselingServiceGuideView.ProductRow;
 import com.coresolution.consultation.dto.publicguide.PublicCounselingServiceGuideView.TypeCard;
+import com.coresolution.consultation.dto.shop.ShopCatalogSkuResponse;
 import com.coresolution.consultation.entity.SystemConfig;
 import com.coresolution.consultation.repository.SystemConfigRepository;
+import com.coresolution.consultation.util.PublicTestProductFilter;
 import com.coresolution.core.domain.Tenant;
 import com.coresolution.core.service.PlatformLegalCopyService;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -46,7 +48,7 @@ public class PublicCounselingServiceGuideService {
     public static final int REFUND_SENTENCE_LIMIT = 2;
 
     private final SystemConfigRepository systemConfigRepository;
-    private final PublicConsultationPackageService publicConsultationPackageService;
+    private final ClientShopCatalogService clientShopCatalogService;
     private final ObjectMapper objectMapper;
 
     /**
@@ -75,9 +77,9 @@ public class PublicCounselingServiceGuideService {
                 CENTER_INTRO_MAX_CHARS));
         view.getTypes().addAll(readTypes(tenant));
         view.getCounselors().addAll(readCounselors(tenant));
-        if (tenant != null && tenant.getTenantId() != null) {
-            view.getProducts().addAll(toProductRows(
-                    publicConsultationPackageService.buildPublicConsultationPackages(tenant.getTenantId())));
+        if (tenant != null && tenant.getTenantId() != null && !tenant.getTenantId().isBlank()) {
+            view.getProducts().addAll(toShopRows(
+                    clientShopCatalogService.listVisibleSkus(tenant.getTenantId())));
         }
         view.setRefundBody(resolveRefund(tenant));
         view.setPaymentNote(PlatformLegalCopyService.CONSULTATION_PACKAGE_PAYMENT_TYPE_NOTE);
@@ -265,22 +267,33 @@ public class PublicCounselingServiceGuideService {
         return rows;
     }
 
-    private List<ProductRow> toProductRows(List<Map<String, Object>> packages) {
+    /**
+     * 판매 중·공개 샵 SKU 만. 상담 패키지 공통코드 전체 목록은 쓰지 않는다.
+     *
+     * @param skus {@link ClientShopCatalogService#listVisibleSkus(String)} 결과
+     * @return 공개 행
+     */
+    private List<ProductRow> toShopRows(List<ShopCatalogSkuResponse> skus) {
         List<ProductRow> rows = new ArrayList<>();
-        if (packages == null) {
+        if (skus == null) {
             return rows;
         }
-        for (Map<String, Object> pkg : packages) {
-            ProductRow row = new ProductRow();
-            row.setName(stringVal(pkg.get("name")));
-            row.setDescription(stringVal(pkg.get("description")));
-            row.setSessions(intObj(pkg.get("sessions")));
-            row.setMinutes(intObj(pkg.get("durationMinutes")));
-            row.setValidityMonths(intObj(pkg.get("validityMonths")));
-            row.setPrice(longObj(pkg.get("price")));
-            if (!row.getName().isBlank()) {
-                rows.add(row);
+        for (ShopCatalogSkuResponse sku : skus) {
+            if (sku == null) {
+                continue;
             }
+            String name = stringVal(sku.getTitle());
+            String code = stringVal(sku.getSkuCode());
+            if (name.isBlank() || PublicTestProductFilter.isExcluded(name, code, Map.of())) {
+                continue;
+            }
+            ProductRow row = new ProductRow();
+            row.setName(name);
+            row.setDescription(stringVal(sku.getDescriptionText()));
+            row.setSessions(sku.getSessionCount() > 0 ? sku.getSessionCount() : null);
+            row.setValidityMonths(sku.getValidityMonths());
+            row.setPrice(sku.getUnitPriceMinor());
+            rows.add(row);
         }
         return rows;
     }
@@ -333,20 +346,6 @@ public class PublicCounselingServiceGuideService {
             } catch (NumberFormatException ex) {
                 return null;
             }
-        }
-        return null;
-    }
-
-    private static Integer intObj(Object value) {
-        if (value instanceof Number number) {
-            return number.intValue();
-        }
-        return null;
-    }
-
-    private static Long longObj(Object value) {
-        if (value instanceof Number number) {
-            return number.longValue();
         }
         return null;
     }

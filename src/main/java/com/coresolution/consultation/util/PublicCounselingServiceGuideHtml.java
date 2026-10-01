@@ -1,7 +1,7 @@
 package com.coresolution.consultation.util;
 
+import com.coresolution.consultation.constant.PublicCounselingServiceGuideCopy;
 import com.coresolution.consultation.dto.publicguide.PublicCounselingServiceGuideView;
-import com.coresolution.consultation.dto.publicguide.PublicCounselingServiceGuideView.CounselorRow;
 import com.coresolution.consultation.dto.publicguide.PublicCounselingServiceGuideView.ProductRow;
 import com.coresolution.consultation.dto.publicguide.PublicCounselingServiceGuideView.TypeCard;
 import com.coresolution.consultation.service.PublicCounselingServiceGuideService;
@@ -52,9 +52,6 @@ public final class PublicCounselingServiceGuideHtml {
      * @return text/html 본문
      */
     public static String render(PublicCounselingServiceGuideView view) {
-        boolean showCenter = PublicCounselingServiceGuideService.showCenter(view);
-        boolean showTypes = view.getTypes() != null && !view.getTypes().isEmpty();
-        boolean showCounselors = view.getCounselors() != null && !view.getCounselors().isEmpty();
         Integer minutes = PublicCounselingServiceGuideService.sharedMinutes(view.getTypes());
         String title = escape(view.getPageTitle());
         String description = escape(view.getPageDescription());
@@ -77,17 +74,11 @@ public final class PublicCounselingServiceGuideHtml {
                     .append(escape(view.getBusinessLandline()))
                     .append("</a></p>");
         }
-        body.append(nav(showCenter, showTypes, showCounselors));
-        if (showCenter) {
-            body.append(centerSection(view));
-        }
-        if (showTypes) {
-            body.append(typesSection(view.getTypes()));
-        }
-        body.append(processSection(minutes));
-        if (showCounselors) {
-            body.append(counselorsSection(view.getCounselors()));
-        }
+        body.append(nav());
+        body.append(centerSection(view));
+        body.append(typesSection(view.getTypes()));
+        body.append(processSection());
+        body.append(counselorsSection());
         body.append(productsSection(view));
         body.append(policySection(view));
         body.append("</main>");
@@ -115,67 +106,66 @@ public final class PublicCounselingServiceGuideHtml {
             sb.append("<p>").append(escape(view.getCenterIntro())).append("</p>");
         }
         sb.append("<dl>");
-        row(sb, "상호", view.getCenterName());
+        row(sb, "센터명", PublicCounselingServiceGuideCopy.CENTER_NAME);
+        row(sb, "주소", PublicCounselingServiceGuideCopy.CENTER_ADDRESS);
+        sb.append("<dt>전화</dt><dd><a href=\"tel:")
+                .append(escape(telHref(PublicCounselingServiceGuideCopy.CENTER_PHONE)))
+                .append("\">")
+                .append(escape(PublicCounselingServiceGuideCopy.CENTER_PHONE))
+                .append("</a></dd>");
+        row(sb, "운영시간", PublicCounselingServiceGuideCopy.CENTER_HOURS);
         row(sb, "대표", view.getRepresentativeName());
         row(sb, "사업자등록번호", view.getBusinessRegistrationNumber());
         row(sb, "통신판매신고번호", view.getMailOrderReportNumber());
-        row(sb, "주소", view.getBusinessAddress());
-        if (!blank(view.getBusinessLandline())) {
-            sb.append("<dt>연락처</dt><dd><a href=\"tel:")
-                    .append(escape(telHref(view.getBusinessLandline())))
-                    .append("\">")
-                    .append(escape(view.getBusinessLandline()))
-                    .append("</a></dd>");
-        }
         sb.append("</dl></section>");
         return sb.toString();
     }
 
-    private static String typesSection(List<TypeCard> types) {
+    private static String typesSection(List<TypeCard> extra) {
         StringBuilder sb = new StringBuilder();
-        sb.append("<section id=\"types\"><h2>상담 종류</h2>");
-        sb.append("<p>").append(TYPES_LEAD).append("</p><div class=\"svc-grid\">");
-        for (TypeCard type : types) {
-            sb.append("<article><h3>").append(escape(type.getName())).append("</h3>");
-            if (!blank(type.getDescription())) {
-                sb.append("<p>").append(escape(type.getDescription())).append("</p>");
-            }
-            sb.append("<dl>");
-            row(sb, "대상", type.getAudience());
-            row(sb, "방식", type.getModality());
-            if (type.getMinutes() != null) {
-                row(sb, "1회 시간", type.getMinutes() + "분");
-            }
-            sb.append("</dl></article>");
+        sb.append("<section id=\"types\"><h2>상담 종류</h2><ul>");
+        for (String line : PublicCounselingServiceGuideCopy.COUNSELING_TYPES) {
+            sb.append("<li>").append(escape(line)).append("</li>");
         }
-        sb.append("</div></section>");
+        sb.append("</ul><p>")
+                .append(escape(PublicCounselingServiceGuideCopy.COMMON_NOTICE))
+                .append("</p>");
+        if (extra != null && !extra.isEmpty()) {
+            sb.append("<div class=\"svc-grid\">");
+            for (TypeCard type : extra) {
+                if (blank(type.getName())) {
+                    continue;
+                }
+                sb.append("<article><h3>").append(escape(type.getName())).append("</h3>");
+                if (!blank(type.getDescription())) {
+                    sb.append("<p>").append(escape(type.getDescription())).append("</p>");
+                }
+                sb.append("</article>");
+            }
+            sb.append("</div>");
+        }
+        sb.append("</section>");
         return sb.toString();
     }
 
-    private static String processSection(Integer minutes) {
-        String session = minutes == null
-                ? "정한 일정에 맞춰 상담사와 정해진 시간 동안 만나요. 회기는 상품의 이용기간 안에 사용해요."
-                : "정한 일정에 맞춰 상담사와 1회 " + minutes + "분씩 만나요. 회기는 상품의 이용기간 안에 사용해요.";
-        return "<section id=\"process\"><h2>진행 절차</h2><ol>"
-                + step(1, "상담 신청", PROCESS_APPLY)
-                + step(2, "초기 면담", PROCESS_INTAKE)
-                + step(3, "상담 회기", session)
-                + step(4, "종결", PROCESS_CLOSE)
-                + "</ol></section>";
+    private static String processSection() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("<section id=\"process\"><h2>진행 절차</h2><p>")
+                .append(escape(PublicCounselingServiceGuideCopy.PROCESS_LINE))
+                .append("</p><ol>");
+        int index = 1;
+        for (String step : PublicCounselingServiceGuideCopy.PROCESS_STEPS) {
+            sb.append(step(index, step, ""));
+            index += 1;
+        }
+        sb.append("</ol></section>");
+        return sb.toString();
     }
 
-    private static String counselorsSection(List<CounselorRow> counselors) {
-        StringBuilder sb = new StringBuilder();
-        sb.append("<section id=\"counselors\"><h2>상담사 자격</h2>");
-        sb.append("<p>").append(COUNSELOR_LEAD).append("</p><article>");
-        for (CounselorRow row : counselors) {
-            sb.append("<p><strong>").append(escape(row.getName())).append("</strong></p>");
-            for (String line : row.getLines()) {
-                sb.append("<p>").append(escape(line)).append("</p>");
-            }
-        }
-        sb.append("</article></section>");
-        return sb.toString();
+    private static String counselorsSection() {
+        return "<section id=\"counselors\"><h2>상담사 소개</h2><p>"
+                + escape(PublicCounselingServiceGuideCopy.COUNSELOR_INTRO)
+                + "</p></section>";
     }
 
     private static String productsSection(PublicCounselingServiceGuideView view) {
@@ -191,26 +181,37 @@ public final class PublicCounselingServiceGuideHtml {
             sb.append("<p>").append(escape(empty)).append("</p>");
         } else {
             String caption = escape(displayCenter(view)) + " 상담 상품과 가격";
-            sb.append("<table><caption class=\"sr-only\">").append(caption).append("</caption><thead><tr>");
+            sb.append("<table class=\"svc-product-table\"><caption class=\"sr-only\">")
+                    .append(caption).append("</caption><thead><tr>");
             sb.append("<th scope=\"col\">상품</th><th scope=\"col\">구성</th>");
             sb.append("<th scope=\"col\">이용기간</th><th scope=\"col\">가격</th>");
             sb.append("</tr></thead><tbody>");
             NumberFormat format = NumberFormat.getInstance(Locale.KOREA);
+            StringBuilder cards = new StringBuilder();
+            cards.append("<div class=\"svc-product-cards\">");
             for (ProductRow row : products) {
+                String period = PublicCounselingUsagePeriod.label(
+                        row.getValidityMonths(), row.getSessions());
+                String sessions = PublicCounselingUsagePeriod.sessionsLabel(row.getSessions());
+                String price = priceLabel(row.getPrice(), format);
                 sb.append("<tr><td><strong>").append(escape(row.getName())).append("</strong>");
                 if (!blank(row.getDescription())) {
                     sb.append("<br>").append(escape(row.getDescription()));
                 }
                 sb.append("</td><td>").append(escape(composition(row))).append("</td><td>");
-                sb.append(escape(validity(row))).append("</td><td>");
-                if (row.getPrice() == null) {
-                    sb.append("—");
-                } else {
-                    sb.append(escape(format.format(row.getPrice()))).append("원");
-                }
+                sb.append(escape(period)).append("</td><td>").append(escape(price));
                 sb.append("</td></tr>");
+                cards.append("<article class=\"svc-product-card\"><h3>")
+                        .append(escape(row.getName())).append("</h3><dl>");
+                cards.append(cardRow(PublicCounselingServiceGuideCopy.LABEL_PRODUCT_NAME, row.getName()));
+                cards.append(cardRow(PublicCounselingServiceGuideCopy.LABEL_SESSIONS, sessions));
+                cards.append(cardRow(PublicCounselingServiceGuideCopy.LABEL_PRICE, price));
+                cards.append(cardRow(PublicCounselingServiceGuideCopy.LABEL_PERIOD, period));
+                cards.append("</dl></article>");
             }
             sb.append("</tbody></table>");
+            cards.append("</div>");
+            sb.append(cards);
         }
         sb.append("<p>").append(escape(view.getPaymentNote())).append("</p>");
         sb.append("<p><a href=\"").append(LOGIN_NEXT).append("\">")
@@ -231,23 +232,15 @@ public final class PublicCounselingServiceGuideHtml {
                 + "</ul></section>";
     }
 
-    private static String nav(boolean center, boolean types, boolean counselors) {
-        StringBuilder sb = new StringBuilder();
-        sb.append("<nav aria-label=\"페이지 안 이동\">");
-        if (center) {
-            sb.append(anchor("center", "센터 소개"));
-        }
-        if (types) {
-            sb.append(anchor("types", "상담 종류"));
-        }
-        sb.append(anchor("process", "진행 절차"));
-        if (counselors) {
-            sb.append(anchor("counselors", "상담사"));
-        }
-        sb.append(anchor("products", "상품·가격"));
-        sb.append(anchor("policy", "환불·개인정보"));
-        sb.append("</nav>");
-        return sb.toString();
+    private static String nav() {
+        return "<nav aria-label=\"페이지 안 이동\">"
+                + anchor("center", "센터 소개")
+                + anchor("types", "상담 종류")
+                + anchor("process", "진행 절차")
+                + anchor("counselors", "상담사")
+                + anchor("products", "상품·가격")
+                + anchor("policy", "환불·개인정보")
+                + "</nav>";
     }
 
     private static String chips(PublicCounselingServiceGuideView view, Integer minutes) {
@@ -293,11 +286,15 @@ public final class PublicCounselingServiceGuideHtml {
         return sb.toString();
     }
 
-    private static String validity(ProductRow row) {
-        if (row.getValidityMonths() == null) {
-            return "—";
+    private static String priceLabel(Long price, NumberFormat format) {
+        if (price == null) {
+            return "";
         }
-        return "결제일부터 " + row.getValidityMonths() + "개월";
+        return format.format(price) + "원";
+    }
+
+    private static String cardRow(String label, String value) {
+        return "<dt>" + escape(label) + "</dt><dd>" + escape(value == null ? "" : value) + "</dd>";
     }
 
     private static String heroTitle(PublicCounselingServiceGuideView view) {
@@ -320,7 +317,11 @@ public final class PublicCounselingServiceGuideHtml {
     }
 
     private static String step(int index, String title, String body) {
-        return "<li><h3>" + index + ". " + title + "</h3><p>" + escape(body) + "</p></li>";
+        String text = "<li><h3>" + index + ". " + escape(title) + "</h3>";
+        if (blank(body)) {
+            return text + "</li>";
+        }
+        return text + "<p>" + escape(body) + "</p></li>";
     }
 
     private static String anchor(String id, String label) {
@@ -357,5 +358,12 @@ public final class PublicCounselingServiceGuideHtml {
             + ".svc-chips{display:flex;flex-wrap:wrap;gap:0.5rem;padding:0;list-style:none;}"
             + ".svc-chips li{padding:0.25rem 0.6rem;border-radius:0.5rem;background:Canvas;}"
             + "@media (min-width:48rem){.svc-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;}}"
-            + "@media (max-width:47.99rem){table,thead,tbody,tr,th,td{display:block;}}";
+            + ".svc-product-cards{display:none;}"
+            + ".svc-product-card{margin:0 0 1rem;padding:1rem;border:1px solid GrayText;}"
+            + "@media (max-width:47.99rem){"
+            + ".svc-product-table, .svc-product-table thead, .svc-product-table tbody,"
+            + ".svc-product-table tr, .svc-product-table th, .svc-product-table td{display:block;}}"
+            + "@media (max-width:24.375rem){"
+            + ".svc-product-table{display:none;}"
+            + ".svc-product-cards{display:block;}}";
 }

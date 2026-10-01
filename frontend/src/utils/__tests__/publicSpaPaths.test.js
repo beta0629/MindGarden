@@ -17,6 +17,11 @@ describe('publicSpaPaths', () => {
     expect(isPublicClientShopPath('/client/shop/points')).toBe(false);
   });
 
+  test('로그아웃 /services 는 로그인 리다이렉트 대상이 아니다', () => {
+    expect(isPublicSpaPath('/services')).toBe(true);
+    expect(isPublicSpaPath('/services/')).toBe(true);
+  });
+
   test('isPublicSpaPath에 공개 쇼핑 경로가 포함된다', () => {
     expect(isPublicSpaPath('/client/shop')).toBe(true);
     expect(isPublicSpaPath('/client/shop/sku/X')).toBe(true);

@@ -6,6 +6,7 @@
  */
 
 import { CONSULTATION_PACKAGE_PAYMENT_TYPE_NOTE } from '../constants/legalPublic';
+import { BLOCKED_PUBLIC_SKU, USAGE_MONTHS_BY_SESSIONS } from '../constants/publicCounselingGuideCopy';
 
 export const GUIDE_COPY = Object.freeze({
   ONE_LINER_WITH_NAME:
@@ -89,7 +90,13 @@ export function isExcludedPublicProduct(row) {
     || String(extra.isTest).toLowerCase() === 'true') {
     return true;
   }
-  const code = row.code || row.sku || row.codeValue || '';
+  if (row.catalogVisible === false || row.active === false || row.onSale === false) {
+    return true;
+  }
+  const code = row.code || row.sku || row.skuCode || row.codeValue || '';
+  if (String(code).trim().toUpperCase() === BLOCKED_PUBLIC_SKU) {
+    return true;
+  }
   return looksLikeTestProductLabel(row.name) || looksLikeTestProductLabel(code);
 }
 
@@ -162,7 +169,7 @@ export function buildGuideView(meta) {
     ? guide.counselors.filter((row) => text(row?.name) || (Array.isArray(row?.lines) && row.lines.length > 0))
     : [];
   const products = filterPublicGuideProducts(
-    Array.isArray(guide.products) ? guide.products : tenant.consultationPackages
+    Array.isArray(guide.products) ? guide.products : []
   );
 
   return {
@@ -183,9 +190,9 @@ export function buildGuideView(meta) {
     types,
     counselors,
     products,
-    showCenter: Boolean(centerName || businessAddress || businessLandline),
-    showTypes: types.length > 0,
-    showCounselors: counselors.length > 0
+    showCenter: true,
+    showTypes: true,
+    showCounselors: true
   };
 }
 
@@ -195,7 +202,7 @@ export function buildGuideView(meta) {
  */
 export function formatGuidePrice(price) {
   if (price === null || price === undefined || price === '' || Number.isNaN(Number(price))) {
-    return '—';
+    return '';
   }
   return `${new Intl.NumberFormat('ko-KR').format(Number(price))}원`;
 }
@@ -205,11 +212,31 @@ export function formatGuidePrice(price) {
  * @returns {string}
  */
 export function formatGuideValidity(row) {
-  const months = row?.validityMonths;
-  if (months === null || months === undefined || months === '') {
-    return '—';
+  const months = Number(row?.validityMonths);
+  if (Number.isInteger(months) && months > 0) {
+    return `결제일부터 ${months}개월`;
   }
-  return `결제일부터 ${months}개월`;
+  const sessions = Number(row?.sessions);
+  if (!Number.isInteger(sessions) || sessions < 1) {
+    return '';
+  }
+  const fallback = USAGE_MONTHS_BY_SESSIONS[sessions];
+  if (fallback) {
+    return `결제일부터 ${fallback}개월`;
+  }
+  return `${sessions}회기`;
+}
+
+/**
+ * @param {object} row
+ * @returns {string}
+ */
+export function formatGuideSessions(row) {
+  const sessions = Number(row?.sessions);
+  if (!Number.isInteger(sessions) || sessions < 1) {
+    return '';
+  }
+  return `${sessions}회기`;
 }
 
 /**

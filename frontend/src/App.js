@@ -181,8 +181,9 @@ import PrivacyPolicy from './components/common/PrivacyPolicy';
 import TermsOfService from './components/common/TermsOfService';
 import PlatformLegalDocumentPage from './components/legal/PlatformLegalDocumentPage';
 import ConsultationPackagePublicPage from './components/legal/ConsultationPackagePublicPage';
+import CounselingServiceGuidePage from './components/legal/CounselingServiceGuidePage';
 import RefundPolicyPublicPage from './components/legal/RefundPolicyPublicPage';
-import { PLATFORM_LEGAL_SECTIONS } from './constants/legalPublic';
+import { COUNSELING_SERVICE_GUIDE, PLATFORM_LEGAL_SECTIONS } from './constants/legalPublic';
 import AccountDeletionInstructions from './components/common/AccountDeletionInstructions';
 import PricingPage from './pages/public/PricingPage';
 const OnboardingPage = lazy(() => import('./pages/public/OnboardingPage'));
@@ -1097,6 +1098,7 @@ function AppContent() {
               element={<PlatformLegalDocumentPage section={PLATFORM_LEGAL_SECTIONS.PRIVACY} />}
             />
             <Route path="/legal/products" element={<ConsultationPackagePublicPage />} />
+            <Route path={COUNSELING_SERVICE_GUIDE.PATH} element={<CounselingServiceGuidePage />} />
             <Route path="/legal/refund" element={<RefundPolicyPublicPage />} />
             {/* Google Play 「데이터 보안 → 사용자 데이터 삭제 정책」 준수 — 비로그인 공개 페이지 */}
             <Route path="/account-deletion" element={<AccountDeletionInstructions />} />

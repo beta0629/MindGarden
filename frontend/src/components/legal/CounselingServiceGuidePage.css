@@ -1,0 +1,151 @@
+/* 공개 상담 서비스 안내. Clinic-OS 토큰만. hex 없음. */
+.mg-svc {
+  --pl-ink: var(--mg-v2-color-text-primary);
+  --pl-muted: var(--mg-v2-color-text-secondary);
+  --pl-line: var(--mg-v2-color-border-main, var(--mg-v2-color-neutral-300));
+  --pl-paper: var(--mg-warm-gray-50, var(--mg-v2-color-neutral-50));
+  min-height: 100vh;
+  color: var(--pl-ink);
+  background: var(--mg-white, var(--pl-paper));
+}
+
+.mg-svc__header {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 4rem;
+  padding: 0 var(--mg-spacing-lg, 1.25rem);
+  background: var(--mg-white, var(--pl-paper));
+  border-bottom: 1px solid var(--pl-line);
+}
+
+.mg-svc__brand {
+  margin: 0;
+  font-weight: 700;
+}
+
+.mg-svc__login {
+  color: var(--pl-ink);
+  text-decoration: underline;
+}
+
+.mg-svc__stage {
+  max-width: 57.5rem;
+  margin: 0 auto;
+  padding: var(--mg-spacing-xl, 2.25rem) var(--mg-spacing-lg, 1.25rem) var(--mg-spacing-2xl, 4rem);
+}
+
+.mg-svc__eyebrow {
+  margin: 0 0 var(--mg-spacing-sm, 0.5rem);
+  color: var(--pl-muted);
+}
+
+.mg-svc h1,
+.mg-svc h2,
+.mg-svc h3 {
+  font-weight: 800;
+  line-height: 1.3;
+}
+
+.mg-svc__def {
+  color: var(--pl-muted);
+}
+
+.mg-svc__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--mg-spacing-sm, 0.5rem);
+  margin: var(--mg-spacing-md, 1rem) 0;
+  padding: 0;
+  list-style: none;
+}
+
+.mg-svc__chips li {
+  padding: 0.25rem 0.6rem;
+  border: 1px solid var(--pl-line);
+  border-radius: var(--mg-radius-sm, 0.5rem);
+  background: var(--pl-paper);
+}
+
+.mg-svc__nav {
+  position: sticky;
+  top: 4rem;
+  z-index: 1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--mg-spacing-sm, 0.5rem) var(--mg-spacing-md, 1rem);
+  padding: var(--mg-spacing-sm, 0.5rem) 0;
+  background: var(--mg-white, var(--pl-paper));
+}
+
+.mg-svc a:focus-visible {
+  outline: 2px solid var(--pl-ink);
+  outline-offset: 2px;
+}
+
+.mg-svc section {
+  padding: var(--mg-spacing-xl, 2rem) 0;
+  border-top: 1px solid var(--pl-line);
+}
+
+.mg-svc__grid {
+  display: grid;
+  gap: var(--mg-spacing-md, 1rem);
+}
+
+.mg-svc table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.mg-svc th,
+.mg-svc td {
+  padding: 0.75rem 0;
+  text-align: left;
+  border-bottom: 1px solid var(--pl-line);
+  vertical-align: top;
+}
+
+.mg-svc .sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (max-width: 47.99rem) {
+  .mg-svc__header {
+    min-height: 3.5rem;
+  }
+
+  .mg-svc__nav {
+    top: 3.5rem;
+  }
+
+  .mg-svc__stage {
+    padding: var(--mg-spacing-lg, 1.25rem) var(--mg-spacing-md, 1rem) var(--mg-spacing-xl, 2.5rem);
+  }
+
+  .mg-svc table,
+  .mg-svc thead,
+  .mg-svc tbody,
+  .mg-svc tr,
+  .mg-svc th,
+  .mg-svc td {
+    display: block;
+  }
+}
+
+@media (min-width: 48rem) {
+  .mg-svc__grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}

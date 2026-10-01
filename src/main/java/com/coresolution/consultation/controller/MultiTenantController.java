@@ -8,6 +8,7 @@ import com.coresolution.consultation.constant.SessionConstants;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.service.MultiTenantUserService;
 import com.coresolution.consultation.service.PublicConsultationPackageService;
+import com.coresolution.consultation.service.PublicCounselingServiceGuideService;
 import com.coresolution.consultation.service.UserService;
 import com.coresolution.consultation.util.EmailLogMasking;
 import com.coresolution.consultation.utils.SessionUtils;
@@ -42,6 +43,7 @@ public class MultiTenantController extends BaseApiController {
     private final TenantRepository tenantRepository;
     private final UserService userService;
     private final PublicConsultationPackageService publicConsultationPackageService;
+    private final PublicCounselingServiceGuideService publicCounselingServiceGuideService;
     private final ObjectMapper objectMapper;
     
     /**
@@ -292,6 +294,9 @@ public class MultiTenantController extends BaseApiController {
                             "consultationPackages",
                             publicConsultationPackageService
                                     .buildPublicConsultationPackages(tenant.getTenantId()));
+                    tenantMap.put(
+                            "serviceGuide",
+                            publicCounselingServiceGuideService.toPublicMap(tenant));
 
                     // 브랜딩 액센트(공개 허용 필드만)
                     String primaryColor = extractPrimaryColor(tenant.getBrandingJson());

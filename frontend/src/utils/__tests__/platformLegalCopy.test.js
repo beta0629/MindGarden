@@ -58,4 +58,11 @@ describe('platformLegalCopy', () => {
     expect(html).toContain('&lt;script&gt;');
     expect(html).not.toContain('<script>');
   });
+
+  test('환불 제목에 id=refund 를 한 번 붙인다', () => {
+    const html = renderQuietLegalHtmlFromMarkdown('# 환불 안내\n\n## 환불 절차\n');
+    expect(html).toContain('<h1 id="refund">환불 안내</h1>');
+    expect(html).toContain('<h2>환불 절차</h2>');
+    expect(html.match(/id="refund"/g)).toHaveLength(1);
+  });
 });

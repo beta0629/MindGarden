@@ -65,7 +65,10 @@ export async function fetchTenantPublicHomeMeta() {
       subdomain: tenant.subdomain || subdomain,
       primaryColor: tenant.primaryColor || '',
       merchantLegal: extractMerchantLegalFromTenantPayload(tenant),
-      consultationPackages: extractConsultationPackagesFromTenantPayload(tenant)
+      consultationPackages: extractConsultationPackagesFromTenantPayload(tenant),
+      serviceGuide: tenant.serviceGuide && typeof tenant.serviceGuide === 'object'
+        ? tenant.serviceGuide
+        : null
     }
   };
 }

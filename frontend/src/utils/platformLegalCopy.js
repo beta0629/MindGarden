@@ -86,6 +86,16 @@ export function renderQuietLegalHtmlFromMarkdown(markdownSection) {
   const lines = markdownSection.split(/\r?\n/);
   const parts = [];
   let paragraph = [];
+  let refundAnchored = false;
+
+  const heading = (tag, text) => {
+    const safe = escapeHtml(text);
+    if (!refundAnchored && text.includes('환불')) {
+      refundAnchored = true;
+      return `<${tag} id="refund">${safe}</${tag}>`;
+    }
+    return `<${tag}>${safe}</${tag}>`;
+  };
 
   const flushParagraph = () => {
     if (paragraph.length === 0) return;
@@ -106,17 +116,17 @@ export function renderQuietLegalHtmlFromMarkdown(markdownSection) {
 
     if (trimmed.startsWith('### ')) {
       flushParagraph();
-      parts.push(`<h3>${escapeHtml(trimmed.slice(4).trim())}</h3>`);
+      parts.push(heading('h3', trimmed.slice(4).trim()));
       return;
     }
     if (trimmed.startsWith('## ')) {
       flushParagraph();
-      parts.push(`<h2>${escapeHtml(trimmed.slice(3).trim())}</h2>`);
+      parts.push(heading('h2', trimmed.slice(3).trim()));
       return;
     }
     if (trimmed.startsWith('# ')) {
       flushParagraph();
-      parts.push(`<h1>${escapeHtml(trimmed.slice(2).trim())}</h1>`);
+      parts.push(heading('h1', trimmed.slice(2).trim()));
       return;
     }
     if (trimmed.startsWith('- ')) {

@@ -170,6 +170,7 @@ public class SecurityConfig {
                     .requestMatchers("/register", "/tablet/register", "/auth/register").permitAll() // 회원가입 페이지는 공개
                     // 크롤러용 공개 법적 HTML (terms/privacy/products)
                     .requestMatchers("/legal/**").permitAll()
+                    .requestMatchers("/services", "/services/**").permitAll()
                     // BW-1 mobile: 버전 검사는 로그인 전 공개
                     .requestMatchers("/api/v1/mobile/app-version/check").permitAll()
                     // Ops Portal 인증 API는 허용
@@ -300,6 +301,7 @@ public class SecurityConfig {
                     .requestMatchers("/api/v1/admin/css-themes/**").permitAll()
                     // 크롤러용 공개 법적 HTML (terms/privacy/products)
                     .requestMatchers("/legal/**").permitAll()
+                    .requestMatchers("/services", "/services/**").permitAll()
                     // BW-1 mobile: 버전 검사는 로그인 전 공개
                     .requestMatchers("/api/v1/mobile/app-version/check").permitAll()
                     // 공개 쇼핑 카탈로그(PLP·PDP) — /api/v1/clients/** 는 열지 않음

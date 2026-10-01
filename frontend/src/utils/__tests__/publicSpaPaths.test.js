@@ -22,5 +22,8 @@ describe('publicSpaPaths', () => {
     expect(isPublicSpaPath('/client/shop/sku/X')).toBe(true);
     expect(isPublicSpaPath('/client/shop/checkout')).toBe(false);
     expect(isPublicSpaPath('/login')).toBe(true);
+    expect(isPublicSpaPath('/services')).toBe(true);
+    expect(isPublicSpaPath('/services/')).toBe(true);
+    expect(isPublicSpaPath('/admin')).toBe(false);
   });
 });

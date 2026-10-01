@@ -10,6 +10,7 @@ import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import MerchantLegalFooterPreview from '../MerchantLegalFooterPreview';
 import {
+  COUNSELING_SERVICE_GUIDE,
   LEGAL_PUBLIC_LABELS,
   LEGAL_PUBLIC_PATHS
 } from '../../../constants/legalPublic';
@@ -66,6 +67,11 @@ describe('MerchantLegalFooterPreview public legal links', () => {
     expect(document.querySelector('a[href="/terms#pricing"]')).toBeNull();
     expect(document.querySelector('a[href="/privacy"]')).toBeNull();
     expect(screen.getByTestId('merchant-legal-footer')).toBeInTheDocument();
+
+    const guide = screen.getByTestId('counseling-service-guide-link');
+    expect(guide).toHaveAttribute('href', COUNSELING_SERVICE_GUIDE.PATH);
+    expect(guide).toHaveTextContent(COUNSELING_SERVICE_GUIDE.LABEL);
+    expect(guide.closest('.mg-merchant-legal-footer__col')).toBe(guideCol);
   });
 
   test('계정 컬럼 개인정보 링크는 /legal/privacy 이다', () => {

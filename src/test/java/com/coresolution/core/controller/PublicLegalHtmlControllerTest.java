@@ -4,7 +4,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
+import com.coresolution.consultation.dto.publicguide.PublicCounselingServiceGuideView;
 import com.coresolution.consultation.service.PublicConsultationPackageService;
+import com.coresolution.consultation.service.PublicCounselingServiceGuideService;
+import com.coresolution.consultation.util.PublicCounselingServiceGuideHtml;
 import com.coresolution.core.domain.Tenant;
 import com.coresolution.core.repository.TenantRepository;
 import com.coresolution.core.service.PlatformLegalCopyService;
@@ -40,6 +43,9 @@ class PublicLegalHtmlControllerTest {
     private PublicConsultationPackageService publicConsultationPackageService;
 
     @Mock
+    private PublicCounselingServiceGuideService publicCounselingServiceGuideService;
+
+    @Mock
     private TenantRepository tenantRepository;
 
     private PlatformLegalCopyService platformLegalCopyService;
@@ -51,6 +57,7 @@ class PublicLegalHtmlControllerTest {
         controller = new PublicLegalHtmlController(
                 platformLegalCopyService,
                 publicConsultationPackageService,
+                publicCounselingServiceGuideService,
                 tenantRepository);
     }
 
@@ -75,6 +82,7 @@ class PublicLegalHtmlControllerTest {
         assertThat(response.getBody()).doesNotContain("1년 내 소진");
         assertThat(response.getBody()).contains("<article>");
         assertThat(response.getBody()).doesNotContain("MindGarden 이용약관");
+        assertThat(response.getBody()).contains("id=\"refund\"");
     }
 
     @Test
@@ -176,6 +184,51 @@ class PublicLegalHtmlControllerTest {
         assertThat(body.indexOf(HtmlUtils.htmlEscape(
                 PlatformLegalCopyService.CONSULTATION_PACKAGE_USAGE_PERIOD_NOTE)))
                 .isLessThan(body.indexOf("<ul>"));
+        assertThat(body).contains("href=\"" + PublicCounselingServiceGuideHtml.PATH + "\"");
+        assertThat(body).contains(PublicCounselingServiceGuideHtml.DETAIL_LINK_LABEL);
+    }
+
+    @Test
+    @DisplayName("services: 로그인 없이 여섯 섹션 HTML")
+    void services_rendersGuideHtmlWithoutLogin() {
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.addHeader("Host", "clinic-a.dev.core-solution.co.kr");
+        request.addHeader("X-Forwarded-Host", "clinic-a.dev.core-solution.co.kr");
+        request.addHeader("X-Forwarded-Proto", "https");
+
+        Tenant tenant = Tenant.builder()
+                .tenantId("tenant-clinic-a")
+                .name("클리닉A")
+                .subdomain("clinic-a")
+                .build();
+        when(tenantRepository.findBySubdomainIgnoreCase(eq("clinic-a")))
+                .thenReturn(Optional.of(tenant));
+
+        PublicCounselingServiceGuideView view = new PublicCounselingServiceGuideView();
+        view.setCenterName("클리닉A");
+        view.setOneLiner("한 줄 정의");
+        view.setPaymentNote(PAYMENT_TYPE_NOTE);
+        view.setRefundBody("환불 요약입니다.");
+        view.setPageTitle("상담 서비스 안내 · 클리닉A");
+        view.setPageDescription("설명");
+        view.setCanonicalUrl("https://clinic-a.dev.core-solution.co.kr/services");
+        when(publicCounselingServiceGuideService.load(
+                eq(tenant), eq("https://clinic-a.dev.core-solution.co.kr/services")))
+                .thenReturn(view);
+
+        ResponseEntity<String> response = controller.services(request);
+        String body = response.getBody();
+
+        assertThat(response.getStatusCode().is2xxSuccessful()).isTrue();
+        assertThat(body).contains("<h2>센터 소개</h2>");
+        assertThat(body).contains("<h2>진행 절차</h2>");
+        assertThat(body).contains("<h2>상품·가격</h2>");
+        assertThat(body).contains("<h2>환불·개인정보</h2>");
+        assertThat(body).contains("href=\"/legal/terms#refund\"");
+        assertThat(body).contains("href=\"/legal/privacy\"");
+        assertThat(body).contains(HtmlUtils.htmlEscape(PAYMENT_TYPE_NOTE));
+        assertThat(body).doesNotContain("일시불만");
+        assertThat(body).doesNotContain("location.href");
     }
 
     @Test

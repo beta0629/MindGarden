@@ -1,6 +1,8 @@
 package com.coresolution.core.controller;
 
 import com.coresolution.consultation.service.PublicConsultationPackageService;
+import com.coresolution.consultation.service.PublicCounselingServiceGuideService;
+import com.coresolution.consultation.util.PublicCounselingServiceGuideHtml;
 import com.coresolution.core.domain.Tenant;
 import com.coresolution.core.repository.TenantRepository;
 import com.coresolution.core.service.PlatformLegalCopyService;
@@ -41,6 +43,7 @@ public class PublicLegalHtmlController {
 
     private final PlatformLegalCopyService platformLegalCopyService;
     private final PublicConsultationPackageService publicConsultationPackageService;
+    private final PublicCounselingServiceGuideService publicCounselingServiceGuideService;
     private final TenantRepository tenantRepository;
 
     /**
@@ -86,6 +89,24 @@ public class PublicLegalHtmlController {
      * @param request Host / X-Forwarded-Host
      * @return text/html
      */
+    /**
+     * 공개 상담 서비스 안내 HTML. 로그인 없이 호스트의 테넌트를 보여 준다.
+     *
+     * @param request Host / X-Forwarded-Host
+     * @return text/html
+     */
+    @GetMapping(value = "/services", produces = "text/html;charset=UTF-8")
+    public ResponseEntity<String> services(HttpServletRequest request) {
+        String subdomain = TenantHostSubdomainUtil.extractTenantSubdomain(request);
+        Tenant tenant = null;
+        if (subdomain != null && !subdomain.isBlank()) {
+            tenant = tenantRepository.findBySubdomainIgnoreCase(subdomain).orElse(null);
+        }
+        String html = PublicCounselingServiceGuideHtml.render(
+                publicCounselingServiceGuideService.load(tenant, canonical(request)));
+        return ResponseEntity.ok().contentType(TEXT_HTML_UTF8).body(html);
+    }
+
     @GetMapping(value = "/legal/products", produces = "text/html;charset=UTF-8")
     public ResponseEntity<String> products(HttpServletRequest request) {
         String subdomain = TenantHostSubdomainUtil.extractTenantSubdomain(request);
@@ -154,6 +175,11 @@ public class PublicLegalHtmlController {
 
     private String renderProductsBody(List<Map<String, Object>> packages) {
         StringBuilder sb = new StringBuilder();
+        sb.append("<p><a href=\"")
+                .append(PublicCounselingServiceGuideHtml.PATH)
+                .append("\">")
+                .append(PublicCounselingServiceGuideHtml.DETAIL_LINK_LABEL)
+                .append("</a></p>\n");
         sb.append("<p>")
                 .append(HtmlUtils.htmlEscape(
                         PlatformLegalCopyService.CONSULTATION_PACKAGE_USAGE_PERIOD_NOTE))
@@ -189,6 +215,21 @@ public class PublicLegalHtmlController {
         }
         sb.append("</ul>");
         return sb.toString();
+    }
+
+    private static String canonical(HttpServletRequest request) {
+        String forwardedHost = request.getHeader("X-Forwarded-Host");
+        String host = forwardedHost != null && !forwardedHost.isBlank()
+                ? forwardedHost.split(",")[0].trim()
+                : request.getHeader("Host");
+        if (host == null || host.isBlank()) {
+            host = request.getServerName();
+        }
+        String forwardedProto = request.getHeader("X-Forwarded-Proto");
+        String scheme = forwardedProto != null && !forwardedProto.isBlank()
+                ? forwardedProto.split(",")[0].trim()
+                : request.getScheme();
+        return scheme + "://" + host + PublicCounselingServiceGuideHtml.PATH;
     }
 
     private static String formatPrice(Object priceObj, NumberFormat priceFormat) {

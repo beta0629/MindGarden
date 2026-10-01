@@ -12,6 +12,7 @@ import CommonPageTemplate from '../common/CommonPageTemplate';
 import ConsultationPackagePublicList from './ConsultationPackagePublicList';
 import LegalPublicNav from './LegalPublicNav';
 import {
+  COUNSELING_SERVICE_GUIDE,
   LEGAL_PUBLIC_LABELS
 } from '../../constants/legalPublic';
 import { fetchTenantPublicHomeMeta } from '../../utils/tenantPublicHomeMeta';
@@ -69,6 +70,14 @@ const ConsultationPackagePublicPage = () => {
         </header>
 
         <main className="mg-platform-legal__main">
+          <p>
+            <Link
+              to={COUNSELING_SERVICE_GUIDE.PATH}
+              data-testid="counseling-service-detail-link"
+            >
+              {COUNSELING_SERVICE_GUIDE.DETAIL_LINK}
+            </Link>
+          </p>
           {loading ? (
             <p className="mg-platform-legal__status">불러오는 중…</p>
           ) : (

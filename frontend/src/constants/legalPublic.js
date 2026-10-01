@@ -12,6 +12,18 @@ export const LEGAL_PUBLIC_PATHS = Object.freeze({
   REFUND: '/legal/refund'
 });
 
+/** 이용약관 안 환불 조항. 새 환불 정책을 쓰지 않는다. */
+export const LEGAL_TERMS_REFUND_HREF = `${LEGAL_PUBLIC_PATHS.TERMS}#refund`;
+
+/** 공개 상담 서비스 안내. /legal 아래가 아니다. */
+export const COUNSELING_SERVICE_GUIDE = Object.freeze({
+  PATH: '/services',
+  LABEL: '상담 서비스 안내',
+  DETAIL_LINK: '상담 서비스 자세히 보기 ›',
+  BUY_LINK: '로그인하고 회기 구매하기 ›',
+  BUY_HREF: '/login?next=/client/shop'
+});
+
 export const LEGAL_PUBLIC_LABELS = Object.freeze({
   TERMS: '이용약관',
   PRIVACY: '개인정보처리방침',

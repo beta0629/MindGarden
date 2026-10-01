@@ -112,6 +112,7 @@ public class PlatformLegalCopyService {
 
         List<String> parts = new ArrayList<>();
         List<String> paragraph = new ArrayList<>();
+        boolean refundAnchored = false;
 
         for (String rawLine : markdownSection.split("\\r?\\n", -1)) {
             String trimmed = rawLine.trim();
@@ -122,17 +123,17 @@ public class PlatformLegalCopyService {
             }
             if (trimmed.startsWith("### ")) {
                 flushParagraph(parts, paragraph);
-                parts.add("<h3>" + HtmlUtils.htmlEscape(trimmed.substring(4).trim()) + "</h3>");
+                refundAnchored = appendHeading(parts, "h3", trimmed.substring(4).trim(), refundAnchored);
                 continue;
             }
             if (trimmed.startsWith("## ")) {
                 flushParagraph(parts, paragraph);
-                parts.add("<h2>" + HtmlUtils.htmlEscape(trimmed.substring(3).trim()) + "</h2>");
+                refundAnchored = appendHeading(parts, "h2", trimmed.substring(3).trim(), refundAnchored);
                 continue;
             }
             if (trimmed.startsWith("# ")) {
                 flushParagraph(parts, paragraph);
-                parts.add("<h1>" + HtmlUtils.htmlEscape(trimmed.substring(2).trim()) + "</h1>");
+                refundAnchored = appendHeading(parts, "h1", trimmed.substring(2).trim(), refundAnchored);
                 continue;
             }
             if (trimmed.startsWith("- ")) {
@@ -195,6 +196,25 @@ public class PlatformLegalCopyService {
                 + "</main>\n"
                 + "</body>\n"
                 + "</html>\n";
+    }
+
+    /**
+     * 환불 제목에 id=refund 를 한 번만 붙인다. /legal/terms#refund 앵커.
+     *
+     * @param parts 출력
+     * @param tag h1, h2, h3
+     * @param text 제목 원문
+     * @param refundAnchored 이미 앵커를 달았으면 true
+     * @return 앵커를 달았으면 true
+     */
+    private static boolean appendHeading(List<String> parts, String tag, String text, boolean refundAnchored) {
+        String safe = HtmlUtils.htmlEscape(text);
+        if (!refundAnchored && text.contains("환불")) {
+            parts.add("<" + tag + " id=\"refund\">" + safe + "</" + tag + ">");
+            return true;
+        }
+        parts.add("<" + tag + ">" + safe + "</" + tag + ">");
+        return refundAnchored;
     }
 
     private static void flushParagraph(List<String> parts, List<String> paragraph) {

@@ -42,6 +42,8 @@ export function isPublicSpaPath(pathname) {
     pathname.startsWith('/auth/oauth2/callback') ||
     pathname.startsWith('/oauth2/callback') ||
     pathname.startsWith('/legal/') ||
+    pathname === '/services' ||
+    pathname === '/services/' ||
     pathname.startsWith('/test/notifications') ||
     pathname.startsWith('/test/payment') ||
     pathname.startsWith('/test/integration')

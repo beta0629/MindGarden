@@ -2,6 +2,7 @@ package com.coresolution.consultation.service;
 
 import com.coresolution.consultation.entity.CommonCode;
 import com.coresolution.consultation.repository.CommonCodeRepository;
+import com.coresolution.consultation.util.PublicTestProductFilter;
 import com.coresolution.core.constant.OnboardingConstants;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -56,7 +57,7 @@ public class PublicConsultationPackageService {
                 continue;
             }
             Map<String, Object> extra = parseExtraDataMap(code.getExtraData());
-            if (isPublicVisibleFalse(extra)) {
+            if (PublicTestProductFilter.isExcluded(name, code.getCodeValue(), extra)) {
                 continue;
             }
             String description = firstNonBlank(
@@ -69,33 +70,12 @@ public class PublicConsultationPackageService {
             item.put("name", name);
             item.put("description", description != null ? description : "");
             item.put("price", price);
+            item.put("sessions", toNumberOrNull(extra.get("sessions")));
+            item.put("durationMinutes", firstNumber(extra.get("durationMinutes"), extra.get("duration")));
+            item.put("validityMonths", toNumberOrNull(extra.get("validityMonths")));
             packages.add(item);
         }
         return packages;
-    }
-
-    /**
-     * extraData.publicVisible === false 이면 공개 목록에서 제외.
-     * 누락·null·true 는 포함(하위 호환).
-     *
-     * @param extra 파싱된 extraData 맵
-     * @return true 이면 제외
-     */
-    private static boolean isPublicVisibleFalse(Map<String, Object> extra) {
-        if (extra == null || extra.isEmpty()) {
-            return false;
-        }
-        Object value = extra.get("publicVisible");
-        if (value == null) {
-            return false;
-        }
-        if (value instanceof Boolean bool) {
-            return Boolean.FALSE.equals(bool);
-        }
-        if (value instanceof String str) {
-            return "false".equalsIgnoreCase(str.trim());
-        }
-        return false;
     }
 
     private Map<String, Object> parseExtraDataMap(String extraDataJson) {
@@ -108,6 +88,14 @@ public class PublicConsultationPackageService {
             log.warn("공개 consultationPackages extraData 파싱 실패: {}", e.getMessage());
             return Map.of();
         }
+    }
+
+    private static Number firstNumber(Object primary, Object fallback) {
+        Number first = toNumberOrNull(primary);
+        if (first != null) {
+            return first;
+        }
+        return toNumberOrNull(fallback);
     }
 
     private static Number toNumberOrNull(Object value) {

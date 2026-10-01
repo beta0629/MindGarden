@@ -1,0 +1,276 @@
+/**
+ * 공개 /services — 상담 서비스 안내. 로그인 없이 호스트의 테넌트를 보여 준다.
+ *
+ * @author CoreSolution
+ * @since 2026-10-01
+ */
+
+import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+import CommonPageTemplate from '../common/CommonPageTemplate';
+import {
+  COUNSELING_SERVICE_GUIDE,
+  LEGAL_PUBLIC_LABELS,
+  LEGAL_PUBLIC_PATHS,
+  LEGAL_TERMS_REFUND_HREF
+} from '../../constants/legalPublic';
+import { fetchTenantPublicHomeMeta } from '../../utils/tenantPublicHomeMeta';
+import {
+  GUIDE_COPY,
+  buildGuideView,
+  formatGuideComposition,
+  formatGuidePrice,
+  formatGuideValidity,
+  sharedGuideMinutes
+} from '../../utils/counselingServiceGuide';
+import './CounselingServiceGuidePage.css';
+
+const EMPTY_VIEW = buildGuideView(null);
+
+/**
+ * @param {string} name
+ * @param {string} content
+ */
+function upsertMeta(name, content) {
+  if (typeof document === 'undefined') {
+    return;
+  }
+  let node = document.querySelector(`meta[name="${name}"]`);
+  if (!node) {
+    node = document.createElement('meta');
+    node.setAttribute('name', name);
+    document.head.appendChild(node);
+  }
+  node.setAttribute('content', content);
+}
+
+const CounselingServiceGuidePage = () => {
+  const [view, setView] = useState(EMPTY_VIEW);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const meta = await fetchTenantPublicHomeMeta();
+        if (!cancelled) {
+          setView(buildGuideView(meta));
+        }
+      } catch (err) {
+        console.warn('상담 서비스 안내 로드 실패:', err);
+        if (!cancelled) {
+          setView(EMPTY_VIEW);
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    document.title = view.pageTitle;
+    upsertMeta('description', view.pageDescription);
+    upsertMeta('robots', 'index');
+    const origin = typeof window !== 'undefined' && window.location?.origin
+      ? window.location.origin
+      : '';
+    if (origin) {
+      let canonical = document.querySelector('link[rel="canonical"]');
+      if (!canonical) {
+        canonical = document.createElement('link');
+        canonical.setAttribute('rel', 'canonical');
+        document.head.appendChild(canonical);
+      }
+      canonical.setAttribute('href', `${origin}${COUNSELING_SERVICE_GUIDE.PATH}`);
+    }
+  }, [view.pageTitle, view.pageDescription]);
+
+  const minutes = sharedGuideMinutes(view.types);
+  const sessionCopy = minutes === null
+    ? GUIDE_COPY.SESSION_WITHOUT_MINUTES
+    : GUIDE_COPY.SESSION_WITH_MINUTES.replace('%s', String(minutes));
+  const productsEmpty = view.businessLandline
+    ? GUIDE_COPY.PRODUCTS_EMPTY_WITH_PHONE.replace('%s', view.businessLandline)
+    : GUIDE_COPY.PRODUCTS_EMPTY;
+  const face = view.types.some((type) => String(type.modality || '').replace('비대면', '').includes('대면'));
+  const remote = view.types.some((type) => String(type.modality || '').includes('비대면'));
+
+  return (
+    <CommonPageTemplate
+      title={view.pageTitle}
+      description={view.pageDescription}
+      bodyClass="mg-svc-body"
+    >
+      <div className="mg-svc" data-testid="counseling-service-guide-page">
+        <header className="mg-svc__header">
+          <p className="mg-svc__brand">{view.centerName || COUNSELING_SERVICE_GUIDE.LABEL}</p>
+          <Link to="/login" className="mg-svc__login">로그인</Link>
+        </header>
+        <main className="mg-svc__stage">
+          {loading ? (
+            <p>불러오는 중…</p>
+          ) : (
+            <>
+              <p className="mg-svc__eyebrow">{COUNSELING_SERVICE_GUIDE.LABEL}</p>
+              <h1>
+                {view.centerName
+                  ? `${view.centerName} 심리상담 서비스 안내`
+                  : '심리상담 서비스 안내'}
+              </h1>
+              <p className="mg-svc__def">{view.oneLiner}</p>
+              <ul className="mg-svc__chips">
+                {face ? <li>대면 상담</li> : null}
+                {remote ? <li>비대면 상담</li> : null}
+                {minutes !== null ? <li>{`1회 ${minutes}분`}</li> : null}
+                <li>카드 결제</li>
+              </ul>
+              {view.businessLandline ? (
+                <p>
+                  <a href={`tel:${view.businessLandline.replace(/\s/g, '')}`}>
+                    {`전화 문의 ${view.businessLandline}`}
+                  </a>
+                </p>
+              ) : null}
+              <nav className="mg-svc__nav" aria-label="페이지 안 이동">
+                {view.showCenter ? <a href="#center">센터 소개</a> : null}
+                {view.showTypes ? <a href="#types">상담 종류</a> : null}
+                <a href="#process">진행 절차</a>
+                {view.showCounselors ? <a href="#counselors">상담사</a> : null}
+                <a href="#products">상품·가격</a>
+                <a href="#policy">환불·개인정보</a>
+              </nav>
+
+              {view.showCenter ? (
+                <section id="center">
+                  <h2>센터 소개</h2>
+                  {view.centerIntro ? <p>{view.centerIntro}</p> : null}
+                  <dl>
+                    {view.centerName ? (<><dt>상호</dt><dd>{view.centerName}</dd></>) : null}
+                    {view.representativeName ? (<><dt>대표</dt><dd>{view.representativeName}</dd></>) : null}
+                    {view.businessRegistrationNumber ? (
+                      <><dt>사업자등록번호</dt><dd>{view.businessRegistrationNumber}</dd></>
+                    ) : null}
+                    {view.mailOrderReportNumber ? (
+                      <><dt>통신판매신고번호</dt><dd>{view.mailOrderReportNumber}</dd></>
+                    ) : null}
+                    {view.businessAddress ? (<><dt>주소</dt><dd>{view.businessAddress}</dd></>) : null}
+                    {view.businessLandline ? (
+                      <><dt>연락처</dt><dd>{view.businessLandline}</dd></>
+                    ) : null}
+                  </dl>
+                </section>
+              ) : null}
+
+              {view.showTypes ? (
+                <section id="types">
+                  <h2>상담 종류</h2>
+                  <p>{GUIDE_COPY.TYPES_LEAD}</p>
+                  <div className="mg-svc__grid">
+                    {view.types.map((type) => (
+                      <article key={type.name}>
+                        <h3>{type.name}</h3>
+                        {type.description ? <p>{type.description}</p> : null}
+                        <dl>
+                          {type.audience ? (<><dt>대상</dt><dd>{type.audience}</dd></>) : null}
+                          {type.modality ? (<><dt>방식</dt><dd>{type.modality}</dd></>) : null}
+                          {type.minutes ? (<><dt>1회 시간</dt><dd>{`${type.minutes}분`}</dd></>) : null}
+                        </dl>
+                      </article>
+                    ))}
+                  </div>
+                </section>
+              ) : null}
+
+              <section id="process">
+                <h2>진행 절차</h2>
+                <ol>
+                  <li><h3>1. 상담 신청</h3><p>{GUIDE_COPY.PROCESS_APPLY}</p></li>
+                  <li><h3>2. 초기 면담</h3><p>{GUIDE_COPY.PROCESS_INTAKE}</p></li>
+                  <li><h3>3. 상담 회기</h3><p>{sessionCopy}</p></li>
+                  <li><h3>4. 종결</h3><p>{GUIDE_COPY.PROCESS_CLOSE}</p></li>
+                </ol>
+              </section>
+
+              {view.showCounselors ? (
+                <section id="counselors">
+                  <h2>상담사 자격</h2>
+                  <p>{GUIDE_COPY.COUNSELOR_LEAD}</p>
+                  <article>
+                    {view.counselors.map((row) => (
+                      <div key={row.name || row.lines?.join('|')}>
+                        {row.name ? <p><strong>{row.name}</strong></p> : null}
+                        {(row.lines || []).map((line) => (
+                          <p key={line}>{line}</p>
+                        ))}
+                      </div>
+                    ))}
+                  </article>
+                </section>
+              ) : null}
+
+              <section id="products">
+                <h2>상품·가격</h2>
+                <p>{GUIDE_COPY.PRODUCTS_LEAD}</p>
+                {view.products.length === 0 ? (
+                  <p>{productsEmpty}</p>
+                ) : (
+                  <table>
+                    <caption className="sr-only">
+                      {`${view.centerName || '상담 서비스'} 상담 상품과 가격`}
+                    </caption>
+                    <thead>
+                      <tr>
+                        <th scope="col">상품</th>
+                        <th scope="col">구성</th>
+                        <th scope="col">이용기간</th>
+                        <th scope="col">가격</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {view.products.map((row) => (
+                        <tr key={row.name}>
+                          <td>
+                            <strong>{row.name}</strong>
+                            {row.description ? <><br />{row.description}</> : null}
+                          </td>
+                          <td>{formatGuideComposition(row)}</td>
+                          <td>{formatGuideValidity(row)}</td>
+                          <td>{formatGuidePrice(row.price)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
+                <p>{view.paymentNote}</p>
+                <p>
+                  <Link to={COUNSELING_SERVICE_GUIDE.BUY_HREF}>
+                    {COUNSELING_SERVICE_GUIDE.BUY_LINK}
+                  </Link>
+                </p>
+              </section>
+
+              <section id="policy">
+                <h2>환불·개인정보</h2>
+                <h3>환불 규정 요약</h3>
+                <p>{view.refundBody}</p>
+                <ul>
+                  <li><a href={LEGAL_TERMS_REFUND_HREF}>환불 규정 전문</a></li>
+                  <li><Link to={LEGAL_PUBLIC_PATHS.TERMS}>{LEGAL_PUBLIC_LABELS.TERMS}</Link></li>
+                  <li><Link to={LEGAL_PUBLIC_PATHS.PRIVACY}>{LEGAL_PUBLIC_LABELS.PRIVACY}</Link></li>
+                  <li><Link to={LEGAL_PUBLIC_PATHS.PRODUCTS}>{LEGAL_PUBLIC_LABELS.PRODUCTS}</Link></li>
+                </ul>
+              </section>
+            </>
+          )}
+        </main>
+      </div>
+    </CommonPageTemplate>
+  );
+};
+
+export default CounselingServiceGuidePage;

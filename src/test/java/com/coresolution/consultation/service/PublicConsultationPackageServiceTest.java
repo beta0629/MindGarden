@@ -96,4 +96,31 @@ class PublicConsultationPackageServiceTest {
         assertThat(service.buildPublicConsultationPackages(null)).isEmpty();
         assertThat(service.buildPublicConsultationPackages("  ")).isEmpty();
     }
+
+    @Test
+    @DisplayName("테스트 상품 이름은 공개 목록에 없고 정상 패키지의 회기·이용기간은 남긴다")
+    void buildPublicConsultationPackages_excludesTestProductName() {
+        CommonCode hidden = CommonCode.builder()
+                .koreanName("테스트 상품")
+                .codeValue("PKG_TEST")
+                .extraData("{\"price\":1000,\"sessions\":1}")
+                .build();
+        CommonCode visible = CommonCode.builder()
+                .koreanName("10회 패키지")
+                .codeValue("PKG10")
+                .extraData("{\"price\":100000,\"sessions\":10,\"duration\":50,\"validityMonths\":3}")
+                .build();
+        when(commonCodeRepository.findByTenantIdAndCodeGroupAndIsActiveTrueOrderBySortOrderAsc(
+                eq(TENANT_ID), eq(CODE_GROUP)))
+                .thenReturn(List.of(hidden, visible));
+
+        List<Map<String, Object>> packages = service.buildPublicConsultationPackages(TENANT_ID);
+
+        assertThat(packages).hasSize(1);
+        assertThat(packages.get(0).get("name")).isEqualTo("10회 패키지");
+        assertThat(packages.get(0).get("sessions")).isEqualTo(10);
+        assertThat(packages.get(0).get("durationMinutes")).isEqualTo(50);
+        assertThat(packages.get(0).get("validityMonths")).isEqualTo(3);
+        assertThat(packages).noneMatch(row -> String.valueOf(row.get("name")).contains("테스트"));
+    }
 }

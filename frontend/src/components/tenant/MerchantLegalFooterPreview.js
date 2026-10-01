@@ -12,6 +12,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import {
+  COUNSELING_SERVICE_GUIDE,
   LEGAL_PUBLIC_LABELS,
   LEGAL_PUBLIC_PATHS
 } from '../../constants/legalPublic';
@@ -104,6 +105,15 @@ const MerchantLegalFooterPreview = ({
           >
             <span className="mg-merchant-legal-footer__link-label">
               {LEGAL_PUBLIC_LABELS.REFUND}
+            </span>
+          </Link>
+          <Link
+            to={COUNSELING_SERVICE_GUIDE.PATH}
+            className="mg-merchant-legal-footer__link"
+            data-testid="counseling-service-guide-link"
+          >
+            <span className="mg-merchant-legal-footer__link-label">
+              {COUNSELING_SERVICE_GUIDE.LABEL}
             </span>
           </Link>
         </div>

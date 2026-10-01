@@ -33,7 +33,8 @@ public class PlatformLegalCopyService {
 
     /** FE legalPublic.js CONSULTATION_PACKAGE_USAGE_PERIOD_NOTE 와 동기화 */
     public static final String CONSULTATION_PACKAGE_USAGE_PERIOD_NOTE =
-            "이용기간 — 단회기: 결제일부터 2개월 내 소진. 패키지(최대 20회기): 결제일부터 1년 내 소진. 무제한 유효기간은 없습니다.";
+            "이용기간 — 단회기: 결제일부터 2개월 내 소진. 10회기: 결제일부터 3개월 내 소진. "
+                    + "20회기: 결제일부터 6개월 내 소진. 무제한 유효기간은 없습니다.";
 
     /** FE legalPublic.js CONSULTATION_PACKAGE_PAYMENT_TYPE_NOTE 와 동기화 */
     public static final String CONSULTATION_PACKAGE_PAYMENT_TYPE_NOTE =

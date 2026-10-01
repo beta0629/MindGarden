@@ -23,8 +23,10 @@ describe('Shop purchase surfaces usage/refund SSOT', () => {
 
   test('§9 이용기간 문구는 글자 그대로 상수에 있다', () => {
     expect(mallConstants).toContain(
-      "'이용기간 — 상품마다 정한 기간(예: 단회기·10회기 패키지는 결제일부터 3개월) 안에 사용해야 합니다. '"
+      "'이용기간 — 상품마다 정한 기간(예: 단회기는 결제일부터 2개월, 10회기는 3개월, 20회기는 6개월) 안에 사용해야 합니다. '"
     );
+    expect(mallConstants).not.toContain('단회기·10회기 패키지는 결제일부터 3개월');
+    expect(mallConstants).not.toContain('1년 내 소진');
     expect(mallConstants).toContain("'기한이 지나면 남은 회기는 만료되며, 센터 사정에 따라 연장될 수 있어요.'");
     expect(mallConstants).toContain('`이용기간 — 이 상품은 결제일부터 ${validityMonths}개월 안에 사용해야 합니다. `');
   });

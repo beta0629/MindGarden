@@ -38,7 +38,7 @@ public class PlatformLegalCopyService {
 
     /** FE legalPublic.js CONSULTATION_PACKAGE_PAYMENT_TYPE_NOTE 와 동기화 */
     public static final String CONSULTATION_PACKAGE_PAYMENT_TYPE_NOTE =
-            "결제 — 일시불만 가능합니다(정기결제·구독 없음).";
+            "카드 결제이며, 5만 원 이상은 할부가 가능합니다. 정기결제·구독은 없습니다.";
 
     private static final Pattern NEXT_SECTION = Pattern.compile("\\n## (terms|privacy|refund)\\b");
 

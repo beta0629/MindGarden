@@ -1,121 +1,675 @@
-/* ClientPaymentHistory.css — suite payment rows + filter aside */
+/**
+ * 내담자 결제 내역 — Clinic-OS 단열 · 필터 칩 바 · ≥768 표 / <768 카드
+ * 스펙: docs/design/clinic-os-client-payments.md (토큰 재사용만 · 녹/틸 칩·pill 없음)
+ *
+ * @author CoreSolution
+ * @since 2026-09-30
+ */
 
-.client-payment-rows__head,
-.client-payment-rows__item {
-  display: grid;
-  grid-template-columns: 6.5rem minmax(0, 1.4fr) 6rem 5.5rem 4.5rem;
-  gap: var(--mg-v2-space-3, 0.75rem);
+.client-payment-history {
+  --client-pay-ink: var(--client-web-ink);
+  --client-pay-slate: var(--client-web-slate);
+  --client-pay-mute: var(--client-web-mute);
+  --client-pay-faint: var(--cs-slate-400);
+  --client-pay-line: var(--client-web-line);
+  --client-pay-hair: var(--client-web-hair);
+  --client-pay-divider: var(--cs-slate-100);
+  --client-pay-hover: var(--cs-slate-50);
+  --client-pay-surface: var(--client-web-surface);
+  --client-pay-cancel-ink: var(--cs-slate-600);
+  --client-pay-warn: var(--cs-warning-600);
+  --client-pay-warn-bg: var(--cs-orange-50);
+  --client-pay-warn-ink: var(--cs-warning-800);
+  --client-pay-brick: var(--cs-error-500);
+  --client-pay-brick-bg: var(--cs-error-50);
+  --client-pay-refund-bg: var(--cs-blue-100);
+  --client-pay-refund-line: var(--cs-blue-200);
+  --client-pay-refund-ink: var(--mg-v2-color-money-expense);
+  --client-pay-primary: var(--client-web-teal);
+  --client-pay-primary-hover: var(--client-web-teal-hover);
+  --client-pay-on-primary: var(--client-web-on);
+  --client-pay-weight-heavy: var(--font-weight-extrabold);
+  --client-pay-weight-bold: var(--mg-v2-font-weight-bold);
+  --client-pay-weight-semibold: var(--mg-v2-font-weight-semibold);
+  --client-pay-weight-medium: var(--mg-v2-font-weight-medium);
+  --client-pay-fs-h1: 1.75rem;
+  --client-pay-fs-h1-mobile: 1.5rem;
+  --client-pay-fs-title: 1rem;
+  --client-pay-fs-body: 0.875rem;
+  --client-pay-fs-body-lg: 0.9375rem;
+  --client-pay-fs-meta: 0.84375rem;
+  --client-pay-fs-small: 0.8125rem;
+  --client-pay-fs-sub: 0.78125rem;
+  --client-pay-fs-badge: 0.75rem;
+  --client-pay-fs-amount-mobile: 1rem;
+  --client-pay-chip-h: 2rem;
+  --client-pay-chip-h-mobile: 2.25rem;
+  --client-pay-chip-radius: 0.5rem;
+  --client-pay-badge-h: 1.375rem;
+  --client-pay-badge-radius: 0.375rem;
+  --client-pay-badge-line-h: 1.25rem;
+  --client-pay-card-radius: 1rem;
+  --client-pay-link-radius: 0.75rem;
+  --client-pay-btn-radius: 0.625rem;
+  --client-pay-btn-h: 2.75rem;
+  --client-pay-btn-h-secondary: 2.5rem;
+  --client-pay-col-date: 6rem;
+  --client-pay-col-amount: 7rem;
+  --client-pay-col-method: 8rem;
+  --client-pay-col-status: 5.25rem;
+  --client-pay-col-product-min: 12.5rem;
+  --client-pay-cell-pad-x: 0.375rem;
+  --client-pay-head-h: 2.5rem;
+  --client-pay-row-min-h: 3.75rem;
+  --client-pay-touch-min: 2.75rem;
+  --client-pay-divider-h: 1.25rem;
+  --client-pay-warn-bar: 0.1875rem;
+  --client-pay-icon: 1.25rem;
+  --client-pay-focus: var(--mg-v2-border-width-thick) solid var(--client-pay-ink);
+  --client-pay-focus-offset: var(--mg-v2-border-width-thick);
+  --client-pay-sk-summary-w: 7.5rem;
+  --client-pay-sk-line-h: 0.75rem;
+  --client-pay-sk-name-h: 0.875rem;
+  --client-pay-sk-sub-h: 0.625rem;
+  --client-pay-sk-date-w: 4.5rem;
+  --client-pay-sk-method-w: 5rem;
+  --client-pay-sk-badge-w: 2.75rem;
+  --client-pay-sk-radius: 0.25rem;
+  --client-pay-shimmer: var(--mg-v2-transition-duration-slow);
+}
+
+/* ---------- stage · page-head (§1) ---------- */
+.client-payment-history .client-web-page-shell__stage {
+  gap: 0;
+}
+
+.client-payment-history .client-web-page-shell__main {
+  gap: 0;
+}
+
+.client-payment-history .client-web-page-shell__page-head {
+  flex-direction: row;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--mg-v2-space-4);
+  margin: 0 0 var(--mg-v2-space-5);
+}
+
+.client-payment-history .client-web-page-shell__title {
+  font-size: var(--client-pay-fs-h1);
+  font-weight: var(--client-pay-weight-heavy);
+}
+
+.client-payment-history__orders-link {
+  color: var(--client-pay-slate);
+  font-size: var(--client-pay-fs-meta);
+  font-weight: var(--client-pay-weight-semibold);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.client-payment-history__orders-link:hover {
+  color: var(--client-pay-slate);
+  text-decoration: underline;
+}
+
+/* ---------- 필터 바 (§1 필터 칩) ---------- */
+.client-payment-filter {
+  display: flex;
+  flex-wrap: wrap;
   align-items: center;
+  gap: var(--mg-v2-space-2);
+  margin: 0 0 var(--mg-v2-space-4);
+  min-height: var(--client-pay-chip-h);
 }
 
-.client-payment-rows__head {
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: var(--client-web-mute);
-  padding-bottom: 0.5rem;
-  border-bottom: 1px solid var(--client-web-line);
+.client-payment-filter__group {
+  display: flex;
+  align-items: center;
+  gap: var(--mg-v2-space-2);
 }
 
-.client-payment-rows__item {
-  padding: 0.85rem 0;
-  border-bottom: 1px solid var(--client-web-line);
-  font-size: 0.875rem;
-  color: var(--client-web-ink);
+.client-payment-filter__divider {
+  width: var(--mg-v2-border-width-thin);
+  height: var(--client-pay-divider-h);
+  margin: 0 var(--mg-v2-space-2);
+  background: var(--client-pay-line);
 }
 
-.client-payment-rows__item:last-child {
+.client-payment-filter__chip {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  height: var(--client-pay-chip-h);
+  margin: 0;
+  padding: 0 var(--mg-v2-space-3);
+  border: var(--mg-v2-border-width-thin) solid var(--client-pay-line);
+  border-radius: var(--client-pay-chip-radius);
+  background: var(--client-pay-surface);
+  color: var(--client-pay-slate);
+  font-family: inherit;
+  font-size: var(--client-pay-fs-meta);
+  font-weight: var(--client-pay-weight-semibold);
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.client-payment-filter__chip:hover {
+  background: var(--client-pay-hover);
+}
+
+.client-payment-filter__chip[aria-pressed='true'] {
+  background: var(--client-pay-line);
+  border-color: var(--client-pay-faint);
+  color: var(--client-pay-ink);
+}
+
+.client-payment-filter__summary {
+  margin: 0 0 0 auto;
+  color: var(--client-pay-mute);
+  font-size: var(--client-pay-fs-small);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- 목록 카드 (§1 · §2) ---------- */
+.client-payment-history__list {
+  background: var(--client-pay-surface);
+  border: var(--mg-v2-border-width-thin) solid var(--client-pay-line);
+  border-radius: var(--client-pay-card-radius);
+  padding: var(--mg-v2-space-2) var(--mg-v2-space-5);
+  box-sizing: border-box;
+  min-width: 0;
+}
+
+/* ---------- 표 (§3) ---------- */
+.client-payment-table {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+}
+
+/* 열 폭 = 스펙 콘텐츠 폭 + 셀 좌우 pad (첫·끝 열은 바깥 pad 0) */
+.client-payment-table__col--date {
+  width: calc(var(--client-pay-col-date) + var(--client-pay-cell-pad-x));
+}
+
+.client-payment-table__col--amount {
+  width: calc(var(--client-pay-col-amount) + var(--client-pay-cell-pad-x) * 2);
+}
+
+.client-payment-table__col--method {
+  width: calc(var(--client-pay-col-method) + var(--client-pay-cell-pad-x) * 2);
+}
+
+.client-payment-table__col--status {
+  width: calc(var(--client-pay-col-status) + var(--client-pay-cell-pad-x));
+}
+
+.client-payment-table th,
+.client-payment-table td {
+  padding: 0 var(--client-pay-cell-pad-x);
+  text-align: left;
+  vertical-align: middle;
+}
+
+.client-payment-table th:first-child,
+.client-payment-table td:first-child {
+  padding-left: 0;
+}
+
+.client-payment-table th:last-child,
+.client-payment-table td:last-child {
+  padding-right: 0;
+}
+
+.client-payment-table th {
+  height: var(--client-pay-head-h);
+  border-bottom: var(--mg-v2-border-width-thin) solid var(--client-pay-line);
+  color: var(--client-pay-mute);
+  font-size: var(--client-pay-fs-sub);
+  font-weight: var(--client-pay-weight-semibold);
+  white-space: nowrap;
+}
+
+.client-payment-table td {
+  height: var(--client-pay-row-min-h);
+  padding-top: var(--mg-v2-space-3);
+  padding-bottom: var(--mg-v2-space-3);
+  border-bottom: var(--mg-v2-border-width-thin) solid var(--client-pay-divider);
+}
+
+.client-payment-table tbody tr:last-child td {
   border-bottom: none;
 }
 
-.client-payment-rows__product {
-  font-weight: 600;
-  min-width: 0;
+.client-payment-table__row--link:hover td {
+  background: var(--client-pay-hover);
+}
+
+.client-payment-table .client-payment-table__cell--amount {
+  text-align: right;
+}
+
+.client-payment-table__cell--date {
+  color: var(--client-pay-slate);
+  font-size: var(--client-pay-fs-meta);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.client-payment-table__cell--product {
+  min-width: var(--client-pay-col-product-min);
+}
+
+.client-payment-table__cell--product .client-payment-history__product-name {
+  display: block;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.client-payment-rows__amount {
-  font-weight: 700;
-  letter-spacing: -0.02em;
+.client-payment-history__product-name {
+  color: var(--client-pay-ink);
+  font-size: var(--client-pay-fs-body);
+  font-weight: var(--client-pay-weight-semibold);
 }
 
-.client-payment-rows__method,
-.client-payment-rows__status,
-.client-payment-rows__date {
-  color: var(--client-web-slate);
-  font-size: 0.8125rem;
+.client-payment-history__product-name--fallback {
+  color: var(--client-pay-mute);
+  font-weight: var(--client-pay-weight-medium);
+  font-style: normal;
 }
 
-.client-payment-filter-aside__title {
-  margin: 0 0 var(--mg-v2-space-4, 1rem);
-  font-size: 0.9375rem;
-  font-weight: 700;
-  color: var(--client-web-ink);
+.client-payment-history__product-link {
+  color: var(--client-pay-ink);
+  text-decoration: none;
 }
 
-.client-payment-filter-aside__list {
+.client-payment-history__product-link:hover {
+  color: var(--client-pay-ink);
+  text-decoration: underline;
+}
+
+.client-payment-history__sub {
+  display: block;
+  color: var(--client-pay-mute);
+  font-size: var(--client-pay-fs-sub);
+  font-variant-numeric: tabular-nums;
+}
+
+.client-payment-history__sub--amount {
+  text-align: right;
+}
+
+.client-payment-history__amount {
+  display: block;
+  color: var(--client-pay-ink);
+  font-size: var(--client-pay-fs-body);
+  font-weight: var(--client-pay-weight-bold);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.client-payment-history__amount--muted {
+  color: var(--client-pay-mute);
+}
+
+.client-payment-history__method {
+  display: block;
+  color: var(--client-pay-slate);
+  font-size: var(--client-pay-fs-meta);
+}
+
+.client-payment-history__status-empty {
+  color: var(--client-pay-mute);
+  font-size: var(--client-pay-fs-small);
+}
+
+/* ---------- 상태 배지 6종 (§4) ---------- */
+.client-payment-badge {
+  display: inline-flex;
+  align-items: center;
+  height: var(--client-pay-badge-h);
+  padding: 0 var(--mg-v2-space-2);
+  border: var(--mg-v2-border-width-thin) solid transparent;
+  border-radius: var(--client-pay-badge-radius);
+  box-sizing: border-box;
+  font-size: var(--client-pay-fs-badge);
+  font-weight: var(--client-pay-weight-semibold);
+  line-height: var(--client-pay-badge-line-h);
+  white-space: nowrap;
+}
+
+.client-payment-badge--completed {
+  background: var(--client-pay-divider);
+  border-color: var(--client-pay-hair);
+  color: var(--client-pay-ink);
+}
+
+.client-payment-badge--pending {
+  background: var(--client-pay-warn-bg);
+  border-color: color-mix(in srgb, var(--client-pay-warn) 35%, transparent);
+  color: var(--client-pay-warn-ink);
+}
+
+.client-payment-badge--refunded {
+  background: var(--client-pay-refund-bg);
+  border-color: var(--client-pay-refund-line);
+  color: var(--client-pay-refund-ink);
+}
+
+.client-payment-badge--partial-refund {
+  background: var(--client-pay-surface);
+  border-color: var(--client-pay-refund-line);
+  color: var(--client-pay-refund-ink);
+}
+
+.client-payment-badge--cancelled {
+  background: var(--client-pay-surface);
+  border-color: var(--client-pay-hair);
+  color: var(--client-pay-cancel-ink);
+}
+
+.client-payment-badge--failed {
+  background: var(--client-pay-brick-bg);
+  border-color: color-mix(in srgb, var(--client-pay-brick) 35%, transparent);
+  color: var(--client-pay-brick);
+}
+
+/* ---------- 모바일 카드 행 (§3 <768) ---------- */
+.client-payment-cards {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.client-payment-cards__item {
+  border-bottom: var(--mg-v2-border-width-thin) solid var(--client-pay-divider);
+}
+
+.client-payment-cards__item:last-child {
+  border-bottom: none;
+}
+
+.client-payment-cards__link,
+.client-payment-cards__static {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: var(--mg-v2-space-1);
+  min-height: var(--client-pay-touch-min);
+  padding: var(--mg-v2-space-3) 0;
+  color: inherit;
+  text-decoration: none;
+  border-radius: var(--client-pay-link-radius);
 }
 
-.client-payment-filter-aside__btn {
-  appearance: none;
+.client-payment-cards__link:hover {
+  color: inherit;
+  background: var(--client-pay-hover);
+}
+
+.client-payment-cards__line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mg-v2-space-2);
+}
+
+.client-payment-cards__date {
+  color: var(--client-pay-mute);
+  font-size: var(--client-pay-fs-sub);
+  font-variant-numeric: tabular-nums;
+}
+
+.client-payment-cards__name .client-payment-history__product-name {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  font-size: var(--client-pay-fs-body-lg);
+}
+
+.client-payment-cards__method {
+  color: var(--client-pay-slate);
+  font-size: var(--client-pay-fs-small);
+}
+
+.client-payment-cards__channel {
+  color: var(--client-pay-mute);
+}
+
+.client-payment-cards__amount {
+  color: var(--client-pay-ink);
+  font-size: var(--client-pay-fs-amount-mobile);
+  font-weight: var(--client-pay-weight-bold);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* ---------- 빈·에러·일부 실패 (§7) ---------- */
+.client-payment-history__state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--mg-v2-space-2);
+  padding: var(--mg-v2-space-12) var(--mg-v2-space-5);
+  text-align: center;
+}
+
+.client-payment-history__state-title {
   margin: 0;
-  width: 100%;
-  text-align: left;
-  padding: 0.65rem 0.85rem;
-  border: 1px solid var(--client-web-line);
-  border-radius: var(--client-web-radius-btn, 0.625rem);
-  background: var(--client-web-surface);
-  color: var(--client-web-slate);
+  color: var(--client-pay-ink);
+  font-size: var(--client-pay-fs-title);
+  font-weight: var(--client-pay-weight-bold);
+}
+
+.client-payment-history__state-body {
+  margin: 0 0 var(--mg-v2-space-3);
+  color: var(--client-pay-slate);
+  font-size: var(--client-pay-fs-body);
+}
+
+.client-payment-history__alert-icon {
+  width: var(--client-pay-icon);
+  height: var(--client-pay-icon);
+  border-radius: var(--mg-v2-radius-pill);
+  border: var(--mg-v2-border-width-thick) solid var(--client-pay-brick);
+  box-sizing: border-box;
+}
+
+.client-payment-history__primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--client-pay-btn-h);
+  padding: 0 var(--mg-v2-space-5);
+  border-radius: var(--client-pay-btn-radius);
+  background: var(--client-pay-primary);
+  color: var(--client-pay-on-primary);
+  font-size: var(--client-pay-fs-body);
+  font-weight: var(--client-pay-weight-semibold);
+  text-decoration: none;
+}
+
+.client-payment-history__primary:hover {
+  background: var(--client-pay-primary-hover);
+  color: var(--client-pay-on-primary);
+}
+
+.client-payment-history__secondary {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--client-pay-btn-h-secondary);
+  padding: 0 var(--mg-v2-space-4);
+  border: var(--mg-v2-border-width-thin) solid var(--client-pay-hair);
+  border-radius: var(--client-pay-btn-radius);
+  background: var(--client-pay-surface);
+  color: var(--client-pay-cancel-ink);
   font-family: inherit;
-  font-size: 0.875rem;
-  font-weight: 600;
+  font-size: var(--client-pay-fs-body);
+  font-weight: var(--client-pay-weight-semibold);
   cursor: pointer;
 }
 
-.client-payment-filter-aside__btn.is-active {
-  border-color: var(--client-web-ink);
-  color: var(--client-web-ink);
-  background: var(--client-web-chip-bg);
+.client-payment-history__secondary:hover {
+  background: var(--client-pay-hover);
 }
 
-.client-payment-filter-aside__btn:focus-visible {
-  outline: 2px solid var(--client-web-line);
-  outline-offset: 2px;
+.client-payment-history__partial {
+  display: flex;
+  align-items: center;
+  gap: var(--mg-v2-space-2);
+  margin: 0 0 var(--mg-v2-space-3);
+  padding: var(--mg-v2-space-2) var(--mg-v2-space-3);
+  background: var(--client-pay-warn-bg);
+  border-left: var(--client-pay-warn-bar) solid var(--client-pay-warn);
+  color: var(--client-pay-warn-ink);
+  font-size: var(--client-pay-fs-meta);
 }
 
-.client-payment-suite__title {
-  margin: 0 0 0.5rem;
-  font-size: 1.0625rem;
-  font-weight: 700;
-  color: var(--client-web-ink);
+.client-payment-history__text-btn {
+  appearance: none;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-weight: var(--client-pay-weight-semibold);
+  text-decoration: underline;
+  cursor: pointer;
 }
 
-.client-payment-suite__mute {
-  margin: 0 0 var(--mg-v2-space-4, 1rem);
-  color: var(--client-web-mute);
-  font-size: 0.875rem;
+/* ---------- skeleton (§7 로딩) ---------- */
+.client-payment-skeleton {
+  display: block;
+  height: var(--client-pay-sk-line-h);
+  border-radius: var(--client-pay-sk-radius);
+  background: var(--client-pay-divider);
+  animation: client-payment-shimmer calc(var(--client-pay-shimmer) * 3) ease-in-out infinite;
 }
 
-@media (max-width: 768px) {
-  .client-payment-rows__head {
+.client-payment-skeleton--summary {
+  display: inline-block;
+  width: var(--client-pay-sk-summary-w);
+  height: var(--client-pay-sk-name-h);
+  vertical-align: middle;
+}
+
+.client-payment-skeleton--date { width: var(--client-pay-sk-date-w); }
+.client-payment-skeleton--name { width: 60%; height: var(--client-pay-sk-name-h); }
+.client-payment-skeleton--sub { width: 40%; height: var(--client-pay-sk-sub-h); margin-top: var(--mg-v2-space-1); }
+.client-payment-skeleton--amount { width: var(--client-pay-sk-date-w); height: var(--client-pay-sk-name-h); margin-left: auto; }
+.client-payment-skeleton--method { width: var(--client-pay-sk-method-w); }
+.client-payment-skeleton--badge {
+  width: var(--client-pay-sk-badge-w);
+  height: var(--client-pay-badge-h);
+  border-radius: var(--client-pay-badge-radius);
+}
+
+.client-payment-cards__item--skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-v2-space-2);
+  padding: var(--mg-v2-space-3) 0;
+}
+
+@keyframes client-payment-shimmer {
+  0%,
+  100% { opacity: 1; }
+  50% { opacity: 0.55; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .client-payment-skeleton {
+    animation: none;
+  }
+}
+
+/* ---------- 페이지네이션 (§8) ---------- */
+.client-payment-history__pagination {
+  display: flex;
+  justify-content: center;
+  margin-top: var(--mg-v2-space-4);
+}
+
+/* ---------- 포커스 (§9) ---------- */
+.client-payment-filter__chip:focus-visible,
+.client-payment-history__orders-link:focus-visible,
+.client-payment-history__product-link:focus-visible,
+.client-payment-history__primary:focus-visible,
+.client-payment-history__secondary:focus-visible,
+.client-payment-history__text-btn:focus-visible,
+.client-payment-cards__link:focus-visible {
+  outline: var(--client-pay-focus);
+  outline-offset: var(--client-pay-focus-offset);
+}
+
+/* ---------- 태블릿 768–1023 (셸 공통 값 없음 → 스펙 값) ---------- */
+@media (min-width: 769px) and (max-width: 1023.98px) {
+  .client-payment-history {
+    --client-web-pad-top: 1.75rem;
+    --client-web-pad-x: var(--mg-v2-space-6);
+    --client-web-pad-bottom: var(--mg-v2-space-10);
+  }
+
+  .client-payment-history__list {
+    padding: var(--mg-v2-space-2) var(--mg-v2-space-4);
+  }
+}
+
+@media (max-width: 1023.98px) {
+  .client-payment-filter__summary {
+    flex-basis: 100%;
+    text-align: right;
+  }
+}
+
+/* ---------- 모바일 <768 (셸 공통 pad 사용) ---------- */
+@media (max-width: 767.98px) {
+  .client-payment-history .client-web-page-shell__page-head {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--mg-v2-space-1);
+  }
+
+  .client-payment-history .client-web-page-shell__title {
+    font-size: var(--client-pay-fs-h1-mobile);
+  }
+
+  .client-payment-filter {
+    flex-direction: column;
+    align-items: stretch;
+    flex-wrap: nowrap;
+  }
+
+  .client-payment-filter__divider {
     display: none;
   }
 
-  .client-payment-rows__item {
-    grid-template-columns: 1fr 1fr;
-    grid-template-areas:
-      'date status'
-      'product product'
-      'amount method';
+  .client-payment-filter__group {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    scrollbar-width: none;
   }
 
-  .client-payment-rows__date { grid-area: date; }
-  .client-payment-rows__product { grid-area: product; white-space: normal; }
-  .client-payment-rows__amount { grid-area: amount; }
-  .client-payment-rows__method { grid-area: method; }
-  .client-payment-rows__status { grid-area: status; text-align: right; }
+  .client-payment-filter__group::-webkit-scrollbar {
+    display: none;
+  }
+
+  .client-payment-filter__chip {
+    height: var(--client-pay-chip-h-mobile);
+    flex-shrink: 0;
+  }
+
+  .client-payment-filter__summary {
+    margin: 0;
+    text-align: left;
+  }
+
+  .client-payment-history__list--cards {
+    padding: 0 var(--mg-v2-space-4);
+  }
 }

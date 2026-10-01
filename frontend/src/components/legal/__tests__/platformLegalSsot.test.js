@@ -36,7 +36,10 @@ describe('clinic-os-platform-legal-copy SSOT', () => {
     expect(terms).toContain('제9조 (청약철회·취소 및 환불)');
     expect(terms).toContain('/legal/refund');
     expect(terms).toContain('단회기: 결제일부터 2개월 내 소진');
-    expect(terms).toContain('패키지(최대 20회기): 결제일부터 1년 내 소진');
+    expect(terms).toContain('10회기: 결제일부터 3개월 내 소진');
+    expect(terms).toContain('20회기: 결제일부터 6개월 내 소진');
+    expect(terms).not.toContain('패키지(최대 20회기): 결제일부터 1년 내 소진');
+    expect(terms).not.toContain('1년 내 소진');
     expect(terms).toContain('무제한 유효기간은 없습니다');
     expect(terms).toContain('일시불만 가능합니다');
     expect(terms).not.toContain('달력일수');
@@ -47,7 +50,10 @@ describe('clinic-os-platform-legal-copy SSOT', () => {
     expect(refund).toContain('LEGAL_PUBLIC_PATHS.REFUND');
     expect(refund).toContain('이용기간과의 관계');
     expect(refund).toContain('단회기는 결제일부터 2개월 내');
-    expect(refund).toContain('1년 내에 소진');
+    expect(refund).toContain('10회기는 결제일부터 3개월 내');
+    expect(refund).toContain('20회기는 결제일부터 6개월 내');
+    expect(refund).not.toContain('1년 내에 소진');
+    expect(refund).not.toContain('10회기: 결제일부터 1년');
     expect(refund).toContain('일시불만 가능합니다');
   });
 

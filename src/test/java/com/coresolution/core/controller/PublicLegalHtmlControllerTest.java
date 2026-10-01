@@ -64,6 +64,11 @@ class PublicLegalHtmlControllerTest {
         assertThat(response.getHeaders().getContentType())
                 .isEqualTo(new MediaType("text", "html", java.nio.charset.StandardCharsets.UTF_8));
         assertThat(response.getBody()).contains(KNOWN_TERMS_PHRASE);
+        assertThat(response.getBody()).contains("단회기: 결제일부터 2개월 내 소진");
+        assertThat(response.getBody()).contains("10회기: 결제일부터 3개월 내 소진");
+        assertThat(response.getBody()).contains("20회기: 결제일부터 6개월 내 소진");
+        assertThat(response.getBody()).contains("일시불만 가능합니다");
+        assertThat(response.getBody()).doesNotContain("1년 내 소진");
         assertThat(response.getBody()).contains("<article>");
         assertThat(response.getBody()).doesNotContain("MindGarden 이용약관");
     }
@@ -88,6 +93,11 @@ class PublicLegalHtmlControllerTest {
 
         assertThat(response.getStatusCode().is2xxSuccessful()).isTrue();
         assertThat(response.getBody()).contains("청약철회 기간");
+        assertThat(response.getBody()).contains("단회기는 결제일부터 2개월 내");
+        assertThat(response.getBody()).contains("10회기는 결제일부터 3개월 내");
+        assertThat(response.getBody()).contains("20회기는 결제일부터 6개월 내");
+        assertThat(response.getBody()).contains("일시불만 가능합니다");
+        assertThat(response.getBody()).doesNotContain("1년 내에 소진");
         assertThat(response.getBody()).contains("청약철회가 제한되는 경우");
         assertThat(response.getBody()).contains("환불");
         assertThat(response.getBody()).contains("절차");
@@ -182,7 +192,9 @@ class PublicLegalHtmlControllerTest {
         assertThat(html).contains(HtmlUtils.htmlEscape(
                 PlatformLegalCopyService.CONSULTATION_PACKAGE_PAYMENT_TYPE_NOTE));
         assertThat(html).contains("2개월");
-        assertThat(html).contains("1년");
+        assertThat(html).contains("3개월");
+        assertThat(html).contains("6개월");
+        assertThat(html).doesNotContain("1년");
         assertThat(html).contains("일시불");
         assertThat(html).contains("무제한");
     }

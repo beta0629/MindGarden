@@ -72,6 +72,15 @@ describe('useScheduleDetailSameDayCheckout helpers', () => {
     );
   });
 
+  test('buildCheckoutSameDayMappingPayload — 배정 저장 결제 방식(paymentMethod) 전달 (당일 결제 prefill)', () => {
+    expect(buildCheckoutSameDayMappingPayload(
+      { ...COMPLETE_MAPPING, paymentMethod: 'BANK_TRANSFER' },
+      55
+    ).paymentMethod).toBe('BANK_TRANSFER');
+    expect(buildCheckoutSameDayMappingPayload(COMPLETE_MAPPING, 55).paymentMethod)
+      .toBe(COMPLETE_MAPPING.paymentMethod ?? null);
+  });
+
   test('resolveCheckoutMappingFromSchedule — not found / incomplete / ok', () => {
     expect(resolveCheckoutMappingFromSchedule({ id: 1 }, []).reason)
       .toBe('missing_mapping_id');

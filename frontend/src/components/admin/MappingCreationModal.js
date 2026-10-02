@@ -27,6 +27,7 @@ import Avatar from '../common/Avatar';
 import BadgeSelect from '../common/BadgeSelect';
 import FormInput from '../common/FormInput';
 import { toDisplayString } from '../../utils/safeDisplay';
+import { generatePaymentReferenceNumber } from '../../utils/paymentReferenceNumber';
 import SafeText from '../common/SafeText';
 import '../schedule/ScheduleB0KlA.css';
 import './MappingCreationModal.css';
@@ -141,14 +142,7 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
     paymentTiming: PAYMENT_TIMING_ADVANCE
   });
 
-  const generateReferenceNumber = (method = 'BANK_TRANSFER') => {
-    const now = new Date();
-    const timestamp = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}_${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}${String(now.getSeconds()).padStart(2, '0')}`;
-    if (method === 'CASH') return `CASH_${timestamp}`;
-    if (method === 'CARD') return `CARD_${timestamp}`;
-    if (method === 'BANK_TRANSFER') return `BANK_${timestamp}`;
-    return `${method}_${timestamp}`;
-  };
+  const generateReferenceNumber = (method) => generatePaymentReferenceNumber(method);
 
   const loadPackageCodes = useCallback(async() => {
     try {

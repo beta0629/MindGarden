@@ -1,11 +1,14 @@
 package com.coresolution.consultation.service.impl;
 
+import java.time.Clock;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.YearMonth;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import com.coresolution.consultation.constant.UserRole;
@@ -14,9 +17,10 @@ import com.coresolution.consultation.entity.SalaryCalculation;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.repository.SalaryCalculationRepository;
 import com.coresolution.consultation.repository.UserRepository;
+import com.coresolution.consultation.salary.PayrollConfirmGrace;
 import com.coresolution.consultation.service.BranchService;
 import com.coresolution.consultation.service.CommonCodeService;
-import com.coresolution.consultation.service.PlSqlSalaryManagementService;
+import com.coresolution.consultation.service.PayrollPeriodConfirmService;
 import com.coresolution.consultation.service.SalaryBatchService;
 import com.coresolution.consultation.service.SalaryScheduleService;
 import com.coresolution.core.context.TenantContextHolder;
@@ -49,10 +53,20 @@ public class SalaryBatchServiceImpl implements SalaryBatchService {
 
     private final UserRepository userRepository;
     private final SalaryCalculationRepository salaryCalculationRepository;
-    private final PlSqlSalaryManagementService plSqlSalaryManagementService;
     private final SalaryScheduleService salaryScheduleService;
     private final CommonCodeService commonCodeService;
     private final BranchService branchService;
+    private final PayrollPeriodConfirmService payrollPeriodConfirmService;
+    private Clock clock = Clock.system(PayrollConfirmGrace.ZONE);
+
+    /**
+     * 테스트에서 배치 시각을 KST 로 고정한다.
+     *
+     * @param clock 판단 시각
+     */
+    void useClock(Clock clock) {
+        this.clock = clock;
+    }
     
     @Override
     @Transactional
@@ -90,11 +104,18 @@ public class SalaryBatchServiceImpl implements SalaryBatchService {
                 try {
                     log.info("💰 상담사 급여 계산: ID={}, 이름={}", consultant.getId(), consultant.getName());
                     
-                    // PL/SQL 통합 급여 계산 (실제 저장)
-                    var result = plSqlSalaryManagementService.processIntegratedSalaryCalculation(
-                        consultant.getId(), 
-                        periodStart, 
-                        periodEnd, 
+                    Optional<SalaryCalculation> existing = payrollPeriodConfirmService.findPrimary(
+                            tenantId, consultant.getId(), periodStart, periodEnd);
+                    if (existing.isPresent()) {
+                        successCount++;
+                        log.info("급여 배치 skip: 이미 PRIMARY 1건 consultantId={} calculationId={}",
+                                consultant.getId(), existing.get().getId());
+                        continue;
+                    }
+                    var result = payrollPeriodConfirmService.confirm(
+                        consultant.getId(),
+                        periodStart,
+                        periodEnd,
                         "BATCH_SYSTEM"
                     );
                     
@@ -140,20 +161,24 @@ public class SalaryBatchServiceImpl implements SalaryBatchService {
     @Override
     @Transactional
     public BatchResult executeCurrentMonthBatch() {
-        LocalDate now = LocalDate.now();
+        LocalDate now = LocalDate.now(clock);
         return executeMonthlySalaryBatch(now.getYear(), now.getMonthValue(), null);
     }
     
     @Override
     public boolean canExecuteBatch(LocalDate targetDate) {
-        LocalDate cutoffDate = salaryScheduleService.getCutoffDate(targetDate.getYear(), targetDate.getMonthValue());
-        LocalDate now = LocalDate.now();
+        YearMonth payrollMonth = YearMonth.from(targetDate);
+        if (PayrollConfirmGrace.isCorrectionOpen(payrollMonth, clock.instant())) {
+            log.debug("배치 최종 확정 보류: 보정 기간 payrollMonth={}", payrollMonth);
+            return false;
+        }
+        LocalDate cutoffDate = salaryScheduleService.getCutoffDate(
+                targetDate.getYear(), targetDate.getMonthValue());
+        LocalDate today = LocalDate.now(clock);
+        boolean canExecute = !today.isBefore(cutoffDate);
         
-        // 마감일 이후에만 실행 가능
-        boolean canExecute = now.isAfter(cutoffDate) || now.isEqual(cutoffDate);
-        
-        log.debug("배치 실행 가능 여부 확인: 현재일={}, 마감일={}, 실행가능={}", 
-            now, cutoffDate, canExecute);
+        log.debug("배치 실행 가능 여부 확인: 현재일={}, 마감일={}, 실행가능={}",
+                today, cutoffDate, canExecute);
         
         return canExecute;
     }

@@ -55,6 +55,7 @@ const data = await apiGet('/api/v1/...');
 
 - 인라인 스타일 금지. `mg-v2-*` 등 디자인 토큰·CSS 클래스 사용
 - `constants/css.js` 등에서 클래스명 상수화
+- FE 시각 변경 전에 `.cursor/rules/design.mdc` 를 읽는다.
 
 ### 상수화
 

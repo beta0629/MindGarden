@@ -1,0 +1,191 @@
+---
+description: FE tasks must follow this Clinic-OS shell rule. Do not invent colors, type sizes, spacing, radius, or shadow.
+globs: frontend/**/*.js,frontend/**/*.jsx,frontend/**/*.css
+alwaysApply: false
+---
+
+# Clinic-OS 셸 — 프론트 시각 값 규칙
+
+웹 프론트(`frontend/` 의 js, jsx, css) 화면 작업에 적용한다. 백엔드 전용 작업에는 적용하지 않는다.
+
+새 화면은 아래 토큰만 쓴다. 컴포넌트 CSS에는 `var(--mg-v2-*)` 만 적는다. 이 문서의 값(hex, rgba, px, rem)을 새 스타일에 다시 적지 않는다. 토큰에 없는 색을 만들지 않는다. 임의 px를 넣지 않는다. 새 토큰을 추가하지 않는다.
+
+출처는 라이트 `:root` 한 곳이다. 같은 이름의 다크 재정의는 그 파일의 `@media (prefers-color-scheme: dark)` (`frontend/src/styles/tokens/design-v2-tokens.css:312`) 와 `[data-theme="dark"]` (`frontend/src/styles/tokens/design-v2-tokens.css:416`) 에 있다. 강제 색상 모드는 `frontend/src/styles/tokens/design-v2-tokens.css:520`. 그림자 `none` 재정의는 `frontend/src/styles/tokens/design-v2-tokens.css:402`, `frontend/src/styles/tokens/design-v2-tokens.css:505`, `frontend/src/styles/tokens/design-v2-tokens.css:557`. 컴포넌트는 변수 이름만 쓰고, 다크 값을 복붙하지 않는다.
+
+`frontend-ops/styles/clinic-os-tokens.css` 는 운영 포털 부분집합이다. 웹 프론트 목록이 아니므로 그 파일의 글자 크기를 가져오지 않는다.
+
+인용 토큰 103개. 색 68, 글자 크기 11, 간격 11, radius 7, shadow 6.
+
+## 1. 디자인 토큰
+
+### 색 (68)
+
+| 토큰 | 정의 값 | 출처 |
+| --- | --- | --- |
+| `--mg-v2-color-primary-main` | `#0E5F5A` | `frontend/src/styles/tokens/design-v2-tokens.css:28` |
+| `--mg-v2-color-primary-light` | `#145A55` | `frontend/src/styles/tokens/design-v2-tokens.css:29` |
+| `--mg-v2-color-primary-dark` | `#0A4F4B` | `frontend/src/styles/tokens/design-v2-tokens.css:30` |
+| `--mg-v2-color-primary-hover` | `#0A4F4B` | `frontend/src/styles/tokens/design-v2-tokens.css:31` |
+| `--mg-v2-color-primary-active` | `#0A4F4B` | `frontend/src/styles/tokens/design-v2-tokens.css:32` |
+| `--mg-v2-color-primary-subtle` | `#DCE8E5` | `frontend/src/styles/tokens/design-v2-tokens.css:33` |
+| `--mg-v2-color-primary-solid` | `#0E5F5A` | `frontend/src/styles/tokens/design-v2-tokens.css:35` |
+| `--mg-v2-color-secondary-main` | `#475569` | `frontend/src/styles/tokens/design-v2-tokens.css:37` |
+| `--mg-v2-color-secondary-light` | `#64748B` | `frontend/src/styles/tokens/design-v2-tokens.css:38` |
+| `--mg-v2-color-secondary-dark` | `#334155` | `frontend/src/styles/tokens/design-v2-tokens.css:39` |
+| `--mg-v2-color-accent-main` | `#145A55` | `frontend/src/styles/tokens/design-v2-tokens.css:41` |
+| `--mg-v2-color-accent-light` | `#4AA99E` | `frontend/src/styles/tokens/design-v2-tokens.css:42` |
+| `--mg-v2-color-accent-dark` | `#0A4F4B` | `frontend/src/styles/tokens/design-v2-tokens.css:43` |
+| `--mg-v2-color-accent-subtle` | `#E4EEEC` | `frontend/src/styles/tokens/design-v2-tokens.css:44` |
+| `--mg-v2-color-neutral-50` | `#FAF9F7` | `frontend/src/styles/tokens/design-v2-tokens.css:49` |
+| `--mg-v2-color-neutral-100` | `#F5F3EF` | `frontend/src/styles/tokens/design-v2-tokens.css:50` |
+| `--mg-v2-color-neutral-200` | `#EBE6DF` | `frontend/src/styles/tokens/design-v2-tokens.css:51` |
+| `--mg-v2-color-neutral-300` | `#D4CFC8` | `frontend/src/styles/tokens/design-v2-tokens.css:52` |
+| `--mg-v2-color-neutral-400` | `#B8B2A8` | `frontend/src/styles/tokens/design-v2-tokens.css:53` |
+| `--mg-v2-color-neutral-500` | `#94A3B8` | `frontend/src/styles/tokens/design-v2-tokens.css:54` |
+| `--mg-v2-color-neutral-600` | `#64748B` | `frontend/src/styles/tokens/design-v2-tokens.css:55` |
+| `--mg-v2-color-neutral-700` | `#475569` | `frontend/src/styles/tokens/design-v2-tokens.css:56` |
+| `--mg-v2-color-neutral-800` | `#1E293B` | `frontend/src/styles/tokens/design-v2-tokens.css:57` |
+| `--mg-v2-color-neutral-900` | `#0F172A` | `frontend/src/styles/tokens/design-v2-tokens.css:58` |
+| `--mg-v2-color-semantic-success` | `#059669` | `frontend/src/styles/tokens/design-v2-tokens.css:63` |
+| `--mg-v2-color-semantic-success-light` | `#ECFDF5` | `frontend/src/styles/tokens/design-v2-tokens.css:64` |
+| `--mg-v2-color-semantic-success-dark` | `#047857` | `frontend/src/styles/tokens/design-v2-tokens.css:65` |
+| `--mg-v2-color-semantic-warning` | `#D97706` | `frontend/src/styles/tokens/design-v2-tokens.css:67` |
+| `--mg-v2-color-semantic-warning-light` | `#FFFBEB` | `frontend/src/styles/tokens/design-v2-tokens.css:68` |
+| `--mg-v2-color-semantic-warning-dark` | `#B45309` | `frontend/src/styles/tokens/design-v2-tokens.css:69` |
+| `--mg-v2-color-semantic-error` | `#A84848` | `frontend/src/styles/tokens/design-v2-tokens.css:71` |
+| `--mg-v2-color-semantic-error-light` | `#F3E8E8` | `frontend/src/styles/tokens/design-v2-tokens.css:72` |
+| `--mg-v2-color-semantic-error-dark` | `#8F3D3D` | `frontend/src/styles/tokens/design-v2-tokens.css:73` |
+| `--mg-v2-color-semantic-info` | `#0284C7` | `frontend/src/styles/tokens/design-v2-tokens.css:75` |
+| `--mg-v2-color-semantic-info-light` | `#F0F9FF` | `frontend/src/styles/tokens/design-v2-tokens.css:76` |
+| `--mg-v2-color-semantic-info-dark` | `#0369A1` | `frontend/src/styles/tokens/design-v2-tokens.css:77` |
+| `--mg-v2-color-money-income` | `var(--color-red-700, #B91C1C)` | `frontend/src/styles/tokens/design-v2-tokens.css:84` |
+| `--mg-v2-color-money-expense` | `#1D4ED8` | `frontend/src/styles/tokens/design-v2-tokens.css:85` |
+| `--mg-v2-color-surface-bg` | `#FAF9F7` | `frontend/src/styles/tokens/design-v2-tokens.css:90` |
+| `--mg-v2-color-surface-card` | `#FFFFFF` | `frontend/src/styles/tokens/design-v2-tokens.css:91` |
+| `--mg-v2-color-surface-raised` | `#FFFFFF` | `frontend/src/styles/tokens/design-v2-tokens.css:92` |
+| `--mg-v2-color-surface-overlay` | `#FFFFFF` | `frontend/src/styles/tokens/design-v2-tokens.css:93` |
+| `--mg-v2-color-surface-sidebar` | `#0F172A` | `frontend/src/styles/tokens/design-v2-tokens.css:94` |
+| `--mg-v2-color-surface-disabled` | `#EBE6DF` | `frontend/src/styles/tokens/design-v2-tokens.css:95` |
+| `--mg-v2-color-surface-hover` | `rgba(15, 23, 42, 0.04)` | `frontend/src/styles/tokens/design-v2-tokens.css:96` |
+| `--mg-v2-color-surface-active` | `rgba(15, 23, 42, 0.08)` | `frontend/src/styles/tokens/design-v2-tokens.css:97` |
+| `--mg-v2-color-surface-stone` | `#F5F3EF` | `frontend/src/styles/tokens/design-v2-tokens.css:98` |
+| `--mg-v2-color-text-primary` | `#0F172A` | `frontend/src/styles/tokens/design-v2-tokens.css:103` |
+| `--mg-v2-color-text-secondary` | `#475569` | `frontend/src/styles/tokens/design-v2-tokens.css:104` |
+| `--mg-v2-color-text-tertiary` | `#64748B` | `frontend/src/styles/tokens/design-v2-tokens.css:105` |
+| `--mg-v2-color-text-disabled` | `#94A3B8` | `frontend/src/styles/tokens/design-v2-tokens.css:106` |
+| `--mg-v2-color-text-placeholder` | `#64748B` | `frontend/src/styles/tokens/design-v2-tokens.css:107` |
+| `--mg-v2-color-text-inverse` | `#FFFFFF` | `frontend/src/styles/tokens/design-v2-tokens.css:108` |
+| `--mg-v2-color-text-link` | `#0E5F5A` | `frontend/src/styles/tokens/design-v2-tokens.css:109` |
+| `--mg-v2-color-text-link-hover` | `#0A4F4B` | `frontend/src/styles/tokens/design-v2-tokens.css:110` |
+| `--mg-v2-color-text-on-sidebar-active` | `#F8FAFC` | `frontend/src/styles/tokens/design-v2-tokens.css:111` |
+| `--mg-v2-color-border-default` | `#D4CFC8` | `frontend/src/styles/tokens/design-v2-tokens.css:117` |
+| `--mg-v2-color-border-subtle` | `#EBE6DF` | `frontend/src/styles/tokens/design-v2-tokens.css:118` |
+| `--mg-v2-color-border-strong` | `#86807A` | `frontend/src/styles/tokens/design-v2-tokens.css:119` |
+| `--mg-v2-color-border-light` | `#EBE6DF` | `frontend/src/styles/tokens/design-v2-tokens.css:120` |
+| `--mg-v2-color-border-dark` | `#94A3B8` | `frontend/src/styles/tokens/design-v2-tokens.css:121` |
+| `--mg-v2-color-border-focus` | `#0D9488` | `frontend/src/styles/tokens/design-v2-tokens.css:122` |
+| `--mg-v2-color-state-hover` | `rgba(15, 23, 42, 0.04)` | `frontend/src/styles/tokens/design-v2-tokens.css:127` |
+| `--mg-v2-color-state-active` | `rgba(15, 23, 42, 0.08)` | `frontend/src/styles/tokens/design-v2-tokens.css:128` |
+| `--mg-v2-color-state-selected` | `rgba(14, 95, 90, 0.12)` | `frontend/src/styles/tokens/design-v2-tokens.css:129` |
+| `--mg-v2-color-state-focus-ring` | `rgba(13, 148, 136, 0.25)` | `frontend/src/styles/tokens/design-v2-tokens.css:130` |
+| `--mg-v2-color-state-disabled-bg` | `#EBE6DF` | `frontend/src/styles/tokens/design-v2-tokens.css:131` |
+| `--mg-v2-color-state-disabled-text` | `#94A3B8` | `frontend/src/styles/tokens/design-v2-tokens.css:132` |
+
+### 글자 크기 (11)
+
+| 토큰 | 정의 값 | 출처 |
+| --- | --- | --- |
+| `--mg-v2-font-size-h1` | `1.75rem` | `frontend/src/styles/tokens/design-v2-tokens.css:145` |
+| `--mg-v2-font-size-h2` | `1.375rem` | `frontend/src/styles/tokens/design-v2-tokens.css:146` |
+| `--mg-v2-font-size-body-md` | `0.875rem` | `frontend/src/styles/tokens/design-v2-tokens.css:147` |
+| `--mg-v2-font-size-caption` | `0.75rem` | `frontend/src/styles/tokens/design-v2-tokens.css:148` |
+| `--mg-v2-font-size-display` | `var(--mg-v2-font-size-h1)` | `frontend/src/styles/tokens/design-v2-tokens.css:151` |
+| `--mg-v2-font-size-h3` | `var(--mg-v2-font-size-h2)` | `frontend/src/styles/tokens/design-v2-tokens.css:152` |
+| `--mg-v2-font-size-h4` | `var(--mg-v2-font-size-body-md)` | `frontend/src/styles/tokens/design-v2-tokens.css:153` |
+| `--mg-v2-font-size-h5` | `var(--mg-v2-font-size-body-md)` | `frontend/src/styles/tokens/design-v2-tokens.css:154` |
+| `--mg-v2-font-size-body-lg` | `var(--mg-v2-font-size-body-md)` | `frontend/src/styles/tokens/design-v2-tokens.css:155` |
+| `--mg-v2-font-size-body-sm` | `var(--mg-v2-font-size-caption)` | `frontend/src/styles/tokens/design-v2-tokens.css:156` |
+| `--mg-v2-font-size-micro` | `var(--mg-v2-font-size-caption)` | `frontend/src/styles/tokens/design-v2-tokens.css:157` |
+
+글자 크기 4단계(`h1`, `h2`, `body-md`, `caption`)가 본 크기이다. `display`, `h3`, `h4`, `h5`, `body-lg`, `body-sm`, `micro` 는 그 4단계의 alias다 (`frontend/src/styles/tokens/design-v2-tokens.css:150`).
+
+### 간격 (11)
+
+| 토큰 | 정의 값 | 출처 |
+| --- | --- | --- |
+| `--mg-v2-space-1` | `0.25rem` | `frontend/src/styles/tokens/design-v2-tokens.css:178` |
+| `--mg-v2-space-2` | `0.5rem` | `frontend/src/styles/tokens/design-v2-tokens.css:179` |
+| `--mg-v2-space-3` | `0.75rem` | `frontend/src/styles/tokens/design-v2-tokens.css:180` |
+| `--mg-v2-space-4` | `1rem` | `frontend/src/styles/tokens/design-v2-tokens.css:181` |
+| `--mg-v2-space-5` | `1.25rem` | `frontend/src/styles/tokens/design-v2-tokens.css:182` |
+| `--mg-v2-space-6` | `1.5rem` | `frontend/src/styles/tokens/design-v2-tokens.css:183` |
+| `--mg-v2-space-8` | `2rem` | `frontend/src/styles/tokens/design-v2-tokens.css:184` |
+| `--mg-v2-space-10` | `2.5rem` | `frontend/src/styles/tokens/design-v2-tokens.css:185` |
+| `--mg-v2-space-12` | `3rem` | `frontend/src/styles/tokens/design-v2-tokens.css:186` |
+| `--mg-v2-space-16` | `4rem` | `frontend/src/styles/tokens/design-v2-tokens.css:187` |
+| `--mg-v2-space-20` | `5rem` | `frontend/src/styles/tokens/design-v2-tokens.css:188` |
+
+### radius (7)
+
+| 토큰 | 정의 값 | 출처 |
+| --- | --- | --- |
+| `--mg-v2-radius-none` | `0` | `frontend/src/styles/tokens/design-v2-tokens.css:214` |
+| `--mg-v2-radius-sm` | `0.25rem` | `frontend/src/styles/tokens/design-v2-tokens.css:215` |
+| `--mg-v2-radius-md` | `0.375rem` | `frontend/src/styles/tokens/design-v2-tokens.css:216` |
+| `--mg-v2-radius-lg` | `0.5rem` | `frontend/src/styles/tokens/design-v2-tokens.css:217` |
+| `--mg-v2-radius-xl` | `1rem` | `frontend/src/styles/tokens/design-v2-tokens.css:218` |
+| `--mg-v2-radius-2xl` | `1.5rem` | `frontend/src/styles/tokens/design-v2-tokens.css:219` |
+| `--mg-v2-radius-pill` | `9999px` | `frontend/src/styles/tokens/design-v2-tokens.css:220` |
+
+### shadow (6)
+
+| 토큰 | 정의 값 | 출처 |
+| --- | --- | --- |
+| `--mg-v2-shadow-xs` | `0 1px 2px 0 rgba(15, 23, 42, 0.04)` | `frontend/src/styles/tokens/design-v2-tokens.css:225` |
+| `--mg-v2-shadow-sm` | `0 1px 3px 0 rgba(15, 23, 42, 0.05)` | `frontend/src/styles/tokens/design-v2-tokens.css:226` |
+| `--mg-v2-shadow-md` | `0 4px 12px 0 rgba(15, 23, 42, 0.08)` | `frontend/src/styles/tokens/design-v2-tokens.css:227` |
+| `--mg-v2-shadow-lg` | `0 20px 25px -5px rgba(15, 23, 42, 0.15)` | `frontend/src/styles/tokens/design-v2-tokens.css:228` |
+| `--mg-v2-shadow-xl` | `0 24px 32px -8px rgba(15, 23, 42, 0.18)` | `frontend/src/styles/tokens/design-v2-tokens.css:229` |
+| `--mg-v2-shadow-focus` | `0 0 0 3px var(--mg-v2-color-state-focus-ring)` | `frontend/src/styles/tokens/design-v2-tokens.css:230` |
+
+## 2. 공통 컴포넌트
+
+있는 것을 다시 쓴다. 새 컴포넌트가 필요하면 코드를 쓰기 전에 사용자에게 묻는다.
+
+| 역할 | 컴포넌트 | 경로 |
+| --- | --- | --- |
+| 버튼 | `MGButton` | `frontend/src/components/common/MGButton.js` |
+| 버튼 | `ActionButton` | `frontend/src/components/common/ActionButton.js` |
+| 카드 | `CardContainer` | `frontend/src/components/common/CardContainer.js` |
+| 테이블 | `MGTable` | `frontend/src/components/common/MGTable.js` |
+| 모달 | `UnifiedModal` | `frontend/src/components/common/modals/UnifiedModal.js` |
+| 입력 | `FormInput` | `frontend/src/components/common/FormInput.js` |
+| 배지 | `Badge` | `frontend/src/components/common/Badge.js` |
+| 배지 | `StatusBadge` | `frontend/src/components/common/StatusBadge.js` |
+| 배지 | `BadgeSelect` | `frontend/src/components/common/BadgeSelect.js` |
+
+모달은 `UnifiedModal` 만 쓴다. `frontend/src/components/common/modals/UnifiedModal.js` 가 저장소 표준이다 (`MGButton` 을 import, 같은 파일 7행).
+
+## 3. 참조 화면
+
+새 화면은 아래 화면의 레이아웃과 밀도를 따른다.
+
+| 화면 | 경로 | 셸 클래스 |
+| --- | --- | --- |
+| 어드민 대시보드 | `frontend/src/components/dashboard-v2/AdminDashboardV2.js` | `mg-v2-ad-b0kla` (`AdminDashboardV2.js:1205`) |
+| 주문 상세 모달 | `frontend/src/components/admin/shop/AdminShopOrderDetailModal.js` | `admin-shop-clinic-os` (`AdminShopOrderDetailModal.js:322`) |
+| 사용자 관리 | `frontend/src/components/admin/UserManagementPage.js` | `user-management--clinic-os` (`UserManagementPage.js:97`) |
+
+## 4. 반응형
+
+확인할 뷰포트는 1280px 와 390px 이다. 1280px 는 기존 토큰 `--mg-v2-breakpoint-xl` (`frontend/src/styles/tokens/design-v2-tokens.css:283`) 이다. 390px 토큰은 이 파일에 없다. 390px 토큰을 새로 만들지 말고, 그 너비에서 레이아웃만 확인한다.
+
+390px 에서 테이블은 카드가 된다. 가로 스크롤을 만들지 않는다.
+
+## 5. 범위
+
+요청한 것만 바꾼다. 관련 없는 화면의 스타일을 다시 입히지 않는다.
+
+## 6. 큰 변경
+
+새 화면이거나 레이아웃 구조를 바꾸는 작업은, 코딩 전에 레이아웃 초안을 글로 보여주고 사용자 승인을 기다린다.

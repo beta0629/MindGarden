@@ -23,6 +23,7 @@ description: 디자인 전용 서브에이전트. 마인드가든 어드민 대�
   - 색상·간격·radius·폰트: `unified-design-tokens.css` 또는 `mindgarden-design-system.pen`의 **변수명·토큰명**을 명시
   - 레이아웃·컴포넌트: `mg-v2-*`, `mg-v2-ad-b0kla__*` 등 **실제 사용할 CSS 클래스명**을 지정
 - **단일 소스**: `mindgarden-design-system.pen`, `pencil-new.pen`, `unified-design-tokens.css` 이 세 가지를 기준으로 한다. 이외 색상·값 사용 금지.
+- FE 시각 변경 전에 `.cursor/rules/design.mdc` 를 읽는다.
 - **캡슐화·모듈화**: `/core-solution-encapsulation-modularization` — 스펙·컴포넌트를 경계 명확히 나누고, 동일·유사 컴포넌트는 한 스펙에 모아 재사용. 공통 컴포넌트 재사용 여부는 core-component-manager 산출물 참조.
 - **공통 모듈 우선**: `/core-solution-common-modules`, `docs/standards/COMMON_MODULES_USAGE_GUIDE.md` — 새 컴포넌트·화면 설계 시 **기존 공통 모듈(UnifiedModal, ContentHeader, BadgeSelect 등) 재사용 여부를 먼저 검토**하고, 재사용 가능하면 스펙에 명시. 없을 때만 신규 설계.
 

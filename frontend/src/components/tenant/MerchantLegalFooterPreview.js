@@ -12,9 +12,12 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import {
+  COUNSELING_SERVICE_GUIDE,
   LEGAL_PUBLIC_LABELS,
   LEGAL_PUBLIC_PATHS
 } from '../../constants/legalPublic';
+import { hasTenantServiceGuide } from '../../constants/publicCounselingGuideCopy';
+import { getTenantSubdomainFromHost } from '../../utils/subdomainUtils';
 import './MerchantLegalFooterPreview.css';
 
 const PLACEHOLDER = {
@@ -46,6 +49,7 @@ const MerchantLegalFooterPreview = ({
   const phone = legal.businessLandline?.trim() || PLACEHOLDER.phone;
   const address = legal.businessAddress?.trim() || PLACEHOLDER.address;
   const mailOrder = legal.mailOrderReportNumber?.trim() || PLACEHOLDER.mailOrder;
+  const showServicesLink = hasTenantServiceGuide(getTenantSubdomainFromHost());
 
   return (
     <footer
@@ -106,6 +110,17 @@ const MerchantLegalFooterPreview = ({
               {LEGAL_PUBLIC_LABELS.REFUND}
             </span>
           </Link>
+          {showServicesLink ? (
+            <Link
+              to={COUNSELING_SERVICE_GUIDE.PATH}
+              className="mg-merchant-legal-footer__link"
+              data-testid="counseling-service-guide-link"
+            >
+              <span className="mg-merchant-legal-footer__link-label">
+                {COUNSELING_SERVICE_GUIDE.LABEL}
+              </span>
+            </Link>
+          ) : null}
         </div>
 
         {showAccountLinks && (

@@ -262,7 +262,7 @@ jobs:
       - name: 📥 체크아웃 (이력 PR / 워크플로 메타용)
         uses: actions/checkout@v4
         with:
-          ref: develop
+          ref: release/dev
           fetch-depth: 1
 
       # ---------------------------------------------------------------------
@@ -648,7 +648,7 @@ jobs:
           set -euo pipefail
           HISTORY_FILE="docs/operations/secret-rotation-history.md"
           if [ ! -f "$HISTORY_FILE" ]; then
-            echo "::warning title=이력 파일 미존재::${HISTORY_FILE} 가 develop 에 없습니다. 이력 PR 생성 skip."
+            echo "::warning title=이력 파일 미존재::${HISTORY_FILE} 가 release/dev 에 없습니다. 이력 PR 생성 skip."
             exit 0
           fi
           if [ -z "${GH_TOKEN:-}" ]; then
@@ -726,7 +726,7 @@ jobs:
           EOF
 
           gh pr create \
-            --base develop \
+            --base release/dev \
             --head "$BRANCH" \
             --title "chore(security): PII_KEY 회전 이력 (${ROTATION_ENV}, ${ROTATION_TABLE}, run ${RUN_ID})" \
             --body-file "$PR_BODY_FILE"

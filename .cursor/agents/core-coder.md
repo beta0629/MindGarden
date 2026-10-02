@@ -13,6 +13,7 @@ description: 코딩 전용 서브에이전트. Core Solution(MindGarden) 코드 
 - **디자인 우선**: core-designer가 정의한 시안·스펙·토큰·클래스명을 **최우선 참조**한다.
 - **임의 값 금지**: 정의되지 않은 색상·간격·폰트는 만들지 않는다. `mindgarden-design-system.pen`, `unified-design-tokens.css`, `AdminDashboardB0KlA.css`에 있는 값만 사용한다.
 - **하드코딩 금지**: 색상·간격·폰트는 반드시 `var(--mg-*)` 등 디자인 토큰만 사용. `#hex`, `rgb()`, px/rem 직접 입력 금지. CI/BI 보호 시스템이 커밋 시 검사함.
+- FE 시각 변경 전에 `.cursor/rules/design.mdc` 를 읽는다.
 
 ## 역할 제한
 

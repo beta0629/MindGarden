@@ -6,10 +6,11 @@
  */
 
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { cleanup, render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import MerchantLegalFooterPreview from '../MerchantLegalFooterPreview';
 import {
+  COUNSELING_SERVICE_GUIDE,
   LEGAL_PUBLIC_LABELS,
   LEGAL_PUBLIC_PATHS
 } from '../../../constants/legalPublic';
@@ -20,6 +21,22 @@ const baseLegal = {
   businessLandline: '02-111-2222',
   businessAddress: '서울시 테스트구',
   mailOrderReportNumber: '제2024-서울-0001호'
+};
+
+const originalLocation = Object.getOwnPropertyDescriptor(window, 'location');
+
+const setHost = (hostname) => {
+  Object.defineProperty(window, 'location', {
+    configurable: true,
+    value: {
+      hostname,
+      origin: `https://${hostname}`,
+      href: `https://${hostname}/`,
+      pathname: '/',
+      search: '',
+      hash: ''
+    }
+  });
 };
 
 const renderFooter = (legal = {}, props = {}) =>
@@ -34,6 +51,16 @@ const renderFooter = (legal = {}, props = {}) =>
   );
 
 describe('MerchantLegalFooterPreview public legal links', () => {
+  beforeEach(() => {
+    setHost('mindgarden.dev.core-solution.co.kr');
+  });
+
+  afterEach(() => {
+    if (originalLocation) {
+      Object.defineProperty(window, 'location', originalLocation);
+    }
+  });
+
   test('안내 컬럼에 /legal/terms·privacy·products·refund 링크가 정확히 4개이고 플랫폼 /terms 가짜 hop이 없다', () => {
     renderFooter({
       refundPolicyText: '환불은 7일 이내 가능합니다.',
@@ -66,6 +93,11 @@ describe('MerchantLegalFooterPreview public legal links', () => {
     expect(document.querySelector('a[href="/terms#pricing"]')).toBeNull();
     expect(document.querySelector('a[href="/privacy"]')).toBeNull();
     expect(screen.getByTestId('merchant-legal-footer')).toBeInTheDocument();
+
+    const guide = screen.getByTestId('counseling-service-guide-link');
+    expect(guide).toHaveAttribute('href', COUNSELING_SERVICE_GUIDE.PATH);
+    expect(guide).toHaveTextContent(COUNSELING_SERVICE_GUIDE.LABEL);
+    expect(guide.closest('.mg-merchant-legal-footer__col')).toBe(guideCol);
   });
 
   test('계정 컬럼 개인정보 링크는 /legal/privacy 이다', () => {
@@ -106,5 +138,20 @@ describe('MerchantLegalFooterPreview public legal links', () => {
     expect(screen.getByTestId('legal-public-link-privacy')).toBeInTheDocument();
     expect(screen.getByTestId('legal-public-link-products')).toBeInTheDocument();
     expect(screen.getByTestId('legal-public-link-refund')).toBeInTheDocument();
+  });
+
+  test('상담 서비스 링크는 안내가 있는 테넌트에만 있다', () => {
+    setHost('clinic-b.dev.core-solution.co.kr');
+    renderFooter();
+    expect(screen.queryByTestId('counseling-service-guide-link')).not.toBeInTheDocument();
+    expect(screen.getByTestId('legal-public-link-terms')).toBeInTheDocument();
+
+    cleanup();
+    setHost('mindgarden.dev.core-solution.co.kr');
+    renderFooter();
+    expect(screen.getByTestId('counseling-service-guide-link')).toHaveAttribute(
+      'href',
+      COUNSELING_SERVICE_GUIDE.PATH
+    );
   });
 });

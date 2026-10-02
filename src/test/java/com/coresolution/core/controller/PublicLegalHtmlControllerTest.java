@@ -4,7 +4,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
+import com.coresolution.consultation.dto.publicguide.PublicCounselingServiceGuideView;
 import com.coresolution.consultation.service.PublicConsultationPackageService;
+import com.coresolution.consultation.service.PublicCounselingServiceGuideService;
+import com.coresolution.consultation.util.PublicCounselingServiceGuideHtml;
 import com.coresolution.core.domain.Tenant;
 import com.coresolution.core.repository.TenantRepository;
 import com.coresolution.core.service.PlatformLegalCopyService;
@@ -40,6 +43,9 @@ class PublicLegalHtmlControllerTest {
     private PublicConsultationPackageService publicConsultationPackageService;
 
     @Mock
+    private PublicCounselingServiceGuideService publicCounselingServiceGuideService;
+
+    @Mock
     private TenantRepository tenantRepository;
 
     private PlatformLegalCopyService platformLegalCopyService;
@@ -51,6 +57,7 @@ class PublicLegalHtmlControllerTest {
         controller = new PublicLegalHtmlController(
                 platformLegalCopyService,
                 publicConsultationPackageService,
+                publicCounselingServiceGuideService,
                 tenantRepository);
     }
 
@@ -75,6 +82,7 @@ class PublicLegalHtmlControllerTest {
         assertThat(response.getBody()).doesNotContain("1년 내 소진");
         assertThat(response.getBody()).contains("<article>");
         assertThat(response.getBody()).doesNotContain("MindGarden 이용약관");
+        assertThat(response.getBody()).contains("id=\"refund\"");
     }
 
     @Test
@@ -176,6 +184,101 @@ class PublicLegalHtmlControllerTest {
         assertThat(body.indexOf(HtmlUtils.htmlEscape(
                 PlatformLegalCopyService.CONSULTATION_PACKAGE_USAGE_PERIOD_NOTE)))
                 .isLessThan(body.indexOf("<ul>"));
+        assertThat(body).contains("href=\"" + PublicCounselingServiceGuideHtml.PATH + "\"");
+        assertThat(body).contains(PublicCounselingServiceGuideHtml.DETAIL_LINK_LABEL);
+    }
+
+    @Test
+    @DisplayName("services: 로그인 없이 여섯 섹션 HTML")
+    void services_rendersGuideHtmlWithoutLogin() {
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.addHeader("Host", "clinic-a.dev.core-solution.co.kr");
+        request.addHeader("X-Forwarded-Host", "clinic-a.dev.core-solution.co.kr");
+        request.addHeader("X-Forwarded-Proto", "https");
+
+        Tenant tenant = Tenant.builder()
+                .tenantId("tenant-clinic-a")
+                .name("클리닉A")
+                .subdomain("clinic-a")
+                .build();
+        when(tenantRepository.findBySubdomainIgnoreCase(eq("clinic-a")))
+                .thenReturn(Optional.of(tenant));
+
+        PublicCounselingServiceGuideView view = new PublicCounselingServiceGuideView();
+        view.setTenantKey("clinic-a");
+        view.setCenterName("클리닉A");
+        view.setOneLiner("한 줄 정의");
+        view.setPaymentNote(PAYMENT_TYPE_NOTE);
+        view.setRefundBody("환불 요약입니다.");
+        view.setPageTitle("상담 서비스 안내 · 클리닉A");
+        view.setPageDescription("설명");
+        view.setCanonicalUrl("https://clinic-a.dev.core-solution.co.kr/services");
+        when(publicCounselingServiceGuideService.load(
+                eq(tenant), eq("https://clinic-a.dev.core-solution.co.kr/services")))
+                .thenReturn(view);
+
+        ResponseEntity<String> response = controller.services(request);
+        String body = response.getBody();
+
+        assertThat(response.getStatusCode().is2xxSuccessful()).isTrue();
+        assertThat(body).doesNotContain("<h2>센터 소개</h2>");
+        assertThat(body).doesNotContain("<h2>진행 절차</h2>");
+        assertThat(body).doesNotContain("마인드가든");
+        assertThat(body).doesNotContain("김선희");
+        assertThat(body).doesNotContain("032-724-8501");
+        assertThat(body).doesNotContain("010-7923-8501");
+        assertThat(body).doesNotContain("해돋이로");
+        assertThat(body).doesNotContain("트리니티 심리상담연구소");
+        assertThat(body).doesNotContain("청소년교육 학사");
+        assertThat(body).contains("<h2>상품·가격</h2>");
+        assertThat(body).contains("<h2>환불·개인정보</h2>");
+        assertThat(body).contains("href=\"/legal/terms#refund\"");
+        assertThat(body).contains("href=\"/legal/privacy\"");
+        assertThat(body).contains(HtmlUtils.htmlEscape(PAYMENT_TYPE_NOTE));
+        assertThat(body).doesNotContain("일시불만");
+        assertThat(body).doesNotContain("location.href");
+    }
+
+    @Test
+    @DisplayName("services: mindgarden 키는 센터 안내를 싣는다")
+    void services_rendersMindgardenGuideForMindgardenKey() {
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.addHeader("Host", "mindgarden.dev.core-solution.co.kr");
+        request.addHeader("X-Forwarded-Host", "mindgarden.dev.core-solution.co.kr");
+        request.addHeader("X-Forwarded-Proto", "https");
+
+        Tenant tenant = Tenant.builder()
+                .tenantId("tenant-mg")
+                .name("마음센터")
+                .subdomain("mindgarden")
+                .build();
+        when(tenantRepository.findBySubdomainIgnoreCase(eq("mindgarden")))
+                .thenReturn(Optional.of(tenant));
+
+        PublicCounselingServiceGuideView view = new PublicCounselingServiceGuideView();
+        view.setTenantKey("mindgarden");
+        view.setCenterName("마음센터");
+        view.setOneLiner("한 줄 정의");
+        view.setPaymentNote(PAYMENT_TYPE_NOTE);
+        view.setRefundBody("환불 요약입니다.");
+        view.setPageTitle("상담 서비스 안내 · 마음센터");
+        view.setPageDescription("설명");
+        when(publicCounselingServiceGuideService.load(
+                eq(tenant), eq("https://mindgarden.dev.core-solution.co.kr/services")))
+                .thenReturn(view);
+
+        String body = controller.services(request).getBody();
+
+        assertThat(body).contains("<h2>센터 소개</h2>");
+        assertThat(body).contains("<h2>상담사 소개</h2>");
+        assertThat(body).contains("마인드가든 심리상담센터");
+        assertThat(body).contains("김선희");
+        assertThat(body).contains("032-724-8501");
+        assertThat(body).contains("15년 이상 임상 경험을 갖춘 대표원장이 직접 상담합니다.");
+        assertThat(body).contains(HtmlUtils.htmlEscape(
+                "주중 10:00–20:00, 토요일 10:00–17:00, 일요일 정기휴무"));
+        assertThat(body).doesNotContain("010-7923-8501");
+        assertThat(body).doesNotContain("센터장이 직접 상담합니다.");
     }
 
     @Test

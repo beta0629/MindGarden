@@ -452,8 +452,15 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
         return best != null ? best.getId() : null;
     }
 
+    /**
+     * 카테고리가 비어 있는 SKU도 상담 상품으로 본다(카탈로그 노출 규칙과 동일, 매핑 가드 우회 방지).
+     */
     private static boolean isConsultationSku(ShopCatalogSku sku) {
-        return sku != null && ShopCatalogCategory.CONSULTATION.equals(sku.getCatalogCategory());
+        if (sku == null) {
+            return false;
+        }
+        String category = sku.getCatalogCategory();
+        return !StringUtils.hasText(category) || ShopCatalogCategory.CONSULTATION.equals(category);
     }
 
     private static boolean isBoundConsultationSku(ShopCatalogSku sku) {
@@ -534,8 +541,7 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
         }
         List<String> cartConsultationTitles = cartLines.stream()
                 .map(CheckoutLine::sku)
-                .filter(sku -> sku != null
-                        && ShopCatalogCategory.CONSULTATION.equals(sku.getCatalogCategory()))
+                .filter(ClientShopCheckoutServiceImpl::isConsultationSku)
                 .map(sku -> resolveOffer(tenantId, sku).title())
                 .filter(StringUtils::hasText)
                 .map(String::trim)

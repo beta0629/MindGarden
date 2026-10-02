@@ -22,6 +22,9 @@ public final class TenantHostSubdomainUtil {
             ".core-solution.co.kr"
     };
 
+    /** nginx regex server_name 에만 있는 문자. 호스트 이름에는 없다. */
+    private static final String NGINX_REGEX_SERVER_NAME_MARKERS = "^\\$[]()+*?|{}";
+
     /** 인프라·온보딩 예약 라벨 (테넌트 아님) */
     private static final Set<String> NON_TENANT_SUBDOMAIN_LABELS;
 
@@ -36,17 +39,39 @@ public final class TenantHostSubdomainUtil {
 
     /**
      * 요청에서 테넌트 서브도메인 라벨을 추출한다.
-     * X-Forwarded-Host 우선, 없으면 Host.
+     * 쓸 수 있는 X-Forwarded-Host, Host, 서버 이름 순. nginx regex server_name 은 호스트가 아니다.
      *
      * @param request HTTP 요청
-     * @return 테넌트 라벨 또는 null (apex·예약·비매칭)
+     * @return 테넌트 라벨 또는 null (apex·예약·비매칭·regex)
      */
     public static String extractTenantSubdomain(HttpServletRequest request) {
         if (request == null) {
             return null;
         }
-        String host = firstForwardedOrHost(request);
-        return extractTenantSubdomain(host);
+        return extractTenantSubdomain(resolveRequestHost(request));
+    }
+
+    /**
+     * canonical·테넌트에 쓸 요청 호스트.
+     * nginx regex {@code server_name} 이 X-Forwarded-Host 나 서버 이름에 있으면 건너뛰고
+     * 다음 실제 호스트를 쓴다.
+     *
+     * @param request HTTP 요청
+     * @return 호스트(포트 허용) 또는 null
+     */
+    public static String resolveRequestHost(HttpServletRequest request) {
+        if (request == null) {
+            return null;
+        }
+        String forwarded = usableHostToken(request.getHeader("X-Forwarded-Host"));
+        if (forwarded != null) {
+            return forwarded;
+        }
+        String hostHeader = usableHostToken(request.getHeader("Host"));
+        if (hostHeader != null) {
+            return hostHeader;
+        }
+        return usableHostToken(request.getServerName());
     }
 
     /**
@@ -56,11 +81,11 @@ public final class TenantHostSubdomainUtil {
      * @return 테넌트 라벨 또는 null
      */
     public static String extractTenantSubdomain(String host) {
-        if (host == null || host.isBlank()) {
+        if (host == null || host.isBlank() || isNginxRegexServerName(host)) {
             return null;
         }
         String hostWithoutPort = host.split(",")[0].trim().split(":")[0].trim().toLowerCase(Locale.ROOT);
-        if (hostWithoutPort.isEmpty()) {
+        if (hostWithoutPort.isEmpty() || isNginxRegexServerName(hostWithoutPort)) {
             return null;
         }
 
@@ -80,11 +105,36 @@ public final class TenantHostSubdomainUtil {
         return null;
     }
 
-    private static String firstForwardedOrHost(HttpServletRequest request) {
-        String forwarded = request.getHeader("X-Forwarded-Host");
-        if (forwarded != null && !forwarded.isBlank()) {
-            return forwarded;
+    private static String usableHostToken(String raw) {
+        if (raw == null || raw.isBlank()) {
+            return null;
         }
-        return request.getHeader("Host");
+        String candidate = raw.split(",")[0].trim();
+        if (candidate.isEmpty() || isNginxRegexServerName(candidate)) {
+            return null;
+        }
+        return candidate;
+    }
+
+    /**
+     * nginx regex {@code server_name} 값(예: {@code ~^...$})은 요청 호스트가 아니다.
+     *
+     * @param candidate 헤더 또는 서버 이름 토큰
+     * @return 정규식 서버 이름이면 true
+     */
+    static boolean isNginxRegexServerName(String candidate) {
+        if (candidate == null || candidate.isBlank()) {
+            return false;
+        }
+        String value = candidate.split(",")[0].trim();
+        if (value.startsWith("~")) {
+            return true;
+        }
+        for (int i = 0; i < value.length(); i++) {
+            if (NGINX_REGEX_SERVER_NAME_MARKERS.indexOf(value.charAt(i)) >= 0) {
+                return true;
+            }
+        }
+        return false;
     }
 }

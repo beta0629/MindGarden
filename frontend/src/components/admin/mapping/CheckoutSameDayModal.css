@@ -13,6 +13,11 @@
   padding: var(--mg-spacing-md, 12px) 0;
 }
 
+/* 요약 래퍼가 페이지 래퍼(.mg-v2-ad-b0kla: min-height 100vh)를 공유해 결제 방식·입력 필드를 화면 밖으로 밀어내지 않도록 */
+.mg-v2-checkout-same-day-modal__body .mg-v2-ad-b0kla.mg-v2-mapping-creation-modal {
+  min-height: auto;
+}
+
 .mg-v2-checkout-same-day-modal__summary-method {
   display: flex;
   align-items: center;

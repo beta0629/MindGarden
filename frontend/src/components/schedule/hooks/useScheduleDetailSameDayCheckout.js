@@ -92,6 +92,7 @@ export function buildCheckoutSameDayMappingPayload(mapping, scheduleId) {
     packagePrice: mapping.packagePrice ?? null,
     paymentAmount: mapping.paymentAmount ?? null,
     totalSessions: mapping.totalSessions ?? null,
+    paymentMethod: mapping.paymentMethod ?? null,
     sameDaySessionScheduleId: resolvedScheduleId
   };
 }

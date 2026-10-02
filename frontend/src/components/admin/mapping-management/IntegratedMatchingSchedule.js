@@ -1049,6 +1049,7 @@ const IntegratedMatchingSchedule = () => {
       paymentAmount: mapping.paymentAmount ?? null,
       totalSessions: mapping.totalSessions ?? null,
       paymentTiming: mapping.paymentTiming ?? null,
+      paymentMethod: mapping.paymentMethod ?? null,
       sameDaySessionScheduleId: scheduleId
     });
   };

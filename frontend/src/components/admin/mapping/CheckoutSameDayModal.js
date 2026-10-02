@@ -24,9 +24,14 @@ import { toDisplayString } from '../../../utils/safeDisplay';
 import {
   filterCheckoutSameDayPaymentMethodCodes,
   mapPaymentMethodCodesToOptions,
+  normalizePaymentMethodCodeValue,
   PAYMENT_METHOD_CODE_BANK_TRANSFER,
   PAYMENT_METHOD_CODE_OTHER
 } from '../../../utils/paymentMethodSsot';
+import {
+  formatPaymentReferenceTimestamp,
+  generatePaymentReferenceNumber
+} from '../../../utils/paymentReferenceNumber';
 import '../MappingCreationModal.css';
 import './CheckoutSameDayModal.css';
 
@@ -58,18 +63,45 @@ const FALLBACK_CHECKOUT_PAYMENT_METHOD_OPTIONS = [
 const IDEMPOTENCY_ERROR_CODE = 'MAPPING_ALREADY_PROCESSED';
 const HTTP_STATUS_CONFLICT = 409;
 
-const methodKey = (value) => {
-  switch (value) {
-    case 'CREDIT_CARD':
-      return 'creditCard';
-    case 'DEBIT_CARD':
-      return 'debitCard';
-    case PAYMENT_METHOD_CODE_BANK_TRANSFER:
-      return 'bankTransfer';
-    case PAYMENT_METHOD_CODE_OTHER:
-    default:
-      return 'other';
+const METHOD_I18N_KEY_BY_VALUE = {
+  CREDIT_CARD: 'creditCard',
+  DEBIT_CARD: 'debitCard',
+  [PAYMENT_METHOD_CODE_BANK_TRANSFER]: 'bankTransfer',
+  [PAYMENT_METHOD_CODE_OTHER]: 'other'
+};
+
+/**
+ * 결제 방식 표시 라벨. 공통코드 라벨(SSOT)을 그대로 쓰고, 폴백 옵션처럼 라벨이 없을 때만 i18n 키를 쓴다.
+ *
+ * @param {Function} t i18n t
+ * @param {string} i18nPrefix 모드별 i18n prefix
+ * @param {{ value: string, label?: string }} option
+ * @returns {string}
+ */
+const resolvePaymentMethodLabel = (t, i18nPrefix, option) => {
+  if (option.label && option.label !== option.value) {
+    return option.label;
   }
+  const key = METHOD_I18N_KEY_BY_VALUE[option.value];
+  return key ? t(`${i18nPrefix}.paymentMethod.${key}`, option.label) : option.value;
+};
+
+/**
+ * 모달 진입 시 선택할 결제 방식: 배정에 저장된 방식 → 기본(신용카드) → 첫 옵션.
+ *
+ * @param {Array<{ value: string }>} options
+ * @param {string|null|undefined} storedMethod 배정 생성 시 저장된 paymentMethod (canonical 정규화 후)
+ * @returns {string}
+ */
+export const resolveInitialCheckoutPaymentMethod = (options, storedMethod) => {
+  const list = Array.isArray(options) ? options : [];
+  if (storedMethod && list.some((opt) => opt.value === storedMethod)) {
+    return storedMethod;
+  }
+  if (list.some((opt) => opt.value === DEFAULT_CHECKOUT_PAYMENT_METHOD)) {
+    return DEFAULT_CHECKOUT_PAYMENT_METHOD;
+  }
+  return list[0]?.value || DEFAULT_CHECKOUT_PAYMENT_METHOD;
 };
 
 /**
@@ -106,38 +138,53 @@ const CheckoutSameDayModal = ({
   const [requestId, setRequestId] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
+  const storedPaymentMethod = mapping?.paymentMethod ?? null;
+
+  const generateReference = (method) => (
+    isConfirmActivate
+      ? `PAY_${formatPaymentReferenceTimestamp(new Date())}`
+      : generatePaymentReferenceNumber(method)
+  );
+
   useEffect(() => {
     if (!isOpen) {
       return;
     }
     let cancelled = false;
+    const applyOptions = (options, storedMethod) => {
+      const initialMethod = resolveInitialCheckoutPaymentMethod(options, storedMethod);
+      setPaymentMethodOptions(options);
+      setPaymentMethod(initialMethod);
+      setPaymentReference(generateReference(initialMethod));
+    };
     (async () => {
       try {
         const codes = await getTenantCodes('PAYMENT_METHOD');
         if (cancelled) {
           return;
         }
-        const checkoutCodes = filterCheckoutSameDayPaymentMethodCodes(codes);
-        const options = mapPaymentMethodCodesToOptions(checkoutCodes);
-        setPaymentMethodOptions(options);
-        const defaultValue = options.some((opt) => opt.value === DEFAULT_CHECKOUT_PAYMENT_METHOD)
-          ? DEFAULT_CHECKOUT_PAYMENT_METHOD
-          : (options[0]?.value || DEFAULT_CHECKOUT_PAYMENT_METHOD);
-        setPaymentMethod(defaultValue);
+        // 당일 결제: 배정 생성 모달과 동일하게 PAYMENT_METHOD 공통코드 전체(활성)를 노출한다.
+        const sourceCodes = isConfirmActivate
+          ? filterCheckoutSameDayPaymentMethodCodes(codes)
+          : codes;
+        applyOptions(
+          mapPaymentMethodCodesToOptions(sourceCodes),
+          normalizePaymentMethodCodeValue(storedPaymentMethod, codes)
+        );
       } catch {
         if (!cancelled) {
-          setPaymentMethodOptions(FALLBACK_CHECKOUT_PAYMENT_METHOD_OPTIONS);
+          applyOptions(FALLBACK_CHECKOUT_PAYMENT_METHOD_OPTIONS, storedPaymentMethod);
         }
       }
     })();
     return () => {
       cancelled = true;
     };
-  }, [isOpen]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- generateReference 는 isConfirmActivate 에만 의존
+  }, [isOpen, isConfirmActivate, storedPaymentMethod]);
 
   useEffect(() => {
     if (isOpen && mapping) {
-      setPaymentReference(generateReference());
       setPaymentAmount(mapping.packagePrice != null
         ? String(mapping.packagePrice)
         : (mapping.paymentAmount != null ? String(mapping.paymentAmount) : ''));
@@ -151,10 +198,11 @@ const CheckoutSameDayModal = ({
     }
   }, [isOpen, mapping, mode]);
 
-  const generateReference = () => {
-    const now = new Date();
-    const stamp = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}_${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}${String(now.getSeconds()).padStart(2, '0')}`;
-    return `${isConfirmActivate ? 'PAY' : 'CARD'}_${stamp}`;
+  const handlePaymentMethodChange = (value) => {
+    setPaymentMethod(value);
+    if (!isConfirmActivate) {
+      setPaymentReference(generateReference(value));
+    }
   };
 
   const handleClose = () => {
@@ -250,10 +298,7 @@ const CheckoutSameDayModal = ({
     (option) => option.value === paymentMethod
   );
   const selectedPaymentMethodLabel = selectedPaymentMethodOption
-    ? t(
-      `${i18nPrefix}.paymentMethod.${methodKey(selectedPaymentMethodOption.value)}`,
-      selectedPaymentMethodOption.label
-    )
+    ? resolvePaymentMethodLabel(t, i18nPrefix, selectedPaymentMethodOption)
     : paymentMethod;
 
   const summaryAmountText = (mapping?.packagePrice != null || mapping?.paymentAmount != null)
@@ -400,11 +445,11 @@ const CheckoutSameDayModal = ({
                 name="checkout-same-day-method"
                 value={option.value}
                 checked={paymentMethod === option.value}
-                onChange={() => setPaymentMethod(option.value)}
+                onChange={() => handlePaymentMethodChange(option.value)}
                 disabled={isLoading}
               />
               <span>
-                {t(`${i18nPrefix}.paymentMethod.${methodKey(option.value)}`, option.label)}
+                {resolvePaymentMethodLabel(t, i18nPrefix, option)}
               </span>
             </label>
           ))}
@@ -480,6 +525,7 @@ CheckoutSameDayModal.propTypes = {
     paymentAmount: PropTypes.number,
     totalSessions: PropTypes.number,
     paymentTiming: PropTypes.string,
+    paymentMethod: PropTypes.string,
     sameDaySessionScheduleId: PropTypes.oneOfType([PropTypes.string, PropTypes.number])
   }),
   onCheckoutCompleted: PropTypes.func,

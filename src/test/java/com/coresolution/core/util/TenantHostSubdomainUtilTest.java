@@ -15,6 +15,10 @@ import org.springframework.mock.web.MockHttpServletRequest;
 @DisplayName("TenantHostSubdomainUtil")
 class TenantHostSubdomainUtilTest {
 
+    /** 운영 vhost regex server_name. 요청 호스트가 아니다. */
+    private static final String NGINX_REGEX_SERVER_NAME =
+            "~^" + "[^.]" + "+\\.core-solution\\.co\\.kr$";
+
     @Test
     @DisplayName("dev 테넌트 호스트에서 라벨 추출")
     void extractsDevTenantLabel() {
@@ -45,5 +49,56 @@ class TenantHostSubdomainUtilTest {
         request.addHeader("Host", "app.core-solution.co.kr");
         request.addHeader("X-Forwarded-Host", "clinic-a.dev.core-solution.co.kr");
         assertThat(TenantHostSubdomainUtil.extractTenantSubdomain(request)).isEqualTo("clinic-a");
+    }
+
+    @Test
+    @DisplayName("nginx regex server_name 은 테넌트가 아니다")
+    void nginxRegexServerNameIsNotATenant() {
+        assertThat(TenantHostSubdomainUtil.extractTenantSubdomain(NGINX_REGEX_SERVER_NAME)).isNull();
+        assertThat(TenantHostSubdomainUtil.isNginxRegexServerName(
+                NGINX_REGEX_SERVER_NAME.substring(1))).isTrue();
+        assertThat(TenantHostSubdomainUtil.extractTenantSubdomain(
+                NGINX_REGEX_SERVER_NAME.substring(1))).isNull();
+        assertThat(TenantHostSubdomainUtil.resolveRequestHost(regexOnlyRequest())).isNull();
+
+        MockHttpServletRequest forwardedOnly = new MockHttpServletRequest();
+        forwardedOnly.setServerName(NGINX_REGEX_SERVER_NAME);
+        forwardedOnly.addHeader("X-Forwarded-Host", NGINX_REGEX_SERVER_NAME);
+        assertThat(TenantHostSubdomainUtil.extractTenantSubdomain(forwardedOnly)).isNull();
+        assertThat(TenantHostSubdomainUtil.resolveRequestHost(forwardedOnly)).isNull();
+    }
+
+    @Test
+    @DisplayName("regex 전달 호스트는 건너뛰고 요청 Host 의 라벨을 쓴다")
+    void regexForwardedHostFallsBackToRequestHost() {
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.setServerName(NGINX_REGEX_SERVER_NAME);
+        request.addHeader("X-Forwarded-Host", NGINX_REGEX_SERVER_NAME);
+        request.addHeader("Host", "mindgarden.core-solution.co.kr");
+
+        assertThat(TenantHostSubdomainUtil.resolveRequestHost(request))
+                .isEqualTo("mindgarden.core-solution.co.kr");
+        assertThat(TenantHostSubdomainUtil.extractTenantSubdomain(request)).isEqualTo("mindgarden");
+    }
+
+    @Test
+    @DisplayName("regex 를 건너뛴 뒤 다른 호스트는 mindgarden 라벨이 아니다")
+    void regexForwardedHostDoesNotBecomeMindgardenLabel() {
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.setServerName(NGINX_REGEX_SERVER_NAME);
+        request.addHeader("X-Forwarded-Host", NGINX_REGEX_SERVER_NAME);
+        request.addHeader("Host", "clinic-a.dev.core-solution.co.kr");
+
+        assertThat(TenantHostSubdomainUtil.extractTenantSubdomain(request)).isEqualTo("clinic-a");
+        assertThat(TenantHostSubdomainUtil.resolveRequestHost(request))
+                .doesNotContain("~");
+    }
+
+    private static MockHttpServletRequest regexOnlyRequest() {
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.setServerName(NGINX_REGEX_SERVER_NAME);
+        request.addHeader("Host", NGINX_REGEX_SERVER_NAME);
+        request.addHeader("X-Forwarded-Host", NGINX_REGEX_SERVER_NAME);
+        return request;
     }
 }

@@ -65,7 +65,7 @@ server {
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
-        proxy_set_header X-Forwarded-Host $server_name;
+        proxy_set_header X-Forwarded-Host $host;
 
         # 타임아웃 설정
         proxy_connect_timeout 60s;
@@ -91,7 +91,7 @@ server {
         root /var/www/html;
     }
 
-    return 301 https://$server_name$request_uri;
+    return 301 https://$host$request_uri;
 }
 
 server {
@@ -123,7 +123,7 @@ server {
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
-        proxy_set_header X-Forwarded-Host $server_name;
+        proxy_set_header X-Forwarded-Host $host;
 
         # 타임아웃 설정
         proxy_connect_timeout 60s;

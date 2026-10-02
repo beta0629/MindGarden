@@ -417,3 +417,11 @@ gh pr edit "$PR" --body-file /tmp/sv-body.md
 - `.cursor/rules/mindgarden-no-hardcode-cloud.mdc` — 하드코딩 금지
 - `scripts/design-system/css-tools/check-hardcoding-enhanced.js` — 하드코딩 스캔
 - `scripts/deployment/check-deploy-no-overwrite-symbols.sh` — 6항 동결
+
+## 디자인 자체 검증
+
+1~7과 하드스톱은 바꾸지 않는다. 화면을 바꾼 PR만 추가한다. 포인터: `.cursor/rules/design.mdc`.
+
+- 1280px와 390px에서 변경 전·후 스크린샷. 스크린샷을 찍지 않았으면 이 항목은 미확인이다. 통과로 적지 않는다.
+- diff에 기존 토큰이 아닌 새 색 또는 raw px가 있으면 보고한다.
+- 참조 화면과 톤이 다르면 적는다.

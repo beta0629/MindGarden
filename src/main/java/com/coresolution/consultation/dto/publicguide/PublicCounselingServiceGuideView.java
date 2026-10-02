@@ -24,6 +24,8 @@ public class PublicCounselingServiceGuideView {
     private String canonicalUrl = "";
     private String pageTitle = "";
     private String pageDescription = "";
+    /** 호스트에서 고른 서브도메인 라벨. 콘텐츠 키이며 숫자 테넌트 id 가 아니다. */
+    private String tenantKey = "";
     private final List<TypeCard> types = new ArrayList<>();
     private final List<CounselorRow> counselors = new ArrayList<>();
     private final List<ProductRow> products = new ArrayList<>();
@@ -130,6 +132,14 @@ public class PublicCounselingServiceGuideView {
 
     public void setPageDescription(String pageDescription) {
         this.pageDescription = pageDescription;
+    }
+
+    public String getTenantKey() {
+        return tenantKey;
+    }
+
+    public void setTenantKey(String tenantKey) {
+        this.tenantKey = tenantKey == null ? "" : tenantKey;
     }
 
     public List<TypeCard> getTypes() {

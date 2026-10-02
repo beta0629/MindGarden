@@ -1,6 +1,8 @@
 package com.coresolution.consultation.util;
 
 import com.coresolution.consultation.constant.PublicCounselingServiceGuideCopy;
+import com.coresolution.consultation.constant.PublicCounselingTenantGuide;
+import com.coresolution.consultation.constant.PublicCounselingTenantGuides;
 import com.coresolution.consultation.dto.publicguide.PublicCounselingServiceGuideView;
 import com.coresolution.consultation.dto.publicguide.PublicCounselingServiceGuideView.ProductRow;
 import com.coresolution.consultation.dto.publicguide.PublicCounselingServiceGuideView.TypeCard;
@@ -74,11 +76,20 @@ public final class PublicCounselingServiceGuideHtml {
                     .append(escape(view.getBusinessLandline()))
                     .append("</a></p>");
         }
-        body.append(nav());
-        body.append(centerSection(view));
-        body.append(typesSection(view.getTypes()));
-        body.append(processSection());
-        body.append(counselorsSection());
+        PublicCounselingTenantGuide guide = PublicCounselingTenantGuides
+                .find(view.getTenantKey())
+                .orElse(null);
+        body.append(nav(guide != null));
+        if (guide == null) {
+            body.append("<p>")
+                    .append(escape(PublicCounselingServiceGuideCopy.EMPTY_GUIDE_LINE))
+                    .append("</p>");
+        } else {
+            body.append(centerSection(view, guide));
+            body.append(typesSection(guide));
+            body.append(processSection(guide));
+            body.append(counselorsSection(guide));
+        }
         body.append(productsSection(view));
         body.append(policySection(view));
         body.append("</main>");
@@ -99,21 +110,23 @@ public final class PublicCounselingServiceGuideHtml {
                 + "\n</body>\n</html>\n";
     }
 
-    private static String centerSection(PublicCounselingServiceGuideView view) {
+    private static String centerSection(
+            PublicCounselingServiceGuideView view,
+            PublicCounselingTenantGuide guide) {
         StringBuilder sb = new StringBuilder();
         sb.append("<section id=\"center\"><h2>센터 소개</h2>");
         if (!blank(view.getCenterIntro())) {
             sb.append("<p>").append(escape(view.getCenterIntro())).append("</p>");
         }
         sb.append("<dl>");
-        row(sb, "센터명", PublicCounselingServiceGuideCopy.CENTER_NAME);
-        row(sb, "주소", PublicCounselingServiceGuideCopy.CENTER_ADDRESS);
+        row(sb, "센터명", guide.getCenterName());
+        row(sb, "주소", guide.getAddress());
         sb.append("<dt>전화</dt><dd><a href=\"tel:")
-                .append(escape(telHref(PublicCounselingServiceGuideCopy.CENTER_PHONE)))
+                .append(escape(telHref(guide.getPhone())))
                 .append("\">")
-                .append(escape(PublicCounselingServiceGuideCopy.CENTER_PHONE))
+                .append(escape(guide.getPhone()))
                 .append("</a></dd>");
-        row(sb, "운영시간", PublicCounselingServiceGuideCopy.CENTER_HOURS);
+        row(sb, "운영시간", guide.getHours());
         row(sb, "대표", view.getRepresentativeName());
         row(sb, "사업자등록번호", view.getBusinessRegistrationNumber());
         row(sb, "통신판매신고번호", view.getMailOrderReportNumber());
@@ -121,40 +134,25 @@ public final class PublicCounselingServiceGuideHtml {
         return sb.toString();
     }
 
-    private static String typesSection(List<TypeCard> extra) {
+    private static String typesSection(PublicCounselingTenantGuide guide) {
         StringBuilder sb = new StringBuilder();
         sb.append("<section id=\"types\"><h2>상담 종류</h2><ul>");
-        for (String line : PublicCounselingServiceGuideCopy.COUNSELING_TYPES) {
+        for (String line : guide.getCounselingTypes()) {
             sb.append("<li>").append(escape(line)).append("</li>");
         }
         sb.append("</ul><p>")
-                .append(escape(PublicCounselingServiceGuideCopy.COMMON_NOTICE))
-                .append("</p>");
-        if (extra != null && !extra.isEmpty()) {
-            sb.append("<div class=\"svc-grid\">");
-            for (TypeCard type : extra) {
-                if (blank(type.getName())) {
-                    continue;
-                }
-                sb.append("<article><h3>").append(escape(type.getName())).append("</h3>");
-                if (!blank(type.getDescription())) {
-                    sb.append("<p>").append(escape(type.getDescription())).append("</p>");
-                }
-                sb.append("</article>");
-            }
-            sb.append("</div>");
-        }
-        sb.append("</section>");
+                .append(escape(guide.getCommonNotice()))
+                .append("</p></section>");
         return sb.toString();
     }
 
-    private static String processSection() {
+    private static String processSection(PublicCounselingTenantGuide guide) {
         StringBuilder sb = new StringBuilder();
         sb.append("<section id=\"process\"><h2>진행 절차</h2><p>")
-                .append(escape(PublicCounselingServiceGuideCopy.PROCESS_LINE))
+                .append(escape(guide.getProcessLine()))
                 .append("</p><ol>");
         int index = 1;
-        for (String step : PublicCounselingServiceGuideCopy.PROCESS_STEPS) {
+        for (String step : guide.getProcessSteps()) {
             sb.append(step(index, step, ""));
             index += 1;
         }
@@ -162,10 +160,27 @@ public final class PublicCounselingServiceGuideHtml {
         return sb.toString();
     }
 
-    private static String counselorsSection() {
-        return "<section id=\"counselors\"><h2>상담사 소개</h2><p>"
-                + escape(PublicCounselingServiceGuideCopy.COUNSELOR_INTRO)
-                + "</p></section>";
+    private static String counselorsSection(PublicCounselingTenantGuide guide) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("<section id=\"counselors\"><h2>상담사 소개</h2><h3>")
+                .append(escape(guide.getCounselorNameLine()))
+                .append("</h3><ul><li>")
+                .append(escape(guide.getMajorLine()))
+                .append("</li>");
+        appendLabeledList(sb, guide.getCredentialLabel(), guide.getCredentials());
+        appendLabeledList(sb, guide.getCareerLabel(), guide.getCareers());
+        sb.append("</ul><p>")
+                .append(escape(guide.getIntro()))
+                .append("</p></section>");
+        return sb.toString();
+    }
+
+    private static void appendLabeledList(StringBuilder sb, String label, List<String> lines) {
+        sb.append("<li>").append(escape(label)).append("<ul>");
+        for (String line : lines) {
+            sb.append("<li>").append(escape(line)).append("</li>");
+        }
+        sb.append("</ul></li>");
     }
 
     private static String productsSection(PublicCounselingServiceGuideView view) {
@@ -232,15 +247,19 @@ public final class PublicCounselingServiceGuideHtml {
                 + "</ul></section>";
     }
 
-    private static String nav() {
-        return "<nav aria-label=\"페이지 안 이동\">"
-                + anchor("center", "센터 소개")
-                + anchor("types", "상담 종류")
-                + anchor("process", "진행 절차")
-                + anchor("counselors", "상담사")
-                + anchor("products", "상품·가격")
-                + anchor("policy", "환불·개인정보")
-                + "</nav>";
+    private static String nav(boolean includeGuide) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("<nav aria-label=\"페이지 안 이동\">");
+        if (includeGuide) {
+            sb.append(anchor("center", "센터 소개"));
+            sb.append(anchor("types", "상담 종류"));
+            sb.append(anchor("process", "진행 절차"));
+            sb.append(anchor("counselors", "상담사"));
+        }
+        sb.append(anchor("products", "상품·가격"));
+        sb.append(anchor("policy", "환불·개인정보"));
+        sb.append("</nav>");
+        return sb.toString();
     }
 
     private static String chips(PublicCounselingServiceGuideView view, Integer minutes) {

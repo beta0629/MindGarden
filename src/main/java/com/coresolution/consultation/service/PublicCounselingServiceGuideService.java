@@ -63,6 +63,7 @@ public class PublicCounselingServiceGuideService {
         PublicCounselingServiceGuideView view = new PublicCounselingServiceGuideView();
         String centerName = tenant == null ? "" : blankToEmpty(tenant.getName());
         view.setCenterName(centerName);
+        view.setTenantKey(tenant == null ? "" : blankToEmpty(tenant.getSubdomain()));
         if (tenant != null) {
             view.setRepresentativeName(blankToEmpty(tenant.getRepresentativeName()));
             view.setBusinessRegistrationNumber(blankToEmpty(tenant.getBusinessRegistrationNumber()));

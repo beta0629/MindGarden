@@ -6,7 +6,7 @@
  */
 
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { cleanup, render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import MerchantLegalFooterPreview from '../MerchantLegalFooterPreview';
 import {
@@ -23,6 +23,22 @@ const baseLegal = {
   mailOrderReportNumber: '제2024-서울-0001호'
 };
 
+const originalLocation = Object.getOwnPropertyDescriptor(window, 'location');
+
+const setHost = (hostname) => {
+  Object.defineProperty(window, 'location', {
+    configurable: true,
+    value: {
+      hostname,
+      origin: `https://${hostname}`,
+      href: `https://${hostname}/`,
+      pathname: '/',
+      search: '',
+      hash: ''
+    }
+  });
+};
+
 const renderFooter = (legal = {}, props = {}) =>
   render(
     <MemoryRouter>
@@ -35,6 +51,16 @@ const renderFooter = (legal = {}, props = {}) =>
   );
 
 describe('MerchantLegalFooterPreview public legal links', () => {
+  beforeEach(() => {
+    setHost('mindgarden.dev.core-solution.co.kr');
+  });
+
+  afterEach(() => {
+    if (originalLocation) {
+      Object.defineProperty(window, 'location', originalLocation);
+    }
+  });
+
   test('안내 컬럼에 /legal/terms·privacy·products·refund 링크가 정확히 4개이고 플랫폼 /terms 가짜 hop이 없다', () => {
     renderFooter({
       refundPolicyText: '환불은 7일 이내 가능합니다.',
@@ -112,5 +138,20 @@ describe('MerchantLegalFooterPreview public legal links', () => {
     expect(screen.getByTestId('legal-public-link-privacy')).toBeInTheDocument();
     expect(screen.getByTestId('legal-public-link-products')).toBeInTheDocument();
     expect(screen.getByTestId('legal-public-link-refund')).toBeInTheDocument();
+  });
+
+  test('상담 서비스 링크는 안내가 있는 테넌트에만 있다', () => {
+    setHost('clinic-b.dev.core-solution.co.kr');
+    renderFooter();
+    expect(screen.queryByTestId('counseling-service-guide-link')).not.toBeInTheDocument();
+    expect(screen.getByTestId('legal-public-link-terms')).toBeInTheDocument();
+
+    cleanup();
+    setHost('mindgarden.dev.core-solution.co.kr');
+    renderFooter();
+    expect(screen.getByTestId('counseling-service-guide-link')).toHaveAttribute(
+      'href',
+      COUNSELING_SERVICE_GUIDE.PATH
+    );
   });
 });

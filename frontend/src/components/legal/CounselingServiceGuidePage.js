@@ -16,10 +16,11 @@ import {
 } from '../../constants/legalPublic';
 import { fetchTenantPublicHomeMeta } from '../../utils/tenantPublicHomeMeta';
 import {
-  PUBLIC_GUIDE_COPY,
-  PUBLIC_GUIDE_PROCESS,
-  PUBLIC_GUIDE_TYPES
+  PUBLIC_GUIDE_EMPTY,
+  PUBLIC_GUIDE_LABELS,
+  findTenantGuide
 } from '../../constants/publicCounselingGuideCopy';
+import { getTenantSubdomainFromHost } from '../../utils/subdomainUtils';
 import {
   GUIDE_COPY,
   buildGuideView,
@@ -96,6 +97,7 @@ const CounselingServiceGuidePage = () => {
     }
   }, [view.pageTitle, view.pageDescription]);
 
+  const guide = findTenantGuide(getTenantSubdomainFromHost());
   const minutes = sharedGuideMinutes(view.types);
   const productsEmpty = view.businessLandline
     ? GUIDE_COPY.PRODUCTS_EMPTY_WITH_PHONE.replace('%s', view.businessLandline)
@@ -140,62 +142,90 @@ const CounselingServiceGuidePage = () => {
                 </p>
               ) : null}
               <nav className="mg-svc__nav" aria-label="페이지 안 이동">
-                <a href="#center">센터 소개</a>
-                <a href="#types">상담 종류</a>
-                <a href="#process">진행 절차</a>
-                <a href="#counselors">상담사</a>
+                {guide ? <a href="#center">센터 소개</a> : null}
+                {guide ? <a href="#types">상담 종류</a> : null}
+                {guide ? <a href="#process">진행 절차</a> : null}
+                {guide ? <a href="#counselors">상담사</a> : null}
                 <a href="#products">상품·가격</a>
                 <a href="#policy">환불·개인정보</a>
               </nav>
 
-              <section id="center">
-                <h2>센터 소개</h2>
-                {view.centerIntro ? <p>{view.centerIntro}</p> : null}
-                <dl>
-                  <dt>센터명</dt>
-                  <dd>{PUBLIC_GUIDE_COPY.CENTER_NAME}</dd>
-                  <dt>주소</dt>
-                  <dd>{PUBLIC_GUIDE_COPY.CENTER_ADDRESS}</dd>
-                  <dt>전화</dt>
-                  <dd>{PUBLIC_GUIDE_COPY.CENTER_PHONE}</dd>
-                  <dt>운영시간</dt>
-                  <dd>{PUBLIC_GUIDE_COPY.CENTER_HOURS}</dd>
-                  {view.representativeName ? (
-                    <><dt>대표</dt><dd>{view.representativeName}</dd></>
-                  ) : null}
-                  {view.businessRegistrationNumber ? (
-                    <><dt>사업자등록번호</dt><dd>{view.businessRegistrationNumber}</dd></>
-                  ) : null}
-                  {view.mailOrderReportNumber ? (
-                    <><dt>통신판매신고번호</dt><dd>{view.mailOrderReportNumber}</dd></>
-                  ) : null}
-                </dl>
-              </section>
+              {guide ? (
+                <>
+                  <section id="center">
+                    <h2>센터 소개</h2>
+                    {view.centerIntro ? <p>{view.centerIntro}</p> : null}
+                    <dl>
+                      <dt>센터명</dt>
+                      <dd>{guide.centerName}</dd>
+                      <dt>주소</dt>
+                      <dd>{guide.address}</dd>
+                      <dt>전화</dt>
+                      <dd>
+                        <a href={`tel:${guide.phone}`}>{guide.phone}</a>
+                      </dd>
+                      <dt>운영시간</dt>
+                      <dd>{guide.hours}</dd>
+                      {view.representativeName ? (
+                        <><dt>대표</dt><dd>{view.representativeName}</dd></>
+                      ) : null}
+                      {view.businessRegistrationNumber ? (
+                        <><dt>사업자등록번호</dt><dd>{view.businessRegistrationNumber}</dd></>
+                      ) : null}
+                      {view.mailOrderReportNumber ? (
+                        <><dt>통신판매신고번호</dt><dd>{view.mailOrderReportNumber}</dd></>
+                      ) : null}
+                    </dl>
+                  </section>
 
-              <section id="types">
-                <h2>상담 종류</h2>
-                <ul>
-                  {PUBLIC_GUIDE_TYPES.map((line) => (
-                    <li key={line}>{line}</li>
-                  ))}
-                </ul>
-                <p>{PUBLIC_GUIDE_COPY.COMMON_NOTICE}</p>
-              </section>
+                  <section id="types">
+                    <h2>상담 종류</h2>
+                    <ul>
+                      {guide.types.map((line) => (
+                        <li key={line}>{line}</li>
+                      ))}
+                    </ul>
+                    <p>{guide.commonNotice}</p>
+                  </section>
 
-              <section id="process">
-                <h2>진행 절차</h2>
-                <p>{PUBLIC_GUIDE_COPY.PROCESS_LINE}</p>
-                <ol>
-                  {PUBLIC_GUIDE_PROCESS.map((step, index) => (
-                    <li key={step}><h3>{`${index + 1}. ${step}`}</h3></li>
-                  ))}
-                </ol>
-              </section>
+                  <section id="process">
+                    <h2>진행 절차</h2>
+                    <p>{guide.processLine}</p>
+                    <ol>
+                      {guide.processSteps.map((step, index) => (
+                        <li key={step}><h3>{`${index + 1}. ${step}`}</h3></li>
+                      ))}
+                    </ol>
+                  </section>
 
-              <section id="counselors">
-                <h2>{PUBLIC_GUIDE_COPY.SECTION_COUNSELOR}</h2>
-                <p>{PUBLIC_GUIDE_COPY.COUNSELOR_INTRO}</p>
-              </section>
+                  <section id="counselors">
+                    <h2>{PUBLIC_GUIDE_LABELS.SECTION_COUNSELOR}</h2>
+                    <h3>{guide.counselorNameLine}</h3>
+                    <ul>
+                      <li>{guide.majorLine}</li>
+                      <li>
+                        {guide.credentialLabel}
+                        <ul>
+                          {guide.credentials.map((line) => (
+                            <li key={line}>{line}</li>
+                          ))}
+                        </ul>
+                      </li>
+                      <li>
+                        {guide.careerLabel}
+                        <ul>
+                          {guide.careers.map((line) => (
+                            <li key={line}>{line}</li>
+                          ))}
+                        </ul>
+                      </li>
+                    </ul>
+                    <p>{guide.intro}</p>
+                  </section>
+                </>
+              ) : (
+                <p>{PUBLIC_GUIDE_EMPTY}</p>
+              )}
 
               <section id="products">
                 <h2>상품·가격</h2>
@@ -235,13 +265,13 @@ const CounselingServiceGuidePage = () => {
                         <article className="svc-product-card" key={`card-${row.name}`}>
                           <h3>{row.name}</h3>
                           <dl>
-                            <dt>{PUBLIC_GUIDE_COPY.LABEL_PRODUCT_NAME}</dt>
+                            <dt>{PUBLIC_GUIDE_LABELS.LABEL_PRODUCT_NAME}</dt>
                             <dd>{row.name}</dd>
-                            <dt>{PUBLIC_GUIDE_COPY.LABEL_SESSIONS}</dt>
+                            <dt>{PUBLIC_GUIDE_LABELS.LABEL_SESSIONS}</dt>
                             <dd>{formatGuideSessions(row)}</dd>
-                            <dt>{PUBLIC_GUIDE_COPY.LABEL_PRICE}</dt>
+                            <dt>{PUBLIC_GUIDE_LABELS.LABEL_PRICE}</dt>
                             <dd>{formatGuidePrice(row.price)}</dd>
-                            <dt>{PUBLIC_GUIDE_COPY.LABEL_PERIOD}</dt>
+                            <dt>{PUBLIC_GUIDE_LABELS.LABEL_PERIOD}</dt>
                             <dd>{formatGuideValidity(row)}</dd>
                           </dl>
                         </article>

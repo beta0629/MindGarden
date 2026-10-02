@@ -1,17 +1,57 @@
 #!/bin/bash
 # 표준화된 프로시저 배포 스크립트 (GitHub Actions용)
-# DELIMITER 없는 배포용 파일 사용
+# 배포 커밋 범위에서 바뀐 프로시저 파일만 교체한다.
+# 새 정의는 스테이징 이름으로 먼저 만들고, 성공한 뒤에만 실제 프로시저를 바꾼다.
+# 실제 프로시저를 DROP 하기 전에 SHOW CREATE 를 저장해 최종 CREATE 실패 시 되돌린다.
 
 set -e
 
 # 환경 변수 설정 (기본값: 개발 환경)
 ENV="${1:-dev}"
-PROCEDURES_DEPLOY_DIR="database/schema/procedures_standardized/deployment"
 
 fail() {
     echo "❌ $1"
     exit 1
 }
+
+SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
+# shellcheck disable=SC1091
+. "$SCRIPT_DIR/procedure-deploy-changed-only.sh"
+
+names_file=$(mktemp "${TMPDIR:-/tmp}/mg-proc-names.XXXXXX")
+list_rc=0
+procedure_deploy_list_names >"$names_file" || list_rc=$?
+if [ "$list_rc" -ne 0 ]; then
+    rm -f "$names_file"
+    if [ "${GITHUB_EVENT_NAME:-}" = "push" ]; then
+        fail "배포 커밋 범위를 확인하지 못해 프로시저를 적용하지 않습니다. 변경되지 않은 프로시저는 교체하지 않습니다."
+    fi
+    echo "배포 커밋 범위가 없어 프로시저를 교체하지 않습니다." >&2
+    exit 0
+fi
+PROCEDURES=()
+while IFS= read -r proc_name; do
+    if [ -n "$proc_name" ]; then
+        PROCEDURES[${#PROCEDURES[@]}]="$proc_name"
+    fi
+done <"$names_file"
+rm -f "$names_file"
+
+if [ "${PROCEDURE_DEPLOY_PLAN_ONLY:-}" = "1" ]; then
+    for proc in "${PROCEDURES[@]}"; do
+        printf 'PLAN safe-replace %s\n' "$proc"
+    done
+    exit 0
+fi
+
+if [ "${#PROCEDURES[@]}" -eq 0 ]; then
+    echo "변경된 표준 프로시저 파일이 없습니다. 다른 프로시저는 실행하거나 DROP 하지 않습니다." >&2
+    exit 0
+fi
+
+for proc in "${PROCEDURES[@]}"; do
+    printf 'PLAN safe-replace %s\n' "$proc"
+done
 
 # prod (일반): 개발 서버 SSH 점프 후 DEV_DB_* 로 mysql — deploy-procedures-prod.yml
 # prod (DEPLOY_TARGET=production_mysql): 운영 호스트 SSH — deploy-procedures-production-mysql.yml (PROD_SERVER_HOST, PROD_SSH_JUMP_HOST 미사용)
@@ -86,194 +126,53 @@ case "${DB_NAME}" in
 esac
 
 echo ""
-
-# 배포할 프로시저 목록
-PROCEDURES=(
-    "CheckTimeConflict"
-    "GetRefundableSessions"
-    "GetRefundStatistics"
-    "ValidateIntegratedAmount"
-    "GetConsolidatedFinancialData"
-    "ProcessIntegratedSalaryCalculation"
-    "GetIntegratedSalaryStatistics"
-    "CalculateSalaryPreview"
-    "ApproveSalaryWithErpSync"
-    "ProcessSalaryPaymentWithErpSync"
-    "ProcessDiscountAccounting"
-    "UpdateDailyStatistics"
-    "UpdateConsultantPerformance"
-)
-
-# 배포용 파일이 없으면 생성
-if [ ! -d "$PROCEDURES_DEPLOY_DIR" ] || [ -z "$(ls -A $PROCEDURES_DEPLOY_DIR/*_deploy.sql 2>/dev/null)" ]; then
-    echo "📦 배포용 프로시저 파일 생성 중..."
-    cd "$(dirname "$0")/../.."
-    bash database/schema/procedures_standardized/create_deployment_files.sh
-    cd - > /dev/null
+if [ "${PROCEDURE_DEPLOY_LOCAL_APPLY:-}" = "1" ]; then
+    for proc in "${PROCEDURES[@]}"; do
+        sql_file=$(procedure_deploy_resolve_sql "$proc") || fail "배포 SQL 없음: $proc"
+        procedure_deploy_safe_replace "$proc" "$sql_file" || fail "safe-replace 실패: $proc"
+    done
+    echo "변경된 프로시저 로컬 적용 완료" >&2
+    exit 0
 fi
 
-# 프로시저 파일을 서버로 업로드
-echo "📤 프로시저 파일 업로드 중..."
+echo "📤 변경된 프로시저 파일만 업로드"
+runner_remote="/tmp/procedure-deploy-changed-only.sh"
+scp "$SCRIPT_DIR/procedure-deploy-changed-only.sh" "$SERVER_USER@$SERVER:$runner_remote" || fail "SCP 실패: runner"
 for proc in "${PROCEDURES[@]}"; do
-    file="${PROCEDURES_DEPLOY_DIR}/${proc}_deploy.sql"
-    if [ -f "$file" ]; then
-        if ! scp "$file" "$SERVER_USER@$SERVER:/tmp/${proc}_deploy.sql"; then
-            fail "SCP 실패: ${proc}_deploy.sql → ${SERVER_USER}@${SERVER}:/tmp/"
-        fi
-        echo "✅ ${proc}_deploy.sql 업로드 완료"
-    else
-        echo "⚠️  파일을 찾을 수 없습니다: $file"
+    sql_file=$(procedure_deploy_resolve_sql "$proc") || fail "배포 SQL 없음: $proc"
+    if ! scp "$sql_file" "$SERVER_USER@$SERVER:/tmp/${proc}_deploy.sql"; then
+        fail "SCP 실패: ${proc}_deploy.sql"
     fi
+    echo "✅ ${proc}_deploy.sql 업로드 완료"
 done
 
 echo ""
-echo "📥 서버에서 프로시저 배포 중..."
+echo "📥 변경된 프로시저만 교체"
 
 # MySQL 8: root 등으로 만들어진 프로시저는 일반 계정이 DROP 할 수 없음(1227 SYSTEM_USER).
-# 재시도 순서: PROD_DB_ROUTINE_ADMIN_* → PROD_DB_ROUTINE_FALLBACK_ROOT_PASSWORD(root) → root + 앱 DB 비밀번호(127.0.0.1·DB_HOST).
+# 재시도는 설정된 DB 호스트에서만 한다.
 ROUTINE_ADMIN_USER="${PROD_DB_ROUTINE_ADMIN_USER:-}"
 ROUTINE_ADMIN_PASS="${PROD_DB_ROUTINE_ADMIN_PASSWORD:-}"
 ROUTINE_FALLBACK_ROOT_PASS="${PROD_DB_ROUTINE_FALLBACK_ROOT_PASSWORD:-}"
 
-# SSH로 접속하여 프로시저 배포 (한 건이라도 mysql 실패 시 비정상 종료 → CI 실패)
-ssh "$SERVER_USER@$SERVER" bash << ENDSSH
+# 변경된 프로시저만 원격에서 교체한다. 한 건이라도 실패하면 중단한다.
+for proc in "${PROCEDURES[@]}"; do
+# 접속 값은 이 쪽에서 원격 스크립트에 넣는다.
+# shellcheck disable=SC2087
+ssh "$SERVER_USER@$SERVER" bash -s << ENDSSH || fail "safe-replace 실패: $proc"
 set -euo pipefail
-
-DB_HOST="$DB_HOST"
-DB_USER="$DB_USER"
-DB_PASS="$DB_PASS"
-DB_NAME="$DB_NAME"
-ROUTINE_ADMIN_USER="$ROUTINE_ADMIN_USER"
-ROUTINE_ADMIN_PASS="$ROUTINE_ADMIN_PASS"
-ROUTINE_FALLBACK_ROOT_PASS="$ROUTINE_FALLBACK_ROOT_PASS"
-# 비밀번호는 CI 로컬에서 heredoc 전개 시 원격 스크립트에 포함됨(기존 -p 와 동일 수준). 클라이언트 경고 회피용.
+export DB_HOST="$DB_HOST"
+export DB_USER="$DB_USER"
+export DB_PASS="$DB_PASS"
+export DB_NAME="$DB_NAME"
+export ROUTINE_ADMIN_USER="$ROUTINE_ADMIN_USER"
+export ROUTINE_ADMIN_PASS="$ROUTINE_ADMIN_PASS"
+export ROUTINE_FALLBACK_ROOT_PASS="$ROUTINE_FALLBACK_ROOT_PASS"
 export MYSQL_PWD="\$DB_PASS"
 trap 'unset MYSQL_PWD 2>/dev/null || true' EXIT
-
-proc_failed=0
-# 각 프로시저 배포 (배포용 SQL에 DELIMITER 포함)
-for proc in ${PROCEDURES[@]}; do
-    file="/tmp/\${proc}_deploy.sql"
-    if [ -f "\$file" ]; then
-        echo "배포 중: \$proc"
-        log="/tmp/mysql_deploy_\${proc}.log"
-        if mysql -h "\$DB_HOST" -u "\$DB_USER" "\$DB_NAME" < "\$file" >"\$log" 2>&1; then
-            echo "✅ \$proc 배포 완료"
-        else
-            echo "❌ \$proc 배포 실패 (1차: \$DB_USER)"
-            cat "\$log"
-            if grep -qE '1227|SYSTEM_USER' "\$log"; then
-                retry_ok=0
-                if [ -n "\${ROUTINE_ADMIN_USER:-}" ]; then
-                    echo "::notice::1227(SYSTEM_USER) → PRODUCTION_DB_PROCEDURE_USER 로 재시도: \$proc"
-                    export MYSQL_PWD="\$ROUTINE_ADMIN_PASS"
-                    if mysql -h "\$DB_HOST" -u "\$ROUTINE_ADMIN_USER" "\$DB_NAME" < "\$file" >"\${log}.admin" 2>&1; then
-                        retry_ok=1
-                    else
-                        cat "\${log}.admin"
-                    fi
-                    export MYSQL_PWD="\$DB_PASS"
-                fi
-                if [ "\$retry_ok" -eq 0 ] && [ -n "\${ROUTINE_FALLBACK_ROOT_PASS:-}" ]; then
-                    echo "::notice::1227(SYSTEM_USER) → root(PRODUCTION_MYSQL_ROOT_PASSWORD) 로 재시도: \$proc"
-                    export MYSQL_PWD="\$ROUTINE_FALLBACK_ROOT_PASS"
-                    for rh in 127.0.0.1 "\$DB_HOST"; do
-                        if mysql -h "\$rh" -u root "\$DB_NAME" < "\$file" >"\${log}.root.\${rh}" 2>&1; then
-                            retry_ok=1
-                            break
-                        fi
-                    done
-                    export MYSQL_PWD="\$DB_PASS"
-                fi
-                if [ "\$retry_ok" -eq 0 ]; then
-                    echo "::notice::1227(SYSTEM_USER) → root + 앱 DB 비밀번호 동일 가정(127.0.0.1·DB_HOST) 재시도: \$proc"
-                    export MYSQL_PWD="\$DB_PASS"
-                    for rh in 127.0.0.1 "\$DB_HOST"; do
-                        if mysql -h "\$rh" -u root "\$DB_NAME" < "\$file" >"\${log}.rootpw.\${rh}" 2>&1; then
-                            retry_ok=1
-                            break
-                        fi
-                    done
-                    export MYSQL_PWD="\$DB_PASS"
-                fi
-                if [ "\$retry_ok" -eq 1 ]; then
-                    echo "✅ \$proc 배포 완료 (SYSTEM_USER 재시도)"
-                else
-                    proc_failed=1
-                fi
-            else
-                proc_failed=1
-            fi
-        fi
-    else
-        echo "⚠️  원격에 없음(스킵): \$file"
-    fi
-done
-
-if [ "\$proc_failed" -ne 0 ]; then
-    echo "::error::표준 프로시저 mysql 적용이 하나 이상 실패했습니다. MySQL 8 SYSTEM_USER(1227)이면: (1) Secret PRODUCTION_DB_PROCEDURE_USER·PASSWORD (2) PRODUCTION_MYSQL_ROOT_PASSWORD (3) 로컬 MySQL에서 root 비밀번호가 앱 DB와 동일한 경우 자동 root 재시도. PRODUCTION_DB_HOST=127.0.0.1 권장."
-    exit 1
-fi
-
-echo ""
-echo "🔍 DB 연결·스키마 확인..."
-vlog="/tmp/mysql_deploy_verify.log"
-if ! mysql -h "\$DB_HOST" -u "\$DB_USER" "\$DB_NAME" -e "SELECT DATABASE() AS current_schema, COUNT(*) AS procedure_count FROM information_schema.ROUTINES WHERE ROUTINE_SCHEMA = DATABASE() AND ROUTINE_TYPE = 'PROCEDURE';" >"\$vlog" 2>&1; then
-    cat "\$vlog"
-    exit 1
-fi
-cat "\$vlog"
-
-# 필수 루틴 존재 하드 검증 (procedure_count=0 또는 필수 누락 시 CI 실패)
-# 급여 핵심 4종은 항상 검사 + PROCEDURES 중 원격에 deploy SQL이 올라간 이름도 전부 검사
-echo ""
-echo "🔍 필수·업로드 프로시저 존재 검증 (ROUTINE_SCHEMA=\$DB_NAME)..."
-verify_failed=0
-procedure_count=\$(mysql -h "\$DB_HOST" -u "\$DB_USER" "\$DB_NAME" -N -e \
-    "SELECT COUNT(*) FROM information_schema.ROUTINES WHERE ROUTINE_SCHEMA = DATABASE() AND ROUTINE_TYPE = 'PROCEDURE';" 2>/dev/null || echo "0")
-echo "procedure_count=\${procedure_count}"
-if [ -z "\${procedure_count}" ] || [ "\${procedure_count}" -eq 0 ]; then
-    echo "::error::procedure_count=0 — 스키마에 PROCEDURE가 없습니다. 표준화 프로시저 배포가 실패했거나 잘못된 DB_NAME일 수 있습니다."
-    verify_failed=1
-fi
-
-routine_exists() {
-    local name="\$1"
-    local cnt
-    cnt=\$(mysql -h "\$DB_HOST" -u "\$DB_USER" "\$DB_NAME" -N -e \
-        "SELECT COUNT(*) FROM information_schema.ROUTINES WHERE ROUTINE_SCHEMA = DATABASE() AND ROUTINE_TYPE = 'PROCEDURE' AND ROUTINE_NAME = '\${name}';" 2>/dev/null || echo "0")
-    if [ -n "\$cnt" ] && [ "\$cnt" -gt 0 ]; then
-        echo "  \${name}: exists=yes"
-        return 0
-    fi
-    echo "  \${name}: exists=no"
-    echo "::error::필수/배포 대상 프로시저 누락: \${name}"
-    return 1
-}
-
-for routine in ApproveSalaryWithErpSync ProcessSalaryPaymentWithErpSync ProcessIntegratedSalaryCalculation CalculateSalaryPreview; do
-    routine_exists "\$routine" || verify_failed=1
-done
-
-for proc in ${PROCEDURES[@]}; do
-    if [ -f "/tmp/\${proc}_deploy.sql" ]; then
-        case "\$proc" in
-            ApproveSalaryWithErpSync|ProcessSalaryPaymentWithErpSync|ProcessIntegratedSalaryCalculation|CalculateSalaryPreview)
-                ;;
-            *)
-                routine_exists "\$proc" || verify_failed=1
-                ;;
-        esac
-    fi
-done
-
-if [ "\$verify_failed" -ne 0 ]; then
-    echo "::error::표준 프로시저 배포 후 검증 실패 — 필수 루틴이 없거나 procedure_count=0 입니다. deploy SQL 적용·DB_NAME·권한을 확인하세요."
-    exit 1
-fi
-echo "✅ 프로시저 존재 검증 통과"
-
+bash /tmp/procedure-deploy-changed-only.sh apply-one "$proc" "/tmp/${proc}_deploy.sql"
 ENDSSH
+done
 
 echo ""
-echo "✅ 프로시저 배포 완료 (모든 mysql 단계 성공)"
+echo "✅ 변경된 프로시저 교체 완료"

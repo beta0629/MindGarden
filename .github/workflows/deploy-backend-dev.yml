@@ -116,7 +116,10 @@ jobs:
     steps:
     - name: 📥 코드 체크아웃
       uses: actions/checkout@v4
-      
+      with:
+        # push 의 before..sha 로 바뀐 프로시저 파일만 고른다.
+        fetch-depth: ${{ github.event_name == 'push' && '0' || '1' }}
+
     - name: ☕ Java 17 설정
       uses: actions/setup-java@v5
       with:

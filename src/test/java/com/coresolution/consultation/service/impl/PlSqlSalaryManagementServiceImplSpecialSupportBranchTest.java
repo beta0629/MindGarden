@@ -334,6 +334,11 @@ class PlSqlSalaryManagementServiceImplSpecialSupportBranchTest {
         return rows;
     }
 
+    private void stubRecalcProcedureFromSqlFile() {
+        when(jdbcTemplate.queryForList(anyString(), eq("RecalcUnpaidSalaryCalculation")))
+                .thenReturn(RecalcUnpaidProcedureSignature.informationSchemaRows());
+    }
+
     private static Map<String, Object> metaRow(int ord, String mode, String name, String dataType) {
         Map<String, Object> m = new HashMap<>();
         m.put("ORDINAL_POSITION", ord);
@@ -356,6 +361,7 @@ class PlSqlSalaryManagementServiceImplSpecialSupportBranchTest {
     @Test
     @DisplayName("Recalc: Confirm 2×30000 후 +1 → completed=3, earnings=90000, same id")
     void recalcUnpaid_whenThreeCompleted_mapsCompleted3AndGross90000SameId() throws Exception {
+        stubRecalcProcedureFromSqlFile();
         when(callableStatement.getObject(4)).thenReturn(Boolean.TRUE);
         when(callableStatement.getString(5)).thenReturn("미지급 급여 재계산이 완료되었습니다.");
         when(callableStatement.getLong(6)).thenReturn(501L);
@@ -377,6 +383,7 @@ class PlSqlSalaryManagementServiceImplSpecialSupportBranchTest {
     @Test
     @DisplayName("Recalc on PAID: SP 거절 메시지 매핑")
     void recalcUnpaid_whenPaid_refuses() throws Exception {
+        stubRecalcProcedureFromSqlFile();
         when(callableStatement.getObject(4)).thenReturn(Boolean.FALSE);
         when(callableStatement.getString(5)).thenReturn("지급 완료된 급여는 재계산할 수 없습니다. 추가 정산을 사용하세요.");
         when(callableStatement.getLong(6)).thenReturn(0L);

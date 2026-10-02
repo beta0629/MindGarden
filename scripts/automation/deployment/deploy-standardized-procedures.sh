@@ -95,6 +95,7 @@ PROCEDURES=(
     "ValidateIntegratedAmount"
     "GetConsolidatedFinancialData"
     "ProcessIntegratedSalaryCalculation"
+    "RecalcUnpaidSalaryCalculation"
     "GetIntegratedSalaryStatistics"
     "CalculateSalaryPreview"
     "ApproveSalaryWithErpSync"

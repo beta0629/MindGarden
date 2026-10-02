@@ -2341,7 +2341,7 @@ public class AdminController extends BaseApiController {
 
         ConsultantClientMappingResponse response =
                 ConsultantClientMappingResponse.fromEntity(mapping);
-        return success("옵션 B 당일 카드 결제가 완료되었습니다.", response);
+        return success("옵션 B 당일 결제가 완료되었습니다.", response);
     }
 
     /**

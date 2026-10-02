@@ -129,4 +129,18 @@ describe('MappingCancelModal footer equal-height + dismiss/confirm', () => {
     expect(onConfirm).toHaveBeenCalledTimes(1);
     expect(onClose).not.toHaveBeenCalled();
   });
+
+  it('hides the additional income void notice by default', () => {
+    render(<MappingCancelModal {...defaultProps} />);
+
+    expect(screen.queryByTestId('mapping-cancel-modal-additional-income-notice')).toBeNull();
+  });
+
+  it('shows the additional income void notice for unmerged additional package', () => {
+    render(<MappingCancelModal {...defaultProps} voidsAdditionalIncome />);
+
+    expect(screen.getByTestId('mapping-cancel-modal-additional-income-notice')).toHaveTextContent(
+      'admin:mapping.cancel.modal.additionalIncomeVoidNotice'
+    );
+  });
 });

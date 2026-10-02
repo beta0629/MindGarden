@@ -248,6 +248,23 @@ class AdminServiceImplCreateMappingPendingPaymentGuardTest {
     }
 
     @Test
+    @DisplayName("ACTIVE 존재 + 추가 패키지 회기 0 → 생성 거부, 저장·기존 매핑 변경 없음")
+    void createMapping_rejectsZeroSessionAdditionalPackage() {
+        ConsultantClientMapping activeMapping = newExistingMapping(105L, MappingStatus.ACTIVE);
+        ConsultantClientMapping terminatedMapping = newExistingMapping(106L, MappingStatus.TERMINATED);
+        stubCreateFlow(Arrays.asList(activeMapping, terminatedMapping));
+
+        ConsultantClientMappingCreateRequest dto = newRequest();
+        dto.setTotalSessions(0);
+
+        assertThatThrownBy(() -> adminService.createMapping(dto))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage(AdminServiceUserFacingMessages.MSG_ADDITIONAL_MAPPING_SESSIONS_REQUIRED);
+        assertThat(terminatedMapping.getTerminatedAt()).isNull();
+        verify(mappingRepository, never()).save(any(ConsultantClientMapping.class));
+    }
+
+    @Test
     @DisplayName("TERMINATED 기존 매핑은 정상적으로 재종료 처리 후 신규 생성 (ACTIVE 아님)")
     void createMapping_terminatesTerminatedMappingAsBefore() {
         ConsultantClientMapping terminatedMapping = newExistingMapping(104L, MappingStatus.TERMINATED);

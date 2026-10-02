@@ -20,8 +20,9 @@ import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../../
 const MAPPING_CANCEL_MODAL_TEST_ID = 'mapping-cancel-modal';
 const MAPPING_CANCEL_CONFIRM_BUTTON_TEST_ID = 'mapping-cancel-modal-confirm';
 const MAPPING_CANCEL_BACK_BUTTON_TEST_ID = 'mapping-cancel-modal-back';
+const MAPPING_CANCEL_ADDITIONAL_INCOME_NOTICE_TEST_ID = 'mapping-cancel-modal-additional-income-notice';
 
-const MappingCancelModal = ({ isOpen, onConfirm, onClose, processing }) => {
+const MappingCancelModal = ({ isOpen, onConfirm, onClose, processing, voidsAdditionalIncome }) => {
   const { t } = useTranslation();
 
   const actions = (
@@ -88,9 +89,19 @@ const MappingCancelModal = ({ isOpen, onConfirm, onClose, processing }) => {
           size={28}
           aria-hidden="true"
         />
-        <p className="mg-v2-mapping-cancel-modal__message">
-          {t('admin:mapping.cancel.modal.body')}
-        </p>
+        <div className="mg-v2-mapping-cancel-modal__messages">
+          <p className="mg-v2-mapping-cancel-modal__message">
+            {t('admin:mapping.cancel.modal.body')}
+          </p>
+          {voidsAdditionalIncome && (
+            <p
+              className="mg-v2-mapping-cancel-modal__message mg-v2-mapping-cancel-modal__message--notice"
+              data-testid={MAPPING_CANCEL_ADDITIONAL_INCOME_NOTICE_TEST_ID}
+            >
+              {t('admin:mapping.cancel.modal.additionalIncomeVoidNotice')}
+            </p>
+          )}
+        </div>
       </div>
     </UnifiedModal>
   );
@@ -100,11 +111,14 @@ MappingCancelModal.propTypes = {
   isOpen: PropTypes.bool.isRequired,
   onConfirm: PropTypes.func.isRequired,
   onClose: PropTypes.func.isRequired,
-  processing: PropTypes.bool
+  processing: PropTypes.bool,
+  /** 미병합 추가 패키지 — 취소 시 연결된 추가 회기 수입 전표도 무효 처리됨을 안내 */
+  voidsAdditionalIncome: PropTypes.bool
 };
 
 MappingCancelModal.defaultProps = {
-  processing: false
+  processing: false,
+  voidsAdditionalIncome: false
 };
 
 export default MappingCancelModal;

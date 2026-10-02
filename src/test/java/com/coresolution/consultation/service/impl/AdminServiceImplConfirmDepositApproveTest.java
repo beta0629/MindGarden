@@ -66,6 +66,7 @@ import org.springframework.transaction.support.AbstractPlatformTransactionManage
 import org.springframework.transaction.support.DefaultTransactionStatus;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -547,6 +548,79 @@ class AdminServiceImplConfirmDepositApproveTest {
                 () -> adminService.approveMapping(additionalId, "AdminMerge"));
         assertTrue(ex.getMessage().contains("활성 매칭을 찾을 수 없습니다"));
         verify(mappingRepository, never()).save(any(ConsultantClientMapping.class));
+    }
+
+    @Test
+    @DisplayName("추가 매칭 회기 0 confirmDeposit: ERP 수입 전표 생성 전 차단 (고아 전표 방지)")
+    void confirmDeposit_zeroSessionAdditional_rejectsBeforeIncome() {
+        Long mappingId = 90L;
+        ConsultantClientMapping mapping = buildZeroSessionAdditionalMapping(mappingId,
+                ConsultantClientMapping.MappingStatus.PAYMENT_CONFIRMED);
+
+        when(mappingRepository.findByTenantIdAndId(eq(TEST_TENANT_ID), eq(mappingId)))
+                .thenReturn(Optional.of(mapping));
+
+        IllegalStateException ex = assertThrows(IllegalStateException.class,
+                () -> adminService.confirmDeposit(mappingId, "REF-ZERO"));
+
+        assertEquals(AdminServiceUserFacingMessages.MSG_ADDITIONAL_MAPPING_SESSIONS_REQUIRED, ex.getMessage());
+        verify(mappingRepository, never()).save(any(ConsultantClientMapping.class));
+        verify(financialTransactionService, never()).createTransaction(any(), any());
+        verify(storedProcedureService, never()).updateMappingInfo(any(), any(), anyDouble(), anyInt(), any());
+    }
+
+    @Test
+    @DisplayName("추가 매칭 회기 0 원샷 confirmAndActivate: confirmPayment 단계에서 차단, 수입 전표 미생성")
+    void confirmAndActivate_zeroSessionAdditional_rejectsBeforeIncome() {
+        Long mappingId = 91L;
+        ConsultantClientMapping mapping = buildZeroSessionAdditionalMapping(mappingId,
+                ConsultantClientMapping.MappingStatus.PENDING_PAYMENT);
+        mapping.setPaymentStatus(ConsultantClientMapping.PaymentStatus.PENDING);
+
+        when(mappingRepository.findByTenantIdAndId(eq(TEST_TENANT_ID), eq(mappingId)))
+                .thenReturn(Optional.of(mapping));
+
+        IllegalStateException ex = assertThrows(IllegalStateException.class,
+                () -> adminService.confirmAndActivate(mappingId, "CREDIT_CARD", "CARD-REF", 250_000L, null));
+
+        assertEquals(AdminServiceUserFacingMessages.MSG_ADDITIONAL_MAPPING_SESSIONS_REQUIRED, ex.getMessage());
+        assertEquals(ConsultantClientMapping.MappingStatus.PENDING_PAYMENT, mapping.getStatus());
+        verify(mappingRepository, never()).save(any(ConsultantClientMapping.class));
+        verify(financialTransactionService, never()).createTransaction(any(), any());
+    }
+
+    @Test
+    @DisplayName("isAdditionalPackagePendingMerge: 병합 완료·ACTIVE·일반 매칭은 false")
+    void isAdditionalPackagePendingMerge_onlyUnmergedAdditionalBeforeActivation() {
+        ConsultantClientMapping pending = buildZeroSessionAdditionalMapping(92L,
+                ConsultantClientMapping.MappingStatus.DEPOSIT_PENDING);
+        assertTrue(adminService.isAdditionalPackagePendingMerge(pending));
+
+        ConsultantClientMapping merged = buildZeroSessionAdditionalMapping(93L,
+                ConsultantClientMapping.MappingStatus.DEPOSIT_PENDING);
+        merged.setNotes(merged.getNotes() + "\n" + String.format(
+                AdminServiceUserFacingMessages.NOTES_ADDITIONAL_MAPPING_MERGED_FMT, 103L, 1));
+        assertFalse(adminService.isAdditionalPackagePendingMerge(merged));
+
+        ConsultantClientMapping activeAdditional = buildZeroSessionAdditionalMapping(94L,
+                ConsultantClientMapping.MappingStatus.ACTIVE);
+        assertFalse(adminService.isAdditionalPackagePendingMerge(activeAdditional));
+
+        assertFalse(adminService.isAdditionalPackagePendingMerge(buildMappingForConfirmDeposit(95L)));
+        assertFalse(adminService.isAdditionalPackagePendingMerge(null));
+    }
+
+    private ConsultantClientMapping buildZeroSessionAdditionalMapping(Long mappingId,
+            ConsultantClientMapping.MappingStatus status) {
+        ConsultantClientMapping m = buildMappingForConfirmDeposit(mappingId);
+        m.setPackageName("시그니처검사패키지");
+        m.setPackagePrice(250_000L);
+        m.setTotalSessions(0);
+        m.setRemainingSessions(0);
+        m.setUsedSessions(0);
+        m.setStatus(status);
+        m.setNotes(String.format(AdminServiceUserFacingMessages.NOTES_ADDITIONAL_MAPPING_LINE_FMT, 103L, 0));
+        return m;
     }
 
     private ConsultantClientMapping buildMappingForConfirmDeposit(Long mappingId) {

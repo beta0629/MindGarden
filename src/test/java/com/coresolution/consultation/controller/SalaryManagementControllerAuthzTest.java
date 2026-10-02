@@ -20,6 +20,7 @@ import com.coresolution.consultation.repository.SalaryCalculationRepository;
 import com.coresolution.consultation.service.AuditLogService;
 import com.coresolution.consultation.service.CommonCodeService;
 import com.coresolution.consultation.service.DynamicPermissionService;
+import com.coresolution.consultation.service.PayrollPeriodConfirmService;
 import com.coresolution.consultation.service.PlSqlSalaryManagementService;
 import com.coresolution.consultation.service.RoleCommonCodeAuthorizationService;
 import com.coresolution.consultation.service.SalaryExportService;
@@ -63,6 +64,7 @@ class SalaryManagementControllerAuthzTest {
     @Mock private AuditLogService auditLogService;
     @Mock private SalaryCalculationRepository salaryCalculationRepository;
     @Mock private ObjectMapper objectMapper;
+    @Mock private PayrollPeriodConfirmService payrollPeriodConfirmService;
     @Mock private HttpSession session;
 
     private MockedStatic<SessionUtils> sessionUtilsStatic;
@@ -81,7 +83,8 @@ class SalaryManagementControllerAuthzTest {
                 salaryExportService,
                 auditLogService,
                 salaryCalculationRepository,
-                objectMapper);
+                objectMapper,
+                payrollPeriodConfirmService);
         SecurityContextHolder.clearContext();
 
         // STAFF + SALARY_MANAGE 는 ErpRestrictedPermissions fail-closed 로 동적 권한까지 떨어질 수 있음

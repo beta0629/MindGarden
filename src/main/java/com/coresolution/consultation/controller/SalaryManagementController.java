@@ -31,6 +31,7 @@ import com.coresolution.consultation.exception.UnauthorizedException;
 import com.coresolution.consultation.exception.ValidationException;
 import com.coresolution.consultation.service.CommonCodeService;
 import com.coresolution.consultation.service.DynamicPermissionService;
+import com.coresolution.consultation.service.PayrollPeriodConfirmService;
 import com.coresolution.consultation.service.RoleCommonCodeAuthorizationService;
 import com.coresolution.consultation.service.PlSqlSalaryManagementService;
 import com.coresolution.consultation.service.SalaryExportService;
@@ -80,6 +81,7 @@ public class SalaryManagementController extends BaseApiController {
     private final AuditLogService auditLogService;
     private final SalaryCalculationRepository salaryCalculationRepository;
     private final ObjectMapper objectMapper;
+    private final PayrollPeriodConfirmService payrollPeriodConfirmService;
 
     /**
      * 급여 관리(SALARY_MANAGE) 권한이 없으면 예외를 던진다. 관리자(ADMIN)는 동적 권한 체크에서 자동 통과한다.
@@ -429,7 +431,7 @@ public class SalaryManagementController extends BaseApiController {
         if (permissionResponse != null) {
             throw new ForbiddenException("급여 관리 권한이 없습니다.");
         }
-        Map<String, Object> result = plSqlSalaryManagementService.processIntegratedSalaryCalculation(
+        Map<String, Object> result = payrollPeriodConfirmService.confirm(
             consultantId, periodStart, periodEnd, currentUser.getName()
         );
         if (!Boolean.TRUE.equals(result.get("success"))) {

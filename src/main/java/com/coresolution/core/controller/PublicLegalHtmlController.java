@@ -218,12 +218,9 @@ public class PublicLegalHtmlController {
     }
 
     private static String canonical(HttpServletRequest request) {
-        String forwardedHost = request.getHeader("X-Forwarded-Host");
-        String host = forwardedHost != null && !forwardedHost.isBlank()
-                ? forwardedHost.split(",")[0].trim()
-                : request.getHeader("Host");
+        String host = TenantHostSubdomainUtil.resolveRequestHost(request);
         if (host == null || host.isBlank()) {
-            host = request.getServerName();
+            return "";
         }
         String forwardedProto = request.getHeader("X-Forwarded-Proto");
         String scheme = forwardedProto != null && !forwardedProto.isBlank()

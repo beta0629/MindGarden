@@ -1,9 +1,14 @@
 package com.coresolution.core.controller;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.coresolution.consultation.constant.PublicCounselingServiceGuideCopy;
 import com.coresolution.consultation.dto.publicguide.PublicCounselingServiceGuideView;
 import com.coresolution.consultation.service.PublicConsultationPackageService;
 import com.coresolution.consultation.service.PublicCounselingServiceGuideService;
@@ -38,6 +43,12 @@ class PublicLegalHtmlControllerTest {
     private static final String KNOWN_TERMS_PHRASE = "상담센터 SaaS";
     private static final String PAYMENT_TYPE_NOTE =
             "카드 결제이며, 5만 원 이상은 할부가 가능합니다. 정기결제·구독은 없습니다.";
+    /** 운영 vhost regex server_name. 요청 호스트가 아니다. */
+    private static final String NGINX_REGEX_SERVER_NAME =
+            "~^" + "[^.]" + "+\\.core-solution\\.co\\.kr$";
+    /** 테스트 스위트에 이미 있는 운영 호스트 형태. */
+    private static final String MINDGARDEN_HOST = "mindgarden.core-solution.co.kr";
+    private static final String OTHER_HOST = "clinic-a.dev.core-solution.co.kr";
 
     @Mock
     private PublicConsultationPackageService publicConsultationPackageService;
@@ -282,6 +293,121 @@ class PublicLegalHtmlControllerTest {
     }
 
     @Test
+    @DisplayName("services: regex 전달 호스트는 테넌트가 아니고 요청 Host 안내와 canonical 을 쓴다")
+    void services_regexForwardedHostUsesRequestHostForMindgardenGuide() {
+        MockHttpServletRequest request = regexForwardedRequest(MINDGARDEN_HOST);
+        Tenant tenant = Tenant.builder()
+                .tenantId("tenant-mg")
+                .name("마음센터")
+                .subdomain("mindgarden")
+                .build();
+        when(tenantRepository.findBySubdomainIgnoreCase(eq("mindgarden")))
+                .thenReturn(Optional.of(tenant));
+        String canonical = "https://" + MINDGARDEN_HOST + PublicCounselingServiceGuideHtml.PATH;
+        when(publicCounselingServiceGuideService.load(eq(tenant), eq(canonical)))
+                .thenReturn(guideView("mindgarden", "마음센터", canonical));
+
+        String body = controller.services(request).getBody();
+
+        assertThat(body).contains("<h2>센터 소개</h2>");
+        assertThat(body).contains("마인드가든 심리상담센터");
+        assertThat(body).contains("김선희");
+        assertThat(body).contains("032-724-8501");
+        assertThat(body).doesNotContain("010-7923-8501");
+        assertThat(body).contains("rel=\"canonical\" href=\"" + canonical + "\"");
+        assertThat(body).doesNotContain("~^");
+        verify(tenantRepository).findBySubdomainIgnoreCase(eq("mindgarden"));
+    }
+
+    @Test
+    @DisplayName("services: 서버 이름과 전달 호스트가 regex 이면 테넌트로 보지 않는다")
+    void services_regexServerNameAndForwardedHostAreNotATenant() {
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.setServerName(NGINX_REGEX_SERVER_NAME);
+        request.addHeader("Host", NGINX_REGEX_SERVER_NAME);
+        request.addHeader("X-Forwarded-Host", NGINX_REGEX_SERVER_NAME);
+        request.addHeader("X-Forwarded-Proto", "https");
+        when(publicCounselingServiceGuideService.load(isNull(), eq("")))
+                .thenReturn(guideView("", "", ""));
+
+        String body = controller.services(request).getBody();
+
+        assertThat(body).contains(PublicCounselingServiceGuideCopy.EMPTY_GUIDE_LINE);
+        assertThat(body).doesNotContain("마인드가든 심리상담센터");
+        assertThat(body).doesNotContain("김선희");
+        assertThat(body).doesNotContain("032-724-8501");
+        assertThat(body).doesNotContain("~^");
+        assertThat(body).doesNotContain("rel=\"canonical\"");
+        verify(tenantRepository, never()).findBySubdomainIgnoreCase(anyString());
+    }
+
+    @Test
+    @DisplayName("services: 다른 호스트는 마인드가든 센터명·상담사·전화를 그리지 않는다")
+    void services_otherHostDoesNotRenderMindgardenIdentity() {
+        MockHttpServletRequest request = regexForwardedRequest(OTHER_HOST);
+        Tenant tenant = Tenant.builder()
+                .tenantId("tenant-clinic-a")
+                .name("클리닉A")
+                .subdomain("clinic-a")
+                .build();
+        when(tenantRepository.findBySubdomainIgnoreCase(eq("clinic-a")))
+                .thenReturn(Optional.of(tenant));
+        String canonical = "https://" + OTHER_HOST + PublicCounselingServiceGuideHtml.PATH;
+        when(publicCounselingServiceGuideService.load(eq(tenant), eq(canonical)))
+                .thenReturn(guideView("clinic-a", "클리닉A", canonical));
+
+        String body = controller.services(request).getBody();
+
+        assertThat(body).contains("클리닉A");
+        assertThat(body).contains("rel=\"canonical\" href=\"" + canonical + "\"");
+        assertThat(body).doesNotContain("마인드가든 심리상담센터");
+        assertThat(body).doesNotContain("김선희");
+        assertThat(body).doesNotContain("032-724-8501");
+        assertThat(body).doesNotContain("010-7923-8501");
+        assertThat(body).doesNotContain("~^");
+        verify(tenantRepository, never()).findBySubdomainIgnoreCase(eq("mindgarden"));
+    }
+
+    @Test
+    @DisplayName("products: regex 전달 호스트는 테넌트가 아니고 요청 Host 상품을 싣는다")
+    void products_regexForwardedHostUsesRequestHost() {
+        MockHttpServletRequest request = regexForwardedRequest(OTHER_HOST);
+        Tenant tenant = Tenant.builder()
+                .tenantId("tenant-clinic-a")
+                .name("클리닉A")
+                .subdomain("clinic-a")
+                .build();
+        when(tenantRepository.findBySubdomainIgnoreCase(eq("clinic-a")))
+                .thenReturn(Optional.of(tenant));
+        when(publicConsultationPackageService.buildPublicConsultationPackages(eq("tenant-clinic-a")))
+                .thenReturn(List.of(Map.of(
+                        "name", "10회 패키지",
+                        "description", "기본 상담 10회",
+                        "price", 300000)));
+
+        String body = controller.products(request).getBody();
+
+        assertThat(body).contains("10회 패키지");
+        assertThat(body).doesNotContain("~^");
+        verify(tenantRepository, never()).findBySubdomainIgnoreCase(eq("mindgarden"));
+    }
+
+    @Test
+    @DisplayName("products: 서버 이름과 전달 호스트가 regex 이면 빈 상태")
+    void products_regexServerNameIsEmpty() {
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.setServerName(NGINX_REGEX_SERVER_NAME);
+        request.addHeader("Host", NGINX_REGEX_SERVER_NAME);
+        request.addHeader("X-Forwarded-Host", NGINX_REGEX_SERVER_NAME);
+
+        String body = controller.products(request).getBody();
+
+        assertThat(body).contains(PlatformLegalCopyService.EMPTY_STATE_KO);
+        assertThat(body).doesNotContain("~^");
+        verify(tenantRepository, never()).findBySubdomainIgnoreCase(anyString());
+    }
+
+    @Test
     @DisplayName("products: 서브도메인 테넌트 미존재 시 빈 상태")
     void products_emptyWhenSubdomainTenantNotFound() {
         MockHttpServletRequest request = new MockHttpServletRequest();
@@ -293,6 +419,29 @@ class PublicLegalHtmlControllerTest {
 
         assertThat(response.getBody()).contains(PlatformLegalCopyService.EMPTY_STATE_KO);
         assertProductsDisclosureNotes(response.getBody());
+    }
+
+    private static MockHttpServletRequest regexForwardedRequest(String requestHost) {
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.setServerName(NGINX_REGEX_SERVER_NAME);
+        request.addHeader("Host", requestHost);
+        request.addHeader("X-Forwarded-Host", NGINX_REGEX_SERVER_NAME);
+        request.addHeader("X-Forwarded-Proto", "https");
+        return request;
+    }
+
+    private static PublicCounselingServiceGuideView guideView(
+            String tenantKey, String centerName, String canonicalUrl) {
+        PublicCounselingServiceGuideView view = new PublicCounselingServiceGuideView();
+        view.setTenantKey(tenantKey);
+        view.setCenterName(centerName);
+        view.setOneLiner("한 줄 정의");
+        view.setPaymentNote(PAYMENT_TYPE_NOTE);
+        view.setRefundBody("환불 요약입니다.");
+        view.setPageTitle("상담 서비스 안내");
+        view.setPageDescription("설명");
+        view.setCanonicalUrl(canonicalUrl);
+        return view;
     }
 
     private static void assertProductsDisclosureNotes(String html) {

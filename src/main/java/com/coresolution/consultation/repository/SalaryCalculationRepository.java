@@ -1,15 +1,18 @@
 package com.coresolution.consultation.repository;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import com.coresolution.consultation.entity.SalaryCalculation;
 import com.coresolution.consultation.entity.User;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 @Repository
 public interface SalaryCalculationRepository extends BaseRepository<SalaryCalculation, Long> {
@@ -205,6 +208,38 @@ public interface SalaryCalculationRepository extends BaseRepository<SalaryCalcul
             @Param("consultantId") Long consultantId,
             @Param("branchCode") String branchCode);
     
+    /**
+     * 보정 기간에 같은 PRIMARY 행의 재계산 금액만 덮어쓴다.
+     * 새 행을 만들지 않고, 프로시저가 이미 고친 다른 컬럼은 건드리지 않는다.
+     *
+     * @param id                      급여 계산 ID
+     * @param tenantId                테넌트 ID
+     * @param calculationKind         PRIMARY
+     * @param completedConsultations  재계산 완료 회기
+     * @param grossSalary             재계산 총급여
+     * @param netSalary               재계산 실지급
+     * @param taxAmount               재계산 세액. deductions 에 저장한다
+     * @return 갱신된 행 수
+     */
+    @Modifying(clearAutomatically = true, flushAutomatically = false)
+    @Transactional
+    @Query("UPDATE SalaryCalculation s SET "
+            + "s.completedConsultations = :completedConsultations, "
+            + "s.grossSalary = :grossSalary, "
+            + "s.netSalary = :netSalary, "
+            + "s.deductions = :taxAmount, "
+            + "s.totalSalary = :grossSalary "
+            + "WHERE s.id = :id AND s.tenantId = :tenantId "
+            + "AND s.isDeleted = false AND s.calculationKind = :calculationKind")
+    int updateRecalculatedPrimary(
+            @Param("id") Long id,
+            @Param("tenantId") String tenantId,
+            @Param("calculationKind") SalaryCalculation.CalculationKind calculationKind,
+            @Param("completedConsultations") Integer completedConsultations,
+            @Param("grossSalary") BigDecimal grossSalary,
+            @Param("netSalary") BigDecimal netSalary,
+            @Param("taxAmount") BigDecimal taxAmount);
+
     /**
      * 만료된 급여 데이터 조회 (파기용)
      */

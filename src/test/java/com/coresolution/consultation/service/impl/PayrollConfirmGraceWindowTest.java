@@ -88,7 +88,23 @@ class PayrollConfirmGraceWindowTest {
     @BeforeEach
     void setUp() {
         gate = new PayrollPeriodConfirmGate(salaryCalculationRepository);
-        coordinator = new PayrollPeriodConfirmCoordinator(gate, plSqlSalaryManagementService);
+        coordinator = new PayrollPeriodConfirmCoordinator(
+                gate, plSqlSalaryManagementService, salaryCalculationRepository);
+        lenient().doAnswer(invocation -> {
+            Long id = invocation.getArgument(0);
+            String tenantId = invocation.getArgument(1);
+            Integer completed = invocation.getArgument(3);
+            BigDecimal gross = invocation.getArgument(4);
+            BigDecimal net = invocation.getArgument(5);
+            BigDecimal tax = invocation.getArgument(6);
+            rows.values().stream()
+                    .filter(row -> id.equals(row.getId()) && tenantId.equals(row.getTenantId()))
+                    .findFirst()
+                    .ifPresent(row -> applyRecalculated(row, completed, gross, net, tax));
+            return 1;
+        }).when(salaryCalculationRepository).updateRecalculatedPrimary(
+                anyLong(), anyString(), eq(CalculationKind.PRIMARY),
+                any(), any(), any(), any());
         lenient().when(salaryCalculationRepository
                 .findByTenantIdAndConsultant_IdAndCalculationPeriodAndCalculationKindAndIsDeletedFalse(
                         anyString(), anyLong(), anyString(), eq(CalculationKind.PRIMARY)))
@@ -178,27 +194,50 @@ class PayrollConfirmGraceWindowTest {
     }
 
     @Test
-    @DisplayName("4. 보정 중 5회/212740은 최종 금액이 아니고, 잠금 뒤에는 9회/348120으로 바꾸지 못한다")
+    @DisplayName("4. 보정 중 5회/212740은 같은 행에 9회/348120으로 남고, 잠금 뒤에도 그 저장값이 유지된다")
     void incompleteFiveSessionsReplacedDuringGraceAndRejectedAfter() {
         rows.put(key(TENANT_A, 1L, "2026-09"), earlySeptember());
         gate.useClock(kst(2026, 10, 2, 15, 0, 0, 0));
         when(plSqlSalaryManagementService.recalcUnpaidSalaryCalculation(eq(EARLY_ID), eq(TENANT_A), eq("admin")))
-                .thenReturn(previewOfNine());
+                .thenAnswer(invocation -> {
+                    SalaryCalculation stored = rows.get(key(TENANT_A, 1L, "2026-09"));
+                    applyRecalculated(stored, 9, PREVIEW_GROSS, PREVIEW_NET, PREVIEW_TAX);
+                    return previewOfNine();
+                });
 
-        Map<String, Object> during = coordinator.confirm(1L, SEP_START, SEP_END, "admin");
+        coordinator.confirm(1L, SEP_START, SEP_END, "admin");
 
-        assertThat(during.get("completedConsultations")).isEqualTo(9);
-        assertThat(new BigDecimal(during.get("grossSalary").toString())).isEqualByComparingTo(PREVIEW_GROSS);
-        assertThat(new BigDecimal(during.get("taxAmount").toString())).isEqualByComparingTo(PREVIEW_TAX);
-        assertThat(new BigDecimal(during.get("netSalary").toString())).isEqualByComparingTo(PREVIEW_NET);
-        assertThat(new BigDecimal(during.get("netSalary").toString())).isNotEqualByComparingTo(EARLY_NET);
+        SalaryCalculation storedDuring = rows.get(key(TENANT_A, 1L, "2026-09"));
+        assertThat(storedDuring.getId()).isEqualTo(EARLY_ID);
+        assertThat(storedDuring.getCompletedConsultations()).isEqualTo(9);
+        assertThat(storedDuring.getGrossSalary()).isEqualByComparingTo(PREVIEW_GROSS);
+        assertThat(storedDuring.getDeductions()).isEqualByComparingTo(PREVIEW_TAX);
+        assertThat(storedDuring.getNetSalary()).isEqualByComparingTo(PREVIEW_NET);
+        assertThat(storedDuring.getNetSalary()).isNotEqualByComparingTo(EARLY_NET);
+        assertThat(rows).hasSize(1);
 
         gate.useClock(kst(2026, 10, 4, 0, 0, 0, 0));
         Map<String, Object> after = coordinator.confirm(1L, SEP_START, SEP_END, "admin");
 
+        SalaryCalculation storedAfterLock = rows.get(key(TENANT_A, 1L, "2026-09"));
+        assertThat(storedAfterLock).isSameAs(storedDuring);
+        assertThat(storedAfterLock.getId()).isEqualTo(EARLY_ID);
+        assertThat(storedAfterLock.getCompletedConsultations()).isEqualTo(9);
+        assertThat(storedAfterLock.getGrossSalary()).isEqualByComparingTo(PREVIEW_GROSS);
+        assertThat(storedAfterLock.getDeductions()).isEqualByComparingTo(PREVIEW_TAX);
+        assertThat(storedAfterLock.getNetSalary()).isEqualByComparingTo(PREVIEW_NET);
+        assertThat(storedAfterLock.getCompletedConsultations()).isNotEqualTo(5);
+        assertThat(storedAfterLock.getNetSalary()).isNotEqualByComparingTo(EARLY_NET);
         assertThat(after.get("success")).isEqualTo(Boolean.FALSE);
-        assertThat(after.get("completedConsultations")).isEqualTo(5);
-        assertThat(new BigDecimal(after.get("netSalary").toString())).isEqualByComparingTo(EARLY_NET);
+        assertThat(after.get("message")).isEqualTo(PayrollConfirmGrace.ALREADY_CONFIRMED_AFTER_GRACE);
+        assertThat(after.get("calculationId")).isEqualTo(storedAfterLock.getId());
+        assertThat(after.get("completedConsultations")).isEqualTo(storedAfterLock.getCompletedConsultations());
+        assertThat(new BigDecimal(after.get("netSalary").toString()))
+                .isEqualByComparingTo(storedAfterLock.getNetSalary());
+        assertThat(rows).hasSize(1);
+        verify(salaryCalculationRepository, times(1)).updateRecalculatedPrimary(
+                eq(EARLY_ID), eq(TENANT_A), eq(CalculationKind.PRIMARY), eq(9),
+                eq(PREVIEW_GROSS), eq(PREVIEW_NET), eq(PREVIEW_TAX));
         verify(plSqlSalaryManagementService, times(1)).recalcUnpaidSalaryCalculation(
                 eq(EARLY_ID), eq(TENANT_A), eq("admin"));
         verify(plSqlSalaryManagementService, never()).processIntegratedSalaryCalculation(
@@ -374,6 +413,19 @@ class PayrollConfirmGraceWindowTest {
         row.setId(id);
         row.setTenantId(TENANT_A);
         return row;
+    }
+
+    private static void applyRecalculated(
+            SalaryCalculation row,
+            int completed,
+            BigDecimal gross,
+            BigDecimal net,
+            BigDecimal tax) {
+        row.setCompletedConsultations(completed);
+        row.setGrossSalary(gross);
+        row.setNetSalary(net);
+        row.setDeductions(tax);
+        row.setTotalSalary(gross);
     }
 
     private static Map<String, Object> previewOfNine() {

@@ -18,6 +18,7 @@ description: 테스트 전용 서브에이전트. Core Solution(MindGarden) 테�
 - **테스트 표준**: `docs/standards/TESTING_STANDARD.md` — 테스트 피라미드, 단위/통합/E2E/보안/성능 테스트 규칙, 커버리지 목표, 금지 사항
 - **에러 처리**: `docs/standards/ERROR_HANDLING_STANDARD.md` — 예외 시나리오 테스트 시 참고
 - **API 설계**: `docs/standards/API_DESIGN_STANDARD.md` — API 테스트 시 엔드포인트·응답 형식
+- **자체 검증**: `.cursor/rules/self-verify.mdc` — 보고는 그 1~7과 하드스톱을 따른다. 항목 1·5의 화면·실제 데이터는 아래 「자체 검증」절. Jest·픽스처로 그 확인을 통과 처리하지 않는다.
 
 ## 테스트 피라미드 (비중)
 
@@ -76,6 +77,17 @@ description: 테스트 전용 서브에이전트. Core Solution(MindGarden) 테�
 4. **작성**: Given-When-Then, @DisplayName, 테스트 데이터 동적 생성
 5. **실행**: `mvn test` (백엔드), `npm test` 또는 `npx jest` (프론트), `npx playwright test` (E2E)
 6. **커버리지**: JaCoCo 리포트 확인. 목표 미달 시 우선순위 높은 코드부터 보완
+
+## 자체 검증 (규칙과 같은 흐름)
+
+검증 보고의 SSOT는 `.cursor/rules/self-verify.mdc` 다. 실행 절차는 `.cursor/skills/core-solution-self-verify/SKILL.md` 다. 아래는 그 안의 항목 1·5를 테스터가 테스트 결과만으로 통과 처리하지 않게 하는 포인터다. 1~7 옆에 두는 두 번째 체크리스트가 아니다.
+
+- 요구사항은 구현 전 번호 목록이다. 끝나면 표(항목 / 결과 / 근거)로 통과 또는 실패를 적는다. 근거는 파일:줄, API 응답, 화면 위치. Jest가 초록이어도 요구사항 행을 통과로 적지 않는다. 실패가 있으면 머지하지 않고, 고친 뒤 다시 대조한다.
+- 실제 화면 확인은 .dev 배포 후 실제 URL 스크린샷이다. PC 1280px, 모바일 390px, 최소 2장. 공개 페이지는 로그아웃 상태. Jest 렌더는 이 확인이 아니다. 스크린샷이 없으면 미확인이다. FE를 바꾸지 않았으면 해당 없음이다.
+- 실제 데이터 확인은 .dev 데이터다. mock·픽스처·테스트 데이터 빌더로 대체하지 않는다. 예: 화면에 나온 개수, 숨김·테스트 상품이 없는지, 빈 값이 「—」만으로 나오지 않는지. 멀티테넌트는 대상 테넌트와 다른 테넌트다. 데이터가 섞이거나 MindGarden 내용이 다른 테넌트에 있으면 실패다.
+- 확인하지 않은 항목은 미확인과 이유다. 추정으로 통과시키지 않는다 (규칙 하드스톱 4).
+- 화면 스모크와 배포 run은 core-deployer의 5번이다. 그 근거 없이 5번을 통과로 적지 않는다.
+- 보고는 PR 본문 「## 자체 검증」과 채팅에 같은 표, FE면 스크린샷 2장 이상, PR 번호·머지 커밋·.dev 배포 run을 남긴다.
 
 ## 금지 사항 (표준과 동일)
 

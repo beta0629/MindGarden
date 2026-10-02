@@ -2,6 +2,7 @@ package com.coresolution.consultation.util;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.coresolution.consultation.constant.PublicCounselingTenantGuides;
 import com.coresolution.consultation.dto.publicguide.PublicCounselingServiceGuideView;
 import com.coresolution.consultation.dto.publicguide.PublicCounselingServiceGuideView.CounselorRow;
 import com.coresolution.consultation.dto.publicguide.PublicCounselingServiceGuideView.ProductRow;
@@ -30,12 +31,20 @@ class PublicCounselingServiceGuideHtmlTest {
         assertThat(html).contains("<h2>상담 종류</h2>");
         assertThat(html).contains("<h2>진행 절차</h2>");
         assertThat(html).contains("<h2>상담사 소개</h2>");
-        assertThat(html).contains("15년 이상 임상 경험을 갖춘 센터장이 직접 상담합니다.");
+        assertThat(html).contains("김선희");
+        assertThat(html).contains("15년 이상 임상 경험을 갖춘 대표원장이 직접 상담합니다.");
+        assertThat(html).doesNotContain("센터장이 직접 상담합니다.");
+        assertThat(html).contains("한국상담학회 전문상담사");
+        assertThat(html).contains("보건복지부 사회복지사");
         assertThat(html).doesNotContain("임상심리사");
         assertThat(html).doesNotContain("TODO");
         assertThat(html).contains("마인드가든 심리상담센터");
         assertThat(html).contains("인천 연수구 해돋이로120번길 23 아크리아2 2층 204호");
+        assertThat(html).contains(HtmlUtils.htmlEscape(
+                "주중 10:00–20:00, 토요일 10:00–17:00, 일요일 정기휴무"));
+        assertThat(html).doesNotContain("화~금 11:00");
         assertThat(html).contains("032-724-8501");
+        assertThat(html).doesNotContain("010-7923-8501");
         assertThat(html).contains(HtmlUtils.htmlEscape("아동·청소년·성인 1:1 개인상담"));
         assertThat(html).contains(HtmlUtils.htmlEscape(
                 "예약 신청 → 센터 확인 전화로 예약 확정"));
@@ -61,9 +70,11 @@ class PublicCounselingServiceGuideHtmlTest {
     }
 
     @Test
-    @DisplayName("종류·자격이 없으면 그 섹션을 빼도 진행 절차는 남긴다")
+    @DisplayName("콘텐츠 키가 없으면 센터 안내를 숨기고 상품 안내는 남긴다")
     void hidesEmptySections() {
         PublicCounselingServiceGuideView view = new PublicCounselingServiceGuideView();
+        view.setTenantKey("clinic-b");
+        view.setCenterName("다른센터");
         view.setOneLiner("폴백");
         view.setPaymentNote(PlatformLegalCopyService.CONSULTATION_PACKAGE_PAYMENT_TYPE_NOTE);
         view.setRefundBody("환불 규정은 센터에 문의해 주세요.");
@@ -72,14 +83,38 @@ class PublicCounselingServiceGuideHtmlTest {
 
         String html = PublicCounselingServiceGuideHtml.render(view);
 
-        assertThat(html).contains("id=\"types\"");
-        assertThat(html).contains("id=\"counselors\"");
-        assertThat(html).contains("id=\"center\"");
-        assertThat(html).contains("id=\"process\"");
-        assertThat(html).contains("예약 신청");
+        assertThat(html).doesNotContain("id=\"types\"");
+        assertThat(html).doesNotContain("id=\"counselors\"");
+        assertThat(html).doesNotContain("id=\"center\"");
+        assertThat(html).doesNotContain("id=\"process\"");
+        assertThat(html).contains("등록된 상담 안내가 없습니다.");
+        assertThat(html).contains("id=\"products\"");
         assertThat(html).contains("구매할 수 있는 상품이 없어요");
+        assertNoMindgardenFacts(html);
         assertThat(html).doesNotContain("—");
         assertThat(html).doesNotContain("TODO");
+    }
+
+    @Test
+    @DisplayName("다른 테넌트 HTML 에는 마인드가든 안내가 없다")
+    void otherTenantOmitsMindgardenGuide() {
+        PublicCounselingServiceGuideView view = new PublicCounselingServiceGuideView();
+        view.setTenantKey("clinic-b");
+        view.setCenterName("다른센터");
+        view.setBusinessLandline("02-333-4444");
+        view.setOneLiner("다른 센터 한 줄");
+        view.setPaymentNote(PlatformLegalCopyService.CONSULTATION_PACKAGE_PAYMENT_TYPE_NOTE);
+        view.setRefundBody("환불");
+        view.setPageTitle("상담 서비스 안내 · 다른센터");
+        view.setPageDescription("설명");
+        addProduct(view, "다른상품", 10, 3, 200000L);
+
+        String html = PublicCounselingServiceGuideHtml.render(view);
+
+        assertThat(html).contains("다른상품");
+        assertThat(html).contains("02-333-4444");
+        assertThat(html).doesNotContain("10회 패키지");
+        assertNoMindgardenFacts(html);
     }
 
     @Test
@@ -112,6 +147,18 @@ class PublicCounselingServiceGuideHtmlTest {
         assertThat(html).contains("이용기간");
     }
 
+    private static void assertNoMindgardenFacts(String html) {
+        assertThat(html).doesNotContain("마인드가든");
+        assertThat(html).doesNotContain("김선희");
+        assertThat(html).doesNotContain("032-724-8501");
+        assertThat(html).doesNotContain("010-7923-8501");
+        assertThat(html).doesNotContain("해돋이로");
+        assertThat(html).doesNotContain("트리니티 심리상담연구소");
+        assertThat(html).doesNotContain("청소년교육 학사");
+        assertThat(html).doesNotContain("아동·청소년·성인");
+        assertThat(html).doesNotContain("센터장이 직접 상담합니다.");
+    }
+
     private static void addProduct(
             PublicCounselingServiceGuideView view,
             String name,
@@ -128,6 +175,7 @@ class PublicCounselingServiceGuideHtmlTest {
 
     private static PublicCounselingServiceGuideView filled() {
         PublicCounselingServiceGuideView view = new PublicCounselingServiceGuideView();
+        view.setTenantKey(PublicCounselingTenantGuides.MINDGARDEN_TENANT_KEY);
         view.setCenterName("마음센터");
         view.setBusinessAddress("서울시");
         view.setBusinessLandline("02-000-0000");

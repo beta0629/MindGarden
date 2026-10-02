@@ -1031,7 +1031,7 @@ const IntegratedMatchingSchedule = () => {
   const handleOpenCheckoutSameDayFromCard = (mapping, extras = {}) => {
     if (!mapping?.consultantId || !mapping?.packageName) {
       notificationManager.warning(
-        '이 배정은 정보가 누락되어 당일 카드 결제를 진행할 수 없습니다. 배정을 다시 생성해 주세요.'
+        '이 배정은 정보가 누락되어 당일 결제를 진행할 수 없습니다. 배정을 다시 생성해 주세요.'
       );
       return;
     }
@@ -1049,6 +1049,7 @@ const IntegratedMatchingSchedule = () => {
       paymentAmount: mapping.paymentAmount ?? null,
       totalSessions: mapping.totalSessions ?? null,
       paymentTiming: mapping.paymentTiming ?? null,
+      paymentMethod: mapping.paymentMethod ?? null,
       sameDaySessionScheduleId: scheduleId
     });
   };

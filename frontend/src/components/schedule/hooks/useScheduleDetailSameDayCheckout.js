@@ -15,7 +15,7 @@ import RoleUtils from '../../../utils/RoleUtils';
 
 /** IntegratedMatchingSchedule.handleOpenCheckoutSameDayFromCard 와 동일 */
 export const SAME_DAY_CHECKOUT_MSG_MAPPING_INCOMPLETE =
-  '이 배정은 정보가 누락되어 당일 카드 결제를 진행할 수 없습니다. 배정을 다시 생성해 주세요.';
+  '이 배정은 정보가 누락되어 당일 결제를 진행할 수 없습니다. 배정을 다시 생성해 주세요.';
 
 /** IntegratedMatchingSchedule.handleCheckoutSameDayFromDetail 과 동일 */
 export const SAME_DAY_CHECKOUT_MSG_MAPPING_NOT_FOUND =
@@ -92,6 +92,7 @@ export function buildCheckoutSameDayMappingPayload(mapping, scheduleId) {
     packagePrice: mapping.packagePrice ?? null,
     paymentAmount: mapping.paymentAmount ?? null,
     totalSessions: mapping.totalSessions ?? null,
+    paymentMethod: mapping.paymentMethod ?? null,
     sameDaySessionScheduleId: resolvedScheduleId
   };
 }

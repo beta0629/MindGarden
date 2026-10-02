@@ -1,5 +1,6 @@
 package com.coresolution.consultation.service.impl;
 
+import com.coresolution.consultation.entity.CommonCode;
 import com.coresolution.consultation.entity.ConsultantClientMapping;
 import com.coresolution.consultation.entity.ConsultantClientMapping.MappingStatus;
 import com.coresolution.consultation.entity.ConsultantClientMapping.PaymentStatus;
@@ -107,6 +108,7 @@ class AdminServiceImplCheckoutSameDayTest {
     private static final Long CONSULTANT_ID = 901L;
     private static final Long CLIENT_ID = 902L;
     private static final String PAYMENT_METHOD = "CREDIT_CARD";
+    private static final String PAYMENT_METHOD_BANK_TRANSFER = "BANK_TRANSFER";
     private static final String PAYMENT_REFERENCE = "AUTH-12345";
     private static final Long PAYMENT_AMOUNT = 500_000L;
 
@@ -575,6 +577,106 @@ class AdminServiceImplCheckoutSameDayTest {
         // 여기서는 타겟 호출이 confirmDeposit 이후 항상 1회 진입함을 고정한다.
         verify(scheduleService, times(1)).useSessionForSpecificMapping(
                 anyString(), anyLong(), anyLong(), anyLong(), any());
+    }
+
+    @Test
+    @DisplayName("미등록 결제 방식: IllegalArgumentException — 멱등 예약·결제·매핑 조회 전 차단")
+    void checkoutSameDayCard_unregisteredPaymentMethod_rejectedBeforeReserve() {
+        stubRegisteredPaymentMethods(PAYMENT_METHOD, PAYMENT_METHOD_BANK_TRANSFER);
+        when(paymentMethodSsotService.resolvePaymentMethodCode(eq(TEST_TENANT_ID), eq("NOT_A_METHOD")))
+                .thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> spyService.checkoutSameDayCard(
+                MAPPING_ID, "NOT_A_METHOD", PAYMENT_REFERENCE, PAYMENT_AMOUNT, null, "req-invalid-1"))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("결제 방식");
+
+        verify(adminRequestIdempotencyService, never()).reserve(anyString(), anyString(), anyString(), anyLong());
+        verify(mappingRepository, never()).findByTenantIdAndId(anyString(), anyLong());
+        verify(spyService, never()).confirmPayment(anyLong(), anyString(), anyString(), anyLong());
+    }
+
+    @Test
+    @DisplayName("계좌이체(BANK_TRANSFER): 등록된 결제 방식이면 confirmPayment 로 그대로 전달")
+    void checkoutSameDayCard_bankTransfer_passesMethodToConfirmPayment() {
+        stubRegisteredPaymentMethods(PAYMENT_METHOD, PAYMENT_METHOD_BANK_TRANSFER);
+        when(paymentMethodSsotService.resolvePaymentMethodCode(eq(TEST_TENANT_ID), eq(PAYMENT_METHOD_BANK_TRANSFER)))
+                .thenReturn(Optional.of(paymentMethodCode(PAYMENT_METHOD_BANK_TRANSFER)));
+        when(mappingRepository.findByTenantIdAndId(eq(TEST_TENANT_ID), eq(MAPPING_ID)))
+                .thenReturn(Optional.of(newPendingPaymentMapping(10, 0, 0)));
+        doReturn(newPaymentConfirmedMapping(10, 0, 0)).when(spyService).confirmPayment(
+                eq(MAPPING_ID), eq(PAYMENT_METHOD_BANK_TRANSFER), eq(PAYMENT_REFERENCE), eq(PAYMENT_AMOUNT));
+        doReturn(newMapping(MappingStatus.DEPOSIT_PENDING, PaymentStatus.APPROVED, 10, 1, 9))
+                .when(spyService).confirmDeposit(eq(MAPPING_ID), eq(PAYMENT_REFERENCE));
+        doReturn(newMapping(MappingStatus.ACTIVE, PaymentStatus.APPROVED, 10, 1, 9))
+                .when(spyService).approveMapping(eq(MAPPING_ID), eq("SYSTEM_AUTO_OPTION_B"));
+
+        ConsultantClientMapping result = spyService.checkoutSameDayCard(
+                MAPPING_ID, PAYMENT_METHOD_BANK_TRANSFER, PAYMENT_REFERENCE, PAYMENT_AMOUNT, null, "req-bank-1");
+
+        assertThat(result.getStatus()).isEqualTo(MappingStatus.ACTIVE);
+        verify(spyService, times(1)).confirmPayment(
+                MAPPING_ID, PAYMENT_METHOD_BANK_TRANSFER, PAYMENT_REFERENCE, PAYMENT_AMOUNT);
+        verify(spyService, never()).confirmPayment(
+                eq(MAPPING_ID), eq(PAYMENT_METHOD), anyString(), anyLong());
+    }
+
+    @Test
+    @DisplayName("confirmPayment 저장: 계좌이체는 BANK_TRANSFER, 카드는 CREDIT_CARD 로 매핑에 저장 (CARD 강제 없음)")
+    void confirmPayment_storesSelectedCanonicalMethod_bankTransferVersusCard() {
+        when(mappingRepository.save(any(ConsultantClientMapping.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        ConsultantClientMapping bankMapping = newPendingPaymentMapping(10, 0, 0);
+        when(mappingRepository.findByTenantIdAndId(eq(TEST_TENANT_ID), eq(MAPPING_ID)))
+                .thenReturn(Optional.of(bankMapping));
+        when(paymentMethodSsotService.normalizeToCanonicalCodeValue(eq(TEST_TENANT_ID), eq(PAYMENT_METHOD_BANK_TRANSFER)))
+                .thenReturn(PAYMENT_METHOD_BANK_TRANSFER);
+        realService.confirmPayment(MAPPING_ID, PAYMENT_METHOD_BANK_TRANSFER, PAYMENT_REFERENCE, PAYMENT_AMOUNT);
+        assertThat(bankMapping.getPaymentMethod()).isEqualTo(PAYMENT_METHOD_BANK_TRANSFER);
+        assertThat(bankMapping.getPaymentReference()).isEqualTo(PAYMENT_REFERENCE);
+        assertThat(bankMapping.getPaymentAmount()).isEqualTo(PAYMENT_AMOUNT);
+
+        ConsultantClientMapping cardMapping = newPendingPaymentMapping(10, 0, 0);
+        when(mappingRepository.findByTenantIdAndId(eq(TEST_TENANT_ID), eq(MAPPING_ID)))
+                .thenReturn(Optional.of(cardMapping));
+        when(paymentMethodSsotService.normalizeToCanonicalCodeValue(eq(TEST_TENANT_ID), eq(PAYMENT_METHOD)))
+                .thenReturn(PAYMENT_METHOD);
+        realService.confirmPayment(MAPPING_ID, PAYMENT_METHOD, PAYMENT_REFERENCE, PAYMENT_AMOUNT);
+        assertThat(cardMapping.getPaymentMethod()).isEqualTo(PAYMENT_METHOD);
+    }
+
+    @Test
+    @DisplayName("다른 테넌트 컨텍스트: 타 테넌트 매핑은 조회되지 않아 결제·활성화 미진행")
+    void checkoutSameDayCard_otherTenantContext_cannotReachMapping() {
+        String otherTenantId = "tenant-other-" + UUID.randomUUID();
+        TenantContextHolder.setTenantId(otherTenantId);
+        when(mappingRepository.findByTenantIdAndId(eq(otherTenantId), eq(MAPPING_ID)))
+                .thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> spyService.checkoutSameDayCard(
+                MAPPING_ID, PAYMENT_METHOD, PAYMENT_REFERENCE, PAYMENT_AMOUNT, null, "req-other-tenant-1"))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessageContaining("매칭");
+
+        verify(mappingRepository, never()).findByTenantIdAndId(eq(TEST_TENANT_ID), anyLong());
+        verify(adminRequestIdempotencyService, never()).reserve(anyString(), anyString(), anyString(), anyLong());
+        verify(spyService, never()).confirmPayment(anyLong(), anyString(), anyString(), anyLong());
+    }
+
+    private void stubRegisteredPaymentMethods(String... codeValues) {
+        java.util.List<CommonCode> rows = new java.util.ArrayList<>();
+        for (String codeValue : codeValues) {
+            rows.add(paymentMethodCode(codeValue));
+        }
+        when(paymentMethodSsotService.getPaymentMethodCodes(eq(TEST_TENANT_ID))).thenReturn(rows);
+    }
+
+    private CommonCode paymentMethodCode(String codeValue) {
+        return CommonCode.builder()
+                .codeGroup("PAYMENT_METHOD")
+                .codeValue(codeValue)
+                .build();
     }
 
     /**

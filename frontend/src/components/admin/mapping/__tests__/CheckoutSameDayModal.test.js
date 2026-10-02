@@ -235,7 +235,7 @@ describe('CheckoutSameDayModal — 옵션 B 당일 카드 결제 모달', () => 
     expect(onCheckoutCompleted).toHaveBeenCalledTimes(1);
   });
 
-  test('getTenantCodes SSOT 경로: 카드 eligible + BANK_TRANSFER + OTHER, CASH 제외', async () => {
+  test('same-day SSOT 경로: 배정 생성 모달과 동일하게 PAYMENT_METHOD 전체(CASH 포함) 노출 + 공통코드 라벨', async () => {
     mockGetTenantCodes.mockResolvedValue(SSOT_PAYMENT_METHOD_CODES);
     render(
       <CheckoutSameDayModal isOpen onClose={jest.fn()} mapping={baseMapping} />
@@ -244,10 +244,124 @@ describe('CheckoutSameDayModal — 옵션 B 당일 카드 결제 모달', () => 
       expect(mockGetTenantCodes).toHaveBeenCalledWith('PAYMENT_METHOD');
       expect(screen.getByDisplayValue('BANK_TRANSFER')).toBeInTheDocument();
     });
-    expect(screen.getByDisplayValue('CREDIT_CARD')).toBeInTheDocument();
-    expect(screen.getByDisplayValue('DEBIT_CARD')).toBeInTheDocument();
+    expect(screen.getAllByRole('radio').map((el) => el.value)).toEqual(
+      SSOT_PAYMENT_METHOD_CODES.map((row) => row.codeValue)
+    );
+    expect(screen.getByDisplayValue('CASH').closest('label')).toHaveTextContent('현금');
+    expect(screen.getByDisplayValue('CREDIT_CARD')).toBeChecked();
+  });
+
+  test('same-day: 비활성 공통코드는 노출하지 않는다', async () => {
+    mockGetTenantCodes.mockResolvedValue([
+      ...SSOT_PAYMENT_METHOD_CODES,
+      { codeValue: 'CARD_TERMINAL', codeLabel: '신용카드(단말)', isActive: false }
+    ]);
+    render(
+      <CheckoutSameDayModal isOpen onClose={jest.fn()} mapping={baseMapping} />
+    );
+    await waitFor(() => {
+      expect(screen.getByDisplayValue('CASH')).toBeInTheDocument();
+    });
+    expect(screen.queryByDisplayValue('CARD_TERMINAL')).toBeNull();
+  });
+
+  test('confirm-activate SSOT 경로: 기존 필터 유지(카드 eligible + BANK_TRANSFER + OTHER, CASH 제외)', async () => {
+    const { CHECKOUT_MODAL_MODE_CONFIRM_ACTIVATE } = require('../CheckoutSameDayModal');
+    mockGetTenantCodes.mockResolvedValue(SSOT_PAYMENT_METHOD_CODES);
+    render(
+      <CheckoutSameDayModal
+        isOpen
+        onClose={jest.fn()}
+        mapping={baseMapping}
+        mode={CHECKOUT_MODAL_MODE_CONFIRM_ACTIVATE}
+      />
+    );
+    await waitFor(() => {
+      expect(screen.getByDisplayValue('BANK_TRANSFER')).toBeInTheDocument();
+    });
     expect(screen.getByDisplayValue('OTHER')).toBeInTheDocument();
     expect(screen.queryByDisplayValue('CASH')).toBeNull();
+  });
+
+  test('prefill: 배정에 저장된 결제 방식(BANK_TRANSFER)이 기본 선택되고 그대로 전송된다', async () => {
+    mockGetTenantCodes.mockResolvedValue(SSOT_PAYMENT_METHOD_CODES);
+    render(
+      <CheckoutSameDayModal
+        isOpen
+        onClose={jest.fn()}
+        mapping={{ ...baseMapping, paymentMethod: 'BANK_TRANSFER' }}
+        onCheckoutCompleted={jest.fn()}
+      />
+    );
+    await waitFor(() => {
+      expect(screen.getByDisplayValue('BANK_TRANSFER')).toBeChecked();
+    });
+    expect(screen.getByDisplayValue('CREDIT_CARD')).not.toBeChecked();
+    expect(screen.getByTestId('checkout-same-day-summary-method')).toHaveTextContent('계좌이체');
+    const referenceInput = screen.getByLabelText('admin:mapping.checkout.sameDay.paymentReference.label');
+    expect(referenceInput.value).toMatch(/^BANK_\d{8}_\d{6}$/);
+
+    await act(async () => {
+      fireEvent.click(screen.getByText('admin:mapping.checkout.sameDay.submit'));
+    });
+    const [, calledPayload] = mockStandardizedApi.post.mock.calls[0];
+    expect(calledPayload.paymentMethod).toBe('BANK_TRANSFER');
+    expect(calledPayload.paymentReference).toMatch(/^BANK_/);
+  });
+
+  test('prefill: 레거시 별칭(CARD)은 공통코드 canonical(CREDIT_CARD)로 정규화해 선택', async () => {
+    mockGetTenantCodes.mockResolvedValue([
+      { ...SSOT_PAYMENT_METHOD_CODES[0], extraData: '{"cardMerchantFeeEligible":true,"legacyAliases":["CARD"]}' },
+      ...SSOT_PAYMENT_METHOD_CODES.slice(1)
+    ]);
+    render(
+      <CheckoutSameDayModal
+        isOpen
+        onClose={jest.fn()}
+        mapping={{ ...baseMapping, paymentMethod: 'CARD' }}
+      />
+    );
+    await waitFor(() => {
+      expect(screen.getByDisplayValue('CREDIT_CARD')).toBeChecked();
+    });
+  });
+
+  test('prefill: 저장된 방식이 목록에 없으면 기본값(CREDIT_CARD)', async () => {
+    mockGetTenantCodes.mockResolvedValue(SSOT_PAYMENT_METHOD_CODES);
+    render(
+      <CheckoutSameDayModal
+        isOpen
+        onClose={jest.fn()}
+        mapping={{ ...baseMapping, paymentMethod: 'UNKNOWN_METHOD' }}
+      />
+    );
+    await waitFor(() => {
+      expect(screen.getByDisplayValue('CREDIT_CARD')).toBeChecked();
+    });
+  });
+
+  test('결제 방식 변경 시 참조번호를 배정 생성과 같은 규칙으로 재생성(CASH_ / BANK_)', async () => {
+    mockGetTenantCodes.mockResolvedValue(SSOT_PAYMENT_METHOD_CODES);
+    render(
+      <CheckoutSameDayModal isOpen onClose={jest.fn()} mapping={baseMapping} onCheckoutCompleted={jest.fn()} />
+    );
+    await waitFor(() => {
+      expect(screen.getByDisplayValue('CASH')).toBeInTheDocument();
+    });
+    const referenceInput = screen.getByLabelText('admin:mapping.checkout.sameDay.paymentReference.label');
+    fireEvent.click(screen.getByDisplayValue('CASH'));
+    expect(referenceInput.value).toMatch(/^CASH_\d{8}_\d{6}$/);
+    fireEvent.click(screen.getByDisplayValue('BANK_TRANSFER'));
+    expect(referenceInput.value).toMatch(/^BANK_\d{8}_\d{6}$/);
+
+    fireEvent.click(screen.getByDisplayValue('CASH'));
+    await act(async () => {
+      fireEvent.click(screen.getByText('admin:mapping.checkout.sameDay.submit'));
+    });
+    const [calledPath, calledPayload] = mockStandardizedApi.post.mock.calls[0];
+    expect(calledPath).toBe('/api/v1/admin/mappings/1001/checkout-same-day');
+    expect(calledPayload.paymentMethod).toBe('CASH');
+    expect(calledPayload.paymentReference).toMatch(/^CASH_/);
   });
 
   test('승인번호 비우면 submit 시 에러 + API 호출 0회', async () => {

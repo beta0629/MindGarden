@@ -136,6 +136,12 @@ public final class AdminServiceUserFacingMessages {
     public static final String MSG_MAPPING_ALREADY_PROCESSED =
             "이미 처리 중입니다. 새 매칭 카드로 확인하세요.";
 
+    /**
+     * 원샷 결제+활성화 — 공통코드 PAYMENT_METHOD 에 없는 결제 방식.
+     */
+    public static final String MSG_PAYMENT_METHOD_NOT_ALLOWED =
+            "등록되지 않은 결제 방식입니다. 결제 방식을 다시 선택해 주세요.";
+
     public static final String MSG_REFUND_SESSIONS_AT_LEAST_ONE = "환불 회기수는 1 이상이어야 합니다.";
 
     public static final String MSG_REFUND_AMOUNT_CALCULATION_IMPOSSIBLE =

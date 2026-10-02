@@ -4803,6 +4803,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         }
 
         String tenantId = getTenantId();
+        assertPaymentMethodRegistered(tenantId, paymentMethod);
         ConsultantClientMapping mapping = mappingRepository.findByTenantIdAndId(tenantId, mappingId)
                 .orElseThrow(() -> new RuntimeException(AdminServiceUserFacingMessages.MSG_MAPPING_NOT_FOUND));
 
@@ -4877,6 +4878,28 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         } catch (RuntimeException ex) {
             adminRequestIdempotencyService.markResult(idempotencyReservation, "FAILED");
             throw ex;
+        }
+    }
+
+    /**
+     * 원샷 결제+활성화 결제 방식이 테넌트 PAYMENT_METHOD 공통코드(별칭 포함)에 등록돼 있는지 확인한다.
+     * <p>
+     * 공통코드 행이 하나도 조회되지 않으면(미시드 테넌트) 기존 동작 보존을 위해 통과시킨다.
+     * </p>
+     *
+     * @param tenantId 테넌트 ID
+     * @param paymentMethod 요청 결제 방식
+     * @throws IllegalArgumentException 등록되지 않은 결제 방식
+     */
+    private void assertPaymentMethodRegistered(String tenantId, String paymentMethod) {
+        List<CommonCode> codes = paymentMethodSsotService.getPaymentMethodCodes(tenantId);
+        if (codes == null || codes.isEmpty()) {
+            return;
+        }
+        if (paymentMethodSsotService.resolvePaymentMethodCode(tenantId, paymentMethod).isEmpty()) {
+            log.warn("원샷 결제+활성화 차단 — 미등록 결제 방식: tenantId={}, paymentMethod={}",
+                    tenantId, paymentMethod);
+            throw new IllegalArgumentException(AdminServiceUserFacingMessages.MSG_PAYMENT_METHOD_NOT_ALLOWED);
         }
     }
 

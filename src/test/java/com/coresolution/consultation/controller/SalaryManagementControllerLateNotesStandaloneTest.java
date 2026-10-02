@@ -19,6 +19,7 @@ import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.exception.GlobalExceptionHandler;
 import com.coresolution.consultation.service.CommonCodeService;
 import com.coresolution.consultation.service.DynamicPermissionService;
+import com.coresolution.consultation.service.PayrollPeriodConfirmService;
 import com.coresolution.consultation.service.PlSqlSalaryManagementService;
 import com.coresolution.consultation.service.RoleCommonCodeAuthorizationService;
 import com.coresolution.consultation.service.SalaryExportService;
@@ -52,6 +53,9 @@ class SalaryManagementControllerLateNotesStandaloneTest {
 
     @Mock
     private PlSqlSalaryManagementService plSqlSalaryManagementService;
+
+    @Mock
+    private PayrollPeriodConfirmService payrollPeriodConfirmService;
 
     @Mock
     private SalaryScheduleService salaryScheduleService;
@@ -105,7 +109,7 @@ class SalaryManagementControllerLateNotesStandaloneTest {
     @Test
     @DisplayName("I-LATE-01: Confirm 2×30000=60000 후 Recalc → completed=3, earnings=90000, same id")
     void postRecalc_afterLateSession_returns90000SameId() throws Exception {
-        when(plSqlSalaryManagementService.processIntegratedSalaryCalculation(
+        when(payrollPeriodConfirmService.confirm(
                 eq(1L), any(LocalDate.class), any(LocalDate.class), any()))
                 .thenReturn(Map.of(
                         "success", true,
@@ -176,7 +180,7 @@ class SalaryManagementControllerLateNotesStandaloneTest {
     @Test
     @DisplayName("I-LATE-03: adjustment 존재 후에도 2nd PRIMARY confirm refuses")
     void postConfirm_secondPrimary_refuses() throws Exception {
-        when(plSqlSalaryManagementService.processIntegratedSalaryCalculation(
+        when(payrollPeriodConfirmService.confirm(
                 eq(1L), any(LocalDate.class), any(LocalDate.class), any()))
                 .thenReturn(Map.of(
                         "success", false,

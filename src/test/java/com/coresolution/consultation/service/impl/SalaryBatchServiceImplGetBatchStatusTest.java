@@ -18,7 +18,7 @@ import com.coresolution.consultation.repository.SalaryCalculationRepository;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.BranchService;
 import com.coresolution.consultation.service.CommonCodeService;
-import com.coresolution.consultation.service.PlSqlSalaryManagementService;
+import com.coresolution.consultation.service.PayrollPeriodConfirmService;
 import com.coresolution.consultation.service.SalaryBatchService;
 import com.coresolution.consultation.service.SalaryScheduleService;
 import com.coresolution.core.context.TenantContextHolder;
@@ -55,7 +55,7 @@ class SalaryBatchServiceImplGetBatchStatusTest {
     @Mock
     private SalaryCalculationRepository salaryCalculationRepository;
     @Mock
-    private PlSqlSalaryManagementService plSqlSalaryManagementService;
+    private PayrollPeriodConfirmService payrollPeriodConfirmService;
     @Mock
     private SalaryScheduleService salaryScheduleService;
     @Mock

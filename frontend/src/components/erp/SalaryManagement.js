@@ -30,6 +30,7 @@ import {
   SALARY_LATE_NOTES_MESSAGES,
   SALARY_LATE_NOTES_CSS,
   SALARY_CALC_SILENT_REFETCH_INTERVAL_MS,
+  SALARY_CONFIRM_GRACE_NOTICE,
   TAX_BREAKDOWN_ORDER,
   TAX_BREAKDOWN_LABELS
 } from '../../constants/salaryConstants';
@@ -1944,7 +1945,7 @@ const SalaryManagement = () => {
                         <p className="salary-calc-block__preview-notice">
                           {t('erp:SalaryManagement.t_6c60769a')} <strong>{t('erp:SalaryManagement.t_55536106')}</strong>해야 급여·세금 내역이 저장되며,
                           세금 관리 탭 통계에도 반영됩니다.
-                          동일 상담사·동일 월에 이미 확정된 급여가 있으면 확정할 수 없습니다. 아래「급여 계산 내역」을 확인해 주세요.
+                          {SALARY_CONFIRM_GRACE_NOTICE}
                         </p>
                       </div>
                     )}

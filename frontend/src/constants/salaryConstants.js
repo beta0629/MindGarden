@@ -252,6 +252,17 @@ export const SALARY_LATE_NOTES_MESSAGES = {
  */
 export const SALARY_CALC_SILENT_REFETCH_INTERVAL_MS = 45000;
 
+/**
+ * 급여 월 익월 보정 일수.
+ * Java {@code PayrollConfirmGrace.DEFAULT_GRACE_DAYS} 와 같다.
+ */
+export const PAYROLL_CONFIRM_GRACE_DAYS = 3;
+
+/** 확정 미리보기 안내. 보정 기간에는 이미 확정된 달을 다시 확정할 수 있다. */
+export const SALARY_CONFIRM_GRACE_NOTICE =
+  `익월 ${PAYROLL_CONFIRM_GRACE_DAYS}일까지는 같은 달 급여를 다시 확정해 고칠 수 있습니다. `
+  + '그 다음 날부터는 이미 확정된 급여를 다시 확정할 수 없습니다.';
+
 /** 급여 계산 카드/배너 BEM 클래스 (Clinic-OS 토큰 스타일) */
 export const SALARY_LATE_NOTES_CSS = {
   PRE_CONFIRM_WARNING: 'salary-calc-block__pre-confirm-warning',

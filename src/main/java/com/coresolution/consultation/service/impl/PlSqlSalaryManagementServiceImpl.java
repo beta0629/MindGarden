@@ -484,6 +484,9 @@ public class PlSqlSalaryManagementServiceImpl implements PlSqlSalaryManagementSe
             case "TINYINT":
             case "BIT":
                 return Types.TINYINT;
+            case "BOOLEAN":
+            case "BOOL":
+                return Types.BOOLEAN;
             case "LONGTEXT":
             case "MEDIUMTEXT":
             case "TEXT":
@@ -1342,6 +1345,146 @@ public class PlSqlSalaryManagementServiceImpl implements PlSqlSalaryManagementSe
     private static final String DEFAULT_PRE_CONFIRM_WARNING_FAILURE_USER_MESSAGE =
             "확정 전 경고 조회에 실패했습니다. DB에서 사유를 반환하지 않았습니다.";
 
+    private static final String RECALC_UNPAID_SALARY_ROUTINE = "RecalcUnpaidSalaryCalculation";
+
+    /**
+     * information_schema 가 선언한 OUT/INOUT 만 등록할 수 있는지 본다.
+     * 4번 파라미터가 없거나 OUT 이 아니면 false 다. 그때는 registerOutParameter 를 호출하지 않는다.
+     *
+     * @param rows ORDINAL 순 메타
+     * @return 재계산에 필요한 IN·OUT 이름이 모드와 함께 있으면 true
+     */
+    private boolean isCompleteRecalcUnpaidProcedureMetadata(List<ProcedureParameterMeta> rows) {
+        if (rows == null || rows.isEmpty()) {
+            return false;
+        }
+        boolean parameter4IsOut = false;
+        Map<String, ProcedureParameterMeta> byName = new HashMap<>();
+        for (ProcedureParameterMeta row : rows) {
+            if (row.ordinal() == 4) {
+                parameter4IsOut = isOutMode(row.mode());
+            }
+            String name = normalizeMysqlParameterName(row.name());
+            if (name.isEmpty()) {
+                return false;
+            }
+            byName.put(name, row);
+        }
+        if (!parameter4IsOut) {
+            return false;
+        }
+        return isInParameter(byName, "p_calculation_id")
+                && isInParameter(byName, "p_tenant_id")
+                && isInParameter(byName, "p_triggered_by")
+                && isOutParameter(byName, "p_success")
+                && isOutParameter(byName, "p_message")
+                && isOutParameter(byName, "p_out_calculation_id")
+                && isOutParameter(byName, "p_completed_consultations")
+                && isOutParameter(byName, "p_gross_salary")
+                && isOutParameter(byName, "p_net_salary")
+                && isOutParameter(byName, "p_tax_amount");
+    }
+
+    private static boolean isInParameter(Map<String, ProcedureParameterMeta> byName, String name) {
+        ProcedureParameterMeta row = byName.get(name);
+        return row != null && "IN".equalsIgnoreCase(row.mode());
+    }
+
+    private static boolean isOutParameter(Map<String, ProcedureParameterMeta> byName, String name) {
+        ProcedureParameterMeta row = byName.get(name);
+        if (row == null || row.mode() == null) {
+            return false;
+        }
+        String mode = row.mode().trim();
+        return "OUT".equalsIgnoreCase(mode) || "INOUT".equalsIgnoreCase(mode);
+    }
+
+    private void bindRecalcUnpaidInParameter(
+            CallableStatement stmt,
+            ProcedureParameterMeta row,
+            Long calculationId,
+            String tenantId,
+            String triggeredBy) throws SQLException {
+        String name = normalizeMysqlParameterName(row.name());
+        int ordinal = row.ordinal();
+        switch (name) {
+            case "p_calculation_id" -> stmt.setLong(ordinal, calculationId);
+            case "p_tenant_id" -> stmt.setString(ordinal, tenantId);
+            case "p_triggered_by" -> stmt.setString(ordinal, triggeredBy);
+            default -> throw new SQLException(
+                    RECALC_UNPAID_SALARY_ROUTINE + " 알 수 없는 IN 파라미터: " + row.name());
+        }
+    }
+
+    /**
+     * 프로시저 메타의 OUT/INOUT 만 등록하고, 그 값으로 회기·총액·세액·실지급을 읽는다.
+     *
+     * @param rows           information_schema 파라미터
+     * @param calculationId  재계산할 PRIMARY id
+     * @param tenantId       테넌트 ID
+     * @param triggeredBy    호출자
+     * @return success, message, calculationId, completedConsultations, grossSalary, netSalary, taxAmount
+     */
+    private Map<String, Object> executeRecalcUnpaidWithMetadata(
+            List<ProcedureParameterMeta> rows,
+            Long calculationId,
+            String tenantId,
+            String triggeredBy) throws SQLException {
+        Map<String, Object> result = new HashMap<>();
+        StringBuilder call = new StringBuilder("{CALL ")
+                .append(RECALC_UNPAID_SALARY_ROUTINE)
+                .append("(");
+        for (int i = 0; i < rows.size(); i++) {
+            if (i > 0) {
+                call.append(", ");
+            }
+            call.append("?");
+        }
+        call.append(")}");
+        try (Connection connection = jdbcTemplate.getDataSource().getConnection();
+                CallableStatement stmt = connection.prepareCall(call.toString())) {
+            setConnectionUtf8mb4(connection);
+            for (ProcedureParameterMeta row : rows) {
+                if ("IN".equalsIgnoreCase(row.mode())) {
+                    bindRecalcUnpaidInParameter(stmt, row, calculationId, tenantId, triggeredBy);
+                } else if (isOutMode(row.mode())) {
+                    stmt.registerOutParameter(
+                            row.ordinal(), mapMysqlDataTypeToJdbcTypeForOut(row.dataType()));
+                }
+            }
+            stmt.execute();
+            for (ProcedureParameterMeta row : rows) {
+                if (!isOutMode(row.mode())) {
+                    continue;
+                }
+                String name = normalizeMysqlParameterName(row.name());
+                int ordinal = row.ordinal();
+                switch (name) {
+                    case "p_success" -> result.put("success", readMysqlProcedureBooleanOut(stmt, ordinal));
+                    case "p_message" -> result.put("message", stmt.getString(ordinal));
+                    case "p_out_calculation_id" ->
+                            result.put("calculationId", getNullableLong(stmt, ordinal));
+                    case "p_completed_consultations" ->
+                            result.put("completedConsultations", stmt.getInt(ordinal));
+                    case "p_gross_salary" -> result.put("grossSalary", stmt.getBigDecimal(ordinal));
+                    case "p_net_salary" -> result.put("netSalary", stmt.getBigDecimal(ordinal));
+                    case "p_tax_amount" -> result.put("taxAmount", stmt.getBigDecimal(ordinal));
+                    default -> {
+                    }
+                }
+            }
+        }
+        return result;
+    }
+
+    private static boolean isOutMode(String mode) {
+        if (mode == null) {
+            return false;
+        }
+        String trimmed = mode.trim();
+        return "OUT".equalsIgnoreCase(trimmed) || "INOUT".equalsIgnoreCase(trimmed);
+    }
+
     /**
      * {@inheritDoc}
      */
@@ -1355,27 +1498,18 @@ public class PlSqlSalaryManagementServiceImpl implements PlSqlSalaryManagementSe
             result.put("message", "테넌트 ID는 필수입니다.");
             return result;
         }
-        try (Connection connection = jdbcTemplate.getDataSource().getConnection();
-             CallableStatement stmt = connection.prepareCall(
-                     "{CALL RecalcUnpaidSalaryCalculation(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)}")) {
-            stmt.setLong(1, calculationId);
-            stmt.setString(2, tenantId);
-            stmt.setString(3, triggeredBy);
-            stmt.registerOutParameter(4, Types.BOOLEAN);
-            stmt.registerOutParameter(5, Types.VARCHAR);
-            stmt.registerOutParameter(6, Types.BIGINT);
-            stmt.registerOutParameter(7, Types.INTEGER);
-            stmt.registerOutParameter(8, Types.DECIMAL);
-            stmt.registerOutParameter(9, Types.DECIMAL);
-            stmt.registerOutParameter(10, Types.DECIMAL);
-            stmt.execute();
-            result.put("success", readMysqlProcedureBooleanOut(stmt, 4));
-            result.put("message", stmt.getString(5));
-            result.put("calculationId", getNullableLong(stmt, 6));
-            result.put("completedConsultations", stmt.getInt(7));
-            result.put("grossSalary", stmt.getBigDecimal(8));
-            result.put("netSalary", stmt.getBigDecimal(9));
-            result.put("taxAmount", stmt.getBigDecimal(10));
+        List<ProcedureParameterMeta> procedureMeta =
+                loadRoutineParametersFromInformationSchema(RECALC_UNPAID_SALARY_ROUTINE);
+        if (!isCompleteRecalcUnpaidProcedureMetadata(procedureMeta)) {
+            result.put("success", false);
+            result.put("message", procedureDefinitionUnavailableMessage(
+                    RECALC_UNPAID_SALARY_ROUTINE, procedureMeta.size()));
+            ensureUserFacingMessageWhenProcedureFailed(result, DEFAULT_RECALC_FAILURE_USER_MESSAGE);
+            return result;
+        }
+        try {
+            result.putAll(executeRecalcUnpaidWithMetadata(
+                    procedureMeta, calculationId, tenantId, triggeredBy));
             log.info("✅ PL/SQL 미지급 급여 재계산 완료: Success={}, CalculationID={}, Completed={}",
                     result.get("success"), result.get("calculationId"), result.get("completedConsultations"));
         } catch (SQLException e) {

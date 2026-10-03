@@ -123,7 +123,7 @@ class OnboardingServiceTest {
                 .thenReturn(Collections.emptyList());
         lenient().when(passwordService.encodePassword(anyString())).thenReturn("$2a$10$stubEncodedPassword");
         lenient().when(applicationContext.getBean(OnboardingServiceImpl.class))
-                .thenReturn(onboardingWorkflowBean);
+                .thenReturn(onboardingService);
         lenient()
                 .doReturn("{}")
                 .when(onboardingWorkflowBean)

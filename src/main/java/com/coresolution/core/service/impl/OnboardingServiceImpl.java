@@ -42,8 +42,10 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import com.coresolution.core.security.OnboardingAdminPasswordSupport;
 import com.coresolution.core.security.PasswordService;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.UnexpectedRollbackException;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.interceptor.TransactionAspectSupport;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 import java.util.concurrent.Executor;
@@ -757,7 +759,7 @@ public class OnboardingServiceImpl implements OnboardingService {
                 if (approvalResult == null) {
                     log.error("승인 결과가 비어 프로시저를 다시 호출하지 않음: requestId={}", requestId);
                     success = false;
-                    message = "온보딩 승인 프로세스 중 알 수 없는 오류가 발생했습니다. (상세 오류 정보 없음)";
+                    message = OnboardingConstants.ERROR_ONBOARDING_APPROVAL_UNKNOWN;
                     approvalResult = new java.util.HashMap<>();
                     approvalResult.put("success", false);
                     approvalResult.put("message", message);
@@ -814,7 +816,7 @@ public class OnboardingServiceImpl implements OnboardingService {
 
             if (success == null || !success) {
                 String errorMessage = (message != null && !message.trim().isEmpty()) ? message
-                        : "온보딩 승인 프로세스 중 알 수 없는 오류가 발생했습니다. (상세 오류 정보 없음)";
+                        : OnboardingConstants.ERROR_ONBOARDING_APPROVAL_UNKNOWN;
 
                 // "이미 활성화된 테넌트" 메시지는 정상 케이스로 처리 (프로시저 버그 대응)
                 if (message != null && message.contains("이미 활성화") && message.contains("정상")) {
@@ -893,6 +895,9 @@ public class OnboardingServiceImpl implements OnboardingService {
         // 최종 저장 시도 (OptimisticLockException 발생 시 상위에서 별도 트랜잭션으로 재시도)
         try {
             OnboardingRequest saved = repository.save(requestToSave);
+            if (isCurrentTransactionRollbackOnly()) {
+                throw new OnboardingDecisionRolledBackException(saved.getDecisionNote());
+            }
             log.info("온보딩 요청 결정 완료: id={}, status={}, version={}", saved.getId(), saved.getStatus(),
                     saved.getVersion());
 
@@ -935,28 +940,131 @@ public class OnboardingServiceImpl implements OnboardingService {
         }
     }
 
+    /**
+     * 결정 트랜잭션 밖에서 호출된다. 참여 트랜잭션이 rollback-only 인 채 정상 반환하면
+     * Spring 이 UnexpectedRollbackException 으로 500 을 만들기 때문에, 그 경우 기존 보류로 다시 저장한다.
+     */
     @Override
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    public OnboardingRequest decide(Long requestId, OnboardingStatus status,
+            String actorId, String note) {
+        OnboardingServiceImpl self = transactionalSelf();
+        try {
+            return self.decideInCurrentTransaction(requestId, status, actorId, note);
+        } catch (RuntimeException e) {
+            if (!isSilentRollback(e)) {
+                throw e;
+            }
+            log.warn("온보딩 결정 트랜잭션이 rollback-only 라 보류로 다시 저장합니다: requestId={}", requestId);
+            return recoverHeldDecisionAfterRollback(requestId, actorId, note, e);
+        }
+    }
+
+    /**
+     * 승인 프로시저와 테넌트 관리자 생성을 같은 트랜잭션에서 커밋한다.
+     */
     @Transactional(propagation = Propagation.REQUIRED, rollbackFor = Exception.class,
             timeout = OnboardingDecisionDeadline.TRANSACTION_TIMEOUT_SECONDS)
-    public OnboardingRequest decide(Long requestId, OnboardingStatus status,
+    public OnboardingRequest decideInCurrentTransaction(Long requestId, OnboardingStatus status,
             String actorId, String note) {
         try {
             return decideInternal(requestId, status, actorId, note);
         } catch (org.springframework.orm.ObjectOptimisticLockingFailureException e) {
-            // OptimisticLockException 발생 시 트랜잭션이 rollback-only로 마크됨
-            // 별도 트랜잭션에서 재시도
             log.warn("OptimisticLockException 발생, 별도 트랜잭션에서 재시도: requestId={}, error={}", requestId,
                     e.getMessage());
-            OnboardingServiceImpl self = applicationContext.getBean(OnboardingServiceImpl.class);
-            return self.decideInNewTransaction(requestId, status, actorId, note);
+            return transactionalSelf().decideInNewTransaction(requestId, status, actorId, note);
         } catch (org.springframework.dao.OptimisticLockingFailureException e) {
-            // OptimisticLockException 발생 시 트랜잭션이 rollback-only로 마크됨
-            // 별도 트랜잭션에서 재시도
             log.warn("OptimisticLockingFailureException 발생, 별도 트랜잭션에서 재시도: requestId={}, error={}",
                     requestId, e.getMessage());
-            OnboardingServiceImpl self = applicationContext.getBean(OnboardingServiceImpl.class);
-            return self.decideInNewTransaction(requestId, status, actorId, note);
+            return transactionalSelf().decideInNewTransaction(requestId, status, actorId, note);
         }
+    }
+
+    /**
+     * 롤백으로 승인 결과가 남지 않은 요청만 기존 보류 상태로 저장한다. 이미 승인된 행은 바꾸지 않는다.
+     *
+     * @param requestId 온보딩 요청 ID
+     * @param actorId 결정자
+     * @param holdNote 보류 메모
+     * @return 저장된 요청
+     */
+    @Transactional(propagation = Propagation.REQUIRES_NEW, rollbackFor = Exception.class)
+    public OnboardingRequest recordHeldDecisionAfterRollback(Long requestId, String actorId,
+            String holdNote) {
+        OnboardingRequest request = repository.findActiveById(requestId)
+                .orElseThrow(() -> new IllegalArgumentException(OnboardingConstants
+                        .formatError(OnboardingConstants.ERROR_TENANT_NOT_FOUND, requestId)));
+        if (request.getStatus() == OnboardingStatus.APPROVED) {
+            return request;
+        }
+        request.setStatus(OnboardingStatus.ON_HOLD);
+        request.setDecidedBy(actorId);
+        request.setDecisionAt(DateTimeFormatter.ISO_INSTANT.format(Instant.now()));
+        request.setDecisionNote(holdNote);
+        OnboardingRequest saved = repository.save(request);
+        log.info("온보딩 결정 롤백 후 보류 저장: id={}, status={}", saved.getId(), saved.getStatus());
+        return saved;
+    }
+
+    private OnboardingRequest recoverHeldDecisionAfterRollback(Long requestId, String actorId,
+            String operatorNote, RuntimeException error) {
+        OnboardingRequest current = repository.findActiveById(requestId).orElse(null);
+        if (current != null && (current.getStatus() == OnboardingStatus.APPROVED
+                || current.getStatus() == OnboardingStatus.ON_HOLD)) {
+            return current;
+        }
+        String holdNote = error instanceof OnboardingDecisionRolledBackException rolledBack
+                ? rolledBack.getHoldNote()
+                : null;
+        if (holdNote == null || holdNote.isBlank()) {
+            holdNote = operatorNote != null && !operatorNote.isBlank()
+                    ? operatorNote + "\n[시스템 오류] " + OnboardingConstants.ERROR_ONBOARDING_APPROVAL_UNKNOWN
+                    : "[시스템 오류] " + OnboardingConstants.ERROR_ONBOARDING_APPROVAL_UNKNOWN;
+        }
+        return transactionalSelf().recordHeldDecisionAfterRollback(requestId, actorId, holdNote);
+    }
+
+    private OnboardingServiceImpl transactionalSelf() {
+        if (applicationContext != null) {
+            try {
+                OnboardingServiceImpl bean = applicationContext.getBean(OnboardingServiceImpl.class);
+                if (bean != null) {
+                    return bean;
+                }
+            } catch (RuntimeException ignored) {
+                log.debug("온보딩 서비스 프록시를 찾지 못해 현재 인스턴스를 사용합니다");
+            }
+        }
+        return this;
+    }
+
+    private boolean isCurrentTransactionRollbackOnly() {
+        if (!TransactionSynchronizationManager.isActualTransactionActive()) {
+            return false;
+        }
+        try {
+            return TransactionAspectSupport.currentTransactionStatus().isRollbackOnly();
+        } catch (RuntimeException ignored) {
+            return false;
+        }
+    }
+
+    private static boolean isSilentRollback(Throwable error) {
+        Throwable current = error;
+        int depth = 0;
+        while (current != null && depth < 10) {
+            if (current instanceof OnboardingDecisionRolledBackException
+                    || current instanceof UnexpectedRollbackException) {
+                return true;
+            }
+            String message = current.getMessage();
+            if (message != null && message.contains("rollback-only")) {
+                return true;
+            }
+            current = current.getCause();
+            depth++;
+        }
+        return false;
     }
 
     @Override
@@ -997,6 +1105,7 @@ public class OnboardingServiceImpl implements OnboardingService {
     }
 
     @Override
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public OnboardingRequest retryApproval(Long requestId, String actorId, String note) {
         log.info("온보딩 승인 프로세스 재시도: requestId={}, actorId={}", requestId, actorId);
 

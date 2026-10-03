@@ -30,6 +30,14 @@ public class OnboardingConstants {
     public static final String ERROR_EMAIL_DUPLICATE = "이미 해당 이메일로 테넌트가 생성되어 있습니다.";
     public static final String ERROR_INVALID_STATUS = "유효하지 않은 상태 코드입니다: {0}";
     public static final String ERROR_RETRY_ONLY_ON_HOLD = "재시도는 ON_HOLD 상태인 경우에만 가능합니다. 현재 상태: {0}";
+
+    /** 승인 트랜잭션이 롤백된 뒤 운영자에게 반환하는 기존 보류 안내 */
+    public static final String MSG_DECISION_HELD_AFTER_FAILURE =
+            "온보딩 승인 프로세스 중 오류가 발생하여 보류 상태로 변경되었습니다. 재시도해주세요.";
+
+    /** 승인 실패 원문을 알 수 없을 때 결정 메모에 붙이는 기존 문구 */
+    public static final String ERROR_ONBOARDING_APPROVAL_UNKNOWN =
+            "온보딩 승인 프로세스 중 알 수 없는 오류가 발생했습니다. (상세 오류 정보 없음)";
     public static final String ERROR_ONBOARDING_REQUEST_NOT_FOUND = "온보딩 요청을 찾을 수 없습니다. ID와 이메일을 확인해주세요.";
 
     /** 온보딩 요청 생성 시 checklist_json 병합 실패 */

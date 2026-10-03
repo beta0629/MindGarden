@@ -133,7 +133,7 @@ class OnboardingAdminPasswordHashFlowTest {
         lenient().when(tenantRepository.findDeletedByContactEmailIgnoreCase(anyString()))
                 .thenReturn(Collections.emptyList());
         lenient().when(applicationContext.getBean(OnboardingServiceImpl.class))
-                .thenReturn(onboardingWorkflowBean);
+                .thenReturn(onboardingService);
         lenient().doReturn("{}").when(onboardingWorkflowBean)
                 .initializeTenantAfterOnboardingInNewTransaction(anyString(), anyString(), anyString(),
                         any(Long.class));

@@ -492,8 +492,7 @@ public class OnboardingController extends BaseApiController {
                     toAdminResponse(updated), resolveCreatedAdminAccount(updated));
 
             if (updated.getStatus() == OnboardingStatus.ON_HOLD) {
-                return updated("온보딩 승인 프로세스 중 오류가 발생하여 보류 상태로 변경되었습니다. 재시도해주세요.",
-                        response);
+                return updated(OnboardingConstants.MSG_DECISION_HELD_AFTER_FAILURE, response);
             }
 
             // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
@@ -521,7 +520,7 @@ public class OnboardingController extends BaseApiController {
                 // ON_HOLD 상태로 변경되었으면 정상 응답 (롤백 완료)
                 OnboardingDecisionResponse response =
                         new OnboardingDecisionResponse(toAdminResponse(updatedRequest), null);
-                return updated("온보딩 승인 프로세스 중 오류가 발생하여 보류 상태로 변경되었습니다. 재시도해주세요.", response);
+                return updated(OnboardingConstants.MSG_DECISION_HELD_AFTER_FAILURE, response);
             } else {
                 // 예상치 못한 상태면 예외를 다시 throw
                 throw e;

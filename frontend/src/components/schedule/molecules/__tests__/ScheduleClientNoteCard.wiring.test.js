@@ -121,9 +121,18 @@ describe('ScheduleClientNoteCard wiring', () => {
     expect(screen.queryByText(/NOT_IN_TABLE/)).not.toBeInTheDocument();
   });
 
-  it('large modal min-width is capped by the viewport so the notes tab does not overflow at 390px', () => {
+  it('schedule detail modal min-width is capped by the viewport so the notes tab does not overflow at 390px', () => {
+    expect(readSrc('components/schedule/ScheduleDetailModal.js'))
+      .toMatch(/className="mg-v2-ad-b0kla schedule-detail-modal"/);
+    expect(readSrc('components/schedule/ScheduleB0KlA.css')).toMatch(
+      /\.mg-modal\.mg-modal--large\.schedule-detail-modal\s*\{[^}]*min-width:\s*min\(var\(--mg-v2-grid-container-md\),\s*92vw\)/
+    );
+  });
+
+  it('the viewport cap stays scoped: the global large modal rule keeps its original min-width', () => {
     const css = readSrc('styles/06-components/_unified-modals.css');
-    expect(css).toMatch(/\.mg-modal\.mg-modal--large\s*\{[^}]*min-width:\s*min\(720px,\s*92vw\)/);
+    expect(css).toMatch(/\.mg-modal\.mg-modal--large\s*\{\s*min-width:\s*720px;/);
+    expect(css).not.toMatch(/min-width:\s*min\(720px,\s*92vw\)/);
   });
 
   it('every note renderer imports the shared card and the screens mount those renderers', () => {

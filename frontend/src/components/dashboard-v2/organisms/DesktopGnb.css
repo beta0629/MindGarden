@@ -39,6 +39,11 @@
   font-size: var(--mg-v2-font-size-h5, 18px);
   font-weight: var(--mg-v2-font-weight-bold, 700);
   color: var(--mg-v2-color-text-primary, var(--mg-color-text-main));
+  min-width: 0;
+  max-width: min(40vw, 28ch);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .mg-v2-desktop-gnb__brand-name {
@@ -61,11 +66,13 @@
   vertical-align: middle;
 }
 
+/* min-width:0 — 기본 min-width:auto 면 우측 그룹(고정폭 검색 + 아이콘) 최소폭이 좁은 데스크톱에서 헤더를 뷰포트 밖으로 민다 */
 .mg-v2-desktop-gnb__center {
   flex: 1;
   display: flex;
   justify-content: flex-end;
   align-items: center;
+  min-width: 0;
   margin-left: 24px;
   overflow: visible;
 }

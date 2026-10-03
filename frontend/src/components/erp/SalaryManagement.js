@@ -1626,7 +1626,7 @@ const SalaryManagement = () => {
                   <>
                   <div className="salary-filter-block__group">
                     <div className="salary-filter-block__fields">
-                    <div className="salary-filter-block__field">
+                    <div className="salary-filter-block__field salary-filter-block__field--select">
                       <label htmlFor="salary-period-calc" className="mg-v2-form-label">{t('erp:SalaryManagement.t_2622331e')}</label>
                       <select
                         id="salary-period-calc"
@@ -1675,7 +1675,7 @@ const SalaryManagement = () => {
                         </MGButton>
                       </div>
                     )}
-                    <div className="salary-filter-block__field">
+                    <div className="salary-filter-block__field salary-filter-block__field--select">
                       <label htmlFor="salary-consultant-calc" className="mg-v2-form-label">{t('common.labels.consultant')}</label>
                       <select
                         id="salary-consultant-calc"
@@ -1700,7 +1700,7 @@ const SalaryManagement = () => {
                         ))}
                       </select>
                     </div>
-                    <div className="salary-filter-block__field">
+                    <div className="salary-filter-block__field salary-filter-block__field--select">
                       <label htmlFor="salary-payday-calc" className="mg-v2-form-label">{t('erp:SalaryManagement.t_41604b0b')}</label>
                       <select
                         id="salary-payday-calc"

@@ -84,7 +84,7 @@ const ApiKeyManager = ({
         </h2>
       </header>
       <p className="mg-ai-section__desc">
-        {AI_PROVIDER_LABELS.keyOpsOnlyNotice}
+        프로바이더별 API 키·URL·모델을 관리합니다. 키는 마스킹되어 노출됩니다 (실제 키 값은 백엔드에서 암호화 저장).
       </p>
 
       <ul className="mg-ai-api-key-manager__list" aria-label="API 키 목록">
@@ -121,7 +121,7 @@ const ApiKeyManager = ({
                     loading: false
                   })}
                   onClick={() => openModal(provider.id)}
-                  disabled
+                  disabled={saving}
                   preventDoubleClick={false}
                 >
                   {hasKey ? AI_PROVIDER_LABELS.changeKey : AI_PROVIDER_LABELS.saveKey}
@@ -138,7 +138,7 @@ const ApiKeyManager = ({
                       className: 'mg-ai-api-key-manager__delete'
                     })}
                     onClick={() => handleDelete(provider.id)}
-                    disabled
+                    disabled={saving}
                     preventDoubleClick={false}
                     aria-label={`${provider.label} 키 삭제`}
                   >

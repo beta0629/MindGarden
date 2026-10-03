@@ -7,13 +7,11 @@ import java.util.Map;
 import java.util.Set;
 import com.coresolution.consultation.constant.NotificationSchedulerFlagKeys;
 import com.coresolution.consultation.constant.SessionSecurityFlagKeys;
-import com.coresolution.consultation.constant.SystemConfigAccessPolicy;
 import com.coresolution.consultation.dto.NotificationSchedulerFlagDto;
 import com.coresolution.consultation.entity.SystemConfig;
 import com.coresolution.consultation.repository.SystemConfigRepository;
 import com.coresolution.consultation.service.SystemConfigService;
 import com.coresolution.consultation.util.EncryptionUtil;
-import com.coresolution.consultation.util.SecretValueMasking;
 import com.coresolution.core.context.TenantContextHolder;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -115,25 +113,11 @@ public class SystemConfigServiceImpl implements SystemConfigService {
         }
     }
     
-    /**
-     * 카테고리별 설정 값 조회.
-     *
-     * <p>P0 보안(2026-10-03): 테넌트 비종속 조회({@code findByCategoryAndIsActiveTrue})가 다른
-     * 테넌트의 설정 값까지 반환하던 문제를 수정했다. 현재 테넌트 행만 조회하며, 시크릿성 키의
-     * 값은 마스킹하여 평문·암호문을 모두 응답에서 제거한다.
-     *
-     * @param category 설정 카테고리
-     * @return 현재 테넌트의 설정 값 목록 (시크릿은 마스킹)
-     */
     @Override
-    @Transactional(readOnly = true)
     public List<String> getConfigsByCategory(String category) {
-        String tenantId = TenantContextHolder.getRequiredTenantId();
-        return systemConfigRepository.findByTenantIdAndCategoryAndIsActiveTrue(tenantId, category)
+        return systemConfigRepository.findByCategoryAndIsActiveTrue(category)
                 .stream()
-                .map(config -> SystemConfigAccessPolicy.isSecretValueKey(config.getConfigKey())
-                        ? SecretValueMasking.mask(config.getConfigValue())
-                        : config.getConfigValue())
+                .map(SystemConfig::getConfigValue)
                 .toList();
     }
     

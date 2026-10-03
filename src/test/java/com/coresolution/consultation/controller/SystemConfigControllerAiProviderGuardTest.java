@@ -12,7 +12,6 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.coresolution.consultation.constant.SystemConfigAccessPolicy;
 import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.service.SystemConfigService;
@@ -206,8 +205,8 @@ class SystemConfigControllerAiProviderGuardTest {
     }
 
     @Test
-    @DisplayName("setConfig(allow-list 내 비-AI 키) — 가드 미적용 (resolver 미호출) + 200")
-    void setConfig_nonAiAllowedKey_skipsGuard() {
+    @DisplayName("setConfig(다른 키) — 가드 미적용 (resolver 미호출)")
+    void setConfig_nonAiKey_skipsGuard() {
         User user = adminUser(TENANT_ID);
         try (MockedStatic<SessionUtils> sessionUtils = mockStatic(SessionUtils.class)) {
             sessionUtils.when(() -> SessionUtils.getCurrentUser(session)).thenReturn(user);
@@ -215,12 +214,12 @@ class SystemConfigControllerAiProviderGuardTest {
             lenient().when(aiProviderResolver.isProviderKeyRegistered(anyString(), anyString())).thenReturn(false);
 
             Map<String, String> request = new HashMap<>();
-            request.put("configValue", "true");
-            request.put("description", "웰니스 자동 발송");
-            request.put("category", "NOTIFICATION");
+            request.put("configValue", "anyValue");
+            request.put("description", "임의 설정");
+            request.put("category", "ETC");
 
-            ResponseEntity<Map<String, Object>> response = controller.setConfig(
-                    SystemConfigAccessPolicy.WELLNESS_AUTO_SEND_ENABLED, request, session);
+            ResponseEntity<Map<String, Object>> response =
+                    controller.setConfig("OTHER_CONFIG_KEY", request, session);
 
             assertEquals(HttpStatus.OK, response.getStatusCode());
             Map<String, Object> body = response.getBody();
@@ -229,27 +228,7 @@ class SystemConfigControllerAiProviderGuardTest {
             verify(aiProviderResolver, never()).isProviderKeyRegistered(anyString(), anyString());
             verify(aiProviderResolver, never()).invalidate(anyString());
             verify(systemConfigService).setConfigValue(
-                    eq(SystemConfigAccessPolicy.WELLNESS_AUTO_SEND_ENABLED),
-                    eq("true"), eq("웰니스 자동 발송"), eq("NOTIFICATION"));
-        }
-    }
-
-    @Test
-    @DisplayName("setConfig(allow-list 외 임의 키) — 404, 서비스 호출 없음")
-    void setConfig_arbitraryKey_returns404() {
-        User user = adminUser(TENANT_ID);
-        try (MockedStatic<SessionUtils> sessionUtils = mockStatic(SessionUtils.class)) {
-            sessionUtils.when(() -> SessionUtils.getCurrentUser(session)).thenReturn(user);
-
-            Map<String, String> request = new HashMap<>();
-            request.put("configValue", "anyValue");
-
-            ResponseEntity<Map<String, Object>> response =
-                    controller.setConfig("OTHER_CONFIG_KEY", request, session);
-
-            assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
-            verify(systemConfigService, never())
-                    .setConfigValue(anyString(), anyString(), anyString(), anyString());
+                    eq("OTHER_CONFIG_KEY"), eq("anyValue"), eq("임의 설정"), eq("ETC"));
         }
     }
 }

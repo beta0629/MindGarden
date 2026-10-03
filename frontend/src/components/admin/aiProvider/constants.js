@@ -98,8 +98,6 @@ export const AI_PROVIDER_LABELS = Object.freeze({
   activePrefix: '현재 활성: ',
   unregistered: 'API 키 미등록',
   registered: '등록됨',
-  /** P0 보안(2026-10-03): AI 키·URL·모델 쓰기는 운영자 전용 경로로만 가능 (테넌트 API 403) */
-  keyOpsOnlyNotice: 'API 키·URL·모델은 운영자가 등록·교체해요. 이 화면에서는 설정 여부만 보여요.',
   emptyStateNoLogs: '조회된 호출 로그가 없습니다.',
   emptyStateNoStats: '통계 데이터가 없습니다.',
   detail: '상세',

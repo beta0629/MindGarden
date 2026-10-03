@@ -5,6 +5,7 @@ import com.coresolution.core.controller.BaseApiController;
 import com.coresolution.core.domain.enums.ApprovalStatus;
 import com.coresolution.core.domain.enums.PgConfigurationStatus;
 import com.coresolution.core.dto.*;
+import com.coresolution.core.service.TenantPgConfigurationDecryptionService;
 import com.coresolution.core.service.TenantPgConfigurationService;
 import com.coresolution.core.security.TenantAccessControlService;
 import com.coresolution.consultation.exception.EntityNotFoundException;
@@ -18,7 +19,6 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -29,23 +29,10 @@ import java.util.List;
  * 테넌트 포털에서 사용하는 PG 설정 관리 API
  * 
  * 표준화 완료: BaseApiController 상속, ApiResponse 사용, GlobalExceptionHandler에 위임
- *
- * <p>P0 보안(2026-10-03):
- * <ul>
- *   <li>목록·상세 조회가 {@code isAuthenticated()} 뿐이어서 내담자·상담사·사무원도 PG 설정을
- *       읽을 수 있었다 → ADMIN 전용으로 제한.</li>
- *   <li>{@code POST /{configId}/decrypt-keys} (복호화 평문 반환) 를 테넌트 경로에서 제거.
- *       복호화는 운영자 전용 {@code /api/v1/ops/...} 경로에만 남는다.</li>
- *   <li>{@code PATCH /{configId}/test-mode}, {@code PATCH /{configId}/webhook-secret} 는
- *       운영자 전용으로 차단 (항상 403).</li>
- * </ul>
- * 브라우저 결제에 필요한 {@code GET /active/portone-client-config} 는 시크릿을 포함하지 않으므로
- * 인증 사용자 전체에 그대로 허용한다.
  * 
  * @author CoreSolution
- * @version 3.0.0
+ * @version 2.0.0
  * @since 2025-01-XX
- * @updated 2026-10-03 - 조회 ADMIN 제한 + 복호화 엔드포인트 제거 + 전역/시크릿 변경 차단
  */
 @Slf4j
 @RestController
@@ -54,16 +41,9 @@ import java.util.List;
 @PreAuthorize("isAuthenticated()")
 @Tag(name = "테넌트 PG 설정", description = "테넌트 포털 PG 설정 관리 API")
 public class TenantPgConfigurationController extends BaseApiController {
-
-    /** P0 보안(2026-10-03): testMode 변경 차단 메시지. */
-    static final String MSG_PG_TEST_MODE_OPS_ONLY =
-            "PG 테스트 모드는 운영자 전용입니다. 테넌트 관리자 경로에서는 변경할 수 없습니다.";
-
-    /** P0 보안(2026-10-03): 웹훅 시크릿 변경 차단 메시지. */
-    static final String MSG_PG_WEBHOOK_SECRET_OPS_ONLY =
-            "PG 웹훅 시크릿은 운영자 전용입니다. 테넌트 관리자 경로에서는 변경할 수 없습니다.";
-
+    
     private final TenantPgConfigurationService pgConfigurationService;
+    private final TenantPgConfigurationDecryptionService decryptionService;
     private final TenantAccessControlService accessControlService;
     
     /**
@@ -80,7 +60,6 @@ public class TenantPgConfigurationController extends BaseApiController {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "권한 없음")
     })
     @GetMapping
-    @PreAuthorize("hasAuthority('" + SecurityRoleConstants.ROLE_ADMIN + "')")
     public ResponseEntity<ApiResponse<List<TenantPgConfigurationResponse>>> getConfigurations(
             @Parameter(description = "테넌트 ID", required = true) @PathVariable String tenantId,
             @Parameter(description = "PG 설정 상태 (필터)") @RequestParam(required = false) PgConfigurationStatus status,
@@ -111,7 +90,6 @@ public class TenantPgConfigurationController extends BaseApiController {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "PG 설정을 찾을 수 없음")
     })
     @GetMapping("/{configId}")
-    @PreAuthorize("hasAuthority('" + SecurityRoleConstants.ROLE_ADMIN + "')")
     public ResponseEntity<ApiResponse<TenantPgConfigurationDetailResponse>> getConfigurationDetail(
             @Parameter(description = "테넌트 ID", required = true) @PathVariable String tenantId,
             @Parameter(description = "PG 설정 ID", required = true) @PathVariable String configId) {
@@ -198,22 +176,18 @@ public class TenantPgConfigurationController extends BaseApiController {
     }
 
     /**
-     * PG 설정 테스트 모드 변경 — P0 보안(2026-10-03) 이후 테넌트 경로에서는 차단된다.
-     *
-     * <p>testMode 는 실결제/테스트 결제를 가르는 스위치이므로 테넌트 관리자 경로에서 즉시 변경할 수
-     * 없게 한다. 변경은 운영자 전용 경로에서만 수행한다.
-     *
-     * @param tenantId 테넌트 ID
-     * @param configId PG 설정 ID
-     * @param request  testMode 요청 (사용하지 않음)
-     * @return 403 (운영자 전용)
+     * PG 설정 테스트 모드 즉시 반영 (승인 리셋 없음)
      */
     @Operation(
-            summary = "PG 테스트 모드 변경 (차단)",
-            description = "P0 보안: 테넌트 관리자 경로에서는 testMode 를 변경할 수 없습니다 (운영자 전용). 항상 403."
+            summary = "PG 테스트 모드 변경",
+            description = "testMode 만 즉시 갱신합니다. 전체 수정(PUT)과 달리 재승인 대기로 되돌리지 않습니다. "
+                    + "IAMPORT 에서 테스트 모드 OFF 시 라이브 channelKey 가 없으면 거부합니다."
     )
     @ApiResponses(value = {
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "운영자 전용")
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "변경 성공",
+                    content = @Content(schema = @Schema(implementation = TenantPgConfigurationResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "검증 실패 (라이브 channelKey 누락 등)"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "PG 설정을 찾을 수 없음")
     })
     @PatchMapping("/{configId}/test-mode")
     @PreAuthorize("hasAuthority('" + SecurityRoleConstants.ROLE_ADMIN + "')")
@@ -222,29 +196,32 @@ public class TenantPgConfigurationController extends BaseApiController {
             @Parameter(description = "PG 설정 ID", required = true) @PathVariable String configId,
             @Valid @RequestBody PgConfigurationTestModePatchRequest request) {
 
+        log.info("PG 테스트 모드 변경 요청: tenantId={}, configId={}, testMode={}",
+                tenantId, configId, request.getTestMode());
+
         accessControlService.validateTenantAccess(tenantId);
 
-        log.warn("PG 테스트 모드 변경 차단(운영자 전용): tenantId={}, configId={}", tenantId, configId);
-        throw new AccessDeniedException(MSG_PG_TEST_MODE_OPS_ONLY);
+        TenantPgConfigurationResponse response =
+                pgConfigurationService.patchTestMode(tenantId, configId, request.getTestMode());
+
+        return updated("테스트 모드가 반영되었습니다.", response);
     }
 
     /**
-     * PG 설정 포트원 웹훅 시크릿 변경 — P0 보안(2026-10-03) 이후 테넌트 경로에서는 차단된다.
-     *
-     * <p>웹훅 시크릿은 결제 통지 위조를 막는 공유 비밀이므로 테넌트 관리자 경로에서 교체할 수 없게
-     * 한다. 교체는 운영자 전용 경로에서만 수행한다.
-     *
-     * @param tenantId 테넌트 ID
-     * @param configId PG 설정 ID
-     * @param request  시크릿 요청 (사용하지 않음)
-     * @return 403 (운영자 전용)
+     * PG 설정 포트원 웹훅 시크릿 즉시 반영 (승인 리셋 없음)
      */
     @Operation(
-            summary = "PG 웹훅 시크릿 변경 (차단)",
-            description = "P0 보안: 테넌트 관리자 경로에서는 웹훅 시크릿을 변경할 수 없습니다 (운영자 전용). 항상 403."
+            summary = "PG 웹훅 시크릿 변경",
+            description = "settings_json 의 portoneWebhookSecret 만 즉시 갱신합니다. "
+                    + "전체 수정(PUT)과 달리 재승인 대기로 되돌리지 않습니다. "
+                    + "응답에는 시크릿 값이 포함되지 않으며 portoneWebhookSecretConfigured 플래그만 반환합니다."
     )
     @ApiResponses(value = {
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "운영자 전용")
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "변경 성공",
+                    content = @Content(schema = @Schema(implementation = TenantPgConfigurationResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "검증 실패 (시크릿 공백 등)"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "권한 없음"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "PG 설정을 찾을 수 없음")
     })
     @PatchMapping("/{configId}/webhook-secret")
     @PreAuthorize("hasAuthority('" + SecurityRoleConstants.ROLE_ADMIN + "')")
@@ -253,10 +230,16 @@ public class TenantPgConfigurationController extends BaseApiController {
             @Parameter(description = "PG 설정 ID", required = true) @PathVariable String configId,
             @Valid @RequestBody PgConfigurationWebhookSecretPatchRequest request) {
 
+        int secretLength = request.getWebhookSecret() != null ? request.getWebhookSecret().trim().length() : 0;
+        log.info("PG 웹훅 시크릿 변경 요청: tenantId={}, configId={}, secretLength={}",
+                tenantId, configId, secretLength);
+
         accessControlService.validateTenantAccess(tenantId);
 
-        log.warn("PG 웹훅 시크릿 변경 차단(운영자 전용): tenantId={}, configId={}", tenantId, configId);
-        throw new AccessDeniedException(MSG_PG_WEBHOOK_SECRET_OPS_ONLY);
+        TenantPgConfigurationResponse response =
+                pgConfigurationService.patchWebhookSecret(tenantId, configId, request.getWebhookSecret());
+
+        return updated("웹훅 시크릿이 반영되었습니다.", response);
     }
     
     /**
@@ -312,6 +295,48 @@ public class TenantPgConfigurationController extends BaseApiController {
         ConnectionTestResponse response = 
                 pgConfigurationService.testConnection(tenantId, configId);
         
+        return success(response);
+    }
+
+    /**
+     * PG 설정 API Key / Secret Key 복호화 (테넌트 ADMIN 전용).
+     *
+     * <p>민감 키 값을 로그에 남기지 않는다. tenantId/configId/requestedBy 만 기록한다.</p>
+     *
+     * @param tenantId 테넌트 ID
+     * @param configId PG 설정 ID
+     * @return 복호화된 키 응답
+     */
+    @Operation(
+            summary = "PG 설정 키 복호화",
+            description = "저장된 PG API Key와 Secret Key를 복호화하여 반환합니다. 테넌트 ADMIN 권한이 필요합니다."
+    )
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "복호화 성공",
+                    content = @Content(schema = @Schema(implementation = PgConfigurationKeysResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증 실패"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "권한 없음 (ADMIN 필요)"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "PG 설정을 찾을 수 없음")
+    })
+    @PostMapping("/{configId}/decrypt-keys")
+    @PreAuthorize("hasAuthority('" + SecurityRoleConstants.ROLE_ADMIN + "')")
+    public ResponseEntity<ApiResponse<PgConfigurationKeysResponse>> decryptKeys(
+            @Parameter(description = "테넌트 ID", required = true) @PathVariable String tenantId,
+            @Parameter(description = "PG 설정 ID", required = true) @PathVariable String configId) {
+
+        accessControlService.validateTenantAccess(tenantId);
+
+        String requestedBy = accessControlService.getCurrentUserId();
+        if (requestedBy == null) {
+            requestedBy = "anonymous";
+        }
+
+        log.info("PG 설정 키 복호화 요청: tenantId={}, configId={}, requestedBy={}",
+                tenantId, configId, requestedBy);
+
+        PgConfigurationKeysResponse response =
+                decryptionService.decryptKeys(tenantId, configId, requestedBy);
+
         return success(response);
     }
 

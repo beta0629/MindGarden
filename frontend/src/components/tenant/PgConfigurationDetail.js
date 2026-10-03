@@ -6,6 +6,7 @@ import {
   getPgConfigurationDetail,
   deletePgConfiguration,
   testPgConnection,
+  decryptPgKeys,
   getPortOneClientConfig,
   patchPgConfigurationWebhookSecret
 } from '../../utils/pgApi';
@@ -128,6 +129,9 @@ const PgConfigurationDetail = () => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [testingConnection, setTestingConnection] = useState(false);
+  const [showKeys, setShowKeys] = useState(false);
+  const [decryptedKeys, setDecryptedKeys] = useState(null);
+  const [loadingKeys, setLoadingKeys] = useState(false);
   const [smokePaymentLoading, setSmokePaymentLoading] = useState(false);
   const [smokeResultOpen, setSmokeResultOpen] = useState(false);
   const [smokeResultMessage, setSmokeResultMessage] = useState('');
@@ -192,6 +196,21 @@ const PgConfigurationDetail = () => {
       showNotification(ADMIN_SHOP_PG_COPY.TEST_FAIL, 'error');
     } finally {
       setTestingConnection(false);
+    }
+  };
+
+  const handleDecryptKeys = async() => {
+    if (!tenantId || !configId) return;
+    try {
+      setLoadingKeys(true);
+      const keys = await decryptPgKeys(tenantId, configId);
+      setDecryptedKeys(keys);
+      setShowKeys(true);
+    } catch (err) {
+      console.error('키 복호화 실패:', err);
+      showNotification(ADMIN_SHOP_PG_COPY.LOAD_FAILED, 'error');
+    } finally {
+      setLoadingKeys(false);
     }
   };
 
@@ -260,6 +279,11 @@ const PgConfigurationDetail = () => {
     } finally {
       setSavingWebhookSecret(false);
     }
+  };
+
+  const copyKey = (value) => {
+    navigator.clipboard.writeText(value || '');
+    showNotification(ADMIN_SHOP_PG_COPY.KEYS_COPIED, 'success');
   };
 
   const renderMessage = (message, withRetry) => (
@@ -462,9 +486,14 @@ const PgConfigurationDetail = () => {
                       <dd>
                         {ADMIN_SHOP_PG_COPY.INFO_API_SECRET_VALUE}
                         {' '}
-                        <span className="admin-shop-suite__card-hint">
-                          {ADMIN_SHOP_PG_COPY.INFO_API_SECRET_OPS_ONLY}
-                        </span>
+                        <button
+                          type="button"
+                          className="admin-shop-suite__copy-btn"
+                          onClick={showKeys ? () => { setShowKeys(false); setDecryptedKeys(null); } : handleDecryptKeys}
+                          disabled={loadingKeys}
+                        >
+                          {showKeys ? ADMIN_SHOP_PG_COPY.KEYS_HIDE : ADMIN_SHOP_PG_COPY.MENU_KEYS}
+                        </button>
                       </dd>
                     </div>
                     {isPortone ? (
@@ -510,6 +539,34 @@ const PgConfigurationDetail = () => {
                       </div>
                     ) : null}
                   </dl>
+                  {showKeys ? (
+                    <dl className="admin-shop-suite__kv">
+                      <div>
+                        <dt>{ADMIN_SHOP_PG_COPY.KEYS_API}</dt>
+                        <dd className="admin-shop-suite__mono">
+                          <SafeText>{decryptedKeys?.apiKey || '***'}</SafeText>
+                          <button type="button" className="admin-shop-suite__copy-btn" onClick={() => copyKey(decryptedKeys?.apiKey)}>
+                            {ADMIN_SHOP_PG_COPY.KEYS_COPY}
+                          </button>
+                        </dd>
+                      </div>
+                      <div>
+                        <dt>{ADMIN_SHOP_PG_COPY.KEYS_SECRET}</dt>
+                        <dd className="admin-shop-suite__mono">
+                          <SafeText>{decryptedKeys?.secretKey || '***'}</SafeText>
+                          <button type="button" className="admin-shop-suite__copy-btn" onClick={() => copyKey(decryptedKeys?.secretKey)}>
+                            {ADMIN_SHOP_PG_COPY.KEYS_COPY}
+                          </button>
+                        </dd>
+                      </div>
+                      {decryptedKeys?.decryptedAt ? (
+                        <div>
+                          <dt>{ADMIN_SHOP_PG_COPY.KEYS_DECRYPTED_AT}</dt>
+                          <dd>{formatDateTime(decryptedKeys.decryptedAt)}</dd>
+                        </div>
+                      ) : null}
+                    </dl>
+                  ) : null}
                 </section>
 
                 {isPortone ? (
@@ -537,7 +594,7 @@ const PgConfigurationDetail = () => {
                           ? ADMIN_SHOP_PG_COPY.WEBHOOK_PLACEHOLDER_REPLACE
                           : ADMIN_SHOP_PG_COPY.WEBHOOK_PLACEHOLDER}
                         autoComplete="new-password"
-                        disabled
+                        disabled={savingWebhookSecret}
                       />
                       <MGButton
                         type="button"
@@ -545,7 +602,7 @@ const PgConfigurationDetail = () => {
                         className={buildErpMgButtonClassName({ variant: 'secondary', size: 'md', loading: savingWebhookSecret })}
                         loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                         onClick={handleSaveWebhookSecret}
-                        disabled
+                        disabled={savingWebhookSecret || !String(webhookSecretInput || '').trim()}
                         loading={savingWebhookSecret}
                         preventDoubleClick={false}
                         data-testid={ADMIN_SHOP_SUITE_TEST_IDS.PG_WEBHOOK_SAVE}
@@ -554,7 +611,7 @@ const PgConfigurationDetail = () => {
                       </MGButton>
                     </div>
                     <AdminShopNotice icon={<Info size={14} aria-hidden="true" />}>
-                      <p>{ADMIN_SHOP_PG_COPY.WEBHOOK_OPS_ONLY_NOTICE}</p>
+                      <p>{ADMIN_SHOP_PG_COPY.WEBHOOK_NOTICE}</p>
                     </AdminShopNotice>
                   </section>
                 ) : null}

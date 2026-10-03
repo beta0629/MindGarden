@@ -3,12 +3,10 @@ package com.coresolution.consultation.controller;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import com.coresolution.consultation.constant.SystemConfigAccessPolicy;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.service.SystemConfigService;
 import com.coresolution.consultation.service.SessionSecurityPolicyService;
 import com.coresolution.consultation.service.ai.AiProviderResolver;
-import com.coresolution.consultation.util.SecretValueMasking;
 import com.coresolution.consultation.utils.SessionUtils;
 import com.coresolution.core.context.TenantContextHolder;
 import org.springframework.http.HttpEntity;
@@ -44,15 +42,9 @@ import lombok.extern.slf4j.Slf4j;
 public class SystemConfigController {
 
     /** 트랙 B PR-3 (2026-05-23): AI provider 변경 가드 — 키 미등록 시 거부 메시지 */
-    private static final String AI_DEFAULT_PROVIDER_KEY = SystemConfigAccessPolicy.AI_DEFAULT_PROVIDER;
+    private static final String AI_DEFAULT_PROVIDER_KEY = "AI_DEFAULT_PROVIDER";
     private static final String MSG_PROVIDER_KEY_NOT_REGISTERED = "선택한 provider 의 API 키가 등록되지 않았습니다.";
     private static final String MSG_NO_TENANT = "테넌트 정보가 없습니다.";
-
-    /** P0 보안(2026-10-03): 허용 목록 밖 키는 값을 노출하지 않고 404 로 거부. */
-    private static final String MSG_KEY_NOT_ALLOWED = "허용되지 않은 설정 키입니다.";
-
-    /** P0 보안(2026-10-03): AI 키·URL·모델 쓰기는 운영자 전용 경로로만 가능. */
-    private static final String MSG_KEY_OPS_ONLY = "운영자 전용 설정입니다. 테넌트 관리자 경로에서는 변경할 수 없습니다.";
 
     private final SystemConfigService systemConfigService;
 
@@ -116,82 +108,31 @@ public class SystemConfigController {
     }
     
     /**
-     * 세션 사용자의 tenantId 를 반환한다. 요청 헤더·파라미터는 신뢰하지 않는다.
-     *
-     * @param session HTTP 세션
-     * @return tenantId, 없으면 null
-     */
-    private String resolveSessionTenantId(HttpSession session) {
-        User user = SessionUtils.getCurrentUser(session);
-        String tenantId = (user != null) ? user.getTenantId() : null;
-        return (tenantId == null || tenantId.isBlank()) ? null : tenantId;
-    }
-
-    /**
-     * 세션 tenantId 로 {@code TenantContext} 를 고정한 뒤 작업을 수행하고 원래 값을 복원한다.
-     *
-     * @param tenantId 세션에서 확인된 tenantId
-     * @param action   수행할 작업
-     * @param <T>      반환 타입
-     * @return 작업 결과
-     */
-    private <T> T withSessionTenant(String tenantId, java.util.function.Supplier<T> action) {
-        String previousTenantId = TenantContextHolder.getTenantId();
-        TenantContextHolder.setTenantId(tenantId);
-        try {
-            return action.get();
-        } finally {
-            if (previousTenantId != null && !previousTenantId.isBlank()) {
-                TenantContextHolder.setTenantId(previousTenantId);
-            } else {
-                TenantContextHolder.clear();
-            }
-        }
-    }
-
-    private ResponseEntity<Map<String, Object>> errorResponse(int status, String message) {
-        Map<String, Object> response = new HashMap<>();
-        response.put("success", false);
-        response.put("message", message);
-        return ResponseEntity.status(status).body(response);
-    }
-
-    /**
-     * 설정 값 조회.
-     *
-     * <p>P0 보안(2026-10-03): {@link SystemConfigAccessPolicy#READABLE_KEYS} 허용 목록 밖의 키는
-     * 값을 노출하지 않고 404 로 거부한다. 시크릿성 키(API 키·시크릿·토큰)는 마지막 4자리만 남긴
-     * 마스킹 값과 설정 여부 플래그만 응답한다. 조회는 세션 tenantId 로만 스코프된다.
+     * 설정 값 조회
      */
     @GetMapping("/{configKey:.+}")
     public ResponseEntity<Map<String, Object>> getConfig(@PathVariable String configKey, HttpSession session) {
         if (!hasAdminPermission(session)) {
-            return errorResponse(403, "접근 권한이 없습니다.");
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", "접근 권한이 없습니다.");
+            return ResponseEntity.status(403).body(response);
         }
-        if (!SystemConfigAccessPolicy.isReadable(configKey)) {
-            log.warn("허용되지 않은 설정 키 조회 시도: configKey={}", configKey);
-            return errorResponse(404, MSG_KEY_NOT_ALLOWED);
+        
+        try {
+            String value = systemConfigService.getConfigValue(configKey, "");
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("configKey", configKey);
+            response.put("configValue", value);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            log.error("설정 조회 실패: {}", configKey, e);
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", "설정 조회 실패: " + e.getMessage());
+            return ResponseEntity.badRequest().body(response);
         }
-        String tenantId = resolveSessionTenantId(session);
-        if (tenantId == null) {
-            return errorResponse(403, MSG_NO_TENANT);
-        }
-        return withSessionTenant(tenantId, () -> {
-            try {
-                String value = systemConfigService.getConfigValue(configKey, "");
-                boolean secret = SystemConfigAccessPolicy.isSecretValueKey(configKey);
-                Map<String, Object> response = new HashMap<>();
-                response.put("success", true);
-                response.put("configKey", configKey);
-                response.put("configValue", secret ? SecretValueMasking.mask(value) : value);
-                response.put("configured", SecretValueMasking.isConfigured(value));
-                response.put("masked", secret);
-                return ResponseEntity.ok(response);
-            } catch (Exception e) {
-                log.error("설정 조회 실패: {}", configKey, e);
-                return errorResponse(400, "설정 조회 실패");
-            }
-        });
     }
     
     /**
@@ -199,9 +140,6 @@ public class SystemConfigController {
      *
      * <p>트랙 B PR-3 (2026-05-23): configKey == {@code AI_DEFAULT_PROVIDER} 인 경우
      * 키 등록 여부 가드를 통과해야 저장 가능하며, 통과 시 프로바이더 캐시를 무효화한다.
-     *
-     * <p>P0 보안(2026-10-03): {@link SystemConfigAccessPolicy#WRITABLE_KEYS} 외의 키는 저장할 수
-     * 없다. AI API 키·URL·모델은 운영자 전용 경로로만 변경하며 테넌트 경로에서는 403 이다.
      */
     @PostMapping("/{configKey:.+}")
     public ResponseEntity<Map<String, Object>> setConfig(
@@ -209,105 +147,110 @@ public class SystemConfigController {
             @RequestBody Map<String, String> request,
             HttpSession session) {
         if (!hasAdminPermission(session)) {
-            return errorResponse(403, "접근 권한이 없습니다.");
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", "접근 권한이 없습니다.");
+            return ResponseEntity.status(403).body(response);
         }
-        if (SystemConfigAccessPolicy.isOpsOnlyWrite(configKey)) {
-            log.warn("운영자 전용 설정 키 변경 시도 차단: configKey={}", configKey);
-            return errorResponse(403, MSG_KEY_OPS_ONLY);
-        }
-        if (!SystemConfigAccessPolicy.isWritable(configKey)) {
-            log.warn("허용되지 않은 설정 키 저장 시도: configKey={}", configKey);
-            return errorResponse(404, MSG_KEY_NOT_ALLOWED);
-        }
-        String tenantId = resolveSessionTenantId(session);
-        if (tenantId == null) {
-            return errorResponse(403, MSG_NO_TENANT);
-        }
-        String configValue = (request != null) ? request.get("configValue") : null;
-        if (configValue == null) {
-            return errorResponse(400, "configValue는 필수입니다.");
-        }
-        String description = request.get("description");
-        String category = request.get("category");
         boolean isAiProviderKey = AI_DEFAULT_PROVIDER_KEY.equals(configKey);
-        return withSessionTenant(tenantId, () -> {
-            try {
-                if (isAiProviderKey && !aiProviderResolver.isProviderKeyRegistered(tenantId, configValue)) {
-                    log.warn("AI provider 변경 거부: tenantId={}, providerId={} — 키 미등록", tenantId, configValue);
-                    return errorResponse(400, MSG_PROVIDER_KEY_NOT_REGISTERED);
-                }
-
-                systemConfigService.setConfigValue(configKey, configValue, description, category);
-
-                if (isAiProviderKey) {
-                    aiProviderResolver.invalidate(tenantId);
-                }
-                if (sessionSecurityPolicyService.isSessionSecurityConfigKey(configKey)) {
-                    sessionSecurityPolicyService.invalidateCache(tenantId);
-                }
-
+        boolean tenantContextSet = false;
+        try {
+            String configValue = request.get("configValue");
+            String description = request.get("description");
+            String category = request.get("category");
+            
+            if (configValue == null) {
                 Map<String, Object> response = new HashMap<>();
-                response.put("success", true);
-                response.put("message", "설정이 저장되었습니다.");
-                return ResponseEntity.ok(response);
-            } catch (Exception e) {
-                log.error("설정 저장 실패: {}", configKey, e);
-                return errorResponse(400, "설정 저장 실패");
+                response.put("success", false);
+                response.put("message", "configValue는 필수입니다.");
+                return ResponseEntity.badRequest().body(response);
             }
-        });
+
+            if (isAiProviderKey) {
+                ResponseEntity<Map<String, Object>> guardResponse = guardAiProviderChange(configValue, session);
+                if (guardResponse != null) {
+                    return guardResponse;
+                }
+                tenantContextSet = true;
+            }
+
+            systemConfigService.setConfigValue(configKey, configValue, description, category);
+
+            if (isAiProviderKey) {
+                aiProviderResolver.invalidate(TenantContextHolder.getTenantId());
+            }
+            if (sessionSecurityPolicyService.isSessionSecurityConfigKey(configKey)) {
+                sessionSecurityPolicyService.invalidateCache(TenantContextHolder.getTenantId());
+            }
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "설정이 저장되었습니다.");
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            log.error("설정 저장 실패: {}", configKey, e);
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", "설정 저장 실패: " + e.getMessage());
+            return ResponseEntity.badRequest().body(response);
+        } finally {
+            if (tenantContextSet) {
+                TenantContextHolder.clear();
+            }
+        }
     }
     
     /**
-     * 카테고리별 설정 조회.
-     *
-     * <p>P0 보안(2026-10-03): 세션 tenantId 로만 스코프되며 시크릿성 키 값은 마스킹된다.
+     * 카테고리별 설정 조회
      */
     @GetMapping("/category/{category}")
     public ResponseEntity<Map<String, Object>> getConfigsByCategory(@PathVariable String category, HttpSession session) {
         if (!hasAdminPermission(session)) {
-            return errorResponse(403, "접근 권한이 없습니다.");
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", "접근 권한이 없습니다.");
+            return ResponseEntity.status(403).body(response);
         }
-        String tenantId = resolveSessionTenantId(session);
-        if (tenantId == null) {
-            return errorResponse(403, MSG_NO_TENANT);
+        try {
+            List<String> configs = systemConfigService.getConfigsByCategory(category);
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("category", category);
+            response.put("configs", configs);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            log.error("카테고리별 설정 조회 실패: {}", category, e);
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", "설정 조회 실패: " + e.getMessage());
+            return ResponseEntity.badRequest().body(response);
         }
-        return withSessionTenant(tenantId, () -> {
-            try {
-                List<String> configs = systemConfigService.getConfigsByCategory(category);
-                Map<String, Object> response = new HashMap<>();
-                response.put("success", true);
-                response.put("category", category);
-                response.put("configs", configs);
-                return ResponseEntity.ok(response);
-            } catch (Exception e) {
-                log.error("카테고리별 설정 조회 실패: {}", category, e);
-                return errorResponse(400, "설정 조회 실패");
-            }
-        });
     }
     
     /**
-     * OpenAI 설정 조회.
-     *
-     * <p>P0 보안(2026-10-03): API 키는 마스킹 값과 설정 여부만 응답한다 (평문 미노출).
+     * OpenAI 설정 조회
      */
     @GetMapping("/openai")
     public ResponseEntity<Map<String, Object>> getOpenAIConfig(HttpSession session) {
         if (!hasAdminPermission(session)) {
-            return errorResponse(403, "접근 권한이 없습니다.");
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", "접근 권한이 없습니다.");
+            return ResponseEntity.status(403).body(response);
         }
         try {
-            String apiKey = systemConfigService.getOpenAIApiKey();
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
-            response.put("apiKey", SecretValueMasking.mask(apiKey));
-            response.put("apiKeyConfigured", SecretValueMasking.isConfigured(apiKey));
+            response.put("apiKey", systemConfigService.getOpenAIApiKey());
             response.put("apiUrl", systemConfigService.getOpenAIApiUrl());
             response.put("model", systemConfigService.getOpenAIModel());
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             log.error("OpenAI 설정 조회 실패", e);
-            return errorResponse(400, "OpenAI 설정 조회 실패");
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", "OpenAI 설정 조회 실패: " + e.getMessage());
+            return ResponseEntity.badRequest().body(response);
         }
     }
     

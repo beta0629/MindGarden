@@ -200,11 +200,7 @@ public class SecurityConfig {
                         .hasAuthority(SecurityRoleConstants.ROLE_ADMIN)
                     .requestMatchers(HttpMethod.POST, "/api/v1/tenants/*/pg-configurations/*/test-connection")
                         .hasAuthority(SecurityRoleConstants.ROLE_ADMIN)
-                    // P0 보안(2026-10-03): 테넌트 경로 복호화 엔드포인트 제거 — 재등장 시에도 차단
                     .requestMatchers(HttpMethod.POST, "/api/v1/tenants/*/pg-configurations/*/decrypt-keys")
-                        .denyAll()
-                    // P0 보안(2026-10-03): PG 설정 조회도 ADMIN 전용 (내담자·상담사·사무원 차단)
-                    .requestMatchers(HttpMethod.GET, "/api/v1/tenants/*/pg-configurations")
                         .hasAuthority(SecurityRoleConstants.ROLE_ADMIN)
                     // ===== 명시적 .authenticated() 매처 (2중 방어선; 컨트롤러 가드와 정합) =====
                     .requestMatchers("/api/system-notifications/**").authenticated()
@@ -336,11 +332,7 @@ public class SecurityConfig {
                         .hasAuthority(SecurityRoleConstants.ROLE_ADMIN)
                     .requestMatchers(HttpMethod.POST, "/api/v1/tenants/*/pg-configurations/*/test-connection")
                         .hasAuthority(SecurityRoleConstants.ROLE_ADMIN)
-                    // P0 보안(2026-10-03): 테넌트 경로 복호화 엔드포인트 제거 — 재등장 시에도 차단
                     .requestMatchers(HttpMethod.POST, "/api/v1/tenants/*/pg-configurations/*/decrypt-keys")
-                        .denyAll()
-                    // P0 보안(2026-10-03): PG 설정 조회도 ADMIN 전용 (내담자·상담사·사무원 차단)
-                    .requestMatchers(HttpMethod.GET, "/api/v1/tenants/*/pg-configurations")
                         .hasAuthority(SecurityRoleConstants.ROLE_ADMIN)
                     // ===== 명시적 .authenticated() 매처 (2중 방어선; 컨트롤러 가드와 정합) =====
                     .requestMatchers("/api/v1/payments/**").authenticated()

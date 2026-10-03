@@ -1,0 +1,78 @@
+/**
+ * ScheduleClientNoteCard — 패딩·radius·shadow·border 는 CardContainer(.mg-v2-card-container) 가 결정한다.
+ * 이 파일은 내부 간격·글자·상태 색만 v2 토큰으로 지정한다.
+ */
+
+.schedule-client-note-card-item + .schedule-client-note-card-item {
+  margin-top: var(--mg-v2-space-3);
+}
+
+.mg-v2-card-container.schedule-client-note-card {
+  min-height: 0;
+}
+
+.mg-v2-card-container.schedule-client-note-card--overdue {
+  border-color: var(--mg-v2-color-semantic-warning);
+}
+
+.mg-v2-card-container.schedule-client-note-card--resolved {
+  background: var(--mg-v2-color-surface-stone);
+}
+
+.schedule-client-note-card__title-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--mg-v2-space-2);
+  font-size: var(--mg-v2-font-size-body-md);
+  font-weight: var(--mg-v2-font-weight-semibold);
+  color: var(--mg-v2-color-text-primary);
+}
+
+.schedule-client-note-card__badge {
+  flex-shrink: 0;
+}
+
+.schedule-client-note-card__meta {
+  margin: var(--mg-v2-space-1) 0 0;
+  font-size: var(--mg-v2-font-size-caption);
+  font-weight: var(--mg-v2-font-weight-medium);
+  color: var(--mg-v2-color-text-secondary);
+}
+
+.schedule-client-note-card__body {
+  margin: var(--mg-v2-space-2) 0 0;
+  font-size: var(--mg-v2-font-size-body-md);
+  color: var(--mg-v2-color-text-primary);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* 본문 ↔ 버튼 영역 간격, 버튼 간 gap 은 공통 v2 간격 토큰 */
+/* 전역 .mg-v2-card-actions 모바일 stretch·column 규칙이 새지 않게 행·우측 정렬을 고정 */
+.schedule-client-note-card .mg-v2-card-actions.schedule-client-note-card__actions {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  width: auto;
+  margin-top: var(--mg-v2-space-4);
+  gap: var(--mg-v2-space-2);
+  min-height: 0;
+}
+
+/* 좁은 화면 공통 .mg-button { width: 100% } 를 끊고 한 줄 우측 정렬 유지 */
+.schedule-client-note-card__actions > .mg-button {
+  flex: 0 0 auto;
+  width: auto;
+}
+
+/* 전역 모바일 [class*="mg-button"] !important 패딩이 내부 span 에도 붙어 버튼이 두 배로 넓어지는 것 차단 */
+.schedule-client-note-card .mg-v2-card-actions.schedule-client-note-card__actions > .mg-button .mg-button__content,
+.schedule-client-note-card .mg-v2-card-actions.schedule-client-note-card__actions > .mg-button .mg-button__text {
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  padding: 0 !important;
+  align-items: center !important;
+}

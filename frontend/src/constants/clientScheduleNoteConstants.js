@@ -14,6 +14,20 @@ export const SCHEDULE_CLIENT_NOTE_TYPE_GROUP = 'SCHEDULE_CLIENT_NOTE_TYPE';
 /** 공통코드 미로드 시 요청용 기본 코드값(마이그레이션 OTHER와 일치) */
 export const DEFAULT_NOTE_TYPE_CODE = 'OTHER';
 
+/**
+ * 공통코드 미로드·미등록 시 noteType 라벨 폴백.
+ * 값은 V20260429_001__client_schedule_notes.sql 의 korean_name 과 동일하게 유지한다.
+ */
+export const SCHEDULE_CLIENT_NOTE_TYPE_FALLBACK_LABELS = Object.freeze({
+  PAYMENT_PROMISE: '입금·비용 약속',
+  ATTENDANCE: '출석·노쇼',
+  RISK: '위험·주의',
+  OTHER: '기타'
+});
+
+/** 공통코드·폴백 어디에도 없는 noteType 표시 라벨 (원시 코드 노출 금지) */
+export const SCHEDULE_CLIENT_NOTE_TYPE_UNKNOWN_LABEL = '기타';
+
 /** 노트 응답 — 달린 일정 날짜(yyyy-MM-dd) 필드명 */
 export const CLIENT_SCHEDULE_NOTE_SCHEDULE_DATE_FIELD = 'scheduleDate';
 

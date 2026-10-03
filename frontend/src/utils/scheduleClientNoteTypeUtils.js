@@ -1,18 +1,23 @@
 /**
  * 통합 스케줄 내담자 특이사항 noteType 라벨 SSOT
- * ScheduleClientNotesSection 공통코드 매핑(koreanName → codeLabel → codeValue)과 동일.
+ * 라벨 우선순위: 공통코드(koreanName → codeLabel) → SCHEDULE_CLIENT_NOTE_TYPE_FALLBACK_LABELS → 중립 라벨.
  *
  * @author CoreSolution
  * @since 2026-09-02
  */
 
 import {
-  DEFAULT_NOTE_TYPE_CODE,
-  SCHEDULE_CLIENT_NOTE_TYPE_GROUP
+  CLIENT_SCHEDULE_NOTE_SCHEDULE_DATE_FIELD,
+  CLIENT_SCHEDULE_NOTES_META_PROMISE_PREFIX,
+  CLIENT_SCHEDULE_NOTES_META_SCHEDULE_DATE_PREFIX,
+  SCHEDULE_CLIENT_NOTE_TYPE_FALLBACK_LABELS,
+  SCHEDULE_CLIENT_NOTE_TYPE_GROUP,
+  SCHEDULE_CLIENT_NOTE_TYPE_UNKNOWN_LABEL
 } from '../constants/clientScheduleNoteConstants';
-import { getCommonCodes } from './commonCodeUtils';
 
 export { SCHEDULE_CLIENT_NOTE_TYPE_GROUP };
+
+const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 
 /**
  * @param {Array<object>} codes getCommonCodes(SCHEDULE_CLIENT_NOTE_TYPE_GROUP) 결과
@@ -23,46 +28,66 @@ export function buildScheduleClientNoteTypeLabelMap(codes) {
   (codes || []).forEach((code) => {
     const value = code?.codeValue;
     if (!value) return;
-    map[value] = code.koreanName || code.codeLabel || value;
+    const label = code.koreanName || code.codeLabel;
+    if (label) {
+      map[value] = label;
+    }
   });
   return map;
 }
 
 /**
  * @param {string} codeValue
- * @param {Record<string, string>} labelMap
- * @returns {string}
+ * @param {Record<string, string>} labelMap 공통코드 라벨 맵
+ * @returns {string} 한글 라벨. 미등록 코드는 중립 라벨, 빈 값은 ''
  */
 export function resolveScheduleClientNoteTypeLabel(codeValue, labelMap) {
   if (!codeValue) return '';
-  return labelMap?.[codeValue] || codeValue;
+  return labelMap?.[codeValue]
+    || SCHEDULE_CLIENT_NOTE_TYPE_FALLBACK_LABELS[codeValue]
+    || SCHEDULE_CLIENT_NOTE_TYPE_UNKNOWN_LABEL;
 }
 
 /**
  * @param {object} note
  * @param {(codeValue: string) => string} getLabel
+ * @param {{ includeScheduleDate?: boolean }} [options]
  * @returns {string}
  */
-export function formatScheduleClientNoteMeta(note, getLabel) {
+export function formatScheduleClientNoteMeta(note, getLabel, { includeScheduleDate = false } = {}) {
   const typeLabel = getLabel(note?.noteType);
   const parts = [typeLabel].filter(Boolean);
   if (note?.promiseDate) {
-    parts.push(`약속일 ${note.promiseDate}`);
+    parts.push(`${CLIENT_SCHEDULE_NOTES_META_PROMISE_PREFIX} ${note.promiseDate}`);
+  }
+  const scheduleDate = note?.[CLIENT_SCHEDULE_NOTE_SCHEDULE_DATE_FIELD];
+  if (includeScheduleDate && scheduleDate) {
+    parts.push(`${CLIENT_SCHEDULE_NOTES_META_SCHEDULE_DATE_PREFIX} ${scheduleDate}`);
   }
   return parts.join(' · ');
 }
 
 /**
- * @returns {Promise<Record<string, string>>}
+ * @param {object} note
+ * @returns {boolean} 해소 전 노트 여부
  */
-export async function loadScheduleClientNoteTypeLabelMap() {
-  try {
-    const codes = await getCommonCodes(SCHEDULE_CLIENT_NOTE_TYPE_GROUP);
-    if (codes && codes.length > 0) {
-      return buildScheduleClientNoteTypeLabelMap(codes);
-    }
-  } catch (error) {
-    console.warn('특이사항 유형 코드 로드 실패:', error);
-  }
-  return { [DEFAULT_NOTE_TYPE_CODE]: '기타' };
+export function isScheduleClientNoteUnresolved(note) {
+  return !note?.resolvedAt;
+}
+
+/**
+ * 미해소 노트의 약속일(yyyy-MM-dd)이 오늘(로컬 날짜)보다 이전이면 true.
+ *
+ * @param {object} note
+ * @param {Date} [now]
+ * @returns {boolean}
+ */
+export function isScheduleClientNotePromiseOverdue(note, now = new Date()) {
+  if (!isScheduleClientNoteUnresolved(note) || !note?.promiseDate) return false;
+  const d = String(note.promiseDate).trim();
+  if (!ISO_DATE_PATTERN.test(d)) return false;
+  const y = now.getFullYear();
+  const m = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  return d < `${y}-${m}-${day}`;
 }

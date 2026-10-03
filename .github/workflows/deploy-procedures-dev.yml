@@ -18,6 +18,12 @@ on:
       - 'database/schema/procedures_standardized/**'
       - 'scripts/automation/deployment/deploy-standardized-procedures.sh'
   workflow_dispatch:
+    inputs:
+      procedures:
+        description: "교체할 프로시저 이름(쉼표 구분). 비우면 기존 동작(변경 파일만)"
+        required: false
+        type: string
+        default: ""
 
 jobs:
   deploy-procedures:
@@ -44,9 +50,21 @@ jobs:
         ssh-keyscan -H "${{ secrets.DEV_SERVER_HOST }}" >> ~/.ssh/known_hosts 2>/dev/null || true
       
     - name: 📤 프로시저 배포
+      env:
+        PROCEDURE_DEPLOY_REQUESTED: ${{ inputs.procedures }}
       run: |
         set -euo pipefail
         fail() { echo "::error::$1"; exit 1; }
+
+        # procedures 입력이 있으면 그 이름의 배포 SQL 만 변경 파일 목록으로 넘긴다. 비면 기존 동작.
+        requested_list="$(mktemp "${RUNNER_TEMP:-/tmp}/mg-proc-requested.XXXXXX")"
+        bash scripts/automation/deployment/procedure-deploy-dispatch-list.sh > "$requested_list" \
+          || fail "procedures 입력을 배포 SQL 로 바꾸지 못했습니다. 위 메시지(이름 형식·배포 SQL 없음)를 확인하세요."
+        if [ -s "$requested_list" ]; then
+          echo "수동 지정 프로시저 배포 SQL:"
+          cat "$requested_list"
+          export PROCEDURE_DEPLOY_CHANGED_FILES="$requested_list"
+        fi
 
         [ -n "${{ secrets.DEV_SERVER_HOST }}" ] || fail "DEV_SERVER_HOST 가 비어 있습니다. Repository → Settings → Secrets and variables → Actions 에서 설정하세요."
         [ -n "${{ secrets.DEV_SERVER_SSH_KEY }}" ] || fail "DEV_SERVER_SSH_KEY 가 비어 있습니다. 개발 서버 SSH용 private key를 등록하세요. (scp/ssh에 필요)"

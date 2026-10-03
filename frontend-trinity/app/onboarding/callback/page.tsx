@@ -269,7 +269,6 @@ export default function OnboardingCallbackPage() {
           };
 
           console.log("[OnboardingCallback] 온보딩 요청 생성 시작...", {
-            fullRequest: JSON.stringify(request, null, 2),
             tenantName: request.tenantName,
             tenantNameLength: request.tenantName?.length,
             requestedBy: request.requestedBy,

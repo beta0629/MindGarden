@@ -9,7 +9,7 @@ import { useRouter } from "next/navigation";
 import { COMPONENT_CSS } from "../../constants/css-variables";
 import { TRINITY_CONSTANTS } from "../../constants/trinity";
 import { useOnboarding } from "../../hooks/useOnboarding";
-import { apiGet, getPublicOnboardingRequests, type OnboardingRequest } from "../../utils/api";
+import { apiGet, getPublicOnboardingRequests, type OnboardingPublicStatus } from "../../utils/api";
 import StepTransition from "../../components/onboarding/StepTransition";
 import ErrorMessage from "../../components/onboarding/ErrorMessage";
 import Step1BasicInfoProgressive from "../../components/onboarding/Step1BasicInfoProgressive";
@@ -57,7 +57,7 @@ export default function OnboardingPage() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
   const [showWelcome, setShowWelcome] = useState(true);
-  const [existingRequests, setExistingRequests] = useState<OnboardingRequest[]>([]);
+  const [existingRequests, setExistingRequests] = useState<OnboardingPublicStatus[]>([]);
   const [showExistingRequests, setShowExistingRequests] = useState(false);
   const [loadingExistingRequests, setLoadingExistingRequests] = useState(false);
   const prevStepRef = useRef<number>(1);
@@ -304,27 +304,11 @@ export default function OnboardingPage() {
   };
 
   // 기존 온보딩 요청 이어서 진행
-  const handleContinueExistingRequest = (request: OnboardingRequest) => {
-    // 기존 요청 데이터로 폼 채우기
-    let parsedPlanId: string | undefined;
-    
-    // checklistJson에서 planId 파싱 시도
-    if (request.checklistJson) {
-      try {
-        const checklist = JSON.parse(request.checklistJson);
-        parsedPlanId = checklist.planId || checklist.selectedPlanId;
-      } catch (err) {
-        // JSON 파싱 실패 시 무시
-        console.warn('checklistJson 파싱 실패:', err);
-      }
-    }
-    
+  const handleContinueExistingRequest = (request: OnboardingPublicStatus) => {
+    // 공개 조회 응답은 상태·기관명·신청일만 포함 (연락처·체크리스트는 서버가 반환하지 않음)
     setFormData(prev => ({
       ...prev,
       tenantName: request.tenantName || prev.tenantName,
-      businessType: request.businessType || prev.businessType,
-      contactEmail: request.requestedBy || prev.contactEmail,
-      planId: parsedPlanId || prev.planId,
     }));
     setShowExistingRequests(false);
     setStep(1); // 첫 단계로 이동

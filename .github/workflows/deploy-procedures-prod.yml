@@ -10,6 +10,12 @@ name: 📦 표준화된 프로시저 배포 (운영·개발 DB 경유)
 
 on:
   workflow_dispatch:  # 수동 실행만 가능
+    inputs:
+      procedures:
+        description: "교체할 프로시저 이름(쉼표 구분). 비우면 기존 동작(변경 파일만)"
+        required: false
+        type: string
+        default: ""
 
 jobs:
   deploy-procedures:
@@ -33,11 +39,23 @@ jobs:
         done
 
     - name: 📤 프로시저 배포
+      env:
+        PROCEDURE_DEPLOY_REQUESTED: ${{ inputs.procedures }}
       run: |
         fail() {
           echo "::error::$1"
           exit 1
         }
+
+        # procedures 입력이 있으면 그 이름의 배포 SQL 만 변경 파일 목록으로 넘긴다. 비면 기존 동작.
+        requested_list="$(mktemp "${RUNNER_TEMP:-/tmp}/mg-proc-requested.XXXXXX")"
+        bash scripts/automation/deployment/procedure-deploy-dispatch-list.sh > "$requested_list" \
+          || fail "procedures 입력을 배포 SQL 로 바꾸지 못했습니다. 위 메시지(이름 형식·배포 SQL 없음)를 확인하세요."
+        if [ -s "$requested_list" ]; then
+          echo "수동 지정 프로시저 배포 SQL:"
+          cat "$requested_list"
+          export PROCEDURE_DEPLOY_CHANGED_FILES="$requested_list"
+        fi
 
         [ -n "${{ secrets.DEV_DB_HOST }}" ] || fail "DEV_DB_HOST 시크릿이 비어 있습니다. 개발 DB 호스트를 GitHub Repository secrets에 설정하세요."
         [ -n "${{ secrets.DEV_SERVER_HOST }}" ] || fail "DEV_SERVER_HOST 시크릿이 비어 있습니다. SSH 점프(개발 서버) 호스트를 설정하세요."

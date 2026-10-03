@@ -10,7 +10,7 @@ import { TRINITY_CONSTANTS } from "../../../constants/trinity";
 import {
   getPublicOnboardingRequests,
   getPublicOnboardingRequest,
-  type OnboardingRequest,
+  type OnboardingPublicStatus,
   type PublicOnboardingContactQuery,
 } from "../../../utils/api";
 import {
@@ -50,8 +50,8 @@ export default function OnboardingStatusPage() {
   );
   const [email, setEmail] = useState(initialEmail);
   const [requestId, setRequestId] = useState(searchParams.get("id") || "");
-  const [requests, setRequests] = useState<OnboardingRequest[]>([]);
-  const [selectedRequest, setSelectedRequest] = useState<OnboardingRequest | null>(null);
+  const [requests, setRequests] = useState<OnboardingPublicStatus[]>([]);
+  const [selectedRequest, setSelectedRequest] = useState<OnboardingPublicStatus | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [searched, setSearched] = useState(false);

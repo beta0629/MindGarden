@@ -24,6 +24,11 @@ on:
         description: 'Type "CONFIRM" to proceed'
         required: true
         default: ''
+      procedures:
+        description: "교체할 프로시저 이름(쉼표 구분). 비우면 기존 동작(변경 파일만)"
+        required: false
+        type: string
+        default: ""
 
 jobs:
   deploy-procedures-production-mysql:
@@ -88,8 +93,22 @@ jobs:
           ssh-keyscan -H "${{ secrets.PRODUCTION_HOST }}" >> ~/.ssh/known_hosts 2>/dev/null
 
       - name: SSH 키 및 표준 프로시저 배포
+        env:
+          PROCEDURE_DEPLOY_REQUESTED: ${{ inputs.procedures }}
         run: |
           set -euo pipefail
+
+          # procedures 입력이 있으면 그 이름의 배포 SQL 만 변경 파일 목록으로 넘긴다. 비면 기존 동작.
+          requested_list="$(mktemp "${RUNNER_TEMP:-/tmp}/mg-proc-requested.XXXXXX")"
+          if ! bash scripts/automation/deployment/procedure-deploy-dispatch-list.sh > "$requested_list"; then
+            echo "::error::procedures 입력을 배포 SQL 로 바꾸지 못했습니다. 위 메시지(이름 형식·배포 SQL 없음)를 확인하세요."
+            exit 1
+          fi
+          if [ -s "$requested_list" ]; then
+            echo "수동 지정 프로시저 배포 SQL:"
+            cat "$requested_list"
+            export PROCEDURE_DEPLOY_CHANGED_FILES="$requested_list"
+          fi
           mkdir -p ~/.ssh
           chmod 700 ~/.ssh
           echo "${{ secrets.PRODUCTION_SSH_KEY }}" > ~/.ssh/prod_ci_key

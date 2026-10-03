@@ -48,13 +48,24 @@ public class PlSqlFinancialServiceImpl implements PlSqlFinancialService {
     @Value("${spring.datasource.schema-name:${DB_NAME:core_solution}}")
     private String dbSchemaName = "core_solution";
     
+    /**
+     * 전사 통합 재무 현황을 집계한다.
+     *
+     * <p>테넌트 격리는 요청 파라미터가 아니라 {@link TenantContextHolder} 에서만 가져온다.
+     * 집계 3종(총계·지점별·카테고리별) 모두 같은 {@code tenantId} 로 제한한다.</p>
+     *
+     * @param startDate 시작일
+     * @param endDate   종료일
+     * @return 통합 재무 집계 (총계 + branchBreakdown + categoryBreakdown)
+     */
     @Override
     @Transactional(readOnly = true)
     public Map<String, Object> getConsolidatedFinancialData(LocalDate startDate, LocalDate endDate) {
-        log.info("🏭 PL/SQL 통합 재무 현황 조회: {} ~ {}", startDate, endDate);
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        log.info("🏭 PL/SQL 통합 재무 현황 조회: {} ~ {}, tenantId={}", startDate, endDate, tenantId);
         
         try {
-            // 직접 SQL 쿼리로 통합 재무 데이터 조회
+            // 직접 SQL 쿼리로 통합 재무 데이터 조회 (테넌트 격리 필수)
             String sql = """
                 SELECT 
                     COALESCE(SUM(CASE WHEN transaction_type = 'INCOME' THEN amount ELSE 0 END), 0) as totalRevenue,
@@ -64,18 +75,21 @@ public class PlSqlFinancialServiceImpl implements PlSqlFinancialService {
                     COUNT(*) as totalTransactions,
                     COUNT(DISTINCT branch_code) as branchCount
                 FROM financial_transactions 
-                WHERE transaction_date BETWEEN ? AND ? 
+                WHERE tenant_id = ?
+                AND transaction_date BETWEEN ? AND ? 
                 AND is_deleted = FALSE
                 """;
             
-            Map<String, Object> result = jdbcTemplate.queryForMap(sql, startDate, endDate);
+            Map<String, Object> result = jdbcTemplate.queryForMap(sql, tenantId, startDate, endDate);
             
             // 지점별 상세 데이터 조회
-            List<Map<String, Object>> branchBreakdown = getBranchFinancialBreakdownData(startDate, endDate);
+            List<Map<String, Object>> branchBreakdown =
+                getBranchFinancialBreakdownData(tenantId, startDate, endDate);
             result.put("branchBreakdown", branchBreakdown);
             
             // 카테고리별 지출 분석 데이터 추가
-            List<Map<String, Object>> categoryBreakdown = getCategoryExpenseAnalysisForConsolidated(startDate, endDate);
+            List<Map<String, Object>> categoryBreakdown =
+                getCategoryExpenseAnalysisForConsolidated(tenantId, startDate, endDate);
             result.put("categoryBreakdown", categoryBreakdown);
             
             log.info("✅ 통합 재무 현황 조회 완료: 수익={}, 지출={}, 순이익={}", 
@@ -348,14 +362,19 @@ public class PlSqlFinancialServiceImpl implements PlSqlFinancialService {
     @Override
     @Transactional(readOnly = true)
     public Map<String, Object> generateYearlyFinancialReport(int year, String branchCode) {
-        log.info("📊 연도별 재무 보고서 생성: {}, 지점={}", year, branchCode);
+        // 표준화 2025-12-06(월별과 동일): branchCode 무시
+        if (branchCode != null) {
+            log.warn("⚠️ Deprecated 파라미터: branchCode는 더 이상 사용하지 않음. branchCode={}", branchCode);
+        }
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        log.info("📊 연도별 재무 보고서 생성: {}, tenantId={}", year, tenantId);
         
         try {
-            // 프로시저 의존성 제거 - 직접 SQL 쿼리 사용
+            // 폐기된 branches 테이블 의존 제거 + 테넌트 격리 (월별 보고서와 동일 패턴)
             String sql = """
                 SELECT 
                     ? AS report_year,
-                    COALESCE(b.branch_code, 'ALL') AS branch_code,
+                    COALESCE(ft.branch_code, 'ALL') AS branch_code,
                     COALESCE(SUM(CASE WHEN ft.transaction_type = 'INCOME' THEN ft.amount ELSE 0 END), 0) AS total_revenue,
                     COALESCE(SUM(CASE WHEN ft.transaction_type = 'EXPENSE' THEN ft.amount ELSE 0 END), 0) AS total_expenses,
                     COALESCE(SUM(CASE WHEN ft.transaction_type = 'INCOME' THEN ft.amount ELSE 0 END) - 
@@ -363,19 +382,16 @@ public class PlSqlFinancialServiceImpl implements PlSqlFinancialService {
                     COUNT(ft.id) AS total_transactions,
                     COUNT(DISTINCT MONTH(ft.transaction_date)) AS active_months,
                     COUNT(DISTINCT ft.branch_code) AS active_branches
-                FROM branches b
-                LEFT JOIN financial_transactions ft ON b.branch_code = ft.branch_code
-                    AND YEAR(ft.transaction_date) = ?
-                    AND ft.is_deleted = FALSE
-                WHERE b.is_deleted = FALSE 
-                AND b.branch_status = 'ACTIVE'
-                AND (? IS NULL OR b.branch_code = ?)
-                GROUP BY b.branch_code
+                FROM financial_transactions ft
+                WHERE ft.tenant_id = ?
+                AND YEAR(ft.transaction_date) = ?
+                AND ft.is_deleted = FALSE
+                GROUP BY ft.branch_code
                 ORDER BY total_revenue DESC
                 """;
             
             List<Map<String, Object>> reportData = jdbcTemplate.query(sql,
-                new Object[]{year, year, branchCode, branchCode},
+                new Object[]{year, tenantId, year},
                 (rs, rowNum) -> {
                     Map<String, Object> report = new HashMap<>();
                     report.put("reportYear", rs.getInt("report_year"));
@@ -460,34 +476,42 @@ public class PlSqlFinancialServiceImpl implements PlSqlFinancialService {
     
     /**
      * 지점별 재무 상세 데이터 조회 (내부 메서드)
+     *
+     * <p>{@code branches} 테이블은 {@code docs/standards/BRANCH_DEPRECATION.md} 에 따라
+     * 2026-06-12 에 {@code branches_dropped_20260612} 로 RENAME 되어 폐기됐다. 신규 조회는
+     * 그 이름에 의존하지 않고 거래의 {@code branch_code} 로만 집계한다.
+     * 테넌트 격리는 호출자가 {@link TenantContextHolder} 에서 받은 값으로만 건다.</p>
+     *
+     * @param tenantId  테넌트 ID (TenantContext 기준, 요청 파라미터 아님)
+     * @param startDate 시작일
+     * @param endDate   종료일
+     * @return 지점 코드별 집계 목록
      */
-    private List<Map<String, Object>> getBranchFinancialBreakdownData(LocalDate startDate, LocalDate endDate) {
-        // branches 테이블에서 지점 데이터 조회하도록 수정
+    private List<Map<String, Object>> getBranchFinancialBreakdownData(
+            String tenantId, LocalDate startDate, LocalDate endDate) {
         String sql = """
             SELECT 
-                b.branch_code,
-                b.branch_name,
+                ft.branch_code,
                 COALESCE(SUM(CASE WHEN ft.transaction_type = 'INCOME' THEN ft.amount ELSE 0 END), 0) AS revenue,
                 COALESCE(SUM(CASE WHEN ft.transaction_type = 'EXPENSE' THEN ft.amount ELSE 0 END), 0) AS expenses,
                 COALESCE(SUM(CASE WHEN ft.transaction_type = 'INCOME' THEN ft.amount ELSE 0 END) - 
                          SUM(CASE WHEN ft.transaction_type = 'EXPENSE' THEN ft.amount ELSE 0 END), 0) AS net_profit,
                 COUNT(ft.id) AS transaction_count
-            FROM branches b
-            LEFT JOIN financial_transactions ft ON b.branch_code = ft.branch_code
-                AND ft.transaction_date BETWEEN ? AND ?
-                AND ft.is_deleted = FALSE
-            WHERE b.is_deleted = FALSE 
-            AND b.branch_status = 'ACTIVE'
-            GROUP BY b.branch_code, b.branch_name
+            FROM financial_transactions ft
+            WHERE ft.tenant_id = ?
+            AND ft.transaction_date BETWEEN ? AND ?
+            AND ft.is_deleted = FALSE
+            AND ft.branch_code IS NOT NULL
+            GROUP BY ft.branch_code
             ORDER BY revenue DESC
             """;
         
         return jdbcTemplate.query(sql,
-            new Object[]{startDate, endDate},
+            new Object[]{tenantId, startDate, endDate},
             (rs, rowNum) -> {
                 Map<String, Object> branch = new HashMap<>();
                 branch.put("branchCode", rs.getString("branch_code"));
-                branch.put("branchName", rs.getString("branch_name"));
+                branch.put("branchName", rs.getString("branch_code"));
                 branch.put("revenue", rs.getLong("revenue"));
                 branch.put("expenses", rs.getLong("expenses"));
                 branch.put("netProfit", rs.getLong("net_profit"));
@@ -543,9 +567,15 @@ public class PlSqlFinancialServiceImpl implements PlSqlFinancialService {
     
     /**
      * 통합 재무현황용 카테고리별 지출 분석 데이터 조회
+     *
+     * @param tenantId  테넌트 ID (TenantContext 기준, 요청 파라미터 아님)
+     * @param startDate 시작일
+     * @param endDate   종료일
+     * @return 카테고리별 지출 집계 목록
      */
-    private List<Map<String, Object>> getCategoryExpenseAnalysisForConsolidated(LocalDate startDate, LocalDate endDate) {
-        log.info("📊 통합 재무현황 카테고리별 지출 분석 조회: {} ~ {}", startDate, endDate);
+    private List<Map<String, Object>> getCategoryExpenseAnalysisForConsolidated(
+            String tenantId, LocalDate startDate, LocalDate endDate) {
+        log.info("📊 통합 재무현황 카테고리별 지출 분석 조회: {} ~ {}, tenantId={}", startDate, endDate, tenantId);
         
         try {
             String sql = """
@@ -555,7 +585,8 @@ public class PlSqlFinancialServiceImpl implements PlSqlFinancialService {
                     COUNT(CASE WHEN ft.transaction_type = 'EXPENSE' THEN 1 END) AS transaction_count,
                     COALESCE(AVG(CASE WHEN ft.transaction_type = 'EXPENSE' THEN ft.amount END), 0) AS avg_amount
                 FROM financial_transactions ft
-                WHERE ft.transaction_date BETWEEN ? AND ?
+                WHERE ft.tenant_id = ?
+                    AND ft.transaction_date BETWEEN ? AND ?
                     AND ft.is_deleted = FALSE
                     AND ft.transaction_type = 'EXPENSE'
                 GROUP BY ft.category
@@ -564,7 +595,7 @@ public class PlSqlFinancialServiceImpl implements PlSqlFinancialService {
                 """;
             
             return jdbcTemplate.query(sql,
-                new Object[]{startDate, endDate},
+                new Object[]{tenantId, startDate, endDate},
                 (rs, rowNum) -> {
                     Map<String, Object> category = new HashMap<>();
                     category.put("category", rs.getString("category"));

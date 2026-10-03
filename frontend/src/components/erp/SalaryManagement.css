@@ -343,7 +343,7 @@
 .salary-management__calc-stage .salary-filter-block__group {
   display: flex;
   flex-direction: row;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
   align-items: flex-end;
   justify-content: flex-start;
   width: 100%;
@@ -351,13 +351,14 @@
   gap: var(--mg-v2-space-3);
 }
 
+/* 입력 묶음은 남는 폭을 쓰고 안에서 줄바꿈한다. 이 최소폭도 안 남으면 버튼 묶음이 다음 줄로 내려간다 */
 .salary-management__calc-stage .salary-filter-block__fields {
   display: flex;
   flex: 1 1 0%;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
   align-items: flex-end;
   gap: var(--mg-v2-space-3);
-  min-width: 0;
+  min-width: min(100%, calc(var(--mg-v2-space-16) * 5));
 }
 
 .salary-management__calc-stage .salary-filter-block__field {
@@ -365,8 +366,10 @@
   min-width: 0;
 }
 
+/* 기간 안내 문구는 남는 폭을 쓰고 줄바꿈한다. select 와 버튼이 먼저 자리를 잡는다 */
 .salary-management__calc-stage .salary-filter-block__period-display {
-  min-width: 0;
+  flex: 1 1 0%;
+  min-width: calc(var(--mg-v2-space-10) * 4);
 }
 
 /* 입력 높이 SSOT: --input-height-default(40px) → design-v2 --mg-v2-component-height-md(2.5rem).
@@ -379,6 +382,16 @@
   padding-block: 0;
   line-height: var(--input-height-default, var(--mg-v2-component-height-md));
   box-sizing: border-box;
+}
+
+/* select 의 max-content 는 가장 긴 option 기준이다. 그 아래로 줄지 않고, 자리가 모자라면 행이 줄바꿈된다. */
+.salary-management__calc-stage .salary-filter-block__field--select {
+  flex: 0 0 auto;
+  min-width: max-content;
+}
+
+.salary-management__calc-stage .salary-filter-block__field--select .mg-v2-select {
+  min-width: max-content;
 }
 
 .salary-management__calc-stage .salary-filter-block__run-calc {

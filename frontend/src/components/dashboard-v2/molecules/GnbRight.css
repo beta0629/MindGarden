@@ -9,11 +9,19 @@
   display: flex;
   align-items: center;
   gap: var(--mg-spacing-md);
+  min-width: 0;
   overflow: visible;
+}
+
+/* 좁은 데스크톱 폭에서는 검색창만 줄어든다. 아이콘·프로필은 그대로 */
+.mg-v2-gnb-right > .mg-v2-search-input {
+  flex: 0 1 auto;
+  min-width: 0;
 }
 
 .mg-v2-gnb-right__icons {
   display: flex;
+  flex-shrink: 0;
   align-items: center;
   gap: var(--mg-spacing-sm);
   overflow: visible;

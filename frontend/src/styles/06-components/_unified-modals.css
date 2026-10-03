@@ -372,8 +372,7 @@
 
 /* large 모달: 테이블/폼이 들어갈 때 500px로 짓눌리지 않도록 (디자인 가이드) */
 .mg-modal.mg-modal--large {
-  /* 좁은 화면에서 min-width 가 max-width(92vw)를 이겨 가로로 넘치지 않게 같은 상한을 둔다 */
-  min-width: min(720px, 92vw);
+  min-width: 720px;
   max-width: min(900px, 92vw);
   width: 90%;
 }

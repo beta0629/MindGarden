@@ -40,10 +40,10 @@ describe('Salary calculation target actions', () => {
       /\.salary-management__calc-stage \.salary-filter-block__group\s*\{[^}]*flex-direction:\s*row/s
     );
     expect(salaryCss).toMatch(
-      /\.salary-management__calc-stage \.salary-filter-block__group\s*\{[^}]*flex-wrap:\s*nowrap/s
+      /\.salary-management__calc-stage \.salary-filter-block__group\s*\{[^}]*flex-wrap:\s*wrap/s
     );
     expect(salaryCss).toMatch(
-      /\.salary-management__calc-stage \.salary-filter-block__fields\s*\{[^}]*flex:\s*1 1 0%/s
+      /\.salary-management__calc-stage \.salary-filter-block__fields\s*\{[^}]*flex-wrap:\s*wrap/s
     );
     expect(salaryCss).toMatch(
       /\.salary-management__calc-stage \.salary-filter-block__group\s*\{[^}]*align-items:\s*flex-end/s
@@ -78,6 +78,27 @@ describe('Salary calculation target actions', () => {
     expect(salaryCss).toMatch(/grid-template-columns:\s*repeat\(\s*auto-fit/);
     expect(salaryCss).not.toMatch(
       /salary-filter-block__field \.mg-v2-select[\s\S]{0,180}?height:\s*var\(--mg-v2-component-height-sm\)/
+    );
+  });
+
+  test('each calc select keeps its longest option visible instead of shrinking', () => {
+    const selectFields = calcBlock.match(
+      /className="salary-filter-block__field salary-filter-block__field--select"/g
+    ) || [];
+    expect(selectFields).toHaveLength(3);
+    ['salary-period-calc', 'salary-consultant-calc', 'salary-payday-calc'].forEach((id) => {
+      const at = calcBlock.indexOf(`id="${id}"`);
+      expect(at).toBeGreaterThan(-1);
+      expect(calcBlock.lastIndexOf('salary-filter-block__field--select', at)).toBeGreaterThan(-1);
+    });
+    expect(salaryCss).toMatch(
+      /\.salary-management__calc-stage \.salary-filter-block__field--select\s*\{[^}]*min-width:\s*max-content/s
+    );
+    expect(salaryCss).toMatch(
+      /\.salary-management__calc-stage \.salary-filter-block__field--select \.mg-v2-select\s*\{[^}]*min-width:\s*max-content/s
+    );
+    expect(salaryCss).toMatch(
+      /\.salary-management__calc-stage \.salary-filter-block__period-display\s*\{[^}]*flex:\s*1 1 0%/s
     );
   });
 

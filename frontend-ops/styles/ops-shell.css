@@ -44,6 +44,10 @@
   color: var(--mg-v2-color-text-primary);
 }
 
+.ops-shell__brand--detail {
+  display: none;
+}
+
 .ops-shell__actor {
   font-size: var(--mg-v2-font-size-caption);
   color: var(--mg-v2-color-text-secondary);
@@ -309,6 +313,14 @@
   .ops-shell__brand {
     text-align: center;
     font-size: var(--ops-font-size-base);
+  }
+
+  .ops-shell__gnb--back .ops-shell__brand--product {
+    display: none;
+  }
+
+  .ops-shell__gnb--back .ops-shell__brand--detail {
+    display: block;
   }
 
   .ops-shell__gnb--back .ops-shell__actor {

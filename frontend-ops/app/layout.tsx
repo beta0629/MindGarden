@@ -13,7 +13,7 @@ import "../styles/ops-onboarding.css";
 import "../styles/ops-tenants.css";
 import { GlobalNotification } from "@/components/common/GlobalNotification";
 import OpsLnb from "@/components/shell/OpsLnb";
-import { ONBOARDING_PATHS } from "@/constants/onboarding";
+import { ONBOARDING_MESSAGES, ONBOARDING_PATHS } from "@/constants/onboarding";
 import {
   OPS_PUBLIC_PATH_PREFIXES,
   OPS_SHELL_BRAND,
@@ -150,7 +150,12 @@ export default function RootLayout({
                   {OPS_SHELL_CHROME.MENU_GLYPH}
                 </button>
               )}
-              <strong className="ops-shell__brand">{OPS_SHELL_BRAND}</strong>
+              <strong className="ops-shell__brand ops-shell__brand--product">{OPS_SHELL_BRAND}</strong>
+              {onboardingDetail ? (
+                <strong className="ops-shell__brand ops-shell__brand--detail">
+                  {ONBOARDING_MESSAGES.PAGE_TITLE}
+                </strong>
+              ) : null}
               <span className="ops-shell__actor">{actorId || ""}</span>
             </header>
             <div className="ops-shell__body">

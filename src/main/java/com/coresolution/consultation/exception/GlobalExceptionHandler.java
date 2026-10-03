@@ -11,6 +11,7 @@ import com.coresolution.consultation.constant.ApiRequestErrorMessages;
 import com.coresolution.consultation.constant.LifecycleState;
 import com.coresolution.consultation.constant.ServerErrorMessages;
 import com.coresolution.consultation.constant.ShopRefundConstants;
+import com.coresolution.consultation.util.ClientMessageSanitizer;
 import com.coresolution.consultation.util.ServerErrorResponses;
 import com.coresolution.core.dto.ErrorResponse;
 import com.coresolution.core.service.impl.OnboardingApprovalBlockedException;
@@ -59,7 +60,7 @@ public class GlobalExceptionHandler {
         log.warn("Entity not found: {}", e.getMessage());
         
         ErrorResponse error = ErrorResponse.of(
-            e.getMessage(),
+            clientSafeMessage(e.getMessage(), "요청한 정보를 찾을 수 없습니다."),
             "ENTITY_NOT_FOUND",
             HttpStatus.NOT_FOUND.value(),
             request.getRequestURI(),
@@ -77,7 +78,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleUnauthorized(UnauthorizedException e, HttpServletRequest request) {
         log.warn("Unauthorized: {}", e.getMessage());
         ErrorResponse error = ErrorResponse.of(
-            e.getMessage(),
+            clientSafeMessage(e.getMessage(), "로그인이 필요합니다."),
             "UNAUTHORIZED",
             HttpStatus.UNAUTHORIZED.value(),
             request.getRequestURI(),
@@ -94,7 +95,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleForbidden(ForbiddenException e, HttpServletRequest request) {
         log.warn("Forbidden: {}", e.getMessage());
         ErrorResponse error = ErrorResponse.of(
-            e.getMessage(),
+            clientSafeMessage(e.getMessage(), "접근 권한이 없습니다."),
             "FORBIDDEN",
             HttpStatus.FORBIDDEN.value(),
             request.getRequestURI(),
@@ -121,7 +122,7 @@ public class GlobalExceptionHandler {
         }
         
         ErrorResponse error = ErrorResponse.of(
-            e.getMessage(),
+            clientSafeMessage(e.getMessage(), "입력 데이터 검증에 실패했습니다."),
             "VALIDATION_ERROR",
             HttpStatus.BAD_REQUEST.value(),
             details
@@ -234,8 +235,28 @@ public class GlobalExceptionHandler {
         }
         log.warn("Illegal state: {}", e.getMessage());
         ErrorResponse error = ErrorResponse.of(
-            e.getMessage(),
+            clientSafeMessage(e.getMessage(), ApiRequestErrorMessages.INVALID_PARAMETER_VALUE),
             "ILLEGAL_STATE",
+            HttpStatus.BAD_REQUEST.value(),
+            request.getRequestURI(),
+            request.getMethod()
+        );
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+    }
+
+    /**
+     * NumberFormatException 처리 — 숫자 파라미터(연도·월 등)를 직접 파싱하다 실패한 경우.
+     *
+     * <p>{@link IllegalArgumentException} 하위 타입이지만 예외 메시지가
+     * {@code For input string: "abc"} 처럼 입력 원문을 담고 있어 응답에 쓸 수 없다.
+     * 공통 타입 오류 문구만 내보내고 원문은 로그에만 남긴다.</p>
+     */
+    @ExceptionHandler(NumberFormatException.class)
+    public ResponseEntity<ErrorResponse> handleNumberFormat(NumberFormatException e, HttpServletRequest request) {
+        log.warn("NumberFormat 실패: path={}, message={}", request.getRequestURI(), e.getMessage());
+        ErrorResponse error = ErrorResponse.of(
+            ApiRequestErrorMessages.INVALID_PARAMETER_TYPE,
+            ApiRequestErrorMessages.CODE_INVALID_PARAMETER_TYPE,
             HttpStatus.BAD_REQUEST.value(),
             request.getRequestURI(),
             request.getMethod()
@@ -246,13 +267,16 @@ public class GlobalExceptionHandler {
     /**
      * IllegalArgumentException 처리
      * HTTP 400 Bad Request 응답
+     *
+     * <p>사용자에게 보여줄 한글 비즈니스 문구는 그대로 두고, 예외 원문(클래스명·입력 원문·SQL 등)이
+     * 섞인 기술 메시지는 공통 문구로 바꾼다.</p>
      */
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ErrorResponse> handleIllegalArgument(IllegalArgumentException e, HttpServletRequest request) {
         log.warn("Illegal argument: {}", e.getMessage());
         
         ErrorResponse error = ErrorResponse.of(
-            e.getMessage(),
+            clientSafeMessage(e.getMessage(), ApiRequestErrorMessages.INVALID_PARAMETER_VALUE),
             "ILLEGAL_ARGUMENT",
             HttpStatus.BAD_REQUEST.value(),
             request.getRequestURI(),
@@ -260,6 +284,17 @@ public class GlobalExceptionHandler {
         );
         
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+    }
+
+    /**
+     * 예외 메시지를 응답에 실어도 되는 형태로 바꾼다 (기술 원문 차단 · 내부 식별자 제거).
+     *
+     * @param message  예외 메시지
+     * @param fallback 쓸 수 없을 때의 사용자 문구
+     * @return 사용자에게 보여줄 문구
+     */
+    private static String clientSafeMessage(String message, String fallback) {
+        return ClientMessageSanitizer.toClientMessage(message, fallback);
     }
     
     /**
@@ -271,7 +306,7 @@ public class GlobalExceptionHandler {
         log.warn("Bad credentials: path={}, message={}", request.getRequestURI(), e.getMessage());
         
         ErrorResponse error = ErrorResponse.of(
-            e.getMessage() != null ? e.getMessage() : "아이디 또는 비밀번호가 올바르지 않습니다.",
+            clientSafeMessage(e.getMessage(), "아이디 또는 비밀번호가 올바르지 않습니다."),
             "BAD_CREDENTIALS",
             HttpStatus.UNAUTHORIZED.value(),
             request.getRequestURI(),
@@ -290,7 +325,7 @@ public class GlobalExceptionHandler {
         log.warn("Authentication failed: path={}, message={}", request.getRequestURI(), e.getMessage());
         
         ErrorResponse error = ErrorResponse.of(
-            e.getMessage() != null ? e.getMessage() : "인증에 실패했습니다.",
+            clientSafeMessage(e.getMessage(), "인증에 실패했습니다."),
             "AUTHENTICATION_FAILED",
             HttpStatus.UNAUTHORIZED.value(),
             request.getRequestURI(),
@@ -309,9 +344,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleAccessDenied(AccessDeniedException e, HttpServletRequest request) {
         log.warn("Access denied: path={}, message={}", request.getRequestURI(), e.getMessage());
 
-        String message = (e.getMessage() != null && !e.getMessage().isBlank())
-            ? e.getMessage().trim()
-            : "접근 권한이 없습니다.";
+        String message = clientSafeMessage(e.getMessage(), "접근 권한이 없습니다.");
 
         ErrorResponse error = ErrorResponse.of(
             message,
@@ -894,9 +927,9 @@ public class GlobalExceptionHandler {
             HttpRequestMethodNotSupportedException e, HttpServletRequest request) {
         log.warn("HTTP method not supported: path={}, method={}", request.getRequestURI(), request.getMethod());
         
-        String message = e.getMessage() != null ? e.getMessage() : "요청 메서드가 지원되지 않습니다.";
+        // Spring 기본 문구는 영문·기술 문구라 응답에 쓰지 않는다 (위 로그에만 남긴다).
         ErrorResponse error = ErrorResponse.of(
-            message,
+            "요청 메서드가 지원되지 않습니다.",
             "METHOD_NOT_ALLOWED",
             HttpStatus.METHOD_NOT_ALLOWED.value(),
             request.getRequestURI(),

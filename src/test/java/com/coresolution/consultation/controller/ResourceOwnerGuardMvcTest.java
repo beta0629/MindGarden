@@ -11,6 +11,9 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.request;
+import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.not;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -64,6 +67,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.core.env.Environment;
+import org.springframework.dao.InvalidDataAccessResourceUsageException;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockHttpSession;
@@ -279,7 +283,7 @@ class ResourceOwnerGuardMvcTest {
     @DisplayName("내담자가 타 내담자 자원 → 403, 데이터 없음, 서비스 미호출")
     void clientOwned_otherClient_forbidden(Endpoint e) throws Exception {
         assertForbidden(perform(e, user(CLIENT_SELF, UserRole.CLIENT, TENANT_A), e.otherRes()),
-            ClientPathAccessGuard.DENIAL_OWN_CLIENT_ONLY);
+            ResourceOwnerAccessGuard.DENIAL_RESOURCE_UNAVAILABLE);
     }
 
     @ParameterizedTest(name = "{0}")
@@ -289,7 +293,8 @@ class ResourceOwnerGuardMvcTest {
         User consultant = user(CONSULTANT_SELF, UserRole.CONSULTANT, TENANT_A);
         perform(e, consultant, e.selfRes()).andExpect(status().is2xxSuccessful());
         setUp();
-        assertForbidden(perform(e, consultant, e.otherRes()), ClientPathAccessGuard.DENIAL_UNMAPPED_CLIENT);
+        assertForbidden(perform(e, consultant, e.otherRes()),
+            ResourceOwnerAccessGuard.DENIAL_RESOURCE_UNAVAILABLE);
     }
 
     @ParameterizedTest(name = "{0}")
@@ -331,15 +336,32 @@ class ResourceOwnerGuardMvcTest {
     }
 
     @Test
+    @DisplayName("자원 조회가 DB 오류로 실패해도 403 — 내담자·상담사 모두 500 아님, 기술 문구 없음")
+    void resourceLookupFailure_forbiddenNotServerError() throws Exception {
+        String uri = "/api/v1/emotion-analysis/multimodal/" + REPORT_SELF;
+        for (User caller : List.of(user(CLIENT_SELF, UserRole.CLIENT, TENANT_A),
+                user(CONSULTANT_SELF, UserRole.CONSULTANT, TENANT_A))) {
+            setUp();
+            when(multimodalReportRepository.findByTenantIdAndIdAndIsDeletedFalse(eq(TENANT_A), anyLong()))
+                .thenThrow(new InvalidDataAccessResourceUsageException(
+                    "could not execute query [Unknown column 'm1_0.deleted_at' in 'field list']"));
+            assertForbidden(call(HttpMethod.GET, uri, null, caller),
+                ResourceOwnerAccessGuard.DENIAL_RESOURCE_UNAVAILABLE)
+                .andExpect(content().string(not(containsString("deleted_at"))))
+                .andExpect(content().string(not(containsString("Unknown column"))));
+        }
+    }
+
+    @Test
     @DisplayName("POST emotion video/{recordId} — 본인 200 / 타 내담자 403 / 미인증 401")
     void emotionVideo_matrix() throws Exception {
         performVideo(RECORD_SELF, user(CLIENT_SELF, UserRole.CLIENT, TENANT_A)).andExpect(status().isOk());
         setUp();
         assertForbidden(performVideo(RECORD_OTHER, user(CLIENT_SELF, UserRole.CLIENT, TENANT_A)),
-            ClientPathAccessGuard.DENIAL_OWN_CLIENT_ONLY);
+            ResourceOwnerAccessGuard.DENIAL_RESOURCE_UNAVAILABLE);
         setUp();
         assertForbidden(performVideo(RECORD_OTHER, user(CONSULTANT_SELF, UserRole.CONSULTANT, TENANT_A)),
-            ClientPathAccessGuard.DENIAL_UNMAPPED_CLIENT);
+            ResourceOwnerAccessGuard.DENIAL_RESOURCE_UNAVAILABLE);
         setUp();
         mockMvc.perform(multipart("/api/v1/emotion-analysis/video/" + RECORD_SELF).file(videoFile()))
             .andExpect(status().isUnauthorized());
@@ -354,10 +376,10 @@ class ResourceOwnerGuardMvcTest {
             .andExpect(status().isOk());
         setUp();
         assertForbidden(call(HttpMethod.POST, String.format(uri, RECORD_OTHER), null,
-            user(CLIENT_SELF, UserRole.CLIENT, TENANT_A)), ClientPathAccessGuard.DENIAL_OWN_CLIENT_ONLY);
+            user(CLIENT_SELF, UserRole.CLIENT, TENANT_A)), ResourceOwnerAccessGuard.DENIAL_RESOURCE_UNAVAILABLE);
         setUp();
         assertForbidden(call(HttpMethod.POST, String.format(uri, RECORD_OTHER), null,
-            user(ADMIN_ID, UserRole.ADMIN, TENANT_A)), ResourceOwnerAccessGuard.DENIAL_RECORD_CLIENT_MISMATCH);
+            user(ADMIN_ID, UserRole.ADMIN, TENANT_A)), ResourceOwnerAccessGuard.DENIAL_RESOURCE_UNAVAILABLE);
     }
 
     // ---- 심리검사 목록·통계 ----
@@ -472,9 +494,9 @@ class ResourceOwnerGuardMvcTest {
                 .andExpect(status().isOk());
             setUp();
             assertForbidden(call(HttpMethod.PUT, "/api/v1/ratings/" + RATING_OTHER, json,
-                user(CLIENT_SELF, UserRole.CLIENT, TENANT_A)), ResourceOwnerAccessGuard.DENIAL_OWN_RATING_ONLY);
+                user(CLIENT_SELF, UserRole.CLIENT, TENANT_A)), ResourceOwnerAccessGuard.DENIAL_RESOURCE_UNAVAILABLE);
             assertForbidden(call(HttpMethod.PUT, "/api/v1/ratings/" + RATING_OTHER, json,
-                user(ADMIN_ID, UserRole.ADMIN, TENANT_A)), ResourceOwnerAccessGuard.DENIAL_OWN_RATING_ONLY);
+                user(ADMIN_ID, UserRole.ADMIN, TENANT_A)), ResourceOwnerAccessGuard.DENIAL_RESOURCE_UNAVAILABLE);
             mockMvc.perform(request(HttpMethod.PUT, "/api/v1/ratings/" + RATING_SELF)
                     .contentType(MediaType.APPLICATION_JSON).content(json))
                 .andExpect(status().isUnauthorized());
@@ -493,11 +515,11 @@ class ResourceOwnerGuardMvcTest {
             verify(ratingService).deleteRating(RATING_OTHER, CLIENT_OTHER);
             setUp();
             assertForbidden(call(HttpMethod.DELETE, "/api/v1/ratings/" + RATING_OTHER + "?clientId=" + CLIENT_OTHER,
-                null, user(CLIENT_SELF, UserRole.CLIENT, TENANT_A)), ResourceOwnerAccessGuard.DENIAL_OWN_RATING_ONLY);
+                null, user(CLIENT_SELF, UserRole.CLIENT, TENANT_A)), ResourceOwnerAccessGuard.DENIAL_RESOURCE_UNAVAILABLE);
             assertForbidden(call(HttpMethod.DELETE, "/api/v1/ratings/" + RATING_SELF + "?clientId=" + CLIENT_OTHER,
-                null, user(CLIENT_SELF, UserRole.CLIENT, TENANT_A)), ResourceOwnerAccessGuard.DENIAL_OWN_RATING_ONLY);
+                null, user(CLIENT_SELF, UserRole.CLIENT, TENANT_A)), ResourceOwnerAccessGuard.DENIAL_RESOURCE_UNAVAILABLE);
             assertForbidden(call(HttpMethod.DELETE, "/api/v1/ratings/" + RATING_SELF, null,
-                user(CONSULTANT_SELF, UserRole.CONSULTANT, TENANT_A)), ResourceOwnerAccessGuard.DENIAL_OWN_RATING_ONLY);
+                user(CONSULTANT_SELF, UserRole.CONSULTANT, TENANT_A)), ResourceOwnerAccessGuard.DENIAL_RESOURCE_UNAVAILABLE);
             assertForbidden(call(HttpMethod.DELETE, "/api/v1/ratings/" + RATING_SELF, null,
                 user(ADMIN_B_ID, UserRole.ADMIN, TENANT_B)), ResourceOwnerAccessGuard.DENIAL_RESOURCE_UNAVAILABLE);
             mockMvc.perform(request(HttpMethod.DELETE, "/api/v1/ratings/" + RATING_SELF))
@@ -515,11 +537,12 @@ class ResourceOwnerGuardMvcTest {
         performConsultant(e, user(CONSULTANT_SELF, UserRole.CONSULTANT, TENANT_A), e.selfRes(), CONSULTANT_SELF)
             .andExpect(status().is2xxSuccessful());
         setUp();
+        String denial = denialFor(e);
         assertForbidden(performConsultant(e, user(CONSULTANT_SELF, UserRole.CONSULTANT, TENANT_A), e.otherRes(),
-            CONSULTANT_OTHER), ClientPathAccessGuard.DENIAL_OWN_CONSULTANT_ONLY);
+            CONSULTANT_OTHER), denial);
         setUp();
         assertForbidden(performConsultant(e, user(CLIENT_SELF, UserRole.CLIENT, TENANT_A), e.selfRes(),
-            CONSULTANT_SELF), ClientPathAccessGuard.DENIAL_OWN_CONSULTANT_ONLY);
+            CONSULTANT_SELF), denial);
     }
 
     @ParameterizedTest(name = "{0}")
@@ -563,11 +586,19 @@ class ResourceOwnerGuardMvcTest {
 
     // ---- helpers ----
 
-    private void assertForbidden(ResultActions result, String expectedMessage) throws Exception {
+    /** 자원 id(slot) 로 거부되면 공통 문구, 경로 상담사 id 로 거부되면 경로 가드 문구. */
+    private static String denialFor(Endpoint e) {
+        return e.template().contains(CONSULTANT)
+            ? ClientPathAccessGuard.DENIAL_OWN_CONSULTANT_ONLY
+            : ResourceOwnerAccessGuard.DENIAL_RESOURCE_UNAVAILABLE;
+    }
+
+    private ResultActions assertForbidden(ResultActions result, String expectedMessage) throws Exception {
         result.andExpect(status().isForbidden())
             .andExpect(jsonPath("$.message").value(expectedMessage))
             .andExpect(jsonPath("$.data").doesNotExist());
         verifyNoInteractions(dataServices);
+        return result;
     }
 
     private ResultActions perform(Endpoint e, User caller, long resId) throws Exception {

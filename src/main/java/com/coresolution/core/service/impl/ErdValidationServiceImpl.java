@@ -134,7 +134,7 @@ public class ErdValidationServiceImpl implements ErdValidationService {
                 ErdDiagram.DiagramType.TENANT);
 
         if (tenantErds.isEmpty()) {
-            throw new IllegalArgumentException("테넌트 ERD를 찾을 수 없습니다: tenantId=" + tenantId);
+            throw new IllegalArgumentException("테넌트 ERD를 찾을 수 없습니다.");
         }
 
         // 가장 최신 ERD 검증

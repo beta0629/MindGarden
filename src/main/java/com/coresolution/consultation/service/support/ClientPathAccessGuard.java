@@ -297,8 +297,21 @@ public class ClientPathAccessGuard {
     }
 
     static void deny(String message, User caller, String field, Long requested) {
+        throw denied(message, caller, field, requested);
+    }
+
+    /**
+     * 거부를 로그에 남기고 던질 예외를 돌려준다 ({@code throw denied(...)} 로 써서 이후 코드를 도달 불가로 만든다).
+     *
+     * @param message   사용자 문구 (내부 id·세션 값 금지)
+     * @param caller    세션 사용자
+     * @param field     로그용 필드 이름
+     * @param requested 로그용 요청 값
+     * @return 던질 {@link AccessDeniedException}
+     */
+    static AccessDeniedException denied(String message, User caller, String field, Long requested) {
         log.warn("[security] client path access denied: userId={}, role={}, {}={}",
-            caller.getId(), caller.getRole(), field, requested);
-        throw new AccessDeniedException(message);
+            caller != null ? caller.getId() : null, caller != null ? caller.getRole() : null, field, requested);
+        return new AccessDeniedException(message);
     }
 }

@@ -49,8 +49,9 @@ public class PermissionGroupController {
         if (tenantId == null || roleId == null) {
             log.warn("⚠️ 세션 정보 부족: userId={}, tenantId={}, roleId={}", 
                 user != null ? user.getId() : "null", tenantId, roleId);
+            // 세션 값(tenantId·roleId)은 위 로그에만 남긴다. 사용자 문구에 내부 식별자를 넣지 않는다.
             return ResponseEntity.badRequest()
-                .body(ApiResponse.error("세션 정보가 부족합니다. tenantId=" + tenantId + ", roleId=" + roleId));
+                .body(ApiResponse.error("세션 정보가 부족합니다."));
         }
 
         log.info("✅ 내 권한 그룹 조회: tenantId={}, roleId={}", tenantId, roleId);

@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 
 import java.util.List;
 
@@ -201,6 +202,19 @@ class SecurityConfigAnyRequestAuthenticatedRegressionIntegrationTest {
 
         assertThat(status)
                 .as("P0: GET /api/v1/onboarding/requests/{id:\\d+} 는 authenticated 이어야 합니다.")
+                .isEqualTo(401);
+    }
+
+    @Test
+    @DisplayName("민감 온보딩 PUT /api/v1/onboarding/requests/{numericId} 미인증 → 401")
+    void onboardingSensitivePutById_withoutAuth_isUnauthorized() throws Exception {
+        int status = mockMvc.perform(put("/api/v1/onboarding/requests/1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"tenantName\":\"probe\"}"))
+                .andReturn().getResponse().getStatus();
+
+        assertThat(status)
+                .as("P0: PUT /api/v1/onboarding/requests/{id:\\d+} 는 authenticated 이어야 합니다.")
                 .isEqualTo(401);
     }
 

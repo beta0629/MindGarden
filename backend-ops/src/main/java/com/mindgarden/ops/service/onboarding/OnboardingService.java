@@ -444,47 +444,11 @@ public class OnboardingService {
                 
                 if (adminEmail != null && !adminEmail.isBlank()) {
                     try {
-                        // 1. 체크리스트에서 비밀번호 추출
-                        String rawPassword = extractAdminPasswordFromChecklist(request.getChecklistJson());
-                        
-                        // 2. 추출된 비밀번호 검증
-                        if (rawPassword == null || rawPassword.isBlank()) {
-                            log.error("❌ 추출된 비밀번호가 null이거나 비어있음, 기본 비밀번호 사용");
-                            rawPassword = "TempPassword123!";
-                        }
-                        
-                        // 3. 비밀번호 최소 길이 검증 (방어 코드)
-                        if (rawPassword.length() < 8) {
-                            log.warn("⚠️ 추출된 비밀번호가 너무 짧음 (length={}), 기본 비밀번호 사용", rawPassword.length());
-                            rawPassword = "TempPassword123!";
-                        }
-                        
-                        log.info("🔑 추출된 관리자 비밀번호: length={}, isEmpty={}", rawPassword.length(), rawPassword.isEmpty());
-                        
-                        // 4. 비밀번호 해시 생성 (방어 코드: 예외 처리)
-                        try {
-                            // 메인 백엔드가 생성 시 BCrypt 해시로 저장 — 재인코딩하면 원 비밀번호로 로그인 불가
-                            adminPasswordHash = BCRYPT_HASH_PATTERN.matcher(rawPassword).matches()
-                                ? rawPassword
-                                : passwordEncoder.encode(rawPassword);
-                            if (adminPasswordHash == null || adminPasswordHash.isBlank()) {
-                                log.error("❌ 비밀번호 해시 생성 실패 (null 반환), 기본 비밀번호 해시 사용");
-                                adminPasswordHash = passwordEncoder.encode("TempPassword123!");
-                            }
-                            log.info("✅ 관리자 계정 정보 준비 완료 - email={}", adminEmail);
-                        } catch (Exception e) {
-                            log.error("❌ 비밀번호 해시 생성 중 예외 발생: {}, 기본 비밀번호 해시 사용", e.getMessage(), e);
-                            try {
-                                adminPasswordHash = passwordEncoder.encode("TempPassword123!");
-                            } catch (Exception e2) {
-                                log.error("❌ 기본 비밀번호 해시 생성도 실패: {}", e2.getMessage(), e2);
-                                // 해시 생성 실패 시 null로 두고 프로시저에서 처리하도록 함
-                                adminPasswordHash = null;
-                            }
-                        }
+                        adminPasswordHash = resolveAdminPasswordHash(request.getChecklistJson());
+                        log.info("✅ 관리자 계정 정보 준비 완료 - email={}, hasPasswordHash={}",
+                                adminEmail, adminPasswordHash != null);
                     } catch (Exception e) {
                         log.error("❌ 관리자 비밀번호 추출/해시 생성 중 예외 발생: {}", e.getMessage(), e);
-                        // 예외 발생 시에도 프로세스는 계속 진행 (프로시저에서 처리)
                         adminPasswordHash = null;
                     }
                 } else {
@@ -743,56 +707,73 @@ public class OnboardingService {
     }
     
     /**
-     * 체크리스트 JSON에서 관리자 비밀번호 추출 (방어 코드 포함)
+     * 체크리스트의 관리자 비밀번호를 해시로 만든다.
+     * 이미 BCrypt 이면 그대로 쓰고, 평문이면 {@link PasswordEncoder} 로 해시한다.
+     * 값이 없거나 길이가 정책 밖이면 요청마다 새 평문을 만들어 해시한다.
+     * 평문은 로그에 남기지 않는다.
+     *
+     * @param checklistJson 체크리스트 JSON
+     * @return BCrypt 해시. 인코더가 빈 값을 주면 null
+     */
+    String resolveAdminPasswordHash(String checklistJson) {
+        String extracted = extractAdminPasswordFromChecklist(checklistJson);
+        if (extracted != null && BCRYPT_HASH_PATTERN.matcher(extracted).matches()) {
+            return extracted;
+        }
+        String rawPassword = extracted;
+        if (rawPassword == null || rawPassword.isBlank()
+                || !OnboardingTemporaryPasswordGenerator.meetsLoginPolicy(rawPassword)) {
+            rawPassword = OnboardingTemporaryPasswordGenerator.generate();
+        }
+        try {
+            String encoded = passwordEncoder.encode(rawPassword);
+            if (encoded == null || encoded.isBlank()) {
+                log.error("관리자 비밀번호 해시 생성 결과가 비어 있습니다.");
+                return null;
+            }
+            return encoded;
+        } catch (RuntimeException e) {
+            log.error("관리자 비밀번호 해시 생성 실패: {}", e.getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * 체크리스트 JSON에서 관리자 비밀번호를 추출한다.
+     * 없거나 길이가 저장 정책 밖이면 null. 고정 비밀번호로 대체하지 않는다.
+     *
      * @param checklistJson 체크리스트 JSON 문자열
-     * @return 관리자 비밀번호 (없거나 추출 실패 시 기본 비밀번호)
+     * @return 추출 값. 없으면 null
      */
     private String extractAdminPasswordFromChecklist(String checklistJson) {
-        // 1. null/빈 문자열 체크
         if (checklistJson == null || checklistJson.isEmpty()) {
-            log.warn("⚠️ 체크리스트 JSON이 null이거나 비어있음, 기본 비밀번호 사용: TempPassword123!");
-            return "TempPassword123!"; // 기본 비밀번호
+            log.warn("체크리스트 JSON이 비어 있어 관리자 비밀번호를 추출하지 못했습니다.");
+            return null;
         }
-        
-        // 2. JSON 파싱 시도 (방어 코드: 예외 처리)
+
         try {
             JsonNode jsonNode = objectMapper.readTree(checklistJson);
-            
-            // 3. adminPassword 필드 존재 및 타입 확인
             if (jsonNode.has("adminPassword") && jsonNode.get("adminPassword").isTextual()) {
                 String extractedPassword = jsonNode.get("adminPassword").asText();
-                
-                // 4. 추출된 비밀번호 검증 (방어 코드)
                 if (extractedPassword != null && !extractedPassword.isEmpty()) {
-                    // 5. 비밀번호 최소 길이 검증 (방어 코드)
-                    if (extractedPassword.length() < 8) {
-                        log.warn("⚠️ 추출된 비밀번호가 너무 짧음 (length={}), 기본 비밀번호 사용", extractedPassword.length());
-                        return "TempPassword123!";
+                    if (extractedPassword.length() < OnboardingTemporaryPasswordGenerator.MIN_LENGTH
+                            || extractedPassword.length() > OnboardingTemporaryPasswordGenerator.MAX_LENGTH) {
+                        log.warn("추출된 관리자 비밀번호 길이가 정책 밖입니다. length={}", extractedPassword.length());
+                        return null;
                     }
-                    
-                    // 6. 비밀번호 최대 길이 검증 (방어 코드: SQL 인젝션 방지)
-                    if (extractedPassword.length() > 100) {
-                        log.warn("⚠️ 추출된 비밀번호가 너무 김 (length={}), 기본 비밀번호 사용", extractedPassword.length());
-                        return "TempPassword123!";
-                    }
-                    
-                    log.info("✅ 체크리스트에서 adminPassword 추출 성공 (JSON 파싱): length={}", extractedPassword.length());
+                    log.info("체크리스트에서 adminPassword 추출 성공. length={}", extractedPassword.length());
                     return extractedPassword;
-                } else {
-                    log.warn("⚠️ 체크리스트 JSON에서 adminPassword 값이 비어있음, 기본 비밀번호 사용");
                 }
+                log.warn("체크리스트 JSON의 adminPassword 값이 비어 있습니다.");
             } else {
-                log.warn("⚠️ 체크리스트 JSON에서 \"adminPassword\" 필드를 찾을 수 없거나 텍스트 타입이 아님, 기본 비밀번호 사용");
+                log.warn("체크리스트 JSON에서 adminPassword 필드를 찾지 못했습니다.");
             }
         } catch (com.fasterxml.jackson.core.JsonProcessingException e) {
-            log.warn("⚠️ 체크리스트 JSON 파싱 실패 (잘못된 JSON 형식), 기본 비밀번호 사용: {}", e.getMessage());
-        } catch (Exception e) {
-            log.warn("⚠️ 체크리스트 JSON에서 adminPassword 추출 실패 (예상치 못한 오류), 기본 비밀번호 사용: {}", e.getMessage(), e);
+            log.warn("체크리스트 JSON 파싱 실패: {}", e.getMessage());
+        } catch (RuntimeException e) {
+            log.warn("체크리스트 JSON에서 adminPassword 추출 실패: {}", e.getMessage());
         }
-        
-        // 7. 모든 추출 시도 실패 시 기본 비밀번호 반환
-        log.warn("⚠️ 기본 비밀번호 사용: TempPassword123!");
-        return "TempPassword123!"; // 추출 실패 시 기본 비밀번호
+        return null;
     }
     
     /**

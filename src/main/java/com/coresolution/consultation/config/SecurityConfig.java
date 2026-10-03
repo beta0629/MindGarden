@@ -142,7 +142,12 @@ public class SecurityConfig {
                         "/api/v1/onboarding/requests/{id:\\d+}/retry").authenticated()
                     .requestMatchers(HttpMethod.POST,
                         "/api/v1/onboarding/requests/{id:\\d+}/retry-initialization").authenticated()
-                    // 공개 온보딩: captcha·POST create·PUT session·public 조회·email/subdomain-check
+                    // PUT by id 는 permitAll 보다 먼저. 미인증 호출자가 id 를 추측해 요청명을 바꾸지 못하게 한다.
+                    // 이 prefix 는 JWT·세션 필터가 스킵하므로 세션이 있어도 여기서 401(fail-closed).
+                    // 운영자 수정은 /api/v1/ops/onboarding/** (authenticated + requireOps).
+                    .requestMatchers(HttpMethod.PUT,
+                        "/api/v1/onboarding/requests/{id:\\d+}").authenticated()
+                    // 공개 온보딩: captcha·POST create·public 조회·email/subdomain-check
                     .requestMatchers("/api/v1/onboarding/**").permitAll()
                     // /api/v1/ops/onboarding/** permitAll 제거 — /api/v1/ops/** authenticated 적용
                     // 공개 엔드포인트: Trinity 온보딩에서 사용하는 요금제 조회 API
@@ -275,7 +280,10 @@ public class SecurityConfig {
                         "/api/v1/onboarding/requests/{id:\\d+}/retry").authenticated()
                     .requestMatchers(HttpMethod.POST,
                         "/api/v1/onboarding/requests/{id:\\d+}/retry-initialization").authenticated()
-                    // 공개 온보딩: captcha·POST create·PUT session·public 조회·email/subdomain-check
+                    // PUT by id 는 permitAll 보다 먼저. 미인증 호출자가 id 를 추측해 요청명을 바꾸지 못하게 한다.
+                    .requestMatchers(HttpMethod.PUT,
+                        "/api/v1/onboarding/requests/{id:\\d+}").authenticated()
+                    // 공개 온보딩: captcha·POST create·public 조회·email/subdomain-check
                     .requestMatchers("/api/v1/onboarding/**").permitAll()
                     // /api/v1/ops/onboarding/** permitAll 제거 — /api/v1/ops/** authenticated 적용
                     // 공개 엔드포인트: Trinity 온보딩에서 사용하는 요금제 조회 API

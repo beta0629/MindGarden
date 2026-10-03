@@ -62,7 +62,9 @@ class ProcedureJdbcSignatureCatalogTest {
             "GetBusinessTimeSettings",
             "UpdateBusinessTimeSetting",
             "UpdateAllBranchDailyStatistics",
-            "UpdateAllConsultantPerformance");
+            "UpdateAllConsultantPerformance",
+            // 운영/개발에서 "Parameter number 4 is not an OUT parameter" 로 500 을 낸 적이 있는 호출
+            "GetConsolidatedFinancialData");
 
     private final Map<Integer, Param> byOrdinal = new HashMap<>();
     private final List<Integer> registeredOut = new ArrayList<>();

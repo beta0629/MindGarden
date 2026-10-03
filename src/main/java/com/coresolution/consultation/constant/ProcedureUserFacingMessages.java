@@ -20,6 +20,7 @@ public final class ProcedureUserFacingMessages {
     public static final String PROC_UPDATE_ALL_CONSULTANT_PERFORMANCE = "UpdateAllConsultantPerformance";
     public static final String PROC_DAILY_PERFORMANCE_MONITORING = "DailyPerformanceMonitoring";
     public static final String PROC_GENERATE_QUARTERLY_FINANCIAL_REPORT = "GenerateQuarterlyFinancialReport";
+    public static final String PROC_GET_CONSOLIDATED_FINANCIAL_DATA = "GetConsolidatedFinancialData";
     public static final String QUERY_CONSOLIDATED_FINANCIAL_DATA = "ConsolidatedFinancialData";
     public static final String QUERY_FINANCIAL_REPORT = "FinancialReport";
 

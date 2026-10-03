@@ -3,10 +3,12 @@ package com.coresolution.consultation.controller;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Map;
+import com.coresolution.consultation.constant.ProcedureUserFacingMessages;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.service.DynamicPermissionService;
 import com.coresolution.consultation.service.PlSqlAccountingService;
 import com.coresolution.consultation.util.EmailLogMasking;
+import com.coresolution.consultation.util.ProcedureResults;
 import com.coresolution.consultation.utils.SessionUtils;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -156,16 +158,19 @@ public class PlSqlAccountingController {
             log.info("🏭 전사 통합 재무 현황 조회 요청: StartDate={}, EndDate={}, BranchCodes={}",
                 start, end, branchCodes);
 
-            Map<String, Object> result = plSqlAccountingService.getConsolidatedFinancialData(start, end, branchCodes);
+            // 프로시저 내부 실패(success:false)도 바깥 success:true 로 감싸지 않는다.
+            // 실패는 GlobalExceptionHandler 가 success:false + 한글 문구로 응답한다.
+            Map<String, Object> result = ProcedureResults.callRequiringSuccess(
+                ProcedureUserFacingMessages.PROC_GET_CONSOLIDATED_FINANCIAL_DATA,
+                ProcedureUserFacingMessages.CONSOLIDATED_FINANCIAL_FAILED,
+                () -> plSqlAccountingService.getConsolidatedFinancialData(start, end, branchCodes));
 
             return ResponseEntity.ok(result);
 
         } catch (Exception e) {
-            log.error("❌ 전사 통합 재무 현황 조회 실패", e);
-            return ResponseEntity.internalServerError().body(Map.of(
-                "success", false,
-                "message", "전사 통합 재무 현황 조회 중 오류가 발생했습니다: " + e.getMessage()
-            ));
+            throw ProcedureResults.failure(
+                ProcedureUserFacingMessages.PROC_GET_CONSOLIDATED_FINANCIAL_DATA,
+                ProcedureUserFacingMessages.CONSOLIDATED_FINANCIAL_FAILED, e);
         }
     }
 

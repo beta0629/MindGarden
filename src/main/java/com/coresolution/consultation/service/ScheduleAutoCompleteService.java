@@ -1,21 +1,30 @@
 package com.coresolution.consultation.service;
 
+import java.time.Clock;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.locks.ReentrantLock;
 import com.coresolution.consultation.constant.ScheduleStatus;
 import com.coresolution.consultation.entity.Schedule;
 import com.coresolution.consultation.repository.ScheduleRepository;
+import com.coresolution.consultation.util.ReservationSmsBusinessHours;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.service.TenantService;
-import org.springframework.context.ConfigurableApplicationContext;
+import jakarta.annotation.PostConstruct;
+import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 import org.hibernate.StaleStateException;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.scheduling.support.CronExpression;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -40,17 +49,58 @@ public class ScheduleAutoCompleteService {
     private final SalaryLateSessionAutoSyncService salaryLateSessionAutoSyncService;
     private final TenantService tenantService;
     private final ConfigurableApplicationContext applicationContext;
-    
+
     /**
-     * 매 10분마다 시간이 지난 스케줄을 자동 완료 처리 및 상담일지 미작성 알림
-     * cron: 초 분 시 일 월 요일
-     * 모든 활성 테넌트에 대해 실행
+     * 두 배치(주기 자동 완료·자정 정리)가 같은 JVM 에서 겹쳐 같은 일정을 동시에 완료·회기 차감하지 않도록 직렬화한다.
+     * 슬롯 간 중복은 {@link SchedulerLock} 이 막는다.
      */
-    @Scheduled(cron = "0 */10 * * * *") // 10분마다 실행 (운영용)
+    private final ReentrantLock runLock = new ReentrantLock();
+
+    @Value("${mindgarden.scheduler.schedule-auto-complete.zone:}")
+    private String zoneId;
+
+    @Value("${mindgarden.scheduler.schedule-auto-complete.cron:}")
+    private String autoCompleteCron;
+
+    @Value("${mindgarden.scheduler.schedule-auto-complete.daily-cron:}")
+    private String dailyCleanupCron;
+
+    private Clock clock;
+
+    /**
+     * 배치 등록·다음 실행 시각을 남긴다 (배포 후 읽기 전용 확인용).
+     */
+    @PostConstruct
+    void logRegistration() {
+        log.info("🗓️ 스케줄 자동 완료 배치 등록: cron={}, next={}, dailyCron={}, dailyNext={}, zone={}",
+            autoCompleteCron, nextRun(autoCompleteCron), dailyCleanupCron, nextRun(dailyCleanupCron),
+            resolveZone());
+    }
+
+    /**
+     * 시간이 지난 스케줄 자동 완료 처리 및 상담일지 미작성 알림 (모든 활성 테넌트).
+     *
+     * <p>조회 API 는 완료 처리를 하지 않는다. 완료 전환·회기 차감·급여 동기화·통계 반영은 이 배치와
+     * {@link #cleanupDailySchedules()}, 관리자 수동 실행 API 에서만 일어난다.
+     * 주기: {@code mindgarden.scheduler.schedule-auto-complete.cron}.</p>
+     */
+    @Scheduled(cron = "${mindgarden.scheduler.schedule-auto-complete.cron}",
+        zone = "${mindgarden.scheduler.schedule-auto-complete.zone}")
+    @SchedulerLock(name = "ScheduleAutoCompleteService_autoCompleteExpiredSchedules",
+        lockAtMostFor = "${mindgarden.scheduler.schedule-auto-complete.lock-at-most-for}")
     public void autoCompleteExpiredSchedules() {
         if (!applicationContext.isActive()) {
             return;
         }
+        runLock.lock();
+        try {
+            runAutoComplete();
+        } finally {
+            runLock.unlock();
+        }
+    }
+
+    private void runAutoComplete() {
         try {
             // 스케줄러는 HTTP 요청 컨텍스트가 없으므로 모든 활성 테넌트에 대해 실행
             List<String> activeTenantIds = tenantService.getAllActiveTenantIds();
@@ -73,7 +123,7 @@ public class ScheduleAutoCompleteService {
                     
                     log.info("🔄 테넌트별 스케줄 자동 완료 처리 시작: tenantId={}", tenantId);
                     
-                    LocalDateTime now = LocalDateTime.now();
+                    LocalDateTime now = currentDateTime();
                     LocalDate today = now.toLocalDate();
                     LocalTime currentTime = now.toLocalTime();
                     
@@ -236,14 +286,50 @@ public class ScheduleAutoCompleteService {
     }
     
     /**
-     * 매일 자정에 하루 종료된 스케줄들을 정리
-     * 테넌트 컨텍스트가 없어 early return되지 않도록 각 활성 테넌트별로 컨텍스트 설정 후 처리
+     * 하루 종료된 스케줄 정리 (진행중 일정 포함, 테넌트별 컨텍스트 설정 후 처리).
+     * 주기: {@code mindgarden.scheduler.schedule-auto-complete.daily-cron}.
      */
-    @Scheduled(cron = "0 0 0 * * *")
+    @Scheduled(cron = "${mindgarden.scheduler.schedule-auto-complete.daily-cron}",
+        zone = "${mindgarden.scheduler.schedule-auto-complete.zone}")
+    @SchedulerLock(name = "ScheduleAutoCompleteService_cleanupDailySchedules",
+        lockAtMostFor = "${mindgarden.scheduler.schedule-auto-complete.daily-lock-at-most-for}")
     public void cleanupDailySchedules() {
         if (!applicationContext.isActive()) {
             return;
         }
+        runLock.lock();
+        try {
+            runDailyCleanup();
+        } finally {
+            runLock.unlock();
+        }
+    }
+
+    /**
+     * 테스트용 시계 주입.
+     *
+     * @param clock 기준 시계
+     */
+    void useClock(Clock clock) {
+        this.clock = clock;
+    }
+
+    private LocalDateTime currentDateTime() {
+        return LocalDateTime.now(clock != null ? clock : Clock.system(resolveZone()));
+    }
+
+    private LocalDateTime nextRun(String cron) {
+        if (!StringUtils.hasText(cron) || !CronExpression.isValidExpression(cron)) {
+            return null;
+        }
+        return CronExpression.parse(cron).next(currentDateTime());
+    }
+
+    private ZoneId resolveZone() {
+        return StringUtils.hasText(zoneId) ? ZoneId.of(zoneId.trim()) : ReservationSmsBusinessHours.ZONE_SEOUL;
+    }
+
+    private void runDailyCleanup() {
         try {
             log.info("🧹 일일 스케줄 정리 시작");
             List<String> activeTenantIds = tenantService.getAllActiveTenantIds();

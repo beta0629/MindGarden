@@ -14,6 +14,12 @@ export interface OnboardingRequest {
   createdAt: string;
   updatedAt: string;
   businessType?: string | null; // 업종 타입 추가
+  subdomain?: string | null;
+  brandName?: string | null;
+  region?: string | null;
+  representativeName?: string | null;
+  businessLandline?: string | null;
+  businessAddress?: string | null;
   initializationStatusJson?: string | null; // 초기화 작업 단계별 상태 (JSON)
 }
 

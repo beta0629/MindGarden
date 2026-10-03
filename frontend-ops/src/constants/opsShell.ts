@@ -53,3 +53,12 @@ export const OPS_PUBLIC_PATH_PREFIXES = [
   '/api/auth/login',
   '/api/auth/logout'
 ] as const;
+
+export const OPS_SHELL_CHROME = {
+  MENU_LABEL: '메뉴',
+  BACK_LABEL: '뒤로',
+  MENU_GLYPH: '☰',
+  BACK_GLYPH: '←',
+  NAV_LABEL: 'Ops 좌측 메뉴',
+  LOGIN: '로그인'
+} as const;

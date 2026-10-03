@@ -3,16 +3,16 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
+import { LogoutButton } from "@/components/auth/LogoutButton";
+import { ONBOARDING_PATHS } from "@/constants/onboarding";
 import {
-  OPS_SHELL_BRAND,
+  OPS_SHELL_CHROME,
   OPS_SHELL_LNB_ITEMS,
   OPS_SHELL_PATHS
 } from "@/constants/opsShell";
-import { LogoutButton } from "@/components/auth/LogoutButton";
 
 /**
- * OpsLnb — DesktopLnb twin wrapper (slate sidebar, Phase 1 3-item IA).
- * No new LNB organism; reuses .mg-v2-desktop-lnb classes.
+ * OpsLnb — 승인된 3항 내비. 신청 심사에서도 테넌트가 현재 위치다.
  *
  * @author CoreSolution
  * @since 2026-09-08
@@ -20,35 +20,49 @@ import { LogoutButton } from "@/components/auth/LogoutButton";
 
 type OpsLnbProps = {
   actorId?: string | null;
-  actorRole?: string | null;
+  embedded?: boolean;
+  showSessionAction?: boolean;
+  onNavigate?: () => void;
 };
+
+function normalizePath(pathname: string): string {
+  if (pathname.length > 1 && pathname.endsWith("/")) {
+    return pathname.slice(0, -1);
+  }
+  return pathname;
+}
 
 function isActivePath(pathname: string | null, href: string): boolean {
   if (!pathname) {
     return false;
   }
-  if (href === OPS_SHELL_PATHS.TENANTS) {
-    return pathname === href || pathname === "/" || pathname.startsWith(`${href}/`);
+  const current = normalizePath(pathname);
+  const target = normalizePath(href);
+  if (target === OPS_SHELL_PATHS.TENANTS) {
+    return (
+      current === target ||
+      current === "/" ||
+      current.startsWith(`${target}/`) ||
+      current === ONBOARDING_PATHS.LIST ||
+      current.startsWith(`${ONBOARDING_PATHS.LIST}/`)
+    );
   }
-  return pathname === href || pathname.startsWith(`${href}/`);
+  return current === target || current.startsWith(`${target}/`);
 }
 
-export default function OpsLnb({ actorId = null, actorRole = null }: OpsLnbProps) {
+export default function OpsLnb({
+  actorId = null,
+  embedded = false,
+  showSessionAction = true,
+  onNavigate
+}: OpsLnbProps) {
   const pathname = usePathname();
+  const asideClass = embedded
+    ? "mg-v2-desktop-lnb mg-v2-desktop-lnb--embedded"
+    : "mg-v2-desktop-lnb";
 
   return (
-    <aside className="mg-v2-desktop-lnb" role="navigation" aria-label="Ops 좌측 메뉴">
-      <div className="mg-v2-desktop-lnb__header">
-        <Link href={OPS_SHELL_PATHS.TENANTS} className="mg-v2-desktop-lnb__title">
-          {OPS_SHELL_BRAND}
-        </Link>
-        {actorId ? (
-          <span className="mg-v2-desktop-lnb__user">
-            {actorId}
-            {actorRole ? ` · ${actorRole}` : ""}
-          </span>
-        ) : null}
-      </div>
+    <aside className={asideClass} aria-label={OPS_SHELL_CHROME.NAV_LABEL}>
       <nav className="mg-v2-desktop-lnb__nav">
         <ul className="mg-v2-desktop-lnb__list">
           {OPS_SHELL_LNB_ITEMS.map((item) => {
@@ -63,6 +77,7 @@ export default function OpsLnb({ actorId = null, actorRole = null }: OpsLnbProps
                       : "mg-v2-desktop-lnb__link"
                   }
                   aria-current={active ? "page" : undefined}
+                  onClick={onNavigate}
                 >
                   {item.label}
                 </Link>
@@ -71,15 +86,18 @@ export default function OpsLnb({ actorId = null, actorRole = null }: OpsLnbProps
           })}
         </ul>
       </nav>
-      <div className="mg-v2-desktop-lnb__footer">
-        {actorId ? (
+      {showSessionAction && actorId ? (
+        <div className="mg-v2-desktop-lnb__footer ops-shell__logout">
           <LogoutButton />
-        ) : (
-          <Link className="ghost-button" href={OPS_SHELL_PATHS.LOGIN}>
-            로그인
+        </div>
+      ) : null}
+      {showSessionAction && !actorId ? (
+        <div className="mg-v2-desktop-lnb__footer">
+          <Link className="mg-v2-desktop-lnb__link" href={OPS_SHELL_PATHS.LOGIN} onClick={onNavigate}>
+            {OPS_SHELL_CHROME.LOGIN}
           </Link>
-        )}
-      </div>
+        </div>
+      ) : null}
     </aside>
   );
 }

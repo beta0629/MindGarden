@@ -1,86 +1,107 @@
-/**
- * 온보딩 카드 리스트 컴포넌트
- * 테이블 형태 대신 카드 형태로 표시
- */
+"use client";
 
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { OnboardingRequest } from "@/types/onboarding";
 import { OnboardingStatus } from "@/types/shared";
-import { ONBOARDING_MESSAGES } from "@/constants/onboarding";
-import { getStatusLabel } from "@/utils/onboardingUtils";
+import {
+  ONBOARDING_LIST_FILTER,
+  ONBOARDING_LIST_FILTERS,
+  ONBOARDING_MESSAGES,
+  ONBOARDING_PATHS,
+  type OnboardingListFilter
+} from "@/constants/onboarding";
+import {
+  countOnboardingFilters,
+  getListFilterLabel,
+  getRequesterDisplayName,
+  getRiskLabel,
+  getStatusLabel,
+  isHighRisk
+} from "@/utils/onboardingUtils";
 import { formatOnboardingDate } from "@/utils/dateUtils";
-import OpsCard from "@/components/ui/OpsCard";
-import RiskBadge from "./RiskBadge";
-import StatusBadge from "./StatusBadge";
-import MGButton from "@/components/ui/MGButton";
-import styles from "./OnboardingCardList.module.css";
 
 interface OnboardingCardListProps {
   requests: OnboardingRequest[];
   statusFilter?: OnboardingStatus;
+  onFilter: (filter: OnboardingListFilter) => void;
 }
 
-export default function OnboardingCardList({ requests, statusFilter }: OnboardingCardListProps) {
-  const router = useRouter();
+export default function OnboardingCardList({
+  requests,
+  statusFilter,
+  onFilter
+}: OnboardingCardListProps) {
   const safeRequests = Array.isArray(requests) ? requests : [];
-  
-  if (safeRequests.length === 0) {
-    return (
-      <div className={styles.emptyMessage}>
-        {statusFilter 
-          ? ONBOARDING_MESSAGES.NO_REQUESTS_BY_STATUS(getStatusLabel(statusFilter))
-          : ONBOARDING_MESSAGES.NO_REQUESTS
-        }
-      </div>
-    );
-  }
-  
-  const handleViewDetail = (requestId: string) => {
-    router.push(`/onboarding/detail?id=${requestId}`);
-  };
-  
+  const counts = countOnboardingFilters(safeRequests);
+  const activeFilter: OnboardingListFilter = statusFilter || ONBOARDING_LIST_FILTER.ALL;
+  const visibleRequests = statusFilter
+    ? safeRequests.filter((request) => request.status === statusFilter)
+    : safeRequests;
+
   return (
-    <div className={styles.cardGrid}>
-      {safeRequests.map((request) => (
-        <OpsCard key={request.id} className={styles.onboardingCard}>
-          <div className={styles.cardHeader}>
-            <div>
-              <h3 className={styles.cardTitle}>{request.tenantName}</h3>
-              <p className={styles.cardSubtitle}>{request.tenantId}</p>
-            </div>
-            <StatusBadge status={request.status} />
-          </div>
-          
-          <div className={styles.cardContent}>
-            <div className={styles.cardMeta}>
-              <div className={styles.metaItem}>
-                <span className={styles.metaLabel}>요청자</span>
-                <span className={styles.metaValue}>{request.requestedBy}</span>
-              </div>
-              <div className={styles.metaItem}>
-                <span className={styles.metaLabel}>리스크</span>
-                <RiskBadge level={request.riskLevel} />
-              </div>
-              <div className={styles.metaItem}>
-                <span className={styles.metaLabel}>요청 일시</span>
-                <span className={styles.metaValue}>{formatOnboardingDate(request.createdAt)}</span>
-              </div>
-            </div>
-          </div>
-          
-          <div className={styles.cardActions}>
-            <MGButton
-              variant="primary"
-              size="small"
-              preventDoubleClick={true}
-              onClick={() => handleViewDetail(String(request.id))}
+    <>
+      <div className="ops-onboarding__stats" role="group" aria-label={ONBOARDING_MESSAGES.FILTER_ALL}>
+        {ONBOARDING_LIST_FILTERS.map((filter) => {
+          const selected = filter === activeFilter;
+          const label = getListFilterLabel(filter);
+          return (
+            <button
+              key={filter}
+              type="button"
+              className={
+                selected
+                  ? "ops-onboarding__stat ops-onboarding__stat--on"
+                  : "ops-onboarding__stat"
+              }
+              aria-pressed={selected}
+              onClick={() => onFilter(filter)}
             >
-              {ONBOARDING_MESSAGES.VIEW_DETAIL}
-            </MGButton>
-          </div>
-        </OpsCard>
-      ))}
-    </div>
+              <b className="ops-onboarding__stat-value">{counts[filter]}</b>
+              <span className="ops-onboarding__stat-label">{label}</span>
+            </button>
+          );
+        })}
+      </div>
+      {visibleRequests.length === 0 ? (
+        <p className="ops-onboarding__empty">
+          {statusFilter
+            ? ONBOARDING_MESSAGES.NO_REQUESTS_BY_STATUS(getStatusLabel(statusFilter))
+            : ONBOARDING_MESSAGES.NO_REQUESTS}
+        </p>
+      ) : (
+        <ul className="ops-onboarding__cards">
+          {visibleRequests.map((request) => {
+            const riskLabel = getRiskLabel(request.riskLevel);
+            const highRisk = isHighRisk(request.riskLevel);
+            return (
+              <li key={request.id}>
+                <Link
+                  className="ops-onboarding__card"
+                  href={`${ONBOARDING_PATHS.DETAIL}?id=${encodeURIComponent(String(request.id))}`}
+                >
+                  <strong className="ops-onboarding__card-title">
+                    {request.tenantName || ONBOARDING_MESSAGES.EMPTY_VALUE}
+                  </strong>
+                  <span className="ops-onboarding__card-status">
+                    {getStatusLabel(request.status)}
+                  </span>
+                  <span className="ops-onboarding__card-meta">
+                    {getRequesterDisplayName(request)}
+                    {ONBOARDING_MESSAGES.META_SEPARATOR}
+                    {highRisk ? (
+                      <span className="ops-onboarding__risk--high">{riskLabel}</span>
+                    ) : (
+                      riskLabel
+                    )}
+                    {ONBOARDING_MESSAGES.META_SEPARATOR}
+                    {formatOnboardingDate(request.createdAt)}
+                  </span>
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </>
   );
 }
-

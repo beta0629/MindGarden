@@ -36,6 +36,11 @@ on:
         required: false
         type: string
         default: ""
+      procedures:
+        description: "target=procedures/procedures-mysql 일 때 교체할 프로시저 이름(쉼표 구분). 비우면 기존 동작"
+        required: false
+        type: string
+        default: ""
 
 permissions:
   contents: read
@@ -53,6 +58,7 @@ jobs:
           INPUT_ENV: ${{ inputs.env }}
           INPUT_TARGET: ${{ inputs.target }}
           INPUT_DEPLOY_REF: ${{ inputs.deploy_ref }}
+          INPUT_PROCEDURES: ${{ inputs.procedures }}
           REPO: ${{ github.repository }}
         run: |
           set -euo pipefail
@@ -131,6 +137,9 @@ jobs:
               else
                 WF="deploy-procedures-prod.yml"
               fi
+              if [ -n "$INPUT_PROCEDURES" ]; then
+                EXTRA_ARGS+=(-f "procedures=$INPUT_PROCEDURES")
+              fi
               ;;
             procedures-mysql)
               if [ "$ENV" = "dev" ]; then
@@ -139,6 +148,9 @@ jobs:
               fi
               WF="deploy-procedures-production-mysql.yml"
               EXTRA_ARGS+=(-f "confirm=CONFIRM")
+              if [ -n "$INPUT_PROCEDURES" ]; then
+                EXTRA_ARGS+=(-f "procedures=$INPUT_PROCEDURES")
+              fi
               ;;
             onboarding)
               if [ "$ENV" = "prod" ]; then

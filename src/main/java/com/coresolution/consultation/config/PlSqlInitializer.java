@@ -45,9 +45,12 @@ public class PlSqlInitializer {
     public static final String CREATE_DEFAULT_TENANT_USERS_PROCEDURE =
             "sql/procedures/create_default_tenant_users.sql";
 
-    /** 개발 서버가 기동 때마다 덮어쓰는 ProcessOnboardingApproval. */
+    /**
+     * 기동 때마다 덮어쓰는 ProcessOnboardingApproval.
+     * 적용된 Flyway 파일은 체크섬을 바꾸지 않고, 이 스크립트가 도메인 접미사 인자를 포함한다.
+     */
     public static final String PROCESS_ONBOARDING_APPROVAL_PROCEDURE =
-            "db/migration/V20251225_004__force_recreate_process_onboarding_approval.sql";
+            "sql/procedures/process_onboarding_approval.sql";
 
     /** 개발 서버가 기동 때마다 덮어쓰는 CreateTenantAdminAccount. user_id 를 쓴다. */
     public static final String CREATE_TENANT_ADMIN_ACCOUNT_PROCEDURE =
@@ -220,8 +223,8 @@ public class PlSqlInitializer {
                 throw new IllegalStateException(errorMsg);
             }
 
-            // 프로시저 파라미터 검증 (필수) - CreateOrActivateTenant는 9개 파라미터
-            if (!verifyProcedureParameters("CreateOrActivateTenant", 9)) {
+            // 프로시저 파라미터 검증 (필수) - CreateOrActivateTenant는 10개 파라미터
+            if (!verifyProcedureParameters("CreateOrActivateTenant", 10)) {
                 String errorMsg = "❌ CreateOrActivateTenant 프로시저 파라미터가 올바르지 않습니다. 프로시저 생성 실패로 애플리케이션 시작 불가";
                 log.error(errorMsg);
                 throw new IllegalStateException(errorMsg);
@@ -812,7 +815,7 @@ public class PlSqlInitializer {
             }
 
             // 프로시저 파라미터 검증 (필수)
-            if (!verifyProcedureParameters("ProcessOnboardingApproval", 11)) {
+            if (!verifyProcedureParameters("ProcessOnboardingApproval", 12)) {
                 String errorMsg = "❌ ProcessOnboardingApproval 프로시저 파라미터가 올바르지 않습니다. 프로시저 생성 실패로 애플리케이션 시작 불가";
                 log.error(errorMsg);
                 throw new IllegalStateException(errorMsg);

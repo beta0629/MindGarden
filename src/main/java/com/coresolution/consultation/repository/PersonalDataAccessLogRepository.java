@@ -96,6 +96,16 @@ public interface PersonalDataAccessLogRepository extends JpaRepository<PersonalD
     long countByTenantIdAndAccessTimeBetween(@Param("tenantId") String tenantId, @Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate);
     
     /**
+     * 테넌트별 특정 시간 이전의 로그 건수 조회 (파기 2단계 확인 preview 용, tenantId 필터링).
+     *
+     * @param tenantId   테넌트 ID
+     * @param cutoffDate 기준 시각
+     * @return 파기 대상 건수
+     */
+    @Query("SELECT COUNT(p) FROM PersonalDataAccessLog p WHERE p.tenantId = :tenantId AND p.accessTime < :cutoffDate")
+    long countByTenantIdAndAccessTimeBefore(@Param("tenantId") String tenantId, @Param("cutoffDate") LocalDateTime cutoffDate);
+
+    /**
      * 테넌트별 특정 시간 이전의 로그 삭제 (tenantId 필터링)
      */
     @Modifying(clearAutomatically = true, flushAutomatically = true)

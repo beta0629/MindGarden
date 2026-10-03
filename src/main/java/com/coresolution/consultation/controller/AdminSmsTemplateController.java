@@ -60,6 +60,13 @@ public class AdminSmsTemplateController extends BaseApiController {
     static final String ERROR_CODE_TEMPLATE_NOT_FOUND = "SMS_TEMPLATE_NOT_FOUND";
     static final String ERROR_CODE_INVALID_REQUEST = "INVALID_REQUEST";
 
+    /** P0 보안(2026-10-03): 전역 SMS 발송 게이트는 운영자 전용. */
+    static final String ERROR_CODE_GLOBAL_DISPATCH_OPS_ONLY = "GLOBAL_DISPATCH_OPS_ONLY";
+
+    /** P0 보안(2026-10-03): 전역 게이트 변경 거부 메시지. */
+    static final String MSG_GLOBAL_DISPATCH_OPS_ONLY =
+            "전역 자동 SMS 발송 게이트는 운영자 전용입니다. 테넌트 관리자 경로에서는 변경할 수 없습니다.";
+
     private final SmsTemplateService smsTemplateService;
 
     /**
@@ -169,16 +176,16 @@ public class AdminSmsTemplateController extends BaseApiController {
     }
 
     /**
-     * 글로벌 자동 SMS 발송 게이트 토글 (옵션 C 1/2).
+     * 글로벌 자동 SMS 발송 게이트 토글 — P0 보안(2026-10-03) 이후 테넌트 경로에서는 차단된다.
      *
-     * <p>운영 결정권자가 어드민 UI 토글로 ON/OFF 한다. {@code system_config} 의
-     * {@code notification.sms.auto-dispatch.enabled} 행이 SSOT 이며,
-     * 자동 트리거 7종 + 자동 배치 8종 모두에 즉시 영향이 미친다. 어드민 수동 발송 /
-     * 인증 OTP 는 본 게이트 비경유 (회귀 없음).
+     * <p>{@code system_config} 의 {@code notification.sms.auto-dispatch.enabled} 행은 전역
+     * ({@code tenant_id=''}) 이라 한 테넌트 관리자가 OFF 하면 모든 테넌트의 자동 SMS 가 멈춘다.
+     * 전역 스위치는 운영자 전용 경로로만 변경하며, 본 엔드포인트는 ADMIN 이라도 403 을 반환한다.
+     * 종목별 토글({@code PATCH /{key}/dispatch})은 테넌트 override 라 그대로 유지한다.
      *
-     * @param request enabled=true|false
-     * @param session 세션 (audit)
-     * @return 변경 후 글로벌 토글 상태 + 새 effective 컨텍스트
+     * @param request enabled=true|false (사용하지 않음)
+     * @param session 세션 (인증 확인)
+     * @return 403 (운영자 전용)
      */
     @PatchMapping("/global-dispatch")
     @PreAuthorize("hasRole('ADMIN')")
@@ -189,12 +196,9 @@ public class AdminSmsTemplateController extends BaseApiController {
         if (currentUser == null || currentUser.getId() == null) {
             return unauthorized("로그인이 필요합니다.");
         }
-        boolean enabled = Boolean.TRUE.equals(request.getEnabled());
-        smsTemplateService.setGlobalAutoDispatchEnabled(enabled, currentUser);
-        boolean newState = smsTemplateService.isGlobalAutoDispatchEnabled();
-        log.info("어드민 SMS 글로벌 게이트 토글: enabled={}, by={}", newState,
-                currentUser.getUserId());
-        return updated(Map.of("globalDispatchEnabled", newState));
+        log.warn("어드민 SMS 글로벌 게이트 변경 차단(운영자 전용): userId={}", currentUser.getId());
+        return error(MSG_GLOBAL_DISPATCH_OPS_ONLY, ERROR_CODE_GLOBAL_DISPATCH_OPS_ONLY,
+                org.springframework.http.HttpStatus.FORBIDDEN);
     }
 
     /**

@@ -59,7 +59,7 @@ public class AdminAiUsageController extends BaseApiController {
      * @return 통계 DTO (period 와 무관하게 3종 호출 수 모두 반환 — 클라이언트는 requestedPeriod 로 라벨 식별)
      */
     @GetMapping("/usage-stats")
-    @PreAuthorize("hasAnyRole('ADMIN', 'STAFF')")
+    @PreAuthorize("hasRole('ADMIN')") // P0 보안(2026-10-03): AI 운영 도구는 ADMIN 전용 (STAFF 제외)
     public ResponseEntity<?> getUsageStats(
             @RequestParam(required = false) String period,
             HttpSession session
@@ -93,7 +93,7 @@ public class AdminAiUsageController extends BaseApiController {
      * @return 페이징 로그 응답
      */
     @GetMapping("/usage-logs")
-    @PreAuthorize("hasAnyRole('ADMIN', 'STAFF')")
+    @PreAuthorize("hasRole('ADMIN')") // P0 보안(2026-10-03): AI 운영 도구는 ADMIN 전용 (STAFF 제외)
     public ResponseEntity<?> getUsageLogs(
             @RequestParam(required = false) String provider,
             @RequestParam(required = false) String caller,
@@ -131,7 +131,7 @@ public class AdminAiUsageController extends BaseApiController {
      * @param session HTTP 세션
      */
     @GetMapping("/usage-logs/{id}/detail")
-    @PreAuthorize("hasAnyRole('ADMIN', 'STAFF')")
+    @PreAuthorize("hasRole('ADMIN')") // P0 보안(2026-10-03): AI 운영 도구는 ADMIN 전용 (STAFF 제외)
     public ResponseEntity<?> getUsageLogDetail(@PathVariable Long id, HttpSession session) {
         User currentUser = SessionUtils.getCurrentUser(session);
         if (currentUser == null) {

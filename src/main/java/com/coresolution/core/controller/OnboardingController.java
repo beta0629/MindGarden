@@ -339,13 +339,19 @@ public class OnboardingController extends BaseApiController {
     }
 
     /**
-     * 온보딩 요청 수정 /** PUT /api/v1/onboarding/requests/{id} /** PENDING, IN_REVIEW, ON_HOLD 상태에서만 수정
-     * 가능 /** 서브도메인 수정 시 중복 확인 수행
+     * 온보딩 요청 수정.
+     * PUT /api/v1/onboarding/requests/{id} 및 /api/v1/ops/onboarding/requests/{id} — OPS 전용 (fail-closed).
+     * 미인증·id 추측으로는 수정하지 않는다. PENDING, IN_REVIEW, ON_HOLD 에서만 수정 가능.
+     * 서브도메인 수정 시 중복 확인을 수행한다.
+     *
+     * @param id 온보딩 요청 ID
+     * @param payload 수정 본문
+     * @return 수정된 공개 상태
      */
     @PutMapping("/requests/{id}")
     public ResponseEntity<ApiResponse<OnboardingPublicStatusResponse>> update(@PathVariable Long id,
-            @RequestBody @Valid OnboardingUpdateRequest payload, HttpSession session) {
-        validateOnboardingAccess(session);
+            @RequestBody @Valid OnboardingUpdateRequest payload) {
+        OpsPermissionUtils.requireOps();
         log.info(
                 "온보딩 요청 수정: id={}, tenantName={}, subdomain={}, brandName={}, regionCode={}, businessType={}",
                 id, payload.tenantName(), payload.subdomain(), payload.brandName(),

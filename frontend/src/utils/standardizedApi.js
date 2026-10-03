@@ -11,7 +11,17 @@
 
 import { apiGet, apiPost, apiPostFormData, apiPut, apiPatch, apiDelete } from './ajax';
 import { getDefaultApiHeadersAsync } from './apiHeaders';
-import { getApiBaseUrl } from '../constants/api';
+import { API_ERROR_MESSAGES, getApiBaseUrl } from '../constants/api';
+import { isTransientNetworkError } from './networkErrorUtils';
+
+/**
+ * HTTP 응답 없이 실패한 요청인지 (fetch TypeError·TimeoutError). 사용자 취소(AbortError)는 제외.
+ * @param {unknown} error
+ * @returns {boolean}
+ */
+const isNoResponseNetworkError = (error) => (
+    isTransientNetworkError(error) && error.name !== 'AbortError'
+);
 
 /**
  * 표준화된 API 호출 래퍼
@@ -249,6 +259,13 @@ class StandardizedApi {
                 serverOrAjaxMessage
                     || '서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.'
             );
+        } else if (error.status == null && isNoResponseNetworkError(error)) {
+            // 응답 자체가 없을 때(연결 실패·타임아웃)만 네트워크 문구. 취소(AbortError)는 그대로 둔다.
+            err = new Error(API_ERROR_MESSAGES.NETWORK_ERROR);
+            err.name = error.name;
+            err.isNetworkError = true;
+            err.cause = error;
+            return err;
         } else {
             return error;
         }

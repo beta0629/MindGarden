@@ -31,7 +31,8 @@ import {
 } from '../../../constants/salaryManagementClinicOsStrings';
 import {
   normalizeSalaryCalculationStatus,
-  isSalaryAdjustmentCalculation
+  isSalaryAdjustmentCalculation,
+  resolveSalaryLateSessionActions
 } from '../../../utils/salaryCalculationDisplay';
 import { toDisplayString } from '../../../utils/safeDisplay';
 
@@ -109,15 +110,13 @@ const SalaryCalculationTable = ({
     return toDisplayString(found?.name, '—');
   };
 
+  const resolveLateActions = (calculation) => resolveSalaryLateSessionActions(
+    calculation,
+    lateSessionByPrimaryId[calculation.id]
+  );
+
   const buildMenuItems = (calculation) => {
-    const statusNorm = normalizeSalaryCalculationStatus(calculation.status);
-    const isAdjustment = isSalaryAdjustmentCalculation(calculation);
-    const lateInfo = lateSessionByPrimaryId[calculation.id];
-    const extraCompletedCount = lateInfo?.extraCompletedCount ?? 0;
-    const showLateNotice = !isAdjustment && extraCompletedCount > 0;
-    const showRecalcAction = showLateNotice
-      && (statusNorm === SALARY_STATUS.CALCULATED || statusNorm === SALARY_STATUS.APPROVED);
-    const showAdjustmentAction = showLateNotice && statusNorm === SALARY_STATUS.PAID;
+    const { extraCompletedCount, showAdjustment: showAdjustmentAction } = resolveLateActions(calculation);
 
     const items = [
       {
@@ -137,14 +136,6 @@ const SalaryCalculationTable = ({
       }
     ];
 
-    if (showRecalcAction) {
-      items.push({
-        id: 'recalc',
-        label: SM_ROW_MENU.RECALC,
-        onClick: () => onRecalc?.(calculation, extraCompletedCount),
-        disabled: busy
-      });
-    }
     if (showAdjustmentAction) {
       items.push({
         id: 'adjustment',
@@ -159,6 +150,7 @@ const SalaryCalculationTable = ({
 
   const renderCell = (columnKey, calculation) => {
     const statusNorm = normalizeSalaryCalculationStatus(calculation.status);
+    const lateActions = resolveLateActions(calculation);
     const isAdjustment = isSalaryAdjustmentCalculation(calculation);
     const net = getNet(calculation);
     const badgeMod = toBadgeModifier(calculation.status);
@@ -242,6 +234,27 @@ const SalaryCalculationTable = ({
               preventDoubleClick
             >
               {SALARY_ACTION_LABELS.PAY}
+            </MGButton>
+          ) : null}
+          {lateActions.showRecalc ? (
+            <MGButton
+              variant="secondary"
+              size="small"
+              onClick={() => onRecalc?.(calculation, lateActions.extraCompletedCount)}
+              disabled={busy}
+              loading={recalcLoadingId === calculation.id}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+              className={buildErpMgButtonClassName({
+                variant: 'secondary',
+                size: 'sm',
+                loading: recalcLoadingId === calculation.id,
+                className: TABLE_ACTION_CELL_LABEL_CLASS
+              })}
+              aria-label={SM_ROW_MENU.RECALC}
+              data-testid={`salary-row-recalc-${calculation.id}`}
+              preventDoubleClick
+            >
+              {SM_ROW_MENU.RECALC}
             </MGButton>
           ) : null}
           <div className="salary-management__row-menu">

@@ -10,11 +10,15 @@ import React, { useCallback, useState } from 'react';
 import { Eye, Filter, RefreshCw } from 'lucide-react';
 import UnifiedModal from '../../../common/modals/UnifiedModal';
 import SafeErrorDisplay from '../../../common/SafeErrorDisplay';
+import EmptyState from '../../../common/EmptyState';
+import ListTableView from '../../../common/ListTableView';
+import StatusBadge from '../../../common/StatusBadge';
 import { toDisplayString } from '../../../../utils/safeDisplay';
 import { SettingsSectionPanel, SettingsButton } from '../../settings-shell';
 import { getAiUsageLogDetail } from '../../../../api/admin/aiUsageApi';
 import {
   AI_LOG_STATUS_OPTIONS,
+  AI_USAGE_LOG_COLUMNS,
   AI_PROVIDER_LABELS,
   AI_PROVIDER_OPTIONS,
   PROVIDER_DISPLAY_LABEL
@@ -77,6 +81,49 @@ const UsageLogsTable = ({
     setDetailLog(null);
     setDetailError(null);
   }, []);
+
+  const renderLogCell = (key, row) => {
+    switch (key) {
+      case 'createdAt':
+        return formatDate(row.createdAt);
+      case 'aiProvider':
+        return (
+          <span className="mg-ai-logs-table__provider">
+            {toDisplayString(PROVIDER_DISPLAY_LABEL[row.aiProvider] || row.aiProvider)}
+          </span>
+        );
+      case 'requestType':
+        return toDisplayString(row.requestType);
+      case 'model':
+        return <span className="mg-ai-logs-table__model">{toDisplayString(row.model)}</span>;
+      case 'status':
+        return (
+          <StatusBadge variant={row.status === 'failed' ? 'danger' : 'success'}>
+            {row.status === 'failed' ? AI_PROVIDER_LABELS.logStatusFailed : AI_PROVIDER_LABELS.logStatusSuccess}
+          </StatusBadge>
+        );
+      case 'durationMs':
+        return row.durationMs ?? '—';
+      case 'tokenCount':
+        return row.tokenCount ?? '—';
+      case 'errorMessage':
+        return <span className="mg-ai-logs-table__error">{toDisplayString(row.errorMessage, '—')}</span>;
+      case 'action':
+        return (
+          <SettingsButton
+            type="button"
+            variant="ghost"
+            onClick={() => handleOpenDetail(row)}
+            preventDoubleClick={false}
+            aria-label={`로그 ${row.id} 상세`}
+          >
+            <Eye size={14} aria-hidden="true" />
+          </SettingsButton>
+        );
+      default:
+        return null;
+    }
+  };
 
   const content = logsPage?.content || [];
   const totalPages = logsPage?.totalPages ?? 0;
@@ -163,68 +210,17 @@ const UsageLogsTable = ({
         <SafeErrorDisplay error={toDisplayString(error)} />
       ) : null}
 
-      <div className="mg-ai-logs-table__wrap">
-        <table className="mg-ai-logs-table__table">
-          <thead>
-            <tr>
-              <th scope="col">시간</th>
-              <th scope="col">프로바이더</th>
-              <th scope="col">호출자</th>
-              <th scope="col">모델</th>
-              <th scope="col">상태</th>
-              <th scope="col" className="mg-ai-logs-table__col-numeric">응답(ms)</th>
-              <th scope="col" className="mg-ai-logs-table__col-numeric">토큰</th>
-              <th scope="col">에러</th>
-              <th scope="col" className="mg-ai-logs-table__col-action">{AI_PROVIDER_LABELS.detail}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {content.length === 0 && !loading ? (
-              <tr>
-                <td colSpan={9} className="mg-ai-logs-table__empty">{AI_PROVIDER_LABELS.emptyStateNoLogs}</td>
-              </tr>
-            ) : null}
-            {content.map((row) => (
-              <tr key={row.id}>
-                <td>{formatDate(row.createdAt)}</td>
-                <td>
-                  <span className="mg-ai-logs-table__provider">
-                    {toDisplayString(PROVIDER_DISPLAY_LABEL[row.aiProvider] || row.aiProvider)}
-                  </span>
-                </td>
-                <td>{toDisplayString(row.requestType)}</td>
-                <td className="mg-ai-logs-table__model">{toDisplayString(row.model)}</td>
-                <td>
-                  <span
-                    className={[
-                      'mg-ai-logs-table__status',
-                      row.status === 'failed'
-                        ? 'mg-ai-logs-table__status--failed'
-                        : 'mg-ai-logs-table__status--success'
-                    ].join(' ')}
-                  >
-                    {row.status === 'failed' ? '실패' : '성공'}
-                  </span>
-                </td>
-                <td className="mg-ai-logs-table__col-numeric">{row.durationMs ?? '—'}</td>
-                <td className="mg-ai-logs-table__col-numeric">{row.tokenCount ?? '—'}</td>
-                <td className="mg-ai-logs-table__error">{toDisplayString(row.errorMessage, '—')}</td>
-                <td className="mg-ai-logs-table__col-action">
-                  <SettingsButton
-                    type="button"
-                    variant="ghost"
-                    onClick={() => handleOpenDetail(row)}
-                    preventDoubleClick={false}
-                    aria-label={`로그 ${row.id} 상세`}
-                  >
-                    <Eye size={14} aria-hidden="true" />
-                  </SettingsButton>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      {content.length === 0 && !loading ? (
+        <EmptyState className="mg-ai-logs-table__empty" description={AI_PROVIDER_LABELS.emptyStateNoLogs} />
+      ) : (
+        <div className="mg-v2-settings-table">
+          <ListTableView
+            columns={AI_USAGE_LOG_COLUMNS}
+            data={content}
+            renderCell={renderLogCell}
+          />
+        </div>
+      )}
 
       <div className="mg-ai-logs-table__pagination">
         <span className="mg-ai-logs-table__page-info">
@@ -274,7 +270,7 @@ const UsageLogsTable = ({
             </div>
             <div>
               <dt>상태</dt>
-              <dd>{detailLog.status === 'failed' ? '실패' : '성공'}</dd>
+              <dd>{detailLog.status === 'failed' ? AI_PROVIDER_LABELS.logStatusFailed : AI_PROVIDER_LABELS.logStatusSuccess}</dd>
             </div>
             <div>
               <dt>호출 시각</dt>

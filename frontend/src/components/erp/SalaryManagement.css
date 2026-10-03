@@ -572,6 +572,13 @@
   margin: 0 0 var(--mg-spacing-md) 0;
 }
 
+.salary-calc-block__saved-detail-late {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--mg-spacing-sm);
+}
+
 .salary-calc-block__preview-grid dt,
 .salary-calc-block__preview-grid dd {
   margin: 0;

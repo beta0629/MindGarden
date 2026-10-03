@@ -160,12 +160,15 @@
 
 .mg-v2-mapping-creation-modal__search .mg-v2-search-input {
   flex: 1;
+  min-width: 0;
   max-width: 320px;
 }
 
 .mg-v2-mapping-creation-modal__count {
+  flex-shrink: 0;
   font-size: 0.875rem;
   color: var(--ad-b0kla-text-secondary);
+  white-space: nowrap;
 }
 
 .mg-v2-mapping-creation-modal__filters {

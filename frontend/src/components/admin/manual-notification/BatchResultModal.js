@@ -3,9 +3,9 @@
  *
  * - 백엔드 `BulkNotificationResponse` 정규화 결과를 받아 표시.
  * - 헤더: 배치 ID + 채널 + 시작 시각
- * - 통계 카드: 전체 / 성공 / 실패 카운트
- * - 실패 행 상세 리스트 (이름 + phoneMasked + errorCode + errorMessage)
- * - 성공 행 상세 리스트 (Solapi groupId/messageId 포함, 감사 추적용)
+ * - 통계: SettingsSummaryStrip (전체 / 성공 / 스킵 / 실패)
+ * - 실패·스킵 행 상세 표 (이름 + phoneMasked + errorCode + errorMessage)
+ * - 성공 행 상세 표 (Solapi groupId/messageId 포함, 감사 추적용)
  * - 전체 차단(`batchErrorCode`)인 경우 결과 행이 없으므로
  *   배치 에러 메시지를 상단 배너로 노출 (RATE_LIMIT_EXCEEDED_BULK 등).
  *
@@ -19,7 +19,8 @@
 
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { SettingsButton } from '../settings-shell';
+import { SettingsButton, SettingsNotice, SettingsSummaryStrip } from '../settings-shell';
+import ListTableView from '../../common/ListTableView';
 import UnifiedModal from '../../common/modals/UnifiedModal';
 import { toDisplayString } from '../../../utils/safeDisplay';
 import { MANUAL_NOTIFICATION_ERROR_CODES } from '../../../api/admin/manualNotificationApi';
@@ -132,6 +133,87 @@ const BatchResultModal = ({ isOpen, onClose, result }) => {
       defaultValue: '총 {{total}}명 중 성공 {{success}}건 / 실패 {{failed}}건'
     });
 
+  const statLabel = (key, fallback) => t(key, { count: '', defaultValue: fallback }).trim();
+
+  const statItems = [
+    { key: 'total', label: statLabel('manualNotification.result.statTotal', '전체'), value: totals.total },
+    { key: 'success', label: statLabel('manualNotification.result.statSuccess', '성공'), value: totals.success },
+    ...(totals.skipped > 0
+      ? [{ key: 'skipped', label: statLabel('manualNotification.result.statSkipped', '스킵'), value: totals.skipped }]
+      : []),
+    { key: 'failed', label: statLabel('manualNotification.result.statFailed', '실패'), value: totals.failed }
+  ];
+
+  const errorColumns = [
+    { key: 'recipient', label: t('manualNotification.result.columnRecipient') },
+    { key: 'errorCode', label: t('manualNotification.result.columnErrorCode') },
+    { key: 'errorMessage', label: t('manualNotification.result.columnErrorMessage'), hideOnMobile: true }
+  ];
+
+  const successColumns = [
+    { key: 'recipient', label: t('manualNotification.result.columnRecipient') },
+    { key: 'solapi', label: t('manualNotification.result.columnSolapiId', 'Solapi ID') }
+  ];
+
+  const withRowKeys = (rows, prefix) => rows.map((row, idx) => ({
+    ...row,
+    rowKey: `${prefix}-${row?.userId ?? idx}`
+  }));
+
+  const renderResultCell = (key, row) => {
+    switch (key) {
+      case 'recipient':
+        return (
+          <span className="mg-v2-settings-table__cell-stack">
+            <strong>{toDisplayString(row?.name, '이름 없음')}</strong>
+            <span className="mg-v2-settings-muted">{toDisplayString(row?.phoneMasked, '번호 없음')}</span>
+          </span>
+        );
+      case 'errorCode':
+        return <span className="mg-v2-settings-mono">{toDisplayString(row?.errorCode || '', '-')}</span>;
+      case 'errorMessage': {
+        const code = row?.errorCode || '';
+        const codeKey = code && Object.values(MANUAL_NOTIFICATION_ERROR_CODES).includes(code)
+          ? `manualNotification.errors.${code}`
+          : null;
+        const fallbackMessage = toDisplayString(row?.errorMessage, '-');
+        return codeKey ? t(codeKey, fallbackMessage) : fallbackMessage;
+      }
+      case 'solapi':
+        return (
+          <span className="mg-v2-settings-mono">
+            {toDisplayString(row?.solapiGroupId, '-')}
+            {' / '}
+            {toDisplayString(row?.solapiMessageId, '-')}
+          </span>
+        );
+      default:
+        return null;
+    }
+  };
+
+  const renderSection = ({ modifier, title, rows, columns, prefix, emptyText }) => (
+    <section className={`${MODAL_CLASS}__section ${MODAL_CLASS}__section--${modifier}`} aria-label={title}>
+      <h4 className="mg-v2-settings-subheading">
+        {title}
+        {' '}
+        <span className="mg-v2-settings-muted">({rows.length})</span>
+      </h4>
+      {rows.length === 0 ? (
+        <p className="mg-v2-settings-muted">{emptyText}</p>
+      ) : (
+        <div className="mg-v2-settings-table">
+          <ListTableView
+            columns={columns}
+            data={withRowKeys(rows, prefix)}
+            renderCell={renderResultCell}
+            rowKeyField="rowKey"
+          />
+        </div>
+      )}
+    </section>
+  );
+
   return (
     <UnifiedModal
       isOpen={isOpen}
@@ -152,219 +234,61 @@ const BatchResultModal = ({ isOpen, onClose, result }) => {
       )}
     >
       <div className={MODAL_CLASS}>
-        <header className={`${MODAL_CLASS}__header`}>
-          <dl className={`${MODAL_CLASS}__meta`}>
-            <div className={`${MODAL_CLASS}__meta-item`}>
-              <dt className={`${MODAL_CLASS}__meta-label`}>
-                {t('manualNotification.result.batchIdLabel')}
-              </dt>
-              <dd className={`${MODAL_CLASS}__meta-value`}>
-                {toDisplayString(result?.batchId, '-')}
-              </dd>
-            </div>
-            <div className={`${MODAL_CLASS}__meta-item`}>
-              <dt className={`${MODAL_CLASS}__meta-label`}>
-                {t('manualNotification.result.channelLabel')}
-              </dt>
-              <dd className={`${MODAL_CLASS}__meta-value`}>
-                {toDisplayString(result?.channel, '-')}
-              </dd>
-            </div>
-            <div className={`${MODAL_CLASS}__meta-item`}>
-              <dt className={`${MODAL_CLASS}__meta-label`}>
-                {t('manualNotification.result.startedAtLabel')}
-              </dt>
-              <dd className={`${MODAL_CLASS}__meta-value`}>
-                {toDisplayString(result?.startedAt, '-')}
-              </dd>
-            </div>
-          </dl>
-        </header>
+        <dl className="mg-v2-settings-kv">
+          <div>
+            <dt>{t('manualNotification.result.batchIdLabel')}</dt>
+            <dd className="mg-v2-settings-mono">{toDisplayString(result?.batchId, '-')}</dd>
+          </div>
+          <div>
+            <dt>{t('manualNotification.result.channelLabel')}</dt>
+            <dd>{toDisplayString(result?.channel, '-')}</dd>
+          </div>
+          <div>
+            <dt>{t('manualNotification.result.startedAtLabel')}</dt>
+            <dd>{toDisplayString(result?.startedAt, '-')}</dd>
+          </div>
+        </dl>
 
         {batchErrorCode && (
-          <div
-            className={`${MODAL_CLASS}__batch-error`}
-            role="alert"
-          >
-            <strong className={`${MODAL_CLASS}__batch-error-code`}>
-              {toDisplayString(batchErrorCode, '-')}
-            </strong>
-            <span className={`${MODAL_CLASS}__batch-error-message`}>
+          <SettingsNotice tone="danger">
+            <p>
+              <strong>{toDisplayString(batchErrorCode, '-')}</strong>
+              {' '}
               {batchErrorI18nKey
                 ? t(batchErrorI18nKey, toDisplayString(batchErrorMessage, '-'))
                 : toDisplayString(batchErrorMessage, '-')}
-            </span>
-          </div>
+            </p>
+          </SettingsNotice>
         )}
 
-        <section className={`${MODAL_CLASS}__stats`} aria-label="발송 통계">
-          <div className={`${MODAL_CLASS}__stat ${MODAL_CLASS}__stat--total`}>
-            {t('manualNotification.result.statTotal', {
-              count: totals.total,
-              defaultValue: '전체 {{count}}'
-            })}
-          </div>
-          <div className={`${MODAL_CLASS}__stat ${MODAL_CLASS}__stat--success`}>
-            {t('manualNotification.result.statSuccess', {
-              count: totals.success,
-              defaultValue: '성공 {{count}}'
-            })}
-          </div>
-          {totals.skipped > 0 && (
-            <div className={`${MODAL_CLASS}__stat ${MODAL_CLASS}__stat--skipped`}>
-              {t('manualNotification.result.statSkipped', {
-                count: totals.skipped,
-                defaultValue: '스킵 {{count}}'
-              })}
-            </div>
-          )}
-          <div className={`${MODAL_CLASS}__stat ${MODAL_CLASS}__stat--failed`}>
-            {t('manualNotification.result.statFailed', {
-              count: totals.failed,
-              defaultValue: '실패 {{count}}'
-            })}
-          </div>
-        </section>
+        <SettingsSummaryStrip items={statItems} ariaLabel="발송 통계" testId="manual-notif-result-stats" />
 
-        {skippedRows.length > 0 && (
-          <section
-            className={`${MODAL_CLASS}__section ${MODAL_CLASS}__section--skipped`}
-            aria-label={t('manualNotification.result.skippedListTitle')}
-          >
-            <h4 className={`${MODAL_CLASS}__section-title`}>
-              {t('manualNotification.result.skippedListTitle')}
-              {' '}
-              <span className={`${MODAL_CLASS}__section-count`}>({skippedRows.length})</span>
-            </h4>
-            <ul className={`${MODAL_CLASS}__list`}>
-              {skippedRows.map((row, idx) => {
-                const code = row?.errorCode || '';
-                const codeKey = code && Object.values(MANUAL_NOTIFICATION_ERROR_CODES).includes(code)
-                  ? `manualNotification.errors.${code}`
-                  : null;
-                const fallbackMessage = toDisplayString(row?.errorMessage, '-');
-                const displayedMessage = codeKey ? t(codeKey, fallbackMessage) : fallbackMessage;
-                return (
-                  <li
-                    key={`skip-${row?.userId ?? idx}`}
-                    className={`${MODAL_CLASS}__row ${MODAL_CLASS}__row--skipped`}
-                  >
-                    <div className={`${MODAL_CLASS}__row-main`}>
-                      <span className={`${MODAL_CLASS}__row-name`}>
-                        {toDisplayString(row?.name, '이름 없음')}
-                      </span>
-                      <span className={`${MODAL_CLASS}__row-phone`}>
-                        {toDisplayString(row?.phoneMasked, '번호 없음')}
-                      </span>
-                    </div>
-                    <div className={`${MODAL_CLASS}__row-error`}>
-                      <span className={`${MODAL_CLASS}__row-error-code`}>
-                        {toDisplayString(code, '-')}
-                      </span>
-                      <span className={`${MODAL_CLASS}__row-error-message`}>
-                        {displayedMessage}
-                      </span>
-                    </div>
-                  </li>
-                );
-              })}
-            </ul>
-          </section>
-        )}
+        {skippedRows.length > 0 && renderSection({
+          modifier: 'skipped',
+          title: t('manualNotification.result.skippedListTitle'),
+          rows: skippedRows,
+          columns: errorColumns,
+          prefix: 'skip',
+          emptyText: ''
+        })}
 
-        <section
-          className={`${MODAL_CLASS}__section ${MODAL_CLASS}__section--failure`}
-          aria-label={t('manualNotification.result.failureListTitle')}
-        >
-          <h4 className={`${MODAL_CLASS}__section-title`}>
-            {t('manualNotification.result.failureListTitle')}
-            {' '}
-            <span className={`${MODAL_CLASS}__section-count`}>({failureRows.length})</span>
-          </h4>
-          {failureRows.length === 0 ? (
-            <p className={`${MODAL_CLASS}__empty`}>
-              {t('manualNotification.result.failureEmpty')}
-            </p>
-          ) : (
-            <ul className={`${MODAL_CLASS}__list`}>
-              {failureRows.map((row, idx) => {
-                const code = row?.errorCode || '';
-                const codeKey = code && Object.values(MANUAL_NOTIFICATION_ERROR_CODES).includes(code)
-                  ? `manualNotification.errors.${code}`
-                  : null;
-                const fallbackMessage = toDisplayString(row?.errorMessage, '-');
-                const displayedMessage = codeKey ? t(codeKey, fallbackMessage) : fallbackMessage;
-                return (
-                  <li
-                    key={`fail-${row?.userId ?? idx}`}
-                    className={`${MODAL_CLASS}__row ${MODAL_CLASS}__row--failure`}
-                  >
-                    <div className={`${MODAL_CLASS}__row-main`}>
-                      <span className={`${MODAL_CLASS}__row-name`}>
-                        {toDisplayString(row?.name, '이름 없음')}
-                      </span>
-                      <span className={`${MODAL_CLASS}__row-phone`}>
-                        {toDisplayString(row?.phoneMasked, '번호 없음')}
-                      </span>
-                    </div>
-                    <div className={`${MODAL_CLASS}__row-error`}>
-                      <span className={`${MODAL_CLASS}__row-error-code`}>
-                        {toDisplayString(code, '-')}
-                      </span>
-                      <span className={`${MODAL_CLASS}__row-error-message`}>
-                        {displayedMessage}
-                      </span>
-                    </div>
-                  </li>
-                );
-              })}
-            </ul>
-          )}
-        </section>
+        {renderSection({
+          modifier: 'failure',
+          title: t('manualNotification.result.failureListTitle'),
+          rows: failureRows,
+          columns: errorColumns,
+          prefix: 'fail',
+          emptyText: t('manualNotification.result.failureEmpty')
+        })}
 
-        <section
-          className={`${MODAL_CLASS}__section ${MODAL_CLASS}__section--success`}
-          aria-label={t('manualNotification.result.successListTitle')}
-        >
-          <h4 className={`${MODAL_CLASS}__section-title`}>
-            {t('manualNotification.result.successListTitle')}
-            {' '}
-            <span className={`${MODAL_CLASS}__section-count`}>({successRows.length})</span>
-          </h4>
-          {successRows.length === 0 ? (
-            <p className={`${MODAL_CLASS}__empty`}>
-              {t('manualNotification.result.successEmpty')}
-            </p>
-          ) : (
-            <ul className={`${MODAL_CLASS}__list`}>
-              {successRows.map((row, idx) => (
-                <li
-                  key={`ok-${row?.userId ?? idx}`}
-                  className={`${MODAL_CLASS}__row ${MODAL_CLASS}__row--success`}
-                >
-                  <div className={`${MODAL_CLASS}__row-main`}>
-                    <span className={`${MODAL_CLASS}__row-name`}>
-                      {toDisplayString(row?.name, '이름 없음')}
-                    </span>
-                    <span className={`${MODAL_CLASS}__row-phone`}>
-                      {toDisplayString(row?.phoneMasked, '번호 없음')}
-                    </span>
-                  </div>
-                  <div className={`${MODAL_CLASS}__row-solapi`}>
-                    <span className={`${MODAL_CLASS}__row-solapi-label`}>
-                      {t('manualNotification.result.columnSolapiId', 'Solapi ID')}:
-                    </span>
-                    <span className={`${MODAL_CLASS}__row-solapi-value`}>
-                      {toDisplayString(row?.solapiGroupId, '-')}
-                      {' / '}
-                      {toDisplayString(row?.solapiMessageId, '-')}
-                    </span>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
+        {renderSection({
+          modifier: 'success',
+          title: t('manualNotification.result.successListTitle'),
+          rows: successRows,
+          columns: successColumns,
+          prefix: 'ok',
+          emptyText: t('manualNotification.result.successEmpty')
+        })}
       </div>
     </UnifiedModal>
   );

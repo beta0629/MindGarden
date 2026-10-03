@@ -745,6 +745,26 @@ describe('MappingCreationModal — P0 핫픽스 + STEP swap', () => {
       expect(screen.getByTestId('payment-timing-card-check-SAME_DAY_CARD')).toBeInTheDocument();
       expect(screen.queryByTestId('payment-timing-card-check-ADVANCE')).toBeNull();
     });
+
+    test('결제 참조번호 입력은 카드일 때만 — 계좌이체·현금은 숨기고 자동 참조번호(BANK_ / CASH_)로 전송', async () => {
+      renderModal();
+      await advanceToStep4();
+      expect(screen.queryByTestId('mapping-creation-payment-reference')).toBeNull();
+
+      fireEvent.click(screen.getByText('admin:labels.creditCard'));
+      expect(screen.getByTestId('mapping-creation-payment-reference')).toBeInTheDocument();
+
+      fireEvent.click(screen.getByText('admin:labels.cash'));
+      expect(screen.queryByTestId('mapping-creation-payment-reference')).toBeNull();
+
+      await act(async () => {
+        fireEvent.click(screen.getByText('admin:mappingCreation.createMapping'));
+      });
+      await waitFor(() => expect(apiPost).toHaveBeenCalledTimes(1));
+      const [, postedBody] = apiPost.mock.calls[0];
+      expect(postedBody.paymentMethod).toBe('CASH');
+      expect(postedBody.paymentReference).toMatch(/^CASH_\d{8}_\d{6}$/);
+    });
   });
 
   test('ACTIVE 배정 존재 시 합산 안내 배너 표시 (생성은 차단하지 않음)', async () => {

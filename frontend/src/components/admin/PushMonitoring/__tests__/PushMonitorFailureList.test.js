@@ -43,7 +43,8 @@ describe('PushMonitorFailureList', () => {
       buildEntry({ id: 12, retryable: false, templateCode: 'TPL_B' })
     ];
     render(<PushMonitorFailureList entries={entries} totalCount={2} onResend={jest.fn()} />);
-    const rows = screen.getAllByTestId('push-monitor-failure-row');
+    const table = within(screen.getByTestId('push-monitor-failure-table')).getByRole('table');
+    const rows = within(table).getAllByRole('row').slice(1);
     expect(rows.length).toBe(2);
     const retryableButton = within(rows[0]).getByRole('button', {
       name: new RegExp(`TPL_A.*${ADMIN_WEB_SCAFFOLD_COPY.PUSH_MONITOR_FAILURES_ACTION_RESEND}`)

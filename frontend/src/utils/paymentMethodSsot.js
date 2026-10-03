@@ -137,6 +137,44 @@ export const mapPaymentMethodCodesToOptions = (codes) => {
 /** common_codes PAYMENT_METHOD — SSOT code_value (백엔드 PaymentMethodSsotConstants 와 동일) */
 export const PAYMENT_METHOD_CODE_OTHER = 'OTHER';
 export const PAYMENT_METHOD_CODE_BANK_TRANSFER = 'BANK_TRANSFER';
+export const PAYMENT_METHOD_CODE_CASH = 'CASH';
+export const PAYMENT_METHOD_CODE_CREDIT_CARD = 'CREDIT_CARD';
+export const PAYMENT_METHOD_CODE_DEBIT_CARD = 'DEBIT_CARD';
+export const PAYMENT_METHOD_CODE_CARD_TERMINAL = 'CARD_TERMINAL';
+/** 레거시 별칭 — common_codes CREDIT_CARD extra_data legacyAliases 와 동일 */
+export const PAYMENT_METHOD_LEGACY_ALIAS_CARD = 'CARD';
+
+/**
+ * 공통코드를 못 읽었을 때만 쓰는 카드 결제 code_value 목록
+ * (common_codes extra_data cardMerchantFeeEligible:true 행과 동일).
+ */
+const CARD_PAYMENT_METHOD_FALLBACK_CODES = [
+  PAYMENT_METHOD_CODE_CREDIT_CARD,
+  PAYMENT_METHOD_CODE_DEBIT_CARD,
+  PAYMENT_METHOD_CODE_CARD_TERMINAL,
+  PAYMENT_METHOD_LEGACY_ALIAS_CARD
+];
+
+/**
+ * 카드(PG·단말) 결제 수단인지 판정. 결제 승인번호 행 노출 여부에 쓴다.
+ * 공통코드가 있으면 extra_data cardMerchantFeeEligible 이 기준이고,
+ * 공통코드가 없거나 해당 코드가 없을 때만 폴백 목록을 쓴다.
+ *
+ * @param {string|null|undefined} paymentMethod
+ * @param {Array<{codeValue?: string, extraData?: string}>|null|undefined} [codes]
+ * @returns {boolean}
+ */
+export const isCardPaymentMethod = (paymentMethod, codes) => {
+  if (!paymentMethod || typeof paymentMethod !== 'string' || paymentMethod.trim() === '') {
+    return false;
+  }
+  const resolved = resolvePaymentMethodCode(paymentMethod, codes);
+  if (resolved) {
+    return parseCardMerchantFeeEligible(resolved.extraData);
+  }
+  const upper = paymentMethod.trim().toUpperCase();
+  return CARD_PAYMENT_METHOD_FALLBACK_CODES.includes(upper);
+};
 
 /**
  * 당일 결제(CheckoutSameDay) 모달에서 카드 eligible 외에도 항상 노출할 코드.

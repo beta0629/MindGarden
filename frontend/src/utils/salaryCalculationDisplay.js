@@ -6,7 +6,8 @@ import {
   SALARY_CALC_DETAIL_OPTION_LABEL,
   SALARY_CALCULATION_KIND,
   SALARY_LATE_NOTES_LABELS,
-  SALARY_LATE_NOTES_MESSAGES
+  SALARY_LATE_NOTES_MESSAGES,
+  SALARY_STATUS
 } from '../constants/salaryConstants';
 import { toErrorMessage } from './safeDisplay';
 
@@ -126,6 +127,68 @@ export function normalizeSalaryCalculationKind(raw) {
 export function isSalaryAdjustmentCalculation(calculation) {
   return normalizeSalaryCalculationKind(calculation?.calculationKind)
     === SALARY_CALCULATION_KIND.ADJUSTMENT;
+}
+
+/**
+ * pre-confirm-warning API 응답(StandardizedApi 언랩 전후 모두)을 화면용 숫자로 정규화.
+ *
+ * @param {unknown} response
+ * @returns {{
+ *   notCompletedCount: number,
+ *   missingRecordCount: number,
+ *   currentCompletedCount: number,
+ *   storedCompletedCount: number,
+ *   extraCompletedCount: number,
+ *   primaryCalculationId: (number|string|null),
+ *   primaryStatus: (string|null)
+ * }|null}
+ */
+export function parsePreConfirmWarningPayload(response) {
+  if (response == null || typeof response !== 'object') {
+    return null;
+  }
+  const data = response.data != null && typeof response.data === 'object'
+    ? response.data
+    : response;
+  if (data.success === false) {
+    return null;
+  }
+  const toCount = (v) => {
+    const n = Number(v);
+    return Number.isFinite(n) && n > 0 ? n : 0;
+  };
+  return {
+    notCompletedCount: toCount(data.notCompletedCount),
+    missingRecordCount: toCount(data.missingRecordCount),
+    currentCompletedCount: toCount(data.currentCompletedCount),
+    storedCompletedCount: toCount(data.storedCompletedCount),
+    extraCompletedCount: toCount(data.extraCompletedCount),
+    primaryCalculationId: data.primaryCalculationId ?? null,
+    primaryStatus: data.primaryStatus != null ? String(data.primaryStatus) : null
+  };
+}
+
+/** 미지급 본정산만 제자리 다시 계산 가능 (지급완료는 추가 정산). */
+const SALARY_RECALC_ALLOWED_STATUSES = [SALARY_STATUS.CALCULATED, SALARY_STATUS.APPROVED];
+
+/**
+ * 본정산 행의 빠진 회기 액션 노출 판정. 상태는 pre-confirm-warning primaryStatus 우선, 없으면 행 status.
+ *
+ * @param {object|null|undefined} calculation 급여 계산 행
+ * @param {ReturnType<typeof parsePreConfirmWarningPayload>|null|undefined} lateInfo
+ * @returns {{ extraCompletedCount: number, showRecalc: boolean, showAdjustment: boolean }}
+ */
+export function resolveSalaryLateSessionActions(calculation, lateInfo) {
+  const extraCompletedCount = lateInfo?.extraCompletedCount ?? 0;
+  if (calculation == null || isSalaryAdjustmentCalculation(calculation) || !(extraCompletedCount > 0)) {
+    return { extraCompletedCount: 0, showRecalc: false, showAdjustment: false };
+  }
+  const status = normalizeSalaryCalculationStatus(lateInfo?.primaryStatus || calculation.status);
+  return {
+    extraCompletedCount,
+    showRecalc: SALARY_RECALC_ALLOWED_STATUSES.includes(status),
+    showAdjustment: status === SALARY_STATUS.PAID
+  };
 }
 
 /**

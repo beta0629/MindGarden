@@ -88,7 +88,7 @@
 .mg-v2-settings-panel__title {
   margin: 0;
   font-size: var(--mg-v2-font-size-h2);
-  font-weight: 700;
+  font-weight: var(--mg-v2-font-weight-semibold);
   line-height: var(--mg-v2-font-line-height-heading);
   color: var(--mg-v2-color-text-primary);
 }
@@ -169,6 +169,14 @@
   color: var(--mg-v2-color-text-primary);
 }
 
+.mg-v2-settings-summary__caption {
+  margin: 0;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-size: var(--mg-v2-font-size-caption);
+  color: var(--mg-v2-color-text-tertiary);
+}
+
 /* ——— Form layout helpers ——— */
 .mg-v2-settings-form-grid {
   display: grid;
@@ -201,6 +209,197 @@
   margin: 0;
   font-size: var(--mg-v2-font-size-body-md);
   color: var(--mg-v2-color-text-secondary);
+}
+
+.mg-v2-settings-subheading {
+  margin: 0;
+  font-size: var(--mg-v2-font-size-body-md);
+  font-weight: var(--mg-v2-font-weight-semibold);
+  color: var(--mg-v2-color-text-primary);
+}
+
+.mg-v2-settings-mono {
+  font-family: var(--mg-v2-font-family-mono);
+  font-size: var(--mg-v2-font-size-caption);
+  overflow-wrap: anywhere;
+}
+
+.mg-v2-settings-text--warning {
+  color: var(--mg-v2-color-semantic-warning-dark);
+}
+
+.mg-v2-settings-text--danger {
+  color: var(--mg-v2-color-semantic-error);
+}
+
+/* ——— Toolbar: 필터·검색·탭 한 줄 (패널 안) ——— */
+.mg-v2-settings-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--mg-v2-space-3);
+  min-width: 0;
+}
+
+.mg-v2-settings-toolbar__spacer {
+  flex: 1 1 auto;
+}
+
+.mg-v2-settings-shell .mg-v2-settings-toolbar .mg-v2-form-input,
+.mg-v2-settings-shell .mg-v2-settings-toolbar .mg-v2-select {
+  flex: 0 1 calc(var(--mg-v2-space-16) * 4);
+  width: auto;
+  max-width: 100%;
+}
+
+/* ——— Notice (SafeErrorDisplay 배너 기하 · 톤 3종) ——— */
+.mg-v2-settings-notice {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mg-v2-space-2) var(--mg-v2-space-4);
+  width: 100%;
+  margin: 0;
+  padding: var(--mg-v2-space-3) var(--mg-v2-space-4);
+  font-size: var(--mg-v2-font-size-body-md);
+  line-height: var(--mg-v2-font-line-height-body);
+  border: var(--mg-v2-border-width-thin) solid var(--mg-v2-color-border-default);
+  border-radius: var(--mg-v2-radius-lg);
+  box-sizing: border-box;
+}
+
+.mg-v2-settings-notice__body {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: var(--mg-v2-space-1);
+  min-width: 0;
+}
+
+.mg-v2-settings-notice__body p {
+  margin: 0;
+}
+
+.mg-v2-settings-notice__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--mg-v2-space-2);
+}
+
+.mg-v2-settings-notice a {
+  color: inherit;
+  font-weight: var(--mg-v2-font-weight-semibold);
+  text-decoration: underline;
+}
+
+.mg-v2-settings-notice--info {
+  color: var(--mg-v2-color-semantic-info-dark);
+  background: var(--mg-v2-color-semantic-info-light);
+  border-color: var(--mg-v2-color-semantic-info);
+}
+
+.mg-v2-settings-notice--warning {
+  color: var(--mg-v2-color-semantic-warning-dark);
+  background: var(--mg-v2-color-semantic-warning-light);
+  border-color: var(--mg-v2-color-semantic-warning);
+}
+
+.mg-v2-settings-notice--danger {
+  color: var(--mg-v2-color-semantic-error-dark);
+  background: var(--mg-v2-color-semantic-error-light);
+  border-color: var(--mg-v2-color-semantic-error);
+}
+
+/* ——— Key-value (읽기 전용 정보) ——— */
+.mg-v2-settings-kv {
+  display: grid;
+  grid-template-columns: minmax(0, calc(var(--mg-v2-space-16) * 2)) minmax(0, 1fr);
+  gap: var(--mg-v2-space-3) var(--mg-v2-space-4);
+  margin: 0;
+}
+
+.mg-v2-settings-kv > div {
+  display: contents;
+}
+
+.mg-v2-settings-kv dt {
+  margin: 0;
+  font-size: var(--mg-v2-font-size-body-md);
+  color: var(--mg-v2-color-text-secondary);
+}
+
+.mg-v2-settings-kv dd {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--mg-v2-space-2);
+  margin: 0;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-size: var(--mg-v2-font-size-body-md);
+  color: var(--mg-v2-color-text-primary);
+}
+
+/* ——— List rows (카드 대신 구분선 행) ——— */
+.mg-v2-settings-list {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  min-width: 0;
+}
+
+.mg-v2-settings-list__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mg-v2-space-2) var(--mg-v2-space-3);
+  padding: var(--mg-v2-space-3) 0;
+  border-bottom: var(--mg-v2-border-width-thin) solid var(--mg-v2-color-neutral-300);
+  min-width: 0;
+}
+
+.mg-v2-settings-list__row:last-child {
+  border-bottom: none;
+}
+
+.mg-v2-settings-list__main {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: var(--mg-v2-space-1);
+  min-width: 0;
+}
+
+.mg-v2-settings-list__title {
+  font-size: var(--mg-v2-font-size-body-md);
+  font-weight: var(--mg-v2-font-weight-semibold);
+  color: var(--mg-v2-color-text-primary);
+  overflow-wrap: anywhere;
+}
+
+.mg-v2-settings-list__meta {
+  font-size: var(--mg-v2-font-size-caption);
+  color: var(--mg-v2-color-text-tertiary);
+  overflow-wrap: anywhere;
+}
+
+/* ——— Table: ListTableView 래퍼 — 스크롤은 래퍼 안에서만, 모바일은 줄바꿈으로 폭 맞춤 ——— */
+.mg-v2-settings-table,
+.mg-v2-settings-table .mg-v2-list-block__table-wrapper {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.mg-v2-settings-table__cell-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-v2-space-1);
+  min-width: 0;
 }
 
 /* ——— Input contract: 높이 토큰 1개 · 테두리 토큰 1개 ——— */
@@ -307,5 +506,35 @@
   .mg-v2-settings-panel,
   .mg-v2-settings-panel__body--form {
     padding: var(--mg-v2-space-4);
+  }
+
+  .mg-v2-settings-shell .mg-v2-settings-toolbar .mg-v2-form-input,
+  .mg-v2-settings-shell .mg-v2-settings-toolbar .mg-v2-select {
+    flex: 1 1 100%;
+    width: 100%;
+  }
+
+  .mg-v2-settings-kv {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--mg-v2-space-1);
+  }
+
+  .mg-v2-settings-kv dd + dt {
+    margin-block-start: var(--mg-v2-space-2);
+  }
+
+  /* 모바일: 보조 열은 hideOnMobile 로 숨기고, 남은 열은 줄바꿈 — 페이지 가로 스크롤 없음 */
+  .mg-v2-settings-shell .mg-v2-settings-table .mg-v2-list-block__table-wrapper .mg-v2-list-block__table,
+  .mg-v2-settings-table .mg-v2-list-block__table-wrapper .mg-v2-list-block__table {
+    min-width: 0;
+  }
+
+  .mg-v2-settings-shell .mg-v2-settings-table .mg-v2-list-block__table th,
+  .mg-v2-settings-shell .mg-v2-settings-table .mg-v2-list-block__table td,
+  .mg-v2-settings-table .mg-v2-list-block__table th:first-child,
+  .mg-v2-settings-table .mg-v2-list-block__table td:first-child {
+    padding-inline: var(--mg-v2-space-3);
+    white-space: normal;
+    overflow-wrap: anywhere;
   }
 }

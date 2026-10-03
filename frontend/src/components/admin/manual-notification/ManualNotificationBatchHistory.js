@@ -2,7 +2,7 @@
  * 수동 발송 배치 히스토리 (Organism).
  *
  * - `GET /api/v1/admin/manual-notifications/history` 페이지네이션 조회
- * - batchId 기준 카드 그룹 (1행 = 1배치) + 아코디언 확장
+ * - batchId 기준 표(ListTableView, 1행 = 1배치) + 펼친 배치의 수신자 표
  * - 펼치면 `GET /api/v1/admin/manual-notifications/batches/{batchId}` 호출하여
  *   수신자별 결과(이름 / 마스킹 전화 / Solapi ID / 상태 / 에러 메시지) 노출
  * - `refreshKey` prop 변경 시 자동 새로고침 (폼에서 발송 성공 후 호출)
@@ -23,7 +23,9 @@
 
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { SettingsButton, SettingsSectionPanel } from '../settings-shell';
+import { SettingsButton, SettingsNotice, SettingsSectionPanel } from '../settings-shell';
+import ListTableView from '../../common/ListTableView';
+import StatusBadge from '../../common/StatusBadge';
 import { toDisplayString } from '../../../utils/safeDisplay';
 import {
   normalizeSpringPageRows,
@@ -164,86 +166,139 @@ const ManualNotificationBatchHistory = ({ refreshKey = 0 }) => {
 
   const totalPages = Math.max(pageMeta.totalPages, 1);
 
+  const batchColumns = [
+    { key: 'batchId', label: t('manualNotification.history.cardBatchId'), hideOnMobile: true },
+    { key: 'channel', label: t('manualNotification.history.cardChannel') },
+    { key: 'startedAt', label: t('manualNotification.history.cardStartedAt') },
+    { key: 'stats', label: t('manualNotification.result.title') },
+    { key: 'reason', label: t('manualNotification.history.cardReason'), hideOnMobile: true },
+    { key: 'action', label: t('manualNotification.history.openDetail') }
+  ];
+
+  const recipientColumns = [
+    { key: 'recipient', label: t('manualNotification.result.columnRecipient') },
+    { key: 'status', label: t('manualNotification.result.title') },
+    { key: 'solapi', label: t('manualNotification.result.columnSolapiId'), hideOnMobile: true },
+    { key: 'error', label: t('manualNotification.result.columnErrorMessage') }
+  ];
+
+  const renderBatchCell = (key, item) => {
+    switch (key) {
+      case 'batchId':
+        return <span className="mg-v2-settings-mono">{toDisplayString(item.batchId, '-')}</span>;
+      case 'channel':
+        return formatChannelLabel(item.channel, t);
+      case 'startedAt':
+        return toDisplayString(item.startedAt, '-');
+      case 'stats':
+        return t('manualNotification.history.cardStats', {
+          success: item.successCount,
+          failed: item.failureCount,
+          total: item.totalCount,
+          defaultValue: '성공 {{success}} / 실패 {{failed}} / 전체 {{total}}'
+        });
+      case 'reason':
+        return toDisplayString(item.reason, '-');
+      case 'action': {
+        const expanded = expandedBatchId === item.batchId;
+        return (
+          <SettingsButton
+            type="button"
+            variant="ghost"
+            preventDoubleClick
+            onClick={() => handleToggleDetail(item.batchId)}
+            aria-expanded={expanded}
+          >
+            {expanded
+              ? t('manualNotification.history.closeDetail')
+              : t('manualNotification.history.openDetail')}
+          </SettingsButton>
+        );
+      }
+      default:
+        return null;
+    }
+  };
+
+  const renderRecipientCell = (key, row) => {
+    const isSuccess = row?.success !== false;
+    switch (key) {
+      case 'recipient':
+        return (
+          <span className="mg-v2-settings-table__cell-stack">
+            <strong>{toDisplayString(row?.name, '이름 없음')}</strong>
+            <span className="mg-v2-settings-muted">{toDisplayString(row?.phoneMasked, '번호 없음')}</span>
+          </span>
+        );
+      case 'status':
+        return (
+          <StatusBadge variant={isSuccess ? 'success' : 'danger'}>
+            {isSuccess
+              ? t('manualNotification.result.statSuccess', { count: '', defaultValue: '성공' })
+              : t('manualNotification.result.statFailed', { count: '', defaultValue: '실패' })}
+          </StatusBadge>
+        );
+      case 'solapi':
+        return (
+          <span className="mg-v2-settings-mono">
+            {toDisplayString(row?.solapiGroupId, '-')}
+            {' / '}
+            {toDisplayString(row?.solapiMessageId, '-')}
+          </span>
+        );
+      case 'error': {
+        if (isSuccess) {
+          return '-';
+        }
+        const code = row?.errorCode || '';
+        const codeKey = code && Object.values(MANUAL_NOTIFICATION_ERROR_CODES).includes(code)
+          ? `manualNotification.errors.${code}`
+          : null;
+        const fallbackMessage = toDisplayString(row?.errorMessage, '');
+        const displayedMessage = codeKey ? t(codeKey, fallbackMessage) : fallbackMessage;
+        return (
+          <span className="mg-v2-settings-text--danger">
+            {toDisplayString(code, '-')}
+            {displayedMessage ? ` · ${displayedMessage}` : null}
+          </span>
+        );
+      }
+      default:
+        return null;
+    }
+  };
+
   const renderDetail = (batchId) => {
     if (detailLoading && expandedBatchId === batchId && !detailByBatch[batchId]) {
-      return (
-        <p className={`${HISTORY_CLASS}__detail-empty`}>
-          {t('manualNotification.history.detailLoading')}
-        </p>
-      );
+      return <p className="mg-v2-settings-muted">{t('manualNotification.history.detailLoading')}</p>;
     }
     if (detailError && expandedBatchId === batchId && !detailByBatch[batchId]) {
-      return (
-        <p className={`${HISTORY_CLASS}__detail-error`} role="alert">
-          {detailError}
-        </p>
-      );
+      return <SettingsNotice tone="danger">{detailError}</SettingsNotice>;
     }
     const detail = detailByBatch[batchId];
     if (!detail) {
       return null;
     }
     if (!Array.isArray(detail.results) || detail.results.length === 0) {
-      return (
-        <p className={`${HISTORY_CLASS}__detail-empty`}>
-          {t('manualNotification.history.empty')}
-        </p>
-      );
+      return <p className="mg-v2-settings-muted">{t('manualNotification.history.empty')}</p>;
     }
+    const rows = detail.results.map((row, idx) => ({
+      ...row,
+      rowKey: `${batchId}-row-${row?.userId ?? idx}`
+    }));
     return (
-      <ul className={`${HISTORY_CLASS}__detail-list`}>
-        {detail.results.map((row, idx) => {
-          const code = row?.errorCode || '';
-          const codeKey = code && Object.values(MANUAL_NOTIFICATION_ERROR_CODES).includes(code)
-            ? `manualNotification.errors.${code}`
-            : null;
-          const fallbackMessage = toDisplayString(row?.errorMessage, '');
-          const displayedMessage = codeKey ? t(codeKey, fallbackMessage) : fallbackMessage;
-          const isSuccess = row?.success !== false;
-          return (
-            <li
-              key={`${batchId}-row-${row?.userId ?? idx}`}
-              className={`${HISTORY_CLASS}__detail-row${isSuccess ? '' : ` ${HISTORY_CLASS}__detail-row--failed`}`}
-            >
-              <div className={`${HISTORY_CLASS}__detail-row-main`}>
-                <span className={`${HISTORY_CLASS}__detail-row-name`}>
-                  {toDisplayString(row?.name, '이름 없음')}
-                </span>
-                <span className={`${HISTORY_CLASS}__detail-row-phone`}>
-                  {toDisplayString(row?.phoneMasked, '번호 없음')}
-                </span>
-                <span
-                  className={`${HISTORY_CLASS}__detail-row-status${isSuccess ? ` ${HISTORY_CLASS}__detail-row-status--ok` : ` ${HISTORY_CLASS}__detail-row-status--fail`}`}
-                >
-                  {isSuccess
-                    ? t('manualNotification.result.statSuccess', { count: '', defaultValue: '성공' })
-                    : t('manualNotification.result.statFailed', { count: '', defaultValue: '실패' })}
-                </span>
-              </div>
-              <div className={`${HISTORY_CLASS}__detail-row-aux`}>
-                <span className={`${HISTORY_CLASS}__detail-row-solapi`}>
-                  {toDisplayString(row?.solapiGroupId, '-')}
-                  {' / '}
-                  {toDisplayString(row?.solapiMessageId, '-')}
-                </span>
-                {!isSuccess && (
-                  <span className={`${HISTORY_CLASS}__detail-row-error`}>
-                    {toDisplayString(code, '-')}
-                    {displayedMessage && (
-                      <>
-                        {' · '}
-                        {displayedMessage}
-                      </>
-                    )}
-                  </span>
-                )}
-              </div>
-            </li>
-          );
-        })}
-      </ul>
+      <div className={`mg-v2-settings-table ${HISTORY_CLASS}__detail-table`}>
+        <ListTableView
+          columns={recipientColumns}
+          data={rows}
+          renderCell={renderRecipientCell}
+          rowKeyField="rowKey"
+        />
+      </div>
     );
   };
+
+  const expandedItem = items.find((item) => item.batchId === expandedBatchId);
 
   return (
     <SettingsSectionPanel
@@ -269,82 +324,33 @@ const ManualNotificationBatchHistory = ({ refreshKey = 0 }) => {
       )}
     >
       {loading && items.length === 0 && (
-        <p className={`${HISTORY_CLASS}__empty`}>
-          {t('manualNotification.history.loading')}
-        </p>
+        <p className="mg-v2-settings-muted">{t('manualNotification.history.loading')}</p>
       )}
 
-      {!loading && error && (
-        <p className={`${HISTORY_CLASS}__error`} role="alert">
-          {error}
-        </p>
-      )}
+      {!loading && error && <SettingsNotice tone="danger">{error}</SettingsNotice>}
 
       {!loading && !error && items.length === 0 && (
-        <p className={`${HISTORY_CLASS}__empty`}>
-          {t('manualNotification.history.empty')}
-        </p>
+        <p className="mg-v2-settings-muted">{t('manualNotification.history.empty')}</p>
       )}
 
       {items.length > 0 && (
-        <ul className={`${HISTORY_CLASS}__list`}>
-          {items.map((item) => {
-            const expanded = expandedBatchId === item.batchId;
-            return (
-              <li
-                key={item.batchId}
-                className={`${HISTORY_CLASS}__card${expanded ? ` ${HISTORY_CLASS}__card--expanded` : ''}`}
-              >
-                <div className={`${HISTORY_CLASS}__card-header`}>
-                  <div className={`${HISTORY_CLASS}__card-meta`}>
-                    <span className={`${HISTORY_CLASS}__card-batch`}>
-                      <strong>{t('manualNotification.history.cardBatchId')}:</strong>{' '}
-                      {toDisplayString(item.batchId, '-')}
-                    </span>
-                    <span className={`${HISTORY_CLASS}__card-channel`}>
-                      <strong>{t('manualNotification.history.cardChannel')}:</strong>{' '}
-                      {formatChannelLabel(item.channel, t)}
-                    </span>
-                    <span className={`${HISTORY_CLASS}__card-started`}>
-                      <strong>{t('manualNotification.history.cardStartedAt')}:</strong>{' '}
-                      {toDisplayString(item.startedAt, '-')}
-                    </span>
-                  </div>
-                  <div className={`${HISTORY_CLASS}__card-stats`}>
-                    {t('manualNotification.history.cardStats', {
-                      success: item.successCount,
-                      failed: item.failureCount,
-                      total: item.totalCount,
-                      defaultValue: '성공 {{success}} / 실패 {{failed}} / 전체 {{total}}'
-                    })}
-                  </div>
-                </div>
-                <div className={`${HISTORY_CLASS}__card-reason`}>
-                  <strong>{t('manualNotification.history.cardReason')}:</strong>{' '}
-                  {toDisplayString(item.reason, '-')}
-                </div>
-                <div className={`${HISTORY_CLASS}__card-actions`}>
-                  <SettingsButton
-                    type="button"
-                    variant="outline"
-                    preventDoubleClick
-                    onClick={() => handleToggleDetail(item.batchId)}
-                    aria-expanded={expanded}
-                  >
-                    {expanded
-                      ? t('manualNotification.history.closeDetail')
-                      : t('manualNotification.history.openDetail')}
-                  </SettingsButton>
-                </div>
-                {expanded && (
-                  <div className={`${HISTORY_CLASS}__detail`}>
-                    {renderDetail(item.batchId)}
-                  </div>
-                )}
-              </li>
-            );
-          })}
-        </ul>
+        <div className="mg-v2-settings-table">
+          <ListTableView
+            columns={batchColumns}
+            data={items}
+            renderCell={renderBatchCell}
+            rowKeyField="batchId"
+          />
+        </div>
+      )}
+
+      {expandedItem && (
+        <section className={`${HISTORY_CLASS}__detail`} aria-live="polite">
+          <h4 className="mg-v2-settings-subheading">
+            {`${t('manualNotification.history.cardBatchId')} ${toDisplayString(expandedItem.batchId, '-')}`}
+          </h4>
+          {renderDetail(expandedItem.batchId)}
+        </section>
       )}
 
       {pageMeta.totalPages > 1 && (

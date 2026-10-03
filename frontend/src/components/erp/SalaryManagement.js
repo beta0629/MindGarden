@@ -51,8 +51,10 @@ import {
   isSalaryAdjustmentCalculation,
   orderSalaryCalculationsPrimaryThenAdjustment,
   toSalaryLateNotesErrorMessage,
-  resolveSalaryMonthlySessionCount
+  resolveSalaryMonthlySessionCount,
+  parsePreConfirmWarningPayload
 } from '../../utils/salaryCalculationDisplay';
+import { fetchSalaryLateSessionByPrimaryId } from '../../utils/salaryLateSessionApi';
 import { getCommonCodes } from '../../utils/commonCodeApi';
 import { showNotification } from '../../utils/notification';
 import UnifiedModal from '../common/modals/UnifiedModal';
@@ -132,36 +134,6 @@ function toSalaryStatusBadgeVariant(rawStatus) {
   }
 }
 
-/**
- * pre-confirm-warning API 응답을 화면용 숫자로 정규화.
- * @param {unknown} response
- * @returns {object|null}
- */
-function parsePreConfirmWarningPayload(response) {
-  if (response == null || typeof response !== 'object') {
-    return null;
-  }
-  const data = response.data != null && typeof response.data === 'object'
-    ? response.data
-    : response;
-  if (data.success === false) {
-    return null;
-  }
-  const toCount = (v) => {
-    const n = Number(v);
-    return Number.isFinite(n) && n > 0 ? n : 0;
-  };
-  return {
-    notCompletedCount: toCount(data.notCompletedCount),
-    missingRecordCount: toCount(data.missingRecordCount),
-    currentCompletedCount: toCount(data.currentCompletedCount),
-    storedCompletedCount: toCount(data.storedCompletedCount),
-    extraCompletedCount: toCount(data.extraCompletedCount),
-    primaryCalculationId: data.primaryCalculationId ?? null,
-    primaryStatus: data.primaryStatus != null ? String(data.primaryStatus) : null
-  };
-}
-
 const SalaryManagement = () => {
   const { t } = useTranslation();
   const [confirm, ConfirmModal] = useConfirm();
@@ -189,6 +161,8 @@ const SalaryManagement = () => {
   const [previewResult, setPreviewResult] = useState(null);
   /** 목록 ⋮「계산」으로 연 저장 행 — calc stage DETAIL(월 횟수). tax/export의 selectedCalculation과 분리. */
   const [calcStageSourceCalculation, setCalcStageSourceCalculation] = useState(null);
+  /** 계산 stage 저장 행의 pre-confirm-warning 결과 (다시 계산 노출 판정). */
+  const [savedCalcLateInfo, setSavedCalcLateInfo] = useState(null);
   const [isConfigModalOpen, setIsConfigModalOpen] = useState(false);
   const [isCalcStageOpen, setIsCalcStageOpen] = useState(false);
   const [calculationPeriodDisplay, setCalculationPeriodDisplay] = useState(null);
@@ -341,63 +315,7 @@ const SalaryManagement = () => {
    * @param {Array<object>} list
    */
   const refreshLateSessionWarnings = async(list) => {
-    const primaries = (Array.isArray(list) ? list : []).filter(
-      (calc) => !isSalaryAdjustmentCalculation(calc)
-    );
-    if (primaries.length === 0) {
-      setLateSessionByPrimaryId({});
-      return;
-    }
-    const uniqueByKey = new Map();
-    primaries.forEach((calc) => {
-      const consultantId = calc?.consultantId;
-      const periodStart = calc?.calculationPeriodStart;
-      const periodEnd = calc?.calculationPeriodEnd;
-      if (consultantId == null || !periodStart || !periodEnd) {
-        return;
-      }
-      const key = `${consultantId}|${periodStart}|${periodEnd}`;
-      if (!uniqueByKey.has(key)) {
-        uniqueByKey.set(key, {
-          consultantId,
-          periodStart,
-          periodEnd,
-          fallbackPrimaryId: calc.id
-        });
-      }
-    });
-    const entries = await Promise.all(
-      [...uniqueByKey.values()].map(async(query) => {
-        try {
-          const response = await StandardizedApi.get(
-            SALARY_API_ENDPOINTS.PRE_CONFIRM_WARNING,
-            {
-              consultantId: query.consultantId,
-              periodStart: query.periodStart,
-              periodEnd: query.periodEnd
-            }
-          );
-          const parsed = parsePreConfirmWarningPayload(response);
-          if (!parsed) {
-            return null;
-          }
-          const primaryId = parsed.primaryCalculationId != null
-            ? parsed.primaryCalculationId
-            : query.fallbackPrimaryId;
-          return [primaryId, parsed];
-        } catch (error) {
-          console.error('빠진 회기 경고 조회 실패:', error);
-          return null;
-        }
-      })
-    );
-    const nextMap = {};
-    entries.forEach((entry) => {
-      if (entry) {
-        nextMap[entry[0]] = entry[1];
-      }
-    });
-    setLateSessionByPrimaryId(nextMap);
+    setLateSessionByPrimaryId(await fetchSalaryLateSessionByPrimaryId(list));
   };
 
   /** 상담사 목록: 공통 모듈 consultantHelper 사용 (GET /api/v1/admin/consultants/with-stats).
@@ -786,6 +704,9 @@ const SalaryManagement = () => {
         );
       } else {
         showNotification(SALARY_LATE_NOTES_MESSAGES.RECALC_SUCCESS, 'success');
+        if (calcStageSourceCalculation?.id === calculation.id) {
+          setSavedCalcLateInfo(null);
+        }
         await refreshCalculationsList({ silent: true });
       }
     } catch (err) {
@@ -980,6 +901,25 @@ const SalaryManagement = () => {
       window.clearInterval(intervalId);
     };
   }, [activeTab]);
+
+  /** 계산 stage 저장 행: 빠진 회기(extraCompletedCount) 조회 → 다시 계산 노출. */
+  useEffect(() => {
+    let cancelled = false;
+    const source = calcStageSourceCalculation;
+    setSavedCalcLateInfo(null);
+    if (!source || isSalaryAdjustmentCalculation(source)) {
+      return undefined;
+    }
+    (async() => {
+      const byPrimaryId = await fetchSalaryLateSessionByPrimaryId([source]);
+      if (!cancelled) {
+        setSavedCalcLateInfo(byPrimaryId[source.id] ?? null);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [calcStageSourceCalculation]);
 
   /** 미리보기 확정 전: 완료 아닌 회기·일지 미작성 건수 (n>0만 배너). */
   useEffect(() => {
@@ -1613,7 +1553,14 @@ const SalaryManagement = () => {
       >
         <div className="salary-management__calc-stage" aria-label={SM_CALC_STAGE.ARIA}>
 
-            <SalarySavedCalculationDetail calculation={calcStageSourceCalculation} />
+            <SalarySavedCalculationDetail
+              calculation={calcStageSourceCalculation}
+              lateInfo={savedCalcLateInfo}
+              onRecalc={handleRecalcSalary}
+              recalcLoading={
+                recalcLoadingId != null && recalcLoadingId === calcStageSourceCalculation?.id
+              }
+            />
 
             <section className="salary-management__card salary-filter-block" aria-labelledby="salary-filter-title-calc">
               <h2 id="salary-filter-title-calc" className="salary-management__section-title salary-filter-block__title">

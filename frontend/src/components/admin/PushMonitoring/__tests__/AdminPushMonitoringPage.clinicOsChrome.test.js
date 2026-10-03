@@ -8,6 +8,7 @@
  *
  * @author CoreSolution
  * @since 2026-09-05
+ * @updated 2026-10-03 — SettingsSummaryStrip · TabChipRow · ListTableView 계약
  */
 
 const fs = require('fs');
@@ -24,6 +25,11 @@ describe('AdminPushMonitoringPage Clinic-OS chrome', () => {
   const filtersCss = read('src/components/admin/PushMonitoring/molecules/PushMonitorFilters.css');
   const badgeCss = read('src/components/admin/PushMonitoring/atoms/PushMonitorOperationalBadge.css');
   const failureCss = read('src/components/admin/PushMonitoring/molecules/PushMonitorFailureList.css');
+  const filtersJs = read('src/components/admin/PushMonitoring/molecules/PushMonitorFilters.jsx');
+  const bannersJs = read('src/components/admin/PushMonitoring/molecules/PushMonitorOperationalBanners.jsx');
+  const failureJs = read('src/components/admin/PushMonitoring/molecules/PushMonitorFailureList.jsx');
+  const snapshotJs = read('src/components/admin/PushMonitoring/molecules/PushMonitorTenantSnapshotTable.jsx');
+  const smsLogJs = read('src/components/admin/PushMonitoring/organisms/SmsLogCard.jsx');
 
   test('uses Clinic-OS page scope not B0KlA shell import', () => {
     expect(pageJs).not.toMatch(/AdminDashboardB0KlA\.css/);
@@ -32,13 +38,36 @@ describe('AdminPushMonitoringPage Clinic-OS chrome', () => {
     expect(pageJs).toMatch(/data-testid="admin-push-monitoring-page"/);
   });
 
-  test('quiet header (SettingsPageShell) present; KPI remapped to mapping-management-summary strip', () => {
+  test('quiet header (SettingsPageShell) present; KPI uses SettingsSummaryStrip', () => {
     expect(pageJs).toMatch(/<SettingsPageShell/);
     expect(pageJs).not.toMatch(/\bContentHeader\b/);
-    expect(kpiJs).toMatch(/mapping-management-summary/);
-    expect(kpiJs).toMatch(/mapping-management-summary--cols-4/);
-    expect(kpiJs).toMatch(/KpiNumeral/);
-    expect(kpiCss).toMatch(/mapping-management-summary--cols-4/);
+    expect(kpiJs).toMatch(/<SettingsSummaryStrip/);
+    expect(kpiJs).not.toMatch(/mapping-management-summary/);
+    expect(kpiJs).not.toMatch(/KpiNumeral/);
+    expect(kpiCss).not.toMatch(/mapping-management-summary/);
+  });
+
+  test('filters use TabChipRow in settings toolbar; error banner is SettingsNotice', () => {
+    expect(filtersJs).toMatch(/<TabChipRow/);
+    expect(filtersJs).toMatch(/mg-v2-settings-toolbar/);
+    expect(filtersJs).not.toMatch(/SegmentedTabs/);
+    expect(filtersCss).not.toMatch(/border:/);
+    expect(pageJs).toMatch(/<SettingsNotice[\s\S]*PUSH_MONITOR_ERROR_BANNER/);
+    expect(pageJs).not.toMatch(/mg-push-monitor__error-banner/);
+    expect(pageCss).not.toMatch(/mg-push-monitor__error-banner/);
+    expect(bannersJs).toMatch(/<SettingsNotice/);
+    expect(bannersJs).not.toMatch(/PushMonitorOperationalBadge/);
+  });
+
+  test('tabular data uses ListTableView or settings kv, no role="table" div grids', () => {
+    expect(failureJs).toMatch(/<ListTableView/);
+    expect(smsLogJs).toMatch(/<ListTableView/);
+    expect(snapshotJs).toMatch(/mg-v2-settings-kv/);
+    [failureJs, smsLogJs, snapshotJs].forEach((src) => {
+      expect(src).not.toMatch(/role="table"/);
+      expect(src).not.toMatch(/role="row"/);
+      expect(src).not.toMatch(/<button\b/);
+    });
   });
 
   test('sections render SettingsSectionPanel; page CSS has no stage card geometry', () => {

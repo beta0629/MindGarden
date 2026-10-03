@@ -1,215 +1,22 @@
 /**
  * 수동 발송 결과 모달 (Organism) 스타일.
  *
- * - UnifiedModal 본문 내부 레이아웃만 정의 (모달 자체 스타일은 UnifiedModal 소유)
+ * - 요약·표·안내·키값 외형은 settings-shell(SettingsSuite.css · ListTableView) 소유 — 여기서는 세로 배치만
  * - design-v2 토큰만 사용 (--mg-v2-*)
  *
  * @author MindGarden
  * @since 2026-05-23
- * @updated 2026-10-03 — design-v2 토큰 이관
+ * @updated 2026-10-03 — 통계 카드·행 카드 → SettingsSummaryStrip · ListTableView
  */
 
-.mg-manual-notif-result {
-  display: flex;
-  flex-direction: column;
-  gap: var(--mg-v2-space-4);
-  color: var(--mg-v2-color-text-primary);
-}
-
-.mg-manual-notif-result__header {
-  padding: var(--mg-v2-space-4);
-  background: var(--mg-v2-color-neutral-100);
-  border: var(--mg-v2-border-width-thin) solid var(--mg-v2-color-neutral-300);
-  border-radius: var(--mg-v2-radius-lg);
-}
-
-.mg-manual-notif-result__meta {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, calc(var(--mg-v2-space-16) * 3)), 1fr));
-  gap: var(--mg-v2-space-4);
-  margin: 0;
-}
-
-.mg-manual-notif-result__meta-item {
-  display: flex;
-  flex-direction: column;
-  gap: var(--mg-v2-space-1);
-  min-width: 0;
-}
-
-.mg-manual-notif-result__meta-label {
-  margin: 0;
-  font-size: var(--mg-v2-font-size-caption);
-  font-weight: var(--mg-v2-font-weight-semibold);
-  color: var(--mg-v2-color-text-secondary);
-}
-
-.mg-manual-notif-result__meta-value {
-  margin: 0;
-  font-size: var(--mg-v2-font-size-body-md);
-  color: var(--mg-v2-color-text-primary);
-  word-break: break-all;
-}
-
-.mg-manual-notif-result__batch-error {
-  display: flex;
-  flex-direction: column;
-  gap: var(--mg-v2-space-1);
-  padding: var(--mg-v2-space-4);
-  background: var(--mg-v2-color-semantic-error-light);
-  border: var(--mg-v2-border-width-thin) solid var(--mg-v2-color-semantic-error);
-  border-radius: var(--mg-v2-radius-lg);
-}
-
-.mg-manual-notif-result__batch-error-code {
-  font-size: var(--mg-v2-font-size-body-md);
-  font-weight: var(--mg-v2-font-weight-bold);
-  color: var(--mg-v2-color-semantic-error-dark);
-}
-
-.mg-manual-notif-result__batch-error-message {
-  font-size: var(--mg-v2-font-size-body-md);
-  color: var(--mg-v2-color-text-primary);
-}
-
-.mg-manual-notif-result__stats {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: var(--mg-v2-space-2);
-}
-
-.mg-manual-notif-result__stat {
-  padding: var(--mg-v2-space-4);
-  font-size: var(--mg-v2-font-size-body-md);
-  font-weight: var(--mg-v2-font-weight-semibold);
-  text-align: center;
-  color: var(--mg-v2-color-text-primary);
-  background: var(--mg-v2-color-surface-card);
-  border: var(--mg-v2-border-width-thin) solid var(--mg-v2-color-neutral-300);
-  border-radius: var(--mg-v2-radius-lg);
-}
-
-.mg-manual-notif-result__stat--total {
-  color: var(--mg-v2-color-primary-main);
-  border-color: var(--mg-v2-color-primary-main);
-}
-
-.mg-manual-notif-result__stat--success {
-  color: var(--mg-v2-color-semantic-success-dark);
-  background: var(--mg-v2-color-semantic-success-light);
-  border-color: var(--mg-v2-color-semantic-success);
-}
-
-.mg-manual-notif-result__stat--failed {
-  color: var(--mg-v2-color-semantic-error-dark);
-  background: var(--mg-v2-color-semantic-error-light);
-  border-color: var(--mg-v2-color-semantic-error);
-}
-
+.mg-manual-notif-result,
 .mg-manual-notif-result__section {
   display: flex;
   flex-direction: column;
-  gap: var(--mg-v2-space-2);
-  padding: var(--mg-v2-space-4);
-  background: var(--mg-v2-color-neutral-100);
-  border: var(--mg-v2-border-width-thin) solid var(--mg-v2-color-neutral-300);
-  border-radius: var(--mg-v2-radius-lg);
+  gap: var(--mg-v2-space-3);
+  min-width: 0;
 }
 
-.mg-manual-notif-result__section-title {
-  margin: 0;
-  font-size: var(--mg-v2-font-size-body-md);
-  font-weight: var(--mg-v2-font-weight-semibold);
-  color: var(--mg-v2-color-text-primary);
-}
-
-.mg-manual-notif-result__section-count {
-  font-weight: var(--mg-v2-font-weight-regular);
-  color: var(--mg-v2-color-text-secondary);
-}
-
-.mg-manual-notif-result__empty {
-  margin: 0;
-  font-size: var(--mg-v2-font-size-body-md);
-  color: var(--mg-v2-color-text-secondary);
-}
-
-.mg-manual-notif-result__list {
-  display: flex;
-  flex-direction: column;
-  gap: var(--mg-v2-space-1);
-  max-height: calc(var(--mg-v2-space-16) * 4);
-  margin: 0;
-  padding: 0;
-  overflow-y: auto;
-  list-style: none;
-}
-
-.mg-manual-notif-result__row {
-  display: flex;
-  flex-direction: column;
-  gap: var(--mg-v2-space-1);
-  padding: var(--mg-v2-space-2) var(--mg-v2-space-3);
-  background: var(--mg-v2-color-surface-card);
-  border: var(--mg-v2-border-width-thin) solid var(--mg-v2-color-border-default);
-  border-radius: var(--mg-v2-radius-lg);
-}
-
-.mg-manual-notif-result__row--failure {
-  border-color: var(--mg-v2-color-semantic-error);
-}
-
-.mg-manual-notif-result__row--success {
-  border-color: var(--mg-v2-color-semantic-success);
-}
-
-.mg-manual-notif-result__row-main {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--mg-v2-space-2);
-}
-
-.mg-manual-notif-result__row-name {
-  font-weight: var(--mg-v2-font-weight-semibold);
-  color: var(--mg-v2-color-text-primary);
-}
-
-.mg-manual-notif-result__row-phone {
-  font-size: var(--mg-v2-font-size-body-md);
-  color: var(--mg-v2-color-text-secondary);
-}
-
-.mg-manual-notif-result__row-error {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--mg-v2-space-2);
-  font-size: var(--mg-v2-font-size-caption);
-}
-
-.mg-manual-notif-result__row-error-code {
-  font-weight: var(--mg-v2-font-weight-bold);
-  color: var(--mg-v2-color-semantic-error-dark);
-}
-
-.mg-manual-notif-result__row-error-message {
-  color: var(--mg-v2-color-text-primary);
-}
-
-.mg-manual-notif-result__row-solapi {
-  display: flex;
-  gap: var(--mg-v2-space-2);
-  font-size: var(--mg-v2-font-size-caption);
-  color: var(--mg-v2-color-text-secondary);
-  word-break: break-all;
-}
-
-.mg-manual-notif-result__row-solapi-label {
-  font-weight: var(--mg-v2-font-weight-semibold);
-}
-
-@media (max-width: 767px) {
-  .mg-manual-notif-result__stats {
-    grid-template-columns: 1fr;
-  }
+.mg-manual-notif-result {
+  gap: var(--mg-v2-space-4);
 }

@@ -28,7 +28,6 @@ import {
   AJAX_ACCESS_DENIED_DEFAULT,
   AJAX_SERVER_ERROR_SHORT,
   AJAX_REQUEST_ERROR_SHORT,
-  AJAX_POST_REQUEST_FAILED,
   AJAX_POST_FORMDATA_FAILED,
   AJAX_BAD_REQUEST_400_DEFAULT,
   AJAX_ERROR_WITH_CODE_PREFIX,
@@ -58,9 +57,14 @@ const getDefaultHeaders = () => {
   return getDefaultApiHeaders();
 };
 
-// 에러 메시지 생성 — HTTP 5xx 는 전부 SERVER_ERROR (502/503 을 NETWORK_ERROR 로 오분류하지 않음)
+// 에러 메시지 생성 — 응답이 있으면(HTTP status 존재) 네트워크 문구를 쓰지 않는다.
+// 5xx → SERVER_ERROR, 그 밖의 4xx(400·409·422 등) → REQUEST_FAILED, status 없음 → NETWORK_ERROR
 export const getErrorMessage = (status) => {
-  if (typeof status === 'number' && status >= API_STATUS.INTERNAL_SERVER_ERROR) {
+  const hasHttpStatus = typeof status === 'number' && status > 0;
+  if (!hasHttpStatus) {
+    return API_ERROR_MESSAGES.NETWORK_ERROR;
+  }
+  if (status >= API_STATUS.INTERNAL_SERVER_ERROR) {
     return API_ERROR_MESSAGES.SERVER_ERROR;
   }
   switch (status) {
@@ -71,7 +75,52 @@ export const getErrorMessage = (status) => {
     case API_STATUS.NOT_FOUND:
       return API_ERROR_MESSAGES.NOT_FOUND;
     default:
-      return API_ERROR_MESSAGES.NETWORK_ERROR;
+      return API_ERROR_MESSAGES.REQUEST_FAILED;
+  }
+};
+
+/**
+ * 오류 응답 본문에서 서버 메시지를 꺼낸다 (ErrorResponse.message → ApiResponse.data.message → error).
+ * @param {unknown} body
+ * @returns {string} 없으면 빈 문자열
+ */
+export const extractServerErrorMessage = (body) => {
+  if (body == null || typeof body !== 'object') {
+    return '';
+  }
+  const candidates = [
+    body.message,
+    body.data && typeof body.data === 'object' ? body.data.message : undefined,
+    body.error
+  ];
+  const found = candidates.find((value) => typeof value === 'string' && value.trim() !== '');
+  return found ? found.trim() : '';
+};
+
+/**
+ * HTTP 응답이 있는 오류의 사용자 문구 — 서버 메시지 우선, 없으면 status 기반 문구.
+ * @param {number} status
+ * @param {unknown} body
+ * @returns {string}
+ */
+export const resolveHttpErrorMessage = (status, body) => (
+  extractServerErrorMessage(body) || getErrorMessage(status)
+);
+
+/**
+ * 응답 본문 JSON 파싱. 오류 응답(!ok)의 빈 본문·HTML(프록시 502 등)은 {} 로 둔다.
+ * 성공 응답의 파싱 실패는 기존과 같이 throw 한다.
+ * @param {Response} response
+ * @returns {Promise<Object>}
+ */
+const readJsonBody = async(response) => {
+  try {
+    return await response.json();
+  } catch (parseError) {
+    if (response.ok) {
+      throw parseError;
+    }
+    return {};
   }
 };
 
@@ -265,14 +314,20 @@ export const checkSessionAndRedirect = async(response, requestUrl = '', options 
 };
 
 // 에러 처리 — StandardizedApi.handleError 가 5xx 를 구분하도록 status 유지
-export const handleError = (error, status) => {
+// body 가 있으면 서버 메시지(message 등)를 우선 노출하고 response.data 로 부착한다.
+export const handleError = (error, status, body) => {
   const isLocalEnv = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
   if (status === API_STATUS.UNAUTHORIZED && !isLocalEnv) {
     redirectToLoginPageOnce();
   }
-  const err = new Error(getErrorMessage(status));
+  const message = status === API_STATUS.UNAUTHORIZED
+    ? getErrorMessage(status)
+    : resolveHttpErrorMessage(status, body);
+  const err = new Error(message);
   err.status = status;
-  if (error && typeof error === 'object' && error.response != null) {
+  if (body !== undefined) {
+    err.response = { status, data: body };
+  } else if (error && typeof error === 'object' && error.response != null) {
     err.response = error.response;
   }
   throw err;
@@ -403,11 +458,11 @@ export const apiGet = async(endpoint, params = {}, options = {}) => {
       }
       // 500 오류도 서버 오류이므로 에러 처리
       if (response.status >= 500) {
-        handleError(new Error(AJAX_SERVER_ERROR_SHORT), response.status);
+        handleError(new Error(AJAX_SERVER_ERROR_SHORT), response.status, jsonData);
       }
-      // 기타 4xx 오류는 클라이언트 오류이므로 에러 처리
+      // 기타 4xx 오류(409 등)는 서버 메시지를 그대로 전달
       if (response.status >= 400) {
-        handleError(new Error(AJAX_REQUEST_ERROR_SHORT), response.status);
+        handleError(new Error(AJAX_REQUEST_ERROR_SHORT), response.status, jsonData);
       }
     }
 
@@ -537,7 +592,7 @@ export const apiPost = async(endpoint, data = {}, options = {}) => {
       headers: { ...getDefaultHeaders(), ...requestOptions.headers }
     });
 
-    const jsonData = await response.json();
+    const jsonData = await readJsonBody(response);
     
     if (!response.ok) {
       const requestUrl = endpoint.startsWith('http')
@@ -554,19 +609,8 @@ export const apiPost = async(endpoint, data = {}, options = {}) => {
         return null; // 리다이렉트됨
       }
       
-      // 표준화 2025-12-08: 에러 응답에서 메시지 추출
-      let errorMessage = AJAX_POST_REQUEST_FAILED;
-      if (jsonData && typeof jsonData === 'object') {
-        if (jsonData.message) {
-          errorMessage = jsonData.message;
-        } else if (jsonData.error) {
-          errorMessage = jsonData.error;
-        } else if (jsonData.data && jsonData.data.message) {
-          errorMessage = jsonData.data.message;
-        }
-      }
-      
-      const error = new Error(errorMessage);
+      // 서버 메시지 우선, 없으면 status 기반 문구 (응답이 있으므로 네트워크 문구 금지)
+      const error = new Error(resolveHttpErrorMessage(response.status, jsonData));
       error.status = response.status;
       error.response = { data: jsonData };
       throw error;
@@ -633,10 +677,7 @@ export const apiPut = async(endpoint, data = {}, options = {}) => {
         return null; // 리다이렉트됨
       }
       // 서버 응답 body의 message가 있으면 사용, 없으면 status 기반 메시지
-      const serverMessage = (jsonData && typeof jsonData === 'object' && jsonData.message)
-        ? String(jsonData.message)
-        : getErrorMessage(response.status);
-      const err = new Error(serverMessage);
+      const err = new Error(resolveHttpErrorMessage(response.status, jsonData));
       err.status = response.status;
       err.response = { data: jsonData };
       throw err;
@@ -700,10 +741,7 @@ export const apiPatch = async(endpoint, data = {}, options = {}) => {
       if (redirected) {
         return null;
       }
-      const serverMessage = (jsonData && typeof jsonData === 'object' && jsonData.message)
-        ? String(jsonData.message)
-        : getErrorMessage(response.status);
-      const err = new Error(serverMessage);
+      const err = new Error(resolveHttpErrorMessage(response.status, jsonData));
       err.status = response.status;
       err.response = { data: jsonData };
       throw err;
@@ -776,7 +814,7 @@ export const apiPostFormData = async(endpoint, formData, options = {}) => {
         throw err;
       }
 
-      handleError(new Error(AJAX_POST_FORMDATA_FAILED), response.status);
+      handleError(new Error(AJAX_POST_FORMDATA_FAILED), response.status, errorBody);
     }
 
     return await response.json();
@@ -796,7 +834,7 @@ export const apiDelete = async(endpoint, options = {}) => {
       headers: { ...getDefaultHeaders(), ...requestOptions.headers }
     });
 
-    const jsonData = await response.json();
+    const jsonData = await readJsonBody(response);
 
     if (!response.ok) {
       const requestUrl = endpoint.startsWith('http')
@@ -819,10 +857,7 @@ export const apiDelete = async(endpoint, options = {}) => {
       if (response.status === API_STATUS.UNAUTHORIZED) {
         handleError(new Error(AJAX_DELETE_REQUEST_FAILED), response.status);
       }
-      const fallbackMessage = (jsonData && typeof jsonData === 'object' && jsonData.message)
-        ? jsonData.message
-        : getErrorMessage(response.status);
-      const enriched = new Error(fallbackMessage);
+      const enriched = new Error(resolveHttpErrorMessage(response.status, jsonData));
       enriched.status = response.status;
       enriched.response = { status: response.status, data: jsonData };
       throw enriched;
@@ -876,7 +911,8 @@ export const apiUpload = async(endpoint, formData, options = {}) => {
         return null; // 리다이렉트됨
       }
       
-      handleError(new Error(AJAX_FILE_UPLOAD_FAILED), response.status);
+      const uploadErrorBody = await readJsonBody(response);
+      handleError(new Error(AJAX_FILE_UPLOAD_FAILED), response.status, uploadErrorBody);
     }
 
     return await response.json();

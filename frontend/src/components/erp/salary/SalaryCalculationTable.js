@@ -7,7 +7,13 @@
  */
 
 import PropTypes from 'prop-types';
-import { ListTableView, EntityRowActions, ENTITY_ROW_ACTIONS_LAYOUT } from '../../common';
+import {
+  ListTableView,
+  EntityRowActions,
+  ENTITY_ROW_ACTIONS_LAYOUT,
+  TableActionCell,
+  TABLE_ACTION_CELL_LABEL_CLASS
+} from '../../common';
 import MGButton from '../../common/MGButton';
 import SafeText from '../../common/SafeText';
 import SalaryPrintComponent from '../../common/SalaryPrintComponent';
@@ -197,7 +203,7 @@ const SalaryCalculationTable = ({
     }
     if (columnKey === 'actions') {
       return (
-        <div className="salary-management__actions">
+        <TableActionCell ariaLabel={SM_TABLE.COL_ACTIONS}>
           {statusNorm === SALARY_STATUS.CALCULATED ? (
             <MGButton
               variant="primary"
@@ -210,7 +216,7 @@ const SalaryCalculationTable = ({
                 variant: 'primary',
                 size: 'sm',
                 loading: approvingCalculationId === calculation.id,
-                className: 'salary-management__cta'
+                className: TABLE_ACTION_CELL_LABEL_CLASS
               })}
               aria-label={SALARY_ACTION_LABELS.APPROVE}
               preventDoubleClick
@@ -230,7 +236,7 @@ const SalaryCalculationTable = ({
                 variant: 'primary',
                 size: 'sm',
                 loading: payingCalculationId === calculation.id,
-                className: 'salary-management__cta'
+                className: TABLE_ACTION_CELL_LABEL_CLASS
               })}
               aria-label={SALARY_ACTION_LABELS.PAY}
               preventDoubleClick
@@ -255,7 +261,7 @@ const SalaryCalculationTable = ({
               includeCalculationDetails
             />
           </span>
-        </div>
+        </TableActionCell>
       );
     }
     return <SafeText>—</SafeText>;

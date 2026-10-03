@@ -1623,7 +1623,9 @@ const SalaryManagement = () => {
               <ErpFilterToolbar
                 ariaLabel="급여 계산 대상 선택"
                 primaryRow={(
+                  <>
                   <div className="salary-filter-block__group">
+                    <div className="salary-filter-block__fields">
                     <div className="salary-filter-block__field">
                       <label htmlFor="salary-period-calc" className="mg-v2-form-label">{t('erp:SalaryManagement.t_2622331e')}</label>
                       <select
@@ -1712,10 +1714,8 @@ const SalaryManagement = () => {
                         ))}
                       </select>
                     </div>
-                  </div>
-                )}
-                secondaryRow={(
-                  <div className="salary-filter-block__run-calc">
+                    </div>
+                    <div className="salary-filter-block__run-calc">
                     <MGButton
                       variant="secondary"
                       size="small"
@@ -1755,15 +1755,17 @@ const SalaryManagement = () => {
                     >
                       {t('erp:SalaryManagement.t_dd64b2ef')}
                     </MGButton>
-                    {calcDisabledReason ? (
-                      <p
-                        id={SM_CALC_DISABLED.HINT_ID}
-                        className="mg-v2-text-xs mg-v2-text-secondary mg-v2-w-full"
-                      >
-                        {calcDisabledReason}
-                      </p>
-                    ) : null}
+                    </div>
                   </div>
+                  {calcDisabledReason ? (
+                    <p
+                      id={SM_CALC_DISABLED.HINT_ID}
+                      className="mg-v2-text-xs mg-v2-text-secondary mg-v2-w-full"
+                    >
+                      {calcDisabledReason}
+                    </p>
+                  ) : null}
+                  </>
                 )}
               />
               </div>

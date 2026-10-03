@@ -249,14 +249,15 @@ const UnifiedLogin = () => {
   // 컴포넌트 마운트 시 한 번만 실행
   useEffect(() => {
     getOAuth2Config();
-    checkOAuthCallback();
+    // checkOAuthCallback 은 아래 [location.search] effect 가 마운트 때도 실행한다. 여기서 또 부르면
+    // replaceState 로는 location.search 가 바뀌지 않아 ?error= 토스트가 두 번 뜬다.
 
     // 세션 체크는 useSession 훅에서 처리하므로 여기서는 제거 (무한 루프 방지)
     // checkExistingSession은 제거하고 useSession의 세션 체크만 사용
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // 빈 의존성 배열: 마운트 시 한 번만 실행
 
-  // OAuth 콜백은 location.search 변경 시에만 체크
+  // OAuth 콜백은 마운트 시와 location.search 변경 시 한 번씩만 체크
   useEffect(() => {
     checkOAuthCallback();
     // eslint-disable-next-line react-hooks/exhaustive-deps

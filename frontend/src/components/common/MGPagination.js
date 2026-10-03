@@ -1,7 +1,23 @@
 import React from 'react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import MGButton from './MGButton';
 import './MGPagination.css';
+
+const PAGINATION_LABELS = Object.freeze({
+  PREV: '이전 페이지',
+  NEXT: '다음 페이지'
+});
+const PAGINATION_ICON_SIZE = 16;
+const PAGINATION_ICON_STROKE = 2;
+
+/** Clinic-OS small 버튼 계약(SettingsButton 과 동일 h32·r8) */
+const buildPaginationButtonClassName = (variant, extraClassName) => buildErpMgButtonClassName({
+  variant,
+  size: 'sm',
+  loading: false,
+  className: ['mg-pagination__button', extraClassName].filter(Boolean).join(' ')
+});
 
 /**
  * Core Solution 페이징 컴포넌트
@@ -107,43 +123,38 @@ const MGPagination = ({
         <MGButton
           type="button"
           variant="outline"
+          size="small"
           onClick={() => handlePageChange(currentPage - 1)}
           disabled={currentPage <= 1 || loading}
-          className={buildErpMgButtonClassName({
-            variant: 'outline',
-            size: 'md',
-            loading: false,
-            className: 'mg-pagination__button mg-pagination__button--prev'
-          })}
-          title="이전 페이지"
+          className={buildPaginationButtonClassName('outline', 'mg-pagination__button--nav mg-pagination__button--prev')}
+          title={PAGINATION_LABELS.PREV}
+          aria-label={PAGINATION_LABELS.PREV}
           preventDoubleClick={false}
           loadingText={ERP_MG_BUTTON_LOADING_TEXT}
         >
-          ←
+          <ChevronLeft size={PAGINATION_ICON_SIZE} strokeWidth={PAGINATION_ICON_STROKE} aria-hidden="true" />
         </MGButton>
         
         {/* 페이지 번호들 */}
         <div className="mg-pagination__pages">
           {getPageNumbers().map((page, index) => (
             page === '...' ? (
-              <span key={`ellipsis-${index}`} className="mg-pagination__ellipsis">
+              <span key={`ellipsis-${index}`} className="mg-pagination__ellipsis" aria-hidden="true">
                 ...
               </span>
             ) : (
               <MGButton
                 key={page}
                 type="button"
-                variant="outline"
+                variant={page === currentPage ? 'primary' : 'outline'}
+                size="small"
                 onClick={() => handlePageChange(page)}
                 disabled={loading}
-                className={buildErpMgButtonClassName({
-                  variant: 'outline',
-                  size: 'md',
-                  loading: false,
-                  className: `mg-pagination__button mg-pagination__button--page ${
-                    page === currentPage ? 'mg-pagination__button--active' : ''
-                  }`
-                })}
+                className={buildPaginationButtonClassName(
+                  page === currentPage ? 'primary' : 'outline',
+                  `mg-pagination__button--page${page === currentPage ? ' mg-pagination__button--active' : ''}`
+                )}
+                aria-current={page === currentPage ? 'page' : undefined}
                 preventDoubleClick={false}
                 loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               >
@@ -157,19 +168,16 @@ const MGPagination = ({
         <MGButton
           type="button"
           variant="outline"
+          size="small"
           onClick={() => handlePageChange(currentPage + 1)}
           disabled={currentPage >= totalPages || loading}
-          className={buildErpMgButtonClassName({
-            variant: 'outline',
-            size: 'md',
-            loading: false,
-            className: 'mg-pagination__button mg-pagination__button--next'
-          })}
-          title="다음 페이지"
+          className={buildPaginationButtonClassName('outline', 'mg-pagination__button--nav mg-pagination__button--next')}
+          title={PAGINATION_LABELS.NEXT}
+          aria-label={PAGINATION_LABELS.NEXT}
           preventDoubleClick={false}
           loadingText={ERP_MG_BUTTON_LOADING_TEXT}
         >
-          →
+          <ChevronRight size={PAGINATION_ICON_SIZE} strokeWidth={PAGINATION_ICON_STROKE} aria-hidden="true" />
         </MGButton>
       </div>
       

@@ -10,11 +10,11 @@
  */
 
 import React, { createContext, useContext, useState, useCallback, useRef, useMemo } from 'react';
+import { resolveNotificationDuration } from '../utils/notificationDuration';
 
 const ToastContext = createContext(null);
 
 const MAX_TOASTS = 3;
-const DEFAULT_DURATION = 3000;
 const MIN_DURATION = 2000;
 
 let toastIdCounter = 0;
@@ -31,8 +31,8 @@ export const ToastProvider = ({ children }) => {
     }
   }, []);
 
-  const showToast = useCallback(({ message, type = 'info', duration = DEFAULT_DURATION }) => {
-    const safeDuration = Math.max(duration, MIN_DURATION);
+  const showToast = useCallback(({ message, type = 'info', duration }) => {
+    const safeDuration = Math.max(resolveNotificationDuration(message, type, duration), MIN_DURATION);
     const id = ++toastIdCounter;
 
     const newToast = { id, message, type, duration: safeDuration, createdAt: Date.now() };

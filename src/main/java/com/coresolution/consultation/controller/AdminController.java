@@ -11,7 +11,6 @@ import java.util.stream.Collectors;
 import jakarta.validation.Valid;
 import jakarta.validation.groups.Default;
 import org.springframework.validation.annotation.Validated;
-import com.coresolution.consultation.constant.ServerErrorMessages;
 import com.coresolution.consultation.util.ServerErrorResponses;
 import com.coresolution.consultation.validation.OnAdminClientRegister;
 import com.coresolution.consultation.validation.OnAdminConsultantRegister;
@@ -797,48 +796,40 @@ public class AdminController extends BaseApiController {
     public ResponseEntity<ApiResponse<Map<String, Object>>> getMappingStats(HttpSession session) {
         log.info("📊 매칭 통계 조회 API 호출");
 
-        try {
-            ResponseEntity<?> permissionResponse = PermissionCheckUtils.checkPermission(session,
-                    "MAPPING_VIEW", dynamicPermissionService);
-            if (permissionResponse != null) {
-                throw new org.springframework.security.access.AccessDeniedException("권한이 없습니다.");
-            }
-
-            List<ConsultantClientMapping> mappings = adminService.getAllMappings();
-
-            long totalMappings = mappings.size();
-            long activeMappings = mappings.stream()
-                    .filter(m -> statusCodeHelper.isStatus("MAPPING_STATUS",
-                            m.getStatus() != null ? m.getStatus().toString() : "", "ACTIVE"))
-                    .count();
-            long completedMappings = mappings.stream()
-                    .filter(m -> statusCodeHelper.isStatus("MAPPING_STATUS",
-                            m.getStatus() != null ? m.getStatus().toString() : "", "COMPLETED"))
-                    .count();
-            long pendingMappings = mappings.stream()
-                    .filter(m -> statusCodeHelper.isStatus("MAPPING_STATUS",
-                            m.getStatus() != null ? m.getStatus().toString() : "", "PENDING"))
-                    .count();
-
-            Map<String, Object> stats = new java.util.HashMap<>();
-            stats.put("totalMappings", totalMappings);
-            stats.put("activeMappings", activeMappings);
-            stats.put("completedMappings", completedMappings);
-            stats.put("pendingMappings", pendingMappings);
-            stats.put("lastUpdated", java.time.LocalDateTime.now());
-
-            log.info("📊 매칭 통계 조회 완료: 전체={}, 활성={}, 완료={}, 대기={}", totalMappings, activeMappings,
-                    completedMappings, pendingMappings);
-
-            return success(stats);
-
-        } catch (Exception e) {
-            String traceId = ServerErrorResponses.logInternalError("매칭 통계 조회 실패", e);
-            Map<String, Object> errorData = new java.util.HashMap<>();
-            errorData.put(ServerErrorResponses.TRACE_ID_KEY, traceId);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(ApiResponse.error(ServerErrorMessages.INTERNAL_SERVER_ERROR, errorData));
+        ResponseEntity<?> permissionResponse = PermissionCheckUtils.checkPermission(session,
+                "MAPPING_VIEW", dynamicPermissionService);
+        if (permissionResponse != null) {
+            throw new org.springframework.security.access.AccessDeniedException("권한이 없습니다.");
         }
+
+        List<ConsultantClientMapping> mappings = adminService.getAllMappings();
+
+        long totalMappings = mappings.size();
+        long activeMappings = mappings.stream()
+                .filter(m -> statusCodeHelper.isStatus("MAPPING_STATUS",
+                        m.getStatus() != null ? m.getStatus().toString() : "", "ACTIVE"))
+                .count();
+        long completedMappings = mappings.stream()
+                .filter(m -> statusCodeHelper.isStatus("MAPPING_STATUS",
+                        m.getStatus() != null ? m.getStatus().toString() : "", "COMPLETED"))
+                .count();
+        long pendingMappings = mappings.stream()
+                .filter(m -> statusCodeHelper.isStatus("MAPPING_STATUS",
+                        m.getStatus() != null ? m.getStatus().toString() : "", "PENDING"))
+                .count();
+
+        Map<String, Object> stats = new java.util.HashMap<>();
+        stats.put("totalMappings", totalMappings);
+        stats.put("activeMappings", activeMappings);
+        stats.put("completedMappings", completedMappings);
+        stats.put("pendingMappings", pendingMappings);
+        stats.put("lastUpdated", java.time.LocalDateTime.now());
+
+        log.info("📊 매칭 통계 조회 완료: 전체={}, 활성={}, 완료={}, 대기={}", totalMappings, activeMappings,
+                completedMappings, pendingMappings);
+
+        return success(stats);
+
     }
 
     /**
@@ -882,109 +873,101 @@ public class AdminController extends BaseApiController {
     public ResponseEntity<ApiResponse<Map<String, Object>>> getTodayStats(HttpSession session) {
         log.info("📊 오늘의 통계 조회 API 호출");
 
-        try {
-            ResponseEntity<?> permissionResponse = PermissionCheckUtils.checkPermission(session,
-                    "DASHBOARD_VIEW", dynamicPermissionService);
-            if (permissionResponse != null) {
-                throw new org.springframework.security.access.AccessDeniedException("권한이 없습니다.");
-            }
-
-            User currentUser = SessionUtils.getCurrentUser(session);
-            // 표준화 원칙: SessionUtils.getTenantId() 사용 (세션 → User 객체 → TenantContextHolder 순서)
-            String tenantId = SessionUtils.getTenantId(session);
-            if (tenantId == null) {
-                tenantId = com.coresolution.core.context.TenantContextHolder.getTenantId();
-            }
-
-            java.time.LocalDate today = java.time.LocalDate.now();
-            java.time.LocalDate weekAgo = today.minusDays(7);
-
-            // 오늘의 통계
-            List<com.coresolution.consultation.entity.Schedule> todaySchedules =
-                    scheduleService.getSchedulesByDate(today, null);
-
-            long totalToday = todaySchedules.size();
-            long completedToday = todaySchedules.stream()
-                    .filter(s -> statusCodeHelper.isStatus("SCHEDULE_STATUS",
-                            s.getStatus() != null ? s.getStatus().toString() : "", "COMPLETED"))
-                    .count();
-            long inProgressToday = todaySchedules.stream()
-                    .filter(s -> statusCodeHelper.isStatus("SCHEDULE_STATUS",
-                            s.getStatus() != null ? s.getStatus().toString() : "", "IN_PROGRESS"))
-                    .count();
-            long cancelledToday = todaySchedules.stream()
-                    .filter(s -> statusCodeHelper.isStatus("SCHEDULE_STATUS",
-                            s.getStatus() != null ? s.getStatus().toString() : "", "CANCELLED"))
-                    .count();
-            long bookedToday = todaySchedules.stream()
-                    .filter(s -> statusCodeHelper.isStatus("SCHEDULE_STATUS",
-                            s.getStatus() != null ? s.getStatus().toString() : "", "BOOKED"))
-                    .count();
-
-            // 지난 주 동일 요일 통계 (증가율 계산용)
-            java.time.LocalDate lastWeekSameDay = today.minusDays(7);
-            List<com.coresolution.consultation.entity.Schedule> lastWeekSchedules =
-                    scheduleService.getSchedulesByDate(lastWeekSameDay, null);
-
-            long lastWeekTotal = lastWeekSchedules.size();
-            long lastWeekCompleted = lastWeekSchedules.stream()
-                    .filter(s -> statusCodeHelper.isStatus("SCHEDULE_STATUS",
-                            s.getStatus() != null ? s.getStatus().toString() : "", "COMPLETED"))
-                    .count();
-            long lastWeekBooked = lastWeekSchedules.stream()
-                    .filter(s -> statusCodeHelper.isStatus("SCHEDULE_STATUS",
-                            s.getStatus() != null ? s.getStatus().toString() : "", "BOOKED"))
-                    .count();
-
-            // 증가율 계산
-            double bookedGrowthRate = lastWeekBooked > 0
-                    ? ((double) (bookedToday - lastWeekBooked) / lastWeekBooked) * 100
-                    : 0.0;
-            double completedGrowthRate = lastWeekCompleted > 0
-                    ? ((double) (completedToday - lastWeekCompleted) / lastWeekCompleted) * 100
-                    : 0.0;
-
-            // 총 사용자 증가율 계산 (이번 주 vs 지난 주)
-            long currentWeekUsers =
-                    adminService.getAllConsultants().size() + adminService.getAllClients().size();
-            // 지난 주 사용자 수는 이번 주 기준으로 계산 (실제로는 지난 주 데이터가 필요하지만, 간단하게 현재 데이터 사용)
-            // TODO: 실제 지난 주 데이터를 조회하도록 개선 필요
-            long lastWeekUsers = currentWeekUsers; // 임시로 동일 값 사용 (실제 데이터 없음)
-            double totalUsersGrowthRate = 0.0; // 데이터가 없으면 0
-
-            Map<String, Object> stats = new java.util.HashMap<>();
-            stats.put("totalToday", totalToday);
-            stats.put("completedToday", completedToday);
-            stats.put("inProgressToday", inProgressToday);
-            stats.put("cancelledToday", cancelledToday);
-            stats.put("bookedToday", bookedToday);
-            stats.put("date", today);
-            stats.put("lastUpdated", java.time.LocalDateTime.now());
-
-            // 증가율 추가 (데이터가 있을 때만)
-            if (lastWeekBooked > 0) {
-                stats.put("bookedGrowthRate", Math.round(bookedGrowthRate * 10.0) / 10.0);
-            }
-            if (lastWeekCompleted > 0) {
-                stats.put("completedGrowthRate", Math.round(completedGrowthRate * 10.0) / 10.0);
-            }
-            if (lastWeekUsers > 0 && currentWeekUsers != lastWeekUsers) {
-                stats.put("totalUsersGrowthRate", Math.round(totalUsersGrowthRate * 10.0) / 10.0);
-            }
-
-            log.info("📊 오늘의 통계 조회 완료: 전체={}, 완료={}, 진행중={}, 취소={}, 예약 증가율={}%, 완료 증가율={}%",
-                    totalToday, completedToday, inProgressToday, cancelledToday, bookedGrowthRate,
-                    completedGrowthRate);
-
-            return success(stats);
-
-        } catch (Exception e) {
-            String traceId = ServerErrorResponses.logInternalError("오늘의 통계 조회 실패", e);
-            Map<String, Object> errorData = new java.util.HashMap<>();
-            errorData.put(ServerErrorResponses.TRACE_ID_KEY, traceId);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(ApiResponse.error(ServerErrorMessages.INTERNAL_SERVER_ERROR, errorData));
+        ResponseEntity<?> permissionResponse = PermissionCheckUtils.checkPermission(session,
+                "DASHBOARD_VIEW", dynamicPermissionService);
+        if (permissionResponse != null) {
+            throw new org.springframework.security.access.AccessDeniedException("권한이 없습니다.");
         }
+
+        User currentUser = SessionUtils.getCurrentUser(session);
+        // 표준화 원칙: SessionUtils.getTenantId() 사용 (세션 → User 객체 → TenantContextHolder 순서)
+        String tenantId = SessionUtils.getTenantId(session);
+        if (tenantId == null) {
+            tenantId = com.coresolution.core.context.TenantContextHolder.getTenantId();
+        }
+
+        java.time.LocalDate today = java.time.LocalDate.now();
+        java.time.LocalDate weekAgo = today.minusDays(7);
+
+        // 오늘의 통계
+        List<com.coresolution.consultation.entity.Schedule> todaySchedules =
+                scheduleService.getSchedulesByDate(today, null);
+
+        long totalToday = todaySchedules.size();
+        long completedToday = todaySchedules.stream()
+                .filter(s -> statusCodeHelper.isStatus("SCHEDULE_STATUS",
+                        s.getStatus() != null ? s.getStatus().toString() : "", "COMPLETED"))
+                .count();
+        long inProgressToday = todaySchedules.stream()
+                .filter(s -> statusCodeHelper.isStatus("SCHEDULE_STATUS",
+                        s.getStatus() != null ? s.getStatus().toString() : "", "IN_PROGRESS"))
+                .count();
+        long cancelledToday = todaySchedules.stream()
+                .filter(s -> statusCodeHelper.isStatus("SCHEDULE_STATUS",
+                        s.getStatus() != null ? s.getStatus().toString() : "", "CANCELLED"))
+                .count();
+        long bookedToday = todaySchedules.stream()
+                .filter(s -> statusCodeHelper.isStatus("SCHEDULE_STATUS",
+                        s.getStatus() != null ? s.getStatus().toString() : "", "BOOKED"))
+                .count();
+
+        // 지난 주 동일 요일 통계 (증가율 계산용)
+        java.time.LocalDate lastWeekSameDay = today.minusDays(7);
+        List<com.coresolution.consultation.entity.Schedule> lastWeekSchedules =
+                scheduleService.getSchedulesByDate(lastWeekSameDay, null);
+
+        long lastWeekTotal = lastWeekSchedules.size();
+        long lastWeekCompleted = lastWeekSchedules.stream()
+                .filter(s -> statusCodeHelper.isStatus("SCHEDULE_STATUS",
+                        s.getStatus() != null ? s.getStatus().toString() : "", "COMPLETED"))
+                .count();
+        long lastWeekBooked = lastWeekSchedules.stream()
+                .filter(s -> statusCodeHelper.isStatus("SCHEDULE_STATUS",
+                        s.getStatus() != null ? s.getStatus().toString() : "", "BOOKED"))
+                .count();
+
+        // 증가율 계산
+        double bookedGrowthRate = lastWeekBooked > 0
+                ? ((double) (bookedToday - lastWeekBooked) / lastWeekBooked) * 100
+                : 0.0;
+        double completedGrowthRate = lastWeekCompleted > 0
+                ? ((double) (completedToday - lastWeekCompleted) / lastWeekCompleted) * 100
+                : 0.0;
+
+        // 총 사용자 증가율 계산 (이번 주 vs 지난 주)
+        long currentWeekUsers =
+                adminService.getAllConsultants().size() + adminService.getAllClients().size();
+        // 지난 주 사용자 수는 이번 주 기준으로 계산 (실제로는 지난 주 데이터가 필요하지만, 간단하게 현재 데이터 사용)
+        // TODO: 실제 지난 주 데이터를 조회하도록 개선 필요
+        long lastWeekUsers = currentWeekUsers; // 임시로 동일 값 사용 (실제 데이터 없음)
+        double totalUsersGrowthRate = 0.0; // 데이터가 없으면 0
+
+        Map<String, Object> stats = new java.util.HashMap<>();
+        stats.put("totalToday", totalToday);
+        stats.put("completedToday", completedToday);
+        stats.put("inProgressToday", inProgressToday);
+        stats.put("cancelledToday", cancelledToday);
+        stats.put("bookedToday", bookedToday);
+        stats.put("date", today);
+        stats.put("lastUpdated", java.time.LocalDateTime.now());
+
+        // 증가율 추가 (데이터가 있을 때만)
+        if (lastWeekBooked > 0) {
+            stats.put("bookedGrowthRate", Math.round(bookedGrowthRate * 10.0) / 10.0);
+        }
+        if (lastWeekCompleted > 0) {
+            stats.put("completedGrowthRate", Math.round(completedGrowthRate * 10.0) / 10.0);
+        }
+        if (lastWeekUsers > 0 && currentWeekUsers != lastWeekUsers) {
+            stats.put("totalUsersGrowthRate", Math.round(totalUsersGrowthRate * 10.0) / 10.0);
+        }
+
+        log.info("📊 오늘의 통계 조회 완료: 전체={}, 완료={}, 진행중={}, 취소={}, 예약 증가율={}%, 완료 증가율={}%",
+                totalToday, completedToday, inProgressToday, cancelledToday, bookedGrowthRate,
+                completedGrowthRate);
+
+        return success(stats);
+
     }
 
     /**
@@ -997,61 +980,53 @@ public class AdminController extends BaseApiController {
             HttpSession session) {
         log.info("📊 입금 대기 통계 조회 API 호출");
 
-        try {
-            ResponseEntity<?> permissionResponse = PermissionCheckUtils.checkPermission(session,
-                    "MAPPING_VIEW", dynamicPermissionService);
-            if (permissionResponse != null) {
-                throw new org.springframework.security.access.AccessDeniedException("권한이 없습니다.");
-            }
-
-            List<ConsultantClientMapping> pendingDeposits =
-                    adminService.getPendingDepositMappings();
-            List<Map<String, Object>> payloads =
-                    clientMappingListPayloadService.buildPayloads(pendingDeposits);
-
-            List<Map<String, Object>> waitingPayloads = payloads.stream()
-                    .filter(p -> !ClientPaymentHistorySsotUtils.isRefundedOrCancelled(p))
-                    .collect(Collectors.toList());
-
-            Set<Long> waitingIds = waitingPayloads.stream()
-                    .map(AdminController::payloadMappingId)
-                    .filter(id -> id != null)
-                    .collect(Collectors.toCollection(HashSet::new));
-
-            long count = waitingPayloads.size();
-            long totalAmount = waitingPayloads.stream()
-                    .mapToLong(ClientPaymentHistorySsotUtils::resolveAmount)
-                    .sum();
-
-            long oldestHours = 0;
-            if (!waitingIds.isEmpty()) {
-                java.time.LocalDateTime now = java.time.LocalDateTime.now();
-                oldestHours = pendingDeposits.stream()
-                        .filter(m -> m.getId() != null && waitingIds.contains(m.getId()))
-                        .filter(m -> m.getCreatedAt() != null)
-                        .mapToLong(m -> java.time.Duration.between(m.getCreatedAt(), now).toHours())
-                        .max()
-                        .orElse(0L);
-            }
-
-            Map<String, Object> stats = new java.util.HashMap<>();
-            stats.put("count", count);
-            stats.put("totalAmount", totalAmount);
-            stats.put("oldestHours", oldestHours);
-            stats.put("lastUpdated", java.time.LocalDateTime.now());
-
-            log.info("📊 입금 대기 통계 조회 완료: 건수={}, 총금액={}, 최장대기={}시간", count, totalAmount,
-                    oldestHours);
-
-            return success(stats);
-
-        } catch (Exception e) {
-            String traceId = ServerErrorResponses.logInternalError("입금 대기 통계 조회 실패", e);
-            Map<String, Object> errorData = new java.util.HashMap<>();
-            errorData.put(ServerErrorResponses.TRACE_ID_KEY, traceId);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(ApiResponse.error(ServerErrorMessages.INTERNAL_SERVER_ERROR, errorData));
+        ResponseEntity<?> permissionResponse = PermissionCheckUtils.checkPermission(session,
+                "MAPPING_VIEW", dynamicPermissionService);
+        if (permissionResponse != null) {
+            throw new org.springframework.security.access.AccessDeniedException("권한이 없습니다.");
         }
+
+        List<ConsultantClientMapping> pendingDeposits =
+                adminService.getPendingDepositMappings();
+        List<Map<String, Object>> payloads =
+                clientMappingListPayloadService.buildPayloads(pendingDeposits);
+
+        List<Map<String, Object>> waitingPayloads = payloads.stream()
+                .filter(p -> !ClientPaymentHistorySsotUtils.isRefundedOrCancelled(p))
+                .collect(Collectors.toList());
+
+        Set<Long> waitingIds = waitingPayloads.stream()
+                .map(AdminController::payloadMappingId)
+                .filter(id -> id != null)
+                .collect(Collectors.toCollection(HashSet::new));
+
+        long count = waitingPayloads.size();
+        long totalAmount = waitingPayloads.stream()
+                .mapToLong(ClientPaymentHistorySsotUtils::resolveAmount)
+                .sum();
+
+        long oldestHours = 0;
+        if (!waitingIds.isEmpty()) {
+            java.time.LocalDateTime now = java.time.LocalDateTime.now();
+            oldestHours = pendingDeposits.stream()
+                    .filter(m -> m.getId() != null && waitingIds.contains(m.getId()))
+                    .filter(m -> m.getCreatedAt() != null)
+                    .mapToLong(m -> java.time.Duration.between(m.getCreatedAt(), now).toHours())
+                    .max()
+                    .orElse(0L);
+        }
+
+        Map<String, Object> stats = new java.util.HashMap<>();
+        stats.put("count", count);
+        stats.put("totalAmount", totalAmount);
+        stats.put("oldestHours", oldestHours);
+        stats.put("lastUpdated", java.time.LocalDateTime.now());
+
+        log.info("📊 입금 대기 통계 조회 완료: 건수={}, 총금액={}, 최장대기={}시간", count, totalAmount,
+                oldestHours);
+
+        return success(stats);
+
     }
 
     /**
@@ -1062,34 +1037,28 @@ public class AdminController extends BaseApiController {
             HttpSession session) {
         log.info("📅 오늘의 스케줄 조회 API 호출");
 
-        try {
-            ResponseEntity<?> permissionResponse = PermissionCheckUtils.checkPermission(session,
-                    "SCHEDULE_VIEW", dynamicPermissionService);
-            if (permissionResponse != null) {
-                throw new org.springframework.security.access.AccessDeniedException("권한이 없습니다.");
-            }
-
-            java.time.LocalDate today = java.time.LocalDate.now();
-            List<com.coresolution.consultation.entity.Schedule> schedules =
-                    scheduleService.getSchedulesByDate(today, null);
-
-            List<Map<String, Object>> scheduleData = schedules.stream().map(s -> {
-                Map<String, Object> data = new java.util.HashMap<>();
-                data.put("id", s.getId());
-                data.put("date", s.getDate());
-                data.put("startTime", s.getStartTime());
-                data.put("endTime", s.getEndTime());
-                data.put("status", s.getStatus() != null ? s.getStatus().toString() : "UNKNOWN");
-                return data;
-            }).collect(java.util.stream.Collectors.toList());
-
-            return success(scheduleData);
-
-        } catch (Exception e) {
-            log.error("❌ 오늘의 스케줄 조회 실패", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(ApiResponse.error("오늘의 스케줄 조회에 실패했습니다", null));
+        ResponseEntity<?> permissionResponse = PermissionCheckUtils.checkPermission(session,
+                "SCHEDULE_VIEW", dynamicPermissionService);
+        if (permissionResponse != null) {
+            throw new org.springframework.security.access.AccessDeniedException("권한이 없습니다.");
         }
+
+        java.time.LocalDate today = java.time.LocalDate.now();
+        List<com.coresolution.consultation.entity.Schedule> schedules =
+                scheduleService.getSchedulesByDate(today, null);
+
+        List<Map<String, Object>> scheduleData = schedules.stream().map(s -> {
+            Map<String, Object> data = new java.util.HashMap<>();
+            data.put("id", s.getId());
+            data.put("date", s.getDate());
+            data.put("startTime", s.getStartTime());
+            data.put("endTime", s.getEndTime());
+            data.put("status", s.getStatus() != null ? s.getStatus().toString() : "UNKNOWN");
+            return data;
+        }).collect(java.util.stream.Collectors.toList());
+
+        return success(scheduleData);
+
     }
 
     /**
@@ -1099,25 +1068,19 @@ public class AdminController extends BaseApiController {
     public ResponseEntity<ApiResponse<Map<String, Object>>> getFinanceSummary(HttpSession session) {
         log.info("💰 재무 요약 조회 API 호출");
 
-        try {
-            ResponseEntity<?> permissionResponse = PermissionCheckUtils.checkPermission(session,
-                    "FINANCE_VIEW", dynamicPermissionService);
-            if (permissionResponse != null) {
-                throw new org.springframework.security.access.AccessDeniedException("권한이 없습니다.");
-            }
-
-            Map<String, Object> summary = new java.util.HashMap<>();
-            summary.put("totalRevenue", 0);
-            summary.put("pendingPayments", 0);
-            summary.put("lastUpdated", java.time.LocalDateTime.now());
-
-            return success(summary);
-
-        } catch (Exception e) {
-            log.error("❌ 재무 요약 조회 실패", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(ApiResponse.error("재무 요약 조회에 실패했습니다", null));
+        ResponseEntity<?> permissionResponse = PermissionCheckUtils.checkPermission(session,
+                "FINANCE_VIEW", dynamicPermissionService);
+        if (permissionResponse != null) {
+            throw new org.springframework.security.access.AccessDeniedException("권한이 없습니다.");
         }
+
+        Map<String, Object> summary = new java.util.HashMap<>();
+        summary.put("totalRevenue", 0);
+        summary.put("pendingPayments", 0);
+        summary.put("lastUpdated", java.time.LocalDateTime.now());
+
+        return success(summary);
+
     }
 
     /**

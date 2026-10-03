@@ -1,5 +1,6 @@
 package com.coresolution.consultation.util;
 
+import java.time.format.DateTimeParseException;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -16,6 +17,7 @@ import com.coresolution.consultation.exception.TaxIntegrityException;
 import com.coresolution.consultation.exception.UnauthorizedException;
 import com.coresolution.consultation.exception.ValidationException;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.convert.ConversionFailedException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
@@ -54,7 +56,11 @@ public final class ServerErrorResponses {
             PeriodClosedException.class,
             TaxIntegrityException.class,
             NoActiveConsultantMappingException.class,
-            ProcedureExecutionException.class);
+            ProcedureExecutionException.class,
+            // 잘못된 입력 — 전역 처리기가 400 으로 매핑한다 (500 으로 덮지 않는다).
+            // BindException 은 검사 예외라 컨트롤러 catch 를 거치지 않고 전역 처리기로 직접 간다.
+            DateTimeParseException.class,
+            ConversionFailedException.class);
 
     private ServerErrorResponses() {
     }
@@ -96,12 +102,38 @@ public final class ServerErrorResponses {
      */
     public static String logInternalError(String operation, Throwable e) {
         if (isMappedBusinessException(e)) {
-            throw (RuntimeException) e;
+            throw propagate(e);
         }
         String traceId = newTraceId();
         log.error("[{}] traceId={} operation={}", ServerErrorMessages.CODE_INTERNAL_SERVER_ERROR,
                 traceId, operation, e);
         return traceId;
+    }
+
+    /**
+     * 컨트롤러 catch 블록을 전역 예외 처리기로 위임한다.
+     *
+     * <p>다른 catch 절(4xx 비즈니스 매핑)이 남아 있어 try/catch 를 지울 수 없는 자리에서 쓴다.
+     * 반환값을 {@code throw} 해야 컴파일러가 이후 코드를 도달 불가로 인식한다.</p>
+     *
+     * <pre>{@code
+     * } catch (Exception e) {
+     *     throw ServerErrorResponses.propagate(e);
+     * }
+     * }</pre>
+     *
+     * @param e 원인 예외
+     * @return 다시 던질 비검사 예외
+     */
+    public static RuntimeException propagate(Throwable e) {
+        if (e instanceof Error error) {
+            throw error;
+        }
+        if (e instanceof RuntimeException runtime) {
+            return runtime;
+        }
+        // 검사 예외는 전역 처리기의 5xx 경로(RuntimeException)로 올린다. 메시지는 응답에 쓰이지 않는다.
+        return new RuntimeException(e);
     }
 
     /**

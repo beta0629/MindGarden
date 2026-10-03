@@ -26,6 +26,7 @@ import com.coresolution.core.service.impl.BaseTenantEntityServiceImpl;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.dao.DataAccessException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -283,13 +284,32 @@ public class BranchServiceImpl extends BaseTenantEntityServiceImpl<Branch, Long>
     }
     
     
+    /**
+     * 활성 지점 목록을 테넌트 범위로 조회한다.
+     *
+     * <p>Branch 는 사용 중단 대상이고(BRANCH_DEPRECATION.md) 원본 테이블은
+     * {@code branches_dropped_20260612} 로 RENAME 되었다. 환경에 따라 {@code branches} 가
+     * 없거나 접근 불가한 호환 객체로 남아 있어 조회가 실패할 수 있으므로, 그 경우
+     * 호출 화면을 500 으로 떨어뜨리지 않고 빈 목록으로 축퇴시킨다.</p>
+     *
+     * @return 현재 테넌트의 활성 지점 목록. 사용 중단된 저장소에 접근할 수 없으면 빈 목록
+     */
     @Override
     @Transactional(readOnly = true)
     public List<BranchResponse> getAllActiveBranches() {
-        List<Branch> branches = branchRepository.findByIsDeletedFalseOrderByBranchName();
-        return branches.stream()
-                .map(this::convertToResponse)
-                .collect(Collectors.toList());
+        String tenantId = TenantContextHolder.getTenantId();
+        try {
+            List<Branch> branches = tenantId != null && !tenantId.isBlank()
+                    ? branchRepository.findByTenantIdAndIsDeletedFalseOrderByBranchName(tenantId)
+                    : branchRepository.findByIsDeletedFalseOrderByBranchName();
+            return branches.stream()
+                    .map(this::convertToResponse)
+                    .collect(Collectors.toList());
+        } catch (DataAccessException e) {
+            log.warn("사용 중단된 지점 저장소를 조회할 수 없어 빈 목록으로 응답합니다: tenantId={}, cause={}",
+                    tenantId, e.getMostSpecificCause().getMessage());
+            return List.of();
+        }
     }
     
     @Override

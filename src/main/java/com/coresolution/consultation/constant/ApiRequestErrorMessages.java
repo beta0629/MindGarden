@@ -22,6 +22,15 @@ public final class ApiRequestErrorMessages {
     /** 파라미터 타입 불일치 */
     public static final String INVALID_PARAMETER_TYPE = "요청 파라미터 형식이 올바르지 않습니다.";
 
+    /** 날짜·시간 파싱 실패 (예: {@code ?startDate=bad}) */
+    public static final String INVALID_DATE_FORMAT = "날짜 형식이 올바르지 않습니다. (예: 2026-01-31)";
+
+    /** 요청 값을 대상 타입으로 변환하지 못함 */
+    public static final String INVALID_PARAMETER_VALUE = "요청 값의 형식이 올바르지 않습니다.";
+
+    /** 요청 바인딩 실패 (폼·쿼리 객체) */
+    public static final String INVALID_REQUEST_BINDING = "요청 값을 처리하지 못했습니다. 입력값을 확인해 주세요.";
+
     public static final String CODE_INVALID_REQUEST_BODY = "INVALID_REQUEST_BODY";
 
     public static final String CODE_UNSUPPORTED_MEDIA_TYPE = "UNSUPPORTED_MEDIA_TYPE";
@@ -29,6 +38,26 @@ public final class ApiRequestErrorMessages {
     public static final String CODE_MISSING_REQUEST_PARAMETER = "MISSING_REQUEST_PARAMETER";
 
     public static final String CODE_INVALID_PARAMETER_TYPE = "INVALID_PARAMETER_TYPE";
+
+    public static final String CODE_INVALID_DATE_FORMAT = "INVALID_DATE_FORMAT";
+
+    public static final String CODE_INVALID_PARAMETER_VALUE = "INVALID_PARAMETER_VALUE";
+
+    public static final String CODE_INVALID_REQUEST_BINDING = "INVALID_REQUEST_BINDING";
+
+    /**
+     * 필드명을 덧붙인 사용자 문구. 예외 원문은 절대 넣지 않는다.
+     *
+     * @param baseMessage 기본 문구
+     * @param field       요청 필드·파라미터 이름 (없으면 기본 문구 그대로)
+     * @return 사용자 문구
+     */
+    public static String withField(String baseMessage, String field) {
+        if (field == null || field.isBlank()) {
+            return baseMessage;
+        }
+        return baseMessage + " (항목: " + field + ")";
+    }
 
     private ApiRequestErrorMessages() {
         throw new UnsupportedOperationException("utility");

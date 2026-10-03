@@ -1,5 +1,7 @@
 package com.coresolution.consultation.exception;
 
+import java.time.format.DateTimeParseException;
+import java.time.temporal.TemporalAccessor;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -27,6 +29,8 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.core.NestedExceptionUtils;
+import org.springframework.core.convert.ConversionFailedException;
+import org.springframework.validation.BindException;
 import org.springframework.transaction.TransactionSystemException;
 import org.springframework.web.HttpMediaTypeNotSupportedException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
@@ -752,19 +756,101 @@ public class GlobalExceptionHandler {
 
     /**
      * MethodArgumentTypeMismatchException — 파라미터 타입 불일치.
+     *
+     * <p>대상 타입이 날짜·시간이면 날짜 전용 문구로 안내한다. 변환기 내부 메시지는 로그에만 남긴다.</p>
      */
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     public ResponseEntity<ErrorResponse> handleMethodArgumentTypeMismatch(
             MethodArgumentTypeMismatchException e, HttpServletRequest request) {
-        log.warn("MethodArgumentTypeMismatch: path={}, message={}", request.getRequestURI(), e.getMessage());
+        log.warn("MethodArgumentTypeMismatch: path={}, parameter={}, message={}",
+                request.getRequestURI(), e.getName(), e.getMessage());
+        boolean temporal = isTemporalType(e.getRequiredType());
         ErrorResponse error = ErrorResponse.of(
-                ApiRequestErrorMessages.INVALID_PARAMETER_TYPE,
-                ApiRequestErrorMessages.CODE_INVALID_PARAMETER_TYPE,
+                temporal ? ApiRequestErrorMessages.INVALID_DATE_FORMAT
+                        : ApiRequestErrorMessages.INVALID_PARAMETER_TYPE,
+                temporal ? ApiRequestErrorMessages.CODE_INVALID_DATE_FORMAT
+                        : ApiRequestErrorMessages.CODE_INVALID_PARAMETER_TYPE,
                 HttpStatus.BAD_REQUEST.value(),
                 request.getRequestURI(),
                 request.getMethod()
         );
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+    }
+
+    /**
+     * DateTimeParseException — 컨트롤러·서비스에서 직접 파싱한 날짜 문자열이 잘못된 경우.
+     *
+     * <p>잘못된 입력이므로 500 이 아니라 400 이다. 파싱 대상 원문은 응답에 넣지 않는다.</p>
+     */
+    @ExceptionHandler(DateTimeParseException.class)
+    public ResponseEntity<ErrorResponse> handleDateTimeParse(
+            DateTimeParseException e, HttpServletRequest request) {
+        log.warn("DateTimeParse 실패: path={}, errorIndex={}", request.getRequestURI(), e.getErrorIndex());
+        ErrorResponse error = ErrorResponse.of(
+                ApiRequestErrorMessages.INVALID_DATE_FORMAT,
+                ApiRequestErrorMessages.CODE_INVALID_DATE_FORMAT,
+                HttpStatus.BAD_REQUEST.value(),
+                request.getRequestURI(),
+                request.getMethod()
+        );
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+    }
+
+    /**
+     * ConversionFailedException — 바인딩 외 경로의 타입 변환 실패.
+     *
+     * <p>{@link MethodArgumentTypeMismatchException} 으로 감싸이지 않고 올라오는 경우를 받는다.</p>
+     */
+    @ExceptionHandler(ConversionFailedException.class)
+    public ResponseEntity<ErrorResponse> handleConversionFailed(
+            ConversionFailedException e, HttpServletRequest request) {
+        log.warn("ConversionFailed: path={}, targetType={}", request.getRequestURI(),
+                e.getTargetType() != null ? e.getTargetType().getName() : null);
+        boolean temporal = e.getTargetType() != null && isTemporalType(e.getTargetType().getType());
+        ErrorResponse error = ErrorResponse.of(
+                temporal ? ApiRequestErrorMessages.INVALID_DATE_FORMAT
+                        : ApiRequestErrorMessages.INVALID_PARAMETER_VALUE,
+                temporal ? ApiRequestErrorMessages.CODE_INVALID_DATE_FORMAT
+                        : ApiRequestErrorMessages.CODE_INVALID_PARAMETER_VALUE,
+                HttpStatus.BAD_REQUEST.value(),
+                request.getRequestURI(),
+                request.getMethod()
+        );
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+    }
+
+    /**
+     * BindException — 폼·쿼리 객체 바인딩 실패.
+     *
+     * <p>{@link MethodArgumentNotValidException} 은 하위 타입이지만 전용 핸들러가 우선한다.
+     * 상세는 {@code field: message} 형식으로만 내보내고 예외 원문은 넣지 않는다.</p>
+     */
+    @ExceptionHandler(BindException.class)
+    public ResponseEntity<ErrorResponse> handleBind(BindException e, HttpServletRequest request) {
+        String details = e.getBindingResult().getFieldErrors().stream()
+                .map(fe -> fe.getField() + ": " + fe.getDefaultMessage())
+                .collect(Collectors.joining(", "));
+        log.warn("BindException: path={}, details={}", request.getRequestURI(), details);
+        ErrorResponse error = ErrorResponse.of(
+                ApiRequestErrorMessages.INVALID_REQUEST_BINDING,
+                ApiRequestErrorMessages.CODE_INVALID_REQUEST_BINDING,
+                HttpStatus.BAD_REQUEST.value(),
+                details.isBlank() ? null : details
+        );
+        error.setPath(request.getRequestURI());
+        error.setMethod(request.getMethod());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+    }
+
+    /**
+     * 날짜·시간 타입 여부.
+     *
+     * @param type 대상 타입
+     * @return {@code java.time} 날짜·시간 타입이면 {@code true}
+     */
+    private static boolean isTemporalType(Class<?> type) {
+        return type != null && (TemporalAccessor.class.isAssignableFrom(type)
+                || java.util.Date.class.isAssignableFrom(type));
     }
 
     /**

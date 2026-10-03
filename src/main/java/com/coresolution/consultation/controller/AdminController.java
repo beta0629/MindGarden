@@ -11,6 +11,8 @@ import java.util.stream.Collectors;
 import jakarta.validation.Valid;
 import jakarta.validation.groups.Default;
 import org.springframework.validation.annotation.Validated;
+import com.coresolution.consultation.constant.ServerErrorMessages;
+import com.coresolution.consultation.util.ServerErrorResponses;
 import com.coresolution.consultation.validation.OnAdminClientRegister;
 import com.coresolution.consultation.validation.OnAdminConsultantRegister;
 import com.coresolution.consultation.constant.UserRole;
@@ -831,11 +833,11 @@ public class AdminController extends BaseApiController {
             return success(stats);
 
         } catch (Exception e) {
-            log.error("❌ 매칭 통계 조회 실패", e);
+            String traceId = ServerErrorResponses.logInternalError("매칭 통계 조회 실패", e);
             Map<String, Object> errorData = new java.util.HashMap<>();
-            errorData.put("error", "매칭 통계 조회에 실패했습니다: " + e.getMessage());
+            errorData.put(ServerErrorResponses.TRACE_ID_KEY, traceId);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(ApiResponse.error("매칭 통계 조회에 실패했습니다", errorData));
+                    .body(ApiResponse.error(ServerErrorMessages.INTERNAL_SERVER_ERROR, errorData));
         }
     }
 
@@ -977,11 +979,11 @@ public class AdminController extends BaseApiController {
             return success(stats);
 
         } catch (Exception e) {
-            log.error("❌ 오늘의 통계 조회 실패", e);
+            String traceId = ServerErrorResponses.logInternalError("오늘의 통계 조회 실패", e);
             Map<String, Object> errorData = new java.util.HashMap<>();
-            errorData.put("error", "오늘의 통계 조회에 실패했습니다: " + e.getMessage());
+            errorData.put(ServerErrorResponses.TRACE_ID_KEY, traceId);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(ApiResponse.error("오늘의 통계 조회에 실패했습니다", errorData));
+                    .body(ApiResponse.error(ServerErrorMessages.INTERNAL_SERVER_ERROR, errorData));
         }
     }
 
@@ -1044,11 +1046,11 @@ public class AdminController extends BaseApiController {
             return success(stats);
 
         } catch (Exception e) {
-            log.error("❌ 입금 대기 통계 조회 실패", e);
+            String traceId = ServerErrorResponses.logInternalError("입금 대기 통계 조회 실패", e);
             Map<String, Object> errorData = new java.util.HashMap<>();
-            errorData.put("error", "입금 대기 통계 조회에 실패했습니다: " + e.getMessage());
+            errorData.put(ServerErrorResponses.TRACE_ID_KEY, traceId);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(ApiResponse.error("입금 대기 통계 조회에 실패했습니다", errorData));
+                    .body(ApiResponse.error(ServerErrorMessages.INTERNAL_SERVER_ERROR, errorData));
         }
     }
 
@@ -3908,9 +3910,7 @@ public class AdminController extends BaseApiController {
             return ResponseEntity.ok(response);
 
         } catch (Exception e) {
-            log.error("❌ 관리자용 상담일지 목록 조회 실패: {}", e.getMessage(), e);
-            return ResponseEntity.internalServerError().body(
-                    Map.of("success", false, "message", "상담일지 목록 조회에 실패했습니다: " + e.getMessage()));
+            return ServerErrorResponses.internalError("관리자용 상담일지 목록 조회 실패", e);
         }
     }
 
@@ -3948,9 +3948,7 @@ public class AdminController extends BaseApiController {
             return ResponseEntity.ok(response);
 
         } catch (Exception e) {
-            log.error("❌ 관리자용 상담일지 상세 조회 실패: {}", e.getMessage(), e);
-            return ResponseEntity.internalServerError().body(
-                    Map.of("success", false, "message", "상담일지 상세 조회에 실패했습니다: " + e.getMessage()));
+            return ServerErrorResponses.internalError("관리자용 상담일지 상세 조회 실패", e);
         }
     }
 
@@ -3988,9 +3986,7 @@ public class AdminController extends BaseApiController {
                 | IllegalArgumentException e) {
             throw e;
         } catch (Exception e) {
-            log.error("❌ 관리자용 상담일지 수정 실패: {}", e.getMessage(), e);
-            return ResponseEntity.internalServerError().body(
-                    Map.of("success", false, "message", "상담일지 수정에 실패했습니다: " + e.getMessage()));
+            return ServerErrorResponses.internalError("관리자용 상담일지 수정 실패", e);
         }
     }
 
@@ -4038,9 +4034,7 @@ public class AdminController extends BaseApiController {
                 | IllegalArgumentException e) {
             throw e;
         } catch (Exception e) {
-            log.error("❌ 관리자용 상담일지 삭제 실패: {}", e.getMessage(), e);
-            return ResponseEntity.internalServerError().body(
-                    Map.of("success", false, "message", "상담일지 삭제에 실패했습니다: " + e.getMessage()));
+            return ServerErrorResponses.internalError("관리자용 상담일지 삭제 실패", e);
         }
     }
 
@@ -4176,9 +4170,7 @@ public class AdminController extends BaseApiController {
             return ResponseEntity.ok(Map.of("success", true, "message", "상담사 전문분야가 업데이트되었습니다."));
 
         } catch (Exception e) {
-            log.error("상담사 전문분야 업데이트 실패", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("success",
-                    false, "message", "상담사 전문분야 업데이트 중 오류가 발생했습니다: " + e.getMessage()));
+            return ServerErrorResponses.internalError("상담사 전문분야 업데이트 실패", e);
         }
     }
 
@@ -4240,9 +4232,7 @@ public class AdminController extends BaseApiController {
                     .ok(Map.of("success", true, "data", statistics, "message", "전문분야 통계 조회 완료"));
 
         } catch (Exception e) {
-            log.error("전문분야 통계 조회 실패", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("success",
-                    false, "message", "전문분야 통계 조회 중 오류가 발생했습니다: " + e.getMessage()));
+            return ServerErrorResponses.internalError("전문분야 통계 조회 실패", e);
         }
     }
 
@@ -4269,9 +4259,7 @@ public class AdminController extends BaseApiController {
                     expenses.size(), "message", "반복 지출 목록 조회 완료"));
 
         } catch (Exception e) {
-            log.error("반복 지출 목록 조회 실패", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("success",
-                    false, "message", "반복 지출 목록 조회 중 오류가 발생했습니다: " + e.getMessage()));
+            return ServerErrorResponses.internalError("반복 지출 목록 조회 실패", e);
         }
     }
 
@@ -4299,9 +4287,7 @@ public class AdminController extends BaseApiController {
                     .ok(Map.of("success", true, "data", statistics, "message", "반복 지출 통계 조회 완료"));
 
         } catch (Exception e) {
-            log.error("반복 지출 통계 조회 실패", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("success",
-                    false, "message", "반복 지출 통계 조회 중 오류가 발생했습니다: " + e.getMessage()));
+            return ServerErrorResponses.internalError("반복 지출 통계 조회 실패", e);
         }
     }
 
@@ -4328,9 +4314,7 @@ public class AdminController extends BaseApiController {
                     categories.size(), "message", "지출 카테고리 목록 조회 완료"));
 
         } catch (Exception e) {
-            log.error("지출 카테고리 목록 조회 실패", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("success",
-                    false, "message", "지출 카테고리 목록 조회 중 오류가 발생했습니다: " + e.getMessage()));
+            return ServerErrorResponses.internalError("지출 카테고리 목록 조회 실패", e);
         }
     }
 
@@ -4408,9 +4392,7 @@ public class AdminController extends BaseApiController {
                     consultations.size(), "totalElements", consultationRecords.getTotalElements(),
                     "message", "상담 이력 조회 완료"));
         } catch (Exception e) {
-            log.error("❌ 상담 이력 조회 중 오류 발생", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("success",
-                    false, "message", "상담 이력 조회 중 오류가 발생했습니다: " + e.getMessage()));
+            return ServerErrorResponses.internalError("상담 이력 조회 중 오류 발생", e);
         }
     }
 

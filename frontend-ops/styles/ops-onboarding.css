@@ -178,6 +178,7 @@
     "choices"
     "memo"
     "primary"
+    "error"
     "note";
 }
 
@@ -274,6 +275,13 @@
   cursor: not-allowed;
 }
 
+.ops-onboarding__save-error {
+  grid-area: error;
+  margin: var(--mg-v2-space-2) 0 0;
+  font-size: var(--mg-v2-font-size-caption);
+  color: var(--mg-v2-color-semantic-error);
+}
+
 .ops-onboarding__note {
   grid-area: note;
   margin: var(--mg-v2-space-2) 0 0;
@@ -310,7 +318,8 @@
       "note"
       "choices"
       "memo"
-      "primary";
+      "primary"
+      "error";
   }
 
   .ops-onboarding__note {

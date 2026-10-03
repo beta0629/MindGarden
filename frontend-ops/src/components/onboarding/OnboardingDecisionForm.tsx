@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useState, useTransition } from "react";
+import { FormEvent, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { ONBOARDING_DECISION_OPTIONS, ONBOARDING_MESSAGES } from "@/constants/onboarding";
@@ -8,6 +8,8 @@ import { OPS_SHELL_PATHS } from "@/constants/opsShell";
 import { decideOnboarding } from "@/services/onboardingClient";
 import { OnboardingRequest } from "@/types/onboarding";
 import { OnboardingStatus } from "@/types/shared";
+import { isClientApiErrorNotified } from "@/utils/clientApiError";
+import { saveOnboardingDecision, withSavingReleased } from "@/utils/onboardingDecisionSave";
 import { getOpsAuthSession } from "@/utils/opsAuthSession";
 import { getStatusLabel, resolveInitialDecision } from "@/utils/onboardingUtils";
 import notificationManager from "@/utils/notification";
@@ -22,7 +24,9 @@ export function OnboardingDecisionForm({ requestId, initialStatus, onDecided }: 
   const router = useRouter();
   const [status, setStatus] = useState<OnboardingStatus>(resolveInitialDecision(initialStatus));
   const [note, setNote] = useState("");
-  const [isPending, startTransition] = useTransition();
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState("");
+  const savingRef = useRef(false);
 
   useEffect(() => {
     setStatus(resolveInitialDecision(initialStatus));
@@ -30,6 +34,9 @@ export function OnboardingDecisionForm({ requestId, initialStatus, onDecided }: 
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (savingRef.current) {
+      return;
+    }
 
     const actorId = getOpsAuthSession().actorId;
     if (!actorId) {
@@ -38,27 +45,42 @@ export function OnboardingDecisionForm({ requestId, initialStatus, onDecided }: 
       return;
     }
 
-    startTransition(async () => {
-      try {
-        const response = await decideOnboarding(requestId, {
-          status,
-          actorId,
-          note: note.trim().length ? note.trim() : undefined
+    setSaveError("");
+
+    // React 18 startTransition does not track an async callback, so isPending can stay true.
+    void withSavingReleased(
+      async () => {
+        const result = await saveOnboardingDecision({
+          decide: () =>
+            decideOnboarding(requestId, {
+              status,
+              actorId,
+              note: note.trim().length ? note.trim() : undefined,
+            }),
+          isNotified: isClientApiErrorNotified,
+          notifySuccess: (message) => notificationManager.success(message),
+          notifyError: (message) => notificationManager.error(message),
+          successMessage: ONBOARDING_MESSAGES.SAVE_SUCCESS,
+          failureMessage: ONBOARDING_MESSAGES.SAVE_FAILED,
         });
-        const updated = response?.request;
-        if (updated?.status) {
-          setStatus(resolveInitialDecision(updated.status));
-          onDecided?.(updated);
+        if (result.saveError) {
+          console.error("[OnboardingDecisionForm] 결정 저장 실패");
         }
-        notificationManager.success(ONBOARDING_MESSAGES.SAVE_SUCCESS);
-      } catch (error) {
-        console.error("[OnboardingDecisionForm] 결정 저장 실패:", error);
-      }
-    });
+        if (result.updated?.status) {
+          setStatus(resolveInitialDecision(result.updated.status));
+          onDecided?.(result.updated);
+        }
+        setSaveError(result.saveError);
+      },
+      (saving) => {
+        savingRef.current = saving;
+        setIsSaving(saving);
+      },
+    );
   };
 
   return (
-    <form className="ops-onboarding__decision" onSubmit={handleSubmit}>
+    <form className="ops-onboarding__decision" onSubmit={handleSubmit} aria-busy={isSaving}>
       <div
         className="ops-onboarding__choices"
         role="radiogroup"
@@ -70,7 +92,7 @@ export function OnboardingDecisionForm({ requestId, initialStatus, onDecided }: 
           const className = [
             "ops-onboarding__choice",
             selected ? "ops-onboarding__choice--on" : "",
-            reject ? "ops-onboarding__choice--reject" : ""
+            reject ? "ops-onboarding__choice--reject" : "",
           ]
             .filter(Boolean)
             .join(" ");
@@ -82,7 +104,7 @@ export function OnboardingDecisionForm({ requestId, initialStatus, onDecided }: 
               name="status"
               aria-checked={selected}
               className={className}
-              disabled={isPending}
+              disabled={isSaving}
               onClick={() => setStatus(option)}
             >
               {getStatusLabel(option)}
@@ -96,12 +118,17 @@ export function OnboardingDecisionForm({ requestId, initialStatus, onDecided }: 
           value={note}
           onChange={(event) => setNote(event.target.value)}
           rows={3}
-          disabled={isPending}
+          disabled={isSaving}
         />
       </label>
-      <button className="ops-onboarding__primary" type="submit" disabled={isPending}>
-        {isPending ? ONBOARDING_MESSAGES.SAVING : ONBOARDING_MESSAGES.SAVE}
+      <button className="ops-onboarding__primary" type="submit" disabled={isSaving}>
+        {isSaving ? ONBOARDING_MESSAGES.SAVING : ONBOARDING_MESSAGES.SAVE}
       </button>
+      {saveError ? (
+        <p className="ops-onboarding__save-error" role="alert">
+          {saveError}
+        </p>
+      ) : null}
       <p className="ops-onboarding__note">{ONBOARDING_MESSAGES.PASSWORD_NOTE}</p>
     </form>
   );

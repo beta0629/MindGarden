@@ -1,3 +1,4 @@
+import { createNotifiedClientError } from "@/utils/clientApiError";
 import notificationManager from "@/utils/notification";
 import {
   clearOpsAuthSession,
@@ -78,11 +79,7 @@ export async function clientApiFetch<T>(
       const errorMessage = errorData.message || body.message || "접근 권한이 없습니다.";
       // 공통 알림 표시
       notificationManager.error(errorMessage);
-      const error = new Error(errorMessage);
-      (error as any).status = 403;
-      (error as any).body = body;
-      // 403 오류는 리다이렉트하지 않고 에러만 throw
-      throw error;
+      throw createNotifiedClientError(errorMessage, 403, body);
     }
     
     // 401 Unauthorized 처리
@@ -93,10 +90,7 @@ export async function clientApiFetch<T>(
 
       // TENANT_ID_NOT_SET 등은 세션 유지 (confirmed wipe hole)
       if (isTenantContextUnauthorized(body, errorData, errorMessage)) {
-        const error = new Error(errorMessage);
-        (error as any).status = 401;
-        (error as any).body = body;
-        throw error;
+        throw createNotifiedClientError(errorMessage, 401, body);
       }
 
       // 실제 인증 실패만 세션 삭제 후 로그인 리다이렉트
@@ -110,10 +104,7 @@ export async function clientApiFetch<T>(
         window.location.href = loginUrl;
       }
 
-      const error = new Error(errorMessage);
-      (error as any).status = 401;
-      (error as any).body = body;
-      throw error;
+      throw createNotifiedClientError(errorMessage, 401, body);
     }
     
     // 기타 오류 처리
@@ -121,11 +112,7 @@ export async function clientApiFetch<T>(
       `API 요청 실패 (${response.status} ${response.statusText})`;
     notificationManager.error(errorMessage);
     
-    throw new Error(
-      `API 요청 실패 (${response.status} ${response.statusText}): ${JSON.stringify(
-        body
-      )}`
-    );
+    throw createNotifiedClientError(errorMessage, response.status, body);
   }
 
   // ApiResponse 래퍼 처리: { success: true, data: T } 형태면 data 추출

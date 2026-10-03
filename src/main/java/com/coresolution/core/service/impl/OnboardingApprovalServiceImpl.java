@@ -53,7 +53,8 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
      * 실패 시 롤백 보장
      */
     @Override
-    @Transactional(rollbackFor = Exception.class, timeout = 600) // 10분 타임아웃 (안전 마진)
+    @Transactional(rollbackFor = Exception.class,
+            timeout = OnboardingDecisionDeadline.TRANSACTION_TIMEOUT_SECONDS)
     public Map<String, Object> processOnboardingApproval(Long requestId, String tenantId,
             String tenantName, String businessType, String approvedBy, String decisionNote,
             String contactEmail, String adminPasswordHash, String subdomain) {
@@ -95,11 +96,25 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
                 copyMerchantLegalFromOnboardingRequest(requestId, tenantId);
                 return completeApprovalWithDashboardAndRoles(requestId, tenantId, tenantName,
                         businessType, approvedBy, contactEmail, adminPasswordHash, procedureMessage);
-            } else {
-                log.warn("⚠️ 프로시저 실행 실패: {} - Java fallback으로 전환", procedureMessage);
             }
+            if (OnboardingDecisionDeadline.isHalted(procedureResult)
+                    || !OnboardingDecisionDeadline.fallbackAllowed()) {
+                log.warn("프로시저 실패를 결정 응답 예산 안에서 반환: {}", procedureMessage);
+                return procedureResult;
+            }
+            log.warn("⚠️ 프로시저 실행 실패: {} - Java fallback으로 전환", procedureMessage);
         } catch (Exception e) {
             log.error("❌ 프로시저 호출 중 예외 발생 - Java fallback으로 전환: {}", e.getMessage(), e);
+            if (OnboardingDecisionDeadline.isStatementTimeoutCause(e)
+                    || !OnboardingDecisionDeadline.fallbackAllowed()) {
+                Map<String, Object> halted = new HashMap<>();
+                halted.put("success", false);
+                halted.put("message", e.getMessage() != null
+                        ? "온보딩 승인 프로세스 중 오류 발생: " + e.getMessage()
+                        : "온보딩 승인 프로세스 중 오류 발생");
+                OnboardingDecisionDeadline.markHalted(halted);
+                return halted;
+            }
         }
 
         // 2. 프로시저 실패 시 Java 코드로 단계별 처리 (fallback)
@@ -355,6 +370,10 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
             boolean rolesApplied = false;
 
             for (int attempt = 1; attempt <= maxRetries; attempt++) {
+                if (!OnboardingDecisionDeadline.fallbackAllowed()) {
+                    log.warn("역할 템플릿 재시도 중단: 결정 응답 예산 소진 tenantId={}", tenantId);
+                    break;
+                }
                 // 재시도 전 역할 존재 확인
                 try {
                     Integer checkCount = jdbcTemplate.queryForObject(
@@ -381,7 +400,7 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
                         org.springframework.transaction.TransactionDefinition.PROPAGATION_REQUIRED);
                 transactionTemplate.setIsolationLevel(
                         org.springframework.transaction.TransactionDefinition.ISOLATION_READ_COMMITTED);
-                transactionTemplate.setTimeout(300); // 5분 타임아웃 (프로시저 실행 시간 고려, 안전 마진)
+                transactionTemplate.setTimeout(OnboardingDecisionDeadline.statementTimeoutSeconds());
 
                 Boolean roleResult = null;
                 try {
@@ -612,7 +631,7 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
                     "{CALL ProcessOnboardingApproval(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)}")) {
 
                 // 프로시저 실행 타임아웃 설정 (초 단위)
-                cs.setQueryTimeout(300); // 5분 타임아웃 (프로시저 실행 시간 고려, 안전 마진)
+                cs.setQueryTimeout(OnboardingDecisionDeadline.statementTimeoutSeconds());
 
                 log.info("프로시저 파라미터 설정:");
                 log.info("  [1] requestId: {}", requestId);
@@ -811,7 +830,11 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
                 }
 
                 // 프로시저 실패 시 Java에서 각 단계를 개별적으로 실행 (fallback)
-                if (success == null || !success) {
+                if ((success == null || !success) && !OnboardingDecisionDeadline.fallbackAllowed()) {
+                    log.warn("Java 재시도 생략: 결정 응답 예산이 부족합니다. requestId={}, message={}",
+                            requestId, message);
+                }
+                if ((success == null || !success) && OnboardingDecisionDeadline.fallbackAllowed()) {
                     log.warn("⚠️ 프로시저 실행 실패 - Java에서 단계별 재시도 시작: tenantId={}", tenantId);
 
                     boolean tenantCreated = false;
@@ -858,6 +881,11 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
                             rolesApplied = false;
 
                             for (int attempt = 1; attempt <= maxRetries; attempt++) {
+                                if (!OnboardingDecisionDeadline.fallbackAllowed()) {
+                                    log.warn("역할 템플릿 재시도 중단: 결정 응답 예산 소진 tenantId={}",
+                                            tenantId);
+                                    break;
+                                }
                                 // 재시도 전 역할 존재 확인 (다른 트랜잭션이 생성했을 수 있음)
                                 try {
                                     Integer checkCount = jdbcTemplate.queryForObject(
@@ -884,8 +912,8 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
                                         org.springframework.transaction.TransactionDefinition.ISOLATION_READ_COMMITTED);
                                 // 락 타임아웃 설정 (초 단위, 기본값보다 길게)
                                 // 30초는 너무 짧아서 쿼리 실행 중단 오류 발생, 60초로 증가
-                                transactionTemplate.setTimeout(300); // 5분 타임아웃 (프로시저 실행 시간 고려, 안전
-                                                                     // 마진)
+                                transactionTemplate.setTimeout(
+                                        OnboardingDecisionDeadline.statementTimeoutSeconds());
 
                                 Boolean roleResult = null;
                                 try {
@@ -1049,6 +1077,9 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
 
             result.put("success", false);
             result.put("message", errorMessage);
+            if (OnboardingDecisionDeadline.isStatementTimeout(e)) {
+                OnboardingDecisionDeadline.markHalted(result);
+            }
         } catch (Exception e) {
             log.error("==========================================");
             log.error("❌❌❌ 온보딩 승인 프로세스 중 예외 발생");
@@ -1611,6 +1642,13 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
      */
     private void updateProcessingStatus(Long requestId, String tenantId, String step,
             String status, String message) {
+        if (org.springframework.transaction.support.TransactionSynchronizationManager
+                .isActualTransactionActive()) {
+            log.info(
+                    "온보딩 처리 상태의 별도 트랜잭션을 생략합니다. 결정 트랜잭션이 요청 행 잠금을 보유한 동안 대기하지 않습니다. requestId={}, step={}",
+                    requestId, step);
+            return;
+        }
         try {
             // 별도 트랜잭션에서 실행하여 메인 트랜잭션의 version 충돌 방지
             org.springframework.transaction.support.TransactionTemplate transactionTemplate =

@@ -486,10 +486,15 @@ public class OnboardingController extends BaseApiController {
             OnboardingRequest updated = onboardingService.decide(id, payload.status(),
                     payload.actorId(), payload.note());
 
-            log.info("✅ 온보딩 요청 결정 완료: id={}, status={}", id, payload.status());
+            log.info("✅ 온보딩 요청 결정 완료: id={}, status={}", id, updated.getStatus());
 
             OnboardingDecisionResponse response = new OnboardingDecisionResponse(
                     toAdminResponse(updated), resolveCreatedAdminAccount(updated));
+
+            if (updated.getStatus() == OnboardingStatus.ON_HOLD) {
+                return updated("온보딩 승인 프로세스 중 오류가 발생하여 보류 상태로 변경되었습니다. 재시도해주세요.",
+                        response);
+            }
 
             // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
             return updated("온보딩 요청이 "

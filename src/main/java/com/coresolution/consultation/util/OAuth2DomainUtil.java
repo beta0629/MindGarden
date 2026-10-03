@@ -11,6 +11,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Pattern;
@@ -414,5 +415,55 @@ public class OAuth2DomainUtil {
         }
 
         return mainDomains.isEmpty() ? host : mainDomains.get(0).trim();
+    }
+
+    /**
+     * 승인으로 새로 저장하는 테넌트 도메인에 붙일 부모 접미사.
+     * 값은 {@code spring.security.oauth2.domain.main-domains} 에 이미 있는 apex 만 사용한다.
+     * {@code prod}·{@code production} 은 dev/staging 라벨이 없는 apex, {@code dev} 는 dev 라벨 apex.
+     *
+     * @param activeProfiles 활성 Spring 프로파일
+     * @return 선행 점이 붙은 접미사
+     * @throws IllegalStateException 그 환경의 apex 가 설정에 없을 때
+     */
+    public String resolveEnvironmentTenantDomainSuffix(String... activeProfiles) {
+        boolean production = hasActiveProfile(activeProfiles, "prod")
+                || hasActiveProfile(activeProfiles, "production");
+        boolean development = hasActiveProfile(activeProfiles, "dev");
+        String apex;
+        if (production) {
+            apex = findConfiguredProdApexHost();
+        } else if (development) {
+            apex = findConfiguredDevApexHost();
+        } else if (mainDomains != null && mainDomains.size() == 1) {
+            apex = mainDomains.get(0);
+        } else {
+            apex = null;
+        }
+        if (apex == null || apex.trim().isEmpty()) {
+            throw new IllegalStateException(
+                    "spring.security.oauth2.domain.main-domains 에서 테넌트 도메인 접미사를 결정할 수 없습니다.");
+        }
+        String normalized = apex.trim().toLowerCase(Locale.ROOT);
+        if (normalized.startsWith(".")) {
+            normalized = normalized.substring(1);
+        }
+        if (normalized.isEmpty()) {
+            throw new IllegalStateException(
+                    "spring.security.oauth2.domain.main-domains 에서 테넌트 도메인 접미사를 결정할 수 없습니다.");
+        }
+        return "." + normalized;
+    }
+
+    private static boolean hasActiveProfile(String[] activeProfiles, String name) {
+        if (activeProfiles == null || name == null) {
+            return false;
+        }
+        for (String profile : activeProfiles) {
+            if (profile != null && name.equalsIgnoreCase(profile.trim())) {
+                return true;
+            }
+        }
+        return false;
     }
 }

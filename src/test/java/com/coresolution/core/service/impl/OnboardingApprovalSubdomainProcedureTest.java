@@ -28,6 +28,7 @@ class OnboardingApprovalSubdomainProcedureTest {
         assertThat(executable).contains("REGEXP_REPLACE(v_generated_subdomain, '[^a-z0-9-]', '')");
         assertThat(executable).contains(OnboardingConstants.ERROR_ONBOARDING_SUBDOMAIN_NOT_DNS_LABEL);
         assertThat(executable).contains(OnboardingConstants.ERROR_ONBOARDING_SUBDOMAIN_HOST_UNAVAILABLE);
+        assertThat(executable).contains(OnboardingConstants.ERROR_ONBOARDING_DOMAIN_SUFFIX_UNAVAILABLE);
         assertThat(executable).contains("v_existing_subdomain");
         assertThat(executable).contains("IN p_subdomain VARCHAR(100)");
         assertThat(executable).doesNotContain("CREATE FUNCTION");
@@ -39,6 +40,23 @@ class OnboardingApprovalSubdomainProcedureTest {
                 "settings_json, subdomain, created_at, updated_at,");
         assertThat(executable).contains("user_id, tenant_id, email, password");
         assertThat(executable).contains("테넌트가 이미 활성화되어 있습니다");
+        assertThat(executable).contains("IN p_domain_suffix VARCHAR(255)");
+        assertThat(executable).contains("CONCAT(v_subdomain, v_domain_suffix)");
+        assertThat(executable).doesNotContain(".dev.core-solution.co.kr");
+        assertThat(executable).doesNotContain(".core-solution.co.kr");
+        assertThat(executable).doesNotContain("core-solution.co.kr");
+
+        String approval = stripLineComments(read(PlSqlInitializer.PROCESS_ONBOARDING_APPROVAL_PROCEDURE));
+        assertThat(approval).contains("IN p_request_id BIGINT");
+        assertThat(approval).contains("IN p_subdomain VARCHAR(100)");
+        assertThat(approval).contains("IN p_domain_suffix VARCHAR(255)");
+        assertThat(approval).contains(
+                "p_approved_by, NULL, NULL, p_subdomain, p_domain_suffix, @tenant_success, @tenant_message");
+        assertThat(approval).doesNotContain(".dev.core-solution.co.kr");
+        assertThat(approval).doesNotContain("core-solution.co.kr");
+        assertThat(approval).doesNotContain("ROLLBACK");
+        assertThat(approval).doesNotContain("START TRANSACTION");
+        assertThat(approval).doesNotContain("COMMIT");
     }
 
     private static String stripLineComments(String sql) {

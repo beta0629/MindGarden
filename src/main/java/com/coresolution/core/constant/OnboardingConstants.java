@@ -67,6 +67,13 @@ public class OnboardingConstants {
     public static final String ERROR_ONBOARDING_SUBDOMAIN_HOST_UNAVAILABLE =
             "호스트로 사용할 수 있는 서브도메인을 만들 수 없어 테넌트를 저장하지 않았습니다.";
 
+    /**
+     * 환경 설정의 도메인 접미사를 프로시저에 넘기지 못하면 테넌트·관리자를 저장하지 않는다.
+     * CreateOrActivateTenant 가 같은 문장으로 실패할 때 Java 도 이 문구로 롤백한다.
+     */
+    public static final String ERROR_ONBOARDING_DOMAIN_SUFFIX_UNAVAILABLE =
+            "테넌트 도메인 접미사가 설정되지 않아 테넌트를 저장하지 않았습니다.";
+
     /** 온보딩 요청 생성 시 관리자 초기 비밀번호 누락 */
     public static final String ERROR_ONBOARDING_ADMIN_PASSWORD_REQUIRED_ON_CREATE =
             "관리자 초기 비밀번호(adminPassword)는 필수입니다. checklist_json 또는 요청 본문에 포함해주세요.";

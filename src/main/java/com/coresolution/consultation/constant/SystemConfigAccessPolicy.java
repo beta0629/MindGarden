@@ -19,8 +19,12 @@ import java.util.Set;
  *       {@link #isSecretValueKey(String)} 로 분류되어 마스킹 값만 응답한다.</li>
  *   <li>{@link #WRITABLE_KEYS} — 테넌트 ADMIN 이 저장할 수 있는 키.</li>
  *   <li>{@link #OPS_ONLY_WRITE_KEYS} — 읽기는 허용(상태/마스킹)하지만 쓰기는 운영자
- *       전용 경로로만 가능한 키 (AI API 키·URL·모델).</li>
+ *       전용 경로로만 가능한 키 (AI API 키·URL·모델, 기본 AI 프로바이더, 플랫폼 세션 스위치).</li>
  * </ul>
+ *
+ * <p>P1 보안(2026-10-03): AI 프로바이더 화면 전체와 플랫폼 세션 스위치(soft-fail·401 유지·OAuth
+ * 서버 검증)는 운영자 소관이다. 테넌트 관리자는 상태만 조회하고 쓰기는 403 이다. 중복 로그인 허용은
+ * 테넌트 정책이라 테넌트 쓰기를 유지한다.
  *
  * @author MindGarden
  * @version 1.0.0
@@ -64,8 +68,14 @@ public final class SystemConfigAccessPolicy {
     private static final List<String> SECRET_KEY_TOKENS =
             List.of("API_KEY", "SECRET", "PASSWORD", "TOKEN", "CREDENTIAL");
 
-    /** AI 프로바이더 관련 키 — 쓰기는 운영자 전용. */
-    public static final Set<String> OPS_ONLY_WRITE_KEYS = buildAiProviderKeys();
+    /** 플랫폼 세션 스위치 — 쓰기는 운영자 전용 (테넌트 화면은 읽기 전용). */
+    public static final Set<String> PLATFORM_SESSION_SWITCH_KEYS = Set.of(
+            SessionSecurityFlagKeys.OAUTH_REQUIRE_SERVER_VERIFY,
+            SessionSecurityFlagKeys.BACKGROUND_401_KEEP_USER,
+            SessionSecurityFlagKeys.SOFT_FAIL_ENABLED);
+
+    /** 운영자 전용 쓰기 키 — AI 프로바이더 키·기본 프로바이더 + 플랫폼 세션 스위치. */
+    public static final Set<String> OPS_ONLY_WRITE_KEYS = buildOpsOnlyWriteKeys();
 
     /** 테넌트 ADMIN 조회 허용 키. */
     public static final Set<String> READABLE_KEYS = buildReadableKeys();
@@ -120,13 +130,15 @@ public final class SystemConfigAccessPolicy {
         return SECRET_KEY_TOKENS.stream().anyMatch(upper::contains);
     }
 
-    private static Set<String> buildAiProviderKeys() {
+    private static Set<String> buildOpsOnlyWriteKeys() {
         Set<String> keys = new LinkedHashSet<>();
         for (String prefix : AI_PROVIDER_KEY_PREFIXES) {
             keys.add(prefix + SUFFIX_API_KEY);
             keys.add(prefix + SUFFIX_API_URL);
             keys.add(prefix + SUFFIX_MODEL);
         }
+        keys.add(AI_DEFAULT_PROVIDER);
+        keys.addAll(PLATFORM_SESSION_SWITCH_KEYS);
         return Collections.unmodifiableSet(keys);
     }
 
@@ -142,11 +154,7 @@ public final class SystemConfigAccessPolicy {
         keys.add(WELLNESS_AUTO_SEND_ENABLED);
         keys.add(WELLNESS_SEND_TIME);
         keys.add(WELLNESS_TARGET_ROLES);
-        keys.add(AI_DEFAULT_PROVIDER);
         keys.add(SessionSecurityFlagKeys.DUPLICATE_LOGIN_ALLOWED);
-        keys.add(SessionSecurityFlagKeys.OAUTH_REQUIRE_SERVER_VERIFY);
-        keys.add(SessionSecurityFlagKeys.BACKGROUND_401_KEEP_USER);
-        keys.add(SessionSecurityFlagKeys.SOFT_FAIL_ENABLED);
         return Collections.unmodifiableSet(keys);
     }
 }

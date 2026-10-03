@@ -5,6 +5,30 @@ import { formatLedgerDateTime } from '../../utils/erpFinanceDisplay';
 import { toDateStr } from '../../utils/dateUtils';
 import { useTranslation } from 'react-i18next';
 
+/** 실측 데이터가 없는 목록(영향평가 개선영역·교육 프로그램) 빈 상태 문구 */
+export const COMPLIANCE_EMPTY_LIST_TEXT = '등록된 항목이 없습니다';
+
+/** 실측 점검이 없는 상태 라벨 (백엔드 STATUS_NOT_REVIEWED 와 동일) */
+export const COMPLIANCE_NOT_REVIEWED_TEXT = '미점검';
+
+/**
+ * 목록이 비어 있으면 빈 상태 문구를, 아니면 렌더 결과를 돌려준다.
+ *
+ * @param {Array|undefined|null} items
+ * @param {(item: *, index: number) => React.ReactNode} renderItem
+ * @returns {React.ReactNode}
+ */
+function renderComplianceList(items, renderItem) {
+  if (!Array.isArray(items) || items.length === 0) {
+    return (
+      <p className="mg-v2-compliance-dashboard__muted" data-testid="compliance-empty-list">
+        {COMPLIANCE_EMPTY_LIST_TEXT}
+      </p>
+    );
+  }
+  return items.map(renderItem);
+}
+
 /**
  * 값이 없으면 '—', 있으면 단위를 붙여 표시 (없는 값을 0으로 꾸미지 않음).
  *
@@ -134,7 +158,7 @@ export function ImpactCard({ impactAssessment }) {
         <div className="mg-v2-compliance-dashboard__row">
           <span className="mg-v2-compliance-dashboard__label">{t('common:compliance.ComplianceDashboardCards.t_ff2e0b95')}</span>
           <span className="mg-v2-compliance-dashboard__value mg-v2-compliance-dashboard__value--risk">
-            <SafeText fallback="미평가">
+            <SafeText fallback={COMPLIANCE_NOT_REVIEWED_TEXT}>
               {impactAssessment.overallAssessment?.overallRiskLevel}
             </SafeText>
           </span>
@@ -142,7 +166,7 @@ export function ImpactCard({ impactAssessment }) {
         <div className="mg-v2-compliance-dashboard__row">
           <span className="mg-v2-compliance-dashboard__label">{t('common:compliance.ComplianceDashboardCards.t_4ac79a4b')}</span>
           <span className="mg-v2-compliance-dashboard__value">
-            <SafeText fallback="미평가">
+            <SafeText fallback={COMPLIANCE_NOT_REVIEWED_TEXT}>
               {impactAssessment.overallAssessment?.complianceStatus}
             </SafeText>
           </span>
@@ -150,7 +174,7 @@ export function ImpactCard({ impactAssessment }) {
         <div className="mg-v2-compliance-dashboard__row mg-v2-compliance-dashboard__row--block">
           <span className="mg-v2-compliance-dashboard__label">{t('common:compliance.ComplianceDashboardCards.t_a6f23a87')}</span>
           <div className="mg-v2-compliance-dashboard__list">
-            {impactAssessment.overallAssessment?.improvementAreas?.map((area) => (
+            {renderComplianceList(impactAssessment.overallAssessment?.improvementAreas, (area) => (
               <div key={area} className="mg-v2-compliance-dashboard__list-item">
                 <SafeText>{area}</SafeText>
               </div>
@@ -238,15 +262,14 @@ export function EducationCard({ educationStatus }) {
         <div className="mg-v2-compliance-dashboard__row mg-v2-compliance-dashboard__row--block">
           <span className="mg-v2-compliance-dashboard__label">{t('common:compliance.ComplianceDashboardCards.t_5fa20d46')}</span>
           <div className="mg-v2-compliance-dashboard__list">
-            {educationStatus.educationPrograms &&
-              Object.entries(educationStatus.educationPrograms).map(([type, program]) => (
-                <div key={type} className="mg-v2-compliance-dashboard__list-item">
-                  <strong>
-                    <SafeText>{program.title}</SafeText>:
-                  </strong>{' '}
-                  <SafeText>{program.frequency}</SafeText>
-                </div>
-              ))}
+            {renderComplianceList(Object.entries(educationStatus.educationPrograms || {}), ([type, program]) => (
+              <div key={type} className="mg-v2-compliance-dashboard__list-item">
+                <strong>
+                  <SafeText>{program?.title}</SafeText>:
+                </strong>{' '}
+                <SafeText>{program?.frequency}</SafeText>
+              </div>
+            ))}
           </div>
         </div>
       </div>

@@ -124,6 +124,35 @@ class ComplianceTenantContactIsolationTest {
     }
 
     @Test
+    @DisplayName("영향평가는 표본 위험도 없이 「미점검」·빈 개선영역 (샘플 제거)")
+    @SuppressWarnings("unchecked")
+    void impactAssessment_withoutRealData_isNotReviewed() {
+        TenantContextHolder.setTenantId(TENANT_B);
+
+        Map<String, Object> impact = complianceService.getPersonalDataImpactAssessment();
+
+        assertThat((Map<String, Object>) impact.get("riskAssessment")).isEmpty();
+        assertThat(impact.get("assessmentDate")).isNull();
+        Map<String, Object> overall = (Map<String, Object>) impact.get("overallAssessment");
+        assertThat(overall.get("overallRiskLevel")).isEqualTo(ComplianceServiceErrorMessages.STATUS_NOT_REVIEWED);
+        assertThat(overall.get("complianceStatus")).isEqualTo(ComplianceServiceErrorMessages.STATUS_NOT_REVIEWED);
+        assertThat((List<Object>) overall.get("improvementAreas")).isEmpty();
+        assertThat(overall.get("nextAssessmentDate")).isNull();
+    }
+
+    @Test
+    @DisplayName("교육 프로그램은 표본 없이 빈 맵 (샘플 제거)")
+    @SuppressWarnings("unchecked")
+    void educationPrograms_withoutRealData_isEmpty() {
+        TenantContextHolder.setTenantId(TENANT_B);
+
+        Map<String, Object> education = complianceService.getPersonalDataProtectionEducationStatus();
+
+        assertThat((Map<String, Object>) education.get("educationPrograms")).isEmpty();
+        assertThat(education.toString()).doesNotContain("개인정보보호 기본 교육", "의료정보보호 전문 교육");
+    }
+
+    @Test
     @DisplayName("전체 컴플라이언스 현황에도 마인드가든 연락처가 0건")
     void overallStatus_hasNoMindgardenContact() {
         TenantContextHolder.setTenantId(TENANT_B);

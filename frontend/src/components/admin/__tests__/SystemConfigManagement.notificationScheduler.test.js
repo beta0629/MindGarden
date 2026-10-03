@@ -2,8 +2,7 @@
  * SystemConfigManagement — PR-2 알림 자동 발송 스케줄러 4 종 토글 섹션 테스트.
  *
  * - 섹션 렌더링 (4 토글 + 라벨 + 마지막 변경자/시각)
- * - 토글 클릭 → UnifiedModal(역할: dialog) 노출 → 확인/취소 흐름
- * - 확인 시 StandardizedApi.put 단일 키 PUT + 4 키 재조회 + 토스트
+ * - P1 보안(2026-10-03): 전역 4 종·플랫폼 세션 3 종은 읽기 전용 — 클릭 시 모달·PUT·POST 없음
  * - 키별 status 라벨(켜짐/꺼짐) + role="switch" + aria-checked 동기화
  *
  * @author MindGarden
@@ -14,6 +13,7 @@ import React from 'react';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import SystemConfigManagement from '../SystemConfigManagement';
+import { OPS_MANAGED_SETTING_CAPTION } from '../../../constants/opsManagedSettings';
 
 jest.mock('../../../utils/ajax', () => ({
   __esModule: true,
@@ -327,111 +327,34 @@ describe('SystemConfigManagement — PR-2 알림 자동 발송 스케줄러 토�
     const systemMetas = await screen.findAllByText(/마지막 변경: SYSTEM/);
     expect(systemMetas.length).toBe(2);
     expect(screen.getByText(/마지막 변경: admin@example.com/)).toBeInTheDocument();
-    expect(screen.getByText('마지막 변경 이력 없음')).toBeInTheDocument();
+    expect(screen.getByText(/마지막 변경 이력 없음/)).toBeInTheDocument();
   });
 
-  it('OFF→ON 토글 클릭 → confirmOn 모달 → 확인 시 PUT + 재조회 + 토스트', async() => {
-    mockStandardizedApi.put.mockResolvedValueOnce({
-      success: true,
-      flag: {
-        key: FLAG_KEY_RECORD,
-        value: true,
-        description: '상담일지 미작성 알림 ON/OFF',
-        updatedBy: 'admin@example.com',
-        updatedAt: '2026-05-25T10:00:00'
-      }
-    });
-    let flagsCall = 0;
-    mockStandardizedApi.get.mockImplementation((url) => {
-      if (typeof url === 'string' && url.includes('notification-scheduler')) {
-        flagsCall += 1;
-        if (flagsCall === 1) {
-          return Promise.resolve(buildFlagsResponse());
-        }
-        return Promise.resolve(
-          buildFlagsResponse({
-            [FLAG_KEY_RECORD]: { value: true, updatedAt: '2026-05-25T10:00:00' }
-          })
-        );
-      }
-      if (typeof url === 'string' && url.includes('/admin/sms-templates')) {
-        return Promise.resolve({
-          success: true,
-          data: [
-            {
-              key: 'RESERVATION_IMMEDIATE_LATE',
-              tenantDispatchEnabled: true,
-              effectiveDispatchEnabled: true
-            },
-            {
-              key: 'RESERVATION_REMINDER_D2',
-              tenantDispatchEnabled: false,
-              effectiveDispatchEnabled: false
-            }
-          ]
-        });
-      }
-      return Promise.resolve({ success: true, configValue: '' });
-    });
+  it('전역 스케줄러 토글은 읽기 전용 — disabled 이고 운영자 관리 안내가 보인다', async() => {
+    renderPage();
+    await waitForLoaded();
 
+    const recordSwitch = await findToggleByLabel('상담 기록 미작성 알림');
+    expect(recordSwitch).toBeDisabled();
+    expect(recordSwitch).toHaveAttribute('aria-checked', 'false');
+    const li = recordSwitch.closest('li');
+    expect(within(li).getByText(new RegExp(OPS_MANAGED_SETTING_CAPTION))).toBeInTheDocument();
+  });
+
+  it('OFF→ON 클릭해도 확인 모달·PUT·재조회가 없다', async() => {
     renderPage();
     await waitForLoaded();
 
     const recordSwitch = await findToggleByLabel('상담 기록 미작성 알림');
     fireEvent.click(recordSwitch);
 
-    const dialog = await screen.findByRole('dialog', { name: /자동 발송 토글 확인/ });
-    expect(within(dialog).getByText(/켜면 다음 cron 시점부터 자동 발송됩니다/)).toBeInTheDocument();
-    expect(within(dialog).getByTestId('modal-subtitle')).toHaveTextContent('상담 기록 미작성 알림');
-
-    fireEvent.click(within(dialog).getByText('확인'));
-
-    await waitFor(() => {
-      expect(mockStandardizedApi.put).toHaveBeenCalledWith(
-        `/api/v1/admin/notification-scheduler/flags/${encodeURIComponent(FLAG_KEY_RECORD)}`,
-        { value: true }
-      );
-    });
-    await waitFor(() => {
-      expect(countFlagsGets()).toBe(2);
-    });
-    expect(notificationShow).toHaveBeenCalledWith(
-      '스케줄러 플래그가 저장되었습니다.',
-      'success'
-    );
+    expect(screen.queryByRole('dialog', { name: /자동 발송 토글 확인/ })).not.toBeInTheDocument();
+    expect(mockStandardizedApi.put).not.toHaveBeenCalled();
+    expect(countFlagsGets()).toBe(1);
+    expect(recordSwitch).toHaveAttribute('aria-checked', 'false');
   });
 
-  it('ON→OFF 토글 → confirmOff 모달 → 확인 시 PUT { value: false }', async() => {
-    mockStandardizedApi.put.mockResolvedValueOnce({
-      success: true,
-      flag: {
-        key: FLAG_KEY_WELLNESS,
-        value: false,
-        updatedBy: 'admin@example.com',
-        updatedAt: '2026-05-25T10:30:00'
-      }
-    });
-
-    renderPage();
-    await waitForLoaded();
-
-    const wellnessSwitch = await findToggleByLabel('웰니스 일일 팁');
-    fireEvent.click(wellnessSwitch);
-
-    const dialog = await screen.findByRole('dialog', { name: /자동 발송 토글 확인/ });
-    expect(within(dialog).getByText(/끄면 자동 발송이 즉시 중단됩니다/)).toBeInTheDocument();
-
-    fireEvent.click(within(dialog).getByText('확인'));
-
-    await waitFor(() => {
-      expect(mockStandardizedApi.put).toHaveBeenCalledWith(
-        `/api/v1/admin/notification-scheduler/flags/${encodeURIComponent(FLAG_KEY_WELLNESS)}`,
-        { value: false }
-      );
-    });
-  });
-
-  it('취소 시 모달이 닫히고 PUT 미호출·aria-checked 유지 (optimistic false)', async() => {
+  it('ON→OFF 클릭해도 PUT 이 없고 aria-checked 가 유지된다', async() => {
     renderPage();
     await waitForLoaded();
 
@@ -439,34 +362,27 @@ describe('SystemConfigManagement — PR-2 알림 자동 발송 스케줄러 토�
     expect(wellnessSwitch).toHaveAttribute('aria-checked', 'true');
     fireEvent.click(wellnessSwitch);
 
-    const dialog = await screen.findByRole('dialog', { name: /자동 발송 토글 확인/ });
-    // confirm 전 UI 미변경 (optimistic:false) — 모달 subtitle 과 라벨 중복 시 switch 참조 재사용
-    expect(wellnessSwitch).toHaveAttribute('aria-checked', 'true');
-    fireEvent.click(within(dialog).getByText('취소'));
-
-    await waitFor(() => {
-      expect(screen.queryByRole('dialog', { name: /자동 발송 토글 확인/ })).not.toBeInTheDocument();
-    });
     expect(mockStandardizedApi.put).not.toHaveBeenCalled();
     expect(wellnessSwitch).toHaveAttribute('aria-checked', 'true');
   });
 
-  it('PUT 실패 시 에러 토스트 + 확인 모달은 닫힌다 (저장은 훅이 재시도 가능)', async() => {
-    mockStandardizedApi.put.mockRejectedValueOnce(
-      Object.assign(new Error('test'), { data: { message: '백엔드 거부' } })
-    );
-
+  it('플랫폼 세션 스위치 3 종도 읽기 전용이며 클릭 시 POST 가 없다', async() => {
     renderPage();
     await waitForLoaded();
 
-    fireEvent.click(await findToggleByLabel('웰니스 일일 팁'));
-    const dialog = await screen.findByRole('dialog', { name: /자동 발송 토글 확인/ });
-    fireEvent.click(within(dialog).getByText('확인'));
-
-    await waitFor(() => {
-      expect(notificationShow).toHaveBeenCalledWith('백엔드 거부', 'error');
+    const ids = [
+      'oauth-require-server-verify-toggle',
+      'background-401-keep-user-toggle',
+      'soft-fail-enabled-toggle'
+    ];
+    ids.forEach((id) => {
+      const sw = screen.getByTestId(id);
+      expect(sw).toBeDisabled();
+      fireEvent.click(sw);
     });
-    expect(screen.queryByRole('dialog', { name: /자동 발송 토글 확인/ })).not.toBeInTheDocument();
+    expect(apiPost).not.toHaveBeenCalled();
+    expect(mockStandardizedApi.post).not.toHaveBeenCalled();
+    expect(mockStandardizedApi.put).not.toHaveBeenCalled();
   });
 
   it('초기 GET 실패 시 에러 토스트 + 토글은 fallback OFF 표시', async() => {

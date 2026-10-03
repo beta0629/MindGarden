@@ -1,170 +1,57 @@
 /**
- * §3. API 키 관리 섹션 — 디자이너 §3.
+ * §3. API 키 상태 섹션 — 디자이너 §3.
  *
- * - 4종 provider 별 키 마스킹·"키 변경" 모달 트리거.
- * - `UnifiedModal` 공통 모듈 사용 (커스텀 오버레이 금지).
+ * P1 보안(2026-10-03): 키·URL·모델 쓰기는 운영자 전용(서버 403)이라
+ * 테넌트 화면은 provider 별 등록 여부·마스킹 값·모델만 보여 준다.
  *
  * @author MindGarden
  * @since 2026-05-24
  */
-import React, { useCallback, useState } from 'react';
-import { useConfirm } from '../../../../hooks/useConfirm';
-import { KeyRound, Trash2 } from 'lucide-react';
-import UnifiedModal from '../../../common/modals/UnifiedModal';
-import { SettingsSectionPanel, SettingsButton } from '../../settings-shell';
+import React from 'react';
+import { KeyRound } from 'lucide-react';
+import { SettingsSectionPanel } from '../../settings-shell';
 import { toDisplayString } from '../../../../utils/safeDisplay';
-import ApiKeyModalContent from '../molecules/ApiKeyModalContent';
 import {
   AI_PROVIDER_LABELS,
   AI_PROVIDER_OPTIONS,
   maskApiKey
 } from '../constants';
 
-const ApiKeyManager = ({
-  providers,
-  saving,
-  onSaveProviderKey,
-  onDeleteProviderKey
-}) => {
-  const [editingProviderId, setEditingProviderId] = useState(null);
-  const [formState, setFormState] = useState(null);
-  const [confirm, ConfirmModal] = useConfirm();
-
-  const openModal = useCallback((providerId) => {
-    const current = providers?.[providerId] || {};
-    const opt = AI_PROVIDER_OPTIONS.find((p) => p.id === providerId);
-    setFormState({
-      apiKey: current.apiKey || '',
-      apiUrl: current.apiUrl || '',
-      model: current.model || (opt?.defaultModel || '')
-    });
-    setEditingProviderId(providerId);
-  }, [providers]);
-
-  const closeModal = useCallback(() => {
-    setEditingProviderId(null);
-    setFormState(null);
-  }, []);
-
-  const handleSave = useCallback(async() => {
-    if (!editingProviderId || !formState) {
-      return;
-    }
-    try {
-      await onSaveProviderKey(editingProviderId, formState);
-      closeModal();
-    } catch (e) {
-      // 부모가 알림 처리. 모달은 열어 둔 채로 유지.
-    }
-  }, [editingProviderId, formState, onSaveProviderKey, closeModal]);
-
-  const handleDelete = useCallback(async(providerId) => {
-    const ok = await confirm({
-      variant: 'danger',
-      messageKey: 'modal.apiKey.delete.confirm.message',
-      interpolation: { providerId: providerId.toUpperCase() }
-    });
-    if (!ok) return;
-    await onDeleteProviderKey(providerId);
-  }, [onDeleteProviderKey, confirm]);
-
-  const editingProvider = editingProviderId
-    ? AI_PROVIDER_OPTIONS.find((p) => p.id === editingProviderId)
-    : null;
-
-  return (
-    <SettingsSectionPanel
-      title="API 키 관리"
-      description={AI_PROVIDER_LABELS.keyOpsOnlyNotice}
-      className="mg-ai-section mg-ai-api-key-manager"
-      body="plain"
-    >
-
-      <ul className="mg-ai-api-key-manager__list" aria-label="API 키 목록">
-        {AI_PROVIDER_OPTIONS.map((provider) => {
-          const current = providers?.[provider.id] || {};
-          const hasKey = (current.apiKey || '').trim() !== '';
-          return (
-            <li key={provider.id} className="mg-ai-api-key-manager__row">
-              <div className="mg-ai-api-key-manager__head">
-                <KeyRound size={16} aria-hidden="true" />
-                <span className="mg-ai-api-key-manager__name">{toDisplayString(provider.label)}</span>
-              </div>
-              <div className="mg-ai-api-key-manager__meta">
-                <span
-                  className={[
-                    'mg-ai-api-key-manager__key',
-                    hasKey ? 'mg-ai-api-key-manager__key--filled' : 'mg-ai-api-key-manager__key--empty'
-                  ].join(' ')}
-                >
-                  {hasKey ? toDisplayString(maskApiKey(current.apiKey)) : AI_PROVIDER_LABELS.unregistered}
-                </span>
-                {current.model ? (
-                  <span className="mg-ai-api-key-manager__model">{toDisplayString(current.model)}</span>
-                ) : null}
-              </div>
-              <div className="mg-ai-api-key-manager__actions">
-                <SettingsButton
-                  type="button"
-                  variant="secondary"
-                  onClick={() => openModal(provider.id)}
-                  disabled
-                  preventDoubleClick={false}
-                >
-                  {hasKey ? AI_PROVIDER_LABELS.changeKey : AI_PROVIDER_LABELS.saveKey}
-                </SettingsButton>
-                {hasKey ? (
-                  <SettingsButton
-                    type="button"
-                    variant="ghost"
-                    className="mg-ai-api-key-manager__delete"
-                    onClick={() => handleDelete(provider.id)}
-                    disabled
-                    preventDoubleClick={false}
-                    aria-label={`${provider.label} 키 삭제`}
-                  >
-                    <Trash2 size={14} aria-hidden="true" />
-                    {' '}
-                    {AI_PROVIDER_LABELS.deleteKey}
-                  </SettingsButton>
-                ) : null}
-              </div>
-            </li>
-          );
-        })}
-      </ul>
-
-      {editingProvider && formState ? (
-        <UnifiedModal
-          isOpen
-          onClose={saving ? undefined : closeModal}
-          title={`${editingProvider.label} API 키 ${maskApiKey(formState.apiKey) ? '변경' : '등록'}`}
-          subtitle="키는 암호화되어 저장됩니다."
-          size="medium"
-          variant="form"
-          loading={saving}
-          actions={(
-            <div className="mg-v2-settings-actions">
-              <SettingsButton variant="outline" onClick={closeModal} disabled={saving}>
-                취소
-              </SettingsButton>
-              <SettingsButton variant="primary" onClick={handleSave} loading={saving}>
-                저장
-              </SettingsButton>
+const ApiKeyManager = ({ providers }) => (
+  <SettingsSectionPanel
+    title="API 키 관리"
+    description={AI_PROVIDER_LABELS.keyOpsOnlyNotice}
+    className="mg-ai-section mg-ai-api-key-manager"
+    body="plain"
+  >
+    <ul className="mg-ai-api-key-manager__list" aria-label="API 키 목록">
+      {AI_PROVIDER_OPTIONS.map((provider) => {
+        const current = providers?.[provider.id] || {};
+        const hasKey = (current.apiKey || '').trim() !== '';
+        return (
+          <li key={provider.id} className="mg-ai-api-key-manager__row">
+            <div className="mg-ai-api-key-manager__head">
+              <KeyRound size={16} aria-hidden="true" />
+              <span className="mg-ai-api-key-manager__name">{toDisplayString(provider.label)}</span>
             </div>
-          )}
-        >
-          <ApiKeyModalContent
-            provider={editingProvider}
-            form={formState}
-            onChange={setFormState}
-            submitting={saving}
-          />
-        </UnifiedModal>
-      ) : null}
-      <ConfirmModal />
-    </SettingsSectionPanel>
-  );
-};
+            <div className="mg-ai-api-key-manager__meta">
+              <span
+                className={[
+                  'mg-ai-api-key-manager__key',
+                  hasKey ? 'mg-ai-api-key-manager__key--filled' : 'mg-ai-api-key-manager__key--empty'
+                ].join(' ')}
+              >
+                {hasKey ? toDisplayString(maskApiKey(current.apiKey)) : AI_PROVIDER_LABELS.unregistered}
+              </span>
+              {current.model ? (
+                <span className="mg-ai-api-key-manager__model">{toDisplayString(current.model)}</span>
+              ) : null}
+            </div>
+          </li>
+        );
+      })}
+    </ul>
+  </SettingsSectionPanel>
+);
 
 export default ApiKeyManager;

@@ -1,8 +1,9 @@
 /**
- * PgConfigurationForm — testMode 즉시 PATCH (Admin UX SSOT)
+ * PgConfigurationForm — testMode 는 폼 상태만 변경 (P1 보안 2026-10-03)
  *
- * edit + configId: 토글 시 PATCH, 응답으로 로컬 상태 갱신, Save 불필요.
- * IAMPORT OFF 시 라이브 channelKey 없으면 PATCH 미호출 + 인라인 에러 + ON 유지.
+ * 테넌트 PATCH /test-mode 는 서버에서 항상 403 이므로 즉시 PATCH 하지 않는다.
+ * edit: 토글은 로컬 상태만 바꾸고, 저장(PUT) 시 재승인 요청으로 제출 — 안내 문구 노출.
+ * IAMPORT OFF 시 라이브 channelKey 없으면 인라인 에러 + ON 유지.
  * create 모드: 로컬만 변경, PATCH 없음.
  *
  * @author CoreSolution
@@ -66,7 +67,7 @@ jest.mock('../PgConfigurationForm.css', () => ({}), { virtual: true });
 
 import PgConfigurationForm, {
   PG_TEST_MODE_LIVE_CHANNEL_KEY_REQUIRED,
-  PG_TEST_MODE_TOAST
+  PG_TEST_MODE_REAPPROVAL_NOTICE
 } from '../PgConfigurationForm';
 import { patchPgConfigurationTestMode } from '../../../utils/pgApi';
 import { showNotification } from '../../../utils/notification';
@@ -91,7 +92,7 @@ const IAMPORT_INITIAL = {
   approvalStatus: 'PENDING'
 };
 
-describe('PgConfigurationForm — testMode immediate PATCH', () => {
+describe('PgConfigurationForm — testMode 폼 상태 전용 (PATCH 없음)', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     patchPgConfigurationTestMode.mockResolvedValue({
@@ -101,7 +102,7 @@ describe('PgConfigurationForm — testMode immediate PATCH', () => {
     });
   });
 
-  it('edit 모드에서 테스트 모드 OFF 시 PATCH 호출 후 로컬 상태 반영 (Save 없음)', async() => {
+  it('edit 모드에서 테스트 모드 OFF 시 PATCH 없이 로컬 상태만 반영하고 재승인 안내를 보인다', async() => {
     const onSave = jest.fn();
     render(
       <PgConfigurationForm
@@ -118,28 +119,21 @@ describe('PgConfigurationForm — testMode immediate PATCH', () => {
     const sw = screen.getByRole('switch', { name: '테스트 모드' });
     expect(sw).toHaveAttribute('aria-checked', 'true');
 
-    fireEvent.click(sw);
+    expect(screen.getByTestId('pg-test-mode-reapproval-notice'))
+      .toHaveTextContent(PG_TEST_MODE_REAPPROVAL_NOTICE);
 
-    await waitFor(() => {
-      expect(patchPgConfigurationTestMode).toHaveBeenCalledTimes(1);
-    });
-    expect(patchPgConfigurationTestMode).toHaveBeenCalledWith(TENANT_ID, CONFIG_ID, false);
-    expect(onSave).not.toHaveBeenCalled();
+    fireEvent.click(sw);
 
     await waitFor(() => {
       expect(screen.getByRole('switch', { name: '테스트 모드' }))
         .toHaveAttribute('aria-checked', 'false');
     });
-    expect(showNotification).toHaveBeenCalledWith(PG_TEST_MODE_TOAST.OFF, 'success');
+    expect(patchPgConfigurationTestMode).not.toHaveBeenCalled();
+    expect(onSave).not.toHaveBeenCalled();
+    expect(showNotification).not.toHaveBeenCalled();
   });
 
-  it('edit 모드에서 테스트 모드 ON 시 PATCH 호출', async() => {
-    patchPgConfigurationTestMode.mockResolvedValue({
-      configId: CONFIG_ID,
-      testMode: true,
-      approvalStatus: 'PENDING'
-    });
-
+  it('edit 모드에서 테스트 모드 ON 시에도 PATCH 를 호출하지 않는다', async() => {
     render(
       <PgConfigurationForm
         mode="edit"
@@ -155,12 +149,10 @@ describe('PgConfigurationForm — testMode immediate PATCH', () => {
     fireEvent.click(screen.getByRole('switch', { name: '테스트 모드' }));
 
     await waitFor(() => {
-      expect(patchPgConfigurationTestMode).toHaveBeenCalledWith(TENANT_ID, CONFIG_ID, true);
-    });
-    await waitFor(() => {
       expect(screen.getByRole('switch', { name: '테스트 모드' }))
         .toHaveAttribute('aria-checked', 'true');
     });
+    expect(patchPgConfigurationTestMode).not.toHaveBeenCalled();
   });
 
   it('IAMPORT OFF 시 라이브 채널 키 없으면 PATCH 미호출·인라인 에러·ON 유지', async() => {
@@ -221,5 +213,6 @@ describe('PgConfigurationForm — testMode immediate PATCH', () => {
         .toHaveAttribute('aria-checked', 'false');
     });
     expect(patchPgConfigurationTestMode).not.toHaveBeenCalled();
+    expect(screen.queryByTestId('pg-test-mode-reapproval-notice')).not.toBeInTheDocument();
   });
 });

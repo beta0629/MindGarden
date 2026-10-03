@@ -1,6 +1,5 @@
 package com.coresolution.consultation.constant.compliance;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -13,63 +12,6 @@ import java.util.Map;
 public final class ComplianceDashboardSampleContent {
 
     private ComplianceDashboardSampleContent() {
-    }
-
-    /**
-     * 개인정보 처리 목적별 위험도 평가 샘플.
-     *
-     * @return 목적별 위험도 맵
-     */
-    public static Map<String, Object> riskAssessment() {
-        return Map.of(
-            "userManagement", Map.of(
-                "purpose", "회원가입 및 서비스 이용",
-                "riskLevel", "중간",
-                "dataTypes", List.of("이름", "이메일", "전화번호", "주소"),
-                "retentionPeriod", "회원 탈퇴 시까지",
-                "protectionMeasures", List.of("암호화", "접근 제어", "로그 관리")
-            ),
-            "consultationService", Map.of(
-                "purpose", "상담 서비스 제공",
-                "riskLevel", "높음",
-                "dataTypes", List.of("상담 내용", "상담 일지", "개인정보"),
-                "retentionPeriod", "상담 완료 후 5년",
-                "protectionMeasures", List.of("의료정보 암호화", "접근 권한 관리", "비밀유지 의무")
-            ),
-            "paymentProcessing", Map.of(
-                "purpose", "결제 및 환불 처리",
-                "riskLevel", "높음",
-                "dataTypes", List.of("결제 정보", "카드번호", "금융 거래 내역"),
-                "retentionPeriod", "거래 완료 후 5년",
-                "protectionMeasures", List.of("결제 정보 암호화", "PCI DSS 준수", "접근 로그 관리")
-            ),
-            "salaryManagement", Map.of(
-                "purpose", "급여 계산 및 세금 처리",
-                "riskLevel", "중간",
-                "dataTypes", List.of("급여 정보", "세금 정보", "근로자 정보"),
-                "retentionPeriod", "급여 지급 후 3년",
-                "protectionMeasures", List.of("급여 정보 암호화", "접근 권한 관리", "감사 로그")
-            )
-        );
-    }
-
-    /**
-     * 전체 위험도 평가 샘플.
-     *
-     * @return 전체 평가 맵
-     */
-    public static Map<String, Object> overallImpactAssessment() {
-        return Map.of(
-            "overallRiskLevel", "중간",
-            "complianceStatus", "부분 준수",
-            "improvementAreas", List.of(
-                "개인정보 처리방침 보완",
-                "개인정보 영향평가 정기 실시",
-                "개인정보보호 교육 강화",
-                "개인정보 침해사고 대응체계 구축"
-            ),
-            "nextAssessmentDate", LocalDateTime.now().plusMonths(6)
-        );
     }
 
     /**

@@ -5,6 +5,7 @@ import { ContentArea, ContentHeader } from '../dashboard-v2/content';
 import './PrivacyPolicy.css';
 import './AccountDeletionInstructions.css';
 import { useTranslation } from 'react-i18next';
+import { getPlatformPrivacyContact } from '../../constants/platformPrivacyContact';
 
 const PRIVACY_PAGE_TITLE_ID = 'privacy-policy-page-title';
 
@@ -17,7 +18,9 @@ const PRIVACY_PAGE_TITLE_ID = 'privacy-policy-page-title';
 
 /** 레이아웃 없이 개인정보처리방침 본문만 렌더 (페이지·모달 공용). omitHeading: ContentHeader와 함께 쓸 때 h1 중복 방지 */
 export const PrivacyPolicyContent = ({ omitHeading = false }) => {
-  const { t } = useTranslation(); return (
+  const { t } = useTranslation();
+  const privacyContact = getPlatformPrivacyContact();
+  return (
   <div className="privacy-policy-container">
         {omitHeading ? null : (
           <h1 className="privacy-policy-title">
@@ -167,10 +170,10 @@ export const PrivacyPolicyContent = ({ omitHeading = false }) => {
               <strong>{t('common:common.PrivacyPolicy.t_4101b50b')}</strong> {t('common:common.PrivacyPolicy.t_811affdb')}
             </p>
             <p className="mg-v2-mb-md">
-              <strong>{t('common:common.PrivacyPolicy.t_286de003')}</strong> privacy@mindgarden.co.kr
+              <strong>{t('common:common.PrivacyPolicy.t_286de003')}</strong> {privacyContact.email}
             </p>
             <p className="mg-v2-m-0">
-              <strong>{t('common:common.PrivacyPolicy.t_ca3404dd')}</strong> 032-724-8501
+              <strong>{t('common:common.PrivacyPolicy.t_ca3404dd')}</strong> {privacyContact.phone}
             </p>
           </div>
         </div>

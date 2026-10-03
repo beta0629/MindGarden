@@ -60,21 +60,35 @@ class SystemConfigAccessPolicyTest {
     }
 
     @Test
-    @DisplayName("쓰기 허용 키는 시크릿이 아닌 운영 플래그만")
+    @DisplayName("쓰기 허용 키는 테넌트 단위 운영 플래그만 (AI 기본 provider·플랫폼 세션 스위치 제외)")
     void writableKeys_containNoSecrets() {
         assertThat(SystemConfigAccessPolicy.WRITABLE_KEYS)
                 .containsExactlyInAnyOrder(
                         SystemConfigAccessPolicy.WELLNESS_AUTO_SEND_ENABLED,
                         SystemConfigAccessPolicy.WELLNESS_SEND_TIME,
                         SystemConfigAccessPolicy.WELLNESS_TARGET_ROLES,
-                        SystemConfigAccessPolicy.AI_DEFAULT_PROVIDER,
-                        SessionSecurityFlagKeys.DUPLICATE_LOGIN_ALLOWED,
-                        SessionSecurityFlagKeys.OAUTH_REQUIRE_SERVER_VERIFY,
-                        SessionSecurityFlagKeys.BACKGROUND_401_KEEP_USER,
-                        SessionSecurityFlagKeys.SOFT_FAIL_ENABLED);
+                        SessionSecurityFlagKeys.DUPLICATE_LOGIN_ALLOWED);
 
         assertThat(SystemConfigAccessPolicy.WRITABLE_KEYS)
                 .noneMatch(SystemConfigAccessPolicy::isSecretValueKey);
+    }
+
+    @Test
+    @DisplayName("AI 기본 provider·플랫폼 세션 스위치는 읽기만 허용, 쓰기는 운영자 전용")
+    void platformKeys_areOpsOnlyWrite() {
+        String[] opsOnlyKeys = {
+            SystemConfigAccessPolicy.AI_DEFAULT_PROVIDER,
+            SessionSecurityFlagKeys.OAUTH_REQUIRE_SERVER_VERIFY,
+            SessionSecurityFlagKeys.BACKGROUND_401_KEEP_USER,
+            SessionSecurityFlagKeys.SOFT_FAIL_ENABLED
+        };
+        for (String key : opsOnlyKeys) {
+            assertThat(SystemConfigAccessPolicy.isReadable(key)).as("읽기 허용: %s", key).isTrue();
+            assertThat(SystemConfigAccessPolicy.isWritable(key)).as("쓰기 거부: %s", key).isFalse();
+            assertThat(SystemConfigAccessPolicy.isOpsOnlyWrite(key)).as("운영자 전용: %s", key).isTrue();
+        }
+        assertThat(SystemConfigAccessPolicy.isOpsOnlyWrite(SessionSecurityFlagKeys.DUPLICATE_LOGIN_ALLOWED))
+                .isFalse();
     }
 
     @Test

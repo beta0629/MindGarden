@@ -3,8 +3,9 @@
  *
  * 트랙 B PR-4 (2026-05-24):
  *   - 마운트 시 health / stats / logs 3 API 가 모두 호출된다.
- *   - 라디오 변경 → /ai-default-provider POST 호출 + 헬스 재조회.
- *   - 미등록 provider 카드는 disabled + tooltip.
+ *   - P1 보안(2026-10-03): 라디오는 모두 읽기 전용 — 클릭해도 POST 없음, 운영자 관리 안내.
+ *   - 미등록 provider 카드는 tooltip, 키 변경·삭제 버튼 없음 (마스킹 값만).
+ *   - STAFF 는 접근 불가 (ADMIN 전용).
  *   - 통계 카드 4 개 (오늘 / 이번 주 / 이번 달 / 성공률) 렌더.
  *   - 호출 로그 테이블 행 + 페이징 컨트롤 노출.
  *
@@ -14,6 +15,8 @@
 import React from 'react';
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import AiProviderManagementPage from '../AiProviderManagementPage';
+import { AI_PROVIDER_DISABLED_TOOLTIP } from '../constants';
+import { OPS_MANAGED_AI_PROVIDER_NOTICE } from '../../../../constants/opsManagedSettings';
 import * as ajax from '../../../../utils/ajax';
 import * as aiHealthApi from '../../../../api/admin/aiHealthApi';
 import * as aiUsageApi from '../../../../api/admin/aiUsageApi';
@@ -42,14 +45,14 @@ jest.mock('../../../../api/admin/aiUsageApi', () => ({
   getAiUsageLogDetail: jest.fn()
 }));
 
-jest.mock('../../../../contexts/SessionContext', () => {
-  const STABLE_USER = { id: 'admin-1', role: 'ADMIN', tenantId: 'tenant-pr4-ai' };
-  const STABLE_SESSION = { user: STABLE_USER, isLoggedIn: true };
-  return {
-    __esModule: true,
-    useSession: () => STABLE_SESSION
-  };
-});
+const mockSessionHolder = {
+  current: { user: { id: 'admin-1', role: 'ADMIN', tenantId: 'tenant-pr4-ai' }, isLoggedIn: true }
+};
+jest.mock('../../../../contexts/SessionContext', () => ({
+  __esModule: true,
+  useSession: () => mockSessionHolder.current
+}));
+const ADMIN_SESSION = mockSessionHolder.current;
 
 jest.mock('../../../../utils/notification', () => ({
   __esModule: true,
@@ -217,7 +220,7 @@ describe('AiProviderManagementPage — 트랙 B PR-4', () => {
     });
   });
 
-  it('미등록 provider (Gemini) 라디오는 disabled 이고 tooltip 노출, OpenAI 는 enable', async() => {
+  it('모든 provider 라디오는 읽기 전용이고 미등록(Gemini)은 tooltip, 운영자 안내가 보인다', async() => {
     render(<AiProviderManagementPage />);
 
     await waitForLoaded();
@@ -225,15 +228,14 @@ describe('AiProviderManagementPage — 트랙 B PR-4', () => {
     const openaiRadio = await screen.findByRole('radio', { name: /OpenAI 사용/ });
     const geminiRadio = await screen.findByRole('radio', { name: /Gemini 사용/ });
 
-    expect(openaiRadio).not.toBeDisabled();
+    expect(openaiRadio).toBeDisabled();
+    expect(openaiRadio).toBeChecked();
     expect(geminiRadio).toBeDisabled();
-    expect(geminiRadio.closest('label')).toHaveAttribute(
-      'title',
-      'API 키 미등록 — 아래 "키 변경" 으로 등록 후 사용 가능'
-    );
+    expect(geminiRadio.closest('label')).toHaveAttribute('title', AI_PROVIDER_DISABLED_TOOLTIP);
+    expect(screen.getByText(OPS_MANAGED_AI_PROVIDER_NOTICE)).toBeInTheDocument();
   });
 
-  it('라디오 변경 → /ai-default-provider POST 호출 + 헬스 재조회', async() => {
+  it('라디오 클릭해도 /ai-default-provider POST 가 없고 키 POST 도 없다', async() => {
     aiHealthApi.getAiProviderHealth.mockResolvedValueOnce({
       ...HEALTH_FIXTURE,
       openaiKeyRegistered: true,
@@ -249,16 +251,32 @@ describe('AiProviderManagementPage — 트랙 B PR-4', () => {
       fireEvent.click(geminiRadio);
     });
 
-    await waitFor(() => {
-      expect(ajax.apiPost).toHaveBeenCalledWith(
-        '/api/v1/admin/system-config/ai-default-provider',
-        { providerId: 'gemini' }
-      );
-    });
-    await waitFor(() => {
-      // 초기 1회 + 변경 후 1회 = 최소 2회
-      expect(aiHealthApi.getAiProviderHealth.mock.calls.length).toBeGreaterThanOrEqual(2);
-    });
+    expect(ajax.apiPost).not.toHaveBeenCalled();
+    expect(screen.queryByRole('button', { name: /키 변경|키 저장|키 삭제/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
+  it('API 키는 마스킹되어 평문이 노출되지 않는다', async() => {
+    render(<AiProviderManagementPage />);
+
+    await waitForLoaded();
+
+    expect(screen.queryByText('sk-existing')).not.toBeInTheDocument();
+  });
+
+  it('STAFF 는 접근 불가 — 데이터 API 를 호출하지 않는다', async() => {
+    mockSessionHolder.current = {
+      user: { id: 'staff-1', role: 'STAFF', tenantId: 'tenant-pr4-ai' },
+      isLoggedIn: true
+    };
+    try {
+      render(<AiProviderManagementPage />);
+      await waitForLoaded();
+      expect(aiHealthApi.getAiProviderHealth).not.toHaveBeenCalled();
+      expect(ajax.apiGet).not.toHaveBeenCalled();
+    } finally {
+      mockSessionHolder.current = ADMIN_SESSION;
+    }
   });
 
   it('사용 통계 카드 (오늘 / 이번 주 / 이번 달 / 성공률) 가 모두 렌더링된다', async() => {

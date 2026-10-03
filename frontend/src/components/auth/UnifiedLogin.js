@@ -867,7 +867,7 @@ const UnifiedLogin = () => {
   };
 
   /**
-   * Apple Sign in with Apple (SIWA) — server-side auth-code 흐름 (2026-06-11, Google PR #204 패턴).
+   * Apple Sign in with Apple (SIWA) — server-side auth-code 흐름 (2026-06-11, Google PR 204번 패턴).
    *
    * <p>handleGoogleLogin 100% mirror — `appleLogin()` 가 BE `/api/v1/auth/oauth2/apple/authorize`
    * 로부터 authorize URL 을 받아 SPA 를 full redirect 한다. Apple → BE apex 콜백
@@ -1112,7 +1112,7 @@ const UnifiedLogin = () => {
                 </MGButton>
 
                 {/*
-                  Google 로그인 — server-side auth-code 흐름 (PR #211, 2026-06-11).
+                  Google 로그인 — server-side auth-code 흐름 (PR 211번, 2026-06-11).
                   BE 가 `/api/v1/auth/oauth2/google/authorize` 에서 client_id 와 authorize URL 을
                   생성하므로 FE 의 `REACT_APP_GOOGLE_CLIENT_ID` 주입 여부와 무관하게 버튼을 노출한다.
 
@@ -1120,7 +1120,7 @@ const UnifiedLogin = () => {
                     `GoogleLoginButton` (server-side 흐름으로 redirect; onSuccess 호출되지 않음 —
                     BE 가 `/api/v1/auth/google/callback` → `/auth/oauth2/callback` 처리).
                   - `isGoogleWebClientIdConfigured === false`: 동일한 server-side 흐름으로 redirect
-                    하는 폴백 `MGButton`. 가드를 제거한 이유는 PR #211 server-side 전환 후
+                    하는 폴백 `MGButton`. 가드를 제거한 이유는 PR 211번 server-side 전환 후
                     FE client_id 미주입 운영 빌드에서도 버튼을 정상 노출해야 하기 때문.
                 */}
                 {isGoogleWebClientIdConfigured ? (
@@ -1144,7 +1144,7 @@ const UnifiedLogin = () => {
                 )}
 
                 {/*
-                  Apple Sign In — server-side auth-code 흐름 (PR #211, 2026-06-11).
+                  Apple Sign In — server-side auth-code 흐름 (PR 211번, 2026-06-11).
                   BE `/api/v1/auth/oauth2/apple/authorize` 가 client_id·Service ID·JWT 서명까지
                   처리하므로 FE `REACT_APP_APPLE_CLIENT_ID` 주입 여부와 무관하게 버튼을 노출한다.
 

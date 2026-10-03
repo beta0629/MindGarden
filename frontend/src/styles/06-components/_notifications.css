@@ -33,7 +33,7 @@
 
 /* 기본 알림 */
 .mg-notification {
-  background: var(--notification-toast-bg, rgba(255, 255, 255, 0.95));
+  background: var(--notification-toast-bg, var(--cs-glass-strong));
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border-radius: var(--notification-toast-border-radius, 0.5rem);

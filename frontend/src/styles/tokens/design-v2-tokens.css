@@ -218,6 +218,8 @@
   --mg-v2-radius-xl: 1rem;
   --mg-v2-radius-2xl: 1.5rem;
   --mg-v2-radius-pill: 9999px;
+  /* settings section panel (SettingsSectionPanel) — 12px */
+  --mg-v2-radius-panel: 0.75rem;
 
   /* ----------------------------------------------------------
      6. SHADOW — light only, suppressed

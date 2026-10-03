@@ -22,8 +22,8 @@
 }
 
 .mg-push-monitor__operational-banner--info {
-  background: color-mix(in srgb, var(--mg-v2-color-primary-solid) 12%, transparent);
-  border-color: var(--mg-v2-color-primary-solid);
+  background: color-mix(in srgb, var(--mg-v2-color-primary-main) 12%, transparent);
+  border-color: var(--mg-v2-color-primary-main);
   color: var(--mg-v2-color-text-primary);
 }
 

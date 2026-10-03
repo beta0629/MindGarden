@@ -19,8 +19,7 @@
 
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
-import MGButton from '../../common/MGButton';
+import { SettingsButton } from '../settings-shell';
 import UnifiedModal from '../../common/modals/UnifiedModal';
 import { toDisplayString } from '../../../utils/safeDisplay';
 import { MANUAL_NOTIFICATION_ERROR_CODES } from '../../../api/admin/manualNotificationApi';
@@ -142,19 +141,14 @@ const BatchResultModal = ({ isOpen, onClose, result }) => {
       size="large"
       variant="default"
       actions={(
-        <MGButton
+        <SettingsButton
           type="button"
           variant="primary"
-          className={buildErpMgButtonClassName({
-            variant: 'primary',
-            size: 'md',
-            loading: false
-          })}
-          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+          preventDoubleClick
           onClick={onClose}
         >
           {t('manualNotification.result.close')}
-        </MGButton>
+        </SettingsButton>
       )}
     >
       <div className={MODAL_CLASS}>

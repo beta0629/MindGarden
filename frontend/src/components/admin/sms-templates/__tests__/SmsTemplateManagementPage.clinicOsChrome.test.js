@@ -27,11 +27,14 @@ describe('SmsTemplateManagementPage Clinic-OS chrome', () => {
     expect(pageJs).toMatch(/data-testid="admin-sms-template-page"/);
   });
 
-  test('공통 ContentHeader·ContentCard·MGButton·UnifiedModal 사용', () => {
-    expect(pageJs).toMatch(/<ContentHeader/);
-    expect(pageJs).toMatch(/<ContentCard className="mg-admin-sms-template__card"/);
-    expect(pageJs).toMatch(/<MGButton/);
+  test('공통 SettingsPageShell·SettingsSectionPanel·SettingsButton·UnifiedModal 사용', () => {
+    expect(pageJs).toMatch(/<SettingsPageShell/);
+    expect(pageJs).toMatch(/<SettingsSectionPanel body="plain" className="mg-admin-sms-template__card"/);
+    expect(pageJs).toMatch(/<SettingsSectionPanel body="form" className="mg-admin-sms-template__card"/);
+    expect(pageJs).toMatch(/<SettingsButton/);
     expect(pageJs).toMatch(/<UnifiedModal/);
+    expect(pageJs).not.toMatch(/\bContentHeader\b/);
+    expect(pageJs).not.toMatch(/\bContentCard\b/);
   });
 
   test('레이아웃 메인 안에 중첩 <main> 없음 (편집 영역은 section)', () => {
@@ -39,22 +42,27 @@ describe('SmsTemplateManagementPage Clinic-OS chrome', () => {
     expect(pageJs).toMatch(/<section className="mg-admin-sms-template__editor">/);
   });
 
-  test('스테이지 단일 카드 지오메트리', () => {
-    expect(pageJs).toMatch(/mg-admin-sms-template__stage/);
-    expect(pageCss).toMatch(/min-height:\s*36rem/);
-    expect(pageCss).toMatch(/border:\s*1px solid var\(--mg-v2-color-neutral-300\)/);
-    expect(pageCss).toMatch(/background:\s*var\(--mg-v2-color-neutral-50\)/);
-    expect(pageCss).toMatch(/border-radius:\s*var\(--mg-v2-radius-lg\)/);
-    expect(pageCss).toMatch(/border-left:\s*none\s*!important/);
+  test('패널 크롬은 settings-shell 이 소유 — 페이지 CSS 에 스테이지·카드 지오메트리 없음', () => {
+    expect(pageJs).not.toMatch(/mg-admin-sms-template__stage/);
+    expect(pageCss).not.toMatch(/mg-admin-sms-template__stage/);
+    expect(pageCss).not.toMatch(/\.mg-admin-sms-template__card\b/);
+    expect(pageCss).not.toMatch(/box-shadow/);
+    expect(pageCss).not.toMatch(/dashed/);
+    expect(pageCss).not.toMatch(/!important/);
   });
 
-  test('CSS 는 v2 토큰만 — hex·legacy 토큰·1px 외 px 없음', () => {
+  test('CSS 는 v2 토큰만 — hex·legacy 토큰·px 없음', () => {
     expect(pageCss).not.toMatch(/#[0-9a-fA-F]{3,8}\b/);
     expect(pageCss).not.toMatch(/var\(--(color|spacing|radius|font-size|font-weight)-/);
     expect(pageCss).not.toMatch(/var\(--mg-color-/);
     expect(pageCss).not.toMatch(/--ad-b0kla/);
-    const pxValues = pageCss.match(/\b\d+px\b/g) || [];
-    expect(pxValues.every((v) => v === '1px')).toBe(true);
+    expect(pageCss).not.toMatch(/\b\d+px\b/);
+  });
+
+  test('입력은 mg-v2 입력 계약 클래스 사용', () => {
+    expect(pageJs).toMatch(/className="mg-v2-form-input mg-admin-sms-template__search"/);
+    expect(pageJs).toMatch(/className="mg-v2-select mg-admin-sms-template__filter"/);
+    expect(pageJs).toMatch(/className="mg-v2-form-textarea"/);
   });
 
   test('수신 대상 배지 변형 셀렉터 유지', () => {

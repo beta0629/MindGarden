@@ -15,7 +15,7 @@
 
 import React, { useCallback, useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
-import ContentSection from '../../../dashboard-v2/content/ContentSection';
+import { SettingsButton, SettingsSectionPanel } from '../../settings-shell';
 import EmptyState from '../../../common/EmptyState';
 import SmsLogRow from '../molecules/SmsLogRow';
 import {
@@ -72,23 +72,24 @@ const SmsLogCard = ({ limit = SMS_LOGS_DEFAULT_LIMIT, autoLoad = true }) => {
   }, [autoLoad, fetchLogs]);
 
   const actions = (
-    <button
+    <SettingsButton
       type="button"
-      className="mg-sms-log-card__refresh"
+      variant="ghost"
       onClick={fetchLogs}
       disabled={isLoading}
       aria-label={ADMIN_WEB_SCAFFOLD_COPY.PUSH_MONITOR_SMS_LOGS_REFRESH}
     >
       {ADMIN_WEB_SCAFFOLD_COPY.PUSH_MONITOR_SMS_LOGS_REFRESH}
-    </button>
+    </SettingsButton>
   );
 
   return (
-    <ContentSection
+    <SettingsSectionPanel
       title={ADMIN_WEB_SCAFFOLD_COPY.PUSH_MONITOR_SMS_LOGS_TITLE}
-      subtitle={ADMIN_WEB_SCAFFOLD_COPY.PUSH_MONITOR_SMS_LOGS_SUBTITLE}
+      description={ADMIN_WEB_SCAFFOLD_COPY.PUSH_MONITOR_SMS_LOGS_SUBTITLE}
       actions={actions}
-      dataTestId="sms-log-card"
+      body="plain"
+      testId="sms-log-card"
     >
       <div className="mg-sms-log-card" role="table">
         <div className="mg-sms-log-card__header" role="row" aria-hidden="true">
@@ -125,7 +126,7 @@ const SmsLogCard = ({ limit = SMS_LOGS_DEFAULT_LIMIT, autoLoad = true }) => {
           </ol>
         ) : null}
       </div>
-    </ContentSection>
+    </SettingsSectionPanel>
   );
 };
 

@@ -24,7 +24,7 @@
 }
 
 .mg-push-monitor__refresh-indicator__dot--active {
-  background: var(--mg-v2-color-primary-solid);
+  background: var(--mg-v2-color-primary-main);
   animation: mg-push-monitor-pulse 1.5s ease-in-out infinite;
 }
 

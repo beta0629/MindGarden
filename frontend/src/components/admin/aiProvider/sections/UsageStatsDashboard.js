@@ -9,10 +9,10 @@
  * @since 2026-05-24
  */
 import React, { useMemo } from 'react';
-import { BarChart3, RefreshCw } from 'lucide-react';
-import MGButton from '../../../common/MGButton';
-import { buildErpMgButtonClassName } from '../../../erp/common/erpMgButtonProps';
+import { RefreshCw } from 'lucide-react';
+import SafeErrorDisplay from '../../../common/SafeErrorDisplay';
 import { toDisplayString } from '../../../../utils/safeDisplay';
+import { SettingsSectionPanel, SettingsButton } from '../../settings-shell';
 import UsageStatChip from '../molecules/UsageStatChip';
 import {
   AI_PROVIDER_LABELS,
@@ -56,22 +56,14 @@ const UsageStatsDashboard = ({
   const fallbackUnsupported = (stats?.fallbackUsageRate ?? -1) < 0;
 
   return (
-    <section className="mg-ai-section mg-ai-usage-dashboard">
-      <header className="mg-ai-section__header">
-        <h2 className="mg-ai-section__title">
-          <span className="mg-ai-section__accent" aria-hidden="true" />
-          <BarChart3 size={18} aria-hidden="true" />
-          {' '}사용 통계
-        </h2>
-        <MGButton
+    <SettingsSectionPanel
+      title="사용 통계"
+      className="mg-ai-section mg-ai-usage-dashboard"
+      body="plain"
+      actions={(
+        <SettingsButton
           type="button"
           variant="secondary"
-          size="medium"
-          className={buildErpMgButtonClassName({
-            variant: 'secondary',
-            size: 'md',
-            loading
-          })}
           onClick={onRefresh}
           disabled={loading}
           loading={loading}
@@ -80,13 +72,11 @@ const UsageStatsDashboard = ({
         >
           <RefreshCw size={14} aria-hidden="true" />
           {' '}새로고침
-        </MGButton>
-      </header>
-
+        </SettingsButton>
+      )}
+    >
       {error ? (
-        <p className="mg-ai-section__empty mg-ai-section__empty--error">
-          {toDisplayString(error)}
-        </p>
+        <SafeErrorDisplay error={toDisplayString(error)} />
       ) : null}
 
       <div className="mg-ai-usage-dashboard__chips">
@@ -207,7 +197,7 @@ const UsageStatsDashboard = ({
           })}
         </div>
       </div>
-    </section>
+    </SettingsSectionPanel>
   );
 };
 

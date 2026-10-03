@@ -45,7 +45,8 @@ jest.mock('../../../common/MGButton', () => ({
 jest.mock('../../../erp/common/erpMgButtonProps', () => ({
   __esModule: true,
   buildErpMgButtonClassName: () => 'mock-btn',
-  ERP_MG_BUTTON_LOADING_TEXT: '처리 중...'
+  ERP_MG_BUTTON_LOADING_TEXT: '처리 중...',
+  mapErpVariantToMg: (variant) => variant
 }));
 
 jest.mock('../../../common/BadgeSelect', () => ({

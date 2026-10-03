@@ -1,10 +1,9 @@
 /**
- * 어드민 수동 알림 발송 페이지 — Clinic-OS chrome
- * SSOT: docs/design-system/CLINIC_OS_ADMIN_VISUAL_SSOT.md
+ * 어드민 수동 알림 발송 페이지 — 크롬은 settings-shell(SettingsSuite.css)
  *
  * @author MindGarden
  * @since 2026-05-23
- * @updated 2026-09-05 — Clinic-OS chrome
+ * @updated 2026-10-03 — SettingsPageShell 이관, 스테이지 카드 제거
  */
 
 .mg-v2-admin-manual-notification,
@@ -14,37 +13,4 @@
   padding: 0;
   max-width: none;
   width: 100%;
-}
-
-.mg-admin-manual-notif-page__panel {
-  margin-top: var(--mg-v2-space-4, 1rem);
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  gap: var(--mg-v2-space-4, 1rem);
-}
-
-.mg-admin-manual-notif-page__stage {
-  width: 100%;
-  min-width: 0;
-  padding: var(--mg-v2-space-4, 1rem);
-  min-height: 36rem;
-  border: 1px solid var(--mg-v2-color-neutral-300);
-  border-radius: var(--mg-v2-radius-lg);
-  background: var(--mg-v2-color-neutral-50);
-  box-shadow: none;
-  border-left: none !important;
-}
-
-.mg-admin-manual-notif-page__form-area,
-.mg-admin-manual-notif-page__history-area {
-  width: 100%;
-  min-width: 0;
-}
-
-@media (max-width: 768px) {
-  .mg-admin-manual-notif-page__panel {
-    margin-top: var(--mg-v2-space-3, 0.75rem);
-    gap: var(--mg-v2-space-3, 0.75rem);
-  }
 }

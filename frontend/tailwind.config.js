@@ -23,7 +23,7 @@ module.exports = {
         'light-cream': '#fffef7',
       },
       fontFamily: {
-        sans: ['-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', 'Noto Sans KR', 'Malgun Gothic', '맑은 고딕', 'sans-serif'],
+        sans: ['var(--mg-v2-font-family-base)'],
       },
       animation: {
         'fade-in': 'fadeIn 0.5s ease-out',

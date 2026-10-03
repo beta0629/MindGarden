@@ -10,6 +10,7 @@
  */
 import React, { useId } from 'react';
 import ProviderCard from '../molecules/ProviderCard';
+import { SettingsSectionPanel } from '../../settings-shell';
 import {
   AI_PROVIDER_DISABLED_TOOLTIP,
   AI_PROVIDER_LABELS,
@@ -37,16 +38,12 @@ const ProviderSelector = ({
   const tooltipPrefix = useId();
 
   return (
-    <section className="mg-ai-section mg-ai-provider-selector">
-      <header className="mg-ai-section__header">
-        <h2 className="mg-ai-section__title">
-          <span className="mg-ai-section__accent" aria-hidden="true" />
-          사용할 AI 프로바이더 선택
-        </h2>
-      </header>
-      <p className="mg-ai-section__desc">
-        API 키가 등록된 프로바이더만 선택할 수 있습니다. 심리검사 AI 리포트·웰니스 등에 선택한 프로바이더가 사용됩니다.
-      </p>
+    <SettingsSectionPanel
+      title="사용할 AI 프로바이더 선택"
+      description="API 키가 등록된 프로바이더만 선택할 수 있습니다. 심리검사 AI 리포트·웰니스 등에 선택한 프로바이더가 사용됩니다."
+      className="mg-ai-section mg-ai-provider-selector"
+      body="plain"
+    >
 
       <div
         role="radiogroup"
@@ -89,7 +86,7 @@ const ProviderSelector = ({
           우측의 "API 키 관리" 카드에서 1개 이상 등록한 뒤 선택할 수 있습니다.
         </p>
       )}
-    </section>
+    </SettingsSectionPanel>
   );
 };
 

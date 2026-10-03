@@ -25,8 +25,7 @@
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
-import MGButton from '../../common/MGButton';
+import { SettingsButton, SettingsSectionPanel } from '../settings-shell';
 import BadgeSelect from '../../common/BadgeSelect';
 import SettingSwitchRow from '../../common/molecules/SettingSwitchRow';
 import UnifiedModal from '../../common/modals/UnifiedModal';
@@ -487,34 +486,22 @@ const ManualNotificationForm = ({ onBatchSent }) => {
         </p>
       </section>
 
-      <section
-        className={`${FORM_CLASS}__section`}
-        aria-labelledby="mg-manual-notif-channel-title"
+      <SettingsSectionPanel
+        headingLevel={3}
+        title={t('manualNotification.channel.label')}
       >
-        <h3
-          id="mg-manual-notif-channel-title"
-          className={`${FORM_CLASS}__section-title`}
-        >
-          {t('manualNotification.channel.label')}
-        </h3>
         <BadgeSelect
           options={channelOptions}
           value={channel}
           onChange={(val) => setChannel(val)}
           aria-label={t('manualNotification.channel.label')}
         />
-      </section>
+      </SettingsSectionPanel>
 
-      <section
-        className={`${FORM_CLASS}__section`}
-        aria-labelledby="mg-manual-notif-recipient-title"
+      <SettingsSectionPanel
+        headingLevel={3}
+        title={t('manualNotification.recipient.title')}
       >
-        <h3
-          id="mg-manual-notif-recipient-title"
-          className={`${FORM_CLASS}__section-title`}
-        >
-          {t('manualNotification.recipient.title')}
-        </h3>
         <RecipientPicker
           value={selectedUsers}
           onChange={setSelectedUsers}
@@ -534,7 +521,7 @@ const ManualNotificationForm = ({ onBatchSent }) => {
           </p>
         )}
         {isPhoneModeChannel && (selectedUsers.length > 0 || phoneList.length > 0) && (
-          <p className={`${FORM_CLASS}__hint`}>
+          <p className="mg-v2-settings-field__hint">
             {t('manualNotification.recipient.totalCounter', {
               total: totalRecipients,
               max: MANUAL_NOTIFICATION_MAX_RECIPIENTS,
@@ -545,27 +532,19 @@ const ManualNotificationForm = ({ onBatchSent }) => {
             })}
           </p>
         )}
-      </section>
+      </SettingsSectionPanel>
 
       {isPhoneModeChannel && (
-        <section
-          className={`${FORM_CLASS}__section`}
-          aria-labelledby="mg-manual-notif-phone-title"
+        <SettingsSectionPanel
+          headingLevel={3}
+          title={t('manualNotification.phone.title')}
+          description={t('manualNotification.phone.hint')}
         >
-          <h3
-            id="mg-manual-notif-phone-title"
-            className={`${FORM_CLASS}__section-title`}
-          >
-            {t('manualNotification.phone.title')}
-          </h3>
-          <p className={`${FORM_CLASS}__hint`}>
-            {t('manualNotification.phone.hint')}
-          </p>
           <div className={`${FORM_CLASS}__phone-input-row`}>
             <input
               id="mg-manual-notif-phone-input"
               type="tel"
-              className={`${FORM_CLASS}__input`}
+              className="mg-v2-form-input"
               value={phoneDraft}
               onChange={handlePhoneDraftChange}
               onKeyDown={(e) => {
@@ -579,17 +558,10 @@ const ManualNotificationForm = ({ onBatchSent }) => {
               aria-describedby={phoneError ? 'mg-manual-notif-phone-error' : undefined}
               autoComplete="off"
             />
-            <MGButton
+            <SettingsButton
               type="button"
               variant="outline"
-              size="small"
-              className={buildErpMgButtonClassName({
-                variant: 'outline',
-                size: 'sm',
-                loading: false,
-                className: `${FORM_CLASS}__phone-add-btn`
-              })}
-              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+              preventDoubleClick
               disabled={
                 !phoneDraft.trim()
                   || Boolean(phoneError)
@@ -598,7 +570,7 @@ const ManualNotificationForm = ({ onBatchSent }) => {
               onClick={addPhone}
             >
               {t('manualNotification.phone.addButton')}
-            </MGButton>
+            </SettingsButton>
           </div>
           {phoneError && (
             <p
@@ -611,7 +583,7 @@ const ManualNotificationForm = ({ onBatchSent }) => {
           )}
           {phoneList.length > 0 && (
             <div className={`${FORM_CLASS}__phone-list-wrapper`}>
-              <p className={`${FORM_CLASS}__hint`}>
+              <p className="mg-v2-settings-field__hint">
                 {t('manualNotification.phone.listTitle', {
                   count: phoneList.length,
                   defaultValue: '추가된 전화번호 ({{count}}건)'
@@ -636,7 +608,7 @@ const ManualNotificationForm = ({ onBatchSent }) => {
               </ul>
             </div>
           )}
-        </section>
+        </SettingsSectionPanel>
       )}
 
       {channel === MANUAL_NOTIFICATION_CHANNEL.PUSH && (
@@ -646,133 +618,138 @@ const ManualNotificationForm = ({ onBatchSent }) => {
       )}
 
       {channel === MANUAL_NOTIFICATION_CHANNEL.SMS && (
-        <section
-          className={`${FORM_CLASS}__section`}
-          aria-labelledby="mg-manual-notif-sms-title"
+        <SettingsSectionPanel
+          ariaLabel={t('manualNotification.sms.contentLabel')}
         >
-          <label
-            id="mg-manual-notif-sms-title"
-            className={`${FORM_CLASS}__section-title`}
-            htmlFor="mg-manual-notif-sms-content"
-          >
-            {t('manualNotification.sms.contentLabel')}
-          </label>
-          <textarea
-            id="mg-manual-notif-sms-content"
-            className={`${FORM_CLASS}__textarea`}
-            rows={4}
-            maxLength={MANUAL_NOTIFICATION_SMS_CONTENT_MAX_LENGTH}
-            value={smsContent}
-            onChange={(e) => setSmsContent(e.target.value)}
-            placeholder={t('manualNotification.sms.contentPlaceholder')}
-          />
-          <p className={`${FORM_CLASS}__hint`}>
-            {t('manualNotification.sms.contentCounter', {
-              count: smsContent.length,
-              max: MANUAL_NOTIFICATION_SMS_CONTENT_MAX_LENGTH,
-              defaultValue: '{{count}} / {{max}}'
-            })}
-          </p>
-        </section>
+          <div className="mg-v2-settings-field">
+            <label
+              id="mg-manual-notif-sms-title"
+              className="mg-v2-form-label"
+              htmlFor="mg-manual-notif-sms-content"
+            >
+              {t('manualNotification.sms.contentLabel')}
+            </label>
+            <textarea
+              id="mg-manual-notif-sms-content"
+              className="mg-v2-form-textarea"
+              rows={4}
+              maxLength={MANUAL_NOTIFICATION_SMS_CONTENT_MAX_LENGTH}
+              value={smsContent}
+              onChange={(e) => setSmsContent(e.target.value)}
+              placeholder={t('manualNotification.sms.contentPlaceholder')}
+            />
+            <p className="mg-v2-settings-field__hint">
+              {t('manualNotification.sms.contentCounter', {
+                count: smsContent.length,
+                max: MANUAL_NOTIFICATION_SMS_CONTENT_MAX_LENGTH,
+                defaultValue: '{{count}} / {{max}}'
+              })}
+            </p>
+          </div>
+        </SettingsSectionPanel>
       )}
 
       {channel === MANUAL_NOTIFICATION_CHANNEL.PUSH && (
-        <section
-          className={`${FORM_CLASS}__section`}
-          aria-labelledby="mg-manual-notif-push-title-label"
+        <SettingsSectionPanel
+          ariaLabel={t('manualNotification.push.titleLabel')}
         >
           <p className={`${FORM_CLASS}__hint`} role="note">
             {t('manualNotification.push.warning')}
           </p>
-          <label
-            id="mg-manual-notif-push-title-label"
-            className={`${FORM_CLASS}__section-title`}
-            htmlFor="mg-manual-notif-push-title"
-          >
-            {t('manualNotification.push.titleLabel')}
-          </label>
-          <input
-            id="mg-manual-notif-push-title"
-            type="text"
-            className={`${FORM_CLASS}__input`}
-            maxLength={MANUAL_NOTIFICATION_PUSH_TITLE_MAX_LENGTH}
-            value={pushTitle}
-            onChange={(e) => setPushTitle(e.target.value)}
-            placeholder={t('manualNotification.push.titlePlaceholder')}
-          />
-          <p className={`${FORM_CLASS}__hint`}>
-            {t('manualNotification.push.titleCounter', {
-              count: pushTitle.length,
-              max: MANUAL_NOTIFICATION_PUSH_TITLE_MAX_LENGTH,
-              defaultValue: '{{count}} / {{max}}'
-            })}
-          </p>
-          <label
-            id="mg-manual-notif-push-body-label"
-            className={`${FORM_CLASS}__section-title`}
-            htmlFor="mg-manual-notif-push-body"
-          >
-            {t('manualNotification.push.bodyLabel')}
-          </label>
-          <textarea
-            id="mg-manual-notif-push-body"
-            className={`${FORM_CLASS}__textarea`}
-            rows={5}
-            maxLength={MANUAL_NOTIFICATION_PUSH_BODY_MAX_LENGTH}
-            value={pushBody}
-            onChange={(e) => setPushBody(e.target.value)}
-            placeholder={t('manualNotification.push.bodyPlaceholder')}
-          />
-          <p className={`${FORM_CLASS}__hint`}>
-            {t('manualNotification.push.bodyCounter', {
-              count: pushBody.length,
-              max: MANUAL_NOTIFICATION_PUSH_BODY_MAX_LENGTH,
-              defaultValue: '{{count}} / {{max}}'
-            })}
-          </p>
-        </section>
+          <div className="mg-v2-settings-field">
+            <label
+              id="mg-manual-notif-push-title-label"
+              className="mg-v2-form-label"
+              htmlFor="mg-manual-notif-push-title"
+            >
+              {t('manualNotification.push.titleLabel')}
+            </label>
+            <input
+              id="mg-manual-notif-push-title"
+              type="text"
+              className="mg-v2-form-input"
+              maxLength={MANUAL_NOTIFICATION_PUSH_TITLE_MAX_LENGTH}
+              value={pushTitle}
+              onChange={(e) => setPushTitle(e.target.value)}
+              placeholder={t('manualNotification.push.titlePlaceholder')}
+            />
+            <p className="mg-v2-settings-field__hint">
+              {t('manualNotification.push.titleCounter', {
+                count: pushTitle.length,
+                max: MANUAL_NOTIFICATION_PUSH_TITLE_MAX_LENGTH,
+                defaultValue: '{{count}} / {{max}}'
+              })}
+            </p>
+          </div>
+          <div className="mg-v2-settings-field">
+            <label
+              id="mg-manual-notif-push-body-label"
+              className="mg-v2-form-label"
+              htmlFor="mg-manual-notif-push-body"
+            >
+              {t('manualNotification.push.bodyLabel')}
+            </label>
+            <textarea
+              id="mg-manual-notif-push-body"
+              className="mg-v2-form-textarea"
+              rows={5}
+              maxLength={MANUAL_NOTIFICATION_PUSH_BODY_MAX_LENGTH}
+              value={pushBody}
+              onChange={(e) => setPushBody(e.target.value)}
+              placeholder={t('manualNotification.push.bodyPlaceholder')}
+            />
+            <p className="mg-v2-settings-field__hint">
+              {t('manualNotification.push.bodyCounter', {
+                count: pushBody.length,
+                max: MANUAL_NOTIFICATION_PUSH_BODY_MAX_LENGTH,
+                defaultValue: '{{count}} / {{max}}'
+              })}
+            </p>
+          </div>
+        </SettingsSectionPanel>
       )}
 
       {channel === MANUAL_NOTIFICATION_CHANNEL.ALIMTALK && (
-        <section
-          className={`${FORM_CLASS}__section`}
-          aria-labelledby="mg-manual-notif-alimtalk-title"
+        <SettingsSectionPanel
+          ariaLabel={t('manualNotification.alimtalk.templateLabel')}
         >
-          <label
-            id="mg-manual-notif-alimtalk-title"
-            className={`${FORM_CLASS}__section-title`}
-            htmlFor="mg-manual-notif-template"
-          >
-            {t('manualNotification.alimtalk.templateLabel')}
-          </label>
-          <select
-            id="mg-manual-notif-template"
-            className={`${FORM_CLASS}__select`}
-            value={templateCode}
-            onChange={(e) => {
-              setTemplateCode(e.target.value);
-              setTemplateParams({});
-            }}
-          >
-            <option value="">
-              {templatesLoading
-                ? t('manualNotification.alimtalk.templatesLoading')
-                : t('manualNotification.alimtalk.templatePlaceholder')}
-            </option>
-            {templates.map((tpl) => {
-              const code = String(tpl.templateCode ?? tpl.code ?? '');
-              const label = toDisplayString(tpl.title ?? tpl.name ?? code, code);
-              const missingMapping = tpl.solapiTemplateIdPresent === false;
-              const prefix = missingMapping
-                ? t('manualNotification.alimtalk.missingMappingBadge')
-                : '';
-              return (
-                <option key={code} value={code}>
-                  {prefix}{label} ({code})
-                </option>
-              );
-            })}
-          </select>
+          <div className="mg-v2-settings-field">
+            <label
+              id="mg-manual-notif-alimtalk-title"
+              className="mg-v2-form-label"
+              htmlFor="mg-manual-notif-template"
+            >
+              {t('manualNotification.alimtalk.templateLabel')}
+            </label>
+            <select
+              id="mg-manual-notif-template"
+              className="mg-v2-select"
+              value={templateCode}
+              onChange={(e) => {
+                setTemplateCode(e.target.value);
+                setTemplateParams({});
+              }}
+            >
+              <option value="">
+                {templatesLoading
+                  ? t('manualNotification.alimtalk.templatesLoading')
+                  : t('manualNotification.alimtalk.templatePlaceholder')}
+              </option>
+              {templates.map((tpl) => {
+                const code = String(tpl.templateCode ?? tpl.code ?? '');
+                const label = toDisplayString(tpl.title ?? tpl.name ?? code, code);
+                const missingMapping = tpl.solapiTemplateIdPresent === false;
+                const prefix = missingMapping
+                  ? t('manualNotification.alimtalk.missingMappingBadge')
+                  : '';
+                return (
+                  <option key={code} value={code}>
+                    {prefix}{label} ({code})
+                  </option>
+                );
+              })}
+            </select>
+          </div>
           <SettingSwitchRow
             id="manual-notif-templates-live"
             label={t('manualNotification.alimtalk.liveToggle')}
@@ -791,7 +768,7 @@ const ManualNotificationForm = ({ onBatchSent }) => {
           )}
           {selectedTemplate && selectedTemplate.content && (
             <div className={`${FORM_CLASS}__template-preview`} aria-live="polite">
-              <span className={`${FORM_CLASS}__preview-label`}>
+              <span className="mg-v2-form-label">
                 {t('manualNotification.alimtalk.bodyPreview')}
               </span>
               <pre className={`${FORM_CLASS}__preview-text`}>{selectedTemplate.content}</pre>
@@ -802,94 +779,90 @@ const ManualNotificationForm = ({ onBatchSent }) => {
               <h4 className={`${FORM_CLASS}__variables-title`}>
                 {t('manualNotification.alimtalk.variablesTitle')}
               </h4>
-              {templateVariableDefs.map((v) => (
-                <div key={v.name} className={`${FORM_CLASS}__variable-row`}>
-                  <label
-                    className={`${FORM_CLASS}__variable-label`}
-                    htmlFor={`mg-manual-notif-var-${v.name}`}
-                  >
-                    {toDisplayString(v.name, '변수')}
-                    {v.required && (
-                      <span className={`${FORM_CLASS}__badge ${FORM_CLASS}__badge--required`}>
-                        {t('manualNotification.alimtalk.variableRequired')}
-                      </span>
-                    )}
-                  </label>
-                  <input
-                    id={`mg-manual-notif-var-${v.name}`}
-                    type="text"
-                    className={`${FORM_CLASS}__input`}
-                    value={templateParams[v.name] || ''}
-                    placeholder={toDisplayString(v.sampleValue, '')}
-                    onChange={(e) => setTemplateParams((prev) => ({
-                      ...prev,
-                      [v.name]: e.target.value
-                    }))}
-                  />
-                </div>
-              ))}
+              <div className="mg-v2-settings-form-grid">
+                {templateVariableDefs.map((v) => (
+                  <div key={v.name} className="mg-v2-settings-field">
+                    <label
+                      className={`mg-v2-form-label ${FORM_CLASS}__variable-label`}
+                      htmlFor={`mg-manual-notif-var-${v.name}`}
+                    >
+                      {toDisplayString(v.name, '변수')}
+                      {v.required && (
+                        <span className={`${FORM_CLASS}__badge ${FORM_CLASS}__badge--required`}>
+                          {t('manualNotification.alimtalk.variableRequired')}
+                        </span>
+                      )}
+                    </label>
+                    <input
+                      id={`mg-manual-notif-var-${v.name}`}
+                      type="text"
+                      className="mg-v2-form-input"
+                      value={templateParams[v.name] || ''}
+                      placeholder={toDisplayString(v.sampleValue, '')}
+                      onChange={(e) => setTemplateParams((prev) => ({
+                        ...prev,
+                        [v.name]: e.target.value
+                      }))}
+                    />
+                  </div>
+                ))}
+              </div>
             </div>
           )}
-        </section>
+        </SettingsSectionPanel>
       )}
 
-      <section
-        className={`${FORM_CLASS}__section`}
-        aria-labelledby="mg-manual-notif-reason-title"
+      <SettingsSectionPanel
+        ariaLabel={t('manualNotification.reason.label')}
       >
-        <label
-          id="mg-manual-notif-reason-title"
-          className={`${FORM_CLASS}__section-title`}
-          htmlFor="mg-manual-notif-reason"
-        >
-          {t('manualNotification.reason.label')}
-        </label>
-        <textarea
-          id="mg-manual-notif-reason"
-          className={`${FORM_CLASS}__textarea`}
-          rows={3}
-          maxLength={MANUAL_NOTIFICATION_REASON_MAX_LENGTH}
-          value={reason}
-          onChange={(e) => setReason(e.target.value)}
-          placeholder={t('manualNotification.reason.placeholder')}
-        />
-        <p className={`${FORM_CLASS}__hint`}>
-          {t('manualNotification.reason.counter', {
-            count: reason.length,
-            max: MANUAL_NOTIFICATION_REASON_MAX_LENGTH,
-            defaultValue: '{{count}} / {{max}}'
-          })}
-        </p>
-        {reasonShortWarning && (
-          <p className={`${FORM_CLASS}__hint ${FORM_CLASS}__hint--warn`} role="note">
-            {t('manualNotification.reason.lengthWarning', {
-              min: MANUAL_NOTIFICATION_REASON_RECOMMENDED_MIN_LENGTH,
-              defaultValue: '사유를 {{min}}자 이상 상세하게 적는 것을 권장합니다.'
+        <div className="mg-v2-settings-field">
+          <label
+            id="mg-manual-notif-reason-title"
+            className="mg-v2-form-label"
+            htmlFor="mg-manual-notif-reason"
+          >
+            {t('manualNotification.reason.label')}
+          </label>
+          <textarea
+            id="mg-manual-notif-reason"
+            className="mg-v2-form-textarea"
+            rows={3}
+            maxLength={MANUAL_NOTIFICATION_REASON_MAX_LENGTH}
+            value={reason}
+            onChange={(e) => setReason(e.target.value)}
+            placeholder={t('manualNotification.reason.placeholder')}
+          />
+          <p className="mg-v2-settings-field__hint">
+            {t('manualNotification.reason.counter', {
+              count: reason.length,
+              max: MANUAL_NOTIFICATION_REASON_MAX_LENGTH,
+              defaultValue: '{{count}} / {{max}}'
             })}
           </p>
-        )}
-      </section>
+          {reasonShortWarning && (
+            <p className={`${FORM_CLASS}__hint ${FORM_CLASS}__hint--warn`} role="note">
+              {t('manualNotification.reason.lengthWarning', {
+                min: MANUAL_NOTIFICATION_REASON_RECOMMENDED_MIN_LENGTH,
+                defaultValue: '사유를 {{min}}자 이상 상세하게 적는 것을 권장합니다.'
+              })}
+            </p>
+          )}
+        </div>
+      </SettingsSectionPanel>
 
-      <div className={`${FORM_CLASS}__submit`}>
-        <MGButton
+      <div className="mg-v2-settings-actions">
+        <SettingsButton
           type="button"
           variant="primary"
-          size="medium"
-          className={buildErpMgButtonClassName({
-            variant: 'primary',
-            size: 'md',
-            loading: submitting,
-            className: `${FORM_CLASS}__submit-btn`
-          })}
+          preventDoubleClick
           loading={submitting}
-          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
           disabled={!isAllRequiredFilled || submitting}
           onClick={handleSendClick}
         >
           {submitting
             ? t('manualNotification.submit.sending')
             : t('manualNotification.submit.send')}
-        </MGButton>
+        </SettingsButton>
       </div>
 
       <UnifiedModal
@@ -900,35 +873,25 @@ const ManualNotificationForm = ({ onBatchSent }) => {
         size="medium"
         actions={(
           <>
-            <MGButton
+            <SettingsButton
               type="button"
               variant="outline"
-              className={buildErpMgButtonClassName({
-                variant: 'outline',
-                size: 'md',
-                loading: false
-              })}
-              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+              preventDoubleClick
               onClick={closeConfirm}
             >
               {t('manualNotification.submit.cancel')}
-            </MGButton>
-            <MGButton
+            </SettingsButton>
+            <SettingsButton
               type="button"
               variant="primary"
-              className={buildErpMgButtonClassName({
-                variant: 'primary',
-                size: 'md',
-                loading: false
-              })}
-              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+              preventDoubleClick
               onClick={() => {
                 setConfirmStep(CONFIRM_STEP.STEP_2);
                 setConfirmChecked(false);
               }}
             >
               {t('manualNotification.submit.confirmStep1Next')}
-            </MGButton>
+            </SettingsButton>
           </>
         )}
       >
@@ -945,35 +908,25 @@ const ManualNotificationForm = ({ onBatchSent }) => {
         loading={submitting}
         actions={(
           <>
-            <MGButton
+            <SettingsButton
               type="button"
               variant="outline"
-              className={buildErpMgButtonClassName({
-                variant: 'outline',
-                size: 'md',
-                loading: false
-              })}
-              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+              preventDoubleClick
               onClick={closeConfirm}
               disabled={submitting}
             >
               {t('manualNotification.submit.cancel')}
-            </MGButton>
-            <MGButton
+            </SettingsButton>
+            <SettingsButton
               type="button"
               variant="danger"
-              className={buildErpMgButtonClassName({
-                variant: 'danger',
-                size: 'md',
-                loading: submitting
-              })}
+              preventDoubleClick
               loading={submitting}
-              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               disabled={!confirmChecked || submitting}
               onClick={doSend}
             >
               {t('manualNotification.submit.confirmStep2Send')}
-            </MGButton>
+            </SettingsButton>
           </>
         )}
       >

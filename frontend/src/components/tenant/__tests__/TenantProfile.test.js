@@ -2,7 +2,7 @@
  * TenantProfile — UI/UX 개선 회귀 테스트 (2026-05-27).
  *
  * 검증 범위:
- *  - 핸드오프 §A: "이름 변경" 액션이 ContentHeader.actions 우측에 렌더 + "활성" 배지 동행.
+ *  - 핸드오프 §A: "이름 변경" 액션이 SettingsQuietHeader actions 우측에 렌더 + "활성" 상태는 요약 띠.
  *  - 핸드오프 §A / §B: 테넌트 정보 카드 2-컬럼 grid 구조 (`__grid--two-col`).
  *  - 핸드오프 §C: 구독/결제 빈 상태가 EmptyState + B0KlA 일러스트(aria-hidden="true").
  *  - 핸드오프 §E: 탭 role="tablist" / role="tab" / aria-selected.
@@ -155,7 +155,7 @@ describe('TenantProfile UI/UX (2026-05-27)', () => {
   });
 
   describe('핸드오프 §A — 헤더 액션 배치', () => {
-    it('"이름 변경" 버튼이 ContentHeader 우측 actions 에 렌더된다', async() => {
+    it('"이름 변경" 버튼이 SettingsQuietHeader 우측 actions 에 렌더된다', async() => {
       await act(async() => {
         renderTenantProfile();
       });
@@ -163,10 +163,10 @@ describe('TenantProfile UI/UX (2026-05-27)', () => {
       const renameBtn = await screen.findByTestId('tenant-profile-rename-open');
       expect(renameBtn).toBeInTheDocument();
 
-      const headerActions = renameBtn.closest('.mg-v2-tenant-profile__header-actions');
+      const headerActions = renameBtn.closest('.mg-v2-settings-header__links');
       expect(headerActions).not.toBeNull();
-      const contentHeader = renameBtn.closest('.mg-v2-content-header');
-      expect(contentHeader).not.toBeNull();
+      const quietHeader = renameBtn.closest('.mg-v2-settings-header');
+      expect(quietHeader).not.toBeNull();
     });
 
     it('"이름 변경" 버튼에 aria-label 이 설정된다', async() => {
@@ -177,16 +177,14 @@ describe('TenantProfile UI/UX (2026-05-27)', () => {
       expect(renameBtn.getAttribute('aria-label')).toBe('admin:tenantProfile.actions.changeNameAria');
     });
 
-    it('"활성" 상태 배지가 헤더 actions 영역에 동행 렌더된다', async() => {
+    it('"활성" 상태가 헤더 아래 요약 띠(SettingsSummaryStrip)에 렌더된다', async() => {
       await act(async() => {
         renderTenantProfile();
       });
 
       await screen.findByTestId('tenant-profile-rename-open');
-      const renameBtn = screen.getByTestId('tenant-profile-rename-open');
-      const headerActions = renameBtn.closest('.mg-v2-tenant-profile__header-actions');
-      expect(headerActions).not.toBeNull();
-      expect(within(headerActions).getByText('활성')).toBeInTheDocument();
+      const summaryStrip = screen.getByTestId('settings-summary-strip');
+      expect(within(summaryStrip).getByText('활성')).toBeInTheDocument();
     });
   });
 
@@ -262,10 +260,10 @@ describe('TenantProfile UI/UX (2026-05-27)', () => {
   });
 
   describe('핸드오프 §B / §H — 좌측 accent bar 제거 정책', () => {
-    it('ContentSection 카드에 inline 스타일로 border-left 가 적용되지 않는다', async() => {
+    it('SettingsSectionPanel 카드에 inline 스타일로 border-left 가 적용되지 않는다', async() => {
       const { container } = await act(async() => renderTenantProfile());
       await screen.findByTestId('tenant-profile-rename-open');
-      const cards = container.querySelectorAll('.mg-v2-content-section--card');
+      const cards = container.querySelectorAll('.mg-v2-settings-panel');
       expect(cards.length).toBeGreaterThan(0);
       cards.forEach((card) => {
         const inlineBorderLeft = card.style && card.style.borderLeft;
@@ -281,13 +279,13 @@ describe('TenantProfile UI/UX (2026-05-27)', () => {
    *   (글로벌 `var(--mg-container-max)` SSOT 위배 방지)
    * - GAP #2: `subscription`/`payment` 탭 활성화 시 `<SubscriptionManagement>` / `<PaymentMethodRegistration>`
    *   임베드가 *절대* 렌더되지 않아야 한다 (페이지 헤더·사이드바·3중 카드 중복 회귀 방지)
-   * - GAP #3: 빈 상태에서 ContentSection 1개 + EmptyState 1개만 렌더 (별도 카드 outline 없이)
+   * - GAP #3: 빈 상태에서 SettingsSectionPanel 1개 + EmptyState 1개만 렌더 (별도 카드 outline 없이)
    */
   describe('P1 핫픽스 회귀 가드 — GAP #1 (max-width override 금지)', () => {
     it('TenantProfile 컨테이너에 inline max-width 가 적용되지 않는다 (글로벌 SSOT 위임)', async() => {
       const { container } = await act(async() => renderTenantProfile());
       await screen.findByTestId('tenant-profile-rename-open');
-      const containers = container.querySelectorAll('.mg-v2-tenant-profile .mg-v2-ad-b0kla__container');
+      const containers = container.querySelectorAll('.mg-v2-settings-shell.mg-v2-tenant-profile');
       expect(containers.length).toBeGreaterThan(0);
       containers.forEach((el) => {
         const inlineMaxWidth = el.style && el.style.maxWidth;
@@ -328,27 +326,27 @@ describe('TenantProfile UI/UX (2026-05-27)', () => {
       expect(screen.queryByTestId('payment-method-registration')).toBeNull();
     });
 
-    it('subscription 탭 빈 상태에서 단일 ContentSection + EmptyState 만 렌더된다', async() => {
+    it('subscription 탭 빈 상태에서 단일 SettingsSectionPanel + EmptyState 만 렌더된다', async() => {
       const { container } = await act(async() => renderTenantProfile());
       await screen.findByTestId('tenant-profile-rename-open');
       await switchTab('subscription');
 
       const panel = container.querySelector('[role="tabpanel"]');
       expect(panel).not.toBeNull();
-      const sections = panel.querySelectorAll('.mg-v2-content-section');
+      const sections = panel.querySelectorAll('.mg-v2-settings-panel');
       expect(sections.length).toBe(1);
       const empties = panel.querySelectorAll('.mg-v2-empty-state');
       expect(empties.length).toBe(1);
     });
 
-    it('payment 탭 빈 상태에서 단일 ContentSection + EmptyState 만 렌더된다', async() => {
+    it('payment 탭 빈 상태에서 단일 SettingsSectionPanel + EmptyState 만 렌더된다', async() => {
       const { container } = await act(async() => renderTenantProfile());
       await screen.findByTestId('tenant-profile-rename-open');
       await switchTab('payment');
 
       const panel = container.querySelector('[role="tabpanel"]');
       expect(panel).not.toBeNull();
-      const sections = panel.querySelectorAll('.mg-v2-content-section');
+      const sections = panel.querySelectorAll('.mg-v2-settings-panel');
       expect(sections.length).toBe(1);
       const empties = panel.querySelectorAll('.mg-v2-empty-state');
       expect(empties.length).toBe(1);

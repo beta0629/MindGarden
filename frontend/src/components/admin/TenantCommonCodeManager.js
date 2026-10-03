@@ -8,11 +8,9 @@
 
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
-import ContentArea from '../dashboard-v2/content/ContentArea';
-import ContentHeader from '../dashboard-v2/content/ContentHeader';
 import { SidePeekShell } from '../common';
-import MGButton from '../common/MGButton';
-import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
+import SafeErrorDisplay from '../common/SafeErrorDisplay';
+import { SettingsPageShell, SettingsSectionPanel, SettingsButton } from './settings-shell';
 import TenantCommonCodeTable from './tenant-common-codes/organisms/TenantCommonCodeTable';
 import TenantCommonCodeSidePeekContent from './tenant-common-codes/molecules/TenantCommonCodeSidePeekContent';
 import TenantCommonCodeFormModal from './tenant-common-codes/molecules/TenantCommonCodeFormModal';
@@ -431,127 +429,118 @@ const TenantCommonCodeManager = () => {
   };
 
   const headerActions = (
-    <MGButton
+    <SettingsButton
       type="button"
       variant="primary"
-      className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: false })}
-      loadingText={ERP_MG_BUTTON_LOADING_TEXT}
       onClick={handleCreateCode}
       disabled={codeGroups.length === 0}
       preventDoubleClick
     >
       + {t('admin:tenantCommonCode.ui.btnAddCode')}
-    </MGButton>
+    </SettingsButton>
   );
 
   return (
     <AdminCommonLayout title={t('admin:tenantCommonCode.ui.layoutTitle')}>
-      <div className="mg-v2-ad-b0kla">
-        <div className="mg-v2-ad-b0kla__container">
-          <ContentArea ariaLabel={t('admin:tenantCommonCode.ui.contentAriaLabel')}>
-            <ContentHeader
-              title={t('admin:tenantCommonCode.ui.headerTitle')}
-              subtitle={t('admin:tenantCommonCode.ui.headerSubtitle')}
-              titleId={TENANT_COMMON_CODE_TITLE_ID}
-              actions={headerActions}
-            />
-            <main aria-labelledby={TENANT_COMMON_CODE_TITLE_ID}>
-              {error && (
-                <div className="tenant-common-code__error" role="alert">
-                  {toDisplayString(error, '—')}
-                </div>
-              )}
+      <SettingsPageShell
+        title={t('admin:tenantCommonCode.ui.headerTitle')}
+        titleId={TENANT_COMMON_CODE_TITLE_ID}
+        actions={headerActions}
+        ariaLabel={t('admin:tenantCommonCode.ui.contentAriaLabel')}
+      >
+        {error && (
+          <SafeErrorDisplay error={toDisplayString(error, '—')} />
+        )}
 
-              <div className="tenant-common-code__filters">
-                <div className="tenant-common-code__filter-field">
-                  <label className="tenant-common-code__filter-label" htmlFor="tenant-code-group-filter">
-                    {TENANT_COMMON_CODE_FILTER_LABELS.GROUP}
-                  </label>
-                  <select
-                    id="tenant-code-group-filter"
-                    className="tenant-common-code__filter-select"
-                    value={groupFilter}
-                    onChange={(e) => setGroupFilter(e.target.value)}
-                  >
-                    <option value={TENANT_COMMON_CODE_FILTER_ALL}>전체 그룹</option>
-                    {codeGroups.map((group) => {
-                      const groupName = group.groupName || group;
-                      return (
-                        <option key={groupName} value={groupName}>
-                          {groupLabelByName[groupName] || groupName}
-                        </option>
-                      );
-                    })}
-                  </select>
-                </div>
-                <div className="tenant-common-code__filter-field">
-                  <label className="tenant-common-code__filter-label" htmlFor="tenant-code-status-filter">
-                    {TENANT_COMMON_CODE_FILTER_LABELS.STATUS}
-                  </label>
-                  <select
-                    id="tenant-code-status-filter"
-                    className="tenant-common-code__filter-select"
-                    value={statusFilter}
-                    onChange={(e) => setStatusFilter(e.target.value)}
-                  >
-                    <option value={TENANT_COMMON_CODE_FILTER_ALL}>전체</option>
-                    <option value={TENANT_COMMON_CODE_FILTER_ACTIVE}>사용</option>
-                    <option value={TENANT_COMMON_CODE_FILTER_INACTIVE}>미사용</option>
-                  </select>
-                </div>
-                <div className="tenant-common-code__filter-field">
-                  <label className="tenant-common-code__filter-label" htmlFor="tenant-code-search">
-                    {TENANT_COMMON_CODE_FILTER_LABELS.SEARCH}
-                  </label>
-                  <input
-                    id="tenant-code-search"
-                    type="search"
-                    className="tenant-common-code__filter-input"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    placeholder={t('admin:tenantCommonCode.ui.searchPlaceholder')}
-                  />
-                </div>
-              </div>
-
-              <div
-                className={[
-                  TENANT_COMMON_CODE_PEEK_LAYOUT_CLASS,
-                  peekCode ? TENANT_COMMON_CODE_PEEK_LAYOUT_OPEN_MODIFIER : ''
-                ].filter(Boolean).join(' ')}
+        <SettingsSectionPanel body="plain">
+          <div className="tenant-common-code__filters">
+            <div className="tenant-common-code__filter-field mg-v2-settings-field">
+              <label className="mg-v2-form-label" htmlFor="tenant-code-group-filter">
+                {TENANT_COMMON_CODE_FILTER_LABELS.GROUP}
+              </label>
+              <select
+                id="tenant-code-group-filter"
+                className="mg-v2-select"
+                value={groupFilter}
+                onChange={(e) => setGroupFilter(e.target.value)}
               >
-                <div className={TENANT_COMMON_CODE_MAIN_REGION_CLASS} data-region="R-MAIN">
-                  <TenantCommonCodeTable
-                    codes={filteredCodes}
-                    loading={loading}
-                    groupLabelByName={groupLabelByName}
-                    onRowClick={openPeek}
-                    onEdit={handleEditCode}
-                    onDelete={handleDeleteCode}
-                    onToggleActive={handleToggleActive}
-                    onResetGlobal={handleResetGlobal}
-                  />
-                </div>
-                <SidePeekShell
-                  isOpen={Boolean(peekCode)}
-                  onClose={() => setPeekCode(null)}
-                  title={peekCode
-                    ? toDisplayString(peekCode.codeLabel || peekCode.codeValue, '상세')
-                    : '상세'}
-                  ariaLabel="센터 코드 상세"
-                >
-                  <TenantCommonCodeSidePeekContent
-                    code={peekCode}
-                    globalCode={peekGlobalCode}
-                    loading={peekGlobalLoading}
-                    groupLabelByName={groupLabelByName}
-                  />
-                </SidePeekShell>
-              </div>
-            </main>
-          </ContentArea>
-        </div>
-      </div>
+                <option value={TENANT_COMMON_CODE_FILTER_ALL}>전체 그룹</option>
+                {codeGroups.map((group) => {
+                  const groupName = group.groupName || group;
+                  return (
+                    <option key={groupName} value={groupName}>
+                      {groupLabelByName[groupName] || groupName}
+                    </option>
+                  );
+                })}
+              </select>
+            </div>
+            <div className="tenant-common-code__filter-field mg-v2-settings-field">
+              <label className="mg-v2-form-label" htmlFor="tenant-code-status-filter">
+                {TENANT_COMMON_CODE_FILTER_LABELS.STATUS}
+              </label>
+              <select
+                id="tenant-code-status-filter"
+                className="mg-v2-select"
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+              >
+                <option value={TENANT_COMMON_CODE_FILTER_ALL}>전체</option>
+                <option value={TENANT_COMMON_CODE_FILTER_ACTIVE}>사용</option>
+                <option value={TENANT_COMMON_CODE_FILTER_INACTIVE}>미사용</option>
+              </select>
+            </div>
+            <div className="tenant-common-code__filter-field mg-v2-settings-field">
+              <label className="mg-v2-form-label" htmlFor="tenant-code-search">
+                {TENANT_COMMON_CODE_FILTER_LABELS.SEARCH}
+              </label>
+              <input
+                id="tenant-code-search"
+                type="search"
+                className="mg-v2-form-input"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder={t('admin:tenantCommonCode.ui.searchPlaceholder')}
+              />
+            </div>
+          </div>
+
+          <div
+            className={[
+              TENANT_COMMON_CODE_PEEK_LAYOUT_CLASS,
+              peekCode ? TENANT_COMMON_CODE_PEEK_LAYOUT_OPEN_MODIFIER : ''
+            ].filter(Boolean).join(' ')}
+          >
+            <div className={TENANT_COMMON_CODE_MAIN_REGION_CLASS} data-region="R-MAIN">
+              <TenantCommonCodeTable
+                codes={filteredCodes}
+                loading={loading}
+                groupLabelByName={groupLabelByName}
+                onRowClick={openPeek}
+                onEdit={handleEditCode}
+                onDelete={handleDeleteCode}
+                onToggleActive={handleToggleActive}
+                onResetGlobal={handleResetGlobal}
+              />
+            </div>
+            <SidePeekShell
+              isOpen={Boolean(peekCode)}
+              onClose={() => setPeekCode(null)}
+              title={peekCode
+                ? toDisplayString(peekCode.codeLabel || peekCode.codeValue, '상세')
+                : '상세'}
+              ariaLabel="센터 코드 상세"
+            >
+              <TenantCommonCodeSidePeekContent
+                code={peekCode}
+                globalCode={peekGlobalCode}
+                loading={peekGlobalLoading}
+                groupLabelByName={groupLabelByName}
+              />
+            </SidePeekShell>
+          </div>
+        </SettingsSectionPanel>
+      </SettingsPageShell>
 
       <TenantCommonCodeFormModal
         showModal={showModal}

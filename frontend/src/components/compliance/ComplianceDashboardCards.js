@@ -1,6 +1,4 @@
-import ContentCard from '../dashboard-v2/content/ContentCard';
-import MGButton from '../common/MGButton';
-import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
+import { SettingsButton, SettingsSectionPanel } from '../admin/settings-shell';
 import SafeText from '../common/SafeText';
 import { toDisplayString } from '../../utils/safeDisplay';
 import { formatLedgerDateTime } from '../../utils/erpFinanceDisplay';
@@ -49,40 +47,36 @@ export function OverallSection({ overallStatus, levelMod }) {
     return null;
   }
   return (
-    <section
+    <SettingsSectionPanel
       className="mg-v2-compliance-dashboard__section mg-v2-compliance-dashboard__section--overall"
-      aria-labelledby="compliance-overall-heading"
+      title={t('common:compliance.ComplianceDashboardCards.t_b53a88c2')}
+      body="form"
     >
-      <ContentCard className="mg-v2-compliance-dashboard__card">
-        <h2 id="compliance-overall-heading" className="mg-v2-compliance-dashboard__card-title">
-          <span>{t('common:compliance.ComplianceDashboardCards.t_b53a88c2')}</span>
-        </h2>
-        <div className="mg-v2-compliance-dashboard__metrics">
-          <div className="mg-v2-compliance-dashboard__metric">
-            <div className="mg-v2-compliance-dashboard__metric-label">{t('common:compliance.ComplianceDashboardCards.t_29ac7208')}</div>
-            <div
-              className={`mg-v2-compliance-dashboard__metric-value mg-v2-compliance-dashboard__metric-value--${levelMod}`}
-            >
-              {formatComplianceCount(overallStatus.overallScore, '점')}
-            </div>
-          </div>
-          <div className="mg-v2-compliance-dashboard__metric">
-            <div className="mg-v2-compliance-dashboard__metric-label">{t('common:compliance.ComplianceDashboardCards.t_b6f6192b')}</div>
-            <div
-              className={`mg-v2-compliance-dashboard__metric-value mg-v2-compliance-dashboard__metric-value--inline mg-v2-compliance-dashboard__metric-value--${levelMod}`}
-            >
-              <SafeText fallback="미평가">{overallStatus.complianceLevel}</SafeText>
-            </div>
-          </div>
-          <div className="mg-v2-compliance-dashboard__metric">
-            <div className="mg-v2-compliance-dashboard__metric-label">{t('common:compliance.ComplianceDashboardCards.t_d735b02d')}</div>
-            <div className="mg-v2-compliance-dashboard__metric-value mg-v2-compliance-dashboard__metric-value--neutral">
-              {formatLedgerDateTime(overallStatus.lastUpdated)}
-            </div>
+      <div className="mg-v2-compliance-dashboard__metrics">
+        <div className="mg-v2-compliance-dashboard__metric">
+          <div className="mg-v2-compliance-dashboard__metric-label">{t('common:compliance.ComplianceDashboardCards.t_29ac7208')}</div>
+          <div
+            className={`mg-v2-compliance-dashboard__metric-value mg-v2-compliance-dashboard__metric-value--${levelMod}`}
+          >
+            {formatComplianceCount(overallStatus.overallScore, '점')}
           </div>
         </div>
-      </ContentCard>
-    </section>
+        <div className="mg-v2-compliance-dashboard__metric">
+          <div className="mg-v2-compliance-dashboard__metric-label">{t('common:compliance.ComplianceDashboardCards.t_b6f6192b')}</div>
+          <div
+            className={`mg-v2-compliance-dashboard__metric-value mg-v2-compliance-dashboard__metric-value--inline mg-v2-compliance-dashboard__metric-value--${levelMod}`}
+          >
+            <SafeText fallback="미평가">{overallStatus.complianceLevel}</SafeText>
+          </div>
+        </div>
+        <div className="mg-v2-compliance-dashboard__metric">
+          <div className="mg-v2-compliance-dashboard__metric-label">{t('common:compliance.ComplianceDashboardCards.t_d735b02d')}</div>
+          <div className="mg-v2-compliance-dashboard__metric-value mg-v2-compliance-dashboard__metric-value--neutral">
+            {formatLedgerDateTime(overallStatus.lastUpdated)}
+          </div>
+        </div>
+      </div>
+    </SettingsSectionPanel>
   );
 }
 
@@ -92,35 +86,35 @@ export function ProcessingCard({ processingStatus }) {
     return null;
   }
   return (
-    <article className="mg-v2-compliance-dashboard__cell">
-      <ContentCard className="mg-v2-compliance-dashboard__card">
-        <h3 className="mg-v2-compliance-dashboard__card-title">
-          <span>{t('common:compliance.ComplianceDashboardCards.t_857f68b1')}</span>
-        </h3>
-        <div className="mg-v2-compliance-dashboard__card-body">
-          <div className="mg-v2-compliance-dashboard__row">
-            <span className="mg-v2-compliance-dashboard__label">{t('common:compliance.ComplianceDashboardCards.t_087f0ee4')}</span>
-            <span className="mg-v2-compliance-dashboard__value">
-              {toDisplayString(processingStatus.totalCount ?? 0)}건
-            </span>
-          </div>
-          <div className="mg-v2-compliance-dashboard__row mg-v2-compliance-dashboard__row--block">
-            <span className="mg-v2-compliance-dashboard__label">{t('common:compliance.ComplianceDashboardCards.t_2b112411')}</span>
-            <div className="mg-v2-compliance-dashboard__subgrid">
-              {processingStatus.dataTypeStats &&
-                Object.entries(processingStatus.dataTypeStats).map(([type, count]) => (
-                  <div key={type} className="mg-v2-compliance-dashboard__subrow">
-                    <span className="mg-v2-compliance-dashboard__muted">{toDisplayString(type)}:</span>
-                    <span className="mg-v2-compliance-dashboard__value">
-                      {toDisplayString(count)}건
-                    </span>
-                  </div>
-                ))}
-            </div>
+    <SettingsSectionPanel
+      className="mg-v2-compliance-dashboard__cell"
+      title={t('common:compliance.ComplianceDashboardCards.t_857f68b1')}
+      headingLevel={3}
+      body="form"
+    >
+      <div className="mg-v2-compliance-dashboard__card-body">
+        <div className="mg-v2-compliance-dashboard__row">
+          <span className="mg-v2-compliance-dashboard__label">{t('common:compliance.ComplianceDashboardCards.t_087f0ee4')}</span>
+          <span className="mg-v2-compliance-dashboard__value">
+            {toDisplayString(processingStatus.totalCount ?? 0)}건
+          </span>
+        </div>
+        <div className="mg-v2-compliance-dashboard__row mg-v2-compliance-dashboard__row--block">
+          <span className="mg-v2-compliance-dashboard__label">{t('common:compliance.ComplianceDashboardCards.t_2b112411')}</span>
+          <div className="mg-v2-compliance-dashboard__subgrid">
+            {processingStatus.dataTypeStats &&
+              Object.entries(processingStatus.dataTypeStats).map(([type, count]) => (
+                <div key={type} className="mg-v2-compliance-dashboard__subrow">
+                  <span className="mg-v2-compliance-dashboard__muted">{toDisplayString(type)}:</span>
+                  <span className="mg-v2-compliance-dashboard__value">
+                    {toDisplayString(count)}건
+                  </span>
+                </div>
+              ))}
           </div>
         </div>
-      </ContentCard>
-    </article>
+      </div>
+    </SettingsSectionPanel>
   );
 }
 
@@ -130,41 +124,41 @@ export function ImpactCard({ impactAssessment }) {
     return null;
   }
   return (
-    <article className="mg-v2-compliance-dashboard__cell">
-      <ContentCard className="mg-v2-compliance-dashboard__card">
-        <h3 className="mg-v2-compliance-dashboard__card-title">
-          <span>{t('common:compliance.ComplianceDashboardCards.t_c1f0c59c')}</span>
-        </h3>
-        <div className="mg-v2-compliance-dashboard__card-body">
-          <div className="mg-v2-compliance-dashboard__row">
-            <span className="mg-v2-compliance-dashboard__label">{t('common:compliance.ComplianceDashboardCards.t_ff2e0b95')}</span>
-            <span className="mg-v2-compliance-dashboard__value mg-v2-compliance-dashboard__value--risk">
-              <SafeText fallback="미평가">
-                {impactAssessment.overallAssessment?.overallRiskLevel}
-              </SafeText>
-            </span>
-          </div>
-          <div className="mg-v2-compliance-dashboard__row">
-            <span className="mg-v2-compliance-dashboard__label">{t('common:compliance.ComplianceDashboardCards.t_4ac79a4b')}</span>
-            <span className="mg-v2-compliance-dashboard__value">
-              <SafeText fallback="미평가">
-                {impactAssessment.overallAssessment?.complianceStatus}
-              </SafeText>
-            </span>
-          </div>
-          <div className="mg-v2-compliance-dashboard__row mg-v2-compliance-dashboard__row--block">
-            <span className="mg-v2-compliance-dashboard__label">{t('common:compliance.ComplianceDashboardCards.t_a6f23a87')}</span>
-            <div className="mg-v2-compliance-dashboard__list">
-              {impactAssessment.overallAssessment?.improvementAreas?.map((area) => (
-                <div key={area} className="mg-v2-compliance-dashboard__list-item">
-                  <SafeText>{area}</SafeText>
-                </div>
-              ))}
-            </div>
+    <SettingsSectionPanel
+      className="mg-v2-compliance-dashboard__cell"
+      title={t('common:compliance.ComplianceDashboardCards.t_c1f0c59c')}
+      headingLevel={3}
+      body="form"
+    >
+      <div className="mg-v2-compliance-dashboard__card-body">
+        <div className="mg-v2-compliance-dashboard__row">
+          <span className="mg-v2-compliance-dashboard__label">{t('common:compliance.ComplianceDashboardCards.t_ff2e0b95')}</span>
+          <span className="mg-v2-compliance-dashboard__value mg-v2-compliance-dashboard__value--risk">
+            <SafeText fallback="미평가">
+              {impactAssessment.overallAssessment?.overallRiskLevel}
+            </SafeText>
+          </span>
+        </div>
+        <div className="mg-v2-compliance-dashboard__row">
+          <span className="mg-v2-compliance-dashboard__label">{t('common:compliance.ComplianceDashboardCards.t_4ac79a4b')}</span>
+          <span className="mg-v2-compliance-dashboard__value">
+            <SafeText fallback="미평가">
+              {impactAssessment.overallAssessment?.complianceStatus}
+            </SafeText>
+          </span>
+        </div>
+        <div className="mg-v2-compliance-dashboard__row mg-v2-compliance-dashboard__row--block">
+          <span className="mg-v2-compliance-dashboard__label">{t('common:compliance.ComplianceDashboardCards.t_a6f23a87')}</span>
+          <div className="mg-v2-compliance-dashboard__list">
+            {impactAssessment.overallAssessment?.improvementAreas?.map((area) => (
+              <div key={area} className="mg-v2-compliance-dashboard__list-item">
+                <SafeText>{area}</SafeText>
+              </div>
+            ))}
           </div>
         </div>
-      </ContentCard>
-    </article>
+      </div>
+    </SettingsSectionPanel>
   );
 }
 
@@ -174,43 +168,43 @@ export function BreachCard({ breachResponse }) {
     return null;
   }
   return (
-    <article className="mg-v2-compliance-dashboard__cell">
-      <ContentCard className="mg-v2-compliance-dashboard__card">
-        <h3 className="mg-v2-compliance-dashboard__card-title">
-          <span>{t('common:compliance.ComplianceDashboardCards.t_d7e04c00')}</span>
-        </h3>
-        <div className="mg-v2-compliance-dashboard__card-body">
-          <div className="mg-v2-compliance-dashboard__row">
-            <span className="mg-v2-compliance-dashboard__label">{t('common:compliance.ComplianceDashboardCards.t_71083ed2')}</span>
-            <span className="mg-v2-compliance-dashboard__value">
-              <SafeText fallback="N/A">{breachResponse.responseTeam?.teamLeader}</SafeText>
-            </span>
-          </div>
-          <div className="mg-v2-compliance-dashboard__row">
-            <span className="mg-v2-compliance-dashboard__label">{t('common:compliance.ComplianceDashboardCards.t_65c0f5a2')}</span>
-            <span className="mg-v2-compliance-dashboard__value">
-              <SafeText fallback="N/A">
-                {breachResponse.responseTeam?.contactInfo?.emergency}
-              </SafeText>
-            </span>
-          </div>
-          <div className="mg-v2-compliance-dashboard__row mg-v2-compliance-dashboard__row--block">
-            <span className="mg-v2-compliance-dashboard__label">{t('common:compliance.ComplianceDashboardCards.t_7df26b5b')}</span>
-            <div className="mg-v2-compliance-dashboard__list">
-              {breachResponse.responseProcedures &&
-                Object.entries(breachResponse.responseProcedures).map(([step, procedure]) => (
-                  <div key={step} className="mg-v2-compliance-dashboard__list-item">
-                    <strong>
-                      <SafeText>{procedure.title}</SafeText>:
-                    </strong>{' '}
-                    <SafeText>{procedure.timeframe}</SafeText>
-                  </div>
-                ))}
-            </div>
+    <SettingsSectionPanel
+      className="mg-v2-compliance-dashboard__cell"
+      title={t('common:compliance.ComplianceDashboardCards.t_d7e04c00')}
+      headingLevel={3}
+      body="form"
+    >
+      <div className="mg-v2-compliance-dashboard__card-body">
+        <div className="mg-v2-compliance-dashboard__row">
+          <span className="mg-v2-compliance-dashboard__label">{t('common:compliance.ComplianceDashboardCards.t_71083ed2')}</span>
+          <span className="mg-v2-compliance-dashboard__value">
+            <SafeText fallback="N/A">{breachResponse.responseTeam?.teamLeader}</SafeText>
+          </span>
+        </div>
+        <div className="mg-v2-compliance-dashboard__row">
+          <span className="mg-v2-compliance-dashboard__label">{t('common:compliance.ComplianceDashboardCards.t_65c0f5a2')}</span>
+          <span className="mg-v2-compliance-dashboard__value">
+            <SafeText fallback="N/A">
+              {breachResponse.responseTeam?.contactInfo?.emergency}
+            </SafeText>
+          </span>
+        </div>
+        <div className="mg-v2-compliance-dashboard__row mg-v2-compliance-dashboard__row--block">
+          <span className="mg-v2-compliance-dashboard__label">{t('common:compliance.ComplianceDashboardCards.t_7df26b5b')}</span>
+          <div className="mg-v2-compliance-dashboard__list">
+            {breachResponse.responseProcedures &&
+              Object.entries(breachResponse.responseProcedures).map(([step, procedure]) => (
+                <div key={step} className="mg-v2-compliance-dashboard__list-item">
+                  <strong>
+                    <SafeText>{procedure.title}</SafeText>:
+                  </strong>{' '}
+                  <SafeText>{procedure.timeframe}</SafeText>
+                </div>
+              ))}
           </div>
         </div>
-      </ContentCard>
-    </article>
+      </div>
+    </SettingsSectionPanel>
   );
 }
 
@@ -220,43 +214,43 @@ export function EducationCard({ educationStatus }) {
     return null;
   }
   return (
-    <article className="mg-v2-compliance-dashboard__cell">
-      <ContentCard className="mg-v2-compliance-dashboard__card">
-        <h3 className="mg-v2-compliance-dashboard__card-title">
-          <span>{t('common:compliance.ComplianceDashboardCards.t_e9f98a96')}</span>
-        </h3>
-        <div className="mg-v2-compliance-dashboard__card-body">
-          <div className="mg-v2-compliance-dashboard__row">
-            <span className="mg-v2-compliance-dashboard__label">{t('common:compliance.ComplianceDashboardCards.t_ffd1b583')}</span>
-            <span className="mg-v2-compliance-dashboard__value">
-              <SafeText>
-                {educationStatus.completionStatus?.completionRate}
-              </SafeText>
-            </span>
-          </div>
-          <div className="mg-v2-compliance-dashboard__row">
-            <span className="mg-v2-compliance-dashboard__label">{t('common:compliance.ComplianceDashboardCards.t_467bd916')}</span>
-            <span className="mg-v2-compliance-dashboard__value">
-              {formatComplianceCount(educationStatus.completionStatus?.totalEmployees, '명')}
-            </span>
-          </div>
-          <div className="mg-v2-compliance-dashboard__row mg-v2-compliance-dashboard__row--block">
-            <span className="mg-v2-compliance-dashboard__label">{t('common:compliance.ComplianceDashboardCards.t_5fa20d46')}</span>
-            <div className="mg-v2-compliance-dashboard__list">
-              {educationStatus.educationPrograms &&
-                Object.entries(educationStatus.educationPrograms).map(([type, program]) => (
-                  <div key={type} className="mg-v2-compliance-dashboard__list-item">
-                    <strong>
-                      <SafeText>{program.title}</SafeText>:
-                    </strong>{' '}
-                    <SafeText>{program.frequency}</SafeText>
-                  </div>
-                ))}
-            </div>
+    <SettingsSectionPanel
+      className="mg-v2-compliance-dashboard__cell"
+      title={t('common:compliance.ComplianceDashboardCards.t_e9f98a96')}
+      headingLevel={3}
+      body="form"
+    >
+      <div className="mg-v2-compliance-dashboard__card-body">
+        <div className="mg-v2-compliance-dashboard__row">
+          <span className="mg-v2-compliance-dashboard__label">{t('common:compliance.ComplianceDashboardCards.t_ffd1b583')}</span>
+          <span className="mg-v2-compliance-dashboard__value">
+            <SafeText>
+              {educationStatus.completionStatus?.completionRate}
+            </SafeText>
+          </span>
+        </div>
+        <div className="mg-v2-compliance-dashboard__row">
+          <span className="mg-v2-compliance-dashboard__label">{t('common:compliance.ComplianceDashboardCards.t_467bd916')}</span>
+          <span className="mg-v2-compliance-dashboard__value">
+            {formatComplianceCount(educationStatus.completionStatus?.totalEmployees, '명')}
+          </span>
+        </div>
+        <div className="mg-v2-compliance-dashboard__row mg-v2-compliance-dashboard__row--block">
+          <span className="mg-v2-compliance-dashboard__label">{t('common:compliance.ComplianceDashboardCards.t_5fa20d46')}</span>
+          <div className="mg-v2-compliance-dashboard__list">
+            {educationStatus.educationPrograms &&
+              Object.entries(educationStatus.educationPrograms).map(([type, program]) => (
+                <div key={type} className="mg-v2-compliance-dashboard__list-item">
+                  <strong>
+                    <SafeText>{program.title}</SafeText>:
+                  </strong>{' '}
+                  <SafeText>{program.frequency}</SafeText>
+                </div>
+              ))}
           </div>
         </div>
-      </ContentCard>
-    </article>
+      </div>
+    </SettingsSectionPanel>
   );
 }
 
@@ -266,43 +260,43 @@ export function PolicyCard({ policyStatus }) {
     return null;
   }
   return (
-    <article className="mg-v2-compliance-dashboard__cell">
-      <ContentCard className="mg-v2-compliance-dashboard__card">
-        <h3 className="mg-v2-compliance-dashboard__card-title">
-          <span>{t('common:compliance.ComplianceDashboardCards.t_95ab9a6b')}</span>
-        </h3>
-        <div className="mg-v2-compliance-dashboard__card-body">
-          <div className="mg-v2-compliance-dashboard__row">
-            <span className="mg-v2-compliance-dashboard__label">{t('common:compliance.ComplianceDashboardCards.t_ea1ba45c')}</span>
-            <span className="mg-v2-compliance-dashboard__value">
-              <SafeText>
-                {policyStatus.policyComponents?.basicInfo?.companyName}
-              </SafeText>
-            </span>
-          </div>
-          <div className="mg-v2-compliance-dashboard__row">
-            <span className="mg-v2-compliance-dashboard__label">{t('common:compliance.ComplianceDashboardCards.t_5823eb2a')}</span>
-            <span className="mg-v2-compliance-dashboard__value">
-              <SafeText>
-                {policyStatus.policyComponents?.basicInfo?.privacyOfficer}
-              </SafeText>
-            </span>
-          </div>
-          <div className="mg-v2-compliance-dashboard__row">
-            <span className="mg-v2-compliance-dashboard__label">{t('common:compliance.ComplianceDashboardCards.t_88107ea4')}</span>
-            <span className="mg-v2-compliance-dashboard__value">
-              <SafeText>{toDateStr(policyStatus.policyComponents?.basicInfo?.lastUpdated)}</SafeText>
-            </span>
-          </div>
-          <div className="mg-v2-compliance-dashboard__row">
-            <span className="mg-v2-compliance-dashboard__label">{t('common:compliance.ComplianceDashboardCards.t_99ac659e')}</span>
-            <span className="mg-v2-compliance-dashboard__value">
-              <SafeText>{toDateStr(policyStatus.nextReviewDate)}</SafeText>
-            </span>
-          </div>
+    <SettingsSectionPanel
+      className="mg-v2-compliance-dashboard__cell"
+      title={t('common:compliance.ComplianceDashboardCards.t_95ab9a6b')}
+      headingLevel={3}
+      body="form"
+    >
+      <div className="mg-v2-compliance-dashboard__card-body">
+        <div className="mg-v2-compliance-dashboard__row">
+          <span className="mg-v2-compliance-dashboard__label">{t('common:compliance.ComplianceDashboardCards.t_ea1ba45c')}</span>
+          <span className="mg-v2-compliance-dashboard__value">
+            <SafeText>
+              {policyStatus.policyComponents?.basicInfo?.companyName}
+            </SafeText>
+          </span>
         </div>
-      </ContentCard>
-    </article>
+        <div className="mg-v2-compliance-dashboard__row">
+          <span className="mg-v2-compliance-dashboard__label">{t('common:compliance.ComplianceDashboardCards.t_5823eb2a')}</span>
+          <span className="mg-v2-compliance-dashboard__value">
+            <SafeText>
+              {policyStatus.policyComponents?.basicInfo?.privacyOfficer}
+            </SafeText>
+          </span>
+        </div>
+        <div className="mg-v2-compliance-dashboard__row">
+          <span className="mg-v2-compliance-dashboard__label">{t('common:compliance.ComplianceDashboardCards.t_88107ea4')}</span>
+          <span className="mg-v2-compliance-dashboard__value">
+            <SafeText>{toDateStr(policyStatus.policyComponents?.basicInfo?.lastUpdated)}</SafeText>
+          </span>
+        </div>
+        <div className="mg-v2-compliance-dashboard__row">
+          <span className="mg-v2-compliance-dashboard__label">{t('common:compliance.ComplianceDashboardCards.t_99ac659e')}</span>
+          <span className="mg-v2-compliance-dashboard__value">
+            <SafeText>{toDateStr(policyStatus.nextReviewDate)}</SafeText>
+          </span>
+        </div>
+      </div>
+    </SettingsSectionPanel>
   );
 }
 
@@ -312,81 +306,78 @@ export function DestructionCard({ destructionStatus }) {
     return null;
   }
   return (
-    <article className="mg-v2-compliance-dashboard__cell">
-      <ContentCard className="mg-v2-compliance-dashboard__card">
-        <h3 className="mg-v2-compliance-dashboard__card-title">
-          <span>{t('common:compliance.ComplianceDashboardCards.t_aa3f6e4d')}</span>
-        </h3>
-        <div className="mg-v2-compliance-dashboard__card-body">
-          <div className="mg-v2-compliance-dashboard__row">
-            <span className="mg-v2-compliance-dashboard__label">{t('common:compliance.ComplianceDashboardCards.t_87b2fe52')}</span>
-            <span className="mg-v2-compliance-dashboard__value">
-              {toDisplayString(destructionStatus.totalDestroyed ?? 0)}건
-            </span>
-          </div>
-          <div className="mg-v2-compliance-dashboard__row">
-            <span className="mg-v2-compliance-dashboard__label">{t('common:compliance.ComplianceDashboardCards.t_8d4540b5')}</span>
-            <span className="mg-v2-compliance-dashboard__value">
-              {formatLedgerDateTime(destructionStatus.lastDestruction)}
-            </span>
-          </div>
-          <div className="mg-v2-compliance-dashboard__row mg-v2-compliance-dashboard__row--block">
-            <span className="mg-v2-compliance-dashboard__label">{t('common:compliance.ComplianceDashboardCards.t_c0c358b3')}</span>
-            <div className="mg-v2-compliance-dashboard__subgrid">
-              {destructionStatus.destructionStats &&
-                Object.entries(destructionStatus.destructionStats).map(([type, count]) => (
-                  <div key={type} className="mg-v2-compliance-dashboard__subrow">
-                    <span className="mg-v2-compliance-dashboard__muted">{toDisplayString(type)}:</span>
-                    <span className="mg-v2-compliance-dashboard__value">
-                      {toDisplayString(count)}건
-                    </span>
-                  </div>
-                ))}
-            </div>
+    <SettingsSectionPanel
+      className="mg-v2-compliance-dashboard__cell"
+      title={t('common:compliance.ComplianceDashboardCards.t_aa3f6e4d')}
+      headingLevel={3}
+      body="form"
+    >
+      <div className="mg-v2-compliance-dashboard__card-body">
+        <div className="mg-v2-compliance-dashboard__row">
+          <span className="mg-v2-compliance-dashboard__label">{t('common:compliance.ComplianceDashboardCards.t_87b2fe52')}</span>
+          <span className="mg-v2-compliance-dashboard__value">
+            {toDisplayString(destructionStatus.totalDestroyed ?? 0)}건
+          </span>
+        </div>
+        <div className="mg-v2-compliance-dashboard__row">
+          <span className="mg-v2-compliance-dashboard__label">{t('common:compliance.ComplianceDashboardCards.t_8d4540b5')}</span>
+          <span className="mg-v2-compliance-dashboard__value">
+            {formatLedgerDateTime(destructionStatus.lastDestruction)}
+          </span>
+        </div>
+        <div className="mg-v2-compliance-dashboard__row mg-v2-compliance-dashboard__row--block">
+          <span className="mg-v2-compliance-dashboard__label">{t('common:compliance.ComplianceDashboardCards.t_c0c358b3')}</span>
+          <div className="mg-v2-compliance-dashboard__subgrid">
+            {destructionStatus.destructionStats &&
+              Object.entries(destructionStatus.destructionStats).map(([type, count]) => (
+                <div key={type} className="mg-v2-compliance-dashboard__subrow">
+                  <span className="mg-v2-compliance-dashboard__muted">{toDisplayString(type)}:</span>
+                  <span className="mg-v2-compliance-dashboard__value">
+                    {toDisplayString(count)}건
+                  </span>
+                </div>
+              ))}
           </div>
         </div>
-      </ContentCard>
-    </article>
+      </div>
+    </SettingsSectionPanel>
   );
 }
 
 export function ComplianceQuickActions({ onOpenImpact, onOpenDestruction, onOpenEduPlan }) {
   const { t } = useTranslation();
   return (
-    <section
+    <SettingsSectionPanel
       className="mg-v2-compliance-dashboard__actions"
-      aria-label={t('common:compliance.ComplianceDashboardCards.t_b5305340')}
+      title={t('common:compliance.ComplianceDashboardCards.t_b5305340')}
+      body="plain"
     >
-      <MGButton
-        type="button"
-        variant="primary"
-        size="small"
-        className={buildErpMgButtonClassName({ variant: 'primary', size: 'sm', loading: false })}
-        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-        onClick={onOpenImpact}
-      >
-        {t('common:compliance.ComplianceDashboardCards.t_86fdae04')}
-      </MGButton>
-      <MGButton
-        type="button"
-        variant="secondary"
-        size="small"
-        className={buildErpMgButtonClassName({ variant: 'secondary', size: 'sm', loading: false })}
-        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-        onClick={onOpenDestruction}
-      >
-        {t('common:compliance.ComplianceDashboardCards.t_a7aed244')}
-      </MGButton>
-      <MGButton
-        type="button"
-        variant="outline"
-        size="small"
-        className={buildErpMgButtonClassName({ variant: 'outline', size: 'sm', loading: false })}
-        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-        onClick={onOpenEduPlan}
-      >
-        {t('common:compliance.ComplianceDashboardCards.t_419560bd')}
-      </MGButton>
-    </section>
+      <div className="mg-v2-settings-actions mg-v2-compliance-dashboard__actions-row">
+        <SettingsButton
+          type="button"
+          variant="primary"
+          onClick={onOpenImpact}
+          preventDoubleClick
+        >
+          {t('common:compliance.ComplianceDashboardCards.t_86fdae04')}
+        </SettingsButton>
+        <SettingsButton
+          type="button"
+          variant="secondary"
+          onClick={onOpenDestruction}
+          preventDoubleClick
+        >
+          {t('common:compliance.ComplianceDashboardCards.t_a7aed244')}
+        </SettingsButton>
+        <SettingsButton
+          type="button"
+          variant="outline"
+          onClick={onOpenEduPlan}
+          preventDoubleClick
+        >
+          {t('common:compliance.ComplianceDashboardCards.t_419560bd')}
+        </SettingsButton>
+      </div>
+    </SettingsSectionPanel>
   );
 }

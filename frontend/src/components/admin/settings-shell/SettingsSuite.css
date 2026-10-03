@@ -1,0 +1,311 @@
+/**
+ * Settings suite — 설정 화면 공통 크롬 (SalaryManagement Clinic-OS 계약)
+ * 색·반경·높이는 design-v2 토큰만 사용한다.
+ */
+
+/* ——— Shell body ——— */
+.mg-v2-settings-shell__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-v2-space-4);
+  width: 100%;
+  min-width: 0;
+}
+
+/* ——— Quiet header (SalaryQuietHeader twin) ——— */
+.mg-v2-settings-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mg-v2-space-3);
+  width: 100%;
+}
+
+.mg-v2-settings-header__title {
+  margin: 0;
+  flex: 0 1 auto;
+  min-width: 0;
+  font-size: var(--mg-v2-font-size-h1);
+  font-weight: 700;
+  line-height: var(--mg-v2-font-line-height-subheading);
+  color: var(--mg-v2-color-text-primary);
+}
+
+.mg-v2-settings-header__controls {
+  display: flex;
+  flex: 0 0 auto;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: var(--mg-v2-space-5);
+}
+
+.mg-v2-settings-header__links {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--mg-v2-space-2);
+  margin-inline-start: var(--mg-v2-space-1);
+  padding-inline-start: var(--mg-v2-space-4);
+  border-inline-start: var(--mg-v2-border-width-thin) solid var(--mg-v2-color-neutral-300);
+}
+
+.mg-v2-settings-header__controls .mg-v2-button {
+  flex-shrink: 0;
+  width: auto;
+}
+
+/* ——— Section panel ——— */
+.mg-v2-settings-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-v2-space-4);
+  width: 100%;
+  min-width: 0;
+  padding: var(--mg-v2-space-5);
+  background: var(--mg-v2-color-neutral-100);
+  border: var(--mg-v2-border-width-thin) solid var(--mg-v2-color-neutral-300);
+  border-radius: var(--mg-v2-radius-panel);
+  box-shadow: none;
+  box-sizing: border-box;
+}
+
+.mg-v2-settings-panel__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--mg-v2-space-3);
+}
+
+.mg-v2-settings-panel__heading {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-v2-space-1);
+  min-width: 0;
+}
+
+.mg-v2-settings-panel__title {
+  margin: 0;
+  font-size: var(--mg-v2-font-size-h2);
+  font-weight: 700;
+  line-height: var(--mg-v2-font-line-height-heading);
+  color: var(--mg-v2-color-text-primary);
+}
+
+.mg-v2-settings-panel__description {
+  margin: 0;
+  font-size: var(--mg-v2-font-size-body-md);
+  line-height: var(--mg-v2-font-line-height-body);
+  color: var(--mg-v2-color-text-secondary);
+}
+
+.mg-v2-settings-panel__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--mg-v2-space-2);
+}
+
+.mg-v2-settings-panel__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-v2-space-4);
+  min-width: 0;
+}
+
+.mg-v2-settings-panel__body--form {
+  padding: var(--mg-v2-space-5);
+  background: var(--mg-v2-color-surface-card);
+  border-radius: var(--mg-v2-radius-lg);
+}
+
+.mg-v2-settings-panel .mg-v2-settings-panel {
+  padding: var(--mg-v2-space-4);
+}
+
+/* ——— Summary strip (SalarySummaryStrip twin) ——— */
+.mg-v2-settings-summary {
+  display: grid;
+  grid-template-columns: repeat(
+    auto-fit,
+    minmax(min(100%, calc(var(--mg-v2-space-16) * 3)), 1fr)
+  );
+  gap: var(--mg-v2-space-4);
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+  padding: var(--mg-v2-space-4) var(--mg-v2-space-5);
+  background: var(--mg-v2-color-neutral-100);
+  border-radius: var(--mg-v2-radius-md);
+  box-sizing: border-box;
+}
+
+.mg-v2-settings-summary__cell {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-v2-space-1);
+  min-width: 0;
+  padding-inline: var(--mg-v2-space-3);
+}
+
+.mg-v2-settings-summary__cell + .mg-v2-settings-summary__cell {
+  border-inline-start: var(--mg-v2-border-width-thin) solid var(--mg-v2-color-neutral-300);
+}
+
+.mg-v2-settings-summary__label {
+  margin: 0;
+  font-size: var(--mg-v2-font-size-body-md);
+  font-weight: 600;
+  color: var(--mg-v2-color-text-secondary);
+}
+
+.mg-v2-settings-summary__value {
+  margin: 0;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-size: var(--mg-v2-font-size-h2);
+  font-weight: 700;
+  color: var(--mg-v2-color-text-primary);
+}
+
+/* ——— Form layout helpers ——— */
+.mg-v2-settings-form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, calc(var(--mg-v2-space-16) * 4)), 1fr));
+  gap: var(--mg-v2-space-4);
+}
+
+.mg-v2-settings-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-v2-space-2);
+  min-width: 0;
+}
+
+.mg-v2-settings-field__hint {
+  margin: 0;
+  font-size: var(--mg-v2-font-size-caption);
+  color: var(--mg-v2-color-text-tertiary);
+}
+
+.mg-v2-settings-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--mg-v2-space-2);
+}
+
+.mg-v2-settings-muted {
+  margin: 0;
+  font-size: var(--mg-v2-font-size-body-md);
+  color: var(--mg-v2-color-text-secondary);
+}
+
+/* ——— Input contract: 높이 토큰 1개 · 테두리 토큰 1개 ——— */
+.mg-v2-settings-shell .mg-v2-form-label {
+  display: block;
+  margin: 0;
+  font-size: var(--mg-v2-font-size-body-md);
+  font-weight: 600;
+  color: var(--mg-v2-color-text-primary);
+}
+
+.mg-v2-settings-shell .mg-v2-form-input,
+.mg-v2-settings-shell .mg-v2-select,
+.mg-v2-settings-shell .mg-v2-form-textarea {
+  width: 100%;
+  min-width: 0;
+  height: var(--mg-v2-component-height-md);
+  min-height: var(--mg-v2-component-height-md);
+  padding: 0 var(--mg-v2-space-3);
+  font-family: inherit;
+  font-size: var(--mg-v2-font-size-body-md);
+  color: var(--mg-v2-color-text-primary);
+  background: var(--mg-v2-color-surface-card);
+  border: var(--mg-v2-border-width-thin) solid var(--mg-v2-color-border-default);
+  border-radius: var(--mg-v2-radius-lg);
+  box-shadow: none;
+  box-sizing: border-box;
+}
+
+.mg-v2-settings-shell .mg-v2-form-textarea {
+  height: auto;
+  min-height: calc(var(--mg-v2-component-height-md) * 2);
+  padding: var(--mg-v2-space-2) var(--mg-v2-space-3);
+  resize: vertical;
+}
+
+.mg-v2-settings-shell .mg-v2-form-input:focus,
+.mg-v2-settings-shell .mg-v2-select:focus,
+.mg-v2-settings-shell .mg-v2-form-textarea:focus {
+  outline: var(--mg-v2-border-width-thin) solid var(--mg-v2-color-primary-main);
+  outline-offset: 0;
+  border-color: var(--mg-v2-color-primary-main);
+}
+
+.mg-v2-settings-shell .mg-v2-form-input:disabled,
+.mg-v2-settings-shell .mg-v2-select:disabled,
+.mg-v2-settings-shell .mg-v2-form-textarea:disabled {
+  color: var(--mg-v2-color-text-disabled);
+  background: var(--mg-v2-color-surface-disabled);
+  cursor: not-allowed;
+}
+
+/* ——— Button contract: small h32 · r8 · primary 토큰 (모달 포털 안의 SettingsButton 포함) ——— */
+.mg-v2-settings-shell .mg-v2-button.mg-v2-button-sm,
+.mg-v2-button.mg-v2-settings-button.mg-v2-button-sm {
+  height: var(--mg-v2-component-height-sm);
+  min-height: var(--mg-v2-component-height-sm);
+  padding-block: 0;
+  padding-inline: var(--mg-v2-space-3);
+  border-radius: var(--mg-v2-radius-lg);
+  font-size: var(--mg-v2-font-size-body-md);
+  box-sizing: border-box;
+}
+
+.mg-v2-settings-shell .mg-v2-button.mg-v2-button-primary,
+.mg-v2-button.mg-v2-settings-button.mg-v2-button-primary {
+  color: var(--mg-v2-color-text-inverse);
+  background: var(--mg-v2-color-primary-main);
+  border-color: var(--mg-v2-color-primary-main);
+  box-shadow: none;
+}
+
+.mg-v2-settings-shell .mg-v2-button.mg-v2-button-primary:hover:not(:disabled),
+.mg-v2-button.mg-v2-settings-button.mg-v2-button-primary:hover:not(:disabled) {
+  background: var(--mg-v2-color-primary-hover);
+  border-color: var(--mg-v2-color-primary-hover);
+  transform: none;
+  box-shadow: none;
+}
+
+@media (max-width: 767px) {
+  .mg-v2-settings-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .mg-v2-settings-header__controls {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .mg-v2-settings-summary {
+    grid-template-columns: 1fr;
+    gap: var(--mg-v2-space-3);
+    padding: var(--mg-v2-space-4);
+  }
+
+  .mg-v2-settings-summary__cell + .mg-v2-settings-summary__cell {
+    border-inline-start: none;
+    border-block-start: var(--mg-v2-border-width-thin) solid var(--mg-v2-color-neutral-300);
+    padding-block-start: var(--mg-v2-space-3);
+  }
+
+  .mg-v2-settings-panel,
+  .mg-v2-settings-panel__body--form {
+    padding: var(--mg-v2-space-4);
+  }
+}

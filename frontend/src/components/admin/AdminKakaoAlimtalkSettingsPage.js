@@ -8,9 +8,7 @@
 import React, { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
-import { ContentArea, ContentHeader, ContentSection } from '../dashboard-v2/content';
-import MGButton from '../common/MGButton';
-import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
+import { SettingsButton, SettingsPageShell, SettingsSectionPanel } from './settings-shell';
 import SafeErrorDisplay from '../common/SafeErrorDisplay';
 import SettingSwitchRow from '../common/molecules/SettingSwitchRow';
 import StandardizedApi from '../../utils/standardizedApi';
@@ -23,7 +21,6 @@ import { isApiMutationSuccess, resolveApiObjectData } from '../../utils/apiRespo
 import { toDisplayString } from '../../utils/safeDisplay';
 import { runResourceLoad, softRefresh } from '../../utils/softRefresh';
 import '../../styles/unified-design-tokens.css';
-import './AdminDashboard/AdminDashboardB0KlA.css';
 import './AdminKakaoAlimtalkSettingsPage.css';
 import { useTranslation } from 'react-i18next';
 
@@ -271,51 +268,57 @@ const AdminKakaoAlimtalkSettingsPage = () => {
       loading={loading && !tenantIdLine}
       loadingText={t('settings:kakao.loading')}
     >
-      <div className="mg-v2-ad-b0kla mg-v2-kakao-alimtalk-settings" data-testid="admin-kakao-alimtalk-settings">
-        <ContentArea>
-          <ContentHeader
-            titleId={pageTitleId}
-            title={t('settings:kakao.title')}
-            subtitle={t('settings:kakao.subtitle')}
-          />
-          <form className="mg-kakao-alimtalk__form" onSubmit={handleSubmit} noValidate>
-            <SafeErrorDisplay error={loadError} />
-            <SafeErrorDisplay error={saveError} />
+      <SettingsPageShell
+        title={t('settings:kakao.title')}
+        titleId={pageTitleId}
+        className="mg-v2-kakao-alimtalk-settings"
+      >
+        <form
+          className="mg-kakao-alimtalk__form"
+          onSubmit={handleSubmit}
+          noValidate
+          data-testid="admin-kakao-alimtalk-settings"
+        >
+          <SafeErrorDisplay error={loadError} />
+          <SafeErrorDisplay error={saveError} />
 
-            <ContentSection title={t('settings:kakao.section.info')}>
-              <p className="mg-kakao-alimtalk__hint">
-                {t('settings:kakao.infoHint')}
+          <SettingsSectionPanel title={t('settings:kakao.section.info')} body="plain">
+            <p className="mg-v2-settings-muted">
+              {t('settings:kakao.infoHint')}
+            </p>
+            {tenantIdLine ? (
+              <p className="mg-kakao-alimtalk__readonly-line">
+                {t('settings:kakao.tenantIdLabel')} {tenantIdLine}
               </p>
-              {tenantIdLine ? (
-                <p className="mg-kakao-alimtalk__readonly-line">
-                  {t('settings:kakao.tenantIdLabel')} {tenantIdLine}
-                </p>
-              ) : null}
-            </ContentSection>
+            ) : null}
+          </SettingsSectionPanel>
 
-            <ContentSection title={t('settings:kakao.section.enabled')}>
-              <SettingSwitchRow
-                id={toggleId}
-                label={t('settings:kakao.enabledLabel')}
-                hint={t('settings:kakao.toggleImmediateHint')}
-                statusLabel={form.alimtalkEnabled
-                  ? t('common:label.on')
-                  : t('common:label.off')}
-                checked={Boolean(form.alimtalkEnabled)}
-                onCheckedChange={onAlimtalkCheckedChange}
-                disabled={alimtalkDisabled || saving || !settingsLoaded}
-                isPending={alimtalkBusy}
-                ariaLabel={t('settings:kakao.enabledLabel')}
-              />
-            </ContentSection>
+          <SettingsSectionPanel title={t('settings:kakao.section.enabled')}>
+            <SettingSwitchRow
+              id={toggleId}
+              label={t('settings:kakao.enabledLabel')}
+              hint={t('settings:kakao.toggleImmediateHint')}
+              statusLabel={form.alimtalkEnabled
+                ? t('common:label.on')
+                : t('common:label.off')}
+              checked={Boolean(form.alimtalkEnabled)}
+              onCheckedChange={onAlimtalkCheckedChange}
+              disabled={alimtalkDisabled || saving || !settingsLoaded}
+              isPending={alimtalkBusy}
+              ariaLabel={t('settings:kakao.enabledLabel')}
+            />
+          </SettingsSectionPanel>
 
-            <ContentSection variant="card" title={t('settings:kakao.section.templates')}>
+          <SettingsSectionPanel title={t('settings:kakao.section.templates')}>
+            <div className="mg-v2-settings-form-grid">
               {TEMPLATE_FIELD_SPECS.map((spec) => (
-                <div key={spec.key} className="mg-kakao-alimtalk__field">
-                  <label htmlFor={`kakao-field-${spec.key}`}>{t(`settings:${spec.i18nKey}`, spec.fallback)}</label>
+                <div key={spec.key} className="mg-v2-settings-field">
+                  <label className="mg-v2-form-label" htmlFor={`kakao-field-${spec.key}`}>
+                    {t(`settings:${spec.i18nKey}`, spec.fallback)}
+                  </label>
                   <input
                     id={`kakao-field-${spec.key}`}
-                    className="mg-kakao-alimtalk__input"
+                    className="mg-v2-form-input"
                     type="text"
                     maxLength={TEMPLATE_MAX_LEN}
                     value={form[spec.key] || ''}
@@ -324,15 +327,19 @@ const AdminKakaoAlimtalkSettingsPage = () => {
                   />
                 </div>
               ))}
-            </ContentSection>
+            </div>
+          </SettingsSectionPanel>
 
-            <ContentSection title={t('settings:kakao.section.refs')}>
+          <SettingsSectionPanel title={t('settings:kakao.section.refs')}>
+            <div className="mg-v2-settings-form-grid">
               {REF_FIELD_SPECS.map((spec) => (
-                <div key={spec.key} className="mg-kakao-alimtalk__field">
-                  <label htmlFor={`kakao-ref-${spec.key}`}>{t(`settings:${spec.i18nKey}`, spec.fallback)}</label>
+                <div key={spec.key} className="mg-v2-settings-field">
+                  <label className="mg-v2-form-label" htmlFor={`kakao-ref-${spec.key}`}>
+                    {t(`settings:${spec.i18nKey}`, spec.fallback)}
+                  </label>
                   <input
                     id={`kakao-ref-${spec.key}`}
-                    className="mg-kakao-alimtalk__input"
+                    className="mg-v2-form-input"
                     type="text"
                     maxLength={REF_MAX_LEN}
                     value={form[spec.key] || ''}
@@ -341,30 +348,30 @@ const AdminKakaoAlimtalkSettingsPage = () => {
                   />
                 </div>
               ))}
-            </ContentSection>
-
-            <div className="mg-kakao-alimtalk__actions">
-              <MGButton
-                type="submit"
-                className={buildErpMgButtonClassName({ variant: 'primary' })}
-                disabled={saving || alimtalkBusy || !settingsLoaded}
-                loading={saving}
-                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-              >
-                {t('settings:kakao.action.saveTemplatesAndRefs')}
-              </MGButton>
-              <MGButton
-                type="button"
-                className={buildErpMgButtonClassName({ variant: 'outline' })}
-                disabled={saving || loading || alimtalkBusy}
-                onClick={() => softRefresh(loadSettings)}
-              >
-                {t('settings:kakao.reload')}
-              </MGButton>
             </div>
-          </form>
-        </ContentArea>
-      </div>
+          </SettingsSectionPanel>
+
+          <div className="mg-v2-settings-actions">
+            <SettingsButton
+              variant="ghost"
+              type="button"
+              preventDoubleClick
+              disabled={saving || loading || alimtalkBusy}
+              onClick={() => softRefresh(loadSettings)}
+            >
+              {t('settings:kakao.reload')}
+            </SettingsButton>
+            <SettingsButton
+              variant="primary"
+              type="submit"
+              disabled={saving || alimtalkBusy || !settingsLoaded}
+              loading={saving}
+            >
+              {t('settings:kakao.action.saveTemplatesAndRefs')}
+            </SettingsButton>
+          </div>
+        </form>
+      </SettingsPageShell>
       <ConfirmEnableModal />
     </AdminCommonLayout>
   );

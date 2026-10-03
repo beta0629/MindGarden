@@ -115,7 +115,8 @@ import AdminTenantComponentGate from './components/shop/templates/AdminTenantCom
 import { PLATFORM_COMPONENT_CODES } from './constants/tenantComponentApi';
 import {
   CLIENT_DASHBOARD_ROUTES,
-  CLIENT_LEGACY_ROUTE_REDIRECTS
+  CLIENT_LEGACY_ROUTE_REDIRECTS,
+  CLIENT_SETTINGS_REDIRECT_HASH
 } from './constants/clientDashboardRoutes';
 import { CLIENT_SHOP_ROUTES } from './constants/clientShopConstants';
 import ConsultantAvailabilityRenewal from './components/consultant/ConsultantAvailabilityRenewal';
@@ -127,7 +128,6 @@ import CommunityMenuRouteGuard from './components/community/CommunityMenuRouteGu
 import { MENU_PERMISSION_CODES } from './utils/menuAccessUtils';
 import ClientPaymentHistory from './components/client/ClientPaymentHistory';
 import HelpPage from './components/common/HelpPage';
-import ClientSettings from './components/client/ClientSettings';
 import WellnessNotificationList from './components/wellness/WellnessNotificationList';
 import WellnessNotificationDetail from './components/wellness/WellnessNotificationDetail';
 import WellnessManagement from './components/admin/WellnessManagement';
@@ -232,9 +232,9 @@ function QueryParamHandler({ children, onLoginSuccess }) {
 }
 
 /** CLN-01 — orphan 라우트 redirect 시 query string 보존 (#476 Statistics 패턴) */
-function RedirectWithSearch({ to }) {
+function RedirectWithSearch({ to, hash = '' }) {
   const { search } = useLocation();
-  return <Navigate to={`${to}${search}`} replace />;
+  return <Navigate to={`${to}${search}${hash}`} replace />;
 }
 
 /** 구 상품 경로(패키지 요금·SKU) → 「상품」 수정 라우트 */
@@ -1069,9 +1069,7 @@ function AppContent() {
             <Route
               path={CLIENT_DASHBOARD_ROUTES.SETTINGS}
               element={(
-                <ProtectedRoute requiredRoles={[USER_ROLES.CLIENT]}>
-                  <ClientSettings />
-                </ProtectedRoute>
+                <RedirectWithSearch to={CLIENT_DASHBOARD_ROUTES.MYPAGE} hash={CLIENT_SETTINGS_REDIRECT_HASH} />
               )}
             />
             <Route path="/client/activity-history" element={<ActivityHistory />} />

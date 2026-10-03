@@ -103,7 +103,7 @@ describe('ClientWebNavNoLnb — client page shells', () => {
       expect(CLIENT_WEB_NAV_LABELS).toEqual(['홈', '예정', '회기', '회기 고르기', '결제']);
       expect(screen.getByTestId(CLIENT_WEB_PROFILE_LINK_TEST_ID)).toHaveAttribute(
         'href',
-        '/client/settings'
+        '/client/mypage'
       );
 
       expect(container.querySelector('.mg-v2-desktop-lnb')).toBeNull();

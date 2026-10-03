@@ -153,7 +153,7 @@ describe('ShopClientLayout shared top chrome', () => {
     expect(profile).toBeTruthy();
     expect(profile.querySelector('.client-web-topchrome__user-name')).toBeTruthy();
     expect(profile.querySelector('.client-web-topchrome__avatar')).toBeTruthy();
-    expect(profile).toHaveAttribute('href', '/client/settings');
+    expect(profile).toHaveAttribute('href', '/client/mypage');
     const endChildren = Array.from(end.children).map((el) => el.className);
     expect(endChildren.indexOf('client-web-topchrome__cart'))
       .toBeLessThan(endChildren.indexOf('client-web-topchrome__profile'));

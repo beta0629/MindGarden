@@ -7,6 +7,8 @@ const VARIANT_TO_MG = {
   secondary: 'secondary',
   success: 'success',
   danger: 'danger',
+  'danger-outline': 'danger-outline',
+  'outline-danger': 'danger-outline',
   warning: 'warning',
   info: 'info',
   outline: 'outline',

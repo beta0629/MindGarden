@@ -1,6 +1,10 @@
 import React, { useState, useCallback } from 'react';
 import './MGButton.css';
 
+const VARIANT_ALIASES = Object.freeze({
+  'outline-danger': 'danger-outline'
+});
+
 /**
  * Core Solution 공통 버튼 컴포넌트
  * - 중복 클릭 방지
@@ -9,7 +13,7 @@ import './MGButton.css';
  * - 접근성 고려
  * 
  * @param {Object} props - 컴포넌트 props
- * @param {string} props.variant - 버튼 스타일 (primary, secondary, success, danger, danger-outline, warning, info, outline, ghost, progress)
+ * @param {string} props.variant - 버튼 스타일 (primary, secondary, success, danger, danger-outline, warning, info, outline, ghost, progress). outline-danger 는 danger-outline 별칭
  * @param {string} props.size - 버튼 크기 (small, medium, large)
  * @param {boolean} props.disabled - 비활성화 상태
  * @param {boolean} props.loading - 로딩 상태
@@ -90,10 +94,12 @@ const MGButton = ({
   const isLoadingState = loading || isProcessing;
   const isDisabledState = disabled;
 
+  const resolvedVariant = VARIANT_ALIASES[variant] || variant;
+
   // 버튼 클래스 구성
   const buttonClasses = [
     'mg-button',
-    `mg-button--${variant}`,
+    `mg-button--${resolvedVariant}`,
     `mg-button--${size}`,
     isDisabledState ? 'mg-button--disabled' : '',
     isLoadingState ? 'mg-button--loading' : '',

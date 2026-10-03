@@ -12,6 +12,7 @@ import java.util.stream.Collectors;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.coresolution.consultation.constant.AuditAction;
+import com.coresolution.consultation.constant.ProcedureUserFacingMessages;
 import com.coresolution.consultation.constant.salary.PlSqlSalaryProcedureUserFacingMessages;
 import com.coresolution.consultation.entity.AuditLog;
 import com.coresolution.consultation.repository.SalaryCalculationRepository;
@@ -38,6 +39,7 @@ import com.coresolution.consultation.service.SalaryExportService;
 import com.coresolution.consultation.service.SalaryManagementService;
 import com.coresolution.consultation.service.SalaryScheduleService;
 import com.coresolution.consultation.util.PermissionCheckUtils;
+import com.coresolution.consultation.util.ProcedureResults;
 import com.coresolution.consultation.util.SalaryCalculationResponseMapper;
 import com.coresolution.consultation.utils.SessionUtils;
 import com.coresolution.core.context.TenantContextHolder;
@@ -615,9 +617,10 @@ public class SalaryManagementController extends BaseApiController {
         }
         requireSalaryManagePermission(session);
         String branchCode = currentUser.getBranchCode();
-        Map<String, Object> statistics = plSqlSalaryManagementService.getIntegratedSalaryStatistics(
-            branchCode, startDate, endDate
-        );
+        Map<String, Object> statistics = ProcedureResults.callRequiringSuccess(
+                ProcedureUserFacingMessages.PROC_GET_INTEGRATED_SALARY_STATISTICS,
+                ProcedureUserFacingMessages.SALARY_STATISTICS_FAILED,
+                () -> plSqlSalaryManagementService.getIntegratedSalaryStatistics(branchCode, startDate, endDate));
         return success("급여 통계를 조회했습니다.", statistics);
     }
     

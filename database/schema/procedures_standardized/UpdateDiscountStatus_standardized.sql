@@ -14,7 +14,7 @@ CREATE PROCEDURE UpdateDiscountStatus(
     OUT p_success BOOLEAN,
     OUT p_message TEXT
 )
-BEGIN
+proc_main: BEGIN
     DECLARE v_error_message VARCHAR(500);
     DECLARE v_accounting_id BIGINT;
     DECLARE v_current_status VARCHAR(20);
@@ -36,21 +36,21 @@ BEGIN
         SET p_success = FALSE;
         SET p_message = '테넌트 ID는 필수입니다.';
         ROLLBACK;
-        LEAVE;
+        LEAVE proc_main;
     END IF;
     
     IF p_mapping_id IS NULL OR p_mapping_id <= 0 THEN
         SET p_success = FALSE;
         SET p_message = '매핑 ID는 필수입니다.';
         ROLLBACK;
-        LEAVE;
+        LEAVE proc_main;
     END IF;
     
     IF p_new_status IS NULL OR p_new_status = '' THEN
         SET p_success = FALSE;
         SET p_message = '새로운 상태는 필수입니다.';
         ROLLBACK;
-        LEAVE;
+        LEAVE proc_main;
     END IF;
     
     -- 2. 할인 회계 거래 조회 (테넌트 격리)
@@ -70,7 +70,7 @@ BEGIN
         SET p_success = FALSE;
         SET p_message = '할인 회계 거래를 찾을 수 없습니다.';
         ROLLBACK;
-        LEAVE;
+        LEAVE proc_main;
     ELSE
         -- 4. 상태 업데이트 (테넌트 격리)
         -- 주의: discount_accounting_transactions 테이블에 is_deleted, updated_by 필드가 없음

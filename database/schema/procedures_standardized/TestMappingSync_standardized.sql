@@ -10,7 +10,7 @@ CREATE PROCEDURE TestMappingSync(
     OUT p_success BOOLEAN,
     OUT p_message TEXT
 )
-BEGIN
+proc_main: BEGIN
     DECLARE v_error_message VARCHAR(500);
     
     DECLARE EXIT HANDLER FOR SQLEXCEPTION
@@ -25,7 +25,7 @@ BEGIN
     IF p_tenant_id IS NULL OR p_tenant_id = '' THEN
         SET p_success = FALSE;
         SET p_message = '테넌트 ID는 필수입니다.';
-        LEAVE;
+        LEAVE proc_main;
     END IF;
     
     -- 2. 테스트 성공 메시지 반환

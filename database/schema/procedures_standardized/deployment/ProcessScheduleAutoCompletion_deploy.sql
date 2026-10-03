@@ -15,7 +15,7 @@ CREATE PROCEDURE ProcessScheduleAutoCompletion(
     OUT p_success BOOLEAN,
     OUT p_message TEXT
 )
-BEGIN
+proc_main: BEGIN
     DECLARE v_error_message VARCHAR(500);
     DECLARE v_has_record TINYINT(1) DEFAULT 0;
     DECLARE v_validation_message VARCHAR(500) DEFAULT '';
@@ -40,21 +40,21 @@ BEGIN
         SET p_success = FALSE;
         SET p_message = '테넌트 ID는 필수입니다.';
         ROLLBACK;
-        LEAVE;
+        LEAVE proc_main;
     END IF;
     
     IF p_schedule_id IS NULL OR p_schedule_id <= 0 THEN
         SET p_success = FALSE;
         SET p_message = '스케줄 ID는 필수입니다.';
         ROLLBACK;
-        LEAVE;
+        LEAVE proc_main;
     END IF;
     
     IF p_consultant_id IS NULL OR p_consultant_id <= 0 THEN
         SET p_success = FALSE;
         SET p_message = '상담사 ID는 필수입니다.';
         ROLLBACK;
-        LEAVE;
+        LEAVE proc_main;
     END IF;
     
     -- 2. 스케줄 존재 여부 확인 (테넌트 격리)
@@ -69,7 +69,7 @@ BEGIN
         SET p_success = FALSE;
         SET p_message = '스케줄을 찾을 수 없습니다.';
         ROLLBACK;
-        LEAVE;
+        LEAVE proc_main;
     END IF;
     
     -- 3. 상담일지 작성 여부 확인 (테넌트 격리)

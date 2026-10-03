@@ -21,7 +21,7 @@ CREATE PROCEDURE GetOverallBranchStatistics(
     OUT p_cancelled_schedules INT,
     OUT p_average_rating DECIMAL(3,2)
 )
-BEGIN
+proc_main: BEGIN
     DECLARE v_error_message VARCHAR(500);
     DECLARE start_date DATE;
     DECLARE end_date DATE;
@@ -58,7 +58,7 @@ BEGIN
         SET p_completed_schedules = 0;
         SET p_cancelled_schedules = 0;
         SET p_average_rating = 0;
-        LEAVE;
+        LEAVE proc_main;
     END IF;
     
     -- 2. 기간 계산

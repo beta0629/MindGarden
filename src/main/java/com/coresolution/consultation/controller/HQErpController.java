@@ -5,11 +5,13 @@ import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import com.coresolution.consultation.constant.ProcedureUserFacingMessages;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.service.CommonCodeService;
 import com.coresolution.consultation.service.DynamicPermissionService;
 import com.coresolution.consultation.service.erp.financial.FinancialTransactionService;
 import com.coresolution.consultation.service.PlSqlFinancialService;
+import com.coresolution.consultation.util.ProcedureResults;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -144,11 +146,8 @@ public class HQErpController {
             ));
             
         } catch (Exception e) {
-            log.error("❌ 전사 통합 재무 현황 조회 실패: {}", e.getMessage(), e);
-            return ResponseEntity.internalServerError().body(Map.of(
-                "success", false,
-                "message", "전사 통합 재무 현황 조회에 실패했습니다: " + e.getMessage()
-            ));
+            throw ProcedureResults.failure(ProcedureUserFacingMessages.QUERY_CONSOLIDATED_FINANCIAL_DATA,
+                    ProcedureUserFacingMessages.CONSOLIDATED_FINANCIAL_FAILED, e);
         }
     }
     
@@ -193,7 +192,10 @@ public class HQErpController {
                     String[] quarterParts = targetPeriod.split("-Q");
                     int quarterYear = Integer.parseInt(quarterParts[0]);
                     int quarter = Integer.parseInt(quarterParts[1]);
-                    reportData = plSqlFinancialService.generateQuarterlyFinancialReport(quarterYear, quarter, branchCode);
+                    reportData = ProcedureResults.requireSuccess(
+                            ProcedureUserFacingMessages.PROC_GENERATE_QUARTERLY_FINANCIAL_REPORT,
+                            plSqlFinancialService.generateQuarterlyFinancialReport(quarterYear, quarter, branchCode),
+                            ProcedureUserFacingMessages.FINANCIAL_REPORT_FAILED);
                     break;
                 case "yearly":
                     int reportYear = Integer.parseInt(targetPeriod);
@@ -215,11 +217,8 @@ public class HQErpController {
             ));
             
         } catch (Exception e) {
-            log.error("❌ 재무 보고서 조회 실패: {}", e.getMessage(), e);
-            return ResponseEntity.internalServerError().body(Map.of(
-                "success", false,
-                "message", "재무 보고서 조회에 실패했습니다: " + e.getMessage()
-            ));
+            throw ProcedureResults.failure(ProcedureUserFacingMessages.QUERY_FINANCIAL_REPORT,
+                    ProcedureUserFacingMessages.FINANCIAL_REPORT_FAILED, e);
         }
     }
     

@@ -4,10 +4,15 @@ name: 🔒 Deploy no-overwrite freeze gate (6-item)
 # session-transfer-history / CardBillingProgress / prepaid 10만 비표시
 # 하나라도 FAIL → job fail (배포·머지 중단). DATAFIX 0 · 부분 tip 금지.
 # 문서: docs/deployment/DEPLOY_NO_OVERWRITE_GATE.md
+# procedure-staging-mysql: 일회용 MySQL 8.0(개발·운영과 같은 메이저)에 저장소의 모든 배포 SQL 을
+# 실제 safe-replace 경로로 적용하고, 야간 운영→개발 복사 후 루틴 재적용을 끝까지 검사한다.
 
 on:
   pull_request:
     paths:
+      - 'database/schema/procedures_standardized/**'
+      - 'scripts/automation/deployment/**'
+      - 'scripts/database/sync/**'
       - 'scripts/deployment/check-deploy-no-overwrite-symbols.sh'
       - 'docs/deployment/DEPLOY_NO_OVERWRITE_GATE.md'
       - '.cursor/skills/core-solution-deployment/**'
@@ -23,6 +28,9 @@ on:
   push:
     branches: [main, develop, 'deploy/**']
     paths:
+      - 'database/schema/procedures_standardized/**'
+      - 'scripts/automation/deployment/**'
+      - 'scripts/database/sync/**'
       - 'scripts/deployment/check-deploy-no-overwrite-symbols.sh'
       - 'docs/deployment/DEPLOY_NO_OVERWRITE_GATE.md'
       - '.cursor/skills/core-solution-deployment/**'
@@ -53,3 +61,52 @@ jobs:
         run: |
           chmod +x scripts/deployment/check-deploy-no-overwrite-symbols.sh
           ./scripts/deployment/check-deploy-no-overwrite-symbols.sh --source-root .
+
+  procedure-staging-mysql:
+    name: Procedure staging CREATE (MySQL 8.0, all deploy SQL)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      PROCEDURE_STAGING_TEST_DB: disposable
+      DB_HOST: 127.0.0.1
+      DB_USER: root
+      DB_NAME: mg_ci_procedures
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Start disposable MySQL 8.0
+        run: |
+          set -euo pipefail
+          pw="$(openssl rand -hex 16)"
+          echo "::add-mask::$pw"
+          echo "DB_PASS=$pw" >> "$GITHUB_ENV"
+          if ! command -v mysql >/dev/null || ! command -v mysqldump >/dev/null; then
+            sudo apt-get update -qq
+            sudo apt-get install -y -qq mysql-client
+          fi
+          docker run -d --name mg-proc-mysql -e MYSQL_ROOT_PASSWORD="$pw" -e MYSQL_DATABASE="$DB_NAME" \
+            -p "$DB_HOST:3306:3306" mysql:8.0
+          for _ in $(seq 1 90); do
+            if MYSQL_PWD="$pw" mysql -h "$DB_HOST" -u "$DB_USER" -N -e 'SELECT VERSION()' 2>/dev/null; then
+              exit 0
+            fi
+            sleep 2
+          done
+          docker logs mg-proc-mysql | tail -50
+          exit 1
+
+      - name: Staging CREATE + safe-replace for every deploy SQL
+        run: bash scripts/automation/deployment/procedure-deploy-staging-mysql.test.sh
+
+      - name: Nightly prod-to-dev copy re-applies repo routines
+        run: bash scripts/database/sync/prod-to-dev-daily.mysql.test.sh
+
+      - name: Procedure deploy shell tests
+        run: |
+          set -euo pipefail
+          for t in procedure-deploy-changed-only procedure-deploy-db-diff procedure-deploy-dispatch-list publish-dev-sync-bundle; do
+            bash "scripts/automation/deployment/${t}.test.sh"
+          done

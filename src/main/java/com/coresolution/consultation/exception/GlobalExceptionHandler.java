@@ -664,6 +664,25 @@ public class GlobalExceptionHandler {
 
 
     /**
+     * 저장 프로시저 실패({@code p_success=false} 또는 호출 예외).
+     * HTTP 500 + {@code success:false} + 사용자용 한글 문구. 프로시저 메시지·SQL 원문은 로그에만 남긴다.
+     */
+    @ExceptionHandler(ProcedureExecutionException.class)
+    public ResponseEntity<ErrorResponse> handleProcedureExecution(
+            ProcedureExecutionException e, HttpServletRequest request) {
+        log.error("[{}] procedure={} path={} detail={}", ProcedureExecutionException.ERROR_CODE,
+                e.getProcedureName(), request.getRequestURI(), e.getDetail(), e.getCause());
+        ErrorResponse error = ErrorResponse.of(
+                e.getMessage(),
+                ProcedureExecutionException.ERROR_CODE,
+                HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                request.getRequestURI(),
+                request.getMethod()
+        );
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+    }
+
+    /**
      * HttpMessageNotReadableException — malformed JSON 등 요청 본문 파싱 실패.
      * 파서/Jackson 상세는 로그에만 남기고 고정 문구만 응답.
      */

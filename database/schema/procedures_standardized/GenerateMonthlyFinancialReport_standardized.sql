@@ -13,7 +13,7 @@ CREATE PROCEDURE GenerateMonthlyFinancialReport(
     OUT p_message TEXT,
     OUT p_report_data JSON
 )
-BEGIN
+proc_main: BEGIN
     DECLARE v_error_message VARCHAR(500);
     DECLARE start_date DATE;
     DECLARE end_date DATE;
@@ -35,21 +35,21 @@ BEGIN
         SET p_success = FALSE;
         SET p_message = '테넌트 ID는 필수입니다.';
         SET p_report_data = JSON_OBJECT('error', '테넌트 ID가 필요합니다.');
-        LEAVE;
+        LEAVE proc_main;
     END IF;
     
     IF p_year IS NULL OR p_year < 2000 OR p_year > 2100 THEN
         SET p_success = FALSE;
         SET p_message = '유효한 연도를 입력해주세요.';
         SET p_report_data = JSON_OBJECT('error', '유효한 연도가 필요합니다.');
-        LEAVE;
+        LEAVE proc_main;
     END IF;
     
     IF p_month IS NULL OR p_month < 1 OR p_month > 12 THEN
         SET p_success = FALSE;
         SET p_message = '유효한 월을 입력해주세요.';
         SET p_report_data = JSON_OBJECT('error', '유효한 월이 필요합니다.');
-        LEAVE;
+        LEAVE proc_main;
     END IF;
     
     -- 2. 날짜 범위 설정

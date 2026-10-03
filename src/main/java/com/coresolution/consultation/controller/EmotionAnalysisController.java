@@ -3,6 +3,7 @@ package com.coresolution.consultation.controller;
 import com.coresolution.consultation.entity.*;
 import com.coresolution.consultation.service.EmotionAnalysisService;
 import com.coresolution.consultation.service.support.ClientPathAccessGuard;
+import com.coresolution.consultation.service.support.ResourceOwnerAccessGuard;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -32,6 +33,7 @@ public class EmotionAnalysisController {
 
     private final EmotionAnalysisService emotionAnalysisService;
     private final ClientPathAccessGuard clientPathAccessGuard;
+    private final ResourceOwnerAccessGuard resourceOwnerAccessGuard;
 
     /**
      * 음성 바이오마커 분석
@@ -40,8 +42,10 @@ public class EmotionAnalysisController {
      */
     @PostMapping("/voice/{audioFileId}")
     public ResponseEntity<Map<String, Object>> analyzeVoiceEmotion(
-            @PathVariable Long audioFileId) {
+            @PathVariable Long audioFileId,
+            HttpSession session) {
 
+        resourceOwnerAccessGuard.requireAudioFileAccess(session, audioFileId);
         log.info("🎤 음성 감정 분석 요청: audioFileId={}", audioFileId);
 
         try {
@@ -74,8 +78,10 @@ public class EmotionAnalysisController {
     @PostMapping("/video/{consultationRecordId}")
     public ResponseEntity<Map<String, Object>> analyzeVideoEmotion(
             @PathVariable Long consultationRecordId,
-            @RequestParam("file") MultipartFile videoFile) {
+            @RequestParam("file") MultipartFile videoFile,
+            HttpSession session) {
 
+        resourceOwnerAccessGuard.requireConsultationRecordAccess(session, consultationRecordId);
         log.info("📹 비디오 감정 분석 요청: recordId={}, fileSize={}",
             consultationRecordId, videoFile.getSize());
 
@@ -113,8 +119,10 @@ public class EmotionAnalysisController {
     @PostMapping("/text/{consultationRecordId}")
     public ResponseEntity<Map<String, Object>> analyzeTextEmotion(
             @PathVariable Long consultationRecordId,
-            @RequestBody Map<String, String> request) {
+            @RequestBody Map<String, String> request,
+            HttpSession session) {
 
+        resourceOwnerAccessGuard.requireConsultationRecordAccess(session, consultationRecordId);
         String text = request.get("text");
         String sourceType = request.getOrDefault("sourceType", "TRANSCRIPTION");
 
@@ -152,8 +160,10 @@ public class EmotionAnalysisController {
      */
     @PostMapping("/multimodal/{consultationRecordId}")
     public ResponseEntity<Map<String, Object>> generateMultimodalReport(
-            @PathVariable Long consultationRecordId) {
+            @PathVariable Long consultationRecordId,
+            HttpSession session) {
 
+        resourceOwnerAccessGuard.requireConsultationRecordAccess(session, consultationRecordId);
         log.info("🔬 멀티모달 통합 리포트 생성 요청: recordId={}", consultationRecordId);
 
         try {
@@ -187,8 +197,10 @@ public class EmotionAnalysisController {
      */
     @GetMapping("/multimodal/{reportId}")
     public ResponseEntity<Map<String, Object>> getMultimodalReport(
-            @PathVariable Long reportId) {
+            @PathVariable Long reportId,
+            HttpSession session) {
 
+        resourceOwnerAccessGuard.requireMultimodalReportAccess(session, reportId);
         try {
             MultimodalEmotionReport report = emotionAnalysisService.getMultimodalReport(reportId);
 
@@ -257,6 +269,7 @@ public class EmotionAnalysisController {
             HttpSession session) {
 
         clientPathAccessGuard.requireClientAccess(session, clientId);
+        resourceOwnerAccessGuard.requireConsultationRecordOfClient(session, consultationRecordId, clientId);
         try {
             emotionAnalysisService.trackEmotionChanges(clientId, consultationRecordId, sessionNumber);
 

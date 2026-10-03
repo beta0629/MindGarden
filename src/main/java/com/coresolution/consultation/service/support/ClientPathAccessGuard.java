@@ -43,6 +43,7 @@ public class ClientPathAccessGuard {
     public static final String DENIAL_OWN_CONSULTANT_ONLY = "본인 상담사 정보만 조회할 수 있습니다.";
     public static final String DENIAL_OTHER_TENANT = "같은 기관의 사용자 정보만 조회할 수 있습니다.";
     public static final String DENIAL_MANAGER_ONLY = "관리자만 변경할 수 있습니다.";
+    public static final String DENIAL_STAFF_OR_CONSULTANT_ONLY = "상담사 또는 관리자만 이용할 수 있습니다.";
     public static final String DENIAL_UNKNOWN_CALLER = "접근 권한이 없습니다.";
 
     private final ConsultantClientMappingRepository consultantClientMappingRepository;
@@ -126,6 +127,66 @@ public class ClientPathAccessGuard {
             deny(DENIAL_MANAGER_ONLY, caller, "userId", caller.getId());
         }
         return caller;
+    }
+
+    /**
+     * 같은 테넌트 관리자·사무원·상담사만 허용한다 (내담자 거부. 테넌트 단위 목록·통계용).
+     *
+     * @param session HTTP 세션
+     * @return 세션 사용자
+     * @throws UnauthorizedException 로그인 사용자가 없을 때
+     * @throws AccessDeniedException 내담자이거나 역할·테넌트가 맞지 않을 때
+     */
+    public User requireTenantManagerOrConsultant(HttpSession session) {
+        User caller = requireCaller(session);
+        UserRole role = requireRole(caller);
+        resolveTenantId(caller);
+        if (!isTenantManager(caller) && !role.isConsultant()) {
+            deny(DENIAL_STAFF_OR_CONSULTANT_ONLY, caller, "userId", caller.getId());
+        }
+        return caller;
+    }
+
+    /**
+     * 세션 사용자 기준 테넌트 ID 를 돌려준다 (TenantContext 와 세션 사용자 테넌트가 다르면 거부).
+     *
+     * @param caller 세션 사용자
+     * @return 테넌트 ID
+     * @throws AccessDeniedException 테넌트를 확정할 수 없거나 불일치할 때
+     */
+    public String requireCallerTenantId(User caller) {
+        requireRole(caller);
+        return resolveTenantId(caller);
+    }
+
+    /**
+     * {@link #assertCanAccessClient} 와 같은 규칙을 예외·경고 로그 없이 판정한다 (목록 필터용).
+     *
+     * @param caller   세션 사용자
+     * @param clientId 대상 내담자 ID (null 이면 false)
+     * @return 접근 가능하면 true
+     */
+    public boolean canAccessClient(User caller, Long clientId) {
+        if (caller == null || caller.getId() == null || caller.getRole() == null || clientId == null) {
+            return false;
+        }
+        String contextTenantId = trimToNull(TenantContextHolder.getTenantId());
+        String callerTenantId = trimToNull(caller.getTenantId());
+        if (contextTenantId != null && callerTenantId != null && !contextTenantId.equals(callerTenantId)) {
+            return false;
+        }
+        String tenantId = contextTenantId != null ? contextTenantId : callerTenantId;
+        if (tenantId == null) {
+            return false;
+        }
+        UserRole role = caller.getRole();
+        if (role.isClient()) {
+            return Objects.equals(caller.getId(), clientId);
+        }
+        if (isTenantManager(caller)) {
+            return userRepository.findByTenantIdAndId(tenantId, clientId).isPresent();
+        }
+        return role.isConsultant() && hasAnyMapping(tenantId, caller.getId(), clientId);
     }
 
     /**
@@ -235,7 +296,7 @@ public class ClientPathAccessGuard {
         return StringUtils.hasText(value) ? value.trim() : null;
     }
 
-    private static void deny(String message, User caller, String field, Long requested) {
+    static void deny(String message, User caller, String field, Long requested) {
         log.warn("[security] client path access denied: userId={}, role={}, {}={}",
             caller.getId(), caller.getRole(), field, requested);
         throw new AccessDeniedException(message);

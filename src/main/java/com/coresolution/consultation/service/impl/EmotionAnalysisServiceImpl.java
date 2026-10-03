@@ -298,7 +298,8 @@ public class EmotionAnalysisServiceImpl implements EmotionAnalysisService {
 
             // 이전 회기 데이터 조회
             List<EmotionTrackingHistory> previousHistory = trackingHistoryRepository
-                .findByClientIdAndIsDeletedFalseOrderBySessionNumberAsc(clientId);
+                .findByTenantIdAndClientIdAndIsDeletedFalseOrderBySessionNumberAsc(
+                    TenantContextHolder.getRequiredTenantId(), clientId);
 
             // 각 감정 유형별 추적 기록 생성
             createTrackingRecord(clientId, consultationRecordId, sessionNumber,
@@ -317,13 +318,16 @@ public class EmotionAnalysisServiceImpl implements EmotionAnalysisService {
 
     @Override
     public List<EmotionTrackingHistory> getEmotionTrend(Long clientId, String emotionType) {
+        String tenantId = TenantContextHolder.getRequiredTenantId();
         return trackingHistoryRepository
-            .findByClientIdAndEmotionTypeAndIsDeletedFalseOrderBySessionNumberAsc(clientId, emotionType);
+            .findByTenantIdAndClientIdAndEmotionTypeAndIsDeletedFalseOrderBySessionNumberAsc(
+                tenantId, clientId, emotionType);
     }
 
     @Override
     public MultimodalEmotionReport getMultimodalReport(Long reportId) {
-        return multimodalReportRepository.findByIdAndIsDeletedFalse(reportId)
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        return multimodalReportRepository.findByTenantIdAndIdAndIsDeletedFalse(tenantId, reportId)
             .orElseThrow(() -> new IllegalArgumentException("멀티모달 리포트를 찾을 수 없습니다: " + reportId));
     }
 

@@ -21,6 +21,8 @@ public interface MultimodalEmotionReportRepository extends JpaRepository<Multimo
 
     Optional<MultimodalEmotionReport> findByIdAndIsDeletedFalse(Long id);
 
+    Optional<MultimodalEmotionReport> findByTenantIdAndIdAndIsDeletedFalse(String tenantId, Long id);
+
     Optional<MultimodalEmotionReport> findByConsultationRecordIdAndIsDeletedFalse(Long consultationRecordId);
 
     @Query("SELECT m FROM MultimodalEmotionReport m " +

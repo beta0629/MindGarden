@@ -7,6 +7,10 @@ import java.util.stream.Collectors;
 import com.coresolution.consultation.dto.ConsultantAvailabilityDto;
 import com.coresolution.consultation.service.ConsultantAvailabilityService;
 import com.coresolution.consultation.service.impl.ConsultantAvailabilityServiceImpl;
+import com.coresolution.consultation.service.support.ClientPathAccessGuard;
+import com.coresolution.consultation.service.support.ResourceOwnerAccessGuard;
+import org.springframework.core.env.Environment;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -19,6 +23,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -33,7 +38,14 @@ import lombok.extern.slf4j.Slf4j;
 @PreAuthorize("isAuthenticated()") // B8 (2026-06-14): 무가드 회귀 방지 fallback. 메서드 본문 inline 권한 체크는 그대로 우선 적용.
 public class ConsultantAvailabilityController {
     
+    /** 테스트용 휴무 데이터 API 를 허용하는 프로필 ({@code TestDataController} 와 동일 규칙). */
+    private static final String LOCAL_PROFILE = "local";
+    private static final String LOCAL_ONLY_MESSAGE = "이 API는 로컬 개발 환경에서만 사용할 수 있습니다.";
+
     private final ConsultantAvailabilityService availabilityService;
+    private final ClientPathAccessGuard clientPathAccessGuard;
+    private final ResourceOwnerAccessGuard resourceOwnerAccessGuard;
+    private final Environment environment;
     
     /**
      * 상담사별 상담 가능 시간 목록 조회
@@ -72,8 +84,10 @@ public class ConsultantAvailabilityController {
     @PostMapping("/{consultantId}/availability")
     public ResponseEntity<Map<String, Object>> addAvailability(
             @PathVariable Long consultantId,
-            @RequestBody ConsultantAvailabilityDto dto) {
+            @RequestBody ConsultantAvailabilityDto dto,
+            HttpSession session) {
         
+        clientPathAccessGuard.requireConsultantAccess(session, consultantId);
         log.info("상담 가능 시간 추가: consultantId={}, dto={}", consultantId, dto);
         
         try {
@@ -104,8 +118,10 @@ public class ConsultantAvailabilityController {
     @PutMapping("/availability/{id}")
     public ResponseEntity<Map<String, Object>> updateAvailability(
             @PathVariable Long id,
-            @RequestBody ConsultantAvailabilityDto dto) {
+            @RequestBody ConsultantAvailabilityDto dto,
+            HttpSession session) {
         
+        resourceOwnerAccessGuard.requireAvailabilityWrite(session, id);
         log.info("상담 가능 시간 수정: id={}, dto={}", id, dto);
         
         try {
@@ -133,8 +149,9 @@ public class ConsultantAvailabilityController {
      * DELETE /api/consultant/availability/{id}
      */
     @DeleteMapping("/availability/{id}")
-    public ResponseEntity<Map<String, Object>> deleteAvailability(@PathVariable Long id) {
+    public ResponseEntity<Map<String, Object>> deleteAvailability(@PathVariable Long id, HttpSession session) {
         
+        resourceOwnerAccessGuard.requireAvailabilityWrite(session, id);
         log.info("상담 가능 시간 삭제: id={}", id);
         
         try {
@@ -201,8 +218,10 @@ public class ConsultantAvailabilityController {
     @PostMapping("/{consultantId}/vacation")
     public ResponseEntity<Map<String, Object>> setVacation(
             @PathVariable Long consultantId,
-            @RequestBody Map<String, Object> vacationData) {
+            @RequestBody Map<String, Object> vacationData,
+            HttpSession session) {
         
+        clientPathAccessGuard.requireConsultantAccess(session, consultantId);
         log.info("상담사 휴무 설정: consultantId={}, vacationData={}", consultantId, vacationData);
         
         try {
@@ -300,8 +319,10 @@ public class ConsultantAvailabilityController {
     @DeleteMapping("/{consultantId}/vacation/{date}")
     public ResponseEntity<Map<String, Object>> deleteVacation(
             @PathVariable Long consultantId,
-            @PathVariable String date) {
+            @PathVariable String date,
+            HttpSession session) {
         
+        clientPathAccessGuard.requireConsultantAccess(session, consultantId);
         log.info("상담사 휴무 삭제: consultantId={}, date={}", consultantId, date);
         
         try {
@@ -328,7 +349,11 @@ public class ConsultantAvailabilityController {
      * POST /api/consultant/init-test-data
      */
     @PostMapping("/init-test-data")
-    public ResponseEntity<Map<String, Object>> initializeTestData() {
+    public ResponseEntity<Map<String, Object>> initializeTestData(HttpSession session) {
+        ResponseEntity<Map<String, Object>> blocked = forbidUnlessLocalManager(session);
+        if (blocked != null) {
+            return blocked;
+        }
         log.info("테스트용 휴무 데이터 초기화 요청");
         
         try {
@@ -356,7 +381,12 @@ public class ConsultantAvailabilityController {
      * POST /api/consultant/set-vacation-data
      */
     @PostMapping("/set-vacation-data")
-    public ResponseEntity<Map<String, Object>> setVacationData(@RequestBody Map<String, Object> request) {
+    public ResponseEntity<Map<String, Object>> setVacationData(@RequestBody Map<String, Object> request,
+            HttpSession session) {
+        ResponseEntity<Map<String, Object>> blocked = forbidUnlessLocalManager(session);
+        if (blocked != null) {
+            return blocked;
+        }
         log.info("휴무 데이터 직접 설정 요청: {}", request);
         
         try {
@@ -425,5 +455,23 @@ public class ConsultantAvailabilityController {
             
             return ResponseEntity.badRequest().body(response);
         }
+    }
+
+    /**
+     * 테스트용 휴무 데이터 API 가드. {@code local} 프로필이 아니면 403, local 에서도 같은 테넌트 관리자·사무원만.
+     *
+     * @param session HTTP 세션
+     * @return 차단 응답 또는 통과 시 null
+     */
+    private ResponseEntity<Map<String, Object>> forbidUnlessLocalManager(HttpSession session) {
+        if (!environment.acceptsProfiles(LOCAL_PROFILE)) {
+            log.warn("🚫 non-local profile에서 테스트용 휴무 데이터 API 차단");
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", LOCAL_ONLY_MESSAGE);
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
+        }
+        clientPathAccessGuard.requireTenantManager(session);
+        return null;
     }
 }

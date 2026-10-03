@@ -12,7 +12,9 @@ import com.coresolution.consultation.assessment.service.PsychAssessmentClientSum
 import com.coresolution.consultation.assessment.repository.PsychAssessmentDocumentRepository;
 import com.coresolution.consultation.assessment.entity.PsychAssessmentDocument;
 import com.coresolution.consultation.assessment.support.PsychAssessmentMarkdownSections;
+import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.service.support.ClientPathAccessGuard;
+import com.coresolution.consultation.service.support.ResourceOwnerAccessGuard;
 import com.coresolution.core.controller.BaseApiController;
 import com.coresolution.core.dto.ApiResponse;
 import com.coresolution.core.context.TenantContextHolder;
@@ -46,6 +48,7 @@ public class PsychAssessmentController extends BaseApiController {
     private final PsychAssessmentReportRepository reportRepository;
     private final PsychAssessmentClientSummaryService clientSummaryService;
     private final ClientPathAccessGuard clientPathAccessGuard;
+    private final ResourceOwnerAccessGuard resourceOwnerAccessGuard;
 
     @PostMapping(value = "/documents", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("isAuthenticated()")
@@ -54,8 +57,13 @@ public class PsychAssessmentController extends BaseApiController {
             @RequestParam("type") @NotNull PsychAssessmentType type,
             @RequestParam(value = "file", required = false) MultipartFile file,
             @RequestParam(value = "files", required = false) MultipartFile[] files,
-            @RequestParam(value = "clientId", required = false) Long clientId) {
+            @RequestParam(value = "clientId", required = false) Long clientId,
+            HttpSession session) {
 
+        User caller = clientPathAccessGuard.requireTenantManagerOrConsultant(session);
+        if (clientId != null) {
+            clientPathAccessGuard.assertCanAccessClient(caller, clientId);
+        }
         String tenantId = TenantContextHolder.getRequiredTenantId();
         PsychAssessmentUploadResponse response;
 
@@ -84,7 +92,9 @@ public class PsychAssessmentController extends BaseApiController {
     @PreAuthorize("isAuthenticated()")
     @Operation(summary = "최신 리포트 생성", description = "추출된 지표를 기반으로 최신 리포트를 생성합니다(MVP).")
     public ResponseEntity<ApiResponse<java.util.Map<String, Object>>> generateReport(
-            @PathVariable Long documentId) {
+            @PathVariable Long documentId,
+            HttpSession session) {
+        resourceOwnerAccessGuard.requirePsychDocumentAccess(session, documentId);
         Long reportId = reportService.generateLatestReport(documentId);
         return success(java.util.Map.of("reportId", reportId));
     }
@@ -93,7 +103,9 @@ public class PsychAssessmentController extends BaseApiController {
     @PreAuthorize("isAuthenticated()")
     @Operation(summary = "최신 리포트 조회", description = "문서에 대한 최신 AI 분석 리포트를 조회합니다.")
     public ResponseEntity<?> getLatestReport(
-            @PathVariable Long documentId) {
+            @PathVariable Long documentId,
+            HttpSession session) {
+        resourceOwnerAccessGuard.requirePsychDocumentAccess(session, documentId);
         String tenantId = TenantContextHolder.getRequiredTenantId();
         var report = reportRepository.findTopByTenantIdAndDocumentIdOrderByCreatedAtDesc(tenantId, documentId)
                 .orElse(null);
@@ -115,7 +127,8 @@ public class PsychAssessmentController extends BaseApiController {
     @GetMapping("/stats")
     @PreAuthorize("isAuthenticated()")
     @Operation(summary = "심리검사 분석 통계(MVP)", description = "테넌트 단위 업로드/추출/리포트 생성 통계를 제공합니다.")
-    public ResponseEntity<ApiResponse<java.util.Map<String, Object>>> stats() {
+    public ResponseEntity<ApiResponse<java.util.Map<String, Object>>> stats(HttpSession session) {
+        clientPathAccessGuard.requireTenantManagerOrConsultant(session);
         return success(statsService.getTenantStats());
     }
 
@@ -123,12 +136,19 @@ public class PsychAssessmentController extends BaseApiController {
     @PreAuthorize("isAuthenticated()")
     @Operation(summary = "최근 업로드 문서 목록", description = "관리자 화면용 최근 업로드 문서 목록을 조회합니다(최대 20개).")
     public ResponseEntity<ApiResponse<java.util.List<PsychAssessmentDocumentListItem>>> recentDocuments(
-            @RequestParam(value = "status", required = false) PsychAssessmentDocumentStatus status
+            @RequestParam(value = "status", required = false) PsychAssessmentDocumentStatus status,
+            HttpSession session
     ) {
+        User caller = clientPathAccessGuard.requireTenantManagerOrConsultant(session);
         String tenantId = TenantContextHolder.getRequiredTenantId();
         java.util.List<PsychAssessmentDocument> docs = (status == null)
                 ? documentRepository.findTop20ByTenantIdOrderByCreatedAtDesc(tenantId)
                 : documentRepository.findTop20ByTenantIdAndStatusOrderByCreatedAtDesc(tenantId, status);
+        if (!clientPathAccessGuard.isTenantManager(caller)) {
+            docs = docs.stream()
+                    .filter(d -> clientPathAccessGuard.canAccessClient(caller, d.getClientId()))
+                    .toList();
+        }
 
         java.util.List<PsychAssessmentDocumentListItem> items = docs.stream()
                 .map(d -> PsychAssessmentDocumentListItem.builder()

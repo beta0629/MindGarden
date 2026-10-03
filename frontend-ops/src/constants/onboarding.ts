@@ -86,6 +86,7 @@ export const ONBOARDING_MESSAGES = {
   SAVE: "결정 저장",
   SAVING: "저장 중...",
   SAVE_SUCCESS: "결정을 저장했습니다.",
+  SAVE_FAILED: "결정을 저장하지 못했습니다. 다시 시도해주세요.",
   LOGIN_REQUIRED: "로그인이 필요합니다. 다시 로그인해주세요.",
   PASSWORD_NOTE: "비밀번호는 신청 화면에만 있습니다.",
   DECISION_GROUP: "결정",

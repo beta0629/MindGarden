@@ -330,6 +330,14 @@ mindgarden:
       dry-run: ${MINDGARDEN_SCHEDULER_FINANCIAL_CLOSE_DRY_RUN:true}
       daily-cron: ${MINDGARDEN_SCHEDULER_FINANCIAL_CLOSE_DAILY_CRON:0 0 2 * * *}
       monthly-cron: ${MINDGARDEN_SCHEDULER_FINANCIAL_CLOSE_MONTHLY_CRON:0 30 2 1 * *}
+    # 지난 일정 자동 완료 (ScheduleAutoCompleteService). 조회 API 는 완료 처리(쓰기)를 하지 않으므로
+    # 완료 반영 지연은 최대 cron 주기다. zone 은 cron 해석과 "오늘/지난 일정" 판정 기준.
+    schedule-auto-complete:
+      cron: ${MINDGARDEN_SCHEDULER_SCHEDULE_AUTO_COMPLETE_CRON:0 */10 * * * *}
+      daily-cron: ${MINDGARDEN_SCHEDULER_SCHEDULE_DAILY_CLEANUP_CRON:0 0 0 * * *}
+      zone: ${MINDGARDEN_SCHEDULER_SCHEDULE_AUTO_COMPLETE_ZONE:Asia/Seoul}
+      lock-at-most-for: ${MINDGARDEN_SCHEDULER_SCHEDULE_AUTO_COMPLETE_LOCK_AT_MOST_FOR:PT9M}
+      daily-lock-at-most-for: ${MINDGARDEN_SCHEDULER_SCHEDULE_DAILY_CLEANUP_LOCK_AT_MOST_FOR:PT30M}
 
 # JWT TTL SSOT — JwtService·RefreshTokenServiceImpl 이 이 키만 참조. FE 별도 만료 상수와 드리프트 금지.
 # 세션 4h(HTTP_SESSION_MAX_INACTIVE) ≠ Access JWT 1h — 계층 분리. jwt.expiration / refresh-expiration 변경 금지.

@@ -1573,24 +1573,24 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<Schedule> findByConsultantId(Long consultantId) {
-        autoCompleteExpiredSchedules();
         // ⚠️ 보안: tenantId는 필수 (다른 테넌트 데이터 접근 방지)
         String tenantId = TenantContextHolder.getRequiredTenantId();
         return scheduleRepository.findByTenantIdAndConsultantId(tenantId, consultantId);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<Schedule> findByConsultantIdAndDate(Long consultantId, LocalDate date) {
-        autoCompleteExpiredSchedules();
         // ⚠️ 보안: tenantId는 필수 (다른 테넌트 데이터 접근 방지)
         String tenantId = TenantContextHolder.getRequiredTenantId();
         return scheduleRepository.findByTenantIdAndConsultantIdAndDate(tenantId, consultantId, date);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<Schedule> findByConsultantIdAndDateBetween(Long consultantId, LocalDate startDate, LocalDate endDate) {
-        autoCompleteExpiredSchedules();
         String tenantId = TenantContextHolder.getTenantId();
         if (tenantId == null) {
             log.error("❌ tenantId가 설정되지 않았습니다");
@@ -1601,24 +1601,24 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
 
 
     @Override
+    @Transactional(readOnly = true)
     public List<Schedule> findByClientId(Long clientId) {
-        autoCompleteExpiredSchedules();
         // ⚠️ 보안: tenantId는 필수 (다른 테넌트 데이터 접근 방지)
         String tenantId = TenantContextHolder.getRequiredTenantId();
         return scheduleRepository.findByTenantIdAndClientId(tenantId, clientId);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<Schedule> findByClientIdAndDate(Long clientId, LocalDate date) {
-        autoCompleteExpiredSchedules();
         // ⚠️ 보안: tenantId는 필수 (다른 테넌트 데이터 접근 방지)
         String tenantId = TenantContextHolder.getRequiredTenantId();
         return scheduleRepository.findByTenantIdAndClientIdAndDate(tenantId, clientId, date);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<Schedule> findByClientIdAndDateBetween(Long clientId, LocalDate startDate, LocalDate endDate) {
-        autoCompleteExpiredSchedules();
         // ⚠️ 보안: tenantId는 필수 (다른 테넌트 데이터 접근 방지)
         String tenantId = TenantContextHolder.getRequiredTenantId();
         return scheduleRepository.findByTenantIdAndClientIdAndDateBetween(tenantId, clientId, startDate, endDate);
@@ -2294,11 +2294,10 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
 
 
     @Override
+    @Transactional(readOnly = true)
     public List<Schedule> findSchedulesByUserRole(Long userId, String userRole) {
         log.info("🔐 권한 기반 스케줄 조회: 사용자 {}, 역할 {}", userId, userRole);
-        
-        autoCompleteExpiredSchedules();
-        
+
         String tenantId = TenantContextHolder.getTenantId();
         if (tenantId == null) {
             log.error("❌ tenantId가 설정되지 않았습니다");
@@ -2318,11 +2317,10 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<Schedule> findSchedulesByUserRoleAndDate(Long userId, String userRole, LocalDate date) {
         log.info("🔐 권한 기반 특정 날짜 스케줄 조회: 사용자 {}, 역할 {}, 날짜 {}", userId, userRole, date);
-        
-        autoCompleteExpiredSchedules();
-        
+
         String tenantId = TenantContextHolder.getRequiredTenantId();
         if (scheduleAdminSeesAllTenant(userId, userRole)) {
             return scheduleRepository.findByTenantIdAndDate(tenantId, date);
@@ -3638,11 +3636,10 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
      * 권한 기반 페이지네이션 스케줄 조회 (상담사 이름 포함)
      */
     @Override
+    @Transactional(readOnly = true)
     public Page<ScheduleResponse> findSchedulesWithNamesByUserRolePaged(Long userId, String userRole, Pageable pageable) {
         log.info("🔐 권한 기반 페이지네이션 스케줄 조회 (이름 포함): 사용자 {}, 역할 {}, 페이지 {}", userId, userRole, pageable.getPageNumber());
-        
-        autoCompleteExpiredSchedules();
-        
+
         String tenantId = TenantContextHolder.getRequiredTenantId();
         Page<Schedule> schedulePage;
         if (scheduleAdminSeesAllTenant(userId, userRole)) {

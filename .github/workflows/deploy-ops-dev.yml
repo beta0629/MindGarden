@@ -43,7 +43,22 @@ jobs:
           BUILD_STANDALONE: "true"
         run: |
           cd frontend-ops
+          # 센터 들어가기 주소는 이 빌드에 이미 있는 Core 공개 주소를 쓴다.
+          # Ops 호스트(ops.dev…)에서 첫 라벨을 떼어 테넌트 호스트를 만들지 않는다.
+          core_origin="${NEXT_PUBLIC_CORE_SOLUTION_URL%/}"
+          core_proto="${core_origin%%://*}"
+          core_host="${core_origin#*://}"
+          core_host="${core_host%%/*}"
+          if [ -z "$core_proto" ] || [ -z "$core_host" ] || [ "$core_proto" = "$core_origin" ]; then
+            echo "NEXT_PUBLIC_CORE_SOLUTION_URL must be an absolute origin"
+            exit 1
+          fi
+          export NEXT_PUBLIC_TENANT_APP_BASE="${core_proto}://{subdomain}.${core_host}/"
           ESLINT_NO_DEV_ERRORS=true npm run build
+          if ! grep -R -F -q -- "$NEXT_PUBLIC_TENANT_APP_BASE" out; then
+            echo "development Ops build did not emit the tenant center address"
+            exit 1
+          fi
 
       - name: 🔍 Ops 프론트엔드 빌드 결과 확인
         run: |

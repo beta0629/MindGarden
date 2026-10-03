@@ -13,10 +13,10 @@ import com.coresolution.consultation.entity.Client;
 import com.coresolution.consultation.entity.Consultant;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.service.ConsultantService;
+import com.coresolution.consultation.service.support.ClientPathAccessGuard;
 import com.coresolution.core.annotation.RequireBusinessType;
 import com.coresolution.core.controller.BaseApiController;
 import com.coresolution.core.dto.ApiResponse;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
@@ -34,6 +34,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -49,6 +50,7 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 @RestController
+@RequiredArgsConstructor
 @RequestMapping("/api/v1/consultants")
 @CrossOrigin(origins = "*")
 @PreAuthorize("isAuthenticated()")
@@ -57,8 +59,8 @@ public class ConsultantController extends BaseApiController {
     /** 매출·상담 통계 등 ADMIN/STAFF 전용 역할 — CONSULTANT 노출 차단. */
     static final String ROLES_VIEW_STATISTICS = "hasAnyRole('ADMIN','STAFF')";
 
-    @Autowired
-    private ConsultantService consultantService;
+    private final ConsultantService consultantService;
+    private final ClientPathAccessGuard clientPathAccessGuard;
     
     // === 상담사 조회 및 검색 ===
     
@@ -163,8 +165,10 @@ public class ConsultantController extends BaseApiController {
             @PathVariable Long id,
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String search,
-            Pageable pageable) {
-        
+            Pageable pageable,
+            HttpSession session) {
+
+        clientPathAccessGuard.requireConsultantAccess(session, id);
         log.info("상담사별 내담자 목록 조회 - ID: {}, status: {}, search: {}, page: {}",
                 id, status, search != null && !search.isBlank() ? "(set)" : null, pageable.getPageNumber());
         
@@ -189,8 +193,10 @@ public class ConsultantController extends BaseApiController {
     @GetMapping("/{consultantId}/clients/{clientId}")
     public ResponseEntity<ApiResponse<ConsultantClientDetailResponse>> getClientByConsultant(
             @PathVariable Long consultantId,
-            @PathVariable Long clientId) {
-        
+            @PathVariable Long clientId,
+            HttpSession session) {
+
+        clientPathAccessGuard.requireConsultantClientAccess(session, consultantId, clientId);
         log.info("상담사별 내담자 상세 정보 조회 - consultantId: {}, clientId: {}", consultantId, clientId);
 
         ConsultantClientDetailResponse client = consultantService.findClientByConsultantId(consultantId, clientId)
@@ -207,8 +213,10 @@ public class ConsultantController extends BaseApiController {
     public ResponseEntity<ApiResponse<Client>> updateClientProfile(
             @PathVariable Long consultantId,
             @PathVariable Long clientId,
-            @RequestBody Client updateData) {
-        
+            @RequestBody Client updateData,
+            HttpSession session) {
+
+        clientPathAccessGuard.requireConsultantClientAccess(session, consultantId, clientId);
         log.info("내담자 프로필 수정 - consultantId: {}, clientId: {}", consultantId, clientId);
         
         // Client updatedClient = consultantService.updateClientProfile(consultantId, clientId, updateData);

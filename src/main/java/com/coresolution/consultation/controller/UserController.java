@@ -7,6 +7,7 @@ import com.coresolution.consultation.dto.UserResponse;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.service.DynamicPermissionService;
 import com.coresolution.consultation.service.UserService;
+import com.coresolution.consultation.service.support.ClientPathAccessGuard;
 import com.coresolution.consultation.util.PermissionCheckUtils;
 import com.coresolution.consultation.utils.SessionUtils;
 import com.coresolution.core.controller.BaseApiController;
@@ -44,6 +45,7 @@ public class UserController extends BaseApiController {
     
     private final UserService userService;
     private final DynamicPermissionService dynamicPermissionService;
+    private final ClientPathAccessGuard clientPathAccessGuard;
     
     // ==================== 기본 CRUD 메서드 ====================
     
@@ -490,10 +492,14 @@ public class UserController extends BaseApiController {
     }
     
     /**
-     * 사용자 프로필 수정
+     * 사용자 프로필 수정 (역할·등급·비밀번호까지 바뀌므로 같은 테넌트 관리자·사무원만).
      */
     @PutMapping("/{id}/profile")
-    public ResponseEntity<ApiResponse<User>> updateProfile(@PathVariable Long id, @RequestBody User updateData) {
+    public ResponseEntity<ApiResponse<User>> updateProfile(
+            @PathVariable Long id,
+            @RequestBody User updateData,
+            HttpSession session) {
+        clientPathAccessGuard.requireTenantManager(session);
         User updatedUser = userService.updateUserProfile(id, updateData);
         return updated("프로필이 수정되었습니다.", updatedUser);
     }

@@ -7,6 +7,8 @@ import com.coresolution.consultation.dto.ConsultantApplicationRequest;
 import com.coresolution.consultation.dto.UserProfileResponse;
 import com.coresolution.consultation.dto.UserProfileUpdateRequest;
 import com.coresolution.consultation.service.UserProfileService;
+import com.coresolution.consultation.service.support.ClientPathAccessGuard;
+import jakarta.servlet.http.HttpSession;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -35,6 +37,7 @@ import lombok.extern.slf4j.Slf4j;
 public class UserProfileController {
     
     private final UserProfileService userProfileService;
+    private final ClientPathAccessGuard clientPathAccessGuard;
     
     /**
      * 유저 프로필 조회
@@ -79,7 +82,9 @@ public class UserProfileController {
     @PutMapping("/{userId}/role")
     public ResponseEntity<Boolean> changeUserRole(
             @PathVariable Long userId,
-            @RequestParam String newRole) {
+            @RequestParam String newRole,
+            HttpSession session) {
+        clientPathAccessGuard.requireTenantManager(session);
         try {
             log.info("유저 역할 변경 요청: userId={}, newRole={}", userId, newRole);
             boolean success = userProfileService.changeUserRole(userId, UserRole.fromString(newRole));

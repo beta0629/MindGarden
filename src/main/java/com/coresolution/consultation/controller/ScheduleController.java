@@ -47,6 +47,7 @@ import com.coresolution.consultation.repository.ConsultantClientMappingRepositor
 import com.coresolution.consultation.service.ScheduleListUserFieldsResolver;
 import com.coresolution.consultation.service.ScheduleMappingContextResolver;
 import com.coresolution.consultation.service.ScheduleMappingContextResolver.ScheduleMappingResponseContext;
+import com.coresolution.consultation.service.support.ClientPathAccessGuard;
 import com.coresolution.consultation.service.ScheduleService;
 import com.coresolution.consultation.util.PermissionCheckUtils;
 import com.coresolution.consultation.util.ScheduleSlotTimes;
@@ -147,6 +148,7 @@ public class ScheduleController extends BaseApiController {
             scheduleClientReminderSmsStatusService;
     private final com.coresolution.consultation.repository.ClientRepository clientRepository;
     private final com.coresolution.consultation.repository.ConsultantRepository consultantRepository;
+    private final ClientPathAccessGuard clientPathAccessGuard;
 
     /**
      * 테넌트 컨텍스트가 비어 있을 때 세션 사용자의 tenantId로 보완 (상담사 대시보드 등).
@@ -978,22 +980,20 @@ public class ScheduleController extends BaseApiController {
 
 
      /**
-     * 내담자별 스케줄 조회 (관리자만 접근 가능)
+     * 내담자별 스케줄 조회.
+     *
+     * <p>역할은 세션 사용자 기준({@link ClientPathAccessGuard}): 내담자 본인, 매칭 상담사, 같은 테넌트 관리자·사무원.
+     * {@code userRole} 파라미터는 기존 호출 호환을 위해 받기만 하고 권한 판단에 쓰지 않는다.</p>
      */
     @GetMapping("/client/{clientId}")
     public ResponseEntity<ApiResponse<List<Schedule>>> getSchedulesByClient(
             @PathVariable Long clientId,
-            @RequestParam String userRole) {
-        
-        log.info("👤 내담자별 스케줄 조회: 내담자 {}, 요청자 역할 {}", clientId, userRole);
-        
-        UserRole role = UserRole.fromString(userRole);
-        if (role == null
-                || !roleCommonCodeAuthorizationService.isAdminOrStaffRoleFromCommonCode(role)) {
-            log.warn("❌ 관리자 권한 없음: {}", userRole);
-            throw new org.springframework.security.access.AccessDeniedException("권한이 없습니다.");
-        }
-        
+            @RequestParam(required = false) String userRole,
+            HttpSession session) {
+
+        clientPathAccessGuard.requireClientAccess(session, clientId);
+        log.info("👤 내담자별 스케줄 조회: 내담자 {}", clientId);
+
         List<Schedule> schedules = scheduleService.findByClientId(clientId);
         log.info("✅ 내담자별 스케줄 조회 완료: {}개", schedules.size());
         return success(schedules);

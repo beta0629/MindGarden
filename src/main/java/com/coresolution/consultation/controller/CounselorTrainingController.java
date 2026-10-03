@@ -3,6 +3,8 @@ package com.coresolution.consultation.controller;
 import com.coresolution.consultation.entity.CounselorFeedback;
 import com.coresolution.consultation.entity.VirtualClientSession;
 import com.coresolution.consultation.service.CounselorTrainingService;
+import com.coresolution.consultation.service.support.ClientPathAccessGuard;
+import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -28,6 +30,7 @@ import java.util.Map;
 public class CounselorTrainingController {
 
     private final CounselorTrainingService trainingService;
+    private final ClientPathAccessGuard clientPathAccessGuard;
 
     /**
      * 상담 세션 분석 및 피드백
@@ -36,7 +39,10 @@ public class CounselorTrainingController {
     @PostMapping("/analyze-session/{consultationRecordId}")
     public ResponseEntity<Map<String, Object>> analyzeSession(
             @PathVariable Long consultationRecordId,
-            @RequestParam Long consultantId) {
+            @RequestParam Long consultantId,
+            HttpSession session) {
+
+        clientPathAccessGuard.requireConsultantAccess(session, consultantId);
 
         log.info("📊 상담 세션 분석 요청: recordId={}, consultantId={}",
             consultationRecordId, consultantId);
@@ -67,9 +73,11 @@ public class CounselorTrainingController {
      */
     @PostMapping("/virtual-client/create")
     public ResponseEntity<Map<String, Object>> createVirtualClientSession(
-            @RequestBody Map<String, Object> request) {
+            @RequestBody Map<String, Object> request,
+            HttpSession httpSession) {
 
-        Long consultantId = ((Number) request.get("consultantId")).longValue();
+        Long consultantId = request.get("consultantId") instanceof Number number ? number.longValue() : null;
+        clientPathAccessGuard.requireConsultantAccess(httpSession, consultantId);
         String scenarioType = (String) request.get("scenarioType");
         String difficultyLevel = (String) request.getOrDefault("difficultyLevel", "MEDIUM");
 
@@ -165,8 +173,10 @@ public class CounselorTrainingController {
     @GetMapping("/feedback/{consultantId}")
     public ResponseEntity<Map<String, Object>> getFeedbackHistory(
             @PathVariable Long consultantId,
-            @RequestParam(defaultValue = "10") Integer limit) {
+            @RequestParam(defaultValue = "10") Integer limit,
+            HttpSession session) {
 
+        clientPathAccessGuard.requireConsultantAccess(session, consultantId);
         try {
             Map<String, Object> result = trainingService.getFeedbackHistory(consultantId, limit);
 

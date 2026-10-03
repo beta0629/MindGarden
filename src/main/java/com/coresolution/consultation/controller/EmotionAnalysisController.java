@@ -2,6 +2,8 @@ package com.coresolution.consultation.controller;
 
 import com.coresolution.consultation.entity.*;
 import com.coresolution.consultation.service.EmotionAnalysisService;
+import com.coresolution.consultation.service.support.ClientPathAccessGuard;
+import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -29,6 +31,7 @@ import java.util.Map;
 public class EmotionAnalysisController {
 
     private final EmotionAnalysisService emotionAnalysisService;
+    private final ClientPathAccessGuard clientPathAccessGuard;
 
     /**
      * 음성 바이오마커 분석
@@ -214,8 +217,10 @@ public class EmotionAnalysisController {
     @GetMapping("/trend/{clientId}")
     public ResponseEntity<Map<String, Object>> getEmotionTrend(
             @PathVariable Long clientId,
-            @RequestParam(required = false) String emotionType) {
+            @RequestParam(required = false) String emotionType,
+            HttpSession session) {
 
+        clientPathAccessGuard.requireClientAccess(session, clientId);
         try {
             List<EmotionTrackingHistory> trend = emotionType != null
                 ? emotionAnalysisService.getEmotionTrend(clientId, emotionType)
@@ -248,8 +253,10 @@ public class EmotionAnalysisController {
     public ResponseEntity<Map<String, Object>> trackEmotionChanges(
             @PathVariable Long clientId,
             @RequestParam Long consultationRecordId,
-            @RequestParam Integer sessionNumber) {
+            @RequestParam Integer sessionNumber,
+            HttpSession session) {
 
+        clientPathAccessGuard.requireClientAccess(session, clientId);
         try {
             emotionAnalysisService.trackEmotionChanges(clientId, consultationRecordId, sessionNumber);
 

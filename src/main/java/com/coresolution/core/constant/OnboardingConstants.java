@@ -49,6 +49,9 @@ public class OnboardingConstants {
     public static final String ERROR_ONBOARDING_ADMIN_PASSWORD_REQUIRED_ON_CREATE =
             "관리자 초기 비밀번호(adminPassword)는 필수입니다. checklist_json 또는 요청 본문에 포함해주세요.";
 
+    /** checklist_json 안의 관리자 초기 비밀번호 키. 저장 값은 항상 BCrypt 해시(신규) — 응답·로그에 노출 금지 */
+    public static final String CHECKLIST_KEY_ADMIN_PASSWORD = "adminPassword";
+
     /** CAPTCHA(Turnstile) 검증이 활성화된 환경에서 토큰 미제출 */
     public static final String ERROR_ONBOARDING_CAPTCHA_TOKEN_REQUIRED =
             "보안 확인(CAPTCHA) 토큰이 필요합니다.";

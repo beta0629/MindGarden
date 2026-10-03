@@ -48,7 +48,6 @@ export function OnboardingDecisionForm({ requestId, initialStatus }: Props) {
   const [isPending, startTransition] = useTransition();
   const [statusCodes, setStatusCodes] = useState<CommonCode[]>([]);
   const [adminAccount, setAdminAccount] = useState<OnboardingDecisionResponse["adminAccount"] | null>(null);
-  const [showPassword, setShowPassword] = useState(false);
   const [processingStatus, setProcessingStatus] = useState<Record<string, any> | null>(null);
   const [isPolling, setIsPolling] = useState(false);
   const [pollIntervalRef, setPollIntervalRef] = useState<NodeJS.Timeout | null>(null);
@@ -373,33 +372,27 @@ export function OnboardingDecisionForm({ requestId, initialStatus }: Props) {
         <div className="form-card" style={{ marginTop: "1rem" }}>
           <h2>🔄 실시간 처리 현황</h2>
           {processingStatus ? (
-            <div style={{ marginTop: "1rem" }}>
+            <div className={styles.processing}>
               {/* 진행률 표시 */}
               {processingStatus.progress !== undefined && (
-                <div style={{ marginBottom: "1rem" }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.5rem" }}>
+                <div className={styles.processing__progress}>
+                  <div className={styles.processing__progressHeader}>
                     <span>전체 진행률</span>
                     <span>{processingStatus.progress}%</span>
                   </div>
-                  <div style={{ 
-                    width: "100%", 
-                    height: "20px", 
-                    backgroundColor: "#e0e0e0", 
-                    borderRadius: "4px",
-                    overflow: "hidden"
-                  }}>
-                    <div style={{ 
-                      width: `${processingStatus.progress}%`, 
-                      height: "100%", 
-                      backgroundColor: processingStatus.progress === 100 ? "#4caf50" : "#2196f3",
-                      transition: "width 0.3s ease"
-                    }} />
+                  <div className={styles.processing__progressTrack}>
+                    <div
+                      className={`${styles.processing__progressBar} ${
+                        processingStatus.progress === 100 ? styles["processing__progressBar--complete"] : ""
+                      }`}
+                      style={{ width: `${processingStatus.progress}%` }}
+                    />
                   </div>
                 </div>
               )}
               
               {/* 단계별 상태 표시 */}
-              <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+              <div className={styles.processing__steps}>
                 {[
                   { key: "PROCEDURE_START", label: "프로시저 실행 시작" },
                   { key: "TENANT_CREATE", label: "테넌트 생성/활성화" },
@@ -415,34 +408,24 @@ export function OnboardingDecisionForm({ requestId, initialStatus }: Props) {
                     : stepData.status === "FAILED" ? "❌" 
                     : stepData.status === "IN_PROGRESS" ? "🔄" 
                     : "⏳";
+                  const stepModifier = styles[`processing__step--${stepData.status}`] || "";
                   
                   return (
-                    <div key={step.key} style={{ 
-                      padding: "0.75rem", 
-                      backgroundColor: stepData.status === "SUCCESS" ? "#e8f5e9" 
-                        : stepData.status === "FAILED" ? "#ffebee" 
-                        : stepData.status === "IN_PROGRESS" ? "#e3f2fd" 
-                        : "#f5f5f5",
-                      borderRadius: "4px",
-                      border: `1px solid ${stepData.status === "SUCCESS" ? "#4caf50" 
-                        : stepData.status === "FAILED" ? "#f44336" 
-                        : stepData.status === "IN_PROGRESS" ? "#2196f3" 
-                        : "#9e9e9e"}`
-                    }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                    <div key={step.key} className={`${styles.processing__step} ${stepModifier}`}>
+                      <div className={styles.processing__stepHeader}>
                         <span>{statusIcon}</span>
                         <strong>{step.label}</strong>
-                        <span style={{ marginLeft: "auto", fontSize: "0.875rem", color: "#666" }}>
+                        <span className={styles.processing__stepStatus}>
                           {stepData.status}
                         </span>
                       </div>
                       {stepData.message && (
-                        <div style={{ marginTop: "0.5rem", fontSize: "0.875rem", color: "#666" }}>
+                        <div className={styles.processing__stepMessage}>
                           {stepData.message}
                         </div>
                       )}
                       {stepData.updatedAt && (
-                        <div style={{ marginTop: "0.25rem", fontSize: "0.75rem", color: "#999" }}>
+                        <div className={styles.processing__stepTime}>
                           {new Date(stepData.updatedAt).toLocaleString("ko-KR")}
                         </div>
                       )}
@@ -452,22 +435,22 @@ export function OnboardingDecisionForm({ requestId, initialStatus }: Props) {
               </div>
               
               {isPolling && (
-                <div style={{ marginTop: "1rem", textAlign: "center", color: "#666", fontSize: "0.875rem" }}>
+                <div className={styles.processing__polling}>
                   🔄 실시간 업데이트 중...
                 </div>
               )}
             </div>
           ) : (
-            <div style={{ marginTop: "1rem", padding: "1rem", textAlign: "center", color: "#666", fontSize: "0.875rem", backgroundColor: "#f5f5f5", borderRadius: "4px" }}>
+            <div className={styles.processing__empty}>
               {isPolling ? (
                 <div>
-                  <div style={{ marginBottom: "0.5rem" }}>🔄 처리 상태 조회 중...</div>
-                  <div style={{ fontSize: "0.75rem", color: "#999" }}>백엔드에서 처리 상태를 가져오는 중입니다.</div>
+                  <div className={styles.processing__emptyTitle}>🔄 처리 상태 조회 중...</div>
+                  <div className={styles.processing__emptyHint}>백엔드에서 처리 상태를 가져오는 중입니다.</div>
                 </div>
               ) : (
                 <div>
-                  <div style={{ marginBottom: "0.5rem" }}>⏳ 처리 상태 정보가 없습니다.</div>
-                  <div style={{ fontSize: "0.75rem", color: "#999" }}>처리 상태가 업데이트되면 자동으로 표시됩니다.</div>
+                  <div className={styles.processing__emptyTitle}>⏳ 처리 상태 정보가 없습니다.</div>
+                  <div className={styles.processing__emptyHint}>처리 상태가 업데이트되면 자동으로 표시됩니다.</div>
                 </div>
               )}
             </div>
@@ -489,26 +472,6 @@ export function OnboardingDecisionForm({ requestId, initialStatus }: Props) {
                 <button
                   type="button"
                   onClick={() => copyToClipboard(adminAccount.email, "이메일")}
-                  className={styles.adminAccountCard__button}
-                >
-                  복사
-                </button>
-              </div>
-              <div className={styles.adminAccountCard__row}>
-                <strong className={styles.adminAccountCard__label}>비밀번호:</strong>
-                <code className={styles.adminAccountCard__value}>
-                  {showPassword ? adminAccount.password : "••••••••••"}
-                </code>
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className={styles.adminAccountCard__button}
-                >
-                  {showPassword ? "숨기기" : "보기"}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => copyToClipboard(adminAccount.password, "비밀번호")}
                   className={styles.adminAccountCard__button}
                 >
                   복사

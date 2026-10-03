@@ -11,11 +11,10 @@ public record OnboardingDecisionResponse(
     AdminAccountInfo adminAccount
 ) {
     /**
-     * 생성된 관리자 계정 정보
+     * 생성된 관리자 계정 정보. 비밀번호는 신청자만 알고 있으므로 포함하지 않는다.
      */
     public record AdminAccountInfo(
         String email,
-        String password,  // 원본 비밀번호 (온보딩 체크리스트에서 추출한 값)
         String tenantId,
         String tenantName
     ) {

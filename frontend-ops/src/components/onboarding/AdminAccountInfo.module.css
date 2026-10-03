@@ -4,45 +4,45 @@
  */
 
 .adminAccountCard {
-  margin-top: var(--ops-spacing-lg, 1.5rem);
-  background-color: var(--ops-color-info-bg, #f0f9ff);
-  border: 2px solid var(--ops-color-info-border, #0ea5e9);
-  border-radius: var(--ops-radius-lg, 0.5rem);
+  margin-top: var(--ops-spacing-lg);
+  background-color: var(--ops-color-info-bg);
+  border: 2px solid var(--ops-color-info-border);
+  border-radius: var(--ops-radius-lg);
 }
 
 .adminAccountCard__title {
-  color: var(--ops-color-info-text, #0369a1);
-  margin-bottom: var(--ops-spacing-md, 1rem);
+  color: var(--ops-color-info-text);
+  margin-bottom: var(--ops-spacing-md);
 }
 
 .adminAccountCard__content {
-  padding: var(--ops-spacing-md, 1rem);
-  background-color: var(--ops-color-bg-white, #ffffff);
-  border-radius: var(--ops-radius-md, 0.375rem);
-  border: 1px solid var(--ops-color-info-border-light, #bae6fd);
+  padding: var(--ops-spacing-md);
+  background-color: var(--ops-color-bg-white);
+  border-radius: var(--ops-radius-md);
+  border: 1px solid var(--ops-color-info-border-light);
 }
 
 .adminAccountCard__field {
-  margin-bottom: var(--ops-spacing-md, 1rem);
+  margin-bottom: var(--ops-spacing-md);
 }
 
 .adminAccountCard__row {
   display: flex;
   align-items: center;
-  gap: var(--ops-spacing-sm, 0.5rem);
-  margin-bottom: var(--ops-spacing-sm, 0.5rem);
+  gap: var(--ops-spacing-sm);
+  margin-bottom: var(--ops-spacing-sm);
 }
 
 .adminAccountCard__label {
   min-width: 100px;
-  font-weight: var(--ops-font-weight-semibold, 600);
+  font-weight: var(--ops-font-weight-semibold);
 }
 
 .adminAccountCard__value {
   flex: 1;
-  padding: var(--ops-spacing-xs, 0.25rem) var(--ops-spacing-sm, 0.5rem);
-  background-color: var(--ops-color-bg-dark, #f1f5f9);
-  border-radius: var(--ops-radius-sm, 0.25rem);
+  padding: var(--ops-spacing-xs) var(--ops-spacing-sm);
+  background-color: var(--ops-color-bg-dark);
+  border-radius: var(--ops-radius-sm);
   font-family: monospace;
 }
 
@@ -52,35 +52,146 @@
 }
 
 .adminAccountCard__button {
-  padding: var(--ops-spacing-xs, 0.25rem) var(--ops-spacing-md, 0.75rem);
-  font-size: var(--ops-font-size-sm, 0.875rem);
-  border: 1px solid var(--ops-color-border, #cbd5e1);
-  border-radius: var(--ops-radius-sm, 0.25rem);
+  padding: var(--ops-spacing-xs) var(--ops-spacing-md);
+  font-size: var(--ops-font-size-sm);
+  border: 1px solid var(--ops-color-border);
+  border-radius: var(--ops-radius-sm);
   cursor: pointer;
-  background-color: var(--ops-color-bg-white, #ffffff);
-  color: var(--ops-color-text-primary, #1e293b);
-  transition: background-color var(--ops-transition-fast, 0.15s ease),
-              border-color var(--ops-transition-fast, 0.15s ease);
+  background-color: var(--ops-color-bg-white);
+  color: var(--ops-color-text-primary);
+  transition: background-color var(--ops-transition-fast),
+              border-color var(--ops-transition-fast);
 }
 
 .adminAccountCard__button:hover {
-  background-color: var(--ops-color-bg-hover, rgba(59, 130, 246, 0.08));
-  border-color: var(--ops-color-primary, #3b82f6);
+  background-color: var(--ops-color-bg-hover));
+  border-color: var(--ops-color-primary);
 }
 
 .adminAccountCard__footer {
-  margin-top: var(--ops-spacing-md, 1rem);
-  padding-top: var(--ops-spacing-md, 1rem);
-  border-top: 1px solid var(--ops-color-info-border-light, #bae6fd);
+  margin-top: var(--ops-spacing-md);
+  padding-top: var(--ops-spacing-md);
+  border-top: 1px solid var(--ops-color-info-border-light);
 }
 
 .adminAccountCard__footerText {
-  margin-bottom: var(--ops-spacing-md, 0.75rem);
-  color: var(--ops-color-info-text, #0369a1);
-  font-size: var(--ops-font-size-sm, 0.875rem);
+  margin-bottom: var(--ops-spacing-md);
+  color: var(--ops-color-info-text);
+  font-size: var(--ops-font-size-sm);
 }
 
 .adminAccountCard__loginButton {
   width: 100%;
 }
 
+
+/* 승인 처리 상태 패널 */
+.processing {
+  margin-top: var(--ops-spacing-md);
+}
+
+.processing__progress {
+  margin-bottom: var(--ops-spacing-md);
+}
+
+.processing__progressHeader {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: var(--ops-spacing-sm);
+}
+
+.processing__progressTrack {
+  width: 100%;
+  height: var(--ops-spacing-lg);
+  background-color: var(--ops-color-border);
+  border-radius: var(--ops-radius-sm);
+  overflow: hidden;
+}
+
+.processing__progressBar {
+  height: 100%;
+  background-color: var(--ops-color-info);
+  transition: width 0.3s ease;
+}
+
+.processing__progressBar--complete {
+  background-color: var(--ops-color-success);
+}
+
+.processing__steps {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ops-spacing-sm);
+}
+
+.processing__step {
+  padding: var(--ops-spacing-sm);
+  background-color: var(--ops-color-badge-neutral-bg);
+  border: 1px solid var(--ops-color-border-hover);
+  border-radius: var(--ops-radius-sm);
+}
+
+.processing__step--SUCCESS {
+  background-color: var(--ops-color-badge-success-bg);
+  border-color: var(--ops-color-success);
+}
+
+.processing__step--FAILED {
+  background-color: var(--ops-color-badge-danger-bg);
+  border-color: var(--ops-color-danger);
+}
+
+.processing__step--IN_PROGRESS {
+  background-color: var(--ops-color-badge-info-bg);
+  border-color: var(--ops-color-info);
+}
+
+.processing__stepHeader {
+  display: flex;
+  align-items: center;
+  gap: var(--ops-spacing-sm);
+}
+
+.processing__stepStatus {
+  margin-left: auto;
+  font-size: var(--ops-font-size-sm);
+  color: var(--ops-color-text-secondary);
+}
+
+.processing__stepMessage {
+  margin-top: var(--ops-spacing-sm);
+  font-size: var(--ops-font-size-sm);
+  color: var(--ops-color-text-secondary);
+}
+
+.processing__stepTime {
+  margin-top: var(--ops-spacing-xs);
+  font-size: var(--ops-font-size-xs);
+  color: var(--ops-color-text-muted);
+}
+
+.processing__polling {
+  margin-top: var(--ops-spacing-md);
+  text-align: center;
+  font-size: var(--ops-font-size-sm);
+  color: var(--ops-color-text-secondary);
+}
+
+.processing__empty {
+  margin-top: var(--ops-spacing-md);
+  padding: var(--ops-spacing-md);
+  text-align: center;
+  font-size: var(--ops-font-size-sm);
+  color: var(--ops-color-text-secondary);
+  background-color: var(--ops-color-badge-neutral-bg);
+  border-radius: var(--ops-radius-sm);
+}
+
+.processing__emptyTitle {
+  margin-bottom: var(--ops-spacing-sm);
+}
+
+.processing__emptyHint {
+  font-size: var(--ops-font-size-xs);
+  color: var(--ops-color-text-muted);
+}

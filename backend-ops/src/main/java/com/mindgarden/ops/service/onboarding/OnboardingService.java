@@ -32,6 +32,10 @@ import com.fasterxml.jackson.databind.JsonNode;
 @RequiredArgsConstructor
 public class OnboardingService {
 
+    /** BCrypt 모듈러 크립트 형식: $2a$/$2b$/$2y$ + cost 2자리 + salt·hash 53자 */
+    private static final java.util.regex.Pattern BCRYPT_HASH_PATTERN =
+            java.util.regex.Pattern.compile("^\\$2[abxy]?\\$\\d{2}\\$[./A-Za-z0-9]{53}$");
+
     private final OnboardingRequestRepository repository;
     private final AuditService auditService;
     private final JdbcTemplate jdbcTemplate;
@@ -335,10 +339,8 @@ public class OnboardingService {
         // 승인 완료 시 생성된 관리자 계정 정보 반환
         com.mindgarden.ops.controller.dto.OnboardingDecisionResponse.AdminAccountInfo adminInfo = null;
         if (status == OnboardingStatus.APPROVED && saved.getRequestedBy() != null) {
-            String rawPassword = extractAdminPasswordFromChecklist(saved.getChecklistJson());
             adminInfo = new com.mindgarden.ops.controller.dto.OnboardingDecisionResponse.AdminAccountInfo(
                 saved.getRequestedBy(),
-                rawPassword,  // 원본 비밀번호 (온보딩 체크리스트에서 추출)
                 saved.getTenantId(),
                 saved.getTenantName()
             );
@@ -461,13 +463,15 @@ public class OnboardingService {
                         
                         // 4. 비밀번호 해시 생성 (방어 코드: 예외 처리)
                         try {
-                            adminPasswordHash = passwordEncoder.encode(rawPassword);
+                            // 메인 백엔드가 생성 시 BCrypt 해시로 저장 — 재인코딩하면 원 비밀번호로 로그인 불가
+                            adminPasswordHash = BCRYPT_HASH_PATTERN.matcher(rawPassword).matches()
+                                ? rawPassword
+                                : passwordEncoder.encode(rawPassword);
                             if (adminPasswordHash == null || adminPasswordHash.isBlank()) {
                                 log.error("❌ 비밀번호 해시 생성 실패 (null 반환), 기본 비밀번호 해시 사용");
                                 adminPasswordHash = passwordEncoder.encode("TempPassword123!");
                             }
-                            log.info("✅ 관리자 계정 정보 준비 완료 - email={}, passwordHashPrefix={}", 
-                                adminEmail, adminPasswordHash.substring(0, Math.min(20, adminPasswordHash.length())) + "...");
+                            log.info("✅ 관리자 계정 정보 준비 완료 - email={}", adminEmail);
                         } catch (Exception e) {
                             log.error("❌ 비밀번호 해시 생성 중 예외 발생: {}, 기본 비밀번호 해시 사용", e.getMessage(), e);
                             try {

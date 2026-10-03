@@ -13,7 +13,6 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import com.coresolution.consultation.constant.UserRole;
-import com.coresolution.consultation.constant.compliance.ComplianceDashboardSampleContent;
 import com.coresolution.consultation.constant.compliance.ComplianceServiceErrorMessages;
 import com.coresolution.consultation.repository.PersonalDataAccessLogRepository;
 import com.coresolution.consultation.repository.UserRepository;
@@ -135,13 +134,18 @@ public class ComplianceService {
         Map<String, Object> result = new HashMap<>();
         
         try {
-            Map<String, Object> responseProcedures = ComplianceDashboardSampleContent.breachResponseProcedures();
-            Map<String, Object> responseTeam =
-                ComplianceDashboardSampleContent.breachResponseTeam(buildTenantContactInfo());
+            // 대응 체계 저장소가 없으므로 표본 대응팀·절차를 내보내지 않고 빈 상태 + 등록 안내만 응답.
+            // 연락처는 현재 테넌트 센터 프로필 실측값만 사용한다.
+            Map<String, Object> responseTeam = new LinkedHashMap<>();
+            responseTeam.put("teamLeader", null);
+            responseTeam.put("members", Collections.emptyList());
+            responseTeam.put("contactInfo", buildTenantContactInfo());
             
-            result.put("responseProcedures", responseProcedures);
+            result.put("responseProcedures", Collections.emptyMap());
             result.put("responseTeam", responseTeam);
-            result.put("lastUpdated", LocalDateTime.now());
+            result.put("registered", false);
+            result.put("emptyMessage", ComplianceServiceErrorMessages.MSG_BREACH_RESPONSE_NOT_REGISTERED);
+            result.put("lastUpdated", null);
             result.put("status", "success");
             
         } catch (Exception e) {

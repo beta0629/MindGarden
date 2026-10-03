@@ -14,6 +14,8 @@ jest.mock('react-i18next', () => ({
 
 /* eslint-disable import/first -- jest.mock 이후 import */
 import {
+  BreachCard,
+  COMPLIANCE_BREACH_EMPTY_TEXT,
   COMPLIANCE_EMPTY_LIST_TEXT,
   COMPLIANCE_NOT_REVIEWED_TEXT,
   EducationCard,
@@ -50,5 +52,39 @@ describe('ComplianceDashboardCards — 표본 제거 빈 상태', () => {
   it('educationPrograms 가 없어도 깨지지 않고 빈 상태를 보인다', () => {
     render(<EducationCard educationStatus={{}} />);
     expect(screen.getByTestId('compliance-empty-list')).toHaveTextContent(COMPLIANCE_EMPTY_LIST_TEXT);
+  });
+
+  it('유출 대응 절차가 비면 서버 안내 「유출 대응 체계를 등록해 주세요」 를 보이고 표본 팀장은 없다', () => {
+    render(
+      <BreachCard
+        breachResponse={{
+          responseProcedures: {},
+          responseTeam: { teamLeader: null, members: [], contactInfo: { emergency: '' } },
+          registered: false,
+          emptyMessage: '유출 대응 체계를 등록해 주세요',
+          lastUpdated: null
+        }}
+      />
+    );
+    expect(screen.getByTestId('compliance-empty-list')).toHaveTextContent('유출 대응 체계를 등록해 주세요');
+    expect(screen.queryByText(/기술팀장|법무팀장|마케팅팀장|개발팀장|침해사고 발견 및 신고/)).not.toBeInTheDocument();
+  });
+
+  it('emptyMessage·responseProcedures 가 없어도 깨지지 않고 기본 유출 대응 빈 상태를 보인다', () => {
+    render(<BreachCard breachResponse={{}} />);
+    expect(screen.getByTestId('compliance-empty-list')).toHaveTextContent(COMPLIANCE_BREACH_EMPTY_TEXT);
+  });
+
+  it('등록된 절차가 있으면 빈 상태 대신 절차를 보인다', () => {
+    render(
+      <BreachCard
+        breachResponse={{
+          responseProcedures: { s1: { title: '등록된 절차', timeframe: '즉시' } },
+          responseTeam: {}
+        }}
+      />
+    );
+    expect(screen.queryByTestId('compliance-empty-list')).not.toBeInTheDocument();
+    expect(screen.getByText('등록된 절차')).toBeInTheDocument();
   });
 });

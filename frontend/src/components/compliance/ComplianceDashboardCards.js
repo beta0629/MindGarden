@@ -11,18 +11,22 @@ export const COMPLIANCE_EMPTY_LIST_TEXT = '등록된 항목이 없습니다';
 /** 실측 점검이 없는 상태 라벨 (백엔드 STATUS_NOT_REVIEWED 와 동일) */
 export const COMPLIANCE_NOT_REVIEWED_TEXT = '미점검';
 
+/** 등록된 유출 대응 체계가 없을 때 안내 (백엔드 MSG_BREACH_RESPONSE_NOT_REGISTERED 와 동일) */
+export const COMPLIANCE_BREACH_EMPTY_TEXT = '유출 대응 체계를 등록해 주세요';
+
 /**
  * 목록이 비어 있으면 빈 상태 문구를, 아니면 렌더 결과를 돌려준다.
  *
  * @param {Array|undefined|null} items
  * @param {(item: *, index: number) => React.ReactNode} renderItem
+ * @param {string} [emptyText] 빈 상태 문구 (기본: 등록된 항목이 없습니다)
  * @returns {React.ReactNode}
  */
-function renderComplianceList(items, renderItem) {
+function renderComplianceList(items, renderItem, emptyText = COMPLIANCE_EMPTY_LIST_TEXT) {
   if (!Array.isArray(items) || items.length === 0) {
     return (
       <p className="mg-v2-compliance-dashboard__muted" data-testid="compliance-empty-list">
-        {COMPLIANCE_EMPTY_LIST_TEXT}
+        {emptyText}
       </p>
     );
   }
@@ -216,15 +220,18 @@ export function BreachCard({ breachResponse }) {
         <div className="mg-v2-compliance-dashboard__row mg-v2-compliance-dashboard__row--block">
           <span className="mg-v2-compliance-dashboard__label">{t('common:compliance.ComplianceDashboardCards.t_7df26b5b')}</span>
           <div className="mg-v2-compliance-dashboard__list">
-            {breachResponse.responseProcedures &&
-              Object.entries(breachResponse.responseProcedures).map(([step, procedure]) => (
+            {renderComplianceList(
+              Object.entries(breachResponse.responseProcedures || {}),
+              ([step, procedure]) => (
                 <div key={step} className="mg-v2-compliance-dashboard__list-item">
                   <strong>
-                    <SafeText>{procedure.title}</SafeText>:
+                    <SafeText>{procedure?.title}</SafeText>:
                   </strong>{' '}
-                  <SafeText>{procedure.timeframe}</SafeText>
+                  <SafeText>{procedure?.timeframe}</SafeText>
                 </div>
-              ))}
+              ),
+              toDisplayString(breachResponse.emptyMessage, COMPLIANCE_BREACH_EMPTY_TEXT)
+            )}
           </div>
         </div>
       </div>

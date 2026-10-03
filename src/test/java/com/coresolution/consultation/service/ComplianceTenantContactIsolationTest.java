@@ -42,7 +42,7 @@ class ComplianceTenantContactIsolationTest {
     /**
      * 코드에서 제거한 마인드가든 고정 연락처 — 어떤 테넌트 응답에도 나타나선 안 된다.
      *
-     * <p>출처: {@code ComplianceDashboardSampleContent.breachResponseTeam} 과
+     * <p>출처: 삭제된 컴플라이언스 대시보드 표본 클래스의 유출 대응팀 연락처와
      * {@code PersonalDataRequestServiceImpl} 의 삭제된 리터럴.
      */
     private static final List<String> REMOVED_MINDGARDEN_CONTACTS = List.of(

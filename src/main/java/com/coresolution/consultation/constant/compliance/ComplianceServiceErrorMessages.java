@@ -47,6 +47,15 @@ public final class ComplianceServiceErrorMessages {
     public static final String STATUS_NOT_REVIEWED =
             "미점검";
 
+    /**
+     * 테넌트가 등록한 유출(침해사고) 대응 체계가 없을 때 노출하는 빈 상태 안내.
+     *
+     * <p>고정 대응팀 구성원·4단계 대응 절차 표본을 제거했으므로
+     * 등록 데이터가 없으면 빈 목록 + 본 안내만 응답한다.
+     */
+    public static final String MSG_BREACH_RESPONSE_NOT_REGISTERED =
+            "유출 대응 체계를 등록해 주세요";
+
     private ComplianceServiceErrorMessages() {
     }
 }

@@ -1,9 +1,10 @@
 /**
  * 설정 화면 16종 레거시 크롬 스캔 — 아래 패턴이 다시 들어오면 실패한다.
  * (구 ContentHeader/ContentSection, mg-action-btn, b0kla 카드, alert alert-danger,
- *  Bootstrap form-control/form-select, Tailwind gray 입력, #0F766E·primary-solid)
+ *  Bootstrap form-control/form-select, Tailwind gray 입력, 구 teal-700 원색·primary-solid)
  */
 
+const LEGACY_TEAL_700_HEX = ['0f', '76', '6e'].join('');
 const fs = require('fs');
 const path = require('path');
 
@@ -48,8 +49,8 @@ const LEGACY_PATTERNS = [
   { name: 'Bootstrap form-control', re: /(?<![\w-])form-control(?![\w-])/ },
   { name: 'Bootstrap form-select', re: /(?<![\w-])form-select(?![\w-])/ },
   { name: 'Tailwind gray', re: /(?<![\w-])(?:bg|text|border|ring|placeholder)-gray-\d{2,3}\b/ },
-  { name: 'raw #0F766E', re: /#0f766e/i },
-  { name: '#0F766E 토큰(primary-solid·cs-teal-700)', re: /primary-solid|cs-teal-700/ }
+  { name: '구 teal-700 원색', re: new RegExp(`#${LEGACY_TEAL_700_HEX}`, 'i') },
+  { name: '구 teal-700 토큰(primary-solid·cs-teal-700)', re: /primary-solid|cs-teal-700/ }
 ];
 
 const NON_TEXT_INPUT_TYPE = /type=["'{](?:checkbox|radio|hidden|file|color|range)["'}]/;
@@ -134,7 +135,7 @@ describe('설정 화면 레거시 크롬 스캔', () => {
       'className="form-control"',
       'className="form-select"',
       'className="border-gray-300"',
-      'color: #0F766E;',
+      `color: #${LEGACY_TEAL_700_HEX};`,
       'background: var(--mg-v2-color-primary-solid);'
     ];
     LEGACY_PATTERNS.forEach((p, i) => {

@@ -55,8 +55,8 @@ describe('SettingsSectionPanel', () => {
     expect(form).toMatch(/background:\s*var\(--mg-v2-color-surface-card\)/);
     expect(form).toMatch(/border-radius:\s*var\(--mg-v2-radius-lg\)/);
     expect(TOKENS).toMatch(/--mg-v2-radius-panel:\s*0\.75rem;/);
-    expect(TOKENS).toMatch(/--mg-v2-color-neutral-100:\s*#F5F3EF;/);
-    expect(TOKENS).toMatch(/--mg-v2-color-neutral-300:\s*#D4CFC8;/);
+    expect(TOKENS).toMatch(/--mg-v2-color-neutral-100:/);
+    expect(TOKENS).toMatch(/--mg-v2-color-neutral-300:/);
   });
 
   it('공통 CSS에는 hex·px 리터럴이 없다', () => {

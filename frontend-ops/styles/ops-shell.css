@@ -44,10 +44,6 @@
   color: var(--mg-v2-color-text-primary);
 }
 
-.ops-shell__brand--mobile {
-  display: none;
-}
-
 .ops-shell__actor {
   font-size: var(--mg-v2-font-size-caption);
   color: var(--mg-v2-color-text-secondary);
@@ -204,23 +200,6 @@
   background: var(--mg-v2-color-primary-main);
 }
 
-.mg-v2-desktop-lnb__footer {
-  margin-top: auto;
-  padding: var(--mg-v2-space-3);
-}
-
-.ops-shell__logout button {
-  width: 100%;
-  justify-content: flex-start;
-  background: transparent;
-  color: color-mix(in srgb, var(--mg-v2-color-text-on-sidebar-active) 78%, transparent);
-  border: 0;
-  box-shadow: none;
-  min-height: 2.75rem;
-  padding: var(--mg-v2-space-2) var(--mg-v2-space-4);
-  font-weight: 500;
-}
-
 .ops-shell__drawer {
   display: none;
 }
@@ -330,14 +309,6 @@
   .ops-shell__brand {
     text-align: center;
     font-size: var(--ops-font-size-base);
-  }
-
-  .ops-shell__gnb--back .ops-shell__brand--desktop {
-    display: none;
-  }
-
-  .ops-shell__gnb--back .ops-shell__brand--mobile {
-    display: block;
   }
 
   .ops-shell__gnb--back .ops-shell__actor {

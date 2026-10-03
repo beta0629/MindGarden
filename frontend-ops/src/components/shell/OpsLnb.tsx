@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-import { LogoutButton } from "@/components/auth/LogoutButton";
 import { ONBOARDING_PATHS } from "@/constants/onboarding";
 import {
   OPS_SHELL_CHROME,
@@ -19,9 +18,7 @@ import {
  */
 
 type OpsLnbProps = {
-  actorId?: string | null;
   embedded?: boolean;
-  showSessionAction?: boolean;
   onNavigate?: () => void;
 };
 
@@ -51,9 +48,7 @@ function isActivePath(pathname: string | null, href: string): boolean {
 }
 
 export default function OpsLnb({
-  actorId = null,
   embedded = false,
-  showSessionAction = true,
   onNavigate
 }: OpsLnbProps) {
   const pathname = usePathname();
@@ -86,18 +81,6 @@ export default function OpsLnb({
           })}
         </ul>
       </nav>
-      {showSessionAction && actorId ? (
-        <div className="mg-v2-desktop-lnb__footer ops-shell__logout">
-          <LogoutButton />
-        </div>
-      ) : null}
-      {showSessionAction && !actorId ? (
-        <div className="mg-v2-desktop-lnb__footer">
-          <Link className="mg-v2-desktop-lnb__link" href={OPS_SHELL_PATHS.LOGIN} onClick={onNavigate}>
-            {OPS_SHELL_CHROME.LOGIN}
-          </Link>
-        </div>
-      ) : null}
     </aside>
   );
 }

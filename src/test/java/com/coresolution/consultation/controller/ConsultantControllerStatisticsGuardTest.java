@@ -9,6 +9,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.coresolution.consultation.service.ConsultantService;
+import com.coresolution.consultation.service.support.ClientPathAccessGuard;
 import com.coresolution.integrationtest.consultant.ConsultantStatisticsGuardTestApp;
 import java.time.LocalDate;
 import java.util.Map;
@@ -54,6 +55,9 @@ class ConsultantControllerStatisticsGuardTest {
 
     @MockBean
     private ConsultantService consultantService;
+
+    @MockBean
+    private ClientPathAccessGuard clientPathAccessGuard;
 
     @Nested
     @DisplayName("getRevenueStatistics 매출 통계 가드")

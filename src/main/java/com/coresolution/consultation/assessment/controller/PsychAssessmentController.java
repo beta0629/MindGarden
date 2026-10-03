@@ -12,11 +12,13 @@ import com.coresolution.consultation.assessment.service.PsychAssessmentClientSum
 import com.coresolution.consultation.assessment.repository.PsychAssessmentDocumentRepository;
 import com.coresolution.consultation.assessment.entity.PsychAssessmentDocument;
 import com.coresolution.consultation.assessment.support.PsychAssessmentMarkdownSections;
+import com.coresolution.consultation.service.support.ClientPathAccessGuard;
 import com.coresolution.core.controller.BaseApiController;
 import com.coresolution.core.dto.ApiResponse;
 import com.coresolution.core.context.TenantContextHolder;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpSession;
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -43,6 +45,7 @@ public class PsychAssessmentController extends BaseApiController {
     private final PsychAssessmentDocumentRepository documentRepository;
     private final PsychAssessmentReportRepository reportRepository;
     private final PsychAssessmentClientSummaryService clientSummaryService;
+    private final ClientPathAccessGuard clientPathAccessGuard;
 
     @PostMapping(value = "/documents", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("isAuthenticated()")
@@ -149,7 +152,9 @@ public class PsychAssessmentController extends BaseApiController {
     @PreAuthorize("isAuthenticated()")
     @Operation(summary = "내담자별 심리검사 문서 목록", description = "상담일지에서 해당 내담자의 심리검사 문서/리포트 목록을 조회합니다.")
     public ResponseEntity<ApiResponse<java.util.List<PsychAssessmentDocumentListItem>>> documentsByClient(
-            @PathVariable Long clientId) {
+            @PathVariable Long clientId,
+            HttpSession session) {
+        clientPathAccessGuard.requireClientAccess(session, clientId);
         String tenantId = TenantContextHolder.getRequiredTenantId();
         java.util.List<PsychAssessmentDocument> docs =
                 documentRepository.findByTenantIdAndClientIdOrderByCreatedAtDesc(tenantId, clientId);
@@ -198,7 +203,9 @@ public class PsychAssessmentController extends BaseApiController {
     @PreAuthorize("isAuthenticated()")
     @Operation(summary = "내담자 심리검사 요약", description = "TCI/MMPI 중 노출 가능 문서·유형(hasPsychData, typesPresent)을 반환합니다.")
     public ResponseEntity<ApiResponse<PsychAssessmentClientSummaryDto>> clientPsychSummary(
-            @PathVariable Long clientId) {
+            @PathVariable Long clientId,
+            HttpSession session) {
+        clientPathAccessGuard.requireClientAccess(session, clientId);
         String tenantId = TenantContextHolder.getRequiredTenantId();
         PsychAssessmentClientSummaryDto dto = clientSummaryService.buildClientSummary(tenantId, clientId);
         return success(dto);

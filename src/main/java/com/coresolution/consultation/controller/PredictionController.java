@@ -3,6 +3,8 @@ package com.coresolution.consultation.controller;
 import com.coresolution.consultation.entity.DropoutRiskAssessment;
 import com.coresolution.consultation.entity.TreatmentPrediction;
 import com.coresolution.consultation.service.PredictionService;
+import com.coresolution.consultation.service.support.ClientPathAccessGuard;
+import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -28,13 +30,17 @@ import java.util.Map;
 public class PredictionController {
 
     private final PredictionService predictionService;
+    private final ClientPathAccessGuard clientPathAccessGuard;
 
     /**
      * 치료 경과 예측
      * POST /api/v1/predictions/treatment-outcome/{clientId}
      */
     @PostMapping("/treatment-outcome/{clientId}")
-    public ResponseEntity<Map<String, Object>> predictTreatmentOutcome(@PathVariable Long clientId) {
+    public ResponseEntity<Map<String, Object>> predictTreatmentOutcome(
+            @PathVariable Long clientId,
+            HttpSession session) {
+        clientPathAccessGuard.requireClientAccess(session, clientId);
         log.info("📊 치료 경과 예측 요청: clientId={}", clientId);
 
         try {
@@ -61,7 +67,10 @@ public class PredictionController {
      * GET /api/v1/predictions/dropout-risk/{clientId}
      */
     @GetMapping("/dropout-risk/{clientId}")
-    public ResponseEntity<Map<String, Object>> assessDropoutRisk(@PathVariable Long clientId) {
+    public ResponseEntity<Map<String, Object>> assessDropoutRisk(
+            @PathVariable Long clientId,
+            HttpSession session) {
+        clientPathAccessGuard.requireClientAccess(session, clientId);
         log.info("⚠️ 중도 탈락 위험 평가 요청: clientId={}", clientId);
 
         try {
@@ -89,7 +98,10 @@ public class PredictionController {
      * POST /api/v1/predictions/recommend-sessions/{clientId}
      */
     @PostMapping("/recommend-sessions/{clientId}")
-    public ResponseEntity<Map<String, Object>> recommendSessionCount(@PathVariable Long clientId) {
+    public ResponseEntity<Map<String, Object>> recommendSessionCount(
+            @PathVariable Long clientId,
+            HttpSession session) {
+        clientPathAccessGuard.requireClientAccess(session, clientId);
         log.info("💡 최적 회기 수 추천 요청: clientId={}", clientId);
 
         try {
@@ -118,7 +130,10 @@ public class PredictionController {
     @GetMapping("/similar-cases/{clientId}")
     public ResponseEntity<Map<String, Object>> findSimilarCases(
             @PathVariable Long clientId,
-            @RequestParam(defaultValue = "5") Integer limit) {
+            @RequestParam(defaultValue = "5") Integer limit,
+            HttpSession session) {
+
+        clientPathAccessGuard.requireClientAccess(session, clientId);
 
         log.info("🔍 유사 케이스 검색 요청: clientId={}, limit={}", clientId, limit);
 

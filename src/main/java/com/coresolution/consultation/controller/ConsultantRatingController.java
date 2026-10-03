@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 import com.coresolution.consultation.entity.ConsultantRating;
 import com.coresolution.consultation.service.ConsultantRatingService;
+import com.coresolution.consultation.service.support.ClientPathAccessGuard;
 import com.coresolution.core.controller.BaseApiController;
 import com.coresolution.core.dto.ApiResponse;
 import com.coresolution.core.util.PaginationUtils;
@@ -21,6 +22,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -39,6 +41,7 @@ import lombok.extern.slf4j.Slf4j;
 public class ConsultantRatingController extends BaseApiController {
 
     private final ConsultantRatingService ratingService;
+    private final ClientPathAccessGuard clientPathAccessGuard;
 
     /**
      * 상담 후 평가 등록
@@ -117,7 +120,10 @@ public class ConsultantRatingController extends BaseApiController {
      * 내담자용 - 평가 가능한 상담 목록
      */
     @GetMapping("/client/{clientId}/ratable-schedules")
-    public ResponseEntity<ApiResponse<Map<String, Object>>> getRatableSchedules(@PathVariable Long clientId) {
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getRatableSchedules(
+            @PathVariable Long clientId,
+            HttpSession session) {
+        clientPathAccessGuard.requireClientAccess(session, clientId);
         log.info("💖 평가 가능한 스케줄 조회 API 호출: clientId={}", clientId);
         
         // 실제 서비스 호출 - 완료되었지만 아직 평가하지 않은 상담만 조회

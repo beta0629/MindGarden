@@ -3,6 +3,7 @@ package com.coresolution.consultation.controller;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import com.coresolution.consultation.dto.response.ConsultantRatingPublicResponse;
 import com.coresolution.consultation.entity.ConsultantRating;
 import com.coresolution.consultation.service.ConsultantRatingService;
 import com.coresolution.consultation.service.support.ClientPathAccessGuard;
@@ -118,15 +119,12 @@ public class ConsultantRatingController extends BaseApiController {
     }
 
     /**
-     * 관리자용 - 전체 평가 통계
+     * 관리자용 - 세션 테넌트 평가 통계 (같은 테넌트 관리자·사무원만)
      */
     @GetMapping("/admin/statistics")
-    public ResponseEntity<ApiResponse<Map<String, Object>>> getAdminRatingStatistics() {
-        log.info("💖 관리자 평가 통계 조회 시작");
-        
-        // 전체 평가 통계 조회
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getAdminRatingStatistics(HttpSession session) {
+        clientPathAccessGuard.requireTenantManager(session);
         Map<String, Object> stats = ratingService.getAdminRatingStatistics();
-        
         return success(stats);
     }
 
@@ -162,7 +160,7 @@ public class ConsultantRatingController extends BaseApiController {
     }
 
     /**
-     * 상담사용 - 평가 목록 조회
+     * 상담사 평가 목록 조회 (공개 응답: 내담자 id·연락처·실명 미포함)
      */
     @GetMapping("/consultant/{consultantId}")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getConsultantRatings(@PathVariable Long consultantId,
@@ -170,7 +168,7 @@ public class ConsultantRatingController extends BaseApiController {
                                                  @RequestParam(defaultValue = "10") int size) {
         // 표준화 원칙: 페이지 크기 최대 20개로 제한
         Pageable pageable = PaginationUtils.createPageable(page, size);
-        Page<ConsultantRating> ratings = ratingService.getConsultantRatings(consultantId, pageable);
+        Page<ConsultantRatingPublicResponse> ratings = ratingService.getConsultantRatings(consultantId, pageable);
 
         Map<String, Object> data = new HashMap<>();
         data.put("ratings", ratings.getContent());

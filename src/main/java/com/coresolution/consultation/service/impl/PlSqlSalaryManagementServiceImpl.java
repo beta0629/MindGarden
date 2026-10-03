@@ -959,7 +959,7 @@ public class PlSqlSalaryManagementServiceImpl implements PlSqlSalaryManagementSe
         
         try (Connection connection = jdbcTemplate.getDataSource().getConnection();
              CallableStatement stmt = connection.prepareCall(
-                 "{CALL GetIntegratedSalaryStatistics(?, ?, ?, ?, ?, ?, ?, ?, ?)}")) {
+                 "{CALL GetIntegratedSalaryStatistics(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)}")) {
             
             // IN 파라미터 설정
             stmt.setString(1, tenantId); // p_tenant_id (첫 번째 파라미터)

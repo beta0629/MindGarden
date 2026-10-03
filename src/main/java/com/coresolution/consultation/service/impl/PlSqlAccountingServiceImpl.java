@@ -166,7 +166,7 @@ public class PlSqlAccountingServiceImpl implements PlSqlAccountingService {
         
         try (Connection connection = jdbcTemplate.getDataSource().getConnection();
              CallableStatement stmt = connection.prepareCall(
-                 "{CALL ProcessDiscountAccounting(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)}")) {
+                 "{CALL ProcessDiscountAccounting(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)}")) {
             
             // UTF-8 인코딩 설정
             setUtf8Encoding(connection);

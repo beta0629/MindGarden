@@ -108,9 +108,13 @@ class PlSqlStatisticsServiceImplCatalogTest {
     @DisplayName("updateAllBranchDailyStatistics: withCatalogName 명시 + withSchemaName 미호출 ★ P0 핵심")
     void updateAllBranchDailyStatistics_specifiesCatalogOnly() {
         // isProcedureAvailable 는 별도 jdbcTemplate.queryForObject 호출 → mock true 반환
+        TenantContextHolder.setTenantId(UT_TENANT);
         when(jdbcTemplate.queryForObject(any(String.class), any(Class.class))).thenReturn(3);
+        Map<String, Object> executeResult = new HashMap<>();
+        executeResult.put("p_success", Boolean.TRUE);
+        executeResult.put("p_message", "ok");
 
-        try (MockedConstruction<SimpleJdbcCall> mocked = mockSimpleJdbcCallConstruction(new HashMap<>())) {
+        try (MockedConstruction<SimpleJdbcCall> mocked = mockSimpleJdbcCallConstruction(executeResult)) {
             String result = service.updateAllBranchDailyStatistics(STAT_DATE);
 
             assertThat(mocked.constructed()).hasSize(1);
@@ -145,7 +149,11 @@ class PlSqlStatisticsServiceImplCatalogTest {
     @Test
     @DisplayName("updateAllConsultantPerformance: withCatalogName 명시 + withSchemaName 미호출")
     void updateAllConsultantPerformance_specifiesCatalogOnly() {
-        try (MockedConstruction<SimpleJdbcCall> mocked = mockSimpleJdbcCallConstruction(new HashMap<>())) {
+        TenantContextHolder.setTenantId(UT_TENANT);
+        Map<String, Object> executeResult = new HashMap<>();
+        executeResult.put("p_success", Boolean.TRUE);
+        executeResult.put("p_message", "ok");
+        try (MockedConstruction<SimpleJdbcCall> mocked = mockSimpleJdbcCallConstruction(executeResult)) {
             String result = service.updateAllConsultantPerformance(STAT_DATE);
 
             assertThat(mocked.constructed()).hasSize(1);

@@ -3,6 +3,7 @@ package com.coresolution.consultation.service.impl;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.function.Function;
 
 import com.coresolution.consultation.entity.ErpSyncLog;
 import com.coresolution.consultation.repository.ErpSyncLogRepository;
@@ -57,7 +58,7 @@ public class StatisticsSchedulerServiceImpl implements StatisticsSchedulerServic
         log.info("📊 일별 통계 자동 업데이트 시작: targetDate={}", yesterday);
         
         try {
-            String result = plSqlStatisticsService.updateAllBranchDailyStatistics(yesterday);
+            String result = callForEachActiveTenant(yesterday, plSqlStatisticsService::updateAllBranchDailyStatistics);
             LocalDateTime endTime = LocalDateTime.now();
             
             ErpSyncLog syncLog = ErpSyncLog.builder()
@@ -122,7 +123,8 @@ public class StatisticsSchedulerServiceImpl implements StatisticsSchedulerServic
         log.info("📈 상담사 성과 자동 업데이트 시작: targetDate={}", yesterday);
         
         try {
-            String result = plSqlStatisticsService.updateAllConsultantPerformance(yesterday);
+            String result = callForEachActiveTenant(yesterday,
+                    plSqlStatisticsService::updateAllConsultantPerformance);
             LocalDateTime endTime = LocalDateTime.now();
             
             ErpSyncLog syncLog = ErpSyncLog.builder()
@@ -242,9 +244,11 @@ public class StatisticsSchedulerServiceImpl implements StatisticsSchedulerServic
         log.info("📊 수동 통계 업데이트 실행: targetDate={}", targetDate);
         
         try {
-            String dailyResult = plSqlStatisticsService.updateAllBranchDailyStatistics(targetDate);
+            String dailyResult = callForEachActiveTenant(targetDate,
+                    plSqlStatisticsService::updateAllBranchDailyStatistics);
             
-            String performanceResult = plSqlStatisticsService.updateAllConsultantPerformance(targetDate);
+            String performanceResult = callForEachActiveTenant(targetDate,
+                    plSqlStatisticsService::updateAllConsultantPerformance);
             
             int alertCount = runPerformanceMonitoringForAllActiveTenants(targetDate);
             
@@ -304,6 +308,41 @@ public class StatisticsSchedulerServiceImpl implements StatisticsSchedulerServic
      * @param targetDate 모니터링 기준일
      * @return 전 테넌트에서 생성·집계된 알림 수 합
      */
+    /**
+     * 표준 프로시저는 테넌트 IN 이 필수다. 스케줄 스레드에는 테넌트가 없으므로 활성 테넌트마다 설정한 뒤 호출한다.
+     *
+     * @param targetDate 기준일
+     * @param call       테넌트 컨텍스트가 설정된 상태에서 실행할 프로시저 호출
+     * @return 테넌트별 결과를 이어 붙인 요약
+     */
+    private String callForEachActiveTenant(LocalDate targetDate, Function<LocalDate, String> call) {
+        List<String> tenantIds = tenantService.getAllActiveTenantIds();
+        if (tenantIds.isEmpty()) {
+            log.warn("활성 테넌트가 없어 통계 프로시저를 생략합니다: targetDate={}", targetDate);
+            return "SKIP: no active tenant";
+        }
+        StringBuilder summary = new StringBuilder();
+        for (String tenantId : tenantIds) {
+            try {
+                TenantContextHolder.setTenantId(tenantId);
+                if (summary.length() > 0) {
+                    summary.append("; ");
+                }
+                summary.append(call.apply(targetDate));
+            } catch (RuntimeException e) {
+                log.error("테넌트별 통계 프로시저 실패: tenantId={}, targetDate={}, error={}",
+                        tenantId, targetDate, e.getMessage(), e);
+                if (summary.length() > 0) {
+                    summary.append("; ");
+                }
+                summary.append("ERROR: ").append(e.getMessage());
+            } finally {
+                TenantContextHolder.clear();
+            }
+        }
+        return summary.toString();
+    }
+
     private int runPerformanceMonitoringForAllActiveTenants(LocalDate targetDate) {
         List<String> tenantIds = tenantService.getAllActiveTenantIds();
         if (tenantIds.isEmpty()) {

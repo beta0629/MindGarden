@@ -126,9 +126,18 @@
   color: var(--mg-v2-color-text-primary);
 }
 
-.salary-management-summary__cell--expense .salary-management-summary__amount .mg-v2-kpi-numeral,
-.salary-management-summary__amount--expense .mg-v2-kpi-numeral {
-  color: var(--mg-v2-color-semantic-info);
+.salary-management-summary__cell--owed .salary-management-summary__amount .mg-v2-kpi-numeral,
+.salary-management-summary__amount--owed .mg-v2-kpi-numeral {
+  color: var(--color-red-700);
+}
+
+.salary-management-summary__cell--owed {
+  background: color-mix(in srgb, var(--color-red-700) 10%, transparent);
+}
+
+.salary-management-summary__amount--deduction .mg-v2-kpi-numeral,
+.salary-management-summary__amount--pending-count .mg-v2-kpi-numeral {
+  color: var(--mg-v2-color-text-primary);
 }
 
 .salary-management-summary .mg-v2-kpi-numeral__roll-layer,
@@ -323,23 +332,57 @@
   min-width: 160px;
 }
 
-.salary-filter-block__run-calc {
+.salary-management__calc-stage .salary-filter-block__group {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: flex-start;
+  width: 100%;
+  gap: var(--mg-v2-space-3);
+}
+
+.salary-management__calc-stage .salary-filter-block__fields {
+  display: flex;
+  flex: 1 1 auto;
+  flex-wrap: nowrap;
+  align-items: flex-end;
+  gap: var(--mg-v2-space-3);
+  min-width: min(100%, calc(var(--mg-v2-space-16) * 6));
+}
+
+.salary-management__calc-stage .salary-filter-block__field {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.salary-management__calc-stage .salary-filter-block__field .mg-v2-select {
+  width: 100%;
+  min-width: 0;
+  height: var(--mg-v2-component-height-sm);
+  min-height: var(--mg-v2-component-height-sm);
+  box-sizing: border-box;
+}
+
+.salary-management__calc-stage .salary-filter-block__run-calc {
   display: flex;
   flex-wrap: wrap;
   justify-content: flex-end;
-  align-items: stretch;
-  gap: var(--mg-spacing-sm);
-  width: 100%;
+  align-items: center;
+  align-self: flex-end;
+  gap: var(--mg-v2-space-2);
+  width: auto;
+  margin-inline-start: auto;
 }
 
-.salary-filter-block__run-calc .mg-button,
-.salary-filter-block__run-calc .mg-v2-button {
+.salary-management__calc-stage .salary-filter-block__run-calc .mg-button,
+.salary-management__calc-stage .salary-filter-block__run-calc .mg-v2-button {
   flex: 0 0 auto !important;
   width: auto !important;
-  align-self: stretch;
-  height: var(--button-height-sm) !important;
-  min-height: var(--button-height-sm) !important;
-  max-height: var(--button-height-sm) !important;
+  align-self: center;
+  height: var(--mg-v2-component-height-sm) !important;
+  min-height: var(--mg-v2-component-height-sm) !important;
+  max-height: var(--mg-v2-component-height-sm) !important;
   box-sizing: border-box !important;
   transform: none !important;
 }
@@ -705,12 +748,7 @@
 .mg-v2-card-actions.salary-calc-block__actions .mg-button.mg-v2-button-secondary,
 .mg-v2-card-actions.salary-calc-block__actions .mg-button.mg-v2-button-primary,
 .mg-v2-card-actions.salary-calc-block__actions .mg-button.mg-v2-button-outline,
-.mg-v2-card-actions.salary-calc-block__actions .print-component-trigger .mg-button,
-.salary-management__actions .mg-button,
-.salary-management__actions .mg-v2-button,
-.salary-management__cta.mg-button,
-.salary-management__cta.mg-v2-button,
-.salary-management__row-menu .mg-v2-entity-row-actions__trigger.mg-button {
+.mg-v2-card-actions.salary-calc-block__actions .print-component-trigger .mg-button {
   margin: 0 !important;
   flex: 0 0 auto !important;
   width: auto !important;
@@ -769,11 +807,12 @@
   width: 100%;
 }
 
-.salary-management__actions {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: stretch;
-  gap: var(--mg-v2-space-2);
+.salary-management__list-table th:last-child,
+.salary-management__list-table td:last-child {
+  vertical-align: middle;
+  text-align: end;
+  white-space: nowrap;
+  width: max-content;
 }
 
 .salary-management__row-consultant {

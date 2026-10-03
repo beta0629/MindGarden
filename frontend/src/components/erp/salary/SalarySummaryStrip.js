@@ -1,7 +1,7 @@
 /**
- * SalarySummaryStrip — 등록 프로필 / 계산 완료 / 지급 총액 KPI
+ * SalarySummaryStrip — 지급 예정(owed) / 공제 / 승인대기 KPI
  * Visual SSOT: PurchaseSummaryStrip / LedgerSummaryStrip — vertical dividers, surface-secondary.
- * 지급 총액 = expense(나간 돈) → semantic-info(blue).
+ * 지급 예정 = operator owed → var(--color-red-700). expense blue 금지.
  *
  * @author CoreSolution
  * @since 2026-09-06
@@ -16,38 +16,40 @@ import { formatWonAmount } from '../organisms/moneyCockpit/moneyCockpitData';
 /**
  * @param {object} props
  * @param {boolean} [props.loading]
- * @param {number} props.profileCount
- * @param {number} props.calculatedCount
- * @param {number} props.payoutTotal
+ * @param {number} props.owedTotal — 미지급(CALCULATED+APPROVED 등) net 합
+ * @param {number} props.deductionTotal — 동일 범위 원천 공제(국세+지방세) 합
+ * @param {number} props.pendingApprovalCount — CALCULATED 건수
  */
 const SalarySummaryStrip = ({
   loading = false,
-  profileCount = 0,
-  calculatedCount = 0,
-  payoutTotal = 0
+  owedTotal = 0,
+  deductionTotal = 0,
+  pendingApprovalCount = 0
 }) => {
   const cells = [
     {
-      id: 'profiles',
-      label: SM_SUMMARY.PROFILES_LABEL,
-      value: String(profileCount),
-      unit: SM_SUMMARY.UNIT_COUNT,
-      amountModifier: ''
-    },
-    {
-      id: 'calculated',
-      label: SM_SUMMARY.CALCULATED_LABEL,
-      value: String(calculatedCount),
-      unit: SM_SUMMARY.UNIT_COUNT,
-      amountModifier: ''
-    },
-    {
-      id: 'payout',
-      label: SM_SUMMARY.PAYOUT_LABEL,
-      value: formatWonAmount(payoutTotal),
+      id: 'owed',
+      label: SM_SUMMARY.OWED_LABEL,
+      value: formatWonAmount(owedTotal),
       unit: SM_SUMMARY.UNIT_WON,
-      amountModifier: 'salary-management-summary__amount--expense',
-      cellModifier: 'salary-management-summary__cell--expense'
+      amountModifier: 'salary-management-summary__amount--owed',
+      cellModifier: 'salary-management-summary__cell--owed'
+    },
+    {
+      id: 'deduction',
+      label: SM_SUMMARY.DEDUCTION_LABEL,
+      value: formatWonAmount(deductionTotal),
+      unit: SM_SUMMARY.UNIT_WON,
+      amountModifier: 'salary-management-summary__amount--deduction',
+      cellModifier: ''
+    },
+    {
+      id: 'pending-approval',
+      label: SM_SUMMARY.PENDING_APPROVAL_LABEL,
+      value: String(pendingApprovalCount),
+      unit: SM_SUMMARY.UNIT_COUNT,
+      amountModifier: 'salary-management-summary__amount--pending-count',
+      cellModifier: ''
     }
   ];
 
@@ -85,9 +87,9 @@ const SalarySummaryStrip = ({
 
 SalarySummaryStrip.propTypes = {
   loading: PropTypes.bool,
-  profileCount: PropTypes.number,
-  calculatedCount: PropTypes.number,
-  payoutTotal: PropTypes.number
+  owedTotal: PropTypes.number,
+  deductionTotal: PropTypes.number,
+  pendingApprovalCount: PropTypes.number
 };
 
 export default SalarySummaryStrip;

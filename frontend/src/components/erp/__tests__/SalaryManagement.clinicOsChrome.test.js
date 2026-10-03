@@ -52,11 +52,21 @@ describe('SalaryManagement Clinic-OS chrome', () => {
     expect(salaryCss).not.toMatch(/\.mg-v2-ad-b0kla/);
   });
 
-  test('payout summary uses expense blue semantic-info', () => {
-    expect(summaryStripJs).toMatch(/salary-management-summary__amount--expense/);
+  test('payout summary owed uses red-700 (not expense blue)', () => {
+    expect(summaryStripJs).toMatch(/owedTotal/);
+    expect(summaryStripJs).toMatch(/deductionTotal/);
+    expect(summaryStripJs).toMatch(/pendingApprovalCount/);
+    expect(summaryStripJs).toMatch(/SM_SUMMARY\.OWED_LABEL/);
+    expect(summaryStripJs).toMatch(/SM_SUMMARY\.DEDUCTION_LABEL/);
+    expect(summaryStripJs).toMatch(/SM_SUMMARY\.PENDING_APPROVAL_LABEL/);
+    expect(summaryStripJs).not.toMatch(/profileCount/);
+    expect(summaryStripJs).not.toMatch(/PROFILES_LABEL/);
+    expect(summaryStripJs).not.toMatch(/PAYOUT_LABEL/);
+    expect(summaryStripJs).toMatch(/salary-management-summary__amount--owed/);
     expect(salaryCss).toMatch(
-      /salary-management-summary__amount--expense[\s\S]*?--mg-v2-color-semantic-info/
+      /salary-management-summary__amount--owed[\s\S]*?--color-red-700/
     );
+    expect(salaryCss).not.toMatch(/salary-management-summary__amount--expense/);
   });
 
   test('uses ErpEmptyState for empty lists (no emoji / no dashed boxes)', () => {
@@ -123,14 +133,19 @@ describe('SalaryManagement Clinic-OS chrome', () => {
     expect(salaryJs).not.toMatch(/getStatusLabel\(/);
   });
 
-  test('CTA and row menu height lock to 36 (2.25rem row token)', () => {
-    expect(salaryCss).toMatch(/--mg-v2-component-height-row:\s*2\.25rem/);
-    expect(salaryCss).toMatch(
-      /salary-management__cta[\s\S]*?height:\s*var\(--mg-v2-component-height-row/
-    );
-    expect(salaryCss).toMatch(
-      /salary-management__row-menu[\s\S]*?height:\s*var\(--mg-v2-component-height-row/
-    );
+  test('payout action cell is one row at component-height-sm', () => {
+    const actionCellCss = read('src/components/common/molecules/TableActionCell.css');
+    const actionCellRule = actionCellCss.match(/\.mg-v2-table-action-cell\s*\{[^}]*\}/s);
+    expect(actionCellRule).not.toBeNull();
+    expect(actionCellRule[0]).toMatch(/flex-direction:\s*row/);
+    expect(actionCellRule[0]).toMatch(/flex-wrap:\s*nowrap/);
+    expect(actionCellRule[0]).not.toMatch(/flex-direction:\s*column/);
+    expect(actionCellRule[0]).toMatch(/--mg-v2-component-height-sm/);
+    expect(actionCellRule[0]).toMatch(/--mg-v2-space-2/);
+    expect(actionCellCss).not.toMatch(/32px/);
+    const calculationTableJs = read('src/components/erp/salary/SalaryCalculationTable.js');
+    expect(calculationTableJs).toMatch(/TableActionCell/);
+    expect(calculationTableJs).not.toMatch(/salary-management__actions/);
   });
 
   test('header actions row locks equal height (단차 방지)', () => {

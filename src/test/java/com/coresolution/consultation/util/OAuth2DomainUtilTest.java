@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
  * OAuth2 콜백용 apex 도메인 수렴 검증 (운영 *.core-solution.co.kr → core-solution.co.kr)
@@ -101,5 +102,37 @@ class OAuth2DomainUtilTest {
     @Test
     void buildTenantHost_noRequestHost_usesConfiguredProdApexFallback() {
         assertEquals("trinity.core-solution.co.kr", util.buildTenantHost("trinity", null));
+    }
+
+    @Test
+    void prodProfile_usesProdApexFromMainDomains() {
+        assertEquals(".core-solution.co.kr", util.resolveEnvironmentTenantDomainSuffix("prod"));
+        assertEquals(".core-solution.co.kr", util.resolveEnvironmentTenantDomainSuffix("production"));
+        assertEquals(".core-solution.co.kr",
+                util.resolveEnvironmentTenantDomainSuffix("dev", "prod"));
+    }
+
+    @Test
+    void devProfile_usesDevApexFromMainDomains() {
+        OAuth2DomainUtil devUtil = configuredUtil("dev.core-solution.co.kr,core-solution.co.kr");
+        assertEquals(".dev.core-solution.co.kr", devUtil.resolveEnvironmentTenantDomainSuffix("dev"));
+        assertEquals(".dev.core-solution.co.kr", util.resolveEnvironmentTenantDomainSuffix("dev"));
+    }
+
+    @Test
+    void prodProfile_doesNotFallBackToDevApex() {
+        OAuth2DomainUtil onlyDev = configuredUtil("dev.core-solution.co.kr");
+        assertThrows(IllegalStateException.class,
+                () -> onlyDev.resolveEnvironmentTenantDomainSuffix("prod"));
+    }
+
+    private static OAuth2DomainUtil configuredUtil(String mainDomains) {
+        OAuth2DomainUtil domainUtil = new OAuth2DomainUtil();
+        ReflectionTestUtils.setField(domainUtil, "mainDomainsConfig", mainDomains);
+        ReflectionTestUtils.setField(domainUtil, "subdomainPatternsConfig", "");
+        ReflectionTestUtils.setField(domainUtil, "tenantParentSuffixesConfig", "");
+        ReflectionTestUtils.setField(domainUtil, "removeRegexPattern", true);
+        domainUtil.init();
+        return domainUtil;
     }
 }

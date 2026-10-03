@@ -83,6 +83,7 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
         }
 
         String requestedSubdomain = TenantHostLabel.explicitDnsLabelOrNull(subdomain);
+        String domainSuffix = resolveApprovalDomainSuffix();
 
         // 1. 프로시저 먼저 시도
         try {
@@ -90,12 +91,13 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
             Map<String, Object> procedureResult =
                     processOnboardingApprovalLegacy(requestId, tenantId, tenantName, businessType,
                             approvedBy, decisionNote, contactEmail, adminPasswordHash,
-                            requestedSubdomain);
+                            requestedSubdomain, domainSuffix);
             Boolean procedureSuccess = (Boolean) procedureResult.get("success");
             String procedureMessage = (String) procedureResult.get("message");
 
             if ((procedureSuccess == null || !procedureSuccess)
-                    && TenantHostLabel.isHostLabelBlockedMessage(procedureMessage)) {
+                    && (TenantHostLabel.isHostLabelBlockedMessage(procedureMessage)
+                            || isDomainSuffixBlocked(procedureMessage))) {
                 throw new OnboardingApprovalBlockedException(procedureMessage);
             }
 
@@ -140,7 +142,7 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
             // Step 1: 테넌트 생성/활성화
             // updateProcessingStatus 제거: 별도 트랜잭션에서 version 충돌 발생
             StepResult tenantResult = executeStepTenantCreation(requestId, tenantId, tenantName,
-                    businessType, subdomain, approvedBy);
+                    businessType, subdomain, approvedBy, domainSuffix);
             stepResults.put(OnboardingConstants.STEP_TENANT_CREATE, tenantResult);
 
             if (!tenantResult.isSuccess()) {
@@ -338,7 +340,8 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
      * Step 1: 테넌트 생성/활성화
      */
     private StepResult executeStepTenantCreation(Long requestId, String tenantId,
-            String tenantName, String businessType, String subdomain, String approvedBy) {
+            String tenantName, String businessType, String subdomain, String approvedBy,
+            String domainSuffix) {
         log.info(OnboardingConstants.LOG_SEPARATOR);
         log.info("📋 Step 1: 테넌트 생성/활성화");
         log.info(OnboardingConstants.LOG_SEPARATOR);
@@ -350,7 +353,7 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
                             legal.businessRegistrationNumber, legal.representativeName,
                             legal.businessLandline, legal.businessAddress,
                             legal.mailOrderReportNumber, legal.refundPolicyText,
-                            legal.productPriceGuideText);
+                            legal.productPriceGuideText, domainSuffix);
             if (created) {
                 log.info("✅ Step 1 성공: 테넌트 생성/활성화 완료 - tenantId={}", tenantId);
                 return StepResult.success(OnboardingConstants.MSG_TENANT_CREATE_COMPLETE);
@@ -607,7 +610,8 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
      */
     private Map<String, Object> processOnboardingApprovalLegacy(Long requestId,
             String tenantId, String tenantName, String businessType, String approvedBy,
-            String decisionNote, String contactEmail, String adminPasswordHash, String subdomain) {
+            String decisionNote, String contactEmail, String adminPasswordHash, String subdomain,
+            String domainSuffix) {
 
         log.info(
                 "온보딩 승인 프로세스 시작 (레거시): requestId={}, tenantId={}, tenantName={}, contactEmail={}, subdomain={}",
@@ -641,7 +645,7 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
             }
 
             try (CallableStatement cs = connection.prepareCall(
-                    "{CALL ProcessOnboardingApproval(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)}")) {
+                    "{CALL ProcessOnboardingApproval(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)}")) {
 
                 // 프로시저 실행 타임아웃 설정 (초 단위)
                 cs.setQueryTimeout(OnboardingDecisionDeadline.statementTimeoutSeconds());
@@ -660,6 +664,7 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
                 log.info("  [8] adminPasswordHash present: {}",
                         adminPasswordHash != null && !adminPasswordHash.isBlank());
                 log.info("  [9] subdomain: {}", subdomain);
+                log.info("  [10] domainSuffix: {}", domainSuffix);
 
                 cs.setLong(1, requestId);
                 cs.setString(2, tenantId);
@@ -670,11 +675,12 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
                 cs.setString(7, contactEmail); // 추가: 연락 이메일
                 cs.setString(8, adminPasswordHash); // 추가: BCrypt 해시된 비밀번호
                 cs.setString(9, subdomain); // 추가: 서브도메인
+                cs.setString(10, domainSuffix); // 환경 설정의 도메인 접미사
 
                 // OUT 파라미터 등록
-                cs.registerOutParameter(10, Types.BOOLEAN); // p_success
-                cs.registerOutParameter(11, Types.VARCHAR); // p_message
-                log.info("OUT 파라미터 등록 완료: [10] success (BOOLEAN), [11] message (VARCHAR)");
+                cs.registerOutParameter(11, Types.BOOLEAN); // p_success
+                cs.registerOutParameter(12, Types.VARCHAR); // p_message
+                log.info("OUT 파라미터 등록 완료: [11] success (BOOLEAN), [12] message (VARCHAR)");
 
                 // 프로시저 실행
                 log.info("==========================================");
@@ -729,14 +735,14 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
                 String message = null;
 
                 try {
-                    success = cs.getBoolean(10);
-                    log.info("프로시저 OUT 파라미터 [10] (success) 읽기: {}", success);
+                    success = cs.getBoolean(11);
+                    log.info("프로시저 OUT 파라미터 [11] (success) 읽기: {}", success);
                 } catch (SQLException e) {
-                    log.error("프로시저 OUT 파라미터 [10] (success) 읽기 실패: {}", e.getMessage(), e);
+                    log.error("프로시저 OUT 파라미터 [11] (success) 읽기 실패: {}", e.getMessage(), e);
                     // VARCHAR로 읽어보기 시도
                     try {
-                        Object successObj = cs.getObject(10);
-                        log.info("프로시저 OUT 파라미터 [10] (success) 원본 값: {}, 타입: {}", successObj,
+                        Object successObj = cs.getObject(11);
+                        log.info("프로시저 OUT 파라미터 [11] (success) 원본 값: {}, 타입: {}", successObj,
                                 successObj != null ? successObj.getClass().getName() : "null");
                         if (successObj instanceof Boolean) {
                             success = (Boolean) successObj;
@@ -748,24 +754,24 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
                                     || "true".equalsIgnoreCase((String) successObj);
                         }
                     } catch (SQLException e2) {
-                        log.error("프로시저 OUT 파라미터 [10] (success) 대체 읽기 실패: {}", e2.getMessage());
+                        log.error("프로시저 OUT 파라미터 [11] (success) 대체 읽기 실패: {}", e2.getMessage());
                     }
                 }
 
                 try {
-                    message = cs.getString(11);
-                    log.info("프로시저 OUT 파라미터 [11] (message) 읽기: {}", message);
+                    message = cs.getString(12);
+                    log.info("프로시저 OUT 파라미터 [12] (message) 읽기: {}", message);
                 } catch (SQLException e) {
-                    log.error("프로시저 OUT 파라미터 [11] (message) 읽기 실패: {}", e.getMessage(), e);
+                    log.error("프로시저 OUT 파라미터 [12] (message) 읽기 실패: {}", e.getMessage(), e);
                     // TEXT로 읽어보기 시도
                     try {
-                        Object messageObj = cs.getObject(11);
-                        log.info("프로시저 OUT 파라미터 [11] (message) 원본 값: {}", messageObj);
+                        Object messageObj = cs.getObject(12);
+                        log.info("프로시저 OUT 파라미터 [12] (message) 원본 값: {}", messageObj);
                         if (messageObj != null) {
                             message = messageObj.toString();
                         }
                     } catch (SQLException e2) {
-                        log.error("프로시저 OUT 파라미터 [11] (message) 대체 읽기 실패: {}", e2.getMessage());
+                        log.error("프로시저 OUT 파라미터 [12] (message) 대체 읽기 실패: {}", e2.getMessage());
                     }
                 }
 
@@ -819,7 +825,8 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
                 }
 
                 if ((success == null || !success)
-                        && TenantHostLabel.isHostLabelBlockedMessage(message)) {
+                        && (TenantHostLabel.isHostLabelBlockedMessage(message)
+                                || isDomainSuffixBlocked(message))) {
                     throw new OnboardingApprovalBlockedException(message);
                 }
 
@@ -869,7 +876,7 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
                                 legal.businessRegistrationNumber, legal.representativeName,
                                 legal.businessLandline, legal.businessAddress,
                                 legal.mailOrderReportNumber, legal.refundPolicyText,
-                                legal.productPriceGuideText);
+                                legal.productPriceGuideText, domainSuffix);
                         if (tenantCreated) {
                             fallbackMessage.append("테넌트=OK, ");
                             updateProcessingStatus(requestId, tenantId, "TENANT_CREATE", "SUCCESS",
@@ -1343,6 +1350,51 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
     }
 
     /**
+     * 활성 프로파일의 main-domains 에서 승인 도메인 접미사를 읽는다.
+     * 없으면 프로시저를 호출하지 않고 승인을 막는다.
+     *
+     * @return 선행 점이 있는 접미사
+     * @throws OnboardingApprovalBlockedException 설정을 읽을 수 없을 때
+     */
+    private String resolveApprovalDomainSuffix() {
+        if (applicationContext == null || oauth2DomainUtil == null) {
+            throw new OnboardingApprovalBlockedException(
+                    OnboardingConstants.ERROR_ONBOARDING_DOMAIN_SUFFIX_UNAVAILABLE);
+        }
+        try {
+            return oauth2DomainUtil.resolveEnvironmentTenantDomainSuffix(
+                    applicationContext.getEnvironment().getActiveProfiles());
+        } catch (IllegalStateException | NullPointerException ex) {
+            log.error("테넌트 도메인 접미사를 환경 설정에서 읽지 못했습니다: {}", ex.getMessage());
+            throw new OnboardingApprovalBlockedException(
+                    OnboardingConstants.ERROR_ONBOARDING_DOMAIN_SUFFIX_UNAVAILABLE);
+        }
+    }
+
+    private static boolean isDomainSuffixBlocked(String message) {
+        return message != null
+                && message.contains(OnboardingConstants.ERROR_ONBOARDING_DOMAIN_SUFFIX_UNAVAILABLE);
+    }
+
+    /**
+     * 서브도메인과 환경 접미사로 저장할 도메인을 만든다.
+     *
+     * @param subdomain DNS 레이블
+     * @param domainSuffix 선행 점이 있는 부모 접미사
+     * @return 도메인. 접미사가 없으면 null
+     */
+    private static String composeTenantDomain(String subdomain, String domainSuffix) {
+        if (subdomain == null || subdomain.isBlank() || domainSuffix == null || domainSuffix.isBlank()) {
+            return null;
+        }
+        String suffix = domainSuffix.trim();
+        if (!suffix.startsWith(".")) {
+            suffix = "." + suffix;
+        }
+        return subdomain.trim() + suffix;
+    }
+
+    /**
      * 테넌트가 존재하는지 확인하고, 없으면 생성/활성화.
      * 온보딩 사업자·약관 필드는 신규 INSERT 시 함께 복사한다.
      */
@@ -1350,7 +1402,7 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
             String subdomain, String approvedBy,
             String businessRegistrationNumber, String representativeName, String businessLandline,
             String businessAddress, String mailOrderReportNumber, String refundPolicyText,
-            String productPriceGuideText) {
+            String productPriceGuideText, String domainSuffix) {
         log.info("테넌트 존재 확인 및 생성: tenantId={}", tenantId);
         String requestedSubdomain = TenantHostLabel.explicitDnsLabelOrNull(subdomain);
 
@@ -1369,7 +1421,8 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
         }
 
         if (count != null && count > 0) {
-            return activateExistingTenant(tenantId, tenantName, requestedSubdomain, approvedBy);
+            return activateExistingTenant(tenantId, tenantName, requestedSubdomain, approvedBy,
+                    domainSuffix);
         } else {
             // 새 테넌트 생성
             try {
@@ -1378,7 +1431,11 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
                         : TenantHostLabel.fromCenterName(tenantName, tenantId);
 
                 // 도메인 생성 (spring.security.oauth2.domain.main-domains 기준 fallback)
-                String domain = oauth2DomainUtil.buildTenantHost(finalSubdomain, null);
+                String domain = composeTenantDomain(finalSubdomain, domainSuffix);
+                if (domain == null || domain.isBlank()) {
+                    log.error("테넌트 도메인을 만들지 못해 저장하지 않습니다: tenantId={}", tenantId);
+                    return false;
+                }
 
                 // settings_json 생성
                 String settingsJson = String.format(
@@ -1412,7 +1469,8 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
                 // 동시성 문제로 테넌트가 이미 생성된 경우 (다른 프로세스에서 생성)
                 log.warn("테넌트 생성 중 중복 키 오류 (이미 존재하는 테넌트): tenantId={}, error={}", tenantId,
                         e.getMessage());
-                return activateExistingTenant(tenantId, tenantName, requestedSubdomain, approvedBy);
+                return activateExistingTenant(tenantId, tenantName, requestedSubdomain, approvedBy,
+                    domainSuffix);
             } catch (OnboardingApprovalBlockedException blocked) {
                 throw blocked;
             } catch (Exception e) {
@@ -1434,7 +1492,7 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
      * @throws OnboardingApprovalBlockedException 잘못된 호스트를 남기게 될 때
      */
     private boolean activateExistingTenant(String tenantId, String tenantName,
-            String requestedSubdomain, String approvedBy) {
+            String requestedSubdomain, String approvedBy, String domainSuffix) {
         String current = null;
         try {
             current = jdbcTemplate.queryForObject(
@@ -1460,7 +1518,7 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
                 log.info("기존 테넌트 활성화 완료: tenantId={}", tenantId);
                 return true;
             }
-            String domain = oauth2DomainUtil.buildTenantHost(next, null);
+            String domain = composeTenantDomain(next, domainSuffix);
             if (domain == null || domain.isBlank()) {
                 jdbcTemplate.update(
                         "UPDATE tenants SET status = 'ACTIVE', subdomain = ?, "

@@ -8,6 +8,8 @@
 --   CopyDefaultTenantCodes V20260831_002 — START TRANSACTION / COMMIT (테넌트만 먼저 확정)
 --   CreateTenantAdminAccount V20251223_001 — user_id INSERT, ROLLBACK 없음
 --   users NOT NULL 기본값: lifecycle_state, counseling_enabled, is_password_changed, notification_channel_preference
+-- 도메인은 tenants 컬럼이 아니다. settings_json 의 domain 키에만 넣는다.
+-- 접미사는 IN p_domain_suffix 로 받는다. 본문에 호스트 리터럴을 두지 않는다.
 
 -- ============================================
 -- V20251222_001__create_create_or_activate_tenant_procedure.sql: Flyway 호환 형식으로 변환
@@ -29,6 +31,7 @@ CREATE PROCEDURE CreateOrActivateTenant(
     IN p_admin_email VARCHAR(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
     IN p_admin_password_hash VARCHAR(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
     IN p_subdomain VARCHAR(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+    IN p_domain_suffix VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
     OUT p_success BOOLEAN,
     OUT p_message TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci
 )
@@ -41,6 +44,7 @@ proc_label: BEGIN
     DECLARE v_generated_subdomain VARCHAR(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT '';
     DECLARE v_label_base VARCHAR(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT '';
     DECLARE v_domain VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT '';
+    DECLARE v_domain_suffix VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT '';
     DECLARE v_settings_json JSON DEFAULT NULL;
     DECLARE v_counter INT DEFAULT 0;
     DECLARE v_consultation_enabled BOOLEAN DEFAULT FALSE;
@@ -94,6 +98,23 @@ proc_label: BEGIN
     IF p_approved_by IS NULL OR TRIM(p_approved_by) = '' THEN
         SET p_success = FALSE;
         SET p_message = '승인자 정보는 필수입니다.';
+        LEAVE proc_label;
+    END IF;
+
+    IF p_domain_suffix IS NULL OR TRIM(p_domain_suffix) = '' THEN
+        SET p_success = FALSE;
+        SET p_message = '테넌트 도메인 접미사가 설정되지 않아 테넌트를 저장하지 않았습니다.';
+        LEAVE proc_label;
+    END IF;
+
+    SET v_domain_suffix = TRIM(p_domain_suffix);
+    IF LEFT(v_domain_suffix, 1) <> '.' THEN
+        SET v_domain_suffix = CONCAT('.', v_domain_suffix);
+    END IF;
+
+    IF v_domain_suffix NOT REGEXP '^[.][a-z0-9]([a-z0-9.-]*[a-z0-9])?$' THEN
+        SET p_success = FALSE;
+        SET p_message = '테넌트 도메인 접미사가 설정되지 않아 테넌트를 저장하지 않았습니다.';
         LEAVE proc_label;
     END IF;
     
@@ -223,7 +244,13 @@ proc_label: BEGIN
             LEAVE proc_label;
         END IF;
         
-        SET v_domain = CONCAT(v_subdomain, '.dev.core-solution.co.kr');
+        IF CHAR_LENGTH(v_subdomain) + CHAR_LENGTH(v_domain_suffix) > 255 THEN
+            SET p_success = FALSE;
+            SET p_message = '테넌트 도메인 접미사가 설정되지 않아 테넌트를 저장하지 않았습니다.';
+            LEAVE proc_label;
+        END IF;
+
+        SET v_domain = CONCAT(v_subdomain, v_domain_suffix);
         
         IF v_settings_json IS NULL THEN
             SET v_settings_json = JSON_OBJECT('subdomain', v_subdomain, 'domain', v_domain);
@@ -381,7 +408,13 @@ proc_label: BEGIN
             LEAVE proc_label;
         END IF;
         
-        SET v_domain = CONCAT(v_subdomain, '.dev.core-solution.co.kr');
+        IF CHAR_LENGTH(v_subdomain) + CHAR_LENGTH(v_domain_suffix) > 255 THEN
+            SET p_success = FALSE;
+            SET p_message = '테넌트 도메인 접미사가 설정되지 않아 테넌트를 저장하지 않았습니다.';
+            LEAVE proc_label;
+        END IF;
+
+        SET v_domain = CONCAT(v_subdomain, v_domain_suffix);
         
         SET v_settings_json = JSON_OBJECT(
             'features', JSON_OBJECT(

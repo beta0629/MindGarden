@@ -8,6 +8,7 @@ import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.service.DynamicPermissionService;
 import com.coresolution.consultation.service.SalaryBatchService;
 import com.coresolution.consultation.util.PermissionCheckUtils;
+import com.coresolution.consultation.util.ServerErrorResponses;
 import com.coresolution.consultation.utils.SessionUtils;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
@@ -79,11 +80,7 @@ public class SalaryBatchController {
             return ResponseEntity.ok(response);
             
         } catch (Exception e) {
-            log.error("급여 배치 실행 오류", e);
-            return ResponseEntity.internalServerError().body(Map.of(
-                "success", false,
-                "message", "급여 배치 실행 중 오류가 발생했습니다: " + e.getMessage()
-            ));
+            return ServerErrorResponses.internalError("급여 배치 실행 오류", e);
         }
     }
     
@@ -126,11 +123,7 @@ public class SalaryBatchController {
             return ResponseEntity.ok(response);
             
         } catch (Exception e) {
-            log.error("현재 달 급여 배치 실행 오류", e);
-            return ResponseEntity.internalServerError().body(Map.of(
-                "success", false,
-                "message", "급여 배치 실행 중 오류가 발생했습니다: " + e.getMessage()
-            ));
+            return ServerErrorResponses.internalError("현재 달 급여 배치 실행 오류", e);
         }
     }
     
@@ -167,11 +160,7 @@ public class SalaryBatchController {
             return ResponseEntity.ok(response);
             
         } catch (Exception e) {
-            log.error("급여 배치 상태 조회 오류", e);
-            return ResponseEntity.internalServerError().body(Map.of(
-                "success", false,
-                "message", "급여 배치 상태 조회 중 오류가 발생했습니다: " + e.getMessage()
-            ));
+            return ServerErrorResponses.internalError("급여 배치 상태 조회 오류", e);
         }
     }
     
@@ -200,11 +189,7 @@ public class SalaryBatchController {
             ));
             
         } catch (Exception e) {
-            log.error("급여 배치 실행 가능 여부 확인 오류", e);
-            return ResponseEntity.internalServerError().body(Map.of(
-                "success", false,
-                "message", "배치 실행 가능 여부 확인 중 오류가 발생했습니다: " + e.getMessage()
-            ));
+            return ServerErrorResponses.internalError("급여 배치 실행 가능 여부 확인 오류", e);
         }
     }
 }

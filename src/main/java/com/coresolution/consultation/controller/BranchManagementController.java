@@ -9,6 +9,7 @@ import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.dto.BranchResponse;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.repository.UserRepository;
+import com.coresolution.consultation.util.ServerErrorResponses;
 import com.coresolution.consultation.service.BranchService;
 import com.coresolution.consultation.service.DynamicPermissionService;
 import com.coresolution.consultation.service.UserService;
@@ -93,12 +94,7 @@ public class BranchManagementController {
             return ResponseEntity.ok(response);
             
         } catch (Exception e) {
-            log.error("지점 목록 조회 중 오류 발생: {}", e.getMessage(), e);
-            
-            Map<String, Object> errorResponse = new HashMap<>();
-            errorResponse.put("success", false);
-            errorResponse.put("message", "지점 목록 조회 중 오류가 발생했습니다: " + e.getMessage());
-            return ResponseEntity.internalServerError().body(errorResponse);
+            return ServerErrorResponses.internalError("지점 목록 조회 중 오류 발생", e);
         }
     }
     
@@ -171,11 +167,7 @@ public class BranchManagementController {
             return ResponseEntity.ok(statistics);
             
         } catch (Exception e) {
-            log.error("테넌트 통계 조회 중 오류 발생: branchCode={}, error={}", branchCode, e.getMessage(), e);
-            Map<String, Object> errorResponse = new HashMap<>();
-            errorResponse.put("success", false);
-            errorResponse.put("message", "통계 조회 중 오류가 발생했습니다: " + e.getMessage());
-            return ResponseEntity.internalServerError().body(errorResponse);
+            return ServerErrorResponses.internalError("테넌트 통계 조회 중 오류 발생: branchCode=" + branchCode, e);
         }
     }
     
@@ -232,11 +224,7 @@ public class BranchManagementController {
             return ResponseEntity.ok(response);
             
         } catch (Exception e) {
-            log.error("테넌트 사용자 목록 조회 중 오류 발생: branchCode={}, error={}", branchCode, e.getMessage(), e);
-            Map<String, Object> errorResponse = new HashMap<>();
-            errorResponse.put("success", false);
-            errorResponse.put("message", "사용자 목록 조회 중 오류가 발생했습니다: " + e.getMessage());
-            return ResponseEntity.internalServerError().body(errorResponse);
+            return ServerErrorResponses.internalError("테넌트 사용자 목록 조회 중 오류 발생: branchCode=" + branchCode, e);
         }
     }
     
@@ -321,11 +309,7 @@ public class BranchManagementController {
             return ResponseEntity.ok(response);
             
         } catch (Exception e) {
-            log.error("사용자 일괄 처리 중 오류 발생: error={}", e.getMessage(), e);
-            Map<String, Object> errorResponse = new HashMap<>();
-            errorResponse.put("success", false);
-            errorResponse.put("message", "일괄 처리 중 오류가 발생했습니다: " + e.getMessage());
-            return ResponseEntity.internalServerError().body(errorResponse);
+            return ServerErrorResponses.internalError("사용자 일괄 처리 중 오류 발생", e);
         }
     }
     

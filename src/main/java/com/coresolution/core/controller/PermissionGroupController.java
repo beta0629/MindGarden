@@ -3,6 +3,8 @@ package com.coresolution.core.controller;
 import com.coresolution.core.dto.ApiResponse;
 import com.coresolution.core.dto.PermissionGroupDTO;
 import com.coresolution.core.service.PermissionGroupService;
+import com.coresolution.consultation.constant.ServerErrorMessages;
+import com.coresolution.consultation.util.ServerErrorResponses;
 import com.coresolution.consultation.utils.SessionUtils;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -58,9 +60,9 @@ public class PermissionGroupController {
 
             return ResponseEntity.ok(ApiResponse.success(groups));
         } catch (Exception e) {
-            log.error("❌ 내 권한 그룹 조회 실패", e);
+            ServerErrorResponses.logInternalError("내 권한 그룹 조회 실패", e);
             return ResponseEntity.internalServerError()
-                .body(ApiResponse.error("권한 그룹 조회 중 오류가 발생했습니다: " + e.getMessage()));
+                .body(ApiResponse.error(ServerErrorMessages.INTERNAL_SERVER_ERROR));
         }
     }
 

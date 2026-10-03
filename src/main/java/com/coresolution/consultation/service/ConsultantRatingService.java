@@ -3,6 +3,7 @@ package com.coresolution.consultation.service;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import com.coresolution.consultation.dto.response.ConsultantRatingPublicResponse;
 import com.coresolution.consultation.entity.ConsultantRating;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -85,13 +86,13 @@ public interface ConsultantRatingService {
     Map<Long, Map<String, Object>> getConsultantRatingStatsByConsultantIds(List<Long> consultantIds);
 
     /**
-     * 상담사별 평가 목록 조회
-     * 
+     * 상담사별 평가 목록 조회 (세션 테넌트 범위, 내담자 식별 정보 제외 공개 응답)
+     *
      * @param consultantId 상담사 ID
      * @param pageable 페이징 정보
-     * @return 평가 목록
+     * @return 평가 공개 응답 페이지
      */
-    Page<ConsultantRating> getConsultantRatings(Long consultantId, Pageable pageable);
+    Page<ConsultantRatingPublicResponse> getConsultantRatings(Long consultantId, Pageable pageable);
 
     /**
      * 내담자별 평가 목록 조회
@@ -129,9 +130,9 @@ public interface ConsultantRatingService {
     List<Map<String, Object>> getPopularRatingTags(Long consultantId);
 
     /**
-     * 관리자용 전체 평가 통계
-     * 
-     * @return 전체 평가 통계 정보
+     * 관리자용 평가 통계 (세션 테넌트의 활성 평가만 집계)
+     *
+     * @return 테넌트 평가 통계 정보
      */
     Map<String, Object> getAdminRatingStatistics();
     

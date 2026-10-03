@@ -7,3 +7,7 @@
   margin-top: var(--mg-spacing-4, 4px);
   min-height: var(--touch-target-min, 44px);
 }
+
+.mg-v2-card-actions--end {
+  justify-content: flex-end;
+}

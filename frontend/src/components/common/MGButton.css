@@ -302,6 +302,28 @@
   box-shadow: var(--cs-shadow-xs);
 }
 
+/* danger-outline — 파괴적 보조 액션(삭제 등). 배경 투명 + 오류색 테두리·글자 */
+.mg-button--danger-outline {
+  background-color: transparent;
+  color: var(--mg-v2-color-semantic-error);
+  border-color: var(--mg-v2-color-semantic-error);
+}
+
+.mg-button.mg-button--danger-outline {
+  border-width: var(--mg-v2-border-width-thin) !important;
+  border-style: solid !important;
+}
+
+.mg-button--danger-outline:hover:not(.mg-button--disabled):not(.mg-button--loading) {
+  background-color: var(--mg-v2-color-semantic-error-light);
+  color: var(--mg-v2-color-semantic-error-dark);
+  border-color: var(--mg-v2-color-semantic-error-dark);
+}
+
+.mg-button--danger-outline:active:not(.mg-button--disabled):not(.mg-button--loading) {
+  box-shadow: var(--mg-v2-shadow-xs);
+}
+
 .mg-button--ghost {
   background-color: transparent;
   color: var(--ad-b0kla-icon-color, var(--mg-color-text-secondary));

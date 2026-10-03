@@ -118,49 +118,6 @@
     margin-bottom: var(--mg-space-3);
 }
 
-.schedule-client-notes-section__item {
-    margin-bottom: var(--mg-space-3);
-    padding: var(--mg-space-3);
-    border: 1px solid var(--mg-border-subtle);
-}
-
-.schedule-client-notes-section__item--overdue {
-    border-left: var(--spacing-xs) solid var(--ad-b0kla-orange);
-}
-
-.schedule-client-notes-section__item--resolved {
-    opacity: 0.88;
-    background: var(--ad-b0kla-green-bg);
-}
-
-.schedule-client-notes-section__item-title {
-    font-weight: 600;
-    margin-bottom: var(--mg-space-2);
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--mg-space-2);
-    align-items: center;
-}
-
-.schedule-client-notes-section__item-badge {
-    font-size: var(--font-size-xs);
-}
-
-.schedule-client-notes-section__item-meta {
-    font-size: var(--mg-font-size-sm);
-}
-
-.schedule-client-notes-section__item-body {
-    margin-top: var(--mg-space-2);
-}
-
-.schedule-client-notes-section__item-actions {
-    margin-top: var(--mg-space-3);
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--mg-space-2);
-}
-
 .schedule-client-notes-section__form-actions {
     display: flex;
     gap: var(--mg-space-2);

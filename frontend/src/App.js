@@ -94,13 +94,9 @@ import SalaryManagement from './components/erp/SalaryManagement';
 import RefundManagement from './components/erp/RefundManagement';
 import ClientSchedule from './components/client/ClientSchedule';
 import ClientSessionManagement from './components/client/ClientSessionManagement';
-import ClientHomeRenewal from './components/client/ClientHomeRenewal';
-import ClientBookingRenewal from './components/client/ClientBookingRenewal';
 import ClientConsultationsRenewal from './components/client/ClientConsultationsRenewal';
-import ClientWellnessRenewal from './components/client/ClientWellnessRenewal';
 import MoodJournal from './components/client/MoodJournal';
 import SelfAssessment from './components/client/SelfAssessment';
-import ClientSessionPaymentRenewal from './components/client/ClientSessionPaymentRenewal';
 import ShopCatalogPage from './pages/client/shop/ShopCatalogPage';
 import ShopCartPage from './pages/client/shop/ShopCartPage';
 import ShopCheckoutPage from './pages/client/shop/ShopCheckoutPage';
@@ -155,12 +151,14 @@ import PgApprovalManagement from './components/ops/PgApprovalManagement';
 import AdminLayout from './components/layout/AdminLayout';
 import TenantCommonCodeManager from './components/admin/TenantCommonCodeManager';
 import ProtectedRoute from './components/common/ProtectedRoute';
+import { isClient } from './utils/RoleUtils';
 import SuperAdminTenantComponentPage from './components/super-admin/SuperAdminTenantComponentPage';
 import { SUPER_ADMIN_ROLE, SUPER_ADMIN_ROUTES } from './constants/superAdminRoutes';
 import { MypageRedirect, SettingsRedirect } from './components/common/MypageSettingsRedirects';
 import ConsultantAppShell from './components/layout/ConsultantAppShell';
 import ClientAppShell from './components/layout/ClientAppShell';
 import ClientLegacyRedirect from './components/client/ClientLegacyRedirect';
+import ClientRouteGuard from './components/client/ClientRouteGuard';
 import MobileLogin from './components/auth/MobileLogin';
 import SessionGuard from './components/common/SessionGuard';
 import { SessionProvider, useSession } from './contexts/SessionContext';
@@ -291,7 +289,8 @@ function AppContent() {
   // 동적 테마 시스템 초기화 (로그인 후에만 CSS 테마 로드)
   useEffect(() => {
     // 로그인 전에는 CSS 테마 로드를 건너뛰고 기본 테마만 설정
-    const shouldLoadColors = !!user; // 로그인된 경우에만 색상 로드
+    // 상담사 색상은 관리자 API — 내담자 화면에서는 부르지 않는다
+    const shouldLoadColors = !!user && !isClient(user);
 
     // H6 가드: DarkModeProvider 가 적용해둔 'dark' 를 user 갱신 시점에 복원한다.
     // Fix A 로 setTheme('ios') 는 더 이상 data-theme 를 제거하지 않지만,
@@ -467,52 +466,144 @@ function AppContent() {
               {/* 하위 라우트는 Phase 2A에서 Outlet으로 연결 */}
             </Route>
             
-            {/* Phase 1 + 2B: 내담자 AppShell 레이아웃 (바텀 네비 + 상단 바) */}
-            <Route
-              path="/client"
-              element={
-                <ProtectedRoute requiredRoles={[USER_ROLES.CLIENT]}>
-                  <ClientAppShell />
-                </ProtectedRoute>
-              }
-            >
-              {/* DEC-02: 로그인 SSOT(`/client/dashboard`)와 index 정합 — ClientHomeRenewal 이중 스택 방지 */}
-              <Route index element={<Navigate to="/client/dashboard" replace />} />
-              <Route path="home" element={<ClientHomeRenewal />} />
-              <Route path="booking" element={<ClientBookingRenewal />} />
-              <Route path="consultations" element={<ClientConsultationsRenewal />} />
-              <Route path="wellness-hub" element={<ClientWellnessRenewal />} />
-              <Route path="mood-journal" element={<MoodJournal />} />
-              <Route path="self-assessment" element={<SelfAssessment />} />
-              <Route path="session-payment" element={<ClientSessionPaymentRenewal />} />
-              <Route path="meditation" element={<MeditationGuide />} />
-              <Route path="psycho-education" element={<PsychoEducation />} />
+            {/*
+              내담자 보호 라우트 SSOT — ClientRouteGuard 가 세션 복원 뒤 한 번만 로그인·역할을 판단한다.
+              화면별 navigate('/login') 분기 금지. 공개 카탈로그·SKU·레거시 Redirect 만 이 그룹 밖.
+            */}
+            <Route element={<ClientRouteGuard />}>
+              {/* Phase 1 + 2B: 내담자 AppShell 레이아웃 (바텀 네비 + 상단 바) */}
+              <Route path="/client" element={<ClientAppShell />}>
+                {/* DEC-02: 로그인 SSOT(`/client/dashboard`)와 index 정합 — ClientHomeRenewal 이중 스택 방지 */}
+                <Route index element={<Navigate to={CLIENT_DASHBOARD_ROUTES.DASHBOARD} replace />} />
+                <Route path="consultations" element={<ClientConsultationsRenewal />} />
+                <Route path="mood-journal" element={<MoodJournal />} />
+                <Route path="self-assessment" element={<SelfAssessment />} />
+                <Route path="meditation" element={<MeditationGuide />} />
+                <Route path="psycho-education" element={<PsychoEducation />} />
+                <Route
+                  path="community"
+                  element={(
+                    <CommunityMenuRouteGuard
+                      menuCode={MENU_PERMISSION_CODES.CLT_COMMUNITY}
+                      fallbackPath={CLIENT_DASHBOARD_ROUTES.DASHBOARD}
+                    >
+                      <CommunityFeed primaryColor="var(--mg-client-primary)" />
+                    </CommunityMenuRouteGuard>
+                  )}
+                />
+                <Route
+                  path="community/:postId"
+                  element={(
+                    <CommunityMenuRouteGuard
+                      menuCode={MENU_PERMISSION_CODES.CLT_COMMUNITY}
+                      fallbackPath={CLIENT_DASHBOARD_ROUTES.DASHBOARD}
+                    >
+                      <CommunityPostDetail primaryColor="var(--mg-client-primary)" />
+                    </CommunityMenuRouteGuard>
+                  )}
+                />
+                {/* 미매칭 /client/* → 대시보드 (정상 라우트보다 뒤) */}
+                <Route
+                  path="*"
+                  element={<Navigate to={CLIENT_DASHBOARD_ROUTES.DASHBOARD} replace />}
+                />
+              </Route>
+
+              <Route path={CLIENT_DASHBOARD_ROUTES.DASHBOARD} element={<ClientDashboard user={user} />} />
+              <Route path={CLIENT_DASHBOARD_ROUTES.SCHEDULE} element={<ClientSchedule />} />
+              <Route path={CLIENT_DASHBOARD_ROUTES.SESSION_MANAGEMENT} element={<ClientSessionManagement />} />
+              <Route path={CLIENT_DASHBOARD_ROUTES.PAYMENT_HISTORY} element={<ClientPaymentHistory />} />
+              <Route path={CLIENT_DASHBOARD_ROUTES.MESSAGES} element={<ClientMessageScreen />} />
+              <Route path={CLIENT_DASHBOARD_ROUTES.MYPAGE} element={<MyPage />} />
+              <Route path="/client/activity-history" element={<ActivityHistory />} />
+              <Route path={CLIENT_DASHBOARD_ROUTES.WELLNESS} element={<WellnessNotificationList />} />
+              <Route path={`${CLIENT_DASHBOARD_ROUTES.WELLNESS}/:id`} element={<WellnessNotificationDetail />} />
+              <Route path="/client/mindfulness-guide" element={<MindfulnessGuide />} />
+
+              {/* 내담자 "더보기" 하위 라우트 */}
+              <Route path="/client/more" element={<ClientAppShell title={t('common:misc.App.t_0b680789')} />}>
+                <Route
+                  path="community"
+                  element={(
+                    <CommunityMenuRouteGuard
+                      menuCode={MENU_PERMISSION_CODES.CLT_COMMUNITY}
+                      fallbackPath={CLIENT_DASHBOARD_ROUTES.DASHBOARD}
+                    >
+                      <CommunityFeed primaryColor="var(--mg-client-primary)" />
+                    </CommunityMenuRouteGuard>
+                  )}
+                />
+                <Route
+                  path="community/:postId"
+                  element={(
+                    <CommunityMenuRouteGuard
+                      menuCode={MENU_PERMISSION_CODES.CLT_COMMUNITY}
+                      fallbackPath={CLIENT_DASHBOARD_ROUTES.DASHBOARD}
+                    >
+                      <CommunityPostDetail primaryColor="var(--mg-client-primary)" />
+                    </CommunityMenuRouteGuard>
+                  )}
+                />
+              </Route>
+
+              {/* Shop 보호 경로 — ClientAppShell 밖, ShopClientLayout 이 ClientWebPageShell 담당 */}
               <Route
-                path="community"
+                path={CLIENT_SHOP_ROUTES.CART}
                 element={(
-                  <CommunityMenuRouteGuard
-                    menuCode={MENU_PERMISSION_CODES.CLT_COMMUNITY}
-                    fallbackPath={CLIENT_DASHBOARD_ROUTES.DASHBOARD}
-                  >
-                    <CommunityFeed primaryColor="var(--mg-client-primary)" />
-                  </CommunityMenuRouteGuard>
+                  <ClientTenantComponentGate componentCode={PLATFORM_COMPONENT_CODES.CLIENT_SHOP}>
+                    <ShopCartPage />
+                  </ClientTenantComponentGate>
                 )}
               />
               <Route
-                path="community/:postId"
+                path={CLIENT_SHOP_ROUTES.CHECKOUT}
                 element={(
-                  <CommunityMenuRouteGuard
-                    menuCode={MENU_PERMISSION_CODES.CLT_COMMUNITY}
-                    fallbackPath={CLIENT_DASHBOARD_ROUTES.DASHBOARD}
-                  >
-                    <CommunityPostDetail primaryColor="var(--mg-client-primary)" />
-                  </CommunityMenuRouteGuard>
+                  <ClientTenantComponentGate componentCode={PLATFORM_COMPONENT_CODES.CLIENT_SHOP}>
+                    <ShopCheckoutPage />
+                  </ClientTenantComponentGate>
                 )}
               />
-              {/* 미매칭 /client/* → 대시보드 (정상 라우트보다 뒤) */}
               <Route
-                path="*"
-                element={<Navigate to={CLIENT_DASHBOARD_ROUTES.DASHBOARD} replace />}
+                path={CLIENT_SHOP_ROUTES.POINTS}
+                element={(
+                  <ClientTenantComponentGate componentCode={PLATFORM_COMPONENT_CODES.CLIENT_SHOP}>
+                    <ClientTenantComponentGate componentCode={PLATFORM_COMPONENT_CODES.CLIENT_REWARD}>
+                      <ShopPointsPage />
+                    </ClientTenantComponentGate>
+                  </ClientTenantComponentGate>
+                )}
+              />
+              <Route
+                path={CLIENT_SHOP_ROUTES.ORDERS}
+                element={(
+                  <ClientTenantComponentGate componentCode={PLATFORM_COMPONENT_CODES.CLIENT_SHOP}>
+                    <ShopOrdersPage />
+                  </ClientTenantComponentGate>
+                )}
+              />
+              <Route
+                path={`${CLIENT_SHOP_ROUTES.ORDERS}/:orderPublicId`}
+                element={(
+                  <ClientTenantComponentGate componentCode={PLATFORM_COMPONENT_CODES.CLIENT_SHOP}>
+                    <ShopOrderDetailPage />
+                  </ClientTenantComponentGate>
+                )}
+              />
+              <Route
+                path={CLIENT_SHOP_ROUTES.PAYMENT_RETURN}
+                element={(
+                  <ClientTenantComponentGate componentCode={PLATFORM_COMPONENT_CODES.CLIENT_SHOP}>
+                    <ShopPaymentReturnPage />
+                  </ClientTenantComponentGate>
+                )}
+              />
+              <Route
+                path={`${CLIENT_SHOP_ROUTES.COMPLETE}/:orderPublicId`}
+                element={(
+                  <ClientTenantComponentGate componentCode={PLATFORM_COMPONENT_CODES.CLIENT_SHOP}>
+                    <ShopPaymentCompletePage />
+                  </ClientTenantComponentGate>
+                )}
               />
             </Route>
 
@@ -535,78 +626,6 @@ function AppContent() {
                 <ClientTenantComponentGate componentCode={PLATFORM_COMPONENT_CODES.CLIENT_SHOP}>
                   <ShopSkuDetailPage />
                 </ClientTenantComponentGate>
-              )}
-            />
-            <Route
-              path={CLIENT_SHOP_ROUTES.CART}
-              element={(
-                <ProtectedRoute requiredRoles={[USER_ROLES.CLIENT]}>
-                  <ClientTenantComponentGate componentCode={PLATFORM_COMPONENT_CODES.CLIENT_SHOP}>
-                    <ShopCartPage />
-                  </ClientTenantComponentGate>
-                </ProtectedRoute>
-              )}
-            />
-            <Route
-              path={CLIENT_SHOP_ROUTES.CHECKOUT}
-              element={(
-                <ProtectedRoute requiredRoles={[USER_ROLES.CLIENT]}>
-                  <ClientTenantComponentGate componentCode={PLATFORM_COMPONENT_CODES.CLIENT_SHOP}>
-                    <ShopCheckoutPage />
-                  </ClientTenantComponentGate>
-                </ProtectedRoute>
-              )}
-            />
-            <Route
-              path={CLIENT_SHOP_ROUTES.POINTS}
-              element={(
-                <ProtectedRoute requiredRoles={[USER_ROLES.CLIENT]}>
-                  <ClientTenantComponentGate componentCode={PLATFORM_COMPONENT_CODES.CLIENT_SHOP}>
-                    <ClientTenantComponentGate componentCode={PLATFORM_COMPONENT_CODES.CLIENT_REWARD}>
-                      <ShopPointsPage />
-                    </ClientTenantComponentGate>
-                  </ClientTenantComponentGate>
-                </ProtectedRoute>
-              )}
-            />
-            <Route
-              path={CLIENT_SHOP_ROUTES.ORDERS}
-              element={(
-                <ProtectedRoute requiredRoles={[USER_ROLES.CLIENT]}>
-                  <ClientTenantComponentGate componentCode={PLATFORM_COMPONENT_CODES.CLIENT_SHOP}>
-                    <ShopOrdersPage />
-                  </ClientTenantComponentGate>
-                </ProtectedRoute>
-              )}
-            />
-            <Route
-              path={`${CLIENT_SHOP_ROUTES.ORDERS}/:orderPublicId`}
-              element={(
-                <ProtectedRoute requiredRoles={[USER_ROLES.CLIENT]}>
-                  <ClientTenantComponentGate componentCode={PLATFORM_COMPONENT_CODES.CLIENT_SHOP}>
-                    <ShopOrderDetailPage />
-                  </ClientTenantComponentGate>
-                </ProtectedRoute>
-              )}
-            />
-            <Route
-              path={CLIENT_SHOP_ROUTES.PAYMENT_RETURN}
-              element={(
-                <ProtectedRoute requiredRoles={[USER_ROLES.CLIENT]}>
-                  <ClientTenantComponentGate componentCode={PLATFORM_COMPONENT_CODES.CLIENT_SHOP}>
-                    <ShopPaymentReturnPage />
-                  </ClientTenantComponentGate>
-                </ProtectedRoute>
-              )}
-            />
-            <Route
-              path={`${CLIENT_SHOP_ROUTES.COMPLETE}/:orderPublicId`}
-              element={(
-                <ProtectedRoute requiredRoles={[USER_ROLES.CLIENT]}>
-                  <ClientTenantComponentGate componentCode={PLATFORM_COMPONENT_CODES.CLIENT_SHOP}>
-                    <ShopPaymentCompletePage />
-                  </ClientTenantComponentGate>
-                </ProtectedRoute>
               )}
             />
             <Route
@@ -635,11 +654,6 @@ function AppContent() {
             <Route path="/dashboard" element={<DynamicDashboard user={user} />} />
             
             {/* 역할별 대시보드 라우트 - 세션/권한 체크 후 해당 역할만 접근 (링크만으로 어드민 대시보드 이동 불가) */}
-            <Route path="/client/dashboard" element={
-              <ProtectedRoute requiredRoles={[USER_ROLES.CLIENT]}>
-                <ClientDashboard user={user} />
-              </ProtectedRoute>
-            } />
             <Route path="/consultant/dashboard" element={
               <ProtectedRoute requiredRoles={[USER_ROLES.CONSULTANT]}>
                 <ConsultantDashboardV2 user={user} />
@@ -657,7 +671,6 @@ function AppContent() {
             />
             <Route path="/branch_super_admin/dashboard" element={<Navigate to="/admin/dashboard" replace />} />
             <Route path="/branch_manager/dashboard" element={<Navigate to="/admin/dashboard" replace />} />
-            <Route path="/client/mypage" element={<MyPage />} />
             <Route path="/consultant/mypage" element={<MyPage />} />
             <Route path="/super_admin/mypage" element={<MyPage />} />
             <Route path="/branch_super_admin/mypage" element={<Navigate to="/admin/mypage" replace />} />
@@ -751,36 +764,6 @@ function AppContent() {
                     fallbackPath="/consultant/more"
                   >
                     <CommunityPostDetail primaryColor="var(--mg-consultant-primary)" />
-                  </CommunityMenuRouteGuard>
-                )}
-              />
-            </Route>
-
-            {/* 내담자 "더보기" 하위 라우트 */}
-            <Route path="/client/more" element={
-              <ProtectedRoute requiredRoles={[USER_ROLES.CLIENT]}>
-                <ClientAppShell title={t('common:misc.App.t_0b680789')} />
-              </ProtectedRoute>
-            }>
-              <Route
-                path="community"
-                element={(
-                  <CommunityMenuRouteGuard
-                    menuCode={MENU_PERMISSION_CODES.CLT_COMMUNITY}
-                    fallbackPath="/client/dashboard"
-                  >
-                    <CommunityFeed primaryColor="var(--mg-client-primary)" />
-                  </CommunityMenuRouteGuard>
-                )}
-              />
-              <Route
-                path="community/:postId"
-                element={(
-                  <CommunityMenuRouteGuard
-                    menuCode={MENU_PERMISSION_CODES.CLT_COMMUNITY}
-                    fallbackPath="/client/dashboard"
-                  >
-                    <CommunityPostDetail primaryColor="var(--mg-client-primary)" />
                   </CommunityMenuRouteGuard>
                 )}
               />
@@ -1045,37 +1028,17 @@ function AppContent() {
             <Route path="/consultant/messages" element={<ConsultantMessages />} />
             
             {/* 시스템 공지 라우트 (모든 사용자) */}
-            <Route path="/notifications" element={<UnifiedNotifications />} />
+            <Route path="/notifications" element={<ProtectedRoute><UnifiedNotifications /></ProtectedRoute>} />
             <Route path="/system-notifications" element={<SystemNotifications />} />
             
-            {/* 내담자 전용 라우트 */}
-            <Route
-              path={CLIENT_DASHBOARD_ROUTES.MESSAGES}
-              element={(
-                <ProtectedRoute requiredRoles={[USER_ROLES.CLIENT]}>
-                  <ClientMessageScreen />
-                </ProtectedRoute>
-              )}
-            />
-            <Route path="/client/booking" element={<Navigate to={CLIENT_DASHBOARD_ROUTES.SCHEDULE} replace />} />
-            <Route path={CLIENT_DASHBOARD_ROUTES.SCHEDULE} element={
-              <ProtectedRoute requiredRoles={[USER_ROLES.CLIENT]}>
-                <ClientSchedule />
-              </ProtectedRoute>
-            } />
+            {/* 내담자 공개 Redirect (가드 밖 — 목적지 라우트가 ClientRouteGuard 를 탄다) */}
             <Route path="/client/records" element={<Navigate to={CLIENT_DASHBOARD_ROUTES.SESSION_MANAGEMENT} replace />} />
-            <Route path={CLIENT_DASHBOARD_ROUTES.SESSION_MANAGEMENT} element={<ClientSessionManagement />} />
-            <Route path={CLIENT_DASHBOARD_ROUTES.PAYMENT_HISTORY} element={<ClientPaymentHistory />} />
             <Route
               path={CLIENT_DASHBOARD_ROUTES.SETTINGS}
               element={(
                 <RedirectWithSearch to={CLIENT_DASHBOARD_ROUTES.MYPAGE} hash={CLIENT_SETTINGS_REDIRECT_HASH} />
               )}
             />
-            <Route path="/client/activity-history" element={<ActivityHistory />} />
-            <Route path={CLIENT_DASHBOARD_ROUTES.WELLNESS} element={<WellnessNotificationList />} />
-            <Route path={`${CLIENT_DASHBOARD_ROUTES.WELLNESS}/:id`} element={<WellnessNotificationDetail />} />
-            <Route path="/client/mindfulness-guide" element={<MindfulnessGuide />} />
 
             {/* 미매칭 /client/* 절대 경로 catch-all (정상 라우트·레거시 Redirect 보다 뒤) */}
             <Route

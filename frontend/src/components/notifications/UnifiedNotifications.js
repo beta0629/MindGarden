@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useSession } from '../../contexts/SessionContext';
+import { useNotification } from '../../contexts/NotificationContext';
 import { apiGet } from '../../utils/ajax';
 import { getConsultationMessagesListPath } from '../../utils/consultationMessagesApi';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
@@ -11,6 +12,13 @@ import MGButton from '../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import ActionBar from '../common/ActionBar';
 import ActionBarButton from '../common/ActionBarButton';
+import SafeText from '../common/SafeText';
+import PersonalNotificationsTab from './PersonalNotificationsTab';
+import {
+  NOTIFICATION_TABS,
+  NOTIFICATION_TAB_QUERY_KEY,
+  PERSONAL_NOTIFICATION_TEST_IDS
+} from '../../constants/notificationTabs';
 import '../../styles/unified-design-tokens.css';
 import { useTranslation } from 'react-i18next';
 
@@ -25,13 +33,23 @@ const API_SYSTEM_NOTIFICATIONS = '/api/v1/system-notifications?page=0&size=50';
  */
 const UNIFIED_NOTIFICATIONS_TITLE_ID = 'unified-notifications-title';
 
+/**
+ * @param {string} search location.search
+ * @returns {string}
+ */
+const resolveInitialTab = (search) => {
+  const tab = new URLSearchParams(search || '').get(NOTIFICATION_TAB_QUERY_KEY);
+  return Object.values(NOTIFICATION_TABS).includes(tab) ? tab : NOTIFICATION_TABS.SYSTEM;
+};
+
 const UnifiedNotifications = () => {
   const { t } = useTranslation();
   const { user, isLoggedIn } = useSession();
   const location = useLocation();
   const navigate = useNavigate();
 
-  const [activeTab, setActiveTab] = useState('system'); // 'system' or 'messages'
+  const { markSystemNotificationAsRead } = useNotification();
+  const [activeTab, setActiveTab] = useState(() => resolveInitialTab(location.search));
   const [systemNotifications, setSystemNotifications] = useState([]);
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -98,10 +116,20 @@ const UnifiedNotifications = () => {
   const handleTabChange = (tab) => {
     setActiveTab(tab);
     setSelectedItem(null);
-    if (tab === 'system') {
+    if (tab === NOTIFICATION_TABS.SYSTEM) {
       loadSystemNotifications();
-    } else {
+    } else if (tab === NOTIFICATION_TABS.MESSAGES) {
       loadMessages();
+    } else {
+      setLoading(false);
+    }
+  };
+
+  // 개인 알림 클릭 — 목록 응답 본문을 그대로 보여 주고 읽음은 컨텍스트가 처리(종 개수 갱신)
+  const handlePersonalNotificationClick = (notification) => {
+    setSelectedItem({ type: NOTIFICATION_TABS.PERSONAL, data: notification });
+    if (!notification.isRead) {
+      void markSystemNotificationAsRead(notification.id);
     }
   };
 
@@ -148,6 +176,9 @@ const UnifiedNotifications = () => {
     setSelectedItem(null);
     
     // 목록 새로고침 (읽음 상태 반영)
+    if (activeTab === NOTIFICATION_TABS.PERSONAL) {
+      return;
+    }
     if (activeTab === 'system') {
       await loadSystemNotifications();
       // 공지 읽음 이벤트 발생 (NotificationContext가 카운트 갱신)
@@ -197,10 +228,12 @@ const UnifiedNotifications = () => {
   };
 
   useEffect(() => {
-    if (activeTab === 'system') {
+    if (activeTab === NOTIFICATION_TABS.SYSTEM) {
       loadSystemNotifications();
-    } else {
+    } else if (activeTab === NOTIFICATION_TABS.MESSAGES) {
       loadMessages();
+    } else {
+      setLoading(false);
     }
   }, [isLoggedIn, user?.id]);
 
@@ -306,6 +339,21 @@ const UnifiedNotifications = () => {
               preventDoubleClick={false}
             >
               {t('common:notification.unified.tabMessages')}
+            </MGButton>
+            <MGButton
+              type="button"
+              variant={activeTab === NOTIFICATION_TABS.PERSONAL ? 'primary' : 'outline'}
+              className={buildErpMgButtonClassName({
+                variant: activeTab === NOTIFICATION_TABS.PERSONAL ? 'primary' : 'outline',
+                size: 'md',
+                loading: false
+              })}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+              onClick={() => handleTabChange(NOTIFICATION_TABS.PERSONAL)}
+              preventDoubleClick={false}
+              data-testid={PERSONAL_NOTIFICATION_TEST_IDS.TAB}
+            >
+              {t('common:notification.unified.tabPersonal')}
             </MGButton>
           </div>
         </div>
@@ -449,6 +497,15 @@ const UnifiedNotifications = () => {
           </div>
         )}
 
+        {activeTab === NOTIFICATION_TABS.PERSONAL && (
+          <PersonalNotificationsTab
+            enabled={Boolean(isLoggedIn && user?.id)}
+            resetKey={user?.id}
+            formatDate={formatDate}
+            onSelect={handlePersonalNotificationClick}
+          />
+        )}
+
         {/* 상세 모달 */}
         {selectedItem && (
           <UnifiedModal
@@ -494,12 +551,16 @@ const UnifiedNotifications = () => {
                 </span>
               )}
             </div>
-            <div
-              className="notification-content"
-              dangerouslySetInnerHTML={{
-                __html: selectedItem.data.content || ''
-              }}
-            />
+            {selectedItem.type === NOTIFICATION_TABS.PERSONAL ? (
+              <SafeText tag="div" className="notification-content">{selectedItem.data.content}</SafeText>
+            ) : (
+              <div
+                className="notification-content"
+                dangerouslySetInnerHTML={{
+                  __html: selectedItem.data.content || ''
+                }}
+              />
+            )}
           </UnifiedModal>
         )}
       </ContentArea>

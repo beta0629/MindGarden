@@ -50,6 +50,11 @@ export const CLIENT_LEGACY_ROUTE_REDIRECTS = Object.freeze([
   { from: '/client/orders', to: CLIENT_SHOP_ROUTES.ORDERS },
   { from: '/client/profile', to: CLIENT_DASHBOARD_ROUTES.SETTINGS },
   { from: '/client/notifications', to: CLIENT_DASHBOARD_ROUTES.NOTIFICATIONS },
+  // 앱 시절 화면 — 웹 내비 없음 · 권한 밖 API(404/403) 호출. 푸시 딥링크(booking·wellness-hub)도 여기로 받는다.
+  { from: '/client/home', to: CLIENT_DASHBOARD_ROUTES.DASHBOARD },
+  { from: '/client/booking', to: CLIENT_DASHBOARD_ROUTES.SCHEDULE },
+  { from: CLIENT_DASHBOARD_ROUTES.WELLNESS_HUB, to: CLIENT_DASHBOARD_ROUTES.WELLNESS },
+  { from: '/client/session-payment', to: CLIENT_SHOP_ROUTES.CATALOG },
   { from: '/shop', to: CLIENT_SHOP_ROUTES.CATALOG }
 ]);
 

@@ -6,11 +6,12 @@
  * @since 2026-09-18
  */
 
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { useSession } from '../../contexts/SessionContext';
+import React, { useCallback, useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { useClientSessionReady } from '../../hooks/useClientSessionReady';
 import { useSoftResourceLoad } from '../../hooks/useSoftResourceLoad';
-import { AUTH_API, DASHBOARD_API } from '../../constants/api';
+import { useUserIdScopedLoad } from '../../hooks/useUserIdScopedLoad';
+import { DASHBOARD_API } from '../../constants/api';
 import StandardizedApi from '../../utils/standardizedApi';
 import {
   isApiGetNullFailure,
@@ -31,36 +32,19 @@ import './ClientSessionManagement.css';
 const CLIENT_SESSION_MGMT_TITLE_ID = 'client-session-management-title';
 
 /**
- * @param {unknown} err
- * @returns {boolean}
+ * 로그인·역할 판단은 ClientRouteGuard 가 한다. 이 화면은 세션 준비 뒤 본인 매칭만 읽는다.
  */
-const isAuthFailure = (err) => {
-  if (err == null) {
-    return true;
-  }
-  if (typeof err === 'object' && err.status === 401) {
-    return true;
-  }
-  return false;
-};
-
 const ClientSessionManagement = () => {
-  const navigate = useNavigate();
-  const { isLoggedIn, isLoading: sessionLoading, checkSession } = useSession();
+  const { ready, userId, userRef } = useClientSessionReady();
   const [sessionData, setSessionData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
   const fetchSessionData = useCallback(async() => {
     setError(null);
-    const userResponse = await StandardizedApi.get(AUTH_API.GET_CURRENT_USER);
-    if (!userResponse || !userResponse.id) {
-      const authErr = new Error(CLIENT_WEB_SUITE_COPY.SESSIONS_ERROR_TITLE);
-      authErr.status = 401;
-      throw authErr;
-    }
+    const clientId = userRef.current?.id;
     const mappingsResponse = await StandardizedApi.get(DASHBOARD_API.CLIENT_CONSULTANT_INFO, {
-      clientId: userResponse.id
+      clientId
     });
     if (isApiGetNullFailure(mappingsResponse)) {
       throw new Error(CLIENT_WEB_SUITE_COPY.SESSIONS_ERROR_TITLE);
@@ -73,70 +57,36 @@ const ClientSessionManagement = () => {
       remainingSessions: sessionTotals.remainingSessions,
       mappings: mappings.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
     });
-  }, []);
+  }, [userRef]);
 
-  const { load: loadSessionData, softRefresh: softRefreshSessions } = useSoftResourceLoad(
+  const { load: loadSessionData } = useSoftResourceLoad(
     setIsLoading,
     async() => {
       try {
         await fetchSessionData();
       } catch (err) {
-        if (isAuthFailure(err)) {
-          navigate('/login', { replace: true });
-          return;
-        }
         setError(err?.message || CLIENT_WEB_SUITE_COPY.SESSIONS_ERROR_TITLE);
         setSessionData(null);
       }
     }
   );
 
-  useEffect(() => {
-    if (sessionLoading) {
-      return;
-    }
-    if (!isLoggedIn) {
-      navigate('/login', { replace: true });
-      return;
-    }
-    void loadSessionData({ silent: false });
-  }, [sessionLoading, isLoggedIn, navigate, loadSessionData]);
+  useUserIdScopedLoad({
+    userId,
+    loadFn: loadSessionData,
+    enabled: ready
+  });
 
-  /**
-   * 다시 시도: current-user 재검증 → 실세션 없으면 soft navigate /login,
-   * 있으면 softRefresh 로 회기 로드 (hard reload 금지).
-   */
-  const handleRetry = useCallback(async() => {
-    setError(null);
-    setIsLoading(true);
-    try {
-      const userResponse = await StandardizedApi.get(AUTH_API.GET_CURRENT_USER);
-      if (!userResponse || !userResponse.id) {
-        navigate('/login', { replace: true });
-        return;
-      }
-      if (typeof checkSession === 'function') {
-        await checkSession(true, { silent: true });
-      }
-      await softRefreshSessions();
-    } catch (err) {
-      if (isAuthFailure(err)) {
-        navigate('/login', { replace: true });
-        return;
-      }
-      setError(err?.message || CLIENT_WEB_SUITE_COPY.SESSIONS_ERROR_TITLE);
-      setSessionData(null);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [navigate, checkSession, softRefreshSessions]);
+  const handleRetry = useCallback(() => {
+    void loadSessionData({ silent: false });
+  }, [loadSessionData]);
 
   const balanceMeta = useMemo(
     () => buildSessionChipAndBalance(sessionData?.mappings),
     [sessionData?.mappings]
   );
 
-  const showLoading = isLoading || sessionLoading;
+  const showLoading = isLoading;
 
   const mainSlot = (
     <>

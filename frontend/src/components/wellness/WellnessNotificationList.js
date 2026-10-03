@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useCallback, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import StandardizedApi from '../../utils/standardizedApi';
-import { useSession } from '../../contexts/SessionContext';
-import notificationManager from '../../utils/notification';
+import { useClientSessionReady } from '../../hooks/useClientSessionReady';
+import { useSoftResourceLoad } from '../../hooks/useSoftResourceLoad';
+import { useUserIdScopedLoad } from '../../hooks/useUserIdScopedLoad';
 import ClientWebPageShell from '../client/ClientWebPageShell';
 import { ContentArea, ContentHeader } from '../dashboard-v2/content';
 import UnifiedLoading from '../../components/common/UnifiedLoading';
@@ -15,7 +16,6 @@ import '../../styles/unified-design-tokens.css';
 import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import '../../styles/themes/client-theme.css';
 import './WellnessNotificationList.css';
-import { USER_ROLES, LEGACY_USER_ROLES } from '../../constants/roles';
 import { API_ENDPOINTS } from '../../constants/apiEndpoints';
 import { useTranslation } from 'react-i18next';
 
@@ -37,32 +37,14 @@ const stripHtmlToPreview = (raw) => {
 const WellnessNotificationList = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { user, isLoggedIn } = useSession();
+  const { ready, userId } = useClientSessionReady();
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
-    if (!isLoggedIn) {
-      notificationManager.show('로그인이 필요합니다.', 'error');
-      navigate('/login');
-      return;
-    }
-
-    if (user?.role !== USER_ROLES.CLIENT && user?.role !== LEGACY_USER_ROLES.ROLE_CLIENT) {
-      notificationManager.show('접근 권한이 없습니다.', 'error');
-      navigate('/');
-      return;
-    }
-
-    loadNotifications();
-  }, [isLoggedIn, user, navigate]);
-
-  const loadNotifications = async() => {
+  const { load: loadNotificationList } = useSoftResourceLoad(setLoading, async() => {
+    setError(null);
     try {
-      setLoading(true);
-      setError(null);
-
       const response = await StandardizedApi.get(API_ENDPOINTS.SYSTEM.NOTIFICATIONS.ACTIVE);
 
       if (response && response.success) {
@@ -76,10 +58,14 @@ const WellnessNotificationList = () => {
     } catch (err) {
       console.error('❌ 웰니스 알림 목록 로드 실패:', err);
       setError('알림을 불러오는 중 오류가 발생했습니다.');
-    } finally {
-      setLoading(false);
     }
-  };
+  });
+
+  useUserIdScopedLoad({ userId, loadFn: loadNotificationList, enabled: ready });
+
+  const loadNotifications = useCallback(() => {
+    void loadNotificationList({ silent: false });
+  }, [loadNotificationList]);
 
   const handleNotificationClick = (notification) => {
     navigate(`/client/wellness/${notification.id}`);

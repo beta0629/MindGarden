@@ -1,0 +1,12 @@
+.mg-list-load-more {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--mg-spacing-sm);
+  padding: var(--mg-spacing-md) 0;
+}
+
+.mg-list-load-more__count {
+  font-size: var(--mg-font-size-sm);
+  color: var(--mg-color-text-secondary);
+}

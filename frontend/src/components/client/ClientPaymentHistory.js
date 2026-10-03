@@ -1,6 +1,7 @@
 /**
  * 내담자 결제 내역 — Clinic-OS 단열(aside 없음) · 필터 칩 바(URL 쿼리) · ≥768 표 / <768 카드
- * 매핑 결제 + 쇼핑 PortOne(ONLINE/PAID·REFUNDED) 주문을 함께 표시한다.
+ * 매핑 결제(센터) + 쇼핑 PortOne(ONLINE/PAID·REFUNDED) 주문을 함께 표시한다.
+ * 매핑 목록은 세션 사용자 id 로만 조회한다(서버가 본인 id 외 403).
  * 포맷·환불 문맥·상품명·합계는 utils/clientPaymentHistoryFormat 한 곳에서만.
  * 스펙: docs/design/clinic-os-client-payments.md
  *
@@ -12,6 +13,9 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom';
 import StandardizedApi from '../../utils/standardizedApi';
 import { isApiGetNullFailure, normalizeMappingsListPayload } from '../../utils/apiResponseNormalize';
+import { useClientSessionReady } from '../../hooks/useClientSessionReady';
+import { useSoftResourceLoad } from '../../hooks/useSoftResourceLoad';
+import { useUserIdScopedLoad } from '../../hooks/useUserIdScopedLoad';
 import {
   buildClientPaymentCaption,
   buildClientPaymentRows,
@@ -49,7 +53,6 @@ import MGPagination from '../common/MGPagination';
 import ClientWebPageShell from './ClientWebPageShell';
 import './ClientPaymentHistory.css';
 
-const API_AUTH_CURRENT_USER = '/api/v1/auth/current-user';
 const API_ADMIN_MAPPINGS_CLIENT = '/api/v1/admin/mappings/client';
 const CLIENT_PAYMENT_HISTORY_TITLE_ID = 'client-payment-history-title';
 const MOBILE_MEDIA_QUERY = `(max-width: ${CLIENT_PAYMENT_TABLE_MIN_WIDTH_PX - 1}px)`;
@@ -334,20 +337,15 @@ const ClientPaymentHistory = () => {
   const status = normalizeStatusFilter(searchParams.get(CLIENT_PAYMENT_QUERY_KEYS.STATUS));
   const requestedPage = normalizePage(searchParams.get(CLIENT_PAYMENT_QUERY_KEYS.PAGE));
 
-  const loadPaymentData = useCallback(async() => {
-    setIsLoading(true);
+  const { ready, userId } = useClientSessionReady();
+
+  const { load: loadPayments } = useSoftResourceLoad(setIsLoading, async() => {
     setError(false);
     setPartialError(false);
     try {
-      const userResponse = await StandardizedApi.get(API_AUTH_CURRENT_USER);
-      if (!userResponse || !userResponse.id) {
-        throw new Error(CLIENT_PAYMENT_COPY.ERROR_TITLE);
-      }
       let shopFailed = false;
       const [mappingsResponse, shopOrders] = await Promise.all([
-        StandardizedApi.get(API_ADMIN_MAPPINGS_CLIENT, {
-          clientId: userResponse.id
-        }),
+        StandardizedApi.get(API_ADMIN_MAPPINGS_CLIENT, { clientId: userId }),
         fetchAllShopOrders().catch(() => {
           shopFailed = true;
           return [];
@@ -364,14 +362,14 @@ const ClientPaymentHistory = () => {
     } catch (err) {
       setError(true);
       setSources(null);
-    } finally {
-      setIsLoading(false);
     }
-  }, []);
+  });
 
-  useEffect(() => {
-    loadPaymentData();
-  }, [loadPaymentData]);
+  useUserIdScopedLoad({ userId, loadFn: loadPayments, enabled: ready });
+
+  const loadPaymentData = useCallback(() => {
+    void loadPayments({ silent: false });
+  }, [loadPayments]);
 
   const allRows = useMemo(
     () => (sources ? buildClientPaymentRows({ ...sources, shopOrderDetails }) : []),

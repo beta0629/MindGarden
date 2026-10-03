@@ -15,12 +15,15 @@
 import { apiGet } from './ajax';
 import { cachedApiCall, CACHE_CONFIG } from './apiCache';
 import { COMMON_CODE_API } from '../constants/api';
+import { NOTIFICATION_DEDUPE_WINDOW_MS } from '../constants/notificationTiming';
+import { getNotificationText, resolveNotificationDuration } from './notificationDuration';
 
 class NotificationManager {
     constructor() {
         this.listeners = [];
         this.notificationId = 0;
         this.notificationTypes = [];
+        this.recentByKey = new Map();
         this.loadNotificationTypes();
     }
 
@@ -75,17 +78,47 @@ class NotificationManager {
         };
     }
 
-/**
-     * 알림 표시
+    /**
+     * 같은 메시지+타입이 dedupe 창 안에 이미 나갔으면 그 id 를 돌려준다.
      */
-    show(message, type = 'success', duration = 1000) { // 기본 duration을 3초에서 1초로 단축
+    findRecentDuplicate(key, now) {
+        for (const [recentKey, entry] of this.recentByKey) {
+            if (now - entry.timestamp >= NOTIFICATION_DEDUPE_WINDOW_MS) {
+                this.recentByKey.delete(recentKey);
+            }
+        }
+        const entry = this.recentByKey.get(key);
+        return entry ? entry.id : null;
+    }
+
+    /**
+     * 알림 표시
+     * @param {*} message 메시지(문자열 또는 payload)
+     * @param {string} [type] success | error | warning | info
+     * @param {number} [duration] 생략 시 NOTIFICATION_DURATION 타입별 기본값
+     * @returns {number} 알림 id (중복으로 합쳐지면 앞선 알림 id)
+     */
+    show(message, type = 'success', duration) {
+        const now = Date.now();
+        const text = getNotificationText(message);
+        const dedupeKey = text ? `${type}\u0000${text}` : null;
+        if (dedupeKey) {
+            const duplicateId = this.findRecentDuplicate(dedupeKey, now);
+            if (duplicateId !== null) {
+                return duplicateId;
+            }
+        }
+
         const notification = {
             id: ++this.notificationId,
             message,
             type,
-            duration,
-            timestamp: Date.now()
+            duration: resolveNotificationDuration(message, type, duration),
+            timestamp: now
         };
+        if (dedupeKey) {
+            this.recentByKey.set(dedupeKey, { id: notification.id, timestamp: now });
+        }
 
         this.listeners.forEach((listener) => {
             try {
@@ -103,28 +136,28 @@ class NotificationManager {
 /**
      * 성공 알림
      */
-    success(message, duration = 1000) { // 기본 duration을 3초에서 1초로 단축
+    success(message, duration) {
         return this.show(message, 'success', duration);
     }
 
 /**
      * 오류 알림
      */
-    error(message, duration = 2000) { // 기본 duration을 5초에서 2초로 단축
+    error(message, duration) {
         return this.show(message, 'error', duration);
     }
 
 /**
      * 경고 알림
      */
-    warning(message, duration = 1500) { // 기본 duration을 4초에서 1.5초로 단축
+    warning(message, duration) {
         return this.show(message, 'warning', duration);
     }
 
 /**
      * 정보 알림
      */
-    info(message, duration = 1000) { // 기본 duration을 3초에서 1초로 단축
+    info(message, duration) {
         return this.show(message, 'info', duration);
     }
 
@@ -210,23 +243,23 @@ class NotificationManager {
 export const notificationManager = new NotificationManager();
 
 // 편의 함수들
-export const showNotification = (message, type = 'success', duration = 3000) => {
+export const showNotification = (message, type = 'success', duration) => {
     return notificationManager.show(message, type, duration);
 };
 
-export const showSuccess = (message, duration = 3000) => {
+export const showSuccess = (message, duration) => {
     return notificationManager.success(message, duration);
 };
 
-export const showError = (message, duration = 5000) => {
+export const showError = (message, duration) => {
     return notificationManager.error(message, duration);
 };
 
-export const showWarning = (message, duration = 4000) => {
+export const showWarning = (message, duration) => {
     return notificationManager.warning(message, duration);
 };
 
-export const showInfo = (message, duration = 3000) => {
+export const showInfo = (message, duration) => {
     return notificationManager.info(message, duration);
 };
 

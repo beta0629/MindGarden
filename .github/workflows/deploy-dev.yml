@@ -202,6 +202,19 @@ jobs:
           echo "SSH 연결 테스트 성공: $(date)"
           echo "서버 정보: $(uname -a)"
           
+    - name: 🛑 OPS_ADMIN_PASSWORD 빈 값 가드 (재시작 전)
+      env:
+        OPS_ADMIN_PASSWORD: ${{ secrets.OPS_ADMIN_PASSWORD }}
+      run: |
+        set -euo pipefail
+        LEN=${#OPS_ADMIN_PASSWORD}
+        echo "OPS_ADMIN_PASSWORD length=${LEN}"
+        if [ "$LEN" -eq 0 ]; then
+          echo "::error title=OPS_ADMIN_PASSWORD 빈 값::GitHub Secret OPS_ADMIN_PASSWORD length=0. /etc/mindgarden/dev.env 에 쓰지 않고 배포를 중단합니다."
+          exit 1
+        fi
+        unset OPS_ADMIN_PASSWORD
+
     - name: 🚀 개발 서버 배포 준비
       uses: appleboy/ssh-action@master
       with:
@@ -381,10 +394,13 @@ jobs:
         
     - name: 🔄 개발 서버 서비스 재시작
       uses: appleboy/ssh-action@master
+      env:
+        OPS_ADMIN_PASSWORD: ${{ secrets.OPS_ADMIN_PASSWORD }}
       with:
         host: ${{ secrets.DEV_SERVER_HOST }}
         username: ${{ secrets.DEV_SERVER_USER }}
         key: ${{ secrets.DEV_SERVER_SSH_KEY }}
+        envs: OPS_ADMIN_PASSWORD
         port: 22
         timeout: 60s
         command_timeout: 5m
@@ -476,6 +492,39 @@ jobs:
           else
             echo "✅ 환경 변수 파일 존재 확인 (업데이트 없음)"
           fi
+
+          # OPS_ADMIN_PASSWORD: GitHub Secret → /etc/mindgarden/dev.env (값 echo 금지)
+          KEY=OPS_ADMIN_PASSWORD
+          ENV_FILE=/etc/mindgarden/dev.env
+          VALUE="${OPS_ADMIN_PASSWORD-}"
+          LEN=${#VALUE}
+          echo "OPS_ADMIN_PASSWORD length=${LEN}"
+          if [ "$LEN" -eq 0 ]; then
+            echo "::error title=OPS_ADMIN_PASSWORD 빈 값::GitHub Secret OPS_ADMIN_PASSWORD length=0. /etc/mindgarden/dev.env 에 쓰지 않고 배포를 중단합니다."
+            exit 1
+          fi
+          sudo mkdir -p /etc/mindgarden
+          if [ ! -f "$ENV_FILE" ]; then
+            sudo touch "$ENV_FILE"
+            sudo chmod 600 "$ENV_FILE"
+            sudo chown root:root "$ENV_FILE"
+          fi
+          escaped_value=$(printf '%s' "$VALUE" | sed -e 's/[\\&|]/\\&/g')
+          if sudo grep -qE "^[[:space:]]*${KEY}=" "$ENV_FILE" 2>/dev/null; then
+            sudo sed -i "s|^[[:space:]]*${KEY}=.*|${KEY}=\"${escaped_value}\"|" "$ENV_FILE"
+          else
+            printf '%s="%s"\n' "$KEY" "$VALUE" | sudo tee -a "$ENV_FILE" >/dev/null
+          fi
+          sudo chmod 600 "$ENV_FILE"
+          sudo chown root:root "$ENV_FILE"
+          STORED=$(sudo grep -E "^[[:space:]]*${KEY}=" "$ENV_FILE" 2>/dev/null | tail -n1 | sed -n 's/^[^=]*=//p' | sed -E 's/^"(.*)"$/\1/' | sed -E "s/^'(.*)'$/\1/" | tr -d '\r')
+          STORED_LEN=${#STORED}
+          echo "OPS_ADMIN_PASSWORD stored length=${STORED_LEN}"
+          if [ "$STORED_LEN" -eq 0 ]; then
+            echo "::error title=OPS_ADMIN_PASSWORD 빈 값::/etc/mindgarden/dev.env 의 OPS_ADMIN_PASSWORD length=0. 서비스 시작 전에 배포를 중단합니다."
+            exit 1
+          fi
+          unset VALUE escaped_value STORED
           
           # 서비스 재시작
           echo "🔄 개발 서버 서비스 재시작..."

@@ -32,7 +32,7 @@ import com.coresolution.consultation.entity.SalaryCalculation.SalaryStatus;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.repository.SalaryCalculationRepository;
 import com.coresolution.consultation.salary.PayrollConfirmGrace;
-import com.coresolution.consultation.service.impl.RecalcUnpaidProcedureSignature.Param;
+import com.coresolution.consultation.service.impl.StandardProcedureSqlSignature.Param;
 import com.coresolution.core.context.TenantContextHolder;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -102,7 +102,9 @@ class RecalcUnpaidSalaryCalculationSignatureTest {
     @DisplayName("SQL 이 OUT 으로 선언한 인덱스만 registerOutParameter 하고, 그 외는 Parameter number 4 예외가 나지 않는다")
     void recalcUnpaidSalaryCalculation_registersOutOnlyWhenProcedureSqlDeclaresOut() throws Exception {
         List<Param> params = RecalcUnpaidProcedureSignature.readDeployedDefinition();
-        assertThat(Files.readString(DEPLOY_SCRIPT)).contains("\"RecalcUnpaidSalaryCalculation\"");
+        assertThat(Files.readString(DEPLOY_SCRIPT)).doesNotContain("\"RecalcUnpaidSalaryCalculation\"");
+        assertThat(StandardProcedureSqlSignature.dropTargets(RecalcUnpaidProcedureSignature.DEPLOY))
+                .containsExactly(RecalcUnpaidProcedureSignature.PROCEDURE);
         assertThat(params).anyMatch(param -> param.ordinal() == 4 && param.out());
         stubProcedureReturns(params);
 

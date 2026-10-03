@@ -341,7 +341,7 @@
 }
 
 .mg-button--progress {
-  background-color: var(--mg-color-primary-light, rgba(61, 82, 70, 0.15));
+  background-color: var(--mg-color-primary-light, var(--mg-v2-color-primary-subtle));
   color: var(--mg-color-primary-main, var(--mg-layout-sidebar-active-bg));
   border-color: transparent;
   position: relative;

@@ -32,21 +32,26 @@ describe('AdminPushMonitoringPage Clinic-OS chrome', () => {
     expect(pageJs).toMatch(/data-testid="admin-push-monitoring-page"/);
   });
 
-  test('quiet header present; KPI remapped to mapping-management-summary strip', () => {
-    expect(pageJs).toMatch(/ContentHeader/);
+  test('quiet header (SettingsPageShell) present; KPI remapped to mapping-management-summary strip', () => {
+    expect(pageJs).toMatch(/<SettingsPageShell/);
+    expect(pageJs).not.toMatch(/\bContentHeader\b/);
     expect(kpiJs).toMatch(/mapping-management-summary/);
     expect(kpiJs).toMatch(/mapping-management-summary--cols-4/);
     expect(kpiJs).toMatch(/KpiNumeral/);
     expect(kpiCss).toMatch(/mapping-management-summary--cols-4/);
   });
 
-  test('main stage single card geometry', () => {
-    expect(pageJs).toMatch(/mg-push-monitor__stage/);
-    expect(pageCss).toMatch(/min-height:\s*36rem/);
-    expect(pageCss).toMatch(/border:\s*1px solid var\(--mg-v2-color-neutral-300\)/);
-    expect(pageCss).toMatch(/background:\s*var\(--mg-v2-color-neutral-50\)/);
-    expect(pageCss).toMatch(/border-radius:\s*var\(--mg-v2-radius-lg\)/);
-    expect(pageCss).toMatch(/border-left:\s*none\s*!important/);
+  test('sections render SettingsSectionPanel; page CSS has no stage card geometry', () => {
+    ['PushMonitorFailureSection', 'PushMonitorOperationalSection', 'PushMonitorSnapshotSection',
+      'PushMonitorTrendSection', 'SmsLogCard'].forEach((name) => {
+      const organismJs = read(`src/components/admin/PushMonitoring/organisms/${name}.jsx`);
+      expect(organismJs).toMatch(/<SettingsSectionPanel/);
+      expect(organismJs).not.toMatch(/\bContentSection\b/);
+    });
+    expect(pageJs).not.toMatch(/mg-push-monitor__stage/);
+    expect(pageCss).not.toMatch(/mg-push-monitor__stage/);
+    expect(pageCss).not.toMatch(/!important/);
+    expect(pageCss).not.toMatch(/\b\d+px\b/);
   });
 
   test('chrome CSS has no leftover --ad-b0kla tokens or 4px left accents', () => {

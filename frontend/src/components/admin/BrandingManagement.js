@@ -8,8 +8,7 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
-import ContentArea from '../dashboard-v2/content/ContentArea';
-import ContentHeader from '../dashboard-v2/content/ContentHeader';
+import { SettingsPageShell, SettingsSectionPanel, SettingsButton } from './settings-shell';
 import UnifiedModal from '../common/modals/UnifiedModal';
 import { AlertCircle } from 'lucide-react';
 import { useBranding } from '../../hooks/useBranding';
@@ -27,7 +26,6 @@ import {
   getDefaultBrandingSecondaryHex
 } from '../../utils/resolveCssColorVarToHex';
 import '../../styles/unified-design-tokens.css';
-import './AdminDashboard/AdminDashboardB0KlA.css';
 import './BrandingManagement.css';
 import MGButton from '../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
@@ -435,421 +433,289 @@ const BrandingManagement = () => {
     ? faviconFile.name
     : (formData.favicon ? '현재 파비콘이 등록되어 있습니다.' : 'PNG 또는 ICO · 드래그하여 놓기');
 
+  const pageTitle = t('admin:BrandingManagement.t_fe06000d');
+  const renderUploadIcon = (size) => (
+    <span className="mg-branding-settings__upload-icon" aria-hidden="true">
+      <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" focusable="false">
+        <path d="M12 16V7M12 7L8 11M12 7L16 11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M4 17V18C4 18.5523 4.44772 19 5 19H19C19.5523 19 20 18.5523 20 18V17" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      </svg>
+    </span>
+  );
+
+  const renderFieldError = (message) => (
+    <div className="mg-branding-settings__field-error" role="alert">
+      <AlertCircle size={16} aria-hidden="true" />
+      <span>{toDisplayString(message)}</span>
+    </div>
+  );
+
+  const renderLogoRemoveButton = () => (
+    <SettingsButton
+      variant="outline"
+      className="mg-branding-settings__logo-remove"
+      onClick={handleLogoRemove}
+      title={t('admin:BrandingManagement.t_86e88c24')}
+    >
+      {t('admin:BrandingManagement.t_11f2aa43')}
+    </SettingsButton>
+  );
+
   return (
     <AdminCommonLayout
-      title={t('admin:BrandingManagement.t_fe06000d')}
+      title={pageTitle}
       loading={isLoading}
       loadingText={t('admin:BrandingManagement.t_a70f6f09')}
     >
-      <div className="mg-v2-ad-b0kla">
-        <div className="mg-v2-ad-b0kla__container">
-          <ContentArea ariaLabel="브랜딩 관리 본문">
-            <ContentHeader
-              title={t('admin:BrandingManagement.t_fe06000d')}
-              subtitle="테넌트의 로고, 상호명, 색상을 설정하여 브랜드 아이덴티티를 구축하세요."
-              titleId={BRANDING_MGMT_TITLE_ID}
+      <SettingsPageShell
+        title={pageTitle}
+        titleId={BRANDING_MGMT_TITLE_ID}
+        ariaLabel="브랜딩 관리 본문"
+        className="mg-branding-settings"
+      >
+        <form
+          id={BRANDING_FORM_ID}
+          className="mg-branding-settings__form"
+          onSubmit={handleSubmit}
+          noValidate
+          lang="ko"
+        >
+          <SettingsSectionPanel title={t('admin:BrandingManagement.t_31cba6e1')}>
+            <p id="branding-logo-desc" className="mg-v2-settings-field__hint">
+              {t('admin:BrandingManagement.t_eeffce99')}
+            </p>
+            <input
+              ref={logoInputRef}
+              type="file"
+              id="branding-logo-file"
+              className="mg-branding-settings__file-input"
+              name="logo"
+              accept="image/png,image/svg+xml,image/jpeg,image/jpg"
+              aria-describedby="branding-logo-desc"
+              onChange={handleLogoFileInputChange}
             />
-            <main
-              aria-labelledby={BRANDING_MGMT_TITLE_ID}
-              className="mg-branding-settings"
-              id="main-content"
-              lang="ko"
+            <label
+              htmlFor="branding-logo-file"
+              className={`mg-branding-settings__upload-zone ${isLogoDragOver ? 'mg-branding-settings__upload-zone--drag' : ''}`}
+              onDragOver={handleLogoDragOver}
+              onDragLeave={handleLogoDragLeave}
+              onDrop={handleLogoDrop}
             >
-              <form
-                  id={BRANDING_FORM_ID}
-                  className="mg-branding-settings__form"
-                  onSubmit={handleSubmit}
-                  noValidate
+              {logoPreview && !logoPreviewLoadFailed ? (
+                <span className="mg-branding-settings__logo-preview-inner">
+                  <img
+                    src={logoPreview}
+                    alt={t('admin:BrandingManagement.t_2abbfc24')}
+                    className="mg-branding-settings__logo-image"
+                    onError={(e) => {
+                      e.currentTarget.onerror = null;
+                      setLogoPreviewLoadFailed(true);
+                    }}
+                  />
+                  {renderLogoRemoveButton()}
+                </span>
+              ) : logoPreview && logoPreviewLoadFailed ? (
+                <span className="mg-branding-settings__logo-preview-inner">
+                  <span className="mg-branding-settings__upload-text">
+                    <span className="mg-branding-settings__upload-primary">{t('admin:BrandingManagement.t_b16adc73')}</span>
+                    <span className="mg-branding-settings__upload-secondary">{t('admin:BrandingManagement.t_c6ba89c0')}</span>
+                  </span>
+                  {renderLogoRemoveButton()}
+                </span>
+              ) : (
+                <>
+                  {renderUploadIcon(40)}
+                  <span className="mg-branding-settings__upload-text">
+                    <span className="mg-branding-settings__upload-primary">{t('admin:BrandingManagement.t_a32cd706')}</span>
+                    <span className="mg-branding-settings__upload-secondary">{t('admin:BrandingManagement.t_c0e6b336')}</span>
+                  </span>
+                </>
+              )}
+            </label>
+            {errors.logo && renderFieldError(errors.logo)}
+          </SettingsSectionPanel>
+
+          <SettingsSectionPanel title={t('admin:BrandingManagement.t_04c77329')}>
+            <div className="mg-v2-settings-form-grid">
+              <div className="mg-v2-settings-field">
+                <label className="mg-v2-form-label" htmlFor="branding-company-name">
+                  {t('admin:BrandingManagement.t_0cb593e1')}
+                  <span className="mg-branding-settings__required" aria-hidden="true">
+                    {' '}
+                    *
+                  </span>
+                </label>
+                <input
+                  type="text"
+                  id="branding-company-name"
+                  className={`mg-v2-form-input ${errors.companyName ? 'mg-branding-settings__input--error' : ''}`}
+                  name="companyName"
+                  autoComplete="organization"
+                  value={formData.companyName}
+                  onChange={(e) => handleInputChange('companyName', e.target.value)}
+                  placeholder="예: Core Solution 상담센터"
+                  maxLength={255}
+                />
+                {errors.companyName && renderFieldError(errors.companyName)}
+              </div>
+              <div className="mg-v2-settings-field">
+                <label className="mg-v2-form-label" htmlFor="branding-company-name-en">
+                  {t('admin:BrandingManagement.t_babce7d2')}
+                </label>
+                <input
+                  type="text"
+                  id="branding-company-name-en"
+                  className={`mg-v2-form-input ${errors.companyNameEn ? 'mg-branding-settings__input--error' : ''}`}
+                  name="companyNameEn"
+                  value={formData.companyNameEn}
+                  onChange={(e) => handleInputChange('companyNameEn', e.target.value)}
+                  placeholder="예: Core Solution Counseling Center"
+                  maxLength={255}
+                />
+                {errors.companyNameEn && renderFieldError(errors.companyNameEn)}
+              </div>
+            </div>
+          </SettingsSectionPanel>
+
+          <SettingsSectionPanel title={t('admin:BrandingManagement.t_2ba435ab')}>
+            <p id="branding-colors-desc" className="mg-v2-settings-field__hint">
+              {t('admin:BrandingManagement.t_24bc76e0')}
+            </p>
+            <div className="mg-v2-settings-form-grid">
+              <div className="mg-v2-settings-field">
+                <label className="mg-v2-form-label" htmlFor="branding-color-primary">
+                  {t('admin:BrandingManagement.t_33ba33a7')}
+                </label>
+                <div className="mg-branding-settings__color-row">
+                  <input
+                    type="color"
+                    id="branding-color-primary"
+                    className="mg-branding-settings__color-swatch"
+                    name="colorPrimary"
+                    value={HEX_COLOR_RE.test(formData.primaryColor) ? formData.primaryColor : RESOLVED_DEFAULT_PRIMARY_HEX}
+                    onChange={(e) => handleInputChange('primaryColor', e.target.value)}
+                    aria-describedby="branding-colors-desc"
+                  />
+                  <input
+                    type="text"
+                    className={`mg-v2-form-input mg-branding-settings__input--color-hex ${errors.primaryColor ? 'mg-branding-settings__input--error' : ''}`}
+                    name="colorPrimaryHex"
+                    inputMode="text"
+                    spellCheck={false}
+                    aria-label={t('admin:BrandingManagement.t_80ab5b00')}
+                    value={formData.primaryColor}
+                    onChange={(e) => onPrimaryHexInput(e.target.value)}
+                    maxLength={7}
+                  />
+                </div>
+                {errors.primaryColor && renderFieldError(errors.primaryColor)}
+              </div>
+              <div className="mg-v2-settings-field">
+                <label className="mg-v2-form-label" htmlFor="branding-color-secondary">
+                  {t('admin:BrandingManagement.t_8b65954e')}
+                </label>
+                <div className="mg-branding-settings__color-row">
+                  <input
+                    type="color"
+                    id="branding-color-secondary"
+                    className="mg-branding-settings__color-swatch"
+                    name="colorSecondary"
+                    value={HEX_COLOR_RE.test(formData.secondaryColor) ? formData.secondaryColor : RESOLVED_DEFAULT_SECONDARY_HEX}
+                    onChange={(e) => handleInputChange('secondaryColor', e.target.value)}
+                    aria-describedby="branding-colors-desc"
+                  />
+                  <input
+                    type="text"
+                    className={`mg-v2-form-input mg-branding-settings__input--color-hex ${errors.secondaryColor ? 'mg-branding-settings__input--error' : ''}`}
+                    name="colorSecondaryHex"
+                    inputMode="text"
+                    spellCheck={false}
+                    aria-label={t('admin:BrandingManagement.t_2204106a')}
+                    value={formData.secondaryColor}
+                    onChange={(e) => onSecondaryHexInput(e.target.value)}
+                    maxLength={7}
+                  />
+                </div>
+                {errors.secondaryColor && renderFieldError(errors.secondaryColor)}
+              </div>
+            </div>
+          </SettingsSectionPanel>
+
+          <SettingsSectionPanel title={t('admin:BrandingManagement.t_63387472')}>
+            <p id="branding-favicon-desc" className="mg-v2-settings-field__hint">
+              {t('admin:BrandingManagement.t_f4929e2f')}
+            </p>
+            <input
+              ref={faviconInputRef}
+              type="file"
+              id="branding-favicon-file"
+              className="mg-branding-settings__file-input"
+              name="favicon"
+              accept="image/png,image/x-icon,image/vnd.microsoft.icon,.ico"
+              aria-describedby="branding-favicon-desc"
+              onChange={handleFaviconFileInputChange}
+            />
+            <label
+              htmlFor="branding-favicon-file"
+              className={`mg-branding-settings__upload-zone mg-branding-settings__upload-zone--compact ${isFaviconDragOver ? 'mg-branding-settings__upload-zone--drag' : ''}`}
+              onDragOver={handleFaviconDragOver}
+              onDragLeave={handleFaviconDragLeave}
+              onDrop={handleFaviconDrop}
+            >
+              {renderUploadIcon(32)}
+              <span className="mg-branding-settings__upload-text">
+                <span className="mg-branding-settings__upload-primary">{t('admin:BrandingManagement.t_98973df4')}</span>
+                <span className="mg-branding-settings__upload-secondary">
+                  {toDisplayString(faviconSecondaryText)}
+                </span>
+              </span>
+              {faviconFile && (
+                <SettingsButton
+                  variant="outline"
+                  className="mg-branding-settings__favicon-remove"
+                  onClick={handleFaviconRemove}
+                  title={t('admin:BrandingManagement.t_c0acdcfd')}
                 >
-                  <section
-                    className="mg-branding-settings__section"
-                    aria-labelledby="branding-logo-heading"
-                  >
-                    <header className="mg-branding-settings__section-head">
-                      <span className="mg-branding-settings__accent-bar" aria-hidden="true" />
-                      <h2 id="branding-logo-heading" className="mg-branding-settings__section-title">
-                        {t('admin:BrandingManagement.t_31cba6e1')}
-                      </h2>
-                    </header>
-                    <div className="mg-branding-settings__section-body">
-                      <p id="branding-logo-desc" className="mg-branding-settings__hint">
-                        {t('admin:BrandingManagement.t_eeffce99')}
-                      </p>
-                      <input
-                        ref={logoInputRef}
-                        type="file"
-                        id="branding-logo-file"
-                        className="mg-branding-settings__file-input"
-                        name="logo"
-                        accept="image/png,image/svg+xml,image/jpeg,image/jpg"
-                        aria-describedby="branding-logo-desc"
-                        onChange={handleLogoFileInputChange}
-                      />
-                      <label
-                        htmlFor="branding-logo-file"
-                        className={`mg-branding-settings__upload-zone ${isLogoDragOver ? 'mg-branding-settings__upload-zone--drag' : ''}`}
-                        onDragOver={handleLogoDragOver}
-                        onDragLeave={handleLogoDragLeave}
-                        onDrop={handleLogoDrop}
-                      >
-                        {logoPreview && !logoPreviewLoadFailed ? (
-                          <span className="mg-branding-settings__logo-preview-inner">
-                            <img
-                              src={logoPreview}
-                              alt={t('admin:BrandingManagement.t_2abbfc24')}
-                              className="mg-branding-settings__logo-image"
-                              onError={(e) => {
-                                e.currentTarget.onerror = null;
-                                setLogoPreviewLoadFailed(true);
-                              }}
-                            />
-                            <MGButton
-                              type="button"
-                              variant="outline"
-                              size="small"
-                              className={buildErpMgButtonClassName({
-                                variant: 'outline',
-                                size: 'sm',
-                                loading: false,
-                                className: 'mg-branding-settings__logo-remove'
-                              })}
-                              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                              onClick={handleLogoRemove}
-                              title={t('admin:BrandingManagement.t_86e88c24')}
-                              preventDoubleClick={false}
-                            >
-                              {t('admin:BrandingManagement.t_11f2aa43')}
-                            </MGButton>
-                          </span>
-                        ) : logoPreview && logoPreviewLoadFailed ? (
-                          <span className="mg-branding-settings__logo-preview-inner">
-                            <span className="mg-branding-settings__upload-text">
-                              <span className="mg-branding-settings__upload-primary">{t('admin:BrandingManagement.t_b16adc73')}</span>
-                              <span className="mg-branding-settings__upload-secondary">{t('admin:BrandingManagement.t_c6ba89c0')}</span>
-                            </span>
-                            <MGButton
-                              type="button"
-                              variant="outline"
-                              size="small"
-                              className={buildErpMgButtonClassName({
-                                variant: 'outline',
-                                size: 'sm',
-                                loading: false,
-                                className: 'mg-branding-settings__logo-remove'
-                              })}
-                              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                              onClick={handleLogoRemove}
-                              title={t('admin:BrandingManagement.t_86e88c24')}
-                              preventDoubleClick={false}
-                            >
-                              {t('admin:BrandingManagement.t_11f2aa43')}
-                            </MGButton>
-                          </span>
-                        ) : (
-                          <>
-                            <span className="mg-branding-settings__upload-icon" aria-hidden="true">
-                              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" focusable="false">
-                                <path d="M12 16V7M12 7L8 11M12 7L16 11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                                <path d="M4 17V18C4 18.5523 4.44772 19 5 19H19C19.5523 19 20 18.5523 20 18V17" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                              </svg>
-                            </span>
-                            <span className="mg-branding-settings__upload-text">
-                              <span className="mg-branding-settings__upload-primary">{t('admin:BrandingManagement.t_a32cd706')}</span>
-                              <span className="mg-branding-settings__upload-secondary">{t('admin:BrandingManagement.t_c0e6b336')}</span>
-                            </span>
-                          </>
-                        )}
-                      </label>
-                      {errors.logo && (
-                        <div className="mg-branding-settings__field-error" role="alert">
-                          <AlertCircle size={16} aria-hidden="true" />
-                          <span>{toDisplayString(errors.logo)}</span>
-                        </div>
-                      )}
-                    </div>
-                  </section>
+                  {t('admin:BrandingManagement.t_bf3e2aa4')}
+                </SettingsButton>
+              )}
+            </label>
+            {errors.favicon && renderFieldError(errors.favicon)}
+          </SettingsSectionPanel>
 
-                  <section
-                    className="mg-branding-settings__section"
-                    aria-labelledby="branding-company-heading"
-                  >
-                    <header className="mg-branding-settings__section-head">
-                      <span className="mg-branding-settings__accent-bar" aria-hidden="true" />
-                      <h2 id="branding-company-heading" className="mg-branding-settings__section-title">
-                        {t('admin:BrandingManagement.t_04c77329')}
-                      </h2>
-                    </header>
-                    <div className="mg-branding-settings__section-body">
-                      <div className="mg-branding-settings__grid mg-branding-settings__grid--2col">
-                        <div className="mg-branding-settings__field">
-                          <label className="mg-branding-settings__label" htmlFor="branding-company-name">
-                            {t('admin:BrandingManagement.t_0cb593e1')}
-                            <span className="mg-branding-settings__required" aria-hidden="true">
-                              {' '}
-                              *
-                            </span>
-                          </label>
-                          <input
-                            type="text"
-                            id="branding-company-name"
-                            className={`mg-branding-settings__input ${errors.companyName ? 'mg-branding-settings__input--error' : ''}`}
-                            name="companyName"
-                            autoComplete="organization"
-                            value={formData.companyName}
-                            onChange={(e) => handleInputChange('companyName', e.target.value)}
-                            placeholder="예: Core Solution 상담센터"
-                            maxLength={255}
-                          />
-                          {errors.companyName && (
-                            <div className="mg-branding-settings__field-error" role="alert">
-                              <AlertCircle size={16} aria-hidden="true" />
-                              <span>{toDisplayString(errors.companyName)}</span>
-                            </div>
-                          )}
-                        </div>
-                        <div className="mg-branding-settings__field">
-                          <label className="mg-branding-settings__label" htmlFor="branding-company-name-en">
-                            {t('admin:BrandingManagement.t_babce7d2')}
-                          </label>
-                          <input
-                            type="text"
-                            id="branding-company-name-en"
-                            className={`mg-branding-settings__input ${errors.companyNameEn ? 'mg-branding-settings__input--error' : ''}`}
-                            name="companyNameEn"
-                            value={formData.companyNameEn}
-                            onChange={(e) => handleInputChange('companyNameEn', e.target.value)}
-                            placeholder="예: Core Solution Counseling Center"
-                            maxLength={255}
-                          />
-                          {errors.companyNameEn && (
-                            <div className="mg-branding-settings__field-error" role="alert">
-                              <AlertCircle size={16} aria-hidden="true" />
-                              <span>{toDisplayString(errors.companyNameEn)}</span>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  </section>
-
-                  <section
-                    className="mg-branding-settings__section"
-                    aria-labelledby="branding-colors-heading"
-                  >
-                    <header className="mg-branding-settings__section-head">
-                      <span className="mg-branding-settings__accent-bar" aria-hidden="true" />
-                      <h2 id="branding-colors-heading" className="mg-branding-settings__section-title">
-                        {t('admin:BrandingManagement.t_2ba435ab')}
-                      </h2>
-                    </header>
-                    <div className="mg-branding-settings__section-body">
-                      <p id="branding-colors-desc" className="mg-branding-settings__hint">
-                        {t('admin:BrandingManagement.t_24bc76e0')}
-                      </p>
-                      <div className="mg-branding-settings__grid mg-branding-settings__grid--2col">
-                        <div className="mg-branding-settings__field">
-                          <label className="mg-branding-settings__label" htmlFor="branding-color-primary">
-                            {t('admin:BrandingManagement.t_33ba33a7')}
-                          </label>
-                          <div className="mg-branding-settings__color-row">
-                            <input
-                              type="color"
-                              id="branding-color-primary"
-                              className="mg-branding-settings__color-swatch"
-                              name="colorPrimary"
-                              value={HEX_COLOR_RE.test(formData.primaryColor) ? formData.primaryColor : RESOLVED_DEFAULT_PRIMARY_HEX}
-                              onChange={(e) => handleInputChange('primaryColor', e.target.value)}
-                              aria-describedby="branding-colors-desc"
-                            />
-                            <input
-                              type="text"
-                              className={`mg-branding-settings__input mg-branding-settings__input--color-hex ${errors.primaryColor ? 'mg-branding-settings__input--error' : ''}`}
-                              name="colorPrimaryHex"
-                              inputMode="text"
-                              spellCheck={false}
-                              aria-label={t('admin:BrandingManagement.t_80ab5b00')}
-                              value={formData.primaryColor}
-                              onChange={(e) => onPrimaryHexInput(e.target.value)}
-                              maxLength={7}
-                            />
-                          </div>
-                          {errors.primaryColor && (
-                            <div className="mg-branding-settings__field-error" role="alert">
-                              <AlertCircle size={16} aria-hidden="true" />
-                              <span>{toDisplayString(errors.primaryColor)}</span>
-                            </div>
-                          )}
-                        </div>
-                        <div className="mg-branding-settings__field">
-                          <label className="mg-branding-settings__label" htmlFor="branding-color-secondary">
-                            {t('admin:BrandingManagement.t_8b65954e')}
-                          </label>
-                          <div className="mg-branding-settings__color-row">
-                            <input
-                              type="color"
-                              id="branding-color-secondary"
-                              className="mg-branding-settings__color-swatch"
-                              name="colorSecondary"
-                              value={HEX_COLOR_RE.test(formData.secondaryColor) ? formData.secondaryColor : RESOLVED_DEFAULT_SECONDARY_HEX}
-                              onChange={(e) => handleInputChange('secondaryColor', e.target.value)}
-                              aria-describedby="branding-colors-desc"
-                            />
-                            <input
-                              type="text"
-                              className={`mg-branding-settings__input mg-branding-settings__input--color-hex ${errors.secondaryColor ? 'mg-branding-settings__input--error' : ''}`}
-                              name="colorSecondaryHex"
-                              inputMode="text"
-                              spellCheck={false}
-                              aria-label={t('admin:BrandingManagement.t_2204106a')}
-                              value={formData.secondaryColor}
-                              onChange={(e) => onSecondaryHexInput(e.target.value)}
-                              maxLength={7}
-                            />
-                          </div>
-                          {errors.secondaryColor && (
-                            <div className="mg-branding-settings__field-error" role="alert">
-                              <AlertCircle size={16} aria-hidden="true" />
-                              <span>{toDisplayString(errors.secondaryColor)}</span>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  </section>
-
-                  <section
-                    className="mg-branding-settings__section"
-                    aria-labelledby="branding-favicon-heading"
-                  >
-                    <header className="mg-branding-settings__section-head">
-                      <span className="mg-branding-settings__accent-bar" aria-hidden="true" />
-                      <h2 id="branding-favicon-heading" className="mg-branding-settings__section-title">
-                        {t('admin:BrandingManagement.t_63387472')}
-                      </h2>
-                    </header>
-                    <div className="mg-branding-settings__section-body">
-                      <p id="branding-favicon-desc" className="mg-branding-settings__hint">
-                        {t('admin:BrandingManagement.t_f4929e2f')}
-                      </p>
-                      <input
-                        ref={faviconInputRef}
-                        type="file"
-                        id="branding-favicon-file"
-                        className="mg-branding-settings__file-input"
-                        name="favicon"
-                        accept="image/png,image/x-icon,image/vnd.microsoft.icon,.ico"
-                        aria-describedby="branding-favicon-desc"
-                        onChange={handleFaviconFileInputChange}
-                      />
-                      <label
-                        htmlFor="branding-favicon-file"
-                        className={`mg-branding-settings__upload-zone mg-branding-settings__upload-zone--compact ${isFaviconDragOver ? 'mg-branding-settings__upload-zone--drag' : ''}`}
-                        onDragOver={handleFaviconDragOver}
-                        onDragLeave={handleFaviconDragLeave}
-                        onDrop={handleFaviconDrop}
-                      >
-                        <span className="mg-branding-settings__upload-icon" aria-hidden="true">
-                          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" focusable="false">
-                            <path d="M12 16V7M12 7L8 11M12 7L16 11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                            <path d="M4 17V18C4 18.5523 4.44772 19 5 19H19C19.5523 19 20 18.5523 20 18V17" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                          </svg>
-                        </span>
-                        <span className="mg-branding-settings__upload-text">
-                          <span className="mg-branding-settings__upload-primary">{t('admin:BrandingManagement.t_98973df4')}</span>
-                          <span className="mg-branding-settings__upload-secondary">
-                            {toDisplayString(faviconSecondaryText)}
-                          </span>
-                        </span>
-                        {faviconFile && (
-                          <MGButton
-                            type="button"
-                            variant="outline"
-                            size="small"
-                            className={buildErpMgButtonClassName({
-                              variant: 'outline',
-                              size: 'sm',
-                              loading: false,
-                              className: 'mg-branding-settings__favicon-remove'
-                            })}
-                            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                            onClick={handleFaviconRemove}
-                            title={t('admin:BrandingManagement.t_c0acdcfd')}
-                            preventDoubleClick={false}
-                          >
-                            {t('admin:BrandingManagement.t_bf3e2aa4')}
-                          </MGButton>
-                        )}
-                      </label>
-                      {errors.favicon && (
-                        <div className="mg-branding-settings__field-error" role="alert">
-                          <AlertCircle size={16} aria-hidden="true" />
-                          <span>{toDisplayString(errors.favicon)}</span>
-                        </div>
-                      )}
-                    </div>
-                  </section>
-
-                  <footer className="mg-branding-settings__footer" aria-labelledby="branding-actions-heading">
-                    <h2 id="branding-actions-heading" className="mg-branding-settings__sr-only">
-                      {t('admin:BrandingManagement.t_ce732639')}
-                    </h2>
-                    <div className="mg-branding-settings__actions mg-branding-settings__actions--split mg-v2-card-actions">
-                      <div className="mg-branding-settings__actions-leading">
-                        <MGButton
-                          type="button"
-                          variant="outline"
-                          className={buildErpMgButtonClassName({
-                            variant: 'outline',
-                            size: 'md',
-                            loading: false
-                          })}
-                          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                          onClick={() => setShowPreview(true)}
-                          disabled={isSaving || isUploading}
-                          preventDoubleClick={false}
-                        >
-                          {t('admin:BrandingManagement.t_2f1c9d7b')}
-                        </MGButton>
-                        <MGButton
-                          type="button"
-                          variant="secondary"
-                          className={buildErpMgButtonClassName({
-                            variant: 'secondary',
-                            size: 'md',
-                            loading: false
-                          })}
-                          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                          onClick={handleReset}
-                          disabled={!hasChanges || isSaving || isUploading}
-                          preventDoubleClick={false}
-                        >
-                          {t('admin:BrandingManagement.t_ff75b4ff')}
-                        </MGButton>
-                      </div>
-                      <div className="mg-branding-settings__actions-trailing">
-                        <MGButton
-                          type="submit"
-                          variant="primary"
-                          className={buildErpMgButtonClassName({
-                            variant: 'primary',
-                            size: 'md',
-                            loading: isSaving || isUploading
-                          })}
-                          disabled={!hasChanges || isSaving || isUploading}
-                          loading={isSaving || isUploading}
-                          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                          preventDoubleClick={false}
-                        >
-                          {t('common.actions.save')}
-                        </MGButton>
-                      </div>
-                    </div>
-                  </footer>
-                </form>
-            </main>
-          </ContentArea>
-        </div>
-      </div>
+          <footer className="mg-branding-settings__footer" aria-labelledby="branding-actions-heading">
+            <h2 id="branding-actions-heading" className="mg-branding-settings__sr-only">
+              {t('admin:BrandingManagement.t_ce732639')}
+            </h2>
+            <div className="mg-branding-settings__actions-leading">
+              <SettingsButton
+                variant="outline"
+                onClick={() => setShowPreview(true)}
+                disabled={isSaving || isUploading}
+              >
+                {t('admin:BrandingManagement.t_2f1c9d7b')}
+              </SettingsButton>
+              <SettingsButton
+                variant="secondary"
+                onClick={handleReset}
+                disabled={!hasChanges || isSaving || isUploading}
+              >
+                {t('admin:BrandingManagement.t_ff75b4ff')}
+              </SettingsButton>
+            </div>
+            <div className="mg-branding-settings__actions-trailing">
+              <SettingsButton
+                type="submit"
+                variant="primary"
+                disabled={!hasChanges || isSaving || isUploading}
+                loading={isSaving || isUploading}
+              >
+                {t('common.actions.save')}
+              </SettingsButton>
+            </div>
+          </footer>
+        </form>
+      </SettingsPageShell>
 
       <UnifiedModal
         isOpen={showPreview}

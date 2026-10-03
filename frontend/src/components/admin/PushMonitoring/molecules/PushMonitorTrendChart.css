@@ -51,7 +51,7 @@
 }
 
 .mg-push-monitor__trend-chart__segment--alimtalk {
-  background: var(--mg-v2-color-primary-solid);
+  background: var(--mg-v2-color-primary-main);
 }
 
 .mg-push-monitor__trend-chart__segment--sms {

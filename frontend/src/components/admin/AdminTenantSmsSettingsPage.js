@@ -8,9 +8,7 @@
 import React, { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
-import { ContentArea, ContentHeader, ContentSection } from '../dashboard-v2/content';
-import MGButton from '../common/MGButton';
-import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
+import { SettingsButton, SettingsPageShell, SettingsSectionPanel } from './settings-shell';
 import SafeErrorDisplay from '../common/SafeErrorDisplay';
 import SettingSwitchRow from '../common/molecules/SettingSwitchRow';
 import StandardizedApi from '../../utils/standardizedApi';
@@ -23,7 +21,6 @@ import { isApiMutationSuccess, resolveApiObjectData } from '../../utils/apiRespo
 import { toDisplayString } from '../../utils/safeDisplay';
 import { runResourceLoad, softRefresh } from '../../utils/softRefresh';
 import '../../styles/unified-design-tokens.css';
-import './AdminDashboard/AdminDashboardB0KlA.css';
 import './AdminTenantSmsSettingsPage.css';
 import { useTranslation } from 'react-i18next';
 
@@ -237,50 +234,56 @@ const AdminTenantSmsSettingsPage = () => {
       loading={loading && !tenantIdLine}
       loadingText={t('settings:sms.loading')}
     >
-      <div className="mg-v2-ad-b0kla mg-v2-tenant-sms-settings" data-testid="admin-tenant-sms-settings">
-        <ContentArea>
-          <ContentHeader
-            titleId={pageTitleId}
-            title={t('settings:sms.title')}
-            subtitle={t('settings:sms.subtitle')}
-          />
-          <form className="mg-tenant-sms__form" onSubmit={handleSubmit} noValidate>
-            <SafeErrorDisplay error={loadError} />
-            <SafeErrorDisplay error={saveError} />
+      <SettingsPageShell
+        title={t('settings:sms.title')}
+        titleId={pageTitleId}
+        className="mg-v2-tenant-sms-settings"
+      >
+        <form
+          className="mg-tenant-sms__form"
+          onSubmit={handleSubmit}
+          noValidate
+          data-testid="admin-tenant-sms-settings"
+        >
+          <SafeErrorDisplay error={loadError} />
+          <SafeErrorDisplay error={saveError} />
 
-            <ContentSection title={t('settings:sms.section.info')}>
-              <p className="mg-tenant-sms__hint">
-                {t('settings:sms.infoHint')}
+          <SettingsSectionPanel title={t('settings:sms.section.info')} body="plain">
+            <p className="mg-v2-settings-muted">
+              {t('settings:sms.infoHint')}
+            </p>
+            {tenantIdLine ? (
+              <p className="mg-tenant-sms__readonly-line">
+                {t('settings:sms.tenantIdLabel')} {tenantIdLine}
               </p>
-              {tenantIdLine ? (
-                <p className="mg-tenant-sms__readonly-line">
-                  {t('settings:sms.tenantIdLabel')} {tenantIdLine}
-                </p>
-              ) : null}
-            </ContentSection>
+            ) : null}
+          </SettingsSectionPanel>
 
-            <ContentSection title={t('settings:sms.section.enabled')}>
-              <SettingSwitchRow
-                id={toggleId}
-                label={t('settings:sms.enabledLabel')}
-                hint={t('settings:sms.toggleImmediateHint')}
-                statusLabel={form.smsEnabled
-                  ? t('common:label.on')
-                  : t('common:label.off')}
-                checked={Boolean(form.smsEnabled)}
-                onCheckedChange={onSmsEnabledCheckedChange}
-                disabled={smsEnabledDisabled || saving || !settingsLoaded}
-                isPending={smsEnabledBusy}
-                ariaLabel={t('settings:sms.enabledLabel')}
-              />
-            </ContentSection>
+          <SettingsSectionPanel title={t('settings:sms.section.enabled')}>
+            <SettingSwitchRow
+              id={toggleId}
+              label={t('settings:sms.enabledLabel')}
+              hint={t('settings:sms.toggleImmediateHint')}
+              statusLabel={form.smsEnabled
+                ? t('common:label.on')
+                : t('common:label.off')}
+              checked={Boolean(form.smsEnabled)}
+              onCheckedChange={onSmsEnabledCheckedChange}
+              disabled={smsEnabledDisabled || saving || !settingsLoaded}
+              isPending={smsEnabledBusy}
+              ariaLabel={t('settings:sms.enabledLabel')}
+            />
+          </SettingsSectionPanel>
 
-            <ContentSection variant="card" title={t('settings:sms.section.integration')}>
-              <div className="mg-tenant-sms__field">
-                <label htmlFor="tenant-sms-provider">{t('settings:sms.fields.provider')}</label>
+          <SettingsSectionPanel title={t('settings:sms.section.integration')}>
+            <div className="mg-v2-settings-form-grid">
+              <div className="mg-v2-settings-field">
+                <label className="mg-v2-form-label" htmlFor="tenant-sms-provider">
+                  {t('settings:sms.fields.provider')}
+                </label>
                 <input
                   id="tenant-sms-provider"
-                  className="mg-tenant-sms__input"
+                  className="mg-v2-form-input"
                   type="text"
                   maxLength={PROVIDER_MAX_LEN}
                   value={form.provider || ''}
@@ -288,11 +291,13 @@ const AdminTenantSmsSettingsPage = () => {
                   autoComplete="off"
                 />
               </div>
-              <div className="mg-tenant-sms__field">
-                <label htmlFor="tenant-sms-sender">{t('settings:sms.fields.senderNumber')}</label>
+              <div className="mg-v2-settings-field">
+                <label className="mg-v2-form-label" htmlFor="tenant-sms-sender">
+                  {t('settings:sms.fields.senderNumber')}
+                </label>
                 <input
                   id="tenant-sms-sender"
-                  className="mg-tenant-sms__input"
+                  className="mg-v2-form-input"
                   type="text"
                   maxLength={SENDER_MAX_LEN}
                   value={form.senderNumber || ''}
@@ -300,14 +305,18 @@ const AdminTenantSmsSettingsPage = () => {
                   autoComplete="off"
                 />
               </div>
-            </ContentSection>
+            </div>
+          </SettingsSectionPanel>
 
-            <ContentSection title={t('settings:sms.section.refs')}>
-              <div className="mg-tenant-sms__field">
-                <label htmlFor="tenant-sms-api-key-ref">{t('settings:sms.fields.apiKeyRef')}</label>
+          <SettingsSectionPanel title={t('settings:sms.section.refs')}>
+            <div className="mg-v2-settings-form-grid">
+              <div className="mg-v2-settings-field">
+                <label className="mg-v2-form-label" htmlFor="tenant-sms-api-key-ref">
+                  {t('settings:sms.fields.apiKeyRef')}
+                </label>
                 <input
                   id="tenant-sms-api-key-ref"
-                  className="mg-tenant-sms__input"
+                  className="mg-v2-form-input"
                   type="text"
                   maxLength={REF_MAX_LEN}
                   value={form.apiKeyRef || ''}
@@ -315,11 +324,13 @@ const AdminTenantSmsSettingsPage = () => {
                   autoComplete="off"
                 />
               </div>
-              <div className="mg-tenant-sms__field">
-                <label htmlFor="tenant-sms-api-secret-ref">{t('settings:sms.fields.apiSecretRef')}</label>
+              <div className="mg-v2-settings-field">
+                <label className="mg-v2-form-label" htmlFor="tenant-sms-api-secret-ref">
+                  {t('settings:sms.fields.apiSecretRef')}
+                </label>
                 <input
                   id="tenant-sms-api-secret-ref"
-                  className="mg-tenant-sms__input"
+                  className="mg-v2-form-input"
                   type="text"
                   maxLength={REF_MAX_LEN}
                   value={form.apiSecretRef || ''}
@@ -327,30 +338,30 @@ const AdminTenantSmsSettingsPage = () => {
                   autoComplete="off"
                 />
               </div>
-            </ContentSection>
-
-            <div className="mg-tenant-sms__actions">
-              <MGButton
-                type="submit"
-                className={buildErpMgButtonClassName({ variant: 'primary' })}
-                disabled={saving || smsEnabledBusy || !settingsLoaded}
-                loading={saving}
-                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-              >
-                {t('settings:sms.action.saveRefs')}
-              </MGButton>
-              <MGButton
-                type="button"
-                className={buildErpMgButtonClassName({ variant: 'outline' })}
-                disabled={saving || loading || smsEnabledBusy}
-                onClick={() => softRefresh(loadSettings)}
-              >
-                {t('settings:sms.reload')}
-              </MGButton>
             </div>
-          </form>
-        </ContentArea>
-      </div>
+          </SettingsSectionPanel>
+
+          <div className="mg-v2-settings-actions">
+            <SettingsButton
+              variant="ghost"
+              type="button"
+              preventDoubleClick
+              disabled={saving || loading || smsEnabledBusy}
+              onClick={() => softRefresh(loadSettings)}
+            >
+              {t('settings:sms.reload')}
+            </SettingsButton>
+            <SettingsButton
+              variant="primary"
+              type="submit"
+              disabled={saving || smsEnabledBusy || !settingsLoaded}
+              loading={saving}
+            >
+              {t('settings:sms.action.saveRefs')}
+            </SettingsButton>
+          </div>
+        </form>
+      </SettingsPageShell>
       <ConfirmEnableModal />
     </AdminCommonLayout>
   );

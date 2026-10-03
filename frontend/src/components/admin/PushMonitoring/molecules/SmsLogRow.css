@@ -9,16 +9,16 @@
 .mg-sms-log-row {
   display: grid;
   grid-template-columns:
-    minmax(96px, 0.8fr)
-    minmax(72px, 0.6fr)
-    minmax(140px, 1.2fr)
-    minmax(120px, 1fr)
-    minmax(64px, 0.5fr)
-    minmax(160px, 2fr);
+    minmax(6rem, 0.8fr)
+    minmax(4.5rem, 0.6fr)
+    minmax(8.75rem, 1.2fr)
+    minmax(7.5rem, 1fr)
+    minmax(4rem, 0.5fr)
+    minmax(10rem, 2fr);
   align-items: center;
   gap: var(--mg-spacing-sm, 0.5rem);
   padding: var(--mg-spacing-sm, 0.5rem) var(--mg-spacing-md, 1rem);
-  border-bottom: 1px solid var(--mg-v2-color-neutral-300);
+  border-bottom: var(--mg-v2-border-width-thin) solid var(--mg-v2-color-neutral-300);
   font-size: var(--mg-font-size-sm, 0.875rem);
   color: var(--mg-v2-color-text-primary);
 }
@@ -44,7 +44,7 @@
 .mg-sms-log-row__recipient {
   display: inline-flex;
   flex-direction: column;
-  gap: 2px;
+  gap: var(--mg-v2-space-1);
   min-width: 0;
 }
 
@@ -67,10 +67,10 @@
 @media (max-width: 1024px) {
   .mg-sms-log-row {
     grid-template-columns:
-      minmax(80px, 0.7fr)
-      minmax(60px, 0.5fr)
-      minmax(120px, 1.4fr)
-      minmax(60px, 0.5fr);
+      minmax(5rem, 0.7fr)
+      minmax(3.75rem, 0.5fr)
+      minmax(7.5rem, 1.4fr)
+      minmax(3.75rem, 0.5fr);
   }
   .mg-sms-log-row__recipient,
   .mg-sms-log-row__error {

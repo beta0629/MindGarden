@@ -1,140 +1,82 @@
 /**
- * 컴플라이언스 대시보드 — B0KlA·디자인 토큰 (하드코딩 색상 없음)
+ * 컴플라이언스 대시보드 — Settings suite chrome (SettingsPageShell · SettingsSectionPanel)
+ * 패널 외형은 settings-shell/SettingsSuite.css. 여기서는 지표·행 레이아웃만 (design-v2 토큰).
  */
 
 .mg-v2-compliance-dashboard {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-v2-space-4);
   width: 100%;
   min-width: 0;
-  max-width: 100%;
   box-sizing: border-box;
-  padding: 0;
-  margin: 0;
-  background: transparent;
-  min-height: 0;
-}
-
-.mg-v2-compliance-dashboard__section {
-  margin-bottom: var(--mg-spacing-lg, 1.25rem);
-}
-
-.mg-v2-compliance-dashboard__section--overall .mg-v2-compliance-dashboard__card {
-  box-shadow: var(--mg-shadow-sm, var(--ad-b0kla-shadow));
-  background: var(--mg-color-surface-main, var(--ad-b0kla-card-bg));
-}
-
-.mg-v2-compliance-dashboard__card.mg-v2-content-card {
-  margin-bottom: 0;
-  height: 100%;
-  box-shadow: var(--mg-shadow-sm, var(--ad-b0kla-shadow));
-  background: var(--mg-color-surface-main, var(--ad-b0kla-card-bg));
-}
-
-.mg-v2-compliance-dashboard__card-title {
-  display: flex;
-  align-items: center;
-  gap: var(--mg-spacing-sm, 0.5rem);
-  margin: 0 0 var(--mg-spacing-md, 1rem) 0;
-  font-size: 1.125rem;
-  font-weight: 700;
-  color: var(--ad-b0kla-title-color);
-  line-height: 1.35;
-}
-
-.mg-v2-compliance-dashboard__section-head-icon {
-  flex-shrink: 0;
-  color: var(--mg-primary-500);
 }
 
 .mg-v2-compliance-dashboard__metrics {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
-  gap: var(--mg-spacing-md, 1rem);
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, calc(var(--mg-v2-space-16) * 3)), 1fr));
+  gap: var(--mg-v2-space-4);
 }
 
 .mg-v2-compliance-dashboard__metric {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-v2-space-1);
+  min-width: 0;
+  padding: var(--mg-v2-space-4);
   text-align: center;
-  padding: var(--mg-spacing-md, 1rem);
-  background: var(--ad-b0kla-bg);
-  border-radius: var(--ad-b0kla-radius);
-  border: 1px solid var(--ad-b0kla-border);
+  background: var(--mg-v2-color-neutral-100);
+  border-radius: var(--mg-v2-radius-lg);
   box-sizing: border-box;
 }
 
 .mg-v2-compliance-dashboard__metric-label {
-  font-size: 0.8125rem;
-  color: var(--ad-b0kla-text-secondary);
-  margin-bottom: var(--mg-spacing-xs, 0.25rem);
+  font-size: var(--mg-v2-font-size-caption);
+  color: var(--mg-v2-color-text-secondary);
 }
 
 .mg-v2-compliance-dashboard__metric-value {
-  font-size: 1.125rem;
+  font-size: var(--mg-v2-font-size-h2);
   font-weight: 700;
-  color: var(--ad-b0kla-title-color);
+  color: var(--mg-v2-color-text-primary);
 }
 
 .mg-v2-compliance-dashboard__metric-value--inline {
   display: inline-flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: center;
-  gap: var(--mg-spacing-sm, 0.5rem);
-  flex-wrap: wrap;
+  gap: var(--mg-v2-space-2);
 }
 
 .mg-v2-compliance-dashboard__metric-value--neutral {
+  font-size: var(--mg-v2-font-size-body-md);
   font-weight: 600;
-  color: var(--ad-b0kla-text-secondary);
+  color: var(--mg-v2-color-text-secondary);
 }
 
-.mg-v2-compliance-dashboard__metric-value--excellent {
-  color: var(--mg-success-500);
-}
-
+.mg-v2-compliance-dashboard__metric-value--excellent,
 .mg-v2-compliance-dashboard__metric-value--good {
-  color: var(--mg-success-400);
+  color: var(--mg-v2-color-semantic-success);
 }
 
 .mg-v2-compliance-dashboard__metric-value--normal {
-  color: var(--mg-warning-500);
+  color: var(--mg-v2-color-semantic-warning);
 }
 
 .mg-v2-compliance-dashboard__metric-value--poor,
 .mg-v2-compliance-dashboard__metric-value--critical {
-  color: var(--mg-error-500);
+  color: var(--mg-v2-color-semantic-error);
 }
 
 .mg-v2-compliance-dashboard__metric-value--unknown {
-  color: var(--mg-gray-500);
-}
-
-.mg-v2-compliance-dashboard__level-icon {
-  flex-shrink: 0;
-}
-
-.mg-v2-compliance-dashboard__level-icon--success {
-  color: var(--mg-success-500);
-}
-
-.mg-v2-compliance-dashboard__level-icon--success-soft {
-  color: var(--mg-success-400);
-}
-
-.mg-v2-compliance-dashboard__level-icon--warning-fill {
-  color: var(--mg-warning-500);
-}
-
-.mg-v2-compliance-dashboard__level-icon--error {
-  color: var(--mg-error-500);
-}
-
-.mg-v2-compliance-dashboard__level-icon--muted {
-  color: var(--mg-gray-400);
+  color: var(--mg-v2-color-text-tertiary);
 }
 
 .mg-v2-compliance-dashboard__grid {
   display: grid;
   grid-template-columns: 1fr;
-  gap: var(--mg-spacing-lg, 1.25rem);
-  margin-bottom: var(--mg-spacing-lg, 1.25rem);
+  gap: var(--mg-v2-space-4);
 }
 
 @media (min-width: 768px) {
@@ -143,35 +85,24 @@
   }
 }
 
-@media (min-width: 1200px) {
-  .mg-v2-compliance-dashboard__grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
 .mg-v2-compliance-dashboard__cell {
   min-width: 0;
-  display: flex;
-}
-
-.mg-v2-compliance-dashboard__cell > .mg-v2-content-card {
-  flex: 1;
 }
 
 .mg-v2-compliance-dashboard__card-body {
   display: flex;
   flex-direction: column;
-  gap: var(--mg-spacing-sm, 0.5rem);
+  gap: var(--mg-v2-space-2);
 }
 
 .mg-v2-compliance-dashboard__row {
   display: flex;
   flex-wrap: wrap;
-  justify-content: space-between;
   align-items: baseline;
-  gap: var(--mg-spacing-sm, 0.5rem);
-  padding: var(--mg-spacing-sm, 0.5rem) 0;
-  border-bottom: 1px solid var(--ad-b0kla-border);
+  justify-content: space-between;
+  gap: var(--mg-v2-space-2);
+  padding: var(--mg-v2-space-2) 0;
+  border-bottom: var(--mg-v2-border-width-thin) solid var(--mg-v2-color-neutral-200);
 }
 
 .mg-v2-compliance-dashboard__row:last-child {
@@ -184,16 +115,16 @@
 }
 
 .mg-v2-compliance-dashboard__label {
-  font-size: 0.8125rem;
-  color: var(--ad-b0kla-text-secondary);
+  font-size: var(--mg-v2-font-size-caption);
+  color: var(--mg-v2-color-text-secondary);
 }
 
 .mg-v2-compliance-dashboard__value {
-  font-size: 0.875rem;
+  font-size: var(--mg-v2-font-size-body-md);
   font-weight: 600;
-  color: var(--ad-b0kla-title-color);
   text-align: right;
   word-break: break-word;
+  color: var(--mg-v2-color-text-primary);
 }
 
 .mg-v2-compliance-dashboard__row--block .mg-v2-compliance-dashboard__value {
@@ -201,89 +132,44 @@
 }
 
 .mg-v2-compliance-dashboard__value--risk {
-  color: var(--mg-warning-500);
+  color: var(--mg-v2-color-semantic-warning);
 }
 
 .mg-v2-compliance-dashboard__muted {
-  font-size: 0.875rem;
-  color: var(--ad-b0kla-text-secondary);
+  font-size: var(--mg-v2-font-size-body-md);
+  color: var(--mg-v2-color-text-secondary);
 }
 
-.mg-v2-compliance-dashboard__subgrid {
+.mg-v2-compliance-dashboard__subgrid,
+.mg-v2-compliance-dashboard__list {
   display: flex;
   flex-direction: column;
-  gap: var(--mg-spacing-xs, 0.25rem);
-  margin-top: var(--mg-spacing-xs, 0.25rem);
+  gap: var(--mg-v2-space-1);
   width: 100%;
+  margin-top: var(--mg-v2-space-1);
 }
 
 .mg-v2-compliance-dashboard__subrow {
   display: flex;
-  justify-content: space-between;
-  gap: var(--mg-spacing-sm, 0.5rem);
   flex-wrap: wrap;
-}
-
-.mg-v2-compliance-dashboard__list {
-  display: flex;
-  flex-direction: column;
-  gap: var(--mg-spacing-xs, 0.25rem);
-  margin-top: var(--mg-spacing-xs, 0.25rem);
-  width: 100%;
+  justify-content: space-between;
+  gap: var(--mg-v2-space-2);
 }
 
 .mg-v2-compliance-dashboard__list-item {
-  font-size: 0.875rem;
-  color: var(--ad-b0kla-text-secondary);
-  padding: var(--mg-spacing-xs, 0.25rem) var(--mg-spacing-sm, 0.5rem);
-  background: var(--ad-b0kla-bg);
-  border-radius: var(--ad-b0kla-radius);
-  border: 1px solid var(--ad-b0kla-border);
+  padding: var(--mg-v2-space-1) var(--mg-v2-space-2);
+  font-size: var(--mg-v2-font-size-body-md);
+  color: var(--mg-v2-color-text-secondary);
+  background: var(--mg-v2-color-neutral-100);
+  border-radius: var(--mg-v2-radius-md);
 }
 
-.mg-v2-compliance-dashboard__actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--mg-spacing-sm, 0.5rem);
-  padding-top: var(--mg-spacing-md, 1rem);
-  border-top: 1px solid var(--ad-b0kla-border);
-}
-
-.mg-v2-compliance-dashboard__state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-height: 16rem;
-  text-align: center;
-  padding: var(--mg-spacing-xl, 1.5rem);
-  box-sizing: border-box;
-  background: var(--mg-color-surface-main, var(--ad-b0kla-card-bg));
-  border: 1px solid var(--ad-b0kla-border);
-  border-radius: var(--ad-b0kla-radius);
-  box-shadow: var(--mg-shadow-sm, var(--ad-b0kla-shadow));
-}
-
-.mg-v2-compliance-dashboard__state-title {
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: var(--mg-error-500);
-  margin: 0 0 var(--mg-spacing-md, 1rem) 0;
-}
-
-.mg-v2-compliance-dashboard__state-text {
-  font-size: 0.875rem;
-  color: var(--ad-b0kla-text-secondary);
-  margin: 0 0 var(--mg-spacing-lg, 1.25rem) 0;
-  max-width: 28rem;
+.mg-v2-settings-actions.mg-v2-compliance-dashboard__actions-row {
+  justify-content: flex-start;
 }
 
 @media (max-width: 767px) {
   .mg-v2-compliance-dashboard__metrics {
     grid-template-columns: 1fr;
-  }
-
-  .mg-v2-compliance-dashboard__metric-value {
-    font-size: 1rem;
   }
 }

@@ -1,90 +1,34 @@
+/**
+ * 사업자·약관 — 설정 공통 셸 위 본문 전용 스타일
+ * 크롬(헤더·요약 띠·패널·입력·버튼)은 settings-shell/SettingsSuite.css 가 담당한다.
+ * 색·간격·반경은 design-v2 토큰만 사용한다.
+ */
+
 .merchant-legal-settings--clinic-os {
-  --ml-ink: var(--mg-v2-color-text-primary);
-  --ml-muted: var(--mg-v2-color-text-secondary);
-  --ml-teal: var(--cs-teal-700);
-  --ml-line: var(--mg-v2-color-neutral-300);
-  --ml-textarea-line-height: 1.55;
-  --ml-textarea-min-height: 10rem;
-  --ml-textarea-pad-block: 0.9rem;
-  --ml-textarea-pad-inline: 0.95rem;
-  color: var(--ml-ink);
-}
-
-.merchant-legal-settings__header-actions {
-  display: flex;
-  gap: 0.5rem;
-  align-items: center;
-}
-
-.merchant-legal-settings__save.mg-button,
-.merchant-legal-settings__save {
-  background: var(--ml-teal) !important;
-  border-color: var(--ml-teal) !important;
-}
-
-.merchant-legal-settings-summary.mapping-management-summary {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0.75rem;
-  margin: 1rem 0;
-  border-left: none !important;
-}
-
-.merchant-legal-settings-summary__cell {
-  background: var(--mg-v2-color-neutral-50);
-  border: 1px solid var(--ml-line);
-  border-radius: var(--mg-v2-radius-md);
-  padding: 0.85rem 1rem;
-}
-
-.merchant-legal-settings-summary__label {
-  display: block;
-  font-size: 0.75rem;
-  color: var(--ml-muted);
-  margin-bottom: 0.25rem;
-}
-
-.merchant-legal-settings__preview-rail {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  padding: 0.75rem 1rem;
-  margin-bottom: 1rem;
-  border-radius: var(--mg-v2-radius-md);
-  background: var(--mg-v2-color-surface-secondary, var(--mg-v2-color-neutral-100));
-  border: 1px solid var(--mg-v2-color-border-main, var(--mg-v2-color-neutral-300));
-  scroll-margin-top: 1rem;
-}
-
-.merchant-legal-settings__preview-rail-text {
-  display: flex;
-  flex-direction: column;
-  gap: 0.15rem;
-  font-size: 0.8125rem;
-  color: var(--ml-ink);
+  --ml-accent: var(--mg-v2-color-primary-main);
+  --ml-textarea-line-height: var(--mg-v2-font-line-height-body);
+  --ml-textarea-min-height: calc(var(--mg-v2-component-height-md) * 4);
 }
 
 .merchant-legal-settings__preview-badge {
   flex-shrink: 0;
-  padding: 0.2rem 0.55rem;
-  border-radius: 999px;
-  background: var(--mg-color-warning-bg, var(--cs-warning-100));
-  color: var(--mg-color-warning-dark, var(--cs-warning-800));
-  font-size: 0.75rem;
-  font-weight: 600;
+  padding: var(--mg-v2-space-1) var(--mg-v2-space-2);
+  border-radius: var(--mg-v2-radius-pill);
+  background: var(--mg-v2-color-semantic-warning-light);
+  color: var(--mg-v2-color-semantic-warning-dark);
+  font-size: var(--mg-v2-font-size-caption);
+  font-weight: var(--mg-v2-font-weight-semibold);
+}
+
+.merchant-legal-settings__preview-rail {
+  scroll-margin-top: var(--mg-v2-space-4);
 }
 
 .merchant-legal-settings__stage {
   display: grid;
-  grid-template-columns: minmax(0, 1.2fr) minmax(16rem, 0.8fr);
-  gap: 1.25rem;
-  min-height: 36rem;
-  padding: 1.25rem;
-  border: 1px solid var(--mg-v2-color-neutral-300);
-  background: var(--mg-v2-color-neutral-50);
-  border-radius: var(--mg-v2-radius-lg);
-  overflow: visible;
+  grid-template-columns: minmax(0, 1.2fr) minmax(calc(var(--mg-v2-space-16) * 4), 0.8fr);
+  gap: var(--mg-v2-space-4);
+  align-items: start;
 }
 
 @media (max-width: 960px) {
@@ -98,43 +42,18 @@
   overflow: visible;
 }
 
-.merchant-legal-settings__section {
-  margin-bottom: 1.5rem;
-}
-
-.merchant-legal-settings__section h2 {
-  margin: 0 0 0.75rem;
-  font-size: 1rem;
-}
-
-.merchant-legal-settings__field {
+.merchant-legal-settings__form-col {
   display: flex;
   flex-direction: column;
-  gap: 0.35rem;
-  margin-bottom: 0.75rem;
-  font-size: 0.8125rem;
-  color: var(--ml-muted);
+  gap: var(--mg-v2-space-4);
+  min-width: 0;
 }
 
-/* base.css `input, textarea { line-height: inherit }` 보다 높은 특이도 */
-.merchant-legal-settings--clinic-os .merchant-legal-settings__field input,
+/* 공통 textarea 계약 위에 줄바꿈·잘림 방지만 덧붙인다 (base.css line-height inherit 보다 높은 특이도) */
 .merchant-legal-settings--clinic-os .merchant-legal-settings__field textarea {
   box-sizing: border-box;
-  width: 100%;
-  height: auto;
-  border: 1px solid var(--ml-line);
-  border-radius: 0.65rem;
-  padding-block: var(--ml-textarea-pad-block);
-  padding-inline: var(--ml-textarea-pad-inline);
-  font-size: 0.9375rem;
-  line-height: var(--ml-textarea-line-height);
-  color: var(--ml-ink);
-  background: var(--mg-white);
-}
-
-.merchant-legal-settings--clinic-os .merchant-legal-settings__field textarea {
   min-height: var(--ml-textarea-min-height);
-  resize: vertical;
+  line-height: var(--ml-textarea-line-height);
   overflow-x: hidden;
   overflow-y: auto;
   white-space: pre-wrap;
@@ -143,49 +62,20 @@
   vertical-align: top;
 }
 
-.merchant-legal-settings--clinic-os .merchant-legal-settings__field input:focus,
-.merchant-legal-settings--clinic-os .merchant-legal-settings__field textarea:focus {
-  outline: 2px solid color-mix(in srgb, var(--ml-teal) 25%, transparent);
-  border-color: var(--ml-teal);
-}
-
 .merchant-legal-settings__field-error {
-  color: var(--mg-color-error-dark, var(--cs-error-700));
-  font-size: 0.75rem;
-}
-
-.merchant-legal-settings__hint {
-  font-size: 0.8125rem;
-  color: var(--ml-muted);
-}
-
-.merchant-legal-settings__sanitize-hint {
-  margin: 0 0 0.5rem;
-  font-size: 0.75rem;
-  color: var(--ml-muted);
-}
-
-.merchant-legal-settings__platform-notice {
-  margin: 0 0 0.75rem;
-  padding: 0.75rem 0.85rem;
-  border: 1px dashed var(--ml-line);
-  border-radius: var(--mg-v2-radius-md);
-  background: var(--mg-v2-color-neutral-50);
-  font-size: 0.8125rem;
-  color: var(--ml-muted);
-  word-break: keep-all;
+  color: var(--mg-v2-color-semantic-error);
+  font-size: var(--mg-v2-font-size-caption);
 }
 
 .merchant-legal-settings__platform-links {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.75rem 1.25rem;
-  margin-bottom: 0.5rem;
+  gap: var(--mg-v2-space-3) var(--mg-v2-space-5);
 }
 
 .merchant-legal-settings__platform-link {
-  font-size: 0.875rem;
-  color: var(--ml-ink);
+  font-size: var(--mg-v2-font-size-body-md);
+  color: var(--ml-accent);
   text-decoration: none;
   word-break: keep-all;
 }
@@ -194,18 +84,9 @@
   text-decoration: underline;
 }
 
-.merchant-legal-settings__preview-col h2 {
-  margin: 0 0 0.75rem;
-  font-size: 0.95rem;
-}
-
-.merchant-legal-settings__preview-note {
-  margin-top: 0.75rem;
-  font-size: 0.75rem;
-  color: var(--ml-muted);
-}
-
-.merchant-legal-settings__error {
-  color: var(--mg-color-error-dark, var(--cs-error-700));
-  margin-bottom: 0.75rem;
+/* 로그인·로비와 공유하는 compact 푸터 미리보기 — 이 화면에서만 dashed 대신 1px solid 카드 표면 */
+.merchant-legal-settings--clinic-os .mg-merchant-legal-footer--compact {
+  border: var(--mg-v2-border-width-thin) solid var(--mg-v2-color-border-default);
+  border-radius: var(--mg-v2-radius-lg);
+  background: var(--mg-v2-color-surface-card);
 }

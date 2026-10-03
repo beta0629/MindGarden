@@ -10,11 +10,8 @@
 import React, { useCallback, useState } from 'react';
 import { useConfirm } from '../../../../hooks/useConfirm';
 import { KeyRound, Trash2 } from 'lucide-react';
-import MGButton from '../../../common/MGButton';
-import ActionBar from '../../../common/ActionBar';
-import ActionBarButton from '../../../common/ActionBarButton';
 import UnifiedModal from '../../../common/modals/UnifiedModal';
-import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../../erp/common/erpMgButtonProps';
+import { SettingsSectionPanel, SettingsButton } from '../../settings-shell';
 import { toDisplayString } from '../../../../utils/safeDisplay';
 import ApiKeyModalContent from '../molecules/ApiKeyModalContent';
 import {
@@ -76,16 +73,12 @@ const ApiKeyManager = ({
     : null;
 
   return (
-    <section className="mg-ai-section mg-ai-api-key-manager">
-      <header className="mg-ai-section__header">
-        <h2 className="mg-ai-section__title">
-          <span className="mg-ai-section__accent" aria-hidden="true" />
-          API 키 관리
-        </h2>
-      </header>
-      <p className="mg-ai-section__desc">
-        {AI_PROVIDER_LABELS.keyOpsOnlyNotice}
-      </p>
+    <SettingsSectionPanel
+      title="API 키 관리"
+      description={AI_PROVIDER_LABELS.keyOpsOnlyNotice}
+      className="mg-ai-section mg-ai-api-key-manager"
+      body="plain"
+    >
 
       <ul className="mg-ai-api-key-manager__list" aria-label="API 키 목록">
         {AI_PROVIDER_OPTIONS.map((provider) => {
@@ -111,32 +104,20 @@ const ApiKeyManager = ({
                 ) : null}
               </div>
               <div className="mg-ai-api-key-manager__actions">
-                <MGButton
+                <SettingsButton
                   type="button"
                   variant="secondary"
-                  size="medium"
-                  className={buildErpMgButtonClassName({
-                    variant: 'secondary',
-                    size: 'md',
-                    loading: false
-                  })}
                   onClick={() => openModal(provider.id)}
                   disabled
                   preventDoubleClick={false}
                 >
                   {hasKey ? AI_PROVIDER_LABELS.changeKey : AI_PROVIDER_LABELS.saveKey}
-                </MGButton>
+                </SettingsButton>
                 {hasKey ? (
-                  <MGButton
+                  <SettingsButton
                     type="button"
                     variant="ghost"
-                    size="medium"
-                    className={buildErpMgButtonClassName({
-                      variant: 'secondary',
-                      size: 'md',
-                      loading: false,
-                      className: 'mg-ai-api-key-manager__delete'
-                    })}
+                    className="mg-ai-api-key-manager__delete"
                     onClick={() => handleDelete(provider.id)}
                     disabled
                     preventDoubleClick={false}
@@ -145,7 +126,7 @@ const ApiKeyManager = ({
                     <Trash2 size={14} aria-hidden="true" />
                     {' '}
                     {AI_PROVIDER_LABELS.deleteKey}
-                  </MGButton>
+                  </SettingsButton>
                 ) : null}
               </div>
             </li>
@@ -163,14 +144,14 @@ const ApiKeyManager = ({
           variant="form"
           loading={saving}
           actions={(
-            <ActionBar align="end" gap="md">
-              <ActionBarButton variant="outline" onClick={closeModal} disabled={saving}>
+            <div className="mg-v2-settings-actions">
+              <SettingsButton variant="outline" onClick={closeModal} disabled={saving}>
                 취소
-              </ActionBarButton>
-              <ActionBarButton variant="primary" onClick={handleSave} loading={saving}>
+              </SettingsButton>
+              <SettingsButton variant="primary" onClick={handleSave} loading={saving}>
                 저장
-              </ActionBarButton>
-            </ActionBar>
+              </SettingsButton>
+            </div>
           )}
         >
           <ApiKeyModalContent
@@ -182,7 +163,7 @@ const ApiKeyManager = ({
         </UnifiedModal>
       ) : null}
       <ConfirmModal />
-    </section>
+    </SettingsSectionPanel>
   );
 };
 

@@ -27,7 +27,7 @@
 }
 
 .mg-push-monitor__kpi-card--queue {
-  --mg-push-monitor-kpi-accent: var(--mg-v2-color-primary-solid);
+  --mg-push-monitor-kpi-accent: var(--mg-v2-color-primary-main);
 }
 
 .mg-push-monitor__kpi-card--success {

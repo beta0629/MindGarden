@@ -3,10 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { ICONS } from '../../constants/icons';
 
 const CreditCardIcon = ICONS.CREDIT_CARD;
-const SearchIcon = ICONS.SEARCH;
 const XCircleIcon = ICONS.X_CIRCLE;
 const ClockIcon = ICONS.CLOCK;
-const AlertCircleIcon = ICONS.ALERT_CIRCLE;
 import { useSession } from '../../contexts/SessionContext';
 import { getPgConfigurations, deletePgConfiguration, testPgConnection } from '../../utils/pgApi';
 import notificationManager from '../../utils/notification';
@@ -15,12 +13,14 @@ import AdminCommonLayout from '../layout/AdminCommonLayout';
 import StatusBadge from '../common/StatusBadge';
 import MGButton from '../common/MGButton';
 import SafeText from '../common/SafeText';
+import SafeErrorDisplay from '../common/SafeErrorDisplay';
+import UnifiedLoading from '../common/UnifiedLoading';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
-import ContentArea from '../dashboard-v2/content/ContentArea';
-import ContentHeader from '../dashboard-v2/content/ContentHeader';
+import { SettingsButton, SettingsPageShell, SettingsSectionPanel } from '../admin/settings-shell';
 import KpiNumeral from '../dashboard-v2/atoms/KpiNumeral';
 import UnifiedModal from '../common/modals/UnifiedModal';
 import '../../styles/unified-design-tokens.css';
+import './PgConfigurationLegacyGlobals.css';
 import './PgConfigurationList.css';
 import { toDisplayString } from '../../utils/safeDisplay';
 import { useTranslation } from 'react-i18next';
@@ -28,6 +28,10 @@ import { isPgConfigDeletable } from './pgConfigurationListUtils';
 import { ADMIN_SHOP_PG_COPY } from '../../constants/adminShopSuite';
 
 export { isPgConfigDeletable };
+
+const PG_LIST_TITLE_ID = 'pg-config-list-title';
+const PG_LIST_ARIA_LABEL = 'PG 설정 목록';
+const PG_LIST_SHELL_CLASS = 'mg-v2-pg-config-list pg-config-list--clinic-os';
 
 /**
  * PG 설정 목록 페이지
@@ -168,23 +172,32 @@ const PgConfigurationList = () => {
   
   if (sessionLoading || (loading && configurations.length === 0)) {
     return (
-      <AdminCommonLayout
-        title={ADMIN_SHOP_PG_COPY.TITLE}
-        loading
-        loadingText={t('common:tenant.PgConfigurationList.t_38760583')}
-      />
+      <AdminCommonLayout title={ADMIN_SHOP_PG_COPY.TITLE}>
+        <SettingsPageShell
+          title={ADMIN_SHOP_PG_COPY.TITLE}
+          titleId={PG_LIST_TITLE_ID}
+          ariaLabel={PG_LIST_ARIA_LABEL}
+          className={PG_LIST_SHELL_CLASS}
+        >
+          <div className="mg-v2-loading-container" role="status" aria-live="polite" aria-busy="true">
+            <UnifiedLoading type="inline" text={t('common:tenant.PgConfigurationList.t_38760583')} />
+          </div>
+        </SettingsPageShell>
+      </AdminCommonLayout>
     );
   }
   
   if (!isLoggedIn || !user) {
     return (
       <AdminCommonLayout title={ADMIN_SHOP_PG_COPY.TITLE}>
-        <ContentArea ariaLabel="PG 설정 목록" className="mg-v2-pg-config-list">
-          <div className="error-message">
-            <AlertCircleIcon size={24} />
-            <p>{t('common:tenant.PgConfigurationList.t_5271ee34')}</p>
-          </div>
-        </ContentArea>
+        <SettingsPageShell
+          title={ADMIN_SHOP_PG_COPY.TITLE}
+          titleId={PG_LIST_TITLE_ID}
+          ariaLabel={PG_LIST_ARIA_LABEL}
+          className={PG_LIST_SHELL_CLASS}
+        >
+          <SafeErrorDisplay error={t('common:tenant.PgConfigurationList.t_5271ee34')} />
+        </SettingsPageShell>
       </AdminCommonLayout>
     );
   }
@@ -192,15 +205,14 @@ const PgConfigurationList = () => {
   if (!tenantId) {
     return (
       <AdminCommonLayout title={ADMIN_SHOP_PG_COPY.TITLE}>
-        <ContentArea
-          ariaLabel="PG 설정 목록"
-          className="mg-v2-pg-config-list pg-config-list--clinic-os"
+        <SettingsPageShell
+          title={ADMIN_SHOP_PG_COPY.TITLE}
+          titleId={PG_LIST_TITLE_ID}
+          ariaLabel={PG_LIST_ARIA_LABEL}
+          className={PG_LIST_SHELL_CLASS}
         >
-          <div className="error-message">
-            <AlertCircleIcon size={24} />
-            <p>{t('common:tenant.PgConfigurationList.t_8f990fec')}</p>
-          </div>
-        </ContentArea>
+          <SafeErrorDisplay error={t('common:tenant.PgConfigurationList.t_8f990fec')} />
+        </SettingsPageShell>
       </AdminCommonLayout>
     );
   }
@@ -226,29 +238,22 @@ const PgConfigurationList = () => {
   return (
     <AdminCommonLayout title={ADMIN_SHOP_PG_COPY.TITLE}>
       <>
-        <ContentArea
-          ariaLabel="PG 설정 목록"
-          className="mg-v2-pg-config-list pg-config-list--clinic-os"
+        <SettingsPageShell
+          title={ADMIN_SHOP_PG_COPY.TITLE}
+          titleId={PG_LIST_TITLE_ID}
+          ariaLabel={PG_LIST_ARIA_LABEL}
+          className={PG_LIST_SHELL_CLASS}
+          actions={(
+            <SettingsButton
+              type="button"
+              variant="primary"
+              onClick={() => navigate('/tenant/pg-configurations/new')}
+              preventDoubleClick={false}
+            >
+              {t('common:tenant.PgConfigurationList.t_61ce87de')}
+            </SettingsButton>
+          )}
         >
-            <ContentHeader
-              title={ADMIN_SHOP_PG_COPY.TITLE}
-              subtitle={ADMIN_SHOP_PG_COPY.LIST_SUBTITLE}
-              titleId="pg-config-list-title"
-              actions={
-                <div className="pg-config-list__header-actions">
-                  <MGButton
-                    type="button"
-                    variant="primary"
-                    className={buildErpMgButtonClassName({ variant: 'primary', size: 'sm', loading: false })}
-                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                    onClick={() => navigate('/tenant/pg-configurations/new')}
-                    preventDoubleClick={false}
-                  >
-                    {t('common:tenant.PgConfigurationList.t_61ce87de')}
-                  </MGButton>
-                </div>
-              }
-            />
 
         <section
           className="pg-config-list-summary mapping-management-summary"
@@ -299,25 +304,25 @@ const PgConfigurationList = () => {
           </article>
         </section>
 
+        <SettingsSectionPanel body="plain" ariaLabel={PG_LIST_ARIA_LABEL}>
         {/* 필터 및 검색 */}
         <div className="pg-config-list-filters mg-v2-pg-config-list__filters">
-          <div className="search-box">
-            <SearchIcon size={18} />
+          <div className="pg-config-list__search mg-v2-settings-field">
             <input
               type="text"
               placeholder={t('common:tenant.PgConfigurationList.t_4598635c')}
               value={filters.search}
               onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
-              className="search-input"
+              className="mg-v2-form-input"
               aria-label={t('common:tenant.PgConfigurationList.t_75c13af6')}
             />
           </div>
           
-          <div className="filter-group">
+          <div className="pg-config-list__filter-group">
             <select
               value={filters.status}
               onChange={(e) => setFilters(prev => ({ ...prev, status: e.target.value }))}
-              className="filter-select"
+              className="mg-v2-select"
               aria-label={t('common:tenant.PgConfigurationList.t_1dfdb50f')}
             >
               <option value="">{t('common:tenant.PgConfigurationList.t_21caa442')}</option>
@@ -332,7 +337,7 @@ const PgConfigurationList = () => {
             <select
               value={filters.approvalStatus}
               onChange={(e) => setFilters(prev => ({ ...prev, approvalStatus: e.target.value }))}
-              className="filter-select"
+              className="mg-v2-select"
               aria-label={t('common:tenant.PgConfigurationList.t_b2a166d3')}
             >
               <option value="">{t('common:tenant.PgConfigurationList.t_82f25333')}</option>
@@ -342,27 +347,19 @@ const PgConfigurationList = () => {
               <option value="REJECTED">{t('admin.labels.rejected')}</option>
             </select>
             
-            <MGButton
+            <SettingsButton
               type="button"
               variant="secondary"
-              size="small"
-              className={buildErpMgButtonClassName({ variant: 'secondary', size: 'sm', loading: false })}
-              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={loadConfigurations}
               preventDoubleClick={false}
             >
               {t('admin.actions.refresh')}
-            </MGButton>
+            </SettingsButton>
           </div>
         </div>
         
         {/* 에러 메시지 */}
-        {error && (
-          <div className="error-alert">
-            <AlertCircleIcon size={20} />
-            <span>{error}</span>
-          </div>
-        )}
+        <SafeErrorDisplay error={error} />
 
         <div className="pg-config-list__stage">
         {/* PG 설정 목록 */}
@@ -371,16 +368,14 @@ const PgConfigurationList = () => {
             <CreditCardIcon size={48} />
             <h3>{t('common:tenant.PgConfigurationList.t_8755c9a8')}</h3>
             <p>{t('common:tenant.PgConfigurationList.t_72539156')}</p>
-            <MGButton
+            <SettingsButton
               type="button"
               variant="primary"
-              className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: false })}
-              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={() => navigate('/tenant/pg-configurations/new')}
               preventDoubleClick={false}
             >
               {t('common:tenant.PgConfigurationList.t_61ce87de')}
-            </MGButton>
+            </SettingsButton>
           </div>
         ) : (
           <div className="pg-config-cards">
@@ -441,59 +436,43 @@ const PgConfigurationList = () => {
                 
                 <div className="card-footer">
                   <div className="card-actions">
-                    <MGButton
+                    <SettingsButton
                       type="button"
                       variant="secondary"
-                      size="small"
-                      className={buildErpMgButtonClassName({ variant: 'secondary', size: 'sm', loading: false })}
-                      loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                       onClick={() => navigate(`/tenant/pg-configurations/${config.configId}`)}
                       preventDoubleClick={false}
                     >
                       {t('common:tenant.PgConfigurationList.t_7ffb5a8b')}
-                    </MGButton>
+                    </SettingsButton>
 
                     {config.status === 'APPROVED' && (
-                      <MGButton
+                      <SettingsButton
                         type="button"
                         variant="secondary"
-                        size="small"
-                        className={buildErpMgButtonClassName({
-                          variant: 'secondary',
-                          size: 'sm',
-                          loading: testingConnection === config.configId
-                        })}
-                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                         onClick={() => handleTestConnection(config.configId)}
                         disabled={testingConnection === config.configId}
                         loading={testingConnection === config.configId}
                         preventDoubleClick={false}
                       >
                         {t('common:tenant.PgConfigurationList.t_3da5c18d')}
-                      </MGButton>
+                      </SettingsButton>
                     )}
 
                     {config.approvalStatus === 'PENDING' && (
-                      <MGButton
+                      <SettingsButton
                         type="button"
                         variant="secondary"
-                        size="small"
-                        className={buildErpMgButtonClassName({ variant: 'secondary', size: 'sm', loading: false })}
-                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                         onClick={() => navigate(`/tenant/pg-configurations/${config.configId}/edit`)}
                         preventDoubleClick={false}
                       >
                         {t('common.actions.edit')}
-                      </MGButton>
+                      </SettingsButton>
                     )}
 
                     {isPgConfigDeletable(config) && (
-                      <MGButton
+                      <SettingsButton
                         type="button"
                         variant="danger"
-                        size="small"
-                        className={buildErpMgButtonClassName({ variant: 'danger', size: 'sm', loading: false })}
-                        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                         onClick={() => {
                           setSelectedConfig(config);
                           setShowDeleteModal(true);
@@ -501,7 +480,7 @@ const PgConfigurationList = () => {
                         preventDoubleClick={false}
                       >
                         {t('admin.actions.delete')}
-                      </MGButton>
+                      </SettingsButton>
                     )}
                   </div>
 
@@ -524,7 +503,8 @@ const PgConfigurationList = () => {
           </div>
         )}
         </div>
-        </ContentArea>
+        </SettingsSectionPanel>
+        </SettingsPageShell>
 
         {/* 삭제 확인 모달 */}
         <UnifiedModal

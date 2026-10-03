@@ -1,7 +1,7 @@
 /**
  * AdminPushMonitoringPage — BW-1 「메시지 발송」 본 데이터 페이지.
  *
- * Clinic-OS chrome: push-monitoring--clinic-os (B0KlA 제거).
+ * 크롬: SettingsPageShell(quiet header) + 섹션별 SettingsSectionPanel.
  * 설계: docs/project-management/2026-06-07/BW1_PUSH_MONITORING_DESIGN_HANDOFF.md
  *
  * @author MindGarden core-coder
@@ -11,8 +11,7 @@
 
 import React, { useCallback, useState } from 'react';
 import AdminCommonLayout from '../../layout/AdminCommonLayout';
-import ContentArea from '../../dashboard-v2/content/ContentArea';
-import ContentHeader from '../../dashboard-v2/content/ContentHeader';
+import { SettingsButton, SettingsPageShell } from '../settings-shell';
 import PushMonitorFilters from './molecules/PushMonitorFilters';
 import PushMonitorKpiRow from './molecules/PushMonitorKpiRow';
 import PushMonitorTrendSection from './organisms/PushMonitorTrendSection';
@@ -89,62 +88,53 @@ const AdminPushMonitoringPage = () => {
         className="mg-push-monitor push-monitoring--clinic-os"
         data-testid="admin-push-monitoring-page"
       >
-        <ContentArea ariaLabel={ADMIN_WEB_SCAFFOLD_COPY.PUSH_MONITOR_TITLE}>
-          <ContentHeader
-            title={ADMIN_WEB_SCAFFOLD_COPY.PUSH_MONITOR_TITLE}
-            subtitle={ADMIN_WEB_SCAFFOLD_COPY.PUSH_MONITOR_SUBTITLE}
-            titleId={PAGE_TITLE_ID}
+        <SettingsPageShell
+          title={ADMIN_WEB_SCAFFOLD_COPY.PUSH_MONITOR_TITLE}
+          titleId={PAGE_TITLE_ID}
+          ariaLabel={ADMIN_WEB_SCAFFOLD_COPY.PUSH_MONITOR_TITLE}
+        >
+          <PushMonitorFilters
+            range={range}
+            channel={channel}
+            onRangeChange={setRange}
+            onChannelChange={setChannel}
+            lastRefreshedAtIso={lastRefreshedAtIso}
+            intervalMs={intervalMs}
+            isPolling={isRefreshing || isLoading}
+            hasError={!!error}
           />
-          <div className="mg-push-monitor__sections">
-            <PushMonitorFilters
-              range={range}
-              channel={channel}
-              onRangeChange={setRange}
-              onChannelChange={setChannel}
-              lastRefreshedAtIso={lastRefreshedAtIso}
-              intervalMs={intervalMs}
-              isPolling={isRefreshing || isLoading}
-              hasError={!!error}
-            />
-            <PushMonitorKpiRow
-              kpi={snapshot?.kpi || null}
-              channelBreakdown={channelBreakdown}
-              loading={isLoading}
-            />
-            <div className="mg-push-monitor__stage">
-              <PushMonitorOperationalSection
-                alimtalkRouteEnabled={alimtalkRouteEnabled}
-                channelBreakdown={channelBreakdown}
-              />
-              <PushMonitorTrendSection
-                points={snapshot?.trendPoints || []}
-                channel={channel}
-              />
-              <PushMonitorSnapshotSection
-                snapshot={snapshot?.tenantSnapshot || null}
-              />
-              <SmsLogCard />
-              <PushMonitorFailureSection
-                entries={snapshot?.failures || []}
-                totalCount={snapshot?.failuresTotal || 0}
-                onResend={handleResend}
-                isResending={isResending}
-              />
-              {error ? (
-                <div className="mg-push-monitor__error-banner" role="alert">
-                  <span>{ADMIN_WEB_SCAFFOLD_COPY.PUSH_MONITOR_ERROR_BANNER}</span>
-                  <button
-                    type="button"
-                    onClick={refresh}
-                    className="mg-push-monitor__error-banner__retry"
-                  >
-                    {ADMIN_WEB_SCAFFOLD_COPY.PUSH_MONITOR_ERROR_RETRY}
-                  </button>
-                </div>
-              ) : null}
+          <PushMonitorKpiRow
+            kpi={snapshot?.kpi || null}
+            channelBreakdown={channelBreakdown}
+            loading={isLoading}
+          />
+          <PushMonitorOperationalSection
+            alimtalkRouteEnabled={alimtalkRouteEnabled}
+            channelBreakdown={channelBreakdown}
+          />
+          <PushMonitorTrendSection
+            points={snapshot?.trendPoints || []}
+            channel={channel}
+          />
+          <PushMonitorSnapshotSection
+            snapshot={snapshot?.tenantSnapshot || null}
+          />
+          <SmsLogCard />
+          <PushMonitorFailureSection
+            entries={snapshot?.failures || []}
+            totalCount={snapshot?.failuresTotal || 0}
+            onResend={handleResend}
+            isResending={isResending}
+          />
+          {error ? (
+            <div className="mg-push-monitor__error-banner" role="alert">
+              <span>{ADMIN_WEB_SCAFFOLD_COPY.PUSH_MONITOR_ERROR_BANNER}</span>
+              <SettingsButton type="button" variant="danger" onClick={refresh}>
+                {ADMIN_WEB_SCAFFOLD_COPY.PUSH_MONITOR_ERROR_RETRY}
+              </SettingsButton>
             </div>
-          </div>
-        </ContentArea>
+          ) : null}
+        </SettingsPageShell>
       </div>
     </AdminCommonLayout>
   );

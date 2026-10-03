@@ -1,527 +1,75 @@
-/* 시스템 설정 관리 페이지 스타일 */
-.system-config-management {
-    max-width: 1000px;
-    margin: 0 auto;
-    padding: 0;
-    font-family: var(--mg-font-family);
-}
+/* 시스템 설정 관리 — 셸·패널·입력·버튼은 settings-shell/SettingsSuite.css 계약을 따른다. */
 
-.system-config-header {
-    margin-bottom: var(--spacing-lg);
-    background: linear-gradient(135deg, var(--mint-green), var(--soft-mint));
-}
-
-.header-content {
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-md);
-}
-
-.header-icon {
-    width: 60px;
-    height: 60px;
-    border-radius: var(--radius-lg);
-    background: var(--mg-glass-bg-medium);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--dark-gray);
-    flex-shrink: 0;
-}
-
-.header-text h1 {
-    font-size: 1.75rem;
-    font-weight: var(--mg-font-weight-bold);
-    margin: 0 0 var(--spacing-xs) 0;
-    color: var(--dark-gray);
-}
-
-.header-text p {
-    font-size: var(--mg-body-large-size);
-    margin: 0;
-    color: var(--medium-gray);
-    line-height: var(--mg-line-height-normal);
-}
-
-.config-section {
-    margin-bottom: var(--spacing-lg);
-}
-
-.section-header {
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-sm);
-    margin-bottom: var(--spacing-lg);
-    padding-bottom: var(--spacing-sm);
-    border-bottom: 2px solid var(--soft-mint);
-}
-
-.section-header h2 {
-    font-size: 1.25rem;
-    font-weight: var(--mg-font-weight-semibold);
-    margin: 0;
-    color: var(--dark-gray);
-}
-
-.config-section-desc {
-    font-size: var(--mg-body-size);
-    color: var(--medium-gray);
-    margin: 0 0 var(--spacing-md) 0;
-    line-height: 1.5;
-}
-
-.config-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: var(--spacing-lg);
-    margin-bottom: var(--spacing-lg);
-}
-
-.config-item {
-    display: flex;
-    flex-direction: column;
-    gap: var(--spacing-xs);
-}
-
-.config-item label {
-    font-size: var(--mg-body-size);
-    font-weight: var(--mg-font-weight-medium);
-    color: var(--dark-gray);
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-xs);
-}
-
-.config-item label input[type="checkbox"] {
-    margin: 0;
-}
-
-.input-group {
-    display: flex;
-    gap: var(--spacing-xs);
-}
-
-.input-group input {
-    flex: 1;
-}
-
-.help-text {
-    font-size: var(--mg-caption-size);
-    color: var(--medium-gray);
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-xs);
-    margin-top: var(--spacing-xs);
-}
-
-.section-actions {
-    display: flex;
-    gap: var(--spacing-sm);
-    margin-top: var(--spacing-md);
-}
-
-.test-result {
-    margin-top: var(--spacing-lg);
-    padding: var(--spacing-md);
-    border-radius: var(--radius-md);
-    display: flex;
-    gap: var(--spacing-sm);
-    align-items: flex-start;
-}
-
-.test-result.success {
-    background: var(--light-green);
-    border: 1px solid var(--mint-green);
-    color: var(--dark-gray);
-}
-
-.test-result.error {
-    background: var(--light-red);
-    border: 1px solid var(--color-error);
-    color: var(--color-error);
-}
-
-.result-icon {
-    flex-shrink: 0;
-    margin-top: 2px;
-}
-
-.result-content {
-    flex: 1;
-}
-
-.result-preview {
-    margin-top: var(--spacing-sm);
-    padding: var(--spacing-sm);
-    background: var(--mg-glass-bg-strong);
-    border-radius: var(--radius-sm);
-    font-size: var(--mg-body-size);
-}
-
-.result-preview strong {
-    display: block;
-    margin-bottom: var(--spacing-xs);
-    font-weight: var(--mg-font-weight-semibold);
-}
-
-.save-section {
-    text-align: center;
-    padding: var(--spacing-lg);
-}
-
-.spinning,
-.mg-spinning {
-    animation: spin 1s linear infinite;
-}
-
-/* ContentArea 레이아웃 + B0KlA 섹션 */
-.mg-v2-system-config-management .mg-v2-content-area {
-    display: flex;
-    flex-direction: column;
-    gap: var(--spacing-lg, 24px);
-}
-
-.mg-v2-system-config__section {
-    padding: 24px;
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-}
-
-.mg-v2-system-config__section-desc {
-    font-size: 13px;
-    line-height: 1.5;
-    color: var(--ad-b0kla-text-secondary, var(--medium-gray));
-    margin: 0;
-}
-
-.mg-v2-system-config__provider-card {
-    padding: 20px;
-    margin-bottom: 16px;
-}
-
-.mg-v2-system-config__provider-card:last-child {
-    margin-bottom: 0;
-}
-
-.mg-v2-system-config__provider-title {
-    font-size: 14px;
-    font-weight: var(--mg-font-weight-bold, 700);
-    color: var(--ad-b0kla-title-color, var(--dark-gray));
-    margin: 0 0 12px 0;
-}
-
-/* 트랙 B PR-3 (2026-05-23): 라디오 헬스 패널 헤더 (제목 + 새로고침 버튼) */
-.mg-v2-system-config__provider-header {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    margin-bottom: 12px;
-}
-
-.mg-v2-system-config__provider-header .mg-v2-system-config__provider-title {
-    margin: 0;
-}
-
-.mg-v2-system-config__radio-group {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 16px;
-    align-items: center;
-}
-
-.mg-v2-system-config__radio-label {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    font-size: var(--mg-body-size, 14px);
-    color: var(--ad-b0kla-text-secondary, var(--dark-gray));
-    cursor: pointer;
-}
-
-.mg-v2-system-config__radio-label input.mg-v2-radio,
-.mg-v2-system-config__radio-label input[type="radio"] {
-    margin: 0;
-    cursor: pointer;
-}
-
-/* 트랙 B PR-3: 헬스체크 미등록 — 라디오 disable 시각 표시 (디자인 토큰만 사용) */
-.mg-v2-system-config__radio-label--disabled {
-    color: var(--medium-gray);
-    cursor: not-allowed;
-    opacity: 0.6;
-}
-
-.mg-v2-system-config__radio-label--disabled input[type="radio"] {
-    cursor: not-allowed;
-}
-
-.mg-v2-system-config__radio-empty {
-    font-size: 13px;
-    color: var(--ad-b0kla-text-secondary, var(--medium-gray));
-    margin: 0;
-}
-
-.mg-v2-system-config__radio-empty--error {
-    color: var(--color-error);
-}
-
-.mg-v2-system-config__pricing-notice {
-    font-size: 13px;
-    color: var(--ad-b0kla-text-secondary, var(--medium-gray));
-    line-height: 1.5;
-}
-
-.mg-v2-system-config__pricing-notice a {
-    color: var(--mg-color-primary-main, var(--mg-color-info));
-    text-decoration: none;
-}
-
-.mg-v2-system-config__pricing-notice a:hover {
-    text-decoration: underline;
-}
-
-@keyframes spin {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
-}
-
-/* 반응형 디자인 */
-@media (max-width: 768px) {
-    .system-config-management {
-        padding: var(--spacing-sm);
-    }
-    
-    .header-content {
-        flex-direction: column;
-        text-align: center;
-    }
-    
-    .header-icon {
-        width: 50px;
-        height: 50px;
-    }
-    
-    .header-text h1 {
-        font-size: 1.5rem;
-    }
-    
-    .config-grid {
-        grid-template-columns: 1fr;
-        gap: var(--spacing-md);
-    }
-    
-    .section-actions {
-        flex-direction: column;
-    }
-}
-
-/* 다크 테마 지원 */
-@media (prefers-color-scheme: dark) {
-    .system-config-header {
-        background: linear-gradient(135deg, var(--mg-dark-mint-green), var(--mg-dark-soft-mint));
-    }
-    
-    .header-icon {
-        background: var(--mg-glass-bg-light);
-        color: var(--mg-dark-text);
-    }
-    
-    .header-text h1,
-    .header-text p {
-        color: var(--mg-dark-text);
-    }
-    
-    .section-header h2 {
-        color: var(--mg-dark-text);
-    }
-    
-    .config-item label {
-        color: var(--mg-dark-text);
-    }
-    
-    .help-text {
-        color: var(--mg-dark-text-secondary);
-    }
-    
-    .test-result.success {
-        background: var(--mg-dark-light-green);
-        border-color: var(--mg-dark-mint-green);
-        color: var(--mg-dark-text);
-    }
-    
-    .test-result.error {
-        background: var(--mg-dark-light-red);
-        border-color: var(--mg-dark-color-error);
-        color: var(--mg-dark-color-error);
-    }
-    
-    .result-preview {
-        background: var(--mg-glass-bg-light);
-    }
-}
-
-/* T8-C1-5: 인라인 마진/사이즈 추출 (정적) */
-.mg-v2-system-config__section-actions--mb-sm {
-    margin-bottom: var(--mg-spacing-8, 8px);
-}
-
-.mg-v2-system-config__notice--mb-sm {
-    margin-bottom: var(--mg-spacing-8, 8px);
-}
-
-.mg-v2-system-config__notice--mt-sm {
-    margin-top: var(--mg-spacing-8, 8px);
-}
-
-.mg-v2-system-config__section-desc--mt-sm {
-    margin-top: var(--mg-spacing-8, 8px);
-}
-
-.mg-v2-system-config__test-result--mt-sm {
-    margin-top: var(--mg-spacing-8, 8px);
-}
-
-.mg-v2-system-config__input--mb-sm {
-    margin-bottom: var(--mg-spacing-8, 8px);
-    width: 100%;
-    max-width: 360px;
-}
-
-/* PR-4 (2026-05-24): AI 프로바이더 관리 페이지 이전 안내 카드 */
-.mg-v2-system-config__section--notice {
-    border-left: 4px solid var(--mg-color-primary-main);
-}
-
+/* AI 프로바이더 관리 이동 링크 */
 .mg-v2-system-config__notice-actions {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
-    gap: var(--mg-spacing-sm, 8px);
+    gap: var(--mg-v2-space-2);
 }
 
 .mg-v2-system-config__notice-link {
     display: inline-flex;
     align-items: center;
-    gap: 4px;
-    color: var(--mg-color-primary-main);
+    gap: var(--mg-v2-space-1);
+    height: var(--mg-v2-component-height-sm);
+    padding: 0 var(--mg-v2-space-3);
+    font-size: var(--mg-v2-font-size-body-md);
+    font-weight: var(--mg-v2-font-weight-semibold);
+    color: var(--mg-v2-color-primary-main);
     text-decoration: none;
-    font-weight: var(--mg-font-weight-semibold, 600);
-    padding: 6px 12px;
-    border: 1px solid var(--mg-color-primary-main);
-    border-radius: var(--mg-radius-md, 8px);
-    background: var(--mg-color-background-main);
+    background: var(--mg-v2-color-surface-card);
+    border: var(--mg-v2-border-width-thin) solid var(--mg-v2-color-primary-main);
+    border-radius: var(--mg-v2-radius-lg);
+    box-sizing: border-box;
 }
 
 .mg-v2-system-config__notice-link:hover,
 .mg-v2-system-config__notice-link:focus-visible {
-    background: var(--mg-color-surface-main);
+    background: var(--mg-v2-color-primary-subtle);
     text-decoration: none;
 }
 
-/* PR-2 (2026-05-25): 알림 자동 발송 스케줄러 4 종 토글 섹션 */
-.mg-v2-notification-scheduler {
-    border-left: 4px solid var(--mg-color-info, var(--mg-color-primary-main));
-}
-
+/* 알림 자동 발송 스케줄러 토글 목록 */
 .mg-v2-notification-scheduler__list {
-    list-style: none;
-    margin: 0;
-    padding: 0;
     display: flex;
     flex-direction: column;
-    gap: var(--mg-spacing-12, 12px);
+    gap: var(--mg-v2-space-3);
+    margin: 0;
+    padding: 0;
+    list-style: none;
 }
 
 .mg-v2-notification-scheduler__item {
-    padding: var(--mg-spacing-12, 12px) var(--mg-spacing-16, 16px);
-    border: 1px solid var(--mg-color-border-subtle, var(--mg-color-border-default));
-    border-radius: var(--mg-radius-md, 8px);
-    background: var(--mg-color-surface-main, var(--mg-color-background-main));
+    padding: var(--mg-v2-space-3) var(--mg-v2-space-4);
+    background: var(--mg-v2-color-surface-card);
+    border: var(--mg-v2-border-width-thin) solid var(--mg-v2-color-neutral-300);
+    border-radius: var(--mg-v2-radius-lg);
 }
 
 .mg-v2-notification-scheduler__dn {
-    margin-top: var(--mg-spacing-16, 16px);
-    padding-top: var(--mg-spacing-16, 16px);
-    border-top: 1px solid var(--mg-color-border-subtle, var(--mg-color-border-default));
+    display: flex;
+    flex-direction: column;
+    gap: var(--mg-v2-space-2);
+    padding-top: var(--mg-v2-space-4);
+    border-top: var(--mg-v2-border-width-thin) solid var(--mg-v2-color-neutral-300);
 }
 
 .mg-v2-notification-scheduler__dn-title {
-    margin: 0 0 var(--mg-spacing-sm, 8px);
-    font-size: var(--mg-font-size-md, 1rem);
-    font-weight: var(--mg-font-weight-semibold, 600);
-    color: var(--mg-color-text-primary, inherit);
+    margin: 0;
+    font-size: var(--mg-v2-font-size-h3);
+    font-weight: var(--mg-v2-font-weight-semibold);
+    color: var(--mg-v2-color-text-primary);
 }
 
 .mg-v2-notification-scheduler__dn-desc {
-    margin: 0 0 var(--mg-spacing-12, 12px);
-    font-size: var(--mg-font-size-sm, 0.875rem);
-    color: var(--mg-color-text-secondary, inherit);
-}
-
-.mg-v2-notification-scheduler__dn-list {
-    margin-top: 0;
+    margin: 0;
+    font-size: var(--mg-v2-font-size-body-md);
+    color: var(--mg-v2-color-text-secondary);
 }
 
 /* Admin Dark Mode C-3 P1-h — System Config cascade ([data-theme="dark"] only) */
-[data-theme="dark"] .mg-v2-system-config-management .mg-v2-system-config__section,
-[data-theme="dark"] .mg-v2-system-config-management .mg-v2-ad-b0kla__card {
-  background: var(--mg-color-surface-main);
-  border-color: var(--mg-color-border-subtle);
-}
-
-[data-theme="dark"] .mg-v2-system-config-management .mg-v2-system-config__section-desc,
-[data-theme="dark"] .mg-v2-system-config-management .mg-v2-system-config__provider-title,
-[data-theme="dark"] .mg-v2-system-config-management .mg-v2-system-config__radio-empty {
-  color: var(--mg-v2-form-label);
-}
-
-[data-theme="dark"] .mg-v2-system-config-management .mg-v2-system-config__radio-label {
-  color: var(--mg-v2-form-text);
-}
-
-[data-theme="dark"] .mg-v2-system-config-management .mg-v2-form-input,
-[data-theme="dark"] .mg-v2-system-config-management .mg-v2-form-select,
-[data-theme="dark"] .mg-v2-system-config-management .mg-v2-form-textarea,
-[data-theme="dark"] .mg-v2-system-config-management .mg-v2-system-config__input--mb-sm {
-  background-color: var(--mg-v2-form-input-bg);
-  color: var(--mg-v2-form-text);
-  border-color: var(--mg-v2-form-border);
-}
-
-[data-theme="dark"] .mg-v2-system-config-management .mg-v2-form-input:focus,
-[data-theme="dark"] .mg-v2-system-config-management .mg-v2-form-select:focus,
-[data-theme="dark"] .mg-v2-system-config-management .mg-v2-form-textarea:focus {
-  border-color: var(--mg-v2-form-focus-ring);
-  box-shadow: 0 0 0 2px var(--mg-v2-form-focus-ring);
-}
-
-[data-theme="dark"] .mg-v2-system-config-management .mg-v2-form-label {
-  color: var(--mg-v2-form-label);
-}
-
 [data-theme="dark"] .mg-v2-system-config-management .mg-v2-notification-scheduler__item {
-  background: var(--mg-color-surface-main);
-  border-color: var(--ad-b0kla-table-border);
-}
-
-[data-theme="dark"] .mg-v2-system-config-management .mg-v2-setting-switch-row__label {
-  color: var(--mg-v2-form-text);
-}
-
-[data-theme="dark"] .mg-v2-system-config-management .mg-v2-setting-switch-row__hint,
-[data-theme="dark"] .mg-v2-system-config-management .mg-v2-setting-switch-row__meta {
-  color: var(--mg-v2-form-label);
-}
-
-[data-theme="dark"] .mg-v2-system-config-management .mg-v2-system-config__notice-link {
-  background: var(--mg-dark-chip-bg);
-  border-color: var(--mg-color-primary-main);
-  color: var(--mg-v2-form-text);
-}
-
-[data-theme="dark"] .mg-v2-system-config-management .mg-v2-system-config__notice-link:hover,
-[data-theme="dark"] .mg-v2-system-config-management .mg-v2-system-config__notice-link:focus-visible {
-  background: var(--mg-dark-chip-active-bg);
+    background: var(--mg-v2-color-surface-card);
+    border-color: var(--mg-v2-color-border-default);
 }

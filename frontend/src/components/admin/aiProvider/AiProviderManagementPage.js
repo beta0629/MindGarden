@@ -24,8 +24,8 @@ import { useSession } from '../../../contexts/SessionContext';
 import { USER_ROLES } from '../../../constants/roles';
 import notificationManager from '../../../utils/notification';
 import AdminCommonLayout from '../../layout/AdminCommonLayout';
-import ContentArea from '../../dashboard-v2/content/ContentArea';
-import ContentHeader from '../../dashboard-v2/content/ContentHeader';
+import UnifiedLoading from '../../common/UnifiedLoading';
+import { SettingsPageShell } from '../settings-shell';
 import useMediaQuery from '../../../hooks/useMediaQuery';
 import ActiveProviderCard from './sections/ActiveProviderCard';
 import ProviderSelector from './sections/ProviderSelector';
@@ -40,6 +40,9 @@ const API_AI_DEFAULT_PROVIDER = '/api/v1/admin/system-config/ai-default-provider
 const API_SYSTEM_CONFIG_PREFIX = '/api/v1/admin/system-config';
 const DEFAULT_LOG_PAGE_SIZE = UsageLogsTable.DEFAULT_PAGE_SIZE;
 const DESKTOP_MIN_WIDTH = '(min-width: 1024px)';
+const AI_PROVIDER_PAGE_TITLE = 'AI 프로바이더 관리';
+const AI_PROVIDER_PAGE_TITLE_ID = 'ai-provider-page-title';
+const AI_PROVIDER_SHELL_CLASS = 'mg-ai-provider-page';
 
 const initialProviderForm = (provider) => ({
   apiKey: '',
@@ -295,76 +298,77 @@ const AiProviderManagementPage = () => {
 
   if (loading) {
     return (
-      <AdminCommonLayout
-        title="AI 프로바이더 관리"
-        loading
-        loadingText={AI_PROVIDER_LABELS.pageLoading}
-      />
+      <AdminCommonLayout title={AI_PROVIDER_PAGE_TITLE}>
+        <SettingsPageShell
+          title={AI_PROVIDER_PAGE_TITLE}
+          titleId={AI_PROVIDER_PAGE_TITLE_ID}
+          className={AI_PROVIDER_SHELL_CLASS}
+        >
+          <div className="mg-v2-loading-container" aria-busy="true" aria-live="polite">
+            <UnifiedLoading type="inline" text={AI_PROVIDER_LABELS.pageLoading} />
+          </div>
+        </SettingsPageShell>
+      </AdminCommonLayout>
     );
   }
 
   return (
-    <AdminCommonLayout title="AI 프로바이더 관리">
-      <div className="mg-v2-ad-b0kla mg-ai-provider-page">
-        <div className="mg-v2-ad-b0kla__container">
-          <ContentArea ariaLabel="AI 프로바이더 관리">
-            <ContentHeader
-              title="AI 프로바이더 관리"
-              subtitle="시스템의 AI 제공자 및 API 키를 관리합니다."
+    <AdminCommonLayout title={AI_PROVIDER_PAGE_TITLE}>
+      <SettingsPageShell
+        title={AI_PROVIDER_PAGE_TITLE}
+        titleId={AI_PROVIDER_PAGE_TITLE_ID}
+        className={AI_PROVIDER_SHELL_CLASS}
+      >
+        <div
+          className={[
+            'mg-ai-provider-page__grid',
+            isDesktop ? 'mg-ai-provider-page__grid--desktop' : 'mg-ai-provider-page__grid--mobile'
+          ].join(' ')}
+        >
+          <div className="mg-ai-provider-page__column">
+            <ActiveProviderCard
+              health={health}
+              loading={healthLoading}
+              error={healthError}
+              onRefresh={refreshHealth}
             />
-
-            <div
-              className={[
-                'mg-ai-provider-page__grid',
-                isDesktop ? 'mg-ai-provider-page__grid--desktop' : 'mg-ai-provider-page__grid--mobile'
-              ].join(' ')}
-            >
-              <div className="mg-ai-provider-page__column">
-                <ActiveProviderCard
-                  health={health}
-                  loading={healthLoading}
-                  error={healthError}
-                  onRefresh={refreshHealth}
-                />
-                <ProviderSelector
-                  activeProvider={activeProvider}
-                  health={health}
-                  healthLoading={healthLoading}
-                  providers={providers}
-                  saving={savingActiveProvider}
-                  onSelect={handleSelectProvider}
-                />
-              </div>
-              <div className="mg-ai-provider-page__column">
-                <ApiKeyManager
-                  providers={providers}
-                  saving={savingKey}
-                  onSaveProviderKey={handleSaveProviderKey}
-                  onDeleteProviderKey={handleDeleteProviderKey}
-                />
-              </div>
-            </div>
-
-            <UsageStatsDashboard
-              stats={stats}
-              loading={statsLoading}
-              error={statsError}
-              onRefresh={refreshStats}
+            <ProviderSelector
+              activeProvider={activeProvider}
+              health={health}
+              healthLoading={healthLoading}
+              providers={providers}
+              saving={savingActiveProvider}
+              onSelect={handleSelectProvider}
             />
-
-            <UsageLogsTable
-              logsPage={logsPage}
-              loading={logsLoading}
-              error={logsError}
-              filters={logFilters}
-              callerOptions={callerOptions}
-              onFiltersChange={handleFiltersChange}
-              onPageChange={handleLogPageChange}
-              onRefresh={() => refreshLogs(logFilters)}
+          </div>
+          <div className="mg-ai-provider-page__column">
+            <ApiKeyManager
+              providers={providers}
+              saving={savingKey}
+              onSaveProviderKey={handleSaveProviderKey}
+              onDeleteProviderKey={handleDeleteProviderKey}
             />
-          </ContentArea>
+          </div>
         </div>
-      </div>
+
+        <UsageStatsDashboard
+          stats={stats}
+          loading={statsLoading}
+          error={statsError}
+          onRefresh={refreshStats}
+        />
+
+        <UsageLogsTable
+          logsPage={logsPage}
+          loading={logsLoading}
+          error={logsError}
+          filters={logFilters}
+          callerOptions={callerOptions}
+          onFiltersChange={handleFiltersChange}
+          onPageChange={handleLogPageChange}
+          onRefresh={() => refreshLogs(logFilters)}
+        />
+      </SettingsPageShell>
     </AdminCommonLayout>
   );
 };

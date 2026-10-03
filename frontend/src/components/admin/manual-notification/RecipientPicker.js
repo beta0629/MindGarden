@@ -25,8 +25,7 @@
 
 import React, { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
-import MGButton from '../../common/MGButton';
+import { SettingsButton } from '../settings-shell';
 import { toDisplayString } from '../../../utils/safeDisplay';
 import { MANUAL_NOTIFICATION_MAX_RECIPIENTS } from '../../../api/admin/manualNotificationApi';
 
@@ -187,7 +186,7 @@ const RecipientPicker = ({
     <div className={RECIPIENT_PICKER_CLASS}>
       <div className={`${RECIPIENT_PICKER_CLASS}__search-row`}>
         <label
-          className={`${RECIPIENT_PICKER_CLASS}__search-label`}
+          className={`mg-v2-form-label ${RECIPIENT_PICKER_CLASS}__search-label`}
           htmlFor="mg-manual-notif-recipient-search"
         >
           {t('manualNotification.recipient.searchLabel')}
@@ -195,7 +194,7 @@ const RecipientPicker = ({
         <input
           id="mg-manual-notif-recipient-search"
           type="search"
-          className={`${RECIPIENT_PICKER_CLASS}__search-input`}
+          className="mg-v2-form-input"
           value={query}
           onChange={(e) => onQueryChange(e.target.value)}
           placeholder={t('manualNotification.recipient.searchPlaceholder')}
@@ -212,38 +211,24 @@ const RecipientPicker = ({
       </div>
 
       <div className={`${RECIPIENT_PICKER_CLASS}__actions-row`}>
-        <MGButton
+        <SettingsButton
           type="button"
           variant="outline"
-          size="small"
-          className={buildErpMgButtonClassName({
-            variant: 'outline',
-            size: 'sm',
-            loading: false,
-            className: `${RECIPIENT_PICKER_CLASS}__action-btn`
-          })}
-          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+          preventDoubleClick
           disabled={disabled || visibleAddable.length === 0 || value.length >= maxCount}
           onClick={handleAddAllVisible}
         >
           {t('manualNotification.recipient.addAllVisible')}
-        </MGButton>
-        <MGButton
+        </SettingsButton>
+        <SettingsButton
           type="button"
           variant="outline"
-          size="small"
-          className={buildErpMgButtonClassName({
-            variant: 'outline',
-            size: 'sm',
-            loading: false,
-            className: `${RECIPIENT_PICKER_CLASS}__action-btn`
-          })}
-          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+          preventDoubleClick
           disabled={disabled || value.length === 0}
           onClick={handleClearAll}
         >
           {t('manualNotification.recipient.clearAll')}
-        </MGButton>
+        </SettingsButton>
       </div>
 
       <div className={`${RECIPIENT_PICKER_CLASS}__results`} aria-live="polite">
@@ -281,22 +266,15 @@ const RecipientPicker = ({
                         : toDisplayString(opt.phoneMasked, '번호 없음')}
                     </span>
                   </div>
-                  <MGButton
+                  <SettingsButton
                     type="button"
                     variant={selected ? 'secondary' : 'outline'}
-                    size="small"
-                    className={buildErpMgButtonClassName({
-                      variant: selected ? 'secondary' : 'outline',
-                      size: 'sm',
-                      loading: false,
-                      className: `${RECIPIENT_PICKER_CLASS}__result-action`
-                    })}
-                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                    preventDoubleClick
                     disabled={disabled || cantSelect || selected || value.length >= maxCount}
                     onClick={() => tryAdd(opt)}
                   >
                     {selected ? '선택됨' : '추가'}
-                  </MGButton>
+                  </SettingsButton>
                 </li>
               );
             })}

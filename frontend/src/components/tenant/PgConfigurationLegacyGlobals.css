@@ -1,0 +1,407 @@
+/**
+ * PG 설정 화면에서 옮겨 온 기존 전역(비스코프) 규칙 — 레거시 그대로 보존 (출처: release/dev PgConfigurationList.css).
+ * PgConfigurationList / PgConfigurationDetail 이 App.js 에서 즉시 import 되어 이 규칙들은 앱 전역에 적용돼 왔고,
+ * 다른 화면(운영 PG 승인 PgApprovalManagement, UnifiedModal, SalaryConfigModal, MGHeader·UnifiedHeader,
+ * ERD 상세, 웰니스 알림 상세 등)이 의존한다. 회귀 방지를 위해 값·순서를 바꾸지 않고 원본 그대로 옮겼다.
+ * 정리(스코프·토큰화)는 별도 후속 작업에서 진행한다.
+ * PgConfigurationList.js 에서 페이지 CSS보다 먼저 import (기존 List.css 로드 위치 유지).
+ */
+
+.header-title {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.header-title h1 {
+  margin: 0 0 4px 0;
+  font-size: 28px;
+  font-weight: 600;
+  color: var(--mg-text-primary, var(--mg-dark-bg-900));
+}
+
+.header-title p {
+  margin: 0;
+  color: var(--mg-color-text-secondary);
+  font-size: 14px;
+}
+
+.search-box {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: white;
+  border: 1px solid var(--mg-border-color, var(--mg-gray-300));
+  border-radius: 8px;
+}
+
+.search-box svg {
+  color: var(--mg-color-text-tertiary);
+  flex-shrink: 0;
+}
+
+.search-input {
+  flex: 1;
+  border: none;
+  outline: none;
+  font-size: 14px;
+  color: var(--mg-text-primary, var(--mg-dark-bg-900));
+}
+
+.search-input::placeholder {
+  color: var(--mg-color-text-tertiary);
+}
+
+.filter-group {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.filter-select {
+  padding: 10px 16px;
+  border: 1px solid var(--mg-border-color, var(--mg-gray-300));
+  border-radius: 8px;
+  font-size: 14px;
+  background: white;
+  color: var(--mg-text-primary, var(--mg-dark-bg-900));
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+
+.filter-select:focus {
+  outline: none;
+  border-color: var(--mg-v2-color-primary-solid);
+}
+
+/* 에러 알림 */
+
+.error-alert {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  background: var(--mg-color-warning-bg);
+  border: 1px solid var(--mg-warning-500);
+  border-radius: 8px;
+  color: var(--mg-color-warning-dark);
+  margin-bottom: 24px;
+}
+
+.error-message {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 48px;
+  text-align: center;
+  color: var(--mg-color-text-secondary);
+}
+
+.error-message p {
+  margin: 0;
+  font-size: 16px;
+}
+
+/* 빈 상태 */
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--mg-v2-space-8, 4rem) var(--mg-v2-space-4, 1.5rem);
+  text-align: center;
+  background: transparent;
+  border-radius: var(--mg-v2-radius-lg);
+  border: none;
+}
+
+.empty-state svg {
+  color: var(--mg-v2-color-text-secondary);
+  margin-bottom: var(--mg-v2-space-4);
+}
+
+.empty-state h3 {
+  margin: 0 0 var(--mg-v2-space-2) 0;
+  font-size: var(--mg-v2-font-size-h2, 1.375rem);
+  font-weight: var(--mg-v2-font-weight-semibold, 600);
+  color: var(--mg-v2-color-text-primary);
+}
+
+.empty-state p {
+  margin: 0 0 var(--mg-v2-space-4) 0;
+  color: var(--mg-v2-color-text-secondary);
+  font-size: var(--mg-v2-font-size-body-md, 0.875rem);
+}
+
+.card-header {
+  margin-bottom: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--mg-border-color, var(--mg-gray-300));
+}
+
+.card-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.card-title h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--mg-text-primary, var(--mg-dark-bg-900));
+  flex: 1;
+}
+
+.card-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.status-badge--success {
+  background: var(--mg-v2-color-semantic-success-bg, var(--mg-color-success-100));
+  color: var(--mg-v2-color-semantic-success, var(--mg-success-700, var(--mg-color-success-dark)));
+}
+
+.status-badge--warning {
+  background: var(--mg-v2-color-semantic-warning-bg, var(--mg-color-warning-bg));
+  color: var(--mg-v2-color-semantic-warning, var(--mg-color-warning-dark));
+}
+
+.status-badge--danger {
+  background: var(--mg-v2-color-semantic-error-bg, var(--mg-color-error-bg));
+  color: var(--mg-v2-color-semantic-error, var(--mg-color-error-dark));
+}
+
+.status-badge--secondary {
+  background: var(--mg-v2-color-neutral-100);
+  color: var(--mg-v2-color-text-secondary);
+}
+
+.status-badge--info {
+  background: var(--mg-v2-color-semantic-info-bg, var(--mg-info_light, var(--mg-v2-color-neutral-100)));
+  color: var(--mg-v2-color-semantic-info, var(--mg-v2-color-text-primary));
+}
+
+.card-body {
+  flex: 1;
+  margin-bottom: 16px;
+}
+
+.card-info {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.info-item {
+  display: flex;
+  gap: 8px;
+  font-size: 14px;
+}
+
+.info-label {
+  font-weight: 500;
+  color: var(--mg-color-text-secondary);
+  min-width: 120px;
+}
+
+.info-value {
+  color: var(--mg-text-primary, var(--mg-dark-bg-900));
+  word-break: break-word;
+}
+
+.card-footer {
+  padding-top: 16px;
+  border-top: 1px solid var(--mg-border-color, var(--mg-gray-300));
+}
+
+.card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* 모달 */
+
+.mg-modal__overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--mg-overlay);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.mg-modal__content {
+  background: white;
+  border-radius: 12px;
+  max-width: 500px;
+  width: 100%;
+  box-shadow: 0 8px 32px var(--mg-shadow-medium);
+}
+
+.mg-modal__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--mg-border-color, var(--mg-gray-300));
+}
+
+.mg-modal__header h2 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: var(--mg-color-text-secondary);
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.modal-close:hover {
+  background-color: var(--mg-bg-secondary, var(--mg-gray-100));
+}
+
+.mg-modal__body {
+  padding: 24px;
+}
+
+.mg-modal__body p {
+  margin: 0 0 12px 0;
+  color: var(--mg-text-primary, var(--mg-dark-bg-900));
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.warning-text {
+  color: var(--mg-error, var(--mg-error-500)) !important;
+  font-weight: 500;
+}
+
+.mg-modal__footer {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: var(--spacing-md);
+  padding: 20px 24px;
+  border-top: 1px solid var(--mg-border-color, var(--mg-gray-300));
+}
+
+/* 포커스 스타일 개선 (접근성) */
+
+.search-input:focus,
+.filter-select:focus,
+.pg-config-card:focus-within {
+  outline: 2px solid var(--mg-v2-color-primary-solid);
+  outline-offset: 2px;
+}
+
+@media (max-width: 768px) {
+  
+  .header-title {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  
+  .filter-group {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .filter-select {
+    width: 100%;
+  }
+  
+  .card-title {
+    flex-direction: column;
+  }
+  
+  .card-actions {
+    flex-direction: column;
+  }
+  
+  .card-actions button {
+    width: 100%;
+  }
+  
+  .pending-notice,
+  .rejected-notice {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+}
+
+@media (max-width: 480px) {
+  
+  .header-title h1 {
+    font-size: 22px;
+  }
+  
+  .search-box {
+    padding: 10px 12px;
+  }
+}
+
+/* 승인 상태 알림 */
+
+.pending-notice,
+.rejected-notice {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px;
+  margin-top: 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.pending-notice {
+  background: var(--mg-color-warning-bg);
+  color: var(--mg-color-warning-dark);
+  border: 1px solid var(--mg-warning-500);
+}
+
+.rejected-notice {
+  background: var(--mg-color-error-bg);
+  color: var(--mg-color-error-dark);
+  border: 1px solid var(--mg-error-500);
+}

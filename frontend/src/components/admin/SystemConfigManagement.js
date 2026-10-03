@@ -13,26 +13,27 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Database, Cpu, ExternalLink, BellRing, Shield } from 'lucide-react';
+import { ExternalLink } from 'lucide-react';
 import StandardizedApi from '../../utils/standardizedApi';
 import { getCommonCodes } from '../../utils/commonCodeApi';
 import { useSession } from '../../contexts/SessionContext';
 import { useConfirm, useSettingToggleSave, useReservationReminderDispatchFlags } from '../../hooks';
 import notificationManager from '../../utils/notification';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
-import ContentArea from '../dashboard-v2/content/ContentArea';
-import ContentHeader from '../dashboard-v2/content/ContentHeader';
 import { USER_ROLES } from '../../constants/roles';
 import UnifiedLoading from '../common/UnifiedLoading';
 import UnifiedModal from '../common/modals/UnifiedModal';
 import ChipMultiSelect from '../common/ChipMultiSelect';
 import SettingSwitchRow from '../common/molecules/SettingSwitchRow';
-import ActionBar from '../common/ActionBar';
-import ActionBarButton from '../common/ActionBarButton';
+import { SettingsPageShell, SettingsSectionPanel, SettingsButton } from './settings-shell';
 import { ADMIN_ROUTES } from '../../constants/adminRoutes';
 import '../../styles/unified-design-tokens.css';
 import './AdminDashboard/AdminDashboardB0KlA.css';
+import './SystemConfigLegacyGlobals.css';
 import './SystemConfigManagement.css';
+
+const SYSTEM_CONFIG_TITLE_ID = 'system-config-title';
+const SYSTEM_CONFIG_SHELL_CLASS = 'mg-v2-system-config-management';
 const API_ADMIN_SYSTEM_CONFIG_WELLNESS_AUTO_SEND_ENABLED = '/api/v1/admin/system-config/WELLNESS_AUTO_SEND_ENABLED';
 const API_ADMIN_SYSTEM_CONFIG_WELLNESS_SEND_TIME = '/api/v1/admin/system-config/WELLNESS_SEND_TIME';
 const API_ADMIN_SYSTEM_CONFIG_WELLNESS_TARGET_ROLES = '/api/v1/admin/system-config/WELLNESS_TARGET_ROLES';
@@ -588,235 +589,229 @@ const SystemConfigManagement = () => {
     }
   };
 
+  const pageTitle = t('systemConfig.pageTitle');
+
   if (!hasCheckedSession || loading) {
     const loadingText = !hasCheckedSession
       ? t('systemConfig.loading.session')
       : t('systemConfig.loading.config');
     return (
-      <AdminCommonLayout
-        loading
-        loadingText={loadingText}
-      />
+      <AdminCommonLayout>
+        <SettingsPageShell
+          title={pageTitle}
+          titleId={SYSTEM_CONFIG_TITLE_ID}
+          className={SYSTEM_CONFIG_SHELL_CLASS}
+        >
+          <div className="mg-v2-loading-container" aria-busy="true" aria-live="polite">
+            <UnifiedLoading type="inline" text={loadingText} />
+          </div>
+        </SettingsPageShell>
+      </AdminCommonLayout>
     );
   }
 
-  const pageTitle = t('systemConfig.pageTitle');
-
   return (
     <AdminCommonLayout>
-      <div className="mg-v2-ad-b0kla mg-v2-system-config-management">
-        <div className="mg-v2-ad-b0kla__container">
-          <ContentArea>
-            <ContentHeader
-              title={pageTitle}
-              subtitle={t('systemConfig.pageSubtitle')}
-            />
+      <SettingsPageShell
+        title={pageTitle}
+        titleId={SYSTEM_CONFIG_TITLE_ID}
+        className={SYSTEM_CONFIG_SHELL_CLASS}
+      >
+        {/* PR-2 (2026-05-25): 알림 자동 발송 스케줄러 4 종 토글 (DB SSOT) + D-1/D-2 종목 게이트 */}
+        <NotificationSchedulerSection
+          t={t}
+          flags={schedulerFlags}
+          loading={schedulerLoading}
+          requestConfirm={requestSchedulerConfirm}
+          applyFlagFromResponse={applySchedulerFlagFromResponse}
+          reloadFlags={loadSchedulerFlags}
+        />
 
-            {/* PR-2 (2026-05-25): 알림 자동 발송 스케줄러 4 종 토글 (DB SSOT) + D-1/D-2 종목 게이트 */}
-            <NotificationSchedulerSection
-              t={t}
-              flags={schedulerFlags}
-              loading={schedulerLoading}
-              requestConfirm={requestSchedulerConfirm}
-              applyFlagFromResponse={applySchedulerFlagFromResponse}
-              reloadFlags={loadSchedulerFlags}
-            />
-
-            {/* 세션 보안 — 테넌트별 중복 로그인 허용 */}
-            <div className="mg-v2-ad-b0kla__card mg-v2-system-config__section">
-              <h2 className="mg-v2-ad-b0kla__section-title">
-                <Shield size={20} aria-hidden="true" />
-                {t('systemConfig.sessionSecurity.title')}
-              </h2>
-              <p className="mg-v2-system-config__section-desc">
-                {t('systemConfig.sessionSecurity.sectionDesc')}
-              </p>
-              <div className="config-grid">
-                <div className="config-item">
-                  <SettingSwitchRow
-                    label={t('systemConfig.sessionSecurity.duplicateLoginAllowed')}
-                    hint={t('systemConfig.sessionSecurity.duplicateLoginAllowedHint')}
-                    statusLabel={duplicateLoginAllowed
-                      ? t('systemConfig.notificationScheduler.status.on')
-                      : t('systemConfig.notificationScheduler.status.off')}
-                    checked={duplicateLoginAllowed}
-                    onCheckedChange={onDuplicateLoginCheckedChange}
-                    disabled={duplicateLoginDisabled}
-                    isPending={duplicateLoginBusy}
-                    data-testid="duplicate-login-allowed-toggle"
-                    ariaLabel={duplicateLoginAllowed
-                      ? t('systemConfig.notificationScheduler.toggleAriaOff', {
-                        label: t('systemConfig.sessionSecurity.duplicateLoginAllowed')
-                      })
-                      : t('systemConfig.notificationScheduler.toggleAriaOn', {
-                        label: t('systemConfig.sessionSecurity.duplicateLoginAllowed')
-                      })}
-                  />
-                </div>
-                <div className="config-item">
-                  <SettingSwitchRow
-                    label={t('systemConfig.sessionSecurity.oauthRequireServerVerify')}
-                    hint={t('systemConfig.sessionSecurity.oauthRequireServerVerifyHint')}
-                    statusLabel={oauthRequireServerVerify
-                      ? t('systemConfig.notificationScheduler.status.on')
-                      : t('systemConfig.notificationScheduler.status.off')}
-                    checked={oauthRequireServerVerify}
-                    onCheckedChange={onOauthVerifyCheckedChange}
-                    disabled={oauthVerifyDisabled}
-                    isPending={oauthVerifyBusy}
-                    data-testid="oauth-require-server-verify-toggle"
-                    ariaLabel={oauthRequireServerVerify
-                      ? t('systemConfig.notificationScheduler.toggleAriaOff', {
-                        label: t('systemConfig.sessionSecurity.oauthRequireServerVerify')
-                      })
-                      : t('systemConfig.notificationScheduler.toggleAriaOn', {
-                        label: t('systemConfig.sessionSecurity.oauthRequireServerVerify')
-                      })}
-                  />
-                </div>
-                <div className="config-item">
-                  <SettingSwitchRow
-                    label={t('systemConfig.sessionSecurity.background401KeepUser')}
-                    hint={t('systemConfig.sessionSecurity.background401KeepUserHint')}
-                    statusLabel={background401KeepUser
-                      ? t('systemConfig.notificationScheduler.status.on')
-                      : t('systemConfig.notificationScheduler.status.off')}
-                    checked={background401KeepUser}
-                    onCheckedChange={onBackground401CheckedChange}
-                    disabled={background401Disabled}
-                    isPending={background401Busy}
-                    data-testid="background-401-keep-user-toggle"
-                    ariaLabel={background401KeepUser
-                      ? t('systemConfig.notificationScheduler.toggleAriaOff', {
-                        label: t('systemConfig.sessionSecurity.background401KeepUser')
-                      })
-                      : t('systemConfig.notificationScheduler.toggleAriaOn', {
-                        label: t('systemConfig.sessionSecurity.background401KeepUser')
-                      })}
-                  />
-                </div>
-                <div className="config-item">
-                  <SettingSwitchRow
-                    label={t('systemConfig.sessionSecurity.softFailEnabled')}
-                    hint={t('systemConfig.sessionSecurity.softFailEnabledHint')}
-                    statusLabel={softFailEnabled
-                      ? t('systemConfig.notificationScheduler.status.on')
-                      : t('systemConfig.notificationScheduler.status.off')}
-                    checked={softFailEnabled}
-                    onCheckedChange={onSoftFailCheckedChange}
-                    disabled={softFailDisabled}
-                    isPending={softFailBusy}
-                    data-testid="soft-fail-enabled-toggle"
-                    ariaLabel={softFailEnabled
-                      ? t('systemConfig.notificationScheduler.toggleAriaOff', {
-                        label: t('systemConfig.sessionSecurity.softFailEnabled')
-                      })
-                      : t('systemConfig.notificationScheduler.toggleAriaOn', {
-                        label: t('systemConfig.sessionSecurity.softFailEnabled')
-                      })}
-                  />
-                </div>
-              </div>
+        {/* 세션 보안 — 테넌트별 중복 로그인 허용 */}
+        <SettingsSectionPanel
+          title={t('systemConfig.sessionSecurity.title')}
+          description={t('systemConfig.sessionSecurity.sectionDesc')}
+          className="mg-v2-system-config__section"
+        >
+          <div className="mg-v2-settings-form-grid">
+            <div className="mg-v2-settings-field">
+              <SettingSwitchRow
+                label={t('systemConfig.sessionSecurity.duplicateLoginAllowed')}
+                hint={t('systemConfig.sessionSecurity.duplicateLoginAllowedHint')}
+                statusLabel={duplicateLoginAllowed
+                  ? t('systemConfig.notificationScheduler.status.on')
+                  : t('systemConfig.notificationScheduler.status.off')}
+                checked={duplicateLoginAllowed}
+                onCheckedChange={onDuplicateLoginCheckedChange}
+                disabled={duplicateLoginDisabled}
+                isPending={duplicateLoginBusy}
+                data-testid="duplicate-login-allowed-toggle"
+                ariaLabel={duplicateLoginAllowed
+                  ? t('systemConfig.notificationScheduler.toggleAriaOff', {
+                    label: t('systemConfig.sessionSecurity.duplicateLoginAllowed')
+                  })
+                  : t('systemConfig.notificationScheduler.toggleAriaOn', {
+                    label: t('systemConfig.sessionSecurity.duplicateLoginAllowed')
+                  })}
+              />
             </div>
-
-            {/* AI 프로바이더 관리 안내 카드 — 이전 사용자 동선 보존 */}
-            <div className="mg-v2-ad-b0kla__card mg-v2-system-config__section mg-v2-system-config__section--notice">
-              <h2 className="mg-v2-ad-b0kla__section-title">
-                <Cpu size={20} aria-hidden="true" />
-                {t('systemConfig.aiProvider.title')}
-              </h2>
-              <p className="mg-v2-system-config__section-desc">
-                {t('systemConfig.aiProvider.desc')}
-              </p>
-              <div className="mg-v2-system-config__notice-actions">
-                <Link
-                  to={ADMIN_ROUTES.AI_PROVIDERS}
-                  className="mg-v2-system-config__notice-link"
-                  aria-label={t('systemConfig.aiProvider.linkAria')}
-                >
-                  <span>{t('systemConfig.aiProvider.linkText')}</span>
-                  <ExternalLink size={14} aria-hidden="true" />
-                </Link>
-              </div>
+            <div className="mg-v2-settings-field">
+              <SettingSwitchRow
+                label={t('systemConfig.sessionSecurity.oauthRequireServerVerify')}
+                hint={t('systemConfig.sessionSecurity.oauthRequireServerVerifyHint')}
+                statusLabel={oauthRequireServerVerify
+                  ? t('systemConfig.notificationScheduler.status.on')
+                  : t('systemConfig.notificationScheduler.status.off')}
+                checked={oauthRequireServerVerify}
+                onCheckedChange={onOauthVerifyCheckedChange}
+                disabled={oauthVerifyDisabled}
+                isPending={oauthVerifyBusy}
+                data-testid="oauth-require-server-verify-toggle"
+                ariaLabel={oauthRequireServerVerify
+                  ? t('systemConfig.notificationScheduler.toggleAriaOff', {
+                    label: t('systemConfig.sessionSecurity.oauthRequireServerVerify')
+                  })
+                  : t('systemConfig.notificationScheduler.toggleAriaOn', {
+                    label: t('systemConfig.sessionSecurity.oauthRequireServerVerify')
+                  })}
+              />
             </div>
-
-            {/* 웰니스 설정 섹션 (잔류) */}
-            <div className="mg-v2-ad-b0kla__card mg-v2-system-config__section">
-              <h2 className="mg-v2-ad-b0kla__section-title">
-                <Database size={20} aria-hidden="true" />
-                {t('systemConfig.wellness.title')}
-              </h2>
-              <p className="mg-v2-system-config__section-desc">
-                {t('systemConfig.wellness.sectionDesc')}
-              </p>
-              <div className="config-grid">
-                <div className="config-item">
-                  <SettingSwitchRow
-                    label={t('systemConfig.wellness.autoSendEnabled')}
-                    hint={t('systemConfig.wellness.autoSendHint')}
-                    statusLabel={wellness.wellnessAutoSendEnabled
-                      ? t('systemConfig.notificationScheduler.status.on')
-                      : t('systemConfig.notificationScheduler.status.off')}
-                    checked={wellness.wellnessAutoSendEnabled}
-                    onCheckedChange={onWellnessAutoSendCheckedChange}
-                    disabled={wellnessAutoSendDisabled}
-                    isPending={wellnessAutoSendBusy}
-                    data-testid="wellness-auto-send-toggle"
-                    ariaLabel={wellness.wellnessAutoSendEnabled
-                      ? t('systemConfig.notificationScheduler.toggleAriaOff', {
-                        label: t('systemConfig.wellness.autoSendEnabled')
-                      })
-                      : t('systemConfig.notificationScheduler.toggleAriaOn', {
-                        label: t('systemConfig.wellness.autoSendEnabled')
-                      })}
-                  />
-                </div>
-                <div className="config-item">
-                  <label htmlFor="sendTime">{t('systemConfig.wellness.sendTime')}</label>
-                  <input
-                    id="sendTime"
-                    type="time"
-                    value={wellness.wellnessSendTime}
-                    onChange={(e) => setWellness((prev) => ({ ...prev, wellnessSendTime: e.target.value }))}
-                    className="mg-v2-input"
-                  />
-                </div>
-                <div className="config-item">
-                  <label htmlFor="targetRoles" id="targetRoles-label">
-                    {t('systemConfig.wellness.targetRoles.label')}
-                  </label>
-                  <ChipMultiSelect
-                    id="targetRoles"
-                    options={targetRoleOptions}
-                    value={targetRoleValues}
-                    onChange={handleTargetRolesChange}
-                    placeholder={rolesLoading
-                      ? t('systemConfig.wellness.targetRoles.placeholderLoading')
-                      : t('systemConfig.wellness.targetRoles.placeholder')}
-                    emptyOptionsText={t('systemConfig.wellness.targetRoles.emptyOptions')}
-                    disabled={rolesLoading}
-                    ariaLabelledBy="targetRoles-label"
-                    formatRemoveLabel={formatRemoveLabel}
-                  />
-                  <small className="help-text">
-                    {t('systemConfig.wellness.targetRoles.hint')}
-                  </small>
-                </div>
-              </div>
-              <div className="section-actions">
-                <ActionBarButton
-                  variant="primary"
-                  onClick={handleSave}
-                  loading={saving}
-                  title={t('systemConfig.wellness.action.saveFields')}
-                >
-                  {t('systemConfig.wellness.action.saveFields')}
-                </ActionBarButton>
-              </div>
+            <div className="mg-v2-settings-field">
+              <SettingSwitchRow
+                label={t('systemConfig.sessionSecurity.background401KeepUser')}
+                hint={t('systemConfig.sessionSecurity.background401KeepUserHint')}
+                statusLabel={background401KeepUser
+                  ? t('systemConfig.notificationScheduler.status.on')
+                  : t('systemConfig.notificationScheduler.status.off')}
+                checked={background401KeepUser}
+                onCheckedChange={onBackground401CheckedChange}
+                disabled={background401Disabled}
+                isPending={background401Busy}
+                data-testid="background-401-keep-user-toggle"
+                ariaLabel={background401KeepUser
+                  ? t('systemConfig.notificationScheduler.toggleAriaOff', {
+                    label: t('systemConfig.sessionSecurity.background401KeepUser')
+                  })
+                  : t('systemConfig.notificationScheduler.toggleAriaOn', {
+                    label: t('systemConfig.sessionSecurity.background401KeepUser')
+                  })}
+              />
             </div>
-          </ContentArea>
-        </div>
-      </div>
+            <div className="mg-v2-settings-field">
+              <SettingSwitchRow
+                label={t('systemConfig.sessionSecurity.softFailEnabled')}
+                hint={t('systemConfig.sessionSecurity.softFailEnabledHint')}
+                statusLabel={softFailEnabled
+                  ? t('systemConfig.notificationScheduler.status.on')
+                  : t('systemConfig.notificationScheduler.status.off')}
+                checked={softFailEnabled}
+                onCheckedChange={onSoftFailCheckedChange}
+                disabled={softFailDisabled}
+                isPending={softFailBusy}
+                data-testid="soft-fail-enabled-toggle"
+                ariaLabel={softFailEnabled
+                  ? t('systemConfig.notificationScheduler.toggleAriaOff', {
+                    label: t('systemConfig.sessionSecurity.softFailEnabled')
+                  })
+                  : t('systemConfig.notificationScheduler.toggleAriaOn', {
+                    label: t('systemConfig.sessionSecurity.softFailEnabled')
+                  })}
+              />
+            </div>
+          </div>
+        </SettingsSectionPanel>
+
+        {/* AI 프로바이더 관리 안내 카드 — 이전 사용자 동선 보존 */}
+        <SettingsSectionPanel
+          title={t('systemConfig.aiProvider.title')}
+          description={t('systemConfig.aiProvider.desc')}
+          className="mg-v2-system-config__section"
+          body="plain"
+        >
+          <div className="mg-v2-system-config__notice-actions">
+            <Link
+              to={ADMIN_ROUTES.AI_PROVIDERS}
+              className="mg-v2-system-config__notice-link"
+              aria-label={t('systemConfig.aiProvider.linkAria')}
+            >
+              <span>{t('systemConfig.aiProvider.linkText')}</span>
+              <ExternalLink size={14} aria-hidden="true" />
+            </Link>
+          </div>
+        </SettingsSectionPanel>
+
+        {/* 웰니스 설정 섹션 (잔류) */}
+        <SettingsSectionPanel
+          title={t('systemConfig.wellness.title')}
+          description={t('systemConfig.wellness.sectionDesc')}
+          className="mg-v2-system-config__section"
+        >
+          <div className="mg-v2-settings-form-grid">
+            <div className="mg-v2-settings-field">
+              <SettingSwitchRow
+                label={t('systemConfig.wellness.autoSendEnabled')}
+                hint={t('systemConfig.wellness.autoSendHint')}
+                statusLabel={wellness.wellnessAutoSendEnabled
+                  ? t('systemConfig.notificationScheduler.status.on')
+                  : t('systemConfig.notificationScheduler.status.off')}
+                checked={wellness.wellnessAutoSendEnabled}
+                onCheckedChange={onWellnessAutoSendCheckedChange}
+                disabled={wellnessAutoSendDisabled}
+                isPending={wellnessAutoSendBusy}
+                data-testid="wellness-auto-send-toggle"
+                ariaLabel={wellness.wellnessAutoSendEnabled
+                  ? t('systemConfig.notificationScheduler.toggleAriaOff', {
+                    label: t('systemConfig.wellness.autoSendEnabled')
+                  })
+                  : t('systemConfig.notificationScheduler.toggleAriaOn', {
+                    label: t('systemConfig.wellness.autoSendEnabled')
+                  })}
+              />
+            </div>
+            <div className="mg-v2-settings-field">
+              <label htmlFor="sendTime" className="mg-v2-form-label">{t('systemConfig.wellness.sendTime')}</label>
+              <input
+                id="sendTime"
+                type="time"
+                value={wellness.wellnessSendTime}
+                onChange={(e) => setWellness((prev) => ({ ...prev, wellnessSendTime: e.target.value }))}
+                className="mg-v2-form-input"
+              />
+            </div>
+            <div className="mg-v2-settings-field">
+              <label htmlFor="targetRoles" id="targetRoles-label" className="mg-v2-form-label">
+                {t('systemConfig.wellness.targetRoles.label')}
+              </label>
+              <ChipMultiSelect
+                id="targetRoles"
+                options={targetRoleOptions}
+                value={targetRoleValues}
+                onChange={handleTargetRolesChange}
+                placeholder={rolesLoading
+                  ? t('systemConfig.wellness.targetRoles.placeholderLoading')
+                  : t('systemConfig.wellness.targetRoles.placeholder')}
+                emptyOptionsText={t('systemConfig.wellness.targetRoles.emptyOptions')}
+                disabled={rolesLoading}
+                ariaLabelledBy="targetRoles-label"
+                formatRemoveLabel={formatRemoveLabel}
+              />
+              <small className="mg-v2-settings-field__hint">
+                {t('systemConfig.wellness.targetRoles.hint')}
+              </small>
+            </div>
+          </div>
+          <div className="mg-v2-settings-actions">
+            <SettingsButton
+              variant="primary"
+              onClick={handleSave}
+              loading={saving}
+              title={t('systemConfig.wellness.action.saveFields')}
+            >
+              {t('systemConfig.wellness.action.saveFields')}
+            </SettingsButton>
+          </div>
+        </SettingsSectionPanel>
+      </SettingsPageShell>
 
       {/* PR-2 (2026-05-25): 토글 확인 모달 — UnifiedModal 표준 */}
       <NotificationSchedulerConfirmModal
@@ -887,20 +882,12 @@ const NotificationSchedulerSection = ({
     .filter(Boolean);
 
   return (
-    <section
-      className="mg-v2-ad-b0kla__card mg-v2-system-config__section mg-v2-notification-scheduler"
-      aria-labelledby="notification-scheduler-title"
+    <SettingsSectionPanel
+      title={t('systemConfig.notificationScheduler.title')}
+      description={t('systemConfig.notificationScheduler.description')}
+      className="mg-v2-system-config__section mg-v2-notification-scheduler"
+      body="plain"
     >
-      <h2
-        id="notification-scheduler-title"
-        className="mg-v2-ad-b0kla__section-title"
-      >
-        <BellRing size={20} aria-hidden="true" />
-        {t('systemConfig.notificationScheduler.title')}
-      </h2>
-      <p className="mg-v2-system-config__section-desc">
-        {t('systemConfig.notificationScheduler.description')}
-      </p>
       {loading ? (
         <UnifiedLoading
           type="inline"
@@ -941,7 +928,7 @@ const NotificationSchedulerSection = ({
         </ul>
       )}
       <ReservationReminderDnDispatchSection t={t} />
-    </section>
+    </SettingsSectionPanel>
   );
 };
 
@@ -1191,7 +1178,7 @@ const NotificationSchedulerFlagRow = ({
 /**
  * PR-2 (2026-05-25): 토글 확인 모달.
  *
- * UnifiedModal 표준 (className="mg-v2-ad-b0kla") 을 사용한다. 켜기/끄기에 따라
+ * UnifiedModal 표준을 사용한다. 켜기/끄기에 따라
  * 메시지가 달라지며, 확인 시 Promise resolve(true) — 실제 PUT 은 행 훅이 수행한다.
  */
 const NotificationSchedulerConfirmModal = ({ t, confirm, onProceed, onCancel }) => {
@@ -1209,18 +1196,17 @@ const NotificationSchedulerConfirmModal = ({ t, confirm, onProceed, onCancel }) 
       title={t('systemConfig.notificationScheduler.confirmTitle')}
       subtitle={confirm ? confirm.label : ''}
       size="small"
-      className="mg-v2-ad-b0kla"
       backdropClick
       showCloseButton
       actions={
-        <ActionBar align="end" gap="md">
-          <ActionBarButton variant="outline" onClick={onCancel}>
+        <div className="mg-v2-settings-actions">
+          <SettingsButton variant="outline" onClick={onCancel}>
             {t('systemConfig.notificationScheduler.cancel')}
-          </ActionBarButton>
-          <ActionBarButton variant="primary" onClick={onProceed}>
+          </SettingsButton>
+          <SettingsButton variant="primary" onClick={onProceed}>
             {t('systemConfig.notificationScheduler.confirm')}
-          </ActionBarButton>
-        </ActionBar>
+          </SettingsButton>
+        </div>
       }
     >
       <p className="mg-v2-info-text">{message}</p>

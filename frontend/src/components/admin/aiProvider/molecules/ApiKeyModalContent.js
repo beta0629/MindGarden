@@ -33,7 +33,7 @@ const ApiKeyModalContent = ({
       </p>
 
       <div className="mg-ai-api-key-modal__field">
-        <label htmlFor={`apiKey-modal-${provider.id}`}>
+        <label htmlFor={`apiKey-modal-${provider.id}`} className="mg-v2-form-label">
           {toDisplayString(AI_PROVIDER_LABELS.apiKeyLabel)}
         </label>
         <div className="mg-ai-api-key-modal__row">
@@ -43,7 +43,7 @@ const ApiKeyModalContent = ({
             value={form.apiKey || ''}
             onChange={(e) => update('apiKey', e.target.value)}
             placeholder={provider.id === 'openai' ? 'sk-...' : 'API 키 입력'}
-            className="mg-v2-input mg-ai-api-key-modal__input"
+            className="mg-v2-input mg-v2-form-input mg-ai-api-key-modal__input"
             disabled={submitting}
             autoComplete="off"
           />
@@ -64,7 +64,7 @@ const ApiKeyModalContent = ({
       </div>
 
       <div className="mg-ai-api-key-modal__field">
-        <label htmlFor={`apiUrl-modal-${provider.id}`}>
+        <label htmlFor={`apiUrl-modal-${provider.id}`} className="mg-v2-form-label">
           {toDisplayString(AI_PROVIDER_LABELS.apiUrlLabel)}
         </label>
         <input
@@ -73,13 +73,13 @@ const ApiKeyModalContent = ({
           value={form.apiUrl || ''}
           onChange={(e) => update('apiUrl', e.target.value)}
           placeholder="https://..."
-          className="mg-v2-input mg-ai-api-key-modal__input"
+          className="mg-v2-input mg-v2-form-input mg-ai-api-key-modal__input"
           disabled={submitting}
         />
       </div>
 
       <div className="mg-ai-api-key-modal__field">
-        <label htmlFor={`apiModel-modal-${provider.id}`}>
+        <label htmlFor={`apiModel-modal-${provider.id}`} className="mg-v2-form-label">
           {toDisplayString(AI_PROVIDER_LABELS.modelLabel)}
         </label>
         <input
@@ -88,7 +88,7 @@ const ApiKeyModalContent = ({
           value={form.model || ''}
           onChange={(e) => update('model', e.target.value)}
           placeholder={provider.defaultModel || '모델 ID'}
-          className="mg-v2-input mg-ai-api-key-modal__input"
+          className="mg-v2-input mg-v2-form-input mg-ai-api-key-modal__input"
           disabled={submitting}
         />
       </div>

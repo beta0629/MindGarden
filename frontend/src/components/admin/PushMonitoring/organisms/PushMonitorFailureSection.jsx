@@ -1,7 +1,7 @@
 /**
  * PushMonitorFailureSection — 「최근 실패 사례」 섹션 organism.
  *
- * ContentSection + PushMonitorFailureList. 핸드오프 §2 / §4.8.
+ * SettingsSectionPanel + PushMonitorFailureList. 핸드오프 §2 / §4.8.
  *
  * @author MindGarden core-coder
  * @since 2026-06-07
@@ -9,7 +9,7 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import ContentSection from '../../../dashboard-v2/content/ContentSection';
+import { SettingsSectionPanel } from '../../settings-shell';
 import PushMonitorFailureList from '../molecules/PushMonitorFailureList';
 import { ADMIN_WEB_SCAFFOLD_COPY } from '../../../../constants/adminWebScaffold';
 
@@ -19,14 +19,14 @@ const PushMonitorFailureSection = ({
   onResend,
   isResending = false
 }) => (
-  <ContentSection title={ADMIN_WEB_SCAFFOLD_COPY.PUSH_MONITOR_FAILURES_TITLE}>
+  <SettingsSectionPanel title={ADMIN_WEB_SCAFFOLD_COPY.PUSH_MONITOR_FAILURES_TITLE} body="plain">
     <PushMonitorFailureList
       entries={entries}
       totalCount={totalCount}
       onResend={onResend}
       isResending={isResending}
     />
-  </ContentSection>
+  </SettingsSectionPanel>
 );
 
 PushMonitorFailureSection.propTypes = {

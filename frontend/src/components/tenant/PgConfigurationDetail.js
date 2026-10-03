@@ -14,11 +14,13 @@ import AdminCommonLayout from '../layout/AdminCommonLayout';
 import MGButton from '../common/MGButton';
 import EntityRowActions from '../common/molecules/EntityRowActions';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
-import ContentArea from '../dashboard-v2/content/ContentArea';
-import ContentHeader from '../dashboard-v2/content/ContentHeader';
+import SafeErrorDisplay from '../common/SafeErrorDisplay';
+import UnifiedLoading from '../common/UnifiedLoading';
+import { SettingsButton, SettingsPageShell, SettingsSectionPanel } from '../admin/settings-shell';
 import UnifiedModal from '../common/modals/UnifiedModal';
 import '../../styles/unified-design-tokens.css';
 import '../../styles/shop/AdminShopSuite.css';
+import './PgConfigurationDetailLegacyGlobals.css';
 import './PgConfigurationDetail.css';
 import { toDisplayString } from '../../utils/safeDisplay';
 import SafeText from '../common/SafeText';
@@ -46,6 +48,8 @@ import { AdminShopNotice } from '../admin/shop/AdminShopSuiteParts';
 
 const PG_LIST_PATH = '/tenant/pg-configurations';
 const EMPTY = '—';
+const PG_DETAIL_TITLE_ID = 'pg-config-detail-title';
+const PG_DETAIL_SHELL_CLASS = 'mg-v2-pg-config-detail pg-config-detail--clinic-os';
 
 /**
  * @param {string|number|null|undefined} value
@@ -264,38 +268,52 @@ const PgConfigurationDetail = () => {
 
   const renderMessage = (message, withRetry) => (
     <AdminCommonLayout title={ADMIN_SHOP_PG_COPY.TITLE}>
-      <ContentArea ariaLabel={ADMIN_SHOP_PG_COPY.TITLE} className="mg-v2-pg-config-detail pg-config-detail--clinic-os admin-shop-suite">
-        <AdminShopNotice tone="error">
-          <p>{message}</p>
-          <span className="admin-shop-suite__header-actions">
+      <SettingsPageShell
+        title={ADMIN_SHOP_PG_COPY.TITLE}
+        titleId={PG_DETAIL_TITLE_ID}
+        className={PG_DETAIL_SHELL_CLASS}
+        actions={(
+          <>
             {withRetry ? (
-              <MGButton
+              <SettingsButton
                 type="button"
-                variant="secondary"
-                className={buildErpMgButtonClassName({ variant: 'secondary', size: 'sm' })}
+                variant="ghost"
                 onClick={() => setReloadKey((k) => k + 1)}
                 preventDoubleClick={false}
               >
                 {ADMIN_SHOP_PG_COPY.RETRY}
-              </MGButton>
+              </SettingsButton>
             ) : null}
-            <MGButton
+            <SettingsButton
               type="button"
-              variant="secondary"
-              className={buildErpMgButtonClassName({ variant: 'secondary', size: 'sm' })}
+              variant="ghost"
               onClick={() => navigate(PG_LIST_PATH)}
               preventDoubleClick={false}
             >
               {ADMIN_SHOP_PG_COPY.BACK_TO_LIST}
-            </MGButton>
-          </span>
-        </AdminShopNotice>
-      </ContentArea>
+            </SettingsButton>
+          </>
+        )}
+      >
+        <SafeErrorDisplay error={message} />
+      </SettingsPageShell>
     </AdminCommonLayout>
   );
 
   if (sessionLoading || loading) {
-    return <AdminCommonLayout title={ADMIN_SHOP_PG_COPY.TITLE} loading loadingText={ADMIN_SHOP_PG_COPY.LOADING} />;
+    return (
+      <AdminCommonLayout title={ADMIN_SHOP_PG_COPY.TITLE}>
+        <SettingsPageShell
+          title={ADMIN_SHOP_PG_COPY.TITLE}
+          titleId={PG_DETAIL_TITLE_ID}
+          className={PG_DETAIL_SHELL_CLASS}
+        >
+          <div className="mg-v2-loading-container" role="status" aria-live="polite" aria-busy="true">
+            <UnifiedLoading type="inline" text={ADMIN_SHOP_PG_COPY.LOADING} />
+          </div>
+        </SettingsPageShell>
+      </AdminCommonLayout>
+    );
   }
   if (!isLoggedIn || !user) {
     return renderMessage(ADMIN_SHOP_PG_COPY.LOGIN_REQUIRED, false);
@@ -330,84 +348,75 @@ const PgConfigurationDetail = () => {
   return (
     <AdminCommonLayout title={ADMIN_SHOP_PG_COPY.TITLE}>
       <>
-        <ContentArea
+        <SettingsPageShell
+          title={(
+            <span className="admin-shop-suite__modal-title">
+              {ADMIN_SHOP_PG_COPY.TITLE}
+              <span className={`admin-shop-suite__chip admin-shop-suite__chip--${badge.tone}`}>{badge.label}</span>
+            </span>
+          )}
+          titleId={PG_DETAIL_TITLE_ID}
           ariaLabel={ADMIN_SHOP_PG_COPY.TITLE}
-          className="mg-v2-pg-config-detail pg-config-detail--clinic-os admin-shop-suite"
+          className={PG_DETAIL_SHELL_CLASS}
+          actions={(
+            <>
+              {showSmoke ? (
+                <SettingsButton
+                  type="button"
+                  variant="ghost"
+                  onClick={handlePortOneSmokePayment}
+                  disabled={smokePaymentLoading || config.status !== 'ACTIVE'}
+                  loading={smokePaymentLoading}
+                  title={config.status !== 'ACTIVE' ? ADMIN_SHOP_PG_COPY.SMOKE_NEEDS_ACTIVE : undefined}
+                  preventDoubleClick={false}
+                >
+                  {ADMIN_SHOP_PG_COPY.SMOKE_OPEN}
+                </SettingsButton>
+              ) : null}
+              {canTest ? (
+                <SettingsButton
+                  type="button"
+                  variant="ghost"
+                  onClick={handleTestConnection}
+                  disabled={testingConnection}
+                  loading={testingConnection}
+                  preventDoubleClick={false}
+                >
+                  {ADMIN_SHOP_PG_COPY.TEST_CONNECTION}
+                </SettingsButton>
+              ) : null}
+              <EntityRowActions
+                ariaLabel={ADMIN_SHOP_PG_COPY.MENU_ARIA}
+                items={[
+                  {
+                    id: 'list',
+                    label: ADMIN_SHOP_PG_COPY.MENU_LIST,
+                    onClick: () => navigate(PG_LIST_PATH)
+                  },
+                  {
+                    id: 'delete',
+                    label: ADMIN_SHOP_PG_COPY.MENU_DELETE,
+                    variant: 'destructive',
+                    hidden: !canEdit,
+                    onClick: () => setShowDeleteModal(true)
+                  }
+                ]}
+              />
+              <SettingsButton
+                type="button"
+                variant="primary"
+                onClick={() => navigate(`${PG_LIST_PATH}/${configId}/edit`)}
+                disabled={!canEdit}
+                title={canEdit ? undefined : ADMIN_SHOP_PG_COPY.EDIT_LOCKED}
+                preventDoubleClick={false}
+                data-testid={ADMIN_SHOP_SUITE_TEST_IDS.PG_EDIT}
+              >
+                {ADMIN_SHOP_PG_COPY.EDIT}
+              </SettingsButton>
+            </>
+          )}
         >
           <div className="admin-shop-suite" data-testid={ADMIN_SHOP_SUITE_TEST_IDS.PG_DETAIL}>
-            <ContentHeader
-              titleId="pg-config-detail-title"
-              title={(
-                <span className="admin-shop-suite__modal-title">
-                  {ADMIN_SHOP_PG_COPY.TITLE}
-                  <span className={`admin-shop-suite__chip admin-shop-suite__chip--${badge.tone}`}>{badge.label}</span>
-                </span>
-              )}
-              subtitle={isPortone ? ADMIN_SHOP_PG_COPY.SUBTITLE_PORTONE : toDisplayString(config.pgName, '')}
-              actions={(
-                <div className="admin-shop-suite__header-actions admin-shop-suite__header-actions--nowrap">
-                  {showSmoke ? (
-                    <MGButton
-                      type="button"
-                      variant="secondary"
-                      className={buildErpMgButtonClassName({ variant: 'secondary', size: 'md', loading: smokePaymentLoading })}
-                      loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                      onClick={handlePortOneSmokePayment}
-                      disabled={smokePaymentLoading || config.status !== 'ACTIVE'}
-                      loading={smokePaymentLoading}
-                      title={config.status !== 'ACTIVE' ? ADMIN_SHOP_PG_COPY.SMOKE_NEEDS_ACTIVE : undefined}
-                      preventDoubleClick={false}
-                    >
-                      {ADMIN_SHOP_PG_COPY.SMOKE_OPEN}
-                    </MGButton>
-                  ) : null}
-                  {canTest ? (
-                    <MGButton
-                      type="button"
-                      variant="secondary"
-                      className={buildErpMgButtonClassName({ variant: 'secondary', size: 'md', loading: testingConnection })}
-                      loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                      onClick={handleTestConnection}
-                      disabled={testingConnection}
-                      loading={testingConnection}
-                      preventDoubleClick={false}
-                    >
-                      {ADMIN_SHOP_PG_COPY.TEST_CONNECTION}
-                    </MGButton>
-                  ) : null}
-                  <EntityRowActions
-                    ariaLabel={ADMIN_SHOP_PG_COPY.MENU_ARIA}
-                    items={[
-                      {
-                        id: 'list',
-                        label: ADMIN_SHOP_PG_COPY.MENU_LIST,
-                        onClick: () => navigate(PG_LIST_PATH)
-                      },
-                      {
-                        id: 'delete',
-                        label: ADMIN_SHOP_PG_COPY.MENU_DELETE,
-                        variant: 'destructive',
-                        hidden: !canEdit,
-                        onClick: () => setShowDeleteModal(true)
-                      }
-                    ]}
-                  />
-                  <MGButton
-                    type="button"
-                    variant="primary"
-                    className={buildErpMgButtonClassName({ variant: 'primary', size: 'md' })}
-                    onClick={() => navigate(`${PG_LIST_PATH}/${configId}/edit`)}
-                    disabled={!canEdit}
-                    title={canEdit ? undefined : ADMIN_SHOP_PG_COPY.EDIT_LOCKED}
-                    preventDoubleClick={false}
-                    data-testid={ADMIN_SHOP_SUITE_TEST_IDS.PG_EDIT}
-                  >
-                    {ADMIN_SHOP_PG_COPY.EDIT}
-                  </MGButton>
-                </div>
-              )}
-            />
-
             <section className="admin-shop-suite__keystrip" data-testid={ADMIN_SHOP_SUITE_TEST_IDS.PG_KEYSTRIP}>
               <div>
                 <span className="admin-shop-suite__section-head">
@@ -439,7 +448,7 @@ const PgConfigurationDetail = () => {
 
             <div className="admin-shop-suite__layout admin-shop-suite__layout--pg">
               <div className="admin-shop-suite__stack">
-                <section className="admin-shop-suite__card" aria-labelledby="pg-info-heading">
+                <SettingsSectionPanel body="form" ariaLabel={ADMIN_SHOP_PG_COPY.INFO_TITLE}>
                   <div className="admin-shop-suite__card-head">
                     <h2 id="pg-info-heading" className="admin-shop-suite__card-title">{ADMIN_SHOP_PG_COPY.INFO_TITLE}</h2>
                     <span className="admin-shop-suite__card-hint">{ADMIN_SHOP_PG_COPY.INFO_HINT}</span>
@@ -510,10 +519,10 @@ const PgConfigurationDetail = () => {
                       </div>
                     ) : null}
                   </dl>
-                </section>
+                </SettingsSectionPanel>
 
                 {isPortone ? (
-                  <section className="admin-shop-suite__card" aria-labelledby="webhook-secret-heading">
+                  <SettingsSectionPanel body="form" ariaLabel={ADMIN_SHOP_PG_COPY.WEBHOOK_TITLE}>
                     <div className="admin-shop-suite__card-head">
                       <h2 id="webhook-secret-heading" className="admin-shop-suite__card-title admin-shop-suite__modal-title">
                         {ADMIN_SHOP_PG_COPY.WEBHOOK_TITLE}
@@ -530,7 +539,7 @@ const PgConfigurationDetail = () => {
                       <input
                         id="pg-webhook-secret-input"
                         type="password"
-                        className="admin-shop-suite__input"
+                        className="admin-shop-suite__input mg-v2-form-input"
                         value={webhookSecretInput}
                         onChange={(e) => setWebhookSecretInput(e.target.value)}
                         placeholder={webhookConfigured
@@ -556,13 +565,12 @@ const PgConfigurationDetail = () => {
                     <AdminShopNotice icon={<Info size={14} aria-hidden="true" />}>
                       <p>{ADMIN_SHOP_PG_COPY.WEBHOOK_OPS_ONLY_NOTICE}</p>
                     </AdminShopNotice>
-                  </section>
+                  </SettingsSectionPanel>
                 ) : null}
               </div>
 
               <div className="admin-shop-suite__stack">
-                <section className="admin-shop-suite__card" aria-labelledby="pg-status-heading">
-                  <h2 id="pg-status-heading" className="admin-shop-suite__card-title">{ADMIN_SHOP_PG_COPY.STATUS_TITLE}</h2>
+                <SettingsSectionPanel title={ADMIN_SHOP_PG_COPY.STATUS_TITLE} body="form">
                   {config.lastConnectionTestAt ? (
                     <>
                       <div className="admin-shop-suite__row-line">
@@ -588,10 +596,9 @@ const PgConfigurationDetail = () => {
                   ) : (
                     <p className="admin-shop-suite__muted">{ADMIN_SHOP_PG_COPY.STATUS_NONE}</p>
                   )}
-                </section>
+                </SettingsSectionPanel>
 
-                <section className="admin-shop-suite__card" aria-labelledby="pg-approval-heading">
-                  <h2 id="pg-approval-heading" className="admin-shop-suite__card-title">{ADMIN_SHOP_PG_COPY.APPROVAL_TITLE}</h2>
+                <SettingsSectionPanel title={ADMIN_SHOP_PG_COPY.APPROVAL_TITLE} body="form">
                   <div className="admin-shop-suite__row-line">
                     <span>{ADMIN_SHOP_PG_COPY.APPROVAL_STATE}</span>
                     <span className="admin-shop-suite__row-line-value">
@@ -624,11 +631,10 @@ const PgConfigurationDetail = () => {
                       </p>
                     </AdminShopNotice>
                   ) : null}
-                </section>
+                </SettingsSectionPanel>
 
                 {isPortone ? (
-                  <section className="admin-shop-suite__card" aria-labelledby="pg-checklist-heading">
-                    <h2 id="pg-checklist-heading" className="admin-shop-suite__card-title">{ADMIN_SHOP_PG_COPY.CHECKLIST_TITLE}</h2>
+                  <SettingsSectionPanel title={ADMIN_SHOP_PG_COPY.CHECKLIST_TITLE} body="form">
                     <ol className="admin-shop-suite__checklist" data-testid={ADMIN_SHOP_SUITE_TEST_IDS.PG_CHECKLIST}>
                       {checklist.map((step, index) => {
                         let stateLabel = ADMIN_SHOP_PG_COPY.CHECKLIST_DONE;
@@ -649,35 +655,38 @@ const PgConfigurationDetail = () => {
                         );
                       })}
                     </ol>
-                  </section>
+                  </SettingsSectionPanel>
                 ) : null}
               </div>
             </div>
 
             {history.length > 0 ? (
-              <section className="admin-shop-suite__card" aria-labelledby="pg-history-heading">
-                <div className="admin-shop-suite__card-head">
-                  <h2 id="pg-history-heading" className="admin-shop-suite__card-title">{ADMIN_SHOP_PG_COPY.HISTORY_TITLE}</h2>
-                  <span className="admin-shop-suite__card-hint">
+              <SettingsSectionPanel
+                title={ADMIN_SHOP_PG_COPY.HISTORY_TITLE}
+                body="plain"
+                description={(
+                  <>
                     {formatAdminShopCopy(ADMIN_SHOP_PG_COPY.HISTORY_PREVIEW, {
                       count: Math.min(history.length, ADMIN_SHOP_PG_HISTORY_PREVIEW)
                     })}
                     {history.length > ADMIN_SHOP_PG_HISTORY_PREVIEW ? (
                       <>
                         {' · '}
-                        <button
+                        <SettingsButton
                           type="button"
-                          className="admin-shop-suite__copy-btn"
+                          variant="ghost"
                           onClick={() => setHistoryExpanded((v) => !v)}
+                          preventDoubleClick={false}
                         >
                           {historyExpanded
                             ? ADMIN_SHOP_PG_COPY.HISTORY_COLLAPSE
                             : formatAdminShopCopy(ADMIN_SHOP_PG_COPY.HISTORY_ALL, { count: history.length })}
-                        </button>
+                        </SettingsButton>
                       </>
                     ) : null}
-                  </span>
-                </div>
+                  </>
+                )}
+              >
                 <div className="admin-shop-suite__table-wrap">
                   <table className="admin-shop-suite__ledger" data-testid={ADMIN_SHOP_SUITE_TEST_IDS.PG_HISTORY}>
                     <thead>
@@ -703,10 +712,10 @@ const PgConfigurationDetail = () => {
                     </tbody>
                   </table>
                 </div>
-              </section>
+              </SettingsSectionPanel>
             ) : null}
           </div>
-        </ContentArea>
+        </SettingsPageShell>
 
         <UnifiedModal
           isOpen={Boolean(showDeleteModal && config)}

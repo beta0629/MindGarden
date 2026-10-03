@@ -25,13 +25,16 @@ describe('MerchantLegalSettings Clinic-OS', () => {
   });
 
   test('strip3 + live public preview rail', () => {
-    expect(pageJs).toMatch(/merchant-legal-settings-summary/);
+    expect(pageJs).toMatch(/<SettingsSummaryStrip items=\{summaryItems\} ariaLabel="등록 상태"/);
+    expect(pageJs).toMatch(/registrationStatusLabel[\s\S]*mailOrderStatusLabel[\s\S]*sitePublicStatusLabel/);
     expect(pageJs).toMatch(/merchant-legal-preview-rail/);
     expect(pageJs).toMatch(/공개 미리보기/);
   });
 
-  test('save CTA teal token, no MindGarden hardcode', () => {
-    expect(pageCss).toMatch(/--ml-teal:\s*var\(--cs-teal-700\)/);
+  test('accent uses primary-main token (no teal-700/primary-solid), no MindGarden hardcode', () => {
+    expect(pageCss).toMatch(/--ml-accent:\s*var\(--mg-v2-color-primary-main\)/);
+    expect(pageCss).not.toMatch(/cs-teal-700|primary-solid/);
+    expect(pageJs).toMatch(/<SettingsButton[\s\S]*?variant="primary"[\s\S]*?data-testid="merchant-legal-save"/);
     expect(pageCss).not.toMatch(/#[0-9a-fA-F]{3,8}/);
     expect(pageJs).not.toMatch(/MindGarden/);
     expect(pageJs).toMatch(/온보딩에서 입력한 값/);

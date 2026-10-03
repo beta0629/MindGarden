@@ -26,17 +26,6 @@ jest.mock('../../dashboard-v2/content/ContentArea', () => ({
   default: ({ children }) => <div data-testid="content-area">{children}</div>
 }));
 
-jest.mock('../../dashboard-v2/content/ContentHeader', () => ({
-  __esModule: true,
-  default: ({ title, subtitle, actions }) => (
-    <header data-testid="content-header" data-has-title={String(Boolean(title))}>
-      {title ? <h1>{title}</h1> : null}
-      {subtitle ? <p>{subtitle}</p> : null}
-      {actions ? <div data-testid="content-header-actions">{actions}</div> : null}
-    </header>
-  )
-}));
-
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({
     t: (key, defOrOpts, opts) => {
@@ -103,15 +92,6 @@ jest.mock('../../common/UnifiedLoading', () => ({
   default: ({ text }) => <div data-testid="loading">{text}</div>
 }));
 
-jest.mock('../../common/ActionBarButton', () => ({
-  __esModule: true,
-  default: ({ children, onClick }) => (
-    <button type="button" onClick={onClick}>
-      {children}
-    </button>
-  )
-}));
-
 jest.mock('../../common/modals/UnifiedModal', () => ({
   __esModule: true,
   default: () => null
@@ -120,8 +100,8 @@ jest.mock('../../common/modals/UnifiedModal', () => ({
 import SystemConfigManagement from '../SystemConfigManagement';
 
 describe('SystemConfigManagement (G-14 P2 header dedup)', () => {
-  test('ContentHeader title SSOT, ACL title 생략, 상단 저장 CTA 없음·웰니스 섹션 CTA만', async() => {
-    render(
+  test('SettingsQuietHeader title SSOT, ACL title 생략, 상단 저장 CTA 없음·웰니스 섹션 CTA만', async() => {
+    const { container } = render(
       <MemoryRouter>
         <SystemConfigManagement />
       </MemoryRouter>
@@ -131,11 +111,11 @@ describe('SystemConfigManagement (G-14 P2 header dedup)', () => {
       expect(screen.getByTestId('admin-common-layout')).toHaveAttribute('data-title', '');
     });
 
-    const header = screen.getByTestId('content-header');
-    expect(header).toHaveAttribute('data-has-title', 'true');
-    expect(screen.getByRole('heading', { name: PAGE_TITLE })).toBeInTheDocument();
-    expect(screen.getByText(PAGE_SUBTITLE)).toBeInTheDocument();
-    expect(screen.queryByTestId('content-header-actions')).not.toBeInTheDocument();
+    const header = container.querySelector('.mg-v2-settings-header');
+    expect(header).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 1, name: PAGE_TITLE })).toBeInTheDocument();
+    expect(screen.queryByText(PAGE_SUBTITLE)).not.toBeInTheDocument();
+    expect(header.querySelector('.mg-v2-settings-header__controls')).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: '발송 시각·대상 저장' })).toBeInTheDocument();
   });
 });

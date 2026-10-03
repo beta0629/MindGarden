@@ -383,7 +383,8 @@ public class OnboardingServiceImpl implements OnboardingService {
      *
      * 주의: decideInternal을 호출하여 트랜잭션 전파 문제를 피함 예외가 발생해도 원래 트랜잭션에 영향을 주지 않도록 예외를 catch하고 null 반환
      */
-    @Transactional(propagation = Propagation.REQUIRES_NEW, rollbackFor = Exception.class)
+    @Transactional(propagation = Propagation.REQUIRES_NEW, rollbackFor = Exception.class,
+            timeout = OnboardingDecisionDeadline.TRANSACTION_TIMEOUT_SECONDS)
     public OnboardingRequest decideInNewTransaction(Long requestId,
             OnboardingStatus status, String actorId, String note) {
         try {
@@ -396,9 +397,22 @@ public class OnboardingServiceImpl implements OnboardingService {
     }
 
     /**
-     * decide 메서드의 실제 로직 (트랜잭션 없음) decide와 decideInNewTransaction에서 공통으로 사용
+     * decide 메서드의 실제 로직. 프록시 읽기 제한 안의 마감을 연 뒤 본처리를 호출한다.
      */
     private OnboardingRequest decideInternal(Long requestId, OnboardingStatus status,
+            String actorId, String note) {
+        OnboardingDecisionDeadline.open();
+        try {
+            return decideWithinDecisionBudget(requestId, status, actorId, note);
+        } finally {
+            OnboardingDecisionDeadline.close();
+        }
+    }
+
+    /**
+     * decide 메서드의 실제 로직 (트랜잭션 없음) decide와 decideInNewTransaction에서 공통으로 사용
+     */
+    private OnboardingRequest decideWithinDecisionBudget(Long requestId, OnboardingStatus status,
             String actorId, String note) {
 
         log.info("온보딩 요청 결정 (내부): requestId={}, status={}, actorId={}", requestId, status, actorId);
@@ -732,25 +746,27 @@ public class OnboardingServiceImpl implements OnboardingService {
                         }
                         // updateProcessingStatus 제거: 별도 트랜잭션에서 version 충돌 발생
                         return true;
-                    }, 5, // 최대 5회 재시도
-                            2000 // 2초 지연
-                    );
+                    }, OnboardingDecisionDeadline.DECISION_MAX_ATTEMPTS,
+                            OnboardingDecisionDeadline.DECISION_RETRY_DELAY_MS);
 
             Map<String, Object> approvalResult;
 
             if (executionResult.isSuccess()) {
-                // 성공 시 저장된 결과 사용
+                // 성공 시 저장된 결과 사용. 결과가 비면 프로시저를 다시 호출하지 않는다.
                 approvalResult = approvalResultRef.get();
                 if (approvalResult == null) {
-                    // 저장된 결과가 없으면 다시 호출
-                    approvalResult = approvalService.processOnboardingApproval(requestId, tenantId,
-                            request.getTenantName(), businessType, actorId, note, finalContactEmail,
-                            finalAdminPasswordHash, finalSubdomain);
+                    log.error("승인 결과가 비어 프로시저를 다시 호출하지 않음: requestId={}", requestId);
+                    success = false;
+                    message = "온보딩 승인 프로세스 중 알 수 없는 오류가 발생했습니다. (상세 오류 정보 없음)";
+                    approvalResult = new java.util.HashMap<>();
+                    approvalResult.put("success", false);
+                    approvalResult.put("message", message);
+                } else {
+                    Boolean resultSuccess = (Boolean) approvalResult.get("success");
+                    String resultMessage = (String) approvalResult.get("message");
+                    success = resultSuccess;
+                    message = resultMessage;
                 }
-                Boolean resultSuccess = (Boolean) approvalResult.get("success");
-                String resultMessage = (String) approvalResult.get("message");
-                success = resultSuccess;
-                message = resultMessage;
             } else {
                 // 실패 시 저장된 결과에서 메시지 추출 시도
                 Map<String, Object> lastResult = approvalResultRef.get();
@@ -855,11 +871,16 @@ public class OnboardingServiceImpl implements OnboardingService {
                 .orElseThrow(() -> new IllegalArgumentException(OnboardingConstants
                         .formatError(OnboardingConstants.ERROR_TENANT_NOT_FOUND, requestId)));
 
-        // 상태를 다시 설정
+        // 상태를 다시 설정. 승인 실패 시 이미 붙인 시스템 오류 메모는 재조회 엔티티에 유지한다.
+        String noteToPersist = note;
+        if (finalStatus == OnboardingStatus.ON_HOLD && request.getDecisionNote() != null
+                && request.getDecisionNote().contains("[시스템 오류]")) {
+            noteToPersist = request.getDecisionNote();
+        }
         requestToSave.setStatus(finalStatus);
         requestToSave.setDecidedBy(actorId);
         requestToSave.setDecisionAt(DateTimeFormatter.ISO_INSTANT.format(Instant.now()));
-        requestToSave.setDecisionNote(note);
+        requestToSave.setDecisionNote(noteToPersist);
 
         if (schedulePostApprovalInitialization && finalStatus == OnboardingStatus.APPROVED
                 && finalSuccess != null && finalSuccess) {
@@ -915,7 +936,8 @@ public class OnboardingServiceImpl implements OnboardingService {
     }
 
     @Override
-    @Transactional(propagation = Propagation.REQUIRED, rollbackFor = Exception.class)
+    @Transactional(propagation = Propagation.REQUIRED, rollbackFor = Exception.class,
+            timeout = OnboardingDecisionDeadline.TRANSACTION_TIMEOUT_SECONDS)
     public OnboardingRequest decide(Long requestId, OnboardingStatus status,
             String actorId, String note) {
         try {

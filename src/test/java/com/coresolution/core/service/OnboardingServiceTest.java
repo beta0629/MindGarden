@@ -17,9 +17,11 @@ import static org.mockito.Mockito.when;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import com.coresolution.core.constant.OnboardingConstants;
 import com.coresolution.core.domain.onboarding.OnboardingRequest;
 import com.coresolution.core.domain.onboarding.OnboardingStatus;
 import com.coresolution.core.domain.onboarding.RiskLevel;
+import com.coresolution.core.service.impl.OnboardingApprovalBlockedException;
 import com.coresolution.core.repository.TenantRepository;
 import com.coresolution.core.repository.billing.TenantSubscriptionRepository;
 import com.coresolution.core.repository.onboarding.OnboardingRequestRepository;
@@ -287,6 +289,46 @@ class OnboardingServiceTest {
         assertThat(noPw.getStatus()).isEqualTo(OnboardingStatus.PENDING);
         verify(approvalService, times(0)).processOnboardingApproval(any(), anyString(), anyString(),
                 anyString(), anyString(), anyString(), anyString(), anyString(), nullable(String.class));
+    }
+
+    @Test
+    @DisplayName("한글 신청 서브도메인은 승인 프로시저 없이 사유로 막힌다")
+    void testDecide_koreanSubdomain_blockedBeforeProcedure() {
+        testRequest.setSubdomain("검증-재검-202610032055");
+        when(repository.findActiveById(testId)).thenReturn(Optional.of(testRequest));
+
+        assertThatThrownBy(() -> onboardingService.decide(testId, OnboardingStatus.APPROVED,
+                "test-admin", "승인 시도"))
+                .isInstanceOf(OnboardingApprovalBlockedException.class)
+                .hasMessage(OnboardingConstants.ERROR_ONBOARDING_SUBDOMAIN_NOT_DNS_LABEL);
+
+        assertThat(testRequest.getStatus()).isEqualTo(OnboardingStatus.PENDING);
+        verify(approvalService, never()).processOnboardingApproval(any(), anyString(), anyString(),
+                anyString(), anyString(), anyString(), anyString(), anyString(), nullable(String.class));
+    }
+
+    @Test
+    @DisplayName("유효한 영문 서브도메인은 소문자로 승인에 전달된다")
+    void testDecide_englishSubdomain_passedLowercase() {
+        testRequest.setSubdomain("MindGarden");
+        when(repository.findActiveById(testId)).thenReturn(Optional.of(testRequest));
+        when(repository.findByTenantIdAndIdAndIsDeletedFalse(testTenantId, testId))
+                .thenReturn(Optional.of(testRequest));
+        when(repository.save(any(OnboardingRequest.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        java.util.Map<String, Object> approvalResult = new java.util.HashMap<>();
+        approvalResult.put("success", true);
+        approvalResult.put("message", "온보딩 승인 완료");
+        when(approvalService.processOnboardingApproval(any(Long.class), anyString(), anyString(),
+                anyString(), anyString(), anyString(), anyString(), anyString(), eq("mindgarden")))
+                        .thenReturn(approvalResult);
+
+        OnboardingRequest result =
+                onboardingService.decide(testId, OnboardingStatus.APPROVED, "test-admin", "테스트 승인");
+
+        assertThat(result.getStatus()).isEqualTo(OnboardingStatus.APPROVED);
+        verify(approvalService).processOnboardingApproval(any(Long.class), anyString(), anyString(),
+                anyString(), anyString(), anyString(), anyString(), anyString(), eq("mindgarden"));
     }
 
     @Test

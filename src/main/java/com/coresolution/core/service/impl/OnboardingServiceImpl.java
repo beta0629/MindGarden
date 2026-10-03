@@ -680,9 +680,7 @@ public class OnboardingServiceImpl implements OnboardingService {
 
             final String finalContactEmail = contactEmail;
             final String finalAdminPasswordHash = adminPasswordHash;
-            final String finalSubdomain = (subdomain != null && !subdomain.trim().isEmpty())
-                    ? subdomain.trim().toLowerCase()
-                    : null;
+            final String finalSubdomain = TenantHostLabel.explicitDnsLabelOrNull(subdomain);
             final Map<String, String> finalDashboardTemplates = dashboardTemplates;
 
             Map<String, java.util.List<String>> dashboardWidgets = null;

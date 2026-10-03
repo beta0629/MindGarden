@@ -36,6 +36,10 @@ proc_label: BEGIN
     DECLARE v_exists BOOLEAN DEFAULT FALSE;
     DECLARE v_error_message VARCHAR(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
     DECLARE v_subdomain VARCHAR(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT '';
+    DECLARE v_existing_subdomain VARCHAR(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL;
+    DECLARE v_requested_subdomain VARCHAR(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT '';
+    DECLARE v_generated_subdomain VARCHAR(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT '';
+    DECLARE v_label_base VARCHAR(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT '';
     DECLARE v_domain VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT '';
     DECLARE v_settings_json JSON DEFAULT NULL;
     DECLARE v_counter INT DEFAULT 0;
@@ -128,53 +132,95 @@ proc_label: BEGIN
         SET v_consultation_enabled = TRUE;
         SET v_academy_enabled = FALSE;
     END IF;
+
+    -- 신청 서브도메인이 있으면 소문자 DNS 레이블만 받는다. 한글은 저장하지 않고 테넌트 INSERT/UPDATE 전에 끝낸다.
+    IF p_subdomain IS NOT NULL AND TRIM(p_subdomain) != '' THEN
+        SET v_requested_subdomain = LOWER(TRIM(p_subdomain));
+        IF v_requested_subdomain NOT REGEXP '^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$' THEN
+            SET p_success = FALSE;
+            SET p_message = '서브도메인은 소문자 영문, 숫자, 하이픈만 사용할 수 있으며 DNS 레이블(최대 63자)이어야 합니다.';
+            LEAVE proc_label;
+        END IF;
+    END IF;
+
+    -- 비어 있는 신청은 센터명에서 레이블을 만든다. 한글만 남으면 tenant- + 테넌트 ID 앞 8자.
+    SET v_generated_subdomain = LOWER(IFNULL(p_tenant_name, ''));
+    SET v_generated_subdomain = REPLACE(v_generated_subdomain, ' ', '-');
+    SET v_generated_subdomain = REPLACE(v_generated_subdomain, '_', '-');
+    SET v_generated_subdomain = REPLACE(v_generated_subdomain, '가든', 'garden');
+    SET v_generated_subdomain = REPLACE(v_generated_subdomain, '마인드', 'mind');
+    SET v_generated_subdomain = REPLACE(v_generated_subdomain, '상담', 'consultation');
+    SET v_generated_subdomain = REPLACE(v_generated_subdomain, '학원', 'academy');
+    SET v_generated_subdomain = REPLACE(v_generated_subdomain, '센터', 'center');
+    SET v_generated_subdomain = REGEXP_REPLACE(v_generated_subdomain, '[^a-z0-9-]', '');
+    SET v_generated_subdomain = REGEXP_REPLACE(v_generated_subdomain, '-+', '-');
+    SET v_generated_subdomain = TRIM(BOTH '-' FROM v_generated_subdomain);
+    IF CHAR_LENGTH(v_generated_subdomain) > 63 THEN
+        SET v_generated_subdomain = TRIM(BOTH '-' FROM LEFT(v_generated_subdomain, 63));
+    END IF;
+    IF v_generated_subdomain IS NULL
+       OR v_generated_subdomain = ''
+       OR v_generated_subdomain NOT REGEXP '^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$' THEN
+        SET v_generated_subdomain = CONCAT(
+            'tenant-',
+            SUBSTRING(REGEXP_REPLACE(LOWER(IFNULL(p_tenant_id, '')), '[^a-z0-9]', ''), 1, 8));
+    END IF;
+    IF v_generated_subdomain IS NULL
+       OR v_generated_subdomain = ''
+       OR v_generated_subdomain NOT REGEXP '^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$' THEN
+        SET v_generated_subdomain = '';
+    END IF;
     
     SELECT COUNT(*) > 0 INTO v_exists
     FROM tenants
     WHERE tenant_id COLLATE utf8mb4_unicode_ci = p_tenant_id COLLATE utf8mb4_unicode_ci;
     
     IF v_exists THEN
-        SELECT settings_json INTO v_settings_json
+        SELECT settings_json, subdomain
+          INTO v_settings_json, v_existing_subdomain
         FROM tenants
         WHERE tenant_id COLLATE utf8mb4_unicode_ci = p_tenant_id COLLATE utf8mb4_unicode_ci;
-        
-        IF p_subdomain IS NOT NULL AND p_subdomain != '' THEN
-            SET v_subdomain = LOWER(TRIM(p_subdomain));
-        ELSE
-            IF v_settings_json IS NULL OR JSON_EXTRACT(v_settings_json, '$.subdomain') IS NULL THEN
-                SET v_subdomain = LOWER(p_tenant_name);
-                SET v_subdomain = REPLACE(v_subdomain, ' ', '-');
-                SET v_subdomain = REPLACE(v_subdomain, '가든', 'garden');
-                SET v_subdomain = REPLACE(v_subdomain, '마인드', 'mind');
-                SET v_subdomain = REPLACE(v_subdomain, '상담', 'consultation');
-                SET v_subdomain = REPLACE(v_subdomain, '학원', 'academy');
-                SET v_subdomain = REGEXP_REPLACE(v_subdomain, '[^a-z0-9-]', '');
-                IF LENGTH(v_subdomain) > 63 THEN
-                    SET v_subdomain = LEFT(v_subdomain, 63);
-                END IF;
-                IF v_subdomain = '' OR v_subdomain IS NULL THEN
-                    SET v_subdomain = CONCAT('tenant-', SUBSTRING(p_tenant_id, 1, 8));
-                END IF;
-                
-                -- 서브도메인 중복 체크 및 고유화
-                SET v_counter = 0;
-                WHILE EXISTS (
-                    SELECT 1 FROM tenants
-                    WHERE (subdomain = v_subdomain OR JSON_EXTRACT(COALESCE(settings_json, '{}'), '$.subdomain') = v_subdomain)
-                    AND is_deleted = FALSE
-                    AND tenant_id != p_tenant_id
-                ) AND v_counter < 100 DO
-                    SET v_counter = v_counter + 1;
-                    SET v_subdomain = CONCAT(v_subdomain, '-', v_counter);
-                END WHILE;
-                
-                -- 100번 시도 후에도 중복이면 UUID 기반으로 변경
-                IF v_counter >= 100 THEN
-                    SET v_subdomain = CONCAT('tenant-', SUBSTRING(p_tenant_id, 1, 8), '-', v_counter);
-                END IF;
-            ELSE
-                SET v_subdomain = JSON_UNQUOTE(JSON_EXTRACT(v_settings_json, '$.subdomain'));
+
+        IF v_requested_subdomain IS NOT NULL AND v_requested_subdomain != '' THEN
+            SET v_subdomain = v_requested_subdomain;
+        ELSEIF v_existing_subdomain IS NOT NULL
+            AND LOWER(TRIM(v_existing_subdomain)) REGEXP '^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$' THEN
+            SET v_subdomain = LOWER(TRIM(v_existing_subdomain));
+        ELSEIF v_settings_json IS NOT NULL
+            AND JSON_UNQUOTE(JSON_EXTRACT(v_settings_json, '$.subdomain'))
+                REGEXP '^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$' THEN
+            SET v_subdomain = JSON_UNQUOTE(JSON_EXTRACT(v_settings_json, '$.subdomain'));
+        ELSEIF v_generated_subdomain IS NOT NULL AND v_generated_subdomain != '' THEN
+            SET v_subdomain = v_generated_subdomain;
+            SET v_label_base = v_subdomain;
+            SET v_counter = 0;
+            WHILE EXISTS (
+                SELECT 1 FROM tenants
+                WHERE (subdomain = v_subdomain OR JSON_EXTRACT(COALESCE(settings_json, '{}'), '$.subdomain') = v_subdomain)
+                AND is_deleted = FALSE
+                AND tenant_id != p_tenant_id
+            ) AND v_counter < 100 DO
+                SET v_counter = v_counter + 1;
+                SET v_subdomain = CONCAT(
+                    LEFT(v_label_base, 63 - CHAR_LENGTH(CONCAT('-', v_counter))),
+                    '-', v_counter);
+            END WHILE;
+            IF v_counter >= 100 THEN
+                SET v_subdomain = CONCAT(
+                    'tenant-',
+                    SUBSTRING(REGEXP_REPLACE(LOWER(p_tenant_id), '[^a-z0-9]', ''), 1, 8),
+                    '-', v_counter);
             END IF;
+        ELSE
+            SET p_success = FALSE;
+            SET p_message = '호스트로 사용할 수 있는 서브도메인을 만들 수 없어 테넌트를 저장하지 않았습니다.';
+            LEAVE proc_label;
+        END IF;
+
+        IF v_subdomain NOT REGEXP '^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$' THEN
+            SET p_success = FALSE;
+            SET p_message = '호스트로 사용할 수 있는 서브도메인을 만들 수 없어 테넌트를 저장하지 않았습니다.';
+            LEAVE proc_label;
         END IF;
         
         SET v_domain = CONCAT(v_subdomain, '.dev.core-solution.co.kr');
@@ -304,22 +350,36 @@ proc_label: BEGIN
             END IF;
         END IF;
     ELSE
-        IF p_subdomain IS NOT NULL AND p_subdomain != '' THEN
-            SET v_subdomain = LOWER(TRIM(p_subdomain));
-        ELSE
+        IF v_requested_subdomain IS NOT NULL AND v_requested_subdomain != '' THEN
+            SET v_subdomain = v_requested_subdomain;
+        ELSEIF v_generated_subdomain IS NOT NULL AND v_generated_subdomain != '' THEN
+            SET v_subdomain = v_generated_subdomain;
+            SET v_label_base = v_subdomain;
             SET v_counter = 0;
-            SET v_subdomain = LOWER(REPLACE(REPLACE(p_tenant_name, ' ', '-'), '_', '-'));
-            WHILE (SELECT COUNT(*) FROM tenants WHERE (subdomain = v_subdomain OR JSON_EXTRACT(COALESCE(settings_json, '{}'), '$.subdomain') = v_subdomain) AND is_deleted = FALSE) > 0 DO
+            WHILE (SELECT COUNT(*) FROM tenants WHERE (subdomain = v_subdomain OR JSON_EXTRACT(COALESCE(settings_json, '{}'), '$.subdomain') = v_subdomain) AND is_deleted = FALSE) > 0
+                  AND v_counter < 100 DO
                 SET v_counter = v_counter + 1;
-                SET v_subdomain = CONCAT(LOWER(REPLACE(REPLACE(p_tenant_name, ' ', '-'), '_', '-')), '-', v_counter);
+                SET v_subdomain = CONCAT(
+                    LEFT(v_label_base, 63 - CHAR_LENGTH(CONCAT('-', v_counter))),
+                    '-', v_counter);
             END WHILE;
+            IF v_counter >= 100 THEN
+                SET v_subdomain = CONCAT(
+                    'tenant-',
+                    SUBSTRING(REGEXP_REPLACE(LOWER(p_tenant_id), '[^a-z0-9]', ''), 1, 8),
+                    '-', v_counter);
+            END IF;
+        ELSE
+            SET p_success = FALSE;
+            SET p_message = '호스트로 사용할 수 있는 서브도메인을 만들 수 없어 테넌트를 저장하지 않았습니다.';
+            LEAVE proc_label;
         END IF;
-        
-        SET v_counter = 0;
-        WHILE (SELECT COUNT(*) FROM tenants WHERE (subdomain = v_subdomain OR JSON_EXTRACT(COALESCE(settings_json, '{}'), '$.subdomain') = v_subdomain) AND is_deleted = FALSE AND tenant_id != p_tenant_id) > 0 DO
-            SET v_counter = v_counter + 1;
-            SET v_subdomain = CONCAT(v_subdomain, '-', v_counter);
-        END WHILE;
+
+        IF v_subdomain NOT REGEXP '^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$' THEN
+            SET p_success = FALSE;
+            SET p_message = '호스트로 사용할 수 있는 서브도메인을 만들 수 없어 테넌트를 저장하지 않았습니다.';
+            LEAVE proc_label;
+        END IF;
         
         SET v_domain = CONCAT(v_subdomain, '.dev.core-solution.co.kr');
         

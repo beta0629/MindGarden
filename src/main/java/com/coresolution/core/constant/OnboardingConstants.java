@@ -53,6 +53,20 @@ public class OnboardingConstants {
             "연락 이메일이 등록된 온보딩은 승인 시 checklist_json에 유효한 adminPassword가 필요합니다. "
                     + "요청을 수정하거나 비밀번호를 포함한 뒤 다시 승인해주세요.";
 
+    /**
+     * 신청 서브도메인이 있는데 DNS 레이블이 아님.
+     * CreateOrActivateTenant 가 같은 문장으로 실패할 때 Java 도 이 문구로 롤백한다.
+     */
+    public static final String ERROR_ONBOARDING_SUBDOMAIN_NOT_DNS_LABEL =
+            "서브도메인은 소문자 영문, 숫자, 하이픈만 사용할 수 있으며 DNS 레이블(최대 63자)이어야 합니다.";
+
+    /**
+     * 센터명에서 호스트 레이블을 만들 수 없음.
+     * 한글을 그대로 저장하지 않고, 테넌트 행은 커밋하지 않는다.
+     */
+    public static final String ERROR_ONBOARDING_SUBDOMAIN_HOST_UNAVAILABLE =
+            "호스트로 사용할 수 있는 서브도메인을 만들 수 없어 테넌트를 저장하지 않았습니다.";
+
     /** 온보딩 요청 생성 시 관리자 초기 비밀번호 누락 */
     public static final String ERROR_ONBOARDING_ADMIN_PASSWORD_REQUIRED_ON_CREATE =
             "관리자 초기 비밀번호(adminPassword)는 필수입니다. checklist_json 또는 요청 본문에 포함해주세요.";

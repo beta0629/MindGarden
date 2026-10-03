@@ -107,10 +107,12 @@ mysql_dev() {
 
 mysqldump_prod() {
   local routine_flags
+  # 운영 루틴 본문은 가져오지 않는다. 운영 정의가 깨져 있거나 빠져 있으면
+  # 개발에 복원된 정의가 그 상태로 덮인다. 루틴은 복원 후 저장소 db-diff 로 맞춘다.
   if [[ "$DUMP_SKIP_ROUTINES" == "1" ]]; then
     routine_flags=(--skip-routines --skip-triggers --skip-events)
   else
-    routine_flags=(--routines --triggers --events)
+    routine_flags=(--skip-routines --triggers --events)
   fi
   mysqldump -h "$PROD_MYSQL_HOST" -P "$PROD_MYSQL_PORT" -u "$PROD_MYSQL_USER" \
     ${PROD_MYSQL_PASSWORD:+-p"$PROD_MYSQL_PASSWORD"} \
@@ -178,5 +180,30 @@ if [[ "$SYNC_MODE" == "dump_live" && "$RETAIN_LOCAL_DUMPS" != "1" ]]; then
   rm -f "$DUMP_FILE"
   log "임시 덤프 삭제"
 fi
+
+redeploy_dev_procedures_from_repo() {
+  if [[ "$DEV_MYSQL_HOST" == "$PROD_MYSQL_HOST" && "$DEV_DB_NAME" == "$PROD_DB_NAME" ]]; then
+    die "개발 DB 호스트·스키마가 운영과 같습니다. 프로시저 재배포를 하지 않습니다."
+  fi
+  local repo deploy
+  repo="${PROCEDURE_DEPLOY_REPO_ROOT:-$(cd "$SCRIPT_DIR/../../.." && pwd)}"
+  deploy="$repo/scripts/automation/deployment/deploy-standardized-procedures.sh"
+  [[ -f "$deploy" ]] || die "프로시저 배포 스크립트가 없습니다: $deploy"
+  [[ -d "$repo/database/schema/procedures_standardized/deployment" ]] || die "배포 SQL 디렉터리가 없습니다."
+  export PROCEDURE_DEPLOY_MODE=db-diff
+  export PROCEDURE_DEPLOY_LOCAL_APPLY=1
+  export DEV_SERVER_HOST="$DEV_MYSQL_HOST"
+  export DEV_DB_HOST="$DEV_MYSQL_HOST"
+  export DEV_DB_USER="$DEV_MYSQL_USER"
+  export DEV_DB_PASSWORD="${DEV_MYSQL_PASSWORD:-}"
+  export DEV_DB_NAME="$DEV_DB_NAME"
+  unset DEPLOY_TARGET || true
+  log "프로시저 db-diff dry-run (개발 DB host=${DEV_MYSQL_HOST} database=${DEV_DB_NAME})"
+  PROCEDURE_DEPLOY_DB_DIFF_CONFIRM= bash "$deploy" dev
+  log "프로시저 db-diff 적용 (개발 DB만, 차이 있는 루틴만)"
+  PROCEDURE_DEPLOY_DB_DIFF_CONFIRM=CONFIRM bash "$deploy" dev
+}
+
+redeploy_dev_procedures_from_repo
 
 log "=== 완료: 개발 DB=${DEV_DB_NAME}, 참고 D-1 날짜 라벨=$(yesterday_ymd_dash) ==="

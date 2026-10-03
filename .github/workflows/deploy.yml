@@ -41,6 +41,16 @@ on:
         required: false
         type: string
         default: ""
+      mode:
+        description: "procedures 대상. 비우면 기존. db-diff 는 DB와 저장소 파라미터 차이만"
+        required: false
+        type: string
+        default: ""
+      confirm:
+        description: "db-diff 적용은 CONFIRM. 비우면 dry-run. procedures-mysql 의 기존 적용은 mode 가 비어 있을 때 CONFIRM 으로 전달"
+        required: false
+        type: string
+        default: ""
 
 permissions:
   contents: read
@@ -59,6 +69,8 @@ jobs:
           INPUT_TARGET: ${{ inputs.target }}
           INPUT_DEPLOY_REF: ${{ inputs.deploy_ref }}
           INPUT_PROCEDURES: ${{ inputs.procedures }}
+          INPUT_MODE: ${{ inputs.mode }}
+          INPUT_CONFIRM: ${{ inputs.confirm }}
           REPO: ${{ github.repository }}
         run: |
           set -euo pipefail
@@ -140,6 +152,12 @@ jobs:
               if [ -n "$INPUT_PROCEDURES" ]; then
                 EXTRA_ARGS+=(-f "procedures=$INPUT_PROCEDURES")
               fi
+              if [ -n "${INPUT_MODE:-}" ]; then
+                EXTRA_ARGS+=(-f "mode=$INPUT_MODE")
+              fi
+              if [ -n "${INPUT_CONFIRM:-}" ]; then
+                EXTRA_ARGS+=(-f "confirm=$INPUT_CONFIRM")
+              fi
               ;;
             procedures-mysql)
               if [ "$ENV" = "dev" ]; then
@@ -147,7 +165,14 @@ jobs:
                 exit 1
               fi
               WF="deploy-procedures-production-mysql.yml"
-              EXTRA_ARGS+=(-f "confirm=CONFIRM")
+              if [ "${INPUT_MODE:-}" = "db-diff" ]; then
+                EXTRA_ARGS+=(-f "mode=db-diff")
+                if [ "${INPUT_CONFIRM:-}" = "CONFIRM" ]; then
+                  EXTRA_ARGS+=(-f "confirm=CONFIRM")
+                fi
+              else
+                EXTRA_ARGS+=(-f "confirm=CONFIRM")
+              fi
               if [ -n "$INPUT_PROCEDURES" ]; then
                 EXTRA_ARGS+=(-f "procedures=$INPUT_PROCEDURES")
               fi

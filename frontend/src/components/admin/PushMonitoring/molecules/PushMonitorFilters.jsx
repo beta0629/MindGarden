@@ -1,17 +1,17 @@
 /**
- * PushMonitorFilters — 범위·채널 SegmentedTabs + 갱신 인디케이터.
+ * PushMonitorFilters — 범위·채널 TabChipRow + 갱신 인디케이터.
  *
- * 디자이너 핸드오프 §4.2 / §5.1 `mg-push-monitor__filters`. 기존 SegmentedTabs 공통 모듈을
- * 재사용해 CSS 일관성을 유지한다(D11). `aria-label` 은 한국어 리터럴을 SCAFFOLD_COPY 로
- * 모두 외부화.
+ * settings-shell 툴바(`mg-v2-settings-toolbar`)와 공통 TabChipRow 를 사용한다.
+ * `aria-label` 은 한국어 리터럴을 SCAFFOLD_COPY 로 모두 외부화.
  *
  * @author MindGarden core-coder
  * @since 2026-06-07
+ * @updated 2026-10-03 — 세그먼트 탭·필터 표면 카드 → TabChipRow + settings 툴바
  */
 
 import React, { useMemo } from 'react';
 import PropTypes from 'prop-types';
-import SegmentedTabs from '../../../common/SegmentedTabs';
+import TabChipRow from '../../../common/TabChipRow';
 import PushMonitorRefreshIndicator from '../atoms/PushMonitorRefreshIndicator';
 import { ADMIN_WEB_SCAFFOLD_COPY } from '../../../../constants/adminWebScaffold';
 import {
@@ -33,40 +33,39 @@ const PushMonitorFilters = ({
   hasError = false
 }) => {
   const rangeItems = useMemo(() => ([
-    { value: PUSH_MONITORING_RANGE.H24, label: ADMIN_WEB_SCAFFOLD_COPY.PUSH_MONITOR_RANGE_24H },
-    { value: PUSH_MONITORING_RANGE.D7, label: ADMIN_WEB_SCAFFOLD_COPY.PUSH_MONITOR_RANGE_7D },
-    { value: PUSH_MONITORING_RANGE.D30, label: ADMIN_WEB_SCAFFOLD_COPY.PUSH_MONITOR_RANGE_30D }
+    { key: PUSH_MONITORING_RANGE.H24, label: ADMIN_WEB_SCAFFOLD_COPY.PUSH_MONITOR_RANGE_24H },
+    { key: PUSH_MONITORING_RANGE.D7, label: ADMIN_WEB_SCAFFOLD_COPY.PUSH_MONITOR_RANGE_7D },
+    { key: PUSH_MONITORING_RANGE.D30, label: ADMIN_WEB_SCAFFOLD_COPY.PUSH_MONITOR_RANGE_30D }
   ]), []);
 
   const channelItems = useMemo(() => ([
-    { value: PUSH_MONITORING_CHANNEL.ALL, label: ADMIN_WEB_SCAFFOLD_COPY.PUSH_MONITOR_CHANNEL_ALL },
-    { value: PUSH_MONITORING_CHANNEL.ALIMTALK, label: ADMIN_WEB_SCAFFOLD_COPY.PUSH_MONITOR_CHANNEL_ALIMTALK },
-    { value: PUSH_MONITORING_CHANNEL.SMS, label: ADMIN_WEB_SCAFFOLD_COPY.PUSH_MONITOR_CHANNEL_SMS },
-    { value: PUSH_MONITORING_CHANNEL.PUSH, label: ADMIN_WEB_SCAFFOLD_COPY.PUSH_MONITOR_CHANNEL_PUSH }
+    { key: PUSH_MONITORING_CHANNEL.ALL, label: ADMIN_WEB_SCAFFOLD_COPY.PUSH_MONITOR_CHANNEL_ALL },
+    { key: PUSH_MONITORING_CHANNEL.ALIMTALK, label: ADMIN_WEB_SCAFFOLD_COPY.PUSH_MONITOR_CHANNEL_ALIMTALK },
+    { key: PUSH_MONITORING_CHANNEL.SMS, label: ADMIN_WEB_SCAFFOLD_COPY.PUSH_MONITOR_CHANNEL_SMS },
+    { key: PUSH_MONITORING_CHANNEL.PUSH, label: ADMIN_WEB_SCAFFOLD_COPY.PUSH_MONITOR_CHANNEL_PUSH }
   ]), []);
 
   return (
     <section
-      className="mg-push-monitor__filters"
+      className="mg-v2-settings-toolbar mg-push-monitor__filters"
       aria-label={ADMIN_WEB_SCAFFOLD_COPY.PUSH_MONITOR_RANGE_LABEL}
       data-testid="push-monitor-filters"
     >
       <div className="mg-push-monitor__filters-group">
-        <SegmentedTabs
+        <TabChipRow
           items={rangeItems}
-          activeValue={range}
+          activeKey={range}
           onChange={onRangeChange}
           ariaLabel={ADMIN_WEB_SCAFFOLD_COPY.PUSH_MONITOR_RANGE_LABEL}
-          size="sm"
         />
-        <SegmentedTabs
+        <TabChipRow
           items={channelItems}
-          activeValue={channel}
+          activeKey={channel}
           onChange={onChannelChange}
           ariaLabel={ADMIN_WEB_SCAFFOLD_COPY.PUSH_MONITOR_CHANNEL_LABEL}
-          size="sm"
         />
       </div>
+      <span className="mg-v2-settings-toolbar__spacer" aria-hidden="true" />
       <PushMonitorRefreshIndicator
         lastRefreshedAtIso={lastRefreshedAtIso}
         intervalMs={intervalMs}

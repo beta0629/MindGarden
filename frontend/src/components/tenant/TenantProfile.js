@@ -25,12 +25,10 @@ import {
   SettingsSummaryStrip,
   SettingsButton
 } from '../admin/settings-shell';
-import MGButton from '../common/MGButton';
 import TabChipRow from '../common/TabChipRow';
 import EmptyState from '../common/EmptyState';
 import UnifiedLoading from '../common/UnifiedLoading';
 import SafeErrorDisplay from '../common/SafeErrorDisplay';
-import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import SafeText from '../common/SafeText';
 import UnifiedModal from '../common/modals/UnifiedModal';
 import {
@@ -586,40 +584,26 @@ const TenantProfile = () => {
         }
         actions={
           <>
-            <MGButton
+            <SettingsButton
               type="button"
-              variant="outline"
-              size="medium"
-              className={buildErpMgButtonClassName({
-                variant: 'outline',
-                size: 'md',
-                loading: false
-              })}
-              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+              variant="secondary"
               onClick={closeTenantNameModal}
               disabled={tenantNameSaving}
               preventDoubleClick={false}
             >
               {t('admin.actions.cancel')}
-            </MGButton>
-            <MGButton
+            </SettingsButton>
+            <SettingsButton
               type="submit"
               form="tenant-profile-rename-form"
               variant="primary"
-              size="medium"
-              className={buildErpMgButtonClassName({
-                variant: 'primary',
-                size: 'md',
-                loading: tenantNameSaving
-              })}
-              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               disabled={tenantNameSaving}
               loading={tenantNameSaving}
               data-testid="tenant-profile-rename-save"
               preventDoubleClick={false}
             >
               {t('common.actions.save')}
-            </MGButton>
+            </SettingsButton>
           </>
         }
       >

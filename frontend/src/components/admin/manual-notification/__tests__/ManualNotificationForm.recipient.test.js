@@ -46,26 +46,8 @@ jest.mock('../../../erp/common/erpMgButtonProps', () => ({
   __esModule: true,
   buildErpMgButtonClassName: () => 'mock-btn',
   ERP_MG_BUTTON_LOADING_TEXT: '처리 중...',
-  mapErpVariantToMg: (variant) => variant
-}));
-
-jest.mock('../../../common/BadgeSelect', () => ({
-  __esModule: true,
-  default: ({ options = [], value, onChange, 'aria-label': ariaLabel }) => (
-    <div role="radiogroup" aria-label={ariaLabel}>
-      {options.map((opt) => (
-        <button
-          key={opt.value}
-          type="button"
-          role="radio"
-          aria-checked={String(value) === String(opt.value)}
-          onClick={() => onChange(opt.value)}
-        >
-          {opt.label}
-        </button>
-      ))}
-    </div>
-  )
+  mapErpVariantToMg: (variant) => variant,
+  mapErpSizeToMg: (size) => size
 }));
 
 jest.mock('react-i18next', () => ({

@@ -1,7 +1,7 @@
 /**
  * 어드민 수동 발송 폼 — 푸시 채널(2026-05-25) 단위 테스트.
  *
- * - 채널 선택 라디오에 "푸시 알림" 옵션이 노출되는지
+ * - 채널 선택 탭(TabChipRow)에 "푸시 알림" 옵션이 노출되는지
  * - 푸시 선택 시 제목·본문 input/textarea 가 렌더링되는지
  * - 5명 이하는 즉시 발송 → `sendPushBatch` 호출 + 결과 모달 노출
  * - SKIPPED(PUSH_NO_TOKEN) 행이 결과 모달 스킵 상세 섹션에 표기되는지
@@ -12,6 +12,12 @@
 
 import React from 'react';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+
+// 0. i18n 인스턴스 — manualNotificationApi 가 import 하므로 테스트 환경용 최소 mock.
+jest.mock('../../../../i18n', () => ({
+  __esModule: true,
+  default: { t: (key) => key }
+}));
 
 // 1. api 모듈을 통째로 mock — sendPushBatch / sendSmsBatch / sendAlimtalkBatch 모두 jest.fn 으로.
 jest.mock('../../../../api/admin/manualNotificationApi', () => {
@@ -76,29 +82,11 @@ jest.mock('../../../erp/common/erpMgButtonProps', () => ({
   __esModule: true,
   buildErpMgButtonClassName: () => 'mock-btn',
   ERP_MG_BUTTON_LOADING_TEXT: '처리 중...',
-  mapErpVariantToMg: (variant) => variant
+  mapErpVariantToMg: (variant) => variant,
+  mapErpSizeToMg: (size) => size
 }));
 
-// 3. BadgeSelect — 라벨로 채널을 선택할 수 있도록 button 으로 mock.
-jest.mock('../../../common/BadgeSelect', () => ({
-  __esModule: true,
-  default: ({ options = [], value, onChange, 'aria-label': ariaLabel }) => (
-    <div role="radiogroup" aria-label={ariaLabel}>
-      {options.map((opt) => (
-        <button
-          key={opt.value}
-          type="button"
-          role="radio"
-          aria-checked={String(value) === String(opt.value)}
-          onClick={() => onChange(opt.value)}
-          data-testid={`channel-${opt.value}`}
-        >
-          {opt.label}
-        </button>
-      ))}
-    </div>
-  )
-}));
+// 3. 채널 선택은 실제 TabChipRow (MGButton mock 이 data-testid 를 그대로 전달 → tab-chip-row-{채널}).
 
 // 4. RecipientPicker — 테스트 편의 위해 props.value 변경 트리거를 노출하는 mock.
 jest.mock('../RecipientPicker', () => ({
@@ -121,29 +109,38 @@ jest.mock('../RecipientPicker', () => ({
 }));
 
 // 5. BatchResultModal — 결과 노출 검증을 위해 실제 구현 사용. SKIPPED 분류는 실제 코드 검증 대상.
-jest.mock('react-i18next', () => ({
-  __esModule: true,
-  useTranslation: () => ({
-    t: (key, defOrOpts, opts) => {
-      const hasDefault = typeof defOrOpts === 'string';
-      const variables = hasDefault ? (opts || {}) : (defOrOpts || {});
-      const fallback = hasDefault
-        ? defOrOpts
-        : (variables.defaultValue || key);
-      return Object.entries(variables).reduce(
-        (acc, [name, value]) => acc.replace(new RegExp(`{{${name}}}`, 'g'), String(value)),
-        fallback
-      );
-    }
-  })
-}));
+// 실제 ko 문구로 키를 풀어 라벨·placeholder 기반 쿼리가 운영 화면과 같게 동작하도록 한다.
+jest.mock('react-i18next', () => {
+  const koManualNotification = jest.requireActual('../../../../locales/ko/manualNotification.json');
+  const lookup = (key) => {
+    const parts = String(key).replace(/^manualNotification\./, '').split('.');
+    const value = parts.reduce((node, part) => (node && typeof node === 'object' ? node[part] : undefined), koManualNotification);
+    return typeof value === 'string' ? value : undefined;
+  };
+  return {
+    __esModule: true,
+    useTranslation: () => ({
+      t: (key, defOrOpts, opts) => {
+        const hasDefault = typeof defOrOpts === 'string';
+        const variables = hasDefault ? (opts || {}) : (defOrOpts || {});
+        const fallback = lookup(key) || (hasDefault
+          ? defOrOpts
+          : (variables.defaultValue || key));
+        return Object.entries(variables).reduce(
+          (acc, [name, value]) => acc.replace(new RegExp(`{{${name}}}`, 'g'), String(value)),
+          fallback
+        );
+      }
+    })
+  };
+});
 
 import ManualNotificationForm from '../ManualNotificationForm';
 
 const setup = (props = {}) => render(<ManualNotificationForm onBatchSent={jest.fn()} {...props} />);
 
 const selectPushChannel = () => {
-  fireEvent.click(screen.getByTestId('channel-PUSH'));
+  fireEvent.click(screen.getByTestId('tab-chip-row-PUSH'));
 };
 
 const fillReason = (text = '운영팀 결정 사항 — 2026-05-25') => {
@@ -157,7 +154,7 @@ describe('ManualNotificationForm — 푸시 채널', () => {
 
   it('채널 옵션에 "푸시 알림" 이 포함된다', () => {
     setup();
-    expect(screen.getByTestId('channel-PUSH')).toHaveTextContent('푸시 알림');
+    expect(screen.getByTestId('tab-chip-row-PUSH')).toHaveTextContent('푸시 알림');
   });
 
   it('푸시 채널 선택 시 제목/본문 입력 필드가 렌더링된다', () => {

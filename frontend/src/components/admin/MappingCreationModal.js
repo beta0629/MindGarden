@@ -28,6 +28,7 @@ import BadgeSelect from '../common/BadgeSelect';
 import FormInput from '../common/FormInput';
 import { toDisplayString } from '../../utils/safeDisplay';
 import { generatePaymentReferenceNumber } from '../../utils/paymentReferenceNumber';
+import { isCardPaymentMethod } from '../../utils/paymentMethodSsot';
 import SafeText from '../common/SafeText';
 import '../schedule/ScheduleB0KlA.css';
 import './MappingCreationModal.css';
@@ -118,6 +119,7 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
   const [loading, setLoading] = useState(false);
   const [packageOptions, setPackageOptions] = useState([]);
   const [paymentMethodOptions, setPaymentMethodOptions] = useState([]);
+  const [paymentMethodCodes, setPaymentMethodCodes] = useState(null);
   const [responsibilityOptions, setResponsibilityOptions] = useState([]);
   const [loadingPackageCodes, setLoadingPackageCodes] = useState(false);
   const [previousPackageHint, setPreviousPackageHint] = useState(null);
@@ -427,6 +429,7 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
       const { getTenantCodes } = await import('../../utils/commonCodeApi');
       const paymentCodes = await getTenantCodes('PAYMENT_METHOD');
       if (paymentCodes?.length) {
+        setPaymentMethodCodes(paymentCodes);
         setPaymentMethodOptions(paymentCodes.map(c => ({ value: c.codeValue, label: c.codeLabel || c.koreanName })));
       }
       const respCodes = await getTenantCodes('RESPONSIBILITY');
@@ -1099,16 +1102,18 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
                   aria-label={t('admin:labels.paymentMethod')}
                 />
               </div>
-              <div className="mg-v2-mapping-creation-modal__form-group">
-                <label>{t('admin:mappingCreation.paymentReference')}</label>
-                <input
-                  type="text"
-                  value={paymentInfo.paymentReference}
-                  onChange={e => setPaymentInfo(prev => ({ ...prev, paymentReference: e.target.value }))}
-                  placeholder={t('admin:mappingCreation.autoGenerate')}
-                  className="mg-v2-mapping-creation-modal__input"
-                />
-              </div>
+              {isCardPaymentMethod(paymentInfo.paymentMethod, paymentMethodCodes) && (
+                <div className="mg-v2-mapping-creation-modal__form-group" data-testid="mapping-creation-payment-reference">
+                  <label>{t('admin:mappingCreation.paymentReference')}</label>
+                  <input
+                    type="text"
+                    value={paymentInfo.paymentReference}
+                    onChange={e => setPaymentInfo(prev => ({ ...prev, paymentReference: e.target.value }))}
+                    placeholder={t('admin:mappingCreation.autoGenerate')}
+                    className="mg-v2-mapping-creation-modal__input"
+                  />
+                </div>
+              )}
               <div className="mg-v2-mapping-creation-modal__form-group">
                 <label>{t('admin:mappingCreation.responsibility')}</label>
                 <BadgeSelect

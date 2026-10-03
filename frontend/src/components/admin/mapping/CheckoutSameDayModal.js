@@ -23,6 +23,7 @@ import { getTenantCodes } from '../../../utils/commonCodeApi';
 import { toDisplayString } from '../../../utils/safeDisplay';
 import {
   filterCheckoutSameDayPaymentMethodCodes,
+  isCardPaymentMethod,
   mapPaymentMethodCodesToOptions,
   normalizePaymentMethodCodeValue,
   PAYMENT_METHOD_CODE_BANK_TRANSFER,
@@ -132,6 +133,7 @@ const CheckoutSameDayModal = ({
     : 'admin:mapping.checkout.sameDay';
   const [paymentMethod, setPaymentMethod] = useState(DEFAULT_CHECKOUT_PAYMENT_METHOD);
   const [paymentMethodOptions, setPaymentMethodOptions] = useState([]);
+  const [paymentMethodCodes, setPaymentMethodCodes] = useState(null);
   const [paymentReference, setPaymentReference] = useState('');
   const [paymentAmount, setPaymentAmount] = useState('');
   const [sameDaySessionScheduleId, setSameDaySessionScheduleId] = useState('');
@@ -163,6 +165,7 @@ const CheckoutSameDayModal = ({
         if (cancelled) {
           return;
         }
+        setPaymentMethodCodes(Array.isArray(codes) ? codes : null);
         // 당일 결제: 배정 생성 모달과 동일하게 PAYMENT_METHOD 공통코드 전체(활성)를 노출한다.
         const sourceCodes = isConfirmActivate
           ? filterCheckoutSameDayPaymentMethodCodes(codes)
@@ -173,6 +176,7 @@ const CheckoutSameDayModal = ({
         );
       } catch {
         if (!cancelled) {
+          setPaymentMethodCodes(null);
           applyOptions(FALLBACK_CHECKOUT_PAYMENT_METHOD_OPTIONS, storedPaymentMethod);
         }
       }
@@ -197,6 +201,8 @@ const CheckoutSameDayModal = ({
       setIsLoading(false);
     }
   }, [isOpen, mapping, mode]);
+
+  const isCardPayment = isCardPaymentMethod(paymentMethod, paymentMethodCodes);
 
   const handlePaymentMethodChange = (value) => {
     setPaymentMethod(value);
@@ -223,7 +229,7 @@ const CheckoutSameDayModal = ({
       notificationManager.error(t(`${i18nPrefix}.error.missingMethod`));
       return;
     }
-    if (!paymentReference.trim()) {
+    if (isCardPayment && !paymentReference.trim()) {
       notificationManager.error(t(`${i18nPrefix}.error.missingReference`));
       return;
     }
@@ -254,7 +260,9 @@ const CheckoutSameDayModal = ({
     try {
       const payload = {
         paymentMethod,
-        paymentReference: paymentReference.trim(),
+        paymentReference: isCardPayment
+          ? paymentReference.trim()
+          : generateReference(paymentMethod),
         paymentAmount: amountNumber,
         sameDaySessionScheduleId: (!isConfirmActivate && sameDaySessionScheduleId)
           ? Number(sameDaySessionScheduleId)
@@ -455,20 +463,22 @@ const CheckoutSameDayModal = ({
           ))}
         </fieldset>
 
-        <div className="mg-v2-checkout-same-day-modal__field-group">
-          <label htmlFor="checkout-same-day-reference">
-            {t(`${i18nPrefix}.paymentReference.label`)}
-          </label>
-          <input
-            id="checkout-same-day-reference"
-            type="text"
-            value={paymentReference}
-            onChange={(e) => setPaymentReference(e.target.value)}
-            disabled={isLoading}
-            className="mg-v2-checkout-same-day-modal__input"
-            placeholder={t(`${i18nPrefix}.paymentReference.placeholder`)}
-          />
-        </div>
+        {isCardPayment && (
+          <div className="mg-v2-checkout-same-day-modal__field-group">
+            <label htmlFor="checkout-same-day-reference">
+              {t(`${i18nPrefix}.paymentReference.label`)}
+            </label>
+            <input
+              id="checkout-same-day-reference"
+              type="text"
+              value={paymentReference}
+              onChange={(e) => setPaymentReference(e.target.value)}
+              disabled={isLoading}
+              className="mg-v2-checkout-same-day-modal__input"
+              placeholder={t(`${i18nPrefix}.paymentReference.placeholder`)}
+            />
+          </div>
+        )}
 
         <div className="mg-v2-checkout-same-day-modal__field-group">
           <label htmlFor="checkout-same-day-amount">

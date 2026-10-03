@@ -1,6 +1,5 @@
 /**
- * PushMonitorKpiRow — Clinic-OS 4-cell summary strip
- * Twin: MappingKpiSection / PgConfigurationList summary (`mapping-management-summary--cols-4`)
+ * PushMonitorKpiRow — settings-shell SettingsSummaryStrip 4지표 요약 띠
  *
  * 기존 snapshot.kpi 4지표(queue/success/failure/skip)를 스트립으로 재매핑.
  * 비즈니스 메트릭 변경 없음.
@@ -8,15 +7,16 @@
  * @author MindGarden core-coder
  * @since 2026-06-07
  * @updated 2026-09-05 — Clinic-OS summary strip
+ * @updated 2026-10-03 — 매핑 요약 스트립·숫자 atom → SettingsSummaryStrip
  */
 
 import React, { useMemo } from 'react';
 import PropTypes from 'prop-types';
-import KpiNumeral from '../../../dashboard-v2/atoms/KpiNumeral';
+import { SettingsSummaryStrip } from '../../settings-shell';
 import { ADMIN_WEB_SCAFFOLD_COPY } from '../../../../constants/adminWebScaffold';
 import './PushMonitorKpiRow.css';
 
-const UNIT_COUNT = ADMIN_WEB_SCAFFOLD_COPY.PUSH_MONITOR_KPI_VALUE_UNIT || '건';
+const UNIT_COUNT = ADMIN_WEB_SCAFFOLD_COPY.PUSH_MONITOR_KPI_VALUE_UNIT;
 
 const safeNumber = (value) => {
   const n = Number(value);
@@ -98,37 +98,22 @@ const PushMonitorKpiRow = ({ kpi = null, channelBreakdown = null, loading = fals
     }
   ];
 
+  const items = cells.map((cell) => ({
+    key: cell.id,
+    label: cell.label,
+    value: `${cell.value.toLocaleString('ko-KR')}${UNIT_COUNT}`,
+    caption: cell.caption || undefined,
+    testId: `push-monitor-kpi-card-${cell.id}`
+  }));
+
   return (
-    <section
-      className={[
-        'mg-push-monitor__kpi-row',
-        'mapping-management-summary',
-        'mapping-management-summary--cols-4',
-        loading ? 'mg-push-monitor__kpi-row--loading' : ''
-      ].filter(Boolean).join(' ')}
-      role="list"
-      aria-label={`${ADMIN_WEB_SCAFFOLD_COPY.PUSH_MONITOR_KPI_QUEUE_LABEL}, ${ADMIN_WEB_SCAFFOLD_COPY.PUSH_MONITOR_KPI_SUCCESS_LABEL}, ${ADMIN_WEB_SCAFFOLD_COPY.PUSH_MONITOR_KPI_FAILURE_LABEL}, ${ADMIN_WEB_SCAFFOLD_COPY.PUSH_MONITOR_KPI_SKIP_LABEL}`}
-      data-testid="push-monitor-kpi-row"
-    >
-      {cells.map((cell) => (
-        <article
-          key={cell.id}
-          className="mapping-management-summary__cell"
-          role="listitem"
-          data-testid={`push-monitor-kpi-card-${cell.id}`}
-        >
-          <div className="mapping-management-summary__hit">
-            <p className="mapping-management-summary__label">{cell.label}</p>
-            <div className="mapping-management-summary__amount">
-              <KpiNumeral value={String(cell.value)} unit={UNIT_COUNT} />
-            </div>
-            {cell.caption ? (
-              <p className="mg-push-monitor__kpi-caption">{cell.caption}</p>
-            ) : null}
-          </div>
-        </article>
-      ))}
-    </section>
+    <div className="mg-push-monitor__kpi-row" aria-busy={loading}>
+      <SettingsSummaryStrip
+        items={items}
+        ariaLabel={`${ADMIN_WEB_SCAFFOLD_COPY.PUSH_MONITOR_KPI_QUEUE_LABEL}, ${ADMIN_WEB_SCAFFOLD_COPY.PUSH_MONITOR_KPI_SUCCESS_LABEL}, ${ADMIN_WEB_SCAFFOLD_COPY.PUSH_MONITOR_KPI_FAILURE_LABEL}, ${ADMIN_WEB_SCAFFOLD_COPY.PUSH_MONITOR_KPI_SKIP_LABEL}`}
+        testId="push-monitor-kpi-row"
+      />
+    </div>
   );
 };
 

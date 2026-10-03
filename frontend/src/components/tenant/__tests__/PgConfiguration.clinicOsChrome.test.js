@@ -45,22 +45,31 @@ describe('PgConfiguration Clinic-OS chrome', () => {
     expect(listCss).not.toMatch(/--ad-b0kla/);
   });
 
-  test('summary strip present (3-cell Clinic-OS, no icon tiles)', () => {
-    expect(listJs).toMatch(/pg-config-list-summary/);
-    expect(listJs).toMatch(/mapping-management-summary/);
-    expect(listJs).toMatch(/KpiNumeral/);
-    expect(listCss).toMatch(/\.pg-config-list-summary\.mapping-management-summary\s*\{[^}]*grid-template-columns:\s*repeat\(3/s);
-    expect(listCss).toMatch(/border-left:\s*none\s*!important/);
+  test('summary strip: 공통 SettingsSummaryStrip(3칸) + 빠른 필터는 TabChipRow', () => {
+    expect(listJs).toMatch(/<SettingsSummaryStrip[\s\S]*testId="pg-config-list-summary"/);
+    expect(listJs).toMatch(/<TabChipRow[\s\S]*onChange=\{handleSummaryFilter\}/);
+    expect(listJs).not.toMatch(/mapping-management-summary/);
+    expect(listJs).not.toMatch(/KpiNumeral/);
+    expect(listCss).not.toMatch(/mapping-management-summary/);
   });
 
-  test('main stage lives in a single SettingsSectionPanel (panel owns border/radius/surface)', () => {
+  test('main stage lives in a single SettingsSectionPanel — 내부 카드 없이 ListTableView 1개', () => {
     expect(listJs).toMatch(/<SettingsSectionPanel body="plain"[\s\S]*pg-config-list__stage/);
+    expect(listJs).toMatch(/<ListTableView[\s\S]*rowKeyField="configId"/);
+    expect(listJs).toMatch(/<EmptyState/);
+    expect(listJs).toMatch(/mg-v2-settings-toolbar/);
+    expect(listJs).not.toMatch(/pg-config-card|className="empty-state"|pending-notice|rejected-notice/);
+    expect(listJs).not.toMatch(/<MGButton/);
     const stageRule = listCss.match(/\.pg-config-list__stage\s*\{[^}]*\}/s);
     expect(stageRule).not.toBeNull();
     expect(stageRule[0]).not.toMatch(/border|box-shadow|background/);
     expect(listCss).not.toMatch(/\b1px\b/);
-    expect(listCss).toMatch(/border-inline-start:\s*var\(--mg-v2-border-width-thin\) solid var\(--mg-v2-color-neutral-300\)/);
+    expect(listCss).not.toMatch(/border(-[a-z-]+)?:|border-radius|box-shadow/);
     expect(formCss).toMatch(/\.pg-config-form-stage\s*\{[^}]*min-height:\s*36rem/s);
+  });
+
+  test('목록 상점 ID는 상세와 같이 마스킹', () => {
+    expect(listJs).toMatch(/maskPortoneChannelKey\(config\.storeId\)/);
   });
 
   test('route param uses :id (Edit/Detail)', () => {
@@ -82,23 +91,25 @@ describe('PgConfiguration Clinic-OS chrome', () => {
     expect(formJs).not.toMatch(/htmlFor="portoneWebhookSecret">\{PORTONE_SETTINGS_KEY_WEBHOOK_SECRET\}/);
   });
 
-  test('Detail exposes webhook secret section with configured badge and patch save', () => {
+  test('Detail webhook section: 설정 여부 배지 + 운영자 전용 안내만 (입력·저장은 테넌트 화면에서 숨김)', () => {
     expect(detailJs).toMatch(/ADMIN_SHOP_PG_COPY\.WEBHOOK_TITLE/);
     expect(detailJs).toMatch(/isPortoneWebhookSecretConfigured/);
-    expect(detailJs).toMatch(/patchPgConfigurationWebhookSecret/);
     expect(detailJs).toMatch(/ADMIN_SHOP_PG_COPY\.WEBHOOK_SET/);
     expect(detailJs).toMatch(/ADMIN_SHOP_PG_COPY\.WEBHOOK_UNSET/);
-    expect(detailJs).toMatch(/type="password"/);
+    expect(detailJs).toMatch(/<SettingsNotice tone="info">[\s\S]{0,120}WEBHOOK_OPS_ONLY_NOTICE/);
+    expect(detailJs).not.toMatch(/patchPgConfigurationWebhookSecret/);
+    expect(detailJs).not.toMatch(/type="password"/);
   });
 
-  test('Detail (결제 연결): 배지 1개 · 헤더 primary는 수정 하나 · 웹훅 저장은 secondary · IAMPORT 문구 없음', () => {
+  test('Detail (결제 연결): 배지 1개 · 헤더 primary는 수정 하나 · 공통 요약/표/버튼 · IAMPORT 문구 없음', () => {
     const primaryCount = (detailJs.match(/variant="primary"/g) || []).length;
     expect(primaryCount).toBe(1);
     expect(detailJs).toMatch(/ADMIN_SHOP_SUITE_TEST_IDS\.PG_EDIT/);
-    expect(detailJs).toMatch(/variant="secondary"[\s\S]{0,700}ADMIN_SHOP_SUITE_TEST_IDS\.PG_WEBHOOK_SAVE/);
     expect(detailJs).toMatch(/resolvePgBadge/);
-    expect(detailJs).toMatch(/admin-shop-suite__keystrip/);
-    expect(detailJs).toMatch(/admin-shop-suite__layout--pg/);
+    expect(detailJs).toMatch(/<SettingsSummaryStrip[\s\S]{0,200}ADMIN_SHOP_SUITE_TEST_IDS\.PG_KEYSTRIP/);
+    expect(detailJs).toMatch(/pg-config-detail__layout/);
+    expect(detailJs).toMatch(/<ListTableView[\s\S]{0,200}HISTORY_COLUMNS/);
+    expect(detailJs).not.toMatch(/admin-shop-suite__|<table|<MGButton|AdminShopSuite\.css/);
     expect(detailJs).toMatch(/ADMIN_SHOP_PG_HISTORY_PREVIEW/);
     expect(detailJs).not.toMatch(/['"]IAMPORT['"]/);
     expect(detailJs).not.toMatch(/className="pg-config-detail pg-config-detail__body"/);

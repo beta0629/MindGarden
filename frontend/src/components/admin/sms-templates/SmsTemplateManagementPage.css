@@ -47,12 +47,6 @@
 }
 
 .mg-admin-sms-template__items {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: var(--mg-v2-space-2);
   max-height: 60vh;
   overflow-y: auto;
 }
@@ -63,20 +57,16 @@
   text-align: center;
 }
 
-.mg-admin-sms-template__item {
-  display: flex;
-  flex-direction: column;
-}
-
 .mg-admin-sms-template__item-button {
-  flex: 1;
+  flex: 1 1 100%;
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: var(--mg-v2-space-1);
-  padding: var(--mg-v2-space-2) var(--mg-v2-space-3);
-  background: var(--mg-v2-color-surface-card);
-  border: var(--mg-v2-border-width-thin) solid var(--mg-v2-color-border-default);
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--mg-v2-space-1) var(--mg-v2-space-2);
+  min-width: 0;
+  padding: var(--mg-v2-space-2);
+  background: transparent;
+  border: none;
   border-radius: var(--mg-v2-radius-sm);
   cursor: pointer;
   text-align: left;
@@ -89,11 +79,11 @@
 }
 
 .mg-admin-sms-template__item--selected .mg-admin-sms-template__item-button {
-  border-color: var(--mg-v2-color-primary-main);
   background: var(--mg-v2-color-primary-subtle);
 }
 
 .mg-admin-sms-template__item-label {
+  flex: 1 1 100%;
   font-weight: var(--mg-v2-font-weight-medium);
   font-size: var(--mg-v2-font-size-body-md);
 }
@@ -101,15 +91,6 @@
 .mg-admin-sms-template__item-key {
   font-size: var(--mg-v2-font-size-caption);
   color: var(--mg-v2-color-text-tertiary);
-}
-
-.mg-admin-sms-template__item-badge {
-  font-size: var(--mg-v2-font-size-caption);
-  padding: var(--mg-v2-space-1) var(--mg-v2-space-2);
-  border-radius: var(--mg-v2-radius-sm);
-  background: var(--mg-v2-color-neutral-100);
-  color: var(--mg-v2-color-text-primary);
-  border: var(--mg-v2-border-width-thin) solid var(--mg-v2-color-border-default);
 }
 
 /* audience (수신 대상) Pill — 상담사/내담자/양쪽/관리자/시스템 시각 구분 */
@@ -168,32 +149,7 @@
   flex-wrap: wrap;
 }
 
-/* 발송 조건 (trigger) — 디테일 헤더 강조 배너 + 리스트 한 줄 요약 */
-.mg-admin-sms-template__trigger-banner {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--mg-v2-space-2);
-  margin-top: var(--mg-v2-space-1);
-  padding: var(--mg-v2-space-2) var(--mg-v2-space-3);
-  background: var(--mg-v2-color-semantic-info-light);
-  border: var(--mg-v2-border-width-thin) solid var(--mg-v2-color-semantic-info-light);
-  border-radius: var(--mg-v2-radius-sm);
-  font-size: var(--mg-v2-font-size-body-md);
-  line-height: 1.4;
-  color: var(--mg-v2-color-text-primary);
-}
-
-.mg-admin-sms-template__trigger-label {
-  flex-shrink: 0;
-  font-weight: var(--mg-v2-font-weight-semibold);
-  color: var(--mg-v2-color-semantic-info-dark);
-}
-
-.mg-admin-sms-template__trigger-value {
-  flex: 1;
-  word-break: keep-all;
-}
-
+/* 발송 조건 (trigger) — 리스트 한 줄 요약 */
 .mg-admin-sms-template__item-trigger {
   display: block;
   width: 100%;
@@ -255,7 +211,6 @@
 
 .mg-admin-sms-template__global-content {
   background: var(--mg-v2-color-neutral-100);
-  border: var(--mg-v2-border-width-thin) solid var(--mg-v2-color-border-light);
   border-radius: var(--mg-v2-radius-sm);
   padding: var(--mg-v2-space-3);
   white-space: pre-wrap;
@@ -266,7 +221,6 @@
 
 .mg-admin-sms-template__preview-output {
   background: var(--mg-v2-color-neutral-100);
-  border: var(--mg-v2-border-width-thin) solid var(--mg-v2-color-border-light);
   border-radius: var(--mg-v2-radius-sm);
   padding: var(--mg-v2-space-3);
   white-space: pre-wrap;
@@ -280,15 +234,6 @@
   margin: 0;
   font-size: var(--mg-v2-font-size-caption);
   color: var(--mg-v2-color-text-secondary);
-}
-
-.mg-admin-sms-template__banner {
-  background: var(--mg-v2-color-semantic-warning-light);
-  color: var(--mg-v2-color-text-primary);
-  border: var(--mg-v2-border-width-thin) solid var(--mg-v2-color-semantic-warning);
-  border-radius: var(--mg-v2-radius-md);
-  padding: var(--mg-v2-space-3) var(--mg-v2-space-4);
-  font-size: var(--mg-v2-font-size-body-md);
 }
 
 .mg-admin-sms-template__template-toggle {
@@ -306,25 +251,5 @@
 
 .mg-admin-sms-template__template-toggle-label {
   font-size: var(--mg-v2-font-size-body-md);
-  color: var(--mg-v2-color-text-secondary);
-}
-
-.mg-admin-sms-template__dispatch-badge {
-  display: inline-flex;
-  align-items: center;
-  margin-left: var(--mg-v2-space-1);
-  padding: var(--mg-v2-space-1) var(--mg-v2-space-2);
-  border-radius: var(--mg-v2-radius-pill);
-  font-size: var(--mg-v2-font-size-caption);
-  font-weight: var(--mg-v2-font-weight-semibold);
-}
-
-.mg-admin-sms-template__dispatch-badge--on {
-  background: var(--mg-v2-color-semantic-success-light);
-  color: var(--mg-v2-color-semantic-success-dark);
-}
-
-.mg-admin-sms-template__dispatch-badge--off {
-  background: var(--mg-v2-color-neutral-100);
   color: var(--mg-v2-color-text-secondary);
 }

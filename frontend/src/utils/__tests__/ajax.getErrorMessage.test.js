@@ -46,11 +46,30 @@ describe('ajax getErrorMessage / handleError', () => {
     expect(getErrorMessage(502)).not.toBe(API_ERROR_MESSAGES.NETWORK_ERROR);
   });
 
-  test('getErrorMessage: 401/403/404 는 기존 메시지, 그 외 4xx 는 NETWORK_ERROR', () => {
+  test('getErrorMessage: 401/403/404 는 기존 메시지, 그 외 4xx 는 REQUEST_FAILED(응답이 있으므로 네트워크 문구 아님)', () => {
     expect(getErrorMessage(API_STATUS.UNAUTHORIZED)).toBe(API_ERROR_MESSAGES.UNAUTHORIZED);
     expect(getErrorMessage(API_STATUS.FORBIDDEN)).toBe(API_ERROR_MESSAGES.FORBIDDEN);
     expect(getErrorMessage(API_STATUS.NOT_FOUND)).toBe(API_ERROR_MESSAGES.NOT_FOUND);
-    expect(getErrorMessage(API_STATUS.BAD_REQUEST)).toBe(API_ERROR_MESSAGES.NETWORK_ERROR);
+    expect(getErrorMessage(API_STATUS.BAD_REQUEST)).toBe(API_ERROR_MESSAGES.REQUEST_FAILED);
+    expect(getErrorMessage(API_STATUS.CONFLICT)).toBe(API_ERROR_MESSAGES.REQUEST_FAILED);
+    expect(getErrorMessage(API_STATUS.CONFLICT)).not.toBe(API_ERROR_MESSAGES.NETWORK_ERROR);
+  });
+
+  test('getErrorMessage: status 가 없으면(응답 없음) NETWORK_ERROR', () => {
+    expect(getErrorMessage(undefined)).toBe(API_ERROR_MESSAGES.NETWORK_ERROR);
+    expect(getErrorMessage(0)).toBe(API_ERROR_MESSAGES.NETWORK_ERROR);
+  });
+
+  test('handleError: body 의 서버 message 를 우선하고 response.data 로 부착한다', () => {
+    const body = { success: false, message: '이미 확정된 급여입니다.' };
+    try {
+      handleError(new Error('x'), API_STATUS.CONFLICT, body);
+      throw new Error('should throw');
+    } catch (err) {
+      expect(err.message).toBe('이미 확정된 급여입니다.');
+      expect(err.status).toBe(API_STATUS.CONFLICT);
+      expect(err.response).toEqual({ status: API_STATUS.CONFLICT, data: body });
+    }
   });
 
   test('handleError: throw 한 Error 에 status 가 붙는다', () => {

@@ -20,7 +20,8 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import AdminCommonLayout from '../../layout/AdminCommonLayout';
-import { SettingsButton, SettingsPageShell, SettingsSectionPanel } from '../settings-shell';
+import { SettingsButton, SettingsNotice, SettingsPageShell, SettingsSectionPanel } from '../settings-shell';
+import StatusBadge from '../../common/StatusBadge';
 import UnifiedLoading from '../../common/UnifiedLoading';
 import UnifiedModal from '../../common/modals/UnifiedModal';
 import ActionBar from '../../common/ActionBar';
@@ -308,13 +309,9 @@ const SmsTemplateManagementPage = () => {
     <AdminCommonLayout title={pageTitle} className="mg-v2-dashboard-layout">
       <div className="mg-admin-sms-template sms-template--clinic-os" data-testid="admin-sms-template-page">
         <SettingsPageShell title={pageTitle} titleId={PAGE_TITLE_ID} ariaLabel={pageTitle}>
-          <aside
-            className="mg-admin-sms-template__banner"
-            data-testid="sms-template-gate-banner"
-            role="note"
-          >
+          <SettingsNotice tone="warning" testId="sms-template-gate-banner">
             {t('smsTemplate.banner.gateNotice')}
-          </aside>
+          </SettingsNotice>
 
           <SettingsSectionPanel
             testId="sms-template-global-toggle"
@@ -369,7 +366,7 @@ const SmsTemplateManagementPage = () => {
                     <UnifiedLoading text={t('common:loading')} />
                   ) : (
                     <ul
-                      className="mg-admin-sms-template__items"
+                      className="mg-v2-settings-list mg-admin-sms-template__items"
                       data-testid="sms-template-items"
                     >
                       {filteredItems.length === 0 && (
@@ -380,7 +377,7 @@ const SmsTemplateManagementPage = () => {
                       {filteredItems.map((item) => (
                         <li
                           key={item.key}
-                          className={`mg-admin-sms-template__item${
+                          className={`mg-v2-settings-list__row mg-admin-sms-template__item${
                             selectedKey === item.key
                               ? ' mg-admin-sms-template__item--selected'
                               : ''
@@ -390,6 +387,7 @@ const SmsTemplateManagementPage = () => {
                             type="button"
                             className="mg-admin-sms-template__item-button"
                             onClick={() => setSelectedKey(item.key)}
+                            aria-pressed={selectedKey === item.key}
                             data-testid={`sms-template-item-${item.key}`}
                           >
                             <span className="mg-admin-sms-template__item-label">
@@ -405,9 +403,9 @@ const SmsTemplateManagementPage = () => {
                               {t(`smsTemplate.audience.${audienceVariantOf(item.audience)}`)}
                             </span>
                             {item.tenantOverride && (
-                              <span className="mg-admin-sms-template__item-badge">
+                              <StatusBadge variant="info">
                                 {t('smsTemplate.list.overrideBadge')}
-                              </span>
+                              </StatusBadge>
                             )}
                             {item.trigger && (
                               <span
@@ -418,18 +416,14 @@ const SmsTemplateManagementPage = () => {
                                 {t('smsTemplate.editor.triggerLabel')}: {item.trigger}
                               </span>
                             )}
-                            <span
-                              className={`mg-admin-sms-template__dispatch-badge${
-                                item.effectiveDispatchEnabled
-                                  ? ' mg-admin-sms-template__dispatch-badge--on'
-                                  : ' mg-admin-sms-template__dispatch-badge--off'
-                              }`}
+                            <StatusBadge
+                              variant={item.effectiveDispatchEnabled ? 'success' : 'neutral'}
                               data-testid={`sms-template-dispatch-badge-${item.key}`}
                             >
                               {item.effectiveDispatchEnabled
                                 ? t('smsTemplate.dispatch.badge.on')
                                 : t('smsTemplate.dispatch.badge.off')}
-                            </span>
+                            </StatusBadge>
                           </button>
                           <div
                             className={`mg-admin-sms-template__template-toggle${
@@ -487,18 +481,16 @@ const SmsTemplateManagementPage = () => {
                           </span>
                         </div>
                         {selectedItem.trigger && (
-                          <div
-                            className="mg-admin-sms-template__trigger-banner"
-                            data-testid={`sms-template-trigger-detail-${selectedItem.key}`}
-                            role="note"
+                          <SettingsNotice
+                            tone="info"
+                            testId={`sms-template-trigger-detail-${selectedItem.key}`}
                           >
-                            <strong className="mg-admin-sms-template__trigger-label">
-                              {t('smsTemplate.editor.triggerLabel')}
-                            </strong>
-                            <span className="mg-admin-sms-template__trigger-value">
+                            <p>
+                              <strong>{t('smsTemplate.editor.triggerLabel')}</strong>
+                              {' '}
                               {selectedItem.trigger}
-                            </span>
-                          </div>
+                            </p>
+                          </SettingsNotice>
                         )}
                         <p className="mg-admin-sms-template__editor-description">
                           {selectedItem.description}

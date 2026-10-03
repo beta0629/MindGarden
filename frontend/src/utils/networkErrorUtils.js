@@ -13,6 +13,9 @@ export const isTransientNetworkError = (err) => {
   if (typeof status === 'number' && status >= API_STATUS.INTERNAL_SERVER_ERROR) {
     return false;
   }
+  if (err.isNetworkError === true) {
+    return true;
+  }
   const name = err.name || '';
   const msg = String(err.message || '');
   // AbortSignal.timeout() 은 AbortError 가 아닌 TimeoutError 로 reject 한다 (세션 확인 타임아웃)

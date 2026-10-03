@@ -28,6 +28,7 @@ import {
   resolvePackagePaymentSourceBadgeVariant
 } from '../../../constants/packagePaymentHistory';
 import notificationManager from '../../../utils/notification';
+import { isCardPaymentMethod } from '../../../utils/paymentMethodSsot';
 import { toDisplayString, toSafeNumber } from '../../../utils/safeDisplay';
 import StandardizedApi from '../../../utils/standardizedApi';
 import './PackagePaymentHistoryList.css';
@@ -294,7 +295,7 @@ const PackagePaymentHistoryList = ({
                           <SafeText>{toDisplayString(item.paymentMethod, '')}</SafeText>
                         </span>
                       )}
-                      {item?.paymentReference && (
+                      {item?.paymentReference && isCardPaymentMethod(item?.paymentMethod) && (
                         <span>
                           <SafeText>
                             {`${PACKAGE_PAYMENT_HISTORY_UI.REFERENCE_PREFIX} ${toDisplayString(item.paymentReference, '')}`}

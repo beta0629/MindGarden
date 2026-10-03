@@ -203,7 +203,7 @@ describe('CheckoutSameDayModal — 옵션 B 당일 카드 결제 모달', () => 
     expect(other).not.toBeChecked();
   });
 
-  test('BANK_TRANSFER 선택 → submit 시 payload paymentMethod: BANK_TRANSFER', async () => {
+  test('BANK_TRANSFER 선택 → 승인번호 행 숨김 + payload paymentMethod: BANK_TRANSFER · 자동 참조번호', async () => {
     const onCheckoutCompleted = jest.fn();
     render(
       <CheckoutSameDayModal
@@ -218,8 +218,7 @@ describe('CheckoutSameDayModal — 옵션 B 당일 카드 결제 모달', () => 
     });
 
     fireEvent.click(screen.getByDisplayValue('BANK_TRANSFER'));
-    const referenceInput = screen.getByLabelText('admin:mapping.checkout.sameDay.paymentReference.label');
-    fireEvent.change(referenceInput, { target: { value: 'BANK-REF-1' } });
+    expect(screen.queryByLabelText('admin:mapping.checkout.sameDay.paymentReference.label')).toBeNull();
 
     await act(async () => {
       fireEvent.click(screen.getByText('admin:mapping.checkout.sameDay.submit'));
@@ -229,7 +228,7 @@ describe('CheckoutSameDayModal — 옵션 B 당일 카드 결제 모달', () => 
     const [calledPath, calledPayload] = mockStandardizedApi.post.mock.calls[0];
     expect(calledPath).toBe('/api/v1/admin/mappings/1001/checkout-same-day');
     expect(calledPayload.paymentMethod).toBe('BANK_TRANSFER');
-    expect(calledPayload.paymentReference).toBe('BANK-REF-1');
+    expect(calledPayload.paymentReference).toMatch(/^BANK_\d{8}_\d{6}$/);
     expect(calledPayload.paymentAmount).toBe(500000);
     expect(mockNotificationManager.success).toHaveBeenCalled();
     expect(onCheckoutCompleted).toHaveBeenCalledTimes(1);
@@ -298,8 +297,7 @@ describe('CheckoutSameDayModal — 옵션 B 당일 카드 결제 모달', () => 
     });
     expect(screen.getByDisplayValue('CREDIT_CARD')).not.toBeChecked();
     expect(screen.getByTestId('checkout-same-day-summary-method')).toHaveTextContent('계좌이체');
-    const referenceInput = screen.getByLabelText('admin:mapping.checkout.sameDay.paymentReference.label');
-    expect(referenceInput.value).toMatch(/^BANK_\d{8}_\d{6}$/);
+    expect(screen.queryByLabelText('admin:mapping.checkout.sameDay.paymentReference.label')).toBeNull();
 
     await act(async () => {
       fireEvent.click(screen.getByText('admin:mapping.checkout.sameDay.submit'));
@@ -340,7 +338,7 @@ describe('CheckoutSameDayModal — 옵션 B 당일 카드 결제 모달', () => 
     });
   });
 
-  test('결제 방식 변경 시 참조번호를 배정 생성과 같은 규칙으로 재생성(CASH_ / BANK_)', async () => {
+  test('결제 승인번호 행은 카드(공통코드 cardMerchantFeeEligible)일 때만 — 현금·계좌이체·기타는 숨기고 자동 참조번호(CASH_ / BANK_) 전송', async () => {
     mockGetTenantCodes.mockResolvedValue(SSOT_PAYMENT_METHOD_CODES);
     render(
       <CheckoutSameDayModal isOpen onClose={jest.fn()} mapping={baseMapping} onCheckoutCompleted={jest.fn()} />
@@ -348,11 +346,16 @@ describe('CheckoutSameDayModal — 옵션 B 당일 카드 결제 모달', () => 
     await waitFor(() => {
       expect(screen.getByDisplayValue('CASH')).toBeInTheDocument();
     });
-    const referenceInput = screen.getByLabelText('admin:mapping.checkout.sameDay.paymentReference.label');
+    const referenceLabel = 'admin:mapping.checkout.sameDay.paymentReference.label';
+    expect(screen.getByLabelText(referenceLabel)).toBeInTheDocument();
+    fireEvent.click(screen.getByDisplayValue('DEBIT_CARD'));
+    expect(screen.getByLabelText(referenceLabel)).toBeInTheDocument();
     fireEvent.click(screen.getByDisplayValue('CASH'));
-    expect(referenceInput.value).toMatch(/^CASH_\d{8}_\d{6}$/);
+    expect(screen.queryByLabelText(referenceLabel)).toBeNull();
     fireEvent.click(screen.getByDisplayValue('BANK_TRANSFER'));
-    expect(referenceInput.value).toMatch(/^BANK_\d{8}_\d{6}$/);
+    expect(screen.queryByLabelText(referenceLabel)).toBeNull();
+    fireEvent.click(screen.getByDisplayValue('OTHER'));
+    expect(screen.queryByLabelText(referenceLabel)).toBeNull();
 
     fireEvent.click(screen.getByDisplayValue('CASH'));
     await act(async () => {
@@ -700,6 +703,35 @@ describe('CheckoutSameDayModal — 옵션 B 당일 카드 결제 모달', () => 
       sameDaySessionScheduleId: null
     });
     expect(onCheckoutCompleted).toHaveBeenCalledTimes(1);
+  });
+
+  test('confirm-activate: 카드에서 입력한 승인번호는 계좌이체로 바꾸면 행이 사라지고 전송되지 않는다', async () => {
+    const { CHECKOUT_MODAL_MODE_CONFIRM_ACTIVATE } = require('../CheckoutSameDayModal');
+    mockGetTenantCodes.mockResolvedValue(SSOT_PAYMENT_METHOD_CODES);
+    render(
+      <CheckoutSameDayModal
+        isOpen
+        onClose={jest.fn()}
+        mapping={baseMapping}
+        onCheckoutCompleted={jest.fn()}
+        mode={CHECKOUT_MODAL_MODE_CONFIRM_ACTIVATE}
+      />
+    );
+    await waitFor(() => {
+      expect(screen.getByDisplayValue('BANK_TRANSFER')).toBeInTheDocument();
+    });
+    const referenceLabel = 'admin:mapping.checkout.confirmAndActivate.paymentReference.label';
+    fireEvent.change(screen.getByLabelText(referenceLabel), { target: { value: 'APPROVAL-TYPED-1' } });
+    fireEvent.click(screen.getByDisplayValue('BANK_TRANSFER'));
+    expect(screen.queryByLabelText(referenceLabel)).toBeNull();
+
+    await act(async () => {
+      fireEvent.click(screen.getByText('admin:mapping.checkout.confirmAndActivate.submit'));
+    });
+    const [, calledPayload] = mockStandardizedApi.post.mock.calls[0];
+    expect(calledPayload.paymentMethod).toBe('BANK_TRANSFER');
+    expect(calledPayload.paymentReference).not.toBe('APPROVAL-TYPED-1');
+    expect(calledPayload.paymentReference).toMatch(/^PAY_\d{8}_\d{6}$/);
   });
 
   test('same-day mode (paymentTiming SAME_DAY_CARD path) → checkout-same-day endpoint', async () => {

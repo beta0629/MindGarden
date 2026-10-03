@@ -1,63 +1,17 @@
 /**
- * PushMonitorTenantSnapshotTable 스타일.
+ * PushMonitorTenantSnapshotTable — 키-값 크롬은 settings-shell(`mg-v2-settings-kv`) 소유.
  *
  * @since 2026-06-07
+ * @updated 2026-10-03 — 테두리 카드·행 그리드 제거, settings kv 이관
  */
 
 .mg-push-monitor__snapshot-table {
-  background: var(--mg-v2-color-neutral-50);
-  border: 1px solid var(--mg-v2-color-neutral-300);
-  border-radius: var(--mg-v2-radius-md);
-  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-v2-space-3);
+  min-width: 0;
 }
 
-.mg-push-monitor__snapshot-row {
-  display: grid;
-  grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
-  align-items: center;
-  gap: var(--mg-spacing-md, 1rem);
-  padding: var(--mg-spacing-sm, 0.5rem) var(--mg-spacing-md, 1rem);
-  border-bottom: 1px solid var(--mg-v2-color-neutral-300);
-}
-
-.mg-push-monitor__snapshot-row:last-child {
-  border-bottom: none;
-}
-
-.mg-push-monitor__snapshot-row__label {
-  font-size: var(--mg-font-size-sm, 0.875rem);
-  color: var(--mg-v2-color-text-secondary);
-}
-
-.mg-push-monitor__snapshot-row__value {
-  font-size: var(--mg-font-size-sm, 0.875rem);
-  font-weight: 500;
-  color: var(--mg-v2-color-text-primary);
-  text-align: right;
-}
-
-.mg-push-monitor__snapshot-row__numeric {
+.mg-push-monitor__snapshot-numeric {
   font-variant-numeric: tabular-nums;
-}
-
-.mg-push-monitor__snapshot-row__toggles {
-  font-variant-numeric: tabular-nums;
-}
-
-.mg-push-monitor__snapshot-table__empty {
-  padding: var(--mg-spacing-md, 1rem);
-  text-align: center;
-  font-size: var(--mg-font-size-xs, 0.75rem);
-  color: var(--mg-v2-color-text-secondary);
-}
-
-@media (max-width: 767px) {
-  .mg-push-monitor__snapshot-row {
-    grid-template-columns: minmax(0, 1fr);
-    gap: var(--mg-spacing-xs, 0.25rem);
-  }
-
-  .mg-push-monitor__snapshot-row__value {
-    text-align: left;
-  }
 }

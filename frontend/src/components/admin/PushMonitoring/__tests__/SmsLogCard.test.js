@@ -14,7 +14,7 @@
  */
 
 import React from 'react';
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 
 jest.mock('../../../../api/admin/pushMonitoringApi', () => {
   const actual = jest.requireActual('../../../../api/admin/pushMonitoringApi');
@@ -82,7 +82,8 @@ describe('SmsLogCard', () => {
       })
     ]));
     await renderCard();
-    const rows = await screen.findAllByTestId('sms-log-row');
+    const table = within(await screen.findByTestId('sms-log-table')).getByRole('table');
+    const rows = within(table).getAllByRole('row').slice(1);
     expect(rows.length).toBe(2);
     expect(screen.getByText(ADMIN_WEB_SCAFFOLD_COPY.PUSH_MONITOR_CHANNEL_SMS)).toBeInTheDocument();
     expect(screen.getByText(ADMIN_WEB_SCAFFOLD_COPY.PUSH_MONITOR_CHANNEL_ALIMTALK)).toBeInTheDocument();
@@ -107,7 +108,8 @@ describe('SmsLogCard', () => {
     const alert = await screen.findByTestId('sms-log-card-error');
     expect(alert).toBeInTheDocument();
     expect(alert.textContent).toEqual(expect.stringContaining('Network down'));
-    expect(screen.queryAllByTestId('sms-log-row').length).toBe(0);
+    expect(screen.queryByTestId('sms-log-table')).not.toBeInTheDocument();
+    expect(screen.queryAllByRole('row').length).toBe(0);
   });
 
   test('S5: 새로고침 클릭 시 재호출', async () => {

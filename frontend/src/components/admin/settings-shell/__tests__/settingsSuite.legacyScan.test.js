@@ -1,7 +1,8 @@
 /**
  * 설정 화면 16종 레거시 크롬 스캔 — 아래 패턴이 다시 들어오면 실패한다.
  * (구 ContentHeader/ContentSection, mg-action-btn, b0kla 카드, alert alert-danger,
- *  Bootstrap form-control/form-select, Tailwind gray 입력, 구 teal-700 원색·primary-solid)
+ *  Bootstrap form-control/form-select, Tailwind gray 입력, 구 teal-700 원색·primary-solid,
+ *  raw 표 태그·role 표 div 그리드, 쇼핑 스위트 BEM, SettingsButton 우회 MGButton 직사용)
  */
 
 const LEGACY_TEAL_700_HEX = ['0f', '76', '6e'].join('');
@@ -36,8 +37,12 @@ const SETTINGS_SCAN_TARGETS = [
   'components/admin/AdminKakaoAlimtalkSettingsPage.css',
   'components/admin/AdminTenantSmsSettingsPage.js',
   'components/admin/AdminTenantSmsSettingsPage.css',
-  'components/admin/AdminShopProductsPage.js'
+  'components/admin/AdminShopProductsPage.js',
+  'components/admin/AdminShopProductsPage.css'
 ];
+
+/** 패턴별 예외 파일 — 공통 래퍼 자신만 허용한다 */
+const SETTINGS_BUTTON_WRAPPER = 'components/admin/settings-shell/SettingsButton.js';
 
 const LEGACY_PATTERNS = [
   { name: '구 ContentHeader', re: /\bContentHeader\b/ },
@@ -50,7 +55,15 @@ const LEGACY_PATTERNS = [
   { name: 'Bootstrap form-select', re: /(?<![\w-])form-select(?![\w-])/ },
   { name: 'Tailwind gray', re: /(?<![\w-])(?:bg|text|border|ring|placeholder)-gray-\d{2,3}\b/ },
   { name: '구 teal-700 원색', re: new RegExp(`#${LEGACY_TEAL_700_HEX}`, 'i') },
-  { name: '구 teal-700 토큰(primary-solid·cs-teal-700)', re: /primary-solid|cs-teal-700/ }
+  { name: '구 teal-700 토큰(primary-solid·cs-teal-700)', re: /primary-solid|cs-teal-700/ },
+  { name: 'raw <table> (ListTableView 사용)', re: /<table\b/ },
+  { name: 'role="table" div 그리드 (ListTableView 사용)', re: /role=["']table["']/ },
+  { name: '쇼핑 스위트 BEM(admin-shop-suite__)', re: /admin-shop-suite__/ },
+  {
+    name: 'MGButton 직사용 (SettingsButton 사용)',
+    re: /<MGButton\b/,
+    allow: [SETTINGS_BUTTON_WRAPPER]
+  }
 ];
 
 const NON_TEXT_INPUT_TYPE = /type=["'{](?:checkbox|radio|hidden|file|color|range)["'}]/;
@@ -92,9 +105,10 @@ describe('설정 화면 레거시 크롬 스캔', () => {
     expect(files.length).toBeGreaterThan(SETTINGS_SCAN_TARGETS.length);
   });
 
-  it.each(LEGACY_PATTERNS.map((p) => [p.name, p.re]))('%s 패턴이 없다', (name, re) => {
+  it.each(LEGACY_PATTERNS.map((p) => [p.name, p.re, p.allow || []]))('%s 패턴이 없다', (name, re, allow) => {
     const hits = [];
-    files.forEach((file) => {
+    const allowed = new Set(allow.map((rel) => path.join(SRC, rel)));
+    files.filter((file) => !allowed.has(file)).forEach((file) => {
       fs.readFileSync(file, 'utf8')
         .split('\n')
         .forEach((line, idx) => {
@@ -136,11 +150,27 @@ describe('설정 화면 레거시 크롬 스캔', () => {
       'className="form-select"',
       'className="border-gray-300"',
       `color: #${LEGACY_TEAL_700_HEX};`,
-      'background: var(--mg-v2-color-primary-solid);'
+      'background: var(--mg-v2-color-primary-solid);',
+      '<table className="x">',
+      '<div role="table" aria-label="x">',
+      'className="admin-shop-suite__toolbar"',
+      '<MGButton variant="primary">'
     ];
+    expect(sample).toHaveLength(LEGACY_PATTERNS.length);
     LEGACY_PATTERNS.forEach((p, i) => {
       expect(p.re.test(sample[i])).toBe(true);
     });
     expect(LEGACY_PATTERNS.some((p) => p.re.test('className="mg-v2-form-input"'))).toBe(false);
+    ['<ListTableView columns={c} />', '<SettingsButton variant="primary">', "import './AdminShopSuite.css';"]
+      .forEach((ok) => {
+        expect(LEGACY_PATTERNS.some((p) => p.re.test(ok))).toBe(false);
+      });
+  });
+
+  it('MGButton 예외는 SettingsButton 래퍼 한 파일뿐이다', () => {
+    const mgButton = LEGACY_PATTERNS.find((p) => p.allow);
+    expect(mgButton.allow).toEqual([SETTINGS_BUTTON_WRAPPER]);
+    expect(fs.existsSync(path.join(SRC, SETTINGS_BUTTON_WRAPPER))).toBe(true);
+    expect(fs.readFileSync(path.join(SRC, SETTINGS_BUTTON_WRAPPER), 'utf8')).toMatch(mgButton.re);
   });
 });

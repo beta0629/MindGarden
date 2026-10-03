@@ -1,7 +1,7 @@
 /**
  * 어드민 SMS·카카오 알림톡 수동 일괄 발송 폼 (Organism).
  *
- * - 채널: SMS / 알림톡 (`BadgeSelect`)
+ * - 채널: SMS / 알림톡 (`TabChipRow`)
  * - 수신자: `RecipientPicker` 분자 (50명 상한)
  * - 알림톡: 템플릿 선택(공통코드/라이브 토글) + 변수 입력 + 본문 미리보기
  *   (회귀 방지를 위해 `TestNotificationForm` 의 알림톡 섹션 UX 를 동일 구조로 차용)
@@ -25,8 +25,9 @@
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { SettingsButton, SettingsSectionPanel } from '../settings-shell';
-import BadgeSelect from '../../common/BadgeSelect';
+import { SettingsButton, SettingsNotice, SettingsSectionPanel } from '../settings-shell';
+import TabChipRow from '../../common/TabChipRow';
+import StatusBadge from '../../common/StatusBadge';
 import SettingSwitchRow from '../../common/molecules/SettingSwitchRow';
 import UnifiedModal from '../../common/modals/UnifiedModal';
 import { toDisplayString } from '../../../utils/safeDisplay';
@@ -392,9 +393,9 @@ const ManualNotificationForm = ({ onBatchSent }) => {
   };
 
   const channelOptions = useMemo(() => [
-    { value: MANUAL_NOTIFICATION_CHANNEL.SMS, label: t('manualNotification.channel.sms', 'SMS') },
-    { value: MANUAL_NOTIFICATION_CHANNEL.ALIMTALK, label: t('manualNotification.channel.alimtalk') },
-    { value: MANUAL_NOTIFICATION_CHANNEL.PUSH, label: t('manualNotification.channel.push') }
+    { key: MANUAL_NOTIFICATION_CHANNEL.SMS, label: t('manualNotification.channel.sms', 'SMS') },
+    { key: MANUAL_NOTIFICATION_CHANNEL.ALIMTALK, label: t('manualNotification.channel.alimtalk') },
+    { key: MANUAL_NOTIFICATION_CHANNEL.PUSH, label: t('manualNotification.channel.push') }
   ], [t]);
 
   const channelLabel = useMemo(() => {
@@ -472,29 +473,24 @@ const ManualNotificationForm = ({ onBatchSent }) => {
 
   return (
     <article className={FORM_CLASS} aria-label={t('manualNotification.page.title')}>
-      <section className={`${FORM_CLASS}__warning`} role="note">
-        <p className={`${FORM_CLASS}__warning-text`}>
-          {t('manualNotification.page.warningActualSend')}
-        </p>
-        <p className={`${FORM_CLASS}__warning-link-text`}>
-          <a
-            className={`${FORM_CLASS}__warning-link`}
-            href={ADMIN_ROUTES_TEST_NOTIFICATION}
-          >
+      <SettingsNotice tone="danger" role="note" testId="manual-notif-actual-send-warning">
+        <p><strong>{t('manualNotification.page.warningActualSend')}</strong></p>
+        <p>
+          <a href={ADMIN_ROUTES_TEST_NOTIFICATION}>
             {t('manualNotification.page.testLinkText')}
           </a>
         </p>
-      </section>
+      </SettingsNotice>
 
       <SettingsSectionPanel
         headingLevel={3}
         title={t('manualNotification.channel.label')}
       >
-        <BadgeSelect
-          options={channelOptions}
-          value={channel}
+        <TabChipRow
+          items={channelOptions}
+          activeKey={channel}
           onChange={(val) => setChannel(val)}
-          aria-label={t('manualNotification.channel.label')}
+          ariaLabel={t('manualNotification.channel.label')}
         />
       </SettingsSectionPanel>
 
@@ -612,9 +608,9 @@ const ManualNotificationForm = ({ onBatchSent }) => {
       )}
 
       {channel === MANUAL_NOTIFICATION_CHANNEL.PUSH && (
-        <p className={`${FORM_CLASS}__hint ${FORM_CLASS}__hint--warn`} role="note">
+        <SettingsNotice tone="warning">
           {t('manualNotification.phone.pushNotSupported')}
-        </p>
+        </SettingsNotice>
       )}
 
       {channel === MANUAL_NOTIFICATION_CHANNEL.SMS && (
@@ -762,9 +758,9 @@ const ManualNotificationForm = ({ onBatchSent }) => {
             ariaLabel={t('manualNotification.alimtalk.liveToggle')}
           />
           {selectedTemplate && selectedTemplate.solapiTemplateIdPresent === false && (
-            <p className={`${FORM_CLASS}__hint ${FORM_CLASS}__hint--warn`} role="note">
+            <SettingsNotice tone="warning">
               {t('manualNotification.alimtalk.missingMappingHint')}
-            </p>
+            </SettingsNotice>
           )}
           {selectedTemplate && selectedTemplate.content && (
             <div className={`${FORM_CLASS}__template-preview`} aria-live="polite">
@@ -776,7 +772,7 @@ const ManualNotificationForm = ({ onBatchSent }) => {
           )}
           {templateVariableDefs.length > 0 && (
             <div className={`${FORM_CLASS}__variables`}>
-              <h4 className={`${FORM_CLASS}__variables-title`}>
+              <h4 className="mg-v2-settings-subheading">
                 {t('manualNotification.alimtalk.variablesTitle')}
               </h4>
               <div className="mg-v2-settings-form-grid">
@@ -788,9 +784,9 @@ const ManualNotificationForm = ({ onBatchSent }) => {
                     >
                       {toDisplayString(v.name, '변수')}
                       {v.required && (
-                        <span className={`${FORM_CLASS}__badge ${FORM_CLASS}__badge--required`}>
+                        <StatusBadge variant="danger">
                           {t('manualNotification.alimtalk.variableRequired')}
-                        </span>
+                        </StatusBadge>
                       )}
                     </label>
                     <input

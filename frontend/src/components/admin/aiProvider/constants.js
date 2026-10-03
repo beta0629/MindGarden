@@ -128,8 +128,23 @@ export const AI_PROVIDER_LABELS = Object.freeze({
   detailPromptBody: '프롬프트 본문',
   detailResponseBody: 'AI 응답 본문',
   detailBodyEmpty: '본문이 저장되지 않았습니다 (V20260529_001 이전 호출)',
-  detailBodyNotApplicable: '실패로 인해 응답이 저장되지 않았습니다'
+  detailBodyNotApplicable: '실패로 인해 응답이 저장되지 않았습니다',
+  logStatusSuccess: '성공',
+  logStatusFailed: '실패'
 });
+
+/** 호출 로그 표(ListTableView) 열 — 보조 열은 모바일에서 숨김 */
+export const AI_USAGE_LOG_COLUMNS = Object.freeze([
+  { key: 'createdAt', label: '시간' },
+  { key: 'aiProvider', label: '프로바이더' },
+  { key: 'requestType', label: '호출자' },
+  { key: 'model', label: '모델', hideOnMobile: true },
+  { key: 'status', label: '상태' },
+  { key: 'durationMs', label: '응답(ms)', hideOnMobile: true },
+  { key: 'tokenCount', label: '토큰', hideOnMobile: true },
+  { key: 'errorMessage', label: '에러', hideOnMobile: true },
+  { key: 'action', label: AI_PROVIDER_LABELS.detail }
+]);
 
 /** 페이지·LNB i18n 키 (i18n 시스템 정착 시 사용) */
 export const AI_PROVIDER_I18N_KEYS = Object.freeze({

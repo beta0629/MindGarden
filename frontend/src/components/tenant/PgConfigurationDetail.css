@@ -1,6 +1,6 @@
 /**
- * PG Configuration Detail — Settings suite chrome (SettingsPageShell · SettingsSectionPanel)
- * 셸·패널·입력·버튼 외형은 settings-shell/SettingsSuite.css, 본문 행·표·스트립은 AdminShopSuite.css가 담당한다.
+ * PG Configuration Detail — 설정 셸(SettingsPageShell · SettingsSectionPanel · SettingsSummaryStrip · ListTableView)
+ * 패널·버튼·표·요약 외형은 settings-shell/SettingsSuite.css 가 담당하고, 여기서는 화면 배치만 둔다.
  */
 
 .mg-v2-pg-config-detail.pg-config-detail--clinic-os {
@@ -8,32 +8,24 @@
   max-width: none;
 }
 
-/* 열쇠·웹훅 패널: 기존 카드 헤드(아이디·문구 유지)를 패널 헤더 타이포로 정렬 */
-.pg-config-detail--clinic-os .mg-v2-settings-panel .admin-shop-suite__card-head {
+.pg-config-detail__title {
+  display: inline-flex;
   flex-wrap: wrap;
-  align-items: flex-start;
-  gap: var(--mg-v2-space-1) var(--mg-v2-space-3);
+  align-items: center;
+  gap: var(--mg-v2-space-2);
 }
 
-.pg-config-detail--clinic-os .mg-v2-settings-panel .admin-shop-suite__card-title {
-  font-size: var(--mg-v2-font-size-h2);
-  font-weight: 700;
-  color: var(--mg-v2-color-text-primary);
+.pg-config-detail__body,
+.pg-config-detail__column {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-v2-space-4);
+  min-width: 0;
 }
 
-.pg-config-detail--clinic-os .mg-v2-settings-panel .admin-shop-suite__card-hint {
-  font-size: var(--mg-v2-font-size-body-md);
-  color: var(--mg-v2-color-text-secondary);
-}
-
-.pg-config-detail--clinic-os .sr-only {
-  position: absolute;
-  width: var(--mg-v2-border-width-thin);
-  height: var(--mg-v2-border-width-thin);
-  padding: 0;
-  margin: calc(var(--mg-v2-border-width-thin) * -1);
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border: 0;
+.pg-config-detail__layout {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, calc(var(--mg-v2-space-16) * 6)), 1fr));
+  gap: var(--mg-v2-space-4);
+  align-items: start;
 }

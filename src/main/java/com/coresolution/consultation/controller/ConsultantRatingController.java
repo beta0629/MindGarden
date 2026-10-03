@@ -6,6 +6,7 @@ import java.util.Map;
 import com.coresolution.consultation.entity.ConsultantRating;
 import com.coresolution.consultation.service.ConsultantRatingService;
 import com.coresolution.consultation.service.support.ClientPathAccessGuard;
+import com.coresolution.consultation.service.support.ResourceOwnerAccessGuard;
 import com.coresolution.core.controller.BaseApiController;
 import com.coresolution.core.dto.ApiResponse;
 import com.coresolution.core.util.PaginationUtils;
@@ -42,14 +43,19 @@ public class ConsultantRatingController extends BaseApiController {
 
     private final ConsultantRatingService ratingService;
     private final ClientPathAccessGuard clientPathAccessGuard;
+    private final ResourceOwnerAccessGuard resourceOwnerAccessGuard;
 
     /**
-     * 상담 후 평가 등록
+     * 상담 후 평가 등록. 평가자는 세션 내담자로 강제한다 (본문 clientId 가 다르면 403).
      */
     @PostMapping("/create")
-    public ResponseEntity<ApiResponse<Map<String, Object>>> createRating(@RequestBody Map<String, Object> request) {
+    public ResponseEntity<ApiResponse<Map<String, Object>>> createRating(
+            @RequestBody Map<String, Object> request,
+            HttpSession session) {
+        Object requestedClientId = request.get("clientId");
+        Long clientId = resourceOwnerAccessGuard.requireRatingSubmitter(session,
+            requestedClientId == null ? null : Long.valueOf(requestedClientId.toString()));
         Long scheduleId = Long.valueOf(request.get("scheduleId").toString());
-        Long clientId = Long.valueOf(request.get("clientId").toString());
         Integer heartScore = (Integer) request.get("heartScore");
         String comment = (String) request.get("comment");
         @SuppressWarnings("unchecked")
@@ -67,10 +73,14 @@ public class ConsultantRatingController extends BaseApiController {
     }
 
     /**
-     * 평가 수정
+     * 평가 수정 (작성 내담자 본인만)
      */
     @PutMapping("/{ratingId}")
-    public ResponseEntity<ApiResponse<Map<String, Object>>> updateRating(@PathVariable Long ratingId, @RequestBody Map<String, Object> request) {
+    public ResponseEntity<ApiResponse<Map<String, Object>>> updateRating(
+            @PathVariable Long ratingId,
+            @RequestBody Map<String, Object> request,
+            HttpSession session) {
+        resourceOwnerAccessGuard.requireRatingOwner(session, ratingId, null, false);
         Integer heartScore = (Integer) request.get("heartScore");
         String comment = (String) request.get("comment");
         @SuppressWarnings("unchecked")
@@ -86,11 +96,15 @@ public class ConsultantRatingController extends BaseApiController {
     }
 
     /**
-     * 평가 삭제
+     * 평가 삭제 (작성 내담자 본인 또는 같은 테넌트 관리자·사무원)
      */
     @DeleteMapping("/{ratingId}")
-    public ResponseEntity<ApiResponse<Void>> deleteRating(@PathVariable Long ratingId, @RequestParam Long clientId) {
-        ratingService.deleteRating(ratingId, clientId);
+    public ResponseEntity<ApiResponse<Void>> deleteRating(
+            @PathVariable Long ratingId,
+            @RequestParam(required = false) Long clientId,
+            HttpSession session) {
+        Long ownerClientId = resourceOwnerAccessGuard.requireRatingOwner(session, ratingId, clientId, true);
+        ratingService.deleteRating(ratingId, ownerClientId);
 
         return deleted("평가가 삭제되었습니다.");
     }

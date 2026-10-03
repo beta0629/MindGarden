@@ -14,7 +14,7 @@ CREATE PROCEDURE ProcessBatchScheduleCompletion(
     OUT p_completed_count INT,
     OUT p_reminder_count INT
 )
-BEGIN
+proc_main: BEGIN
     DECLARE v_error_message VARCHAR(500);
     DECLARE v_done INT DEFAULT FALSE;
     DECLARE v_schedule_id BIGINT;
@@ -61,7 +61,7 @@ BEGIN
         SET p_completed_count = 0;
         SET p_reminder_count = 0;
         ROLLBACK;
-        LEAVE;
+        LEAVE proc_main;
     END IF;
     
     SET p_processed_count = 0;

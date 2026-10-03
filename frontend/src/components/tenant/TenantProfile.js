@@ -14,16 +14,22 @@ import { ICONS } from '../../constants/icons';
 
 const CreditCardIcon = ICONS.CREDIT_CARD;
 const DollarSignIcon = ICONS.DOLLAR_SIGN;
-const AlertCircleIcon = ICONS.ALERT_CIRCLE;
 import { getPaymentMethods, getSubscriptions } from '../../utils/billingService';
 import notificationManager from '../../utils/notification';
 import StandardizedApi from '../../utils/standardizedApi';
 import StatusBadge from '../common/StatusBadge';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
-import { ContentArea, ContentHeader, ContentSection } from '../dashboard-v2/content';
+import {
+  SettingsPageShell,
+  SettingsSectionPanel,
+  SettingsSummaryStrip,
+  SettingsButton
+} from '../admin/settings-shell';
 import MGButton from '../common/MGButton';
-import SegmentedTabs from '../common/SegmentedTabs';
+import TabChipRow from '../common/TabChipRow';
 import EmptyState from '../common/EmptyState';
+import UnifiedLoading from '../common/UnifiedLoading';
+import SafeErrorDisplay from '../common/SafeErrorDisplay';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import SafeText from '../common/SafeText';
 import UnifiedModal from '../common/modals/UnifiedModal';
@@ -48,10 +54,20 @@ import {
   TENANT_PROFILE_SMS_SETTINGS_BUTTON
 } from '../../constants/tenantProfileStrings';
 import '../../styles/unified-design-tokens.css';
-import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import './TenantProfile.css';
 import { USER_ROLES } from '../../constants/roles';
 import { useTranslation } from 'react-i18next';
+
+const TENANT_PROFILE_TITLE_ID = 'tenant-profile-title';
+
+const TENANT_STATUS_CONFIG = {
+  PENDING: { label: '대기 중', variant: 'warning' },
+  ACTIVE: { label: '활성', variant: 'success' },
+  SUSPENDED: { label: '일시정지', variant: 'danger' },
+  CLOSED: { label: '종료', variant: 'neutral' }
+};
+
+const resolveTenantStatusConfig = (status) => TENANT_STATUS_CONFIG[status] || TENANT_STATUS_CONFIG.PENDING;
 
 const TenantProfile = () => {
   const { t } = useTranslation(['common', 'admin']);
@@ -81,24 +97,15 @@ const TenantProfile = () => {
   const canRenameTenant = canEditTenantDisplayName(user);
   const canOpenAdminNotificationSettings = hasAnyRole([USER_ROLES.ADMIN, USER_ROLES.STAFF]);
 
-  const renderChangeNameButton = (size = 'medium') => (
-    <MGButton
-      type="button"
-      variant="outline"
-      size={size}
-      className={buildErpMgButtonClassName({
-        variant: 'outline',
-        size: size === 'medium' ? 'md' : size,
-        loading: false
-      })}
-      loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+  const renderChangeNameButton = () => (
+    <SettingsButton
+      variant="ghost"
       onClick={openTenantNameModal}
       aria-label={t('admin:tenantProfile.actions.changeNameAria')}
       data-testid="tenant-profile-rename-open"
-      preventDoubleClick={false}
     >
       {t('admin:tenantProfile.actions.changeName')}
-    </MGButton>
+    </SettingsButton>
   );
 
   useEffect(() => {
@@ -241,472 +248,424 @@ const TenantProfile = () => {
   };
 
   const renderStatusBadge = (status) => {
-    const statusConfig = {
-      PENDING: { label: '대기 중', variant: 'warning' },
-      ACTIVE: { label: '활성', variant: 'success' },
-      SUSPENDED: { label: '일시정지', variant: 'danger' },
-      CLOSED: { label: '종료', variant: 'neutral' }
-    };
-    const config = statusConfig[status] || statusConfig.PENDING;
+    const config = resolveTenantStatusConfig(status);
     return <StatusBadge variant={config.variant}>{config.label}</StatusBadge>;
   };
 
   const pageTitle = t('common:tenant.TenantProfile.t_326425a6');
+  const tabsAriaLabel = t('common:tenant.TenantProfile.t_15c8471b');
+  const regionLabel = t('admin:tenantProfile.header.regionLabel');
+
+  const renderShell = (children, extra = {}) => (
+    <SettingsPageShell
+      title={pageTitle}
+      titleId={TENANT_PROFILE_TITLE_ID}
+      ariaLabel={regionLabel}
+      className="mg-v2-tenant-profile"
+      {...extra}
+    >
+      {children}
+    </SettingsPageShell>
+  );
+
+  const renderLoadError = () => (
+    <AdminCommonLayout title={pageTitle}>
+      {renderShell(
+        <SettingsSectionPanel body="plain">
+          <SafeErrorDisplay
+            className="tenant-profile-error"
+            error={t('common:tenant.TenantProfile.t_8f990fec')}
+          />
+        </SettingsSectionPanel>
+      )}
+    </AdminCommonLayout>
+  );
+
+  const renderInitialLoading = (loadingText) => (
+    <AdminCommonLayout title={pageTitle}>
+      {renderShell(<UnifiedLoading type="inline" text={loadingText} />)}
+    </AdminCommonLayout>
+  );
 
   if (sessionLoading || !isLoggedIn || !user) {
-    return (
-      <AdminCommonLayout
-        title={pageTitle}
-        loading
-        loadingText={t('common:tenant.TenantProfile.t_42f5bfb9', {
-          defaultValue: TENANT_PROFILE_LOADING_SESSION
-        })}
-      />
-    );
+    return renderInitialLoading(t('common:tenant.TenantProfile.t_42f5bfb9', {
+      defaultValue: TENANT_PROFILE_LOADING_SESSION
+    }));
   }
 
   if (!tenantId) {
-    return (
-      <AdminCommonLayout title={pageTitle}>
-        <div className="mg-v2-tenant-profile">
-          <div className="mg-v2-ad-b0kla__container">
-            <div className="tenant-profile-error">
-              <AlertCircleIcon size={24} />
-              <p>{t('common:tenant.TenantProfile.t_8f990fec')}</p>
-            </div>
-          </div>
-        </div>
-      </AdminCommonLayout>
-    );
+    return renderLoadError();
   }
 
   if (loading) {
-    return (
-      <AdminCommonLayout
-        title={pageTitle}
-        loading
-        loadingText={t('common:tenant.TenantProfile.t_ca5bf104', {
-          defaultValue: TENANT_PROFILE_LOADING_PROFILE
-        })}
-      />
-    );
+    return renderInitialLoading(t('common:tenant.TenantProfile.t_ca5bf104', {
+      defaultValue: TENANT_PROFILE_LOADING_PROFILE
+    }));
   }
 
   if (!tenantInfo) {
-    return (
-      <AdminCommonLayout title={pageTitle}>
-        <div className="mg-v2-tenant-profile">
-          <div className="mg-v2-ad-b0kla__container">
-            <div className="tenant-profile-error">
-              <AlertCircleIcon size={24} />
-              <p>{t('common:tenant.TenantProfile.t_8f990fec')}</p>
-            </div>
-          </div>
-        </div>
-      </AdminCommonLayout>
-    );
+    return renderLoadError();
   }
+
+  const subscriptionTitle = t('admin:tenantProfile.card.subscription', {
+    defaultValue: t('common:tenant.TenantProfile.t_d37f5764')
+  });
+  const paymentTitle = t('admin:tenantProfile.card.payment', {
+    defaultValue: t('common:tenant.TenantProfile.t_bb94631a')
+  });
+  const primarySubscription = subscriptions.find((s) => s?.status === 'ACTIVE') || subscriptions[0];
+
+  const summaryItems = [
+    {
+      key: 'name',
+      label: t('common:tenant.TenantProfile.t_dacf2653'),
+      value: toDisplayString(tenantInfo.name, '')
+    },
+    {
+      key: 'businessType',
+      label: t('common:tenant.TenantProfile.t_0fb1a92d'),
+      value: toDisplayString(tenantInfo.businessType, '')
+    },
+    {
+      key: 'subscription',
+      label: subscriptionTitle,
+      value: toDisplayString(primarySubscription?.planName, '')
+    },
+    {
+      key: 'status',
+      label: t('admin.labels.status'),
+      value: resolveTenantStatusConfig(tenantInfo.status).label
+    }
+  ];
+
+  const renderSubscriptionList = () => (
+    <div className="subscription-summary">
+      {subscriptions.map((subscription) => (
+        <div key={subscription.subscriptionId} className="subscription-summary-item">
+          <div>
+            <strong><SafeText fallback="요금제">{subscription.planName}</SafeText></strong>
+            <span className={`subscription-status subscription-status--${toDisplayString(subscription.status, 'unknown').toLowerCase()}`}>
+              <SafeText>{subscription.status}</SafeText>
+            </span>
+          </div>
+          {subscription.amount != null && (
+            <div className="subscription-amount">
+              <DollarSignIcon size={16} />
+              {toSafeNumber(subscription.amount).toLocaleString()}원
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+
+  const renderEmptyCta = (route, testId, label) => (
+    <SettingsButton
+      variant="primary"
+      onClick={() => navigate(route)}
+      data-testid={testId}
+    >
+      {label}
+    </SettingsButton>
+  );
 
   return (
     <AdminCommonLayout title={pageTitle}>
-      <div className="mg-v2-tenant-profile">
-        <div className="mg-v2-ad-b0kla__container">
-          <ContentArea ariaLabel={t('admin:tenantProfile.header.regionLabel')}>
-            <div className="tenant-profile-header">
-              <ContentHeader
-                title={toDisplayString(tenantInfo.name, '센터')}
-                subtitle={t('admin:tenantProfile.header.subtitle')}
-                titleId="tenant-profile-title"
-                actions={(
-                  <div className="mg-v2-tenant-profile__header-actions">
-                    {canRenameTenant ? renderChangeNameButton('medium') : null}
-                    {renderStatusBadge(tenantInfo.status)}
+      {renderShell(
+        <div
+          className="mg-v2-tenant-profile__panel tenant-profile-content"
+          role="tabpanel"
+        >
+          {activeTab === 'overview' && (
+            <div className="mg-v2-tenant-profile__overview tenant-profile-overview">
+              <SettingsSectionPanel title={t('admin:tenantProfile.card.tenantInfo')}>
+                <div className="mg-v2-tenant-profile__grid--two-col">
+                  <div className="mg-v2-tenant-profile__column">
+                    <div className="mg-v2-settings-field">
+                      <label className="mg-v2-form-label">{t('common:tenant.TenantProfile.t_065dd028')}</label>
+                      <p className="mg-v2-tenant-profile__value"><SafeText>{tenantInfo.tenantId}</SafeText></p>
+                    </div>
+                    <div className="mg-v2-settings-field">
+                      <label className="mg-v2-form-label">{t('common:tenant.TenantProfile.t_dacf2653')}</label>
+                      <p className="mg-v2-tenant-profile__value"><SafeText>{tenantInfo.name}</SafeText></p>
+                    </div>
                   </div>
-                )}
-              />
-            </div>
-
-            <SegmentedTabs
-              ariaLabel={t('common:tenant.TenantProfile.t_15c8471b')}
-              items={[
-                { value: 'overview', label: t('common:tenant.TenantProfile.t_476966c5') },
-                { value: 'subscription', label: t('common:tenant.TenantProfile.t_3ba22bb7') },
-                { value: 'payment', label: t('common:tenant.TenantProfile.t_bb94631a') },
-              ]}
-              activeValue={activeTab}
-              onChange={setActiveTab}
-              size="md"
-              className="mg-v2-ad-b0kla__pill-toggle mg-v2-tenant-profile__pill-toggle"
-            />
-
-            <div
-              className="mg-v2-tenant-profile__panel tenant-profile-content"
-              role="tabpanel"
-            >
-              {activeTab === 'overview' && (
-                <div className="mg-v2-tenant-profile__overview tenant-profile-overview">
-                  <ContentSection title={t('admin:tenantProfile.card.tenantInfo')}>
-                    <div className="mg-v2-tenant-profile__grid mg-v2-tenant-profile__grid--two-col">
-                      <div className="mg-v2-tenant-profile__column">
-                        <div className="mg-v2-tenant-profile__field">
-                          <label>{t('common:tenant.TenantProfile.t_065dd028')}</label>
-                          <p><SafeText>{tenantInfo.tenantId}</SafeText></p>
-                        </div>
-                        <div className="mg-v2-tenant-profile__field">
-                          <label>{t('common:tenant.TenantProfile.t_dacf2653')}</label>
-                          <p><SafeText>{tenantInfo.name}</SafeText></p>
-                        </div>
-                      </div>
-                      <div className="mg-v2-tenant-profile__column">
-                        <div className="mg-v2-tenant-profile__field">
-                          <label>{t('common:tenant.TenantProfile.t_0fb1a92d')}</label>
-                          <p><SafeText fallback="-">{tenantInfo.businessType}</SafeText></p>
-                        </div>
-                        <div className="mg-v2-tenant-profile__field">
-                          <label>{t('admin.labels.status')}</label>
-                          <div>{renderStatusBadge(tenantInfo.status)}</div>
-                        </div>
-                      </div>
+                  <div className="mg-v2-tenant-profile__column">
+                    <div className="mg-v2-settings-field">
+                      <label className="mg-v2-form-label">{t('common:tenant.TenantProfile.t_0fb1a92d')}</label>
+                      <p className="mg-v2-tenant-profile__value"><SafeText fallback="-">{tenantInfo.businessType}</SafeText></p>
                     </div>
-                  </ContentSection>
-
-                  <ContentSection title={t('admin:tenantProfile.card.notifications', { defaultValue: TENANT_PROFILE_NOTIFICATIONS_SECTION_TITLE })}>
-                    <div className="mg-v2-tenant-profile__grid">
-                      <div className="mg-v2-tenant-profile__field">
-                        <label>{TENANT_PROFILE_KAKAO_ALIMTALK_LABEL}</label>
-                        <div>
-                          {canOpenAdminNotificationSettings ? (
-                            <MGButton
-                              type="button"
-                              variant="outline"
-                              size="medium"
-                              className={buildErpMgButtonClassName({
-                                variant: 'outline',
-                                size: 'md',
-                                loading: false
-                              })}
-                              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                              onClick={() => navigate(ADMIN_ROUTES.KAKAO_ALIMTALK_SETTINGS)}
-                              data-testid="tenant-profile-kakao-alimtalk-settings"
-                              preventDoubleClick={false}
-                            >
-                              {TENANT_PROFILE_KAKAO_ALIMTALK_SETTINGS_BUTTON}
-                            </MGButton>
-                          ) : null}
-                        </div>
-                      </div>
-                      <div className="mg-v2-tenant-profile__field">
-                        <label>{TENANT_PROFILE_SMS_CHANNEL_LABEL}</label>
-                        <div>
-                          {canOpenAdminNotificationSettings ? (
-                            <MGButton
-                              type="button"
-                              variant="outline"
-                              size="medium"
-                              className={buildErpMgButtonClassName({
-                                variant: 'outline',
-                                size: 'md',
-                                loading: false
-                              })}
-                              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                              onClick={() => navigate(ADMIN_ROUTES.TENANT_SMS_SETTINGS)}
-                              data-testid="tenant-profile-sms-settings"
-                              preventDoubleClick={false}
-                            >
-                              {TENANT_PROFILE_SMS_SETTINGS_BUTTON}
-                            </MGButton>
-                          ) : null}
-                        </div>
-                      </div>
+                    <div className="mg-v2-settings-field">
+                      <label className="mg-v2-form-label">{t('admin.labels.status')}</label>
+                      <div>{renderStatusBadge(tenantInfo.status)}</div>
                     </div>
-                  </ContentSection>
-
-                  <ContentSection
-                    title={t('admin:tenantProfile.card.subscription', { defaultValue: t('common:tenant.TenantProfile.t_d37f5764') })}
-                    className="mg-v2-tenant-profile__overview-card"
-                  >
-                    {subscriptions.length > 0 ? (
-                      <div className="subscription-summary">
-                        {subscriptions.map((subscription) => (
-                          <div key={subscription.subscriptionId} className="subscription-summary-item">
-                            <div>
-                              <strong><SafeText fallback="요금제">{subscription.planName}</SafeText></strong>
-                              <span className={`subscription-status subscription-status--${toDisplayString(subscription.status, 'unknown').toLowerCase()}`}>
-                                <SafeText>{subscription.status}</SafeText>
-                              </span>
-                            </div>
-                            {subscription.amount != null && (
-                              <div className="subscription-amount">
-                                <DollarSignIcon size={16} />
-                                {toSafeNumber(subscription.amount).toLocaleString()}원
-                              </div>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <EmptyState
-                        className="mg-v2-tenant-profile__empty"
-                        icon={<TenantSubscriptionEmptyIllustration />}
-                        title={t('admin:tenantProfile.empty.subscription.headline')}
-                        description={t('admin:tenantProfile.empty.subscription.subcopy')}
-                        action={(
-                          <MGButton
-                            type="button"
-                            variant="primary"
-                            size="medium"
-                            className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: false })}
-                            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                            onClick={() => navigate(ADMIN_ROUTES.BILLING_SUBSCRIPTIONS)}
-                            data-testid="tenant-profile-empty-subscription-cta"
-                            preventDoubleClick={false}
-                          >
-                            {t('admin:tenantProfile.empty.subscription.cta')}
-                          </MGButton>
-                        )}
-                      />
-                    )}
-                  </ContentSection>
-
-                  <ContentSection
-                    title={t('admin:tenantProfile.card.payment', { defaultValue: t('common:tenant.TenantProfile.t_bb94631a') })}
-                    className="mg-v2-tenant-profile__overview-card"
-                  >
-                    {paymentMethods.length > 0 ? (
-                      <div className="payment-method-summary">
-                        {paymentMethods.map((pm) => (
-                          <div key={pm.paymentMethodId} className="payment-method-summary-item">
-                            <CreditCardIcon size={16} />
-                            <span><SafeText fallback="결제 수단">{pm.cardNumber ?? pm.methodType}</SafeText></span>
-                            {pm.isDefault && (
-                              <span className="default-badge">{t('common:tenant.TenantProfile.t_7f1d8c41')}</span>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <EmptyState
-                        className="mg-v2-tenant-profile__empty"
-                        icon={<TenantPaymentEmptyIllustration />}
-                        title={t('admin:tenantProfile.empty.payment.headline')}
-                        description={t('admin:tenantProfile.empty.payment.subcopy')}
-                        action={(
-                          <MGButton
-                            type="button"
-                            variant="primary"
-                            size="medium"
-                            className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: false })}
-                            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                            onClick={() => navigate(ADMIN_ROUTES.BILLING_PAYMENT_METHODS)}
-                            data-testid="tenant-profile-empty-payment-cta"
-                            preventDoubleClick={false}
-                          >
-                            {t('admin:tenantProfile.empty.payment.cta')}
-                          </MGButton>
-                        )}
-                      />
-                    )}
-                  </ContentSection>
+                  </div>
                 </div>
-              )}
+              </SettingsSectionPanel>
 
-              {activeTab === 'subscription' && (
-                <ContentSection
-                  title={t('admin:tenantProfile.card.subscription', { defaultValue: t('common:tenant.TenantProfile.t_d37f5764') })}
-                  className="mg-v2-tenant-profile__subscription-wrap tenant-profile-subscription"
-                  data-testid="tenant-profile-subscription-section"
-                >
-                  {subscriptions.length > 0 ? (
-                    <div className="subscription-summary">
-                      {subscriptions.map((subscription) => (
-                        <div key={subscription.subscriptionId} className="subscription-summary-item">
-                          <div>
-                            <strong><SafeText fallback="요금제">{subscription.planName}</SafeText></strong>
-                            <span className={`subscription-status subscription-status--${toDisplayString(subscription.status, 'unknown').toLowerCase()}`}>
-                              <SafeText>{subscription.status}</SafeText>
-                            </span>
-                          </div>
-                          {subscription.amount != null && (
-                            <div className="subscription-amount">
-                              <DollarSignIcon size={16} />
-                              {toSafeNumber(subscription.amount).toLocaleString()}원
-                            </div>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <EmptyState
-                      className="mg-v2-tenant-profile__empty"
-                      icon={<TenantSubscriptionEmptyIllustration />}
-                      title={t('admin:tenantProfile.empty.subscription.headline')}
-                      description={t('admin:tenantProfile.empty.subscription.subcopy')}
-                      action={(
-                        <MGButton
-                          type="button"
-                          variant="primary"
-                          size="medium"
-                          className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: false })}
-                          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                          onClick={() => navigate(ADMIN_ROUTES.BILLING_SUBSCRIPTIONS)}
-                          data-testid="tenant-profile-tab-subscription-cta"
-                          preventDoubleClick={false}
+              <SettingsSectionPanel title={t('admin:tenantProfile.card.notifications', { defaultValue: TENANT_PROFILE_NOTIFICATIONS_SECTION_TITLE })}>
+                <div className="mg-v2-settings-form-grid">
+                  <div className="mg-v2-settings-field">
+                    <label className="mg-v2-form-label">{TENANT_PROFILE_KAKAO_ALIMTALK_LABEL}</label>
+                    <div>
+                      {canOpenAdminNotificationSettings ? (
+                        <SettingsButton
+                          variant="outline"
+                          onClick={() => navigate(ADMIN_ROUTES.KAKAO_ALIMTALK_SETTINGS)}
+                          data-testid="tenant-profile-kakao-alimtalk-settings"
                         >
-                          {t('admin:billing.actions.addSubscription')}
-                        </MGButton>
-                      )}
-                    />
-                  )}
-                </ContentSection>
-              )}
-
-              {activeTab === 'payment' && (
-                <ContentSection
-                  title={t('admin:tenantProfile.card.payment', { defaultValue: t('common:tenant.TenantProfile.t_bb94631a') })}
-                  className="mg-v2-tenant-profile__payment-wrap tenant-profile-payment"
-                  data-testid="tenant-profile-payment-section"
-                >
-                  {paymentMethods.length > 0 ? (
-                    <div className="payment-method-summary">
-                      {paymentMethods.map((pm) => (
-                        <div key={pm.paymentMethodId} className="payment-method-summary-item">
-                          <CreditCardIcon size={16} />
-                          <span><SafeText fallback="결제 수단">{pm.cardNumber ?? pm.methodType}</SafeText></span>
-                          {pm.cardExpiry && (
-                            <span className="payment-method-expiry">
-                              {t('common:tenant.TenantProfile.t_fabb8d23')} <SafeText>{pm.cardExpiry}</SafeText>
-                            </span>
-                          )}
-                          {pm.isDefault && (
-                            <span className="default-badge">{t('common:tenant.TenantProfile.t_7f1d8c41')}</span>
-                          )}
-                        </div>
-                      ))}
+                          {TENANT_PROFILE_KAKAO_ALIMTALK_SETTINGS_BUTTON}
+                        </SettingsButton>
+                      ) : null}
                     </div>
-                  ) : (
-                    <EmptyState
-                      className="mg-v2-tenant-profile__empty"
-                      icon={<TenantPaymentEmptyIllustration />}
-                      title={t('admin:tenantProfile.empty.payment.headline')}
-                      description={t('admin:tenantProfile.empty.payment.subcopy')}
-                      action={(
-                        <MGButton
-                          type="button"
-                          variant="primary"
-                          size="medium"
-                          className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: false })}
-                          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                          onClick={() => navigate(ADMIN_ROUTES.BILLING_PAYMENT_METHODS)}
-                          data-testid="tenant-profile-tab-payment-cta"
-                          preventDoubleClick={false}
+                  </div>
+                  <div className="mg-v2-settings-field">
+                    <label className="mg-v2-form-label">{TENANT_PROFILE_SMS_CHANNEL_LABEL}</label>
+                    <div>
+                      {canOpenAdminNotificationSettings ? (
+                        <SettingsButton
+                          variant="outline"
+                          onClick={() => navigate(ADMIN_ROUTES.TENANT_SMS_SETTINGS)}
+                          data-testid="tenant-profile-sms-settings"
                         >
-                          {t('admin:billing.actions.addPaymentMethod')}
-                        </MGButton>
-                      )}
-                    />
-                  )}
-                </ContentSection>
-              )}
-            </div>
-          </ContentArea>
+                          {TENANT_PROFILE_SMS_SETTINGS_BUTTON}
+                        </SettingsButton>
+                      ) : null}
+                    </div>
+                  </div>
+                </div>
+              </SettingsSectionPanel>
 
-          <UnifiedModal
-            isOpen={showTenantNameModal}
-            onClose={closeTenantNameModal}
-            title={t('common:tenant.TenantProfile.t_3981095c')}
-            size="small"
-            variant="form"
-            backdropClick={!tenantNameSaving}
-            showCloseButton
-            loading={tenantNameSaving}
-            aria-describedby={
-              tenantNameFieldError || tenantNameServerError ? tenantNameErrorId : undefined
-            }
-            actions={
-              <>
-                <MGButton
-                  type="button"
-                  variant="outline"
-                  size="medium"
-                  className={buildErpMgButtonClassName({
-                    variant: 'outline',
-                    size: 'md',
-                    loading: false
-                  })}
-                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                  onClick={closeTenantNameModal}
-                  disabled={tenantNameSaving}
-                  preventDoubleClick={false}
-                >
-                  {t('admin.actions.cancel')}
-                </MGButton>
-                <MGButton
-                  type="submit"
-                  form="tenant-profile-rename-form"
-                  variant="primary"
-                  size="medium"
-                  className={buildErpMgButtonClassName({
-                    variant: 'primary',
-                    size: 'md',
-                    loading: tenantNameSaving
-                  })}
-                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                  disabled={tenantNameSaving}
-                  loading={tenantNameSaving}
-                  data-testid="tenant-profile-rename-save"
-                  preventDoubleClick={false}
-                >
-                  {t('common.actions.save')}
-                </MGButton>
-              </>
-            }
-          >
-            <form id="tenant-profile-rename-form" onSubmit={handleTenantNameSave} noValidate>
-              <div className="mg-v2-form-group">
-                <label className="mg-v2-label" htmlFor={tenantNameInputId}>
-                  {t('common:tenant.TenantProfile.t_dacf2653')}
-                </label>
-                <input
-                  id={tenantNameInputId}
-                  name="tenantDisplayName"
-                  type="text"
-                  className="mg-v2-input"
-                  value={tenantNameDraft}
-                  onChange={(ev) => {
-                    setTenantNameDraft(ev.target.value);
-                    if (tenantNameFieldError) {
-                      setTenantNameFieldError('');
-                    }
-                    if (tenantNameServerError) {
-                      setTenantNameServerError('');
-                    }
-                  }}
-                  maxLength={TENANT_DISPLAY_NAME_MAX_LENGTH}
-                  disabled={tenantNameSaving}
-                  autoComplete="organization"
-                  aria-invalid={!!(tenantNameFieldError || tenantNameServerError)}
-                  aria-describedby={
-                    tenantNameFieldError || tenantNameServerError ? tenantNameErrorId : undefined
-                  }
-                  data-testid="tenant-profile-rename-input"
-                />
-                {(tenantNameFieldError || tenantNameServerError) && (
-                  <p
-                    id={tenantNameErrorId}
-                    className="mg-v2-form-error"
-                    role="alert"
-                  >
-                    {tenantNameFieldError || tenantNameServerError}
-                  </p>
+              <SettingsSectionPanel
+                title={subscriptionTitle}
+                className="mg-v2-tenant-profile__overview-card"
+              >
+                {subscriptions.length > 0 ? renderSubscriptionList() : (
+                  <EmptyState
+                    className="mg-v2-tenant-profile__empty"
+                    icon={<TenantSubscriptionEmptyIllustration />}
+                    title={t('admin:tenantProfile.empty.subscription.headline')}
+                    description={t('admin:tenantProfile.empty.subscription.subcopy')}
+                    action={renderEmptyCta(
+                      ADMIN_ROUTES.BILLING_SUBSCRIPTIONS,
+                      'tenant-profile-empty-subscription-cta',
+                      t('admin:tenantProfile.empty.subscription.cta')
+                    )}
+                  />
                 )}
-              </div>
-            </form>
-          </UnifiedModal>
-        </div>
-      </div>
+              </SettingsSectionPanel>
+
+              <SettingsSectionPanel
+                title={paymentTitle}
+                className="mg-v2-tenant-profile__overview-card"
+              >
+                {paymentMethods.length > 0 ? (
+                  <div className="payment-method-summary">
+                    {paymentMethods.map((pm) => (
+                      <div key={pm.paymentMethodId} className="payment-method-summary-item">
+                        <CreditCardIcon size={16} />
+                        <span><SafeText fallback="결제 수단">{pm.cardNumber ?? pm.methodType}</SafeText></span>
+                        {pm.isDefault && (
+                          <span className="default-badge">{t('common:tenant.TenantProfile.t_7f1d8c41')}</span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <EmptyState
+                    className="mg-v2-tenant-profile__empty"
+                    icon={<TenantPaymentEmptyIllustration />}
+                    title={t('admin:tenantProfile.empty.payment.headline')}
+                    description={t('admin:tenantProfile.empty.payment.subcopy')}
+                    action={renderEmptyCta(
+                      ADMIN_ROUTES.BILLING_PAYMENT_METHODS,
+                      'tenant-profile-empty-payment-cta',
+                      t('admin:tenantProfile.empty.payment.cta')
+                    )}
+                  />
+                )}
+              </SettingsSectionPanel>
+            </div>
+          )}
+
+          {activeTab === 'subscription' && (
+            <SettingsSectionPanel
+              title={subscriptionTitle}
+              className="mg-v2-tenant-profile__subscription-wrap tenant-profile-subscription"
+              testId="tenant-profile-subscription-section"
+            >
+              {subscriptions.length > 0 ? renderSubscriptionList() : (
+                <EmptyState
+                  className="mg-v2-tenant-profile__empty"
+                  icon={<TenantSubscriptionEmptyIllustration />}
+                  title={t('admin:tenantProfile.empty.subscription.headline')}
+                  description={t('admin:tenantProfile.empty.subscription.subcopy')}
+                  action={renderEmptyCta(
+                    ADMIN_ROUTES.BILLING_SUBSCRIPTIONS,
+                    'tenant-profile-tab-subscription-cta',
+                    t('admin:billing.actions.addSubscription')
+                  )}
+                />
+              )}
+            </SettingsSectionPanel>
+          )}
+
+          {activeTab === 'payment' && (
+            <SettingsSectionPanel
+              title={paymentTitle}
+              className="mg-v2-tenant-profile__payment-wrap tenant-profile-payment"
+              testId="tenant-profile-payment-section"
+            >
+              {paymentMethods.length > 0 ? (
+                <div className="payment-method-summary">
+                  {paymentMethods.map((pm) => (
+                    <div key={pm.paymentMethodId} className="payment-method-summary-item">
+                      <CreditCardIcon size={16} />
+                      <span><SafeText fallback="결제 수단">{pm.cardNumber ?? pm.methodType}</SafeText></span>
+                      {pm.cardExpiry && (
+                        <span className="payment-method-expiry">
+                          {t('common:tenant.TenantProfile.t_fabb8d23')} <SafeText>{pm.cardExpiry}</SafeText>
+                        </span>
+                      )}
+                      {pm.isDefault && (
+                        <span className="default-badge">{t('common:tenant.TenantProfile.t_7f1d8c41')}</span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <EmptyState
+                  className="mg-v2-tenant-profile__empty"
+                  icon={<TenantPaymentEmptyIllustration />}
+                  title={t('admin:tenantProfile.empty.payment.headline')}
+                  description={t('admin:tenantProfile.empty.payment.subcopy')}
+                  action={renderEmptyCta(
+                    ADMIN_ROUTES.BILLING_PAYMENT_METHODS,
+                    'tenant-profile-tab-payment-cta',
+                    t('admin:billing.actions.addPaymentMethod')
+                  )}
+                />
+              )}
+            </SettingsSectionPanel>
+          )}
+        </div>,
+        {
+          actions: canRenameTenant ? renderChangeNameButton() : null,
+          tabs: (
+            <TabChipRow
+              ariaLabel={tabsAriaLabel}
+              items={[
+                { key: 'overview', label: t('common:tenant.TenantProfile.t_476966c5') },
+                { key: 'subscription', label: t('common:tenant.TenantProfile.t_3ba22bb7') },
+                { key: 'payment', label: t('common:tenant.TenantProfile.t_bb94631a') }
+              ]}
+              activeKey={activeTab}
+              onChange={setActiveTab}
+            />
+          ),
+          summary: (
+            <SettingsSummaryStrip
+              items={summaryItems}
+              ariaLabel={t('admin:tenantProfile.card.tenantInfo')}
+            />
+          )
+        }
+      )}
+
+      <UnifiedModal
+        isOpen={showTenantNameModal}
+        onClose={closeTenantNameModal}
+        title={t('common:tenant.TenantProfile.t_3981095c')}
+        size="small"
+        variant="form"
+        backdropClick={!tenantNameSaving}
+        showCloseButton
+        loading={tenantNameSaving}
+        aria-describedby={
+          tenantNameFieldError || tenantNameServerError ? tenantNameErrorId : undefined
+        }
+        actions={
+          <>
+            <MGButton
+              type="button"
+              variant="outline"
+              size="medium"
+              className={buildErpMgButtonClassName({
+                variant: 'outline',
+                size: 'md',
+                loading: false
+              })}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+              onClick={closeTenantNameModal}
+              disabled={tenantNameSaving}
+              preventDoubleClick={false}
+            >
+              {t('admin.actions.cancel')}
+            </MGButton>
+            <MGButton
+              type="submit"
+              form="tenant-profile-rename-form"
+              variant="primary"
+              size="medium"
+              className={buildErpMgButtonClassName({
+                variant: 'primary',
+                size: 'md',
+                loading: tenantNameSaving
+              })}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+              disabled={tenantNameSaving}
+              loading={tenantNameSaving}
+              data-testid="tenant-profile-rename-save"
+              preventDoubleClick={false}
+            >
+              {t('common.actions.save')}
+            </MGButton>
+          </>
+        }
+      >
+        <form id="tenant-profile-rename-form" onSubmit={handleTenantNameSave} noValidate>
+          <div className="mg-v2-form-group mg-v2-settings-field">
+            <label className="mg-v2-label mg-v2-form-label" htmlFor={tenantNameInputId}>
+              {t('common:tenant.TenantProfile.t_dacf2653')}
+            </label>
+            <input
+              id={tenantNameInputId}
+              name="tenantDisplayName"
+              type="text"
+              className="mg-v2-input mg-v2-form-input"
+              value={tenantNameDraft}
+              onChange={(ev) => {
+                setTenantNameDraft(ev.target.value);
+                if (tenantNameFieldError) {
+                  setTenantNameFieldError('');
+                }
+                if (tenantNameServerError) {
+                  setTenantNameServerError('');
+                }
+              }}
+              maxLength={TENANT_DISPLAY_NAME_MAX_LENGTH}
+              disabled={tenantNameSaving}
+              autoComplete="organization"
+              aria-invalid={!!(tenantNameFieldError || tenantNameServerError)}
+              aria-describedby={
+                tenantNameFieldError || tenantNameServerError ? tenantNameErrorId : undefined
+              }
+              data-testid="tenant-profile-rename-input"
+            />
+            {(tenantNameFieldError || tenantNameServerError) && (
+              <p
+                id={tenantNameErrorId}
+                className="mg-v2-form-error"
+                role="alert"
+              >
+                {tenantNameFieldError || tenantNameServerError}
+              </p>
+            )}
+          </div>
+        </form>
+      </UnifiedModal>
     </AdminCommonLayout>
   );
 };
 
 export default TenantProfile;
-

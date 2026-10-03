@@ -1,5 +1,6 @@
 import { clientApiFetch } from "@/services/clientApi";
 import { OPS_API_PATHS } from "@/constants/api";
+import { ONBOARDING_LIST_PAGE_SIZE } from "@/constants/onboarding";
 import { OnboardingRequest } from "@/types/onboarding";
 
 /**
@@ -26,6 +27,7 @@ export async function fetchAllOnboarding(status?: string): Promise<OnboardingReq
   try {
     // Ops 백엔드는 페이징을 사용하지 않으므로 status 파라미터만 전달
     const params = new URLSearchParams();
+    params.append("size", String(ONBOARDING_LIST_PAGE_SIZE));
     if (status) {
       // 상태 값이 대문자로 전달되도록 보장 (APPROVED, ON_HOLD 등)
       params.append('status', status.toUpperCase());

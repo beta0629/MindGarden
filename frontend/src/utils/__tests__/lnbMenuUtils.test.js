@@ -16,6 +16,7 @@ import {
   filterBranchAdminLnbItems,
   filterHiddenAdminLnbItems,
   filterStaffErpLnbItems,
+  filterStaffRestrictedLnbItems,
   mergeShopAdminLnbItems,
   normalizeLnbTree,
   resolveOperatorLnbDisplayLabel
@@ -701,5 +702,100 @@ describe('filterStaffErpLnbItems', () => {
   test('비배열 입력은 그대로 반환', () => {
     expect(filterStaffErpLnbItems(null)).toBeNull();
     expect(filterStaffErpLnbItems(undefined)).toBeUndefined();
+  });
+});
+
+/**
+ * P0 보안(2026-10-03): STAFF LNB 에서 결제 연결(PG)·AI 프로바이더·시스템 설정 제거.
+ * 서버 SSOT 는 MenuServiceImpl + StaffRestrictedMenuCodes 이고, 본 필터는 `/menus/lnb`
+ * 실패 시 쓰이는 폴백 트리에 같은 정책을 적용한다.
+ */
+describe('filterStaffRestrictedLnbItems', () => {
+  const buildSettingsTree = () => ([
+    { to: '/admin/dashboard', label: '대시보드', icon: 'LAYOUT_DASHBOARD', end: true },
+    {
+      to: '/erp/dashboard',
+      label: '운영·재무',
+      icon: 'BRIEFCASE',
+      menuCode: 'ADM_ERP',
+      children: [{ to: '/erp/financial', label: '이번 달 돈', icon: 'CALCULATOR', end: true }]
+    },
+    {
+      to: '/admin/adm_settings',
+      label: '시스템·설정',
+      icon: 'SETTINGS',
+      menuCode: 'ADM_SETTINGS',
+      children: [
+        { to: '/admin/adm_push_monitoring', label: '메시지 발송', icon: 'SEND', menuCode: 'ADM_PUSH_MONITORING' },
+        { to: '/tenant/pg-configurations', label: '결제 연결', icon: 'CREDIT_CARD', menuCode: 'ADM_SETTINGS_PG' },
+        { to: ADMIN_ROUTES.AI_PROVIDERS, label: 'AI', icon: 'CPU', menuCode: 'ADM_SETTINGS_AI_PROVIDER' },
+        { to: ADMIN_ROUTES.SYSTEM_CONFIG, label: '시스템 설정', icon: 'SETTINGS', menuCode: 'ADM_SETTINGS_SYSTEM' },
+        { to: ADMIN_ROUTES.COMPLIANCE, label: '컴플라이언스', icon: 'FILE_WARNING', menuCode: 'ADM_REPORTS_COMP' }
+      ]
+    }
+  ]);
+
+  const settingsChildCodes = (items) => (
+    items.find((item) => item.menuCode === 'ADM_SETTINGS').children.map((child) => child.menuCode)
+  );
+
+  test('menuCode 기준으로 PG·AI·시스템 설정·컴플라이언스 자식을 제거한다', () => {
+    const result = filterStaffRestrictedLnbItems(buildSettingsTree());
+
+    expect(settingsChildCodes(result)).toEqual(['ADM_PUSH_MONITORING']);
+  });
+
+  test('menuCode 가 없는 폴백 항목은 경로로 제거한다', () => {
+    const items = [
+      { to: '/admin/dashboard', label: '대시보드', icon: 'LAYOUT_DASHBOARD', end: true },
+      { to: '/tenant/pg-configurations', label: '결제 연결', icon: 'CREDIT_CARD', end: true },
+      { to: ADMIN_ROUTES.AI_PROVIDERS, label: 'AI', icon: 'CPU', end: true },
+      { to: `${ADMIN_ROUTES.SYSTEM_CONFIG}?tab=session`, label: '시스템 설정', icon: 'SETTINGS', end: true }
+    ];
+
+    const result = filterStaffRestrictedLnbItems(items);
+
+    expect(result.map((item) => item.to)).toEqual(['/admin/dashboard']);
+  });
+
+  test('ERP 제거 정책도 함께 유지된다', () => {
+    const result = filterStaffRestrictedLnbItems(buildSettingsTree());
+
+    expect(result.some((item) => item.menuCode === 'ADM_ERP')).toBe(false);
+  });
+
+  test('자식이 모두 제거되면 그룹 노드도 제거한다', () => {
+    const items = [
+      {
+        to: '/admin/adm_settings',
+        label: '시스템·설정',
+        icon: 'SETTINGS',
+        menuCode: 'ADM_SETTINGS',
+        children: [
+          { to: '/tenant/pg-configurations', label: '결제 연결', icon: 'CREDIT_CARD', menuCode: 'ADM_SETTINGS_PG' },
+          { to: ADMIN_ROUTES.AI_PROVIDERS, label: 'AI', icon: 'CPU', menuCode: 'ADM_SETTINGS_AI_PROVIDER' }
+        ]
+      }
+    ];
+
+    expect(filterStaffRestrictedLnbItems(items)).toEqual([]);
+  });
+
+  test('컴플라이언스 하위 경로(개인정보 파기 등)도 경로 prefix 로 제거한다', () => {
+    const items = [
+      { to: '/admin/dashboard', label: '대시보드', icon: 'LAYOUT_DASHBOARD', end: true },
+      { to: ADMIN_ROUTES.COMPLIANCE, label: '컴플라이언스', icon: 'FILE_WARNING', end: true },
+      { to: ADMIN_ROUTES.COMPLIANCE_DASHBOARD, label: '컴플라이언스 현황', icon: 'FILE_WARNING', end: true },
+      { to: ADMIN_ROUTES.COMPLIANCE_DESTRUCTION, label: '개인정보 파기', icon: 'TRASH', end: true }
+    ];
+
+    const result = filterStaffRestrictedLnbItems(items);
+
+    expect(result.map((item) => item.to)).toEqual(['/admin/dashboard']);
+  });
+
+  test('비배열 입력은 그대로 반환', () => {
+    expect(filterStaffRestrictedLnbItems(null)).toBeNull();
+    expect(filterStaffRestrictedLnbItems(undefined)).toBeUndefined();
   });
 });

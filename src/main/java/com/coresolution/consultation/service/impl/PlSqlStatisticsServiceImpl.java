@@ -125,20 +125,35 @@ public class PlSqlStatisticsServiceImpl implements PlSqlStatisticsService {
             String procedureName = "UpdateAllBranchDailyStatistics";
             log.debug("🔍 PL/SQL 프로시저 호출 시도: {}", procedureName);
 
+            String tenantId = TenantContextHolder.getRequiredTenantId();
+            String updatedBy = com.coresolution.consultation.entity.ErpSyncLog.SCHEDULER_AUDIT_ACTOR;
             SimpleJdbcCall jdbcCall =
                     new SimpleJdbcCall(dataSource)
                             .withCatalogName(dbSchemaName)
                             .withProcedureName(procedureName)
-                            .declareParameters(new SqlParameter("p_stat_date", Types.DATE));
+                            .withoutProcedureColumnMetaDataAccess()
+                            .declareParameters(
+                                    new SqlParameter("p_tenant_id", Types.VARCHAR),
+                                    new SqlParameter("p_stat_date", Types.DATE),
+                                    new SqlParameter("p_updated_by", Types.VARCHAR),
+                                    new SqlOutParameter("p_success", Types.BOOLEAN),
+                                    new SqlOutParameter("p_message", Types.VARCHAR),
+                                    new SqlOutParameter("p_processed_count", Types.INTEGER));
 
             Map<String, Object> params = new HashMap<>();
+            params.put("p_tenant_id", tenantId);
             params.put("p_stat_date", java.sql.Date.valueOf(statDate));
+            params.put("p_updated_by", updatedBy);
 
             log.debug("📋 PL/SQL 파라미터: {}", params);
-            jdbcCall.execute(params);
+            Map<String, Object> out = jdbcCall.execute(params);
+            Boolean success = (Boolean) out.get("p_success");
+            String message = (String) out.get("p_message");
 
-            log.info("✅ 모든 지점 일별 통계 PL/SQL 프로시저 실행 완료: statDate={}", statDate);
-            return "SUCCESS: All branch daily statistics updated for " + statDate;
+            log.info("✅ 모든 지점 일별 통계 PL/SQL 프로시저 실행 완료: statDate={}, success={}", statDate, success);
+            return Boolean.TRUE.equals(success)
+                    ? "SUCCESS: " + message
+                    : "ERROR: " + message;
 
         } catch (Exception e) {
             log.error("❌ 모든 지점 일별 통계 PL/SQL 프로시저 실행 실패: statDate={}, 오류={}", statDate,
@@ -201,19 +216,35 @@ public class PlSqlStatisticsServiceImpl implements PlSqlStatisticsService {
     public String updateAllConsultantPerformance(LocalDate performanceDate) {
         log.info("📈 모든 상담사 성과 PL/SQL 프로시저 호출: performanceDate={}", performanceDate);
 
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        String updatedBy = com.coresolution.consultation.entity.ErpSyncLog.SCHEDULER_AUDIT_ACTOR;
         try {
             SimpleJdbcCall jdbcCall = new SimpleJdbcCall(dataSource)
                     .withCatalogName(dbSchemaName)
                     .withProcedureName("UpdateAllConsultantPerformance")
-                    .declareParameters(new SqlParameter("p_performance_date", Types.DATE));
+                    .withoutProcedureColumnMetaDataAccess()
+                    .declareParameters(
+                            new SqlParameter("p_tenant_id", Types.VARCHAR),
+                            new SqlParameter("p_performance_date", Types.DATE),
+                            new SqlParameter("p_updated_by", Types.VARCHAR),
+                            new SqlOutParameter("p_success", Types.BOOLEAN),
+                            new SqlOutParameter("p_message", Types.VARCHAR),
+                            new SqlOutParameter("p_processed_count", Types.INTEGER));
 
             Map<String, Object> params = new HashMap<>();
+            params.put("p_tenant_id", tenantId);
             params.put("p_performance_date", java.sql.Date.valueOf(performanceDate));
+            params.put("p_updated_by", updatedBy);
 
-            jdbcCall.execute(params);
+            Map<String, Object> out = jdbcCall.execute(params);
+            Boolean success = (Boolean) out.get("p_success");
+            String message = (String) out.get("p_message");
 
-            log.info("✅ 모든 상담사 성과 PL/SQL 프로시저 실행 완료: performanceDate={}", performanceDate);
-            return "SUCCESS: All consultant performance updated for " + performanceDate;
+            log.info("✅ 모든 상담사 성과 PL/SQL 프로시저 실행 완료: performanceDate={}, success={}",
+                    performanceDate, success);
+            return Boolean.TRUE.equals(success)
+                    ? "SUCCESS: " + message
+                    : "ERROR: " + message;
 
         } catch (Exception e) {
             log.error("❌ 모든 상담사 성과 PL/SQL 프로시저 실행 실패: performanceDate={}, 오류={}", performanceDate,

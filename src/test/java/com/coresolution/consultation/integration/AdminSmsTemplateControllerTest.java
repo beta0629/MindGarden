@@ -211,11 +211,9 @@ class AdminSmsTemplateControllerTest {
     }
 
     @Test
-    @DisplayName("PATCH /api/v1/admin/sms-templates/global-dispatch — ADMIN 200, 게이트 토글 위임")
+    @DisplayName("PATCH /api/v1/admin/sms-templates/global-dispatch — ADMIN 이어도 운영자 전용 403")
     @WithMockUser(roles = {"ADMIN"})
-    void patchGlobalDispatch_whenAdmin_returns200() throws Exception {
-        when(smsTemplateService.isGlobalAutoDispatchEnabled()).thenReturn(true);
-
+    void patchGlobalDispatch_whenAdmin_returns403OpsOnly() throws Exception {
         try (MockedStatic<SessionUtils> mocked = mockStatic(SessionUtils.class)) {
             mocked.when(() -> SessionUtils.getCurrentUser(any(HttpSession.class)))
                 .thenReturn(buildCurrentUser());
@@ -223,12 +221,12 @@ class AdminSmsTemplateControllerTest {
             mockMvc.perform(patch("/api/v1/admin/sms-templates/global-dispatch")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(Map.of("enabled", true))))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data.globalDispatchEnabled").value(true));
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.errorCode").value("GLOBAL_DISPATCH_OPS_ONLY"));
         }
 
-        verify(smsTemplateService).setGlobalAutoDispatchEnabled(eq(true), any());
+        verify(smsTemplateService, never()).setGlobalAutoDispatchEnabled(anyBoolean(), any());
     }
 
     @Test

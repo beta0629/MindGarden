@@ -1,0 +1,27 @@
+/* SafeErrorDisplay — 토큰 기반 공통 오류 배너 */
+.mg-safe-error-display--banner {
+  display: flex;
+  align-items: center;
+  gap: var(--mg-v2-space-2);
+  width: 100%;
+  margin: 0;
+  padding: var(--mg-v2-space-3) var(--mg-v2-space-4);
+  font-size: var(--mg-v2-font-size-body-md);
+  line-height: var(--mg-v2-font-line-height-body);
+  color: var(--mg-v2-color-semantic-error-dark);
+  background: var(--mg-v2-color-semantic-error-light);
+  border: var(--mg-v2-border-width-thin) solid var(--mg-v2-color-semantic-error);
+  border-radius: var(--mg-v2-radius-lg);
+  box-sizing: border-box;
+}
+
+.mg-safe-error-display--banner svg,
+.mg-safe-error-display--with-icon svg {
+  flex-shrink: 0;
+}
+
+.mg-safe-error-display--with-icon {
+  display: flex;
+  align-items: center;
+  gap: var(--mg-v2-space-2);
+}

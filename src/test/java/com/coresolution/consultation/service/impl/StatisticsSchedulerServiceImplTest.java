@@ -56,8 +56,8 @@ class StatisticsSchedulerServiceImplTest {
         LocalDate d = LocalDate.of(2026, 4, 1);
         statisticsSchedulerService.updateStatisticsForDate(d);
 
-        verify(plSqlStatisticsService, times(1)).updateAllBranchDailyStatistics(d);
-        verify(plSqlStatisticsService, times(1)).updateAllConsultantPerformance(d);
+        verify(plSqlStatisticsService, times(2)).updateAllBranchDailyStatistics(d);
+        verify(plSqlStatisticsService, times(2)).updateAllConsultantPerformance(d);
         verify(plSqlStatisticsService, times(2)).performDailyPerformanceMonitoring(d);
     }
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import StandardizedApi from '../../utils/standardizedApi';
 import { getCommonCodes } from '../../utils/commonCodeApi';
 import notificationManager from '../../utils/notification';
@@ -11,7 +11,6 @@ import {
   CLIENT_SCHEDULE_NOTE_API,
   SCHEDULE_CLIENT_NOTE_TYPE_GROUP,
   DEFAULT_NOTE_TYPE_CODE,
-  CLIENT_SCHEDULE_NOTE_SCHEDULE_DATE_FIELD,
   CLIENT_SCHEDULE_NOTES_SECTION_TITLE,
   CLIENT_SCHEDULE_NOTES_INTRO,
   CLIENT_SCHEDULE_NOTES_BANNER_CLIENT_WIDE_PREFIX,
@@ -23,15 +22,16 @@ import {
   CLIENT_SCHEDULE_NOTES_LOADING,
   CLIENT_SCHEDULE_NOTES_NO_ANCHOR,
   CLIENT_SCHEDULE_NOTES_NO_CLIENT_WARNING,
-  CLIENT_SCHEDULE_NOTES_META_PROMISE_PREFIX,
-  CLIENT_SCHEDULE_NOTES_META_SCHEDULE_DATE_PREFIX,
-  CLIENT_SCHEDULE_NOTES_ACTION_RESOLVE,
-  CLIENT_SCHEDULE_NOTES_ACTION_REOPEN,
-  CLIENT_SCHEDULE_NOTES_BADGE_OVERDUE,
-  CLIENT_SCHEDULE_NOTES_BADGE_RESOLVED,
   CLIENT_SCHEDULE_NOTES_BANNER_EXPAND_HINT
 } from '../../constants/clientScheduleNoteConstants';
 import { CALENDAR_EXTENDED_TYPE_VACATION } from '../../constants/schedule';
+import {
+  isScheduleClientNoteUnresolved,
+  resolveScheduleClientNoteTypeLabel
+} from '../../utils/scheduleClientNoteTypeUtils';
+import ScheduleClientNoteCard, {
+  SCHEDULE_CLIENT_NOTE_CARD_ITEM_CLASS
+} from './molecules/ScheduleClientNoteCard';
 import './ScheduleClientNotesSection.css';
 import { useTranslation } from 'react-i18next';
 import { useConfirm } from '../../hooks/useConfirm';
@@ -149,6 +149,21 @@ const ScheduleClientNotesSection = ({ scheduleData, user, onSummaryChange }) => 
     onSummaryChange({ unresolvedCount: unresolved, totalCount: notes.length });
   }, [notes, onSummaryChange]);
 
+  const noteTypeLabelMap = useMemo(() => {
+    const map = {};
+    noteTypeOptions.forEach((opt) => {
+      if (opt?.value && opt.label && opt.label !== opt.value) {
+        map[opt.value] = opt.label;
+      }
+    });
+    return map;
+  }, [noteTypeOptions]);
+
+  const getNoteTypeLabel = useCallback(
+    (codeValue) => resolveScheduleClientNoteTypeLabel(codeValue, noteTypeLabelMap),
+    [noteTypeLabelMap]
+  );
+
   const resetForm = () => {
     setFormTitle('');
     setFormBody('');
@@ -173,19 +188,7 @@ const ScheduleClientNotesSection = ({ scheduleData, user, onSummaryChange }) => 
     return false;
   };
 
-  const isUnresolved = (n) => !n?.resolvedAt;
-
-  const isPromiseOverdue = (n) => {
-    if (!isUnresolved(n) || !n?.promiseDate) return false;
-    const d = String(n.promiseDate).trim();
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(d)) return false;
-    const today = new Date();
-    const y = today.getFullYear();
-    const m = String(today.getMonth() + 1).padStart(2, '0');
-    const day = String(today.getDate()).padStart(2, '0');
-    const todayStr = `${y}-${m}-${day}`;
-    return d < todayStr;
-  };
+  const isUnresolved = isScheduleClientNoteUnresolved;
 
   const handleResolve = async(note, resolved) => {
     if (!canEditNote(note)) return;
@@ -280,19 +283,6 @@ const ScheduleClientNotesSection = ({ scheduleData, user, onSummaryChange }) => 
     }
   };
 
-  const formatNoteMeta = (n) => {
-    const parts = [];
-    if (n.noteType) parts.push(String(n.noteType));
-    if (n.promiseDate) {
-      parts.push(`${CLIENT_SCHEDULE_NOTES_META_PROMISE_PREFIX} ${n.promiseDate}`);
-    }
-    const scheduleDate = n?.[CLIENT_SCHEDULE_NOTE_SCHEDULE_DATE_FIELD];
-    if (scheduleDate) {
-      parts.push(`${CLIENT_SCHEDULE_NOTES_META_SCHEDULE_DATE_PREFIX} ${scheduleDate}`);
-    }
-    return parts.join(' · ');
-  };
-
   const handleBannerToggle = () => {
     setBannerExpanded((prev) => {
       const next = !prev;
@@ -312,7 +302,7 @@ const ScheduleClientNotesSection = ({ scheduleData, user, onSummaryChange }) => 
   const typeSelectOptions =
     noteTypeOptions.length > 0
       ? noteTypeOptions
-      : [{ value: DEFAULT_NOTE_TYPE_CODE, label: '기타' }];
+      : [{ value: DEFAULT_NOTE_TYPE_CODE, label: getNoteTypeLabel(DEFAULT_NOTE_TYPE_CODE) }];
 
   if (!hasAnchor) {
     return (
@@ -336,122 +326,19 @@ const ScheduleClientNotesSection = ({ scheduleData, user, onSummaryChange }) => 
   const showBanner = clientWideUnresolvedCount > 0;
 
   const renderItem = (n, { compactActions = false } = {}) => {
-    const overdue = isPromiseOverdue(n);
-    const resolved = !isUnresolved(n);
-    const itemClassName = [
-      'mg-v2-card',
-      'mg-v2-card--flat',
-      'schedule-client-notes-section__item',
-      overdue ? 'schedule-client-notes-section__item--overdue' : '',
-      resolved ? 'schedule-client-notes-section__item--resolved' : ''
-    ].filter(Boolean).join(' ');
+    const editable = canEditNote(n);
     return (
-      <li
-        key={String(n.id)}
-        className={itemClassName}
-      >
-        <div className="schedule-client-notes-section__item-title">
-          <SafeText>{toDisplayString(n.title, '')}</SafeText>
-          {overdue ? (
-            <span className="mg-v2-badge warning schedule-client-notes-section__item-badge">
-              {CLIENT_SCHEDULE_NOTES_BADGE_OVERDUE}
-            </span>
-          ) : null}
-          {resolved ? (
-            <span className="mg-v2-badge secondary schedule-client-notes-section__item-badge">
-              {CLIENT_SCHEDULE_NOTES_BADGE_RESOLVED}
-            </span>
-          ) : null}
-        </div>
-        <div className="mg-v2-text-secondary schedule-client-notes-section__item-meta">
-          <SafeText>
-            {toDisplayString(formatNoteMeta(n), '')}
-          </SafeText>
-        </div>
-        {n.body ? (
-          <div className="schedule-client-notes-section__item-body">
-            <SafeText>{toDisplayString(n.body, '')}</SafeText>
-          </div>
-        ) : null}
-        {canEditNote(n) ? (
-          <div className="schedule-client-notes-section__item-actions">
-            {isUnresolved(n) ? (
-              <MGButton
-                type="button"
-                variant="primary"
-                size="small"
-                className={buildErpMgButtonClassName({
-                  variant: 'primary',
-                  size: 'sm',
-                  loading: false,
-                  className: 'mg-v2-btn--primary'
-                })}
-                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                preventDoubleClick={false}
-                onClick={() => handleResolve(n, true)}
-                disabled={loading}
-              >
-                {CLIENT_SCHEDULE_NOTES_ACTION_RESOLVE}
-              </MGButton>
-            ) : (
-              <MGButton
-                type="button"
-                variant="outline"
-                size="small"
-                className={buildErpMgButtonClassName({
-                  variant: 'outline',
-                  size: 'sm',
-                  loading: false,
-                  className: 'mg-v2-btn--outline'
-                })}
-                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                preventDoubleClick={false}
-                onClick={() => handleResolve(n, false)}
-                disabled={loading}
-              >
-                {CLIENT_SCHEDULE_NOTES_ACTION_REOPEN}
-              </MGButton>
-            )}
-            {!compactActions ? (
-              <>
-                <MGButton
-                  type="button"
-                  variant="outline"
-                  size="small"
-                  className={buildErpMgButtonClassName({
-                    variant: 'outline',
-                    size: 'sm',
-                    loading: false,
-                    className: 'mg-v2-btn--outline'
-                  })}
-                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                  preventDoubleClick={false}
-                  onClick={() => handleEdit(n)}
-                  disabled={loading}
-                >
-                  {t('common.actions.edit')}
-                </MGButton>
-                <MGButton
-                  type="button"
-                  variant="danger"
-                  size="small"
-                  className={buildErpMgButtonClassName({
-                    variant: 'danger',
-                    size: 'sm',
-                    loading: false,
-                    className: 'mg-v2-schedule-detail-btn--danger'
-                  })}
-                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                  preventDoubleClick={false}
-                  onClick={() => handleDelete(n)}
-                  disabled={loading}
-                >
-                  {t('common.actions.delete')}
-                </MGButton>
-              </>
-            ) : null}
-          </div>
-        ) : null}
+      <li key={String(n.id)} className={SCHEDULE_CLIENT_NOTE_CARD_ITEM_CLASS}>
+        <ScheduleClientNoteCard
+          note={n}
+          getTypeLabel={getNoteTypeLabel}
+          showScheduleDate
+          onResolve={editable ? (note) => handleResolve(note, true) : null}
+          onReopen={editable ? (note) => handleResolve(note, false) : null}
+          onEdit={editable && !compactActions ? handleEdit : null}
+          onDelete={editable && !compactActions ? handleDelete : null}
+          actionsDisabled={loading}
+        />
       </li>
     );
   };

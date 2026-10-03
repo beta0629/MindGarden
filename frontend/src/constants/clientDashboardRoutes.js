@@ -16,6 +16,8 @@ export const CLIENT_DASHBOARD_ROUTES = {
   SESSION_MANAGEMENT: '/client/session-management',
   PAYMENT_HISTORY: '/client/payment-history',
   SETTINGS: '/client/settings',
+  /** 헤더 아바타 진입 · /client/settings 는 이 경로 #notify 로 리다이렉트 */
+  MYPAGE: '/client/mypage',
   /**
    * 웹 커뮤니티 SSOT — v4 로비 크롬 (`ClientCommunityPage`).
    * ClientAppShell(`/client/more/community`) 에 묶지 않음. Expo scheme 금지.
@@ -33,6 +35,9 @@ export const CLIENT_DASHBOARD_ROUTES = {
    */
   WELLNESS_HUB: '/client/wellness-hub'
 };
+
+/** `/client/settings` → `/client/mypage#notify` (마이페이지 「알림 받는 방법」 섹션 앵커) */
+export const CLIENT_SETTINGS_REDIRECT_HASH = '#notify';
 
 /**
  * 레거시 → v4 경로 매핑 SSOT (App.js Redirect 등록용)

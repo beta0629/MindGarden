@@ -37,12 +37,11 @@ describe('PgConfiguration Clinic-OS chrome', () => {
     expect(formJs).not.toMatch(/mg-v2-ad-b0kla/);
   });
 
-  test('header CTA uses MGButton solid primary not ActionBarButton', () => {
-    expect(listJs).toMatch(/import MGButton from/);
-    expect(listJs).toMatch(/pg-config-list__header-actions/);
-    expect(listJs).toMatch(/<MGButton[\s\S]*variant="primary"/);
+  test('header CTA uses SettingsPageShell quiet header + SettingsButton primary not ActionBarButton', () => {
+    expect(listJs).toMatch(/<SettingsPageShell[\s\S]*actions=\{\(\s*<SettingsButton[\s\S]*variant="primary"/);
+    expect(listJs).not.toMatch(/ContentHeader/);
     expect(listJs).not.toMatch(/ActionBarButton/);
-    expect(listCss).toMatch(/pg-config-list__header-actions[\s\S]*height:\s*var\(--button-height-sm\)/);
+    expect(listCss).not.toMatch(/pg-config-list__header-actions/);
     expect(listCss).not.toMatch(/--ad-b0kla/);
   });
 
@@ -54,11 +53,13 @@ describe('PgConfiguration Clinic-OS chrome', () => {
     expect(listCss).toMatch(/border-left:\s*none\s*!important/);
   });
 
-  test('main stage single card geometry', () => {
-    expect(listCss).toMatch(/\.pg-config-list__stage\s*\{[^}]*min-height:\s*36rem/s);
-    expect(listCss).toMatch(/border:\s*1px solid var\(--mg-v2-color-neutral-300\)/);
-    expect(listCss).toMatch(/background:\s*var\(--mg-v2-color-neutral-50\)/);
-    expect(listCss).toMatch(/border-radius:\s*var\(--mg-v2-radius-lg\)/);
+  test('main stage lives in a single SettingsSectionPanel (panel owns border/radius/surface)', () => {
+    expect(listJs).toMatch(/<SettingsSectionPanel body="plain"[\s\S]*pg-config-list__stage/);
+    const stageRule = listCss.match(/\.pg-config-list__stage\s*\{[^}]*\}/s);
+    expect(stageRule).not.toBeNull();
+    expect(stageRule[0]).not.toMatch(/border|box-shadow|background/);
+    expect(listCss).not.toMatch(/\b1px\b/);
+    expect(listCss).toMatch(/border-inline-start:\s*var\(--mg-v2-border-width-thin\) solid var\(--mg-v2-color-neutral-300\)/);
     expect(formCss).toMatch(/\.pg-config-form-stage\s*\{[^}]*min-height:\s*36rem/s);
   });
 
@@ -127,6 +128,8 @@ describe('PgConfiguration Clinic-OS chrome', () => {
     const hexColor = /#[0-9a-fA-F]{3,8}\b/;
     expect(listCss).not.toMatch(hexColor);
     expect(detailCss).not.toMatch(hexColor);
-    expect(detailCss).toMatch(/border-left:\s*none\s*!important/);
+    expect(detailCss).not.toMatch(/primary-solid|cs-teal-700|box-shadow:\s*0|\b1px\b/);
+    expect(detailJs).toMatch(/<SettingsSectionPanel/);
+    expect(detailJs).not.toMatch(/admin-shop-suite__card"/);
   });
 });

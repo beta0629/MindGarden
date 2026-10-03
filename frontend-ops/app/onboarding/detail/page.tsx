@@ -5,10 +5,11 @@ import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 
 import { OnboardingDecisionForm } from "@/components/onboarding/OnboardingDecisionForm";
-import ChecklistDisplay from "@/components/onboarding/ChecklistDisplay";
-import InitializationStatusDisplay from "@/components/onboarding/InitializationStatusDisplay";
 import { fetchOnboardingDetail } from "@/services/onboardingService";
 import { OnboardingRequest } from "@/types/onboarding";
+import { ONBOARDING_MESSAGES, ONBOARDING_PATHS } from "@/constants/onboarding";
+import { buildOnboardingFacts, getStatusLabel } from "@/utils/onboardingUtils";
+import { formatOnboardingDate } from "@/utils/dateUtils";
 
 function OnboardingDetailPageContent() {
   const searchParams = useSearchParams();
@@ -22,48 +23,40 @@ function OnboardingDetailPageContent() {
   useEffect(() => {
     const loadDetail = async () => {
       if (!id) {
-        setError("ID가 없습니다.");
+        setError(ONBOARDING_MESSAGES.MISSING_ID);
         setLoading(false);
-        router.push("/onboarding");
+        router.push(ONBOARDING_PATHS.LIST);
         return;
       }
 
       try {
         setLoading(true);
         setError(null);
-        console.log("[OnboardingDetailPage] 상세 페이지 로드:", { id });
         const data = await fetchOnboardingDetail(id);
-        
-        // 데이터가 없거나 필수 필드가 없는 경우
+
         if (!data || (data.id === null && data.id === undefined)) {
-          console.warn(`온보딩 상세 데이터가 비어있습니다 (id: ${id})`);
-          setError("데이터를 찾을 수 없습니다.");
+          setError(ONBOARDING_MESSAGES.NOT_FOUND);
           setLoading(false);
           return;
         }
-        
+
         setDetail(data);
       } catch (err) {
         console.error(`온보딩 상세 페이지 오류 (id: ${id}):`, err);
-        
+
         if (err instanceof Error) {
-          // 404 Not Found 처리
-          if ((err as any).status === 404 || err.message.includes("404") || err.message.includes("찾을 수 없습니다")) {
-            setError("요청을 찾을 수 없습니다.");
-            router.push("/onboarding");
+          if ((err as { status?: number }).status === 404 || err.message.includes("404") || err.message.includes("찾을 수 없습니다")) {
+            setError(ONBOARDING_MESSAGES.NOT_FOUND);
+            router.push(ONBOARDING_PATHS.LIST);
             return;
           }
-          // 403 Forbidden (권한 없음) 처리
-          // 403은 권한 문제이므로 로그인 페이지로 리다이렉트하지 않음
-          // 에러 메시지만 표시하고 현재 페이지에 머무름
-          else if ((err as any).status === 403 || err.message.includes("403") || err.message.includes("권한")) {
-            setError(err.message || "접근 권한이 없습니다. 관리자에게 문의하세요.");
-            // 403 오류는 리다이렉트하지 않음
+          if ((err as { status?: number }).status === 403 || err.message.includes("403") || err.message.includes("권한")) {
+            setError(err.message || ONBOARDING_MESSAGES.ERROR_BODY);
           } else {
-            setError(err.message || "알 수 없는 오류가 발생했습니다.");
+            setError(err.message || ONBOARDING_MESSAGES.ERROR_BODY);
           }
         } else {
-          setError("알 수 없는 오류가 발생했습니다.");
+          setError(ONBOARDING_MESSAGES.ERROR_BODY);
         }
       } finally {
         setLoading(false);
@@ -75,155 +68,74 @@ function OnboardingDetailPageContent() {
 
   if (loading) {
     return (
-      <section className="panel">
-        <header className="panel__header">
-          <h1>로딩 중...</h1>
-        </header>
-        <div className="loading-message">
-          <p>데이터를 불러오는 중입니다...</p>
-        </div>
+      <section className="ops-onboarding">
+        <p className="ops-onboarding__status">{ONBOARDING_MESSAGES.LOADING_BODY}</p>
       </section>
     );
   }
 
-  if (error) {
+  if (error || !detail) {
     return (
-      <section className="panel">
-        <header className="panel__header">
-          <h1>오류 발생</h1>
-        </header>
-        <div className="error-message">
-          <p>{error}</p>
-          <Link className="ghost-button" href="/onboarding">
-            목록으로 돌아가기
-          </Link>
-        </div>
+      <section className="ops-onboarding">
+        <p className="ops-onboarding__status" role="alert">
+          {error || ONBOARDING_MESSAGES.NOT_FOUND}
+        </p>
+        <Link href={ONBOARDING_PATHS.LIST}>{ONBOARDING_MESSAGES.BACK_TO_LIST}</Link>
       </section>
     );
   }
 
-  if (!detail) {
-    return (
-      <section className="panel">
-        <header className="panel__header">
-          <h1>데이터 없음</h1>
-        </header>
-        <div className="error-message">
-          <p>요청 정보를 찾을 수 없습니다.</p>
-          <Link className="ghost-button" href="/onboarding">
-            목록으로 돌아가기
-          </Link>
-        </div>
-      </section>
-    );
-  }
+  const facts = buildOnboardingFacts(detail);
 
   return (
-    <section className="panel">
-      <header className="panel__header panel__header--split">
-        <div>
-          <h1>{detail.tenantName || "이름 없음"}</h1>
-          <p>테넌트 ID: {detail.tenantId || "-"}</p>
-        </div>
-        <Link className="ghost-button" href="/onboarding">
-          목록으로
-        </Link>
-      </header>
-
-      <div className="detail-grid">
-        <div className="detail-grid__section">
-          <h2>요청 정보</h2>
-          <dl className="detail-grid__list">
-            <div>
-              <dt>요청자</dt>
-              <dd>{detail.requestedBy || "-"}</dd>
-            </div>
-            <div>
-              <dt>리스크 레벨</dt>
+    <section className="ops-onboarding" aria-labelledby="ops-onboarding-detail-title">
+      <p className="ops-onboarding__crumb">
+        {ONBOARDING_MESSAGES.SECTION}
+        {ONBOARDING_MESSAGES.META_SEPARATOR}
+        {ONBOARDING_MESSAGES.PAGE_TITLE}
+      </p>
+      <h1 id="ops-onboarding-detail-title" className="ops-onboarding__title">
+        {detail.tenantName || ONBOARDING_MESSAGES.EMPTY_VALUE}
+      </h1>
+      <p className="ops-onboarding__sub">
+        {getStatusLabel(detail.status)}
+        {ONBOARDING_MESSAGES.META_SEPARATOR}
+        {formatOnboardingDate(detail.createdAt)}
+      </p>
+      <div className="ops-onboarding__split">
+        <dl className="ops-onboarding__facts">
+          {facts.map((fact) => (
+            <div key={fact.id} className="ops-onboarding__fact">
+              <dt>{fact.label}</dt>
               <dd>
-                <span
-                  className={`risk-badge risk-badge--${(detail.riskLevel || "LOW").toLowerCase()}`}
-                >
-                  {detail.riskLevel || "LOW"}
-                </span>
+                {fact.emphasize ? (
+                  <span className="ops-onboarding__risk--high">{fact.value}</span>
+                ) : (
+                  fact.value
+                )}
               </dd>
             </div>
-            <div>
-              <dt>요청 시각</dt>
-              <dd>{formatDate(detail.createdAt)}</dd>
-            </div>
-            <div>
-              <dt>현재 상태</dt>
-              <dd>
-                <span className={`status-badge status-badge--${(detail.status || "PENDING").toLowerCase()}`}>
-                  {detail.status || "PENDING"}
-                </span>
-              </dd>
-            </div>
-            {detail.decisionNote && (
-              <div>
-                <dt>결정 메모</dt>
-                <dd>
-                  <pre className="decision-note">{detail.decisionNote}</pre>
-                </dd>
-              </div>
-            )}
-          </dl>
-        </div>
-        <div className="detail-grid__section">
-          <h2>체크리스트</h2>
-          <ChecklistDisplay checklistJson={detail.checklistJson} />
-        </div>
-        {detail.status === "APPROVED" && detail.tenantId && (
-          <div className="detail-grid__section">
-            <InitializationStatusDisplay
-              request={detail}
-              onUpdate={async () => {
-                // 상세 정보 다시 로드
-                try {
-                  const updated = await fetchOnboardingDetail(String(detail.id));
-                  setDetail(updated);
-                } catch (err) {
-                  console.error("상세 정보 업데이트 실패:", err);
-                }
-              }}
-            />
-          </div>
-        )}
+          ))}
+        </dl>
+        <OnboardingDecisionForm
+          requestId={String(detail.id)}
+          initialStatus={detail.status}
+          onDecided={(updated) => setDetail(updated)}
+        />
       </div>
-
-      <OnboardingDecisionForm
-        requestId={String(detail.id)}
-        initialStatus={detail.status}
-      />
     </section>
   );
 }
 
-function formatDate(value?: string | null) {
-  if (!value) return "-";
-  const date = new Date(value);
-  return date.toLocaleString("ko-KR", {
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit"
-  });
-}
-
 export default function OnboardingDetailPage() {
   return (
-    <Suspense fallback={
-      <section className="panel">
-        <header className="panel__header">
-          <h1>로딩 중...</h1>
-        </header>
-        <div className="loading-message">
-          <p>데이터를 불러오는 중입니다...</p>
-        </div>
-      </section>
-    }>
+    <Suspense
+      fallback={
+        <section className="ops-onboarding">
+          <p className="ops-onboarding__status">{ONBOARDING_MESSAGES.LOADING_BODY}</p>
+        </section>
+      }
+    >
       <OnboardingDetailPageContent />
     </Suspense>
   );

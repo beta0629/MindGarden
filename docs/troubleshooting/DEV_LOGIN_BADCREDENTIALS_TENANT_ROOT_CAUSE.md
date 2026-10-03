@@ -57,7 +57,7 @@
 | B6 | `createTestConsultant` (`POST /consultant`) 가드 없음 | **확정(코드)** | L488-507 — 메서드 내 `isDev`/`local` 가드 없음. 빈 로드 시에만 노출 | 신규 등록 경로(실비번 UPDATE 아님) |
 | B7 | Flyway `V202609*` / #815~#821이 `users.password` 변경 | **반증(코드·머지)** | 전 `V202609*.sql`에 `password`/`users` 쓰기 **0건**. 머지: #815 `cf07ae1c1`, #817 `5cb399b93`, #818 `0c6ab84ed`, #819 `59163c2bc`, #820 `1af0f1ef3`, #821 `401e0765a`. #816 **OPEN(미머지)**. #819 diff의 `encodeSecret`은 **테스트 mock만** | 배포 마이그로 비번 변경 불가 |
 | B8 | `post-dev-sync-anonymize.sql`이 password 치환 | **반증(코드)** | `scripts/database/sync/post-dev-sync-anonymize.sql:8-11,25,36-56` — **password/email KEEP** (`16ee61b25`). name 등만 UPDATE. 단 `updated_at=CURRENT_TIMESTAMP`는 **전 users**에 찍힘 | `updated_at`만으로 비번 변경 단정 금지 |
-| B9 | 온보딩 `CreateTenantAdminAccount` / Ops `TempPassword` | **반증(기존 실계정 UPDATE 아님)** | `V20251223_001__...:45-79` — 동일 tenant+email 있으면 **skip**, 없으면 **INSERT**. Ops `OnboardingService.java` `TempPassword123!` → 해시 후 프로시저 INSERT. `OnboardingApprovalServiceImpl.java:1244`도 INSERT | 신규 테넌트 관리자만 |
+| B9 | 온보딩 `CreateTenantAdminAccount` / Ops `TempPassword` | **반증(기존 실계정 UPDATE 아님)** | `V20251223_001__...:45-79` — 동일 tenant+email 있으면 **skip**, 없으면 **INSERT**. Ops `OnboardingService.java` 고정 임시 비밀번호 폴백(제거됨) → 해시 후 프로시저 INSERT. `OnboardingApprovalServiceImpl.java:1244`도 INSERT | 신규 테넌트 관리자만 |
 | B10 | 수동/유틸 SQL `UPDATE users SET password` | **반증(자동 경로 아님)** | `scripts/database/update_password_hash.sql` UPDATE는 **주석 처리**. `database/schema/add_test_data_for_tenant.sql`은 테스트 테넌트 **INSERT** | 사람이 수동 실행하면 별도(SSH/audit) |
 | B11 | E2E/`agisunny`가 DB 해시를 덮어씀 | **반증(코드)** | testing skill·스크립트는 UI 로그인 자격만. TestData `reset-password` 자동 호출 없음 | 사람/수동 API 호출은 SSH |
 | B12 | `AdminUserController` 관리자 리셋 | **확정(의도적 별경로)** | `AdminUserController.java:365-402` — `PUT .../reset-password`, 로그 `관리자 권한으로 사용자 비밀번호 초기화`. 인증 필요 | 가설 B(TestData)와 구분. journal 패턴 보강됨 |
@@ -188,7 +188,7 @@
 | #821 `401e0765a` LNB → `V20260904_004` rename | rename only | **반증** |
 | `post-dev-sync-anonymize.sql` | password/email **KEEP**; name 치환; **전 users `updated_at` 갱신** | 비번 덮어쓰기 **반증**; updated_at 해석 주의 |
 | `CreateTenantAdminAccount` (`V20251223_001` L45-79) | 존재 시 skip / 없으면 **INSERT** | 기존 UPDATE **반증** |
-| Ops `OnboardingService` `TempPassword123!` | 해시 후 프로시저 **INSERT** | 기존 UPDATE **반증** |
+| Ops `OnboardingService` 고정 임시 비밀번호 폴백(제거됨) | 해시 후 프로시저 **INSERT** | 기존 UPDATE **반증** |
 | `scripts/database/update_password_hash.sql` | UPDATE **주석** | 자동 경로 **반증** |
 | E2E `agisunny@...` | UI 로그인만 | 자동 덮어쓰기 **반증** |
 | `AdminUserController` `PUT .../reset-password` L365 | 인증된 관리자 리셋 | 가설 B와 **별개** |

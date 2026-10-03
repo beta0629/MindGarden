@@ -174,8 +174,8 @@ public OnboardingRequest create(OnboardingCreateRequest request) {
  */
 private String extractAdminPasswordFromChecklist(String checklistJson) {
     if (checklistJson == null || checklistJson.isEmpty()) {
-        log.warn("⚠️ 체크리스트 JSON이 null이거나 비어있음, 기본 비밀번호 사용");
-        return "TempPassword123!"; // 기본 비밀번호
+        log.warn("체크리스트 JSON이 비어 있어 관리자 비밀번호를 추출하지 못했습니다.");
+        return null;
     }
     try {
         // JSON 파싱을 사용하여 안전하게 추출
@@ -192,7 +192,7 @@ private String extractAdminPasswordFromChecklist(String checklistJson) {
     } catch (Exception e) {
         log.warn("⚠️ 체크리스트 JSON에서 adminPassword 추출 실패: {}", e.getMessage());
     }
-    return "TempPassword123!"; // 추출 실패 시 기본 비밀번호
+    return null; // 추출 실패 시 고정 비밀번호로 대체하지 않는다. 호출부가 요청마다 생성해 해시한다.
 }
 ```
 

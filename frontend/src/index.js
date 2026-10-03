@@ -2,6 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import 'bootstrap/dist/css/bootstrap.min.css';
+import './assets/fonts/pretendard/pretendard-variable-dynamic-subset.css';
 import './styles/unified-design-tokens.css';
 import './index.css';
 import App from './App';

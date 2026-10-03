@@ -34,8 +34,12 @@ const DEFAULT_HELP_TEXT = 'JPG, PNG, WEBP (권장 2MB 이하)';
  * @param {boolean} [props.disabled] - true 이면 액션 버튼 숨김
  * @param {boolean} [props.hideLabel] - true 이면 "프로필 사진" 라벨 숨김
  * @param {string} [props.className] - 루트 추가 클래스
+ * @param {'primary'|'outline'} [props.selectVariant] - 「사진 선택」 버튼 variant
+ * @param {'small'|'medium'} [props.actionSize] - 액션 버튼 크기
  * @returns {JSX.Element}
  */
+const ACTION_SIZE_TO_ERP = Object.freeze({ small: 'sm', medium: 'md' });
+
 const ProfileImageInput = ({
   value,
   onChange,
@@ -48,8 +52,11 @@ const ProfileImageInput = ({
   removeLabel = '제거',
   disabled = false,
   hideLabel = false,
-  className = ''
+  className = '',
+  selectVariant = 'primary',
+  actionSize = 'medium'
 }) => {
+  const erpSize = ACTION_SIZE_TO_ERP[actionSize] || ACTION_SIZE_TO_ERP.medium;
   const inputRef = useRef(null);
   const reactId = useId();
   const inputId = `profile-photo-input-${reactId}`;
@@ -137,10 +144,11 @@ const ProfileImageInput = ({
           <div className="mg-v2-profile-photo-actions">
             <MGButton
               type="button"
-              variant="primary"
+              variant={selectVariant}
+              size={actionSize}
               className={buildErpMgButtonClassName({
-                variant: 'primary',
-                size: 'md',
+                variant: selectVariant,
+                size: erpSize,
                 loading: false
               })}
               onClick={handleSelectClick}
@@ -154,9 +162,10 @@ const ProfileImageInput = ({
               <MGButton
                 type="button"
                 variant="outline"
+                size={actionSize}
                 className={buildErpMgButtonClassName({
                   variant: 'outline',
-                  size: 'md',
+                  size: erpSize,
                   loading: false
                 })}
                 onClick={handleRemove}
@@ -186,7 +195,9 @@ ProfileImageInput.propTypes = {
   removeLabel: PropTypes.string,
   disabled: PropTypes.bool,
   hideLabel: PropTypes.bool,
-  className: PropTypes.string
+  className: PropTypes.string,
+  selectVariant: PropTypes.oneOf(['primary', 'outline']),
+  actionSize: PropTypes.oneOf(['small', 'medium'])
 };
 
 export default ProfileImageInput;

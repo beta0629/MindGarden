@@ -1,60 +1,49 @@
 /**
- * SmsTemplateManagementPage 전용 스타일.
- * 디자인 토큰 SSOT(unified-design-tokens.css) 만 사용한다 — 색·공간·반경 하드코딩 금지.
+ * SmsTemplateManagementPage — Clinic-OS chrome
+ * SSOT: docs/design-system/CLINIC_OS_ADMIN_VISUAL_SSOT.md
+ * 토큰: design-v2-tokens.css (--mg-v2-*) 만 사용 — 색·공간·반경 하드코딩 금지.
  *
  * @author MindGarden
  * @since 2026-05-29
+ * @updated 2026-10-03 — 크롬은 settings-shell(SettingsSuite.css), 여기서는 목록·편집 내부만
  */
 
-.mg-admin-sms-template {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-md);
-  padding: var(--spacing-md);
+.mg-admin-sms-template,
+.mg-admin-sms-template.sms-template--clinic-os {
+  min-height: 100%;
+  background: transparent;
+  padding: 0;
+  max-width: none;
+  width: 100%;
 }
 
 .mg-admin-sms-template__panel {
-  background: var(--color-bg-primary);
-  border: 1px solid var(--color-border-light);
-  border-radius: var(--radius-md, 8px);
-  padding: var(--spacing-md);
+  min-width: 0;
 }
 
 .mg-admin-sms-template__grid {
   display: grid;
-  grid-template-columns: minmax(220px, 1fr) 2fr;
-  gap: var(--spacing-md);
+  grid-template-columns: minmax(13.75rem, 1fr) 2fr;
+  gap: var(--mg-v2-space-4);
+  align-items: start;
 }
 
-@media (max-width: 960px) {
+@media (max-width: 60rem) {
   .mg-admin-sms-template__grid {
     grid-template-columns: 1fr;
   }
 }
 
 .mg-admin-sms-template__list {
-  border-right: 1px solid var(--color-border-light);
-  padding-right: var(--spacing-sm);
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-xs);
+  gap: var(--mg-v2-space-2);
 }
 
 .mg-admin-sms-template__filters {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-xs);
-}
-
-.mg-admin-sms-template__search,
-.mg-admin-sms-template__filter {
-  width: 100%;
-  padding: var(--spacing-xs);
-  border: 1px solid var(--color-border-default);
-  border-radius: var(--radius-sm, 4px);
-  font-size: var(--font-size-sm, 0.875rem);
-  background: var(--color-bg-primary);
-  color: var(--color-text-primary);
+  gap: var(--mg-v2-space-2);
 }
 
 .mg-admin-sms-template__items {
@@ -63,19 +52,20 @@
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-xs);
+  gap: var(--mg-v2-space-2);
   max-height: 60vh;
   overflow-y: auto;
 }
 
 .mg-admin-sms-template__empty {
-  padding: var(--spacing-sm);
-  color: var(--color-text-muted);
+  padding: var(--mg-v2-space-3);
+  color: var(--mg-v2-color-text-tertiary);
   text-align: center;
 }
 
 .mg-admin-sms-template__item {
   display: flex;
+  flex-direction: column;
 }
 
 .mg-admin-sms-template__item-button {
@@ -83,141 +73,120 @@
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: var(--spacing-xs);
-  padding: var(--spacing-xs);
-  background: var(--color-bg-primary);
-  border: 1px solid var(--color-border-default);
-  border-radius: var(--radius-sm, 4px);
+  gap: var(--mg-v2-space-1);
+  padding: var(--mg-v2-space-2) var(--mg-v2-space-3);
+  background: var(--mg-v2-color-surface-card);
+  border: var(--mg-v2-border-width-thin) solid var(--mg-v2-color-border-default);
+  border-radius: var(--mg-v2-radius-sm);
   cursor: pointer;
   text-align: left;
-  color: var(--color-text-primary);
-  transition: background-color 0.2s ease;
+  color: var(--mg-v2-color-text-primary);
+  transition: background-color var(--mg-v2-transition-fast);
 }
 
 .mg-admin-sms-template__item-button:hover {
-  background: var(--color-bg-secondary);
+  background: var(--mg-v2-color-neutral-100);
 }
 
 .mg-admin-sms-template__item--selected .mg-admin-sms-template__item-button {
-  border-color: var(--color-primary, var(--color-primary-main));
-  background: var(--color-bg-secondary);
+  border-color: var(--mg-v2-color-primary-main);
+  background: var(--mg-v2-color-primary-subtle);
 }
 
 .mg-admin-sms-template__item-label {
-  font-weight: var(--font-weight-medium, 500);
-  font-size: var(--font-size-md, 0.95rem);
+  font-weight: var(--mg-v2-font-weight-medium);
+  font-size: var(--mg-v2-font-size-body-md);
 }
 
 .mg-admin-sms-template__item-key {
-  font-size: var(--font-size-xs, 0.75rem);
-  color: var(--color-text-muted);
+  font-size: var(--mg-v2-font-size-caption);
+  color: var(--mg-v2-color-text-tertiary);
 }
 
 .mg-admin-sms-template__item-badge {
-  font-size: var(--font-size-xs, 0.75rem);
-  padding: var(--spacing-xs) var(--spacing-sm);
-  border-radius: var(--radius-sm, 4px);
-  background: var(--color-primary-light, var(--color-bg-secondary));
-  color: var(--color-text-primary);
-  border: 1px solid var(--color-border-default);
+  font-size: var(--mg-v2-font-size-caption);
+  padding: var(--mg-v2-space-1) var(--mg-v2-space-2);
+  border-radius: var(--mg-v2-radius-sm);
+  background: var(--mg-v2-color-neutral-100);
+  color: var(--mg-v2-color-text-primary);
+  border: var(--mg-v2-border-width-thin) solid var(--mg-v2-color-border-default);
 }
 
-/* =============================================================================
- * audience (수신 대상) Pill 배지 — 상담사/내담자 시각 구분 (2026-06-01)
- * 색상 토큰 SSOT: unified-design-tokens.css 의 info/brand/warning/neutral 스케일.
- * 디자인 시스템 미배포 신규 토큰 fallback 은 hex 로 명시 (D5 §1 SSOT 가드 통과).
- * =========================================================================== */
+/* audience (수신 대상) Pill — 상담사/내담자/양쪽/관리자/시스템 시각 구분 */
 .mg-admin-sms-template__audience-badge {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: var(--font-size-xs, 0.75rem);
-  font-weight: var(--font-weight-semibold, 600);
+  font-size: var(--mg-v2-font-size-caption);
+  font-weight: var(--mg-v2-font-weight-semibold);
   line-height: 1;
-  padding: var(--spacing-xs) var(--spacing-sm);
-  border-radius: var(--radius-pill, 9999px);
-  border: 1px solid transparent;
-  letter-spacing: 0.02em;
+  padding: var(--mg-v2-space-1) var(--mg-v2-space-2);
+  border-radius: var(--mg-v2-radius-pill);
+  border: var(--mg-v2-border-width-thin) solid transparent;
   white-space: nowrap;
 }
 
 .mg-admin-sms-template__audience-badge--lg {
-  font-size: var(--font-size-sm, 0.875rem);
-  padding: var(--spacing-xs) var(--spacing-md);
+  font-size: var(--mg-v2-font-size-body-md);
+  padding: var(--mg-v2-space-1) var(--mg-v2-space-3);
 }
 
-/* 내담자 — 인디고/블루 (mg-color-info-* cascade) */
 .mg-admin-sms-template__audience-badge--client {
-  background: var(--mg-color-info-100);
-  color: var(--mg-color-info-800);
-  border-color: var(--mg-color-info-100);
+  background: var(--mg-v2-color-semantic-info-light);
+  color: var(--mg-v2-color-semantic-info-dark);
+  border-color: var(--mg-v2-color-semantic-info-light);
 }
 
-/*
- * 상담사 — 보라(violet) Pill. SSOT 토큰 미시드 (brand-violet 단계 부재) 이므로
- * 후속 디자이너 위임 전까지 Tailwind violet-100/700/200 hex 사용.
- * TODO(2026-Q2 D12): unified-design-tokens.css 에 --mg-color-brand-violet-100/700/200 신설.
- */
 .mg-admin-sms-template__audience-badge--consultant {
-  background: #ede9fe;
-  color: #6d28d9;
-  border-color: #ddd6fe;
+  background: var(--mg-v2-color-accent-subtle);
+  color: var(--mg-v2-color-accent-dark);
+  border-color: var(--mg-v2-color-accent-light);
 }
 
-/*
- * 양쪽(BOTH) — 내담자+상담사 동시 발송. CLIENT 인디고 + CONSULTANT 보라 사이의
- * 시각 분리를 위해 sky 계 (info-100 + brand-violet hint) 그라데이션 톤 적용.
- * TODO(2026-Q2 D12): --mg-color-brand-both-* 통합 토큰 신설 후 hex 제거.
- */
 .mg-admin-sms-template__audience-badge--both {
-  background: linear-gradient(90deg, var(--mg-color-info-100) 0%, #ede9fe 100%);
-  color: #4338ca;
-  border-color: #c7d2fe;
+  background: var(--mg-v2-color-primary-subtle);
+  color: var(--mg-v2-color-primary-dark);
+  border-color: var(--mg-v2-color-primary-light);
 }
 
-/* 관리자 — 경고/포커스 앰버 (mg-color-warning-* cascade) */
 .mg-admin-sms-template__audience-badge--admin {
-  background: var(--mg-color-warning-100);
-  color: var(--mg-color-warning-700);
-  border-color: var(--mg-color-warning-200);
+  background: var(--mg-v2-color-semantic-warning-light);
+  color: var(--mg-v2-color-semantic-warning-dark);
+  border-color: var(--mg-v2-color-semantic-warning-light);
 }
 
-/* 시스템 — 중립 그레이 (mg-color-bg/border cascade) */
 .mg-admin-sms-template__audience-badge--system {
-  background: var(--mg-color-bg-secondary);
-  color: var(--mg-color-text-secondary);
-  border-color: var(--mg-color-border-default);
+  background: var(--mg-v2-color-neutral-100);
+  color: var(--mg-v2-color-text-secondary);
+  border-color: var(--mg-v2-color-border-default);
 }
 
 .mg-admin-sms-template__editor-title-row {
   display: flex;
   align-items: center;
-  gap: var(--spacing-sm);
+  gap: var(--mg-v2-space-2);
   flex-wrap: wrap;
 }
 
-/* =============================================================================
- * 발송 조건 (trigger) — 어드민이 본문만 보고 트리거 헷갈리는 문제 해소.
- * 디테일 헤더에 강조 배너 + 리스트에 한 줄 요약.
- * ========================================================================= */
+/* 발송 조건 (trigger) — 디테일 헤더 강조 배너 + 리스트 한 줄 요약 */
 .mg-admin-sms-template__trigger-banner {
   display: flex;
   align-items: flex-start;
-  gap: var(--spacing-xs);
-  margin-top: var(--spacing-xs);
-  padding: var(--spacing-xs) var(--spacing-sm);
-  background: var(--mg-color-info-soft, var(--mg-color-bg-secondary));
-  border-left: 3px solid var(--mg-color-info-800, var(--mg-color-info));
-  border-radius: var(--radius-sm, 4px);
-  font-size: var(--font-size-sm, 0.875rem);
+  gap: var(--mg-v2-space-2);
+  margin-top: var(--mg-v2-space-1);
+  padding: var(--mg-v2-space-2) var(--mg-v2-space-3);
+  background: var(--mg-v2-color-semantic-info-light);
+  border: var(--mg-v2-border-width-thin) solid var(--mg-v2-color-semantic-info-light);
+  border-radius: var(--mg-v2-radius-sm);
+  font-size: var(--mg-v2-font-size-body-md);
   line-height: 1.4;
-  color: var(--mg-color-text-primary);
+  color: var(--mg-v2-color-text-primary);
 }
 
 .mg-admin-sms-template__trigger-label {
   flex-shrink: 0;
-  font-weight: var(--font-weight-semibold, 600);
-  color: var(--mg-color-info-800, var(--mg-color-info));
+  font-weight: var(--mg-v2-font-weight-semibold);
+  color: var(--mg-v2-color-semantic-info-dark);
 }
 
 .mg-admin-sms-template__trigger-value {
@@ -228,9 +197,9 @@
 .mg-admin-sms-template__item-trigger {
   display: block;
   width: 100%;
-  margin-top: var(--spacing-xs);
-  font-size: var(--font-size-xs, 0.75rem);
-  color: var(--mg-color-text-secondary);
+  margin-top: var(--mg-v2-space-1);
+  font-size: var(--mg-v2-font-size-caption);
+  color: var(--mg-v2-color-text-secondary);
   line-height: 1.3;
   white-space: nowrap;
   overflow: hidden;
@@ -240,183 +209,122 @@
 .mg-admin-sms-template__editor {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-md);
+  gap: var(--mg-v2-space-4);
+  min-width: 0;
 }
 
 .mg-admin-sms-template__placeholder {
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 240px;
-  color: var(--color-text-muted);
-  border: 1px dashed var(--color-border-default);
-  border-radius: var(--radius-sm, 4px);
+  min-height: 15rem;
+  color: var(--mg-v2-color-text-tertiary);
 }
 
 .mg-admin-sms-template__editor-header {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-xs);
+  gap: var(--mg-v2-space-1);
 }
 
 .mg-admin-sms-template__editor-title {
   margin: 0;
-  font-size: var(--font-size-lg, 1.125rem);
+  font-size: var(--mg-v2-font-size-h3);
+  font-weight: var(--mg-v2-font-weight-semibold);
+  color: var(--mg-v2-color-text-primary);
 }
 
 .mg-admin-sms-template__editor-description {
   margin: 0;
-  color: var(--color-text-secondary);
-  font-size: var(--font-size-sm, 0.875rem);
+  color: var(--mg-v2-color-text-secondary);
+  font-size: var(--mg-v2-font-size-body-md);
 }
 
 .mg-admin-sms-template__editor-section {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-xs);
+  gap: var(--mg-v2-space-2);
 }
 
 .mg-admin-sms-template__editor-section-title {
   margin: 0;
-  font-size: var(--font-size-sm, 0.875rem);
-  color: var(--color-text-primary);
-  font-weight: var(--font-weight-semibold, 600);
+  font-size: var(--mg-v2-font-size-body-md);
+  color: var(--mg-v2-color-text-primary);
+  font-weight: var(--mg-v2-font-weight-semibold);
 }
 
 .mg-admin-sms-template__global-content {
-  background: var(--color-bg-secondary);
-  border: 1px solid var(--color-border-light);
-  border-radius: var(--radius-sm, 4px);
-  padding: var(--spacing-sm);
+  background: var(--mg-v2-color-neutral-100);
+  border: var(--mg-v2-border-width-thin) solid var(--mg-v2-color-border-light);
+  border-radius: var(--mg-v2-radius-sm);
+  padding: var(--mg-v2-space-3);
   white-space: pre-wrap;
-  font-size: var(--font-size-sm, 0.875rem);
-  color: var(--color-text-secondary);
+  font-size: var(--mg-v2-font-size-body-md);
+  color: var(--mg-v2-color-text-secondary);
   margin: 0;
-}
-
-.mg-admin-sms-template__tenant-content {
-  width: 100%;
-  resize: vertical;
-  padding: var(--spacing-sm);
-  border: 1px solid var(--color-border-default);
-  border-radius: var(--radius-sm, 4px);
-  font-family: inherit;
-  font-size: var(--font-size-sm, 0.875rem);
-  background: var(--color-bg-primary);
-  color: var(--color-text-primary);
-}
-
-.mg-admin-sms-template__hint {
-  margin: 0;
-  font-size: var(--font-size-xs, 0.75rem);
-  color: var(--color-text-muted);
-}
-
-.mg-admin-sms-template__variables-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: var(--spacing-xs);
-}
-
-.mg-admin-sms-template__variable-row {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-xs);
-}
-
-.mg-admin-sms-template__variable-name {
-  font-size: var(--font-size-xs, 0.75rem);
-  color: var(--color-text-secondary);
-}
-
-.mg-admin-sms-template__variable-input {
-  padding: var(--spacing-xs);
-  border: 1px solid var(--color-border-default);
-  border-radius: var(--radius-sm, 4px);
-  font-size: var(--font-size-sm, 0.875rem);
-  background: var(--color-bg-primary);
-  color: var(--color-text-primary);
-}
-
-.mg-admin-sms-template__actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--spacing-xs);
 }
 
 .mg-admin-sms-template__preview-output {
-  background: var(--color-bg-secondary);
-  border: 1px solid var(--color-border-light);
-  border-radius: var(--radius-sm, 4px);
-  padding: var(--spacing-sm);
+  background: var(--mg-v2-color-neutral-100);
+  border: var(--mg-v2-border-width-thin) solid var(--mg-v2-color-border-light);
+  border-radius: var(--mg-v2-radius-sm);
+  padding: var(--mg-v2-space-3);
   white-space: pre-wrap;
-  font-size: var(--font-size-sm, 0.875rem);
-  color: var(--color-text-primary);
+  font-size: var(--mg-v2-font-size-body-md);
+  color: var(--mg-v2-color-text-primary);
   margin: 0;
 }
 
-.mg-admin-sms-template__preview-meta {
-  margin: 0;
-  font-size: var(--font-size-xs, 0.75rem);
-  color: var(--color-text-secondary);
-}
-
+.mg-admin-sms-template__preview-meta,
 .mg-admin-sms-template__preview-missing {
   margin: 0;
-  font-size: var(--font-size-xs, 0.75rem);
-  color: var(--color-text-secondary);
+  font-size: var(--mg-v2-font-size-caption);
+  color: var(--mg-v2-color-text-secondary);
 }
 
 .mg-admin-sms-template__banner {
-  background: var(--color-bg-warning, var(--color-warning-50));
-  color: var(--color-text-primary);
-  border: 1px solid var(--color-border-warning, var(--color-warning-200));
-  border-radius: var(--radius-sm, 4px);
-  padding: var(--spacing-sm) var(--spacing-md);
-  font-size: var(--font-size-sm, 0.875rem);
-}
-
-.mg-admin-sms-template__global-toggle {
-  background: var(--color-bg-primary);
-  border: 1px solid var(--color-border-light);
-  border-radius: var(--radius-md, 8px);
-  padding: var(--spacing-md);
+  background: var(--mg-v2-color-semantic-warning-light);
+  color: var(--mg-v2-color-text-primary);
+  border: var(--mg-v2-border-width-thin) solid var(--mg-v2-color-semantic-warning);
+  border-radius: var(--mg-v2-radius-md);
+  padding: var(--mg-v2-space-3) var(--mg-v2-space-4);
+  font-size: var(--mg-v2-font-size-body-md);
 }
 
 .mg-admin-sms-template__template-toggle {
   display: inline-flex;
   align-items: center;
-  gap: var(--spacing-xs);
-  margin-top: var(--spacing-xs);
-  padding: var(--spacing-xs) var(--spacing-sm);
+  gap: var(--mg-v2-space-2);
+  margin-top: var(--mg-v2-space-1);
+  padding: var(--mg-v2-space-1) var(--mg-v2-space-2);
 }
 
 .mg-admin-sms-template__template-toggle--disabled {
-  opacity: 0.6;
+  opacity: var(--mg-v2-opacity-disabled);
   cursor: not-allowed;
 }
 
 .mg-admin-sms-template__template-toggle-label {
-  font-size: var(--font-size-sm, 0.875rem);
-  color: var(--color-text-secondary);
+  font-size: var(--mg-v2-font-size-body-md);
+  color: var(--mg-v2-color-text-secondary);
 }
 
 .mg-admin-sms-template__dispatch-badge {
   display: inline-flex;
   align-items: center;
-  margin-left: var(--spacing-xs);
-  padding: 2px var(--spacing-xs);
-  border-radius: 999px;
-  font-size: var(--font-size-xs, 0.75rem);
-  font-weight: 600;
+  margin-left: var(--mg-v2-space-1);
+  padding: var(--mg-v2-space-1) var(--mg-v2-space-2);
+  border-radius: var(--mg-v2-radius-pill);
+  font-size: var(--mg-v2-font-size-caption);
+  font-weight: var(--mg-v2-font-weight-semibold);
 }
 
 .mg-admin-sms-template__dispatch-badge--on {
-  background: var(--color-success-50, var(--color-bg-success));
-  color: var(--color-success-600, var(--color-text-success));
+  background: var(--mg-v2-color-semantic-success-light);
+  color: var(--mg-v2-color-semantic-success-dark);
 }
 
 .mg-admin-sms-template__dispatch-badge--off {
-  background: var(--color-neutral-100, var(--color-bg-secondary));
-  color: var(--color-text-secondary);
+  background: var(--mg-v2-color-neutral-100);
+  color: var(--mg-v2-color-text-secondary);
 }

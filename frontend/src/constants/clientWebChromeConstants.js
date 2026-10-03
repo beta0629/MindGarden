@@ -29,7 +29,7 @@ export const CLIENT_WEB_TOP_NAV_TEST_ID = 'client-web-top-nav';
 export const CLIENT_WEB_PROFILE_LINK_TEST_ID = 'client-web-profile-settings-link';
 
 /** ClientWebTopChrome — profile link aria (header-right → settings) */
-export const CLIENT_WEB_SETTINGS_ARIA = '설정';
+export const CLIENT_WEB_SETTINGS_ARIA = '마이페이지';
 
 /** TopChrome — 알림 벨·메시지 진입점 */
 export const CLIENT_WEB_NOTIFICATIONS_ARIA = '알림';

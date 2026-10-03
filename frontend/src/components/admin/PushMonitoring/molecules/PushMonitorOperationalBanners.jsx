@@ -53,7 +53,6 @@ const PushMonitorOperationalBanners = ({
           tone={PUSH_MONITOR_BADGE_TONES.WARNING}
           title={ADMIN_WEB_SCAFFOLD_COPY.PUSH_MONITOR_BANNER_ALIMTALK_OFF_TITLE}
           description={ADMIN_WEB_SCAFFOLD_COPY.PUSH_MONITOR_BANNER_ALIMTALK_OFF_DESC}
-          code={ADMIN_WEB_SCAFFOLD_COPY.PUSH_MONITOR_BANNER_ALIMTALK_OFF_CODE}
         />
       ) : null}
       <PushMonitorOperationalBadge

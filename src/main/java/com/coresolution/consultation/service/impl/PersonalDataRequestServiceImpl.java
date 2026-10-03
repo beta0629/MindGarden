@@ -2,6 +2,7 @@ package com.coresolution.consultation.service.impl;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -11,7 +12,10 @@ import com.coresolution.consultation.repository.PersonalDataAccessLogRepository;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.PersonalDataRequestService;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
+import com.coresolution.consultation.constant.compliance.ComplianceServiceErrorMessages;
 import com.coresolution.core.context.TenantContextHolder;
+import com.coresolution.core.domain.Tenant;
+import com.coresolution.core.repository.TenantRepository;
 import com.coresolution.core.security.PasswordService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -34,6 +38,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class PersonalDataRequestServiceImpl implements PersonalDataRequestService {
     
     private final UserRepository userRepository;
+    private final TenantRepository tenantRepository;
     private final PersonalDataAccessLogRepository personalDataAccessLogRepository;
     private final PasswordService passwordService;
     private final PersonalDataEncryptionUtil encryptionUtil;
@@ -252,10 +257,9 @@ public class PersonalDataRequestServiceImpl implements PersonalDataRequestServic
                     "deletion", true,
                     "suspension", true
                 ),
-                "contactInfo", Map.of(
-                    "privacyOfficer", "privacy@mindgarden.com",
-                    "phone", "032-724-8501"
-                ),
+                // P1 보안(2026-10-03): 특정 테넌트(마인드가든) 연락처 하드코딩 제거 —
+                // 현재 테넌트 센터 프로필만 사용하고, 비어 있으면 공백 + 안내 문구
+                "contactInfo", buildTenantContactInfo(tenantId),
                 "lastUpdated", user.getUpdatedAt()
             );
             
@@ -265,6 +269,39 @@ public class PersonalDataRequestServiceImpl implements PersonalDataRequestServic
         }
     }
     
+    /**
+     * 현재 테넌트 센터 연락처. 값이 없으면 공백 + 안내 문구만 노출한다.
+     *
+     * <p>P1 보안(2026-10-03): 다른 테넌트 사용자에게 마인드가든 연락처가 노출되던 문제 수정.
+     * 마인드가든 값으로의 폴백은 없다.
+     *
+     * @param tenantId 현재 테넌트 ID
+     * @return {@code privacyOfficer}/{@code phone} + 필요 시 {@code notice}
+     */
+    private Map<String, Object> buildTenantContactInfo(String tenantId) {
+        Optional<Tenant> tenant = tenantRepository.findByTenantIdAndIsDeletedFalse(tenantId);
+        String privacyOfficer = blankToEmpty(tenant.map(Tenant::getContactEmail).orElse(null));
+        String phone = blankToEmpty(tenant.map(Tenant::getContactPhone).orElse(null));
+
+        Map<String, Object> contactInfo = new LinkedHashMap<>();
+        contactInfo.put("privacyOfficer", privacyOfficer);
+        contactInfo.put("phone", phone);
+        if (privacyOfficer.isEmpty() || phone.isEmpty()) {
+            contactInfo.put("notice", ComplianceServiceErrorMessages.MSG_CENTER_PROFILE_REQUIRED);
+        }
+        return contactInfo;
+    }
+
+    /**
+     * null·공백은 빈 문자열로 정규화 (화면에서 공백 표시).
+     *
+     * @param value 원본 값
+     * @return 공백이면 빈 문자열, 아니면 trim 값
+     */
+    private static String blankToEmpty(String value) {
+        return (value == null || value.isBlank()) ? "" : value.trim();
+    }
+
     /**
      * 클라이언트 IP 주소 추출
      */

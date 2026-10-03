@@ -75,7 +75,8 @@ jest.mock('../../../common/MGButton', () => ({
 jest.mock('../../../erp/common/erpMgButtonProps', () => ({
   __esModule: true,
   buildErpMgButtonClassName: () => 'mock-btn',
-  ERP_MG_BUTTON_LOADING_TEXT: '처리 중...'
+  ERP_MG_BUTTON_LOADING_TEXT: '처리 중...',
+  mapErpVariantToMg: (variant) => variant
 }));
 
 // 3. BadgeSelect — 라벨로 채널을 선택할 수 있도록 button 으로 mock.

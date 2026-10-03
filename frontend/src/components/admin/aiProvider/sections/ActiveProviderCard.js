@@ -16,8 +16,7 @@ import {
   RefreshCw,
   AlertCircle
 } from 'lucide-react';
-import MGButton from '../../../common/MGButton';
-import { buildErpMgButtonClassName } from '../../../erp/common/erpMgButtonProps';
+import { SettingsSectionPanel, SettingsButton } from '../../settings-shell';
 import { toDisplayString } from '../../../../utils/safeDisplay';
 import {
   AI_PROVIDER_LABELS,
@@ -61,21 +60,14 @@ const ActiveProviderCard = ({ health, loading, error, onRefresh }) => {
   })();
 
   return (
-    <section className="mg-ai-section mg-ai-active-provider">
-      <header className="mg-ai-section__header">
-        <h2 className="mg-ai-section__title">
-          <span className="mg-ai-section__accent" aria-hidden="true" />
-          현재 활성 프로바이더
-        </h2>
-        <MGButton
+    <SettingsSectionPanel
+      title="현재 활성 프로바이더"
+      className="mg-ai-section mg-ai-active-provider"
+      body="plain"
+      actions={(
+        <SettingsButton
           type="button"
           variant="secondary"
-          size="medium"
-          className={buildErpMgButtonClassName({
-            variant: 'secondary',
-            size: 'md',
-            loading
-          })}
           onClick={onRefresh}
           disabled={loading}
           loading={loading}
@@ -86,8 +78,9 @@ const ActiveProviderCard = ({ health, loading, error, onRefresh }) => {
           <RefreshCw size={14} aria-hidden="true" />
           {' '}
           {AI_PROVIDER_LABELS.healthRefresh}
-        </MGButton>
-      </header>
+        </SettingsButton>
+      )}
+    >
 
       <div className="mg-ai-active-provider__body">
         <div className="mg-ai-active-provider__logo" aria-hidden="true">
@@ -109,7 +102,7 @@ const ActiveProviderCard = ({ health, loading, error, onRefresh }) => {
           ) : null}
         </div>
       </div>
-    </section>
+    </SettingsSectionPanel>
   );
 };
 

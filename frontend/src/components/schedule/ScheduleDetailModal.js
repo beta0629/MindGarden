@@ -1325,7 +1325,7 @@ const ScheduleDetailModal = ({
                 showCloseButton={true}
                 zIndex={SCHEDULE_DETAIL_Z_INDEX_MAIN}
                 closeOnEscape={!partyQuickView}
-                className="mg-v2-ad-b0kla"
+                className="mg-v2-ad-b0kla schedule-detail-modal"
                 actions={(
                     <ActionBar
                         align="end"

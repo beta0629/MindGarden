@@ -339,13 +339,19 @@ public class OnboardingController extends BaseApiController {
     }
 
     /**
-     * 온보딩 요청 수정 /** PUT /api/v1/onboarding/requests/{id} /** PENDING, IN_REVIEW, ON_HOLD 상태에서만 수정
-     * 가능 /** 서브도메인 수정 시 중복 확인 수행
+     * 온보딩 요청 수정.
+     * PUT /api/v1/onboarding/requests/{id} 및 /api/v1/ops/onboarding/requests/{id} — OPS 전용 (fail-closed).
+     * 미인증·id 추측으로는 수정하지 않는다. PENDING, IN_REVIEW, ON_HOLD 에서만 수정 가능.
+     * 서브도메인 수정 시 중복 확인을 수행한다.
+     *
+     * @param id 온보딩 요청 ID
+     * @param payload 수정 본문
+     * @return 수정된 공개 상태
      */
     @PutMapping("/requests/{id}")
     public ResponseEntity<ApiResponse<OnboardingPublicStatusResponse>> update(@PathVariable Long id,
-            @RequestBody @Valid OnboardingUpdateRequest payload, HttpSession session) {
-        validateOnboardingAccess(session);
+            @RequestBody @Valid OnboardingUpdateRequest payload) {
+        OpsPermissionUtils.requireOps();
         log.info(
                 "온보딩 요청 수정: id={}, tenantName={}, subdomain={}, brandName={}, regionCode={}, businessType={}",
                 id, payload.tenantName(), payload.subdomain(), payload.brandName(),
@@ -480,10 +486,15 @@ public class OnboardingController extends BaseApiController {
             OnboardingRequest updated = onboardingService.decide(id, payload.status(),
                     payload.actorId(), payload.note());
 
-            log.info("✅ 온보딩 요청 결정 완료: id={}, status={}", id, payload.status());
+            log.info("✅ 온보딩 요청 결정 완료: id={}, status={}", id, updated.getStatus());
 
             OnboardingDecisionResponse response = new OnboardingDecisionResponse(
                     toAdminResponse(updated), resolveCreatedAdminAccount(updated));
+
+            if (updated.getStatus() == OnboardingStatus.ON_HOLD) {
+                return updated("온보딩 승인 프로세스 중 오류가 발생하여 보류 상태로 변경되었습니다. 재시도해주세요.",
+                        response);
+            }
 
             // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
             return updated("온보딩 요청이 "

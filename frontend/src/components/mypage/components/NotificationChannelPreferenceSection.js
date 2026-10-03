@@ -22,7 +22,9 @@ const NotificationChannelPreferenceSection = ({
   preferenceUiAdjusted,
   onPreferenceChange,
   readOnlyDueToPolicy = false,
-  readOnlyHintI18nKey = 'admin.userProfile.notificationChannel.staffReadOnlyHint'
+  readOnlyHintI18nKey = 'admin.userProfile.notificationChannel.staffReadOnlyHint',
+  translate = tNotificationChannel,
+  hideHeading = false
 }) => {
   const groupId = useId();
   const titleId = `${groupId}-title`;
@@ -71,39 +73,45 @@ const NotificationChannelPreferenceSection = ({
     !noneConfigured &&
     preferenceValue === NOTIFICATION_CHANNEL_PREFERENCE_VALUE.TENANT_DEFAULT &&
     tenantDefaultHint === 'KAKAO'
-      ? tNotificationChannel('tenantProfile.notificationChannel.optionKakaoDescription')
+      ? translate('tenantProfile.notificationChannel.optionKakaoDescription')
       : !noneConfigured &&
         preferenceValue === NOTIFICATION_CHANNEL_PREFERENCE_VALUE.TENANT_DEFAULT &&
         tenantDefaultHint === 'SMS'
-        ? tNotificationChannel('tenantProfile.notificationChannel.optionSmsDescription')
+        ? translate('tenantProfile.notificationChannel.optionSmsDescription')
         : null;
 
   return (
     <div className="mg-mypage-clinic-os__form-row mg-mypage-clinic-os__form-row--stack" aria-labelledby={titleId}>
-      <div>
-        <h3 id={titleId} className="mg-mypage-clinic-os__section-title">
-          {tNotificationChannel(SECTION_I18N)}
+      {hideHeading ? (
+        <h3 id={titleId} className="mg-mypage-visually-hidden">
+          {translate(SECTION_I18N)}
         </h3>
-        <p className="mg-mypage-clinic-os__section-description mg-mypage-notification-channel__hint">
-          {tNotificationChannel(SUB_I18N)}
-        </p>
-      </div>
+      ) : (
+        <div>
+          <h3 id={titleId} className="mg-mypage-clinic-os__section-title">
+            {translate(SECTION_I18N)}
+          </h3>
+          <p className="mg-mypage-clinic-os__section-description mg-mypage-notification-channel__hint">
+            {translate(SUB_I18N)}
+          </p>
+        </div>
+      )}
 
       {topHintKey ? (
         <p className="mg-mypage-notification-channel__hint mg-mypage-notification-channel__hint--warn">
-          {tNotificationChannel(topHintKey)}
+          {translate(topHintKey)}
         </p>
       ) : null}
 
       {preferenceUiAdjusted ? (
         <p className="mg-mypage-notification-channel__hint mg-mypage-notification-channel__hint--warn">
-          {tNotificationChannel('tenantProfile.notificationChannel.hintPreferenceResetToTenantDefault')}
+          {translate('tenantProfile.notificationChannel.hintPreferenceResetToTenantDefault')}
         </p>
       ) : null}
 
       {readOnlyDueToPolicy && isEditing ? (
         <p className="mg-mypage-notification-channel__hint mg-mypage-notification-channel__hint--warn">
-          {tNotificationChannel(readOnlyHintI18nKey)}
+          {translate(readOnlyHintI18nKey)}
         </p>
       ) : null}
 
@@ -139,10 +147,10 @@ const NotificationChannelPreferenceSection = ({
                     !isEditing || readOnlyDueToPolicy || opt.disabled || noneConfigured
                   }
                 />
-                <span>{tNotificationChannel(opt.labelKey)}</span>
+                <span>{translate(opt.labelKey)}</span>
               </div>
               <p className="mg-mypage-notification-channel__option-desc">
-                {tNotificationChannel(opt.descKey)}
+                {translate(opt.descKey)}
               </p>
             </label>
           );

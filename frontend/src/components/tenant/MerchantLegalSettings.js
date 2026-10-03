@@ -10,13 +10,14 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useSession } from '../../contexts/SessionContext';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
-import ContentArea from '../dashboard-v2/content/ContentArea';
-import ContentHeader from '../dashboard-v2/content/ContentHeader';
-import MGButton from '../common/MGButton';
 import {
-  buildErpMgButtonClassName,
-  ERP_MG_BUTTON_LOADING_TEXT
-} from '../erp/common/erpMgButtonProps';
+  SettingsPageShell,
+  SettingsSectionPanel,
+  SettingsSummaryStrip,
+  SettingsButton
+} from '../admin/settings-shell';
+import UnifiedLoading from '../common/UnifiedLoading';
+import SafeErrorDisplay from '../common/SafeErrorDisplay';
 import MerchantLegalFooterPreview from './MerchantLegalFooterPreview';
 import {
   deriveMerchantLegalStatusLabels,
@@ -57,6 +58,10 @@ const GUIDE_SANITIZE_HINT =
   '자리표시자 `[분]` 을 읽기 쉬운 문구로 바꿨습니다. 저장하면 반영됩니다.';
 
 const TEXTAREA_ROWS = 6;
+
+const PAGE_TITLE = '사업자·약관';
+const PAGE_TITLE_ID = 'merchant-legal-settings-title';
+const PAGE_CLASS_NAME = 'merchant-legal-settings--clinic-os';
 
 /**
  * 사업자등록번호 입력으로 포커스·스크롤.
@@ -240,10 +245,10 @@ const MerchantLegalSettings = () => {
 
   if (sessionLoading) {
     return (
-      <AdminCommonLayout title="사업자·약관">
-        <ContentArea>
-          <p>세션 확인 중…</p>
-        </ContentArea>
+      <AdminCommonLayout title={PAGE_TITLE}>
+        <SettingsPageShell title={PAGE_TITLE} titleId={PAGE_TITLE_ID} className={PAGE_CLASS_NAME}>
+          <UnifiedLoading type="inline" text="세션 확인 중…" />
+        </SettingsPageShell>
       </AdminCommonLayout>
     );
   }
@@ -253,165 +258,149 @@ const MerchantLegalSettings = () => {
     return null;
   }
 
+  const summaryItems = [
+    { key: 'registration', label: '등록', value: statusLabels.registrationStatusLabel },
+    { key: 'mailOrder', label: '통신판매', value: statusLabels.mailOrderStatusLabel },
+    { key: 'sitePublic', label: '사이트 공개', value: statusLabels.sitePublicStatusLabel }
+  ];
+
   return (
-    <AdminCommonLayout title="사업자·약관">
-      <ContentArea className="merchant-legal-settings--clinic-os">
-        <ContentHeader
-          title="사업자·약관"
-          subtitle="사이트·PG 검증에 쓰는 입점 정보 · 센터별로 등록합니다."
-          actions={(
-            <div className="merchant-legal-settings__header-actions">
-              <MGButton
-                variant="secondary"
-                className={buildErpMgButtonClassName({ variant: 'secondary', loading: false })}
-                onClick={() => {
-                  const el = document.getElementById('merchant-legal-public-preview');
-                  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                }}
-              >
-                미리보기
-              </MGButton>
-              <MGButton
-                variant="primary"
-                className={`merchant-legal-settings__save ${buildErpMgButtonClassName({
-                  variant: 'primary',
-                  loading: saving
-                })}`}
-                loading={saving}
-                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                onClick={handleSave}
-                data-testid="merchant-legal-save"
-              >
-                저장
-              </MGButton>
-            </div>
-          )}
-        />
-
-        <div className="merchant-legal-settings-summary mapping-management-summary" aria-label="등록 상태">
-          <div className="merchant-legal-settings-summary__cell">
-            <span className="merchant-legal-settings-summary__label">등록</span>
-            <strong data-testid="merchant-legal-status-reg">
-              {statusLabels.registrationStatusLabel}
-            </strong>
-          </div>
-          <div className="merchant-legal-settings-summary__cell">
-            <span className="merchant-legal-settings-summary__label">통신판매</span>
-            <strong data-testid="merchant-legal-status-mail">
-              {statusLabels.mailOrderStatusLabel}
-            </strong>
-          </div>
-          <div className="merchant-legal-settings-summary__cell">
-            <span className="merchant-legal-settings-summary__label">사이트 공개</span>
-            <strong data-testid="merchant-legal-status-site">
-              {statusLabels.sitePublicStatusLabel}
-            </strong>
-          </div>
-        </div>
-
-        <div
-          className="merchant-legal-settings__preview-rail"
-          id="merchant-legal-public-preview"
-          data-testid="merchant-legal-preview-rail"
-        >
-          <div className="merchant-legal-settings__preview-rail-text">
-            <strong>공개 미리보기</strong>
-            <span>
-              저장하면 고객에게 이렇게 보입니다. 결제 연결은 「결제 연결」에서 진행합니다.
-              {' '}
-              {JSON.stringify(form) === JSON.stringify(savedSnapshot)
-                ? '현재 미리보기는 저장본과 동일합니다.'
-                : '저장 전 미리보기입니다. 저장하면 공개 값이 갱신됩니다.'}
-            </span>
-          </div>
-          <span className="merchant-legal-settings__preview-badge">
-            {liveStatus.registrationStatusLabel}
-          </span>
-        </div>
-
-        {loadError && (
-          <p className="merchant-legal-settings__error" role="alert">{loadError}</p>
+    <AdminCommonLayout title={PAGE_TITLE}>
+      <SettingsPageShell
+        title={PAGE_TITLE}
+        titleId={PAGE_TITLE_ID}
+        className={PAGE_CLASS_NAME}
+        actions={(
+          <>
+            <SettingsButton
+              variant="ghost"
+              preventDoubleClick
+              onClick={() => {
+                const el = document.getElementById('merchant-legal-public-preview');
+                if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              }}
+            >
+              미리보기
+            </SettingsButton>
+            <SettingsButton
+              variant="primary"
+              preventDoubleClick
+              loading={saving}
+              onClick={handleSave}
+              data-testid="merchant-legal-save"
+            >
+              저장
+            </SettingsButton>
+          </>
         )}
+        summary={<SettingsSummaryStrip items={summaryItems} ariaLabel="등록 상태" />}
+      >
+        <SettingsSectionPanel
+          id="merchant-legal-public-preview"
+          testId="merchant-legal-preview-rail"
+          className="merchant-legal-settings__preview-rail"
+          title="공개 미리보기"
+          body="plain"
+          actions={(
+            <span className="merchant-legal-settings__preview-badge">
+              {liveStatus.registrationStatusLabel}
+            </span>
+          )}
+        >
+          <p className="mg-v2-settings-muted">
+            저장하면 고객에게 이렇게 보입니다. 결제 연결은 「결제 연결」에서 진행합니다.
+            {' '}
+            {JSON.stringify(form) === JSON.stringify(savedSnapshot)
+              ? '현재 미리보기는 저장본과 동일합니다.'
+              : '저장 전 미리보기입니다. 저장하면 공개 값이 갱신됩니다.'}
+          </p>
+        </SettingsSectionPanel>
+
+        <SafeErrorDisplay error={loadError} />
 
         <div className="merchant-legal-settings__stage">
           <div className="merchant-legal-settings__form-col">
             {loading ? (
-              <p>불러오는 중…</p>
+              <p className="mg-v2-settings-muted">불러오는 중…</p>
             ) : (
               <>
-                <section className="merchant-legal-settings__section" aria-labelledby="ml-biz">
-                  <h2 id="ml-biz">사업자</h2>
-                  <label className="merchant-legal-settings__field">
-                    <span>사업자등록번호</span>
-                    <input
-                      id={BIZ_NUMBER_INPUT_ID}
-                      type="text"
-                      value={form.businessRegistrationNumber}
-                      onChange={onChange('businessRegistrationNumber')}
-                      placeholder="000-00-00000"
-                      aria-invalid={Boolean(bizError)}
-                      aria-describedby={bizError ? BIZ_NUMBER_ERROR_ID : undefined}
-                      data-testid={BIZ_NUMBER_TEST_ID}
-                    />
-                    {bizError && (
-                      <span
-                        id={BIZ_NUMBER_ERROR_ID}
-                        className="merchant-legal-settings__field-error"
-                        role="alert"
-                      >
-                        {bizError}
-                      </span>
-                    )}
-                  </label>
-                  <label className="merchant-legal-settings__field">
-                    <span>대표자</span>
-                    <input
-                      type="text"
-                      value={form.representativeName}
-                      onChange={onChange('representativeName')}
-                      placeholder="대표 이름"
-                    />
-                  </label>
-                  <label className="merchant-legal-settings__field">
-                    <span>유선전화</span>
-                    <input
-                      type="text"
-                      value={form.businessLandline}
-                      onChange={onChange('businessLandline')}
-                      placeholder="000-000-0000"
-                    />
-                  </label>
-                  <label className="merchant-legal-settings__field">
-                    <span>사업장 주소</span>
-                    <input
-                      type="text"
-                      value={form.businessAddress}
-                      onChange={onChange('businessAddress')}
-                      placeholder="주소"
-                    />
-                  </label>
-                </section>
+                <SettingsSectionPanel title="사업자">
+                  <div className="mg-v2-settings-form-grid">
+                    <label className="mg-v2-settings-field merchant-legal-settings__field">
+                      <span className="mg-v2-form-label">사업자등록번호</span>
+                      <input
+                        id={BIZ_NUMBER_INPUT_ID}
+                        type="text"
+                        className="mg-v2-form-input"
+                        value={form.businessRegistrationNumber}
+                        onChange={onChange('businessRegistrationNumber')}
+                        placeholder="000-00-00000"
+                        aria-invalid={Boolean(bizError)}
+                        aria-describedby={bizError ? BIZ_NUMBER_ERROR_ID : undefined}
+                        data-testid={BIZ_NUMBER_TEST_ID}
+                      />
+                      {bizError && (
+                        <span
+                          id={BIZ_NUMBER_ERROR_ID}
+                          className="merchant-legal-settings__field-error"
+                          role="alert"
+                        >
+                          {bizError}
+                        </span>
+                      )}
+                    </label>
+                    <label className="mg-v2-settings-field merchant-legal-settings__field">
+                      <span className="mg-v2-form-label">대표자</span>
+                      <input
+                        type="text"
+                        className="mg-v2-form-input"
+                        value={form.representativeName}
+                        onChange={onChange('representativeName')}
+                        placeholder="대표 이름"
+                      />
+                    </label>
+                    <label className="mg-v2-settings-field merchant-legal-settings__field">
+                      <span className="mg-v2-form-label">유선전화</span>
+                      <input
+                        type="text"
+                        className="mg-v2-form-input"
+                        value={form.businessLandline}
+                        onChange={onChange('businessLandline')}
+                        placeholder="000-000-0000"
+                      />
+                    </label>
+                    <label className="mg-v2-settings-field merchant-legal-settings__field">
+                      <span className="mg-v2-form-label">사업장 주소</span>
+                      <input
+                        type="text"
+                        className="mg-v2-form-input"
+                        value={form.businessAddress}
+                        onChange={onChange('businessAddress')}
+                        placeholder="주소"
+                      />
+                    </label>
+                  </div>
+                </SettingsSectionPanel>
 
-                <section className="merchant-legal-settings__section" aria-labelledby="ml-mail">
-                  <h2 id="ml-mail">통신판매</h2>
-                  <label className="merchant-legal-settings__field">
-                    <span>통신판매업 신고번호</span>
+                <SettingsSectionPanel title="통신판매">
+                  <label className="mg-v2-settings-field merchant-legal-settings__field">
+                    <span className="mg-v2-form-label">통신판매업 신고번호</span>
                     <input
                       type="text"
+                      className="mg-v2-form-input"
                       value={form.mailOrderReportNumber}
                       onChange={onChange('mailOrderReportNumber')}
                       placeholder="제0000-OOOO-0000호"
                     />
                   </label>
-                </section>
+                </SettingsSectionPanel>
 
-                <section
-                  className="merchant-legal-settings__section merchant-legal-settings__section--platform"
-                  aria-labelledby="ml-platform"
-                  data-testid="merchant-legal-platform-notice"
+                <SettingsSectionPanel
+                  title="이용약관·개인정보처리방침"
+                  className="merchant-legal-settings__section--platform"
+                  testId="merchant-legal-platform-notice"
                 >
-                  <h2 id="ml-platform">이용약관·개인정보처리방침</h2>
-                  <p className="merchant-legal-settings__platform-notice">
+                  <p className="mg-v2-settings-muted">
                     이용약관·개인정보처리방침은 플랫폼 공통 · 편집 불가
                   </p>
                   <div className="merchant-legal-settings__platform-links">
@@ -430,34 +419,34 @@ const MerchantLegalSettings = () => {
                       {LEGAL_PUBLIC_LABELS.PRIVACY}
                     </Link>
                   </div>
-                </section>
+                </SettingsSectionPanel>
 
-                <section className="merchant-legal-settings__section" aria-labelledby="ml-refund">
-                  <h2 id="ml-refund">환불·취소·청약철회</h2>
-                  <label className="merchant-legal-settings__field">
-                    <span>안내 문구</span>
+                <SettingsSectionPanel title="환불·취소·청약철회">
+                  <label className="mg-v2-settings-field merchant-legal-settings__field">
+                    <span className="mg-v2-form-label">안내 문구</span>
                     <textarea
                       rows={TEXTAREA_ROWS}
+                      className="mg-v2-form-textarea"
                       value={form.refundPolicyText}
                       onChange={onChange('refundPolicyText')}
                       onBlur={onGuideBlur('refundPolicyText')}
                       placeholder="센터 정책에 맞는 환불·취소·청약철회 안내를 입력하세요"
                     />
                   </label>
-                  <p className="merchant-legal-settings__hint">
+                  <p className="mg-v2-settings-field__hint">
                     비어 있으면 공개 페이지
                     {' '}
                     <Link to={LEGAL_PUBLIC_PATHS.REFUND}>{LEGAL_PUBLIC_LABELS.REFUND}</Link>
                     에 플랫폼 기본 안내가 표시됩니다. 등록하면 센터 문구가 우선합니다.
                   </p>
-                </section>
+                </SettingsSectionPanel>
 
-                <section className="merchant-legal-settings__section" aria-labelledby="ml-price">
-                  <h2 id="ml-price">상품·가격</h2>
-                  <label className="merchant-legal-settings__field">
-                    <span>안내 문구</span>
+                <SettingsSectionPanel title="상품·가격">
+                  <label className="mg-v2-settings-field merchant-legal-settings__field">
+                    <span className="mg-v2-form-label">안내 문구</span>
                     <textarea
                       rows={TEXTAREA_ROWS}
+                      className="mg-v2-form-textarea"
                       value={form.productPriceGuideText}
                       onChange={onChange('productPriceGuideText')}
                       onBlur={onGuideBlur('productPriceGuideText')}
@@ -466,21 +455,21 @@ const MerchantLegalSettings = () => {
                   </label>
                   {guideSanitizeHint && (
                     <p
-                      className="merchant-legal-settings__sanitize-hint"
+                      className="mg-v2-settings-field__hint"
                       data-testid="merchant-legal-sanitize-hint"
                     >
                       {GUIDE_SANITIZE_HINT}
                     </p>
                   )}
-                  <p className="merchant-legal-settings__hint">
+                  <p className="mg-v2-settings-field__hint">
                     고객에게 보이는 상품·가격 목록은 「패키지 요금」에 등록된 항목이며, 공개 페이지
                     {' '}
                     <Link to={LEGAL_PUBLIC_PATHS.PRODUCTS}>{LEGAL_PUBLIC_LABELS.PRODUCTS}</Link>
                     에서 확인합니다.
                   </p>
-                </section>
+                </SettingsSectionPanel>
 
-                <p className="merchant-legal-settings__hint">
+                <p className="mg-v2-settings-field__hint">
                   온보딩에서 입력한 값이 있으면 여기에 미리 채워집니다. 비어 있는 항목만 보완하면 됩니다.
                 </p>
               </>
@@ -488,19 +477,20 @@ const MerchantLegalSettings = () => {
           </div>
 
           <aside className="merchant-legal-settings__preview-col" aria-label="사이트에 보이는 모습">
-            <h2>사이트에 보이는 모습</h2>
-            <MerchantLegalFooterPreview
-              centerName={previewCenterName}
-              legal={form}
-              compact
-              showAccountLinks={false}
-            />
-            <p className="merchant-legal-settings__preview-note">
-              예시 레이아웃 · 실제 값은 센터 DB에서 가져옵니다.
-            </p>
+            <SettingsSectionPanel title="사이트에 보이는 모습" body="plain">
+              <MerchantLegalFooterPreview
+                centerName={previewCenterName}
+                legal={form}
+                compact
+                showAccountLinks={false}
+              />
+              <p className="mg-v2-settings-field__hint">
+                예시 레이아웃 · 실제 값은 센터 DB에서 가져옵니다.
+              </p>
+            </SettingsSectionPanel>
           </aside>
         </div>
-      </ContentArea>
+      </SettingsPageShell>
     </AdminCommonLayout>
   );
 };

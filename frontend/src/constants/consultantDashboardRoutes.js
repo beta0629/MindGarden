@@ -16,7 +16,8 @@ export const CONSULTANT_DASHBOARD_ROUTES = {
   /** App.js canonical: `/consultant/client/:id` (+ alias `/consultant/clients/:id`) */
   CLIENTS: '/consultant/clients',
   MESSAGES: '/consultant/messages',
-  SALARY_SETTLEMENT: '/consultant/salary-settlement'
+  SALARY_SETTLEMENT: '/consultant/salary-settlement',
+  AVAILABILITY: '/consultant/availability'
 };
 
 /** KPI 카드 → 웹-native deep link (ClientDashboardKpiSection 패턴) */

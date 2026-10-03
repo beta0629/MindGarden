@@ -1,6 +1,6 @@
 /**
- * 마이페이지 스모크: /mypage 리다이렉트, 탭 순회, 공통코드(GENDER) 로드, 보안 모달
- * (리뉴얼: `mypageUi.js` 탭 라벨·섹션 제목·보안 버튼 구조 반영)
+ * 마이페이지 스모크: /mypage 리다이렉트, 섹션 앵커(탭 없음)·?tab= 스크롤, 편집, 보안 모달
+ * (역할 공통 레이아웃: `mypageRoleLayout.js` 섹션 제목·보안 버튼 구조 반영)
  *
  * 로컬 실행 (프론트·백엔드 기동 후):
  *   cd tests/e2e && BASE_URL=http://localhost:3000 TEST_USERNAME=... TEST_PASSWORD=... \
@@ -47,7 +47,7 @@ test.describe('마이페이지 스모크', () => {
     await loginWithEnv(page, username, password);
   });
 
-  test('/mypage 진입 시 역할별 마이페이지로 리다이렉트되고 탭·프로필·보안 모달이 동작한다', async ({
+  test('/mypage 진입 시 역할별 마이페이지로 리다이렉트되고 섹션·편집·보안 모달이 동작한다', async ({
     page,
   }: {
     page: Page;
@@ -61,42 +61,26 @@ test.describe('마이페이지 스모크', () => {
       timeout: 15000,
     });
 
-    const tabs = page.getByRole('tab');
-    await tabs.filter({ hasText: '프로필' }).first().click();
-    await expect(page.getByRole('heading', { name: '프로필', level: 2 })).toBeVisible({
+    // 탭 없음 — 섹션이 한 화면에 앵커로 쌓인다
+    await expect(page.getByRole('tab')).toHaveCount(0);
+    await expect(page.getByRole('heading', { name: '기본 정보', level: 2 })).toBeVisible({
       timeout: 15000,
     });
-    await expect(page.locator('select[name="gender"]')).toBeVisible({ timeout: 15000 });
-    const genderOptionCount = await page.locator('select[name="gender"] option').count();
-    expect(
-      genderOptionCount,
-      '성별 select에 옵션이 없으면 공통코드 파싱 실패 또는 로드 실패 가능'
-    ).toBeGreaterThan(1);
-
-    await tabs.filter({ hasText: '설정' }).first().click();
-    await expect(page.getByRole('heading', { name: '일반', level: 2 })).toBeVisible();
-
-    await tabs.filter({ hasText: '보안' }).first().click();
-    await expect(page.getByRole('heading', { name: '비밀번호', level: 2 })).toBeVisible();
-
-    await tabs.filter({ hasText: '소셜 계정' }).first().click();
+    await expect(page.getByRole('heading', { name: '로그인·보안', level: 2 })).toBeVisible();
     await expect(page.getByRole('heading', { name: '연결된 계정', level: 2 })).toBeVisible();
-
-    await tabs.filter({ hasText: '개인정보·동의' }).first().click();
-    await expect(page.getByRole('heading', { name: '동의 요약', level: 2 })).toBeVisible({
+    await expect(page.getByRole('heading', { name: '개인정보·동의', level: 2 })).toBeVisible({
       timeout: 15000,
     });
 
-    await tabs.filter({ hasText: '프로필' }).first().click();
-    await expect(page.locator('select[name="gender"]')).toBeVisible();
+    // ?tab= 딥링크는 해당 섹션으로 스크롤
+    await page.goto(`${new URL(page.url()).pathname}?tab=security`, { waitUntil: 'domcontentloaded' });
+    await expect(page.locator('#security')).toBeInViewport({ timeout: 15000 });
 
-    await page.getByRole('button', { name: '편집' }).click();
-    await expect(page.getByRole('button', { name: '사진 변경' })).toBeVisible();
+    await page.getByTestId('mypage-section-basic-edit').click();
+    await expect(page.getByRole('button', { name: '사진 선택' })).toBeVisible();
     await expect(page.locator('input[type="file"][accept="image/*"]')).toHaveCount(1);
-    await expect(page.getByRole('button', { name: '주소 검색' })).toBeVisible();
-    await expect(page.locator('#mg-mypage-address-line')).toBeVisible();
+    await page.getByTestId('mypage-section-basic-cancel').click();
 
-    await tabs.filter({ hasText: '보안' }).first().click();
     await page.getByRole('button', { name: '비밀번호 변경' }).click();
     await expect(page.getByRole('dialog')).toBeVisible();
     await expect(page.getByRole('heading', { name: '비밀번호 변경' })).toBeVisible();
@@ -109,7 +93,6 @@ test.describe('마이페이지 스모크', () => {
     await page.getByRole('button', { name: '닫기' }).click();
     await expect(page.getByRole('dialog')).toHaveCount(0, { timeout: 5000 });
 
-    await tabs.filter({ hasText: '소셜 계정' }).first().click();
     const unlinkBtn = page.getByRole('button', { name: '연결 해제' });
     if ((await unlinkBtn.count()) > 0) {
       await unlinkBtn.first().click();

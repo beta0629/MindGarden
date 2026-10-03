@@ -5,9 +5,8 @@ import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/co
 import SafeText from '../common/SafeText';
 import SettingSwitchRow from '../common/molecules/SettingSwitchRow';
 import { showNotification } from '../../utils/notification';
-import { patchPgConfigurationTestMode, testPgConnection } from '../../utils/pgApi';
+import { testPgConnection } from '../../utils/pgApi';
 import { toDisplayString } from '../../utils/safeDisplay';
-import { useSettingToggleSave } from '../../hooks/useSettingToggleSave';
 import {
   PG_PROVIDER_IAMPORT,
   PG_PROVIDER_IAMPORT_DISPLAY_LABEL,
@@ -48,12 +47,9 @@ const InfoIcon = ICONS.INFO;
 export const PG_TEST_MODE_LIVE_CHANNEL_KEY_REQUIRED =
   '테스트 모드를 끄려면 운영(라이브) 채널 키를 입력하세요.';
 
-/** 테스트 모드 즉시 반영 성공/실패 메시지 */
-export const PG_TEST_MODE_TOAST = {
-  ON: '테스트 모드가 켜졌습니다.',
-  OFF: '테스트 모드가 꺼졌습니다.',
-  FAIL: '테스트 모드 변경에 실패했습니다.'
-};
+/** 수정 모드 테스트 모드 안내 — 저장 시 재승인 요청으로 제출되고 운영자 승인 후 반영 */
+export const PG_TEST_MODE_REAPPROVAL_NOTICE =
+  '테스트 모드 변경은 저장하면 재승인 요청으로 제출되고, 운영자 승인 후 반영돼요.';
 
 /**
  * settings_json 에서 KICC 이지페이 호스트 오버라이드 분리
@@ -178,18 +174,10 @@ const PgConfigurationForm = ({
   const canRunConnectionTest = Boolean(
     tenantId && configId && (isIamportPortoneV2 || isKicc)
   );
-  const canPersistTestMode = mode === 'edit' && Boolean(tenantId) && Boolean(configId);
+  const isEditMode = mode === 'edit';
 
-  const setTestModeValue = useCallback((next) => {
-    setFormData((prev) => ({ ...prev, testMode: next }));
-    setTouched((prev) => ({ ...prev, testMode: true }));
-  }, []);
-
-  const persistTestMode = useCallback(async(next) => {
-    if (!canPersistTestMode) {
-      return;
-    }
-    if (isIamportPortoneV2 && next === false) {
+  const handleTestModeCheckedChange = useCallback((next) => {
+    if (isEditMode && isIamportPortoneV2 && next === false) {
       const liveKey = resolvePortoneChannelKey(
         { channelKey: portoneChannelKey, channelKeyTest: portoneChannelKeyTest },
         false
@@ -201,67 +189,27 @@ const PgConfigurationForm = ({
           testMode: PG_TEST_MODE_LIVE_CHANNEL_KEY_REQUIRED,
           portoneChannelKey: PG_TEST_MODE_LIVE_CHANNEL_KEY_REQUIRED
         }));
-        throw new Error(PG_TEST_MODE_LIVE_CHANNEL_KEY_REQUIRED);
+        return;
       }
     }
-
-    const response = await patchPgConfigurationTestMode(tenantId, configId, next);
-    if (response && typeof response.testMode === 'boolean') {
-      setFormData((prev) => ({ ...prev, testMode: response.testMode }));
-    }
+    setFormData((prev) => ({ ...prev, testMode: next }));
+    setTouched((prev) => ({ ...prev, testMode: true }));
     setErrors((prev) => {
+      if (!prev.testMode) {
+        return prev;
+      }
       const cleared = { ...prev };
       delete cleared.testMode;
       return cleared;
     });
-    showNotification(next ? PG_TEST_MODE_TOAST.ON : PG_TEST_MODE_TOAST.OFF, 'success');
-  }, [
-    canPersistTestMode,
-    isIamportPortoneV2,
-    portoneChannelKey,
-    portoneChannelKeyTest,
-    tenantId,
-    configId
-  ]);
+  }, [isEditMode, isIamportPortoneV2, portoneChannelKey, portoneChannelKeyTest]);
 
-  const {
-    busy: testModeBusy,
-    disabled: testModeSwitchDisabled,
-    onCheckedChange: onTestModePersistChange
-  } = useSettingToggleSave({
-    value: !!formData.testMode,
-    onValueChange: setTestModeValue,
-    save: persistTestMode,
-    optimistic: true,
-    isEnabled: canPersistTestMode,
-    onError: (error) => {
-      const msg = error?.message
-        ? String(error.message)
-        : PG_TEST_MODE_TOAST.FAIL;
-      setTouched((prev) => ({ ...prev, testMode: true }));
-      setErrors((prev) => ({ ...prev, testMode: msg }));
-      if (msg !== PG_TEST_MODE_LIVE_CHANNEL_KEY_REQUIRED) {
-        showNotification(msg, 'error');
-      }
-    }
-  });
-
-  const handleTestModeCheckedChange = useCallback((next) => {
-    if (!canPersistTestMode) {
-      setFormData((prev) => ({ ...prev, testMode: next }));
-      setTouched((prev) => ({ ...prev, testMode: true }));
-      setErrors((prev) => {
-        if (!prev.testMode) {
-          return prev;
-        }
-        const cleared = { ...prev };
-        delete cleared.testMode;
-        return cleared;
-      });
-      return;
-    }
-    return onTestModePersistChange(next);
-  }, [canPersistTestMode, onTestModePersistChange]);
+  const testModeReapprovalNotice = isEditMode ? (
+    <small className="help-text" data-testid="pg-test-mode-reapproval-notice">
+      <InfoIcon size={14} aria-hidden="true" />
+      {PG_TEST_MODE_REAPPROVAL_NOTICE}
+    </small>
+  ) : null;
   const isActiveLikeStatus = Boolean(
     initialData
       && (initialData.status === 'ACTIVE'
@@ -884,8 +832,6 @@ const PgConfigurationForm = ({
                 label={t('common:tenant.PgConfigurationForm.t_cfd49442')}
                 checked={!!formData.testMode}
                 onCheckedChange={handleTestModeCheckedChange}
-                disabled={testModeSwitchDisabled && canPersistTestMode}
-                isPending={testModeBusy}
                 ariaLabel={t('common:tenant.PgConfigurationForm.t_cfd49442')}
               />
               {getFieldError('testMode') && (
@@ -894,6 +840,7 @@ const PgConfigurationForm = ({
                   {getFieldError('testMode')}
                 </span>
               )}
+              {testModeReapprovalNotice}
               <small className="help-text">
                 <InfoIcon size={14} aria-hidden="true" />
                 테스트·운영 API 엔드포인트는 KICC 문서를 따릅니다.{' '}
@@ -1133,8 +1080,6 @@ const PgConfigurationForm = ({
                     statusLabel={formData.testMode ? '켜짐' : undefined}
                     checked={!!formData.testMode}
                     onCheckedChange={handleTestModeCheckedChange}
-                    disabled={testModeSwitchDisabled && canPersistTestMode}
-                    isPending={testModeBusy}
                     ariaLabel="테스트 모드"
                   />
                   {getFieldError('testMode') && (
@@ -1143,6 +1088,7 @@ const PgConfigurationForm = ({
                       {getFieldError('testMode')}
                     </span>
                   )}
+                  {testModeReapprovalNotice}
                   <small className="help-text">
                     <InfoIcon size={14} aria-hidden="true" />
                     {formData.testMode
@@ -1631,8 +1577,6 @@ const PgConfigurationForm = ({
                 label={t('common:tenant.PgConfigurationForm.t_cfd49442')}
                 checked={!!formData.testMode}
                 onCheckedChange={handleTestModeCheckedChange}
-                disabled={testModeSwitchDisabled && canPersistTestMode}
-                isPending={testModeBusy}
                 ariaLabel={t('common:tenant.PgConfigurationForm.t_cfd49442')}
               />
               {getFieldError('testMode') && (
@@ -1641,6 +1585,7 @@ const PgConfigurationForm = ({
                   {getFieldError('testMode')}
                 </span>
               )}
+              {testModeReapprovalNotice}
               <small className="help-text">
                 <InfoIcon size={14} aria-hidden="true" />
                 {t('common:tenant.PgConfigurationForm.t_ca86098c')}

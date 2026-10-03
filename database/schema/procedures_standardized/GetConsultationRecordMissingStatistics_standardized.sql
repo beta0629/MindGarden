@@ -13,7 +13,7 @@ CREATE PROCEDURE GetConsultationRecordMissingStatistics(
     OUT p_missing_count INT,
     OUT p_alerts_created INT
 )
-BEGIN
+proc_main: BEGIN
     DECLARE v_error_message VARCHAR(500);
     DECLARE v_schedule_count INT DEFAULT 0;
     DECLARE v_record_count INT DEFAULT 0;
@@ -34,7 +34,7 @@ BEGIN
         SET p_message = '테넌트 ID는 필수입니다.';
         SET p_missing_count = 0;
         SET p_alerts_created = 0;
-        LEAVE;
+        LEAVE proc_main;
     END IF;
     
     IF p_check_date IS NULL THEN
@@ -42,7 +42,7 @@ BEGIN
         SET p_message = '확인 날짜는 필수입니다.';
         SET p_missing_count = 0;
         SET p_alerts_created = 0;
-        LEAVE;
+        LEAVE proc_main;
     END IF;
     
     -- 2. 완료된 스케줄 수 조회 (테넌트 격리)

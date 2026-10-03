@@ -11,15 +11,13 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom';
 import { Info } from 'lucide-react';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
-import { ContentArea, ContentHeader } from '../dashboard-v2/content';
+import { SettingsButton, SettingsPageShell, SettingsSectionPanel } from './settings-shell';
 import EmptyState from '../common/EmptyState';
 import SafeText from '../common/SafeText';
-import MGButton from '../common/MGButton';
 import MGPagination from '../common/MGPagination';
 import SegmentedTabs from '../common/SegmentedTabs';
 import Switch from '../common/Switch';
 import EntityRowActions from '../common/molecules/EntityRowActions';
-import { buildErpMgButtonClassName } from '../erp/common/erpMgButtonProps';
 import {
   ADMIN_SHOP_PRODUCT_ROUTES,
   ADMIN_SHOP_PRODUCT_SEGMENT,
@@ -55,7 +53,7 @@ import {
 import '../../styles/unified-design-tokens.css';
 import '../../styles/shop/AdminShopClinicOs.css';
 import '../../styles/shop/AdminShopSuite.css';
-import './AdminDashboard/AdminDashboardB0KlA.css';
+import './AdminShopProductsPage.css';
 import { useTranslation } from 'react-i18next';
 
 const PAGE_TITLE_ID = 'admin-shop-products-title';
@@ -426,14 +424,14 @@ const AdminShopProductsPage = () => {
                   title={ADMIN_SHOP_PRODUCTS_COPY.EMPTY_TITLE}
                   description={ADMIN_SHOP_PRODUCTS_COPY.EMPTY_DESC}
                   action={(
-                    <MGButton
+                    <SettingsButton
                       type="button"
                       variant="secondary"
-                      className={buildErpMgButtonClassName({ variant: 'secondary', size: 'md' })}
                       onClick={goCreate}
+                      preventDoubleClick
                     >
                       {ADMIN_SHOP_PRODUCTS_COPY.CREATE_FIRST}
-                    </MGButton>
+                    </SettingsButton>
                   )}
                 />
               ) : (
@@ -458,38 +456,39 @@ const AdminShopProductsPage = () => {
 
   return (
     <AdminCommonLayout title={ADMIN_SHOP_PRODUCTS_COPY.TITLE}>
-      <ContentArea className="admin-shop-clinic-os admin-shop-suite" ariaLabel={ADMIN_SHOP_PRODUCTS_COPY.TITLE}>
+      <SettingsPageShell
+        title={ADMIN_SHOP_PRODUCTS_COPY.TITLE}
+        titleId={PAGE_TITLE_ID}
+        ariaLabel={ADMIN_SHOP_PRODUCTS_COPY.TITLE}
+        className="admin-shop-products-page"
+        actions={(
+          <SettingsButton
+            type="button"
+            variant="primary"
+            onClick={goCreate}
+            preventDoubleClick
+          >
+            {ADMIN_SHOP_PRODUCTS_COPY.CREATE}
+          </SettingsButton>
+        )}
+      >
         <div className="admin-shop-suite" data-testid={ADMIN_SHOP_SUITE_TEST_IDS.PRODUCTS_PAGE}>
-          <ContentHeader
-            titleId={PAGE_TITLE_ID}
-            title={ADMIN_SHOP_PRODUCTS_COPY.TITLE}
-            subtitle={ADMIN_SHOP_PRODUCTS_COPY.SUBTITLE}
-            actions={(
-              <MGButton
-                type="button"
-                variant="primary"
-                className={buildErpMgButtonClassName({ variant: 'primary', size: 'md' })}
-                onClick={goCreate}
-              >
-                {ADMIN_SHOP_PRODUCTS_COPY.CREATE}
-              </MGButton>
-            )}
-          />
-
           {loadError ? (
-            <EmptyState
-              title={ADMIN_SHOP_PRODUCTS_COPY.LOAD_FAILED_TITLE}
-              action={(
-                <MGButton
-                  type="button"
-                  variant="secondary"
-                  className={buildErpMgButtonClassName({ variant: 'secondary', size: 'md' })}
-                  onClick={() => loadProducts()}
-                >
-                  {t('admin.actions.refresh')}
-                </MGButton>
-              )}
-            />
+            <SettingsSectionPanel body="form">
+              <EmptyState
+                title={ADMIN_SHOP_PRODUCTS_COPY.LOAD_FAILED_TITLE}
+                action={(
+                  <SettingsButton
+                    type="button"
+                    variant="secondary"
+                    onClick={() => loadProducts()}
+                    preventDoubleClick
+                  >
+                    {t('admin.actions.refresh')}
+                  </SettingsButton>
+                )}
+              />
+            </SettingsSectionPanel>
           ) : (
             <>
               <AdminShopNotice
@@ -501,88 +500,90 @@ const AdminShopProductsPage = () => {
                 <p className="admin-shop-suite__muted">{ADMIN_SHOP_PRODUCTS_COPY.USAGE_PERIOD_EXPIRY_NOTE}</p>
               </AdminShopNotice>
 
-              <div className="admin-shop-suite__toolbar">
-                <SegmentedTabs
-                  items={segmentItems}
-                  activeValue={segment}
-                  onChange={setSegment}
-                  ariaLabel={ADMIN_SHOP_PRODUCTS_COPY.SEGMENT_ARIA}
-                  size="sm"
-                />
-                <span className="admin-shop-suite__toolbar-spacer" />
-                <input
-                  type="search"
-                  className="admin-shop-suite__search"
-                  placeholder={ADMIN_SHOP_PRODUCTS_COPY.SEARCH_PLACEHOLDER}
-                  aria-label={ADMIN_SHOP_PRODUCTS_COPY.SEARCH_ARIA}
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                />
-              </div>
-
-              <div className="admin-shop-suite__table-wrap">
-                <table className="admin-shop-suite__table" data-testid={ADMIN_SHOP_SUITE_TEST_IDS.PRODUCTS_TABLE}>
-                  <colgroup>
-                    <col />
-                    <col className="admin-shop-suite__col-status" />
-                    <col className="admin-shop-suite__col-sessions" />
-                    <col className="admin-shop-suite__col-price" />
-                    <col className="admin-shop-suite__col-price" />
-                    <col className="admin-shop-suite__col-validity" />
-                    <col className="admin-shop-suite__col-toggle" />
-                    <col className="admin-shop-suite__col-toggle" />
-                    <col className="admin-shop-suite__col-content" />
-                    <col className="admin-shop-suite__col-menu" />
-                  </colgroup>
-                  <thead>
-                    <tr>
-                      <th scope="col">{ADMIN_SHOP_PRODUCTS_COPY.COL_NAME}</th>
-                      <th scope="col">{ADMIN_SHOP_PRODUCTS_COPY.COL_STATUS}</th>
-                      <th scope="col" className="admin-shop-suite__cell--right">
-                        {ADMIN_SHOP_PRODUCTS_COPY.COL_SESSIONS}
-                        <span className="admin-shop-suite__arrow" aria-hidden="true">▸</span>
-                      </th>
-                      <th scope="col" className="admin-shop-suite__cell--right admin-shop-suite__cell--band">
-                        {ADMIN_SHOP_PRODUCTS_COPY.COL_PRICE}
-                        <span className="admin-shop-suite__arrow" aria-hidden="true">▸</span>
-                      </th>
-                      <th scope="col" className="admin-shop-suite__cell--right">{ADMIN_SHOP_PRODUCTS_COPY.COL_PER_SESSION}</th>
-                      <th scope="col">{ADMIN_SHOP_PRODUCTS_COPY.COL_VALIDITY}</th>
-                      <th scope="col">{ADMIN_SHOP_PRODUCTS_COPY.COL_HOME}</th>
-                      <th scope="col">{ADMIN_SHOP_PRODUCTS_COPY.COL_MALL}</th>
-                      <th scope="col">{ADMIN_SHOP_PRODUCTS_COPY.COL_CONTENT}</th>
-                      <th scope="col"><span className="sr-only">{ADMIN_SHOP_PRODUCTS_COPY.COL_MENU}</span></th>
-                    </tr>
-                  </thead>
-                  {renderBody()}
-                </table>
-              </div>
-
-              {totalElements > 0 ? (
-                <div className="admin-shop-suite__pagination">
-                  <span>
-                    <SafeText>
-                      {`${rangeFrom}–${rangeTo} / ${totalElements}${ADMIN_SHOP_PRODUCTS_COPY.PAGINATION_UNIT}`}
-                    </SafeText>
-                  </span>
-                  {totalPages > 1 ? (
-                    <MGPagination
-                      currentPage={page}
-                      totalPages={totalPages}
-                      totalItems={totalElements}
-                      itemsPerPage={ADMIN_SHOP_SUITE_PAGE_SIZE}
-                      onPageChange={setPage}
-                      showInfo={false}
-                      showItemsPerPage={false}
-                      variant="compact"
-                    />
-                  ) : null}
+              <SettingsSectionPanel body="plain" ariaLabel={ADMIN_SHOP_PRODUCTS_COPY.TITLE}>
+                <div className="admin-shop-suite__toolbar">
+                  <SegmentedTabs
+                    items={segmentItems}
+                    activeValue={segment}
+                    onChange={setSegment}
+                    ariaLabel={ADMIN_SHOP_PRODUCTS_COPY.SEGMENT_ARIA}
+                    size="sm"
+                  />
+                  <span className="admin-shop-suite__toolbar-spacer" />
+                  <input
+                    type="search"
+                    className="admin-shop-suite__search admin-shop-products-page__search mg-v2-form-input"
+                    placeholder={ADMIN_SHOP_PRODUCTS_COPY.SEARCH_PLACEHOLDER}
+                    aria-label={ADMIN_SHOP_PRODUCTS_COPY.SEARCH_ARIA}
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                  />
                 </div>
-              ) : null}
+
+                <div className="admin-shop-suite__table-wrap">
+                  <table className="admin-shop-suite__table" data-testid={ADMIN_SHOP_SUITE_TEST_IDS.PRODUCTS_TABLE}>
+                    <colgroup>
+                      <col />
+                      <col className="admin-shop-suite__col-status" />
+                      <col className="admin-shop-suite__col-sessions" />
+                      <col className="admin-shop-suite__col-price" />
+                      <col className="admin-shop-suite__col-price" />
+                      <col className="admin-shop-suite__col-validity" />
+                      <col className="admin-shop-suite__col-toggle" />
+                      <col className="admin-shop-suite__col-toggle" />
+                      <col className="admin-shop-suite__col-content" />
+                      <col className="admin-shop-suite__col-menu" />
+                    </colgroup>
+                    <thead>
+                      <tr>
+                        <th scope="col">{ADMIN_SHOP_PRODUCTS_COPY.COL_NAME}</th>
+                        <th scope="col">{ADMIN_SHOP_PRODUCTS_COPY.COL_STATUS}</th>
+                        <th scope="col" className="admin-shop-suite__cell--right">
+                          {ADMIN_SHOP_PRODUCTS_COPY.COL_SESSIONS}
+                          <span className="admin-shop-suite__arrow" aria-hidden="true">▸</span>
+                        </th>
+                        <th scope="col" className="admin-shop-suite__cell--right admin-shop-suite__cell--band">
+                          {ADMIN_SHOP_PRODUCTS_COPY.COL_PRICE}
+                          <span className="admin-shop-suite__arrow" aria-hidden="true">▸</span>
+                        </th>
+                        <th scope="col" className="admin-shop-suite__cell--right">{ADMIN_SHOP_PRODUCTS_COPY.COL_PER_SESSION}</th>
+                        <th scope="col">{ADMIN_SHOP_PRODUCTS_COPY.COL_VALIDITY}</th>
+                        <th scope="col">{ADMIN_SHOP_PRODUCTS_COPY.COL_HOME}</th>
+                        <th scope="col">{ADMIN_SHOP_PRODUCTS_COPY.COL_MALL}</th>
+                        <th scope="col">{ADMIN_SHOP_PRODUCTS_COPY.COL_CONTENT}</th>
+                        <th scope="col"><span className="sr-only">{ADMIN_SHOP_PRODUCTS_COPY.COL_MENU}</span></th>
+                      </tr>
+                    </thead>
+                    {renderBody()}
+                  </table>
+                </div>
+
+                {totalElements > 0 ? (
+                  <div className="admin-shop-suite__pagination">
+                    <span>
+                      <SafeText>
+                        {`${rangeFrom}–${rangeTo} / ${totalElements}${ADMIN_SHOP_PRODUCTS_COPY.PAGINATION_UNIT}`}
+                      </SafeText>
+                    </span>
+                    {totalPages > 1 ? (
+                      <MGPagination
+                        currentPage={page}
+                        totalPages={totalPages}
+                        totalItems={totalElements}
+                        itemsPerPage={ADMIN_SHOP_SUITE_PAGE_SIZE}
+                        onPageChange={setPage}
+                        showInfo={false}
+                        showItemsPerPage={false}
+                        variant="compact"
+                      />
+                    ) : null}
+                  </div>
+                ) : null}
+              </SettingsSectionPanel>
             </>
           )}
         </div>
-      </ContentArea>
+      </SettingsPageShell>
       <AdminShopSuiteToast toast={toast} onDismiss={hideToast} />
     </AdminCommonLayout>
   );

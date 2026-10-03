@@ -142,7 +142,12 @@ public class SecurityConfig {
                         "/api/v1/onboarding/requests/{id:\\d+}/retry").authenticated()
                     .requestMatchers(HttpMethod.POST,
                         "/api/v1/onboarding/requests/{id:\\d+}/retry-initialization").authenticated()
-                    // 공개 온보딩: captcha·POST create·PUT session·public 조회·email/subdomain-check
+                    // PUT by id 는 permitAll 보다 먼저. 미인증 호출자가 id 를 추측해 요청명을 바꾸지 못하게 한다.
+                    // 이 prefix 는 JWT·세션 필터가 스킵하므로 세션이 있어도 여기서 401(fail-closed).
+                    // 운영자 수정은 /api/v1/ops/onboarding/** (authenticated + requireOps).
+                    .requestMatchers(HttpMethod.PUT,
+                        "/api/v1/onboarding/requests/{id:\\d+}").authenticated()
+                    // 공개 온보딩: captcha·POST create·public 조회·email/subdomain-check
                     .requestMatchers("/api/v1/onboarding/**").permitAll()
                     // /api/v1/ops/onboarding/** permitAll 제거 — /api/v1/ops/** authenticated 적용
                     // 공개 엔드포인트: Trinity 온보딩에서 사용하는 요금제 조회 API
@@ -195,7 +200,11 @@ public class SecurityConfig {
                         .hasAuthority(SecurityRoleConstants.ROLE_ADMIN)
                     .requestMatchers(HttpMethod.POST, "/api/v1/tenants/*/pg-configurations/*/test-connection")
                         .hasAuthority(SecurityRoleConstants.ROLE_ADMIN)
+                    // P0 보안(2026-10-03): 테넌트 경로 복호화 엔드포인트 제거 — 재등장 시에도 차단
                     .requestMatchers(HttpMethod.POST, "/api/v1/tenants/*/pg-configurations/*/decrypt-keys")
+                        .denyAll()
+                    // P0 보안(2026-10-03): PG 설정 조회도 ADMIN 전용 (내담자·상담사·사무원 차단)
+                    .requestMatchers(HttpMethod.GET, "/api/v1/tenants/*/pg-configurations")
                         .hasAuthority(SecurityRoleConstants.ROLE_ADMIN)
                     // ===== 명시적 .authenticated() 매처 (2중 방어선; 컨트롤러 가드와 정합) =====
                     .requestMatchers("/api/system-notifications/**").authenticated()
@@ -275,7 +284,10 @@ public class SecurityConfig {
                         "/api/v1/onboarding/requests/{id:\\d+}/retry").authenticated()
                     .requestMatchers(HttpMethod.POST,
                         "/api/v1/onboarding/requests/{id:\\d+}/retry-initialization").authenticated()
-                    // 공개 온보딩: captcha·POST create·PUT session·public 조회·email/subdomain-check
+                    // PUT by id 는 permitAll 보다 먼저. 미인증 호출자가 id 를 추측해 요청명을 바꾸지 못하게 한다.
+                    .requestMatchers(HttpMethod.PUT,
+                        "/api/v1/onboarding/requests/{id:\\d+}").authenticated()
+                    // 공개 온보딩: captcha·POST create·public 조회·email/subdomain-check
                     .requestMatchers("/api/v1/onboarding/**").permitAll()
                     // /api/v1/ops/onboarding/** permitAll 제거 — /api/v1/ops/** authenticated 적용
                     // 공개 엔드포인트: Trinity 온보딩에서 사용하는 요금제 조회 API
@@ -324,7 +336,11 @@ public class SecurityConfig {
                         .hasAuthority(SecurityRoleConstants.ROLE_ADMIN)
                     .requestMatchers(HttpMethod.POST, "/api/v1/tenants/*/pg-configurations/*/test-connection")
                         .hasAuthority(SecurityRoleConstants.ROLE_ADMIN)
+                    // P0 보안(2026-10-03): 테넌트 경로 복호화 엔드포인트 제거 — 재등장 시에도 차단
                     .requestMatchers(HttpMethod.POST, "/api/v1/tenants/*/pg-configurations/*/decrypt-keys")
+                        .denyAll()
+                    // P0 보안(2026-10-03): PG 설정 조회도 ADMIN 전용 (내담자·상담사·사무원 차단)
+                    .requestMatchers(HttpMethod.GET, "/api/v1/tenants/*/pg-configurations")
                         .hasAuthority(SecurityRoleConstants.ROLE_ADMIN)
                     // ===== 명시적 .authenticated() 매처 (2중 방어선; 컨트롤러 가드와 정합) =====
                     .requestMatchers("/api/v1/payments/**").authenticated()

@@ -1,6 +1,7 @@
 package com.coresolution.core.controller;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -9,6 +10,7 @@ import com.coresolution.consultation.config.MindgardenSecurityProperties;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.util.OAuth2DomainUtil;
 import com.coresolution.core.controller.dto.OnboardingDecisionRequest;
+import com.coresolution.core.controller.dto.OnboardingUpdateRequest;
 import com.coresolution.core.domain.onboarding.OnboardingStatus;
 import com.coresolution.core.security.CaptchaVerifier;
 import com.coresolution.core.service.OnboardingService;
@@ -124,6 +126,18 @@ class OnboardingControllerAuthzTest {
                 .isInstanceOf(AccessDeniedException.class);
 
         verifyNoInteractions(onboardingService);
+    }
+
+    @Test
+    @DisplayName("미인증 update → 자격 증명 예외, 서비스 미호출(저장 이름 불변)")
+    void update_unauthenticated_doesNotChangeStoredName() {
+        OnboardingUpdateRequest payload =
+                new OnboardingUpdateRequest("changed-name-must-not-persist", null, null, null, null);
+
+        assertThatThrownBy(() -> onboardingController.update(910_001L, payload))
+                .isInstanceOf(AuthenticationCredentialsNotFoundException.class);
+
+        verify(onboardingService, never()).update(any(), any(), any(), any(), any(), any());
     }
 
     @Test

@@ -12,7 +12,7 @@ CREATE PROCEDURE ValidateMappingIntegrity(
     OUT p_message TEXT,
     OUT p_validation_results JSON
 )
-BEGIN
+proc_main: BEGIN
     DECLARE v_error_message VARCHAR(500);
     DECLARE v_total_sessions INT DEFAULT 0;
     DECLARE v_used_sessions INT DEFAULT 0;
@@ -38,14 +38,14 @@ BEGIN
         SET p_success = FALSE;
         SET p_message = '테넌트 ID는 필수입니다.';
         SET p_validation_results = JSON_OBJECT('error', '테넌트 ID가 필요합니다.');
-        LEAVE;
+        LEAVE proc_main;
     END IF;
     
     IF p_mapping_id IS NULL OR p_mapping_id <= 0 THEN
         SET p_success = FALSE;
         SET p_message = '매핑 ID는 필수입니다.';
         SET p_validation_results = JSON_OBJECT('error', '매핑 ID가 필요합니다.');
-        LEAVE;
+        LEAVE proc_main;
     END IF;
     
     -- 2. 매핑 존재 여부 확인 (테넌트 격리)
@@ -65,7 +65,7 @@ BEGIN
         SET p_success = FALSE;
         SET p_message = '매핑을 찾을 수 없습니다.';
         SET p_validation_results = JSON_OBJECT('exists', FALSE);
-        LEAVE;
+        LEAVE proc_main;
     ELSE
         -- 3. 매핑 정보 조회 (테넌트 격리)
         SELECT 

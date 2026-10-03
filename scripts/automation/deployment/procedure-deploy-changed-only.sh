@@ -537,6 +537,38 @@ procedure_deploy_safe_replace() {
     return 0
 }
 
+# 프로시저별 결과 한 줄: name<TAB>success|failed|skipped<TAB>reason
+procedure_deploy_result_add() {
+    local file="$1" proc="$2" result="$3" reason="${4:-}"
+    reason=$(printf '%s' "$reason" | tr '\t\r\n' '   ' | cut -c1-200)
+    printf '%s\t%s\t%s\n' "$proc" "$result" "$reason" >>"$file"
+}
+
+# 실패 로그에서 사람이 읽을 이유 한 줄을 고른다. MySQL 오류가 있으면 그 줄.
+procedure_deploy_failure_reason() {
+    local err="$1" line
+    line=$(grep -E 'ERROR [0-9]+' "$err" 2>/dev/null | tail -n 1 || true)
+    if [ -z "$line" ]; then
+        line=$(grep -E '실패|거부|없습니다' "$err" 2>/dev/null | tail -n 1 || true)
+    fi
+    [ -n "$line" ] || line="원인 미상 (로그 확인)"
+    printf '%s\n' "$line"
+}
+
+procedure_deploy_result_print() {
+    local file="$1"
+    echo "name | result | reason"
+    awk -F '\t' '{ printf "%s | %s | %s\n", $1, $2, $3 }' "$file"
+    awk -F '\t' '{ c[$2]++ } END {
+        printf "summary total=%d success=%d failed=%d skipped=%d\n", NR, c["success"] + 0, c["failed"] + 0, c["skipped"] + 0
+    }' "$file"
+}
+
+# success 가 아닌 행 수. skipped(업로드 실패 등 미적용)도 실패로 센다.
+procedure_deploy_result_not_ok_count() {
+    awk -F '\t' '$2 != "success" { n++ } END { print n + 0 }' "$1"
+}
+
 procedure_deploy_main() {
     local cmd="${1:-}"
     local name names_file rc

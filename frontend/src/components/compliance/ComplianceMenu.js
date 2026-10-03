@@ -1,10 +1,12 @@
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
-import ContentArea from '../dashboard-v2/content/ContentArea';
-import ContentHeader from '../dashboard-v2/content/ContentHeader';
+import { SettingsPageShell, SettingsSectionPanel } from '../admin/settings-shell';
 import SafeText from '../common/SafeText';
+import StandardizedApi from '../../utils/standardizedApi';
+import { resolveApiObjectData } from '../../utils/apiResponseNormalize';
+import { API_ADMIN_COMPLIANCE_POLICY } from './useComplianceDashboardData';
 import '../../styles/unified-design-tokens.css';
-import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import './ComplianceMenu.css';
 import { useTranslation } from 'react-i18next';
 
@@ -46,8 +48,33 @@ function ComplianceMenuNav({ items }) {
   );
 }
 
+/**
+ * 문의 카드용 현재 테넌트 기본정보 (처리방침 API basicInfo). 실패·미설정이면 빈 객체.
+ *
+ * @returns {object}
+ */
+function useTenantComplianceContact() {
+  const [basicInfo, setBasicInfo] = useState({});
+  useEffect(() => {
+    let active = true;
+    StandardizedApi.get(API_ADMIN_COMPLIANCE_POLICY)
+      .then((res) => {
+        const info = resolveApiObjectData(res)?.policyComponents?.basicInfo;
+        if (active && info && typeof info === 'object') {
+          setBasicInfo(info);
+        }
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, []);
+  return basicInfo;
+}
+
 function ComplianceMenuInfoSection() {
   const { t } = useTranslation();
+  const contact = useTenantComplianceContact();
   return (
     <section
       className="mg-v2-compliance-menu__info"
@@ -57,10 +84,12 @@ function ComplianceMenuInfoSection() {
         {t('common:compliance.ComplianceMenu.t_bff88cb5')}
       </h2>
       <div className="mg-v2-compliance-menu__info-grid">
-        <article className="mg-v2-compliance-menu__info-card mg-v2-ad-b0kla__card">
-          <h3 className="mg-v2-compliance-menu__info-card-title">
-            <span>{t('common:compliance.ComplianceMenu.t_1a4b5c83')}</span>
-          </h3>
+        <SettingsSectionPanel
+          className="mg-v2-compliance-menu__info-card"
+          title={t('common:compliance.ComplianceMenu.t_1a4b5c83')}
+          headingLevel={3}
+          body="form"
+        >
           <ul className="mg-v2-compliance-menu__info-list">
             <li>{t('common:compliance.ComplianceMenu.t_a1daf6b9')}</li>
             <li>{t('common:compliance.ComplianceMenu.t_3f6bbd56')}</li>
@@ -68,12 +97,14 @@ function ComplianceMenuInfoSection() {
             <li>{t('common:compliance.ComplianceMenu.t_06d297ee')}</li>
             <li>{t('common:compliance.ComplianceMenu.t_e72c96de')}</li>
           </ul>
-        </article>
+        </SettingsSectionPanel>
 
-        <article className="mg-v2-compliance-menu__info-card mg-v2-ad-b0kla__card">
-          <h3 className="mg-v2-compliance-menu__info-card-title">
-            <span>{t('common:compliance.ComplianceMenu.t_d0684bf7')}</span>
-          </h3>
+        <SettingsSectionPanel
+          className="mg-v2-compliance-menu__info-card"
+          title={t('common:compliance.ComplianceMenu.t_d0684bf7')}
+          headingLevel={3}
+          body="form"
+        >
           <ul className="mg-v2-compliance-menu__info-list">
             <li>{t('common:compliance.ComplianceMenu.t_5c559556')}</li>
             <li>{t('common:compliance.ComplianceMenu.t_90a46e86')}</li>
@@ -81,27 +112,29 @@ function ComplianceMenuInfoSection() {
             <li>{t('common:compliance.ComplianceMenu.t_45982811')}</li>
             <li>{t('common:compliance.ComplianceMenu.t_32fad31d')}</li>
           </ul>
-        </article>
+        </SettingsSectionPanel>
 
-        <article
-          className="mg-v2-compliance-menu__info-card mg-v2-compliance-menu__info-card--full mg-v2-ad-b0kla__card"
+        <SettingsSectionPanel
+          className="mg-v2-compliance-menu__info-card mg-v2-compliance-menu__info-card--full"
+          title={t('common:compliance.ComplianceMenu.t_21c6983d')}
+          headingLevel={3}
+          body="form"
         >
-          <h3 className="mg-v2-compliance-menu__info-card-title">
-            <span>{t('common:compliance.ComplianceMenu.t_21c6983d')}</span>
-          </h3>
-          <div className="mg-v2-compliance-menu__contact">
+          <div className="mg-v2-compliance-menu__contact" data-testid="compliance-menu-contact">
             <p>
               <strong>{t('common:compliance.ComplianceMenu.t_5823eb2a')}</strong>{' '}
-              privacy@mindgarden.co.kr
+              <SafeText>{contact.contactEmail}</SafeText>
             </p>
             <p>
-              <strong>{t('common:compliance.ComplianceMenu.t_ca3404dd')}</strong> 032-724-8501
+              <strong>{t('common:compliance.ComplianceMenu.t_ca3404dd')}</strong>{' '}
+              <SafeText>{contact.contactPhone}</SafeText>
             </p>
             <p>
-              <strong>{t('common:compliance.ComplianceMenu.t_069db422')}</strong> {t('common:compliance.ComplianceMenu.t_c9092377')}
+              <strong>{t('common:compliance.ComplianceMenu.t_069db422')}</strong>{' '}
+              <SafeText>{contact.address}</SafeText>
             </p>
           </div>
-        </article>
+        </SettingsSectionPanel>
       </div>
     </section>
   );
@@ -177,25 +210,21 @@ const ComplianceMenu = () => {
 
   return (
     <AdminCommonLayout title={t('common:compliance.ComplianceMenu.t_77eda937')}>
-      <div className="mg-v2-ad-b0kla">
-        <div className="mg-v2-ad-b0kla__container">
-          <ContentArea ariaLabel="컴플라이언스 관리 콘텐츠">
-            <ContentHeader
-              title={t('common:compliance.ComplianceMenu.t_77eda937')}
-              subtitle="개인정보보호법 및 관련 법령 준수를 위한 통합 관리 허브입니다."
-              titleId="compliance-menu-page-title"
-            />
-            <main
-              id="compliance-menu-main"
-              className="mg-v2-compliance-menu"
-              aria-labelledby="compliance-menu-page-title"
-            >
-              <ComplianceMenuNav items={complianceMenuItems} />
-              <ComplianceMenuInfoSection />
-            </main>
-          </ContentArea>
+      <SettingsPageShell
+        title={t('common:compliance.ComplianceMenu.t_77eda937')}
+        titleId="compliance-menu-page-title"
+        ariaLabel="컴플라이언스 관리 콘텐츠"
+      >
+        <div id="compliance-menu-main" className="mg-v2-compliance-menu">
+          <SettingsSectionPanel
+            title={t('common:compliance.ComplianceMenu.t_10513476')}
+            body="plain"
+          >
+            <ComplianceMenuNav items={complianceMenuItems} />
+          </SettingsSectionPanel>
+          <ComplianceMenuInfoSection />
         </div>
-      </div>
+      </SettingsPageShell>
     </AdminCommonLayout>
   );
 };

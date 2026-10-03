@@ -16,17 +16,15 @@
  * @since 2026-05-29
  */
 
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import AdminCommonLayout from '../../layout/AdminCommonLayout';
-import { ContentArea, ContentHeader } from '../../dashboard-v2/content';
+import { SettingsButton, SettingsPageShell, SettingsSectionPanel } from '../settings-shell';
 import UnifiedLoading from '../../common/UnifiedLoading';
 import UnifiedModal from '../../common/modals/UnifiedModal';
-import MGButton from '../../common/MGButton';
 import ActionBar from '../../common/ActionBar';
-import ActionBarButton from '../../common/ActionBarButton';
-import SettingSwitchRow from '../../common/molecules/SettingSwitchRow';
+import OpsManagedSwitchRow from '../../common/molecules/OpsManagedSwitchRow';
 import Switch from '../../common/Switch';
 import { useSession } from '../../../contexts/SessionContext';
 import { useSettingToggleSave } from '../../../hooks';
@@ -38,7 +36,6 @@ import {
   updateSmsTemplateTenantOverride,
   deleteSmsTemplateTenantOverride,
   previewSmsTemplate,
-  patchGlobalDispatchFlag,
   patchTemplateDispatchFlag
 } from '../../../api/admin/smsTemplateApi';
 import { getReservationReminderDnListLabel } from '../../../constants/batchNotificationCodes';
@@ -109,8 +106,6 @@ const SmsTemplateManagementPage = () => {
   const [previewResult, setPreviewResult] = useState(null);
   const [saveModalOpen, setSaveModalOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
-  const [globalEnableModalOpen, setGlobalEnableModalOpen] = useState(false);
-  const globalConfirmResolverRef = useRef(null);
   const [submitting, setSubmitting] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('ALL');
@@ -293,59 +288,7 @@ const SmsTemplateManagementPage = () => {
     }
   }, [selectedKey, loadList, t]);
 
-  const requestGlobalOnConfirm = useCallback(() => new Promise((resolve) => {
-    globalConfirmResolverRef.current = resolve;
-    setGlobalEnableModalOpen(true);
-  }), []);
-
-  const resolveGlobalConfirm = useCallback((ok) => {
-    setGlobalEnableModalOpen(false);
-    const resolver = globalConfirmResolverRef.current;
-    globalConfirmResolverRef.current = null;
-    if (typeof resolver === 'function') {
-      resolver(ok);
-    }
-  }, []);
-
-  const saveGlobalDispatch = useCallback(async(enabled) => {
-    setSubmitting(true);
-    try {
-      await patchGlobalDispatchFlag({ enabled });
-    } finally {
-      setSubmitting(false);
-    }
-  }, []);
-
-  const {
-    busy: globalBusy,
-    disabled: globalDisabled,
-    onCheckedChange: onGlobalCheckedChange
-  } = useSettingToggleSave({
-    value: globalDispatchEnabled,
-    onValueChange: () => {},
-    save: saveGlobalDispatch,
-    requireConfirm: (next) => next === true,
-    confirm: async() => requestGlobalOnConfirm(),
-    optimistic: false,
-    onSuccess: async() => {
-      notificationManager.show(
-        t('smsTemplate.action.dispatchUpdated'),
-        'success'
-      );
-      await softRefresh(loadList);
-    },
-    onError: (error) => {
-      console.error('SMS 글로벌 게이트 토글 실패', error);
-      notificationManager.show(
-        t('smsTemplate.action.dispatchUpdateFailed'),
-        'error'
-      );
-    },
-    isEnabled: isAdmin && !submitting
-  });
-
   const pageTitle = t('smsTemplate.page.title');
-  const pageSubtitle = t('smsTemplate.page.subtitle');
   if (sessionLoading || !hasAccess) {
     return (
       <AdminCommonLayout
@@ -363,14 +306,8 @@ const SmsTemplateManagementPage = () => {
 
   return (
     <AdminCommonLayout title={pageTitle} className="mg-v2-dashboard-layout">
-      <div className="mg-admin-sms-template" data-testid="admin-sms-template-page">
-        <ContentArea>
-          <ContentHeader
-            titleId={PAGE_TITLE_ID}
-            title={pageTitle}
-            subtitle={pageSubtitle}
-          />
-
+      <div className="mg-admin-sms-template sms-template--clinic-os" data-testid="admin-sms-template-page">
+        <SettingsPageShell title={pageTitle} titleId={PAGE_TITLE_ID} ariaLabel={pageTitle}>
           <aside
             className="mg-admin-sms-template__banner"
             data-testid="sms-template-gate-banner"
@@ -379,12 +316,11 @@ const SmsTemplateManagementPage = () => {
             {t('smsTemplate.banner.gateNotice')}
           </aside>
 
-          <section
-            className="mg-admin-sms-template__global-toggle"
-            data-testid="sms-template-global-toggle"
-            aria-label={t('smsTemplate.globalDispatch.title')}
+          <SettingsSectionPanel
+            testId="sms-template-global-toggle"
+            ariaLabel={t('smsTemplate.globalDispatch.title')}
           >
-            <SettingSwitchRow
+            <OpsManagedSwitchRow
               id="sms-template-global-toggle-input"
               label={t('smsTemplate.globalDispatch.title')}
               hint={t('smsTemplate.globalDispatch.description')}
@@ -392,313 +328,317 @@ const SmsTemplateManagementPage = () => {
                 ? t('smsTemplate.dispatch.badge.on')
                 : t('smsTemplate.dispatch.badge.off')}
               checked={globalDispatchEnabled}
-              onCheckedChange={onGlobalCheckedChange}
-              disabled={globalDisabled || !isAdmin || submitting}
-              isPending={globalBusy}
               data-testid="sms-template-global-toggle-input"
               ariaLabel={t('smsTemplate.globalDispatch.title')}
             />
-          </section>
+          </SettingsSectionPanel>
 
           <section
             className="mg-admin-sms-template__panel"
             aria-labelledby={PAGE_TITLE_ID}
           >
             <div className="mg-admin-sms-template__grid">
-              <aside className="mg-admin-sms-template__list">
-                <div className="mg-admin-sms-template__filters">
-                  <input
-                    type="search"
-                    className="mg-admin-sms-template__search"
-                    placeholder={t('smsTemplate.list.searchPlaceholder')}
-                    value={searchTerm}
-                    onChange={(event) => setSearchTerm(event.target.value)}
-                    data-testid="sms-template-search"
-                  />
-                  <select
-                    className="mg-admin-sms-template__filter"
-                    value={categoryFilter}
-                    onChange={(event) => setCategoryFilter(event.target.value)}
-                    data-testid="sms-template-category-filter"
-                  >
-                    {categories.map((category) => (
-                      <option key={category} value={category}>
-                        {category === 'ALL'
-                          ? t('smsTemplate.list.categoryAll')
-                          : category}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+              <SettingsSectionPanel body="plain" className="mg-admin-sms-template__card">
+                <aside className="mg-admin-sms-template__list">
+                  <div className="mg-admin-sms-template__filters">
+                    <input
+                      type="search"
+                      className="mg-v2-form-input mg-admin-sms-template__search"
+                      placeholder={t('smsTemplate.list.searchPlaceholder')}
+                      value={searchTerm}
+                      onChange={(event) => setSearchTerm(event.target.value)}
+                      data-testid="sms-template-search"
+                    />
+                    <select
+                      className="mg-v2-select mg-admin-sms-template__filter"
+                      value={categoryFilter}
+                      onChange={(event) => setCategoryFilter(event.target.value)}
+                      data-testid="sms-template-category-filter"
+                    >
+                      {categories.map((category) => (
+                        <option key={category} value={category}>
+                          {category === 'ALL'
+                            ? t('smsTemplate.list.categoryAll')
+                            : category}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
 
-                {loading ? (
-                  <UnifiedLoading text={t('common:loading')} />
-                ) : (
-                  <ul
-                    className="mg-admin-sms-template__items"
-                    data-testid="sms-template-items"
-                  >
-                    {filteredItems.length === 0 && (
-                      <li className="mg-admin-sms-template__empty">
-                        {t('smsTemplate.list.empty')}
-                      </li>
-                    )}
-                    {filteredItems.map((item) => (
-                      <li
-                        key={item.key}
-                        className={`mg-admin-sms-template__item${
-                          selectedKey === item.key
-                            ? ' mg-admin-sms-template__item--selected'
-                            : ''
-                        }`}
-                      >
-                        <button
-                          type="button"
-                          className="mg-admin-sms-template__item-button"
-                          onClick={() => setSelectedKey(item.key)}
-                          data-testid={`sms-template-item-${item.key}`}
-                        >
-                          <span className="mg-admin-sms-template__item-label">
-                            {resolveSmsTemplateDisplayLabel(item, t)}
-                          </span>
-                          <span className="mg-admin-sms-template__item-key">
-                            {item.key}
-                          </span>
-                          <span
-                            className={`mg-admin-sms-template__audience-badge mg-admin-sms-template__audience-badge--${audienceVariantOf(item.audience)}`}
-                            data-testid={`sms-template-audience-badge-${item.key}`}
-                          >
-                            {t(`smsTemplate.audience.${audienceVariantOf(item.audience)}`)}
-                          </span>
-                          {item.tenantOverride && (
-                            <span className="mg-admin-sms-template__item-badge">
-                              {t('smsTemplate.list.overrideBadge')}
-                            </span>
-                          )}
-                          {item.trigger && (
-                            <span
-                              className="mg-admin-sms-template__item-trigger"
-                              data-testid={`sms-template-trigger-summary-${item.key}`}
-                              title={item.trigger}
-                            >
-                              {t('smsTemplate.editor.triggerLabel')}: {item.trigger}
-                            </span>
-                          )}
-                          <span
-                            className={`mg-admin-sms-template__dispatch-badge${
-                              item.effectiveDispatchEnabled
-                                ? ' mg-admin-sms-template__dispatch-badge--on'
-                                : ' mg-admin-sms-template__dispatch-badge--off'
-                            }`}
-                            data-testid={`sms-template-dispatch-badge-${item.key}`}
-                          >
-                            {item.effectiveDispatchEnabled
-                              ? t('smsTemplate.dispatch.badge.on')
-                              : t('smsTemplate.dispatch.badge.off')}
-                          </span>
-                        </button>
-                        <div
-                          className={`mg-admin-sms-template__template-toggle${
-                            !globalDispatchEnabled
-                              ? ' mg-admin-sms-template__template-toggle--disabled'
+                  {loading ? (
+                    <UnifiedLoading text={t('common:loading')} />
+                  ) : (
+                    <ul
+                      className="mg-admin-sms-template__items"
+                      data-testid="sms-template-items"
+                    >
+                      {filteredItems.length === 0 && (
+                        <li className="mg-admin-sms-template__empty">
+                          {t('smsTemplate.list.empty')}
+                        </li>
+                      )}
+                      {filteredItems.map((item) => (
+                        <li
+                          key={item.key}
+                          className={`mg-admin-sms-template__item${
+                            selectedKey === item.key
+                              ? ' mg-admin-sms-template__item--selected'
                               : ''
                           }`}
-                          title={
-                            !globalDispatchEnabled
-                              ? t('smsTemplate.templateDispatch.disabledByGlobal')
-                              : undefined
-                          }
                         >
-                          <SmsTemplateDispatchToggle
-                            templateKey={item.key}
-                            checked={getTemplateDispatchEnabled(item)}
-                            disabled={
-                              !isAdmin || submitting || !globalDispatchEnabled
+                          <button
+                            type="button"
+                            className="mg-admin-sms-template__item-button"
+                            onClick={() => setSelectedKey(item.key)}
+                            data-testid={`sms-template-item-${item.key}`}
+                          >
+                            <span className="mg-admin-sms-template__item-label">
+                              {resolveSmsTemplateDisplayLabel(item, t)}
+                            </span>
+                            <span className="mg-admin-sms-template__item-key">
+                              {item.key}
+                            </span>
+                            <span
+                              className={`mg-admin-sms-template__audience-badge mg-admin-sms-template__audience-badge--${audienceVariantOf(item.audience)}`}
+                              data-testid={`sms-template-audience-badge-${item.key}`}
+                            >
+                              {t(`smsTemplate.audience.${audienceVariantOf(item.audience)}`)}
+                            </span>
+                            {item.tenantOverride && (
+                              <span className="mg-admin-sms-template__item-badge">
+                                {t('smsTemplate.list.overrideBadge')}
+                              </span>
+                            )}
+                            {item.trigger && (
+                              <span
+                                className="mg-admin-sms-template__item-trigger"
+                                data-testid={`sms-template-trigger-summary-${item.key}`}
+                                title={item.trigger}
+                              >
+                                {t('smsTemplate.editor.triggerLabel')}: {item.trigger}
+                              </span>
+                            )}
+                            <span
+                              className={`mg-admin-sms-template__dispatch-badge${
+                                item.effectiveDispatchEnabled
+                                  ? ' mg-admin-sms-template__dispatch-badge--on'
+                                  : ' mg-admin-sms-template__dispatch-badge--off'
+                              }`}
+                              data-testid={`sms-template-dispatch-badge-${item.key}`}
+                            >
+                              {item.effectiveDispatchEnabled
+                                ? t('smsTemplate.dispatch.badge.on')
+                                : t('smsTemplate.dispatch.badge.off')}
+                            </span>
+                          </button>
+                          <div
+                            className={`mg-admin-sms-template__template-toggle${
+                              !globalDispatchEnabled
+                                ? ' mg-admin-sms-template__template-toggle--disabled'
+                                : ''
+                            }`}
+                            title={
+                              !globalDispatchEnabled
+                                ? t('smsTemplate.templateDispatch.disabledByGlobal')
+                                : undefined
                             }
-                            t={t}
-                            onReload={() => softRefresh(loadList)}
-                            setSubmitting={setSubmitting}
-                          />
-                          <span className="mg-admin-sms-template__template-toggle-label">
-                            {t('smsTemplate.templateDispatch.label')}
+                          >
+                            <SmsTemplateDispatchToggle
+                              templateKey={item.key}
+                              checked={getTemplateDispatchEnabled(item)}
+                              disabled={
+                                !isAdmin || submitting || !globalDispatchEnabled
+                              }
+                              t={t}
+                              onReload={() => softRefresh(loadList)}
+                              setSubmitting={setSubmitting}
+                            />
+                            <span className="mg-admin-sms-template__template-toggle-label">
+                              {t('smsTemplate.templateDispatch.label')}
+                            </span>
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </aside>
+              </SettingsSectionPanel>
+
+              <SettingsSectionPanel body="form" className="mg-admin-sms-template__card">
+                <section className="mg-admin-sms-template__editor">
+                  {!selectedItem && (
+                    <div className="mg-admin-sms-template__placeholder">
+                      {t('smsTemplate.editor.selectPrompt')}
+                    </div>
+                  )}
+
+                  {selectedItem && (
+                    <>
+                      <header className="mg-admin-sms-template__editor-header">
+                        <div className="mg-admin-sms-template__editor-title-row">
+                          <h3 className="mg-admin-sms-template__editor-title">
+                            {resolveSmsTemplateDisplayLabel(selectedItem, t)}
+                          </h3>
+                          <span
+                            className={`mg-admin-sms-template__audience-badge mg-admin-sms-template__audience-badge--${audienceVariantOf(selectedItem.audience)} mg-admin-sms-template__audience-badge--lg`}
+                            data-testid={`sms-template-audience-badge-detail-${selectedItem.key}`}
+                          >
+                            {t(`smsTemplate.audience.${audienceVariantOf(selectedItem.audience)}`)}
                           </span>
                         </div>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </aside>
+                        {selectedItem.trigger && (
+                          <div
+                            className="mg-admin-sms-template__trigger-banner"
+                            data-testid={`sms-template-trigger-detail-${selectedItem.key}`}
+                            role="note"
+                          >
+                            <strong className="mg-admin-sms-template__trigger-label">
+                              {t('smsTemplate.editor.triggerLabel')}
+                            </strong>
+                            <span className="mg-admin-sms-template__trigger-value">
+                              {selectedItem.trigger}
+                            </span>
+                          </div>
+                        )}
+                        <p className="mg-admin-sms-template__editor-description">
+                          {selectedItem.description}
+                        </p>
+                      </header>
 
-              <main className="mg-admin-sms-template__editor">
-                {!selectedItem && (
-                  <div className="mg-admin-sms-template__placeholder">
-                    {t('smsTemplate.editor.selectPrompt')}
-                  </div>
-                )}
-
-                {selectedItem && (
-                  <>
-                    <header className="mg-admin-sms-template__editor-header">
-                      <div className="mg-admin-sms-template__editor-title-row">
-                        <h3 className="mg-admin-sms-template__editor-title">
-                          {resolveSmsTemplateDisplayLabel(selectedItem, t)}
-                        </h3>
-                        <span
-                          className={`mg-admin-sms-template__audience-badge mg-admin-sms-template__audience-badge--${audienceVariantOf(selectedItem.audience)} mg-admin-sms-template__audience-badge--lg`}
-                          data-testid={`sms-template-audience-badge-detail-${selectedItem.key}`}
-                        >
-                          {t(`smsTemplate.audience.${audienceVariantOf(selectedItem.audience)}`)}
-                        </span>
-                      </div>
-                      {selectedItem.trigger && (
-                        <div
-                          className="mg-admin-sms-template__trigger-banner"
-                          data-testid={`sms-template-trigger-detail-${selectedItem.key}`}
-                          role="note"
-                        >
-                          <strong className="mg-admin-sms-template__trigger-label">
-                            {t('smsTemplate.editor.triggerLabel')}
-                          </strong>
-                          <span className="mg-admin-sms-template__trigger-value">
-                            {selectedItem.trigger}
-                          </span>
-                        </div>
-                      )}
-                      <p className="mg-admin-sms-template__editor-description">
-                        {selectedItem.description}
-                      </p>
-                    </header>
-
-                    <section className="mg-admin-sms-template__editor-section">
-                      <h4 className="mg-admin-sms-template__editor-section-title">
-                        {t('smsTemplate.editor.globalLabel')}
-                      </h4>
-                      <pre
-                        className="mg-admin-sms-template__global-content"
-                        data-testid="sms-template-global-content"
-                      >
-                        {selectedItem.globalContent}
-                      </pre>
-                    </section>
-
-                    <section className="mg-admin-sms-template__editor-section">
-                      <h4 className="mg-admin-sms-template__editor-section-title">
-                        {t('smsTemplate.editor.tenantLabel')}
-                      </h4>
-                      <textarea
-                        className="mg-admin-sms-template__tenant-content"
-                        value={editingContent}
-                        onChange={(event) => setEditingContent(event.target.value)}
-                        rows={5}
-                        disabled={!isAdmin}
-                        data-testid="sms-template-tenant-content"
-                      />
-                      <p className="mg-admin-sms-template__hint">
-                        {t('smsTemplate.editor.variableHint')}
-                      </p>
-                    </section>
-
-                    {variableKeys.length > 0 && (
                       <section className="mg-admin-sms-template__editor-section">
                         <h4 className="mg-admin-sms-template__editor-section-title">
-                          {t('smsTemplate.editor.variablesLabel')}
+                          {t('smsTemplate.editor.globalLabel')}
                         </h4>
-                        <div className="mg-admin-sms-template__variables-grid">
-                          {variableKeys.map((variableKey) => (
-                            <label
-                              key={variableKey}
-                              className="mg-admin-sms-template__variable-row"
-                            >
-                              <span className="mg-admin-sms-template__variable-name">
-                                {variableKey}
-                              </span>
-                              <input
-                                type="text"
-                                className="mg-admin-sms-template__variable-input"
-                                value={previewVariables[variableKey] || ''}
-                                onChange={(event) =>
-                                  handleVariableChange(variableKey, event.target.value)
-                                }
-                                data-testid={`sms-template-variable-${variableKey}`}
-                              />
-                            </label>
-                          ))}
+                        <pre
+                          className="mg-admin-sms-template__global-content"
+                          data-testid="sms-template-global-content"
+                        >
+                          {selectedItem.globalContent}
+                        </pre>
+                      </section>
+
+                      <section className="mg-admin-sms-template__editor-section">
+                        <h4 className="mg-admin-sms-template__editor-section-title">
+                          {t('smsTemplate.editor.tenantLabel')}
+                        </h4>
+                        <textarea
+                          className="mg-v2-form-textarea"
+                          value={editingContent}
+                          onChange={(event) => setEditingContent(event.target.value)}
+                          rows={5}
+                          disabled={!isAdmin}
+                          data-testid="sms-template-tenant-content"
+                        />
+                        <p className="mg-v2-settings-field__hint">
+                          {t('smsTemplate.editor.variableHint')}
+                        </p>
+                      </section>
+
+                      {variableKeys.length > 0 && (
+                        <section className="mg-admin-sms-template__editor-section">
+                          <h4 className="mg-admin-sms-template__editor-section-title">
+                            {t('smsTemplate.editor.variablesLabel')}
+                          </h4>
+                          <div className="mg-v2-settings-form-grid">
+                            {variableKeys.map((variableKey) => (
+                              <label
+                                key={variableKey}
+                                className="mg-v2-settings-field"
+                              >
+                                <span className="mg-v2-form-label">
+                                  {variableKey}
+                                </span>
+                                <input
+                                  type="text"
+                                  className="mg-v2-form-input"
+                                  value={previewVariables[variableKey] || ''}
+                                  onChange={(event) =>
+                                    handleVariableChange(variableKey, event.target.value)
+                                  }
+                                  data-testid={`sms-template-variable-${variableKey}`}
+                                />
+                              </label>
+                            ))}
+                          </div>
+                        </section>
+                      )}
+
+                      <section className="mg-admin-sms-template__editor-section">
+                        <div className="mg-v2-settings-actions">
+                          <SettingsButton
+                            type="button"
+                            variant="outline"
+                            preventDoubleClick
+                            onClick={handlePreview}
+                            data-testid="sms-template-preview-btn"
+                          >
+                            {t('smsTemplate.actions.preview')}
+                          </SettingsButton>
+                          {isAdmin && (
+                            <>
+                              <SettingsButton
+                                type="button"
+                                variant="primary"
+                                preventDoubleClick
+                                onClick={() => setSaveModalOpen(true)}
+                                disabled={!editingContent.trim()}
+                                data-testid="sms-template-save-btn"
+                              >
+                                {t('smsTemplate.actions.save')}
+                              </SettingsButton>
+                              {selectedItem.tenantOverride && (
+                                <SettingsButton
+                                  type="button"
+                                  variant="danger"
+                                  preventDoubleClick
+                                  onClick={() => setDeleteModalOpen(true)}
+                                  data-testid="sms-template-delete-btn"
+                                >
+                                  {t('smsTemplate.actions.deleteOverride')}
+                                </SettingsButton>
+                              )}
+                            </>
+                          )}
                         </div>
                       </section>
-                    )}
 
-                    <section className="mg-admin-sms-template__editor-section">
-                      <div className="mg-admin-sms-template__actions">
-                        <MGButton
-                          type="button"
-                          variant="secondary"
-                          onClick={handlePreview}
-                          data-testid="sms-template-preview-btn"
+                      {previewResult && (
+                        <section
+                          className="mg-admin-sms-template__editor-section"
+                          data-testid="sms-template-preview-result"
                         >
-                          {t('smsTemplate.actions.preview')}
-                        </MGButton>
-                        {isAdmin && (
-                          <>
-                            <MGButton
-                              type="button"
-                              variant="primary"
-                              onClick={() => setSaveModalOpen(true)}
-                              disabled={!editingContent.trim()}
-                              data-testid="sms-template-save-btn"
-                            >
-                              {t('smsTemplate.actions.save')}
-                            </MGButton>
-                            {selectedItem.tenantOverride && (
-                              <MGButton
-                                type="button"
-                                variant="danger"
-                                onClick={() => setDeleteModalOpen(true)}
-                                data-testid="sms-template-delete-btn"
-                              >
-                                {t('smsTemplate.actions.deleteOverride')}
-                              </MGButton>
+                          <h4 className="mg-admin-sms-template__editor-section-title">
+                            {t('smsTemplate.editor.previewLabel')}
+                          </h4>
+                          <pre className="mg-admin-sms-template__preview-output">
+                            {previewResult.previewContent}
+                          </pre>
+                          <p className="mg-admin-sms-template__preview-meta">
+                            {t('smsTemplate.preview.byteLength')}:{' '}
+                            {previewResult.byteLength} /{' '}
+                            {t('smsTemplate.preview.charLength')}:{' '}
+                            {previewResult.charLength} /{' '}
+                            {t('smsTemplate.preview.source')}:{' '}
+                            {previewResult.fromTenantOverride
+                              ? t('smsTemplate.preview.sourceTenant')
+                              : t('smsTemplate.preview.sourceGlobal')}
+                          </p>
+                          {Array.isArray(previewResult.missingVariables) &&
+                            previewResult.missingVariables.length > 0 && (
+                              <p className="mg-admin-sms-template__preview-missing">
+                                {t('smsTemplate.preview.missing')}
+                                : {previewResult.missingVariables.join(', ')}
+                              </p>
                             )}
-                          </>
-                        )}
-                      </div>
-                    </section>
-
-                    {previewResult && (
-                      <section
-                        className="mg-admin-sms-template__editor-section"
-                        data-testid="sms-template-preview-result"
-                      >
-                        <h4 className="mg-admin-sms-template__editor-section-title">
-                          {t('smsTemplate.editor.previewLabel')}
-                        </h4>
-                        <pre className="mg-admin-sms-template__preview-output">
-                          {previewResult.previewContent}
-                        </pre>
-                        <p className="mg-admin-sms-template__preview-meta">
-                          {t('smsTemplate.preview.byteLength')}:{' '}
-                          {previewResult.byteLength} /{' '}
-                          {t('smsTemplate.preview.charLength')}:{' '}
-                          {previewResult.charLength} /{' '}
-                          {t('smsTemplate.preview.source')}:{' '}
-                          {previewResult.fromTenantOverride
-                            ? t('smsTemplate.preview.sourceTenant')
-                            : t('smsTemplate.preview.sourceGlobal')}
-                        </p>
-                        {Array.isArray(previewResult.missingVariables) &&
-                          previewResult.missingVariables.length > 0 && (
-                            <p className="mg-admin-sms-template__preview-missing">
-                              {t('smsTemplate.preview.missing')}
-                              : {previewResult.missingVariables.join(', ')}
-                            </p>
-                          )}
-                      </section>
-                    )}
-                  </>
-                )}
-              </main>
+                        </section>
+                      )}
+                    </>
+                  )}
+                </section>
+              </SettingsSectionPanel>
             </div>
           </section>
-        </ContentArea>
+        </SettingsPageShell>
       </div>
 
       <UnifiedModal
@@ -709,17 +649,17 @@ const SmsTemplateManagementPage = () => {
         variant="confirm"
         actions={
           <ActionBar align="end" gap="md">
-            <ActionBarButton variant="outline" onClick={() => setSaveModalOpen(false)} disabled={submitting}>
+            <SettingsButton variant="outline" onClick={() => setSaveModalOpen(false)} disabled={submitting}>
               {t('common:cancel')}
-            </ActionBarButton>
-            <ActionBarButton
+            </SettingsButton>
+            <SettingsButton
               variant="primary"
               onClick={handleSaveConfirm}
               loading={submitting}
               data-testid="sms-template-save-confirm"
             >
               {t('smsTemplate.modals.confirmSave')}
-            </ActionBarButton>
+            </SettingsButton>
           </ActionBar>
         }
       >
@@ -736,53 +676,22 @@ const SmsTemplateManagementPage = () => {
         variant="alert"
         actions={
           <ActionBar align="end" gap="md">
-            <ActionBarButton variant="outline" onClick={() => setDeleteModalOpen(false)} disabled={submitting}>
+            <SettingsButton variant="outline" onClick={() => setDeleteModalOpen(false)} disabled={submitting}>
               {t('common:cancel')}
-            </ActionBarButton>
-            <ActionBarButton
+            </SettingsButton>
+            <SettingsButton
               variant="danger"
               onClick={handleDeleteConfirm}
               loading={submitting}
               data-testid="sms-template-delete-confirm"
             >
               {t('smsTemplate.modals.confirmDelete')}
-            </ActionBarButton>
+            </SettingsButton>
           </ActionBar>
         }
       >
         <div data-testid="sms-template-delete-modal-body">
           {t('smsTemplate.modals.deleteBody')}
-        </div>
-      </UnifiedModal>
-
-      <UnifiedModal
-        isOpen={globalEnableModalOpen}
-        onClose={() => resolveGlobalConfirm(false)}
-        title={t('smsTemplate.globalDispatch.title')}
-        subtitle={t('smsTemplate.globalDispatch.confirmOn')}
-        variant="alert"
-        actions={
-          <ActionBar align="end" gap="md">
-            <ActionBarButton
-              variant="outline"
-              onClick={() => resolveGlobalConfirm(false)}
-              disabled={submitting || globalBusy}
-            >
-              {t('common:cancel')}
-            </ActionBarButton>
-            <ActionBarButton
-              variant="primary"
-              onClick={() => resolveGlobalConfirm(true)}
-              loading={submitting || globalBusy}
-              data-testid="sms-template-global-dispatch-confirm"
-            >
-              {t('smsTemplate.dispatch.badge.on')}
-            </ActionBarButton>
-          </ActionBar>
-        }
-      >
-        <div data-testid="sms-template-global-dispatch-modal-body">
-          {t('smsTemplate.globalDispatch.description')}
         </div>
       </UnifiedModal>
     </AdminCommonLayout>

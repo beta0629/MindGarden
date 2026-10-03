@@ -3,8 +3,10 @@ package com.coresolution.consultation.controller;
 import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.Map;
+import com.coresolution.consultation.constant.ProcedureUserFacingMessages;
 import com.coresolution.consultation.service.PlSqlStatisticsService;
 import com.coresolution.consultation.service.StatisticsSchedulerService;
+import com.coresolution.consultation.util.ProcedureResults;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -88,7 +90,10 @@ public class StatisticsManagementController {
             
             // 표준화 2025-12-06: branchCode 무시, tenantId 기반으로 통계 업데이트
             // 모든 지점 통계 업데이트 (tenantId 기반)
-            String result = plSqlStatisticsService.updateAllBranchDailyStatistics(targetDate);
+            String result = ProcedureResults.requireSuccessText(
+                    ProcedureUserFacingMessages.PROC_UPDATE_ALL_BRANCH_DAILY_STATISTICS,
+                    plSqlStatisticsService.updateAllBranchDailyStatistics(targetDate),
+                    ProcedureUserFacingMessages.DAILY_STATISTICS_FAILED);
             
             response.put("success", true);
             response.put("message", "일별 통계 업데이트가 완료되었습니다.");
@@ -100,11 +105,8 @@ public class StatisticsManagementController {
             return ResponseEntity.ok(response);
             
         } catch (Exception e) {
-            log.error("❌ 일별 통계 수동 업데이트 실패: branchCode={} (무시됨), date={}, 오류={}", 
-                     branchCode, date, e.getMessage(), e);
-            response.put("success", false);
-            response.put("message", "통계 업데이트 중 오류가 발생했습니다: " + e.getMessage());
-            return ResponseEntity.ok(response);
+            throw ProcedureResults.failure(ProcedureUserFacingMessages.PROC_UPDATE_ALL_BRANCH_DAILY_STATISTICS,
+                    ProcedureUserFacingMessages.DAILY_STATISTICS_FAILED, e);
         }
     }
     
@@ -127,11 +129,15 @@ public class StatisticsManagementController {
             
             String result;
             if (consultantId != null) {
-                // 특정 상담사 성과 업데이트
-                result = plSqlStatisticsService.updateConsultantPerformance(consultantId, targetDate);
+                result = ProcedureResults.requireSuccessText(
+                        ProcedureUserFacingMessages.PROC_UPDATE_CONSULTANT_PERFORMANCE,
+                        plSqlStatisticsService.updateConsultantPerformance(consultantId, targetDate),
+                        ProcedureUserFacingMessages.CONSULTANT_PERFORMANCE_FAILED);
             } else {
-                // 모든 상담사 성과 업데이트
-                result = plSqlStatisticsService.updateAllConsultantPerformance(targetDate);
+                result = ProcedureResults.requireSuccessText(
+                        ProcedureUserFacingMessages.PROC_UPDATE_ALL_CONSULTANT_PERFORMANCE,
+                        plSqlStatisticsService.updateAllConsultantPerformance(targetDate),
+                        ProcedureUserFacingMessages.CONSULTANT_PERFORMANCE_FAILED);
             }
             
             response.put("success", true);
@@ -144,11 +150,8 @@ public class StatisticsManagementController {
             return ResponseEntity.ok(response);
             
         } catch (Exception e) {
-            log.error("❌ 상담사 성과 수동 업데이트 실패: consultantId={}, date={}, 오류={}", 
-                     consultantId, date, e.getMessage(), e);
-            response.put("success", false);
-            response.put("message", "성과 업데이트 중 오류가 발생했습니다: " + e.getMessage());
-            return ResponseEntity.ok(response);
+            throw ProcedureResults.failure(ProcedureUserFacingMessages.PROC_UPDATE_ALL_CONSULTANT_PERFORMANCE,
+                    ProcedureUserFacingMessages.CONSULTANT_PERFORMANCE_FAILED, e);
         }
     }
     
@@ -179,10 +182,8 @@ public class StatisticsManagementController {
             return ResponseEntity.ok(response);
             
         } catch (Exception e) {
-            log.error("❌ 성과 모니터링 수동 실행 실패: date={}, 오류={}", date, e.getMessage(), e);
-            response.put("success", false);
-            response.put("message", "성과 모니터링 중 오류가 발생했습니다: " + e.getMessage());
-            return ResponseEntity.ok(response);
+            throw ProcedureResults.failure(ProcedureUserFacingMessages.PROC_DAILY_PERFORMANCE_MONITORING,
+                    ProcedureUserFacingMessages.PERFORMANCE_MONITORING_FAILED, e);
         }
     }
     

@@ -14,7 +14,7 @@ CREATE PROCEDURE ProcessDiscountRefund(
     OUT p_success BOOLEAN,
     OUT p_message TEXT
 )
-BEGIN
+proc_main: BEGIN
     DECLARE v_error_message VARCHAR(500);
     DECLARE v_accounting_id BIGINT;
     DECLARE v_current_status VARCHAR(20);
@@ -41,21 +41,21 @@ BEGIN
         SET p_success = FALSE;
         SET p_message = '테넌트 ID는 필수입니다.';
         ROLLBACK;
-        LEAVE;
+        LEAVE proc_main;
     END IF;
     
     IF p_mapping_id IS NULL OR p_mapping_id <= 0 THEN
         SET p_success = FALSE;
         SET p_message = '매핑 ID는 필수입니다.';
         ROLLBACK;
-        LEAVE;
+        LEAVE proc_main;
     END IF;
     
     IF p_refund_amount IS NULL OR p_refund_amount < 0 THEN
         SET p_success = FALSE;
         SET p_message = '환불 금액은 0 이상이어야 합니다.';
         ROLLBACK;
-        LEAVE;
+        LEAVE proc_main;
     END IF;
     
     -- 2. 할인 회계 거래 조회 (테넌트 격리)
@@ -79,12 +79,12 @@ BEGIN
         SET p_success = FALSE;
         SET p_message = '환불 가능한 할인 거래를 찾을 수 없습니다.';
         ROLLBACK;
-        LEAVE;
+        LEAVE proc_main;
     ELSEIF v_remaining_amount < p_refund_amount THEN
         SET p_success = FALSE;
         SET p_message = CONCAT('환불 요청 금액이 잔여 금액을 초과합니다. 잔여: ', v_remaining_amount, ', 요청: ', p_refund_amount);
         ROLLBACK;
-        LEAVE;
+        LEAVE proc_main;
     ELSE
         -- 4. 환불 거래 생성 (테넌트 격리)
         INSERT INTO financial_transactions (

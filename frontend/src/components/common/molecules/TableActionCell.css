@@ -1,0 +1,60 @@
+/**
+ * TableActionCell — 작업 열 한 줄. 토큰만 사용 (design-v2-tokens.css).
+ * 높이: --mg-v2-component-height-sm (2rem). 간격: --mg-v2-space-2.
+ */
+
+.mg-v2-table-action-cell {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--mg-v2-space-2);
+  width: max-content;
+  max-width: 100%;
+  margin-inline-start: auto;
+  min-height: 0;
+  max-height: var(--mg-v2-component-height-sm);
+  white-space: nowrap;
+}
+
+.mg-v2-table-action-cell .salary-management__row-menu,
+.mg-v2-table-action-cell .salary-management__print-slot,
+.mg-v2-table-action-cell .print-component-trigger,
+.mg-v2-table-action-cell .mg-v2-entity-row-actions {
+  display: inline-flex;
+  flex: 0 0 auto;
+  flex-direction: row;
+  align-items: center;
+  width: auto;
+  min-width: 0;
+  min-height: 0;
+  max-height: var(--mg-v2-component-height-sm);
+}
+
+.mg-v2-table-action-cell .mg-v2-table-action-cell__label.mg-button,
+.mg-v2-table-action-cell .print-component-trigger .mg-button {
+  flex: 0 0 auto;
+  width: auto !important;
+  min-width: calc(var(--mg-v2-space-16) + var(--mg-v2-space-4)) !important;
+  height: var(--mg-v2-component-height-sm) !important;
+  min-height: var(--mg-v2-component-height-sm) !important;
+  max-height: var(--mg-v2-component-height-sm) !important;
+  margin: 0;
+  align-self: center;
+  box-sizing: border-box;
+}
+
+.mg-v2-table-action-cell .mg-v2-entity-row-actions__trigger.mg-button {
+  flex: 0 0 auto;
+  width: var(--mg-v2-component-height-sm) !important;
+  min-width: var(--mg-v2-component-height-sm) !important;
+  max-width: var(--mg-v2-component-height-sm) !important;
+  height: var(--mg-v2-component-height-sm) !important;
+  min-height: var(--mg-v2-component-height-sm) !important;
+  max-height: var(--mg-v2-component-height-sm) !important;
+  padding: 0 !important;
+  margin: 0;
+  align-self: center;
+  box-sizing: border-box;
+}

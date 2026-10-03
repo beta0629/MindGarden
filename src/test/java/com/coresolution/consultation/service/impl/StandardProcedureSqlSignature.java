@@ -102,7 +102,7 @@ final class StandardProcedureSqlSignature {
         int end = closingParen(text, open);
         List<Param> params = new ArrayList<>();
         int ordinal = 1;
-        for (String part : splitTopLevel(text.substring(open + 1, end))) {
+        for (String part : splitTopLevel(stripLineComments(text.substring(open + 1, end)))) {
             String trimmed = part.trim();
             if (trimmed.isEmpty()) {
                 continue;
@@ -154,6 +154,18 @@ final class StandardProcedureSqlSignature {
             }
         }
         throw new IllegalStateException("프로시저 파라미터 목록이 닫히지 않았습니다.");
+    }
+
+    private static String stripLineComments(String list) {
+        StringBuilder out = new StringBuilder();
+        for (String line : list.split("\n", -1)) {
+            int comment = line.indexOf("--");
+            if (comment >= 0) {
+                line = line.substring(0, comment);
+            }
+            out.append(line).append('\n');
+        }
+        return out.toString();
     }
 
     private static List<String> splitTopLevel(String list) {

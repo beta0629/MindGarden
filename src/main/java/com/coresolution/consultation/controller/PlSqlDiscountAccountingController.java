@@ -2,7 +2,9 @@ package com.coresolution.consultation.controller;
 
 import java.math.BigDecimal;
 import java.util.Map;
+import com.coresolution.consultation.constant.ProcedureUserFacingMessages;
 import com.coresolution.consultation.service.PlSqlDiscountAccountingService;
+import com.coresolution.consultation.util.ProcedureResults;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -77,23 +79,11 @@ public class PlSqlDiscountAccountingController {
         
         log.info("💰 PL/SQL 할인 적용: MappingID={}, DiscountCode={}", mappingId, discountCode);
         
-        try {
-            Map<String, Object> result = plSqlDiscountAccountingService.applyDiscountAccounting(
-                mappingId, discountCode, originalAmount, discountAmount, finalAmount, branchCode, appliedBy
-            );
-            
-            return ResponseEntity.ok(result);
-            
-        } catch (Exception e) {
-            log.error("❌ PL/SQL 할인 적용 실패: MappingID={}, 오류={}", mappingId, e.getMessage(), e);
-            
-            Map<String, Object> response = Map.of(
-                "success", false,
-                "message", "PL/SQL 할인 적용 실패: " + e.getMessage()
-            );
-            
-            return ResponseEntity.ok(response);
-        }
+        return ResponseEntity.ok(ProcedureResults.callRequiringSuccess(
+                ProcedureUserFacingMessages.PROC_APPLY_DISCOUNT_ACCOUNTING,
+                ProcedureUserFacingMessages.DISCOUNT_APPLY_FAILED,
+                () -> plSqlDiscountAccountingService.applyDiscountAccounting(mappingId, discountCode,
+                        originalAmount, discountAmount, finalAmount, branchCode, appliedBy)));
     }
     
     /**
@@ -110,23 +100,11 @@ public class PlSqlDiscountAccountingController {
         
         log.info("💰 PL/SQL 할인 환불 처리: MappingID={}, RefundAmount={}", mappingId, refundAmount);
         
-        try {
-            Map<String, Object> result = plSqlDiscountAccountingService.processDiscountRefund(
-                mappingId, refundAmount, refundReason, processedBy
-            );
-            
-            return ResponseEntity.ok(result);
-            
-        } catch (Exception e) {
-            log.error("❌ PL/SQL 할인 환불 처리 실패: MappingID={}, 오류={}", mappingId, e.getMessage(), e);
-            
-            Map<String, Object> response = Map.of(
-                "success", false,
-                "message", "PL/SQL 할인 환불 처리 실패: " + e.getMessage()
-            );
-            
-            return ResponseEntity.ok(response);
-        }
+        return ResponseEntity.ok(ProcedureResults.callRequiringSuccess(
+                ProcedureUserFacingMessages.PROC_PROCESS_DISCOUNT_REFUND,
+                ProcedureUserFacingMessages.DISCOUNT_REFUND_FAILED,
+                () -> plSqlDiscountAccountingService.processDiscountRefund(
+                        mappingId, refundAmount, refundReason, processedBy)));
     }
     
     /**
@@ -143,23 +121,11 @@ public class PlSqlDiscountAccountingController {
         
         log.info("🔄 PL/SQL 할인 상태 업데이트: MappingID={}, NewStatus={}", mappingId, newStatus);
         
-        try {
-            Map<String, Object> result = plSqlDiscountAccountingService.updateDiscountStatus(
-                mappingId, newStatus, updatedBy, reason
-            );
-            
-            return ResponseEntity.ok(result);
-            
-        } catch (Exception e) {
-            log.error("❌ PL/SQL 할인 상태 업데이트 실패: MappingID={}, 오류={}", mappingId, e.getMessage(), e);
-            
-            Map<String, Object> response = Map.of(
-                "success", false,
-                "message", "PL/SQL 할인 상태 업데이트 실패: " + e.getMessage()
-            );
-            
-            return ResponseEntity.ok(response);
-        }
+        return ResponseEntity.ok(ProcedureResults.callRequiringSuccess(
+                ProcedureUserFacingMessages.PROC_UPDATE_DISCOUNT_STATUS,
+                ProcedureUserFacingMessages.DISCOUNT_STATUS_FAILED,
+                () -> plSqlDiscountAccountingService.updateDiscountStatus(
+                        mappingId, newStatus, updatedBy, reason)));
     }
     
     /**
@@ -173,23 +139,10 @@ public class PlSqlDiscountAccountingController {
         
         log.info("📊 PL/SQL 할인 통계 조회: BranchCode={}, Period={} ~ {}", branchCode, startDate, endDate);
         
-        try {
-            Map<String, Object> result = plSqlDiscountAccountingService.getDiscountStatistics(
-                branchCode, startDate, endDate
-            );
-            
-            return ResponseEntity.ok(result);
-            
-        } catch (Exception e) {
-            log.error("❌ PL/SQL 할인 통계 조회 실패: BranchCode={}, 오류={}", branchCode, e.getMessage(), e);
-            
-            Map<String, Object> response = Map.of(
-                "success", false,
-                "message", "PL/SQL 할인 통계 조회 실패: " + e.getMessage()
-            );
-            
-            return ResponseEntity.ok(response);
-        }
+        return ResponseEntity.ok(ProcedureResults.callRequiringSuccess(
+                ProcedureUserFacingMessages.PROC_GET_DISCOUNT_STATISTICS,
+                ProcedureUserFacingMessages.DISCOUNT_STATISTICS_FAILED,
+                () -> plSqlDiscountAccountingService.getDiscountStatistics(branchCode, startDate, endDate)));
     }
     
     /**
@@ -201,20 +154,9 @@ public class PlSqlDiscountAccountingController {
         
         log.info("🔍 PL/SQL 할인 무결성 검증: BranchCode={}", branchCode);
         
-        try {
-            Map<String, Object> result = plSqlDiscountAccountingService.validateDiscountIntegrity(branchCode);
-            
-            return ResponseEntity.ok(result);
-            
-        } catch (Exception e) {
-            log.error("❌ PL/SQL 할인 무결성 검증 실패: BranchCode={}, 오류={}", branchCode, e.getMessage(), e);
-            
-            Map<String, Object> response = Map.of(
-                "success", false,
-                "message", "PL/SQL 할인 무결성 검증 실패: " + e.getMessage()
-            );
-            
-            return ResponseEntity.ok(response);
-        }
+        return ResponseEntity.ok(ProcedureResults.callRequiringSuccess(
+                ProcedureUserFacingMessages.PROC_VALIDATE_DISCOUNT_INTEGRITY,
+                ProcedureUserFacingMessages.DISCOUNT_INTEGRITY_FAILED,
+                () -> plSqlDiscountAccountingService.validateDiscountIntegrity(branchCode)));
     }
 }

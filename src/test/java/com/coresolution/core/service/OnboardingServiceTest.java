@@ -6,6 +6,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.lenient;
@@ -21,6 +22,7 @@ import com.coresolution.core.domain.onboarding.RiskLevel;
 import com.coresolution.core.repository.TenantRepository;
 import com.coresolution.core.repository.billing.TenantSubscriptionRepository;
 import com.coresolution.core.repository.onboarding.OnboardingRequestRepository;
+import com.coresolution.core.service.impl.OnboardingDecisionDeadline;
 import com.coresolution.core.service.impl.OnboardingServiceImpl;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.AfterEach;
@@ -234,6 +236,37 @@ class OnboardingServiceTest {
         verify(approvalService, times(1)).processOnboardingApproval(any(Long.class), anyString(),
                 anyString(), anyString(), anyString(), anyString(), anyString(), anyString(),
                 nullable(String.class));
+        verify(errorHandlingService).executeWithRetry(any(),
+                eq(OnboardingDecisionDeadline.DECISION_MAX_ATTEMPTS),
+                eq(OnboardingDecisionDeadline.DECISION_RETRY_DELAY_MS));
+    }
+
+    @Test
+    @DisplayName("승인 프로시저가 실패하면 ON_HOLD 로 끝나고 프로시저는 한 번만 호출된다")
+    void testDecide_procedureFailure_onHold_singleAttempt() {
+        when(repository.findActiveById(testId)).thenReturn(Optional.of(testRequest));
+        when(repository.findByTenantIdAndIdAndIsDeletedFalse(testTenantId, testId))
+                .thenReturn(Optional.of(testRequest));
+        when(repository.save(any(OnboardingRequest.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        java.util.Map<String, Object> approvalResult = new java.util.HashMap<>();
+        approvalResult.put("success", false);
+        approvalResult.put("message", "역할 템플릿 적용 실패");
+        when(approvalService.processOnboardingApproval(any(Long.class), anyString(), anyString(),
+                anyString(), anyString(), anyString(), anyString(), anyString(), nullable(String.class)))
+                        .thenReturn(approvalResult);
+
+        OnboardingRequest result =
+                onboardingService.decide(testId, OnboardingStatus.APPROVED, "test-admin", "테스트 승인");
+
+        assertThat(result.getStatus()).isEqualTo(OnboardingStatus.ON_HOLD);
+        assertThat(result.getDecisionNote()).contains("역할 템플릿 적용 실패");
+        verify(approvalService, times(1)).processOnboardingApproval(any(Long.class), anyString(),
+                anyString(), anyString(), anyString(), anyString(), anyString(), anyString(),
+                nullable(String.class));
+        verify(errorHandlingService).executeWithRetry(any(),
+                eq(OnboardingDecisionDeadline.DECISION_MAX_ATTEMPTS),
+                eq(OnboardingDecisionDeadline.DECISION_RETRY_DELAY_MS));
     }
 
     @Test

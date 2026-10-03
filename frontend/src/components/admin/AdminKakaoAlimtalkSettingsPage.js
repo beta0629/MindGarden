@@ -8,9 +8,7 @@
 import React, { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
-import { ContentArea, ContentHeader, ContentSection } from '../dashboard-v2/content';
-import MGButton from '../common/MGButton';
-import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
+import { SettingsButton, SettingsPageShell, SettingsSectionPanel } from './settings-shell';
 import SafeErrorDisplay from '../common/SafeErrorDisplay';
 import SettingSwitchRow from '../common/molecules/SettingSwitchRow';
 import StandardizedApi from '../../utils/standardizedApi';
@@ -19,10 +17,10 @@ import { RoleUtils } from '../../constants/roles';
 import { useSession } from '../../contexts/SessionContext';
 import { useConfirm, useSettingToggleSave } from '../../hooks';
 import notificationManager from '../../utils/notification';
+import { isApiMutationSuccess, resolveApiObjectData } from '../../utils/apiResponseNormalize';
 import { toDisplayString } from '../../utils/safeDisplay';
 import { runResourceLoad, softRefresh } from '../../utils/softRefresh';
 import '../../styles/unified-design-tokens.css';
-import './AdminDashboard/AdminDashboardB0KlA.css';
 import './AdminKakaoAlimtalkSettingsPage.css';
 import { useTranslation } from 'react-i18next';
 
@@ -105,6 +103,8 @@ const AdminKakaoAlimtalkSettingsPage = () => {
   const [saveError, setSaveError] = useState(null);
   const [form, setForm] = useState(buildInitialForm);
   const [tenantIdLine, setTenantIdLine] = useState('');
+  /** 서버 값 로드 성공 여부 — 실패 시 빈 폼으로 저장값을 덮어쓰지 않도록 저장·토글 차단 */
+  const [settingsLoaded, setSettingsLoaded] = useState(false);
   /** 마지막 로드·저장 확정값 — 토글 PUT 시 dirty 텍스트 미포함 */
   const committedRef = useRef(buildInitialForm());
 
@@ -118,16 +118,20 @@ const AdminKakaoAlimtalkSettingsPage = () => {
     try {
       await runResourceLoad(options, setLoading, async() => {
         const res = await StandardizedApi.get(API.KAKAO_ALIMTALK_SETTINGS);
-        if (res && res.success === true && res.data) {
-          const mapped = mapApiToForm(res.data);
+        const data = resolveApiObjectData(res);
+        if (data) {
+          const mapped = mapApiToForm(data);
           committedRef.current = mapped;
           setForm(mapped);
-          setTenantIdLine(toDisplayString(res.data.tenantId, ''));
+          setTenantIdLine(toDisplayString(data.tenantId, ''));
+          setSettingsLoaded(true);
         } else {
+          setSettingsLoaded(false);
           setLoadError(t('settings:kakao.loadFail'));
         }
       });
     } catch (e) {
+      setSettingsLoaded(false);
       setLoadError(e);
     }
   }, [t]);
@@ -155,17 +159,18 @@ const AdminKakaoAlimtalkSettingsPage = () => {
   const saveAlimtalkEnabled = useCallback(async(next) => {
     const body = buildAlimtalkPutBodyFromCommitted(committedRef.current, next);
     const res = await StandardizedApi.put(API.KAKAO_ALIMTALK_SETTINGS, body);
-    if (!(res && res.success === true)) {
+    if (!isApiMutationSuccess(res)) {
       throw new Error(t('settings:kakao.toggleSaveFail'));
     }
-    if (res.data) {
-      const serverForm = mapApiToForm(res.data);
+    const saved = resolveApiObjectData(res);
+    if (saved) {
+      const serverForm = mapApiToForm(saved);
       committedRef.current = serverForm;
       setForm((prev) => ({
         ...prev,
         alimtalkEnabled: serverForm.alimtalkEnabled
       }));
-      setTenantIdLine(toDisplayString(res.data.tenantId, tenantIdLine));
+      setTenantIdLine(toDisplayString(saved.tenantId, tenantIdLine));
     } else {
       committedRef.current = {
         ...committedRef.current,
@@ -207,6 +212,9 @@ const AdminKakaoAlimtalkSettingsPage = () => {
 
   const handleSubmit = async(e) => {
     e.preventDefault();
+    if (!settingsLoaded) {
+      return;
+    }
     setSaveError(null);
     setSaving(true);
     try {
@@ -223,13 +231,14 @@ const AdminKakaoAlimtalkSettingsPage = () => {
         kakaoSenderKeyRef: form.kakaoSenderKeyRef || null
       };
       const res = await StandardizedApi.put(API.KAKAO_ALIMTALK_SETTINGS, body);
-      if (res && res.success === true) {
+      if (isApiMutationSuccess(res)) {
         notificationManager.success(t('settings:kakao.saveSuccess'));
-        if (res.data) {
-          const mapped = mapApiToForm(res.data);
+        const saved = resolveApiObjectData(res);
+        if (saved) {
+          const mapped = mapApiToForm(saved);
           committedRef.current = mapped;
           setForm(mapped);
-          setTenantIdLine(toDisplayString(res.data.tenantId, tenantIdLine));
+          setTenantIdLine(toDisplayString(saved.tenantId, tenantIdLine));
         }
       } else {
         setSaveError(t('settings:kakao.saveFail'));
@@ -259,51 +268,57 @@ const AdminKakaoAlimtalkSettingsPage = () => {
       loading={loading && !tenantIdLine}
       loadingText={t('settings:kakao.loading')}
     >
-      <div className="mg-v2-ad-b0kla mg-v2-kakao-alimtalk-settings" data-testid="admin-kakao-alimtalk-settings">
-        <ContentArea>
-          <ContentHeader
-            titleId={pageTitleId}
-            title={t('settings:kakao.title')}
-            subtitle={t('settings:kakao.subtitle')}
-          />
-          <form className="mg-kakao-alimtalk__form" onSubmit={handleSubmit} noValidate>
-            <SafeErrorDisplay error={loadError} />
-            <SafeErrorDisplay error={saveError} />
+      <SettingsPageShell
+        title={t('settings:kakao.title')}
+        titleId={pageTitleId}
+        className="mg-v2-kakao-alimtalk-settings"
+      >
+        <form
+          className="mg-kakao-alimtalk__form"
+          onSubmit={handleSubmit}
+          noValidate
+          data-testid="admin-kakao-alimtalk-settings"
+        >
+          <SafeErrorDisplay error={loadError} />
+          <SafeErrorDisplay error={saveError} />
 
-            <ContentSection title={t('settings:kakao.section.info')}>
-              <p className="mg-kakao-alimtalk__hint">
-                {t('settings:kakao.infoHint')}
+          <SettingsSectionPanel title={t('settings:kakao.section.info')} body="plain">
+            <p className="mg-v2-settings-muted">
+              {t('settings:kakao.infoHint')}
+            </p>
+            {tenantIdLine ? (
+              <p className="mg-kakao-alimtalk__readonly-line">
+                {t('settings:kakao.tenantIdLabel')} {tenantIdLine}
               </p>
-              {tenantIdLine ? (
-                <p className="mg-kakao-alimtalk__readonly-line">
-                  {t('settings:kakao.tenantIdLabel')} {tenantIdLine}
-                </p>
-              ) : null}
-            </ContentSection>
+            ) : null}
+          </SettingsSectionPanel>
 
-            <ContentSection title={t('settings:kakao.section.enabled')}>
-              <SettingSwitchRow
-                id={toggleId}
-                label={t('settings:kakao.enabledLabel')}
-                hint={t('settings:kakao.toggleImmediateHint')}
-                statusLabel={form.alimtalkEnabled
-                  ? t('common:label.on')
-                  : t('common:label.off')}
-                checked={Boolean(form.alimtalkEnabled)}
-                onCheckedChange={onAlimtalkCheckedChange}
-                disabled={alimtalkDisabled || saving}
-                isPending={alimtalkBusy}
-                ariaLabel={t('settings:kakao.enabledLabel')}
-              />
-            </ContentSection>
+          <SettingsSectionPanel title={t('settings:kakao.section.enabled')}>
+            <SettingSwitchRow
+              id={toggleId}
+              label={t('settings:kakao.enabledLabel')}
+              hint={t('settings:kakao.toggleImmediateHint')}
+              statusLabel={form.alimtalkEnabled
+                ? t('common:label.on')
+                : t('common:label.off')}
+              checked={Boolean(form.alimtalkEnabled)}
+              onCheckedChange={onAlimtalkCheckedChange}
+              disabled={alimtalkDisabled || saving || !settingsLoaded}
+              isPending={alimtalkBusy}
+              ariaLabel={t('settings:kakao.enabledLabel')}
+            />
+          </SettingsSectionPanel>
 
-            <ContentSection variant="card" title={t('settings:kakao.section.templates')}>
+          <SettingsSectionPanel title={t('settings:kakao.section.templates')}>
+            <div className="mg-v2-settings-form-grid">
               {TEMPLATE_FIELD_SPECS.map((spec) => (
-                <div key={spec.key} className="mg-kakao-alimtalk__field">
-                  <label htmlFor={`kakao-field-${spec.key}`}>{t(`settings:${spec.i18nKey}`, spec.fallback)}</label>
+                <div key={spec.key} className="mg-v2-settings-field">
+                  <label className="mg-v2-form-label" htmlFor={`kakao-field-${spec.key}`}>
+                    {t(`settings:${spec.i18nKey}`, spec.fallback)}
+                  </label>
                   <input
                     id={`kakao-field-${spec.key}`}
-                    className="mg-kakao-alimtalk__input"
+                    className="mg-v2-form-input"
                     type="text"
                     maxLength={TEMPLATE_MAX_LEN}
                     value={form[spec.key] || ''}
@@ -312,15 +327,19 @@ const AdminKakaoAlimtalkSettingsPage = () => {
                   />
                 </div>
               ))}
-            </ContentSection>
+            </div>
+          </SettingsSectionPanel>
 
-            <ContentSection title={t('settings:kakao.section.refs')}>
+          <SettingsSectionPanel title={t('settings:kakao.section.refs')}>
+            <div className="mg-v2-settings-form-grid">
               {REF_FIELD_SPECS.map((spec) => (
-                <div key={spec.key} className="mg-kakao-alimtalk__field">
-                  <label htmlFor={`kakao-ref-${spec.key}`}>{t(`settings:${spec.i18nKey}`, spec.fallback)}</label>
+                <div key={spec.key} className="mg-v2-settings-field">
+                  <label className="mg-v2-form-label" htmlFor={`kakao-ref-${spec.key}`}>
+                    {t(`settings:${spec.i18nKey}`, spec.fallback)}
+                  </label>
                   <input
                     id={`kakao-ref-${spec.key}`}
-                    className="mg-kakao-alimtalk__input"
+                    className="mg-v2-form-input"
                     type="text"
                     maxLength={REF_MAX_LEN}
                     value={form[spec.key] || ''}
@@ -329,30 +348,30 @@ const AdminKakaoAlimtalkSettingsPage = () => {
                   />
                 </div>
               ))}
-            </ContentSection>
-
-            <div className="mg-kakao-alimtalk__actions">
-              <MGButton
-                type="submit"
-                className={buildErpMgButtonClassName({ variant: 'primary' })}
-                disabled={saving || alimtalkBusy}
-                loading={saving}
-                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-              >
-                {t('settings:kakao.action.saveTemplatesAndRefs')}
-              </MGButton>
-              <MGButton
-                type="button"
-                className={buildErpMgButtonClassName({ variant: 'outline' })}
-                disabled={saving || loading || alimtalkBusy}
-                onClick={() => softRefresh(loadSettings)}
-              >
-                {t('settings:kakao.reload')}
-              </MGButton>
             </div>
-          </form>
-        </ContentArea>
-      </div>
+          </SettingsSectionPanel>
+
+          <div className="mg-v2-settings-actions">
+            <SettingsButton
+              variant="ghost"
+              type="button"
+              preventDoubleClick
+              disabled={saving || loading || alimtalkBusy}
+              onClick={() => softRefresh(loadSettings)}
+            >
+              {t('settings:kakao.reload')}
+            </SettingsButton>
+            <SettingsButton
+              variant="primary"
+              type="submit"
+              disabled={saving || alimtalkBusy || !settingsLoaded}
+              loading={saving}
+            >
+              {t('settings:kakao.action.saveTemplatesAndRefs')}
+            </SettingsButton>
+          </div>
+        </form>
+      </SettingsPageShell>
       <ConfirmEnableModal />
     </AdminCommonLayout>
   );

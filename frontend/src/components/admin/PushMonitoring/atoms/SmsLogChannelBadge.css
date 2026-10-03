@@ -20,7 +20,7 @@
 }
 
 .mg-sms-log-channel-badge--sms {
-  background: color-mix(in srgb, var(--mg-v2-color-primary-solid) 12%, transparent);
+  background: color-mix(in srgb, var(--mg-v2-color-primary-main) 12%, transparent);
   color: var(--mg-v2-color-semantic-info);
 }
 

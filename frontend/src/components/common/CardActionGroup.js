@@ -10,8 +10,13 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import './CardActionGroup.css';
 
-function CardActionGroup({ children, className = '', ...rest }) {
-  const mergedClassName = ['mg-v2-card-actions', className].filter(Boolean).join(' ');
+const ALIGN_CLASS = {
+  start: '',
+  end: 'mg-v2-card-actions--end'
+};
+
+function CardActionGroup({ children, className = '', align = 'start', ...rest }) {
+  const mergedClassName = ['mg-v2-card-actions', ALIGN_CLASS[align], className].filter(Boolean).join(' ');
   return (
     <div className={mergedClassName} {...rest}>
       {children}
@@ -21,7 +26,8 @@ function CardActionGroup({ children, className = '', ...rest }) {
 
 CardActionGroup.propTypes = {
   children: PropTypes.node.isRequired,
-  className: PropTypes.string
+  className: PropTypes.string,
+  align: PropTypes.oneOf(['start', 'end'])
 };
 
 export default CardActionGroup;

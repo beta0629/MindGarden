@@ -21,6 +21,9 @@ describe('AdminManualNotificationPage Clinic-OS chrome', () => {
   const pageCss = read('src/components/admin/manual-notification/AdminManualNotificationPage.css');
   const formCss = read('src/components/admin/manual-notification/ManualNotificationForm.css');
   const resultCss = read('src/components/admin/manual-notification/BatchResultModal.css');
+  const historyCss = read('src/components/admin/manual-notification/ManualNotificationBatchHistory.css');
+  const formJs = read('src/components/admin/manual-notification/ManualNotificationForm.js');
+  const historyJs = read('src/components/admin/manual-notification/ManualNotificationBatchHistory.js');
 
   test('uses Clinic-OS page scope not B0KlA shell import', () => {
     expect(pageJs).not.toMatch(/AdminDashboardB0KlA\.css/);
@@ -29,20 +32,25 @@ describe('AdminManualNotificationPage Clinic-OS chrome', () => {
     expect(pageJs).toMatch(/mg-v2-admin-manual-notification/);
   });
 
-  test('quiet header Korean i18n; no invented KPI strip', () => {
-    expect(pageJs).toMatch(/ContentHeader/);
+  test('quiet header (SettingsPageShell) Korean i18n; no invented KPI strip', () => {
+    expect(pageJs).toMatch(/<SettingsPageShell/);
+    expect(pageJs).not.toMatch(/\bContentHeader\b/);
     expect(pageJs).toMatch(/manualNotification\.page\.title/);
-    expect(pageJs).toMatch(/manualNotification\.page\.subtitle/);
     expect(pageJs).not.toMatch(/mapping-management-summary/);
   });
 
-  test('main stage card geometry on form + history', () => {
-    expect(pageJs).toMatch(/mg-admin-manual-notif-page__stage/);
-    expect(pageCss).toMatch(/min-height:\s*36rem/);
-    expect(pageCss).toMatch(/border:\s*1px solid var\(--mg-v2-color-neutral-300\)/);
-    expect(pageCss).toMatch(/background:\s*var\(--mg-v2-color-neutral-50\)/);
-    expect(pageCss).toMatch(/border-radius:\s*var\(--mg-v2-radius-lg\)/);
-    expect(pageCss).toMatch(/border-left:\s*none\s*!important/);
+  test('form + history sections render SettingsSectionPanel; page CSS has no stage card geometry', () => {
+    expect(formJs).toMatch(/<SettingsSectionPanel/);
+    expect(historyJs).toMatch(/<SettingsSectionPanel/);
+    expect(pageJs).not.toMatch(/mg-admin-manual-notif-page__stage/);
+    expect(pageCss).not.toMatch(/mg-admin-manual-notif-page__stage/);
+    expect(pageCss).not.toMatch(/!important/);
+    [formCss, historyCss, resultCss].forEach((css) => {
+      expect(css).not.toMatch(/box-shadow/);
+      expect(css).not.toMatch(/dashed/);
+      const declarations = css.split('\n').filter((line) => !line.trim().startsWith('@media'));
+      expect(declarations.join('\n')).not.toMatch(/\b\d+px\b/);
+    });
   });
 
   test('no 4px left accents in form/result chrome CSS', () => {

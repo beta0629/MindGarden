@@ -8,10 +8,10 @@
  */
 import React, { useCallback, useState } from 'react';
 import { Eye, Filter, RefreshCw } from 'lucide-react';
-import MGButton from '../../../common/MGButton';
 import UnifiedModal from '../../../common/modals/UnifiedModal';
-import { buildErpMgButtonClassName } from '../../../erp/common/erpMgButtonProps';
+import SafeErrorDisplay from '../../../common/SafeErrorDisplay';
 import { toDisplayString } from '../../../../utils/safeDisplay';
+import { SettingsSectionPanel, SettingsButton } from '../../settings-shell';
 import { getAiUsageLogDetail } from '../../../../api/admin/aiUsageApi';
 import {
   AI_LOG_STATUS_OPTIONS,
@@ -83,21 +83,14 @@ const UsageLogsTable = ({
   const currentPage = logsPage?.number ?? 0;
 
   return (
-    <section className="mg-ai-section mg-ai-logs-table">
-      <header className="mg-ai-section__header">
-        <h2 className="mg-ai-section__title">
-          <span className="mg-ai-section__accent" aria-hidden="true" />
-          호출 로그
-        </h2>
-        <MGButton
+    <SettingsSectionPanel
+      title="호출 로그"
+      className="mg-ai-section mg-ai-logs-table"
+      body="plain"
+      actions={(
+        <SettingsButton
           type="button"
           variant="secondary"
-          size="medium"
-          className={buildErpMgButtonClassName({
-            variant: 'secondary',
-            size: 'md',
-            loading
-          })}
           onClick={onRefresh}
           disabled={loading}
           loading={loading}
@@ -106,18 +99,19 @@ const UsageLogsTable = ({
         >
           <RefreshCw size={14} aria-hidden="true" />
           {' '}새로고침
-        </MGButton>
-      </header>
+        </SettingsButton>
+      )}
+    >
 
-      <div className="mg-ai-logs-table__filters">
-        <div className="mg-ai-logs-table__filter">
-          <label htmlFor="ai-log-filter-provider">
+      <div className="mg-ai-logs-table__filters mg-v2-settings-form-grid">
+        <div className="mg-ai-logs-table__filter mg-v2-settings-field">
+          <label htmlFor="ai-log-filter-provider" className="mg-v2-form-label">
             <Filter size={12} aria-hidden="true" />
             {' '}{AI_PROVIDER_LABELS.filterProvider}
           </label>
           <select
             id="ai-log-filter-provider"
-            className="mg-v2-input"
+            className="mg-v2-select"
             value={filters.provider || ''}
             onChange={(e) => handleFilterUpdate('provider', e.target.value)}
             disabled={loading}
@@ -128,14 +122,14 @@ const UsageLogsTable = ({
             ))}
           </select>
         </div>
-        <div className="mg-ai-logs-table__filter">
-          <label htmlFor="ai-log-filter-caller">
+        <div className="mg-ai-logs-table__filter mg-v2-settings-field">
+          <label htmlFor="ai-log-filter-caller" className="mg-v2-form-label">
             <Filter size={12} aria-hidden="true" />
             {' '}{AI_PROVIDER_LABELS.filterCaller}
           </label>
           <select
             id="ai-log-filter-caller"
-            className="mg-v2-input"
+            className="mg-v2-select"
             value={filters.caller || ''}
             onChange={(e) => handleFilterUpdate('caller', e.target.value)}
             disabled={loading}
@@ -146,14 +140,14 @@ const UsageLogsTable = ({
             ))}
           </select>
         </div>
-        <div className="mg-ai-logs-table__filter">
-          <label htmlFor="ai-log-filter-status">
+        <div className="mg-ai-logs-table__filter mg-v2-settings-field">
+          <label htmlFor="ai-log-filter-status" className="mg-v2-form-label">
             <Filter size={12} aria-hidden="true" />
             {' '}{AI_PROVIDER_LABELS.filterStatus}
           </label>
           <select
             id="ai-log-filter-status"
-            className="mg-v2-input"
+            className="mg-v2-select"
             value={filters.status || ''}
             onChange={(e) => handleFilterUpdate('status', e.target.value)}
             disabled={loading}
@@ -166,7 +160,7 @@ const UsageLogsTable = ({
       </div>
 
       {error ? (
-        <p className="mg-ai-section__empty mg-ai-section__empty--error">{toDisplayString(error)}</p>
+        <SafeErrorDisplay error={toDisplayString(error)} />
       ) : null}
 
       <div className="mg-ai-logs-table__wrap">
@@ -216,17 +210,15 @@ const UsageLogsTable = ({
                 <td className="mg-ai-logs-table__col-numeric">{row.tokenCount ?? '—'}</td>
                 <td className="mg-ai-logs-table__error">{toDisplayString(row.errorMessage, '—')}</td>
                 <td className="mg-ai-logs-table__col-action">
-                  <MGButton
+                  <SettingsButton
                     type="button"
                     variant="ghost"
-                    size="small"
-                    className={buildErpMgButtonClassName({ variant: 'secondary', size: 'sm', loading: false })}
                     onClick={() => handleOpenDetail(row)}
                     preventDoubleClick={false}
                     aria-label={`로그 ${row.id} 상세`}
                   >
                     <Eye size={14} aria-hidden="true" />
-                  </MGButton>
+                  </SettingsButton>
                 </td>
               </tr>
             ))}
@@ -241,28 +233,24 @@ const UsageLogsTable = ({
             : '0 / 0 페이지'}
         </span>
         <div className="mg-ai-logs-table__page-controls">
-          <MGButton
+          <SettingsButton
             type="button"
             variant="secondary"
-            size="medium"
-            className={buildErpMgButtonClassName({ variant: 'secondary', size: 'md', loading: false })}
             onClick={() => onPageChange(Math.max(currentPage - 1, 0))}
             disabled={loading || currentPage <= 0}
             preventDoubleClick={false}
           >
             {AI_PROVIDER_LABELS.pagePrev}
-          </MGButton>
-          <MGButton
+          </SettingsButton>
+          <SettingsButton
             type="button"
             variant="secondary"
-            size="medium"
-            className={buildErpMgButtonClassName({ variant: 'secondary', size: 'md', loading: false })}
             onClick={() => onPageChange(currentPage + 1)}
             disabled={loading || currentPage + 1 >= totalPages}
             preventDoubleClick={false}
           >
             {AI_PROVIDER_LABELS.pageNext}
-          </MGButton>
+          </SettingsButton>
         </div>
       </div>
 
@@ -277,7 +265,7 @@ const UsageLogsTable = ({
           loading={detailLoading}
         >
           {detailError ? (
-            <p className="mg-ai-section__empty mg-ai-section__empty--error">{toDisplayString(detailError)}</p>
+            <SafeErrorDisplay error={toDisplayString(detailError)} />
           ) : null}
           <dl className="mg-ai-logs-table__detail-list">
             <div>
@@ -345,7 +333,7 @@ const UsageLogsTable = ({
           </dl>
         </UnifiedModal>
       ) : null}
-    </section>
+    </SettingsSectionPanel>
   );
 };
 

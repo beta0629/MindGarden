@@ -1,95 +1,31 @@
 /**
- * 브랜딩 관리 — B0KlA 본문 (mg-branding-settings__)
+ * 브랜딩 관리 — 설정 공통 셸 위 본문 전용 스타일 (mg-branding-settings__)
+ * 크롬(헤더·패널·입력·버튼)은 settings-shell/SettingsSuite.css 가 담당한다.
+ * 색·간격·반경은 design-v2 토큰만 사용한다.
  *
  * @author CoreSolution
  * @since 2025-11-26
+ * @updated 2026-10-03 (설정 공통 셸 이관 — accent bar·dashed·shadow·gradient 제거)
  */
-
-/* -------------------------------------------------------------------------- */
-/* Root layout — 단일 surface                                                 */
-/* -------------------------------------------------------------------------- */
-
-.mg-branding-settings {
-  width: 100%;
-  max-width: 100%;
-  margin: 0;
-  padding: 0;
-}
 
 .mg-branding-settings__form {
   display: flex;
   flex-direction: column;
-  gap: var(--mg-spacing-md, var(--mg-spacing-lg));
-  padding: var(--mg-spacing-lg);
-  background: var(--mg-color-surface-main, var(--ad-b0kla-card-bg, var(--mg-white)));
-  border: 1px solid var(--mg-color-border-main, var(--mg-gray-200));
-  border-radius: var(--mg-radius-lg, var(--cs-radius-lg));
-  box-shadow: var(--ad-b0kla-shadow-card, var(--mg-shadow-sm));
-}
-
-/* -------------------------------------------------------------------------- */
-/* Section (악센트 바 + 제목)                                                  */
-/* -------------------------------------------------------------------------- */
-
-.mg-branding-settings__section {
-  display: flex;
-  flex-direction: column;
-  gap: var(--mg-spacing-sm);
-  padding-bottom: var(--mg-spacing-md);
-  border-bottom: 1px solid var(--mg-color-border-main, var(--mg-gray-200));
-}
-
-.mg-branding-settings__section:last-of-type {
-  border-bottom: none;
-  padding-bottom: 0;
-}
-
-.mg-branding-settings__section-head {
-  display: flex;
-  align-items: center;
-  gap: var(--mg-spacing-sm);
-  min-height: var(--mg-spacing-lg);
-}
-
-.mg-branding-settings__accent-bar {
-  display: block;
-  width: var(--mg-spacing-xs);
-  align-self: stretch;
-  min-height: 1.25rem;
-  background: var(--mg-color-primary-main, var(--mg-primary-500));
-  border-radius: var(--mg-radius-sm);
-}
-
-.mg-branding-settings__section-title {
-  margin: 0;
-  font-size: var(--cs-text-lg, 1.125rem);
-  font-weight: var(--cs-font-semibold, 600);
-  color: var(--mg-color-text-main, var(--mg-gray-900));
-}
-
-.mg-branding-settings__section-body {
-  display: flex;
-  flex-direction: column;
-  gap: var(--mg-spacing-md);
-}
-
-.mg-branding-settings__hint {
-  margin: 0;
-  font-size: var(--cs-text-sm, 0.875rem);
-  color: var(--mg-color-text-secondary, var(--mg-gray-600));
-  line-height: 1.5;
+  gap: var(--mg-v2-space-4);
+  min-width: 0;
 }
 
 /* -------------------------------------------------------------------------- */
 /* 파일 입력 (sr-only, display:none 금지)                                      */
 /* -------------------------------------------------------------------------- */
 
-.mg-branding-settings__file-input {
+.mg-branding-settings__file-input,
+.mg-branding-settings__sr-only {
   position: absolute;
-  width: 1px;
-  height: 1px;
+  width: var(--mg-v2-border-width-thin);
+  height: var(--mg-v2-border-width-thin);
   padding: 0;
-  margin: -1px;
+  margin: calc(var(--mg-v2-border-width-thin) * -1);
   overflow: hidden;
   clip: rect(0, 0, 0, 0);
   white-space: nowrap;
@@ -97,7 +33,7 @@
 }
 
 /* -------------------------------------------------------------------------- */
-/* 업로드 존                                                                  */
+/* 업로드 존 — 1px solid 기본 테두리 · 카드 표면                               */
 /* -------------------------------------------------------------------------- */
 
 .mg-branding-settings__upload-zone {
@@ -106,54 +42,52 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: var(--mg-spacing-sm);
-  min-height: 12.5rem;
-  padding: var(--mg-spacing-lg);
+  gap: var(--mg-v2-space-2);
+  min-height: calc(var(--mg-v2-space-20) * 2.5);
+  padding: var(--mg-v2-space-5);
   text-align: center;
   cursor: pointer;
-  border: 2px dashed var(--mg-color-border-main, var(--mg-gray-300));
-  border-radius: var(--mg-radius-md, var(--cs-radius-md));
-  background: var(--mg-color-surface-main, var(--mg-white));
-  color: var(--mg-color-text-secondary, var(--mg-gray-600));
-  transition: border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+  border: var(--mg-v2-border-width-thin) solid var(--mg-v2-color-border-default);
+  border-radius: var(--mg-v2-radius-lg);
+  background: var(--mg-v2-color-surface-card);
+  color: var(--mg-v2-color-text-secondary);
+  transition: border-color 0.2s ease;
 }
 
 .mg-branding-settings__upload-zone:hover,
 .mg-branding-settings__upload-zone--drag {
-  border-color: var(--mg-color-primary-main, var(--mg-primary-500));
-  background: color-mix(in srgb, var(--mg-color-primary-main, var(--mg-primary-500)) 6%, var(--mg-color-surface-main, var(--mg-white)));
-  box-shadow: var(--ad-b0kla-shadow-hover, 0 2px 8px color-mix(in srgb, var(--mg-color-text-main, var(--mg-gray-900)) 8%, transparent));
+  border-color: var(--mg-v2-color-primary-main);
 }
 
 .mg-branding-settings__upload-zone--compact {
   flex-direction: row;
   flex-wrap: wrap;
-  min-height: 6.5rem;
-  text-align: left;
+  min-height: calc(var(--mg-v2-space-16) + var(--mg-v2-space-10));
+  text-align: start;
   justify-content: flex-start;
-  gap: var(--mg-spacing-md);
+  gap: var(--mg-v2-space-4);
 }
 
 .mg-branding-settings__upload-icon {
   display: flex;
-  color: var(--mg-color-text-secondary, var(--mg-gray-500));
+  color: var(--mg-v2-color-text-tertiary);
 }
 
 .mg-branding-settings__upload-text {
   display: flex;
   flex-direction: column;
-  gap: var(--mg-spacing-xs);
+  gap: var(--mg-v2-space-1);
 }
 
 .mg-branding-settings__upload-primary {
-  font-size: var(--cs-text-md, 1rem);
-  font-weight: var(--cs-font-medium, 500);
-  color: var(--mg-color-text-main, var(--mg-gray-900));
+  font-size: var(--mg-v2-font-size-body-md);
+  font-weight: var(--mg-v2-font-weight-semibold);
+  color: var(--mg-v2-color-text-primary);
 }
 
 .mg-branding-settings__upload-secondary {
-  font-size: var(--cs-text-sm, 0.875rem);
-  color: var(--mg-color-text-secondary, var(--mg-gray-500));
+  font-size: var(--mg-v2-font-size-caption);
+  color: var(--mg-v2-color-text-secondary);
 }
 
 .mg-branding-settings__logo-preview-inner {
@@ -162,104 +96,56 @@
   align-items: center;
   justify-content: center;
   width: 100%;
-  min-height: 10rem;
+  min-height: calc(var(--mg-v2-space-20) * 2);
 }
 
 .mg-branding-settings__logo-image {
-  max-width: 12.5rem;
-  max-height: 7.5rem;
+  max-width: calc(var(--mg-v2-space-20) * 2.5);
+  max-height: calc(var(--mg-v2-space-20) * 1.5);
   object-fit: contain;
-  border-radius: var(--mg-radius-sm, var(--cs-radius-sm));
+  border-radius: var(--mg-v2-radius-sm);
 }
 
 .mg-branding-settings__logo-remove {
   position: absolute;
-  top: var(--mg-spacing-sm);
-  right: var(--mg-spacing-sm);
+  top: var(--mg-v2-space-2);
+  right: var(--mg-v2-space-2);
 }
 
 .mg-branding-settings__favicon-remove {
-  margin-left: auto;
+  margin-inline-start: auto;
 }
 
 /* -------------------------------------------------------------------------- */
-/* 폼 그리드 · 필드                                                           */
+/* 필드 보조                                                                  */
 /* -------------------------------------------------------------------------- */
-
-.mg-branding-settings__grid {
-  display: grid;
-  gap: var(--mg-spacing-md);
-}
-
-.mg-branding-settings__grid--2col {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-
-.mg-branding-settings__field {
-  display: flex;
-  flex-direction: column;
-  gap: var(--mg-spacing-xs);
-  min-width: 0;
-}
-
-.mg-branding-settings__field--full {
-  grid-column: 1 / -1;
-}
-
-.mg-branding-settings__label {
-  font-size: var(--cs-text-sm, 0.875rem);
-  font-weight: var(--cs-font-semibold, 600);
-  color: var(--mg-color-text-main, var(--mg-gray-900));
-}
 
 .mg-branding-settings__required {
-  color: var(--mg-error-500, var(--mg-color-danger, var(--cs-error-500)));
+  color: var(--mg-v2-color-semantic-error);
 }
 
-.mg-branding-settings__input {
-  width: 100%;
-  padding: var(--mg-spacing-sm) var(--mg-spacing-md);
-  font-size: var(--cs-text-md, 1rem);
-  color: var(--mg-color-text-main, var(--mg-gray-900));
-  background: var(--mg-color-surface-main, var(--mg-white));
-  border: 1px solid var(--mg-color-border-main, var(--mg-gray-300));
-  border-radius: var(--mg-radius-sm, var(--cs-radius-sm));
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+.mg-v2-settings-shell .mg-v2-form-input.mg-branding-settings__input--error {
+  border-color: var(--mg-v2-color-semantic-error);
 }
 
-.mg-branding-settings__input::placeholder {
-  color: var(--mg-color-text-secondary, var(--mg-gray-400));
-}
-
-.mg-branding-settings__input:focus {
-  outline: none;
-  border-color: var(--mg-color-primary-main, var(--mg-primary-500));
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--mg-color-primary-main, var(--mg-primary-500)) 22%, transparent);
-}
-
-.mg-branding-settings__input--error,
-.mg-branding-settings__input.mg-branding-settings__input--error {
-  border-color: var(--mg-error-500, var(--mg-color-danger, var(--cs-error-500)));
-}
-
-.mg-branding-settings__input--color-hex {
-  font-family: var(--mg-font-mono, ui-monospace, monospace);
-  max-width: 9rem;
+.mg-v2-settings-shell .mg-v2-form-input.mg-branding-settings__input--color-hex {
+  max-width: calc(var(--mg-v2-space-12) * 3);
+  font-family: var(--mg-v2-font-family-mono);
 }
 
 .mg-branding-settings__color-row {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: var(--mg-spacing-sm);
+  gap: var(--mg-v2-space-2);
 }
 
 .mg-branding-settings__color-swatch {
-  width: 3rem;
-  height: 2.5rem;
+  width: var(--mg-v2-space-12);
+  height: var(--mg-v2-component-height-md);
   padding: 0;
-  border: 1px solid var(--mg-color-border-main, var(--mg-gray-300));
-  border-radius: var(--mg-radius-sm, var(--cs-radius-sm));
+  border: var(--mg-v2-border-width-thin) solid var(--mg-v2-color-border-default);
+  border-radius: var(--mg-v2-radius-lg);
   background: none;
   cursor: pointer;
 }
@@ -270,20 +156,19 @@
 
 .mg-branding-settings__color-swatch::-webkit-color-swatch {
   border: none;
-  border-radius: var(--mg-radius-sm, var(--cs-radius-sm));
+  border-radius: var(--mg-v2-radius-lg);
 }
 
 .mg-branding-settings__field-error {
   display: flex;
   align-items: flex-start;
-  gap: var(--mg-spacing-xs);
-  font-size: var(--cs-text-sm, 0.875rem);
-  color: var(--mg-error-500, var(--mg-color-danger, var(--cs-error-500)));
+  gap: var(--mg-v2-space-1);
+  font-size: var(--mg-v2-font-size-caption);
+  color: var(--mg-v2-color-semantic-error);
 }
 
 .mg-branding-settings__field-error svg {
   flex-shrink: 0;
-  margin-top: 0.125rem;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -291,43 +176,18 @@
 /* -------------------------------------------------------------------------- */
 
 .mg-branding-settings__footer {
-  margin-top: var(--mg-spacing-md);
-  padding-top: var(--mg-spacing-md);
-  border-top: 1px solid var(--mg-color-border-main, var(--mg-gray-200));
-}
-
-.mg-branding-settings__actions {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: var(--mg-spacing-sm);
-}
-
-.mg-branding-settings__actions--split {
   justify-content: space-between;
+  gap: var(--mg-v2-space-2);
 }
 
 .mg-branding-settings__actions-leading,
 .mg-branding-settings__actions-trailing {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--mg-spacing-sm);
-}
-
-/* -------------------------------------------------------------------------- */
-/* 스크린리더 전용                                                            */
-/* -------------------------------------------------------------------------- */
-
-.mg-branding-settings__sr-only {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border: 0;
+  gap: var(--mg-v2-space-2);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -337,28 +197,28 @@
 .mg-branding-settings__preview {
   display: flex;
   flex-direction: column;
-  gap: var(--mg-spacing-md);
+  gap: var(--mg-v2-space-4);
 }
 
 .mg-branding-settings__preview-lead {
   margin: 0;
   text-align: center;
-  font-size: var(--cs-text-sm, 0.875rem);
-  color: var(--mg-color-text-secondary, var(--mg-gray-600));
+  font-size: var(--mg-v2-font-size-body-md);
+  color: var(--mg-v2-color-text-secondary);
 }
 
 .mg-branding-settings__preview-demo {
-  padding: var(--mg-spacing-md);
-  border-radius: var(--mg-radius-md, var(--cs-radius-md));
-  background: var(--mg-layout-section-bg, var(--mg-gray-50));
+  padding: var(--mg-v2-space-4);
+  border-radius: var(--mg-v2-radius-panel);
+  background: var(--mg-v2-color-neutral-100);
+  border: var(--mg-v2-border-width-thin) solid var(--mg-v2-color-neutral-300);
 }
 
 .mg-branding-settings__preview-header-demo {
-  padding: var(--mg-spacing-md) var(--mg-spacing-lg);
-  margin-bottom: var(--mg-spacing-md);
-  border-radius: var(--mg-radius-sm, var(--cs-radius-sm));
-  background: var(--mg-color-surface-main, var(--mg-white));
-  box-shadow: var(--mg-shadow-sm, var(--ad-b0kla-shadow-hover));
+  padding: var(--mg-v2-space-4) var(--mg-v2-space-5);
+  margin-bottom: var(--mg-v2-space-4);
+  border-radius: var(--mg-v2-radius-lg);
+  background: var(--mg-v2-color-surface-card);
 }
 
 .mg-branding-settings__preview-logo {
@@ -367,48 +227,48 @@
 }
 
 .mg-branding-settings__preview-logo-image {
-  max-height: 2.5rem;
-  max-width: 9.375rem;
+  max-height: var(--mg-v2-space-10);
+  max-width: calc(var(--mg-v2-space-16) * 2.5);
   object-fit: contain;
 }
 
 .mg-branding-settings__preview-logo-text {
   display: flex;
   flex-direction: column;
-  gap: var(--mg-spacing-xs);
+  gap: var(--mg-v2-space-1);
 }
 
 .mg-branding-settings__preview-company-name {
-  font-size: var(--cs-text-lg, 1.125rem);
-  font-weight: var(--cs-font-bold, 700);
-  color: var(--mg-color-text-main, var(--mg-gray-900));
+  font-size: var(--mg-v2-font-size-h2);
+  font-weight: var(--mg-v2-font-weight-bold);
+  color: var(--mg-v2-color-text-primary);
 }
 
 .mg-branding-settings__preview-subtitle {
-  font-size: var(--cs-text-xs, 0.75rem);
-  color: var(--mg-color-text-secondary, var(--mg-gray-600));
+  font-size: var(--mg-v2-font-size-caption);
+  color: var(--mg-v2-color-text-secondary);
 }
 
 .mg-branding-settings__preview-colors {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--mg-spacing-md);
+  gap: var(--mg-v2-space-4);
 }
 
 .mg-branding-settings__preview-color-item {
   display: flex;
   align-items: center;
-  gap: var(--mg-spacing-sm);
-  font-size: var(--cs-text-sm, 0.875rem);
-  color: var(--mg-color-text-main, var(--mg-gray-800));
+  gap: var(--mg-v2-space-2);
+  font-size: var(--mg-v2-font-size-body-md);
+  color: var(--mg-v2-color-text-primary);
 }
 
 .mg-branding-settings__preview-swatch {
   display: inline-block;
-  width: 1.5rem;
-  height: 1.5rem;
-  border-radius: var(--mg-radius-sm, var(--cs-radius-sm));
-  border: 1px solid var(--mg-color-border-main, var(--mg-gray-200));
+  width: var(--mg-v2-space-6);
+  height: var(--mg-v2-space-6);
+  border-radius: var(--mg-v2-radius-sm);
+  border: var(--mg-v2-border-width-thin) solid var(--mg-v2-color-border-default);
 }
 
 .mg-branding-settings__preview-actions {
@@ -420,16 +280,8 @@
 /* 반응형                                                                     */
 /* -------------------------------------------------------------------------- */
 
-@media (max-width: 768px) {
-  .mg-branding-settings__form {
-    padding: var(--mg-spacing-md);
-  }
-
-  .mg-branding-settings__grid--2col {
-    grid-template-columns: 1fr;
-  }
-
-  .mg-branding-settings__actions--split {
+@media (max-width: 767px) {
+  .mg-branding-settings__footer {
     flex-direction: column;
     align-items: stretch;
   }
@@ -446,6 +298,6 @@
   }
 
   .mg-branding-settings__favicon-remove {
-    margin-left: 0;
+    margin-inline-start: 0;
   }
 }

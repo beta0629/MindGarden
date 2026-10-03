@@ -158,7 +158,7 @@
 }
 
 /* ERP mg-v2-button 병행 시 전역 .mg-v2-button height:32px·padding-sm 캐스케이드 무력화
- * ghost(#720 누락 재발 방지): mg-v2-button-ghost / mg-button--ghost 동일 높이 계약 */
+ * ghost(PR 720 누락 재발 방지): mg-v2-button-ghost / mg-button--ghost 동일 높이 계약 */
 .mg-modal__actions .mg-button.mg-v2-button,
 .mg-modal__actions .mg-button.mg-v2-button.mg-button--medium,
 .mg-modal__actions .mg-button.mg-v2-button.mg-v2-button-secondary,

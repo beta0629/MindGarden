@@ -138,3 +138,36 @@ export function normalizeApiObjectPayload(payload) {
   }
   return payload;
 }
+
+/**
+ * StandardizedApi 단일 객체 응답 본문.
+ * ajax 가 `{ success, data }` 를 풀어 DTO 만 돌려주는 경우와 래퍼가 남는 경우를 같이 처리한다.
+ *
+ * @param {*} response StandardizedApi.get/put 반환값
+ * @returns {object|null} `success === false`·null·본문 없음이면 null
+ */
+export function resolveApiObjectData(response) {
+  if (response == null || typeof response !== 'object' || Array.isArray(response)) {
+    return null;
+  }
+  if (response.success === false) {
+    return null;
+  }
+  return normalizeApiObjectPayload(response);
+}
+
+/**
+ * 저장(PUT/POST) 응답 성공 여부. 본문이 있거나 래퍼가 `success: true` 이면 성공.
+ *
+ * @param {*} response StandardizedApi.put/post 반환값
+ * @returns {boolean}
+ */
+export function isApiMutationSuccess(response) {
+  if (response == null || typeof response !== 'object') {
+    return false;
+  }
+  if (response.success === false) {
+    return false;
+  }
+  return response.success === true || resolveApiObjectData(response) != null;
+}

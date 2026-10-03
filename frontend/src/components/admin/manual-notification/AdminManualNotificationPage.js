@@ -1,7 +1,7 @@
 /**
  * 어드민 수동 알림 발송 도구 페이지 (Page Template / Organism 컨테이너).
  *
- * Clinic-OS chrome: manual-notification--clinic-os (B0KlA 제거).
+ * 크롬: SettingsPageShell(quiet header) — 폼·히스토리는 각자 SettingsSectionPanel 을 렌더.
  * Summary strip 생략 (KPI 부재 — consultation-logs twin).
  *
  * @author MindGarden
@@ -13,7 +13,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import AdminCommonLayout from '../../layout/AdminCommonLayout';
-import { ContentArea, ContentHeader } from '../../dashboard-v2/content';
+import { SettingsPageShell } from '../settings-shell';
 import { useSession } from '../../../contexts/SessionContext';
 import { USER_ROLES, RoleUtils } from '../../../constants/roles';
 import notificationManager from '../../../utils/notification';
@@ -55,7 +55,6 @@ const AdminManualNotificationPage = () => {
   }, []);
 
   const pageTitle = t('manualNotification.page.title');
-  const pageSubtitle = t('manualNotification.page.subtitle');
 
   if (sessionLoading || !hasAccess) {
     return (
@@ -74,25 +73,10 @@ const AdminManualNotificationPage = () => {
         className="mg-v2-admin-manual-notification manual-notification--clinic-os"
         data-testid="admin-manual-notification-page"
       >
-        <ContentArea>
-          <ContentHeader
-            titleId={PAGE_TITLE_ID}
-            title={pageTitle}
-            subtitle={pageSubtitle}
-          />
-
-          <section
-            className="mg-admin-manual-notif-page__panel"
-            aria-labelledby={PAGE_TITLE_ID}
-          >
-            <div className="mg-admin-manual-notif-page__stage mg-admin-manual-notif-page__form-area">
-              <ManualNotificationForm onBatchSent={handleBatchSent} />
-            </div>
-            <div className="mg-admin-manual-notif-page__stage mg-admin-manual-notif-page__history-area">
-              <ManualNotificationBatchHistory refreshKey={historyRefreshKey} />
-            </div>
-          </section>
-        </ContentArea>
+        <SettingsPageShell title={pageTitle} titleId={PAGE_TITLE_ID}>
+          <ManualNotificationForm onBatchSent={handleBatchSent} />
+          <ManualNotificationBatchHistory refreshKey={historyRefreshKey} />
+        </SettingsPageShell>
       </div>
     </AdminCommonLayout>
   );

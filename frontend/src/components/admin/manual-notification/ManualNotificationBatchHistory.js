@@ -23,8 +23,7 @@
 
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
-import MGButton from '../../common/MGButton';
+import { SettingsButton, SettingsSectionPanel } from '../settings-shell';
 import { toDisplayString } from '../../../utils/safeDisplay';
 import {
   normalizeSpringPageRows,
@@ -247,41 +246,28 @@ const ManualNotificationBatchHistory = ({ refreshKey = 0 }) => {
   };
 
   return (
-    <section
+    <SettingsSectionPanel
       className={HISTORY_CLASS}
-      aria-label={t('manualNotification.history.title')}
-    >
-      <header className={`${HISTORY_CLASS}__header`}>
-        <div>
-          <h3 className={`${HISTORY_CLASS}__title`}>
-            {t('manualNotification.history.title')}
-          </h3>
-          <p className={`${HISTORY_CLASS}__subtitle`}>
-            {t('manualNotification.history.subtitle', {
-              size: MANUAL_NOTIFICATION_HISTORY_DEFAULT_SIZE,
-              defaultValue: '최대 {{size}}건 (페이지당). 배치 ID 기준으로 그룹화되어 있습니다.'
-            })}
-          </p>
-        </div>
-        <MGButton
+      body="plain"
+      headingLevel={3}
+      title={t('manualNotification.history.title')}
+      description={t('manualNotification.history.subtitle', {
+        size: MANUAL_NOTIFICATION_HISTORY_DEFAULT_SIZE,
+        defaultValue: '최대 {{size}}건 (페이지당). 배치 ID 기준으로 그룹화되어 있습니다.'
+      })}
+      actions={(
+        <SettingsButton
           type="button"
           variant="outline"
-          size="small"
-          className={buildErpMgButtonClassName({
-            variant: 'outline',
-            size: 'sm',
-            loading,
-            className: `${HISTORY_CLASS}__refresh`
-          })}
+          preventDoubleClick
           loading={loading}
-          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
           onClick={load}
           aria-label={t('manualNotification.history.refresh')}
         >
           {t('manualNotification.history.refresh')}
-        </MGButton>
-      </header>
-
+        </SettingsButton>
+      )}
+    >
       {loading && items.length === 0 && (
         <p className={`${HISTORY_CLASS}__empty`}>
           {t('manualNotification.history.loading')}
@@ -338,24 +324,17 @@ const ManualNotificationBatchHistory = ({ refreshKey = 0 }) => {
                   {toDisplayString(item.reason, '-')}
                 </div>
                 <div className={`${HISTORY_CLASS}__card-actions`}>
-                  <MGButton
+                  <SettingsButton
                     type="button"
                     variant="outline"
-                    size="small"
-                    className={buildErpMgButtonClassName({
-                      variant: 'outline',
-                      size: 'sm',
-                      loading: false,
-                      className: `${HISTORY_CLASS}__detail-toggle`
-                    })}
-                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                    preventDoubleClick
                     onClick={() => handleToggleDetail(item.batchId)}
                     aria-expanded={expanded}
                   >
                     {expanded
                       ? t('manualNotification.history.closeDetail')
                       : t('manualNotification.history.openDetail')}
-                  </MGButton>
+                  </SettingsButton>
                 </div>
                 {expanded && (
                   <div className={`${HISTORY_CLASS}__detail`}>
@@ -370,21 +349,15 @@ const ManualNotificationBatchHistory = ({ refreshKey = 0 }) => {
 
       {pageMeta.totalPages > 1 && (
         <nav className={`${HISTORY_CLASS}__pagination`} aria-label="페이지">
-          <MGButton
+          <SettingsButton
             type="button"
             variant="outline"
-            size="small"
-            className={buildErpMgButtonClassName({
-              variant: 'outline',
-              size: 'sm',
-              loading: false
-            })}
-            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+            preventDoubleClick
             disabled={page <= 0 || loading}
             onClick={() => setPage((p) => Math.max(0, p - 1))}
           >
             {t('manualNotification.history.pagePrev')}
-          </MGButton>
+          </SettingsButton>
           <span className={`${HISTORY_CLASS}__page-indicator`}>
             {t('manualNotification.history.pageIndicator', {
               current: page + 1,
@@ -392,24 +365,18 @@ const ManualNotificationBatchHistory = ({ refreshKey = 0 }) => {
               defaultValue: '{{current}} / {{total}}'
             })}
           </span>
-          <MGButton
+          <SettingsButton
             type="button"
             variant="outline"
-            size="small"
-            className={buildErpMgButtonClassName({
-              variant: 'outline',
-              size: 'sm',
-              loading: false
-            })}
-            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+            preventDoubleClick
             disabled={page + 1 >= totalPages || loading}
             onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
           >
             {t('manualNotification.history.pageNext')}
-          </MGButton>
+          </SettingsButton>
         </nav>
       )}
-    </section>
+    </SettingsSectionPanel>
   );
 };
 

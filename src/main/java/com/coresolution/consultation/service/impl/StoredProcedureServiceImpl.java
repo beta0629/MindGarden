@@ -4,10 +4,14 @@ import java.sql.ResultSet;
 import java.sql.Types;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import com.coresolution.consultation.constant.UserRole;
+import com.coresolution.consultation.entity.ErpSyncLog;
 import com.coresolution.consultation.service.StoredProcedureService;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.coresolution.core.context.TenantContextHolder;
 import org.springframework.jdbc.core.CallableStatementCallback;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -29,44 +33,42 @@ import lombok.extern.slf4j.Slf4j;
 public class StoredProcedureServiceImpl implements StoredProcedureService {
     
     private final JdbcTemplate jdbcTemplate;
+    private final ObjectMapper objectMapper = new ObjectMapper();
     
     @Override
     @Transactional(readOnly = false)
     public Map<String, Object> getBusinessTimeSettings() {
         log.info("🕐 PL/SQL 프로시저 호출: GetBusinessTimeSettings");
+        String tenantId = TenantContextHolder.getRequiredTenantId();
         
         try {
             return jdbcTemplate.execute(
-                connection -> connection.prepareCall("{CALL GetBusinessTimeSettings()}"),
+                connection -> connection.prepareCall("{CALL GetBusinessTimeSettings(?, ?, ?, ?)}"),
                 (CallableStatementCallback<Map<String, Object>>) cs -> {
+                    cs.setString(1, tenantId);
+                    cs.registerOutParameter(2, Types.BOOLEAN);
+                    cs.registerOutParameter(3, Types.VARCHAR);
+                    cs.registerOutParameter(4, Types.LONGVARCHAR);
+                    cs.execute();
+
+                    boolean success = cs.getBoolean(2);
+                    String message = cs.getString(3);
+                    String settingsJson = cs.getString(4);
+                    if (!success) {
+                        throw new IllegalStateException(message == null ? "업무 시간 설정 조회에 실패했습니다." : message);
+                    }
+                    JsonNode root;
+                    try {
+                        root = settingsJson == null || settingsJson.isBlank()
+                                ? objectMapper.createObjectNode()
+                                : objectMapper.readTree(settingsJson);
+                    } catch (com.fasterxml.jackson.core.JsonProcessingException e) {
+                        throw new java.sql.SQLException("업무 시간 설정 JSON 을 읽지 못했습니다.", e);
+                    }
+                    List<Map<String, Object>> businessHours = jsonRows(root.get("business_hours"));
+                    List<Map<String, Object>> cancellationPolicy = jsonRows(root.get("cancellation_policy"));
+
                     Map<String, Object> result = new HashMap<>();
-                    List<Map<String, Object>> businessHours = new ArrayList<>();
-                    List<Map<String, Object>> cancellationPolicy = new ArrayList<>();
-                    
-                    boolean hasResult = cs.execute();
-                    int resultSetIndex = 0;
-                    
-                    do {
-                        if (hasResult) {
-                            try (ResultSet rs = cs.getResultSet()) {
-                                List<Map<String, Object>> currentList = (resultSetIndex == 0) ? businessHours : cancellationPolicy;
-                                
-                                while (rs.next()) {
-                                    Map<String, Object> row = new HashMap<>();
-                                    row.put("codeGroup", rs.getString("code_group"));
-                                    row.put("codeValue", rs.getString("code_value"));
-                                    row.put("codeLabel", rs.getString("code_label"));
-                                    row.put("koreanName", rs.getString("korean_name"));
-                                    row.put("settingKey", rs.getString("setting_key"));
-                                    row.put("settingValue", rs.getString("setting_value"));
-                                    currentList.add(row);
-                                }
-                                resultSetIndex++;
-                            }
-                        }
-                        hasResult = cs.getMoreResults();
-                    } while (hasResult);
-                    
                     result.put("businessHours", businessHours);
                     result.put("cancellationPolicy", cancellationPolicy);
                     
@@ -81,24 +83,55 @@ public class StoredProcedureServiceImpl implements StoredProcedureService {
             throw new RuntimeException("업무 시간 설정 조회에 실패했습니다: " + e.getMessage(), e);
         }
     }
+
+    private List<Map<String, Object>> jsonRows(JsonNode array) {
+        List<Map<String, Object>> rows = new ArrayList<>();
+        if (array == null || !array.isArray()) {
+            return rows;
+        }
+        Iterator<JsonNode> iterator = array.elements();
+        while (iterator.hasNext()) {
+            JsonNode node = iterator.next();
+            Map<String, Object> row = new HashMap<>();
+            row.put("codeGroup", text(node, "code_group"));
+            row.put("codeValue", text(node, "code_value"));
+            row.put("codeLabel", text(node, "code_label"));
+            row.put("koreanName", text(node, "korean_name"));
+            row.put("settingKey", text(node, "setting_key"));
+            row.put("settingValue", text(node, "setting_value"));
+            rows.add(row);
+        }
+        return rows;
+    }
+
+    private static String text(JsonNode node, String field) {
+        JsonNode value = node.get(field);
+        return value == null || value.isNull() ? null : value.asText();
+    }
     
     @Override
     @Transactional
     public boolean updateBusinessTimeSetting(String codeGroup, String codeValue, String newValue) {
         log.info("🕐 PL/SQL 프로시저 호출: UpdateBusinessTimeSetting - {}.{} = {}", codeGroup, codeValue, newValue);
         
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        String updatedBy = ErpSyncLog.SCHEDULER_AUDIT_ACTOR;
         try {
             return jdbcTemplate.execute(
-                connection -> connection.prepareCall("{CALL UpdateBusinessTimeSetting(?, ?, ?)}"),
+                connection -> connection.prepareCall("{CALL UpdateBusinessTimeSetting(?, ?, ?, ?, ?, ?, ?)}"),
                 (CallableStatementCallback<Boolean>) cs -> {
                     cs.setString(1, codeGroup);
                     cs.setString(2, codeValue);
                     cs.setString(3, newValue);
+                    cs.setString(4, tenantId);
+                    cs.setString(5, updatedBy);
+                    cs.registerOutParameter(6, Types.BOOLEAN);
+                    cs.registerOutParameter(7, Types.VARCHAR);
                     
                     cs.execute();
-                    
-                    log.info("✅ 업무 시간 설정 업데이트 성공: {}.{} = {}", codeGroup, codeValue, newValue);
-                    return true;
+                    boolean success = cs.getBoolean(6);
+                    log.info("✅ 업무 시간 설정 업데이트: {}.{} success={}", codeGroup, codeValue, success);
+                    return success;
                 }
             );
         } catch (Exception e) {

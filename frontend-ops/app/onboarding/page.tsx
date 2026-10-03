@@ -1,17 +1,22 @@
 "use client";
 
 import { Suspense, useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { fetchAllOnboarding } from "@/services/onboardingService";
-import { OnboardingStatus } from "@/types/shared";
 import { OnboardingRequest } from "@/types/onboarding";
-import OnboardingPageHeader from "@/components/onboarding/OnboardingPageHeader";
+import { OnboardingStatus } from "@/types/shared";
+import { ONBOARDING_MESSAGES, ONBOARDING_PATHS, type OnboardingListFilter } from "@/constants/onboarding";
+import { isOnboardingListFilter } from "@/utils/onboardingUtils";
 import OnboardingCardList from "@/components/onboarding/OnboardingCardList";
 
 function OnboardingPageContent() {
+  const router = useRouter();
   const searchParams = useSearchParams();
-  const statusFilter = (searchParams?.get("status") || undefined) as OnboardingStatus | undefined;
-  
+  const statusParam = searchParams?.get("status");
+  const statusFilter = isOnboardingListFilter(statusParam) && statusParam !== "ALL"
+    ? (statusParam as OnboardingStatus)
+    : undefined;
+
   const [allRequests, setAllRequests] = useState<OnboardingRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -21,13 +26,11 @@ function OnboardingPageContent() {
       try {
         setLoading(true);
         setError(null);
-        const result = await fetchAllOnboarding(statusFilter);
-        // 배열인지 확인하고, 배열이 아니면 빈 배열로 처리
+        const result = await fetchAllOnboarding();
         setAllRequests(Array.isArray(result) ? result : []);
       } catch (err) {
-        // 예상치 못한 오류인 경우에만 로깅하고 빈 배열 사용
         console.error("온보딩 페이지 데이터 로드 실패:", err);
-        setError(err instanceof Error ? err.message : "데이터를 불러오는데 실패했습니다.");
+        setError(err instanceof Error ? err.message : ONBOARDING_MESSAGES.ERROR_BODY);
         setAllRequests([]);
       } finally {
         setLoading(false);
@@ -35,60 +38,47 @@ function OnboardingPageContent() {
     };
 
     loadData();
-  }, [statusFilter]);
+  }, []);
 
-  if (loading) {
-    return (
-      <section className="panel">
-        <header className="panel__header">
-          <h1>로딩 중...</h1>
-        </header>
-        <div className="loading-message">
-          <p>데이터를 불러오는 중입니다...</p>
-        </div>
-      </section>
-    );
-  }
-
-  if (error) {
-    return (
-      <section className="panel">
-        <header className="panel__header">
-          <h1>오류 발생</h1>
-        </header>
-        <div className="error-message">
-          <p>{error}</p>
-        </div>
-      </section>
-    );
-  }
+  const applyFilter = (filter: OnboardingListFilter) => {
+    if (filter === "ALL") {
+      router.replace(ONBOARDING_PATHS.LIST);
+      return;
+    }
+    router.replace(`${ONBOARDING_PATHS.LIST}?status=${encodeURIComponent(filter)}`);
+  };
 
   return (
-    <section className="panel">
-      <OnboardingPageHeader 
-        statusFilter={statusFilter} 
-        requestCount={allRequests.length} 
-      />
-      <OnboardingCardList 
-        requests={allRequests} 
-        statusFilter={statusFilter} 
-      />
+    <section className="ops-onboarding" aria-labelledby="ops-onboarding-title">
+      <p className="ops-onboarding__crumb">{ONBOARDING_MESSAGES.SECTION}</p>
+      <h1 id="ops-onboarding-title" className="ops-onboarding__title">
+        {ONBOARDING_MESSAGES.PAGE_TITLE}
+      </h1>
+      <p className="ops-onboarding__sub">{ONBOARDING_MESSAGES.PAGE_DESCRIPTION}</p>
+      {loading ? (
+        <p className="ops-onboarding__status">{ONBOARDING_MESSAGES.LOADING_BODY}</p>
+      ) : error ? (
+        <p className="ops-onboarding__status" role="alert">{error}</p>
+      ) : (
+        <OnboardingCardList
+          requests={allRequests}
+          statusFilter={statusFilter}
+          onFilter={applyFilter}
+        />
+      )}
     </section>
   );
 }
 
 export default function OnboardingPage() {
   return (
-    <Suspense fallback={
-      <section className="panel">
-        <header className="panel__header">
-          <h1>로딩 중...</h1>
-        </header>
-        <div className="loading-message">
-          <p>데이터를 불러오는 중입니다...</p>
-        </div>
-      </section>
-    }>
+    <Suspense
+      fallback={
+        <section className="ops-onboarding">
+          <p className="ops-onboarding__status">{ONBOARDING_MESSAGES.LOADING_BODY}</p>
+        </section>
+      }
+    >
       <OnboardingPageContent />
     </Suspense>
   );

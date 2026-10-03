@@ -32,6 +32,24 @@ description: 배포·CI/CD 워크플로 수정 시 적용. GitHub Actions, syste
 - 사용자 트래픽이 받는 슬롯은 세트 배포 중 재시작으로 로그인 이탈을 만들지 않는다. **비활성 슬롯 헬스 통과 후**에만 전환한다.
 - 분야·테넌트·호스트 하드코딩 금지. 공통코드·env.
 
+## 표준 프로시저 운영 반영 순서 (프로시저 먼저, BE 나중)
+
+프로시저 시그니처·본문이 바뀐 BE 를 운영에 올릴 때는 **운영 프로시저 배포 → BE 운영 배포** 순서다. BE 가 먼저 나가면 새 JDBC 호출이 옛 프로시저와 맞지 않아 통계·급여·할인 API 가 실패한다.
+
+1. `deploy-procedures-production-mysql.yml` 을 `mode=db-diff`, `confirm` 비움으로 실행(dry-run). DDL 없음. 로그의 차이 목록을 PR·이슈에 남긴다. db-diff 는 **파라미터만** 비교하므로 본문만 바뀐 프로시저(예: `LEAVE` 라벨 수정)는 여기 안 나올 수 있다.
+2. 같은 워크플로를 `mode` 비움, `procedures=<이름 쉼표 구분>`, `confirm=CONFIRM` 으로 실행. 지정한 이름만 safe-replace(스테이징 CREATE → SHOW CREATE 백업 → 교체, 실패 시 복원). 결과 표(`프로시저 | 결과 | 사유`)에 failed 가 있으면 BE 배포하지 않는다.
+3. 1번 dry-run 을 다시 돌려 차이 0 을 확인한 뒤 BE 운영 배포.
+
+2026-10 LEAVE 라벨(ERROR 1064) 수정 배치의 `procedures` 값:
+
+```
+GetIntegratedSalaryStatistics,ProcessDiscountAccounting,GetBusinessTimeSettings,UpdateBusinessTimeSetting,UpdateAllBranchDailyStatistics,UpdateAllConsultantPerformance,ApplyDiscountAccounting
+```
+
+같은 배치에서 SQL(본문)이 바뀐 나머지 15개 — DailyPerformanceMonitoring, GenerateFinancialReport, GenerateMonthlyFinancialReport, GenerateYearlyFinancialReport, GetBranchComparisonStatistics, GetBranchTrendStatistics, GetConsultationRecordMissingStatistics, GetDiscountStatistics, GetOverallBranchStatistics, ProcessBatchScheduleCompletion, ProcessDiscountRefund, ProcessScheduleAutoCompletion, TestMappingSync, UpdateDiscountStatus, ValidateMappingIntegrity — 는 운영에 기존 정의가 있으면 동작 변화가 없다(조기 반환 라벨만 추가). 운영에서 이 이름들이 없거나 1064 로 깨져 있으면 같은 2번 절차로 함께 반영한다.
+
+개발(.dev) DB 는 매일 운영 데이터 복사(`prod-to-dev-daily.sh`, 루틴 제외 덤프) 직후 저장소 SQL 44개를 safe-replace 로 다시 깐다. 운영 루틴 본문을 개발로 가져오지 않는다. 서버 쪽 스크립트·SQL 묶음은 `deploy-procedures-dev.yml` 의 `publish-dev-sync-bundle.sh` 가 갱신한다.
+
 ## release/dev 머지 전 — 자체 검증 실행 (필수)
 
 - **`release/dev` 머지·배포 시 자체 검증**: 규칙을 읽는 데 그치지 말고 스킬 `.cursor/skills/core-solution-self-verify/SKILL.md`를 **실행**한다. 머지 전 1~4, 6, 7번을 실행해 PR 본문 「## 자체 검증」에 전부 PASS로 기록하고, `.dev` 배포 후 같은 스킬의 5번 스모크를 실행·보고한다. 섹션 누락이나 FAIL이 있으면 머지하지 않고 사용자에게 보고한다. FAIL에는 하드스톱(다른 사용자 데이터, 동작이 증명되지 않은 스모크, 외부 호출 중 커넥션 점유, 돈·권한 경로의 추정 PASS)이 포함되며, 이를 「남은 위험」으로 적고 PASS 처리하지 않는다.

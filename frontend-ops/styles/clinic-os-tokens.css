@@ -26,6 +26,10 @@
   --mg-v2-color-semantic-error-light: #F3E8E8;
   --mg-v2-color-semantic-error-dark: #8F3D3D;
 
+  --mg-v2-color-semantic-warning: #D97706;
+  --mg-v2-color-semantic-warning-light: #FFFBEB;
+  --mg-v2-color-semantic-warning-dark: #B45309;
+
   --mg-v2-color-surface-sidebar: #0F172A;
   --mg-v2-color-state-active: rgba(15, 23, 42, 0.08);
   --mg-v2-color-state-hover: rgba(248, 250, 252, 0.08);

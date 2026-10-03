@@ -21,18 +21,23 @@ on:
   workflow_dispatch:
     inputs:
       confirm:
-        description: 'Type "CONFIRM" to proceed'
-        required: true
+        description: 'Type "CONFIRM" to apply DDL. db-diff without CONFIRM is dry-run only'
+        required: false
         default: ''
       procedures:
         description: "교체할 프로시저 이름(쉼표 구분). 비우면 기존 동작(변경 파일만)"
         required: false
         type: string
         default: ""
+      mode:
+        description: "비우면 변경 파일만. db-diff 는 DB 파라미터와 저장소 SQL이 다른 프로시저만. CONFIRM 없으면 dry-run"
+        required: false
+        type: string
+        default: ""
 
 jobs:
   deploy-procedures-production-mysql:
-    if: github.event.inputs.confirm == 'CONFIRM'
+    if: github.event.inputs.mode == 'db-diff' || github.event.inputs.confirm == 'CONFIRM'
     name: 운영 MySQL 표준 프로시저 배포
     runs-on: [self-hosted, linux, deploy]
 
@@ -95,6 +100,8 @@ jobs:
       - name: SSH 키 및 표준 프로시저 배포
         env:
           PROCEDURE_DEPLOY_REQUESTED: ${{ inputs.procedures }}
+          PROCEDURE_DEPLOY_MODE: ${{ inputs.mode }}
+          PROCEDURE_DEPLOY_DB_DIFF_CONFIRM: ${{ inputs.confirm }}
         run: |
           set -euo pipefail
 

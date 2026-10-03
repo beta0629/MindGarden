@@ -3,19 +3,23 @@
  *
  * - 4종 provider 라디오 (`role="radiogroup"`).
  * - 미등록 카드 disabled + tooltip.
- * - 선택 변경 시 부모로 PUT 위임.
+ * - P1 보안(2026-10-03): 기본 프로바이더 변경은 운영자 전용(서버 403) — 모든 카드 읽기 전용.
  *
  * @author MindGarden
  * @since 2026-05-24
  */
 import React, { useId } from 'react';
 import ProviderCard from '../molecules/ProviderCard';
+import { SettingsSectionPanel } from '../../settings-shell';
 import {
   AI_PROVIDER_DISABLED_TOOLTIP,
   AI_PROVIDER_LABELS,
   AI_PROVIDER_OPTIONS,
   AI_PROVIDER_UNGUARDED_TOOLTIP
 } from '../constants';
+import { OPS_MANAGED_AI_PROVIDER_NOTICE } from '../../../../constants/opsManagedSettings';
+
+const noop = () => {};
 
 const isProviderRegistered = (providerId, health, providers) => {
   if (health) {
@@ -30,23 +34,17 @@ const ProviderSelector = ({
   activeProvider,
   health,
   healthLoading,
-  providers,
-  saving,
-  onSelect
+  providers
 }) => {
   const tooltipPrefix = useId();
 
   return (
-    <section className="mg-ai-section mg-ai-provider-selector">
-      <header className="mg-ai-section__header">
-        <h2 className="mg-ai-section__title">
-          <span className="mg-ai-section__accent" aria-hidden="true" />
-          사용할 AI 프로바이더 선택
-        </h2>
-      </header>
-      <p className="mg-ai-section__desc">
-        API 키가 등록된 프로바이더만 선택할 수 있습니다. 심리검사 AI 리포트·웰니스 등에 선택한 프로바이더가 사용됩니다.
-      </p>
+    <SettingsSectionPanel
+      title="사용할 AI 프로바이더 선택"
+      description={OPS_MANAGED_AI_PROVIDER_NOTICE}
+      className="mg-ai-section mg-ai-provider-selector"
+      body="plain"
+    >
 
       <div
         role="radiogroup"
@@ -62,16 +60,15 @@ const ProviderSelector = ({
           } else if (!guarded) {
             tooltip = AI_PROVIDER_UNGUARDED_TOOLTIP;
           }
-          const disabled = (healthLoading && guarded) || saving || !registered;
           return (
             <ProviderCard
               key={provider.id}
               provider={provider}
               checked={activeProvider === provider.id}
-              disabled={disabled}
+              disabled
               tooltip={tooltip}
               registered={registered}
-              onChange={onSelect}
+              onChange={noop}
               tooltipId={`${tooltipPrefix}-${provider.id}-tooltip`}
             />
           );
@@ -85,11 +82,9 @@ const ProviderSelector = ({
         && AI_PROVIDER_OPTIONS.every((p) => !(providers?.[p.id]?.apiKey || '').trim()) && (
         <p className="mg-ai-section__empty">
           {AI_PROVIDER_LABELS.unregistered}
-          {' — '}
-          우측의 "API 키 관리" 카드에서 1개 이상 등록한 뒤 선택할 수 있습니다.
         </p>
       )}
-    </section>
+    </SettingsSectionPanel>
   );
 };
 

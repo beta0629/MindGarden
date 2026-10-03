@@ -1,6 +1,7 @@
 import React from 'react';
 import { AlertTriangle } from 'lucide-react';
 import { toErrorMessage } from '../../utils/safeDisplay';
+import './SafeErrorDisplay.css';
 
 /**
  * API·예외 오류를 안전한 문자열로 표시 (React 자식 객체 렌더 방지)
@@ -37,7 +38,7 @@ export default function SafeErrorDisplay({
   if (variant === 'banner') {
     return (
       <div
-        className={`mg-safe-error-display mg-safe-error-display--banner alert alert-danger d-flex align-items-center gap-2${extra}`}
+        className={`mg-safe-error-display mg-safe-error-display--banner${extra}`}
         role={resolvedRole}
       >
         {showIcon ? <AlertTriangle size={iconSize} aria-hidden /> : null}
@@ -46,7 +47,7 @@ export default function SafeErrorDisplay({
     );
   }
 
-  const inlineFlex = showIcon ? ' d-flex align-items-center gap-2' : '';
+  const inlineFlex = showIcon ? ' mg-safe-error-display--with-icon' : '';
   const InlineTag = inlineTag || 'p';
 
   return (

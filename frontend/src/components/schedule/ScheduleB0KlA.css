@@ -2657,3 +2657,8 @@ textarea.mg-v2-textarea {
   background: var(--mg-dark-content-bg);
 }
 
+
+/* 일정 상세(특이사항 카드) 모달만: 좁은 화면에서 전역 large min-width 가 max-width(92vw)를 이겨 넘치지 않게 같은 상한 */
+.mg-modal.mg-modal--large.schedule-detail-modal {
+  min-width: min(var(--mg-v2-grid-container-md), 92vw);
+}

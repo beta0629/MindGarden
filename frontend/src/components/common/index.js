@@ -17,6 +17,11 @@ export { default as SettingSwitchRow } from './molecules/SettingSwitchRow';
 export { default as SmallCardGrid } from './SmallCardGrid';
 export { default as ListTableView } from './ListTableView';
 export { default as EntityRowActions, ENTITY_ROW_ACTIONS_LAYOUT } from './molecules/EntityRowActions';
+export {
+  default as TableActionCell,
+  TABLE_ACTION_CELL_CLASS,
+  TABLE_ACTION_CELL_LABEL_CLASS
+} from './molecules/TableActionCell';
 export { default as EmptyState } from './EmptyState';
 export {
   default as StatsGrid,

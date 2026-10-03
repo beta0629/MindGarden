@@ -123,13 +123,13 @@ const AddressInput = ({ postalCode, address, addressDetail, onAddressChange, isE
   };
 
   return (
-    <div className="mg-mypage__address-grid">
-      <div className="mg-mypage__form-row">
-        <label className="mg-mypage__form-label" htmlFor="mg-mypage-address-type">
+    <div className="mg-mypage-form__group">
+      <div className="mg-mypage-form__field">
+        <label className="mg-v2-form-label" htmlFor="mg-mypage-address-type">
           주소 유형
         </label>
         <select
-          className="mg-mypage__form-control"
+          className="mg-v2-form-select"
           id="mg-mypage-address-type"
           value={addressType}
           onChange={handleAddressTypeChange}
@@ -144,13 +144,13 @@ const AddressInput = ({ postalCode, address, addressDetail, onAddressChange, isE
         </select>
       </div>
 
-      <div className="mg-mypage__form-row">
-        <label className="mg-mypage__form-label" htmlFor="mg-mypage-postal-input">
+      <div className="mg-mypage-form__field">
+        <label className="mg-v2-form-label" htmlFor="mg-mypage-postal-input">
           우편번호
         </label>
-        <div className="mg-mypage__postal-row">
+        <div className="mg-mypage-form__inline">
           <input
-            className="mg-mypage__form-control"
+            className="mg-v2-form-input"
             id="mg-mypage-postal-input"
             type="text"
             value={localPostalCode}
@@ -161,10 +161,11 @@ const AddressInput = ({ postalCode, address, addressDetail, onAddressChange, isE
           {isEditing ? (
             <MGButton
               type="button"
-              className={buildErpMgButtonClassName({ variant: 'outline', size: 'md', loading: false })}
+              className={buildErpMgButtonClassName({ variant: 'outline', size: 'sm', loading: false })}
               loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={handleAddressSearch}
               variant="outline"
+              size="small"
               preventDoubleClick={false}
             >
               주소 검색
@@ -173,12 +174,12 @@ const AddressInput = ({ postalCode, address, addressDetail, onAddressChange, isE
         </div>
       </div>
 
-      <div className="mg-mypage__form-row">
-        <label className="mg-mypage__form-label" htmlFor="mg-mypage-address-line">
+      <div className="mg-mypage-form__field">
+        <label className="mg-v2-form-label" htmlFor="mg-mypage-address-line">
           주소
         </label>
         <input
-          className="mg-mypage__form-control"
+          className="mg-v2-form-input"
           id="mg-mypage-address-line"
           type="text"
           value={localAddress}
@@ -188,12 +189,12 @@ const AddressInput = ({ postalCode, address, addressDetail, onAddressChange, isE
         />
       </div>
 
-      <div className="mg-mypage__form-row">
-        <label className="mg-mypage__form-label" htmlFor="mg-mypage-address-detail">
+      <div className="mg-mypage-form__field">
+        <label className="mg-v2-form-label" htmlFor="mg-mypage-address-detail">
           상세주소
         </label>
         <input
-          className="mg-mypage__form-control"
+          className="mg-v2-form-input"
           id="mg-mypage-address-detail"
           type="text"
           value={localAddressDetail}

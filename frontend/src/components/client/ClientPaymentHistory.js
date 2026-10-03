@@ -1,7 +1,7 @@
 /**
  * 내담자 결제 내역 — Clinic-OS 단열(aside 없음) · 필터 칩 바(URL 쿼리) · ≥768 표 / <768 카드
- * 출처는 본인 전용 온라인 주문 API(`/api/v1/clients/me/shop/orders`) 하나다.
- * 관리자 API(매칭 목록)는 부르지 않는다 — 센터 직접 결제분은 내담자 전용 API가 생기면 합친다.
+ * 매핑 결제(센터) + 쇼핑 PortOne(ONLINE/PAID·REFUNDED) 주문을 함께 표시한다.
+ * 매핑 목록은 세션 사용자 id 로만 조회한다(서버가 본인 id 외 403).
  * 포맷·환불 문맥·상품명·합계는 utils/clientPaymentHistoryFormat 한 곳에서만.
  * 스펙: docs/design/clinic-os-client-payments.md
  *
@@ -11,6 +11,8 @@
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
+import StandardizedApi from '../../utils/standardizedApi';
+import { isApiGetNullFailure, normalizeMappingsListPayload } from '../../utils/apiResponseNormalize';
 import { useClientSessionReady } from '../../hooks/useClientSessionReady';
 import { useSoftResourceLoad } from '../../hooks/useSoftResourceLoad';
 import { useUserIdScopedLoad } from '../../hooks/useUserIdScopedLoad';
@@ -51,6 +53,7 @@ import MGPagination from '../common/MGPagination';
 import ClientWebPageShell from './ClientWebPageShell';
 import './ClientPaymentHistory.css';
 
+const API_ADMIN_MAPPINGS_CLIENT = '/api/v1/admin/mappings/client';
 const CLIENT_PAYMENT_HISTORY_TITLE_ID = 'client-payment-history-title';
 const MOBILE_MEDIA_QUERY = `(max-width: ${CLIENT_PAYMENT_TABLE_MIN_WIDTH_PX - 1}px)`;
 const SHOP_ORDER_PAGE_START = 0;
@@ -327,6 +330,7 @@ const ClientPaymentHistory = () => {
   const [shopOrderDetails, setShopOrderDetails] = useState({});
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [partialError, setPartialError] = useState(false);
   const requestedDetailsRef = useRef(new Set());
 
   const period = normalizePeriod(searchParams.get(CLIENT_PAYMENT_QUERY_KEYS.PERIOD));
@@ -337,9 +341,24 @@ const ClientPaymentHistory = () => {
 
   const { load: loadPayments } = useSoftResourceLoad(setIsLoading, async() => {
     setError(false);
+    setPartialError(false);
     try {
-      const shopOrders = await fetchAllShopOrders();
-      setSources({ shopOrders });
+      let shopFailed = false;
+      const [mappingsResponse, shopOrders] = await Promise.all([
+        StandardizedApi.get(API_ADMIN_MAPPINGS_CLIENT, { clientId: userId }),
+        fetchAllShopOrders().catch(() => {
+          shopFailed = true;
+          return [];
+        })
+      ]);
+      if (isApiGetNullFailure(mappingsResponse)) {
+        throw new Error(CLIENT_PAYMENT_COPY.ERROR_TITLE);
+      }
+      setSources({
+        mappings: normalizeMappingsListPayload(mappingsResponse),
+        shopOrders
+      });
+      setPartialError(shopFailed);
     } catch (err) {
       setError(true);
       setSources(null);
@@ -450,10 +469,19 @@ const ClientPaymentHistory = () => {
         {isLoading ? (
           <span className="client-payment-skeleton client-payment-skeleton--summary" aria-hidden="true" />
         ) : (
-          <SafeText>{formatClientPaymentSummary(summary)}</SafeText>
+          <SafeText>{formatClientPaymentSummary(summary, { partial: partialError })}</SafeText>
         )}
       </p>
     </section>
+  ) : null;
+
+  const partialBanner = !isLoading && !error && partialError ? (
+    <p className="client-payment-history__partial" role="status" data-testid={CLIENT_PAYMENT_TEST_IDS.PARTIAL_ERROR}>
+      <span>{CLIENT_PAYMENT_COPY.PARTIAL_ERROR}</span>
+      <button type="button" className="client-payment-history__text-btn" onClick={loadPaymentData}>
+        {CLIENT_PAYMENT_COPY.RETRY}
+      </button>
+    </p>
   ) : null;
 
   let listContent;
@@ -497,6 +525,7 @@ const ClientPaymentHistory = () => {
   const mainSlot = (
     <>
       {filterBar}
+      {partialBanner}
       <section
         className={[
           'client-payment-history__list',
@@ -507,11 +536,6 @@ const ClientPaymentHistory = () => {
       >
         {listContent}
       </section>
-      {!isLoading && !error ? (
-        <p className="client-payment-history__sub" data-testid={CLIENT_PAYMENT_TEST_IDS.CENTER_NOTE}>
-          {CLIENT_PAYMENT_COPY.CENTER_PAYMENTS_NOTE}
-        </p>
-      ) : null}
       {!isLoading && !error && totalPages > 1 ? (
         <nav className="client-payment-history__pagination" data-testid={CLIENT_PAYMENT_TEST_IDS.PAGINATION}>
           <MGPagination

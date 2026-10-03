@@ -1,7 +1,7 @@
 /**
  * ClientPaymentHistory — Clinic-OS 개편 화면 테스트
- * 출처: 본인 온라인 주문(/api/v1/clients/me/shop/orders)만 · 관리자 API 호출 없음
- * 칩 URL 쿼리 · 주문 상태 배지 · 결제수단 「카드」만 · 빈/에러 · 세션 준비 전 로드 안 함
+ * 칩 URL 쿼리 · 배지 매핑(APPROVED 포함) · 결제수단 「카드」만 · 환불 「-1」 폴백 · 빈/에러/일부 실패
+ * 세션 준비(useClientSessionReady) 후 세션 사용자 id 로만 매핑을 읽는다.
  * 스펙: docs/design/clinic-os-client-payments.md
  *
  * @author CoreSolution
@@ -28,12 +28,12 @@ jest.mock('../../../services/clientShopService', () => ({
   fetchShopOrder: jest.fn()
 }));
 
-jest.mock('../../../hooks/useMediaQuery', () => ({
-  useMediaQuery: jest.fn(() => false)
-}));
-
 jest.mock('../../../hooks/useClientSessionReady', () => ({
   useClientSessionReady: jest.fn()
+}));
+
+jest.mock('../../../hooks/useMediaQuery', () => ({
+  useMediaQuery: jest.fn(() => false)
 }));
 
 jest.mock('../../common/SafeText', () => ({
@@ -66,20 +66,54 @@ const renderScreen = (initialEntry = '/client/payment-history') => render(
 
 const USER = { id: 77 };
 
-const SHOP_ORDERS = [
-  { orderPublicId: 'pub-r', status: 'REFUNDED', cashDueMinor: 90000, createdAt: '2026-09-30T10:00:00' },
-  { orderPublicId: 'pub-p', status: 'PAID', cashDueMinor: 100000, createdAt: '2026-09-29T10:00:00' },
-  { orderPublicId: 'pub-w', status: 'PENDING_PAYMENT', cashDueMinor: 30000, createdAt: '2026-09-28T10:00:00' },
-  { orderPublicId: 'pub-x', status: 'EXPIRED', cashDueMinor: 20000, createdAt: '2026-09-27T10:00:00' },
-  { orderPublicId: 'pub-pt', status: 'PAID', cashDueMinor: 0, pointsRedeemMinor: 40000, createdAt: '2026-09-26T10:00:00' }
+const MAPPINGS = [
+  {
+    id: 930,
+    packageName: '-1',
+    productTitle: null,
+    paymentAmount: 90000,
+    paymentStatus: 'REFUNDED',
+    effectivePaymentStatus: 'REFUNDED',
+    paymentMethod: 'CREDIT_CARD',
+    paymentSource: 'MANUAL',
+    paymentProvider: 'IAMPORT',
+    totalSessions: 10,
+    paymentDate: '2026-09-30T10:00:00'
+  },
+  {
+    id: 929,
+    packageName: '기본 10회기',
+    paymentAmount: 100000,
+    paymentStatus: 'APPROVED',
+    paymentMethod: 'CARD_TERMINAL',
+    paymentSource: 'MANUAL',
+    totalSessions: 10,
+    paymentDate: '2026-09-29T10:00:00'
+  },
+  {
+    id: 928,
+    packageName: '검사',
+    paymentAmount: 30000,
+    paymentStatus: 'PENDING',
+    paymentMethod: 'BANK_TRANSFER',
+    paymentSource: 'MANUAL',
+    totalSessions: 0,
+    paymentDate: '2026-09-28T10:00:00'
+  }
 ];
 
-const setSessionReady = (ready = true) => {
-  useClientSessionReady.mockReturnValue({
-    ready,
-    user: ready ? USER : null,
-    userId: ready ? USER.id : null,
-    userRef: { current: ready ? USER : null }
+const SHOP_ORDERS = [
+  { orderPublicId: 'pub-1', status: 'PAID', cashDueMinor: 50000, createdAt: '2026-09-27T10:00:00' }
+];
+
+const API_ADMIN_MAPPINGS_CLIENT = '/api/v1/admin/mappings/client';
+
+const mockApi = ({ mappings = MAPPINGS, mappingsFail = false } = {}) => {
+  StandardizedApi.get.mockImplementation(() => {
+    if (mappingsFail) {
+      return Promise.resolve(null);
+    }
+    return Promise.resolve({ mappings, count: mappings.length });
   });
 };
 
@@ -88,12 +122,10 @@ const waitForRows = () => screen.findAllByTestId(CLIENT_PAYMENT_TEST_IDS.ROW);
 
 beforeEach(() => {
   jest.clearAllMocks();
-  setSessionReady(true);
+  useClientSessionReady.mockReturnValue({ ready: true, user: USER, userId: USER.id });
   useMediaQuery.mockReturnValue(false);
   fetchShopOrders.mockResolvedValue(SHOP_ORDERS);
-  fetchShopOrder.mockImplementation((id) => Promise.resolve({
-    lines: [{ title: `상품 ${id}`, sessionCount: 5 }]
-  }));
+  fetchShopOrder.mockResolvedValue({ lines: [{ title: '온라인 5회기', sessionCount: 5 }] });
   jest.spyOn(console, 'warn').mockImplementation(() => {});
 });
 
@@ -101,30 +133,66 @@ afterEach(() => {
   console.warn.mockRestore();
 });
 
-describe('ClientPaymentHistory — 출처·권한', () => {
-  test('본인 온라인 주문만 읽고 관리자 API·current-user 를 부르지 않는다', async() => {
+describe('ClientPaymentHistory — 출처 (세션 사용자 id)', () => {
+  test('current-user 를 다시 부르지 않고 세션 id 로만 매핑을 읽는다', async() => {
+    mockApi();
     renderScreen();
     await waitForRows();
+    expect(StandardizedApi.get).toHaveBeenCalledTimes(1);
+    expect(StandardizedApi.get).toHaveBeenCalledWith(API_ADMIN_MAPPINGS_CLIENT, { clientId: USER.id });
     expect(fetchShopOrders).toHaveBeenCalledWith(0, 50);
-    expect(StandardizedApi.get).not.toHaveBeenCalled();
   });
 
-  test('세션 준비 전에는 주문을 읽지 않는다 (skeleton 유지)', () => {
-    setSessionReady(false);
+  test('세션 준비 전에는 아무것도 읽지 않는다 (skeleton 유지)', () => {
+    useClientSessionReady.mockReturnValue({ ready: false, user: null, userId: null });
+    mockApi();
     renderScreen();
+    expect(StandardizedApi.get).not.toHaveBeenCalled();
     expect(fetchShopOrders).not.toHaveBeenCalled();
-    expect(screen.getAllByTestId(CLIENT_PAYMENT_TEST_IDS.SKELETON)).toHaveLength(5);
+    expect(screen.getAllByTestId(CLIENT_PAYMENT_TEST_IDS.SKELETON).length).toBeGreaterThan(0);
   });
 
-  test('센터 직접 결제 안내 한 줄', async() => {
+  test('.dev 분포: 온라인 EXPIRED 14 + REFUNDED 4 + 센터 환불 1 → 5행 · 결제 193,000원 · 환불 193,000원', async() => {
+    const refundedAmounts = [1000, 1000, 90000, 100000];
+    const expired = Array.from({ length: 14 }, (_, i) => ({
+      orderPublicId: `exp-${i}`,
+      status: 'EXPIRED',
+      cashDueMinor: 1000,
+      pointsRedeemMinor: 0,
+      createdAt: '2026-09-20T10:00:00'
+    }));
+    const refunded = refundedAmounts.map((amount, i) => ({
+      orderPublicId: `ref-${i}`,
+      status: 'REFUNDED',
+      cashDueMinor: amount,
+      pointsRedeemMinor: 0,
+      createdAt: `2026-09-2${i}T10:00:00`
+    }));
+    fetchShopOrders.mockResolvedValue([...expired, ...refunded]);
+    mockApi({
+      mappings: [{
+        id: 501,
+        packageName: '단회기',
+        paymentAmount: 1000,
+        paymentStatus: 'REFUNDED',
+        effectivePaymentStatus: 'REFUNDED',
+        paymentMethod: 'CREDIT_CARD',
+        paymentSource: 'MANUAL',
+        totalSessions: 1,
+        paymentDate: '2026-09-30T10:00:00'
+      }]
+    });
     renderScreen();
     await waitForRows();
-    expect(screen.getByTestId(CLIENT_PAYMENT_TEST_IDS.CENTER_NOTE)).toBeInTheDocument();
+    expect(rowsByProduct()).toHaveLength(5);
+    expect(screen.getByTestId(CLIENT_PAYMENT_TEST_IDS.SUMMARY).textContent)
+      .toBe('5건 · 결제 193,000원 · 환불 193,000원');
   });
 });
 
 describe('ClientPaymentHistory — layout', () => {
   test('aside 없음 · 칩 바 · ≥768 시맨틱 표 · 헤더 aria-hidden 없음', async() => {
+    mockApi();
     renderScreen();
     await waitForRows();
     const table = screen.getByTestId(CLIENT_PAYMENT_TEST_IDS.TABLE);
@@ -133,12 +201,13 @@ describe('ClientPaymentHistory — layout', () => {
     expect(within(table).getAllByRole('columnheader').map((th) => th.textContent))
       .toEqual(['결제일', '상품', '금액', '결제수단', '상태']);
     expect(table.querySelector('thead[aria-hidden]')).toBeNull();
-    expect(table.querySelector('caption').textContent).toBe('결제 내역 · 전체 기간 · 전체 · 5건');
+    expect(table.querySelector('caption').textContent).toBe('결제 내역 · 전체 기간 · 전체 · 4건');
     expect(screen.getByRole('link', { name: '구매 목록 보기 ›' })).toBeInTheDocument();
   });
 
   test('<768 카드 리스트', async() => {
     useMediaQuery.mockReturnValue(true);
+    mockApi();
     renderScreen();
     await waitForRows();
     expect(screen.getByTestId(CLIENT_PAYMENT_TEST_IDS.CARDS)).toBeInTheDocument();
@@ -147,57 +216,62 @@ describe('ClientPaymentHistory — layout', () => {
 });
 
 describe('ClientPaymentHistory — 행 표기', () => {
-  test('주문 상태 배지 (REFUNDED 환불 · PAID 완료 · PENDING_PAYMENT 대기 · EXPIRED 취소)', async() => {
+  test('배지 6종 매핑 (APPROVED → 완료 · REFUNDED → 환불 · PENDING → 대기)', async() => {
+    mockApi();
     renderScreen();
     await waitForRows();
     const badges = screen.getAllByTestId(CLIENT_PAYMENT_TEST_IDS.BADGE).map((b) => b.textContent);
-    expect(badges).toEqual(['환불', '완료', '대기', '취소', '완료']);
+    expect(badges).toEqual(['환불', '완료', '대기', '완료']);
+    expect(screen.queryByText('미결제')).toBeNull();
+    expect(screen.queryByText('환불완료')).toBeNull();
   });
 
-  test('환불 행: 절댓값 · 전액 환불 보조줄 · 음수·₩·PortOne 없음', async() => {
+  test('환불 「-1」 행: 상품 폴백 · 절댓값 · 전액 환불 보조줄 · 음수·₩·PortOne 없음', async() => {
+    mockApi();
     renderScreen();
     await waitForRows();
     const [refundRow] = rowsByProduct();
+    expect(within(refundRow).getByText('상품 정보 없음')).toBeInTheDocument();
     expect(within(refundRow).getByText('90,000원')).toBeInTheDocument();
     expect(within(refundRow).getByText('전액 환불')).toBeInTheDocument();
-    expect(refundRow.textContent).not.toMatch(/-90|₩|PortOne/);
+    expect(within(refundRow).getByText('10회기')).toBeInTheDocument();
+    expect(refundRow.textContent).not.toMatch(/-1|₩|PortOne/);
     expect(document.body.textContent).not.toMatch(/₩|PortOne/);
   });
 
-  test('포인트 전액 결제(현금 0원)도 행으로 보인다', async() => {
+  test('할부 정보 없음 → 「카드」만 (「일시불」 없음) · 채널 회색 텍스트', async() => {
+    mockApi();
     renderScreen();
     await waitForRows();
-    const pointsRow = rowsByProduct()[4];
-    expect(within(pointsRow).getByText('0원')).toBeInTheDocument();
-  });
-
-  test('할부 정보 없음 → 「카드」만 (「일시불」 없음) · 채널 온라인', async() => {
-    renderScreen();
-    await waitForRows();
-    const [, paidRow] = rowsByProduct();
-    expect(within(paidRow).getByText('카드')).toBeInTheDocument();
-    expect(within(paidRow).getByText('온라인')).toBeInTheDocument();
+    const rows = rowsByProduct();
+    expect(within(rows[1]).getByText('카드')).toBeInTheDocument();
+    expect(within(rows[1]).getByText('센터 결제')).toBeInTheDocument();
+    expect(within(rows[3]).getByText('카드')).toBeInTheDocument();
+    expect(within(rows[3]).getByText('온라인')).toBeInTheDocument();
     expect(document.body.textContent).not.toMatch(/일시불/);
   });
 
   test('온라인 주문: 상세 라인으로 상품명 복원 · 링크', async() => {
+    mockApi();
     renderScreen();
-    const link = await screen.findByRole('link', { name: '상품 pub-p' });
-    expect(link).toHaveAttribute('href', '/client/shop/orders/pub-p');
-    expect(fetchShopOrder).toHaveBeenCalledWith('pub-p');
+    const link = await screen.findByRole('link', { name: '온라인 5회기' });
+    expect(link).toHaveAttribute('href', '/client/shop/orders/pub-1');
+    expect(fetchShopOrder).toHaveBeenCalledWith('pub-1');
   });
 
-  test('결과 요약 — 결제·환불 합계는 완료·환불 주문만 (대기·취소 제외)', async() => {
+  test('결과 요약 (필터된 전체 기준)', async() => {
+    mockApi();
     renderScreen();
     await waitForRows();
     const summary = screen.getByTestId(CLIENT_PAYMENT_TEST_IDS.SUMMARY);
-    await waitFor(() => expect(summary.textContent).toBe('5건 · 결제 190,000원 · 환불 90,000원'));
+    await waitFor(() => expect(summary.textContent).toBe('4건 · 결제 240,000원 · 환불 90,000원'));
     expect(summary).toHaveAttribute('aria-live', 'polite');
   });
 });
 
 describe('ClientPaymentHistory — 필터 칩 URL 쿼리', () => {
   test('칩 선택 → URL 쿼리 · 페이지 초기화 · 결과 반영', async() => {
+    mockApi();
     renderScreen('/client/payment-history?page=2');
     await waitForRows();
     const statusGroup = screen.getByRole('group', { name: '상태' });
@@ -215,6 +289,7 @@ describe('ClientPaymentHistory — 필터 칩 URL 쿼리', () => {
   });
 
   test('URL 쿼리에서 선택값 복원 (새로고침·뒤로가기)', async() => {
+    mockApi();
     renderScreen('/client/payment-history?status=pending');
     await waitForRows();
     const statusGroup = screen.getByRole('group', { name: '상태' });
@@ -224,8 +299,9 @@ describe('ClientPaymentHistory — 필터 칩 URL 쿼리', () => {
   });
 });
 
-describe('ClientPaymentHistory — 빈·에러 (§7)', () => {
+describe('ClientPaymentHistory — 빈·에러·일부 실패 (§7)', () => {
   test('전체 없음: 필터 바 숨김 · 「회기 고르기」 primary', async() => {
+    mockApi({ mappings: [] });
     fetchShopOrders.mockResolvedValue([]);
     renderScreen();
     expect(await screen.findByText('아직 결제 내역이 없어요')).toBeInTheDocument();
@@ -234,7 +310,8 @@ describe('ClientPaymentHistory — 빈·에러 (§7)', () => {
   });
 
   test('필터 결과 없음: 필터 바·요약 유지 · 「필터 초기화」', async() => {
-    fetchShopOrders.mockResolvedValue([SHOP_ORDERS[1]]);
+    mockApi({ mappings: [MAPPINGS[1]] });
+    fetchShopOrders.mockResolvedValue([]);
     renderScreen('/client/payment-history?status=refunded');
     expect(await screen.findByText('조건에 맞는 결제 내역이 없어요')).toBeInTheDocument();
     expect(screen.getByTestId(CLIENT_PAYMENT_TEST_IDS.SUMMARY).textContent).toBe('0건 · 결제 0원');
@@ -243,40 +320,53 @@ describe('ClientPaymentHistory — 빈·에러 (§7)', () => {
     expect(rowsByProduct()).toHaveLength(1);
   });
 
-  test('조회 실패: role=alert · 필터 바 숨김 · 다시 시도', async() => {
-    fetchShopOrders.mockRejectedValueOnce(new Error('network'));
+  test('전체 실패: role=alert · 필터 바 숨김 · 다시 시도', async() => {
+    mockApi({ mappingsFail: true });
     renderScreen();
     const alert = await screen.findByRole('alert');
     expect(within(alert).getByText('결제 내역을 불러오지 못했어요')).toBeInTheDocument();
     expect(screen.queryByTestId(CLIENT_PAYMENT_TEST_IDS.FILTER_BAR)).toBeNull();
+    mockApi();
     fireEvent.click(within(alert).getByRole('button', { name: '다시 시도' }));
-    expect(await waitForRows()).toHaveLength(5);
+    expect(await waitForRows()).toHaveLength(4);
+  });
+
+  test('일부 실패(온라인): 안내 한 줄 · 나머지 행 표시 · 요약 「(일부)」', async() => {
+    mockApi();
+    fetchShopOrders.mockRejectedValue(new Error('network'));
+    renderScreen();
+    expect(await screen.findByTestId(CLIENT_PAYMENT_TEST_IDS.PARTIAL_ERROR)).toBeInTheDocument();
+    expect(rowsByProduct()).toHaveLength(3);
+    expect(screen.getByTestId(CLIENT_PAYMENT_TEST_IDS.SUMMARY).textContent).toMatch(/\(일부\)$/);
   });
 
   test('로딩: skeleton 행 · aria-busy', async() => {
-    let resolveOrders;
-    fetchShopOrders.mockImplementation(() => new Promise((resolve) => {
-      resolveOrders = resolve;
+    let resolveUser;
+    StandardizedApi.get.mockImplementation(() => new Promise((resolve) => {
+      resolveUser = resolve;
     }));
     renderScreen();
     expect(screen.getAllByTestId(CLIENT_PAYMENT_TEST_IDS.SKELETON)).toHaveLength(5);
     expect(screen.getByTestId(CLIENT_PAYMENT_TEST_IDS.FILTER_BAR)).toBeInTheDocument();
     expect(document.querySelector('[aria-busy="true"]')).not.toBeNull();
-    await waitFor(() => expect(resolveOrders).toBeDefined());
-    resolveOrders([]);
-    expect(await screen.findByText('아직 결제 내역이 없어요')).toBeInTheDocument();
+    resolveUser(null);
+    expect(await screen.findByRole('alert')).toBeInTheDocument();
   });
 });
 
 describe('ClientPaymentHistory — 페이징 (공통 MGPagination)', () => {
   test('10건 초과 → 페이지네이션 · 페이지 이동 시 URL page', async() => {
     const many = Array.from({ length: 12 }, (_, i) => ({
-      orderPublicId: `p-${i + 1}`,
-      status: 'PAID',
-      cashDueMinor: 1000,
-      createdAt: `2026-09-${String(i + 1).padStart(2, '0')}T10:00:00`
+      id: i + 1,
+      packageName: `상품 ${i + 1}`,
+      paymentAmount: 1000,
+      paymentStatus: 'CONFIRMED',
+      paymentMethod: 'CASH',
+      paymentSource: 'MANUAL',
+      paymentDate: `2026-09-${String(i + 1).padStart(2, '0')}T10:00:00`
     }));
-    fetchShopOrders.mockResolvedValue(many);
+    mockApi({ mappings: many });
+    fetchShopOrders.mockResolvedValue([]);
     renderScreen();
     await screen.findByTestId(CLIENT_PAYMENT_TEST_IDS.PAGINATION);
     expect(rowsByProduct()).toHaveLength(10);
@@ -286,6 +376,7 @@ describe('ClientPaymentHistory — 페이징 (공통 MGPagination)', () => {
   });
 
   test('온라인 주문 끝까지 읽기 (서버 size 50 페이지 반복)', async() => {
+    mockApi({ mappings: [] });
     const fullPage = Array.from({ length: 50 }, (_, i) => ({
       orderPublicId: `p-${i}`, status: 'EXPIRED', cashDueMinor: 0, createdAt: '2026-09-01T10:00:00'
     }));
@@ -293,10 +384,9 @@ describe('ClientPaymentHistory — 페이징 (공통 MGPagination)', () => {
       .mockResolvedValueOnce(fullPage)
       .mockResolvedValueOnce([{ orderPublicId: 'last', status: 'PAID', cashDueMinor: 7000, createdAt: '2026-01-01T10:00:00' }]);
     renderScreen();
-    await screen.findByTestId(CLIENT_PAYMENT_TEST_IDS.PAGINATION);
+    await waitForRows();
     expect(fetchShopOrders).toHaveBeenNthCalledWith(1, 0, 50);
     expect(fetchShopOrders).toHaveBeenNthCalledWith(2, 1, 50);
-    expect(fetchShopOrders).toHaveBeenCalledTimes(2);
-    expect(screen.getByTestId(CLIENT_PAYMENT_TEST_IDS.SUMMARY).textContent).toBe('51건 · 결제 7,000원');
+    expect(rowsByProduct()).toHaveLength(1);
   });
 });

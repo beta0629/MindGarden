@@ -15,8 +15,8 @@
 | 상품 칸 | **폭 14px** → 「1…」 「쇼.」 한 글자 · 헤더 「상품」 36px 높이 2줄 |
 | 열 | 일자 · 상품 · 금액 · 방법 · 상태 |
 | 필터 | 버튼 4개 전체 · 완료 · 대기 · 환불 (`aria-pressed` 있음). **기간 필터는 없음** (제목만 「기간·상태」) · 링크 「내 구매 목록 보기」 teal `#0D9488` |
-| 데이터 출처 | `GET /api/v1/clients/me/shop/orders?page=0&size=50` (본인 온라인 주문, 필드 `orderPublicId` `status` `subtotalMinor` `pointsRedeemMinor` `cashDueMinor` `createdAt`) 하나만 · 날짜 내림차순. 내담자 화면은 관리자 API(`/api/v1/admin/mappings/client`)를 부르지 않는다 (2026-10-03). 센터 직접 결제분은 내담자 전용 API가 생기면 합친다 — 화면 하단 안내 한 줄 |
-| 온라인 행 포함 규칙 | 본인 주문은 상태와 관계없이 모두 표시 (구매 목록과 같은 출처 · 「주문 18건인데 결제 내역 0건」 방지, 2026-10-03). 상태는 배지로 구분하고 결제·환불 합계는 완료·환불 배지만 더한다. 포인트 전액 결제(현금 0원)도 표시 · 상품명 없음 → 주문 상세 라인으로 복원 |
+| 데이터 출처 | ① `GET /api/v1/admin/mappings/client?clientId=` (센터/수동 결제, 필드 `paymentSource` `paymentMethod` `paymentProvider` `effectivePaymentStatus` `paymentStatus` `status` `orderStatus` `productTitle` `packageName` `pgAmount` `paymentAmount` …) ② `GET /api/v1/clients/me/shop/orders?page=0&size=50` (온라인, 필드 `orderPublicId` `status` `subtotalMinor` `pointsRedeemMinor` `cashDueMinor` `createdAt`) → FE에서 합쳐 날짜 내림차순 |
+| 온라인 행 포함 규칙 | `status` PAID·REFUNDED 이고 `cashDueMinor > 0`만 표시 (EXPIRED 13건은 숨김) · 상품명 없음 → 폴백 「쇼핑 주문」 |
 | 상태 문구 (코드) | 센터: CONFIRMED 결제완료 · PAY 결제확인 · DEP 입금확인 · PENDING **결제대기** · REJECTED 결제실패 · REFUNDED **환불완료** · CANCELLED 취소완료 · 그 외 미결제 / 온라인: PAID 결제 완료 · REFUNDED **환불됨** |
 | 결제수단 문구 | 센터: BANK_TRANSFER 계좌이체 · CARD/CREDIT_CARD 신용카드 · CARD_TERMINAL 신용카드(단말) · DEBIT_CARD 체크카드 · CASH 현금 · OTHER 기타 (+provider IAMPORT면 「 · PortOne」) / 온라인: 「PortOne(카드)」 고정 |
 | 채널 표시 | 배지: 「온라인」 **녹색** `#6EE7B7`/`#064E3B` pill · 「수동/센터」 회색 pill (12px, h22, r9999) |
@@ -136,7 +136,7 @@
 | 〃 | 〃 | `CANCELLED` (또는 `orderStatus`=`CANCELLED`) | 취소 | 코드 확인 |
 | 온라인 주문 | `status` | `PAID` | 완료 | 코드 확인 |
 | 〃 | 〃 | `REFUNDED` | 환불 | 코드 + .dev 데이터 확인 |
-| 〃 | 〃 | `CREATED` · `PENDING_PAYMENT` → 대기 / `CANCELLED` · `EXPIRED` → 취소 | 대기 · 취소 (합계 제외) | 코드 확인 (2026-10-03 규칙 변경) |
+| 〃 | 〃 | `EXPIRED` · `CREATED` · `PENDING_PAYMENT` · `CANCELLED` | **목록에 안 보임** (지금 규칙 유지 · 돈이 오가지 않은 주문) | 코드 확인 |
 | 둘 다 | — | 부분환불 원본 값 | 부분환불 | **확인 필요** (전용 값이 없으면 §6-3 금액 비교로 판정) |
 
 필터 칩 매핑: 완료 = 완료 · 대기 = 대기 · 환불 = 환불 + 부분환불 · 전체 = 모두.

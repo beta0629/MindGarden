@@ -446,8 +446,7 @@ export function buildMappingPaymentRow(mapping, original = null) {
 }
 
 /**
- * 온라인 주문이 목록에 보이는지 (알려진 주문 상태 + 공개 ID).
- * 결제 대기·취소·포인트 전액 결제(현금 0원)도 구매 목록과 같이 보여 주고, 합계는 배지로 거른다.
+ * 온라인 주문이 목록에 보이는지 (PAID·REFUNDED + cashDue > 0 + 공개 ID).
  *
  * @param {object|null|undefined} order
  * @returns {boolean}
@@ -457,6 +456,10 @@ export function isVisibleShopOrder(order) {
     return false;
   }
   if (!CLIENT_PAYMENT_SHOP_VISIBLE_STATUSES.includes(toUpperTrim(order.status))) {
+    return false;
+  }
+  const cashDue = toFiniteOrNull(order.cashDueMinor ?? order.cashDue);
+  if (cashDue == null || cashDue <= 0) {
     return false;
   }
   return order.orderPublicId != null && String(order.orderPublicId).trim() !== '';

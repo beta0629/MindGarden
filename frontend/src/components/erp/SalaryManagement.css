@@ -88,9 +88,13 @@
 /* ——— Summary strip (MoneyHeroBand / Purchase twin) ——— */
 .salary-management-summary {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(
+    auto-fit,
+    minmax(min(100%, calc(var(--mg-v2-space-16) * 4 + var(--mg-v2-space-8))), 1fr)
+  );
   gap: var(--mg-v2-space-4);
   width: 100%;
+  min-width: 0;
   padding: var(--mg-v2-space-4) var(--mg-v2-space-5);
   background: var(--mg-v2-color-surface-secondary, var(--mg-color-surface-subtle, var(--mg-color-surface-main)));
   border-radius: var(--mg-v2-radius-md, var(--radius-md, 0.5rem));
@@ -167,12 +171,16 @@
   flex-direction: column;
   gap: var(--mg-v2-space-4);
   width: 100%;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .salary-management__stage {
   display: flex;
   flex-direction: column;
   width: 100%;
+  min-width: 0;
+  max-width: 100%;
   min-height: 36rem;
   padding: var(--mg-v2-space-5);
   border: 0.0625rem solid var(--mg-v2-color-neutral-300);
@@ -335,20 +343,21 @@
 .salary-management__calc-stage .salary-filter-block__group {
   display: flex;
   flex-direction: row;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: flex-end;
   justify-content: flex-start;
   width: 100%;
+  min-width: 0;
   gap: var(--mg-v2-space-3);
 }
 
 .salary-management__calc-stage .salary-filter-block__fields {
   display: flex;
-  flex: 1 1 auto;
+  flex: 1 1 0%;
   flex-wrap: nowrap;
   align-items: flex-end;
   gap: var(--mg-v2-space-3);
-  min-width: min(100%, calc(var(--mg-v2-space-16) * 6));
+  min-width: 0;
 }
 
 .salary-management__calc-stage .salary-filter-block__field {
@@ -356,35 +365,59 @@
   min-width: 0;
 }
 
+.salary-management__calc-stage .salary-filter-block__period-display {
+  min-width: 0;
+}
+
+/* 입력 높이 SSOT: --input-height-default(40px) → design-v2 --mg-v2-component-height-md(2.5rem).
+ * sm(2rem) + .mg-v2-select 세로 padding 이 옵션 글자를 자른다. */
 .salary-management__calc-stage .salary-filter-block__field .mg-v2-select {
   width: 100%;
   min-width: 0;
-  height: var(--mg-v2-component-height-sm);
-  min-height: var(--mg-v2-component-height-sm);
+  height: var(--input-height-default, var(--mg-v2-component-height-md));
+  min-height: var(--input-height-default, var(--mg-v2-component-height-md));
+  padding-block: 0;
+  line-height: var(--input-height-default, var(--mg-v2-component-height-md));
   box-sizing: border-box;
 }
 
 .salary-management__calc-stage .salary-filter-block__run-calc {
   display: flex;
-  flex-wrap: wrap;
+  flex: 0 0 auto;
+  flex-wrap: nowrap;
   justify-content: flex-end;
-  align-items: center;
+  align-items: flex-end;
   align-self: flex-end;
   gap: var(--mg-v2-space-2);
   width: auto;
+  margin: 0;
   margin-inline-start: auto;
 }
 
 .salary-management__calc-stage .salary-filter-block__run-calc .mg-button,
-.salary-management__calc-stage .salary-filter-block__run-calc .mg-v2-button {
+.salary-management__calc-stage .salary-filter-block__run-calc .mg-v2-button,
+.salary-management__calc-stage .salary-filter-block__run-calc .mg-button.mg-button--primary,
+.salary-management__calc-stage .salary-filter-block__run-calc .mg-button.mg-button--secondary {
   flex: 0 0 auto !important;
   width: auto !important;
-  align-self: center;
-  height: var(--mg-v2-component-height-sm) !important;
-  min-height: var(--mg-v2-component-height-sm) !important;
-  max-height: var(--mg-v2-component-height-sm) !important;
+  align-self: flex-end !important;
+  margin: 0 !important;
+  padding-block: 0 !important;
+  height: var(--input-height-default, var(--mg-v2-component-height-md)) !important;
+  min-height: var(--input-height-default, var(--mg-v2-component-height-md)) !important;
+  max-height: var(--input-height-default, var(--mg-v2-component-height-md)) !important;
+  line-height: 1 !important;
+  border-width: 1px !important;
   box-sizing: border-box !important;
   transform: none !important;
+}
+
+.mg-modal.mg-modal--large:has(.salary-management__calc-stage) {
+  width: min(100%, 100vw);
+  max-width: min(100vw, 56.25rem);
+  /* flex item 기본 min-width:auto 가 내용 최소폭으로 max-width를 이긴다 */
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .salary-filter-block__period-display {
@@ -815,6 +848,20 @@
   width: max-content;
 }
 
+/* 지급 표 min-width(ListBlockView 600px) + 작업 열 max-content 가
+ * flex 부모 min-width:auto 를 밀어 페이지가 가로로 스크롤된다.
+ * 스크롤은 테이블 래퍼 안에서만. */
+.salary-calc-block,
+.salary-management__table,
+.salary-management .mg-v2-list-block__table-wrapper {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.salary-management .mg-v2-list-block__table-wrapper {
+  overflow-x: auto;
+}
+
 .salary-management__row-consultant {
   display: inline-flex;
   flex-wrap: wrap;
@@ -1130,6 +1177,47 @@
 
   .salary-tax-block__header {
     align-items: flex-start;
+  }
+}
+
+/* ≤480px. --breakpoint-mobile 과 같은 값. var()는 미디어 쿼리에서 버려지므로 토큰 값 480px을 쓴다. */
+@media (max-width: 480px) {
+  .salary-management__calc-stage .salary-filter-block__group,
+  .salary-management__calc-stage .salary-filter-block__fields {
+    flex-direction: column;
+    flex-wrap: nowrap;
+    align-items: stretch;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .salary-management__calc-stage .salary-filter-block__field,
+  .salary-management__calc-stage .salary-filter-block__field .mg-v2-select,
+  .salary-management__calc-stage .salary-filter-block__run-calc {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    margin-inline-start: 0;
+  }
+
+  .salary-management__calc-stage .salary-filter-block__run-calc {
+    flex-direction: column;
+    flex-wrap: nowrap;
+    justify-content: stretch;
+    align-items: stretch;
+  }
+
+  .salary-management__calc-stage .salary-filter-block__run-calc .mg-button,
+  .salary-management__calc-stage .salary-filter-block__run-calc .mg-v2-button,
+  .salary-management__calc-stage .salary-filter-block__run-calc .mg-button.mg-button--primary,
+  .salary-management__calc-stage .salary-filter-block__run-calc .mg-button.mg-button--secondary {
+    width: 100% !important;
+    align-self: stretch !important;
+  }
+
+  .mg-modal.mg-modal--large:has(.salary-management__calc-stage) {
+    width: 100%;
+    max-width: 100vw;
   }
 }
 

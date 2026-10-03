@@ -1,5 +1,6 @@
 package com.coresolution.core.controller;
 
+import com.coresolution.consultation.util.ServerErrorResponses;
 import com.coresolution.core.dto.ApiResponse;
 import com.coresolution.core.dto.IosReviewModeRequest;
 import com.coresolution.core.dto.IosReviewModeResponse;
@@ -45,23 +46,17 @@ public class MenuPermissionController {
         HttpSession session,
         @PathVariable String roleId
     ) {
-        try {
-            String tenantId = SessionUtils.getTenantId(session);
-            
-            if (tenantId == null) {
-                return ResponseEntity.badRequest()
-                    .body(ApiResponse.error("테넌트 ID가 필요합니다."));
-            }
-
-            log.info("역할별 메뉴 권한 조회: tenantId={}, roleId={}", tenantId, roleId);
-            List<MenuPermissionDTO> permissions = menuPermissionService.getRoleMenuPermissions(tenantId, roleId);
-            
-            return ResponseEntity.ok(ApiResponse.success(permissions));
-        } catch (Exception e) {
-            log.error("역할별 메뉴 권한 조회 실패", e);
-            return ResponseEntity.internalServerError()
-                .body(ApiResponse.error("메뉴 권한 조회 중 오류가 발생했습니다."));
+        String tenantId = SessionUtils.getTenantId(session);
+        
+        if (tenantId == null) {
+            return ResponseEntity.badRequest()
+                .body(ApiResponse.error("테넌트 ID가 필요합니다."));
         }
+
+        log.info("역할별 메뉴 권한 조회: tenantId={}, roleId={}", tenantId, roleId);
+        List<MenuPermissionDTO> permissions = menuPermissionService.getRoleMenuPermissions(tenantId, roleId);
+        
+        return ResponseEntity.ok(ApiResponse.success(permissions));
     }
 
     @GetMapping("/ios-review-mode")
@@ -70,19 +65,13 @@ public class MenuPermissionController {
         description = "CLIENT/CONSULTANT 커뮤니티 iOS 숨김 여부(원버튼 상태)를 조회합니다."
     )
     public ResponseEntity<ApiResponse<IosReviewModeResponse>> getIosReviewMode(HttpSession session) {
-        try {
-            String tenantId = SessionUtils.getTenantId(session);
-            if (tenantId == null) {
-                return ResponseEntity.badRequest()
-                    .body(ApiResponse.error("테넌트 ID가 필요합니다."));
-            }
-            IosReviewModeResponse response = menuPermissionService.getIosReviewMode(tenantId);
-            return ResponseEntity.ok(ApiResponse.success(response));
-        } catch (Exception e) {
-            log.error("iOS 심사 모드 조회 실패", e);
-            return ResponseEntity.internalServerError()
-                .body(ApiResponse.error("iOS 심사 모드 조회 중 오류가 발생했습니다."));
+        String tenantId = SessionUtils.getTenantId(session);
+        if (tenantId == null) {
+            return ResponseEntity.badRequest()
+                .body(ApiResponse.error("테넌트 ID가 필요합니다."));
         }
+        IosReviewModeResponse response = menuPermissionService.getIosReviewMode(tenantId);
+        return ResponseEntity.ok(ApiResponse.success(response));
     }
 
     @PostMapping("/ios-review-mode")
@@ -111,9 +100,7 @@ public class MenuPermissionController {
             return ResponseEntity.badRequest()
                 .body(ApiResponse.error(e.getMessage()));
         } catch (Exception e) {
-            log.error("iOS 심사 모드 적용 실패", e);
-            return ResponseEntity.internalServerError()
-                .body(ApiResponse.error("iOS 심사 모드 적용 중 오류가 발생했습니다."));
+            throw ServerErrorResponses.propagate(e);
         }
     }
 
@@ -142,9 +129,7 @@ public class MenuPermissionController {
             return ResponseEntity.badRequest()
                 .body(ApiResponse.error(e.getMessage()));
         } catch (Exception e) {
-            log.error("메뉴 권한 부여 실패", e);
-            return ResponseEntity.internalServerError()
-                .body(ApiResponse.error("메뉴 권한 부여 중 오류가 발생했습니다."));
+            throw ServerErrorResponses.propagate(e);
         }
     }
 
@@ -173,9 +158,7 @@ public class MenuPermissionController {
             return ResponseEntity.badRequest()
                 .body(ApiResponse.error(e.getMessage()));
         } catch (Exception e) {
-            log.error("메뉴 권한 회수 실패", e);
-            return ResponseEntity.internalServerError()
-                .body(ApiResponse.error("메뉴 권한 회수 중 오류가 발생했습니다."));
+            throw ServerErrorResponses.propagate(e);
         }
     }
 
@@ -186,25 +169,19 @@ public class MenuPermissionController {
         @RequestParam String roleId,
         @RequestBody @Valid List<MenuPermissionGrantRequest> requests
     ) {
-        try {
-            String tenantId = SessionUtils.getTenantId(session);
-            
-            if (tenantId == null) {
-                return ResponseEntity.badRequest()
-                    .body(ApiResponse.error("테넌트 ID가 필요합니다."));
-            }
-
-            log.info("메뉴 권한 일괄 업데이트: tenantId={}, roleId={}, count={}", 
-                tenantId, roleId, requests.size());
-            
-            menuPermissionService.batchUpdateMenuPermissions(tenantId, roleId, requests);
-            
-            return ResponseEntity.ok(ApiResponse.success(null));
-        } catch (Exception e) {
-            log.error("메뉴 권한 일괄 업데이트 실패", e);
-            return ResponseEntity.internalServerError()
-                .body(ApiResponse.error("메뉴 권한 일괄 업데이트 중 오류가 발생했습니다."));
+        String tenantId = SessionUtils.getTenantId(session);
+        
+        if (tenantId == null) {
+            return ResponseEntity.badRequest()
+                .body(ApiResponse.error("테넌트 ID가 필요합니다."));
         }
+
+        log.info("메뉴 권한 일괄 업데이트: tenantId={}, roleId={}, count={}", 
+            tenantId, roleId, requests.size());
+        
+        menuPermissionService.batchUpdateMenuPermissions(tenantId, roleId, requests);
+        
+        return ResponseEntity.ok(ApiResponse.success(null));
     }
 
     @GetMapping("/user/accessible")
@@ -212,27 +189,21 @@ public class MenuPermissionController {
     public ResponseEntity<ApiResponse<List<MenuDTO>>> getUserAccessibleMenus(
         HttpSession session
     ) {
-        try {
-            String tenantId = SessionUtils.getTenantId(session);
-            String roleId = SessionUtils.getRoleId(session);
-            String role = SessionUtils.getRoleName(session);
-            
-            if (tenantId == null || roleId == null || role == null) {
-                return ResponseEntity.badRequest()
-                    .body(ApiResponse.error("세션 정보가 부족합니다."));
-            }
-
-            log.info("사용자 접근 가능한 메뉴 조회: tenantId={}, roleId={}, role={}", 
-                tenantId, roleId, role);
-            
-            List<MenuDTO> menus = menuPermissionService.getUserAccessibleMenus(tenantId, roleId, role);
-            
-            return ResponseEntity.ok(ApiResponse.success(menus));
-        } catch (Exception e) {
-            log.error("사용자 접근 가능한 메뉴 조회 실패", e);
-            return ResponseEntity.internalServerError()
-                .body(ApiResponse.error("메뉴 조회 중 오류가 발생했습니다."));
+        String tenantId = SessionUtils.getTenantId(session);
+        String roleId = SessionUtils.getRoleId(session);
+        String role = SessionUtils.getRoleName(session);
+        
+        if (tenantId == null || roleId == null || role == null) {
+            return ResponseEntity.badRequest()
+                .body(ApiResponse.error("세션 정보가 부족합니다."));
         }
+
+        log.info("사용자 접근 가능한 메뉴 조회: tenantId={}, roleId={}, role={}", 
+            tenantId, roleId, role);
+        
+        List<MenuDTO> menus = menuPermissionService.getUserAccessibleMenus(tenantId, roleId, role);
+        
+        return ResponseEntity.ok(ApiResponse.success(menus));
     }
 }
 

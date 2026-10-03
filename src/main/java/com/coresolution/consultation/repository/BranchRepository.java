@@ -47,6 +47,14 @@ public interface BranchRepository extends BaseRepository<Branch, Long> {
      * 모든 활성 지점 조회 (삭제되지 않은 모든 지점)
      */
     List<Branch> findByIsDeletedFalseOrderByBranchName();
+
+    /**
+     * 테넌트 범위의 활성 지점 조회.
+     *
+     * @param tenantId 테넌트 id
+     * @return 해당 테넌트의 삭제되지 않은 지점 목록
+     */
+    List<Branch> findByTenantIdAndIsDeletedFalseOrderByBranchName(String tenantId);
     
     /**
      * 지점 유형별 조회

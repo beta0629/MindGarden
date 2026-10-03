@@ -1,5 +1,6 @@
 package com.coresolution.core.controller;
 
+import com.coresolution.consultation.util.ServerErrorResponses;
 import com.coresolution.core.domain.ClientPlatform;
 import com.coresolution.core.dto.ApiResponse;
 import com.coresolution.core.dto.MenuDTO;
@@ -60,98 +61,80 @@ public class MenuController {
         @RequestHeader(value = ClientPlatform.HEADER_NAME, required = false) String clientPlatformHeader,
         @RequestParam(value = "platform", required = false) String platformQuery
     ) {
-        try {
-            User user = SessionUtils.getCurrentUser(session);
-            String role = SessionUtils.getRoleName(session);
-            if (role == null) {
-                role = "CLIENT";
-            }
-            String tenantId = SessionUtils.getTenantId(session);
-            String roleId = SessionUtils.getRoleId(session);
-            ClientPlatform platform = ClientPlatform.fromHeader(
-                clientPlatformHeader != null ? clientPlatformHeader : platformQuery
-            );
-            Set<String> permissionCodes = Set.of();
-            if ("STAFF".equalsIgnoreCase(role) && dynamicPermissionService != null && user != null) {
-                List<String> list = dynamicPermissionService.getUserPermissionsAsStringList(user);
-                permissionCodes = list != null ? list.stream().collect(Collectors.toSet()) : Set.of();
-            }
-            List<MenuDTO> menus;
-            if (user != null && UserRoleCapabilityUtils.isDualRole(user)) {
-                List<MenuDTO> operatorMenus = menuService.getLnbMenus(role, permissionCodes);
-                List<MenuDTO> consultantMenus = menuService.getLnbMenus("CONSULTANT", Set.of());
-                operatorMenus = menuPermissionService.filterMenuTreeByPermissions(
-                    operatorMenus, tenantId, roleId, role, platform);
-                String consultantRoleId = menuPermissionService
-                    .resolveTenantRoleIdForRoleCode(tenantId, "CONSULTANT");
-                consultantMenus = menuPermissionService.filterMenuTreeByPermissions(
-                    consultantMenus,
-                    tenantId,
-                    consultantRoleId != null ? consultantRoleId : roleId,
-                    "CONSULTANT",
-                    platform);
-                menus = menuService.mergeLnbMenus(operatorMenus, consultantMenus);
-            } else {
-                menus = menuService.getLnbMenus(role, permissionCodes);
-                menus = menuPermissionService.filterMenuTreeByPermissions(
-                    menus, tenantId, roleId, role, platform);
-            }
-            return ResponseEntity.ok(ApiResponse.success(menus));
-        } catch (Exception e) {
-            log.error("LNB 메뉴 조회 실패", e);
-            return ResponseEntity.internalServerError()
-                .body(ApiResponse.error(MSG_MENU_ERROR));
+        User user = SessionUtils.getCurrentUser(session);
+        String role = SessionUtils.getRoleName(session);
+        if (role == null) {
+            role = "CLIENT";
         }
+        String tenantId = SessionUtils.getTenantId(session);
+        String roleId = SessionUtils.getRoleId(session);
+        ClientPlatform platform = ClientPlatform.fromHeader(
+            clientPlatformHeader != null ? clientPlatformHeader : platformQuery
+        );
+        Set<String> permissionCodes = Set.of();
+        if ("STAFF".equalsIgnoreCase(role) && dynamicPermissionService != null && user != null) {
+            List<String> list = dynamicPermissionService.getUserPermissionsAsStringList(user);
+            permissionCodes = list != null ? list.stream().collect(Collectors.toSet()) : Set.of();
+        }
+        List<MenuDTO> menus;
+        if (user != null && UserRoleCapabilityUtils.isDualRole(user)) {
+            List<MenuDTO> operatorMenus = menuService.getLnbMenus(role, permissionCodes);
+            List<MenuDTO> consultantMenus = menuService.getLnbMenus("CONSULTANT", Set.of());
+            operatorMenus = menuPermissionService.filterMenuTreeByPermissions(
+                operatorMenus, tenantId, roleId, role, platform);
+            String consultantRoleId = menuPermissionService
+                .resolveTenantRoleIdForRoleCode(tenantId, "CONSULTANT");
+            consultantMenus = menuPermissionService.filterMenuTreeByPermissions(
+                consultantMenus,
+                tenantId,
+                consultantRoleId != null ? consultantRoleId : roleId,
+                "CONSULTANT",
+                platform);
+            menus = menuService.mergeLnbMenus(operatorMenus, consultantMenus);
+        } else {
+            menus = menuService.getLnbMenus(role, permissionCodes);
+            menus = menuPermissionService.filterMenuTreeByPermissions(
+                menus, tenantId, roleId, role, platform);
+        }
+        return ResponseEntity.ok(ApiResponse.success(menus));
     }
 
     @GetMapping("/user")
     @Operation(summary = "사용자 메뉴 조회", description = "현재 로그인한 사용자의 역할에 따른 메뉴를 조회합니다.")
     public ResponseEntity<ApiResponse<List<MenuDTO>>> getUserMenus(HttpSession session) {
-        try {
-            // 표준화된 방법으로 역할 조회
-            String role = SessionUtils.getRoleName(session);
-            
-            if (role == null) {
-                log.warn("세션에 역할 정보가 없습니다");
-                role = "USER"; // 기본값
-            }
-
-            log.info("사용자 메뉴 조회: role={}", role);
-            List<MenuDTO> menus = menuService.getMenusByRole(role);
-            
-            return ResponseEntity.ok(ApiResponse.success(menus));
-        } catch (Exception e) {
-            log.error("사용자 메뉴 조회 실패", e);
-            return ResponseEntity.internalServerError()
-                .body(ApiResponse.error(MSG_MENU_ERROR));
+        // 표준화된 방법으로 역할 조회
+        String role = SessionUtils.getRoleName(session);
+        
+        if (role == null) {
+            log.warn("세션에 역할 정보가 없습니다");
+            role = "USER"; // 기본값
         }
+
+        log.info("사용자 메뉴 조회: role={}", role);
+        List<MenuDTO> menus = menuService.getMenusByRole(role);
+        
+        return ResponseEntity.ok(ApiResponse.success(menus));
     }
 
     @GetMapping("/admin")
     @Operation(summary = "관리자 전용 메뉴 조회", description = "관리자·스태프 전용 메뉴를 조회합니다. STAFF는 ERP 노드 제외.")
     public ResponseEntity<ApiResponse<List<MenuDTO>>> getAdminMenus(HttpSession session) {
-        try {
-            if (!SessionUtils.isAdminOrStaff(session)) {
-                String role = SessionUtils.getRoleName(session);
-                log.warn("관리자 메뉴 접근 거부: role={}", role);
-                return ResponseEntity.status(403)
-                    .body(ApiResponse.error("관리자만 접근 가능합니다."));
-            }
-
-            log.info("관리자 메뉴 조회");
-            List<MenuDTO> menus = menuService.getAdminMenus();
-
-            // STAFF인 경우 반환 목록에서 ERP 노드(ADM_ERP) 제거
-            if (SessionUtils.getRole(session) != null && SessionUtils.getRole(session).isStaff()) {
-                menus = filterOutErpMenus(menus);
-            }
-
-            return ResponseEntity.ok(ApiResponse.success(menus));
-        } catch (Exception e) {
-            log.error("관리자 메뉴 조회 실패", e);
-            return ResponseEntity.internalServerError()
-                .body(ApiResponse.error(MSG_MENU_ERROR));
+        if (!SessionUtils.isAdminOrStaff(session)) {
+            String role = SessionUtils.getRoleName(session);
+            log.warn("관리자 메뉴 접근 거부: role={}", role);
+            return ResponseEntity.status(403)
+                .body(ApiResponse.error("관리자만 접근 가능합니다."));
         }
+
+        log.info("관리자 메뉴 조회");
+        List<MenuDTO> menus = menuService.getAdminMenus();
+
+        // STAFF인 경우 반환 목록에서 ERP 노드(ADM_ERP) 제거
+        if (SessionUtils.getRole(session) != null && SessionUtils.getRole(session).isStaff()) {
+            menus = filterOutErpMenus(menus);
+        }
+
+        return ResponseEntity.ok(ApiResponse.success(menus));
     }
 
     /**
@@ -177,16 +160,10 @@ public class MenuController {
     @GetMapping("/all")
     @Operation(summary = "전체 메뉴 조회", description = "모든 활성 메뉴를 조회합니다.")
     public ResponseEntity<ApiResponse<List<MenuDTO>>> getAllMenus() {
-        try {
-            log.info("전체 메뉴 조회");
-            List<MenuDTO> menus = menuService.getAllActiveMenus();
-            
-            return ResponseEntity.ok(ApiResponse.success(menus));
-        } catch (Exception e) {
-            log.error("전체 메뉴 조회 실패", e);
-            return ResponseEntity.internalServerError()
-                .body(ApiResponse.error(MSG_MENU_ERROR));
-        }
+        log.info("전체 메뉴 조회");
+        List<MenuDTO> menus = menuService.getAllActiveMenus();
+        
+        return ResponseEntity.ok(ApiResponse.success(menus));
     }
 
     @GetMapping("/code/{menuCode}")
@@ -201,9 +178,7 @@ public class MenuController {
             log.warn("메뉴를 찾을 수 없음: menuCode={}", menuCode);
             return ResponseEntity.notFound().build();
         } catch (Exception e) {
-            log.error("메뉴 조회 실패", e);
-            return ResponseEntity.internalServerError()
-                .body(ApiResponse.error(MSG_MENU_ERROR));
+            throw ServerErrorResponses.propagate(e);
         }
     }
 
@@ -219,9 +194,7 @@ public class MenuController {
             log.warn("메뉴를 찾을 수 없음: path={}", path);
             return ResponseEntity.notFound().build();
         } catch (Exception e) {
-            log.error("메뉴 조회 실패", e);
-            return ResponseEntity.internalServerError()
-                .body(ApiResponse.error(MSG_MENU_ERROR));
+            throw ServerErrorResponses.propagate(e);
         }
     }
 }

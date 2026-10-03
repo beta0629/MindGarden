@@ -54,48 +54,50 @@ public class BranchManagementController {
     private final DynamicPermissionService dynamicPermissionService;
     
     /**
-     * 지점 목록 조회 (branches 테이블 기반)
+     * 지점 목록 조회.
+     *
+     * <p>Branch 는 사용 중단 대상이라 원본 테이블이 {@code branches_dropped_20260612} 로
+     * RENAME 되었다(BRANCH_DEPRECATION.md §3.2). 조회는 {@code BranchService} 가 테넌트
+     * 범위로 수행하고, 사용 중단된 저장소에 접근할 수 없는 환경에서는 500 대신 빈 목록을
+     * 돌려준다.</p>
+     *
+     * @param session 현재 세션
+     * @return 현재 테넌트의 지점 목록 (없으면 빈 목록)
      */
     @GetMapping("/branches")
     public ResponseEntity<Map<String, Object>> getBranches(HttpSession session) {
-        try {
-            log.info("지점 목록 조회 요청 (branches 테이블 기반)");
-            
-            // 권한 체크
-            User currentUser = (User) session.getAttribute("user");
-            if (currentUser == null) {
-                return ResponseEntity.status(401).body(Map.of(
-                    "success", false,
-                    "message", "로그인이 필요합니다.",
-                    "redirectToLogin", true
-                ));
-            }
-            
-            // HQ 권한 체크
-            if (!dynamicPermissionService.hasPermission(currentUser, "HQ_BRANCH_VIEW")) {
-                return ResponseEntity.status(403).body(Map.of(
-                    "success", false,
-                    "message", "지점 조회 권한이 없습니다."
-                ));
-            }
-            
-            // branches 테이블에서 지점 목록 조회
-            List<BranchResponse> branchResponses = branchService.getAllActiveBranches();
-            List<Map<String, Object>> branches = branchResponses.stream()
-                .map(this::convertBranchResponseToMap)
-                .collect(Collectors.toList());
-            
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", true);
-            response.put("data", branches);
-            response.put("totalCount", branches.size());
-            
-            log.info("지점 목록 조회 완료: {}개", branches.size());
-            return ResponseEntity.ok(response);
-            
-        } catch (Exception e) {
-            return ServerErrorResponses.internalError("지점 목록 조회 중 오류 발생", e);
+        log.info("지점 목록 조회 요청");
+
+        // 권한 체크
+        User currentUser = (User) session.getAttribute("user");
+        if (currentUser == null) {
+            return ResponseEntity.status(401).body(Map.of(
+                "success", false,
+                "message", "로그인이 필요합니다.",
+                "redirectToLogin", true
+            ));
         }
+
+        // HQ 권한 체크
+        if (!dynamicPermissionService.hasPermission(currentUser, "HQ_BRANCH_VIEW")) {
+            return ResponseEntity.status(403).body(Map.of(
+                "success", false,
+                "message", "지점 조회 권한이 없습니다."
+            ));
+        }
+
+        List<BranchResponse> branchResponses = branchService.getAllActiveBranches();
+        List<Map<String, Object>> branches = branchResponses.stream()
+            .map(this::convertBranchResponseToMap)
+            .collect(Collectors.toList());
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("success", true);
+        response.put("data", branches);
+        response.put("totalCount", branches.size());
+
+        log.info("지점 목록 조회 완료: {}개", branches.size());
+        return ResponseEntity.ok(response);
     }
     
     /**

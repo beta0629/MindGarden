@@ -1,5 +1,6 @@
 package com.coresolution.core.controller;
 
+import com.coresolution.consultation.util.ServerErrorResponses;
 import java.util.List;
 import java.util.Map;
 import com.coresolution.consultation.service.CommonCodeService;
@@ -72,20 +73,11 @@ public class WidgetController {
         log.debug("위젯 그룹 조회 API: tenantId={}, businessType={}, roleCode={}", tenantId, businessType,
                 roleCode);
 
-        try {
-            List<WidgetGroupResponse> groups =
-                    widgetGroupService.getWidgetGroups(tenantId, businessType, roleCode);
+        List<WidgetGroupResponse> groups =
+                widgetGroupService.getWidgetGroups(tenantId, businessType, roleCode);
 
-            return ResponseEntity.ok(ApiResponse.success(groups));
+        return ResponseEntity.ok(ApiResponse.success(groups));
 
-        } catch (Exception e) {
-            log.error("위젯 그룹 조회 실패", e);
-            // ✅ 표준: 공통코드에서 에러 메시지 조회
-            String errorMessage =
-                    commonCodeService.getCodeKoreanName("ERROR_CODE", "WIDGET_GROUP_FETCH_ERROR");
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(ApiResponse.<List<WidgetGroupResponse>>error(errorMessage));
-        }
     }
 
     /**
@@ -99,18 +91,10 @@ public class WidgetController {
 
         log.debug("그룹별 위젯 조회 API: groupId={}", groupId);
 
-        try {
-            List<WidgetDefinitionResponse> widgets = widgetGroupService.getWidgetsByGroup(groupId);
+        List<WidgetDefinitionResponse> widgets = widgetGroupService.getWidgetsByGroup(groupId);
 
-            return ResponseEntity.ok(ApiResponse.success(widgets));
+        return ResponseEntity.ok(ApiResponse.success(widgets));
 
-        } catch (Exception e) {
-            log.error("그룹별 위젯 조회 실패", e);
-            String errorMessage =
-                    commonCodeService.getCodeKoreanName("ERROR_CODE", "WIDGET_FETCH_ERROR");
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(ApiResponse.<List<WidgetDefinitionResponse>>error(errorMessage));
-        }
     }
 
     /**
@@ -138,19 +122,11 @@ public class WidgetController {
         log.debug("그룹화된 위젯 조회 API: tenantId={}, businessType={}, roleCode={}", tenantId,
                 businessType, roleCode);
 
-        try {
-            Map<String, List<WidgetDefinitionResponse>> groupedWidgets =
-                    widgetGroupService.getGroupedWidgets(tenantId, businessType, roleCode);
+        Map<String, List<WidgetDefinitionResponse>> groupedWidgets =
+                widgetGroupService.getGroupedWidgets(tenantId, businessType, roleCode);
 
-            return ResponseEntity.ok(ApiResponse.success(groupedWidgets));
+        return ResponseEntity.ok(ApiResponse.success(groupedWidgets));
 
-        } catch (Exception e) {
-            log.error("그룹화된 위젯 조회 실패", e);
-            String errorMessage =
-                    commonCodeService.getCodeKoreanName("ERROR_CODE", "GROUPED_WIDGET_FETCH_ERROR");
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
-                    ApiResponse.<Map<String, List<WidgetDefinitionResponse>>>error(errorMessage));
-        }
     }
 
     /**
@@ -164,19 +140,11 @@ public class WidgetController {
 
         log.debug("독립 위젯 조회 API: businessType={}", businessType);
 
-        try {
-            List<WidgetDefinitionResponse> widgets =
-                    widgetGroupService.getAvailableIndependentWidgets(businessType);
+        List<WidgetDefinitionResponse> widgets =
+                widgetGroupService.getAvailableIndependentWidgets(businessType);
 
-            return ResponseEntity.ok(ApiResponse.success(widgets));
+        return ResponseEntity.ok(ApiResponse.success(widgets));
 
-        } catch (Exception e) {
-            log.error("독립 위젯 조회 실패", e);
-            String errorMessage = commonCodeService.getCodeKoreanName("ERROR_CODE",
-                    "AVAILABLE_WIDGET_FETCH_ERROR");
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(ApiResponse.<List<WidgetDefinitionResponse>>error(errorMessage));
-        }
     }
 
     /**
@@ -222,11 +190,7 @@ public class WidgetController {
             return ResponseEntity.badRequest().body(ApiResponse.error(errorMessage));
 
         } catch (Exception e) {
-            log.error("위젯 추가 실패", e);
-            String errorMessage =
-                    commonCodeService.getCodeKoreanName("ERROR_CODE", "WIDGET_ADD_ERROR");
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(ApiResponse.error(errorMessage));
+            throw ServerErrorResponses.propagate(e);
         }
     }
 
@@ -272,11 +236,7 @@ public class WidgetController {
             return ResponseEntity.badRequest().body(ApiResponse.error(errorMessage));
 
         } catch (Exception e) {
-            log.error("위젯 삭제 실패", e);
-            String errorMessage =
-                    commonCodeService.getCodeKoreanName("ERROR_CODE", "WIDGET_DELETE_ERROR");
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(ApiResponse.error(errorMessage));
+            throw ServerErrorResponses.propagate(e);
         }
     }
 
@@ -308,11 +268,7 @@ public class WidgetController {
                     .body(ApiResponse.<Map<String, Boolean>>error(errorMessage));
 
         } catch (Exception e) {
-            log.error("위젯 권한 확인 실패", e);
-            String errorMessage =
-                    commonCodeService.getCodeKoreanName("ERROR_CODE", "PERMISSION_CHECK_ERROR");
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(ApiResponse.<Map<String, Boolean>>error(errorMessage));
+            throw ServerErrorResponses.propagate(e);
         }
     }
 }

@@ -296,12 +296,23 @@ class OnboardingAdminPasswordHashFlowTest {
     }
 
     @Test
-    @DisplayName("반례: 해시 문자열을 비밀번호로 넣어도 그대로 저장되지 않음 (정책 거부 → 해시 주입 불가)")
-    void create_hashShapedInput_isNotStoredAsIs() throws Exception {
-        String hashShaped = checklistWithPassword(passwordEncoder.encode(generatePolicySafePassword()));
+    @DisplayName("반례: 해시 문자열을 비밀번호로 넣어도 그대로 저장되지 않음 (정책 거부 또는 재인코딩 → 해시 주입 불가)")
+    void create_hashShapedInput_isRejectedOrReEncoded() throws Exception {
+        String hashValue = passwordEncoder.encode(generatePolicySafePassword());
+        String hashShaped = checklistWithPassword(hashValue);
 
-        assertThatThrownBy(() -> createWithChecklist(hashShaped)).isInstanceOf(IllegalArgumentException.class);
-        verify(repository, never()).save(any(OnboardingRequest.class));
+        // 솔트가 랜덤이라 비밀번호 정책 통과 여부가 달라짐 — 거부되든 재인코딩되든 입력값 그대로 저장되면 안 됨
+        OnboardingRequest saved;
+        try {
+            saved = createWithChecklist(hashShaped);
+        } catch (IllegalArgumentException rejected) {
+            verify(repository, never()).save(any(OnboardingRequest.class));
+            return;
+        }
+        Map<String, Object> checklist = objectMapper.readValue(saved.getChecklistJson(), MAP_TYPE);
+        String stored = (String) checklist.get("adminPassword");
+        assertThat(stored).isNotEqualTo(hashValue);
+        assertThat(passwordEncoder.matches(hashValue, stored)).isTrue();
     }
 
     @Test

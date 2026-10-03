@@ -196,23 +196,61 @@ case "${DB_NAME}" in
 esac
 
 echo ""
+# 프로시저마다 독립적으로 safe-replace 한다. 한 건이 실패해도 나머지를 계속 처리하고
+# 마지막에 표를 찍은 뒤 하나라도 성공이 아니면 exit 1. 실패한 건의 실제 프로시저는 DROP 되지 않는다.
+RESULTS=$(mktemp "${TMPDIR:-/tmp}/mg-proc-results.XXXXXX")
+STEP_ERR=$(mktemp "${TMPDIR:-/tmp}/mg-proc-step-err.XXXXXX")
+
+procedure_deploy_finish() {
+    local not_ok
+    echo ""
+    echo "프로시저별 결과"
+    procedure_deploy_result_print "$RESULTS"
+    not_ok=$(procedure_deploy_result_not_ok_count "$RESULTS")
+    rm -f "$RESULTS" "$STEP_ERR"
+    if [ "$not_ok" -ne 0 ]; then
+        fail "safe-replace 실패 ${not_ok}건. 위 표를 확인하세요. 실패한 프로시저의 기존 정의는 그대로입니다."
+    fi
+}
+
 if [ "${PROCEDURE_DEPLOY_LOCAL_APPLY:-}" = "1" ]; then
     for proc in "${PROCEDURES[@]}"; do
-        sql_file=$(procedure_deploy_resolve_sql "$proc") || fail "배포 SQL 없음: $proc"
-        procedure_deploy_safe_replace "$proc" "$sql_file" || fail "safe-replace 실패: $proc"
+        if ! sql_file=$(procedure_deploy_resolve_sql "$proc"); then
+            procedure_deploy_result_add "$RESULTS" "$proc" failed "배포 SQL 없음"
+            continue
+        fi
+        if procedure_deploy_safe_replace "$proc" "$sql_file" 2>"$STEP_ERR"; then
+            cat "$STEP_ERR" >&2
+            procedure_deploy_result_add "$RESULTS" "$proc" success ""
+        else
+            cat "$STEP_ERR" >&2
+            procedure_deploy_result_add "$RESULTS" "$proc" failed "$(procedure_deploy_failure_reason "$STEP_ERR")"
+        fi
     done
+    procedure_deploy_finish
     echo "변경된 프로시저 로컬 적용 완료" >&2
     exit 0
 fi
 
 echo "📤 변경된 프로시저 파일만 업로드"
 runner_remote="/tmp/procedure-deploy-changed-only.sh"
-scp "$SCRIPT_DIR/procedure-deploy-changed-only.sh" "$SERVER_USER@$SERVER:$runner_remote" || fail "SCP 실패: runner"
+if ! scp "$SCRIPT_DIR/procedure-deploy-changed-only.sh" "$SERVER_USER@$SERVER:$runner_remote"; then
+    for proc in "${PROCEDURES[@]}"; do
+        procedure_deploy_result_add "$RESULTS" "$proc" skipped "runner 업로드(SCP) 실패로 미적용"
+    done
+    procedure_deploy_finish
+fi
+UPLOADED=()
 for proc in "${PROCEDURES[@]}"; do
-    sql_file=$(procedure_deploy_resolve_sql "$proc") || fail "배포 SQL 없음: $proc"
-    if ! scp "$sql_file" "$SERVER_USER@$SERVER:/tmp/${proc}_deploy.sql"; then
-        fail "SCP 실패: ${proc}_deploy.sql"
+    if ! sql_file=$(procedure_deploy_resolve_sql "$proc"); then
+        procedure_deploy_result_add "$RESULTS" "$proc" failed "배포 SQL 없음"
+        continue
     fi
+    if ! scp "$sql_file" "$SERVER_USER@$SERVER:/tmp/${proc}_deploy.sql"; then
+        procedure_deploy_result_add "$RESULTS" "$proc" skipped "SQL 업로드(SCP) 실패로 미적용"
+        continue
+    fi
+    UPLOADED[${#UPLOADED[@]}]="$proc"
     echo "✅ ${proc}_deploy.sql 업로드 완료"
 done
 
@@ -225,11 +263,10 @@ ROUTINE_ADMIN_USER="${PROD_DB_ROUTINE_ADMIN_USER:-}"
 ROUTINE_ADMIN_PASS="${PROD_DB_ROUTINE_ADMIN_PASSWORD:-}"
 ROUTINE_FALLBACK_ROOT_PASS="${PROD_DB_ROUTINE_FALLBACK_ROOT_PASSWORD:-}"
 
-# 변경된 프로시저만 원격에서 교체한다. 한 건이라도 실패하면 중단한다.
-for proc in "${PROCEDURES[@]}"; do
+for proc in ${UPLOADED[@]+"${UPLOADED[@]}"}; do
 # 접속 값은 이 쪽에서 원격 스크립트에 넣는다.
 # shellcheck disable=SC2087
-ssh "$SERVER_USER@$SERVER" bash -s << ENDSSH || fail "safe-replace 실패: $proc"
+if ssh "$SERVER_USER@$SERVER" bash -s 2>"$STEP_ERR" << ENDSSH
 set -euo pipefail
 export DB_HOST="$DB_HOST"
 export DB_USER="$DB_USER"
@@ -242,7 +279,15 @@ export MYSQL_PWD="\$DB_PASS"
 trap 'unset MYSQL_PWD 2>/dev/null || true' EXIT
 bash /tmp/procedure-deploy-changed-only.sh apply-one "$proc" "/tmp/${proc}_deploy.sql"
 ENDSSH
+then
+    cat "$STEP_ERR" >&2
+    procedure_deploy_result_add "$RESULTS" "$proc" success ""
+else
+    cat "$STEP_ERR" >&2
+    procedure_deploy_result_add "$RESULTS" "$proc" failed "$(procedure_deploy_failure_reason "$STEP_ERR")"
+fi
 done
 
+procedure_deploy_finish
 echo ""
 echo "✅ 변경된 프로시저 교체 완료"

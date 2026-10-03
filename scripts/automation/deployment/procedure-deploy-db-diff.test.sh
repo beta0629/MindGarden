@@ -211,4 +211,65 @@ set -e
 [ "$blocked_rc" -ne 0 ] || fail "dev db-diff must refuse production_mysql"
 printf '%s\n' "$blocked" | grep -q 'production_mysql' || fail "refuse message missing: $blocked"
 
+# CONFIRM: 첫 프로시저 스테이징 CREATE 가 실패해도 다음 프로시저를 계속 처리하고 표를 찍은 뒤 exit 1.
+grep -v $'\tTestMappingSync\t' "$WORKDIR/snap.tsv" > "$WORKDIR/snap2.tsv"
+STATE="$WORKDIR/created-TestMappingSync"
+cat > "$STUB/mysql" <<'EOF'
+#!/bin/bash
+log="${PROCEDURE_DEPLOY_MYSQL_LOG:?}"
+snap="${PROCEDURE_DEPLOY_TEST_SNAPSHOT:?}"
+state="${PROCEDURE_DEPLOY_TEST_STATE:?}"
+args="$*"
+stdin=$(cat || true)
+printf -- '---\nARGS:%s\nSTDIN:%s\n' "$args" "$stdin" >> "$log"
+if printf '%s' "$args" | grep -q 'information_schema.PARAMETERS'; then
+    cat "$snap"
+    exit 0
+fi
+if printf '%s' "$stdin" | grep -q 'GetIntegratedSalaryStatistics__mg_stage'; then
+    echo "ERROR 1064 (42000) at line 8: syntax error near ';'" >&2
+    exit 1
+fi
+if printf '%s' "$stdin$args" | grep -q '__mg_stage'; then
+    exit 0
+fi
+if printf '%s' "$args" | grep -q "ROUTINE_NAME = 'TestMappingSync'"; then
+    if [ -f "$state" ]; then echo 1; else echo 0; fi
+    exit 0
+fi
+if printf '%s' "$stdin" | grep -q 'CREATE PROCEDURE TestMappingSync'; then
+    : > "$state"
+    exit 0
+fi
+if printf '%s' "$stdin$args" | grep -q 'DROP PROCEDURE'; then
+    echo "REAL_DROP" >> "$log"
+    exit 98
+fi
+echo "unexpected mysql" >&2
+exit 97
+EOF
+chmod +x "$STUB/mysql"
+unset DEPLOY_TARGET PROD_DB_HOST PROD_DB_NAME
+export PROCEDURE_DEPLOY_TEST_SNAPSHOT="$WORKDIR/snap2.tsv"
+export PROCEDURE_DEPLOY_TEST_STATE="$STATE"
+export PROCEDURE_DEPLOY_DB_DIFF_CONFIRM=CONFIRM
+: > "$MYSQL_LOG"
+set +e
+multi=$(bash "$DEPLOY" dev 2>&1)
+multi_rc=$?
+set -e
+[ "$multi_rc" -eq 1 ] || fail "partial failure must exit 1, got $multi_rc: $multi"
+printf '%s\n' "$multi" | grep -q '^name | result | reason$' || fail "result table header missing: $multi"
+printf '%s\n' "$multi" | grep -q '^GetIntegratedSalaryStatistics | failed | ERROR 1064' \
+    || fail "failed row missing: $multi"
+printf '%s\n' "$multi" | grep -q '^TestMappingSync | success | $' || fail "later procedure was not processed: $multi"
+printf '%s\n' "$multi" | grep -q 'summary total=2 success=1 failed=1 skipped=0' || fail "summary missing: $multi"
+[ -f "$STATE" ] || fail "TestMappingSync was not created after the earlier failure"
+if grep -q 'REAL_DROP' "$MYSQL_LOG"; then
+    fail "a failed staging CREATE dropped the real routine"
+fi
+if printf '%s\n' "$multi" | grep -q 'secret-not-printed'; then
+    fail "password printed"
+fi
+
 echo "procedure-deploy-db-diff.test.sh PASS"

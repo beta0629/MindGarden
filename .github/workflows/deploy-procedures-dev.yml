@@ -17,6 +17,10 @@ on:
     paths:
       - 'database/schema/procedures_standardized/**'
       - 'scripts/automation/deployment/deploy-standardized-procedures.sh'
+      - 'scripts/automation/deployment/procedure-deploy-changed-only.sh'
+      - 'scripts/automation/deployment/procedure-deploy-db-diff.sh'
+      - 'scripts/automation/deployment/publish-dev-sync-bundle.sh'
+      - 'scripts/database/sync/**'
   workflow_dispatch:
     inputs:
       procedures:
@@ -106,6 +110,10 @@ jobs:
         export DEV_DB_USER="${{ secrets.DEV_DB_USER }}"
         export DEV_DB_PASSWORD="${{ secrets.DEV_DB_PASSWORD }}"
         export DEV_DB_NAME="${{ secrets.DEV_DB_NAME }}"
+
+        # 야간 운영→개발 복사(cron)는 DROP DATABASE 로 루틴을 지운 뒤 서버의 저장소 번들로 다시 적용한다.
+        # 그 번들(동기화 스크립트·배포 스크립트·배포 SQL)을 crontab 이 가리키는 배포 루트에 갱신한다. DDL 없음.
+        bash scripts/automation/deployment/publish-dev-sync-bundle.sh
 
         chmod +x scripts/automation/deployment/deploy-standardized-procedures.sh
         bash scripts/automation/deployment/deploy-standardized-procedures.sh dev

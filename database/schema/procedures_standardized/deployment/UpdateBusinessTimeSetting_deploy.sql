@@ -14,7 +14,7 @@ CREATE PROCEDURE UpdateBusinessTimeSetting(
     OUT p_success BOOLEAN,
     OUT p_message TEXT
 )
-BEGIN
+proc_main: BEGIN
     DECLARE v_error_message VARCHAR(500);
     DECLARE v_updated_count INT DEFAULT 0;
     
@@ -34,28 +34,28 @@ BEGIN
         SET p_success = FALSE;
         SET p_message = '테넌트 ID는 필수입니다.';
         ROLLBACK;
-        LEAVE;
+        LEAVE proc_main;
     END IF;
     
     IF p_code_group IS NULL OR p_code_group = '' THEN
         SET p_success = FALSE;
         SET p_message = '코드 그룹은 필수입니다.';
         ROLLBACK;
-        LEAVE;
+        LEAVE proc_main;
     END IF;
     
     IF p_code_value IS NULL OR p_code_value = '' THEN
         SET p_success = FALSE;
         SET p_message = '코드 값은 필수입니다.';
         ROLLBACK;
-        LEAVE;
+        LEAVE proc_main;
     END IF;
     
     IF p_new_value IS NULL OR p_new_value = '' THEN
         SET p_success = FALSE;
         SET p_message = '새로운 값은 필수입니다.';
         ROLLBACK;
-        LEAVE;
+        LEAVE proc_main;
     END IF;
     
     -- 2. 업무 시간 설정 업데이트 (테넌트 격리)
@@ -102,7 +102,7 @@ BEGIN
         SET p_success = FALSE;
         SET p_message = '업무 시간 설정을 찾을 수 없습니다.';
         ROLLBACK;
-        LEAVE;
+        LEAVE proc_main;
     END IF;
     
     SET p_success = TRUE;

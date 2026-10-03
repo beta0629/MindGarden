@@ -17,7 +17,7 @@ CREATE PROCEDURE GetDiscountStatistics(
     OUT p_discount_count INT,
     OUT p_refund_count INT
 )
-BEGIN
+proc_main: BEGIN
     DECLARE v_error_message VARCHAR(500);
     
     DECLARE EXIT HANDLER FOR SQLEXCEPTION
@@ -42,7 +42,7 @@ BEGIN
         SET p_net_discounts = 0;
         SET p_discount_count = 0;
         SET p_refund_count = 0;
-        LEAVE;
+        LEAVE proc_main;
     END IF;
     
     IF p_start_date IS NULL OR p_end_date IS NULL OR p_start_date > p_end_date THEN
@@ -53,7 +53,7 @@ BEGIN
         SET p_net_discounts = 0;
         SET p_discount_count = 0;
         SET p_refund_count = 0;
-        LEAVE;
+        LEAVE proc_main;
     END IF;
     
     -- 2. 할인 통계 계산 (테넌트 격리)

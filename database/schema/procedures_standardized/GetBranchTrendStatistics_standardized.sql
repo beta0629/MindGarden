@@ -13,7 +13,7 @@ CREATE PROCEDURE GetBranchTrendStatistics(
     OUT p_message TEXT,
     OUT p_trend_data JSON
 )
-BEGIN
+proc_main: BEGIN
     DECLARE v_error_message VARCHAR(500);
     DECLARE start_date DATE;
     DECLARE end_date DATE;
@@ -35,7 +35,7 @@ BEGIN
         SET p_success = FALSE;
         SET p_message = '테넌트 ID는 필수입니다.';
         SET p_trend_data = JSON_OBJECT('error', '테넌트 ID가 필요합니다.');
-        LEAVE;
+        LEAVE proc_main;
     END IF;
     
     -- 2. 기간 계산

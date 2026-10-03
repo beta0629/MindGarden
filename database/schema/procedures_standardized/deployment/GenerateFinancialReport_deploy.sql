@@ -14,7 +14,7 @@ CREATE PROCEDURE GenerateFinancialReport(
     OUT p_success BOOLEAN,
     OUT p_message TEXT
 )
-BEGIN
+proc_main: BEGIN
     DECLARE v_error_message VARCHAR(500);
     DECLARE v_total_revenue DECIMAL(15,2) DEFAULT 0;
     DECLARE v_total_expenses DECIMAL(15,2) DEFAULT 0;
@@ -43,7 +43,7 @@ BEGIN
         SET p_message = '테넌트 ID는 필수입니다.';
         SET p_report_data = JSON_OBJECT('error', '테넌트 ID가 필요합니다.');
         ROLLBACK;
-        LEAVE;
+        LEAVE proc_main;
     END IF;
     
     IF p_period_start IS NULL OR p_period_end IS NULL OR p_period_start > p_period_end THEN
@@ -51,7 +51,7 @@ BEGIN
         SET p_message = '유효한 기간을 입력해주세요.';
         SET p_report_data = JSON_OBJECT('error', '유효한 기간이 필요합니다.');
         ROLLBACK;
-        LEAVE;
+        LEAVE proc_main;
     END IF;
     
     -- 2. 기본 재무 데이터 집계 (테넌트 격리)

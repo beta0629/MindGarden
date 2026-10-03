@@ -13,7 +13,7 @@ CREATE PROCEDURE UpdateAllBranchDailyStatistics(
     OUT p_message TEXT,
     OUT p_processed_count INT
 )
-BEGIN
+proc_main: BEGIN
     DECLARE v_error_message VARCHAR(500);
     DECLARE v_update_success BOOLEAN;
     DECLARE v_update_message TEXT;
@@ -36,7 +36,7 @@ BEGIN
         SET p_message = '테넌트 ID는 필수입니다.';
         SET p_processed_count = 0;
         ROLLBACK;
-        LEAVE;
+        LEAVE proc_main;
     END IF;
     
     IF p_stat_date IS NULL THEN
@@ -44,7 +44,7 @@ BEGIN
         SET p_message = '통계 날짜는 필수입니다.';
         SET p_processed_count = 0;
         ROLLBACK;
-        LEAVE;
+        LEAVE proc_main;
     END IF;
     
     -- 2. 일일 통계 업데이트 (테넌트 단위로 처리)

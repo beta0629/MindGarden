@@ -13,7 +13,7 @@ CREATE PROCEDURE DailyPerformanceMonitoring(
     OUT p_message TEXT,
     OUT p_alert_count INT
 )
-BEGIN
+proc_main: BEGIN
     DECLARE v_error_message VARCHAR(500);
     DECLARE done INT DEFAULT FALSE;
     DECLARE v_consultant_id BIGINT;
@@ -56,7 +56,7 @@ BEGIN
         SET p_message = '테넌트 ID는 필수입니다.';
         SET p_alert_count = 0;
         ROLLBACK;
-        LEAVE;
+        LEAVE proc_main;
     END IF;
     
     IF p_monitoring_date IS NULL THEN
@@ -64,7 +64,7 @@ BEGIN
         SET p_message = '모니터링 날짜는 필수입니다.';
         SET p_alert_count = 0;
         ROLLBACK;
-        LEAVE;
+        LEAVE proc_main;
     END IF;
     
     SET p_alert_count = 0;

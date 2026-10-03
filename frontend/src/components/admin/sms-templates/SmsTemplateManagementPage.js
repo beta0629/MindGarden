@@ -16,7 +16,7 @@
  * @since 2026-05-29
  */
 
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import AdminCommonLayout from '../../layout/AdminCommonLayout';
@@ -24,7 +24,7 @@ import { SettingsButton, SettingsPageShell, SettingsSectionPanel } from '../sett
 import UnifiedLoading from '../../common/UnifiedLoading';
 import UnifiedModal from '../../common/modals/UnifiedModal';
 import ActionBar from '../../common/ActionBar';
-import SettingSwitchRow from '../../common/molecules/SettingSwitchRow';
+import OpsManagedSwitchRow from '../../common/molecules/OpsManagedSwitchRow';
 import Switch from '../../common/Switch';
 import { useSession } from '../../../contexts/SessionContext';
 import { useSettingToggleSave } from '../../../hooks';
@@ -36,7 +36,6 @@ import {
   updateSmsTemplateTenantOverride,
   deleteSmsTemplateTenantOverride,
   previewSmsTemplate,
-  patchGlobalDispatchFlag,
   patchTemplateDispatchFlag
 } from '../../../api/admin/smsTemplateApi';
 import { getReservationReminderDnListLabel } from '../../../constants/batchNotificationCodes';
@@ -107,8 +106,6 @@ const SmsTemplateManagementPage = () => {
   const [previewResult, setPreviewResult] = useState(null);
   const [saveModalOpen, setSaveModalOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
-  const [globalEnableModalOpen, setGlobalEnableModalOpen] = useState(false);
-  const globalConfirmResolverRef = useRef(null);
   const [submitting, setSubmitting] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('ALL');
@@ -291,57 +288,6 @@ const SmsTemplateManagementPage = () => {
     }
   }, [selectedKey, loadList, t]);
 
-  const requestGlobalOnConfirm = useCallback(() => new Promise((resolve) => {
-    globalConfirmResolverRef.current = resolve;
-    setGlobalEnableModalOpen(true);
-  }), []);
-
-  const resolveGlobalConfirm = useCallback((ok) => {
-    setGlobalEnableModalOpen(false);
-    const resolver = globalConfirmResolverRef.current;
-    globalConfirmResolverRef.current = null;
-    if (typeof resolver === 'function') {
-      resolver(ok);
-    }
-  }, []);
-
-  const saveGlobalDispatch = useCallback(async(enabled) => {
-    setSubmitting(true);
-    try {
-      await patchGlobalDispatchFlag({ enabled });
-    } finally {
-      setSubmitting(false);
-    }
-  }, []);
-
-  const {
-    busy: globalBusy,
-    disabled: globalDisabled,
-    onCheckedChange: onGlobalCheckedChange
-  } = useSettingToggleSave({
-    value: globalDispatchEnabled,
-    onValueChange: () => {},
-    save: saveGlobalDispatch,
-    requireConfirm: (next) => next === true,
-    confirm: async() => requestGlobalOnConfirm(),
-    optimistic: false,
-    onSuccess: async() => {
-      notificationManager.show(
-        t('smsTemplate.action.dispatchUpdated'),
-        'success'
-      );
-      await softRefresh(loadList);
-    },
-    onError: (error) => {
-      console.error('SMS 글로벌 게이트 토글 실패', error);
-      notificationManager.show(
-        t('smsTemplate.action.dispatchUpdateFailed'),
-        'error'
-      );
-    },
-    isEnabled: isAdmin && !submitting
-  });
-
   const pageTitle = t('smsTemplate.page.title');
   if (sessionLoading || !hasAccess) {
     return (
@@ -374,7 +320,7 @@ const SmsTemplateManagementPage = () => {
             testId="sms-template-global-toggle"
             ariaLabel={t('smsTemplate.globalDispatch.title')}
           >
-            <SettingSwitchRow
+            <OpsManagedSwitchRow
               id="sms-template-global-toggle-input"
               label={t('smsTemplate.globalDispatch.title')}
               hint={t('smsTemplate.globalDispatch.description')}
@@ -382,9 +328,6 @@ const SmsTemplateManagementPage = () => {
                 ? t('smsTemplate.dispatch.badge.on')
                 : t('smsTemplate.dispatch.badge.off')}
               checked={globalDispatchEnabled}
-              onCheckedChange={onGlobalCheckedChange}
-              disabled={globalDisabled || !isAdmin || submitting}
-              isPending={globalBusy}
               data-testid="sms-template-global-toggle-input"
               ariaLabel={t('smsTemplate.globalDispatch.title')}
             />
@@ -749,37 +692,6 @@ const SmsTemplateManagementPage = () => {
       >
         <div data-testid="sms-template-delete-modal-body">
           {t('smsTemplate.modals.deleteBody')}
-        </div>
-      </UnifiedModal>
-
-      <UnifiedModal
-        isOpen={globalEnableModalOpen}
-        onClose={() => resolveGlobalConfirm(false)}
-        title={t('smsTemplate.globalDispatch.title')}
-        subtitle={t('smsTemplate.globalDispatch.confirmOn')}
-        variant="alert"
-        actions={
-          <ActionBar align="end" gap="md">
-            <SettingsButton
-              variant="outline"
-              onClick={() => resolveGlobalConfirm(false)}
-              disabled={submitting || globalBusy}
-            >
-              {t('common:cancel')}
-            </SettingsButton>
-            <SettingsButton
-              variant="primary"
-              onClick={() => resolveGlobalConfirm(true)}
-              loading={submitting || globalBusy}
-              data-testid="sms-template-global-dispatch-confirm"
-            >
-              {t('smsTemplate.dispatch.badge.on')}
-            </SettingsButton>
-          </ActionBar>
-        }
-      >
-        <div data-testid="sms-template-global-dispatch-modal-body">
-          {t('smsTemplate.globalDispatch.description')}
         </div>
       </UnifiedModal>
     </AdminCommonLayout>

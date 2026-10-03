@@ -106,12 +106,16 @@ public class ComplianceService {
         Map<String, Object> result = new HashMap<>();
         
         try {
-            Map<String, Object> riskAssessment = ComplianceDashboardSampleContent.riskAssessment();
-            Map<String, Object> overallAssessment = ComplianceDashboardSampleContent.overallImpactAssessment();
+            // 영향평가 실측 저장소가 없으므로 표본 위험도·개선영역을 내보내지 않고 「미점검」 빈 상태만 응답
+            Map<String, Object> overallAssessment = new LinkedHashMap<>();
+            overallAssessment.put("overallRiskLevel", ComplianceServiceErrorMessages.STATUS_NOT_REVIEWED);
+            overallAssessment.put("complianceStatus", ComplianceServiceErrorMessages.STATUS_NOT_REVIEWED);
+            overallAssessment.put("improvementAreas", Collections.emptyList());
+            overallAssessment.put("nextAssessmentDate", null);
             
-            result.put("riskAssessment", riskAssessment);
+            result.put("riskAssessment", Collections.emptyMap());
             result.put("overallAssessment", overallAssessment);
-            result.put("assessmentDate", LocalDateTime.now());
+            result.put("assessmentDate", null);
             result.put("status", "success");
             
         } catch (Exception e) {
@@ -157,45 +161,8 @@ public class ComplianceService {
         Map<String, Object> result = new HashMap<>();
         
         try {
-            // 교육 프로그램
-            Map<String, Object> educationPrograms = Map.of(
-                "basicEducation", Map.of(
-                    "title", "개인정보보호 기본 교육",
-                    "target", "전체 임직원",
-                    "frequency", "연 2회",
-                    "duration", "2시간",
-                    "content", List.of(
-                        "개인정보보호법 이해",
-                        "개인정보 처리 원칙",
-                        "개인정보 침해사고 예방",
-                        "개인정보보호 실무 가이드"
-                    )
-                ),
-                "medicalDataEducation", Map.of(
-                    "title", "의료정보보호 전문 교육",
-                    "target", "상담사 및 의료진",
-                    "frequency", "연 4회",
-                    "duration", "3시간",
-                    "content", List.of(
-                        "의료법상 개인정보보호 의무",
-                        "의료정보 접근 권한 관리",
-                        "상담 기록 보호 조치",
-                        "비밀유지 의무 및 위반 시 조치"
-                    )
-                ),
-                "technicalEducation", Map.of(
-                    "title", "개인정보보호 기술 교육",
-                    "target", "개발팀 및 IT팀",
-                    "frequency", "연 6회",
-                    "duration", "4시간",
-                    "content", List.of(
-                        "개인정보 암호화 기술",
-                        "접근 제어 시스템",
-                        "개인정보 로그 관리",
-                        "개인정보 유출 방지 기술"
-                    )
-                )
-            );
+            // 교육 프로그램 저장소가 없으므로 표본 프로그램을 내보내지 않는다 (화면은 빈 상태 안내)
+            Map<String, Object> educationPrograms = Collections.emptyMap();
             
             // 이수 기록 저장소가 없으므로 이수 인원·이수율은 비워 두고(화면 '—'), 대상 인원만 실제 집계
             Map<String, Object> completionStatus = new LinkedHashMap<>();

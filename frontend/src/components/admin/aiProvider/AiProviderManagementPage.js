@@ -12,12 +12,13 @@
  *   - §5 UsageLogsTable              (하단 전체)
  *
  * 멀티테넌트: 모든 API 호출은 StandardizedApi 경유 (X-Tenant-Id 자동 부착).
+ * P1 보안(2026-10-03): ADMIN 전용·읽기 전용. 프로바이더 선택·키 쓰기는 운영자 전용(서버 403).
  *
  * @author MindGarden
  * @since 2026-05-24
  */
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { apiGet, apiPost } from '../../../utils/ajax';
+import { apiGet } from '../../../utils/ajax';
 import { getAiProviderHealth } from '../../../api/admin/aiHealthApi';
 import { getAiUsageLogs, getAiUsageStats } from '../../../api/admin/aiUsageApi';
 import { useSession } from '../../../contexts/SessionContext';
@@ -58,8 +59,6 @@ const AiProviderManagementPage = () => {
   const isDesktop = useMediaQuery(DESKTOP_MIN_WIDTH);
 
   const [loading, setLoading] = useState(true);
-  const [savingKey, setSavingKey] = useState(false);
-  const [savingActiveProvider, setSavingActiveProvider] = useState(false);
 
   const [providers, setProviders] = useState(() =>
     AI_PROVIDER_OPTIONS.reduce((acc, p) => {
@@ -189,8 +188,7 @@ const AiProviderManagementPage = () => {
       setLoading(false);
       return;
     }
-    const allowedRoles = [USER_ROLES.ADMIN, USER_ROLES.STAFF];
-    if (!allowedRoles.includes(user.role)) {
+    if (user.role !== USER_ROLES.ADMIN) {
       notificationManager.show('접근 권한이 없습니다.', 'error');
       setLoading(false);
       return;
@@ -201,76 +199,6 @@ const AiProviderManagementPage = () => {
   }, [isLoggedIn, user]);
 
   // ---- 인터랙션 ----
-
-  const handleSelectProvider = useCallback(async(providerId) => {
-    if (savingActiveProvider || providerId === activeProvider) {
-      return;
-    }
-    setSavingActiveProvider(true);
-    try {
-      const response = await apiPost(API_AI_DEFAULT_PROVIDER, { providerId });
-      if (response?.success === false) {
-        throw new Error(response.message || '기본 프로바이더 변경 실패');
-      }
-      setActiveProvider(providerId);
-      notificationManager.show('활성 AI 프로바이더가 변경되었습니다.', 'success');
-      refreshHealth();
-    } catch (e) {
-      console.error('활성 provider 변경 실패:', e);
-      const backendMsg = e?.response?.data?.message || e?.data?.message;
-      notificationManager.show(backendMsg || e?.message || '활성 프로바이더 변경에 실패했습니다.', 'error');
-    } finally {
-      setSavingActiveProvider(false);
-    }
-  }, [activeProvider, refreshHealth, savingActiveProvider]);
-
-  const handleSaveProviderKey = useCallback(async(providerId, form) => {
-    const opt = AI_PROVIDER_OPTIONS.find((p) => p.id === providerId);
-    if (!opt) {
-      return;
-    }
-    setSavingKey(true);
-    try {
-      await Promise.all([
-        apiPost(`${API_SYSTEM_CONFIG_PREFIX}/${opt.keyPrefix}_API_KEY`, {
-          configValue: (form.apiKey || '').trim(),
-          description: `${opt.keyPrefix} API 키`,
-          category: 'AI'
-        }),
-        apiPost(`${API_SYSTEM_CONFIG_PREFIX}/${opt.keyPrefix}_API_URL`, {
-          configValue: (form.apiUrl || '').trim(),
-          description: `${opt.keyPrefix} API URL`,
-          category: 'AI'
-        }),
-        apiPost(`${API_SYSTEM_CONFIG_PREFIX}/${opt.keyPrefix}_MODEL`, {
-          configValue: (form.model || '').trim(),
-          description: `${opt.keyPrefix} 모델`,
-          category: 'AI'
-        })
-      ]);
-      setProviders((prev) => ({
-        ...prev,
-        [providerId]: {
-          apiKey: (form.apiKey || '').trim(),
-          apiUrl: (form.apiUrl || '').trim(),
-          model: (form.model || '').trim() || opt.defaultModel || ''
-        }
-      }));
-      notificationManager.show(`${opt.label} API 키가 저장되었습니다.`, 'success');
-      refreshHealth();
-    } catch (e) {
-      console.error('API 키 저장 실패:', e);
-      const backendMsg = e?.response?.data?.message || e?.data?.message;
-      notificationManager.show(backendMsg || e?.message || 'API 키 저장에 실패했습니다.', 'error');
-      throw e;
-    } finally {
-      setSavingKey(false);
-    }
-  }, [refreshHealth]);
-
-  const handleDeleteProviderKey = useCallback(async(providerId) => {
-    await handleSaveProviderKey(providerId, { apiKey: '', apiUrl: '', model: '' });
-  }, [handleSaveProviderKey]);
 
   const handleFiltersChange = useCallback((nextFilters) => {
     setLogFilters(nextFilters);
@@ -337,17 +265,10 @@ const AiProviderManagementPage = () => {
               health={health}
               healthLoading={healthLoading}
               providers={providers}
-              saving={savingActiveProvider}
-              onSelect={handleSelectProvider}
             />
           </div>
           <div className="mg-ai-provider-page__column">
-            <ApiKeyManager
-              providers={providers}
-              saving={savingKey}
-              onSaveProviderKey={handleSaveProviderKey}
-              onDeleteProviderKey={handleDeleteProviderKey}
-            />
+            <ApiKeyManager providers={providers} />
           </div>
         </div>
 

@@ -83,7 +83,7 @@ export const PROVIDER_DISPLAY_LABEL = Object.freeze({
 });
 
 /** API 키 미등록 가드 툴팁 — 디자이너 §2 (PR-3 시스템 설정과 동일 메시지) */
-export const AI_PROVIDER_DISABLED_TOOLTIP = 'API 키 미등록 — 아래 "키 변경" 으로 등록 후 사용 가능';
+export const AI_PROVIDER_DISABLED_TOOLTIP = 'API 키 미등록 — 운영자가 등록한 뒤 사용할 수 있어요';
 
 /** 비-가드(claude/replicate) 안내 툴팁 */
 export const AI_PROVIDER_UNGUARDED_TOOLTIP = '키 등록 가드 미지원 (입력 폼 기준 활성화)';

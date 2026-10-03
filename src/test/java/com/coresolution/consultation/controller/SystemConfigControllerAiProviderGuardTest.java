@@ -6,21 +6,22 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.verifyNoInteractions;
 
+import com.coresolution.consultation.constant.SessionSecurityFlagKeys;
 import com.coresolution.consultation.constant.SystemConfigAccessPolicy;
 import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.entity.User;
+import com.coresolution.consultation.service.SessionSecurityPolicyService;
 import com.coresolution.consultation.service.SystemConfigService;
-import com.coresolution.consultation.service.ai.AiProviderResolver;
 import com.coresolution.consultation.utils.SessionUtils;
 import jakarta.servlet.http.HttpSession;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Function;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -32,16 +33,16 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
 /**
- * {@link SystemConfigController} 의 AI 프로바이더 변경 가드 단위 테스트.
+ * {@link SystemConfigController} AI 프로바이더·플랫폼 세션 스위치 운영자 전용 가드 단위 테스트.
  *
- * <p>트랙 B PR-3 (2026-05-23): 키 미등록 provider 선택 시 400 + 메시지,
- * 통과 시 service 호출·캐시 무효화·tenantId null 시 403 분기를 검증한다.
+ * <p>P1 보안(2026-10-03): 기본 provider 변경·키 테스트·모델 목록·AI 키 저장·플랫폼 세션 스위치 저장은
+ * 테넌트 관리자 경로에서 403 이고 서비스·외부 호출이 일어나지 않는다. 테넌트 단위 키는 계속 저장된다.
  *
  * @author MindGarden
  * @since 2026-05-23
  */
 @ExtendWith(MockitoExtension.class)
-@DisplayName("SystemConfigController — AI provider 변경 가드")
+@DisplayName("SystemConfigController — AI provider·플랫폼 세션 운영자 전용 가드")
 class SystemConfigControllerAiProviderGuardTest {
 
     private static final String TENANT_ID = "tenant-pr3-guard";
@@ -50,10 +51,7 @@ class SystemConfigControllerAiProviderGuardTest {
     private SystemConfigService systemConfigService;
 
     @Mock
-    private AiProviderResolver aiProviderResolver;
-
-    @Mock
-    private com.coresolution.consultation.service.SessionSecurityPolicyService sessionSecurityPolicyService;
+    private SessionSecurityPolicyService sessionSecurityPolicyService;
 
     @Mock
     private HttpSession session;
@@ -61,195 +59,167 @@ class SystemConfigControllerAiProviderGuardTest {
     @InjectMocks
     private SystemConfigController controller;
 
-    private User adminUser(String tenantId) {
+    private User userWithRole(UserRole role, String tenantId) {
         User user = User.builder().build();
-        user.setRole(UserRole.ADMIN);
+        user.setRole(role);
         user.setTenantId(tenantId);
         return user;
     }
 
-    @Test
-    @DisplayName("setAiDefaultProvider — 등록된 provider 선택 시 200 + 캐시 무효화")
-    void setAiDefaultProvider_registered_returns200() {
-        User user = adminUser(TENANT_ID);
+    private ResponseEntity<Map<String, Object>> callAs(
+            User user, Function<SystemConfigController, ResponseEntity<Map<String, Object>>> call) {
         try (MockedStatic<SessionUtils> sessionUtils = mockStatic(SessionUtils.class)) {
             sessionUtils.when(() -> SessionUtils.getCurrentUser(session)).thenReturn(user);
-            when(aiProviderResolver.isProviderKeyRegistered(TENANT_ID, "openai")).thenReturn(true);
-
-            Map<String, String> request = new HashMap<>();
-            request.put("providerId", "openai");
-
-            ResponseEntity<Map<String, Object>> response = controller.setAiDefaultProvider(request, session);
-
-            assertEquals(HttpStatus.OK, response.getStatusCode());
-            Map<String, Object> body = response.getBody();
-            assertNotNull(body);
-            assertEquals(true, body.get("success"));
-            verify(systemConfigService).setAiDefaultProvider("openai");
-            verify(aiProviderResolver).invalidate(TENANT_ID);
+            return call.apply(controller);
         }
     }
 
-    @Test
-    @DisplayName("setAiDefaultProvider — 미등록 provider 선택 시 400 + 메시지")
-    void setAiDefaultProvider_notRegistered_returns400() {
-        User user = adminUser(TENANT_ID);
-        try (MockedStatic<SessionUtils> sessionUtils = mockStatic(SessionUtils.class)) {
-            sessionUtils.when(() -> SessionUtils.getCurrentUser(session)).thenReturn(user);
-            when(aiProviderResolver.isProviderKeyRegistered(TENANT_ID, "gemini")).thenReturn(false);
+    private static Map<String, String> body(String key, String value) {
+        Map<String, String> map = new HashMap<>();
+        map.put(key, value);
+        return map;
+    }
 
-            Map<String, String> request = new HashMap<>();
-            request.put("providerId", "gemini");
-
-            ResponseEntity<Map<String, Object>> response = controller.setAiDefaultProvider(request, session);
-
-            assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
-            Map<String, Object> body = response.getBody();
-            assertNotNull(body);
-            assertEquals(false, body.get("success"));
-            assertEquals("선택한 provider 의 API 키가 등록되지 않았습니다.", body.get("message"));
-            verify(systemConfigService, never()).setAiDefaultProvider(anyString());
-            verify(aiProviderResolver, never()).invalidate(anyString());
-        }
+    private static void assertOpsOnly(ResponseEntity<Map<String, Object>> response) {
+        assertEquals(HttpStatus.FORBIDDEN, response.getStatusCode());
+        Map<String, Object> responseBody = response.getBody();
+        assertNotNull(responseBody);
+        assertEquals(false, responseBody.get("success"));
+        assertEquals(SystemConfigController.MSG_KEY_OPS_ONLY, responseBody.get("message"));
     }
 
     @Test
-    @DisplayName("setAiDefaultProvider — tenantId null 시 403")
+    @DisplayName("setAiDefaultProvider — ADMIN 이어도 403 운영자 전용, 서비스 미호출")
+    void setAiDefaultProvider_admin_returns403OpsOnly() {
+        ResponseEntity<Map<String, Object>> response = callAs(userWithRole(UserRole.ADMIN, TENANT_ID),
+                c -> c.setAiDefaultProvider(body("providerId", "openai"), session));
+
+        assertOpsOnly(response);
+        verify(systemConfigService, never()).setAiDefaultProvider(anyString());
+    }
+
+    @Test
+    @DisplayName("setAiDefaultProvider — tenantId 없는 ADMIN 도 403 운영자 전용")
     void setAiDefaultProvider_nullTenant_returns403() {
-        User user = adminUser(null);
-        try (MockedStatic<SessionUtils> sessionUtils = mockStatic(SessionUtils.class)) {
-            sessionUtils.when(() -> SessionUtils.getCurrentUser(session)).thenReturn(user);
+        ResponseEntity<Map<String, Object>> response = callAs(userWithRole(UserRole.ADMIN, null),
+                c -> c.setAiDefaultProvider(body("providerId", "openai"), session));
 
-            Map<String, String> request = new HashMap<>();
-            request.put("providerId", "openai");
-
-            ResponseEntity<Map<String, Object>> response = controller.setAiDefaultProvider(request, session);
-
-            assertEquals(HttpStatus.FORBIDDEN, response.getStatusCode());
-            Map<String, Object> body = response.getBody();
-            assertNotNull(body);
-            assertEquals(false, body.get("success"));
-            assertEquals("테넌트 정보가 없습니다.", body.get("message"));
-            verify(systemConfigService, never()).setAiDefaultProvider(anyString());
-            verify(aiProviderResolver, never()).invalidate(anyString());
-        }
+        assertOpsOnly(response);
+        verifyNoInteractions(systemConfigService);
     }
 
     @Test
-    @DisplayName("setAiDefaultProvider — providerId 누락 시 400 (가드 미진입)")
-    void setAiDefaultProvider_missingProviderId_returns400() {
-        User user = adminUser(TENANT_ID);
-        try (MockedStatic<SessionUtils> sessionUtils = mockStatic(SessionUtils.class)) {
-            sessionUtils.when(() -> SessionUtils.getCurrentUser(session)).thenReturn(user);
+    @DisplayName("setAiDefaultProvider — STAFF 는 403 접근 권한 없음")
+    void setAiDefaultProvider_staff_returns403() {
+        ResponseEntity<Map<String, Object>> response = callAs(userWithRole(UserRole.STAFF, TENANT_ID),
+                c -> c.setAiDefaultProvider(body("providerId", "openai"), session));
 
-            Map<String, String> request = new HashMap<>();
-
-            ResponseEntity<Map<String, Object>> response = controller.setAiDefaultProvider(request, session);
-
-            assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
-            Map<String, Object> body = response.getBody();
-            assertNotNull(body);
-            assertEquals("providerId는 필수입니다.", body.get("message"));
-            verify(aiProviderResolver, never()).isProviderKeyRegistered(anyString(), anyString());
-        }
+        assertEquals(HttpStatus.FORBIDDEN, response.getStatusCode());
+        assertEquals("접근 권한이 없습니다.", response.getBody().get("message"));
+        verifyNoInteractions(systemConfigService);
     }
 
     @Test
-    @DisplayName("setConfig(AI_DEFAULT_PROVIDER) — 미등록 provider 시 400 + 캐시 무효화 미호출")
-    void setConfig_aiDefaultProvider_notRegistered_returns400() {
-        User user = adminUser(TENANT_ID);
-        try (MockedStatic<SessionUtils> sessionUtils = mockStatic(SessionUtils.class)) {
-            sessionUtils.when(() -> SessionUtils.getCurrentUser(session)).thenReturn(user);
-            when(aiProviderResolver.isProviderKeyRegistered(TENANT_ID, "gemini")).thenReturn(false);
+    @DisplayName("키 테스트·모델 목록 4종 — 403, 저장된 키 조회·외부 호출 없음")
+    void keyTestAndModelEndpoints_returns403WithoutTouchingKeys() {
+        User admin = userWithRole(UserRole.ADMIN, TENANT_ID);
+        Map<String, String> exfil = body("apiUrl", "https://attacker.example.test/collect");
 
-            Map<String, String> request = new HashMap<>();
-            request.put("configValue", "gemini");
-            request.put("description", "기본 AI 프로바이더");
-            request.put("category", "AI");
+        assertOpsOnly(callAs(admin, c -> c.testOpenAIKey(exfil, session)));
+        assertOpsOnly(callAs(admin, c -> c.testGeminiKey(exfil, session)));
+        assertOpsOnly(callAs(admin, c -> c.getOpenAIModels(exfil, session)));
+        assertOpsOnly(callAs(admin, c -> c.getGeminiModels(exfil, session)));
 
-            ResponseEntity<Map<String, Object>> response =
-                    controller.setConfig("AI_DEFAULT_PROVIDER", request, session);
-
-            assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
-            Map<String, Object> body = response.getBody();
-            assertEquals(false, body.get("success"));
-            assertEquals("선택한 provider 의 API 키가 등록되지 않았습니다.", body.get("message"));
-            verify(systemConfigService, never())
-                    .setConfigValue(anyString(), anyString(), any(), any());
-            verify(aiProviderResolver, never()).invalidate(anyString());
-        }
+        verifyNoInteractions(systemConfigService);
     }
 
     @Test
-    @DisplayName("setConfig(AI_DEFAULT_PROVIDER) — 등록된 provider 시 200 + 캐시 무효화")
-    void setConfig_aiDefaultProvider_registered_returns200() {
-        User user = adminUser(TENANT_ID);
-        try (MockedStatic<SessionUtils> sessionUtils = mockStatic(SessionUtils.class)) {
-            sessionUtils.when(() -> SessionUtils.getCurrentUser(session)).thenReturn(user);
-            when(aiProviderResolver.isProviderKeyRegistered(TENANT_ID, "openai")).thenReturn(true);
+    @DisplayName("setConfig(AI_DEFAULT_PROVIDER) — 403 운영자 전용, 저장 없음")
+    void setConfig_aiDefaultProvider_returns403() {
+        Map<String, String> request = body("configValue", "gemini");
+        request.put("category", "AI");
 
-            Map<String, String> request = new HashMap<>();
-            request.put("configValue", "openai");
-            request.put("description", "기본 AI 프로바이더");
-            request.put("category", "AI");
+        ResponseEntity<Map<String, Object>> response = callAs(userWithRole(UserRole.ADMIN, TENANT_ID),
+                c -> c.setConfig(SystemConfigAccessPolicy.AI_DEFAULT_PROVIDER, request, session));
 
-            ResponseEntity<Map<String, Object>> response =
-                    controller.setConfig("AI_DEFAULT_PROVIDER", request, session);
-
-            assertEquals(HttpStatus.OK, response.getStatusCode());
-            Map<String, Object> body = response.getBody();
-            assertEquals(true, body.get("success"));
-            verify(systemConfigService).setConfigValue(
-                    eq("AI_DEFAULT_PROVIDER"), eq("openai"), eq("기본 AI 프로바이더"), eq("AI"));
-            verify(aiProviderResolver).invalidate(TENANT_ID);
-        }
+        assertOpsOnly(response);
+        verify(systemConfigService, never()).setConfigValue(anyString(), anyString(), any(), any());
     }
 
     @Test
-    @DisplayName("setConfig(allow-list 내 비-AI 키) — 가드 미적용 (resolver 미호출) + 200")
-    void setConfig_nonAiAllowedKey_skipsGuard() {
-        User user = adminUser(TENANT_ID);
-        try (MockedStatic<SessionUtils> sessionUtils = mockStatic(SessionUtils.class)) {
-            sessionUtils.when(() -> SessionUtils.getCurrentUser(session)).thenReturn(user);
-            // resolver 호출이 일어나면 안 됨 (lenient: 다른 mock 검증 위해)
-            lenient().when(aiProviderResolver.isProviderKeyRegistered(anyString(), anyString())).thenReturn(false);
-
-            Map<String, String> request = new HashMap<>();
-            request.put("configValue", "true");
-            request.put("description", "웰니스 자동 발송");
-            request.put("category", "NOTIFICATION");
-
-            ResponseEntity<Map<String, Object>> response = controller.setConfig(
-                    SystemConfigAccessPolicy.WELLNESS_AUTO_SEND_ENABLED, request, session);
-
-            assertEquals(HttpStatus.OK, response.getStatusCode());
-            Map<String, Object> body = response.getBody();
-            assertNotNull(body);
-            assertTrue((Boolean) body.get("success"));
-            verify(aiProviderResolver, never()).isProviderKeyRegistered(anyString(), anyString());
-            verify(aiProviderResolver, never()).invalidate(anyString());
-            verify(systemConfigService).setConfigValue(
-                    eq(SystemConfigAccessPolicy.WELLNESS_AUTO_SEND_ENABLED),
-                    eq("true"), eq("웰니스 자동 발송"), eq("NOTIFICATION"));
+    @DisplayName("setConfig(AI 키·URL·모델) — 403 운영자 전용, 저장 없음")
+    void setConfig_aiProviderKeys_returns403() {
+        User admin = userWithRole(UserRole.ADMIN, TENANT_ID);
+        for (String prefix : SystemConfigAccessPolicy.AI_PROVIDER_KEY_PREFIXES) {
+            for (String suffix : new String[] {
+                SystemConfigAccessPolicy.SUFFIX_API_KEY,
+                SystemConfigAccessPolicy.SUFFIX_API_URL,
+                SystemConfigAccessPolicy.SUFFIX_MODEL
+            }) {
+                String key = prefix + suffix;
+                assertOpsOnly(callAs(admin, c -> c.setConfig(key, body("configValue", "x"), session)));
+            }
         }
+        verifyNoInteractions(systemConfigService);
+    }
+
+    @Test
+    @DisplayName("setConfig(플랫폼 세션 스위치 3종) — 403 운영자 전용, 저장·캐시 무효화 없음")
+    void setConfig_platformSessionSwitches_returns403() {
+        User admin = userWithRole(UserRole.ADMIN, TENANT_ID);
+        String[] keys = {
+            SessionSecurityFlagKeys.OAUTH_REQUIRE_SERVER_VERIFY,
+            SessionSecurityFlagKeys.BACKGROUND_401_KEEP_USER,
+            SessionSecurityFlagKeys.SOFT_FAIL_ENABLED
+        };
+        for (String key : keys) {
+            assertOpsOnly(callAs(admin, c -> c.setConfig(key, body("configValue", "false"), session)));
+        }
+        verifyNoInteractions(systemConfigService);
+        verifyNoInteractions(sessionSecurityPolicyService);
+    }
+
+    @Test
+    @DisplayName("setConfig(중복 로그인 허용) — 테넌트 단위라 200 + 캐시 무효화")
+    void setConfig_duplicateLogin_stillWritable() {
+        org.mockito.Mockito.when(sessionSecurityPolicyService
+                .isSessionSecurityConfigKey(SessionSecurityFlagKeys.DUPLICATE_LOGIN_ALLOWED)).thenReturn(true);
+
+        ResponseEntity<Map<String, Object>> response = callAs(userWithRole(UserRole.ADMIN, TENANT_ID),
+                c -> c.setConfig(SessionSecurityFlagKeys.DUPLICATE_LOGIN_ALLOWED,
+                        body("configValue", "true"), session));
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        verify(systemConfigService).setConfigValue(
+                eq(SessionSecurityFlagKeys.DUPLICATE_LOGIN_ALLOWED), eq("true"), any(), any());
+        verify(sessionSecurityPolicyService).invalidateCache(TENANT_ID);
+    }
+
+    @Test
+    @DisplayName("setConfig(allow-list 내 비-AI 키) — 200 저장")
+    void setConfig_nonAiAllowedKey_returns200() {
+        Map<String, String> request = body("configValue", "true");
+        request.put("description", "웰니스 자동 발송");
+        request.put("category", "NOTIFICATION");
+
+        ResponseEntity<Map<String, Object>> response = callAs(userWithRole(UserRole.ADMIN, TENANT_ID),
+                c -> c.setConfig(SystemConfigAccessPolicy.WELLNESS_AUTO_SEND_ENABLED, request, session));
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertTrue((Boolean) response.getBody().get("success"));
+        verify(systemConfigService).setConfigValue(
+                eq(SystemConfigAccessPolicy.WELLNESS_AUTO_SEND_ENABLED),
+                eq("true"), eq("웰니스 자동 발송"), eq("NOTIFICATION"));
     }
 
     @Test
     @DisplayName("setConfig(allow-list 외 임의 키) — 404, 서비스 호출 없음")
     void setConfig_arbitraryKey_returns404() {
-        User user = adminUser(TENANT_ID);
-        try (MockedStatic<SessionUtils> sessionUtils = mockStatic(SessionUtils.class)) {
-            sessionUtils.when(() -> SessionUtils.getCurrentUser(session)).thenReturn(user);
+        ResponseEntity<Map<String, Object>> response = callAs(userWithRole(UserRole.ADMIN, TENANT_ID),
+                c -> c.setConfig("OTHER_CONFIG_KEY", body("configValue", "anyValue"), session));
 
-            Map<String, String> request = new HashMap<>();
-            request.put("configValue", "anyValue");
-
-            ResponseEntity<Map<String, Object>> response =
-                    controller.setConfig("OTHER_CONFIG_KEY", request, session);
-
-            assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
-            verify(systemConfigService, never())
-                    .setConfigValue(anyString(), anyString(), anyString(), anyString());
-        }
+        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+        verify(systemConfigService, never())
+                .setConfigValue(anyString(), anyString(), anyString(), anyString());
     }
 }

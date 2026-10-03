@@ -10,7 +10,7 @@
  * @since 2025-01-21
  */
 
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { ExternalLink } from 'lucide-react';
@@ -22,9 +22,9 @@ import notificationManager from '../../utils/notification';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import { USER_ROLES } from '../../constants/roles';
 import UnifiedLoading from '../common/UnifiedLoading';
-import UnifiedModal from '../common/modals/UnifiedModal';
 import ChipMultiSelect from '../common/ChipMultiSelect';
 import SettingSwitchRow from '../common/molecules/SettingSwitchRow';
+import OpsManagedSwitchRow from '../common/molecules/OpsManagedSwitchRow';
 import { SettingsPageShell, SettingsSectionPanel, SettingsButton } from './settings-shell';
 import { ADMIN_ROUTES } from '../../constants/adminRoutes';
 import '../../styles/unified-design-tokens.css';
@@ -162,6 +162,7 @@ const SystemConfigManagement = () => {
   const [saving, setSaving] = useState(false);
   const [wellness, setWellness] = useState(DEFAULT_WELLNESS);
   const [duplicateLoginAllowed, setDuplicateLoginAllowed] = useState(DEFAULT_DUPLICATE_LOGIN_ALLOWED);
+  // 플랫폼 세션 스위치 — 운영자 전용, 상태만 표시
   const [oauthRequireServerVerify, setOauthRequireServerVerify] = useState(DEFAULT_OAUTH_REQUIRE_SERVER_VERIFY);
   const [background401KeepUser, setBackground401KeepUser] = useState(DEFAULT_BACKGROUND_401_KEEP_USER);
   const [softFailEnabled, setSoftFailEnabled] = useState(DEFAULT_SOFT_FAIL_ENABLED);
@@ -170,9 +171,6 @@ const SystemConfigManagement = () => {
 
   const [schedulerFlags, setSchedulerFlags] = useState({});
   const [schedulerLoading, setSchedulerLoading] = useState(true);
-  // 토글 확인 모달 상태 — null 이면 닫힘. { key, label, nextValue } 객체로 보관.
-  const [schedulerConfirm, setSchedulerConfirm] = useState(null);
-  const schedulerConfirmResolverRef = useRef(null);
 
   const [confirmWellnessOn, WellnessOnConfirmModal] = useConfirm({
     variant: 'warning'
@@ -304,53 +302,6 @@ const SystemConfigManagement = () => {
     }
   }, [t]);
 
-  /**
-   * PR-2: 스케줄러 토글 확인 — Promise 로 주입 (useSettingToggleSave confirm).
-   * UnifiedModal 확인/취소가 resolve 한다. 저장은 훅이 수행한다.
-   *
-   * @param {{ key: string, label: string, nextValue: boolean }} payload
-   * @returns {Promise<boolean>}
-   */
-  const requestSchedulerConfirm = useCallback((payload) => {
-    return new Promise((resolve) => {
-      schedulerConfirmResolverRef.current = resolve;
-      setSchedulerConfirm(payload);
-    });
-  }, []);
-
-  const handleSchedulerConfirmCancel = useCallback(() => {
-    setSchedulerConfirm(null);
-    const resolver = schedulerConfirmResolverRef.current;
-    schedulerConfirmResolverRef.current = null;
-    if (typeof resolver === 'function') {
-      resolver(false);
-    }
-  }, []);
-
-  const handleSchedulerConfirmProceed = useCallback(() => {
-    setSchedulerConfirm(null);
-    const resolver = schedulerConfirmResolverRef.current;
-    schedulerConfirmResolverRef.current = null;
-    if (typeof resolver === 'function') {
-      resolver(true);
-    }
-  }, []);
-
-  const applySchedulerFlagFromResponse = useCallback((flag) => {
-    if (!flag || typeof flag.key !== 'string') {
-      return;
-    }
-    setSchedulerFlags((prev) => ({
-      ...prev,
-      [flag.key]: {
-        key: flag.key,
-        value: !!flag.value,
-        updatedBy: flag.updatedBy || '',
-        updatedAt: flag.updatedAt || ''
-      }
-    }));
-  }, []);
-
   const loadConfigs = useCallback(async() => {
     try {
       setLoading(true);
@@ -405,30 +356,6 @@ const SystemConfigManagement = () => {
     });
   }, [t]);
 
-  const saveOauthRequireServerVerify = useCallback(async(next) => {
-    await StandardizedApi.post(API_ADMIN_SYSTEM_CONFIG_OAUTH_REQUIRE_SERVER_VERIFY, {
-      configValue: String(next),
-      description: t('systemConfig.sessionSecurity.descOauthRequireServerVerify'),
-      category: SESSION_SECURITY_CATEGORY
-    });
-  }, [t]);
-
-  const saveBackground401KeepUser = useCallback(async(next) => {
-    await StandardizedApi.post(API_ADMIN_SYSTEM_CONFIG_BACKGROUND_401_KEEP_USER, {
-      configValue: String(next),
-      description: t('systemConfig.sessionSecurity.descBackground401KeepUser'),
-      category: SESSION_SECURITY_CATEGORY
-    });
-  }, [t]);
-
-  const saveSoftFailEnabled = useCallback(async(next) => {
-    await StandardizedApi.post(API_ADMIN_SYSTEM_CONFIG_SOFT_FAIL_ENABLED, {
-      configValue: String(next),
-      description: t('systemConfig.sessionSecurity.descSoftFailEnabled'),
-      category: SESSION_SECURITY_CATEGORY
-    });
-  }, [t]);
-
   const {
     busy: duplicateLoginBusy,
     disabled: duplicateLoginDisabled,
@@ -437,60 +364,6 @@ const SystemConfigManagement = () => {
     value: duplicateLoginAllowed,
     onValueChange: setDuplicateLoginAllowed,
     save: saveDuplicateLoginAllowed,
-    optimistic: true,
-    onSuccess: () => {
-      notificationManager.show(t('systemConfig.sessionSecurity.toggleSaveSuccess'), 'success');
-    },
-    onError: (error) => {
-      const backendMsg = error?.response?.data?.message || error?.data?.message || error?.message;
-      notificationManager.show(backendMsg || t('systemConfig.error.save'), 'error');
-    }
-  });
-
-  const {
-    busy: oauthVerifyBusy,
-    disabled: oauthVerifyDisabled,
-    onCheckedChange: onOauthVerifyCheckedChange
-  } = useSettingToggleSave({
-    value: oauthRequireServerVerify,
-    onValueChange: setOauthRequireServerVerify,
-    save: saveOauthRequireServerVerify,
-    optimistic: true,
-    onSuccess: () => {
-      notificationManager.show(t('systemConfig.sessionSecurity.toggleSaveSuccess'), 'success');
-    },
-    onError: (error) => {
-      const backendMsg = error?.response?.data?.message || error?.data?.message || error?.message;
-      notificationManager.show(backendMsg || t('systemConfig.error.save'), 'error');
-    }
-  });
-
-  const {
-    busy: background401Busy,
-    disabled: background401Disabled,
-    onCheckedChange: onBackground401CheckedChange
-  } = useSettingToggleSave({
-    value: background401KeepUser,
-    onValueChange: setBackground401KeepUser,
-    save: saveBackground401KeepUser,
-    optimistic: true,
-    onSuccess: () => {
-      notificationManager.show(t('systemConfig.sessionSecurity.toggleSaveSuccess'), 'success');
-    },
-    onError: (error) => {
-      const backendMsg = error?.response?.data?.message || error?.data?.message || error?.message;
-      notificationManager.show(backendMsg || t('systemConfig.error.save'), 'error');
-    }
-  });
-
-  const {
-    busy: softFailBusy,
-    disabled: softFailDisabled,
-    onCheckedChange: onSoftFailCheckedChange
-  } = useSettingToggleSave({
-    value: softFailEnabled,
-    onValueChange: setSoftFailEnabled,
-    save: saveSoftFailEnabled,
     optimistic: true,
     onSuccess: () => {
       notificationManager.show(t('systemConfig.sessionSecurity.toggleSaveSuccess'), 'success');
@@ -552,8 +425,8 @@ const SystemConfigManagement = () => {
       setLoading(false);
       return;
     }
-    const allowedRoles = [USER_ROLES.ADMIN, USER_ROLES.STAFF];
-    if (!allowedRoles.includes(user.role)) {
+    // 시스템 설정 API 는 ADMIN 전용 (STAFF 403) — 메뉴 정책과 동일
+    if (user.role !== USER_ROLES.ADMIN) {
       notificationManager.show(t('systemConfig.error.noAccess'), 'error');
       setLoading(false);
       return;
@@ -622,9 +495,6 @@ const SystemConfigManagement = () => {
           t={t}
           flags={schedulerFlags}
           loading={schedulerLoading}
-          requestConfirm={requestSchedulerConfirm}
-          applyFlagFromResponse={applySchedulerFlagFromResponse}
-          reloadFlags={loadSchedulerFlags}
         />
 
         {/* 세션 보안 — 테넌트별 중복 로그인 허용 */}
@@ -656,66 +526,39 @@ const SystemConfigManagement = () => {
               />
             </div>
             <div className="mg-v2-settings-field">
-              <SettingSwitchRow
+              <OpsManagedSwitchRow
                 label={t('systemConfig.sessionSecurity.oauthRequireServerVerify')}
                 hint={t('systemConfig.sessionSecurity.oauthRequireServerVerifyHint')}
                 statusLabel={oauthRequireServerVerify
                   ? t('systemConfig.notificationScheduler.status.on')
                   : t('systemConfig.notificationScheduler.status.off')}
                 checked={oauthRequireServerVerify}
-                onCheckedChange={onOauthVerifyCheckedChange}
-                disabled={oauthVerifyDisabled}
-                isPending={oauthVerifyBusy}
                 data-testid="oauth-require-server-verify-toggle"
-                ariaLabel={oauthRequireServerVerify
-                  ? t('systemConfig.notificationScheduler.toggleAriaOff', {
-                    label: t('systemConfig.sessionSecurity.oauthRequireServerVerify')
-                  })
-                  : t('systemConfig.notificationScheduler.toggleAriaOn', {
-                    label: t('systemConfig.sessionSecurity.oauthRequireServerVerify')
-                  })}
+                ariaLabel={t('systemConfig.sessionSecurity.oauthRequireServerVerify')}
               />
             </div>
             <div className="mg-v2-settings-field">
-              <SettingSwitchRow
+              <OpsManagedSwitchRow
                 label={t('systemConfig.sessionSecurity.background401KeepUser')}
                 hint={t('systemConfig.sessionSecurity.background401KeepUserHint')}
                 statusLabel={background401KeepUser
                   ? t('systemConfig.notificationScheduler.status.on')
                   : t('systemConfig.notificationScheduler.status.off')}
                 checked={background401KeepUser}
-                onCheckedChange={onBackground401CheckedChange}
-                disabled={background401Disabled}
-                isPending={background401Busy}
                 data-testid="background-401-keep-user-toggle"
-                ariaLabel={background401KeepUser
-                  ? t('systemConfig.notificationScheduler.toggleAriaOff', {
-                    label: t('systemConfig.sessionSecurity.background401KeepUser')
-                  })
-                  : t('systemConfig.notificationScheduler.toggleAriaOn', {
-                    label: t('systemConfig.sessionSecurity.background401KeepUser')
-                  })}
+                ariaLabel={t('systemConfig.sessionSecurity.background401KeepUser')}
               />
             </div>
             <div className="mg-v2-settings-field">
-              <SettingSwitchRow
+              <OpsManagedSwitchRow
                 label={t('systemConfig.sessionSecurity.softFailEnabled')}
                 hint={t('systemConfig.sessionSecurity.softFailEnabledHint')}
                 statusLabel={softFailEnabled
                   ? t('systemConfig.notificationScheduler.status.on')
                   : t('systemConfig.notificationScheduler.status.off')}
                 checked={softFailEnabled}
-                onCheckedChange={onSoftFailCheckedChange}
-                disabled={softFailDisabled}
-                isPending={softFailBusy}
                 data-testid="soft-fail-enabled-toggle"
-                ariaLabel={softFailEnabled
-                  ? t('systemConfig.notificationScheduler.toggleAriaOff', {
-                    label: t('systemConfig.sessionSecurity.softFailEnabled')
-                  })
-                  : t('systemConfig.notificationScheduler.toggleAriaOn', {
-                    label: t('systemConfig.sessionSecurity.softFailEnabled')
-                  })}
+                ariaLabel={t('systemConfig.sessionSecurity.softFailEnabled')}
               />
             </div>
           </div>
@@ -813,13 +656,6 @@ const SystemConfigManagement = () => {
         </SettingsSectionPanel>
       </SettingsPageShell>
 
-      {/* PR-2 (2026-05-25): 토글 확인 모달 — UnifiedModal 표준 */}
-      <NotificationSchedulerConfirmModal
-        t={t}
-        confirm={schedulerConfirm}
-        onProceed={handleSchedulerConfirmProceed}
-        onCancel={handleSchedulerConfirmCancel}
-      />
       <WellnessOnConfirmModal />
     </AdminCommonLayout>
   );
@@ -828,24 +664,18 @@ const SystemConfigManagement = () => {
 /**
  * PR-2 (2026-05-25): 알림 자동 발송 스케줄러 4 종 토글 섹션 (presentational + 행별 훅).
  *
- * 부모로부터 i18n {@code t}, 플래그 dict, 로딩, confirm/apply/reload 콜백을 주입받는다.
- * 각 행은 useSettingToggleSave(optimistic:false, requireConfirm) 로 정렬한다.
+ * P1 보안(2026-10-03): 4 종 플래그는 전역 행이라 테넌트 관리자 PUT 이 항상 403 이다.
+ * 상태만 {@link OpsManagedSwitchRow} 로 보여 준다 (운영자 관리 안내 포함).
  *
  * @param {object} props
  * @param {(key: string, fallback: string, vars?: object) => string} props.t i18n 함수
  * @param {Object<string, {value: boolean, updatedBy: string, updatedAt: string}>} props.flags 키별 메타
  * @param {boolean} props.loading 4 키 일괄 로딩 중
- * @param {(payload: { key: string, label: string, nextValue: boolean }) => Promise<boolean>} props.requestConfirm
- * @param {(flag: object) => void} props.applyFlagFromResponse
- * @param {() => Promise<void>} props.reloadFlags
  */
 const NotificationSchedulerSection = ({
   t,
   flags,
-  loading,
-  requestConfirm,
-  applyFlagFromResponse,
-  reloadFlags
+  loading
 }) => {
   const items = [
     {
@@ -911,16 +741,16 @@ const NotificationSchedulerSection = ({
                 key={item.key}
                 className="mg-v2-notification-scheduler__item"
               >
-                <NotificationSchedulerFlagRow
-                  t={t}
-                  flagKey={item.key}
+                <OpsManagedSwitchRow
                   label={label}
                   hint={hint}
                   meta={lastUpdatedText}
-                  value={value}
-                  requestConfirm={requestConfirm}
-                  applyFlagFromResponse={applyFlagFromResponse}
-                  reloadFlags={reloadFlags}
+                  statusLabel={value
+                    ? t('systemConfig.notificationScheduler.status.on')
+                    : t('systemConfig.notificationScheduler.status.off')}
+                  checked={value}
+                  ariaLabel={label}
+                  data-testid={`notification-scheduler-${item.key}`}
                 />
               </li>
             );
@@ -1097,120 +927,6 @@ const ReservationReminderDnFlagRow = ({
       onCheckedChange={onCheckedChange}
       data-testid={testId}
     />
-  );
-};
-
-/**
- * 스케줄러 단일 플래그 행 — useSettingToggleSave(optimistic:false) + UnifiedModal confirm.
- *
- * @param {object} props
- */
-const NotificationSchedulerFlagRow = ({
-  t,
-  flagKey,
-  label,
-  hint,
-  meta,
-  value,
-  requestConfirm,
-  applyFlagFromResponse,
-  reloadFlags
-}) => {
-  const saveFlag = useCallback(async(next) => {
-    const response = await StandardizedApi.put(
-      `${API_ADMIN_NOTIFICATION_SCHEDULER_FLAGS}/${encodeURIComponent(flagKey)}`,
-      { value: next }
-    );
-    applyFlagFromResponse(response?.flag);
-  }, [flagKey, applyFlagFromResponse]);
-
-  const confirmToggle = useCallback(({ next }) => (
-    requestConfirm({ key: flagKey, label, nextValue: next })
-  ), [requestConfirm, flagKey, label]);
-
-  const onValueChange = useCallback(() => {
-    // optimistic:false — 값은 save 응답 apply + reloadFlags 로 동기화
-  }, []);
-
-  const { busy, disabled, onCheckedChange } = useSettingToggleSave({
-    value,
-    onValueChange,
-    save: saveFlag,
-    requireConfirm: true,
-    confirm: confirmToggle,
-    optimistic: false,
-    onSuccess: async() => {
-      notificationManager.show(t('systemConfig.notificationScheduler.success.save'), 'success');
-      await reloadFlags();
-    },
-    onError: (error) => {
-      console.error('알림 스케줄러 플래그 저장 실패:', error);
-      const backendMsg = error?.response?.data?.message || error?.data?.message;
-      notificationManager.show(
-        backendMsg || t('systemConfig.notificationScheduler.error.save'),
-        'error'
-      );
-    }
-  });
-
-  const statusLabel = value
-    ? t('systemConfig.notificationScheduler.status.on')
-    : t('systemConfig.notificationScheduler.status.off');
-  const ariaLabel = value
-    ? t('systemConfig.notificationScheduler.toggleAriaOff', { label })
-    : t('systemConfig.notificationScheduler.toggleAriaOn', { label });
-
-  return (
-    <SettingSwitchRow
-      label={label}
-      hint={hint}
-      meta={meta}
-      statusLabel={statusLabel}
-      checked={value}
-      disabled={disabled}
-      isPending={busy}
-      ariaLabel={ariaLabel}
-      onCheckedChange={onCheckedChange}
-    />
-  );
-};
-
-/**
- * PR-2 (2026-05-25): 토글 확인 모달.
- *
- * UnifiedModal 표준을 사용한다. 켜기/끄기에 따라
- * 메시지가 달라지며, 확인 시 Promise resolve(true) — 실제 PUT 은 행 훅이 수행한다.
- */
-const NotificationSchedulerConfirmModal = ({ t, confirm, onProceed, onCancel }) => {
-  const isOpen = !!confirm;
-  const message = !confirm
-    ? ''
-    : confirm.nextValue
-      ? t('systemConfig.notificationScheduler.confirmOn')
-      : t('systemConfig.notificationScheduler.confirmOff');
-
-  return (
-    <UnifiedModal
-      isOpen={isOpen}
-      onClose={onCancel}
-      title={t('systemConfig.notificationScheduler.confirmTitle')}
-      subtitle={confirm ? confirm.label : ''}
-      size="small"
-      backdropClick
-      showCloseButton
-      actions={
-        <div className="mg-v2-settings-actions">
-          <SettingsButton variant="outline" onClick={onCancel}>
-            {t('systemConfig.notificationScheduler.cancel')}
-          </SettingsButton>
-          <SettingsButton variant="primary" onClick={onProceed}>
-            {t('systemConfig.notificationScheduler.confirm')}
-          </SettingsButton>
-        </div>
-      }
-    >
-      <p className="mg-v2-info-text">{message}</p>
-    </UnifiedModal>
   );
 };
 

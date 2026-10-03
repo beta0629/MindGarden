@@ -142,8 +142,10 @@ import {
   updateSmsTemplateTenantOverride,
   deleteSmsTemplateTenantOverride,
   previewSmsTemplate,
+  patchGlobalDispatchFlag,
   patchTemplateDispatchFlag
 } from '../../../../api/admin/smsTemplateApi';
+import { OPS_MANAGED_SETTING_CAPTION } from '../../../../constants/opsManagedSettings';
 
 import SmsTemplateManagementPage from '../SmsTemplateManagementPage';
 
@@ -324,6 +326,25 @@ describe('SmsTemplateManagementPage — SettingSwitchRow/Switch 스모크', () =
     expect(globalSw).toHaveAttribute('aria-checked', 'false');
     expect(screen.getByRole('switch', { name: '글로벌 SMS 발송' })).toBe(globalSw);
     expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
+  });
+
+  it('글로벌 게이트는 운영자 전용 읽기 전용 — 클릭해도 patchGlobalDispatchFlag·확인 모달이 없다', async() => {
+    getSmsTemplates.mockResolvedValue({
+      success: true,
+      data: SAMPLE_ITEMS.map((item) => ({ ...item, globalDispatchEnabled: false }))
+    });
+
+    render(<SmsTemplateManagementPage />);
+    await waitFor(() => expect(getSmsTemplates).toHaveBeenCalled());
+
+    const globalSw = await screen.findByTestId('sms-template-global-toggle-input');
+    expect(globalSw).toBeDisabled();
+    fireEvent.click(globalSw);
+
+    expect(patchGlobalDispatchFlag).not.toHaveBeenCalled();
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(globalSw).toHaveAttribute('aria-checked', 'false');
+    expect(screen.getByText(new RegExp(OPS_MANAGED_SETTING_CAPTION))).toBeInTheDocument();
   });
 
   it('글로벌 ON 이면 종목 Switch 토글이 patchTemplateDispatchFlag 를 호출한다', async() => {

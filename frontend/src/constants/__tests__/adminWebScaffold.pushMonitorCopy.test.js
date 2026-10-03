@@ -13,10 +13,10 @@ import PushMonitorOperationalBanners from '../../components/admin/PushMonitoring
 const DEVELOPER_COPY_PATTERNS = [/BW-\d/, /후속\s*PR/, /notification\.batch\./];
 
 const pushMonitorCopyEntries = () => Object.entries(ADMIN_WEB_SCAFFOLD_COPY)
-  .filter(([key, value]) => key.startsWith('PUSH_MONITOR_') && typeof value === 'string');
+  .filter(([key, value]) => key.startsWith('PUSH_') && typeof value === 'string');
 
 describe('메시지 발송 화면 문구', () => {
-  it('PUSH_MONITOR_* 문구에 개발용 메모가 없다', () => {
+  it('PUSH_MONITOR_*·PUSH_PLACEHOLDER_* 문구에 개발용 메모가 없다', () => {
     const entries = pushMonitorCopyEntries();
     expect(entries.length).toBeGreaterThan(0);
     entries.forEach(([key, value]) => {

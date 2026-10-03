@@ -334,7 +334,7 @@ export const ADMIN_WEB_SCAFFOLD_COPY = {
   CONTENT_FORM_SAVE: '저장',
   CONTENT_FORM_CANCEL: '취소',
   CONTENT_RELOAD: '다시 불러오기',
-  PUSH_PLACEHOLDER_BODY: '예정: 발송 큐 길이, 실패율, 테넌트별 설정 스냅샷 등(BW-1).',
+  PUSH_PLACEHOLDER_BODY: '발송 대기 건수, 실패율, 센터별 설정 현황을 이곳에서 확인할 수 있도록 준비 중입니다.',
   PUSH_FOOTER_NOTE: 'StandardizedApi 연동 시 이 영역에 테이블·차트가 배치됩니다.',
   PUSH_EMPTY_TITLE: '모니터링 API 준비 중',
   COMMUNITY_DETAIL_STATUS_PREFIX: '상태: ',

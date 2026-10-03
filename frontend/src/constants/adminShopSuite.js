@@ -544,6 +544,8 @@ export const ADMIN_SHOP_PG_COPY = Object.freeze({
   INFO_MERCHANT: '가맹점 ID',
   INFO_API_SECRET: 'API 시크릿',
   INFO_API_SECRET_VALUE: '•••• 암호화 저장',
+  /** P0 보안(2026-10-03): 테넌트 화면에서 복호화·복사 불가 — 설정 여부만 노출 */
+  INFO_API_SECRET_OPS_ONLY: '화면에서는 볼 수 없어요 · 운영자만 확인',
   INFO_CHANNEL_TEST: '채널 키 · 테스트',
   INFO_CHANNEL_LIVE: '채널 키 · 운영',
   INFO_CREATED: '등록',
@@ -566,6 +568,8 @@ export const ADMIN_SHOP_PG_COPY = Object.freeze({
   WEBHOOK_PLACEHOLDER_REPLACE: '새 시크릿을 넣으면 교체돼요',
   WEBHOOK_SAVE: '저장',
   WEBHOOK_NOTICE: '승인 상태는 바뀌지 않아요. 비워 두면 결제 후 정합 필요 주문이 늘어나요.',
+  /** P0 보안(2026-10-03): 웹훅 시크릿 교체는 운영자 전용 경로로만 가능 */
+  WEBHOOK_OPS_ONLY_NOTICE: '웹훅 시크릿은 운영자가 교체해요. 이 화면에서는 설정 여부만 보여요.',
   WEBHOOK_EMPTY: '웹훅 시크릿을 넣어 주세요.',
   WEBHOOK_SAVED: '웹훅 시크릿을 저장했어요',
   WEBHOOK_FAILED: '웹훅 시크릿을 저장하지 못했어요.',

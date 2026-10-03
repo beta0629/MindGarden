@@ -37,7 +37,7 @@ public class AdminAiHealthController extends BaseApiController {
      * @return 헬스 DTO
      */
     @GetMapping("/health")
-    @PreAuthorize("hasAnyRole('ADMIN', 'STAFF')")
+    @PreAuthorize("hasRole('ADMIN')") // P0 보안(2026-10-03): AI 운영 도구는 ADMIN 전용 (STAFF 제외)
     public ResponseEntity<?> getHealth(HttpSession session) {
         User currentUser = SessionUtils.getCurrentUser(session);
         if (currentUser == null) {

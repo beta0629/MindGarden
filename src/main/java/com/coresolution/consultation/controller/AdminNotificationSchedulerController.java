@@ -29,9 +29,12 @@ import org.springframework.web.bind.annotation.RestController;
  * {@link NotificationSchedulerFlagKeys#all()} 외의 키 변경을 차단한다.
  *
  * <p>RBAC: ADMIN 역할만 허용 ({@link AdminRoleUtils#isAdmin}). 미인증/일반 사용자/세션 만료는
- * 403 으로 거부한다. 감사 로그는 {@code system_config.updated_by} 에 사용자 이메일(없으면 ID)
- * 을 기록하여 PR-1 핫픽스 감사 패턴(SchedulerExecutionLog 외부 트레이스) 과 별개로 변경 이력을
- * 남긴다.
+ * 403 으로 거부한다.
+ *
+ * <p>P0 보안(2026-10-03): 조회 전용으로 축소. 전역 행 변경은 한 테넌트 관리자가 전체 테넌트의
+ * 알림 발송을 바꾸는 결과가 되므로 {@code PUT /flags/{key}} 는 ADMIN 이라도 403 이다.
+ * 응답의 마지막 변경자는 다른 관리자 이메일 대신 역할 라벨로만 노출한다
+ * ({@link NotificationSchedulerFlagDto#fromEntity}).
  *
  * <p>경로 표준화: {@code /api/v1/admin/notification-scheduler/*} (PR-2 신설). 기존
  * {@link SystemConfigController} 의 일반 키-밸류 API 는 테넌트 종속이라 전역 토글에 부적합하므로
@@ -49,10 +52,14 @@ public class AdminNotificationSchedulerController {
 
     /** 응답 메시지 — i18n 가능하도록 키만 노출하지만, 백엔드 fallback 텍스트도 한국어로 통일. */
     private static final String MSG_FORBIDDEN = "접근 권한이 없습니다.";
-    private static final String MSG_KEY_NOT_ALLOWED = "허용되지 않은 플래그 키입니다.";
-    private static final String MSG_VALUE_REQUIRED = "value 는 필수입니다.";
     private static final String MSG_GET_FAILED = "스케줄러 플래그 조회 실패";
-    private static final String MSG_PUT_FAILED = "스케줄러 플래그 저장 실패";
+
+    /**
+     * P0 보안(2026-10-03): 본 플래그는 {@code tenant_id=''} 전역 행이라 한 테넌트 관리자의 변경이
+     * 모든 테넌트의 알림 발송에 영향을 준다. 테넌트 관리자 경로에서는 변경을 차단하고 조회만 허용한다.
+     */
+    private static final String MSG_OPS_ONLY =
+            "전역 스케줄러 플래그는 운영자 전용입니다. 테넌트 관리자 경로에서는 변경할 수 없습니다.";
 
     private final SystemConfigService systemConfigService;
 
@@ -81,12 +88,16 @@ public class AdminNotificationSchedulerController {
     }
 
     /**
-     * 단일 키 토글 저장 (whitelist + audit).
+     * 단일 키 토글 저장 — P0 보안(2026-10-03) 이후 테넌트 관리자 경로에서는 차단된다.
      *
-     * @param key      플래그 키 (path variable, {@link NotificationSchedulerFlagKeys#all()} 화이트리스트)
-     * @param request  {@code {value: boolean}} 본문
-     * @param session  HTTP 세션 (RBAC + audit 사용자 식별)
-     * @return {@code {success, flag: {...}}}
+     * <p>이 플래그는 {@code system_config} 전역 행({@code tenant_id=''})이므로 한 테넌트의
+     * 관리자가 변경하면 전체 테넌트의 자동 알림 발송이 함께 멈추거나 켜진다. 전역 스위치는
+     * 운영자 전용 경로로만 변경하며, 본 엔드포인트는 ADMIN 이라도 403 을 반환한다.
+     *
+     * @param key     플래그 키 (path variable)
+     * @param request {@code {value: boolean}} 본문 (사용하지 않음)
+     * @param session HTTP 세션 (RBAC)
+     * @return 403 (운영자 전용)
      */
     @PutMapping("/flags/{key}")
     public ResponseEntity<Map<String, Object>> updateFlag(
@@ -97,26 +108,8 @@ public class AdminNotificationSchedulerController {
         if (!isAdmin(user)) {
             return forbidden();
         }
-        if (!NotificationSchedulerFlagKeys.all().contains(key)) {
-            log.warn("[NotificationSchedulerFlag] 허용되지 않은 키 변경 시도: key={}, by={}",
-                    key, auditActor(user));
-            return badRequest(MSG_KEY_NOT_ALLOWED);
-        }
-        Boolean value = extractBoolean(request);
-        if (value == null) {
-            return badRequest(MSG_VALUE_REQUIRED);
-        }
-        try {
-            NotificationSchedulerFlagDto saved = systemConfigService.setGlobalBoolean(
-                    key, value, auditActor(user));
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", true);
-            response.put("flag", saved);
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            log.error("[NotificationSchedulerFlag] updateFlag 실패: key={}", key, e);
-            return badRequest(MSG_PUT_FAILED + ": " + safeMessage(e));
-        }
+        log.warn("[NotificationSchedulerFlag] 전역 플래그 변경 차단(운영자 전용): key={}", key);
+        return opsOnly();
     }
 
     /**
@@ -133,58 +126,17 @@ public class AdminNotificationSchedulerController {
         return user != null && AdminRoleUtils.isAdmin(user);
     }
 
-    /**
-     * 감사 로그용 식별자 — 이메일 우선, 없으면 ID, 그것도 없으면 "ADMIN".
-     */
-    private String auditActor(User user) {
-        if (user == null) {
-            return "ADMIN";
-        }
-        String email = user.getEmail();
-        if (email != null && !email.isBlank()) {
-            return email.trim();
-        }
-        Long id = user.getId();
-        if (id != null) {
-            return "user#" + id;
-        }
-        return "ADMIN";
-    }
-
-    /**
-     * 요청 본문에서 {@code value} 키의 boolean 을 추출. {@code true|"true"|"1"|"on"|"yes"} 만 ON.
-     *
-     * @param request 요청 본문 (null 허용)
-     * @return 파싱된 boolean, 추출 실패 시 null
-     */
-    private Boolean extractBoolean(Map<String, Object> request) {
-        if (request == null) {
-            return null;
-        }
-        Object raw = request.get("value");
-        if (raw instanceof Boolean) {
-            return (Boolean) raw;
-        }
-        if (raw instanceof String) {
-            String normalized = ((String) raw).trim().toLowerCase();
-            if (normalized.isEmpty()) {
-                return null;
-            }
-            return "true".equals(normalized)
-                    || "1".equals(normalized)
-                    || "on".equals(normalized)
-                    || "yes".equals(normalized);
-        }
-        if (raw instanceof Number) {
-            return ((Number) raw).intValue() != 0;
-        }
-        return null;
-    }
-
     private ResponseEntity<Map<String, Object>> forbidden() {
         Map<String, Object> body = new HashMap<>();
         body.put("success", false);
         body.put("message", MSG_FORBIDDEN);
+        return ResponseEntity.status(403).body(body);
+    }
+
+    private ResponseEntity<Map<String, Object>> opsOnly() {
+        Map<String, Object> body = new HashMap<>();
+        body.put("success", false);
+        body.put("message", MSG_OPS_ONLY);
         return ResponseEntity.status(403).body(body);
     }
 

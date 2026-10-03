@@ -5,7 +5,9 @@ import java.util.HashMap;
 import java.util.Map;
 import com.coresolution.consultation.service.ComplianceService;
 import com.coresolution.consultation.service.PersonalDataDestructionService;
+import com.coresolution.core.constants.SecurityRoleConstants;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -17,15 +19,21 @@ import lombok.extern.slf4j.Slf4j;
 
 /**
  * 컴플라이언스 관리 컨트롤러
+ *
+ * <p>P0 보안(2026-10-03): 기존에는 역할 가드가 없어 {@code /api/v1/admin/**} 인증만 통과하면
+ * 내담자·상담사·사무원도 개인정보 처리 현황·영향평가·파기 로그를 조회할 수 있었다.
+ * 클래스 레벨 {@code @PreAuthorize} 로 ADMIN 전용으로 제한한다.
  * 
  * @author MindGarden
- * @version 1.0.0
+ * @version 1.1.0
  * @since 2024-12-19
+ * @updated 2026-10-03 - ADMIN 전용 RBAC 적용
  */
 @Slf4j
 @RestController
 @RequestMapping("/api/v1/admin/compliance") // 표준화 2025-12-05: 레거시 경로 제거
 @RequiredArgsConstructor
+@PreAuthorize("hasAuthority('" + SecurityRoleConstants.ROLE_ADMIN + "')")
 public class ComplianceController {
     
     private final ComplianceService complianceService;

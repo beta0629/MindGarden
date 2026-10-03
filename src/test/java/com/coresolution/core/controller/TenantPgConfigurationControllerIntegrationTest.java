@@ -107,8 +107,8 @@ class TenantPgConfigurationControllerIntegrationTest {
     }
     
     @Test
-    @DisplayName("PG 설정 목록 조회 - 성공")
-    @WithMockUser
+    @DisplayName("PG 설정 목록 조회 - ADMIN 성공")
+    @WithMockUser(roles = {"ADMIN"})
     void testGetConfigurations_Success() throws Exception {
         // Given
         List<TenantPgConfigurationResponse> configurations = Arrays.asList(testResponse);
@@ -128,8 +128,8 @@ class TenantPgConfigurationControllerIntegrationTest {
     }
     
     @Test
-    @DisplayName("PG 설정 상세 조회 - 성공")
-    @WithMockUser
+    @DisplayName("PG 설정 상세 조회 - ADMIN 성공")
+    @WithMockUser(roles = {"ADMIN"})
     void testGetConfigurationDetail_Success() throws Exception {
         // Given
         TenantPgConfigurationDetailResponse detailResponse = TenantPgConfigurationDetailResponse.detailBuilder()
@@ -316,55 +316,23 @@ class TenantPgConfigurationControllerIntegrationTest {
     }
 
     @Test
-    @DisplayName("PG 설정 키 복호화 - ADMIN 성공")
+    @DisplayName("PG 설정 키 복호화 - 테넌트 경로 엔드포인트 제거 (ADMIN 도 평문 키 불가)")
     @WithMockUser(roles = {"ADMIN"})
-    void testDecryptKeys_Success() throws Exception {
-        PgConfigurationKeysResponse keysResponse = PgConfigurationKeysResponse.builder()
-                .configId(testConfigId)
-                .tenantId(testTenantId)
-                .pgProvider("TOSS")
-                .apiKey("decrypted-api-key")
-                .secretKey("decrypted-secret-key")
-                .decryptedAt(LocalDateTime.now())
-                .requestedBy("test-user")
-                .build();
-
-        when(decryptionService.decryptKeys(eq(testTenantId), eq(testConfigId), eq("test-user")))
-                .thenReturn(keysResponse);
-
+    void testDecryptKeys_EndpointRemoved() throws Exception {
         mockMvc.perform(post("/api/v1/tenants/{tenantId}/pg-configurations/{configId}/decrypt-keys",
                         testTenantId, testConfigId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .header("X-Tenant-Id", testTenantId))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data.configId").value(testConfigId))
-                .andExpect(jsonPath("$.data.apiKey").value("decrypted-api-key"))
-                .andExpect(jsonPath("$.data.secretKey").value("decrypted-secret-key"));
+                .andExpect(status().isNotFound());
+
+        verify(decryptionService, never())
+                .decryptKeys(anyString(), anyString(), anyString());
     }
 
     @Test
-    @DisplayName("웹훅 시크릿 PATCH - 성공 (마스킹·configured·승인 유지)")
+    @DisplayName("웹훅 시크릿 PATCH - ADMIN 이어도 운영자 전용 403, 서비스 호출 없음")
     @WithMockUser(roles = {"ADMIN"})
-    void testPatchWebhookSecret_Success() throws Exception {
-        TenantPgConfigurationResponse maskedResponse = TenantPgConfigurationResponse.builder()
-                .configId(testConfigId)
-                .tenantId(testTenantId)
-                .pgProvider(PgProvider.IAMPORT)
-                .pgName("포트원")
-                .status(PgConfigurationStatus.ACTIVE)
-                .approvalStatus(ApprovalStatus.APPROVED)
-                .testMode(false)
-                .settingsJson("{\"portoneChannelKey\":\"channel-key-live\"}")
-                .portoneWebhookSecretConfigured(true)
-                .requestedAt(LocalDateTime.now())
-                .createdAt(LocalDateTime.now())
-                .updatedAt(LocalDateTime.now())
-                .build();
-
-        when(pgConfigurationService.patchWebhookSecret(eq(testTenantId), eq(testConfigId), eq("whsec_patch")))
-                .thenReturn(maskedResponse);
-
+    void testPatchWebhookSecret_OpsOnlyForbidden() throws Exception {
         PgConfigurationWebhookSecretPatchRequest request = PgConfigurationWebhookSecretPatchRequest.builder()
                 .webhookSecret("whsec_patch")
                 .build();
@@ -374,16 +342,12 @@ class TenantPgConfigurationControllerIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .header("X-Tenant-Id", testTenantId)
                         .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data.configId").value(testConfigId))
-                .andExpect(jsonPath("$.data.portoneWebhookSecretConfigured").value(true))
-                .andExpect(jsonPath("$.data.approvalStatus").value("APPROVED"))
-                .andExpect(jsonPath("$.data.status").value("ACTIVE"))
-                .andExpect(jsonPath("$.data.settingsJson").value(
-                        org.hamcrest.Matchers.not(org.hamcrest.Matchers.containsString("portoneWebhookSecret"))))
-                .andExpect(jsonPath("$.data.settingsJson").value(
+                .andExpect(status().isForbidden())
+                .andExpect(content().string(
                         org.hamcrest.Matchers.not(org.hamcrest.Matchers.containsString("whsec_patch"))));
+
+        verify(pgConfigurationService, never())
+                .patchWebhookSecret(anyString(), anyString(), anyString());
     }
 
     @Test
@@ -447,12 +411,9 @@ class TenantPgConfigurationControllerIntegrationTest {
     }
 
     @Test
-    @DisplayName("테스트 모드 PATCH - ADMIN 성공")
+    @DisplayName("테스트 모드 PATCH - ADMIN 이어도 운영자 전용 403, PortOne 모드 불변")
     @WithMockUser(roles = {"ADMIN"})
-    void testPatchTestMode_Success() throws Exception {
-        when(pgConfigurationService.patchTestMode(eq(testTenantId), eq(testConfigId), eq(true)))
-                .thenReturn(testResponse);
-
+    void testPatchTestMode_OpsOnlyForbidden() throws Exception {
         PgConfigurationTestModePatchRequest request = PgConfigurationTestModePatchRequest.builder()
                 .testMode(true)
                 .build();
@@ -462,9 +423,10 @@ class TenantPgConfigurationControllerIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .header("X-Tenant-Id", testTenantId)
                         .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data.configId").value(testConfigId));
+                .andExpect(status().isForbidden());
+
+        verify(pgConfigurationService, never())
+                .patchTestMode(anyString(), anyString(), any());
     }
 
     @Test
@@ -680,7 +642,7 @@ class TenantPgConfigurationControllerIntegrationTest {
                         testTenantId, testConfigId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .header("X-Tenant-Id", testTenantId))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isNotFound());
 
         verify(decryptionService, never())
                 .decryptKeys(anyString(), anyString(), anyString());
@@ -694,7 +656,7 @@ class TenantPgConfigurationControllerIntegrationTest {
                         testTenantId, testConfigId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .header("X-Tenant-Id", testTenantId))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isNotFound());
 
         verify(decryptionService, never())
                 .decryptKeys(anyString(), anyString(), anyString());

@@ -19,6 +19,16 @@ import { resolvePostLoginLandingPath } from './dashboardUtils';
 /** 내담자 LNB 커뮤니티 잔재 menuCode — v4는 헤더 내비 SSOT이므로 드롭만 수행 */
 const CLIENT_COMMUNITY_MENU_CODE = 'CLT_COMMUNITY';
 
+/**
+ * P0 보안(2026-10-03): STAFF(사무원)에게 노출하지 않는 LNB menuCode.
+ * 서버 SSOT: `com.coresolution.core.constants.StaffRestrictedMenuCodes`.
+ */
+export const STAFF_RESTRICTED_LNB_MENU_CODES = Object.freeze([
+  'ADM_SETTINGS_PG',
+  'ADM_SETTINGS_AI_PROVIDER',
+  'ADM_SETTINGS_SYSTEM'
+]);
+
 const SHOP_ADMIN_LNB_GROUP_LABEL = '쇼핑·리워드';
 const CLIENT_SHOP_LNB_GROUP_LABEL = '온라인 쇼핑';
 const BILLING_ADMIN_LNB_GROUP_LABEL = '결제/구독';
@@ -244,6 +254,16 @@ export const SHOP_ADMIN_LNB_CHILD_LABELS = Object.freeze({
 
 export const PG_CONFIGURATION_LNB_PATH = '/tenant/pg-configurations';
 export const PG_CONFIGURATION_LNB_LABEL = '결제 연결';
+
+/**
+ * P0 보안(2026-10-03): {@link STAFF_RESTRICTED_LNB_MENU_CODES} 가 없는 폴백 항목을
+ * 경로로도 판정하기 위한 보조 SSOT.
+ */
+export const STAFF_RESTRICTED_LNB_PATHS = Object.freeze([
+  PG_CONFIGURATION_LNB_PATH,
+  ADMIN_ROUTES.AI_PROVIDERS,
+  ADMIN_ROUTES.SYSTEM_CONFIG
+]);
 
 const SHOP_LNB_CHILD_ORDER = Object.freeze([
   ADMIN_ROUTES.SHOP_ORDERS,
@@ -495,6 +515,55 @@ export function filterStaffErpLnbItems(items) {
   };
 
   return items.map(filterNode).filter(Boolean);
+}
+
+/**
+ * STAFF(사무원) LNB에서 운영재무 + 결제 연결(PG)·AI 프로바이더·시스템 설정 노드 제거.
+ *
+ * P0 보안(2026-10-03): DB LNB SSOT는 서버
+ * (`MenuServiceImpl.filterStaffRestrictedMenus` + `StaffRestrictedMenuCodes`)가 차단하지만,
+ * `/api/v1/menus/lnb` 실패 시 쓰이는 폴백 트리에도 동일 정책을 적용해야 한다.
+ * menuCode가 없는 폴백 항목은 경로로도 판정한다.
+ * 메뉴 숨김만으로는 보안이 아니며, 해당 API는 모두 ADMIN 전용으로 제한되어 있다.
+ *
+ * @param {Array<{ to?: string, label?: string, icon?: string, end?: boolean, menuCode?: string, children?: Array }>} items
+ * @returns {typeof items}
+ */
+export function filterStaffRestrictedLnbItems(items) {
+  if (!Array.isArray(items)) {
+    return items;
+  }
+
+  const filterNode = (item) => {
+    if (!item || typeof item !== 'object') {
+      return null;
+    }
+    if (STAFF_RESTRICTED_LNB_MENU_CODES.includes(item.menuCode)
+      || isStaffRestrictedLnbPath(item.to)) {
+      return null;
+    }
+    if (!Array.isArray(item.children) || item.children.length === 0) {
+      return item;
+    }
+    const children = item.children.map(filterNode).filter(Boolean);
+    if (children.length === 0) {
+      return null;
+    }
+    return { ...item, children };
+  };
+
+  return filterStaffErpLnbItems(items).map(filterNode).filter(Boolean);
+}
+
+/**
+ * @param {string|undefined|null} path
+ * @returns {boolean}
+ */
+function isStaffRestrictedLnbPath(path) {
+  if (typeof path !== 'string' || !path.startsWith('/')) {
+    return false;
+  }
+  return STAFF_RESTRICTED_LNB_PATHS.includes(path.split('?')[0]);
 }
 
 /**

@@ -467,6 +467,105 @@ public class PersonalDataDestructionService {
         return result;
     }
 
+    /** 파기 범위 식별자 — 사용자 데이터. */
+    public static final String SCOPE_USER_DATA = "userData";
+
+    /** 파기 범위 식별자 — 상담 기록. */
+    public static final String SCOPE_CONSULTATION_DATA = "consultationData";
+
+    /** 파기 범위 식별자 — 결제 데이터. */
+    public static final String SCOPE_PAYMENT_DATA = "paymentData";
+
+    /** 파기 범위 식별자 — 급여 데이터. */
+    public static final String SCOPE_SALARY_DATA = "salaryData";
+
+    /** 파기 범위 식별자 — 개인정보 접근 로그. */
+    public static final String SCOPE_ACCESS_LOG = "accessLog";
+
+    /** 파기 범위 식별자 — 전체. */
+    public static final String SCOPE_ALL = "all";
+
+    /**
+     * 파기 대상 건수 미리보기 (읽기 전용, 파기 수행 없음).
+     *
+     * <p>P0 보안(2026-10-03): 개인정보 파기는 되돌릴 수 없으므로 preview → execute 2단계
+     * 확인을 강제한다. 본 메서드는 현재 테넌트의 파기 대상 건수만 집계하고 아무것도 삭제하지
+     * 않는다. {@code execute*} 호출 시 전달된 기대 건수가 본 집계와 다르면 거부된다.
+     *
+     * @return 범위별 파기 대상 건수 (테넌트 컨텍스트가 없으면 전부 0)
+     */
+    @Transactional(readOnly = true)
+    public Map<String, Integer> previewExpiredCounts() {
+        Map<String, Integer> counts = new java.util.LinkedHashMap<>();
+        counts.put(SCOPE_USER_DATA, countExpiredUserData());
+        counts.put(SCOPE_CONSULTATION_DATA, countExpiredConsultationData());
+        counts.put(SCOPE_PAYMENT_DATA, countExpiredPaymentData());
+        counts.put(SCOPE_SALARY_DATA, countExpiredSalaryData());
+        counts.put(SCOPE_ACCESS_LOG, countExpiredAccessLogs());
+        return counts;
+    }
+
+    /**
+     * 특정 범위의 파기 대상 건수 조회.
+     *
+     * @param scope {@code SCOPE_*} 상수 중 하나
+     * @return 파기 대상 건수. 알 수 없는 범위는 -1
+     */
+    @Transactional(readOnly = true)
+    public int previewExpiredCount(String scope) {
+        Map<String, Integer> counts = previewExpiredCounts();
+        if (SCOPE_ALL.equals(scope)) {
+            return counts.values().stream().mapToInt(Integer::intValue).sum();
+        }
+        Integer count = counts.get(scope);
+        return count != null ? count : -1;
+    }
+
+    private int countExpiredUserData() {
+        Optional<String> tenantId = resolveTenantIdForDestruction("사용자(preview)");
+        if (tenantId.isEmpty()) {
+            return 0;
+        }
+        return userRepository.findExpiredUsersForDestructionByTenantId(
+            tenantId.get(), cutoffFor(LifecycleDataCategory.USER_DATA)).size();
+    }
+
+    private int countExpiredConsultationData() {
+        Optional<String> tenantId = resolveTenantIdForDestruction("상담기록(preview)");
+        if (tenantId.isEmpty()) {
+            return 0;
+        }
+        return consultationRecordRepository.findExpiredRecordsForDestruction(
+            tenantId.get(), cutoffFor(LifecycleDataCategory.CONSULTATION_RECORDS)).size();
+    }
+
+    private int countExpiredPaymentData() {
+        Optional<String> tenantId = resolveTenantIdForDestruction("결제(preview)");
+        if (tenantId.isEmpty()) {
+            return 0;
+        }
+        return paymentRepository.findExpiredPaymentsForDestructionByTenantId(
+            tenantId.get(), cutoffFor(LifecycleDataCategory.PAYMENTS)).size();
+    }
+
+    private int countExpiredSalaryData() {
+        Optional<String> tenantId = resolveTenantIdForDestruction("급여(preview)");
+        if (tenantId.isEmpty()) {
+            return 0;
+        }
+        return salaryCalculationRepository.findExpiredSalariesForDestructionByTenantId(
+            tenantId.get(), cutoffFor(LifecycleDataCategory.SALARY_DATA)).size();
+    }
+
+    private int countExpiredAccessLogs() {
+        Optional<String> tenantId = resolveTenantIdForDestruction("접근로그(preview)");
+        if (tenantId.isEmpty()) {
+            return 0;
+        }
+        return (int) personalDataAccessLogRepository.countByTenantIdAndAccessTimeBefore(
+            tenantId.get(), cutoffFor(LifecycleDataCategory.ACCESS_LOGS));
+    }
+
     /**
      * 개인정보 파기 현황 조회.
      */

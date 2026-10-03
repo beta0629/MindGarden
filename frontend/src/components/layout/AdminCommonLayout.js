@@ -26,7 +26,7 @@ import {
   deriveGnbQuickNavigateActionsFromLnb,
   filterBranchAdminLnbItems,
   filterHiddenAdminLnbItems,
-  filterStaffErpLnbItems,
+  filterStaffRestrictedLnbItems,
   getLnbTreeFromResponse,
   mergeBillingAdminLnbItems,
   mergeClientShopLnbItems,
@@ -158,7 +158,8 @@ const AdminCommonLayoutShell = ({
       return CLIENT_MENU_ITEMS;
     }
     const base = DEFAULT_MENU_ITEMS;
-    return isStaffUser ? filterStaffErpLnbItems(base) : base;
+    // P0 보안(2026-10-03): STAFF 폴백 LNB에서 결제 연결(PG)·AI·시스템 설정까지 제거
+    return isStaffUser ? filterStaffRestrictedLnbItems(base) : base;
   };
 
   const resolveLnbHeaderTitle = () => {
@@ -208,8 +209,9 @@ const AdminCommonLayoutShell = ({
     if (isCounselorOnly) {
       return CONSULTANT_MENU_ITEMS;
     }
+    // P0 보안(2026-10-03): ERP + 결제 연결(PG)·AI·시스템 설정을 STAFF LNB에서 제거
     const applyStaffErpFilter = (items) => (
-      isStaffUser ? filterStaffErpLnbItems(items) : items
+      isStaffUser ? filterStaffRestrictedLnbItems(items) : items
     );
     if (lnbRawTree && lnbRawTree.length > 0) {
       let normalized = mergeSupplementalAdminLnbItems(

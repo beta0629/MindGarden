@@ -1,5 +1,6 @@
 package com.coresolution.core.service.impl;
 
+import com.coresolution.core.constants.StaffRestrictedMenuCodes;
 import com.coresolution.core.dto.MenuDTO;
 import com.coresolution.core.entity.Menu;
 import com.coresolution.core.repository.MenuRepository;
@@ -116,8 +117,37 @@ public class MenuServiceImpl implements MenuService {
             tree = tree.stream()
                 .filter(m -> !"ADM_ERP".equals(m.getMenuCode()))
                 .collect(Collectors.toList());
+            tree = filterStaffRestrictedMenus(tree);
         }
         return tree;
+    }
+
+    /**
+     * STAFF 에게 노출하지 않는 메뉴를 트리에서 제거한다 (자식 포함).
+     *
+     * <p>P0 보안(2026-10-03): STAFF 의 {@code visibleRoles} 에 {@code ADMIN} 이 포함되어 있어
+     * {@code required_role='ADMIN'} 으로 시드된 결제 연결(PG)·AI 프로바이더·시스템 설정 메뉴가
+     * 사무원 LNB 에 그대로 노출됐다. {@link StaffRestrictedMenuCodes} 를 SSOT 로 제거한다.
+     * 메뉴 숨김만으로는 보안이 아니므로 해당 API 들도 ADMIN 전용으로 제한되어 있다.
+     *
+     * @param tree LNB 메뉴 트리
+     * @return STAFF 제한 메뉴가 제거된 트리
+     */
+    private List<MenuDTO> filterStaffRestrictedMenus(List<MenuDTO> tree) {
+        if (tree == null || tree.isEmpty()) {
+            return tree;
+        }
+        List<MenuDTO> filtered = new ArrayList<>();
+        for (MenuDTO menu : tree) {
+            if (menu == null || StaffRestrictedMenuCodes.isRestricted(menu.getMenuCode())) {
+                continue;
+            }
+            if (menu.getChildren() != null && !menu.getChildren().isEmpty()) {
+                menu.setChildren(filterStaffRestrictedMenus(menu.getChildren()));
+            }
+            filtered.add(menu);
+        }
+        return filtered;
     }
 
     @Override

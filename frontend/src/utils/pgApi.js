@@ -177,22 +177,8 @@ export const getPortOneClientConfig = async(tenantId) => {
   }
 };
 
-/**
- * PG 설정 키 복호화 (테넌트용)
- *
- * @param {string} tenantId - 테넌트 ID
- * @param {string} configId - PG 설정 ID
- * @returns {Promise<Object>} 복호화된 키 정보
+/*
+ * P0 보안(2026-10-03): 테넌트용 키 복호화 호출(`decryptPgKeys`)을 제거했다.
+ * 서버의 테넌트 경로 복호화 엔드포인트가 삭제되어 평문 키를 응답하는 경로가 없다.
+ * 운영자 복호화는 `pgOpsApi.decryptPgKeysForOps` 만 사용한다.
  */
-export const decryptPgKeys = async(tenantId, configId) => {
-  try {
-    const response = await StandardizedApi.post(
-      `${getTenantPgBase(tenantId)}/${configId}/decrypt-keys`,
-      {}
-    );
-    return response;
-  } catch (error) {
-    console.error('PG 설정 키 복호화 실패:', error);
-    throw error;
-  }
-};

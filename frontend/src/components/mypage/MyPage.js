@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { sessionManager } from '../../utils/sessionManager';
 import { withFormSubmit } from '../../utils/formSubmitWrapper';
 import mypageApi from '../../utils/mypageApi';
@@ -22,32 +22,44 @@ import UnifiedLoading from '../common/UnifiedLoading';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import ClientWebPageShell from '../client/ClientWebPageShell';
 import { ContentArea } from '../dashboard-v2/content';
+import ErpPageShell from '../erp/shell/ErpPageShell';
 import { useSession } from '../../contexts/SessionContext';
 import { RoleUtils } from '../../constants/roles';
-import { buildSessionRemainingLabel, computeSessionExpiryState, pickFresherSessionInfo } from '../../utils/sessionExpiryDisplay';
-import { SESSION_REMAINING_DISPLAY } from '../../constants/session';
-import ProfileSection from './components/ProfileSection';
+import ProfileSection, { PROFILE_OWNED_SECTIONS, getProfileAvatarSrc } from './components/ProfileSection';
 import PrivacyConsentSection from './components/PrivacyConsentSection';
 import SettingsSection from './components/SettingsSection';
 import SecuritySection from './components/SecuritySection';
 import SocialAccountsSection from './components/SocialAccountsSection';
+import AccountManagementSection from './components/AccountManagementSection';
+import ClientNotificationToggles from './components/ClientNotificationToggles';
 import PasswordResetModal from './components/PasswordResetModal';
 import PasswordChangeModal from './components/PasswordChangeModal';
 import WithdrawalRequestModal from './components/WithdrawalRequestModal';
 import WithdrawalPendingWidget from './components/WithdrawalPendingWidget';
 import MypageQuietHeader from './shell/MypageQuietHeader';
-import MypageSummaryStrip from './shell/MypageSummaryStrip';
+import MypageLayout from './layout/MypageLayout';
+import MypageAccountCard from './layout/MypageAccountCard';
+import MypageRoleLinks from './layout/MypageRoleLinks';
+import MypageSectionIndex from './layout/MypageSectionIndex';
 import {
   MYPAGE_TITLE_ID,
-  MYPAGE_TAB_SET,
-  MYPAGE_TAB_ORDER,
-  MYPAGE_TAB_LABELS,
-  MYPAGE_TAB_KEYS,
   getSocialProviderLabel,
   MYPAGE_SOCIAL_LINK_DEFAULT_ERROR,
   MYPAGE_SOCIAL_LINK_DEFAULT_SUCCESS
 } from '../../constants/mypageUi';
-import SegmentedTabs from '../common/SegmentedTabs';
+import {
+  MYPAGE_SECTION_KEYS,
+  MYPAGE_FEATURE_READY,
+  MYPAGE_LAYOUT_COPY,
+  MYPAGE_ROLE_LAYOUT_KEYS,
+  MYPAGE_SOCIAL_PROVIDER_LABELS,
+  resolveMypageRoleLayout,
+  resolveMypageScrollTarget
+} from '../../constants/mypageRoleLayout';
+import { CLIENT_SHOP_ROUTES } from '../../constants/clientShopConstants';
+import { fetchShopCart } from '../../services/clientShopService';
+import { sumCartLineQuantities } from '../../utils/guestShopCart';
+import { readReturnToFromSearch } from '../../utils/clientSettingsReturnTo';
 import { formatPhoneNumber } from '../../utils/common';
 import '../../styles/unified-design-tokens.css';
 import '../../styles/tokens/design-v2-tokens.css';
@@ -55,29 +67,18 @@ import './MyPageClinicOs.css';
 import { useTranslation } from 'react-i18next';
 import i18n from '../../i18n';
 
-const TAB_IDS = {
-  profile: 'mg-mypage-tab-profile',
-  settings: 'mg-mypage-tab-settings',
-  security: 'mg-mypage-tab-security',
-  social: 'mg-mypage-tab-social',
-  privacy: 'mg-mypage-tab-privacy'
-};
-
-const PANEL_IDS = {
-  profile: 'mg-mypage-panel-profile',
-  settings: 'mg-mypage-panel-settings',
-  security: 'mg-mypage-panel-security',
-  social: 'mg-mypage-panel-social',
-  privacy: 'mg-mypage-panel-privacy'
-};
+const MYPAGE_PAGE_TEST_ID = 'client-mypage-page';
+const MYPAGE_MAIN_ARIA = '마이페이지 본문';
 
 const MyPage = () => {
   const { t } = useTranslation();
-  const { user: sessionUser, sessionInfo } = useSession();
+  const { user: sessionUser } = useSession();
   const [searchParams, setSearchParams] = useSearchParams();
+  const location = useLocation();
+  const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [localUser, setLocalUser] = useState(null);
-  const [activeTab, setActiveTab] = useState(MYPAGE_TAB_KEYS.PROFILE);
+  const [activeEditSection, setActiveEditSection] = useState(null);
   const [socialAccounts, setSocialAccounts] = useState([]);
   const [showPasswordResetModal, setShowPasswordResetModal] = useState(false);
   const [showPasswordChangeModal, setShowPasswordChangeModal] = useState(false);
@@ -85,6 +86,7 @@ const MyPage = () => {
   const [showLogoutOtherConfirm, setShowLogoutOtherConfirm] = useState(false);
   const [showWithdrawalModal, setShowWithdrawalModal] = useState(false);
   const [withdrawalStatus, setWithdrawalStatus] = useState(null);
+  const [cartQty, setCartQty] = useState(null);
   const [formData, setFormData] = useState({
     userId: '',
     nickname: '',
@@ -116,10 +118,6 @@ const MyPage = () => {
     notificationChannelPreferenceUiAdjusted: undefined
   });
 
-  const [sessionLabel, setSessionLabel] = useState('');
-
-  const visibleTabs = MYPAGE_TAB_ORDER.filter((key) => MYPAGE_TAB_SET.has(key));
-
   // P0 hotfix 2026-06-12: SessionContext.user 우선 사용. sessionManager.checkSession(true) 호출 회피.
   // 마이페이지 진입 시 loadUserInfo / loadSocialAccounts / loadWithdrawalStatus 가 동시에 호출되어
   // resolveMypageSessionUser → checkSession(true) 가 중복 발생, current-user 호출이 N배 증폭되던 문제 차단.
@@ -144,21 +142,6 @@ const MyPage = () => {
     resolved = sessionManager.getUser() || sessionUser;
     return resolved || null;
   }, [sessionUser]);
-
-  const setTabInUrl = useCallback(
-    (tab) => {
-      setActiveTab(tab);
-      setSearchParams(
-        (prev) => {
-          const next = new URLSearchParams(prev);
-          next.set('tab', tab);
-          return next;
-        },
-        { replace: true }
-      );
-    },
-    [setSearchParams]
-  );
 
   const loadUserInfo = useCallback(async() => {
     try {
@@ -268,33 +251,8 @@ const MyPage = () => {
   }, []);
 
   const displayUser = user || localUser || sessionUser;
-
-  useEffect(() => {
-    if (!displayUser) {
-      setSessionLabel('');
-      return undefined;
-    }
-
-    const tick = () => {
-      const effectiveInfo = pickFresherSessionInfo(sessionInfo, sessionManager.getSessionInfo());
-      if (!effectiveInfo || effectiveInfo.isAuthenticated !== true) {
-        setSessionLabel('');
-        return;
-      }
-      const { remainingMs } = computeSessionExpiryState(effectiveInfo, Date.now(), {
-        allowFallback: false
-      });
-      if (remainingMs == null) {
-        setSessionLabel('활성');
-        return;
-      }
-      setSessionLabel(buildSessionRemainingLabel(remainingMs));
-    };
-
-    tick();
-    const id = setInterval(tick, SESSION_REMAINING_DISPLAY.TICK_MS);
-    return () => clearInterval(id);
-  }, [displayUser, sessionInfo]);
+  const roleLayout = resolveMypageRoleLayout(displayUser);
+  const isClientLayout = roleLayout.key === MYPAGE_ROLE_LAYOUT_KEYS.CLIENT;
 
   useEffect(() => {
     loadUserInfo();
@@ -318,12 +276,36 @@ const MyPage = () => {
     return () => document.removeEventListener('visibilitychange', onVisibility);
   }, [loadUserInfo]);
 
-  useEffect(() => {
-    const tab = searchParams.get('tab');
-    if (tab && MYPAGE_TAB_SET.has(tab)) {
-      setActiveTab(tab);
+  const scrollToSection = useCallback((sectionKey) => {
+    const target = sectionKey ? document.getElementById(sectionKey) : null;
+    if (target && typeof target.scrollIntoView === 'function') {
+      target.scrollIntoView({ block: 'start' });
+      return;
     }
-  }, [searchParams]);
+    if (typeof window.scrollTo === 'function') {
+      window.scrollTo({ top: 0 });
+    }
+  }, []);
+
+  // ?tab= (구 탭 딥링크) · #섹션 → 해당 섹션으로 스크롤. 없으면 맨 위.
+  // 결제 화면의 휴대폰 인증 복귀(returnTo)는 휴대폰 행이 있는 기본 정보로.
+  const hasClientReturnTo = isClientLayout && Boolean(readReturnToFromSearch(location.search));
+  const scrollTarget = hasClientReturnTo
+    ? MYPAGE_SECTION_KEYS.BASIC
+    : resolveMypageScrollTarget({
+      tab: searchParams.get('tab'),
+      hash: location.hash,
+      sections: roleLayout.sections
+    });
+  const scrolledTargetRef = useRef('');
+  const sectionsReady = Boolean(user);
+  useEffect(() => {
+    if (!sectionsReady || !scrollTarget || scrolledTargetRef.current === scrollTarget) {
+      return;
+    }
+    scrolledTargetRef.current = scrollTarget;
+    scrollToSection(scrollTarget);
+  }, [sectionsReady, scrollTarget, scrollToSection]);
 
   useEffect(() => {
     let linkStatus = searchParams.get('link');
@@ -364,11 +346,29 @@ const MyPage = () => {
     }, { replace: true });
   }, [loadSocialAccounts, searchParams, setSearchParams]);
 
+  // 내담자 헤더 장바구니 뱃지 — 기존 장바구니 조회(GET)만 사용
   useEffect(() => {
-    if (activeTab === MYPAGE_TAB_KEYS.SOCIAL) {
-      loadSocialAccounts();
+    if (!isClientLayout) {
+      return undefined;
     }
-  }, [activeTab, loadSocialAccounts]);
+    let cancelled = false;
+    const loadCartQty = async() => {
+      try {
+        const cart = await fetchShopCart();
+        if (!cancelled) {
+          setCartQty(sumCartLineQuantities(cart?.lines));
+        }
+      } catch {
+        if (!cancelled) {
+          setCartQty(null);
+        }
+      }
+    };
+    loadCartQty();
+    return () => {
+      cancelled = true;
+    };
+  }, [isClientLayout]);
 
   const handleSubmit = withFormSubmit(async(e, formDataToUpdate) => {
     if (e && e.preventDefault) {
@@ -563,13 +563,11 @@ const MyPage = () => {
     !!withdrawalStatus && withdrawalStatus.lifecycleState === 'WITHDRAWAL_PENDING';
 
   const handleLinkSocialAccount = async(provider) => {
+    const providerName = MYPAGE_SOCIAL_PROVIDER_LABELS[provider] || provider;
     try {
-      notificationManager.show(
-        `${provider === 'KAKAO' ? '카카오' : '네이버'} 계정 연동을 시작합니다.`,
-        'info'
-      );
+      notificationManager.show(`${providerName} 계정 연동을 시작합니다.`, 'info');
       const oauthUrl = await mypageApi.getOAuth2Url(provider);
-      notificationManager.show(`${provider === 'KAKAO' ? '카카오' : '네이버'}에서 권한을 승인해주세요.`, 'system');
+      notificationManager.show(`${providerName}에서 권한을 승인해주세요.`, 'system');
       window.location.href = oauthUrl;
     } catch (error) {
       console.error('소셜 계정 연동 URL 생성 실패:', error);
@@ -596,25 +594,26 @@ const MyPage = () => {
     }
   };
 
-  const handleSupportClick = () => {
-    notificationManager.show('고객센터 연결은 준비 중입니다.', 'info');
-  };
-
-  const handleLogoutClick = async() => {
-    try {
-      await sessionManager.logout();
-    } catch (error) {
-      console.error('로그아웃 실패:', error);
-      notificationManager.show('로그아웃 중 오류가 발생했습니다.', 'error');
+  // 구 /client/settings?returnTo= (결제 화면 휴대폰 인증) — 인증 성공 후 원래 화면으로
+  const handlePhoneChanged = useCallback(async() => {
+    const returnTo = isClientLayout ? readReturnToFromSearch(location.search) : '';
+    if (!returnTo) {
+      return;
     }
-  };
+    try {
+      await sessionManager.checkSession(true);
+    } catch (error) {
+      console.warn('휴대폰 인증 후 세션 갱신 실패 — 원래 화면으로 이동:', error);
+    }
+    navigate(returnTo, { replace: true });
+  }, [isClientLayout, location.search, navigate]);
 
   if (!displayUser) {
     if (RoleUtils.isClient(sessionUser)) {
       return (
-        <ClientWebPageShell>
+        <ClientWebPageShell title={MYPAGE_LAYOUT_COPY.TITLE} titleId={MYPAGE_TITLE_ID}>
           <div aria-busy="true" aria-live="polite">
-            <UnifiedLoading type="inline" text="사용자 정보를 불러오는 중..." />
+            <UnifiedLoading type="inline" text={MYPAGE_LAYOUT_COPY.LOADING} />
           </div>
         </ClientWebPageShell>
       );
@@ -624,131 +623,117 @@ const MyPage = () => {
         title={t('common.labels.myPage')}
         className="mg-v2-dashboard-layout"
         loading
-        loadingText="사용자 정보를 불러오는 중..."
+        loadingText={MYPAGE_LAYOUT_COPY.LOADING}
       />
     );
   }
 
-  const myPageBody = (
+  const profileSectionKeys = roleLayout.sections.filter((key) => PROFILE_OWNED_SECTIONS.includes(key));
+  const displayName = pickSessionProfileNameForForm(displayUser) || formData.nickname || '';
+
+  const sectionRenderers = {
+    [MYPAGE_SECTION_KEYS.SECURITY]: () => (
+      <SecuritySection
+        key={MYPAGE_SECTION_KEYS.SECURITY}
+        onPasswordChange={handlePasswordChange}
+        onPasswordReset={handlePasswordReset}
+        onRequestLogoutOtherDevices={() => setShowLogoutOtherConfirm(true)}
+      />
+    ),
+    [MYPAGE_SECTION_KEYS.SOCIAL]: () => (
+      <SocialAccountsSection
+        key={MYPAGE_SECTION_KEYS.SOCIAL}
+        socialAccounts={socialAccounts}
+        onLinkAccount={handleLinkSocialAccount}
+        onUnlinkAccount={requestUnlinkSocial}
+      />
+    ),
+    [MYPAGE_SECTION_KEYS.PRIVACY]: () => (
+      <PrivacyConsentSection
+        key={MYPAGE_SECTION_KEYS.PRIVACY}
+        editDisabled={activeEditSection != null}
+      />
+    ),
+    [MYPAGE_SECTION_KEYS.ACCOUNT]: () => (
+      <AccountManagementSection
+        key={MYPAGE_SECTION_KEYS.ACCOUNT}
+        onRequestWithdrawal={handleOpenWithdrawalModal}
+        isWithdrawalPending={isWithdrawalPending}
+        withdrawalStatus={withdrawalStatus}
+        onWithdrawalCancelled={handleWithdrawalCancelled}
+      />
+    )
+  };
+
+  const renderSection = (key) => {
+    if (PROFILE_OWNED_SECTIONS.includes(key)) {
+      if (key !== profileSectionKeys[0]) {
+        return null;
+      }
+      return (
+        <ProfileSection
+          key="profile-sections"
+          user={user}
+          displayUser={displayUser}
+          formData={formData}
+          onFormDataChange={setFormData}
+          onUserChange={setUser}
+          onSave={handleSubmit}
+          onReloadProfile={loadUserInfo}
+          onPhoneChanged={handlePhoneChanged}
+          formatPhoneNumber={formatPhoneNumber}
+          sections={profileSectionKeys}
+          hideFields={roleLayout.hideFields}
+          activeEditSection={activeEditSection}
+          onEditSectionChange={setActiveEditSection}
+          notifyExtra={isClientLayout ? <ClientNotificationToggles /> : null}
+        />
+      );
+    }
+    const render = sectionRenderers[key];
+    return render ? render() : null;
+  };
+
+  const pendingNotice = isWithdrawalPending && !roleLayout.sections.includes(MYPAGE_SECTION_KEYS.ACCOUNT)
+    ? (
+      <WithdrawalPendingWidget
+        withdrawalExpiresAt={withdrawalStatus?.withdrawalExpiresAt}
+        withdrawalRequestedAt={withdrawalStatus?.withdrawalRequestedAt}
+        onCancelled={handleWithdrawalCancelled}
+      />
+    )
+    : null;
+
+  const layoutNode = (
+    <MypageLayout
+      mode={roleLayout.layout}
+      surface={roleLayout.surface}
+      roleKey={roleLayout.key}
+      notice={pendingNotice}
+      account={(
+        <MypageAccountCard
+          displayName={displayName}
+          centerName={resolveMypageCenterName(displayUser)}
+          roleLabel={getMypageRoleDisplayLabel(displayUser)}
+          avatarSrc={getProfileAvatarSrc(formData)}
+        />
+      )}
+      links={(
+        <MypageRoleLinks
+          title={roleLayout.linksTitle}
+          landing={roleLayout.linksLanding}
+          links={roleLayout.links}
+        />
+      )}
+      index={<MypageSectionIndex sections={roleLayout.sections} onNavigate={scrollToSection} />}
+    >
+      {roleLayout.sections.map(renderSection)}
+      {MYPAGE_FEATURE_READY.SETTINGS ? <SettingsSection /> : null}
+    </MypageLayout>
+  );
+
+  const modals = (
     <>
-      <ContentArea ariaLabel="마이페이지">
-        <div className="mg-mypage-clinic-os" data-testid="client-mypage-page">
-          <MypageQuietHeader
-            onSupportClick={handleSupportClick}
-            onLogoutClick={handleLogoutClick}
-          />
-
-          <MypageSummaryStrip
-            roleLabel={getMypageRoleDisplayLabel(displayUser)}
-            displayName={
-              pickSessionProfileNameForForm(displayUser) ||
-              formData.nickname ||
-              ''
-            }
-            centerName={resolveMypageCenterName(displayUser)}
-            sessionLabel={sessionLabel}
-          />
-
-          {isWithdrawalPending ? (
-            <WithdrawalPendingWidget
-              withdrawalExpiresAt={withdrawalStatus?.withdrawalExpiresAt}
-              withdrawalRequestedAt={withdrawalStatus?.withdrawalRequestedAt}
-              onCancelled={handleWithdrawalCancelled}
-            />
-          ) : null}
-
-          <nav className="mg-mypage-clinic-os__tabs" aria-label="마이페이지 섹션">
-            <SegmentedTabs
-              ariaLabel="마이페이지 섹션"
-              items={visibleTabs.map((tabKey) => ({
-                value: tabKey,
-                label: MYPAGE_TAB_LABELS[tabKey],
-                id: TAB_IDS[tabKey],
-                ariaControls: PANEL_IDS[tabKey]
-              }))}
-              activeValue={activeTab}
-              onChange={setTabInUrl}
-              size="md"
-              className="mg-mypage-clinic-os__tab-list"
-            />
-          </nav>
-
-          <div className="mg-mypage-clinic-os__stage" aria-labelledby={MYPAGE_TITLE_ID}>
-            <div className="mg-mypage-clinic-os__stage-inner">
-              <section
-                className="mg-mypage-clinic-os__panel"
-                role="tabpanel"
-                id={PANEL_IDS.profile}
-                aria-labelledby={TAB_IDS.profile}
-                hidden={activeTab !== MYPAGE_TAB_KEYS.PROFILE}
-              >
-                <ProfileSection
-                  user={user}
-                  displayUser={displayUser}
-                  formData={formData}
-                  onFormDataChange={setFormData}
-                  onUserChange={setUser}
-                  onSave={handleSubmit}
-                  onReloadProfile={loadUserInfo}
-                  formatPhoneNumber={formatPhoneNumber}
-                />
-              </section>
-
-              <section
-                className="mg-mypage-clinic-os__panel"
-                role="tabpanel"
-                id={PANEL_IDS.settings}
-                aria-labelledby={TAB_IDS.settings}
-                hidden={activeTab !== MYPAGE_TAB_KEYS.SETTINGS}
-              >
-                <SettingsSection />
-              </section>
-
-              <section
-                className="mg-mypage-clinic-os__panel"
-                role="tabpanel"
-                id={PANEL_IDS.security}
-                aria-labelledby={TAB_IDS.security}
-                hidden={activeTab !== MYPAGE_TAB_KEYS.SECURITY}
-              >
-                <SecuritySection
-                  onPasswordChange={handlePasswordChange}
-                  onPasswordReset={handlePasswordReset}
-                  onRequestLogoutOtherDevices={() => setShowLogoutOtherConfirm(true)}
-                  onRequestWithdrawal={handleOpenWithdrawalModal}
-                  isWithdrawalPending={isWithdrawalPending}
-                />
-              </section>
-
-              <section
-                className="mg-mypage-clinic-os__panel"
-                role="tabpanel"
-                id={PANEL_IDS.social}
-                aria-labelledby={TAB_IDS.social}
-                hidden={activeTab !== MYPAGE_TAB_KEYS.SOCIAL}
-              >
-                <SocialAccountsSection
-                  socialAccounts={socialAccounts}
-                  onLinkAccount={handleLinkSocialAccount}
-                  onUnlinkAccount={requestUnlinkSocial}
-                  onSupportClick={handleSupportClick}
-                />
-              </section>
-
-              <section
-                className="mg-mypage-clinic-os__panel"
-                role="tabpanel"
-                id={PANEL_IDS.privacy}
-                aria-labelledby={TAB_IDS.privacy}
-                hidden={activeTab !== MYPAGE_TAB_KEYS.PRIVACY}
-              >
-                <PrivacyConsentSection />
-              </section>
-            </div>
-          </div>
-        </div>
-      </ContentArea>
-
       <PasswordResetModal
         isOpen={showPasswordResetModal}
         onClose={() => setShowPasswordResetModal(false)}
@@ -782,29 +767,51 @@ const MyPage = () => {
         type="danger"
       />
 
-      <ConfirmModal
-        isOpen={showLogoutOtherConfirm}
-        onClose={() => setShowLogoutOtherConfirm(false)}
-        onConfirm={() => {
-          setShowLogoutOtherConfirm(false);
-          notificationManager.show('다른 기기 세션 일괄 종료 API는 준비 중입니다.', 'info');
-        }}
-        title="다른 기기 로그아웃"
-        message="다른 기기에서 로그인된 세션을 모두 종료할까요? 이 기기는 유지됩니다."
-        confirmText="확인"
-        cancelText="취소"
-        type="warning"
-      />
+      {MYPAGE_FEATURE_READY.LOGOUT_OTHER_DEVICES ? (
+        <ConfirmModal
+          isOpen={showLogoutOtherConfirm}
+          onClose={() => setShowLogoutOtherConfirm(false)}
+          onConfirm={() => {
+            setShowLogoutOtherConfirm(false);
+            notificationManager.show('다른 기기 세션 일괄 종료 API는 준비 중입니다.', 'info');
+          }}
+          title="다른 기기 로그아웃"
+          message="다른 기기에서 로그인된 세션을 모두 종료할까요? 이 기기는 유지됩니다."
+          confirmText="확인"
+          cancelText="취소"
+          type="warning"
+        />
+      ) : null}
     </>
   );
 
-  if (RoleUtils.isClient(displayUser)) {
-    return <ClientWebPageShell>{myPageBody}</ClientWebPageShell>;
+  if (isClientLayout) {
+    return (
+      <ClientWebPageShell
+        title={MYPAGE_LAYOUT_COPY.TITLE}
+        titleId={MYPAGE_TITLE_ID}
+        aside={null}
+        cartBadgeQty={cartQty}
+        cartHref={CLIENT_SHOP_ROUTES.CART}
+      >
+        <div className="mg-mypage-page" data-testid={MYPAGE_PAGE_TEST_ID}>
+          {layoutNode}
+        </div>
+        {modals}
+      </ClientWebPageShell>
+    );
   }
 
   return (
     <AdminCommonLayout title={t('common.labels.myPage')} className="mg-v2-dashboard-layout">
-      {myPageBody}
+      <ContentArea ariaLabel={MYPAGE_LAYOUT_COPY.TITLE}>
+        <div className="mg-mypage-page" data-testid={MYPAGE_PAGE_TEST_ID}>
+          <ErpPageShell headerSlot={<MypageQuietHeader />} mainAriaLabel={MYPAGE_MAIN_ARIA}>
+            {layoutNode}
+          </ErpPageShell>
+        </div>
+      </ContentArea>
+      {modals}
     </AdminCommonLayout>
   );
 };

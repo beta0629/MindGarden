@@ -4,7 +4,7 @@
  *
  * Right meta order (header SSOT):
  * cart? · notifications · messages · {userName} · avatar · 로그아웃
- * Profile (userName/avatar) → /client/settings (not a nav tab)
+ * Profile (userName/avatar) → /client/mypage (not a nav tab)
  *
  * @author CoreSolution
  * @since 2026-09-17
@@ -142,7 +142,7 @@ const ClientWebTopChrome = ({
   cartHref,
   loginHref = '/login',
   loginLabel = CLIENT_WEB_LOGIN,
-  settingsHref = CLIENT_DASHBOARD_ROUTES.SETTINGS,
+  settingsHref = CLIENT_DASHBOARD_ROUTES.MYPAGE,
   className = ''
 }) => {
   const word = typeof brandWord === 'string' ? brandWord.trim() : '';

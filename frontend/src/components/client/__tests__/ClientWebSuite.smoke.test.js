@@ -130,7 +130,7 @@ describe('ClientWeb suite — TopChrome · nav 5 · zero LNB', () => {
       }
 
       const profile = screen.getByTestId(CLIENT_WEB_PROFILE_LINK_TEST_ID);
-      expect(profile).toHaveAttribute('href', '/client/settings');
+      expect(profile).toHaveAttribute('href', '/client/mypage');
 
       expect(container.querySelector('.mg-v2-desktop-lnb')).toBeNull();
       expect(container.querySelector('.mg-app-shell__sidebar')).toBeNull();

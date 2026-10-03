@@ -4,9 +4,19 @@ import UnifiedModal from '../../common/modals/UnifiedModal';
 import ConfirmModal from '../../common/ConfirmModal';
 import UnifiedLoading from '../../common/UnifiedLoading';
 import MGButton from '../../common/MGButton';
+import MypageSectionPanel from '../layout/MypageSectionPanel';
+import MypageDefinitionRows from '../layout/MypageDefinitionRows';
+import MypageActionButton from '../layout/MypageActionButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import StandardizedApi from '../../../utils/standardizedApi';
 import notificationManager from '../../../utils/notification';
+import {
+  MYPAGE_SECTION_KEYS,
+  MYPAGE_SECTION_LABELS,
+  MYPAGE_SECTION_CAPTIONS,
+  MYPAGE_FEATURE_READY,
+  MYPAGE_PRIVACY_COPY
+} from '../../../constants/mypageRoleLayout';
 import { useTranslation } from 'react-i18next';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
@@ -17,7 +27,7 @@ const API_PRIVACY_CONSENT_UPDATE = '/api/v1/privacy-consent/update';
 const TERMS_PLACEHOLDER =
   '약관 전문은 관리자 설정에 따라 제공됩니다. 자세한 내용은 고객센터로 문의해 주세요.';
 
-const PrivacyConsentSection = () => {
+const PrivacyConsentSection = ({ editDisabled = false }) => {
   const { t } = useTranslation();
   const [consentStatus, setConsentStatus] = useState({
     hasConsent: false,
@@ -31,7 +41,6 @@ const PrivacyConsentSection = () => {
   const [showConsentModal, setShowConsentModal] = useState(false);
   const [updating, setUpdating] = useState(false);
   const [termsModalOpen, setTermsModalOpen] = useState(false);
-  const [withdrawOpen, setWithdrawOpen] = useState(false);
   const [dataRequestOpen, setDataRequestOpen] = useState(false);
 
   const loadConsentStatus = useCallback(async() => {
@@ -82,7 +91,7 @@ const PrivacyConsentSection = () => {
   };
 
   const formatDate = (dateString) => {
-    if (!dateString) return '—';
+    if (!dateString) return '';
     const date = new Date(dateString);
     return date.toLocaleDateString('ko-KR', {
       year: 'numeric',
@@ -97,199 +106,86 @@ const PrivacyConsentSection = () => {
     loadConsentStatus();
   }, [loadConsentStatus]);
 
-  if (loading) {
-    return (
-      <article className="mg-mypage-clinic-os__section" aria-busy="true">
-        <div className="mg-mypage-clinic-os__section-body">
-          <UnifiedLoading type="inline" text="개인정보 동의 상태를 불러오는 중..." />
-        </div>
-      </article>
-    );
-  }
+  const agreedLabel = (value) => (value ? MYPAGE_PRIVACY_COPY.AGREED : MYPAGE_PRIVACY_COPY.NOT_AGREED);
+  const lastUpdated = formatDate(consentStatus.consentDate);
+  const caption = lastUpdated
+    ? `${MYPAGE_PRIVACY_COPY.LAST_UPDATED} ${lastUpdated}`
+    : MYPAGE_SECTION_CAPTIONS[MYPAGE_SECTION_KEYS.PRIVACY];
+
+  const headerAction = (
+    <MypageActionButton
+      variant="outline"
+      onClick={() => setShowConsentModal(true)}
+      disabled={editDisabled || updating || loading}
+      loading={updating}
+      data-testid="mypage-privacy-edit"
+    >
+      {consentStatus.hasConsent ? MYPAGE_PRIVACY_COPY.EDIT : MYPAGE_PRIVACY_COPY.START}
+    </MypageActionButton>
+  );
 
   return (
     <>
-      <article className="mg-mypage-clinic-os__section" aria-labelledby="mg-mypage-privacy-summary-title">
-        <div className="mg-mypage-clinic-os__section-head">
-          <div className="mg-mypage-clinic-os__section-head-text">
-            <h2 id="mg-mypage-privacy-summary-title" className="mg-mypage-clinic-os__section-title">
-              동의 요약
-            </h2>
-            <p className="mg-mypage-clinic-os__section-description">
-              최종 업데이트: {formatDate(consentStatus.consentDate)}
-            </p>
-          </div>
-        </div>
-        <div className="mg-mypage-clinic-os__section-body">
-          <div className="mg-mypage-clinic-os__consent-badges">
-            <span className="mg-v2-status-badge mg-v2-badge--info" role="status">
-              {consentStatus.isComplete ? '동의 완료' : '동의 미완료'}
-            </span>
-          </div>
-          <MGButton
-            type="button"
-            variant="outline"
-            className={buildErpMgButtonClassName({ variant: 'outline', size: 'md', loading: false, className: 'mg-mypage-clinic-os__link' })}
-            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-            onClick={() => setTermsModalOpen(true)}
-            preventDoubleClick={false}
-          >
-            전체 약관 보기
-          </MGButton>
-        </div>
-      </article>
-
-      <article className="mg-mypage-clinic-os__section" aria-labelledby="mg-mypage-privacy-list-title">
-        <div className="mg-mypage-clinic-os__section-head">
-          <div className="mg-mypage-clinic-os__section-head-text">
-            <h2 id="mg-mypage-privacy-list-title" className="mg-mypage-clinic-os__section-title">
-              항목별 동의
-            </h2>
-          </div>
-        </div>
-        <ul className="mg-mypage-clinic-os__list">
-          <li className="mg-mypage-clinic-os__list-item mg-mypage-clinic-os__preference-row">
-            <div className="mg-mypage-clinic-os__list-item-main">
-              <p className="mg-mypage-clinic-os__item-title">서비스 이용약관</p>
-              <span className="mg-v2-status-badge mg-v2-badge--danger" role="status">
-                필수
-              </span>
-              <p className="mg-mypage-clinic-os__section-description">서비스 이용에 필요한 최소 동의입니다.</p>
-              <MGButton
-                type="button"
-                variant="outline"
-                size="small"
-                className={buildErpMgButtonClassName({ variant: 'outline', size: 'sm', loading: false })}
-                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                onClick={() => setTermsModalOpen(true)}
-                preventDoubleClick={false}
-              >
-                약관 전문
-              </MGButton>
-            </div>
-            <div className="mg-mypage-clinic-os__list-item-meta">
-              <input
-                type="checkbox"
-                checked={!!consentStatus.termsConsent}
-                disabled
-                readOnly
-                role="switch"
-                aria-checked={!!consentStatus.termsConsent}
-              />
-            </div>
-          </li>
-          <li className="mg-mypage-clinic-os__list-item mg-mypage-clinic-os__preference-row">
-            <div className="mg-mypage-clinic-os__list-item-main">
-              <p className="mg-mypage-clinic-os__item-title">개인정보 처리방침</p>
-              <span className="mg-v2-status-badge mg-v2-badge--danger" role="status">
-                필수
-              </span>
-              <p className="mg-mypage-clinic-os__section-description">개인정보 수집·이용에 동의합니다.</p>
-            </div>
-            <div className="mg-mypage-clinic-os__list-item-meta">
-              <input
-                type="checkbox"
-                checked={!!consentStatus.privacyConsent}
-                disabled
-                readOnly
-                role="switch"
-                aria-checked={!!consentStatus.privacyConsent}
-              />
-            </div>
-          </li>
-          <li className="mg-mypage-clinic-os__list-item mg-mypage-clinic-os__preference-row">
-            <div className="mg-mypage-clinic-os__list-item-main">
-              <p className="mg-mypage-clinic-os__item-title">마케팅 수신</p>
-              <span className="mg-v2-status-badge mg-v2-badge--neutral" role="status">
-                선택
-              </span>
-              <p className="mg-mypage-clinic-os__section-description">이벤트·혜택 정보를 받습니다.</p>
-            </div>
-            <div className="mg-mypage-clinic-os__list-item-meta">
-              <input
-                type="checkbox"
-                checked={!!consentStatus.marketingConsent}
-                disabled
-                readOnly
-                role="switch"
-                aria-checked={!!consentStatus.marketingConsent}
-              />
-            </div>
-          </li>
-        </ul>
-        <div className="mg-mypage-clinic-os__consent-actions">
-          <MGButton
-            type="button"
-            variant="primary"
-            className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: updating })}
-            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-            onClick={() => setShowConsentModal(true)}
-            disabled={updating}
-            preventDoubleClick={false}
-          >
-            {consentStatus.hasConsent ? '동의 상태 수정' : '개인정보 동의하기'}
-          </MGButton>
-          <MGButton
-            type="button"
-            variant="outline"
-            className={buildErpMgButtonClassName({ variant: 'outline', size: 'md', loading: updating })}
-            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-            onClick={loadConsentStatus}
-            disabled={updating}
-            preventDoubleClick={false}
-          >
-            {t('common.actions.refresh')}
-          </MGButton>
-        </div>
-        {!consentStatus.isComplete ? (
-          <div className="mg-mypage-clinic-os__consent-notice" role="alert">
-            <strong>개인정보 동의가 필요합니다.</strong>
-            <p className="mg-mypage-clinic-os__section-description">
-              서비스 이용을 위해 개인정보 처리방침과 이용약관에 동의해주세요.
-            </p>
-          </div>
-        ) : null}
-      </article>
-
-      <article
-        className="mg-mypage-clinic-os__section mg-mypage-clinic-os__danger-zone"
-        aria-labelledby="mg-mypage-privacy-danger-title"
+      <MypageSectionPanel
+        sectionKey={MYPAGE_SECTION_KEYS.PRIVACY}
+        title={MYPAGE_SECTION_LABELS[MYPAGE_SECTION_KEYS.PRIVACY]}
+        caption={caption}
+        headerAction={headerAction}
       >
-        <div className="mg-mypage-clinic-os__section-head">
-          <div className="mg-mypage-clinic-os__section-head-text">
-            <h2 id="mg-mypage-privacy-danger-title" className="mg-mypage-clinic-os__section-title">
-              데이터 및 계정
-            </h2>
+        {loading ? (
+          <div aria-busy="true">
+            <UnifiedLoading type="inline" text="개인정보 동의 상태를 불러오는 중..." />
           </div>
-        </div>
-        <div className="mg-mypage-clinic-os__section-body">
-          <MGButton
-            type="button"
-            variant="outline"
-            className={buildErpMgButtonClassName({ variant: 'outline', size: 'md', loading: false })}
-            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-            onClick={() => setDataRequestOpen(true)}
-            preventDoubleClick={false}
-          >
-            내 데이터 요청
-          </MGButton>
-          <MGButton
-            type="button"
-            variant="outline"
-            className={buildErpMgButtonClassName({
-              variant: 'outline',
-              size: 'md',
-              loading: false,
-              className: 'mg-mypage-clinic-os__danger-withdraw'
-            })}
-            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-            onClick={() => setWithdrawOpen(true)}
-            preventDoubleClick={false}
-          >
-            회원 탈퇴
-          </MGButton>
-        </div>
-      </article>
+        ) : (
+          <>
+            <MypageDefinitionRows
+              testId="mypage-privacy-rows"
+              rows={[
+                {
+                  key: 'terms',
+                  label: MYPAGE_PRIVACY_COPY.TERMS,
+                  value: agreedLabel(consentStatus.termsConsent),
+                  caption: MYPAGE_PRIVACY_COPY.REQUIRED,
+                  action: (
+                    <MypageActionButton variant="ghost" onClick={() => setTermsModalOpen(true)}>
+                      {MYPAGE_PRIVACY_COPY.VIEW_TERMS}
+                    </MypageActionButton>
+                  )
+                },
+                {
+                  key: 'privacy',
+                  label: MYPAGE_PRIVACY_COPY.PRIVACY,
+                  value: agreedLabel(consentStatus.privacyConsent),
+                  caption: MYPAGE_PRIVACY_COPY.REQUIRED
+                },
+                {
+                  key: 'marketing',
+                  label: MYPAGE_PRIVACY_COPY.MARKETING,
+                  value: agreedLabel(consentStatus.marketingConsent),
+                  caption: MYPAGE_PRIVACY_COPY.OPTIONAL
+                },
+                MYPAGE_FEATURE_READY.DATA_REQUEST
+                  ? {
+                    key: 'data-request',
+                    label: '내 데이터 요청',
+                    value: '개인정보 사본',
+                    action: (
+                      <MypageActionButton variant="ghost" onClick={() => setDataRequestOpen(true)}>
+                        요청
+                      </MypageActionButton>
+                    )
+                  }
+                  : null
+              ]}
+            />
+            {!consentStatus.isComplete ? (
+              <p className="mg-mypage-panel__caption" role="status" data-testid="mypage-privacy-incomplete">
+                {MYPAGE_PRIVACY_COPY.INCOMPLETE}
+              </p>
+            ) : null}
+          </>
+        )}
+      </MypageSectionPanel>
 
       <PrivacyConsentModal
         isOpen={showConsentModal}
@@ -302,7 +198,7 @@ const PrivacyConsentSection = () => {
       <UnifiedModal
         isOpen={termsModalOpen}
         onClose={() => setTermsModalOpen(false)}
-        title="서비스 이용약관"
+        title={MYPAGE_PRIVACY_COPY.TERMS}
         size="medium"
         backdropClick
         showCloseButton
@@ -319,40 +215,26 @@ const PrivacyConsentSection = () => {
           </MGButton>
         }
       >
-        <div className="mg-mypage-clinic-os__modal-scroll">
-          <div className="mg-mypage-clinic-os__legal-body">
-            {TERMS_PLACEHOLDER}
-          </div>
+        <div className="mg-mypage-legal-body">
+          {TERMS_PLACEHOLDER}
         </div>
       </UnifiedModal>
 
-      <ConfirmModal
-        isOpen={dataRequestOpen}
-        onClose={() => setDataRequestOpen(false)}
-        onConfirm={() => {
-          setDataRequestOpen(false);
-          notificationManager.show('내 데이터 요청 절차는 준비 중입니다.', 'info');
-        }}
-        title="내 데이터 요청"
-        message="개인정보 사본을 요청하시겠습니까? 담당 부서 확인 후 안내드립니다."
-        confirmText="요청"
-        cancelText="취소"
-        type="default"
-      />
-
-      <ConfirmModal
-        isOpen={withdrawOpen}
-        onClose={() => setWithdrawOpen(false)}
-        onConfirm={() => {
-          setWithdrawOpen(false);
-          notificationManager.show('회원 탈퇴는 고객센터 또는 별도 절차로 진행됩니다.', 'info');
-        }}
-        title="회원 탈퇴"
-        message="탈퇴 시 계정과 데이터가 삭제되거나 분리될 수 있습니다. 계속하시겠습니까?"
-        confirmText="확인"
-        cancelText="취소"
-        type="danger"
-      />
+      {MYPAGE_FEATURE_READY.DATA_REQUEST ? (
+        <ConfirmModal
+          isOpen={dataRequestOpen}
+          onClose={() => setDataRequestOpen(false)}
+          onConfirm={() => {
+            setDataRequestOpen(false);
+            notificationManager.show('내 데이터 요청 절차는 준비 중입니다.', 'info');
+          }}
+          title="내 데이터 요청"
+          message="개인정보 사본을 요청하시겠습니까? 담당 부서 확인 후 안내드립니다."
+          confirmText="요청"
+          cancelText="취소"
+          type="default"
+        />
+      ) : null}
     </>
   );
 };

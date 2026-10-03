@@ -1,13 +1,21 @@
 import React, { useMemo } from 'react';
-import { useTranslation } from 'react-i18next';
 import notificationManager from '../../../utils/notification';
-import MGButton from '../../common/MGButton';
-import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
+import MypageSectionPanel from '../layout/MypageSectionPanel';
+import MypageDefinitionRows from '../layout/MypageDefinitionRows';
+import MypageActionButton from '../layout/MypageActionButton';
+import {
+  MYPAGE_SECTION_KEYS,
+  MYPAGE_SECTION_LABELS,
+  MYPAGE_SECTION_CAPTIONS,
+  MYPAGE_FEATURE_READY,
+  MYPAGE_FIELD_LABELS,
+  MYPAGE_SECURITY_COPY
+} from '../../../constants/mypageRoleLayout';
 
 const parseUaSummary = () => {
-  if (typeof navigator === 'undefined') return '이 브라우저';
+  if (typeof navigator === 'undefined') return MYPAGE_SECURITY_COPY.THIS_BROWSER;
   const ua = navigator.userAgent || '';
-  let browser = '브라우저';
+  let browser = MYPAGE_SECURITY_COPY.BROWSER;
   if (ua.includes('Chrome') && !ua.includes('Edg')) browser = 'Chrome';
   else if (ua.includes('Safari') && !ua.includes('Chrome')) browser = 'Safari';
   else if (ua.includes('Firefox')) browser = 'Firefox';
@@ -20,158 +28,69 @@ const parseUaSummary = () => {
   return os ? `${os} · ${browser}` : browser;
 };
 
+/**
+ * 로그인·보안 — 비밀번호 변경/찾기 · 지금 로그인한 기기.
+ * 2단계 인증·다른 기기 로그아웃은 MYPAGE_FEATURE_READY 가 true 일 때만 노출 (Q1).
+ */
 const SecuritySection = ({
   onPasswordChange,
   onPasswordReset,
-  onRequestLogoutOtherDevices,
-  onRequestWithdrawal,
-  isWithdrawalPending
+  onRequestLogoutOtherDevices
 }) => {
-  const { t } = useTranslation('mypage');
   const deviceLabel = useMemo(() => parseUaSummary(), []);
 
-  return (
-    <>
-      <article className="mg-mypage-clinic-os__section" aria-labelledby="mg-mypage-security-pw-title">
-        <div className="mg-mypage-clinic-os__section-head">
-          <div className="mg-mypage-clinic-os__section-head-text">
-            <h2 id="mg-mypage-security-pw-title" className="mg-mypage-clinic-os__section-title">
-              비밀번호
-            </h2>
-          </div>
-        </div>
-        <div className="mg-mypage-clinic-os__section-body">
-          <p className="mg-mypage-clinic-os__section-description">
-            비밀번호는 목록에 표시되지 않습니다. 변경 시 확인이 필요합니다.
-          </p>
-          <div className="mg-mypage-clinic-os__action-row">
-            <MGButton
-              type="button"
-              variant="primary"
-              size="medium"
-              className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: false })}
-              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-              onClick={onPasswordChange}
-            >
-              비밀번호 변경
-            </MGButton>
-            <MGButton
-              type="button"
-              variant="ghost"
-              size="medium"
-              className={buildErpMgButtonClassName({ variant: 'ghost', size: 'md', loading: false })}
-              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-              onClick={onPasswordReset}
-              preventDoubleClick={false}
-            >
-              비밀번호 찾기
-            </MGButton>
-          </div>
-        </div>
-      </article>
-
-      <article className="mg-mypage-clinic-os__section" aria-labelledby="mg-mypage-security-2fa-title">
-        <div className="mg-mypage-clinic-os__section-head">
-          <div className="mg-mypage-clinic-os__section-head-text">
-            <h2 id="mg-mypage-security-2fa-title" className="mg-mypage-clinic-os__section-title">
-              2단계 인증
-            </h2>
-          </div>
-        </div>
-        <div className="mg-mypage-clinic-os__section-body">
-          <div className="mg-mypage-clinic-os__action-row">
-            <span className="mg-v2-status-badge mg-v2-badge--neutral" role="status">
-              미사용
-            </span>
-            <MGButton
-              type="button"
-              variant="ghost"
-              size="medium"
-              className={buildErpMgButtonClassName({ variant: 'ghost', size: 'md', loading: false })}
-              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-              onClick={() => notificationManager.show('2단계 인증은 준비 중입니다.', 'info')}
-              preventDoubleClick={false}
-            >
-              설정
-            </MGButton>
-          </div>
-        </div>
-      </article>
-
-      <article className="mg-mypage-clinic-os__section" aria-labelledby="mg-mypage-security-sessions-title">
-        <div className="mg-mypage-clinic-os__section-head">
-          <div className="mg-mypage-clinic-os__section-head-text">
-            <h2 id="mg-mypage-security-sessions-title" className="mg-mypage-clinic-os__section-title">
-              로그인된 기기
-            </h2>
-          </div>
-        </div>
-        <ul className="mg-mypage-clinic-os__list">
-          <li className="mg-mypage-clinic-os__list-item">
-            <div className="mg-mypage-clinic-os__list-item-main">
-              <p className="mg-mypage-clinic-os__item-title">{deviceLabel}</p>
-              <p className="mg-mypage-clinic-os__section-description">현재 세션 · 이 브라우저</p>
-            </div>
-            <div className="mg-mypage-clinic-os__list-item-meta">
-              <span className="mg-v2-status-badge mg-v2-badge--success" role="status">
-                이 기기
-              </span>
-            </div>
-          </li>
-        </ul>
-        <div className="mg-mypage-clinic-os__card-actions">
-          <MGButton
-            type="button"
+  const rows = [
+    {
+      key: 'password',
+      label: MYPAGE_FIELD_LABELS.PASSWORD,
+      value: MYPAGE_FIELD_LABELS.PASSWORD_VALUE,
+      action: (
+        <span className="mg-mypage-rows__action-group">
+          <MypageActionButton variant="ghost" onClick={onPasswordReset} data-testid="mypage-password-reset">
+            {MYPAGE_FIELD_LABELS.PASSWORD_RESET}
+          </MypageActionButton>
+          <MypageActionButton variant="outline" onClick={onPasswordChange} data-testid="mypage-password-change">
+            {MYPAGE_FIELD_LABELS.PASSWORD_CHANGE}
+          </MypageActionButton>
+        </span>
+      )
+    },
+    MYPAGE_FEATURE_READY.TWO_FACTOR
+      ? {
+        key: 'two-factor',
+        label: MYPAGE_SECURITY_COPY.TWO_FACTOR,
+        value: MYPAGE_SECURITY_COPY.TWO_FACTOR_OFF,
+        action: (
+          <MypageActionButton
             variant="ghost"
-            size="medium"
-            className={buildErpMgButtonClassName({ variant: 'ghost', size: 'md', loading: false })}
-            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-            onClick={onRequestLogoutOtherDevices}
+            onClick={() => notificationManager.show(MYPAGE_SECURITY_COPY.TWO_FACTOR_NOT_READY, 'info')}
           >
-            다른 기기 모두 로그아웃
-          </MGButton>
-        </div>
-      </article>
+            {MYPAGE_SECURITY_COPY.TWO_FACTOR_SETUP}
+          </MypageActionButton>
+        )
+      }
+      : null,
+    {
+      key: 'device',
+      label: MYPAGE_FIELD_LABELS.DEVICE,
+      value: deviceLabel,
+      caption: MYPAGE_FIELD_LABELS.DEVICE_CURRENT,
+      action: MYPAGE_FEATURE_READY.LOGOUT_OTHER_DEVICES ? (
+        <MypageActionButton variant="ghost" onClick={onRequestLogoutOtherDevices}>
+          {MYPAGE_SECURITY_COPY.LOGOUT_OTHER_DEVICES}
+        </MypageActionButton>
+      ) : null
+    }
+  ];
 
-      <article
-        className="mg-mypage-clinic-os__section"
-        aria-labelledby="mg-mypage-security-account-title"
-        data-testid="mypage-security-account-section"
-      >
-        <div className="mg-mypage-clinic-os__section-head">
-          <div className="mg-mypage-clinic-os__section-head-text">
-            <h2 id="mg-mypage-security-account-title" className="mg-mypage-clinic-os__section-title">
-              {t('withdrawal.sectionTitle')}
-            </h2>
-          </div>
-        </div>
-        <div className="mg-mypage-clinic-os__section-body">
-          <p className="mg-mypage-clinic-os__section-description">
-            {t('withdrawal.sectionDescription')}
-          </p>
-          <div className="mg-mypage-clinic-os__action-row">
-            <MGButton
-              type="button"
-              variant="danger"
-              size="medium"
-              className={buildErpMgButtonClassName({
-                variant: 'danger',
-                size: 'md',
-                loading: false
-              })}
-              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-              onClick={onRequestWithdrawal || (() =>
-                notificationManager.show('회원 탈퇴 신청 기능을 사용할 수 없습니다.', 'info')
-              )}
-              disabled={isWithdrawalPending}
-              data-testid="mypage-security-withdrawal-button"
-            >
-              {t('withdrawal.openModalButton')}
-            </MGButton>
-          </div>
-        </div>
-      </article>
-    </>
+  return (
+    <MypageSectionPanel
+      sectionKey={MYPAGE_SECTION_KEYS.SECURITY}
+      title={MYPAGE_SECTION_LABELS[MYPAGE_SECTION_KEYS.SECURITY]}
+      caption={MYPAGE_SECTION_CAPTIONS[MYPAGE_SECTION_KEYS.SECURITY]}
+    >
+      <MypageDefinitionRows rows={rows} testId="mypage-security-rows" />
+    </MypageSectionPanel>
   );
 };
 

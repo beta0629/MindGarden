@@ -1,0 +1,78 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`MYPAGE_ROLE_LAYOUT section order per role (snapshot) 1`] = `
+Object {
+  "client": Object {
+    "hideFields": Array [],
+    "layout": "single",
+    "links": Array [
+      "회기·회기 관리",
+      "결제·결제 내역",
+    ],
+    "linksTitle": "바로가기",
+    "sections": Array [
+      "basic",
+      "notify",
+      "security",
+      "social",
+      "privacy",
+      "account",
+    ],
+    "surface": "card",
+  },
+  "consultant": Object {
+    "hideFields": Array [],
+    "layout": "aside",
+    "links": Array [
+      "상담·급여 정산",
+      "상담·근무 가능 시간",
+    ],
+    "linksTitle": "바로가기",
+    "sections": Array [
+      "basic",
+      "counsel",
+      "notify",
+      "security",
+      "social",
+      "privacy",
+      "account",
+    ],
+    "surface": "stone",
+  },
+  "operator": Object {
+    "hideFields": Array [
+      "address",
+      "gender",
+    ],
+    "layout": "aside",
+    "links": Array [],
+    "linksTitle": "",
+    "sections": Array [
+      "basic",
+      "security",
+      "social",
+      "privacy",
+    ],
+    "surface": "stone",
+  },
+  "operatorDual": Object {
+    "hideFields": Array [],
+    "layout": "aside",
+    "links": Array [
+      "상담·본인 급여 조회",
+      "운영·상담사 지급 승인",
+    ],
+    "linksTitle": "역할 지도",
+    "sections": Array [
+      "basic",
+      "counsel",
+      "notify",
+      "security",
+      "social",
+      "privacy",
+      "account",
+    ],
+    "surface": "stone",
+  },
+}
+`;

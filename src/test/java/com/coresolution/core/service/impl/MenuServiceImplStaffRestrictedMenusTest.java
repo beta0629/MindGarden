@@ -34,7 +34,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
  * @since 2026-10-03
  */
 @ExtendWith(MockitoExtension.class)
-@DisplayName("MenuServiceImpl — STAFF 설정 메뉴 차단(PG·AI·시스템 설정)")
+@DisplayName("MenuServiceImpl — STAFF 설정 메뉴 차단(PG·AI·시스템 설정·컴플라이언스)")
 class MenuServiceImplStaffRestrictedMenusTest {
 
     private static final String MENU_LOCATION_ADMIN_ONLY = "ADMIN_ONLY";
@@ -92,7 +92,7 @@ class MenuServiceImplStaffRestrictedMenusTest {
     }
 
     @Test
-    @DisplayName("STAFF — PG·AI·시스템 설정 메뉴가 제거된다 (DB 행이 STAFF 로 drift 된 경우에도)")
+    @DisplayName("STAFF — PG·AI·시스템 설정·컴플라이언스 메뉴가 제거된다 (DB 행이 STAFF 로 drift 된 경우에도)")
     void getLnbMenus_staff_excludesRestrictedSettingsMenus() {
         when(menuRepository.findByMenuLocationAndRequiredRoleIn(
                 eq(MENU_LOCATION_ADMIN_ONLY),
@@ -109,7 +109,7 @@ class MenuServiceImplStaffRestrictedMenusTest {
     }
 
     @Test
-    @DisplayName("ADMIN — PG·AI·시스템 설정 메뉴는 그대로 노출 (회귀 방지)")
+    @DisplayName("ADMIN — PG·AI·시스템 설정·컴플라이언스 메뉴는 그대로 노출 (회귀 방지)")
     void getLnbMenus_admin_keepsRestrictedSettingsMenus() {
         when(menuRepository.findByMenuLocationAndRequiredRoleIn(
                 eq(MENU_LOCATION_ADMIN_ONLY),
@@ -123,12 +123,14 @@ class MenuServiceImplStaffRestrictedMenusTest {
     }
 
     @Test
-    @DisplayName("제한 목록 SSOT — PG·AI·시스템 설정 3종")
-    void restrictedMenuCodes_areExactlyThree() {
+    @DisplayName("제한 목록 SSOT — PG·AI·시스템 설정·컴플라이언스 4종")
+    void restrictedMenuCodes_areExactlyFour() {
         assertThat(StaffRestrictedMenuCodes.ALL).containsExactlyInAnyOrder(
                 StaffRestrictedMenuCodes.ADM_SETTINGS_PG,
                 StaffRestrictedMenuCodes.ADM_SETTINGS_AI_PROVIDER,
-                StaffRestrictedMenuCodes.ADM_SETTINGS_SYSTEM);
+                StaffRestrictedMenuCodes.ADM_SETTINGS_SYSTEM,
+                StaffRestrictedMenuCodes.ADM_REPORTS_COMP);
+        assertThat(StaffRestrictedMenuCodes.isRestricted(StaffRestrictedMenuCodes.ADM_REPORTS_COMP)).isTrue();
         assertThat(StaffRestrictedMenuCodes.isRestricted(StaffRestrictedMenuCodes.ADM_SETTINGS_PG)).isTrue();
         assertThat(StaffRestrictedMenuCodes.isRestricted("ADM_DASHBOARD")).isFalse();
         assertThat(StaffRestrictedMenuCodes.isRestricted(null)).isFalse();

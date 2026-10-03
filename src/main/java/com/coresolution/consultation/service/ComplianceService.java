@@ -40,6 +40,11 @@ public class ComplianceService {
     private static final Set<UserRole> EDUCATION_TARGET_ROLES =
         Collections.unmodifiableSet(EnumSet.of(UserRole.ADMIN, UserRole.CONSULTANT, UserRole.STAFF));
 
+    /** 개인정보 처리방침 준수 점검 항목. 실측 데이터가 없으면 전 항목 「미점검」. */
+    private static final List<String> POLICY_COMPLIANCE_ITEMS = List.of(
+        "policyExists", "policyUpdated", "userConsent", "dataMinimization", "purposeLimitation",
+        "storageLimitation", "accuracy", "security", "transparency", "accountability");
+
     private final PersonalDataAccessLogRepository personalDataAccessLogRepository;
     private final UserRepository userRepository;
     private final TenantRepository tenantRepository;
@@ -127,7 +132,8 @@ public class ComplianceService {
         
         try {
             Map<String, Object> responseProcedures = ComplianceDashboardSampleContent.breachResponseProcedures();
-            Map<String, Object> responseTeam = ComplianceDashboardSampleContent.breachResponseTeam();
+            Map<String, Object> responseTeam =
+                ComplianceDashboardSampleContent.breachResponseTeam(buildTenantContactInfo());
             
             result.put("responseProcedures", responseProcedures);
             result.put("responseTeam", responseTeam);
@@ -244,19 +250,8 @@ public class ComplianceService {
                 )
             );
             
-            // 처리방침 준수 현황
-            Map<String, Object> complianceStatus = Map.of(
-                "policyExists", true,
-                "policyUpdated", true,
-                "userConsent", true,
-                "dataMinimization", true,
-                "purposeLimitation", true,
-                "storageLimitation", true,
-                "accuracy", true,
-                "security", true,
-                "transparency", true,
-                "accountability", true
-            );
+            // 처리방침 준수 현황 — 실측 점검 데이터가 없으므로 전 항목 「미점검」
+            Map<String, Object> complianceStatus = buildNotReviewedComplianceStatus();
             
             result.put("policyComponents", policyComponents);
             result.put("complianceStatus", complianceStatus);
@@ -335,10 +330,67 @@ public class ComplianceService {
      *
      * @return 기본 정보 맵 (null 값 허용)
      */
-    private Map<String, Object> buildTenantBasicInfo() {
-        Optional<Tenant> tenant = Optional.ofNullable(TenantContextHolder.getTenantId())
+    /**
+     * 현재 테넌트 센터 연락처. 값이 없으면 공백 + {@code notice} 안내만 노출한다.
+     *
+     * <p>P1 보안(2026-10-03): 특정 테넌트(마인드가든) 전화·이메일·주소 하드코딩 제거.
+     * 마인드가든 값으로의 폴백은 없다.
+     *
+     * @return {@code emergency}/{@code email}/{@code address} + 필요 시 {@code notice}
+     */
+    private Map<String, Object> buildTenantContactInfo() {
+        Optional<Tenant> tenant = currentTenant();
+        String emergency = blankToEmpty(tenant.map(Tenant::getContactPhone).orElse(null));
+        String email = blankToEmpty(tenant.map(Tenant::getContactEmail).orElse(null));
+        String address = blankToEmpty(tenant.map(ComplianceService::joinTenantAddress).orElse(null));
+
+        Map<String, Object> contactInfo = new LinkedHashMap<>();
+        contactInfo.put("emergency", emergency);
+        contactInfo.put("email", email);
+        contactInfo.put("address", address);
+        if (emergency.isEmpty() || email.isEmpty() || address.isEmpty()) {
+            contactInfo.put("notice", ComplianceServiceErrorMessages.MSG_CENTER_PROFILE_REQUIRED);
+        }
+        return contactInfo;
+    }
+
+    /**
+     * 실측 점검 데이터가 없는 처리방침 준수 항목 상태 — 전 항목 「미점검」.
+     *
+     * @return 항목별 상태 맵
+     */
+    private static Map<String, Object> buildNotReviewedComplianceStatus() {
+        Map<String, Object> complianceStatus = new LinkedHashMap<>();
+        for (String item : POLICY_COMPLIANCE_ITEMS) {
+            complianceStatus.put(item, ComplianceServiceErrorMessages.STATUS_NOT_REVIEWED);
+        }
+        return complianceStatus;
+    }
+
+    /**
+     * 현재 테넌트 컨텍스트의 테넌트.
+     *
+     * @return 테넌트, 컨텍스트·행이 없으면 빈 Optional
+     */
+    private Optional<Tenant> currentTenant() {
+        return Optional.ofNullable(TenantContextHolder.getTenantId())
             .filter(id -> !id.isBlank())
             .flatMap(tenantRepository::findByTenantIdAndIsDeletedFalse);
+    }
+
+    /**
+     * null·공백은 빈 문자열로 정규화 (화면에서 공백 표시).
+     *
+     * @param value 원본 값
+     * @return 공백이면 빈 문자열, 아니면 trim 값
+     */
+    private static String blankToEmpty(String value) {
+        return (value == null || value.isBlank()) ? "" : value.trim();
+    }
+
+    private Map<String, Object> buildTenantBasicInfo() {
+        Optional<Tenant> tenant = currentTenant();
+
         Map<String, Object> basicInfo = new LinkedHashMap<>();
         basicInfo.put("companyName", tenant.map(Tenant::getName).orElse(null));
         basicInfo.put("privacyOfficer", null);

@@ -15,7 +15,10 @@ import java.util.Set;
  *   <li>{@code ADM_SETTINGS_PG} → {@code /api/v1/tenants/{tenantId}/pg-configurations/**}</li>
  *   <li>{@code ADM_SETTINGS_AI_PROVIDER} → {@code /api/v1/admin/system-config/**},
  *       {@code /api/v1/admin/ai/**}</li>
- *   <li>{@code ADM_SETTINGS_SYSTEM} → {@code /api/v1/admin/system-config/**}</li>
+ *   <li>{@code ADM_SETTINGS_SYSTEM} → {@code /api/v1/admin/system-config/**},
+ *       {@code /api/v1/admin/notification-scheduler/**}</li>
+ *   <li>{@code ADM_REPORTS_COMP} → {@code /api/v1/admin/compliance/**},
+ *       {@code /api/v1/admin/personal-data-destruction/**}</li>
  * </ul>
  *
  * <p>프론트 폴백 LNB 의 동일 정책은 {@code frontend/src/utils/lnbMenuUtils.js} 의
@@ -33,14 +36,25 @@ public final class StaffRestrictedMenuCodes {
     /** AI 프로바이더 관리. */
     public static final String ADM_SETTINGS_AI_PROVIDER = "ADM_SETTINGS_AI_PROVIDER";
 
-    /** 시스템 설정. */
+    /** 시스템 설정 (알림 스케줄러 전역 스위치 포함). */
     public static final String ADM_SETTINGS_SYSTEM = "ADM_SETTINGS_SYSTEM";
+
+    /**
+     * 컴플라이언스 + 개인정보 파기.
+     *
+     * <p>P1 보안(2026-10-03): 시드 행은 이미 {@code required_role='ADMIN'} 이지만
+     * STAFF 가시 역할 집합에 ADMIN 이 포함되어 사무원 LNB 에 노출됐다. 개인정보 파기는
+     * 별도 메뉴 행 없이 본 메뉴 하위 탭({@code /admin/compliance/destruction})이므로
+     * 본 코드 한 건으로 두 화면을 함께 차단한다.
+     */
+    public static final String ADM_REPORTS_COMP = "ADM_REPORTS_COMP";
 
     /** STAFF 비노출 메뉴 코드 집합. */
     public static final Set<String> ALL = Set.of(
             ADM_SETTINGS_PG,
             ADM_SETTINGS_AI_PROVIDER,
-            ADM_SETTINGS_SYSTEM
+            ADM_SETTINGS_SYSTEM,
+            ADM_REPORTS_COMP
     );
 
     private StaffRestrictedMenuCodes() {

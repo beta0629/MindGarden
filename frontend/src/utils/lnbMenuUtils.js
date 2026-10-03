@@ -26,7 +26,9 @@ const CLIENT_COMMUNITY_MENU_CODE = 'CLT_COMMUNITY';
 export const STAFF_RESTRICTED_LNB_MENU_CODES = Object.freeze([
   'ADM_SETTINGS_PG',
   'ADM_SETTINGS_AI_PROVIDER',
-  'ADM_SETTINGS_SYSTEM'
+  'ADM_SETTINGS_SYSTEM',
+  // P1 보안(2026-10-03): 컴플라이언스 + 개인정보 파기(하위 탭) — API 는 ADMIN 전용
+  'ADM_REPORTS_COMP'
 ]);
 
 const SHOP_ADMIN_LNB_GROUP_LABEL = '쇼핑·리워드';
@@ -262,7 +264,13 @@ export const PG_CONFIGURATION_LNB_LABEL = '결제 연결';
 export const STAFF_RESTRICTED_LNB_PATHS = Object.freeze([
   PG_CONFIGURATION_LNB_PATH,
   ADMIN_ROUTES.AI_PROVIDERS,
-  ADMIN_ROUTES.SYSTEM_CONFIG
+  ADMIN_ROUTES.SYSTEM_CONFIG,
+  ADMIN_ROUTES.COMPLIANCE
+]);
+
+/** 하위 경로까지 차단할 prefix (컴플라이언스 하위 탭 = 개인정보 파기 등). */
+export const STAFF_RESTRICTED_LNB_PATH_PREFIXES = Object.freeze([
+  ADMIN_ROUTES.COMPLIANCE
 ]);
 
 const SHOP_LNB_CHILD_ORDER = Object.freeze([
@@ -563,7 +571,12 @@ function isStaffRestrictedLnbPath(path) {
   if (typeof path !== 'string' || !path.startsWith('/')) {
     return false;
   }
-  return STAFF_RESTRICTED_LNB_PATHS.includes(path.split('?')[0]);
+  const normalized = path.split('?')[0];
+  if (STAFF_RESTRICTED_LNB_PATHS.includes(normalized)) {
+    return true;
+  }
+  // 컴플라이언스는 하위 탭(개인정보 파기 등)까지 모두 차단
+  return STAFF_RESTRICTED_LNB_PATH_PREFIXES.some((prefix) => normalized.startsWith(`${prefix}/`));
 }
 
 /**

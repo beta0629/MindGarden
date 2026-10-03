@@ -52,6 +52,9 @@ public class PersonalDataDestructionService {
     /** destruction 사유 메시지 포맷 — {0}: 카테고리 라벨, {1}: 연수. */
     private static final String DESTRUCTION_REASON_FORMAT = "%s 보존기간 %d년 경과로 인한 자동 파기";
 
+    /** 테넌트 컨텍스트 누락 시 응답 메시지. */
+    private static final String MSG_TENANT_CONTEXT_MISSING = "테넌트 정보가 없어 조회할 수 없습니다.";
+
     /** 시스템 접근자 ID. */
     private static final String SYSTEM_ACCESSOR_ID = "SYSTEM";
 
@@ -571,10 +574,18 @@ public class PersonalDataDestructionService {
      */
     public Map<String, Object> getPersonalDataDestructionStatus() {
         try {
+            String tenantId = TenantContextHolder.getTenantId();
+            if (tenantId == null || tenantId.isBlank()) {
+                log.warn("개인정보 파기 현황 조회 거부: 테넌트 컨텍스트 없음");
+                return Map.of("error", MSG_TENANT_CONTEXT_MISSING);
+            }
+
             LocalDateTime oneMonthAgo = LocalDateTime.now().minusMonths(1);
 
+            // P1 보안(2026-10-03): 테넌트 미필터 조회로 타 테넌트 파기 집계가 노출되던 문제 수정
             List<PersonalDataAccessLog> destructionLogs = personalDataAccessLogRepository
-                .findByAccessTypeAndAccessTimeBetween(ACCESS_TYPE_DELETE, oneMonthAgo, LocalDateTime.now());
+                .findByTenantIdAndAccessTypeAndAccessTimeBetween(
+                    tenantId, ACCESS_TYPE_DELETE, oneMonthAgo, LocalDateTime.now());
 
             Map<String, Long> destructionStats = destructionLogs.stream()
                 .collect(java.util.stream.Collectors.groupingBy(

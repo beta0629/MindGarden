@@ -729,7 +729,8 @@ describe('filterStaffRestrictedLnbItems', () => {
         { to: '/admin/adm_push_monitoring', label: '메시지 발송', icon: 'SEND', menuCode: 'ADM_PUSH_MONITORING' },
         { to: '/tenant/pg-configurations', label: '결제 연결', icon: 'CREDIT_CARD', menuCode: 'ADM_SETTINGS_PG' },
         { to: ADMIN_ROUTES.AI_PROVIDERS, label: 'AI', icon: 'CPU', menuCode: 'ADM_SETTINGS_AI_PROVIDER' },
-        { to: ADMIN_ROUTES.SYSTEM_CONFIG, label: '시스템 설정', icon: 'SETTINGS', menuCode: 'ADM_SETTINGS_SYSTEM' }
+        { to: ADMIN_ROUTES.SYSTEM_CONFIG, label: '시스템 설정', icon: 'SETTINGS', menuCode: 'ADM_SETTINGS_SYSTEM' },
+        { to: ADMIN_ROUTES.COMPLIANCE, label: '컴플라이언스', icon: 'FILE_WARNING', menuCode: 'ADM_REPORTS_COMP' }
       ]
     }
   ]);
@@ -738,7 +739,7 @@ describe('filterStaffRestrictedLnbItems', () => {
     items.find((item) => item.menuCode === 'ADM_SETTINGS').children.map((child) => child.menuCode)
   );
 
-  test('menuCode 기준으로 PG·AI·시스템 설정 자식을 제거한다', () => {
+  test('menuCode 기준으로 PG·AI·시스템 설정·컴플라이언스 자식을 제거한다', () => {
     const result = filterStaffRestrictedLnbItems(buildSettingsTree());
 
     expect(settingsChildCodes(result)).toEqual(['ADM_PUSH_MONITORING']);
@@ -778,6 +779,19 @@ describe('filterStaffRestrictedLnbItems', () => {
     ];
 
     expect(filterStaffRestrictedLnbItems(items)).toEqual([]);
+  });
+
+  test('컴플라이언스 하위 경로(개인정보 파기 등)도 경로 prefix 로 제거한다', () => {
+    const items = [
+      { to: '/admin/dashboard', label: '대시보드', icon: 'LAYOUT_DASHBOARD', end: true },
+      { to: ADMIN_ROUTES.COMPLIANCE, label: '컴플라이언스', icon: 'FILE_WARNING', end: true },
+      { to: ADMIN_ROUTES.COMPLIANCE_DASHBOARD, label: '컴플라이언스 현황', icon: 'FILE_WARNING', end: true },
+      { to: ADMIN_ROUTES.COMPLIANCE_DESTRUCTION, label: '개인정보 파기', icon: 'TRASH', end: true }
+    ];
+
+    const result = filterStaffRestrictedLnbItems(items);
+
+    expect(result.map((item) => item.to)).toEqual(['/admin/dashboard']);
   });
 
   test('비배열 입력은 그대로 반환', () => {

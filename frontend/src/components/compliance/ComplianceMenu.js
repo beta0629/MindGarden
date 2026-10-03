@@ -1,8 +1,12 @@
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import ContentArea from '../dashboard-v2/content/ContentArea';
 import ContentHeader from '../dashboard-v2/content/ContentHeader';
 import SafeText from '../common/SafeText';
+import StandardizedApi from '../../utils/standardizedApi';
+import { resolveApiObjectData } from '../../utils/apiResponseNormalize';
+import { API_ADMIN_COMPLIANCE_POLICY } from './useComplianceDashboardData';
 import '../../styles/unified-design-tokens.css';
 import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import './ComplianceMenu.css';
@@ -46,8 +50,33 @@ function ComplianceMenuNav({ items }) {
   );
 }
 
+/**
+ * 문의 카드용 현재 테넌트 기본정보 (처리방침 API basicInfo). 실패·미설정이면 빈 객체.
+ *
+ * @returns {object}
+ */
+function useTenantComplianceContact() {
+  const [basicInfo, setBasicInfo] = useState({});
+  useEffect(() => {
+    let active = true;
+    StandardizedApi.get(API_ADMIN_COMPLIANCE_POLICY)
+      .then((res) => {
+        const info = resolveApiObjectData(res)?.policyComponents?.basicInfo;
+        if (active && info && typeof info === 'object') {
+          setBasicInfo(info);
+        }
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, []);
+  return basicInfo;
+}
+
 function ComplianceMenuInfoSection() {
   const { t } = useTranslation();
+  const contact = useTenantComplianceContact();
   return (
     <section
       className="mg-v2-compliance-menu__info"
@@ -89,16 +118,18 @@ function ComplianceMenuInfoSection() {
           <h3 className="mg-v2-compliance-menu__info-card-title">
             <span>{t('common:compliance.ComplianceMenu.t_21c6983d')}</span>
           </h3>
-          <div className="mg-v2-compliance-menu__contact">
+          <div className="mg-v2-compliance-menu__contact" data-testid="compliance-menu-contact">
             <p>
               <strong>{t('common:compliance.ComplianceMenu.t_5823eb2a')}</strong>{' '}
-              privacy@mindgarden.co.kr
+              <SafeText>{contact.contactEmail}</SafeText>
             </p>
             <p>
-              <strong>{t('common:compliance.ComplianceMenu.t_ca3404dd')}</strong> 032-724-8501
+              <strong>{t('common:compliance.ComplianceMenu.t_ca3404dd')}</strong>{' '}
+              <SafeText>{contact.contactPhone}</SafeText>
             </p>
             <p>
-              <strong>{t('common:compliance.ComplianceMenu.t_069db422')}</strong> {t('common:compliance.ComplianceMenu.t_c9092377')}
+              <strong>{t('common:compliance.ComplianceMenu.t_069db422')}</strong>{' '}
+              <SafeText>{contact.address}</SafeText>
             </p>
           </div>
         </article>

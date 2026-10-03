@@ -1,12 +1,25 @@
 package com.coresolution.consultation.service;
 
 import java.time.LocalDateTime;
+import java.util.Collections;
+import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.constant.compliance.ComplianceDashboardSampleContent;
 import com.coresolution.consultation.constant.compliance.ComplianceServiceErrorMessages;
 import com.coresolution.consultation.repository.PersonalDataAccessLogRepository;
+import com.coresolution.consultation.repository.UserRepository;
+import com.coresolution.core.context.TenantContextHolder;
+import com.coresolution.core.domain.Tenant;
+import com.coresolution.core.repository.TenantRepository;
 import org.springframework.stereotype.Service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,8 +35,14 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 @RequiredArgsConstructor
 public class ComplianceService {
-    
+
+    /** 교육 대상 인원 집계 역할 (내담자 제외 임직원) */
+    private static final Set<UserRole> EDUCATION_TARGET_ROLES =
+        Collections.unmodifiableSet(EnumSet.of(UserRole.ADMIN, UserRole.CONSULTANT, UserRole.STAFF));
+
     private final PersonalDataAccessLogRepository personalDataAccessLogRepository;
+    private final UserRepository userRepository;
+    private final TenantRepository tenantRepository;
     
     /**
      * 개인정보 처리 현황 조회
@@ -34,22 +53,25 @@ public class ComplianceService {
      */
     public Map<String, Object> getPersonalDataProcessingStatus(LocalDateTime startDate, LocalDateTime endDate) {
         Map<String, Object> result = new HashMap<>();
+        String tenantId = TenantContextHolder.getTenantId();
+        if (tenantId == null || tenantId.isBlank()) {
+            result.put("error", ComplianceServiceErrorMessages.MSG_TENANT_CONTEXT_MISSING);
+            return result;
+        }
         
         try {
-            // 개인정보 유형별 처리 현황
-            Map<String, Long> dataTypeStats = personalDataAccessLogRepository.countByDataTypeAndAccessTimeBetween(
-                startDate, endDate);
-            
-            // 접근 유형별 처리 현황
-            Map<String, Long> accessTypeStats = personalDataAccessLogRepository.countByAccessTypeAndAccessTimeBetween(
-                startDate, endDate);
-            
-            // 접근자별 처리 현황
-            Map<String, Long> accessorStats = personalDataAccessLogRepository.countByAccessorIdAndAccessTimeBetween(
-                startDate, endDate);
-            
-            // 전체 처리 건수
-            long totalCount = personalDataAccessLogRepository.countByAccessTimeBetween(startDate, endDate);
+            long totalCount = personalDataAccessLogRepository.countByTenantIdAndAccessTimeBetween(
+                tenantId, startDate, endDate);
+
+            Map<String, Long> dataTypeStats = countStatsOrEmpty("dataType",
+                () -> personalDataAccessLogRepository.countByTenantIdAndDataTypeAndAccessTimeBetween(
+                    tenantId, startDate, endDate));
+            Map<String, Long> accessTypeStats = countStatsOrEmpty("accessType",
+                () -> personalDataAccessLogRepository.countByTenantIdAndAccessTypeAndAccessTimeBetween(
+                    tenantId, startDate, endDate));
+            Map<String, Long> accessorStats = countStatsOrEmpty("accessorId",
+                () -> personalDataAccessLogRepository.countByTenantIdAndAccessorIdAndAccessTimeBetween(
+                    tenantId, startDate, endDate));
             
             result.put("dataTypeStats", dataTypeStats);
             result.put("accessTypeStats", accessTypeStats);
@@ -169,18 +191,17 @@ public class ComplianceService {
                 )
             );
             
-            // 교육 이수 현황 (예시)
-            Map<String, Object> completionStatus = Map.of(
-                "totalEmployees", 50,
-                "basicEducationCompleted", 45,
-                "medicalDataEducationCompleted", 20,
-                "technicalEducationCompleted", 15,
-                "completionRate", "90%"
-            );
+            // 이수 기록 저장소가 없으므로 이수 인원·이수율은 비워 두고(화면 '—'), 대상 인원만 실제 집계
+            Map<String, Object> completionStatus = new LinkedHashMap<>();
+            completionStatus.put("totalEmployees", countEducationTargets());
+            completionStatus.put("basicEducationCompleted", null);
+            completionStatus.put("medicalDataEducationCompleted", null);
+            completionStatus.put("technicalEducationCompleted", null);
+            completionStatus.put("completionRate", null);
             
             result.put("educationPrograms", educationPrograms);
             result.put("completionStatus", completionStatus);
-            result.put("nextEducationDate", LocalDateTime.now().plusMonths(1));
+            result.put("nextEducationDate", null);
             result.put("status", "success");
             
         } catch (Exception e) {
@@ -202,12 +223,7 @@ public class ComplianceService {
         try {
             // 처리방침 구성 요소
             Map<String, Object> policyComponents = Map.of(
-                "basicInfo", Map.of(
-                    "companyName", "마인드가든",
-                    "privacyOfficer", "개인정보보호책임자",
-                    "contactInfo", "privacy@mindgarden.co.kr",
-                    "lastUpdated", "2024-12-19"
-                ),
+                "basicInfo", buildTenantBasicInfo(),
                 "dataTypes", Map.of(
                     "userInfo", List.of("이름", "이메일", "전화번호", "주소", "생년월일"),
                     "consultationInfo", List.of("상담 내용", "상담 일지", "상담사 정보"),
@@ -244,8 +260,8 @@ public class ComplianceService {
             
             result.put("policyComponents", policyComponents);
             result.put("complianceStatus", complianceStatus);
-            result.put("lastReviewDate", LocalDateTime.now());
-            result.put("nextReviewDate", LocalDateTime.now().plusMonths(3));
+            result.put("lastReviewDate", null);
+            result.put("nextReviewDate", null);
             result.put("status", "success");
             
         } catch (Exception e) {
@@ -281,17 +297,14 @@ public class ComplianceService {
             // 처리방침 현황
             Map<String, Object> policyStatus = getPersonalDataProcessingPolicyStatus();
             
-            // 종합 점수 계산
-            int overallScore = calculateComplianceScore(processingStatus, impactAssessment, 
-                breachResponse, educationStatus, policyStatus);
-            
             result.put("processingStatus", processingStatus);
             result.put("impactAssessment", impactAssessment);
             result.put("breachResponse", breachResponse);
             result.put("educationStatus", educationStatus);
             result.put("policyStatus", policyStatus);
-            result.put("overallScore", overallScore);
-            result.put("complianceLevel", getComplianceLevel(overallScore));
+            // 실측 평가 기준이 없어 점수·등급은 산출하지 않음 (응답 키 존재 여부로 만점이 나오던 고정값 제거)
+            result.put("overallScore", null);
+            result.put("complianceLevel", null);
             result.put("lastUpdated", LocalDateTime.now());
             result.put("status", "success");
             
@@ -304,57 +317,66 @@ public class ComplianceService {
     }
     
     /**
-     * 컴플라이언스 점수 계산
+     * 현재 테넌트의 교육 대상(임직원) 활성 인원.
+     *
+     * @return 인원 수, 테넌트 컨텍스트가 없으면 {@code null}
      */
-    private int calculateComplianceScore(Map<String, Object> processingStatus, 
-                                       Map<String, Object> impactAssessment,
-                                       Map<String, Object> breachResponse,
-                                       Map<String, Object> educationStatus,
-                                       Map<String, Object> policyStatus) {
-        int score = 0;
-        
-        // 개인정보 처리 현황 (20점)
-        if (processingStatus.containsKey("totalCount")) {
-            score += 20;
+    private Long countEducationTargets() {
+        String tenantId = TenantContextHolder.getTenantId();
+        if (tenantId == null || tenantId.isBlank()) {
+            return null;
         }
-        
-        // 개인정보 영향평가 (25점)
-        if (impactAssessment.containsKey("riskAssessment")) {
-            score += 25;
-        }
-        
-        // 침해사고 대응 (20점)
-        if (breachResponse.containsKey("responseProcedures")) {
-            score += 20;
-        }
-        
-        // 교육 현황 (15점)
-        if (educationStatus.containsKey("educationPrograms")) {
-            score += 15;
-        }
-        
-        // 처리방침 현황 (20점)
-        if (policyStatus.containsKey("policyComponents")) {
-            score += 20;
-        }
-        
-        return score;
+        return userRepository.countByTenantIdAndRolesInAndIsActiveTrueAndIsDeletedFalse(
+            tenantId, EDUCATION_TARGET_ROLES);
     }
-    
+
     /**
-     * 컴플라이언스 수준 판정
+     * 처리방침 기본 정보 — 현재 테넌트 설정(이름·연락처)만 사용. 값이 없으면 {@code null}.
+     *
+     * @return 기본 정보 맵 (null 값 허용)
      */
-    private String getComplianceLevel(int score) {
-        if (score >= 90) {
-            return "우수";
-        } else if (score >= 80) {
-            return "양호";
-        } else if (score >= 70) {
-            return "보통";
-        } else if (score >= 60) {
-            return "미흡";
-        } else {
-            return "부족";
+    private Map<String, Object> buildTenantBasicInfo() {
+        Optional<Tenant> tenant = Optional.ofNullable(TenantContextHolder.getTenantId())
+            .filter(id -> !id.isBlank())
+            .flatMap(tenantRepository::findByTenantIdAndIsDeletedFalse);
+        Map<String, Object> basicInfo = new LinkedHashMap<>();
+        basicInfo.put("companyName", tenant.map(Tenant::getName).orElse(null));
+        basicInfo.put("privacyOfficer", null);
+        basicInfo.put("contactEmail", tenant.map(Tenant::getContactEmail).orElse(null));
+        basicInfo.put("contactPhone", tenant.map(Tenant::getContactPhone).orElse(null));
+        basicInfo.put("address", tenant.map(ComplianceService::joinTenantAddress).orElse(null));
+        basicInfo.put("lastUpdated", null);
+        return basicInfo;
+    }
+
+    /**
+     * 테넌트 주소 + 상세주소. 둘 다 비어 있으면 {@code null}.
+     *
+     * @param tenant 테넌트
+     * @return 표시용 주소
+     */
+    private static String joinTenantAddress(Tenant tenant) {
+        String joined = Stream.of(tenant.getAddress(), tenant.getAddressDetail())
+            .filter(part -> part != null && !part.isBlank())
+            .map(String::trim)
+            .collect(Collectors.joining(" "));
+        return joined.isEmpty() ? null : joined;
+    }
+
+    /**
+     * 그룹 집계 조회. 실패 시 빈 맵으로 두고 전체 건수 응답은 유지한다.
+     *
+     * @param label 로그용 집계 이름
+     * @param query 집계 조회
+     * @return 집계 맵 (실패·null 이면 빈 맵)
+     */
+    private Map<String, Long> countStatsOrEmpty(String label, Supplier<Map<String, Long>> query) {
+        try {
+            Map<String, Long> stats = query.get();
+            return stats != null ? stats : Collections.emptyMap();
+        } catch (RuntimeException e) {
+            log.warn("개인정보 처리 현황 {} 집계 실패: {}", label, e.getMessage());
+            return Collections.emptyMap();
         }
     }
 }

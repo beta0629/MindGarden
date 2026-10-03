@@ -26,6 +26,9 @@ public final class ComplianceServiceErrorMessages {
     public static final String MSG_COMPLIANCE_OVERALL_STATUS_QUERY_FAILED =
             "컴플라이언스 종합 현황 조회에 실패했습니다.";
 
+    public static final String MSG_TENANT_CONTEXT_MISSING =
+            "테넌트 정보를 확인할 수 없어 조회할 수 없습니다.";
+
     private ComplianceServiceErrorMessages() {
     }
 }

@@ -132,13 +132,48 @@ describe('DEFAULT_MENU_ITEMS (LNB IA P0/P1)', () => {
   });
 
   describe('시스템·설정 — 메시지 발송 (ADM_PUSH_MONITORING)', () => {
-    it('시스템·설정 children에 메시지 발송이 있고 path=/admin/push-monitoring', () => {
+    it('메시지 발송은 DB(V20260905_001 P1-7)처럼 알림·메시지에만 있고 시스템·설정에는 없다', () => {
       const item = DEFAULT_MENU_ITEMS.find((m) => m.label === '시스템·설정');
       expect(item).toBeDefined();
-      const messageSend = item.children.find((c) => c.label === '메시지 발송');
-      expect(messageSend).toBeDefined();
-      expect(messageSend.to).toBe(ADMIN_ROUTES.PUSH_MONITORING);
-      expect(messageSend.to).toBe('/admin/push-monitoring');
+      expect(item.children.some((c) => c.to === ADMIN_ROUTES.PUSH_MONITORING)).toBe(false);
+      const pushMonitoringEntries = DEFAULT_MENU_ITEMS.flatMap((m) => m.children || [])
+        .filter((c) => c.to === ADMIN_ROUTES.PUSH_MONITORING);
+      expect(pushMonitoringEntries).toHaveLength(1);
+    });
+  });
+
+  describe('시스템·설정 — DB ADM_SETTINGS 하위와 정합', () => {
+    /**
+     * DB ADM_SETTINGS 활성 하위 13건(sort_order 순) 중 FE 가 숨기는 3건
+     * (카카오 알림톡·문자 메시지(SMS)·패키지 요금 관리, HIDDEN_ADMIN_LNB_PATHS)을 뺀 화면 표시 목록.
+     * 라벨은 resolveOperatorLnbDisplayLabel 적용 후 DB 경로에서 보이는 값과 같다.
+     */
+    const EXPECTED_SETTINGS_CHILDREN = [
+      { label: '센터 프로필', to: '/tenant/profile' },
+      { label: '브랜딩', to: ADMIN_ROUTES.BRANDING },
+      { label: '시스템 설정', to: ADMIN_ROUTES.SYSTEM_CONFIG },
+      { label: '센터 코드', to: ADMIN_ROUTES.TENANT_COMMON_CODES },
+      { label: '사업자·약관', to: '/tenant/merchant-legal' },
+      { label: '결제 연결', to: '/tenant/pg-configurations' },
+      { label: 'AI 프로바이더 관리', to: ADMIN_ROUTES.AI_PROVIDERS },
+      { label: '수동 알림 발송', to: ADMIN_ROUTES.MANUAL_NOTIFICATION },
+      { label: 'SMS 템플릿 관리', to: ADMIN_ROUTES.SMS_TEMPLATES },
+      { label: '컴플라이언스', to: '/admin/compliance' }
+    ];
+
+    it('폴백 하위 라벨·경로·순서가 DB 표시 목록과 같다', () => {
+      const item = DEFAULT_MENU_ITEMS.find((m) => m.label === '시스템·설정');
+      expect(item.children.map(({ label, to }) => ({ label, to }))).toEqual(EXPECTED_SETTINGS_CHILDREN);
+    });
+
+    it('FE 숨김 3건·DB 비활성 항목은 폴백에 없다', () => {
+      const item = DEFAULT_MENU_ITEMS.find((m) => m.label === '시스템·설정');
+      const paths = item.children.map((c) => c.to);
+      expect(paths).not.toContain(ADMIN_ROUTES.KAKAO_ALIMTALK_SETTINGS);
+      expect(paths).not.toContain(ADMIN_ROUTES.TENANT_SMS_SETTINGS);
+      expect(paths).not.toContain(ADMIN_ROUTES.PACKAGE_PRICING);
+      expect(paths).not.toContain('/admin/common-codes');
+      expect(paths).not.toContain('/admin/test-notification');
     });
   });
 

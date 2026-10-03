@@ -19,6 +19,7 @@ import { RoleUtils } from '../../constants/roles';
 import { useSession } from '../../contexts/SessionContext';
 import { useConfirm, useSettingToggleSave } from '../../hooks';
 import notificationManager from '../../utils/notification';
+import { isApiMutationSuccess, resolveApiObjectData } from '../../utils/apiResponseNormalize';
 import { toDisplayString } from '../../utils/safeDisplay';
 import { runResourceLoad, softRefresh } from '../../utils/softRefresh';
 import '../../styles/unified-design-tokens.css';
@@ -105,6 +106,8 @@ const AdminKakaoAlimtalkSettingsPage = () => {
   const [saveError, setSaveError] = useState(null);
   const [form, setForm] = useState(buildInitialForm);
   const [tenantIdLine, setTenantIdLine] = useState('');
+  /** 서버 값 로드 성공 여부 — 실패 시 빈 폼으로 저장값을 덮어쓰지 않도록 저장·토글 차단 */
+  const [settingsLoaded, setSettingsLoaded] = useState(false);
   /** 마지막 로드·저장 확정값 — 토글 PUT 시 dirty 텍스트 미포함 */
   const committedRef = useRef(buildInitialForm());
 
@@ -118,16 +121,20 @@ const AdminKakaoAlimtalkSettingsPage = () => {
     try {
       await runResourceLoad(options, setLoading, async() => {
         const res = await StandardizedApi.get(API.KAKAO_ALIMTALK_SETTINGS);
-        if (res && res.success === true && res.data) {
-          const mapped = mapApiToForm(res.data);
+        const data = resolveApiObjectData(res);
+        if (data) {
+          const mapped = mapApiToForm(data);
           committedRef.current = mapped;
           setForm(mapped);
-          setTenantIdLine(toDisplayString(res.data.tenantId, ''));
+          setTenantIdLine(toDisplayString(data.tenantId, ''));
+          setSettingsLoaded(true);
         } else {
+          setSettingsLoaded(false);
           setLoadError(t('settings:kakao.loadFail'));
         }
       });
     } catch (e) {
+      setSettingsLoaded(false);
       setLoadError(e);
     }
   }, [t]);
@@ -155,17 +162,18 @@ const AdminKakaoAlimtalkSettingsPage = () => {
   const saveAlimtalkEnabled = useCallback(async(next) => {
     const body = buildAlimtalkPutBodyFromCommitted(committedRef.current, next);
     const res = await StandardizedApi.put(API.KAKAO_ALIMTALK_SETTINGS, body);
-    if (!(res && res.success === true)) {
+    if (!isApiMutationSuccess(res)) {
       throw new Error(t('settings:kakao.toggleSaveFail'));
     }
-    if (res.data) {
-      const serverForm = mapApiToForm(res.data);
+    const saved = resolveApiObjectData(res);
+    if (saved) {
+      const serverForm = mapApiToForm(saved);
       committedRef.current = serverForm;
       setForm((prev) => ({
         ...prev,
         alimtalkEnabled: serverForm.alimtalkEnabled
       }));
-      setTenantIdLine(toDisplayString(res.data.tenantId, tenantIdLine));
+      setTenantIdLine(toDisplayString(saved.tenantId, tenantIdLine));
     } else {
       committedRef.current = {
         ...committedRef.current,
@@ -207,6 +215,9 @@ const AdminKakaoAlimtalkSettingsPage = () => {
 
   const handleSubmit = async(e) => {
     e.preventDefault();
+    if (!settingsLoaded) {
+      return;
+    }
     setSaveError(null);
     setSaving(true);
     try {
@@ -223,13 +234,14 @@ const AdminKakaoAlimtalkSettingsPage = () => {
         kakaoSenderKeyRef: form.kakaoSenderKeyRef || null
       };
       const res = await StandardizedApi.put(API.KAKAO_ALIMTALK_SETTINGS, body);
-      if (res && res.success === true) {
+      if (isApiMutationSuccess(res)) {
         notificationManager.success(t('settings:kakao.saveSuccess'));
-        if (res.data) {
-          const mapped = mapApiToForm(res.data);
+        const saved = resolveApiObjectData(res);
+        if (saved) {
+          const mapped = mapApiToForm(saved);
           committedRef.current = mapped;
           setForm(mapped);
-          setTenantIdLine(toDisplayString(res.data.tenantId, tenantIdLine));
+          setTenantIdLine(toDisplayString(saved.tenantId, tenantIdLine));
         }
       } else {
         setSaveError(t('settings:kakao.saveFail'));
@@ -291,7 +303,7 @@ const AdminKakaoAlimtalkSettingsPage = () => {
                   : t('common:label.off')}
                 checked={Boolean(form.alimtalkEnabled)}
                 onCheckedChange={onAlimtalkCheckedChange}
-                disabled={alimtalkDisabled || saving}
+                disabled={alimtalkDisabled || saving || !settingsLoaded}
                 isPending={alimtalkBusy}
                 ariaLabel={t('settings:kakao.enabledLabel')}
               />
@@ -335,7 +347,7 @@ const AdminKakaoAlimtalkSettingsPage = () => {
               <MGButton
                 type="submit"
                 className={buildErpMgButtonClassName({ variant: 'primary' })}
-                disabled={saving || alimtalkBusy}
+                disabled={saving || alimtalkBusy || !settingsLoaded}
                 loading={saving}
                 loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               >

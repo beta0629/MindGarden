@@ -19,6 +19,7 @@ import { RoleUtils } from '../../constants/roles';
 import { useSession } from '../../contexts/SessionContext';
 import { useConfirm, useSettingToggleSave } from '../../hooks';
 import notificationManager from '../../utils/notification';
+import { isApiMutationSuccess, resolveApiObjectData } from '../../utils/apiResponseNormalize';
 import { toDisplayString } from '../../utils/safeDisplay';
 import { runResourceLoad, softRefresh } from '../../utils/softRefresh';
 import '../../styles/unified-design-tokens.css';
@@ -76,6 +77,8 @@ const AdminTenantSmsSettingsPage = () => {
   const [saveError, setSaveError] = useState(null);
   const [form, setForm] = useState(buildInitialForm);
   const [tenantIdLine, setTenantIdLine] = useState('');
+  /** 서버 값 로드 성공 여부 — 실패 시 빈 폼으로 저장값을 덮어쓰지 않도록 저장·토글 차단 */
+  const [settingsLoaded, setSettingsLoaded] = useState(false);
   /** 마지막 로드·저장 확정값 — 토글 PUT 시 dirty 텍스트 미포함 */
   const committedRef = useRef(buildInitialForm());
 
@@ -89,16 +92,20 @@ const AdminTenantSmsSettingsPage = () => {
     try {
       await runResourceLoad(options, setLoading, async() => {
         const res = await StandardizedApi.get(API.TENANT_SMS_SETTINGS);
-        if (res && res.success === true && res.data) {
-          const mapped = mapApiToForm(res.data);
+        const data = resolveApiObjectData(res);
+        if (data) {
+          const mapped = mapApiToForm(data);
           committedRef.current = mapped;
           setForm(mapped);
-          setTenantIdLine(toDisplayString(res.data.tenantId, ''));
+          setTenantIdLine(toDisplayString(data.tenantId, ''));
+          setSettingsLoaded(true);
         } else {
+          setSettingsLoaded(false);
           setLoadError(t('settings:sms.loadFail'));
         }
       });
     } catch (e) {
+      setSettingsLoaded(false);
       setLoadError(e);
     }
   }, [t]);
@@ -126,17 +133,18 @@ const AdminTenantSmsSettingsPage = () => {
   const saveSmsEnabled = useCallback(async(next) => {
     const body = buildSmsPutBodyFromCommitted(committedRef.current, next);
     const res = await StandardizedApi.put(API.TENANT_SMS_SETTINGS, body);
-    if (!(res && res.success === true)) {
+    if (!isApiMutationSuccess(res)) {
       throw new Error(t('settings:sms.toggleSaveFail'));
     }
-    if (res.data) {
-      const serverForm = mapApiToForm(res.data);
+    const saved = resolveApiObjectData(res);
+    if (saved) {
+      const serverForm = mapApiToForm(saved);
       committedRef.current = serverForm;
       setForm((prev) => ({
         ...prev,
         smsEnabled: serverForm.smsEnabled
       }));
-      setTenantIdLine(toDisplayString(res.data.tenantId, tenantIdLine));
+      setTenantIdLine(toDisplayString(saved.tenantId, tenantIdLine));
     } else {
       committedRef.current = {
         ...committedRef.current,
@@ -178,6 +186,9 @@ const AdminTenantSmsSettingsPage = () => {
 
   const handleSubmit = async(e) => {
     e.preventDefault();
+    if (!settingsLoaded) {
+      return;
+    }
     setSaveError(null);
     setSaving(true);
     try {
@@ -189,13 +200,14 @@ const AdminTenantSmsSettingsPage = () => {
         apiSecretRef: form.apiSecretRef || null
       };
       const res = await StandardizedApi.put(API.TENANT_SMS_SETTINGS, body);
-      if (res && res.success === true) {
+      if (isApiMutationSuccess(res)) {
         notificationManager.success(t('settings:sms.saveSuccess'));
-        if (res.data) {
-          const mapped = mapApiToForm(res.data);
+        const saved = resolveApiObjectData(res);
+        if (saved) {
+          const mapped = mapApiToForm(saved);
           committedRef.current = mapped;
           setForm(mapped);
-          setTenantIdLine(toDisplayString(res.data.tenantId, tenantIdLine));
+          setTenantIdLine(toDisplayString(saved.tenantId, tenantIdLine));
         }
       } else {
         setSaveError(t('settings:sms.saveFail'));
@@ -257,7 +269,7 @@ const AdminTenantSmsSettingsPage = () => {
                   : t('common:label.off')}
                 checked={Boolean(form.smsEnabled)}
                 onCheckedChange={onSmsEnabledCheckedChange}
-                disabled={smsEnabledDisabled || saving}
+                disabled={smsEnabledDisabled || saving || !settingsLoaded}
                 isPending={smsEnabledBusy}
                 ariaLabel={t('settings:sms.enabledLabel')}
               />
@@ -321,7 +333,7 @@ const AdminTenantSmsSettingsPage = () => {
               <MGButton
                 type="submit"
                 className={buildErpMgButtonClassName({ variant: 'primary' })}
-                disabled={saving || smsEnabledBusy}
+                disabled={saving || smsEnabledBusy || !settingsLoaded}
                 loading={saving}
                 loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               >

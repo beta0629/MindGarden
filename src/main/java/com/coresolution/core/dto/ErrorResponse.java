@@ -1,6 +1,7 @@
 package com.coresolution.core.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -69,6 +70,12 @@ public class ErrorResponse {
      * 개발용 스택 트레이스 (프로덕션에서는 제외)
      */
     private String stackTrace;
+
+    /**
+     * 5xx 응답과 서버 로그를 대조하는 추적 id (5xx 에서만 채움)
+     */
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private String traceId;
     
     /**
      * 정적 팩토리 메서드 - 기본 에러 응답 생성

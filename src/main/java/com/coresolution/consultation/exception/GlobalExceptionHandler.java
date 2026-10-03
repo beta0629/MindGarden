@@ -7,7 +7,9 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import com.coresolution.consultation.constant.ApiRequestErrorMessages;
 import com.coresolution.consultation.constant.LifecycleState;
+import com.coresolution.consultation.constant.ServerErrorMessages;
 import com.coresolution.consultation.constant.ShopRefundConstants;
+import com.coresolution.consultation.util.ServerErrorResponses;
 import com.coresolution.core.dto.ErrorResponse;
 import com.coresolution.core.service.impl.OnboardingApprovalBlockedException;
 import jakarta.validation.ConstraintViolation;
@@ -205,15 +207,7 @@ public class GlobalExceptionHandler {
         if (root instanceof ConstraintViolationException cve) {
             return handleConstraintViolation(cve, request);
         }
-        log.error("Transaction system error (non-constraint): {}", e.getMessage(), e);
-        ErrorResponse error = ErrorResponse.of(
-            "트랜잭션 처리 중 오류가 발생했습니다.",
-            "TRANSACTION_SYSTEM_ERROR",
-            HttpStatus.INTERNAL_SERVER_ERROR.value(),
-            request.getRequestURI(),
-            request.getMethod()
-        );
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+        return sanitizedServerError("TRANSACTION_SYSTEM_ERROR", e, request);
     }
     
     /**
@@ -690,8 +684,9 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(ProcedureExecutionException.class)
     public ResponseEntity<ErrorResponse> handleProcedureExecution(
             ProcedureExecutionException e, HttpServletRequest request) {
-        log.error("[{}] procedure={} path={} detail={}", ProcedureExecutionException.ERROR_CODE,
-                e.getProcedureName(), request.getRequestURI(), e.getDetail(), e.getCause());
+        String traceId = ServerErrorResponses.newTraceId();
+        log.error("[{}] traceId={} procedure={} path={} detail={}", ProcedureExecutionException.ERROR_CODE,
+                traceId, e.getProcedureName(), request.getRequestURI(), e.getDetail(), e.getCause());
         ErrorResponse error = ErrorResponse.of(
                 e.getMessage(),
                 ProcedureExecutionException.ERROR_CODE,
@@ -699,6 +694,7 @@ public class GlobalExceptionHandler {
                 request.getRequestURI(),
                 request.getMethod()
         );
+        error.setTraceId(traceId);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
     }
 
@@ -772,38 +768,15 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * RuntimeException 처리
-     * HTTP 500 Internal Server Error 응답
-     * 비즈니스 로직 오류의 경우 실제 메시지를 클라이언트에 전달
+     * RuntimeException 처리 (별도 핸들러가 없는 런타임 예외)
+     * HTTP 500 + 공통 한글 문구. 예외 메시지는 SQL·클래스명 등 기술 문구일 수 있어 로그에만 남긴다.
+     * 화면에 문구를 보여야 하는 비즈니스 오류는 4xx 로 매핑되는 예외(IllegalArgument/IllegalState/전용 예외)를 던진다.
      */
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<ErrorResponse> handleRuntime(RuntimeException e, HttpServletRequest request) {
-        log.error("Runtime error occurred: {}", e.getMessage(), e);
-        
-        // 비즈니스 로직 오류 메시지가 있으면 전달 (한글 메시지 포함)
         String errorMessage = e.getMessage();
-        if (errorMessage != null && !errorMessage.trim().isEmpty()) {
-            // 한글 메시지인 경우 그대로 전달
-            ErrorResponse error = ErrorResponse.of(
-                errorMessage,
-                "RUNTIME_ERROR",
-                HttpStatus.INTERNAL_SERVER_ERROR.value(),
-                request.getRequestURI(),
-                request.getMethod()
-            );
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
-        }
-        
-        // 메시지가 없거나 비어있으면 기본 메시지 사용
-        ErrorResponse error = ErrorResponse.of(
-            "서버 내부 오류가 발생했습니다.",
-            "INTERNAL_SERVER_ERROR",
-            HttpStatus.INTERNAL_SERVER_ERROR.value(),
-            request.getRequestURI(),
-            request.getMethod()
-        );
-        
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+        boolean hasMessage = errorMessage != null && !errorMessage.trim().isEmpty();
+        return sanitizedServerError(hasMessage ? "RUNTIME_ERROR" : "INTERNAL_SERVER_ERROR", e, request);
     }
     
     /**
@@ -857,17 +830,30 @@ public class GlobalExceptionHandler {
         if (e instanceof NoResourceFoundException) {
             return handleNoResourceFound((NoResourceFoundException) e, request);
         }
-        
-        log.error("Unexpected error occurred: {}", e.getMessage(), e);
-        
+        return sanitizedServerError("UNEXPECTED_ERROR", e, request);
+    }
+
+    /**
+     * 5xx 공통 응답 — 예외 전체는 추적 id 와 함께 로그에만, 응답에는 공통 한글 문구와 추적 id 만 싣는다.
+     *
+     * @param errorCode 응답 오류 코드
+     * @param e         원인 예외
+     * @param request   요청
+     * @return HTTP 500 응답
+     */
+    private ResponseEntity<ErrorResponse> sanitizedServerError(
+            String errorCode, Throwable e, HttpServletRequest request) {
+        String traceId = ServerErrorResponses.newTraceId();
+        log.error("[{}] traceId={} path={} method={} exception={} message={}", errorCode, traceId,
+                request.getRequestURI(), request.getMethod(), e.getClass().getName(), e.getMessage(), e);
         ErrorResponse error = ErrorResponse.of(
-            "예상치 못한 오류가 발생했습니다.",
-            "UNEXPECTED_ERROR",
+            ServerErrorMessages.INTERNAL_SERVER_ERROR,
+            errorCode,
             HttpStatus.INTERNAL_SERVER_ERROR.value(),
             request.getRequestURI(),
             request.getMethod()
         );
-        
+        error.setTraceId(traceId);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
     }
     

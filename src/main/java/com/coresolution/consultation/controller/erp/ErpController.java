@@ -31,6 +31,7 @@ import com.coresolution.consultation.service.erp.financial.CardMerchantFeeSettin
 import com.coresolution.consultation.service.erp.financial.FinancialTransactionService;
 import com.coresolution.consultation.util.AdminRoleUtils;
 import com.coresolution.consultation.util.EmailLogMasking;
+import com.coresolution.consultation.util.ServerErrorResponses;
 import com.coresolution.consultation.util.TaxCalculationUtil;
 import com.coresolution.consultation.utils.SessionUtils;
 import com.coresolution.core.context.TenantContextHolder;
@@ -1447,9 +1448,7 @@ public class ErpController extends BaseApiController {
             return ResponseEntity.ok(result);
 
         } catch (Exception e) {
-            log.error("❌ 데이터 확인 실패: {}", e.getMessage(), e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("error", "데이터 확인 실패: " + e.getMessage()));
+            return ServerErrorResponses.internalError("데이터 확인 실패", e);
         }
     }
 
@@ -2317,9 +2316,7 @@ public class ErpController extends BaseApiController {
             return ResponseEntity.ok(result);
 
         } catch (Exception e) {
-            log.error("재무 거래 삭제 실패: id={}", id, e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("success",
-                    false, "message", "재무 거래 삭제 중 오류가 발생했습니다: " + e.getMessage()));
+            return ServerErrorResponses.internalError("재무 거래 삭제 실패: id=" + id, e);
         }
     }
 

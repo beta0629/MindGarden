@@ -12,6 +12,7 @@ import com.coresolution.consultation.service.DynamicPermissionService;
 import com.coresolution.consultation.service.erp.financial.FinancialTransactionService;
 import com.coresolution.consultation.service.PlSqlFinancialService;
 import com.coresolution.consultation.util.ProcedureResults;
+import com.coresolution.consultation.util.ServerErrorResponses;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -94,11 +95,7 @@ public class HQErpController {
             ));
             
         } catch (Exception e) {
-            log.error("❌ 지점별 재무 현황 조회 실패: 지점={}, 오류={}", branchCode, e.getMessage(), e);
-            return ResponseEntity.internalServerError().body(Map.of(
-                "success", false,
-                "message", "지점별 재무 현황 조회에 실패했습니다: " + e.getMessage()
-            ));
+            return ServerErrorResponses.internalError("지점별 재무 현황 조회 실패: 지점=" + branchCode, e);
         }
     }
     

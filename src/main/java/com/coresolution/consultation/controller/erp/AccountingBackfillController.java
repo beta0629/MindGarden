@@ -5,9 +5,11 @@ import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.service.SessionExtensionService;
 import com.coresolution.consultation.service.erp.accounting.AccountingService;
 import com.coresolution.consultation.service.erp.financial.CardMerchantFeeBackfillService;
+import com.coresolution.consultation.util.ServerErrorResponses;
 import com.coresolution.consultation.utils.SessionUtils;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.controller.BaseApiController;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -129,11 +131,10 @@ public class AccountingBackfillController extends BaseApiController {
                     "message", "ERP 계정 매핑 초기화 완료 (이미 존재 시 스킵됨)",
                     "tenantId", tenantId));
         } catch (Exception e) {
-            log.error("ERP 계정 매핑 초기화 실패: tenantId={}, error={}", tenantId, e.getMessage(), e);
-            return ResponseEntity.status(500).body(Map.of(
-                    "success", false,
-                    "message", "ERP 계정 매핑 초기화 실패: " + (e.getMessage() != null ? e.getMessage() : "알 수 없는 오류"),
-                    "tenantId", tenantId));
+            String traceId = ServerErrorResponses.logInternalError("ERP 계정 매핑 초기화 실패: tenantId=" + tenantId, e);
+            Map<String, Object> body = ServerErrorResponses.body(traceId);
+            body.put("tenantId", tenantId);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(body);
         }
     }
 }

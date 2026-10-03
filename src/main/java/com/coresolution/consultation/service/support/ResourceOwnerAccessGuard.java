@@ -1,6 +1,8 @@
 package com.coresolution.consultation.service.support;
 
 import java.util.Objects;
+import java.util.Optional;
+import java.util.function.Supplier;
 import com.coresolution.consultation.assessment.entity.PsychAssessmentDocument;
 import com.coresolution.consultation.assessment.repository.PsychAssessmentDocumentRepository;
 import com.coresolution.consultation.entity.ConsultantAvailability;
@@ -15,8 +17,11 @@ import com.coresolution.consultation.repository.ConsultantRatingRepository;
 import com.coresolution.consultation.repository.ConsultationAudioFileRepository;
 import com.coresolution.consultation.repository.ConsultationRecordRepository;
 import com.coresolution.consultation.repository.MultimodalEmotionReportRepository;
+import com.coresolution.consultation.util.ServerErrorResponses;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataAccessException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,20 +30,24 @@ import org.springframework.transaction.annotation.Transactional;
  * 자원 id(문서·평가·상담기록·음성파일·리포트·가용시간)로 접근하는 API 의 소유자 가드.
  *
  * <p>자원을 세션 테넌트 범위로 먼저 읽고, 그 소유 내담자/상담사에 {@link ClientPathAccessGuard} 와
- * 같은 규칙(내담자 본인 · 매칭 상담사 · 같은 테넌트 관리자/사무원)을 적용한다.
- * 테넌트 안에 자원이 없으면 존재 여부를 드러내지 않도록 403 으로 거부한다.</p>
+ * 같은 규칙(내담자 본인 · 매칭 상담사 · 같은 테넌트 관리자/사무원)을 적용한다.</p>
+ *
+ * <p>자원 id 로 인한 거부는 사유와 무관하게 하나의 문구({@link #DENIAL_RESOURCE_UNAVAILABLE})로 403 을
+ * 돌려준다. 없는 자원·타인 자원·조회 실패가 서로 다른 상태 코드나 문구로 구분되면 그 자체가 존재 여부를
+ * 드러내기 때문이다. 조회 중 DB 오류가 나도 500 으로 흘리지 않고 같은 403 으로 거부하며, 원인 예외는
+ * 추적 id 와 함께 로그에만 남긴다.</p>
  *
  * @author CoreSolution
  * @since 2026-10-04
  */
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class ResourceOwnerAccessGuard {
 
+    /** 자원 id 기반 거부 공통 문구 (없음·타인·조회 실패를 구분하지 않는다) */
     public static final String DENIAL_RESOURCE_UNAVAILABLE = "접근할 수 없는 자료입니다.";
     public static final String DENIAL_CLIENT_RATING_ONLY = "내담자 본인만 평가를 등록할 수 있습니다.";
-    public static final String DENIAL_OWN_RATING_ONLY = "본인의 평가만 변경할 수 있습니다.";
-    public static final String DENIAL_RECORD_CLIENT_MISMATCH = "해당 내담자의 상담 기록이 아닙니다.";
 
     private final ClientPathAccessGuard clientPathAccessGuard;
     private final PsychAssessmentDocumentRepository psychDocumentRepository;
@@ -61,18 +70,15 @@ public class ResourceOwnerAccessGuard {
     public User requirePsychDocumentAccess(HttpSession session, Long documentId) {
         User caller = clientPathAccessGuard.requireCaller(session);
         String tenantId = clientPathAccessGuard.requireCallerTenantId(caller);
-        PsychAssessmentDocument document = documentId == null ? null
-            : psychDocumentRepository.findByTenantIdAndId(tenantId, documentId).orElse(null);
-        if (document == null) {
-            ClientPathAccessGuard.deny(DENIAL_RESOURCE_UNAVAILABLE, caller, "documentId", documentId);
-        }
+        PsychAssessmentDocument document = load(caller, "documentId", documentId,
+            () -> psychDocumentRepository.findByTenantIdAndId(tenantId, documentId));
         if (document.getClientId() == null) {
             if (!clientPathAccessGuard.isTenantManager(caller)) {
-                ClientPathAccessGuard.deny(DENIAL_RESOURCE_UNAVAILABLE, caller, "documentId", documentId);
+                throw denyResource(caller, "documentId", documentId);
             }
             return caller;
         }
-        clientPathAccessGuard.assertCanAccessClient(caller, document.getClientId());
+        assertClientAccess(caller, document.getClientId(), "documentId", documentId);
         return caller;
     }
 
@@ -113,19 +119,19 @@ public class ResourceOwnerAccessGuard {
             boolean allowManager) {
         User caller = clientPathAccessGuard.requireCaller(session);
         String tenantId = clientPathAccessGuard.requireCallerTenantId(caller);
-        ConsultantRating rating = ratingId == null ? null
-            : ratingRepository.findByTenantIdAndId(tenantId, ratingId).orElse(null);
-        Long ownerId = rating != null && rating.getClient() != null ? rating.getClient().getId() : null;
+        ConsultantRating rating = load(caller, "ratingId", ratingId,
+            () -> ratingRepository.findByTenantIdAndId(tenantId, ratingId));
+        Long ownerId = rating.getClient() != null ? rating.getClient().getId() : null;
         if (ownerId == null) {
-            ClientPathAccessGuard.deny(DENIAL_RESOURCE_UNAVAILABLE, caller, "ratingId", ratingId);
+            throw denyResource(caller, "ratingId", ratingId);
         }
         if (requestedClientId != null && !Objects.equals(ownerId, requestedClientId)) {
-            ClientPathAccessGuard.deny(DENIAL_OWN_RATING_ONLY, caller, "ratingId", ratingId);
+            throw denyResource(caller, "ratingId", ratingId);
         }
         boolean owner = caller.getRole().isClient() && Objects.equals(caller.getId(), ownerId);
         boolean manager = allowManager && clientPathAccessGuard.isTenantManager(caller);
         if (!owner && !manager) {
-            ClientPathAccessGuard.deny(DENIAL_OWN_RATING_ONLY, caller, "ratingId", ratingId);
+            throw denyResource(caller, "ratingId", ratingId);
         }
         return ownerId;
     }
@@ -159,8 +165,7 @@ public class ResourceOwnerAccessGuard {
         User caller = clientPathAccessGuard.requireCaller(session);
         ConsultationRecord record = loadAccessibleRecord(caller, consultationRecordId);
         if (!Objects.equals(record.getClientId(), clientId)) {
-            ClientPathAccessGuard.deny(DENIAL_RECORD_CLIENT_MISMATCH, caller, "consultationRecordId",
-                consultationRecordId);
+            throw denyResource(caller, "consultationRecordId", consultationRecordId);
         }
     }
 
@@ -176,11 +181,8 @@ public class ResourceOwnerAccessGuard {
     public void requireAudioFileAccess(HttpSession session, Long audioFileId) {
         User caller = clientPathAccessGuard.requireCaller(session);
         String tenantId = clientPathAccessGuard.requireCallerTenantId(caller);
-        ConsultationAudioFile audioFile = audioFileId == null ? null
-            : audioFileRepository.findByTenantIdAndId(tenantId, audioFileId).orElse(null);
-        if (audioFile == null) {
-            ClientPathAccessGuard.deny(DENIAL_RESOURCE_UNAVAILABLE, caller, "audioFileId", audioFileId);
-        }
+        ConsultationAudioFile audioFile = load(caller, "audioFileId", audioFileId,
+            () -> audioFileRepository.findByTenantIdAndId(tenantId, audioFileId));
         loadAccessibleRecord(caller, audioFile.getConsultationRecordId());
     }
 
@@ -196,11 +198,8 @@ public class ResourceOwnerAccessGuard {
     public void requireMultimodalReportAccess(HttpSession session, Long reportId) {
         User caller = clientPathAccessGuard.requireCaller(session);
         String tenantId = clientPathAccessGuard.requireCallerTenantId(caller);
-        MultimodalEmotionReport report = reportId == null ? null
-            : multimodalReportRepository.findByTenantIdAndIdAndIsDeletedFalse(tenantId, reportId).orElse(null);
-        if (report == null) {
-            ClientPathAccessGuard.deny(DENIAL_RESOURCE_UNAVAILABLE, caller, "reportId", reportId);
-        }
+        MultimodalEmotionReport report = load(caller, "reportId", reportId,
+            () -> multimodalReportRepository.findByTenantIdAndIdAndIsDeletedFalse(tenantId, reportId));
         loadAccessibleRecord(caller, report.getConsultationRecordId());
     }
 
@@ -216,23 +215,62 @@ public class ResourceOwnerAccessGuard {
     public void requireAvailabilityWrite(HttpSession session, Long availabilityId) {
         User caller = clientPathAccessGuard.requireCaller(session);
         String tenantId = clientPathAccessGuard.requireCallerTenantId(caller);
-        ConsultantAvailability availability = availabilityId == null ? null
-            : availabilityRepository.findByTenantIdAndId(tenantId, availabilityId).orElse(null);
-        if (availability == null) {
-            ClientPathAccessGuard.deny(DENIAL_RESOURCE_UNAVAILABLE, caller, "availabilityId", availabilityId);
-        }
-        clientPathAccessGuard.assertCanAccessConsultant(caller, availability.getConsultantId());
+        ConsultantAvailability availability = load(caller, "availabilityId", availabilityId,
+            () -> availabilityRepository.findByTenantIdAndId(tenantId, availabilityId));
+        assertConsultantAccess(caller, availability.getConsultantId(), "availabilityId", availabilityId);
     }
 
     private ConsultationRecord loadAccessibleRecord(User caller, Long consultationRecordId) {
         String tenantId = clientPathAccessGuard.requireCallerTenantId(caller);
-        ConsultationRecord record = consultationRecordId == null ? null
-            : consultationRecordRepository.findByTenantIdAndId(tenantId, consultationRecordId).orElse(null);
-        if (record == null || record.getClientId() == null) {
-            ClientPathAccessGuard.deny(DENIAL_RESOURCE_UNAVAILABLE, caller, "consultationRecordId",
-                consultationRecordId);
+        ConsultationRecord record = load(caller, "consultationRecordId", consultationRecordId,
+            () -> consultationRecordRepository.findByTenantIdAndId(tenantId, consultationRecordId));
+        if (record.getClientId() == null) {
+            throw denyResource(caller, "consultationRecordId", consultationRecordId);
         }
-        clientPathAccessGuard.assertCanAccessClient(caller, record.getClientId());
+        assertClientAccess(caller, record.getClientId(), "consultationRecordId", consultationRecordId);
         return record;
+    }
+
+    /**
+     * 테넌트 범위로 자원을 읽는다.
+     *
+     * <p>id 누락·테넌트 내 미존재·조회 실패를 모두 같은 403 으로 수렴시킨다. 조회 실패(스키마 불일치 등)를
+     * 500 으로 흘리면 없는 id 와 읽을 수 있는 id 의 상태 코드가 갈려 존재 여부가 드러난다.</p>
+     */
+    private <T> T load(User caller, String field, Long resourceId, Supplier<Optional<T>> lookup) {
+        if (resourceId == null) {
+            throw denyResource(caller, field, null);
+        }
+        Optional<T> found;
+        try {
+            found = lookup.get();
+        } catch (DataAccessException e) {
+            log.error("[security] 자원 조회 실패 — 403 으로 거부: traceId={}, {}={}",
+                ServerErrorResponses.newTraceId(), field, resourceId, e);
+            throw denyResource(caller, field, resourceId);
+        }
+        return found.orElseThrow(() -> denyResource(caller, field, resourceId));
+    }
+
+    /** 소유 내담자 접근 검증. 거부 사유를 자원 공통 문구로 바꿔 존재 여부를 숨긴다. */
+    private void assertClientAccess(User caller, Long clientId, String field, Long resourceId) {
+        try {
+            clientPathAccessGuard.assertCanAccessClient(caller, clientId);
+        } catch (AccessDeniedException e) {
+            throw denyResource(caller, field, resourceId);
+        }
+    }
+
+    /** 소유 상담사 접근 검증. 거부 사유를 자원 공통 문구로 바꿔 존재 여부를 숨긴다. */
+    private void assertConsultantAccess(User caller, Long consultantId, String field, Long resourceId) {
+        try {
+            clientPathAccessGuard.assertCanAccessConsultant(caller, consultantId);
+        } catch (AccessDeniedException e) {
+            throw denyResource(caller, field, resourceId);
+        }
+    }
+
+    private static AccessDeniedException denyResource(User caller, String field, Long resourceId) {
+        return ClientPathAccessGuard.denied(DENIAL_RESOURCE_UNAVAILABLE, caller, field, resourceId);
     }
 }

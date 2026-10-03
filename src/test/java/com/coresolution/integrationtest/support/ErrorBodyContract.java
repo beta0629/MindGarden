@@ -37,6 +37,15 @@ public final class ErrorBodyContract {
             "at com.", "Caused by",
             "Hibernate", "JDBC", "jdbc", "Access denied", "bad SQL grammar");
 
+    /**
+     * 응답 본문에 나오면 안 되는 내부 식별자 패턴.
+     *
+     * <p>예외·검증 메시지에 디버깅용으로 붙는 세션·DB 식별자다. 로그에만 남아야 한다.</p>
+     */
+    private static final List<String> FORBIDDEN_IDENTIFIERS = List.of(
+            "tenantId=", "tenant_id=", "roleId=", "role_id=", "userId=", "user_id=",
+            "clientId=", "consultantId=", "mappingId=", "scheduleId=", "transactionId=");
+
     private ErrorBodyContract() {
     }
 
@@ -54,7 +63,7 @@ public final class ErrorBodyContract {
                 .andExpect(jsonPath("$.traceId").isNotEmpty())
                 .andExpect(jsonPath("$.details").doesNotExist())
                 .andExpect(jsonPath("$.stackTrace").doesNotExist());
-        assertNoTechnicalLeak(actions);
+        assertNoSensitiveLeak(actions);
     }
 
     /**
@@ -71,7 +80,7 @@ public final class ErrorBodyContract {
                 .andExpect(jsonPath("$.message").value(message))
                 .andExpect(jsonPath("$.errorCode").value(errorCode))
                 .andExpect(jsonPath("$.traceId").doesNotExist());
-        assertNoTechnicalLeak(actions);
+        assertNoSensitiveLeak(actions);
     }
 
     /**
@@ -84,5 +93,31 @@ public final class ErrorBodyContract {
         for (String fragment : FORBIDDEN_FRAGMENTS) {
             actions.andExpect(content().string(not(containsString(fragment))));
         }
+    }
+
+    /**
+     * 응답 본문에 내부 식별자({@code tenantId=} · {@code roleId=} · {@code userId=} 등)가 없는지 검증한다.
+     *
+     * @param actions MockMvc 수행 결과
+     * @throws Exception 검증 실패 시
+     */
+    public static void assertNoInternalIdentifierLeak(ResultActions actions) throws Exception {
+        for (String fragment : FORBIDDEN_IDENTIFIERS) {
+            actions.andExpect(content().string(not(containsString(fragment))));
+        }
+    }
+
+    /**
+     * 오류 응답(4xx·5xx) 공통 금칙 — 예외 원문도 내부 식별자도 없어야 한다.
+     *
+     * <p>상태 코드·문구는 경로마다 다르므로 여기서 단정하지 않는다. 경로별 단정은
+     * {@link #assertBadRequest} · {@link #assertSanitizedServerError} 를 쓴다.</p>
+     *
+     * @param actions MockMvc 수행 결과
+     * @throws Exception 검증 실패 시
+     */
+    public static void assertNoSensitiveLeak(ResultActions actions) throws Exception {
+        assertNoTechnicalLeak(actions);
+        assertNoInternalIdentifierLeak(actions);
     }
 }

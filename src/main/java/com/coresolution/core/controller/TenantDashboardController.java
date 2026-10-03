@@ -292,7 +292,7 @@ public class TenantDashboardController extends BaseApiController {
         TenantDashboardResponse dashboard = dashboardService.getDashboardByRole(tenantId, tenantRoleId);
         
         if (dashboard == null) {
-            throw new EntityNotFoundException("대시보드를 찾을 수 없습니다: tenantRoleId=" + tenantRoleId);
+            throw new EntityNotFoundException("대시보드를 찾을 수 없습니다.");
         }
         
         log.info("✅ 역할별 대시보드 조회 완료: tenantRoleId={}, dashboardId={}", 

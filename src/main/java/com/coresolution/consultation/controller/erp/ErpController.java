@@ -30,6 +30,7 @@ import com.coresolution.consultation.dto.CardMerchantFeeSettingsResponse;
 import com.coresolution.consultation.service.erp.financial.CardMerchantFeeSettingsService;
 import com.coresolution.consultation.service.erp.financial.FinancialTransactionService;
 import com.coresolution.consultation.util.AdminRoleUtils;
+import com.coresolution.consultation.util.ApiRequestParams;
 import com.coresolution.consultation.util.EmailLogMasking;
 import com.coresolution.consultation.util.ServerErrorResponses;
 import com.coresolution.consultation.util.TaxCalculationUtil;
@@ -440,12 +441,7 @@ public class ErpController extends BaseApiController {
         } catch (Exception e) {
             log.error("구매 요청 생성 중 오류: requesterId={}, itemId={}, quantity={}, error={}",
                     requesterId, itemId, quantity, e.getMessage(), e);
-
-            Map<String, Object> errorResponse = new HashMap<>();
-            errorResponse.put("success", false);
-            errorResponse.put("message", "구매 요청 생성에 실패했습니다: " + e.getMessage());
-
-            return ResponseEntity.status(400).body(errorResponse);
+            throw ServerErrorResponses.propagate(e);
         }
     }
 
@@ -561,12 +557,7 @@ public class ErpController extends BaseApiController {
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             log.error("관리자 승인 중 오류: id={}, adminId={}, error={}", id, adminId, e.getMessage(), e);
-
-            Map<String, Object> errorResponse = new HashMap<>();
-            errorResponse.put("success", false);
-            errorResponse.put("message", "관리자 승인에 실패했습니다: " + e.getMessage());
-
-            return ResponseEntity.status(400).body(errorResponse);
+            throw ServerErrorResponses.propagate(e);
         }
     }
 
@@ -594,12 +585,7 @@ public class ErpController extends BaseApiController {
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             log.error("관리자 거부 중 오류: id={}, adminId={}, error={}", id, adminId, e.getMessage(), e);
-
-            Map<String, Object> errorResponse = new HashMap<>();
-            errorResponse.put("success", false);
-            errorResponse.put("message", "관리자 거부에 실패했습니다: " + e.getMessage());
-
-            return ResponseEntity.status(400).body(errorResponse);
+            throw ServerErrorResponses.propagate(e);
         }
     }
 
@@ -628,12 +614,7 @@ public class ErpController extends BaseApiController {
         } catch (Exception e) {
             log.error("수퍼 관리자 승인 중 오류: id={}, superAdminId={}, error={}", id, superAdminId,
                     e.getMessage(), e);
-
-            Map<String, Object> errorResponse = new HashMap<>();
-            errorResponse.put("success", false);
-            errorResponse.put("message", "수퍼 관리자 승인에 실패했습니다: " + e.getMessage());
-
-            return ResponseEntity.status(400).body(errorResponse);
+            throw ServerErrorResponses.propagate(e);
         }
     }
 
@@ -662,12 +643,7 @@ public class ErpController extends BaseApiController {
         } catch (Exception e) {
             log.error("수퍼 관리자 거부 중 오류: id={}, superAdminId={}, error={}", id, superAdminId,
                     e.getMessage(), e);
-
-            Map<String, Object> errorResponse = new HashMap<>();
-            errorResponse.put("success", false);
-            errorResponse.put("message", "수퍼 관리자 거부에 실패했습니다: " + e.getMessage());
-
-            return ResponseEntity.status(400).body(errorResponse);
+            throw ServerErrorResponses.propagate(e);
         }
     }
 
@@ -690,12 +666,7 @@ public class ErpController extends BaseApiController {
         } catch (Exception e) {
             log.error("구매 요청 취소 중 오류: id={}, requesterId={}, error={}", id, requesterId,
                     e.getMessage(), e);
-
-            Map<String, Object> errorResponse = new HashMap<>();
-            errorResponse.put("success", false);
-            errorResponse.put("message", "구매 요청 취소에 실패했습니다: " + e.getMessage());
-
-            return ResponseEntity.status(400).body(errorResponse);
+            throw ServerErrorResponses.propagate(e);
         }
     }
 
@@ -748,12 +719,7 @@ public class ErpController extends BaseApiController {
         } catch (Exception e) {
             log.error("구매 주문 생성 중 오류: requestId={}, purchaserId={}, error={}", requestId,
                     purchaserId, e.getMessage(), e);
-
-            Map<String, Object> errorResponse = new HashMap<>();
-            errorResponse.put("success", false);
-            errorResponse.put("message", "구매 주문 생성에 실패했습니다: " + e.getMessage());
-
-            return ResponseEntity.status(400).body(errorResponse);
+            throw ServerErrorResponses.propagate(e);
         }
     }
 
@@ -800,12 +766,7 @@ public class ErpController extends BaseApiController {
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             log.error("주문 상태 업데이트 중 오류: id={}, status={}, error={}", id, status, e.getMessage(), e);
-
-            Map<String, Object> errorResponse = new HashMap<>();
-            errorResponse.put("success", false);
-            errorResponse.put("message", "주문 상태 업데이트에 실패했습니다: " + e.getMessage());
-
-            return ResponseEntity.status(400).body(errorResponse);
+            throw ServerErrorResponses.propagate(e);
         }
     }
 
@@ -826,12 +787,7 @@ public class ErpController extends BaseApiController {
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             log.error("배송 완료 처리 중 오류: id={}, error={}", id, e.getMessage(), e);
-
-            Map<String, Object> errorResponse = new HashMap<>();
-            errorResponse.put("success", false);
-            errorResponse.put("message", "배송 완료 처리에 실패했습니다: " + e.getMessage());
-
-            return ResponseEntity.status(400).body(errorResponse);
+            throw ServerErrorResponses.propagate(e);
         }
     }
 
@@ -883,9 +839,10 @@ public class ErpController extends BaseApiController {
      */
     @GetMapping("/budgets/year/{year}")
     public ResponseEntity<Map<String, Object>> getBudgetsByYear(@PathVariable String year) {
-        log.info("연도별 예산 조회: year={}", year);
+        String targetYear = ApiRequestParams.yearText(year, "year", LocalDate.now().getYear());
+        log.info("연도별 예산 조회: year={}", targetYear);
 
-        List<Budget> budgets = erpService.getBudgetsByYear(year);
+        List<Budget> budgets = erpService.getBudgetsByYear(targetYear);
 
         Map<String, Object> response = new HashMap<>();
         response.put("success", true);
@@ -902,9 +859,12 @@ public class ErpController extends BaseApiController {
     @GetMapping("/budgets/year/{year}/month/{month}")
     public ResponseEntity<Map<String, Object>> getBudgetsByYearAndMonth(@PathVariable String year,
             @PathVariable String month) {
-        log.info("월별 예산 조회: year={}, month={}", year, month);
+        LocalDate today = LocalDate.now();
+        String targetYear = ApiRequestParams.yearText(year, "year", today.getYear());
+        String targetMonth = ApiRequestParams.monthText(month, "month", today.getMonthValue());
+        log.info("월별 예산 조회: year={}, month={}", targetYear, targetMonth);
 
-        List<Budget> budgets = erpService.getBudgetsByYearAndMonth(year, month);
+        List<Budget> budgets = erpService.getBudgetsByYearAndMonth(targetYear, targetMonth);
 
         Map<String, Object> response = new HashMap<>();
         response.put("success", true);
@@ -977,9 +937,12 @@ public class ErpController extends BaseApiController {
     @GetMapping("/stats/budgets/monthly")
     public ResponseEntity<Map<String, Object>> getMonthlyBudgetStats(@RequestParam String year,
             @RequestParam String month) {
-        log.info("월별 예산 통계: year={}, month={}", year, month);
+        LocalDate today = LocalDate.now();
+        String targetYear = ApiRequestParams.yearText(year, "year", today.getYear());
+        String targetMonth = ApiRequestParams.monthText(month, "month", today.getMonthValue());
+        log.info("월별 예산 통계: year={}, month={}", targetYear, targetMonth);
 
-        Map<String, Object> stats = erpService.getMonthlyBudgetStats(year, month);
+        Map<String, Object> stats = erpService.getMonthlyBudgetStats(targetYear, targetMonth);
 
         Map<String, Object> response = new HashMap<>();
         response.put("success", true);
@@ -1194,14 +1157,16 @@ public class ErpController extends BaseApiController {
 
         log.info("재무 대시보드 데이터 조회 요청: 사용자={}, 테넌트={}", EmailLogMasking.maskForLog(currentUser.getEmail()), tenantId);
 
+        // 한쪽만 들어와도 형식을 검증한다 (둘 다 있을 때만 파싱하면 ?startDate=bad 가 200 으로 빠져나간다)
+        LocalDate start = ApiRequestParams.optionalDate(startDate, "startDate");
+        LocalDate end = ApiRequestParams.optionalDate(endDate, "endDate");
+
         // 테넌트 컨텍스트 설정 (서비스에서 getRequiredTenantId() 사용)
         TenantContextHolder.setTenantId(tenantId);
         try {
             // 테넌트별 데이터 조회 (날짜 파라미터 전달)
             Map<String, Object> financeData;
-            if (startDate != null && endDate != null) {
-                LocalDate start = LocalDate.parse(startDate);
-                LocalDate end = LocalDate.parse(endDate);
+            if (start != null && end != null) {
                 financeData = erpService.getBranchFinanceDashboard(null, start, end);
                 log.info("✅ 테넌트별 재무 대시보드 데이터 조회 완료: 테넌트={}, 기간={}~{}", tenantId, startDate,
                         endDate);
@@ -1245,13 +1210,16 @@ public class ErpController extends BaseApiController {
                     Map.of("success", false, "message", "테넌트 정보를 찾을 수 없습니다."));
         }
 
+        String start = ApiRequestParams.optionalDateText(startDate, "startDate");
+        String end = ApiRequestParams.optionalDateText(endDate, "endDate");
+
         // 테넌트 컨텍스트 설정
         TenantContextHolder.setTenantId(tenantId);
         try {
-            log.info("수입/지출 통계 조회 요청: {} ~ {}, 테넌트={}", startDate, endDate, tenantId);
+            log.info("수입/지출 통계 조회 요청: {} ~ {}, 테넌트={}", start, end, tenantId);
 
             Map<String, Object> statistics =
-                    erpService.getBranchFinanceStatistics(null, startDate, endDate);
+                    erpService.getBranchFinanceStatistics(null, start, end);
 
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
@@ -1288,12 +1256,15 @@ public class ErpController extends BaseApiController {
                     Map.of("success", false, "message", "테넌트 정보를 찾을 수 없습니다."));
         }
 
+        String start = ApiRequestParams.optionalDateText(startDate, "startDate");
+        String end = ApiRequestParams.optionalDateText(endDate, "endDate");
+
         // 테넌트 컨텍스트 설정
         TenantContextHolder.setTenantId(tenantId);
         try {
-            log.info("카테고리별 분석 조회 요청: {} ~ {}, 테넌트={}", startDate, endDate, tenantId);
+            log.info("카테고리별 분석 조회 요청: {} ~ {}, 테넌트={}", start, end, tenantId);
 
-            Map<String, Object> analysis = erpService.getCategoryAnalysis(startDate, endDate);
+            Map<String, Object> analysis = erpService.getCategoryAnalysis(start, end);
 
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
@@ -1330,17 +1301,18 @@ public class ErpController extends BaseApiController {
         }
 
         // 기본값으로 오늘 날짜 사용
-        if (reportDate == null) {
-            reportDate = java.time.LocalDate.now().toString();
+        String targetDate = ApiRequestParams.optionalDateText(reportDate, "reportDate");
+        if (targetDate == null) {
+            targetDate = java.time.LocalDate.now().toString();
         }
 
         // 테넌트 컨텍스트 설정
         TenantContextHolder.setTenantId(tenantId);
         try {
-            log.info("일간 재무 리포트 조회 요청: {}, 테넌트={}", reportDate, tenantId);
+            log.info("일간 재무 리포트 조회 요청: {}, 테넌트={}", targetDate, tenantId);
 
             Map<String, Object> dailyReport =
-                    erpService.getDailyFinanceReport(reportDate, null);
+                    erpService.getDailyFinanceReport(targetDate, null);
 
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
@@ -1377,21 +1349,18 @@ public class ErpController extends BaseApiController {
                     Map.of("success", false, "message", "테넌트 정보를 찾을 수 없습니다."));
         }
 
+        // 기본값으로 현재 년월 사용. 형식 검증은 공통 파서가 담당한다 (서비스의 parseInt 가 400 에 입력 원문을 흘리지 않도록)
+        LocalDate today = LocalDate.now();
+        String targetYear = ApiRequestParams.yearText(year, "year", today.getYear());
+        String targetMonth = ApiRequestParams.monthText(month, "month", today.getMonthValue());
+
         // 테넌트 컨텍스트 설정
         TenantContextHolder.setTenantId(tenantId);
         try {
-            log.info("월간 재무 리포트 조회 요청: {}-{}, 테넌트={}", year, month, tenantId);
-
-            // 기본값으로 현재 년월 사용
-            if (year == null) {
-                year = String.valueOf(java.time.LocalDate.now().getYear());
-            }
-            if (month == null) {
-                month = String.valueOf(java.time.LocalDate.now().getMonthValue());
-            }
+            log.info("월간 재무 리포트 조회 요청: {}-{}, 테넌트={}", targetYear, targetMonth, tenantId);
 
             Map<String, Object> monthlyReport =
-                    erpService.getMonthlyFinanceReport(year, month, null);
+                    erpService.getMonthlyFinanceReport(targetYear, targetMonth, null);
 
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
@@ -1423,20 +1392,12 @@ public class ErpController extends BaseApiController {
                     Map.of("success", false, "message", "테넌트 정보를 찾을 수 없습니다."));
         }
 
-        if (year == null || year.isEmpty()) {
-            year = String.valueOf(LocalDate.now().getYear());
-        }
-        try {
-            Integer.parseInt(year);
-        } catch (NumberFormatException ex) {
-            return ResponseEntity.status(400).body(
-                    Map.of("success", false, "message", "유효한 연도(year)를 입력해주세요."));
-        }
+        String targetYear = ApiRequestParams.yearText(year, "year", LocalDate.now().getYear());
 
         TenantContextHolder.setTenantId(tenantId);
         try {
-            log.info("연도별 월 세금 집계 요청: year={}, 테넌트={}", year, tenantId);
-            Map<String, Object> series = erpService.getTaxMonthlySeries(year);
+            log.info("연도별 월 세금 집계 요청: year={}, 테넌트={}", targetYear, tenantId);
+            Map<String, Object> series = erpService.getTaxMonthlySeries(targetYear);
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
             response.put("message", "연도별 월 세금 집계를 조회했습니다.");
@@ -1470,17 +1431,15 @@ public class ErpController extends BaseApiController {
                     Map.of("success", false, "message", "테넌트 정보를 찾을 수 없습니다."));
         }
 
-        // 기본값으로 현재 년도 사용
-        if (year == null) {
-            year = String.valueOf(java.time.LocalDate.now().getYear());
-        }
+        // 기본값으로 현재 년도 사용 (형식 검증은 공통 파서)
+        String targetYear = ApiRequestParams.yearText(year, "year", LocalDate.now().getYear());
 
         // 테넌트 컨텍스트 설정
         TenantContextHolder.setTenantId(tenantId);
         try {
-            log.info("년간 재무 리포트 조회 요청: {}, 테넌트={}", year, tenantId);
+            log.info("년간 재무 리포트 조회 요청: {}, 테넌트={}", targetYear, tenantId);
 
-            Map<String, Object> yearlyReport = erpService.getYearlyFinanceReport(year);
+            Map<String, Object> yearlyReport = erpService.getYearlyFinanceReport(targetYear);
 
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
@@ -1518,12 +1477,14 @@ public class ErpController extends BaseApiController {
                     Map.of("success", false, "message", "테넌트 정보를 찾을 수 없습니다."));
         }
 
+        String targetDate = ApiRequestParams.optionalDateText(reportDate, "reportDate");
+
         TenantContextHolder.setTenantId(tenantId);
         try {
-            log.info("대차대조표 조회 요청: {}, 테넌트: {}", reportDate, tenantId);
+            log.info("대차대조표 조회 요청: {}, 테넌트: {}", targetDate, tenantId);
 
             Map<String, Object> balanceSheet =
-                    erpService.getBalanceSheet(reportDate, branchCode);
+                    erpService.getBalanceSheet(targetDate, branchCode);
 
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
@@ -1559,13 +1520,16 @@ public class ErpController extends BaseApiController {
                     Map.of("success", false, "message", "테넌트 정보를 찾을 수 없습니다."));
         }
 
+        String start = ApiRequestParams.optionalDateText(startDate, "startDate");
+        String end = ApiRequestParams.optionalDateText(endDate, "endDate");
+
         // 테넌트 컨텍스트 설정
         TenantContextHolder.setTenantId(tenantId);
         try {
-            log.info("손익계산서 조회 요청: {} ~ {}, 테넌트={}", startDate, endDate, tenantId);
+            log.info("손익계산서 조회 요청: {} ~ {}, 테넌트={}", start, end, tenantId);
 
             Map<String, Object> incomeStatement =
-                    erpService.getIncomeStatement(startDate, endDate, null);
+                    erpService.getIncomeStatement(start, end, null);
 
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
@@ -1658,11 +1622,10 @@ public class ErpController extends BaseApiController {
             result.put("tenantId", tenantId);
 
             return ResponseEntity.ok(result);
-        } catch (RuntimeException e) {
-            log.error("재무 거래 단건 조회 실패: id={}", id, e);
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(Map.of("success", false, "message", e.getMessage()));
         } catch (Exception e) {
+            // 예외 원문을 400 에 그대로 싣지 않는다. 비즈니스 4xx 문구는 전역 처리기가 유지하고
+            // 나머지는 공통 5xx(문구 + errorCode + traceId)로 내보낸다.
+            log.error("재무 거래 단건 조회 실패: id={}", id, e);
             throw ServerErrorResponses.propagate(e);
         }
     }
@@ -1710,11 +1673,10 @@ public class ErpController extends BaseApiController {
             result.put("data", response);
 
             return ResponseEntity.ok(result);
-        } catch (RuntimeException e) {
-            log.error("재무 거래 수정 실패: id={}", id, e);
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(Map.of("success", false, "message", e.getMessage()));
         } catch (Exception e) {
+            // 예외 원문을 400 에 그대로 싣지 않는다. 비즈니스 4xx 문구는 전역 처리기가 유지하고
+            // 나머지는 공통 5xx(문구 + errorCode + traceId)로 내보낸다.
+            log.error("재무 거래 수정 실패: id={}", id, e);
             throw ServerErrorResponses.propagate(e);
         }
     }
@@ -1746,11 +1708,14 @@ public class ErpController extends BaseApiController {
                     Map.of("success", false, "message", "테넌트 정보를 찾을 수 없습니다."));
         }
 
+        String start = ApiRequestParams.optionalDateText(startDate, "startDate");
+        String end = ApiRequestParams.optionalDateText(endDate, "endDate");
+
         log.info("수입/지출 거래 목록 조회 요청: tenantId={}, branchCode={} (무시됨)", tenantId, branchCode);
 
         // 표준화 원칙: 페이지 크기 최대 20개로 제한
         Page<FinancialTransactionResponse> transactionPage = financialTransactionService
-                .getTransactionsByBranch(null, transactionType, category, startDate, endDate,
+                .getTransactionsByBranch(null, transactionType, category, start, end,
                         PaginationUtils.createPageable(page, size));
         List<FinancialTransactionResponse> transactions = transactionPage.getContent();
 

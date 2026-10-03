@@ -12,6 +12,7 @@ import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.BranchService;
 import com.coresolution.consultation.service.DynamicPermissionService;
 import com.coresolution.consultation.service.erp.ErpService;
+import com.coresolution.consultation.service.support.ResourceOwnerAccessGuard;
 import com.coresolution.core.service.PermissionGroupService;
 import com.coresolution.integrationtest.support.ErrorBodyContract;
 import com.coresolution.integrationtest.support.WithMockAdminSecurityContext;
@@ -73,6 +74,49 @@ class CommonErrorContractMvcTest {
         }
     }
 
+    /**
+     * 잘못된 입력 대표 경로 — 날짜·숫자 파라미터가 한쪽만 와도 400 이어야 하고,
+     * 본문에 {@code For input string} 같은 예외 원문이 없어야 한다.
+     */
+    private enum BadInputCase {
+        DASHBOARD_START_ONLY("/api/v1/erp/finance/dashboard", "startDate", "bad",
+                ApiRequestErrorMessages.INVALID_DATE_FORMAT, ApiRequestErrorMessages.CODE_INVALID_DATE_FORMAT),
+        DASHBOARD_END_ONLY("/api/v1/erp/finance/dashboard", "endDate", "bad",
+                ApiRequestErrorMessages.INVALID_DATE_FORMAT, ApiRequestErrorMessages.CODE_INVALID_DATE_FORMAT),
+        STATISTICS_START_ONLY("/api/v1/erp/finance/statistics", "startDate", "bad",
+                ApiRequestErrorMessages.INVALID_DATE_FORMAT, ApiRequestErrorMessages.CODE_INVALID_DATE_FORMAT),
+        CATEGORY_ANALYSIS_END_ONLY("/api/v1/erp/finance/category-analysis", "endDate", "bad",
+                ApiRequestErrorMessages.INVALID_DATE_FORMAT, ApiRequestErrorMessages.CODE_INVALID_DATE_FORMAT),
+        DAILY_REPORT_DATE("/api/v1/erp/finance/daily-report", "reportDate", "bad",
+                ApiRequestErrorMessages.INVALID_DATE_FORMAT, ApiRequestErrorMessages.CODE_INVALID_DATE_FORMAT),
+        INCOME_STATEMENT_START_ONLY("/api/v1/erp/finance/income-statement", "startDate", "bad",
+                ApiRequestErrorMessages.INVALID_DATE_FORMAT, ApiRequestErrorMessages.CODE_INVALID_DATE_FORMAT),
+        BALANCE_SHEET_DATE("/api/v1/erp/finance/balance-sheet", "reportDate", "bad",
+                ApiRequestErrorMessages.INVALID_DATE_FORMAT, ApiRequestErrorMessages.CODE_INVALID_DATE_FORMAT),
+        MONTHLY_REPORT_YEAR("/api/v1/erp/finance/monthly-report", "year", "abc",
+                ApiRequestErrorMessages.INVALID_PARAMETER_TYPE, ApiRequestErrorMessages.CODE_INVALID_PARAMETER_TYPE),
+        MONTHLY_REPORT_MONTH("/api/v1/erp/finance/monthly-report", "month", "99",
+                ApiRequestErrorMessages.INVALID_PARAMETER_TYPE, ApiRequestErrorMessages.CODE_INVALID_PARAMETER_TYPE),
+        YEARLY_REPORT_YEAR("/api/v1/erp/finance/yearly-report", "year", "abc",
+                ApiRequestErrorMessages.INVALID_PARAMETER_TYPE, ApiRequestErrorMessages.CODE_INVALID_PARAMETER_TYPE),
+        TAX_MONTHLY_SERIES_YEAR("/api/v1/erp/finance/tax-monthly-series", "year", "abc",
+                ApiRequestErrorMessages.INVALID_PARAMETER_TYPE, ApiRequestErrorMessages.CODE_INVALID_PARAMETER_TYPE);
+
+        private final String path;
+        private final String param;
+        private final String value;
+        private final String message;
+        private final String errorCode;
+
+        BadInputCase(String path, String param, String value, String message, String errorCode) {
+            this.path = path;
+            this.param = param;
+            this.value = value;
+            this.message = message;
+            this.errorCode = errorCode;
+        }
+    }
+
     @Autowired
     private MockMvc mockMvc;
 
@@ -104,24 +148,22 @@ class CommonErrorContractMvcTest {
         ErrorBodyContract.assertSanitizedServerError(perform(testCase.path));
     }
 
-    @Test
-    @DisplayName("ERP 재무 대시보드 ?startDate=bad → 400 · 날짜 안내 문구 (500 아님)")
-    void financeDashboard_badDate_returnsBadRequest() throws Exception {
+    @ParameterizedTest(name = "{0} → 400 · 공통 문구 · 예외 원문/내부 식별자 없음")
+    @EnumSource(BadInputCase.class)
+    @DisplayName("잘못된 날짜·숫자 파라미터는 한쪽만 와도 400 (200·raw 문구 금지)")
+    void badInputs_shareClientSafeBody(BadInputCase testCase) throws Exception {
         stubCommonBeans();
 
-        ResultActions actions = mockMvc.perform(get("/api/v1/erp/finance/dashboard")
-                .param("startDate", "bad")
-                .param("endDate", "2026-01-31")
+        ResultActions actions = mockMvc.perform(get(testCase.path)
+                .param(testCase.param, testCase.value)
                 .sessionAttr(SessionConstants.USER_OBJECT, adminUser())
                 .sessionAttr(SessionConstants.TENANT_ID, TEST_TENANT_ID));
 
-        ErrorBodyContract.assertBadRequest(actions,
-                ApiRequestErrorMessages.INVALID_DATE_FORMAT,
-                ApiRequestErrorMessages.CODE_INVALID_DATE_FORMAT);
+        ErrorBodyContract.assertBadRequest(actions, testCase.message, testCase.errorCode);
     }
 
     @Test
-    @DisplayName("ERP 재무 대시보드 ?endDate=2026-13-45(범위 밖) → 400 · 날짜 안내 문구")
+    @DisplayName("ERP 재무 대시보드 — 두 날짜가 모두 와도 범위 밖이면 400 · 날짜 안내 문구")
     void financeDashboard_outOfRangeDate_returnsBadRequest() throws Exception {
         stubCommonBeans();
 
@@ -134,6 +176,36 @@ class CommonErrorContractMvcTest {
         ErrorBodyContract.assertBadRequest(actions,
                 ApiRequestErrorMessages.INVALID_DATE_FORMAT,
                 ApiRequestErrorMessages.CODE_INVALID_DATE_FORMAT);
+    }
+
+    @Test
+    @DisplayName("권한 그룹 조회 — 세션 정보 부족 응답에 tenantId·roleId 값이 없다")
+    void permissionGroupsMy_sessionIncomplete_hidesSessionValues() throws Exception {
+        stubCommonBeans();
+
+        ResultActions actions = mockMvc.perform(get("/api/v1/permissions/groups/my")
+                .sessionAttr(SessionConstants.USER_OBJECT, adminUser())
+                .sessionAttr(SessionConstants.TENANT_ID, TEST_TENANT_ID));
+
+        actions.andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers
+                .status().is4xxClientError());
+        ErrorBodyContract.assertNoSensitiveLeak(actions);
+    }
+
+    @Test
+    @DisplayName("자원 id 가드 — 없는 리포트 id 는 실제 가드·리포지토리 경로로도 403 (500 아님)")
+    void multimodalReport_missingId_forbiddenThroughRealBeans() throws Exception {
+        ResultActions actions = mockMvc.perform(get("/api/v1/emotion-analysis/multimodal/999999")
+                .sessionAttr(SessionConstants.USER_OBJECT, clientUser())
+                .sessionAttr(SessionConstants.TENANT_ID, TEST_TENANT_ID));
+
+        actions.andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers
+                        .status().isForbidden())
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers
+                        .jsonPath("$.message").value(ResourceOwnerAccessGuard.DENIAL_RESOURCE_UNAVAILABLE))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers
+                        .jsonPath("$.data").doesNotExist());
+        ErrorBodyContract.assertNoSensitiveLeak(actions);
     }
 
     @Test
@@ -172,6 +244,18 @@ class CommonErrorContractMvcTest {
         user.setName("테스트관리자");
         user.setTenantId(TEST_TENANT_ID);
         user.setRole(UserRole.ADMIN);
+        return user;
+    }
+
+    /** 자원 id 가드를 실제 빈(@Transactional 프록시 + 리포지토리)으로 통과시키기 위한 내담자 세션 사용자. */
+    private User clientUser() {
+        User user = new User();
+        user.setId(20L);
+        user.setUserId("client-error-contract");
+        user.setEmail("client-error-contract@test.com");
+        user.setName("테스트내담자");
+        user.setTenantId(TEST_TENANT_ID);
+        user.setRole(UserRole.CLIENT);
         return user;
     }
 }

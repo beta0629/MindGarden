@@ -1683,7 +1683,7 @@ public class AdminController extends BaseApiController {
                 log.warn("매칭 데이터 추출 중 오류 (ID: {}): {}", mapping.getId(), e.getMessage());
                 Map<String, Object> errorData = new java.util.HashMap<>();
                 errorData.put("id", mapping.getId());
-                errorData.put("error", "데이터 추출 실패: " + e.getMessage());
+                errorData.put("error", "데이터를 불러오지 못했습니다.");
                 return errorData;
             }
         }).collect(java.util.stream.Collectors.toList());
@@ -3566,12 +3566,7 @@ public class AdminController extends BaseApiController {
 
         } catch (Exception e) {
             log.error("❌ 메뉴 목록 조회 실패: {}", e.getMessage(), e);
-
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", false);
-            response.put("message", "메뉴 목록 조회에 실패했습니다: " + e.getMessage());
-
-            return ResponseEntity.badRequest().body(response);
+            throw ServerErrorResponses.propagate(e);
         }
     }
 
@@ -3650,18 +3645,11 @@ public class AdminController extends BaseApiController {
 
         } catch (IllegalArgumentException e) {
             log.warn("❌ 재무 거래 목록 조회: 잘못된 요청 {}", e.getMessage());
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", false);
-            response.put("message", e.getMessage());
-            return ResponseEntity.badRequest().body(response);
+            // 예외 원문을 응답에 직접 싣지 않는다 — 전역 처리기가 사용자 문구만 400 으로 내보낸다.
+            throw e;
         } catch (Exception e) {
             log.error("❌ 재무 거래 목록 조회 실패: {}", e.getMessage(), e);
-
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", false);
-            response.put("message", "재무 거래 목록 조회에 실패했습니다: " + e.getMessage());
-
-            return ResponseEntity.badRequest().body(response);
+            throw ServerErrorResponses.propagate(e);
         }
     }
 
@@ -3698,12 +3686,7 @@ public class AdminController extends BaseApiController {
 
         } catch (Exception e) {
             log.error("❌ 예산 목록 조회 실패: {}", e.getMessage(), e);
-
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", false);
-            response.put("message", "예산 목록 조회에 실패했습니다: " + e.getMessage());
-
-            return ResponseEntity.badRequest().body(response);
+            throw ServerErrorResponses.propagate(e);
         }
     }
 
@@ -3746,12 +3729,7 @@ public class AdminController extends BaseApiController {
 
         } catch (Exception e) {
             log.error("❌ 세금 계산 목록 조회 실패: {}", e.getMessage(), e);
-
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", false);
-            response.put("message", "세금 계산 목록 조회에 실패했습니다: " + e.getMessage());
-
-            return ResponseEntity.badRequest().body(response);
+            throw ServerErrorResponses.propagate(e);
         }
     }
 
@@ -3788,12 +3766,7 @@ public class AdminController extends BaseApiController {
 
         } catch (Exception e) {
             log.error("❌ 세금 계산 항목 생성 실패: {}", e.getMessage(), e);
-
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", false);
-            response.put("message", "세금 계산 항목 생성에 실패했습니다: " + e.getMessage());
-
-            return ResponseEntity.badRequest().body(response);
+            throw ServerErrorResponses.propagate(e);
         }
     }
 

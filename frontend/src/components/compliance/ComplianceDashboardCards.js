@@ -3,7 +3,23 @@ import MGButton from '../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import SafeText from '../common/SafeText';
 import { toDisplayString } from '../../utils/safeDisplay';
+import { formatLedgerDateTime } from '../../utils/erpFinanceDisplay';
+import { toDateStr } from '../../utils/dateUtils';
 import { useTranslation } from 'react-i18next';
+
+/**
+ * 값이 없으면 '—', 있으면 단위를 붙여 표시 (없는 값을 0으로 꾸미지 않음).
+ *
+ * @param {*} value
+ * @param {string} unit
+ * @returns {string}
+ */
+export function formatComplianceCount(value, unit) {
+  if (value == null || value === '') {
+    return toDisplayString(null);
+  }
+  return `${toDisplayString(value)}${unit}`;
+}
 
 
 /**
@@ -47,7 +63,7 @@ export function OverallSection({ overallStatus, levelMod }) {
             <div
               className={`mg-v2-compliance-dashboard__metric-value mg-v2-compliance-dashboard__metric-value--${levelMod}`}
             >
-              {toDisplayString(overallStatus.overallScore ?? 0)}점
+              {formatComplianceCount(overallStatus.overallScore, '점')}
             </div>
           </div>
           <div className="mg-v2-compliance-dashboard__metric">
@@ -61,11 +77,7 @@ export function OverallSection({ overallStatus, levelMod }) {
           <div className="mg-v2-compliance-dashboard__metric">
             <div className="mg-v2-compliance-dashboard__metric-label">{t('common:compliance.ComplianceDashboardCards.t_d735b02d')}</div>
             <div className="mg-v2-compliance-dashboard__metric-value mg-v2-compliance-dashboard__metric-value--neutral">
-              <SafeText fallback="N/A">
-                {overallStatus.lastUpdated
-                  ? new Date(overallStatus.lastUpdated).toLocaleString()
-                  : null}
-              </SafeText>
+              {formatLedgerDateTime(overallStatus.lastUpdated)}
             </div>
           </div>
         </div>
@@ -217,7 +229,7 @@ export function EducationCard({ educationStatus }) {
           <div className="mg-v2-compliance-dashboard__row">
             <span className="mg-v2-compliance-dashboard__label">{t('common:compliance.ComplianceDashboardCards.t_ffd1b583')}</span>
             <span className="mg-v2-compliance-dashboard__value">
-              <SafeText fallback="N/A">
+              <SafeText>
                 {educationStatus.completionStatus?.completionRate}
               </SafeText>
             </span>
@@ -225,7 +237,7 @@ export function EducationCard({ educationStatus }) {
           <div className="mg-v2-compliance-dashboard__row">
             <span className="mg-v2-compliance-dashboard__label">{t('common:compliance.ComplianceDashboardCards.t_467bd916')}</span>
             <span className="mg-v2-compliance-dashboard__value">
-              {toDisplayString(educationStatus.completionStatus?.totalEmployees ?? 0)}명
+              {formatComplianceCount(educationStatus.completionStatus?.totalEmployees, '명')}
             </span>
           </div>
           <div className="mg-v2-compliance-dashboard__row mg-v2-compliance-dashboard__row--block">
@@ -263,7 +275,7 @@ export function PolicyCard({ policyStatus }) {
           <div className="mg-v2-compliance-dashboard__row">
             <span className="mg-v2-compliance-dashboard__label">{t('common:compliance.ComplianceDashboardCards.t_ea1ba45c')}</span>
             <span className="mg-v2-compliance-dashboard__value">
-              <SafeText fallback="N/A">
+              <SafeText>
                 {policyStatus.policyComponents?.basicInfo?.companyName}
               </SafeText>
             </span>
@@ -271,7 +283,7 @@ export function PolicyCard({ policyStatus }) {
           <div className="mg-v2-compliance-dashboard__row">
             <span className="mg-v2-compliance-dashboard__label">{t('common:compliance.ComplianceDashboardCards.t_5823eb2a')}</span>
             <span className="mg-v2-compliance-dashboard__value">
-              <SafeText fallback="N/A">
+              <SafeText>
                 {policyStatus.policyComponents?.basicInfo?.privacyOfficer}
               </SafeText>
             </span>
@@ -279,19 +291,13 @@ export function PolicyCard({ policyStatus }) {
           <div className="mg-v2-compliance-dashboard__row">
             <span className="mg-v2-compliance-dashboard__label">{t('common:compliance.ComplianceDashboardCards.t_88107ea4')}</span>
             <span className="mg-v2-compliance-dashboard__value">
-              <SafeText fallback="N/A">
-                {policyStatus.policyComponents?.basicInfo?.lastUpdated}
-              </SafeText>
+              <SafeText>{toDateStr(policyStatus.policyComponents?.basicInfo?.lastUpdated)}</SafeText>
             </span>
           </div>
           <div className="mg-v2-compliance-dashboard__row">
             <span className="mg-v2-compliance-dashboard__label">{t('common:compliance.ComplianceDashboardCards.t_99ac659e')}</span>
             <span className="mg-v2-compliance-dashboard__value">
-              <SafeText fallback="N/A">
-                {policyStatus.nextReviewDate
-                  ? new Date(policyStatus.nextReviewDate).toLocaleDateString()
-                  : null}
-              </SafeText>
+              <SafeText>{toDateStr(policyStatus.nextReviewDate)}</SafeText>
             </span>
           </div>
         </div>
@@ -321,11 +327,7 @@ export function DestructionCard({ destructionStatus }) {
           <div className="mg-v2-compliance-dashboard__row">
             <span className="mg-v2-compliance-dashboard__label">{t('common:compliance.ComplianceDashboardCards.t_8d4540b5')}</span>
             <span className="mg-v2-compliance-dashboard__value">
-              <SafeText fallback="N/A">
-                {destructionStatus.lastDestruction
-                  ? new Date(destructionStatus.lastDestruction).toLocaleString()
-                  : null}
-              </SafeText>
+              {formatLedgerDateTime(destructionStatus.lastDestruction)}
             </span>
           </div>
           <div className="mg-v2-compliance-dashboard__row mg-v2-compliance-dashboard__row--block">

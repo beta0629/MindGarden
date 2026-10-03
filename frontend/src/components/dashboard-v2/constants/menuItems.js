@@ -161,10 +161,9 @@ const DEFAULT_MENU_ITEMS = [
       { to: ADMIN_ROUTES.TENANT_COMMON_CODES, icon: 'TAG', label: '센터 코드', end: true },
       { to: '/tenant/merchant-legal', icon: 'FILE_TEXT', label: '사업자·약관', end: true },
       { to: '/tenant/pg-configurations', icon: 'CREDIT_CARD', label: '결제 연결', end: true },
-      { to: ADMIN_ROUTES.AI_PROVIDERS, icon: 'BOT', label: 'AI 프로바이더', end: true },
+      { to: ADMIN_ROUTES.AI_PROVIDERS, icon: 'BOT', label: 'AI 프로바이더 관리', end: true },
       { to: ADMIN_ROUTES.MANUAL_NOTIFICATION, icon: 'MEGAPHONE', label: '수동 알림 발송', end: true },
       { to: ADMIN_ROUTES.SMS_TEMPLATES, icon: 'FILE_TEXT', label: 'SMS 템플릿 관리', end: true },
-      { to: ADMIN_ROUTES.PUSH_MONITORING, icon: 'SEND', label: '메시지 발송', end: true },
       { to: '/admin/compliance', icon: 'FILE_WARNING', label: '컴플라이언스', end: true }
     ]
   }

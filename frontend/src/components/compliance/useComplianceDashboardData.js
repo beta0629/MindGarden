@@ -6,7 +6,7 @@ const API_ADMIN_COMPLIANCE_PERSONAL_DATA_PROCESSING = '/api/v1/admin/compliance/
 const API_ADMIN_COMPLIANCE_IMPACT_ASSESSMENT = '/api/v1/admin/compliance/impact-assessment';
 const API_ADMIN_COMPLIANCE_BREACH_RESPONSE = '/api/v1/admin/compliance/breach-response';
 const API_ADMIN_COMPLIANCE_EDUCATION = '/api/v1/admin/compliance/education';
-const API_ADMIN_COMPLIANCE_POLICY = '/api/v1/admin/compliance/policy';
+export const API_ADMIN_COMPLIANCE_POLICY = '/api/v1/admin/compliance/policy';
 const API_ADMIN_PERSONAL_DATA_DESTRUCTION_STATUS = '/api/v1/admin/personal-data-destruction/status';
 
 

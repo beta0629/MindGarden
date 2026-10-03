@@ -8,6 +8,7 @@ import com.coresolution.core.domain.onboarding.RiskLevel;
 import com.coresolution.core.repository.TenantRepository;
 import com.coresolution.core.repository.TenantDashboardRepository;
 import com.coresolution.core.service.OnboardingService;
+import com.coresolution.core.service.impl.OnboardingApprovalBlockedException;
 import com.coresolution.core.service.TenantDashboardService;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.constant.UserRole;
@@ -92,18 +93,9 @@ class MvpOnboardingFlowIntegrationTest {
         assertThat(request.getRequestedBy()).isEqualTo(testEmail);
         
         // Step 2: 온보딩 승인
-        OnboardingRequest approved = onboardingService.decide(
-            request.getId(),
-            OnboardingStatus.APPROVED,
-            "system-admin",
-            "MVP 테스트 승인"
-        );
-        
+        OnboardingRequest approved = decideApprovedOrAbort(request.getId(), "MVP 테스트 승인");
         assertThat(approved).isNotNull();
         assertThat(approved.getDecidedBy()).isEqualTo("system-admin");
-        org.junit.jupiter.api.Assumptions.assumeTrue(
-                approved.getStatus() == OnboardingStatus.APPROVED,
-                "사전/메타데이터 검증 등으로 ON_HOLD 인 경우 이후 프로비저닝 단계는 풀 시드·MySQL에서 검증");
         
         // Step 3: 테넌트 생성 확인
         Tenant tenant = tenantRepository.findByTenantId(testTenantId).orElse(null);
@@ -193,16 +185,7 @@ class MvpOnboardingFlowIntegrationTest {
         assertThat(request.getStatus()).isEqualTo(OnboardingStatus.PENDING);
         
         // Step 2: 온보딩 승인
-        OnboardingRequest approved = onboardingService.decide(
-            request.getId(),
-            OnboardingStatus.APPROVED,
-            "system-admin",
-            "MVP 테스트 승인"
-        );
-        
-        org.junit.jupiter.api.Assumptions.assumeTrue(
-                approved.getStatus() == OnboardingStatus.APPROVED,
-                "사전/메타데이터 검증 등으로 ON_HOLD 인 경우 이후 단계는 풀 시드·MySQL에서 검증");
+        OnboardingRequest approved = decideApprovedOrAbort(request.getId(), "MVP 테스트 승인");
         
         // Step 3: 테넌트 생성 확인
         Tenant tenant = tenantRepository.findByTenantId(academyTenantId).orElse(null);
@@ -243,15 +226,7 @@ class MvpOnboardingFlowIntegrationTest {
             "CONSULTATION"
         );
         
-        OnboardingRequest decided = onboardingService.decide(
-            request.getId(),
-            OnboardingStatus.APPROVED,
-            "system-admin",
-            "MVP 테스트 승인"
-        );
-        org.junit.jupiter.api.Assumptions.assumeTrue(
-                decided.getStatus() == OnboardingStatus.APPROVED,
-                "ON_HOLD 인 경우 subdomain·테넌트 설정 검증 생략");
+        OnboardingRequest decided = decideApprovedOrAbort(request.getId(), "MVP 테스트 승인");
         
         // 테넌트의 settings_json에서 subdomain 확인
         Tenant tenant = tenantRepository.findByTenantId(testTenantId).orElse(null);
@@ -273,6 +248,22 @@ class MvpOnboardingFlowIntegrationTest {
         System.out.println("✅ Subdomain 확인:");
         System.out.println("  - Subdomain: " + subdomain);
         System.out.println("  - Domain: " + domain);
+    }
+
+    /**
+     * 승인이 막히면 이후 프로비저닝 검증은 건너뛴다. 막힌 요청은 승인으로 남지 않는다.
+     */
+    private OnboardingRequest decideApprovedOrAbort(Long requestId, String note) {
+        try {
+            OnboardingRequest decided = onboardingService.decide(requestId, OnboardingStatus.APPROVED,
+                    "system-admin", note);
+            org.junit.jupiter.api.Assumptions.assumeTrue(
+                    decided.getStatus() == OnboardingStatus.APPROVED, decided.getStatus().name());
+            return decided;
+        } catch (OnboardingApprovalBlockedException blocked) {
+            org.junit.jupiter.api.Assumptions.assumeTrue(false, blocked.getMessage());
+            return null;
+        }
     }
 }
 

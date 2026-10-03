@@ -9,6 +9,7 @@ import com.coresolution.consultation.constant.ApiRequestErrorMessages;
 import com.coresolution.consultation.constant.LifecycleState;
 import com.coresolution.consultation.constant.ShopRefundConstants;
 import com.coresolution.core.dto.ErrorResponse;
+import com.coresolution.core.service.impl.OnboardingApprovalBlockedException;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import org.slf4j.Logger;
@@ -662,6 +663,25 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(error);
     }
 
+
+    /**
+     * 온보딩 승인이 테넌트·관리자를 커밋하지 못한 경우.
+     * HTTP 409 와 차단 사유를 반환하고, 요청은 승인으로 두지 않는다.
+     */
+    @ExceptionHandler(OnboardingApprovalBlockedException.class)
+    public ResponseEntity<ErrorResponse> handleOnboardingApprovalBlocked(
+            OnboardingApprovalBlockedException e, HttpServletRequest request) {
+        log.warn("[{}] path={} reason={}", OnboardingApprovalBlockedException.ERROR_CODE,
+                request.getRequestURI(), e.getMessage());
+        ErrorResponse error = ErrorResponse.of(
+                e.getMessage(),
+                OnboardingApprovalBlockedException.ERROR_CODE,
+                HttpStatus.CONFLICT.value(),
+                request.getRequestURI(),
+                request.getMethod()
+        );
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
+    }
 
     /**
      * 저장 프로시저 실패({@code p_success=false} 또는 호출 예외).

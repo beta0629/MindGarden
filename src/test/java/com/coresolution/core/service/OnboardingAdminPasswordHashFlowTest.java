@@ -31,6 +31,7 @@ import com.coresolution.core.repository.billing.TenantSubscriptionRepository;
 import com.coresolution.core.repository.onboarding.OnboardingRequestRepository;
 import com.coresolution.core.security.OnboardingAdminPasswordSupport;
 import com.coresolution.core.security.PasswordService;
+import com.coresolution.core.service.impl.OnboardingApprovalBlockedException;
 import com.coresolution.core.service.impl.OnboardingApprovalServiceImpl;
 import com.coresolution.core.service.impl.OnboardingServiceImpl;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -316,8 +317,8 @@ class OnboardingAdminPasswordHashFlowTest {
     }
 
     @Test
-    @DisplayName("반례: 빈 비밀번호는 키를 제거하고 인코딩하지 않음 → 승인은 ON_HOLD")
-    void create_blankPassword_removesKey_andApprovalHolds() throws Exception {
+    @DisplayName("반례: 빈 비밀번호는 키를 제거하고 인코딩하지 않음 → 승인은 사유와 함께 막힌다")
+    void create_blankPassword_removesKey_andApprovalIsBlocked() throws Exception {
         OnboardingRequest saved = createWithChecklist(checklistWithPassword("   "));
 
         Map<String, Object> checklist = objectMapper.readValue(saved.getChecklistJson(), MAP_TYPE);
@@ -325,9 +326,11 @@ class OnboardingAdminPasswordHashFlowTest {
         verify(passwordService, never()).encodePassword(anyString());
 
         when(repository.findActiveById(saved.getId())).thenReturn(Optional.of(saved));
-        OnboardingRequest result =
-                onboardingService.decide(saved.getId(), OnboardingStatus.APPROVED, "ops-actor", "승인");
-        assertThat(result.getStatus()).isEqualTo(OnboardingStatus.ON_HOLD);
+        assertThatThrownBy(() -> onboardingService.decide(saved.getId(), OnboardingStatus.APPROVED,
+                "ops-actor", "승인"))
+                .isInstanceOf(OnboardingApprovalBlockedException.class)
+                .hasMessageContaining("adminPassword");
+        assertThat(saved.getStatus()).isNotEqualTo(OnboardingStatus.APPROVED);
         verify(approvalService, never()).processOnboardingApproval(any(), anyString(), anyString(),
                 anyString(), anyString(), anyString(), anyString(), anyString(), nullable(String.class));
     }

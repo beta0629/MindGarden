@@ -10,6 +10,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -242,12 +243,9 @@ class OnboardingServiceTest {
     }
 
     @Test
-    @DisplayName("승인 프로시저가 실패하면 ON_HOLD 로 끝나고 프로시저는 한 번만 호출된다")
-    void testDecide_procedureFailure_onHold_singleAttempt() {
+    @DisplayName("승인 프로시저가 실패하면 승인으로 저장하지 않고 그 사유를 던진다")
+    void testDecide_procedureFailure_staysUnapprovedWithReason() {
         when(repository.findActiveById(testId)).thenReturn(Optional.of(testRequest));
-        when(repository.findByTenantIdAndIdAndIsDeletedFalse(testTenantId, testId))
-                .thenReturn(Optional.of(testRequest));
-        when(repository.save(any(OnboardingRequest.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         java.util.Map<String, Object> approvalResult = new java.util.HashMap<>();
         approvalResult.put("success", false);
@@ -256,11 +254,13 @@ class OnboardingServiceTest {
                 anyString(), anyString(), anyString(), anyString(), anyString(), nullable(String.class)))
                         .thenReturn(approvalResult);
 
-        OnboardingRequest result =
-                onboardingService.decide(testId, OnboardingStatus.APPROVED, "test-admin", "테스트 승인");
+        assertThatThrownBy(() -> onboardingService.decide(testId, OnboardingStatus.APPROVED, "test-admin",
+                "테스트 승인"))
+                .isInstanceOf(com.coresolution.core.service.impl.OnboardingApprovalBlockedException.class)
+                .hasMessageContaining("역할 템플릿 적용 실패");
 
-        assertThat(result.getStatus()).isEqualTo(OnboardingStatus.ON_HOLD);
-        assertThat(result.getDecisionNote()).contains("역할 템플릿 적용 실패");
+        assertThat(testRequest.getStatus()).isEqualTo(OnboardingStatus.PENDING);
+        verify(repository, never()).save(any(OnboardingRequest.class));
         verify(approvalService, times(1)).processOnboardingApproval(any(Long.class), anyString(),
                 anyString(), anyString(), anyString(), anyString(), anyString(), anyString(),
                 nullable(String.class));
@@ -270,21 +270,21 @@ class OnboardingServiceTest {
     }
 
     @Test
-    @DisplayName("온보딩 승인 - 연락 이메일은 있으나 adminPassword 없으면 ON_HOLD")
-    void testDecide_Approved_missingAdminPassword_onHold() {
+    @DisplayName("온보딩 승인 - 연락 이메일은 있으나 adminPassword 없으면 사유와 함께 막힌다")
+    void testDecide_Approved_missingAdminPassword_blocked() {
         OnboardingRequest noPw = OnboardingRequest.builder().id(testId).tenantId(testTenantId)
                 .tenantName(testTenantName).requestedBy("test-requester").riskLevel(RiskLevel.LOW)
                 .checklistJson("{\"checklist\":[]}").businessType(testBusinessType)
                 .status(OnboardingStatus.PENDING).isDeleted(false).build();
 
         when(repository.findActiveById(testId)).thenReturn(Optional.of(noPw));
-        when(repository.save(any(OnboardingRequest.class))).thenAnswer(inv -> inv.getArgument(0));
 
-        OnboardingRequest result = onboardingService.decide(testId, OnboardingStatus.APPROVED,
-                "test-admin", "승인 시도");
+        assertThatThrownBy(() -> onboardingService.decide(testId, OnboardingStatus.APPROVED,
+                "test-admin", "승인 시도"))
+                .isInstanceOf(com.coresolution.core.service.impl.OnboardingApprovalBlockedException.class)
+                .hasMessageContaining("adminPassword");
 
-        assertThat(result.getStatus()).isEqualTo(OnboardingStatus.ON_HOLD);
-        assertThat(result.getDecisionNote()).contains("승인 중단");
+        assertThat(noPw.getStatus()).isEqualTo(OnboardingStatus.PENDING);
         verify(approvalService, times(0)).processOnboardingApproval(any(), anyString(), anyString(),
                 anyString(), anyString(), anyString(), anyString(), anyString(), nullable(String.class));
     }

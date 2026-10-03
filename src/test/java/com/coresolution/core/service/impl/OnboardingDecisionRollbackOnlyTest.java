@@ -1,13 +1,15 @@
 package com.coresolution.core.service.impl;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.nullable;
-import static org.mockito.Mockito.atLeast;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -17,7 +19,6 @@ import java.sql.Connection;
 import java.util.Collections;
 import java.util.Optional;
 import java.util.concurrent.Executor;
-import java.util.concurrent.atomic.AtomicInteger;
 import javax.sql.DataSource;
 import com.coresolution.consultation.repository.CommonCodeRepository;
 import com.coresolution.consultation.service.CommonCodeService;
@@ -53,7 +54,7 @@ import org.springframework.transaction.interceptor.TransactionInterceptor;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 /**
- * 승인 처리가 트랜잭션을 rollback-only 로 남긴 채 반환하면 500 대신 기존 보류로 끝난다.
+ * 유효한 승인은 한 트랜잭션에서 커밋되고, 실제 실패는 승인으로 남지 않으며 사유를 돌려준다.
  *
  * @author CoreSolution
  * @since 2026-10-03
@@ -130,20 +131,10 @@ class OnboardingDecisionRollbackOnlyTest {
     }
 
     @Test
-    @DisplayName("rollback-only 인 결정 실패는 예외 없이 보류로 저장되고 승인 프로시저는 호출된다")
-    void rollbackOnlyFailureIsHeldInsteadOfUnhandledRollback() throws Exception {
-        AtomicInteger reads = new AtomicInteger();
-        OnboardingRequest[] inTransaction = new OnboardingRequest[1];
-        when(repository.findActiveById(REQUEST_ID)).thenAnswer(invocation -> {
-            if (reads.incrementAndGet() == 1) {
-                inTransaction[0] = pendingRequest();
-                return Optional.of(inTransaction[0]);
-            }
-            return Optional.of(pendingRequest());
-        });
-        when(repository.findByTenantIdAndIdAndIsDeletedFalse(TENANT_ID, REQUEST_ID))
-                .thenAnswer(invocation -> Optional.of(inTransaction[0]));
-        when(repository.save(any(OnboardingRequest.class))).thenAnswer(invocation -> invocation.getArgument(0));
+    @DisplayName("rollback-only 인 승인 실패는 사유를 던지고 테넌트·결정을 커밋하지 않는다")
+    void rollbackOnlyFailureStaysUnapprovedWithReason() throws Exception {
+        OnboardingRequest request = pendingRequest();
+        when(repository.findActiveById(REQUEST_ID)).thenReturn(Optional.of(request));
         when(approvalService.processOnboardingApproval(any(Long.class), anyString(), anyString(), anyString(),
                 anyString(), anyString(), anyString(), anyString(), nullable(String.class)))
                         .thenAnswer(invocation -> {
@@ -151,16 +142,39 @@ class OnboardingDecisionRollbackOnlyTest {
                             throw new RuntimeException("역할 템플릿 적용 실패");
                         });
 
-        OnboardingRequest result =
-                decideProxy.decide(REQUEST_ID, OnboardingStatus.APPROVED, "ops-actor", "승인");
+        assertThatThrownBy(() -> decideProxy.decide(REQUEST_ID, OnboardingStatus.APPROVED, "ops-actor", "승인"))
+                .isInstanceOf(OnboardingApprovalBlockedException.class)
+                .hasMessageContaining("역할 템플릿 적용 실패");
 
-        assertThat(result.getStatus()).isEqualTo(OnboardingStatus.ON_HOLD);
-        assertThat(result.getDecisionNote()).contains("역할 템플릿 적용 실패");
-        assertThat(result.getDecisionNote()).contains("[시스템 오류]");
-        verify(approvalService).processOnboardingApproval(any(Long.class), anyString(), anyString(),
-                anyString(), anyString(), anyString(), anyString(), anyString(), nullable(String.class));
-        verify(dataSource, atLeast(2)).getConnection();
+        assertThat(request.getStatus()).isEqualTo(OnboardingStatus.PENDING);
+        verify(repository, never()).save(any(OnboardingRequest.class));
+        verify(connection, atLeastOnce()).rollback();
+        verify(connection, never()).commit();
+        verify(dataSource, times(1)).getConnection();
         assertThat(TransactionSynchronizationManager.isActualTransactionActive()).isFalse();
+    }
+
+    @Test
+    @DisplayName("프로시저가 실패를 반환하면 승인으로 커밋하지 않고 그 사유를 돌려준다")
+    void procedureFailureRollsBackWithoutPartialCommit() throws Exception {
+        OnboardingRequest request = pendingRequest();
+        when(repository.findActiveById(REQUEST_ID)).thenReturn(Optional.of(request));
+        java.util.Map<String, Object> approvalResult = new java.util.HashMap<>();
+        approvalResult.put("success", false);
+        approvalResult.put("message", "Unknown column 'username' in 'field list'");
+        when(approvalService.processOnboardingApproval(any(Long.class), anyString(), anyString(), anyString(),
+                anyString(), anyString(), anyString(), anyString(), nullable(String.class)))
+                        .thenReturn(approvalResult);
+
+        assertThatThrownBy(() -> decideProxy.decide(REQUEST_ID, OnboardingStatus.APPROVED, "ops-actor", "승인"))
+                .isInstanceOf(OnboardingApprovalBlockedException.class)
+                .hasMessageContaining("username");
+
+        assertThat(request.getStatus()).isEqualTo(OnboardingStatus.PENDING);
+        verify(repository, never()).save(any(OnboardingRequest.class));
+        verify(connection).rollback();
+        verify(connection, never()).commit();
+        verify(dataSource, times(1)).getConnection();
     }
 
     @Test
@@ -184,6 +198,8 @@ class OnboardingDecisionRollbackOnlyTest {
         assertThat(result.getStatus()).isEqualTo(OnboardingStatus.APPROVED);
         verify(approvalService, times(1)).processOnboardingApproval(any(Long.class), anyString(), anyString(),
                 anyString(), anyString(), anyString(), anyString(), anyString(), nullable(String.class));
+        verify(connection).commit();
+        verify(connection, never()).rollback();
         verify(dataSource, times(1)).getConnection();
     }
 

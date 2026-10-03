@@ -35,12 +35,15 @@ describe('Salary calculation target actions', () => {
     expect(calcBlock).toMatch(/onClick=\{executeSalaryCalculation\}/);
   });
 
-  test('buttons share the input height token and wrap right-aligned', () => {
+  test('buttons share the input height token and align to the input row', () => {
     expect(salaryCss).toMatch(
       /\.salary-management__calc-stage \.salary-filter-block__group\s*\{[^}]*flex-direction:\s*row/s
     );
     expect(salaryCss).toMatch(
-      /\.salary-management__calc-stage \.salary-filter-block__group\s*\{[^}]*flex-wrap:\s*wrap/s
+      /\.salary-management__calc-stage \.salary-filter-block__group\s*\{[^}]*flex-wrap:\s*nowrap/s
+    );
+    expect(salaryCss).toMatch(
+      /\.salary-management__calc-stage \.salary-filter-block__fields\s*\{[^}]*flex:\s*1 1 0%/s
     );
     expect(salaryCss).toMatch(
       /\.salary-management__calc-stage \.salary-filter-block__group\s*\{[^}]*align-items:\s*flex-end/s
@@ -52,10 +55,29 @@ describe('Salary calculation target actions', () => {
       /\.salary-management__calc-stage \.salary-filter-block__run-calc\s*\{[^}]*justify-content:\s*flex-end/s
     );
     expect(salaryCss).toMatch(
-      /salary-filter-block__run-calc \.mg-button[\s\S]*?height:\s*var\(--mg-v2-component-height-sm\)/
+      /salary-filter-block__run-calc \.mg-button[\s\S]*?height:\s*var\(--input-height-default, var\(--mg-v2-component-height-md\)\)/
     );
     expect(salaryCss).toMatch(
-      /salary-filter-block__field \.mg-v2-select[\s\S]*?height:\s*var\(--mg-v2-component-height-sm\)/
+      /salary-filter-block__field \.mg-v2-select[\s\S]*?height:\s*var\(--input-height-default, var\(--mg-v2-component-height-md\)\)/
+    );
+    expect(salaryCss).toMatch(
+      /salary-filter-block__field \.mg-v2-select[\s\S]*?padding-block:\s*0/
+    );
+    expect(salaryCss).toMatch(
+      /salary-filter-block__run-calc[\s\S]*?align-items:\s*flex-end/
+    );
+    expect(salaryCss).toMatch(/@media \(max-width: 480px\)/);
+    expect(salaryCss).toMatch(/--breakpoint-mobile/);
+    expect(salaryCss).toMatch(/max-width:\s*100vw/);
+    expect(salaryCss).toMatch(
+      /mg-v2-list-block__table-wrapper\s*\{[^}]*min-width:\s*0/s
+    );
+    expect(salaryCss).toMatch(
+      /\.salary-management \.mg-v2-list-block__table-wrapper\s*\{[^}]*overflow-x:\s*auto/s
+    );
+    expect(salaryCss).toMatch(/grid-template-columns:\s*repeat\(\s*auto-fit/);
+    expect(salaryCss).not.toMatch(
+      /salary-filter-block__field \.mg-v2-select[\s\S]{0,180}?height:\s*var\(--mg-v2-component-height-sm\)/
     );
   });
 

@@ -117,6 +117,7 @@ class SessionManager {
     this.isLoading = false;
     this.listeners = [];
     this.lastCheckTime = 0;
+    this.lastVerifiedAt = 0;
     this.checkInProgress = false;
     this.minCheckInterval = SESSION_CHECK_INTERVAL;
     this.isProfileEditing = false; // 프로필 수정 중 플래그
@@ -406,6 +407,7 @@ class SessionManager {
 
         this.user = null;
         this.sessionInfo = null;
+        this.lastVerifiedAt = 0;
         clearStoredSessionExpiry();
         this.lastCheckTime = now;
         this.notifyListeners();
@@ -475,6 +477,7 @@ class SessionManager {
         }
 
         this.user = newUser;
+        this.lastVerifiedAt = now;
         console.log('✅ 사용자 정보 로드 완료:', this.user);
 
         // 세션 정보(비활성 타임아웃·마지막 접근 시각 등) — idle 경고용으로 항상 동기화
@@ -596,6 +599,7 @@ class SessionManager {
     this.sessionInfo = null;
     clearStoredSessionExpiry();
     this.lastCheckTime = 0;
+    this.lastVerifiedAt = 0;
     this.checkInProgress = false;
 
     localStorage.removeItem('user');
@@ -763,6 +767,7 @@ class SessionManager {
       this.user = null;
       this.sessionInfo = null;
       this.lastCheckTime = 0;
+      this.lastVerifiedAt = 0;
 
       this.notifyListeners();
       console.log('✅ 세션 강제 초기화 완료');
@@ -775,6 +780,7 @@ class SessionManager {
       this.user = null;
       this.sessionInfo = null;
       this.lastCheckTime = 0;
+      this.lastVerifiedAt = 0;
       this.notifyListeners();
     }
   }
@@ -787,6 +793,7 @@ class SessionManager {
     this.user = null;
     this.sessionInfo = null;
     this.lastCheckTime = 0;
+    this.lastVerifiedAt = 0;
     this.notifyListeners();
     console.log('✅ localStorage 정리 완료');
   }
@@ -883,6 +890,15 @@ class SessionManager {
   }
 
   // Getter 메서드들
+  /**
+   * 마지막으로 current-user 200 을 받은 시각(ms). 401·네트워크 실패로 찍힌 lastCheckTime 과 구분한다.
+   *
+   * @returns {number}
+   */
+  getLastVerifiedAt() {
+    return this.lastVerifiedAt || 0;
+  }
+
   getUser() {
     // sessionManager의 user만 반환 (서버 응답 우선)
     // localStorage는 백업으로만 사용하지 않음

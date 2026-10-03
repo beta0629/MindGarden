@@ -293,18 +293,21 @@ describe('buildClientPaymentRows', () => {
     expect(rows.find((r) => r.key === 'mapping-2').productName).toBe('상품 정보 없음');
   });
 
-  test('온라인 주문: PAID·REFUNDED + cashDue>0 만 · 「카드」만 · 원주문 매핑 상품명', () => {
+  test('온라인 주문: 본인 주문 전 상태 표시 · 배지로 구분 · 합계는 결제분만 · 「카드」 · 원주문 매핑 상품명', () => {
     const rows = buildClientPaymentRows({
       mappings: [{ id: 5, paymentReference: 'pub-1', productTitle: '온라인 5회기', paymentAmount: 50000, paymentStatus: 'CONFIRMED', paymentSource: 'ONLINE', paymentMethod: 'CREDIT_CARD', totalSessions: 5 }],
       shopOrders: [
         { orderPublicId: 'pub-1', status: 'PAID', cashDueMinor: 50000, createdAt: '2026-09-20T10:00:00' },
         { orderPublicId: 'pub-2', status: 'REFUNDED', cashDueMinor: 20000, createdAt: '2026-09-21T10:00:00' },
         { orderPublicId: 'pub-3', status: 'EXPIRED', cashDueMinor: 20000, createdAt: '2026-09-22T10:00:00' },
-        { orderPublicId: 'pub-4', status: 'PAID', cashDueMinor: 0, createdAt: '2026-09-23T10:00:00' }
+        { orderPublicId: 'pub-4', status: 'PAID', cashDueMinor: 0, createdAt: '2026-09-23T10:00:00' },
+        { orderPublicId: 'pub-5', status: 'PENDING_PAYMENT', cashDueMinor: 30000, createdAt: '2026-09-24T10:00:00' },
+        { orderPublicId: 'pub-6', status: 'UNKNOWN_STATE', cashDueMinor: 30000, createdAt: '2026-09-25T10:00:00' },
+        { orderPublicId: '', status: 'PAID', cashDueMinor: 30000, createdAt: '2026-09-26T10:00:00' }
       ]
     });
     const shopRows = rows.filter((r) => r.kind === CLIENT_PAYMENT_ROW_KIND.SHOP_ORDER);
-    expect(shopRows.map((r) => r.orderPublicId)).toEqual(['pub-2', 'pub-1']);
+    expect(shopRows.map((r) => r.orderPublicId)).toEqual(['pub-5', 'pub-4', 'pub-3', 'pub-2', 'pub-1']);
     const paid = shopRows.find((r) => r.orderPublicId === 'pub-1');
     expect(paid.productName).toBe('온라인 5회기');
     expect(paid.sessionsText).toBe('5회기');
@@ -315,6 +318,14 @@ describe('buildClientPaymentRows', () => {
     expect(refunded.productName).toBe('상품 정보 없음');
     expect(refunded.badge).toBe(CLIENT_PAYMENT_BADGE.REFUNDED);
     expect(refunded.amountSubText).toBe('전액 환불');
+    expect(shopRows.find((r) => r.orderPublicId === 'pub-3').badge).toBe(CLIENT_PAYMENT_BADGE.CANCELLED);
+    expect(shopRows.find((r) => r.orderPublicId === 'pub-4').amountText).toBe('0원');
+    expect(shopRows.find((r) => r.orderPublicId === 'pub-5').badge).toBe(CLIENT_PAYMENT_BADGE.PENDING);
+
+    const onlineSummary = summarizeClientPaymentRows(shopRows);
+    expect(onlineSummary.count).toBe(5);
+    expect(onlineSummary.paidSum).toBe(70000);
+    expect(onlineSummary.refundSum).toBe(20000);
   });
 
   test('온라인 주문 상세 라인으로 상품명 복원', () => {

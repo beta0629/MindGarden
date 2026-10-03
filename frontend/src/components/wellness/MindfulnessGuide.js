@@ -1,10 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useSession } from '../../contexts/SessionContext';
-import notificationManager from '../../utils/notification';
+import React, { useState } from 'react';
 import ClientWebPageShell from '../client/ClientWebPageShell';
 import { ContentArea, ContentHeader } from '../dashboard-v2/content';
-import UnifiedLoading from '../../components/common/UnifiedLoading';
 import SafeText from '../common/SafeText';
 import MGButton from '../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
@@ -12,32 +8,11 @@ import '../../styles/unified-design-tokens.css';
 import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import '../../styles/themes/client-theme.css';
 import './MindfulnessGuide.css';
-import { USER_ROLES, LEGACY_USER_ROLES } from '../../constants/roles';
 
 const MINDFULNESS_GUIDE_TITLE_ID = 'mindfulness-guide-page-title';
 
 const MindfulnessGuide = () => {
-  const navigate = useNavigate();
-  const { user, isLoggedIn, isLoading } = useSession();
   const [activeSection, setActiveSection] = useState('breathing');
-
-  useEffect(() => {
-    if (isLoading) {
-      return;
-    }
-
-    if (!isLoggedIn || !user) {
-      notificationManager.show('로그인이 필요합니다.', 'error');
-      navigate('/login');
-      return;
-    }
-
-    if (user.role !== USER_ROLES.CLIENT && user.role !== LEGACY_USER_ROLES.ROLE_CLIENT) {
-      notificationManager.show('접근 권한이 없습니다.', 'error');
-      navigate('/');
-      return;
-    }
-  }, [isLoggedIn, user, isLoading, navigate]);
 
   const sections = [
     {
@@ -239,14 +214,6 @@ const MindfulnessGuide = () => {
       </div>
     </ClientWebPageShell>
   );
-
-  if (isLoading) {
-    return pageShell(
-      <div aria-busy="true" aria-live="polite">
-        <UnifiedLoading type="inline" text="로딩중..." />
-      </div>
-    );
-  }
 
   return pageShell(
     <div className="mindfulness-guide">

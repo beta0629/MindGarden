@@ -93,10 +93,14 @@ export const CLIENT_PAYMENT_MAPPING_STATUS_TO_BADGE = Object.freeze({
   CANCELLED: CLIENT_PAYMENT_BADGE.CANCELLED
 });
 
-/** 온라인 주문 상태 원본 → 배지 (목록에 보이는 값만) */
+/** 온라인 주문 상태 원본(ShopClientOrderStatus) → 배지 */
 export const CLIENT_PAYMENT_SHOP_STATUS_TO_BADGE = Object.freeze({
   PAID: CLIENT_PAYMENT_BADGE.COMPLETED,
-  REFUNDED: CLIENT_PAYMENT_BADGE.REFUNDED
+  REFUNDED: CLIENT_PAYMENT_BADGE.REFUNDED,
+  CREATED: CLIENT_PAYMENT_BADGE.PENDING,
+  PENDING_PAYMENT: CLIENT_PAYMENT_BADGE.PENDING,
+  CANCELLED: CLIENT_PAYMENT_BADGE.CANCELLED,
+  EXPIRED: CLIENT_PAYMENT_BADGE.CANCELLED
 });
 
 /** 필터 칩 → 포함 배지 */
@@ -139,8 +143,10 @@ export const CLIENT_PAYMENT_ROW_KIND = Object.freeze({
   SHOP_ORDER: 'SHOP_ORDER'
 });
 
-/** 목록에 보이는 온라인 주문 상태 (돈이 오간 주문만) */
-export const CLIENT_PAYMENT_SHOP_VISIBLE_STATUSES = Object.freeze(['PAID', 'REFUNDED']);
+/** 목록에 보이는 온라인 주문 상태 — 구매 목록과 같은 출처라 상태를 숨기지 않고 배지로 구분한다 */
+export const CLIENT_PAYMENT_SHOP_VISIBLE_STATUSES = Object.freeze(
+  Object.keys(CLIENT_PAYMENT_SHOP_STATUS_TO_BADGE)
+);
 
 export const CLIENT_PAYMENT_COPY = Object.freeze({
   TITLE: '결제 내역',
@@ -183,6 +189,7 @@ export const CLIENT_PAYMENT_COPY = Object.freeze({
   ERROR_BODY: '잠시 후 다시 시도해 주세요.',
   RETRY: '다시 시도',
   PARTIAL_ERROR: '온라인 결제 내역 일부를 불러오지 못했어요.',
+  CENTER_PAYMENTS_NOTE: '센터에서 직접 결제한 내역은 센터에 문의해 주세요.',
   LOADING_LABEL: '결제 내역을 불러오는 중'
 });
 
@@ -204,5 +211,6 @@ export const CLIENT_PAYMENT_TEST_IDS = Object.freeze({
   ERROR: 'client-payment-error',
   PARTIAL_ERROR: 'client-payment-partial-error',
   SKELETON: 'client-payment-skeleton',
-  PAGINATION: 'client-payment-pagination'
+  PAGINATION: 'client-payment-pagination',
+  CENTER_NOTE: 'client-payment-center-note'
 });

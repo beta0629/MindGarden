@@ -41,6 +41,13 @@ export const SESSION_CHECK_RECENT_SKIP_MS = 1000; // 1초
 export const SESSION_CHECK_COOLDOWN_MS = 3000; // 3초
 
 /**
+ * StandardizedApi 헤더 조립의 강제 세션 확인 재사용 창.
+ * 이 시간 안에 확인이 끝났고 tenantId 가 있으면 요청마다 current-user·session-info 를 다시 부르지 않는다.
+ * 만료는 실제 API 401 처리와 주기·활동 ping 이 맡는다.
+ */
+export const API_HEADER_SESSION_FRESH_MS = 30 * 1000;
+
+/**
  * 타이핑·포인터·이동 등 활동 시 서버 HttpSession lastAccessedTime 갱신용 스로틀 간격.
  * SESSION_CHECK_COOLDOWN_MS(3s)보다 길고, 키보드·마우스 어느 쪽이든 UI 리필이 체감되도록 30–60초 구간을 사용한다.
  * mousemove/pointermove도 동일 간격으로만 ping한다(픽셀 단위 API 금지).

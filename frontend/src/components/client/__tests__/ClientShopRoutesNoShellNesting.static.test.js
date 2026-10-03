@@ -36,11 +36,17 @@ describe('App.js client shop + legacy redirect wiring', () => {
     expect(snippet).not.toMatch(/ProtectedRoute/);
   });
 
-  test('cart route keeps CLIENT ProtectedRoute', () => {
+  test('cart route is inside the shared CLIENT route guard group', () => {
+    const guardOpen = '<Route element={<ClientRouteGuard />}>';
+    const guardIdx = appJs.indexOf(guardOpen);
+    expect(guardIdx).toBeGreaterThan(-1);
+    const lineStart = appJs.lastIndexOf('\n', guardIdx) + 1;
+    const indent = appJs.slice(lineStart, guardIdx);
+    const guardClose = appJs.indexOf(`\n${indent}</Route>`, guardIdx);
     const cartIdx = appJs.indexOf('path={CLIENT_SHOP_ROUTES.CART}');
-    expect(cartIdx).toBeGreaterThan(-1);
-    const snippet = appJs.slice(cartIdx, cartIdx + 520);
-    expect(snippet).toMatch(/ProtectedRoute\s+requiredRoles=\{\[USER_ROLES\.CLIENT\]\}/);
-    expect(snippet).toMatch(/ShopCartPage/);
+    expect(cartIdx).toBeGreaterThan(guardIdx);
+    expect(cartIdx).toBeLessThan(guardClose);
+    expect(appJs.slice(cartIdx, cartIdx + 520)).toMatch(/ShopCartPage/);
+    expect(read('src/components/client/ClientRouteGuard.js')).toMatch(/USER_ROLES\.CLIENT/);
   });
 });

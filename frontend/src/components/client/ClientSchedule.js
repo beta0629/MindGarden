@@ -6,9 +6,10 @@
  * @since 2026-09-18
  */
 
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useSession } from '../../contexts/SessionContext';
+import React, { useCallback, useMemo, useState } from 'react';
+import { useClientSessionReady } from '../../hooks/useClientSessionReady';
+import { useSoftResourceLoad } from '../../hooks/useSoftResourceLoad';
+import { useUserIdScopedLoad } from '../../hooks/useUserIdScopedLoad';
 import StandardizedApi from '../../utils/standardizedApi';
 import { DASHBOARD_API } from '../../constants/api';
 import { USER_ROLES } from '../../constants/roles';
@@ -62,23 +63,17 @@ function buildMiniMonthCells(cursor, markedIsoDates) {
 }
 
 const ClientSchedule = () => {
-  const navigate = useNavigate();
-  const { user, isLoggedIn, isLoading: sessionLoading } = useSession();
+  const { ready, userId, userRef } = useClientSessionReady();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [schedules, setSchedules] = useState([]);
   const [monthCursor] = useState(() => new Date());
 
-  const loadSchedules = useCallback(async() => {
-    if (!user?.id) {
-      setLoading(false);
-      return;
-    }
-    setLoading(true);
+  const { load: loadSchedules } = useSoftResourceLoad(setLoading, async() => {
     setError(null);
     try {
       const raw = await StandardizedApi.get(DASHBOARD_API.CLIENT_SCHEDULES, {
-        userId: user.id,
+        userId: userRef.current?.id,
         userRole: USER_ROLES.CLIENT
       });
       const list = normalizeScheduleListPayload(raw);
@@ -86,20 +81,14 @@ const ClientSchedule = () => {
     } catch (err) {
       setError(err?.message || CLIENT_WEB_SUITE_COPY.SCHEDULE_ERROR_TITLE);
       setSchedules([]);
-    } finally {
-      setLoading(false);
     }
-  }, [user?.id]);
+  });
 
-  useEffect(() => {
-    if (!sessionLoading && !isLoggedIn) {
-      navigate('/login', { replace: true });
-      return;
-    }
-    if (user?.id) {
-      loadSchedules();
-    }
-  }, [user?.id, isLoggedIn, sessionLoading, navigate, loadSchedules]);
+  useUserIdScopedLoad({ userId, loadFn: loadSchedules, enabled: ready });
+
+  const handleRetry = useCallback(() => {
+    void loadSchedules({ silent: false });
+  }, [loadSchedules]);
 
   const listItems = useMemo(() => buildLobbyUpcomingList(schedules), [schedules]);
   const nextSchedule = schedules[0] || null;
@@ -119,7 +108,7 @@ const ClientSchedule = () => {
 
   const mainSlot = (
     <>
-      {loading || sessionLoading ? (
+      {loading ? (
         <div aria-busy="true" aria-live="polite">
           <UnifiedLoading type="inline" text={CLIENT_WEB_SUITE_COPY.SCHEDULE_LOADING} />
         </div>
@@ -134,7 +123,7 @@ const ClientSchedule = () => {
           <button
             type="button"
             className="client-web-page-shell__cta"
-            onClick={loadSchedules}
+            onClick={handleRetry}
           >
             {CLIENT_WEB_SUITE_COPY.SCHEDULE_RETRY}
           </button>

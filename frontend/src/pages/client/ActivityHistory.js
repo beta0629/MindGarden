@@ -1,8 +1,11 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import 'bootstrap-icons/font/bootstrap-icons.css';
-import { useSession } from '../../contexts/SessionContext';
+import { useClientSessionReady } from '../../hooks/useClientSessionReady';
+import { useSoftResourceLoad } from '../../hooks/useSoftResourceLoad';
+import { useUserIdScopedLoad } from '../../hooks/useUserIdScopedLoad';
 import StandardizedApi from '../../utils/standardizedApi';
+import { CLIENT_DASHBOARD_ROUTES } from '../../constants/clientDashboardRoutes';
 import { toDisplayString, toSafeNumber } from '../../utils/safeDisplay';
 import ClientWebPageShell from '../../components/client/ClientWebPageShell';
 import ContentArea from '../../components/dashboard-v2/content/ContentArea';
@@ -59,25 +62,14 @@ function resolveActivityIconClass(activity) {
 
 const ActivityHistory = () => {
   const navigate = useNavigate();
-  const { isLoggedIn, isLoading: sessionLoading } = useSession();
+  const { ready, userId } = useClientSessionReady();
   const [activities, setActivities] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
   const [statistics, setStatistics] = useState({});
 
-  useEffect(() => {
-    if (sessionLoading) {
-      return;
-    }
-    if (!isLoggedIn) {
-      navigate('/login', { replace: true });
-    }
-  }, [isLoggedIn, sessionLoading, navigate]);
-
-  const loadActivities = useCallback(async() => {
+  const fetchActivities = useCallback(async() => {
     try {
-      setLoading(true);
-
       const params = {};
       if (filter !== 'all') {
         params.type = filter.toUpperCase();
@@ -94,8 +86,6 @@ const ActivityHistory = () => {
     } catch (error) {
       console.error('활동 내역 로드 실패:', error);
       setActivities([]);
-    } finally {
-      setLoading(false);
     }
   }, [filter]);
 
@@ -111,13 +101,20 @@ const ActivityHistory = () => {
     }
   }, []);
 
-  useEffect(() => {
-    if (sessionLoading || !isLoggedIn) {
-      return;
-    }
-    loadActivities();
-    loadStatistics();
-  }, [sessionLoading, isLoggedIn, loadActivities, loadStatistics]);
+  const { load: loadActivities } = useSoftResourceLoad(setLoading, fetchActivities);
+
+  useUserIdScopedLoad({
+    userId,
+    loadFn: loadActivities,
+    enabled: ready,
+    extraDeps: [filter]
+  });
+
+  useUserIdScopedLoad({
+    userId,
+    loadFn: loadStatistics,
+    enabled: ready
+  });
 
   const getActivityTypeLabel = (type) => {
     const key = String(type || '').toLowerCase();
@@ -214,7 +211,7 @@ const ActivityHistory = () => {
   );
 
   const headerActions = (
-    <ActionBarButton variant="outline" onClick={() => navigate('/client/dashboard')}>
+    <ActionBarButton variant="outline" onClick={() => navigate(CLIENT_DASHBOARD_ROUTES.DASHBOARD)}>
       <i className="bi bi-arrow-left" aria-hidden="true" />
       대시보드로
     </ActionBarButton>
@@ -239,18 +236,6 @@ const ActivityHistory = () => {
       </div>
     </ClientWebPageShell>
   );
-
-  if (sessionLoading) {
-    return pageShell(
-      <div aria-busy="true" aria-live="polite">
-        <UnifiedLoading type="inline" text="준비 중..." />
-      </div>
-    );
-  }
-
-  if (!isLoggedIn) {
-    return null;
-  }
 
   return pageShell(
     <div className="activity-history-inner">

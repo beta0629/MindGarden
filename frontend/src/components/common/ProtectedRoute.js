@@ -27,11 +27,13 @@ const ProtectedRoute = ({
   const { user, isLoading, hasCheckedSession, hasPermissionGroup } = useSession();
   const location = useLocation();
 
-  if (isLoading) {
+  if (!hasCheckedSession) {
     return <UnifiedLoading />;
   }
 
-  if (!hasCheckedSession) {
+  // 복원된 사용자가 있으면 이후 세션 재확인(isLoading) 동안 화면을 언마운트하지 않는다.
+  // 언마운트되면 화면 로딩 상태가 초기화되고 진행 중 요청 결과를 잃는다.
+  if (isLoading && !user) {
     return <UnifiedLoading />;
   }
 

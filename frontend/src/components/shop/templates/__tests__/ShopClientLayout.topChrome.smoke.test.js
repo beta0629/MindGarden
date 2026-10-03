@@ -19,6 +19,10 @@ import {
   CLIENT_WEB_TOP_NAV_TEST_ID
 } from '../../../../constants/clientWebChromeConstants';
 import { CLIENT_DASHBOARD_ROUTES } from '../../../../constants/clientDashboardRoutes';
+import {
+  NOTIFICATION_TABS,
+  buildNotificationsTabPath
+} from '../../../../constants/notificationTabs';
 import { CLIENT_SHOP_ROUTES } from '../../../../constants/clientShopConstants';
 import ShopClientLayout from '../ShopClientLayout';
 
@@ -140,7 +144,7 @@ describe('ShopClientLayout shared top chrome', () => {
 
     expect(screen.getByTestId(CLIENT_WEB_NOTIFICATIONS_LINK_TEST_ID)).toHaveAttribute(
       'href',
-      CLIENT_DASHBOARD_ROUTES.NOTIFICATIONS
+      buildNotificationsTabPath(CLIENT_DASHBOARD_ROUTES.NOTIFICATIONS, NOTIFICATION_TABS.PERSONAL)
     );
     expect(screen.getByTestId(CLIENT_WEB_MESSAGES_LINK_TEST_ID)).toHaveAttribute(
       'href',

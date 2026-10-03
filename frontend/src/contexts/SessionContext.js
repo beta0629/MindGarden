@@ -242,6 +242,12 @@ export const SessionProvider = ({ children }) => {
     // stateRef를 통해 최신 state 값 참조
     const currentState = stateRef.current;
 
+    // 마운트 복원 전 비강제 확인은 진행 중 복원과 겹쳐 '미로그인'으로 스킵 응답될 수 있다.
+    // 그 결과로 CLEAR_SESSION·hasCheckedSession 을 확정하면 보호 라우트가 /login 으로 튕긴다.
+    if (!force && !currentState.hasCheckedSession) {
+      return sessionManager.isLoggedIn();
+    }
+
     // 모달이 열려있으면 세션 체크 스킵 (모달 닫힘 방지)
     if (!force && currentState.isModalOpen) {
       console.log('🔄 세션 체크 스킵 (모달 열림)');

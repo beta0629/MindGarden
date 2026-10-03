@@ -36,5 +36,22 @@ public record OnboardingCreateRequest(
     String adminPassword,  // 관리자 계정 비밀번호 (승인 시 계정 생성에 사용, 암호화 저장)
 
     String captchaToken  // Turnstile 등 CAPTCHA 응답 토큰 (서버에서 검증 활성화 시 필수)
-) {}
+) {
+
+    private static final String MASKED = "***";
+
+    /**
+     * 로그·예외 메시지에 비밀번호·CAPTCHA 토큰·checklist_json(비밀번호 포함 가능)이 남지 않도록 마스킹한다.
+     */
+    @Override
+    public String toString() {
+        return "OnboardingCreateRequest[tenantId=" + tenantId + ", tenantName=" + tenantName
+                + ", requestedBy=" + requestedBy + ", riskLevel=" + riskLevel
+                + ", checklistJson=" + (checklistJson != null ? MASKED : null)
+                + ", businessType=" + businessType + ", regionCode=" + regionCode
+                + ", brandName=" + brandName + ", subdomain=" + subdomain
+                + ", adminPassword=" + (adminPassword != null ? MASKED : null)
+                + ", captchaToken=" + (captchaToken != null ? MASKED : null) + "]";
+    }
+}
 

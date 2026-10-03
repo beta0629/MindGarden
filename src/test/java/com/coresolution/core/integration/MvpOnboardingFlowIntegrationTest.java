@@ -55,6 +55,9 @@ class MvpOnboardingFlowIntegrationTest {
     @Autowired
     private ObjectMapper objectMapper;
     
+    /** PasswordPolicy 충족 테스트 전용 값 (생성 시 정책 검증 후 BCrypt 저장) */
+    private static final String POLICY_COMPLIANT_TEST_PASSWORD = "Mvp7@Onbd";
+
     private String testTenantId;
     private String testTenantName;
     private String testEmail;
@@ -66,7 +69,7 @@ class MvpOnboardingFlowIntegrationTest {
         testTenantId = "test-consultation-" + timestamp;
         testTenantName = "테스트 상담소 " + timestamp;
         testEmail = "admin@consultation-" + timestamp + ".com";
-        testPassword = "test1234";
+        testPassword = POLICY_COMPLIANT_TEST_PASSWORD;
     }
     
     @Test
@@ -174,7 +177,7 @@ class MvpOnboardingFlowIntegrationTest {
         String academyTenantId = "test-academy-" + timestamp;
         String academyTenantName = "테스트 학원 " + timestamp;
         String academyEmail = "admin@academy-" + timestamp + ".com";
-        String academyPassword = "test1234";
+        String academyPassword = POLICY_COMPLIANT_TEST_PASSWORD;
         
         // Step 1: 온보딩 요청 생성
         OnboardingRequest request = onboardingService.create(

@@ -401,6 +401,17 @@ export interface OnboardingRequest {
 }
 
 /**
+ * 비인증 공개 온보딩 응답 (생성·이메일 조회·ID+이메일 상세).
+ * 서버는 상태 확인용 최소 필드만 반환한다 (연락처·사업자 정보·비밀번호 없음).
+ */
+export interface OnboardingPublicStatus {
+  id: number | string;
+  tenantName: string;
+  status: OnboardingRequest['status'];
+  createdAt: string;
+}
+
+/**
  * 이메일 중복 확인
  */
 /**
@@ -519,8 +530,8 @@ export async function checkEmailDuplicate(email: string): Promise<{
  */
 export async function createOnboardingRequest(
   data: OnboardingCreateRequest
-): Promise<OnboardingRequest> {
-  return apiPost<OnboardingRequest>('/api/v1/onboarding/requests', data);
+): Promise<OnboardingPublicStatus> {
+  return apiPost<OnboardingPublicStatus>('/api/v1/onboarding/requests', data);
 }
 
 /**
@@ -577,7 +588,7 @@ function toPublicOnboardingContactSearchParams(
  */
 export async function getPublicOnboardingRequests(
   contact: string | PublicOnboardingContactQuery
-): Promise<OnboardingRequest[]> {
+): Promise<OnboardingPublicStatus[]> {
   const query = buildPublicOnboardingContactQuery(contact);
   if (!query.email && !query.phone) {
     return [];
@@ -585,7 +596,7 @@ export async function getPublicOnboardingRequests(
 
   try {
     const search = toPublicOnboardingContactSearchParams(query);
-    const response = await apiGet<OnboardingRequest[]>(
+    const response = await apiGet<OnboardingPublicStatus[]>(
       `/api/v1/onboarding/requests/public?${search}`
     );
     
@@ -607,7 +618,7 @@ export async function getPublicOnboardingRequests(
     
     // 하위 호환성: ApiResponse 래퍼가 있는 경우
     if (typeof response === 'object' && 'success' in response && 'data' in response) {
-      const apiResponse = response as ApiResponse<OnboardingRequest[]>;
+      const apiResponse = response as ApiResponse<OnboardingPublicStatus[]>;
       if (apiResponse.success && apiResponse.data && Array.isArray(apiResponse.data)) {
         return apiResponse.data;
       }
@@ -636,7 +647,7 @@ export async function getPublicOnboardingRequests(
 export async function getPublicOnboardingRequest(
   id: string,
   contact: string | PublicOnboardingContactQuery
-): Promise<OnboardingRequest> {
+): Promise<OnboardingPublicStatus> {
   const query = buildPublicOnboardingContactQuery(contact);
   if (!query.email && !query.phone) {
     throw new Error('휴대폰 번호 또는 이메일 중 하나를 입력해주세요.');
@@ -645,7 +656,7 @@ export async function getPublicOnboardingRequest(
   try {
     const requestId = id.trim();
     const contactSearch = toPublicOnboardingContactSearchParams(query);
-    const response = await apiGet<OnboardingRequest>(
+    const response = await apiGet<OnboardingPublicStatus>(
       `/api/v1/onboarding/requests/public/${encodeURIComponent(requestId)}?${contactSearch}`
     );
     
@@ -667,7 +678,7 @@ export async function getPublicOnboardingRequest(
     
     // 하위 호환성: ApiResponse 래퍼가 있는 경우
     if (typeof response === 'object' && 'success' in response && 'data' in response) {
-      const apiResponse = response as ApiResponse<OnboardingRequest>;
+      const apiResponse = response as ApiResponse<OnboardingPublicStatus>;
       if (apiResponse.success && apiResponse.data) {
         return apiResponse.data;
       }

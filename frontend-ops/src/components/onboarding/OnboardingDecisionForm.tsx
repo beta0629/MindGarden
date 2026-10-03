@@ -48,7 +48,6 @@ export function OnboardingDecisionForm({ requestId, initialStatus }: Props) {
   const [isPending, startTransition] = useTransition();
   const [statusCodes, setStatusCodes] = useState<CommonCode[]>([]);
   const [adminAccount, setAdminAccount] = useState<OnboardingDecisionResponse["adminAccount"] | null>(null);
-  const [showPassword, setShowPassword] = useState(false);
   const [processingStatus, setProcessingStatus] = useState<Record<string, any> | null>(null);
   const [isPolling, setIsPolling] = useState(false);
   const [pollIntervalRef, setPollIntervalRef] = useState<NodeJS.Timeout | null>(null);
@@ -489,26 +488,6 @@ export function OnboardingDecisionForm({ requestId, initialStatus }: Props) {
                 <button
                   type="button"
                   onClick={() => copyToClipboard(adminAccount.email, "이메일")}
-                  className={styles.adminAccountCard__button}
-                >
-                  복사
-                </button>
-              </div>
-              <div className={styles.adminAccountCard__row}>
-                <strong className={styles.adminAccountCard__label}>비밀번호:</strong>
-                <code className={styles.adminAccountCard__value}>
-                  {showPassword ? adminAccount.password : "••••••••••"}
-                </code>
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className={styles.adminAccountCard__button}
-                >
-                  {showPassword ? "숨기기" : "보기"}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => copyToClipboard(adminAccount.password, "비밀번호")}
                   className={styles.adminAccountCard__button}
                 >
                   복사

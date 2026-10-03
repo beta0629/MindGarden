@@ -625,10 +625,8 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
                                 ? decisionNote.substring(0, 100) + "..."
                                 : decisionNote) : "null");
                 log.info("  [7] contactEmail: {}", EmailLogMasking.maskForLog(contactEmail));
-                log.info("  [8] adminPasswordHash: {}",
-                        adminPasswordHash != null ? (adminPasswordHash.length() > 20
-                                ? adminPasswordHash.substring(0, 20) + "..."
-                                : adminPasswordHash) : "null");
+                log.info("  [8] adminPasswordHash present: {}",
+                        adminPasswordHash != null && !adminPasswordHash.isBlank());
                 log.info("  [9] subdomain: {}", subdomain);
 
                 cs.setLong(1, requestId);

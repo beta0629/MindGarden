@@ -39,6 +39,7 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.jdbc.core.JdbcTemplate;
+import com.coresolution.core.security.OnboardingAdminPasswordSupport;
 import com.coresolution.core.security.PasswordService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
@@ -114,6 +115,8 @@ public class OnboardingServiceImpl implements OnboardingService {
 
         RiskLevel defaultRiskLevel = getDefaultRiskLevel();
         RiskLevel finalRiskLevel = riskLevel != null ? riskLevel : defaultRiskLevel;
+
+        checklistJson = hashAdminPasswordInChecklist(checklistJson);
 
         // checklistJson에서 regionCode와 brandName 추출하여 필드에 저장
         String region = null;
@@ -197,6 +200,49 @@ public class OnboardingServiceImpl implements OnboardingService {
         }
 
         return saved;
+    }
+
+    /**
+     * checklist_json 의 관리자 초기 비밀번호 평문을 사용자 비밀번호와 동일한 PasswordEncoder(BCrypt)로 해시해 치환한다.
+     * 생성 입력은 항상 평문으로 간주하므로 해시 형식 문자열이 와도 다시 인코딩한다.
+     *
+     * @param checklistJson 요청 checklist_json
+     * @return 비밀번호가 해시로 치환된 checklist_json (비밀번호 키가 없으면 원문)
+     * @throws IllegalArgumentException JSON 파싱 실패 또는 비밀번호 정책 위반
+     */
+    private String hashAdminPasswordInChecklist(String checklistJson) {
+        if (checklistJson == null || checklistJson.isBlank()) {
+            return checklistJson;
+        }
+        Map<String, Object> checklist;
+        try {
+            checklist = objectMapper.readValue(checklistJson,
+                    new TypeReference<Map<String, Object>>() {});
+        } catch (JsonProcessingException e) {
+            throw new IllegalArgumentException(
+                    OnboardingConstants.ERROR_ONBOARDING_CHECKLIST_MERGE_FAILED, e);
+        }
+        if (checklist == null
+                || !checklist.containsKey(OnboardingConstants.CHECKLIST_KEY_ADMIN_PASSWORD)) {
+            return checklistJson;
+        }
+        String rawPassword = OnboardingAdminPasswordSupport.readStoredValue(checklist);
+        if (rawPassword == null) {
+            checklist.remove(OnboardingConstants.CHECKLIST_KEY_ADMIN_PASSWORD);
+        } else {
+            try {
+                checklist.put(OnboardingConstants.CHECKLIST_KEY_ADMIN_PASSWORD,
+                        passwordService.encodePassword(rawPassword));
+            } catch (PasswordService.InvalidPasswordException e) {
+                throw new IllegalArgumentException(e.getMessage(), e);
+            }
+        }
+        try {
+            return objectMapper.writeValueAsString(checklist);
+        } catch (JsonProcessingException e) {
+            throw new IllegalArgumentException(
+                    OnboardingConstants.ERROR_ONBOARDING_CHECKLIST_MERGE_FAILED, e);
+        }
     }
 
     @Override
@@ -542,20 +588,15 @@ public class OnboardingServiceImpl implements OnboardingService {
                             objectMapper.readValue(request.getChecklistJson(),
                                     new TypeReference<Map<String, Object>>() {});
 
-                    String adminPassword = null;
-                    Object adminPwObj = checklist.get("adminPassword");
-                    if (adminPwObj instanceof String) {
-                        adminPassword = ((String) adminPwObj).trim();
-                        if (adminPassword.isEmpty()) {
-                            adminPassword = null;
-                        }
-                    } else if (adminPwObj != null) {
-                        String asText = String.valueOf(adminPwObj).trim();
-                        adminPassword = asText.isEmpty() ? null : asText;
-                    }
-                    if (adminPassword != null) {
-                        adminPasswordHash = passwordService.encodePassword(adminPassword);
-                        log.info("관리자 비밀번호 해시 완료: requestId={}", requestId);
+                    String storedAdminPassword =
+                            OnboardingAdminPasswordSupport.readStoredValue(checklist);
+                    if (OnboardingAdminPasswordSupport.isBcryptHash(storedAdminPassword)) {
+                        // 생성 시 이미 해시됨 — 재인코딩하면 원 비밀번호로 로그인 불가
+                        adminPasswordHash = storedAdminPassword;
+                    } else if (storedAdminPassword != null) {
+                        // 해시 저장 도입 전 레거시 평문 행 호환
+                        log.warn("레거시 평문 adminPassword 행을 승인 시점에 해시: requestId={}", requestId);
+                        adminPasswordHash = passwordService.encodePassword(storedAdminPassword);
                     } else if (contactEmailPresent) {
                         log.warn("checklistJson에 adminPassword가 없음: requestId={}", requestId);
                     }

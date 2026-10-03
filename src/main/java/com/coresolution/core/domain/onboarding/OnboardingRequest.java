@@ -1,12 +1,14 @@
 package com.coresolution.core.domain.onboarding;
 
 import com.coresolution.consultation.entity.BaseEntity;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 import lombok.experimental.SuperBuilder;
 
  /**
@@ -83,7 +85,10 @@ public class OnboardingRequest {
     @Builder.Default
     private RiskLevel riskLevel = RiskLevel.LOW;
     
+    /** adminPassword(해시)를 포함하므로 엔티티 직렬화·toString 에서 제외. 응답은 DTO 로만 */
     @Column(name = "checklist_json", columnDefinition = "TEXT")
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
+    @ToString.Exclude
     private String checklistJson;
     
     @Column(name = "decided_by", length = 64)

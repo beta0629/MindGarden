@@ -13,6 +13,7 @@ import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.util.OAuth2DomainUtil;
 import com.coresolution.core.controller.dto.OnboardingCaptchaSiteKeyResponse;
 import com.coresolution.core.controller.dto.OnboardingCreateRequest;
+import com.coresolution.core.controller.dto.OnboardingPublicStatusResponse;
 import com.coresolution.core.constant.OnboardingConstants;
 import com.coresolution.core.domain.onboarding.OnboardingRequest;
 import com.coresolution.core.domain.onboarding.RiskLevel;
@@ -134,11 +135,11 @@ class OnboardingControllerTest {
 
         OnboardingCreateRequest payload = basePayload();
 
-        ResponseEntity<com.coresolution.core.dto.ApiResponse<OnboardingRequest>> response =
+        ResponseEntity<com.coresolution.core.dto.ApiResponse<OnboardingPublicStatusResponse>> response =
                 onboardingController.create(payload, httpSession, httpRequest);
 
         assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody().getData().getId()).isEqualTo(1L);
+        assertThat(response.getBody().getData().id()).isEqualTo(1L);
         verify(captchaVerifier, never()).verify(any(), any());
     }
 

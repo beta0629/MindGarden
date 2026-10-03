@@ -1,11 +1,14 @@
 "use client";
 
-import { type OnboardingRequest } from "../../utils/api";
+import { type OnboardingPublicStatus } from "../../utils/api";
 import Button from "../Button";
 import { COMPONENT_CSS } from "../../constants/css-variables";
 
+/** 승인 후 이동할 테넌트 로그인 URL (환경별 주입, 미설정 시 링크 숨김) */
+const TENANT_LOGIN_URL = process.env.NEXT_PUBLIC_TENANT_LOGIN_URL?.trim() || "";
+
 interface OnboardingStatusCardProps {
-  request: OnboardingRequest;
+  request: OnboardingPublicStatus;
   onViewDetail?: (id: string) => void; // id는 UUID 문자열
   formatDate: (dateString: string) => string;
   getStatusLabel: (status: string) => { label: string; color: string };
@@ -58,24 +61,6 @@ export default function OnboardingStatusCard({
               {formatDate(request.createdAt)}
             </span>
           </div>
-          {request.decisionAt && (
-            <div className="trinity-onboarding-status-card__info-item">
-              <span className="trinity-onboarding-status-card__info-label">
-                {request.status === "APPROVED" ? "승인" : "거부"}일:
-              </span>
-              <span className="trinity-onboarding-status-card__info-value">
-                {formatDate(request.decisionAt)}
-              </span>
-            </div>
-          )}
-          {request.decisionNote && (
-            <div className="trinity-onboarding-status-card__info-item">
-              <span className="trinity-onboarding-status-card__info-label">처리 메모:</span>
-              <span className="trinity-onboarding-status-card__info-value">
-                {request.decisionNote}
-              </span>
-            </div>
-          )}
         </div>
 
         {request.status === "APPROVED" && (
@@ -83,15 +68,17 @@ export default function OnboardingStatusCard({
             <div className="trinity-onboarding-status-card__approved-title">
               ✅ 승인 완료
             </div>
-            <a
-              href={`http://localhost:3001/login?email=${encodeURIComponent(request.requestedBy)}&redirect=/tenant/profile`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="trinity-onboarding-status-card__login-link"
-              onClick={(e) => e.stopPropagation()}
-            >
-              로그인하기
-            </a>
+            {TENANT_LOGIN_URL && (
+              <a
+                href={TENANT_LOGIN_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="trinity-onboarding-status-card__login-link"
+                onClick={(e) => e.stopPropagation()}
+              >
+                로그인하기
+              </a>
+            )}
           </div>
         )}
       </div>

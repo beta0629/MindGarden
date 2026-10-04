@@ -3970,6 +3970,10 @@ public class AdminController extends BaseApiController {
      * <p>회기수({@code sessionNumber})와 대상 일정({@code consultationId})은 쿼리 파라미터 필수.
      * 누락·불일치 시 4xx.</p>
      *
+     * <p>존재 여부를 보기 전에 공용 가드 {@link ConsultationRecordAccessGuard#requireDeleteAccess} 로 판정한다
+     * (작성 상담사 본인 또는 같은 테넌트 관리자, 사무원 제외). 권한이 없으면 일지가 없어도 있어도 같은 403 이고
+     * 서비스는 호출하지 않는다.</p>
+     *
      * @param recordId 삭제 대상 상담일지 ID
      * @param consultationId 의도한 Schedule.id
      * @param sessionNumber 의도한 회기수
@@ -3981,21 +3985,11 @@ public class AdminController extends BaseApiController {
             @RequestParam Long consultationId,
             @RequestParam Integer sessionNumber,
             HttpSession session) {
+        log.info("📝 관리자용 상담일지 삭제 - 기록 ID: {}, consultationId={}, sessionNumber={}",
+                recordId, consultationId, sessionNumber);
+        consultationRecordAccessGuard.requireDeleteAccess(session, recordId);
+
         try {
-            log.info("📝 관리자용 상담일지 삭제 - 기록 ID: {}, consultationId={}, sessionNumber={}",
-                    recordId, consultationId, sessionNumber);
-
-            User currentUser = SessionUtils.getCurrentUser(session);
-            if (currentUser == null) {
-                return ResponseEntity.status(401)
-                        .body(Map.of("success", false, "message", "로그인이 필요합니다."));
-            }
-
-            if (!roleCommonCodeAuthorizationService.isAdminOrStaffRoleFromCommonCode(currentUser.getRole())) {
-                return ResponseEntity.status(403)
-                        .body(Map.of("success", false, "message", "관리자 권한이 필요합니다."));
-            }
-
             consultationRecordService.deleteConsultationRecord(recordId, consultationId, sessionNumber);
 
             Map<String, Object> response = new HashMap<>();

@@ -268,13 +268,15 @@ public class ConsultationRecordAccessGuard {
      * 상담일지 삭제 검증 — {@link #requireWriteAccess} 와 같은 규칙이되, 거부 문구를 하나로 맞춘다.
      *
      * <p>내담자·역할 미상은 일지를 조회하기 전에 거부하고, 일지가 없을 때와 권한이 없을 때 모두
-     * {@link #DENIAL_RECORD_UNAVAILABLE} 403 이므로 응답으로 id 존재 여부를 알 수 없다.</p>
+     * {@link #DENIAL_RECORD_UNAVAILABLE} 403 이므로 응답으로 id 존재 여부를 알 수 없다.
+     * 관리자 쪽 삭제와 상담사 경로 삭제가 모두 이 판정 하나를 쓰며, 사무원(STAFF)은
+     * {@link #isRecordBodyManager} 가 아니므로 거부된다.</p>
      *
      * @param session  HTTP 세션
      * @param recordId 삭제 대상 상담일지 ID
      * @return 판정을 통과한 작성자 정보
      * @throws UnauthorizedException 로그인 사용자가 없을 때
-     * @throws AccessDeniedException 일지가 없거나 작성자·같은 테넌트 관리자가 아닐 때
+     * @throws AccessDeniedException 일지가 없거나 작성자·같은 테넌트 관리자(ADMIN)가 아닐 때 (사무원 포함)
      */
     @Transactional(readOnly = true)
     public ConsultationRecordWriter requireDeleteAccess(HttpSession session, Long recordId) {

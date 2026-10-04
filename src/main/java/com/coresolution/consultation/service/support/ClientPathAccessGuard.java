@@ -178,6 +178,19 @@ public class ClientPathAccessGuard {
     }
 
     /**
+     * 대상 사용자가 세션 테넌트 소속인지 판정한다 (역할 검사 후 사용자 id 자원의 테넌트 소속 확인용).
+     *
+     * @param caller 세션 사용자
+     * @param userId 대상 사용자 ID (null 이면 false)
+     * @return 세션 테넌트에 있으면 true
+     * @throws AccessDeniedException 테넌트를 확정할 수 없거나 불일치할 때
+     */
+    public boolean isUserInCallerTenant(User caller, Long userId) {
+        String tenantId = requireCallerTenantId(caller);
+        return userId != null && userRepository.findByTenantIdAndId(tenantId, userId).isPresent();
+    }
+
+    /**
      * {@link #assertCanAccessClient} 와 같은 규칙을 예외·경고 로그 없이 판정한다 (목록 필터용).
      *
      * @param caller   세션 사용자

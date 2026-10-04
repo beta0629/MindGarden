@@ -57,6 +57,8 @@ import com.coresolution.consultation.service.RealTimeStatisticsService;
 import com.coresolution.consultation.service.ScheduleAutoCompleteService;
 import com.coresolution.consultation.service.ScheduleService;
 import com.coresolution.consultation.service.support.ClientPathAccessGuard;
+import com.coresolution.consultation.service.support.ResourceOwnerAccessGuard;
+import com.coresolution.core.security.OpsAccessGuard;
 import com.coresolution.consultation.service.support.ConsultationRecordAccessGuard;
 import com.coresolution.consultation.service.support.ConsultationRecordWriter;
 import com.coresolution.consultation.service.StoredProcedureService;
@@ -165,6 +167,8 @@ public class AdminController extends BaseApiController {
     private final ScheduleService scheduleService;
     private final ScheduleAutoCompleteService scheduleAutoCompleteService;
     private final ClientPathAccessGuard clientPathAccessGuard;
+    private final ResourceOwnerAccessGuard resourceOwnerAccessGuard;
+    private final OpsAccessGuard opsAccessGuard;
     private final ConsultationRecordAccessGuard consultationRecordAccessGuard;
     private final ConsultationRecordService consultationRecordService;
     private final DynamicPermissionService dynamicPermissionService;
@@ -195,7 +199,8 @@ public class AdminController extends BaseApiController {
      */
     @GetMapping("/consultants/with-stats/{id}")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getConsultantWithStats(
-            @PathVariable Long id) {
+            @PathVariable Long id, HttpSession session) {
+        resourceOwnerAccessGuard.requireTenantUserManagerAccess(session, "consultantId", id);
         log.info("📊 상담사 통계 조회 API 호출: consultantId={}", id);
 
         Map<String, Object> stats = consultantStatsService.getConsultantWithStats(id);
@@ -211,11 +216,7 @@ public class AdminController extends BaseApiController {
             HttpSession session) {
         log.info("📊 전체 상담사 통계 조회 API 호출");
 
-        User currentUser = SessionUtils.getCurrentUser(session);
-        if (currentUser == null) {
-            log.error("❌ 로그인이 필요합니다. 세션: {}", session != null ? session.getId() : "null");
-            throw new org.springframework.security.access.AccessDeniedException("로그인이 필요합니다.");
-        }
+        User currentUser = clientPathAccessGuard.requireTenantManager(session);
 
         // 표준화 원칙: TenantContextHolder에 이미 설정된 tenantId 우선 사용 (TenantContextFilter에서 설정됨)
         // 없으면 SessionUtils.getTenantId() 사용 (세션 → User 객체 순서로 확인)
@@ -271,6 +272,7 @@ public class AdminController extends BaseApiController {
     public ResponseEntity<ApiResponse<Map<String, Object>>> getClientWithStats(
             @PathVariable Long id,
             HttpSession session) {
+        resourceOwnerAccessGuard.requireTenantUserManagerAccess(session, "clientId", id);
         log.info("📊 내담자 통계 조회 API 호출: clientId={}", id);
 
         User currentUser = SessionUtils.getCurrentUser(session);
@@ -411,12 +413,8 @@ public class AdminController extends BaseApiController {
     @GetMapping("/consultants/with-vacation")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getAllConsultantsWithVacationInfo(
             @RequestParam String date, HttpSession session) {
+        User currentUser = clientPathAccessGuard.requireTenantManager(session);
         log.info("🔍 휴무 정보를 포함한 상담사 목록 조회: date={}", date);
-
-        User currentUser = SessionUtils.getCurrentUser(session);
-        if (currentUser == null) {
-            throw new org.springframework.security.access.AccessDeniedException("로그인이 필요합니다.");
-        }
 
         // 표준화 원칙: SessionUtils.getTenantId() 사용 (세션 → User 객체 순서로 확인)
         String tenantId = SessionUtils.getTenantId(session);
@@ -453,11 +451,7 @@ public class AdminController extends BaseApiController {
             @RequestParam(defaultValue = "month") String period, HttpSession session) {
         log.info("📊 상담사별 휴가 통계 조회: period={}", period);
 
-        User currentUser = SessionUtils.getCurrentUser(session);
-        if (currentUser == null) {
-            log.error("❌ 로그인된 사용자 정보가 없습니다");
-            throw new org.springframework.security.access.AccessDeniedException("로그인이 필요합니다.");
-        }
+        User currentUser = clientPathAccessGuard.requireTenantManager(session);
 
         // 표준화 원칙: SessionUtils.getTenantId() 사용 (세션 → User 객체 순서로 확인)
         String tenantId = SessionUtils.getTenantId(session);
@@ -568,6 +562,7 @@ public class AdminController extends BaseApiController {
     @GetMapping("/mappings/consultant/{consultantId}/clients")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getClientsByConsultantMapping(
             @PathVariable Long consultantId, HttpSession session) {
+        resourceOwnerAccessGuard.requireConsultantSelfOrManagerAccess(session, consultantId);
         ResponseEntity<?> permissionResponse = PermissionCheckUtils.checkPermission(session,
                 "MAPPING_VIEW", dynamicPermissionService);
         if (permissionResponse != null) {
@@ -1471,7 +1466,9 @@ public class AdminController extends BaseApiController {
      * @return ApiResponse with mappings DTO list and count
      */
     @GetMapping("/mappings/payment-confirmed")
-    public ResponseEntity<ApiResponse<Map<String, Object>>> getPaymentConfirmedMappings() {
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getPaymentConfirmedMappings(
+            HttpSession session) {
+        resourceOwnerAccessGuard.requireTenantAdminAccess(session);
         log.info("🔍 입금 확인된 매칭 목록 조회");
         List<ConsultantClientMappingResponse> mappings = adminService.getPaymentConfirmedMappings();
 
@@ -1727,7 +1724,8 @@ public class AdminController extends BaseApiController {
      */
     @GetMapping("/mappings/{mappingId}")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getMappingById(
-            @PathVariable Long mappingId) {
+            @PathVariable Long mappingId, HttpSession session) {
+        resourceOwnerAccessGuard.requireMappingManagerAccess(session, mappingId);
         log.info("🔍 매칭 ID {} 조회", mappingId);
         ConsultantClientMapping mapping = adminService.getMappingById(mappingId);
 
@@ -1779,7 +1777,8 @@ public class AdminController extends BaseApiController {
      */
     @PostMapping("/mappings/{mappingId}/confirm-payment")
     public ResponseEntity<ApiResponse<Map<String, Object>>> confirmPayment(
-            @PathVariable Long mappingId, @RequestBody Map<String, Object> request) {
+            @PathVariable Long mappingId, @RequestBody Map<String, Object> request, HttpSession session) {
+        resourceOwnerAccessGuard.requireMappingManagerAccess(session, mappingId);
         log.info("💰 매칭 ID {} 결제 확인 시작", mappingId);
 
         String paymentMethod = (String) request.get("paymentMethod");
@@ -1848,6 +1847,7 @@ public class AdminController extends BaseApiController {
     public ResponseEntity<ApiResponse<Map<String, Object>>> approveMapping(
             @PathVariable Long mappingId, @RequestBody Map<String, Object> request,
             HttpSession session) {
+        resourceOwnerAccessGuard.requireMappingManagerAccess(session, mappingId);
         log.info("✅ 매칭 ID {} 관리자 승인", mappingId);
 
         String adminName = (String) request.get("adminName");
@@ -1955,7 +1955,8 @@ public class AdminController extends BaseApiController {
      */
     @PostMapping("/mappings/{mappingId}/reject")
     public ResponseEntity<ApiResponse<ConsultantClientMappingResponse>> rejectMapping(
-            @PathVariable Long mappingId, @RequestBody Map<String, Object> request) {
+            @PathVariable Long mappingId, @RequestBody Map<String, Object> request, HttpSession session) {
+        resourceOwnerAccessGuard.requireMappingAdminAccess(session, mappingId);
         log.info("❌ 매칭 ID {} 관리자 거부", mappingId);
 
         String reason = (String) request.get("reason");
@@ -1970,7 +1971,8 @@ public class AdminController extends BaseApiController {
      */
     @PostMapping("/mappings/{mappingId}/use-session")
     public ResponseEntity<ApiResponse<ConsultantClientMappingResponse>> useSession(
-            @PathVariable Long mappingId) {
+            @PathVariable Long mappingId, HttpSession session) {
+        resourceOwnerAccessGuard.requireMappingAdminAccess(session, mappingId);
         log.info("📅 매칭 ID {} 회기 사용 처리", mappingId);
 
         ConsultantClientMappingResponse mapping = adminService.useSession(mappingId);
@@ -1983,7 +1985,8 @@ public class AdminController extends BaseApiController {
      */
     @PostMapping("/mappings/{mappingId}/extend-sessions")
     public ResponseEntity<ApiResponse<ConsultantClientMappingResponse>> extendSessions(
-            @PathVariable Long mappingId, @RequestBody Map<String, Object> request) {
+            @PathVariable Long mappingId, @RequestBody Map<String, Object> request, HttpSession session) {
+        resourceOwnerAccessGuard.requireMappingAdminAccess(session, mappingId);
         log.info("🔄 매칭 ID {} 회기 추가 (연장)", mappingId);
 
         Integer additionalSessions = (Integer) request.get("additionalSessions");
@@ -2370,6 +2373,7 @@ public class AdminController extends BaseApiController {
     @PutMapping("/consultants/{id}")
     public ResponseEntity<ApiResponse<Map<String, Object>>> updateConsultant(@PathVariable Long id,
             @RequestBody @Valid ConsultantRegistrationRequest request, HttpSession session) {
+        resourceOwnerAccessGuard.requireTenantUserManagerAccess(session, "consultantId", id);
         log.info("🔧 상담사 정보 수정: ID={}", id);
 
         if (request == null) {
@@ -2398,7 +2402,8 @@ public class AdminController extends BaseApiController {
      */
     @PutMapping("/consultants/{id}/grade")
     public ResponseEntity<ApiResponse<Map<String, Object>>> updateConsultantGrade(
-            @PathVariable Long id, @RequestBody Map<String, Object> request) {
+            @PathVariable Long id, @RequestBody Map<String, Object> request, HttpSession session) {
+        resourceOwnerAccessGuard.requireTenantUserAdminAccess(session, "consultantId", id);
         Object gradeObj = request != null ? request.get("grade") : null;
         String grade = gradeObj != null ? gradeObj.toString().trim() : null;
         if (grade == null || grade.isEmpty()) {
@@ -2503,6 +2508,7 @@ public class AdminController extends BaseApiController {
             @PathVariable Long id,
             @RequestParam(name = "reason", required = false) String reason,
             HttpSession session) {
+        resourceOwnerAccessGuard.requireTenantUserManagerAccess(session, "consultantId", id);
         log.info("🔧 상담사 강제 종료: ID={}, reason={}", id, reason);
         User currentAdmin = SessionUtils.getCurrentUser(session);
         Long adminUserId = currentAdmin != null ? currentAdmin.getId()
@@ -2518,12 +2524,14 @@ public class AdminController extends BaseApiController {
      */
     @PostMapping("/consultants/{id}/delete-with-transfer")
     public ResponseEntity<ApiResponse<Void>> deleteConsultantWithTransfer(@PathVariable Long id,
-            @RequestBody Map<String, Object> request) {
+            @RequestBody Map<String, Object> request, HttpSession session) {
+        resourceOwnerAccessGuard.requireTenantUserAdminAccess(session, "consultantId", id);
         Long transferToConsultantId =
                 Long.valueOf(request.get("transferToConsultantId").toString());
         String reason = (String) request.get("reason");
 
         log.info("🔄 상담사 이전 삭제: ID={}, 이전 대상={}, 사유={}", id, transferToConsultantId, reason);
+        resourceOwnerAccessGuard.requireTenantUserAdminAccess(session, "transferToConsultantId", transferToConsultantId);
         adminService.deleteConsultantWithTransfer(id, transferToConsultantId, reason);
 
         return deleted("상담사가 성공적으로 이전 처리되어 삭제되었습니다");
@@ -2534,7 +2542,8 @@ public class AdminController extends BaseApiController {
      */
     @GetMapping("/consultants/{id}/deletion-status")
     public ResponseEntity<ApiResponse<Map<String, Object>>> checkConsultantDeletionStatus(
-            @PathVariable Long id) {
+            @PathVariable Long id, HttpSession session) {
+        resourceOwnerAccessGuard.requireTenantUserManagerAccess(session, "consultantId", id);
         log.info("🔍 상담사 삭제 가능 여부 확인: ID={}", id);
         Map<String, Object> status = adminService.checkConsultantDeletionStatus(id);
 
@@ -2569,7 +2578,8 @@ public class AdminController extends BaseApiController {
     @GetMapping("/clients/{id}/deletion-status")
     @PreAuthorize("hasAnyRole('ADMIN', 'STAFF')")
     public ResponseEntity<ApiResponse<Map<String, Object>>> checkClientDeletionStatus(
-            @PathVariable Long id) {
+            @PathVariable Long id, HttpSession session) {
+        resourceOwnerAccessGuard.requireTenantUserManagerAccess(session, "clientId", id);
         log.info("🔍 내담자 삭제 가능 여부 확인: ID={}", id);
         Map<String, Object> status = adminService.checkClientDeletionStatus(id);
 
@@ -2605,7 +2615,8 @@ public class AdminController extends BaseApiController {
      */
     @PostMapping("/mappings/{id}/terminate")
     public ResponseEntity<ApiResponse<Void>> terminateMapping(@PathVariable Long id,
-            @RequestBody Map<String, Object> requestBody) {
+            @RequestBody Map<String, Object> requestBody, HttpSession session) {
+        resourceOwnerAccessGuard.requireMappingManagerAccess(session, id);
         log.info("🔧 매칭 강제 종료: ID={}", id);
         String reason = (String) requestBody.get("reason");
         adminService.terminateMapping(id, reason);
@@ -2618,7 +2629,8 @@ public class AdminController extends BaseApiController {
      */
     @PostMapping("/mappings/{id}/cleanup-future-schedules")
     public ResponseEntity<ApiResponse<Map<String, Object>>> cleanupFutureSchedulesForMapping(
-            @PathVariable Long id) {
+            @PathVariable Long id, HttpSession session) {
+        resourceOwnerAccessGuard.requireMappingManagerAccess(session, id);
         log.info("🔧 desync-cleanup 미래 일정 정리: MappingID={}", id);
         int cancelledCount = adminService.cleanupFutureSchedulesForMapping(id);
         Map<String, Object> data = new HashMap<>();
@@ -2633,6 +2645,7 @@ public class AdminController extends BaseApiController {
     @PostMapping("/mappings/{id}/partial-refund")
     public ResponseEntity<ApiResponse<Void>> partialRefundMapping(@PathVariable Long id,
             @RequestBody Map<String, Object> requestBody, HttpSession session) {
+        resourceOwnerAccessGuard.requireMappingManagerAccess(session, id);
         log.info("🔧 매칭 부분 환불: ID={}", id);
 
         String reason = (String) requestBody.get("reason");
@@ -2659,10 +2672,10 @@ public class AdminController extends BaseApiController {
     @GetMapping("/refund-statistics")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getRefundStatistics(
             @RequestParam(defaultValue = "month") String period, HttpSession session) {
+        User currentUser = resourceOwnerAccessGuard.requireTenantAdminAccess(session);
         log.info("📊 환불 통계 조회: period={}", period);
 
-        User currentUser = SessionUtils.getCurrentUser(session);
-        String currentBranchCode = currentUser != null ? currentUser.getBranchCode() : null;
+        String currentBranchCode = currentUser.getBranchCode();
         log.info("🔍 현재 사용자 지점코드: {}", currentBranchCode);
 
         Map<String, Object> statistics =
@@ -2679,10 +2692,10 @@ public class AdminController extends BaseApiController {
             @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "20") int size,
             @RequestParam(required = false) String period,
             @RequestParam(required = false) String status, HttpSession session) {
+        User currentUser = resourceOwnerAccessGuard.requireTenantAdminAccess(session);
         log.info("📋 환불 이력 조회: page={}, size={}, period={}, status={}", page, size, period, status);
 
-        User currentUser = SessionUtils.getCurrentUser(session);
-        String currentBranchCode = currentUser != null ? currentUser.getBranchCode() : null;
+        String currentBranchCode = currentUser.getBranchCode();
         log.info("🔍 현재 사용자 지점코드: {}", currentBranchCode);
 
         Map<String, Object> result =
@@ -2695,7 +2708,8 @@ public class AdminController extends BaseApiController {
      * ERP 동기화 상태 확인
      */
     @GetMapping("/erp-sync-status")
-    public ResponseEntity<ApiResponse<Map<String, Object>>> getErpSyncStatus() {
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getErpSyncStatus(HttpSession session) {
+        resourceOwnerAccessGuard.requireTenantAdminAccess(session);
         log.info("🔄 ERP 동기화 상태 확인");
         Map<String, Object> status = adminService.getErpSyncStatus();
 
@@ -2708,7 +2722,9 @@ public class AdminController extends BaseApiController {
      */
     @PostMapping("/mappings/transfer")
     public ResponseEntity<ApiResponse<Map<String, Object>>> transferConsultant(
-            @RequestBody ConsultantTransferRequest request) {
+            @RequestBody ConsultantTransferRequest request, HttpSession session) {
+        resourceOwnerAccessGuard.requireMappingManagerAccess(session, request.getCurrentMappingId());
+        resourceOwnerAccessGuard.requireTenantUserManagerAccess(session, "newConsultantId", request.getNewConsultantId());
         log.info("🔄 상담사 변경 요청: 기존 매칭 ID={}, 새 상담사 ID={}", request.getCurrentMappingId(),
                 request.getNewConsultantId());
 
@@ -2778,7 +2794,8 @@ public class AdminController extends BaseApiController {
      */
     @GetMapping("/clients/{clientId}/transfer-history")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getTransferHistory(
-            @PathVariable Long clientId) {
+            @PathVariable Long clientId, HttpSession session) {
+        resourceOwnerAccessGuard.requireTenantUserManagerAccess(session, "clientId", clientId);
         log.info("🔍 내담자 ID {} 상담사 변경 이력 조회", clientId);
         List<ConsultantClientMapping> transferHistory = adminService.getTransferHistory(clientId);
 
@@ -2942,7 +2959,8 @@ public class AdminController extends BaseApiController {
      */
     @PostMapping("/mapping/payment/confirm")
     public ResponseEntity<ApiResponse<Map<String, Object>>> confirmMappingPayment(
-            @RequestBody Map<String, Object> request) {
+            @RequestBody Map<String, Object> request, HttpSession session) {
+        resourceOwnerAccessGuard.requireMappingsManagerAccess(session, request.get("mappingIds"));
         log.info("결제 확인 요청: {}", request);
 
         @SuppressWarnings("unchecked")
@@ -2987,7 +3005,8 @@ public class AdminController extends BaseApiController {
      */
     @PostMapping("/mapping/payment/cancel")
     public ResponseEntity<ApiResponse<Map<String, Object>>> cancelMappingPayment(
-            @RequestBody Map<String, Object> request) {
+            @RequestBody Map<String, Object> request, HttpSession session) {
+        resourceOwnerAccessGuard.requireMappingsManagerAccess(session, request.get("mappingIds"));
         log.info("결제 취소 요청: {}", request);
 
         @SuppressWarnings("unchecked")
@@ -3032,11 +3051,7 @@ public class AdminController extends BaseApiController {
             @RequestParam(required = false) String period, HttpSession session) {
         log.info("📊 상담사별 상담 완료 건수 통계 조회: period={}", period);
 
-        User currentUser = SessionUtils.getCurrentUser(session);
-        if (currentUser == null) {
-            log.error("❌ 로그인된 사용자 정보가 없습니다");
-            throw new org.springframework.security.access.AccessDeniedException("로그인이 필요합니다.");
-        }
+        User currentUser = clientPathAccessGuard.requireTenantManager(session);
 
         // 표준화 원칙: SessionUtils.getTenantId() 사용 (세션 → User 객체 순서로 확인)
         String tenantId = SessionUtils.getTenantId(session);
@@ -3114,10 +3129,7 @@ public class AdminController extends BaseApiController {
             HttpSession session) {
         log.info("📊 월별 신규 내담자 유입 통계 조회: months={}", months);
 
-        User currentUser = SessionUtils.getCurrentUser(session);
-        if (currentUser == null) {
-            throw new org.springframework.security.access.AccessDeniedException("로그인이 필요합니다.");
-        }
+        User currentUser = clientPathAccessGuard.requireTenantManager(session);
 
         String tenantId = SessionUtils.getTenantId(session);
         if (tenantId == null || tenantId.isEmpty()) {
@@ -3147,10 +3159,7 @@ public class AdminController extends BaseApiController {
             HttpSession session) {
         log.info("📊 요일별 상담 건수 통계 조회: months={}", months);
 
-        User currentUser = SessionUtils.getCurrentUser(session);
-        if (currentUser == null) {
-            throw new org.springframework.security.access.AccessDeniedException("로그인이 필요합니다.");
-        }
+        User currentUser = clientPathAccessGuard.requireTenantManager(session);
 
         String tenantId = SessionUtils.getTenantId(session);
         if (tenantId == null || tenantId.isEmpty()) {
@@ -3183,10 +3192,7 @@ public class AdminController extends BaseApiController {
             HttpSession session) {
         log.info("📊 주간 예약 현황 통계 조회: weekOffset={}", weekOffset);
 
-        User currentUser = SessionUtils.getCurrentUser(session);
-        if (currentUser == null) {
-            throw new org.springframework.security.access.AccessDeniedException("로그인이 필요합니다.");
-        }
+        User currentUser = clientPathAccessGuard.requireTenantManager(session);
 
         String tenantId = SessionUtils.getTenantId(session);
         if (tenantId == null || tenantId.isEmpty()) {
@@ -3329,11 +3335,7 @@ public class AdminController extends BaseApiController {
             @RequestParam(required = false) String userRole, HttpSession session) {
         log.info("📊 스케줄 상태별 통계 조회 요청 - 사용자 역할: {}", userRole);
 
-        User currentUser = SessionUtils.getCurrentUser(session);
-        if (currentUser == null) {
-            log.warn("❌ 인증되지 않은 사용자");
-            throw new org.springframework.security.access.AccessDeniedException("인증이 필요합니다.");
-        }
+        User currentUser = resourceOwnerAccessGuard.requireTenantAdminAccess(session);
 
         log.info("👤 현재 사용자: {} (역할: {}, 지점코드: {})", currentUser.getUserId(), currentUser.getRole(),
                 currentUser.getBranchCode());
@@ -3480,6 +3482,7 @@ public class AdminController extends BaseApiController {
     @GetMapping("/users/{id}")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getUserById(@PathVariable Long id,
             HttpSession session) {
+        resourceOwnerAccessGuard.requireTenantUserManagerAccess(session, "userId", id);
         log.info("🔍 사용자 상세 정보 조회: ID={}", id);
 
         User currentUser = SessionUtils.getCurrentUser(session);
@@ -3518,6 +3521,7 @@ public class AdminController extends BaseApiController {
     @GetMapping("/users/{id}/social-accounts")
     public ResponseEntity<ApiResponse<List<?>>> getUserSocialAccounts(@PathVariable Long id,
             HttpSession session) {
+        resourceOwnerAccessGuard.requireTenantUserManagerAccess(session, "userId", id);
         log.info("🔍 사용자 소셜 계정 정보 조회: ID={}", id);
 
         User currentUser = SessionUtils.getCurrentUser(session);
@@ -3629,18 +3633,10 @@ public class AdminController extends BaseApiController {
             @RequestParam(required = false) String category,
             @RequestParam(required = false) String startDate,
             @RequestParam(required = false) String endDate, HttpSession session) {
+        User currentUser = resourceOwnerAccessGuard.requireTenantAdminAccess(session);
         try {
             log.info("🔍 재무 거래 목록 조회: 유형={}, 카테고리={}, startDate={}, endDate={}", transactionType,
                     category, startDate, endDate);
-
-            User currentUser = SessionUtils.getCurrentUser(session);
-            if (currentUser == null) {
-                log.warn("❌ 세션에서 사용자 정보를 찾을 수 없습니다.");
-                Map<String, Object> response = new HashMap<>();
-                response.put("success", false);
-                response.put("message", "로그인이 필요합니다.");
-                return ResponseEntity.status(401).body(response);
-            }
 
             String tenantId = SessionUtils.getTenantId(session);
             if (tenantId == null || tenantId.isBlank()) {
@@ -3709,16 +3705,9 @@ public class AdminController extends BaseApiController {
     public ResponseEntity<Map<String, Object>> getBudgets(
             @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "20") int size,
             HttpSession session) {
+        resourceOwnerAccessGuard.requireTenantAdminAccess(session);
         try {
             log.info("🔍 예산 목록 조회");
-
-            User currentUser = SessionUtils.getCurrentUser(session);
-            if (currentUser == null) {
-                Map<String, Object> response = new HashMap<>();
-                response.put("success", false);
-                response.put("message", "로그인이 필요합니다.");
-                return ResponseEntity.status(401).body(response);
-            }
 
             java.util.List<com.coresolution.consultation.entity.Budget> budgets =
                     erpService.getAllActiveBudgets();
@@ -4079,10 +4068,7 @@ public class AdminController extends BaseApiController {
             HttpSession session) {
         log.info("💖 관리자 평가 통계 조회 요청");
 
-        User currentUser = SessionUtils.getCurrentUser(session);
-        if (currentUser == null) {
-            throw new org.springframework.security.access.AccessDeniedException("로그인이 필요합니다.");
-        }
+        User currentUser = clientPathAccessGuard.requireTenantManager(session);
 
         // 표준화 원칙: SessionUtils.getTenantId() 사용 (세션 → User 객체 순서로 확인)
         String tenantId = SessionUtils.getTenantId(session);
@@ -4387,6 +4373,7 @@ public class AdminController extends BaseApiController {
     @PostMapping("/initialize-default-codes")
     public ResponseEntity<ApiResponse<Map<String, Object>>> initializeDefaultCodes(
             HttpSession session) {
+        opsAccessGuard.requireHqOps();
         log.info("📋 현재 테넌트 기본 공통코드 추가 요청");
 
         User currentUser = SessionUtils.getCurrentUser(session);

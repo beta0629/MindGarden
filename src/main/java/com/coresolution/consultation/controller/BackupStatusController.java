@@ -14,6 +14,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import com.coresolution.core.security.OpsAccessGuard;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -33,7 +34,9 @@ import lombok.extern.slf4j.Slf4j;
 @RequestMapping("/api/v1/admin/backup") // 표준화 2025-12-05: 레거시 경로 제거
 @RequiredArgsConstructor
 public class BackupStatusController {
-    
+
+    private final OpsAccessGuard opsAccessGuard;
+
     @Value("${backup.directory:/home/backup/database}")
     private String backupDirectory;
     
@@ -45,6 +48,7 @@ public class BackupStatusController {
      */
     @GetMapping("/status")
     public Map<String, Object> getBackupStatus() {
+        opsAccessGuard.requireHqOps();
         Map<String, Object> result = new HashMap<>();
         
         // 백업 디렉토리 확인
@@ -139,6 +143,7 @@ public class BackupStatusController {
      */
     @GetMapping("/logs")
     public Map<String, Object> getBackupLogs() {
+        opsAccessGuard.requireHqOps();
         Map<String, Object> result = new HashMap<>();
         
         Path logPath = Paths.get(logDirectory);
@@ -188,6 +193,7 @@ public class BackupStatusController {
      */
     @GetMapping("/directory-info")
     public Map<String, Object> getDirectoryInfo() {
+        opsAccessGuard.requireHqOps();
         Map<String, Object> result = new HashMap<>();
         
         // 백업 디렉토리 정보

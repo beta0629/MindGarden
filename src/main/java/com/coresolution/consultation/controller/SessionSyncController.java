@@ -2,8 +2,11 @@ package com.coresolution.consultation.controller;
 
 import java.util.HashMap;
 import com.coresolution.consultation.service.SessionSyncService;
+import com.coresolution.consultation.service.support.ClientPathAccessGuard;
+import com.coresolution.consultation.service.support.ResourceOwnerAccessGuard;
 import com.coresolution.core.controller.BaseApiController;
 import com.coresolution.core.dto.ApiResponse;
+import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -25,12 +28,17 @@ import java.util.Map;
 public class SessionSyncController extends BaseApiController {
     
     private final SessionSyncService sessionSyncService;
+
+    private final ResourceOwnerAccessGuard resourceOwnerAccessGuard;
+
+    private final ClientPathAccessGuard clientPathAccessGuard;
     
     /**
      * 전체 시스템 회기 수 검증
      */
     @GetMapping("/validate")
-    public ResponseEntity<ApiResponse<Map<String, Object>>> validateAllSessions() {
+    public ResponseEntity<ApiResponse<Map<String, Object>>> validateAllSessions(HttpSession session) {
+        resourceOwnerAccessGuard.requireTenantAdminAccess(session);
         log.info("🔍 전체 시스템 회기 수 검증 요청");
         
         Map<String, Object> result = sessionSyncService.validateAllSessions();
@@ -39,10 +47,12 @@ public class SessionSyncController extends BaseApiController {
     }
     
     /**
-     * 특정 매핑 회기 수 검증 및 동기화
+     * 특정 매핑 회기 수 검증 및 동기화 (통합 일정 화면 「배정 완료」 — 사무원도 사용)
      */
     @PostMapping("/validate/{mappingId}")
-    public ResponseEntity<ApiResponse<Map<String, Object>>> validateMappingSessions(@PathVariable Long mappingId) {
+    public ResponseEntity<ApiResponse<Map<String, Object>>> validateMappingSessions(@PathVariable Long mappingId,
+            HttpSession session) {
+        clientPathAccessGuard.requireTenantManager(session);
         log.info("🔍 매핑 회기 수 검증 요청: mappingId={}", mappingId);
         
         sessionSyncService.validateAndSyncMappingSessions(mappingId);
@@ -57,7 +67,8 @@ public class SessionSyncController extends BaseApiController {
      * 회기 수 불일치 자동 수정
      */
     @PostMapping("/fix-mismatches")
-    public ResponseEntity<ApiResponse<Void>> fixSessionMismatches() {
+    public ResponseEntity<ApiResponse<Void>> fixSessionMismatches(HttpSession session) {
+        resourceOwnerAccessGuard.requireTenantAdminAccess(session);
         log.info("🔧 회기 수 불일치 자동 수정 요청");
         
         sessionSyncService.fixSessionMismatches();
@@ -69,7 +80,8 @@ public class SessionSyncController extends BaseApiController {
      * 회기 동기화 상태 조회
      */
     @GetMapping("/status")
-    public ResponseEntity<ApiResponse<Map<String, Object>>> getSyncStatus() {
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getSyncStatus(HttpSession session) {
+        resourceOwnerAccessGuard.requireTenantAdminAccess(session);
         log.info("📊 회기 동기화 상태 조회 요청");
         
         Map<String, Object> status = sessionSyncService.getSyncStatus();
@@ -81,7 +93,9 @@ public class SessionSyncController extends BaseApiController {
      * 회기 사용 로그 기록
      */
     @PostMapping("/log-usage")
-    public ResponseEntity<ApiResponse<Void>> logSessionUsage(@RequestBody Map<String, Object> request) {
+    public ResponseEntity<ApiResponse<Void>> logSessionUsage(@RequestBody Map<String, Object> request,
+            HttpSession session) {
+        resourceOwnerAccessGuard.requireTenantAdminAccess(session);
         log.info("📝 회기 사용 로그 기록 요청");
         
         Long mappingId = Long.valueOf(request.get("mappingId").toString());

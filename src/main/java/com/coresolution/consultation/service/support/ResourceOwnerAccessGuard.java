@@ -1,5 +1,6 @@
 package com.coresolution.consultation.service.support;
 
+import java.util.Collection;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
@@ -460,6 +461,102 @@ public class ResourceOwnerAccessGuard {
     }
 
     /**
+     * 매핑 id 기반 관리자·사무원 자원(배정·통합 일정 화면의 결제 확인·승인·종료·환불, 단건 조회) 접근 검증.
+     * 같은 테넌트 관리자·사무원만, 매핑이 세션 테넌트에 있을 때만 허용한다.
+     *
+     * @param session   HTTP 세션
+     * @param mappingId 매핑 ID (null 이면 거부)
+     * @return 테넌트 범위로 조회한 매핑
+     * @throws UnauthorizedException 로그인 사용자가 없을 때
+     * @throws AccessDeniedException 관리자·사무원이 아니거나 세션 테넌트에 매핑이 없을 때
+     */
+    @Transactional(readOnly = true)
+    public ConsultantClientMapping requireMappingManagerAccess(HttpSession session, Long mappingId) {
+        User caller = requireTenantManager(session, "mappingId", mappingId);
+        return loadMappingInCallerTenant(caller, mappingId);
+    }
+
+    /**
+     * 여러 매핑을 한 번에 바꾸는 관리자·사무원 API(일괄 결제 확인·취소) 검증. 모든 id 가 세션 테넌트 매핑이어야 한다.
+     *
+     * @param session    HTTP 세션
+     * @param mappingIds 요청 본문의 매핑 ID 목록 값 (목록이 아니거나 비었거나 숫자가 아닌 값이 있으면 거부)
+     * @return 세션 사용자
+     * @throws UnauthorizedException 로그인 사용자가 없을 때
+     * @throws AccessDeniedException 관리자·사무원이 아니거나 하나라도 세션 테넌트 매핑이 아닐 때
+     */
+    @Transactional(readOnly = true)
+    public User requireMappingsManagerAccess(HttpSession session, Object mappingIds) {
+        User caller = requireTenantManager(session, "mappingIds", null);
+        if (!(mappingIds instanceof Collection<?> ids) || ids.isEmpty()) {
+            throw denyResource(caller, "mappingIds", null);
+        }
+        for (Object rawId : ids) {
+            if (!(rawId instanceof Number)) {
+                throw denyResource(caller, "mappingIds", null);
+            }
+            loadMappingInCallerTenant(caller, ((Number) rawId).longValue());
+        }
+        return caller;
+    }
+
+    /**
+     * 사용자 id(상담사·내담자)로 읽거나 바꾸는 관리자·사무원 API 검증. 대상이 세션 테넌트 사용자여야 한다.
+     *
+     * @param session HTTP 세션
+     * @param field   로그용 필드 이름
+     * @param userId  대상 사용자 ID (null 이면 거부)
+     * @return 세션 사용자
+     * @throws UnauthorizedException 로그인 사용자가 없을 때
+     * @throws AccessDeniedException 관리자·사무원이 아니거나 대상이 세션 테넌트 사용자가 아닐 때
+     */
+    @Transactional(readOnly = true)
+    public User requireTenantUserManagerAccess(HttpSession session, String field, Long userId) {
+        User caller = requireTenantManager(session, field, userId);
+        assertUserInCallerTenant(caller, field, userId);
+        return caller;
+    }
+
+    /**
+     * 상담사 id 로 읽는 API 검증. 상담사 본인은 자기 id 만, 관리자·사무원은 세션 테넌트 사용자만 허용한다.
+     *
+     * @param session      HTTP 세션
+     * @param consultantId 대상 상담사 ID (null 이면 거부)
+     * @return 세션 사용자
+     * @throws UnauthorizedException 로그인 사용자가 없을 때
+     * @throws AccessDeniedException 본인·관리자·사무원이 아니거나 대상이 세션 테넌트 사용자가 아닐 때
+     */
+    @Transactional(readOnly = true)
+    public User requireConsultantSelfOrManagerAccess(HttpSession session, Long consultantId) {
+        User caller = clientPathAccessGuard.requireCaller(session);
+        clientPathAccessGuard.requireCallerTenantId(caller);
+        boolean self = caller.getRole() != null && caller.getRole().isConsultant()
+                && consultantId != null && consultantId.equals(caller.getId());
+        if (!self && !clientPathAccessGuard.isTenantManager(caller)) {
+            throw denyResource(caller, "consultantId", consultantId);
+        }
+        assertUserInCallerTenant(caller, "consultantId", consultantId);
+        return caller;
+    }
+
+    /**
+     * 사용자 id 로 바꾸는 관리자 전용 API(상담사 등급·이관 삭제 등) 검증. 대상이 세션 테넌트 사용자여야 한다.
+     *
+     * @param session HTTP 세션
+     * @param field   로그용 필드 이름
+     * @param userId  대상 사용자 ID (null 이면 거부)
+     * @return 세션 관리자
+     * @throws UnauthorizedException 로그인 사용자가 없을 때
+     * @throws AccessDeniedException 관리자가 아니거나 대상이 세션 테넌트 사용자가 아닐 때
+     */
+    @Transactional(readOnly = true)
+    public User requireTenantUserAdminAccess(HttpSession session, String field, Long userId) {
+        User caller = requireTenantAdmin(session, field, userId);
+        assertUserInCallerTenant(caller, field, userId);
+        return caller;
+    }
+
+    /**
      * 감사 필드 문자열 값. 세션 사용자 id 를 쓴다 (승인자 id 기록과 같은 기준).
      *
      * @param actor 세션 사용자
@@ -642,6 +739,24 @@ public class ResourceOwnerAccessGuard {
             throw denyResource(caller, field, resourceId);
         }
         return caller;
+    }
+
+    /**
+     * 세션 테넌트 관리자·사무원인지 검증한다. 자원 조회 전에 호출해 그 외 역할에는 id 존재 여부를 드러내지 않는다.
+     */
+    private User requireTenantManager(HttpSession session, String field, Object resourceId) {
+        User caller = clientPathAccessGuard.requireCaller(session);
+        clientPathAccessGuard.requireCallerTenantId(caller);
+        if (!clientPathAccessGuard.isTenantManager(caller)) {
+            throw denyResource(caller, field, resourceId);
+        }
+        return caller;
+    }
+
+    private void assertUserInCallerTenant(User caller, String field, Long userId) {
+        if (!clientPathAccessGuard.isUserInCallerTenant(caller, userId)) {
+            throw denyResource(caller, field, userId);
+        }
     }
 
     private ConsultantClientMapping loadMappingInCallerTenant(User caller, Long mappingId) {

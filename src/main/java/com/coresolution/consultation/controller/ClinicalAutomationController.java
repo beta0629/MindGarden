@@ -33,7 +33,9 @@ import com.coresolution.consultation.repository.ConsultationRecordRepository;
 import com.coresolution.consultation.service.ClinicalDocumentService;
 import com.coresolution.consultation.service.RiskDetectionService;
 import com.coresolution.consultation.service.SpeechToTextService;
+import com.coresolution.consultation.service.support.ConsultationRecordAccessGuard;
 import com.coresolution.core.context.TenantContextHolder;
+import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -59,6 +61,7 @@ public class ClinicalAutomationController {
     private final SpeechToTextService speechToTextService;
     private final ClinicalDocumentService clinicalDocumentService;
     private final RiskDetectionService riskDetectionService;
+    private final ConsultationRecordAccessGuard consultationRecordAccessGuard;
 
     // 파일 저장 경로 설정
     private static final String AUDIO_STORAGE_PATH = "./uploads/consultation-audio";
@@ -180,8 +183,10 @@ public class ClinicalAutomationController {
      * 3. SOAP 노트 자동 생성 POST /api/v1/clinical-automation/consultation-records/{id}/generate-soap
      */
     @PostMapping("/consultation-records/{id}/generate-soap")
-    public ResponseEntity<Map<String, Object>> generateSOAPNote(@PathVariable Long id) {
+    public ResponseEntity<Map<String, Object>> generateSOAPNote(@PathVariable Long id,
+            HttpSession session) {
         log.info("📝 SOAP 노트 생성 요청: consultationRecordId={}", id);
+        consultationRecordAccessGuard.requireConsultationRecordReadAccess(session, id);
 
         try {
             String tenantId = TenantContextHolder.getRequiredTenantId();
@@ -220,8 +225,10 @@ public class ClinicalAutomationController {
      * 4. DAP 노트 자동 생성 POST /api/v1/clinical-automation/consultation-records/{id}/generate-dap
      */
     @PostMapping("/consultation-records/{id}/generate-dap")
-    public ResponseEntity<Map<String, Object>> generateDAPNote(@PathVariable Long id) {
+    public ResponseEntity<Map<String, Object>> generateDAPNote(@PathVariable Long id,
+            HttpSession session) {
         log.info("📝 DAP 노트 생성 요청: consultationRecordId={}", id);
+        consultationRecordAccessGuard.requireConsultationRecordReadAccess(session, id);
 
         try {
             String tenantId = TenantContextHolder.getRequiredTenantId();
@@ -259,8 +266,10 @@ public class ClinicalAutomationController {
      * /api/v1/clinical-automation/consultation-records/{id}/generate-diagnostic-report
      */
     @PostMapping("/consultation-records/{id}/generate-diagnostic-report")
-    public ResponseEntity<Map<String, Object>> generateDiagnosticReport(@PathVariable Long id) {
+    public ResponseEntity<Map<String, Object>> generateDiagnosticReport(@PathVariable Long id,
+            HttpSession session) {
         log.info("📋 진단 보고서 생성 요청: consultationRecordId={}", id);
+        consultationRecordAccessGuard.requireConsultationRecordReadAccess(session, id);
 
         try {
             ClinicalReport report = clinicalDocumentService.generateDiagnosticReport(id);
@@ -285,8 +294,10 @@ public class ClinicalAutomationController {
      * 6. 위험 징후 수동 분석 POST /api/v1/clinical-automation/consultation-records/{id}/analyze-risks
      */
     @PostMapping("/consultation-records/{id}/analyze-risks")
-    public ResponseEntity<Map<String, Object>> analyzeRisks(@PathVariable Long id) {
+    public ResponseEntity<Map<String, Object>> analyzeRisks(@PathVariable Long id,
+            HttpSession session) {
         log.info("🔍 위험 징후 분석 요청: consultationRecordId={}", id);
+        consultationRecordAccessGuard.requireConsultationRecordReadAccess(session, id);
 
         try {
             // 음성 전사 결과 조회
@@ -332,8 +343,10 @@ public class ClinicalAutomationController {
      * 7. 생성된 보고서 조회 GET /api/v1/clinical-automation/clinical-reports/{id}
      */
     @GetMapping("/clinical-reports/{id}")
-    public ResponseEntity<Map<String, Object>> getClinicalReport(@PathVariable Long id) {
+    public ResponseEntity<Map<String, Object>> getClinicalReport(@PathVariable Long id,
+            HttpSession session) {
         log.info("📄 임상 보고서 조회: reportId={}", id);
+        consultationRecordAccessGuard.requireClinicalReportAccess(session, id);
 
         try {
             ClinicalReport report = clinicalDocumentService.getClinicalReport(id);
@@ -355,9 +368,10 @@ public class ClinicalAutomationController {
      */
     @PutMapping("/clinical-reports/{id}")
     public ResponseEntity<Map<String, Object>> updateClinicalReport(@PathVariable Long id,
-            @RequestBody ClinicalReport updatedReport) {
+            @RequestBody ClinicalReport updatedReport, HttpSession session) {
 
         log.info("✏️ 임상 보고서 수정 요청: reportId={}", id);
+        consultationRecordAccessGuard.requireClinicalReportAccess(session, id);
 
         try {
             ClinicalReport report = clinicalDocumentService.updateClinicalReport(id, updatedReport);
@@ -381,9 +395,10 @@ public class ClinicalAutomationController {
      */
     @PostMapping("/clinical-reports/{id}/approve")
     public ResponseEntity<Map<String, Object>> approveClinicalReport(@PathVariable Long id,
-            @RequestParam Long reviewerUserId) {
+            @RequestParam Long reviewerUserId, HttpSession session) {
 
         log.info("✅ 임상 보고서 승인 요청: reportId={}, reviewerId={}", id, reviewerUserId);
+        consultationRecordAccessGuard.requireClinicalReportAccess(session, id);
 
         try {
             ClinicalReport report =
@@ -408,8 +423,9 @@ public class ClinicalAutomationController {
      */
     @GetMapping("/consultation-records/{id}/reports")
     public ResponseEntity<Map<String, Object>> getReportsByConsultationRecord(
-            @PathVariable Long id) {
+            @PathVariable Long id, HttpSession session) {
         log.info("📚 상담 기록의 보고서 목록 조회: consultationRecordId={}", id);
+        consultationRecordAccessGuard.requireConsultationRecordReadAccess(session, id);
 
         try {
             List<ClinicalReport> reports =

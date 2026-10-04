@@ -20,6 +20,7 @@ import com.coresolution.consultation.constant.ProfessionalProviderTypeConstants;
 import com.coresolution.consultation.constant.ScheduleStatus;
 import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.dto.ConsultationRecordDraftResponse;
+import com.coresolution.consultation.dto.ConsultationRecordListItemResponse;
 import com.coresolution.consultation.dto.ConsultationRecordDraftSaveRequest;
 import com.coresolution.consultation.dto.CumulativeConsultantCountsResponse;
 import com.coresolution.consultation.dto.CumulativeMissingConsultationLogsResponse;
@@ -48,6 +49,7 @@ import com.coresolution.consultation.service.ScheduleListUserFieldsResolver;
 import com.coresolution.consultation.service.ScheduleMappingContextResolver;
 import com.coresolution.consultation.service.ScheduleMappingContextResolver.ScheduleMappingResponseContext;
 import com.coresolution.consultation.service.support.ClientPathAccessGuard;
+import com.coresolution.consultation.service.support.ConsultationRecordAccessGuard;
 import com.coresolution.consultation.service.ScheduleService;
 import com.coresolution.consultation.util.PermissionCheckUtils;
 import com.coresolution.consultation.util.ScheduleSlotTimes;
@@ -150,6 +152,7 @@ public class ScheduleController extends BaseApiController {
     private final com.coresolution.consultation.repository.ConsultantRepository consultantRepository;
     private final ClientPathAccessGuard clientPathAccessGuard;
     private final com.coresolution.consultation.service.ScheduleAutoCompleteService scheduleAutoCompleteService;
+    private final ConsultationRecordAccessGuard consultationRecordAccessGuard;
 
     /**
      * 테넌트 컨텍스트가 비어 있을 때 세션 사용자의 tenantId로 보완 (상담사 대시보드 등).
@@ -1184,19 +1187,27 @@ public class ScheduleController extends BaseApiController {
      * 상담일지 목록 조회 (모바일·웹 공통). {@code records}는 표시용 필드({@code clientName} 등)가 채워진 맵 리스트이다.
      * GET /api/v1/schedules/consultation-records?consultantId=&amp;consultationId=&amp;page=&amp;size=
      *
+     * <p>상담일지 본문을 돌려주므로 {@link ConsultationRecordAccessGuard} 로 작성 상담사 본인 또는
+     * 같은 테넌트 관리자·사무원만 허용한다. 범위 파라미터가 하나도 없으면 빈 목록이다
+     * (테넌트 전체 dump 금지).</p>
+     *
      * @param consultantId 상담사 ID (지정 시 Spring {@link Pageable}로 전체 목록 페이지 조회)
      * @param consultationId 상담(스케줄) ID 또는 {@code schedule-} 접두 — 지정 시 해당 상담의 일지만 비페이지 목록
      * @param pageable 상담사별 목록 시 페이지·크기
+     * @param session HTTP 세션
      * @return records, totalCount, totalPages, number, last, size
      */
     @GetMapping("/consultation-records")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getConsultationRecords(
             @RequestParam(required = false) Long consultantId,
             @RequestParam(required = false) String consultationId,
-            @PageableDefault(size = 20) Pageable pageable) {
+            @PageableDefault(size = 20) Pageable pageable,
+            HttpSession session) {
 
         log.info("📝 상담일지 목록 조회 - 상담사 ID: {}, 상담 ID: {}, page={}, size={}",
             consultantId, consultationId, pageable.getPageNumber(), pageable.getPageSize());
+
+        ensureTenantContextFromSession(session);
 
         List<ConsultationRecord> recordList;
         long totalCount;
@@ -1204,6 +1215,7 @@ public class ScheduleController extends BaseApiController {
         int number;
         boolean last;
         int size;
+        boolean summaryOnly;
 
         if (consultationId != null) {
             Long consultationIdLong;
@@ -1212,13 +1224,20 @@ public class ScheduleController extends BaseApiController {
             } else {
                 consultationIdLong = Long.valueOf(consultationId);
             }
+            if (consultantId != null) {
+                consultationRecordAccessGuard.requireConsultantScopeReadAccess(session, consultantId);
+            } else {
+                consultationRecordAccessGuard.requireConsultationScopeReadAccess(session, consultationIdLong);
+            }
             recordList = consultationRecordService.getConsultationRecordsByConsultationId(consultationIdLong);
             totalCount = recordList.size();
             totalPages = 1;
             number = 0;
             last = true;
             size = recordList.size();
+            summaryOnly = false;
         } else if (consultantId != null) {
+            consultationRecordAccessGuard.requireConsultantScopeReadAccess(session, consultantId);
             Page<ConsultationRecord> page =
                 consultationRecordService.getConsultationRecordsByConsultantId(consultantId, pageable);
             recordList = page.getContent();
@@ -1227,6 +1246,7 @@ public class ScheduleController extends BaseApiController {
             number = page.getNumber();
             last = page.isLast();
             size = page.getSize();
+            summaryOnly = true;
         } else {
             recordList = new ArrayList<>();
             totalCount = 0L;
@@ -1234,11 +1254,13 @@ public class ScheduleController extends BaseApiController {
             number = 0;
             last = true;
             size = pageable.getPageSize();
+            summaryOnly = true;
         }
 
         String tenantId = resolveTenantIdForConsultationRecordList(recordList);
         Map<Long, String> displayNameByUserId = buildScheduleListDisplayNameIndex(tenantId, recordList);
-        List<Map<String, Object>> records = convertConsultationRecordsToDisplayMaps(recordList, displayNameByUserId);
+        List<Map<String, Object>> records =
+            convertConsultationRecordsToDisplayMaps(recordList, displayNameByUserId, summaryOnly);
 
         Map<String, Object> data = new LinkedHashMap<>();
         data.put("records", records);
@@ -1265,7 +1287,8 @@ public class ScheduleController extends BaseApiController {
             @RequestHeader(value = ClientPlatform.HEADER_NAME, required = false) String clientPlatformHeader,
             HttpSession session) {
         
-        log.info("📝 상담일지 작성 - 데이터: {}", recordData);
+        // 상담일지 본문은 로그에 남기지 않는다 (키 목록만).
+        log.info("📝 상담일지 작성 요청 - 본문 필드 수: {}", recordData != null ? recordData.size() : 0);
 
         Object savedRecord = institutionLinkConsultationLogWriteRouter.create(
                 recordData, ClientPlatform.fromHeader(clientPlatformHeader));
@@ -1283,7 +1306,9 @@ public class ScheduleController extends BaseApiController {
             @PathVariable Long recordId,
             @RequestBody Map<String, Object> recordData) {
         
-        log.info("📝 상담일지 수정 - 기록 ID: {}, 데이터: {}", recordId, recordData);
+        // 상담일지 본문은 로그에 남기지 않는다.
+        log.info("📝 상담일지 수정 요청 - 기록 ID: {}, 본문 필드 수: {}",
+                recordId, recordData != null ? recordData.size() : 0);
         
         com.coresolution.consultation.entity.ConsultationRecord updatedRecord = 
             consultationRecordService.updateConsultationRecord(recordId, recordData);
@@ -2237,13 +2262,24 @@ public class ScheduleController extends BaseApiController {
      * @param displayNameByUserId PK별 표시명
      * @return JSON 필드 + 표시명
      */
+    /**
+     * 상담일지 엔티티를 표시용 맵으로 변환한다.
+     *
+     * @param records             변환 대상 상담일지
+     * @param displayNameByUserId 사용자 id → 표시명 인덱스
+     * @param summaryOnly         true 면 {@link ConsultationRecordListItemResponse} 요약·메타만 직렬화
+     *                            (임상 본문 비노출). false 면 엔티티 전체 (단건 편집 로드용).
+     * @return 표시용 맵 리스트
+     */
     private List<Map<String, Object>> convertConsultationRecordsToDisplayMaps(
             List<ConsultationRecord> records,
-            Map<Long, String> displayNameByUserId) {
+            Map<Long, String> displayNameByUserId,
+            boolean summaryOnly) {
         List<Map<String, Object>> out = new ArrayList<>();
         for (ConsultationRecord r : records) {
+            Object source = summaryOnly ? ConsultationRecordListItemResponse.fromEntity(r) : r;
             Map<String, Object> map = new LinkedHashMap<>(objectMapper.convertValue(
-                r, new TypeReference<Map<String, Object>>() {}));
+                source, new TypeReference<Map<String, Object>>() {}));
             String clientResolved = r.getClientId() != null
                 ? displayNameByUserId.getOrDefault(r.getClientId(), AdminServiceUserFacingMessages.DISPLAY_NAME_UNKNOWN)
                 : AdminServiceUserFacingMessages.DISPLAY_NAME_UNKNOWN;

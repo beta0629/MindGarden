@@ -396,7 +396,8 @@ const ScheduleDetailModal = ({
      * 실패 시 null 유지 (로딩 중 작성/보기 모두 비노출 — 상호배타 SSOT). */
     useEffect(() => {
         const scheduleId = scheduleData?.id;
-        if (!isOpen || !scheduleId) {
+        // 내담자는 상담일지 작성/보기 액션 자체가 없고, 일지 조회 API 도 403 이므로 호출하지 않는다.
+        if (!isOpen || !scheduleId || isClient) {
             setHasConsultationRecord(null);
             return undefined;
         }
@@ -439,6 +440,7 @@ const ScheduleDetailModal = ({
         };
     }, [
         isOpen,
+        isClient,
         scheduleData?.id,
         scheduleData?.mappingId,
         scheduleData?.consultantClientMappingId,

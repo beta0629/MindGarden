@@ -51,7 +51,10 @@ import com.coresolution.core.repository.UserRoleAssignmentRepository;
 import com.coresolution.core.security.PasswordService;
 import com.coresolution.core.service.UserRoleQueryService;
 import com.coresolution.core.util.StatusCodeHelper;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -71,6 +74,7 @@ import org.springframework.transaction.support.DefaultTransactionStatus;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyCollection;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.never;
@@ -248,18 +252,70 @@ class AdminServiceImplCreateMappingPendingPaymentGuardTest {
     }
 
     @Test
-    @DisplayName("TERMINATED 기존 매핑은 정상적으로 재종료 처리 후 신규 생성 (ACTIVE 아님)")
-    void createMapping_terminatesTerminatedMappingAsBefore() {
-        ConsultantClientMapping terminatedMapping = newExistingMapping(104L, MappingStatus.TERMINATED);
-        terminatedMapping.setRemainingSessions(2);
-        terminatedMapping.setUsedSessions(3);
-        stubCreateFlowWithSave(List.of(terminatedMapping));
+    @DisplayName("[상태 조건 없는 일괄 상태 변경] 같은 쌍의 종료 매핑(TERMINATED·CANCELLED·SESSIONS_EXHAUSTED)은 새 매핑 생성 후에도 상태·terminatedAt·notes·회기 그대로")
+    void createMapping_unconditionalBulkStatusChange_preservesClosedMappings() {
+        LocalDateTime closedAt = LocalDateTime.of(2026, 9, 1, 10, 0);
+        List<ConsultantClientMapping> closed = new ArrayList<>();
+        long id = 104L;
+        for (MappingStatus status : List.of(MappingStatus.TERMINATED, MappingStatus.CANCELLED,
+                MappingStatus.SESSIONS_EXHAUSTED)) {
+            ConsultantClientMapping mapping = newExistingMapping(id++, status);
+            mapping.setTerminatedAt(closedAt);
+            mapping.setNotes("원래 메모 " + status);
+            mapping.setRemainingSessions(2);
+            mapping.setUsedSessions(3);
+            closed.add(mapping);
+        }
+        stubCreateFlowWithSave(closed);
 
         adminService.createMapping(newRequest());
 
-        assertThat(terminatedMapping.getStatus()).isEqualTo(MappingStatus.TERMINATED);
-        assertThat(terminatedMapping.getRemainingSessions()).isZero();
-        assertThat(terminatedMapping.getUsedSessions()).isEqualTo(5);
+        for (ConsultantClientMapping mapping : closed) {
+            MappingStatus original = MappingStatus.valueOf(mapping.getNotes().substring("원래 메모 ".length()));
+            assertThat(mapping.getStatus()).as("status of %s", original).isEqualTo(original);
+            assertThat(mapping.getTerminatedAt()).as("terminatedAt of %s", original).isEqualTo(closedAt);
+            assertThat(mapping.getNotes()).as("notes of %s", original)
+                    .doesNotContain(AdminServiceUserFacingMessages.NOTES_AUTO_TERMINATED_ON_NEW_MAPPING);
+            assertThat(mapping.getRemainingSessions()).isEqualTo(2);
+            assertThat(mapping.getUsedSessions()).isEqualTo(3);
+        }
+        ArgumentCaptor<ConsultantClientMapping> saved = ArgumentCaptor.forClass(ConsultantClientMapping.class);
+        verify(mappingRepository, atLeast(1)).save(saved.capture());
+        assertThat(saved.getAllValues()).noneMatch(closed::contains);
+    }
+
+    @Test
+    @DisplayName("[상태 조건 없는 일괄 상태 변경] 기존 매핑 조회 쿼리에 상태 조건이 들어가고, 종료·결제 대기 상태는 조건에 없다")
+    void createMapping_unconditionalBulkStatusChange_queryCarriesStatusCondition() {
+        stubCreateFlowWithSave(List.of());
+
+        adminService.createMapping(newRequest());
+
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<Collection<MappingStatus>> statuses = ArgumentCaptor.forClass(Collection.class);
+        verify(mappingRepository).findByTenantIdAndConsultantAndClientAndStatusIn(
+                eq(TEST_TENANT_ID), any(User.class), any(User.class), statuses.capture());
+        assertThat(statuses.getValue()).containsExactlyInAnyOrder(MappingStatus.ACTIVE,
+                MappingStatus.DEPOSIT_PENDING, MappingStatus.DEPOSIT_CONFIRMED, MappingStatus.INACTIVE,
+                MappingStatus.SUSPENDED);
+        verify(mappingRepository, never()).findByTenantIdAndConsultantAndClient(any(), any(), any());
+    }
+
+    @Test
+    @DisplayName("진행 중 상태(DEPOSIT_PENDING 등)의 기존 매핑은 자동 종료 + 잔여 회기 소진 후 신규 생성")
+    void createMapping_terminatesInProgressMapping() {
+        ConsultantClientMapping depositPending = newExistingMapping(110L, MappingStatus.DEPOSIT_PENDING);
+        depositPending.setRemainingSessions(2);
+        depositPending.setUsedSessions(3);
+        stubCreateFlowWithSave(List.of(depositPending));
+
+        adminService.createMapping(newRequest());
+
+        assertThat(depositPending.getStatus()).isEqualTo(MappingStatus.TERMINATED);
+        assertThat(depositPending.getTerminatedAt()).isNotNull();
+        assertThat(depositPending.getNotes()).contains(AdminServiceUserFacingMessages.NOTES_AUTO_TERMINATED_ON_NEW_MAPPING);
+        assertThat(depositPending.getRemainingSessions()).isZero();
+        assertThat(depositPending.getUsedSessions()).isEqualTo(5);
         verify(mappingRepository, atLeast(2)).save(any(ConsultantClientMapping.class));
     }
 
@@ -346,8 +402,12 @@ class AdminServiceImplCreateMappingPendingPaymentGuardTest {
                 .thenReturn(Optional.of(consultant));
         when(userRepository.findByTenantIdAndId(eq(TEST_TENANT_ID), eq(CLIENT_ID)))
                 .thenReturn(Optional.of(client));
-        when(mappingRepository.findByTenantIdAndConsultantAndClient(eq(TEST_TENANT_ID), eq(consultant), eq(client)))
-                .thenReturn(existingMappings);
+        when(mappingRepository.findByTenantIdAndConsultantAndClientAndStatusIn(
+                eq(TEST_TENANT_ID), eq(consultant), eq(client), anyCollection()))
+                .thenAnswer(inv -> {
+                    Collection<?> statuses = inv.getArgument(3);
+                    return existingMappings.stream().filter(m -> statuses.contains(m.getStatus())).toList();
+                });
     }
 
     private void stubCreateFlowWithSave(List<ConsultantClientMapping> existingMappings) {

@@ -1,5 +1,5 @@
 /**
- * MappingManagementPage — 부분 환불 액션은 관리자에게만 노출(사무원·상담사 숨김).
+ * MappingManagementPage — 부분 환불·결제 대기 취소(매칭 종료)·일괄 결제 취소는 관리자에게만 노출(사무원·상담사 숨김).
  *
  * @author Core Solution
  * @since 2026-10-04
@@ -79,8 +79,12 @@ jest.mock('../../../common/UnifiedLoading', () => ({
 }));
 jest.mock('../organisms/MappingKpiSection', () => () => null);
 jest.mock('../organisms/MappingSearchSection', () => () => null);
-jest.mock('../organisms/MappingListBlock', () => ({ onRefund }) => (
-  <div data-testid="mapping-list-block" data-has-refund={String(typeof onRefund === 'function')} />
+jest.mock('../organisms/MappingListBlock', () => ({ onRefund, onCancelPendingMapping }) => (
+  <div
+    data-testid="mapping-list-block"
+    data-has-refund={String(typeof onRefund === 'function')}
+    data-has-cancel-pending={String(typeof onCancelPendingMapping === 'function')}
+  />
 ));
 jest.mock('../integrated-schedule/molecules/MappingScheduleSidePeekContent', () => () => null);
 jest.mock('../../../common', () => ({
@@ -99,7 +103,9 @@ jest.mock('../../MappingCreationModal', () => () => null);
 jest.mock('../../mapping/ConsultantTransferModal', () => () => null);
 jest.mock('../../mapping/ConsultantTransferHistory', () => () => null);
 jest.mock('../../mapping/PartialRefundModal', () => () => null);
-jest.mock('../../PaymentConfirmationModal', () => () => null);
+jest.mock('../../PaymentConfirmationModal', () => ({ canCancelPayment }) => (
+  <div data-testid="payment-modal" data-can-cancel={String(canCancelPayment === true)} />
+));
 jest.mock('../../MappingEditModal', () => () => null);
 jest.mock('../../../common/modals/UnifiedModal', () => () => null);
 
@@ -121,13 +127,17 @@ describe('mappingManagement.partialRefundRole', () => {
     window.scrollTo = jest.fn();
   });
 
-  test('관리자 — 부분 환불 액션 전달', async() => {
+  test('관리자 — 부분 환불·결제 대기 취소·일괄 결제 취소 액션 전달', async() => {
     const block = await renderAs(USER_ROLES.ADMIN);
     expect(block).toHaveAttribute('data-has-refund', 'true');
+    expect(block).toHaveAttribute('data-has-cancel-pending', 'true');
+    expect(screen.getByTestId('payment-modal')).toHaveAttribute('data-can-cancel', 'true');
   });
 
-  test.each([USER_ROLES.STAFF, USER_ROLES.CONSULTANT])('%s — 부분 환불 액션 숨김', async(role) => {
+  test.each([USER_ROLES.STAFF, USER_ROLES.CONSULTANT])('%s — 부분 환불·결제 대기 취소·일괄 결제 취소 숨김', async(role) => {
     const block = await renderAs(role);
     expect(block).toHaveAttribute('data-has-refund', 'false');
+    expect(block).toHaveAttribute('data-has-cancel-pending', 'false');
+    expect(screen.getByTestId('payment-modal')).toHaveAttribute('data-can-cancel', 'false');
   });
 });

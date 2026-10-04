@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.Optional;
 import com.coresolution.consultation.entity.CssColorSettings;
 import com.coresolution.consultation.entity.CssThemeMetadata;
+import com.coresolution.consultation.exception.EntityNotFoundException;
 import com.coresolution.consultation.service.CssThemeService;
 import com.coresolution.core.controller.BaseApiController;
 import com.coresolution.core.dto.ApiResponse;
@@ -68,9 +69,8 @@ public class CssThemeController extends BaseApiController {
         
         if (defaultTheme.isPresent()) {
             return success("기본 테마를 성공적으로 조회했습니다.", defaultTheme.get());
-        } else {
-            throw new RuntimeException("기본 테마를 찾을 수 없습니다.");
         }
+        throw new EntityNotFoundException("기본 테마를 찾을 수 없습니다.");
     }
 
     /**
@@ -81,7 +81,7 @@ public class CssThemeController extends BaseApiController {
         log.info("🎨 테마 색상 설정 조회: {}", themeName);
         
         if (!cssThemeService.isThemeExists(themeName)) {
-            throw new RuntimeException("테마를 찾을 수 없습니다.");
+            throw new EntityNotFoundException("테마를 찾을 수 없습니다.");
         }
         
         Map<String, String> colors = cssThemeService.getThemeColors(themeName);
@@ -104,7 +104,7 @@ public class CssThemeController extends BaseApiController {
         log.info("🎨 특정 테마 색상 조회: {} - {}", themeName, colorKey);
         
         if (!cssThemeService.isThemeExists(themeName)) {
-            throw new RuntimeException("테마를 찾을 수 없습니다.");
+            throw new EntityNotFoundException("테마를 찾을 수 없습니다.");
         }
         
         Optional<String> colorValue = cssThemeService.getThemeColor(themeName, colorKey);
@@ -117,7 +117,7 @@ public class CssThemeController extends BaseApiController {
             
             return success("색상을 성공적으로 조회했습니다.", data);
         } else {
-            throw new RuntimeException("색상을 찾을 수 없습니다.");
+            throw new EntityNotFoundException("색상을 찾을 수 없습니다.");
         }
     }
 
@@ -131,7 +131,7 @@ public class CssThemeController extends BaseApiController {
         log.info("🎨 테마 카테고리별 색상 조회: {} - {}", themeName, category);
         
         if (!cssThemeService.isThemeExists(themeName)) {
-            throw new RuntimeException("테마를 찾을 수 없습니다.");
+            throw new EntityNotFoundException("테마를 찾을 수 없습니다.");
         }
         
         List<CssColorSettings> colors = cssThemeService.getThemeColorsByCategory(themeName, category);
@@ -232,7 +232,7 @@ public class CssThemeController extends BaseApiController {
         log.info("🎨 테마 삭제: {}", themeName);
         
         if (!cssThemeService.isThemeExists(themeName)) {
-            throw new RuntimeException("테마를 찾을 수 없습니다.");
+            throw new EntityNotFoundException("테마를 찾을 수 없습니다.");
         }
         
         cssThemeService.deleteTheme(themeName);

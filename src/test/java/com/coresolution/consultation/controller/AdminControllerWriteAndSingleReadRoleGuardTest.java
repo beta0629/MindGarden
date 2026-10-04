@@ -16,6 +16,7 @@ import static org.mockito.Mockito.when;
 
 import com.coresolution.consultation.constant.SessionConstants;
 import com.coresolution.consultation.constant.UserRole;
+import com.coresolution.consultation.dto.ConsultantClientMappingResponse;
 import com.coresolution.consultation.dto.ConsultantRegistrationRequest;
 import com.coresolution.consultation.dto.ConsultantTransferRequest;
 import com.coresolution.consultation.entity.ConsultantClientMapping;
@@ -139,6 +140,7 @@ class AdminControllerWriteAndSingleReadRoleGuardTest {
         consultant.setId(CONSULTANT_ID);
         consultant.setRole(UserRole.CONSULTANT);
         when(adminService.getMappingById(anyLong())).thenReturn(mapping);
+        when(adminService.getMappingDetail(anyLong())).thenReturn(ConsultantClientMappingResponse.fromEntity(mapping));
         when(adminService.confirmPayment(anyLong(), any(), any(), any())).thenReturn(mapping);
         when(adminService.approveMapping(anyLong(), any())).thenReturn(mapping);
         when(adminService.transferConsultant(any())).thenReturn(mapping);
@@ -200,6 +202,7 @@ class AdminControllerWriteAndSingleReadRoleGuardTest {
         verify(adminService, never()).deleteConsultantWithTransfer(anyLong(), anyLong(), any());
         verify(adminService, times(2)).confirmPayment(anyLong(), any(), any(), any());
         verify(adminService, never()).partialRefundMapping(anyLong(), anyInt(), any());
+        verify(adminService, never()).terminateMapping(anyLong(), any());
     }
 
     @Test
@@ -211,6 +214,7 @@ class AdminControllerWriteAndSingleReadRoleGuardTest {
         }
         verify(adminService).rejectMapping(MAPPING_ID, "reason");
         verify(adminService).partialRefundMapping(MAPPING_ID, 1, "reason");
+        verify(adminService).terminateMapping(MAPPING_ID, "reason");
         verify(adminService).deleteConsultantWithTransfer(CONSULTANT_ID, NEW_CONSULTANT_ID, "reason");
     }
 
@@ -309,7 +313,7 @@ class AdminControllerWriteAndSingleReadRoleGuardTest {
                         (s, f) -> controller.confirmPayment(mappingId(f), Map.of("paymentMethod", "CARD"), s)),
                 new Case("POST mappings/{id}/approve", Access.MANAGER,
                         (s, f) -> controller.approveMapping(mappingId(f), Map.of("adminName", "admin"), s)),
-                new Case("POST mappings/{id}/terminate", Access.MANAGER,
+                new Case("POST mappings/{id}/terminate", Access.ADMIN,
                         (s, f) -> controller.terminateMapping(mappingId(f), Map.of("reason", "reason"), s)),
                 new Case("POST mappings/{id}/cleanup-future-schedules", Access.MANAGER,
                         (s, f) -> controller.cleanupFutureSchedulesForMapping(mappingId(f), s)),
@@ -322,7 +326,7 @@ class AdminControllerWriteAndSingleReadRoleGuardTest {
                 new Case("POST mapping/payment/confirm", Access.MANAGER,
                         (s, f) -> controller.confirmMappingPayment(
                                 Map.of("mappingIds", List.of(mappingId(f)), "paymentMethod", "CARD"), s)),
-                new Case("POST mapping/payment/cancel", Access.MANAGER,
+                new Case("POST mapping/payment/cancel", Access.ADMIN,
                         (s, f) -> controller.cancelMappingPayment(Map.of("mappingIds", List.of(mappingId(f))), s)),
                 new Case("PUT consultants/{id}", Access.MANAGER,
                         (s, f) -> controller.updateConsultant(consultantId(f), new ConsultantRegistrationRequest(), s)),

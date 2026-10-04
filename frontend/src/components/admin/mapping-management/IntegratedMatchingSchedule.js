@@ -12,6 +12,7 @@ import StandardizedApi from '../../../utils/standardizedApi';
 import notificationManager from '../../../utils/notification';
 import { runResourceLoad, softRefresh } from '../../../utils/softRefresh';
 import { useSession } from '../../../contexts/SessionContext';
+import { isAdmin } from '../../../utils/RoleUtils';
 import useMonthlyConsultantCounts from '../../../hooks/useMonthlyConsultantCounts';
 import useMissingConsultationLogs from '../../../hooks/useMissingConsultationLogs';
 import UnifiedScheduleComponent from '../../schedule/UnifiedScheduleComponent';
@@ -1136,8 +1137,10 @@ const IntegratedMatchingSchedule = () => {
    * 2) 모달 confirm → POST /admin/mappings/{id}/terminate (백엔드 PENDING_PAYMENT 분기 처리).
    * 3) 성공 시 카드 목록 자동 갱신 → TERMINATED 매칭 사이드바에서 사라짐.
    */
+  const canTerminateMapping = isAdmin(user);
+
   const handleRequestCancelPendingMapping = useCallback((mapping) => {
-    if (!mapping?.id) {
+    if (!mapping?.id || !canTerminateMapping) {
       return;
     }
     if (mapping.status !== 'PENDING_PAYMENT') {
@@ -1151,7 +1154,7 @@ const IntegratedMatchingSchedule = () => {
       clientName: mapping.clientName,
       paymentTiming: mapping.paymentTiming ?? null
     });
-  }, []);
+  }, [canTerminateMapping]);
 
   /**
    * 가계약(PENDING_PAYMENT) 전용 패키지 변경 — 동일 매핑 write SSOT.
@@ -1507,7 +1510,7 @@ const IntegratedMatchingSchedule = () => {
           onDeposit={setDepositModalMapping}
           onApprove={handleApprove}
           onCheckoutSameDay={handleOpenCheckoutSameDayFromCard}
-          onCancelPendingMapping={handleRequestCancelPendingMapping}
+          onCancelPendingMapping={canTerminateMapping ? handleRequestCancelPendingMapping : undefined}
           onChangePendingPackage={handleRequestChangePendingPackage}
           onDesyncAction={handleRequestDesyncAction}
           onSessionExtension={handleSessionExtensionFromCard}

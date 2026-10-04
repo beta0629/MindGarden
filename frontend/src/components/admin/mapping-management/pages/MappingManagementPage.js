@@ -782,7 +782,7 @@ const MappingManagementPage = () => {
                 onConfirmDeposit={handleConfirmDeposit}
                 onApprove={handleApproveMapping}
                 onChangePendingPackage={handleRequestChangePendingPackage}
-                onCancelPendingMapping={handleRequestCancelPendingMapping}
+                onCancelPendingMapping={isAdmin(user) ? handleRequestCancelPendingMapping : undefined}
                 cancelPendingProcessing={cancelPendingProcessing}
                 onCreateClick={() => setShowCreateModal(true)}
                 viewMode={viewMode}
@@ -836,6 +836,7 @@ const MappingManagementPage = () => {
         onClose={handlePaymentModalClose}
         mappings={pendingMappings}
         onPaymentConfirmed={handlePaymentConfirmed}
+        canCancelPayment={isAdmin(user)}
       />
 
       <PartialRefundModal

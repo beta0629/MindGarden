@@ -59,7 +59,8 @@ const PaymentConfirmationModal = ({
   isOpen, 
   onClose, 
   mappings = [], 
-  onPaymentConfirmed 
+  onPaymentConfirmed,
+  canCancelPayment = false
 }) => {
   const { t } = useTranslation();
   const [alert, AlertModal] = useAlert();
@@ -360,18 +361,20 @@ const PaymentConfirmationModal = ({
           >
             {t('admin.actions.cancel')}
           </MGButton>
-          <MGButton
-            type="button"
-            variant="danger"
-            className={buildErpMgButtonClassName({ variant: 'danger', size: 'md', loading })}
-            onClick={handleCancelPayment}
-            loading={loading}
-            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-            disabled={selectedMappings.length === 0}
-            preventDoubleClick
-          >
-            결제 취소
-          </MGButton>
+          {canCancelPayment && (
+            <MGButton
+              type="button"
+              variant="danger"
+              className={buildErpMgButtonClassName({ variant: 'danger', size: 'md', loading })}
+              onClick={handleCancelPayment}
+              loading={loading}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+              disabled={selectedMappings.length === 0}
+              preventDoubleClick
+            >
+              결제 취소
+            </MGButton>
+          )}
           <MGButton
             type="button"
             variant="primary"

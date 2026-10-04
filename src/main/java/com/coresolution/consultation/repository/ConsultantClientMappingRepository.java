@@ -31,6 +31,18 @@ public interface ConsultantClientMappingRepository extends BaseRepository<Consul
     
     // 상담사와 내담자로 특정 매칭 조회 (tenantId 필터링 필수)
     List<ConsultantClientMapping> findByTenantIdAndConsultantAndClient(String tenantId, User consultant, User client);
+
+    /**
+     * 상담사·내담자 쌍의 매핑 중 지정한 상태만 조회 (tenantId 필터링 필수).
+     *
+     * @param tenantId   테넌트 ID
+     * @param consultant 상담사
+     * @param client     내담자
+     * @param statuses   조회할 상태 (비어 있으면 결과 없음)
+     * @return 해당 상태의 매핑 목록
+     */
+    List<ConsultantClientMapping> findByTenantIdAndConsultantAndClientAndStatusIn(String tenantId, User consultant,
+            User client, Collection<ConsultantClientMapping.MappingStatus> statuses);
     
     // 상담사와 내담자로 활성 상태의 매칭 존재 여부 확인 (tenantId 필터링 필수)
     boolean existsByTenantIdAndConsultantAndClientAndStatus(String tenantId, User consultant, User client, ConsultantClientMapping.MappingStatus status);

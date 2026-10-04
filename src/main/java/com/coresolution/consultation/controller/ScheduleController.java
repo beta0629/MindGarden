@@ -29,6 +29,7 @@ import com.coresolution.consultation.dto.MonthlyConsultantCountsResponse;
 import com.coresolution.consultation.dto.MonthlyMissingConsultationLogsResponse;
 import com.coresolution.consultation.dto.ScheduleCreateRequest;
 import com.coresolution.consultation.dto.ScheduleResponse;
+import com.coresolution.consultation.exception.ScheduleSessionNotStartedException;
 import com.coresolution.consultation.exception.ValidationException;
 import com.coresolution.consultation.entity.CommonCode;
 import com.coresolution.consultation.entity.ConsultantClientMapping;
@@ -905,10 +906,16 @@ public class ScheduleController extends BaseApiController {
         existingSchedule.setUpdatedAt(java.time.LocalDateTime.now());
         
         try {
+            if (statusBeforeSlotUpdate != ScheduleStatus.COMPLETED
+                    && existingSchedule.getStatus() == ScheduleStatus.COMPLETED) {
+                scheduleService.requireSessionStartedForCompletion(existingSchedule);
+            }
             Schedule updatedSchedule = scheduleService.updateSchedule(id, existingSchedule);
             Map<String, Object> data = Map.of("scheduleId", updatedSchedule.getId());
             log.info("✅ 스케줄 수정 완료: ID {}", updatedSchedule.getId());
             return updated("스케줄이 성공적으로 수정되었습니다.", data);
+        } catch (ScheduleSessionNotStartedException e) {
+            throw e;
         } catch (IllegalStateException e) {
             log.warn("⚠️ 스케줄 수정 거부: id={}, message={}", id, e.getMessage());
             return ResponseEntity.badRequest()

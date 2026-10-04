@@ -7,7 +7,9 @@
 #   - SELECT COUNT 만 실행한다. SQL 은 이 파일에 고정되어 있고 입력으로 바꿀 수 없다.
 #   - 일지 본문·ID·테넌트 값을 출력하지 않는다. 출력은 테이블명과 정수 건수뿐이다.
 #   - mysql 세션을 read only 로 고정한다(--init-command).
-#   - 개발 DB 만 대상이다. 운영 DB·프로시저 실행·UPDATE/DELETE 는 범위 밖이다.
+#   - 개발 DB 만 대상이다. DEV_* secret 만 참조하고 대상 선택 입력이 없어 운영을 가리킬 수 없다.
+#     운영 DB·프로시저 실행·UPDATE/DELETE 는 범위 밖이다.
+#   - 호스트·계정·DB 이름은 모두 secret 이다(코드 기본값 없음). 개발 서버 SSH 경유로만 접속한다.
 name: 상담일지 일정당 중복 COUNT (읽기 전용·개발)
 
 on:
@@ -37,10 +39,12 @@ jobs:
           DB_PASSWORD: ${{ secrets.DEV_DB_PASSWORD }}
         run: |
           set -euo pipefail
-          if [ -z "${SERVER_HOST:-}" ] || [ -z "${SERVER_SSH_KEY:-}" ] || [ -z "${DB_USER:-}" ] || [ -z "${DB_NAME:-}" ]; then
-            echo "::error title=접속 정보 누락::DEV_SERVER_HOST/DEV_SERVER_SSH_KEY/DEV_DB_USER/DEV_DB_NAME secret 을 확인하세요."
-            exit 1
-          fi
+          for name in SERVER_HOST SERVER_USER SERVER_SSH_KEY DB_HOST DB_USER DB_NAME DB_PASSWORD; do
+            if [ -z "${!name:-}" ]; then
+              echo "::error title=접속 정보 누락::DEV_${name} secret 을 확인하세요."
+              exit 1
+            fi
+          done
           case "$DB_NAME" in
             mind_garden|mind_garden_legacy_*)
               echo "::error title=대상 DB 차단::개발 core_solution 스키마만 집계합니다."
@@ -49,6 +53,8 @@ jobs:
           esac
 
           SQL_FILE=$(mktemp)
+          KEY_FILE=$(mktemp)
+          trap 'rm -f "$SQL_FILE" "$KEY_FILE"' EXIT
           cat > "$SQL_FILE" <<'SQL'
           SELECT 'consultation_records' AS scope, COUNT(*) AS dup_schedules, COALESCE(SUM(cnt), 0) AS dup_rows
           FROM (SELECT COUNT(*) AS cnt FROM consultation_records
@@ -65,7 +71,6 @@ jobs:
             exit 1
           fi
 
-          KEY_FILE=$(mktemp)
           printf '%s\n' "$SERVER_SSH_KEY" > "$KEY_FILE"
           chmod 600 "$KEY_FILE"
           mkdir -p ~/.ssh
@@ -78,9 +83,8 @@ jobs:
             printf 'set -euo pipefail\n'
             printf 'export MYSQL_PWD=%q\n' "$DB_PASSWORD"
             printf 'mysql --init-command=%q -h %q -u %q %q --batch --raw --skip-column-names <<'"'"'__COUNT_SQL__'"'"'\n' \
-              "SET SESSION TRANSACTION READ ONLY" "${DB_HOST:-127.0.0.1}" "$DB_USER" "$DB_NAME"
+              "SET SESSION TRANSACTION READ ONLY" "$DB_HOST" "$DB_USER" "$DB_NAME"
             cat "$SQL_FILE"
             printf '__COUNT_SQL__\n'
-          } | ssh -i "$KEY_FILE" -o BatchMode=yes "${SERVER_USER:-root}@${SERVER_HOST}" 'bash -s'
-          rm -f "$SQL_FILE" "$KEY_FILE"
+          } | ssh -i "$KEY_FILE" -o BatchMode=yes "${SERVER_USER}@${SERVER_HOST}" 'bash -s'
           echo "=== 끝 — 건수만 출력 ==="

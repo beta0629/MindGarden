@@ -623,6 +623,16 @@ public interface ScheduleService {
     boolean isBeforeSessionStart(String tenantId, Long scheduleId);
 
     /**
+     * 관리자·수동 완료 요청 전 시작 여부를 강제한다 (시작 전이면 400, 상태·회기·급여 변경 없음).
+     *
+     * @param schedule 완료하려는 일정 (변경 예정 date/startTime 반영본)
+     * @throws com.coresolution.consultation.exception.ScheduleSessionNotStartedException 시작 전이면
+     * @author CoreSolution
+     * @since 2026-10-04
+     */
+    void requireSessionStartedForCompletion(Schedule schedule);
+
+    /**
      * 스케줄 상태를 한글로 변환
      */
     String getStatusInKorean(String status);

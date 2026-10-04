@@ -69,3 +69,26 @@ export const hasScheduleSessionStarted = (schedule, now = new Date()) => {
   }
   return formatNowInSessionZone(now) >= `${dateKey}T${timeKey}`;
 };
+
+/** 서버 시작 전 완료 거부 오류 코드 (ScheduleSessionStartGate.COMPLETION_BEFORE_START_ERROR_CODE). */
+export const SCHEDULE_SESSION_NOT_STARTED_ERROR_CODE = 'SCHEDULE_SESSION_NOT_STARTED';
+
+/**
+ * 관리자·수동 완료 버튼 활성 여부 — 시작 전 일정은 비활성(툴팁 안내).
+ * 최종 판정은 서버가 한다(시작 전 완료 요청은 400).
+ *
+ * @param {{ date?: *, startTime?: * }|null|undefined} schedule
+ * @param {Date} [now]
+ * @returns {boolean}
+ */
+export const canCompleteScheduleNow = (schedule, now = new Date()) =>
+  hasScheduleSessionStarted(schedule, now);
+
+/**
+ * 서버가 시작 전 완료를 거부한 응답인지.
+ *
+ * @param {*} error StandardizedApi 오류
+ * @returns {boolean}
+ */
+export const isScheduleSessionNotStartedError = (error) =>
+  error?.status === 400 && error?.response?.data?.errorCode === SCHEDULE_SESSION_NOT_STARTED_ERROR_CODE;

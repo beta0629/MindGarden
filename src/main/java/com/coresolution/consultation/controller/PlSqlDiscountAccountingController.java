@@ -21,7 +21,8 @@ import lombok.extern.slf4j.Slf4j;
  * PL/SQL 할인 회계 처리 컨트롤러
  *
  * <p>할인 적용·환불·상태 변경은 세션 테넌트 관리자만, 본문 {@code mappingId} 가 세션 테넌트 매핑일 때만 허용한다
- * ({@link ResourceOwnerAccessGuard#requireMappingAdminAccess}).</p>
+ * ({@link ResourceOwnerAccessGuard#requireMappingAdminActor}). 적용자·처리자·변경자는 세션 관리자로 기록하고
+ * 본문 {@code appliedBy}·{@code processedBy}·{@code updatedBy} 는 무시한다.</p>
  *
  * @author MindGarden
  * @version 1.0.0
@@ -75,13 +76,13 @@ public class PlSqlDiscountAccountingController {
     public ResponseEntity<Map<String, Object>> applyDiscount(
             @RequestBody Map<String, Object> request, HttpSession session) {
         
-        Long mappingId = requireAdminMapping(request, session);
+        Long mappingId = mappingIdOf(request);
+        String appliedBy = requireAdminActor(session, mappingId);
         String discountCode = (String) request.get("discountCode");
         BigDecimal originalAmount = new BigDecimal(request.get("originalAmount").toString());
         BigDecimal discountAmount = new BigDecimal(request.get("discountAmount").toString());
         BigDecimal finalAmount = new BigDecimal(request.get("finalAmount").toString());
         String branchCode = (String) request.get("branchCode");
-        String appliedBy = (String) request.get("appliedBy");
         
         log.info("💰 PL/SQL 할인 적용: MappingID={}, DiscountCode={}", mappingId, discountCode);
         
@@ -99,10 +100,10 @@ public class PlSqlDiscountAccountingController {
     public ResponseEntity<Map<String, Object>> processRefund(
             @RequestBody Map<String, Object> request, HttpSession session) {
         
-        Long mappingId = requireAdminMapping(request, session);
+        Long mappingId = mappingIdOf(request);
+        String processedBy = requireAdminActor(session, mappingId);
         BigDecimal refundAmount = new BigDecimal(request.get("refundAmount").toString());
         String refundReason = (String) request.get("refundReason");
-        String processedBy = (String) request.get("processedBy");
         
         log.info("💰 PL/SQL 할인 환불 처리: MappingID={}, RefundAmount={}", mappingId, refundAmount);
         
@@ -120,9 +121,9 @@ public class PlSqlDiscountAccountingController {
     public ResponseEntity<Map<String, Object>> updateStatus(
             @RequestBody Map<String, Object> request, HttpSession session) {
         
-        Long mappingId = requireAdminMapping(request, session);
+        Long mappingId = mappingIdOf(request);
+        String updatedBy = requireAdminActor(session, mappingId);
         String newStatus = (String) request.get("newStatus");
-        String updatedBy = (String) request.get("updatedBy");
         String reason = (String) request.get("reason");
         
         log.info("🔄 PL/SQL 할인 상태 업데이트: MappingID={}, NewStatus={}", mappingId, newStatus);
@@ -166,13 +167,15 @@ public class PlSqlDiscountAccountingController {
                 () -> plSqlDiscountAccountingService.validateDiscountIntegrity(branchCode)));
     }
 
-    /**
-     * 본문 {@code mappingId} 를 관리자·세션 테넌트 기준으로 검증한다. 숫자가 아니거나 없으면 null 로 넘겨 공통 403 으로 거부한다.
-     */
-    private Long requireAdminMapping(Map<String, Object> request, HttpSession session) {
+    /** 본문 {@code mappingId}. 숫자가 아니거나 없으면 null (가드가 공통 403 으로 거부한다). */
+    private static Long mappingIdOf(Map<String, Object> request) {
         Object raw = request != null ? request.get("mappingId") : null;
-        Long mappingId = raw instanceof Number number ? number.longValue() : null;
-        resourceOwnerAccessGuard.requireMappingAdminAccess(session, mappingId);
-        return mappingId;
+        return raw instanceof Number number ? number.longValue() : null;
+    }
+
+    /** 관리자·세션 테넌트 매핑을 검증하고 감사 필드에 기록할 세션 관리자 값을 돌려준다. */
+    private String requireAdminActor(HttpSession session, Long mappingId) {
+        return ResourceOwnerAccessGuard.auditActorOf(
+                resourceOwnerAccessGuard.requireMappingAdminActor(session, mappingId));
     }
 }

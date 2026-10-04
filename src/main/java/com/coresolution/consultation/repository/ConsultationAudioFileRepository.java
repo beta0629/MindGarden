@@ -40,4 +40,13 @@ public interface ConsultationAudioFileRepository extends BaseRepository<Consulta
      * ID로 조회 (삭제되지 않은 것만)
      */
     Optional<ConsultationAudioFile> findByIdAndIsDeletedFalse(Long id);
+
+    /**
+     * 테넌트 범위 ID 조회 (삭제되지 않은 것만)
+     *
+     * @param tenantId 테넌트 ID
+     * @param id       음성 파일 ID
+     * @return 음성 파일 Optional
+     */
+    Optional<ConsultationAudioFile> findByTenantIdAndIdAndIsDeletedFalse(String tenantId, Long id);
 }

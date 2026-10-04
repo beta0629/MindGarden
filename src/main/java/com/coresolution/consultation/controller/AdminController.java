@@ -3171,6 +3171,7 @@ public class AdminController extends BaseApiController {
      * page/size missing → force defaults (never full dump); in-memory slice like mappings.
      *
      * @param consultantId optional consultant filter
+     * @param clientId     optional client filter (호출자 테넌트 안에서만 좁힘 — 관리자 권한 검사 후 적용)
      * @param status       optional schedule status filter
      * @param startDate    optional start date (yyyy-MM-dd)
      * @param endDate      optional end date (yyyy-MM-dd)
@@ -3182,6 +3183,7 @@ public class AdminController extends BaseApiController {
     @GetMapping("/schedules")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getSchedules(
             @RequestParam(required = false) Long consultantId,
+            @RequestParam(required = false) Long clientId,
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String startDate,
             @RequestParam(required = false) String endDate,
@@ -3189,8 +3191,8 @@ public class AdminController extends BaseApiController {
             @RequestParam(required = false) Integer size,
             HttpSession session) {
         clientPathAccessGuard.requireTenantManager(session);
-        log.info("📅 어드민 스케줄 조회: consultantId={}, status={}, startDate={}, endDate={}, page={}, size={}",
-                consultantId, status, startDate, endDate, page, size);
+        log.info("📅 어드민 스케줄 조회: consultantId={}, clientId={}, status={}, startDate={}, endDate={}, "
+                + "page={}, size={}", consultantId, clientId, status, startDate, endDate, page, size);
 
         java.time.LocalDate start = null;
         java.time.LocalDate end = null;
@@ -3208,7 +3210,7 @@ public class AdminController extends BaseApiController {
 
         Pageable applied = resolveAdminListPageable(page, size);
         com.coresolution.consultation.dto.AdminListPageResult<Map<String, Object>> pageResult =
-                adminService.getSchedulesFilteredPaged(consultantId, status, start, end, applied);
+                adminService.getSchedulesFilteredPaged(consultantId, clientId, status, start, end, applied);
         List<Map<String, Object>> schedules = pageResult.getContent();
         long total = pageResult.getTotalCount();
         log.info("📅 어드민 스케줄 조회 완료 - 전체 {}개, 페이지 {}건 (page={}, size={})",
@@ -3220,6 +3222,7 @@ public class AdminController extends BaseApiController {
         data.put("page", applied.getPageNumber());
         data.put("size", applied.getPageSize());
         data.put("consultantId", consultantId);
+        data.put("clientId", clientId);
         data.put("status", status);
         data.put("startDate", startDate);
         data.put("endDate", endDate);

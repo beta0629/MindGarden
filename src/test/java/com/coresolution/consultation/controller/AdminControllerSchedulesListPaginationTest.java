@@ -2,7 +2,9 @@ package com.coresolution.consultation.controller;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.coresolution.consultation.dto.AdminListPageResult;
@@ -115,7 +117,7 @@ class AdminControllerSchedulesListPaginationTest {
 
     private void stubFilteredSchedulesPage(int pageSize, long total) {
         when(adminService.getSchedulesFilteredPaged(
-                isNull(), isNull(), isNull(), isNull(), any(Pageable.class)))
+                isNull(), isNull(), isNull(), isNull(), isNull(), any(Pageable.class)))
                 .thenReturn(new AdminListPageResult<>(buildStubSchedules(pageSize), total));
     }
 
@@ -125,7 +127,7 @@ class AdminControllerSchedulesListPaginationTest {
         stubFilteredSchedulesPage(20, 45L);
 
         ResponseEntity<ApiResponse<Map<String, Object>>> response =
-                adminController.getSchedules(null, null, null, null, 0, 20, new MockHttpSession());
+                adminController.getSchedules(null, null, null, null, null, 0, 20, new MockHttpSession());
 
         assertThat(response.getBody()).isNotNull();
         assertThat(response.getBody().isSuccess()).isTrue();
@@ -145,7 +147,7 @@ class AdminControllerSchedulesListPaginationTest {
         stubFilteredSchedulesPage(PaginationUtils.DEFAULT_PAGE_SIZE, 45L);
 
         ResponseEntity<ApiResponse<Map<String, Object>>> response =
-                adminController.getSchedules(null, null, null, null, null, null, new MockHttpSession());
+                adminController.getSchedules(null, null, null, null, null, null, null, new MockHttpSession());
 
         Map<String, Object> data = response.getBody().getData();
         assertThat(data.get("count")).isEqualTo(45L);
@@ -163,7 +165,7 @@ class AdminControllerSchedulesListPaginationTest {
         stubFilteredSchedulesPage(ADMIN_LIST_MAX_PAGE_SIZE, 250L);
 
         ResponseEntity<ApiResponse<Map<String, Object>>> response =
-                adminController.getSchedules(null, null, null, null, 0, 999, new MockHttpSession());
+                adminController.getSchedules(null, null, null, null, null, 0, 999, new MockHttpSession());
 
         Map<String, Object> data = response.getBody().getData();
         assertThat(data.get("count")).isEqualTo(250L);
@@ -178,15 +180,18 @@ class AdminControllerSchedulesListPaginationTest {
     @Test
     @DisplayName("필터 파라미터 유지 + 페이지 메타")
     void getSchedules_keepsFilters_andPageMeta() {
-        when(adminService.getSchedulesFilteredPaged(any(), any(), any(), any(), any(Pageable.class)))
+        when(adminService.getSchedulesFilteredPaged(any(), any(), any(), any(), any(), any(Pageable.class)))
                 .thenReturn(new AdminListPageResult<>(buildStubSchedules(5), 5L));
 
         ResponseEntity<ApiResponse<Map<String, Object>>> response =
-                adminController.getSchedules(7L, "TENTATIVE_PENDING_PAYMENT",
+                adminController.getSchedules(7L, 9L, "TENTATIVE_PENDING_PAYMENT",
                         "2026-09-01", "2026-09-30", 0, 20, new MockHttpSession());
 
         Map<String, Object> data = response.getBody().getData();
         assertThat(data.get("consultantId")).isEqualTo(7L);
+        assertThat(data.get("clientId")).isEqualTo(9L);
+        verify(adminService).getSchedulesFilteredPaged(
+                eq(7L), eq(9L), eq("TENTATIVE_PENDING_PAYMENT"), any(), any(), any(Pageable.class));
         assertThat(data.get("status")).isEqualTo("TENTATIVE_PENDING_PAYMENT");
         assertThat(data.get("startDate")).isEqualTo("2026-09-01");
         assertThat(data.get("endDate")).isEqualTo("2026-09-30");

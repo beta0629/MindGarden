@@ -807,6 +807,7 @@ public interface AdminService {
      * 관리자 스케줄 목록 DB 페이징 — 필터를 저장소로 푸시.
      *
      * @param consultantId 상담사 ID (nullable)
+     * @param clientId     내담자 ID (nullable, 호출자 테넌트 안에서만 좁힘)
      * @param status       상태 문자열 (nullable, ALL 무시)
      * @param startDate    시작일 (nullable)
      * @param endDate      종료일 (nullable)
@@ -816,7 +817,8 @@ public interface AdminService {
      * @since 2026-09-23
      */
     AdminListPageResult<Map<String, Object>> getSchedulesFilteredPaged(
-            Long consultantId, String status, LocalDate startDate, LocalDate endDate, Pageable pageable);
+            Long consultantId, Long clientId, String status, LocalDate startDate, LocalDate endDate,
+            Pageable pageable);
 
     /**
      * 상담사별 상담 완료 건수 통계 조회

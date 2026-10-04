@@ -10174,7 +10174,8 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
     @Override
     @Transactional(readOnly = true)
     public AdminListPageResult<Map<String, Object>> getSchedulesFilteredPaged(
-            Long consultantId, String status, LocalDate startDate, LocalDate endDate, Pageable pageable) {
+            Long consultantId, Long clientId, String status, LocalDate startDate, LocalDate endDate,
+            Pageable pageable) {
         try {
             String tenantId = getTenantId();
             Pageable safePageable = pageable != null
@@ -10196,7 +10197,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             }
 
             Page<Schedule> schedulePage = scheduleRepository.findFilteredByTenant(
-                    tenantId, consultantId, statusEnum, startDate, endDate, safePageable);
+                    tenantId, consultantId, clientId, statusEnum, startDate, endDate, safePageable);
             List<Map<String, Object>> scheduleMaps =
                     toScheduleMapsBatched(tenantId, schedulePage.getContent());
             log.info("✅ 스케줄 필터 페이지 조회 완료: page={}, size={}, total={}",
@@ -10204,8 +10205,8 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                     schedulePage.getTotalElements());
             return new AdminListPageResult<>(scheduleMaps, schedulePage.getTotalElements());
         } catch (Exception e) {
-            log.error("❌ 스케줄 필터 페이지 조회 실패: consultantId={}, error={}",
-                    consultantId, e.getMessage(), e);
+            log.error("❌ 스케줄 필터 페이지 조회 실패: consultantId={}, clientId={}, error={}",
+                    consultantId, clientId, e.getMessage(), e);
             return new AdminListPageResult<>(Collections.emptyList(), 0L);
         }
     }

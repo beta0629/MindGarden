@@ -19,6 +19,8 @@ import { clearStoredSessionExpiry, syncStoredSessionExpiry } from './sessionExpi
 import { clearJustRefreshed, hasStoredAccessToken, hasStoredRefreshToken, isWithinAuthGraceWindow } from './sessionAuthPolicy';
 import { isBackground401KeepUser, loadSessionSecurityFlags } from './sessionSecurityFlags';
 import { isPublicSpaPath } from './publicSpaPaths';
+import { purgeAllLegacyConsultationLogLocalDrafts } from './consultationLogLocalDraft';
+import { purgeAllDraftBackups } from './consultationLogDraftBackupStore';
 
 /**
  * current-user / session-info 등: `{ success, data }` 래퍼면 `data`만 사용.
@@ -597,6 +599,9 @@ class SessionManager {
   applyClientLogoutCleanupPreserveSubdomain() {
     this.user = null;
     this.sessionInfo = null;
+    // 상담일지 초안: 레거시 평문 키 + 암호화 백업(IndexedDB·메모리) 전량 제거
+    purgeAllLegacyConsultationLogLocalDrafts();
+    void purgeAllDraftBackups();
     clearStoredSessionExpiry();
     this.lastCheckTime = 0;
     this.lastVerifiedAt = 0;
@@ -863,6 +868,13 @@ class SessionManager {
 
   // 사용자 정보 설정 (로그인 시 사용)
   setUser(user, tokens = null) {
+    // 계정 전환: 이전 사용자의 상담일지 초안 백업·레거시 평문 키를 먼저 제거
+    const previousUserId = this.user?.id;
+    const nextUserId = user?.id;
+    if (previousUserId != null && nextUserId != null && String(previousUserId) !== String(nextUserId)) {
+      purgeAllLegacyConsultationLogLocalDrafts();
+      void purgeAllDraftBackups();
+    }
     this.user = user;
     this.sessionInfo = null; // 서버에서 가져올 예정
 

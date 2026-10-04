@@ -17,6 +17,7 @@ import com.coresolution.consultation.repository.ScheduleRepository;
 import com.coresolution.consultation.constant.ScheduleStatus;
 import com.coresolution.consultation.entity.Schedule;
 import com.coresolution.consultation.service.ConsultationLogExistenceSsot;
+import com.coresolution.consultation.service.ConsultationRecordDraftService;
 import com.coresolution.consultation.service.ConsultationRecordService;
 import com.coresolution.consultation.service.PlSqlConsultationRecordAlertService;
 import com.coresolution.consultation.service.SalaryLateSessionAutoSyncService;
@@ -26,6 +27,7 @@ import com.coresolution.consultation.util.ProvisionalConsultationLogSession;
 import com.coresolution.core.context.TenantContextHolder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
@@ -67,6 +69,16 @@ public class ConsultationRecordServiceImpl implements ConsultationRecordService 
 
     @Autowired
     private SalaryLateSessionAutoSyncService salaryLateSessionAutoSyncService;
+
+    /**
+     * 확정 저장 후 서버 초안 정리용.
+     *
+     * <p>이 클래스의 다른 의존성과 같은 필드 주입을 쓴다. 생성자를 하나라도 선언하면
+     * Mockito {@code @InjectMocks} 가 생성자 주입으로 전환되어 기존 단위 테스트의
+     * {@code @Mock} 필드가 전부 null 이 된다.</p>
+     */
+    @Autowired
+    private ConsultationRecordDraftService consultationRecordDraftService;
 
     @Override
     public Page<ConsultationRecord> getConsultationRecords(Long consultantId, Long clientId, Pageable pageable) {
@@ -272,6 +284,7 @@ public class ConsultationRecordServiceImpl implements ConsultationRecordService 
             }
             
             ConsultationRecord savedRecord = consultationRecordRepository.save(record);
+            deleteServerDraftQuietly(tenantId, savedRecord.getConsultationId(), savedRecord.getConsultantId());
 
             if (Boolean.TRUE.equals(savedRecord.getIsSessionCompleted())) {
                 completeLinkedScheduleSessionIfNeeded(tenantId, savedRecord.getConsultationId());
@@ -392,6 +405,7 @@ public class ConsultationRecordServiceImpl implements ConsultationRecordService 
             }
             
             ConsultationRecord saved = consultationRecordRepository.save(record);
+            deleteServerDraftQuietly(tenantId, saved.getConsultationId(), saved.getConsultantId());
             if (Boolean.TRUE.equals(saved.getIsSessionCompleted())) {
                 completeLinkedScheduleSessionIfNeeded(tenantId, saved.getConsultationId());
             }
@@ -674,16 +688,74 @@ public class ConsultationRecordServiceImpl implements ConsultationRecordService 
         }
     }
 
+    /**
+     * 확정 저장 후 해당 상담·상담사의 서버 초안을 정리한다. 실패해도 저장은 성공으로 본다.
+     *
+     * @param tenantId 테넌트 ID
+     * @param consultationId 상담(스케줄) ID
+     * @param consultantId 상담사 ID
+     */
+    private void deleteServerDraftQuietly(String tenantId, Long consultationId, Long consultantId) {
+        if (consultationRecordDraftService == null) return;
+        try {
+            consultationRecordDraftService.deleteDraft(tenantId, consultationId, consultantId);
+        } catch (Exception e) {
+            log.warn("⚠️ 확정 저장 후 서버 초안 삭제 실패(무시): consultationId={}, consultantId={}, reason={}",
+                    consultationId, consultantId, e.getMessage());
+        }
+    }
+
+    /**
+     * 상담일지 본문 키워드 검색.
+     *
+     * <p>2026-10-04: 본문 컬럼이 암호화되면서 DB LIKE 가 동작하지 않는다. 테넌트·대상자
+     * 범위로 먼저 좁혀 읽은 뒤(복호화는 JPA 변환기가 수행) 애플리케이션에서 필터링하고
+     * 수동 페이징한다. 평문·암호문 혼재 상태에서도 같은 결과를 준다.</p>
+     *
+     * @param userId 상담사 또는 내담자 ID
+     * @param userType 사용자 유형
+     * @param keyword 검색어
+     * @param pageable 페이지 정보
+     * @return 검색 결과 페이지
+     */
     @Override
     public Page<ConsultationRecord> searchConsultationRecords(Long userId, String userType, String keyword, Pageable pageable) {
-        log.info("📝 상담일지 검색 - 사용자 ID: {}, 유형: {}, 키워드: {}", userId, userType, keyword);
+        log.info("📝 상담일지 검색 - 사용자 ID: {}, 유형: {}", userId, userType);
         String tenantId = TenantContextHolder.getRequiredTenantId();
         // 표준화 2025-12-05: enum 활용
-        if (UserRole.CONSULTANT.name().equals(userType)) {
-            return consultationRecordRepository.searchByKeywordAndConsultantId(tenantId, keyword, userId, pageable);
-        } else {
-            return consultationRecordRepository.searchByKeywordAndClientId(tenantId, keyword, userId, pageable);
+        List<ConsultationRecord> candidates = UserRole.CONSULTANT.name().equals(userType)
+                ? consultationRecordRepository
+                    .findByTenantIdAndConsultantIdAndIsDeletedFalseOrderBySessionDateDesc(tenantId, userId)
+                : consultationRecordRepository
+                    .findByTenantIdAndClientIdAndIsDeletedFalseOrderBySessionDateDesc(tenantId, userId);
+        List<ConsultationRecord> matched = candidates.stream()
+                .filter(record -> matchesKeyword(record, keyword))
+                .collect(Collectors.toList());
+        int from = (int) Math.min(pageable.getOffset(), matched.size());
+        int to = Math.min(from + pageable.getPageSize(), matched.size());
+        return new PageImpl<>(matched.subList(from, to), pageable, matched.size());
+    }
+
+    /**
+     * 복호화된 본문(주요 이슈·개입 방법·내담자 반응·다음 세션 계획)에 검색어가 포함되는지 확인한다.
+     *
+     * @param record 상담일지
+     * @param keyword 검색어 (null·공백이면 전체 일치)
+     * @return 포함하면 true
+     */
+    private boolean matchesKeyword(ConsultationRecord record, String keyword) {
+        if (keyword == null || keyword.trim().isEmpty()) {
+            return true;
         }
+        String needle = keyword.trim().toLowerCase();
+        return containsIgnoreCase(record.getMainIssues(), needle)
+                || containsIgnoreCase(record.getInterventionMethods(), needle)
+                || containsIgnoreCase(record.getClientResponse(), needle)
+                || containsIgnoreCase(record.getNextSessionPlan(), needle);
+    }
+
+    private boolean containsIgnoreCase(String haystack, String lowerNeedle) {
+        return haystack != null && haystack.toLowerCase().contains(lowerNeedle);
     }
 
     @Override

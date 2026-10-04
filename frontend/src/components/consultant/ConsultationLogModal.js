@@ -10,16 +10,21 @@ import UnifiedModal from '../common/modals/UnifiedModal';
 import ConfirmModal from '../common/ConfirmModal';
 import MGButton from '../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
-import { CONSULTATION_LOG_AUTOSAVE_STRINGS, CONSULTATION_LOG_SESSION_NUMBER_STRINGS } from '../../constants/consultationLogAutosaveStrings';
+import {
+  CONSULTATION_LOG_AUTOSAVE_STRINGS,
+  CONSULTATION_LOG_SESSION_NUMBER_STRINGS,
+  formatConsultationLogAutosaveString
+} from '../../constants/consultationLogAutosaveStrings';
 import {
   buildConsultationLogFormMessages,
   validateConsultationLogForm
 } from '../../utils/consultationLogFormValidation';
 import {
-  removeConsultationLogLocalDraft,
-  writeConsultationLogLocalDraft
-} from '../../utils/consultationLogLocalDraft';
-import { useConsultationLogLocalAutosave } from '../../hooks/useConsultationLogLocalAutosave';
+  DRAFT_AUTOSAVE_STATUS,
+  formatDraftSavedAtLabel,
+  useConsultationLogDraftAutosave
+} from '../../hooks/useConsultationLogDraftAutosave';
+import { useUnsavedChangesGuard } from '../../hooks/useUnsavedChangesGuard';
 import {
   resolveSessionNumberFromSchedule,
   shouldBlockSaveForMissingSessionNumber
@@ -334,39 +339,78 @@ const ConsultationLogModal = ({
   const [restoreDraftConfirmOpen, setRestoreDraftConfirmOpen] = useState(false);
   const [pendingRestoreDraft, setPendingRestoreDraft] = useState(null);
   const [closeWithoutSaveConfirmOpen, setCloseWithoutSaveConfirmOpen] = useState(false);
+  const [conflictConfirmOpen, setConflictConfirmOpen] = useState(false);
 
   const formDataRef = useRef(formData);
   const memoDraftRef = useRef(memoDraft);
   const contentDirtyRef = useRef(false);
   const restoreConfirmedRef = useRef(false);
+  /** 서버 초안 payloadJson 과 동일 스키마 — 훅이 그대로 직렬화한다 */
+  const draftSnapshotRef = useRef({ formData, memoDraft });
 
   formDataRef.current = formData;
   memoDraftRef.current = memoDraft;
+  draftSnapshotRef.current = { formData, memoDraft };
 
-  const onRestoreDraftCandidate = useCallback((draft) => {
-    setPendingRestoreDraft(draft);
+  const onRestoreCandidate = useCallback((candidate) => {
+    setPendingRestoreDraft(candidate);
     setRestoreDraftConfirmOpen(true);
   }, []);
 
+  const onConflictDetected = useCallback(() => {
+    setConflictConfirmOpen(true);
+  }, []);
+
+  const conflictResolvedRef = useRef(false);
+
+  /** 복구·충돌 해소 시 스냅샷을 폼에 반영 (초안 payloadJson 스키마와 동일) */
+  const applyRestoredDraftSnapshot = useCallback((snapshot) => {
+    if (!snapshot || typeof snapshot !== 'object') return;
+    if (snapshot.formData && typeof snapshot.formData === 'object') {
+      setFormData(snapshot.formData);
+    }
+    setMemoDraft(typeof snapshot.memoDraft === 'string' ? snapshot.memoDraft : '');
+    setMemoDirty(false);
+    contentDirtyRef.current = false;
+  }, []);
+
+  /** "임시저장된 내용이 있어요(2:03). 불러올까요?" — KST */
+  const restoreDraftMessage = useMemo(() => {
+    const savedAt = pendingRestoreDraft?.savedAt;
+    if (!Number.isFinite(savedAt)) {
+      return CONSULTATION_LOG_AUTOSAVE_STRINGS.RESTORE_MESSAGE;
+    }
+    return formatConsultationLogAutosaveString(
+      CONSULTATION_LOG_AUTOSAVE_STRINGS.RESTORE_MESSAGE_WITH_TIME,
+      formatDraftSavedAtLabel(savedAt)
+    );
+  }, [pendingRestoreDraft?.savedAt]);
+
   const {
-    localAutosaveUi,
-    localSavedAtLabel,
-    serverDraftSyncFailed,
-    resetLocalAutosaveState,
-    markRestoreHandled
-  } = useConsultationLogLocalAutosave({
-    isOpen,
-    loading,
-    tenantIdStr,
-    draftScope,
-    draftQueryConsultationId,
+    status: draftStatus,
+    savedAtLabel: draftSavedAtLabel,
+    notifyDirty,
+    saveNow: saveDraftNow,
+    discardDraft,
+    loadLatestFromServer,
+    keepMineOnConflict
+  } = useConsultationLogDraftAutosave({
+    enabled: isOpen && !loading,
+    tenantId: tenantIdStr,
+    userId: user?.id,
+    consultationId: draftQueryConsultationId,
     consultantId: draftConsultantId,
-    formData,
-    memoDraft,
-    formDataRef,
-    memoDraftRef,
-    contentDirtyRef,
-    onRestoreDraftCandidate
+    legacyScope: draftScope,
+    snapshotRef: draftSnapshotRef,
+    dirtyRef: contentDirtyRef,
+    onRestoreCandidate,
+    onConflictDetected
+  });
+
+  // 새로고침·탭 닫기 확인 (모달은 라우트가 아니므로 beforeunload 만)
+  useUnsavedChangesGuard({
+    when: isOpen && (contentDirtyRef.current || memoDirty),
+    enableRouteBlocker: false
   });
 
   useEffect(() => {
@@ -374,15 +418,16 @@ const ConsultationLogModal = ({
       setRestoreDraftConfirmOpen(false);
       setPendingRestoreDraft(null);
       setCloseWithoutSaveConfirmOpen(false);
+      setConflictConfirmOpen(false);
       return undefined;
     }
     return undefined;
   }, [isOpen]);
 
   const setFormDataWithDirty = useCallback((updater) => {
-    contentDirtyRef.current = true;
+    notifyDirty();
     setFormData(updater);
-  }, []);
+  }, [notifyDirty]);
 
   const requestClose = useCallback(() => {
     if (saving) return;
@@ -393,23 +438,30 @@ const ConsultationLogModal = ({
     onClose?.();
   }, [saving, memoDirty, onClose]);
 
+  /** "저장 중… / 2:03 임시저장됨 / 저장 실패(재시도 중)" — KST */
   const autosaveStatusText = useMemo(() => {
     if (saving) return CONSULTATION_LOG_AUTOSAVE_STRINGS.STATUS_FINAL_SAVING;
-    if (!tenantIdStr) return CONSULTATION_LOG_AUTOSAVE_STRINGS.STATUS_LOCAL_UNAVAILABLE;
-    if (localAutosaveUi === 'saving') return CONSULTATION_LOG_AUTOSAVE_STRINGS.STATUS_LOCAL_SAVING;
-    if (localAutosaveUi === 'failed') return CONSULTATION_LOG_AUTOSAVE_STRINGS.STATUS_LOCAL_FAILED;
-    if (localAutosaveUi === 'saved' && localSavedAtLabel) {
-      const base = `${CONSULTATION_LOG_AUTOSAVE_STRINGS.STATUS_LOCAL_SAVED_PREFIX} · ${localSavedAtLabel}`;
-      if (serverDraftSyncFailed) {
-        return `${base} · ${CONSULTATION_LOG_AUTOSAVE_STRINGS.STATUS_SERVER_DRAFT_FAILED}`;
-      }
-      return base;
+    if (!tenantIdStr) return CONSULTATION_LOG_AUTOSAVE_STRINGS.STATUS_DRAFT_UNAVAILABLE;
+    if (draftStatus === DRAFT_AUTOSAVE_STATUS.SAVING) {
+      return CONSULTATION_LOG_AUTOSAVE_STRINGS.STATUS_DRAFT_SAVING;
     }
-    if (serverDraftSyncFailed) {
-      return CONSULTATION_LOG_AUTOSAVE_STRINGS.STATUS_SERVER_DRAFT_FAILED;
+    if (draftStatus === DRAFT_AUTOSAVE_STATUS.RETRYING) {
+      return CONSULTATION_LOG_AUTOSAVE_STRINGS.STATUS_DRAFT_RETRYING;
+    }
+    if (draftStatus === DRAFT_AUTOSAVE_STATUS.FAILED) {
+      return CONSULTATION_LOG_AUTOSAVE_STRINGS.STATUS_DRAFT_FAILED;
+    }
+    if (draftStatus === DRAFT_AUTOSAVE_STATUS.SAVED && draftSavedAtLabel) {
+      return formatConsultationLogAutosaveString(
+        CONSULTATION_LOG_AUTOSAVE_STRINGS.STATUS_DRAFT_SAVED_WITH_TIME,
+        draftSavedAtLabel
+      );
     }
     return '';
-  }, [saving, tenantIdStr, localAutosaveUi, localSavedAtLabel, serverDraftSyncFailed]);
+  }, [saving, tenantIdStr, draftStatus, draftSavedAtLabel]);
+
+  const autosaveStatusIsError = draftStatus === DRAFT_AUTOSAVE_STATUS.FAILED
+    || draftStatus === DRAFT_AUTOSAVE_STATUS.RETRYING;
 
   /** 일정에 유효한 내담자 ID가 있는지 (빈 문자열/NaN 제외) */
   const hasValidScheduleClientId = useMemo(() => {
@@ -897,7 +949,7 @@ const ConsultationLogModal = ({
 
   const handleMemoChange = (e) => {
     // BadgeSelect 등과 동일하게 stopPropagation 생략 가능
-    contentDirtyRef.current = true;
+    notifyDirty();
     setMemoDraft(e?.target?.value ?? '');
     setMemoDirty(true);
   };
@@ -1052,11 +1104,8 @@ const ConsultationLogModal = ({
           isEditMode ? '상담일지가 수정되었습니다.' : t('common:consultant.ConsultationLogModal.t_41ce4bfb'),
           'success'
         );
-        if (tenantIdStr && draftScope) {
-          removeConsultationLogLocalDraft(tenantIdStr, draftScope);
-        }
         contentDirtyRef.current = false;
-        resetLocalAutosaveState();
+        await discardDraft();
         setConsultationRecord(record);
         if (record.sessionNumber != null) {
           setFormData(prev => ({
@@ -1149,11 +1198,8 @@ const ConsultationLogModal = ({
       const isSuccess = response && (response.success === true || (record && record.id != null));
       if (isSuccess && record) {
         notificationManager.show(t('common:consultant.ConsultationLogModal.t_b571e260'), 'success');
-        if (tenantIdStr && draftScope) {
-          removeConsultationLogLocalDraft(tenantIdStr, draftScope);
-        }
         contentDirtyRef.current = false;
-        resetLocalAutosaveState();
+        await discardDraft();
         onSave && onSave(record);
         onClose();
       } else {
@@ -1175,24 +1221,15 @@ const ConsultationLogModal = ({
     }
   };
 
-  if (!isOpen && !restoreDraftConfirmOpen && !closeWithoutSaveConfirmOpen) {
+  if (!isOpen && !restoreDraftConfirmOpen && !closeWithoutSaveConfirmOpen && !conflictConfirmOpen) {
     return null;
   }
 
   const modalTitle = `상담일지 작성${isEditMode ? ' (수정 모드)' : ''}`;
 
-  const finalizeCloseWithOptionalLocalFlush = () => {
-    if (tenantIdStr && draftScope) {
-      try {
-        writeConsultationLogLocalDraft(tenantIdStr, draftScope, {
-          formData: formDataRef.current,
-          memoDraft: memoDraftRef.current
-        });
-      } catch {
-        // 단말 초안 flush 실패는 닫기 자체는 허용
-      }
-    }
-    contentDirtyRef.current = false;
+  /** 닫기 직전 서버 초안으로 한 번 flush (실패 시 훅이 암호화 백업에 보관) */
+  const finalizeCloseWithDraftFlush = () => {
+    void saveDraftNow({ force: true });
     setMemoDirty(false);
     setCloseWithoutSaveConfirmOpen(false);
     onClose?.();
@@ -1265,43 +1302,59 @@ const ConsultationLogModal = ({
     <ConfirmModal
       isOpen={restoreDraftConfirmOpen}
       title={CONSULTATION_LOG_AUTOSAVE_STRINGS.RESTORE_TITLE}
-      message={toDisplayString(CONSULTATION_LOG_AUTOSAVE_STRINGS.RESTORE_MESSAGE, '')}
-      confirmText="불러오기"
-      cancelText="삭제하고 계속"
+      message={toDisplayString(restoreDraftMessage, '')}
+      confirmText={CONSULTATION_LOG_AUTOSAVE_STRINGS.RESTORE_CONFIRM}
+      cancelText={CONSULTATION_LOG_AUTOSAVE_STRINGS.RESTORE_DISCARD}
       type="default"
       onConfirm={() => {
         restoreConfirmedRef.current = true;
-        if (pendingRestoreDraft) {
-          setFormData(pendingRestoreDraft.formData);
-          setMemoDraft(pendingRestoreDraft.memoDraft ?? '');
-          setMemoDirty(false);
-          contentDirtyRef.current = false;
-        }
+        applyRestoredDraftSnapshot(pendingRestoreDraft?.snapshot);
         setPendingRestoreDraft(null);
         setRestoreDraftConfirmOpen(false);
-        markRestoreHandled();
       }}
       onClose={() => {
         if (restoreConfirmedRef.current) {
           restoreConfirmedRef.current = false;
           return;
         }
-        if (tenantIdStr && draftScope) {
-          removeConsultationLogLocalDraft(tenantIdStr, draftScope);
-        }
-        markRestoreHandled();
+        // 버리기 — 서버 초안·브라우저 백업·레거시 키 모두 삭제
+        void discardDraft();
         setPendingRestoreDraft(null);
         setRestoreDraftConfirmOpen(false);
+      }}
+    />
+    <ConfirmModal
+      isOpen={conflictConfirmOpen}
+      title={CONSULTATION_LOG_AUTOSAVE_STRINGS.CONFLICT_TITLE}
+      message={toDisplayString(CONSULTATION_LOG_AUTOSAVE_STRINGS.CONFLICT_MESSAGE, '')}
+      confirmText={CONSULTATION_LOG_AUTOSAVE_STRINGS.CONFLICT_KEEP_MINE}
+      cancelText={CONSULTATION_LOG_AUTOSAVE_STRINGS.CONFLICT_LOAD_LATEST}
+      type="warning"
+      onConfirm={() => {
+        conflictResolvedRef.current = true;
+        setConflictConfirmOpen(false);
+        void keepMineOnConflict();
+      }}
+      onClose={() => {
+        if (conflictResolvedRef.current) {
+          conflictResolvedRef.current = false;
+          return;
+        }
+        setConflictConfirmOpen(false);
+        void (async() => {
+          const latest = await loadLatestFromServer();
+          applyRestoredDraftSnapshot(latest);
+        })();
       }}
     />
     <ConfirmModal
       isOpen={closeWithoutSaveConfirmOpen}
       title={CONSULTATION_LOG_AUTOSAVE_STRINGS.CLOSE_UNSAVED_TITLE}
       message={toDisplayString(CONSULTATION_LOG_AUTOSAVE_STRINGS.CLOSE_UNSAVED_MESSAGE, '')}
-      confirmText="닫기"
-      cancelText="계속 작성"
+      confirmText={CONSULTATION_LOG_AUTOSAVE_STRINGS.CLOSE_UNSAVED_CONFIRM}
+      cancelText={CONSULTATION_LOG_AUTOSAVE_STRINGS.CLOSE_UNSAVED_CANCEL}
       type="warning"
-      onConfirm={finalizeCloseWithOptionalLocalFlush}
+      onConfirm={finalizeCloseWithDraftFlush}
       onClose={() => setCloseWithoutSaveConfirmOpen(false)}
     />
     <UnifiedModal
@@ -1321,7 +1374,7 @@ const ConsultationLogModal = ({
           <p
             className={[
               'mg-v2-text-sm mg-v2-consultation-log-modal__status',
-              localAutosaveUi === 'failed' || serverDraftSyncFailed
+              autosaveStatusIsError
                 ? 'mg-v2-text-danger'
                 : 'mg-v2-text-secondary'
             ].join(' ')}

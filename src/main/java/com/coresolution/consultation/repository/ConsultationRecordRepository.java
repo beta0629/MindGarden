@@ -42,6 +42,16 @@ public interface ConsultationRecordRepository extends JpaRepository<Consultation
      * 내담자 ID로 상담일지 목록 조회 (tenantId 필터링)
      */
     Page<ConsultationRecord> findByTenantIdAndClientIdAndIsDeletedFalseOrderBySessionDateDesc(String tenantId, Long clientId, Pageable pageable);
+
+    /**
+     * 상담사 ID로 상담일지 전체 조회 (본문 암호화로 DB LIKE 불가 → 애플리케이션 필터용, tenantId 필터링)
+     */
+    List<ConsultationRecord> findByTenantIdAndConsultantIdAndIsDeletedFalseOrderBySessionDateDesc(String tenantId, Long consultantId);
+
+    /**
+     * 내담자 ID로 상담일지 전체 조회 (본문 암호화로 DB LIKE 불가 → 애플리케이션 필터용, tenantId 필터링)
+     */
+    List<ConsultationRecord> findByTenantIdAndClientIdAndIsDeletedFalseOrderBySessionDateDesc(String tenantId, Long clientId);
     
     /**
      * 상담사와 내담자로 상담일지 목록 조회 (tenantId 필터링)
@@ -149,7 +159,12 @@ public interface ConsultationRecordRepository extends JpaRepository<Consultation
     
     /**
      * 상담일지 검색 (제목, 내용) (tenantId 필터링)
+     *
+     * @deprecated 2026-10-04 본문 컬럼 암호화 적용으로 암호문에는 LIKE 가 매칭되지 않는다.
+     *     {@code ConsultationRecordServiceImpl#searchConsultationRecords} 의 복호화 후
+     *     애플리케이션 필터를 사용한다. 평문 잔존 행 조회용으로만 남겨 둔다.
      */
+    @Deprecated
     @Query("SELECT cr FROM ConsultationRecord cr WHERE cr.tenantId = :tenantId " +
            "AND (cr.mainIssues LIKE %:keyword% OR cr.interventionMethods LIKE %:keyword% OR " +
            "cr.clientResponse LIKE %:keyword% OR cr.nextSessionPlan LIKE %:keyword%) " +
@@ -171,7 +186,12 @@ public interface ConsultationRecordRepository extends JpaRepository<Consultation
     
     /**
      * 내담자별 상담일지 검색 (tenantId 필터링)
+     *
+     * @deprecated 2026-10-04 본문 컬럼 암호화 적용으로 암호문에는 LIKE 가 매칭되지 않는다.
+     *     {@code ConsultationRecordServiceImpl#searchConsultationRecords} 의 복호화 후
+     *     애플리케이션 필터를 사용한다. 평문 잔존 행 조회용으로만 남겨 둔다.
      */
+    @Deprecated
     @Query("SELECT cr FROM ConsultationRecord cr WHERE cr.tenantId = :tenantId " +
            "AND (cr.mainIssues LIKE %:keyword% OR cr.interventionMethods LIKE %:keyword% OR " +
            "cr.clientResponse LIKE %:keyword% OR cr.nextSessionPlan LIKE %:keyword%) " +

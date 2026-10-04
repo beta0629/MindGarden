@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useSession } from '../../contexts/SessionContext';
 import { apiGet, apiPost, apiPut } from '../../utils/ajax';
@@ -21,6 +21,18 @@ import {
   resolveSessionNumberFromSchedule,
   shouldBlockSaveForMissingSessionNumber
 } from '../../utils/consultationRecordSessionNumber';
+import ConfirmModal from '../common/ConfirmModal';
+import { toDisplayString } from '../../utils/safeDisplay';
+import {
+  CONSULTATION_LOG_AUTOSAVE_STRINGS,
+  formatConsultationLogAutosaveString
+} from '../../constants/consultationLogAutosaveStrings';
+import {
+  DRAFT_AUTOSAVE_STATUS,
+  formatDraftSavedAtLabel,
+  useConsultationLogDraftAutosave
+} from '../../hooks/useConsultationLogDraftAutosave';
+import { useUnsavedChangesGuard } from '../../hooks/useUnsavedChangesGuard';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_COMMON_CODES = '/api/v1/common-codes?codeGroup=PRIORITY';
@@ -452,8 +464,107 @@ const ConsultationRecordScreen = () => {
     }
   };
 
+  const draftSnapshotRef = useRef({ formData, memoDraft: '' });
+  draftSnapshotRef.current = { formData, memoDraft: '' };
+  const contentDirtyRef = useRef(false);
+  const restoreConfirmedRef = useRef(false);
+  const conflictResolvedRef = useRef(false);
+  const [restoreDraftConfirmOpen, setRestoreDraftConfirmOpen] = useState(false);
+  const [pendingRestoreDraft, setPendingRestoreDraft] = useState(null);
+  const [conflictConfirmOpen, setConflictConfirmOpen] = useState(false);
+
+  const tenantIdStr = useMemo(() => {
+    const raw = user?.tenantId ?? user?.tenant_id;
+    return raw == null || String(raw).trim() === '' ? '' : String(raw).trim();
+  }, [user?.tenantId, user?.tenant_id]);
+
+  const draftLegacyScope = useMemo(
+    () => (scheduleId != null && String(scheduleId).trim() !== ''
+      ? { type: 'schedule', id: String(scheduleId).trim() }
+      : null),
+    [scheduleId]
+  );
+
+  const onRestoreCandidate = useCallback((candidate) => {
+    setPendingRestoreDraft(candidate);
+    setRestoreDraftConfirmOpen(true);
+  }, []);
+
+  const onConflictDetected = useCallback(() => {
+    setConflictConfirmOpen(true);
+  }, []);
+
+  const {
+    status: draftStatus,
+    savedAtLabel: draftSavedAtLabel,
+    notifyDirty,
+    discardDraft,
+    loadLatestFromServer,
+    keepMineOnConflict
+  } = useConsultationLogDraftAutosave({
+    enabled: !loading,
+    tenantId: tenantIdStr,
+    userId: user?.id,
+    consultationId: scheduleId,
+    consultantId: user?.id,
+    legacyScope: draftLegacyScope,
+    snapshotRef: draftSnapshotRef,
+    dirtyRef: contentDirtyRef,
+    onRestoreCandidate,
+    onConflictDetected
+  });
+
+  // 미저장 변경: 라우트 이동 차단 + 새로고침·닫기 확인
+  const { blocker: leaveBlocker } = useUnsavedChangesGuard({ when: contentDirtyRef.current });
+
+  const applyRestoredDraftSnapshot = useCallback((snapshot) => {
+    if (!snapshot || typeof snapshot !== 'object') return;
+    if (snapshot.formData && typeof snapshot.formData === 'object') {
+      setFormData(snapshot.formData);
+    }
+    contentDirtyRef.current = false;
+  }, []);
+
+  /** "임시저장된 내용이 있어요(2:03). 불러올까요?" — KST */
+  const restoreDraftMessage = useMemo(() => {
+    const savedAt = pendingRestoreDraft?.savedAt;
+    if (!Number.isFinite(savedAt)) {
+      return CONSULTATION_LOG_AUTOSAVE_STRINGS.RESTORE_MESSAGE;
+    }
+    return formatConsultationLogAutosaveString(
+      CONSULTATION_LOG_AUTOSAVE_STRINGS.RESTORE_MESSAGE_WITH_TIME,
+      formatDraftSavedAtLabel(savedAt)
+    );
+  }, [pendingRestoreDraft?.savedAt]);
+
+  /** "저장 중… / 2:03 임시저장됨 / 저장 실패(재시도 중)" — KST */
+  const autosaveStatusText = useMemo(() => {
+    if (saving) return CONSULTATION_LOG_AUTOSAVE_STRINGS.STATUS_FINAL_SAVING;
+    if (!tenantIdStr) return CONSULTATION_LOG_AUTOSAVE_STRINGS.STATUS_DRAFT_UNAVAILABLE;
+    if (draftStatus === DRAFT_AUTOSAVE_STATUS.SAVING) {
+      return CONSULTATION_LOG_AUTOSAVE_STRINGS.STATUS_DRAFT_SAVING;
+    }
+    if (draftStatus === DRAFT_AUTOSAVE_STATUS.RETRYING) {
+      return CONSULTATION_LOG_AUTOSAVE_STRINGS.STATUS_DRAFT_RETRYING;
+    }
+    if (draftStatus === DRAFT_AUTOSAVE_STATUS.FAILED) {
+      return CONSULTATION_LOG_AUTOSAVE_STRINGS.STATUS_DRAFT_FAILED;
+    }
+    if (draftStatus === DRAFT_AUTOSAVE_STATUS.SAVED && draftSavedAtLabel) {
+      return formatConsultationLogAutosaveString(
+        CONSULTATION_LOG_AUTOSAVE_STRINGS.STATUS_DRAFT_SAVED_WITH_TIME,
+        draftSavedAtLabel
+      );
+    }
+    return '';
+  }, [saving, tenantIdStr, draftStatus, draftSavedAtLabel]);
+
+  const autosaveStatusIsError = draftStatus === DRAFT_AUTOSAVE_STATUS.FAILED
+    || draftStatus === DRAFT_AUTOSAVE_STATUS.RETRYING;
+
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
+    notifyDirty();
     setFormData(prev => ({
       ...prev,
       [name]: type === 'checkbox' ? checked : value
@@ -513,6 +624,8 @@ const ConsultationRecordScreen = () => {
           isEditMode ? '상담일지가 수정되었습니다.' : '상담일지가 저장되었습니다.',
           'success'
         );
+        contentDirtyRef.current = false;
+        await discardDraft();
         setIsEditMode(true);
         setConsultationRecord(response.data);
       } else {
@@ -555,7 +668,9 @@ const ConsultationRecordScreen = () => {
 
       if (response.success) {
         notificationManager.show('상담일지가 완료되었습니다.', 'success');
-        
+        contentDirtyRef.current = false;
+        await discardDraft();
+
         navigate(`/consultant/send-message/${scheduleId}`, {
           state: {
             client: client,
@@ -607,6 +722,76 @@ const ConsultationRecordScreen = () => {
           title={t('common:consultant.ConsultationRecordScreen.t_a0658140')}
           subtitle="내담자 정보와 세션 내용을 기록합니다."
           titleId={CONSULTATION_RECORD_TITLE_ID}
+        />
+
+        {autosaveStatusText ? (
+          <p
+            className={[
+              'mg-v2-text-sm',
+              autosaveStatusIsError ? 'mg-v2-text-danger' : 'mg-v2-text-secondary'
+            ].join(' ')}
+            role="status"
+            aria-live="polite"
+          >
+            {toDisplayString(autosaveStatusText, '')}
+          </p>
+        ) : null}
+
+        <ConfirmModal
+          isOpen={restoreDraftConfirmOpen}
+          title={CONSULTATION_LOG_AUTOSAVE_STRINGS.RESTORE_TITLE}
+          message={toDisplayString(restoreDraftMessage, '')}
+          confirmText={CONSULTATION_LOG_AUTOSAVE_STRINGS.RESTORE_CONFIRM}
+          cancelText={CONSULTATION_LOG_AUTOSAVE_STRINGS.RESTORE_DISCARD}
+          type="default"
+          onConfirm={() => {
+            restoreConfirmedRef.current = true;
+            applyRestoredDraftSnapshot(pendingRestoreDraft?.snapshot);
+            setPendingRestoreDraft(null);
+            setRestoreDraftConfirmOpen(false);
+          }}
+          onClose={() => {
+            if (restoreConfirmedRef.current) {
+              restoreConfirmedRef.current = false;
+              return;
+            }
+            void discardDraft();
+            setPendingRestoreDraft(null);
+            setRestoreDraftConfirmOpen(false);
+          }}
+        />
+        <ConfirmModal
+          isOpen={conflictConfirmOpen}
+          title={CONSULTATION_LOG_AUTOSAVE_STRINGS.CONFLICT_TITLE}
+          message={toDisplayString(CONSULTATION_LOG_AUTOSAVE_STRINGS.CONFLICT_MESSAGE, '')}
+          confirmText={CONSULTATION_LOG_AUTOSAVE_STRINGS.CONFLICT_KEEP_MINE}
+          cancelText={CONSULTATION_LOG_AUTOSAVE_STRINGS.CONFLICT_LOAD_LATEST}
+          type="warning"
+          onConfirm={() => {
+            conflictResolvedRef.current = true;
+            setConflictConfirmOpen(false);
+            void keepMineOnConflict();
+          }}
+          onClose={() => {
+            if (conflictResolvedRef.current) {
+              conflictResolvedRef.current = false;
+              return;
+            }
+            setConflictConfirmOpen(false);
+            void (async() => {
+              applyRestoredDraftSnapshot(await loadLatestFromServer());
+            })();
+          }}
+        />
+        <ConfirmModal
+          isOpen={leaveBlocker?.state === 'blocked'}
+          title={CONSULTATION_LOG_AUTOSAVE_STRINGS.LEAVE_TITLE}
+          message={toDisplayString(CONSULTATION_LOG_AUTOSAVE_STRINGS.LEAVE_MESSAGE, '')}
+          confirmText={CONSULTATION_LOG_AUTOSAVE_STRINGS.LEAVE_CONFIRM}
+          cancelText={CONSULTATION_LOG_AUTOSAVE_STRINGS.LEAVE_CANCEL}
+          type="warning"
+          onConfirm={() => leaveBlocker?.proceed?.()}
+          onClose={() => leaveBlocker?.reset?.()}
         />
 
       {/* 내담자 정보 카드 */}

@@ -3,6 +3,7 @@ package com.coresolution.consultation.entity;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Index;
 import jakarta.persistence.Table;
@@ -12,10 +13,17 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
+import com.coresolution.consultation.converter.ConsultationBodyAttributeConverter;
 
 /**
  * 상담일지 엔티티
- * 
+ *
+ * <p>2026-10-04: 서술형 본문 컬럼에 {@link ConsultationBodyAttributeConverter} 적용.
+ * 신규 저장분부터 암호화되며, 기존 평문 행은 변환기가 평문 그대로 읽는다(전환 호환).
+ * 본문 LIKE 검색은 암호문에서 동작하지 않으므로
+ * {@code ConsultationRecordServiceImpl#searchConsultationRecords} 가 복호화 후
+ * 애플리케이션 레벨로 필터링한다.</p>
+ *
  * @author MindGarden
  * @version 1.0.0
  * @since 2024-12-19
@@ -54,26 +62,32 @@ public class ConsultationRecord extends BaseEntity {
     private Integer sessionNumber; // 상담 세션 번호
     
     @Size(max = 4000, message = "내담자 상태는 4000자 이하여야 합니다.")
+    @Convert(converter = ConsultationBodyAttributeConverter.class)
     @Column(name = "client_condition", columnDefinition = "TEXT")
     private String clientCondition; // 내담자 현재 상태
     
     @Size(max = 4000, message = "주요 이슈는 4000자 이하여야 합니다.")
+    @Convert(converter = ConsultationBodyAttributeConverter.class)
     @Column(name = "main_issues", columnDefinition = "TEXT")
     private String mainIssues; // 주요 상담 이슈
     
     @Size(max = 4000, message = "개입 방법은 4000자 이하여야 합니다.")
+    @Convert(converter = ConsultationBodyAttributeConverter.class)
     @Column(name = "intervention_methods", columnDefinition = "TEXT")
     private String interventionMethods; // 상담 개입 방법
     
     @Size(max = 4000, message = "내담자 반응은 4000자 이하여야 합니다.")
+    @Convert(converter = ConsultationBodyAttributeConverter.class)
     @Column(name = "client_response", columnDefinition = "TEXT")
     private String clientResponse; // 내담자 반응 및 변화
     
     @Size(max = 1000, message = "다음 세션 계획은 1000자 이하여야 합니다.")
+    @Convert(converter = ConsultationBodyAttributeConverter.class)
     @Column(name = "next_session_plan", columnDefinition = "TEXT")
     private String nextSessionPlan; // 다음 세션 계획
     
     @Size(max = 1000, message = "과제 부여는 1000자 이하여야 합니다.")
+    @Convert(converter = ConsultationBodyAttributeConverter.class)
     @Column(name = "homework_assigned", columnDefinition = "TEXT")
     private String homeworkAssigned; // 과제 부여
     
@@ -85,14 +99,17 @@ public class ConsultationRecord extends BaseEntity {
     private String riskAssessment; // 위험도 평가 (LOW, MEDIUM, HIGH, CRITICAL)
     
     @Size(max = 1000, message = "위험 요소는 1000자 이하여야 합니다.")
+    @Convert(converter = ConsultationBodyAttributeConverter.class)
     @Column(name = "risk_factors", columnDefinition = "TEXT")
     private String riskFactors; // 위험 요소 상세
     
     @Size(max = 1000, message = "긴급 대응 계획은 1000자 이하여야 합니다.")
+    @Convert(converter = ConsultationBodyAttributeConverter.class)
     @Column(name = "emergency_response_plan", columnDefinition = "TEXT")
     private String emergencyResponsePlan; // 긴급 대응 계획
     
     @Size(max = 4000, message = "진행도 평가는 4000자 이하여야 합니다.")
+    @Convert(converter = ConsultationBodyAttributeConverter.class)
     @Column(name = "progress_evaluation", columnDefinition = "TEXT")
     private String progressEvaluation; // 진행도 평가
     
@@ -104,38 +121,47 @@ public class ConsultationRecord extends BaseEntity {
     private String goalAchievement; // 목표 달성도 (LOW, MEDIUM, HIGH, EXCELLENT)
     
     @Size(max = 1000, message = "목표 달성 상세는 1000자 이하여야 합니다.")
+    @Convert(converter = ConsultationBodyAttributeConverter.class)
     @Column(name = "goal_achievement_details", columnDefinition = "TEXT")
     private String goalAchievementDetails; // 목표 달성 상세
     
     @Size(max = 1000, message = "상담사 관찰사항은 1000자 이하여야 합니다.")
+    @Convert(converter = ConsultationBodyAttributeConverter.class)
     @Column(name = "consultant_observations", columnDefinition = "TEXT")
     private String consultantObservations; // 상담사 관찰사항
     
     @Size(max = 1000, message = "상담사 평가는 1000자 이하여야 합니다.")
+    @Convert(converter = ConsultationBodyAttributeConverter.class)
     @Column(name = "consultant_assessment", columnDefinition = "TEXT")
     private String consultantAssessment; // 상담사 평가
     
     @Size(max = 1000, message = "특별 고려사항은 1000자 이하여야 합니다.")
+    @Convert(converter = ConsultationBodyAttributeConverter.class)
     @Column(name = "special_considerations", columnDefinition = "TEXT")
     private String specialConsiderations; // 특별 고려사항
     
     @Size(max = 1000, message = "의료 정보는 1000자 이하여야 합니다.")
+    @Convert(converter = ConsultationBodyAttributeConverter.class)
     @Column(name = "medical_information", columnDefinition = "TEXT")
     private String medicalInformation; // 의료 정보
     
     @Size(max = 1000, message = "약물 정보는 1000자 이하여야 합니다.")
+    @Convert(converter = ConsultationBodyAttributeConverter.class)
     @Column(name = "medication_info", columnDefinition = "TEXT")
     private String medicationInfo; // 약물 정보
     
     @Size(max = 1000, message = "가족 관계는 1000자 이하여야 합니다.")
+    @Convert(converter = ConsultationBodyAttributeConverter.class)
     @Column(name = "family_relationships", columnDefinition = "TEXT")
     private String familyRelationships; // 가족 관계
     
     @Size(max = 1000, message = "사회적 지원은 1000자 이하여야 합니다.")
+    @Convert(converter = ConsultationBodyAttributeConverter.class)
     @Column(name = "social_support", columnDefinition = "TEXT")
     private String socialSupport; // 사회적 지원
     
     @Size(max = 1000, message = "환경적 요인은 1000자 이하여야 합니다.")
+    @Convert(converter = ConsultationBodyAttributeConverter.class)
     @Column(name = "environmental_factors", columnDefinition = "TEXT")
     private String environmentalFactors; // 환경적 요인
     
@@ -156,6 +182,7 @@ public class ConsultationRecord extends BaseEntity {
     private LocalDate nextSessionDate; // 다음 세션 예정일
     
     @Size(max = 1000, message = "후속 조치사항은 1000자 이하여야 합니다.")
+    @Convert(converter = ConsultationBodyAttributeConverter.class)
     @Column(name = "follow_up_actions", columnDefinition = "TEXT")
     private String followUpActions; // 후속 조치사항
     

@@ -50,6 +50,7 @@ import com.coresolution.consultation.service.ScheduleMappingContextResolver;
 import com.coresolution.consultation.service.ScheduleMappingContextResolver.ScheduleMappingResponseContext;
 import com.coresolution.consultation.service.support.ClientPathAccessGuard;
 import com.coresolution.consultation.service.support.ConsultationRecordAccessGuard;
+import com.coresolution.consultation.service.support.ConsultationRecordDraftAccessGuard;
 import com.coresolution.consultation.service.ScheduleService;
 import com.coresolution.consultation.util.PermissionCheckUtils;
 import com.coresolution.consultation.util.ScheduleSlotTimes;
@@ -66,6 +67,8 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.CacheControl;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -130,11 +133,17 @@ public class ScheduleController extends BaseApiController {
         return PageRequest.of(validPage, validSize);
     }
 
+    /** 초안 응답 캐시 금지 보조 헤더 (레거시 프록시 대응) */
+    private static final String DRAFT_PRAGMA_NO_CACHE = "no-cache";
+
     private final ScheduleService scheduleService;
     private final AdminService adminService;
     private final ConsultationRecordService consultationRecordService;
     private final InstitutionLinkConsultationLogWriteRouter institutionLinkConsultationLogWriteRouter;
     private final ConsultationRecordDraftService consultationRecordDraftService;
+
+    private final ConsultationRecordDraftAccessGuard consultationRecordDraftAccessGuard;
+
     private final CommonCodeService commonCodeService;
     private final RoleCommonCodeAuthorizationService roleCommonCodeAuthorizationService;
     private final ConsultantAvailabilityService consultantAvailabilityService;
@@ -1336,22 +1345,17 @@ public class ScheduleController extends BaseApiController {
             HttpSession session) {
 
         ensureTenantContextFromSession(session);
-        String tenantIdVal = TenantContextHolder.getTenantId();
-        if (tenantIdVal == null || tenantIdVal.isEmpty()) {
-            log.warn("테넌트 정보 없음 - 상담일지 초안 조회 거부");
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(ApiResponse.error("테넌트 정보가 없습니다. 로그아웃 후 다시 로그인해 주세요."));
+        ResponseEntity<ApiResponse<ConsultationRecordDraftResponse>> tenantError = rejectIfNoTenantContext();
+        if (tenantError != null) {
+            return tenantError;
         }
-        User currentUser = SessionUtils.getCurrentUser(session);
-        if (currentUser == null) {
-            throw new org.springframework.security.access.AccessDeniedException("로그인이 필요합니다.");
-        }
-        assertConsultationDraftAccess(currentUser, consultantId);
         Long consultationIdLong = parseScheduleConsultationId(consultationId);
+        String tenantIdVal = consultationRecordDraftAccessGuard
+                .requireDraftAuthor(session, consultationIdLong, consultantId);
         ConsultationRecordDraftResponse body = consultationRecordDraftService
                 .getDraft(tenantIdVal, consultationIdLong, consultantId)
                 .orElse(ConsultationRecordDraftResponse.empty(consultationIdLong, consultantId));
-        return success(body);
+        return noStore(success(body));
     }
 
     /**
@@ -1376,33 +1380,77 @@ public class ScheduleController extends BaseApiController {
             HttpSession session) {
 
         ensureTenantContextFromSession(session);
-        String tenantIdVal = TenantContextHolder.getTenantId();
-        if (tenantIdVal == null || tenantIdVal.isEmpty()) {
-            log.warn("테넌트 정보 없음 - 상담일지 초안 저장 거부");
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(ApiResponse.error("테넌트 정보가 없습니다. 로그아웃 후 다시 로그인해 주세요."));
+        ResponseEntity<ApiResponse<ConsultationRecordDraftResponse>> tenantError = rejectIfNoTenantContext();
+        if (tenantError != null) {
+            return tenantError;
         }
-        User currentUser = SessionUtils.getCurrentUser(session);
-        if (currentUser == null) {
-            throw new org.springframework.security.access.AccessDeniedException("로그인이 필요합니다.");
-        }
-        assertConsultationDraftAccess(currentUser, consultantId);
         Long consultationIdLong = parseScheduleConsultationId(consultationId);
+        String tenantIdVal = consultationRecordDraftAccessGuard
+                .requireDraftAuthor(session, consultationIdLong, consultantId);
         ConsultationRecordDraftResponse saved = consultationRecordDraftService.upsertDraft(
                 tenantIdVal,
                 consultationIdLong,
                 consultantId,
                 body != null ? body.getPayloadJson() : null,
                 body != null ? body.getExpectedVersion() : null);
-        return updated("상담일지 초안이 저장되었습니다.", saved);
+        return noStore(updated("상담일지 초안이 저장되었습니다.", saved));
     }
 
-    private void assertConsultationDraftAccess(User currentUser, Long consultantId) {
-        if (!canRegisterOrModifyOthersSchedule(currentUser.getRole())
-                && !currentUser.getId().equals(consultantId)) {
-            throw new org.springframework.security.access.AccessDeniedException(
-                    "다른 상담사의 상담일지 초안에 접근할 권한이 없습니다.");
+    /**
+     * 상담일지 서버 초안 삭제 (버리기·확정 저장 후 정리).
+     * DELETE /api/v1/schedules/consultation-records/draft?consultationId=schedule-30&amp;consultantId=41
+     *
+     * @param consultationId 상담(스케줄) ID 또는 schedule- 접두 형식
+     * @param consultantId 상담사 ID
+     * @param session HTTP 세션
+     * @return 삭제 결과(초안 없음도 성공)
+     */
+    @DeleteMapping("/consultation-records/draft")
+    public ResponseEntity<ApiResponse<ConsultationRecordDraftResponse>> deleteConsultationRecordDraft(
+            @RequestParam String consultationId,
+            @RequestParam Long consultantId,
+            HttpSession session) {
+
+        ensureTenantContextFromSession(session);
+        ResponseEntity<ApiResponse<ConsultationRecordDraftResponse>> tenantError = rejectIfNoTenantContext();
+        if (tenantError != null) {
+            return tenantError;
         }
+        Long consultationIdLong = parseScheduleConsultationId(consultationId);
+        String tenantIdVal = consultationRecordDraftAccessGuard
+                .requireDraftAuthor(session, consultationIdLong, consultantId);
+        consultationRecordDraftService.deleteDraft(tenantIdVal, consultationIdLong, consultantId);
+        return noStore(success(ConsultationRecordDraftResponse.empty(consultationIdLong, consultantId)));
+    }
+
+    /**
+     * 초안 API 공통 — 테넌트 컨텍스트가 없으면 400 으로 거부한다 (cross-tenant 조기 차단).
+     *
+     * @return 거부 응답, 정상이면 {@code null}
+     */
+    private ResponseEntity<ApiResponse<ConsultationRecordDraftResponse>> rejectIfNoTenantContext() {
+        String tenantIdVal = TenantContextHolder.getTenantId();
+        if (tenantIdVal != null && !tenantIdVal.isEmpty()) {
+            return null;
+        }
+        log.warn("테넌트 정보 없음 - 상담일지 초안 요청 거부");
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(ApiResponse.error("테넌트 정보가 없습니다. 로그아웃 후 다시 로그인해 주세요."));
+    }
+
+    /**
+     * 상담일지 초안 응답에 캐시 금지 헤더를 붙인다 (본문이 중간 캐시·브라우저 디스크에 남지 않도록).
+     *
+     * @param <T> 응답 본문 타입
+     * @param response 원본 응답
+     * @return {@code Cache-Control: no-store} 가 적용된 응답
+     */
+    private <T> ResponseEntity<T> noStore(ResponseEntity<T> response) {
+        return ResponseEntity.status(response.getStatusCode())
+                .headers(headers -> headers.addAll(response.getHeaders()))
+                .cacheControl(CacheControl.noStore().mustRevalidate())
+                .header(HttpHeaders.PRAGMA, DRAFT_PRAGMA_NO_CACHE)
+                .body(response.getBody());
     }
 
     private Long parseScheduleConsultationId(String consultationId) {

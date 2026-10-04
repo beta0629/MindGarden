@@ -4,6 +4,7 @@ import { getCommonCodes } from '../../utils/commonCodeApi';
 import notificationManager from '../../utils/notification';
 import { useSession } from '../../contexts/SessionContext';
 import { RoleUtils, USER_ROLES } from '../../constants/roles';
+import { canAccessConsultationLogBody } from '../../utils/consultationLogBodyAccess';
 import UnifiedModal from '../common/modals/UnifiedModal';
 import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import './ScheduleB0KlA.css';
@@ -288,16 +289,16 @@ function shouldShowConsultationLogLink(schedule, statusCode, isVacation, now = n
  * - CONFIRMED·IN_PROGRESS·TENTATIVE_PENDING_PAYMENT: 항상 노출 (record 있으면 수정 모드)
  * - COMPLETED: record 확정(true) 이면 「보기/수정」 링크가 담당하므로 숨김.
  *   미작성(false)·미조회(null, 조회 실패 포함) 는 노출 — 작성 진입점 유실 방지
- * - 그 외 상태(BOOKED·CANCELLED)·휴가·내담자 포털은 제외
+ * - 그 외 상태(BOOKED·CANCELLED)·휴가·본문 권한 없는 역할(내담자·사무원)은 제외
  *
  * @param {string} statusCode 정규화된 상태 코드
  * @param {boolean|null} hasConsultationRecord 일지 존재 여부 (null = 미조회)
  * @param {boolean} isVacation
- * @param {boolean} isClient
+ * @param {boolean} bodyAccessDenied canAccessConsultationLogBody 가 false 인지
  * @returns {boolean}
  */
-function shouldShowConsultationLogWriteAction(statusCode, hasConsultationRecord, isVacation, isClient) {
-    if (isVacation || isClient) {
+function shouldShowConsultationLogWriteAction(statusCode, hasConsultationRecord, isVacation, bodyAccessDenied) {
+    if (isVacation || bodyAccessDenied) {
         return false;
     }
     if (!CONSULTATION_LOG_WRITE_ACTION_STATUSES.includes(statusCode)) {
@@ -384,6 +385,7 @@ const ScheduleDetailModal = ({
     const [hasConsultationRecord, setHasConsultationRecord] = useState(null);
 
     const isClient = RoleUtils.isClient(user);
+    const canOpenConsultationLog = canAccessConsultationLogBody(user);
 
     useEffect(() => {
         partyQuickViewRef.current = partyQuickView;
@@ -396,8 +398,8 @@ const ScheduleDetailModal = ({
      * 실패 시 null 유지 (로딩 중 작성/보기 모두 비노출 — 상호배타 SSOT). */
     useEffect(() => {
         const scheduleId = scheduleData?.id;
-        // 내담자는 상담일지 작성/보기 액션 자체가 없고, 일지 조회 API 도 403 이므로 호출하지 않는다.
-        if (!isOpen || !scheduleId || isClient) {
+        // 본문 권한이 없는 역할(내담자·사무원)은 작성/보기 액션이 없고 일지 조회 API 도 403 이므로 호출하지 않는다.
+        if (!isOpen || !scheduleId || !canOpenConsultationLog) {
             setHasConsultationRecord(null);
             return undefined;
         }
@@ -440,7 +442,7 @@ const ScheduleDetailModal = ({
         };
     }, [
         isOpen,
-        isClient,
+        canOpenConsultationLog,
         scheduleData?.id,
         scheduleData?.mappingId,
         scheduleData?.consultantClientMappingId,
@@ -1006,13 +1008,13 @@ const ScheduleDetailModal = ({
         statusCodeForActions,
         hasConsultationRecord,
         isVacationEvent(),
-        isClient
+        !canOpenConsultationLog
     );
     const consultationLogLinkVisible = shouldShowConsultationLogLink(
         displayData,
         getStatusCodeValue(statusForDisplay),
         isVacationEvent()
-    ) && !isClient && consultationLogActions.showView;
+    ) && canOpenConsultationLog && consultationLogActions.showView;
 
     const buildPartySummaryRows = (kind) => {
         const dash = SCHEDULE_DETAIL_DISPLAY_PLACEHOLDER;
@@ -1239,7 +1241,7 @@ const ScheduleDetailModal = ({
                      * - 미작성(false) → 작성만 / 작성됨(true) → 보기·수정만(COMPLETED 가드)
                      * - 조회 중(null) → 둘 다 비노출
                      */
-                    const showWriteConsultationLog = !isClient && consultationLogActions.showWrite;
+                    const showWriteConsultationLog = canOpenConsultationLog && consultationLogActions.showWrite;
                     return (
                         <>
                             {renderRescheduleButton()}
@@ -1274,7 +1276,7 @@ const ScheduleDetailModal = ({
                     const bookedStatus = scheduleStatusOptions.find(opt =>
                         opt.value === 'BOOKED' || opt.label?.includes(t('schedule:ScheduleDetailModal.t_17f4b478'))
                     )?.value || 'BOOKED';
-                    const showWriteConsultationLogCompleted = !isClient && consultationLogActions.showWrite;
+                    const showWriteConsultationLogCompleted = canOpenConsultationLog && consultationLogActions.showWrite;
                     return (
                         <>
                             {showWriteConsultationLogCompleted && (

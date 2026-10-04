@@ -1,8 +1,9 @@
 /**
- * ScheduleDetailModal — 관리자(ADMIN·STAFF) 상담일지 작성·수정 진입점.
+ * ScheduleDetailModal — 관리자(ADMIN) 상담일지 작성·수정 진입점, 사무원(STAFF)·내담자 비노출.
  *
  * 관리자는 상담사와 같은 「상담일지 작성」/「보기/수정」 버튼으로 같은 ConsultationLogModal 을 연다
- * (onConsultationLogOpen). 권한 판정은 서버 공용 가드가 한다.
+ * (onConsultationLogOpen). 사무원·내담자는 본문 권한이 없으므로(canAccessConsultationLogBody)
+ * 버튼도, 일지 조회 호출도 없다. 최종 권한 판정은 서버 공용 가드가 한다.
  *
  * @author MindGarden
  * @since 2026-10-06
@@ -127,8 +128,7 @@ const renderModal = (schedule, onConsultationLogOpen = jest.fn()) => render(
 );
 
 describe.each([
-  ['ADMIN', { id: 1, role: 'ADMIN' }],
-  ['STAFF', { id: 2, role: 'STAFF' }]
+  ['ADMIN', { id: 1, role: 'ADMIN' }]
 ])('ScheduleDetailModal 관리자 상담일지 진입점 (%s)', (_label, sessionUser) => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -166,21 +166,25 @@ describe.each([
   });
 });
 
-describe('ScheduleDetailModal 내담자', () => {
+describe.each([
+  ['내담자', { id: 4700, role: 'CLIENT' }],
+  ['사무원(STAFF)', { id: 2, role: 'STAFF' }]
+])('ScheduleDetailModal %s', (label, sessionUser) => {
   beforeEach(() => {
     jest.clearAllMocks();
-    mockSessionUser = { id: 4700, role: 'CLIENT' };
+    mockSessionUser = sessionUser;
   });
 
-  test('내담자에게는 작성·보기/수정 버튼이 없고 일지 조회도 하지 않는다', async() => {
+  test.each(['COMPLETED', 'CONFIRMED'])(`${label}에게는 작성·보기/수정 버튼이 없고 일지 조회도 하지 않는다 (%s)`, async(status) => {
     mockGet.mockResolvedValue({ records: [] });
 
-    renderModal(buildSchedule());
+    renderModal(buildSchedule({ status, statusCode: status }));
 
     await waitFor(() => {
       expect(screen.getByTestId('unified-modal-actions')).toBeInTheDocument();
     });
     expect(screen.queryByTestId('schedule-detail-write-consultation-log-completed')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('schedule-detail-write-consultation-log')).not.toBeInTheDocument();
     expect(screen.queryByTestId('schedule-detail-open-consultation-log')).not.toBeInTheDocument();
     expect(mockGet).not.toHaveBeenCalledWith('/api/v1/schedules/consultation-records', expect.anything());
   });

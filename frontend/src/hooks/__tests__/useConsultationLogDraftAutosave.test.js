@@ -203,7 +203,7 @@ describe('useConsultationLogDraftAutosave', () => {
     expect(candidate.snapshot.formData.mainIssues).toBe('서버 초안');
   });
 
-  test('서버·백업이 없고 레거시 평문 키만 있으면 1회 제안한 뒤 레거시 키를 정리한다', async() => {
+  test('레거시 평문 키는 제안 시점에 지우지 않고, 선택을 끝낸 뒤에 정리한다', async() => {
     const legacyKey = `${CONSULTATION_LOG_LEGACY_LOCAL_DRAFT_KEY_PREFIX}`
       + `.v${CONSULTATION_LOG_LOCAL_DRAFT_STORAGE_VERSION}:tenant-a:schedule:30`;
     localStorage.setItem(legacyKey, JSON.stringify({
@@ -218,7 +218,61 @@ describe('useConsultationLogDraftAutosave', () => {
 
     expect(onRestoreCandidate).toHaveBeenCalledTimes(1);
     expect(onRestoreCandidate.mock.calls[0][0].source).toBe(DRAFT_RESTORE_SOURCE.LEGACY_LOCAL);
+    // 프롬프트가 떠 있는 동안은 보존 — 선택 전 이탈·새로고침에도 입력이 남아야 한다.
+    expect(localStorage.getItem(legacyKey)).not.toBeNull();
+
+    // 사용자가 불러오기/덮어쓰기 취소 중 하나를 고른 뒤에 정리한다.
+    act(() => { latest.api.resolveRestoreCandidate(); });
     expect(localStorage.getItem(legacyKey)).toBeNull();
+  });
+
+  test('초안이 확정 저장본보다 오래되면 복구 프롬프트를 띄우지 않는다 (삭제도 하지 않음)', async() => {
+    adapter.fetchConsultationLogDraftFromServer.mockResolvedValue({
+      ok: true,
+      hasDraft: true,
+      payloadJson: JSON.stringify({ formData: { mainIssues: '옛 초안' }, memoDraft: '' }),
+      version: 3,
+      updatedAt: '2026-10-01T00:00:00Z'
+    });
+    const onRestoreCandidate = jest.fn();
+    renderHook({ onRestoreCandidate, recordUpdatedAt: '2026-10-02T00:00:00Z' });
+    await flushMicrotasks();
+
+    expect(onRestoreCandidate).not.toHaveBeenCalled();
+    expect(latest.api.staleDraftSavedAt).toBe(Date.parse('2026-10-01T00:00:00Z'));
+    // 보고만 하고 지우지 않는다
+    expect(adapter.deleteConsultationLogDraftOnServer).not.toHaveBeenCalled();
+  });
+
+  test('초안이 확정 저장본보다 최신이면 복구 프롬프트를 띄운다', async() => {
+    adapter.fetchConsultationLogDraftFromServer.mockResolvedValue({
+      ok: true,
+      hasDraft: true,
+      payloadJson: JSON.stringify({ formData: { mainIssues: '최신 초안' }, memoDraft: '' }),
+      version: 4,
+      updatedAt: '2026-10-03T00:00:00Z'
+    });
+    const onRestoreCandidate = jest.fn();
+    renderHook({ onRestoreCandidate, recordUpdatedAt: '2026-10-02T00:00:00Z' });
+    await flushMicrotasks();
+
+    expect(onRestoreCandidate).toHaveBeenCalledTimes(1);
+    expect(latest.api.staleDraftSavedAt).toBeNull();
+  });
+
+  test('확정 저장본 시각을 모르면 복구 프롬프트를 띄운다 (복구 기회 우선)', async() => {
+    adapter.fetchConsultationLogDraftFromServer.mockResolvedValue({
+      ok: true,
+      hasDraft: true,
+      payloadJson: JSON.stringify({ formData: { mainIssues: '초안' }, memoDraft: '' }),
+      version: 2,
+      updatedAt: '2026-10-01T00:00:00Z'
+    });
+    const onRestoreCandidate = jest.fn();
+    renderHook({ onRestoreCandidate, recordUpdatedAt: null });
+    await flushMicrotasks();
+
+    expect(onRestoreCandidate).toHaveBeenCalledTimes(1);
   });
 
   test('discardDraft 는 서버 초안·브라우저 백업을 모두 삭제한다', async() => {

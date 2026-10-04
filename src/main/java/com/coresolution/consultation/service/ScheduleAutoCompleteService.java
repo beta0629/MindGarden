@@ -102,6 +102,14 @@ public class ScheduleAutoCompleteService {
     @Value("${mindgarden.scheduler.schedule-auto-complete.manual-lock-poll-millis:500}")
     private long manualLockPollMillis = 500L;
 
+    /**
+     * ShedLock 제공자 필수 여부. {@code ShedLockConfig} 가 프로필 조건 없이 빈을 등록하므로 Spring 기동 시에는
+     * 항상 있어야 한다 — 없으면 설정 오류로 보고 기동을 실패시킨다. 락 없이 JVM 락만 쓰는 특수 컨텍스트에서만
+     * {@code false} 로 끄며, 그때는 ERROR 로그를 남긴다.
+     */
+    @Value("${mindgarden.scheduler.schedule-auto-complete.cluster-lock-required:true}")
+    private boolean clusterLockRequired;
+
     private Clock clock;
 
     /**
@@ -122,6 +130,23 @@ public class ScheduleAutoCompleteService {
         log.info("🗓️ 스케줄 자동 완료 배치 등록: cron={}, next={}, dailyCron={}, dailyNext={}, zone={}",
             autoCompleteCron, nextRun(autoCompleteCron), dailyCleanupCron, nextRun(dailyCleanupCron),
             resolveZone());
+        verifyClusterLock();
+    }
+
+    /**
+     * ShedLock 제공자가 없을 때의 기동 판정. 필수면 기동 실패, 아니면 ERROR 로그 후 JVM 락만 쓴다.
+     *
+     * @throws IllegalStateException 제공자가 필수인데 없을 때
+     */
+    void verifyClusterLock() {
+        if (lockProvider != null) {
+            return;
+        }
+        if (clusterLockRequired) {
+            throw new IllegalStateException(
+                "ShedLock LockProvider 빈이 없습니다. 서버 간 자동 완료 중복 실행을 막을 수 없어 기동을 중단합니다.");
+        }
+        log.error("❌ ShedLock LockProvider 빈 없음 — 자동 완료 수동 실행이 JVM 락만 사용합니다(서버 간 중복 방지 없음).");
     }
 
     /**
@@ -255,7 +280,8 @@ public class ScheduleAutoCompleteService {
     }
 
     /**
-     * ShedLock DB 락 제공자 주입. 빈이 없으면(일부 단위 테스트) JVM 락만 쓴다.
+     * ShedLock DB 락 제공자 주입. 빈이 없으면 {@link #verifyClusterLock()} 가 기동을 막거나(기본)
+     * ERROR 로그 후 JVM 락만 쓰게 한다.
      *
      * @param lockProvider ShedLock 제공자
      */

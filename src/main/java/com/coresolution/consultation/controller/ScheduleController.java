@@ -22,6 +22,7 @@ import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.dto.ConsultationRecordDraftResponse;
 import com.coresolution.consultation.dto.ConsultationRecordListItemResponse;
 import com.coresolution.consultation.dto.ConsultationRecordDraftSaveRequest;
+import com.coresolution.consultation.dto.InstitutionLinkConsultationLogCreateRequest;
 import com.coresolution.consultation.dto.CumulativeConsultantCountsResponse;
 import com.coresolution.consultation.dto.CumulativeMissingConsultationLogsResponse;
 import com.coresolution.consultation.dto.MonthlyConsultantCountsResponse;
@@ -1320,9 +1321,11 @@ public class ScheduleController extends BaseApiController {
      * <p>타기관 연계는 {@link InstitutionLinkConsultationLogWriteRouter} 에 위임만 한다.
      * 타기관 예외를 catch 하지 않는다. 필수값 키가 하나도 없는 본문은 헤더와 무관하게 기존 앱으로 보고 통과시킨다.</p>
      *
-     * <p>회기권 일지는 저장 전에 공용 가드 {@link ConsultationRecordAccessGuard#requireCreateAccess} 로
-     * 판정한다(일정 담당 상담사 또는 같은 테넌트 관리자 계열). 관리자가 작성해도 일지는 일정 담당 상담사
-     * 귀속이며 실제 작성자는 {@code created_by_*} 에 남는다.</p>
+     * <p>회기권·타기관 모두 저장 전에 공용 가드로 판정한다. 회기권은
+     * {@link ConsultationRecordAccessGuard#requireCreateAccess}, 타기관은
+     * {@link ConsultationRecordAccessGuard#requireInstitutionLinkCreateAccess}(일정 담당 상담사 또는 같은 테넌트
+     * 관리자 계열)이며, 본문의 {@code contractId} 등 타기관 표시로 판정을 건너뛰지 않는다. 관리자가 작성해도
+     * 일지는 담당 상담사 귀속이며 실제 작성자는 {@code created_by_*} 에 남는다.</p>
      */
     @PostMapping("/consultation-records")
     public ResponseEntity<ApiResponse<Object>> createConsultationRecord(
@@ -1334,11 +1337,14 @@ public class ScheduleController extends BaseApiController {
         log.info("📝 상담일지 작성 요청 - 본문 필드 수: {}", recordData != null ? recordData.size() : 0);
 
         ensureTenantContextFromSession(session);
-        ConsultationRecordWriter writer = null;
-        if (!institutionLinkConsultationLogWriteRouter.isInstitutionLink(recordData)) {
+        consultationRecordAccessGuard.requireConsultationRecordRole(session);
+        ConsultationRecordWriter writer;
+        if (institutionLinkConsultationLogWriteRouter.isInstitutionLink(recordData)) {
+            writer = consultationRecordAccessGuard.requireInstitutionLinkCreateAccess(session,
+                    InstitutionLinkConsultationLogCreateRequest.fromSchedulePayload(recordData).getScheduleId());
+        } else {
             Long scheduleId = parseOptionalRecordScheduleId(recordData);
             if (scheduleId == null) {
-                consultationRecordAccessGuard.requireConsultationRecordRole(session);
                 throw new ValidationException(CONSULTATION_ID_FIELD, null, "consultationId는 필수입니다.");
             }
             writer = consultationRecordAccessGuard.requireCreateAccess(session, scheduleId);

@@ -7,6 +7,7 @@ import com.coresolution.consultation.dto.InstitutionLinkConsultationLogResponse;
 import com.coresolution.consultation.service.InstitutionLinkConsultationLogService;
 import com.coresolution.consultation.service.support.ClientPathAccessGuard;
 import com.coresolution.consultation.service.support.ConsultationRecordAccessGuard;
+import com.coresolution.consultation.service.support.ConsultationRecordWriter;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.controller.BaseApiController;
 import com.coresolution.core.dto.ApiResponse;
@@ -47,17 +48,24 @@ public class InstitutionLinkConsultationLogController extends BaseApiController 
     /**
      * 타기관 연계 상담일지 작성.
      *
+     * <p>공용 가드 {@link ConsultationRecordAccessGuard#requireInstitutionLinkCreateAccess} 를 먼저 통과해야 하고,
+     * 서비스가 매핑·계약의 담당 상담사로 다시 판정한다.</p>
+     *
      * @param request 작성 요청
+     * @param session HTTP 세션
      * @return 저장된 일지
      */
     @PostMapping
     public ResponseEntity<ApiResponse<InstitutionLinkConsultationLogResponse>> create(
-            @Valid @RequestBody InstitutionLinkConsultationLogCreateRequest request) {
+            @Valid @RequestBody InstitutionLinkConsultationLogCreateRequest request,
+            HttpSession session) {
         log.info("타기관 연계 상담일지 작성: mappingId={}, contractId={}, scheduleId={}",
                 request.getMappingId(), request.getContractId(), request.getScheduleId());
+        ConsultationRecordWriter writer =
+                consultationRecordAccessGuard.requireInstitutionLinkCreateAccess(session, request.getScheduleId());
         String tenantId = TenantContextHolder.getRequiredTenantId();
         InstitutionLinkConsultationLogResponse saved =
-                institutionLinkConsultationLogService.create(tenantId, request);
+                institutionLinkConsultationLogService.create(tenantId, request, writer);
         return created("타기관 연계 상담일지가 작성되었습니다.", saved);
     }
 
@@ -132,13 +140,16 @@ public class InstitutionLinkConsultationLogController extends BaseApiController 
      *
      * @param recordId 일지 ID
      * @param request 수정 본문
+     * @param session HTTP 세션
      * @return 수정된 일지
      */
     @PutMapping("/{recordId}")
     public ResponseEntity<ApiResponse<InstitutionLinkConsultationLogResponse>> update(
             @PathVariable Long recordId,
-            @Valid @RequestBody InstitutionLinkConsultationLogCreateRequest request) {
+            @Valid @RequestBody InstitutionLinkConsultationLogCreateRequest request,
+            HttpSession session) {
         log.info("타기관 연계 상담일지 수정: recordId={}", recordId);
+        consultationRecordAccessGuard.requireInstitutionLinkLogWriteAccess(session, recordId);
         InstitutionLinkConsultationLogResponse saved =
                 institutionLinkConsultationLogService.update(recordId, request);
         return success("타기관 연계 상담일지가 수정되었습니다.", saved);
@@ -148,12 +159,15 @@ public class InstitutionLinkConsultationLogController extends BaseApiController 
      * 월 실적 완료. 회기권 잔여 회기를 차감하지 않는다.
      *
      * @param recordId 일지 ID
+     * @param session HTTP 세션
      * @return 완료된 일지
      */
     @PostMapping("/{recordId}/complete")
     public ResponseEntity<ApiResponse<InstitutionLinkConsultationLogResponse>> complete(
-            @PathVariable Long recordId) {
+            @PathVariable Long recordId,
+            HttpSession session) {
         log.info("타기관 연계 상담일지 완료: recordId={}", recordId);
+        consultationRecordAccessGuard.requireInstitutionLinkLogWriteAccess(session, recordId);
         InstitutionLinkConsultationLogResponse saved = institutionLinkConsultationLogService.complete(recordId);
         return success("타기관 연계 상담일지가 완료되었습니다.", saved);
     }

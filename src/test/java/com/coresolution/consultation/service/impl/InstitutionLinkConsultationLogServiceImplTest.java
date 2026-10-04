@@ -27,6 +27,8 @@ import com.coresolution.consultation.repository.ConsultantClientMappingRepositor
 import com.coresolution.consultation.repository.InstitutionLinkConsultationLogRepository;
 import com.coresolution.consultation.repository.InstitutionLinkContractRepository;
 import com.coresolution.consultation.service.ScheduleService;
+import com.coresolution.consultation.service.support.ConsultationRecordAccessGuard;
+import com.coresolution.consultation.service.support.ConsultationRecordWriter;
 import com.coresolution.core.context.TenantContextHolder;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
@@ -50,6 +52,8 @@ class InstitutionLinkConsultationLogServiceImplTest {
     private static final String TENANT_ID = "tenant-institution-link-1";
     private static final long MAPPING_ID = 8801L;
     private static final long CONTRACT_ID = 41L;
+    private static final ConsultationRecordWriter WRITER =
+            new ConsultationRecordWriter(7L, "CONSULTANT", false, null, null);
 
     @Mock
     private InstitutionLinkConsultationLogRepository institutionLinkConsultationLogRepository;
@@ -65,6 +69,10 @@ class InstitutionLinkConsultationLogServiceImplTest {
 
     @Mock
     private ScheduleService scheduleService;
+
+    /** 작성 권한 판정은 {@code InstitutionLinkConsultationLogCreateGuardMvcTest} 가 실제 가드로 검증한다. */
+    @Mock
+    private ConsultationRecordAccessGuard consultationRecordAccessGuard;
 
     @InjectMocks
     private InstitutionLinkConsultationLogServiceImpl service;
@@ -106,7 +114,7 @@ class InstitutionLinkConsultationLogServiceImplTest {
                 .isSessionCompleted(false)
                 .build();
 
-        InstitutionLinkConsultationLogResponse saved = service.create(TENANT_ID, request);
+        InstitutionLinkConsultationLogResponse saved = service.create(TENANT_ID, request, WRITER);
 
         ArgumentCaptor<InstitutionLinkConsultationLog> captor =
                 ArgumentCaptor.forClass(InstitutionLinkConsultationLog.class);
@@ -143,7 +151,7 @@ class InstitutionLinkConsultationLogServiceImplTest {
                 .sessionDate(LocalDate.of(2026, 9, 14))
                 .build();
 
-        assertThatThrownBy(() -> service.create(TENANT_ID, request))
+        assertThatThrownBy(() -> service.create(TENANT_ID, request, WRITER))
                 .isInstanceOf(ValidationException.class)
                 .hasMessageContaining("회기권 매핑은 타기관 상담일지 경로를 사용할 수 없습니다.");
         verify(institutionLinkConsultationLogRepository, never()).save(any());
@@ -185,7 +193,7 @@ class InstitutionLinkConsultationLogServiceImplTest {
                 .clientCondition("오배정 보정 저장")
                 .build();
 
-        InstitutionLinkConsultationLogResponse saved = service.create(TENANT_ID, request);
+        InstitutionLinkConsultationLogResponse saved = service.create(TENANT_ID, request, WRITER);
 
         assertThat(saved.getId()).isEqualTo(99L);
         verify(consultantClientMappingRepository, never()).save(any());
@@ -251,7 +259,7 @@ class InstitutionLinkConsultationLogServiceImplTest {
                 .isSessionCompleted(true)
                 .build();
 
-        service.create(TENANT_ID, request);
+        service.create(TENANT_ID, request, WRITER);
 
         verify(scheduleService).markCompletedAfterConsultationLogIfOpen(eq(TENANT_ID), eq(436L));
     }
@@ -266,7 +274,7 @@ class InstitutionLinkConsultationLogServiceImplTest {
                 .sessionDate(LocalDate.of(2026, 9, 14))
                 .build();
 
-        assertThatThrownBy(() -> service.create(null, request))
+        assertThatThrownBy(() -> service.create(null, request, WRITER))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("tenantId는 필수입니다.");
         verifyNoInteractions(institutionLinkConsultationLogRepository);
@@ -305,7 +313,7 @@ class InstitutionLinkConsultationLogServiceImplTest {
                 .sessionDate(LocalDate.of(2026, 9, 14))
                 .build();
 
-        InstitutionLinkConsultationLogResponse saved = service.create(TENANT_ID, request);
+        InstitutionLinkConsultationLogResponse saved = service.create(TENANT_ID, request, WRITER);
 
         assertThat(saved.getId()).isEqualTo(89L);
         assertThat(saved.getContractId()).isEqualTo(CONTRACT_ID);

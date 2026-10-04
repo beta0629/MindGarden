@@ -51,7 +51,7 @@ jest.mock('../../../utils/consultationLogDraftBackupStore', () => ({
   saveDraftBackup: jest.fn().mockResolvedValue(undefined)
 }));
 jest.mock('../../../hooks/useUnsavedChangesGuard', () => ({
-  useUnsavedChangesGuard: () => ({ blocker: null })
+  useUnsavedChangesGuard: () => ({ blocker: null, releaseGuard: jest.fn() })
 }));
 jest.mock('../../common/modals/UnifiedModal', () => ({
   __esModule: true,

@@ -5,6 +5,8 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import './assets/fonts/pretendard/pretendard-variable-dynamic-subset.css';
 import './styles/unified-design-tokens.css';
 import './index.css';
+// 미저장 가드 popstate 관문은 라우터(App)보다 먼저 등록돼야 한다.
+import './hooks/unsavedChangesPopStateGate';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
 import { GOOGLE_WEB_CLIENT_ID, isGoogleWebClientIdConfigured } from './constants/oauth2';

@@ -1,6 +1,7 @@
-import { useContext, useEffect, useRef } from 'react';
+import { useCallback, useContext, useEffect, useRef } from 'react';
 import { UNSAFE_DataRouterContext, UNSAFE_NavigationContext, useBlocker } from 'react-router-dom';
 import { CONSULTATION_LOG_AUTOSAVE_STRINGS } from '../constants/consultationLogAutosaveStrings';
+import { addUnsavedChangesPopStateHandler } from './unsavedChangesPopStateGate';
 
 /**
  * 미저장 변경이 있을 때 이탈을 막는 공통 가드.
@@ -12,8 +13,10 @@ import { CONSULTATION_LOG_AUTOSAVE_STRINGS } from '../constants/consultationLogA
  *   <li>SPA 라우트 이동 (BrowserRouter) — 라우터 navigator 의 {@code push}·{@code replace}·{@code go} 를
  *       미저장 동안만 감싸 {@code window.confirm} 으로 확인한다. {@code <Link>}·{@code navigate()}·
  *       {@code navigate(-1)} 이 모두 이 경로를 지난다.</li>
- *   <li>브라우저 뒤로·앞으로 (BrowserRouter) — {@code popstate} 를 라우터보다 먼저(캡처) 받아 확인하고,
- *       취소하면 라우터에 전달하지 않은 채 {@code history.go(delta)} 로 원래 항목에 되돌린다.</li>
+ *   <li>브라우저 뒤로·앞으로 (BrowserRouter) — {@code popstate} 를 라우터보다 먼저 받아 확인하고
+ *       ({@link ./unsavedChangesPopStateGate} 관문 — 앱 진입 시 라우터보다 먼저 등록),
+ *       취소하면 라우터에 전달하지 않은 채 {@code history.go(delta)} 로 원래 항목에 되돌린다. 되돌릴 때 생기는
+ *       {@code popstate} 도 라우터에 전달하지 않는다 — 라우터 위치가 그대로라 화면·입력이 재렌더·재마운트되지 않는다.</li>
  * </ul>
  *
  * <h3>왜 라우터를 구분하는가</h3>
@@ -41,7 +44,9 @@ import { CONSULTATION_LOG_AUTOSAVE_STRINGS } from '../constants/consultationLogA
  * @param {boolean} params.when 미저장 변경 여부
  * @param {boolean} [params.enableRouteBlocker] 라우트 차단 사용 여부 (기본 true)
  * @param {string} [params.confirmMessage] 이동 확인창 문구
- * @returns {{ blocker: object|null }} data router 에서 차단 중이면 proceed/reset 보유, 그 외 null
+ * @returns {{ blocker: object|null, releaseGuard: function }} blocker — data router 에서 차단 중이면
+ *   proceed/reset 보유, 그 외 null. releaseGuard — 화면이 이미 확인을 받은 이동(저장 후 닫기·
+ *   「저장하지 않고 닫기」) 직전에 호출하면 미저장 상태가 끝날 때까지 다시 묻지 않는다.
  * @author CoreSolution
  * @since 2026-10-04
  */
@@ -61,16 +66,27 @@ export function useUnsavedChangesGuard({
   }
   const routeBlockerActive = routeBlockerActiveRef.current;
 
+  // 저장·「저장하지 않고 닫기」처럼 화면이 이미 확인을 받은 이동은 다시 묻지 않는다.
+  // 렌더 전에 같은 틱에서 이동하므로 when 갱신을 기다리지 않고 ref 로 즉시 해제한다.
+  const releasedRef = useRef(false);
+  const releaseGuard = useCallback(() => {
+    releasedRef.current = true;
+  }, []);
+  useEffect(() => {
+    if (!shouldBlock) releasedRef.current = false;
+  }, [shouldBlock]);
+
   let blocker = null;
   if (routeBlockerActive) {
     // eslint-disable-next-line react-hooks/rules-of-hooks
     blocker = useBlocker(({ currentLocation, nextLocation }) =>
-      shouldBlock && currentLocation.pathname !== nextLocation.pathname);
+      shouldBlock && !releasedRef.current && currentLocation.pathname !== nextLocation.pathname);
   }
 
   useEffect(() => {
     if (!shouldBlock) return undefined;
     const onBeforeUnload = (event) => {
+      if (releasedRef.current) return undefined;
       event.preventDefault();
       // 최신 브라우저는 커스텀 문구를 무시하고 기본 확인창을 띄운다.
       event.returnValue = '';
@@ -85,10 +101,17 @@ export function useUnsavedChangesGuard({
     if (routeBlockerActive || !enableRouteBlocker || !shouldBlock || !navigator) return undefined;
     const { push: originalPush, replace: originalReplace, go: originalGo } = navigator;
     let current = snapshotHistoryEntry();
-    let skipNextPop = false;
+    // 확인을 받은 navigator.go — 뒤따르는 popstate 는 라우터에 그대로 전달한다.
+    let passNextPop = false;
+    // 취소 후 원래 항목으로 되돌리는 history.go — 뒤따르는 popstate 는 라우터에 전달하지 않는다
+    // (라우터는 이탈을 본 적이 없으므로 위치 갱신·재렌더가 필요 없다).
+    let swallowNextPop = false;
 
-    // eslint-disable-next-line no-alert
-    const confirmLeave = () => window.confirm(confirmMessage);
+    const confirmLeave = () => {
+      if (releasedRef.current) return true;
+      // eslint-disable-next-line no-alert
+      return window.confirm(confirmMessage);
+    };
     const changesPath = (to) => resolvePathname(navigator, to) !== window.location.pathname;
     const guarded = (original) => (...args) => {
       if (changesPath(args[0]) && !confirmLeave()) return undefined;
@@ -102,13 +125,19 @@ export function useUnsavedChangesGuard({
     navigator.go = (delta) => {
       if (!delta) return originalGo.call(navigator, delta);
       if (!confirmLeave()) return undefined;
-      skipNextPop = true;
+      passNextPop = true;
       return originalGo.call(navigator, delta);
     };
 
     const onPopStateCapture = (event) => {
-      if (skipNextPop) {
-        skipNextPop = false;
+      if (swallowNextPop) {
+        swallowNextPop = false;
+        event.stopImmediatePropagation();
+        current = snapshotHistoryEntry();
+        return;
+      }
+      if (passNextPop) {
+        passNextPop = false;
         current = snapshotHistoryEntry();
         return;
       }
@@ -120,23 +149,23 @@ export function useUnsavedChangesGuard({
       const nextIdx = event.state?.idx;
       const delta = Number.isInteger(current.idx) && Number.isInteger(nextIdx) ? current.idx - nextIdx : 0;
       if (delta !== 0) {
-        skipNextPop = true;
+        swallowNextPop = true;
         window.history.go(delta);
       } else {
         window.history.pushState(current.state, '', current.href);
       }
     };
-    window.addEventListener('popstate', onPopStateCapture, true);
+    const removePopStateHandler = addUnsavedChangesPopStateHandler(onPopStateCapture);
 
     return () => {
-      window.removeEventListener('popstate', onPopStateCapture, true);
+      removePopStateHandler();
       navigator.push = originalPush;
       navigator.replace = originalReplace;
       navigator.go = originalGo;
     };
   }, [routeBlockerActive, enableRouteBlocker, shouldBlock, confirmMessage, navigator]);
 
-  return { blocker };
+  return { blocker, releaseGuard };
 }
 
 /** 현재 기록 항목 (라우터 인덱스 {@code idx}·state·주소). 취소 시 되돌릴 기준. */

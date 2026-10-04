@@ -5,7 +5,6 @@ import java.util.Optional;
 import com.coresolution.consultation.dto.InstitutionLinkConsultationLogCreateRequest;
 import com.coresolution.consultation.dto.InstitutionLinkConsultationLogResponse;
 import com.coresolution.consultation.service.InstitutionLinkConsultationLogService;
-import com.coresolution.consultation.service.support.ClientPathAccessGuard;
 import com.coresolution.consultation.service.support.ConsultationRecordAccessGuard;
 import com.coresolution.consultation.service.support.ConsultationRecordWriter;
 import com.coresolution.core.context.TenantContextHolder;
@@ -42,7 +41,6 @@ import org.springframework.web.bind.annotation.RestController;
 public class InstitutionLinkConsultationLogController extends BaseApiController {
 
     private final InstitutionLinkConsultationLogService institutionLinkConsultationLogService;
-    private final ClientPathAccessGuard clientPathAccessGuard;
     private final ConsultationRecordAccessGuard consultationRecordAccessGuard;
 
     /**
@@ -72,7 +70,7 @@ public class InstitutionLinkConsultationLogController extends BaseApiController 
     /**
      * 월말 상담내역 목록.
      *
-     * <p>계약·매핑 단위로 여러 상담사의 일지 본문이 섞이므로 같은 테넌트 관리자·사무원만 허용한다
+     * <p>계약·매핑 단위로 여러 상담사의 일지 본문이 섞이므로 같은 테넌트 관리자(ADMIN)만 허용한다
      * (월말 청구·실적 용도). 상담사 본인 범위 목록이 필요해지면 작성자 기준 필터를 추가한다.</p>
      *
      * @param contractId 계약 ID
@@ -89,7 +87,7 @@ public class InstitutionLinkConsultationLogController extends BaseApiController 
             HttpSession session) {
         log.info("타기관 연계 월말 상담내역 조회: mappingId={}, contractId={}, billingYearMonth={}",
                 mappingId, contractId, billingYearMonth);
-        clientPathAccessGuard.requireTenantManager(session);
+        consultationRecordAccessGuard.requireRecordBodyManager(session);
         List<InstitutionLinkConsultationLogResponse> records =
                 institutionLinkConsultationLogService.listByBillingMonth(contractId, mappingId, billingYearMonth);
         return success(records);

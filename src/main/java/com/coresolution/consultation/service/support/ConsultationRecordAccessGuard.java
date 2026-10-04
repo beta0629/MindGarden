@@ -31,9 +31,9 @@ import org.springframework.transaction.annotation.Transactional;
  * 이 클래스의 판정 메서드만 호출한다. 판정 규칙은 {@link #canRead(User, String, String, Long)} 하나다.</p>
  * <ul>
  *   <li>허용 — 일지 작성 상담사 본인({@code consultation_records.consultant_id == 로그인 사용자})</li>
- *   <li>허용 — 같은 테넌트 관리자 계열({@link ClientPathAccessGuard#isTenantManager}: ADMIN·STAFF).
- *       본문까지 열람한다.</li>
- *   <li>거부(403) — 다른 상담사(현재 담당 상담사여도 작성자가 아니면 거부), 내담자, 다른 테넌트</li>
+ *   <li>허용 — 같은 테넌트 관리자({@link #isRecordBodyManager}: ADMIN). 본문까지 열람한다.</li>
+ *   <li>거부(403) — 사무원(STAFF), 다른 상담사(현재 담당 상담사여도 작성자가 아니면 거부), 내담자, 다른 테넌트.
+ *       사무원은 누락 알림·일정·목록 메타 등 본문이 없는 경로만 쓴다.</li>
  *   <li>거부(401) — 미인증</li>
  * </ul>
  * <p>요청 파라미터({@code consultantId} 등)와 일정의 현재 담당 상담사는 허용 근거로 쓰지 않는다.
@@ -79,7 +79,7 @@ public class ConsultationRecordAccessGuard {
         if (caller == null || callerTenantId == null || !Objects.equals(callerTenantId, recordTenantId)) {
             return false;
         }
-        return isAuthor(caller, authorConsultantId) || clientPathAccessGuard.isTenantManager(caller);
+        return isAuthor(caller, authorConsultantId) || isRecordBodyManager(caller);
     }
 
     /**
@@ -123,7 +123,7 @@ public class ConsultationRecordAccessGuard {
      * @return 담당 상담사 본인이거나 같은 테넌트 관리자 계열이면 {@code true}
      */
     private boolean canCreateFor(User caller, Long assigneeConsultantId) {
-        return isAuthor(caller, assigneeConsultantId) || clientPathAccessGuard.isTenantManager(caller);
+        return isAuthor(caller, assigneeConsultantId) || isRecordBodyManager(caller);
     }
 
     /**
@@ -155,7 +155,7 @@ public class ConsultationRecordAccessGuard {
         if (!allowed) {
             deny(DENIAL_CREATE_ASSIGNEE_ONLY, caller, "scheduleId", scheduleId);
         }
-        return ConsultationRecordWriter.forCreate(caller, clientPathAccessGuard.isTenantManager(caller),
+        return ConsultationRecordWriter.forCreate(caller, isRecordBodyManager(caller),
                 schedule.getId());
     }
 
@@ -163,7 +163,7 @@ public class ConsultationRecordAccessGuard {
      * 타기관 연계 상담일지 작성 1차 검증 (컨트롤러). 저장 전에 반드시 통과한다.
      *
      * <p>일정이 있으면 회기권과 같은 {@link #requireCreateAccess} 규칙(일정 담당 상담사 또는 같은 테넌트
-     * 관리자 계열)이다. 일정이 없으면 같은 테넌트 상담사·관리자 계열만 통과하고, 담당 상담사 대조는
+     * 관리자)이다. 일정이 없으면 같은 테넌트 상담사·관리자(ADMIN)만 통과하고(사무원은 감사 기록 후 403), 담당 상담사 대조는
      * 서비스가 매핑·계약을 읽은 뒤 {@link #requireInstitutionLinkAssignee} 로 한다. 본문의 타기관 표시
      * ({@code contractId}·{@code mappingId} 등)는 허용 근거가 아니다.</p>
      *
@@ -179,7 +179,16 @@ public class ConsultationRecordAccessGuard {
             return requireCreateAccess(session, scheduleId);
         }
         User caller = requireConsultationRecordRole(session);
-        return ConsultationRecordWriter.forCreate(caller, clientPathAccessGuard.isTenantManager(caller), null);
+        boolean manager = isRecordBodyManager(caller);
+        boolean consultant = caller.getRole() != null && caller.getRole().isConsultant();
+        if (!manager && !consultant) {
+            String tenantId = clientPathAccessGuard.requireCallerTenantId(caller);
+            audit(caller, tenantId, ConsultationRecordAccessAudit.KIND_INSTITUTION_LINK_LOG, null, null, null,
+                    ConsultationRecordAccessAudit.ACTION_CREATE, ConsultationRecordAccessAudit.RESULT_DENIED,
+                    DENIAL_CREATE_ASSIGNEE_ONLY);
+            deny(DENIAL_CREATE_ASSIGNEE_ONLY, caller, "scheduleId", null);
+        }
+        return ConsultationRecordWriter.forCreate(caller, manager, null);
     }
 
     /**
@@ -251,7 +260,7 @@ public class ConsultationRecordAccessGuard {
         if (!allowed) {
             deny(DENIAL_WRITE_AUTHOR_ONLY, caller, "recordId", recordId);
         }
-        return ConsultationRecordWriter.forEdit(caller, clientPathAccessGuard.isTenantManager(caller),
+        return ConsultationRecordWriter.forEdit(caller, isRecordBodyManager(caller),
                 record.getId());
     }
 
@@ -371,7 +380,7 @@ public class ConsultationRecordAccessGuard {
             allowed = !readable.isEmpty();
         } else {
             allowed = schedule != null
-                && (clientPathAccessGuard.isTenantManager(caller) || isAuthor(caller, schedule.getConsultantId()));
+                && (isRecordBodyManager(caller) || isAuthor(caller, schedule.getConsultantId()));
         }
         Long auditedAuthor = readable.isEmpty() ? null : readable.get(0).getConsultantId();
         audit(caller, tenantId, ConsultationRecordAccessAudit.KIND_CONSULTATION_RECORD, null, null, auditedAuthor,
@@ -468,6 +477,43 @@ public class ConsultationRecordAccessGuard {
         if (!allowed) {
             deny(DENIAL_WRITE_AUTHOR_ONLY, caller, "recordId", recordId);
         }
+    }
+
+    /**
+     * 여러 상담사의 일지 본문이 섞이는 테넌트 단위 목록(예: 타기관 월말 상담내역) 검증.
+     * 같은 테넌트 관리자({@link #isRecordBodyManager})만 허용한다.
+     *
+     * @param session HTTP 세션
+     * @return 세션 사용자
+     * @throws UnauthorizedException 로그인 사용자가 없을 때
+     * @throws AccessDeniedException 관리자가 아닐 때 (사무원 포함)
+     */
+    public User requireRecordBodyManager(HttpSession session) {
+        User caller = clientPathAccessGuard.requireCaller(session);
+        String tenantId = clientPathAccessGuard.requireCallerTenantId(caller);
+        boolean allowed = isRecordBodyManager(caller);
+        audit(caller, tenantId, ConsultationRecordAccessAudit.KIND_INSTITUTION_LINK_LOG, null, null, null,
+                ConsultationRecordAccessAudit.ACTION_LIST,
+                allowed ? ConsultationRecordAccessAudit.RESULT_ALLOWED : ConsultationRecordAccessAudit.RESULT_DENIED,
+                allowed ? null : DENIAL_AUTHOR_ONLY);
+        if (!allowed) {
+            deny(DENIAL_AUTHOR_ONLY, caller, "userId", caller.getId());
+        }
+        return caller;
+    }
+
+    /**
+     * 상담일지 본문(읽기·작성·수정)을 작성자가 아니어도 다룰 수 있는 관리자인지 — ADMIN 만.
+     *
+     * <p>사무원(STAFF)은 테넌트 관리 기능은 쓰지만 상담일지 본문은 다루지 않는다. 초안 가드 등 본문을
+     * 다루는 다른 가드도 이 판정을 쓴다.</p>
+     *
+     * @param caller 세션 사용자
+     * @return ADMIN 이면 {@code true}
+     */
+    public static boolean isRecordBodyManager(User caller) {
+        UserRole role = caller != null ? caller.getRole() : null;
+        return role != null && role.isAdmin();
     }
 
     /**

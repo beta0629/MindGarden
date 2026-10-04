@@ -52,6 +52,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.web.PageableHandlerMethodArgumentResolver;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockHttpSession;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.web.servlet.MockMvc;
@@ -63,8 +64,9 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
  * 상담일지 본문 보호 — 작성자 기준 접근 가드 ({@link ConsultationRecordAccessGuard}).
  *
  * <p>#1397·#1398·#1401 가드보다 엄격하다. 상담일지 본문은 <b>작성 상담사</b> 와 같은 테넌트
- * 관리자·사무원만 읽을 수 있다. 같은 테넌트의 다른 상담사(매칭 보유 여부 무관)·내담자·다른
- * 테넌트 관리자는 모두 403, 미인증은 401 이다.</p>
+ * 관리자(ADMIN)만 읽고·작성하고·수정할 수 있다. 사무원(STAFF)·같은 테넌트의 다른 상담사(매칭 보유
+ * 여부 무관)·내담자·다른 테넌트 관리자는 모두 403, 미인증은 401 이다. 사무원은 본문이 없는 메타
+ * 목록({@code ?consultantId=})만 쓴다.</p>
  *
  * <p>목록 응답에 임상 본문이 섞이지 않는지와 {@code Cache-Control: no-store} 도 함께 고정한다.</p>
  *
@@ -88,6 +90,7 @@ class ConsultationLogAccessGuardMvcTest {
     private static final long IL_LOG_ID = 500L;
 
     private static final String LIST_URI = "/api/v1/schedules/consultation-records";
+    private static final String IL_URI = "/api/v1/institution-link/consultation-records";
     private static final String MEDICAL_BODY = "복용 중인 약물 — 본문 유출 감지 문구";
     private static final String MAIN_ISSUES_BODY = "주요 이슈 본문";
 
@@ -205,13 +208,16 @@ class ConsultationLogAccessGuardMvcTest {
     }
 
     @Test
-    @DisplayName("목록(?consultantId=) — 같은 테넌트 관리자·사무원 200 (현행 관리자 열람 유지)")
+    @DisplayName("목록(?consultantId=) — 같은 테넌트 관리자·사무원 200, 사무원 응답도 메타만 (본문 없음)")
     void list_byConsultant_manager_ok() throws Exception {
         call(HttpMethod.GET, listByConsultant(AUTHOR_CONSULTANT), user(ADMIN_A, UserRole.ADMIN, TENANT_A))
             .andExpect(status().isOk());
         setUp();
-        call(HttpMethod.GET, listByConsultant(AUTHOR_CONSULTANT), user(STAFF_A, UserRole.STAFF, TENANT_A))
-            .andExpect(status().isOk());
+        call(HttpMethod.GET, listByConsultant(AUTHOR_CONSULTANT), staff())
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.records[0].id").value((int) RECORD_ID))
+            .andExpect(content().string(not(containsString(MEDICAL_BODY))))
+            .andExpect(content().string(not(containsString(MAIN_ISSUES_BODY))));
     }
 
     @Test
@@ -326,6 +332,89 @@ class ConsultationLogAccessGuardMvcTest {
         assertForbidden(call(HttpMethod.GET, uri, client()));
     }
 
+    // ---- 5-1. 사무원(STAFF) 본문 제외 ----
+
+    @Test
+    @DisplayName("STAFF — 단건 상세·일정 단위 본문 목록·타기관 단건·월말 목록 모두 403, 본문 없음 / ADMIN 200")
+    void staff_bodyRead_forbidden_adminOk() throws Exception {
+        String detail = detailUri(AUTHOR_CONSULTANT, RECORD_ID);
+        String bySchedule = LIST_URI + "?consultationId=" + SCHEDULE_ID;
+        String ilDetail = IL_URI + "/" + IL_LOG_ID;
+        String ilList = IL_URI + "?mappingId=1&billingYearMonth=2026-10";
+        for (String uri : new String[] {detail, bySchedule, ilDetail, ilList}) {
+            setUp();
+            assertForbidden(call(HttpMethod.GET, uri, staff()));
+        }
+        setUp();
+        call(HttpMethod.GET, detail, admin()).andExpect(status().isOk());
+        setUp();
+        call(HttpMethod.GET, bySchedule, admin())
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.records[0].mainIssues").value(MAIN_ISSUES_BODY));
+        setUp();
+        call(HttpMethod.GET, ilDetail, admin()).andExpect(status().isOk());
+    }
+
+    @Test
+    @DisplayName("STAFF — 일지가 없는 일정의 작성 진입 목록도 403 (담당 상담사·ADMIN 은 빈 목록 200)")
+    void staff_emptyScheduleList_forbidden() throws Exception {
+        String uri = LIST_URI + "?consultationId=" + SCHEDULE_ID;
+        setUp();
+        when(recordRepository.findActiveForScheduleSsot(TENANT_A, SCHEDULE_ID)).thenReturn(List.of());
+        assertForbidden(call(HttpMethod.GET, uri, staff()));
+        setUp();
+        when(recordRepository.findActiveForScheduleSsot(TENANT_A, SCHEDULE_ID)).thenReturn(List.of());
+        call(HttpMethod.GET, uri, admin()).andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.records.length()").value(0));
+        setUp();
+        when(recordRepository.findActiveForScheduleSsot(TENANT_A, SCHEDULE_ID)).thenReturn(List.of());
+        call(HttpMethod.GET, uri, author()).andExpect(status().isOk());
+    }
+
+    @Test
+    @DisplayName("타기관 수정·완료 — 작성 상담사·ADMIN 200 / STAFF·다른 상담사·내담자·다른 테넌트 403 / 미인증 401")
+    void institutionLinkWrite_matrix() throws Exception {
+        String update = IL_URI + "/" + IL_LOG_ID;
+        String complete = IL_URI + "/" + IL_LOG_ID + "/complete";
+        for (User ok : new User[] {author(), admin()}) {
+            setUp();
+            callJson(HttpMethod.PUT, update, ilPayload(AUTHOR_CONSULTANT, SCHEDULE_ID), ok)
+                .andExpect(status().isOk());
+            setUp();
+            call(HttpMethod.POST, complete, ok).andExpect(status().isOk());
+        }
+        for (User denied : new User[] {staff(), otherConsultant(), client(), user(ADMIN_B, UserRole.ADMIN, TENANT_B)}) {
+            setUp();
+            assertForbidden(callJson(HttpMethod.PUT, update, ilPayload(AUTHOR_CONSULTANT, SCHEDULE_ID), denied));
+            setUp();
+            assertForbidden(call(HttpMethod.POST, complete, denied));
+        }
+        setUp();
+        mockMvc.perform(request(HttpMethod.POST, complete)).andExpect(status().isUnauthorized());
+        verifyNoInteractions(dataServices);
+    }
+
+    @Test
+    @DisplayName("타기관 작성 — 담당 상담사·ADMIN 201 / STAFF·다른 상담사·내담자 403, 일정 없는 요청도 STAFF·내담자 403")
+    void institutionLinkCreate_matrix() throws Exception {
+        for (User ok : new User[] {author(), admin()}) {
+            setUp();
+            callJson(HttpMethod.POST, IL_URI, ilPayload(AUTHOR_CONSULTANT, SCHEDULE_ID), ok)
+                .andExpect(status().isCreated());
+        }
+        setUp();
+        callJson(HttpMethod.POST, IL_URI, ilPayload(AUTHOR_CONSULTANT, null), author())
+            .andExpect(status().isCreated());
+        for (User denied : new User[] {staff(), otherConsultant(), client()}) {
+            setUp();
+            assertForbidden(callJson(HttpMethod.POST, IL_URI, ilPayload(AUTHOR_CONSULTANT, SCHEDULE_ID), denied));
+        }
+        for (User denied : new User[] {staff(), client()}) {
+            setUp();
+            assertForbidden(callJson(HttpMethod.POST, IL_URI, ilPayload(AUTHOR_CONSULTANT, null), denied));
+        }
+    }
+
     // ---- 6. 캐시 금지 헤더 ----
 
     @Test
@@ -373,6 +462,25 @@ class ConsultationLogAccessGuardMvcTest {
             TenantContextHolder.setTenantId(tenantId);
             return r;
         };
+    }
+
+    private ResultActions callJson(HttpMethod method, String uri, String body, User caller) throws Exception {
+        return mockMvc.perform(request(method, uri).session(session(caller)).with(tenant(caller.getTenantId()))
+            .contentType(MediaType.APPLICATION_JSON).content(body));
+    }
+
+    private static String ilPayload(long consultantId, Long scheduleId) {
+        return "{\"mappingId\":1,\"clientId\":" + CLIENT_ID + ",\"consultantId\":" + consultantId
+            + (scheduleId == null ? "" : ",\"scheduleId\":" + scheduleId)
+            + ",\"sessionDate\":\"2026-10-01\",\"mainIssues\":\"x\"}";
+    }
+
+    private static User admin() {
+        return user(ADMIN_A, UserRole.ADMIN, TENANT_A);
+    }
+
+    private static User staff() {
+        return user(STAFF_A, UserRole.STAFF, TENANT_A);
     }
 
     private static User author() {

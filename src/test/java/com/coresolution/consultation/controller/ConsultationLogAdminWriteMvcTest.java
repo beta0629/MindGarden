@@ -263,12 +263,13 @@ class ConsultationLogAdminWriteMvcTest {
     }
 
     @Test
-    @DisplayName("작성 — 같은 테넌트 STAFF 도 관리자 계열로 201")
-    void create_sameTenantStaff_created() throws Exception {
+    @DisplayName("작성 — 같은 테넌트 STAFF 403, 저장·수정 감사 없음")
+    void create_sameTenantStaff_forbidden() throws Exception {
         callJson(HttpMethod.POST, CREATE_URI, createPayload(ASSIGNEE), user(STAFF_ID, UserRole.STAFF, TENANT_A))
-            .andExpect(status().isCreated())
-            .andExpect(jsonPath("$.data.consultantId").value(ASSIGNEE));
-        assertThat(store.get(RECORD_ID).getCreatedByUserId()).isEqualTo(STAFF_ID);
+            .andExpect(status().isForbidden())
+            .andExpect(jsonPath("$.data").doesNotExist());
+        verify(recordRepository, never()).save(any());
+        assertThat(audits).isEmpty();
     }
 
     @Test
@@ -353,12 +354,28 @@ class ConsultationLogAdminWriteMvcTest {
 
         Map<String, Object> second = editPayload();
         second.put("clientResponse", BODY_EDIT + " 2");
-        callJson(HttpMethod.PUT, ADMIN_EDIT_URI, second, user(STAFF_ID, UserRole.STAFF, TENANT_A))
+        callJson(HttpMethod.PUT, ADMIN_EDIT_URI, second, user(ADMIN_ID, UserRole.ADMIN, TENANT_A))
             .andExpect(status().isOk());
         assertThat(audits).hasSize(2);
-        assertThat(audits.get(1).getEditorId()).isEqualTo(STAFF_ID);
+        assertThat(audits.get(1).getEditorId()).isEqualTo(ADMIN_ID);
         assertThat(audits.get(1).getChangedFields()).isEqualTo("clientResponse");
         audits.forEach(ConsultationLogAdminWriteMvcTest::assertNoBody);
+    }
+
+    @Test
+    @DisplayName("수정 — 같은 테넌트 STAFF 는 관리자 API·일정 API 모두 403, 본문·수정 감사 변화 없음")
+    void edit_sameTenantStaff_forbidden() throws Exception {
+        seedRecord();
+        String before = store.get(RECORD_ID).getClientResponse();
+        Map<String, Object> payload = editPayload();
+        payload.put("clientResponse", BODY_EDIT + " staff");
+        for (String uri : new String[] {ADMIN_EDIT_URI, SCHEDULE_EDIT_URI}) {
+            callJson(HttpMethod.PUT, uri, payload, user(STAFF_ID, UserRole.STAFF, TENANT_A))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.data").doesNotExist());
+        }
+        assertThat(store.get(RECORD_ID).getClientResponse()).isEqualTo(before);
+        assertThat(audits).isEmpty();
     }
 
     @Test

@@ -36,7 +36,7 @@ import org.springframework.security.access.AccessDeniedException;
 /**
  * {@link ConsultationRecordAccessGuard} 단건 읽기·쓰기(작성·수정) 권한 매트릭스.
  *
- * <p>정책: 작성 상담사 본인 + 같은 테넌트 관리자 계열만 허용. 다른 상담사·내담자·다른 테넌트는 403,
+ * <p>정책: 작성 상담사 본인 + 같은 테넌트 관리자(ADMIN)만 허용. 사무원(STAFF)·다른 상담사·내담자·다른 테넌트는 403,
  * 미인증 401. 감사 기록에는 본문이 들어가지 않는다.</p>
  *
  * @author CoreSolution
@@ -133,10 +133,115 @@ class ConsultationRecordAccessGuardTest {
     }
 
     @Test
-    @DisplayName("같은 테넌트 ADMIN·STAFF — 허용")
-    void sameTenantManagers_allowed() {
+    @DisplayName("같은 테넌트 ADMIN — 허용")
+    void sameTenantAdmin_allowed() {
         assertThat(guard.requireReadAccess(session(ADMIN, UserRole.ADMIN, TENANT_A), RECORD_ID)).isNotNull();
-        assertThat(guard.requireReadAccess(session(STAFF, UserRole.STAFF, TENANT_A), RECORD_ID)).isNotNull();
+    }
+
+    @Test
+    @DisplayName("같은 테넌트 STAFF — 본문 읽기·작성·수정 모두 403")
+    void sameTenantStaff_deniedForBody() {
+        MockHttpSession staff = session(STAFF, UserRole.STAFF, TENANT_A);
+        assertThatThrownBy(() -> guard.requireReadAccess(staff, RECORD_ID))
+            .isInstanceOf(AccessDeniedException.class);
+        assertThatThrownBy(() -> guard.requireCreateAccess(staff, SCHEDULE_ID))
+            .isInstanceOf(AccessDeniedException.class);
+        assertThatThrownBy(() -> guard.requireWriteAccess(staff, RECORD_ID))
+            .isInstanceOf(AccessDeniedException.class);
+        assertThatThrownBy(() -> guard.requireClinicalReportAccess(staff, REPORT_ID))
+            .isInstanceOf(AccessDeniedException.class);
+        assertThatThrownBy(() -> guard.requireInstitutionLinkLogReadAccess(staff, LINK_LOG_ID))
+            .isInstanceOf(AccessDeniedException.class);
+        assertThatThrownBy(() -> guard.requireInstitutionLinkLogWriteAccess(staff, LINK_LOG_ID))
+            .isInstanceOf(AccessDeniedException.class);
+        assertThatThrownBy(() -> guard.requireInstitutionLinkCreateAccess(staff, SCHEDULE_ID))
+            .isInstanceOf(AccessDeniedException.class);
+        assertThatThrownBy(() -> guard.requireInstitutionLinkCreateAccess(staff, null))
+            .isInstanceOf(AccessDeniedException.class);
+        assertThatThrownBy(() -> guard.requireDeleteAccess(staff, RECORD_ID))
+            .isInstanceOf(AccessDeniedException.class);
+        assertThatThrownBy(() -> guard.requireRecordBodyManager(staff))
+            .isInstanceOf(AccessDeniedException.class);
+        User staffUser = user(STAFF, UserRole.STAFF, TENANT_A);
+        assertThat(guard.canRead(staffUser, TENANT_A, TENANT_A, AUTHOR)).isFalse();
+        assertThat(guard.canWrite(staffUser, TENANT_A, TENANT_A, AUTHOR)).isFalse();
+        assertThat(ConsultationRecordAccessGuard.isRecordBodyManager(staffUser)).isFalse();
+        assertThat(ConsultationRecordAccessGuard.isRecordBodyManager(user(ADMIN, UserRole.ADMIN, TENANT_A))).isTrue();
+    }
+
+    @Test
+    @DisplayName("STAFF 거부 — VIEW·CREATE·EDIT 마다 DENIED 감사 행이 남고 본문은 없다 (타기관 일정 없는 작성 포함)")
+    void staffDenial_isAudited() {
+        MockHttpSession staff = session(STAFF, UserRole.STAFF, TENANT_A);
+        assertThatThrownBy(() -> guard.requireReadAccess(staff, RECORD_ID))
+            .isInstanceOf(AccessDeniedException.class);
+        assertThatThrownBy(() -> guard.requireCreateAccess(staff, SCHEDULE_ID))
+            .isInstanceOf(AccessDeniedException.class);
+        assertThatThrownBy(() -> guard.requireWriteAccess(staff, RECORD_ID))
+            .isInstanceOf(AccessDeniedException.class);
+        assertThatThrownBy(() -> guard.requireInstitutionLinkCreateAccess(staff, null))
+            .isInstanceOf(AccessDeniedException.class);
+        ArgumentCaptor<ConsultationRecordAccessLogService.ConsultationRecordAccessCommand> captor =
+            ArgumentCaptor.forClass(ConsultationRecordAccessLogService.ConsultationRecordAccessCommand.class);
+        verify(accessLogService, atLeastOnce()).record(captor.capture());
+        for (String action : new String[] {ConsultationRecordAccessAudit.ACTION_VIEW,
+                ConsultationRecordAccessAudit.ACTION_CREATE, ConsultationRecordAccessAudit.ACTION_EDIT}) {
+            assertThat(captor.getAllValues()).anyMatch(c -> action.equals(c.action())
+                && ConsultationRecordAccessAudit.RESULT_DENIED.equals(c.result())
+                && Long.valueOf(STAFF).equals(c.actorId())
+                && UserRole.STAFF.name().equals(c.actorRole())
+                && c.denialReason() != null);
+        }
+        assertThat(captor.getAllValues()).anyMatch(c -> ConsultationRecordAccessAudit.KIND_INSTITUTION_LINK_LOG
+                .equals(c.recordKind())
+            && ConsultationRecordAccessAudit.ACTION_CREATE.equals(c.action())
+            && ConsultationRecordAccessAudit.RESULT_DENIED.equals(c.result())
+            && Long.valueOf(STAFF).equals(c.actorId()));
+        assertThat(captor.getAllValues())
+            .noneMatch(c -> Long.valueOf(STAFF).equals(c.actorId())
+                && ConsultationRecordAccessAudit.RESULT_ALLOWED.equals(c.result()));
+        assertThat(captor.getAllValues()).allSatisfy(c -> assertThat(c.toString()).doesNotContain(BODY_TEXT));
+    }
+
+    @Test
+    @DisplayName("타기관 연계 수정·작성 — 작성자·담당 상담사·ADMIN 허용, 다른 상담사·내담자·다른 테넌트 403, 미인증 401")
+    void institutionLinkWrite_matrix() {
+        guard.requireInstitutionLinkLogWriteAccess(session(AUTHOR, UserRole.CONSULTANT, TENANT_A), LINK_LOG_ID);
+        guard.requireInstitutionLinkLogWriteAccess(session(ADMIN, UserRole.ADMIN, TENANT_A), LINK_LOG_ID);
+        assertThatThrownBy(() -> guard.requireInstitutionLinkLogWriteAccess(
+            session(OTHER_CONSULTANT, UserRole.CONSULTANT, TENANT_A), LINK_LOG_ID))
+            .isInstanceOf(AccessDeniedException.class);
+        assertThatThrownBy(() -> guard.requireInstitutionLinkLogWriteAccess(
+            session(CLIENT, UserRole.CLIENT, TENANT_A), LINK_LOG_ID))
+            .isInstanceOf(AccessDeniedException.class);
+        assertThatThrownBy(() -> guard.requireInstitutionLinkLogWriteAccess(
+            session(ADMIN, UserRole.ADMIN, TENANT_B), LINK_LOG_ID))
+            .isInstanceOf(AccessDeniedException.class);
+        assertThatThrownBy(() -> guard.requireInstitutionLinkLogWriteAccess(new MockHttpSession(), LINK_LOG_ID))
+            .isInstanceOf(UnauthorizedException.class);
+
+        assertThat(guard.requireInstitutionLinkCreateAccess(
+            session(OTHER_CONSULTANT, UserRole.CONSULTANT, TENANT_A), SCHEDULE_ID).tenantManager()).isFalse();
+        assertThat(guard.requireInstitutionLinkCreateAccess(session(ADMIN, UserRole.ADMIN, TENANT_A), SCHEDULE_ID)
+            .tenantManager()).isTrue();
+        assertThat(guard.requireInstitutionLinkCreateAccess(session(ADMIN, UserRole.ADMIN, TENANT_A), null)
+            .tenantManager()).isTrue();
+        assertThat(guard.requireInstitutionLinkCreateAccess(session(AUTHOR, UserRole.CONSULTANT, TENANT_A), null)
+            .tenantManager()).isFalse();
+        assertThatThrownBy(() -> guard.requireInstitutionLinkCreateAccess(
+            session(AUTHOR, UserRole.CONSULTANT, TENANT_A), SCHEDULE_ID))
+            .isInstanceOf(AccessDeniedException.class);
+        assertThatThrownBy(() -> guard.requireInstitutionLinkCreateAccess(session(CLIENT, UserRole.CLIENT, TENANT_A), null))
+            .isInstanceOf(AccessDeniedException.class);
+        assertThatThrownBy(() -> guard.requireInstitutionLinkCreateAccess(
+            session(ADMIN, UserRole.ADMIN, TENANT_B), SCHEDULE_ID))
+            .isInstanceOf(AccessDeniedException.class);
+        assertThatThrownBy(() -> guard.requireInstitutionLinkCreateAccess(new MockHttpSession(), null))
+            .isInstanceOf(UnauthorizedException.class);
+
+        assertThat(guard.requireRecordBodyManager(session(ADMIN, UserRole.ADMIN, TENANT_A)).getId()).isEqualTo(ADMIN);
+        assertThatThrownBy(() -> guard.requireRecordBodyManager(session(AUTHOR, UserRole.CONSULTANT, TENANT_A)))
+            .isInstanceOf(AccessDeniedException.class);
     }
 
     @Test
@@ -216,7 +321,7 @@ class ConsultationRecordAccessGuardTest {
     // ---- 쓰기(수정) ----
 
     @Test
-    @DisplayName("수정 — 작성 상담사·같은 테넌트 ADMIN·STAFF 허용, 작성자 정보가 판정 대상 일지에 묶인다")
+    @DisplayName("수정 — 작성 상담사·같은 테넌트 ADMIN 허용, 작성자 정보가 판정 대상 일지에 묶인다")
     void write_authorAndManagers_allowed() {
         ConsultationRecordWriter author = guard.requireWriteAccess(
             session(AUTHOR, UserRole.CONSULTANT, TENANT_A), RECORD_ID);
@@ -228,8 +333,6 @@ class ConsultationRecordAccessGuardTest {
         assertThat(admin.userId()).isEqualTo(ADMIN);
         assertThat(admin.role()).isEqualTo(UserRole.ADMIN.name());
         assertThat(admin.tenantManager()).isTrue();
-        assertThat(guard.requireWriteAccess(session(STAFF, UserRole.STAFF, TENANT_A), RECORD_ID).tenantManager())
-            .isTrue();
     }
 
     @Test

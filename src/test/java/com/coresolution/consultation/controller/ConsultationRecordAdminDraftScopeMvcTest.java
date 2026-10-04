@@ -65,6 +65,7 @@ class ConsultationRecordAdminDraftScopeMvcTest {
     private static final long ADMIN_ID = 1L;
     private static final long ADMIN_B = 5L;
     private static final long OTHER_CONSULTANT = 77L;
+    private static final long STAFF_ID = 2L;
     private static final String DRAFT_URI = "/api/v1/schedules/consultation-records/draft";
     private static final String ADMIN_PAYLOAD = "{\"formData\":{\"mainIssues\":\"관리자 초안 문구\"}}";
     private static final String CONSULTANT_PAYLOAD = "{\"formData\":{\"mainIssues\":\"상담사 초안 문구\"}}";
@@ -182,6 +183,17 @@ class ConsultationRecordAdminDraftScopeMvcTest {
                     return r;
                 }))
             .andExpect(status().isUnauthorized());
+        org.assertj.core.api.Assertions.assertThat(drafts).isEmpty();
+    }
+
+    @Test
+    @DisplayName("같은 테넌트 사무원(STAFF) — 본인 id 여도 초안 저장·조회·삭제 403, 저장 없음")
+    void sameTenantStaff_forbidden() throws Exception {
+        User staff = user(STAFF_ID, UserRole.STAFF, TENANT_A);
+        put(staff, STAFF_ID, ADMIN_PAYLOAD).andExpect(status().isForbidden());
+        get(staff, STAFF_ID).andExpect(status().isForbidden());
+        call(HttpMethod.DELETE, staff, STAFF_ID, null).andExpect(status().isForbidden());
+        get(staff, ASSIGNEE).andExpect(status().isForbidden());
         org.assertj.core.api.Assertions.assertThat(drafts).isEmpty();
     }
 

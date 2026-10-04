@@ -3,6 +3,7 @@ package com.coresolution.consultation.controller;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
@@ -198,7 +199,7 @@ class AdminControllerWriteAndSingleReadRoleGuardTest {
         verify(adminService, never()).updateConsultantGrade(anyLong(), anyString());
         verify(adminService, never()).deleteConsultantWithTransfer(anyLong(), anyLong(), any());
         verify(adminService, times(2)).confirmPayment(anyLong(), any(), any(), any());
-        verify(adminService).partialRefundMapping(MAPPING_ID, 1, "reason");
+        verify(adminService, never()).partialRefundMapping(anyLong(), anyInt(), any());
     }
 
     @Test
@@ -209,6 +210,7 @@ class AdminControllerWriteAndSingleReadRoleGuardTest {
             assertOk(c.name(), c.invoke(admin));
         }
         verify(adminService).rejectMapping(MAPPING_ID, "reason");
+        verify(adminService).partialRefundMapping(MAPPING_ID, 1, "reason");
         verify(adminService).deleteConsultantWithTransfer(CONSULTANT_ID, NEW_CONSULTANT_ID, "reason");
     }
 
@@ -311,7 +313,7 @@ class AdminControllerWriteAndSingleReadRoleGuardTest {
                         (s, f) -> controller.terminateMapping(mappingId(f), Map.of("reason", "reason"), s)),
                 new Case("POST mappings/{id}/cleanup-future-schedules", Access.MANAGER,
                         (s, f) -> controller.cleanupFutureSchedulesForMapping(mappingId(f), s)),
-                new Case("POST mappings/{id}/partial-refund", Access.MANAGER,
+                new Case("POST mappings/{id}/partial-refund", Access.ADMIN,
                         (s, f) -> controller.partialRefundMapping(mappingId(f),
                                 Map.of("refundSessions", 1, "reason", "reason"), s)),
                 new Case("POST mappings/transfer", Access.MANAGER,

@@ -9,6 +9,7 @@ import com.coresolution.consultation.entity.CssThemeMetadata;
 import com.coresolution.consultation.service.CssThemeService;
 import com.coresolution.core.controller.BaseApiController;
 import com.coresolution.core.dto.ApiResponse;
+import com.coresolution.core.security.OpsAccessGuard;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -24,7 +25,11 @@ import lombok.extern.slf4j.Slf4j;
 /**
  * CSS 테마 관리 컨트롤러
  * 테마별 색상 설정을 관리하는 REST API
- * 
+ *
+ * <p>조회(GET)는 로그인 전 화면도 테마를 불러야 하므로 공개한다. 테마 메타데이터·색상은 테넌트 컬럼 없이
+ * 테마명으로만 저장되는 플랫폼 공용 자원이라, 쓰기(저장·삭제)는 한 기관 관리자가 바꾸면 전 기관에 반영된다.
+ * 그래서 쓰기는 본사 Ops 운영자({@link OpsAccessGuard#requireHqOps()})만 허용하고, 거부 시 서비스를 호출하지 않는다.</p>
+ *
  * @author MindGarden
  * @version 1.0.0
  * @since 2024-12-19
@@ -36,6 +41,7 @@ import lombok.extern.slf4j.Slf4j;
 public class CssThemeController extends BaseApiController {
 
     private final CssThemeService cssThemeService;
+    private final OpsAccessGuard opsAccessGuard;
 
     /**
      * 모든 활성화된 테마 목록 조회
@@ -189,6 +195,7 @@ public class CssThemeController extends BaseApiController {
      */
     @PostMapping("/themes")
     public ResponseEntity<ApiResponse<CssThemeMetadata>> saveThemeMetadata(@RequestBody CssThemeMetadata themeMetadata) {
+        opsAccessGuard.requireHqOps();
         log.info("🎨 테마 메타데이터 저장/수정: {}", themeMetadata.getThemeName());
         
         CssThemeMetadata savedTheme = cssThemeService.saveThemeMetadata(themeMetadata);
@@ -203,6 +210,7 @@ public class CssThemeController extends BaseApiController {
     public ResponseEntity<ApiResponse<Map<String, Object>>> saveThemeColors(
             @PathVariable String themeName,
             @RequestBody List<CssColorSettings> colorSettings) {
+        opsAccessGuard.requireHqOps();
         log.info("🎨 테마 색상 설정 저장/수정: {}", themeName);
         
         List<CssColorSettings> savedColors = cssThemeService.saveThemeColors(themeName, colorSettings);
@@ -220,6 +228,7 @@ public class CssThemeController extends BaseApiController {
      */
     @DeleteMapping("/themes/{themeName}")
     public ResponseEntity<ApiResponse<Map<String, Object>>> deleteTheme(@PathVariable String themeName) {
+        opsAccessGuard.requireHqOps();
         log.info("🎨 테마 삭제: {}", themeName);
         
         if (!cssThemeService.isThemeExists(themeName)) {

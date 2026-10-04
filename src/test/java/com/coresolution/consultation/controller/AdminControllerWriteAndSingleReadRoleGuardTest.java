@@ -30,6 +30,7 @@ import com.coresolution.consultation.repository.ConsultantClientMappingRepositor
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.repository.UserSocialAccountRepository;
 import com.coresolution.consultation.service.AdminBulkMappingPaymentService;
+import com.coresolution.consultation.service.MappingTerminationService;
 import com.coresolution.consultation.service.AdminService;
 import com.coresolution.consultation.service.ClientStatsService;
 import com.coresolution.consultation.service.ConsultantStatsService;
@@ -109,6 +110,7 @@ class AdminControllerWriteAndSingleReadRoleGuardTest {
 
     @Mock private AdminService adminService;
     @Mock private AdminBulkMappingPaymentService adminBulkMappingPaymentService;
+    @Mock private MappingTerminationService mappingTerminationService;
     @Mock private RealTimeStatisticsService realTimeStatisticsService;
     @Mock private ConsultantStatsService consultantStatsService;
     @Mock private ClientStatsService clientStatsService;
@@ -218,7 +220,7 @@ class AdminControllerWriteAndSingleReadRoleGuardTest {
         verify(adminBulkMappingPaymentService).confirmMappings(List.of(MAPPING_ID), "CARD", null);
         verify(adminBulkMappingPaymentService, never()).cancelMappings(any(), any());
         verify(adminService, never()).partialRefundMapping(anyLong(), anyInt(), any());
-        verify(adminService, never()).terminateMapping(anyLong(), any());
+        verify(mappingTerminationService, never()).terminate(anyLong(), any());
     }
 
     @Test
@@ -230,7 +232,7 @@ class AdminControllerWriteAndSingleReadRoleGuardTest {
         }
         verify(adminService).rejectMapping(MAPPING_ID, "reason");
         verify(adminService).partialRefundMapping(MAPPING_ID, 1, "reason");
-        verify(adminService).terminateMapping(MAPPING_ID, "reason");
+        verify(mappingTerminationService).terminate(MAPPING_ID, "reason");
         verify(adminService).deleteConsultantWithTransfer(CONSULTANT_ID, NEW_CONSULTANT_ID, "reason");
         verify(adminBulkMappingPaymentService).confirmMappings(List.of(MAPPING_ID), "CARD", null);
         verify(adminBulkMappingPaymentService).cancelMappings(List.of(MAPPING_ID),

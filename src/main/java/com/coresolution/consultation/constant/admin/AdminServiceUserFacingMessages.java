@@ -156,6 +156,14 @@ public final class AdminServiceUserFacingMessages {
     public static final String MSG_BULK_MAPPING_STOPPED_ON_FAILURE =
             "일부 매칭을 처리하지 못해 중단했습니다. 처리 결과를 확인해 주세요.";
 
+    /** 환불 전표 기록 실패 — 기관 세율 공통코드 미설정 (매칭 변경 롤백). */
+    public static final String MSG_REFUND_LEDGER_TAX_RATE_NOT_CONFIGURED =
+            "환불 전표를 만들 수 없어 처리를 취소했습니다. 기관 세율 공통코드(SALARY_TAX_RATE)를 설정한 뒤 다시 시도해 주세요.";
+
+    /** 환불 전표 기록 실패 — 그 밖의 원인 (매칭 변경 롤백). */
+    public static final String MSG_REFUND_LEDGER_NOT_RECORDED =
+            "환불 전표를 기록하지 못해 처리를 취소했습니다. 잠시 후 다시 시도해 주세요.";
+
     /**
      * 옵션 B v2.0 멱등성 가드 (Q6 Carbon Copy, 2026-05-28).
      *

@@ -403,6 +403,9 @@ portone:
 shop:
   late-payment:
     refund-claim-lease-ms: ${SHOP_LATE_PAYMENT_REFUND_CLAIM_LEASE_MS:60000}
+  # 어드민 전액 환불 PG 취소 임대 시간 — PortOne 조회·취소·증거 확인 호출 시간 합보다 길게 둔다
+  admin-refund:
+    pg-lease-ms: ${SHOP_ADMIN_REFUND_PG_LEASE_MS:120000}
 
 # 서버 설정
 server:

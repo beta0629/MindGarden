@@ -14,6 +14,7 @@ import com.coresolution.consultation.dto.admin.BulkMappingPaymentResult;
 import com.coresolution.consultation.entity.ConsultantClientMapping;
 import com.coresolution.consultation.entity.ConsultantClientMapping.MappingStatus;
 import com.coresolution.consultation.exception.MappingAlreadyProcessedException;
+import com.coresolution.consultation.exception.RefundLedgerNotRecordedException;
 import com.coresolution.consultation.repository.ConsultantClientMappingRepository;
 import com.coresolution.consultation.service.AdminBulkMappingPaymentService;
 import com.coresolution.consultation.service.AdminService;
@@ -141,11 +142,15 @@ public class AdminBulkMappingPaymentServiceImpl implements AdminBulkMappingPayme
                 skipped.add(mappingId);
             } catch (RuntimeException e) {
                 log.error("일괄 처리 실패로 중단: mappingId={}, error={}", mappingId, e.getClass().getSimpleName(), e);
+                RefundLedgerNotRecordedException ledgerFailure = e instanceof RefundLedgerNotRecordedException r
+                        ? r : null;
                 return BulkMappingPaymentResult.builder()
                         .processedMappingIds(processed)
                         .skippedMappingIds(skipped)
                         .failedMappingId(mappingId)
                         .notProcessedMappingIds(new ArrayList<>(mappingIds.subList(i + 1, mappingIds.size())))
+                        .failureCode(ledgerFailure != null ? RefundLedgerNotRecordedException.ERROR_CODE : null)
+                        .failureMessage(ledgerFailure != null ? ledgerFailure.getMessage() : null)
                         .build();
             }
         }

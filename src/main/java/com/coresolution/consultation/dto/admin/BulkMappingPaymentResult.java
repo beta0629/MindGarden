@@ -30,6 +30,12 @@ public class BulkMappingPaymentResult {
     /** 실패로 중단되어 처리하지 않은 매칭 ID */
     private final List<Long> notProcessedMappingIds;
 
+    /** 관리자에게 보여 줄 실패 코드 (예: 환불 전표 미기록). 안내할 원인이 없으면 null */
+    private final String failureCode;
+
+    /** 관리자에게 보여 줄 실패 안내 문구. 안내할 원인이 없으면 null */
+    private final String failureMessage;
+
     /**
      * 모든 매칭을 처리했는지(실패 없이 끝났는지) 여부.
      *

@@ -93,6 +93,33 @@ public final class ShopRefundConstants {
     public static final String MSG_REFUND_AMOUNT_EXHAUSTED_FMT =
             "환불 가능 금액이 없습니다(orderPublicId=%s): 결제액 %,d원, 매핑 부분 환불 %,d원, PG 기취소 %,d원.";
 
+    /** 같은 주문의 PG 환불이 진행 중이거나 자동 재시도할 수 없음 (409) */
+    public static final String ERROR_CODE_REFUND_IN_PROGRESS = "SHOP_REFUND_IN_PROGRESS";
+
+    /**
+     * 같은 주문의 PG 환불 진행 중 — PG 취소를 다시 부르지 않는다.
+     * 인자: orderPublicId
+     */
+    public static final String MSG_REFUND_IN_PROGRESS_FMT =
+            "같은 주문의 환불이 진행 중입니다(orderPublicId=%s). 잠시 후 주문 상태를 확인해 주세요.";
+
+    /**
+     * PortOne 이 아닌 결제는 PG 취소 요청 이력이 있으면 자동 재시도하지 않는다(이중 환불 방지).
+     * 인자: orderPublicId
+     */
+    public static final String MSG_REFUND_PG_RETRY_MANUAL_CHECK_FMT =
+            "이전 PG 환불 요청 결과를 확인할 수 없어 자동 재시도를 막았습니다(orderPublicId=%s). "
+                    + "PG 관리 화면에서 취소 여부를 확인한 뒤 환불 정합(reconcile-refund)으로 처리해 주세요.";
+
+    /**
+     * 어드민 환불 PortOne 취소 멱등 키. 같은 PG 상태(기취소 누적액)에서 같은 금액을 취소하는 재요청은 같은 키가 된다.
+     * 인자: paymentId, PG 기취소 누적액, 이번 취소액
+     */
+    public static final String PORTONE_CANCEL_IDEMPOTENCY_KEY_FMT = "mg-shop-refund-%s-c%d-a%d";
+
+    /** 어드민 전액 환불 PG 취소 임대 시간 기본값(ms) — {@code shop.admin-refund.pg-lease-ms} 미설정 시 */
+    public static final long DEFAULT_ADMIN_REFUND_PG_LEASE_MS = 120_000L;
+
     private ShopRefundConstants() {
         throw new UnsupportedOperationException("utility");
     }

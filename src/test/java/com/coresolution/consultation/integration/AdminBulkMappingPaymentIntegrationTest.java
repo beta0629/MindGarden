@@ -171,8 +171,8 @@ class AdminBulkMappingPaymentIntegrationTest {
         assertThat(boundaries).extracting(CallBoundary::call)
                 .contains("sendRefundCompleted", "dispatchRefundAutoCancelNotification");
         assertExternalCallsOutsideTransaction();
-        verify(portOneV2PaymentCancelService, never()).cancelPayment(any(), any(), any());
-        verify(portOneV2PaymentCancelService, never()).cancelPaymentAmount(any(), any(), any(), any());
+        verify(portOneV2PaymentCancelService, never()).cancelPayment(any(), any(), any(), any());
+        verify(portOneV2PaymentCancelService, never()).cancelPaymentAmount(any(), any(), any(), any(), any());
         verify(adminShopOrderRefundService, never()).refundPaidOrder(any(), any(), any());
     }
 

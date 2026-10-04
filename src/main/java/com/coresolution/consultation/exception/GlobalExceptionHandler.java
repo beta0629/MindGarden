@@ -425,6 +425,23 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
     }
 
+    /**
+     * 쇼핑 전액 환불 — 같은 주문 환불 진행 중 / 자동 재시도 불가 (PG 미호출).
+     */
+    @ExceptionHandler(ShopRefundInProgressException.class)
+    public ResponseEntity<ErrorResponse> handleShopRefundInProgress(
+            ShopRefundInProgressException e, HttpServletRequest request) {
+        log.warn("Shop refund in progress: path={}, orderPublicId={}",
+                request.getRequestURI(), e.getOrderPublicId());
+        ErrorResponse error = ErrorResponse.of(
+                e.getMessage(),
+                e.getErrorCode(),
+                HttpStatus.CONFLICT.value(),
+                request.getRequestURI(),
+                request.getMethod());
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
+    }
+
     private static boolean isEmailUniqueConstraint(String lowerMessage) {
         if (lowerMessage == null || lowerMessage.isBlank()) {
             return false;
@@ -496,6 +513,31 @@ public class GlobalExceptionHandler {
         body.put("method", request.getMethod());
 
         return ResponseEntity.status(HttpStatus.CONFLICT).body(body);
+    }
+
+    /**
+     * 환불 전표 미기록 — 매칭 변경은 롤백됐다. 관리자 문구(세율 설정 안내 등)만 내보낸다.
+     *
+     * @since 2026-10-04
+     */
+    @ExceptionHandler(RefundLedgerNotRecordedException.class)
+    public ResponseEntity<Map<String, Object>> handleRefundLedgerNotRecorded(
+            RefundLedgerNotRecordedException e, HttpServletRequest request) {
+        log.warn("[REFUND_LEDGER_NOT_RECORDED] mappingId={} cause={} path={}",
+                e.getMappingId(), e.getCause() != null ? e.getCause().getClass().getSimpleName() : null,
+                request.getRequestURI());
+
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("success", false);
+        body.put("code", RefundLedgerNotRecordedException.ERROR_CODE);
+        body.put("errorCode", RefundLedgerNotRecordedException.ERROR_CODE);
+        body.put("mappingId", e.getMappingId());
+        body.put("message", e.getMessage());
+        body.put("status", HttpStatus.UNPROCESSABLE_ENTITY.value());
+        body.put("timestamp", java.time.LocalDateTime.now().toString());
+        body.put("path", request.getRequestURI());
+        body.put("method", request.getMethod());
+        return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(body);
     }
 
     /**

@@ -65,7 +65,6 @@ import com.coresolution.consultation.constant.CardMerchantFeeConstants;
 import com.coresolution.consultation.constant.PaymentConstants;
 import com.coresolution.consultation.constant.PaymentMethodSsotConstants;
 import com.coresolution.consultation.constant.ShopClientOrderStatus;
-import com.coresolution.consultation.constant.ShopRefundConstants;
 import com.coresolution.consultation.constant.ShopSessionCountConstants;
 import com.coresolution.consultation.entity.erp.financial.FinancialTransaction;
 import com.coresolution.consultation.entity.ShopClientOrder;
@@ -74,8 +73,8 @@ import com.coresolution.consultation.repository.CommonCodeRepository;
 import com.coresolution.consultation.exception.AdminDeleteBlockedException;
 import com.coresolution.consultation.exception.EntityNotFoundException;
 import com.coresolution.consultation.exception.MappingAlreadyProcessedException;
+import com.coresolution.consultation.exception.RefundLedgerNotRecordedException;
 import com.coresolution.consultation.service.AdminRequestIdempotencyService;
-import com.coresolution.consultation.service.AdminShopOrderRefundService;
 import com.coresolution.consultation.repository.ClientRepository;
 import com.coresolution.consultation.repository.PartnerInstitutionRepository;
 import com.coresolution.consultation.repository.ConsultantClientMappingRepository;
@@ -149,7 +148,6 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import com.coresolution.core.security.PasswordService;
-import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.core.NestedExceptionUtils;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.access.AccessDeniedException;
@@ -273,9 +271,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
     private final SalaryTaxRateLookupService salaryTaxRateLookupService;
     private final PartnerInstitutionRepository partnerInstitutionRepository;
     private final InstitutionLinkContractRepository institutionLinkContractRepository;
-    /** Path B(쇼핑 PAID) 매핑 terminate/payment-cancel 위임 — 순환 의존 방지 ObjectProvider */
     private final ShopClientOrderLineRepository shopClientOrderLineRepository;
-    private final ObjectProvider<AdminShopOrderRefundService> adminShopOrderRefundServiceProvider;
     /** PG/PortOne Payment 조인 — ONLINE fee(D5)·PaymentSource 판정 */
     private final PaymentRepository paymentRepository;
 
@@ -1051,11 +1047,17 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 savedMapping.getId(),
                 savedMapping.getClient() != null ? savedMapping.getClient().getId() : null);
         } else {
-            try {
-                batchNotificationDispatchService.dispatchClientWelcomeFirst(savedMapping.getId());
-            } catch (Exception welcomeError) {
-                log.warn("CLIENT_WELCOME_FIRST 발송 실패(무시): mappingId={}, error={}",
-                    savedMapping.getId(), welcomeError.getMessage());
+            Long welcomeMappingId = savedMapping.getId();
+            Runnable welcomeNotice = () -> {
+                try {
+                    batchNotificationDispatchService.dispatchClientWelcomeFirst(welcomeMappingId);
+                } catch (Exception welcomeError) {
+                    log.warn("CLIENT_WELCOME_FIRST 발송 실패(무시): mappingId={}, error={}",
+                        welcomeMappingId, welcomeError.getMessage());
+                }
+            };
+            if (!DeferredExternalCalls.deferIfActive(welcomeNotice)) {
+                welcomeNotice.run();
             }
         }
         return savedMapping;
@@ -4073,7 +4075,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         AmountManagementService.AmountConsistencyResult consistency = 
             amountManagementService.checkAmountConsistency(mapping.getId());
         
-        if (!consistency.isConsistent()) {
+        if (consistency != null && !consistency.isConsistent()) {
             log.warn("⚠️ 부분 환불 시 금액 일관성 문제 감지: {}", consistency.getInconsistencyReason());
             log.warn("💡 권장사항: {}", consistency.getRecommendation());
         }
@@ -4143,19 +4145,18 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         
         com.coresolution.consultation.dto.FinancialTransactionResponse response = 
             financialTransactionService.createTransaction(request, null);
+        if (response == null || response.getId() == null) {
+            throw new IllegalStateException("부분 환불 전표 생성 결과가 없습니다: mappingId=" + mapping.getId());
+        }
         
-        try {
-            FinancialTransaction transaction = (tenantIdForPartial != null && !tenantIdForPartial.isEmpty() && response.getId() != null)
-                ? financialTransactionRepository.findByTenantIdAndId(tenantIdForPartial, response.getId()).orElse(null)
-                : null;
-            if (transaction != null) {
-                transaction.complete(); // 완료 상태로 변경
-                transaction.setApprovedAt(java.time.LocalDateTime.now());
-                financialTransactionRepository.save(transaction);
-                log.info("💚 부분 환불 거래 즉시 완료 처리: TransactionID={}", response.getId());
-            }
-        } catch (Exception e) {
-            log.error("부분 환불 거래 완료 처리 실패: {}", e.getMessage(), e);
+        FinancialTransaction transaction = (tenantIdForPartial != null && !tenantIdForPartial.isEmpty() && response.getId() != null)
+            ? financialTransactionRepository.findByTenantIdAndId(tenantIdForPartial, response.getId()).orElse(null)
+            : null;
+        if (transaction != null) {
+            transaction.complete(); // 완료 상태로 변경
+            transaction.setApprovedAt(java.time.LocalDateTime.now());
+            financialTransactionRepository.save(transaction);
+            log.info("💚 부분 환불 거래 즉시 완료 처리: TransactionID={}", response.getId());
         }
         
         // 부분 환불 시 매핑 notes/version은 부모 트랜잭션(partialRefundMapping)에서 한 번만 갱신함.
@@ -8006,11 +8007,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         String tenantId = getTenantId();
 
         // 원장 환불·결제 대기 취소는 행 잠금으로 읽어 동시 요청의 이중 환불을 막는다.
-        // Path B 는 PortOne 취소를 포함하므로 기존처럼 잠금 없이 읽는다 (주문 환불 SSOT 가 멱등 처리).
-        Optional<String> pathBOrderPublicId = findPathBShopOrderPublicIdForRefund(tenantId, id);
-        ConsultantClientMapping mapping = (pathBOrderPublicId.isPresent()
-                ? mappingRepository.findByTenantIdAndId(tenantId, id)
-                : mappingRepository.findByTenantIdAndIdForUpdate(tenantId, id))
+        ConsultantClientMapping mapping = mappingRepository.findByTenantIdAndIdForUpdate(tenantId, id)
                 .orElseThrow(() -> new RuntimeException(AdminServiceUserFacingMessages.MSG_MAPPING_NOT_FOUND));
         Hibernate.initialize(mapping.getConsultant());
         Hibernate.initialize(mapping.getClient());
@@ -8032,12 +8029,12 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             return;
         }
 
-        // Path B(쇼핑 PAID/REFUNDED 주문 라인): unusedFullVoid/INCOME cancel 금지.
-        // PortOne→reverse→EXPENSE fail-closed 는 AdminShopOrderRefundService.refundPaidOrder SSOT.
-        // 매핑 CANCELLED 전이 금지 — clinic이 rem reverse + paymentStatus REFUNDED(+SESSIONS_EXHAUSTED).
-        if (pathBOrderPublicId.isPresent()) {
-            terminatePathBShopMappingViaOrderRefund(tenantId, id, pathBOrderPublicId.get(), reason);
-            return;
+        // Path B(쇼핑 PAID/REFUNDED 주문 라인): PortOne 취소가 필요해 트랜잭션 밖 주문 환불
+        // (MappingTerminationService → AdminShopOrderRefundService.refundPaidOrder)로만 처리한다.
+        if (findPathBShopOrderPublicIdForRefund(tenantId, id).isPresent()) {
+            throw new MappingAlreadyProcessedException(id, null,
+                    MappingAlreadyProcessedException.Reason.SHOP_ORDER_REFUND_REQUIRED,
+                    AdminServiceUserFacingMessages.MSG_BULK_CANCEL_SHOP_ORDER_REFUND_REQUIRED);
         }
 
         int refundedSessions = mapping.getRemainingSessions();
@@ -8051,20 +8048,12 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 && alreadyPartialRefunded <= 0;
         long refundAmount = calculateRefundableAmount(mapping.getPackagePrice(), totalSessions,
                 resolveOriginalTotalSessions(mapping), refundedSessions, alreadyPartialRefunded);
-        final ConsultantClientMapping mappingForErp = mapping;
-        final int finalRefundedSessions = refundedSessions;
-        final long finalRefundAmount = refundAmount;
-        final String finalReason = reason;
-        String tenantIdForErp = getTenantIdFromMapping(mapping);
-        if (tenantIdForErp == null) tenantIdForErp = getTenantIdOrNull();
-        try {
-            runInNewTransaction(tenantIdForErp, () -> sendRefundToErp(
-                    mappingForErp, finalRefundedSessions, finalRefundAmount, finalReason, unusedFullVoid));
-        } catch (Exception e) {
-            log.error("❌ ERP 환불 데이터 전송 실패: MappingID={}", id, e);
-            throw new IllegalStateException(String.format(
-                    AdminServiceUserFacingMessages.MSG_ERP_REFUND_SEND_FAILED_FMT,
-                    e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName()), e);
+        // 환불 전표는 매칭 변경과 같은 트랜잭션에서 기록한다. 기록하지 못하면 매칭 변경까지 롤백(fail-closed).
+        if (unusedFullVoid || refundAmount > 0L) {
+            sendRefundToErp(mapping, refundedSessions, refundAmount, reason, unusedFullVoid);
+        } else {
+            log.info("환불할 금액 없음 — 환불 전표 생략: MappingID={}, remaining={}, alreadyPartialRefunded={}",
+                    id, refundedSessions, alreadyPartialRefunded);
         }
         
         // 유료 전액 취소 SSOT: CANCELLED + paymentStatus REFUNDED (TERMINATED는 이관·병합·자연종료용)
@@ -8129,6 +8118,26 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public Optional<String> findTerminationShopOrderPublicId(Long mappingId) {
+        String tenantId = getTenantId();
+        ConsultantClientMapping mapping = mappingRepository.findByTenantIdAndId(tenantId, mappingId)
+                .orElseThrow(() -> new RuntimeException(AdminServiceUserFacingMessages.MSG_MAPPING_NOT_FOUND));
+        String terminatedStatus = getMappingStatusCode(MappingStatusConstants.TERMINATED);
+        String cancelledStatus = getMappingStatusCode(MappingStatusConstants.CANCELLED);
+        if (isClosedMappingStatus(mapping.getStatus(), terminatedStatus, cancelledStatus)) {
+            throw new MappingAlreadyProcessedException(mappingId, null,
+                    MappingAlreadyProcessedException.Reason.ALREADY_CLOSED,
+                    AdminServiceUserFacingMessages.MSG_MAPPING_ALREADY_TERMINATED);
+        }
+        String pendingPaymentStatus = getMappingStatusCode(MappingStatusConstants.PENDING_PAYMENT);
+        if (mapping.getStatus() != null && mapping.getStatus().name().equals(pendingPaymentStatus)) {
+            return Optional.empty();
+        }
+        return findPathBShopOrderPublicIdForRefund(tenantId, mappingId);
+    }
+
+    @Override
     @Transactional(rollbackFor = Exception.class)
     public ConsultantClientMapping confirmPendingPayment(Long mappingId, String paymentMethod,
             String paymentReference, Long paymentAmount) {
@@ -8179,38 +8188,6 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             }
         }
         return Optional.empty();
-    }
-
-    /**
-     * Path B terminate/payment-cancel — 쇼핑 전액 환불 SSOT 위임.
-     *
-     * <p>매핑 CANCELLED 전이를 하지 않는다. {@link AdminShopOrderRefundService#refundPaidOrder} 가
-     * PortOne 취소 → 회기 reverse → EXPENSE(fail-closed) → paymentStatus REFUNDED 를 수행한다.</p>
-     *
-     * @param tenantId      테넌트 ID
-     * @param mappingId     매핑 ID (로그용)
-     * @param orderPublicId 쇼핑 주문 publicId
-     * @param reason        관리자 사유 (감사 로그; PG reasonCode 는 상수)
-     */
-    private void terminatePathBShopMappingViaOrderRefund(
-            String tenantId, Long mappingId, String orderPublicId, String reason) {
-        AdminShopOrderRefundService refundService = adminShopOrderRefundServiceProvider.getIfAvailable();
-        if (refundService == null) {
-            throw new IllegalStateException(
-                    "AdminShopOrderRefundService 미주입 — Path B 매핑 환불을 진행할 수 없습니다.");
-        }
-        String reasonCode = ShopRefundConstants.REASON_CUSTOMER_REQUEST;
-        log.info(
-                "🛒 Path B 매칭 종료 → 쇼핑 주문 환불 위임: mappingId={}, orderPublicId={}, reasonCode={}, reason={}",
-                mappingId,
-                orderPublicId,
-                reasonCode,
-                reason);
-        refundService.refundPaidOrder(tenantId, orderPublicId, reasonCode);
-        log.info(
-                "✅ Path B 매칭 종료(쇼핑 환불) 완료 — CANCELLED 미전이: mappingId={}, orderPublicId={}",
-                mappingId,
-                orderPublicId);
     }
 
     /**
@@ -8549,7 +8526,8 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         log.info("🔧 부분 환불 처리 시작: ID={}, 환불회기={}, 사유={}", id, refundSessions, reason);
         
         String tenantId = getTenantId();
-        ConsultantClientMapping mapping = mappingRepository.findByTenantIdAndId(tenantId, id)
+        // 누적 환불 상한(기환불 합계 조회 → 전표 기록)을 동시 요청에서도 지키도록 매칭 행을 잠근다.
+        ConsultantClientMapping mapping = mappingRepository.findByTenantIdAndIdForUpdate(tenantId, id)
                 .orElseThrow(() -> new RuntimeException(AdminServiceUserFacingMessages.MSG_MAPPING_NOT_FOUND));
         Hibernate.initialize(mapping.getConsultant());
         Hibernate.initialize(mapping.getClient());
@@ -8634,36 +8612,20 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         log.info("💰 부분 환불 금액 계산 완료: 환불회기={}, 계산방식={}, 환불금액={}원", 
                 refundSessions, calculationMethod, refundAmount);
         
-        final ConsultantClientMapping mappingForRefund = mapping;
-        final int finalRefundSessions = refundSessions;
-        final long finalRefundAmount = refundAmount;
-        final String finalReason = reason;
-        String tenantIdForErp = getTenantIdFromMapping(mapping);
-        if (tenantIdForErp == null) tenantIdForErp = getTenantIdOrNull();
+        // 부분환불: ERP 페이로드 전송 + 부분 환불 전표(단일 write + 멱등)를 매칭 변경과 같은 트랜잭션에서 기록한다.
+        // 전표를 기록하지 못하면 회기 차감까지 롤백(fail-closed). 전액 CONSULTATION_REFUND FT 는 생성하지 않음.
         try {
-            // 부분환불: ERP 페이로드만 전송. 전액 CONSULTATION_REFUND FT 는 생성하지 않음
-            // (createPartialConsultationRefundTransaction 단일 write + existsBy 멱등).
-            runInNewTransaction(tenantIdForErp, () -> {
-                boolean erpSent = sendRefundPayloadToErp(
-                        mappingForRefund, finalRefundSessions, finalRefundAmount, finalReason, false);
-                if (erpSent) {
-                    log.info("💚 부분 환불 ERP 전송 성공: MappingID={}, RefundSessions={}, RefundAmount={}",
-                            id, finalRefundSessions, finalRefundAmount);
-                } else {
-                    log.warn("⚠️ 부분 환불 ERP 전송 실패: MappingID={}", id);
-                }
-            });
-        } catch (Exception e) {
-            log.error("❌ ERP 환불 데이터 전송 실패: MappingID={}", id, e);
+            if (!sendRefundPayloadToErp(mapping, refundSessions, refundAmount, reason, false)) {
+                throw new IllegalStateException("ERP 부분 환불 페이로드 전송 실패");
+            }
+            createPartialConsultationRefundTransaction(mapping, refundSessions, refundAmount, reason);
+        } catch (RuntimeException e) {
+            log.error("❌ 부분 환불 전표 기록 실패(매칭 변경 롤백): MappingID={}, cause={}",
+                    id, e.getClass().getSimpleName(), e);
+            throw RefundLedgerNotRecordedException.of(id, e);
         }
-        
-        try {
-            runInNewTransaction(tenantIdForErp, () -> createPartialConsultationRefundTransaction(mappingForRefund, finalRefundSessions, finalRefundAmount, finalReason));
-            log.info("💚 부분 환불 거래 자동 생성 완료: MappingID={}, RefundSessions={}, RefundAmount={}", 
+        log.info("💚 부분 환불 거래 자동 생성 완료: MappingID={}, RefundSessions={}, RefundAmount={}",
                 id, refundSessions, refundAmount);
-        } catch (Exception e) {
-            log.error("❌ 부분 환불 거래 자동 생성 실패: {}", e.getMessage(), e);
-        }
         
         mapping.setRemainingSessions(mapping.getRemainingSessions() - refundSessions);
         mapping.setTotalSessions(mapping.getTotalSessions() - refundSessions);
@@ -8698,21 +8660,26 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             notifyRefundAutoCancel4Channels(mapping, tenantId, cancelledScheduleCount);
         }
         
-        try {
-            User client = mapping.getClient();
-            if (client != null) {
-                log.info("📤 부분 환불 완료 알림 발송 시작: 내담자={}", client.getName());
-                
-                boolean notificationSent = notificationService.sendRefundCompleted(client, refundSessions, refundAmount);
-                
-                if (notificationSent) {
-                    log.info("✅ 부분 환불 완료 알림 발송 성공: 내담자={}", client.getName());
-                } else {
-                    log.warn("⚠️ 부분 환불 완료 알림 발송 실패: 내담자={}", client.getName());
+        User refundClient = mapping.getClient();
+        long refundAmountForNotice = refundAmount;
+        Runnable partialRefundNotice = () -> {
+            try {
+                if (refundClient != null) {
+                    log.info("📤 부분 환불 완료 알림 발송 시작: MappingID={}", id);
+                    boolean notificationSent = notificationService.sendRefundCompleted(
+                            refundClient, refundSessions, refundAmountForNotice);
+                    if (notificationSent) {
+                        log.info("✅ 부분 환불 완료 알림 발송 성공: MappingID={}", id);
+                    } else {
+                        log.warn("⚠️ 부분 환불 완료 알림 발송 실패: MappingID={}", id);
+                    }
                 }
+            } catch (Exception e) {
+                log.error("❌ 부분 환불 완료 알림 발송 중 오류: MappingID={}", id, e);
             }
-        } catch (Exception e) {
-            log.error("❌ 부분 환불 완료 알림 발송 중 오류: MappingID={}", id, e);
+        };
+        if (!DeferredExternalCalls.deferIfActive(partialRefundNotice)) {
+            partialRefundNotice.run();
         }
         
         log.info("✅ 부분 환불 완료: ID={}, 환불회기={}, 환불금액={}, 남은회기={}, 총회기={}, 상담사={}, 내담자={}", 
@@ -9687,29 +9654,25 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
     private void sendRefundToErp(ConsultantClientMapping mapping, int refundedSessions, long refundAmount,
             String reason, boolean unusedFullVoid) {
         try {
-            boolean success = sendRefundPayloadToErp(mapping, refundedSessions, refundAmount, reason, unusedFullVoid);
-            
-            if (success) {
-                log.info("✅ ERP 환불 데이터 전송 성공: MappingID={}, Amount={}", mapping.getId(), refundAmount);
-                if (unusedFullVoid) {
-                    int cancelled = financialTransactionService.cancelRelatedPostedIncomeTransactions(
-                            mapping.getId(),
-                            FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING);
-                    log.info("🛑 미사용 전액 무효: MappingID={}, CANCELLED INCOME={}건, EXPENSE 환불 스킵",
-                            mapping.getId(), cancelled);
-                    return;
-                }
-                createConsultationRefundTransaction(mapping, refundedSessions, refundAmount, reason);
-                log.info("💚 환불 거래 자동 생성 완료: MappingID={}, RefundAmount={}", 
-                    mapping.getId(), refundAmount);
-            } else {
-                log.warn("⚠️ ERP 환불 데이터 전송 실패: MappingID={}", mapping.getId());
+            if (!sendRefundPayloadToErp(mapping, refundedSessions, refundAmount, reason, unusedFullVoid)) {
+                throw new IllegalStateException("ERP 환불 페이로드 전송 실패");
             }
-            
-        } catch (Exception e) {
-            log.error("❌ ERP 환불 데이터 전송 중 오류: MappingID={}", mapping.getId(), e);
-            throw new RuntimeException(String.format(
-                    AdminServiceUserFacingMessages.MSG_ERP_REFUND_SEND_FAILED_FMT, e.getMessage()));
+            log.info("✅ ERP 환불 데이터 전송 성공: MappingID={}, Amount={}", mapping.getId(), refundAmount);
+            if (unusedFullVoid) {
+                int cancelled = financialTransactionService.cancelRelatedPostedIncomeTransactions(
+                        mapping.getId(),
+                        FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING);
+                log.info("🛑 미사용 전액 무효: MappingID={}, CANCELLED INCOME={}건, EXPENSE 환불 스킵",
+                        mapping.getId(), cancelled);
+                return;
+            }
+            createConsultationRefundTransaction(mapping, refundedSessions, refundAmount, reason);
+            log.info("💚 환불 거래 자동 생성 완료: MappingID={}, RefundAmount={}",
+                    mapping.getId(), refundAmount);
+        } catch (RuntimeException e) {
+            log.error("❌ 환불 전표 기록 실패(매칭 변경 롤백): MappingID={}, cause={}",
+                    mapping.getId(), e.getClass().getSimpleName(), e);
+            throw RefundLedgerNotRecordedException.of(mapping.getId(), e);
         }
     }
 
@@ -9755,17 +9718,6 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         return sendToErpSystem(erpUrl, erpData, headers);
     }
 
-    /**
-     * ERP 환불 전송 (부분 환불 등 — EXPENSE 환불 경로, INCOME 유지).
-     *
-     * @param mapping          대상 매핑
-     * @param refundedSessions 환불 회기
-     * @param refundAmount     환불 금액
-     * @param reason           사유
-     */
-    private void sendRefundToErp(ConsultantClientMapping mapping, int refundedSessions, long refundAmount, String reason) {
-        sendRefundToErp(mapping, refundedSessions, refundAmount, reason, false);
-    }
 
      /**
      * ERP 시스템으로 실제 데이터 전송

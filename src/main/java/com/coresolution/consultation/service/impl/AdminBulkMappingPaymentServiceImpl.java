@@ -22,15 +22,15 @@ import com.coresolution.core.context.TenantContextHolder;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 /**
  * 관리자 일괄 매칭 결제 확인·취소 구현.
  *
- * <p>이 빈 자체는 트랜잭션을 열지 않는다({@code NOT_SUPPORTED}). 매칭마다 {@link AdminService} 프록시를 통해
- * 독립 트랜잭션으로 처리하고, 그 안에서 등록된 외부 알림은 {@link DeferredExternalCalls} 로 커밋 뒤에 보낸다.
+ * <p>이 빈에는 트랜잭션 선언을 두지 않는다. {@code NOT_SUPPORTED} 도 동기화 구간을 열어 조회 중 바인딩된
+ * EntityManager 가 커넥션을 구간 끝까지 쥐므로, 외부 알림 시점에 커넥션 점유가 0 이 되지 않는다.
+ * 매칭마다 {@link AdminService} 프록시를 통해 독립 트랜잭션으로 처리하고, 그 안에서 등록된 외부 알림은
+ * {@link DeferredExternalCalls} 로 커밋·커넥션 반환 뒤에 보낸다.
  * 일괄 취소는 원장(재무 전표) 환불만 하며 PG(PortOne) 를 호출하지 않는다 — 쇼핑 주문 결제 매칭은 사전 검증에서 거부.</p>
  *
  * @author CoreSolution
@@ -39,7 +39,6 @@ import org.springframework.util.StringUtils;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-@Transactional(propagation = Propagation.NOT_SUPPORTED)
 public class AdminBulkMappingPaymentServiceImpl implements AdminBulkMappingPaymentService {
 
     private static final Pattern DIGITS = Pattern.compile("\\d{1,18}");

@@ -6,6 +6,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
@@ -15,16 +16,20 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import com.coresolution.consultation.constant.SessionConstants;
+import com.coresolution.consultation.constant.admin.AdminBulkMappingConstants;
+import com.coresolution.consultation.constant.admin.AdminServiceUserFacingMessages;
 import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.dto.ConsultantClientMappingResponse;
 import com.coresolution.consultation.dto.ConsultantRegistrationRequest;
 import com.coresolution.consultation.dto.ConsultantTransferRequest;
+import com.coresolution.consultation.dto.admin.BulkMappingPaymentResult;
 import com.coresolution.consultation.entity.ConsultantClientMapping;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.exception.UnauthorizedException;
 import com.coresolution.consultation.repository.ConsultantClientMappingRepository;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.repository.UserSocialAccountRepository;
+import com.coresolution.consultation.service.AdminBulkMappingPaymentService;
 import com.coresolution.consultation.service.AdminService;
 import com.coresolution.consultation.service.ClientStatsService;
 import com.coresolution.consultation.service.ConsultantStatsService;
@@ -35,8 +40,11 @@ import com.coresolution.consultation.service.support.ResourceOwnerAccessGuard;
 import com.coresolution.core.constant.OpsTenantConstants;
 import com.coresolution.core.constants.SecurityRoleConstants;
 import com.coresolution.core.context.TenantContextHolder;
+import com.coresolution.core.dto.ApiResponse;
 import com.coresolution.core.security.OpsAccessGuard;
 import com.coresolution.core.service.impl.OnboardingServiceImpl;
+import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -100,6 +108,7 @@ class AdminControllerWriteAndSingleReadRoleGuardTest {
     }
 
     @Mock private AdminService adminService;
+    @Mock private AdminBulkMappingPaymentService adminBulkMappingPaymentService;
     @Mock private RealTimeStatisticsService realTimeStatisticsService;
     @Mock private ConsultantStatsService consultantStatsService;
     @Mock private ClientStatsService clientStatsService;
@@ -154,6 +163,11 @@ class AdminControllerWriteAndSingleReadRoleGuardTest {
         when(clientStatsService.getClientWithStats(anyString(), anyLong())).thenReturn(new HashMap<>());
         when(roleCommonCodeAuthorizationService.isAdminOrStaffRoleFromCommonCode(any())).thenReturn(true);
         when(onboardingService.addDefaultTenantCommonCodes(anyString(), anyString())).thenReturn(0);
+        BulkMappingPaymentResult completed = BulkMappingPaymentResult.builder()
+                .processedMappingIds(List.of(MAPPING_ID)).skippedMappingIds(List.of())
+                .notProcessedMappingIds(List.of()).build();
+        when(adminBulkMappingPaymentService.confirmMappings(any(), any(), any())).thenReturn(completed);
+        when(adminBulkMappingPaymentService.cancelMappings(any(), any())).thenReturn(completed);
     }
 
     @AfterEach
@@ -200,7 +214,9 @@ class AdminControllerWriteAndSingleReadRoleGuardTest {
         verify(adminService, never()).extendSessions(anyLong(), any(), any(), any());
         verify(adminService, never()).updateConsultantGrade(anyLong(), anyString());
         verify(adminService, never()).deleteConsultantWithTransfer(anyLong(), anyLong(), any());
-        verify(adminService, times(2)).confirmPayment(anyLong(), any(), any(), any());
+        verify(adminService, times(1)).confirmPayment(anyLong(), any(), any(), any());
+        verify(adminBulkMappingPaymentService).confirmMappings(List.of(MAPPING_ID), "CARD", null);
+        verify(adminBulkMappingPaymentService, never()).cancelMappings(any(), any());
         verify(adminService, never()).partialRefundMapping(anyLong(), anyInt(), any());
         verify(adminService, never()).terminateMapping(anyLong(), any());
     }
@@ -216,6 +232,9 @@ class AdminControllerWriteAndSingleReadRoleGuardTest {
         verify(adminService).partialRefundMapping(MAPPING_ID, 1, "reason");
         verify(adminService).terminateMapping(MAPPING_ID, "reason");
         verify(adminService).deleteConsultantWithTransfer(CONSULTANT_ID, NEW_CONSULTANT_ID, "reason");
+        verify(adminBulkMappingPaymentService).confirmMappings(List.of(MAPPING_ID), "CARD", null);
+        verify(adminBulkMappingPaymentService).cancelMappings(List.of(MAPPING_ID),
+                AdminServiceUserFacingMessages.DEFAULT_MAPPING_NOTE_REASON_ADMIN_REQUEST);
     }
 
     @Test
@@ -241,16 +260,74 @@ class AdminControllerWriteAndSingleReadRoleGuardTest {
     }
 
     @Test
-    @DisplayName("일괄 결제 확인·취소 — 목록 아님·빈 목록·숫자 아님·다른 기관 id 섞임은 403, 서비스 호출 없음")
-    void bulkPayment_rejectsMalformedOrForeignIds() {
+    @DisplayName("일괄 결제 확인·취소 — 목록 아님·빈 목록·형식 오류·최대 개수 초과는 400, 서비스 호출 없음")
+    void bulkPayment_rejectsMalformedIds() {
         MockHttpSession admin = sessionOf(UserRole.ADMIN, TENANT_ID);
-        for (Object ids : new Object[] {null, "1", List.of(), List.of("x"), List.of(MAPPING_ID, FOREIGN_MAPPING_ID)}) {
+        List<Long> tooMany = new ArrayList<>();
+        for (long i = 0; i <= AdminBulkMappingConstants.MAX_MAPPING_IDS_PER_REQUEST; i++) {
+            tooMany.add(MAPPING_ID);
+        }
+        Object[] malformed = {null, "1", List.of(), List.of("x"), List.of(0), List.of(-1L), List.of(1.5),
+            List.of(true), List.of("1e3"), List.of(new BigInteger("9223372036854775808")), tooMany};
+        for (Object ids : malformed) {
             Map<String, Object> body = new HashMap<>();
             body.put("mappingIds", ids);
+            assertThatThrownBy(() -> controller.confirmMappingPayment(body, admin)).as("confirm " + ids)
+                    .isInstanceOf(IllegalArgumentException.class);
+            assertThatThrownBy(() -> controller.cancelMappingPayment(body, admin)).as("cancel " + ids)
+                    .isInstanceOf(IllegalArgumentException.class);
+        }
+        assertNoServiceCalls();
+    }
+
+    @Test
+    @DisplayName("일괄 결제 확인·취소 — 다른 기관·없는 id 가 하나라도 섞이면 요청 전체 403, 서비스 호출 없음")
+    void bulkPayment_foreignOrUnknownIdRejectsWholeRequest() {
+        MockHttpSession admin = sessionOf(UserRole.ADMIN, TENANT_ID);
+        for (List<Long> ids : List.of(List.of(MAPPING_ID, FOREIGN_MAPPING_ID), List.of(FOREIGN_MAPPING_ID, MAPPING_ID))) {
+            Map<String, Object> body = Map.of("mappingIds", ids, "paymentMethod", "CARD");
             assertResourceDenied("confirm " + ids, () -> controller.confirmMappingPayment(body, admin));
             assertResourceDenied("cancel " + ids, () -> controller.cancelMappingPayment(body, admin));
         }
         assertNoServiceCalls();
+    }
+
+    @Test
+    @DisplayName("일괄 결제 — 역할 검사가 형식 검사보다 먼저: 내담자가 잘못된 본문을 보내도 403(400 아님)")
+    void bulkPayment_roleCheckedBeforeFormat() {
+        Map<String, Object> body = new HashMap<>();
+        body.put("mappingIds", List.of("x"));
+        assertResourceDenied("client confirm", () -> controller.confirmMappingPayment(body,
+                sessionOf(UserRole.CLIENT, TENANT_ID)));
+        assertResourceDenied("staff cancel", () -> controller.cancelMappingPayment(body,
+                sessionOf(UserRole.STAFF, TENANT_ID)));
+        assertNoServiceCalls();
+    }
+
+    @Test
+    @DisplayName("일괄 결제 — JSON 정수(Integer)·Long·숫자 문자열 id 허용, 같은 id 중복은 한 번만 서비스에 전달")
+    void bulkPayment_acceptsNumericVariants_dedupes() {
+        MockHttpSession admin = sessionOf(UserRole.ADMIN, TENANT_ID);
+        List<Object> ids = List.of(MAPPING_ID.intValue(), MAPPING_ID, String.valueOf(MAPPING_ID));
+        assertOk("confirm", controller.confirmMappingPayment(
+                Map.of("mappingIds", ids, "paymentMethod", "CARD", "amount", 1000), admin));
+        assertOk("cancel", controller.cancelMappingPayment(Map.of("mappingIds", ids), admin));
+        verify(adminBulkMappingPaymentService).confirmMappings(List.of(MAPPING_ID), "CARD", 1000);
+        verify(adminBulkMappingPaymentService).cancelMappings(eq(List.of(MAPPING_ID)), any());
+    }
+
+    @Test
+    @DisplayName("일괄 처리 중 실패로 중단되면 409 + 처리·미처리 목록 (성공 응답 아님)")
+    void bulkPayment_stoppedOnFailure_conflict() {
+        when(adminBulkMappingPaymentService.cancelMappings(any(), any())).thenReturn(BulkMappingPaymentResult.builder()
+                .processedMappingIds(List.of()).skippedMappingIds(List.of()).failedMappingId(MAPPING_ID)
+                .notProcessedMappingIds(List.of()).build());
+        ResponseEntity<?> response = controller.cancelMappingPayment(Map.of("mappingIds", List.of(MAPPING_ID)),
+                sessionOf(UserRole.ADMIN, TENANT_ID));
+        assertThat(response.getStatusCode().value()).isEqualTo(409);
+        ApiResponse<?> body = (ApiResponse<?>) response.getBody();
+        assertThat(body).isNotNull();
+        assertThat(body.isSuccess()).isFalse();
     }
 
     @Test
@@ -373,8 +450,8 @@ class AdminControllerWriteAndSingleReadRoleGuardTest {
     }
 
     private void assertNoServiceCalls() {
-        verifyNoInteractions(adminService, realTimeStatisticsService, consultantStatsService, clientStatsService,
-                userSocialAccountRepository, onboardingService);
+        verifyNoInteractions(adminService, adminBulkMappingPaymentService, realTimeStatisticsService,
+                consultantStatsService, clientStatsService, userSocialAccountRepository, onboardingService);
     }
 
     private static void assertResourceDenied(String name, Runnable call) {

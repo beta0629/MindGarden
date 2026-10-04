@@ -24,6 +24,7 @@
  * @since 2025-11-20
  */
 
+import logger from './logger';
 import { requestPortOnePayment } from './portonePayment';
 
 // ============================================
@@ -183,7 +184,7 @@ class PaymentGatewaySdk {
  */
 class TestPaymentGatewaySdk extends PaymentGatewaySdk {
   async init(options) {
-    console.log('[Test Mode] PG SDK 초기화 (모의)');
+    logger.debug('[Test Mode] PG SDK 초기화 (모의)');
   }
 
   async createToken(cardInfo) {
@@ -219,7 +220,7 @@ class TestPaymentGatewaySdk extends PaymentGatewaySdk {
   }
 
   async requestBillingAuth(params) {
-    console.log('[Test Mode] 자동결제 등록 시뮬레이션:', params);
+    logger.debug('[Test Mode] 자동결제 등록 시뮬레이션');
     // 테스트 모드에서는 실제 리다이렉트 없이 시뮬레이션
     return Promise.resolve();
   }
@@ -271,7 +272,7 @@ class TossPaymentGatewaySdk extends PaymentGatewaySdk {
     }
 
     this.tossPayments = window.TossPayments(this.clientKey);
-    console.log('[TossPayments] SDK 초기화 완료');
+    logger.debug('[TossPayments] SDK 초기화 완료');
   }
 
   async createToken(cardInfo) {

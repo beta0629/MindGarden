@@ -1,3 +1,4 @@
+import logger from '../../utils/logger';
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import PropTypes from 'prop-types';
 import UnifiedLoading from '../../components/common/UnifiedLoading';
@@ -238,7 +239,7 @@ const ClientComprehensiveManagement = ({ embedded = false, initialOpenUserId = n
             
             setUserStatusOptions(uniqueStatusCodes);
             
-            console.log('공통 코드 로드 완료:', {
+            logger.debug('공통 코드 로드 완료:', {
                 status: uniqueStatusCodes.length,
                 grade: userGradeCodes?.length || 0,
                 originalCount: userStatusCodes?.length || 0,
@@ -263,10 +264,10 @@ const ClientComprehensiveManagement = ({ embedded = false, initialOpenUserId = n
     const loadClients = useCallback(async() => {
         setLoading(true);
         try {
-            console.log('🔄 내담자 목록 로딩 시작 (통합 API)...');
+            logger.debug('🔄 내담자 목록 로딩 시작 (통합 API)...');
             
             const clientsList = await getAllClientsWithStats();
-            console.log('📊 통합 API 응답:', clientsList);
+            logger.debug('📊 통합 API 응답:', clientsList);
             
             if (clientsList && clientsList.length > 0) {
                 const clientsData = clientsList.map(item => {
@@ -313,7 +314,7 @@ const ClientComprehensiveManagement = ({ embedded = false, initialOpenUserId = n
                 });
                 
                 setClients(clientsData);
-                console.log('✅ 내담자 목록 설정 완료 (통합 API):', clientsData.length, '명');
+                logger.debug('✅ 내담자 목록 설정 완료 (통합 API):', clientsData.length, '명');
             } else {
                 console.warn('⚠️ 내담자 데이터 없음');
                 setClients([]);
@@ -331,7 +332,7 @@ const ClientComprehensiveManagement = ({ embedded = false, initialOpenUserId = n
     const loadConsultants = useCallback(async() => {
         try {
             const response = await apiGet(API_ENDPOINTS.ADMIN.CONSULTANTS.LIST);
-            console.log('📊 상담사 목록 응답:', response);
+            logger.debug('📊 상담사 목록 응답:', response);
             
             if (response && response.success) {
                 const consultantsList = response.data?.consultants || response.data || [];
@@ -349,7 +350,7 @@ const ClientComprehensiveManagement = ({ embedded = false, initialOpenUserId = n
     const loadMappings = useCallback(async() => {
         try {
             const response = await adminMappingsListGet();
-            console.log('📊 매칭 정보 응답:', response);
+            logger.debug('📊 매칭 정보 응답:', response);
             // apiGet이 401/404 시 null 반환 → 총 매칭 0건으로 표시됨. 원인 추적용 로그.
             if (response == null) {
                 console.warn('⚠️ 매칭 API 응답 없음 (401/404 또는 리다이렉트).');
@@ -363,7 +364,7 @@ const ClientComprehensiveManagement = ({ embedded = false, initialOpenUserId = n
             }
             setMappings(list);
             if (list.length > 0) {
-                console.log('✅ 매칭 정보 설정:', list.length, '건');
+                logger.debug('✅ 매칭 정보 설정:', list.length, '건');
             }
         } catch (error) {
             console.error('매칭 정보 로드 실패:', error);
@@ -373,15 +374,15 @@ const ClientComprehensiveManagement = ({ embedded = false, initialOpenUserId = n
 
     const loadConsultations = useCallback(async() => {
         try {
-            console.log('🔄 상담 이력 로드 시작...');
+            logger.debug('🔄 상담 이력 로드 시작...');
             const response = await apiGet(API_ADMIN_CONSULTATIONS);
-            console.log('📊 상담 이력 응답:', response);
+            logger.debug('📊 상담 이력 응답:', response);
             
             if (Array.isArray(response)) {
-                console.log('✅ 상담 이력 배열로 처리:', response.length, '건');
+                logger.debug('✅ 상담 이력 배열로 처리:', response.length, '건');
                 setConsultations(response);
             } else if (response && response.success) {
-                console.log('✅ 상담 이력 성공 응답:', response.data?.length || 0, '건');
+                logger.debug('✅ 상담 이력 성공 응답:', response.data?.length || 0, '건');
                 setConsultations(response.data || []);
             } else {
                 console.warn('⚠️ 상담 이력 응답 실패:', response);
@@ -390,7 +391,7 @@ const ClientComprehensiveManagement = ({ embedded = false, initialOpenUserId = n
         } catch (error) {
             console.error('❌ 상담 이력 로드 실패:', error);
             if (error.message && error.message.includes('권한')) {
-                console.log('⚠️ 상담 이력 조회 권한이 없습니다. 빈 배열로 처리합니다.');
+                logger.debug('⚠️ 상담 이력 조회 권한이 없습니다. 빈 배열로 처리합니다.');
             }
             setConsultations([]);
         }
@@ -614,12 +615,12 @@ const ClientComprehensiveManagement = ({ embedded = false, initialOpenUserId = n
         if (!passwordResetClient) return;
 
         try {
-            console.log('🔑 내담자 비밀번호 초기화 시작:', passwordResetClient.id);
+            logger.debug('🔑 내담자 비밀번호 초기화 시작:', passwordResetClient.id);
             
             const endpoint = `/api/v1/admin/user-management/${passwordResetClient.id}/reset-password`;
             const response = await StandardizedApi.put(endpoint, { newPassword });
             
-            console.log('✅ 비밀번호 초기화 응답:', response);
+            logger.debug('✅ 비밀번호 초기화 응답:', response);
             
             if (response && (response.success !== false)) {
                 showSuccess(t('admin:client.success.passwordReset'));
@@ -1045,7 +1046,7 @@ const ClientComprehensiveManagement = ({ embedded = false, initialOpenUserId = n
                         setFormData={setFormData}
                         onClose={handleCloseModal}
                         onSave={(data) => {
-                            console.log('🔘 내담자 저장 클릭 (onSave 호출)', { modalType, editingClientId: editingClient?.id, hasData: !!data });
+                            logger.debug('🔘 내담자 저장 클릭 (onSave 호출)', { modalType, editingClientId: editingClient?.id, hasData: !!data });
                             const handleSave = async() => {
                                 if (modalType === 'view') return;
                                 // 모달 제출 시점의 최신 폼 데이터(data) 우선 사용. (상담사는 formData 직접 전달과 동일)
@@ -1133,9 +1134,7 @@ const ClientComprehensiveManagement = ({ embedded = false, initialOpenUserId = n
                                     }
                                     let response;
                                     if (modalType === 'create') {
-                                        console.log('🔧 내담자 등록 시작:', { ...payload, profileImageUrl: payload.profileImageUrl ? '(base64)' : undefined });
                                         response = await StandardizedApi.post(API_ADMIN_CLIENTS, payload);
-                                        console.log('✅ 내담자 등록 응답:', response);
                                         if (!response) {
                                             throw new Error(i18n.t('error:admin.ClientComprehensiveManagement.t_740a4e2f'));
                                         }
@@ -1150,9 +1149,7 @@ const ClientComprehensiveManagement = ({ embedded = false, initialOpenUserId = n
                                             showError(idErr);
                                             return;
                                         }
-                                        console.log('🔧 내담자 수정 요청:', { id: editingClient.id, payload });
                                         response = await StandardizedApi.put(`/api/v1/admin/clients/${editingClient.id}`, payload);
-                                        console.log('✅ 내담자 수정 응답:', response);
                                         const success = response != null && (response.success === true || response.id != null);
                                         if (!success) {
                                             throw new Error(response?.message || '수정에 실패했습니다.');

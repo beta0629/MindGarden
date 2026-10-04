@@ -9,6 +9,7 @@
  * @since 2025-12-06
  */
 
+import logger from './logger';
 import { apiGet, apiPost, apiPostFormData, apiPut, apiPatch, apiDelete } from './ajax';
 import { getDefaultApiHeadersAsync } from './apiHeaders';
 import { API_ERROR_MESSAGES, getApiBaseUrl } from '../constants/api';
@@ -51,11 +52,11 @@ class StandardizedApi {
                 headers: { ...headers, ...(options.headers || {}) }
             };
             
-            console.log('📤 [표준화 API] GET', endpoint, { params, tenantId: headers['X-Tenant-Id'] });
+            logger.debug('📤 [표준화 API] GET', endpoint, { params, tenantId: headers['X-Tenant-Id'] });
             
             const response = await apiGet(endpoint, params, finalOptions);
             
-            console.log('✅ [표준화 API] GET 성공', endpoint);
+            logger.debug('✅ [표준화 API] GET 성공', endpoint);
             return response;
         } catch (error) {
             console.error('❌ [표준화 API] GET 실패:', endpoint, error);
@@ -83,11 +84,11 @@ class StandardizedApi {
                 headers: { ...headers, ...(optionHeaders || {}) }
             };
             
-            console.log('📤 [표준화 API] POST', endpoint, { data, tenantId: headers['X-Tenant-Id'] });
+            logger.debug('📤 [표준화 API] POST', endpoint, { tenantId: headers['X-Tenant-Id'] });
             
             const response = await apiPost(endpoint, data, finalOptions);
             
-            console.log('✅ [표준화 API] POST 성공', endpoint);
+            logger.debug('✅ [표준화 API] POST 성공', endpoint);
             return response;
         } catch (error) {
             console.error('❌ [표준화 API] POST 실패:', endpoint, error);
@@ -112,11 +113,11 @@ class StandardizedApi {
                 headers: { ...headers, ...(options.headers || {}) }
             };
             
-            console.log('📤 [표준화 API] PUT', endpoint, { data, tenantId: headers['X-Tenant-Id'] });
+            logger.debug('📤 [표준화 API] PUT', endpoint, { tenantId: headers['X-Tenant-Id'] });
             
             const response = await apiPut(endpoint, data, finalOptions);
             
-            console.log('✅ [표준화 API] PUT 성공', endpoint);
+            logger.debug('✅ [표준화 API] PUT 성공', endpoint);
             return response;
         } catch (error) {
             console.error('❌ [표준화 API] PUT 실패:', endpoint, error);
@@ -141,11 +142,11 @@ class StandardizedApi {
                 headers: { ...headers, ...(options.headers || {}) }
             };
 
-            console.log('📤 [표준화 API] PATCH', endpoint, { data, tenantId: headers['X-Tenant-Id'] });
+            logger.debug('📤 [표준화 API] PATCH', endpoint, { tenantId: headers['X-Tenant-Id'] });
 
             const response = await apiPatch(endpoint, data, finalOptions);
 
-            console.log('✅ [표준화 API] PATCH 성공', endpoint);
+            logger.debug('✅ [표준화 API] PATCH 성공', endpoint);
             return response;
         } catch (error) {
             console.error('❌ [표준화 API] PATCH 실패:', endpoint, error);
@@ -175,11 +176,11 @@ class StandardizedApi {
                 ? endpoint
                 : `${getApiBaseUrl()}${endpoint}`;
             
-            console.log('📤 [표준화 API] POST FormData', endpoint, { tenantId: headers['X-Tenant-Id'] });
+            logger.debug('📤 [표준화 API] POST FormData', endpoint, { tenantId: headers['X-Tenant-Id'] });
             
             const response = await apiPostFormData(url, formData, finalOptions);
             
-            console.log('✅ [표준화 API] POST FormData 성공', endpoint);
+            logger.debug('✅ [표준화 API] POST FormData 성공', endpoint);
             return response;
         } catch (error) {
             console.error('❌ [표준화 API] POST FormData 실패:', endpoint, error);
@@ -203,11 +204,11 @@ class StandardizedApi {
                 headers: { ...headers, ...(options.headers || {}) }
             };
             
-            console.log('📤 [표준화 API] DELETE', endpoint, { tenantId: headers['X-Tenant-Id'] });
+            logger.debug('📤 [표준화 API] DELETE', endpoint, { tenantId: headers['X-Tenant-Id'] });
             
             const response = await apiDelete(endpoint, finalOptions);
             
-            console.log('✅ [표준화 API] DELETE 성공', endpoint);
+            logger.debug('✅ [표준화 API] DELETE 성공', endpoint);
             return response;
         } catch (error) {
             console.error('❌ [표준화 API] DELETE 실패:', endpoint, error);

@@ -38,6 +38,7 @@ import com.coresolution.consultation.service.PlSqlSalaryManagementService;
 import com.coresolution.consultation.service.SalaryExportService;
 import com.coresolution.consultation.service.SalaryManagementService;
 import com.coresolution.consultation.service.SalaryScheduleService;
+import com.coresolution.consultation.service.support.ResourceOwnerAccessGuard;
 import com.coresolution.consultation.util.PermissionCheckUtils;
 import com.coresolution.consultation.util.ProcedureResults;
 import com.coresolution.consultation.util.SalaryCalculationResponseMapper;
@@ -84,6 +85,7 @@ public class SalaryManagementController extends BaseApiController {
     private final SalaryCalculationRepository salaryCalculationRepository;
     private final ObjectMapper objectMapper;
     private final PayrollPeriodConfirmService payrollPeriodConfirmService;
+    private final ResourceOwnerAccessGuard resourceOwnerAccessGuard;
 
     /**
      * 급여 관리(SALARY_MANAGE) 권한이 없으면 예외를 던진다. 관리자(ADMIN)는 동적 권한 체크에서 자동 통과한다.
@@ -172,6 +174,7 @@ public class SalaryManagementController extends BaseApiController {
         if (currentUser != null && currentUser.getTenantId() != null) {
             TenantContextHolder.setTenantId(currentUser.getTenantId());
         }
+        resourceOwnerAccessGuard.requireConsultantResourceAccess(session, consultantId);
         log.info("개별 급여 프로필 조회: 상담사 ID {}", consultantId);
         ConsultantSalaryProfileResponse consultantProfile =
                 salaryManagementService.getSalaryProfileDetailForConsultant(consultantId);
@@ -284,6 +287,7 @@ public class SalaryManagementController extends BaseApiController {
             TenantContextHolder.setTenantId(currentUser.getTenantId());
         }
         requireSalaryManagePermission(session);
+        resourceOwnerAccessGuard.requireConsultantResourceAccess(session, consultantId);
         log.info("급여 계산 조회: 사용자 {}, 상담사 ID {}", currentUser.getName(), consultantId);
         List<SalaryCalculation> calculations = salaryManagementService.getSalaryCalculations(consultantId);
         List<Map<String, Object>> calculationDtos = calculations.stream()

@@ -1,3 +1,4 @@
+import logger from './logger';
 import { 
   getApiBaseUrl,
   AUTH_API, 
@@ -190,19 +191,19 @@ export const checkSessionAndRedirect = async(response, requestUrl = '', options 
   if (response.status === 401 || response.status === 403) {
     // shell chrome(브랜딩·LNB·unread-count 등) — 리다이렉트하지 않음
     if (isSessionSoftFailUrl(requestUrl)) {
-      console.log('🔐 shell chrome soft-fail URL - checkSessionAndRedirect 스킵:', requestUrl);
+      logger.debug('🔐 shell chrome soft-fail URL - checkSessionAndRedirect 스킵:', requestUrl);
       return false;
     }
 
     // justLoggedIn / justRefreshed TTL — 킥 스킵 (병렬 401 레이스, 요청 시작 시점 기준 포함)
     if (authGraceAtStart || isWithinAuthGraceWindow()) {
-      console.log('🔐 auth grace TTL 창 - checkSessionAndRedirect 스킵');
+      logger.debug('🔐 auth grace TTL 창 - checkSessionAndRedirect 스킵');
       return false;
     }
 
     // 이미 로그인 페이지에 있으면 리다이렉트하지 않음
     if (isLoginPage) {
-      console.log('🔐 이미 로그인 페이지에 있음 - 리다이렉트 스킵');
+      logger.debug('🔐 이미 로그인 페이지에 있음 - 리다이렉트 스킵');
       return false;
     }
 
@@ -222,7 +223,7 @@ export const checkSessionAndRedirect = async(response, requestUrl = '', options 
           headers: getDefaultHeaders()
         });
         if (sessionResponse.ok) {
-          console.log('🔐 세션 있음 - 리다이렉트 스킵 (권한 문제일 수 있음)');
+          logger.debug('🔐 세션 있음 - 리다이렉트 스킵 (권한 문제일 수 있음)');
           return false;
         }
         const verifyStatus = sessionResponse.status;
@@ -234,14 +235,14 @@ export const checkSessionAndRedirect = async(response, requestUrl = '', options 
         if (verifyStatus === 401) {
           // soft-fail / login / grace — 킥 금지 (동일 burst 후속 401 포함)
           if (isSessionSoftFailUrl(requestUrl) || isLoginPage || authGraceAtStart || isWithinAuthGraceWindow()) {
-            console.log('🔐 verify 401 soft-skip (soft-fail/login/grace)');
+            logger.debug('🔐 verify 401 soft-skip (soft-fail/login/grace)');
             return false;
           }
 
           if (hasStoredAccessToken() || hasStoredRefreshToken()) {
             const refreshed = await refreshAccessTokenPair();
             if (!refreshed) {
-              console.log('🔐 refresh 실패 - 로그인 페이지로 리다이렉트');
+              logger.debug('🔐 refresh 실패 - 로그인 페이지로 리다이렉트');
               redirectToLoginPageOnce();
               return true;
             }
@@ -258,7 +259,7 @@ export const checkSessionAndRedirect = async(response, requestUrl = '', options 
                 }
               });
               if (retryVerify.ok) {
-                console.log('🔐 refresh 후 세션 확인 성공 - 리다이렉트 스킵');
+                logger.debug('🔐 refresh 후 세션 확인 성공 - 리다이렉트 스킵');
                 return false;
               }
               if (retryVerify.status >= 500) {
@@ -267,11 +268,11 @@ export const checkSessionAndRedirect = async(response, requestUrl = '', options 
                 return false;
               }
               if (retryVerify.status === 401) {
-                console.log('🔐 refresh 후 verify 401 - 로그인 페이지로 리다이렉트');
+                logger.debug('🔐 refresh 후 verify 401 - 로그인 페이지로 리다이렉트');
                 redirectToLoginPageOnce();
                 return true;
               }
-              console.log('🔐 refresh 후 verify 비-401:', retryVerify.status);
+              logger.debug('🔐 refresh 후 verify 비-401:', retryVerify.status);
               return false;
             } catch (retryErr) {
               console.warn('🔐 refresh 후 verify 재시도 실패:', retryErr);
@@ -281,11 +282,11 @@ export const checkSessionAndRedirect = async(response, requestUrl = '', options 
           }
 
           // 토큰 없음 + grace 밖 + current-user 401
-          console.log('🔐 세션 없음 - 로그인 페이지로 리다이렉트 (서브도메인 유지)');
+          logger.debug('🔐 세션 없음 - 로그인 페이지로 리다이렉트 (서브도메인 유지)');
           redirectToLoginPageOnce();
           return true;
         }
-        console.log('🔐 세션 재확인 실패(리다이렉트 없음):', verifyStatus);
+        logger.debug('🔐 세션 재확인 실패(리다이렉트 없음):', verifyStatus);
         return false;
       } catch (sessionError) {
         lastVerifyError = sessionError;
@@ -306,7 +307,7 @@ export const checkSessionAndRedirect = async(response, requestUrl = '', options 
 
   // 500 오류는 서버 오류이므로 세션 체크하지 않음
   if (response.status >= 500) {
-    console.log('⚠️ 서버 오류 (500) - 세션 체크 스킵');
+    logger.debug('⚠️ 서버 오류 (500) - 세션 체크 스킵');
     return false;
   }
 
@@ -349,7 +350,7 @@ export const apiGet = async(endpoint, params = {}, options = {}) => {
       : (queryString ? `${apiBaseUrl}${endpoint}?${queryString}` : `${apiBaseUrl}${endpoint}`);
     
     const headers = { ...getDefaultHeaders(), ...optionHeaders };
-    console.log('📤 API GET 요청:', { url, headers: { ...headers, 'Authorization': headers['Authorization'] ? 'Bearer ***' : undefined, 'X-Tenant-Id': headers['X-Tenant-Id'] } });
+    logger.debug('📤 API GET 요청:', { url, headers: { ...headers, 'Authorization': headers['Authorization'] ? 'Bearer ***' : undefined, 'X-Tenant-Id': headers['X-Tenant-Id'] } });
 
     const authGraceAtStart = isWithinAuthGraceWindow();
     const response = await fetch(url, {
@@ -421,7 +422,7 @@ export const apiGet = async(endpoint, params = {}, options = {}) => {
                                currentPath.startsWith('/auth/oauth2/callback');
 
             if (!isPublicPage) {
-              console.log('🔐 400 오류 (Tenant ID 부족) - 로그인 페이지로 리다이렉트 (서브도메인 유지)');
+              logger.debug('🔐 400 오류 (Tenant ID 부족) - 로그인 페이지로 리다이렉트 (서브도메인 유지)');
               redirectToLoginPageOnce();
               throw err; // 위젯이 실패로 인식해 "목록을 불러오지 못했습니다" 표시 (return null 시 빈 목록으로 오인됨)
             }
@@ -510,7 +511,7 @@ export const apiGet = async(endpoint, params = {}, options = {}) => {
                            currentPath.startsWith('/auth/oauth2/callback');
 
         if (!isPublicPage) {
-          console.log('🔐 400 오류 (Tenant ID 부족) - 로그인 페이지로 리다이렉트 (서브도메인 유지)');
+          logger.debug('🔐 400 오류 (Tenant ID 부족) - 로그인 페이지로 리다이렉트 (서브도메인 유지)');
           redirectToLoginPageOnce();
           throw error; // 위젯이 실패로 인식하도록 throw (return null 시 빈 목록으로 오인됨)
         }
@@ -540,7 +541,7 @@ export const apiGet = async(endpoint, params = {}, options = {}) => {
                          currentPath.startsWith('/auth/oauth2/callback');
 
       if (!isPublicPage) {
-        console.log('🔐 401 오류 - 로그인 페이지로 리다이렉트 (서브도메인 유지)');
+        logger.debug('🔐 401 오류 - 로그인 페이지로 리다이렉트 (서브도메인 유지)');
         redirectToLoginPageOnce();
         return null;
       }
@@ -565,7 +566,7 @@ export const apiGet = async(endpoint, params = {}, options = {}) => {
                          currentPath.startsWith('/auth/oauth2/callback');
 
       if (isPublicPage) {
-        console.log('🔐 네트워크 오류 - 공개 페이지 - 리다이렉트 없음');
+        logger.debug('🔐 네트워크 오류 - 공개 페이지 - 리다이렉트 없음');
         return null;
       }
       console.warn('🔐 GET 일시적 네트워크 오류 - 로그인으로 이동하지 않음');
@@ -580,7 +581,7 @@ export const apiGet = async(endpoint, params = {}, options = {}) => {
 // POST 요청 (CSRF 토큰 자동 포함)
 export const apiPost = async(endpoint, data = {}, options = {}) => {
   try {
-    console.log('📤 POST 요청:', {
+    logger.debug('📤 POST 요청:', {
       url: endpoint,
       data: redactSensitivePayloadForLog(data)
     });
@@ -927,20 +928,19 @@ export const authAPI = {
   login: async(data) => {
     // CSRF 토큰을 포함한 로그인 요청
     try {
-      console.log('🔐 CSRF 토큰 포함 로그인 시도:', data);
       
       // csrfTokenManager를 사용하여 CSRF 토큰 자동 포함
       const response = await csrfTokenManager.post(AUTH_API.LOGIN, data);
       
       const responseData = await response.json();
-      console.log('🔐 로그인 응답 원본:', responseData);
+      logger.debug('🔐 로그인 응답 원본:', responseData);
       
       if (!response.ok) {
         // requiresConfirmation이 있는 경우는 정상 응답으로 처리
         // ApiResponse 래퍼 처리: responseData.data.requiresConfirmation 또는 responseData.requiresConfirmation
         const requiresConfirmation = (responseData.data && responseData.data.requiresConfirmation) || responseData.requiresConfirmation;
         if (requiresConfirmation) {
-          console.log('🔔 중복 로그인 확인 요청 응답:', responseData);
+          logger.debug('🔔 중복 로그인 확인 요청 응답:', responseData);
           return responseData;
         }
         
@@ -1032,7 +1032,6 @@ export const testLogin = async() => {
     }
     
     const data = await response.json();
-    console.log('테스트 로그인 성공:', data);
     return data;
   } catch (error) {
     console.error('테스트 로그인 실패:', error);

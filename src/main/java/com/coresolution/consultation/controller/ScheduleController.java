@@ -1260,12 +1260,10 @@ public class ScheduleController extends BaseApiController {
             } else {
                 consultationIdLong = Long.valueOf(consultationId);
             }
-            if (consultantId != null) {
-                consultationRecordAccessGuard.requireConsultantScopeReadAccess(session, consultantId);
-            } else {
-                consultationRecordAccessGuard.requireConsultationScopeReadAccess(session, consultationIdLong);
-            }
-            recordList = consultationRecordService.getConsultationRecordsByConsultationId(consultationIdLong);
+            // 일정 단위 조회는 요청 consultantId·현재 담당 상담사로 판정하지 않는다. 가드가 일지별
+            // 작성자·같은 테넌트 관리자 규칙으로 거른 목록만 돌려준다(#1408 검증 FAIL 보완).
+            recordList = consultationRecordAccessGuard
+                .requireConsultationScopeReadAccess(session, consultationIdLong);
             totalCount = recordList.size();
             totalPages = 1;
             number = 0;

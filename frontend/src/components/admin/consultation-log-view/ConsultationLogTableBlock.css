@@ -75,13 +75,6 @@
   outline-offset: -2px;
 }
 
-.mg-v2-consultation-log-table__summary {
-  max-width: 12.5rem;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
 .mg-v2-consultation-log-table-block__empty.mg-v2-empty-state {
   padding: var(--mg-v2-space-8, 3rem) var(--mg-v2-space-6, 2rem);
 }

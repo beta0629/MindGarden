@@ -77,14 +77,47 @@ public class WorkflowAutomationServiceImpl implements WorkflowAutomationService 
     }
     
     /**
+     * 실행 대상 테넌트 목록. 관리자 수동 실행은 호출자 테넌트 1건으로 제한한다.
+     *
+     * @param onlyTenantId 단일 테넌트 (null 이면 전체 활성 테넌트)
+     * @return 대상 테넌트 목록
+     */
+    private List<String> resolveTargetTenantIds(String onlyTenantId) {
+        return onlyTenantId != null ? List.of(onlyTenantId) : tenantService.getAllActiveTenantIds();
+    }
+
+    private static String requireTenantId(String tenantId) {
+        if (tenantId == null || tenantId.isBlank()) {
+            throw new IllegalArgumentException("tenantId 가 필요합니다.");
+        }
+        return tenantId;
+    }
+
+    /**
      * 예약 리마인더 자동 발송 (매 10분마다 실행)
      */
     @Override
     @Scheduled(fixedRate = 600000) // 10분마다 실행
     public void sendScheduleReminders() {
+        runSendScheduleReminders(null);
+    }
+
+    @Override
+    public void sendScheduleRemindersForTenant(String tenantId) {
+        runSendScheduleReminders(requireTenantId(tenantId));
+    }
+
+    /**
+     * 실행 본문 (배치·관리자 수동 실행 공용).
+     *
+     * @param onlyTenantId 지정하면 그 테넌트만, null 이면 전체 활성 테넌트 (배치)
+     */
+    private void runSendScheduleReminders(String onlyTenantId) {
         if (isDisabledByDbFlag("ScheduleReminders")) {
             return;
         }
+        List<String> tenantIds = resolveTargetTenantIds(onlyTenantId);
+        String previousTenantId = TenantContextHolder.peekTenantId();
         log.info("🔔 예약 리마인더 자동 발송 시작");
 
         try {
@@ -98,7 +131,7 @@ public class WorkflowAutomationServiceImpl implements WorkflowAutomationService 
                 .collect(Collectors.toList());
 
             int totalSchedules = 0;
-            for (String tenantId : tenantService.getAllActiveTenantIds()) {
+            for (String tenantId : tenantIds) {
                 try {
                     TenantContextHolder.setTenantId(tenantId);
                     List<Schedule> todaySchedules = scheduleRepository.findByTenantIdAndDateAndStatusIn(
@@ -124,7 +157,7 @@ public class WorkflowAutomationServiceImpl implements WorkflowAutomationService 
                     log.error("❌ 예약 리마인더 테넌트 처리 실패: tenantId={}, error={}",
                         tenantId, tenantError.getMessage(), tenantError);
                 } finally {
-                    TenantContextHolder.clear();
+                    TenantContextHolder.setTenantIdOrClear(previousTenantId);
                 }
             }
 
@@ -143,9 +176,25 @@ public class WorkflowAutomationServiceImpl implements WorkflowAutomationService 
     @Override
     @Scheduled(cron = "0 0 * * * *") // 매 시간 정각에 실행
     public void sendIncompleteConsultationAlerts() {
+        runSendIncompleteConsultationAlerts(null);
+    }
+
+    @Override
+    public void sendIncompleteConsultationAlertsForTenant(String tenantId) {
+        runSendIncompleteConsultationAlerts(requireTenantId(tenantId));
+    }
+
+    /**
+     * 실행 본문 (배치·관리자 수동 실행 공용).
+     *
+     * @param onlyTenantId 지정하면 그 테넌트만, null 이면 전체 활성 테넌트 (배치)
+     */
+    private void runSendIncompleteConsultationAlerts(String onlyTenantId) {
         if (isDisabledByDbFlag("IncompleteAlerts")) {
             return;
         }
+        List<String> tenantIds = resolveTargetTenantIds(onlyTenantId);
+        String previousTenantId = TenantContextHolder.peekTenantId();
         log.info("⚠️ 미완료 상담 알림 시작");
 
         try {
@@ -159,7 +208,7 @@ public class WorkflowAutomationServiceImpl implements WorkflowAutomationService 
                 .collect(Collectors.toList());
 
             int totalIncomplete = 0;
-            for (String tenantId : tenantService.getAllActiveTenantIds()) {
+            for (String tenantId : tenantIds) {
                 try {
                     TenantContextHolder.setTenantId(tenantId);
                     List<Schedule> incompleteSchedules = scheduleRepository.findByTenantIdAndDateAndStatusIn(
@@ -195,7 +244,7 @@ public class WorkflowAutomationServiceImpl implements WorkflowAutomationService 
                     log.error("❌ 미완료 상담 알림 테넌트 처리 실패: tenantId={}, error={}",
                         tenantId, tenantError.getMessage(), tenantError);
                 } finally {
-                    TenantContextHolder.clear();
+                    TenantContextHolder.setTenantIdOrClear(previousTenantId);
                 }
             }
 
@@ -219,9 +268,25 @@ public class WorkflowAutomationServiceImpl implements WorkflowAutomationService 
         lockAtLeastFor = "PT5M"
     )
     public void sendDailyPerformanceSummary() {
+        runSendDailyPerformanceSummary(null);
+    }
+
+    @Override
+    public void sendDailyPerformanceSummaryForTenant(String tenantId) {
+        runSendDailyPerformanceSummary(requireTenantId(tenantId));
+    }
+
+    /**
+     * 실행 본문 (배치·관리자 수동 실행 공용).
+     *
+     * @param onlyTenantId 지정하면 그 테넌트만, null 이면 전체 활성 테넌트 (배치)
+     */
+    private void runSendDailyPerformanceSummary(String onlyTenantId) {
         if (isDisabledByDbFlag("DailySummary")) {
             return;
         }
+        List<String> tenantIds = resolveTargetTenantIds(onlyTenantId);
+        String previousTenantId = TenantContextHolder.peekTenantId();
         log.info("📊 일일 성과 요약 알림 시작");
 
         try {
@@ -229,7 +294,7 @@ public class WorkflowAutomationServiceImpl implements WorkflowAutomationService 
             String consultantRoleCode = getRoleCodeFromCommonCode(UserRole.CONSULTANT.name());
             int totalConsultants = 0;
 
-            for (String tenantId : tenantService.getAllActiveTenantIds()) {
+            for (String tenantId : tenantIds) {
                 try {
                     TenantContextHolder.setTenantId(tenantId);
                     List<User> consultants = userRepository.findByRoleAndIsDeletedFalse(tenantId, consultantRoleCode);
@@ -269,7 +334,7 @@ public class WorkflowAutomationServiceImpl implements WorkflowAutomationService 
                     log.error("❌ 일일 성과 요약 테넌트 처리 실패: tenantId={}, error={}",
                         tenantId, tenantError.getMessage(), tenantError);
                 } finally {
-                    TenantContextHolder.clear();
+                    TenantContextHolder.setTenantIdOrClear(previousTenantId);
                 }
             }
 
@@ -293,9 +358,25 @@ public class WorkflowAutomationServiceImpl implements WorkflowAutomationService 
         lockAtLeastFor = "PT5M"
     )
     public void generateMonthlyPerformanceReport() {
+        runGenerateMonthlyPerformanceReport(null);
+    }
+
+    @Override
+    public void generateMonthlyPerformanceReportForTenant(String tenantId) {
+        runGenerateMonthlyPerformanceReport(requireTenantId(tenantId));
+    }
+
+    /**
+     * 실행 본문 (배치·관리자 수동 실행 공용).
+     *
+     * @param onlyTenantId 지정하면 그 테넌트만, null 이면 전체 활성 테넌트 (배치)
+     */
+    private void runGenerateMonthlyPerformanceReport(String onlyTenantId) {
         if (isDisabledByDbFlag("MonthlyReport")) {
             return;
         }
+        List<String> tenantIds = resolveTargetTenantIds(onlyTenantId);
+        String previousTenantId = TenantContextHolder.peekTenantId();
         log.info("📈 월간 성과 리포트 생성 시작");
 
         try {
@@ -306,7 +387,7 @@ public class WorkflowAutomationServiceImpl implements WorkflowAutomationService 
             List<String> roleList = List.of(adminRoleCode);
             int totalAdmins = 0;
 
-            for (String tenantId : tenantService.getAllActiveTenantIds()) {
+            for (String tenantId : tenantIds) {
                 try {
                     TenantContextHolder.setTenantId(tenantId);
 
@@ -343,7 +424,7 @@ public class WorkflowAutomationServiceImpl implements WorkflowAutomationService 
                     log.error("❌ 월간 성과 리포트 테넌트 처리 실패: tenantId={}, error={}",
                         tenantId, tenantError.getMessage(), tenantError);
                 } finally {
-                    TenantContextHolder.clear();
+                    TenantContextHolder.setTenantIdOrClear(previousTenantId);
                 }
             }
 

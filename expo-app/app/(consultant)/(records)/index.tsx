@@ -162,11 +162,11 @@ export default function ConsultantRecords() {
             }
             const row = item.data;
             return (
+              /* 목록에는 본문 미리보기를 싣지 않는다. 탭하면 단건 상세에서 본문을 받는다. */
               <RecordCard
                 clientName={`${row.clientName} 님`}
                 date={row.date}
                 time={`${row.startTime} - ${row.endTime}`}
-                summary={row.summary}
                 index={index}
                 onPress={() => router.push(`/(consultant)/(records)/${row.id}`)}
               />

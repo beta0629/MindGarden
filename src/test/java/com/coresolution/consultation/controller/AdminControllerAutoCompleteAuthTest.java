@@ -70,6 +70,12 @@ class AdminControllerAutoCompleteAuthTest {
         TenantContextHolder.setTenantId(TENANT_A);
         when(scheduleAutoCompleteService.autoCompleteExpiredSchedulesForTenant(TENANT_A))
             .thenReturn(new TenantAutoCompleteResult(TENANT_A, 1, 0));
+        // run lock 은 실제처럼 공급자를 실행한다 (점유 경합은 별도 테스트).
+        org.mockito.Mockito.lenient().when(scheduleAutoCompleteService.runExclusively(
+                org.mockito.ArgumentMatchers.anyString(), org.mockito.ArgumentMatchers.any()))
+            .thenAnswer(invocation -> ((java.util.function.Supplier<?>) invocation.getArgument(1)).get());
+        org.mockito.Mockito.lenient().when(adminService.autoCompleteSchedulesWithReminder())
+            .thenReturn(new java.util.HashMap<>(java.util.Map.of("success", true)));
     }
 
     @AfterEach
@@ -167,6 +173,34 @@ class AdminControllerAutoCompleteAuthTest {
         assertThatThrownBy(() -> controller.autoCompleteSchedulesWithReminder(new MockHttpSession()))
             .isInstanceOf(UnauthorizedException.class);
         verify(adminService, never()).autoCompleteSchedulesWithReminder();
+    }
+
+    @Test
+    @DisplayName("미작성 알림 포함 자동 완료 — 이미 실행 중이면 409, 처리 없음")
+    void autoCompleteWithReminder_alreadyRunning_conflict() {
+        org.mockito.Mockito.doThrow(new IllegalStateException(ScheduleAutoCompleteService.ALREADY_RUNNING))
+            .when(scheduleAutoCompleteService).runExclusively(
+                org.mockito.ArgumentMatchers.anyString(), org.mockito.ArgumentMatchers.any());
+
+        var response = controller.autoCompleteSchedulesWithReminder(sessionOf(1L, UserRole.ADMIN, TENANT_A));
+
+        org.assertj.core.api.Assertions.assertThat(response.getStatusCode().value()).isEqualTo(409);
+        verify(adminService, never()).autoCompleteSchedulesWithReminder();
+    }
+
+    @Test
+    @DisplayName("미작성 알림 포함 자동 완료 — 서비스 내부 오류는 공용 500 (원시 문구 없음)")
+    void autoCompleteWithReminder_internalError_shared500() {
+        java.util.Map<String, Object> failed = new java.util.HashMap<>();
+        failed.put("success", false);
+        failed.put("traceId", "trace-x");
+        when(adminService.autoCompleteSchedulesWithReminder()).thenReturn(failed);
+
+        var response = controller.autoCompleteSchedulesWithReminder(sessionOf(1L, UserRole.ADMIN, TENANT_A));
+
+        org.assertj.core.api.Assertions.assertThat(response.getStatusCode().value()).isEqualTo(500);
+        org.assertj.core.api.Assertions.assertThat(String.valueOf(response.getBody().getData()))
+            .contains("INTERNAL_SERVER_ERROR").contains("trace-x");
     }
 
     private void verifyNoCompletion() {

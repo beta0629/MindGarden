@@ -186,7 +186,7 @@ public class ClinicalAutomationController {
     public ResponseEntity<Map<String, Object>> generateSOAPNote(@PathVariable Long id,
             HttpSession session) {
         log.info("📝 SOAP 노트 생성 요청: consultationRecordId={}", id);
-        consultationRecordAccessGuard.requireConsultationRecordReadAccess(session, id);
+        consultationRecordAccessGuard.requireReadAccess(session, id);
 
         try {
             String tenantId = TenantContextHolder.getRequiredTenantId();
@@ -228,7 +228,7 @@ public class ClinicalAutomationController {
     public ResponseEntity<Map<String, Object>> generateDAPNote(@PathVariable Long id,
             HttpSession session) {
         log.info("📝 DAP 노트 생성 요청: consultationRecordId={}", id);
-        consultationRecordAccessGuard.requireConsultationRecordReadAccess(session, id);
+        consultationRecordAccessGuard.requireReadAccess(session, id);
 
         try {
             String tenantId = TenantContextHolder.getRequiredTenantId();
@@ -269,7 +269,7 @@ public class ClinicalAutomationController {
     public ResponseEntity<Map<String, Object>> generateDiagnosticReport(@PathVariable Long id,
             HttpSession session) {
         log.info("📋 진단 보고서 생성 요청: consultationRecordId={}", id);
-        consultationRecordAccessGuard.requireConsultationRecordReadAccess(session, id);
+        consultationRecordAccessGuard.requireReadAccess(session, id);
 
         try {
             ClinicalReport report = clinicalDocumentService.generateDiagnosticReport(id);
@@ -297,7 +297,7 @@ public class ClinicalAutomationController {
     public ResponseEntity<Map<String, Object>> analyzeRisks(@PathVariable Long id,
             HttpSession session) {
         log.info("🔍 위험 징후 분석 요청: consultationRecordId={}", id);
-        consultationRecordAccessGuard.requireConsultationRecordReadAccess(session, id);
+        consultationRecordAccessGuard.requireReadAccess(session, id);
 
         try {
             // 음성 전사 결과 조회
@@ -425,7 +425,7 @@ public class ClinicalAutomationController {
     public ResponseEntity<Map<String, Object>> getReportsByConsultationRecord(
             @PathVariable Long id, HttpSession session) {
         log.info("📚 상담 기록의 보고서 목록 조회: consultationRecordId={}", id);
-        consultationRecordAccessGuard.requireConsultationRecordReadAccess(session, id);
+        consultationRecordAccessGuard.requireReadAccess(session, id);
 
         try {
             List<ClinicalReport> reports =

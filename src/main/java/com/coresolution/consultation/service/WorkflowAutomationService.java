@@ -19,24 +19,52 @@ public interface WorkflowAutomationService {
      * - 상담 30분 전 최종 리마인더
      */
     void sendScheduleReminders();
+
+    /**
+     * 관리자 수동 실행 — 지정 테넌트 1건만 처리한다.
+     *
+     * @param tenantId 호출자 테넌트 ID
+     */
+    void sendScheduleRemindersForTenant(String tenantId);
     
     /**
      * 미완료 상담 알림
      * - 상담 시간이 지났지만 완료되지 않은 상담에 대한 알림
      */
     void sendIncompleteConsultationAlerts();
+
+    /**
+     * 관리자 수동 실행 — 지정 테넌트 1건만 처리한다.
+     *
+     * @param tenantId 호출자 테넌트 ID
+     */
+    void sendIncompleteConsultationAlertsForTenant(String tenantId);
     
     /**
      * 일일 성과 요약 알림
      * - 상담사별 일일 성과 요약 발송
      */
     void sendDailyPerformanceSummary();
+
+    /**
+     * 관리자 수동 실행 — 지정 테넌트 1건만 처리한다.
+     *
+     * @param tenantId 호출자 테넌트 ID
+     */
+    void sendDailyPerformanceSummaryForTenant(String tenantId);
     
     /**
      * 월간 성과 리포트 자동 생성
      * - 월말 자동 성과 리포트 생성 및 발송
      */
     void generateMonthlyPerformanceReport();
+
+    /**
+     * 관리자 수동 실행 — 지정 테넌트 1건만 처리한다.
+     *
+     * @param tenantId 호출자 테넌트 ID
+     */
+    void generateMonthlyPerformanceReportForTenant(String tenantId);
     
     /**
      * 워크플로우 실행 상태 조회

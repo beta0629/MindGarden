@@ -1,6 +1,6 @@
 /**
  * 상담일지 조회 - 테이블 뷰 블록 (ListTableView 기반)
- * 컬럼: 세션일자, 회기, 내담자명, 상담사명, 완료여부, 요약(50자), 작성일. 행 클릭 시 모달.
+ * 컬럼: 세션일자, 회기, 내담자명, 상담사명, 완료여부, 작성일. 행 클릭 시 모달(본문은 단건 상세에서 조회).
  *
  * @author Core Solution
  * @since 2025-03-02
@@ -19,7 +19,6 @@ const EMPTY_DESC = '다른 필터를 적용해 보시거나, 스케줄에서 상
 const BADGE_COMPLETED = '완료';
 const BADGE_INCOMPLETE = '미완료';
 const SESSION_SUFFIX = '회기';
-const SUMMARY_MAX_LEN = 50;
 const MOBILE_HINT = '가로 스크롤하여 전체 컬럼을 확인할 수 있습니다.';
 
 const COLUMNS = [
@@ -28,7 +27,6 @@ const COLUMNS = [
   { key: 'clientName', label: '내담자명' },
   { key: 'consultantName', label: '상담사명' },
   { key: 'isSessionCompleted', label: '완료여부' },
-  { key: 'summary', label: '요약' },
   { key: 'createdAt', label: '작성일' }
 ];
 
@@ -36,13 +34,6 @@ const formatDate = (val) => {
   if (!val) return '-';
   if (typeof val === 'string') return val.split('T')[0];
   return val;
-};
-
-const truncate = (str, maxLen) => {
-  if (!str || typeof str !== 'string') return '-';
-  const trimmed = str.trim();
-  if (trimmed.length <= maxLen) return trimmed;
-  return `${trimmed.slice(0, maxLen)}…`;
 };
 
 const ConsultationLogTableBlock = ({
@@ -87,7 +78,6 @@ const ConsultationLogTableBlock = ({
       sessionNumber: record.sessionNumber ?? 0,
       clientName,
       consultantName,
-      summary: truncate(record.clientCondition, SUMMARY_MAX_LEN),
       createdAt: record.createdAt ?? record.updatedAt
     };
   });
@@ -116,8 +106,6 @@ const ConsultationLogTableBlock = ({
           </span>
         );
       }
-      case 'summary':
-        return <span className="mg-v2-consultation-log-table__summary">{item.summary}</span>;
       case 'createdAt':
         return formatDate(item.createdAt);
       default:
@@ -158,7 +146,6 @@ ConsultationLogTableBlock.propTypes = {
       consultantId: PropTypes.number,
       consultantName: PropTypes.string,
       isSessionCompleted: PropTypes.bool,
-      clientCondition: PropTypes.string,
       createdAt: PropTypes.string,
       updatedAt: PropTypes.string
     })

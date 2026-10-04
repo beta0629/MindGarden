@@ -209,8 +209,8 @@ function normalizeEntityRowToConsultationRecord(row: Record<string, unknown>): C
   const startTime = parseIsoTimePart(row.startTime ?? row.start_time);
   const endTime = parseIsoTimePart(row.endTime ?? row.end_time);
   const completed = Boolean(row.isSessionCompleted ?? row.is_session_completed);
-  const obs =
-    readStringProp(row, 'consultantObservations') || readStringProp(row, 'consultant_observations');
+  // 목록 응답에는 서술형 본문이 없다 (BE ConsultationRecordListItemResponse 메타 전용).
+  // 본문은 카드를 탭해 단건 상세(useRecordDetail)를 조회할 때만 받는다.
   const createdAt =
     readStringProp(row, 'createdAt') ||
     readStringProp(row, 'created_at') ||
@@ -229,18 +229,11 @@ function normalizeEntityRowToConsultationRecord(row: Record<string, unknown>): C
     startTime,
     endTime,
     sessionNumber,
-    summary:
-      readStringProp(row, 'clientCondition') ||
-      readStringProp(row, 'mainIssues') ||
-      obs ||
-      undefined,
-    expertMemo: obs || undefined,
+    summary: undefined,
+    expertMemo: undefined,
     tags: [],
     nextSessionDate: parseJsonLocalDate(row.nextSessionDate ?? row.next_session_date) || undefined,
-    nextSessionMemo:
-      readStringProp(row, 'nextSessionPlan') ||
-      readStringProp(row, 'next_session_plan') ||
-      undefined,
+    nextSessionMemo: undefined,
     status: completed ? 'COMPLETED' : 'DRAFT',
     createdAt,
     updatedAt,

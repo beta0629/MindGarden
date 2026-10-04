@@ -173,7 +173,7 @@ public class ConsultantRecordsController {
                         recordMap.put("startTime", startTimeStr);
                         recordMap.put("endTime", endTimeStr);
                         recordMap.put("status", record.getIsSessionCompleted() ? "COMPLETED" : "PENDING");
-                        recordMap.put("notes", record.getConsultantObservations());
+                        // 목록에는 서술형 본문(관찰사항 등) 미리보기를 싣지 않는다 — 본문은 단건 조회에서만.
                         recordMap.put("consultationType", "INDIVIDUAL"); // 기본값
                         recordMap.put("isSessionCompleted", record.getIsSessionCompleted());
                         recordMap.put("sessionNumber", record.getSessionNumber());
@@ -326,10 +326,8 @@ public class ConsultantRecordsController {
                         .body(Map.of("success", false, "message", "테넌트 정보가 없습니다."));
             }
             tenantId = tenantId.trim();
-            // 상담일지 본문 반환 전 소유자 검증 (작성 상담사 본인 또는 같은 테넌트 관리자·사무원).
-            // 테넌트 내 기록이 없으면 존재 여부를 드러내지 않고 403.
-            var record = consultationRecordAccessGuard
-                    .requireConsultationRecordReadAccess(session, recordId);
+            // 공용 가드: 작성 상담사 본인 또는 같은 테넌트 관리자 계열. 테넌트 내 기록이 없으면 403.
+            var record = consultationRecordAccessGuard.requireReadAccess(session, recordId);
 
             // 경로 상담사 id 와 기록의 작성 상담사가 다르면 거부 (경로-자원 불일치).
             if (!record.getConsultantId().equals(consultantId)) {

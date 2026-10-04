@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -27,6 +28,7 @@ import com.coresolution.consultation.service.DynamicPermissionService;
 import com.coresolution.consultation.service.RoleCommonCodeAuthorizationService;
 import com.coresolution.consultation.service.ScheduleListUserFieldsResolver;
 import com.coresolution.consultation.service.ScheduleService;
+import com.coresolution.consultation.service.support.ClientPathAccessGuard;
 import com.coresolution.consultation.utils.SessionUtils;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.dto.ApiResponse;
@@ -44,6 +46,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
+import org.mockito.Spy;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
@@ -83,6 +86,10 @@ class ScheduleControllerDateRangeFailClosedTest {
     @Mock private ClientScheduleNoteRepository clientScheduleNoteRepository;
     @Mock private ConsultantClientMappingRepository consultantClientMappingRepository;
     @Mock private ScheduleRepository scheduleRepository;
+
+    @Spy
+    private ClientPathAccessGuard clientPathAccessGuard = new ClientPathAccessGuard(
+            mock(ConsultantClientMappingRepository.class), mock(UserRepository.class));
 
     @InjectMocks
     private ScheduleController controller;

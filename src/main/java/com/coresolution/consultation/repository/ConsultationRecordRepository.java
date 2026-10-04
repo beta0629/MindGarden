@@ -157,10 +157,8 @@ public interface ConsultationRecordRepository extends JpaRepository<Consultation
     List<ConsultationRecord> findByTenantIdAndProgressScoreBetweenAndIsDeletedFalseOrderBySessionDateDesc(
         String tenantId, Integer minScore, Integer maxScore);
     
-    // 본문 컬럼 암호화(2026-10-04) 로 암호문에는 LIKE 가 매칭되지 않아
-    // searchByKeywordAndConsultantId / searchByKeywordAndClientId 는 제거했다.
-    // 키워드 검색은 ConsultationRecordServiceImpl#searchConsultationRecords 의
-    // 복호화 후 애플리케이션 필터를 사용한다.
+    // 본문 컬럼은 암호문이라 DB LIKE 검색을 추가하지 않는다.
+    // 키워드 검색은 ConsultationRecordServiceImpl#searchConsultationRecords 의 복호화 후 필터를 쓴다.
 
     // 내담자별 회기별 조회 (tenantId 필터링)
     Page<ConsultationRecord> findByTenantIdAndClientIdAndSessionNumberAndIsDeletedFalseOrderBySessionDateDesc(String tenantId, Long clientId, Integer sessionNumber, Pageable pageable);

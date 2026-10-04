@@ -5,7 +5,7 @@ set -euo pipefail
 
 ROOT=$(cd "$(dirname "$0")/../../.." && pwd)
 SCRIPT_REL="scripts/database/sync/flyway-procedure-extract.sh"
-DEV_SYNC_REL="database/schema/procedures_flyway_dev_sync"
+PROC_REL="database/schema/procedures_standardized"
 
 pass=0
 fail=0
@@ -30,7 +30,7 @@ make_fake_root() {
         "$dest/src/main/resources/db/migration" \
         "$dest/src/main/resources/sql/procedures" \
         "$dest/src/main/java/com/coresolution/consultation/config" \
-        "$dest/$DEV_SYNC_REL"
+        "$dest/$PROC_REL"
     cp "$ROOT/$SCRIPT_REL" "$dest/$SCRIPT_REL"
     cat >"$dest/src/main/java/com/coresolution/consultation/config/PlSqlInitializer.java" <<'JAVA'
 class PlSqlInitializer {
@@ -94,9 +94,9 @@ FAKE="$WORK/case"
 make_fake_root "$FAKE"
 write_migration "$FAKE/src/main/resources/db/migration/V10__case_proc.sql" CaseProc TAIL_MARKER
 printf 'CaseProc\tsrc/main/resources/db/migration/V10__case_proc.sql\tflyway-latest\n' \
-    >"$FAKE/$DEV_SYNC_REL/MANIFEST.tsv"
+    >"$FAKE/$PROC_REL/FLYWAY_SOURCES.tsv"
 if out=$(run_extract "$FAKE" generate); then
-    body="$FAKE/$DEV_SYNC_REL/CaseProc_devsync.sql"
+    body="$FAKE/$PROC_REL/CaseProc_standardized.sql"
     if grep -q "TAIL_MARKER" "$body"; then
         ok "CASE 식 뒤 본문까지 추출"
     else
@@ -132,9 +132,9 @@ fi
 
 echo "=== 4) generate 로 갱신하면 최신 정의를 담는다 ==="
 printf 'CaseProc\tsrc/main/resources/db/migration/V20260901_001__case_proc_newer.sql\tflyway-latest\n' \
-    >"$FAKE/$DEV_SYNC_REL/MANIFEST.tsv"
+    >"$FAKE/$PROC_REL/FLYWAY_SOURCES.tsv"
 if run_extract "$FAKE" generate >/dev/null && run_extract "$FAKE" check >/dev/null; then
-    if grep -q "NEWER" "$FAKE/$DEV_SYNC_REL/CaseProc_devsync.sql"; then
+    if grep -q "NEWER" "$FAKE/$PROC_REL/CaseProc_standardized.sql"; then
         ok "최신 마이그레이션 본문으로 갱신"
     else
         ng "갱신했는데 최신 본문이 아닙니다"
@@ -144,7 +144,7 @@ else
 fi
 
 echo "=== 5) 산출물을 손으로 고치면 check 가 막는다 ==="
-echo "-- 손으로 고침" >>"$FAKE/$DEV_SYNC_REL/CaseProc_devsync.sql"
+echo "-- 손으로 고침" >>"$FAKE/$PROC_REL/CaseProc_standardized.sql"
 set +e
 out=$(run_extract "$FAKE" check)
 rc=$?
@@ -157,17 +157,38 @@ fi
 
 echo "=== 6) MANIFEST 에 없는 산출물이 남으면 막는다 ==="
 run_extract "$FAKE" generate >/dev/null
-cp "$FAKE/$DEV_SYNC_REL/CaseProc_devsync.sql" "$FAKE/$DEV_SYNC_REL/Orphan_devsync.sql"
+cp "$FAKE/$PROC_REL/CaseProc_standardized.sql" "$FAKE/$PROC_REL/Orphan_standardized.sql"
 set +e
 out=$(run_extract "$FAKE" check)
 rc=$?
 set -e
-if [ "$rc" -ne 0 ] && printf '%s' "$out" | grep -q "MANIFEST 에 없는 파일"; then
+if [ "$rc" -ne 0 ] && printf '%s' "$out" | grep -q "MANIFEST 에 없는 생성 파일"; then
     ok "고아 산출물을 FAIL 처리"
 else
     ng "고아 산출물을 통과시켰습니다 (rc=$rc): $out"
 fi
-rm -f "$FAKE/$DEV_SYNC_REL/Orphan_devsync.sql"
+rm -f "$FAKE/$PROC_REL/Orphan_standardized.sql"
+
+echo "=== 6-1) 손으로 관리하는 표준 SQL 은 목록 밖이어도 통과하고, 이름이 겹치면 막는다 ==="
+printf -- '-- 손으로 관리\nDELIMITER //\nDROP PROCEDURE IF EXISTS HandProc //\nCREATE PROCEDURE HandProc() BEGIN SELECT 1; END //\nDELIMITER ;\n' \
+    >"$FAKE/$PROC_REL/HandProc_standardized.sql"
+if out=$(run_extract "$FAKE" check); then
+    ok "목록 밖 손 관리 표준 SQL 은 건드리지 않고 통과"
+else
+    ng "손 관리 표준 SQL 때문에 check 가 실패했습니다: $out"
+fi
+cp "$FAKE/$PROC_REL/HandProc_standardized.sql" "$FAKE/$PROC_REL/CaseProc_standardized.sql"
+set +e
+out=$(run_extract "$FAKE" generate)
+rc=$?
+set -e
+if [ "$rc" -ne 0 ] && printf '%s' "$out" | grep -q "이름이 겹칩니다" \
+    && grep -q "손으로 관리" "$FAKE/$PROC_REL/CaseProc_standardized.sql"; then
+    ok "손 관리 표준 SQL 을 generate 가 덮어쓰지 않음"
+else
+    ng "손 관리 표준 SQL 을 덮어썼거나 통과시켰습니다 (rc=$rc): $out"
+fi
+rm -f "$FAKE/$PROC_REL/HandProc_standardized.sql" "$FAKE/$PROC_REL/CaseProc_standardized.sql"
 
 echo "=== 7) pinned 원본이 PlSqlInitializer 에서 쓰이지 않으면 막는다 ==="
 PINNED="$WORK/pinned"
@@ -178,14 +199,14 @@ cp "$PINNED/src/main/resources/db/migration/V10__pinned.sql" \
 cp "$PINNED/src/main/resources/db/migration/V10__pinned.sql" \
     "$PINNED/src/main/resources/sql/procedures/unused_proc.sql"
 printf 'PinnedProc\tsrc/main/resources/sql/procedures/pinned_proc.sql\tpinned\n' \
-    >"$PINNED/$DEV_SYNC_REL/MANIFEST.tsv"
+    >"$PINNED/$PROC_REL/FLYWAY_SOURCES.tsv"
 if run_extract "$PINNED" generate >/dev/null && run_extract "$PINNED" check >/dev/null; then
     ok "PlSqlInitializer 가 참조하는 pinned 원본은 통과"
 else
     ng "정상 pinned 원본을 막았습니다"
 fi
 printf 'PinnedProc\tsrc/main/resources/sql/procedures/unused_proc.sql\tpinned\n' \
-    >"$PINNED/$DEV_SYNC_REL/MANIFEST.tsv"
+    >"$PINNED/$PROC_REL/FLYWAY_SOURCES.tsv"
 set +e
 out=$(run_extract "$PINNED" check)
 rc=$?
@@ -198,7 +219,7 @@ fi
 
 echo "=== 8) 프로시저 이름 형식이 아니면 막는다 ==="
 printf 'Bad Name;DROP\tsrc/main/resources/db/migration/V10__pinned.sql\tflyway-latest\n' \
-    >"$PINNED/$DEV_SYNC_REL/MANIFEST.tsv"
+    >"$PINNED/$PROC_REL/FLYWAY_SOURCES.tsv"
 set +e
 out=$(run_extract "$PINNED" check)
 rc=$?

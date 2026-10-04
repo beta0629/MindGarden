@@ -1,16 +1,17 @@
 #!/bin/bash
-# Flyway·PlSqlInitializer 가 소유한 온보딩 프로시저 정의를 개발 DB 재적재용 SQL 로 뽑는다.
-# generate: MANIFEST.tsv 의 원본에서 <이름>_devsync.sql 을 다시 만든다.
+# Flyway·PlSqlInitializer 가 소유한 온보딩 프로시저 정의를 표준 배포 SQL 로 뽑는다.
+# generate: FLYWAY_SOURCES.tsv 의 원본에서 <이름>_standardized.sql 을 다시 만든다.
 # check   : 저장소에 커밋된 SQL 이 원본과 같은지, flyway-latest 원본이 실제 최신 마이그레이션인지 검사한다.
 #           (CI 가 이 모드를 돌려 복사본이 낡는 것을 막는다. DB 접속·DDL 은 하지 않는다.)
 #
-# 이 스크립트는 개발 DB 전용 산출물만 만든다. 운영 배포 경로
-# (database/schema/procedures_standardized, deploy-procedures-prod.yml,
-#  deploy-procedures-production-mysql.yml) 는 건드리지 않는다.
+# 산출물은 다른 표준 프로시저와 같은 폴더에 두므로 개발·운영 db-diff 와 야간 개발 재적재가 같은 정의를 쓴다.
+# 목록에 없는 *_standardized.sql(손으로 관리하는 표준 프로시저)은 읽기만 하고 고치지 않는다.
 set -euo pipefail
 
 ROOT=$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)
-DEV_SYNC_REL="database/schema/procedures_flyway_dev_sync"
+PROC_REL="database/schema/procedures_standardized"
+MANIFEST_NAME="FLYWAY_SOURCES.tsv"
+GENERATED_MARK="-- 생성: scripts/database/sync/flyway-procedure-extract.sh generate"
 
 fail() {
     echo "❌ $1" >&2
@@ -26,16 +27,19 @@ flyway_procedure_extract_main() {
             return 1
             ;;
     esac
-    [ -f "$ROOT/$DEV_SYNC_REL/MANIFEST.tsv" ] || fail "MANIFEST.tsv 가 없습니다: $DEV_SYNC_REL"
+    [ -f "$ROOT/$PROC_REL/$MANIFEST_NAME" ] || fail "$MANIFEST_NAME 가 없습니다: $PROC_REL"
     command -v python3 >/dev/null 2>&1 || fail "python3 가 필요합니다."
-    FLYWAY_PROC_ROOT="$ROOT" FLYWAY_PROC_REL="$DEV_SYNC_REL" FLYWAY_PROC_MODE="$mode" python3 - <<'PY'
+    FLYWAY_PROC_ROOT="$ROOT" FLYWAY_PROC_REL="$PROC_REL" FLYWAY_PROC_MANIFEST="$MANIFEST_NAME" \
+        FLYWAY_PROC_MARK="$GENERATED_MARK" FLYWAY_PROC_MODE="$mode" python3 - <<'PY'
 import os
 import re
 import sys
 from pathlib import Path
 
 root = Path(os.environ["FLYWAY_PROC_ROOT"])
-dev_sync = root / os.environ["FLYWAY_PROC_REL"]
+proc_dir = root / os.environ["FLYWAY_PROC_REL"]
+manifest = proc_dir / os.environ["FLYWAY_PROC_MANIFEST"]
+generated_mark = os.environ["FLYWAY_PROC_MARK"]
 mode = os.environ["FLYWAY_PROC_MODE"]
 migration_dir = root / "src/main/resources/db/migration"
 initializer = root / "src/main/java/com/coresolution/consultation/config/PlSqlInitializer.java"
@@ -141,9 +145,9 @@ def extract(source_path, name):
 def render(name, source_rel, body):
     return (
         "-- 생성 파일 — 직접 고치지 마세요.\n"
-        "-- 생성: scripts/database/sync/flyway-procedure-extract.sh generate\n"
+        f"{generated_mark}\n"
         f"-- 원본: {source_rel}\n"
-        "-- 용도: 야간 운영→개발 복사 뒤 개발 DB 재적재 전용. 운영 배포 경로와 무관합니다.\n"
+        "-- 용도: 표준 프로시저 배포(개발·운영 db-diff)와 야간 운영→개발 복사 뒤 재적재.\n"
         "DELIMITER //\n"
         "\n"
         f"DROP PROCEDURE IF EXISTS {name} //\n"
@@ -180,7 +184,7 @@ def latest_migration_for(name):
 
 
 entries = []
-for raw in (dev_sync / "MANIFEST.tsv").read_text(encoding="utf-8").splitlines():
+for raw in manifest.read_text(encoding="utf-8").splitlines():
     line = raw.strip()
     if not line or line.startswith("#"):
         continue
@@ -233,7 +237,10 @@ for name, source_rel, kind in entries:
     except ValueError as exc:
         problems.append(f"{name}: {exc}")
         continue
-    target = dev_sync / f"{name}_devsync.sql"
+    target = proc_dir / f"{name}_standardized.sql"
+    if target.is_file() and generated_mark not in target.read_text(encoding="utf-8", errors="replace").splitlines()[:3]:
+        problems.append(f"{name}: 손으로 관리하는 표준 SQL 과 이름이 겹칩니다 ({target.name})")
+        continue
     if mode == "generate":
         target.write_text(rendered, encoding="utf-8")
         print(f"생성: {target.relative_to(root).as_posix()}")
@@ -244,10 +251,13 @@ for name, source_rel, kind in entries:
     if target.read_text(encoding="utf-8") != rendered:
         problems.append(f"{name}: 생성 SQL 이 원본과 다릅니다 — generate 를 돌리세요")
 
-known = {f"{name}_devsync.sql" for name, _, _ in entries}
-for path in sorted(dev_sync.glob("*_devsync.sql")):
-    if path.name not in known:
-        problems.append(f"{path.name}: MANIFEST 에 없는 파일입니다")
+# 생성 표시가 있는데 목록에서 빠진 파일은 원본 대조 없이 배포되므로 막는다.
+known = {f"{name}_standardized.sql" for name, _, _ in entries}
+for path in sorted(proc_dir.glob("*_standardized.sql")):
+    if path.name in known:
+        continue
+    if generated_mark in path.read_text(encoding="utf-8", errors="replace").splitlines()[:3]:
+        problems.append(f"{path.name}: MANIFEST 에 없는 생성 파일입니다")
 
 if problems:
     for problem in problems:

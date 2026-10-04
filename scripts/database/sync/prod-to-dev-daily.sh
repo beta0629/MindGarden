@@ -220,27 +220,7 @@ redeploy_dev_procedures_from_repo() {
   PROCEDURE_DEPLOY_DB_DIFF_CONFIRM=CONFIRM bash "$deploy" dev
 }
 
+# Flyway 소유 온보딩 프로시저(FLYWAY_SOURCES.tsv)도 표준 배포 SQL 에 들어 있어 이 db-diff 로 함께 되살아난다.
 redeploy_dev_procedures_from_repo
-
-# procedures_standardized 44개로는 Flyway 가 소유한 온보딩 프로시저가 되살아나지 않는다.
-# flyway_schema_history 가 "적용됨"으로 복원되므로 Flyway 도 다시 만들지 않는다. 개발 DB 에만 심는다.
-redeploy_dev_flyway_procedures() {
-  if dev_target_is_production; then
-    die "개발 DB 호스트·스키마가 운영과 같습니다. Flyway 온보딩 프로시저 재적재를 하지 않습니다."
-  fi
-  local apply
-  apply="$SCRIPT_DIR/apply-flyway-procedures-dev.sh"
-  if [[ ! -f "$apply" ]]; then
-    log "WARN: $apply 가 없어 Flyway 온보딩 프로시저 재적재를 건너뜁니다. 번들을 갱신하세요."
-    return 0
-  fi
-  export PROCEDURE_DEPLOY_REPO_ROOT="${PROCEDURE_DEPLOY_REPO_ROOT:-$(cd "$SCRIPT_DIR/../../.." && pwd)}"
-  export DEV_MYSQL_HOST DEV_MYSQL_PORT DEV_MYSQL_USER DEV_DB_NAME
-  export DEV_MYSQL_PASSWORD="${DEV_MYSQL_PASSWORD:-}"
-  export PROD_MYSQL_HOST PROD_DB_NAME
-  bash "$apply"
-}
-
-redeploy_dev_flyway_procedures
 
 log "=== 완료: 개발 DB=${DEV_DB_NAME}, 참고 D-1 날짜 라벨=$(yesterday_ymd_dash) ==="

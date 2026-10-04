@@ -1,7 +1,7 @@
 -- 생성 파일 — 직접 고치지 마세요.
 -- 생성: scripts/database/sync/flyway-procedure-extract.sh generate
 -- 원본: src/main/resources/db/migration/V20260522_002__shop_reward_default_components_onboarding.sql
--- 용도: 야간 운영→개발 복사 뒤 개발 DB 재적재 전용. 운영 배포 경로와 무관합니다.
+-- 용도: 표준 프로시저 배포(개발·운영 db-diff)와 야간 운영→개발 복사 뒤 재적재.
 DELIMITER //
 
 DROP PROCEDURE IF EXISTS ActivateDefaultComponents //

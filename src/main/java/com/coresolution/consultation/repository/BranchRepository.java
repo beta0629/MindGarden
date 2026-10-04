@@ -32,6 +32,11 @@ public interface BranchRepository extends BaseRepository<Branch, Long> {
      * 지점 코드로 조회
      */
     Optional<Branch> findByBranchCodeAndIsDeletedFalse(String branchCode);
+
+    /**
+     * 테넌트 범위 지점 코드 조회
+     */
+    Optional<Branch> findByTenantIdAndBranchCodeAndIsDeletedFalse(String tenantId, String branchCode);
     
     /**
      * 지점명으로 조회

@@ -24,6 +24,10 @@ import lombok.extern.slf4j.Slf4j;
  * ({@link ResourceOwnerAccessGuard#requireMappingAdminActor}). 적용자·처리자·변경자는 세션 관리자로 기록하고
  * 본문 {@code appliedBy}·{@code processedBy}·{@code updatedBy} 는 무시한다.</p>
  *
+ * <p>프로시저 상태·통계는 세션 테넌트 관리자만({@link ResourceOwnerAccessGuard#requireTenantAdminAccess}), 통계 테넌트는
+ * 세션 테넌트 컨텍스트다. 무결성 검증은 지점이 세션 테넌트 소속일 때만 허용한다
+ * ({@link ResourceOwnerAccessGuard#requireTenantBranchAdminAccess}). 가드가 서비스·프로시저 호출보다 먼저 실행된다.</p>
+ *
  * @author MindGarden
  * @version 1.0.0
  * @since 2025-09-24
@@ -41,7 +45,8 @@ public class PlSqlDiscountAccountingController {
      * PL/SQL 프로시저 사용 가능 여부 확인
      */
     @GetMapping("/status")
-    public ResponseEntity<Map<String, Object>> getPlSqlStatus() {
+    public ResponseEntity<Map<String, Object>> getPlSqlStatus(HttpSession session) {
+        resourceOwnerAccessGuard.requireTenantAdminAccess(session);
         log.info("🔍 PL/SQL 할인 회계 프로시저 상태 확인");
         
         try {
@@ -142,8 +147,10 @@ public class PlSqlDiscountAccountingController {
     public ResponseEntity<Map<String, Object>> getStatistics(
             @RequestParam String branchCode,
             @RequestParam String startDate,
-            @RequestParam String endDate) {
+            @RequestParam String endDate,
+            HttpSession session) {
         
+        resourceOwnerAccessGuard.requireTenantAdminAccess(session);
         log.info("📊 PL/SQL 할인 통계 조회: BranchCode={}, Period={} ~ {}", branchCode, startDate, endDate);
         
         return ResponseEntity.ok(ProcedureResults.callRequiringSuccess(
@@ -157,14 +164,16 @@ public class PlSqlDiscountAccountingController {
      */
     @GetMapping("/validate-integrity")
     public ResponseEntity<Map<String, Object>> validateIntegrity(
-            @RequestParam String branchCode) {
+            @RequestParam String branchCode,
+            HttpSession session) {
         
-        log.info("🔍 PL/SQL 할인 무결성 검증: BranchCode={}", branchCode);
+        String tenantBranchCode = resourceOwnerAccessGuard.requireTenantBranchAdminAccess(session, branchCode);
+        log.info("🔍 PL/SQL 할인 무결성 검증: BranchCode={}", tenantBranchCode);
         
         return ResponseEntity.ok(ProcedureResults.callRequiringSuccess(
                 ProcedureUserFacingMessages.PROC_VALIDATE_DISCOUNT_INTEGRITY,
                 ProcedureUserFacingMessages.DISCOUNT_INTEGRITY_FAILED,
-                () -> plSqlDiscountAccountingService.validateDiscountIntegrity(branchCode)));
+                () -> plSqlDiscountAccountingService.validateDiscountIntegrity(tenantBranchCode)));
     }
 
     /** 본문 {@code mappingId}. 숫자가 아니거나 없으면 null (가드가 공통 403 으로 거부한다). */

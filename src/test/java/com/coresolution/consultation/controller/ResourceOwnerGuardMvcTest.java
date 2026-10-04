@@ -216,7 +216,8 @@ class ResourceOwnerGuardMvcTest {
             mock(com.coresolution.consultation.repository.erp.accounting.AccountingEntryRepository.class),
             mock(com.coresolution.consultation.repository.AccountRepository.class),
             mock(com.coresolution.consultation.repository.ConsultantClientMappingRepository.class),
-            mock(com.coresolution.consultation.repository.erp.settlement.SettlementRepository.class));
+            mock(com.coresolution.consultation.repository.erp.settlement.SettlementRepository.class),
+            mock(org.springframework.beans.factory.ObjectProvider.class));
         Object[] provided = {clientGuard, ownerGuard, ingestService, reportService, statsService,
             psychReportRepository, psychDocumentRepository, ratingService, emotionAnalysisService,
             availabilityService, environment};

@@ -26,6 +26,7 @@ import com.coresolution.consultation.entity.erp.financial.FinancialTransaction;
 import com.coresolution.consultation.entity.erp.settlement.Settlement;
 import com.coresolution.consultation.exception.UnauthorizedException;
 import com.coresolution.consultation.repository.AccountRepository;
+import com.coresolution.consultation.repository.BranchRepository;
 import com.coresolution.consultation.repository.BudgetRepository;
 import com.coresolution.consultation.repository.ConsultantAvailabilityRepository;
 import com.coresolution.consultation.repository.ConsultantClientMappingRepository;
@@ -48,6 +49,7 @@ import com.coresolution.core.repository.ErdDiagramRepository;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.dao.DataAccessException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Component;
@@ -98,6 +100,7 @@ public class ResourceOwnerAccessGuard {
     private final AccountRepository accountRepository;
     private final ConsultantClientMappingRepository mappingRepository;
     private final SettlementRepository settlementRepository;
+    private final ObjectProvider<BranchRepository> branchRepositoryProvider;
 
     /**
      * 심리검사 문서(및 그 리포트) 접근 검증. 내담자 미지정 문서는 같은 테넌트 관리자·사무원만.
@@ -463,6 +466,42 @@ public class ResourceOwnerAccessGuard {
      */
     public static String auditActorOf(User actor) {
         return String.valueOf(actor.getId());
+    }
+
+    /**
+     * 자원 id 없이 테넌트 전체를 읽거나 바꾸는 관리자 API(할인 통계·프로시저 상태·급여 배치 상태·급여 계산 방식 등) 검증.
+     * 세션 테넌트 관리자만 허용하며, 서비스·프로시저 호출 전에 부른다.
+     *
+     * @param session HTTP 세션
+     * @return 세션 관리자
+     * @throws UnauthorizedException 로그인 사용자가 없을 때
+     * @throws AccessDeniedException 관리자가 아니거나 세션 테넌트가 없을 때
+     */
+    public User requireTenantAdminAccess(HttpSession session) {
+        return requireTenantAdmin(session, "tenantAdmin", null);
+    }
+
+    /**
+     * 지점 코드로 읽는 관리자 API(할인 무결성 검증 등) 검증. 세션 테넌트 관리자만, 지점이 세션 테넌트 소속일 때만 허용한다.
+     * 지점 기능이 꺼져 있으면 거부한다.
+     *
+     * @param session    HTTP 세션
+     * @param branchCode 요청 지점 코드 (null 이면 거부)
+     * @return 세션 테넌트에서 확인한 지점 코드
+     * @throws UnauthorizedException 로그인 사용자가 없을 때
+     * @throws AccessDeniedException 관리자가 아니거나 세션 테넌트에 지점이 없을 때
+     */
+    @Transactional(readOnly = true)
+    public String requireTenantBranchAdminAccess(HttpSession session, String branchCode) {
+        User caller = requireTenantAdmin(session, "branchCode", branchCode);
+        String tenantId = clientPathAccessGuard.requireCallerTenantId(caller);
+        BranchRepository branchRepository = branchRepositoryProvider.getIfAvailable();
+        if (branchRepository == null) {
+            throw denyResource(caller, "branchCode", branchCode);
+        }
+        return load(caller, "branchCode", branchCode,
+            () -> branchRepository.findByTenantIdAndBranchCodeAndIsDeletedFalse(tenantId, branchCode))
+            .getBranchCode();
     }
 
     /**

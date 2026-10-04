@@ -45,8 +45,12 @@ let sessionKeyPromise = null;
  * @param {{ userId: string|number, tenantId: string, consultationId: string|number }} scope
  * @returns {string}
  */
-export function buildDraftBackupRecordKey({ userId, tenantId, consultationId }) {
-  return `u${String(userId ?? '')}:t${String(tenantId ?? '')}:c${String(consultationId ?? '')}`;
+export function buildDraftBackupRecordKey({ userId, tenantId, consultationId } = {}) {
+  const parts = [userId, tenantId, consultationId]
+    .map((value) => (value == null ? '' : String(value).trim()));
+  // 식별자가 하나라도 비면 다른 사용자·테넌트의 백업과 키가 겹칠 수 있으므로 키를 만들지 않는다
+  if (parts.some((value) => value === '')) return null;
+  return `u${parts[0]}:t${parts[1]}:c${parts[2]}`;
 }
 
 function getCryptoSubtle() {
@@ -138,6 +142,7 @@ function runStoreRequest(mode, action) {
  */
 export async function saveDraftBackup(scope, payloadJson) {
   const recordKey = buildDraftBackupRecordKey(scope);
+  if (!recordKey) return { memory: false, persisted: false };
   const savedAt = Date.now();
   memoryBackups.set(recordKey, { payloadJson, savedAt });
 
@@ -169,6 +174,7 @@ export async function saveDraftBackup(scope, payloadJson) {
  */
 export async function readDraftBackup(scope) {
   const recordKey = buildDraftBackupRecordKey(scope);
+  if (!recordKey) return null;
   const inMemory = memoryBackups.get(recordKey);
   if (inMemory) return inMemory;
 
@@ -198,6 +204,7 @@ export async function readDraftBackup(scope) {
  */
 export async function removeDraftBackup(scope) {
   const recordKey = buildDraftBackupRecordKey(scope);
+  if (!recordKey) return;
   memoryBackups.delete(recordKey);
   await runStoreRequest('readwrite', (store) => store.delete(recordKey));
 }

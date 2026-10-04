@@ -7,12 +7,15 @@ import java.util.Map;
 import java.util.Optional;
 import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.exception.EntityNotFoundException;
+import com.coresolution.consultation.entity.ConsultantClientMapping;
 import com.coresolution.consultation.entity.Schedule;
 import com.coresolution.consultation.entity.User;
+import com.coresolution.consultation.repository.ConsultantClientMappingRepository;
 import com.coresolution.consultation.service.ClientStatsService;
 import com.coresolution.consultation.service.ConsultationRecordService;
 import com.coresolution.consultation.service.DynamicPermissionService;
 import com.coresolution.consultation.service.ScheduleService;
+import com.coresolution.consultation.service.support.ClientPathAccessGuard;
 import com.coresolution.consultation.service.support.ConsultationRecordAccessGuard;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.util.PermissionCheckUtils;
@@ -52,6 +55,60 @@ public class ConsultantRecordsController {
     private final ScheduleService scheduleService;
     private final com.coresolution.consultation.service.UserPersonalDataCacheService userPersonalDataCacheService;
     private final ClientStatsService clientStatsService;
+    private final ClientPathAccessGuard clientPathAccessGuard;
+    private final ConsultantClientMappingRepository consultantClientMappingRepository;
+
+    /**
+     * 상담사 본인에게 배정된 내담자 목록 (id·이름만).
+     *
+     * <p>상담일지 관리 화면의 내담자 필터·이름 매핑용이다. 기존에는 이 화면이
+     * {@code GET /api/v1/admin/clients/with-stats} (관리자 전용) 를 호출해 상담사 로그인에서
+     * 403 이 났다. 여기서는 {@link ClientPathAccessGuard#requireConsultantAccess} 로
+     * <strong>본인 consultantId 만</strong> 허용하고(관리자는 통과), 활성 매칭에 있는 내담자만
+     * 돌려준다 — 다른 상담사의 내담자나 테넌트 전체 목록은 노출되지 않는다.</p>
+     *
+     * @param consultantId 조회 대상 상담사 ID (본인 또는 관리자만)
+     * @param session HTTP 세션
+     * @return {@code { success, data: [{ id, name }] }}
+     */
+    @GetMapping("/{consultantId}/clients")
+    public ResponseEntity<Map<String, Object>> getAssignedClients(
+            @PathVariable Long consultantId,
+            HttpSession session) {
+
+        User caller = clientPathAccessGuard.requireConsultantAccess(session, consultantId);
+        String tenantId = clientPathAccessGuard.requireCallerTenantId(caller);
+        com.coresolution.core.context.TenantContextHolder.setTenantId(tenantId);
+
+        List<ConsultantClientMapping> mappings = consultantClientMappingRepository
+                .findByConsultantIdAndStatusNot(tenantId, consultantId,
+                        ConsultantClientMapping.MappingStatus.TERMINATED);
+
+        Map<Long, String> clientNameById = new java.util.LinkedHashMap<>();
+        for (ConsultantClientMapping mapping : mappings) {
+            User client = mapping.getClient();
+            if (client == null || client.getId() == null) {
+                continue;
+            }
+            clientNameById.putIfAbsent(client.getId(), client.getName());
+        }
+
+        List<Map<String, Object>> clients = new ArrayList<>();
+        for (Map.Entry<Long, String> entry : clientNameById.entrySet()) {
+            Map<String, Object> item = new HashMap<>();
+            item.put("id", entry.getKey());
+            item.put("name", entry.getValue());
+            clients.add(item);
+        }
+
+        log.info("상담사 담당 내담자 목록 조회: consultantId={}, 건수={}", consultantId, clients.size());
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("success", true);
+        response.put("data", clients);
+        return ResponseEntity.ok(response);
+    }
+
     
     /**
      * 상담사별 상담 기록 목록 조회

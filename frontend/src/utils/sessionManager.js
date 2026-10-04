@@ -599,9 +599,11 @@ class SessionManager {
   applyClientLogoutCleanupPreserveSubdomain() {
     this.user = null;
     this.sessionInfo = null;
-    // 상담일지 초안: 레거시 평문 키 + 암호화 백업(IndexedDB·메모리) 전량 제거
+    // 상담일지 초안: 레거시 평문 키 + 암호화 백업(IndexedDB·메모리) 전량 제거.
+    // IndexedDB 삭제는 비동기라 반환 Promise 를 넘겨 호출자가 끝까지 기다릴 수 있게 한다
+    // (로그아웃 리다이렉트가 먼저 일어나면 삭제가 중단되어 본문 백업이 단말에 남는다).
     purgeAllLegacyConsultationLogLocalDrafts();
-    void purgeAllDraftBackups();
+    const draftBackupPurge = purgeAllDraftBackups();
     clearStoredSessionExpiry();
     this.lastCheckTime = 0;
     this.lastVerifiedAt = 0;
@@ -635,6 +637,8 @@ class SessionManager {
     document.cookie = '_csrf=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
 
     this.notifyListeners();
+
+    return draftBackupPurge;
   }
 
   /** 로그아웃 게이트: 남은 서버 세션 한 번 더 무효화 시도(리다이렉트 없음) */
@@ -694,7 +698,13 @@ class SessionManager {
       console.error('❌ 서버 로그아웃 실패:', error);
       // 서버 로그아웃 실패해도 클라이언트 로그아웃은 진행
     } finally {
-      this.applyClientLogoutCleanupPreserveSubdomain();
+      // IndexedDB 초안 백업 삭제가 끝난 뒤에 리다이렉트한다.
+      // 리다이렉트가 먼저면 삭제 트랜잭션이 끊겨 상담 본문 백업이 단말에 남는다.
+      try {
+        await this.applyClientLogoutCleanupPreserveSubdomain();
+      } catch (purgeError) {
+        console.warn('⚠️ 상담일지 초안 백업 삭제 실패(로그아웃은 계속):', purgeError);
+      }
 
       console.log('✅ 클라이언트 로그아웃 완료');
 

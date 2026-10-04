@@ -11,6 +11,7 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import StandardizedApi from '../../../utils/standardizedApi';
+import { API_ENDPOINTS } from '../../../constants/apiEndpoints';
 import { useSession } from '../../../contexts/SessionContext';
 import { RoleUtils } from '../../../constants/roles';
 import notificationManager from '../../../utils/notification';
@@ -342,8 +343,26 @@ const ConsultationLogViewPage = () => {
     }
   }, [isAdmin]);
 
+  /**
+   * 내담자 목록(필터·이름 매핑용).
+   *
+   * <p>관리자만 테넌트 전체 목록(`/admin/clients/with-stats`)을 쓴다. 상담사는 그 경로가
+   * 403 이므로 본인 담당 내담자만 돌려주는 상담사 스코프 API 를 쓴다(#1398 본인 id 강제).</p>
+   */
   const loadClients = useCallback(async() => {
     try {
+      if (!isAdmin) {
+        if (!user?.id) {
+          setClients([]);
+          return;
+        }
+        const res = await StandardizedApi.get(
+          API_ENDPOINTS.CONSULTANT_RECORDS.ASSIGNED_CLIENTS(user.id)
+        );
+        const arr = Array.isArray(res) ? res : (res?.data ?? []);
+        setClients(arr.map((c) => ({ ...c, id: c.id, name: c.name, userName: c.name })));
+        return;
+      }
       const list = await getAllClientsWithStats();
       const arr = Array.isArray(list) ? list : [];
       setClients(arr.map((item) => {
@@ -354,7 +373,7 @@ const ConsultationLogViewPage = () => {
       console.error('내담자 목록 로드 실패:', e);
       setClients([]);
     }
-  }, []);
+  }, [isAdmin, user?.id]);
 
   /** 상담사 본인 목록 응답을 목록 뷰 형식으로 정규화 */
   const normalizeConsultantRecords = useCallback((list, consultantDisplayName) => {

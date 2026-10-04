@@ -449,6 +449,16 @@ public interface AdminService {
     boolean requiresShopOrderRefund(Long mappingId);
 
     /**
+     * 단건 종료 경로 판정 — 쇼핑 주문(Path B)으로 결제된 매칭이면 그 주문 공개 ID.
+     * 결제 대기 매칭·원장 결제 매칭은 empty ({@link #terminateMapping(Long, String)} 경로).
+     *
+     * @param mappingId 매칭 ID
+     * @return Path B 주문 공개 ID (없으면 empty)
+     * @throws com.coresolution.consultation.exception.MappingAlreadyProcessedException 이미 종료·취소된 매칭
+     */
+    java.util.Optional<String> findTerminationShopOrderPublicId(Long mappingId);
+
+    /**
      * 결제 확인 처리 (미수금 상태)
      */
     ConsultantClientMapping confirmPayment(Long mappingId, String paymentMethod, String paymentReference);

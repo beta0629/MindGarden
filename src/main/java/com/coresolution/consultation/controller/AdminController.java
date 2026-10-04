@@ -40,6 +40,7 @@ import com.coresolution.consultation.entity.ConsultantClientMapping;
 import com.coresolution.consultation.entity.ConsultationRecord;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.exception.EntityNotFoundException;
+import com.coresolution.consultation.exception.RefundLedgerNotRecordedException;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.repository.UserSocialAccountRepository;
 import com.coresolution.consultation.service.AdminBulkMappingPaymentService;
@@ -60,6 +61,7 @@ import com.coresolution.consultation.service.RealTimeStatisticsService;
 import com.coresolution.consultation.service.ScheduleAutoCompleteService;
 import com.coresolution.consultation.service.ScheduleService;
 import com.coresolution.consultation.service.support.ClientPathAccessGuard;
+import com.coresolution.consultation.service.MappingTerminationService;
 import com.coresolution.consultation.service.support.DeferredExternalCalls;
 import com.coresolution.consultation.service.support.ResourceOwnerAccessGuard;
 import com.coresolution.core.security.OpsAccessGuard;
@@ -166,6 +168,7 @@ public class AdminController extends BaseApiController {
 
     private final AdminService adminService;
     private final AdminBulkMappingPaymentService adminBulkMappingPaymentService;
+    private final MappingTerminationService mappingTerminationService;
     private final ClientPackagePaymentHistoryService clientPackagePaymentHistoryService;
     private final ClientMappingListPayloadService clientMappingListPayloadService;
     private final BranchService branchService;
@@ -1757,8 +1760,8 @@ public class AdminController extends BaseApiController {
         log.info("💰 요청 데이터 - paymentMethod: {}, paymentReference: {}, paymentAmount: {}",
                 paymentMethod, paymentReference, paymentAmount);
 
-        ConsultantClientMapping mapping = adminService.confirmPayment(mappingId, paymentMethod,
-                paymentReference, paymentAmount);
+        ConsultantClientMapping mapping = DeferredExternalCalls.run(() -> adminService.confirmPayment(mappingId,
+                paymentMethod, paymentReference, paymentAmount));
 
         log.info("💰 매칭 ID {} 결제 확인 완료 (미수금 상태)", mappingId);
 
@@ -1819,7 +1822,8 @@ public class AdminController extends BaseApiController {
 
         String adminName = (String) request.get("adminName");
 
-        ConsultantClientMapping mapping = adminService.approveMapping(mappingId, adminName);
+        ConsultantClientMapping mapping = DeferredExternalCalls.run(
+                () -> adminService.approveMapping(mappingId, adminName));
 
         log.info("✅ 매칭 ID {} 관리자 승인 완료", mappingId);
 
@@ -2235,7 +2239,7 @@ public class AdminController extends BaseApiController {
         String currentBranchCode = currentUser.getBranchCode();
         log.info("🔧 현재 사용자 지점코드: {}", currentBranchCode);
 
-        ConsultantClientMapping mapping = adminService.createMapping(request);
+        ConsultantClientMapping mapping = DeferredExternalCalls.run(() -> adminService.createMapping(request));
 
         log.info("🔧 생성된 매칭 지점코드: {}", mapping.getBranchCode());
 
@@ -2586,7 +2590,7 @@ public class AdminController extends BaseApiController {
         resourceOwnerAccessGuard.requireMappingAdminAccess(session, id);
         log.info("🔧 매칭 강제 종료: ID={}", id);
         String reason = (String) requestBody.get("reason");
-        DeferredExternalCalls.run(() -> adminService.terminateMapping(id, reason));
+        DeferredExternalCalls.run(() -> mappingTerminationService.terminate(id, reason));
         return success("매칭이 성공적으로 종료되었습니다");
     }
 
@@ -2629,7 +2633,8 @@ public class AdminController extends BaseApiController {
             throw new IllegalArgumentException("환불 회기수는 숫자여야 합니다.");
         }
 
-        adminService.partialRefundMapping(id, refundSessions, reason);
+        int sessionsToRefund = refundSessions;
+        DeferredExternalCalls.run(() -> adminService.partialRefundMapping(id, sessionsToRefund, reason));
         return success(String.format("%d회기 부분 환불이 성공적으로 처리되었습니다", refundSessions));
     }
 
@@ -2824,7 +2829,8 @@ public class AdminController extends BaseApiController {
         log.info("💰 현재 매핑 상태 - status: {}, paymentStatus: {}", existingMapping.getStatus(),
                 existingMapping.getPaymentStatus());
 
-        ConsultantClientMapping mapping = adminService.confirmDeposit(mappingId, depositReference);
+        ConsultantClientMapping mapping = DeferredExternalCalls.run(
+                () -> adminService.confirmDeposit(mappingId, depositReference));
 
         log.info("💰 매칭 ID {} 입금 확인 완료 (현금 수입)", mappingId);
 
@@ -2974,6 +2980,10 @@ public class AdminController extends BaseApiController {
         data.put("skippedMappings", result.getSkippedMappingIds());
         data.put("failedMappingId", result.getFailedMappingId());
         data.put("notProcessedMappings", result.getNotProcessedMappingIds());
+        if (result.getFailureCode() != null) {
+            data.put("failureCode", result.getFailureCode());
+            data.put("failureMessage", result.getFailureMessage());
+        }
         return data;
     }
 
@@ -2982,8 +2992,13 @@ public class AdminController extends BaseApiController {
         if (result.isCompleted()) {
             return success(successMessage, data);
         }
-        return ResponseEntity.status(HttpStatus.CONFLICT)
-                .body(ApiResponse.error(AdminServiceUserFacingMessages.MSG_BULK_MAPPING_STOPPED_ON_FAILURE, data));
+        String message = result.getFailureMessage() != null
+                ? result.getFailureMessage()
+                : AdminServiceUserFacingMessages.MSG_BULK_MAPPING_STOPPED_ON_FAILURE;
+        HttpStatus status = RefundLedgerNotRecordedException.ERROR_CODE.equals(result.getFailureCode())
+                ? HttpStatus.UNPROCESSABLE_ENTITY
+                : HttpStatus.CONFLICT;
+        return ResponseEntity.status(status).body(ApiResponse.error(message, data));
     }
 
     /**

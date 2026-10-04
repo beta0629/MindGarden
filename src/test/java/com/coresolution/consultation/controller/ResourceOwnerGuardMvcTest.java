@@ -53,6 +53,7 @@ import com.coresolution.consultation.repository.ConsultationAudioFileRepository;
 import com.coresolution.consultation.repository.ConsultationRecordRepository;
 import com.coresolution.consultation.repository.MultimodalEmotionReportRepository;
 import com.coresolution.consultation.repository.UserRepository;
+import com.coresolution.consultation.repository.erp.financial.FinancialTransactionRepository;
 import com.coresolution.consultation.service.ConsultantRatingService;
 import com.coresolution.consultation.service.EmotionAnalysisService;
 import com.coresolution.consultation.service.impl.ConsultantAvailabilityServiceImpl;
@@ -203,7 +204,7 @@ class ResourceOwnerGuardMvcTest {
         ClientPathAccessGuard clientGuard = new ClientPathAccessGuard(mappingRepository, userRepository);
         ResourceOwnerAccessGuard ownerGuard = new ResourceOwnerAccessGuard(clientGuard, psychDocumentRepository,
             ratingRepository, recordRepository, audioFileRepository, multimodalReportRepository,
-            availabilityRepository);
+            availabilityRepository, mock(FinancialTransactionRepository.class));
         Object[] provided = {clientGuard, ownerGuard, ingestService, reportService, statsService,
             psychReportRepository, psychDocumentRepository, ratingService, emotionAnalysisService,
             availabilityService, environment};

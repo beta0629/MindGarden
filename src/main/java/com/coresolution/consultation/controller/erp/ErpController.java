@@ -24,6 +24,7 @@ import com.coresolution.consultation.service.CommonCodeService;
 import com.coresolution.consultation.service.DynamicPermissionService;
 import com.coresolution.consultation.service.RecurringExpenseService;
 import com.coresolution.consultation.service.SalaryTaxRateLookupService;
+import com.coresolution.consultation.service.support.ResourceOwnerAccessGuard;
 import com.coresolution.consultation.service.erp.ErpService;
 import com.coresolution.consultation.dto.CardMerchantFeeSettingsRequest;
 import com.coresolution.consultation.dto.CardMerchantFeeSettingsResponse;
@@ -43,6 +44,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -139,6 +141,7 @@ public class ErpController extends BaseApiController {
     private final DynamicPermissionService dynamicPermissionService;
     private final UserRepository userRepository;
     private final org.springframework.core.env.Environment environment;
+    private final ResourceOwnerAccessGuard resourceOwnerAccessGuard;
 
     // ==================== Item Management ====================
 
@@ -1613,6 +1616,7 @@ public class ErpController extends BaseApiController {
                         Map.of("success", false, "message", "테넌트 정보를 찾을 수 없습니다."));
             }
 
+            resourceOwnerAccessGuard.requireFinancialTransactionAccess(session, id);
             FinancialTransactionResponse data = financialTransactionService.getTransaction(id);
 
             Map<String, Object> result = new HashMap<>();
@@ -1664,6 +1668,7 @@ public class ErpController extends BaseApiController {
             log.info("수입/지출 거래 수정 요청: 사용자={}, tenantId={}, id={}", EmailLogMasking.maskForLog(currentUser.getEmail()),
                     tenantId, id);
 
+            resourceOwnerAccessGuard.requireFinancialTransactionAccess(session, id);
             FinancialTransactionResponse response =
                     financialTransactionService.updateTransaction(id, request, currentUser);
 
@@ -1885,6 +1890,7 @@ public class ErpController extends BaseApiController {
             log.info("재무 거래 삭제 허용: user={}, role={}", EmailLogMasking.maskForLog(currentUser.getEmail()),
                     currentUser.getRole());
 
+            resourceOwnerAccessGuard.requireFinancialTransactionAccess(session, id);
             financialTransactionService.deleteTransaction(id, currentUser);
 
             Map<String, Object> result = new HashMap<>();
@@ -1893,6 +1899,8 @@ public class ErpController extends BaseApiController {
 
             return ResponseEntity.ok(result);
 
+        } catch (AccessDeniedException e) {
+            throw e;
         } catch (Exception e) {
             return ServerErrorResponses.internalError("재무 거래 삭제 실패: id=" + id, e);
         }

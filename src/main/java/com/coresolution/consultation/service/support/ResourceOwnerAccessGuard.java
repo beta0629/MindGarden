@@ -11,12 +11,14 @@ import com.coresolution.consultation.entity.ConsultationAudioFile;
 import com.coresolution.consultation.entity.ConsultationRecord;
 import com.coresolution.consultation.entity.MultimodalEmotionReport;
 import com.coresolution.consultation.entity.User;
+import com.coresolution.consultation.entity.erp.financial.FinancialTransaction;
 import com.coresolution.consultation.exception.UnauthorizedException;
 import com.coresolution.consultation.repository.ConsultantAvailabilityRepository;
 import com.coresolution.consultation.repository.ConsultantRatingRepository;
 import com.coresolution.consultation.repository.ConsultationAudioFileRepository;
 import com.coresolution.consultation.repository.ConsultationRecordRepository;
 import com.coresolution.consultation.repository.MultimodalEmotionReportRepository;
+import com.coresolution.consultation.repository.erp.financial.FinancialTransactionRepository;
 import com.coresolution.consultation.util.ServerErrorResponses;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
@@ -27,7 +29,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * 자원 id(문서·평가·상담기록·음성파일·리포트·가용시간)로 접근하는 API 의 소유자 가드.
+ * 자원 id(문서·평가·상담기록·음성파일·리포트·가용시간·재무 거래·상담사 급여)로 접근하는 API 의 소유자 가드.
  *
  * <p>자원을 세션 테넌트 범위로 먼저 읽고, 그 소유 내담자/상담사에 {@link ClientPathAccessGuard} 와
  * 같은 규칙(내담자 본인 · 매칭 상담사 · 같은 테넌트 관리자/사무원)을 적용한다.</p>
@@ -56,6 +58,7 @@ public class ResourceOwnerAccessGuard {
     private final ConsultationAudioFileRepository audioFileRepository;
     private final MultimodalEmotionReportRepository multimodalReportRepository;
     private final ConsultantAvailabilityRepository availabilityRepository;
+    private final FinancialTransactionRepository financialTransactionRepository;
 
     /**
      * 심리검사 문서(및 그 리포트) 접근 검증. 내담자 미지정 문서는 같은 테넌트 관리자·사무원만.
@@ -218,6 +221,47 @@ public class ResourceOwnerAccessGuard {
         ConsultantAvailability availability = load(caller, "availabilityId", availabilityId,
             () -> availabilityRepository.findByTenantIdAndId(tenantId, availabilityId));
         assertConsultantAccess(caller, availability.getConsultantId(), "availabilityId", availabilityId);
+    }
+
+    /**
+     * 재무 거래 id 기반 접근 검증 (같은 테넌트 관리자·사무원만).
+     *
+     * @param session       HTTP 세션
+     * @param transactionId 거래 ID
+     * @return 테넌트 범위로 조회한 거래
+     * @throws UnauthorizedException 로그인 사용자가 없을 때
+     * @throws AccessDeniedException 테넌트 내 거래가 없거나 관리자·사무원이 아닐 때
+     */
+    @Transactional(readOnly = true)
+    public FinancialTransaction requireFinancialTransactionAccess(HttpSession session, Long transactionId) {
+        User caller = clientPathAccessGuard.requireCaller(session);
+        String tenantId = clientPathAccessGuard.requireCallerTenantId(caller);
+        FinancialTransaction transaction = load(caller, "transactionId", transactionId,
+            () -> financialTransactionRepository.findByTenantIdAndId(tenantId, transactionId));
+        if (!clientPathAccessGuard.isTenantManager(caller)) {
+            throw denyResource(caller, "transactionId", transactionId);
+        }
+        return transaction;
+    }
+
+    /**
+     * 상담사 id 로 읽는 자원(급여 프로필·급여 계산 등) 접근 검증. 상담사 본인 또는 같은 테넌트 관리자·사무원.
+     *
+     * @param session      HTTP 세션
+     * @param consultantId 상담사 ID
+     * @return 세션 사용자
+     * @throws UnauthorizedException 로그인 사용자가 없을 때
+     * @throws AccessDeniedException 테넌트 내 상담사가 아니거나 본인·관리자가 아닐 때
+     */
+    @Transactional(readOnly = true)
+    public User requireConsultantResourceAccess(HttpSession session, Long consultantId) {
+        User caller = clientPathAccessGuard.requireCaller(session);
+        clientPathAccessGuard.requireCallerTenantId(caller);
+        if (consultantId == null) {
+            throw denyResource(caller, "consultantId", null);
+        }
+        assertConsultantAccess(caller, consultantId, "consultantId", consultantId);
+        return caller;
     }
 
     private ConsultationRecord loadAccessibleRecord(User caller, Long consultationRecordId) {

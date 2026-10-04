@@ -30,6 +30,7 @@ import com.coresolution.consultation.service.erp.accounting.LedgerService;
 import com.coresolution.consultation.service.erp.financial.CardMerchantFeeSettingsService;
 import com.coresolution.consultation.service.erp.financial.FinancialTransactionService;
 import com.coresolution.consultation.service.erp.settlement.SettlementService;
+import com.coresolution.consultation.service.support.ResourceOwnerAccessGuard;
 import com.coresolution.consultation.utils.SessionUtils;
 import jakarta.servlet.http.HttpSession;
 import java.util.HashMap;
@@ -85,6 +86,7 @@ class ErpStaffStillForbiddenTest {
     @Mock private SalaryTaxRateLookupService salaryTaxRateLookupService;
     @Mock private UserRepository userRepository;
     @Mock private Environment environment;
+    @Mock private ResourceOwnerAccessGuard resourceOwnerAccessGuard;
     @Mock private SalaryBatchService salaryBatchService;
 
     private MockedStatic<SessionUtils> sessionUtilsStatic;
@@ -171,7 +173,8 @@ class ErpStaffStillForbiddenTest {
         // local/dev 분기를 건너뛰고 동적 ERP_ACCESS 체크로 떨어진다.
         ErpController controller = new ErpController(erpService, financialTransactionService,
                 cardMerchantFeeSettingsService, recurringExpenseService, commonCodeService,
-                salaryTaxRateLookupService, dynamicPermissionService, userRepository, environment);
+                salaryTaxRateLookupService, dynamicPermissionService, userRepository, environment,
+                resourceOwnerAccessGuard);
 
         ResponseEntity<Map<String, Object>> response = controller.getAllItems(session);
 

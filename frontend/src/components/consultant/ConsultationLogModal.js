@@ -447,7 +447,7 @@ const ConsultationLogModal = ({
   });
 
   // 새로고침·탭 닫기 확인. 전체화면 라우트(routeLeaveGuard)로 띄울 때만 라우트 이동도 확인한다.
-  const { blocker: leaveBlocker } = useUnsavedChangesGuard({
+  const { blocker: leaveBlocker, releaseGuard: releaseLeaveGuard } = useUnsavedChangesGuard({
     when: isOpen && (contentDirtyRef.current || memoDirty),
     enableRouteBlocker: routeLeaveGuard
   });
@@ -1168,7 +1168,10 @@ const ConsultationLogModal = ({
           }));
         }
         onSave && onSave(record);
-        if (recordId) onClose && onClose();
+        if (recordId) {
+          if (!memoDirty) releaseLeaveGuard();
+          onClose && onClose();
+        }
       } else {
         throw new Error(response?.message || t('common:consultant.ConsultationLogModal.t_8a91f40c'));
       }
@@ -1255,6 +1258,7 @@ const ConsultationLogModal = ({
         contentDirtyRef.current = false;
         await discardDraft();
         onSave && onSave(record);
+        if (!memoDirty) releaseLeaveGuard();
         onClose();
       } else {
         throw new Error(response?.message || t('common:consultant.ConsultationLogModal.t_cbbfa91c'));
@@ -1287,6 +1291,8 @@ const ConsultationLogModal = ({
     void saveDraftNow({ force: true });
     setMemoDirty(false);
     setCloseWithoutSaveConfirmOpen(false);
+    // 방금 「저장하지 않고 닫기」를 확인받았으므로 라우트 이동 확인을 다시 띄우지 않는다.
+    releaseLeaveGuard();
     onClose?.();
   };
 
@@ -1367,13 +1373,18 @@ const ConsultationLogModal = ({
         // 화면에 입력된 내용을 덮어쓰게 되므로 한 번 더 확인한다.
         setRestoreOverwriteConfirmOpen(true);
       }}
+      onCancel={() => {
+        // 「버리기」를 명시적으로 눌렀을 때만 서버 초안·브라우저 백업·레거시 키를 삭제한다.
+        void discardDraft();
+        setPendingRestoreDraft(null);
+        setRestoreDraftConfirmOpen(false);
+      }}
       onClose={() => {
         if (restoreConfirmedRef.current) {
           restoreConfirmedRef.current = false;
           return;
         }
-        // 버리기 — 서버 초안·브라우저 백업·레거시 키 모두 삭제
-        void discardDraft();
+        // ×·ESC·배경 클릭은 「나중에」 — 초안을 모두 남겨 두고 다음 진입 때 다시 묻는다.
         setPendingRestoreDraft(null);
         setRestoreDraftConfirmOpen(false);
       }}

@@ -55,6 +55,7 @@ import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.dao.DataAccessException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
@@ -610,18 +611,22 @@ public class ResourceOwnerAccessGuard {
      * 지점이 하나도 없거나 지점 기능이 꺼진 테넌트의 관리자는 통과하되 빈 값을 돌려준다 — 지점 코드만 받는
      * 프로시저는 테넌트로 거르지 않으므로 호출하지 않는다(다른 테넌트 지점 범위 금지).</p>
      *
+     * <p>지점 존재 조회 자체가 DB 오류(지점 테이블·뷰 권한 없음 등)로 실패해도 지점 없는 테넌트와 같이
+     * 빈 값을 돌려준다(500·예외 문구 노출 금지). 조회 실패가 바깥 트랜잭션을 rollback-only 로 만들어
+     * 커밋 시 500 이 되지 않도록 이 메서드는 트랜잭션을 열지 않는다.</p>
+     *
      * @param session    HTTP 세션
      * @param branchCode 요청 지점 코드
-     * @return 세션 테넌트에서 확인한 지점 코드, 지점이 없는 테넌트면 빈 값
+     * @return 세션 테넌트에서 확인한 지점 코드, 지점이 없거나 지점 조회가 불가한 테넌트면 빈 값
      * @throws UnauthorizedException 로그인 사용자가 없을 때
      * @throws AccessDeniedException 관리자가 아니거나, 지점이 있는 테넌트에서 요청 지점이 그 테넌트 소속이 아닐 때
      */
-    @Transactional(readOnly = true)
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public Optional<String> requireTenantBranchAdminAccess(HttpSession session, String branchCode) {
         User caller = requireTenantAdmin(session, "branchCode", branchCode);
         String tenantId = clientPathAccessGuard.requireCallerTenantId(caller);
         BranchRepository branchRepository = branchRepositoryProvider.getIfAvailable();
-        if (branchRepository == null || !branchRepository.existsByTenantIdAndIsDeletedFalse(tenantId)) {
+        if (branchRepository == null || !tenantHasBranches(branchRepository, tenantId)) {
             return Optional.empty();
         }
         return Optional.of(load(caller, "branchCode", branchCode,
@@ -782,6 +787,17 @@ public class ResourceOwnerAccessGuard {
         }
         assertClientAccess(caller, record.getClientId(), "consultationRecordId", consultationRecordId);
         return record;
+    }
+
+    /** 세션 테넌트에 지점이 있는지. 조회가 실패하면 지점이 없는 것으로 본다(예외 문구는 남기지 않는다). */
+    private boolean tenantHasBranches(BranchRepository branchRepository, String tenantId) {
+        try {
+            return branchRepository.existsByTenantIdAndIsDeletedFalse(tenantId);
+        } catch (DataAccessException e) {
+            log.warn("[security] 지점 존재 조회 실패 — 지점 없는 테넌트로 처리: tenantId={}, cause={}",
+                tenantId, e.getClass().getSimpleName());
+            return false;
+        }
     }
 
     /**

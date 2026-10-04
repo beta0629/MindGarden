@@ -1,5 +1,6 @@
 package com.coresolution.consultation.controller;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -45,6 +46,7 @@ import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockHttpSession;
+import org.springframework.orm.jpa.JpaSystemException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
@@ -194,6 +196,24 @@ class TenantAdminDiscountSalaryGuardMvcTest {
                 .andExpect(jsonPath("$.branchScoped").value(false))
                 .andExpect(jsonPath("$.errorCount").value(0));
         }
+        verify(plSqlDiscountAccountingService, never()).validateDiscountIntegrity(any());
+        verify(branchRepository, never()).findByTenantIdAndBranchCodeAndIsDeletedFalse(anyString(), anyString());
+    }
+
+    @Test
+    @DisplayName("지점 존재 조회가 DB 오류(지점 뷰 권한 없음 등) — 500·예외 문구 없이 200(지점 범위 없음), 프로시저 미호출")
+    void branchLookupDbError_okWithoutProcedure() throws Exception {
+        String dbError = "Access denied for user 'leak-check'";
+        when(branchRepository.existsByTenantIdAndIsDeletedFalse(TENANT_NO_BRANCH))
+            .thenThrow(new JpaSystemException(new RuntimeException(dbError)));
+        User admin = user(ADMIN_NO_BRANCH, UserRole.ADMIN, TENANT_NO_BRANCH);
+        String body = mockMvc.perform(req(validateIntegrity(BRANCH_A), admin, null))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.success").value(true))
+            .andExpect(jsonPath("$.branchScoped").value(false))
+            .andExpect(jsonPath("$.errorCount").value(0))
+            .andReturn().getResponse().getContentAsString();
+        assertThat(body).doesNotContain(dbError).doesNotContain("JpaSystemException");
         verify(plSqlDiscountAccountingService, never()).validateDiscountIntegrity(any());
         verify(branchRepository, never()).findByTenantIdAndBranchCodeAndIsDeletedFalse(anyString(), anyString());
     }

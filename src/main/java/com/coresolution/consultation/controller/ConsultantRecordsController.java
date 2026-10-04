@@ -206,10 +206,14 @@ public class ConsultantRecordsController {
      *
      * <p>회기수({@code sessionNumber})와 대상 일정({@code consultationId})은 쿼리 파라미터 필수.</p>
      *
+     * <p>존재 여부를 보기 전에 공용 가드 {@link ConsultationRecordAccessGuard#requireDeleteAccess} 로 판정한다.
+     * 권한이 없으면 일지가 없어도 있어도 같은 403 이다.</p>
+     *
      * @param consultantId 상담사 ID
      * @param recordId 삭제 대상 상담일지 ID
      * @param consultationId 의도한 Schedule.id
      * @param sessionNumber 의도한 회기수
+     * @param session HTTP 세션
      * @return 삭제 결과
      */
     @DeleteMapping("/{consultantId}/consultation-records/{recordId}")
@@ -217,10 +221,12 @@ public class ConsultantRecordsController {
             @PathVariable Long consultantId,
             @PathVariable Long recordId,
             @RequestParam Long consultationId,
-            @RequestParam Integer sessionNumber) {
+            @RequestParam Integer sessionNumber,
+            HttpSession session) {
         
         log.info("상담기록 삭제 요청: consultantId={}, recordId={}, consultationId={}, sessionNumber={}",
                 consultantId, recordId, consultationId, sessionNumber);
+        consultationRecordAccessGuard.requireDeleteAccess(session, recordId);
         
         try {
             consultationRecordService.deleteConsultationRecord(recordId, consultationId, sessionNumber);

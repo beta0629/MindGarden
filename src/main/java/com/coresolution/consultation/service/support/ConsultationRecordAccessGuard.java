@@ -112,7 +112,18 @@ public class ConsultationRecordAccessGuard {
                 || !Objects.equals(callerTenantId, schedule.getTenantId())) {
             return false;
         }
-        return isAuthor(caller, schedule.getConsultantId()) || clientPathAccessGuard.isTenantManager(caller);
+        return canCreateFor(caller, schedule.getConsultantId());
+    }
+
+    /**
+     * 담당 상담사 기준 작성 허용 여부 — 회기권·타기관 작성이 공유하는 단일 규칙.
+     *
+     * @param caller               세션 사용자
+     * @param assigneeConsultantId 담당 상담사 ID (일정·매핑·계약의 상담사)
+     * @return 담당 상담사 본인이거나 같은 테넌트 관리자 계열이면 {@code true}
+     */
+    private boolean canCreateFor(User caller, Long assigneeConsultantId) {
+        return isAuthor(caller, assigneeConsultantId) || clientPathAccessGuard.isTenantManager(caller);
     }
 
     /**
@@ -149,6 +160,69 @@ public class ConsultationRecordAccessGuard {
     }
 
     /**
+     * 타기관 연계 상담일지 작성 1차 검증 (컨트롤러). 저장 전에 반드시 통과한다.
+     *
+     * <p>일정이 있으면 회기권과 같은 {@link #requireCreateAccess} 규칙(일정 담당 상담사 또는 같은 테넌트
+     * 관리자 계열)이다. 일정이 없으면 같은 테넌트 상담사·관리자 계열만 통과하고, 담당 상담사 대조는
+     * 서비스가 매핑·계약을 읽은 뒤 {@link #requireInstitutionLinkAssignee} 로 한다. 본문의 타기관 표시
+     * ({@code contractId}·{@code mappingId} 등)는 허용 근거가 아니다.</p>
+     *
+     * @param session    HTTP 세션
+     * @param scheduleId 대상 일정 ID (없으면 null)
+     * @return 판정을 통과한 작성자 정보
+     * @throws UnauthorizedException 로그인 사용자가 없을 때
+     * @throws AccessDeniedException 내담자·다른 테넌트이거나 일정 담당 상담사·관리자가 아닐 때
+     */
+    @Transactional(readOnly = true)
+    public ConsultationRecordWriter requireInstitutionLinkCreateAccess(HttpSession session, Long scheduleId) {
+        if (scheduleId != null) {
+            return requireCreateAccess(session, scheduleId);
+        }
+        User caller = requireConsultationRecordRole(session);
+        return ConsultationRecordWriter.forCreate(caller, clientPathAccessGuard.isTenantManager(caller), null);
+    }
+
+    /**
+     * 타기관 작성 대상(매핑·계약)이 세션 테넌트에 없을 때 던질 예외. 담당이 아닐 때와 같은 403 이라
+     * 다른 테넌트·같은 테넌트 모두 id 존재 여부를 알 수 없다.
+     *
+     * @param writer 컨트롤러 가드가 만든 작성자 정보 (로그용)
+     * @return 던질 {@link AccessDeniedException}
+     */
+    public AccessDeniedException institutionLinkTargetDenied(ConsultationRecordWriter writer) {
+        return ClientPathAccessGuard.denied(DENIAL_CREATE_ASSIGNEE_ONLY, null, "writerUserId",
+            writer != null ? writer.userId() : null);
+    }
+
+    /**
+     * 타기관 연계 상담일지 작성 2차 검증 (서비스). 매핑·계약에서 읽은 담당자로 다시 판정한다.
+     *
+     * <p>작성자가 담당 상담사 본인이거나 같은 테넌트 관리자 계열이어야 하고, 본문의 상담사·내담자는
+     * 매핑·계약의 담당 상담사·내담자와 같아야 한다. 판정 대상 일정이 있으면 저장 대상 일정과 같아야 한다.</p>
+     *
+     * @param writer               컨트롤러 가드가 만든 작성자 정보 (null 이면 거부)
+     * @param assigneeConsultantId 매핑·계약의 담당 상담사 ID
+     * @param assigneeClientId     매핑·계약의 내담자 ID
+     * @param requestConsultantId  본문 상담사 ID
+     * @param requestClientId      본문 내담자 ID
+     * @param requestScheduleId    본문 일정 ID
+     * @throws AccessDeniedException 위 조건 중 하나라도 맞지 않을 때
+     */
+    public void requireInstitutionLinkAssignee(ConsultationRecordWriter writer, Long assigneeConsultantId,
+            Long assigneeClientId, Long requestConsultantId, Long requestClientId, Long requestScheduleId) {
+        Long writerUserId = writer != null ? writer.userId() : null;
+        boolean allowed = writerUserId != null
+            && assigneeConsultantId != null
+            && (writer.tenantManager() || Objects.equals(writerUserId, assigneeConsultantId))
+            && Objects.equals(requestConsultantId, assigneeConsultantId)
+            && (assigneeClientId == null || Objects.equals(requestClientId, assigneeClientId))
+            && (writer.scheduleId() == null || writer.matchesSchedule(requestScheduleId));
+        if (!allowed) {
+            deny(DENIAL_CREATE_ASSIGNEE_ONLY, null, "writerUserId", writerUserId);
+        }
+    }
+
+    /**
      * 상담일지 수정 검증. 수정 경로는 저장 전에 반드시 이 메서드를 통과한다.
      *
      * @param session  HTTP 세션
@@ -179,6 +253,28 @@ public class ConsultationRecordAccessGuard {
         }
         return ConsultationRecordWriter.forEdit(caller, clientPathAccessGuard.isTenantManager(caller),
                 record.getId());
+    }
+
+    /**
+     * 상담일지 삭제 검증 — {@link #requireWriteAccess} 와 같은 규칙이되, 거부 문구를 하나로 맞춘다.
+     *
+     * <p>내담자·역할 미상은 일지를 조회하기 전에 거부하고, 일지가 없을 때와 권한이 없을 때 모두
+     * {@link #DENIAL_RECORD_UNAVAILABLE} 403 이므로 응답으로 id 존재 여부를 알 수 없다.</p>
+     *
+     * @param session  HTTP 세션
+     * @param recordId 삭제 대상 상담일지 ID
+     * @return 판정을 통과한 작성자 정보
+     * @throws UnauthorizedException 로그인 사용자가 없을 때
+     * @throws AccessDeniedException 일지가 없거나 작성자·같은 테넌트 관리자가 아닐 때
+     */
+    @Transactional(readOnly = true)
+    public ConsultationRecordWriter requireDeleteAccess(HttpSession session, Long recordId) {
+        requireConsultationRecordRole(session);
+        try {
+            return requireWriteAccess(session, recordId);
+        } catch (AccessDeniedException e) {
+            throw new AccessDeniedException(DENIAL_RECORD_UNAVAILABLE, e);
+        }
     }
 
     /**
@@ -341,6 +437,37 @@ public class ConsultationRecordAccessGuard {
             deny(DENIAL_AUTHOR_ONLY, caller, "recordId", recordId);
         }
         return log;
+    }
+
+    /**
+     * 타기관 연계 상담일지 수정·완료 검증 — {@link #canWrite} 규칙을 그대로 적용한다.
+     *
+     * @param session  HTTP 세션
+     * @param recordId 타기관 연계 일지 ID
+     * @throws UnauthorizedException 로그인 사용자가 없을 때
+     * @throws AccessDeniedException 테넌트 내 일지가 없거나 작성자·같은 테넌트 관리자가 아닐 때
+     */
+    @Transactional(readOnly = true)
+    public void requireInstitutionLinkLogWriteAccess(HttpSession session, Long recordId) {
+        User caller = clientPathAccessGuard.requireCaller(session);
+        String tenantId = clientPathAccessGuard.requireCallerTenantId(caller);
+        InstitutionLinkConsultationLog log = recordId == null ? null
+            : institutionLinkConsultationLogRepository
+                .findByTenantIdAndIdAndIsDeletedFalse(tenantId, recordId).orElse(null);
+        if (log == null) {
+            audit(caller, tenantId, ConsultationRecordAccessAudit.KIND_INSTITUTION_LINK_LOG, recordId, null, null,
+                    ConsultationRecordAccessAudit.ACTION_EDIT, ConsultationRecordAccessAudit.RESULT_DENIED,
+                    DENIAL_RECORD_UNAVAILABLE);
+            deny(DENIAL_RECORD_UNAVAILABLE, caller, "recordId", recordId);
+        }
+        boolean allowed = canWrite(caller, tenantId, log.getTenantId(), log.getConsultantId());
+        audit(caller, tenantId, ConsultationRecordAccessAudit.KIND_INSTITUTION_LINK_LOG, recordId,
+                log.getClientId(), log.getConsultantId(), ConsultationRecordAccessAudit.ACTION_EDIT,
+                allowed ? ConsultationRecordAccessAudit.RESULT_ALLOWED : ConsultationRecordAccessAudit.RESULT_DENIED,
+                allowed ? null : DENIAL_WRITE_AUTHOR_ONLY);
+        if (!allowed) {
+            deny(DENIAL_WRITE_AUTHOR_ONLY, caller, "recordId", recordId);
+        }
     }
 
     /**

@@ -25,6 +25,8 @@ import com.coresolution.consultation.repository.InstitutionLinkConsultationLogRe
 import com.coresolution.consultation.repository.InstitutionLinkContractRepository;
 import com.coresolution.consultation.service.InstitutionLinkConsultationLogService;
 import com.coresolution.consultation.service.ScheduleService;
+import com.coresolution.consultation.service.support.ConsultationRecordAccessGuard;
+import com.coresolution.consultation.service.support.ConsultationRecordWriter;
 import com.coresolution.core.context.TenantContextHolder;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -52,11 +54,12 @@ public class InstitutionLinkConsultationLogServiceImpl implements InstitutionLin
     private final ConsultantClientMappingRepository consultantClientMappingRepository;
     private final ClientRepository clientRepository;
     private final ScheduleService scheduleService;
+    private final ConsultationRecordAccessGuard consultationRecordAccessGuard;
 
     @Override
     @Transactional
     public InstitutionLinkConsultationLogResponse create(String tenantId,
-            InstitutionLinkConsultationLogCreateRequest request) {
+            InstitutionLinkConsultationLogCreateRequest request, ConsultationRecordWriter writer) {
         requireTenantId(tenantId);
         if (request == null) {
             throw new ValidationException("타기관 상담일지 요청은 필수입니다.");
@@ -76,10 +79,19 @@ public class InstitutionLinkConsultationLogServiceImpl implements InstitutionLin
 
         final Long mappingId = request.getMappingId();
         final Long requestedContractId = request.getContractId();
+        Long assigneeConsultantId = null;
+        Long assigneeClientId = null;
         if (mappingId != null) {
             ConsultantClientMapping mapping = consultantClientMappingRepository
                     .findByTenantIdAndId(tenantId, mappingId)
-                    .orElseThrow(() -> new EntityNotFoundException("ConsultantClientMapping", mappingId));
+                    .orElse(null);
+            if (mapping == null) {
+                throw consultationRecordAccessGuard.institutionLinkTargetDenied(writer);
+            }
+            assigneeConsultantId = mapping.getConsultant() != null ? mapping.getConsultant().getId() : null;
+            assigneeClientId = mapping.getClient() != null ? mapping.getClient().getId() : null;
+            consultationRecordAccessGuard.requireInstitutionLinkAssignee(writer, assigneeConsultantId,
+                    assigneeClientId, request.getConsultantId(), request.getClientId(), request.getScheduleId());
             if (!PaymentTimingConstants.isInstitutionLink(mapping.getPaymentTiming())
                     && requestedContractId == null
                     && !isInstitutionLinkClient(tenantId, request.getClientId())) {
@@ -90,7 +102,16 @@ public class InstitutionLinkConsultationLogServiceImpl implements InstitutionLin
         if (requestedContractId != null) {
             InstitutionLinkContract contract = institutionLinkContractRepository
                     .findByTenantIdAndIdAndIsDeletedFalse(tenantId, requestedContractId)
-                    .orElseThrow(() -> new EntityNotFoundException("InstitutionLinkContract", requestedContractId));
+                    .orElse(null);
+            if (contract == null) {
+                throw consultationRecordAccessGuard.institutionLinkTargetDenied(writer);
+            }
+            // 매핑을 함께 보냈으면 담당 상담사는 이미 매핑(현재 담당)으로 검증했다 — 계약의 상담사는 생성 시점 값이라
+            // 담당 변경 뒤에는 다를 수 있다. 계약 내담자는 항상 본문·매핑 내담자와 같아야 한다.
+            consultationRecordAccessGuard.requireInstitutionLinkAssignee(writer,
+                    mappingId != null ? assigneeConsultantId : contract.getConsultantId(),
+                    contract.getClientId() != null ? contract.getClientId() : assigneeClientId,
+                    request.getConsultantId(), request.getClientId(), request.getScheduleId());
             resolvedContractId = contract.getId();
         } else {
             resolvedContractId = institutionLinkContractRepository
@@ -138,9 +159,10 @@ public class InstitutionLinkConsultationLogServiceImpl implements InstitutionLin
 
     @Override
     @Transactional
-    public InstitutionLinkConsultationLogResponse createFromSchedulePayload(Map<String, Object> recordData) {
+    public InstitutionLinkConsultationLogResponse createFromSchedulePayload(Map<String, Object> recordData,
+            ConsultationRecordWriter writer) {
         String tenantId = TenantContextHolder.getRequiredTenantId();
-        return create(tenantId, InstitutionLinkConsultationLogCreateRequest.fromSchedulePayload(recordData));
+        return create(tenantId, InstitutionLinkConsultationLogCreateRequest.fromSchedulePayload(recordData), writer);
     }
 
     @Override

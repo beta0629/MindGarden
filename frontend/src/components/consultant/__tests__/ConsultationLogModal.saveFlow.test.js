@@ -63,7 +63,7 @@ jest.mock('../../../hooks/useConsultationLogDraftAutosave', () => ({
   })
 }));
 jest.mock('../../../hooks/useUnsavedChangesGuard', () => ({
-  useUnsavedChangesGuard: () => ({ blocker: null })
+  useUnsavedChangesGuard: () => ({ blocker: null, releaseGuard: jest.fn() })
 }));
 jest.mock('../../common/modals/UnifiedModal', () => ({
   __esModule: true,

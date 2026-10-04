@@ -30,6 +30,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.DriverManagerDataSource;
+import org.springframework.test.util.ReflectionTestUtils;
 
 /**
  * 수동 자동완료(with-reminder 포함) — 서버 여러 대에서 한 번만 실행 (ShedLock DB 락).
@@ -152,6 +153,32 @@ class ScheduleAutoCompleteServiceClusterLockTest {
         } catch (IllegalStateException e) {
             return "rejected";
         }
+    }
+
+    @Test
+    @DisplayName("락 빈 없음 + 필수(기본·운영 프로필 포함) — 기동 실패(fail-fast), 조용히 JVM 락으로 폴백하지 않음")
+    void missingLockProvider_required_failsStartup() {
+        ScheduleAutoCompleteService service = newInstance(null);
+        ReflectionTestUtils.setField(service, "clusterLockRequired", true);
+        IllegalStateException e = assertThrows(IllegalStateException.class, service::verifyClusterLock);
+        assertTrue(e.getMessage().contains("LockProvider"));
+    }
+
+    @Test
+    @DisplayName("락 빈 없음 + 명시적으로 끔 — 기동은 하되 ERROR 로그 후 JVM 락만 사용")
+    void missingLockProvider_optedOut_startsWithJvmLockOnly() {
+        ScheduleAutoCompleteService service = newInstance(null);
+        ReflectionTestUtils.setField(service, "clusterLockRequired", false);
+        service.verifyClusterLock();
+        assertEquals(1, service.runExclusively("withReminder", () -> 1));
+    }
+
+    @Test
+    @DisplayName("락 빈 있음 — 필수여도 기동 정상")
+    void lockProviderPresent_startsNormally() {
+        ScheduleAutoCompleteService service = newInstance(blueProvider);
+        ReflectionTestUtils.setField(service, "clusterLockRequired", true);
+        service.verifyClusterLock();
     }
 
     private int lockedRows(String name) {

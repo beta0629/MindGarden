@@ -23,6 +23,7 @@ import com.coresolution.consultation.exception.ValidationException;
 import com.coresolution.consultation.repository.ClientRepository;
 import com.coresolution.consultation.repository.ConsultantClientMappingRepository;
 import com.coresolution.consultation.repository.InstitutionLinkContractRepository;
+import com.coresolution.consultation.service.support.ConsultationRecordWriter;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.domain.ClientPlatform;
 import org.junit.jupiter.api.AfterEach;
@@ -45,6 +46,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class InstitutionLinkConsultationLogWriteRouterIsolationTest {
 
     private static final String TENANT_ID = "tenant-institution-link-log-1";
+
+    private static final ConsultationRecordWriter WRITER =
+            new ConsultationRecordWriter(7L, "CONSULTANT", false, 500L, null);
 
     @Mock
     private InstitutionLinkConsultationLogService institutionLinkConsultationLogService;
@@ -83,14 +87,14 @@ class InstitutionLinkConsultationLogWriteRouterIsolationTest {
         Map<String, Object> payload = new HashMap<>();
         payload.put("engagementType", PaymentTimingConstants.INSTITUTION_LINK);
         payload.put("mappingId", 8801L);
-        when(institutionLinkConsultationLogService.createFromSchedulePayload(payload))
+        when(institutionLinkConsultationLogService.createFromSchedulePayload(payload, WRITER))
                 .thenThrow(new ValidationException("sessionDate", null, "세션 일자는 필수입니다."));
 
-        assertThatThrownBy(() -> router.create(payload))
+        assertThatThrownBy(() -> router.create(payload, ClientPlatform.WEB, WRITER))
                 .isInstanceOf(ValidationException.class)
                 .hasMessageContaining("세션 일자는 필수입니다.");
 
-        verify(institutionLinkConsultationLogService).createFromSchedulePayload(payload);
+        verify(institutionLinkConsultationLogService).createFromSchedulePayload(payload, WRITER);
         verifyNoInteractions(consultationRecordService);
     }
 
@@ -100,15 +104,15 @@ class InstitutionLinkConsultationLogWriteRouterIsolationTest {
         Map<String, Object> payload = new HashMap<>();
         payload.put("paymentTiming", PaymentTimingConstants.ADVANCE);
         payload.put("remainingSessions", 0);
-        when(consultationRecordService.createConsultationRecord(payload))
+        when(consultationRecordService.createConsultationRecord(payload, WRITER))
                 .thenThrow(new ValidationException("sessionNumber", null, "회기수(sessionNumber)는 필수입니다."));
 
-        assertThatThrownBy(() -> router.create(payload))
+        assertThatThrownBy(() -> router.create(payload, ClientPlatform.WEB, WRITER))
                 .isInstanceOf(ValidationException.class)
                 .hasMessageContaining("회기수(sessionNumber)는 필수입니다.");
 
-        verify(consultationRecordService).createConsultationRecord(payload);
-        verify(institutionLinkConsultationLogService, never()).createFromSchedulePayload(any());
+        verify(consultationRecordService).createConsultationRecord(payload, WRITER);
+        verify(institutionLinkConsultationLogService, never()).createFromSchedulePayload(any(), any());
         verifyNoInteractions(consultantClientMappingRepository);
         verifyNoInteractions(institutionLinkContractRepository);
         verifyNoInteractions(clientRepository);
@@ -120,13 +124,13 @@ class InstitutionLinkConsultationLogWriteRouterIsolationTest {
         Map<String, Object> payload = new HashMap<>();
         payload.put("remainingSessions", 0);
         payload.put("sessionNumber", null);
-        when(consultationRecordService.createConsultationRecord(payload))
+        when(consultationRecordService.createConsultationRecord(payload, WRITER))
                 .thenReturn(new ConsultationRecord());
 
-        router.create(payload);
+        router.create(payload, ClientPlatform.WEB, WRITER);
 
-        verify(consultationRecordService).createConsultationRecord(payload);
-        verify(institutionLinkConsultationLogService, never()).createFromSchedulePayload(any());
+        verify(consultationRecordService).createConsultationRecord(payload, WRITER);
+        verify(institutionLinkConsultationLogService, never()).createFromSchedulePayload(any(), any());
     }
 
     @Test
@@ -143,9 +147,9 @@ class InstitutionLinkConsultationLogWriteRouterIsolationTest {
         when(clientRepository.findByTenantIdAndIdIncludingDeleted(TENANT_ID, 78L))
                 .thenReturn(Optional.of(client));
 
-        router.create(payload);
+        router.create(payload, ClientPlatform.WEB, WRITER);
 
-        verify(institutionLinkConsultationLogService).createFromSchedulePayload(payload);
+        verify(institutionLinkConsultationLogService).createFromSchedulePayload(payload, WRITER);
         verifyNoInteractions(consultationRecordService);
     }
 
@@ -161,9 +165,9 @@ class InstitutionLinkConsultationLogWriteRouterIsolationTest {
         when(consultantClientMappingRepository.findByTenantIdAndId(TENANT_ID, 8801L))
                 .thenReturn(Optional.of(mapping));
 
-        router.create(payload);
+        router.create(payload, ClientPlatform.WEB, WRITER);
 
-        verify(institutionLinkConsultationLogService).createFromSchedulePayload(payload);
+        verify(institutionLinkConsultationLogService).createFromSchedulePayload(payload, WRITER);
         verifyNoInteractions(consultationRecordService);
     }
 
@@ -182,9 +186,9 @@ class InstitutionLinkConsultationLogWriteRouterIsolationTest {
         when(institutionLinkContractRepository.findByTenantIdAndSourceMappingId(TENANT_ID, 9901L))
                 .thenReturn(Optional.of(contract));
 
-        router.create(payload);
+        router.create(payload, ClientPlatform.WEB, WRITER);
 
-        verify(institutionLinkConsultationLogService).createFromSchedulePayload(payload);
+        verify(institutionLinkConsultationLogService).createFromSchedulePayload(payload, WRITER);
         verifyNoInteractions(consultationRecordService);
     }
 
@@ -197,7 +201,7 @@ class InstitutionLinkConsultationLogWriteRouterIsolationTest {
                 .when(consultationRecordCreateRequestValidator)
                 .validate(eq(payload), anyBoolean(), eq(ClientPlatform.WEB));
 
-        assertThatThrownBy(() -> router.create(payload))
+        assertThatThrownBy(() -> router.create(payload, ClientPlatform.WEB, WRITER))
                 .isInstanceOf(ValidationException.class);
 
         verifyNoInteractions(consultationRecordService);
@@ -209,12 +213,12 @@ class InstitutionLinkConsultationLogWriteRouterIsolationTest {
     void institutionFlag_passedToValidator() {
         Map<String, Object> institutionPayload = new HashMap<>();
         institutionPayload.put("engagementType", PaymentTimingConstants.INSTITUTION_LINK);
-        router.create(institutionPayload);
+        router.create(institutionPayload, ClientPlatform.WEB, WRITER);
         verify(consultationRecordCreateRequestValidator).validate(institutionPayload, true, ClientPlatform.WEB);
 
         Map<String, Object> sessionPayload = new HashMap<>();
         sessionPayload.put("paymentTiming", PaymentTimingConstants.ADVANCE);
-        router.create(sessionPayload);
+        router.create(sessionPayload, ClientPlatform.WEB, WRITER);
         verify(consultationRecordCreateRequestValidator).validate(sessionPayload, false, ClientPlatform.WEB);
     }
 
@@ -224,10 +228,10 @@ class InstitutionLinkConsultationLogWriteRouterIsolationTest {
         Map<String, Object> payload = new HashMap<>();
         payload.put("paymentTiming", PaymentTimingConstants.ADVANCE);
 
-        router.create(payload, ClientPlatform.ANDROID);
+        router.create(payload, ClientPlatform.ANDROID, WRITER);
 
         verify(consultationRecordCreateRequestValidator).validate(payload, false, ClientPlatform.ANDROID);
-        verify(consultationRecordService).createConsultationRecord(payload);
+        verify(consultationRecordService).createConsultationRecord(payload, WRITER);
     }
 
     @Test
@@ -236,7 +240,7 @@ class InstitutionLinkConsultationLogWriteRouterIsolationTest {
         TenantContextHolder.clear();
         Map<String, Object> payload = new HashMap<>();
 
-        assertThatThrownBy(() -> router.create(payload)).isInstanceOf(RuntimeException.class);
+        assertThatThrownBy(() -> router.create(payload, ClientPlatform.WEB, WRITER)).isInstanceOf(RuntimeException.class);
 
         verifyNoInteractions(consultationRecordCreateRequestValidator);
         verifyNoInteractions(consultationRecordService);

@@ -51,8 +51,8 @@ ssh root@beta74.cafe24.com 'journalctl -u mindgarden-core-blue.service --no-page
 ssh root@beta74.cafe24.com 'journalctl -u mindgarden-core-green.service --no-pager -n 400'
 
 # 기간 지정 예
-ssh root@beta74.cafe24.com 'journalctl -u mindgarden-core-blue.service --since "2026-07-27 00:00:00" --no-pager -p err..warning'
-ssh root@beta74.cafe24.com 'journalctl -u mindgarden-core-green.service --since "2026-07-27 00:00:00" --no-pager -p err..warning'
+ssh root@beta74.cafe24.com 'journalctl -u mindgarden-core-blue.service --since "<YYYY-MM-DD HH:MM:SS>" --no-pager -p err..warning'
+ssh root@beta74.cafe24.com 'journalctl -u mindgarden-core-green.service --since "<YYYY-MM-DD HH:MM:SS>" --no-pager -p err..warning'
 ```
 
 선택: `scripts/ops/prod-health-snapshot.sh` — 기본 한 번 호출로 blue+green(8080/8081) 스냅샷. 단일만이면 `MG_SERVICE_NAME=…`.

@@ -1,6 +1,8 @@
 package com.coresolution.consultation.service;
 
 import java.time.Clock;
+import java.time.Duration;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -17,8 +19,12 @@ import com.coresolution.consultation.util.ReservationSmsBusinessHours;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.service.TenantService;
 import jakarta.annotation.PostConstruct;
+import net.javacrumbs.shedlock.core.LockConfiguration;
+import net.javacrumbs.shedlock.core.LockProvider;
+import net.javacrumbs.shedlock.core.SimpleLock;
 import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 import org.hibernate.StaleStateException;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
@@ -63,6 +69,18 @@ public class ScheduleAutoCompleteService {
      */
     private final ReentrantLock runLock = new ReentrantLock();
 
+    /** 주기 배치 {@link SchedulerLock} 이름 — 수동 실행도 같은 DB 락을 잡아 서버 간 중복을 막는다. */
+    static final String PERIODIC_LOCK_NAME = "ScheduleAutoCompleteService_autoCompleteExpiredSchedules";
+
+    /** 자정 정리 배치 {@link SchedulerLock} 이름 */
+    static final String DAILY_LOCK_NAME = "ScheduleAutoCompleteService_cleanupDailySchedules";
+
+    /** 수동 실행이 잡는 DB 락 (두 배치 이름 모두 — 어느 서버의 배치·수동 실행과도 겹치지 않게) */
+    private static final List<String> MANUAL_CLUSTER_LOCK_NAMES = List.of(PERIODIC_LOCK_NAME, DAILY_LOCK_NAME);
+
+    /** ShedLock DB 락 제공자 ({@code ShedLockConfig}). 수동 실행을 서버 여러 대에서 한 번만 돌게 한다. */
+    private LockProvider lockProvider;
+
     @Value("${mindgarden.scheduler.schedule-auto-complete.zone:}")
     private String zoneId;
 
@@ -75,6 +93,14 @@ public class ScheduleAutoCompleteService {
     /** 수동 실행이 배치 점유를 기다리는 최대 시간(초). 넘으면 실행하지 않고 거부한다. */
     @Value("${mindgarden.scheduler.schedule-auto-complete.manual-lock-wait-seconds:30}")
     private long manualLockWaitSeconds;
+
+    /** 수동 실행 DB 락 최대 보유 시간. 프로세스가 죽어도 이 시간이 지나면 풀린다. */
+    @Value("${mindgarden.scheduler.schedule-auto-complete.manual-lock-at-most-for:PT30M}")
+    private Duration manualLockAtMostFor = Duration.ofMinutes(30);
+
+    /** DB 락이 점유 중일 때 다시 시도하기까지 간격(밀리초) */
+    @Value("${mindgarden.scheduler.schedule-auto-complete.manual-lock-poll-millis:500}")
+    private long manualLockPollMillis = 500L;
 
     private Clock clock;
 
@@ -107,7 +133,7 @@ public class ScheduleAutoCompleteService {
      */
     @Scheduled(cron = "${mindgarden.scheduler.schedule-auto-complete.cron}",
         zone = "${mindgarden.scheduler.schedule-auto-complete.zone}")
-    @SchedulerLock(name = "ScheduleAutoCompleteService_autoCompleteExpiredSchedules",
+    @SchedulerLock(name = PERIODIC_LOCK_NAME,
         lockAtMostFor = "${mindgarden.scheduler.schedule-auto-complete.lock-at-most-for}")
     public void autoCompleteExpiredSchedules() {
         if (!applicationContext.isActive()) {
@@ -137,22 +163,8 @@ public class ScheduleAutoCompleteService {
         if (!StringUtils.hasText(tenantId)) {
             throw new IllegalArgumentException(TENANT_REQUIRED);
         }
-        boolean acquired;
-        try {
-            acquired = runLock.tryLock(manualLockWaitSeconds, TimeUnit.SECONDS);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new IllegalStateException(ALREADY_RUNNING);
-        }
-        if (!acquired) {
-            log.warn("⚠️ 스케줄 자동 완료 수동 실행 거부(점유 중): tenantId={}", tenantId);
-            throw new IllegalStateException(ALREADY_RUNNING);
-        }
-        try {
-            return withTenantContext(tenantId, () -> runAutoCompleteForTenant(tenantId));
-        } finally {
-            runLock.unlock();
-        }
+        return runExclusively("autoCompleteExpiredSchedulesForTenant",
+                () -> withTenantContext(tenantId, () -> runAutoCompleteForTenant(tenantId)));
     }
 
     /**
@@ -169,22 +181,87 @@ public class ScheduleAutoCompleteService {
      * @throws IllegalStateException 대기 시간 안에 점유를 얻지 못했을 때
      */
     public <T> T runExclusively(String operationName, java.util.function.Supplier<T> action) {
-        boolean acquired;
+        long deadlineNanos = System.nanoTime() + TimeUnit.SECONDS.toNanos(manualLockWaitSeconds);
+        List<SimpleLock> clusterLocks = acquireClusterLocks(operationName, deadlineNanos);
         try {
-            acquired = runLock.tryLock(manualLockWaitSeconds, TimeUnit.SECONDS);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new IllegalStateException(ALREADY_RUNNING);
-        }
-        if (!acquired) {
-            log.warn("⚠️ 자동 완료 계열 수동 실행 거부(점유 중): operation={}", operationName);
-            throw new IllegalStateException(ALREADY_RUNNING);
-        }
-        try {
-            return action.get();
+            boolean acquired;
+            try {
+                acquired = runLock.tryLock(Math.max(0L, deadlineNanos - System.nanoTime()), TimeUnit.NANOSECONDS);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new IllegalStateException(ALREADY_RUNNING);
+            }
+            if (!acquired) {
+                log.warn("⚠️ 자동 완료 계열 수동 실행 거부(점유 중): operation={}", operationName);
+                throw new IllegalStateException(ALREADY_RUNNING);
+            }
+            try {
+                return action.get();
+            } finally {
+                runLock.unlock();
+            }
         } finally {
-            runLock.unlock();
+            releaseClusterLocks(clusterLocks);
         }
+    }
+
+    /**
+     * 두 배치와 같은 이름의 ShedLock DB 락을 잡는다. 서버가 여러 대여도 배치·수동 실행 중 하나만 돈다.
+     *
+     * <p>DB 락을 JVM {@code runLock} 보다 먼저 잡는다. 배치는 DB 락(애스펙트) → {@code runLock} 순서이므로
+     * 순서를 맞춰 같은 JVM 에서 서로 기다리지 않게 한다. 대기 시간 안에 못 잡으면 잡은 락을 풀고 거부한다.</p>
+     */
+    private List<SimpleLock> acquireClusterLocks(String operationName, long deadlineNanos) {
+        List<SimpleLock> acquired = new ArrayList<>();
+        if (lockProvider == null) {
+            return acquired;
+        }
+        try {
+            for (String lockName : MANUAL_CLUSTER_LOCK_NAMES) {
+                acquired.add(waitForClusterLock(operationName, lockName, deadlineNanos));
+            }
+            return acquired;
+        } catch (RuntimeException e) {
+            releaseClusterLocks(acquired);
+            throw e;
+        }
+    }
+
+    private SimpleLock waitForClusterLock(String operationName, String lockName, long deadlineNanos) {
+        while (true) {
+            Optional<SimpleLock> lock = lockProvider.lock(
+                    new LockConfiguration(Instant.now(), lockName, manualLockAtMostFor, Duration.ZERO));
+            if (lock.isPresent()) {
+                return lock.get();
+            }
+            if (System.nanoTime() >= deadlineNanos) {
+                log.warn("⚠️ 자동 완료 계열 수동 실행 거부(다른 서버 점유 중): operation={}, lock={}",
+                        operationName, lockName);
+                throw new IllegalStateException(ALREADY_RUNNING);
+            }
+            try {
+                Thread.sleep(manualLockPollMillis);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new IllegalStateException(ALREADY_RUNNING);
+            }
+        }
+    }
+
+    private static void releaseClusterLocks(List<SimpleLock> locks) {
+        for (int i = locks.size() - 1; i >= 0; i--) {
+            locks.get(i).unlock();
+        }
+    }
+
+    /**
+     * ShedLock DB 락 제공자 주입. 빈이 없으면(일부 단위 테스트) JVM 락만 쓴다.
+     *
+     * @param lockProvider ShedLock 제공자
+     */
+    @Autowired(required = false)
+    void useLockProvider(LockProvider lockProvider) {
+        this.lockProvider = lockProvider;
     }
 
     /**
@@ -408,7 +485,7 @@ public class ScheduleAutoCompleteService {
      */
     @Scheduled(cron = "${mindgarden.scheduler.schedule-auto-complete.daily-cron}",
         zone = "${mindgarden.scheduler.schedule-auto-complete.zone}")
-    @SchedulerLock(name = "ScheduleAutoCompleteService_cleanupDailySchedules",
+    @SchedulerLock(name = DAILY_LOCK_NAME,
         lockAtMostFor = "${mindgarden.scheduler.schedule-auto-complete.daily-lock-at-most-for}")
     public void cleanupDailySchedules() {
         if (!applicationContext.isActive()) {

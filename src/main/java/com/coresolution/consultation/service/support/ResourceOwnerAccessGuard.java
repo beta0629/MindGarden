@@ -507,26 +507,29 @@ public class ResourceOwnerAccessGuard {
     }
 
     /**
-     * 지점 코드로 읽는 관리자 API(할인 무결성 검증 등) 검증. 세션 테넌트 관리자만, 지점이 세션 테넌트 소속일 때만 허용한다.
-     * 지점 기능이 꺼져 있으면 거부한다.
+     * 지점 코드로 읽는 관리자 API(할인 무결성 검증 등) 검증. 세션 테넌트 관리자만 허용한다.
+     *
+     * <p>세션 테넌트에 지점이 있으면 요청 지점이 그 테넌트 소속일 때만 그 지점 코드를 돌려준다(아니면 403).
+     * 지점이 하나도 없거나 지점 기능이 꺼진 테넌트의 관리자는 통과하되 빈 값을 돌려준다 — 지점 코드만 받는
+     * 프로시저는 테넌트로 거르지 않으므로 호출하지 않는다(다른 테넌트 지점 범위 금지).</p>
      *
      * @param session    HTTP 세션
-     * @param branchCode 요청 지점 코드 (null 이면 거부)
-     * @return 세션 테넌트에서 확인한 지점 코드
+     * @param branchCode 요청 지점 코드
+     * @return 세션 테넌트에서 확인한 지점 코드, 지점이 없는 테넌트면 빈 값
      * @throws UnauthorizedException 로그인 사용자가 없을 때
-     * @throws AccessDeniedException 관리자가 아니거나 세션 테넌트에 지점이 없을 때
+     * @throws AccessDeniedException 관리자가 아니거나, 지점이 있는 테넌트에서 요청 지점이 그 테넌트 소속이 아닐 때
      */
     @Transactional(readOnly = true)
-    public String requireTenantBranchAdminAccess(HttpSession session, String branchCode) {
+    public Optional<String> requireTenantBranchAdminAccess(HttpSession session, String branchCode) {
         User caller = requireTenantAdmin(session, "branchCode", branchCode);
         String tenantId = clientPathAccessGuard.requireCallerTenantId(caller);
         BranchRepository branchRepository = branchRepositoryProvider.getIfAvailable();
-        if (branchRepository == null) {
-            throw denyResource(caller, "branchCode", branchCode);
+        if (branchRepository == null || !branchRepository.existsByTenantIdAndIsDeletedFalse(tenantId)) {
+            return Optional.empty();
         }
-        return load(caller, "branchCode", branchCode,
+        return Optional.of(load(caller, "branchCode", branchCode,
             () -> branchRepository.findByTenantIdAndBranchCodeAndIsDeletedFalse(tenantId, branchCode))
-            .getBranchCode();
+            .getBranchCode());
     }
 
     /**

@@ -211,4 +211,28 @@ class PsychAiServiceImplTest {
         assertNull(saved.getResponse(),
                 "실패 시 response 는 null (성공 시에만 raw text 저장)");
     }
+
+    @Test
+    @DisplayName("이름 식별자 — AI 요청에 maskingIdentifiers 로 전달되고 사용 로그 prompt 에는 [이름] 만 남는다 (#1422)")
+    void generateKoreanReport_namesMaskedInRequestAndUsageLog() throws Exception {
+        when(aiChatCompletionService.completeChat(any(AiCompletionRequest.class)))
+                .thenReturn(successWithParsedJson(VALID_TCI_REPORT_JSON));
+        List<MetricInput> metrics = List.of(
+                new MetricInput("NS", "Novelty Seeking", 12.0, null, 45.0, "보통"));
+        String base = "내담자 홍길순 님 결과, 담당 김상담 상담사, 연락처 010-1234-5678";
+
+        service.generateKoreanReport(PsychAssessmentType.TCI, metrics, base, List.of("홍길순", "김상담"));
+
+        ArgumentCaptor<AiCompletionRequest> request = ArgumentCaptor.forClass(AiCompletionRequest.class);
+        org.mockito.Mockito.verify(aiChatCompletionService).completeChat(request.capture());
+        assertEquals(List.of("홍길순", "김상담"), request.getValue().getMaskingIdentifiers());
+
+        ArgumentCaptor<AiUsageLog> saved = ArgumentCaptor.forClass(AiUsageLog.class);
+        org.mockito.Mockito.verify(usageLogRepository).save(saved.capture());
+        String storedPrompt = saved.getValue().getPrompt();
+        assertNotNull(storedPrompt);
+        assertTrue(!storedPrompt.contains("홍길순") && !storedPrompt.contains("김상담"), "이름 원문 저장 금지");
+        assertTrue(!storedPrompt.contains("010-1234-5678"), "전화번호 원문 저장 금지");
+        assertTrue(storedPrompt.contains("[이름]"));
+    }
 }

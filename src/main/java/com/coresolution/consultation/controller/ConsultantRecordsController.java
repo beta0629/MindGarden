@@ -420,9 +420,14 @@ public class ConsultantRecordsController {
     /**
      * 스케줄과 상담기록 데이터 일관성 검증
      * GET /api/consultant/{consultantId}/data-consistency-check
+     *
+     * <p>같은 테넌트 관리자·사무원만. 내담자·상담사 토큰은 서비스 호출 전에 403.</p>
      */
     @GetMapping("/{consultantId}/data-consistency-check")
-    public ResponseEntity<Map<String, Object>> checkDataConsistency(@PathVariable Long consultantId) {
+    public ResponseEntity<Map<String, Object>> checkDataConsistency(@PathVariable Long consultantId,
+            HttpSession session) {
+        User caller = clientPathAccessGuard.requireTenantManager(session);
+        clientPathAccessGuard.assertCanAccessConsultant(caller, consultantId);
         
         log.info("데이터 일관성 검증: consultantId={}", consultantId);
         
@@ -477,9 +482,14 @@ public class ConsultantRecordsController {
     /**
      * 불일치 데이터 정리 및 복구
      * POST /api/consultant/{consultantId}/cleanup-inconsistent-data
+     *
+     * <p>같은 테넌트 관리자·사무원만. 내담자·상담사 토큰은 서비스 호출 전에 403.</p>
      */
     @PostMapping("/{consultantId}/cleanup-inconsistent-data")
-    public ResponseEntity<Map<String, Object>> cleanupInconsistentData(@PathVariable Long consultantId) {
+    public ResponseEntity<Map<String, Object>> cleanupInconsistentData(@PathVariable Long consultantId,
+            HttpSession session) {
+        User caller = clientPathAccessGuard.requireTenantManager(session);
+        clientPathAccessGuard.assertCanAccessConsultant(caller, consultantId);
         
         log.info("🧹 불일치 데이터 정리 시작: consultantId={}", consultantId);
         

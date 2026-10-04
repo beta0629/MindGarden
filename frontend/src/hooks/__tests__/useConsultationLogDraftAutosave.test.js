@@ -226,6 +226,79 @@ describe('useConsultationLogDraftAutosave', () => {
     expect(localStorage.getItem(legacyKey)).toBeNull();
   });
 
+  describe('레거시 평문 키 — 사용자가 고른 뒤에만 삭제 (K 후속)', () => {
+    const legacyKeyFor = (scopeId) => `${CONSULTATION_LOG_LEGACY_LOCAL_DRAFT_KEY_PREFIX}`
+      + `.v${CONSULTATION_LOG_LOCAL_DRAFT_STORAGE_VERSION}:tenant-a:schedule:${scopeId}`;
+    const seedLegacy = (scopeId) => {
+      localStorage.setItem(legacyKeyFor(scopeId), JSON.stringify({
+        v: CONSULTATION_LOG_LOCAL_DRAFT_STORAGE_VERSION,
+        savedAt: Date.now(),
+        formData: { mainIssues: `레거시 ${scopeId}` },
+        memoDraft: ''
+      }));
+    };
+
+    test('서버 초안이 있어도 레거시 키는 제안 시점에 남고, 선택 뒤에 지운다', async() => {
+      seedLegacy('30');
+      adapter.fetchConsultationLogDraftFromServer.mockResolvedValue({
+        ok: true,
+        hasDraft: true,
+        payloadJson: JSON.stringify({ formData: { mainIssues: '서버 초안' }, memoDraft: '' }),
+        version: 2,
+        updatedAt: '2026-10-03T00:00:00Z'
+      });
+      const onRestoreCandidate = jest.fn();
+      renderHook({ onRestoreCandidate });
+      await flushMicrotasks();
+
+      expect(onRestoreCandidate.mock.calls[0][0].source).toBe(DRAFT_RESTORE_SOURCE.SERVER);
+      expect(localStorage.getItem(legacyKeyFor('30'))).not.toBeNull();
+      act(() => { latest.api.resolveRestoreCandidate(); });
+      expect(localStorage.getItem(legacyKeyFor('30'))).toBeNull();
+    });
+
+    test('브라우저 백업이 있어도 레거시 키는 선택 전까지 남는다', async() => {
+      seedLegacy('30');
+      backupStore.readDraftBackup.mockResolvedValue({
+        payloadJson: JSON.stringify({ formData: { mainIssues: '백업' }, memoDraft: '' }),
+        savedAt: Date.now()
+      });
+      const onRestoreCandidate = jest.fn();
+      renderHook({ onRestoreCandidate });
+      await flushMicrotasks();
+
+      expect(onRestoreCandidate.mock.calls[0][0].source).toBe(DRAFT_RESTORE_SOURCE.BACKUP);
+      expect(localStorage.getItem(legacyKeyFor('30'))).not.toBeNull();
+      await act(async() => { await latest.api.discardDraft(); });
+      expect(localStorage.getItem(legacyKeyFor('30'))).toBeNull();
+    });
+
+    test('프롬프트가 없으면(오래된 서버 초안) 레거시 키를 지우지 않는다', async() => {
+      seedLegacy('30');
+      adapter.fetchConsultationLogDraftFromServer.mockResolvedValue({
+        ok: true,
+        hasDraft: true,
+        payloadJson: JSON.stringify({ formData: { mainIssues: '옛 초안' }, memoDraft: '' }),
+        version: 3,
+        updatedAt: '2026-10-01T00:00:00Z'
+      });
+      renderHook({ recordUpdatedAt: '2026-10-02T00:00:00Z' });
+      await flushMicrotasks();
+
+      expect(localStorage.getItem(legacyKeyFor('30'))).not.toBeNull();
+    });
+
+    test('복구 후보가 없는 화면을 열어도 다른 화면의 레거시 키는 묻지 않고 지우지 않는다', async() => {
+      seedLegacy('99');
+      const onRestoreCandidate = jest.fn();
+      renderHook({ onRestoreCandidate });
+      await flushMicrotasks();
+
+      expect(onRestoreCandidate).not.toHaveBeenCalled();
+      expect(localStorage.getItem(legacyKeyFor('99'))).not.toBeNull();
+    });
+  });
+
   test('초안이 확정 저장본보다 오래되면 복구 프롬프트를 띄우지 않는다 (삭제도 하지 않음)', async() => {
     adapter.fetchConsultationLogDraftFromServer.mockResolvedValue({
       ok: true,

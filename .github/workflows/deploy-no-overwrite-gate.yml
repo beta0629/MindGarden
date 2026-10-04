@@ -105,6 +105,9 @@ jobs:
       - name: Flyway-owned standard procedure SQL matches latest Flyway definition
         run: bash scripts/database/sync/flyway-procedure-extract.sh check
 
+      - name: GetMissingConsultationRecordAlerts contract (params, OUT, result JSON)
+        run: bash scripts/database/sync/get-missing-consultation-record-alerts.contract.mysql.test.sh
+
       - name: Staging CREATE + safe-replace for every deploy SQL
         run: bash scripts/automation/deployment/procedure-deploy-staging-mysql.test.sh
 

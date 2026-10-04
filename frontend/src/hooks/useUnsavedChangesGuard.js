@@ -1,5 +1,5 @@
 import { useContext, useEffect, useRef } from 'react';
-import { UNSAFE_DataRouterContext, useBlocker } from 'react-router-dom';
+import { UNSAFE_DataRouterContext, UNSAFE_NavigationContext, useBlocker } from 'react-router-dom';
 import { CONSULTATION_LOG_AUTOSAVE_STRINGS } from '../constants/consultationLogAutosaveStrings';
 
 /**
@@ -9,12 +9,15 @@ import { CONSULTATION_LOG_AUTOSAVE_STRINGS } from '../constants/consultationLogA
  *   <li>새로고침·탭 닫기 — {@code beforeunload} (브라우저 기본 확인창). 라우터 종류와 무관.</li>
  *   <li>SPA 라우트 이동 (data router) — react-router {@code useBlocker}.
  *       {@code createBrowserRouter} 계열에서만 사용 가능하다.</li>
- *   <li>SPA 라우트 이동 (BrowserRouter) — 같은 출처 {@code <a href>} 클릭을 캡처 단계에서
- *       가로채 {@code window.confirm} 으로 확인한다.</li>
+ *   <li>SPA 라우트 이동 (BrowserRouter) — 라우터 navigator 의 {@code push}·{@code replace}·{@code go} 를
+ *       미저장 동안만 감싸 {@code window.confirm} 으로 확인한다. {@code <Link>}·{@code navigate()}·
+ *       {@code navigate(-1)} 이 모두 이 경로를 지난다.</li>
+ *   <li>브라우저 뒤로·앞으로 (BrowserRouter) — {@code popstate} 를 라우터보다 먼저(캡처) 받아 확인하고,
+ *       취소하면 라우터에 전달하지 않은 채 {@code history.go(delta)} 로 원래 항목에 되돌린다.</li>
  * </ul>
  *
  * <h3>왜 라우터를 구분하는가</h3>
- * <p>{@code useBlocker} 는 v6.4+ <strong>data router 전용</strong> API 로,
+ * <p>{@code useBlocker} 는 <strong>data router 전용</strong> API 로,
  * {@code BrowserRouter} 아래에서 호출하면 "useBlocker must be used within a data router"
  * 예외를 던져 화면이 크래시한다. 앱 루트가 {@code BrowserRouter} 인 동안에는 호출하지 않는다.
  * 판별은 {@code UNSAFE_DataRouterContext} 가 존재하는지로 한다
@@ -25,14 +28,19 @@ import { CONSULTATION_LOG_AUTOSAVE_STRINGS } from '../constants/consultationLogA
  * 훅 호출 순서는 항상 동일하다.</p>
  *
  * <h3>BrowserRouter 경로의 한계</h3>
- * <p>앵커 클릭만 가로채므로 {@code navigate()} 직접 호출(버튼 등)은 막히지 않는다.
- * LNB·GNB 등 주요 이동 경로는 {@code <Link>}(= {@code <a href>}) 이므로 실사용 경로는 덮인다.
- * 전면 차단이 필요하면 라우터를 {@code createBrowserRouter} 로 이전해야 한다(본 변경 범위 밖).</p>
+ * <ul>
+ *   <li>뒤로 가기를 취소하면 주소창이 잠깐 이전 주소로 바뀌었다가 되돌아온다(브라우저가 먼저 이동하므로).</li>
+ *   <li>라우터 밖에서 만든 기록 항목(라우터 인덱스 {@code idx} 없음)으로 돌아가는 경우에는 현재 주소를
+ *       새 항목으로 다시 쌓아 되돌린다 — 앞으로 가기 기록 1건이 사라질 수 있다.</li>
+ *   <li>{@code window.history.pushState} 직접 호출·{@code window.location} 변경은 라우터 navigator 를 거치지 않는다.
+ *       {@code location} 변경(전체 새로고침)은 {@code beforeunload} 가 막는다.</li>
+ *   <li>새로고침·탭 닫기 확인창 문구는 브라우저 기본 문구다(사용자 지정 문구 무시).</li>
+ * </ul>
  *
  * @param {object} params
  * @param {boolean} params.when 미저장 변경 여부
  * @param {boolean} [params.enableRouteBlocker] 라우트 차단 사용 여부 (기본 true)
- * @param {string} [params.confirmMessage] 앵커 클릭 확인창 문구
+ * @param {string} [params.confirmMessage] 이동 확인창 문구
  * @returns {{ blocker: object|null }} data router 에서 차단 중이면 proceed/reset 보유, 그 외 null
  * @author CoreSolution
  * @since 2026-10-04
@@ -46,6 +54,7 @@ export function useUnsavedChangesGuard({
 
   // data router 여부는 마운트 시점에 한 번만 확정한다 (훅 호출 순서 고정).
   const dataRouterContext = useContext(UNSAFE_DataRouterContext);
+  const navigator = useContext(UNSAFE_NavigationContext)?.navigator;
   const routeBlockerActiveRef = useRef(null);
   if (routeBlockerActiveRef.current === null) {
     routeBlockerActiveRef.current = Boolean(enableRouteBlocker) && Boolean(dataRouterContext?.router);
@@ -71,37 +80,79 @@ export function useUnsavedChangesGuard({
     return () => window.removeEventListener('beforeunload', onBeforeUnload);
   }, [shouldBlock]);
 
-  // BrowserRouter 폴백 — 같은 출처 앵커 클릭을 캡처 단계에서 확인한다.
+  // BrowserRouter 폴백 — navigator(push·replace·go)와 popstate(뒤로·앞으로)를 미저장 동안만 확인한다.
   useEffect(() => {
-    if (routeBlockerActive || !enableRouteBlocker || !shouldBlock) return undefined;
-    const onClickCapture = (event) => {
-      if (event.defaultPrevented || event.button !== 0) return;
-      if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
-      const anchor = event.target?.closest?.('a[href]');
-      if (!anchor) return;
-      if (anchor.target && anchor.target !== '_self') return;
-      if (anchor.hasAttribute('download')) return;
-      const href = anchor.getAttribute('href');
-      if (!href || href.startsWith('#')) return;
-      let nextUrl;
-      try {
-        nextUrl = new URL(anchor.href, window.location.href);
-      } catch {
+    if (routeBlockerActive || !enableRouteBlocker || !shouldBlock || !navigator) return undefined;
+    const { push: originalPush, replace: originalReplace, go: originalGo } = navigator;
+    let current = snapshotHistoryEntry();
+    let skipNextPop = false;
+
+    // eslint-disable-next-line no-alert
+    const confirmLeave = () => window.confirm(confirmMessage);
+    const changesPath = (to) => resolvePathname(navigator, to) !== window.location.pathname;
+    const guarded = (original) => (...args) => {
+      if (changesPath(args[0]) && !confirmLeave()) return undefined;
+      const result = original.apply(navigator, args);
+      current = snapshotHistoryEntry();
+      return result;
+    };
+
+    navigator.push = guarded(originalPush);
+    navigator.replace = guarded(originalReplace);
+    navigator.go = (delta) => {
+      if (!delta) return originalGo.call(navigator, delta);
+      if (!confirmLeave()) return undefined;
+      skipNextPop = true;
+      return originalGo.call(navigator, delta);
+    };
+
+    const onPopStateCapture = (event) => {
+      if (skipNextPop) {
+        skipNextPop = false;
+        current = snapshotHistoryEntry();
         return;
       }
-      if (nextUrl.origin !== window.location.origin) return;
-      if (nextUrl.pathname === window.location.pathname) return;
-      // eslint-disable-next-line no-alert
-      if (!window.confirm(confirmMessage)) {
-        event.preventDefault();
-        event.stopPropagation();
+      if (window.location.pathname === new URL(current.href).pathname || confirmLeave()) {
+        current = snapshotHistoryEntry();
+        return;
+      }
+      event.stopImmediatePropagation();
+      const nextIdx = event.state?.idx;
+      const delta = Number.isInteger(current.idx) && Number.isInteger(nextIdx) ? current.idx - nextIdx : 0;
+      if (delta !== 0) {
+        skipNextPop = true;
+        window.history.go(delta);
+      } else {
+        window.history.pushState(current.state, '', current.href);
       }
     };
-    document.addEventListener('click', onClickCapture, true);
-    return () => document.removeEventListener('click', onClickCapture, true);
-  }, [routeBlockerActive, enableRouteBlocker, shouldBlock, confirmMessage]);
+    window.addEventListener('popstate', onPopStateCapture, true);
+
+    return () => {
+      window.removeEventListener('popstate', onPopStateCapture, true);
+      navigator.push = originalPush;
+      navigator.replace = originalReplace;
+      navigator.go = originalGo;
+    };
+  }, [routeBlockerActive, enableRouteBlocker, shouldBlock, confirmMessage, navigator]);
 
   return { blocker };
+}
+
+/** 현재 기록 항목 (라우터 인덱스 {@code idx}·state·주소). 취소 시 되돌릴 기준. */
+function snapshotHistoryEntry() {
+  const state = window.history.state;
+  return { idx: state?.idx, state, href: window.location.href };
+}
+
+/** navigator 로 넘어온 대상(문자열·경로 객체)의 pathname. 해석 실패면 현재 경로(=확인 생략). */
+function resolvePathname(navigator, to) {
+  try {
+    const href = typeof navigator.createHref === 'function' ? navigator.createHref(to) : String(to);
+    return new URL(href, window.location.href).pathname;
+  } catch {
+    return window.location.pathname;
+  }
 }
 
 export default useUnsavedChangesGuard;

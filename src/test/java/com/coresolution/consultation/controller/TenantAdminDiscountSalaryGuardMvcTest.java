@@ -4,7 +4,9 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -63,6 +65,8 @@ class TenantAdminDiscountSalaryGuardMvcTest {
 
     private static final String TENANT_A = "tenant-stats-a";
     private static final String TENANT_B = "tenant-stats-b";
+    private static final String TENANT_NO_BRANCH = "tenant-stats-no-branch";
+    private static final long ADMIN_NO_BRANCH = 950L;
     private static final String BRANCH_A = "BR-A";
     private static final long ADMIN_A = 1L;
     private static final long CLIENT_A = 2L;
@@ -109,6 +113,8 @@ class TenantAdminDiscountSalaryGuardMvcTest {
         when(branchA.getBranchCode()).thenReturn(BRANCH_A);
         when(branchRepository.findByTenantIdAndBranchCodeAndIsDeletedFalse(TENANT_A, BRANCH_A))
             .thenReturn(Optional.of(branchA));
+        when(branchRepository.existsByTenantIdAndIsDeletedFalse(TENANT_A)).thenReturn(true);
+        when(branchRepository.existsByTenantIdAndIsDeletedFalse(TENANT_B)).thenReturn(true);
         stubServices();
     }
 
@@ -172,8 +178,76 @@ class TenantAdminDiscountSalaryGuardMvcTest {
         }
         verify(plSqlDiscountAccountingService).validateDiscountIntegrity(BRANCH_A);
         verify(plSqlDiscountAccountingService).getDiscountStatistics(anyString(), anyString(), anyString());
+        verify(salaryBatchService).executeMonthlySalaryBatch(eq(2026), eq(9), isNull());
         verify(commonCodeService).updateCodeExtraData(eq("SALARY_CALCULATION_METHOD"), eq("HOURLY_RATE"),
             anyString());
+    }
+
+    @Test
+    @DisplayName("지점이 0개인 테넌트 관리자 — 무결성 검증 200(지점 범위 없음), 지점 코드만 받는 프로시저는 미호출")
+    void zeroBranchTenantAdmin_okWithoutProcedure() throws Exception {
+        User admin = user(ADMIN_NO_BRANCH, UserRole.ADMIN, TENANT_NO_BRANCH);
+        for (String code : List.of(BRANCH_A, "ANY")) {
+            mockMvc.perform(req(validateIntegrity(code), admin, null))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.branchScoped").value(false))
+                .andExpect(jsonPath("$.errorCount").value(0));
+        }
+        verify(plSqlDiscountAccountingService, never()).validateDiscountIntegrity(any());
+        verify(branchRepository, never()).findByTenantIdAndBranchCodeAndIsDeletedFalse(anyString(), anyString());
+    }
+
+    @Test
+    @DisplayName("지점이 0개인 테넌트의 내담자 — 무결성 검증 403 (관리자 확인이 먼저)")
+    void zeroBranchTenantClient_forbidden() throws Exception {
+        assertSharedDenial(mockMvc.perform(
+            req(validateIntegrity("ANY"), user(951L, UserRole.CLIENT, TENANT_NO_BRANCH), null)));
+        verifyNoServiceCalls();
+        verifyNoInteractions(branchRepository);
+    }
+
+    @Test
+    @DisplayName("급여 배치 상태 — 마지막 실행일·메시지가 null 이어도 200 (Map.of NPE → 500 회귀)")
+    void salaryBatchStatus_nullFields_ok() throws Exception {
+        SalaryBatchService.BatchStatus empty = new SalaryBatchService.BatchStatus("PENDING");
+        when(salaryBatchService.getBatchStatus(anyInt(), anyInt())).thenReturn(empty);
+        mockMvc.perform(req(new String[] {"GET", SALARY_BATCH + "/status?targetDate=" + TARGET_DATE, null},
+                user(ADMIN_A, UserRole.ADMIN, TENANT_A), null))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.status").value("PENDING"))
+            .andExpect(jsonPath("$.data.lastExecuted").doesNotExist())
+            .andExpect(jsonPath("$.data.message").doesNotExist());
+    }
+
+    @Test
+    @DisplayName("급여 배치 실행 — 비관리자는 본문이 비었거나 틀려도 403(입력 검증보다 권한 먼저), 서비스 미호출")
+    void salaryBatchExecute_nonAdmin_forbiddenBeforeValidation() throws Exception {
+        List<String> bodies = Arrays.asList(null, "{}", "{\"targetMonth\":\"bad\"}", "{\"targetMonth\":7}");
+        for (User caller : List.of(user(CLIENT_A, UserRole.CLIENT, TENANT_A),
+                user(CONSULTANT_A, UserRole.CONSULTANT, TENANT_A))) {
+            for (String body : bodies) {
+                assertSharedDenial(mockMvc.perform(req(new String[] {"POST", SALARY_BATCH + "/execute", body},
+                    caller, null)));
+            }
+        }
+        for (String body : bodies) {
+            mockMvc.perform(req(new String[] {"POST", SALARY_BATCH + "/execute", body}, null, null))
+                .andExpect(status().isUnauthorized());
+        }
+        verifyNoServiceCalls();
+    }
+
+    @Test
+    @DisplayName("급여 배치 실행 — 관리자라도 대상 월 형식이 틀리면 400 공용 문구, 서비스 미호출")
+    void salaryBatchExecute_admin_invalidMonth_badRequest() throws Exception {
+        User adminA = user(ADMIN_A, UserRole.ADMIN, TENANT_A);
+        for (String body : Arrays.asList(null, "{}", "{\"targetMonth\":\"2026-13\"}", "{\"targetMonth\":\"x-y\"}")) {
+            mockMvc.perform(req(new String[] {"POST", SALARY_BATCH + "/execute", body}, adminA, null))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value(SalaryBatchController.INVALID_TARGET_MONTH));
+        }
+        verifyNoInteractions(salaryBatchService);
     }
 
     private static List<String[]> endpoints() {
@@ -183,6 +257,7 @@ class TenantAdminDiscountSalaryGuardMvcTest {
             validateIntegrity(BRANCH_A),
             new String[] {"GET", SALARY_BATCH + "/status?targetDate=" + TARGET_DATE, null},
             new String[] {"GET", SALARY_BATCH + "/can-execute?targetDate=" + TARGET_DATE, null},
+            new String[] {"POST", SALARY_BATCH + "/execute", "{\"targetMonth\":\"2026-09\"}"},
             new String[] {"PUT", SALARY_CONFIG + "/calculation-method",
                 "{\"methodCode\":\"HOURLY_RATE\",\"ratePerConsultation\":1,\"defaultHourlyRate\":1}"});
     }
@@ -201,6 +276,8 @@ class TenantAdminDiscountSalaryGuardMvcTest {
         batchStatus.setMessage("ok");
         when(salaryBatchService.getBatchStatus(anyInt(), anyInt())).thenReturn(batchStatus);
         when(salaryBatchService.canExecuteBatch(any())).thenReturn(true);
+        when(salaryBatchService.executeMonthlySalaryBatch(anyInt(), anyInt(), any()))
+            .thenReturn(new SalaryBatchService.BatchResult(true, "ok", 0, 0, 0));
     }
 
     private void verifyNoServiceCalls() {

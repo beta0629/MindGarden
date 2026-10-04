@@ -8,6 +8,8 @@ set -euo pipefail
 ROOT=$(cd "$(dirname "$0")/../../.." && pwd)
 SYNC_REL="scripts/database/sync/prod-to-dev-daily.sh"
 SQL_REL="database/schema/procedures_standardized/deployment"
+# Flyway 가 소유한 온보딩 프로시저의 개발 재적재 SQL. 운영 배포 경로와 섞지 않는다.
+DEV_SYNC_SQL_REL="database/schema/procedures_flyway_dev_sync"
 
 fail() {
     echo "❌ $1" >&2
@@ -32,8 +34,10 @@ dev_sync_bundle_root_from_crontab() {
 
 dev_sync_bundle_build() {
     local dest="$1" std name
-    mkdir -p "$dest/scripts/database/sync" "$dest/scripts/automation/deployment" "$dest/$SQL_REL"
+    mkdir -p "$dest/scripts/database/sync" "$dest/scripts/automation/deployment" \
+        "$dest/$SQL_REL" "$dest/$DEV_SYNC_SQL_REL"
     cp "$ROOT/$SYNC_REL" "$dest/scripts/database/sync/"
+    cp "$ROOT/scripts/database/sync/apply-flyway-procedures-dev.sh" "$dest/scripts/database/sync/"
     cp "$ROOT/scripts/database/sync/post-dev-sync-anonymize.sql" "$dest/scripts/database/sync/"
     cp "$ROOT/scripts/database/sync/post-dev-sync-anonymize-dry-run.sql" "$dest/scripts/database/sync/"
     for f in deploy-standardized-procedures.sh procedure-deploy-changed-only.sh procedure-deploy-db-diff.sh; do
@@ -44,6 +48,11 @@ dev_sync_bundle_build() {
         name=$(basename "$std" _standardized.sql)
         cp "$ROOT/$SQL_REL/${name}_deploy.sql" "$dest/$SQL_REL/"
     done
+    # 개발 재적재 SQL 은 커밋된 산출물이 원본과 같을 때만 싣는다.
+    bash "$ROOT/scripts/database/sync/flyway-procedure-extract.sh" check >/dev/null \
+        || fail "개발 재적재 SQL 이 원본과 다릅니다. flyway-procedure-extract.sh generate 를 돌리세요."
+    cp "$ROOT/$DEV_SYNC_SQL_REL/MANIFEST.tsv" "$dest/$DEV_SYNC_SQL_REL/"
+    cp "$ROOT"/$DEV_SYNC_SQL_REL/*_devsync.sql "$dest/$DEV_SYNC_SQL_REL/"
 }
 
 # 원격: stdin 의 tar 를 임시 폴더에 푼 뒤 스크립트는 덮고 SQL 폴더는 통째로 교체한다.
@@ -51,6 +60,7 @@ DEV_SYNC_BUNDLE_REMOTE=$(cat <<'REMOTE'
 set -euo pipefail
 root="$1"
 sql_rel="$2"
+dev_sync_rel="$3"
 tmp=$(mktemp -d "${root}/.mg-sync-bundle.XXXXXX")
 trap 'rm -rf "$tmp"' EXIT
 tar -xzf - -C "$tmp"
@@ -67,12 +77,19 @@ if [ -d "$root/$sql_rel" ]; then
 fi
 mv "$tmp/$sql_rel" "$root/$sql_rel"
 rm -rf "$root/${sql_rel}.old"
-echo "remote bundle ok: $(find "$root/$sql_rel" -name '*_deploy.sql' | wc -l | tr -d ' ') sql"
+mkdir -p "$(dirname "$root/$dev_sync_rel")"
+rm -rf "$root/${dev_sync_rel}.old"
+if [ -d "$root/$dev_sync_rel" ]; then
+    mv "$root/$dev_sync_rel" "$root/${dev_sync_rel}.old"
+fi
+mv "$tmp/$dev_sync_rel" "$root/$dev_sync_rel"
+rm -rf "$root/${dev_sync_rel}.old"
+echo "remote bundle ok: $(find "$root/$sql_rel" -name '*_deploy.sql' | wc -l | tr -d ' ') sql, dev-sync $(find "$root/$dev_sync_rel" -name '*_devsync.sql' | wc -l | tr -d ' ') sql"
 REMOTE
 )
 
 dev_sync_bundle_main() {
-    local user remote_root work count cron
+    local user remote_root work count dev_sync_count cron
     : "${DEV_SERVER_HOST:?DEV_SERVER_HOST 필요}"
     user="${DEV_SERVER_USER:-root}"
     cron=$(ssh "$user@$DEV_SERVER_HOST" "crontab -l 2>/dev/null || true") || fail "개발 서버 SSH 실패 (crontab 조회)"
@@ -86,10 +103,12 @@ dev_sync_bundle_main() {
     dev_sync_bundle_build "$work"
     count=$(find "$work/$SQL_REL" -name '*_deploy.sql' | wc -l | tr -d ' ')
     [ "$count" -gt 0 ] || fail "번들에 배포 SQL 이 없습니다."
-    echo "야간 복사 번들 갱신: 배포 SQL ${count}개, 스크립트 6개 → crontab 기준 배포 루트"
+    dev_sync_count=$(find "$work/$DEV_SYNC_SQL_REL" -name '*_devsync.sql' | wc -l | tr -d ' ')
+    [ "$dev_sync_count" -gt 0 ] || fail "번들에 개발 재적재 SQL 이 없습니다."
+    echo "야간 복사 번들 갱신: 배포 SQL ${count}개, 개발 재적재 SQL ${dev_sync_count}개, 스크립트 7개 → crontab 기준 배포 루트"
     # 새 번들을 임시 폴더에 푼 뒤 교체한다. 저장소에서 빠진 프로시저 SQL 은 남기지 않는다.
     tar -C "$work" -czf - scripts database \
-        | ssh "$user@$DEV_SERVER_HOST" "bash -c $(printf '%q' "$DEV_SYNC_BUNDLE_REMOTE") mg-sync-bundle $(printf '%q' "$remote_root") $(printf '%q' "$SQL_REL")"
+        | ssh "$user@$DEV_SERVER_HOST" "bash -c $(printf '%q' "$DEV_SYNC_BUNDLE_REMOTE") mg-sync-bundle $(printf '%q' "$remote_root") $(printf '%q' "$SQL_REL") $(printf '%q' "$DEV_SYNC_SQL_REL")"
 }
 
 if [ "${BASH_SOURCE[0]}" = "$0" ]; then

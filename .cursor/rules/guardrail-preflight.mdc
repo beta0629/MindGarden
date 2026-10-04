@@ -1,0 +1,15 @@
+---
+description: 작업 종료 전 가드레일 1~3 로컬 실행 결과를 PR 「## 자체 검증」에 기록, FAIL이면 PASS 금지
+alwaysApply: true
+---
+
+# 작업 종료 전 가드레일
+
+- 끝내기 전에 아래를 로컬에서 실행하고 출력 원문을 PR 본문 `## 자체 검증`에 붙인다.
+  - `mvn -o -q test -Dtest='AdminApiGuardCoverageTest,ProcedureSignatureGuardrailTest,ApplicationYmlSecretDefaultsTest,AdminApiRoleMatrixGuardrailMvcTest' -Dsurefire.failIfNoSpecifiedTests=false` + 바꾼 클래스의 관련 테스트
+  - `scripts/ci/guardrail-gitleaks-diff.sh origin/release/dev`
+- 하나라도 FAIL이거나 실행하지 않았으면 PASS라고 쓰지 않는다. 베이스라인(`src/test/resources/guardrails/*.txt`, `.gitleaksignore`)에 새 줄을 넣어 통과시키지 않는다.
+- heal·데이터 강제 수정·기존 데이터 일괄 UPDATE/DELETE 금지.
+- 공통 모듈(공통 가드·UnifiedModal·StandardizedApi 등)을 재사용한다.
+- PR·머지는 `release/dev` 만. `release/prod` 직접 수정·머지 금지.
+- 상세 체크리스트는 `.cursor/rules/self-verify.mdc`.

@@ -13,6 +13,9 @@ import com.coresolution.consultation.assessment.repository.PsychAssessmentReport
 import com.coresolution.consultation.assessment.service.PsychAiService;
 import com.coresolution.consultation.assessment.service.PsychAssessmentExtractionService;
 import com.coresolution.consultation.assessment.service.PsychAssessmentReportService;
+import com.coresolution.consultation.entity.ConsultantClientMapping;
+import com.coresolution.consultation.repository.ConsultantClientMappingRepository;
+import com.coresolution.consultation.service.ai.privacy.AiPiiMaskingService;
 import com.coresolution.core.context.TenantContextHolder;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -40,6 +43,8 @@ public class PsychAssessmentReportServiceImpl implements PsychAssessmentReportSe
     private final PsychAssessmentMetricRepository metricRepository;
     private final PsychAssessmentReportRepository reportRepository;
     private final PsychAiService psychAiService;
+    private final AiPiiMaskingService aiPiiMaskingService;
+    private final ConsultantClientMappingRepository consultantClientMappingRepository;
     @Lazy
     private final PsychAssessmentExtractionService extractionService;
 
@@ -79,7 +84,8 @@ public class PsychAssessmentReportServiceImpl implements PsychAssessmentReportSe
                         m.getCutoffTag()
                 ))
                 .toList();
-        var aiResult = psychAiService.generateKoreanReport(doc.getAssessmentType(), aiInputs, baseMarkdown);
+        var aiResult = psychAiService.generateKoreanReport(doc.getAssessmentType(), aiInputs, baseMarkdown,
+                resolveMaskingIdentifiers(tenantId, doc.getClientId()));
 
         PsychAssessmentReport report = PsychAssessmentReport.builder()
                 .tenantId(tenantId)
@@ -96,6 +102,22 @@ public class PsychAssessmentReportServiceImpl implements PsychAssessmentReportSe
                 .build();
 
         return reportRepository.save(report).getId();
+    }
+
+    /** 내담자와 (종료되지 않은 매칭의) 담당 상담사 이름 — 같은 테넌트에서만 조회한다. */
+    private List<String> resolveMaskingIdentifiers(String tenantId, Long clientId) {
+        if (clientId == null) {
+            return List.of();
+        }
+        List<Long> userIds = new ArrayList<>();
+        userIds.add(clientId);
+        for (ConsultantClientMapping mapping : consultantClientMappingRepository.findByClientIdAndStatusNot(
+                tenantId, clientId, ConsultantClientMapping.MappingStatus.TERMINATED)) {
+            if (mapping.getConsultant() != null && mapping.getConsultant().getId() != null) {
+                userIds.add(mapping.getConsultant().getId());
+            }
+        }
+        return aiPiiMaskingService.resolveUserIdentifiers(tenantId, userIds.toArray(Long[]::new));
     }
 
     private String readExtractionReasonCode(String extractedJson) {

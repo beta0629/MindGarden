@@ -133,7 +133,10 @@ async function putDraftOnce({ consultationId, consultantId, payloadJson, expecte
     body.expectedVersion = ev;
   }
   const query = buildConsultationLogDraftQuery(consultationId, consultantId);
-  const data = await apiPut(`${CONSULTATION_LOG_SERVER_DRAFT_API_PATH}?${query}`, body);
+  // 401 은 공용 모듈이 로그인으로 보내지 않고 던지게 한다 — 훅이 보관 백업을 쓴 뒤 returnUrl 로 이동한다.
+  const data = await apiPut(`${CONSULTATION_LOG_SERVER_DRAFT_API_PATH}?${query}`, body, {
+    throwOnUnauthorized: true
+  });
   if (data == null) {
     return { ok: false, skipped: false };
   }

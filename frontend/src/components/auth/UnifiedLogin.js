@@ -33,6 +33,7 @@ import { useSession } from '../../contexts/SessionContext';
 import { authAPI } from '../../utils/ajax';
 import { sessionManager } from '../../utils/sessionManager';
 import { markJustLoggedIn } from '../../utils/sessionAuthPolicy';
+import { sanitizeSameOriginReturnPath } from '../../utils/sessionRedirect';
 import { appleLogin, googleLogin, kakaoLogin, naverLogin } from '../../utils/socialLogin';
 import {
   OAUTH2_LOGIN_UI,
@@ -510,7 +511,7 @@ const UnifiedLogin = () => {
 
       // 단일 테넌트 또는 멀티 테넌트가 아닌 경우: redirect 파라미터 확인 후 리다이렉트
       const searchParams = new URLSearchParams(location.search);
-      const redirectPath = searchParams.get('redirect');
+      const redirectPath = sanitizeSameOriginReturnPath(searchParams.get('redirect'));
 
       try {
         await mergeGuestShopCartIntoServer();
@@ -685,7 +686,7 @@ const UnifiedLogin = () => {
 
         // 단일 테넌트 사용자: redirect 파라미터 확인 후 리다이렉트
         const searchParams = new URLSearchParams(location.search);
-        const redirectPath = searchParams.get('redirect');
+        const redirectPath = sanitizeSameOriginReturnPath(searchParams.get('redirect'));
 
         try {
           await mergeGuestShopCartIntoServer();

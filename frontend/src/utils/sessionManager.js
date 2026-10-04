@@ -5,7 +5,8 @@ import {
   SESSION_CHECK_CALLER_CAP_MS,
   SESSION_CHECK_COOLDOWN_MS,
   SESSION_TERMINATED_DUPLICATE_ERROR_CODE,
-  DUPLICATE_LOGIN_REDIRECT_SEARCH
+  DUPLICATE_LOGIN_REDIRECT_SEARCH,
+  FETCH_INIT_SKIP_FORM_SESSION_HOOK
 } from '../constants/session';
 import { getDefaultApiHeaders, getDefaultApiHeadersWithCsrf } from './apiHeaders';
 import {
@@ -168,13 +169,16 @@ class SessionManager {
         // 로그아웃·세션 무효화는 폼 훅에서 제외 — endFormSubmit → checkSession(true) 가
         // 서버 세션이 아직 남은 경우 current-user 로 사용자를 되살리는 부작용 방지.
         // refresh-token 은 세션 확인·401 재시도 내부에서 호출되므로 훅이 또 확인을 걸지 않게 제외.
+        // 호출자가 401 을 직접 처리하는 요청(ajax throwOnUnauthorized)도 제외 — 훅의 세션 재확인이
+        // 호출자보다 먼저 returnUrl 없이 /login 으로 보내 401 보관 백업·복귀 경로를 끊지 않게 한다.
         const skipFormSessionHook =
-          typeof reqUrl === 'string' &&
-          (reqUrl.includes('/api/v1/auth/logout') ||
-            reqUrl.includes('/api/auth/logout') ||
-            reqUrl.includes('/api/v1/auth/clear-session') ||
-            reqUrl.includes('/api/auth/clear-session') ||
-            reqUrl.includes(AUTH_API.REFRESH_TOKEN));
+          args[1]?.[FETCH_INIT_SKIP_FORM_SESSION_HOOK] === true ||
+          (typeof reqUrl === 'string' &&
+            (reqUrl.includes('/api/v1/auth/logout') ||
+              reqUrl.includes('/api/auth/logout') ||
+              reqUrl.includes('/api/v1/auth/clear-session') ||
+              reqUrl.includes('/api/auth/clear-session') ||
+              reqUrl.includes(AUTH_API.REFRESH_TOKEN)));
 
         if (['POST', 'PUT', 'DELETE', 'PATCH'].includes(method) && !skipFormSessionHook) {
           this.startFormSubmit();

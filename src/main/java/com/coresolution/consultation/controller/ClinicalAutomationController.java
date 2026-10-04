@@ -1,15 +1,14 @@
 package com.coresolution.consultation.controller;
 
-import java.nio.file.Files;
+import java.io.InputStream;
 import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -26,6 +25,8 @@ import com.coresolution.consultation.entity.ClinicalReport;
 import com.coresolution.consultation.entity.ConsultationAudioFile;
 import com.coresolution.consultation.entity.ConsultationRecord;
 import com.coresolution.consultation.entity.ConsultationRecordAlert;
+import com.coresolution.consultation.entity.User;
+import com.coresolution.consultation.exception.UnauthorizedException;
 import com.coresolution.consultation.repository.AudioTranscriptionRepository;
 import com.coresolution.consultation.repository.ClinicalReportRepository;
 import com.coresolution.consultation.repository.ConsultationAudioFileRepository;
@@ -33,6 +34,8 @@ import com.coresolution.consultation.repository.ConsultationRecordRepository;
 import com.coresolution.consultation.service.ClinicalDocumentService;
 import com.coresolution.consultation.service.RiskDetectionService;
 import com.coresolution.consultation.service.SpeechToTextService;
+import com.coresolution.consultation.service.support.ClientPathAccessGuard;
+import com.coresolution.consultation.service.support.ConsultationAudioStorage;
 import com.coresolution.consultation.service.support.ConsultationRecordAccessGuard;
 import com.coresolution.core.context.TenantContextHolder;
 import jakarta.servlet.http.HttpSession;
@@ -62,12 +65,11 @@ public class ClinicalAutomationController {
     private final ClinicalDocumentService clinicalDocumentService;
     private final RiskDetectionService riskDetectionService;
     private final ConsultationRecordAccessGuard consultationRecordAccessGuard;
+    private final ClientPathAccessGuard clientPathAccessGuard;
 
-    // 파일 저장 경로 설정
-    private static final String AUDIO_STORAGE_PATH = "./uploads/consultation-audio";
+    private final ConsultationAudioStorage consultationAudioStorage;
+
     private static final long MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB
-    private static final List<String> ALLOWED_MIME_TYPES =
-            Arrays.asList("audio/wav", "audio/mpeg", "audio/mp3", "audio/m4a", "audio/x-m4a");
 
     /**
      * 1. 음성 파일 업로드 및 전사 시작 POST /api/v1/clinical-automation/consultations/{id}/upload-audio
@@ -76,7 +78,17 @@ public class ClinicalAutomationController {
     public ResponseEntity<Map<String, Object>> uploadAudioFile(@PathVariable Long id,
             @RequestParam("file") MultipartFile audioFile,
             @RequestParam(value = "consultationRecordId",
-                    required = false) Long consultationRecordId) {
+                    required = false) Long consultationRecordId,
+            HttpSession session) {
+
+        consultationRecordAccessGuard.requireConsultationScopeReadAccess(session, id);
+        if (consultationRecordId != null) {
+            ConsultationRecord record =
+                    consultationRecordAccessGuard.requireReadAccess(session, consultationRecordId);
+            if (!Objects.equals(record.getConsultationId(), id)) {
+                throw new AccessDeniedException(ConsultationRecordAccessGuard.DENIAL_RECORD_UNAVAILABLE);
+            }
+        }
 
         log.info("🎤 음성 파일 업로드 요청: consultationId={}, fileName={}, size={}MB", id,
                 audioFile.getOriginalFilename(), audioFile.getSize() / (1024.0 * 1024.0));
@@ -90,24 +102,17 @@ public class ClinicalAutomationController {
 
             // MIME 타입 검증
             String mimeType = audioFile.getContentType();
-            if (mimeType == null || !ALLOWED_MIME_TYPES.contains(mimeType)) {
+            if (!consultationAudioStorage.isAllowedMimeType(mimeType)) {
                 return createErrorResponse("지원하지 않는 파일 형식입니다. (wav, mp3, m4a만 가능)",
                         HttpStatus.BAD_REQUEST);
             }
 
-            // 저장 디렉토리 생성
-            String tenantId = TenantContextHolder.getTenantId();
-            Path uploadDir = Paths.get(AUDIO_STORAGE_PATH, tenantId);
-            Files.createDirectories(uploadDir);
-
-            // 파일명 생성 (중복 방지)
+            String tenantId = TenantContextHolder.getRequiredTenantId();
             String originalFilename = audioFile.getOriginalFilename();
-            String extension = originalFilename.substring(originalFilename.lastIndexOf("."));
-            String filename = "consultation_" + id + "_" + System.currentTimeMillis() + extension;
-            Path filePath = uploadDir.resolve(filename);
-
-            // 파일 저장
-            Files.copy(audioFile.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+            Path filePath;
+            try (InputStream audioStream = audioFile.getInputStream()) {
+                filePath = consultationAudioStorage.storeEncrypted(tenantId, id, mimeType, audioStream);
+            }
 
             // 데이터베이스에 메타데이터 저장
             ConsultationAudioFile audioFileEntity = ConsultationAudioFile.builder()
@@ -133,10 +138,12 @@ public class ClinicalAutomationController {
 
             return ResponseEntity.ok(response);
 
+        } catch (AccessDeniedException | UnauthorizedException e) {
+            throw e;
         } catch (Exception e) {
-            log.error("❌ 음성 파일 업로드 실패: consultationId={}, error={}", id, e.getMessage(), e);
-            return createErrorResponse("음성 파일 업로드 실패: " + e.getMessage(),
-                    HttpStatus.INTERNAL_SERVER_ERROR);
+            log.error("❌ 음성 파일 업로드 실패: consultationId={}, errorType={}", id,
+                    e.getClass().getSimpleName(), e);
+            return createErrorResponse("음성 파일 업로드에 실패했습니다.", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -144,12 +151,24 @@ public class ClinicalAutomationController {
      * 2. 전사 상태 확인 GET /api/v1/clinical-automation/audio-files/{id}/transcription-status
      */
     @GetMapping("/audio-files/{id}/transcription-status")
-    public ResponseEntity<Map<String, Object>> getTranscriptionStatus(@PathVariable Long id) {
+    public ResponseEntity<Map<String, Object>> getTranscriptionStatus(@PathVariable Long id,
+            HttpSession session) {
         log.info("📊 전사 상태 조회: audioFileId={}", id);
 
+        User caller = clientPathAccessGuard.requireCaller(session);
+        String tenantId = clientPathAccessGuard.requireCallerTenantId(caller);
+        ConsultationAudioFile audioFile = audioFileRepository
+                .findByTenantIdAndIdAndIsDeletedFalse(tenantId, id)
+                .orElseThrow(() -> new AccessDeniedException(
+                        ConsultationRecordAccessGuard.DENIAL_RECORD_UNAVAILABLE));
+        if (audioFile.getConsultationRecordId() != null) {
+            consultationRecordAccessGuard.requireReadAccess(session, audioFile.getConsultationRecordId());
+        } else {
+            consultationRecordAccessGuard.requireConsultationScopeReadAccess(session,
+                    audioFile.getConsultationId());
+        }
+
         try {
-            ConsultationAudioFile audioFile = audioFileRepository.findByIdAndIsDeletedFalse(id)
-                    .orElseThrow(() -> new IllegalArgumentException("음성 파일을 찾을 수 없습니다."));
 
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
@@ -172,10 +191,12 @@ public class ClinicalAutomationController {
 
             return ResponseEntity.ok(response);
 
+        } catch (AccessDeniedException | UnauthorizedException e) {
+            throw e;
         } catch (Exception e) {
-            log.error("❌ 전사 상태 조회 실패: audioFileId={}, error={}", id, e.getMessage(), e);
-            return createErrorResponse("전사 상태 조회 실패: " + e.getMessage(),
-                    HttpStatus.INTERNAL_SERVER_ERROR);
+            log.error("❌ 전사 상태 조회 실패: audioFileId={}, errorType={}", id,
+                    e.getClass().getSimpleName(), e);
+            return createErrorResponse("전사 상태 조회에 실패했습니다.", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 

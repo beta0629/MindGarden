@@ -15,7 +15,6 @@ import {
   pushConsultationLogDraftToServer
 } from '../utils/consultationLogDraftServerAdapter';
 import {
-  purgeAllLegacyConsultationLogLocalDrafts,
   readLegacyConsultationLogLocalDraft,
   removeConsultationLogLocalDraft
 } from '../utils/consultationLogLocalDraft';
@@ -41,9 +40,6 @@ export const DRAFT_RESTORE_SOURCE = {
   BACKUP: 'backup',
   LEGACY_LOCAL: 'legacyLocal'
 };
-
-/** 레거시 평문 키 정리는 앱 수명 중 1회만 */
-let legacyPurgeDone = false;
 
 /**
  * KST 기준 "H:mm" 라벨.
@@ -179,16 +175,20 @@ export function useConsultationLogDraftAutosave({
   const canSave = Boolean(enabled && tenantId && normalizedConsultationId && normalizedConsultantId != null);
 
   /**
-   * 레거시 평문 키 정리. 이 화면의 키는 항상 지우고(값을 이미 읽었으므로),
-   * 전체 sweep 은 배포 후 첫 로드에서 1회만 수행한다.
+   * 이 화면의 레거시 평문 키 정리. 복구 프롬프트에서 사용자가 선택(불러오기·버리기)을 끝낸 뒤에만 부른다.
+   * 다른 화면의 레거시 키는 묻지 않고 지우지 않는다 — 전체 정리는 로그아웃·계정 전환({@code sessionManager})이 맡는다.
    */
   const purgeLegacyDrafts = useCallback(() => {
     if (tenantId && legacyScope) {
       removeConsultationLogLocalDraft(tenantId, legacyScope);
     }
-    if (legacyPurgeDone) return;
-    legacyPurgeDone = true;
-    purgeAllLegacyConsultationLogLocalDrafts();
+  }, [tenantId, legacyScope]);
+
+  /** 이 화면에 레거시 평문 초안이 남아 있으면, 지금 띄우는 프롬프트의 선택이 끝난 뒤 정리하도록 표시한다. */
+  const markLegacyPurgeAfterChoice = useCallback(() => {
+    if (legacyScope && tenantId && readLegacyConsultationLogLocalDraft(tenantId, legacyScope)) {
+      legacyPurgePendingRef.current = true;
+    }
   }, [tenantId, legacyScope]);
 
   const clearTimers = useCallback(() => {
@@ -389,7 +389,6 @@ export function useConsultationLogDraftAutosave({
         serverVersionRef.current = server.version ?? null;
         serverUpdatedAtRef.current = server.updatedAt ?? null;
         const snapshot = safeParse(server.payloadJson);
-        purgeLegacyDrafts();
         // 확정 저장이 초안보다 나중이면 그 초안은 이미 반영된 과거 내용이다.
         // 복구 프롬프트를 띄우면 확정본을 옛 초안으로 되돌릴 위험이 있어 표시만 하고 묻지 않는다.
         // (#1409 후속: 삭제는 하지 않는다 — 데이터 보존)
@@ -398,6 +397,8 @@ export function useConsultationLogDraftAutosave({
           return;
         }
         if (snapshot) {
+          // 레거시 키는 프롬프트 선택이 끝난 뒤에 정리한다 (묻지 않고 지우지 않음).
+          markLegacyPurgeAfterChoice();
           onRestoreCandidate?.({
             snapshot,
             savedAt: server.updatedAt ? Date.parse(server.updatedAt) : Date.now(),
@@ -414,8 +415,8 @@ export function useConsultationLogDraftAutosave({
       if (cancelled) return;
       if (backup) {
         const snapshot = safeParse(backup.payloadJson);
-        purgeLegacyDrafts();
         if (snapshot) {
+          markLegacyPurgeAfterChoice();
           onRestoreCandidate?.({
             snapshot,
             savedAt: backup.savedAt,
@@ -438,7 +439,6 @@ export function useConsultationLogDraftAutosave({
         });
         return;
       }
-      purgeLegacyDrafts();
     })();
 
     return () => { cancelled = true; };
@@ -450,7 +450,7 @@ export function useConsultationLogDraftAutosave({
     backupScope,
     legacyScope,
     onRestoreCandidate,
-    purgeLegacyDrafts
+    markLegacyPurgeAfterChoice
   ]);
 
   /** 디바운스 저장 — snapshotRef 는 ref 라 의존성에 넣을 수 없어 dirtySignal 로 트리거한다. */

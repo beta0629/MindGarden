@@ -1,6 +1,8 @@
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
-import { BrowserRouter, Link, RouterProvider, createMemoryRouter } from 'react-router-dom';
+import { act, render, screen, fireEvent, waitFor } from '@testing-library/react';
+import {
+  BrowserRouter, Link, Route, Routes, RouterProvider, createMemoryRouter, useNavigate
+} from 'react-router-dom';
 import { useUnsavedChangesGuard } from '../useUnsavedChangesGuard';
 
 /**
@@ -107,5 +109,126 @@ describe('useUnsavedChangesGuard — 라우터 호환', () => {
     );
     fireEvent.click(screen.getByRole('link', { name: '다른 화면' }));
     expect(confirmSpy).not.toHaveBeenCalled();
+  });
+
+  describe('BrowserRouter — navigate()·뒤로 가기 (#1419)', () => {
+    const FormPage = ({ when = true }) => {
+      const navigate = useNavigate();
+      useUnsavedChangesGuard({ when, confirmMessage: '떠날까요?' });
+      return (
+        <div>
+          <span data-testid="page">form</span>
+          <button type="button" onClick={() => navigate('/done')}>저장 없이 이동</button>
+          <button type="button" onClick={() => navigate('/form?tab=2')}>같은 화면 쿼리</button>
+          <button type="button" onClick={() => navigate(-1)}>뒤로</button>
+        </div>
+      );
+    };
+    const Home = () => {
+      const navigate = useNavigate();
+      return (
+        <div>
+          <span data-testid="page">home</span>
+          <button type="button" onClick={() => navigate('/form')}>작성</button>
+        </div>
+      );
+    };
+    const App = ({ when }) => (
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/form" element={<FormPage when={when} />} />
+          <Route path="/done" element={<span data-testid="page">done</span>} />
+        </Routes>
+      </BrowserRouter>
+    );
+    const openForm = (when = true) => {
+      render(<App when={when} />);
+      fireEvent.click(screen.getByRole('button', { name: '작성' }));
+      expect(screen.getByTestId('page')).toHaveTextContent('form');
+      confirmSpy.mockClear();
+    };
+
+    it('navigate() 이동 — 취소하면 화면·주소 유지, 확인하면 이동', () => {
+      openForm();
+      confirmSpy.mockReturnValue(false);
+      fireEvent.click(screen.getByRole('button', { name: '저장 없이 이동' }));
+      expect(confirmSpy).toHaveBeenCalledWith('떠날까요?');
+      expect(screen.getByTestId('page')).toHaveTextContent('form');
+      expect(window.location.pathname).toBe('/form');
+
+      confirmSpy.mockReturnValue(true);
+      fireEvent.click(screen.getByRole('button', { name: '저장 없이 이동' }));
+      expect(screen.getByTestId('page')).toHaveTextContent('done');
+      expect(window.location.pathname).toBe('/done');
+    });
+
+    it('같은 경로(쿼리만 변경) navigate 는 확인하지 않는다', () => {
+      openForm();
+      fireEvent.click(screen.getByRole('button', { name: '같은 화면 쿼리' }));
+      expect(confirmSpy).not.toHaveBeenCalled();
+      expect(window.location.search).toBe('?tab=2');
+    });
+
+    it('navigate(-1) — 취소하면 history.go 를 부르지 않는다', () => {
+      openForm();
+      const goSpy = jest.spyOn(window.history, 'go');
+      confirmSpy.mockReturnValue(false);
+      fireEvent.click(screen.getByRole('button', { name: '뒤로' }));
+      expect(confirmSpy).toHaveBeenCalledTimes(1);
+      expect(goSpy).not.toHaveBeenCalled();
+    });
+
+    it('navigate(-1) 확인 — 이동하고 popstate 에서 확인창을 다시 띄우지 않는다', async () => {
+      openForm();
+      confirmSpy.mockReturnValue(true);
+      fireEvent.click(screen.getByRole('button', { name: '뒤로' }));
+      await waitFor(() => expect(screen.getByTestId('page')).toHaveTextContent('home'));
+      expect(confirmSpy).toHaveBeenCalledTimes(1);
+    });
+
+    it('브라우저 뒤로 가기 — 취소하면 원래 화면·주소로 되돌린다', async () => {
+      openForm();
+      confirmSpy.mockReturnValue(false);
+      await act(async () => {
+        window.history.back();
+      });
+      await waitFor(() => expect(confirmSpy).toHaveBeenCalledWith('떠날까요?'));
+      await waitFor(() => expect(window.location.pathname).toBe('/form'));
+      expect(screen.getByTestId('page')).toHaveTextContent('form');
+      expect(confirmSpy).toHaveBeenCalledTimes(1);
+    });
+
+    it('브라우저 뒤로 가기 — 확인하면 이전 화면으로 이동', async () => {
+      openForm();
+      confirmSpy.mockReturnValue(true);
+      await act(async () => {
+        window.history.back();
+      });
+      await waitFor(() => expect(screen.getByTestId('page')).toHaveTextContent('home'));
+      expect(window.location.pathname).toBe('/');
+    });
+
+    it('미저장 변경이 없으면 navigate·뒤로 가기에 확인창이 없다', async () => {
+      openForm(false);
+      await act(async () => {
+        window.history.back();
+      });
+      await waitFor(() => expect(screen.getByTestId('page')).toHaveTextContent('home'));
+      expect(confirmSpy).not.toHaveBeenCalled();
+    });
+
+    it('화면을 떠나 가드가 언마운트되면 이후 뒤로 가기에 확인창이 없다', async () => {
+      openForm();
+      confirmSpy.mockReturnValue(true);
+      fireEvent.click(screen.getByRole('button', { name: '저장 없이 이동' }));
+      expect(screen.getByTestId('page')).toHaveTextContent('done');
+      confirmSpy.mockClear();
+      await act(async () => {
+        window.history.back();
+      });
+      await waitFor(() => expect(window.location.pathname).toBe('/form'));
+      expect(confirmSpy).not.toHaveBeenCalled();
+    });
   });
 });

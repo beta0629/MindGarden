@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import com.coresolution.consultation.constant.UserRole;
+import com.coresolution.consultation.constant.consultation.ConsultationRecordAccessAudit;
 import com.coresolution.consultation.entity.ConsultantClientMapping;
 import com.coresolution.consultation.entity.ConsultationRecord;
 import com.coresolution.consultation.exception.ValidationException;
@@ -22,8 +23,12 @@ import com.coresolution.consultation.service.ConsultationRecordService;
 import com.coresolution.consultation.service.PlSqlConsultationRecordAlertService;
 import com.coresolution.consultation.service.SalaryLateSessionAutoSyncService;
 import com.coresolution.consultation.service.ScheduleService;
+import com.coresolution.consultation.service.support.ConsultationRecordEditAuditService;
+import com.coresolution.consultation.service.support.ConsultationRecordWriter;
+import com.coresolution.consultation.util.ConsultationRecordChangedFields;
 import com.coresolution.consultation.util.ConsultationRecordLinkedScheduleCompletion;
 import com.coresolution.consultation.util.ProvisionalConsultationLogSession;
+import com.coresolution.consultation.utils.SessionUtils;
 import com.coresolution.core.context.TenantContextHolder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -45,6 +50,9 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 @Transactional
 public class ConsultationRecordServiceImpl implements ConsultationRecordService {
+
+    /** 가드 판정 없이 쓰기 오버로드가 호출되거나, 판정 대상과 저장 대상이 다를 때의 거부 사유. */
+    static final String DENIAL_WRITER_MISMATCH = "상담일지 쓰기 권한을 확인할 수 없습니다.";
 
     @Autowired
     private ConsultationRecordRepository consultationRecordRepository;
@@ -79,6 +87,15 @@ public class ConsultationRecordServiceImpl implements ConsultationRecordService 
      */
     @Autowired
     private ConsultationRecordDraftService consultationRecordDraftService;
+
+    /**
+     * 작성·수정 감사 1행 기록 (일지 저장과 같은 트랜잭션).
+     *
+     * <p>{@link #consultationRecordDraftService} 와 같은 이유로 필드 주입을 쓴다. 운영 컨텍스트에서는
+     * 필수 빈이라 null 이 될 수 없고, 목만 주입하는 기존 단위 테스트에서만 null 이다.</p>
+     */
+    @Autowired
+    private ConsultationRecordEditAuditService consultationRecordEditAuditService;
 
     @Override
     public Page<ConsultationRecord> getConsultationRecords(Long consultantId, Long clientId, Pageable pageable) {
@@ -155,6 +172,26 @@ public class ConsultationRecordServiceImpl implements ConsultationRecordService 
 
     @Override
     public ConsultationRecord createConsultationRecord(Map<String, Object> recordData) {
+        return createRecord(recordData, null);
+    }
+
+    @Override
+    public ConsultationRecord createConsultationRecord(Map<String, Object> recordData,
+                                                       ConsultationRecordWriter writer) {
+        if (writer == null) {
+            throw new AccessDeniedException(DENIAL_WRITER_MISMATCH);
+        }
+        return createRecord(recordData, writer);
+    }
+
+    /**
+     * 상담일지 작성 공통 구현.
+     *
+     * @param recordData    요청 본문
+     * @param guardedWriter 공용 가드를 통과한 작성자 (null 이면 내부 경로 — 기존 본인 검증 적용)
+     * @return 저장된 상담일지
+     */
+    private ConsultationRecord createRecord(Map<String, Object> recordData, ConsultationRecordWriter guardedWriter) {
         // 상담일지 본문은 로그에 남기지 않는다.
         log.info("📝 상담일지 작성 - 본문 필드 수: {}", recordData != null ? recordData.size() : 0);
         String tenantId = TenantContextHolder.getRequiredTenantId();
@@ -170,14 +207,31 @@ public class ConsultationRecordServiceImpl implements ConsultationRecordService 
             Long consultantId = recordData.get("consultantId") != null ? 
                 Long.valueOf(recordData.get("consultantId").toString()) : null;
             Integer requestedSessionNumber = parseOptionalSessionNumber(recordData);
+
+            if (guardedWriter != null && consultationIdInput != null) {
+                // 가드가 판정한 일정과 같은 일정이어야 한다. 일지 귀속(consultant_id·client_id)은 요청이 아니라 일정 기준.
+                if (!guardedWriter.matchesSchedule(consultationIdInput)) {
+                    throw new AccessDeniedException(DENIAL_WRITER_MISMATCH);
+                }
+                Schedule guardedSchedule = scheduleRepository.findByTenantIdAndId(tenantId, consultationIdInput)
+                        .orElseThrow(() -> new AccessDeniedException(DENIAL_WRITER_MISMATCH));
+                consultantId = guardedSchedule.getConsultantId();
+                if (guardedSchedule.getClientId() != null) {
+                    clientId = guardedSchedule.getClientId();
+                }
+            }
             
             if (consultationIdInput == null || clientId == null || consultantId == null) {
                 throw new ValidationException(
                         "필수 필드가 누락되었습니다: consultationId, clientId, consultantId");
             }
             
-            // 권한 검증: 본인 기록만 생성 가능
-            validateUserAccess(consultantId);
+            ConsultationRecordWriter writer = guardedWriter;
+            if (writer == null) {
+                // 내부 경로 권한 검증: 본인 기록만 생성 가능
+                validateUserAccess(consultantId);
+                writer = ConsultationRecordWriter.ofInternal(SessionUtils.getCurrentUser(null));
+            }
             
             // 읽기 SSOT(r.consultationId = s.id)와 맞추기 위해 입력 ID를 Schedule.id 로 정규화
             Long consultationId = resolveScheduleIdForConsultationRecord(
@@ -283,8 +337,15 @@ public class ConsultationRecordServiceImpl implements ConsultationRecordService 
                 }
             }
             
+            record.setCreatedByUserId(writer.userId());
+            record.setCreatedByRole(writer.role());
+            
             ConsultationRecord savedRecord = consultationRecordRepository.save(record);
-            deleteServerDraftQuietly(tenantId, savedRecord.getConsultationId(), savedRecord.getConsultantId());
+            deleteServerDraftQuietly(tenantId, savedRecord.getConsultationId(),
+                    resolveDraftOwnerId(guardedWriter, savedRecord));
+            recordEditAudit(tenantId, savedRecord, ConsultationRecordAccessAudit.ACTION_CREATE, writer,
+                    ConsultationRecordChangedFields.diff(Map.of(),
+                            ConsultationRecordChangedFields.snapshot(savedRecord)));
 
             if (Boolean.TRUE.equals(savedRecord.getIsSessionCompleted())) {
                 completeLinkedScheduleSessionIfNeeded(tenantId, savedRecord.getConsultationId());
@@ -323,6 +384,28 @@ public class ConsultationRecordServiceImpl implements ConsultationRecordService 
 
     @Override
     public ConsultationRecord updateConsultationRecord(Long recordId, Map<String, Object> recordData) {
+        return updateRecord(recordId, recordData, null);
+    }
+
+    @Override
+    public ConsultationRecord updateConsultationRecord(Long recordId, Map<String, Object> recordData,
+                                                       ConsultationRecordWriter writer) {
+        if (writer == null) {
+            throw new AccessDeniedException(DENIAL_WRITER_MISMATCH);
+        }
+        return updateRecord(recordId, recordData, writer);
+    }
+
+    /**
+     * 상담일지 수정 공통 구현.
+     *
+     * @param recordId      상담일지 ID
+     * @param recordData    요청 본문
+     * @param guardedWriter 공용 가드를 통과한 수정자 (null 이면 내부 경로 — 기존 본인 검증 적용)
+     * @return 저장된 상담일지
+     */
+    private ConsultationRecord updateRecord(Long recordId, Map<String, Object> recordData,
+                                            ConsultationRecordWriter guardedWriter) {
         // 상담일지 본문은 로그에 남기지 않는다.
         log.info("📝 상담일지 수정 - 기록 ID: {}, 본문 필드 수: {}",
                 recordId, recordData != null ? recordData.size() : 0);
@@ -333,10 +416,19 @@ public class ConsultationRecordServiceImpl implements ConsultationRecordService 
         }
         ConsultationRecord record = recordOpt.get();
         
-        // 권한 검증: 본인 기록만 수정 가능
-        validateUserAccess(record.getConsultantId());
+        ConsultationRecordWriter writer = guardedWriter;
+        if (writer != null) {
+            if (!writer.matchesRecord(record.getId())) {
+                throw new AccessDeniedException(DENIAL_WRITER_MISMATCH);
+            }
+        } else {
+            // 내부 경로 권한 검증: 본인 기록만 수정 가능
+            validateUserAccess(record.getConsultantId());
+            writer = ConsultationRecordWriter.ofInternal(SessionUtils.getCurrentUser(null));
+        }
         
         try {
+            Map<String, Object> before = ConsultationRecordChangedFields.snapshot(record);
             Integer requestedSessionNumber = requireSessionNumber(recordData);
             Long intendedConsultationId = requireConsultationId(recordData);
             assertRecordMatchesIntendedTarget(record, intendedConsultationId, requestedSessionNumber);
@@ -404,8 +496,16 @@ public class ConsultationRecordServiceImpl implements ConsultationRecordService 
                 }
             }
             
+            List<String> changedFields = ConsultationRecordChangedFields.diff(
+                    before, ConsultationRecordChangedFields.snapshot(record));
+            if (writer.userId() != null) {
+                record.setUpdatedByUserId(writer.userId());
+                record.setUpdatedByRole(writer.role());
+            }
+            
             ConsultationRecord saved = consultationRecordRepository.save(record);
-            deleteServerDraftQuietly(tenantId, saved.getConsultationId(), saved.getConsultantId());
+            deleteServerDraftQuietly(tenantId, saved.getConsultationId(), resolveDraftOwnerId(guardedWriter, saved));
+            recordEditAudit(tenantId, saved, ConsultationRecordAccessAudit.ACTION_EDIT, writer, changedFields);
             if (Boolean.TRUE.equals(saved.getIsSessionCompleted())) {
                 completeLinkedScheduleSessionIfNeeded(tenantId, saved.getConsultationId());
             }
@@ -686,6 +786,38 @@ public class ConsultationRecordServiceImpl implements ConsultationRecordService 
         } else {
             throw new RuntimeException("상담일지를 찾을 수 없습니다: " + recordId);
         }
+    }
+
+    /**
+     * 확정 저장 후 정리할 서버 초안 소유자. 초안은 작성자 본인 키라서, 가드를 통과한 쓰기면 실제
+     * 작성자(관리자면 관리자 본인) 초안을, 내부 경로면 기존처럼 일지 귀속 상담사 초안을 지운다.
+     *
+     * @param guardedWriter 가드 통과 작성자 (null 이면 내부 경로)
+     * @param saved         저장된 일지
+     * @return 초안 소유자 users.id
+     */
+    private static Long resolveDraftOwnerId(ConsultationRecordWriter guardedWriter, ConsultationRecord saved) {
+        if (guardedWriter != null && guardedWriter.userId() != null) {
+            return guardedWriter.userId();
+        }
+        return saved.getConsultantId();
+    }
+
+    /**
+     * 작성·수정 감사 1행 기록 (필드명만). 저장과 같은 트랜잭션이라 실패하면 저장도 롤백된다.
+     *
+     * @param tenantId      테넌트 ID
+     * @param saved         저장된 일지
+     * @param action        CREATE·EDIT
+     * @param writer        실제 작성·수정자
+     * @param changedFields 바뀐 필드명
+     */
+    private void recordEditAudit(String tenantId, ConsultationRecord saved, String action,
+                                 ConsultationRecordWriter writer, List<String> changedFields) {
+        if (consultationRecordEditAuditService == null) {
+            return;
+        }
+        consultationRecordEditAuditService.record(tenantId, saved.getId(), action, writer, changedFields);
     }
 
     /**

@@ -36,8 +36,15 @@ public class ConsultationRecordDraftServiceImpl implements ConsultationRecordDra
     @Override
     @Transactional(readOnly = true)
     public Optional<ConsultationRecordDraftResponse> getDraft(String tenantId, Long consultationId, Long consultantId) {
+        return getDraft(tenantId, consultationId, consultantId, false);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Optional<ConsultationRecordDraftResponse> getDraft(String tenantId, Long consultationId,
+            Long consultantId, boolean managerOwner) {
         validateTenant(tenantId);
-        requireAssignableSchedule(tenantId, consultationId, consultantId);
+        requireAssignableSchedule(tenantId, consultationId, consultantId, managerOwner);
         return consultationRecordDraftRepository
                 .findByTenantIdAndConsultationIdAndConsultantIdAndIsDeletedFalse(tenantId, consultationId, consultantId)
                 .map(this::toResponse);
@@ -51,8 +58,20 @@ public class ConsultationRecordDraftServiceImpl implements ConsultationRecordDra
             Long consultantId,
             String payloadJson,
             Long expectedVersion) {
+        return upsertDraft(tenantId, consultationId, consultantId, payloadJson, expectedVersion, false);
+    }
+
+    @Override
+    @Transactional
+    public ConsultationRecordDraftResponse upsertDraft(
+            String tenantId,
+            Long consultationId,
+            Long consultantId,
+            String payloadJson,
+            Long expectedVersion,
+            boolean managerOwner) {
         validateTenant(tenantId);
-        requireAssignableSchedule(tenantId, consultationId, consultantId);
+        requireAssignableSchedule(tenantId, consultationId, consultantId, managerOwner);
         if (payloadJson == null) {
             throw new ValidationException("payloadJson", null, "payloadJson은 필수입니다.");
         }
@@ -97,11 +116,15 @@ public class ConsultationRecordDraftServiceImpl implements ConsultationRecordDra
         }
     }
 
-    private void requireAssignableSchedule(String tenantId, Long consultationId, Long consultantId) {
+    private void requireAssignableSchedule(String tenantId, Long consultationId, Long consultantId,
+            boolean managerOwner) {
         Schedule schedule = scheduleRepository.findByTenantIdAndId(tenantId, consultationId)
                 .orElseThrow(() -> new EntityNotFoundException("Schedule", consultationId));
         if (Boolean.TRUE.equals(schedule.getIsDeleted())) {
             throw new EntityNotFoundException("Schedule", consultationId, "삭제된 일정입니다.");
+        }
+        if (managerOwner) {
+            return;
         }
         if (schedule.getConsultantId() == null || !schedule.getConsultantId().equals(consultantId)) {
             throw new ForbiddenException("해당 일정에 대한 상담일지 초안을 작성할 권한이 없습니다.");

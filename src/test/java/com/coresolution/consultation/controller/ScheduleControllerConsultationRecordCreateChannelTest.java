@@ -2,6 +2,7 @@ package com.coresolution.consultation.controller;
 
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.not;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
@@ -23,6 +24,8 @@ import com.coresolution.consultation.service.ConsultationRecordCreateRequestVali
 import com.coresolution.consultation.service.ConsultationRecordService;
 import com.coresolution.consultation.service.InstitutionLinkConsultationLogService;
 import com.coresolution.consultation.service.InstitutionLinkConsultationLogWriteRouter;
+import com.coresolution.consultation.service.support.ConsultationRecordAccessGuard;
+import com.coresolution.consultation.service.support.ConsultationRecordWriter;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.domain.ClientPlatform;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -74,6 +77,10 @@ class ScheduleControllerConsultationRecordCreateChannelTest {
     @Mock
     private ClientRepository clientRepository;
 
+    /** 작성 권한 판정은 공용 가드 몫이다. 이 테스트는 그 뒤의 필수값 검증 분기만 본다. */
+    @Mock
+    private ConsultationRecordAccessGuard consultationRecordAccessGuard;
+
     @InjectMocks
     private ScheduleController controller;
 
@@ -92,7 +99,10 @@ class ScheduleControllerConsultationRecordCreateChannelTest {
                 clientRepository,
                 new ConsultationRecordCreateRequestValidator());
         ReflectionTestUtils.setField(controller, "institutionLinkConsultationLogWriteRouter", router);
-        lenient().when(consultationRecordService.createConsultationRecord(anyMap()))
+        lenient().when(consultationRecordAccessGuard.requireCreateAccess(any(), any()))
+                .thenReturn(new ConsultationRecordWriter(41L, "CONSULTANT", false, 30L, null));
+        lenient().when(consultationRecordService
+                .createConsultationRecord(anyMap(), any(ConsultationRecordWriter.class)))
                 .thenReturn(new ConsultationRecord());
         mockMvc = MockMvcBuilders.standaloneSetup(controller)
                 .setControllerAdvice(new GlobalExceptionHandler())
@@ -164,7 +174,7 @@ class ScheduleControllerConsultationRecordCreateChannelTest {
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.success").value(true));
 
-        verify(consultationRecordService).createConsultationRecord(anyMap());
+        verify(consultationRecordService).createConsultationRecord(anyMap(), any(ConsultationRecordWriter.class));
     }
 
     @Test
@@ -181,7 +191,7 @@ class ScheduleControllerConsultationRecordCreateChannelTest {
                 .andExpect(jsonPath("$.details").value(containsString("progressEvaluation")))
                 .andExpect(jsonPath("$.details").value(not(containsString("clientCondition"))));
 
-        verify(consultationRecordService, never()).createConsultationRecord(anyMap());
+        verify(consultationRecordService, never()).createConsultationRecord(anyMap(), any(ConsultationRecordWriter.class));
     }
 
     @Test
@@ -191,7 +201,7 @@ class ScheduleControllerConsultationRecordCreateChannelTest {
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.success").value(true));
 
-        verify(consultationRecordService).createConsultationRecord(anyMap());
+        verify(consultationRecordService).createConsultationRecord(anyMap(), any(ConsultationRecordWriter.class));
     }
 
     @Test
@@ -208,7 +218,7 @@ class ScheduleControllerConsultationRecordCreateChannelTest {
                 .andExpect(jsonPath("$.details").value(containsString("riskAssessment")))
                 .andExpect(jsonPath("$.details").value(not(containsString("mainIssues"))));
 
-        verify(consultationRecordService, never()).createConsultationRecord(anyMap());
+        verify(consultationRecordService, never()).createConsultationRecord(anyMap(), any(ConsultationRecordWriter.class));
     }
 
     @Test
@@ -229,7 +239,7 @@ class ScheduleControllerConsultationRecordCreateChannelTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.details").value(containsString("riskAssessment")));
 
-        verify(consultationRecordService, never()).createConsultationRecord(anyMap());
+        verify(consultationRecordService, never()).createConsultationRecord(anyMap(), any(ConsultationRecordWriter.class));
     }
 
     @Test
@@ -248,7 +258,7 @@ class ScheduleControllerConsultationRecordCreateChannelTest {
         mockMvc.perform(postJson(payLaterApp, PLATFORM_ANDROID))
                 .andExpect(status().isCreated());
 
-        verify(consultationRecordService, times(2)).createConsultationRecord(anyMap());
+        verify(consultationRecordService, times(2)).createConsultationRecord(anyMap(), any(ConsultationRecordWriter.class));
     }
 
     @Test
@@ -267,7 +277,7 @@ class ScheduleControllerConsultationRecordCreateChannelTest {
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.success").value(true));
 
-        verify(consultationRecordService).createConsultationRecord(anyMap());
+        verify(consultationRecordService).createConsultationRecord(anyMap(), any(ConsultationRecordWriter.class));
     }
 
     @Test
@@ -283,7 +293,7 @@ class ScheduleControllerConsultationRecordCreateChannelTest {
                 .andExpect(jsonPath("$.details").value(containsString("interventionMethods")))
                 .andExpect(jsonPath("$.details").value(containsString("sessionDurationMinutes")));
 
-        verify(consultationRecordService, never()).createConsultationRecord(anyMap());
+        verify(consultationRecordService, never()).createConsultationRecord(anyMap(), any(ConsultationRecordWriter.class));
     }
 
     @Test
@@ -297,6 +307,6 @@ class ScheduleControllerConsultationRecordCreateChannelTest {
                 .andExpect(jsonPath("$.details").value(containsString("mainIssues")))
                 .andExpect(jsonPath("$.details").value(not(containsString("clientCondition"))));
 
-        verify(consultationRecordService, never()).createConsultationRecord(anyMap());
+        verify(consultationRecordService, never()).createConsultationRecord(anyMap(), any(ConsultationRecordWriter.class));
     }
 }

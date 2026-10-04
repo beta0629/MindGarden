@@ -14,6 +14,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 import com.coresolution.consultation.converter.ConsultationBodyAttributeConverter;
+import com.coresolution.consultation.util.ConsultationRecordWriterRoles;
 
 /**
  * 상담일지 엔티티
@@ -188,6 +189,67 @@ public class ConsultationRecord extends BaseEntity {
     
     @Column(name = "follow_up_due_date")
     private LocalDate followUpDueDate; // 후속 조치 기한
+
+    /** 실제 작성자 users.id (관리자 대리 작성이면 관리자 id. consultant_id 는 일정 담당 상담사). */
+    @Column(name = "created_by_user_id")
+    private Long createdByUserId;
+
+    /** 실제 작성자 역할명. */
+    @Column(name = "created_by_role", length = 40)
+    private String createdByRole;
+
+    /** 마지막 수정자 users.id. */
+    @Column(name = "updated_by_user_id")
+    private Long updatedByUserId;
+
+    /** 마지막 수정자 역할명. */
+    @Column(name = "updated_by_role", length = 40)
+    private String updatedByRole;
+
+    /**
+     * 마지막 작성·수정자 id (UI 메타). 수정 이력이 없으면 작성자.
+     *
+     * @return users.id 또는 null(기록 이전 행)
+     */
+    public Long getLastEditedById() {
+        return updatedByUserId != null ? updatedByUserId : createdByUserId;
+    }
+
+    /**
+     * 마지막 작성·수정자 역할명 (UI 메타).
+     *
+     * @return 역할명 또는 null
+     */
+    public String getLastEditedByRole() {
+        return updatedByUserId != null ? updatedByRole : createdByRole;
+    }
+
+    /**
+     * 마지막 작성·수정 시각 (UI 메타).
+     *
+     * @return 수정 이력이 있으면 updatedAt, 없으면 createdAt
+     */
+    public LocalDateTime getLastEditedAt() {
+        return updatedByUserId != null ? getUpdatedAt() : getCreatedAt();
+    }
+
+    /**
+     * 같은 테넌트 관리자 계열이 대리 작성했는지 (UI 배지).
+     *
+     * @return 관리자 작성이면 true
+     */
+    public boolean isWrittenByAdmin() {
+        return ConsultationRecordWriterRoles.isManagerRole(createdByRole);
+    }
+
+    /**
+     * 마지막 수정자가 같은 테넌트 관리자 계열인지 (UI 배지).
+     *
+     * @return 관리자 수정이면 true
+     */
+    public boolean isEditedByAdmin() {
+        return updatedByUserId != null && ConsultationRecordWriterRoles.isManagerRole(updatedByRole);
+    }
     
     // 비즈니스 메서드
     /**

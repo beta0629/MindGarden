@@ -41,4 +41,20 @@ describe('ConsultationLogTableBlock', () => {
     fireEvent.click(screen.getAllByText('내담자A')[0]);
     expect(onRowClick).toHaveBeenCalledWith(101);
   });
+
+  it('관리자 화면(showAdminWriteBadge)에서만 관리자 작성·수정 컬럼과 배지를 보인다', () => {
+    const adminRecords = [
+      { ...RECORDS[0], editedByAdmin: true, lastEditedByRole: 'ADMIN', lastEditedAt: '2026-10-02T11:20:00' }
+    ];
+    const { unmount } = render(
+      <ConsultationLogTableBlock records={adminRecords} onRowClick={jest.fn()} showAdminWriteBadge />
+    );
+    expect(screen.getAllByText('관리자 작성·수정').length).toBeGreaterThan(0);
+    expect(screen.getAllByTestId('consultation-log-admin-write-badge')[0]).toHaveTextContent('관리자 수정');
+    unmount();
+
+    render(<ConsultationLogTableBlock records={adminRecords} onRowClick={jest.fn()} />);
+    expect(screen.queryByText('관리자 작성·수정')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('consultation-log-admin-write-badge')).not.toBeInTheDocument();
+  });
 });

@@ -22,6 +22,12 @@ public final class ConsultationRecordAccessAudit {
     /** 내보내기 (파일·리포트 반출). */
     public static final String ACTION_EXPORT = "EXPORT";
 
+    /** 신규 작성 (작성 상담사·같은 테넌트 관리자 계열 허용). 수정 감사 테이블 action 에도 쓴다. */
+    public static final String ACTION_CREATE = "CREATE";
+
+    /** 수정 (작성 상담사·같은 테넌트 관리자 계열 허용). 수정 감사 테이블 action 에도 쓴다. */
+    public static final String ACTION_EDIT = "EDIT";
+
     /** 허용됨. */
     public static final String RESULT_ALLOWED = "ALLOWED";
 

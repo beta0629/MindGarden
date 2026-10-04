@@ -4,6 +4,7 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import com.coresolution.consultation.entity.ConsultationRecord;
+import com.coresolution.consultation.service.support.ConsultationRecordWriter;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -58,6 +59,20 @@ public interface ConsultationRecordService {
      * @return 저장된 상담일지
      */
     ConsultationRecord createConsultationRecord(Map<String, Object> recordData);
+
+    /**
+     * 공용 가드({@code ConsultationRecordAccessGuard#requireCreateAccess})를 통과한 상담일지 작성.
+     *
+     * <p>{@code consultant_id}·{@code client_id} 는 요청 본문이 아니라 판정 대상 일정에서 가져온다
+     * (관리자 대리 작성이어도 일지는 일정 담당 상담사 귀속). 실제 작성자는 {@code created_by_*} 와
+     * 수정 감사 1행에 남는다.</p>
+     *
+     * @param recordData 상담일지 본문 (consultationId 필수)
+     * @param writer     가드가 만든 작성자 정보 (필수)
+     * @return 저장된 상담일지
+     */
+    ConsultationRecord createConsultationRecord(Map<String, Object> recordData,
+            ConsultationRecordWriter writer);
     
     /**
      * 특정 스케줄에 대한 상담일지 작성 여부 확인
@@ -68,6 +83,19 @@ public interface ConsultationRecordService {
      * 상담일지 수정
      */
     ConsultationRecord updateConsultationRecord(Long recordId, Map<String, Object> recordData);
+
+    /**
+     * 공용 가드({@code ConsultationRecordAccessGuard#requireWriteAccess})를 통과한 상담일지 수정.
+     *
+     * <p>실제 수정자는 {@code updated_by_*} 와 수정 감사 1행(바뀐 필드명만)에 남는다.</p>
+     *
+     * @param recordId   상담일지 ID
+     * @param recordData 수정 본문 (consultationId·sessionNumber 필수)
+     * @param writer     가드가 만든 수정자 정보 (필수)
+     * @return 저장된 상담일지
+     */
+    ConsultationRecord updateConsultationRecord(Long recordId, Map<String, Object> recordData,
+            ConsultationRecordWriter writer);
     
     /**
      * 상담일지 삭제 (소프트 삭제).

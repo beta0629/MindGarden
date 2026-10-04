@@ -40,6 +40,7 @@ import ConsultationLogPrecautionsPanel from './organisms/ConsultationLogPrecauti
 import ConsultationLogFormPanel from './organisms/ConsultationLogFormPanel';
 import ConsultationLogRequiredFieldsNotice from './molecules/ConsultationLogRequiredFieldsNotice';
 import ConsultationLogSessionHeaderMeta from './molecules/ConsultationLogSessionHeaderMeta';
+import ConsultationLogAdminWriteBadge from './molecules/ConsultationLogAdminWriteBadge';
 import {
   INSTITUTION_LINK_CONSULTATION_RECORDS_API,
   buildInstitutionLinkLatestLogUrl,
@@ -341,7 +342,14 @@ const ConsultationLogModal = ({
     return '';
   }, [scheduleData?.id, consultationRecord?.consultationId]);
 
+  /** 서버 초안은 작성자 본인 키로만 저장된다 — 관리자는 담당 상담사가 아닌 본인 id 로 조회·저장한다. */
   const draftConsultantId = useMemo(() => {
+    if (isAdmin) {
+      const adminId = user?.id;
+      if (adminId == null || adminId === '') return null;
+      const n = typeof adminId === 'number' ? adminId : parseInt(String(adminId), 10);
+      return Number.isFinite(n) ? n : null;
+    }
     const fromSchedule = scheduleData?.consultantId;
     if (fromSchedule != null && fromSchedule !== '') {
       const n = typeof fromSchedule === 'number' ? fromSchedule : parseInt(String(fromSchedule), 10);
@@ -358,7 +366,7 @@ const ConsultationLogModal = ({
       if (Number.isFinite(n)) return n;
     }
     return null;
-  }, [scheduleData?.consultantId, consultationRecord?.consultantId, user?.id]);
+  }, [isAdmin, scheduleData?.consultantId, consultationRecord?.consultantId, user?.id]);
 
   const [restoreDraftConfirmOpen, setRestoreDraftConfirmOpen] = useState(false);
   /** 불러오기 확정 전 "작성 중 내용 덮어쓰기" 2차 확인 */
@@ -1477,6 +1485,7 @@ const ConsultationLogModal = ({
             sessionDateLabel={formData.sessionDate}
             institutionLink={isInstitutionLinkLog}
           />
+          {isAdmin ? <ConsultationLogAdminWriteBadge record={consultationRecord} /> : null}
 
           <div className="mg-v2-consultation-log__layout">
             <aside className="mg-v2-consultation-log__sidebar">

@@ -21,7 +21,11 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * 상담일지 읽기 권한 단일 판정 가드.
+ * 상담일지 읽기·쓰기 권한 단일 판정 가드.
+ *
+ * <p>쓰기(2026-10-06): 수정은 {@link #canWrite}(읽기와 같은 규칙), 신규 작성은 {@link #canCreate}
+ * (일정 담당 상담사 또는 같은 테넌트 관리자 계열)로 판정한다. 모든 작성·수정 경로는
+ * {@link #requireCreateAccess}·{@link #requireWriteAccess} 를 통과한 뒤 저장한다. 삭제 규칙은 바꾸지 않는다.</p>
  *
  * <p>모든 상담일지 읽기 경로(단건·일정 단위 목록·상담사 단위 목록·임상 리포트·타기관 연계 일지)는
  * 이 클래스의 판정 메서드만 호출한다. 판정 규칙은 {@link #canRead(User, String, String, Long)} 하나다.</p>
@@ -49,6 +53,12 @@ public class ConsultationRecordAccessGuard {
     /** 작성 상담사도 같은 테넌트 관리자도 아닌 호출자의 거부 사유. */
     public static final String DENIAL_AUTHOR_ONLY = "본인이 작성한 상담일지만 조회할 수 있습니다.";
 
+    /** 작성 상담사도 같은 테넌트 관리자도 아닌 호출자의 수정 거부 사유. */
+    public static final String DENIAL_WRITE_AUTHOR_ONLY = "본인이 작성한 상담일지만 수정할 수 있습니다.";
+
+    /** 일정 담당 상담사도 같은 테넌트 관리자도 아닌 호출자의 작성 거부 사유. */
+    public static final String DENIAL_CREATE_ASSIGNEE_ONLY = "담당 일정의 상담일지만 작성할 수 있습니다.";
+
     private final ClientPathAccessGuard clientPathAccessGuard;
     private final ClinicalReportRepository clinicalReportRepository;
     private final ConsultationRecordAccessLogService consultationRecordAccessLogService;
@@ -70,6 +80,105 @@ public class ConsultationRecordAccessGuard {
             return false;
         }
         return isAuthor(caller, authorConsultantId) || clientPathAccessGuard.isTenantManager(caller);
+    }
+
+    /**
+     * 상담일지 수정 허용 여부 — 모든 수정 경로가 공유하는 판정 규칙. 읽기 규칙({@link #canRead})과 같다.
+     *
+     * @param caller             세션 사용자
+     * @param callerTenantId     세션 사용자 테넌트 ID
+     * @param recordTenantId     일지 테넌트 ID
+     * @param authorConsultantId 일지 작성 상담사 ID ({@code consultation_records.consultant_id})
+     * @return 작성 상담사 본인이거나 같은 테넌트 관리자 계열이면 {@code true}
+     */
+    public boolean canWrite(User caller, String callerTenantId, String recordTenantId, Long authorConsultantId) {
+        return canRead(caller, callerTenantId, recordTenantId, authorConsultantId);
+    }
+
+    /**
+     * 상담일지 신규 작성 허용 여부 — 모든 작성 경로가 공유하는 판정 규칙.
+     *
+     * <p>일정이 호출자 테넌트에 있고(삭제되지 않음), 호출자가 그 일정의 담당 상담사이거나 같은 테넌트
+     * 관리자 계열이면 허용한다. 요청 본문의 {@code consultantId} 는 근거로 쓰지 않는다.</p>
+     *
+     * @param caller         세션 사용자
+     * @param callerTenantId 세션 사용자 테넌트 ID
+     * @param schedule       대상 일정 (null 이면 거부)
+     * @return 허용이면 {@code true}
+     */
+    public boolean canCreate(User caller, String callerTenantId, Schedule schedule) {
+        if (caller == null || callerTenantId == null || schedule == null
+                || Boolean.TRUE.equals(schedule.getIsDeleted())
+                || !Objects.equals(callerTenantId, schedule.getTenantId())) {
+            return false;
+        }
+        return isAuthor(caller, schedule.getConsultantId()) || clientPathAccessGuard.isTenantManager(caller);
+    }
+
+    /**
+     * 상담일지 신규 작성 검증. 작성 경로는 저장 전에 반드시 이 메서드를 통과한다.
+     *
+     * @param session    HTTP 세션
+     * @param scheduleId 대상 일정 ID ({@code consultation_records.consultation_id})
+     * @return 판정을 통과한 작성자 정보 (서비스가 실제 작성자 기록에 사용)
+     * @throws UnauthorizedException 로그인 사용자가 없을 때
+     * @throws AccessDeniedException 테넌트 내 일정이 없거나 담당 상담사·같은 테넌트 관리자가 아닐 때
+     */
+    @Transactional(readOnly = true)
+    public ConsultationRecordWriter requireCreateAccess(HttpSession session, Long scheduleId) {
+        User caller = clientPathAccessGuard.requireCaller(session);
+        String tenantId = clientPathAccessGuard.requireCallerTenantId(caller);
+        Schedule schedule = scheduleId == null ? null
+            : scheduleRepository.findByTenantIdAndId(tenantId, scheduleId).orElse(null);
+        if (schedule == null || Boolean.TRUE.equals(schedule.getIsDeleted())) {
+            audit(caller, tenantId, ConsultationRecordAccessAudit.KIND_CONSULTATION_RECORD, null, null, null,
+                    ConsultationRecordAccessAudit.ACTION_CREATE, ConsultationRecordAccessAudit.RESULT_DENIED,
+                    DENIAL_RECORD_UNAVAILABLE);
+            deny(DENIAL_RECORD_UNAVAILABLE, caller, "scheduleId", scheduleId);
+        }
+        boolean allowed = canCreate(caller, tenantId, schedule);
+        audit(caller, tenantId, ConsultationRecordAccessAudit.KIND_CONSULTATION_RECORD, null,
+                schedule.getClientId(), schedule.getConsultantId(), ConsultationRecordAccessAudit.ACTION_CREATE,
+                allowed ? ConsultationRecordAccessAudit.RESULT_ALLOWED : ConsultationRecordAccessAudit.RESULT_DENIED,
+                allowed ? null : DENIAL_CREATE_ASSIGNEE_ONLY);
+        if (!allowed) {
+            deny(DENIAL_CREATE_ASSIGNEE_ONLY, caller, "scheduleId", scheduleId);
+        }
+        return ConsultationRecordWriter.forCreate(caller, clientPathAccessGuard.isTenantManager(caller),
+                schedule.getId());
+    }
+
+    /**
+     * 상담일지 수정 검증. 수정 경로는 저장 전에 반드시 이 메서드를 통과한다.
+     *
+     * @param session  HTTP 세션
+     * @param recordId 상담일지 ID
+     * @return 판정을 통과한 작성자 정보 (서비스가 실제 수정자 기록에 사용)
+     * @throws UnauthorizedException 로그인 사용자가 없을 때
+     * @throws AccessDeniedException 테넌트 내 일지가 없거나 작성자·같은 테넌트 관리자가 아닐 때
+     */
+    @Transactional(readOnly = true)
+    public ConsultationRecordWriter requireWriteAccess(HttpSession session, Long recordId) {
+        User caller = clientPathAccessGuard.requireCaller(session);
+        String tenantId = clientPathAccessGuard.requireCallerTenantId(caller);
+        ConsultationRecord record = recordId == null ? null
+            : consultationRecordRepository.findByTenantIdAndId(tenantId, recordId).orElse(null);
+        if (record == null || Boolean.TRUE.equals(record.getIsDeleted())) {
+            audit(caller, tenantId, ConsultationRecordAccessAudit.KIND_CONSULTATION_RECORD, recordId, null, null,
+                    ConsultationRecordAccessAudit.ACTION_EDIT, ConsultationRecordAccessAudit.RESULT_DENIED,
+                    DENIAL_RECORD_UNAVAILABLE);
+            deny(DENIAL_RECORD_UNAVAILABLE, caller, "recordId", recordId);
+        }
+        boolean allowed = canWrite(caller, tenantId, record.getTenantId(), record.getConsultantId());
+        audit(caller, tenantId, ConsultationRecordAccessAudit.KIND_CONSULTATION_RECORD, record.getId(),
+                record.getClientId(), record.getConsultantId(), ConsultationRecordAccessAudit.ACTION_EDIT,
+                allowed ? ConsultationRecordAccessAudit.RESULT_ALLOWED : ConsultationRecordAccessAudit.RESULT_DENIED,
+                allowed ? null : DENIAL_WRITE_AUTHOR_ONLY);
+        if (!allowed) {
+            deny(DENIAL_WRITE_AUTHOR_ONLY, caller, "recordId", recordId);
+        }
+        return ConsultationRecordWriter.forEdit(caller, clientPathAccessGuard.isTenantManager(caller),
+                record.getId());
     }
 
     /**

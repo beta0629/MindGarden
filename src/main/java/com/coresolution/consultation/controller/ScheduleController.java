@@ -52,6 +52,7 @@ import com.coresolution.consultation.service.support.ClientPathAccessGuard;
 import com.coresolution.consultation.service.support.ResourceOwnerAccessGuard;
 import com.coresolution.consultation.service.support.ConsultationRecordAccessGuard;
 import com.coresolution.consultation.service.support.ConsultationRecordDraftAccessGuard;
+import com.coresolution.consultation.service.support.ConsultationRecordWriter;
 import com.coresolution.consultation.service.ScheduleService;
 import com.coresolution.consultation.util.PermissionCheckUtils;
 import com.coresolution.consultation.util.ScheduleSlotTimes;
@@ -136,6 +137,9 @@ public class ScheduleController extends BaseApiController {
 
     /** 초안 응답 캐시 금지 보조 헤더 (레거시 프록시 대응) */
     private static final String DRAFT_PRAGMA_NO_CACHE = "no-cache";
+
+    /** 상담일지 작성 본문의 일정 ID 키 (= consultation_records.consultation_id). */
+    private static final String CONSULTATION_ID_FIELD = "consultationId";
 
     private final ScheduleService scheduleService;
     private final AdminService adminService;
@@ -1315,6 +1319,10 @@ public class ScheduleController extends BaseApiController {
      *
      * <p>타기관 연계는 {@link InstitutionLinkConsultationLogWriteRouter} 에 위임만 한다.
      * 타기관 예외를 catch 하지 않는다. 필수값 키가 하나도 없는 본문은 헤더와 무관하게 기존 앱으로 보고 통과시킨다.</p>
+     *
+     * <p>회기권 일지는 저장 전에 공용 가드 {@link ConsultationRecordAccessGuard#requireCreateAccess} 로
+     * 판정한다(일정 담당 상담사 또는 같은 테넌트 관리자 계열). 관리자가 작성해도 일지는 일정 담당 상담사
+     * 귀속이며 실제 작성자는 {@code created_by_*} 에 남는다.</p>
      */
     @PostMapping("/consultation-records")
     public ResponseEntity<ApiResponse<Object>> createConsultationRecord(
@@ -1325,28 +1333,44 @@ public class ScheduleController extends BaseApiController {
         // 상담일지 본문은 로그에 남기지 않는다 (키 목록만).
         log.info("📝 상담일지 작성 요청 - 본문 필드 수: {}", recordData != null ? recordData.size() : 0);
 
+        ensureTenantContextFromSession(session);
+        ConsultationRecordWriter writer = null;
+        if (!institutionLinkConsultationLogWriteRouter.isInstitutionLink(recordData)) {
+            Long scheduleId = parseOptionalRecordScheduleId(recordData);
+            if (scheduleId == null) {
+                consultationRecordAccessGuard.requireConsultationRecordRole(session);
+                throw new ValidationException(CONSULTATION_ID_FIELD, null, "consultationId는 필수입니다.");
+            }
+            writer = consultationRecordAccessGuard.requireCreateAccess(session, scheduleId);
+        }
+
         Object savedRecord = institutionLinkConsultationLogWriteRouter.create(
-                recordData, ClientPlatform.fromHeader(clientPlatformHeader));
+                recordData, ClientPlatform.fromHeader(clientPlatformHeader), writer);
         
         return created("상담일지가 성공적으로 작성되었습니다.", savedRecord);
     }
     
     /**
-     /**
      * 상담일지 수정
      * PUT /api/schedules/consultation-records/{recordId}
+     *
+     * <p>공용 가드 {@link ConsultationRecordAccessGuard#requireWriteAccess} 로 판정한다(작성 상담사 본인 또는
+     * 같은 테넌트 관리자 계열). 실제 수정자는 {@code updated_by_*}·수정 감사에 남는다.</p>
      */
     @PutMapping("/consultation-records/{recordId}")
     public ResponseEntity<ApiResponse<com.coresolution.consultation.entity.ConsultationRecord>> updateConsultationRecord(
             @PathVariable Long recordId,
-            @RequestBody Map<String, Object> recordData) {
+            @RequestBody Map<String, Object> recordData,
+            HttpSession session) {
         
         // 상담일지 본문은 로그에 남기지 않는다.
         log.info("📝 상담일지 수정 요청 - 기록 ID: {}, 본문 필드 수: {}",
                 recordId, recordData != null ? recordData.size() : 0);
         
+        ensureTenantContextFromSession(session);
+        ConsultationRecordWriter writer = consultationRecordAccessGuard.requireWriteAccess(session, recordId);
         com.coresolution.consultation.entity.ConsultationRecord updatedRecord = 
-            consultationRecordService.updateConsultationRecord(recordId, recordData);
+            consultationRecordService.updateConsultationRecord(recordId, recordData, writer);
         
         return updated("상담일지가 성공적으로 수정되었습니다.", updatedRecord);
     }
@@ -1376,10 +1400,10 @@ public class ScheduleController extends BaseApiController {
             return tenantError;
         }
         Long consultationIdLong = parseScheduleConsultationId(consultationId);
-        String tenantIdVal = consultationRecordDraftAccessGuard
-                .requireDraftAuthor(session, consultationIdLong, consultantId);
+        ConsultationRecordDraftAccessGuard.DraftOwner owner = consultationRecordDraftAccessGuard
+                .requireDraftOwner(session, consultationIdLong, consultantId);
         ConsultationRecordDraftResponse body = consultationRecordDraftService
-                .getDraft(tenantIdVal, consultationIdLong, consultantId)
+                .getDraft(owner.tenantId(), consultationIdLong, owner.ownerUserId(), owner.manager())
                 .orElse(ConsultationRecordDraftResponse.empty(consultationIdLong, consultantId));
         return noStore(success(body));
     }
@@ -1411,14 +1435,15 @@ public class ScheduleController extends BaseApiController {
             return tenantError;
         }
         Long consultationIdLong = parseScheduleConsultationId(consultationId);
-        String tenantIdVal = consultationRecordDraftAccessGuard
-                .requireDraftAuthor(session, consultationIdLong, consultantId);
+        ConsultationRecordDraftAccessGuard.DraftOwner owner = consultationRecordDraftAccessGuard
+                .requireDraftOwner(session, consultationIdLong, consultantId);
         ConsultationRecordDraftResponse saved = consultationRecordDraftService.upsertDraft(
-                tenantIdVal,
+                owner.tenantId(),
                 consultationIdLong,
-                consultantId,
+                owner.ownerUserId(),
                 body != null ? body.getPayloadJson() : null,
-                body != null ? body.getExpectedVersion() : null);
+                body != null ? body.getExpectedVersion() : null,
+                owner.manager());
         return noStore(updated("상담일지 초안이 저장되었습니다.", saved));
     }
 
@@ -1443,9 +1468,9 @@ public class ScheduleController extends BaseApiController {
             return tenantError;
         }
         Long consultationIdLong = parseScheduleConsultationId(consultationId);
-        String tenantIdVal = consultationRecordDraftAccessGuard
-                .requireDraftAuthor(session, consultationIdLong, consultantId);
-        consultationRecordDraftService.deleteDraft(tenantIdVal, consultationIdLong, consultantId);
+        ConsultationRecordDraftAccessGuard.DraftOwner owner = consultationRecordDraftAccessGuard
+                .requireDraftOwner(session, consultationIdLong, consultantId);
+        consultationRecordDraftService.deleteDraft(owner.tenantId(), consultationIdLong, owner.ownerUserId());
         return noStore(success(ConsultationRecordDraftResponse.empty(consultationIdLong, consultantId)));
     }
 
@@ -1477,6 +1502,24 @@ public class ScheduleController extends BaseApiController {
                 .cacheControl(CacheControl.noStore().mustRevalidate())
                 .header(HttpHeaders.PRAGMA, DRAFT_PRAGMA_NO_CACHE)
                 .body(response.getBody());
+    }
+
+    /**
+     * 상담일지 작성 본문의 일정 ID({@code consultationId})를 읽는다. 없거나 형식이 틀리면 null.
+     *
+     * @param recordData 작성 본문
+     * @return 일정 ID 또는 null
+     */
+    private static Long parseOptionalRecordScheduleId(Map<String, Object> recordData) {
+        Object raw = recordData != null ? recordData.get(CONSULTATION_ID_FIELD) : null;
+        if (raw == null || raw.toString().isBlank()) {
+            return null;
+        }
+        try {
+            return Long.valueOf(raw.toString().trim());
+        } catch (NumberFormatException e) {
+            return null;
+        }
     }
 
     private Long parseScheduleConsultationId(String consultationId) {

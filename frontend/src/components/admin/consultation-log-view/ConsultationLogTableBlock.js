@@ -12,6 +12,7 @@ import ContentSection from '../../dashboard-v2/content/ContentSection';
 import ContentCard from '../../dashboard-v2/content/ContentCard';
 import ListTableView from '../../common/ListTableView';
 import EmptyState from '../../common/EmptyState';
+import ConsultationLogAdminWriteBadge from '../../consultant/molecules/ConsultationLogAdminWriteBadge';
 import './ConsultationLogTableBlock.css';
 
 const EMPTY_TITLE = '등록된 상담일지가 없습니다.';
@@ -30,6 +31,8 @@ const COLUMNS = [
   { key: 'createdAt', label: '작성일' }
 ];
 
+const ADMIN_WRITE_COLUMN = { key: 'adminWrite', label: '관리자 작성·수정' };
+
 const formatDate = (val) => {
   if (!val) return '-';
   if (typeof val === 'string') return val.split('T')[0];
@@ -40,7 +43,8 @@ const ConsultationLogTableBlock = ({
   records,
   clientNameMap,
   consultantNameMap,
-  onRowClick
+  onRowClick,
+  showAdminWriteBadge = false
 }) => {
   const isEmpty = !records || records.length === 0;
 
@@ -108,6 +112,8 @@ const ConsultationLogTableBlock = ({
       }
       case 'createdAt':
         return formatDate(item.createdAt);
+      case 'adminWrite':
+        return <ConsultationLogAdminWriteBadge record={item} />;
       default:
         return item[columnKey] ?? '-';
     }
@@ -121,7 +127,7 @@ const ConsultationLogTableBlock = ({
         </p>
         <div className="mg-v2-consultation-log-table-block__scroll">
           <ListTableView
-            columns={COLUMNS}
+            columns={showAdminWriteBadge ? [...COLUMNS, ADMIN_WRITE_COLUMN] : COLUMNS}
             data={data}
             renderCell={renderCell}
             onRowClick={(item) => onRowClick(item.id)}
@@ -147,12 +153,17 @@ ConsultationLogTableBlock.propTypes = {
       consultantName: PropTypes.string,
       isSessionCompleted: PropTypes.bool,
       createdAt: PropTypes.string,
-      updatedAt: PropTypes.string
+      updatedAt: PropTypes.string,
+      writtenByAdmin: PropTypes.bool,
+      editedByAdmin: PropTypes.bool,
+      lastEditedByRole: PropTypes.string,
+      lastEditedAt: PropTypes.string
     })
   ),
   clientNameMap: PropTypes.object,
   consultantNameMap: PropTypes.object,
-  onRowClick: PropTypes.func.isRequired
+  onRowClick: PropTypes.func.isRequired,
+  showAdminWriteBadge: PropTypes.bool
 };
 
 export default ConsultationLogTableBlock;

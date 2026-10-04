@@ -741,6 +741,7 @@ const ConsultationLogViewPage = () => {
                 clientNameMap={clientNameMap}
                 consultantNameMap={consultantNameMap}
                 onCardClick={handleOpenModal}
+                showAdminWriteBadge={isAdmin}
               />
             )}
             {viewMode === VIEW_MODE_TABLE && (
@@ -749,6 +750,7 @@ const ConsultationLogViewPage = () => {
                 clientNameMap={clientNameMap}
                 consultantNameMap={consultantNameMap}
                 onRowClick={handleOpenModal}
+                showAdminWriteBadge={isAdmin}
               />
             )}
           </>

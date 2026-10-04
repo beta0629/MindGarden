@@ -110,6 +110,8 @@ class ProcedureSignatureGuardrailTest {
                     + ") @" + c.file(), d.source());
             }
         }
+        System.out.println("[guardrail2] Java 호출 " + calls.size() + "건 · 정의 " + defs.size() + "개 · 위반 "
+            + violations.size() + "건");
         Files.createDirectories(CURRENT_OUT.getParent());
         Files.write(CURRENT_OUT, violations.entrySet().stream().map(e -> "TODO " + e.getKey() + " # " + e.getValue())
             .collect(Collectors.toList()), StandardCharsets.UTF_8);

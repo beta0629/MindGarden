@@ -85,6 +85,7 @@ class AdminApiGuardCoverageTest {
                 unguarded.merge(handlerKey(method), e.getKey(), (a, b) -> a + ", " + b);
             }
         }
+        System.out.println("[guardrail1] 관리자 핸들러 " + handlers.size() + "개 · 미가드 " + unguarded.size() + "개");
         Files.createDirectories(CURRENT_OUT.getParent());
         Files.write(CURRENT_OUT, unguarded.entrySet().stream()
             .map(x -> "TODO " + x.getKey() + " # " + x.getValue()).collect(Collectors.toList()),

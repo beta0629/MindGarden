@@ -36,6 +36,11 @@ import { getStatusColor, getStatusIcon } from '../../utils/codeHelper';
 import { getCommonCodes } from '../../utils/commonCodeApi';
 import notificationManager from '../../utils/notification';
 import {
+    CONSULTATION_LOG_BODY_ACCESS_STRINGS,
+    canAccessConsultationLogBody,
+    isConsultationLogBodyManager
+} from '../../utils/consultationLogBodyAccess';
+import {
   CALENDAR_EXTENDED_TYPE_KR_PUBLIC_HOLIDAY,
   CALENDAR_EXTENDED_TYPE_VACATION,
   CLIENT_SCHEDULE_NOTES_CLIENT_WIDE_UNRESOLVED_COUNT_FIELD,
@@ -1290,7 +1295,13 @@ const UnifiedScheduleComponent = ({
     };
 
     // 상담일지 모달 핸들러
+    const consultationLogUser = { id: userId, role: userRole };
+
     const handleConsultationLogModalOpen = (scheduleData) => {
+        if (!canAccessConsultationLogBody(consultationLogUser)) {
+            notificationManager.info(CONSULTATION_LOG_BODY_ACCESS_STRINGS.RESTRICTED);
+            return;
+        }
         setSelectedSchedule(scheduleData);
         setIsConsultationLogModalOpen(true);
     };
@@ -1312,6 +1323,10 @@ const UnifiedScheduleComponent = ({
         clientId
     }) => {
         if (missingLogChipResolvingRef.current) {
+            return;
+        }
+        if (!canAccessConsultationLogBody({ id: userId, role: userRole })) {
+            notificationManager.info(CONSULTATION_LOG_BODY_ACCESS_STRINGS.RESTRICTED);
             return;
         }
         missingLogChipResolvingRef.current = true;
@@ -1590,7 +1605,7 @@ const UnifiedScheduleComponent = ({
                     onClose={handleConsultationLogModalClose}
                     scheduleData={selectedSchedule}
                     onSave={handleConsultationLogSaved}
-                    isAdmin={isAdminLikeScheduleUserRole(userRole)}
+                    isAdmin={isConsultationLogBodyManager(consultationLogUser)}
                 />
             )}
 

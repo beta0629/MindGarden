@@ -14,6 +14,11 @@ import useCumulativeConsultantCounts from '../../hooks/useCumulativeConsultantCo
 import { useNavigate } from 'react-router-dom';
 import { AdminMgmtNavCard, AdminMgmtActionCard } from './molecules/AdminMgmtGridCard';
 import notificationManager from '../../utils/notification';
+import {
+  CONSULTATION_LOG_BODY_ACCESS_STRINGS,
+  canAccessConsultationLogBody,
+  isConsultationLogBodyManager
+} from '../../utils/consultationLogBodyAccess';
 import { useConfirm } from '../../hooks/useConfirm';
 import { RoleUtils, USER_ROLES } from '../../constants/roles';
 import { FaCalendarAlt } from 'react-icons/fa';
@@ -302,6 +307,10 @@ const AdminDashboardV2 = ({ user: propUser }) => {
     if (missingLogChipResolving) {
       return;
     }
+    if (!canAccessConsultationLogBody(dashboardUser)) {
+      notificationManager.info(CONSULTATION_LOG_BODY_ACCESS_STRINGS.RESTRICTED);
+      return;
+    }
     setMissingLogChipResolving(true);
     try {
       const resolved = await resolveMissingLogSchedule({
@@ -344,7 +353,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
     } finally {
       setMissingLogChipResolving(false);
     }
-  }, [missingLogChipResolving, navigate, t, dashboardUser?.id, dashboardUser?.role]);
+  }, [missingLogChipResolving, navigate, t, dashboardUser]);
 
   const handleMissingLogModalClose = useCallback(() => {
     setMissingLogModalOpen(false);
@@ -2011,7 +2020,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
           onClose={handleMissingLogModalClose}
           onSave={handleMissingLogModalSave}
           scheduleData={missingLogModalSchedule}
-          isAdmin
+          isAdmin={isConsultationLogBodyManager(dashboardUser)}
         />
       )}
     </>

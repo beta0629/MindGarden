@@ -15,6 +15,10 @@ import { API_ENDPOINTS } from '../../../constants/apiEndpoints';
 import { useSession } from '../../../contexts/SessionContext';
 import { RoleUtils } from '../../../constants/roles';
 import notificationManager from '../../../utils/notification';
+import {
+  CONSULTATION_LOG_BODY_ACCESS_STRINGS,
+  canAccessConsultationLogBody
+} from '../../../utils/consultationLogBodyAccess';
 import UnifiedLoading from '../../common/UnifiedLoading';
 import MGButton from '../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
@@ -252,6 +256,7 @@ export const findRecordIdByScheduleDeepLink = (records, scheduleId) => {
 const ConsultationLogViewPage = () => {
   const { user } = useSession();
   const isAdmin = RoleUtils.isAdmin(user);
+  const canOpenConsultationLog = canAccessConsultationLogBody(user);
   const [searchParams] = useSearchParams();
 
   /**
@@ -506,6 +511,10 @@ const ConsultationLogViewPage = () => {
   }
 
   const handleOpenModal = (recordId) => {
+    if (!canOpenConsultationLog) {
+      notificationManager.info(CONSULTATION_LOG_BODY_ACCESS_STRINGS.RESTRICTED);
+      return;
+    }
     setModalRecordId(recordId);
     setModalOpen(true);
   };
@@ -515,7 +524,7 @@ const ConsultationLogViewPage = () => {
    * (스케줄 상세 → navigate fallback / 북마크 UX)
    */
   useEffect(() => {
-    if (deepLinkAutoOpenedRef.current || loading) {
+    if (deepLinkAutoOpenedRef.current || loading || !canOpenConsultationLog) {
       return;
     }
     const scheduleId = initialQueryFilter.scheduleId;
@@ -528,7 +537,7 @@ const ConsultationLogViewPage = () => {
     }
     deepLinkAutoOpenedRef.current = true;
     handleOpenModal(recordId);
-  }, [loading, records, initialQueryFilter.scheduleId]);
+  }, [loading, records, initialQueryFilter.scheduleId, canOpenConsultationLog]);
 
   const handleModalClose = () => {
     setModalOpen(false);
@@ -758,7 +767,7 @@ const ConsultationLogViewPage = () => {
       </ContentArea>
 
       <ConsultationLogModal
-        isOpen={modalOpen}
+        isOpen={modalOpen && canOpenConsultationLog}
         onClose={handleModalClose}
         onSave={handleModalSave}
         recordId={modalRecordId}

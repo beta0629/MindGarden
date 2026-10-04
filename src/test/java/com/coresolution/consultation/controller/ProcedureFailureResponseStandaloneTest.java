@@ -103,7 +103,8 @@ class ProcedureFailureResponseStandaloneTest {
                 payrollPeriodConfirmService, resourceOwnerAccessGuard);
         mockMvc = MockMvcBuilders.standaloneSetup(
                         salaryController,
-                        new PlSqlDiscountAccountingController(plSqlDiscountAccountingService),
+                        new PlSqlDiscountAccountingController(plSqlDiscountAccountingService,
+                                org.mockito.Mockito.mock(ResourceOwnerAccessGuard.class)),
                         new StatisticsManagementController(plSqlStatisticsService, statisticsSchedulerService))
                 .setControllerAdvice(new GlobalExceptionHandler())
                 .build();

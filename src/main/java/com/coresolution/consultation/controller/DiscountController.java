@@ -4,12 +4,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import com.coresolution.consultation.entity.ConsultantClientMapping;
-import com.coresolution.consultation.repository.ConsultantClientMappingRepository;
 import com.coresolution.consultation.service.PackageDiscountService;
-import com.coresolution.consultation.utils.SessionUtils;
 import com.coresolution.consultation.service.PackageDiscountService.DiscountCalculationResult;
 import com.coresolution.consultation.service.PackageDiscountService.DiscountOption;
 import com.coresolution.consultation.service.PackageDiscountService.DiscountValidationResult;
+import com.coresolution.consultation.service.support.ResourceOwnerAccessGuard;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -23,6 +22,9 @@ import lombok.extern.slf4j.Slf4j;
 
 /**
  * 할인 관리 컨트롤러
+ *
+ * <p>모든 엔드포인트는 세션 테넌트 관리자만, {@code mappingId} 가 세션 테넌트 매핑일 때만 허용한다
+ * ({@link ResourceOwnerAccessGuard#requireMappingAdminAccess}). 없는·다른 테넌트 매핑은 공통 403 이다.</p>
  * 
  * @author MindGarden
  * @version 1.0.0
@@ -33,20 +35,14 @@ import lombok.extern.slf4j.Slf4j;
 @RequestMapping("/api/v1/admin/discounts") // 표준화 2025-12-05: 레거시 경로 제거
 @RequiredArgsConstructor
 public class DiscountController {
-    
-    private final PackageDiscountService packageDiscountService;
-    private final ConsultantClientMappingRepository mappingRepository;
 
-    private String resolveTenantId(HttpSession session) {
-        String tenantId = SessionUtils.getTenantId(session);
-        if (tenantId == null || tenantId.isEmpty()) {
-            var user = SessionUtils.getCurrentUser(session);
-            if (user != null) {
-                tenantId = user.getTenantId();
-            }
-        }
-        return tenantId;
-    }
+    private static final String AVAILABLE_FAILED = "할인 옵션 조회에 실패했습니다.";
+    private static final String APPLY_FAILED = "할인 적용에 실패했습니다.";
+    private static final String VALIDATE_FAILED = "할인 검증에 실패했습니다.";
+    private static final String PREVIEW_FAILED = "할인 미리보기에 실패했습니다.";
+
+    private final PackageDiscountService packageDiscountService;
+    private final ResourceOwnerAccessGuard resourceOwnerAccessGuard;
     
     /**
      * 적용 가능한 할인 옵션 조회
@@ -56,16 +52,10 @@ public class DiscountController {
             @RequestParam Long mappingId,
             HttpSession session) {
         
+        ConsultantClientMapping mapping = resourceOwnerAccessGuard.requireMappingAdminAccess(session, mappingId);
         log.info("💰 적용 가능한 할인 옵션 조회: mappingId={}", mappingId);
         
         try {
-            String tenantId = resolveTenantId(session);
-            if (tenantId == null || tenantId.isEmpty()) {
-                throw new IllegalStateException("테넌트 ID를 확인할 수 없습니다.");
-            }
-            ConsultantClientMapping mapping = mappingRepository.findByTenantIdAndId(tenantId, mappingId)
-                .orElseThrow(() -> new RuntimeException("매핑을 찾을 수 없습니다: " + mappingId));
-            
             List<DiscountOption> discounts = packageDiscountService.getAvailableDiscounts(mapping);
             
             Map<String, Object> response = new HashMap<>();
@@ -78,11 +68,7 @@ public class DiscountController {
             
         } catch (Exception e) {
             log.error("❌ 적용 가능한 할인 옵션 조회 실패: mappingId={}, 오류={}", mappingId, e.getMessage(), e);
-            
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", false);
-            response.put("message", "할인 옵션 조회 실패: " + e.getMessage());
-            return ResponseEntity.ok(response);
+            return failure(AVAILABLE_FAILED);
         }
     }
     
@@ -94,19 +80,13 @@ public class DiscountController {
             @RequestBody Map<String, Object> request,
             HttpSession session) {
         
-        Long mappingId = ((Number) request.get("mappingId")).longValue();
+        ConsultantClientMapping mapping = requireAdminMapping(request, session);
+        Long mappingId = mapping.getId();
         String discountCode = (String) request.get("discountCode");
         
         log.info("💰 할인 코드 적용: mappingId={}, discountCode={}", mappingId, discountCode);
         
         try {
-            String tenantId = resolveTenantId(session);
-            if (tenantId == null || tenantId.isEmpty()) {
-                throw new IllegalStateException("테넌트 ID를 확인할 수 없습니다.");
-            }
-            ConsultantClientMapping mapping = mappingRepository.findByTenantIdAndId(tenantId, mappingId)
-                .orElseThrow(() -> new RuntimeException("매핑을 찾을 수 없습니다: " + mappingId));
-            
             DiscountCalculationResult result = packageDiscountService.calculateDiscountWithCode(mapping, discountCode);
             
             Map<String, Object> response = new HashMap<>();
@@ -127,11 +107,7 @@ public class DiscountController {
         } catch (Exception e) {
             log.error("❌ 할인 코드 적용 실패: mappingId={}, discountCode={}, 오류={}", 
                      mappingId, discountCode, e.getMessage(), e);
-            
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", false);
-            response.put("message", "할인 적용 실패: " + e.getMessage());
-            return ResponseEntity.ok(response);
+            return failure(APPLY_FAILED);
         }
     }
     
@@ -143,19 +119,13 @@ public class DiscountController {
             @RequestBody Map<String, Object> request,
             HttpSession session) {
         
-        Long mappingId = ((Number) request.get("mappingId")).longValue();
+        ConsultantClientMapping mapping = requireAdminMapping(request, session);
+        Long mappingId = mapping.getId();
         String discountCode = (String) request.get("discountCode");
         
         log.info("🔍 할인 유효성 검증: mappingId={}, discountCode={}", mappingId, discountCode);
         
         try {
-            String tenantId = resolveTenantId(session);
-            if (tenantId == null || tenantId.isEmpty()) {
-                throw new IllegalStateException("테넌트 ID를 확인할 수 없습니다.");
-            }
-            ConsultantClientMapping mapping = mappingRepository.findByTenantIdAndId(tenantId, mappingId)
-                .orElseThrow(() -> new RuntimeException("매핑을 찾을 수 없습니다: " + mappingId));
-            
             DiscountValidationResult result = packageDiscountService.validateDiscount(mapping, discountCode);
             
             Map<String, Object> response = new HashMap<>();
@@ -171,11 +141,7 @@ public class DiscountController {
         } catch (Exception e) {
             log.error("❌ 할인 유효성 검증 실패: mappingId={}, discountCode={}, 오류={}", 
                      mappingId, discountCode, e.getMessage(), e);
-            
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", false);
-            response.put("message", "할인 검증 실패: " + e.getMessage());
-            return ResponseEntity.ok(response);
+            return failure(VALIDATE_FAILED);
         }
     }
     
@@ -187,19 +153,13 @@ public class DiscountController {
             @RequestBody Map<String, Object> request,
             HttpSession session) {
         
-        Long mappingId = ((Number) request.get("mappingId")).longValue();
+        ConsultantClientMapping mapping = requireAdminMapping(request, session);
+        Long mappingId = mapping.getId();
         String discountCode = (String) request.get("discountCode");
         
         log.info("👁️ 할인 미리보기: mappingId={}, discountCode={}", mappingId, discountCode);
         
         try {
-            String tenantId = resolveTenantId(session);
-            if (tenantId == null || tenantId.isEmpty()) {
-                throw new IllegalStateException("테넌트 ID를 확인할 수 없습니다.");
-            }
-            ConsultantClientMapping mapping = mappingRepository.findByTenantIdAndId(tenantId, mappingId)
-                .orElseThrow(() -> new RuntimeException("매핑을 찾을 수 없습니다: " + mappingId));
-            
             DiscountCalculationResult result = packageDiscountService.calculateDiscountWithCode(mapping, discountCode);
             
             Map<String, Object> response = new HashMap<>();
@@ -215,11 +175,23 @@ public class DiscountController {
         } catch (Exception e) {
             log.error("❌ 할인 미리보기 실패: mappingId={}, discountCode={}, 오류={}", 
                      mappingId, discountCode, e.getMessage(), e);
-            
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", false);
-            response.put("message", "할인 미리보기 실패: " + e.getMessage());
-            return ResponseEntity.ok(response);
+            return failure(PREVIEW_FAILED);
         }
+    }
+
+    /**
+     * 본문 {@code mappingId} 를 관리자·세션 테넌트 기준으로 검증한다. 숫자가 아니거나 없으면 공통 403 으로 거부한다.
+     */
+    private ConsultantClientMapping requireAdminMapping(Map<String, Object> request, HttpSession session) {
+        Object raw = request != null ? request.get("mappingId") : null;
+        Long mappingId = raw instanceof Number number ? number.longValue() : null;
+        return resourceOwnerAccessGuard.requireMappingAdminAccess(session, mappingId);
+    }
+
+    private static ResponseEntity<Map<String, Object>> failure(String message) {
+        Map<String, Object> response = new HashMap<>();
+        response.put("success", false);
+        response.put("message", message);
+        return ResponseEntity.ok(response);
     }
 }

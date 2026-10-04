@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.util.Map;
 import com.coresolution.consultation.constant.ProcedureUserFacingMessages;
 import com.coresolution.consultation.service.PlSqlDiscountAccountingService;
+import com.coresolution.consultation.service.support.ResourceOwnerAccessGuard;
 import com.coresolution.consultation.util.ProcedureResults;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -12,12 +13,16 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 /**
  * PL/SQL 할인 회계 처리 컨트롤러
- * 
+ *
+ * <p>할인 적용·환불·상태 변경은 세션 테넌트 관리자만, 본문 {@code mappingId} 가 세션 테넌트 매핑일 때만 허용한다
+ * ({@link ResourceOwnerAccessGuard#requireMappingAdminAccess}).</p>
+ *
  * @author MindGarden
  * @version 1.0.0
  * @since 2025-09-24
@@ -29,6 +34,7 @@ import lombok.extern.slf4j.Slf4j;
 public class PlSqlDiscountAccountingController {
     
     private final PlSqlDiscountAccountingService plSqlDiscountAccountingService;
+    private final ResourceOwnerAccessGuard resourceOwnerAccessGuard;
     
     /**
      * PL/SQL 프로시저 사용 가능 여부 확인
@@ -67,9 +73,9 @@ public class PlSqlDiscountAccountingController {
      */
     @PostMapping("/apply")
     public ResponseEntity<Map<String, Object>> applyDiscount(
-            @RequestBody Map<String, Object> request) {
+            @RequestBody Map<String, Object> request, HttpSession session) {
         
-        Long mappingId = ((Number) request.get("mappingId")).longValue();
+        Long mappingId = requireAdminMapping(request, session);
         String discountCode = (String) request.get("discountCode");
         BigDecimal originalAmount = new BigDecimal(request.get("originalAmount").toString());
         BigDecimal discountAmount = new BigDecimal(request.get("discountAmount").toString());
@@ -91,9 +97,9 @@ public class PlSqlDiscountAccountingController {
      */
     @PostMapping("/refund")
     public ResponseEntity<Map<String, Object>> processRefund(
-            @RequestBody Map<String, Object> request) {
+            @RequestBody Map<String, Object> request, HttpSession session) {
         
-        Long mappingId = ((Number) request.get("mappingId")).longValue();
+        Long mappingId = requireAdminMapping(request, session);
         BigDecimal refundAmount = new BigDecimal(request.get("refundAmount").toString());
         String refundReason = (String) request.get("refundReason");
         String processedBy = (String) request.get("processedBy");
@@ -112,9 +118,9 @@ public class PlSqlDiscountAccountingController {
      */
     @PostMapping("/update-status")
     public ResponseEntity<Map<String, Object>> updateStatus(
-            @RequestBody Map<String, Object> request) {
+            @RequestBody Map<String, Object> request, HttpSession session) {
         
-        Long mappingId = ((Number) request.get("mappingId")).longValue();
+        Long mappingId = requireAdminMapping(request, session);
         String newStatus = (String) request.get("newStatus");
         String updatedBy = (String) request.get("updatedBy");
         String reason = (String) request.get("reason");
@@ -158,5 +164,15 @@ public class PlSqlDiscountAccountingController {
                 ProcedureUserFacingMessages.PROC_VALIDATE_DISCOUNT_INTEGRITY,
                 ProcedureUserFacingMessages.DISCOUNT_INTEGRITY_FAILED,
                 () -> plSqlDiscountAccountingService.validateDiscountIntegrity(branchCode)));
+    }
+
+    /**
+     * 본문 {@code mappingId} 를 관리자·세션 테넌트 기준으로 검증한다. 숫자가 아니거나 없으면 null 로 넘겨 공통 403 으로 거부한다.
+     */
+    private Long requireAdminMapping(Map<String, Object> request, HttpSession session) {
+        Object raw = request != null ? request.get("mappingId") : null;
+        Long mappingId = raw instanceof Number number ? number.longValue() : null;
+        resourceOwnerAccessGuard.requireMappingAdminAccess(session, mappingId);
+        return mappingId;
     }
 }

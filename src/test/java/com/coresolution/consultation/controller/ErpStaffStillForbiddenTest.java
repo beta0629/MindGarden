@@ -124,7 +124,8 @@ class ErpStaffStillForbiddenTest {
     @DisplayName("SettlementController — STAFF + ERP_ACCESS 없음 → 403")
     void settlement_staff_forbidden() {
         SettlementController controller =
-                new SettlementController(settlementService, dynamicPermissionService);
+                new SettlementController(settlementService, dynamicPermissionService,
+                        org.mockito.Mockito.mock(ResourceOwnerAccessGuard.class));
 
         ResponseEntity<?> response = controller.getRules(session);
 

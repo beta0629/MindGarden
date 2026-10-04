@@ -219,13 +219,8 @@ export default function OnboardingCallbackPage() {
               pgProvider: TRINITY_CONSTANTS.PAYMENT.DEFAULT_PG_PROVIDER as "TOSS" | "STRIPE" | "OTHER",
             });
             paymentMethodId = paymentMethod.paymentMethodId;
-            console.log("[OnboardingCallback] 결제 수단 등록 완료:", paymentMethodId);
-          } else if (paymentType === "pay") {
-            // 즉시 결제: 결제 완료 처리 (결제 수단 등록 없이)
-            // TODO: 실제 결제 완료 처리는 백엔드에서 webhook으로 처리
-            // 여기서는 온보딩 요청만 생성
-            console.log("[OnboardingCallback] 즉시 결제 완료:", { orderId });
           }
+          // 즉시 결제(pay)는 결제 수단 등록 없이 온보딩 요청만 생성한다 (결제 완료는 백엔드 webhook 처리)
 
           // 3. 온보딩 요청 생성 (메인 플로우에서 저장한 Turnstile 토큰 — 캡차 ON 시 필요)
           const storedCaptchaToken =
@@ -257,16 +252,6 @@ export default function OnboardingCallbackPage() {
               dashboardTemplates: formData.dashboardTemplates || {}, // 대시보드 템플릿 설정
             }),
           };
-
-          console.log("[OnboardingCallback] 온보딩 요청 생성 시작...", {
-            tenantName: request.tenantName,
-            tenantNameLength: request.tenantName?.length,
-            requestedByLength: request.requestedBy?.length,
-            riskLevel: request.riskLevel,
-            businessType: request.businessType,
-            checklistJsonLength: request.checklistJson?.length,
-            paymentMethodId,
-          });
 
           await createOnboardingRequest(request);
 

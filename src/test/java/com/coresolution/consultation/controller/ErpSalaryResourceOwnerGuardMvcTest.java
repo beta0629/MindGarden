@@ -115,7 +115,8 @@ class ErpSalaryResourceOwnerGuardMvcTest {
             mock(com.coresolution.core.repository.ErdDiagramRepository.class),
             mock(com.coresolution.consultation.repository.erp.accounting.AccountingEntryRepository.class),
             mock(com.coresolution.consultation.repository.AccountRepository.class),
-            mock(com.coresolution.consultation.repository.ConsultantClientMappingRepository.class));
+            mock(com.coresolution.consultation.repository.ConsultantClientMappingRepository.class),
+            mock(com.coresolution.consultation.repository.erp.settlement.SettlementRepository.class));
         Object[] provided = {ownerGuard, financialTransactionService, salaryManagementService, userRepository,
             dynamicPermissionService, environment};
 

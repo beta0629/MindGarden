@@ -14,6 +14,7 @@ import com.coresolution.consultation.service.DynamicPermissionService;
 import com.coresolution.consultation.service.RoleCommonCodeAuthorizationService;
 import com.coresolution.consultation.service.SalaryBatchService;
 import com.coresolution.consultation.service.SalaryScheduleService;
+import com.coresolution.consultation.service.support.ResourceOwnerAccessGuard;
 import com.coresolution.consultation.util.PermissionCheckUtils;
 import com.coresolution.consultation.util.ServerErrorResponses;
 import com.coresolution.consultation.utils.SessionUtils;
@@ -45,6 +46,7 @@ public class SalaryConfigController {
     private final SalaryBatchService salaryBatchService;
     private final DynamicPermissionService dynamicPermissionService;
     private final RoleCommonCodeAuthorizationService roleCommonCodeAuthorizationService;
+    private final ResourceOwnerAccessGuard resourceOwnerAccessGuard;
     
     /**
      * 급여 설정 조회
@@ -169,15 +171,8 @@ public class SalaryConfigController {
     public ResponseEntity<Map<String, Object>> updateCalculationMethod(
             @RequestBody Map<String, Object> request, 
             HttpSession session) {
+        User currentUser = resourceOwnerAccessGuard.requireTenantAdminAccess(session);
         try {
-            User currentUser = SessionUtils.getCurrentUser(session);
-            if (currentUser == null) {
-                return ResponseEntity.badRequest().body(Map.of(
-                    "success", false,
-                    "message", "로그인이 필요합니다."
-                ));
-            }
-            
             String methodCode = (String) request.get("methodCode");
             String ratePerConsultation = String.valueOf(request.get("ratePerConsultation"));
             String defaultHourlyRate = String.valueOf(request.get("defaultHourlyRate"));

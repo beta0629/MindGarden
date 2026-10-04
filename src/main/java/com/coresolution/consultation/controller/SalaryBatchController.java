@@ -7,6 +7,7 @@ import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.service.DynamicPermissionService;
 import com.coresolution.consultation.service.SalaryBatchService;
+import com.coresolution.consultation.service.support.ResourceOwnerAccessGuard;
 import com.coresolution.consultation.util.PermissionCheckUtils;
 import com.coresolution.consultation.util.ServerErrorResponses;
 import com.coresolution.consultation.utils.SessionUtils;
@@ -37,6 +38,7 @@ public class SalaryBatchController {
     
     private final SalaryBatchService salaryBatchService;
     private final DynamicPermissionService dynamicPermissionService;
+    private final ResourceOwnerAccessGuard resourceOwnerAccessGuard;
     
     /**
      * 급여 배치 실행
@@ -134,15 +136,8 @@ public class SalaryBatchController {
     public ResponseEntity<Map<String, Object>> getBatchStatus(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate targetDate,
             HttpSession session) {
+        resourceOwnerAccessGuard.requireTenantAdminAccess(session);
         try {
-            User currentUser = SessionUtils.getCurrentUser(session);
-            if (currentUser == null) {
-                return ResponseEntity.badRequest().body(Map.of(
-                    "success", false,
-                    "message", "로그인이 필요합니다."
-                ));
-            }
-            
             SalaryBatchService.BatchStatus status = salaryBatchService.getBatchStatus(
                 targetDate.getYear(), targetDate.getMonthValue());
             
@@ -171,15 +166,8 @@ public class SalaryBatchController {
     public ResponseEntity<Map<String, Object>> canExecuteBatch(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate targetDate,
             HttpSession session) {
+        resourceOwnerAccessGuard.requireTenantAdminAccess(session);
         try {
-            User currentUser = SessionUtils.getCurrentUser(session);
-            if (currentUser == null) {
-                return ResponseEntity.badRequest().body(Map.of(
-                    "success", false,
-                    "message", "로그인이 필요합니다."
-                ));
-            }
-            
             boolean canExecute = salaryBatchService.canExecuteBatch(targetDate);
             
             return ResponseEntity.ok(Map.of(

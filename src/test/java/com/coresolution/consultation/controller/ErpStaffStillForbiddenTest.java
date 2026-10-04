@@ -188,7 +188,8 @@ class ErpStaffStillForbiddenTest {
     @DisplayName("SalaryBatchController — STAFF + SALARY_MANAGE 없음 → 403")
     void salaryBatch_staff_forbidden() {
         SalaryBatchController controller =
-                new SalaryBatchController(salaryBatchService, dynamicPermissionService);
+                new SalaryBatchController(salaryBatchService, dynamicPermissionService,
+                        org.mockito.Mockito.mock(ResourceOwnerAccessGuard.class));
 
         ResponseEntity<Map<String, Object>> response =
                 controller.executeBatch(new HashMap<>(), session);

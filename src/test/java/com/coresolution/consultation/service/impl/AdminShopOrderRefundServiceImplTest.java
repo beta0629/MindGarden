@@ -47,6 +47,10 @@ import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
+import org.springframework.transaction.support.AbstractPlatformTransactionManager;
+import org.springframework.transaction.support.DefaultTransactionStatus;
 
 /**
  * {@link AdminShopOrderRefundServiceImpl} 단위 검증 — fail-closed PG 취소 증거(cancelledAt) 정책.
@@ -60,6 +64,25 @@ class AdminShopOrderRefundServiceImplTest {
     private static final String REASON = ShopRefundConstants.REASON_PRE_FULFILLMENT;
     private static final String PAYMENT_ID = "pay-shop-001";
 
+    private static final PlatformTransactionManager NOOP_TX = new AbstractPlatformTransactionManager() {
+        @Override
+        protected Object doGetTransaction() {
+            return new Object();
+        }
+
+        @Override
+        protected void doBegin(Object transaction, TransactionDefinition definition) {
+        }
+
+        @Override
+        protected void doCommit(DefaultTransactionStatus status) {
+        }
+
+        @Override
+        protected void doRollback(DefaultTransactionStatus status) {
+        }
+    };
+
     @Mock private ShopClientOrderRepository shopClientOrderRepository;
     @Mock private ClientPointWalletService clientPointWalletService;
     @Mock private PointTenantPolicyService pointTenantPolicyService;
@@ -72,6 +95,7 @@ class AdminShopOrderRefundServiceImplTest {
     @Mock private PortOneV2PaymentVerifyService portOneV2PaymentVerifyService;
     @Mock private ShopClientOrderLineRepository shopClientOrderLineRepository;
     @Mock private FinancialTransactionRepository financialTransactionRepository;
+    @Mock private com.coresolution.consultation.service.SalaryTaxRateLookupService salaryTaxRateLookupService;
 
     private AdminShopOrderRefundServiceImpl service;
 
@@ -88,6 +112,10 @@ class AdminShopOrderRefundServiceImplTest {
                 portOneV2PaymentCancelService,
                 portOneV2PaymentVerifyService,
                 newResolver(),
+                salaryTaxRateLookupService,
+                shopClientOrderLineRepository,
+                NOOP_TX,
+                ShopRefundConstants.DEFAULT_ADMIN_REFUND_PG_LEASE_MS,
                 paymentGatewayService);
     }
 
@@ -106,7 +134,7 @@ class AdminShopOrderRefundServiceImplTest {
     void refundPaidOrder_nonIamport_success_cancelledAtRecorded() {
         ShopClientOrder order = paidOrder(10_000L, 3_000L, 7_000L);
         Payment payment = approvedPayment(BigDecimal.valueOf(7_000L));
-        when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID)).thenReturn(Optional.of(order));
+        when(shopClientOrderRepository.lockByTenantIdAndPublicId(TENANT, ORDER_ID)).thenReturn(Optional.of(order));
         when(pointTenantPolicyService.getEffectivePoliciesTyped(TENANT))
                 .thenReturn(new EffectivePointTenantPolicies(0L, 0L, true, true, 500, 0L, 30));
         when(clientPointWalletService.clawbackEarn(
@@ -145,14 +173,14 @@ class AdminShopOrderRefundServiceImplTest {
     void refundPaidOrder_iamport_cancelWithEvidence_cancelledAtRecorded() {
         ShopClientOrder order = paidOrder(10_000L, 0L, 7_000L);
         Payment payment = iamportPayment(BigDecimal.valueOf(7_000L));
-        when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID)).thenReturn(Optional.of(order));
+        when(shopClientOrderRepository.lockByTenantIdAndPublicId(TENANT, ORDER_ID)).thenReturn(Optional.of(order));
         when(pointTenantPolicyService.getEffectivePoliciesTyped(TENANT))
                 .thenReturn(new EffectivePointTenantPolicies(0L, 0L, false, false, 0, 0L, 30));
         when(paymentRepository.findFirstByTenantIdAndOrderIdAndStatusAndIsDeletedFalseOrderByIdDesc(
                         TENANT, ORDER_ID, Payment.PaymentStatus.APPROVED))
                 .thenReturn(Optional.of(payment));
         when(portOneV2PaymentVerifyService.isIamportPayment(payment)).thenReturn(true);
-        when(portOneV2PaymentCancelService.cancelPayment(eq(TENANT), eq(PAYMENT_ID), any())).thenReturn(true);
+        when(portOneV2PaymentCancelService.cancelPayment(eq(TENANT), eq(PAYMENT_ID), any(), any())).thenReturn(true);
         when(portOneV2PaymentVerifyService.isCancelledOrPartialCancelled(TENANT, PAYMENT_ID)).thenReturn(true);
         when(paymentRepository.save(payment)).thenReturn(payment);
         when(paymentRepository.findByTenantIdAndPaymentIdAndIsDeletedFalse(TENANT, PAYMENT_ID))
@@ -164,7 +192,9 @@ class AdminShopOrderRefundServiceImplTest {
         assertEquals(ShopRefundConstants.PG_REFUND_STATUS_COMPLETED, response.getPgRefundStatus());
         assertNotNull(payment.getCancelledAt(), "cancelledAt must be set after PortOne cancel evidence");
         verify(paymentRepository).save(payment);
-        verify(paymentRepository).findByTenantIdAndPaymentIdAndIsDeletedFalse(TENANT, PAYMENT_ID);
+        // ③ 반영 트랜잭션의 결제 재조회 + cancelledAt 최종 검증
+        verify(paymentRepository, org.mockito.Mockito.times(2))
+                .findByTenantIdAndPaymentIdAndIsDeletedFalse(TENANT, PAYMENT_ID);
     }
 
     @Test
@@ -172,14 +202,14 @@ class AdminShopOrderRefundServiceImplTest {
     void refundPaidOrder_emptyEventsPaid_portOneCancelThenClinicReverse() {
         ShopClientOrder order = paidOrder(10_000L, 0L, 7_000L);
         Payment payment = iamportPayment(BigDecimal.valueOf(7_000L));
-        when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID)).thenReturn(Optional.of(order));
+        when(shopClientOrderRepository.lockByTenantIdAndPublicId(TENANT, ORDER_ID)).thenReturn(Optional.of(order));
         when(pointTenantPolicyService.getEffectivePoliciesTyped(TENANT))
                 .thenReturn(new EffectivePointTenantPolicies(0L, 0L, false, false, 0, 0L, 30));
         when(paymentRepository.findFirstByTenantIdAndOrderIdAndStatusAndIsDeletedFalseOrderByIdDesc(
                         TENANT, ORDER_ID, Payment.PaymentStatus.APPROVED))
                 .thenReturn(Optional.of(payment));
         when(portOneV2PaymentVerifyService.isIamportPayment(payment)).thenReturn(true);
-        when(portOneV2PaymentCancelService.cancelPayment(eq(TENANT), eq(PAYMENT_ID), any())).thenReturn(true);
+        when(portOneV2PaymentCancelService.cancelPayment(eq(TENANT), eq(PAYMENT_ID), any(), any())).thenReturn(true);
         when(portOneV2PaymentVerifyService.isCancelledOrPartialCancelled(TENANT, PAYMENT_ID)).thenReturn(true);
         when(paymentRepository.save(payment)).thenReturn(payment);
         when(paymentRepository.findByTenantIdAndPaymentIdAndIsDeletedFalse(TENANT, PAYMENT_ID))
@@ -191,7 +221,7 @@ class AdminShopOrderRefundServiceImplTest {
         assertEquals(ShopRefundConstants.PG_REFUND_STATUS_COMPLETED, response.getPgRefundStatus());
         assertNotNull(payment.getCancelledAt());
         InOrder inOrder = inOrder(portOneV2PaymentCancelService, shopOrderFulfillmentService);
-        inOrder.verify(portOneV2PaymentCancelService).cancelPayment(eq(TENANT), eq(PAYMENT_ID), any());
+        inOrder.verify(portOneV2PaymentCancelService).cancelPayment(eq(TENANT), eq(PAYMENT_ID), any(), any());
         inOrder.verify(shopOrderFulfillmentService).reversePaidOrderFulfillment(TENANT, order);
         verify(paymentGatewayService, never()).refundPayment(any(), any(), any());
     }
@@ -201,7 +231,7 @@ class AdminShopOrderRefundServiceImplTest {
     void refundPaidOrder_iamport_alreadyCancelledOnPortOne_continuesClinic() {
         ShopClientOrder order = paidOrder(10_000L, 0L, 7_000L);
         Payment payment = iamportPayment(BigDecimal.valueOf(7_000L));
-        when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID)).thenReturn(Optional.of(order));
+        when(shopClientOrderRepository.lockByTenantIdAndPublicId(TENANT, ORDER_ID)).thenReturn(Optional.of(order));
         when(pointTenantPolicyService.getEffectivePoliciesTyped(TENANT))
                 .thenReturn(new EffectivePointTenantPolicies(0L, 0L, false, false, 0, 0L, 30));
         when(paymentRepository.findFirstByTenantIdAndOrderIdAndStatusAndIsDeletedFalseOrderByIdDesc(
@@ -209,7 +239,7 @@ class AdminShopOrderRefundServiceImplTest {
                 .thenReturn(Optional.of(payment));
         when(portOneV2PaymentVerifyService.isIamportPayment(payment)).thenReturn(true);
         // PortOne cancel 멱등 성공(이미 CANCELLED)
-        when(portOneV2PaymentCancelService.cancelPayment(eq(TENANT), eq(PAYMENT_ID), any())).thenReturn(true);
+        when(portOneV2PaymentCancelService.cancelPayment(eq(TENANT), eq(PAYMENT_ID), any(), any())).thenReturn(true);
         when(portOneV2PaymentVerifyService.isCancelledOrPartialCancelled(TENANT, PAYMENT_ID)).thenReturn(true);
         when(paymentRepository.save(payment)).thenReturn(payment);
         when(paymentRepository.findByTenantIdAndPaymentIdAndIsDeletedFalse(TENANT, PAYMENT_ID))
@@ -230,14 +260,16 @@ class AdminShopOrderRefundServiceImplTest {
     void refundPaidOrder_iamport_localRefundFailsAfterPg_clinicIncomplete() {
         ShopClientOrder order = paidOrder(10_000L, 0L, 7_000L);
         Payment payment = iamportPayment(BigDecimal.valueOf(7_000L));
-        when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID)).thenReturn(Optional.of(order));
+        when(shopClientOrderRepository.lockByTenantIdAndPublicId(TENANT, ORDER_ID)).thenReturn(Optional.of(order));
         when(paymentRepository.findFirstByTenantIdAndOrderIdAndStatusAndIsDeletedFalseOrderByIdDesc(
                         TENANT, ORDER_ID, Payment.PaymentStatus.APPROVED))
                 .thenReturn(Optional.of(payment));
         when(portOneV2PaymentVerifyService.isIamportPayment(payment)).thenReturn(true);
-        when(portOneV2PaymentCancelService.cancelPayment(eq(TENANT), eq(PAYMENT_ID), any())).thenReturn(true);
+        when(portOneV2PaymentCancelService.cancelPayment(eq(TENANT), eq(PAYMENT_ID), any(), any())).thenReturn(true);
         when(portOneV2PaymentVerifyService.isCancelledOrPartialCancelled(TENANT, PAYMENT_ID)).thenReturn(true);
         when(paymentRepository.save(payment)).thenReturn(payment);
+        when(paymentRepository.findByTenantIdAndPaymentIdAndIsDeletedFalse(TENANT, PAYMENT_ID))
+                .thenReturn(Optional.of(payment));
         when(paymentService.refundPayment(eq(PAYMENT_ID), any(), any(), eq(false)))
                 .thenThrow(new IllegalStateException("local payment refund failed"));
 
@@ -255,7 +287,7 @@ class AdminShopOrderRefundServiceImplTest {
     @DisplayName("현금 0원 — PG NOT_APPLICABLE, cancelledAt 미설정, 회기 원복은 수행")
     void refundPaidOrder_zeroCash_skipsPg() {
         ShopClientOrder order = paidOrder(5_000L, 0L, 0L);
-        when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID)).thenReturn(Optional.of(order));
+        when(shopClientOrderRepository.lockByTenantIdAndPublicId(TENANT, ORDER_ID)).thenReturn(Optional.of(order));
         when(pointTenantPolicyService.getEffectivePoliciesTyped(TENANT))
                 .thenReturn(new EffectivePointTenantPolicies(0L, 0L, false, false, 0, 0L, 30));
 
@@ -265,7 +297,9 @@ class AdminShopOrderRefundServiceImplTest {
         verify(shopOrderFulfillmentService).reversePaidOrderFulfillment(TENANT, order);
         verify(paymentGatewayService, never()).refundPayment(any(), any(), any());
         verify(paymentService, never()).refundPayment(any(), any(), any());
-        verify(shopClientOrderRepository).save(order);
+        assertEquals(ShopClientOrderStatus.REFUNDED, order.getStatus());
+        assertNull(order.getRefundPgLeaseUntil());
+        assertNull(order.getRefundPgAttemptedAt(), "PG 를 부르지 않는 주문은 PG 요청 시각을 남기지 않는다");
     }
 
     @Test
@@ -273,7 +307,7 @@ class AdminShopOrderRefundServiceImplTest {
     void refundPaidOrder_clawbackIdempotentZero_cancelledAtRecorded() {
         ShopClientOrder order = paidOrder(10_000L, 3_000L, 7_000L);
         Payment payment = approvedPayment(BigDecimal.valueOf(7_000L));
-        when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID)).thenReturn(Optional.of(order));
+        when(shopClientOrderRepository.lockByTenantIdAndPublicId(TENANT, ORDER_ID)).thenReturn(Optional.of(order));
         when(pointTenantPolicyService.getEffectivePoliciesTyped(TENANT))
                 .thenReturn(new EffectivePointTenantPolicies(0L, 0L, true, true, 500, 0L, 30));
         when(clientPointWalletService.clawbackEarn(
@@ -307,7 +341,7 @@ class AdminShopOrderRefundServiceImplTest {
         void pgRefundFails_noCancelledAt() {
             ShopClientOrder order = paidOrder(10_000L, 0L, 7_000L);
             Payment payment = approvedPayment(BigDecimal.valueOf(7_000L));
-            when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID))
+            when(shopClientOrderRepository.lockByTenantIdAndPublicId(TENANT, ORDER_ID))
                     .thenReturn(Optional.of(order));
             when(paymentRepository.findFirstByTenantIdAndOrderIdAndStatusAndIsDeletedFalseOrderByIdDesc(
                             TENANT, ORDER_ID, Payment.PaymentStatus.APPROVED))
@@ -321,7 +355,8 @@ class AdminShopOrderRefundServiceImplTest {
             assertEquals(ShopClientOrderStatus.PAID, order.getStatus());
             assertNull(payment.getCancelledAt(), "cancelledAt must NOT be set on PG failure");
             verify(paymentService, never()).refundPayment(any(), any(), any());
-            verify(shopClientOrderRepository, never()).save(order);
+            assertNull(order.getRefundPgLeaseUntil(), "PG 실패 후 lease 는 해제되어 재시도 가능");
+            assertNotNull(order.getRefundPgAttemptedAt(), "PG 를 불렀으므로 요청 시각은 남는다");
         }
 
         @Test
@@ -329,13 +364,13 @@ class AdminShopOrderRefundServiceImplTest {
         void portOneCancelFails_noCancelledAt() {
             ShopClientOrder order = paidOrder(10_000L, 0L, 7_000L);
             Payment payment = iamportPayment(BigDecimal.valueOf(7_000L));
-            when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID))
+            when(shopClientOrderRepository.lockByTenantIdAndPublicId(TENANT, ORDER_ID))
                     .thenReturn(Optional.of(order));
             when(paymentRepository.findFirstByTenantIdAndOrderIdAndStatusAndIsDeletedFalseOrderByIdDesc(
                             TENANT, ORDER_ID, Payment.PaymentStatus.APPROVED))
                     .thenReturn(Optional.of(payment));
             when(portOneV2PaymentVerifyService.isIamportPayment(payment)).thenReturn(true);
-            when(portOneV2PaymentCancelService.cancelPayment(eq(TENANT), eq(PAYMENT_ID), any()))
+            when(portOneV2PaymentCancelService.cancelPayment(eq(TENANT), eq(PAYMENT_ID), any(), any()))
                     .thenReturn(false);
 
             assertThrows(IllegalStateException.class,
@@ -351,13 +386,13 @@ class AdminShopOrderRefundServiceImplTest {
         void portOneCancelOk_butNoEvidence_noCancelledAt() {
             ShopClientOrder order = paidOrder(10_000L, 0L, 7_000L);
             Payment payment = iamportPayment(BigDecimal.valueOf(7_000L));
-            when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID))
+            when(shopClientOrderRepository.lockByTenantIdAndPublicId(TENANT, ORDER_ID))
                     .thenReturn(Optional.of(order));
             when(paymentRepository.findFirstByTenantIdAndOrderIdAndStatusAndIsDeletedFalseOrderByIdDesc(
                             TENANT, ORDER_ID, Payment.PaymentStatus.APPROVED))
                     .thenReturn(Optional.of(payment));
             when(portOneV2PaymentVerifyService.isIamportPayment(payment)).thenReturn(true);
-            when(portOneV2PaymentCancelService.cancelPayment(eq(TENANT), eq(PAYMENT_ID), any()))
+            when(portOneV2PaymentCancelService.cancelPayment(eq(TENANT), eq(PAYMENT_ID), any(), any()))
                     .thenReturn(true);
             when(portOneV2PaymentVerifyService.isCancelledOrPartialCancelled(TENANT, PAYMENT_ID))
                     .thenReturn(false);
@@ -377,7 +412,7 @@ class AdminShopOrderRefundServiceImplTest {
             ShopClientOrder order = paidOrder(10_000L, 0L, 7_000L);
             Payment payment = approvedPayment(BigDecimal.valueOf(7_000L));
             Payment persistedWithoutCancelledAt = approvedPayment(BigDecimal.valueOf(7_000L));
-            when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID))
+            when(shopClientOrderRepository.lockByTenantIdAndPublicId(TENANT, ORDER_ID))
                     .thenReturn(Optional.of(order));
             when(paymentRepository.findFirstByTenantIdAndOrderIdAndStatusAndIsDeletedFalseOrderByIdDesc(
                             TENANT, ORDER_ID, Payment.PaymentStatus.APPROVED))
@@ -386,7 +421,7 @@ class AdminShopOrderRefundServiceImplTest {
             when(paymentGatewayService.refundPayment(eq(PAYMENT_ID), any(), any())).thenReturn(true);
             when(paymentRepository.save(payment)).thenReturn(payment);
             when(paymentRepository.findByTenantIdAndPaymentIdAndIsDeletedFalse(TENANT, PAYMENT_ID))
-                    .thenReturn(Optional.of(persistedWithoutCancelledAt));
+                    .thenReturn(Optional.of(payment), Optional.of(persistedWithoutCancelledAt));
 
             ShopRefundClinicChainException thrown = assertThrows(
                     ShopRefundClinicChainException.class,
@@ -405,11 +440,13 @@ class AdminShopOrderRefundServiceImplTest {
                     shopClientOrderRepository, clientPointWalletService, pointTenantPolicyService,
                     paymentRepository, paymentService, shopNotificationHelper,
                     shopOrderFulfillmentService, portOneV2PaymentCancelService,
-                    portOneV2PaymentVerifyService, newResolver(), null);
+                    portOneV2PaymentVerifyService, newResolver(), salaryTaxRateLookupService,
+                    shopClientOrderLineRepository, NOOP_TX,
+                    ShopRefundConstants.DEFAULT_ADMIN_REFUND_PG_LEASE_MS, null);
 
             ShopClientOrder order = paidOrder(10_000L, 0L, 7_000L);
             Payment payment = approvedPayment(BigDecimal.valueOf(7_000L));
-            when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID))
+            when(shopClientOrderRepository.lockByTenantIdAndPublicId(TENANT, ORDER_ID))
                     .thenReturn(Optional.of(order));
             when(paymentRepository.findFirstByTenantIdAndOrderIdAndStatusAndIsDeletedFalseOrderByIdDesc(
                             TENANT, ORDER_ID, Payment.PaymentStatus.APPROVED))
@@ -431,7 +468,7 @@ class AdminShopOrderRefundServiceImplTest {
     void refundPaidOrder_reverseFails_afterPg_cancelledAtRecorded() {
         ShopClientOrder order = paidOrder(10_000L, 0L, 7_000L);
         Payment payment = approvedPayment(BigDecimal.valueOf(7_000L));
-        when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID)).thenReturn(Optional.of(order));
+        when(shopClientOrderRepository.lockByTenantIdAndPublicId(TENANT, ORDER_ID)).thenReturn(Optional.of(order));
         when(paymentRepository.findFirstByTenantIdAndOrderIdAndStatusAndIsDeletedFalseOrderByIdDesc(
                         TENANT, ORDER_ID, Payment.PaymentStatus.APPROVED))
                 .thenReturn(Optional.of(payment));
@@ -461,7 +498,7 @@ class AdminShopOrderRefundServiceImplTest {
     void refundPaidOrder_reverseDataIntegrity_afterPg() {
         ShopClientOrder order = paidOrder(10_000L, 0L, 7_000L);
         Payment payment = approvedPayment(BigDecimal.valueOf(7_000L));
-        when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID)).thenReturn(Optional.of(order));
+        when(shopClientOrderRepository.lockByTenantIdAndPublicId(TENANT, ORDER_ID)).thenReturn(Optional.of(order));
         when(paymentRepository.findFirstByTenantIdAndOrderIdAndStatusAndIsDeletedFalseOrderByIdDesc(
                         TENANT, ORDER_ID, Payment.PaymentStatus.APPROVED))
                 .thenReturn(Optional.of(payment));
@@ -490,7 +527,7 @@ class AdminShopOrderRefundServiceImplTest {
         ShopClientOrder order = paidOrder(5_000L, 0L, 5_000L);
         order.setStatus(ShopClientOrderStatus.REFUNDED);
         Payment refunded = refundedPaymentWithCancelledAt(BigDecimal.valueOf(5_000L));
-        when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID)).thenReturn(Optional.of(order));
+        when(shopClientOrderRepository.lockByTenantIdAndPublicId(TENANT, ORDER_ID)).thenReturn(Optional.of(order));
         when(paymentRepository.findFirstByTenantIdAndOrderIdAndStatusAndIsDeletedFalseOrderByIdDesc(
                         TENANT, ORDER_ID, Payment.PaymentStatus.REFUNDED))
                 .thenReturn(Optional.of(refunded));
@@ -508,7 +545,7 @@ class AdminShopOrderRefundServiceImplTest {
         ShopClientOrder order = paidOrder(5_000L, 0L, 5_000L);
         order.setStatus(ShopClientOrderStatus.REFUNDED);
         Payment refunded = refundedPayment(BigDecimal.valueOf(5_000L));
-        when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID)).thenReturn(Optional.of(order));
+        when(shopClientOrderRepository.lockByTenantIdAndPublicId(TENANT, ORDER_ID)).thenReturn(Optional.of(order));
         when(paymentRepository.findFirstByTenantIdAndOrderIdAndStatusAndIsDeletedFalseOrderByIdDesc(
                         TENANT, ORDER_ID, Payment.PaymentStatus.REFUNDED))
                 .thenReturn(Optional.of(refunded));
@@ -525,7 +562,7 @@ class AdminShopOrderRefundServiceImplTest {
     void refundPaidOrder_alreadyRefunded_noRefundedPayment_notApplicable() {
         ShopClientOrder order = paidOrder(5_000L, 0L, 5_000L);
         order.setStatus(ShopClientOrderStatus.REFUNDED);
-        when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID)).thenReturn(Optional.of(order));
+        when(shopClientOrderRepository.lockByTenantIdAndPublicId(TENANT, ORDER_ID)).thenReturn(Optional.of(order));
         when(paymentRepository.findFirstByTenantIdAndOrderIdAndStatusAndIsDeletedFalseOrderByIdDesc(
                         TENANT, ORDER_ID, Payment.PaymentStatus.REFUNDED))
                 .thenReturn(Optional.empty());
@@ -543,7 +580,7 @@ class AdminShopOrderRefundServiceImplTest {
     void refundPaidOrder_alreadyRefunded_zeroCash_notApplicable() {
         ShopClientOrder order = paidOrder(5_000L, 5_000L, 0L);
         order.setStatus(ShopClientOrderStatus.REFUNDED);
-        when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID)).thenReturn(Optional.of(order));
+        when(shopClientOrderRepository.lockByTenantIdAndPublicId(TENANT, ORDER_ID)).thenReturn(Optional.of(order));
 
         ShopOrderRefundResponse response = service.refundPaidOrder(TENANT, ORDER_ID, REASON);
 
@@ -562,24 +599,26 @@ class AdminShopOrderRefundServiceImplTest {
             ShopClientOrder order = paidOrder(5_000L, 0L, 5_000L);
             order.setStatus(ShopClientOrderStatus.REFUNDED);
             Payment refunded = refundedIamportPayment(BigDecimal.valueOf(5_000L));
-            when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID))
+            when(shopClientOrderRepository.lockByTenantIdAndPublicId(TENANT, ORDER_ID))
                     .thenReturn(Optional.of(order));
             when(paymentRepository.findFirstByTenantIdAndOrderIdAndStatusAndIsDeletedFalseOrderByIdDesc(
                             TENANT, ORDER_ID, Payment.PaymentStatus.REFUNDED))
                     .thenReturn(Optional.of(refunded));
             when(portOneV2PaymentVerifyService.isIamportPayment(refunded)).thenReturn(true);
-            when(portOneV2PaymentCancelService.cancelPayment(eq(TENANT), eq(PAYMENT_ID), any()))
+            when(portOneV2PaymentCancelService.cancelPayment(eq(TENANT), eq(PAYMENT_ID), any(), any()))
                     .thenReturn(true);
             when(portOneV2PaymentVerifyService.isCancelledOrPartialCancelled(TENANT, PAYMENT_ID))
                     .thenReturn(true);
             when(paymentRepository.save(refunded)).thenReturn(refunded);
+            when(paymentRepository.findByTenantIdAndPaymentIdAndIsDeletedFalse(TENANT, PAYMENT_ID))
+                    .thenReturn(Optional.of(refunded));
 
             ShopOrderRefundResponse response = service.refundPaidOrder(TENANT, ORDER_ID, REASON);
 
             assertEquals(ShopClientOrderStatus.REFUNDED, response.getStatus());
             assertEquals(ShopRefundConstants.PG_REFUND_STATUS_COMPLETED, response.getPgRefundStatus());
             assertNotNull(refunded.getCancelledAt(), "cancelledAt must be set after PG cancel補完");
-            verify(portOneV2PaymentCancelService).cancelPayment(eq(TENANT), eq(PAYMENT_ID), any());
+            verify(portOneV2PaymentCancelService).cancelPayment(eq(TENANT), eq(PAYMENT_ID), any(), any());
             verify(paymentRepository).save(refunded);
         }
 
@@ -589,13 +628,13 @@ class AdminShopOrderRefundServiceImplTest {
             ShopClientOrder order = paidOrder(5_000L, 0L, 5_000L);
             order.setStatus(ShopClientOrderStatus.REFUNDED);
             Payment refunded = refundedIamportPayment(BigDecimal.valueOf(5_000L));
-            when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID))
+            when(shopClientOrderRepository.lockByTenantIdAndPublicId(TENANT, ORDER_ID))
                     .thenReturn(Optional.of(order));
             when(paymentRepository.findFirstByTenantIdAndOrderIdAndStatusAndIsDeletedFalseOrderByIdDesc(
                             TENANT, ORDER_ID, Payment.PaymentStatus.REFUNDED))
                     .thenReturn(Optional.of(refunded));
             when(portOneV2PaymentVerifyService.isIamportPayment(refunded)).thenReturn(true);
-            when(portOneV2PaymentCancelService.cancelPayment(eq(TENANT), eq(PAYMENT_ID), any()))
+            when(portOneV2PaymentCancelService.cancelPayment(eq(TENANT), eq(PAYMENT_ID), any(), any()))
                     .thenReturn(false);
 
             assertThrows(IllegalStateException.class,
@@ -610,13 +649,13 @@ class AdminShopOrderRefundServiceImplTest {
             ShopClientOrder order = paidOrder(5_000L, 0L, 5_000L);
             order.setStatus(ShopClientOrderStatus.REFUNDED);
             Payment refunded = refundedIamportPayment(BigDecimal.valueOf(5_000L));
-            when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID))
+            when(shopClientOrderRepository.lockByTenantIdAndPublicId(TENANT, ORDER_ID))
                     .thenReturn(Optional.of(order));
             when(paymentRepository.findFirstByTenantIdAndOrderIdAndStatusAndIsDeletedFalseOrderByIdDesc(
                             TENANT, ORDER_ID, Payment.PaymentStatus.REFUNDED))
                     .thenReturn(Optional.of(refunded));
             when(portOneV2PaymentVerifyService.isIamportPayment(refunded)).thenReturn(true);
-            when(portOneV2PaymentCancelService.cancelPayment(eq(TENANT), eq(PAYMENT_ID), any()))
+            when(portOneV2PaymentCancelService.cancelPayment(eq(TENANT), eq(PAYMENT_ID), any(), any()))
                     .thenReturn(true);
             when(portOneV2PaymentVerifyService.isCancelledOrPartialCancelled(TENANT, PAYMENT_ID))
                     .thenReturn(false);
@@ -634,7 +673,7 @@ class AdminShopOrderRefundServiceImplTest {
             ShopClientOrder order = paidOrder(5_000L, 0L, 5_000L);
             order.setStatus(ShopClientOrderStatus.REFUNDED);
             Payment approved = iamportPayment(BigDecimal.valueOf(5_000L));
-            when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID))
+            when(shopClientOrderRepository.lockByTenantIdAndPublicId(TENANT, ORDER_ID))
                     .thenReturn(Optional.of(order));
             when(paymentRepository.findFirstByTenantIdAndOrderIdAndStatusAndIsDeletedFalseOrderByIdDesc(
                             TENANT, ORDER_ID, Payment.PaymentStatus.REFUNDED))
@@ -643,17 +682,19 @@ class AdminShopOrderRefundServiceImplTest {
                             TENANT, ORDER_ID, Payment.PaymentStatus.APPROVED))
                     .thenReturn(Optional.of(approved));
             when(portOneV2PaymentVerifyService.isIamportPayment(approved)).thenReturn(true);
-            when(portOneV2PaymentCancelService.cancelPayment(eq(TENANT), eq(PAYMENT_ID), any()))
+            when(portOneV2PaymentCancelService.cancelPayment(eq(TENANT), eq(PAYMENT_ID), any(), any()))
                     .thenReturn(true);
             when(portOneV2PaymentVerifyService.isCancelledOrPartialCancelled(TENANT, PAYMENT_ID))
                     .thenReturn(true);
             when(paymentRepository.save(approved)).thenReturn(approved);
+            when(paymentRepository.findByTenantIdAndPaymentIdAndIsDeletedFalse(TENANT, PAYMENT_ID))
+                    .thenReturn(Optional.of(approved));
 
             ShopOrderRefundResponse response = service.refundPaidOrder(TENANT, ORDER_ID, REASON);
 
             assertEquals(ShopRefundConstants.PG_REFUND_STATUS_COMPLETED, response.getPgRefundStatus());
             assertNotNull(approved.getCancelledAt());
-            verify(portOneV2PaymentCancelService).cancelPayment(eq(TENANT), eq(PAYMENT_ID), any());
+            verify(portOneV2PaymentCancelService).cancelPayment(eq(TENANT), eq(PAYMENT_ID), any(), any());
         }
     }
 
@@ -664,7 +705,7 @@ class AdminShopOrderRefundServiceImplTest {
     void refundPaidOrder_notPaid_throws() {
         ShopClientOrder order = paidOrder(5_000L, 0L, 5_000L);
         order.setStatus(ShopClientOrderStatus.CREATED);
-        when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID)).thenReturn(Optional.of(order));
+        when(shopClientOrderRepository.lockByTenantIdAndPublicId(TENANT, ORDER_ID)).thenReturn(Optional.of(order));
 
         assertThrows(IllegalArgumentException.class, () -> service.refundPaidOrder(TENANT, ORDER_ID, REASON));
     }

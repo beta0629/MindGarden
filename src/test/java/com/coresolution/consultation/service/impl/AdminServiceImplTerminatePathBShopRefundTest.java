@@ -5,7 +5,8 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -23,6 +24,7 @@ import com.coresolution.consultation.entity.ConsultantClientMapping.PaymentStatu
 import com.coresolution.consultation.entity.ShopClientOrder;
 import com.coresolution.consultation.entity.ShopClientOrderLine;
 import com.coresolution.consultation.entity.User;
+import com.coresolution.consultation.exception.MappingAlreadyProcessedException;
 import com.coresolution.consultation.repository.ClientRepository;
 import com.coresolution.consultation.repository.CommonCodeRepository;
 import com.coresolution.consultation.repository.ConsultantClientMappingRepository;
@@ -35,6 +37,7 @@ import com.coresolution.consultation.repository.ShopClientOrderLineRepository;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.repository.erp.financial.FinancialTransactionRepository;
 import com.coresolution.consultation.service.AdminRequestIdempotencyService;
+import com.coresolution.consultation.service.AdminService;
 import com.coresolution.consultation.service.AdminShopOrderRefundService;
 import com.coresolution.consultation.service.AmountManagementService;
 import com.coresolution.consultation.service.BatchNotificationDispatchService;
@@ -46,6 +49,7 @@ import com.coresolution.consultation.service.ConsultantRatingService;
 import com.coresolution.consultation.service.ConsultantStatsService;
 import com.coresolution.consultation.service.ConsultationMessageService;
 import com.coresolution.consultation.service.MappingSettlementNotificationHelper;
+import com.coresolution.consultation.service.MappingTerminationService;
 import com.coresolution.consultation.service.NotificationService;
 import com.coresolution.consultation.service.PasswordResetService;
 import com.coresolution.consultation.service.PaymentMethodSsotService;
@@ -75,14 +79,13 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.support.AbstractPlatformTransactionManager;
 import org.springframework.transaction.support.DefaultTransactionStatus;
 
 /**
- * Path B PAID 매핑 terminate/payment-cancel → 쇼핑 환불 SSOT 위임 (unusedFullVoid/INCOME cancel 금지).
+ * Path B PAID 매핑 종료 → 트랜잭션 밖 쇼핑 환불 SSOT 위임 (unusedFullVoid/INCOME cancel 금지).
  *
  * @author MindGarden
  * @since 2026-09-19
@@ -141,10 +144,6 @@ class AdminServiceImplTerminatePathBShopRefundTest {
     @Mock private ShopClientOrderLineRepository shopClientOrderLineRepository;
     @Mock private AdminShopOrderRefundService adminShopOrderRefundService;
 
-    @SuppressWarnings("unchecked")
-    private final ObjectProvider<AdminShopOrderRefundService> adminShopOrderRefundServiceProvider =
-            mock(ObjectProvider.class);
-
     private final PlatformTransactionManager noopTransactionManager = new AbstractPlatformTransactionManager() {
         @Override
         protected Object doGetTransaction() {
@@ -169,7 +168,6 @@ class AdminServiceImplTerminatePathBShopRefundTest {
     @BeforeEach
     void setUp() {
         TenantContextHolder.setTenantId(TEST_TENANT_ID);
-        when(adminShopOrderRefundServiceProvider.getIfAvailable()).thenReturn(adminShopOrderRefundService);
         adminService = new AdminServiceImpl(
                 userRepository,
                 consultantRepository,
@@ -220,7 +218,6 @@ class AdminServiceImplTerminatePathBShopRefundTest {
                 null,
                 org.mockito.Mockito.mock(com.coresolution.consultation.repository.InstitutionLinkContractRepository.class),
                 shopClientOrderLineRepository,
-                adminShopOrderRefundServiceProvider,
                 org.mockito.Mockito.mock(com.coresolution.consultation.repository.PaymentRepository.class));
     }
 
@@ -230,9 +227,77 @@ class AdminServiceImplTerminatePathBShopRefundTest {
     }
 
     @Test
-    @DisplayName("Path B PAID 주문 라인 → refundPaidOrder 위임, INCOME cancel/unusedFullVoid 미호출, CANCELLED 미전이")
-    void terminateMapping_pathBPaidShopOrder_delegatesToRefundPaidOrder() {
+    @DisplayName("Path B 매칭 terminateMapping(트랜잭션) — PortOne 경로를 타지 않고 409, 매칭·전표 변경 없음")
+    void terminateMapping_pathBPaidShopOrder_rejectsInsideTransaction() {
         ConsultantClientMapping mapping = newActivePathBMapping();
+        stubPathB(mapping);
+        when(mappingRepository.findByTenantIdAndIdForUpdate(eq(TEST_TENANT_ID), eq(MAPPING_ID)))
+                .thenReturn(Optional.of(mapping));
+
+        MappingAlreadyProcessedException thrown = assertThrows(MappingAlreadyProcessedException.class,
+                () -> adminService.terminateMapping(MAPPING_ID, "리더 결제 취소"));
+
+        assertThat(thrown.getReason()).isEqualTo(MappingAlreadyProcessedException.Reason.SHOP_ORDER_REFUND_REQUIRED);
+        verify(adminShopOrderRefundService, never()).refundPaidOrder(anyString(), anyString(), anyString());
+        verify(financialTransactionService, never()).cancelRelatedPostedIncomeTransactions(anyLong(), anyString());
+        verify(financialTransactionService, never()).createTransaction(any(), any());
+        verify(mappingRepository, never()).save(any(ConsultantClientMapping.class));
+        assertThat(mapping.getStatus()).isEqualTo(MappingStatus.ACTIVE);
+        assertThat(mapping.getPaymentStatus()).isEqualTo(PaymentStatus.APPROVED);
+    }
+
+    @Test
+    @DisplayName("단건 종료 오케스트레이터 — Path B 는 refundPaidOrder 위임, terminateMapping 미호출, CANCELLED 미전이")
+    void mappingTermination_pathBPaidShopOrder_delegatesToRefundPaidOrder() {
+        ConsultantClientMapping mapping = newActivePathBMapping();
+        stubPathB(mapping);
+        when(mappingRepository.findByTenantIdAndId(eq(TEST_TENANT_ID), eq(MAPPING_ID)))
+                .thenReturn(Optional.of(mapping));
+        when(adminShopOrderRefundService.refundPaidOrder(
+                eq(TEST_TENANT_ID), eq(ORDER_PUBLIC_ID), eq(ShopRefundConstants.REASON_CUSTOMER_REQUEST)))
+                .thenReturn(ShopOrderRefundResponse.builder()
+                        .orderPublicId(ORDER_PUBLIC_ID)
+                        .status(ShopClientOrderStatus.REFUNDED)
+                        .reasonCode(ShopRefundConstants.REASON_CUSTOMER_REQUEST)
+                        .pointsRestoredMinor(0L)
+                        .pointsClawedBackMinor(0L)
+                        .pgRefundStatus(ShopRefundConstants.PG_REFUND_STATUS_COMPLETED)
+                        .build());
+        AdminService adminSpy = spy(adminService);
+        MappingTerminationService termination = new MappingTerminationServiceImpl(adminSpy, adminShopOrderRefundService);
+
+        termination.terminate(MAPPING_ID, "리더 결제 취소");
+
+        verify(adminShopOrderRefundService).refundPaidOrder(
+                eq(TEST_TENANT_ID), eq(ORDER_PUBLIC_ID), eq(ShopRefundConstants.REASON_CUSTOMER_REQUEST));
+        verify(adminSpy, never()).terminateMapping(anyLong(), any());
+        verify(financialTransactionService, never()).cancelRelatedPostedIncomeTransactions(anyLong(), anyString());
+        verify(mappingRepository, never()).save(any(ConsultantClientMapping.class));
+        assertThat(mapping.getStatus()).isEqualTo(MappingStatus.ACTIVE);
+    }
+
+    @Test
+    @DisplayName("단건 종료 오케스트레이터 — 이미 종료된 매칭은 409(ALREADY_CLOSED), 환불 미호출")
+    void mappingTermination_closedMapping_rejectsWithoutRefund() {
+        ConsultantClientMapping mapping = newActivePathBMapping();
+        mapping.setStatus(MappingStatus.TERMINATED);
+        when(mappingRepository.findByTenantIdAndId(eq(TEST_TENANT_ID), eq(MAPPING_ID)))
+                .thenReturn(Optional.of(mapping));
+        when(statusCodeHelper.getStatusCodeValue(eq("MAPPING_STATUS"), eq("TERMINATED")))
+                .thenReturn(MappingStatus.TERMINATED.name());
+        when(statusCodeHelper.getStatusCodeValue(eq("MAPPING_STATUS"), eq("CANCELLED")))
+                .thenReturn(MappingStatus.CANCELLED.name());
+        MappingTerminationService termination =
+                new MappingTerminationServiceImpl(adminService, adminShopOrderRefundService);
+
+        MappingAlreadyProcessedException thrown = assertThrows(MappingAlreadyProcessedException.class,
+                () -> termination.terminate(MAPPING_ID, "중복 종료"));
+
+        assertThat(thrown.getReason()).isEqualTo(MappingAlreadyProcessedException.Reason.ALREADY_CLOSED);
+        verify(adminShopOrderRefundService, never()).refundPaidOrder(anyString(), anyString(), anyString());
+    }
+
+    private void stubPathB(ConsultantClientMapping mapping) {
         ShopClientOrder order = ShopClientOrder.builder()
                 .publicId(ORDER_PUBLIC_ID)
                 .status(ShopClientOrderStatus.PAID)
@@ -251,12 +316,9 @@ class AdminServiceImplTerminatePathBShopRefundTest {
                 .unitPriceMinor(100_000L)
                 .quantity(1)
                 .lineTotalMinor(100_000L)
-                .consultantClientMappingId(MAPPING_ID)
+                .consultantClientMappingId(mapping.getId())
                 .build();
         line.setTenantId(TEST_TENANT_ID);
-
-        when(mappingRepository.findByTenantIdAndId(eq(TEST_TENANT_ID), eq(MAPPING_ID)))
-                .thenReturn(Optional.of(mapping));
         when(statusCodeHelper.getStatusCodeValue(eq("MAPPING_STATUS"), eq("TERMINATED")))
                 .thenReturn(MappingStatus.TERMINATED.name());
         when(statusCodeHelper.getStatusCodeValue(eq("MAPPING_STATUS"), eq("CANCELLED")))
@@ -267,26 +329,6 @@ class AdminServiceImplTerminatePathBShopRefundTest {
                 .findByTenantIdAndConsultantClientMappingIdInAndIsDeletedFalseOrderByIdDesc(
                         eq(TEST_TENANT_ID), eq(List.of(MAPPING_ID))))
                 .thenReturn(List.of(line));
-        when(adminShopOrderRefundService.refundPaidOrder(
-                eq(TEST_TENANT_ID), eq(ORDER_PUBLIC_ID), eq(ShopRefundConstants.REASON_CUSTOMER_REQUEST)))
-                .thenReturn(ShopOrderRefundResponse.builder()
-                        .orderPublicId(ORDER_PUBLIC_ID)
-                        .status(ShopClientOrderStatus.REFUNDED)
-                        .reasonCode(ShopRefundConstants.REASON_CUSTOMER_REQUEST)
-                        .pointsRestoredMinor(0L)
-                        .pointsClawedBackMinor(0L)
-                        .pgRefundStatus(ShopRefundConstants.PG_REFUND_STATUS_COMPLETED)
-                        .build());
-
-        adminService.terminateMapping(MAPPING_ID, "리더 결제 취소");
-
-        verify(adminShopOrderRefundService).refundPaidOrder(
-                eq(TEST_TENANT_ID), eq(ORDER_PUBLIC_ID), eq(ShopRefundConstants.REASON_CUSTOMER_REQUEST));
-        verify(financialTransactionService, never()).cancelRelatedPostedIncomeTransactions(anyLong(), anyString());
-        verify(financialTransactionService, never()).createTransaction(any(), any());
-        verify(mappingRepository, never()).save(any(ConsultantClientMapping.class));
-        assertThat(mapping.getStatus()).isEqualTo(MappingStatus.ACTIVE);
-        assertThat(mapping.getPaymentStatus()).isEqualTo(PaymentStatus.APPROVED);
     }
 
     private ConsultantClientMapping newActivePathBMapping() {

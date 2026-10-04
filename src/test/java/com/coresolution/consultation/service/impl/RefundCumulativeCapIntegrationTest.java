@@ -252,7 +252,6 @@ class RefundCumulativeCapIntegrationTest {
                 org.mockito.Mockito.mock(
                         com.coresolution.consultation.repository.InstitutionLinkContractRepository.class),
                 shopClientOrderLineRepository,
-                org.mockito.Mockito.mock(org.springframework.beans.factory.ObjectProvider.class),
                 paymentRepository);
         shopRefundService = new AdminShopOrderRefundServiceImpl(
                 shopClientOrderRepository,
@@ -269,6 +268,10 @@ class RefundCumulativeCapIntegrationTest {
                         financialTransactionRepository,
                         portOneV2PaymentCancelService,
                         portOneV2PaymentVerifyService),
+                org.mockito.Mockito.mock(com.coresolution.consultation.service.SalaryTaxRateLookupService.class),
+                shopClientOrderLineRepository,
+                noopTransactionManager,
+                ShopRefundConstants.DEFAULT_ADMIN_REFUND_PG_LEASE_MS,
                 paymentGatewayService);
         TenantContextHolder.setTenantId(TENANT);
         when(statusCodeHelper.getStatusCodeValue(anyString(), anyString()))
@@ -301,8 +304,8 @@ class RefundCumulativeCapIntegrationTest {
 
         ArgumentCaptor<BigDecimal> pgAmount = ArgumentCaptor.forClass(BigDecimal.class);
         verify(portOneV2PaymentCancelService).cancelPaymentAmount(
-                eq(TENANT), eq(PAYMENT_ID), anyString(), pgAmount.capture());
-        verify(portOneV2PaymentCancelService, never()).cancelPayment(anyString(), anyString(), anyString());
+                eq(TENANT), eq(PAYMENT_ID), anyString(), pgAmount.capture(), any());
+        verify(portOneV2PaymentCancelService, never()).cancelPayment(anyString(), anyString(), anyString(), any());
         assertThat(pgAmount.getValue()).isEqualByComparingTo(BigDecimal.valueOf(80_000L));
         assertThat(mappingSideRefunded + pgAmount.getValue().longValue())
                 .as("누적 환불(매핑 + PG) == 결제액")
@@ -336,8 +339,8 @@ class RefundCumulativeCapIntegrationTest {
 
         ArgumentCaptor<BigDecimal> pgAmount = ArgumentCaptor.forClass(BigDecimal.class);
         verify(portOneV2PaymentCancelService, times(1)).cancelPaymentAmount(
-                eq(TENANT), eq(PAYMENT_ID), anyString(), pgAmount.capture());
-        verify(portOneV2PaymentCancelService, never()).cancelPayment(anyString(), anyString(), anyString());
+                eq(TENANT), eq(PAYMENT_ID), anyString(), pgAmount.capture(), any());
+        verify(portOneV2PaymentCancelService, never()).cancelPayment(anyString(), anyString(), anyString(), any());
         long pgTotal = pgAmount.getAllValues().stream().mapToLong(BigDecimal::longValue).sum();
         assertThat(sumLedgerRefunds() + pgTotal).isEqualTo(PAID);
         assertThat(second.getPgRefundStatus()).isEqualTo(ShopRefundConstants.PG_REFUND_STATUS_COMPLETED);
@@ -360,8 +363,8 @@ class RefundCumulativeCapIntegrationTest {
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("환불 가능 금액이 없습니다")
                 .hasMessageContaining(ORDER_ID);
-        verify(portOneV2PaymentCancelService, never()).cancelPayment(anyString(), anyString(), anyString());
-        verify(portOneV2PaymentCancelService, never()).cancelPaymentAmount(anyString(), anyString(), anyString(), any());
+        verify(portOneV2PaymentCancelService, never()).cancelPayment(anyString(), anyString(), anyString(), any());
+        verify(portOneV2PaymentCancelService, never()).cancelPaymentAmount(anyString(), anyString(), anyString(), any(), any());
         verify(paymentService, never()).refundPayment(anyString(), any(), anyString(), org.mockito.ArgumentMatchers.anyBoolean());
         verify(shopOrderFulfillmentService, never()).reversePaidOrderFulfillment(anyString(), any());
         assertThat(order.getStatus()).isEqualTo(ShopClientOrderStatus.PAID);
@@ -383,7 +386,7 @@ class RefundCumulativeCapIntegrationTest {
 
         ArgumentCaptor<BigDecimal> pgAmount = ArgumentCaptor.forClass(BigDecimal.class);
         verify(portOneV2PaymentCancelService).cancelPaymentAmount(
-                eq(TENANT), eq(PAYMENT_ID), anyString(), pgAmount.capture());
+                eq(TENANT), eq(PAYMENT_ID), anyString(), pgAmount.capture(), any());
         assertThat(pgAmount.getValue()).isEqualByComparingTo(BigDecimal.valueOf(50_000L));
         assertThat(sumLedgerRefunds() + 30_000L + pgAmount.getValue().longValue()).isEqualTo(PAID);
     }
@@ -404,7 +407,7 @@ class RefundCumulativeCapIntegrationTest {
         shopRefundService.refundPaidOrder(TENANT, ORDER_ID, ShopRefundConstants.REASON_CUSTOMER_REQUEST);
 
         verify(paymentGatewayService).refundPayment(eq(PAYMENT_ID), eq(BigDecimal.valueOf(80_000L)), anyString());
-        verify(portOneV2PaymentCancelService, never()).cancelPaymentAmount(anyString(), anyString(), anyString(), any());
+        verify(portOneV2PaymentCancelService, never()).cancelPaymentAmount(anyString(), anyString(), anyString(), any(), any());
     }
 
     @Test
@@ -418,8 +421,8 @@ class RefundCumulativeCapIntegrationTest {
 
         shopRefundService.refundPaidOrder(TENANT, ORDER_ID, ShopRefundConstants.REASON_CUSTOMER_REQUEST);
 
-        verify(portOneV2PaymentCancelService).cancelPayment(eq(TENANT), eq(PAYMENT_ID), anyString());
-        verify(portOneV2PaymentCancelService, never()).cancelPaymentAmount(anyString(), anyString(), anyString(), any());
+        verify(portOneV2PaymentCancelService).cancelPayment(eq(TENANT), eq(PAYMENT_ID), anyString(), any());
+        verify(portOneV2PaymentCancelService, never()).cancelPaymentAmount(anyString(), anyString(), anyString(), any(), any());
     }
 
     // ── (b) 패키지 추정 단가 — 원래 총 회기 기준 ──
@@ -498,7 +501,8 @@ class RefundCumulativeCapIntegrationTest {
                     row.setRelatedEntityType(req.getRelatedEntityType());
                     row.setIsDeleted(false);
                     ledger.add(row);
-                    return null;
+                    return com.coresolution.consultation.dto.FinancialTransactionResponse.builder()
+                            .id(row.getId()).build();
                 });
         when(financialTransactionRepository
                 .existsByTenantIdAndRelatedEntityIdAndRelatedEntityTypeAndTransactionTypeAndIsDeletedFalse(
@@ -537,7 +541,7 @@ class RefundCumulativeCapIntegrationTest {
     }
 
     private void stubShopRefund(ShopClientOrder order, Payment payment) {
-        when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID)).thenReturn(Optional.of(order));
+        when(shopClientOrderRepository.lockByTenantIdAndPublicId(TENANT, ORDER_ID)).thenReturn(Optional.of(order));
         ShopClientOrderLine line = ShopClientOrderLine.builder()
                 .clientOrder(order)
                 .lineNo(1)
@@ -554,8 +558,8 @@ class RefundCumulativeCapIntegrationTest {
         when(paymentRepository.save(payment)).thenReturn(payment);
         when(portOneV2PaymentVerifyService.isIamportPayment(payment)).thenReturn(true);
         when(portOneV2PaymentVerifyService.isCancelledOrPartialCancelled(TENANT, PAYMENT_ID)).thenReturn(true);
-        when(portOneV2PaymentCancelService.cancelPayment(eq(TENANT), eq(PAYMENT_ID), anyString())).thenReturn(true);
-        when(portOneV2PaymentCancelService.cancelPaymentAmount(eq(TENANT), eq(PAYMENT_ID), anyString(), any()))
+        when(portOneV2PaymentCancelService.cancelPayment(eq(TENANT), eq(PAYMENT_ID), anyString(), any())).thenReturn(true);
+        when(portOneV2PaymentCancelService.cancelPaymentAmount(eq(TENANT), eq(PAYMENT_ID), anyString(), any(), any()))
                 .thenReturn(true);
         when(pointTenantPolicyService.getEffectivePoliciesTyped(TENANT))
                 .thenReturn(new EffectivePointTenantPolicies(0L, 0L, false, false, 0, 0L, 30));

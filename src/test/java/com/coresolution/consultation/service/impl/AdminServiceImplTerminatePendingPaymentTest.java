@@ -229,7 +229,6 @@ class AdminServiceImplTerminatePendingPaymentTest {
                 null,
                 org.mockito.Mockito.mock(com.coresolution.consultation.repository.InstitutionLinkContractRepository.class),
                 org.mockito.Mockito.mock(com.coresolution.consultation.repository.ShopClientOrderLineRepository.class),
-                org.mockito.Mockito.mock(org.springframework.beans.factory.ObjectProvider.class),
                 org.mockito.Mockito.mock(com.coresolution.consultation.repository.PaymentRepository.class));
         TenantContextHolder.setTenantId(TEST_TENANT_ID);
     }
@@ -552,10 +551,6 @@ class AdminServiceImplTerminatePendingPaymentTest {
         when(scheduleRepository.findByTenantIdAndConsultantIdAndClientIdAndDateGreaterThanEqual(
                 eq(TEST_TENANT_ID), eq(consultantId), eq(clientId), any(LocalDate.class)))
                 .thenReturn(List.of(futureBooked));
-        when(financialTransactionRepository
-                .existsByTenantIdAndRelatedEntityIdAndRelatedEntityTypeAndTransactionTypeAndIsDeletedFalse(
-                        anyString(), anyLong(), anyString(), any()))
-                .thenReturn(false);
 
         adminService.terminateMapping(mappingId, "ACTIVE 매칭 강제 종료 — 회귀 0 검증");
 

@@ -172,6 +172,9 @@ class AdminServiceImplPartialRefundExhaustedScheduleCancelTest {
     void setUp() {
         lenient().when(mappingRepository.findByTenantIdAndIdForUpdate(anyString(), anyLong()))
                 .thenAnswer(inv -> mappingRepository.findByTenantIdAndId(inv.getArgument(0), inv.getArgument(1)));
+        // 부분 환불 전표는 fail-closed — 전표 생성이 결과를 돌려줘야 회기 차감이 진행된다
+        lenient().when(financialTransactionService.createTransaction(any(FinancialTransactionRequest.class), any()))
+                .thenReturn(com.coresolution.consultation.dto.FinancialTransactionResponse.builder().id(1L).build());
         adminService = new AdminServiceImpl(
                 userRepository,
                 consultantRepository,
@@ -224,7 +227,6 @@ class AdminServiceImplPartialRefundExhaustedScheduleCancelTest {
                 null,
                 org.mockito.Mockito.mock(com.coresolution.consultation.repository.InstitutionLinkContractRepository.class),
                 org.mockito.Mockito.mock(com.coresolution.consultation.repository.ShopClientOrderLineRepository.class),
-                org.mockito.Mockito.mock(org.springframework.beans.factory.ObjectProvider.class),
                 org.mockito.Mockito.mock(com.coresolution.consultation.repository.PaymentRepository.class));
         TenantContextHolder.setTenantId(TEST_TENANT_ID);
         org.mockito.Mockito.lenient()
@@ -656,7 +658,8 @@ class AdminServiceImplPartialRefundExhaustedScheduleCancelTest {
                     row.setRelatedEntityType(req.getRelatedEntityType());
                     row.setIsDeleted(false);
                     ledger.add(row);
-                    return null;
+                    return com.coresolution.consultation.dto.FinancialTransactionResponse.builder()
+                            .id(row.getId()).build();
                 });
         org.mockito.Mockito.lenient().when(financialTransactionRepository
                 .existsByTenantIdAndRelatedEntityIdAndRelatedEntityTypeAndTransactionTypeAndIsDeletedFalse(

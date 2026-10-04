@@ -1,0 +1,1 @@
+# 관리자 API 가드 allowlist (AdminApiGuardCoverageTest). 형식: <PUBLIC|TODO> <Controller#method> # 사유

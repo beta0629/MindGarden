@@ -1,0 +1,27 @@
+# 관리자 API 공통 가드로 인정하는 호출 목록 (AdminApiGuardCoverageTest).
+# 형식: <소유 클래스 단순명>#<메서드명 glob(*)> # 설명
+# 핸들러 메서드 본문(같은 컨트롤러의 private/protected 헬퍼·람다 포함, 깊이 5)에서 아래 호출이
+# 바이트코드에 하나라도 있으면 "가드 통과" 로 본다. 새 공통 가드를 만들면 여기에 한 줄 추가한다.
+ClientPathAccessGuard#requireTenantManager* # 같은 테넌트 관리자/사무원(또는 상담사) 강제
+ClientPathAccessGuard#requireClientAccess # 내담자 본인·매칭 상담사·같은 테넌트 관리자
+ClientPathAccessGuard#requireConsultantAccess # 상담사 본인·같은 테넌트 관리자
+ClientPathAccessGuard#requireConsultantClientAccess # 상담사-내담자 쌍 접근
+ClientPathAccessGuard#requireSelf # 본인 id 강제
+ClientPathAccessGuard#assertCanAccess* # 자원 소유자 검사
+ClientPathAccessGuard#isTenantManager # 관리자 여부 분기
+ResourceOwnerAccessGuard#require* # 자원 id 소유자/테넌트 관리자 가드
+ConsultationRecordAccessGuard#require* # 상담일지 열람/작성 가드
+ConsultationRecordDraftAccessGuard#require* # 상담일지 초안 가드
+ConsultationMessageAccessGuard#require* # 상담 메시지 가드
+OpsAccessGuard#* # 본사(OPS) 전용 가드
+PermissionCheckUtils#checkPermission # 동적 권한 코드 검사
+PermissionCheckUtils#checkAdminPermission # 관리자 권한 검사
+PermissionCheckUtils#checkStatisticsPermission # 통계 권한 검사
+DynamicPermissionService#hasPermission* # 동적 권한 코드 검사
+RoleCommonCodeAuthorizationService#isAdminOrStaff* # 공통코드 기반 관리자/사무원 검사
+SessionUtils#isAdmin* # 세션 역할 검사
+AdminRoleUtils#isAdmin # 관리자 역할 검사
+AdminRoleUtils#isHqAdmin # 본사 관리자 검사
+UserRole#isAdmin # 역할 enum 검사
+TenantAccessControlService#* # 테넌트 접근 제어
+SecurityUtils#check* # 레거시 역할/권한 검사(SecurityAspect·@RequireRole 경로)

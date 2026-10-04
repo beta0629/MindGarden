@@ -424,6 +424,7 @@ const ConsultationLogModal = ({
   const {
     status: draftStatus,
     savedAtLabel: draftSavedAtLabel,
+    backupKept: draftBackupKept,
     notifyDirty,
     saveNow: saveDraftNow,
     discardDraft,
@@ -489,7 +490,9 @@ const ConsultationLogModal = ({
       return CONSULTATION_LOG_AUTOSAVE_STRINGS.STATUS_DRAFT_RETRYING;
     }
     if (draftStatus === DRAFT_AUTOSAVE_STATUS.FAILED) {
-      return CONSULTATION_LOG_AUTOSAVE_STRINGS.STATUS_DRAFT_FAILED;
+      return draftBackupKept
+        ? CONSULTATION_LOG_AUTOSAVE_STRINGS.STATUS_DRAFT_FAILED
+        : CONSULTATION_LOG_AUTOSAVE_STRINGS.STATUS_DRAFT_FAILED_NOT_KEPT;
     }
     if (draftStatus === DRAFT_AUTOSAVE_STATUS.SAVED && draftSavedAtLabel) {
       return formatConsultationLogAutosaveString(
@@ -498,7 +501,7 @@ const ConsultationLogModal = ({
       );
     }
     return '';
-  }, [saving, tenantIdStr, draftStatus, draftSavedAtLabel]);
+  }, [saving, tenantIdStr, draftStatus, draftSavedAtLabel, draftBackupKept]);
 
   const autosaveStatusIsError = draftStatus === DRAFT_AUTOSAVE_STATUS.FAILED
     || draftStatus === DRAFT_AUTOSAVE_STATUS.RETRYING;

@@ -18,6 +18,15 @@
  * 서버 초안 경로다(브라우저 백업은 같은 세션의 오프라인 복구 전용). 키를 디스크에 두면
  * 분실 단말에서 본문이 복호화되므로, 복구 범위를 좁히는 쪽을 택했다.</p>
  *
+ * <h3>401 보관 백업 (예외)</h3>
+ * <p>세션 만료(401)로 로그인 화면으로 이동하면 페이지가 다시 로드되어 메모리 세션 키가 사라진다.
+ * 이때 서버 초안도 저장되지 않았으므로, 401 직전 입력만은 <strong>보관용 키</strong>로 암호화한다.
+ * 보관용 키도 추출 불가 CryptoKey 이며 IndexedDB 에만 있다. 이 백업은</p>
+ * <ul>
+ *   <li>세션 정리(401·중복 로그인 종료)에서는 지우지 않고,</li>
+ *   <li>명시적 로그아웃·계정 전환·다른 사용자 로그인·복원/확정 저장·{@code TTL} 경과 시 지운다.</li>
+ * </ul>
+ *
  * <p>레코드 키에는 userId 를 포함해 계정 전환 시 다른 사용자가 읽지 못하게 한다.</p>
  *
  * @author CoreSolution
@@ -30,6 +39,8 @@ import {
   CONSULTATION_LOG_BACKUP_CRYPTO_KEY_LENGTH,
   CONSULTATION_LOG_BACKUP_DB_NAME,
   CONSULTATION_LOG_BACKUP_DB_VERSION,
+  CONSULTATION_LOG_BACKUP_RESCUE_KEY_RECORD,
+  CONSULTATION_LOG_BACKUP_RESCUE_TTL_MS,
   CONSULTATION_LOG_BACKUP_STORE_NAME
 } from '../constants/consultationLogAutosaveConstants';
 
@@ -133,20 +144,94 @@ function runStoreRequest(mode, action) {
   });
 }
 
+function isRescueKeyRecord(recordKey) {
+  return recordKey === CONSULTATION_LOG_BACKUP_RESCUE_KEY_RECORD;
+}
+
+/**
+ * 401 보관용 키를 IndexedDB 에서 읽고, 없으면 만들어 저장한다(추출 불가 CryptoKey).
+ *
+ * @param {{ create: boolean }} options create=false 면 읽기만
+ * @returns {Promise<CryptoKey|null>}
+ */
+async function getRescueKey({ create }) {
+  const cryptoObj = getCryptoSubtle();
+  if (!cryptoObj) return null;
+  const stored = await runStoreRequest('readonly', (store) => store.get(CONSULTATION_LOG_BACKUP_RESCUE_KEY_RECORD));
+  if (stored && stored.key) return stored.key;
+  if (!create) return null;
+  let key;
+  try {
+    key = await cryptoObj.subtle.generateKey(
+      { name: CONSULTATION_LOG_BACKUP_CRYPTO_ALGORITHM, length: CONSULTATION_LOG_BACKUP_CRYPTO_KEY_LENGTH },
+      false,
+      ['encrypt', 'decrypt']
+    );
+  } catch {
+    return null;
+  }
+  const written = await runStoreRequest('readwrite', (store) =>
+    store.put({ key, createdAt: Date.now() }, CONSULTATION_LOG_BACKUP_RESCUE_KEY_RECORD));
+  return written === null ? null : key;
+}
+
+/** 모든 레코드 [key, value] 를 읽는다. IndexedDB 가 없으면 빈 배열. */
+async function readAllEntries() {
+  const entries = [];
+  await runStoreRequest('readonly', (store) => {
+    const req = store.openCursor();
+    req.onsuccess = () => {
+      const cursor = req.result;
+      if (!cursor) return;
+      entries.push([cursor.key, cursor.value]);
+      cursor.continue();
+    };
+    return null;
+  });
+  return entries;
+}
+
+/** 주어진 레코드 키들을 지운다. */
+async function deleteKeys(recordKeys) {
+  if (recordKeys.length === 0) return;
+  await runStoreRequest('readwrite', (store) => {
+    recordKeys.forEach((recordKey) => store.delete(recordKey));
+    return null;
+  });
+}
+
+/** 남은 401 보관 백업이 없으면 보관용 키도 지운다. */
+async function dropRescueKeyIfUnused() {
+  const entries = await readAllEntries();
+  const hasRescue = entries.some(([recordKey, value]) => !isRescueKeyRecord(recordKey) && value?.rescue === true);
+  if (!hasRescue && entries.some(([recordKey]) => isRescueKeyRecord(recordKey))) {
+    await deleteKeys([CONSULTATION_LOG_BACKUP_RESCUE_KEY_RECORD]);
+  }
+}
+
+function isRescueExpired(value, now) {
+  return typeof value?.savedAt !== 'number' || now - value.savedAt > CONSULTATION_LOG_BACKUP_RESCUE_TTL_MS;
+}
+
 /**
  * 초안 백업 저장. 메모리에 먼저 쓰고, 가능하면 암호화해 IndexedDB 에도 쓴다.
  *
+ * <p>{@code rescue: true}(401 직전)면 세션 키 대신 보관용 키로 암호화해 새로고침·재로그인 뒤에도
+ * 복원할 수 있게 하고, 쓴 뒤 레코드를 다시 읽어 실제로 남았는지 확인한다.</p>
+ *
  * @param {{ userId: string|number, tenantId: string, consultationId: string|number }} scope
  * @param {string} payloadJson 서버 초안과 같은 JSON 문자열
- * @returns {Promise<{ memory: boolean, persisted: boolean }>}
+ * @param {{ rescue?: boolean }} [options]
+ * @returns {Promise<{ memory: boolean, persisted: boolean }>} persisted = IndexedDB 에 실제로 남음
  */
-export async function saveDraftBackup(scope, payloadJson) {
+export async function saveDraftBackup(scope, payloadJson, options = {}) {
   const recordKey = buildDraftBackupRecordKey(scope);
   if (!recordKey) return { memory: false, persisted: false };
+  const rescue = options.rescue === true;
   const savedAt = Date.now();
   memoryBackups.set(recordKey, { payloadJson, savedAt });
 
-  const key = await getSessionKey();
+  const key = rescue ? await getRescueKey({ create: true }) : await getSessionKey();
   const cryptoObj = getCryptoSubtle();
   if (!key || !cryptoObj) {
     return { memory: true, persisted: false };
@@ -158,16 +243,21 @@ export async function saveDraftBackup(scope, payloadJson) {
       key,
       new TextEncoder().encode(payloadJson)
     );
-    const written = await runStoreRequest('readwrite', (store) =>
-      store.put({ iv: Array.from(iv), cipher: Array.from(new Uint8Array(cipher)), savedAt }, recordKey));
-    return { memory: true, persisted: written !== null };
+    const value = { iv: Array.from(iv), cipher: Array.from(new Uint8Array(cipher)), savedAt };
+    if (rescue) value.rescue = true;
+    const written = await runStoreRequest('readwrite', (store) => store.put(value, recordKey));
+    if (written === null) return { memory: true, persisted: false };
+    if (!rescue) return { memory: true, persisted: true };
+    const readBack = await runStoreRequest('readonly', (store) => store.get(recordKey));
+    return { memory: true, persisted: Boolean(readBack && readBack.rescue === true && readBack.savedAt === savedAt) };
   } catch {
     return { memory: true, persisted: false };
   }
 }
 
 /**
- * 초안 백업 읽기. 메모리 → IndexedDB(같은 세션 키로만 복호화 가능) 순.
+ * 초안 백업 읽기. 메모리 → IndexedDB 순. 세션 백업은 같은 세션 키로만, 401 보관 백업은
+ * 보관용 키로 복호화한다. 보관 기간이 지난 401 백업은 지우고 null.
  *
  * @param {{ userId: string|number, tenantId: string, consultationId: string|number }} scope
  * @returns {Promise<{ payloadJson: string, savedAt: number }|null>}
@@ -178,11 +268,17 @@ export async function readDraftBackup(scope) {
   const inMemory = memoryBackups.get(recordKey);
   if (inMemory) return inMemory;
 
-  const key = await getSessionKey();
   const cryptoObj = getCryptoSubtle();
-  if (!key || !cryptoObj) return null;
+  if (!cryptoObj) return null;
   const stored = await runStoreRequest('readonly', (store) => store.get(recordKey));
   if (!stored || !Array.isArray(stored.iv) || !Array.isArray(stored.cipher)) return null;
+  if (stored.rescue === true && isRescueExpired(stored, Date.now())) {
+    await deleteKeys([recordKey]);
+    await dropRescueKeyIfUnused();
+    return null;
+  }
+  const key = stored.rescue === true ? await getRescueKey({ create: false }) : await getSessionKey();
+  if (!key) return null;
   try {
     const plain = await cryptoObj.subtle.decrypt(
       { name: CONSULTATION_LOG_BACKUP_CRYPTO_ALGORITHM, iv: new Uint8Array(stored.iv) },
@@ -191,13 +287,13 @@ export async function readDraftBackup(scope) {
     );
     return { payloadJson: new TextDecoder().decode(plain), savedAt: stored.savedAt };
   } catch {
-    // 다른 세션에서 쓴 백업 — 키가 없어 복호화 불가. 설계상 정상.
+    // 다른 세션에서 쓴 세션 백업 — 키가 없어 복호화 불가. 설계상 정상.
     return null;
   }
 }
 
 /**
- * 단일 초안 백업 삭제 (확정 저장·버리기).
+ * 단일 초안 백업 삭제 (확정 저장·버리기·복원 후 서버 저장 성공).
  *
  * @param {{ userId: string|number, tenantId: string, consultationId: string|number }} scope
  * @returns {Promise<void>}
@@ -206,18 +302,52 @@ export async function removeDraftBackup(scope) {
   const recordKey = buildDraftBackupRecordKey(scope);
   if (!recordKey) return;
   memoryBackups.delete(recordKey);
-  await runStoreRequest('readwrite', (store) => store.delete(recordKey));
+  await deleteKeys([recordKey]);
+  await dropRescueKeyIfUnused();
 }
 
 /**
- * 모든 초안 백업 삭제 (로그아웃·계정 전환). 세션 키도 폐기한다.
+ * 초안 백업 일괄 삭제. 세션 키는 항상 폐기한다.
  *
+ * <ul>
+ *   <li>기본(명시적 로그아웃·계정 전환): 401 보관 백업·보관용 키까지 전량 삭제.</li>
+ *   <li>{@code keepRescue: true}(세션 정리 — 401·중복 로그인 종료): 401 보관 백업과 보관용 키는 남기고
+ *       세션 백업만 지운다. 재로그인 뒤 같은 일정을 열면 복원을 제안하기 위함이다.</li>
+ * </ul>
+ *
+ * @param {{ keepRescue?: boolean }} [options]
  * @returns {Promise<void>}
  */
-export async function purgeAllDraftBackups() {
+export async function purgeAllDraftBackups(options = {}) {
   memoryBackups.clear();
   sessionKeyPromise = null;
-  await runStoreRequest('readwrite', (store) => store.clear());
+  if (options.keepRescue !== true) {
+    await runStoreRequest('readwrite', (store) => store.clear());
+    return;
+  }
+  const entries = await readAllEntries();
+  const sessionOnly = entries
+    .filter(([recordKey, value]) => !isRescueKeyRecord(recordKey) && value?.rescue !== true)
+    .map(([recordKey]) => recordKey);
+  await deleteKeys(sessionOnly);
+}
+
+/**
+ * 로그인한 사용자가 아닌 다른 사용자의 401 보관 백업을 지운다(공용 단말 잔존물 정리).
+ *
+ * @param {string|number} userId 지금 로그인한 사용자 ID
+ * @returns {Promise<void>}
+ */
+export async function purgeRescueBackupsOfOtherUsers(userId) {
+  if (userId == null || String(userId).trim() === '') return;
+  const ownPrefix = `u${String(userId).trim()}:`;
+  const entries = await readAllEntries();
+  const others = entries
+    .filter(([recordKey, value]) => !isRescueKeyRecord(recordKey) && value?.rescue === true
+      && !String(recordKey).startsWith(ownPrefix))
+    .map(([recordKey]) => recordKey);
+  await deleteKeys(others);
+  await dropRescueKeyIfUnused();
 }
 
 /**

@@ -24,6 +24,8 @@ export const CONSULTATION_LOG_AUTOSAVE_STRINGS = {
   STATUS_DRAFT_SAVED_WITH_TIME: '{time} 임시저장됨',
   STATUS_DRAFT_RETRYING: '저장 실패(재시도 중)',
   STATUS_DRAFT_FAILED: '저장 실패 — 입력은 이 브라우저에 안전하게 보관됩니다',
+  /** 브라우저 백업까지 실패(IndexedDB 불가 등) — '보관' 이라고 말하지 않는다 */
+  STATUS_DRAFT_FAILED_NOT_KEPT: '저장 실패 — 브라우저에도 보관하지 못했습니다. 창을 닫지 말고 내용을 복사해 두세요',
   STATUS_DRAFT_UNAVAILABLE: '임시저장을 사용할 수 없습니다(일정·테넌트 정보 없음)',
   CONFLICT_TITLE: '다른 곳에서 편집 중',
   CONFLICT_MESSAGE:

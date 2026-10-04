@@ -54,6 +54,12 @@ public class ConsultationRecordServiceImpl implements ConsultationRecordService 
     /** 가드 판정 없이 쓰기 오버로드가 호출되거나, 판정 대상과 저장 대상이 다를 때의 거부 사유. */
     static final String DENIAL_WRITER_MISMATCH = "상담일지 쓰기 권한을 확인할 수 없습니다.";
 
+    /** 일정 시작 전 세션 완료 요청 거부 사유. */
+    static final String SESSION_NOT_STARTED_MESSAGE = "일정 시작 전에는 세션을 완료할 수 없습니다.";
+
+    /** 같은 일정에 활성 일지가 이미 있을 때 생성 거부 사유. */
+    static final String DUPLICATE_RECORD_MESSAGE = "이 일정에는 이미 상담일지가 있습니다. 기존 일지를 수정해 주세요.";
+
     @Autowired
     private ConsultationRecordRepository consultationRecordRepository;
     
@@ -316,9 +322,14 @@ public class ConsultationRecordServiceImpl implements ConsultationRecordService 
             
             // 세션 완료 여부 설정
             if (recordData.get("isSessionCompleted") != null) {
-                record.setIsSessionCompleted(Boolean.valueOf(recordData.get("isSessionCompleted").toString()));
-                if (record.getIsSessionCompleted()) {
-                    record.completeSession();
+                boolean requestedCompleted = Boolean.parseBoolean(recordData.get("isSessionCompleted").toString());
+                if (requestedCompleted && isBeforeLinkedSessionStart(scheduleForSessionDate)) {
+                    record.setIsSessionCompleted(false);
+                } else {
+                    record.setIsSessionCompleted(requestedCompleted);
+                    if (requestedCompleted) {
+                        record.completeSession();
+                    }
                 }
             }
             
@@ -479,10 +490,15 @@ public class ConsultationRecordServiceImpl implements ConsultationRecordService 
             }
             
             if (recordData.get("isSessionCompleted") != null) {
-                Boolean isCompleted = Boolean.valueOf(recordData.get("isSessionCompleted").toString());
-                record.setIsSessionCompleted(isCompleted);
-                if (isCompleted && record.getCompletionTime() == null) {
-                    record.completeSession();
+                boolean isCompleted = Boolean.parseBoolean(recordData.get("isSessionCompleted").toString());
+                boolean blockedBeforeStart = isCompleted
+                        && !Boolean.TRUE.equals(record.getIsSessionCompleted())
+                        && isBeforeLinkedSessionStart(linkedOpt.orElse(null));
+                if (!blockedBeforeStart) {
+                    record.setIsSessionCompleted(isCompleted);
+                    if (isCompleted && record.getCompletionTime() == null) {
+                        record.completeSession();
+                    }
                 }
             }
             
@@ -764,6 +780,11 @@ public class ConsultationRecordServiceImpl implements ConsultationRecordService 
         Optional<ConsultationRecord> record = consultationRecordRepository.findByTenantIdAndId(tenantId, recordId);
         if (record.isPresent() && !record.get().getIsDeleted()) {
             validateUserAccess(record.get().getConsultantId());
+            Schedule linked = record.get().getConsultationId() == null ? null
+                    : scheduleRepository.findByTenantIdAndId(tenantId, record.get().getConsultationId()).orElse(null);
+            if (isBeforeLinkedSessionStart(linked)) {
+                throw new ValidationException(SESSION_NOT_STARTED_MESSAGE);
+            }
             record.get().completeSession();
             ConsultationRecord saved = consultationRecordRepository.save(record.get());
             completeLinkedScheduleSessionIfNeeded(tenantId, saved.getConsultationId());
@@ -1061,6 +1082,16 @@ public class ConsultationRecordServiceImpl implements ConsultationRecordService 
     }
 
     /**
+     * 링크 일정이 시작 전인지 ({@link ScheduleService#isBeforeSessionStart} 위임).
+     *
+     * @param schedule 링크 일정 (null 이면 false)
+     * @return 시작 전이면 true — 완료 처리(회기 차감·급여·COMPLETED) 보류
+     */
+    private boolean isBeforeLinkedSessionStart(Schedule schedule) {
+        return schedule != null && scheduleService.isBeforeSessionStart(schedule);
+    }
+
+    /**
      * 일지 세션 완료 시 링크 스케줄 COMPLETED + 회기 차감.
      *
      * <p>tenantId·scheduleId 필수. 전면 swallow 금지.
@@ -1081,6 +1112,10 @@ public class ConsultationRecordServiceImpl implements ConsultationRecordService 
         Schedule schedule = scheduleRepository.findByTenantIdAndId(tenantId, scheduleId)
                 .orElseThrow(() -> new IllegalStateException(
                         "상담일지에 연결된 일정을 찾을 수 없습니다: " + scheduleId));
+        if (isBeforeLinkedSessionStart(schedule)) {
+            log.info("일지 세션 완료 — 일정 시작 전, 회기 차감·COMPLETED 보류: scheduleId={}", scheduleId);
+            return;
+        }
 
         ConsultationRecordLinkedScheduleCompletion.Action action =
                 ConsultationRecordLinkedScheduleCompletion.resolveAction(schedule);

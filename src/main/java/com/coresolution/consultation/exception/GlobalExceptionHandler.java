@@ -498,6 +498,29 @@ public class GlobalExceptionHandler {
     }
 
     /**
+     * 일정당 상담일지 1건 — 중복 생성 HTTP 409 (기존 일지 ID 포함, 본문 미포함).
+     */
+    @ExceptionHandler(ConsultationRecordDuplicateException.class)
+    public ResponseEntity<Map<String, Object>> handleConsultationRecordDuplicate(
+            ConsultationRecordDuplicateException e, HttpServletRequest request) {
+        log.info("[CONSULTATION_RECORD_DUPLICATE] scheduleId={} existingRecordId={} path={}",
+                e.getScheduleId(), e.getExistingRecordId(), request.getRequestURI());
+
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("success", false);
+        body.put("code", "CONSULTATION_RECORD_DUPLICATE");
+        body.put("message", e.getMessage());
+        body.put("existingRecordId", e.getExistingRecordId());
+        body.put("errorCode", "CONSULTATION_RECORD_DUPLICATE");
+        body.put("status", HttpStatus.CONFLICT.value());
+        body.put("timestamp", java.time.LocalDateTime.now().toString());
+        body.put("path", request.getRequestURI());
+        body.put("method", request.getMethod());
+
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(body);
+    }
+
+    /**
      * lifecycle §3.6 전이 그래프 위반 — HTTP 409 (시스템 오류 아님).
      */
     @ExceptionHandler(IllegalStateTransitionException.class)

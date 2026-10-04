@@ -570,6 +570,7 @@ public class ErpController extends BaseApiController {
             if (accessCheck != null) {
                 return (ResponseEntity<Map<String, Object>>) accessCheck;
             }
+            resourceOwnerAccessGuard.requirePurchaseRequestAccess(session, id);
 
             log.info("관리자 승인: id={}, adminId={}", id, adminId);
 
@@ -598,6 +599,7 @@ public class ErpController extends BaseApiController {
             if (accessCheck != null) {
                 return (ResponseEntity<Map<String, Object>>) accessCheck;
             }
+            resourceOwnerAccessGuard.requirePurchaseRequestAccess(session, id);
 
             log.info("관리자 거부: id={}, adminId={}", id, adminId);
 
@@ -626,6 +628,7 @@ public class ErpController extends BaseApiController {
             if (accessCheck != null) {
                 return (ResponseEntity<Map<String, Object>>) accessCheck;
             }
+            resourceOwnerAccessGuard.requirePurchaseRequestAccess(session, id);
 
             log.info("수퍼 관리자 승인: id={}, superAdminId={}", id, superAdminId);
 
@@ -655,6 +658,7 @@ public class ErpController extends BaseApiController {
             if (accessCheck != null) {
                 return (ResponseEntity<Map<String, Object>>) accessCheck;
             }
+            resourceOwnerAccessGuard.requirePurchaseRequestAccess(session, id);
 
             log.info("수퍼 관리자 거부: id={}, superAdminId={}", id, superAdminId);
 
@@ -677,7 +681,12 @@ public class ErpController extends BaseApiController {
      */
     @PostMapping("/purchase-requests/{id}/cancel")
     public ResponseEntity<Map<String, Object>> cancelPurchaseRequest(@PathVariable Long id,
-            @RequestParam Long requesterId) {
+            @RequestParam Long requesterId, HttpSession session) {
+        ResponseEntity<?> accessCheck = checkErpAccess(session);
+        if (accessCheck != null) {
+            return (ResponseEntity<Map<String, Object>>) accessCheck;
+        }
+        resourceOwnerAccessGuard.requirePurchaseRequestAccess(session, id);
         try {
             log.info("구매 요청 취소: id={}, requesterId={}", id, requesterId);
 
@@ -723,7 +732,12 @@ public class ErpController extends BaseApiController {
             @RequestParam Long purchaserId, @RequestParam String supplier,
             @RequestParam(required = false) String supplierContact,
             @RequestParam(required = false) String expectedDeliveryDate,
-            @RequestParam(required = false) String notes) {
+            @RequestParam(required = false) String notes, HttpSession session) {
+        ResponseEntity<?> accessCheck = checkErpAccess(session);
+        if (accessCheck != null) {
+            return (ResponseEntity<Map<String, Object>>) accessCheck;
+        }
+        resourceOwnerAccessGuard.requirePurchaseRequestAccess(session, requestId);
         try {
             log.info("구매 주문 생성: requestId={}, purchaserId={}", requestId, purchaserId);
 

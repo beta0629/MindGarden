@@ -10,6 +10,7 @@ import com.coresolution.consultation.entity.erp.accounting.AccountingEntry;
 import com.coresolution.consultation.entity.erp.accounting.JournalEntryLine;
 import com.coresolution.consultation.service.DynamicPermissionService;
 import com.coresolution.consultation.service.erp.accounting.AccountingService;
+import com.coresolution.consultation.service.support.ResourceOwnerAccessGuard;
 import com.coresolution.consultation.util.EmailLogMasking;
 import com.coresolution.consultation.utils.SessionUtils;
 import com.coresolution.core.context.TenantContextHolder;
@@ -41,6 +42,7 @@ public class AccountingController extends BaseApiController {
 
     private final AccountingService accountingService;
     private final DynamicPermissionService dynamicPermissionService;
+    private final ResourceOwnerAccessGuard resourceOwnerAccessGuard;
 
     /**
      * ERP 접근 권한 체크 (동적 권한 시스템)
@@ -131,6 +133,7 @@ public class AccountingController extends BaseApiController {
         if (accessCheck != null) {
             return accessCheck;
         }
+        resourceOwnerAccessGuard.requireJournalEntryAccess(session, id);
 
         String tenantId = TenantContextHolder.getRequiredTenantId();
         log.info("분개 상세 조회: tenantId={}, entryId={}", tenantId, id);
@@ -150,6 +153,7 @@ public class AccountingController extends BaseApiController {
         if (accessCheck != null) {
             return accessCheck;
         }
+        resourceOwnerAccessGuard.requireJournalEntryAccess(session, id);
 
         String tenantId = TenantContextHolder.getRequiredTenantId();
         log.info("분개 승인 요청: tenantId={}, entryId={}", tenantId, id);
@@ -170,6 +174,7 @@ public class AccountingController extends BaseApiController {
         if (accessCheck != null) {
             return accessCheck;
         }
+        resourceOwnerAccessGuard.requireJournalEntryAccess(session, id);
 
         String tenantId = TenantContextHolder.getRequiredTenantId();
         log.info("분개 전기 요청: tenantId={}, entryId={}", tenantId, id);
@@ -190,6 +195,7 @@ public class AccountingController extends BaseApiController {
         if (accessCheck != null) {
             return accessCheck;
         }
+        resourceOwnerAccessGuard.requireJournalEntryAccess(session, id);
 
         String tenantId = TenantContextHolder.getRequiredTenantId();
         log.info("분개 수정 요청: tenantId={}, entryId={}", tenantId, id);

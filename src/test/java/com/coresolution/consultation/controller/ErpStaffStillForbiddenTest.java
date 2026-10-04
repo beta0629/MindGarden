@@ -135,7 +135,8 @@ class ErpStaffStillForbiddenTest {
     @DisplayName("AccountingController — STAFF + ERP_ACCESS 없음 → 403")
     void accounting_staff_forbidden() {
         AccountingController controller =
-                new AccountingController(accountingService, dynamicPermissionService);
+                new AccountingController(accountingService, dynamicPermissionService,
+                        org.mockito.Mockito.mock(ResourceOwnerAccessGuard.class));
 
         ResponseEntity<?> response = controller.getJournalEntries(session);
 
@@ -146,7 +147,8 @@ class ErpStaffStillForbiddenTest {
     @DisplayName("LedgerController — STAFF + ERP_ACCESS 없음 → 403")
     void ledger_staff_forbidden() {
         LedgerController controller =
-                new LedgerController(ledgerService, dynamicPermissionService);
+                new LedgerController(ledgerService, dynamicPermissionService,
+                        org.mockito.Mockito.mock(ResourceOwnerAccessGuard.class));
 
         ResponseEntity<?> response = controller.getLedgersByAccount(1L, session);
 
@@ -212,7 +214,8 @@ class ErpStaffStillForbiddenTest {
         DiscountAccountingService discountAccountingService =
                 org.mockito.Mockito.mock(DiscountAccountingService.class);
         DiscountAccountingController controller =
-                new DiscountAccountingController(discountAccountingService, dynamicPermissionService);
+                new DiscountAccountingController(discountAccountingService, dynamicPermissionService,
+                        org.mockito.Mockito.mock(ResourceOwnerAccessGuard.class));
 
         ResponseEntity<Map<String, Object>> response = controller.getDiscountAccounting(1L, session);
 

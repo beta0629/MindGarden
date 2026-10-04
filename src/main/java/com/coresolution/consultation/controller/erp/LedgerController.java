@@ -5,6 +5,7 @@ import com.coresolution.core.dto.ApiResponse;
 import com.coresolution.consultation.entity.erp.accounting.Ledger;
 import com.coresolution.consultation.service.erp.accounting.LedgerService;
 import com.coresolution.consultation.service.DynamicPermissionService;
+import com.coresolution.consultation.service.support.ResourceOwnerAccessGuard;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.util.EmailLogMasking;
 import com.coresolution.consultation.utils.SessionUtils;
@@ -38,6 +39,7 @@ public class LedgerController extends BaseApiController {
     
     private final LedgerService ledgerService;
     private final DynamicPermissionService dynamicPermissionService;
+    private final ResourceOwnerAccessGuard resourceOwnerAccessGuard;
     
     /**
      * ERP 접근 권한 체크 (동적 권한 시스템)
@@ -86,6 +88,7 @@ public class LedgerController extends BaseApiController {
         if (accessCheck != null) {
             return accessCheck;
         }
+        resourceOwnerAccessGuard.requireLedgerAccountAccess(session, accountId);
         
         String tenantId = TenantContextHolder.getRequiredTenantId();
         log.info("계정별 원장 조회: tenantId={}, accountId={}", tenantId, accountId);
@@ -130,6 +133,7 @@ public class LedgerController extends BaseApiController {
         if (accessCheck != null) {
             return accessCheck;
         }
+        resourceOwnerAccessGuard.requireLedgerAccountAccess(session, accountId);
         
         String tenantId = TenantContextHolder.getRequiredTenantId();
         

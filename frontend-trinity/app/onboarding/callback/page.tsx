@@ -39,17 +39,13 @@ export default function OnboardingCallbackPage() {
   const errorCode = searchParams.get("code") || searchParams.get("errorCode"); // 토스페이먼츠는 'code' 파라미터 사용
   const errorMessage = searchParams.get("message") || searchParams.get("errorMessage"); // 토스페이먼츠는 'message' 파라미터 사용
   
-  // 디버깅: 모든 URL 파라미터 로그
+  // 디버깅: 결제 키·연락처는 남기지 않고 상태만 로그
   useEffect(() => {
     console.log("[OnboardingCallback] URL 파라미터:", {
       status: statusParam,
-      authKey,
-      customerKey,
-      tenantName,
-      contactEmail,
+      hasAuthKey: Boolean(authKey),
+      hasCustomerKey: Boolean(customerKey),
       errorCode,
-      errorMessage,
-      allParams: Object.fromEntries(searchParams.entries()),
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [statusParam, authKey, customerKey, tenantName, contactEmail, errorCode, errorMessage]);
@@ -144,7 +140,6 @@ export default function OnboardingCallbackPage() {
         console.error("[OnboardingCallback] 카드 등록 실패:", {
           errorCode,
           errorMessage,
-          allParams: Object.fromEntries(searchParams.entries()),
         });
         
         setError(errorMsg);
@@ -218,7 +213,7 @@ export default function OnboardingCallbackPage() {
           // 1. 결제 타입에 따른 처리
           if (paymentType === "register") {
             // 카드 등록: 결제 수단 등록
-            console.log("[OnboardingCallback] 카드 등록 처리 시작...", { authKey });
+            console.log("[OnboardingCallback] 카드 등록 처리 시작...");
             const paymentMethod = await createPaymentMethod({
               paymentMethodToken: authKey!, // 토스페이먼츠 billingKey
               pgProvider: TRINITY_CONSTANTS.PAYMENT.DEFAULT_PG_PROVIDER as "TOSS" | "STRIPE" | "OTHER",
@@ -229,11 +224,7 @@ export default function OnboardingCallbackPage() {
             // 즉시 결제: 결제 완료 처리 (결제 수단 등록 없이)
             // TODO: 실제 결제 완료 처리는 백엔드에서 webhook으로 처리
             // 여기서는 온보딩 요청만 생성
-            console.log("[OnboardingCallback] 즉시 결제 완료:", {
-              paymentKey,
-              orderId,
-              amount: formData.amount,
-            });
+            console.log("[OnboardingCallback] 즉시 결제 완료:", { orderId });
           }
 
           // 3. 온보딩 요청 생성 (메인 플로우에서 저장한 Turnstile 토큰 — 캡차 ON 시 필요)
@@ -270,7 +261,6 @@ export default function OnboardingCallbackPage() {
           console.log("[OnboardingCallback] 온보딩 요청 생성 시작...", {
             tenantName: request.tenantName,
             tenantNameLength: request.tenantName?.length,
-            requestedBy: request.requestedBy,
             requestedByLength: request.requestedBy?.length,
             riskLevel: request.riskLevel,
             businessType: request.businessType,
@@ -278,13 +268,13 @@ export default function OnboardingCallbackPage() {
             paymentMethodId,
           });
 
-          const onboardingRequest = await createOnboardingRequest(request);
+          await createOnboardingRequest(request);
 
           if (typeof window !== "undefined") {
             sessionStorage.removeItem(SESSION_STORAGE_KEYS.ONBOARDING_CAPTCHA_TOKEN);
           }
 
-          console.log("[OnboardingCallback] ✅ 온보딩 요청 생성 완료:", onboardingRequest);
+          console.log("[OnboardingCallback] ✅ 온보딩 요청 생성 완료");
 
           setStatus("success");
           

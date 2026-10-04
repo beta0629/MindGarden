@@ -16,6 +16,7 @@ import { authAPI } from './ajax';
 import { storage, sessionStorage } from './common';
 import { AUTH_API, API_BASE_URL } from '../constants/api';
 import StandardizedApi from './standardizedApi';
+import logger from './logger';
 import { 
   KAKAO_OAUTH2_CONFIG, 
   NAVER_OAUTH2_CONFIG,
@@ -42,7 +43,7 @@ export const initializeOAuth2 = async() => {
       CACHE_CONFIG.OAUTH2_CONFIG.ttl
     );
     oauth2Config = config;
-    console.log('OAuth2 설정 로드 완료:', config);
+    logger.log('OAuth2 설정 로드 완료:', config);
   } catch (error) {
     console.error('OAuth2 설정 로드 실패:', error);
     // 기본 설정 사용
@@ -52,7 +53,7 @@ export const initializeOAuth2 = async() => {
       google: GOOGLE_OAUTH2_CONFIG,
       facebook: FACEBOOK_OAUTH2_CONFIG
     };
-    console.log('기본 OAuth2 설정을 사용합니다:', oauth2Config);
+    logger.log('기본 OAuth2 설정을 사용합니다:', oauth2Config);
   }
 };
 
@@ -90,7 +91,7 @@ const generateRandomState = (length = 32) => {
  */
 export const kakaoLogin = async() => {
   try {
-    console.log('=== 카카오 로그인 시작 ===');
+    logger.log('=== 카카오 로그인 시작 ===');
     
     // 서브도메인 확인 (로컬 환경에서는 스킵)
     const host = window.location.hostname;
@@ -111,12 +112,12 @@ export const kakaoLogin = async() => {
 
     // 백엔드의 인증 URL 생성 엔드포인트 호출
     // OAuth 인가 API는 세션 쿠키(JSESSIONID)가 필요함 — cross-origin fetch 시 credentials 필수
-    console.log('백엔드 API 호출 시작:', `${API_BASE_URL}${AUTH_API.KAKAO_AUTHORIZE}`);
+    logger.log('백엔드 API 호출 시작:', `${API_BASE_URL}${AUTH_API.KAKAO_AUTHORIZE}`);
     const response = await fetch(`${API_BASE_URL}${AUTH_API.KAKAO_AUTHORIZE}`, {
       credentials: 'include',
       headers: { Accept: 'application/json' }
     });
-    console.log('백엔드 응답 상태:', response.status, response.statusText);
+    logger.log('백엔드 응답 상태:', response.status, response.statusText);
     
     if (!response.ok) {
       let errorMessage = i18n.t('common:utils.socialLogin.t_f2ce3edf');
@@ -147,7 +148,7 @@ export const kakaoLogin = async() => {
     }
     
     const data = await response.json();
-    console.log('백엔드에서 받은 카카오 인증 URL:', data);
+    logger.log('백엔드에서 받은 카카오 인증 URL:', data);
     
     // ApiResponse 래퍼 처리: data.data.authUrl 또는 data.authUrl
     const authUrl = (data.data && data.data.authUrl) || data.authUrl;
@@ -160,8 +161,8 @@ export const kakaoLogin = async() => {
         sessionStorage.set('oauth_state', state);
       }
       
-      console.log('최종 카카오 OAuth2 인증 URL:', authUrl);
-      console.log('=== 카카오 로그인 완료 ===');
+      logger.log('최종 카카오 OAuth2 인증 URL:', authUrl);
+      logger.log('=== 카카오 로그인 완료 ===');
       
       window.location.href = authUrl;
     } else {
@@ -179,7 +180,7 @@ export const kakaoLogin = async() => {
  */
 export const naverLogin = async() => {
   try {
-    console.log('=== 네이버 로그인 시작 ===');
+    logger.log('=== 네이버 로그인 시작 ===');
     
     // 서브도메인 확인 (로컬 환경에서는 스킵)
     const host = window.location.hostname;
@@ -232,7 +233,7 @@ export const naverLogin = async() => {
     }
     
     const data = await response.json();
-    console.log('백엔드에서 받은 네이버 인증 URL:', data);
+    logger.log('백엔드에서 받은 네이버 인증 URL:', data);
     
     // ApiResponse 래퍼 처리: data.data.authUrl 또는 data.authUrl
     const authUrl = (data.data && data.data.authUrl) || data.authUrl;
@@ -245,8 +246,8 @@ export const naverLogin = async() => {
         sessionStorage.set('oauth_state', state);
       }
       
-      console.log('최종 네이버 OAuth2 인증 URL:', authUrl);
-      console.log('=== 네이버 로그인 완료 ===');
+      logger.log('최종 네이버 OAuth2 인증 URL:', authUrl);
+      logger.log('=== 네이버 로그인 완료 ===');
       
       window.location.href = authUrl;
     } else {
@@ -273,7 +274,7 @@ export const naverLogin = async() => {
  */
 export const googleLogin = async() => {
   try {
-    console.log('=== 구글 로그인 시작 ===');
+    logger.log('=== 구글 로그인 시작 ===');
 
     // 서브도메인 확인 (로컬 환경에서는 스킵) — 카카오/네이버 동일 가드.
     const host = window.location.hostname;
@@ -324,7 +325,7 @@ export const googleLogin = async() => {
     }
 
     const data = await response.json();
-    console.log('백엔드에서 받은 구글 인증 URL:', data);
+    logger.log('백엔드에서 받은 구글 인증 URL:', data);
 
     // ApiResponse 래퍼 처리: data.data.authUrl 또는 data.authUrl.
     const authUrl = (data.data && data.data.authUrl) || data.authUrl;
@@ -337,8 +338,8 @@ export const googleLogin = async() => {
         sessionStorage.set('oauth_state', state);
       }
 
-      console.log('최종 구글 OAuth2 인증 URL 길이:', authUrl.length);
-      console.log('=== 구글 로그인 완료 ===');
+      logger.log('최종 구글 OAuth2 인증 URL 길이:', authUrl.length);
+      logger.log('=== 구글 로그인 완료 ===');
 
       window.location.href = authUrl;
     } else {
@@ -367,7 +368,7 @@ export const googleLogin = async() => {
  */
 export const appleLogin = async() => {
   try {
-    console.log('=== Apple 로그인 시작 ===');
+    logger.log('=== Apple 로그인 시작 ===');
 
     // 서브도메인 확인 (로컬 환경에서는 스킵) — 카카오/네이버/Google 동일 가드.
     const host = window.location.hostname;
@@ -418,7 +419,7 @@ export const appleLogin = async() => {
     }
 
     const data = await response.json();
-    console.log('백엔드에서 받은 Apple 인증 URL:', data);
+    logger.log('백엔드에서 받은 Apple 인증 URL:', data);
 
     const authUrl = (data.data && data.data.authUrl) || data.authUrl;
     const state = (data.data && data.data.state) || data.state;
@@ -430,8 +431,8 @@ export const appleLogin = async() => {
         sessionStorage.set('oauth_state', state);
       }
 
-      console.log('최종 Apple OAuth2 인증 URL 길이:', authUrl.length);
-      console.log('=== Apple 로그인 완료 ===');
+      logger.log('최종 Apple OAuth2 인증 URL 길이:', authUrl.length);
+      logger.log('=== Apple 로그인 완료 ===');
 
       window.location.href = authUrl;
     } else {
@@ -463,7 +464,7 @@ export const facebookLogin = () => {
       scope: config.scope
     });
     
-    console.log('페이스북 OAuth2 인증 URL 생성:', `${config.authUrl}?${params.toString()}`);
+    logger.log('페이스북 OAuth2 인증 URL 생성:', `${config.authUrl}?${params.toString()}`);
     window.location.href = `${config.authUrl}?${params.toString()}`;
   } catch (error) {
     console.error('페이스북 로그인 오류:', error);
@@ -491,7 +492,7 @@ export const handleOAuthCallback = async(provider, code, state, navigate = null)
       sessionStorage.remove('pkce_code_verifier');
     }
     
-    console.log(`${provider} OAuth2 콜백 처리:`, { code, state, codeVerifier });
+    logger.debug(`${provider} OAuth2 콜백 처리`);
     
     const raw = await StandardizedApi.post(
       AUTH_API.OAUTH2_CALLBACK,
@@ -515,7 +516,10 @@ export const handleOAuthCallback = async(provider, code, state, navigate = null)
           socialUserInfo: envelope.data.socialUserInfo ?? envelope.socialUserInfo
         }
         : envelope;
-    console.log(`${provider} OAuth2 결과:`, result);
+    logger.debug(`${provider} OAuth2 결과`, {
+      success: result.success,
+      requiresSignup: Boolean(result.requiresSignup)
+    });
     
     if (result.success) {
       // 세션 설정
@@ -544,7 +548,7 @@ export const handleOAuthCallback = async(provider, code, state, navigate = null)
         throw new Error(i18n.t('common:utils.socialLogin.t_53ec68ef'));
       }
     } else if (result.requiresSignup) {
-      console.log('간편 회원가입 필요:', result.socialUserInfo);
+      logger.log('간편 회원가입 필요:', result.socialUserInfo);
       return { requiresSignup: true, socialUserInfo: result.socialUserInfo };
     } else {
       throw new Error(result.message || i18n.t('common:utils.socialLogin.t_9509df49'));
@@ -570,7 +574,7 @@ export const socialLogout = async() => {
     sessionStorage.remove('oauth_state');
     sessionStorage.remove('pkce_code_verifier');
     
-    console.log('소셜 로그아웃 완료');
+    logger.log('소셜 로그아웃 완료');
     redirectToLoginPageOnce();
   } catch (error) {
     console.error('소셜 로그아웃 오류:', error);

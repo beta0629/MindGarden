@@ -20,8 +20,12 @@ import java.util.Optional;
 
 import com.coresolution.consultation.constant.SessionConstants;
 import com.coresolution.consultation.constant.UserRole;
+import com.coresolution.consultation.controller.erp.AccountingController;
 import com.coresolution.consultation.controller.erp.ErpController;
+import com.coresolution.consultation.controller.erp.LedgerController;
+import com.coresolution.consultation.entity.Account;
 import com.coresolution.consultation.entity.Budget;
+import com.coresolution.consultation.entity.ConsultantClientMapping;
 import com.coresolution.consultation.entity.ConsultantSalaryProfile;
 import com.coresolution.consultation.entity.Item;
 import com.coresolution.consultation.entity.PurchaseOrder;
@@ -29,7 +33,9 @@ import com.coresolution.consultation.entity.PurchaseRequest;
 import com.coresolution.consultation.entity.RecurringExpense;
 import com.coresolution.consultation.entity.SalaryCalculation;
 import com.coresolution.consultation.entity.User;
+import com.coresolution.consultation.entity.erp.accounting.AccountingEntry;
 import com.coresolution.consultation.exception.GlobalExceptionHandler;
+import com.coresolution.consultation.repository.AccountRepository;
 import com.coresolution.consultation.repository.BudgetRepository;
 import com.coresolution.consultation.repository.ConsultantClientMappingRepository;
 import com.coresolution.consultation.repository.ConsultantSalaryProfileRepository;
@@ -39,10 +45,15 @@ import com.coresolution.consultation.repository.PurchaseRequestRepository;
 import com.coresolution.consultation.repository.RecurringExpenseRepository;
 import com.coresolution.consultation.repository.SalaryCalculationRepository;
 import com.coresolution.consultation.repository.UserRepository;
+import com.coresolution.consultation.repository.erp.accounting.AccountingEntryRepository;
+import com.coresolution.consultation.service.DiscountAccountingService;
 import com.coresolution.consultation.service.DynamicPermissionService;
+import com.coresolution.consultation.service.PlSqlSalaryManagementService;
 import com.coresolution.consultation.service.RecurringExpenseService;
 import com.coresolution.consultation.service.SalaryManagementService;
 import com.coresolution.consultation.service.erp.ErpService;
+import com.coresolution.consultation.service.erp.accounting.AccountingService;
+import com.coresolution.consultation.service.erp.accounting.LedgerService;
 import com.coresolution.consultation.service.impl.RecurringExpenseServiceImpl;
 import com.coresolution.consultation.service.impl.SalaryManagementServiceImpl;
 import com.coresolution.consultation.service.support.ClientPathAccessGuard;
@@ -63,7 +74,8 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 /**
- * ERP 조달·예산·반복 지출, 급여 프로필 수정·세금 상세 — 자원 id 공통 가드 매트릭스.
+ * ERP 조달(승인·취소·주문 생성 포함)·예산·반복 지출·분개·원장·할인 회계, 급여 프로필 수정·세금 상세·승인·지급 —
+ * 자원 id 공통 가드 매트릭스.
  *
  * <p>엔드포인트마다 미인증 401 · 역할 없음 403 · 다른 테넌트 공통 403(데이터 없음, 서비스 미호출) ·
  * 같은 테넌트 200 을 확인한다. 실제 서비스 구현으로 다른 테넌트 id 를 보내던 경로(반복 지출 수정·삭제 500,
@@ -84,6 +96,9 @@ class ErpSalaryIdGuardFollowupMvcTest {
     private static final long ID = 501L;
     private static final String ERP = "/api/v1/erp";
     private static final String SALARY = "/api/v1/admin/salary";
+    private static final String ENTRIES = "/api/v1/erp/accounting/entries";
+    private static final String LEDGERS = "/api/v1/erp/accounting/ledgers";
+    private static final String DISCOUNT = "/api/v1/admin/discount-accounting";
     private static final String ITEM_BODY = "{\"name\":\"n\",\"category\":\"c\",\"unitPrice\":1000,\"stockQuantity\":1}";
     private static final String PROFILE_BODY = "{\"consultantId\":" + CONSULTANT_A + ",\"salaryType\":\"FREELANCE\"}";
     private static final String RECORD_MONTH_BODY = "{\"yearMonth\":\"2026-10\",\"amount\":1000}";
@@ -104,7 +119,27 @@ class ErpSalaryIdGuardFollowupMvcTest {
         new String[] {"POST", ERP + "/recurring-expenses/" + ID + "/record-month", RECORD_MONTH_BODY},
         new String[] {"POST", ERP + "/recurring-expenses/" + ID + "/process", null},
         new String[] {"PUT", SALARY + "/profiles/" + ID, PROFILE_BODY},
-        new String[] {"GET", SALARY + "/tax/" + ID, null});
+        new String[] {"GET", SALARY + "/tax/" + ID, null},
+        new String[] {"POST", ERP + "/purchase-requests/" + ID + "/approve-admin?adminId=" + ADMIN_A, null},
+        new String[] {"POST", ERP + "/purchase-requests/" + ID + "/reject-admin?adminId=" + ADMIN_A, null},
+        new String[] {"POST", ERP + "/purchase-requests/" + ID + "/approve-super-admin?superAdminId=" + ADMIN_A, null},
+        new String[] {"POST", ERP + "/purchase-requests/" + ID + "/reject-super-admin?superAdminId=" + ADMIN_A, null},
+        new String[] {"POST", ERP + "/purchase-requests/" + ID + "/cancel?requesterId=" + ADMIN_A, null},
+        new String[] {"POST", ERP + "/purchase-orders?requestId=" + ID + "&purchaserId=" + ADMIN_A + "&supplier=s", null},
+        new String[] {"GET", ENTRIES + "/" + ID, null},
+        new String[] {"POST", ENTRIES + "/" + ID + "/approve", "{\"approverId\":" + ADMIN_A + "}"},
+        new String[] {"POST", ENTRIES + "/" + ID + "/post", null},
+        new String[] {"PUT", ENTRIES + "/" + ID, "{\"lines\":[]}"},
+        new String[] {"GET", LEDGERS + "/account/" + ID, null},
+        new String[] {"GET", LEDGERS + "/balance/" + ID, null},
+        new String[] {"GET", DISCOUNT + "/" + ID, null},
+        new String[] {"GET", DISCOUNT + "/" + ID + "/validate", null},
+        new String[] {"POST", DISCOUNT + "/" + ID + "/cancel", "{\"reason\":\"r\"}"},
+        new String[] {"PUT", DISCOUNT + "/" + ID, "{\"newFinalAmount\":1000}"},
+        new String[] {"POST", SALARY + "/approve/" + ID, null},
+        new String[] {"POST", SALARY + "/pay/" + ID, null},
+        new String[] {"POST", SALARY + "/recalc/" + ID, null},
+        new String[] {"POST", SALARY + "/adjustment/" + ID, null});
 
     private ErpService erpService;
     private RecurringExpenseService recurringExpenseService;
@@ -118,6 +153,13 @@ class ErpSalaryIdGuardFollowupMvcTest {
     private ConsultantSalaryProfileRepository salaryProfileRepository;
     private SalaryCalculationRepository salaryCalculationRepository;
     private UserRepository userRepository;
+    private AccountingService accountingService;
+    private LedgerService ledgerService;
+    private DiscountAccountingService discountAccountingService;
+    private PlSqlSalaryManagementService plSqlSalaryManagementService;
+    private AccountingEntryRepository accountingEntryRepository;
+    private AccountRepository accountRepository;
+    private ConsultantClientMappingRepository mappingRepository;
     private ResourceOwnerAccessGuard ownerGuard;
     private MockMvc mockMvc;
 
@@ -137,12 +179,19 @@ class ErpSalaryIdGuardFollowupMvcTest {
         salaryProfileRepository = mock(ConsultantSalaryProfileRepository.class);
         salaryCalculationRepository = mock(SalaryCalculationRepository.class);
         userRepository = mock(UserRepository.class);
+        accountingService = mock(AccountingService.class);
+        ledgerService = mock(LedgerService.class);
+        discountAccountingService = mock(DiscountAccountingService.class);
+        plSqlSalaryManagementService = mock(PlSqlSalaryManagementService.class);
+        accountingEntryRepository = mock(AccountingEntryRepository.class);
+        accountRepository = mock(AccountRepository.class);
+        mappingRepository = mock(ConsultantClientMappingRepository.class);
 
-        ClientPathAccessGuard clientGuard = new ClientPathAccessGuard(
-            mock(ConsultantClientMappingRepository.class), userRepository);
+        ClientPathAccessGuard clientGuard = new ClientPathAccessGuard(mappingRepository, userRepository);
         ownerGuard = build(ResourceOwnerAccessGuard.class, clientGuard, itemRepository, purchaseRequestRepository,
             purchaseOrderRepository, budgetRepository, recurringExpenseRepository, salaryProfileRepository,
-            salaryCalculationRepository, userRepository);
+            salaryCalculationRepository, userRepository, accountingEntryRepository, accountRepository,
+            mappingRepository);
         mockMvc = standalone(recurringExpenseService, salaryManagementService);
 
         stubTenantAResources();
@@ -202,7 +251,7 @@ class ErpSalaryIdGuardFollowupMvcTest {
     void ownTenantAdmin_unknownId_sharedDenial() throws Exception {
         long unknown = 999_999L;
         for (String[] e : ENDPOINTS) {
-            String[] unknownEndpoint = {e[0], e[1].replace("/" + ID, "/" + unknown), e[2]};
+            String[] unknownEndpoint = {e[0], e[1].replace(String.valueOf(ID), String.valueOf(unknown)), e[2]};
             assertSharedDenial(mockMvc.perform(req(unknownEndpoint, user(ADMIN_A, UserRole.ADMIN, TENANT_A))));
         }
         verifyNoServiceCalls();
@@ -251,10 +300,14 @@ class ErpSalaryIdGuardFollowupMvcTest {
 
     private MockMvc standalone(Object recurring, Object salary) throws Exception {
         Object[] provided = {ownerGuard, erpService, recurring, salary, userRepository, dynamicPermissionService,
-            mock(Environment.class)};
+            mock(Environment.class), accountingService, ledgerService, discountAccountingService,
+            plSqlSalaryManagementService, salaryCalculationRepository};
         return MockMvcBuilders.standaloneSetup(
                 build(ErpController.class, provided),
-                build(SalaryManagementController.class, provided))
+                build(SalaryManagementController.class, provided),
+                build(AccountingController.class, provided),
+                build(LedgerController.class, provided),
+                build(DiscountAccountingController.class, provided))
             .setControllerAdvice(new GlobalExceptionHandler())
             .build();
     }
@@ -278,6 +331,11 @@ class ErpSalaryIdGuardFollowupMvcTest {
         when(salaryCalculationRepository.findByTenantIdAndId(TENANT_A, ID)).thenReturn(Optional.of(calculation));
         when(userRepository.findByTenantIdAndId(TENANT_A, CONSULTANT_A))
             .thenReturn(Optional.of(user(CONSULTANT_A, UserRole.CONSULTANT, TENANT_A)));
+        when(accountingEntryRepository.findByTenantIdAndId(TENANT_A, ID))
+            .thenReturn(Optional.of(mock(AccountingEntry.class)));
+        when(accountRepository.findByTenantIdAndId(TENANT_A, ID)).thenReturn(Optional.of(mock(Account.class)));
+        when(mappingRepository.findByTenantIdAndId(TENANT_A, ID))
+            .thenReturn(Optional.of(mock(ConsultantClientMapping.class)));
     }
 
     private void stubServices() {
@@ -295,10 +353,34 @@ class ErpSalaryIdGuardFollowupMvcTest {
         when(recurringExpenseService.recordRecurringExpenseMonth(eq(ID), any(), any())).thenReturn(true);
         when(salaryManagementService.updateSalaryProfile(any(), any())).thenReturn(new ConsultantSalaryProfile());
         when(salaryManagementService.getTaxDetails(anyLong())).thenReturn(Map.of());
+        when(erpService.approveByAdmin(eq(ID), anyLong(), any())).thenReturn(true);
+        when(erpService.rejectByAdmin(eq(ID), anyLong(), any())).thenReturn(true);
+        when(erpService.approveBySuperAdmin(eq(ID), anyLong(), any())).thenReturn(true);
+        when(erpService.rejectBySuperAdmin(eq(ID), anyLong(), any())).thenReturn(true);
+        when(erpService.cancelPurchaseRequest(eq(ID), anyLong())).thenReturn(true);
+        when(erpService.createPurchaseOrder(eq(ID), anyLong(), any(), any(), any(), any()))
+            .thenReturn(new PurchaseOrder());
+        DiscountAccountingService.DiscountAccountingResult discount = new DiscountAccountingService.DiscountAccountingResult();
+        discount.setSuccess(true);
+        discount.setMessage("ok");
+        when(discountAccountingService.getDiscountAccounting(ID)).thenReturn(discount);
+        when(discountAccountingService.validateDiscountAccounting(ID)).thenReturn(Map.of());
+        when(discountAccountingService.cancelDiscountAccounting(eq(ID), any())).thenReturn(Map.of("success", true));
+        when(discountAccountingService.updateDiscountAccounting(eq(ID), any(), any()))
+            .thenReturn(Map.of("success", true));
+        Map<String, Object> procedureOk = Map.of("success", true);
+        when(plSqlSalaryManagementService.approveSalaryWithErpSync(eq(ID), eq(TENANT_A), any())).thenReturn(procedureOk);
+        when(plSqlSalaryManagementService.processSalaryPaymentWithErpSync(eq(ID), eq(TENANT_A), any()))
+            .thenReturn(procedureOk);
+        when(plSqlSalaryManagementService.recalcUnpaidSalaryCalculation(eq(ID), eq(TENANT_A), any()))
+            .thenReturn(procedureOk);
+        when(plSqlSalaryManagementService.insertSalaryAdjustmentForLateSessions(eq(ID), eq(TENANT_A), any()))
+            .thenReturn(procedureOk);
     }
 
     private void verifyNoServiceCalls() {
-        verifyNoInteractions(erpService, recurringExpenseService, salaryManagementService);
+        verifyNoInteractions(erpService, recurringExpenseService, salaryManagementService, accountingService,
+            ledgerService, discountAccountingService, plSqlSalaryManagementService);
     }
 
     private ResultActions assertSharedDenial(ResultActions result) throws Exception {

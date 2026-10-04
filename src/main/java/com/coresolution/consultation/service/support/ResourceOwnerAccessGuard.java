@@ -6,8 +6,10 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import com.coresolution.consultation.assessment.entity.PsychAssessmentDocument;
 import com.coresolution.consultation.assessment.repository.PsychAssessmentDocumentRepository;
+import com.coresolution.consultation.entity.Account;
 import com.coresolution.consultation.entity.Budget;
 import com.coresolution.consultation.entity.ConsultantAvailability;
+import com.coresolution.consultation.entity.ConsultantClientMapping;
 import com.coresolution.consultation.entity.ConsultantRating;
 import com.coresolution.consultation.entity.ConsultantSalaryProfile;
 import com.coresolution.consultation.entity.ConsultationAudioFile;
@@ -19,10 +21,13 @@ import com.coresolution.consultation.entity.PurchaseRequest;
 import com.coresolution.consultation.entity.RecurringExpense;
 import com.coresolution.consultation.entity.SalaryCalculation;
 import com.coresolution.consultation.entity.User;
+import com.coresolution.consultation.entity.erp.accounting.AccountingEntry;
 import com.coresolution.consultation.entity.erp.financial.FinancialTransaction;
 import com.coresolution.consultation.exception.UnauthorizedException;
+import com.coresolution.consultation.repository.AccountRepository;
 import com.coresolution.consultation.repository.BudgetRepository;
 import com.coresolution.consultation.repository.ConsultantAvailabilityRepository;
+import com.coresolution.consultation.repository.ConsultantClientMappingRepository;
 import com.coresolution.consultation.repository.ConsultantRatingRepository;
 import com.coresolution.consultation.repository.ConsultantSalaryProfileRepository;
 import com.coresolution.consultation.repository.ConsultationAudioFileRepository;
@@ -33,6 +38,7 @@ import com.coresolution.consultation.repository.PurchaseOrderRepository;
 import com.coresolution.consultation.repository.PurchaseRequestRepository;
 import com.coresolution.consultation.repository.RecurringExpenseRepository;
 import com.coresolution.consultation.repository.SalaryCalculationRepository;
+import com.coresolution.consultation.repository.erp.accounting.AccountingEntryRepository;
 import com.coresolution.consultation.repository.erp.financial.FinancialTransactionRepository;
 import com.coresolution.consultation.util.ServerErrorResponses;
 import com.coresolution.core.domain.ErdDiagram;
@@ -86,6 +92,9 @@ public class ResourceOwnerAccessGuard {
     private final ConsultantSalaryProfileRepository salaryProfileRepository;
     private final SalaryCalculationRepository salaryCalculationRepository;
     private final ErdDiagramRepository erdDiagramRepository;
+    private final AccountingEntryRepository accountingEntryRepository;
+    private final AccountRepository accountRepository;
+    private final ConsultantClientMappingRepository mappingRepository;
 
     /**
      * 심리검사 문서(및 그 리포트) 접근 검증. 내담자 미지정 문서는 같은 테넌트 관리자·사무원만.
@@ -364,6 +373,51 @@ public class ResourceOwnerAccessGuard {
     public RecurringExpense requireRecurringExpenseAccess(HttpSession session, Long recurringExpenseId) {
         return loadInCallerTenant(session, "recurringExpenseId", recurringExpenseId,
             tenantId -> recurringExpenseRepository.findByTenantIdAndId(tenantId, recurringExpenseId));
+    }
+
+    /**
+     * 회계 분개 id 기반 접근 검증 (세션 테넌트 범위).
+     *
+     * @param session        HTTP 세션
+     * @param journalEntryId 분개 ID
+     * @return 테넌트 범위로 조회한 분개
+     * @throws UnauthorizedException 로그인 사용자가 없을 때
+     * @throws AccessDeniedException 세션 테넌트에 분개가 없을 때
+     */
+    @Transactional(readOnly = true)
+    public AccountingEntry requireJournalEntryAccess(HttpSession session, Long journalEntryId) {
+        return loadInCallerTenant(session, "journalEntryId", journalEntryId,
+            tenantId -> accountingEntryRepository.findByTenantIdAndId(tenantId, journalEntryId));
+    }
+
+    /**
+     * 원장 계정 id 기반 접근 검증 (세션 테넌트 범위).
+     *
+     * @param session   HTTP 세션
+     * @param accountId 계정 ID
+     * @return 테넌트 범위로 조회한 계정
+     * @throws UnauthorizedException 로그인 사용자가 없을 때
+     * @throws AccessDeniedException 세션 테넌트에 계정이 없을 때
+     */
+    @Transactional(readOnly = true)
+    public Account requireLedgerAccountAccess(HttpSession session, Long accountId) {
+        return loadInCallerTenant(session, "accountId", accountId,
+            tenantId -> accountRepository.findByTenantIdAndId(tenantId, accountId));
+    }
+
+    /**
+     * 매핑 id 기반 회계 자원(할인 회계 등) 접근 검증 (세션 테넌트 범위).
+     *
+     * @param session   HTTP 세션
+     * @param mappingId 매핑 ID
+     * @return 테넌트 범위로 조회한 매핑
+     * @throws UnauthorizedException 로그인 사용자가 없을 때
+     * @throws AccessDeniedException 세션 테넌트에 매핑이 없을 때
+     */
+    @Transactional(readOnly = true)
+    public ConsultantClientMapping requireMappingAccountingAccess(HttpSession session, Long mappingId) {
+        return loadInCallerTenant(session, "mappingId", mappingId,
+            tenantId -> mappingRepository.findByTenantIdAndId(tenantId, mappingId));
     }
 
     /**

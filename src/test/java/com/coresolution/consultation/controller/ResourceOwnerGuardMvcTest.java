@@ -212,7 +212,10 @@ class ResourceOwnerGuardMvcTest {
             mock(com.coresolution.consultation.repository.RecurringExpenseRepository.class),
             mock(com.coresolution.consultation.repository.ConsultantSalaryProfileRepository.class),
             mock(com.coresolution.consultation.repository.SalaryCalculationRepository.class),
-            mock(com.coresolution.core.repository.ErdDiagramRepository.class));
+            mock(com.coresolution.core.repository.ErdDiagramRepository.class),
+            mock(com.coresolution.consultation.repository.erp.accounting.AccountingEntryRepository.class),
+            mock(com.coresolution.consultation.repository.AccountRepository.class),
+            mock(com.coresolution.consultation.repository.ConsultantClientMappingRepository.class));
         Object[] provided = {clientGuard, ownerGuard, ingestService, reportService, statsService,
             psychReportRepository, psychDocumentRepository, ratingService, emotionAnalysisService,
             availabilityService, environment};

@@ -11,7 +11,6 @@ on:
   pull_request:
     paths:
       - 'database/schema/procedures_standardized/**'
-      - 'database/schema/procedures_flyway_dev_sync/**'
       - 'scripts/automation/deployment/**'
       - 'scripts/database/sync/**'
       - 'src/main/resources/db/migration/**'
@@ -32,7 +31,6 @@ on:
     branches: [main, develop, 'deploy/**']
     paths:
       - 'database/schema/procedures_standardized/**'
-      - 'database/schema/procedures_flyway_dev_sync/**'
       - 'scripts/automation/deployment/**'
       - 'scripts/database/sync/**'
       - 'src/main/resources/db/migration/**'
@@ -104,7 +102,7 @@ jobs:
           docker logs mg-proc-mysql | tail -50
           exit 1
 
-      - name: Dev-sync procedure SQL matches latest Flyway definition
+      - name: Flyway-owned standard procedure SQL matches latest Flyway definition
         run: bash scripts/database/sync/flyway-procedure-extract.sh check
 
       - name: Staging CREATE + safe-replace for every deploy SQL
@@ -113,11 +111,8 @@ jobs:
       - name: Nightly prod-to-dev copy re-applies repo routines
         run: bash scripts/database/sync/prod-to-dev-daily.mysql.test.sh
 
-      - name: Dev-only Flyway procedure re-apply tests
-        run: |
-          set -euo pipefail
-          bash scripts/database/sync/flyway-procedure-extract.test.sh
-          bash scripts/database/sync/apply-flyway-procedures-dev.test.sh
+      - name: Flyway-owned procedure extract tests
+        run: bash scripts/database/sync/flyway-procedure-extract.test.sh
 
       - name: Procedure deploy shell tests
         run: |

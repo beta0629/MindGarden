@@ -184,7 +184,8 @@ const ConsultationLogModal = ({
   scheduleData,
   onSave,
   recordId,
-  isAdmin = false
+  isAdmin = false,
+  routeLeaveGuard = false
 }) => {
   const { t } = useTranslation();
   const { user } = useSession();
@@ -437,10 +438,10 @@ const ConsultationLogModal = ({
     onConflictDetected
   });
 
-  // 새로고침·탭 닫기 확인 (모달은 라우트가 아니므로 beforeunload 만)
-  useUnsavedChangesGuard({
+  // 새로고침·탭 닫기 확인. 전체화면 라우트(routeLeaveGuard)로 띄울 때만 라우트 이동도 확인한다.
+  const { blocker: leaveBlocker } = useUnsavedChangesGuard({
     when: isOpen && (contentDirtyRef.current || memoDirty),
-    enableRouteBlocker: false
+    enableRouteBlocker: routeLeaveGuard
   });
 
   useEffect(() => {
@@ -1141,6 +1142,8 @@ const ConsultationLogModal = ({
         contentDirtyRef.current = false;
         await discardDraft();
         setConsultationRecord(record);
+        // 같은 화면에서 다시 저장하면 새 일지를 또 만들지 않고 방금 저장한 일지를 수정한다.
+        setIsEditMode(true);
         if (record.sessionNumber != null) {
           setFormData(prev => ({
             ...prev,
@@ -1418,6 +1421,16 @@ const ConsultationLogModal = ({
       type="warning"
       onConfirm={finalizeCloseWithDraftFlush}
       onClose={() => setCloseWithoutSaveConfirmOpen(false)}
+    />
+    <ConfirmModal
+      isOpen={leaveBlocker?.state === 'blocked'}
+      title={CONSULTATION_LOG_AUTOSAVE_STRINGS.LEAVE_TITLE}
+      message={toDisplayString(CONSULTATION_LOG_AUTOSAVE_STRINGS.LEAVE_MESSAGE, '')}
+      confirmText={CONSULTATION_LOG_AUTOSAVE_STRINGS.LEAVE_CONFIRM}
+      cancelText={CONSULTATION_LOG_AUTOSAVE_STRINGS.LEAVE_CANCEL}
+      type="warning"
+      onConfirm={() => leaveBlocker?.proceed?.()}
+      onClose={() => leaveBlocker?.reset?.()}
     />
     <UnifiedModal
       isOpen={isOpen}

@@ -1,1318 +1,173 @@
-import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useSession } from '../../contexts/SessionContext';
-import { apiGet, apiPost, apiPut } from '../../utils/ajax';
-import notificationManager from '../../utils/notification';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import { ContentArea, ContentHeader } from '../dashboard-v2/content';
-import { CONSULTANT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
-import { getUserStatusKoreanNameSync } from '../../utils/codeHelper';
-import SafeText from '../common/SafeText';
-import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import MGButton from '../common/MGButton';
-import PsychClientContextSummaryBlock from '../psych-context/organisms/PsychClientContextSummaryBlock';
-import { useTranslation } from 'react-i18next';
-import { isInstitutionLinkConsultationLogContext } from '../../utils/consultationLogInstitutionContext';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
+import ConsultationLogModal from './ConsultationLogModal';
 import {
-  buildConsultationLogFormMessages,
-  validateConsultationLogForm
-} from '../../utils/consultationLogFormValidation';
+  fetchScheduleMetaForMissingLog,
+  normalizeMissingLogScheduleId
+} from '../../utils/missingConsultationLogNavigation';
+import { CONSULTANT_DASHBOARD_ROUTES } from '../../constants/consultantDashboardRoutes';
+import { HTTP_STATUS } from '../../constants/magicNumbers';
 import {
-  resolveSessionNumberFromSchedule,
-  shouldBlockSaveForMissingSessionNumber
-} from '../../utils/consultationRecordSessionNumber';
-import ConfirmModal from '../common/ConfirmModal';
+  CONSULTATION_RECORD_SCREEN_STATUS,
+  CONSULTATION_RECORD_SCREEN_STRINGS
+} from '../../constants/consultationRecordScreenStrings';
 import { toDisplayString } from '../../utils/safeDisplay';
-import {
-  CONSULTATION_LOG_AUTOSAVE_STRINGS,
-  formatConsultationLogAutosaveString
-} from '../../constants/consultationLogAutosaveStrings';
-import {
-  DRAFT_AUTOSAVE_STATUS,
-  formatDraftSavedAtLabel,
-  useConsultationLogDraftAutosave
-} from '../../hooks/useConsultationLogDraftAutosave';
-import { useUnsavedChangesGuard } from '../../hooks/useUnsavedChangesGuard';
 
-// T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
-const API_COMMON_CODES = '/api/v1/common-codes?codeGroup=PRIORITY';
-const API_COMMON_CODES_2 = '/api/v1/common-codes?codeGroup=COMPLETION_STATUS';
-const API_SCHEDULES = '/api/v1/schedules?userId=0&userRole=ADMIN';
-
-
-/**
- * 상담일지 작성 화면
-/**
- * 스케줄 시간에 상담사가 내담자 정보를 보면서 상담일지를 작성할 수 있는 종합 화면
- */
 const CONSULTATION_RECORD_TITLE_ID = 'consultation-record-screen-title';
 
+/** react-router 가 첫 진입(직접 URL) 위치에 붙이는 key — 이 경우 뒤로 갈 이력이 없다 */
+const INITIAL_LOCATION_KEY = 'default';
+
+const STATUS_SUBTITLE = {
+  [CONSULTATION_RECORD_SCREEN_STATUS.LOADING]: CONSULTATION_RECORD_SCREEN_STRINGS.SUBTITLE_LOADING,
+  [CONSULTATION_RECORD_SCREEN_STATUS.READY]: CONSULTATION_RECORD_SCREEN_STRINGS.SUBTITLE_READY,
+  [CONSULTATION_RECORD_SCREEN_STATUS.NOT_FOUND]: CONSULTATION_RECORD_SCREEN_STRINGS.NOT_FOUND,
+  [CONSULTATION_RECORD_SCREEN_STATUS.FORBIDDEN]: CONSULTATION_RECORD_SCREEN_STRINGS.FORBIDDEN,
+  [CONSULTATION_RECORD_SCREEN_STATUS.ERROR]: CONSULTATION_RECORD_SCREEN_STRINGS.LOAD_FAILED
+};
+
+/**
+ * 일정 조회 오류를 화면 상태로 바꾼다.
+ *
+ * @param {unknown} error StandardizedApi 오류
+ * @returns {string} CONSULTATION_RECORD_SCREEN_STATUS 값
+ */
+const resolveLoadErrorStatus = (error) => {
+  const status = error?.status;
+  if (status === HTTP_STATUS.FORBIDDEN) return CONSULTATION_RECORD_SCREEN_STATUS.FORBIDDEN;
+  if (status === HTTP_STATUS.NOT_FOUND) return CONSULTATION_RECORD_SCREEN_STATUS.NOT_FOUND;
+  return CONSULTATION_RECORD_SCREEN_STATUS.ERROR;
+};
+
+/**
+ * 상담일지 작성 전체화면 (/consultant/consultation-record/:consultationId).
+ *
+ * <p>경로의 일정 id 로 일정을 불러온 뒤, 대시보드·일정 화면과 같은 {@link ConsultationLogModal} 을 띄운다.
+ * 내담자 프로필·기존 일지 조회, 필수값 검증, 저장/수정 API, 서버 초안 자동저장·복구 확인·덮어쓰기 확인,
+ * 미저장 이탈 확인은 모두 모달이 담당한다(화면별 중복 구현 금지).</p>
+ *
+ * @returns {JSX.Element}
+ */
 const ConsultationRecordScreen = () => {
   const { t } = useTranslation();
-  const { consultationId: scheduleId } = useParams();
+  const { consultationId: routeScheduleId } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useSession();
-  
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [consultation, setConsultation] = useState(null);
-  const [client, setClient] = useState(null);
-  const [consultationRecord, setConsultationRecord] = useState(null);
-  const [isEditMode, setIsEditMode] = useState(false);
-  const [priorityOptions, setPriorityOptions] = useState([]);
-  const [loadingCodes, setLoadingCodes] = useState(false);
-  const [completionStatusOptions, setCompletionStatusOptions] = useState([]);
-  const [loadingCompletionCodes, setLoadingCompletionCodes] = useState(false);
-  const loadPriorityCodes = useCallback(async() => {
-    try {
-      setLoadingCodes(true);
-      const response = await apiGet(API_COMMON_CODES);
-      if (response && response.length > 0) {
-        const options = response.map(code => ({
-          value: code.codeValue,
-          label: code.codeLabel,
-          icon: null,
-          color: code.colorCode,
-          description: code.codeDescription
-        }));
-        setPriorityOptions(options);
-      }
-    } catch (error) {
-      console.error('우선순위 코드 로드 실패:', error);
-      setPriorityOptions([
-        { value: 'LOW', label: '낮음', color: 'var(--mg-success-500)', description: '낮은 우선순위' },
-        { value: 'MEDIUM', label: '보통', color: 'var(--mg-warning-500)', description: '보통 우선순위' },
-        { value: 'HIGH', label: '높음', color: 'var(--mg-warning-600)', description: '높은 우선순위' },
-        { value: 'URGENT', label: '긴급', color: 'var(--mg-error-500)', description: '긴급 우선순위' },
-        { value: 'CRITICAL', label: '위험', color: 'var(--mg-color-secondary-main)', description: '치명적 위험' }
-      ]);
-    } finally {
-      setLoadingCodes(false);
-    }
-  }, []);
-  
-  const [formData, setFormData] = useState({
-    sessionDate: '',
-    sessionNumber: null,
-    clientCondition: '',
-    mainIssues: '',
-    interventionMethods: '',
-    clientResponse: '',
-    nextSessionPlan: '',
-    homeworkAssigned: '',
-    homeworkDueDate: '',
-    riskAssessment: 'LOW',
-    riskFactors: '',
-    emergencyResponsePlan: '',
-    progressEvaluation: '',
-    progressScore: 50,
-    goalAchievement: 'MEDIUM',
-    goalAchievementDetails: '',
-    consultantObservations: '',
-    consultantAssessment: '',
-    specialConsiderations: '',
-    medicalInformation: '',
-    medicationInfo: '',
-    familyRelationships: '',
-    socialSupport: '',
-    environmentalFactors: '',
-    sessionDurationMinutes: 60,
-    isSessionCompleted: false,
-    incompletionReason: '',
-    nextSessionDate: '',
-    followUpActions: '',
-    followUpDueDate: ''
-  });
+  const userId = user?.id;
+  const userRole = user?.role;
 
-  const riskLevels = priorityOptions;
-
-  const goalAchievements = [
-    { value: 'LOW', label: '낮음', color: 'var(--mg-error-500)' },
-    { value: 'MEDIUM', label: '보통', color: 'var(--mg-warning-500)' },
-    { value: 'HIGH', label: '높음', color: 'var(--mg-success-500)' },
-    { value: 'EXCELLENT', label: '우수', color: 'var(--mg-primary-500)' }
-  ];
-
-  const styles = {
-    container: {
-      minHeight: '100vh',
-      backgroundColor: 'var(--mg-gray-100)',
-      padding: '20px'
-    },
-    header: {
-      backgroundColor: 'var(--mg-white, var(--mg-white))',
-      borderRadius: '12px',
-      padding: '24px',
-      marginBottom: '20px',
-      boxShadow: '0 2px 8px var(--mg-shadow-light)',
-      border: '1px solid var(--mg-gray-200, var(--mg-color-border-main))'
-    },
-    headerTitle: {
-      fontSize: 'var(--font-size-xxl)',
-      fontWeight: '700',
-      color: 'var(--mg-gray-800, var(--mg-color-text-main))',
-      marginBottom: '8px',
-      display: 'flex',
-      alignItems: 'center',
-      gap: '12px'
-    },
-    headerSubtitle: {
-      fontSize: 'var(--font-size-base)',
-      color: 'var(--mg-secondary-500)',
-      marginBottom: '20px'
-    },
-    clientInfoCard: {
-      backgroundColor: 'var(--mg-white, var(--mg-white))',
-      borderRadius: '12px',
-      padding: '24px',
-      marginBottom: '20px',
-      boxShadow: '0 2px 8px var(--mg-shadow-light)',
-      border: '1px solid var(--mg-gray-200, var(--mg-color-border-main))'
-    },
-    clientInfoTitle: {
-      fontSize: 'var(--font-size-xl)',
-      fontWeight: '600',
-      color: 'var(--mg-gray-800, var(--mg-color-text-main))',
-      marginBottom: '16px',
-      display: 'flex',
-      alignItems: 'center',
-      gap: '8px'
-    },
-    clientInfoGrid: {
-      display: 'grid',
-      gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-      gap: '16px'
-    },
-    clientInfoItem: {
-      display: 'flex',
-      flexDirection: 'column',
-      gap: '4px'
-    },
-    clientInfoLabel: {
-      fontSize: 'var(--font-size-sm)',
-      fontWeight: '600',
-      color: 'var(--mg-secondary-500)',
-      textTransform: 'uppercase',
-      letterSpacing: '0.5px'
-    },
-    clientInfoValue: {
-      fontSize: 'var(--font-size-base)',
-      color: 'var(--mg-gray-800, var(--mg-color-text-main))',
-      fontWeight: '500'
-    },
-    formCard: {
-      backgroundColor: 'var(--mg-white, var(--mg-white))',
-      borderRadius: '12px',
-      padding: '24px',
-      boxShadow: '0 2px 8px var(--mg-shadow-light)',
-      border: '1px solid var(--mg-gray-200, var(--mg-color-border-main))'
-    },
-    formTitle: {
-      fontSize: 'var(--font-size-xl)',
-      fontWeight: '600',
-      color: 'var(--mg-gray-800, var(--mg-color-text-main))',
-      marginBottom: '20px',
-      display: 'flex',
-      alignItems: 'center',
-      gap: '8px'
-    },
-    formGrid: {
-      display: 'grid',
-      gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))',
-      gap: '20px'
-    },
-    formGroup: {
-      display: 'flex',
-      flexDirection: 'column',
-      gap: '8px'
-    },
-    formLabel: {
-      fontSize: 'var(--font-size-sm)',
-      fontWeight: '600',
-      color: 'var(--mg-color-text-secondary)',
-      marginBottom: '4px'
-    },
-    formInput: {
-      padding: '12px 16px',
-      border: '2px solid var(--mg-color-border-main)',
-      borderRadius: '8px',
-      fontSize: 'var(--font-size-sm)',
-      transition: 'all 0.2s ease',
-      backgroundColor: 'var(--mg-white)'
-    },
-    formTextarea: {
-      padding: '12px 16px',
-      border: '2px solid var(--mg-color-border-main)',
-      borderRadius: '8px',
-      fontSize: 'var(--font-size-sm)',
-      minHeight: '100px',
-      resize: 'vertical',
-      fontFamily: 'inherit',
-      transition: 'all 0.2s ease',
-      backgroundColor: 'var(--mg-white)'
-    },
-    formSelect: {
-      padding: '12px 16px',
-      border: '2px solid var(--mg-color-border-main)',
-      borderRadius: '8px',
-      fontSize: 'var(--font-size-sm)',
-      backgroundColor: 'var(--mg-white, var(--mg-white))',
-      cursor: 'pointer',
-      transition: 'all 0.2s ease'
-    },
-    formInputFocus: {
-      borderColor: 'var(--mg-primary-500)',
-      boxShadow: '0 0 0 3px var(--mg-primary-100)'
-    },
-    buttonGroup: {
-      display: 'flex',
-      gap: '12px',
-      justifyContent: 'flex-end',
-      marginTop: '24px',
-      paddingTop: '20px',
-      borderTop: '1px solid var(--mg-color-border-main)'
-    },
-    button: {
-      padding: '12px 24px',
-      borderRadius: '8px',
-      fontSize: 'var(--font-size-sm)',
-      fontWeight: '600',
-      cursor: 'pointer',
-      transition: 'all 0.2s ease',
-      border: 'none',
-      display: 'flex',
-      alignItems: 'center',
-      gap: '8px'
-    },
-    primaryButton: {
-      backgroundColor: 'var(--mg-primary-500)',
-      color: 'var(--mg-white)'
-    },
-    secondaryButton: {
-      backgroundColor: 'var(--mg-secondary-500)',
-      color: 'var(--mg-white)'
-    },
-    dangerButton: {
-      backgroundColor: 'var(--mg-error-500)',
-      color: 'var(--mg-white)'
-    },
-    statusBadge: {
-      padding: '4px 12px',
-      borderRadius: '20px',
-      fontSize: 'var(--font-size-xs)',
-      fontWeight: '600',
-      textTransform: 'uppercase',
-      letterSpacing: '0.5px'
-    },
-    progressBar: {
-      width: '100%',
-      height: '8px',
-      backgroundColor: 'var(--mg-color-border-main)',
-      borderRadius: '4px',
-      overflow: 'hidden',
-      marginTop: '8px'
-    },
-    progressFill: {
-      height: '100%',
-      backgroundColor: 'var(--mg-primary-500)',
-      transition: 'width 0.3s ease'
-    },
-    loadingOverlay: {
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      backgroundColor: 'var(--mg-overlay)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      zIndex: 9999
-    }
-  };
-
-  const loadCompletionStatusCodes = useCallback(async() => {
-    try {
-      setLoadingCompletionCodes(true);
-      const response = await apiGet(API_COMMON_CODES_2);
-      if (response && response.length > 0) {
-        setCompletionStatusOptions(response.map(code => ({
-          // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-          value: code.codeValue === 'COMPLETED',
-          label: code.codeLabel,
-          icon: null,
-          color: code.colorCode,
-          description: code.codeDescription
-        })));
-      }
-    } catch (error) {
-      console.error('완료 상태 코드 로드 실패:', error);
-      setCompletionStatusOptions([
-        { value: true, label: '완료', color: 'var(--mg-success-500)', description: '작업 완료' },
-        { value: false, label: '미완료', color: 'var(--mg-error-500)', description: '작업 미완료' }
-      ]);
-    } finally {
-      setLoadingCompletionCodes(false);
-    }
-  }, []);
+  const [loadStatus, setLoadStatus] = useState(CONSULTATION_RECORD_SCREEN_STATUS.LOADING);
+  const [schedule, setSchedule] = useState(null);
+  const [reloadToken, setReloadToken] = useState(0);
+  const loadSeqRef = useRef(0);
 
   useEffect(() => {
-    loadData();
-    loadPriorityCodes();
-    loadCompletionStatusCodes();
-  }, [scheduleId, loadPriorityCodes, loadCompletionStatusCodes]);
-
-  const loadData = async() => {
-    try {
-      setLoading(true);
-      
-      const scheduleResponse = await apiGet(API_SCHEDULES);
-      if (scheduleResponse.success && scheduleResponse.data.length > 0) {
-        const scheduleData = scheduleResponse.data[0];
-        const consultationData = {
-          id: scheduleData.id,
-          clientId: scheduleData.clientId,
-          consultantId: scheduleData.consultantId,
-          startTime: scheduleData.startTime,
-          endTime: scheduleData.endTime,
-          consultationType: scheduleData.consultationType,
-          status: scheduleData.status,
-          title: scheduleData.title,
-          notes: scheduleData.notes
-        };
-        setConsultation(consultationData);
-        
-        if (consultationData.clientId) {
-          try {
-            const clientResponse = await apiGet(`/api/v1/admin/clients/with-stats/${consultationData.clientId}`);
-            if (clientResponse && clientResponse.data && clientResponse.data.client) {
-              setClient(clientResponse.data.client);
-            }
-          } catch (err) {
-            const fallback = await apiGet(`/api/admin/users`);
-            if (fallback && fallback.success && fallback.data) {
-              const clientData = fallback.data.find(u => u.id === consultationData.clientId);
-              if (clientData) setClient(clientData);
-            }
-          }
-        }
-        
-        try {
-          const recordResponse = await apiGet(`/api/consultants/${user.id}/consultation-records?consultationId=${scheduleId}`);
-          if (recordResponse.success && recordResponse.data.length > 0) {
-            const record = recordResponse.data[0];
-            setConsultationRecord(record);
-            setIsEditMode(true);
-            
-            setFormData({
-              sessionDate: record.sessionDate || consultation?.startTime?.split('T')[0] || '',
-              sessionNumber: record.sessionNumber != null
-                ? Number(record.sessionNumber)
-                : (scheduleData.sessionSequence != null
-                  ? Number(scheduleData.sessionSequence)
-                  : null),
-              clientCondition: record.clientCondition || '',
-              mainIssues: record.mainIssues || '',
-              interventionMethods: record.interventionMethods || '',
-              clientResponse: record.clientResponse || '',
-              nextSessionPlan: record.nextSessionPlan || '',
-              homeworkAssigned: record.homeworkAssigned || '',
-              homeworkDueDate: record.homeworkDueDate || '',
-              riskAssessment: record.riskAssessment || 'LOW',
-              riskFactors: record.riskFactors || '',
-              emergencyResponsePlan: record.emergencyResponsePlan || '',
-              progressEvaluation: record.progressEvaluation || '',
-              progressScore: record.progressScore || 50,
-              goalAchievement: record.goalAchievement || 'MEDIUM',
-              goalAchievementDetails: record.goalAchievementDetails || '',
-              consultantObservations: record.consultantObservations || '',
-              consultantAssessment: record.consultantAssessment || '',
-              specialConsiderations: record.specialConsiderations || '',
-              medicalInformation: record.medicalInformation || '',
-              medicationInfo: record.medicationInfo || '',
-              familyRelationships: record.familyRelationships || '',
-              socialSupport: record.socialSupport || '',
-              environmentalFactors: record.environmentalFactors || '',
-              sessionDurationMinutes: record.sessionDurationMinutes || 60,
-              isSessionCompleted: record.isSessionCompleted || false,
-              incompletionReason: record.incompletionReason || '',
-              nextSessionDate: record.nextSessionDate || '',
-              followUpActions: record.followUpActions || '',
-              followUpDueDate: record.followUpDueDate || ''
-            });
-          } else {
-            setFormData(prev => ({
-              ...prev,
-              sessionDate: consultation?.startTime?.split('T')[0] || new Date().toISOString().split('T')[0],
-              sessionNumber: scheduleData.sessionSequence != null
-                ? Number(scheduleData.sessionSequence)
-                : (scheduleData.sessionNumber != null ? Number(scheduleData.sessionNumber) : null),
-              sessionDurationMinutes: 60,
-              isSessionCompleted: true
-            }));
-          }
-        } catch (error) {
-          console.log('기존 상담일지 없음, 새로 작성');
-        }
-      }
-    } catch (error) {
-      console.error('데이터 로드 오류:', error);
-      notificationManager.show('데이터를 불러오는 중 오류가 발생했습니다.', 'error');
-    } finally {
-      setLoading(false);
+    if (userId == null || !userRole) {
+      return undefined;
     }
-  };
-
-  const draftSnapshotRef = useRef({ formData, memoDraft: '' });
-  draftSnapshotRef.current = { formData, memoDraft: '' };
-  const contentDirtyRef = useRef(false);
-  const restoreConfirmedRef = useRef(false);
-  const overwriteConfirmedRef = useRef(false);
-  const conflictResolvedRef = useRef(false);
-  const [restoreDraftConfirmOpen, setRestoreDraftConfirmOpen] = useState(false);
-  /** 불러오기 확정 전 "작성 중 내용 덮어쓰기" 2차 확인 */
-  const [restoreOverwriteConfirmOpen, setRestoreOverwriteConfirmOpen] = useState(false);
-  const [pendingRestoreDraft, setPendingRestoreDraft] = useState(null);
-  const [conflictConfirmOpen, setConflictConfirmOpen] = useState(false);
-
-  const tenantIdStr = useMemo(() => {
-    const raw = user?.tenantId ?? user?.tenant_id;
-    return raw == null || String(raw).trim() === '' ? '' : String(raw).trim();
-  }, [user?.tenantId, user?.tenant_id]);
-
-  const draftLegacyScope = useMemo(
-    () => (scheduleId != null && String(scheduleId).trim() !== ''
-      ? { type: 'schedule', id: String(scheduleId).trim() }
-      : null),
-    [scheduleId]
-  );
-
-  const onRestoreCandidate = useCallback((candidate) => {
-    setPendingRestoreDraft(candidate);
-    setRestoreDraftConfirmOpen(true);
-  }, []);
-
-  const onConflictDetected = useCallback(() => {
-    setConflictConfirmOpen(true);
-  }, []);
-
-  const {
-    status: draftStatus,
-    savedAtLabel: draftSavedAtLabel,
-    notifyDirty,
-    discardDraft,
-    resolveRestoreCandidate,
-    loadLatestFromServer,
-    keepMineOnConflict
-  } = useConsultationLogDraftAutosave({
-    enabled: !loading,
-    tenantId: tenantIdStr,
-    userId: user?.id,
-    consultationId: scheduleId,
-    consultantId: user?.id,
-    legacyScope: draftLegacyScope,
-    snapshotRef: draftSnapshotRef,
-    dirtyRef: contentDirtyRef,
-    recordUpdatedAt: consultationRecord?.updatedAt,
-    onRestoreCandidate,
-    onConflictDetected
-  });
-
-  // 미저장 변경: 라우트 이동 차단 + 새로고침·닫기 확인
-  const { blocker: leaveBlocker } = useUnsavedChangesGuard({ when: contentDirtyRef.current });
-
-  const applyRestoredDraftSnapshot = useCallback((snapshot) => {
-    if (!snapshot || typeof snapshot !== 'object') return;
-    if (snapshot.formData && typeof snapshot.formData === 'object') {
-      setFormData(snapshot.formData);
+    const numericScheduleId = normalizeMissingLogScheduleId(routeScheduleId);
+    if (numericScheduleId == null) {
+      setSchedule(null);
+      setLoadStatus(CONSULTATION_RECORD_SCREEN_STATUS.NOT_FOUND);
+      return undefined;
     }
-    contentDirtyRef.current = false;
-  }, []);
-
-  /** "임시저장된 내용이 있어요(2:03). 불러올까요?" — KST */
-  const restoreDraftMessage = useMemo(() => {
-    const savedAt = pendingRestoreDraft?.savedAt;
-    if (!Number.isFinite(savedAt)) {
-      return CONSULTATION_LOG_AUTOSAVE_STRINGS.RESTORE_MESSAGE;
-    }
-    return formatConsultationLogAutosaveString(
-      CONSULTATION_LOG_AUTOSAVE_STRINGS.RESTORE_MESSAGE_WITH_TIME,
-      formatDraftSavedAtLabel(savedAt)
-    );
-  }, [pendingRestoreDraft?.savedAt]);
-
-  /** "저장 중… / 2:03 임시저장됨 / 저장 실패(재시도 중)" — KST */
-  const autosaveStatusText = useMemo(() => {
-    if (saving) return CONSULTATION_LOG_AUTOSAVE_STRINGS.STATUS_FINAL_SAVING;
-    if (!tenantIdStr) return CONSULTATION_LOG_AUTOSAVE_STRINGS.STATUS_DRAFT_UNAVAILABLE;
-    if (draftStatus === DRAFT_AUTOSAVE_STATUS.SAVING) {
-      return CONSULTATION_LOG_AUTOSAVE_STRINGS.STATUS_DRAFT_SAVING;
-    }
-    if (draftStatus === DRAFT_AUTOSAVE_STATUS.RETRYING) {
-      return CONSULTATION_LOG_AUTOSAVE_STRINGS.STATUS_DRAFT_RETRYING;
-    }
-    if (draftStatus === DRAFT_AUTOSAVE_STATUS.FAILED) {
-      return CONSULTATION_LOG_AUTOSAVE_STRINGS.STATUS_DRAFT_FAILED;
-    }
-    if (draftStatus === DRAFT_AUTOSAVE_STATUS.SAVED && draftSavedAtLabel) {
-      return formatConsultationLogAutosaveString(
-        CONSULTATION_LOG_AUTOSAVE_STRINGS.STATUS_DRAFT_SAVED_WITH_TIME,
-        draftSavedAtLabel
-      );
-    }
-    return '';
-  }, [saving, tenantIdStr, draftStatus, draftSavedAtLabel]);
-
-  const autosaveStatusIsError = draftStatus === DRAFT_AUTOSAVE_STATUS.FAILED
-    || draftStatus === DRAFT_AUTOSAVE_STATUS.RETRYING;
-
-  const handleInputChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    notifyDirty();
-    setFormData(prev => ({
-      ...prev,
-      [name]: type === 'checkbox' ? checked : value
-    }));
-  };
-
-  const institutionLinkLog = isInstitutionLinkConsultationLogContext(consultation, client);
-
-  const rejectInvalidConsultationLog = () => {
-    const sessionNumber = resolveSessionNumberFromSchedule(consultation) ?? formData.sessionNumber;
-    const messages = buildConsultationLogFormMessages(t);
-    const errors = validateConsultationLogForm({
-      formData,
-      sessionNumber,
-      isEditMode,
-      isInstitutionLinkLog: institutionLinkLog,
-      messages
-    });
-    if (Object.keys(errors).length === 0) {
-      return false;
-    }
-    if (errors.sessionNumber && shouldBlockSaveForMissingSessionNumber(sessionNumber, isEditMode)) {
-      notificationManager.show(errors.sessionNumber, 'error');
-      return true;
-    }
-    notificationManager.show(messages.summary, 'error');
-    return true;
-  };
-
-  const handleSave = async() => {
-    try {
-      if (rejectInvalidConsultationLog()) {
-        return;
-      }
-      setSaving(true);
-      
-      const lockedSessionNumber = resolveSessionNumberFromSchedule(consultation) ?? formData.sessionNumber;
-      const recordData = {
-        ...formData,
-        sessionNumber: lockedSessionNumber == null || lockedSessionNumber === ''
-          ? null
-          : Number(lockedSessionNumber),
-        consultationId: parseInt(scheduleId),
-        clientId: client?.id,
-        consultantId: user.id
-      };
-
-      let response;
-      if (isEditMode && consultationRecord) {
-        response = await apiPut(`/api/consultants/${user.id}/consultation-records/${consultationRecord.id}`, recordData);
-      } else {
-        response = await apiPost(`/api/consultants/${user.id}/consultation-records`, recordData);
-      }
-
-      if (response.success) {
-        notificationManager.show(
-          isEditMode ? '상담일지가 수정되었습니다.' : '상담일지가 저장되었습니다.',
-          'success'
-        );
-        contentDirtyRef.current = false;
-        await discardDraft();
-        setIsEditMode(true);
-        setConsultationRecord(response.data);
-      } else {
-        throw new Error(response.message || '저장에 실패했습니다.');
-      }
-    } catch (error) {
-      console.error('저장 오류:', error);
-      notificationManager.show('저장 중 오류가 발생했습니다.', 'error');
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const handleComplete = async() => {
-    try {
-      if (rejectInvalidConsultationLog()) {
-        return;
-      }
-      setSaving(true);
-      
-      const lockedSessionNumber = resolveSessionNumberFromSchedule(consultation) ?? formData.sessionNumber;
-      const recordData = {
-        ...formData,
-        sessionNumber: lockedSessionNumber == null || lockedSessionNumber === ''
-          ? null
-          : Number(lockedSessionNumber),
-        consultationId: parseInt(scheduleId),
-        clientId: client?.id,
-        consultantId: user.id,
-        isSessionCompleted: true,
-        completionTime: new Date().toISOString()
-      };
-
-      let response;
-      if (isEditMode && consultationRecord) {
-        response = await apiPut(`/api/consultants/${user.id}/consultation-records/${consultationRecord.id}`, recordData);
-      } else {
-        response = await apiPost(`/api/consultants/${user.id}/consultation-records`, recordData);
-      }
-
-      if (response.success) {
-        notificationManager.show('상담일지가 완료되었습니다.', 'success');
-        contentDirtyRef.current = false;
-        await discardDraft();
-
-        navigate(`/consultant/send-message/${scheduleId}`, {
-          state: {
-            client: client,
-            consultation: consultation,
-            consultationRecord: response.data
-          }
+    const seq = loadSeqRef.current + 1;
+    loadSeqRef.current = seq;
+    setSchedule(null);
+    setLoadStatus(CONSULTATION_RECORD_SCREEN_STATUS.LOADING);
+    (async() => {
+      try {
+        const resolved = await fetchScheduleMetaForMissingLog({
+          scheduleId: numericScheduleId,
+          userId,
+          userRole
         });
-      } else {
-        throw new Error(response.message || '완료 처리에 실패했습니다.');
+        if (loadSeqRef.current !== seq) return;
+        if (!resolved) {
+          setLoadStatus(CONSULTATION_RECORD_SCREEN_STATUS.NOT_FOUND);
+          return;
+        }
+        setSchedule(resolved);
+        setLoadStatus(CONSULTATION_RECORD_SCREEN_STATUS.READY);
+      } catch (error) {
+        if (loadSeqRef.current !== seq) return;
+        console.warn('상담일지 화면 — 일정 조회 실패:', error?.status);
+        setLoadStatus(resolveLoadErrorStatus(error));
       }
-    } catch (error) {
-      console.error('완료 처리 오류:', error);
-      notificationManager.show('완료 처리 중 오류가 발생했습니다.', 'error');
-    } finally {
-      setSaving(false);
+    })();
+    return () => {
+      loadSeqRef.current += 1;
+    };
+  }, [routeScheduleId, userId, userRole, reloadToken]);
+
+  const handleLeave = useCallback(() => {
+    if (location.key && location.key !== INITIAL_LOCATION_KEY) {
+      navigate(-1);
+      return;
     }
-  };
+    navigate(CONSULTANT_DASHBOARD_ROUTES.DASHBOARD, { replace: true });
+  }, [location.key, navigate]);
 
-  if (loading) {
-    return (
-      <AdminCommonLayout title={t('common:consultant.ConsultationRecordScreen.t_a0658140')}>
-        <ContentArea ariaLabel="상담일지 작성 로딩">
-          <div className="consultation-record-screen-loading">
-            <div className="mg-loading">{t('common:consultant.ConsultationRecordScreen.t_f596b561')}</div>
-          </div>
-        </ContentArea>
-      </AdminCommonLayout>
-    );
-  }
+  const handleRetry = useCallback(() => {
+    setReloadToken((prev) => prev + 1);
+  }, []);
 
-  if (!consultation || !client) {
-    return (
-      <AdminCommonLayout title={t('common:consultant.ConsultationRecordScreen.t_a0658140')}>
-        <ContentArea ariaLabel="상담일지 작성">
-          <ContentHeader
-            title={t('common:consultant.ConsultationRecordScreen.t_a0658140')}
-            subtitle="상담 정보를 불러올 수 없습니다."
-            titleId={CONSULTATION_RECORD_TITLE_ID}
-          />
-        </ContentArea>
-      </AdminCommonLayout>
-    );
-  }
+  const title = t('common:consultant.ConsultationRecordScreen.t_a0658140');
+  const isFailure = loadStatus === CONSULTATION_RECORD_SCREEN_STATUS.NOT_FOUND
+    || loadStatus === CONSULTATION_RECORD_SCREEN_STATUS.FORBIDDEN
+    || loadStatus === CONSULTATION_RECORD_SCREEN_STATUS.ERROR;
 
   return (
-    <AdminCommonLayout title={t('common:consultant.ConsultationRecordScreen.t_a0658140')}>
-      <ContentArea ariaLabel="상담일지 작성">
+    <AdminCommonLayout title={title}>
+      <ContentArea ariaLabel={title}>
         <ContentHeader
-          title={t('common:consultant.ConsultationRecordScreen.t_a0658140')}
-          subtitle="내담자 정보와 세션 내용을 기록합니다."
+          title={title}
+          subtitle={toDisplayString(STATUS_SUBTITLE[loadStatus], '')}
           titleId={CONSULTATION_RECORD_TITLE_ID}
+          actions={isFailure ? (
+            <>
+              {loadStatus === CONSULTATION_RECORD_SCREEN_STATUS.ERROR ? (
+                <MGButton
+                  type="button"
+                  variant="primary"
+                  className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: false })}
+                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                  onClick={handleRetry}
+                >
+                  {CONSULTATION_RECORD_SCREEN_STRINGS.RETRY}
+                </MGButton>
+              ) : null}
+              <MGButton
+                type="button"
+                variant="secondary"
+                className={buildErpMgButtonClassName({ variant: 'secondary', size: 'md', loading: false })}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                onClick={handleLeave}
+              >
+                {CONSULTATION_RECORD_SCREEN_STRINGS.BACK}
+              </MGButton>
+            </>
+          ) : null}
         />
-
-        {autosaveStatusText ? (
-          <p
-            className={[
-              'mg-v2-text-sm',
-              autosaveStatusIsError ? 'mg-v2-text-danger' : 'mg-v2-text-secondary'
-            ].join(' ')}
-            role="status"
-            aria-live="polite"
-          >
-            {toDisplayString(autosaveStatusText, '')}
-          </p>
+        {loadStatus === CONSULTATION_RECORD_SCREEN_STATUS.LOADING ? (
+          <div className="consultation-record-screen-loading" role="status" aria-live="polite">
+            <div className="mg-loading">{t('common:consultant.ConsultationRecordScreen.t_f596b561')}</div>
+          </div>
         ) : null}
-
-        <ConfirmModal
-          isOpen={restoreDraftConfirmOpen}
-          title={CONSULTATION_LOG_AUTOSAVE_STRINGS.RESTORE_TITLE}
-          message={toDisplayString(restoreDraftMessage, '')}
-          confirmText={CONSULTATION_LOG_AUTOSAVE_STRINGS.RESTORE_CONFIRM}
-          cancelText={CONSULTATION_LOG_AUTOSAVE_STRINGS.RESTORE_DISCARD}
-          type="default"
-          onConfirm={() => {
-            restoreConfirmedRef.current = true;
-            setRestoreDraftConfirmOpen(false);
-            // 화면에 입력된 내용을 덮어쓰게 되므로 한 번 더 확인한다.
-            setRestoreOverwriteConfirmOpen(true);
-          }}
-          onClose={() => {
-            if (restoreConfirmedRef.current) {
-              restoreConfirmedRef.current = false;
-              return;
-            }
-            void discardDraft();
-            setPendingRestoreDraft(null);
-            setRestoreDraftConfirmOpen(false);
-          }}
+        <ConsultationLogModal
+          isOpen={loadStatus === CONSULTATION_RECORD_SCREEN_STATUS.READY && schedule != null}
+          scheduleData={schedule}
+          onClose={handleLeave}
+          isAdmin={false}
+          routeLeaveGuard
         />
-        <ConfirmModal
-          isOpen={restoreOverwriteConfirmOpen}
-          title={CONSULTATION_LOG_AUTOSAVE_STRINGS.RESTORE_OVERWRITE_TITLE}
-          message={toDisplayString(CONSULTATION_LOG_AUTOSAVE_STRINGS.RESTORE_OVERWRITE_MESSAGE, '')}
-          confirmText={CONSULTATION_LOG_AUTOSAVE_STRINGS.RESTORE_OVERWRITE_CONFIRM}
-          cancelText={CONSULTATION_LOG_AUTOSAVE_STRINGS.RESTORE_OVERWRITE_CANCEL}
-          type="warning"
-          onConfirm={() => {
-            overwriteConfirmedRef.current = true;
-            applyRestoredDraftSnapshot(pendingRestoreDraft?.snapshot);
-            resolveRestoreCandidate();
-            setPendingRestoreDraft(null);
-            setRestoreOverwriteConfirmOpen(false);
-            restoreConfirmedRef.current = false;
-          }}
-          onClose={() => {
-            if (overwriteConfirmedRef.current) {
-              overwriteConfirmedRef.current = false;
-              return;
-            }
-            // 덮어쓰기 취소는 복구·버리기 중 어느 쪽도 고르지 않은 보류다.
-            // 서버 초안·레거시 초안을 모두 남겨 두고 다음 진입 때 다시 묻는다.
-            setPendingRestoreDraft(null);
-            setRestoreOverwriteConfirmOpen(false);
-            restoreConfirmedRef.current = false;
-          }}
-        />
-        <ConfirmModal
-          isOpen={conflictConfirmOpen}
-          title={CONSULTATION_LOG_AUTOSAVE_STRINGS.CONFLICT_TITLE}
-          message={toDisplayString(CONSULTATION_LOG_AUTOSAVE_STRINGS.CONFLICT_MESSAGE, '')}
-          confirmText={CONSULTATION_LOG_AUTOSAVE_STRINGS.CONFLICT_KEEP_MINE}
-          cancelText={CONSULTATION_LOG_AUTOSAVE_STRINGS.CONFLICT_LOAD_LATEST}
-          type="warning"
-          onConfirm={() => {
-            conflictResolvedRef.current = true;
-            setConflictConfirmOpen(false);
-            void keepMineOnConflict();
-          }}
-          onClose={() => {
-            if (conflictResolvedRef.current) {
-              conflictResolvedRef.current = false;
-              return;
-            }
-            setConflictConfirmOpen(false);
-            void (async() => {
-              applyRestoredDraftSnapshot(await loadLatestFromServer());
-            })();
-          }}
-        />
-        <ConfirmModal
-          isOpen={leaveBlocker?.state === 'blocked'}
-          title={CONSULTATION_LOG_AUTOSAVE_STRINGS.LEAVE_TITLE}
-          message={toDisplayString(CONSULTATION_LOG_AUTOSAVE_STRINGS.LEAVE_MESSAGE, '')}
-          confirmText={CONSULTATION_LOG_AUTOSAVE_STRINGS.LEAVE_CONFIRM}
-          cancelText={CONSULTATION_LOG_AUTOSAVE_STRINGS.LEAVE_CANCEL}
-          type="warning"
-          onConfirm={() => leaveBlocker?.proceed?.()}
-          onClose={() => leaveBlocker?.reset?.()}
-        />
-
-      {/* 내담자 정보 카드 */}
-      <div className="mg-v2-card mg-mb-lg">
-        <h2 className="mg-h3 mg-mb-md mg-flex mg-align-center mg-gap-sm">
-          {t('common:consultant.ConsultationRecordScreen.t_dac6c054')}
-        </h2>
-        <div className="mg-grid mg-grid-cols-2 mg-gap-md">
-          <div className="mg-flex mg-flex-col">
-            <span className="mg-v2-label mg-v2-text-sm mg-v2-color-text-secondary">{t('common.labels.name')}</span>
-            <span className="mg-v2-text-base mg-font-medium"><SafeText>{client.name}</SafeText></span>
-          </div>
-          <div style={styles.clientInfoItem}>
-            <span style={styles.clientInfoLabel}>{t('common:consultant.ConsultationRecordScreen.t_6c620e5c')}</span>
-            <span style={styles.clientInfoValue}>{client.age != null ? `${client.age}세` : '—'}</span>
-          </div>
-          <div style={styles.clientInfoItem}>
-            <span style={styles.clientInfoLabel}>{t('common:consultant.ConsultationRecordScreen.t_77737feb')}</span>
-            <span style={styles.clientInfoValue}>
-              <SafeText>{client.gender === 'MALE' ? '남' : client.gender === 'FEMALE' ? '여' : client.gender}</SafeText>
-            </span>
-          </div>
-          <div style={styles.clientInfoItem}>
-            <span style={styles.clientInfoLabel}>{t('common.labels.email')}</span>
-            <span style={styles.clientInfoValue}><SafeText fallback="정보 없음">{client.email}</SafeText></span>
-          </div>
-          <div style={styles.clientInfoItem}>
-            <span style={styles.clientInfoLabel}>{t('common:consultant.ConsultationRecordScreen.t_9a1c3aaa')}</span>
-            <span style={styles.clientInfoValue}><SafeText fallback="정보 없음">{client.phone}</SafeText></span>
-          </div>
-          <div style={styles.clientInfoItem}>
-            <span style={styles.clientInfoLabel}>{t('common:consultant.ConsultationRecordScreen.t_117bab80')}</span>
-            <span style={styles.clientInfoValue}>
-              <SafeText fallback="정보 없음">{[client.postalCode, client.address, client.addressDetail].filter(Boolean).join(' ')}</SafeText>
-            </span>
-          </div>
-          <div style={styles.clientInfoItem}>
-            <span style={styles.clientInfoLabel}>{t('common.labels.status')}</span>
-            <span style={styles.clientInfoValue}>
-              <span style={{
-                ...styles.statusBadge,
-                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-                backgroundColor: client.status === 'ACTIVE' ? 'var(--mg-success-500)' : 'var(--mg-secondary-500)',
-                color: 'var(--mg-white)'
-              }}>
-                <SafeText>{getUserStatusKoreanNameSync(client.status)}</SafeText>
-              </span>
-            </span>
-          </div>
-          <div style={styles.clientInfoItem}>
-            <span style={styles.clientInfoLabel}>{t('common:consultant.ConsultationRecordScreen.t_89dbf513')}</span>
-            <span style={styles.clientInfoValue}>
-              {client.grade === 'BRONZE' && '🥉 브론즈'}
-              {client.grade === 'SILVER' && '🥈 실버'}
-              {client.grade === 'GOLD' && '🥇 골드'}
-              {client.grade === 'PLATINUM' && '💎 플래티넘'}
-              {!['BRONZE', 'SILVER', 'GOLD', 'PLATINUM'].includes(client.grade) && '일반'}
-            </span>
-          </div>
-          <div style={styles.clientInfoItem}>
-            <span style={styles.clientInfoLabel}>{t('common:consultant.ConsultationRecordScreen.t_170f7b92')}</span>
-            <span style={styles.clientInfoValue}><SafeText fallback="정보 없음">{client.createdAt?.split('T')[0]}</SafeText></span>
-          </div>
-        </div>
-      </div>
-
-      <PsychClientContextSummaryBlock clientId={consultation?.clientId} variant="section" />
-
-      {/* 상담일지 작성 폼 */}
-      <div style={styles.formCard}>
-        <h2 style={styles.formTitle}>
-          {t('common:consultant.ConsultationRecordScreen.t_b8e6fb4d')}
-        </h2>
-        
-        <div style={styles.formGrid}>
-          {/* 기본 정보 */}
-          <div style={styles.formGroup}>
-            <label style={styles.formLabel}>{t('common:consultant.ConsultationRecordScreen.t_9d161eee')}</label>
-            <input
-              type="date"
-              name="sessionDate"
-              value={formData.sessionDate}
-              onChange={handleInputChange}
-              style={{ ...styles.formInput, ...styles.formInputFocus }}
-              required
-            />
-          </div>
-          
-          <div style={styles.formGroup}>
-            <label style={styles.formLabel}>{t('common:consultant.ConsultationRecordScreen.t_6ee27466')}</label>
-            <input
-              type="number"
-              name="sessionNumber"
-              value={formData.sessionNumber}
-              onChange={handleInputChange}
-              min="1"
-              style={styles.formInput}
-            />
-          </div>
-
-          <div style={styles.formGroup}>
-            <label style={styles.formLabel}>{t('common:consultant.ConsultationRecordScreen.t_ad01b2b5')}</label>
-            <input
-              type="number"
-              name="sessionDurationMinutes"
-              value={formData.sessionDurationMinutes}
-              onChange={handleInputChange}
-              min="1"
-              max="180"
-              style={styles.formInput}
-              required
-            />
-          </div>
-
-          <div style={styles.formGroup}>
-            <label style={styles.formLabel}>{t('common:consultant.ConsultationRecordScreen.t_19279be8')}</label>
-            <select
-              name="isSessionCompleted"
-              value={formData.isSessionCompleted}
-              onChange={handleInputChange}
-              style={styles.formSelect}
-            >
-              {completionStatusOptions.map(option => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* 내담자 상태 */}
-          <div style={styles.formGroup}>
-            <label style={styles.formLabel}>{t('common:consultant.ConsultationRecordScreen.t_fa35dc53')}</label>
-            <textarea
-              name="clientCondition"
-              value={formData.clientCondition}
-              onChange={handleInputChange}
-              placeholder={t('common:consultant.ConsultationRecordScreen.t_d59656e7')}
-              style={styles.formTextarea}
-              required
-            />
-          </div>
-
-          {/* 주요 이슈 */}
-          <div style={styles.formGroup}>
-            <label style={styles.formLabel}>{t('common:consultant.ConsultationRecordScreen.t_e633a3f6')}</label>
-            <textarea
-              name="mainIssues"
-              value={formData.mainIssues}
-              onChange={handleInputChange}
-              placeholder={t('common:consultant.ConsultationRecordScreen.t_1e9fdda7')}
-              style={styles.formTextarea}
-              required
-            />
-          </div>
-
-          {/* 개입 방법 */}
-          <div style={styles.formGroup}>
-            <label style={styles.formLabel}>{t('common:consultant.ConsultationRecordScreen.t_5620da99')}</label>
-            <textarea
-              name="interventionMethods"
-              value={formData.interventionMethods}
-              onChange={handleInputChange}
-              placeholder={t('common:consultant.ConsultationRecordScreen.t_5159282d')}
-              style={styles.formTextarea}
-              required
-            />
-          </div>
-
-          {/* 내담자 반응 */}
-          <div style={styles.formGroup}>
-            <label style={styles.formLabel}>{t('common:consultant.ConsultationRecordScreen.t_845225fc')}</label>
-            <textarea
-              name="clientResponse"
-              value={formData.clientResponse}
-              onChange={handleInputChange}
-              placeholder={t('common:consultant.ConsultationRecordScreen.t_8fd7e314')}
-              style={styles.formTextarea}
-              required
-            />
-          </div>
-
-          {/* 다음 세션 계획 */}
-          <div style={styles.formGroup}>
-            <label style={styles.formLabel}>{t('common:consultant.ConsultationRecordScreen.t_6856fca3')}</label>
-            <textarea
-              name="nextSessionPlan"
-              value={formData.nextSessionPlan}
-              onChange={handleInputChange}
-              placeholder={t('common:consultant.ConsultationRecordScreen.t_39067e66')}
-              style={styles.formTextarea}
-            />
-          </div>
-
-          {/* 과제 부여 */}
-          <div style={styles.formGroup}>
-            <label style={styles.formLabel}>{t('common:consultant.ConsultationRecordScreen.t_a6c7c7d5')}</label>
-            <textarea
-              name="homeworkAssigned"
-              value={formData.homeworkAssigned}
-              onChange={handleInputChange}
-              placeholder={t('common:consultant.ConsultationRecordScreen.t_b4fdaee3')}
-              style={styles.formTextarea}
-            />
-          </div>
-
-          <div style={styles.formGroup}>
-            <label style={styles.formLabel}>{t('common:consultant.ConsultationRecordScreen.t_ec235921')}</label>
-            <input
-              type="date"
-              lang="ko"
-              name="homeworkDueDate"
-              value={formData.homeworkDueDate}
-              onChange={handleInputChange}
-              style={styles.formInput}
-            />
-          </div>
-
-          {/* 위험도 평가 */}
-          <div style={styles.formGroup}>
-            <label style={styles.formLabel}>{t('common:consultant.ConsultationRecordScreen.t_92495efd')}</label>
-            <select
-              name="riskAssessment"
-              value={formData.riskAssessment}
-              onChange={handleInputChange}
-              style={styles.formSelect}
-              required={!institutionLinkLog}
-              disabled={loadingCodes}
-            >
-              <option value="">{t('common:consultant.ConsultationRecordScreen.t_39150dda')}</option>
-              {riskLevels.map(level => (
-                <option key={level.value} value={level.value} style={{ color: level.color }}>
-                  {level.label}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div style={styles.formGroup}>
-            <label style={styles.formLabel}>{t('common:consultant.ConsultationRecordScreen.t_be6337f1')}</label>
-            <textarea
-              name="riskFactors"
-              value={formData.riskFactors}
-              onChange={handleInputChange}
-              placeholder={t('common:consultant.ConsultationRecordScreen.t_b4a5c279')}
-              style={styles.formTextarea}
-            />
-          </div>
-
-          {/* 진행도 평가 */}
-          <div style={styles.formGroup}>
-            <label style={styles.formLabel}>{t('common:consultant.ConsultationRecordScreen.t_e7b28555')}</label>
-            <input
-              type="range"
-              name="progressScore"
-              value={formData.progressScore}
-              onChange={handleInputChange}
-              min="0"
-              max="100"
-              style={{ width: '100%' }}
-            />
-            <div style={styles.progressBar}>
-              <div style={{ ...styles.progressFill, width: `${formData.progressScore}%` }} />
-            </div>
-            <span className="mg-v2-text-sm mg-v2-text-secondary">{formData.progressScore}점</span>
-          </div>
-
-          <div style={styles.formGroup}>
-            <label style={styles.formLabel}>{t('common:consultant.ConsultationRecordScreen.t_526df8c3')}</label>
-            <textarea
-              name="progressEvaluation"
-              value={formData.progressEvaluation}
-              onChange={handleInputChange}
-              placeholder={t('common:consultant.ConsultationRecordScreen.t_c7df43de')}
-              style={styles.formTextarea}
-              required
-            />
-          </div>
-
-          {/* 목표 달성도 */}
-          <div style={styles.formGroup}>
-            <label style={styles.formLabel}>{t('common:consultant.ConsultationRecordScreen.t_51041d7f')}</label>
-            <select
-              name="goalAchievement"
-              value={formData.goalAchievement}
-              onChange={handleInputChange}
-              style={styles.formSelect}
-            >
-              {goalAchievements.map(achievement => (
-                <option key={achievement.value} value={achievement.value} style={{ color: achievement.color }}>
-                  {achievement.label}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div style={styles.formGroup}>
-            <label style={styles.formLabel}>{t('common:consultant.ConsultationRecordScreen.t_5a5ee490')}</label>
-            <textarea
-              name="goalAchievementDetails"
-              value={formData.goalAchievementDetails}
-              onChange={handleInputChange}
-              placeholder={t('common:consultant.ConsultationRecordScreen.t_3a2cf0b7')}
-              style={styles.formTextarea}
-            />
-          </div>
-
-          {/* 상담사 관찰사항 */}
-          <div style={styles.formGroup}>
-            <label style={styles.formLabel}>{t('common:consultant.ConsultationRecordScreen.t_1cf7189f')}</label>
-            <textarea
-              name="consultantObservations"
-              value={formData.consultantObservations}
-              onChange={handleInputChange}
-              placeholder={t('common:consultant.ConsultationRecordScreen.t_d81ff6a0')}
-              style={styles.formTextarea}
-            />
-          </div>
-
-          {/* 상담사 평가 */}
-          <div style={styles.formGroup}>
-            <label style={styles.formLabel}>{t('common:consultant.ConsultationRecordScreen.t_2ee2ab8d')}</label>
-            <textarea
-              name="consultantAssessment"
-              value={formData.consultantAssessment}
-              onChange={handleInputChange}
-              placeholder={t('common:consultant.ConsultationRecordScreen.t_49ffbe86')}
-              style={styles.formTextarea}
-            />
-          </div>
-
-          {/* 특별 고려사항 */}
-          <div style={styles.formGroup}>
-            <label style={styles.formLabel}>{t('common:consultant.ConsultationRecordScreen.t_aec2075b')}</label>
-            <textarea
-              name="specialConsiderations"
-              value={formData.specialConsiderations}
-              onChange={handleInputChange}
-              placeholder={t('common:consultant.ConsultationRecordScreen.t_a7a3fb64')}
-              style={styles.formTextarea}
-            />
-          </div>
-
-          {/* 의료 정보 */}
-          <div style={styles.formGroup}>
-            <label style={styles.formLabel}>{t('common:consultant.ConsultationRecordScreen.t_824dd6de')}</label>
-            <textarea
-              name="medicalInformation"
-              value={formData.medicalInformation}
-              onChange={handleInputChange}
-              placeholder={t('common:consultant.ConsultationRecordScreen.t_d3a6608a')}
-              style={styles.formTextarea}
-            />
-          </div>
-
-          {/* 약물 정보 */}
-          <div style={styles.formGroup}>
-            <label style={styles.formLabel}>{t('common:consultant.ConsultationRecordScreen.t_b933b126')}</label>
-            <textarea
-              name="medicationInfo"
-              value={formData.medicationInfo}
-              onChange={handleInputChange}
-              placeholder={t('common:consultant.ConsultationRecordScreen.t_eda8a47e')}
-              style={styles.formTextarea}
-            />
-          </div>
-
-          {/* 가족 관계 */}
-          <div style={styles.formGroup}>
-            <label style={styles.formLabel}>{t('common:consultant.ConsultationRecordScreen.t_38576d81')}</label>
-            <textarea
-              name="familyRelationships"
-              value={formData.familyRelationships}
-              onChange={handleInputChange}
-              placeholder={t('common:consultant.ConsultationRecordScreen.t_b531fee5')}
-              style={styles.formTextarea}
-            />
-          </div>
-
-          {/* 사회적 지원 */}
-          <div style={styles.formGroup}>
-            <label style={styles.formLabel}>{t('common:consultant.ConsultationRecordScreen.t_4cba7523')}</label>
-            <textarea
-              name="socialSupport"
-              value={formData.socialSupport}
-              onChange={handleInputChange}
-              placeholder={t('common:consultant.ConsultationRecordScreen.t_78039485')}
-              style={styles.formTextarea}
-            />
-          </div>
-
-          {/* 환경적 요인 */}
-          <div style={styles.formGroup}>
-            <label style={styles.formLabel}>{t('common:consultant.ConsultationRecordScreen.t_45dd416d')}</label>
-            <textarea
-              name="environmentalFactors"
-              value={formData.environmentalFactors}
-              onChange={handleInputChange}
-              placeholder={t('common:consultant.ConsultationRecordScreen.t_7679a7f3')}
-              style={styles.formTextarea}
-            />
-          </div>
-
-          {/* 미완료 사유 */}
-          {!formData.isSessionCompleted && (
-            <div style={styles.formGroup}>
-              <label style={styles.formLabel}>{t('common:consultant.ConsultationRecordScreen.t_58561e6f')}</label>
-              <textarea
-                name="incompletionReason"
-                value={formData.incompletionReason}
-                onChange={handleInputChange}
-                placeholder={t('common:consultant.ConsultationRecordScreen.t_0c9f8f20')}
-                style={styles.formTextarea}
-              />
-            </div>
-          )}
-
-          {/* 다음 세션 예정일 */}
-          <div style={styles.formGroup}>
-            <label style={styles.formLabel}>{t('common:consultant.ConsultationRecordScreen.t_f2b8c5e7')}</label>
-            <input
-              type="date"
-              name="nextSessionDate"
-              value={formData.nextSessionDate}
-              onChange={handleInputChange}
-              style={styles.formInput}
-            />
-          </div>
-
-          {/* 후속 조치사항 */}
-          <div style={styles.formGroup}>
-            <label style={styles.formLabel}>{t('common:consultant.ConsultationRecordScreen.t_0a6da346')}</label>
-            <textarea
-              name="followUpActions"
-              value={formData.followUpActions}
-              onChange={handleInputChange}
-              placeholder={t('common:consultant.ConsultationRecordScreen.t_8e6ab501')}
-              style={styles.formTextarea}
-            />
-          </div>
-
-          <div style={styles.formGroup}>
-            <label style={styles.formLabel}>{t('common:consultant.ConsultationRecordScreen.t_83b65ae8')}</label>
-            <input
-              type="date"
-              name="followUpDueDate"
-              value={formData.followUpDueDate}
-              onChange={handleInputChange}
-              style={styles.formInput}
-            />
-          </div>
-        </div>
-
-        {/* 버튼 그룹 */}
-        <div style={styles.buttonGroup}>
-          <MGButton
-            type="button"
-            variant="secondary"
-            className={buildErpMgButtonClassName({ variant: 'secondary', size: 'md', loading: false })}
-            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-            onClick={() => navigate('/consultant/schedule')}
-            disabled={saving}
-          >
-            {t('common.actions.cancel')}
-          </MGButton>
-          <MGButton
-            type="button"
-            variant="primary"
-            className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: saving })}
-            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-            onClick={handleSave}
-            disabled={saving}
-            loading={saving}
-          >
-            {t('common:consultant.ConsultationRecordScreen.t_854d3bd6')}
-          </MGButton>
-          <MGButton
-            type="button"
-            variant="danger"
-            className={buildErpMgButtonClassName({ variant: 'danger', size: 'md', loading: saving })}
-            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-            onClick={handleComplete}
-            disabled={saving}
-            loading={saving}
-          >
-            {t('common:consultant.ConsultationRecordScreen.t_e43453e6')}
-          </MGButton>
-        </div>
-      </div>
       </ContentArea>
     </AdminCommonLayout>
   );

@@ -60,6 +60,14 @@ public interface BranchRepository extends BaseRepository<Branch, Long> {
      * @return 해당 테넌트의 삭제되지 않은 지점 목록
      */
     List<Branch> findByTenantIdAndIsDeletedFalseOrderByBranchName(String tenantId);
+
+    /**
+     * 테넌트에 삭제되지 않은 지점이 하나라도 있는지.
+     *
+     * @param tenantId 테넌트 id
+     * @return 지점이 있으면 true
+     */
+    boolean existsByTenantIdAndIsDeletedFalse(String tenantId);
     
     /**
      * 지점 유형별 조회

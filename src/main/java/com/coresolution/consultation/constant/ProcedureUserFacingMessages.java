@@ -34,6 +34,10 @@ public final class ProcedureUserFacingMessages {
             "할인 상태를 바꾸지 못했습니다. 잠시 후 다시 시도하고, 계속되면 관리자에게 문의해 주세요.";
     public static final String DISCOUNT_STATISTICS_FAILED =
             "할인 통계를 불러오지 못했습니다. 잠시 후 다시 시도하고, 계속되면 관리자에게 문의해 주세요.";
+    /** 지점이 없는 기관 — 지점 단위 할인 무결성 검증 대상 없음 (프로시저 미호출) */
+    public static final String DISCOUNT_INTEGRITY_NO_BRANCH =
+        "지점이 없는 기관은 지점 단위 할인 무결성 검증 대상이 없습니다.";
+
     public static final String DISCOUNT_INTEGRITY_FAILED =
             "할인 무결성 검증을 하지 못했습니다. 잠시 후 다시 시도하고, 계속되면 관리자에게 문의해 주세요.";
     public static final String DAILY_STATISTICS_FAILED =

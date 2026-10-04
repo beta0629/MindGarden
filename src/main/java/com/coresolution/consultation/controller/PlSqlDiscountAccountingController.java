@@ -1,7 +1,9 @@
 package com.coresolution.consultation.controller;
 
 import java.math.BigDecimal;
+import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Optional;
 import com.coresolution.consultation.constant.ProcedureUserFacingMessages;
 import com.coresolution.consultation.service.PlSqlDiscountAccountingService;
 import com.coresolution.consultation.service.support.ResourceOwnerAccessGuard;
@@ -26,7 +28,8 @@ import lombok.extern.slf4j.Slf4j;
  *
  * <p>프로시저 상태·통계는 세션 테넌트 관리자만({@link ResourceOwnerAccessGuard#requireTenantAdminAccess}), 통계 테넌트는
  * 세션 테넌트 컨텍스트다. 무결성 검증은 지점이 세션 테넌트 소속일 때만 허용한다
- * ({@link ResourceOwnerAccessGuard#requireTenantBranchAdminAccess}). 가드가 서비스·프로시저 호출보다 먼저 실행된다.</p>
+ * ({@link ResourceOwnerAccessGuard#requireTenantBranchAdminAccess}). 지점이 없는 테넌트 관리자는 200 이지만 지점 코드만
+ * 받는(테넌트로 거르지 않는) 프로시저는 호출하지 않는다. 가드가 서비스·프로시저 호출보다 먼저 실행된다.</p>
  *
  * @author MindGarden
  * @version 1.0.0
@@ -167,7 +170,16 @@ public class PlSqlDiscountAccountingController {
             @RequestParam String branchCode,
             HttpSession session) {
         
-        String tenantBranchCode = resourceOwnerAccessGuard.requireTenantBranchAdminAccess(session, branchCode);
+        Optional<String> scopedBranch = resourceOwnerAccessGuard.requireTenantBranchAdminAccess(session, branchCode);
+        if (scopedBranch.isEmpty()) {
+            Map<String, Object> noBranch = new LinkedHashMap<>();
+            noBranch.put("success", true);
+            noBranch.put("branchScoped", false);
+            noBranch.put("errorCount", 0);
+            noBranch.put("message", ProcedureUserFacingMessages.DISCOUNT_INTEGRITY_NO_BRANCH);
+            return ResponseEntity.ok(noBranch);
+        }
+        String tenantBranchCode = scopedBranch.get();
         log.info("🔍 PL/SQL 할인 무결성 검증: BranchCode={}", tenantBranchCode);
         
         return ResponseEntity.ok(ProcedureResults.callRequiringSuccess(

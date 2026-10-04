@@ -13,7 +13,9 @@ import com.coresolution.consultation.entity.ConsultationRecordAlert.AlertStatus;
 import com.coresolution.consultation.entity.ConsultationRecordAlert.AlertType;
 import com.coresolution.consultation.repository.ConsultationAudioFileRepository;
 import com.coresolution.consultation.repository.ConsultationRecordAlertRepository;
+import com.coresolution.consultation.repository.ConsultationRecordRepository;
 import com.coresolution.consultation.service.RiskDetectionService;
+import com.coresolution.consultation.service.ai.privacy.AiPiiMaskingService;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.service.ai.AIModelProvider;
 import com.coresolution.core.service.ai.AIModelProvider.AIResponse;
@@ -37,6 +39,8 @@ public class RiskDetectionServiceImpl implements RiskDetectionService {
     private final AIModelProvider geminiModelProvider;
     private final ConsultationRecordAlertRepository alertRepository;
     private final ConsultationAudioFileRepository audioFileRepository;
+    private final ConsultationRecordRepository consultationRecordRepository;
+    private final AiPiiMaskingService aiPiiMaskingService;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     // 위험 키워드 정의
@@ -73,7 +77,8 @@ public class RiskDetectionServiceImpl implements RiskDetectionService {
             log.warn("⚠️ 위험 키워드 발견: {}", detectedKeywords);
 
             // 2. AI를 통한 문맥 기반 분석
-            RiskAnalysisResult aiAnalysis = analyzeRiskWithAI(text, detectedKeywords);
+            RiskAnalysisResult aiAnalysis =
+                    analyzeRiskWithAI(maskTranscriptForAi(transcription, text), detectedKeywords);
 
             // 3. 위험도가 있으면 알림 생성
             if (aiAnalysis.hasRisk() && aiAnalysis.getRiskScore() >= 0.3) {
@@ -106,6 +111,20 @@ public class RiskDetectionServiceImpl implements RiskDetectionService {
                     e.getMessage(), e);
             return null;
         }
+    }
+
+    private String maskTranscriptForAi(AudioTranscription transcription, String text) {
+        String tenantId = TenantContextHolder.getTenantId();
+        List<String> identifiers = List.of();
+        if (tenantId != null && transcription.getAudioFileId() != null) {
+            identifiers = audioFileRepository.findByTenantIdAndId(tenantId, transcription.getAudioFileId())
+                    .map(af -> af.getConsultationRecordId())
+                    .flatMap(recordId -> consultationRecordRepository.findByTenantIdAndId(tenantId, recordId))
+                    .map(record -> aiPiiMaskingService.resolveUserIdentifiers(
+                            tenantId, record.getClientId(), record.getConsultantId()))
+                    .orElse(List.of());
+        }
+        return aiPiiMaskingService.mask(tenantId, text, identifiers);
     }
 
     @Override

@@ -1,6 +1,8 @@
 package com.coresolution.core.service.ai;
 
 import com.coresolution.consultation.service.SystemConfigService;
+import com.coresolution.consultation.service.ai.privacy.AiPiiMaskingService;
+import com.coresolution.core.context.TenantContextHolder;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -21,6 +23,7 @@ import org.springframework.stereotype.Component;
 public class GeminiModelProvider implements AIModelProvider {
 
     private final SystemConfigService systemConfigService;
+    private final AiPiiMaskingService aiPiiMaskingService;
 
     @Override
     public String getModelName() {
@@ -35,6 +38,9 @@ public class GeminiModelProvider implements AIModelProvider {
     @Override
     public AIResponse analyze(String systemPrompt, String userPrompt, int maxTokens, double temperature) {
         long startTime = System.currentTimeMillis();
+        String maskingTenantId = TenantContextHolder.getTenantId();
+        systemPrompt = aiPiiMaskingService.mask(maskingTenantId, systemPrompt);
+        userPrompt = aiPiiMaskingService.mask(maskingTenantId, userPrompt);
 
         try {
             // 설정 값 조회

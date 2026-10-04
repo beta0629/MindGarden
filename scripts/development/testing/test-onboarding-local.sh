@@ -9,7 +9,7 @@ TIMESTAMP=$(date +%s)
 TENANT_ID=""  # null로 보내서 TenantIdGenerator가 자동 생성하도록 함
 TENANT_NAME="TestTenant${TIMESTAMP}"
 EMAIL="test${TIMESTAMP}@test.com"
-ADMIN_PASSWORD="Test1234!@#"
+ADMIN_PASSWORD="${ADMIN_PASSWORD:?ADMIN_PASSWORD 환경변수를 설정하세요}"
 
 echo "=========================================="
 echo "🧪 Onboarding Test (Local)"

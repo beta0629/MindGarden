@@ -1,11 +1,11 @@
 #!/bin/bash
 # 표준화된 프로시저를 개발 DB에 배포하는 간단한 스크립트
 
-DEV_SERVER="beta0629.cafe24.com"
+DEV_SERVER="${DEV_SERVER_HOST:?DEV_SERVER_HOST 환경변수를 설정하세요}"
 DEV_USER="root"
-DB_HOST="beta0629.cafe24.com"
+DB_HOST="${DB_HOST:?DB_HOST 환경변수를 설정하세요}"
 DB_USER="mindgarden_dev"
-DB_PASS="MindGardenDev2025!@#"
+DB_PASS="${DB_PASSWORD:?DB_PASSWORD 환경변수를 설정하세요}"
 DB_NAME="core_solution"
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

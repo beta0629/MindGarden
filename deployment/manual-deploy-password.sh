@@ -1,14 +1,14 @@
 #!/bin/bash
 
 # MindGarden 수동 배포 스크립트 (비밀번호 인증)
-# 서버: beta74.cafe24.com
+# 서버: $PROD_SERVER_HOST
 # 계정: beta74 / beta0629!@
 
 set -e
 
-SERVER_HOST="beta74.cafe24.com"
+SERVER_HOST="${PROD_SERVER_HOST:?PROD_SERVER_HOST 환경변수를 설정하세요}"
 SERVER_USER="beta74"
-SERVER_PASS="beta0629!@"
+SERVER_PASS="${SERVER_PASS:?SERVER_PASS 환경변수를 설정하세요}"
 DEPLOY_PATH="/home/beta74/mindgarden"
 
 echo "🚀 MindGarden 수동 배포 시작..."
@@ -84,7 +84,7 @@ echo "   ssh ${SERVER_USER}@${SERVER_HOST}"
 echo "   (비밀번호: ${SERVER_PASS})"
 echo ""
 echo "2. 🗄️ 데이터베이스 설정:"
-echo "   mysql -u root -p < ~/mindgarden/production-db-setup.sql"
+echo "   envsubst < ~/mindgarden/production-db-setup.sql | mysql -u root -p"
 echo ""
 echo "3. 🔧 환경변수 로드:"
 echo "   cd ~/mindgarden"

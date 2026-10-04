@@ -8,7 +8,7 @@ echo "🔧 개발 서버 Flyway 체크섬 불일치 자동 해결 시작..."
 echo ""
 
 # 개발 서버 정보
-DEV_SERVER_HOST="${DEV_SERVER_HOST:-114.202.247.246}"
+DEV_SERVER_HOST="${DEV_SERVER_HOST:?DEV_SERVER_HOST 환경변수를 설정하세요}"
 DEV_SERVER_USER="${DEV_SERVER_USER:-root}"
 
 echo "📋 개발 서버 정보:"
@@ -150,7 +150,7 @@ echo ""
 echo "✅ 개발 서버 Flyway 체크섬 수정 완료!"
 echo ""
 echo "📝 다음 단계:"
-echo "   1. 서비스 상태 확인: ssh root@beta0629.cafe24.com 'systemctl status mindgarden-dev.service'"
-echo "   2. 로그 확인: ssh root@beta0629.cafe24.com 'journalctl -u mindgarden-dev.service -n 50'"
+echo "   1. 서비스 상태 확인: ssh root@${DEV_SERVER_HOST:?DEV_SERVER_HOST 환경변수를 설정하세요} 'systemctl status mindgarden-dev.service'"
+echo "   2. 로그 확인: ssh root@${DEV_SERVER_HOST:?DEV_SERVER_HOST 환경변수를 설정하세요} 'journalctl -u mindgarden-dev.service -n 50'"
 echo ""
 

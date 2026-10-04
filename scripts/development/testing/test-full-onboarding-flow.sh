@@ -1,12 +1,12 @@
 #!/bin/bash
 # 온보딩 전체 플로우 테스트: 요청 생성 → 승인 → 테넌트 생성 → 로그인 확인
 
-BASE_URL="${1:-http://beta0629.cafe24.com:8080}"
+BASE_URL="${1:-http://${DEV_SERVER_HOST:?DEV_SERVER_HOST 환경변수를 설정하세요}:8080}"
 TIMESTAMP=$(date +%s)
 TENANT_ID="test-tenant-${TIMESTAMP}"
 TENANT_NAME="테스트 테넌트 ${TIMESTAMP}"
 EMAIL="test${TIMESTAMP}@example.com"
-ADMIN_PASSWORD="Test1234!@#"
+ADMIN_PASSWORD="${ADMIN_PASSWORD:?ADMIN_PASSWORD 환경변수를 설정하세요}"
 
 echo "=========================================="
 echo "🧪 온보딩 전체 플로우 테스트"
@@ -92,7 +92,7 @@ echo "📋 4단계: 테넌트 생성 확인"
 echo "----------------------------------------"
 sleep 3  # 프로시저 실행 대기
 
-ssh root@beta0629.cafe24.com << EOF
+ssh root@${DEV_SERVER_HOST:?DEV_SERVER_HOST 환경변수를 설정하세요} << EOF
     if [ -f /etc/mindgarden/dev.env ]; then
         source /etc/mindgarden/dev.env
     fi
@@ -139,7 +139,7 @@ echo ""
 # 5. 관리자 계정 확인
 echo "📋 5단계: 관리자 계정 확인"
 echo "----------------------------------------"
-ssh root@beta0629.cafe24.com << EOF
+ssh root@${DEV_SERVER_HOST:?DEV_SERVER_HOST 환경변수를 설정하세요} << EOF
     if [ -f /etc/mindgarden/dev.env ]; then
         source /etc/mindgarden/dev.env
     fi

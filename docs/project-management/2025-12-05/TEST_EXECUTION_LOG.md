@@ -37,10 +37,10 @@
 ssh root@beta0629.cafe24.com
 
 # MySQL 접속
-mysql -h beta0629.cafe24.com -u mindgarden_dev -p'MindGardenDev2025!@#' core_solution
+mysql -h beta0629.cafe24.com -u mindgarden_dev -p'<DEV_DB_PASSWORD>' core_solution
 
 # 또는 스크립트 직접 실행
-mysql -h beta0629.cafe24.com -u mindgarden_dev -p'MindGardenDev2025!@#' core_solution < scripts/testing/test_procedure_standardization.sql
+mysql -h beta0629.cafe24.com -u mindgarden_dev -p'<DEV_DB_PASSWORD>' core_solution < scripts/testing/test_procedure_standardization.sql
 ```
 
 **검증 항목**:
@@ -90,7 +90,7 @@ mysql -h beta0629.cafe24.com -u mindgarden_dev -p'MindGardenDev2025!@#' core_sol
 ssh root@beta0629.cafe24.com
 
 # MySQL 접속
-mysql -h beta0629.cafe24.com -u mindgarden_dev -p'MindGardenDev2025!@#' core_solution
+mysql -h beta0629.cafe24.com -u mindgarden_dev -p'<DEV_DB_PASSWORD>' core_solution
 
 # 수동 검증 스크립트 실행
 source database/schema/manual_procedure_check.sql

@@ -7,7 +7,7 @@ echo "=========================================="
 echo ""
 
 # 서버 URL
-BASE_URL="${BASE_URL:-http://beta0629.cafe24.com:8080}"
+BASE_URL="${BASE_URL:-http://${DEV_SERVER_HOST:?DEV_SERVER_HOST 환경변수를 설정하세요}:8080}"
 
 # 1. 서버 헬스체크
 echo "1. 서버 헬스체크..."

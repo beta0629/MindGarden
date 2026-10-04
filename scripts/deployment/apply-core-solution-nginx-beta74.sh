@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 # beta74 등 운영 서버에 core-solution nginx 반영 (로컬에서 실행)
-# 사용 전: SSH 키로 root@beta74.cafe24.com 접속 가능해야 함
+# 사용 전: SSH 키로 root@$PROD_SERVER_HOST 접속 가능해야 함
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 CONF="${REPO_ROOT}/config/nginx/core-solution-prod.conf"
-REMOTE_HOST="${REMOTE_HOST:-root@beta74.cafe24.com}"
+REMOTE_HOST="root@${REMOTE_HOST:?REMOTE_HOST 환경변수를 설정하세요}"
 REMOTE_PATH="${REMOTE_PATH:-/etc/nginx/sites-available/core-solution}"
 
 if [[ ! -f "$CONF" ]]; then

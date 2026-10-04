@@ -239,7 +239,7 @@ spring:
   datasource:
     url: jdbc:mysql://114.202.247.246:3306/core_solution
     username: mindgarden_dev
-    password: MindGardenDev2025!@#
+    password: <DEV_DB_PASSWORD>
     driver-class-name: com.mysql.cj.jdbc.Driver
 ```
 

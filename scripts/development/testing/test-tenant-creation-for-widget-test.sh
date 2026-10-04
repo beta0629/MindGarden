@@ -1,9 +1,9 @@
 #!/bin/bash
 # 상담소 및 학원 테넌트 생성 후 위젯 테스트용 스크립트
 
-BASE_URL="${1:-http://beta0629.cafe24.com:8080}"
+BASE_URL="${1:-http://${DEV_SERVER_HOST:?DEV_SERVER_HOST 환경변수를 설정하세요}:8080}"
 TIMESTAMP=$(date +%s)
-ADMIN_PASSWORD="Test1234!@#"
+ADMIN_PASSWORD="${ADMIN_PASSWORD:?ADMIN_PASSWORD 환경변수를 설정하세요}"
 
 echo "=========================================="
 echo "🧪 테넌트 생성 및 위젯 테스트 준비"
@@ -79,7 +79,7 @@ EOF
     
     # 테넌트 ID 확인
     echo "4. 테넌트 ID 확인 중..."
-    ssh root@beta0629.cafe24.com << EOF
+    ssh root@${DEV_SERVER_HOST:?DEV_SERVER_HOST 환경변수를 설정하세요} << EOF
         if [ -f /etc/mindgarden/dev.env ]; then
             source /etc/mindgarden/dev.env
         fi

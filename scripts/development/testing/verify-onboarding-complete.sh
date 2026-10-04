@@ -5,10 +5,10 @@ TIMESTAMP=$(date +%s)
 TENANT_ID="test-tenant-${TIMESTAMP}"
 TENANT_NAME="테스트 테넌트 ${TIMESTAMP}"
 EMAIL="test${TIMESTAMP}@example.com"
-ADMIN_PASSWORD="Test1234!@#"
+ADMIN_PASSWORD="${ADMIN_PASSWORD:?ADMIN_PASSWORD 환경변수를 설정하세요}"
 BASE_URL="http://localhost:8080"
 ADMIN_EMAIL="superadmin@mindgarden.com"
-ADMIN_PASS="admin123"
+ADMIN_PASS="${ADMIN_PASS:?ADMIN_PASS 환경변수를 설정하세요}"
 
 echo "=========================================="
 echo "🧪 온보딩 완료 후 전체 검증"

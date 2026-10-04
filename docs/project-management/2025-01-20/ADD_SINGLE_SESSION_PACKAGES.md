@@ -30,7 +30,7 @@ ssh root@beta0629.cafe24.com
 
 2. **MySQL 접속**
 ```bash
-mysql -u mindgarden_dev -p'MindGardenDev2025!@#' core_solution
+mysql -u mindgarden_dev -p'<DEV_DB_PASSWORD>' core_solution
 ```
 
 3. **SQL 스크립트 실행**

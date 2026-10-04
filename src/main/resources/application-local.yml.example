@@ -21,7 +21,7 @@ spring:
   datasource:
     url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:core_solution}?useSSL=false&serverTimezone=Asia/Seoul&characterEncoding=UTF-8&useUnicode=true&characterSetResults=UTF-8&allowPublicKeyRetrieval=true&connectionCollation=utf8mb4_unicode_ci
     username: ${DB_USERNAME:mindgarden_dev}
-    password: ${DB_PASSWORD:}  # 필수: 환경 변수로 설정 (예: export DB_PASSWORD="MindGardenDev2025!@#")
+    password: ${DB_PASSWORD:}  # 필수: 환경 변수로 설정 (예: export DB_PASSWORD="<로컬 DB 비밀번호>")
     driver-class-name: com.mysql.cj.jdbc.Driver
     # 문자셋 설정 추가
     connection-init-sql: "SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci"
@@ -61,7 +61,7 @@ spring:
         registration:
           kakao:
             client-id: cbb457cfb5f9351fd495be4af2b11a34
-            client-secret: LH53SXuqZk7iEVeDkKfQuKxW0sdxYmEG
+            client-secret: ${KAKAO_CLIENT_SECRET:}
             scope: profile_nickname,account_email
             redirect-uri: "${server.base-url}/api/auth/kakao/callback"
             client-authentication-method: post
@@ -69,7 +69,7 @@ spring:
             client-name: Kakao
           naver:
             client-id: vTKNlxYKIfo1uCCXaDfk
-            client-secret: V_b3omW5pu
+            client-secret: ${NAVER_CLIENT_SECRET:}
             scope: name,email
             redirect-uri: "${server.base-url}/api/auth/naver/callback"
             client-authentication-method: post

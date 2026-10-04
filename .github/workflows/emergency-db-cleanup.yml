@@ -45,15 +45,15 @@ jobs:
           fi
           
           # MySQL 연결 정보
-          DB_HOST="${DB_HOST:-beta0629.cafe24.com}"
+          DB_HOST="${DB_HOST:?DB_HOST 미설정 (/etc/mindgarden/dev.env)}"
           DB_PORT="${DB_PORT:-3306}"
-          DB_NAME="${DB_NAME:-core_solution}"
-          DB_USERNAME="${DB_USERNAME:-mindgarden_dev}"
-          DB_PASSWORD="${DB_PASSWORD:-MindGardenDev2025!@#}"
+          DB_NAME="${DB_NAME:?DB_NAME 미설정 (/etc/mindgarden/dev.env)}"
+          DB_USERNAME="${DB_USERNAME:?DB_USERNAME 미설정 (/etc/mindgarden/dev.env)}"
+          export MYSQL_PWD="${DB_PASSWORD:?DB_PASSWORD 미설정 (/etc/mindgarden/dev.env)}"
           
           echo ""
           echo "📊 정리 전 연결 상태:"
-          mysql -h "$DB_HOST" -P "$DB_PORT" -u "$DB_USERNAME" -p"$DB_PASSWORD" "$DB_NAME" <<EOF 2>/dev/null || true
+          mysql -h "$DB_HOST" -P "$DB_PORT" -u "$DB_USERNAME" "$DB_NAME" <<EOF 2>/dev/null || true
           SELECT 
               COUNT(*) as total_connections,
               COUNT(CASE WHEN command != 'Sleep' THEN 1 END) as active_connections,
@@ -65,7 +65,7 @@ jobs:
           
           echo ""
           echo "🔍 현재 연결 상세 정보:"
-          mysql -h "$DB_HOST" -P "$DB_PORT" -u "$DB_USERNAME" -p"$DB_PASSWORD" "$DB_NAME" <<EOF 2>/dev/null || true
+          mysql -h "$DB_HOST" -P "$DB_PORT" -u "$DB_USERNAME" "$DB_NAME" <<EOF 2>/dev/null || true
           SELECT 
               id,
               user,
@@ -83,7 +83,7 @@ jobs:
           
           echo ""
           echo "🧹 모든 유휴 연결 정리 중..."
-          mysql -h "$DB_HOST" -P "$DB_PORT" -u "$DB_USERNAME" -p"$DB_PASSWORD" "$DB_NAME" <<EOF 2>/dev/null || true
+          mysql -h "$DB_HOST" -P "$DB_PORT" -u "$DB_USERNAME" "$DB_NAME" <<EOF 2>/dev/null || true
           -- 모든 유휴 연결 정리
           SET @kill_ids = (
               SELECT GROUP_CONCAT(id SEPARATOR ', ')
@@ -103,7 +103,7 @@ jobs:
           
           echo ""
           echo "📊 정리 후 연결 상태:"
-          mysql -h "$DB_HOST" -P "$DB_PORT" -u "$DB_USERNAME" -p"$DB_PASSWORD" "$DB_NAME" <<EOF 2>/dev/null || true
+          mysql -h "$DB_HOST" -P "$DB_PORT" -u "$DB_USERNAME" "$DB_NAME" <<EOF 2>/dev/null || true
           SELECT 
               COUNT(*) as total_connections,
               COUNT(CASE WHEN command != 'Sleep' THEN 1 END) as active_connections,

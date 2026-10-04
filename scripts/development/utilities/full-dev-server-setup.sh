@@ -1,14 +1,14 @@
 #!/bin/bash
 
 # 개발 서버 전체 자동 세팅 스크립트
-# 서버 IP: 114.202.247.246
+# 서버 IP: 환경변수 SERVER_IP (GitHub Secret DEV_SERVER_HOST / PRODUCTION_HOST 와 동일 값) — 하드코딩 금지
 # 사용법: 서버에 접속 후 sudo ./full-dev-server-setup.sh
 
 set -e
 
 echo "=========================================="
 echo "개발 서버 전체 자동 세팅 시작"
-echo "서버 IP: 114.202.247.246"
+echo "서버 IP: ${SERVER_IP:?SERVER_IP 환경변수를 설정하세요}"
 echo "=========================================="
 echo ""
 
@@ -82,7 +82,7 @@ DOMAINS=(
     "dev.m-garden.co.kr"
 )
 
-EXPECTED_IP="114.202.247.246"
+EXPECTED_IP="${SERVER_IP:?SERVER_IP 환경변수를 설정하세요}"
 ALL_OK=true
 
 for domain in "${DOMAINS[@]}"; do
@@ -195,7 +195,7 @@ echo "1. 환경 변수 파일 설정 (아직 안 했다면):"
 echo "   sudo nano /etc/mindgarden/dev.env"
 echo ""
 echo "2. 애플리케이션 JAR 파일 업로드:"
-echo "   scp target/mindgarden-*.jar root@114.202.247.246:/opt/mindgarden/mindgarden.jar"
+echo "   scp target/mindgarden-*.jar root@${SERVER_IP}:/opt/mindgarden/mindgarden.jar"
 echo ""
 echo "3. 서비스 시작:"
 echo "   sudo systemctl start mindgarden-dev.service"

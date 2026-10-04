@@ -74,7 +74,7 @@ sudo kill -9 <PID>
 #### 3.4 데이터베이스 연결 확인
 ```bash
 # 데이터베이스 연결 테스트
-mysql -h beta0629.cafe24.com -u mindgarden_dev -pMindGardenDev2025!@# core_solution -e "SELECT 1;"
+mysql -h beta0629.cafe24.com -u mindgarden_dev -p<DEV_DB_PASSWORD> core_solution -e "SELECT 1;"
 ```
 
 ### 4. GitHub Actions를 통한 재배포

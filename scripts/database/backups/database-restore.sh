@@ -4,7 +4,7 @@
 # 사용법: ./database-restore.sh [백업파일명]
 
 # 설정 변수
-DB_HOST="beta74.cafe24.com"
+DB_HOST="${DB_HOST:?DB_HOST 환경변수를 설정하세요}"
 DB_NAME="mind_garden"
 DB_USER="root"
 BACKUP_DIR="/home/backup/database"

@@ -49,7 +49,7 @@
 ```bash
 # 개발 서버에서 실행
 ssh root@beta0629.cafe24.com
-mysql -h beta0629.cafe24.com -u mindgarden_dev -p'MindGardenDev2025!@#' core_solution < scripts/testing/test_procedures_comprehensive.sql
+mysql -h beta0629.cafe24.com -u mindgarden_dev -p'<DEV_DB_PASSWORD>' core_solution < scripts/testing/test_procedures_comprehensive.sql
 ```
 
 **검증 항목**:

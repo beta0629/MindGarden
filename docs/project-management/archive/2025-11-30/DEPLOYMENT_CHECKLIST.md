@@ -73,7 +73,7 @@
 - [ ] 개발 서버 MySQL 백업
   ```bash
   ssh root@beta0629.cafe24.com
-  mysqldump -u mindgarden_dev -p'MindGardenDev2025!@#' core_solution > backup_$(date +%Y%m%d_%H%M%S).sql
+  mysqldump -u mindgarden_dev -p'<DEV_DB_PASSWORD>' core_solution > backup_$(date +%Y%m%d_%H%M%S).sql
   ```
 - [ ] 백업 파일 확인
 - [ ] 백업 파일 다운로드 (안전한 위치에 보관)
@@ -245,7 +245,7 @@
    ```
 5. [ ] 데이터베이스 복구 (필요 시)
    ```bash
-   mysql -u mindgarden_dev -p'MindGardenDev2025!@#' core_solution < backup_YYYYMMDD_HHMMSS.sql
+   mysql -u mindgarden_dev -p'<DEV_DB_PASSWORD>' core_solution < backup_YYYYMMDD_HHMMSS.sql
    ```
 6. [ ] 헬스 체크
 7. [ ] 로그 확인

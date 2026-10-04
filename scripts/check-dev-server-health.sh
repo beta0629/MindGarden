@@ -5,7 +5,7 @@
 
 set -e
 
-SERVER="root@beta0629.cafe24.com"
+SERVER="root@${DEV_SERVER_HOST:?DEV_SERVER_HOST 환경변수를 설정하세요}"
 WARNING_THRESHOLD_DISK=80  # 디스크 사용률 경고 기준 (%)
 WARNING_THRESHOLD_CONN=250  # MySQL 연결 수 경고 기준
 WARNING_THRESHOLD_MEM=85    # 메모리 사용률 경고 기준 (%)

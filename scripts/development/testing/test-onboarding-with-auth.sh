@@ -5,10 +5,10 @@ TIMESTAMP=$(date +%s)
 TENANT_ID="test-tenant-${TIMESTAMP}"
 TENANT_NAME="테스트 테넌트 ${TIMESTAMP}"
 EMAIL="test${TIMESTAMP}@example.com"
-ADMIN_PASSWORD="Test1234!@#"
+# ADMIN_PASSWORD 는 아래에서 SUPERADMIN_PASSWORD 로 설정
 BASE_URL="http://localhost:8080"
 ADMIN_EMAIL="superadmin@mindgarden.com"
-ADMIN_PASSWORD="admin123"
+ADMIN_PASSWORD="${SUPERADMIN_PASSWORD:?SUPERADMIN_PASSWORD 환경변수를 설정하세요}"
 
 echo "=========================================="
 echo "🧪 온보딩 전체 플로우 테스트 (인증 포함)"

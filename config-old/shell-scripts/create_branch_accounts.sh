@@ -1,4 +1,7 @@
 #!/bin/bash
+: "${SUPERADMIN_PASSWORD:?SUPERADMIN_PASSWORD 환경변수를 설정하세요}"
+: "${TEST_CONSULTANT_PASSWORD:?TEST_CONSULTANT_PASSWORD 환경변수를 설정하세요}"
+: "${TEST_CLIENT_PASSWORD:?TEST_CLIENT_PASSWORD 환경변수를 설정하세요}"
 
 # 지점별 지점수퍼 관리자 계정 생성 스크립트
 # 작성일: 2025-09-23
@@ -46,7 +49,7 @@ login_admin() {
     
     response=$(curl -s -c $COOKIE_FILE -X POST "$BASE_URL/api/auth/login" \
         -H "Content-Type: application/json" \
-        -d '{"email":"superadmin@mindgarden.com","password":"admin123"}')
+        -d '{"email":"superadmin@mindgarden.com","password":"'"${SUPERADMIN_PASSWORD}"'"}')
     
     if echo "$response" | grep -q '"success":true'; then
         log_success "관리자 로그인 성공"
@@ -118,7 +121,7 @@ create_test_consultant() {
     local consultant_data=$(cat <<EOF
 {
     "email": "$email",
-    "password": "consultant123",
+    "password": "${TEST_CONSULTANT_PASSWORD}",
     "name": "$consultant_name",
     "role": "CONSULTANT",
     "phone": "010-2345-6789",
@@ -156,7 +159,7 @@ create_test_client() {
     local client_data=$(cat <<EOF
 {
     "email": "$email",
-    "password": "client123",
+    "password": "${TEST_CLIENT_PASSWORD}",
     "name": "$client_name",
     "role": "CLIENT",
     "phone": "010-3456-7890",

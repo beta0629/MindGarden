@@ -4,7 +4,7 @@
 
 set -e
 
-DEV_SERVER="beta0629.cafe24.com"
+DEV_SERVER="${DEV_SERVER_HOST:?DEV_SERVER_HOST 환경변수를 설정하세요}"
 DEV_USER="root"
 DOMAIN="dev.m-garden.co.kr"
 
@@ -45,7 +45,7 @@ echo "📝 Nginx 설정 파일 생성 중..."
 # 설정 파일 생성
 sudo tee /etc/nginx/sites-available/dev.m-garden.co.kr.conf > /dev/null << 'NGINXCONF'
 # MindGarden 개발 서버 Nginx 설정
-# 서버: beta0629.cafe24.com
+# 서버: $DEV_SERVER_HOST
 # 도메인: dev.m-garden.co.kr
 
 # HTTP 서버 (Let's Encrypt 인증서 발급용)

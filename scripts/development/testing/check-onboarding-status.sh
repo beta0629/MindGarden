@@ -12,11 +12,11 @@ BLUE='\033[0;34m'
 NC='\033[0m'
 
 # DB 연결 정보
-DB_HOST="${DB_HOST:-114.202.247.246}"
+DB_HOST="${DB_HOST:?DB_HOST 환경변수를 설정하세요}"
 DB_PORT="${DB_PORT:-3306}"
 DB_NAME="${DB_NAME:-core_solution}"
 DB_USER="${DB_USERNAME:-mindgarden_dev}"
-DB_PASS="${DB_PASSWORD:-MindGardenDev2025!@#}"
+DB_PASS="${DB_PASSWORD:?DB_PASSWORD 환경변수를 설정하세요}"
 
 echo -e "${BLUE}========================================${NC}"
 echo -e "${BLUE}온보딩 승인 후 DB 상태 확인${NC}"

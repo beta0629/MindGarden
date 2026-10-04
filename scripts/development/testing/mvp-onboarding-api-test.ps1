@@ -5,17 +5,20 @@ param(
     [string]$BaseUrl = "http://localhost:8080/api/v1",
     [string]$BusinessType = "CONSULTATION",
     [string]$OpsUsername = "superadmin@mindgarden.com",
-    [string]$OpsPassword = "admin123"
+    [string]$OpsPassword = $env:OPS_PASSWORD
 )
 
 $ErrorActionPreference = "Stop"
+
+if (-not $OpsPassword) { throw "OPS_PASSWORD 환경변수(또는 -OpsPassword)를 설정하세요" }
+if (-not $env:TEST_TENANT_ADMIN_PASSWORD) { throw "TEST_TENANT_ADMIN_PASSWORD 환경변수를 설정하세요" }
 
 # 타임스탬프 생성
 $timestamp = [DateTimeOffset]::Now.ToUnixTimeMilliseconds()
 $tenantId = "test-$BusinessType-$timestamp"
 $tenantName = "테스트 $BusinessType $timestamp"
 $email = "admin@$BusinessType-$timestamp.com"
-$password = "test1234"
+$password = $env:TEST_TENANT_ADMIN_PASSWORD
 
 Write-Host "=== MVP 온보딩 플로우 API 테스트 시작 ===" -ForegroundColor Green
 Write-Host "테넌트 ID: $tenantId" -ForegroundColor Cyan

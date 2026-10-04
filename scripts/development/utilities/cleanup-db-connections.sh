@@ -16,15 +16,16 @@ else
 fi
 
 # MySQL 연결 정보
-DB_HOST="${DB_HOST:-beta0629.cafe24.com}"
+DB_HOST="${DB_HOST:?DB_HOST 환경변수를 설정하세요}"
 DB_PORT="${DB_PORT:-3306}"
 DB_NAME="${DB_NAME:-core_solution}"
 DB_USERNAME="${DB_USERNAME:-mindgarden_dev}"
-DB_PASSWORD="${DB_PASSWORD:-MindGardenDev2025!@#}"
+DB_PASSWORD="${DB_PASSWORD:?DB_PASSWORD 환경변수를 설정하세요}"
+export MYSQL_PWD="$DB_PASSWORD"
 
 echo ""
 echo "📊 현재 연결 상태:"
-mysql -h "$DB_HOST" -P "$DB_PORT" -u "$DB_USERNAME" -p"$DB_PASSWORD" "$DB_NAME" <<EOF 2>/dev/null
+mysql -h "$DB_HOST" -P "$DB_PORT" -u "$DB_USERNAME" "$DB_NAME" <<EOF 2>/dev/null
 SELECT 
     COUNT(*) as total_connections,
     COUNT(CASE WHEN command != 'Sleep' THEN 1 END) as active_connections,
@@ -36,7 +37,7 @@ EOF
 
 echo ""
 echo "🔍 오래된 연결 확인 (60초 이상 유휴 상태):"
-mysql -h "$DB_HOST" -P "$DB_PORT" -u "$DB_USERNAME" -p"$DB_PASSWORD" "$DB_NAME" <<EOF 2>/dev/null
+mysql -h "$DB_HOST" -P "$DB_PORT" -u "$DB_USERNAME" "$DB_NAME" <<EOF 2>/dev/null
 SELECT 
     id,
     user,
@@ -64,7 +65,7 @@ fi
 
 if [[ "$AUTO_YES" = "true" ]] || [[ $REPLY =~ ^[Yy]$ ]]; then
     echo "🧹 오래된 연결 정리 중..."
-    mysql -h "$DB_HOST" -P "$DB_PORT" -u "$DB_USERNAME" -p"$DB_PASSWORD" "$DB_NAME" <<EOF 2>/dev/null
+    mysql -h "$DB_HOST" -P "$DB_PORT" -u "$DB_USERNAME" "$DB_NAME" <<EOF 2>/dev/null
 -- 60초 이상 유휴 상태인 연결 정리
 SET @kill_ids = (
     SELECT GROUP_CONCAT(id SEPARATOR ', ')
@@ -87,7 +88,7 @@ fi
 
 echo ""
 echo "📊 정리 후 연결 상태:"
-mysql -h "$DB_HOST" -P "$DB_PORT" -u "$DB_USERNAME" -p"$DB_PASSWORD" "$DB_NAME" <<EOF 2>/dev/null
+mysql -h "$DB_HOST" -P "$DB_PORT" -u "$DB_USERNAME" "$DB_NAME" <<EOF 2>/dev/null
 SELECT 
     COUNT(*) as total_connections,
     COUNT(CASE WHEN command != 'Sleep' THEN 1 END) as active_connections,

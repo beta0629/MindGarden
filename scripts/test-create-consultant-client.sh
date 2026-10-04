@@ -1,4 +1,6 @@
 #!/bin/bash
+: "${TEST_CONSULTANT_PASSWORD:?TEST_CONSULTANT_PASSWORD 환경변수를 설정하세요}"
+: "${TEST_CLIENT_PASSWORD:?TEST_CLIENT_PASSWORD 환경변수를 설정하세요}"
 
 # 내담자와 상담사 생성 테스트 스크립트
 # 사용법: ./scripts/test-create-consultant-client.sh <admin_email> <admin_password>
@@ -62,7 +64,7 @@ CONSULTANT_DATA=$(cat <<EOF
 {
     "username": "consultant_${TIMESTAMP}",
     "email": "$CONSULTANT_EMAIL",
-    "password": "consultant123",
+    "password": "${TEST_CONSULTANT_PASSWORD}",
     "name": "$CONSULTANT_NAME",
     "phone": "010-1234-5678",
     "address": "서울시 강남구",
@@ -98,7 +100,7 @@ CLIENT_DATA=$(cat <<EOF
 {
     "username": "client_${TIMESTAMP}",
     "email": "$CLIENT_EMAIL",
-    "password": "client123",
+    "password": "${TEST_CLIENT_PASSWORD}",
     "name": "$CLIENT_NAME",
     "age": 30,
     "phone": "010-9876-5432",

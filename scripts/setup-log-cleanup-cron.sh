@@ -5,7 +5,7 @@
 
 set -e
 
-SERVER="root@beta0629.cafe24.com"
+SERVER="root@${DEV_SERVER_HOST:?DEV_SERVER_HOST 환경변수를 설정하세요}"
 LOG_CLEANUP_SCRIPT="/var/www/mindgarden-dev/scripts/clean-dev-server-logs.sh"
 BACKUP_CLEANUP_SCRIPT="/var/www/mindgarden-dev/scripts/clean-dev-server-backups.sh"
 CRON_SCHEDULE="0 2 * * *"  # 매일 오전 2시 실행

@@ -1,14 +1,14 @@
 #!/bin/bash
 
 # 개발 서버 전체 세팅 스크립트
-# 서버 IP: 114.202.247.246
+# 서버 IP: 환경변수 SERVER_IP (GitHub Secret DEV_SERVER_HOST / PRODUCTION_HOST 와 동일 값) — 하드코딩 금지
 # 사용법: sudo ./setup-dev-server.sh
 
 set -e
 
 echo "=========================================="
 echo "개발 서버 세팅 시작"
-echo "서버 IP: 114.202.247.246"
+echo "서버 IP: ${SERVER_IP:?SERVER_IP 환경변수를 설정하세요}"
 echo "=========================================="
 echo ""
 
@@ -86,7 +86,7 @@ DOMAINS=(
     "dev.m-garden.co.kr"
 )
 
-EXPECTED_IP="114.202.247.246"
+EXPECTED_IP="${SERVER_IP:?SERVER_IP 환경변수를 설정하세요}"
 
 for domain in "${DOMAINS[@]}"; do
     if command -v nslookup &> /dev/null; then

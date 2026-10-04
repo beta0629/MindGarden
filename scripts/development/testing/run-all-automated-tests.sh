@@ -28,7 +28,7 @@ echo ""
 
 # 테스트 계정 정보
 export TEST_USERNAME="${TEST_USERNAME:-superadmin@mindgarden.com}"
-export TEST_PASSWORD="${TEST_PASSWORD:-admin123}"
+export TEST_PASSWORD="${TEST_PASSWORD:?TEST_PASSWORD 환경변수를 설정하세요}"
 
 API_PASSED=0
 API_FAILED=0

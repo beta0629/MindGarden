@@ -2,7 +2,7 @@
 # CreateOrActivateTenant 프로시저 수동 배포 스크립트
 # 사용법: ./scripts/deploy-procedure.sh [서버호스트] [사용자]
 
-SERVER_HOST="${1:-114.202.247.246}"
+SERVER_HOST="${1:-${DEV_SERVER_HOST:?인자 또는 DEV_SERVER_HOST 환경변수를 설정하세요}}"
 SERVER_USER="${2:-root}"
 SQL_FILE="MindGarden/scripts/manual_create_procedure.sql"
 REMOTE_FILE="/tmp/manual_create_procedure.sql"

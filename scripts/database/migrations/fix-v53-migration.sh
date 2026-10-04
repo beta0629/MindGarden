@@ -5,11 +5,11 @@
 echo "🔧 V53 마이그레이션 실패 기록 정리 시작..."
 
 # 데이터베이스 연결 정보
-DB_HOST="114.202.247.246"
+DB_HOST="${DB_HOST:?DB_HOST 환경변수를 설정하세요}"
 DB_PORT="3306"
 DB_NAME="core_solution"
 DB_USER="mindgarden_dev"
-DB_PASS="MindGardenDev2025!@#"
+DB_PASS="${DB_PASSWORD:?DB_PASSWORD 환경변수를 설정하세요}"
 
 # V53 실패 기록 삭제
 echo "📋 V53 실패 기록 삭제 중..."

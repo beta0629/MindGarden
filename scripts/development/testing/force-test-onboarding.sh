@@ -1,12 +1,12 @@
 #!/bin/bash
 # 강제 온보딩 테스트 - 서버 연결 재시도
 
-BASE_URL="http://beta0629.cafe24.com:8080"
+BASE_URL="http://${DEV_SERVER_HOST:?DEV_SERVER_HOST 환경변수를 설정하세요}:8080"
 TIMESTAMP=$(date +%s)
 TENANT_ID="test-tenant-${TIMESTAMP}"
 TENANT_NAME="테스트테넌트${TIMESTAMP}"
 EMAIL="test${TIMESTAMP}@test.com"
-ADMIN_PASSWORD="Test1234!@#"
+ADMIN_PASSWORD="${ADMIN_PASSWORD:?ADMIN_PASSWORD 환경변수를 설정하세요}"
 
 echo "=========================================="
 echo "🧪 온보딩 강제 테스트"
@@ -30,7 +30,7 @@ for i in $(seq 1 $MAX_RETRIES); do
             echo "❌ 서버 연결 실패 (최대 재시도 횟수 초과)"
             echo ""
             echo "서버 상태 확인 필요:"
-            echo "  ssh root@beta0629.cafe24.com 'systemctl status mindgarden-dev'"
+            echo "  ssh root@${DEV_SERVER_HOST:?DEV_SERVER_HOST 환경변수를 설정하세요} 'systemctl status mindgarden-dev'"
             exit 1
         fi
     fi

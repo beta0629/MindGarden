@@ -24,11 +24,11 @@ else
 fi
 
 # 데이터베이스 연결 정보
-DB_HOST="${DB_HOST:-beta0629.cafe24.com}"
+DB_HOST="${DB_HOST:?DB_HOST 환경변수를 설정하세요}"
 DB_PORT="${DB_PORT:-3306}"
 DB_NAME="${DB_NAME:-core_solution}"
 DB_USER="${DB_USER:-mindgarden_dev}"
-DB_PASS="${DB_PASS:-MindGardenDev2025!@#}"
+DB_PASS="${DB_PASS:-${DB_PASSWORD:?DB_PASSWORD 환경변수를 설정하세요}}"
 
 echo ""
 echo "=========================================="

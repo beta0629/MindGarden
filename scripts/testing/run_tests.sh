@@ -33,9 +33,9 @@ test_procedures() {
     log_info "Phase 1: 프로시저 표준화 테스트 시작"
     
     # 개발 서버 MySQL 접속 정보
-    DB_HOST="${DB_HOST:-beta0629.cafe24.com}"
+    DB_HOST="${DB_HOST:?DB_HOST 환경변수를 설정하세요}"
     DB_USER="${DB_USER:-root}"
-    DB_PASS="${DB_PASS:-qwer1234}"
+    DB_PASS="${DB_PASS:-${DB_PASSWORD:?DB_PASSWORD 환경변수를 설정하세요}}"
     DB_NAME="${DB_NAME:-mindgarden}"
     
     log_info "MySQL 접속: $DB_HOST/$DB_NAME"

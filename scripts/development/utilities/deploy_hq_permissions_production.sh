@@ -6,7 +6,7 @@
 echo "🚀 운영 환경 HQ_MASTER 권한 적용 시작..."
 
 # 운영 서버 접속
-ssh root@beta74.cafe24.com << 'EOF'
+ssh root@${PROD_SERVER_HOST:?PROD_SERVER_HOST 환경변수를 설정하세요} << 'EOF'
 
 echo "📋 운영 서버 접속 완료"
 echo "🔍 현재 서비스 상태 확인..."
@@ -61,7 +61,7 @@ echo "✅ 권한 설정 완료"
 
 echo "🔄 권한 캐시 클리어..."
 # 권한 캐시 클리어
-curl -X POST https://beta74.cafe24.com/api/admin/permission-cache/clear
+curl -X POST https://${PROD_SERVER_HOST:?PROD_SERVER_HOST 환경변수를 설정하세요}/api/admin/permission-cache/clear
 
 echo "🔄 서비스 재시작..."
 # 서비스 재시작

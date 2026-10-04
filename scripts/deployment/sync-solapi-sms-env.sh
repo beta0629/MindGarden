@@ -4,8 +4,8 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 LOCAL_ENV="${SMS_LOCAL_ENV:-$ROOT/config/environments/sms.local.env}"
-DEV_HOST="${DEV_HOST:-beta0629.cafe24.com}"
-PROD_HOST="${PROD_HOST:-beta74.cafe24.com}"
+DEV_HOST="${DEV_HOST:?DEV_HOST 환경변수를 설정하세요}"
+PROD_HOST="${PROD_HOST:?PROD_HOST 환경변수를 설정하세요}"
 DEV_ENV_FILE="/etc/mindgarden/dev.env"
 PROD_ENV_FILE="/etc/mindgarden/prod-from-dev.env"
 

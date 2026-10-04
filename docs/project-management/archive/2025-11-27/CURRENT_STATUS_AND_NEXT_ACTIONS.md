@@ -171,7 +171,7 @@ DB_HOST=beta0629.cafe24.com
 DB_PORT=3306
 DB_NAME=core_solution
 DB_USERNAME=mindgarden_dev
-DB_PASSWORD=MindGardenDev2025!@#
+DB_PASSWORD=<DEV_DB_PASSWORD>
 ```
 
 ### 주요 도메인

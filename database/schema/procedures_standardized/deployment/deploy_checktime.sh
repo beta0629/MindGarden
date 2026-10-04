@@ -1,9 +1,9 @@
 #!/bin/bash
 # CheckTimeConflict 프로시저 배포 스크립트 (서버에서 직접 실행)
 
-DB_HOST="beta0629.cafe24.com"
+DB_HOST="${DB_HOST:?DB_HOST 환경변수를 설정하세요}"
 DB_USER="mindgarden_dev"
-DB_PASS="MindGardenDev2025!@#"
+DB_PASS="${DB_PASSWORD:?DB_PASSWORD 환경변수를 설정하세요}"
 DB_NAME="core_solution"
 
 mysql -h "$DB_HOST" -u "$DB_USER" -p"$DB_PASS" "$DB_NAME" << 'SQL'

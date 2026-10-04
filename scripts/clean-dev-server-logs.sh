@@ -17,7 +17,7 @@ if [ -f "/var/www/mindgarden-dev/scripts/clean-dev-server-logs.sh" ]; then
     DAYS=${1:-3}  # 자동 실행 시 기본값: 3일
 else
     # 로컬에서 원격 서버에 SSH로 실행
-    SERVER="root@beta0629.cafe24.com"
+    SERVER="root@${DEV_SERVER_HOST:?DEV_SERVER_HOST 환경변수를 설정하세요}"
     AUTO_MODE="no"
     DAYS=${1:-7}  # 로컬 실행 시 기본값: 7일
 fi

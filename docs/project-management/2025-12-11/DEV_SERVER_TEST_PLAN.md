@@ -12,7 +12,7 @@
 - **서버 주소**: `beta0629.cafe24.com`
 - **SSH 접속**: `ssh root@beta0629.cafe24.com`
 - **데이터베이스**: `beta0629.cafe24.com:3306/core_solution`
-- **DB 계정**: `mindgarden_dev` / `MindGardenDev2025!@#`
+- **DB 계정**: `mindgarden_dev` / `<DEV_DB_PASSWORD>`
 
 ### 서비스 정보
 - **CoreSolution 백엔드**: `https://dev.core-solution.co.kr/api/v1/`
@@ -265,7 +265,7 @@ tail -f /var/log/mindgarden-dev.log
 
 ### 4. 데이터베이스 접속
 ```bash
-mysql -h beta0629.cafe24.com -u mindgarden_dev -p'MindGardenDev2025!@#' core_solution
+mysql -h beta0629.cafe24.com -u mindgarden_dev -p'<DEV_DB_PASSWORD>' core_solution
 ```
 
 ### 5. API 테스트

@@ -27,10 +27,10 @@ if [[ ! -f "$ENV_FILE" ]]; then
   else
     cat <<'EOF' > "$ENV_FILE"
 OPS_ADMIN_USERNAME=ops-admin
-OPS_ADMIN_PASSWORD=change-me
+OPS_ADMIN_PASSWORD=
 OPS_ADMIN_ROLE=HQ_ADMIN
 
-SECURITY_JWT_SECRET=local-dev-secret-change-me-please-use-a-stronger-one
+SECURITY_JWT_SECRET=
 SECURITY_JWT_ISSUER=mindgarden-ops-local
 SECURITY_JWT_EXPIRES=3600
 EOF

@@ -5,14 +5,14 @@ TIMESTAMP=$(date +%s)
 TENANT_ID="test-tenant-${TIMESTAMP}"
 TENANT_NAME="테스트테넌트${TIMESTAMP}"
 EMAIL="test${TIMESTAMP}@test.com"
-ADMIN_PASSWORD="Test1234!@#"
+ADMIN_PASSWORD="${ADMIN_PASSWORD:?ADMIN_PASSWORD 환경변수를 설정하세요}"
 
 echo "=========================================="
 echo "🧪 서버 내부 온보딩 테스트"
 echo "=========================================="
 echo ""
 
-ssh root@beta0629.cafe24.com << EOF
+ssh root@${DEV_SERVER_HOST:?DEV_SERVER_HOST 환경변수를 설정하세요} << EOF
     BASE_URL="http://localhost:8080"
     TIMESTAMP=${TIMESTAMP}
     TENANT_ID="${TENANT_ID}"

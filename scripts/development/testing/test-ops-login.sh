@@ -1,9 +1,9 @@
 #!/bin/bash
 # Ops Portal 로그인 테스트 스크립트
 
-BASE_URL="http://beta0629.cafe24.com:8080"
+BASE_URL="http://${DEV_SERVER_HOST:?DEV_SERVER_HOST 환경변수를 설정하세요}:8080"
 OPS_USERNAME="${OPS_USERNAME:-superadmin@mindgarden.com}"
-OPS_PASSWORD="${OPS_PASSWORD:-admin123}"
+OPS_PASSWORD="${OPS_PASSWORD:?OPS_PASSWORD 환경변수를 설정하세요}"
 
 echo "=========================================="
 echo "🧪 Ops Portal 로그인 테스트"

@@ -1,11 +1,11 @@
 #!/bin/bash
 # 표준화된 프로시저를 개발 서버에 직접 배포하는 스크립트
 
-DEV_SERVER="beta0629.cafe24.com"
+DEV_SERVER="${DEV_SERVER_HOST:?DEV_SERVER_HOST 환경변수를 설정하세요}"
 DEV_USER="root"
-DB_HOST="beta0629.cafe24.com"
+DB_HOST="${DB_HOST:?DB_HOST 환경변수를 설정하세요}"
 DB_USER="mindgarden_dev"
-DB_PASS="MindGardenDev2025!@#"
+DB_PASS="${DB_PASSWORD:?DB_PASSWORD 환경변수를 설정하세요}"
 DB_NAME="core_solution"
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -43,9 +43,9 @@ echo "📥 서버에서 프로시저 배포 중..."
 ssh "$DEV_USER@$DEV_SERVER" << 'ENDSSH'
 set -e
 
-DB_HOST="beta0629.cafe24.com"
+DB_HOST="${DB_HOST:?DB_HOST 환경변수를 설정하세요}"
 DB_USER="mindgarden_dev"
-DB_PASS="MindGardenDev2025!@#"
+DB_PASS="${DB_PASSWORD:?DB_PASSWORD 환경변수를 설정하세요}"
 DB_NAME="core_solution"
 
 for proc in CheckTimeConflict GetRefundableSessions GetRefundStatistics ValidateIntegratedAmount GetConsolidatedFinancialData; do

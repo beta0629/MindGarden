@@ -26,7 +26,7 @@ else
 fi
 
 # 데이터베이스 연결 정보
-DB_HOST="${DB_HOST:-beta0629.cafe24.com}"
+DB_HOST="${DB_HOST:?DB_HOST 환경변수를 설정하세요}"
 DB_PORT="${DB_PORT:-3306}"
 DB_NAME="${DB_NAME:-core_solution}"
 DB_USERNAME="${DB_USERNAME:-mindgarden_dev}"

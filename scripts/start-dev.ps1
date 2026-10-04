@@ -227,7 +227,7 @@ try {
     # ================================================
     Write-ColorOutput Yellow "🔍 2단계: 데이터베이스 연결 설정 확인"
 
-    $DB_HOST_VAL = if ($env:DB_HOST) { $env:DB_HOST } else { "beta0629.cafe24.com" }
+    $DB_HOST_VAL = if ($env:DB_HOST) { $env:DB_HOST } else { "$env:DEV_SERVER_HOST" }
     $DB_PORT_VAL = if ($env:DB_PORT) { $env:DB_PORT } else { "3306" }
     $DB_NAME_VAL = if ($env:DB_NAME) { $env:DB_NAME } else { "mind_garden" }
     $DB_USERNAME_VAL = if ($env:DB_USERNAME) { $env:DB_USERNAME } else { "mindgarden_dev" }

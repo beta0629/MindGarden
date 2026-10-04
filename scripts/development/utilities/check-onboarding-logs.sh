@@ -30,11 +30,11 @@ fi
 # 서버별 설정
 case "$SERVER" in
     "dev"|"development")
-        SERVER_HOST="beta0629.cafe24.com"
+        SERVER_HOST="${DEV_SERVER_HOST:?DEV_SERVER_HOST 환경변수를 설정하세요}"
         SERVER_USER="root"
         ;;
     "prod"|"production")
-        SERVER_HOST="beta74.cafe24.com"
+        SERVER_HOST="${PROD_SERVER_HOST:?PROD_SERVER_HOST 환경변수를 설정하세요}"
         SERVER_USER="root"
         ;;
     *)

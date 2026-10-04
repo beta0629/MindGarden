@@ -4,9 +4,9 @@
 
 set -e
 
-DB_HOST="beta0629.cafe24.com"
+DB_HOST="${DB_HOST:?DB_HOST 환경변수를 설정하세요}"
 DB_USER="mindgarden_dev"
-DB_PASS="MindGardenDev2025!@#"
+DB_PASS="${DB_PASSWORD:?DB_PASSWORD 환경변수를 설정하세요}"
 DB_NAME="core_solution"
 
 echo "🔍 프로시저 마이그레이션 파일 테스트 시작..."

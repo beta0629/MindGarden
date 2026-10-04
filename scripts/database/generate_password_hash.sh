@@ -2,7 +2,7 @@
 # 비밀번호 해시 생성 스크립트
 # CoreSolution의 BCrypt 강도 12를 사용하여 해시 생성
 
-PASSWORD="godgod826!"
+PASSWORD="${PASSWORD:?PASSWORD 환경변수를 설정하세요}"
 
 # Maven을 사용하여 Java 클래스 실행
 cd "$(dirname "$0")/../.."

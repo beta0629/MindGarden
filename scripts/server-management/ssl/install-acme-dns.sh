@@ -3,7 +3,7 @@
 #
 # 설계서: docs/project-management/2026-05-28/SSL_WILDCARD_ACMEDNS_AUTO_RENEW_HANDOFF.md
 # 결재 변수:
-#   - 배치 위치   : beta0629.cafe24.com (dev 서버 단독, 설계서 §2 (a))
+#   - 배치 위치   : $DEV_SERVER_HOST (dev 서버 단독, 설계서 §2 (a))
 #   - 서비스 도메인: acme.core-solution.co.kr
 #   - 데이터 저장 : SQLite (/var/lib/acme-dns/acme-dns.db)
 #   - API 포트   : 127.0.0.1:8053 (mindgarden-dev가 8080 점유 → 충돌 방지)

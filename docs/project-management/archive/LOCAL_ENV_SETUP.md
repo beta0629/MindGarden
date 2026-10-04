@@ -40,7 +40,7 @@ DB_HOST=your-dev-db-host          # 개발 서버 DB 호스트 주소
 DB_PORT=3306
 DB_NAME=core_solution
 DB_USERNAME=mindgarden_dev
-DB_PASSWORD=MindGardenDev2025!@#  # 실제 비밀번호로 변경
+DB_PASSWORD=<DEV_DB_PASSWORD>  # 실제 비밀번호로 변경
 ```
 
 ### 3단계: 환경 변수 로드
@@ -111,7 +111,7 @@ export DB_HOST=your-dev-db-host
 export DB_PORT=3306
 export DB_NAME=core_solution
 export DB_USERNAME=mindgarden_dev
-export DB_PASSWORD=MindGardenDev2025!@#
+export DB_PASSWORD=<DEV_DB_PASSWORD>
 
 # 적용
 source ~/.zshrc
@@ -124,7 +124,7 @@ source ~/.zshrc
    - `DB_PORT=3306`
    - `DB_NAME=core_solution`
    - `DB_USERNAME=mindgarden_dev`
-   - `DB_PASSWORD=MindGardenDev2025!@#`
+   - `DB_PASSWORD=<DEV_DB_PASSWORD>`
 
 **장점**:
 - 한 번 설정하면 계속 사용 가능
@@ -139,7 +139,7 @@ source ~/.zshrc
 1. Run → Edit Configurations
 2. Environment variables에 추가:
    ```
-   DB_HOST=your-dev-db-host;DB_PORT=3306;DB_NAME=core_solution;DB_USERNAME=mindgarden_dev;DB_PASSWORD=MindGardenDev2025!@#
+   DB_HOST=your-dev-db-host;DB_PORT=3306;DB_NAME=core_solution;DB_USERNAME=mindgarden_dev;DB_PASSWORD=<DEV_DB_PASSWORD>
    ```
 
 #### VS Code
@@ -157,7 +157,7 @@ source ~/.zshrc
         "DB_PORT": "3306",
         "DB_NAME": "core_solution",
         "DB_USERNAME": "mindgarden_dev",
-        "DB_PASSWORD": "MindGardenDev2025!@#"
+        "DB_PASSWORD": "<DEV_DB_PASSWORD>"
       }
     }
   ]

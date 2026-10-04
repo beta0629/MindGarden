@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # 운영 DB 접속 정보
-DB_HOST="beta74.cafe24.com"
+DB_HOST="${DB_HOST:?DB_HOST 환경변수를 설정하세요}"
 DB_NAME="mindgarden_prod"
 DB_USER="root"  # 운영 환경에서는 root로 접속
 

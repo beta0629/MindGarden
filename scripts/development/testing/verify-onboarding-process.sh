@@ -13,11 +13,11 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 # DB 연결 정보 (dev.env에서 읽기)
-DB_HOST="${DB_HOST:-114.202.247.246}"
+DB_HOST="${DB_HOST:?DB_HOST 환경변수를 설정하세요}"
 DB_PORT="${DB_PORT:-3306}"
 DB_NAME="${DB_NAME:-core_solution}"
 DB_USER="${DB_USERNAME:-mindgarden_dev}"
-DB_PASS="${DB_PASSWORD:-MindGardenDev2025!@#}"
+DB_PASS="${DB_PASSWORD:?DB_PASSWORD 환경변수를 설정하세요}"
 
 # API 정보
 API_BASE_URL="${API_BASE_URL:-http://localhost:3001}"
@@ -33,7 +33,7 @@ TEST_ID=$(date +%s)
 TEST_TENANT_ID="test-tenant-${TEST_ID}"
 TEST_TENANT_NAME="테스트 테넌트 ${TEST_ID}"
 TEST_EMAIL="test${TEST_ID}@test.com"
-TEST_PASSWORD="Test1234!@#"
+TEST_PASSWORD="${TEST_PASSWORD:?TEST_PASSWORD 환경변수를 설정하세요}"
 
 echo -e "${YELLOW}테스트 정보:${NC}"
 echo "  - Tenant ID: ${TEST_TENANT_ID}"

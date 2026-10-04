@@ -4,7 +4,7 @@ public class CheckTable {
     public static void main(String[] args) {
         String url = "jdbc:mysql://beta0629.cafe24.com:3306/core_solution?useSSL=false";
         String user = "mindgarden_dev";
-        String password = "MindGardenDev2025!@#";
+        String password = System.getenv("DB_PASSWORD");
         
         try (Connection conn = DriverManager.getConnection(url, user, password)) {
             DatabaseMetaData meta = conn.getMetaData();

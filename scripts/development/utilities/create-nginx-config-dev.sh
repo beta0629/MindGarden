@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # 개발 서버 Nginx 설정 파일 생성 스크립트
-# 서버 IP: 114.202.247.246
+# 서버 IP: 환경변수 SERVER_IP (GitHub Secret DEV_SERVER_HOST / PRODUCTION_HOST 와 동일 값) — 하드코딩 금지
 # 사용법: sudo ./create-nginx-config-dev.sh
 
 set -e

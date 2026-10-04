@@ -7,9 +7,9 @@ import os
 import sys
 
 DB_CONFIG = {
-    'host': 'beta0629.cafe24.com',
+    'host': os.environ['DB_HOST'],
     'user': 'mindgarden_dev',
-    'password': 'MindGardenDev2025!@#',
+    'password': os.environ['DB_PASSWORD'],
     'database': 'core_solution',
     'charset': 'utf8mb4'
 }

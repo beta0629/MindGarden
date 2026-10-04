@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # MindGarden 수동 배포 스크립트 (간소화 버전)
-# 서버: beta74.cafe24.com
+# 서버: $PROD_SERVER_HOST
 # 도메인: http://m-garden.co.kr
 
 set -e
@@ -75,7 +75,7 @@ echo "📋 다음 수동 작업이 필요합니다:"
 echo ""
 echo "1. 🗄️ 데이터베이스 설정:"
 echo "   ssh ${SERVER_USER}@${SERVER_HOST}"
-echo "   mysql -u root -p < ~/mindgarden/production-db-setup.sql"
+echo "   envsubst < ~/mindgarden/production-db-setup.sql | mysql -u root -p"
 echo ""
 echo "2. 🔧 환경변수 로드:"
 echo "   source ~/mindgarden/.env.production"

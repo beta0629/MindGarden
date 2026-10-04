@@ -296,7 +296,7 @@
 
 ### 개발 서버
 - **SSH**: `ssh root@beta0629.cafe24.com`
-- **MySQL**: `mysql -u mindgarden_dev -p'MindGardenDev2025!@#' -D core_solution`
+- **MySQL**: `mysql -u mindgarden_dev -p'<DEV_DB_PASSWORD>' -D core_solution`
 
 ### 문서
 - **아키텍처**: `docs/architecture/`

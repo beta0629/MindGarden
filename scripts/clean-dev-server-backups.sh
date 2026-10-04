@@ -17,7 +17,7 @@ if [ -f "/var/www/mindgarden-dev/scripts/clean-dev-server-backups.sh" ]; then
     BACKUP_DIR="/var/www/backups"
 else
     # 로컬에서 원격 서버에 SSH로 실행
-    SERVER="root@beta0629.cafe24.com"
+    SERVER="root@${DEV_SERVER_HOST:?DEV_SERVER_HOST 환경변수를 설정하세요}"
     AUTO_MODE="no"
     DAYS=${1:-3}  # 로컬 실행 시 기본값: 3일
     BACKUP_DIR="/var/www/backups"

@@ -3,12 +3,12 @@
 
 set -e
 
-DEV_SERVER="beta0629.cafe24.com"
+DEV_SERVER="${DEV_SERVER_HOST:?DEV_SERVER_HOST 환경변수를 설정하세요}"
 DEV_USER="root"
 SSH_KEY="$HOME/.ssh/github_actions_dev"
-DB_HOST="beta0629.cafe24.com"
+DB_HOST="${DB_HOST:?DB_HOST 환경변수를 설정하세요}"
 DB_USER="mindgarden_dev"
-DB_PASSWORD="MindGardenDev2025!@#"
+DB_PASSWORD="${DB_PASSWORD:?DB_PASSWORD 환경변수를 설정하세요}"
 DB_NAME="core_solution"
 
 echo "🚀 개발 서버 프로시저 배포 시작..."

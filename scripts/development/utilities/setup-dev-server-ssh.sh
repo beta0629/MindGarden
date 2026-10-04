@@ -4,7 +4,7 @@
 
 set -e
 
-DEV_SERVER="beta0629.cafe24.com"
+DEV_SERVER="${DEV_SERVER_HOST:?DEV_SERVER_HOST 환경변수를 설정하세요}"
 DEV_USER="root"
 SSH_KEY_NAME="github_actions_dev"
 SSH_KEY_PATH="$HOME/.ssh/$SSH_KEY_NAME"

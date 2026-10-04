@@ -16,7 +16,7 @@ echo "=========================================="
 echo ""
 
 # 운영 서버에 스크립트 전송 및 실행
-ssh -t root@beta74.cafe24.com << 'SSH_EOF'
+ssh -t root@${PROD_SERVER_HOST:?PROD_SERVER_HOST 환경변수를 설정하세요} << 'SSH_EOF'
 set -e
 
 DOMAIN="*.core-solution.co.kr"

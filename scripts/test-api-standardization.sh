@@ -30,7 +30,7 @@ API_URL="http://localhost:8080"
 
 # 로그인 정보
 ADMIN_EMAIL="superadmin@mindgarden.com"
-ADMIN_PASSWORD="admin123"
+ADMIN_PASSWORD="${ADMIN_PASSWORD:?ADMIN_PASSWORD 환경변수를 설정하세요}"
 
 # JWT 토큰 저장 변수
 JWT_TOKEN=""
@@ -261,11 +261,11 @@ test_database() {
         return
     fi
     
-    DB_HOST="${DB_HOST:-beta0629.cafe24.com}"
+    DB_HOST="${DB_HOST:?DB_HOST 환경변수를 설정하세요}"
     DB_PORT="${DB_PORT:-3306}"
     DB_NAME="${DB_NAME:-core_solution}"
     DB_USER="${DB_USER:-mindgarden_dev}"
-    DB_PASS="${DB_PASS:-MindGardenDev2025!@#}"
+    DB_PASS="${DB_PASS:-${DB_PASSWORD:?DB_PASSWORD 환경변수를 설정하세요}}"
     
     # 스케줄러 실행 로그 테이블 확인
     log "scheduler_execution_log 테이블 확인..."

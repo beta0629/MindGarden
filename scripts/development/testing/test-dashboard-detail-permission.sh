@@ -5,7 +5,7 @@ BASE_URL="http://localhost:8080"
 TIMESTAMP=$(date +%s)
 TENANT_ID="test-tenant-category-1763957121"
 EMAIL="test-category1763957121@example.com"
-ADMIN_PASSWORD="Test1234!@#"
+ADMIN_PASSWORD="${ADMIN_PASSWORD:?ADMIN_PASSWORD 환경변수를 설정하세요}"
 
 echo "=========================================="
 echo "🧪 대시보드 상세 페이지 권한 테스트"

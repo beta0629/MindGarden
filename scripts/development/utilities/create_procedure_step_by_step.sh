@@ -2,7 +2,7 @@
 # CreateOrActivateTenant 프로시저 단계별 생성 스크립트
 # DELIMITER 문제를 피하기 위해 프로시저를 여러 단계로 나눠서 실행
 
-SERVER_HOST="${1:-beta0629.cafe24.com}"
+SERVER_HOST="${1:-${DEV_SERVER_HOST:?DEV_SERVER_HOST 환경변수를 설정하세요}}"
 SERVER_USER="${2:-root}"
 
 echo "🚀 프로시저 단계별 생성 시작..."

@@ -11,7 +11,7 @@ echo ""
 if [ -z "$DB_HOST" ]; then
     echo "⚠️  DB_HOST 환경 변수가 설정되지 않았습니다."
     echo "   개발 서버 DB 호스트를 설정해주세요:"
-    echo "   export DB_HOST=beta0629.cafe24.com"
+    echo "   export DB_HOST=${DEV_SERVER_HOST:?DEV_SERVER_HOST 환경변수를 설정하세요}"
     exit 1
 fi
 
@@ -22,7 +22,7 @@ if [ -z "$DB_PASSWORD" ]; then
     exit 1
 fi
 
-DB_HOST=${DB_HOST:-beta0629.cafe24.com}
+DB_HOST="${DB_HOST:?DB_HOST 환경변수를 설정하세요}"
 DB_PORT=${DB_PORT:-3306}
 DB_NAME=${DB_NAME:-mind_garden}
 DB_USERNAME=${DB_USERNAME:-mindgarden_dev}

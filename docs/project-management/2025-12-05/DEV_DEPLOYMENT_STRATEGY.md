@@ -51,7 +51,7 @@
 
 DEV_DB_HOST="beta0629.cafe24.com"
 DEV_DB_USER="mindgarden_dev"
-DEV_DB_PASS="MindGardenDev2025!@#"
+DEV_DB_PASS="<DEV_DB_PASSWORD>"
 DEV_DB_NAME="core_solution"
 PROCEDURES_DEPLOY_DIR="database/schema/procedures_standardized/deployment"
 

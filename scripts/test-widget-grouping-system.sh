@@ -1,4 +1,5 @@
 #!/bin/bash
+: "${SUPERADMIN_PASSWORD:?SUPERADMIN_PASSWORD 환경변수를 설정하세요}"
 
 ##############################################################################
 # 위젯 그룹화 시스템 테스트 스크립트
@@ -41,7 +42,7 @@ API_URL="${1:-http://localhost:8080}"
 # 테스트 데이터
 TIMESTAMP=$(date +%s)
 TENANT_EMAIL="test-widget-${TIMESTAMP}@example.com"
-ADMIN_PASSWORD="Test1234!@#"
+ADMIN_PASSWORD="${ADMIN_PASSWORD:?ADMIN_PASSWORD 환경변수를 설정하세요}"
 TENANT_ID=""
 DASHBOARD_ID=""
 WIDGET_ID=""
@@ -155,7 +156,7 @@ EOF
     ADMIN_LOGIN_RESPONSE=$(curl -s -X POST "${API_URL}/api/auth/login" \
         -H "Content-Type: application/json" \
         -c "$ADMIN_COOKIE_FILE" \
-        -d '{"email":"superadmin@mindgarden.com","password":"admin123"}')
+        -d '{"email":"superadmin@mindgarden.com","password":"'"${SUPERADMIN_PASSWORD}"'"}')
     
     if ! echo "$ADMIN_LOGIN_RESPONSE" | grep -q '"success":true'; then
         fail "최고 관리자 로그인 실패"

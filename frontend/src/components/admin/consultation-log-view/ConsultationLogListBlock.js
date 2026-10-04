@@ -12,6 +12,7 @@ import ContentSection from '../../dashboard-v2/content/ContentSection';
 import ContentCard from '../../dashboard-v2/content/ContentCard';
 import MGButton from '../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
+import ConsultationLogAdminWriteBadge from '../../consultant/molecules/ConsultationLogAdminWriteBadge';
 
 const EMPTY_TITLE = '등록된 상담일지가 없습니다.';
 const EMPTY_DESC = '다른 필터를 적용해 보시거나, 스케줄에서 상담일지를 작성해 주세요.';
@@ -25,7 +26,13 @@ const formatDate = (val) => {
   return val;
 };
 
-const ConsultationLogListBlock = ({ records, clientNameMap, consultantNameMap, onCardClick }) => {
+const ConsultationLogListBlock = ({
+  records,
+  clientNameMap,
+  consultantNameMap,
+  onCardClick,
+  showAdminWriteBadge = false
+}) => {
   const isEmpty = !records || records.length === 0;
 
   const renderContent = () => {
@@ -92,6 +99,11 @@ const ConsultationLogListBlock = ({ records, clientNameMap, consultantNameMap, o
                 <div className="mg-v2-consultation-log-list-block__card-row mg-v2-consultation-log-list-block__card-row--meta">
                   {formatDate(updatedAt)}
                 </div>
+                {showAdminWriteBadge ? (
+                  <div className="mg-v2-consultation-log-list-block__card-row">
+                    <ConsultationLogAdminWriteBadge record={record} />
+                  </div>
+                ) : null}
               </div>
             </MGButton>
           );
@@ -122,12 +134,17 @@ ConsultationLogListBlock.propTypes = {
       consultantName: PropTypes.string,
       isSessionCompleted: PropTypes.bool,
       createdAt: PropTypes.string,
-      updatedAt: PropTypes.string
+      updatedAt: PropTypes.string,
+      writtenByAdmin: PropTypes.bool,
+      editedByAdmin: PropTypes.bool,
+      lastEditedByRole: PropTypes.string,
+      lastEditedAt: PropTypes.string
     })
   ),
   clientNameMap: PropTypes.object,
   consultantNameMap: PropTypes.object,
-  onCardClick: PropTypes.func.isRequired
+  onCardClick: PropTypes.func.isRequired,
+  showAdminWriteBadge: PropTypes.bool
 };
 
 export default ConsultationLogListBlock;

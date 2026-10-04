@@ -155,6 +155,7 @@ public final class SystemConfigAccessPolicy {
         keys.add(WELLNESS_SEND_TIME);
         keys.add(WELLNESS_TARGET_ROLES);
         keys.add(SessionSecurityFlagKeys.DUPLICATE_LOGIN_ALLOWED);
+        keys.add(AiPrivacyFlagKeys.PII_MASKING_ENABLED);
         return Collections.unmodifiableSet(keys);
     }
 }

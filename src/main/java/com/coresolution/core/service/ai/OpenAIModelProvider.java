@@ -1,6 +1,8 @@
 package com.coresolution.core.service.ai;
 
 import com.coresolution.consultation.service.SystemConfigService;
+import com.coresolution.consultation.service.ai.privacy.AiPiiMaskingService;
+import com.coresolution.core.context.TenantContextHolder;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -30,6 +32,7 @@ import java.util.Map;
 public class OpenAIModelProvider implements AIModelProvider {
     
     private final SystemConfigService systemConfigService;
+    private final AiPiiMaskingService aiPiiMaskingService;
     private final RestTemplate restTemplate = new RestTemplate();
     
     @Override
@@ -45,6 +48,9 @@ public class OpenAIModelProvider implements AIModelProvider {
     @Override
     public AIResponse analyze(String systemPrompt, String userPrompt, int maxTokens, double temperature) {
         long startTime = System.currentTimeMillis();
+        String maskingTenantId = TenantContextHolder.getTenantId();
+        systemPrompt = aiPiiMaskingService.mask(maskingTenantId, systemPrompt);
+        userPrompt = aiPiiMaskingService.mask(maskingTenantId, userPrompt);
         
         try {
             String apiKey = systemConfigService.getOpenAIApiKey();

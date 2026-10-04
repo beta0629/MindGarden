@@ -4,6 +4,7 @@ import com.coresolution.consultation.service.SystemConfigService;
 import com.coresolution.consultation.service.ai.dto.AiCompletionRequest;
 import com.coresolution.consultation.service.ai.dto.AiResponseFormat;
 import com.coresolution.consultation.service.ai.parser.AiJsonResponseParser;
+import com.coresolution.consultation.service.ai.privacy.AiPiiMaskingService;
 import com.coresolution.core.context.TenantContextHolder;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -46,6 +47,7 @@ public class AiChatCompletionServiceImpl implements AiChatCompletionService {
     private final AiJsonResponseParser jsonResponseParser;
     private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper;
+    private final AiPiiMaskingService aiPiiMaskingService;
 
     @Override
     public AiChatCompletionResult completeChat(
@@ -60,7 +62,8 @@ public class AiChatCompletionServiceImpl implements AiChatCompletionService {
                 maxTokens,
                 temperature,
                 geminiJsonResponseMimeType,
-                systemConfigService.getAiDefaultProvider());
+                systemConfigService.getAiDefaultProvider(),
+                null);
     }
 
     @Override
@@ -89,7 +92,8 @@ public class AiChatCompletionServiceImpl implements AiChatCompletionService {
                     request.getMaxTokensOrDefault(),
                     request.getTemperatureOrDefault(),
                     jsonMime,
-                    requestedProvider);
+                    requestedProvider,
+                    request.getMaskingIdentifiers());
             return enrichResult(raw, request.getResponseFormatOrDefault());
         } finally {
             if (previousTenantId != null && !previousTenantId.isBlank()) {
@@ -128,8 +132,12 @@ public class AiChatCompletionServiceImpl implements AiChatCompletionService {
             int maxTokens,
             double temperature,
             boolean geminiJsonResponseMimeType,
-            String requestedProvider) {
+            String requestedProvider,
+            List<String> maskingIdentifiers) {
         String requested = requestedProvider != null ? requestedProvider : systemConfigService.getAiDefaultProvider();
+        String maskingTenantId = TenantContextHolder.getTenantId();
+        systemPrompt = aiPiiMaskingService.mask(maskingTenantId, systemPrompt, maskingIdentifiers);
+        userPrompt = aiPiiMaskingService.mask(maskingTenantId, userPrompt, maskingIdentifiers);
         try {
             Optional<EffectiveTarget> target = resolveEffectiveTarget(requested);
             if (target.isEmpty()) {

@@ -1,5 +1,6 @@
 package com.coresolution.consultation.service.ai.dto;
 
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -26,6 +27,12 @@ public class AiCompletionRequest {
     private String traceId;
     private String tenantId;
     private String callerId;
+
+    /**
+     * 전송 전 {@code [이름]} 으로 치환할 식별자(내담자·상담사 이름 등). 패턴 마스킹은 항상 적용된다
+     * (테넌트 토글 {@code AI_PII_MASKING_ENABLED} 가 꺼진 경우 제외).
+     */
+    private List<String> maskingIdentifiers;
 
     /**
      * @return maxTokens 또는 기본값 800

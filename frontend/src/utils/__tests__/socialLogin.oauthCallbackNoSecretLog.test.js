@@ -54,7 +54,7 @@ jest.mock('../standardizedApi', () => ({
 const { sessionStorage: mockedSessionStorage } = require('../common');
 const mockedSession = require('../session');
 const mockedApi = require('../standardizedApi').default;
-const { handleOAuthCallback } = require('../socialLogin');
+const { handleOAuthCallback, facebookLogin } = require('../socialLogin');
 
 const CODE = 'fixture-oauth-code';
 const STATE = 'fixture-oauth-state';
@@ -126,5 +126,35 @@ describe('handleOAuthCallback 민감값 콘솔 미노출', () => {
   it('state 불일치: 서버 호출 없이 거부한다', async() => {
     await expect(handleOAuthCallback('KAKAO', CODE, 'other-state')).rejects.toThrow();
     expect(mockedApi.post).not.toHaveBeenCalled();
+  });
+});
+
+describe('facebookLogin 인증 URL(state 포함) 콘솔 미노출', () => {
+  let spies;
+  let originalLocation;
+
+  beforeEach(() => {
+    spies = CONSOLE_METHODS.map((method) => jest.spyOn(console, method).mockImplementation(() => {}));
+    originalLocation = window.location;
+    delete window.location;
+    window.location = { href: '' };
+    mockedSessionStorage.set.mockClear();
+  });
+
+  afterEach(() => {
+    spies.forEach((spy) => spy.mockRestore());
+    window.location = originalLocation;
+  });
+
+  it('state 를 저장하고 인증 URL 로 이동하지만 URL·state 는 콘솔에 남기지 않는다', () => {
+    facebookLogin();
+
+    const stateCall = mockedSessionStorage.set.mock.calls.find(([key]) => key === 'oauth_state');
+    expect(stateCall).toBeDefined();
+    const savedState = stateCall[1];
+    expect(window.location.href).toContain(`state=${savedState}`);
+    const output = consoleOutput(spies);
+    expect(output).not.toContain(savedState);
+    expect(output).not.toContain(window.location.href);
   });
 });

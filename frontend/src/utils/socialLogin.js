@@ -464,7 +464,6 @@ export const facebookLogin = () => {
       scope: config.scope
     });
     
-    logger.log('페이스북 OAuth2 인증 URL 생성:', `${config.authUrl}?${params.toString()}`);
     window.location.href = `${config.authUrl}?${params.toString()}`;
   } catch (error) {
     console.error('페이스북 로그인 오류:', error);

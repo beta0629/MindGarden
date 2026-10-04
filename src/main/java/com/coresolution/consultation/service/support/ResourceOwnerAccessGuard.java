@@ -23,6 +23,7 @@ import com.coresolution.consultation.entity.SalaryCalculation;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.entity.erp.accounting.AccountingEntry;
 import com.coresolution.consultation.entity.erp.financial.FinancialTransaction;
+import com.coresolution.consultation.entity.erp.settlement.Settlement;
 import com.coresolution.consultation.exception.UnauthorizedException;
 import com.coresolution.consultation.repository.AccountRepository;
 import com.coresolution.consultation.repository.BudgetRepository;
@@ -40,6 +41,7 @@ import com.coresolution.consultation.repository.RecurringExpenseRepository;
 import com.coresolution.consultation.repository.SalaryCalculationRepository;
 import com.coresolution.consultation.repository.erp.accounting.AccountingEntryRepository;
 import com.coresolution.consultation.repository.erp.financial.FinancialTransactionRepository;
+import com.coresolution.consultation.repository.erp.settlement.SettlementRepository;
 import com.coresolution.consultation.util.ServerErrorResponses;
 import com.coresolution.core.domain.ErdDiagram;
 import com.coresolution.core.repository.ErdDiagramRepository;
@@ -52,7 +54,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * 자원 id(문서·평가·상담기록·음성파일·리포트·가용시간·재무 거래·ERP 조달/예산/반복 지출·상담사 급여·ERD)로
+ * 자원 id(문서·평가·상담기록·음성파일·리포트·가용시간·재무 거래·ERP 조달/예산/반복 지출·정산·할인 매핑·상담사 급여·ERD)로
  * 접근하는 API 의 소유자 가드.
  *
  * <p>자원을 세션 테넌트 범위로 먼저 읽고, 그 소유 내담자/상담사에 {@link ClientPathAccessGuard} 와
@@ -95,6 +97,7 @@ public class ResourceOwnerAccessGuard {
     private final AccountingEntryRepository accountingEntryRepository;
     private final AccountRepository accountRepository;
     private final ConsultantClientMappingRepository mappingRepository;
+    private final SettlementRepository settlementRepository;
 
     /**
      * 심리검사 문서(및 그 리포트) 접근 검증. 내담자 미지정 문서는 같은 테넌트 관리자·사무원만.
@@ -421,6 +424,42 @@ public class ResourceOwnerAccessGuard {
     }
 
     /**
+     * 매핑 id 기반 관리자 전용 자원(할인 적용·환불·상태 변경, 적용 가능 할인 조회) 접근 검증.
+     * 세션 테넌트 관리자만, 매핑이 세션 테넌트에 있을 때만 허용한다.
+     *
+     * @param session   HTTP 세션
+     * @param mappingId 매핑 ID (요청 본문·파라미터 값. null 이면 거부)
+     * @return 테넌트 범위로 조회한 매핑
+     * @throws UnauthorizedException 로그인 사용자가 없을 때
+     * @throws AccessDeniedException 관리자가 아니거나 세션 테넌트에 매핑이 없을 때
+     */
+    @Transactional(readOnly = true)
+    public ConsultantClientMapping requireMappingAdminAccess(HttpSession session, Long mappingId) {
+        User caller = requireTenantAdmin(session, "mappingId", mappingId);
+        String tenantId = clientPathAccessGuard.requireCallerTenantId(caller);
+        return load(caller, "mappingId", mappingId,
+            () -> mappingRepository.findByTenantIdAndId(tenantId, mappingId));
+    }
+
+    /**
+     * 정산 승인 검증. 세션 테넌트 관리자만, 정산이 세션 테넌트에 있을 때만 허용한다.
+     *
+     * @param session      HTTP 세션
+     * @param settlementId 정산 ID
+     * @return 승인자(세션 사용자)
+     * @throws UnauthorizedException 로그인 사용자가 없을 때
+     * @throws AccessDeniedException 관리자가 아니거나 세션 테넌트에 정산이 없을 때
+     */
+    @Transactional(readOnly = true)
+    public User requireSettlementApproval(HttpSession session, Long settlementId) {
+        User caller = requireTenantAdmin(session, "settlementId", settlementId);
+        String tenantId = clientPathAccessGuard.requireCallerTenantId(caller);
+        load(caller, "settlementId", settlementId,
+            () -> settlementRepository.findByTenantIdAndId(tenantId, settlementId));
+        return caller;
+    }
+
+    /**
      * 급여 프로필 id 기반 접근 검증. 프로필의 상담사 본인 또는 같은 테넌트 관리자·사무원.
      *
      * @param session   HTTP 세션
@@ -500,6 +539,18 @@ public class ResourceOwnerAccessGuard {
             throw denyResource(caller, "tenantId", pathTenantId);
         }
         return tenantId;
+    }
+
+    /**
+     * 세션 테넌트 관리자인지 검증한다. 자원 조회 전에 호출해 관리자가 아닌 사용자에게는 id 존재 여부를 드러내지 않는다.
+     */
+    private User requireTenantAdmin(HttpSession session, String field, Object resourceId) {
+        User caller = clientPathAccessGuard.requireCaller(session);
+        clientPathAccessGuard.requireCallerTenantId(caller);
+        if (!caller.getRole().isAdmin()) {
+            throw denyResource(caller, field, resourceId);
+        }
+        return caller;
     }
 
     /** 세션 테넌트 범위로 자원을 읽는다 (소유자가 테넌트 자체인 자원용). */

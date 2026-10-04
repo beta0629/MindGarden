@@ -8,6 +8,7 @@ import com.coresolution.consultation.entity.erp.settlement.Settlement;
 import com.coresolution.consultation.entity.erp.settlement.SettlementRule;
 import com.coresolution.consultation.service.DynamicPermissionService;
 import com.coresolution.consultation.service.erp.settlement.SettlementService;
+import com.coresolution.consultation.service.support.ResourceOwnerAccessGuard;
 import com.coresolution.consultation.util.EmailLogMasking;
 import com.coresolution.consultation.utils.SessionUtils;
 import com.coresolution.core.context.TenantContextHolder;
@@ -39,6 +40,7 @@ public class SettlementController extends BaseApiController {
 
     private final SettlementService settlementService;
     private final DynamicPermissionService dynamicPermissionService;
+    private final ResourceOwnerAccessGuard resourceOwnerAccessGuard;
 
     /**
      * ERP 접근 권한 체크 (동적 권한 시스템)
@@ -157,17 +159,17 @@ public class SettlementController extends BaseApiController {
      */
     @PostMapping("/results/{id}/approve")
     public ResponseEntity<?> approveSettlement(@PathVariable Long id,
-            @RequestBody SettlementApproveRequest request, HttpSession session) {
+            @RequestBody(required = false) SettlementApproveRequest request, HttpSession session) {
         ResponseEntity<?> accessCheck = checkErpAccess(session);
         if (accessCheck != null) {
             return accessCheck;
         }
 
+        User approver = resourceOwnerAccessGuard.requireSettlementApproval(session, id);
         String tenantId = TenantContextHolder.getRequiredTenantId();
         log.info("정산 승인 요청: tenantId={}, settlementId={}", tenantId, id);
 
-        Settlement approved =
-                settlementService.approveSettlement(tenantId, id, request.getApproverId());
+        Settlement approved = settlementService.approveSettlement(tenantId, id, approver.getId());
         return success("정산이 승인되었습니다.", approved);
     }
 
@@ -192,7 +194,7 @@ public class SettlementController extends BaseApiController {
     }
 
     /**
-     * 정산 승인 요청 DTO
+     * 정산 승인 요청 DTO. {@code approverId} 는 하위 호환으로만 받고 무시한다 (승인자는 세션 관리자).
      */
     @Data
     public static class SettlementApproveRequest {

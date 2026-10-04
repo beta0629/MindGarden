@@ -24,6 +24,7 @@ import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.entity.erp.accounting.AccountingEntry;
 import com.coresolution.consultation.service.DynamicPermissionService;
 import com.coresolution.consultation.service.erp.accounting.AccountingService;
+import com.coresolution.consultation.service.support.ResourceOwnerAccessGuard;
 import com.coresolution.consultation.utils.SessionUtils;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.dto.ApiResponse;
@@ -92,6 +93,9 @@ class AccountingControllerLazyInitGuardTest {
 
     @Mock
     private HttpSession session;
+
+    @Mock
+    private ResourceOwnerAccessGuard resourceOwnerAccessGuard;
 
     @InjectMocks
     private AccountingController controller;

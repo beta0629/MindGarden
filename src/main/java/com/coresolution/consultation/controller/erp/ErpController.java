@@ -304,6 +304,10 @@ public class ErpController extends BaseApiController {
     @PutMapping("/items/{id}")
     public ResponseEntity<Map<String, Object>> updateItem(@PathVariable Long id,
             @Valid @RequestBody ItemUpdateRequest request, HttpSession session) {
+        ResponseEntity<?> accessCheck = checkErpAccess(session);
+        if (accessCheck != null) {
+            return (ResponseEntity<Map<String, Object>>) accessCheck;
+        }
         // 표준화 원칙: AdminRoleUtils 사용
         User currentUser = SessionUtils.getCurrentUser(session);
         if (currentUser == null || !AdminRoleUtils.isAdmin(currentUser)) {
@@ -383,6 +387,10 @@ public class ErpController extends BaseApiController {
     @PutMapping("/items/{id}/stock")
     public ResponseEntity<Map<String, Object>> updateItemStock(@PathVariable Long id,
             @RequestParam Integer quantity, HttpSession session) {
+        ResponseEntity<?> accessCheck = checkErpAccess(session);
+        if (accessCheck != null) {
+            return (ResponseEntity<Map<String, Object>>) accessCheck;
+        }
         // 표준화 원칙: AdminRoleUtils 사용
         User currentUser = SessionUtils.getCurrentUser(session);
         if (currentUser == null || !AdminRoleUtils.isAdmin(currentUser)) {

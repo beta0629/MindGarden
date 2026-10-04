@@ -41,7 +41,6 @@ public class DashboardOpsController extends BaseApiController {
      */
     @GetMapping("/metrics")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getMetrics() {
-        // 권한 체크: ADMIN 또는 OPS 역할이 있어야 함
         OpsPermissionUtils.requireOps();
         
         Map<String, Object> metrics = dashboardService.getMetrics();

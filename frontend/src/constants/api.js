@@ -369,7 +369,7 @@ export const SCHEDULE_API = {
   
   // 통계
   STATISTICS: '/api/v1/admin/schedules/statistics',
-  TODAY_STATISTICS: '/api/v1/admin/schedules/today/statistics',
+  TODAY_STATISTICS: '/api/v1/schedules/today/statistics',
   
   // 페이지네이션
   PAGED_SCHEDULES: '/api/v1/schedules/paged',

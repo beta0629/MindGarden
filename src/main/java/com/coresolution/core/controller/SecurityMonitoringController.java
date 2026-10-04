@@ -1,8 +1,10 @@
 package com.coresolution.core.controller;
 
+import com.coresolution.consultation.service.support.ResourceOwnerAccessGuard;
 import com.coresolution.core.dto.ApiResponse;
 import com.coresolution.core.security.SecurityAuditReport;
 import com.coresolution.core.security.SecurityAuditService;
+import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -25,13 +27,16 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class SecurityMonitoringController {
 
+    private final ResourceOwnerAccessGuard resourceOwnerAccessGuard;
+
     private final SecurityAuditService securityAuditService;
 
     /**
      * 보안 통계 조회
      */
     @GetMapping("/stats")
-    public ResponseEntity<ApiResponse<Map<String, Object>>> getSecurityStatistics() {
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getSecurityStatistics(HttpSession session) {
+        resourceOwnerAccessGuard.requireTenantAdminAccess(session);
         log.info("🔒 보안 통계 조회 요청");
         
         Map<String, Object> stats = securityAuditService.getSecurityStatistics();
@@ -44,7 +49,8 @@ public class SecurityMonitoringController {
      * 차단된 IP 목록 조회
      */
     @GetMapping("/blocked-ips")
-    public ResponseEntity<ApiResponse<List<String>>> getBlockedIPs() {
+    public ResponseEntity<ApiResponse<List<String>>> getBlockedIPs(HttpSession session) {
+        resourceOwnerAccessGuard.requireTenantAdminAccess(session);
         log.info("🚫 차단된 IP 목록 조회 요청");
         
         List<String> blockedIPs = securityAuditService.getBlockedIPs();
@@ -57,7 +63,8 @@ public class SecurityMonitoringController {
      * 보안 감사 보고서 생성
      */
     @GetMapping("/audit-report")
-    public ResponseEntity<ApiResponse<SecurityAuditReport>> generateAuditReport() {
+    public ResponseEntity<ApiResponse<SecurityAuditReport>> generateAuditReport(HttpSession session) {
+        resourceOwnerAccessGuard.requireTenantAdminAccess(session);
         log.info("📋 보안 감사 보고서 생성 요청");
         
         SecurityAuditReport report = securityAuditService.generateAuditReport();
@@ -70,7 +77,8 @@ public class SecurityMonitoringController {
      * 보안 이벤트 통계 초기화
      */
     @DeleteMapping("/stats")
-    public ResponseEntity<ApiResponse<String>> clearSecurityStats() {
+    public ResponseEntity<ApiResponse<String>> clearSecurityStats(HttpSession session) {
+        resourceOwnerAccessGuard.requireTenantAdminAccess(session);
         log.info("🧹 보안 통계 초기화 요청");
         
         // 보안 통계 초기화 로직 (실제 구현에서는 신중하게 처리)
@@ -83,7 +91,8 @@ public class SecurityMonitoringController {
      * 실시간 보안 상태 조회
      */
     @GetMapping("/status")
-    public ResponseEntity<ApiResponse<Map<String, Object>>> getSecurityStatus() {
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getSecurityStatus(HttpSession session) {
+        resourceOwnerAccessGuard.requireTenantAdminAccess(session);
         log.info("📊 실시간 보안 상태 조회 요청");
         
         Map<String, Object> stats = securityAuditService.getSecurityStatistics();
@@ -104,7 +113,8 @@ public class SecurityMonitoringController {
      * 보안 권장사항 조회
      */
     @GetMapping("/recommendations")
-    public ResponseEntity<ApiResponse<List<String>>> getSecurityRecommendations() {
+    public ResponseEntity<ApiResponse<List<String>>> getSecurityRecommendations(HttpSession session) {
+        resourceOwnerAccessGuard.requireTenantAdminAccess(session);
         log.info("💡 보안 권장사항 조회 요청");
         
         SecurityAuditReport report = securityAuditService.generateAuditReport();
@@ -117,7 +127,8 @@ public class SecurityMonitoringController {
      * 특정 IP 차단 해제
      */
     @DeleteMapping("/blocked-ips/{ip}")
-    public ResponseEntity<ApiResponse<String>> unblockIP(@PathVariable String ip) {
+    public ResponseEntity<ApiResponse<String>> unblockIP(@PathVariable String ip, HttpSession session) {
+        resourceOwnerAccessGuard.requireTenantAdminAccess(session);
         log.info("🔓 IP 차단 해제 요청: {}", ip);
         
         // IP 차단 해제 로직 (실제 구현 필요)
@@ -130,7 +141,8 @@ public class SecurityMonitoringController {
      * 보안 알림 설정 조회
      */
     @GetMapping("/alert-settings")
-    public ResponseEntity<ApiResponse<Map<String, Object>>> getAlertSettings() {
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getAlertSettings(HttpSession session) {
+        resourceOwnerAccessGuard.requireTenantAdminAccess(session);
         log.info("🔔 보안 알림 설정 조회 요청");
         
         Map<String, Object> alertSettings = Map.of(
@@ -149,7 +161,9 @@ public class SecurityMonitoringController {
      * 보안 알림 설정 업데이트
      */
     @PutMapping("/alert-settings")
-    public ResponseEntity<ApiResponse<String>> updateAlertSettings(@RequestBody Map<String, Object> settings) {
+    public ResponseEntity<ApiResponse<String>> updateAlertSettings(@RequestBody Map<String, Object> settings,
+            HttpSession session) {
+        resourceOwnerAccessGuard.requireTenantAdminAccess(session);
         log.info("🔔 보안 알림 설정 업데이트 요청: {}", settings);
         
         // 알림 설정 업데이트 로직 (실제 구현 필요)

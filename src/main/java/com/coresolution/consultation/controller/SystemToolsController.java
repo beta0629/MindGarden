@@ -15,26 +15,30 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import javax.sql.DataSource;
-import com.coresolution.consultation.service.DynamicPermissionService;
-import org.springframework.beans.factory.annotation.Autowired;
+import jakarta.servlet.http.HttpSession;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import com.coresolution.consultation.service.DynamicPermissionService;
+import com.coresolution.consultation.service.support.ResourceOwnerAccessGuard;
 
 @RestController
 @RequestMapping("/api/v1/admin/system-tools") // 표준화 2025-12-05: 레거시 경로 제거
+@RequiredArgsConstructor
 public class SystemToolsController {
 
-    @Autowired
-    private DataSource dataSource;
-    
-    @Autowired
-    private DynamicPermissionService dynamicPermissionService;
+    private final DataSource dataSource;
+
+    private final DynamicPermissionService dynamicPermissionService;
+
+    private final ResourceOwnerAccessGuard resourceOwnerAccessGuard;
 
     @GetMapping("/logs/recent")
-    public ResponseEntity<Map<String, Object>> getRecentLogs() {
+    public ResponseEntity<Map<String, Object>> getRecentLogs(HttpSession session) {
+        resourceOwnerAccessGuard.requireTenantAdminAccess(session);
         Map<String, Object> response = new HashMap<>();
         try {
             // 로그 파일 경로들
@@ -76,7 +80,8 @@ public class SystemToolsController {
     }
 
     @PostMapping("/cache/clear")
-    public ResponseEntity<Map<String, Object>> clearCache() {
+    public ResponseEntity<Map<String, Object>> clearCache(HttpSession session) {
+        resourceOwnerAccessGuard.requireTenantAdminAccess(session);
         Map<String, Object> response = new HashMap<>();
         try {
             // 여기서는 간단한 응답만 반환
@@ -94,7 +99,8 @@ public class SystemToolsController {
     }
 
     @PostMapping("/permission-cache/clear")
-    public ResponseEntity<Map<String, Object>> clearPermissionCache() {
+    public ResponseEntity<Map<String, Object>> clearPermissionCache(HttpSession session) {
+        resourceOwnerAccessGuard.requireTenantAdminAccess(session);
         Map<String, Object> response = new HashMap<>();
         try {
             dynamicPermissionService.clearPermissionCache();
@@ -111,7 +117,8 @@ public class SystemToolsController {
     }
 
     @PostMapping("/backup/create")
-    public ResponseEntity<Map<String, Object>> createBackup() {
+    public ResponseEntity<Map<String, Object>> createBackup(HttpSession session) {
+        resourceOwnerAccessGuard.requireTenantAdminAccess(session);
         Map<String, Object> response = new HashMap<>();
         try {
             // 백업 디렉토리 생성

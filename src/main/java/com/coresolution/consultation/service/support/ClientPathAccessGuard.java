@@ -65,6 +65,24 @@ public class ClientPathAccessGuard {
     }
 
     /**
+     * 본인 계정에만 쓰는 API(패스키·SNS 연결 등)를 검증한다. 요청 사용자 id 는 비교용으로만 쓰고,
+     * 실제 대상은 항상 세션 사용자다. 관리자라도 다른 사용자 id 는 거부한다.
+     *
+     * @param session         HTTP 세션
+     * @param requestedUserId 요청에 실린 사용자 ID (null 이면 세션 사용자로 본다)
+     * @return 세션 사용자
+     * @throws UnauthorizedException 로그인 사용자가 없을 때
+     * @throws AccessDeniedException 요청 사용자 id 가 세션 사용자와 다를 때
+     */
+    public User requireSelf(HttpSession session, Long requestedUserId) {
+        User caller = requireCaller(session);
+        if (requestedUserId != null && !requestedUserId.equals(caller.getId())) {
+            deny(DENIAL_OWN_CLIENT_ONLY, caller, "userId", requestedUserId);
+        }
+        return caller;
+    }
+
+    /**
      * 세션 사용자가 경로 내담자 id 에 접근할 수 있는지 검증한다.
      *
      * @param session  HTTP 세션

@@ -589,6 +589,15 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public Optional<Schedule> findInTenant(String tenantId, Long id) {
+        if (tenantId == null || id == null) {
+            return Optional.empty();
+        }
+        return scheduleRepository.findByTenantIdAndId(tenantId, id);
+    }
+
+    @Override
     public List<Schedule> findAll() {
         // ⚠️ 보안: tenantId는 필수 (다른 테넌트 데이터 접근 방지)
         String tenantId = TenantContextHolder.getRequiredTenantId();

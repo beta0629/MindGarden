@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import com.coresolution.consultation.constant.ConsultationType;
 import com.coresolution.consultation.dto.CumulativeConsultantCountsResponse;
 import com.coresolution.consultation.dto.CumulativeMissingConsultationLogsResponse;
@@ -47,6 +48,15 @@ public interface ScheduleService {
      * {@code findByTenantIdAndId}를 사용하므로 PK만으로 타 테넌트 행을 반환하지 않는다.
      */
     Schedule findById(Long id);
+
+    /**
+     * 주어진 테넌트 범위에서 스케줄을 찾는다. 없으면 빈 값 (예외를 던지지 않는다).
+     *
+     * @param tenantId 테넌트 ID
+     * @param id       스케줄 ID
+     * @return 스케줄
+     */
+    Optional<Schedule> findInTenant(String tenantId, Long id);
     
     /**
      * 모든 스케줄 조회

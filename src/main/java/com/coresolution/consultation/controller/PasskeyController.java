@@ -1,6 +1,8 @@
 package com.coresolution.consultation.controller;
 
 import com.coresolution.consultation.service.PasskeyService;
+import com.coresolution.consultation.service.support.ClientPathAccessGuard;
+import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -25,6 +27,8 @@ import java.util.Map;
 public class PasskeyController {
     
     private final PasskeyService passkeyService;
+
+    private final ClientPathAccessGuard clientPathAccessGuard;
     
     /**
      * Passkey 등록 시작
@@ -32,9 +36,10 @@ public class PasskeyController {
     @PostMapping("/register/start")
     public ResponseEntity<Map<String, Object>> startRegistration(
             @RequestBody Map<String, Object> request,
-            Authentication authentication) {
+            Authentication authentication,
+            HttpSession session) {
+        Long userId = clientPathAccessGuard.requireSelf(session, requestedUserId(request.get("userId"))).getId();
         try {
-            Long userId = Long.parseLong(request.get("userId").toString());
             String deviceName = (String) request.get("deviceName");
             
             Map<String, Object> result = passkeyService.startRegistration(userId, deviceName);
@@ -55,9 +60,10 @@ public class PasskeyController {
     @PostMapping("/register/finish")
     public ResponseEntity<Map<String, Object>> finishRegistration(
             @RequestBody Map<String, Object> request,
-            Authentication authentication) {
+            Authentication authentication,
+            HttpSession session) {
+        Long userId = clientPathAccessGuard.requireSelf(session, requestedUserId(request.get("userId"))).getId();
         try {
-            Long userId = Long.parseLong(request.get("userId").toString());
             @SuppressWarnings("unchecked")
             Map<String, Object> credential = (Map<String, Object>) request.get("credential");
             String challengeKey = (String) request.get("challengeKey");
@@ -125,10 +131,12 @@ public class PasskeyController {
      */
     @GetMapping("/list")
     public ResponseEntity<Map<String, Object>> listPasskeys(
-            @RequestParam Long userId,
-            Authentication authentication) {
+            @RequestParam(required = false) Long userId,
+            Authentication authentication,
+            HttpSession session) {
+        Long ownerId = clientPathAccessGuard.requireSelf(session, userId).getId();
         try {
-            Map<String, Object> result = passkeyService.listPasskeys(userId);
+            Map<String, Object> result = passkeyService.listPasskeys(ownerId);
             return ResponseEntity.ok(result);
             
         } catch (Exception e) {
@@ -146,10 +154,12 @@ public class PasskeyController {
     @DeleteMapping("/{passkeyId}")
     public ResponseEntity<Map<String, Object>> deletePasskey(
             @PathVariable Long passkeyId,
-            @RequestParam Long userId,
-            Authentication authentication) {
+            @RequestParam(required = false) Long userId,
+            Authentication authentication,
+            HttpSession session) {
+        Long ownerId = clientPathAccessGuard.requireSelf(session, userId).getId();
         try {
-            Map<String, Object> result = passkeyService.deletePasskey(userId, passkeyId);
+            Map<String, Object> result = passkeyService.deletePasskey(ownerId, passkeyId);
             return ResponseEntity.ok(result);
             
         } catch (Exception e) {
@@ -160,5 +170,16 @@ public class PasskeyController {
             ));
         }
     }
-}
 
+    /** 요청 본문의 사용자 id (비교용). 숫자가 아니면 잘못된 요청이다. */
+    private static Long requestedUserId(Object raw) {
+        if (raw == null) {
+            return null;
+        }
+        try {
+            return Long.valueOf(raw.toString().trim());
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException("사용자 정보가 올바르지 않습니다.");
+        }
+    }
+}

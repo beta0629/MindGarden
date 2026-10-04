@@ -49,6 +49,7 @@ import com.coresolution.consultation.service.ScheduleListUserFieldsResolver;
 import com.coresolution.consultation.service.ScheduleMappingContextResolver;
 import com.coresolution.consultation.service.ScheduleMappingContextResolver.ScheduleMappingResponseContext;
 import com.coresolution.consultation.service.support.ClientPathAccessGuard;
+import com.coresolution.consultation.service.support.ResourceOwnerAccessGuard;
 import com.coresolution.consultation.service.support.ConsultationRecordAccessGuard;
 import com.coresolution.consultation.service.support.ConsultationRecordDraftAccessGuard;
 import com.coresolution.consultation.service.ScheduleService;
@@ -160,6 +161,7 @@ public class ScheduleController extends BaseApiController {
     private final com.coresolution.consultation.repository.ClientRepository clientRepository;
     private final com.coresolution.consultation.repository.ConsultantRepository consultantRepository;
     private final ClientPathAccessGuard clientPathAccessGuard;
+    private final ResourceOwnerAccessGuard resourceOwnerAccessGuard;
     private final com.coresolution.consultation.service.ScheduleAutoCompleteService scheduleAutoCompleteService;
     private final ConsultationRecordAccessGuard consultationRecordAccessGuard;
 
@@ -440,10 +442,9 @@ public class ScheduleController extends BaseApiController {
         }
 
         String trustedRole = resolveTrustedScheduleRole(userId, userRole, session);
-        Schedule schedule = scheduleService.findById(id);
-        if (!scheduleService.canAccessScheduleDetail(userId, trustedRole, schedule)) {
-            throw new org.springframework.security.access.AccessDeniedException("해당 스케줄을 조회할 권한이 없습니다.");
-        }
+        Schedule schedule = resourceOwnerAccessGuard.requireAccessibleResource(session, "scheduleId", id,
+                tenantId -> scheduleService.findInTenant(tenantId, id),
+                found -> scheduleService.canAccessScheduleDetail(userId, trustedRole, found));
 
         Map<Long, Integer> unresolvedByScheduleId =
                 buildUnresolvedClientNoteCountByScheduleId(tenantIdVal, List.of(schedule));

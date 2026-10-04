@@ -186,8 +186,8 @@ class RefundLedgerFailClosedIntegrationTest {
     }
 
     @Test
-    @DisplayName("일괄 취소 + 세율 미설정 — 422(세율 안내 문구·failureCode), 매칭 그대로, 전표 0건, 나머지 미처리")
-    void bulkCancel_taxRateMissing_stopsWithLedgerMessage() throws Exception {
+    @DisplayName("일괄 취소 + 세율 미설정 — 커밋 0건이라 422(세율 안내 문구), 매칭별 결과 모두 전표 미기록, 매칭 그대로·전표 0건")
+    void bulkCancel_taxRateMissing_allItemsFailWithLedgerCode() throws Exception {
         ConsultantClientMapping first = saveMapping(MappingStatus.ACTIVE, 10, 6);
         ConsultantClientMapping second = saveMapping(MappingStatus.ACTIVE, 10, 6);
         removeTaxRates();
@@ -196,9 +196,14 @@ class RefundLedgerFailClosedIntegrationTest {
                 Map.of("mappingIds", List.of(first.getId(), second.getId())))
                 .andExpect(status().isUnprocessableEntity())
                 .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString(TAX_CODE_GROUP_HINT)))
-                .andExpect(jsonPath("$.data.failureCode").value(RefundLedgerNotRecordedException.ERROR_CODE))
-                .andExpect(jsonPath("$.data.failedMappingId").value(first.getId()))
-                .andExpect(jsonPath("$.data.notProcessedMappings[0]").value(second.getId()));
+                .andExpect(jsonPath("$.data.results.length()").value(2))
+                .andExpect(jsonPath("$.data.results[0].mappingId").value(first.getId()))
+                .andExpect(jsonPath("$.data.results[0].status").value("FAILED"))
+                .andExpect(jsonPath("$.data.results[0].code").value(RefundLedgerNotRecordedException.ERROR_CODE))
+                .andExpect(jsonPath("$.data.results[1].mappingId").value(second.getId()))
+                .andExpect(jsonPath("$.data.results[1].status").value("FAILED"))
+                .andExpect(jsonPath("$.data.results[1].code").value(RefundLedgerNotRecordedException.ERROR_CODE))
+                .andExpect(jsonPath("$.data.cancelledMappings.length()").value(0));
 
         for (ConsultantClientMapping mapping : List.of(first, second)) {
             assertThat(reload(mapping).getStatus()).isEqualTo(MappingStatus.ACTIVE);

@@ -152,9 +152,17 @@ public final class AdminServiceUserFacingMessages {
     public static final String MSG_BULK_CONFIRM_AMOUNT_MISMATCH =
             "여러 매칭을 함께 확인할 때는 결제 금액이 선택한 매칭 패키지 금액 합계와 같아야 합니다.";
 
-    /** 일괄 처리 중 일부 매칭 처리 실패 — 실패 매칭부터 나머지는 처리하지 않음 */
-    public static final String MSG_BULK_MAPPING_STOPPED_ON_FAILURE =
-            "일부 매칭을 처리하지 못해 중단했습니다. 처리 결과를 확인해 주세요.";
+    /** 일괄 처리 — 일부 매칭만 처리됨(처리된 매칭은 반영 유지, 실패 매칭은 롤백) */
+    public static final String MSG_BULK_MAPPING_PARTIAL_FAILURE =
+            "일부 매칭을 처리하지 못했습니다. 처리된 매칭은 반영되었으니 매칭별 결과를 확인해 주세요.";
+
+    /** 일괄 처리 — 이번 요청으로 처리된 매칭이 없음(모든 매칭 실패, 변경 없음) */
+    public static final String MSG_BULK_MAPPING_ALL_FAILED =
+            "선택한 매칭을 처리하지 못했습니다. 변경된 내용은 없으니 매칭별 결과를 확인해 주세요.";
+
+    /** 일괄 처리 매칭별 결과 — 원인을 안내할 수 없는 처리 실패(그 매칭 변경은 롤백) */
+    public static final String MSG_BULK_MAPPING_ITEM_FAILED =
+            "이 매칭은 처리하지 못해 변경 없이 그대로 두었습니다. 잠시 후 다시 시도해 주세요.";
 
     /** 환불 전표 기록 실패 — 기관 세율 공통코드 미설정 (매칭 변경 롤백). */
     public static final String MSG_REFUND_LEDGER_TAX_RATE_NOT_CONFIGURED =

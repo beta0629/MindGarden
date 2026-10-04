@@ -2928,11 +2928,12 @@ public class AdminController extends BaseApiController {
     }
 
     /**
-     * 일괄 매칭 결제 확인 (관리자·사무원). 결제 대기 매칭만, 사전 검증은 전부 아니면 전무.
+     * 일괄 매칭 결제 확인 (관리자·사무원). 결제 대기 매칭만. 사전 검증에 걸리면 요청 전체를 거부한다.
      *
      * <p>mappingIds: 정수 숫자·숫자 문자열(중복은 한 번만), 비었거나 형식 오류·최대 개수 초과 400,
-     * 다른 기관·없는 id 가 하나라도 있으면 403(아무것도 처리 안 함), 결제 대기가 아닌 매칭 포함 409.
-     * 2건 이상이면 amount 는 패키지 금액 합계와 같아야 하고 각 매칭에 자기 패키지 금액이 기록된다.</p>
+     * 다른 기관·없는 id 가 하나라도 있으면 403(아무것도 처리 안 함), 결제 대기가 아닌 매칭 포함 409(아무것도 처리 안 함).
+     * 2건 이상이면 amount 는 패키지 금액 합계와 같아야 하고 각 매칭에 자기 패키지 금액이 기록된다.
+     * 처리는 매칭마다 독립 트랜잭션이며 응답 {@code results} 에 매칭별 결과(SUCCEEDED·FAILED·SKIPPED)를 담는다.</p>
      */
     @PostMapping("/mapping/payment/confirm")
     public ResponseEntity<ApiResponse<Map<String, Object>>> confirmMappingPayment(
@@ -2955,7 +2956,8 @@ public class AdminController extends BaseApiController {
      * 일괄 매칭 결제 취소 (같은 기관 관리자 전용) — 매칭마다 {@link AdminService#terminateMapping} 위임 (원장 환불만, PG 호출 없음).
      *
      * <p>mappingIds 규칙은 결제 확인과 같다. 이미 종료·취소된 매칭이나 쇼핑 주문(PG) 결제 매칭이 하나라도 있으면
-     * 409(아무것도 처리 안 함). 같은 요청 반복·동시 요청은 매칭 행 잠금으로 두 번째부터 건너뛰어 재환불하지 않는다.</p>
+     * 409(아무것도 처리 안 함). 같은 요청 반복·동시 요청은 매칭 행 잠금으로 두 번째부터 건너뛰어 재환불하지 않는다.
+     * 처리는 매칭마다 독립 트랜잭션이며 응답 {@code results} 에 매칭별 결과를 담는다.</p>
      */
     @PostMapping("/mapping/payment/cancel")
     public ResponseEntity<ApiResponse<Map<String, Object>>> cancelMappingPayment(
@@ -2976,29 +2978,54 @@ public class AdminController extends BaseApiController {
     }
 
     private static Map<String, Object> bulkResultData(BulkMappingPaymentResult result) {
-        Map<String, Object> data = new HashMap<>();
-        data.put("skippedMappings", result.getSkippedMappingIds());
-        data.put("failedMappingId", result.getFailedMappingId());
-        data.put("notProcessedMappings", result.getNotProcessedMappingIds());
-        if (result.getFailureCode() != null) {
-            data.put("failureCode", result.getFailureCode());
-            data.put("failureMessage", result.getFailureMessage());
+        List<Map<String, Object>> items = new ArrayList<>(result.getItems().size());
+        for (BulkMappingPaymentResult.Item item : result.getItems()) {
+            Map<String, Object> row = new HashMap<>();
+            row.put("mappingId", item.getMappingId());
+            row.put("status", item.getStatus().name());
+            row.put("code", item.getCode());
+            row.put("message", item.getMessage());
+            items.add(row);
         }
+        Map<String, Object> summary = new HashMap<>();
+        summary.put("total", result.getItems().size());
+        summary.put("succeeded", result.getProcessedMappingIds().size());
+        summary.put("failed", result.getFailedMappingIds().size());
+        summary.put("skipped", result.getSkippedMappingIds().size());
+
+        Map<String, Object> data = new HashMap<>();
+        data.put("results", items);
+        data.put("summary", summary);
+        data.put("skippedMappings", result.getSkippedMappingIds());
+        data.put("failedMappings", result.getFailedMappingIds());
+        data.put("allSucceeded", result.isAllSucceededOrSkipped());
         return data;
     }
 
+    /**
+     * 일괄 처리 응답. 이번 요청으로 커밋된 매칭이 하나라도 있으면 일부 실패여도 200 + 매칭별 결과로 답한다
+     * (커밋된 매칭이 있는데 요청 전체를 실패로 답하지 않는다). 커밋된 매칭 없이 실패만 있으면 422(전부 환불 전표
+     * 미기록) 또는 409 로 답한다.
+     */
     private ResponseEntity<ApiResponse<Map<String, Object>>> bulkResponse(BulkMappingPaymentResult result,
             String successMessage, Map<String, Object> data) {
-        if (result.isCompleted()) {
+        if (result.isAllSucceededOrSkipped()) {
             return success(successMessage, data);
         }
-        String message = result.getFailureMessage() != null
-                ? result.getFailureMessage()
-                : AdminServiceUserFacingMessages.MSG_BULK_MAPPING_STOPPED_ON_FAILURE;
-        HttpStatus status = RefundLedgerNotRecordedException.ERROR_CODE.equals(result.getFailureCode())
-                ? HttpStatus.UNPROCESSABLE_ENTITY
-                : HttpStatus.CONFLICT;
-        return ResponseEntity.status(status).body(ApiResponse.error(message, data));
+        if (!result.getProcessedMappingIds().isEmpty()) {
+            return success(AdminServiceUserFacingMessages.MSG_BULK_MAPPING_PARTIAL_FAILURE, data);
+        }
+        List<BulkMappingPaymentResult.Item> failures = result.getItems().stream()
+                .filter(item -> item.getStatus() == BulkMappingPaymentResult.ItemStatus.FAILED)
+                .collect(Collectors.toList());
+        boolean allLedgerFailures = failures.stream()
+                .allMatch(item -> RefundLedgerNotRecordedException.ERROR_CODE.equals(item.getCode()));
+        if (allLedgerFailures) {
+            return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
+                    .body(ApiResponse.error(failures.get(0).getMessage(), data));
+        }
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(ApiResponse.error(AdminServiceUserFacingMessages.MSG_BULK_MAPPING_ALL_FAILED, data));
     }
 
     /**

@@ -8,11 +8,12 @@ jest.mock('../consultationLogLocalDraft', () => ({
   purgeAllLegacyConsultationLogLocalDrafts: jest.fn()
 }));
 jest.mock('../consultationLogDraftBackupStore', () => ({
-  purgeAllDraftBackups: jest.fn().mockResolvedValue(undefined)
+  purgeAllDraftBackups: jest.fn().mockResolvedValue(undefined),
+  purgeRescueBackupsOfOtherUsers: jest.fn().mockResolvedValue(undefined)
 }));
 
 const { purgeAllLegacyConsultationLogLocalDrafts } = require('../consultationLogLocalDraft');
-const { purgeAllDraftBackups } = require('../consultationLogDraftBackupStore');
+const { purgeAllDraftBackups, purgeRescueBackupsOfOtherUsers } = require('../consultationLogDraftBackupStore');
 const sessionManager = require('../sessionManager').default;
 
 describe('sessionManager — 상담일지 초안 잔존물 제거', () => {
@@ -21,11 +22,12 @@ describe('sessionManager — 상담일지 초안 잔존물 제거', () => {
     sessionManager.user = null;
   });
 
-  test('로그아웃 정리에서 레거시 평문 키와 암호화 백업을 모두 제거한다', () => {
+  test('세션 정리에서 레거시 평문 키와 세션 암호화 백업을 제거하되 401 보관 백업은 남긴다', () => {
     sessionManager.applyClientLogoutCleanupPreserveSubdomain();
 
     expect(purgeAllLegacyConsultationLogLocalDrafts).toHaveBeenCalledTimes(1);
     expect(purgeAllDraftBackups).toHaveBeenCalledTimes(1);
+    expect(purgeAllDraftBackups).toHaveBeenCalledWith({ keepRescue: true });
   });
 
   test('로그아웃 정리는 IndexedDB 삭제 Promise 를 반환해 호출자가 기다릴 수 있다', async() => {
@@ -63,6 +65,8 @@ describe('sessionManager — 상담일지 초안 잔존물 제거', () => {
       await Promise.resolve();
       expect(purgeAllLegacyConsultationLogLocalDrafts).toHaveBeenCalled();
       expect(fetchMock).not.toHaveBeenCalled();
+      // 명시적 로그아웃은 401 보관 백업까지 지운다(인자 없는 전량 삭제가 먼저).
+      expect(purgeAllDraftBackups.mock.calls[0]).toEqual([]);
 
       resolvePurge();
       await pending;
@@ -80,6 +84,21 @@ describe('sessionManager — 상담일지 초안 잔존물 제거', () => {
 
     expect(purgeAllLegacyConsultationLogLocalDrafts).toHaveBeenCalledTimes(1);
     expect(purgeAllDraftBackups).toHaveBeenCalledTimes(1);
+  });
+
+  test('다른 사용자로 전환하면 401 보관 백업까지 전량 제거한다 (keepRescue 없음)', () => {
+    sessionManager.user = { id: 41 };
+    sessionManager.setUser({ id: 42 });
+
+    expect(purgeAllDraftBackups).toHaveBeenCalledWith();
+  });
+
+  test('재로드 후 첫 사용자 설정이면 다른 사용자의 401 보관 백업만 정리한다', () => {
+    sessionManager.user = null;
+    sessionManager.setUser({ id: 42 });
+
+    expect(purgeRescueBackupsOfOtherUsers).toHaveBeenCalledWith(42);
+    expect(purgeAllDraftBackups).not.toHaveBeenCalled();
   });
 
   test('같은 사용자 정보 갱신은 초안을 지우지 않는다', () => {

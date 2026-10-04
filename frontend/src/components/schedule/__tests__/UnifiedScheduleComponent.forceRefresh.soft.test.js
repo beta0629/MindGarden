@@ -61,4 +61,13 @@ describe('UnifiedScheduleComponent forceRefresh soft path', () => {
     expect(adminBlock[0]).toMatch(/listParams\.page\s*=\s*0/);
     expect(adminBlock[0]).toMatch(/listParams\.size\s*=\s*ADMIN_LIST_DRAIN_PAGE_SIZE/);
   });
+
+  test('URL clientId 필터를 admin 목록 요청(clientId)과 in-flight 키에 반영한다', () => {
+    const adminBlock = SOURCE.match(
+      /else if \(isAdminLikeScheduleUserRole\(userRole\)\) \{[\s\S]*?adminScheduleControllerListGetAll\(listParams\)/
+    );
+    expect(adminBlock).not.toBeNull();
+    expect(adminBlock[0]).toMatch(/listParams\.clientId\s*=\s*clientIdFilter/);
+    expect(adminBlock[0]).toMatch(/invalidationKey = `[^`]*\$\{clientIdFilter \|\| ''\}/);
+  });
 });

@@ -38,23 +38,25 @@ public class PermissionGroupController {
     @GetMapping("/my")
     @Operation(summary = "내 권한 그룹 조회", description = "현재 사용자의 권한 그룹 코드 목록을 조회합니다.")
     public ResponseEntity<ApiResponse<List<String>>> getMyPermissionGroups(HttpSession session) {
-        // SessionUtils.getRoleId()가 이미 폴백 로직을 포함하므로 중복 처리 불필요
-        String tenantId = SessionUtils.getTenantId(session);
-        String roleId = SessionUtils.getRoleId(session);
-
         var user = SessionUtils.getCurrentUser(session);
-        log.info("🔍 내 권한 그룹 조회 시작: userId={}, tenantId={}, roleId={}", 
-            user != null ? user.getId() : "null", tenantId, roleId);
-
-        if (tenantId == null || roleId == null) {
-            log.warn("⚠️ 세션 정보 부족: userId={}, tenantId={}, roleId={}", 
-                user != null ? user.getId() : "null", tenantId, roleId);
-            // 세션 값(tenantId·roleId)은 위 로그에만 남긴다. 사용자 문구에 내부 식별자를 넣지 않는다.
+        if (user == null) {
+            log.warn("⚠️ 로그인 사용자 없음 — 권한 그룹 조회 거부");
             return ResponseEntity.badRequest()
                 .body(ApiResponse.error("세션 정보가 부족합니다."));
         }
 
-        log.info("✅ 내 권한 그룹 조회: tenantId={}, roleId={}", tenantId, roleId);
+        // SessionUtils.getRoleId()가 이미 폴백 로직을 포함하므로 중복 처리 불필요
+        String tenantId = SessionUtils.getTenantId(session);
+        String roleId = SessionUtils.getRoleId(session);
+
+        // 내담자 등 테넌트 역할 할당(user_role_assignments)이 없는 사용자는 정상 상태다.
+        // 요청 자체는 올바르므로 400 이 아니라 "권한 그룹 없음"(빈 목록)으로 200 을 돌려준다.
+        if (tenantId == null || roleId == null) {
+            log.info("ℹ️ 권한 그룹 없음(역할 할당 미등록): userId={}, role={}", user.getId(), user.getRole());
+            return ResponseEntity.ok(ApiResponse.success(List.of()));
+        }
+
+        log.info("✅ 내 권한 그룹 조회: userId={}", user.getId());
         List<String> groups = permissionGroupService.getUserPermissionGroupCodes(tenantId, roleId);
 
         return ResponseEntity.ok(ApiResponse.success(groups));

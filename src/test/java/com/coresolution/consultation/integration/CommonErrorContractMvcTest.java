@@ -10,7 +10,9 @@ import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.BranchService;
+import com.coresolution.consultation.service.CounselorTrainingService;
 import com.coresolution.consultation.service.DynamicPermissionService;
+import com.coresolution.consultation.service.EmotionAnalysisService;
 import com.coresolution.consultation.service.erp.ErpService;
 import com.coresolution.consultation.service.support.ResourceOwnerAccessGuard;
 import com.coresolution.core.service.PermissionGroupService;
@@ -65,7 +67,9 @@ class CommonErrorContractMvcTest {
         ERP_FINANCE_DASHBOARD("/api/v1/erp/finance/dashboard"),
         PERMISSION_GROUPS_MY("/api/v1/permissions/groups/my"),
         HQ_BRANCH_MANAGEMENT_BRANCHES("/api/v1/hq/branch-management/branches"),
-        HQ_BRANCHES("/api/v1/hq/branches");
+        HQ_BRANCHES("/api/v1/hq/branches"),
+        EMOTION_ANALYSIS_TREND("/api/v1/emotion-analysis/trend/1?emotionType=ANXIETY"),
+        TRAINING_FEEDBACK_HISTORY("/api/v1/training/feedback/1");
 
         private final String path;
 
@@ -135,6 +139,12 @@ class CommonErrorContractMvcTest {
     @MockBean
     private UserRepository userRepository;
 
+    @MockBean
+    private EmotionAnalysisService emotionAnalysisService;
+
+    @MockBean
+    private CounselorTrainingService counselorTrainingService;
+
     @ParameterizedTest(name = "{0} → 500 · 공통 문구 · errorCode · traceId · 기술 문구 없음")
     @EnumSource(ServerErrorCase.class)
     @DisplayName("대표 경로의 서버 오류는 모두 같은 5xx 본문")
@@ -144,6 +154,8 @@ class CommonErrorContractMvcTest {
         when(erpService.getBranchFinanceDashboard(any())).thenThrow(leak);
         when(permissionGroupService.getUserPermissionGroupCodes(anyString(), anyString())).thenThrow(leak);
         when(branchService.getAllActiveBranches()).thenThrow(leak);
+        when(emotionAnalysisService.getEmotionTrend(any(), anyString())).thenThrow(leak);
+        when(counselorTrainingService.getFeedbackHistory(any(), any())).thenThrow(leak);
 
         ErrorBodyContract.assertSanitizedServerError(perform(testCase.path));
     }
@@ -179,16 +191,32 @@ class CommonErrorContractMvcTest {
     }
 
     @Test
-    @DisplayName("권한 그룹 조회 — 세션 정보 부족 응답에 tenantId·roleId 값이 없다")
-    void permissionGroupsMy_sessionIncomplete_hidesSessionValues() throws Exception {
+    @DisplayName("권한 그룹 조회 — 역할 할당이 없으면 400 이 아니라 200 · 빈 목록 (세션 값 노출 없음)")
+    void permissionGroupsMy_noRoleAssignment_returnsEmptyList() throws Exception {
         stubCommonBeans();
 
         ResultActions actions = mockMvc.perform(get("/api/v1/permissions/groups/my")
-                .sessionAttr(SessionConstants.USER_OBJECT, adminUser())
+                .sessionAttr(SessionConstants.USER_OBJECT, clientUser())
                 .sessionAttr(SessionConstants.TENANT_ID, TEST_TENANT_ID));
 
         actions.andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers
-                .status().is4xxClientError());
+                        .status().isOk())
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers
+                        .jsonPath("$.success").value(true))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers
+                        .jsonPath("$.data").isArray())
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers
+                        .jsonPath("$.data").isEmpty());
+        ErrorBodyContract.assertNoSensitiveLeak(actions);
+    }
+
+    @Test
+    @DisplayName("권한 그룹 조회 — 로그인 사용자가 없으면 400 (세션 값 노출 없음)")
+    void permissionGroupsMy_noSessionUser_returnsBadRequest() throws Exception {
+        ResultActions actions = mockMvc.perform(get("/api/v1/permissions/groups/my"));
+
+        actions.andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers
+                .status().isBadRequest());
         ErrorBodyContract.assertNoSensitiveLeak(actions);
     }
 

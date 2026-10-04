@@ -149,6 +149,7 @@ public class ScheduleController extends BaseApiController {
     private final com.coresolution.consultation.repository.ClientRepository clientRepository;
     private final com.coresolution.consultation.repository.ConsultantRepository consultantRepository;
     private final ClientPathAccessGuard clientPathAccessGuard;
+    private final com.coresolution.consultation.service.ScheduleAutoCompleteService scheduleAutoCompleteService;
 
     /**
      * 테넌트 컨텍스트가 비어 있을 때 세션 사용자의 tenantId로 보완 (상담사 대시보드 등).
@@ -1034,24 +1035,29 @@ public class ScheduleController extends BaseApiController {
 
 
      /**
-     * 시간이 지난 확정된 스케줄을 자동으로 완료 처리
-     * 관리자만 호출 가능
+     * 시간이 지난 확정된 스케줄을 자동으로 완료 처리 (수동 실행).
+     *
+     * <p>역할은 <b>세션 사용자</b>에서만 읽는다. 요청 파라미터 {@code userRole} 은 기존 프론트 호환을 위해
+     * 받기만 하고 권한 판정에 쓰지 않는다 (내담자가 {@code userRole=ADMIN} 으로 위장해도 403).
+     * 처리 범위는 호출자 테넌트 1건으로 강제하며, 배치와 같은
+     * {@link com.coresolution.consultation.service.ScheduleAutoCompleteService} 경로를 써서
+     * 완료 전환·회기 차감이 중복되지 않게 한다.</p>
+     *
+     * @param ignoredUserRole 신뢰하지 않는 요청 파라미터 (호환용, 무시)
+     * @param session         HTTP 세션
+     * @return 처리 완료 응답
      */
     @PostMapping("/auto-complete")
     public ResponseEntity<ApiResponse<Void>> autoCompleteExpiredSchedules(
-            @RequestParam String userRole) {
-        log.info("🔄 자동 완료 처리 요청: 사용자 역할 {}", userRole);
-        
-        UserRole role = UserRole.fromString(userRole);
-        // STAFF == ADMIN 동등(1.0.5): 자동 완료 처리는 STAFF 도 허용
-        if (role == null || !(role.isAdmin() || role.isStaff())) {
-            log.warn("❌ 관리자 권한 없음: {}", userRole);
-            throw new org.springframework.security.access.AccessDeniedException("관리자 권한이 필요합니다.");
-        }
-        
-        scheduleService.autoCompleteExpiredSchedules();
-        
-        log.info("✅ 자동 완료 처리 완료");
+            @RequestParam(name = "userRole", required = false) String ignoredUserRole,
+            HttpSession session) {
+        User caller = clientPathAccessGuard.requireTenantManager(session);
+        String tenantId = clientPathAccessGuard.requireCallerTenantId(caller);
+        log.info("🔄 자동 완료 처리 수동 실행 요청: userId={}, role={}", caller.getId(), caller.getRole());
+
+        var result = scheduleAutoCompleteService.autoCompleteExpiredSchedulesForTenant(tenantId);
+
+        log.info("✅ 자동 완료 처리 완료: 완료 {}건, 알림 {}건", result.completedCount(), result.reminderSentCount());
         return success("시간이 지난 스케줄이 자동으로 완료 처리되었습니다.", null);
     }
 

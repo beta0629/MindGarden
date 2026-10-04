@@ -52,7 +52,9 @@ import com.coresolution.consultation.service.erp.ErpService;
 import com.coresolution.consultation.service.erp.financial.FinancialTransactionService;
 import com.coresolution.consultation.service.MenuService;
 import com.coresolution.consultation.service.RealTimeStatisticsService;
+import com.coresolution.consultation.service.ScheduleAutoCompleteService;
 import com.coresolution.consultation.service.ScheduleService;
+import com.coresolution.consultation.service.support.ClientPathAccessGuard;
 import com.coresolution.consultation.service.StoredProcedureService;
 import com.coresolution.consultation.service.UserPersonalDataCacheService;
 import com.coresolution.consultation.service.UserService;
@@ -157,6 +159,8 @@ public class AdminController extends BaseApiController {
     private final ClientMappingListPayloadService clientMappingListPayloadService;
     private final BranchService branchService;
     private final ScheduleService scheduleService;
+    private final ScheduleAutoCompleteService scheduleAutoCompleteService;
+    private final ClientPathAccessGuard clientPathAccessGuard;
     private final ConsultationRecordService consultationRecordService;
     private final DynamicPermissionService dynamicPermissionService;
     private final MenuService menuService;
@@ -3249,14 +3253,25 @@ public class AdminController extends BaseApiController {
     }
 
     /**
-     * 스케줄 자동 완료 처리 (수동 실행)
+     * 스케줄 자동 완료 처리 (수동 실행).
+     *
+     * <p>세션 역할이 같은 기관의 관리자·사무원일 때만 허용하고(내담자·상담사는 403, 미인증은 401),
+     * 처리 범위는 {@code TenantContext} 의 호출자 테넌트 1건으로 강제한다. 완료 전환·회기 차감은
+     * 배치와 같은 {@link ScheduleAutoCompleteService} 경로를 쓴다.</p>
+     *
+     * @param session HTTP 세션
+     * @return 처리 완료 응답
      */
     @PostMapping("/schedules/auto-complete")
-    public ResponseEntity<ApiResponse<Void>> autoCompleteSchedules() {
-        log.info("🔄 스케줄 자동 완료 처리 수동 실행");
+    public ResponseEntity<ApiResponse<Void>> autoCompleteSchedules(HttpSession session) {
+        User caller = clientPathAccessGuard.requireTenantManager(session);
+        String tenantId = clientPathAccessGuard.requireCallerTenantId(caller);
+        log.info("🔄 스케줄 자동 완료 처리 수동 실행: userId={}, role={}", caller.getId(), caller.getRole());
 
-        scheduleService.autoCompleteExpiredSchedules();
+        var result = scheduleAutoCompleteService.autoCompleteExpiredSchedulesForTenant(tenantId);
 
+        log.info("✅ 스케줄 자동 완료 처리 완료: 완료 {}건, 알림 {}건",
+                result.completedCount(), result.reminderSentCount());
         return success("스케줄 자동 완료 처리가 실행되었습니다.");
     }
 
@@ -3264,8 +3279,10 @@ public class AdminController extends BaseApiController {
      * 스케줄 자동 완료 처리 및 상담일지 미작성 알림 (수동 실행)
      */
     @PostMapping("/schedules/auto-complete-with-reminder")
-    public ResponseEntity<ApiResponse<Map<String, Object>>> autoCompleteSchedulesWithReminder() {
-        log.info("🔄 스케줄 자동 완료 처리 및 상담일지 미작성 알림 수동 실행");
+    public ResponseEntity<ApiResponse<Map<String, Object>>> autoCompleteSchedulesWithReminder(HttpSession session) {
+        User caller = clientPathAccessGuard.requireTenantManager(session);
+        log.info("🔄 스케줄 자동 완료 처리 및 상담일지 미작성 알림 수동 실행: userId={}, role={}",
+                caller.getId(), caller.getRole());
 
         Map<String, Object> result = adminService.autoCompleteSchedulesWithReminder();
 

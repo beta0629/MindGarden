@@ -4,6 +4,7 @@ import com.coresolution.consultation.entity.CounselorFeedback;
 import com.coresolution.consultation.entity.VirtualClientSession;
 import com.coresolution.consultation.service.CounselorTrainingService;
 import com.coresolution.consultation.service.support.ClientPathAccessGuard;
+import com.coresolution.consultation.util.ServerErrorResponses;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -59,11 +60,7 @@ public class CounselorTrainingController {
             return ResponseEntity.ok(response);
 
         } catch (Exception e) {
-            log.error("❌ 상담 세션 분석 실패: {}", e.getMessage(), e);
-            return ResponseEntity.internalServerError().body(Map.of(
-                "success", false,
-                "message", "상담 세션 분석 실패"
-            ));
+            throw ServerErrorResponses.propagate(e);
         }
     }
 
@@ -96,11 +93,7 @@ public class CounselorTrainingController {
             return ResponseEntity.ok(response);
 
         } catch (Exception e) {
-            log.error("❌ 가상 내담자 세션 생성 실패: {}", e.getMessage(), e);
-            return ResponseEntity.internalServerError().body(Map.of(
-                "success", false,
-                "message", "가상 내담자 세션 생성 실패"
-            ));
+            throw ServerErrorResponses.propagate(e);
         }
     }
 
@@ -129,11 +122,7 @@ public class CounselorTrainingController {
             return ResponseEntity.ok(response);
 
         } catch (Exception e) {
-            log.error("❌ 메시지 전송 실패: {}", e.getMessage(), e);
-            return ResponseEntity.internalServerError().body(Map.of(
-                "success", false,
-                "message", "메시지 전송 실패"
-            ));
+            throw ServerErrorResponses.propagate(e);
         }
     }
 
@@ -158,11 +147,7 @@ public class CounselorTrainingController {
             return ResponseEntity.ok(response);
 
         } catch (Exception e) {
-            log.error("❌ 세션 종료 실패: {}", e.getMessage(), e);
-            return ResponseEntity.internalServerError().body(Map.of(
-                "success", false,
-                "message", "세션 종료 실패"
-            ));
+            throw ServerErrorResponses.propagate(e);
         }
     }
 
@@ -187,11 +172,7 @@ public class CounselorTrainingController {
             return ResponseEntity.ok(response);
 
         } catch (Exception e) {
-            log.error("❌ 피드백 이력 조회 실패: {}", e.getMessage(), e);
-            return ResponseEntity.internalServerError().body(Map.of(
-                "success", false,
-                "message", "피드백 이력 조회 실패"
-            ));
+            throw ServerErrorResponses.propagate(e);
         }
     }
 }

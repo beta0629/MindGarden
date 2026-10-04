@@ -4,6 +4,7 @@ import com.coresolution.consultation.entity.*;
 import com.coresolution.consultation.service.EmotionAnalysisService;
 import com.coresolution.consultation.service.support.ClientPathAccessGuard;
 import com.coresolution.consultation.service.support.ResourceOwnerAccessGuard;
+import com.coresolution.consultation.util.ServerErrorResponses;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -60,13 +61,7 @@ public class EmotionAnalysisController {
             return ResponseEntity.ok(response);
 
         } catch (Exception e) {
-            log.error("❌ 음성 감정 분석 실패: {}", e.getMessage(), e);
-
-            Map<String, Object> error = new HashMap<>();
-            error.put("success", false);
-            error.put("message", "음성 감정 분석 실패: " + e.getMessage());
-
-            return ResponseEntity.internalServerError().body(error);
+            throw ServerErrorResponses.propagate(e);
         }
     }
 
@@ -101,13 +96,7 @@ public class EmotionAnalysisController {
             return ResponseEntity.ok(response);
 
         } catch (Exception e) {
-            log.error("❌ 비디오 감정 분석 실패: {}", e.getMessage(), e);
-
-            Map<String, Object> error = new HashMap<>();
-            error.put("success", false);
-            error.put("message", "비디오 감정 분석 실패: " + e.getMessage());
-
-            return ResponseEntity.internalServerError().body(error);
+            throw ServerErrorResponses.propagate(e);
         }
     }
 
@@ -143,13 +132,7 @@ public class EmotionAnalysisController {
             return ResponseEntity.ok(response);
 
         } catch (Exception e) {
-            log.error("❌ 텍스트 감정 분석 실패: {}", e.getMessage(), e);
-
-            Map<String, Object> error = new HashMap<>();
-            error.put("success", false);
-            error.put("message", "텍스트 감정 분석 실패: " + e.getMessage());
-
-            return ResponseEntity.internalServerError().body(error);
+            throw ServerErrorResponses.propagate(e);
         }
     }
 
@@ -180,13 +163,7 @@ public class EmotionAnalysisController {
             return ResponseEntity.ok(response);
 
         } catch (Exception e) {
-            log.error("❌ 멀티모달 리포트 생성 실패: {}", e.getMessage(), e);
-
-            Map<String, Object> error = new HashMap<>();
-            error.put("success", false);
-            error.put("message", "멀티모달 리포트 생성 실패: " + e.getMessage());
-
-            return ResponseEntity.internalServerError().body(error);
+            throw ServerErrorResponses.propagate(e);
         }
     }
 
@@ -233,27 +210,17 @@ public class EmotionAnalysisController {
             HttpSession session) {
 
         clientPathAccessGuard.requireClientAccess(session, clientId);
-        try {
-            List<EmotionTrackingHistory> trend = emotionType != null
-                ? emotionAnalysisService.getEmotionTrend(clientId, emotionType)
-                : List.of();  // 전체 조회는 추후 구현
+        // 실패는 전역 예외 처리기가 공통 5xx 응답(message·errorCode·traceId)으로 만든다.
+        List<EmotionTrackingHistory> trend = emotionType != null
+            ? emotionAnalysisService.getEmotionTrend(clientId, emotionType)
+            : List.of();  // 전체 조회는 추후 구현
 
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", true);
-            response.put("trend", trend);
-            response.put("emotionType", emotionType);
+        Map<String, Object> response = new HashMap<>();
+        response.put("success", true);
+        response.put("trend", trend);
+        response.put("emotionType", emotionType);
 
-            return ResponseEntity.ok(response);
-
-        } catch (Exception e) {
-            log.error("❌ 감정 추이 조회 실패: {}", e.getMessage(), e);
-
-            Map<String, Object> error = new HashMap<>();
-            error.put("success", false);
-            error.put("message", "감정 추이 조회 실패");
-
-            return ResponseEntity.internalServerError().body(error);
-        }
+        return ResponseEntity.ok(response);
     }
 
     /**
@@ -280,13 +247,7 @@ public class EmotionAnalysisController {
             return ResponseEntity.ok(response);
 
         } catch (Exception e) {
-            log.error("❌ 감정 변화 추적 실패: {}", e.getMessage(), e);
-
-            Map<String, Object> error = new HashMap<>();
-            error.put("success", false);
-            error.put("message", "감정 변화 추적 실패");
-
-            return ResponseEntity.internalServerError().body(error);
+            throw ServerErrorResponses.propagate(e);
         }
     }
 }

@@ -208,8 +208,9 @@ public class CounselorTrainingServiceImpl implements CounselorTrainingService {
 
     @Override
     public Map<String, Object> getFeedbackHistory(Long consultantId, Integer limit) {
+        String tenantId = TenantContextHolder.getRequiredTenantId();
         List<CounselorFeedback> feedbacks = feedbackRepository
-                .findByConsultantIdAndIsDeletedFalseOrderByFeedbackDateDesc(consultantId);
+                .findByTenantIdAndConsultantIdAndIsDeletedFalseOrderByFeedbackDateDesc(tenantId, consultantId);
 
         if (limit != null && limit > 0 && feedbacks.size() > limit) {
             feedbacks = feedbacks.subList(0, limit);

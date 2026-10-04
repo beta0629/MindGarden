@@ -4,6 +4,23 @@
  * Typography: h1/h2/body-md/caption tokens only. No B0KlA accent bars or #3D5246.
  */
 
+/*
+ * 필드·섹션 chrome 토큰 — 대시보드 모달과 전체화면 라우트(/consultant/consultation-record/:id)가
+ * 같은 값을 쓰도록 여기서만 정의하고 아래 규칙은 이 변수만 참조한다.
+ */
+.mg-modal.mg-v2-clinic-os {
+  --mg-v2-consultation-log-field-radius: var(--mg-v2-radius-md);
+  --mg-v2-consultation-log-field-border-width: var(--mg-v2-border-width-thin);
+  --mg-v2-consultation-log-field-border-color: var(--mg-v2-color-border-default);
+  --mg-v2-consultation-log-field-bg: var(--mg-v2-color-surface-card);
+  --mg-v2-consultation-log-section-radius: var(--mg-v2-radius-lg);
+  --mg-v2-consultation-log-section-border-width: var(--mg-v2-border-width-thin);
+  --mg-v2-consultation-log-section-border-color: var(--mg-v2-color-border-default);
+  --mg-v2-consultation-log-section-bg: var(--mg-v2-color-surface-card);
+  --mg-v2-consultation-log-section-header-bg: transparent;
+  --mg-v2-consultation-log-section-header-divider: var(--mg-v2-color-border-subtle);
+}
+
 /* ——— Modal shell (fullscreen, header/footer fixed, body scroll) ——— */
 .mg-modal.mg-modal--fullscreen.mg-v2-clinic-os .mg-modal__header {
   padding: var(--mg-v2-space-5) var(--mg-v2-space-6);
@@ -110,9 +127,9 @@
   gap: var(--mg-v2-space-4);
   margin-bottom: var(--mg-v2-space-5);
   padding: var(--mg-v2-space-3) var(--mg-v2-space-4);
-  border: var(--mg-v2-border-width-thin) solid var(--mg-v2-color-border-default);
-  border-radius: var(--mg-v2-radius-lg);
-  background: var(--mg-v2-color-surface-card);
+  border: var(--mg-v2-consultation-log-section-border-width) solid var(--mg-v2-consultation-log-section-border-color);
+  border-radius: var(--mg-v2-consultation-log-section-radius);
+  background: var(--mg-v2-consultation-log-section-bg);
 }
 
 .mg-v2-clinic-os .mg-v2-consultation-log__header-meta-row {
@@ -235,10 +252,10 @@
 }
 
 .mg-v2-clinic-os .mg-v2-consultation-log__content-superblock {
-  border: var(--mg-v2-border-width-thin) solid var(--mg-v2-color-border-default);
-  border-radius: var(--mg-v2-radius-lg);
+  border: var(--mg-v2-consultation-log-section-border-width) solid var(--mg-v2-consultation-log-section-border-color);
+  border-radius: var(--mg-v2-consultation-log-section-radius);
   padding: var(--mg-v2-space-5);
-  background: var(--mg-v2-color-surface-card);
+  background: var(--mg-v2-consultation-log-section-bg);
   margin-bottom: var(--mg-v2-space-5);
 }
 
@@ -249,6 +266,7 @@
 .mg-v2-clinic-os .mg-v2-consultation-log__superblock-title,
 .mg-v2-clinic-os .mg-v2-consultation-log__section-heading {
   margin: 0 0 var(--mg-v2-space-4);
+  background: var(--mg-v2-consultation-log-section-header-bg);
   font-size: var(--mg-v2-font-size-h2);
   font-weight: var(--mg-v2-font-weight-semibold);
   line-height: var(--mg-v2-font-line-height-heading);
@@ -278,9 +296,9 @@
   font-size: var(--mg-v2-font-size-body-md);
   line-height: var(--mg-v2-font-line-height-body);
   color: var(--mg-v2-color-text-primary);
-  border: var(--mg-v2-border-width-thin) solid var(--mg-v2-color-border-default);
-  border-radius: var(--mg-v2-radius-md);
-  background: var(--mg-v2-color-surface-card);
+  border: var(--mg-v2-consultation-log-field-border-width) solid var(--mg-v2-consultation-log-field-border-color);
+  border-radius: var(--mg-v2-consultation-log-field-radius);
+  background: var(--mg-v2-consultation-log-field-bg);
   padding: var(--mg-v2-space-3) var(--mg-v2-space-4);
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
@@ -330,8 +348,8 @@
 .mg-v2-clinic-os .mg-v2-consultation-log-modal__required-notice {
   padding: var(--mg-v2-space-4);
   margin-bottom: 0;
-  border: var(--mg-v2-border-width-thin) solid var(--mg-v2-color-border-default);
-  border-radius: var(--mg-v2-radius-lg);
+  border: var(--mg-v2-consultation-log-section-border-width) solid var(--mg-v2-consultation-log-section-border-color);
+  border-radius: var(--mg-v2-consultation-log-section-radius);
   background: var(--mg-v2-color-surface-stone);
 }
 
@@ -367,6 +385,7 @@
 
 .mg-v2-clinic-os .mg-v2-consultation-log__memo-p1-title {
   margin: 0;
+  background: var(--mg-v2-consultation-log-section-header-bg);
   font-size: var(--mg-v2-font-size-h2);
   font-weight: var(--mg-v2-font-weight-semibold);
   line-height: var(--mg-v2-font-line-height-heading);
@@ -399,7 +418,7 @@
 }
 
 .mg-v2-clinic-os .mg-v2-consultation-log-modal__accordion .mg-accordion-item {
-  border-bottom: var(--mg-v2-border-width-thin) solid var(--mg-v2-color-border-subtle);
+  border-bottom: var(--mg-v2-consultation-log-section-border-width) solid var(--mg-v2-consultation-log-section-header-divider);
 }
 
 .mg-v2-clinic-os .mg-v2-consultation-log-modal__accordion .mg-accordion-item:last-child {
@@ -439,7 +458,7 @@
   min-height: unset !important;
   max-height: none !important;
   padding: var(--mg-v2-space-4) var(--mg-v2-space-5) !important;
-  background: transparent;
+  background: var(--mg-v2-consultation-log-section-header-bg);
   border-width: 0 !important;
   border-style: none !important;
   border-color: transparent !important;
@@ -534,9 +553,9 @@
 .mg-v2-clinic-os .mg-v2-consultation-log-modal__psych-summary {
   margin-top: var(--mg-v2-space-5);
   padding: var(--mg-v2-space-4);
-  border: var(--mg-v2-border-width-thin) solid var(--mg-v2-color-border-default);
-  border-radius: var(--mg-v2-radius-lg);
-  background: var(--mg-v2-color-surface-card);
+  border: var(--mg-v2-consultation-log-section-border-width) solid var(--mg-v2-consultation-log-section-border-color);
+  border-radius: var(--mg-v2-consultation-log-section-radius);
+  background: var(--mg-v2-consultation-log-section-bg);
 }
 
 .mg-v2-clinic-os .mg-v2-consultation-log-modal__precaution-list {

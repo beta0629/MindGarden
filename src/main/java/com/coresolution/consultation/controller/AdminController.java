@@ -23,6 +23,7 @@ import com.coresolution.consultation.dto.ClientRegistrationRequest;
 import com.coresolution.consultation.dto.CheckoutSameDayRequest;
 import com.coresolution.consultation.dto.ConsultantClientMappingCreateRequest;
 import com.coresolution.consultation.dto.ConsultantClientMappingResponse;
+import com.coresolution.consultation.dto.admin.BulkMappingPaymentResult;
 import com.coresolution.consultation.dto.ConsultantRegistrationRequest;
 import com.coresolution.consultation.dto.ConsultationRecordListItemResponse;
 import com.coresolution.consultation.dto.ConsultationsByDayOfWeekResponse;
@@ -41,6 +42,7 @@ import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.exception.EntityNotFoundException;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.repository.UserSocialAccountRepository;
+import com.coresolution.consultation.service.AdminBulkMappingPaymentService;
 import com.coresolution.consultation.service.AdminService;
 import com.coresolution.consultation.service.BranchService;
 import com.coresolution.consultation.service.ClientMappingListPayloadService;
@@ -58,6 +60,7 @@ import com.coresolution.consultation.service.RealTimeStatisticsService;
 import com.coresolution.consultation.service.ScheduleAutoCompleteService;
 import com.coresolution.consultation.service.ScheduleService;
 import com.coresolution.consultation.service.support.ClientPathAccessGuard;
+import com.coresolution.consultation.service.support.DeferredExternalCalls;
 import com.coresolution.consultation.service.support.ResourceOwnerAccessGuard;
 import com.coresolution.core.security.OpsAccessGuard;
 import com.coresolution.consultation.service.support.ConsultationRecordAccessGuard;
@@ -162,6 +165,7 @@ public class AdminController extends BaseApiController {
     }
 
     private final AdminService adminService;
+    private final AdminBulkMappingPaymentService adminBulkMappingPaymentService;
     private final ClientPackagePaymentHistoryService clientPackagePaymentHistoryService;
     private final ClientMappingListPayloadService clientMappingListPayloadService;
     private final BranchService branchService;
@@ -2582,7 +2586,7 @@ public class AdminController extends BaseApiController {
         resourceOwnerAccessGuard.requireMappingAdminAccess(session, id);
         log.info("🔧 매칭 강제 종료: ID={}", id);
         String reason = (String) requestBody.get("reason");
-        adminService.terminateMapping(id, reason);
+        DeferredExternalCalls.run(() -> adminService.terminateMapping(id, reason));
         return success("매칭이 성공적으로 종료되었습니다");
     }
 
@@ -2918,92 +2922,68 @@ public class AdminController extends BaseApiController {
     }
 
     /**
-     * 매칭 결제 확인
+     * 일괄 매칭 결제 확인 (관리자·사무원). 결제 대기 매칭만, 사전 검증은 전부 아니면 전무.
+     *
+     * <p>mappingIds: 정수 숫자·숫자 문자열(중복은 한 번만), 비었거나 형식 오류·최대 개수 초과 400,
+     * 다른 기관·없는 id 가 하나라도 있으면 403(아무것도 처리 안 함), 결제 대기가 아닌 매칭 포함 409.
+     * 2건 이상이면 amount 는 패키지 금액 합계와 같아야 하고 각 매칭에 자기 패키지 금액이 기록된다.</p>
      */
     @PostMapping("/mapping/payment/confirm")
     public ResponseEntity<ApiResponse<Map<String, Object>>> confirmMappingPayment(
             @RequestBody Map<String, Object> request, HttpSession session) {
-        resourceOwnerAccessGuard.requireMappingsManagerAccess(session, request.get("mappingIds"));
-        log.info("결제 확인 요청: {}", request);
+        List<Long> mappingIds = resourceOwnerAccessGuard.requireMappingsManagerAccess(session,
+                request.get("mappingIds"));
+        Object paymentMethod = request.get("paymentMethod");
+        log.info("일괄 결제 확인 요청: count={}", mappingIds.size());
 
-        @SuppressWarnings("unchecked")
-        List<Long> mappingIds = (List<Long>) request.get("mappingIds");
-        String paymentMethod = (String) request.get("paymentMethod");
-        Integer amount = (Integer) request.get("amount");
-        String note = (String) request.get("note");
+        BulkMappingPaymentResult result = adminBulkMappingPaymentService.confirmMappings(mappingIds,
+                paymentMethod instanceof String method ? method : null, request.get("amount"));
 
-        if (mappingIds == null || mappingIds.isEmpty()) {
-            throw new IllegalArgumentException("매칭 ID가 필요합니다.");
-        }
-
-        log.info("결제 확인 처리: mappingIds={}, method={}, amount={}, note={}", mappingIds,
-                paymentMethod, amount, note);
-
-        for (Long mappingId : mappingIds) {
-            try {
-                adminService.confirmPayment(mappingId, paymentMethod,
-                        "ADMIN_CONFIRMED_" + System.currentTimeMillis(),
-                        amount != null ? amount.longValue() : 0L);
-                log.info("매칭 ID {} 결제 확인 및 ERP 연동 완료", mappingId);
-            } catch (Exception e) {
-                log.error("매칭 ID {} 결제 확인 실패: {}", mappingId, e.getMessage());
-            }
-        }
-
-        Map<String, Object> data = new HashMap<>();
-        data.put("confirmedMappings", mappingIds);
-        data.put("paymentMethod", paymentMethod);
-        data.put("amount", amount);
-        data.put("note", note);
+        Map<String, Object> data = bulkResultData(result);
+        data.put("confirmedMappings", result.getProcessedMappingIds());
         data.put("confirmedAt", System.currentTimeMillis());
-
-        return success("결제가 성공적으로 확인되었습니다.", data);
+        return bulkResponse(result, "결제가 성공적으로 확인되었습니다.", data);
     }
 
     /**
-     * 매칭 결제 취소 — {@link AdminService#terminateMapping} 위임 (write-path SSOT).
+     * 일괄 매칭 결제 취소 (같은 기관 관리자 전용) — 매칭마다 {@link AdminService#terminateMapping} 위임 (원장 환불만, PG 호출 없음).
      *
-     * <p>메모리만 REJECTED 로 바꾸던 stub 을 제거. PENDING_PAYMENT 는 CANCELLED+REJECTED,
-     * 유료 전액은 CANCELLED+REFUNDED 로 persist 된다.</p>
+     * <p>mappingIds 규칙은 결제 확인과 같다. 이미 종료·취소된 매칭이나 쇼핑 주문(PG) 결제 매칭이 하나라도 있으면
+     * 409(아무것도 처리 안 함). 같은 요청 반복·동시 요청은 매칭 행 잠금으로 두 번째부터 건너뛰어 재환불하지 않는다.</p>
      */
     @PostMapping("/mapping/payment/cancel")
     public ResponseEntity<ApiResponse<Map<String, Object>>> cancelMappingPayment(
             @RequestBody Map<String, Object> request, HttpSession session) {
-        resourceOwnerAccessGuard.requireMappingsAdminAccess(session, request.get("mappingIds"));
-        log.info("결제 취소 요청: {}", request);
-
-        @SuppressWarnings("unchecked")
-        List<Long> mappingIds = (List<Long>) request.get("mappingIds");
-
-        if (mappingIds == null || mappingIds.isEmpty()) {
-            throw new IllegalArgumentException("매칭 ID가 필요합니다.");
-        }
-
+        List<Long> mappingIds = resourceOwnerAccessGuard.requireMappingsAdminAccess(session,
+                request.get("mappingIds"));
         String reason = request.get("reason") != null
                 ? String.valueOf(request.get("reason"))
                 : AdminServiceUserFacingMessages.DEFAULT_MAPPING_NOTE_REASON_ADMIN_REQUEST;
+        log.info("일괄 결제 취소 요청(terminateMapping 위임): count={}", mappingIds.size());
 
-        log.info("결제 취소 처리(terminateMapping 위임): mappingIds={}, reason={}", mappingIds, reason);
+        BulkMappingPaymentResult result = adminBulkMappingPaymentService.cancelMappings(mappingIds, reason);
 
-        List<Long> cancelledMappings = new ArrayList<>();
-        List<Long> failedMappings = new ArrayList<>();
-        for (Long mappingId : mappingIds) {
-            try {
-                adminService.terminateMapping(mappingId, reason);
-                cancelledMappings.add(mappingId);
-                log.info("매칭 ID {} 결제 취소(terminate) 완료", mappingId);
-            } catch (Exception e) {
-                failedMappings.add(mappingId);
-                log.error("매칭 ID {} 결제 취소 실패: {}", mappingId, e.getMessage());
-            }
-        }
-
-        Map<String, Object> data = new HashMap<>();
-        data.put("cancelledMappings", cancelledMappings);
-        data.put("failedMappings", failedMappings);
+        Map<String, Object> data = bulkResultData(result);
+        data.put("cancelledMappings", result.getProcessedMappingIds());
         data.put("cancelledAt", System.currentTimeMillis());
+        return bulkResponse(result, "결제가 성공적으로 취소되었습니다.", data);
+    }
 
-        return success("결제가 성공적으로 취소되었습니다.", data);
+    private static Map<String, Object> bulkResultData(BulkMappingPaymentResult result) {
+        Map<String, Object> data = new HashMap<>();
+        data.put("skippedMappings", result.getSkippedMappingIds());
+        data.put("failedMappingId", result.getFailedMappingId());
+        data.put("notProcessedMappings", result.getNotProcessedMappingIds());
+        return data;
+    }
+
+    private ResponseEntity<ApiResponse<Map<String, Object>>> bulkResponse(BulkMappingPaymentResult result,
+            String successMessage, Map<String, Object> data) {
+        if (result.isCompleted()) {
+            return success(successMessage, data);
+        }
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(ApiResponse.error(AdminServiceUserFacingMessages.MSG_BULK_MAPPING_STOPPED_ON_FAILURE, data));
     }
 
     /**

@@ -120,6 +120,7 @@ import com.coresolution.consultation.constant.LifecycleState;
 import com.coresolution.consultation.dto.lifecycle.Actor;
 import com.coresolution.consultation.service.UserLifecycleService;
 import com.coresolution.consultation.service.UserService;
+import com.coresolution.consultation.service.support.DeferredExternalCalls;
 import com.coresolution.consultation.dto.PaymentSource;
 import com.coresolution.consultation.entity.Payment;
 import com.coresolution.consultation.util.CardMerchantFeeFromPaymentJsonUtil;
@@ -4942,14 +4943,17 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
     }
 
     private void notifyMappingSettlement(ConsultantClientMapping mapping, MappingSettlementScenario scenario) {
-        try {
-            String tenantId = getTenantIdFromMapping(mapping);
-            if (tenantId == null) {
-                tenantId = getTenantIdOrNull();
+        String resolvedTenantId = getTenantIdFromMapping(mapping);
+        String tenantId = resolvedTenantId != null ? resolvedTenantId : getTenantIdOrNull();
+        Runnable notice = () -> {
+            try {
+                mappingSettlementNotificationHelper.notifyAfterMappingSettlement(mapping, tenantId, scenario);
+            } catch (Exception ex) {
+                log.warn("매칭 정산 알림 실패: mappingId={}, scenario={}", mapping.getId(), scenario, ex);
             }
-            mappingSettlementNotificationHelper.notifyAfterMappingSettlement(mapping, tenantId, scenario);
-        } catch (Exception ex) {
-            log.warn("매칭 정산 알림 실패: mappingId={}, scenario={}", mapping.getId(), scenario, ex);
+        };
+        if (!DeferredExternalCalls.deferIfActive(notice)) {
+            notice.run();
         }
     }
 
@@ -8001,7 +8005,12 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         log.info("🔧 매칭 강제 종료 처리 시작: ID={}, 사유={}", id, reason);
         String tenantId = getTenantId();
 
-        ConsultantClientMapping mapping = mappingRepository.findByTenantIdAndId(tenantId, id)
+        // 원장 환불·결제 대기 취소는 행 잠금으로 읽어 동시 요청의 이중 환불을 막는다.
+        // Path B 는 PortOne 취소를 포함하므로 기존처럼 잠금 없이 읽는다 (주문 환불 SSOT 가 멱등 처리).
+        Optional<String> pathBOrderPublicId = findPathBShopOrderPublicIdForRefund(tenantId, id);
+        ConsultantClientMapping mapping = (pathBOrderPublicId.isPresent()
+                ? mappingRepository.findByTenantIdAndId(tenantId, id)
+                : mappingRepository.findByTenantIdAndIdForUpdate(tenantId, id))
                 .orElseThrow(() -> new RuntimeException(AdminServiceUserFacingMessages.MSG_MAPPING_NOT_FOUND));
         Hibernate.initialize(mapping.getConsultant());
         Hibernate.initialize(mapping.getClient());
@@ -8009,7 +8018,8 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         String terminatedStatus = getMappingStatusCode(MappingStatusConstants.TERMINATED);
         String cancelledStatus = getMappingStatusCode(MappingStatusConstants.CANCELLED);
         if (isClosedMappingStatus(mapping.getStatus(), terminatedStatus, cancelledStatus)) {
-            throw new RuntimeException(AdminServiceUserFacingMessages.MSG_MAPPING_ALREADY_TERMINATED);
+            throw new MappingAlreadyProcessedException(id, null, MappingAlreadyProcessedException.Reason.ALREADY_CLOSED,
+                    AdminServiceUserFacingMessages.MSG_MAPPING_ALREADY_TERMINATED);
         }
 
         // R4 (옵션 B 디러티 PENDING_PAYMENT 정리) — 결제 대기 매칭은 별도 정리 흐름을 탄다.
@@ -8025,7 +8035,6 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         // Path B(쇼핑 PAID/REFUNDED 주문 라인): unusedFullVoid/INCOME cancel 금지.
         // PortOne→reverse→EXPENSE fail-closed 는 AdminShopOrderRefundService.refundPaidOrder SSOT.
         // 매핑 CANCELLED 전이 금지 — clinic이 rem reverse + paymentStatus REFUNDED(+SESSIONS_EXHAUSTED).
-        Optional<String> pathBOrderPublicId = findPathBShopOrderPublicIdForRefund(tenantId, id);
         if (pathBOrderPublicId.isPresent()) {
             terminatePathBShopMappingViaOrderRefund(tenantId, id, pathBOrderPublicId.get(), reason);
             return;
@@ -8087,26 +8096,50 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         // Phase 0 (Q3=3A·보조=C): 4채널 의무 통지 (인앱·이메일·푸시·알림톡) + audit notes 누적.
         notifyRefundAutoCancel4Channels(mapping, tenantId, cancelledScheduleCount);
         
-        try {
-            User client = mapping.getClient();
-            if (client != null) {
-                log.info("📤 환불 완료 알림 발송 시작: 내담자={}", client.getName());
-                
-                boolean notificationSent = notificationService.sendRefundCompleted(client, refundedSessions, refundAmount);
-                
-                if (notificationSent) {
-                    log.info("✅ 환불 완료 알림 발송 성공: 내담자={}", client.getName());
-                } else {
-                    log.warn("⚠️ 환불 완료 알림 발송 실패: 내담자={}", client.getName());
+        User refundClient = mapping.getClient();
+        Runnable refundCompletedNotice = () -> {
+            try {
+                if (refundClient != null) {
+                    log.info("📤 환불 완료 알림 발송 시작: MappingID={}", id);
+                    boolean notificationSent = notificationService.sendRefundCompleted(
+                            refundClient, refundedSessions, refundAmount);
+                    if (notificationSent) {
+                        log.info("✅ 환불 완료 알림 발송 성공: MappingID={}", id);
+                    } else {
+                        log.warn("⚠️ 환불 완료 알림 발송 실패: MappingID={}", id);
+                    }
                 }
+            } catch (Exception e) {
+                log.error("❌ 환불 완료 알림 발송 중 오류: MappingID={}", id, e);
             }
-        } catch (Exception e) {
-            log.error("❌ 환불 완료 알림 발송 중 오류: MappingID={}", id, e);
+        };
+        if (!DeferredExternalCalls.deferIfActive(refundCompletedNotice)) {
+            refundCompletedNotice.run();
         }
         
         log.info("✅ 매칭 강제 종료(취소) 완료: ID={}, status={}, paymentStatus={}, 환불 회기={}, 환불 금액={}, 상담사={}, 내담자={}", 
                 id, mapping.getStatus(), mapping.getPaymentStatus(), refundedSessions, refundAmount,
                 mapping.getConsultant().getName(), mapping.getClient().getName());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public boolean requiresShopOrderRefund(Long mappingId) {
+        return findPathBShopOrderPublicIdForRefund(getTenantId(), mappingId).isPresent();
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public ConsultantClientMapping confirmPendingPayment(Long mappingId, String paymentMethod,
+            String paymentReference, Long paymentAmount) {
+        ConsultantClientMapping mapping = mappingRepository.findByTenantIdAndIdForUpdate(getTenantId(), mappingId)
+                .orElseThrow(() -> new RuntimeException(AdminServiceUserFacingMessages.MSG_MAPPING_NOT_FOUND));
+        String pendingPaymentStatus = getMappingStatusCode(MappingStatusConstants.PENDING_PAYMENT);
+        if (mapping.getStatus() == null || !mapping.getStatus().name().equals(pendingPaymentStatus)) {
+            throw new MappingAlreadyProcessedException(mappingId,
+                    AdminServiceUserFacingMessages.MSG_BULK_CONFIRM_NOT_PENDING_PAYMENT);
+        }
+        return confirmPayment(mappingId, paymentMethod, paymentReference, paymentAmount);
     }
 
     /**
@@ -8432,25 +8465,52 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             log.warn("자동 취소 4채널 통지 skip: client null MappingID={}", mapping.getId());
             return;
         }
-        try {
-            String mypageUrl = AdminServiceUserFacingMessages.AUTO_CANCEL_MYPAGE_PATH;
-            Map<String, String> channelResults = refundAutoCancelNotificationService
-                    .dispatchRefundAutoCancelNotification(
-                            tenantId, mapping.getClient(), mapping.getId(), cancelCount, mypageUrl);
-
-            String channelsJson = serializeChannelResults(channelResults);
-            String auditLine = String.format(
-                    AdminServiceUserFacingMessages.NOTES_AUTO_CANCEL_NOTIFY_LINE_FMT,
-                    LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME),
-                    cancelCount,
-                    channelsJson);
+        User client = mapping.getClient();
+        Long mappingId = mapping.getId();
+        boolean deferred = DeferredExternalCalls.deferIfActive(() -> {
+            String auditLine = dispatchRefundAutoCancel(tenantId, client, mappingId, cancelCount);
+            if (auditLine != null) {
+                runInNewTransaction(tenantId, () -> appendMappingNoteLine(tenantId, mappingId, auditLine));
+            }
+        });
+        if (deferred) {
+            return;
+        }
+        String auditLine = dispatchRefundAutoCancel(tenantId, client, mappingId, cancelCount);
+        if (auditLine != null) {
             String prevNotes = mapping.getNotes() != null ? mapping.getNotes() : "";
             mapping.setNotes(prevNotes.isEmpty() ? auditLine : prevNotes + "\n" + auditLine);
             mappingRepository.save(mapping);
-        } catch (Exception e) {
-            // 통지 실패가 환불·취소 본 흐름을 막지 않도록 격리. 운영 사후 분석을 위해 ERROR 로그 보존.
-            log.error("❌ 자동 취소 4채널 통지 실패: MappingID={}", mapping.getId(), e);
         }
+    }
+
+    /**
+     * 4채널 통지를 보내고 매핑 notes 에 남길 audit 한 줄을 돌려준다. 통지 실패는 환불·취소 본 흐름을 막지 않도록 격리.
+     *
+     * @return audit 한 줄, 통지 중 예외면 null
+     */
+    private String dispatchRefundAutoCancel(String tenantId, User client, Long mappingId, int cancelCount) {
+        try {
+            Map<String, String> channelResults = refundAutoCancelNotificationService
+                    .dispatchRefundAutoCancelNotification(tenantId, client, mappingId, cancelCount,
+                            AdminServiceUserFacingMessages.AUTO_CANCEL_MYPAGE_PATH);
+            return String.format(
+                    AdminServiceUserFacingMessages.NOTES_AUTO_CANCEL_NOTIFY_LINE_FMT,
+                    LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME),
+                    cancelCount,
+                    serializeChannelResults(channelResults));
+        } catch (Exception e) {
+            log.error("❌ 자동 취소 4채널 통지 실패: MappingID={}", mappingId, e);
+            return null;
+        }
+    }
+
+    private void appendMappingNoteLine(String tenantId, Long mappingId, String line) {
+        mappingRepository.findByTenantIdAndId(tenantId, mappingId).ifPresent(m -> {
+            String prevNotes = m.getNotes() != null ? m.getNotes() : "";
+            m.setNotes(prevNotes.isEmpty() ? line : prevNotes + "\n" + line);
+            mappingRepository.save(m);
+        });
     }
 
     /**

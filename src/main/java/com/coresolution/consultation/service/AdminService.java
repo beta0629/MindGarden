@@ -427,6 +427,28 @@ public interface AdminService {
     ConsultantClientMapping confirmPayment(Long mappingId, String paymentMethod, String paymentReference, Long paymentAmount);
 
     /**
+     * 결제 대기(PENDING_PAYMENT) 매칭만 결제 확인한다. 행 잠금 후 상태를 다시 보므로 같은 매칭에 대한
+     * 반복·동시 요청은 두 번째부터 409 로 거부된다.
+     *
+     * @param mappingId        매칭 ID
+     * @param paymentMethod    결제 수단
+     * @param paymentReference 결제 참조값
+     * @param paymentAmount    결제 금액
+     * @return 결제 확인된 매칭
+     * @throws com.coresolution.consultation.exception.MappingAlreadyProcessedException 결제 대기가 아닐 때
+     */
+    ConsultantClientMapping confirmPendingPayment(Long mappingId, String paymentMethod, String paymentReference,
+            Long paymentAmount);
+
+    /**
+     * 매칭이 쇼핑 주문(PG) 결제로 연결되어 종료 시 PortOne 취소가 필요한지 여부.
+     *
+     * @param mappingId 매칭 ID
+     * @return 쇼핑 주문 환불 경로 대상이면 true
+     */
+    boolean requiresShopOrderRefund(Long mappingId);
+
+    /**
      * 결제 확인 처리 (미수금 상태)
      */
     ConsultantClientMapping confirmPayment(Long mappingId, String paymentMethod, String paymentReference);

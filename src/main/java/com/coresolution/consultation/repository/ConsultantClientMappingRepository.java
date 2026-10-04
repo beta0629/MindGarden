@@ -3,10 +3,13 @@ package com.coresolution.consultation.repository;
 import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import com.coresolution.consultation.entity.ConsultantClientMapping;
 import com.coresolution.consultation.entity.User;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -41,6 +44,19 @@ public interface ConsultantClientMappingRepository extends BaseRepository<Consul
      * @param statuses   조회할 상태 (비어 있으면 결과 없음)
      * @return 해당 상태의 매핑 목록
      */
+    /**
+     * 매칭 종료·결제 확인처럼 돈이 움직이는 쓰기 전에 행 잠금(PESSIMISTIC_WRITE)으로 읽는다.
+     * 같은 매칭에 동시 요청이 들어와도 두 번째 요청은 첫 요청 커밋 뒤의 상태를 본다.
+     *
+     * @param tenantId 테넌트 ID
+     * @param id       매칭 ID
+     * @return 잠금 획득한 매칭
+     */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT m FROM ConsultantClientMapping m WHERE m.tenantId = :tenantId AND m.id = :id")
+    Optional<ConsultantClientMapping> findByTenantIdAndIdForUpdate(@Param("tenantId") String tenantId,
+            @Param("id") Long id);
+
     List<ConsultantClientMapping> findByTenantIdAndConsultantAndClientAndStatusIn(String tenantId, User consultant,
             User client, Collection<ConsultantClientMapping.MappingStatus> statuses);
     

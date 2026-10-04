@@ -156,6 +156,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import java.math.BigDecimal;
 import org.hibernate.Hibernate;
+import com.coresolution.consultation.service.ScheduleAutoCompleteService;
+import com.coresolution.consultation.util.ServerErrorResponses;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import java.util.UUID;
@@ -11165,30 +11167,64 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         }
     }
     
+    /**
+     * 스케줄 자동 완료 처리 및 상담일지 미작성 알림 (수동 실행).
+     *
+     * <p>2026-10-05 (#1407·#1408 검증 FAIL 보완)</p>
+     * <ul>
+     *   <li><b>동시 실행 차단</b> — 호출 진입점(AdminController)이 배치와 같은 run lock
+     *       ({@link ScheduleAutoCompleteService#runExclusively}) 으로 직렬화한다.</li>
+     *   <li><b>멱등성</b> — 일정별로 최신 상태를 다시 읽어 이미 {@code BOOKED} 가 아니면 건너뛴다.
+     *       따라서 두 번째 호출은 회기를 다시 차감하지 않는다(0건).</li>
+     *   <li><b>오류 문구</b> — 실패 응답에 원시 예외 문구를 싣지 않는다.</li>
+     * </ul>
+     * <p>처리 규칙 자체는 바꾸지 않는다: 지난 {@code BOOKED} 일정은 상담일지 작성 여부와 무관하게
+     * 완료 처리·회기 차감되고, 일지가 없으면 추가로 미작성 알림 메시지를 보낸다.</p>
+     *
+     * @return 처리 결과 (완료 건수·알림 건수·대상 상담사)
+     */
     @Override
     public Map<String, Object> autoCompleteSchedulesWithReminder() {
+        String tenantId = getTenantIdOrNull();
+        if (tenantId == null) {
+            log.error("❌ tenantId가 설정되지 않았습니다");
+            Map<String, Object> errorResult = new HashMap<>();
+            errorResult.put("success", false);
+            errorResult.put("message", ScheduleAutoCompleteService.TENANT_REQUIRED);
+            errorResult.put("completedSchedules", 0);
+            errorResult.put("reminderMessagesSent", 0);
+            return errorResult;
+        }
+        return runAutoCompleteWithReminder(tenantId);
+    }
+
+    /**
+     * 자동 완료 + 미작성 알림 본 처리 (진입점의 run lock 안에서만 호출된다).
+     *
+     * @param tenantId 호출자 테넌트 ID
+     * @return 처리 결과
+     */
+    private Map<String, Object> runAutoCompleteWithReminder(String tenantId) {
         try {
             log.info("🔄 스케줄 자동 완료 처리 및 상담일지 미작성 알림 시작");
-            
-            String tenantId = getTenantIdOrNull();
-            if (tenantId == null) {
-                log.error("❌ tenantId가 설정되지 않았습니다");
-                Map<String, Object> errorResult = new HashMap<>();
-                errorResult.put("completedCount", 0);
-                errorResult.put("reminderSentCount", 0);
-                return errorResult;
-            }
-            
+
             List<Schedule> expiredSchedules = scheduleRepository.findByDateBeforeAndStatus(
                 // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
                 tenantId, LocalDate.now(), ScheduleStatus.BOOKED);
-            
+
             int completedCount = 0;
             int reminderSentCount = 0;
             List<Long> consultantIdsWithReminder = new ArrayList<>();
-            
-            for (Schedule schedule : expiredSchedules) {
+
+            for (Schedule candidate : expiredSchedules) {
                 try {
+                    // 멱등성: 최신 상태를 다시 읽어 이미 완료·취소된 일정은 건너뛴다 (재차감 방지).
+                    Schedule schedule = scheduleRepository
+                            .findByTenantIdAndId(tenantId, candidate.getId())
+                            .orElse(null);
+                    if (schedule == null || !ScheduleStatus.BOOKED.equals(schedule.getStatus())) {
+                        continue;
+                    }
                     scheduleService.deductSessionAtCompletionIfNeeded(schedule);
                     // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
                     schedule.setStatus(ScheduleStatus.COMPLETED);
@@ -11196,41 +11232,44 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                     scheduleRepository.save(schedule);
                     salaryLateSessionAutoSyncService.syncAfterScheduleCompleted(schedule);
                     completedCount++;
-                    
+
                     boolean hasConsultationRecord = checkConsultationRecord(schedule);
-                    
+
                     if (!hasConsultationRecord) {
                         sendConsultationReminderMessage(schedule);
                         reminderSentCount++;
-                        
+
                         if (!consultantIdsWithReminder.contains(schedule.getConsultantId())) {
                             consultantIdsWithReminder.add(schedule.getConsultantId());
                         }
                     }
-                    
+
                 } catch (Exception e) {
-                    log.error("❌ 스케줄 ID {} 자동 완료 처리 실패: {}", schedule.getId(), e.getMessage());
+                    log.error("❌ 스케줄 ID {} 자동 완료 처리 실패", candidate.getId(), e);
                 }
             }
-            
+
             Map<String, Object> result = new HashMap<>();
             result.put("success", true);
             result.put("completedSchedules", completedCount);
             result.put("reminderMessagesSent", reminderSentCount);
             result.put("consultantsNotified", consultantIdsWithReminder.size());
             result.put("consultantIds", consultantIdsWithReminder);
-            result.put("message", String.format(AdminServiceUserFacingMessages.MSG_SCHEDULE_AUTO_COMPLETE_SUCCESS_FMT, 
+            result.put("message", String.format(AdminServiceUserFacingMessages.MSG_SCHEDULE_AUTO_COMPLETE_SUCCESS_FMT,
                 completedCount, consultantIdsWithReminder.size()));
-            
+
             log.info("✅ 스케줄 자동 완료 처리 완료: 완료 {}개, 알림 발송 {}개", completedCount, reminderSentCount);
             return result;
-            
+
         } catch (Exception e) {
-            log.error("❌ 스케줄 자동 완료 처리 실패", e);
+            // 원시 예외 문구(SQL·프로시저 부재 등)를 응답에 싣지 않는다. 추적은 traceId 로그로만.
+            String traceId = ServerErrorResponses.logInternalError("스케줄 자동 완료 처리", e);
             Map<String, Object> errorResult = new HashMap<>();
             errorResult.put("success", false);
-            errorResult.put("message", String.format(AdminServiceUserFacingMessages.MSG_SCHEDULE_AUTO_COMPLETE_FAILED_FMT,
-                    e.getMessage()));
+            errorResult.put("message", AdminServiceUserFacingMessages.MSG_SCHEDULE_AUTO_COMPLETE_FAILED);
+            errorResult.put(ServerErrorResponses.TRACE_ID_KEY, traceId);
+            errorResult.put("completedSchedules", 0);
+            errorResult.put("reminderMessagesSent", 0);
             return errorResult;
         }
     }

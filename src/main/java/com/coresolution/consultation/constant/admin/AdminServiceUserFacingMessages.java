@@ -325,6 +325,10 @@ public final class AdminServiceUserFacingMessages {
     public static final String MSG_SCHEDULE_AUTO_COMPLETE_FAILED_FMT =
             "스케줄 자동 완료 처리에 실패했습니다: %s";
 
+    /** 원시 예외 문구를 노출하지 않는 자동 완료 실패 문구 (traceId 로만 추적). */
+    public static final String MSG_SCHEDULE_AUTO_COMPLETE_FAILED =
+            "스케줄 자동 완료 처리에 실패했습니다. 잠시 후 다시 시도해 주세요.";
+
     public static final String MSG_DUPLICATE_MAPPING_MERGE_SUCCESS_FMT =
             "중복 매칭 통합 완료: %d개 그룹 통합, %d개 매칭 종료";
 

@@ -872,9 +872,8 @@ const ConsultationLogModal = ({
         }
 
         if (!loadedRecord) {
-        const recordUrl = isAdmin
-          ? `/api/v1/schedules/consultation-records?consultationId=${activeSchedule.id}`
-          : `/api/v1/schedules/consultation-records?consultantId=${user.id}&consultationId=${activeSchedule.id}`;
+        // 권한은 서버가 작성자(consultation_records.consultant_id)·같은 테넌트 관리자 기준으로 판정한다.
+        const recordUrl = `/api/v1/schedules/consultation-records?consultationId=${activeSchedule.id}`;
         const recordResponse = await apiGet(recordUrl);
         const recordList = recordResponse?.records ?? recordResponse?.data?.records ?? (Array.isArray(recordResponse?.data) ? recordResponse.data : Array.isArray(recordResponse) ? recordResponse : []);
         const hasRecord = recordList.length > 0 && (recordResponse?.success !== false);

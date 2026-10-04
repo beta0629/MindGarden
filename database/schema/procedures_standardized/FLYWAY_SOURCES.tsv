@@ -28,3 +28,4 @@ SetupTenantCategoryMapping	src/main/resources/db/migration/V41__create_missing_o
 ActivateDefaultComponents	src/main/resources/db/migration/V20260522_002__shop_reward_default_components_onboarding.sql	flyway-latest
 CopyDefaultTenantCodes	src/main/resources/db/migration/V20260831_002__expense_income_ssot_tenant_backfill.sql	flyway-latest
 CreateOrActivateTenant	src/main/resources/sql/procedures/create_or_activate_tenant_approval.sql	pinned
+GetMissingConsultationRecordAlerts	src/main/resources/db/migration/V20260424_002__consultation_record_alert_tenant_procedures.sql	flyway-latest

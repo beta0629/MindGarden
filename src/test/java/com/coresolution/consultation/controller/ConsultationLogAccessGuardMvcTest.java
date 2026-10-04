@@ -40,6 +40,7 @@ import com.coresolution.consultation.service.DynamicPermissionService;
 import com.coresolution.consultation.service.InstitutionLinkConsultationLogService;
 import com.coresolution.consultation.service.support.ClientPathAccessGuard;
 import com.coresolution.consultation.service.support.ConsultationRecordAccessGuard;
+import com.coresolution.consultation.service.support.ConsultationRecordAccessLogService;
 import com.coresolution.core.context.TenantContextHolder;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
@@ -99,6 +100,7 @@ class ConsultationLogAccessGuardMvcTest {
     private ConsultantClientMappingRepository mappingRepository;
     private DynamicPermissionService dynamicPermissionService;
     private UserRepository userRepository;
+    private ConsultationRecordAccessLogService accessLogService;
     private Object[] dataServices;
     private MockMvc mockMvc;
 
@@ -118,8 +120,10 @@ class ConsultationLogAccessGuardMvcTest {
         dataServices = new Object[] {consultationRecordService, institutionLinkService};
 
         ClientPathAccessGuard clientGuard = new ClientPathAccessGuard(mappingRepository, userRepository);
+        accessLogService = mock(ConsultationRecordAccessLogService.class);
         ConsultationRecordAccessGuard logGuard = new ConsultationRecordAccessGuard(clientGuard,
-            clinicalReportRepository, recordRepository, institutionLinkRepository, scheduleRepository);
+            clinicalReportRepository, accessLogService, recordRepository, institutionLinkRepository,
+            scheduleRepository);
         // 동적 권한은 통과시켜, 거부 판정이 오직 상담일지 소유자 가드에서 나오는지 확인한다.
         when(dynamicPermissionService.hasPermission(any(User.class), anyString())).thenReturn(true);
         Object[] provided = {clientGuard, logGuard, consultationRecordService, institutionLinkService,
@@ -147,6 +151,7 @@ class ConsultationLogAccessGuardMvcTest {
         when(recordRepository.findByTenantIdAndConsultationIdAndIsDeletedFalse(TENANT_A, SCHEDULE_ID))
             .thenReturn(List.of(record));
         when(scheduleRepository.findByTenantIdAndId(TENANT_A, SCHEDULE_ID)).thenReturn(Optional.of(schedule()));
+        when(recordRepository.findActiveForScheduleSsot(TENANT_A, SCHEDULE_ID)).thenReturn(List.of(record));
 
         Page<ConsultationRecord> page = new PageImpl<>(List.of(record));
         when(consultationRecordService.getConsultationRecordsByConsultantId(anyLong(), any())).thenReturn(page);

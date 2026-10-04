@@ -11,6 +11,7 @@ import java.util.stream.Collectors;
 import jakarta.validation.Valid;
 import jakarta.validation.groups.Default;
 import org.springframework.validation.annotation.Validated;
+import com.coresolution.consultation.constant.ServerErrorMessages;
 import com.coresolution.consultation.util.ServerErrorResponses;
 import com.coresolution.consultation.validation.OnAdminClientRegister;
 import com.coresolution.consultation.validation.OnAdminConsultantRegister;
@@ -23,6 +24,7 @@ import com.coresolution.consultation.dto.CheckoutSameDayRequest;
 import com.coresolution.consultation.dto.ConsultantClientMappingCreateRequest;
 import com.coresolution.consultation.dto.ConsultantClientMappingResponse;
 import com.coresolution.consultation.dto.ConsultantRegistrationRequest;
+import com.coresolution.consultation.dto.ConsultationRecordListItemResponse;
 import com.coresolution.consultation.dto.ConsultationsByDayOfWeekResponse;
 import com.coresolution.consultation.dto.CounselingEnabledUpdateRequest;
 import com.coresolution.consultation.dto.ConsultantTransferRequest;
@@ -55,6 +57,7 @@ import com.coresolution.consultation.service.RealTimeStatisticsService;
 import com.coresolution.consultation.service.ScheduleAutoCompleteService;
 import com.coresolution.consultation.service.ScheduleService;
 import com.coresolution.consultation.service.support.ClientPathAccessGuard;
+import com.coresolution.consultation.service.support.ConsultationRecordAccessGuard;
 import com.coresolution.consultation.service.StoredProcedureService;
 import com.coresolution.consultation.service.UserPersonalDataCacheService;
 import com.coresolution.consultation.service.UserService;
@@ -161,6 +164,7 @@ public class AdminController extends BaseApiController {
     private final ScheduleService scheduleService;
     private final ScheduleAutoCompleteService scheduleAutoCompleteService;
     private final ClientPathAccessGuard clientPathAccessGuard;
+    private final ConsultationRecordAccessGuard consultationRecordAccessGuard;
     private final ConsultationRecordService consultationRecordService;
     private final DynamicPermissionService dynamicPermissionService;
     private final MenuService menuService;
@@ -3276,16 +3280,38 @@ public class AdminController extends BaseApiController {
     }
 
     /**
-     * 스케줄 자동 완료 처리 및 상담일지 미작성 알림 (수동 실행)
+     * 스케줄 자동 완료 처리 및 상담일지 미작성 알림 (수동 실행).
+     *
+     * <p>2026-10-05 (#1407·#1408 검증 FAIL 보완) — 배치와 같은 run lock 으로 직렬화한다.
+     * 이미 실행 중이면 409 로 거부하고, 두 번째 실행은 이미 완료된 일정을 건너뛰어 회기를
+     * 다시 차감하지 않는다(멱등). 처리 규칙(지난 BOOKED 일정은 상담일지 유무와 무관하게
+     * 완료·차감)은 바꾸지 않는다.</p>
      */
     @PostMapping("/schedules/auto-complete-with-reminder")
     public ResponseEntity<ApiResponse<Map<String, Object>>> autoCompleteSchedulesWithReminder(HttpSession session) {
         User caller = clientPathAccessGuard.requireTenantManager(session);
+        clientPathAccessGuard.requireCallerTenantId(caller);
         log.info("🔄 스케줄 자동 완료 처리 및 상담일지 미작성 알림 수동 실행: userId={}, role={}",
                 caller.getId(), caller.getRole());
 
-        Map<String, Object> result = adminService.autoCompleteSchedulesWithReminder();
-
+        Map<String, Object> result;
+        try {
+            result = scheduleAutoCompleteService.runExclusively(
+                    "autoCompleteSchedulesWithReminder",
+                    adminService::autoCompleteSchedulesWithReminder);
+        } catch (IllegalStateException e) {
+            if (!ScheduleAutoCompleteService.ALREADY_RUNNING.equals(e.getMessage())) {
+                throw e;
+            }
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(ApiResponse.error(ScheduleAutoCompleteService.ALREADY_RUNNING));
+        }
+        Object traceId = result.get(ServerErrorResponses.TRACE_ID_KEY);
+        if (traceId != null) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.error(ServerErrorMessages.INTERNAL_SERVER_ERROR,
+                            ServerErrorResponses.body(traceId.toString())));
+        }
         return success(result);
     }
 
@@ -3852,9 +3878,14 @@ public class AdminController extends BaseApiController {
                     consultationRecordService.getConsultationRecords(consultantId, clientId,
                             startDate, endDate, pageable);
 
+            // 목록은 식별자·일자·작성자·상태만. 본문은 단건 상세(공용 가드 판정)에서만 받는다.
+            List<ConsultationRecordListItemResponse> metaItems = consultationRecords.getContent().stream()
+                    .map(ConsultationRecordListItemResponse::fromEntity)
+                    .toList();
+
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
-            response.put("data", consultationRecords.getContent());
+            response.put("data", metaItems);
             response.put("totalCount", consultationRecords.getTotalElements());
             response.put("totalPages", consultationRecords.getTotalPages());
             response.put("currentPage", consultationRecords.getNumber());
@@ -3868,7 +3899,14 @@ public class AdminController extends BaseApiController {
     }
 
     /**
-     * 관리자용 상담일지 상세 조회
+     * 관리자용 상담일지 상세 조회.
+     *
+     * <p>공용 가드 {@link ConsultationRecordAccessGuard#requireReadAccess} 로 판정한다(작성 상담사 본인 또는
+     * 같은 테넌트 관리자 계열). 거부는 403/401 로 그대로 위임한다.</p>
+     *
+     * @param recordId 상담일지 ID
+     * @param session HTTP 세션
+     * @return 상담일지 상세
      */
     @GetMapping("/consultation-records/{recordId}")
     public ResponseEntity<Map<String, Object>> getConsultationRecord(@PathVariable Long recordId,
@@ -3876,23 +3914,7 @@ public class AdminController extends BaseApiController {
         try {
             log.info("📝 관리자용 상담일지 상세 조회 - 기록 ID: {}", recordId);
 
-            User currentUser = SessionUtils.getCurrentUser(session);
-            if (currentUser == null) {
-                return ResponseEntity.status(401)
-                        .body(Map.of("success", false, "message", "로그인이 필요합니다."));
-            }
-
-            if (!roleCommonCodeAuthorizationService.isAdminOrStaffRoleFromCommonCode(currentUser.getRole())) {
-                return ResponseEntity.status(403)
-                        .body(Map.of("success", false, "message", "관리자 권한이 필요합니다."));
-            }
-
-            com.coresolution.consultation.entity.ConsultationRecord record =
-                    consultationRecordService.getConsultationRecordById(recordId);
-
-            if (record == null) {
-                return ResponseEntity.notFound().build();
-            }
+            ConsultationRecord record = consultationRecordAccessGuard.requireReadAccess(session, recordId);
 
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
@@ -3900,6 +3922,9 @@ public class AdminController extends BaseApiController {
 
             return ResponseEntity.ok(response);
 
+        } catch (org.springframework.security.access.AccessDeniedException
+                | com.coresolution.consultation.exception.UnauthorizedException e) {
+            throw e;
         } catch (Exception e) {
             return ServerErrorResponses.internalError("관리자용 상담일지 상세 조회 실패", e);
         }

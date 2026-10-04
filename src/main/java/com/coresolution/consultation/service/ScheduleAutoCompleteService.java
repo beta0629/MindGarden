@@ -156,6 +156,38 @@ public class ScheduleAutoCompleteService {
     }
 
     /**
+     * 자동 완료 계열 작업을 배치와 같은 {@code runLock} 으로 직렬화해 실행한다.
+     *
+     * <p>{@code auto-complete-with-reminder} 처럼 같은 일정을 완료·회기 차감하는 다른 수동 실행
+     * 경로가 배치·자기 자신과 동시에 돌지 않도록 하기 위한 공용 진입점이다. 대기 시간 안에
+     * 점유를 얻지 못하면 실행하지 않고 거부한다.</p>
+     *
+     * @param operationName 로그용 작업 이름
+     * @param action        락 안에서 실행할 작업
+     * @param <T>           작업 반환 타입
+     * @return 작업 결과
+     * @throws IllegalStateException 대기 시간 안에 점유를 얻지 못했을 때
+     */
+    public <T> T runExclusively(String operationName, java.util.function.Supplier<T> action) {
+        boolean acquired;
+        try {
+            acquired = runLock.tryLock(manualLockWaitSeconds, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException(ALREADY_RUNNING);
+        }
+        if (!acquired) {
+            log.warn("⚠️ 자동 완료 계열 수동 실행 거부(점유 중): operation={}", operationName);
+            throw new IllegalStateException(ALREADY_RUNNING);
+        }
+        try {
+            return action.get();
+        } finally {
+            runLock.unlock();
+        }
+    }
+
+    /**
      * 테넌트 컨텍스트를 바꿔 실행하고 이전 값으로 되돌린다 (HTTP 요청 스레드의 컨텍스트 보존).
      */
     private TenantAutoCompleteResult withTenantContext(String tenantId,

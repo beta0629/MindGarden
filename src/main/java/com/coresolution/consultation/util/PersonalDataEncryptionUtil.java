@@ -1,9 +1,11 @@
 package com.coresolution.consultation.util;
 
 import java.nio.charset.StandardCharsets;
+import java.security.SecureRandom;
 import java.util.Base64;
 import java.util.Collection;
 import javax.crypto.Cipher;
+import javax.crypto.spec.GCMParameterSpec;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -21,10 +23,19 @@ import org.springframework.util.StringUtils;
 @RequiredArgsConstructor
 public class PersonalDataEncryptionUtil {
 
+    /** v1 — 키별 고정 IV. 같은 평문이 같은 암호문이 되어 동등 비교 조회(이메일·전화)가 가능하다. */
     private static final String ALGORITHM = "AES/CBC/PKCS5Padding";
+    /** v2 — 메시지별 랜덤 nonce. 동등 비교 불가, 서술형 본문 전용. */
+    private static final String ALGORITHM_RANDOM_IV = "AES/GCM/NoPadding";
     private static final String VERSION_DELIMITER = "::";
+    /** v2 암호문 접두어는 {@code {keyId}:v2::} 형태 */
+    private static final String RANDOM_IV_VERSION_SUFFIX = ":v2";
+    private static final int GCM_NONCE_LENGTH_BYTES = 12;
+    private static final int GCM_TAG_LENGTH_BITS = 128;
     /** legacy 마이그레이션 시 DB에 저장된 접두어. 복호화 불가 시 제거 후 평문만 반환용 */
     private static final String LEGACY_PREFIX = "legacy::";
+
+    private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 
     private final PersonalDataEncryptionKeyProvider keyProvider;
 
@@ -59,7 +70,53 @@ public class PersonalDataEncryptionUtil {
     }
     
     /**
-     * 개인정보 복호화
+     * 메시지별 랜덤 IV 암호화 (AES-GCM, v2).
+     *
+     * <p>{@link #encrypt(String)} 는 키별 고정 IV 라 같은 평문이 항상 같은 암호문이 된다.
+     * 동등 비교 조회가 필요 없는 <strong>서술형 본문</strong>(상담일지 본문·초안 payload·
+     * 상담 녹취 등) 은 이 메서드를 써서 같은 평문도 매번 다른 암호문이 되게 한다.</p>
+     *
+     * <p>출력 형식: {@code {keyId}:v2::base64(nonce(12B) || ciphertext || tag(16B))}.
+     * {@link #decrypt(String)} 가 v1·v2·평문을 모두 읽으므로 전환 중 혼재가 허용된다.</p>
+     *
+     * @param plainText 암호화할 평문 (null·빈 문자열은 그대로 반환)
+     * @return v2 마커가 붙은 암호문
+     * @throws RuntimeException 활성 키가 없거나 암호화에 실패한 경우
+     */
+    public String encryptWithRandomIv(String plainText) {
+        if (plainText == null || plainText.trim().isEmpty()) {
+            return plainText;
+        }
+
+        try {
+            PersonalDataEncryptionKeyProvider.KeyMaterial keyMaterial = keyProvider.getActiveKey();
+            if (keyMaterial == null) {
+                throw new IllegalStateException("활성 암호화 키를 찾을 수 없습니다.");
+            }
+
+            byte[] nonce = new byte[GCM_NONCE_LENGTH_BYTES];
+            SECURE_RANDOM.nextBytes(nonce);
+
+            Cipher cipher = Cipher.getInstance(ALGORITHM_RANDOM_IV);
+            cipher.init(Cipher.ENCRYPT_MODE, keyMaterial.getSecretKey(),
+                new GCMParameterSpec(GCM_TAG_LENGTH_BITS, nonce));
+
+            byte[] cipherBytes = cipher.doFinal(plainText.getBytes(StandardCharsets.UTF_8));
+            byte[] payload = new byte[nonce.length + cipherBytes.length];
+            System.arraycopy(nonce, 0, payload, 0, nonce.length);
+            System.arraycopy(cipherBytes, 0, payload, nonce.length, cipherBytes.length);
+
+            return keyMaterial.getKeyId() + RANDOM_IV_VERSION_SUFFIX + VERSION_DELIMITER
+                + Base64.getEncoder().encodeToString(payload);
+
+        } catch (Exception e) {
+            log.error("개인정보 랜덤 IV 암호화 실패: {}", e.getMessage(), e);
+            throw new RuntimeException("개인정보 암호화에 실패했습니다.", e);
+        }
+    }
+
+    /**
+     * 개인정보 복호화 (v1 고정 IV · v2 랜덤 IV · 평문 혼재 모두 처리)
      * 
      * @param encryptedText 복호화할 암호문 (Base64 인코딩)
      * @return 복호화된 평문
@@ -229,12 +286,18 @@ public class PersonalDataEncryptionUtil {
             return text;
         }
 
+        // 회전 시에도 암호화 방식(v1 고정 IV / v2 랜덤 IV)은 유지한다.
+        // v2 를 v1 로 되돌리면 서술형 본문이 다시 동등 비교 가능한 암호문이 된다.
+        boolean randomIv = isRandomIvEncrypted(text);
         String decrypted = decrypt(text);
-        return encrypt(decrypted);
+        return randomIv ? encryptWithRandomIv(decrypted) : encrypt(decrypted);
     }
 
     /**
-     * 암호화 데이터에서 키 버전을 추출한다.
+     * 암호화 데이터에서 키 ID 를 추출한다. v2({@code {keyId}:v2::}) 는 버전 접미사를 떼고 돌려준다.
+     *
+     * @param encryptedText 암호문
+     * @return keyId. 마커가 없으면 null
      */
     public String extractKeyVersion(String encryptedText) {
         if (!StringUtils.hasText(encryptedText) || !encryptedText.contains(VERSION_DELIMITER)) {
@@ -244,7 +307,26 @@ public class PersonalDataEncryptionUtil {
         if (delimiterIndex <= 0) {
             return null;
         }
-        return encryptedText.substring(0, delimiterIndex);
+        String marker = encryptedText.substring(0, delimiterIndex);
+        if (marker.endsWith(RANDOM_IV_VERSION_SUFFIX)) {
+            String keyId = marker.substring(0, marker.length() - RANDOM_IV_VERSION_SUFFIX.length());
+            return keyId.isEmpty() ? null : keyId;
+        }
+        return marker;
+    }
+
+    /**
+     * 메시지별 랜덤 IV(v2) 로 암호화된 값인지 여부.
+     *
+     * @param text 검사할 값
+     * @return v2 마커를 가진 암호문이면 true
+     */
+    public boolean isRandomIvEncrypted(String text) {
+        if (!StringUtils.hasText(text)) {
+            return false;
+        }
+        int delimiterIndex = text.indexOf(VERSION_DELIMITER);
+        return delimiterIndex > 0 && text.substring(0, delimiterIndex).endsWith(RANDOM_IV_VERSION_SUFFIX);
     }
 
     public String getActiveKeyId() {
@@ -253,16 +335,54 @@ public class PersonalDataEncryptionUtil {
 
     private String decryptWithVersionedCipher(String encryptedText) throws Exception {
         int delimiterIndex = encryptedText.indexOf(VERSION_DELIMITER);
-        String keyId = encryptedText.substring(0, delimiterIndex);
+        String marker = encryptedText.substring(0, delimiterIndex);
         String cipherPayload = encryptedText.substring(delimiterIndex + VERSION_DELIMITER.length());
+        boolean randomIv = marker.endsWith(RANDOM_IV_VERSION_SUFFIX);
+        String keyId = randomIv
+            ? marker.substring(0, marker.length() - RANDOM_IV_VERSION_SUFFIX.length())
+            : marker;
 
         PersonalDataEncryptionKeyProvider.KeyMaterial keyMaterial = keyProvider.getKey(keyId);
         if (keyMaterial == null) {
             log.warn("⚠️ 암호화 키를 찾을 수 없습니다. keyId={}", keyId);
-            return decryptWithFallbackKeys(cipherPayload);
+            return randomIv
+                ? decryptWithRandomIvFallbackKeys(cipherPayload)
+                : decryptWithFallbackKeys(cipherPayload);
         }
 
-        return decryptWithMaterial(cipherPayload, keyMaterial);
+        return randomIv
+            ? decryptWithRandomIvMaterial(cipherPayload, keyMaterial)
+            : decryptWithMaterial(cipherPayload, keyMaterial);
+    }
+
+    private String decryptWithRandomIvFallbackKeys(String cipherPayload) throws Exception {
+        Collection<PersonalDataEncryptionKeyProvider.KeyMaterial> candidates = keyProvider.getAllKeysByPriority();
+        for (PersonalDataEncryptionKeyProvider.KeyMaterial material : candidates) {
+            try {
+                return decryptWithRandomIvMaterial(cipherPayload, material);
+            } catch (Exception e) {
+                log.debug("암호화 키({})로 v2 복호화 실패: {}", material.getKeyId(), e.getMessage());
+            }
+        }
+        log.debug("v2 복호화 가능한 키를 찾지 못했습니다. 원본을 그대로 반환합니다.");
+        return cipherPayload;
+    }
+
+    private String decryptWithRandomIvMaterial(String cipherPayload,
+        PersonalDataEncryptionKeyProvider.KeyMaterial material) throws Exception {
+        byte[] payload = Base64.getDecoder().decode(cipherPayload);
+        if (payload.length <= GCM_NONCE_LENGTH_BYTES) {
+            throw new IllegalArgumentException("v2 암호문 길이가 nonce 보다 짧습니다.");
+        }
+        byte[] nonce = new byte[GCM_NONCE_LENGTH_BYTES];
+        System.arraycopy(payload, 0, nonce, 0, GCM_NONCE_LENGTH_BYTES);
+        byte[] cipherBytes = new byte[payload.length - GCM_NONCE_LENGTH_BYTES];
+        System.arraycopy(payload, GCM_NONCE_LENGTH_BYTES, cipherBytes, 0, cipherBytes.length);
+
+        Cipher cipher = Cipher.getInstance(ALGORITHM_RANDOM_IV);
+        cipher.init(Cipher.DECRYPT_MODE, material.getSecretKey(),
+            new GCMParameterSpec(GCM_TAG_LENGTH_BITS, nonce));
+        return new String(cipher.doFinal(cipherBytes), StandardCharsets.UTF_8);
     }
 
     private String decryptWithFallbackKeys(String cipherText) throws Exception {

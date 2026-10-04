@@ -11,13 +11,21 @@ import lombok.extern.slf4j.Slf4j;
  *
  * <p>{@link PersonalNameAttributeConverter} 와 같은 키 관리
  * ({@link com.coresolution.consultation.util.PersonalDataEncryptionKeyProvider} · 환경변수
- * {@code encryption.personal-data.*})를 재사용하며, 저장 시 AES-256/CBC 암호화,
- * 조회 시 복호화한다. 적용 대상은 {@code consultation_records} 서술 컬럼과
+ * {@code encryption.personal-data.*})를 재사용하며, 저장 시
+ * <strong>AES-256/GCM + 메시지별 랜덤 nonce(v2)</strong> 로 암호화하고 조회 시 복호화한다.
+ * 적용 대상은 {@code consultation_records} 서술 컬럼과
  * {@code consultation_record_drafts.payload_json} 이다.</p>
  *
+ * <h3>왜 랜덤 IV 인가</h3>
+ * <p>이메일·전화 컬럼은 {@code findByEmail} 같은 동등 비교 조회 때문에 키별 고정 IV(v1,
+ * 결정적 암호화) 를 유지해야 한다. 반면 상담 본문은 동등 비교 조회가 없으므로 고정 IV 를 쓸
+ * 이유가 없고, 고정 IV 는 "같은 문장을 쓴 일지"가 암호문만 봐도 드러난다. 그래서 본문은
+ * 저장할 때마다 다른 nonce 를 쓰는 v2 로 암호화한다.</p>
+ *
  * <h3>평문·암호문 혼재(전환 호환)</h3>
- * <p>기존 행은 평문이므로 읽기는 반드시 <strong>둘 다</strong> 처리해야 한다. 판별은
- * {@link PersonalDataEncryptionUtil} 이 쓰는 버전 마커 {@code {keyId}::{base64}} 형식을
+ * <p>기존 행은 평문이거나 v1 암호문이므로 읽기는 반드시 <strong>셋 다</strong> 처리해야 한다.
+ * 판별은 {@link PersonalDataEncryptionUtil} 이 쓰는 버전 마커
+ * {@code {keyId}::{base64}}(v1) · {@code {keyId}:v2::{base64}}(v2) 형식을
  * 정규식({@link #ENCRYPTED_MARKER})으로 엄격하게 검사한다. 상담 서술 평문이 이 형식과
  * 겹치려면 "식별자 + {@code ::} + 전부 Base64 문자" 여야 하므로 사실상 충돌하지 않는다.
  * ({@code safeDecrypt} 의 legacy Base64 추측 경로는 쓰지 않는다 — 짧은 ASCII 평문을
@@ -34,9 +42,12 @@ import lombok.extern.slf4j.Slf4j;
 @Converter
 public class ConsultationBodyAttributeConverter implements AttributeConverter<String, String> {
 
-    /** {@code {keyId}::{base64}} 버전 마커. keyId 는 영숫자·{@code _.-} 만 허용. */
+    /**
+     * 버전 마커 — v1 {@code {keyId}::{base64}} · v2 {@code {keyId}:v2::{base64}}.
+     * keyId 는 영숫자·{@code _.-} 만 허용.
+     */
     private static final Pattern ENCRYPTED_MARKER =
-        Pattern.compile("^[A-Za-z0-9_.\\-]{1,32}::[A-Za-z0-9+/=\\r\\n]+$");
+        Pattern.compile("^[A-Za-z0-9_.\\-]{1,32}(:v2)?::[A-Za-z0-9+/=\\r\\n]+$");
 
     /**
      * 암호문 여부를 버전 마커로 판별한다.
@@ -62,7 +73,8 @@ public class ConsultationBodyAttributeConverter implements AttributeConverter<St
             return attribute;
         }
         try {
-            return util.encrypt(attribute);
+            // 서술형 본문은 동등 비교 조회가 없으므로 메시지별 랜덤 IV(AES-GCM v2) 를 쓴다.
+            return util.encryptWithRandomIv(attribute);
         } catch (RuntimeException e) {
             log.error("상담 본문 암호화 실패 - 평문 폴백 저장 (길이={})", attribute.length());
             return attribute;

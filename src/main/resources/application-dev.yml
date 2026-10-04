@@ -23,8 +23,12 @@ jwt:
 
 encryption:
   personal-data:
-    key: ${PERSONAL_DATA_ENCRYPTION_KEY:dev-encryption-key-32-bytes-long!!!!}
-    iv: ${PERSONAL_DATA_ENCRYPTION_IV:dev-iv-16-bytes!!}
+    # 평문 폴백 금지 (2026-10-04) — 폴백 키로 기동하면 기존 암호문을 못 읽고
+    # 신규 개인정보가 폴백 키로 암호화돼 운영 키로는 복구 불가하다.
+    # 키는 /etc/mindgarden/dev.env 의 환경변수(GitHub Secrets 주입)에서만 받는다.
+    # 미주입 시 PersonalDataEncryptionKeyProvider 가 기동을 중단한다.
+    key: ${PERSONAL_DATA_ENCRYPTION_KEY:}
+    iv: ${PERSONAL_DATA_ENCRYPTION_IV:}
 
 # OAuth2 클라이언트 등록 (Google/Apple redirect-uri 기본값)
 # authorization-grant-type 미설정 시 authorizationGrantType cannot be null 기동 실패

@@ -52,6 +52,7 @@ if printf '%s\n' "$CODE" | grep -Eq "$BE_RE"; then
       printf '%s\n' "$CODE" | grep -E '^src/test/java/.*Test\.java$' | while read -r f; do [ -f "$f" ] && echo "$f"; done
     } | xargs -n1 basename 2>/dev/null | sed 's/\.java$//' | sort -u | head -n "$MAX_RELATED" | paste -sd, -)
   [ -n "$RELATED" ] && TESTS="$TESTS,$RELATED"
+  TESTS=$(printf '%s' "$TESTS" | tr ',' '\n' | awk 'NF && !seen[$0]++' | paste -sd, -)
   BE_LOG="$LOG_DIR/maven.log"
   log "mvn -o test -Dtest=$TESTS (timeout ${MAVEN_TIMEOUT}s)"
   START=$(date +%s)

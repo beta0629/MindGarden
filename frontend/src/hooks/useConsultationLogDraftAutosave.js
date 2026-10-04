@@ -152,12 +152,18 @@ export function useConsultationLogDraftAutosave({
 
   const canSave = Boolean(enabled && tenantId && normalizedConsultationId && normalizedConsultantId != null);
 
-  /** 배포 후 첫 로드 — 평문 레거시 키 전량 삭제 (복구 제안에 쓴 값은 그 전에 읽는다) */
-  const purgeLegacyOnce = useCallback(() => {
+  /**
+   * 레거시 평문 키 정리. 이 화면의 키는 항상 지우고(값을 이미 읽었으므로),
+   * 전체 sweep 은 배포 후 첫 로드에서 1회만 수행한다.
+   */
+  const purgeLegacyDrafts = useCallback(() => {
+    if (tenantId && legacyScope) {
+      removeConsultationLogLocalDraft(tenantId, legacyScope);
+    }
     if (legacyPurgeDone) return;
     legacyPurgeDone = true;
     purgeAllLegacyConsultationLogLocalDrafts();
-  }, []);
+  }, [tenantId, legacyScope]);
 
   const clearTimers = useCallback(() => {
     if (debounceTimerRef.current) {
@@ -344,7 +350,7 @@ export function useConsultationLogDraftAutosave({
         serverVersionRef.current = server.version ?? null;
         serverUpdatedAtRef.current = server.updatedAt ?? null;
         const snapshot = safeParse(server.payloadJson);
-        purgeLegacyOnce();
+        purgeLegacyDrafts();
         if (snapshot) {
           onRestoreCandidate?.({
             snapshot,
@@ -362,7 +368,7 @@ export function useConsultationLogDraftAutosave({
       if (cancelled) return;
       if (backup) {
         const snapshot = safeParse(backup.payloadJson);
-        purgeLegacyOnce();
+        purgeLegacyDrafts();
         if (snapshot) {
           onRestoreCandidate?.({
             snapshot,
@@ -382,7 +388,7 @@ export function useConsultationLogDraftAutosave({
           source: DRAFT_RESTORE_SOURCE.LEGACY_LOCAL
         });
       }
-      purgeLegacyOnce();
+      purgeLegacyDrafts();
     })();
 
     return () => { cancelled = true; };
@@ -394,7 +400,7 @@ export function useConsultationLogDraftAutosave({
     backupScope,
     legacyScope,
     onRestoreCandidate,
-    purgeLegacyOnce
+    purgeLegacyDrafts
   ]);
 
   /** 디바운스 저장 — snapshotRef 는 ref 라 의존성에 넣을 수 없어 dirtySignal 로 트리거한다. */

@@ -1345,6 +1345,10 @@ public class ScheduleController extends BaseApiController {
             HttpSession session) {
 
         ensureTenantContextFromSession(session);
+        ResponseEntity<ApiResponse<ConsultationRecordDraftResponse>> tenantError = rejectIfNoTenantContext();
+        if (tenantError != null) {
+            return tenantError;
+        }
         Long consultationIdLong = parseScheduleConsultationId(consultationId);
         String tenantIdVal = consultationRecordDraftAccessGuard
                 .requireDraftAuthor(session, consultationIdLong, consultantId);
@@ -1376,6 +1380,10 @@ public class ScheduleController extends BaseApiController {
             HttpSession session) {
 
         ensureTenantContextFromSession(session);
+        ResponseEntity<ApiResponse<ConsultationRecordDraftResponse>> tenantError = rejectIfNoTenantContext();
+        if (tenantError != null) {
+            return tenantError;
+        }
         Long consultationIdLong = parseScheduleConsultationId(consultationId);
         String tenantIdVal = consultationRecordDraftAccessGuard
                 .requireDraftAuthor(session, consultationIdLong, consultantId);
@@ -1404,11 +1412,30 @@ public class ScheduleController extends BaseApiController {
             HttpSession session) {
 
         ensureTenantContextFromSession(session);
+        ResponseEntity<ApiResponse<ConsultationRecordDraftResponse>> tenantError = rejectIfNoTenantContext();
+        if (tenantError != null) {
+            return tenantError;
+        }
         Long consultationIdLong = parseScheduleConsultationId(consultationId);
         String tenantIdVal = consultationRecordDraftAccessGuard
                 .requireDraftAuthor(session, consultationIdLong, consultantId);
         consultationRecordDraftService.deleteDraft(tenantIdVal, consultationIdLong, consultantId);
         return noStore(success(ConsultationRecordDraftResponse.empty(consultationIdLong, consultantId)));
+    }
+
+    /**
+     * 초안 API 공통 — 테넌트 컨텍스트가 없으면 400 으로 거부한다 (cross-tenant 조기 차단).
+     *
+     * @return 거부 응답, 정상이면 {@code null}
+     */
+    private ResponseEntity<ApiResponse<ConsultationRecordDraftResponse>> rejectIfNoTenantContext() {
+        String tenantIdVal = TenantContextHolder.getTenantId();
+        if (tenantIdVal != null && !tenantIdVal.isEmpty()) {
+            return null;
+        }
+        log.warn("테넌트 정보 없음 - 상담일지 초안 요청 거부");
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(ApiResponse.error("테넌트 정보가 없습니다. 로그아웃 후 다시 로그인해 주세요."));
     }
 
     /**

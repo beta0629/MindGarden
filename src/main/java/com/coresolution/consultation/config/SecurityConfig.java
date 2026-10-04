@@ -169,9 +169,9 @@ public class SecurityConfig {
                     // 표준화 원칙: 온보딩 프로세스는 로그인 전 접근이 필요하므로 공개 API로 설정
                     .requestMatchers("/api/v1/business-categories/**").permitAll()
                     .requestMatchers("/api/business-categories/**").permitAll() // 레거시 경로 지원 (하위 호환성)
-                    // CSS 테마 API는 허용
-                    .requestMatchers("/api/admin/css-themes/**").permitAll()
-                    .requestMatchers("/api/v1/admin/css-themes/**").permitAll()
+                    // CSS 테마 조회(GET)만 공개 — 로그인 전 화면 테마 로딩. 저장·삭제는 anyRequest 인증 + 컨트롤러 본사 Ops 가드
+                    .requestMatchers(HttpMethod.GET, "/api/admin/css-themes/**").permitAll()
+                    .requestMatchers(HttpMethod.GET, "/api/v1/admin/css-themes/**").permitAll()
                     .requestMatchers("/register", "/tablet/register", "/auth/register").permitAll() // 회원가입 페이지는 공개
                     // 크롤러용 공개 법적 HTML (terms/privacy/products)
                     .requestMatchers("/legal/**").permitAll()
@@ -309,8 +309,8 @@ public class SecurityConfig {
                     // 업종 카테고리 API는 허용 (온보딩에서 사용)
                     .requestMatchers("/api/v1/business-categories/**").permitAll()
                     .requestMatchers("/api/business-categories/**").permitAll() // 레거시 경로 지원 (하위 호환성)
-                    // CSS 테마 API는 허용
-                    .requestMatchers("/api/v1/admin/css-themes/**").permitAll()
+                    // CSS 테마 조회(GET)만 공개 — 로그인 전 화면 테마 로딩. 저장·삭제는 anyRequest 인증 + 컨트롤러 본사 Ops 가드
+                    .requestMatchers(HttpMethod.GET, "/api/v1/admin/css-themes/**").permitAll()
                     // 크롤러용 공개 법적 HTML (terms/privacy/products)
                     .requestMatchers("/legal/**").permitAll()
                     .requestMatchers("/services", "/services/**").permitAll()

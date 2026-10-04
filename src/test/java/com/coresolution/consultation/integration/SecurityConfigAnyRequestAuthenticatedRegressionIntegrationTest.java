@@ -2,6 +2,7 @@ package com.coresolution.consultation.integration;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
@@ -68,6 +69,8 @@ class SecurityConfigAnyRequestAuthenticatedRegressionIntegrationTest {
     private static final String ADMIN_FORCE_LOGOUT_PATH = "/api/v1/admin/sessions/force-logout";
     private static final String LEGACY_FORCE_LOGOUT_PATH = "/api/v1/auth/force-logout";
     private static final String FORCE_LOGOUT_BODY = "{\"email\":\"probe@example.com\"}";
+    private static final String CSS_THEMES_PATH = "/api/v1/admin/css-themes/themes";
+    private static final String CSS_THEME_PROBE_PATH = CSS_THEMES_PATH + "/__pr_css_theme_probe__";
 
     @Autowired
     private MockMvc mockMvc;
@@ -292,5 +295,33 @@ class SecurityConfigAnyRequestAuthenticatedRegressionIntegrationTest {
         assertThat(status)
                 .as("P0: 구 공개 경로 /api/v1/auth/force-logout 은 제거되어 성공 응답이 나오면 안 됩니다.")
                 .isNotIn(200, 201, 202, 204);
+    }
+
+    @Test
+    @DisplayName("CSS 테마 조회 GET 미인증 → 401/403 아님 (로그인 전 화면 테마 로딩)")
+    void cssThemeRead_withoutAuth_isPublic() throws Exception {
+        int status = mockMvc.perform(get(CSS_THEMES_PATH)).andReturn().getResponse().getStatus();
+
+        assertThat(status)
+                .as("CSS 테마 조회는 GET permitAll 이어야 합니다.")
+                .isNotIn(401, 403);
+    }
+
+    @Test
+    @DisplayName("CSS 테마 저장·색상 저장·삭제 미인증 → 401/403 (GET 만 permitAll)")
+    void cssThemeWrites_withoutAuth_areRejected() throws Exception {
+        Integer[] statuses = {
+            mockMvc.perform(post(CSS_THEMES_PATH).contentType(MediaType.APPLICATION_JSON)
+                    .content("{\"themeName\":\"__pr_css_theme_probe__\",\"displayName\":\"probe\"}"))
+                .andReturn().getResponse().getStatus(),
+            mockMvc.perform(post(CSS_THEME_PROBE_PATH + "/colors").contentType(MediaType.APPLICATION_JSON)
+                    .content("[]"))
+                .andReturn().getResponse().getStatus(),
+            mockMvc.perform(delete(CSS_THEME_PROBE_PATH)).andReturn().getResponse().getStatus(),
+        };
+
+        assertThat(statuses)
+                .as("P0: CSS 테마 쓰기는 미인증 시 401/403 이어야 합니다(permitAll 은 GET 만).")
+                .allSatisfy(code -> assertThat(code).isIn(401, 403));
     }
 }

@@ -31,10 +31,14 @@ public class OpsAccessGuard {
      * Ops 운영자 + 본사 테넌트인지 검증한다.
      *
      * @throws org.springframework.security.authentication.AuthenticationCredentialsNotFoundException 미인증
-     * @throws AccessDeniedException Ops 권한이 없거나 본사 테넌트가 아닌 경우
+     * @throws AccessDeniedException Ops 권한이 없거나 본사 테넌트가 아닌 경우 ({@link #DENIAL_HQ_OPS_ONLY})
      */
     public void requireHqOps() {
-        OpsPermissionUtils.requireOps();
+        try {
+            OpsPermissionUtils.requireOps();
+        } catch (AccessDeniedException e) {
+            throw new AccessDeniedException(DENIAL_HQ_OPS_ONLY);
+        }
         String tenantId = TenantContextHolder.getTenantId();
         if (tenantId == null || !opsTenantConstants.isHqTenant(tenantId)) {
             log.warn("[OPS] 플랫폼 운영 API 외부 테넌트 차단 — tenant={}", LogSanitizer.forLog(tenantId));

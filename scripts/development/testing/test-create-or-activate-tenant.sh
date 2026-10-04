@@ -1,7 +1,7 @@
 #!/bin/bash
 # CreateOrActivateTenant 프로시저 종합 테스트 스크립트
 
-SERVER_HOST="${1:-beta0629.cafe24.com}"
+SERVER_HOST="${1:-${DEV_SERVER_HOST:?DEV_SERVER_HOST 환경변수를 설정하세요}}"
 BASE_URL="http://${SERVER_HOST}:8080"
 
 echo "=========================================="

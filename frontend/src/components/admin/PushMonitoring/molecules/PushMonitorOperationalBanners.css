@@ -1,47 +1,23 @@
 /**
- * PushMonitorOperationalBanners 스타일.
- *
- * 비용 카드는 점선 placeholder 표기.
+ * PushMonitorOperationalBanners — 배너 크롬은 settings-shell(SettingsNotice) 소유.
+ * 데스크톱에서 3열 배치만 둔다. design-v2 토큰만.
  *
  * @since 2026-06-07
+ * @updated 2026-10-03 — 점선 비용 카드·커스텀 배너 제거, SettingsNotice 이관
  */
 
 .mg-push-monitor__operational-banners {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  gap: var(--mg-spacing-sm, 0.5rem);
+  gap: var(--mg-v2-space-3);
 }
 
-.mg-push-monitor__cost-card {
-  display: flex;
-  flex-direction: column;
-  gap: var(--mg-spacing-xs, 0.25rem);
-  padding: var(--mg-spacing-md, 1rem);
-  background: var(--mg-v2-color-neutral-50);
-  border: 1px dashed var(--mg-v2-color-neutral-300);
-  border-radius: var(--mg-v2-radius-md);
-  font-size: var(--mg-font-size-sm, 0.875rem);
-}
-
-.mg-push-monitor__cost-card__title {
-  font-weight: 600;
-  color: var(--mg-v2-color-text-primary);
-}
-
-.mg-push-monitor__cost-card__channels {
-  font-size: var(--mg-font-size-sm, 0.875rem);
-  color: var(--mg-v2-color-text-secondary);
+.mg-push-monitor__cost-channels {
   font-variant-numeric: tabular-nums;
-}
-
-.mg-push-monitor__cost-card__desc {
-  font-size: var(--mg-font-size-xs, 0.75rem);
-  color: var(--mg-v2-color-text-secondary);
 }
 
 @media (min-width: 1024px) {
   .mg-push-monitor__operational-banners {
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: var(--mg-spacing-md, 1rem);
   }
 }

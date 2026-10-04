@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Info, User, CreditCard, Calendar, TrendingUp, Clock, CheckCircle, AlertTriangle } from 'lucide-react';
 import { apiGet } from '../../../utils/ajax';
 import { getMappingPaymentMethodDisplayLabel } from '../../../constants/billing';
+import { isCardPaymentMethod } from '../../../utils/paymentMethodSsot';
 import { getUserStatusKoreanNameSync } from '../../../utils/codeHelper';
 import UnifiedModal from '../../common/modals/UnifiedModal';
 import MGButton from '../../common/MGButton';
@@ -261,10 +262,12 @@ const MappingDetailModal = ({ mapping, isOpen, onClose }) => {
                                                 <label>{t('admin.labels.paymentMethod')}</label>
                                                 <span>{getMappingPaymentMethodDisplayLabel(mapping?.paymentMethod)}</span>
                                             </div>
-                                            <div className="info-item">
-                                                <label>{t('admin:MappingDetailModal.t_45e5e4dd')}</label>
-                                                <span>{mapping?.paymentReference || '-'}</span>
-                                            </div>
+                                            {isCardPaymentMethod(mapping?.paymentMethod) && (
+                                                <div className="info-item" data-testid="mapping-detail-payment-reference">
+                                                    <label>{t('admin:MappingDetailModal.t_45e5e4dd')}</label>
+                                                    <span>{mapping?.paymentReference || '-'}</span>
+                                                </div>
+                                            )}
                                             <div className="info-item">
                                                 <label>{t('admin:MappingDetailModal.t_f1e49d04')}</label>
                                                 <span>{formatDate(mapping?.paymentDate)}</span>

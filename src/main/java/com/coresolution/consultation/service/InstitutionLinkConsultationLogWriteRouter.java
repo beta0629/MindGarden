@@ -9,6 +9,7 @@ import com.coresolution.consultation.entity.ConsultantClientMapping;
 import com.coresolution.consultation.repository.ClientRepository;
 import com.coresolution.consultation.repository.ConsultantClientMappingRepository;
 import com.coresolution.consultation.repository.InstitutionLinkContractRepository;
+import com.coresolution.consultation.service.support.ConsultationRecordWriter;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.domain.ClientPlatform;
 import lombok.RequiredArgsConstructor;
@@ -37,30 +38,24 @@ public class InstitutionLinkConsultationLogWriteRouter {
     private final ConsultationRecordCreateRequestValidator consultationRecordCreateRequestValidator;
 
     /**
-     * 웹 채널로 보고 {@link #create(Map, ClientPlatform)} 를 호출한다.
-     *
-     * @param recordData 스케줄 상담일지 본문
-     * @return 저장된 일지
-     */
-    public Object create(Map<String, Object> recordData) {
-        return create(recordData, ClientPlatform.WEB);
-    }
-
-    /**
      * 테넌트를 확인하고 필수값을 검증한 뒤, 타기관이면 전용 서비스만, 아니면 회기권 일지 서비스만 호출한다.
+     *
+     * <p>두 경로 모두 공용 가드({@code ConsultationRecordAccessGuard})를 통과한 작성자로만 저장한다.
+     * 작성자 없이 저장하는 오버로드는 두지 않는다.</p>
      *
      * @param recordData 스케줄 상담일지 본문
      * @param platform 요청 클라이언트 채널({@code X-Client-Platform}, 로그용)
+     * @param writer 가드가 만든 작성자 정보 (두 경로 모두 필수)
      * @return 저장된 일지
      */
-    public Object create(Map<String, Object> recordData, ClientPlatform platform) {
+    public Object create(Map<String, Object> recordData, ClientPlatform platform, ConsultationRecordWriter writer) {
         TenantContextHolder.getRequiredTenantId();
         boolean institutionLink = isInstitutionLink(recordData);
         consultationRecordCreateRequestValidator.validate(recordData, institutionLink, platform);
         if (institutionLink) {
-            return institutionLinkConsultationLogService.createFromSchedulePayload(recordData);
+            return institutionLinkConsultationLogService.createFromSchedulePayload(recordData, writer);
         }
-        return consultationRecordService.createConsultationRecord(recordData);
+        return consultationRecordService.createConsultationRecord(recordData, writer);
     }
 
     /**

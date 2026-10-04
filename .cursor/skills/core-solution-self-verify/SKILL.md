@@ -1,11 +1,11 @@
 ---
 name: core-solution-self-verify
-description: release/dev 머지 전 자체 검증 실행 절차. `.cursor/rules/self-verify.mdc` 7항목과 하드스톱(타인 데이터, 스모크 동작 확인, 커넥션 점유 0, 추정 PASS 금지, 스텁으로 가린 프로시저·외부 HTTP)을 실제로 실행한다. 항목 1은 요구사항 표(항목/결과/근거), 항목 5의 FE는 실제 URL 스크린샷과 .dev 실제 데이터다. Jest·curl 200·mock·파라미터 모드를 검사하지 않는 thenReturn으로 통과시키지 않는다. 운영 배포 전 .dev에서 같은 프로시저를 1회 실행하지 않았으면 미확인이고 운영 배포는 하지 않는다. PR 본문 「## 자체 검증」 갱신 + 규칙 형식 요약. .dev 배포 후 5번 스모크. FAIL이면 머지 금지.
+description: release/dev 머지 전 자체 검증 실행 절차. `.cursor/rules/guardrail-preflight.mdc` 체크리스트와 하드스톱(타인 데이터, 스모크 동작 확인, 커넥션 점유 0, 추정 PASS 금지, 스텁으로 가린 프로시저·외부 HTTP)을 실제로 실행한다. 항목 1은 요구사항 표(항목/결과/근거), 항목 5의 FE는 실제 URL 스크린샷과 .dev 실제 데이터다. Jest·curl 200·mock·파라미터 모드를 검사하지 않는 thenReturn으로 통과시키지 않는다. 운영 배포 전 .dev에서 같은 프로시저를 1회 실행하지 않았으면 미확인이고 운영 배포는 하지 않는다. PR 본문 「## 자체 검증」 갱신 + 규칙 형식 요약. .dev 배포 후 5번 스모크. FAIL이면 머지 금지.
 ---
 
 # 자체 검증 실행 스킬 (Self-Verify)
 
-규칙 SSOT는 **`.cursor/rules/self-verify.mdc`** 다. 이 스킬은 그 체크리스트를 **읽는 것이 아니라 실행**하는 절차다. 규칙과 충돌하면 규칙이 우선한다.
+규칙 SSOT는 **`.cursor/rules/guardrail-preflight.mdc`** 다(이 스킬의 1~7 번호는 실행 단계이고, 판정 항목·번호는 규칙을 따른다). 이 스킬은 그 체크리스트를 **읽는 것이 아니라 실행**하는 절차다. 규칙과 충돌하면 규칙이 우선한다.
 
 이 스킬과 규칙, deployer 게이트는 **이 git 저장소**에 있다. 클론하거나 pull 하면 로그인 계정이 달라도 같은 절차다. 사용자 홈의 Cursor 스킬 폴더나 개인 agent store에만 복사해 두고 저장소 파일을 비우지 않는다. 로그인·이메일·사용자 id·토큰 값을 이 파일에 적지 않는다. 스모크 계정은 아래 환경변수 이름만 쓴다.
 
@@ -382,7 +382,7 @@ git diff "$BASE"...HEAD -U0 | grep '^+' | rg -n -i \
   -e 'https?://' -e '\b[0-9]{1,3}(\.[0-9]{1,3}){3}\b' -e '#[0-9a-fA-F]{3,6}\b'
 ```
 
-- 변경 파일에서 새로 걸린 항목이 있으면 **FAIL** — 같은 PR에서 env·system_config·공통코드·디자인 토큰으로 치환 (`.cursor/rules/mindgarden-no-hardcode-cloud.mdc`).
+- 변경 파일에서 새로 걸린 항목이 있으면 **FAIL** — 같은 PR에서 env·system_config·공통코드·디자인 토큰으로 치환 (`AGENTS.md §6`).
 - 오탐은 근거와 함께 명시(예: 테스트 픽스처 전용).
 - 동결 심볼은 `./scripts/deployment/check-deploy-no-overwrite-symbols.sh --source-root .` 가 담당한다. 이 스킬이 그 스크립트를 느슨하게 만들지 않는다.
 
@@ -440,13 +440,13 @@ gh pr edit "$PR" --body-file /tmp/sv-body.md
 
 ## 참조
 
-- `.cursor/rules/self-verify.mdc` — 규칙 SSOT (alwaysApply, 저장소 안)
+- `.cursor/rules/guardrail-preflight.mdc` — 규칙 SSOT (alwaysApply, 저장소 안)
 - `scripts/verification/check-client-admin-own-id.js` — 내담자 `/api/v1/admin/**` 본인 id
 - `scripts/verification/check-external-call-connection.js` — 외부 호출 시점 커넥션 0
 - `node scripts/verification/self-verify-hard-stops.test.js` — 위 두 스크립트의 픽스처 검사
 - `/core-solution-deployment` — 머지 전 이 스킬을 실행. FAIL에 하드스톱 포함
 - `/core-solution-testing` — 테스트 작성 표준
-- `.cursor/rules/mindgarden-no-hardcode-cloud.mdc` — 하드코딩 금지
+- `AGENTS.md` §6 — 하드코딩 금지
 - `scripts/design-system/css-tools/check-hardcoding-enhanced.js` — 하드코딩 스캔
 - `scripts/deployment/check-deploy-no-overwrite-symbols.sh` — 6항 동결
 

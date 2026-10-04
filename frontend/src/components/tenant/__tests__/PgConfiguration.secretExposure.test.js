@@ -42,23 +42,25 @@ describe('PgConfigurationDetail — 평문 시크릿 노출 제거', () => {
     expect(detailSource).not.toContain('KEYS_COPY');
   });
 
-  test('API 시크릿은 마스킹 표시 + 운영자 전용 안내만 노출한다', () => {
-    expect(detailSource).toContain('ADMIN_SHOP_PG_COPY.INFO_API_SECRET_VALUE');
-    expect(detailSource).toContain('ADMIN_SHOP_PG_COPY.INFO_API_SECRET_OPS_ONLY');
+  test('API 시크릿 행은 테넌트 화면에서 숨긴다(운영자 전용)', () => {
+    expect(detailSource).not.toContain('ADMIN_SHOP_PG_COPY.INFO_API_SECRET');
+    expect(detailSource).not.toMatch(/apiSecret|secretKey/);
     expect(ADMIN_SHOP_PG_COPY.INFO_API_SECRET_VALUE).not.toMatch(/[A-Za-z0-9]{8,}/);
   });
 
-  test('웹훅 시크릿 입력·저장 컨트롤은 비활성 + 운영자 전용 안내', () => {
+  test('웹훅 시크릿 입력·저장 컨트롤은 숨기고 설정 여부 배지 + 운영자 전용 안내만 둔다', () => {
     expect(detailSource).toContain('ADMIN_SHOP_PG_COPY.WEBHOOK_OPS_ONLY_NOTICE');
     expect(detailSource).not.toContain('ADMIN_SHOP_PG_COPY.WEBHOOK_NOTICE');
+    expect(detailSource).not.toContain('pg-webhook-secret-input');
+    expect(detailSource).not.toContain('PG_WEBHOOK_SAVE');
+    expect(detailSource).not.toContain('patchPgConfigurationWebhookSecret');
+    expect(detailSource).not.toMatch(/type="password"/);
+    expect(detailSource).toMatch(/isPortoneWebhookSecretConfigured/);
+  });
 
-    const webhookSection = detailSource.slice(
-      detailSource.indexOf('pg-webhook-secret-input'),
-      detailSource.indexOf('PG_WEBHOOK_SAVE') + 200
-    );
-    expect(webhookSection).toContain('type="password"');
-    expect(webhookSection.match(/disabled\b/g).length).toBeGreaterThanOrEqual(2);
-    expect(webhookSection).not.toContain('disabled={savingWebhookSecret}');
+  test('테스트 모드는 읽기 전용 표시만 (전환 컨트롤 없음)', () => {
+    expect(detailSource).toContain('ADMIN_SHOP_PG_COPY.KEY_TEST_MODE');
+    expect(detailSource).not.toMatch(/setTestMode|onToggleTestMode|patchPgConfigurationTestMode/);
   });
 });
 

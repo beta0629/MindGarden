@@ -1,3 +1,4 @@
+import logger from './logger';
 import { 
   getApiBaseUrl,
   AUTH_API, 
@@ -28,7 +29,6 @@ import {
   AJAX_ACCESS_DENIED_DEFAULT,
   AJAX_SERVER_ERROR_SHORT,
   AJAX_REQUEST_ERROR_SHORT,
-  AJAX_POST_REQUEST_FAILED,
   AJAX_POST_FORMDATA_FAILED,
   AJAX_BAD_REQUEST_400_DEFAULT,
   AJAX_ERROR_WITH_CODE_PREFIX,
@@ -58,9 +58,14 @@ const getDefaultHeaders = () => {
   return getDefaultApiHeaders();
 };
 
-// 에러 메시지 생성 — HTTP 5xx 는 전부 SERVER_ERROR (502/503 을 NETWORK_ERROR 로 오분류하지 않음)
+// 에러 메시지 생성 — 응답이 있으면(HTTP status 존재) 네트워크 문구를 쓰지 않는다.
+// 5xx → SERVER_ERROR, 그 밖의 4xx(400·409·422 등) → REQUEST_FAILED, status 없음 → NETWORK_ERROR
 export const getErrorMessage = (status) => {
-  if (typeof status === 'number' && status >= API_STATUS.INTERNAL_SERVER_ERROR) {
+  const hasHttpStatus = typeof status === 'number' && status > 0;
+  if (!hasHttpStatus) {
+    return API_ERROR_MESSAGES.NETWORK_ERROR;
+  }
+  if (status >= API_STATUS.INTERNAL_SERVER_ERROR) {
     return API_ERROR_MESSAGES.SERVER_ERROR;
   }
   switch (status) {
@@ -71,7 +76,52 @@ export const getErrorMessage = (status) => {
     case API_STATUS.NOT_FOUND:
       return API_ERROR_MESSAGES.NOT_FOUND;
     default:
-      return API_ERROR_MESSAGES.NETWORK_ERROR;
+      return API_ERROR_MESSAGES.REQUEST_FAILED;
+  }
+};
+
+/**
+ * 오류 응답 본문에서 서버 메시지를 꺼낸다 (ErrorResponse.message → ApiResponse.data.message → error).
+ * @param {unknown} body
+ * @returns {string} 없으면 빈 문자열
+ */
+export const extractServerErrorMessage = (body) => {
+  if (body == null || typeof body !== 'object') {
+    return '';
+  }
+  const candidates = [
+    body.message,
+    body.data && typeof body.data === 'object' ? body.data.message : undefined,
+    body.error
+  ];
+  const found = candidates.find((value) => typeof value === 'string' && value.trim() !== '');
+  return found ? found.trim() : '';
+};
+
+/**
+ * HTTP 응답이 있는 오류의 사용자 문구 — 서버 메시지 우선, 없으면 status 기반 문구.
+ * @param {number} status
+ * @param {unknown} body
+ * @returns {string}
+ */
+export const resolveHttpErrorMessage = (status, body) => (
+  extractServerErrorMessage(body) || getErrorMessage(status)
+);
+
+/**
+ * 응답 본문 JSON 파싱. 오류 응답(!ok)의 빈 본문·HTML(프록시 502 등)은 {} 로 둔다.
+ * 성공 응답의 파싱 실패는 기존과 같이 throw 한다.
+ * @param {Response} response
+ * @returns {Promise<Object>}
+ */
+const readJsonBody = async(response) => {
+  try {
+    return await response.json();
+  } catch (parseError) {
+    if (response.ok) {
+      throw parseError;
+    }
+    return {};
   }
 };
 
@@ -141,19 +191,19 @@ export const checkSessionAndRedirect = async(response, requestUrl = '', options 
   if (response.status === 401 || response.status === 403) {
     // shell chrome(브랜딩·LNB·unread-count 등) — 리다이렉트하지 않음
     if (isSessionSoftFailUrl(requestUrl)) {
-      console.log('🔐 shell chrome soft-fail URL - checkSessionAndRedirect 스킵:', requestUrl);
+      logger.debug('🔐 shell chrome soft-fail URL - checkSessionAndRedirect 스킵:', requestUrl);
       return false;
     }
 
     // justLoggedIn / justRefreshed TTL — 킥 스킵 (병렬 401 레이스, 요청 시작 시점 기준 포함)
     if (authGraceAtStart || isWithinAuthGraceWindow()) {
-      console.log('🔐 auth grace TTL 창 - checkSessionAndRedirect 스킵');
+      logger.debug('🔐 auth grace TTL 창 - checkSessionAndRedirect 스킵');
       return false;
     }
 
     // 이미 로그인 페이지에 있으면 리다이렉트하지 않음
     if (isLoginPage) {
-      console.log('🔐 이미 로그인 페이지에 있음 - 리다이렉트 스킵');
+      logger.debug('🔐 이미 로그인 페이지에 있음 - 리다이렉트 스킵');
       return false;
     }
 
@@ -173,7 +223,7 @@ export const checkSessionAndRedirect = async(response, requestUrl = '', options 
           headers: getDefaultHeaders()
         });
         if (sessionResponse.ok) {
-          console.log('🔐 세션 있음 - 리다이렉트 스킵 (권한 문제일 수 있음)');
+          logger.debug('🔐 세션 있음 - 리다이렉트 스킵 (권한 문제일 수 있음)');
           return false;
         }
         const verifyStatus = sessionResponse.status;
@@ -185,14 +235,14 @@ export const checkSessionAndRedirect = async(response, requestUrl = '', options 
         if (verifyStatus === 401) {
           // soft-fail / login / grace — 킥 금지 (동일 burst 후속 401 포함)
           if (isSessionSoftFailUrl(requestUrl) || isLoginPage || authGraceAtStart || isWithinAuthGraceWindow()) {
-            console.log('🔐 verify 401 soft-skip (soft-fail/login/grace)');
+            logger.debug('🔐 verify 401 soft-skip (soft-fail/login/grace)');
             return false;
           }
 
           if (hasStoredAccessToken() || hasStoredRefreshToken()) {
             const refreshed = await refreshAccessTokenPair();
             if (!refreshed) {
-              console.log('🔐 refresh 실패 - 로그인 페이지로 리다이렉트');
+              logger.debug('🔐 refresh 실패 - 로그인 페이지로 리다이렉트');
               redirectToLoginPageOnce();
               return true;
             }
@@ -209,7 +259,7 @@ export const checkSessionAndRedirect = async(response, requestUrl = '', options 
                 }
               });
               if (retryVerify.ok) {
-                console.log('🔐 refresh 후 세션 확인 성공 - 리다이렉트 스킵');
+                logger.debug('🔐 refresh 후 세션 확인 성공 - 리다이렉트 스킵');
                 return false;
               }
               if (retryVerify.status >= 500) {
@@ -218,11 +268,11 @@ export const checkSessionAndRedirect = async(response, requestUrl = '', options 
                 return false;
               }
               if (retryVerify.status === 401) {
-                console.log('🔐 refresh 후 verify 401 - 로그인 페이지로 리다이렉트');
+                logger.debug('🔐 refresh 후 verify 401 - 로그인 페이지로 리다이렉트');
                 redirectToLoginPageOnce();
                 return true;
               }
-              console.log('🔐 refresh 후 verify 비-401:', retryVerify.status);
+              logger.debug('🔐 refresh 후 verify 비-401:', retryVerify.status);
               return false;
             } catch (retryErr) {
               console.warn('🔐 refresh 후 verify 재시도 실패:', retryErr);
@@ -232,11 +282,11 @@ export const checkSessionAndRedirect = async(response, requestUrl = '', options 
           }
 
           // 토큰 없음 + grace 밖 + current-user 401
-          console.log('🔐 세션 없음 - 로그인 페이지로 리다이렉트 (서브도메인 유지)');
+          logger.debug('🔐 세션 없음 - 로그인 페이지로 리다이렉트 (서브도메인 유지)');
           redirectToLoginPageOnce();
           return true;
         }
-        console.log('🔐 세션 재확인 실패(리다이렉트 없음):', verifyStatus);
+        logger.debug('🔐 세션 재확인 실패(리다이렉트 없음):', verifyStatus);
         return false;
       } catch (sessionError) {
         lastVerifyError = sessionError;
@@ -257,7 +307,7 @@ export const checkSessionAndRedirect = async(response, requestUrl = '', options 
 
   // 500 오류는 서버 오류이므로 세션 체크하지 않음
   if (response.status >= 500) {
-    console.log('⚠️ 서버 오류 (500) - 세션 체크 스킵');
+    logger.debug('⚠️ 서버 오류 (500) - 세션 체크 스킵');
     return false;
   }
 
@@ -265,14 +315,20 @@ export const checkSessionAndRedirect = async(response, requestUrl = '', options 
 };
 
 // 에러 처리 — StandardizedApi.handleError 가 5xx 를 구분하도록 status 유지
-export const handleError = (error, status) => {
+// body 가 있으면 서버 메시지(message 등)를 우선 노출하고 response.data 로 부착한다.
+export const handleError = (error, status, body) => {
   const isLocalEnv = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
   if (status === API_STATUS.UNAUTHORIZED && !isLocalEnv) {
     redirectToLoginPageOnce();
   }
-  const err = new Error(getErrorMessage(status));
+  const message = status === API_STATUS.UNAUTHORIZED
+    ? getErrorMessage(status)
+    : resolveHttpErrorMessage(status, body);
+  const err = new Error(message);
   err.status = status;
-  if (error && typeof error === 'object' && error.response != null) {
+  if (body !== undefined) {
+    err.response = { status, data: body };
+  } else if (error && typeof error === 'object' && error.response != null) {
     err.response = error.response;
   }
   throw err;
@@ -294,7 +350,7 @@ export const apiGet = async(endpoint, params = {}, options = {}) => {
       : (queryString ? `${apiBaseUrl}${endpoint}?${queryString}` : `${apiBaseUrl}${endpoint}`);
     
     const headers = { ...getDefaultHeaders(), ...optionHeaders };
-    console.log('📤 API GET 요청:', { url, headers: { ...headers, 'Authorization': headers['Authorization'] ? 'Bearer ***' : undefined, 'X-Tenant-Id': headers['X-Tenant-Id'] } });
+    logger.debug('📤 API GET 요청:', { url, headers: { ...headers, 'Authorization': headers['Authorization'] ? 'Bearer ***' : undefined, 'X-Tenant-Id': headers['X-Tenant-Id'] } });
 
     const authGraceAtStart = isWithinAuthGraceWindow();
     const response = await fetch(url, {
@@ -366,7 +422,7 @@ export const apiGet = async(endpoint, params = {}, options = {}) => {
                                currentPath.startsWith('/auth/oauth2/callback');
 
             if (!isPublicPage) {
-              console.log('🔐 400 오류 (Tenant ID 부족) - 로그인 페이지로 리다이렉트 (서브도메인 유지)');
+              logger.debug('🔐 400 오류 (Tenant ID 부족) - 로그인 페이지로 리다이렉트 (서브도메인 유지)');
               redirectToLoginPageOnce();
               throw err; // 위젯이 실패로 인식해 "목록을 불러오지 못했습니다" 표시 (return null 시 빈 목록으로 오인됨)
             }
@@ -403,11 +459,11 @@ export const apiGet = async(endpoint, params = {}, options = {}) => {
       }
       // 500 오류도 서버 오류이므로 에러 처리
       if (response.status >= 500) {
-        handleError(new Error(AJAX_SERVER_ERROR_SHORT), response.status);
+        handleError(new Error(AJAX_SERVER_ERROR_SHORT), response.status, jsonData);
       }
-      // 기타 4xx 오류는 클라이언트 오류이므로 에러 처리
+      // 기타 4xx 오류(409 등)는 서버 메시지를 그대로 전달
       if (response.status >= 400) {
-        handleError(new Error(AJAX_REQUEST_ERROR_SHORT), response.status);
+        handleError(new Error(AJAX_REQUEST_ERROR_SHORT), response.status, jsonData);
       }
     }
 
@@ -455,7 +511,7 @@ export const apiGet = async(endpoint, params = {}, options = {}) => {
                            currentPath.startsWith('/auth/oauth2/callback');
 
         if (!isPublicPage) {
-          console.log('🔐 400 오류 (Tenant ID 부족) - 로그인 페이지로 리다이렉트 (서브도메인 유지)');
+          logger.debug('🔐 400 오류 (Tenant ID 부족) - 로그인 페이지로 리다이렉트 (서브도메인 유지)');
           redirectToLoginPageOnce();
           throw error; // 위젯이 실패로 인식하도록 throw (return null 시 빈 목록으로 오인됨)
         }
@@ -485,7 +541,7 @@ export const apiGet = async(endpoint, params = {}, options = {}) => {
                          currentPath.startsWith('/auth/oauth2/callback');
 
       if (!isPublicPage) {
-        console.log('🔐 401 오류 - 로그인 페이지로 리다이렉트 (서브도메인 유지)');
+        logger.debug('🔐 401 오류 - 로그인 페이지로 리다이렉트 (서브도메인 유지)');
         redirectToLoginPageOnce();
         return null;
       }
@@ -510,7 +566,7 @@ export const apiGet = async(endpoint, params = {}, options = {}) => {
                          currentPath.startsWith('/auth/oauth2/callback');
 
       if (isPublicPage) {
-        console.log('🔐 네트워크 오류 - 공개 페이지 - 리다이렉트 없음');
+        logger.debug('🔐 네트워크 오류 - 공개 페이지 - 리다이렉트 없음');
         return null;
       }
       console.warn('🔐 GET 일시적 네트워크 오류 - 로그인으로 이동하지 않음');
@@ -525,7 +581,7 @@ export const apiGet = async(endpoint, params = {}, options = {}) => {
 // POST 요청 (CSRF 토큰 자동 포함)
 export const apiPost = async(endpoint, data = {}, options = {}) => {
   try {
-    console.log('📤 POST 요청:', {
+    logger.debug('📤 POST 요청:', {
       url: endpoint,
       data: redactSensitivePayloadForLog(data)
     });
@@ -537,7 +593,7 @@ export const apiPost = async(endpoint, data = {}, options = {}) => {
       headers: { ...getDefaultHeaders(), ...requestOptions.headers }
     });
 
-    const jsonData = await response.json();
+    const jsonData = await readJsonBody(response);
     
     if (!response.ok) {
       const requestUrl = endpoint.startsWith('http')
@@ -554,19 +610,8 @@ export const apiPost = async(endpoint, data = {}, options = {}) => {
         return null; // 리다이렉트됨
       }
       
-      // 표준화 2025-12-08: 에러 응답에서 메시지 추출
-      let errorMessage = AJAX_POST_REQUEST_FAILED;
-      if (jsonData && typeof jsonData === 'object') {
-        if (jsonData.message) {
-          errorMessage = jsonData.message;
-        } else if (jsonData.error) {
-          errorMessage = jsonData.error;
-        } else if (jsonData.data && jsonData.data.message) {
-          errorMessage = jsonData.data.message;
-        }
-      }
-      
-      const error = new Error(errorMessage);
+      // 서버 메시지 우선, 없으면 status 기반 문구 (응답이 있으므로 네트워크 문구 금지)
+      const error = new Error(resolveHttpErrorMessage(response.status, jsonData));
       error.status = response.status;
       error.response = { data: jsonData };
       throw error;
@@ -633,10 +678,7 @@ export const apiPut = async(endpoint, data = {}, options = {}) => {
         return null; // 리다이렉트됨
       }
       // 서버 응답 body의 message가 있으면 사용, 없으면 status 기반 메시지
-      const serverMessage = (jsonData && typeof jsonData === 'object' && jsonData.message)
-        ? String(jsonData.message)
-        : getErrorMessage(response.status);
-      const err = new Error(serverMessage);
+      const err = new Error(resolveHttpErrorMessage(response.status, jsonData));
       err.status = response.status;
       err.response = { data: jsonData };
       throw err;
@@ -700,10 +742,7 @@ export const apiPatch = async(endpoint, data = {}, options = {}) => {
       if (redirected) {
         return null;
       }
-      const serverMessage = (jsonData && typeof jsonData === 'object' && jsonData.message)
-        ? String(jsonData.message)
-        : getErrorMessage(response.status);
-      const err = new Error(serverMessage);
+      const err = new Error(resolveHttpErrorMessage(response.status, jsonData));
       err.status = response.status;
       err.response = { data: jsonData };
       throw err;
@@ -776,7 +815,7 @@ export const apiPostFormData = async(endpoint, formData, options = {}) => {
         throw err;
       }
 
-      handleError(new Error(AJAX_POST_FORMDATA_FAILED), response.status);
+      handleError(new Error(AJAX_POST_FORMDATA_FAILED), response.status, errorBody);
     }
 
     return await response.json();
@@ -796,7 +835,7 @@ export const apiDelete = async(endpoint, options = {}) => {
       headers: { ...getDefaultHeaders(), ...requestOptions.headers }
     });
 
-    const jsonData = await response.json();
+    const jsonData = await readJsonBody(response);
 
     if (!response.ok) {
       const requestUrl = endpoint.startsWith('http')
@@ -819,10 +858,7 @@ export const apiDelete = async(endpoint, options = {}) => {
       if (response.status === API_STATUS.UNAUTHORIZED) {
         handleError(new Error(AJAX_DELETE_REQUEST_FAILED), response.status);
       }
-      const fallbackMessage = (jsonData && typeof jsonData === 'object' && jsonData.message)
-        ? jsonData.message
-        : getErrorMessage(response.status);
-      const enriched = new Error(fallbackMessage);
+      const enriched = new Error(resolveHttpErrorMessage(response.status, jsonData));
       enriched.status = response.status;
       enriched.response = { status: response.status, data: jsonData };
       throw enriched;
@@ -876,7 +912,8 @@ export const apiUpload = async(endpoint, formData, options = {}) => {
         return null; // 리다이렉트됨
       }
       
-      handleError(new Error(AJAX_FILE_UPLOAD_FAILED), response.status);
+      const uploadErrorBody = await readJsonBody(response);
+      handleError(new Error(AJAX_FILE_UPLOAD_FAILED), response.status, uploadErrorBody);
     }
 
     return await response.json();
@@ -891,20 +928,19 @@ export const authAPI = {
   login: async(data) => {
     // CSRF 토큰을 포함한 로그인 요청
     try {
-      console.log('🔐 CSRF 토큰 포함 로그인 시도:', data);
       
       // csrfTokenManager를 사용하여 CSRF 토큰 자동 포함
       const response = await csrfTokenManager.post(AUTH_API.LOGIN, data);
       
       const responseData = await response.json();
-      console.log('🔐 로그인 응답 원본:', responseData);
+      logger.debug('🔐 로그인 응답 원본:', responseData);
       
       if (!response.ok) {
         // requiresConfirmation이 있는 경우는 정상 응답으로 처리
         // ApiResponse 래퍼 처리: responseData.data.requiresConfirmation 또는 responseData.requiresConfirmation
         const requiresConfirmation = (responseData.data && responseData.data.requiresConfirmation) || responseData.requiresConfirmation;
         if (requiresConfirmation) {
-          console.log('🔔 중복 로그인 확인 요청 응답:', responseData);
+          logger.debug('🔔 중복 로그인 확인 요청 응답:', responseData);
           return responseData;
         }
         
@@ -996,7 +1032,6 @@ export const testLogin = async() => {
     }
     
     const data = await response.json();
-    console.log('테스트 로그인 성공:', data);
     return data;
   } catch (error) {
     console.error('테스트 로그인 실패:', error);

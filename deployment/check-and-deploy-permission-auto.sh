@@ -8,7 +8,7 @@ echo "재무 거래 삭제 권한 자동 확인 및 부여"
 echo "========================================"
 
 # 운영 서버 정보
-PROD_SERVER="beta74.cafe24.com"
+PROD_SERVER="${PROD_SERVER_HOST:?PROD_SERVER_HOST 환경변수를 설정하세요}"
 SSH_USER="root"
 
 # B8 (P0 보안, 2026-06-12): 저장소 평문 비밀번호 제거 — 환경변수 주입 필수.

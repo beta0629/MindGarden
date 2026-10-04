@@ -1,66 +1,14 @@
 /**
- * SmsLogCard 스타일.
- *
- * 패널 크롬·새로고침 버튼은 settings-shell 소유. 헤더 + 행 list 의 6컬럼 grid 는
- * SmsLogRow.css 와 동일하게 맞춘다. design-v2 토큰만 사용.
+ * SmsLogCard — 패널·표·배지·안내 크롬은 settings-shell · ListTableView · StatusBadge 소유.
+ * design-v2 토큰만.
  *
  * @since 2026-06-13
- * @updated 2026-10-03 — SettingsSectionPanel 이관, design-v2 토큰
+ * @updated 2026-10-03 — div 표 그리드·헤더·오류 박스 제거, ListTableView 이관
  */
 
 .mg-sms-log-card {
   display: flex;
   flex-direction: column;
+  gap: var(--mg-v2-space-3);
   min-width: 0;
-  overflow: hidden;
-  background: var(--mg-v2-color-surface-card);
-  border: var(--mg-v2-border-width-thin) solid var(--mg-v2-color-neutral-300);
-  border-radius: var(--mg-v2-radius-lg);
-}
-
-.mg-sms-log-card__header {
-  display: grid;
-  grid-template-columns:
-    minmax(6rem, 0.8fr)
-    minmax(4.5rem, 0.6fr)
-    minmax(8.75rem, 1.2fr)
-    minmax(7.5rem, 1fr)
-    minmax(4rem, 0.5fr)
-    minmax(10rem, 2fr);
-  gap: var(--mg-v2-space-2);
-  padding: var(--mg-v2-space-2) var(--mg-v2-space-4);
-  font-size: var(--mg-v2-font-size-caption);
-  font-weight: var(--mg-v2-font-weight-semibold);
-  color: var(--mg-v2-color-text-secondary);
-  background: var(--mg-v2-color-neutral-100);
-  border-bottom: var(--mg-v2-border-width-thin) solid var(--mg-v2-color-neutral-300);
-}
-
-.mg-sms-log-card__rows {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.mg-sms-log-card__loading,
-.mg-sms-log-card__error,
-.mg-sms-log-card__empty {
-  padding: var(--mg-v2-space-4);
-  font-size: var(--mg-v2-font-size-body-md);
-  color: var(--mg-v2-color-text-secondary);
-}
-
-.mg-sms-log-card__error {
-  color: var(--mg-v2-color-semantic-error-dark);
-  background: var(--mg-v2-color-semantic-error-light);
-}
-
-@media (max-width: 1024px) {
-  .mg-sms-log-card__header {
-    grid-template-columns:
-      minmax(5rem, 0.7fr)
-      minmax(3.75rem, 0.5fr)
-      minmax(7.5rem, 1.4fr)
-      minmax(3.75rem, 0.5fr);
-  }
 }

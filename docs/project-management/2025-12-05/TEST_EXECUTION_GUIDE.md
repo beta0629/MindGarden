@@ -23,7 +23,7 @@ ssh root@beta0629.cafe24.com
 
 **MySQL 접속**:
 ```bash
-mysql -h beta0629.cafe24.com -u mindgarden_dev -p'MindGardenDev2025!@#' core_solution
+mysql -h beta0629.cafe24.com -u mindgarden_dev -p'<DEV_DB_PASSWORD>' core_solution
 ```
 
 ### 2. 로컬 환경 변수 설정
@@ -34,14 +34,14 @@ $env:DB_HOST="beta0629.cafe24.com"
 $env:DB_PORT="3306"
 $env:DB_NAME="core_solution"
 $env:DB_USERNAME="mindgarden_dev"
-$env:DB_PASSWORD="MindGardenDev2025!@#"
+$env:DB_PASSWORD="<DEV_DB_PASSWORD>"
 
 # Linux/Mac
 export DB_HOST=beta0629.cafe24.com
 export DB_PORT=3306
 export DB_NAME=core_solution
 export DB_USERNAME=mindgarden_dev
-export DB_PASSWORD="MindGardenDev2025!@#"
+export DB_PASSWORD="<DEV_DB_PASSWORD>"
 ```
 
 ---
@@ -60,13 +60,13 @@ export DB_PASSWORD="MindGardenDev2025!@#"
 ssh root@beta0629.cafe24.com
 
 # MySQL 접속 후 스크립트 실행
-mysql -h beta0629.cafe24.com -u mindgarden_dev -p'MindGardenDev2025!@#' core_solution < /path/to/test_procedures_comprehensive.sql
+mysql -h beta0629.cafe24.com -u mindgarden_dev -p'<DEV_DB_PASSWORD>' core_solution < /path/to/test_procedures_comprehensive.sql
 ```
 
 #### 방법 2: 로컬에서 원격 실행
 ```bash
 # MySQL 클라이언트가 설치되어 있어야 함
-mysql -h beta0629.cafe24.com -u mindgarden_dev -p'MindGardenDev2025!@#' core_solution < scripts/testing/test_procedures_comprehensive.sql
+mysql -h beta0629.cafe24.com -u mindgarden_dev -p'<DEV_DB_PASSWORD>' core_solution < scripts/testing/test_procedures_comprehensive.sql
 ```
 
 **검증 항목**:
@@ -124,7 +124,7 @@ mvn test -Dtest=StoredProcedureStandardizationIntegrationTest -Dspring.profiles.
 ssh root@beta0629.cafe24.com
 
 # MySQL 접속
-mysql -h beta0629.cafe24.com -u mindgarden_dev -p'MindGardenDev2025!@#' core_solution
+mysql -h beta0629.cafe24.com -u mindgarden_dev -p'<DEV_DB_PASSWORD>' core_solution
 
 # 수동 검증 스크립트 실행
 source database/schema/manual_procedure_check.sql

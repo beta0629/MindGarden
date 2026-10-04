@@ -1,6 +1,6 @@
 #!/bin/bash
 # 개발 서버 상태 확인 스크립트
-# 사용법: ssh root@beta0629.cafe24.com 'bash -s' < check-dev-server-status.sh
+# 사용법: ssh root@$DEV_SERVER_HOST 'bash -s' < check-dev-server-status.sh
 
 echo "=========================================="
 echo "개발 서버 상태 확인"

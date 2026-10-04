@@ -1,6 +1,6 @@
 /**
- * ClientSessionManagement — soft-refresh + auth retry wiring
- * (no location.reload / 401 null retry loop)
+ * ClientSessionManagement — soft-refresh + retry wiring
+ * (no location.reload / 401 null retry loop · 로그인 판단은 ClientRouteGuard 한 곳)
  *
  * @author CoreSolution
  * @since 2026-09-26
@@ -15,18 +15,18 @@ const SRC = fs.readFileSync(
 );
 
 describe('ClientSessionManagement soft-refresh + auth retry wiring', () => {
-  test('imports useSoftResourceLoad and uses softRefresh on retry path', () => {
+  test('imports useSoftResourceLoad and loads only after shared session ready', () => {
     expect(SRC).toMatch(/from ['"][^'"]*hooks\/useSoftResourceLoad['"]/);
     expect(SRC).toMatch(/useSoftResourceLoad/);
-    expect(SRC).toMatch(/softRefreshSessions/);
-    expect(SRC).toMatch(/softRefreshSessions\(\)/);
+    expect(SRC).toMatch(/useClientSessionReady\(\)/);
+    expect(SRC).toMatch(/enabled:\s*ready/);
   });
 
-  test('retry re-verifies current-user then soft navigates or softRefresh', () => {
-    expect(SRC).toMatch(/AUTH_API\.GET_CURRENT_USER/);
+  test('retry reloads data without per-screen login redirect or current-user re-check', () => {
     expect(SRC).toMatch(/handleRetry/);
-    expect(SRC).toMatch(/navigate\(['"]\/login['"]\s*,\s*\{\s*replace:\s*true\s*\}\)/);
     expect(SRC).toMatch(/onClick=\{handleRetry\}/);
+    expect(SRC).not.toMatch(/navigate\(['"]\/login/);
+    expect(SRC).not.toMatch(/AUTH_API\.GET_CURRENT_USER/);
   });
 
   test('does not hard-reload on retry or session miss', () => {

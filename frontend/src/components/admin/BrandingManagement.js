@@ -27,8 +27,6 @@ import {
 } from '../../utils/resolveCssColorVarToHex';
 import '../../styles/unified-design-tokens.css';
 import './BrandingManagement.css';
-import MGButton from '../common/MGButton';
-import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import { useTranslation } from 'react-i18next';
 
 const BRANDING_MGMT_TITLE_ID = 'branding-management-title';
@@ -796,20 +794,14 @@ const BrandingManagement = () => {
             </div>
           </div>
           <div className="mg-branding-settings__preview-actions">
-            <MGButton
+            <SettingsButton
               type="button"
-              variant="primary"
-              className={buildErpMgButtonClassName({
-                variant: 'primary',
-                size: 'md',
-                loading: false
-              })}
-              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+              variant="secondary"
               onClick={() => setShowPreview(false)}
               preventDoubleClick={false}
             >
               {t('common.actions.close')}
-            </MGButton>
+            </SettingsButton>
           </div>
         </div>
       </UnifiedModal>

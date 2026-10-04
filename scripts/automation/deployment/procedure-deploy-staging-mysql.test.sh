@@ -26,6 +26,9 @@ export ROUTINE_ADMIN_USER="" ROUTINE_ADMIN_PASS="" ROUTINE_FALLBACK_ROOT_PASS=""
 
 bash -n "$RUNNER"
 bash "$PROC_DIR/create_deployment_files.sh" >/dev/null
+# Flyway 원본에서 만든 표준 SQL 도 아래 목록에 포함된다. 원본과 다르면 검증 전에 멈춘다.
+bash "$ROOT/scripts/database/sync/flyway-procedure-extract.sh" check >/dev/null \
+    || fail "Flyway 원본 표준 SQL 이 원본과 다릅니다. flyway-procedure-extract.sh generate 를 돌리세요."
 
 # shellcheck disable=SC1090
 . "$RUNNER"
@@ -36,13 +39,23 @@ echo "MySQL server version: $server_version"
 table=$(mktemp "${TMPDIR:-/tmp}/mg-stage-table.XXXXXX")
 log=$(mktemp "${TMPDIR:-/tmp}/mg-stage-log.XXXXXX")
 all_log=$(mktemp "${TMPDIR:-/tmp}/mg-stage-all.XXXXXX")
-trap 'rm -f "$table" "$log" "$all_log"' EXIT
+trap 'rm -f "$table" "$log" "$all_log" "${targets:-}"' EXIT
+
+list_targets() {
+    local std name
+    for std in "$PROC_DIR"/*_standardized.sql; do
+        name=$(basename "$std" _standardized.sql)
+        printf '%s\t%s\n' "$name" "$PROC_DIR/deployment/${name}_deploy.sql"
+    done
+}
+
+targets=$(mktemp "${TMPDIR:-/tmp}/mg-stage-targets.XXXXXX")
+list_targets >"$targets"
 
 total=0
 failed=0
-for std in "$PROC_DIR"/*_standardized.sql; do
-    proc=$(basename "$std" _standardized.sql)
-    sql="$PROC_DIR/deployment/${proc}_deploy.sql"
+while IFS=$'\t' read -r proc sql; do
+    [ -n "$proc" ] || continue
     total=$((total + 1))
     reason=""
     : >"$log"
@@ -79,7 +92,8 @@ for std in "$PROC_DIR"/*_standardized.sql; do
     else
         printf '%s | success | staging+create+replace\n' "$proc" >>"$table"
     fi
-done
+done <"$targets"
+rm -f "$targets"
 
 echo "name | result | reason"
 cat "$table"

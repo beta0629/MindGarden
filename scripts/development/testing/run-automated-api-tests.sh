@@ -22,7 +22,7 @@ mkdir -p "${TEST_REPORT_DIR}"
 
 # 테스트 계정 정보 (환경 변수 또는 기본값)
 TEST_USERNAME="${TEST_USERNAME:-superadmin@mindgarden.com}"
-TEST_PASSWORD="${TEST_PASSWORD:-admin123}"
+TEST_PASSWORD="${TEST_PASSWORD:?TEST_PASSWORD 환경변수를 설정하세요}"
 
 PASSED=0
 FAILED=0

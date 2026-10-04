@@ -30,8 +30,11 @@ fi
 
 echo "=== 원격 교체 (ssh 는 로컬 실행 스텁) ==="
 REMOTE_ROOT="$WORK/remote"
-mkdir -p "$REMOTE_ROOT/database/schema/procedures_standardized/deployment" "$REMOTE_ROOT/scripts/database/sync"
+mkdir -p "$REMOTE_ROOT/database/schema/procedures_standardized/deployment" \
+    "$REMOTE_ROOT/database/schema/procedures_flyway_dev_sync" "$REMOTE_ROOT/scripts/database/sync"
 echo stale > "$REMOTE_ROOT/database/schema/procedures_standardized/deployment/RemovedProc_deploy.sql"
+echo stale > "$REMOTE_ROOT/database/schema/procedures_flyway_dev_sync/RemovedProc_devsync.sql"
+echo stale > "$REMOTE_ROOT/scripts/database/sync/apply-flyway-procedures-dev.sh"
 echo "keep" > "$REMOTE_ROOT/scripts/database/sync/local-only.txt"
 STUB="$WORK/bin"
 mkdir -p "$STUB"
@@ -50,15 +53,26 @@ expected=$(ls "$ROOT"/database/schema/procedures_standardized/*_standardized.sql
 actual=$(find "$REMOTE_ROOT/database/schema/procedures_standardized/deployment" -name '*_deploy.sql' | wc -l | tr -d ' ')
 [ "$expected" = "$actual" ] || fail "SQL expected=$expected actual=$actual"
 [ ! -e "$REMOTE_ROOT/database/schema/procedures_standardized/deployment/RemovedProc_deploy.sql" ] || fail "저장소에 없는 SQL 이 남았습니다."
-for f in scripts/database/sync/prod-to-dev-daily.sh scripts/automation/deployment/deploy-standardized-procedures.sh \
+for f in scripts/database/sync/prod-to-dev-daily.sh \
+    scripts/automation/deployment/deploy-standardized-procedures.sh \
     scripts/automation/deployment/procedure-deploy-changed-only.sh scripts/automation/deployment/procedure-deploy-db-diff.sh; do
     cmp -s "$ROOT/$f" "$REMOTE_ROOT/$f" || fail "갱신 안 됨: $f"
 done
+
+echo "=== Flyway 원본 온보딩 프로시저도 표준 배포 SQL 로 실린다 ==="
+while IFS=$'\t' read -r name _ _; do
+    case "$name" in ""|\#*) continue ;; esac
+    [ -f "$REMOTE_ROOT/database/schema/procedures_standardized/deployment/${name}_deploy.sql" ] \
+        || fail "Flyway 원본 프로시저가 번들에 없습니다: $name"
+done <"$ROOT/database/schema/procedures_standardized/FLYWAY_SOURCES.tsv"
+[ ! -e "$REMOTE_ROOT/database/schema/procedures_flyway_dev_sync" ] || fail "예전 개발 전용 재적재 폴더가 남았습니다."
+[ ! -e "$REMOTE_ROOT/scripts/database/sync/apply-flyway-procedures-dev.sh" ] || fail "예전 개발 전용 재적재 스크립트가 남았습니다."
 [ -f "$REMOTE_ROOT/scripts/database/sync/local-only.txt" ] || fail "서버 전용 파일을 지웠습니다."
 if ls -d "$REMOTE_ROOT"/.mg-sync-bundle.* >/dev/null 2>&1; then
     fail "임시 폴더가 남았습니다."
 fi
-printf '%s\n' "$out" | grep -q "remote bundle ok: ${expected} sql" || fail "원격 결과 없음: $out"
+printf '%s\n' "$out" | grep -q "remote bundle ok: ${expected} sql" \
+    || fail "원격 결과 없음: $out"
 
 echo "=== crontab 에 동기화가 없으면 아무것도 하지 않는다 ==="
 cat > "$STUB/ssh" <<'EOF'

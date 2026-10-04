@@ -24,13 +24,16 @@ import com.coresolution.consultation.service.CommonCodeService;
 import com.coresolution.consultation.service.DynamicPermissionService;
 import com.coresolution.consultation.service.RecurringExpenseService;
 import com.coresolution.consultation.service.SalaryTaxRateLookupService;
+import com.coresolution.consultation.service.support.ResourceOwnerAccessGuard;
 import com.coresolution.consultation.service.erp.ErpService;
 import com.coresolution.consultation.dto.CardMerchantFeeSettingsRequest;
 import com.coresolution.consultation.dto.CardMerchantFeeSettingsResponse;
 import com.coresolution.consultation.service.erp.financial.CardMerchantFeeSettingsService;
 import com.coresolution.consultation.service.erp.financial.FinancialTransactionService;
 import com.coresolution.consultation.util.AdminRoleUtils;
+import com.coresolution.consultation.util.ApiRequestParams;
 import com.coresolution.consultation.util.EmailLogMasking;
+import com.coresolution.consultation.util.ServerErrorResponses;
 import com.coresolution.consultation.util.TaxCalculationUtil;
 import com.coresolution.consultation.utils.SessionUtils;
 import com.coresolution.core.context.TenantContextHolder;
@@ -41,6 +44,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -137,6 +141,7 @@ public class ErpController extends BaseApiController {
     private final DynamicPermissionService dynamicPermissionService;
     private final UserRepository userRepository;
     private final org.springframework.core.env.Environment environment;
+    private final ResourceOwnerAccessGuard resourceOwnerAccessGuard;
 
     // ==================== Item Management ====================
 
@@ -145,80 +150,65 @@ public class ErpController extends BaseApiController {
      */
     @GetMapping("/items")
     public ResponseEntity<Map<String, Object>> getAllItems(HttpSession session) {
-        try {
-            // 표준화 원칙: ERP 접근 권한은 데이터베이스에서 관리
-            ResponseEntity<?> accessCheck = checkErpAccess(session);
-            if (accessCheck != null) {
-                return (ResponseEntity<Map<String, Object>>) accessCheck;
-            }
-
-            log.info("모든 아이템 조회 요청");
-
-            User currentUser = SessionUtils.getCurrentUser(session);
-
-            String tenantId = TenantContextHolder.getTenantId();
-            if (tenantId == null || tenantId.isEmpty()) {
-                return ResponseEntity.status(403).body(
-                        Map.of("success", false, "message", "테넌트 정보를 찾을 수 없습니다."));
-            }
-            log.info("🔍 현재 사용자 tenantId: {}", tenantId);
-
-            List<Item> allItems = erpService.getAllActiveItems();
-
-            // 표준화 2025-12-06: branchCode 필터링 제거, tenantId 기반으로만 조회
-            List<Item> items = allItems;
-
-            log.info("🔍 아이템 목록 조회 완료 - 전체: {}, tenantId: {}", allItems.size(), tenantId);
-
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", true);
-            response.put("data", items);
-            response.put("count", items.size());
-            response.put("message", "아이템 목록을 성공적으로 조회했습니다.");
-
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            log.error("아이템 목록 조회 중 오류: {}", e.getMessage(), e);
-
-            Map<String, Object> errorResponse = new HashMap<>();
-            errorResponse.put("success", false);
-            errorResponse.put("message", "아이템 목록 조회에 실패했습니다.");
-
-            return ResponseEntity.status(500).body(errorResponse);
+        // 표준화 원칙: ERP 접근 권한은 데이터베이스에서 관리
+        ResponseEntity<?> accessCheck = checkErpAccess(session);
+        if (accessCheck != null) {
+            return (ResponseEntity<Map<String, Object>>) accessCheck;
         }
+
+        log.info("모든 아이템 조회 요청");
+
+        User currentUser = SessionUtils.getCurrentUser(session);
+
+        String tenantId = TenantContextHolder.getTenantId();
+        if (tenantId == null || tenantId.isEmpty()) {
+            return ResponseEntity.status(403).body(
+                    Map.of("success", false, "message", "테넌트 정보를 찾을 수 없습니다."));
+        }
+        log.info("🔍 현재 사용자 tenantId: {}", tenantId);
+
+        List<Item> allItems = erpService.getAllActiveItems();
+
+        // 표준화 2025-12-06: branchCode 필터링 제거, tenantId 기반으로만 조회
+        List<Item> items = allItems;
+
+        log.info("🔍 아이템 목록 조회 완료 - 전체: {}, tenantId: {}", allItems.size(), tenantId);
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("success", true);
+        response.put("data", items);
+        response.put("count", items.size());
+        response.put("message", "아이템 목록을 성공적으로 조회했습니다.");
+
+        return ResponseEntity.ok(response);
     }
 
     /**
      * ID로 아이템 조회
      */
     @GetMapping("/items/{id}")
-    public ResponseEntity<Map<String, Object>> getItemById(@PathVariable Long id) {
-        try {
-            log.info("아이템 조회 요청: id={}", id);
-
-            Optional<Item> item = erpService.getItemById(id);
-
-            Map<String, Object> response = new HashMap<>();
-            if (item.isPresent()) {
-                response.put("success", true);
-                response.put("data", item.get());
-                response.put("message", "아이템을 성공적으로 조회했습니다.");
-            } else {
-                response.put("success", false);
-                response.put("message", "아이템을 찾을 수 없습니다.");
-                return ResponseEntity.status(404).body(response);
-            }
-
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            log.error("아이템 조회 중 오류: id={}, error={}", id, e.getMessage(), e);
-
-            Map<String, Object> errorResponse = new HashMap<>();
-            errorResponse.put("success", false);
-            errorResponse.put("message", "아이템 조회에 실패했습니다.");
-
-            return ResponseEntity.status(500).body(errorResponse);
+    public ResponseEntity<Map<String, Object>> getItemById(@PathVariable Long id, HttpSession session) {
+        ResponseEntity<?> accessCheck = checkErpAccess(session);
+        if (accessCheck != null) {
+            return (ResponseEntity<Map<String, Object>>) accessCheck;
         }
+        resourceOwnerAccessGuard.requireErpItemAccess(session, id);
+        log.info("아이템 조회 요청: id={}", id);
+
+        Optional<Item> item = erpService.getItemById(id);
+
+        Map<String, Object> response = new HashMap<>();
+        if (item.isPresent()) {
+            response.put("success", true);
+            response.put("data", item.get());
+            response.put("message", "아이템을 성공적으로 조회했습니다.");
+        } else {
+            response.put("success", false);
+            response.put("message", "아이템을 찾을 수 없습니다.");
+            return ResponseEntity.status(404).body(response);
+        }
+
+        return ResponseEntity.ok(response);
     }
 
     /**
@@ -226,27 +216,17 @@ public class ErpController extends BaseApiController {
      */
     @GetMapping("/items/category/{category}")
     public ResponseEntity<Map<String, Object>> getItemsByCategory(@PathVariable String category) {
-        try {
-            log.info("카테고리별 아이템 조회 요청: category={}", category);
+        log.info("카테고리별 아이템 조회 요청: category={}", category);
 
-            List<Item> items = erpService.getItemsByCategory(category);
+        List<Item> items = erpService.getItemsByCategory(category);
 
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", true);
-            response.put("data", items);
-            response.put("count", items.size());
-            response.put("message", "카테고리별 아이템 목록을 성공적으로 조회했습니다.");
+        Map<String, Object> response = new HashMap<>();
+        response.put("success", true);
+        response.put("data", items);
+        response.put("count", items.size());
+        response.put("message", "카테고리별 아이템 목록을 성공적으로 조회했습니다.");
 
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            log.error("카테고리별 아이템 조회 중 오류: category={}, error={}", category, e.getMessage(), e);
-
-            Map<String, Object> errorResponse = new HashMap<>();
-            errorResponse.put("success", false);
-            errorResponse.put("message", "카테고리별 아이템 조회에 실패했습니다.");
-
-            return ResponseEntity.status(500).body(errorResponse);
-        }
+        return ResponseEntity.ok(response);
     }
 
     /**
@@ -254,27 +234,17 @@ public class ErpController extends BaseApiController {
      */
     @GetMapping("/items/search")
     public ResponseEntity<Map<String, Object>> searchItemsByName(@RequestParam String name) {
-        try {
-            log.info("아이템 검색 요청: name={}", name);
+        log.info("아이템 검색 요청: name={}", name);
 
-            List<Item> items = erpService.searchItemsByName(name);
+        List<Item> items = erpService.searchItemsByName(name);
 
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", true);
-            response.put("data", items);
-            response.put("count", items.size());
-            response.put("message", "아이템 검색을 성공적으로 완료했습니다.");
+        Map<String, Object> response = new HashMap<>();
+        response.put("success", true);
+        response.put("data", items);
+        response.put("count", items.size());
+        response.put("message", "아이템 검색을 성공적으로 완료했습니다.");
 
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            log.error("아이템 검색 중 오류: name={}, error={}", name, e.getMessage(), e);
-
-            Map<String, Object> errorResponse = new HashMap<>();
-            errorResponse.put("success", false);
-            errorResponse.put("message", "아이템 검색에 실패했습니다.");
-
-            return ResponseEntity.status(500).body(errorResponse);
-        }
+        return ResponseEntity.ok(response);
     }
 
     /**
@@ -283,27 +253,17 @@ public class ErpController extends BaseApiController {
     @GetMapping("/items/low-stock")
     public ResponseEntity<Map<String, Object>> getLowStockItems(
             @RequestParam(defaultValue = "10") Integer threshold) {
-        try {
-            log.info("재고 부족 아이템 조회 요청: threshold={}", threshold);
+        log.info("재고 부족 아이템 조회 요청: threshold={}", threshold);
 
-            List<Item> items = erpService.getLowStockItems(threshold);
+        List<Item> items = erpService.getLowStockItems(threshold);
 
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", true);
-            response.put("data", items);
-            response.put("count", items.size());
-            response.put("message", "재고 부족 아이템 목록을 성공적으로 조회했습니다.");
+        Map<String, Object> response = new HashMap<>();
+        response.put("success", true);
+        response.put("data", items);
+        response.put("count", items.size());
+        response.put("message", "재고 부족 아이템 목록을 성공적으로 조회했습니다.");
 
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            log.error("재고 부족 아이템 조회 중 오류: threshold={}, error={}", threshold, e.getMessage(), e);
-
-            Map<String, Object> errorResponse = new HashMap<>();
-            errorResponse.put("success", false);
-            errorResponse.put("message", "재고 부족 아이템 조회에 실패했습니다.");
-
-            return ResponseEntity.status(500).body(errorResponse);
-        }
+        return ResponseEntity.ok(response);
     }
 
     /**
@@ -312,40 +272,30 @@ public class ErpController extends BaseApiController {
     @PostMapping("/items")
     public ResponseEntity<Map<String, Object>> createItem(
             @Valid @RequestBody ItemCreateRequest request, HttpSession session) {
-        try {
-            // 표준화 원칙: AdminRoleUtils 사용
-            User currentUser = SessionUtils.getCurrentUser(session);
-            if (currentUser == null || !AdminRoleUtils.isAdmin(currentUser)) {
-                log.warn("아이템 생성 권한 없음: {}", currentUser != null ? EmailLogMasking.maskForLog(currentUser.getEmail()) : "null");
-                return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                        .body(Map.of("success", false, "message", "관리자 권한이 필요합니다."));
-            }
-
-            log.info("아이템 생성 요청: name={}, category={}", request.getName(), request.getCategory());
-
-            // Item 엔티티 생성
-            Item item = Item.builder().name(request.getName()).description(request.getDescription())
-                    .category(request.getCategory()).unitPrice(request.getUnitPrice())
-                    .stockQuantity(request.getStockQuantity()).supplier(request.getSupplier())
-                    .isActive(true).build();
-
-            Item createdItem = erpService.createItem(item);
-
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", true);
-            response.put("data", createdItem);
-            response.put("message", "아이템이 성공적으로 생성되었습니다.");
-
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            log.error("아이템 생성 중 오류: error={}", e.getMessage(), e);
-
-            Map<String, Object> errorResponse = new HashMap<>();
-            errorResponse.put("success", false);
-            errorResponse.put("message", "아이템 생성에 실패했습니다.");
-
-            return ResponseEntity.status(500).body(errorResponse);
+        // 표준화 원칙: AdminRoleUtils 사용
+        User currentUser = SessionUtils.getCurrentUser(session);
+        if (currentUser == null || !AdminRoleUtils.isAdmin(currentUser)) {
+            log.warn("아이템 생성 권한 없음: {}", currentUser != null ? EmailLogMasking.maskForLog(currentUser.getEmail()) : "null");
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("success", false, "message", "관리자 권한이 필요합니다."));
         }
+
+        log.info("아이템 생성 요청: name={}, category={}", request.getName(), request.getCategory());
+
+        // Item 엔티티 생성
+        Item item = Item.builder().name(request.getName()).description(request.getDescription())
+                .category(request.getCategory()).unitPrice(request.getUnitPrice())
+                .stockQuantity(request.getStockQuantity()).supplier(request.getSupplier())
+                .isActive(true).build();
+
+        Item createdItem = erpService.createItem(item);
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("success", true);
+        response.put("data", createdItem);
+        response.put("message", "아이템이 성공적으로 생성되었습니다.");
+
+        return ResponseEntity.ok(response);
     }
 
     /**
@@ -354,50 +304,45 @@ public class ErpController extends BaseApiController {
     @PutMapping("/items/{id}")
     public ResponseEntity<Map<String, Object>> updateItem(@PathVariable Long id,
             @Valid @RequestBody ItemUpdateRequest request, HttpSession session) {
-        try {
-            // 표준화 원칙: AdminRoleUtils 사용
-            User currentUser = SessionUtils.getCurrentUser(session);
-            if (currentUser == null || !AdminRoleUtils.isAdmin(currentUser)) {
-                log.warn("아이템 수정 권한 없음: {}", currentUser != null ? EmailLogMasking.maskForLog(currentUser.getEmail()) : "null");
-                return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                        .body(Map.of("success", false, "message", "관리자 권한이 필요합니다."));
-            }
-
-            log.info("아이템 수정 요청: id={}, name={}", id, request.getName());
-
-            // 기존 아이템 조회
-            Optional<Item> existingItem = erpService.getItemById(id);
-            if (existingItem.isEmpty()) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body(Map.of("success", false, "message", "아이템을 찾을 수 없습니다."));
-            }
-
-            // 아이템 정보 업데이트
-            Item item = existingItem.get();
-            item.setName(request.getName());
-            item.setDescription(request.getDescription());
-            item.setCategory(request.getCategory());
-            item.setUnitPrice(request.getUnitPrice());
-            item.setStockQuantity(request.getStockQuantity());
-            item.setSupplier(request.getSupplier());
-
-            Item updatedItem = erpService.updateItem(id, item);
-
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", true);
-            response.put("data", updatedItem);
-            response.put("message", "아이템이 성공적으로 수정되었습니다.");
-
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            log.error("아이템 수정 중 오류: id={}, error={}", id, e.getMessage(), e);
-
-            Map<String, Object> errorResponse = new HashMap<>();
-            errorResponse.put("success", false);
-            errorResponse.put("message", "아이템 수정에 실패했습니다.");
-
-            return ResponseEntity.status(500).body(errorResponse);
+        ResponseEntity<?> accessCheck = checkErpAccess(session);
+        if (accessCheck != null) {
+            return (ResponseEntity<Map<String, Object>>) accessCheck;
         }
+        // 표준화 원칙: AdminRoleUtils 사용
+        User currentUser = SessionUtils.getCurrentUser(session);
+        if (currentUser == null || !AdminRoleUtils.isAdmin(currentUser)) {
+            log.warn("아이템 수정 권한 없음: {}", currentUser != null ? EmailLogMasking.maskForLog(currentUser.getEmail()) : "null");
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("success", false, "message", "관리자 권한이 필요합니다."));
+        }
+
+        resourceOwnerAccessGuard.requireErpItemAccess(session, id);
+        log.info("아이템 수정 요청: id={}, name={}", id, request.getName());
+
+        // 기존 아이템 조회
+        Optional<Item> existingItem = erpService.getItemById(id);
+        if (existingItem.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("success", false, "message", "아이템을 찾을 수 없습니다."));
+        }
+
+        // 아이템 정보 업데이트
+        Item item = existingItem.get();
+        item.setName(request.getName());
+        item.setDescription(request.getDescription());
+        item.setCategory(request.getCategory());
+        item.setUnitPrice(request.getUnitPrice());
+        item.setStockQuantity(request.getStockQuantity());
+        item.setSupplier(request.getSupplier());
+
+        Item updatedItem = erpService.updateItem(id, item);
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("success", true);
+        response.put("data", updatedItem);
+        response.put("message", "아이템이 성공적으로 수정되었습니다.");
+
+        return ResponseEntity.ok(response);
     }
 
     /**
@@ -406,42 +351,33 @@ public class ErpController extends BaseApiController {
     @DeleteMapping("/items/{id}")
     public ResponseEntity<Map<String, Object>> deleteItem(@PathVariable Long id,
             HttpSession session) {
-        try {
-            ResponseEntity<?> accessCheck = checkErpAccess(session);
-            if (accessCheck != null) {
-                return (ResponseEntity<Map<String, Object>>) accessCheck;
-            }
+        ResponseEntity<?> accessCheck = checkErpAccess(session);
+        if (accessCheck != null) {
+            return (ResponseEntity<Map<String, Object>>) accessCheck;
+        }
 
-            User currentUser = SessionUtils.getCurrentUser(session);
-            if (currentUser == null || !AdminRoleUtils.isAdmin(currentUser)) {
-                log.warn("아이템 삭제 권한 없음: 관리자만 가능, user={}",
-                        currentUser != null ? EmailLogMasking.maskForLog(currentUser.getEmail()) : "null");
-                return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                        .body(Map.of("success", false, "message", "아이템 삭제는 테넌트 관리자(ADMIN)만 할 수 있습니다."));
-            }
+        User currentUser = SessionUtils.getCurrentUser(session);
+        if (currentUser == null || !AdminRoleUtils.isAdmin(currentUser)) {
+            log.warn("아이템 삭제 권한 없음: 관리자만 가능, user={}",
+                    currentUser != null ? EmailLogMasking.maskForLog(currentUser.getEmail()) : "null");
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("success", false, "message", "아이템 삭제는 테넌트 관리자(ADMIN)만 할 수 있습니다."));
+        }
 
-            log.info("아이템 삭제 요청: id={}", id);
+        resourceOwnerAccessGuard.requireErpItemAccess(session, id);
+        log.info("아이템 삭제 요청: id={}", id);
 
-            boolean deleted = erpService.deleteItem(id);
+        boolean deleted = erpService.deleteItem(id);
 
-            if (deleted) {
-                Map<String, Object> response = new HashMap<>();
-                response.put("success", true);
-                response.put("message", "아이템이 성공적으로 삭제되었습니다.");
+        if (deleted) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "아이템이 성공적으로 삭제되었습니다.");
 
-                return ResponseEntity.ok(response);
-            } else {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body(Map.of("success", false, "message", "아이템을 찾을 수 없습니다."));
-            }
-        } catch (Exception e) {
-            log.error("아이템 삭제 중 오류: id={}, error={}", id, e.getMessage(), e);
-
-            Map<String, Object> errorResponse = new HashMap<>();
-            errorResponse.put("success", false);
-            errorResponse.put("message", "아이템 삭제에 실패했습니다.");
-
-            return ResponseEntity.status(500).body(errorResponse);
+            return ResponseEntity.ok(response);
+        } else {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("success", false, "message", "아이템을 찾을 수 없습니다."));
         }
     }
 
@@ -451,39 +387,33 @@ public class ErpController extends BaseApiController {
     @PutMapping("/items/{id}/stock")
     public ResponseEntity<Map<String, Object>> updateItemStock(@PathVariable Long id,
             @RequestParam Integer quantity, HttpSession session) {
-        try {
-            // 표준화 원칙: AdminRoleUtils 사용
-            User currentUser = SessionUtils.getCurrentUser(session);
-            if (currentUser == null || !AdminRoleUtils.isAdmin(currentUser)) {
-                log.warn("아이템 재고 업데이트 권한 없음: {}",
-                        currentUser != null ? EmailLogMasking.maskForLog(currentUser.getEmail()) : "null");
-                return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                        .body(Map.of("success", false, "message", "관리자 권한이 필요합니다."));
-            }
+        ResponseEntity<?> accessCheck = checkErpAccess(session);
+        if (accessCheck != null) {
+            return (ResponseEntity<Map<String, Object>>) accessCheck;
+        }
+        // 표준화 원칙: AdminRoleUtils 사용
+        User currentUser = SessionUtils.getCurrentUser(session);
+        if (currentUser == null || !AdminRoleUtils.isAdmin(currentUser)) {
+            log.warn("아이템 재고 업데이트 권한 없음: {}",
+                    currentUser != null ? EmailLogMasking.maskForLog(currentUser.getEmail()) : "null");
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("success", false, "message", "관리자 권한이 필요합니다."));
+        }
 
-            log.info("아이템 재고 업데이트 요청: id={}, quantity={}", id, quantity);
+        resourceOwnerAccessGuard.requireErpItemAccess(session, id);
+        log.info("아이템 재고 업데이트 요청: id={}, quantity={}", id, quantity);
 
-            boolean updated = erpService.updateItemStock(id, quantity);
+        boolean updated = erpService.updateItemStock(id, quantity);
 
-            if (updated) {
-                Map<String, Object> response = new HashMap<>();
-                response.put("success", true);
-                response.put("message", "아이템 재고가 성공적으로 업데이트되었습니다.");
+        if (updated) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "아이템 재고가 성공적으로 업데이트되었습니다.");
 
-                return ResponseEntity.ok(response);
-            } else {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body(Map.of("success", false, "message", "아이템을 찾을 수 없습니다."));
-            }
-        } catch (Exception e) {
-            log.error("아이템 재고 업데이트 중 오류: id={}, quantity={}, error={}", id, quantity,
-                    e.getMessage(), e);
-
-            Map<String, Object> errorResponse = new HashMap<>();
-            errorResponse.put("success", false);
-            errorResponse.put("message", "아이템 재고 업데이트에 실패했습니다.");
-
-            return ResponseEntity.status(500).body(errorResponse);
+            return ResponseEntity.ok(response);
+        } else {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("success", false, "message", "아이템을 찾을 수 없습니다."));
         }
     }
 
@@ -494,27 +424,17 @@ public class ErpController extends BaseApiController {
      */
     @GetMapping("/purchase-requests")
     public ResponseEntity<Map<String, Object>> getAllPurchaseRequests() {
-        try {
-            log.info("모든 구매 요청 조회");
+        log.info("모든 구매 요청 조회");
 
-            List<PurchaseRequest> requests = erpService.getAllActivePurchaseRequests();
+        List<PurchaseRequest> requests = erpService.getAllActivePurchaseRequests();
 
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", true);
-            response.put("data", requests);
-            response.put("count", requests.size());
-            response.put("message", "구매 요청 목록을 성공적으로 조회했습니다.");
+        Map<String, Object> response = new HashMap<>();
+        response.put("success", true);
+        response.put("data", requests);
+        response.put("count", requests.size());
+        response.put("message", "구매 요청 목록을 성공적으로 조회했습니다.");
 
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            log.error("구매 요청 목록 조회 중 오류: error={}", e.getMessage(), e);
-
-            Map<String, Object> errorResponse = new HashMap<>();
-            errorResponse.put("success", false);
-            errorResponse.put("message", "구매 요청 목록 조회에 실패했습니다.");
-
-            return ResponseEntity.status(500).body(errorResponse);
-        }
+        return ResponseEntity.ok(response);
     }
 
     /**
@@ -540,12 +460,7 @@ public class ErpController extends BaseApiController {
         } catch (Exception e) {
             log.error("구매 요청 생성 중 오류: requesterId={}, itemId={}, quantity={}, error={}",
                     requesterId, itemId, quantity, e.getMessage(), e);
-
-            Map<String, Object> errorResponse = new HashMap<>();
-            errorResponse.put("success", false);
-            errorResponse.put("message", "구매 요청 생성에 실패했습니다: " + e.getMessage());
-
-            return ResponseEntity.status(400).body(errorResponse);
+            throw ServerErrorResponses.propagate(e);
         }
     }
 
@@ -553,33 +468,29 @@ public class ErpController extends BaseApiController {
      * 구매 요청 조회
      */
     @GetMapping("/purchase-requests/{id}")
-    public ResponseEntity<Map<String, Object>> getPurchaseRequestById(@PathVariable Long id) {
-        try {
-            log.info("구매 요청 조회: id={}", id);
-
-            Optional<PurchaseRequest> request = erpService.getPurchaseRequestById(id);
-
-            Map<String, Object> response = new HashMap<>();
-            if (request.isPresent()) {
-                response.put("success", true);
-                response.put("data", request.get());
-                response.put("message", "구매 요청을 성공적으로 조회했습니다.");
-            } else {
-                response.put("success", false);
-                response.put("message", "구매 요청을 찾을 수 없습니다.");
-                return ResponseEntity.status(404).body(response);
-            }
-
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            log.error("구매 요청 조회 중 오류: id={}, error={}", id, e.getMessage(), e);
-
-            Map<String, Object> errorResponse = new HashMap<>();
-            errorResponse.put("success", false);
-            errorResponse.put("message", "구매 요청 조회에 실패했습니다.");
-
-            return ResponseEntity.status(500).body(errorResponse);
+    public ResponseEntity<Map<String, Object>> getPurchaseRequestById(@PathVariable Long id,
+            HttpSession session) {
+        ResponseEntity<?> accessCheck = checkErpAccess(session);
+        if (accessCheck != null) {
+            return (ResponseEntity<Map<String, Object>>) accessCheck;
         }
+        resourceOwnerAccessGuard.requirePurchaseRequestAccess(session, id);
+        log.info("구매 요청 조회: id={}", id);
+
+        Optional<PurchaseRequest> request = erpService.getPurchaseRequestById(id);
+
+        Map<String, Object> response = new HashMap<>();
+        if (request.isPresent()) {
+            response.put("success", true);
+            response.put("data", request.get());
+            response.put("message", "구매 요청을 성공적으로 조회했습니다.");
+        } else {
+            response.put("success", false);
+            response.put("message", "구매 요청을 찾을 수 없습니다.");
+            return ResponseEntity.status(404).body(response);
+        }
+
+        return ResponseEntity.ok(response);
     }
 
     /**
@@ -588,28 +499,17 @@ public class ErpController extends BaseApiController {
     @GetMapping("/purchase-requests/requester/{requesterId}")
     public ResponseEntity<Map<String, Object>> getPurchaseRequestsByRequester(
             @PathVariable Long requesterId) {
-        try {
-            log.info("요청자별 구매 요청 목록 조회: requesterId={}", requesterId);
+        log.info("요청자별 구매 요청 목록 조회: requesterId={}", requesterId);
 
-            List<PurchaseRequest> requests = erpService.getPurchaseRequestsByRequester(requesterId);
+        List<PurchaseRequest> requests = erpService.getPurchaseRequestsByRequester(requesterId);
 
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", true);
-            response.put("data", requests);
-            response.put("count", requests.size());
-            response.put("message", "요청자별 구매 요청 목록을 성공적으로 조회했습니다.");
+        Map<String, Object> response = new HashMap<>();
+        response.put("success", true);
+        response.put("data", requests);
+        response.put("count", requests.size());
+        response.put("message", "요청자별 구매 요청 목록을 성공적으로 조회했습니다.");
 
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            log.error("요청자별 구매 요청 목록 조회 중 오류: requesterId={}, error={}", requesterId,
-                    e.getMessage(), e);
-
-            Map<String, Object> errorResponse = new HashMap<>();
-            errorResponse.put("success", false);
-            errorResponse.put("message", "요청자별 구매 요청 목록 조회에 실패했습니다.");
-
-            return ResponseEntity.status(500).body(errorResponse);
-        }
+        return ResponseEntity.ok(response);
     }
 
     /**
@@ -617,32 +517,22 @@ public class ErpController extends BaseApiController {
      */
     @GetMapping("/purchase-requests/pending-admin")
     public ResponseEntity<Map<String, Object>> getPendingAdminApproval(HttpSession session) {
-        try {
-            ResponseEntity<?> accessCheck = checkFinanceApprovalAdminAccess(session);
-            if (accessCheck != null) {
-                return (ResponseEntity<Map<String, Object>>) accessCheck;
-            }
-
-            log.info("관리자 승인 대기 목록 조회");
-
-            List<PurchaseRequest> requests = erpService.getPendingAdminApproval();
-
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", true);
-            response.put("data", requests);
-            response.put("count", requests.size());
-            response.put("message", "관리자 승인 대기 목록을 성공적으로 조회했습니다.");
-
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            log.error("관리자 승인 대기 목록 조회 중 오류: {}", e.getMessage(), e);
-
-            Map<String, Object> errorResponse = new HashMap<>();
-            errorResponse.put("success", false);
-            errorResponse.put("message", "관리자 승인 대기 목록 조회에 실패했습니다.");
-
-            return ResponseEntity.status(500).body(errorResponse);
+        ResponseEntity<?> accessCheck = checkFinanceApprovalAdminAccess(session);
+        if (accessCheck != null) {
+            return (ResponseEntity<Map<String, Object>>) accessCheck;
         }
+
+        log.info("관리자 승인 대기 목록 조회");
+
+        List<PurchaseRequest> requests = erpService.getPendingAdminApproval();
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("success", true);
+        response.put("data", requests);
+        response.put("count", requests.size());
+        response.put("message", "관리자 승인 대기 목록을 성공적으로 조회했습니다.");
+
+        return ResponseEntity.ok(response);
     }
 
     /**
@@ -650,32 +540,22 @@ public class ErpController extends BaseApiController {
      */
     @GetMapping("/purchase-requests/pending-super-admin")
     public ResponseEntity<Map<String, Object>> getPendingSuperAdminApproval(HttpSession session) {
-        try {
-            ResponseEntity<?> accessCheck = checkFinanceApprovalAdminAccess(session);
-            if (accessCheck != null) {
-                return (ResponseEntity<Map<String, Object>>) accessCheck;
-            }
-
-            log.info("수퍼 관리자 승인 대기 목록 조회");
-
-            List<PurchaseRequest> requests = erpService.getPendingSuperAdminApproval();
-
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", true);
-            response.put("data", requests);
-            response.put("count", requests.size());
-            response.put("message", "수퍼 관리자 승인 대기 목록을 성공적으로 조회했습니다.");
-
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            log.error("수퍼 관리자 승인 대기 목록 조회 중 오류: {}", e.getMessage(), e);
-
-            Map<String, Object> errorResponse = new HashMap<>();
-            errorResponse.put("success", false);
-            errorResponse.put("message", "수퍼 관리자 승인 대기 목록 조회에 실패했습니다.");
-
-            return ResponseEntity.status(500).body(errorResponse);
+        ResponseEntity<?> accessCheck = checkFinanceApprovalAdminAccess(session);
+        if (accessCheck != null) {
+            return (ResponseEntity<Map<String, Object>>) accessCheck;
         }
+
+        log.info("수퍼 관리자 승인 대기 목록 조회");
+
+        List<PurchaseRequest> requests = erpService.getPendingSuperAdminApproval();
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("success", true);
+        response.put("data", requests);
+        response.put("count", requests.size());
+        response.put("message", "수퍼 관리자 승인 대기 목록을 성공적으로 조회했습니다.");
+
+        return ResponseEntity.ok(response);
     }
 
     /**
@@ -690,6 +570,7 @@ public class ErpController extends BaseApiController {
             if (accessCheck != null) {
                 return (ResponseEntity<Map<String, Object>>) accessCheck;
             }
+            resourceOwnerAccessGuard.requirePurchaseRequestAccess(session, id);
 
             log.info("관리자 승인: id={}, adminId={}", id, adminId);
 
@@ -702,12 +583,7 @@ public class ErpController extends BaseApiController {
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             log.error("관리자 승인 중 오류: id={}, adminId={}, error={}", id, adminId, e.getMessage(), e);
-
-            Map<String, Object> errorResponse = new HashMap<>();
-            errorResponse.put("success", false);
-            errorResponse.put("message", "관리자 승인에 실패했습니다: " + e.getMessage());
-
-            return ResponseEntity.status(400).body(errorResponse);
+            throw ServerErrorResponses.propagate(e);
         }
     }
 
@@ -723,6 +599,7 @@ public class ErpController extends BaseApiController {
             if (accessCheck != null) {
                 return (ResponseEntity<Map<String, Object>>) accessCheck;
             }
+            resourceOwnerAccessGuard.requirePurchaseRequestAccess(session, id);
 
             log.info("관리자 거부: id={}, adminId={}", id, adminId);
 
@@ -735,12 +612,7 @@ public class ErpController extends BaseApiController {
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             log.error("관리자 거부 중 오류: id={}, adminId={}, error={}", id, adminId, e.getMessage(), e);
-
-            Map<String, Object> errorResponse = new HashMap<>();
-            errorResponse.put("success", false);
-            errorResponse.put("message", "관리자 거부에 실패했습니다: " + e.getMessage());
-
-            return ResponseEntity.status(400).body(errorResponse);
+            throw ServerErrorResponses.propagate(e);
         }
     }
 
@@ -756,6 +628,7 @@ public class ErpController extends BaseApiController {
             if (accessCheck != null) {
                 return (ResponseEntity<Map<String, Object>>) accessCheck;
             }
+            resourceOwnerAccessGuard.requirePurchaseRequestAccess(session, id);
 
             log.info("수퍼 관리자 승인: id={}, superAdminId={}", id, superAdminId);
 
@@ -769,12 +642,7 @@ public class ErpController extends BaseApiController {
         } catch (Exception e) {
             log.error("수퍼 관리자 승인 중 오류: id={}, superAdminId={}, error={}", id, superAdminId,
                     e.getMessage(), e);
-
-            Map<String, Object> errorResponse = new HashMap<>();
-            errorResponse.put("success", false);
-            errorResponse.put("message", "수퍼 관리자 승인에 실패했습니다: " + e.getMessage());
-
-            return ResponseEntity.status(400).body(errorResponse);
+            throw ServerErrorResponses.propagate(e);
         }
     }
 
@@ -790,6 +658,7 @@ public class ErpController extends BaseApiController {
             if (accessCheck != null) {
                 return (ResponseEntity<Map<String, Object>>) accessCheck;
             }
+            resourceOwnerAccessGuard.requirePurchaseRequestAccess(session, id);
 
             log.info("수퍼 관리자 거부: id={}, superAdminId={}", id, superAdminId);
 
@@ -803,12 +672,7 @@ public class ErpController extends BaseApiController {
         } catch (Exception e) {
             log.error("수퍼 관리자 거부 중 오류: id={}, superAdminId={}, error={}", id, superAdminId,
                     e.getMessage(), e);
-
-            Map<String, Object> errorResponse = new HashMap<>();
-            errorResponse.put("success", false);
-            errorResponse.put("message", "수퍼 관리자 거부에 실패했습니다: " + e.getMessage());
-
-            return ResponseEntity.status(400).body(errorResponse);
+            throw ServerErrorResponses.propagate(e);
         }
     }
 
@@ -817,7 +681,12 @@ public class ErpController extends BaseApiController {
      */
     @PostMapping("/purchase-requests/{id}/cancel")
     public ResponseEntity<Map<String, Object>> cancelPurchaseRequest(@PathVariable Long id,
-            @RequestParam Long requesterId) {
+            @RequestParam Long requesterId, HttpSession session) {
+        ResponseEntity<?> accessCheck = checkErpAccess(session);
+        if (accessCheck != null) {
+            return (ResponseEntity<Map<String, Object>>) accessCheck;
+        }
+        resourceOwnerAccessGuard.requirePurchaseRequestAccess(session, id);
         try {
             log.info("구매 요청 취소: id={}, requesterId={}", id, requesterId);
 
@@ -831,12 +700,7 @@ public class ErpController extends BaseApiController {
         } catch (Exception e) {
             log.error("구매 요청 취소 중 오류: id={}, requesterId={}, error={}", id, requesterId,
                     e.getMessage(), e);
-
-            Map<String, Object> errorResponse = new HashMap<>();
-            errorResponse.put("success", false);
-            errorResponse.put("message", "구매 요청 취소에 실패했습니다: " + e.getMessage());
-
-            return ResponseEntity.status(400).body(errorResponse);
+            throw ServerErrorResponses.propagate(e);
         }
     }
 
@@ -847,27 +711,17 @@ public class ErpController extends BaseApiController {
      */
     @GetMapping("/purchase-orders")
     public ResponseEntity<Map<String, Object>> getAllPurchaseOrders() {
-        try {
-            log.info("모든 구매 주문 조회");
+        log.info("모든 구매 주문 조회");
 
-            List<PurchaseOrder> orders = erpService.getAllActivePurchaseOrders();
+        List<PurchaseOrder> orders = erpService.getAllActivePurchaseOrders();
 
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", true);
-            response.put("data", orders);
-            response.put("count", orders.size());
-            response.put("message", "구매 주문 목록을 성공적으로 조회했습니다.");
+        Map<String, Object> response = new HashMap<>();
+        response.put("success", true);
+        response.put("data", orders);
+        response.put("count", orders.size());
+        response.put("message", "구매 주문 목록을 성공적으로 조회했습니다.");
 
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            log.error("구매 주문 목록 조회 중 오류: error={}", e.getMessage(), e);
-
-            Map<String, Object> errorResponse = new HashMap<>();
-            errorResponse.put("success", false);
-            errorResponse.put("message", "구매 주문 목록 조회에 실패했습니다.");
-
-            return ResponseEntity.status(500).body(errorResponse);
-        }
+        return ResponseEntity.ok(response);
     }
 
     /**
@@ -878,7 +732,12 @@ public class ErpController extends BaseApiController {
             @RequestParam Long purchaserId, @RequestParam String supplier,
             @RequestParam(required = false) String supplierContact,
             @RequestParam(required = false) String expectedDeliveryDate,
-            @RequestParam(required = false) String notes) {
+            @RequestParam(required = false) String notes, HttpSession session) {
+        ResponseEntity<?> accessCheck = checkErpAccess(session);
+        if (accessCheck != null) {
+            return (ResponseEntity<Map<String, Object>>) accessCheck;
+        }
+        resourceOwnerAccessGuard.requirePurchaseRequestAccess(session, requestId);
         try {
             log.info("구매 주문 생성: requestId={}, purchaserId={}", requestId, purchaserId);
 
@@ -899,12 +758,7 @@ public class ErpController extends BaseApiController {
         } catch (Exception e) {
             log.error("구매 주문 생성 중 오류: requestId={}, purchaserId={}, error={}", requestId,
                     purchaserId, e.getMessage(), e);
-
-            Map<String, Object> errorResponse = new HashMap<>();
-            errorResponse.put("success", false);
-            errorResponse.put("message", "구매 주문 생성에 실패했습니다: " + e.getMessage());
-
-            return ResponseEntity.status(400).body(errorResponse);
+            throw ServerErrorResponses.propagate(e);
         }
     }
 
@@ -912,33 +766,29 @@ public class ErpController extends BaseApiController {
      * 구매 주문 조회
      */
     @GetMapping("/purchase-orders/{id}")
-    public ResponseEntity<Map<String, Object>> getPurchaseOrderById(@PathVariable Long id) {
-        try {
-            log.info("구매 주문 조회: id={}", id);
-
-            Optional<PurchaseOrder> order = erpService.getPurchaseOrderById(id);
-
-            Map<String, Object> response = new HashMap<>();
-            if (order.isPresent()) {
-                response.put("success", true);
-                response.put("data", order.get());
-                response.put("message", "구매 주문을 성공적으로 조회했습니다.");
-            } else {
-                response.put("success", false);
-                response.put("message", "구매 주문을 찾을 수 없습니다.");
-                return ResponseEntity.status(404).body(response);
-            }
-
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            log.error("구매 주문 조회 중 오류: id={}, error={}", id, e.getMessage(), e);
-
-            Map<String, Object> errorResponse = new HashMap<>();
-            errorResponse.put("success", false);
-            errorResponse.put("message", "구매 주문 조회에 실패했습니다.");
-
-            return ResponseEntity.status(500).body(errorResponse);
+    public ResponseEntity<Map<String, Object>> getPurchaseOrderById(@PathVariable Long id,
+            HttpSession session) {
+        ResponseEntity<?> accessCheck = checkErpAccess(session);
+        if (accessCheck != null) {
+            return (ResponseEntity<Map<String, Object>>) accessCheck;
         }
+        resourceOwnerAccessGuard.requirePurchaseOrderAccess(session, id);
+        log.info("구매 주문 조회: id={}", id);
+
+        Optional<PurchaseOrder> order = erpService.getPurchaseOrderById(id);
+
+        Map<String, Object> response = new HashMap<>();
+        if (order.isPresent()) {
+            response.put("success", true);
+            response.put("data", order.get());
+            response.put("message", "구매 주문을 성공적으로 조회했습니다.");
+        } else {
+            response.put("success", false);
+            response.put("message", "구매 주문을 찾을 수 없습니다.");
+            return ResponseEntity.status(404).body(response);
+        }
+
+        return ResponseEntity.ok(response);
     }
 
     /**
@@ -946,7 +796,12 @@ public class ErpController extends BaseApiController {
      */
     @PutMapping("/purchase-orders/{id}/status")
     public ResponseEntity<Map<String, Object>> updateOrderStatus(@PathVariable Long id,
-            @RequestParam String status) {
+            @RequestParam String status, HttpSession session) {
+        ResponseEntity<?> accessCheck = checkErpAccess(session);
+        if (accessCheck != null) {
+            return (ResponseEntity<Map<String, Object>>) accessCheck;
+        }
+        resourceOwnerAccessGuard.requirePurchaseOrderAccess(session, id);
         try {
             log.info("주문 상태 업데이트: id={}, status={}", id, status);
 
@@ -961,12 +816,7 @@ public class ErpController extends BaseApiController {
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             log.error("주문 상태 업데이트 중 오류: id={}, status={}, error={}", id, status, e.getMessage(), e);
-
-            Map<String, Object> errorResponse = new HashMap<>();
-            errorResponse.put("success", false);
-            errorResponse.put("message", "주문 상태 업데이트에 실패했습니다: " + e.getMessage());
-
-            return ResponseEntity.status(400).body(errorResponse);
+            throw ServerErrorResponses.propagate(e);
         }
     }
 
@@ -974,7 +824,12 @@ public class ErpController extends BaseApiController {
      * 배송 완료 처리
      */
     @PostMapping("/purchase-orders/{id}/deliver")
-    public ResponseEntity<Map<String, Object>> markAsDelivered(@PathVariable Long id) {
+    public ResponseEntity<Map<String, Object>> markAsDelivered(@PathVariable Long id, HttpSession session) {
+        ResponseEntity<?> accessCheck = checkErpAccess(session);
+        if (accessCheck != null) {
+            return (ResponseEntity<Map<String, Object>>) accessCheck;
+        }
+        resourceOwnerAccessGuard.requirePurchaseOrderAccess(session, id);
         try {
             log.info("배송 완료 처리: id={}", id);
 
@@ -987,12 +842,7 @@ public class ErpController extends BaseApiController {
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             log.error("배송 완료 처리 중 오류: id={}, error={}", id, e.getMessage(), e);
-
-            Map<String, Object> errorResponse = new HashMap<>();
-            errorResponse.put("success", false);
-            errorResponse.put("message", "배송 완료 처리에 실패했습니다: " + e.getMessage());
-
-            return ResponseEntity.status(400).body(errorResponse);
+            throw ServerErrorResponses.propagate(e);
         }
     }
 
@@ -1003,60 +853,45 @@ public class ErpController extends BaseApiController {
      */
     @GetMapping("/budgets")
     public ResponseEntity<Map<String, Object>> getAllBudgets() {
-        try {
-            log.info("모든 예산 조회 요청");
+        log.info("모든 예산 조회 요청");
 
-            List<Budget> budgets = erpService.getAllActiveBudgets();
+        List<Budget> budgets = erpService.getAllActiveBudgets();
 
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", true);
-            response.put("data", budgets);
-            response.put("count", budgets.size());
-            response.put("message", "예산 목록을 성공적으로 조회했습니다.");
+        Map<String, Object> response = new HashMap<>();
+        response.put("success", true);
+        response.put("data", budgets);
+        response.put("count", budgets.size());
+        response.put("message", "예산 목록을 성공적으로 조회했습니다.");
 
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            log.error("예산 목록 조회 중 오류: {}", e.getMessage(), e);
-
-            Map<String, Object> errorResponse = new HashMap<>();
-            errorResponse.put("success", false);
-            errorResponse.put("message", "예산 목록 조회에 실패했습니다.");
-
-            return ResponseEntity.status(500).body(errorResponse);
-        }
+        return ResponseEntity.ok(response);
     }
 
     /**
      * ID로 예산 조회
      */
     @GetMapping("/budgets/{id}")
-    public ResponseEntity<Map<String, Object>> getBudgetById(@PathVariable Long id) {
-        try {
-            log.info("예산 조회: id={}", id);
-
-            Optional<Budget> budget = erpService.getBudgetById(id);
-
-            Map<String, Object> response = new HashMap<>();
-            if (budget.isPresent()) {
-                response.put("success", true);
-                response.put("data", budget.get());
-                response.put("message", "예산을 성공적으로 조회했습니다.");
-            } else {
-                response.put("success", false);
-                response.put("message", "예산을 찾을 수 없습니다.");
-                return ResponseEntity.status(404).body(response);
-            }
-
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            log.error("예산 조회 중 오류: id={}, error={}", id, e.getMessage(), e);
-
-            Map<String, Object> errorResponse = new HashMap<>();
-            errorResponse.put("success", false);
-            errorResponse.put("message", "예산 조회에 실패했습니다.");
-
-            return ResponseEntity.status(500).body(errorResponse);
+    public ResponseEntity<Map<String, Object>> getBudgetById(@PathVariable Long id, HttpSession session) {
+        ResponseEntity<?> accessCheck = checkErpAccess(session);
+        if (accessCheck != null) {
+            return (ResponseEntity<Map<String, Object>>) accessCheck;
         }
+        resourceOwnerAccessGuard.requireBudgetAccess(session, id);
+        log.info("예산 조회: id={}", id);
+
+        Optional<Budget> budget = erpService.getBudgetById(id);
+
+        Map<String, Object> response = new HashMap<>();
+        if (budget.isPresent()) {
+            response.put("success", true);
+            response.put("data", budget.get());
+            response.put("message", "예산을 성공적으로 조회했습니다.");
+        } else {
+            response.put("success", false);
+            response.put("message", "예산을 찾을 수 없습니다.");
+            return ResponseEntity.status(404).body(response);
+        }
+
+        return ResponseEntity.ok(response);
     }
 
     /**
@@ -1064,27 +899,18 @@ public class ErpController extends BaseApiController {
      */
     @GetMapping("/budgets/year/{year}")
     public ResponseEntity<Map<String, Object>> getBudgetsByYear(@PathVariable String year) {
-        try {
-            log.info("연도별 예산 조회: year={}", year);
+        String targetYear = ApiRequestParams.yearText(year, "year", LocalDate.now().getYear());
+        log.info("연도별 예산 조회: year={}", targetYear);
 
-            List<Budget> budgets = erpService.getBudgetsByYear(year);
+        List<Budget> budgets = erpService.getBudgetsByYear(targetYear);
 
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", true);
-            response.put("data", budgets);
-            response.put("count", budgets.size());
-            response.put("message", "연도별 예산 목록을 성공적으로 조회했습니다.");
+        Map<String, Object> response = new HashMap<>();
+        response.put("success", true);
+        response.put("data", budgets);
+        response.put("count", budgets.size());
+        response.put("message", "연도별 예산 목록을 성공적으로 조회했습니다.");
 
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            log.error("연도별 예산 조회 중 오류: year={}, error={}", year, e.getMessage(), e);
-
-            Map<String, Object> errorResponse = new HashMap<>();
-            errorResponse.put("success", false);
-            errorResponse.put("message", "연도별 예산 조회에 실패했습니다.");
-
-            return ResponseEntity.status(500).body(errorResponse);
-        }
+        return ResponseEntity.ok(response);
     }
 
     /**
@@ -1093,27 +919,20 @@ public class ErpController extends BaseApiController {
     @GetMapping("/budgets/year/{year}/month/{month}")
     public ResponseEntity<Map<String, Object>> getBudgetsByYearAndMonth(@PathVariable String year,
             @PathVariable String month) {
-        try {
-            log.info("월별 예산 조회: year={}, month={}", year, month);
+        LocalDate today = LocalDate.now();
+        String targetYear = ApiRequestParams.yearText(year, "year", today.getYear());
+        String targetMonth = ApiRequestParams.monthText(month, "month", today.getMonthValue());
+        log.info("월별 예산 조회: year={}, month={}", targetYear, targetMonth);
 
-            List<Budget> budgets = erpService.getBudgetsByYearAndMonth(year, month);
+        List<Budget> budgets = erpService.getBudgetsByYearAndMonth(targetYear, targetMonth);
 
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", true);
-            response.put("data", budgets);
-            response.put("count", budgets.size());
-            response.put("message", "월별 예산 목록을 성공적으로 조회했습니다.");
+        Map<String, Object> response = new HashMap<>();
+        response.put("success", true);
+        response.put("data", budgets);
+        response.put("count", budgets.size());
+        response.put("message", "월별 예산 목록을 성공적으로 조회했습니다.");
 
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            log.error("월별 예산 조회 중 오류: year={}, month={}, error={}", year, month, e.getMessage(), e);
-
-            Map<String, Object> errorResponse = new HashMap<>();
-            errorResponse.put("success", false);
-            errorResponse.put("message", "월별 예산 조회에 실패했습니다.");
-
-            return ResponseEntity.status(500).body(errorResponse);
-        }
+        return ResponseEntity.ok(response);
     }
 
     /**
@@ -1121,27 +940,17 @@ public class ErpController extends BaseApiController {
      */
     @GetMapping("/budgets/category/{category}")
     public ResponseEntity<Map<String, Object>> getBudgetsByCategory(@PathVariable String category) {
-        try {
-            log.info("카테고리별 예산 조회: category={}", category);
+        log.info("카테고리별 예산 조회: category={}", category);
 
-            List<Budget> budgets = erpService.getBudgetsByCategory(category);
+        List<Budget> budgets = erpService.getBudgetsByCategory(category);
 
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", true);
-            response.put("data", budgets);
-            response.put("count", budgets.size());
-            response.put("message", "카테고리별 예산 목록을 성공적으로 조회했습니다.");
+        Map<String, Object> response = new HashMap<>();
+        response.put("success", true);
+        response.put("data", budgets);
+        response.put("count", budgets.size());
+        response.put("message", "카테고리별 예산 목록을 성공적으로 조회했습니다.");
 
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            log.error("카테고리별 예산 조회 중 오류: category={}, error={}", category, e.getMessage(), e);
-
-            Map<String, Object> errorResponse = new HashMap<>();
-            errorResponse.put("success", false);
-            errorResponse.put("message", "카테고리별 예산 조회에 실패했습니다.");
-
-            return ResponseEntity.status(500).body(errorResponse);
-        }
+        return ResponseEntity.ok(response);
     }
 
     // ==================== Statistics and Reports ====================
@@ -1152,27 +961,16 @@ public class ErpController extends BaseApiController {
     @GetMapping("/stats/purchase-requests/monthly")
     public ResponseEntity<Map<String, Object>> getMonthlyPurchaseRequestStats(
             @RequestParam int year, @RequestParam int month) {
-        try {
-            log.info("월별 구매 요청 통계: year={}, month={}", year, month);
+        log.info("월별 구매 요청 통계: year={}, month={}", year, month);
 
-            Map<String, Object> stats = erpService.getMonthlyPurchaseRequestStats(year, month);
+        Map<String, Object> stats = erpService.getMonthlyPurchaseRequestStats(year, month);
 
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", true);
-            response.put("data", stats);
-            response.put("message", "월별 구매 요청 통계를 성공적으로 조회했습니다.");
+        Map<String, Object> response = new HashMap<>();
+        response.put("success", true);
+        response.put("data", stats);
+        response.put("message", "월별 구매 요청 통계를 성공적으로 조회했습니다.");
 
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            log.error("월별 구매 요청 통계 조회 중 오류: year={}, month={}, error={}", year, month,
-                    e.getMessage(), e);
-
-            Map<String, Object> errorResponse = new HashMap<>();
-            errorResponse.put("success", false);
-            errorResponse.put("message", "월별 구매 요청 통계 조회에 실패했습니다.");
-
-            return ResponseEntity.status(500).body(errorResponse);
-        }
+        return ResponseEntity.ok(response);
     }
 
     /**
@@ -1181,27 +979,16 @@ public class ErpController extends BaseApiController {
     @GetMapping("/stats/purchase-orders/monthly")
     public ResponseEntity<Map<String, Object>> getMonthlyPurchaseOrderStats(@RequestParam int year,
             @RequestParam int month) {
-        try {
-            log.info("월별 구매 주문 통계: year={}, month={}", year, month);
+        log.info("월별 구매 주문 통계: year={}, month={}", year, month);
 
-            Map<String, Object> stats = erpService.getMonthlyPurchaseOrderStats(year, month);
+        Map<String, Object> stats = erpService.getMonthlyPurchaseOrderStats(year, month);
 
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", true);
-            response.put("data", stats);
-            response.put("message", "월별 구매 주문 통계를 성공적으로 조회했습니다.");
+        Map<String, Object> response = new HashMap<>();
+        response.put("success", true);
+        response.put("data", stats);
+        response.put("message", "월별 구매 주문 통계를 성공적으로 조회했습니다.");
 
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            log.error("월별 구매 주문 통계 조회 중 오류: year={}, month={}, error={}", year, month,
-                    e.getMessage(), e);
-
-            Map<String, Object> errorResponse = new HashMap<>();
-            errorResponse.put("success", false);
-            errorResponse.put("message", "월별 구매 주문 통계 조회에 실패했습니다.");
-
-            return ResponseEntity.status(500).body(errorResponse);
-        }
+        return ResponseEntity.ok(response);
     }
 
     /**
@@ -1210,27 +997,19 @@ public class ErpController extends BaseApiController {
     @GetMapping("/stats/budgets/monthly")
     public ResponseEntity<Map<String, Object>> getMonthlyBudgetStats(@RequestParam String year,
             @RequestParam String month) {
-        try {
-            log.info("월별 예산 통계: year={}, month={}", year, month);
+        LocalDate today = LocalDate.now();
+        String targetYear = ApiRequestParams.yearText(year, "year", today.getYear());
+        String targetMonth = ApiRequestParams.monthText(month, "month", today.getMonthValue());
+        log.info("월별 예산 통계: year={}, month={}", targetYear, targetMonth);
 
-            Map<String, Object> stats = erpService.getMonthlyBudgetStats(year, month);
+        Map<String, Object> stats = erpService.getMonthlyBudgetStats(targetYear, targetMonth);
 
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", true);
-            response.put("data", stats);
-            response.put("message", "월별 예산 통계를 성공적으로 조회했습니다.");
+        Map<String, Object> response = new HashMap<>();
+        response.put("success", true);
+        response.put("data", stats);
+        response.put("message", "월별 예산 통계를 성공적으로 조회했습니다.");
 
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            log.error("월별 예산 통계 조회 중 오류: year={}, month={}, error={}", year, month, e.getMessage(),
-                    e);
-
-            Map<String, Object> errorResponse = new HashMap<>();
-            errorResponse.put("success", false);
-            errorResponse.put("message", "월별 예산 통계 조회에 실패했습니다.");
-
-            return ResponseEntity.status(500).body(errorResponse);
-        }
+        return ResponseEntity.ok(response);
     }
 
     /**
@@ -1238,26 +1017,16 @@ public class ErpController extends BaseApiController {
      */
     @GetMapping("/stats/purchase-requests/status")
     public ResponseEntity<Map<String, Object>> getPurchaseRequestStatsByStatus() {
-        try {
-            log.info("상태별 구매 요청 통계");
+        log.info("상태별 구매 요청 통계");
 
-            Map<String, Object> stats = erpService.getPurchaseRequestStatsByStatus();
+        Map<String, Object> stats = erpService.getPurchaseRequestStatsByStatus();
 
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", true);
-            response.put("data", stats);
-            response.put("message", "상태별 구매 요청 통계를 성공적으로 조회했습니다.");
+        Map<String, Object> response = new HashMap<>();
+        response.put("success", true);
+        response.put("data", stats);
+        response.put("message", "상태별 구매 요청 통계를 성공적으로 조회했습니다.");
 
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            log.error("상태별 구매 요청 통계 조회 중 오류: {}", e.getMessage(), e);
-
-            Map<String, Object> errorResponse = new HashMap<>();
-            errorResponse.put("success", false);
-            errorResponse.put("message", "상태별 구매 요청 통계 조회에 실패했습니다.");
-
-            return ResponseEntity.status(500).body(errorResponse);
-        }
+        return ResponseEntity.ok(response);
     }
 
     /**
@@ -1265,26 +1034,16 @@ public class ErpController extends BaseApiController {
      */
     @GetMapping("/stats/purchase-requests/requester")
     public ResponseEntity<Map<String, Object>> getPurchaseRequestStatsByRequester() {
-        try {
-            log.info("요청자별 구매 요청 통계");
+        log.info("요청자별 구매 요청 통계");
 
-            Map<String, Object> stats = erpService.getPurchaseRequestStatsByRequester();
+        Map<String, Object> stats = erpService.getPurchaseRequestStatsByRequester();
 
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", true);
-            response.put("data", stats);
-            response.put("message", "요청자별 구매 요청 통계를 성공적으로 조회했습니다.");
+        Map<String, Object> response = new HashMap<>();
+        response.put("success", true);
+        response.put("data", stats);
+        response.put("message", "요청자별 구매 요청 통계를 성공적으로 조회했습니다.");
 
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            log.error("요청자별 구매 요청 통계 조회 중 오류: {}", e.getMessage(), e);
-
-            Map<String, Object> errorResponse = new HashMap<>();
-            errorResponse.put("success", false);
-            errorResponse.put("message", "요청자별 구매 요청 통계 조회에 실패했습니다.");
-
-            return ResponseEntity.status(500).body(errorResponse);
-        }
+        return ResponseEntity.ok(response);
     }
 
     /**
@@ -1292,26 +1051,16 @@ public class ErpController extends BaseApiController {
      */
     @GetMapping("/stats/purchase-orders/supplier")
     public ResponseEntity<Map<String, Object>> getPurchaseOrderStatsBySupplier() {
-        try {
-            log.info("공급업체별 구매 주문 통계");
+        log.info("공급업체별 구매 주문 통계");
 
-            Map<String, Object> stats = erpService.getPurchaseOrderStatsBySupplier();
+        Map<String, Object> stats = erpService.getPurchaseOrderStatsBySupplier();
 
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", true);
-            response.put("data", stats);
-            response.put("message", "공급업체별 구매 주문 통계를 성공적으로 조회했습니다.");
+        Map<String, Object> response = new HashMap<>();
+        response.put("success", true);
+        response.put("data", stats);
+        response.put("message", "공급업체별 구매 주문 통계를 성공적으로 조회했습니다.");
 
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            log.error("공급업체별 구매 주문 통계 조회 중 오류: {}", e.getMessage(), e);
-
-            Map<String, Object> errorResponse = new HashMap<>();
-            errorResponse.put("success", false);
-            errorResponse.put("message", "공급업체별 구매 주문 통계 조회에 실패했습니다.");
-
-            return ResponseEntity.status(500).body(errorResponse);
-        }
+        return ResponseEntity.ok(response);
     }
 
     /**
@@ -1319,26 +1068,16 @@ public class ErpController extends BaseApiController {
      */
     @GetMapping("/stats/budgets/category")
     public ResponseEntity<Map<String, Object>> getBudgetStatsByCategory() {
-        try {
-            log.info("카테고리별 예산 통계");
+        log.info("카테고리별 예산 통계");
 
-            Map<String, Object> stats = erpService.getBudgetStatsByCategory();
+        Map<String, Object> stats = erpService.getBudgetStatsByCategory();
 
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", true);
-            response.put("data", stats);
-            response.put("message", "카테고리별 예산 통계를 성공적으로 조회했습니다.");
+        Map<String, Object> response = new HashMap<>();
+        response.put("success", true);
+        response.put("data", stats);
+        response.put("message", "카테고리별 예산 통계를 성공적으로 조회했습니다.");
 
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            log.error("카테고리별 예산 통계 조회 중 오류: {}", e.getMessage(), e);
-
-            Map<String, Object> errorResponse = new HashMap<>();
-            errorResponse.put("success", false);
-            errorResponse.put("message", "카테고리별 예산 통계 조회에 실패했습니다.");
-
-            return ResponseEntity.status(500).body(errorResponse);
-        }
+        return ResponseEntity.ok(response);
     }
 
     /**
@@ -1346,27 +1085,17 @@ public class ErpController extends BaseApiController {
      */
     @GetMapping("/budgets/high-usage")
     public ResponseEntity<Map<String, Object>> getHighUsageBudgets() {
-        try {
-            log.info("예산 사용률이 높은 예산 목록 조회");
+        log.info("예산 사용률이 높은 예산 목록 조회");
 
-            List<Budget> budgets = erpService.getHighUsageBudgets();
+        List<Budget> budgets = erpService.getHighUsageBudgets();
 
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", true);
-            response.put("data", budgets);
-            response.put("count", budgets.size());
-            response.put("message", "예산 사용률이 높은 예산 목록을 성공적으로 조회했습니다.");
+        Map<String, Object> response = new HashMap<>();
+        response.put("success", true);
+        response.put("data", budgets);
+        response.put("count", budgets.size());
+        response.put("message", "예산 사용률이 높은 예산 목록을 성공적으로 조회했습니다.");
 
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            log.error("예산 사용률이 높은 예산 목록 조회 중 오류: {}", e.getMessage(), e);
-
-            Map<String, Object> errorResponse = new HashMap<>();
-            errorResponse.put("success", false);
-            errorResponse.put("message", "예산 사용률이 높은 예산 목록 조회에 실패했습니다.");
-
-            return ResponseEntity.status(500).body(errorResponse);
-        }
+        return ResponseEntity.ok(response);
     }
 
     /**
@@ -1374,27 +1103,17 @@ public class ErpController extends BaseApiController {
      */
     @GetMapping("/budgets/over-budget")
     public ResponseEntity<Map<String, Object>> getOverBudgetBudgets() {
-        try {
-            log.info("예산 부족 예산 목록 조회");
+        log.info("예산 부족 예산 목록 조회");
 
-            List<Budget> budgets = erpService.getOverBudgetBudgets();
+        List<Budget> budgets = erpService.getOverBudgetBudgets();
 
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", true);
-            response.put("data", budgets);
-            response.put("count", budgets.size());
-            response.put("message", "예산 부족 예산 목록을 성공적으로 조회했습니다.");
+        Map<String, Object> response = new HashMap<>();
+        response.put("success", true);
+        response.put("data", budgets);
+        response.put("count", budgets.size());
+        response.put("message", "예산 부족 예산 목록을 성공적으로 조회했습니다.");
 
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            log.error("예산 부족 예산 목록 조회 중 오류: {}", e.getMessage(), e);
-
-            Map<String, Object> errorResponse = new HashMap<>();
-            errorResponse.put("success", false);
-            errorResponse.put("message", "예산 부족 예산 목록 조회에 실패했습니다.");
-
-            return ResponseEntity.status(500).body(errorResponse);
-        }
+        return ResponseEntity.ok(response);
     }
 
     // ==================== 회계 시스템 통합 API ====================
@@ -1447,9 +1166,7 @@ public class ErpController extends BaseApiController {
             return ResponseEntity.ok(result);
 
         } catch (Exception e) {
-            log.error("❌ 데이터 확인 실패: {}", e.getMessage(), e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("error", "데이터 확인 실패: " + e.getMessage()));
+            return ServerErrorResponses.internalError("데이터 확인 실패", e);
         }
     }
 
@@ -1460,79 +1177,75 @@ public class ErpController extends BaseApiController {
     public ResponseEntity<Map<String, Object>> getFinanceDashboard(
             @RequestParam(required = false) String startDate,
             @RequestParam(required = false) String endDate, HttpSession session) {
-        try {
-            // 동적 권한 체크
-            // 표준화 원칙: SessionUtils 사용
-            User currentUser = SessionUtils.getCurrentUser(session);
-            if (currentUser == null) {
-                return ResponseEntity.status(401).body(Map.of("success", false, "message",
-                        "로그인이 필요합니다.", "redirectToLogin", true));
-            }
-
-            String tenantId = SessionUtils.getTenantId(session);
-            if (tenantId == null || tenantId.isEmpty()) {
-                tenantId = currentUser.getTenantId();
-            }
-            if (tenantId == null || tenantId.isEmpty()) {
-                log.error("❌ 테넌트 정보를 찾을 수 없습니다: 사용자={}, userId={}", EmailLogMasking.maskForLog(currentUser.getEmail()),
-                        currentUser.getId());
-                return ResponseEntity.status(400).body(
-                        Map.of("success", false, "message", "테넌트 정보를 찾을 수 없습니다. 관리자에게 문의하세요."));
-            }
-
-            // 세션의 사용자 정보가 불완전할 수 있으므로 테넌트 스코프로 DB에서 다시 조회
-            User fullUser = userRepository.findByTenantIdAndId(tenantId, currentUser.getId())
-                    .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
-            currentUser = fullUser;
-
-            // 통합재무관리 접근 권한 확인 (관리자 역할이면 허용)
-            boolean isAdmin = currentUser.getRole() != null && currentUser.getRole().isAdmin();
-
-            if (!isAdmin && !dynamicPermissionService.hasPermission(currentUser,
-                    "INTEGRATED_FINANCE_VIEW")) {
-                return ResponseEntity.status(403)
-                        .body(Map.of("success", false, "message", "통합재무관리 접근 권한이 없습니다."));
-            }
-
-            if (session.getAttribute(SessionConstants.TENANT_ID) == null) {
-                session.setAttribute(SessionConstants.TENANT_ID, tenantId);
-                log.info("✅ 세션에 테넌트 ID 저장: tenantId={}", tenantId);
-            }
-
-            log.info("재무 대시보드 데이터 조회 요청: 사용자={}, 테넌트={}", EmailLogMasking.maskForLog(currentUser.getEmail()), tenantId);
-
-            // 테넌트 컨텍스트 설정 (서비스에서 getRequiredTenantId() 사용)
-            TenantContextHolder.setTenantId(tenantId);
-            try {
-                // 테넌트별 데이터 조회 (날짜 파라미터 전달)
-                Map<String, Object> financeData;
-                if (startDate != null && endDate != null) {
-                    LocalDate start = LocalDate.parse(startDate);
-                    LocalDate end = LocalDate.parse(endDate);
-                    financeData = erpService.getBranchFinanceDashboard(null, start, end);
-                    log.info("✅ 테넌트별 재무 대시보드 데이터 조회 완료: 테넌트={}, 기간={}~{}", tenantId, startDate,
-                            endDate);
-                } else {
-                    financeData = erpService.getBranchFinanceDashboard(null);
-                    log.info("✅ 테넌트별 재무 대시보드 데이터 조회 완료: 테넌트={} (전체 기간)", tenantId);
-                }
-
-                Map<String, Object> response = new HashMap<>();
-                response.put("success", true);
-                response.put("message", "재무 대시보드 데이터를 성공적으로 조회했습니다.");
-                response.put("data", financeData);
-                response.put("tenantId", tenantId);
-
-                return ResponseEntity.ok(response);
-            } finally {
-                TenantContextHolder.clear();
-            }
-
-        } catch (Exception e) {
-            log.error("재무 대시보드 데이터 조회 실패", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("success", false, "message", "재무 데이터 조회 중 오류가 발생했습니다."));
+        // 동적 권한 체크
+        // 표준화 원칙: SessionUtils 사용
+        User currentUser = SessionUtils.getCurrentUser(session);
+        if (currentUser == null) {
+            return ResponseEntity.status(401).body(Map.of("success", false, "message",
+                    "로그인이 필요합니다.", "redirectToLogin", true));
         }
+
+        String tenantId = SessionUtils.getTenantId(session);
+        if (tenantId == null || tenantId.isEmpty()) {
+            tenantId = currentUser.getTenantId();
+        }
+        if (tenantId == null || tenantId.isEmpty()) {
+            log.error("❌ 테넌트 정보를 찾을 수 없습니다: 사용자={}, userId={}", EmailLogMasking.maskForLog(currentUser.getEmail()),
+                    currentUser.getId());
+            return ResponseEntity.status(400).body(
+                    Map.of("success", false, "message", "테넌트 정보를 찾을 수 없습니다. 관리자에게 문의하세요."));
+        }
+
+        // 세션의 사용자 정보가 불완전할 수 있으므로 테넌트 스코프로 DB에서 다시 조회
+        User fullUser = userRepository.findByTenantIdAndId(tenantId, currentUser.getId())
+                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
+        currentUser = fullUser;
+
+        // 통합재무관리 접근 권한 확인 (관리자 역할이면 허용)
+        boolean isAdmin = currentUser.getRole() != null && currentUser.getRole().isAdmin();
+
+        if (!isAdmin && !dynamicPermissionService.hasPermission(currentUser,
+                "INTEGRATED_FINANCE_VIEW")) {
+            return ResponseEntity.status(403)
+                    .body(Map.of("success", false, "message", "통합재무관리 접근 권한이 없습니다."));
+        }
+
+        if (session.getAttribute(SessionConstants.TENANT_ID) == null) {
+            session.setAttribute(SessionConstants.TENANT_ID, tenantId);
+            log.info("✅ 세션에 테넌트 ID 저장: tenantId={}", tenantId);
+        }
+
+        log.info("재무 대시보드 데이터 조회 요청: 사용자={}, 테넌트={}", EmailLogMasking.maskForLog(currentUser.getEmail()), tenantId);
+
+        // 한쪽만 들어와도 형식을 검증한다 (둘 다 있을 때만 파싱하면 ?startDate=bad 가 200 으로 빠져나간다)
+        LocalDate start = ApiRequestParams.optionalDate(startDate, "startDate");
+        LocalDate end = ApiRequestParams.optionalDate(endDate, "endDate");
+
+        // 테넌트 컨텍스트 설정 (서비스에서 getRequiredTenantId() 사용)
+        TenantContextHolder.setTenantId(tenantId);
+        try {
+            // 테넌트별 데이터 조회 (날짜 파라미터 전달)
+            Map<String, Object> financeData;
+            if (start != null && end != null) {
+                financeData = erpService.getBranchFinanceDashboard(null, start, end);
+                log.info("✅ 테넌트별 재무 대시보드 데이터 조회 완료: 테넌트={}, 기간={}~{}", tenantId, startDate,
+                        endDate);
+            } else {
+                financeData = erpService.getBranchFinanceDashboard(null);
+                log.info("✅ 테넌트별 재무 대시보드 데이터 조회 완료: 테넌트={} (전체 기간)", tenantId);
+            }
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "재무 대시보드 데이터를 성공적으로 조회했습니다.");
+            response.put("data", financeData);
+            response.put("tenantId", tenantId);
+
+            return ResponseEntity.ok(response);
+        } finally {
+            TenantContextHolder.clear();
+        }
+
     }
 
     /**
@@ -1542,46 +1255,43 @@ public class ErpController extends BaseApiController {
     public ResponseEntity<Map<String, Object>> getFinanceStatistics(
             @RequestParam(required = false) String startDate,
             @RequestParam(required = false) String endDate, HttpSession session) {
-        try {
-            // 표준화 원칙: ERP 접근 권한은 데이터베이스에서 관리
-            ResponseEntity<?> accessCheck = checkErpAccess(session);
-            if (accessCheck != null) {
-                return (ResponseEntity<Map<String, Object>>) accessCheck;
-            }
-
-            User currentUser = SessionUtils.getCurrentUser(session);
-
-            // 표준화 원칙: 테넌트 ID 기반 데이터 조회
-            String tenantId = SessionUtils.getTenantId(session);
-            if (tenantId == null || tenantId.isEmpty()) {
-                return ResponseEntity.status(400).body(
-                        Map.of("success", false, "message", "테넌트 정보를 찾을 수 없습니다."));
-            }
-
-            // 테넌트 컨텍스트 설정
-            TenantContextHolder.setTenantId(tenantId);
-            try {
-                log.info("수입/지출 통계 조회 요청: {} ~ {}, 테넌트={}", startDate, endDate, tenantId);
-
-                Map<String, Object> statistics =
-                        erpService.getBranchFinanceStatistics(null, startDate, endDate);
-
-                Map<String, Object> response = new HashMap<>();
-                response.put("success", true);
-                response.put("message", "수입/지출 통계를 성공적으로 조회했습니다.");
-                response.put("data", statistics);
-                response.put("tenantId", tenantId);
-
-                return ResponseEntity.ok(response);
-            } finally {
-                TenantContextHolder.clear();
-            }
-
-        } catch (Exception e) {
-            log.error("수입/지출 통계 조회 실패", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("success", false, "message", "통계 조회 중 오류가 발생했습니다."));
+        // 표준화 원칙: ERP 접근 권한은 데이터베이스에서 관리
+        ResponseEntity<?> accessCheck = checkErpAccess(session);
+        if (accessCheck != null) {
+            return (ResponseEntity<Map<String, Object>>) accessCheck;
         }
+
+        User currentUser = SessionUtils.getCurrentUser(session);
+
+        // 표준화 원칙: 테넌트 ID 기반 데이터 조회
+        String tenantId = SessionUtils.getTenantId(session);
+        if (tenantId == null || tenantId.isEmpty()) {
+            return ResponseEntity.status(400).body(
+                    Map.of("success", false, "message", "테넌트 정보를 찾을 수 없습니다."));
+        }
+
+        String start = ApiRequestParams.optionalDateText(startDate, "startDate");
+        String end = ApiRequestParams.optionalDateText(endDate, "endDate");
+
+        // 테넌트 컨텍스트 설정
+        TenantContextHolder.setTenantId(tenantId);
+        try {
+            log.info("수입/지출 통계 조회 요청: {} ~ {}, 테넌트={}", start, end, tenantId);
+
+            Map<String, Object> statistics =
+                    erpService.getBranchFinanceStatistics(null, start, end);
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "수입/지출 통계를 성공적으로 조회했습니다.");
+            response.put("data", statistics);
+            response.put("tenantId", tenantId);
+
+            return ResponseEntity.ok(response);
+        } finally {
+            TenantContextHolder.clear();
+        }
+
     }
 
     /**
@@ -1591,45 +1301,42 @@ public class ErpController extends BaseApiController {
     public ResponseEntity<Map<String, Object>> getCategoryAnalysis(
             @RequestParam(required = false) String startDate,
             @RequestParam(required = false) String endDate, HttpSession session) {
-        try {
-            // 표준화 원칙: ERP 접근 권한은 데이터베이스에서 관리
-            ResponseEntity<?> accessCheck = checkErpAccess(session);
-            if (accessCheck != null) {
-                return (ResponseEntity<Map<String, Object>>) accessCheck;
-            }
-
-            User currentUser = SessionUtils.getCurrentUser(session);
-
-            // 표준화 원칙: 테넌트 ID 기반 데이터 조회
-            String tenantId = SessionUtils.getTenantId(session);
-            if (tenantId == null || tenantId.isEmpty()) {
-                return ResponseEntity.status(400).body(
-                        Map.of("success", false, "message", "테넌트 정보를 찾을 수 없습니다."));
-            }
-
-            // 테넌트 컨텍스트 설정
-            TenantContextHolder.setTenantId(tenantId);
-            try {
-                log.info("카테고리별 분석 조회 요청: {} ~ {}, 테넌트={}", startDate, endDate, tenantId);
-
-                Map<String, Object> analysis = erpService.getCategoryAnalysis(startDate, endDate);
-
-                Map<String, Object> response = new HashMap<>();
-                response.put("success", true);
-                response.put("message", "카테고리별 분석을 성공적으로 조회했습니다.");
-                response.put("data", analysis);
-                response.put("tenantId", tenantId);
-
-                return ResponseEntity.ok(response);
-            } finally {
-                TenantContextHolder.clear();
-            }
-
-        } catch (Exception e) {
-            log.error("카테고리별 분석 조회 실패", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("success", false, "message", "분석 조회 중 오류가 발생했습니다."));
+        // 표준화 원칙: ERP 접근 권한은 데이터베이스에서 관리
+        ResponseEntity<?> accessCheck = checkErpAccess(session);
+        if (accessCheck != null) {
+            return (ResponseEntity<Map<String, Object>>) accessCheck;
         }
+
+        User currentUser = SessionUtils.getCurrentUser(session);
+
+        // 표준화 원칙: 테넌트 ID 기반 데이터 조회
+        String tenantId = SessionUtils.getTenantId(session);
+        if (tenantId == null || tenantId.isEmpty()) {
+            return ResponseEntity.status(400).body(
+                    Map.of("success", false, "message", "테넌트 정보를 찾을 수 없습니다."));
+        }
+
+        String start = ApiRequestParams.optionalDateText(startDate, "startDate");
+        String end = ApiRequestParams.optionalDateText(endDate, "endDate");
+
+        // 테넌트 컨텍스트 설정
+        TenantContextHolder.setTenantId(tenantId);
+        try {
+            log.info("카테고리별 분석 조회 요청: {} ~ {}, 테넌트={}", start, end, tenantId);
+
+            Map<String, Object> analysis = erpService.getCategoryAnalysis(start, end);
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "카테고리별 분석을 성공적으로 조회했습니다.");
+            response.put("data", analysis);
+            response.put("tenantId", tenantId);
+
+            return ResponseEntity.ok(response);
+        } finally {
+            TenantContextHolder.clear();
+        }
+
     }
 
     /**
@@ -1638,51 +1345,46 @@ public class ErpController extends BaseApiController {
     @GetMapping("/finance/daily-report")
     public ResponseEntity<Map<String, Object>> getDailyFinanceReport(
             @RequestParam(required = false) String reportDate, HttpSession session) {
-        try {
-            // 표준화 원칙: ERP 접근 권한은 데이터베이스에서 관리
-            ResponseEntity<?> accessCheck = checkErpAccess(session);
-            if (accessCheck != null) {
-                return (ResponseEntity<Map<String, Object>>) accessCheck;
-            }
-
-            User currentUser = SessionUtils.getCurrentUser(session);
-
-            // 표준화 원칙: 테넌트 ID 기반 데이터 조회
-            String tenantId = SessionUtils.getTenantId(session);
-            if (tenantId == null || tenantId.isEmpty()) {
-                return ResponseEntity.status(400).body(
-                        Map.of("success", false, "message", "테넌트 정보를 찾을 수 없습니다."));
-            }
-
-            // 기본값으로 오늘 날짜 사용
-            if (reportDate == null) {
-                reportDate = java.time.LocalDate.now().toString();
-            }
-
-            // 테넌트 컨텍스트 설정
-            TenantContextHolder.setTenantId(tenantId);
-            try {
-                log.info("일간 재무 리포트 조회 요청: {}, 테넌트={}", reportDate, tenantId);
-
-                Map<String, Object> dailyReport =
-                        erpService.getDailyFinanceReport(reportDate, null);
-
-                Map<String, Object> response = new HashMap<>();
-                response.put("success", true);
-                response.put("message", "일간 재무 리포트를 성공적으로 조회했습니다.");
-                response.put("data", dailyReport);
-                response.put("tenantId", tenantId);
-
-                return ResponseEntity.ok(response);
-            } finally {
-                TenantContextHolder.clear();
-            }
-
-        } catch (Exception e) {
-            log.error("일간 재무 리포트 조회 실패", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("success", false, "message", "일간 리포트 조회 중 오류가 발생했습니다."));
+        // 표준화 원칙: ERP 접근 권한은 데이터베이스에서 관리
+        ResponseEntity<?> accessCheck = checkErpAccess(session);
+        if (accessCheck != null) {
+            return (ResponseEntity<Map<String, Object>>) accessCheck;
         }
+
+        User currentUser = SessionUtils.getCurrentUser(session);
+
+        // 표준화 원칙: 테넌트 ID 기반 데이터 조회
+        String tenantId = SessionUtils.getTenantId(session);
+        if (tenantId == null || tenantId.isEmpty()) {
+            return ResponseEntity.status(400).body(
+                    Map.of("success", false, "message", "테넌트 정보를 찾을 수 없습니다."));
+        }
+
+        // 기본값으로 오늘 날짜 사용
+        String targetDate = ApiRequestParams.optionalDateText(reportDate, "reportDate");
+        if (targetDate == null) {
+            targetDate = java.time.LocalDate.now().toString();
+        }
+
+        // 테넌트 컨텍스트 설정
+        TenantContextHolder.setTenantId(tenantId);
+        try {
+            log.info("일간 재무 리포트 조회 요청: {}, 테넌트={}", targetDate, tenantId);
+
+            Map<String, Object> dailyReport =
+                    erpService.getDailyFinanceReport(targetDate, null);
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "일간 재무 리포트를 성공적으로 조회했습니다.");
+            response.put("data", dailyReport);
+            response.put("tenantId", tenantId);
+
+            return ResponseEntity.ok(response);
+        } finally {
+            TenantContextHolder.clear();
+        }
+
     }
 
     /**
@@ -1692,54 +1394,45 @@ public class ErpController extends BaseApiController {
     public ResponseEntity<Map<String, Object>> getMonthlyFinanceReport(
             @RequestParam(required = false) String year,
             @RequestParam(required = false) String month, HttpSession session) {
-        try {
-            // 표준화 원칙: ERP 접근 권한은 데이터베이스에서 관리
-            ResponseEntity<?> accessCheck = checkErpAccess(session);
-            if (accessCheck != null) {
-                return (ResponseEntity<Map<String, Object>>) accessCheck;
-            }
-
-            User currentUser = SessionUtils.getCurrentUser(session);
-
-            // 표준화 원칙: 테넌트 ID 기반 데이터 조회
-            String tenantId = SessionUtils.getTenantId(session);
-            if (tenantId == null || tenantId.isEmpty()) {
-                return ResponseEntity.status(400).body(
-                        Map.of("success", false, "message", "테넌트 정보를 찾을 수 없습니다."));
-            }
-
-            // 테넌트 컨텍스트 설정
-            TenantContextHolder.setTenantId(tenantId);
-            try {
-                log.info("월간 재무 리포트 조회 요청: {}-{}, 테넌트={}", year, month, tenantId);
-
-                // 기본값으로 현재 년월 사용
-                if (year == null) {
-                    year = String.valueOf(java.time.LocalDate.now().getYear());
-                }
-                if (month == null) {
-                    month = String.valueOf(java.time.LocalDate.now().getMonthValue());
-                }
-
-                Map<String, Object> monthlyReport =
-                        erpService.getMonthlyFinanceReport(year, month, null);
-
-                Map<String, Object> response = new HashMap<>();
-                response.put("success", true);
-                response.put("message", "월간 재무 리포트를 성공적으로 조회했습니다.");
-                response.put("data", monthlyReport);
-                response.put("tenantId", tenantId);
-
-                return ResponseEntity.ok(response);
-            } finally {
-                TenantContextHolder.clear();
-            }
-
-        } catch (Exception e) {
-            log.error("월간 재무 리포트 조회 실패", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("success", false, "message", "월간 리포트 조회 중 오류가 발생했습니다."));
+        // 표준화 원칙: ERP 접근 권한은 데이터베이스에서 관리
+        ResponseEntity<?> accessCheck = checkErpAccess(session);
+        if (accessCheck != null) {
+            return (ResponseEntity<Map<String, Object>>) accessCheck;
         }
+
+        User currentUser = SessionUtils.getCurrentUser(session);
+
+        // 표준화 원칙: 테넌트 ID 기반 데이터 조회
+        String tenantId = SessionUtils.getTenantId(session);
+        if (tenantId == null || tenantId.isEmpty()) {
+            return ResponseEntity.status(400).body(
+                    Map.of("success", false, "message", "테넌트 정보를 찾을 수 없습니다."));
+        }
+
+        // 기본값으로 현재 년월 사용. 형식 검증은 공통 파서가 담당한다 (서비스의 parseInt 가 400 에 입력 원문을 흘리지 않도록)
+        LocalDate today = LocalDate.now();
+        String targetYear = ApiRequestParams.yearText(year, "year", today.getYear());
+        String targetMonth = ApiRequestParams.monthText(month, "month", today.getMonthValue());
+
+        // 테넌트 컨텍스트 설정
+        TenantContextHolder.setTenantId(tenantId);
+        try {
+            log.info("월간 재무 리포트 조회 요청: {}-{}, 테넌트={}", targetYear, targetMonth, tenantId);
+
+            Map<String, Object> monthlyReport =
+                    erpService.getMonthlyFinanceReport(targetYear, targetMonth, null);
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "월간 재무 리포트를 성공적으로 조회했습니다.");
+            response.put("data", monthlyReport);
+            response.put("tenantId", tenantId);
+
+            return ResponseEntity.ok(response);
+        } finally {
+            TenantContextHolder.clear();
+        }
+
     }
 
     /**
@@ -1748,47 +1441,33 @@ public class ErpController extends BaseApiController {
     @GetMapping("/finance/tax-monthly-series")
     public ResponseEntity<Map<String, Object>> getTaxMonthlySeries(
             @RequestParam(required = false) String year, HttpSession session) {
-        try {
-            ResponseEntity<?> accessCheck = checkErpAccess(session);
-            if (accessCheck != null) {
-                return (ResponseEntity<Map<String, Object>>) accessCheck;
-            }
-
-            String tenantId = SessionUtils.getTenantId(session);
-            if (tenantId == null || tenantId.isEmpty()) {
-                return ResponseEntity.status(400).body(
-                        Map.of("success", false, "message", "테넌트 정보를 찾을 수 없습니다."));
-            }
-
-            if (year == null || year.isEmpty()) {
-                year = String.valueOf(LocalDate.now().getYear());
-            }
-            try {
-                Integer.parseInt(year);
-            } catch (NumberFormatException ex) {
-                return ResponseEntity.status(400).body(
-                        Map.of("success", false, "message", "유효한 연도(year)를 입력해주세요."));
-            }
-
-            TenantContextHolder.setTenantId(tenantId);
-            try {
-                log.info("연도별 월 세금 집계 요청: year={}, 테넌트={}", year, tenantId);
-                Map<String, Object> series = erpService.getTaxMonthlySeries(year);
-                Map<String, Object> response = new HashMap<>();
-                response.put("success", true);
-                response.put("message", "연도별 월 세금 집계를 조회했습니다.");
-                response.put("data", series);
-                response.put("tenantId", tenantId);
-                return ResponseEntity.ok(response);
-            } finally {
-                TenantContextHolder.clear();
-            }
-
-        } catch (Exception e) {
-            log.error("연도별 월 세금 집계 조회 실패", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("success", false, "message", "월별 세금 집계 조회 중 오류가 발생했습니다."));
+        ResponseEntity<?> accessCheck = checkErpAccess(session);
+        if (accessCheck != null) {
+            return (ResponseEntity<Map<String, Object>>) accessCheck;
         }
+
+        String tenantId = SessionUtils.getTenantId(session);
+        if (tenantId == null || tenantId.isEmpty()) {
+            return ResponseEntity.status(400).body(
+                    Map.of("success", false, "message", "테넌트 정보를 찾을 수 없습니다."));
+        }
+
+        String targetYear = ApiRequestParams.yearText(year, "year", LocalDate.now().getYear());
+
+        TenantContextHolder.setTenantId(tenantId);
+        try {
+            log.info("연도별 월 세금 집계 요청: year={}, 테넌트={}", targetYear, tenantId);
+            Map<String, Object> series = erpService.getTaxMonthlySeries(targetYear);
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "연도별 월 세금 집계를 조회했습니다.");
+            response.put("data", series);
+            response.put("tenantId", tenantId);
+            return ResponseEntity.ok(response);
+        } finally {
+            TenantContextHolder.clear();
+        }
+
     }
 
     /**
@@ -1797,50 +1476,42 @@ public class ErpController extends BaseApiController {
     @GetMapping("/finance/yearly-report")
     public ResponseEntity<Map<String, Object>> getYearlyFinanceReport(
             @RequestParam(required = false) String year, HttpSession session) {
-        try {
-            // 표준화 원칙: ERP 접근 권한은 데이터베이스에서 관리
-            ResponseEntity<?> accessCheck = checkErpAccess(session);
-            if (accessCheck != null) {
-                return (ResponseEntity<Map<String, Object>>) accessCheck;
-            }
-
-            User currentUser = SessionUtils.getCurrentUser(session);
-
-            // 표준화 원칙: 테넌트 ID 기반 데이터 조회
-            String tenantId = SessionUtils.getTenantId(session);
-            if (tenantId == null || tenantId.isEmpty()) {
-                return ResponseEntity.status(400).body(
-                        Map.of("success", false, "message", "테넌트 정보를 찾을 수 없습니다."));
-            }
-
-            // 기본값으로 현재 년도 사용
-            if (year == null) {
-                year = String.valueOf(java.time.LocalDate.now().getYear());
-            }
-
-            // 테넌트 컨텍스트 설정
-            TenantContextHolder.setTenantId(tenantId);
-            try {
-                log.info("년간 재무 리포트 조회 요청: {}, 테넌트={}", year, tenantId);
-
-                Map<String, Object> yearlyReport = erpService.getYearlyFinanceReport(year);
-
-                Map<String, Object> response = new HashMap<>();
-                response.put("success", true);
-                response.put("message", "년간 재무 리포트를 성공적으로 조회했습니다.");
-                response.put("data", yearlyReport);
-                response.put("tenantId", tenantId);
-
-                return ResponseEntity.ok(response);
-            } finally {
-                TenantContextHolder.clear();
-            }
-
-        } catch (Exception e) {
-            log.error("년간 재무 리포트 조회 실패", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("success", false, "message", "년간 리포트 조회 중 오류가 발생했습니다."));
+        // 표준화 원칙: ERP 접근 권한은 데이터베이스에서 관리
+        ResponseEntity<?> accessCheck = checkErpAccess(session);
+        if (accessCheck != null) {
+            return (ResponseEntity<Map<String, Object>>) accessCheck;
         }
+
+        User currentUser = SessionUtils.getCurrentUser(session);
+
+        // 표준화 원칙: 테넌트 ID 기반 데이터 조회
+        String tenantId = SessionUtils.getTenantId(session);
+        if (tenantId == null || tenantId.isEmpty()) {
+            return ResponseEntity.status(400).body(
+                    Map.of("success", false, "message", "테넌트 정보를 찾을 수 없습니다."));
+        }
+
+        // 기본값으로 현재 년도 사용 (형식 검증은 공통 파서)
+        String targetYear = ApiRequestParams.yearText(year, "year", LocalDate.now().getYear());
+
+        // 테넌트 컨텍스트 설정
+        TenantContextHolder.setTenantId(tenantId);
+        try {
+            log.info("년간 재무 리포트 조회 요청: {}, 테넌트={}", targetYear, tenantId);
+
+            Map<String, Object> yearlyReport = erpService.getYearlyFinanceReport(targetYear);
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "년간 재무 리포트를 성공적으로 조회했습니다.");
+            response.put("data", yearlyReport);
+            response.put("tenantId", tenantId);
+
+            return ResponseEntity.ok(response);
+        } finally {
+            TenantContextHolder.clear();
+        }
+
     }
 
     /**
@@ -1850,45 +1521,41 @@ public class ErpController extends BaseApiController {
     public ResponseEntity<Map<String, Object>> getBalanceSheet(
             @RequestParam(required = false) String reportDate,
             @RequestParam(required = false) String branchCode, HttpSession session) {
-        try {
-            // 관리자 권한 확인 (표준화 2025-12-05: 표준 관리자 역할만 사용)
-            User currentUser = SessionUtils.getCurrentUser(session);
-            if (currentUser == null || !currentUser.getRole().isAdmin()) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                        .body(Map.of("success", false, "message", "관리자 권한이 필요합니다."));
-            }
-
-            String tenantId = SessionUtils.getTenantId(session);
-            if (tenantId == null || tenantId.isEmpty()) {
-                tenantId = currentUser.getTenantId();
-            }
-            if (tenantId == null || tenantId.isEmpty()) {
-                return ResponseEntity.status(400).body(
-                        Map.of("success", false, "message", "테넌트 정보를 찾을 수 없습니다."));
-            }
-
-            TenantContextHolder.setTenantId(tenantId);
-            try {
-                log.info("대차대조표 조회 요청: {}, 테넌트: {}", reportDate, tenantId);
-
-                Map<String, Object> balanceSheet =
-                        erpService.getBalanceSheet(reportDate, branchCode);
-
-                Map<String, Object> response = new HashMap<>();
-                response.put("success", true);
-                response.put("message", "대차대조표를 성공적으로 조회했습니다.");
-                response.put("data", balanceSheet);
-
-                return ResponseEntity.ok(response);
-            } finally {
-                TenantContextHolder.clear();
-            }
-
-        } catch (Exception e) {
-            log.error("대차대조표 조회 실패", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("success", false, "message", "대차대조표 조회 중 오류가 발생했습니다."));
+        // 관리자 권한 확인 (표준화 2025-12-05: 표준 관리자 역할만 사용)
+        User currentUser = SessionUtils.getCurrentUser(session);
+        if (currentUser == null || !currentUser.getRole().isAdmin()) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("success", false, "message", "관리자 권한이 필요합니다."));
         }
+
+        String tenantId = SessionUtils.getTenantId(session);
+        if (tenantId == null || tenantId.isEmpty()) {
+            tenantId = currentUser.getTenantId();
+        }
+        if (tenantId == null || tenantId.isEmpty()) {
+            return ResponseEntity.status(400).body(
+                    Map.of("success", false, "message", "테넌트 정보를 찾을 수 없습니다."));
+        }
+
+        String targetDate = ApiRequestParams.optionalDateText(reportDate, "reportDate");
+
+        TenantContextHolder.setTenantId(tenantId);
+        try {
+            log.info("대차대조표 조회 요청: {}, 테넌트: {}", targetDate, tenantId);
+
+            Map<String, Object> balanceSheet =
+                    erpService.getBalanceSheet(targetDate, branchCode);
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "대차대조표를 성공적으로 조회했습니다.");
+            response.put("data", balanceSheet);
+
+            return ResponseEntity.ok(response);
+        } finally {
+            TenantContextHolder.clear();
+        }
+
     }
 
     /**
@@ -1898,46 +1565,43 @@ public class ErpController extends BaseApiController {
     public ResponseEntity<Map<String, Object>> getIncomeStatement(
             @RequestParam(required = false) String startDate,
             @RequestParam(required = false) String endDate, HttpSession session) {
-        try {
-            // 표준화 원칙: ERP 접근 권한은 데이터베이스에서 관리
-            ResponseEntity<?> accessCheck = checkErpAccess(session);
-            if (accessCheck != null) {
-                return (ResponseEntity<Map<String, Object>>) accessCheck;
-            }
-
-            User currentUser = SessionUtils.getCurrentUser(session);
-
-            // 표준화 원칙: 테넌트 ID 기반 데이터 조회
-            String tenantId = SessionUtils.getTenantId(session);
-            if (tenantId == null || tenantId.isEmpty()) {
-                return ResponseEntity.status(400).body(
-                        Map.of("success", false, "message", "테넌트 정보를 찾을 수 없습니다."));
-            }
-
-            // 테넌트 컨텍스트 설정
-            TenantContextHolder.setTenantId(tenantId);
-            try {
-                log.info("손익계산서 조회 요청: {} ~ {}, 테넌트={}", startDate, endDate, tenantId);
-
-                Map<String, Object> incomeStatement =
-                        erpService.getIncomeStatement(startDate, endDate, null);
-
-                Map<String, Object> response = new HashMap<>();
-                response.put("success", true);
-                response.put("message", "손익계산서를 성공적으로 조회했습니다.");
-                response.put("data", incomeStatement);
-                response.put("tenantId", tenantId);
-
-                return ResponseEntity.ok(response);
-            } finally {
-                TenantContextHolder.clear();
-            }
-
-        } catch (Exception e) {
-            log.error("손익계산서 조회 실패", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("success", false, "message", "손익계산서 조회 중 오류가 발생했습니다."));
+        // 표준화 원칙: ERP 접근 권한은 데이터베이스에서 관리
+        ResponseEntity<?> accessCheck = checkErpAccess(session);
+        if (accessCheck != null) {
+            return (ResponseEntity<Map<String, Object>>) accessCheck;
         }
+
+        User currentUser = SessionUtils.getCurrentUser(session);
+
+        // 표준화 원칙: 테넌트 ID 기반 데이터 조회
+        String tenantId = SessionUtils.getTenantId(session);
+        if (tenantId == null || tenantId.isEmpty()) {
+            return ResponseEntity.status(400).body(
+                    Map.of("success", false, "message", "테넌트 정보를 찾을 수 없습니다."));
+        }
+
+        String start = ApiRequestParams.optionalDateText(startDate, "startDate");
+        String end = ApiRequestParams.optionalDateText(endDate, "endDate");
+
+        // 테넌트 컨텍스트 설정
+        TenantContextHolder.setTenantId(tenantId);
+        try {
+            log.info("손익계산서 조회 요청: {} ~ {}, 테넌트={}", start, end, tenantId);
+
+            Map<String, Object> incomeStatement =
+                    erpService.getIncomeStatement(start, end, null);
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "손익계산서를 성공적으로 조회했습니다.");
+            response.put("data", incomeStatement);
+            response.put("tenantId", tenantId);
+
+            return ResponseEntity.ok(response);
+        } finally {
+            TenantContextHolder.clear();
+        }
+
     }
 
     // ==================== 수입/지출 직접 등록 ====================
@@ -1948,44 +1612,38 @@ public class ErpController extends BaseApiController {
     @PostMapping("/finance/transactions")
     public ResponseEntity<Map<String, Object>> createFinancialTransaction(
             @Valid @RequestBody FinancialTransactionRequest request, HttpSession session) {
-        try {
-            // 비용처리 권한 확인 (표준화 2025-12-05: 표준 관리자 역할만 사용)
-            User currentUser = SessionUtils.getCurrentUser(session);
-            if (currentUser == null || !currentUser.getRole().isAdmin()) {
-                log.warn("❌ 비용처리 접근 권한 없음: 현재 역할={}",
-                        currentUser != null ? currentUser.getRole() : "null");
-                return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                        .body(Map.of("success", false, "message", "비용처리는 관리자 권한이 필요합니다."));
-            }
-
-            // 표준화 2025-12-06: tenantId 없으면 서비스 호출 금지
-            String tenantId = TenantContextHolder.getTenantId();
-            if (tenantId == null || tenantId.isEmpty()) {
-                return ResponseEntity.status(400).body(
-                        Map.of("success", false, "message", "테넌트 정보를 찾을 수 없습니다."));
-            }
-            if (request.getBranchCode() != null) {
-                request.setBranchCode(null); // branchCode 무시
-            }
-
-            log.info("수입/지출 거래 등록 요청: 사용자={}, tenantId={}, 거래={}", EmailLogMasking.maskForLog(currentUser.getEmail()), tenantId,
-                    request);
-
-            FinancialTransactionResponse response =
-                    financialTransactionService.createTransaction(request, currentUser);
-
-            Map<String, Object> result = new HashMap<>();
-            result.put("success", true);
-            result.put("message", "거래가 성공적으로 등록되었습니다.");
-            result.put("data", response);
-
-            return ResponseEntity.ok(result);
-
-        } catch (Exception e) {
-            log.error("수입/지출 거래 등록 실패", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("success", false, "message", "거래 등록 중 오류가 발생했습니다."));
+        // 비용처리 권한 확인 (표준화 2025-12-05: 표준 관리자 역할만 사용)
+        User currentUser = SessionUtils.getCurrentUser(session);
+        if (currentUser == null || !currentUser.getRole().isAdmin()) {
+            log.warn("❌ 비용처리 접근 권한 없음: 현재 역할={}",
+                    currentUser != null ? currentUser.getRole() : "null");
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("success", false, "message", "비용처리는 관리자 권한이 필요합니다."));
         }
+
+        // 표준화 2025-12-06: tenantId 없으면 서비스 호출 금지
+        String tenantId = TenantContextHolder.getTenantId();
+        if (tenantId == null || tenantId.isEmpty()) {
+            return ResponseEntity.status(400).body(
+                    Map.of("success", false, "message", "테넌트 정보를 찾을 수 없습니다."));
+        }
+        if (request.getBranchCode() != null) {
+            request.setBranchCode(null); // branchCode 무시
+        }
+
+        log.info("수입/지출 거래 등록 요청: 사용자={}, tenantId={}, 거래={}", EmailLogMasking.maskForLog(currentUser.getEmail()), tenantId,
+                request);
+
+        FinancialTransactionResponse response =
+                financialTransactionService.createTransaction(request, currentUser);
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("success", true);
+        result.put("message", "거래가 성공적으로 등록되었습니다.");
+        result.put("data", response);
+
+        return ResponseEntity.ok(result);
+
     }
 
     /**
@@ -2015,6 +1673,7 @@ public class ErpController extends BaseApiController {
                         Map.of("success", false, "message", "테넌트 정보를 찾을 수 없습니다."));
             }
 
+            resourceOwnerAccessGuard.requireFinancialTransactionAccess(session, id);
             FinancialTransactionResponse data = financialTransactionService.getTransaction(id);
 
             Map<String, Object> result = new HashMap<>();
@@ -2024,14 +1683,11 @@ public class ErpController extends BaseApiController {
             result.put("tenantId", tenantId);
 
             return ResponseEntity.ok(result);
-        } catch (RuntimeException e) {
-            log.error("재무 거래 단건 조회 실패: id={}", id, e);
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(Map.of("success", false, "message", e.getMessage()));
         } catch (Exception e) {
+            // 예외 원문을 400 에 그대로 싣지 않는다. 비즈니스 4xx 문구는 전역 처리기가 유지하고
+            // 나머지는 공통 5xx(문구 + errorCode + traceId)로 내보낸다.
             log.error("재무 거래 단건 조회 실패: id={}", id, e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("success", false, "message", "거래 조회 중 오류가 발생했습니다."));
+            throw ServerErrorResponses.propagate(e);
         }
     }
 
@@ -2069,6 +1725,7 @@ public class ErpController extends BaseApiController {
             log.info("수입/지출 거래 수정 요청: 사용자={}, tenantId={}, id={}", EmailLogMasking.maskForLog(currentUser.getEmail()),
                     tenantId, id);
 
+            resourceOwnerAccessGuard.requireFinancialTransactionAccess(session, id);
             FinancialTransactionResponse response =
                     financialTransactionService.updateTransaction(id, request, currentUser);
 
@@ -2078,14 +1735,11 @@ public class ErpController extends BaseApiController {
             result.put("data", response);
 
             return ResponseEntity.ok(result);
-        } catch (RuntimeException e) {
-            log.error("재무 거래 수정 실패: id={}", id, e);
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(Map.of("success", false, "message", e.getMessage()));
         } catch (Exception e) {
+            // 예외 원문을 400 에 그대로 싣지 않는다. 비즈니스 4xx 문구는 전역 처리기가 유지하고
+            // 나머지는 공통 5xx(문구 + errorCode + traceId)로 내보낸다.
             log.error("재무 거래 수정 실패: id={}", id, e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("success", false, "message", "거래 수정 중 오류가 발생했습니다."));
+            throw ServerErrorResponses.propagate(e);
         }
     }
 
@@ -2100,44 +1754,41 @@ public class ErpController extends BaseApiController {
             @RequestParam(required = false) String category,
             @RequestParam(required = false) String startDate,
             @RequestParam(required = false) String endDate, HttpSession session) {
-        try {
-            // 비용처리 권한 확인 (표준화 2025-12-05: 표준 관리자 역할만 사용)
-            User currentUser = SessionUtils.getCurrentUser(session);
-            if (currentUser == null || !currentUser.getRole().isAdmin()) {
-                log.warn("❌ 비용처리 접근 권한 없음: 현재 역할={}",
-                        currentUser != null ? currentUser.getRole() : "null");
-                return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                        .body(Map.of("success", false, "message", "비용처리는 관리자 권한이 필요합니다."));
-            }
-
-            // 표준화 2025-12-06: tenantId 없으면 서비스 호출 금지
-            String tenantId = TenantContextHolder.getTenantId();
-            if (tenantId == null || tenantId.isEmpty()) {
-                return ResponseEntity.status(400).body(
-                        Map.of("success", false, "message", "테넌트 정보를 찾을 수 없습니다."));
-            }
-
-            log.info("수입/지출 거래 목록 조회 요청: tenantId={}, branchCode={} (무시됨)", tenantId, branchCode);
-
-            // 표준화 원칙: 페이지 크기 최대 20개로 제한
-            Page<FinancialTransactionResponse> transactionPage = financialTransactionService
-                    .getTransactionsByBranch(null, transactionType, category, startDate, endDate,
-                            PaginationUtils.createPageable(page, size));
-            List<FinancialTransactionResponse> transactions = transactionPage.getContent();
-
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", true);
-            response.put("message", "거래 목록을 성공적으로 조회했습니다.");
-            response.put("data", transactions);
-            response.put("tenantId", tenantId);
-
-            return ResponseEntity.ok(response);
-
-        } catch (Exception e) {
-            log.error("수입/지출 거래 목록 조회 실패", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("success", false, "message", "거래 목록 조회 중 오류가 발생했습니다."));
+        // 비용처리 권한 확인 (표준화 2025-12-05: 표준 관리자 역할만 사용)
+        User currentUser = SessionUtils.getCurrentUser(session);
+        if (currentUser == null || !currentUser.getRole().isAdmin()) {
+            log.warn("❌ 비용처리 접근 권한 없음: 현재 역할={}",
+                    currentUser != null ? currentUser.getRole() : "null");
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("success", false, "message", "비용처리는 관리자 권한이 필요합니다."));
         }
+
+        // 표준화 2025-12-06: tenantId 없으면 서비스 호출 금지
+        String tenantId = TenantContextHolder.getTenantId();
+        if (tenantId == null || tenantId.isEmpty()) {
+            return ResponseEntity.status(400).body(
+                    Map.of("success", false, "message", "테넌트 정보를 찾을 수 없습니다."));
+        }
+
+        String start = ApiRequestParams.optionalDateText(startDate, "startDate");
+        String end = ApiRequestParams.optionalDateText(endDate, "endDate");
+
+        log.info("수입/지출 거래 목록 조회 요청: tenantId={}, branchCode={} (무시됨)", tenantId, branchCode);
+
+        // 표준화 원칙: 페이지 크기 최대 20개로 제한
+        Page<FinancialTransactionResponse> transactionPage = financialTransactionService
+                .getTransactionsByBranch(null, transactionType, category, start, end,
+                        PaginationUtils.createPageable(page, size));
+        List<FinancialTransactionResponse> transactions = transactionPage.getContent();
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("success", true);
+        response.put("message", "거래 목록을 성공적으로 조회했습니다.");
+        response.put("data", transactions);
+        response.put("tenantId", tenantId);
+
+        return ResponseEntity.ok(response);
+
     }
 
     /**
@@ -2148,69 +1799,63 @@ public class ErpController extends BaseApiController {
             @RequestParam String subcategory, @RequestParam java.math.BigDecimal amount,
             @RequestParam(required = false) String description,
             @RequestParam(required = false) String transactionDate, HttpSession session) {
-        try {
-            // 비용처리 권한 확인 (표준화 2025-12-05: 표준 관리자 역할만 사용)
-            User currentUser = SessionUtils.getCurrentUser(session);
-            if (currentUser == null || !currentUser.getRole().isAdmin()) {
-                log.warn("❌ 비용처리 접근 권한 없음: 현재 역할={}",
-                        currentUser != null ? currentUser.getRole() : "null");
-                return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                        .body(Map.of("success", false, "message", "비용처리는 관리자 권한이 필요합니다."));
-            }
-
-            // 표준화 2025-12-06: tenantId 없으면 서비스 호출 금지
-            String tenantId = TenantContextHolder.getTenantId();
-            if (tenantId == null || tenantId.isEmpty()) {
-                return ResponseEntity.status(400).body(
-                        Map.of("success", false, "message", "테넌트 정보를 찾을 수 없습니다."));
-            }
-            log.info("빠른 지출 등록 요청: category={}, amount={}, tenantId={}", category, amount,
-                    tenantId);
-
-            // 부가세 적용 여부 확인 및 계산
-            boolean isVatApplicable = TaxCalculationUtil.isVatApplicable(category);
-            TaxCalculationUtil.TaxCalculationResult taxResult;
-            BigDecimal vatRate = salaryTaxRateLookupService.getVatRate(tenantId);
-
-            if (isVatApplicable) {
-                // 부가세 적용: 입력 금액은 부가세 제외 금액으로 간주
-                taxResult = TaxCalculationUtil.calculateTaxForExpense(amount, vatRate);
-            } else {
-                // 부가세 미적용: 급여 등
-                taxResult = new TaxCalculationUtil.TaxCalculationResult(amount, amount,
-                        BigDecimal.ZERO);
-            }
-
-            FinancialTransactionRequest request =
-                    FinancialTransactionRequest.builder().transactionType("EXPENSE")
-                            .category(category).subcategory(subcategory)
-                            .amount(taxResult.getAmountIncludingTax()) // 부가세 포함 금액
-                            .amountBeforeTax(taxResult.getAmountExcludingTax()) // 부가세 제외 금액
-                            .taxAmount(taxResult.getVatAmount()) // 부가세 금액
-                            .description(description != null ? description : category + " 지출")
-                            .transactionDate(transactionDate != null
-                                    ? java.time.LocalDate.parse(transactionDate)
-                                    : java.time.LocalDate.now())
-                            .taxIncluded(isVatApplicable).branchCode(null) // 표준화 2025-12-06:
-                                                                           // branchCode는 더 이상 사용하지
-                                                                           // 않음
-                            .build();
-
-            FinancialTransactionResponse response =
-                    financialTransactionService.createTransaction(request, currentUser);
-
-            Map<String, Object> result = new HashMap<>();
-            result.put("success", true);
-            result.put("message", category + " 지출이 성공적으로 등록되었습니다.");
-            result.put("data", response);
-
-            return ResponseEntity.ok(result);
-
-        } catch (Exception e) {
-            log.error("빠른 지출 등록 실패", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("success", false, "message", "지출 등록 중 오류가 발생했습니다."));
+        // 비용처리 권한 확인 (표준화 2025-12-05: 표준 관리자 역할만 사용)
+        User currentUser = SessionUtils.getCurrentUser(session);
+        if (currentUser == null || !currentUser.getRole().isAdmin()) {
+            log.warn("❌ 비용처리 접근 권한 없음: 현재 역할={}",
+                    currentUser != null ? currentUser.getRole() : "null");
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("success", false, "message", "비용처리는 관리자 권한이 필요합니다."));
         }
+
+        // 표준화 2025-12-06: tenantId 없으면 서비스 호출 금지
+        String tenantId = TenantContextHolder.getTenantId();
+        if (tenantId == null || tenantId.isEmpty()) {
+            return ResponseEntity.status(400).body(
+                    Map.of("success", false, "message", "테넌트 정보를 찾을 수 없습니다."));
+        }
+        log.info("빠른 지출 등록 요청: category={}, amount={}, tenantId={}", category, amount,
+                tenantId);
+
+        // 부가세 적용 여부 확인 및 계산
+        boolean isVatApplicable = TaxCalculationUtil.isVatApplicable(category);
+        TaxCalculationUtil.TaxCalculationResult taxResult;
+        BigDecimal vatRate = salaryTaxRateLookupService.getVatRate(tenantId);
+
+        if (isVatApplicable) {
+            // 부가세 적용: 입력 금액은 부가세 제외 금액으로 간주
+            taxResult = TaxCalculationUtil.calculateTaxForExpense(amount, vatRate);
+        } else {
+            // 부가세 미적용: 급여 등
+            taxResult = new TaxCalculationUtil.TaxCalculationResult(amount, amount,
+                    BigDecimal.ZERO);
+        }
+
+        FinancialTransactionRequest request =
+                FinancialTransactionRequest.builder().transactionType("EXPENSE")
+                        .category(category).subcategory(subcategory)
+                        .amount(taxResult.getAmountIncludingTax()) // 부가세 포함 금액
+                        .amountBeforeTax(taxResult.getAmountExcludingTax()) // 부가세 제외 금액
+                        .taxAmount(taxResult.getVatAmount()) // 부가세 금액
+                        .description(description != null ? description : category + " 지출")
+                        .transactionDate(transactionDate != null
+                                ? java.time.LocalDate.parse(transactionDate)
+                                : java.time.LocalDate.now())
+                        .taxIncluded(isVatApplicable).branchCode(null) // 표준화 2025-12-06:
+                                                                       // branchCode는 더 이상 사용하지
+                                                                       // 않음
+                        .build();
+
+        FinancialTransactionResponse response =
+                financialTransactionService.createTransaction(request, currentUser);
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("success", true);
+        result.put("message", category + " 지출이 성공적으로 등록되었습니다.");
+        result.put("data", response);
+
+        return ResponseEntity.ok(result);
+
     }
 
     /**
@@ -2221,59 +1866,53 @@ public class ErpController extends BaseApiController {
             @RequestParam String subcategory, @RequestParam java.math.BigDecimal amount,
             @RequestParam(required = false) String description,
             @RequestParam(required = false) String transactionDate, HttpSession session) {
-        try {
-            // 비용처리 권한 확인 (표준화 2025-12-05: 표준 관리자 역할만 사용)
-            User currentUser = SessionUtils.getCurrentUser(session);
-            if (currentUser == null || !currentUser.getRole().isAdmin()) {
-                log.warn("❌ 비용처리 접근 권한 없음: 현재 역할={}",
-                        currentUser != null ? currentUser.getRole() : "null");
-                return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                        .body(Map.of("success", false, "message", "비용처리는 관리자 권한이 필요합니다."));
-            }
-
-            // 표준화 2025-12-06: tenantId 없으면 서비스 호출 금지
-            String tenantId = TenantContextHolder.getTenantId();
-            if (tenantId == null || tenantId.isEmpty()) {
-                return ResponseEntity.status(400).body(
-                        Map.of("success", false, "message", "테넌트 정보를 찾을 수 없습니다."));
-            }
-            log.info("빠른 수입 등록 요청: category={}, amount={}, tenantId={}", category, amount,
-                    tenantId);
-
-            // 수입은 항상 부가세 포함 (내담자가 결제한 금액)
-            BigDecimal vatRate = salaryTaxRateLookupService.getVatRate(tenantId);
-            TaxCalculationUtil.TaxCalculationResult taxResult =
-                    TaxCalculationUtil.calculateTaxFromPayment(amount, vatRate);
-
-            FinancialTransactionRequest request =
-                    FinancialTransactionRequest.builder().transactionType("INCOME")
-                            .category(category).subcategory(subcategory)
-                            .amount(taxResult.getAmountIncludingTax()) // 부가세 포함 금액
-                            .amountBeforeTax(taxResult.getAmountExcludingTax()) // 부가세 제외 금액
-                            .taxAmount(taxResult.getVatAmount()) // 부가세 금액
-                            .description(description != null ? description : category + " 수입")
-                            .transactionDate(transactionDate != null
-                                    ? java.time.LocalDate.parse(transactionDate)
-                                    : java.time.LocalDate.now())
-                            .taxIncluded(true) // 수입은 항상 부가세 포함
-                            .branchCode(null) // 표준화 2025-12-06: branchCode는 더 이상 사용하지 않음
-                            .build();
-
-            FinancialTransactionResponse response =
-                    financialTransactionService.createTransaction(request, currentUser);
-
-            Map<String, Object> result = new HashMap<>();
-            result.put("success", true);
-            result.put("message", category + " 수입이 성공적으로 등록되었습니다.");
-            result.put("data", response);
-
-            return ResponseEntity.ok(result);
-
-        } catch (Exception e) {
-            log.error("빠른 수입 등록 실패", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("success", false, "message", "수입 등록 중 오류가 발생했습니다."));
+        // 비용처리 권한 확인 (표준화 2025-12-05: 표준 관리자 역할만 사용)
+        User currentUser = SessionUtils.getCurrentUser(session);
+        if (currentUser == null || !currentUser.getRole().isAdmin()) {
+            log.warn("❌ 비용처리 접근 권한 없음: 현재 역할={}",
+                    currentUser != null ? currentUser.getRole() : "null");
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("success", false, "message", "비용처리는 관리자 권한이 필요합니다."));
         }
+
+        // 표준화 2025-12-06: tenantId 없으면 서비스 호출 금지
+        String tenantId = TenantContextHolder.getTenantId();
+        if (tenantId == null || tenantId.isEmpty()) {
+            return ResponseEntity.status(400).body(
+                    Map.of("success", false, "message", "테넌트 정보를 찾을 수 없습니다."));
+        }
+        log.info("빠른 수입 등록 요청: category={}, amount={}, tenantId={}", category, amount,
+                tenantId);
+
+        // 수입은 항상 부가세 포함 (내담자가 결제한 금액)
+        BigDecimal vatRate = salaryTaxRateLookupService.getVatRate(tenantId);
+        TaxCalculationUtil.TaxCalculationResult taxResult =
+                TaxCalculationUtil.calculateTaxFromPayment(amount, vatRate);
+
+        FinancialTransactionRequest request =
+                FinancialTransactionRequest.builder().transactionType("INCOME")
+                        .category(category).subcategory(subcategory)
+                        .amount(taxResult.getAmountIncludingTax()) // 부가세 포함 금액
+                        .amountBeforeTax(taxResult.getAmountExcludingTax()) // 부가세 제외 금액
+                        .taxAmount(taxResult.getVatAmount()) // 부가세 금액
+                        .description(description != null ? description : category + " 수입")
+                        .transactionDate(transactionDate != null
+                                ? java.time.LocalDate.parse(transactionDate)
+                                : java.time.LocalDate.now())
+                        .taxIncluded(true) // 수입은 항상 부가세 포함
+                        .branchCode(null) // 표준화 2025-12-06: branchCode는 더 이상 사용하지 않음
+                        .build();
+
+        FinancialTransactionResponse response =
+                financialTransactionService.createTransaction(request, currentUser);
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("success", true);
+        result.put("message", category + " 수입이 성공적으로 등록되었습니다.");
+        result.put("data", response);
+
+        return ResponseEntity.ok(result);
+
     }
 
     /**
@@ -2308,6 +1947,7 @@ public class ErpController extends BaseApiController {
             log.info("재무 거래 삭제 허용: user={}, role={}", EmailLogMasking.maskForLog(currentUser.getEmail()),
                     currentUser.getRole());
 
+            resourceOwnerAccessGuard.requireFinancialTransactionAccess(session, id);
             financialTransactionService.deleteTransaction(id, currentUser);
 
             Map<String, Object> result = new HashMap<>();
@@ -2316,10 +1956,10 @@ public class ErpController extends BaseApiController {
 
             return ResponseEntity.ok(result);
 
+        } catch (AccessDeniedException e) {
+            throw e;
         } catch (Exception e) {
-            log.error("재무 거래 삭제 실패: id={}", id, e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("success",
-                    false, "message", "재무 거래 삭제 중 오류가 발생했습니다: " + e.getMessage()));
+            return ServerErrorResponses.internalError("재무 거래 삭제 실패: id=" + id, e);
         }
     }
 
@@ -2391,13 +2031,15 @@ public class ErpController extends BaseApiController {
     @PutMapping("/recurring-expenses/{id}")
     public ResponseEntity<ApiResponse<RecurringExpense>> updateRecurringExpense(
             @PathVariable Long id, @RequestBody RecurringExpense recurringExpense,
-            HttpServletRequest request) {
+            HttpSession session) {
+        ResponseEntity<?> accessCheck = checkErpAccess(session);
+        if (accessCheck != null) {
+            return (ResponseEntity<ApiResponse<RecurringExpense>>) accessCheck;
+        }
+        resourceOwnerAccessGuard.requireRecurringExpenseAccess(session, id);
         log.info("반복 지출 수정 요청: id={}", id);
 
-        User currentUser = SessionUtils.getCurrentUser(request.getSession());
-        if (currentUser == null) {
-            throw new org.springframework.security.access.AccessDeniedException("로그인이 필요합니다.");
-        }
+        User currentUser = SessionUtils.getCurrentUser(session);
 
         recurringExpense.setUpdatedBy(currentUser.getName());
         RecurringExpense updatedExpense =
@@ -2411,7 +2053,12 @@ public class ErpController extends BaseApiController {
      */
     @DeleteMapping("/recurring-expenses/{id}")
     public ResponseEntity<ApiResponse<Map<String, Object>>> deleteRecurringExpense(
-            @PathVariable Long id) {
+            @PathVariable Long id, HttpSession session) {
+        ResponseEntity<?> accessCheck = checkErpAccess(session);
+        if (accessCheck != null) {
+            return (ResponseEntity<ApiResponse<Map<String, Object>>>) accessCheck;
+        }
+        resourceOwnerAccessGuard.requireRecurringExpenseAccess(session, id);
         log.info("반복 지출 soft-delete 요청: id={}", id);
 
         boolean deleted = recurringExpenseService.deleteRecurringExpense(id);
@@ -2432,7 +2079,12 @@ public class ErpController extends BaseApiController {
     @PostMapping("/recurring-expenses/{id}/record-month")
     public ResponseEntity<ApiResponse<Map<String, Object>>> recordRecurringExpenseMonth(
             @PathVariable Long id,
-            @RequestBody RecurringExpenseRecordMonthRequest request) {
+            @RequestBody RecurringExpenseRecordMonthRequest request, HttpSession session) {
+        ResponseEntity<?> accessCheck = checkErpAccess(session);
+        if (accessCheck != null) {
+            return (ResponseEntity<ApiResponse<Map<String, Object>>>) accessCheck;
+        }
+        resourceOwnerAccessGuard.requireRecurringExpenseAccess(session, id);
         log.info("변동 반복 지출 월별 기록 요청: id={}, month={}", id,
             request != null ? request.getYearMonth() : null);
 
@@ -2458,7 +2110,12 @@ public class ErpController extends BaseApiController {
      */
     @PostMapping("/recurring-expenses/{id}/process")
     public ResponseEntity<ApiResponse<Void>> processRecurringExpense(@PathVariable Long id,
-            @RequestParam(required = false) BigDecimal customAmount) {
+            @RequestParam(required = false) BigDecimal customAmount, HttpSession session) {
+        ResponseEntity<?> accessCheck = checkErpAccess(session);
+        if (accessCheck != null) {
+            return (ResponseEntity<ApiResponse<Void>>) accessCheck;
+        }
+        resourceOwnerAccessGuard.requireRecurringExpenseAccess(session, id);
         log.info("반복 지출 수동 처리 요청: id={}, 금액={}", id, customAmount);
 
         recurringExpenseService.processRecurringExpense(id, customAmount);

@@ -1,14 +1,14 @@
 #!/bin/bash
 # 온보딩 테스트 - 서버가 준비되면 실행
 
-BASE_URL="http://beta0629.cafe24.com:8080"
+BASE_URL="http://${DEV_SERVER_HOST:?DEV_SERVER_HOST 환경변수를 설정하세요}:8080"
 TIMESTAMP=$(date +%s)
 # 표준 형식: tenant-{지역코드}-{업종코드}-{순번}
 # 테스트용: tenantId는 null로 보내서 자동 생성되도록 함 (표준 준수)
 TENANT_ID=""  # null로 보내서 TenantIdGenerator가 자동 생성하도록 함
 TENANT_NAME="테스트테넌트${TIMESTAMP}"
 EMAIL="test${TIMESTAMP}@test.com"
-ADMIN_PASSWORD="Test1234!@#"
+ADMIN_PASSWORD="${ADMIN_PASSWORD:?ADMIN_PASSWORD 환경변수를 설정하세요}"
 
 echo "=========================================="
 echo "🧪 온보딩 테스트"
@@ -23,7 +23,7 @@ if ! timeout 5 curl -s "${BASE_URL}/actuator/health" > /dev/null 2>&1; then
     echo "⚠️ 서버에 연결할 수 없습니다. 서버가 아직 시작 중일 수 있습니다."
     echo ""
     echo "수동 테스트 방법:"
-    echo "1. 브라우저에서 http://beta0629.cafe24.com:8080 접속 확인"
+    echo "1. 브라우저에서 http://${DEV_SERVER_HOST:?DEV_SERVER_HOST 환경변수를 설정하세요}:8080 접속 확인"
     echo "2. 온보딩 요청 생성:"
     echo "   POST ${BASE_URL}/api/v1/onboarding/requests"
     echo "   Body: {"

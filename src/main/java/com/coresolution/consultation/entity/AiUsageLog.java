@@ -2,6 +2,7 @@ package com.coresolution.consultation.entity;
 
 import java.time.LocalDateTime;
 import java.util.Locale;
+import com.coresolution.consultation.service.ai.privacy.AiPiiMaskingService;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -111,12 +112,17 @@ public class AiUsageLog {
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
+    /**
+     * 저장 직전 기본값과 프롬프트 마스킹. 호출 경로와 테넌트 토글에 관계없이 {@code prompt} 에는 패턴(주민등록번호·카드·
+     * 전화·이메일) 마스킹된 값만 남긴다. 이름은 호출자가 식별자로 마스킹한 결합 본문을 넘긴다.
+     */
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
         if (isSuccess == null) {
             isSuccess = true;
         }
+        prompt = AiPiiMaskingService.applyMasking(prompt, null);
     }
 
     /**

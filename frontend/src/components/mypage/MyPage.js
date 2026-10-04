@@ -17,6 +17,8 @@ import {
   resolveProfileImageFromApiResponse
 } from '../../utils/mypageProfilePayload';
 import notificationManager from '../../utils/notification';
+import { resolveSessionUserId } from '../../utils/sessionUserIdentity';
+import useUserIdScopedLoad from '../../hooks/useUserIdScopedLoad';
 import ConfirmModal from '../common/ConfirmModal';
 import UnifiedLoading from '../common/UnifiedLoading';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
@@ -122,8 +124,13 @@ const MyPage = () => {
   // 마이페이지 진입 시 loadUserInfo / loadSocialAccounts / loadWithdrawalStatus 가 동시에 호출되어
   // resolveMypageSessionUser → checkSession(true) 가 중복 발생, current-user 호출이 N배 증폭되던 문제 차단.
   // sessionManager 자체에도 in-flight dedup 이 추가되었으므로 안전망은 이중.
+  // sessionUser 는 ref 로 읽는다. silent checkSession 이 같은 사용자를 새 객체로 넣어도 로더 identity 가
+  // 바뀌지 않아야 진입 로드(프로필·소셜 계정)가 두 번 돌지 않는다. 재로드 기준은 userId 뿐이다.
+  const sessionUserRef = useRef(sessionUser);
+  sessionUserRef.current = sessionUser;
+
   const resolveMypageSessionUser = useCallback(async() => {
-    let resolved = sessionUser || sessionManager.getUser();
+    let resolved = sessionUserRef.current || sessionManager.getUser();
     if (resolved) {
       return resolved;
     }
@@ -139,9 +146,9 @@ const MyPage = () => {
       }
     }
     await sessionManager.checkSession(true);
-    resolved = sessionManager.getUser() || sessionUser;
+    resolved = sessionManager.getUser() || sessionUserRef.current;
     return resolved || null;
-  }, [sessionUser]);
+  }, []);
 
   const loadUserInfo = useCallback(async() => {
     try {
@@ -151,7 +158,7 @@ const MyPage = () => {
       }
 
       const counselingEnabled = Boolean(
-        currentUser.counselingEnabled ?? sessionUser?.counselingEnabled
+        currentUser.counselingEnabled ?? sessionUserRef.current?.counselingEnabled
       );
 
       const response = await mypageApi.getProfileInfo(currentUser.role, currentUser.id, {
@@ -219,7 +226,7 @@ const MyPage = () => {
         setFormData(normalizeProfileFormNameField(formDataToSet));
       }
     }
-  }, [resolveMypageSessionUser, sessionUser]);
+  }, [resolveMypageSessionUser]);
 
   const loadSocialAccounts = useCallback(async() => {
     try {
@@ -254,10 +261,13 @@ const MyPage = () => {
   const roleLayout = resolveMypageRoleLayout(displayUser);
   const isClientLayout = roleLayout.key === MYPAGE_ROLE_LAYOUT_KEYS.CLIENT;
 
-  useEffect(() => {
-    loadUserInfo();
-    loadSocialAccounts();
-  }, [loadUserInfo, loadSocialAccounts]);
+  const mypageUserId = resolveSessionUserId(sessionUser)
+    ?? resolveSessionUserId(sessionManager.getUser())
+    ?? resolveSessionUserId(localUser);
+  useUserIdScopedLoad({
+    userId: mypageUserId,
+    loadFn: () => Promise.all([loadUserInfo(), loadSocialAccounts()])
+  });
 
   // P0 hotfix 2026-06-12: 탭 복귀 시 loadUserInfo 자동 재호출은 30초 쿨다운 적용 (current-user 폭증 차단)
   const lastVisibilityLoadAtRef = useRef(0);

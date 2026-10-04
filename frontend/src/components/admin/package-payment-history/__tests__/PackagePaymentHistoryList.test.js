@@ -114,4 +114,54 @@ describe('PackagePaymentHistoryList date labels', () => {
       .toHaveTextContent('활성 매핑 #501에 합산됨');
     expect(screen.getByText('종료됨')).toBeInTheDocument();
   });
+
+  it('참조번호는 카드 결제 행에만 — 현금·계좌이체 행은 숨김', async () => {
+    StandardizedApi.get.mockResolvedValue({
+      summary: { clientName: '수단내담', consultantName: '상담사', totalSessions: 3, remainingSessions: 3 },
+      items: [
+        {
+          type: PACKAGE_PAYMENT_HISTORY_TYPE.INITIAL_MAPPING,
+          paymentDate: '2026-09-01T10:00:00',
+          packageName: '카드 패키지',
+          sessions: 1,
+          amount: 50000,
+          status: 'ACTIVE',
+          mappingId: 701,
+          paymentMethod: 'CREDIT_CARD',
+          paymentReference: 'APPROVAL-CARD-701'
+        },
+        {
+          type: PACKAGE_PAYMENT_HISTORY_TYPE.ADDITIONAL_PACKAGE,
+          paymentDate: '2026-09-02T10:00:00',
+          packageName: '현금 패키지',
+          sessions: 1,
+          amount: 50000,
+          status: 'ACTIVE',
+          mappingId: 702,
+          paymentMethod: 'CASH',
+          paymentReference: 'CASH_20260902_100000'
+        },
+        {
+          type: PACKAGE_PAYMENT_HISTORY_TYPE.ADDITIONAL_PACKAGE,
+          paymentDate: '2026-09-03T10:00:00',
+          packageName: '이체 패키지',
+          sessions: 1,
+          amount: 50000,
+          status: 'ACTIVE',
+          mappingId: 703,
+          paymentMethod: 'BANK_TRANSFER',
+          paymentReference: 'BANK_20260903_100000'
+        }
+      ]
+    });
+
+    render(<PackagePaymentHistoryList clientId={1002} />);
+
+    await waitFor(() => {
+      expect(screen.getByText('카드 패키지')).toBeInTheDocument();
+    });
+    expect(screen.getByText(/APPROVAL-CARD-701/)).toBeInTheDocument();
+    expect(screen.queryByText(/CASH_20260902_100000/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/BANK_20260903_100000/)).not.toBeInTheDocument();
+  });
 });

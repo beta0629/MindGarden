@@ -59,6 +59,14 @@ describe('SettingsSectionPanel', () => {
     expect(TOKENS).toMatch(/--mg-v2-color-neutral-300:/);
   });
 
+  it('패널 제목은 h2 크기 토큰 · semibold(600) 토큰 — 상담사 지급 화면과 같은 굵기', () => {
+    const title = ruleBody('.mg-v2-settings-panel__title');
+    expect(title).toMatch(/font-size:\s*var\(--mg-v2-font-size-h2\)/);
+    expect(title).toMatch(/font-weight:\s*var\(--mg-v2-font-weight-semibold\)/);
+    expect(title).not.toMatch(/font-weight:\s*700/);
+    expect(TOKENS).toMatch(/--mg-v2-font-weight-semibold:\s*600;/);
+  });
+
   it('공통 CSS에는 hex·px 리터럴이 없다', () => {
     expect(CSS).not.toMatch(/#[0-9a-fA-F]{3,8}\b/);
     expect(CSS.replace(/max-width:\s*767px/g, '')).not.toMatch(/\d+px/);

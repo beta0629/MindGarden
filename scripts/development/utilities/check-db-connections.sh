@@ -16,11 +16,12 @@ else
 fi
 
 # MySQL 연결 정보
-DB_HOST="${DB_HOST:-beta0629.cafe24.com}"
+DB_HOST="${DB_HOST:?DB_HOST 환경변수를 설정하세요}"
 DB_PORT="${DB_PORT:-3306}"
 DB_NAME="${DB_NAME:-core_solution}"
 DB_USERNAME="${DB_USERNAME:-mindgarden_dev}"
-DB_PASSWORD="${DB_PASSWORD:-MindGardenDev2025!@#}"
+DB_PASSWORD="${DB_PASSWORD:?DB_PASSWORD 환경변수를 설정하세요}"
+export MYSQL_PWD="$DB_PASSWORD"
 
 echo ""
 echo "📊 연결 정보:"
@@ -32,7 +33,7 @@ echo ""
 
 # MySQL 연결 테스트
 echo "🔗 MySQL 연결 테스트..."
-mysql -h "$DB_HOST" -P "$DB_PORT" -u "$DB_USERNAME" -p"$DB_PASSWORD" "$DB_NAME" <<EOF 2>&1 | head -20
+mysql -h "$DB_HOST" -P "$DB_PORT" -u "$DB_USERNAME" "$DB_NAME" <<EOF 2>&1 | head -20
 -- 현재 연결 상태 확인
 SELECT 
     COUNT(*) as total_connections,

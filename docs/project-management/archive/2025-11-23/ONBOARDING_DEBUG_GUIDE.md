@@ -8,7 +8,7 @@
 
 ```bash
 ssh root@beta0629.cafe24.com
-mysql -u mindgarden_dev -p'MindGardenDev2025!@#' core_solution -e "SHOW PROCEDURE STATUS WHERE Db = 'core_solution' AND Name IN ('ProcessOnboardingApproval', 'CreateOrActivateTenant', 'SetupTenantCategoryMapping', 'ActivateDefaultComponents', 'CreateDefaultSubscription', 'ApplyDefaultRoleTemplates', 'GenerateErdOnOnboardingApproval');"
+mysql -u mindgarden_dev -p'<DEV_DB_PASSWORD>' core_solution -e "SHOW PROCEDURE STATUS WHERE Db = 'core_solution' AND Name IN ('ProcessOnboardingApproval', 'CreateOrActivateTenant', 'SetupTenantCategoryMapping', 'ActivateDefaultComponents', 'CreateDefaultSubscription', 'ApplyDefaultRoleTemplates', 'GenerateErdOnOnboardingApproval');"
 ```
 
 **확인 사항**: 모든 프로시저가 존재하는지 확인
@@ -16,7 +16,7 @@ mysql -u mindgarden_dev -p'MindGardenDev2025!@#' core_solution -e "SHOW PROCEDUR
 ## 2단계: 최근 온보딩 요청 확인
 
 ```bash
-mysql -u mindgarden_dev -p'MindGardenDev2025!@#' core_solution -e "SELECT id, tenant_id, tenant_name, status, decision_status, decision_note FROM onboarding_requests ORDER BY id DESC LIMIT 5;"
+mysql -u mindgarden_dev -p'<DEV_DB_PASSWORD>' core_solution -e "SELECT id, tenant_id, tenant_name, status, decision_status, decision_note FROM onboarding_requests ORDER BY id DESC LIMIT 5;"
 ```
 
 **확인 사항**: 
@@ -26,7 +26,7 @@ mysql -u mindgarden_dev -p'MindGardenDev2025!@#' core_solution -e "SELECT id, te
 ## 3단계: 테넌트 존재 확인
 
 ```bash
-mysql -u mindgarden_dev -p'MindGardenDev2025!@#' core_solution -e "SELECT tenant_id, name, status, business_type, created_at FROM tenants WHERE tenant_id LIKE 'test-%' ORDER BY created_at DESC LIMIT 10;"
+mysql -u mindgarden_dev -p'<DEV_DB_PASSWORD>' core_solution -e "SELECT tenant_id, name, status, business_type, created_at FROM tenants WHERE tenant_id LIKE 'test-%' ORDER BY created_at DESC LIMIT 10;"
 ```
 
 **확인 사항**: 최근 생성된 테스트 테넌트가 있는지 확인
@@ -34,7 +34,7 @@ mysql -u mindgarden_dev -p'MindGardenDev2025!@#' core_solution -e "SELECT tenant
 ## 4단계: 프로시저 직접 실행 테스트
 
 ```bash
-mysql -u mindgarden_dev -p'MindGardenDev2025!@#' core_solution << 'EOF'
+mysql -u mindgarden_dev -p'<DEV_DB_PASSWORD>' core_solution << 'EOF'
 SET @request_id = 27;
 SET @tenant_id = 'test-CONSULTATION-1763901075357';
 SET @tenant_name = 'Test Consultation Tenant';
@@ -78,7 +78,7 @@ journalctl -u mindgarden-dev.service --since '30 minutes ago' --no-pager | grep 
 ## 6단계: CreateOrActivateTenant 프로시저 직접 테스트
 
 ```bash
-mysql -u mindgarden_dev -p'MindGardenDev2025!@#' core_solution << 'EOF'
+mysql -u mindgarden_dev -p'<DEV_DB_PASSWORD>' core_solution << 'EOF'
 SET @tenant_id = 'test-direct-12345';
 SET @tenant_name = 'Direct Test Tenant';
 SET @business_type = 'CONSULTATION';
@@ -106,7 +106,7 @@ EOF
 ## 7단계: MySQL 버전 확인
 
 ```bash
-mysql -u mindgarden_dev -p'MindGardenDev2025!@#' core_solution -e "SELECT VERSION();"
+mysql -u mindgarden_dev -p'<DEV_DB_PASSWORD>' core_solution -e "SELECT VERSION();"
 ```
 
 **확인 사항**: 
@@ -116,7 +116,7 @@ mysql -u mindgarden_dev -p'MindGardenDev2025!@#' core_solution -e "SELECT VERSIO
 ## 8단계: 프로시저 정의 확인
 
 ```bash
-mysql -u mindgarden_dev -p'MindGardenDev2025!@#' core_solution -e "SHOW CREATE PROCEDURE CreateOrActivateTenant\G"
+mysql -u mindgarden_dev -p'<DEV_DB_PASSWORD>' core_solution -e "SHOW CREATE PROCEDURE CreateOrActivateTenant\G"
 ```
 
 **확인 사항**: 프로시저 정의가 올바른지 확인
@@ -142,7 +142,7 @@ mysql -u mindgarden_dev -p'MindGardenDev2025!@#' core_solution -e "SHOW CREATE P
 # quick_check.sh
 
 DB_USER="mindgarden_dev"
-DB_PASS="MindGardenDev2025!@#"
+DB_PASS="<DEV_DB_PASSWORD>"
 DB_NAME="core_solution"
 
 echo "=== 1. 프로시저 존재 확인 ==="

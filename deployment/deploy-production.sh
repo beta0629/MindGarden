@@ -1,19 +1,19 @@
 #!/bin/bash
 
 # MindGarden 운영 서버 배포 스크립트
-# 서버 예시: beta74.cafe24.com (211.37.179.204)
+# 서버: 환경변수 SERVER_HOST (GitHub Secret PRODUCTION_HOST) — 호스트/IP 하드코딩 금지
 # 도메인: dev FQDN에서 `.dev` 제거 규칙 — 예) mindgarden.dev → mindgarden.core-solution.co.kr (HTTPS)
 # 통합 Nginx: config/nginx/core-solution-prod.conf | 레거시 스니펫의 m-garden.co.kr은 참고용
 
 set -e  # 오류 발생 시 스크립트 중단
 
 echo "🚀 MindGarden 운영 서버 배포 시작..."
-echo "📍 서버: beta74.cafe24.com"
+echo "📍 서버: ${PROD_SERVER_HOST:?PROD_SERVER_HOST 환경변수를 설정하세요}"
 echo "🌐 공개 URL(예시): https://mindgarden.core-solution.co.kr"
 echo ""
 
 # 배포 변수 설정
-SERVER_HOST="beta74.cafe24.com"
+SERVER_HOST="${PROD_SERVER_HOST:?PROD_SERVER_HOST 환경변수를 설정하세요}"
 SERVER_USER="beta74"
 DEPLOY_PATH="/home/beta74/mindgarden"
 BACKUP_PATH="/home/beta74/mindgarden-backup"
@@ -58,7 +58,7 @@ EOF
 
 echo "💾 5. 데이터베이스 설정 중..."
 echo "⚠️  다음 명령어를 서버에서 실행해주세요:"
-echo "   mysql -u root -p < ${DEPLOY_PATH}/production-db-setup.sql"
+echo "   envsubst < ${DEPLOY_PATH}/production-db-setup.sql | mysql -u root -p"
 echo ""
 
 echo "🔒 6. 환경변수 설정 안내..."
@@ -171,7 +171,7 @@ server {
         proxy_set_header X-Forwarded-Proto $scheme;
         
         # IP 제한 (관리자만)
-        allow 211.37.179.204;  # 서버 자체
+        allow <운영 서버 공인 IP>;  # 서버 자체
         deny all;
     }
 }

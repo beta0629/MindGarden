@@ -1689,6 +1689,27 @@
   background: var(--mg-primary-500);
 }
 
+/* 좁은 화면: 고정 패딩·연결선 여백 합이 모달 본문 폭을 넘지 않게 축소 */
+@media (max-width: 767px) {
+  .mg-v2-ad-stepper {
+    padding: var(--mg-spacing-sm);
+  }
+
+  .mg-v2-ad-stepper__item {
+    flex: 0 1 auto;
+    min-width: 0;
+  }
+
+  .mg-v2-ad-stepper__line {
+    min-width: 0;
+    margin: 0 var(--mg-spacing-xs);
+  }
+
+  .mg-v2-ad-stepper__title {
+    white-space: nowrap;
+  }
+}
+
 /* ===== Section Block ===== */
 .mg-v2-ad-section-block {
   background: var(--mg-gray-100);
@@ -2517,13 +2538,14 @@ textarea.mg-v2-textarea {
 
 .schedule-detail-modal__parties {
   display: flex;
+  flex-wrap: wrap;
   gap: var(--mg-space-3, 1rem);
   margin-bottom: var(--mg-space-4, 1.5rem);
 }
 
-/* ProfileCard compact 를 parties 컨테이너 안에서 flex: 1 로 균등 분배 */
+/* ProfileCard compact 균등 분배 — 본문 폭이 두 장에 못 미치면(모바일) 한 줄에 한 장씩 */
 .schedule-detail-modal__parties > .mg-v2-profile-card {
-  flex: 1;
+  flex: 1 1 calc(var(--mg-v2-grid-container-sm) / 3);
   min-width: 0;
   border-radius: var(--mg-radius-md, 8px);
 }
@@ -2657,8 +2679,3 @@ textarea.mg-v2-textarea {
   background: var(--mg-dark-content-bg);
 }
 
-
-/* 일정 상세(특이사항 카드) 모달만: 좁은 화면에서 전역 large min-width 가 max-width(92vw)를 이겨 넘치지 않게 같은 상한 */
-.mg-modal.mg-modal--large.schedule-detail-modal {
-  min-width: min(var(--mg-v2-grid-container-md), 92vw);
-}

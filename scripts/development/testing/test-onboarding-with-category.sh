@@ -6,9 +6,9 @@ TIMESTAMP=$(date +%s)
 TENANT_ID="test-tenant-category-${TIMESTAMP}"
 TENANT_NAME="카테고리 테스트 테넌트 ${TIMESTAMP}"
 EMAIL="test-category${TIMESTAMP}@example.com"
-ADMIN_PASSWORD="Test1234!@#"
+ADMIN_PASSWORD="${ADMIN_PASSWORD:?ADMIN_PASSWORD 환경변수를 설정하세요}"
 ADMIN_EMAIL="superadmin@mindgarden.com"
-ADMIN_PASS="admin123"
+ADMIN_PASS="${ADMIN_PASS:?ADMIN_PASS 환경변수를 설정하세요}"
 
 echo "=========================================="
 echo "🧪 온보딩 프로세스 테스트 (카테고리 매핑)"
@@ -96,7 +96,7 @@ echo ""
 # 4. 테넌트 생성 확인
 echo "📋 4단계: 테넌트 생성 확인"
 echo "----------------------------------------"
-TENANT_CHECK=$(mysql -u mindgarden_dev -p"MindGardenDev2025!@#" core_solution -N -e \
+TENANT_CHECK=$(MYSQL_PWD="${DB_PASSWORD:?DB_PASSWORD 환경변수를 설정하세요}" mysql -u mindgarden_dev core_solution -N -e \
     "SELECT COUNT(*) FROM tenants WHERE tenant_id = '${TENANT_ID}' AND is_deleted = FALSE;" 2>/dev/null)
 
 if [ "$TENANT_CHECK" = "1" ]; then
@@ -110,7 +110,7 @@ echo ""
 # 5. 카테고리 매핑 확인
 echo "📋 5단계: 카테고리 매핑 확인"
 echo "----------------------------------------"
-CATEGORY_CHECK=$(mysql -u mindgarden_dev -p"MindGardenDev2025!@#" core_solution -N -e \
+CATEGORY_CHECK=$(MYSQL_PWD="${DB_PASSWORD:?DB_PASSWORD 환경변수를 설정하세요}" mysql -u mindgarden_dev core_solution -N -e \
     "SELECT COUNT(*) FROM tenant_category_mappings 
      WHERE tenant_id = '${TENANT_ID}' 
      AND is_deleted = FALSE 
@@ -120,7 +120,7 @@ if [ "$CATEGORY_CHECK" = "1" ]; then
     echo "✅ 카테고리 매핑 생성 확인"
     
     # 카테고리 정보 조회
-    CATEGORY_INFO=$(mysql -u mindgarden_dev -p"MindGardenDev2025!@#" core_solution -N -e \
+    CATEGORY_INFO=$(MYSQL_PWD="${DB_PASSWORD:?DB_PASSWORD 환경변수를 설정하세요}" mysql -u mindgarden_dev core_solution -N -e \
         "SELECT 
             tcm.tenant_id,
             t.name AS tenant_name,
@@ -149,7 +149,7 @@ echo ""
 # 6. 관리자 계정 생성 확인
 echo "📋 6단계: 관리자 계정 생성 확인"
 echo "----------------------------------------"
-ADMIN_CHECK=$(mysql -u mindgarden_dev -p"MindGardenDev2025!@#" core_solution -N -e \
+ADMIN_CHECK=$(MYSQL_PWD="${DB_PASSWORD:?DB_PASSWORD 환경변수를 설정하세요}" mysql -u mindgarden_dev core_solution -N -e \
     "SELECT COUNT(*) FROM users 
      WHERE tenant_id = '${TENANT_ID}' 
      AND email = '${EMAIL}' 
@@ -159,7 +159,7 @@ if [ "$ADMIN_CHECK" = "1" ]; then
     echo "✅ 관리자 계정 생성 확인"
     
     # 역할 할당 확인
-    ROLE_CHECK=$(mysql -u mindgarden_dev -p"MindGardenDev2025!@#" core_solution -N -e \
+    ROLE_CHECK=$(MYSQL_PWD="${DB_PASSWORD:?DB_PASSWORD 환경변수를 설정하세요}" mysql -u mindgarden_dev core_solution -N -e \
         "SELECT COUNT(*) FROM user_role_assignments ura
          INNER JOIN users u ON ura.user_id = u.id
          WHERE u.tenant_id = '${TENANT_ID}'

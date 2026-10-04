@@ -1,7 +1,7 @@
 #!/bin/bash
 # 빠른 온보딩 테스트 - 프로시저 확인 후 테스트 진행
 
-BASE_URL="http://beta0629.cafe24.com:8080"
+BASE_URL="http://${DEV_SERVER_HOST:?DEV_SERVER_HOST 환경변수를 설정하세요}:8080"
 TIMESTAMP=$(date +%s)
 TENANT_ID="test-tenant-${TIMESTAMP}"
 TENANT_NAME="테스트 테넌트 ${TIMESTAMP}"

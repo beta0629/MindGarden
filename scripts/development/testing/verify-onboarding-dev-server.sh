@@ -1,6 +1,6 @@
 #!/bin/bash
 # 개발 서버 온보딩 전체 사이클 검증 스크립트
-# beta0629.cafe24.com에서 실행
+# $DEV_SERVER_HOST에서 실행
 
 set -e
 
@@ -19,11 +19,11 @@ elif [ -f ~/dev.env ]; then
 fi
 
 # DB 연결 정보
-DB_HOST="${DB_HOST:-beta0629.cafe24.com}"
+DB_HOST="${DB_HOST:?DB_HOST 환경변수를 설정하세요}"
 DB_PORT="${DB_PORT:-3306}"
 DB_NAME="${DB_NAME:-core_solution}"
 DB_USER="${DB_USERNAME:-mindgarden_dev}"
-DB_PASS="${DB_PASSWORD:-MindGardenDev2025!@#}"
+DB_PASS="${DB_PASSWORD:?DB_PASSWORD 환경변수를 설정하세요}"
 
 # API 정보
 API_BASE_URL="${SERVER_BASE_URL:-https://dev.m-garden.co.kr}"
@@ -38,7 +38,7 @@ TEST_ID=$(date +%s)
 TEST_TENANT_ID="test-tenant-${TEST_ID}"
 TEST_TENANT_NAME="테스트 테넌트 ${TEST_ID}"
 TEST_EMAIL="test${TEST_ID}@test.com"
-TEST_PASSWORD="Test1234!@#"
+TEST_PASSWORD="${TEST_PASSWORD:?TEST_PASSWORD 환경변수를 설정하세요}"
 
 echo -e "${YELLOW}테스트 정보:${NC}"
 echo "  - Tenant ID: ${TEST_TENANT_ID}"
@@ -94,7 +94,7 @@ echo -e "${BLUE}[2단계] 온보딩 승인${NC}"
 # OPS Portal 로그인 (인증 필요)
 echo "  OPS Portal 로그인 중..."
 OPS_USERNAME="${OPS_ADMIN_USERNAME:-superadmin@mindgarden.com}"
-OPS_PASSWORD="${OPS_ADMIN_PASSWORD:-admin123}"
+OPS_PASSWORD="${OPS_ADMIN_PASSWORD:?OPS_ADMIN_PASSWORD 환경변수를 설정하세요}"
 
 OPS_LOGIN_RESPONSE=$(curl -s -k -X POST "${API_BASE_URL}/api/v1/ops/auth/login" \
   -H "Content-Type: application/json" \

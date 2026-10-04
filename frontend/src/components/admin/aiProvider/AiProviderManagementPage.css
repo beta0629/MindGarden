@@ -462,53 +462,6 @@
   gap: var(--mg-v2-space-1);
 }
 
-.mg-ai-logs-table__wrap {
-  overflow-x: auto;
-  background: var(--mg-v2-color-surface-card);
-  border: var(--mg-v2-border-width-thin) solid var(--mg-v2-color-neutral-300);
-  border-radius: var(--mg-v2-radius-lg);
-}
-
-.mg-ai-logs-table__table {
-  width: 100%;
-  table-layout: auto;
-  border-collapse: collapse;
-  font-size: var(--mg-v2-font-size-body-md);
-  color: var(--mg-v2-color-text-primary);
-}
-
-.mg-ai-logs-table__table thead th {
-  padding: var(--mg-v2-space-2) var(--mg-v2-space-4);
-  font-weight: var(--mg-v2-font-weight-semibold);
-  color: var(--mg-v2-color-text-secondary);
-  text-align: left;
-  white-space: nowrap;
-  background: var(--mg-v2-color-neutral-100);
-  border-bottom: var(--mg-v2-border-width-thin) solid var(--mg-v2-color-neutral-300);
-}
-
-.mg-ai-logs-table__table tbody td {
-  padding: var(--mg-v2-space-2) var(--mg-v2-space-4);
-  vertical-align: middle;
-  border-bottom: var(--mg-v2-border-width-thin) solid var(--mg-v2-color-neutral-300);
-}
-
-.mg-ai-logs-table__table tbody tr:last-child td {
-  border-bottom: none;
-}
-
-.mg-ai-logs-table__col-numeric {
-  font-variant-numeric: tabular-nums;
-  text-align: right;
-  white-space: nowrap;
-}
-
-.mg-ai-logs-table__col-action {
-  width: 1%;
-  text-align: center;
-  white-space: nowrap;
-}
-
 .mg-ai-logs-table__provider {
   font-weight: var(--mg-v2-font-weight-semibold);
 }
@@ -519,39 +472,14 @@
   color: var(--mg-v2-color-text-secondary);
 }
 
-.mg-ai-logs-table__status {
-  display: inline-block;
-  padding: 0 var(--mg-v2-space-2);
-  font-size: var(--mg-v2-font-size-caption);
-  color: var(--mg-v2-color-text-secondary);
-  background: var(--mg-v2-color-surface-card);
-  border: var(--mg-v2-border-width-thin) solid var(--mg-v2-color-neutral-300);
-  border-radius: var(--mg-v2-radius-pill);
-}
-
-.mg-ai-logs-table__status--success {
-  color: var(--mg-v2-color-semantic-success-dark);
-  border-color: var(--mg-v2-color-semantic-success);
-}
-
-.mg-ai-logs-table__status--failed {
-  color: var(--mg-v2-color-semantic-error);
-  border-color: var(--mg-v2-color-semantic-error);
-}
-
 .mg-ai-logs-table__error {
+  display: block;
   max-width: calc(var(--mg-v2-space-16) * 4);
   overflow: hidden;
   font-size: var(--mg-v2-font-size-caption);
   color: var(--mg-v2-color-text-secondary);
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-.mg-ai-logs-table__empty {
-  padding: var(--mg-v2-space-6);
-  color: var(--mg-v2-color-text-secondary);
-  text-align: center;
 }
 
 .mg-ai-logs-table__pagination {

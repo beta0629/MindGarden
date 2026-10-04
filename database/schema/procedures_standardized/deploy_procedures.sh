@@ -2,9 +2,9 @@
 # 표준화된 프로시저 배포 스크립트
 # 사용법: ./deploy_procedures.sh [프로시저명]
 
-DB_HOST="beta0629.cafe24.com"
+DB_HOST="${DB_HOST:?DB_HOST 환경변수를 설정하세요}"
 DB_USER="mindgarden_dev"
-DB_PASS="MindGardenDev2025!@#"
+DB_PASS="${DB_PASSWORD:?DB_PASSWORD 환경변수를 설정하세요}"
 DB_NAME="core_solution"
 
 PROCEDURES_DIR="$(dirname "$0")"

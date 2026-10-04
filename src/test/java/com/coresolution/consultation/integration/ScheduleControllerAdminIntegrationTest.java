@@ -329,6 +329,7 @@ class ScheduleControllerAdminIntegrationTest {
                 eq(tenantId),
                 isNull(),
                 isNull(),
+                isNull(),
                 eq(startDate),
                 eq(endDate),
                 any(org.springframework.data.domain.Pageable.class));
@@ -394,6 +395,66 @@ class ScheduleControllerAdminIntegrationTest {
     }
 
     @Test
+    @DisplayName("clientId 지정 → 해당 내담자 일정만 (같은 테넌트 다른 내담자·다른 테넌트 같은 clientId 제외)")
+    void getSchedulesForAdmin_clientIdFilter_appliesWithinTenant() throws Exception {
+        String tenantId = UUID.randomUUID().toString();
+        String otherTenantId = UUID.randomUUID().toString();
+        TenantContextHolder.setTenantId(tenantId);
+        User admin = createAdminUser(tenantId);
+
+        Long consultantId = Math.abs(java.util.concurrent.ThreadLocalRandom.current().nextLong());
+        Long targetClientId = Math.abs(java.util.concurrent.ThreadLocalRandom.current().nextLong());
+        Long otherClientId = targetClientId + 1;
+        LocalDate base = LocalDate.of(2026, 9, 1);
+        Schedule mine1 = saveBookedSchedule(tenantId, consultantId, targetClientId, base, LocalTime.of(9, 0));
+        Schedule mine2 = saveBookedSchedule(tenantId, consultantId, targetClientId, base.plusDays(1),
+                LocalTime.of(9, 0));
+        saveBookedSchedule(tenantId, consultantId, otherClientId, base, LocalTime.of(10, 0));
+        saveBookedSchedule(otherTenantId, consultantId, targetClientId, base, LocalTime.of(11, 0));
+
+        clearInvocations(scheduleRepository);
+
+        mockMvc.perform(get("/api/v1/schedules/admin")
+                        .param("clientId", targetClientId.toString())
+                        .sessionAttr(SessionConstants.USER_OBJECT, admin)
+                        .sessionAttr(SessionConstants.TENANT_ID, tenantId)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.count").value(2))
+                .andExpect(jsonPath("$.data.clientId").value(targetClientId))
+                .andExpect(jsonPath("$.data.schedules.length()").value(2))
+                .andExpect(jsonPath("$.data.schedules[0].id").value(mine1.getId()))
+                .andExpect(jsonPath("$.data.schedules[1].id").value(mine2.getId()));
+
+        verify(scheduleRepository, times(1)).findAdminSchedulesWithFilters(
+                eq(tenantId), isNull(), eq(targetClientId), isNull(), isNull(), isNull(), any(Pageable.class));
+    }
+
+    @Test
+    @DisplayName("내담자 세션이 clientId 로 다른 내담자 일정 조회 시도 → 403, 조회 미실행")
+    void getSchedulesForAdmin_clientRoleWithOtherClientId_isRejected() throws Exception {
+        String tenantId = UUID.randomUUID().toString();
+        TenantContextHolder.setTenantId(tenantId);
+        User clientUser = createAdminUser(tenantId);
+        clientUser.setRole(UserRole.CLIENT);
+
+        Long otherClientId = Math.abs(java.util.concurrent.ThreadLocalRandom.current().nextLong());
+        saveBookedSchedule(tenantId, 1L, otherClientId, LocalDate.of(2026, 9, 1), LocalTime.of(9, 0));
+        clearInvocations(scheduleRepository);
+
+        mockMvc.perform(get("/api/v1/schedules/admin")
+                        .param("clientId", otherClientId.toString())
+                        .sessionAttr(SessionConstants.USER_OBJECT, clientUser)
+                        .sessionAttr(SessionConstants.TENANT_ID, tenantId)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.data.schedules").doesNotExist());
+
+        verify(scheduleRepository, never()).findAdminSchedulesWithFilters(
+                any(), any(), any(), any(), any(), any(), any(Pageable.class));
+    }
+
+    @Test
     @DisplayName("page/size 생략 → size=DEFAULT(20) cap, unbounded dump 아님 + count=totalElements")
     void getSchedulesForAdmin_missingPageSize_forcesDefaultCap() throws Exception {
         String tenantId = UUID.randomUUID().toString();
@@ -424,7 +485,7 @@ class ScheduleControllerAdminIntegrationTest {
 
         ArgumentCaptor<Pageable> pageableCaptor = ArgumentCaptor.forClass(Pageable.class);
         verify(scheduleRepository, times(1)).findAdminSchedulesWithFilters(
-                eq(tenantId), isNull(), isNull(), isNull(), isNull(), pageableCaptor.capture());
+                eq(tenantId), isNull(), isNull(), isNull(), isNull(), isNull(), pageableCaptor.capture());
         assertThat(pageableCaptor.getValue().getPageNumber()).isZero();
         assertThat(pageableCaptor.getValue().getPageSize()).isEqualTo(PaginationUtils.DEFAULT_PAGE_SIZE);
 
@@ -468,7 +529,7 @@ class ScheduleControllerAdminIntegrationTest {
 
         ArgumentCaptor<Pageable> pageableCaptor = ArgumentCaptor.forClass(Pageable.class);
         verify(scheduleRepository, times(1)).findAdminSchedulesWithFilters(
-                eq(tenantId), isNull(), isNull(), isNull(), isNull(), pageableCaptor.capture());
+                eq(tenantId), isNull(), isNull(), isNull(), isNull(), isNull(), pageableCaptor.capture());
         assertThat(pageableCaptor.getValue().getPageSize()).isEqualTo(ADMIN_LIST_MAX_PAGE_SIZE);
     }
 

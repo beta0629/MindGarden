@@ -14353,6 +14353,7 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    gap: var(--spacing-md);
     padding: var(--spacing-sm) 0;
     border-bottom: 1px solid var(--color-border-light);
 }
@@ -14361,7 +14362,10 @@ body {
     border-bottom: none;
 }
 
+/* 긴 값(이메일 등)이 라벨 폭을 잠식해 라벨이 세로로 꺾이지 않도록 라벨은 줄바꿈·축소 금지, 값만 줄바꿈 */
 .mg-v2-detail-label {
+    flex-shrink: 0;
+    white-space: nowrap;
     font-size: var(--font-size-sm);
     color: var(--color-text-secondary);
     font-weight: 500;
@@ -14376,6 +14380,8 @@ body {
 }
 
 .mg-v2-detail-value {
+    min-width: 0;
+    overflow-wrap: anywhere;
     font-size: var(--font-size-sm);
     color: var(--color-text-primary);
     font-weight: 600;

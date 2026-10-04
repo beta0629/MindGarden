@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import com.coresolution.consultation.constant.ConsultationType;
 import com.coresolution.consultation.dto.CumulativeConsultantCountsResponse;
 import com.coresolution.consultation.dto.CumulativeMissingConsultationLogsResponse;
@@ -47,6 +48,15 @@ public interface ScheduleService {
      * {@code findByTenantIdAndId}를 사용하므로 PK만으로 타 테넌트 행을 반환하지 않는다.
      */
     Schedule findById(Long id);
+
+    /**
+     * 주어진 테넌트 범위에서 스케줄을 찾는다. 없으면 빈 값 (예외를 던지지 않는다).
+     *
+     * @param tenantId 테넌트 ID
+     * @param id       스케줄 ID
+     * @return 스케줄
+     */
+    Optional<Schedule> findInTenant(String tenantId, Long id);
     
     /**
      * 모든 스케줄 조회
@@ -587,6 +597,40 @@ public interface ScheduleService {
      * @since 2026-09-14
      */
     void markCompletedAfterConsultationLogIfOpen(String tenantId, Long scheduleId);
+
+    /**
+     * 일정 시작 시각 이전인지 판정 (완료 처리 차단 SSOT).
+     *
+     * <p>시작 전이면 일지 내용만 저장하고 회기 차감·급여 반영·COMPLETED 전이를 하지 않는다.
+     * 판정 규칙은 {@link com.coresolution.consultation.util.ScheduleSessionStartGate}.</p>
+     *
+     * @param schedule 링크 일정 (null 이면 false)
+     * @return 시작 전이면 true
+     * @author CoreSolution
+     * @since 2026-10-04
+     */
+    boolean isBeforeSessionStart(Schedule schedule);
+
+    /**
+     * 테넌트 일정 ID 로 시작 전 여부 판정 ({@link #isBeforeSessionStart(Schedule)} 위임).
+     *
+     * @param tenantId   테넌트 ID
+     * @param scheduleId 일정 ID (null·미존재면 false)
+     * @return 시작 전이면 true
+     * @author CoreSolution
+     * @since 2026-10-04
+     */
+    boolean isBeforeSessionStart(String tenantId, Long scheduleId);
+
+    /**
+     * 관리자·수동 완료 요청 전 시작 여부를 강제한다 (시작 전이면 400, 상태·회기·급여 변경 없음).
+     *
+     * @param schedule 완료하려는 일정 (변경 예정 date/startTime 반영본)
+     * @throws com.coresolution.consultation.exception.ScheduleSessionNotStartedException 시작 전이면
+     * @author CoreSolution
+     * @since 2026-10-04
+     */
+    void requireSessionStartedForCompletion(Schedule schedule);
 
     /**
      * 스케줄 상태를 한글로 변환

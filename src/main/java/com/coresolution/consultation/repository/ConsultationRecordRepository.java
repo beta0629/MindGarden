@@ -42,6 +42,16 @@ public interface ConsultationRecordRepository extends JpaRepository<Consultation
      * 내담자 ID로 상담일지 목록 조회 (tenantId 필터링)
      */
     Page<ConsultationRecord> findByTenantIdAndClientIdAndIsDeletedFalseOrderBySessionDateDesc(String tenantId, Long clientId, Pageable pageable);
+
+    /**
+     * 상담사 ID로 상담일지 전체 조회 (본문 암호화로 DB LIKE 불가 → 애플리케이션 필터용, tenantId 필터링)
+     */
+    List<ConsultationRecord> findByTenantIdAndConsultantIdAndIsDeletedFalseOrderBySessionDateDesc(String tenantId, Long consultantId);
+
+    /**
+     * 내담자 ID로 상담일지 전체 조회 (본문 암호화로 DB LIKE 불가 → 애플리케이션 필터용, tenantId 필터링)
+     */
+    List<ConsultationRecord> findByTenantIdAndClientIdAndIsDeletedFalseOrderBySessionDateDesc(String tenantId, Long clientId);
     
     /**
      * 상담사와 내담자로 상담일지 목록 조회 (tenantId 필터링)
@@ -147,20 +157,9 @@ public interface ConsultationRecordRepository extends JpaRepository<Consultation
     List<ConsultationRecord> findByTenantIdAndProgressScoreBetweenAndIsDeletedFalseOrderBySessionDateDesc(
         String tenantId, Integer minScore, Integer maxScore);
     
-    /**
-     * 상담일지 검색 (제목, 내용) (tenantId 필터링)
-     */
-    @Query("SELECT cr FROM ConsultationRecord cr WHERE cr.tenantId = :tenantId " +
-           "AND (cr.mainIssues LIKE %:keyword% OR cr.interventionMethods LIKE %:keyword% OR " +
-           "cr.clientResponse LIKE %:keyword% OR cr.nextSessionPlan LIKE %:keyword%) " +
-           "AND cr.consultantId = :consultantId AND cr.isDeleted = false " +
-           "ORDER BY cr.sessionDate DESC")
-    Page<ConsultationRecord> searchByKeywordAndConsultantId(
-        @Param("tenantId") String tenantId,
-        @Param("keyword") String keyword, 
-        @Param("consultantId") Long consultantId, 
-        Pageable pageable);
-    
+    // 본문 컬럼은 암호문이라 DB LIKE 검색을 추가하지 않는다.
+    // 키워드 검색은 ConsultationRecordServiceImpl#searchConsultationRecords 의 복호화 후 필터를 쓴다.
+
     // 내담자별 회기별 조회 (tenantId 필터링)
     Page<ConsultationRecord> findByTenantIdAndClientIdAndSessionNumberAndIsDeletedFalseOrderBySessionDateDesc(String tenantId, Long clientId, Integer sessionNumber, Pageable pageable);
     
@@ -168,20 +167,6 @@ public interface ConsultationRecordRepository extends JpaRepository<Consultation
     
     @Query("SELECT cr FROM ConsultationRecord cr WHERE cr.tenantId = :tenantId AND cr.clientId = :clientId AND cr.isDeleted = false ORDER BY cr.sessionNumber ASC, cr.sessionDate ASC")
     List<ConsultationRecord> findByClientIdOrderBySession(@Param("tenantId") String tenantId, @Param("clientId") Long clientId);
-    
-    /**
-     * 내담자별 상담일지 검색 (tenantId 필터링)
-     */
-    @Query("SELECT cr FROM ConsultationRecord cr WHERE cr.tenantId = :tenantId " +
-           "AND (cr.mainIssues LIKE %:keyword% OR cr.interventionMethods LIKE %:keyword% OR " +
-           "cr.clientResponse LIKE %:keyword% OR cr.nextSessionPlan LIKE %:keyword%) " +
-           "AND cr.clientId = :clientId AND cr.isDeleted = false " +
-           "ORDER BY cr.sessionDate DESC")
-    Page<ConsultationRecord> searchByKeywordAndClientId(
-        @Param("tenantId") String tenantId,
-        @Param("keyword") String keyword, 
-        @Param("clientId") Long clientId, 
-        Pageable pageable);
     
     /**
      * 상담사별 최근 상담일지 조회 (tenantId 필터링)

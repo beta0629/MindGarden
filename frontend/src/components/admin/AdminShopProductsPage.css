@@ -1,10 +1,31 @@
 /**
- * 상품(패키지 요금) — Settings suite chrome 위 툴바 검색 폭만 페이지에서 조정
- * 입력 외형(높이·테두리)은 settings-shell/SettingsSuite.css의 mg-v2-form-input 계약을 따른다.
+ * 상품(패키지 요금) — 설정 셸(SettingsPageShell · TabChipRow · ListTableView · SettingsNotice)
+ * 패널·표·툴바·안내 외형은 settings-shell/SettingsSuite.css 가 담당한다. 여기서는 셀 배치·판매 중지 톤만.
  */
 
-.admin-shop-products-page .admin-shop-suite__toolbar .admin-shop-products-page__search.mg-v2-form-input {
-  flex: 0 1 calc(var(--mg-v2-space-16) * 4);
-  width: calc(var(--mg-v2-space-16) * 4);
-  max-width: 100%;
+.admin-shop-products-page__body,
+.admin-shop-products-page__tables {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-v2-space-4);
+  min-width: 0;
+}
+
+.admin-shop-products-page__sale-status,
+.admin-shop-products-page__toggle-blocked {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--mg-v2-space-2);
+}
+
+.admin-shop-products-page__table--stopped td {
+  color: var(--mg-v2-color-text-secondary);
+}
+
+.admin-shop-products-page__pagination {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mg-v2-space-3);
 }

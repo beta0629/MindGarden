@@ -1,3 +1,4 @@
+import logger from '../../utils/logger';
 import React, { useState, useEffect } from 'react';
 import { Eye, EyeOff, Store, XCircle } from 'lucide-react';
 // import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
@@ -108,14 +109,13 @@ const BranchSpecificLogin = () => {
         password: formData.password
       };
 
-      console.log('🏢 지점별 로그인 요청:', { branchCode, loginData });
 
       const response = await csrfTokenManager.post(`${API_ENDPOINTS.AUTH}/branch/${branchCode}/login`, loginData);
 
       const result = await response.json();
 
       if (result.success) {
-        console.log('✅ 지점별 로그인 성공:', result);
+        logger.debug('✅ 지점별 로그인 성공:', result);
         
         // 세션에 사용자 정보 저장
         setUser(result.user);
@@ -128,14 +128,14 @@ const BranchSpecificLogin = () => {
         
         // 역할에 따른 대시보드로 리다이렉트
         const dashboardPath = resolvePostLoginLandingPath(result.user);
-        console.log('✅ 로그인 성공, 대시보드로 이동:', dashboardPath);
+        logger.debug('✅ 로그인 성공, 대시보드로 이동:', dashboardPath);
         navigate(dashboardPath, { replace: true });
       } else if (result.requiresConfirmation) {
         // 중복 로그인 확인 요청
-        console.log('🔔 중복 로그인 확인 요청:', result.message);
+        logger.debug('🔔 중복 로그인 확인 요청:', result.message);
         notificationManager.show(result.message, 'warning');
       } else {
-        console.log('❌ 로그인 실패:', result.message);
+        logger.debug('❌ 로그인 실패:', result.message);
         notificationManager.show(LOGIN_CREDENTIALS_MISMATCH_MESSAGE, 'error');
       }
     } catch (error) {

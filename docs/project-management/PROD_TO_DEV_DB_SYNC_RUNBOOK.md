@@ -91,8 +91,68 @@ CRON_TZ=Asia/Seoul
 - 스키마 버전이 어긋나면 **Flyway** `repair` / 마이그레이션 재실행 필요 여부를 배포 런북과 맞출 것.
 - 동일 `POST_SYNC_SQL_FILE` 훅으로 개발 전용 플래그·외부 발송 차단 SQL을 이어 붙일 수 있다 (경로를 합본 SQL 또는 별도 오케스트레이션으로).
 
+## Flyway 소유 온보딩 프로시저 재적재
+
+운영 덤프는 항상 `--skip-routines` 라서 루틴이 없고, 복원은 `DROP DATABASE` 로 시작한다.
+그래서 복사 뒤에는 **저장소 SQL 로 루틴을 다시 만들어야** 한다.
+
+- `redeploy_dev_procedures_from_repo` 가 `procedures_standardized/deployment` 전체를 db-diff 로 다시 만든다.
+- **Flyway 마이그레이션에만 정의된 온보딩 프로시저 5건**도 2026-10-04 부터 같은 폴더의
+  `<이름>_standardized.sql` 로 들어 있다. `flyway_schema_history` 가 "이미 적용됨" 으로 복원돼
+  Flyway 는 이 5건을 다시 만들지 않으므로, 이 경로로만 되살아난다.
+- #1410 의 개발 전용 경로(`procedures_flyway_dev_sync/`, `apply-flyway-procedures-dev.sh`)는 제거했다.
+  같은 프로시저를 두 정의로 심지 않도록 원본 하나(아래 표)에서 생성한 SQL 하나만 쓴다.
+  번들 publish 가 서버에 남은 예전 폴더·스크립트를 지운다.
+
+| 프로시저 | 원본 | 선정 근거 |
+| --- | --- | --- |
+| `ProcessOnboardingApproval` | `src/main/resources/sql/procedures/process_onboarding_approval.sql` | `pinned`. Flyway 최신(`V20260402_001`)은 파라미터 11개라 호출부(12개)와 맞지 않음 |
+| `GenerateErdOnOnboardingApproval` | `V14__create_erd_generation_procedure.sql` | CREATE 가 이 파일에만 있음 |
+| `SetupTenantCategoryMapping` | `V41__create_missing_onboarding_procedures.sql` | CREATE 가 이 파일에만 있음 |
+| `ActivateDefaultComponents` | `V20260522_002__shop_reward_default_components_onboarding.sql` | CREATE 가 이 파일에만 있음 |
+| `CopyDefaultTenantCodes` | `V20260831_002__expense_income_ssot_tenant_backfill.sql` | CREATE 4개 파일 중 최신 버전 |
+
+원본 목록은 `database/schema/procedures_standardized/FLYWAY_SOURCES.tsv` 이고,
+이 5건의 `*_standardized.sql` 은 **생성물**이다. 손으로 고치지 말고 아래로 다시 뽑는다.
+
+```bash
+# 원본(마이그레이션)이 바뀌었을 때 재생성
+bash scripts/database/sync/flyway-procedure-extract.sh generate
+
+# 생성물이 최신 원본과 같은지 검사 (CI·번들 publish 가 같은 명령을 돌린다)
+bash scripts/database/sync/flyway-procedure-extract.sh check
+```
+
+### 개발 DB 에 수동 1회 적용
+
+전체 복사를 돌리지 않고 프로시저만 넣을 때는 다른 표준 프로시저와 같이
+`deploy-procedures-dev.yml` 을 실행한다(`procedures` 입력에 이름, 또는 `mode=db-diff` + `confirm=CONFIRM`).
+
+### 야간 배치 결과 확인 (다음 03:30 이후)
+
+```bash
+# 개발 서버. 읽기 전용
+grep -E 'db-diff|summary total=' /var/log/mindgarden/prod-to-dev-daily.log | tail -20
+mysql --defaults-extra-file=... -N -e "
+  SELECT COUNT(*) FROM information_schema.ROUTINES
+   WHERE ROUTINE_SCHEMA='core_solution' AND ROUTINE_TYPE='PROCEDURE';
+  SELECT ROUTINE_NAME FROM information_schema.ROUTINES
+   WHERE ROUTINE_SCHEMA='core_solution' AND ROUTINE_NAME IN
+     ('ProcessOnboardingApproval','GenerateErdOnOnboardingApproval','SetupTenantCategoryMapping',
+      'ActivateDefaultComponents','CopyDefaultTenantCodes') ORDER BY ROUTINE_NAME;"
+```
+
+5건이 모두 나와야 한다.
+
+### 운영 반영
+
+운영은 Flyway 가 이미 만들어 뒀다면 `deploy-procedures-production-mysql.yml` `mode=db-diff` dry-run 에서
+이 5건의 차이가 0 으로 나온다. 운영에 없거나 파라미터가 다르면 `missing`/`count` 로 나오며,
+`confirm=CONFIRM` 일 때만 safe-replace 한다. Flyway 마이그레이션 파일은 고치지 않는다.
+
 ## 관련 스크립트
 
+- `scripts/database/sync/flyway-procedure-extract.sh` — Flyway 소유 온보딩 프로시저 표준 SQL 생성·최신성 검사
 - `scripts/database/backups/database-backup.sh` — 운영 월간 백업(레거시 경로)
 - `scripts/database/backups/database-restore.sh` — 단일 호스트 복원(대화형)
 

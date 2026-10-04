@@ -8,7 +8,7 @@ echo "매핑 수정 프로시저 배포 스크립트"
 echo "========================================"
 
 # 운영 서버 정보
-PROD_SERVER="beta74.cafe24.com"
+PROD_SERVER="${PROD_SERVER_HOST:?PROD_SERVER_HOST 환경변수를 설정하세요}"
 SSH_USER="root"
 
 # SQL 파일 경로

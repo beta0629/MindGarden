@@ -221,7 +221,7 @@ DB_HOST=[REDACTED]
 DB_PORT=3306
 DB_NAME=core_solution
 DB_USERNAME=mindgarden_dev
-DB_PASSWORD=MindGardenDev2025!@#
+DB_PASSWORD=<DEV_DB_PASSWORD>
 
 # JWT
 JWT_SECRET=<32자 이상의 비밀키>

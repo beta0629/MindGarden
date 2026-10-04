@@ -369,7 +369,7 @@ export const SCHEDULE_API = {
   
   // 통계
   STATISTICS: '/api/v1/admin/schedules/statistics',
-  TODAY_STATISTICS: '/api/v1/admin/schedules/today/statistics',
+  TODAY_STATISTICS: '/api/v1/schedules/today/statistics',
   
   // 페이지네이션
   PAGED_SCHEDULES: '/api/v1/schedules/paged',
@@ -579,6 +579,7 @@ export const API_ERROR_MESSAGES = {
   FORBIDDEN: '접근 권한이 없습니다.',
   NOT_FOUND: '요청한 리소스를 찾을 수 없습니다.',
   SERVER_ERROR: '서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.',
+  REQUEST_FAILED: '요청을 처리하지 못했습니다. 잠시 후 다시 시도해주세요.',
   VALIDATION_ERROR: '입력 정보를 확인해주세요.',
   DUPLICATE_EMAIL: '이미 사용 중인 이메일입니다.',
   INVALID_CREDENTIALS: '이메일 또는 비밀번호가 올바르지 않습니다.'

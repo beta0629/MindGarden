@@ -1,14 +1,28 @@
 package com.coresolution.consultation.service.impl;
 
+import java.sql.Types;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import com.coresolution.consultation.constant.MissingConsultationLogStatuses;
+import com.coresolution.consultation.entity.User;
+import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.PlSqlConsultationRecordAlertService;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.coresolution.core.context.TenantContextHolder;
+import com.coresolution.consultation.constant.ServerErrorMessages;
+import com.coresolution.consultation.util.ServerErrorResponses;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.SqlOutParameter;
+import org.springframework.jdbc.core.SqlParameter;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.simple.SimpleJdbcCall;
 import org.springframework.stereotype.Service;
@@ -27,8 +41,15 @@ import lombok.extern.slf4j.Slf4j;
 @Transactional
 public class PlSqlConsultationRecordAlertServiceImpl implements PlSqlConsultationRecordAlertService {
 
+    private static final String PROC_GET_MISSING_ALERTS = "GetMissingConsultationRecordAlerts";
+    private static final ObjectMapper ALERT_JSON = new ObjectMapper();
+    private static final TypeReference<List<Map<String, Object>>> ALERT_LIST_TYPE = new TypeReference<>() { };
+
     @Autowired
     private JdbcTemplate jdbcTemplate;
+
+    @Autowired
+    private UserRepository userRepository;
 
     /**
      * SimpleJdbcCall 카탈로그(=DB명) 명시용 SSOT.
@@ -75,7 +96,7 @@ public class PlSqlConsultationRecordAlertServiceImpl implements PlSqlConsultatio
             
             Map<String, Object> response = new HashMap<>();
             response.put("success", result.get("p_success"));
-            response.put("message", result.get("p_message"));
+            response.put("message", resolveProcedureMessage(result, response));
             response.put("missingCount", result.get("p_missing_count"));
             response.put("alertsCreated", result.get("p_alerts_created"));
             
@@ -85,11 +106,12 @@ public class PlSqlConsultationRecordAlertServiceImpl implements PlSqlConsultatio
             return response;
             
         } catch (Exception e) {
-            log.error("❌ 상담일지 미작성 확인 실패: {}", e.getMessage(), e);
+            String traceId = ServerErrorResponses.newTraceId();
+            log.error("❌ 상담일지 미작성 확인 실패: traceId={}", traceId, e);
             
             Map<String, Object> errorResponse = new HashMap<>();
             errorResponse.put("success", false);
-            errorResponse.put("message", "상담일지 미작성 확인 중 오류가 발생했습니다: " + e.getMessage());
+            putInternalError(errorResponse, traceId);
             errorResponse.put("missingCount", 0);
             errorResponse.put("alertsCreated", 0);
             
@@ -108,6 +130,7 @@ public class PlSqlConsultationRecordAlertServiceImpl implements PlSqlConsultatio
             log.warn("⚠️ Deprecated 파라미터: branchCode는 더 이상 사용하지 않음. branchCode={}", branchCode);
         }
         String tenantId = com.coresolution.core.context.TenantContextHolder.getRequiredTenantId();
+        LocalDate today = LocalDate.now();
         log.info("📝 상담일지 미작성 알림 조회: tenantId={}, 기간={}~{}", tenantId, startDate, endDate);
         
         try {
@@ -116,32 +139,48 @@ public class PlSqlConsultationRecordAlertServiceImpl implements PlSqlConsultatio
             
             SimpleJdbcCall jdbcCall = new SimpleJdbcCall(jdbcTemplate)
                 .withCatalogName(dbSchemaName)
-                .withProcedureName("GetMissingConsultationRecordAlerts");
+                .withProcedureName(PROC_GET_MISSING_ALERTS)
+                .withoutProcedureColumnMetaDataAccess()
+                .declareParameters(
+                    new SqlParameter("p_tenant_id", Types.VARCHAR),
+                    new SqlParameter("p_start_date", Types.DATE),
+                    new SqlParameter("p_end_date", Types.DATE),
+                    new SqlParameter("p_today", Types.DATE),
+                    new SqlParameter("p_statuses", Types.VARCHAR),
+                    new SqlOutParameter("p_alerts", Types.LONGVARCHAR),
+                    new SqlOutParameter("p_total_count", Types.INTEGER),
+                    new SqlOutParameter("p_success", Types.BOOLEAN),
+                    new SqlOutParameter("p_message", Types.LONGVARCHAR));
             
-            // 표준화 2025-12-06: branchCode 대신 tenantId 사용 (프로시저가 p_tenant_id를 받도록 수정되었다고 가정)
             MapSqlParameterSource params = new MapSqlParameterSource()
-                .addValue("p_tenant_id", tenantId) // branchCode 대신 tenantId 사용
+                .addValue("p_tenant_id", tenantId)
                 .addValue("p_start_date", startDate)
-                .addValue("p_end_date", endDate);
+                .addValue("p_end_date", endDate)
+                .addValue("p_today", today)
+                .addValue("p_statuses", MissingConsultationLogStatuses.toProcedureCsv());
             
             Map<String, Object> result = jdbcCall.execute(params);
             
             Map<String, Object> response = new HashMap<>();
             response.put("success", result.get("p_success"));
-            response.put("message", result.get("p_message"));
-            response.put("alerts", result.get("p_alerts"));
-            response.put("totalCount", result.get("p_total_count"));
+            response.put("message", resolveProcedureMessage(result, response));
+            boolean failed = Boolean.FALSE.equals(toBoolean(result.get("p_success")));
+            List<Map<String, Object>> alerts = failed ? List.of()
+                    : withConsultantNames(tenantId, parseAlerts(result.get("p_alerts")));
+            response.put("alerts", alerts);
+            response.put("totalCount", failed ? 0 : alerts.size());
             
-            log.info("✅ 상담일지 미작성 알림 조회 완료: 총 {}건", result.get("p_total_count"));
+            log.info("✅ 상담일지 미작성 알림 조회 완료: 총 {}건", alerts.size());
             
             return response;
             
         } catch (Exception e) {
-            log.error("❌ 상담일지 미작성 알림 조회 실패: {}", e.getMessage(), e);
+            String traceId = ServerErrorResponses.newTraceId();
+            log.error("❌ 상담일지 미작성 알림 조회 실패: traceId={}", traceId, e);
             
             Map<String, Object> errorResponse = new HashMap<>();
             errorResponse.put("success", false);
-            errorResponse.put("message", "상담일지 미작성 알림 조회 중 오류가 발생했습니다: " + e.getMessage());
+            putInternalError(errorResponse, traceId);
             errorResponse.put("alerts", List.of());
             errorResponse.put("totalCount", 0);
             
@@ -169,18 +208,19 @@ public class PlSqlConsultationRecordAlertServiceImpl implements PlSqlConsultatio
             
             Map<String, Object> response = new HashMap<>();
             response.put("success", result.get("p_success"));
-            response.put("message", result.get("p_message"));
+            response.put("message", resolveProcedureMessage(result, response));
             
             log.info("✅ 상담일지 알림 해제 완료: {}", result.get("p_message"));
             
             return response;
             
         } catch (Exception e) {
-            log.error("❌ 상담일지 알림 해제 실패: {}", e.getMessage(), e);
+            String traceId = ServerErrorResponses.newTraceId();
+            log.error("❌ 상담일지 알림 해제 실패: traceId={}", traceId, e);
             
             Map<String, Object> errorResponse = new HashMap<>();
             errorResponse.put("success", false);
-            errorResponse.put("message", "상담일지 알림 해제 중 오류가 발생했습니다: " + e.getMessage());
+            putInternalError(errorResponse, traceId);
             
             return errorResponse;
         }
@@ -211,7 +251,7 @@ public class PlSqlConsultationRecordAlertServiceImpl implements PlSqlConsultatio
             
             Map<String, Object> response = new HashMap<>();
             response.put("success", result.get("p_success"));
-            response.put("message", result.get("p_message"));
+            response.put("message", resolveProcedureMessage(result, response));
             response.put("totalConsultations", result.get("p_total_consultations"));
             response.put("missingRecords", result.get("p_missing_records"));
             response.put("completionRate", result.get("p_completion_rate"));
@@ -223,11 +263,12 @@ public class PlSqlConsultationRecordAlertServiceImpl implements PlSqlConsultatio
             return response;
             
         } catch (Exception e) {
-            log.error("❌ 상담일지 미작성 통계 조회 실패: {}", e.getMessage(), e);
+            String traceId = ServerErrorResponses.newTraceId();
+            log.error("❌ 상담일지 미작성 통계 조회 실패: traceId={}", traceId, e);
             
             Map<String, Object> errorResponse = new HashMap<>();
             errorResponse.put("success", false);
-            errorResponse.put("message", "상담일지 미작성 통계 조회 중 오류가 발생했습니다: " + e.getMessage());
+            putInternalError(errorResponse, traceId);
             errorResponse.put("totalConsultations", 0);
             errorResponse.put("missingRecords", 0);
             errorResponse.put("completionRate", 0.0);
@@ -258,7 +299,7 @@ public class PlSqlConsultationRecordAlertServiceImpl implements PlSqlConsultatio
             
             Map<String, Object> response = new HashMap<>();
             response.put("success", result.get("p_success"));
-            response.put("message", result.get("p_message"));
+            response.put("message", resolveProcedureMessage(result, response));
             response.put("processedDays", result.get("p_processed_days"));
             response.put("totalAlertsCreated", result.get("p_total_alerts_created"));
             
@@ -268,11 +309,12 @@ public class PlSqlConsultationRecordAlertServiceImpl implements PlSqlConsultatio
             return response;
             
         } catch (Exception e) {
-            log.error("❌ 상담일지 미작성 알림 자동 생성 실패: {}", e.getMessage(), e);
+            String traceId = ServerErrorResponses.newTraceId();
+            log.error("❌ 상담일지 미작성 알림 자동 생성 실패: traceId={}", traceId, e);
             
             Map<String, Object> errorResponse = new HashMap<>();
             errorResponse.put("success", false);
-            errorResponse.put("message", "상담일지 미작성 알림 자동 생성 중 오류가 발생했습니다: " + e.getMessage());
+            putInternalError(errorResponse, traceId);
             errorResponse.put("processedDays", 0);
             errorResponse.put("totalAlertsCreated", 0);
             
@@ -331,11 +373,12 @@ public class PlSqlConsultationRecordAlertServiceImpl implements PlSqlConsultatio
             return response;
             
         } catch (Exception e) {
-            log.error("❌ 상담사별 상담일지 미작성 현황 조회 실패: {}", e.getMessage(), e);
+            String traceId = ServerErrorResponses.newTraceId();
+            log.error("❌ 상담사별 상담일지 미작성 현황 조회 실패: traceId={}", traceId, e);
             
             Map<String, Object> errorResponse = new HashMap<>();
             errorResponse.put("success", false);
-            errorResponse.put("message", "상담사별 상담일지 미작성 현황 조회 중 오류가 발생했습니다: " + e.getMessage());
+            putInternalError(errorResponse, traceId);
             errorResponse.put("records", List.of());
             errorResponse.put("totalCount", 0);
             errorResponse.put("missingCount", 0);
@@ -377,14 +420,94 @@ public class PlSqlConsultationRecordAlertServiceImpl implements PlSqlConsultatio
             return response;
             
         } catch (Exception e) {
-            log.error("❌ 상담일지 알림 일괄 해제 실패: {}", e.getMessage(), e);
+            String traceId = ServerErrorResponses.newTraceId();
+            log.error("❌ 상담일지 알림 일괄 해제 실패: traceId={}", traceId, e);
             
             Map<String, Object> errorResponse = new HashMap<>();
             errorResponse.put("success", false);
-            errorResponse.put("message", "상담일지 알림 일괄 해제 중 오류가 발생했습니다: " + e.getMessage());
+            putInternalError(errorResponse, traceId);
             errorResponse.put("updatedCount", 0);
             
             return errorResponse;
         }
+    }
+
+    /**
+     * 실패 응답에 공용 5xx 문구·오류 코드·추적 id 만 싣는다 (원시 예외 문구 비노출).
+     *
+     * @param errorResponse 실패 응답
+     * @param traceId       추적 id
+     */
+    /** 프로시저 JSON 배열(문자열) → 알림 목록. 비어 있거나 null 이면 빈 목록. */
+    private static List<Map<String, Object>> parseAlerts(Object raw) throws JsonProcessingException {
+        if (raw == null) {
+            return new ArrayList<>();
+        }
+        String json = raw.toString();
+        if (json.isBlank()) {
+            return new ArrayList<>();
+        }
+        return ALERT_JSON.readValue(json, ALERT_LIST_TYPE);
+    }
+
+    /** 프로시저는 암호화된 이름을 돌려주지 않으므로 세션 테넌트 사용자만 읽어 복호화된 이름을 채운다. */
+    private List<Map<String, Object>> withConsultantNames(String tenantId, List<Map<String, Object>> alerts) {
+        Set<Long> consultantIds = new HashSet<>();
+        for (Map<String, Object> alert : alerts) {
+            Object id = alert.get("consultantId");
+            if (id instanceof Number number) {
+                consultantIds.add(number.longValue());
+            }
+        }
+        if (consultantIds.isEmpty()) {
+            return alerts;
+        }
+        Map<Long, String> names = new HashMap<>();
+        for (User user : userRepository.findByTenantIdAndIdIn(tenantId, new ArrayList<>(consultantIds))) {
+            names.put(user.getId(), user.getName());
+        }
+        for (Map<String, Object> alert : alerts) {
+            Object id = alert.get("consultantId");
+            alert.put("consultantName", id instanceof Number number ? names.get(number.longValue()) : null);
+        }
+        return alerts;
+    }
+
+    private static void putInternalError(Map<String, Object> errorResponse, String traceId) {
+        errorResponse.put("message", ServerErrorMessages.INTERNAL_SERVER_ERROR);
+        errorResponse.put("errorCode", ServerErrorMessages.CODE_INTERNAL_SERVER_ERROR);
+        errorResponse.put(ServerErrorResponses.TRACE_ID_KEY, traceId);
+    }
+
+    /**
+     * 프로시저 결과 문구. 실패({@code p_success=false})면 프로시저가 붙인 SQL 오류 문구 대신 공용 문구로 바꾼다.
+     *
+     * @param result   프로시저 OUT 결과
+     * @param response 응답 (실패 시 오류 코드·추적 id 를 함께 싣는다)
+     * @return 응답에 실을 문구
+     */
+    private static String resolveProcedureMessage(Map<String, Object> result, Map<String, Object> response) {
+        if (!Boolean.FALSE.equals(toBoolean(result.get("p_success")))) {
+            Object message = result.get("p_message");
+            return message != null ? message.toString() : null;
+        }
+        String traceId = ServerErrorResponses.newTraceId();
+        log.error("❌ 상담일지 알림 프로시저 실패(p_success=false): traceId={}", traceId);
+        response.put("errorCode", ServerErrorMessages.CODE_INTERNAL_SERVER_ERROR);
+        response.put(ServerErrorResponses.TRACE_ID_KEY, traceId);
+        return ServerErrorMessages.INTERNAL_SERVER_ERROR;
+    }
+
+    private static Boolean toBoolean(Object value) {
+        if (value == null) {
+            return null;
+        }
+        if (value instanceof Boolean bool) {
+            return bool;
+        }
+        if (value instanceof Number number) {
+            return number.intValue() != 0;
+        }
+        return Boolean.valueOf(value.toString());
     }
 }

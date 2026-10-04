@@ -32,6 +32,11 @@ public interface BranchRepository extends BaseRepository<Branch, Long> {
      * 지점 코드로 조회
      */
     Optional<Branch> findByBranchCodeAndIsDeletedFalse(String branchCode);
+
+    /**
+     * 테넌트 범위 지점 코드 조회
+     */
+    Optional<Branch> findByTenantIdAndBranchCodeAndIsDeletedFalse(String tenantId, String branchCode);
     
     /**
      * 지점명으로 조회
@@ -47,6 +52,22 @@ public interface BranchRepository extends BaseRepository<Branch, Long> {
      * 모든 활성 지점 조회 (삭제되지 않은 모든 지점)
      */
     List<Branch> findByIsDeletedFalseOrderByBranchName();
+
+    /**
+     * 테넌트 범위의 활성 지점 조회.
+     *
+     * @param tenantId 테넌트 id
+     * @return 해당 테넌트의 삭제되지 않은 지점 목록
+     */
+    List<Branch> findByTenantIdAndIsDeletedFalseOrderByBranchName(String tenantId);
+
+    /**
+     * 테넌트에 삭제되지 않은 지점이 하나라도 있는지.
+     *
+     * @param tenantId 테넌트 id
+     * @return 지점이 있으면 true
+     */
+    boolean existsByTenantIdAndIsDeletedFalse(String tenantId);
     
     /**
      * 지점 유형별 조회

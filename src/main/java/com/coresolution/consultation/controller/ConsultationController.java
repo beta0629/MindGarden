@@ -10,12 +10,12 @@ import com.coresolution.consultation.entity.Consultation;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.ConsultationService;
+import com.coresolution.consultation.service.support.ClientPathAccessGuard;
 import com.coresolution.consultation.utils.SessionUtils;
 import com.coresolution.core.annotation.RequireBusinessType;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.controller.BaseApiController;
 import com.coresolution.core.dto.ApiResponse;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -32,6 +32,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -41,16 +42,15 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 @RestController
+@RequiredArgsConstructor
 @RequestMapping("/api/v1/consultations")
 @CrossOrigin(origins = "*")
 @RequireBusinessType(value = "CONSULTATION", message = "상담 관리 기능은 상담소에서만 사용할 수 있습니다.")
 public class ConsultationController extends BaseApiController {
     
-    @Autowired
-    private ConsultationService consultationService;
-    
-    @Autowired
-    private UserRepository userRepository;
+    private final ConsultationService consultationService;
+    private final UserRepository userRepository;
+    private final ClientPathAccessGuard clientPathAccessGuard;
 
     /**
      * 세션 기준 테넌트 컨텍스트 설정 (서비스 계층의 테넌트 스코프 조회용)
@@ -137,7 +137,10 @@ public class ConsultationController extends BaseApiController {
      * GET /api/v1/consultations/client/{clientId}/history
      */
     @GetMapping("/client/{clientId}/history")
-    public ResponseEntity<ApiResponse<Map<String, Object>>> getClientConsultationHistory(@PathVariable Long clientId) {
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getClientConsultationHistory(
+            @PathVariable Long clientId,
+            HttpSession session) {
+        clientPathAccessGuard.requireClientAccess(session, clientId);
         log.info("내담자 상담 히스토리 조회 - clientId: {}", clientId);
         
         List<Map<String, Object>> history = consultationService.getClientConsultationHistory(clientId);

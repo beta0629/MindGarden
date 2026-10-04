@@ -10,6 +10,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.EnumMap;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -119,6 +120,7 @@ import com.coresolution.consultation.constant.LifecycleState;
 import com.coresolution.consultation.dto.lifecycle.Actor;
 import com.coresolution.consultation.service.UserLifecycleService;
 import com.coresolution.consultation.service.UserService;
+import com.coresolution.consultation.service.support.DeferredExternalCalls;
 import com.coresolution.consultation.dto.PaymentSource;
 import com.coresolution.consultation.entity.Payment;
 import com.coresolution.consultation.util.CardMerchantFeeFromPaymentJsonUtil;
@@ -156,6 +158,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import java.math.BigDecimal;
 import org.hibernate.Hibernate;
+import com.coresolution.consultation.service.ScheduleAutoCompleteService;
+import com.coresolution.consultation.util.ServerErrorResponses;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import java.util.UUID;
@@ -914,8 +918,11 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         // 표준화 2025-12-06: 브랜치 코드 사용 금지 - branchCode는 null로 설정
         String branchCode = null;
         
+        Set<ConsultantClientMapping.MappingStatus> existingLookupStatuses =
+                EnumSet.copyOf(ConsultantClientMapping.MappingStatus.AUTO_TERMINATE_ON_NEW_MAPPING);
+        existingLookupStatuses.add(ConsultantClientMapping.MappingStatus.ACTIVE);
         List<ConsultantClientMapping> existingMappings = mappingRepository
-            .findByTenantIdAndConsultantAndClient(tenantId, consultant, clientUser);
+            .findByTenantIdAndConsultantAndClientAndStatusIn(tenantId, consultant, clientUser, existingLookupStatuses);
 
         // ACTIVE가 있으면 결제용 PENDING 행을 추가 패키지로 생성하고, 확정(approve) 시 기존 ACTIVE에 회기 합산.
         // 기존 ACTIVE는 TERMINATED/회기 소진하지 않는다 (이중 ACTIVE 금지).
@@ -936,17 +943,8 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             String terminatedStatus = getMappingStatusCode("TERMINATED");
             
             for (ConsultantClientMapping existingMapping : existingMappings) {
-                // 옵션 B (예약 우선 매칭): PENDING_PAYMENT / PAYMENT_CONFIRMED 매핑은
-                // 사후 카드 결제 대기 상태이므로 자동 TERMINATED 대상에서 제외한다.
-                // (디러티 정리는 별도 어드민 UI에서 수동 종료)
-                ConsultantClientMapping.MappingStatus currentStatus = existingMapping.getStatus();
-                if (currentStatus == ConsultantClientMapping.MappingStatus.PENDING_PAYMENT
-                        || currentStatus == ConsultantClientMapping.MappingStatus.PAYMENT_CONFIRMED) {
-                    log.info("⏸️ 옵션 B 가드: 결제 대기 매핑 자동 종료 제외: 매칭ID={}, 상태={}",
-                            existingMapping.getId(), currentStatus);
-                    continue;
-                }
-                if (currentStatus == ConsultantClientMapping.MappingStatus.ACTIVE) {
+                if (!ConsultantClientMapping.MappingStatus.AUTO_TERMINATE_ON_NEW_MAPPING
+                        .contains(existingMapping.getStatus())) {
                     continue;
                 }
                 try {
@@ -4945,14 +4943,17 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
     }
 
     private void notifyMappingSettlement(ConsultantClientMapping mapping, MappingSettlementScenario scenario) {
-        try {
-            String tenantId = getTenantIdFromMapping(mapping);
-            if (tenantId == null) {
-                tenantId = getTenantIdOrNull();
+        String resolvedTenantId = getTenantIdFromMapping(mapping);
+        String tenantId = resolvedTenantId != null ? resolvedTenantId : getTenantIdOrNull();
+        Runnable notice = () -> {
+            try {
+                mappingSettlementNotificationHelper.notifyAfterMappingSettlement(mapping, tenantId, scenario);
+            } catch (Exception ex) {
+                log.warn("매칭 정산 알림 실패: mappingId={}, scenario={}", mapping.getId(), scenario, ex);
             }
-            mappingSettlementNotificationHelper.notifyAfterMappingSettlement(mapping, tenantId, scenario);
-        } catch (Exception ex) {
-            log.warn("매칭 정산 알림 실패: mappingId={}, scenario={}", mapping.getId(), scenario, ex);
+        };
+        if (!DeferredExternalCalls.deferIfActive(notice)) {
+            notice.run();
         }
     }
 
@@ -8004,7 +8005,12 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         log.info("🔧 매칭 강제 종료 처리 시작: ID={}, 사유={}", id, reason);
         String tenantId = getTenantId();
 
-        ConsultantClientMapping mapping = mappingRepository.findByTenantIdAndId(tenantId, id)
+        // 원장 환불·결제 대기 취소는 행 잠금으로 읽어 동시 요청의 이중 환불을 막는다.
+        // Path B 는 PortOne 취소를 포함하므로 기존처럼 잠금 없이 읽는다 (주문 환불 SSOT 가 멱등 처리).
+        Optional<String> pathBOrderPublicId = findPathBShopOrderPublicIdForRefund(tenantId, id);
+        ConsultantClientMapping mapping = (pathBOrderPublicId.isPresent()
+                ? mappingRepository.findByTenantIdAndId(tenantId, id)
+                : mappingRepository.findByTenantIdAndIdForUpdate(tenantId, id))
                 .orElseThrow(() -> new RuntimeException(AdminServiceUserFacingMessages.MSG_MAPPING_NOT_FOUND));
         Hibernate.initialize(mapping.getConsultant());
         Hibernate.initialize(mapping.getClient());
@@ -8012,7 +8018,8 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         String terminatedStatus = getMappingStatusCode(MappingStatusConstants.TERMINATED);
         String cancelledStatus = getMappingStatusCode(MappingStatusConstants.CANCELLED);
         if (isClosedMappingStatus(mapping.getStatus(), terminatedStatus, cancelledStatus)) {
-            throw new RuntimeException(AdminServiceUserFacingMessages.MSG_MAPPING_ALREADY_TERMINATED);
+            throw new MappingAlreadyProcessedException(id, null, MappingAlreadyProcessedException.Reason.ALREADY_CLOSED,
+                    AdminServiceUserFacingMessages.MSG_MAPPING_ALREADY_TERMINATED);
         }
 
         // R4 (옵션 B 디러티 PENDING_PAYMENT 정리) — 결제 대기 매칭은 별도 정리 흐름을 탄다.
@@ -8028,7 +8035,6 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         // Path B(쇼핑 PAID/REFUNDED 주문 라인): unusedFullVoid/INCOME cancel 금지.
         // PortOne→reverse→EXPENSE fail-closed 는 AdminShopOrderRefundService.refundPaidOrder SSOT.
         // 매핑 CANCELLED 전이 금지 — clinic이 rem reverse + paymentStatus REFUNDED(+SESSIONS_EXHAUSTED).
-        Optional<String> pathBOrderPublicId = findPathBShopOrderPublicIdForRefund(tenantId, id);
         if (pathBOrderPublicId.isPresent()) {
             terminatePathBShopMappingViaOrderRefund(tenantId, id, pathBOrderPublicId.get(), reason);
             return;
@@ -8090,26 +8096,50 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         // Phase 0 (Q3=3A·보조=C): 4채널 의무 통지 (인앱·이메일·푸시·알림톡) + audit notes 누적.
         notifyRefundAutoCancel4Channels(mapping, tenantId, cancelledScheduleCount);
         
-        try {
-            User client = mapping.getClient();
-            if (client != null) {
-                log.info("📤 환불 완료 알림 발송 시작: 내담자={}", client.getName());
-                
-                boolean notificationSent = notificationService.sendRefundCompleted(client, refundedSessions, refundAmount);
-                
-                if (notificationSent) {
-                    log.info("✅ 환불 완료 알림 발송 성공: 내담자={}", client.getName());
-                } else {
-                    log.warn("⚠️ 환불 완료 알림 발송 실패: 내담자={}", client.getName());
+        User refundClient = mapping.getClient();
+        Runnable refundCompletedNotice = () -> {
+            try {
+                if (refundClient != null) {
+                    log.info("📤 환불 완료 알림 발송 시작: MappingID={}", id);
+                    boolean notificationSent = notificationService.sendRefundCompleted(
+                            refundClient, refundedSessions, refundAmount);
+                    if (notificationSent) {
+                        log.info("✅ 환불 완료 알림 발송 성공: MappingID={}", id);
+                    } else {
+                        log.warn("⚠️ 환불 완료 알림 발송 실패: MappingID={}", id);
+                    }
                 }
+            } catch (Exception e) {
+                log.error("❌ 환불 완료 알림 발송 중 오류: MappingID={}", id, e);
             }
-        } catch (Exception e) {
-            log.error("❌ 환불 완료 알림 발송 중 오류: MappingID={}", id, e);
+        };
+        if (!DeferredExternalCalls.deferIfActive(refundCompletedNotice)) {
+            refundCompletedNotice.run();
         }
         
         log.info("✅ 매칭 강제 종료(취소) 완료: ID={}, status={}, paymentStatus={}, 환불 회기={}, 환불 금액={}, 상담사={}, 내담자={}", 
                 id, mapping.getStatus(), mapping.getPaymentStatus(), refundedSessions, refundAmount,
                 mapping.getConsultant().getName(), mapping.getClient().getName());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public boolean requiresShopOrderRefund(Long mappingId) {
+        return findPathBShopOrderPublicIdForRefund(getTenantId(), mappingId).isPresent();
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public ConsultantClientMapping confirmPendingPayment(Long mappingId, String paymentMethod,
+            String paymentReference, Long paymentAmount) {
+        ConsultantClientMapping mapping = mappingRepository.findByTenantIdAndIdForUpdate(getTenantId(), mappingId)
+                .orElseThrow(() -> new RuntimeException(AdminServiceUserFacingMessages.MSG_MAPPING_NOT_FOUND));
+        String pendingPaymentStatus = getMappingStatusCode(MappingStatusConstants.PENDING_PAYMENT);
+        if (mapping.getStatus() == null || !mapping.getStatus().name().equals(pendingPaymentStatus)) {
+            throw new MappingAlreadyProcessedException(mappingId,
+                    AdminServiceUserFacingMessages.MSG_BULK_CONFIRM_NOT_PENDING_PAYMENT);
+        }
+        return confirmPayment(mappingId, paymentMethod, paymentReference, paymentAmount);
     }
 
     /**
@@ -8435,25 +8465,52 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             log.warn("자동 취소 4채널 통지 skip: client null MappingID={}", mapping.getId());
             return;
         }
-        try {
-            String mypageUrl = AdminServiceUserFacingMessages.AUTO_CANCEL_MYPAGE_PATH;
-            Map<String, String> channelResults = refundAutoCancelNotificationService
-                    .dispatchRefundAutoCancelNotification(
-                            tenantId, mapping.getClient(), mapping.getId(), cancelCount, mypageUrl);
-
-            String channelsJson = serializeChannelResults(channelResults);
-            String auditLine = String.format(
-                    AdminServiceUserFacingMessages.NOTES_AUTO_CANCEL_NOTIFY_LINE_FMT,
-                    LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME),
-                    cancelCount,
-                    channelsJson);
+        User client = mapping.getClient();
+        Long mappingId = mapping.getId();
+        boolean deferred = DeferredExternalCalls.deferIfActive(() -> {
+            String auditLine = dispatchRefundAutoCancel(tenantId, client, mappingId, cancelCount);
+            if (auditLine != null) {
+                runInNewTransaction(tenantId, () -> appendMappingNoteLine(tenantId, mappingId, auditLine));
+            }
+        });
+        if (deferred) {
+            return;
+        }
+        String auditLine = dispatchRefundAutoCancel(tenantId, client, mappingId, cancelCount);
+        if (auditLine != null) {
             String prevNotes = mapping.getNotes() != null ? mapping.getNotes() : "";
             mapping.setNotes(prevNotes.isEmpty() ? auditLine : prevNotes + "\n" + auditLine);
             mappingRepository.save(mapping);
-        } catch (Exception e) {
-            // 통지 실패가 환불·취소 본 흐름을 막지 않도록 격리. 운영 사후 분석을 위해 ERROR 로그 보존.
-            log.error("❌ 자동 취소 4채널 통지 실패: MappingID={}", mapping.getId(), e);
         }
+    }
+
+    /**
+     * 4채널 통지를 보내고 매핑 notes 에 남길 audit 한 줄을 돌려준다. 통지 실패는 환불·취소 본 흐름을 막지 않도록 격리.
+     *
+     * @return audit 한 줄, 통지 중 예외면 null
+     */
+    private String dispatchRefundAutoCancel(String tenantId, User client, Long mappingId, int cancelCount) {
+        try {
+            Map<String, String> channelResults = refundAutoCancelNotificationService
+                    .dispatchRefundAutoCancelNotification(tenantId, client, mappingId, cancelCount,
+                            AdminServiceUserFacingMessages.AUTO_CANCEL_MYPAGE_PATH);
+            return String.format(
+                    AdminServiceUserFacingMessages.NOTES_AUTO_CANCEL_NOTIFY_LINE_FMT,
+                    LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME),
+                    cancelCount,
+                    serializeChannelResults(channelResults));
+        } catch (Exception e) {
+            log.error("❌ 자동 취소 4채널 통지 실패: MappingID={}", mappingId, e);
+            return null;
+        }
+    }
+
+    private void appendMappingNoteLine(String tenantId, Long mappingId, String line) {
+        mappingRepository.findByTenantIdAndId(tenantId, mappingId).ifPresent(m -> {
+            String prevNotes = m.getNotes() != null ? m.getNotes() : "";
+            m.setNotes(prevNotes.isEmpty() ? line : prevNotes + "\n" + line);
+            mappingRepository.save(m);
+        });
     }
 
     /**
@@ -10019,6 +10076,31 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
 
 
     @Override
+    @Transactional(readOnly = true)
+    public ConsultantClientMappingResponse getMappingDetail(Long mappingId) {
+        String tenantId = getTenantIdOrNull();
+        if (tenantId == null || tenantId.isEmpty()) {
+            return null;
+        }
+        return mappingRepository.findByTenantIdAndId(tenantId, mappingId)
+                .map(mapping -> {
+                    ConsultantClientMappingResponse response = ConsultantClientMappingResponse.fromEntity(mapping);
+                    response.setConsultantName(decryptedNameOf(mapping.getConsultant()));
+                    response.setClientName(decryptedNameOf(mapping.getClient()));
+                    return response;
+                })
+                .orElse(null);
+    }
+
+    private String decryptedNameOf(User user) {
+        if (user == null) {
+            return null;
+        }
+        Map<String, String> decrypted = userPersonalDataCacheService.getDecryptedUserData(user);
+        return decrypted != null ? decrypted.get("name") : user.getName();
+    }
+
+    @Override
     @Transactional(rollbackFor = Exception.class)
     public ConsultantClientMapping transferConsultant(ConsultantTransferRequest request) {
         log.info("상담사 변경 처리 시작: 기존 매칭 ID={}, 새 상담사 ID={}", 
@@ -11165,30 +11247,64 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         }
     }
     
+    /**
+     * 스케줄 자동 완료 처리 및 상담일지 미작성 알림 (수동 실행).
+     *
+     * <p>2026-10-05 (#1407·#1408 검증 FAIL 보완)</p>
+     * <ul>
+     *   <li><b>동시 실행 차단</b> — 호출 진입점(AdminController)이 배치와 같은 run lock
+     *       ({@link ScheduleAutoCompleteService#runExclusively}) 으로 직렬화한다.</li>
+     *   <li><b>멱등성</b> — 일정별로 최신 상태를 다시 읽어 이미 {@code BOOKED} 가 아니면 건너뛴다.
+     *       따라서 두 번째 호출은 회기를 다시 차감하지 않는다(0건).</li>
+     *   <li><b>오류 문구</b> — 실패 응답에 원시 예외 문구를 싣지 않는다.</li>
+     * </ul>
+     * <p>처리 규칙 자체는 바꾸지 않는다: 지난 {@code BOOKED} 일정은 상담일지 작성 여부와 무관하게
+     * 완료 처리·회기 차감되고, 일지가 없으면 추가로 미작성 알림 메시지를 보낸다.</p>
+     *
+     * @return 처리 결과 (완료 건수·알림 건수·대상 상담사)
+     */
     @Override
     public Map<String, Object> autoCompleteSchedulesWithReminder() {
+        String tenantId = getTenantIdOrNull();
+        if (tenantId == null) {
+            log.error("❌ tenantId가 설정되지 않았습니다");
+            Map<String, Object> errorResult = new HashMap<>();
+            errorResult.put("success", false);
+            errorResult.put("message", ScheduleAutoCompleteService.TENANT_REQUIRED);
+            errorResult.put("completedSchedules", 0);
+            errorResult.put("reminderMessagesSent", 0);
+            return errorResult;
+        }
+        return runAutoCompleteWithReminder(tenantId);
+    }
+
+    /**
+     * 자동 완료 + 미작성 알림 본 처리 (진입점의 run lock 안에서만 호출된다).
+     *
+     * @param tenantId 호출자 테넌트 ID
+     * @return 처리 결과
+     */
+    private Map<String, Object> runAutoCompleteWithReminder(String tenantId) {
         try {
             log.info("🔄 스케줄 자동 완료 처리 및 상담일지 미작성 알림 시작");
-            
-            String tenantId = getTenantIdOrNull();
-            if (tenantId == null) {
-                log.error("❌ tenantId가 설정되지 않았습니다");
-                Map<String, Object> errorResult = new HashMap<>();
-                errorResult.put("completedCount", 0);
-                errorResult.put("reminderSentCount", 0);
-                return errorResult;
-            }
-            
+
             List<Schedule> expiredSchedules = scheduleRepository.findByDateBeforeAndStatus(
                 // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
                 tenantId, LocalDate.now(), ScheduleStatus.BOOKED);
-            
+
             int completedCount = 0;
             int reminderSentCount = 0;
             List<Long> consultantIdsWithReminder = new ArrayList<>();
-            
-            for (Schedule schedule : expiredSchedules) {
+
+            for (Schedule candidate : expiredSchedules) {
                 try {
+                    // 멱등성: 최신 상태를 다시 읽어 이미 완료·취소된 일정은 건너뛴다 (재차감 방지).
+                    Schedule schedule = scheduleRepository
+                            .findByTenantIdAndId(tenantId, candidate.getId())
+                            .orElse(null);
+                    if (schedule == null || !ScheduleStatus.BOOKED.equals(schedule.getStatus())) {
+                        continue;
+                    }
                     scheduleService.deductSessionAtCompletionIfNeeded(schedule);
                     // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
                     schedule.setStatus(ScheduleStatus.COMPLETED);
@@ -11196,41 +11312,44 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                     scheduleRepository.save(schedule);
                     salaryLateSessionAutoSyncService.syncAfterScheduleCompleted(schedule);
                     completedCount++;
-                    
+
                     boolean hasConsultationRecord = checkConsultationRecord(schedule);
-                    
+
                     if (!hasConsultationRecord) {
                         sendConsultationReminderMessage(schedule);
                         reminderSentCount++;
-                        
+
                         if (!consultantIdsWithReminder.contains(schedule.getConsultantId())) {
                             consultantIdsWithReminder.add(schedule.getConsultantId());
                         }
                     }
-                    
+
                 } catch (Exception e) {
-                    log.error("❌ 스케줄 ID {} 자동 완료 처리 실패: {}", schedule.getId(), e.getMessage());
+                    log.error("❌ 스케줄 ID {} 자동 완료 처리 실패", candidate.getId(), e);
                 }
             }
-            
+
             Map<String, Object> result = new HashMap<>();
             result.put("success", true);
             result.put("completedSchedules", completedCount);
             result.put("reminderMessagesSent", reminderSentCount);
             result.put("consultantsNotified", consultantIdsWithReminder.size());
             result.put("consultantIds", consultantIdsWithReminder);
-            result.put("message", String.format(AdminServiceUserFacingMessages.MSG_SCHEDULE_AUTO_COMPLETE_SUCCESS_FMT, 
+            result.put("message", String.format(AdminServiceUserFacingMessages.MSG_SCHEDULE_AUTO_COMPLETE_SUCCESS_FMT,
                 completedCount, consultantIdsWithReminder.size()));
-            
+
             log.info("✅ 스케줄 자동 완료 처리 완료: 완료 {}개, 알림 발송 {}개", completedCount, reminderSentCount);
             return result;
-            
+
         } catch (Exception e) {
-            log.error("❌ 스케줄 자동 완료 처리 실패", e);
+            // 원시 예외 문구(SQL·프로시저 부재 등)를 응답에 싣지 않는다. 추적은 traceId 로그로만.
+            String traceId = ServerErrorResponses.logInternalError("스케줄 자동 완료 처리", e);
             Map<String, Object> errorResult = new HashMap<>();
             errorResult.put("success", false);
-            errorResult.put("message", String.format(AdminServiceUserFacingMessages.MSG_SCHEDULE_AUTO_COMPLETE_FAILED_FMT,
-                    e.getMessage()));
+            errorResult.put("message", AdminServiceUserFacingMessages.MSG_SCHEDULE_AUTO_COMPLETE_FAILED);
+            errorResult.put(ServerErrorResponses.TRACE_ID_KEY, traceId);
+            errorResult.put("completedSchedules", 0);
+            errorResult.put("reminderMessagesSent", 0);
             return errorResult;
         }
     }

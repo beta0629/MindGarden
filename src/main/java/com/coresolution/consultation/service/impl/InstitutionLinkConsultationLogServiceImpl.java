@@ -17,6 +17,7 @@ import com.coresolution.consultation.entity.Client;
 import com.coresolution.consultation.entity.ConsultantClientMapping;
 import com.coresolution.consultation.entity.InstitutionLinkConsultationLog;
 import com.coresolution.consultation.entity.InstitutionLinkContract;
+import com.coresolution.consultation.exception.ConsultationRecordDuplicateException;
 import com.coresolution.consultation.exception.EntityNotFoundException;
 import com.coresolution.consultation.exception.ValidationException;
 import com.coresolution.consultation.repository.ClientRepository;
@@ -25,6 +26,8 @@ import com.coresolution.consultation.repository.InstitutionLinkConsultationLogRe
 import com.coresolution.consultation.repository.InstitutionLinkContractRepository;
 import com.coresolution.consultation.service.InstitutionLinkConsultationLogService;
 import com.coresolution.consultation.service.ScheduleService;
+import com.coresolution.consultation.service.support.ConsultationRecordAccessGuard;
+import com.coresolution.consultation.service.support.ConsultationRecordWriter;
 import com.coresolution.core.context.TenantContextHolder;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -47,16 +50,23 @@ public class InstitutionLinkConsultationLogServiceImpl implements InstitutionLin
     private static final DateTimeFormatter BILLING_YEAR_MONTH_FORMATTER =
             DateTimeFormatter.ofPattern(InstitutionLinkConstants.BILLING_YEAR_MONTH_PATTERN);
 
+    /** 일정 시작 전 세션 완료 요청 거부 사유. */
+    static final String SESSION_NOT_STARTED_MESSAGE = "일정 시작 전에는 세션을 완료할 수 없습니다.";
+
+    /** 같은 일정에 활성 타기관 일지가 이미 있을 때 생성 거부 사유. */
+    static final String DUPLICATE_LOG_MESSAGE = "이 일정에는 이미 상담일지가 있습니다. 기존 일지를 수정해 주세요.";
+
     private final InstitutionLinkConsultationLogRepository institutionLinkConsultationLogRepository;
     private final InstitutionLinkContractRepository institutionLinkContractRepository;
     private final ConsultantClientMappingRepository consultantClientMappingRepository;
     private final ClientRepository clientRepository;
     private final ScheduleService scheduleService;
+    private final ConsultationRecordAccessGuard consultationRecordAccessGuard;
 
     @Override
     @Transactional
     public InstitutionLinkConsultationLogResponse create(String tenantId,
-            InstitutionLinkConsultationLogCreateRequest request) {
+            InstitutionLinkConsultationLogCreateRequest request, ConsultationRecordWriter writer) {
         requireTenantId(tenantId);
         if (request == null) {
             throw new ValidationException("타기관 상담일지 요청은 필수입니다.");
@@ -76,10 +86,19 @@ public class InstitutionLinkConsultationLogServiceImpl implements InstitutionLin
 
         final Long mappingId = request.getMappingId();
         final Long requestedContractId = request.getContractId();
+        Long assigneeConsultantId = null;
+        Long assigneeClientId = null;
         if (mappingId != null) {
             ConsultantClientMapping mapping = consultantClientMappingRepository
                     .findByTenantIdAndId(tenantId, mappingId)
-                    .orElseThrow(() -> new EntityNotFoundException("ConsultantClientMapping", mappingId));
+                    .orElse(null);
+            if (mapping == null) {
+                throw consultationRecordAccessGuard.institutionLinkTargetDenied(writer);
+            }
+            assigneeConsultantId = mapping.getConsultant() != null ? mapping.getConsultant().getId() : null;
+            assigneeClientId = mapping.getClient() != null ? mapping.getClient().getId() : null;
+            consultationRecordAccessGuard.requireInstitutionLinkAssignee(writer, assigneeConsultantId,
+                    assigneeClientId, request.getConsultantId(), request.getClientId(), request.getScheduleId());
             if (!PaymentTimingConstants.isInstitutionLink(mapping.getPaymentTiming())
                     && requestedContractId == null
                     && !isInstitutionLinkClient(tenantId, request.getClientId())) {
@@ -90,7 +109,16 @@ public class InstitutionLinkConsultationLogServiceImpl implements InstitutionLin
         if (requestedContractId != null) {
             InstitutionLinkContract contract = institutionLinkContractRepository
                     .findByTenantIdAndIdAndIsDeletedFalse(tenantId, requestedContractId)
-                    .orElseThrow(() -> new EntityNotFoundException("InstitutionLinkContract", requestedContractId));
+                    .orElse(null);
+            if (contract == null) {
+                throw consultationRecordAccessGuard.institutionLinkTargetDenied(writer);
+            }
+            // 매핑을 함께 보냈으면 담당 상담사는 이미 매핑(현재 담당)으로 검증했다 — 계약의 상담사는 생성 시점 값이라
+            // 담당 변경 뒤에는 다를 수 있다. 계약 내담자는 항상 본문·매핑 내담자와 같아야 한다.
+            consultationRecordAccessGuard.requireInstitutionLinkAssignee(writer,
+                    mappingId != null ? assigneeConsultantId : contract.getConsultantId(),
+                    contract.getClientId() != null ? contract.getClientId() : assigneeClientId,
+                    request.getConsultantId(), request.getClientId(), request.getScheduleId());
             resolvedContractId = contract.getId();
         } else {
             resolvedContractId = institutionLinkContractRepository
@@ -98,6 +126,10 @@ public class InstitutionLinkConsultationLogServiceImpl implements InstitutionLin
                     .map(InstitutionLinkContract::getId)
                     .orElse(null);
         }
+
+        rejectIfActiveLogExistsForSchedule(tenantId, request.getScheduleId());
+        boolean completedRequested = Boolean.TRUE.equals(request.getIsSessionCompleted())
+                && !scheduleService.isBeforeSessionStart(tenantId, request.getScheduleId());
 
         String billingYearMonth = request.getSessionDate().format(BILLING_YEAR_MONTH_FORMATTER);
         int monthlyOccurrence = nextMonthlyOccurrence(tenantId, mappingId, resolvedContractId, billingYearMonth);
@@ -121,7 +153,7 @@ public class InstitutionLinkConsultationLogServiceImpl implements InstitutionLin
                 .consultantAssessment(request.getConsultantAssessment())
                 .progressEvaluation(request.getProgressEvaluation())
                 .specialConsiderations(request.getSpecialConsiderations())
-                .isSessionCompleted(Boolean.TRUE.equals(request.getIsSessionCompleted()))
+                .isSessionCompleted(completedRequested)
                 .build();
         entity.setTenantId(tenantId);
         entity.setIsDeleted(false);
@@ -138,9 +170,10 @@ public class InstitutionLinkConsultationLogServiceImpl implements InstitutionLin
 
     @Override
     @Transactional
-    public InstitutionLinkConsultationLogResponse createFromSchedulePayload(Map<String, Object> recordData) {
+    public InstitutionLinkConsultationLogResponse createFromSchedulePayload(Map<String, Object> recordData,
+            ConsultationRecordWriter writer) {
         String tenantId = TenantContextHolder.getRequiredTenantId();
-        return create(tenantId, InstitutionLinkConsultationLogCreateRequest.fromSchedulePayload(recordData));
+        return create(tenantId, InstitutionLinkConsultationLogCreateRequest.fromSchedulePayload(recordData), writer);
     }
 
     @Override
@@ -241,7 +274,10 @@ public class InstitutionLinkConsultationLogServiceImpl implements InstitutionLin
         if (request.getSpecialConsiderations() != null) {
             entity.setSpecialConsiderations(request.getSpecialConsiderations());
         }
-        if (request.getIsSessionCompleted() != null) {
+        boolean blockedBeforeStart = Boolean.TRUE.equals(request.getIsSessionCompleted())
+                && !Boolean.TRUE.equals(entity.getIsSessionCompleted())
+                && scheduleService.isBeforeSessionStart(tenantId, entity.getScheduleId());
+        if (request.getIsSessionCompleted() != null && !blockedBeforeStart) {
             entity.setIsSessionCompleted(request.getIsSessionCompleted());
             if (Boolean.TRUE.equals(request.getIsSessionCompleted()) && entity.getCompletedAt() == null) {
                 entity.setCompletedAt(LocalDateTime.now());
@@ -259,12 +295,33 @@ public class InstitutionLinkConsultationLogServiceImpl implements InstitutionLin
     public InstitutionLinkConsultationLogResponse complete(Long recordId) {
         String tenantId = TenantContextHolder.getRequiredTenantId();
         InstitutionLinkConsultationLog entity = requireLog(tenantId, recordId);
+        if (scheduleService.isBeforeSessionStart(tenantId, entity.getScheduleId())) {
+            throw new ValidationException(SESSION_NOT_STARTED_MESSAGE);
+        }
         entity.setIsSessionCompleted(true);
         entity.setCompletedAt(LocalDateTime.now());
         InstitutionLinkConsultationLog saved = institutionLinkConsultationLogRepository.save(entity);
         log.info("타기관 상담일지 완료: tenantId={}, logId={}, mapping 잔여회기 미차감", tenantId, saved.getId());
         promoteScheduleIfSessionCompleted(tenantId, saved);
         return InstitutionLinkConsultationLogResponse.fromEntity(saved);
+    }
+
+    /**
+     * 같은 일정에 활성 타기관 일지가 있으면 생성을 거부한다 (일정당 일지 1건).
+     *
+     * @param tenantId   테넌트 ID
+     * @param scheduleId 일정 ID (null 이면 계약 단위 일지 — 검사 생략)
+     */
+    private void rejectIfActiveLogExistsForSchedule(String tenantId, Long scheduleId) {
+        if (scheduleId == null) {
+            return;
+        }
+        institutionLinkConsultationLogRepository
+                .findFirstByTenantIdAndScheduleIdAndIsDeletedFalseOrderByIdDesc(tenantId, scheduleId)
+                .ifPresent(existing -> {
+                    throw new ConsultationRecordDuplicateException(scheduleId, existing.getId(),
+                            DUPLICATE_LOG_MESSAGE);
+                });
     }
 
     /**

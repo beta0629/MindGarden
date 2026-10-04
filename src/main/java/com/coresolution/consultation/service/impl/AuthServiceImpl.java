@@ -253,7 +253,7 @@ public class AuthServiceImpl implements AuthService {
             User user;
             if (tenantId != null && !tenantId.trim().isEmpty()) {
                 user = userRepository.findByTenantIdAndUserId(tenantId, userId)
-                    .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다: tenantId=" + tenantId + ", userId=" + userId));
+                    .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다."));
             } else {
                 log.warn("refreshToken: JWT에 tenantId 없음 — 전역 이메일 조회 거부 userId={}", userId);
                 return AuthResponse.failure("유효하지 않은 리프레시 토큰입니다.");

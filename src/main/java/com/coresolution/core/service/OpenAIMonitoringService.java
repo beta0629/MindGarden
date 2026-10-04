@@ -1,6 +1,8 @@
 package com.coresolution.core.service;
 
 import com.coresolution.consultation.entity.AiUsageLog;
+import com.coresolution.consultation.service.ai.privacy.AiPiiMaskingService;
+import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.consultation.repository.AiUsageLogRepository;
 import com.coresolution.consultation.service.SystemConfigService;
 import com.coresolution.core.domain.SystemMetric;
@@ -50,6 +52,7 @@ public class OpenAIMonitoringService {
 
     private final AiUsageLogRepository usageLogRepository;
     private final SystemConfigService systemConfigService;
+    private final AiPiiMaskingService aiPiiMaskingService;
     private final RestTemplate restTemplate = new RestTemplate();
 
     @Autowired(required = false)
@@ -72,9 +75,10 @@ public class OpenAIMonitoringService {
         long startTime = System.currentTimeMillis();
         
         try {
-            String prompt = buildAnomalyPrompt(metrics, metricType);
-            String combinedPrompt = buildCombinedPromptForLog(SYSTEM_PROMPT_ANOMALY, prompt);
-            AnomalyAnalysisResult result = callOpenAIForAnomalyAnalysis(prompt, combinedPrompt);
+            String systemPrompt = maskForAi(SYSTEM_PROMPT_ANOMALY);
+            String prompt = maskForAi(buildAnomalyPrompt(metrics, metricType));
+            String combinedPrompt = buildCombinedPromptForLog(systemPrompt, prompt);
+            AnomalyAnalysisResult result = callOpenAIForAnomalyAnalysis(systemPrompt, prompt, combinedPrompt);
 
             long responseTime = System.currentTimeMillis() - startTime;
             log.info("✅ AI 이상 탐지 분석 완료 ({}ms): {}", responseTime, metricType);
@@ -115,9 +119,10 @@ public class OpenAIMonitoringService {
                 log.debug("🔒 민감정보 마스킹 완료: {} 필드", maskedDetails.size());
             }
             
-            String prompt = buildSecurityThreatPrompt(eventType, maskedDetails);
-            String combinedPrompt = buildCombinedPromptForLog(SYSTEM_PROMPT_SECURITY, prompt);
-            SecurityThreatAnalysisResult result = callOpenAIForSecurityAnalysis(prompt, combinedPrompt);
+            String systemPrompt = maskForAi(SYSTEM_PROMPT_SECURITY);
+            String prompt = maskForAi(buildSecurityThreatPrompt(eventType, maskedDetails));
+            String combinedPrompt = buildCombinedPromptForLog(systemPrompt, prompt);
+            SecurityThreatAnalysisResult result = callOpenAIForSecurityAnalysis(systemPrompt, prompt, combinedPrompt);
 
             long responseTime = System.currentTimeMillis() - startTime;
             log.info("✅ AI 보안 위협 분석 완료 ({}ms): {}", responseTime, eventType);
@@ -204,10 +209,12 @@ public class OpenAIMonitoringService {
     /**
      * OpenAI API 호출 - 이상 탐지 분석
      *
-     * @param prompt              raw user prompt (system_role 분리는 메서드 내부에서 message1 으로 결합)
-     * @param combinedPromptForLog system + user 결합 본문 (V20260529_001 prompt 컬럼 저장용)
+     * @param systemPrompt        마스킹된 system prompt
+     * @param prompt              마스킹된 user prompt
+     * @param combinedPromptForLog 마스킹된 system + user 결합 본문 (V20260529_001 prompt 컬럼 저장용)
      */
-    private AnomalyAnalysisResult callOpenAIForAnomalyAnalysis(String prompt, String combinedPromptForLog) {
+    private AnomalyAnalysisResult callOpenAIForAnomalyAnalysis(String systemPrompt, String prompt,
+            String combinedPromptForLog) {
         long startTime = System.currentTimeMillis();
         
         String apiKey = systemConfigService.getOpenAIApiKey();
@@ -220,7 +227,7 @@ public class OpenAIMonitoringService {
         
         Map<String, Object> message1 = new HashMap<>();
         message1.put("role", "system");
-        message1.put("content", "당신은 시스템 모니터링 및 이상 탐지 전문가입니다. 메트릭 데이터를 분석하여 이상 패턴을 정확하게 식별합니다.");
+        message1.put("content", systemPrompt);
         
         Map<String, Object> message2 = new HashMap<>();
         message2.put("role", "user");
@@ -284,10 +291,12 @@ public class OpenAIMonitoringService {
     /**
      * OpenAI API 호출 - 보안 위협 분석
      *
-     * @param prompt              raw user prompt
-     * @param combinedPromptForLog system + user 결합 본문 (V20260529_001 prompt 컬럼 저장용)
+     * @param systemPrompt        마스킹된 system prompt
+     * @param prompt              마스킹된 user prompt
+     * @param combinedPromptForLog 마스킹된 system + user 결합 본문 (V20260529_001 prompt 컬럼 저장용)
      */
-    private SecurityThreatAnalysisResult callOpenAIForSecurityAnalysis(String prompt, String combinedPromptForLog) {
+    private SecurityThreatAnalysisResult callOpenAIForSecurityAnalysis(String systemPrompt, String prompt,
+            String combinedPromptForLog) {
         long startTime = System.currentTimeMillis();
         
         String apiKey = systemConfigService.getOpenAIApiKey();
@@ -300,7 +309,7 @@ public class OpenAIMonitoringService {
         
         Map<String, Object> message1 = new HashMap<>();
         message1.put("role", "system");
-        message1.put("content", "당신은 사이버 보안 전문가입니다. 보안 이벤트를 분석하여 위협을 정확하게 평가합니다.");
+        message1.put("content", systemPrompt);
         
         Map<String, Object> message2 = new HashMap<>();
         message2.put("role", "user");
@@ -395,6 +404,11 @@ public class OpenAIMonitoringService {
         } catch (Exception e) {
             log.error("❌ API 사용 로그 저장 실패", e);
         }
+    }
+
+    /** 중앙 AI 채팅·모델 제공자와 같은 마스킹 경로 (테넌트 토글, 컨텍스트 없으면 기본 ON). */
+    private String maskForAi(String text) {
+        return aiPiiMaskingService.mask(TenantContextHolder.getTenantId(), text);
     }
 
     /**

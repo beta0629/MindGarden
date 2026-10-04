@@ -8,7 +8,7 @@ echo ""
 
 # 서버에 SSH로 접속하여 확인
 echo "서버 상태 확인 중..."
-ssh root@beta0629.cafe24.com << 'EOF'
+ssh root@${DEV_SERVER_HOST:?DEV_SERVER_HOST 환경변수를 설정하세요} << 'EOF'
     echo "=========================================="
     echo "1. 서비스 상태"
     echo "=========================================="

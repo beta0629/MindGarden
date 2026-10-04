@@ -42,7 +42,7 @@ export DB_HOST=your-dev-db-host  # 개발 서버 DB 호스트 주소
 export DB_PORT=3306
 export DB_NAME=core_solution
 export DB_USERNAME=mindgarden_dev
-export DB_PASSWORD="MindGardenDev2025!@#"  # 실제 비밀번호로 변경
+export DB_PASSWORD="<DEV_DB_PASSWORD>"  # 실제 비밀번호로 변경
 
 # 기타 필수 환경 변수
 export JWT_SECRET=your-jwt-secret-key
@@ -82,7 +82,7 @@ DB_HOST=your-dev-db-host
 DB_PORT=3306
 DB_NAME=core_solution
 DB_USERNAME=mindgarden_dev
-DB_PASSWORD=MindGardenDev2025!@#
+DB_PASSWORD=<DEV_DB_PASSWORD>
 
 # JWT 설정
 JWT_SECRET=dev-jwt-secret-key-change-me
@@ -140,7 +140,7 @@ CREATE DATABASE IF NOT EXISTS core_solution
 CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- 개발 서버 전용 사용자 생성
-CREATE USER IF NOT EXISTS 'mindgarden_dev'@'%' IDENTIFIED BY 'MindGardenDev2025!@#';
+CREATE USER IF NOT EXISTS 'mindgarden_dev'@'%' IDENTIFIED BY '<DEV_DB_PASSWORD>';
 
 -- 권한 부여
 GRANT ALL PRIVILEGES ON core_solution.* TO 'mindgarden_dev'@'%';

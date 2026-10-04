@@ -16,6 +16,7 @@ import { Link } from 'react-router-dom';
 import SafeText from '../common/SafeText';
 import { NotificationBadge } from '../dashboard-v2/atoms';
 import { CLIENT_DASHBOARD_ROUTES } from '../../constants/clientDashboardRoutes';
+import { NOTIFICATION_TABS, buildNotificationsTabPath } from '../../constants/notificationTabs';
 import {
   CLIENT_WEB_LOGIN,
   CLIENT_WEB_LOGOUT,
@@ -36,6 +37,11 @@ import { toDisplayString } from '../../utils/safeDisplay';
 import './ClientWebTopChrome.css';
 
 const BellIcon = ICONS.BELL;
+/** 종 개수는 개인 알림 미읽음 — 같은 목록(내 알림 탭)으로 연다 */
+const NOTIFICATIONS_BELL_HREF = buildNotificationsTabPath(
+  CLIENT_DASHBOARD_ROUTES.NOTIFICATIONS,
+  NOTIFICATION_TABS.PERSONAL
+);
 const MessageCircleIcon = ICONS.MESSAGE_CIRCLE;
 const CartIcon = ICONS.SHOPPING_CART;
 
@@ -90,7 +96,7 @@ function ClientWebChromeAlerts() {
     <>
       <Link
         className="client-web-topchrome__icon-link"
-        to={CLIENT_DASHBOARD_ROUTES.NOTIFICATIONS}
+        to={NOTIFICATIONS_BELL_HREF}
         data-testid={CLIENT_WEB_NOTIFICATIONS_LINK_TEST_ID}
         aria-label={CLIENT_WEB_NOTIFICATIONS_ARIA}
       >

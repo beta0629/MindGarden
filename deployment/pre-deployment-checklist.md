@@ -30,7 +30,7 @@
 ssh user@your-production-host
 
 # DB 초기화 스크립트는 운영에서 이미 적용 여부 확인 후 실행
-# mysql -u root -p < ~/mindgarden/production-db-setup.sql
+# envsubst < ~/mindgarden/production-db-setup.sql | mysql -u root -p
 
 source ~/mindgarden/.env.production
 cd ~/mindgarden

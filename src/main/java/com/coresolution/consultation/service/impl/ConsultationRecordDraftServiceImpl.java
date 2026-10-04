@@ -1,5 +1,6 @@
 package com.coresolution.consultation.service.impl;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 import com.coresolution.consultation.dto.ConsultationRecordDraftResponse;
 import com.coresolution.consultation.entity.ConsultationRecordDraft;
@@ -18,6 +19,8 @@ import org.springframework.transaction.annotation.Transactional;
 /**
  * 상담일지 서버 초안 서비스 구현.
  *
+ * <p>로그에 초안 본문(payloadJson)을 남기지 않는다. 식별자·길이만 기록한다.</p>
+ *
  * @author CoreSolution
  * @since 2026-04-22
  */
@@ -33,8 +36,15 @@ public class ConsultationRecordDraftServiceImpl implements ConsultationRecordDra
     @Override
     @Transactional(readOnly = true)
     public Optional<ConsultationRecordDraftResponse> getDraft(String tenantId, Long consultationId, Long consultantId) {
+        return getDraft(tenantId, consultationId, consultantId, false);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Optional<ConsultationRecordDraftResponse> getDraft(String tenantId, Long consultationId,
+            Long consultantId, boolean managerOwner) {
         validateTenant(tenantId);
-        requireAssignableSchedule(tenantId, consultationId, consultantId);
+        requireAssignableSchedule(tenantId, consultationId, consultantId, managerOwner);
         return consultationRecordDraftRepository
                 .findByTenantIdAndConsultationIdAndConsultantIdAndIsDeletedFalse(tenantId, consultationId, consultantId)
                 .map(this::toResponse);
@@ -48,8 +58,20 @@ public class ConsultationRecordDraftServiceImpl implements ConsultationRecordDra
             Long consultantId,
             String payloadJson,
             Long expectedVersion) {
+        return upsertDraft(tenantId, consultationId, consultantId, payloadJson, expectedVersion, false);
+    }
+
+    @Override
+    @Transactional
+    public ConsultationRecordDraftResponse upsertDraft(
+            String tenantId,
+            Long consultationId,
+            Long consultantId,
+            String payloadJson,
+            Long expectedVersion,
+            boolean managerOwner) {
         validateTenant(tenantId);
-        requireAssignableSchedule(tenantId, consultationId, consultantId);
+        requireAssignableSchedule(tenantId, consultationId, consultantId, managerOwner);
         if (payloadJson == null) {
             throw new ValidationException("payloadJson", null, "payloadJson은 필수입니다.");
         }
@@ -61,9 +83,31 @@ public class ConsultationRecordDraftServiceImpl implements ConsultationRecordDra
         ConsultationRecordDraft entity = existing.orElseGet(() -> newDraft(tenantId, consultationId, consultantId));
         entity.setPayloadJson(payloadJson);
         ConsultationRecordDraft saved = consultationRecordDraftRepository.save(entity);
-        log.info("상담일지 서버 초안 저장: tenantId={}, consultationId={}, consultantId={}, id={}",
-                tenantId, consultationId, consultantId, saved.getId());
+        log.info("상담일지 서버 초안 저장: tenantId={}, consultationId={}, consultantId={}, id={}, payloadLength={}",
+                tenantId, consultationId, consultantId, saved.getId(), payloadJson.length());
         return toResponse(saved);
+    }
+
+    @Override
+    @Transactional
+    public boolean deleteDraft(String tenantId, Long consultationId, Long consultantId) {
+        if (tenantId == null || tenantId.isEmpty() || consultationId == null || consultantId == null) {
+            return false;
+        }
+        Optional<ConsultationRecordDraft> existing = consultationRecordDraftRepository
+                .findByTenantIdAndConsultationIdAndConsultantIdAndIsDeletedFalse(tenantId, consultationId, consultantId);
+        if (existing.isEmpty()) {
+            return false;
+        }
+        ConsultationRecordDraft draft = existing.get();
+        // 본문을 남기지 않기 위해 soft delete 와 함께 payload 를 비운다.
+        draft.setPayloadJson("{}");
+        draft.setIsDeleted(true);
+        draft.setDeletedAt(LocalDateTime.now());
+        consultationRecordDraftRepository.save(draft);
+        log.info("상담일지 서버 초안 삭제: tenantId={}, consultationId={}, consultantId={}, id={}",
+                tenantId, consultationId, consultantId, draft.getId());
+        return true;
     }
 
     private void validateTenant(String tenantId) {
@@ -72,11 +116,15 @@ public class ConsultationRecordDraftServiceImpl implements ConsultationRecordDra
         }
     }
 
-    private void requireAssignableSchedule(String tenantId, Long consultationId, Long consultantId) {
+    private void requireAssignableSchedule(String tenantId, Long consultationId, Long consultantId,
+            boolean managerOwner) {
         Schedule schedule = scheduleRepository.findByTenantIdAndId(tenantId, consultationId)
                 .orElseThrow(() -> new EntityNotFoundException("Schedule", consultationId));
         if (Boolean.TRUE.equals(schedule.getIsDeleted())) {
             throw new EntityNotFoundException("Schedule", consultationId, "삭제된 일정입니다.");
+        }
+        if (managerOwner) {
+            return;
         }
         if (schedule.getConsultantId() == null || !schedule.getConsultantId().equals(consultantId)) {
             throw new ForbiddenException("해당 일정에 대한 상담일지 초안을 작성할 권한이 없습니다.");

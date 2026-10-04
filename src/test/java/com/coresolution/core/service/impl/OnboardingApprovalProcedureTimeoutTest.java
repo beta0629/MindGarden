@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.contains;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -29,6 +30,7 @@ import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationContext;
+import org.springframework.core.env.Environment;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.PlatformTransactionManager;
 import jakarta.persistence.EntityManager;
@@ -59,6 +61,9 @@ class OnboardingApprovalProcedureTimeoutTest {
 
     @Mock
     private ApplicationContext applicationContext;
+
+    @Mock
+    private Environment environment;
 
     @Mock
     private PlatformTransactionManager transactionManager;
@@ -118,8 +123,8 @@ class OnboardingApprovalProcedureTimeoutTest {
         OnboardingDecisionDeadline.bindDeadlineEpochMillis(System.currentTimeMillis() - 1_000L);
         stubConnection();
         when(callableStatement.execute()).thenReturn(false);
-        when(callableStatement.getBoolean(10)).thenReturn(false);
-        when(callableStatement.getString(11)).thenReturn("역할 템플릿 적용 실패");
+        when(callableStatement.getBoolean(11)).thenReturn(false);
+        when(callableStatement.getString(12)).thenReturn("역할 템플릿 적용 실패");
 
         Map<String, Object> result = approvalService.processOnboardingApproval(78L, "tenant-78",
                 "검증 테넌트", "COUNSELING", "ops-actor", "승인", "admin@example.com",
@@ -127,7 +132,9 @@ class OnboardingApprovalProcedureTimeoutTest {
 
         assertThat(result.get("success")).isEqualTo(false);
         assertThat(String.valueOf(result.get("message"))).contains("역할 템플릿 적용 실패");
-        verify(connection).prepareCall(contains("ProcessOnboardingApproval"));
+        verify(connection).prepareCall(
+                eq("{CALL ProcessOnboardingApproval(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)}"));
+        verify(callableStatement).setString(10, ".dev.core-solution.co.kr");
         verify(callableStatement).setQueryTimeout(1);
         verify(transactionManager, never()).getTransaction(any());
     }
@@ -140,5 +147,9 @@ class OnboardingApprovalProcedureTimeoutTest {
         when(statement.executeQuery(anyString())).thenReturn(resultSet);
         when(resultSet.next()).thenReturn(false);
         when(connection.prepareCall(anyString())).thenReturn(callableStatement);
+        when(applicationContext.getEnvironment()).thenReturn(environment);
+        when(environment.getActiveProfiles()).thenReturn(new String[] {"dev"});
+        when(oauth2DomainUtil.resolveEnvironmentTenantDomainSuffix(any(String[].class)))
+                .thenReturn(".dev.core-solution.co.kr");
     }
 }

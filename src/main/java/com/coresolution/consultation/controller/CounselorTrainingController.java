@@ -3,6 +3,9 @@ package com.coresolution.consultation.controller;
 import com.coresolution.consultation.entity.CounselorFeedback;
 import com.coresolution.consultation.entity.VirtualClientSession;
 import com.coresolution.consultation.service.CounselorTrainingService;
+import com.coresolution.consultation.service.support.ClientPathAccessGuard;
+import com.coresolution.consultation.util.ServerErrorResponses;
+import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -28,6 +31,7 @@ import java.util.Map;
 public class CounselorTrainingController {
 
     private final CounselorTrainingService trainingService;
+    private final ClientPathAccessGuard clientPathAccessGuard;
 
     /**
      * 상담 세션 분석 및 피드백
@@ -36,7 +40,10 @@ public class CounselorTrainingController {
     @PostMapping("/analyze-session/{consultationRecordId}")
     public ResponseEntity<Map<String, Object>> analyzeSession(
             @PathVariable Long consultationRecordId,
-            @RequestParam Long consultantId) {
+            @RequestParam Long consultantId,
+            HttpSession session) {
+
+        clientPathAccessGuard.requireConsultantAccess(session, consultantId);
 
         log.info("📊 상담 세션 분석 요청: recordId={}, consultantId={}",
             consultationRecordId, consultantId);
@@ -53,11 +60,7 @@ public class CounselorTrainingController {
             return ResponseEntity.ok(response);
 
         } catch (Exception e) {
-            log.error("❌ 상담 세션 분석 실패: {}", e.getMessage(), e);
-            return ResponseEntity.internalServerError().body(Map.of(
-                "success", false,
-                "message", "상담 세션 분석 실패"
-            ));
+            throw ServerErrorResponses.propagate(e);
         }
     }
 
@@ -67,9 +70,11 @@ public class CounselorTrainingController {
      */
     @PostMapping("/virtual-client/create")
     public ResponseEntity<Map<String, Object>> createVirtualClientSession(
-            @RequestBody Map<String, Object> request) {
+            @RequestBody Map<String, Object> request,
+            HttpSession httpSession) {
 
-        Long consultantId = ((Number) request.get("consultantId")).longValue();
+        Long consultantId = request.get("consultantId") instanceof Number number ? number.longValue() : null;
+        clientPathAccessGuard.requireConsultantAccess(httpSession, consultantId);
         String scenarioType = (String) request.get("scenarioType");
         String difficultyLevel = (String) request.getOrDefault("difficultyLevel", "MEDIUM");
 
@@ -88,11 +93,7 @@ public class CounselorTrainingController {
             return ResponseEntity.ok(response);
 
         } catch (Exception e) {
-            log.error("❌ 가상 내담자 세션 생성 실패: {}", e.getMessage(), e);
-            return ResponseEntity.internalServerError().body(Map.of(
-                "success", false,
-                "message", "가상 내담자 세션 생성 실패"
-            ));
+            throw ServerErrorResponses.propagate(e);
         }
     }
 
@@ -121,11 +122,7 @@ public class CounselorTrainingController {
             return ResponseEntity.ok(response);
 
         } catch (Exception e) {
-            log.error("❌ 메시지 전송 실패: {}", e.getMessage(), e);
-            return ResponseEntity.internalServerError().body(Map.of(
-                "success", false,
-                "message", "메시지 전송 실패"
-            ));
+            throw ServerErrorResponses.propagate(e);
         }
     }
 
@@ -150,11 +147,7 @@ public class CounselorTrainingController {
             return ResponseEntity.ok(response);
 
         } catch (Exception e) {
-            log.error("❌ 세션 종료 실패: {}", e.getMessage(), e);
-            return ResponseEntity.internalServerError().body(Map.of(
-                "success", false,
-                "message", "세션 종료 실패"
-            ));
+            throw ServerErrorResponses.propagate(e);
         }
     }
 
@@ -165,8 +158,10 @@ public class CounselorTrainingController {
     @GetMapping("/feedback/{consultantId}")
     public ResponseEntity<Map<String, Object>> getFeedbackHistory(
             @PathVariable Long consultantId,
-            @RequestParam(defaultValue = "10") Integer limit) {
+            @RequestParam(defaultValue = "10") Integer limit,
+            HttpSession session) {
 
+        clientPathAccessGuard.requireConsultantAccess(session, consultantId);
         try {
             Map<String, Object> result = trainingService.getFeedbackHistory(consultantId, limit);
 
@@ -177,11 +172,7 @@ public class CounselorTrainingController {
             return ResponseEntity.ok(response);
 
         } catch (Exception e) {
-            log.error("❌ 피드백 이력 조회 실패: {}", e.getMessage(), e);
-            return ResponseEntity.internalServerError().body(Map.of(
-                "success", false,
-                "message", "피드백 이력 조회 실패"
-            ));
+            throw ServerErrorResponses.propagate(e);
         }
     }
 }

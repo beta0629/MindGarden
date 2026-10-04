@@ -1,64 +1,13 @@
 ---
-description: MindGarden — 서브에이전트(Task) 위임 필수 및 역할 분리
-alwaysApply: true
+description: 서브에이전트(Task)에 일을 나눌 때의 역할 매핑과 위임 프롬프트 규칙. 위임·병렬 배치·역할 분리가 필요할 때 적용.
+alwaysApply: false
 ---
 
-# MindGarden — 서브에이전트 사용 (필수)
+# 서브에이전트 위임 (필요할 때만)
 
-모델·세션이 바뀌어도 아래를 **기본 전제**로 둔다.
-
-## 1. 구현·대규모 수정은 서브에이전트에 위임
-
-- **일반 채팅(메인) 어시스턴트는 소스 코드를 직접 수정하지 않는다.** (사용자가 “직접 해줘”라고 하더라도, 프로젝트 규칙이 우선이면 **위임**으로 안내한다.)
-- **코드 작성·리팩터·버그 패치** → **`core-coder`** Task(서브에이전트)에 위임한다. 프롬프트에 파일 경로·완료 조건·참고 문서 경로를 명시한다.
-- **원인 분석·스택 해석·재현 절차** (수정은 제외) → **`core-debugger`** 에 위임한다.
-- **탐색·인벤토리·코드베이스 질문** → **`explore`** 에 위임한다.
-- **계획·배치·오케스트레이션** (누가 무엇을 하는지) → **`core-planner`** 에 위임한다.
-- **코드 변경이 수반된 배치의 검증** → 반드시 **`core-tester`** 게이트를 거친다고 가정하고, 위임 프롬프트에 검증 항목을 넣는다.
-- UI 구조·중복 컴포넌트 **제안·문서화만** → **`core-component-manager`** (코드 직수정 없음).
-- 디자인·시안 → **`core-designer`** / 마크업만 → **`core-publisher`**.
-- **배포·CI/CD·GitHub Actions 트리거·운영/개발 반영 절차** → **`core-deployer`**. 저장소 워크플로 기준으로만 짧게 안내한다.
-
-### 디자인·비주얼 변경 배치 — Task 모델 (권장)
-
-- **UI·레이아웃·시각 스펙·와이어·마크업**이 중심인 위임(`core-designer`, `core-publisher`, 또는 이 둘과 병렬되는 **디자인 변경 전용** 배치)에는 Cursor **Task** 호출 시 **`model: "gemini-3.1-pro"`** 를 명시하는 것을 **권장**한다. (제공자 일시 오류 시 한 번 재시도.)
-- **오케스트레이션 문서**: `docs/project-management/CORE_PLANNER_DELEGATION_ORDER.md`에 동일 권장이 정리되어 있다.
-- **스킬**: `/core-solution-design-handoff`, `/core-solution-planning`, `/core-solution-publisher`에 반영.
-- `core-coder`·`core-tester`는 과제 성격에 따라 기본 모델을 두고, 사용자가 **「디자인 변경과 같은 배치에서 제미나이」**라고 명시한 경우에만 동일 모델을 태스크별로 지정한다.
-
-서브에이전트 정의는 저장소 **`/.cursor/agents/*.md`** 를 따른다.
-
-### 배포 주제 시 메인 어시스턴트 행동
-
-- **배포가 필요한지·어떻게 할지를 매번 되묻거나**, 동일한 배포 설명을 **길게 반복하지 않는다.**
-- 사용자가 배포·푸시 후 반영만 언급하면 → **`core-deployer`** Task에 위임하거나, **`/.cursor/agents/core-deployer.md`** 를 따른 한 번의 짧은 요약만 한다 (확인 질문·꼬리 제안 금지).
-- Task 도구에 `core-deployer` 타입이 없으면 **`generalPurpose`** 로 동일 프롬프트에 `/.cursor/agents/core-deployer.md` 전문을 붙여 실행한다.
-
-## 2. 필수 참조 문서 (위임 전 읽기·프롬프트에 인용)
-
-배치·품질 이슈 시 우선:
-
-- `docs/project-management/CORE_PLANNER_DELEGATION_ORDER.md` — 위임 순서, **직접 수정 금지**, 테스터 게이트.
-- `docs/project-management/COMMON_DISPLAY_BOUNDARY_MEETING_20260322.md` — React #130·`safeDisplay`·표시 경계.
-- (해당 작업별) `docs/standards/*.md` — 코딩 표준은 **`core-coder`** 프롬프트에 경로를 넣어 전달한다.
-- **`expo-app/`** 에서 Metro·모듈 해석·`@/`·`getMmkv`·`metro.config.js`·`react-native-mmkv` 관련 작업 시: **`docs/project-management/EXPO_APP_METRO_ALIAS_AND_MMKV_HANDOFF.md`** 필독. **`core-coder`** 위임 프롬프트에 이 경로를 넣고 **문서 §5 체크리스트를 완료 조건**에 명시한다. 동일 `Unable to resolve module` 루프 방지: **import 경로만 여러 스타일로 바꾸는 패치 금지** — 문서의 고정 규칙(`@/lib/getMmkv` 단일)과 Metro 층을 먼저 구분한다.
-- **운영(go-live) 반영 전 하드코딩 게이트** — 아래 §17·§1.3을 **`core-coder`** 위임 시 반드시 인용한다.
-  - `docs/project-management/ADMIN_LNB_LAYOUT_UNIFICATION_MEETING_HANDOFF.md` **§17** (검사·완료 조건)
-  - `docs/project-management/SETTINGS_PAGES_LAYOUT_UNIFICATION_ORCHESTRATION.md` **§1.3**
-  - `docs/운영반영/PRE_PRODUCTION_GO_LIVE_CHECKLIST.md`
-
-Task를 띄울 때는 서브에이전트가 **이 대화 맥락을 모를 수 있으므로**, 위 문서의 **요약 5~10줄 + 수정 대상 경로**를 프롬프트에 포함한다.
-
-## 3. 예외
-
-- **사용자가 명시적으로** “메인이 지금 이 한 줄만 수정”처럼 범위를 극히 좁혀 허용한 경우에만 메인에서 패치를 논의할 수 있다. 그 외는 위임이 기본이다.
-
-## 4. 운영 반영 준비 — 하드코딩 (필수)
-
-- **원칙**: **코드 검색·CI/BI 하드코딩 검사·`check-hardcode`(저장소 스크립트 경로 확인)·리뷰에서 하드코딩으로 식별되면, 운영 반영 전까지 예외 없이 수정·치환한다.** 로컬 커밋 훅이 “개발 중 허용”을 보여도 **운영 게이트 기준은 아님**.
-- **범위**: 같은 PR·태스크 범위에서 스캔에 걸린 항목은 **전부** 정리한다. 구현·치환은 **`core-coder`**. 토큰·팔레트 부재 시 **`core-designer`** 스펙 합의 후 반영.
-- **스킬 정합**: `/core-solution-standardization`, `/core-solution-frontend`, `/core-solution-deployment`, `/core-solution-design-system-css` 에 동일 정책이 있음.
-
-## 5. 커밋·푸시
-
-- 코드 변경이 포함된 커밋은 **`core-coder` 위임 결과를 사용자가 검수한 뒤**, 별도 지시가 있을 때만 수행한다. (메인이 임의로 대량 커밋하지 않는다.)
+- 위임은 선택이다. 작은 수정은 메인이 직접 한다(토큰 절약). 큰 배치·병렬 작업일 때만 나눈다.
+- 매핑: 구현·수정 → `core-coder` · 원인 분석(수정 없음) → `core-debugger` · 탐색 → `explore` · 계획·분배 → `core-planner` · 테스트 → `core-tester` · 시안 → `core-designer` · 마크업 → `core-publisher` · 컴포넌트 중복·배치 제안 → `core-component-manager` · 배포 사실 안내 → `core-deployer`
+- 정의: `.cursor/agents/*.md` · 상세 매핑: `/core-solution-rules`
+- 서브에이전트는 이 대화를 모른다. 프롬프트에 목표 · 대상 경로 · 완료 조건 · "루트 AGENTS.md 와 `.cursor/rules/guardrail-preflight.mdc` 를 따를 것"을 넣는다.
+- 모델은 기본(Auto). 특정 모델 지정은 사용자가 요청할 때만.
+- 코드 변경 배치는 검증 표(`guardrail-preflight.mdc`)가 붙기 전에는 완료로 보고하지 않는다.

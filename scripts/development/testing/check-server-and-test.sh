@@ -8,7 +8,7 @@ echo ""
 
 # 서버 상태 확인 (SSH로 직접 확인)
 echo "1. 서버 상태 확인 중..."
-ssh root@beta0629.cafe24.com << 'EOF'
+ssh root@${DEV_SERVER_HOST:?DEV_SERVER_HOST 환경변수를 설정하세요} << 'EOF'
     echo "=== 서비스 상태 ==="
     systemctl status mindgarden-dev --no-pager | head -20
     

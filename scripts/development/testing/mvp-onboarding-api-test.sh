@@ -7,14 +7,14 @@ set -e
 BASE_URL="${BASE_URL:-https://ops.dev.e-trinity.co.kr/api/v1}"
 BUSINESS_TYPE="${BUSINESS_TYPE:-CONSULTATION}"
 OPS_USERNAME="${OPS_USERNAME:-superadmin@mindgarden.com}"
-OPS_PASSWORD="${OPS_PASSWORD:-admin123}"
+OPS_PASSWORD="${OPS_PASSWORD:?OPS_PASSWORD 환경변수를 설정하세요}"
 
 # 타임스탬프 생성
 TIMESTAMP=$(date +%s%3N)
 TENANT_ID="test-${BUSINESS_TYPE}-${TIMESTAMP}"
 TENANT_NAME="테스트 ${BUSINESS_TYPE} ${TIMESTAMP}"
 EMAIL="admin@${BUSINESS_TYPE}-${TIMESTAMP}.com"
-PASSWORD="test1234"
+PASSWORD="${TEST_TENANT_ADMIN_PASSWORD:?TEST_TENANT_ADMIN_PASSWORD 환경변수를 설정하세요}"
 
 echo "=== MVP 온보딩 플로우 API 테스트 시작 ==="
 echo "테넌트 ID: ${TENANT_ID}"

@@ -30,6 +30,7 @@ import com.coresolution.consultation.service.erp.accounting.LedgerService;
 import com.coresolution.consultation.service.erp.financial.CardMerchantFeeSettingsService;
 import com.coresolution.consultation.service.erp.financial.FinancialTransactionService;
 import com.coresolution.consultation.service.erp.settlement.SettlementService;
+import com.coresolution.consultation.service.support.ResourceOwnerAccessGuard;
 import com.coresolution.consultation.utils.SessionUtils;
 import jakarta.servlet.http.HttpSession;
 import java.util.HashMap;
@@ -85,6 +86,7 @@ class ErpStaffStillForbiddenTest {
     @Mock private SalaryTaxRateLookupService salaryTaxRateLookupService;
     @Mock private UserRepository userRepository;
     @Mock private Environment environment;
+    @Mock private ResourceOwnerAccessGuard resourceOwnerAccessGuard;
     @Mock private SalaryBatchService salaryBatchService;
 
     private MockedStatic<SessionUtils> sessionUtilsStatic;
@@ -122,7 +124,8 @@ class ErpStaffStillForbiddenTest {
     @DisplayName("SettlementController — STAFF + ERP_ACCESS 없음 → 403")
     void settlement_staff_forbidden() {
         SettlementController controller =
-                new SettlementController(settlementService, dynamicPermissionService);
+                new SettlementController(settlementService, dynamicPermissionService,
+                        org.mockito.Mockito.mock(ResourceOwnerAccessGuard.class));
 
         ResponseEntity<?> response = controller.getRules(session);
 
@@ -133,7 +136,8 @@ class ErpStaffStillForbiddenTest {
     @DisplayName("AccountingController — STAFF + ERP_ACCESS 없음 → 403")
     void accounting_staff_forbidden() {
         AccountingController controller =
-                new AccountingController(accountingService, dynamicPermissionService);
+                new AccountingController(accountingService, dynamicPermissionService,
+                        org.mockito.Mockito.mock(ResourceOwnerAccessGuard.class));
 
         ResponseEntity<?> response = controller.getJournalEntries(session);
 
@@ -144,7 +148,8 @@ class ErpStaffStillForbiddenTest {
     @DisplayName("LedgerController — STAFF + ERP_ACCESS 없음 → 403")
     void ledger_staff_forbidden() {
         LedgerController controller =
-                new LedgerController(ledgerService, dynamicPermissionService);
+                new LedgerController(ledgerService, dynamicPermissionService,
+                        org.mockito.Mockito.mock(ResourceOwnerAccessGuard.class));
 
         ResponseEntity<?> response = controller.getLedgersByAccount(1L, session);
 
@@ -171,7 +176,8 @@ class ErpStaffStillForbiddenTest {
         // local/dev 분기를 건너뛰고 동적 ERP_ACCESS 체크로 떨어진다.
         ErpController controller = new ErpController(erpService, financialTransactionService,
                 cardMerchantFeeSettingsService, recurringExpenseService, commonCodeService,
-                salaryTaxRateLookupService, dynamicPermissionService, userRepository, environment);
+                salaryTaxRateLookupService, dynamicPermissionService, userRepository, environment,
+                resourceOwnerAccessGuard);
 
         ResponseEntity<Map<String, Object>> response = controller.getAllItems(session);
 
@@ -182,7 +188,8 @@ class ErpStaffStillForbiddenTest {
     @DisplayName("SalaryBatchController — STAFF + SALARY_MANAGE 없음 → 403")
     void salaryBatch_staff_forbidden() {
         SalaryBatchController controller =
-                new SalaryBatchController(salaryBatchService, dynamicPermissionService);
+                new SalaryBatchController(salaryBatchService, dynamicPermissionService,
+                        org.mockito.Mockito.mock(ResourceOwnerAccessGuard.class));
 
         ResponseEntity<Map<String, Object>> response =
                 controller.executeBatch(new HashMap<>(), session);
@@ -209,7 +216,8 @@ class ErpStaffStillForbiddenTest {
         DiscountAccountingService discountAccountingService =
                 org.mockito.Mockito.mock(DiscountAccountingService.class);
         DiscountAccountingController controller =
-                new DiscountAccountingController(discountAccountingService, dynamicPermissionService);
+                new DiscountAccountingController(discountAccountingService, dynamicPermissionService,
+                        org.mockito.Mockito.mock(ResourceOwnerAccessGuard.class));
 
         ResponseEntity<Map<String, Object>> response = controller.getDiscountAccounting(1L, session);
 

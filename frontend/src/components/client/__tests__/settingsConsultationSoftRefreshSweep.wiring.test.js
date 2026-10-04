@@ -64,18 +64,18 @@ describe('settings/consultation/messages soft-refresh sweep wiring', () => {
       expect(src).not.toMatch(/window\.location\.href\s*=\s*['"]\/client\/dashboard/);
       expect(src).not.toMatch(/window\.location\.href\s*=\s*['"]\/consultant\/dashboard/);
       if (expectSoftRefresh) {
-        expect(src).toMatch(/useUserIdScopedLoad|useSoftResourceLoad|softRefresh|runResourceLoad/);
+        expect(src).toMatch(/useUserIdScopedLoad|useSoftResourceLoad|softRefresh|runResourceLoad|usePagedList/);
       }
     }
   );
 
-  test('ConsultationHistory / ClientMessageScreen import softRefresh SSOT hooks', () => {
+  test('ConsultationHistory / ClientMessageScreen use softRefresh SSOT hooks (messages: paged list silent reload)', () => {
     const history = readSrc('components', 'consultation', 'ConsultationHistory.js');
     const messages = readSrc('components', 'client', 'ClientMessageScreen.js');
     expect(history).toMatch(/useSoftResourceLoad/);
     expect(history).toMatch(/useUserIdScopedLoad/);
-    expect(messages).toMatch(/useSoftResourceLoad/);
-    expect(messages).toMatch(/softRefreshMessages|softRefresh\(/);
+    expect(messages).toMatch(/usePagedList/);
+    expect(messages).toMatch(/reloadMessages\(\{\s*silent:\s*true\s*\}\)/);
   });
 
   test('ShopCheckout / ShopOrderDetail PortOne gate deps are not bare [user]', () => {

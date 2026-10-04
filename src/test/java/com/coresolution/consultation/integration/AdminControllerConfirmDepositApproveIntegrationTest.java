@@ -2,13 +2,16 @@ package com.coresolution.consultation.integration;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import com.coresolution.consultation.constant.SessionConstants;
 import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.entity.ConsultantClientMapping;
 import com.coresolution.consultation.entity.User;
+import com.coresolution.consultation.repository.ConsultantClientMappingRepository;
 import com.coresolution.consultation.service.AdminService;
 import com.coresolution.consultation.service.DynamicPermissionService;
 import com.coresolution.consultation.service.RealTimeStatisticsService;
+import com.coresolution.consultation.service.support.ResourceOwnerAccessGuard;
 import com.coresolution.integrationtest.support.WithMockAdminSecurityContext;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.DisplayName;
@@ -25,6 +28,7 @@ import org.springframework.transaction.annotation.Transactional;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -70,6 +74,9 @@ class AdminControllerConfirmDepositApproveIntegrationTest {
 
     @MockBean
     private DynamicPermissionService dynamicPermissionService;
+
+    @MockBean
+    private ConsultantClientMappingRepository mappingRepository;
 
     private User adminUser() {
         User user = new User();
@@ -147,6 +154,7 @@ class AdminControllerConfirmDepositApproveIntegrationTest {
         ConsultantClientMapping mapping = mappingWithRelations(mappingId, consultantId, clientId);
 
         when(adminService.approveMapping(eq(mappingId), eq("관리자이름"))).thenReturn(mapping);
+        when(mappingRepository.findByTenantIdAndId(TEST_TENANT_ID, mappingId)).thenReturn(Optional.of(mapping));
         when(adminService.getMappingById(mappingId)).thenReturn(mapping);
 
         Map<String, Object> body = new HashMap<>();
@@ -205,6 +213,7 @@ class AdminControllerConfirmDepositApproveIntegrationTest {
         Long mappingId = 3L;
         ConsultantClientMapping mapping = mappingWithRelations(mappingId, 12L, 22L);
         when(adminService.approveMapping(eq(mappingId), eq("Admin"))).thenReturn(mapping);
+        when(mappingRepository.findByTenantIdAndId(TEST_TENANT_ID, mappingId)).thenReturn(Optional.of(mapping));
         when(adminService.getMappingById(mappingId)).thenReturn(mapping);
 
         Map<String, Object> body = new HashMap<>();
@@ -217,5 +226,24 @@ class AdminControllerConfirmDepositApproveIntegrationTest {
                         .content(objectMapper.writeValueAsString(body)))
                 .andExpect(status().isOk());
         verify(adminService).approveMapping(mappingId, "Admin");
+    }
+
+    @Test
+    @DisplayName("approveMapping - 호출자 기관 소유가 아닌 매칭은 403, 서비스 미호출")
+    void approveMapping_foreignMapping_returns403WithoutServiceCall() throws Exception {
+        Long mappingId = 4L;
+        when(mappingRepository.findByTenantIdAndId(TEST_TENANT_ID, mappingId)).thenReturn(Optional.empty());
+
+        Map<String, Object> body = new HashMap<>();
+        body.put("adminName", "Admin");
+
+        mockMvc.perform(post("/api/v1/admin/mappings/{mappingId}/approve", mappingId)
+                        .sessionAttr(SessionConstants.USER_OBJECT, adminUser())
+                        .sessionAttr(SessionConstants.TENANT_ID, TEST_TENANT_ID)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(body)))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.message").value(ResourceOwnerAccessGuard.DENIAL_RESOURCE_UNAVAILABLE));
+        verify(adminService, never()).approveMapping(any(), any());
     }
 }

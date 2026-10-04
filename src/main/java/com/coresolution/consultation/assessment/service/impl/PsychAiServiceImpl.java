@@ -7,6 +7,7 @@ import com.coresolution.consultation.repository.AiUsageLogRepository;
 import com.coresolution.consultation.service.ai.AiChatCompletionResult;
 import com.coresolution.consultation.service.ai.AiChatCompletionService;
 import com.coresolution.consultation.service.ai.dto.AiCompletionRequest;
+import com.coresolution.consultation.service.ai.privacy.AiPiiMaskingService;
 import com.coresolution.consultation.service.ai.dto.AiResponseFormat;
 import com.coresolution.consultation.service.ai.parser.AiJsonResponseParser;
 import com.coresolution.core.context.TenantContextHolder;
@@ -89,7 +90,8 @@ public class PsychAiServiceImpl implements PsychAiService {
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Override
-    public AiResult generateKoreanReport(PsychAssessmentType assessmentType, List<MetricInput> metrics, String baseMarkdown) {
+    public AiResult generateKoreanReport(PsychAssessmentType assessmentType, List<MetricInput> metrics, String baseMarkdown,
+            List<String> maskingIdentifiers) {
         String tenantId = resolveTenantId();
 
         if (metrics == null || metrics.isEmpty()) {
@@ -103,7 +105,8 @@ public class PsychAiServiceImpl implements PsychAiService {
         long startTime = System.currentTimeMillis();
         String systemPrompt = buildSystemPrompt(assessmentType);
         String userPrompt = buildUserPrompt(assessmentType, metrics, baseMarkdown);
-        String combinedPrompt = buildCombinedPromptForLog(systemPrompt, userPrompt);
+        String combinedPrompt = AiPiiMaskingService.applyMasking(
+                buildCombinedPromptForLog(systemPrompt, userPrompt), maskingIdentifiers);
 
         try {
             log.info("Psych AI report generation start: tenantId={}, type={}, metricsCount={}",
@@ -118,6 +121,7 @@ public class PsychAiServiceImpl implements PsychAiService {
                     .tenantId(tenantId)
                     .callerId(CALLER_ID)
                     .traceId(UUID.randomUUID().toString())
+                    .maskingIdentifiers(maskingIdentifiers)
                     .build();
 
             AiChatCompletionResult result = aiChatCompletionService.completeChat(request);

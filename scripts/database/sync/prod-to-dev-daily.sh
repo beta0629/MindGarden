@@ -220,6 +220,7 @@ redeploy_dev_procedures_from_repo() {
   PROCEDURE_DEPLOY_DB_DIFF_CONFIRM=CONFIRM bash "$deploy" dev
 }
 
+# Flyway 소유 온보딩 프로시저(FLYWAY_SOURCES.tsv)도 표준 배포 SQL 에 들어 있어 이 db-diff 로 함께 되살아난다.
 redeploy_dev_procedures_from_repo
 
 log "=== 완료: 개발 DB=${DEV_DB_NAME}, 참고 D-1 날짜 라벨=$(yesterday_ymd_dash) ==="

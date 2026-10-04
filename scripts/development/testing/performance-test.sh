@@ -50,9 +50,9 @@ cat > "$PERFORMANCE_LOG" << EOF
 EOF
 
 # DB 연결 정보
-DB_HOST="114.202.247.246"
+DB_HOST="${DB_HOST:?DB_HOST 환경변수를 설정하세요}"
 DB_USER="mindgarden_dev"
-DB_PASS="MindGardenDev2025!@#"
+DB_PASS="${DB_PASSWORD:?DB_PASSWORD 환경변수를 설정하세요}"
 DB_NAME="core_solution"
 
 # ===============================================

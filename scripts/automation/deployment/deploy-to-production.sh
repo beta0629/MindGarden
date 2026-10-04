@@ -1,4 +1,5 @@
 #!/bin/bash
+: "${ADMIN_PASSWORD:?ADMIN_PASSWORD 환경변수를 설정하세요}"
 
 # 🚀 MindGarden 운영 서버 배포 스크립트
 # 로컬 테스트 → 운영 배포 프로세스
@@ -37,7 +38,7 @@ fi
 echo "🧪 current-user API 테스트..."
 curl -c /tmp/test_cookies -X POST http://localhost:8080/api/auth/login \
   -H 'Content-Type: application/json' \
-  -d '{"email":"admin@mindgarden.com","password":"admin123"}' 2>/dev/null > /dev/null
+  -d '{"email":"admin@mindgarden.com","password":"'"${ADMIN_PASSWORD}"'"}' 2>/dev/null > /dev/null
 
 STATUS=$(curl -b /tmp/test_cookies -X GET http://localhost:8080/api/auth/current-user -w '%{http_code}' -o /dev/null -s)
 
@@ -59,10 +60,10 @@ echo "✅ 로컬 테스트 완료"
 echo ""
 echo "📋 2단계: 운영 서버 배포"
 echo "🚀 JAR 파일 업로드 중..."
-scp target/consultation-management-system-1.0.0.jar root@beta74.cafe24.com:/var/www/mindgarden/app-new.jar
+scp target/consultation-management-system-1.0.0.jar root@${PROD_SERVER_HOST:?PROD_SERVER_HOST 환경변수를 설정하세요}:/var/www/mindgarden/app-new.jar
 
 echo "🔧 운영 서버 배포 중..."
-ssh root@beta74.cafe24.com "
+ssh root@${PROD_SERVER_HOST:?PROD_SERVER_HOST 환경변수를 설정하세요} "
 cd /var/www/mindgarden
 
 echo '=== 기존 JAR 백업 ==='

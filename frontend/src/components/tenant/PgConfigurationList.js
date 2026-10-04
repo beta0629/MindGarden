@@ -1,36 +1,47 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ICONS } from '../../constants/icons';
-
-const CreditCardIcon = ICONS.CREDIT_CARD;
-const XCircleIcon = ICONS.X_CIRCLE;
-const ClockIcon = ICONS.CLOCK;
 import { useSession } from '../../contexts/SessionContext';
 import { getPgConfigurations, deletePgConfiguration, testPgConnection } from '../../utils/pgApi';
 import notificationManager from '../../utils/notification';
 import { runResourceLoad, softRefresh } from '../../utils/softRefresh';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import StatusBadge from '../common/StatusBadge';
-import MGButton from '../common/MGButton';
 import SafeText from '../common/SafeText';
 import SafeErrorDisplay from '../common/SafeErrorDisplay';
 import UnifiedLoading from '../common/UnifiedLoading';
-import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
-import { SettingsButton, SettingsPageShell, SettingsSectionPanel } from '../admin/settings-shell';
-import KpiNumeral from '../dashboard-v2/atoms/KpiNumeral';
+import EmptyState from '../common/EmptyState';
+import ListTableView from '../common/ListTableView';
+import TabChipRow from '../common/TabChipRow';
+import {
+  SettingsButton,
+  SettingsPageShell,
+  SettingsSectionPanel,
+  SettingsSummaryStrip
+} from '../admin/settings-shell';
 import UnifiedModal from '../common/modals/UnifiedModal';
 import '../../styles/unified-design-tokens.css';
 import './PgConfigurationLegacyGlobals.css';
 import './PgConfigurationList.css';
 import { toDisplayString } from '../../utils/safeDisplay';
+import { maskPortoneChannelKey } from '../../utils/portonePgSettingsJson';
 import { useTranslation } from 'react-i18next';
 import { isPgConfigDeletable } from './pgConfigurationListUtils';
 import { ADMIN_SHOP_PG_COPY } from '../../constants/adminShopSuite';
+import {
+  PG_LIST_APPROVAL_BADGE,
+  PG_LIST_COPY,
+  PG_LIST_QUICK_FILTER,
+  PG_LIST_STATUS_BADGE,
+  formatPgListCount
+} from '../../constants/pgConfigurationList';
+
+const CreditCardIcon = ICONS.CREDIT_CARD;
 
 export { isPgConfigDeletable };
 
 const PG_LIST_TITLE_ID = 'pg-config-list-title';
-const PG_LIST_ARIA_LABEL = 'PG 설정 목록';
+const PG_LIST_ARIA_LABEL = PG_LIST_COPY.ARIA_LABEL;
 const PG_LIST_SHELL_CLASS = 'mg-v2-pg-config-list pg-config-list--clinic-os';
 
 /**
@@ -149,27 +160,15 @@ const PgConfigurationList = () => {
   };
   
   const renderStatusBadge = (status) => {
-    const statusConfig = {
-      PENDING: { label: '대기 중', variant: 'warning' },
-      APPROVED: { label: '승인됨', variant: 'success' },
-      REJECTED: { label: '거부됨', variant: 'danger' },
-      ACTIVE: { label: '활성화', variant: 'success' },
-      INACTIVE: { label: '비활성화', variant: 'neutral' }
-    };
-    const config = statusConfig[status] || statusConfig.PENDING;
-    return <StatusBadge variant={config.variant}>{toDisplayString(config.label, '—')}</StatusBadge>;
+    const badge = PG_LIST_STATUS_BADGE[status] || PG_LIST_STATUS_BADGE.PENDING;
+    return <StatusBadge variant={badge.variant}>{toDisplayString(badge.label, '—')}</StatusBadge>;
   };
 
   const renderApprovalBadge = (approvalStatus) => {
-    const statusConfig = {
-      PENDING: { label: '승인 대기', variant: 'warning' },
-      APPROVED: { label: '승인됨', variant: 'success' },
-      REJECTED: { label: '거부됨', variant: 'danger' }
-    };
-    const config = statusConfig[approvalStatus] || statusConfig.PENDING;
-    return <StatusBadge variant={config.variant}>{toDisplayString(config.label, '—')}</StatusBadge>;
+    const badge = PG_LIST_APPROVAL_BADGE[approvalStatus] || PG_LIST_APPROVAL_BADGE.PENDING;
+    return <StatusBadge variant={badge.variant}>{toDisplayString(badge.label, '—')}</StatusBadge>;
   };
-  
+
   if (sessionLoading || (loading && configurations.length === 0)) {
     return (
       <AdminCommonLayout title={ADMIN_SHOP_PG_COPY.TITLE}>
@@ -222,19 +221,150 @@ const PgConfigurationList = () => {
   const summaryActive = configurations.filter((c) => c.status === 'ACTIVE').length;
 
   const handleSummaryFilter = (kind) => {
-    if (kind === 'ALL') {
+    if (kind === PG_LIST_QUICK_FILTER.ALL) {
       setFilters((prev) => ({ ...prev, status: '', approvalStatus: '' }));
       return;
     }
-    if (kind === 'PENDING') {
+    if (kind === PG_LIST_QUICK_FILTER.PENDING) {
       setFilters((prev) => ({ ...prev, status: '', approvalStatus: 'PENDING' }));
       return;
     }
-    if (kind === 'ACTIVE') {
+    if (kind === PG_LIST_QUICK_FILTER.ACTIVE) {
       setFilters((prev) => ({ ...prev, status: 'ACTIVE', approvalStatus: '' }));
     }
   };
-  
+
+  let quickFilterKey = PG_LIST_QUICK_FILTER.CUSTOM;
+  if (!filters.status && !filters.approvalStatus) {
+    quickFilterKey = PG_LIST_QUICK_FILTER.ALL;
+  } else if (!filters.status && filters.approvalStatus === 'PENDING') {
+    quickFilterKey = PG_LIST_QUICK_FILTER.PENDING;
+  } else if (filters.status === 'ACTIVE' && !filters.approvalStatus) {
+    quickFilterKey = PG_LIST_QUICK_FILTER.ACTIVE;
+  }
+
+  const summaryItems = [
+    { key: 'all', label: PG_LIST_COPY.SUMMARY_ALL, value: formatPgListCount(summaryTotal) },
+    { key: 'pending', label: PG_LIST_COPY.SUMMARY_PENDING, value: formatPgListCount(summaryPending) },
+    { key: 'active', label: PG_LIST_COPY.SUMMARY_ACTIVE, value: formatPgListCount(summaryActive) }
+  ];
+
+  const quickFilterItems = [
+    { key: PG_LIST_QUICK_FILTER.ALL, label: PG_LIST_COPY.SUMMARY_ALL },
+    { key: PG_LIST_QUICK_FILTER.PENDING, label: PG_LIST_COPY.SUMMARY_PENDING },
+    { key: PG_LIST_QUICK_FILTER.ACTIVE, label: PG_LIST_COPY.SUMMARY_ACTIVE }
+  ];
+
+  const listColumns = [
+    { key: 'name', label: PG_LIST_COPY.COL_NAME },
+    { key: 'provider', label: t('common:tenant.PgConfigurationList.t_6fa6eaf8'), hideOnMobile: true },
+    { key: 'merchant', label: t('common:tenant.PgConfigurationList.t_028977fd'), hideOnMobile: true },
+    { key: 'store', label: t('common:tenant.PgConfigurationList.t_74c0ddf7'), hideOnMobile: true },
+    { key: 'lastTest', label: t('common:tenant.PgConfigurationList.t_4521343d'), hideOnMobile: true },
+    { key: 'status', label: PG_LIST_COPY.COL_STATUS },
+    { key: 'actions', label: PG_LIST_COPY.COL_ACTIONS }
+  ];
+
+  const renderNameCell = (config) => (
+    <span
+      className="mg-v2-settings-table__cell-stack"
+      aria-label={`${PG_LIST_COPY.ROW_ARIA_PREFIX}${toDisplayString(config.pgName || config.pgProvider, '')}`}
+    >
+      <strong><SafeText>{config.pgName || config.pgProvider}</SafeText></strong>
+      {config.notes ? <SafeText className="mg-v2-settings-muted">{config.notes}</SafeText> : null}
+      {config.approvalStatus === 'PENDING' ? (
+        <span className="mg-v2-settings-text--warning">{t('common:tenant.PgConfigurationList.t_5f44a8c3')}</span>
+      ) : null}
+      {config.approvalStatus === 'REJECTED' && config.rejectionReason ? (
+        <span className="mg-v2-settings-text--danger">
+          {PG_LIST_COPY.REJECTED_PREFIX}
+          <SafeText>{config.rejectionReason}</SafeText>
+        </span>
+      ) : null}
+    </span>
+  );
+
+  const renderActionsCell = (config) => (
+    <span className="pg-config-list__row-actions">
+      <SettingsButton
+        type="button"
+        variant="secondary"
+        onClick={() => navigate(`/tenant/pg-configurations/${config.configId}`)}
+        preventDoubleClick={false}
+      >
+        {t('common:tenant.PgConfigurationList.t_7ffb5a8b')}
+      </SettingsButton>
+      {config.status === 'APPROVED' && (
+        <SettingsButton
+          type="button"
+          variant="ghost"
+          onClick={() => handleTestConnection(config.configId)}
+          disabled={testingConnection === config.configId}
+          loading={testingConnection === config.configId}
+          preventDoubleClick={false}
+        >
+          {t('common:tenant.PgConfigurationList.t_3da5c18d')}
+        </SettingsButton>
+      )}
+      {config.approvalStatus === 'PENDING' && (
+        <SettingsButton
+          type="button"
+          variant="ghost"
+          onClick={() => navigate(`/tenant/pg-configurations/${config.configId}/edit`)}
+          preventDoubleClick={false}
+        >
+          {t('common.actions.edit')}
+        </SettingsButton>
+      )}
+      {isPgConfigDeletable(config) && (
+        <SettingsButton
+          type="button"
+          variant="danger"
+          onClick={() => {
+            setSelectedConfig(config);
+            setShowDeleteModal(true);
+          }}
+          preventDoubleClick={false}
+        >
+          {t('admin.actions.delete')}
+        </SettingsButton>
+      )}
+    </span>
+  );
+
+  const renderListCell = (key, config) => {
+    switch (key) {
+      case 'name':
+        return renderNameCell(config);
+      case 'provider':
+        return <SafeText>{config.pgProvider}</SafeText>;
+      case 'merchant':
+        return <SafeText className="mg-v2-settings-mono" fallback="—">{config.merchantId}</SafeText>;
+      case 'store':
+        return config.storeId
+          ? <SafeText className="mg-v2-settings-mono">{maskPortoneChannelKey(config.storeId)}</SafeText>
+          : '—';
+      case 'lastTest':
+        return config.lastConnectionTestAt
+          ? new Date(config.lastConnectionTestAt).toLocaleString('ko-KR')
+          : '—';
+      case 'status':
+        return (
+          <span className="pg-config-list__badges">
+            {renderStatusBadge(config.status)}
+            {renderApprovalBadge(config.approvalStatus)}
+            {config.testMode && (
+              <StatusBadge variant="info">{t('common:tenant.PgConfigurationList.t_cfd49442')}</StatusBadge>
+            )}
+          </span>
+        );
+      case 'actions':
+        return renderActionsCell(config);
+      default:
+        return null;
+    }
+  };
+
   return (
     <AdminCommonLayout title={ADMIN_SHOP_PG_COPY.TITLE}>
       <>
@@ -253,257 +383,100 @@ const PgConfigurationList = () => {
               {t('common:tenant.PgConfigurationList.t_61ce87de')}
             </SettingsButton>
           )}
-        >
-
-        <section
-          className="pg-config-list-summary mapping-management-summary"
-          data-testid="pg-config-list-summary"
-          aria-label="PG 설정 요약"
-        >
-          <article className="mapping-management-summary__cell">
-            <button
-              type="button"
-              className="mapping-management-summary__hit"
-              onClick={() => handleSummaryFilter('ALL')}
-            >
-              <p className="mapping-management-summary__label">
-                <SafeText>전체</SafeText>
-              </p>
-              <div className="mapping-management-summary__amount">
-                <KpiNumeral value={String(summaryTotal)} unit="건" />
-              </div>
-            </button>
-          </article>
-          <article className="mapping-management-summary__cell">
-            <button
-              type="button"
-              className="mapping-management-summary__hit"
-              onClick={() => handleSummaryFilter('PENDING')}
-            >
-              <p className="mapping-management-summary__label">
-                <SafeText>승인 대기</SafeText>
-              </p>
-              <div className="mapping-management-summary__amount">
-                <KpiNumeral value={String(summaryPending)} unit="건" />
-              </div>
-            </button>
-          </article>
-          <article className="mapping-management-summary__cell">
-            <button
-              type="button"
-              className="mapping-management-summary__hit"
-              onClick={() => handleSummaryFilter('ACTIVE')}
-            >
-              <p className="mapping-management-summary__label">
-                <SafeText>활성</SafeText>
-              </p>
-              <div className="mapping-management-summary__amount">
-                <KpiNumeral value={String(summaryActive)} unit="건" />
-              </div>
-            </button>
-          </article>
-        </section>
-
-        <SettingsSectionPanel body="plain" ariaLabel={PG_LIST_ARIA_LABEL}>
-        {/* 필터 및 검색 */}
-        <div className="pg-config-list-filters mg-v2-pg-config-list__filters">
-          <div className="pg-config-list__search mg-v2-settings-field">
-            <input
-              type="text"
-              placeholder={t('common:tenant.PgConfigurationList.t_4598635c')}
-              value={filters.search}
-              onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
-              className="mg-v2-form-input"
-              aria-label={t('common:tenant.PgConfigurationList.t_75c13af6')}
+          tabs={(
+            <TabChipRow
+              items={quickFilterItems}
+              activeKey={quickFilterKey}
+              onChange={handleSummaryFilter}
+              ariaLabel={PG_LIST_COPY.QUICK_FILTER_ARIA}
             />
-          </div>
-          
-          <div className="pg-config-list__filter-group">
-            <select
-              value={filters.status}
-              onChange={(e) => setFilters(prev => ({ ...prev, status: e.target.value }))}
-              className="mg-v2-select"
-              aria-label={t('common:tenant.PgConfigurationList.t_1dfdb50f')}
-            >
-              <option value="">{t('common:tenant.PgConfigurationList.t_21caa442')}</option>
-              {/* 표준화: 상태값 공통코드 동적 조회 권장 getCommonCodes('STATUS_GROUP') */}
-              <option value="PENDING">{t('common:tenant.PgConfigurationList.t_ec425b26')}</option>
-              <option value="APPROVED">{t('common.labels.approved')}</option>
-              <option value="REJECTED">{t('admin.labels.rejected')}</option>
-              <option value="ACTIVE">{t('common:tenant.PgConfigurationList.t_bbf831ad')}</option>
-              <option value="INACTIVE">{t('common:tenant.PgConfigurationList.t_8ff58636')}</option>
-            </select>
-            
-            <select
-              value={filters.approvalStatus}
-              onChange={(e) => setFilters(prev => ({ ...prev, approvalStatus: e.target.value }))}
-              className="mg-v2-select"
-              aria-label={t('common:tenant.PgConfigurationList.t_b2a166d3')}
-            >
-              <option value="">{t('common:tenant.PgConfigurationList.t_82f25333')}</option>
-              {/* 표준화: 승인 상태 공통코드 동적 조회 권장 */}
-              <option value="PENDING">{t('common:tenant.PgConfigurationList.t_f5aaa7c5')}</option>
-              <option value="APPROVED">{t('common.labels.approved')}</option>
-              <option value="REJECTED">{t('admin.labels.rejected')}</option>
-            </select>
-            
-            <SettingsButton
-              type="button"
-              variant="secondary"
-              onClick={loadConfigurations}
-              preventDoubleClick={false}
-            >
-              {t('admin.actions.refresh')}
-            </SettingsButton>
-          </div>
-        </div>
-        
-        {/* 에러 메시지 */}
-        <SafeErrorDisplay error={error} />
-
-        <div className="pg-config-list__stage">
-        {/* PG 설정 목록 */}
-        {configurations.length === 0 ? (
-          <div className="empty-state">
-            <CreditCardIcon size={48} />
-            <h3>{t('common:tenant.PgConfigurationList.t_8755c9a8')}</h3>
-            <p>{t('common:tenant.PgConfigurationList.t_72539156')}</p>
-            <SettingsButton
-              type="button"
-              variant="primary"
-              onClick={() => navigate('/tenant/pg-configurations/new')}
-              preventDoubleClick={false}
-            >
-              {t('common:tenant.PgConfigurationList.t_61ce87de')}
-            </SettingsButton>
-          </div>
-        ) : (
-          <div className="pg-config-cards">
-            {configurations.map((config) => (
-              <div 
-                key={config.configId} 
-                className="pg-config-card"
-                role="article"
-                aria-label={`PG 설정: ${config.pgName || config.pgProvider}`}
+          )}
+          summary={(
+            <SettingsSummaryStrip
+              items={summaryItems}
+              ariaLabel={PG_LIST_COPY.SUMMARY_ARIA}
+              testId="pg-config-list-summary"
+            />
+          )}
+        >
+          <SettingsSectionPanel body="plain" ariaLabel={PG_LIST_ARIA_LABEL}>
+            <div className="mg-v2-settings-toolbar">
+              <input
+                type="text"
+                placeholder={t('common:tenant.PgConfigurationList.t_4598635c')}
+                value={filters.search}
+                onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
+                className="mg-v2-form-input"
+                aria-label={t('common:tenant.PgConfigurationList.t_75c13af6')}
+              />
+              <select
+                value={filters.status}
+                onChange={(e) => setFilters(prev => ({ ...prev, status: e.target.value }))}
+                className="mg-v2-select"
+                aria-label={t('common:tenant.PgConfigurationList.t_1dfdb50f')}
               >
-                <div className="card-header">
-                  <div className="card-title">
-                    <h3>{config.pgName || config.pgProvider}</h3>
-                    <div className="card-badges">
-                      {renderStatusBadge(config.status)}
-                      {renderApprovalBadge(config.approvalStatus)}
-                      {config.testMode && (
-                        <StatusBadge variant="info">{t('common:tenant.PgConfigurationList.t_cfd49442')}</StatusBadge>
-                      )}
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="card-body">
-                  <div className="card-info">
-                    <div className="info-item">
-                      <span className="info-label">{t('common:tenant.PgConfigurationList.t_6fa6eaf8')}</span>
-                      <span className="info-value">{config.pgProvider}</span>
-                    </div>
-                    {config.merchantId && (
-                      <div className="info-item">
-                        <span className="info-label">{t('common:tenant.PgConfigurationList.t_028977fd')}</span>
-                        <span className="info-value">{config.merchantId}</span>
-                      </div>
-                    )}
-                    {config.storeId && (
-                      <div className="info-item">
-                        <span className="info-label">{t('common:tenant.PgConfigurationList.t_74c0ddf7')}</span>
-                        <span className="info-value">{config.storeId}</span>
-                      </div>
-                    )}
-                    {config.notes && (
-                      <div className="info-item">
-                        <span className="info-label">{t('common:tenant.PgConfigurationList.t_d8da18b1')}</span>
-                        <span className="info-value">{config.notes}</span>
-                      </div>
-                    )}
-                    {config.lastConnectionTestAt && (
-                      <div className="info-item">
-                        <span className="info-label">{t('common:tenant.PgConfigurationList.t_4521343d')}</span>
-                        <span className="info-value">
-                          {new Date(config.lastConnectionTestAt).toLocaleString('ko-KR')}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-                
-                <div className="card-footer">
-                  <div className="card-actions">
+                <option value="">{t('common:tenant.PgConfigurationList.t_21caa442')}</option>
+                {/* 표준화: 상태값 공통코드 동적 조회 권장 getCommonCodes('STATUS_GROUP') */}
+                <option value="PENDING">{t('common:tenant.PgConfigurationList.t_ec425b26')}</option>
+                <option value="APPROVED">{t('common.labels.approved')}</option>
+                <option value="REJECTED">{t('admin.labels.rejected')}</option>
+                <option value="ACTIVE">{t('common:tenant.PgConfigurationList.t_bbf831ad')}</option>
+                <option value="INACTIVE">{t('common:tenant.PgConfigurationList.t_8ff58636')}</option>
+              </select>
+              <select
+                value={filters.approvalStatus}
+                onChange={(e) => setFilters(prev => ({ ...prev, approvalStatus: e.target.value }))}
+                className="mg-v2-select"
+                aria-label={t('common:tenant.PgConfigurationList.t_b2a166d3')}
+              >
+                <option value="">{t('common:tenant.PgConfigurationList.t_82f25333')}</option>
+                {/* 표준화: 승인 상태 공통코드 동적 조회 권장 */}
+                <option value="PENDING">{t('common:tenant.PgConfigurationList.t_f5aaa7c5')}</option>
+                <option value="APPROVED">{t('common.labels.approved')}</option>
+                <option value="REJECTED">{t('admin.labels.rejected')}</option>
+              </select>
+              <span className="mg-v2-settings-toolbar__spacer" />
+              <SettingsButton
+                type="button"
+                variant="ghost"
+                onClick={loadConfigurations}
+                preventDoubleClick={false}
+              >
+                {t('admin.actions.refresh')}
+              </SettingsButton>
+            </div>
+
+            <SafeErrorDisplay error={error} />
+
+            <div className="pg-config-list__stage">
+              {configurations.length === 0 ? (
+                <EmptyState
+                  icon={<CreditCardIcon aria-hidden="true" />}
+                  title={t('common:tenant.PgConfigurationList.t_8755c9a8')}
+                  description={t('common:tenant.PgConfigurationList.t_72539156')}
+                  action={(
                     <SettingsButton
                       type="button"
                       variant="secondary"
-                      onClick={() => navigate(`/tenant/pg-configurations/${config.configId}`)}
+                      onClick={() => navigate('/tenant/pg-configurations/new')}
                       preventDoubleClick={false}
                     >
-                      {t('common:tenant.PgConfigurationList.t_7ffb5a8b')}
+                      {t('common:tenant.PgConfigurationList.t_61ce87de')}
                     </SettingsButton>
-
-                    {config.status === 'APPROVED' && (
-                      <SettingsButton
-                        type="button"
-                        variant="secondary"
-                        onClick={() => handleTestConnection(config.configId)}
-                        disabled={testingConnection === config.configId}
-                        loading={testingConnection === config.configId}
-                        preventDoubleClick={false}
-                      >
-                        {t('common:tenant.PgConfigurationList.t_3da5c18d')}
-                      </SettingsButton>
-                    )}
-
-                    {config.approvalStatus === 'PENDING' && (
-                      <SettingsButton
-                        type="button"
-                        variant="secondary"
-                        onClick={() => navigate(`/tenant/pg-configurations/${config.configId}/edit`)}
-                        preventDoubleClick={false}
-                      >
-                        {t('common.actions.edit')}
-                      </SettingsButton>
-                    )}
-
-                    {isPgConfigDeletable(config) && (
-                      <SettingsButton
-                        type="button"
-                        variant="danger"
-                        onClick={() => {
-                          setSelectedConfig(config);
-                          setShowDeleteModal(true);
-                        }}
-                        preventDoubleClick={false}
-                      >
-                        {t('admin.actions.delete')}
-                      </SettingsButton>
-                    )}
-                  </div>
-
-                  {config.approvalStatus === 'PENDING' && (
-                    <div className="pending-notice">
-                      <ClockIcon size={14} />
-                      <span>{t('common:tenant.PgConfigurationList.t_5f44a8c3')}</span>
-                    </div>
                   )}
-
-                  {config.approvalStatus === 'REJECTED' && config.rejectionReason && (
-                    <div className="rejected-notice">
-                      <XCircleIcon size={14} />
-                      <span>거부됨: {config.rejectionReason}</span>
-                    </div>
-                  )}
+                />
+              ) : (
+                <div className="mg-v2-settings-table" data-testid="pg-config-list-table">
+                  <ListTableView
+                    columns={listColumns}
+                    data={configurations}
+                    renderCell={renderListCell}
+                    rowKeyField="configId"
+                  />
                 </div>
-              </div>
-            ))}
-          </div>
-        )}
-        </div>
-        </SettingsSectionPanel>
+              )}
+            </div>
+          </SettingsSectionPanel>
         </SettingsPageShell>
 
         {/* 삭제 확인 모달 */}
@@ -515,41 +488,38 @@ const PgConfigurationList = () => {
           variant="confirm"
           backdropClick={!deleting}
           loading={deleting}
-          actions={
+          actions={(
             <>
-              <MGButton
+              <SettingsButton
                 type="button"
                 variant="secondary"
-                className={buildErpMgButtonClassName({ variant: 'secondary', size: 'md', loading: false })}
-                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 onClick={() => setShowDeleteModal(false)}
                 disabled={deleting}
                 preventDoubleClick={false}
               >
                 {t('admin.actions.cancel')}
-              </MGButton>
-              <MGButton
+              </SettingsButton>
+              <SettingsButton
                 type="button"
                 variant="danger"
-                className={buildErpMgButtonClassName({ variant: 'danger', size: 'md', loading: deleting })}
-                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 onClick={handleDelete}
                 disabled={deleting}
+                loading={deleting}
                 preventDoubleClick={false}
               >
                 {t('admin.actions.delete')}
-              </MGButton>
+              </SettingsButton>
             </>
-          }
+          )}
         >
           {selectedConfig && (
             <>
               <p>
-                정말로{' '}
-                <strong>{selectedConfig.pgName || selectedConfig.pgProvider}</strong>
-                {' '}설정을 삭제하시겠습니까?
+                {PG_LIST_COPY.DELETE_CONFIRM_PREFIX}
+                <strong><SafeText>{selectedConfig.pgName || selectedConfig.pgProvider}</SafeText></strong>
+                {PG_LIST_COPY.DELETE_CONFIRM_SUFFIX}
               </p>
-              <p className="warning-text">{t('common:tenant.PgConfigurationList.t_cdfb991d')}</p>
+              <p className="mg-v2-settings-text--danger">{t('common:tenant.PgConfigurationList.t_cdfb991d')}</p>
             </>
           )}
         </UnifiedModal>
@@ -559,4 +529,3 @@ const PgConfigurationList = () => {
 };
 
 export default PgConfigurationList;
-

@@ -9,13 +9,21 @@
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Info } from 'lucide-react';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
-import { SettingsButton, SettingsPageShell, SettingsSectionPanel } from './settings-shell';
+import {
+  SettingsButton,
+  SettingsNotice,
+  SettingsPageShell,
+  SettingsRowControl,
+  SettingsSectionPanel
+} from './settings-shell';
 import EmptyState from '../common/EmptyState';
 import SafeText from '../common/SafeText';
 import MGPagination from '../common/MGPagination';
-import SegmentedTabs from '../common/SegmentedTabs';
+import TabChipRow from '../common/TabChipRow';
+import ListTableView from '../common/ListTableView';
+import StatusBadge from '../common/StatusBadge';
+import UnifiedLoading from '../common/UnifiedLoading';
 import Switch from '../common/Switch';
 import EntityRowActions from '../common/molecules/EntityRowActions';
 import {
@@ -44,12 +52,7 @@ import {
   setAdminShopProductSaleStatus
 } from '../../services/adminShopProductService';
 import { runResourceLoad, softRefresh } from '../../utils/softRefresh';
-import {
-  AdminShopNotice,
-  AdminShopSuiteToast,
-  AdminShopTableSkeleton,
-  useAdminShopSuiteToast
-} from './shop/AdminShopSuiteParts';
+import { AdminShopSuiteToast, useAdminShopSuiteToast } from './shop/AdminShopSuiteParts';
 import '../../styles/unified-design-tokens.css';
 import '../../styles/shop/AdminShopClinicOs.css';
 import '../../styles/shop/AdminShopSuite.css';
@@ -57,8 +60,20 @@ import './AdminShopProductsPage.css';
 import { useTranslation } from 'react-i18next';
 
 const PAGE_TITLE_ID = 'admin-shop-products-title';
-const TABLE_COLUMN_COUNT = 10;
 const TOGGLE = Object.freeze({ HOME: 'home', MALL: 'mall' });
+
+const PRODUCT_COLUMNS = [
+  { key: 'name', label: ADMIN_SHOP_PRODUCTS_COPY.COL_NAME },
+  { key: 'status', label: ADMIN_SHOP_PRODUCTS_COPY.COL_STATUS },
+  { key: 'sessions', label: ADMIN_SHOP_PRODUCTS_COPY.COL_SESSIONS },
+  { key: 'price', label: ADMIN_SHOP_PRODUCTS_COPY.COL_PRICE },
+  { key: 'perSession', label: ADMIN_SHOP_PRODUCTS_COPY.COL_PER_SESSION, hideOnMobile: true },
+  { key: 'validity', label: ADMIN_SHOP_PRODUCTS_COPY.COL_VALIDITY, hideOnMobile: true },
+  { key: 'home', label: ADMIN_SHOP_PRODUCTS_COPY.COL_HOME, hideOnMobile: true },
+  { key: 'mall', label: ADMIN_SHOP_PRODUCTS_COPY.COL_MALL, hideOnMobile: true },
+  { key: 'content', label: ADMIN_SHOP_PRODUCTS_COPY.COL_CONTENT, hideOnMobile: true },
+  { key: 'menu', label: ADMIN_SHOP_PRODUCTS_COPY.COL_MENU }
+];
 
 /**
  * @param {object} product
@@ -150,9 +165,8 @@ const AdminShopProductsPage = () => {
   }, [segment, debouncedQuery]);
 
   const segmentItems = useMemo(() => ADMIN_SHOP_PRODUCT_SEGMENTS.map((seg) => ({
-    value: seg.value,
-    label: seg.label,
-    badge: Number(counts?.[seg.value]) || 0
+    key: seg.value,
+    label: `${seg.label} ${Number(counts?.[seg.value]) || 0}`
   })), [counts]);
   const stoppedCount = Number(counts?.[ADMIN_SHOP_PRODUCT_SEGMENT.STOPPED]) || 0;
   const catalogEmpty = (Number(counts?.[ADMIN_SHOP_PRODUCT_SEGMENT.ALL]) || 0) === 0 && !debouncedQuery;
@@ -283,7 +297,7 @@ const AdminShopProductsPage = () => {
     }
     return (
       <span
-        className="admin-shop-suite__toggle-blocked"
+        className="admin-shop-products-page__toggle-blocked"
         title={stopped ? ADMIN_SHOP_PRODUCTS_COPY.STOPPED_BLOCKED_HINT : ADMIN_SHOP_PRODUCTS_COPY.MALL_BLOCKED_HINT}
       >
         {toggle}
@@ -291,46 +305,29 @@ const AdminShopProductsPage = () => {
     );
   };
 
-  const renderGroupRow = () => (
-    <tr key="stopped-group" className="admin-shop-suite__row--group admin-shop-suite__row--static">
-      <td colSpan={TABLE_COLUMN_COUNT}>
-        <strong>{formatAdminShopCopy(ADMIN_SHOP_PRODUCTS_COPY.STOPPED_GROUP, { stoppedCount })}</strong>
-        {ADMIN_SHOP_PRODUCTS_COPY.STOPPED_GROUP_TAIL}
-      </td>
-    </tr>
-  );
+  const openEdit = (product) => {
+    const editId = resolveEditId(product);
+    if (editId) {
+      navigate(buildAdminShopProductEditRoute(editId));
+    }
+  };
 
-  const renderRow = (product) => {
+  const renderCell = (key, product) => {
     const unset = isAdminShopProductSessionUnset(product.sessions);
     const stopped = product.active === false;
     const editId = resolveEditId(product);
-    const openEdit = () => {
-      if (editId) {
-        navigate(buildAdminShopProductEditRoute(editId));
-      }
-    };
-    const rowClass = [
-      !product.active ? 'admin-shop-suite__row--dim' : '',
-      !editId ? 'admin-shop-suite__row--static' : ''
-    ].filter(Boolean).join(' ');
-    return (
-      <tr
-        key={product.key}
-        className={rowClass || undefined}
-        data-testid={ADMIN_SHOP_SUITE_TEST_IDS.PRODUCT_ROW}
-        onClick={openEdit}
-      >
-        <td>
-          <div className="admin-shop-suite__cell-stack">
-            <span className="admin-shop-suite__cell-title"><SafeText>{product.name}</SafeText></span>
-            <span className="admin-shop-suite__cell-sub admin-shop-suite__mono">
-              <SafeText>{product.code || '—'}</SafeText>
-            </span>
-          </div>
-        </td>
-        <td onClick={(e) => e.stopPropagation()}>
-          <div className="admin-shop-suite__cell-stack">
-            <span className="admin-shop-suite__sale-status">
+    switch (key) {
+      case 'name':
+        return (
+          <span className="mg-v2-settings-table__cell-stack" data-testid={ADMIN_SHOP_SUITE_TEST_IDS.PRODUCT_ROW}>
+            <strong><SafeText>{product.name}</SafeText></strong>
+            <SafeText className="mg-v2-settings-mono mg-v2-settings-muted">{product.code || '—'}</SafeText>
+          </span>
+        );
+      case 'status':
+        return (
+          <SettingsRowControl className="mg-v2-settings-table__cell-stack">
+            <span className="admin-shop-products-page__sale-status">
               <Switch
                 checked={!stopped}
                 disabled={Boolean(pendingKey) && pendingKey !== `${product.key}:sale`}
@@ -339,119 +336,131 @@ const AdminShopProductsPage = () => {
                 data-testid={ADMIN_SHOP_SUITE_TEST_IDS.PRODUCT_SALE_TOGGLE}
                 onCheckedChange={(next) => handleSaleStatus(product, next)}
               />
-              <span
-                className={`admin-shop-suite__chip ${stopped ? 'admin-shop-suite__chip--stopped' : 'admin-shop-suite__chip--on-sale'}`}
+              <StatusBadge
+                variant={stopped ? 'neutral' : 'success'}
                 data-testid={ADMIN_SHOP_SUITE_TEST_IDS.PRODUCT_STATUS_CHIP}
               >
                 {stopped ? ADMIN_SHOP_PRODUCTS_COPY.STATUS_STOPPED : ADMIN_SHOP_PRODUCTS_COPY.STATUS_ON_SALE}
-              </span>
+              </StatusBadge>
             </span>
             {unset ? (
-              <span
-                className="admin-shop-suite__cell-sub"
-                data-testid={ADMIN_SHOP_SUITE_TEST_IDS.PRODUCT_UNSET_CHIP}
-              >
+              <span className="mg-v2-settings-text--warning" data-testid={ADMIN_SHOP_SUITE_TEST_IDS.PRODUCT_UNSET_CHIP}>
                 {ADMIN_SHOP_PRODUCTS_COPY.SESSION_UNSET}
               </span>
             ) : null}
-          </div>
-        </td>
-        <td className="admin-shop-suite__cell--right">
-          {unset ? (
-            <span className="admin-shop-suite__faint">—</span>
-          ) : (
-            <span className="admin-shop-suite__delta">
-              <SafeText>{`${product.sessions}${ADMIN_SHOP_PRODUCTS_COPY.SESSION_UNIT}`}</SafeText>
-            </span>
-          )}
-        </td>
-        <td className="admin-shop-suite__cell--right admin-shop-suite__cell--band admin-shop-suite__num">
-          <SafeText>{product.price != null ? formatShopMoney(product.price) : '—'}</SafeText>
-        </td>
-        <td className="admin-shop-suite__cell--right admin-shop-suite__num admin-shop-suite__muted">
-          <SafeText>{product.perSession != null ? formatShopMoney(product.perSession) : '—'}</SafeText>
-        </td>
-        <td className="admin-shop-suite__muted">
-          <SafeText>
+          </SettingsRowControl>
+        );
+      case 'sessions':
+        return unset ? '—' : <SafeText>{`${product.sessions}${ADMIN_SHOP_PRODUCTS_COPY.SESSION_UNIT}`}</SafeText>;
+      case 'price':
+        return <SafeText>{product.price != null ? formatShopMoney(product.price) : '—'}</SafeText>;
+      case 'perSession':
+        return (
+          <SafeText className="mg-v2-settings-muted">
+            {product.perSession != null ? formatShopMoney(product.perSession) : '—'}
+          </SafeText>
+        );
+      case 'validity':
+        return (
+          <SafeText className="mg-v2-settings-muted">
             {product.validityMonths != null
               ? formatAdminShopCopy(ADMIN_SHOP_PRODUCTS_COPY.VALIDITY_VALUE, { months: product.validityMonths })
               : ADMIN_SHOP_PRODUCTS_COPY.VALIDITY_NONE}
           </SafeText>
-        </td>
-        <td onClick={(e) => e.stopPropagation()}>
-          {product.codeRow ? renderToggle(product, TOGGLE.HOME) : <span className="admin-shop-suite__faint">—</span>}
-        </td>
-        <td onClick={(e) => e.stopPropagation()}>{renderToggle(product, TOGGLE.MALL)}</td>
-        <td onClick={(e) => e.stopPropagation()}>
-          {stopped ? (
-            <span className="admin-shop-suite__faint">—</span>
-          ) : product.contentReady ? (
-            <span>{ADMIN_SHOP_PRODUCTS_COPY.CONTENT_READY}</span>
-          ) : editId ? (
-            <button type="button" className="admin-shop-suite__link-btn" onClick={openEdit}>
+        );
+      case 'home':
+        return (
+          <SettingsRowControl>
+            {product.codeRow ? renderToggle(product, TOGGLE.HOME) : '—'}
+          </SettingsRowControl>
+        );
+      case 'mall':
+        return <SettingsRowControl>{renderToggle(product, TOGGLE.MALL)}</SettingsRowControl>;
+      case 'content':
+        if (stopped) {
+          return '—';
+        }
+        if (product.contentReady) {
+          return ADMIN_SHOP_PRODUCTS_COPY.CONTENT_READY;
+        }
+        return editId ? (
+          <SettingsRowControl>
+            <SettingsButton type="button" variant="ghost" onClick={() => openEdit(product)}>
               {ADMIN_SHOP_PRODUCTS_COPY.CONTENT_EDIT}
-            </button>
-          ) : <span className="admin-shop-suite__faint">—</span>}
-        </td>
-        <td>
-          <EntityRowActions
-            ariaLabel={ADMIN_SHOP_PRODUCTS_COPY.COL_MENU}
-            items={[
-              {
-                id: 'edit',
-                label: ADMIN_SHOP_PRODUCTS_COPY.MENU_EDIT,
-                hidden: !editId,
-                onClick: openEdit
-              }
-            ]}
-          />
-        </td>
-      </tr>
-    );
+            </SettingsButton>
+          </SettingsRowControl>
+        ) : '—';
+      case 'menu':
+        return (
+          <SettingsRowControl>
+            <EntityRowActions
+              ariaLabel={ADMIN_SHOP_PRODUCTS_COPY.COL_MENU}
+              items={[
+                {
+                  id: 'edit',
+                  label: ADMIN_SHOP_PRODUCTS_COPY.MENU_EDIT,
+                  hidden: !editId,
+                  onClick: () => openEdit(product)
+                }
+              ]}
+            />
+          </SettingsRowControl>
+        );
+      default:
+        return null;
+    }
   };
+
+  const renderTable = (rows, stoppedRows) => (
+    <ListTableView
+      columns={PRODUCT_COLUMNS}
+      data={rows}
+      renderCell={renderCell}
+      onRowClick={openEdit}
+      rowKeyField="key"
+      className={stoppedRows ? 'admin-shop-products-page__table--stopped' : ''}
+    />
+  );
 
   const renderBody = () => {
     if (loading && products.length === 0) {
-      return <AdminShopTableSkeleton columnCount={TABLE_COLUMN_COUNT} />;
+      return <UnifiedLoading type="inline" text={ADMIN_SHOP_PRODUCTS_COPY.TITLE} />;
     }
     if (products.length === 0) {
-      return (
-        <tbody>
-          <tr className="admin-shop-suite__row--static">
-            <td colSpan={TABLE_COLUMN_COUNT}>
-              {catalogEmpty ? (
-                <EmptyState
-                  title={ADMIN_SHOP_PRODUCTS_COPY.EMPTY_TITLE}
-                  description={ADMIN_SHOP_PRODUCTS_COPY.EMPTY_DESC}
-                  action={(
-                    <SettingsButton
-                      type="button"
-                      variant="secondary"
-                      onClick={goCreate}
-                      preventDoubleClick
-                    >
-                      {ADMIN_SHOP_PRODUCTS_COPY.CREATE_FIRST}
-                    </SettingsButton>
-                  )}
-                />
-              ) : (
-                <EmptyState title={ADMIN_SHOP_PRODUCTS_COPY.EMPTY_FILTERED} />
-              )}
-            </td>
-          </tr>
-        </tbody>
+      return catalogEmpty ? (
+        <EmptyState
+          title={ADMIN_SHOP_PRODUCTS_COPY.EMPTY_TITLE}
+          description={ADMIN_SHOP_PRODUCTS_COPY.EMPTY_DESC}
+          action={(
+            <SettingsButton
+              type="button"
+              variant="secondary"
+              onClick={goCreate}
+              preventDoubleClick
+            >
+              {ADMIN_SHOP_PRODUCTS_COPY.CREATE_FIRST}
+            </SettingsButton>
+          )}
+        />
+      ) : (
+        <EmptyState title={ADMIN_SHOP_PRODUCTS_COPY.EMPTY_FILTERED} />
       );
     }
-    const rows = [];
-    products.forEach((product, index) => {
-      const prev = index > 0 ? products[index - 1] : null;
-      const startsStopped = product.active === false && (prev == null || prev.active !== false);
-      if (startsStopped && segment === ADMIN_SHOP_PRODUCT_SEGMENT.ALL) {
-        rows.push(renderGroupRow());
-      }
-      rows.push(renderRow(product));
-    });
-    return <tbody>{rows}</tbody>;
+    const onSaleRows = products.filter((product) => product.active !== false);
+    const stoppedRows = products.filter((product) => product.active === false);
+    return (
+      <>
+        {onSaleRows.length > 0 ? renderTable(onSaleRows, false) : null}
+        {stoppedRows.length > 0 && segment === ADMIN_SHOP_PRODUCT_SEGMENT.ALL ? (
+          <p className="mg-v2-settings-subheading">
+            <strong>{formatAdminShopCopy(ADMIN_SHOP_PRODUCTS_COPY.STOPPED_GROUP, { stoppedCount })}</strong>
+            {' '}
+            <span className="mg-v2-settings-muted">{ADMIN_SHOP_PRODUCTS_COPY.STOPPED_GROUP_TAIL}</span>
+          </p>
+        ) : null}
+        {stoppedRows.length > 0 ? renderTable(stoppedRows, true) : null}
+      </>
+    );
   };
 
   return (
@@ -471,8 +480,16 @@ const AdminShopProductsPage = () => {
             {ADMIN_SHOP_PRODUCTS_COPY.CREATE}
           </SettingsButton>
         )}
+        tabs={loadError ? null : (
+          <TabChipRow
+            items={segmentItems}
+            activeKey={segment}
+            onChange={setSegment}
+            ariaLabel={ADMIN_SHOP_PRODUCTS_COPY.SEGMENT_ARIA}
+          />
+        )}
       >
-        <div className="admin-shop-suite" data-testid={ADMIN_SHOP_SUITE_TEST_IDS.PRODUCTS_PAGE}>
+        <div className="admin-shop-products-page__body" data-testid={ADMIN_SHOP_SUITE_TEST_IDS.PRODUCTS_PAGE}>
           {loadError ? (
             <SettingsSectionPanel body="form">
               <EmptyState
@@ -491,28 +508,17 @@ const AdminShopProductsPage = () => {
             </SettingsSectionPanel>
           ) : (
             <>
-              <AdminShopNotice
-                tone="info"
-                icon={<Info size={14} aria-hidden="true" />}
-                testId={ADMIN_SHOP_SUITE_TEST_IDS.PRODUCTS_USAGE_NOTICE}
-              >
+              <SettingsNotice tone="info" testId={ADMIN_SHOP_SUITE_TEST_IDS.PRODUCTS_USAGE_NOTICE}>
                 <p>{ADMIN_SHOP_PRODUCTS_COPY.USAGE_PERIOD_NOTICE}</p>
-                <p className="admin-shop-suite__muted">{ADMIN_SHOP_PRODUCTS_COPY.USAGE_PERIOD_EXPIRY_NOTE}</p>
-              </AdminShopNotice>
+                <p className="mg-v2-settings-muted">{ADMIN_SHOP_PRODUCTS_COPY.USAGE_PERIOD_EXPIRY_NOTE}</p>
+              </SettingsNotice>
 
               <SettingsSectionPanel body="plain" ariaLabel={ADMIN_SHOP_PRODUCTS_COPY.TITLE}>
-                <div className="admin-shop-suite__toolbar">
-                  <SegmentedTabs
-                    items={segmentItems}
-                    activeValue={segment}
-                    onChange={setSegment}
-                    ariaLabel={ADMIN_SHOP_PRODUCTS_COPY.SEGMENT_ARIA}
-                    size="sm"
-                  />
-                  <span className="admin-shop-suite__toolbar-spacer" />
+                <div className="mg-v2-settings-toolbar">
+                  <span className="mg-v2-settings-toolbar__spacer" />
                   <input
                     type="search"
-                    className="admin-shop-suite__search admin-shop-products-page__search mg-v2-form-input"
+                    className="mg-v2-form-input"
                     placeholder={ADMIN_SHOP_PRODUCTS_COPY.SEARCH_PLACEHOLDER}
                     aria-label={ADMIN_SHOP_PRODUCTS_COPY.SEARCH_ARIA}
                     value={query}
@@ -520,47 +526,13 @@ const AdminShopProductsPage = () => {
                   />
                 </div>
 
-                <div className="admin-shop-suite__table-wrap">
-                  <table className="admin-shop-suite__table" data-testid={ADMIN_SHOP_SUITE_TEST_IDS.PRODUCTS_TABLE}>
-                    <colgroup>
-                      <col />
-                      <col className="admin-shop-suite__col-status" />
-                      <col className="admin-shop-suite__col-sessions" />
-                      <col className="admin-shop-suite__col-price" />
-                      <col className="admin-shop-suite__col-price" />
-                      <col className="admin-shop-suite__col-validity" />
-                      <col className="admin-shop-suite__col-toggle" />
-                      <col className="admin-shop-suite__col-toggle" />
-                      <col className="admin-shop-suite__col-content" />
-                      <col className="admin-shop-suite__col-menu" />
-                    </colgroup>
-                    <thead>
-                      <tr>
-                        <th scope="col">{ADMIN_SHOP_PRODUCTS_COPY.COL_NAME}</th>
-                        <th scope="col">{ADMIN_SHOP_PRODUCTS_COPY.COL_STATUS}</th>
-                        <th scope="col" className="admin-shop-suite__cell--right">
-                          {ADMIN_SHOP_PRODUCTS_COPY.COL_SESSIONS}
-                          <span className="admin-shop-suite__arrow" aria-hidden="true">▸</span>
-                        </th>
-                        <th scope="col" className="admin-shop-suite__cell--right admin-shop-suite__cell--band">
-                          {ADMIN_SHOP_PRODUCTS_COPY.COL_PRICE}
-                          <span className="admin-shop-suite__arrow" aria-hidden="true">▸</span>
-                        </th>
-                        <th scope="col" className="admin-shop-suite__cell--right">{ADMIN_SHOP_PRODUCTS_COPY.COL_PER_SESSION}</th>
-                        <th scope="col">{ADMIN_SHOP_PRODUCTS_COPY.COL_VALIDITY}</th>
-                        <th scope="col">{ADMIN_SHOP_PRODUCTS_COPY.COL_HOME}</th>
-                        <th scope="col">{ADMIN_SHOP_PRODUCTS_COPY.COL_MALL}</th>
-                        <th scope="col">{ADMIN_SHOP_PRODUCTS_COPY.COL_CONTENT}</th>
-                        <th scope="col"><span className="sr-only">{ADMIN_SHOP_PRODUCTS_COPY.COL_MENU}</span></th>
-                      </tr>
-                    </thead>
-                    {renderBody()}
-                  </table>
+                <div className="mg-v2-settings-table admin-shop-products-page__tables" data-testid={ADMIN_SHOP_SUITE_TEST_IDS.PRODUCTS_TABLE}>
+                  {renderBody()}
                 </div>
 
                 {totalElements > 0 ? (
-                  <div className="admin-shop-suite__pagination">
-                    <span>
+                  <div className="admin-shop-products-page__pagination">
+                    <span className="mg-v2-settings-muted">
                       <SafeText>
                         {`${rangeFrom}–${rangeTo} / ${totalElements}${ADMIN_SHOP_PRODUCTS_COPY.PAGINATION_UNIT}`}
                       </SafeText>

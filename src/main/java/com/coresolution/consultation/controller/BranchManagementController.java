@@ -9,6 +9,7 @@ import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.dto.BranchResponse;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.repository.UserRepository;
+import com.coresolution.consultation.util.ServerErrorResponses;
 import com.coresolution.consultation.service.BranchService;
 import com.coresolution.consultation.service.DynamicPermissionService;
 import com.coresolution.consultation.service.UserService;
@@ -53,53 +54,50 @@ public class BranchManagementController {
     private final DynamicPermissionService dynamicPermissionService;
     
     /**
-     * 지점 목록 조회 (branches 테이블 기반)
+     * 지점 목록 조회.
+     *
+     * <p>Branch 는 사용 중단 대상이라 원본 테이블이 {@code branches_dropped_20260612} 로
+     * RENAME 되었다(BRANCH_DEPRECATION.md §3.2). 조회는 {@code BranchService} 가 테넌트
+     * 범위로 수행하고, 사용 중단된 저장소에 접근할 수 없는 환경에서는 500 대신 빈 목록을
+     * 돌려준다.</p>
+     *
+     * @param session 현재 세션
+     * @return 현재 테넌트의 지점 목록 (없으면 빈 목록)
      */
     @GetMapping("/branches")
     public ResponseEntity<Map<String, Object>> getBranches(HttpSession session) {
-        try {
-            log.info("지점 목록 조회 요청 (branches 테이블 기반)");
-            
-            // 권한 체크
-            User currentUser = (User) session.getAttribute("user");
-            if (currentUser == null) {
-                return ResponseEntity.status(401).body(Map.of(
-                    "success", false,
-                    "message", "로그인이 필요합니다.",
-                    "redirectToLogin", true
-                ));
-            }
-            
-            // HQ 권한 체크
-            if (!dynamicPermissionService.hasPermission(currentUser, "HQ_BRANCH_VIEW")) {
-                return ResponseEntity.status(403).body(Map.of(
-                    "success", false,
-                    "message", "지점 조회 권한이 없습니다."
-                ));
-            }
-            
-            // branches 테이블에서 지점 목록 조회
-            List<BranchResponse> branchResponses = branchService.getAllActiveBranches();
-            List<Map<String, Object>> branches = branchResponses.stream()
-                .map(this::convertBranchResponseToMap)
-                .collect(Collectors.toList());
-            
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", true);
-            response.put("data", branches);
-            response.put("totalCount", branches.size());
-            
-            log.info("지점 목록 조회 완료: {}개", branches.size());
-            return ResponseEntity.ok(response);
-            
-        } catch (Exception e) {
-            log.error("지점 목록 조회 중 오류 발생: {}", e.getMessage(), e);
-            
-            Map<String, Object> errorResponse = new HashMap<>();
-            errorResponse.put("success", false);
-            errorResponse.put("message", "지점 목록 조회 중 오류가 발생했습니다: " + e.getMessage());
-            return ResponseEntity.internalServerError().body(errorResponse);
+        log.info("지점 목록 조회 요청");
+
+        // 권한 체크
+        User currentUser = (User) session.getAttribute("user");
+        if (currentUser == null) {
+            return ResponseEntity.status(401).body(Map.of(
+                "success", false,
+                "message", "로그인이 필요합니다.",
+                "redirectToLogin", true
+            ));
         }
+
+        // HQ 권한 체크
+        if (!dynamicPermissionService.hasPermission(currentUser, "HQ_BRANCH_VIEW")) {
+            return ResponseEntity.status(403).body(Map.of(
+                "success", false,
+                "message", "지점 조회 권한이 없습니다."
+            ));
+        }
+
+        List<BranchResponse> branchResponses = branchService.getAllActiveBranches();
+        List<Map<String, Object>> branches = branchResponses.stream()
+            .map(this::convertBranchResponseToMap)
+            .collect(Collectors.toList());
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("success", true);
+        response.put("data", branches);
+        response.put("totalCount", branches.size());
+
+        log.info("지점 목록 조회 완료: {}개", branches.size());
+        return ResponseEntity.ok(response);
     }
     
     /**
@@ -171,11 +169,7 @@ public class BranchManagementController {
             return ResponseEntity.ok(statistics);
             
         } catch (Exception e) {
-            log.error("테넌트 통계 조회 중 오류 발생: branchCode={}, error={}", branchCode, e.getMessage(), e);
-            Map<String, Object> errorResponse = new HashMap<>();
-            errorResponse.put("success", false);
-            errorResponse.put("message", "통계 조회 중 오류가 발생했습니다: " + e.getMessage());
-            return ResponseEntity.internalServerError().body(errorResponse);
+            return ServerErrorResponses.internalError("테넌트 통계 조회 중 오류 발생: branchCode=" + branchCode, e);
         }
     }
     
@@ -232,11 +226,7 @@ public class BranchManagementController {
             return ResponseEntity.ok(response);
             
         } catch (Exception e) {
-            log.error("테넌트 사용자 목록 조회 중 오류 발생: branchCode={}, error={}", branchCode, e.getMessage(), e);
-            Map<String, Object> errorResponse = new HashMap<>();
-            errorResponse.put("success", false);
-            errorResponse.put("message", "사용자 목록 조회 중 오류가 발생했습니다: " + e.getMessage());
-            return ResponseEntity.internalServerError().body(errorResponse);
+            return ServerErrorResponses.internalError("테넌트 사용자 목록 조회 중 오류 발생: branchCode=" + branchCode, e);
         }
     }
     
@@ -321,11 +311,7 @@ public class BranchManagementController {
             return ResponseEntity.ok(response);
             
         } catch (Exception e) {
-            log.error("사용자 일괄 처리 중 오류 발생: error={}", e.getMessage(), e);
-            Map<String, Object> errorResponse = new HashMap<>();
-            errorResponse.put("success", false);
-            errorResponse.put("message", "일괄 처리 중 오류가 발생했습니다: " + e.getMessage());
-            return ResponseEntity.internalServerError().body(errorResponse);
+            return ServerErrorResponses.internalError("사용자 일괄 처리 중 오류 발생", e);
         }
     }
     

@@ -5,7 +5,7 @@
 
 set -e
 
-DEV_SERVER="beta0629.cafe24.com"
+DEV_SERVER="${DEV_SERVER_HOST:?DEV_SERVER_HOST 환경변수를 설정하세요}"
 DEV_USER="root"
 SCRIPT_PATH="/opt/mindgarden/scripts/development/utilities/emergency-kill-connections.sh"
 
@@ -28,11 +28,11 @@ ssh -o StrictHostKeyChecking=no "$DEV_USER@$DEV_SERVER" << 'REMOTE_SCRIPT'
   fi
   
   # MySQL 연결 정보
-  DB_HOST="${DB_HOST:-beta0629.cafe24.com}"
+  DB_HOST="${DB_HOST:?DB_HOST 환경변수를 설정하세요}"
   DB_PORT="${DB_PORT:-3306}"
   DB_NAME="${DB_NAME:-core_solution}"
   DB_USERNAME="${DB_USERNAME:-mindgarden_dev}"
-  DB_PASSWORD="${DB_PASSWORD:-MindGardenDev2025!@#}"
+  DB_PASSWORD="${DB_PASSWORD:?DB_PASSWORD 환경변수를 설정하세요}"
   
   echo ""
   echo "📊 정리 전 연결 상태:"

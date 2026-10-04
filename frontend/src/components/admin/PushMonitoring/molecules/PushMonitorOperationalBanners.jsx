@@ -10,13 +10,12 @@
  *
  * @author MindGarden core-coder
  * @since 2026-06-07
+ * @updated 2026-10-03 — 커스텀 배너·점선 비용 카드 → SettingsNotice
  */
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import PushMonitorOperationalBadge, {
-  PUSH_MONITOR_BADGE_TONES
-} from '../atoms/PushMonitorOperationalBadge';
+import { SettingsNotice } from '../../settings-shell';
 import { ADMIN_WEB_SCAFFOLD_COPY } from '../../../../constants/adminWebScaffold';
 import './PushMonitorOperationalBanners.css';
 
@@ -49,32 +48,20 @@ const PushMonitorOperationalBanners = ({
   return (
     <div className="mg-push-monitor__operational-banners" data-testid="push-monitor-operational-banners">
       {showAlimtalkOff ? (
-        <PushMonitorOperationalBadge
-          tone={PUSH_MONITOR_BADGE_TONES.WARNING}
-          title={ADMIN_WEB_SCAFFOLD_COPY.PUSH_MONITOR_BANNER_ALIMTALK_OFF_TITLE}
-          description={ADMIN_WEB_SCAFFOLD_COPY.PUSH_MONITOR_BANNER_ALIMTALK_OFF_DESC}
-        />
+        <SettingsNotice tone="warning" role="status" testId="push-monitor-banner-warning">
+          <strong>{ADMIN_WEB_SCAFFOLD_COPY.PUSH_MONITOR_BANNER_ALIMTALK_OFF_TITLE}</strong>
+          <p>{ADMIN_WEB_SCAFFOLD_COPY.PUSH_MONITOR_BANNER_ALIMTALK_OFF_DESC}</p>
+        </SettingsNotice>
       ) : null}
-      <PushMonitorOperationalBadge
-        tone={PUSH_MONITOR_BADGE_TONES.INFO}
-        title={ADMIN_WEB_SCAFFOLD_COPY.PUSH_MONITOR_BANNER_PUSH_GUARD_TITLE}
-        description={ADMIN_WEB_SCAFFOLD_COPY.PUSH_MONITOR_BANNER_PUSH_GUARD_DESC}
-      />
-      <div
-        className="mg-push-monitor__cost-card"
-        role="note"
-        aria-label={ADMIN_WEB_SCAFFOLD_COPY.PUSH_MONITOR_COST_TITLE}
-      >
-        <div className="mg-push-monitor__cost-card__title">
-          {ADMIN_WEB_SCAFFOLD_COPY.PUSH_MONITOR_COST_TITLE}
-        </div>
-        <div className="mg-push-monitor__cost-card__channels" aria-hidden="true">
-          {costSummary}
-        </div>
-        <div className="mg-push-monitor__cost-card__desc">
-          {ADMIN_WEB_SCAFFOLD_COPY.PUSH_MONITOR_COST_DESC}
-        </div>
-      </div>
+      <SettingsNotice tone="info" testId="push-monitor-banner-info">
+        <strong>{ADMIN_WEB_SCAFFOLD_COPY.PUSH_MONITOR_BANNER_PUSH_GUARD_TITLE}</strong>
+        <p>{ADMIN_WEB_SCAFFOLD_COPY.PUSH_MONITOR_BANNER_PUSH_GUARD_DESC}</p>
+      </SettingsNotice>
+      <SettingsNotice tone="info" ariaLabel={ADMIN_WEB_SCAFFOLD_COPY.PUSH_MONITOR_COST_TITLE}>
+        <strong>{ADMIN_WEB_SCAFFOLD_COPY.PUSH_MONITOR_COST_TITLE}</strong>
+        <p className="mg-push-monitor__cost-channels" aria-hidden="true">{costSummary}</p>
+        <p className="mg-v2-settings-muted">{ADMIN_WEB_SCAFFOLD_COPY.PUSH_MONITOR_COST_DESC}</p>
+      </SettingsNotice>
     </div>
   );
 };

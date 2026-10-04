@@ -57,43 +57,18 @@ description: Core Solution(MindGarden) 테스트 표준 요약. 단위·통합·
 
 ## E2E·수동 스모크용 로그인 계정 (필요 시)
 
-**보안**: 아래 값은 **개발/스테이징·내부 E2E 전용**이다. 저장소가 외부에 공개되거나 유출 의심 시 **즉시 비밀번호를 변경**하고, 이 스킬 문구를 갱신한다. **CI(GitHub Actions 등)** 에서는 반드시 **Secrets**로 주입하고, 워크플로에 평문을 넣지 않는다.
+**값은 저장소에 두지 않는다.** 로컬 `.env`(커밋 금지) 또는 비밀 저장소에서 주입하고, CI는 GitHub Secrets로만 넣는다. 값은 PR 본문·이슈·채팅·로그에도 쓰지 않는다.
 
-**우선순위**: 환경 변수가 있으면 **항상 환경 변수를 사용**한다.
+| 용도 | 환경변수 |
+|------|----------|
+| 관리자·ERP·일반 웹 E2E (이메일 로그인) | `E2E_TEST_EMAIL`, `E2E_TEST_PASSWORD` (또는 `TEST_USERNAME` / `TEST_PASSWORD`, `getE2eCredentials()` 참고) |
+| 상담사 웹 E2E (`/login`) | `CONSULTANT_USERNAME` 또는 `E2E_CONSULTANT_LOGIN_ID`, `CONSULTANT_PASSWORD` 또는 `E2E_CONSULTANT_PASSWORD` |
+| 내담자 웹 E2E (`/login`) | `TEST_CLIENT_USERNAME` 또는 `E2E_CLIENT_LOGIN_ID`, `TEST_CLIENT_PASSWORD` 또는 `E2E_CLIENT_PASSWORD` |
 
-### 관리자·ERP·일반 웹 E2E (이메일 로그인)
-
-| 변수 | 없을 때 기본값(로컬·에이전트 수동 스모크용) |
-|------|---------------------------------------------|
-| `E2E_TEST_EMAIL` | `agisunny@daum.net` |
-| `E2E_TEST_PASSWORD` | `godgod826!` |
-| `TEST_USERNAME` / `TEST_PASSWORD` | 위 이메일·비밀번호로 폴백 (`getE2eCredentials()` 참고) |
-
-### 상담사 웹 E2E (`/login` — 아이디에 전화번호)
-
-| 변수 | 없을 때 기본값 |
-|------|----------------|
-| `CONSULTANT_USERNAME` 또는 `E2E_CONSULTANT_LOGIN_ID` | `01042858570` |
-| `CONSULTANT_PASSWORD` 또는 `E2E_CONSULTANT_PASSWORD` | 로컬 시드 계정용 기본값(관리자 E2E와 동일) |
-
-### 내담자 웹 E2E (`/login` — 아이디에 전화번호)
-
-| 변수 | 없을 때 기본값 |
-|------|----------------|
-| `TEST_CLIENT_USERNAME` 또는 `E2E_CLIENT_LOGIN_ID` | `01086322121` |
-| `TEST_CLIENT_PASSWORD` 또는 `E2E_CLIENT_PASSWORD` | 로컬 시드 계정용 기본값 |
-
-> **재발 방지(상담사·내담자 실계정 충돌)**: 위 기본값은 **로컬에서 시드된 테스트 계정** 전용이다.
-> dev·스테이징의 **실계정**(예: `01042858570`)은 실제 비밀번호가 다를 수 있으므로, 그 대상으로 실행할 때는
-> 반드시 `E2E_CONSULTANT_PASSWORD` / `E2E_CLIENT_PASSWORD`(또는 `CONSULTANT_PASSWORD` / `TEST_CLIENT_PASSWORD`)에
-> **실제 비밀번호를 env 로 주입**한다. 로그인 실패를 이유로 **DB 비밀번호 해시를 기본값으로 덮어쓰지 않는다** —
-> E2E/Playwright 는 UI **읽기 로그인만** 수행하고 사용자 자격 증명을 변경하지 않는다. 실계정 비밀번호는 문서·커밋·로그에 평문으로 남기지 않는다.
-
-**core-tester·에이전트 사용 시**: Playwright·스크립트는 `tests/e2e/helpers/erpAuth.ts`의 **`getMindGardenWebLogin()`**(관리자 등)·**`getConsultantWebLogin()`**(상담사)·**`getClientWebLogin()`**(내담자)를 사용한다. 수동 안내 시에도 위 표를 인용한다.
-
-**Playwright 코드 경로**: 레거시 `superadmin@mindgarden.com` / `admin123` / `consultant@example.com` / `beta74@live.co.kr` 및 **내담자 `TEST_CLIENT_*` 미설정 시 무조건 스킵** 패턴 등 **옛 방식은 사용하지 않는다.**
-
-**금지**: 운영(production) URL·실사용자 데이터에 이 계정을 쓰지 않는다. PR·이슈 본문·로그에 비밀번호를 붙여 넣지 않는다.
+- .dev 대상 실행은 새로 만든 테스트 계정만 쓰고 PR에는 id만 적는다(AGENTS.md §3).
+- 로그인 실패를 이유로 DB 비밀번호 해시를 덮어쓰지 않는다. E2E는 UI 읽기 로그인만 하고 자격 증명을 바꾸지 않는다.
+- 레거시 하드코딩 계정·미설정 시 무조건 스킵 패턴은 쓰지 않는다.
+- 운영(production) URL·실사용자 데이터에 테스트 계정을 쓰지 않는다.
 
 ## 서브에이전트 활용
 

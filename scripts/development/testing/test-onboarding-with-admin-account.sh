@@ -12,7 +12,7 @@ DATE_STR=$(date +%Y%m%d)
 TIME_STR=$(date +%H%M%S)
 TENANT_NAME="테스트 상담소 ${DATE_STR} ${TIME_STR}"
 EMAIL="test-${DATE_STR}-${TIME_STR}@example.com"
-ADMIN_PASSWORD="Test1234!@#"
+ADMIN_PASSWORD="${ADMIN_PASSWORD:?ADMIN_PASSWORD 환경변수를 설정하세요}"
 REGION="서울특별시"
 BUSINESS_TYPE="CONSULTATION"
 
@@ -106,7 +106,7 @@ echo ""
 echo "📋 3단계: Ops Portal 로그인 (승인 API 인증)"
 echo "----------------------------------------"
 OPS_USERNAME="superadmin@mindgarden.com"
-OPS_PASSWORD="admin123"
+OPS_PASSWORD="${OPS_PASSWORD:?OPS_PASSWORD 환경변수를 설정하세요}"
 
 OPS_LOGIN_PAYLOAD=$(cat <<EOF
 {

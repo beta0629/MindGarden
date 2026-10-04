@@ -98,7 +98,6 @@ UI/비주얼이 포함된 기능을 기획할 때는 **화면설계서**를 작�
 2. **§0.4 세 가지**(사용성·정보 노출·레이아웃 요구)를 태스크 설명에 반드시 포함.
 3. **참조 지정**: 어드민 대시보드 샘플, `mindgarden-design-system.pen` B0KlA, `/core-solution-unified-modal`, `/core-solution-atomic-design`, `docs/standards` 등.
 4. **산출 요청**: "화면별 레이아웃·블록/컴포넌트 구성·디자인 토큰·시안(또는 스펙 문서). 코드 작성 없음."
-5. **Task 모델 (디자인·비주얼 변경)**: `core-designer`·`core-publisher` Task 호출 시 **`model: "gemini-3.1-pro"`** 를 권장한다. 배치 계획서·분배표에 명시하고, 근거는 `docs/project-management/CORE_PLANNER_DELEGATION_ORDER.md`(§ Task 모델 — 디자인·비주얼 변경 배치) 및 `.cursor/rules/mindgarden-subagents.mdc`.
 
 이렇게 작성한 화면설계서와 전달문을 바탕으로 core-designer가 시안을 설계하고, 이후 core-coder가 해당 산출물을 참조해 구현합니다.
 

@@ -2,14 +2,14 @@
 # 프론트엔드 로그인 테스트 스크립트
 # 생성된 관리자 계정으로 로그인 및 대시보드 접근 확인
 
-BASE_URL="http://beta0629.cafe24.com:8080"
+BASE_URL="http://${DEV_SERVER_HOST:?DEV_SERVER_HOST 환경변수를 설정하세요}:8080"
 TIMESTAMP=$(date +%s)
 TENANT_ID="test-tenant-${TIMESTAMP}"
 TENANT_NAME="테스트 테넌트 ${TIMESTAMP}"
 EMAIL="test${TIMESTAMP}@example.com"
-ADMIN_PASSWORD="Test1234!@#"
+ADMIN_PASSWORD="${ADMIN_PASSWORD:?ADMIN_PASSWORD 환경변수를 설정하세요}"
 ADMIN_EMAIL="superadmin@mindgarden.com"
-ADMIN_PASS="admin123"
+ADMIN_PASS="${ADMIN_PASS:?ADMIN_PASS 환경변수를 설정하세요}"
 
 echo "=========================================="
 echo "🧪 프론트엔드 로그인 테스트"
@@ -167,12 +167,12 @@ echo "관리자 비밀번호: $ADMIN_PASSWORD"
 echo ""
 echo "다음 단계:"
 echo "1. 브라우저에서 로그인 테스트"
-echo "   URL: http://beta0629.cafe24.com:8080/login"
+echo "   URL: http://${DEV_SERVER_HOST:?DEV_SERVER_HOST 환경변수를 설정하세요}:8080/login"
 echo "   이메일: $EMAIL"
 echo "   비밀번호: $ADMIN_PASSWORD"
 echo ""
 echo "2. 대시보드 접근 확인"
-echo "   URL: http://beta0629.cafe24.com:8080/dashboard"
-echo "   또는: http://beta0629.cafe24.com:8080/admin/dashboard"
+echo "   URL: http://${DEV_SERVER_HOST:?DEV_SERVER_HOST 환경변수를 설정하세요}:8080/dashboard"
+echo "   또는: http://${DEV_SERVER_HOST:?DEV_SERVER_HOST 환경변수를 설정하세요}:8080/admin/dashboard"
 echo ""
 

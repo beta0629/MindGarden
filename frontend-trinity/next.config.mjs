@@ -1,6 +1,9 @@
+import compilerOptions from "./config/compilerOptions.js";
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  compiler: compilerOptions.buildCompilerOptions(process.env.NODE_ENV),
   output: "export",
   trailingSlash: true,
   images: {

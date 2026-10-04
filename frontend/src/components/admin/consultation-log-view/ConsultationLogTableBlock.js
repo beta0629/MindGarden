@@ -1,6 +1,6 @@
 /**
  * 상담일지 조회 - 테이블 뷰 블록 (ListTableView 기반)
- * 컬럼: 세션일자, 회기, 내담자명, 상담사명, 완료여부, 요약(50자), 작성일. 행 클릭 시 모달.
+ * 컬럼: 세션일자, 회기, 내담자명, 상담사명, 완료여부, 작성일. 행 클릭 시 모달(본문은 단건 상세에서 조회).
  *
  * @author Core Solution
  * @since 2025-03-02
@@ -12,6 +12,7 @@ import ContentSection from '../../dashboard-v2/content/ContentSection';
 import ContentCard from '../../dashboard-v2/content/ContentCard';
 import ListTableView from '../../common/ListTableView';
 import EmptyState from '../../common/EmptyState';
+import ConsultationLogAdminWriteBadge from '../../consultant/molecules/ConsultationLogAdminWriteBadge';
 import './ConsultationLogTableBlock.css';
 
 const EMPTY_TITLE = '등록된 상담일지가 없습니다.';
@@ -19,7 +20,6 @@ const EMPTY_DESC = '다른 필터를 적용해 보시거나, 스케줄에서 상
 const BADGE_COMPLETED = '완료';
 const BADGE_INCOMPLETE = '미완료';
 const SESSION_SUFFIX = '회기';
-const SUMMARY_MAX_LEN = 50;
 const MOBILE_HINT = '가로 스크롤하여 전체 컬럼을 확인할 수 있습니다.';
 
 const COLUMNS = [
@@ -28,9 +28,10 @@ const COLUMNS = [
   { key: 'clientName', label: '내담자명' },
   { key: 'consultantName', label: '상담사명' },
   { key: 'isSessionCompleted', label: '완료여부' },
-  { key: 'summary', label: '요약' },
   { key: 'createdAt', label: '작성일' }
 ];
+
+const ADMIN_WRITE_COLUMN = { key: 'adminWrite', label: '관리자 작성·수정' };
 
 const formatDate = (val) => {
   if (!val) return '-';
@@ -38,18 +39,12 @@ const formatDate = (val) => {
   return val;
 };
 
-const truncate = (str, maxLen) => {
-  if (!str || typeof str !== 'string') return '-';
-  const trimmed = str.trim();
-  if (trimmed.length <= maxLen) return trimmed;
-  return `${trimmed.slice(0, maxLen)}…`;
-};
-
 const ConsultationLogTableBlock = ({
   records,
   clientNameMap,
   consultantNameMap,
-  onRowClick
+  onRowClick,
+  showAdminWriteBadge = false
 }) => {
   const isEmpty = !records || records.length === 0;
 
@@ -87,7 +82,6 @@ const ConsultationLogTableBlock = ({
       sessionNumber: record.sessionNumber ?? 0,
       clientName,
       consultantName,
-      summary: truncate(record.clientCondition, SUMMARY_MAX_LEN),
       createdAt: record.createdAt ?? record.updatedAt
     };
   });
@@ -116,10 +110,10 @@ const ConsultationLogTableBlock = ({
           </span>
         );
       }
-      case 'summary':
-        return <span className="mg-v2-consultation-log-table__summary">{item.summary}</span>;
       case 'createdAt':
         return formatDate(item.createdAt);
+      case 'adminWrite':
+        return <ConsultationLogAdminWriteBadge record={item} />;
       default:
         return item[columnKey] ?? '-';
     }
@@ -133,7 +127,7 @@ const ConsultationLogTableBlock = ({
         </p>
         <div className="mg-v2-consultation-log-table-block__scroll">
           <ListTableView
-            columns={COLUMNS}
+            columns={showAdminWriteBadge ? [...COLUMNS, ADMIN_WRITE_COLUMN] : COLUMNS}
             data={data}
             renderCell={renderCell}
             onRowClick={(item) => onRowClick(item.id)}
@@ -158,14 +152,18 @@ ConsultationLogTableBlock.propTypes = {
       consultantId: PropTypes.number,
       consultantName: PropTypes.string,
       isSessionCompleted: PropTypes.bool,
-      clientCondition: PropTypes.string,
       createdAt: PropTypes.string,
-      updatedAt: PropTypes.string
+      updatedAt: PropTypes.string,
+      writtenByAdmin: PropTypes.bool,
+      editedByAdmin: PropTypes.bool,
+      lastEditedByRole: PropTypes.string,
+      lastEditedAt: PropTypes.string
     })
   ),
   clientNameMap: PropTypes.object,
   consultantNameMap: PropTypes.object,
-  onRowClick: PropTypes.func.isRequired
+  onRowClick: PropTypes.func.isRequired,
+  showAdminWriteBadge: PropTypes.bool
 };
 
 export default ConsultationLogTableBlock;

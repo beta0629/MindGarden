@@ -1,5 +1,6 @@
 import { CONSULTATION_LOG_SERVER_DRAFT_API_PATH } from '../../constants/consultationLogAutosaveConstants';
 import {
+  deleteConsultationLogDraftOnServer,
   fetchConsultationLogDraftFromServer,
   pushConsultationLogDraftToServer
 } from '../consultationLogDraftServerAdapter';
@@ -7,7 +8,8 @@ import * as ajax from '../ajax';
 
 jest.mock('../ajax', () => ({
   apiGet: jest.fn(),
-  apiPut: jest.fn()
+  apiPut: jest.fn(),
+  apiDelete: jest.fn()
 }));
 
 describe('consultationLogDraftServerAdapter', () => {
@@ -34,7 +36,8 @@ describe('consultationLogDraftServerAdapter', () => {
         ok: true,
         hasDraft: true,
         version: 3,
-        payloadJson: '{"a":1}'
+        payloadJson: '{"a":1}',
+        updatedAt: null
       });
     });
 
@@ -65,8 +68,7 @@ describe('consultationLogDraftServerAdapter', () => {
       const res = await pushConsultationLogDraftToServer({
         consultationId: 'schedule-5',
         consultantId: 9,
-        formData: { x: 1 },
-        memoDraft: 'm',
+        payloadJson: JSON.stringify({ formData: { x: 1 }, memoDraft: 'm' }),
         expectedVersion: 3
       });
       expect(ajax.apiPut).toHaveBeenCalledTimes(1);
@@ -78,7 +80,7 @@ describe('consultationLogDraftServerAdapter', () => {
         payloadJson: JSON.stringify({ formData: { x: 1 }, memoDraft: 'm' }),
         expectedVersion: 3
       });
-      expect(res).toEqual({ ok: true, version: 4 });
+      expect(res).toEqual({ ok: true, version: 4, updatedAt: null });
     });
 
     test('apiPut null이면 ok false', async() => {
@@ -86,8 +88,7 @@ describe('consultationLogDraftServerAdapter', () => {
       const res = await pushConsultationLogDraftToServer({
         consultationId: '1',
         consultantId: 2,
-        formData: {},
-        memoDraft: ''
+        payloadJson: '{}'
       });
       expect(res.ok).toBe(false);
       expect(res.skipped).toBe(false);
@@ -97,8 +98,7 @@ describe('consultationLogDraftServerAdapter', () => {
       const res = await pushConsultationLogDraftToServer({
         consultationId: '1',
         consultantId: null,
-        formData: {},
-        memoDraft: ''
+        payloadJson: '{}'
       });
       expect(res.skipped).toBe(true);
       expect(ajax.apiPut).not.toHaveBeenCalled();
@@ -120,15 +120,55 @@ describe('consultationLogDraftServerAdapter', () => {
       const res = await pushConsultationLogDraftToServer({
         consultationId: 'schedule-386',
         consultantId: 22,
-        formData: { a: 1 },
-        memoDraft: '',
+        payloadJson: JSON.stringify({ formData: { a: 1 }, memoDraft: '' }),
         expectedVersion: 3
       });
 
       expect(ajax.apiPut).toHaveBeenCalledTimes(2);
       expect(ajax.apiGet).toHaveBeenCalledTimes(1);
       expect(ajax.apiPut.mock.calls[1][1].expectedVersion).toBe(5);
-      expect(res).toEqual({ ok: true, version: 6 });
+      expect(res).toEqual({ ok: true, version: 6, updatedAt: null });
+    });
+
+    test('401 이면 notAuthenticated 를 돌려주고 재시도하지 않는다 (입력 보존은 호출부 책임)', async() => {
+      const unauthorized = new Error('unauthorized');
+      unauthorized.status = 401;
+      ajax.apiPut.mockRejectedValueOnce(unauthorized);
+
+      const res = await pushConsultationLogDraftToServer({
+        consultationId: 'schedule-7',
+        consultantId: 3,
+        payloadJson: '{}'
+      });
+
+      expect(res).toEqual({ ok: false, skipped: false, notAuthenticated: true });
+      expect(ajax.apiPut).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('deleteConsultationLogDraftOnServer', () => {
+    test('DELETE 쿼리에 consultationId·consultantId 를 넣어 호출한다', async() => {
+      ajax.apiDelete.mockResolvedValueOnce({});
+
+      const res = await deleteConsultationLogDraftOnServer({
+        consultationId: 'schedule-5',
+        consultantId: 9
+      });
+
+      expect(res.ok).toBe(true);
+      expect(ajax.apiDelete).toHaveBeenCalledWith(
+        `${CONSULTATION_LOG_SERVER_DRAFT_API_PATH}?consultationId=schedule-5&consultantId=9`
+      );
+    });
+
+    test('consultantId 누락 시 skipped 이며 호출하지 않는다', async() => {
+      const res = await deleteConsultationLogDraftOnServer({
+        consultationId: 'schedule-5',
+        consultantId: null
+      });
+
+      expect(res.skipped).toBe(true);
+      expect(ajax.apiDelete).not.toHaveBeenCalled();
     });
   });
 });

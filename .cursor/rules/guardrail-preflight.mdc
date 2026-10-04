@@ -1,0 +1,29 @@
+---
+description: release/dev 머지·완료·PASS 선언 전 자체 검증 실행과 결과 첨부 (MindGarden 단일 검증 규칙)
+alwaysApply: true
+---
+
+# 완료 전 검증 — PASS 조건
+
+규칙을 읽기만 하고 PASS라 쓰지 않는다. 근거는 실제로 실행한 명령과 그 출력이다. 상세 명령: `.cursor/skills/core-solution-self-verify/SKILL.md`
+
+1. 요구사항 대조: 구현 전 번호 체크리스트, 끝나면 표(항목 / 결과 / 근거: 파일:줄·명령 출력·API 응답·스크린샷).
+2. 검사 스크립트: AGENTS.md §8 의 명령(가드레일 테스트·gitleaks diff·검증 스크립트)을 실행하고 exit 코드·걸린 줄을 첨부한다. 새로 걸린 항목이 있으면 FAIL. 베이스라인(`src/test/resources/guardrails/*.txt`, `.gitleaksignore`)에 새 줄을 넣어 통과시키지 않는다.
+3. 테스트: 변경·신규 클래스 관련 테스트 로컬 실행(CI는 -DskipTests). 통과/전체, 기존 실패는 base에서 재현해 구분. FE/Expo 바꿨으면 jest도.
+4. 반례 3개 이상을 테스트로: 권한(미인증·다른 역할·다른 테넌트·타인 id), 돈(중복·재시도·누적 환불 ≤ 결제액), 동시성, KST 날짜 경계.
+5. DB·외부 호출: 프로시저는 Java 파라미터 수·IN/OUT = 배포 SQL, 그리고 표준 배포 SQL에 포함. mock `thenReturn` 만으로는 근거 아님. 외부 API(PortOne·SMS) 호출 중 DB 커넥션 점유 0.
+6. Flyway: 운영 적용 파일 수정 0건(`git diff origin/release/prod -- src/main/resources/db/migration/`), 새 버전만, 데이터 UPDATE/DELETE 없음.
+7. 회귀: 바꾼 코드를 부르는 다른 경로(웹·Expo·관리자·배치) 목록과 확인.
+8. .dev 스모크(배포 후): `/actuator/info` 커밋 = 머지 커밋, 바꾼 기능 1회 실호출. FE면 실제 URL 1280px·390px 스크린샷. 머지 전에는 「미확인(배포 후)」.
+
+## 하드스톱 (해당하면 FAIL — 「남은 위험」으로 돌려 PASS 금지)
+- 같은 테넌트라도 타인의 결제·매핑·주문·개인정보·일지를 읽을 수 있음. 내담자 화면이 `/api/v1/admin/**` 를 부르면 본인 id 강제 확인.
+- 보호 API에 역할 가드 누락, 가드가 서비스 뒤에 있음.
+- 오류 응답에 예외 메시지·스택·SQL 노출. yml에 비밀값·기본값, `.dev` 등 도메인 하드코딩.
+- 돈·권한 경로를 추정·mock·픽스처로 PASS 처리.
+
+## 판정·보고
+- 결과 값: 통과 / 실패 / 미확인 / 해당 없음. 미확인·해당 없음을 통과로 적지 않는다.
+- 1~7에 실패·미확인이 있으면 `release/dev` 에 머지하지 않는다. 정책 판단이 필요하면 멈추고 묻는다.
+- 같은 표를 PR 본문 `## 자체 검증` 과 채팅에 남긴다. 비밀값·테스트 계정 비밀번호는 쓰지 않는다(id만).
+- 완료 시 stop 훅(`.cursor/hooks/guardrail-stop.sh`)이 변경 영역의 가드레일·관련 테스트를 돌리고, 실패하면 완료를 되돌린다. 훅 통과만으로 위 표를 대신하지 않는다.

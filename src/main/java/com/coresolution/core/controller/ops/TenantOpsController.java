@@ -22,6 +22,8 @@ import java.util.stream.Collectors;
  * Ops Portal 테넌트 관리 API 컨트롤러
  * 테넌트 목록·상세·정지/재개 및 테넌트별 관리자 계정 조회
  *
+ * <p>전 테넌트를 다루므로 Ops 운영자({@code ROLE_OPS})만 허용한다. 테넌트 관리자({@code ROLE_ADMIN})는 403.</p>
+ *
  * @author CoreSolution
  * @version 1.1.0
  * @since 2025-11-23
@@ -47,7 +49,7 @@ public class TenantOpsController extends BaseApiController {
      */
     @GetMapping
     public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getTenants() {
-        OpsPermissionUtils.requireAdminOrOps();
+        OpsPermissionUtils.requireOps();
         List<Map<String, Object>> tenantList = tenantOpsService.listTenants();
         log.info("Ops Portal 테넌트 목록 조회 완료: {}개", tenantList.size());
         return success(tenantList);
@@ -63,7 +65,7 @@ public class TenantOpsController extends BaseApiController {
     @GetMapping("/{tenantId}")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getTenant(
             @PathVariable String tenantId) {
-        OpsPermissionUtils.requireAdminOrOps();
+        OpsPermissionUtils.requireOps();
         Map<String, Object> detail = tenantOpsService.getTenantDetail(tenantId);
         return success(detail);
     }
@@ -78,7 +80,7 @@ public class TenantOpsController extends BaseApiController {
     @PostMapping("/{tenantId}/suspend")
     public ResponseEntity<ApiResponse<Map<String, Object>>> suspendTenant(
             @PathVariable String tenantId) {
-        OpsPermissionUtils.requireAdminOrOps();
+        OpsPermissionUtils.requireOps();
         Map<String, Object> updated = tenantOpsService.suspendTenant(tenantId);
         return success(updated);
     }
@@ -93,7 +95,7 @@ public class TenantOpsController extends BaseApiController {
     @PostMapping("/{tenantId}/resume")
     public ResponseEntity<ApiResponse<Map<String, Object>>> resumeTenant(
             @PathVariable String tenantId) {
-        OpsPermissionUtils.requireAdminOrOps();
+        OpsPermissionUtils.requireOps();
         Map<String, Object> updated = tenantOpsService.resumeTenant(tenantId);
         return success(updated);
     }
@@ -108,7 +110,7 @@ public class TenantOpsController extends BaseApiController {
     @GetMapping("/{tenantId}/admins")
     public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getTenantAdmins(
             @PathVariable String tenantId) {
-        OpsPermissionUtils.requireAdminOrOps();
+        OpsPermissionUtils.requireOps();
 
         tenantRepository.findByTenantIdAndIsDeletedFalse(tenantId)
                 .orElseThrow(() -> new IllegalArgumentException("테넌트를 찾을 수 없습니다: " + tenantId));

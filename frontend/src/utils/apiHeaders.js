@@ -7,6 +7,26 @@
  * @since 2025-12-06
  */
 
+import { API_HEADER_SESSION_FRESH_MS } from '../constants/session';
+
+/**
+ * 직전 current-user 200 이 재사용 창 안이고 tenantId 가 있으면 true.
+ * 401·네트워크 실패로만 찍힌 확인 시각은 쓰지 않는다 (getLastVerifiedAt).
+ *
+ * @param {object} manager sessionManager
+ * @returns {boolean}
+ */
+export const hasFreshSessionTenant = (manager) => {
+    if (!manager || typeof manager.getUser !== 'function' || typeof manager.getLastVerifiedAt !== 'function') {
+        return false;
+    }
+    const user = manager.getUser();
+    const verifiedAt = Number(manager.getLastVerifiedAt()) || 0;
+    return Boolean(user && user.tenantId)
+        && verifiedAt > 0
+        && (Date.now() - verifiedAt) < API_HEADER_SESSION_FRESH_MS;
+};
+
 /**
  * tenantId 헤더 가져오기 (공통 함수)
  * @param {boolean} forceRefresh 세션 강제 갱신 여부
@@ -14,8 +34,9 @@
  */
 export const getTenantId = async(forceRefresh = false) => {
     try {
-        // forceRefresh 시 API 호출 전 한 번 갱신: 맨 처음 checkSession(true) await 후 조회
-        if (forceRefresh && typeof window !== 'undefined' && window.sessionManager?.checkSession) {
+        // forceRefresh 시 API 호출 전 한 번 갱신. 직전 확인이 재사용 창 안이면 요청마다 다시 확인하지 않는다.
+        if (forceRefresh && typeof window !== 'undefined' && window.sessionManager?.checkSession
+            && !hasFreshSessionTenant(window.sessionManager)) {
             await window.sessionManager.checkSession(true);
         }
         // sessionManager가 있으면 우선 사용 (최신 정보)

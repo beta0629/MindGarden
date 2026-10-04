@@ -1,3 +1,4 @@
+import logger from '../utils/logger';
 import React, { createContext, useContext, useReducer, useEffect, useCallback, useRef } from 'react';
 import { CONSTANTS } from '../constants/magicNumbers';
 import { sessionManager } from '../utils/sessionManager';
@@ -170,7 +171,7 @@ export const SessionProvider = ({ children }) => {
     let cancelled = false;
     (async() => {
       const postLogoutGate = sessionManager.consumePostLogoutGate();
-      console.log('🔄 SessionProvider 마운트: checkSession( true ) 실행', {
+      logger.debug('🔄 SessionProvider 마운트: checkSession( true ) 실행', {
         postLogoutGate
       });
       const ok = await sessionManager.checkSession(true);
@@ -194,7 +195,7 @@ export const SessionProvider = ({ children }) => {
         const user = sessionManager.getUser();
         const sessionInfo = sessionManager.getSessionInfo();
         if (user) {
-          console.log('✅ SessionProvider: checkSession 성공, 사용자 설정:', user);
+          logger.debug('✅ SessionProvider: checkSession 성공, 사용자 설정:', user);
           dispatch({ type: SessionActionTypes.SET_USER, payload: user });
           dispatch({ type: SessionActionTypes.SET_LOGGED_IN, payload: true });
           if (sessionInfo) {
@@ -205,11 +206,11 @@ export const SessionProvider = ({ children }) => {
         }
       } else if (sessionManager.getUser()) {
         // auth grace 창의 401 등 sessionManager 가 사용자를 유지한 false — Context 도 유지 (ProtectedRoute 소프트 킥 방지)
-        console.log('⚠️ SessionProvider: checkSession false 이지만 sessionManager 가 사용자 유지');
+        logger.debug('⚠️ SessionProvider: checkSession false 이지만 sessionManager 가 사용자 유지');
         dispatch({ type: SessionActionTypes.SET_USER, payload: sessionManager.getUser() });
         dispatch({ type: SessionActionTypes.SET_LOGGED_IN, payload: true });
       } else {
-        console.log('❌ SessionProvider: checkSession 실패(401 등), 로그인 상태 없음');
+        logger.debug('❌ SessionProvider: checkSession 실패(401 등), 로그인 상태 없음');
         dispatch({ type: SessionActionTypes.CLEAR_SESSION });
       }
       dispatch({ type: SessionActionTypes.SET_HAS_CHECKED_SESSION, payload: true });
@@ -242,15 +243,21 @@ export const SessionProvider = ({ children }) => {
     // stateRef를 통해 최신 state 값 참조
     const currentState = stateRef.current;
 
+    // 마운트 복원 전 비강제 확인은 진행 중 복원과 겹쳐 '미로그인'으로 스킵 응답될 수 있다.
+    // 그 결과로 CLEAR_SESSION·hasCheckedSession 을 확정하면 보호 라우트가 /login 으로 튕긴다.
+    if (!force && !currentState.hasCheckedSession) {
+      return sessionManager.isLoggedIn();
+    }
+
     // 모달이 열려있으면 세션 체크 스킵 (모달 닫힘 방지)
     if (!force && currentState.isModalOpen) {
-      console.log('🔄 세션 체크 스킵 (모달 열림)');
+      logger.debug('🔄 세션 체크 스킵 (모달 열림)');
       return currentState.isLoggedIn;
     }
 
     // 강제 확인이 아니고, 이미 체크 중이거나 최근에 체크했으면 스킵
     if (!force && (currentState.isLoading || (now - currentState.lastCheckTime < SESSION_CHECK_INTERVAL))) {
-      console.log('🔄 세션 체크 스킵 (중복 방지)');
+      logger.debug('🔄 세션 체크 스킵 (중복 방지)');
       return currentState.isLoggedIn;
     }
 
@@ -272,20 +279,20 @@ export const SessionProvider = ({ children }) => {
         // 기존 사용자 정보가 있으면 role 정보 보존
         const currentUser = currentState.user;
         if (currentUser && currentUser.role && !user.role) {
-          console.log('🔄 기존 사용자 role 정보 보존:', currentUser.role);
+          logger.debug('🔄 기존 사용자 role 정보 보존:', currentUser.role);
           user.role = currentUser.role;
         }
         
-        console.log('🔄 SessionContext: checkSession에서 SET_USER 호출', user);
+        logger.debug('🔄 SessionContext: checkSession에서 SET_USER 호출', user);
         dispatch({ type: SessionActionTypes.SET_USER, payload: user });
         if (sessionInfo) {
-          console.log('🔄 SessionContext: checkSession에서 SET_SESSION_INFO 호출', sessionInfo);
+          logger.debug('🔄 SessionContext: checkSession에서 SET_SESSION_INFO 호출', sessionInfo);
           dispatch({ type: SessionActionTypes.SET_SESSION_INFO, payload: sessionInfo });
         }
         
         // 지점 매핑 로직 제거됨 - 브랜치 코드 제거 정책
         
-        console.log('✅ 중앙 세션 확인 완료:', user);
+        logger.debug('✅ 중앙 세션 확인 완료:', user);
       } else if (user) {
         // sessionManager 가 사용자를 유지한 false(auth grace·백그라운드 401) — Context 도 유지해
         // ProtectedRoute 가 /login 으로 소프트 킥하지 않게 한다. 확정 만료는 sessionManager 가 user=null 로 정리한다.
@@ -321,14 +328,13 @@ export const SessionProvider = ({ children }) => {
     try {
       dispatch({ type: SessionActionTypes.SET_LOADING, payload: true });
       
-      console.log('🔐 중앙 세션 로그인 시작:', loginData);
       
       // 기존 세션이 있으면 먼저 정리 (다른 계정으로 로그인 시 충돌 방지)
       // 단, 같은 디바이스/브라우저에서만 정리 (다른 디바이스는 그대로 유지)
       if (state.user || sessionManager.isLoggedIn()) {
-        console.log('🧹 기존 세션 정리 시작...');
+        logger.debug('🧹 기존 세션 정리 시작...');
         const currentUser = state.user || sessionManager.getUser();
-        console.log('현재 로그인된 사용자:', currentUser?.email || currentUser?.id);
+        logger.debug('현재 로그인된 사용자:', currentUser?.email || currentUser?.id);
         
         // 세션 상태만 정리 (백엔드 로그아웃 API는 호출하지 않음)
         // 주의: 현재 디바이스의 세션만 정리 (백엔드에서 다른 디바이스 세션은 그대로 유지됨)
@@ -346,12 +352,12 @@ export const SessionProvider = ({ children }) => {
         localStorage.removeItem('refreshToken');
         sessionStorage.clear();
         
-        console.log('✅ 기존 세션 정리 완료 (현재 디바이스)');
+        logger.debug('✅ 기존 세션 정리 완료 (현재 디바이스)');
       }
       
       // API 호출 (authAPI.login은 ApiResponse 래퍼를 반환할 수 있음 — UnifiedLogin과 동일 unwrap)
       const response = await authAPI.login(loginData);
-      console.log('📡 로그인 API 응답:', response);
+      logger.debug('📡 로그인 API 응답:', response);
       const loginPayload = response?.data || response;
       
       if (response && response.success && (loginPayload?.user || response.user)) {
@@ -371,25 +377,25 @@ export const SessionProvider = ({ children }) => {
         // 잠시 후 서버 세션 확인 (쿠키 설정 시간 확보) - 실패해도 사용자 정보 유지
         setTimeout(async() => {
           try {
-            console.log('🔄 로그인 후 세션 확인 시작...');
+            logger.debug('🔄 로그인 후 세션 확인 시작...');
             const sessionCheckResult = await checkSession(true, { background: true });
             if (sessionCheckResult) {
-              console.log('✅ 로그인 후 세션 확인 완료');
+              logger.debug('✅ 로그인 후 세션 확인 완료');
             } else {
-              console.log('⚠️ 로그인 후 세션 확인 실패했지만 사용자 정보 유지');
+              logger.debug('⚠️ 로그인 후 세션 확인 실패했지만 사용자 정보 유지');
             }
           } catch (error) {
             console.error('❌ 로그인 후 세션 확인 실패:', error);
-            console.log('⚠️ 세션 확인 실패했지만 사용자 정보 유지');
+            logger.debug('⚠️ 세션 확인 실패했지만 사용자 정보 유지');
           }
         }, CONSTANTS.FORM_CONSTANTS.MAX_COMMENT_LENGTH); // CONSTANTS.NOTIFICATION_CONSTANTS.PRIORITY_LOW초 → 500ms로 단축
         
-        console.log('✅ 중앙 세션 로그인 완료:', loggedInUser);
+        logger.debug('✅ 중앙 세션 로그인 완료:', loggedInUser);
         return { success: true, user: loggedInUser };
       } else if (response && (response.requiresConfirmation || loginPayload?.requiresConfirmation)) {
         // 중복 로그인 확인 요청
         const confirmMessage = loginPayload?.message || response.message;
-        console.log('🔔 중복 로그인 확인 요청:', confirmMessage);
+        logger.debug('🔔 중복 로그인 확인 요청:', confirmMessage);
         dispatch({ type: SessionActionTypes.SET_LOADING, payload: false });
         dispatch({ 
           type: SessionActionTypes.SET_DUPLICATE_LOGIN_MODAL, 
@@ -401,7 +407,7 @@ export const SessionProvider = ({ children }) => {
         });
         return { success: false, requiresConfirmation: true, message: confirmMessage };
       } else {
-        console.log('❌ 로그인 실패:', response);
+        logger.debug('❌ 로그인 실패:', response);
         dispatch({ type: SessionActionTypes.SET_LOADING, payload: false });
         return { success: false, message: loginPayload?.message || response?.message || AUTH_MESSAGES.LOGIN_FAILED };
       }
@@ -419,7 +425,7 @@ export const SessionProvider = ({ children }) => {
     try {
       dispatch({ type: SessionActionTypes.SET_LOADING, payload: true });
 
-      console.log('🧪 테스트 로그인 시작:', userInfo);
+      logger.debug('🧪 테스트 로그인 시작:', userInfo);
 
       await loadSessionSecurityFlags();
       const requireServerVerify =
@@ -469,7 +475,7 @@ export const SessionProvider = ({ children }) => {
         dispatch({ type: SessionActionTypes.SET_LOGGED_IN, payload: true });
         dispatch({ type: SessionActionTypes.SET_LOADING, payload: false });
         dispatch({ type: SessionActionTypes.SET_HAS_CHECKED_SESSION, payload: true });
-        console.log('✅ 테스트 로그인(서버 검증) 완료:', verifiedUser);
+        logger.debug('✅ 테스트 로그인(서버 검증) 완료:', verifiedUser);
         return true;
       }
 
@@ -480,15 +486,15 @@ export const SessionProvider = ({ children }) => {
 
       setTimeout(async() => {
         try {
-          console.log('🔄 테스트 로그인 후 세션 확인 시작...');
+          logger.debug('🔄 테스트 로그인 후 세션 확인 시작...');
           await checkSession(true, { background: true });
-          console.log('✅ 테스트 로그인 후 세션 확인 완료');
+          logger.debug('✅ 테스트 로그인 후 세션 확인 완료');
         } catch (error) {
           console.error('❌ 테스트 로그인 후 세션 확인 실패:', error);
         }
       }, CONSTANTS.FORM_CONSTANTS.MAX_COMMENT_LENGTH);
 
-      console.log('✅ 테스트 로그인 완료:', userInfo);
+      logger.debug('✅ 테스트 로그인 완료:', userInfo);
       return true;
     } catch (error) {
       console.error('❌ 테스트 로그인 실패:', error);
@@ -517,7 +523,7 @@ export const SessionProvider = ({ children }) => {
         }
       });
 
-      console.log('✅ 중앙 세션 로그아웃 완료');
+      logger.debug('✅ 중앙 세션 로그아웃 완료');
       
       // 로그인 페이지로 즉시 리다이렉트 (sessionManager에서 처리하므로 여기서는 스킵)
       // sessionManager.logout()에서 이미 리다이렉트 처리함
@@ -550,7 +556,7 @@ export const SessionProvider = ({ children }) => {
       // 로그인 페이지가 아니고, 로딩 중이 아니고, 사용자가 있을 때만 체크
       // silent: true — 백그라운드 폴에서 isLoading을 올리지 않아 전체 오버레이를 방지한다.
       if (!currentState.isLoading && !isLoginPageInner && currentState.user) {
-        console.log('🔍 주기적 세션 체크 실행 (silent)');
+        logger.debug('🔍 주기적 세션 체크 실행 (silent)');
         checkSession(false, { silent: true });
       }
     }, SESSION_CHECK_INTERVAL);

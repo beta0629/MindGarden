@@ -5,6 +5,7 @@ import com.coresolution.consultation.entity.ConsultationAudioFile;
 import com.coresolution.consultation.repository.AudioTranscriptionRepository;
 import com.coresolution.consultation.repository.ConsultationAudioFileRepository;
 import com.coresolution.consultation.service.SpeechToTextService;
+import com.coresolution.consultation.service.support.ConsultationAudioFileCipher;
 import com.coresolution.core.context.TenantContextHolder;
 import com.google.cloud.speech.v1.*;
 import com.google.protobuf.ByteString;
@@ -17,7 +18,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigDecimal;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
@@ -35,6 +35,7 @@ public class SpeechToTextServiceImpl implements SpeechToTextService {
 
     private final ConsultationAudioFileRepository audioFileRepository;
     private final AudioTranscriptionRepository transcriptionRepository;
+    private final ConsultationAudioFileCipher consultationAudioFileCipher;
 
     @Override
     @Transactional
@@ -47,7 +48,7 @@ public class SpeechToTextServiceImpl implements SpeechToTextService {
 
             // 파일 읽기
             Path filePath = Paths.get(audioFile.getFilePath());
-            byte[] audioBytes = Files.readAllBytes(filePath);
+            byte[] audioBytes = consultationAudioFileCipher.readAllBytes(filePath);
             ByteString audioContent = ByteString.copyFrom(audioBytes);
 
             // Google Cloud Speech API 설정

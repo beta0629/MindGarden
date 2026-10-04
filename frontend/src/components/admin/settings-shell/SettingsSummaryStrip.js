@@ -13,14 +13,16 @@ import './SettingsSuite.css';
 
 export const SETTINGS_SUMMARY_EMPTY = '—';
 
-const SettingsSummaryStrip = ({ items, ariaLabel }) => (
-  <dl className="mg-v2-settings-summary" aria-label={ariaLabel} data-testid="settings-summary-strip">
+const SettingsSummaryStrip = ({ items, ariaLabel, testId = 'settings-summary-strip' }) => (
+  <dl className="mg-v2-settings-summary" aria-label={ariaLabel} data-testid={testId}>
     {items.map((item) => {
       const text = toDisplayString(item.value, SETTINGS_SUMMARY_EMPTY);
+      const caption = toDisplayString(item.caption, '');
       return (
-        <div key={item.key} className="mg-v2-settings-summary__cell">
+        <div key={item.key} className="mg-v2-settings-summary__cell" data-testid={item.testId}>
           <dt className="mg-v2-settings-summary__label">{item.label}</dt>
           <dd className="mg-v2-settings-summary__value">{text === '' ? SETTINGS_SUMMARY_EMPTY : text}</dd>
+          {caption ? <dd className="mg-v2-settings-summary__caption">{caption}</dd> : null}
         </div>
       );
     })}
@@ -32,10 +34,13 @@ SettingsSummaryStrip.propTypes = {
     PropTypes.shape({
       key: PropTypes.string.isRequired,
       label: PropTypes.node.isRequired,
-      value: PropTypes.oneOfType([PropTypes.string, PropTypes.number])
+      value: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+      caption: PropTypes.string,
+      testId: PropTypes.string
     })
   ).isRequired,
-  ariaLabel: PropTypes.string
+  ariaLabel: PropTypes.string,
+  testId: PropTypes.string
 };
 
 export default SettingsSummaryStrip;

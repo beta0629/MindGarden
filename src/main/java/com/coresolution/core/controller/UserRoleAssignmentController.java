@@ -103,7 +103,8 @@ public class UserRoleAssignmentController extends BaseApiController {
         
         UserRoleAssignmentResponse role = assignmentService.getCurrentActiveRole(userId, tenantId, branchId);
         if (role == null) {
-            throw new EntityNotFoundException("활성 역할을 찾을 수 없습니다: userId=" + userId + ", tenantId=" + tenantId);
+            // 식별자는 위 로그에만 남긴다 (응답 문구에 세션·테넌트 값 금지)
+            throw new EntityNotFoundException("활성 역할을 찾을 수 없습니다.");
         }
         
         log.info("✅ 현재 활성 역할 조회 완료: userId={}, tenantId={}, tenantRoleId={}", 

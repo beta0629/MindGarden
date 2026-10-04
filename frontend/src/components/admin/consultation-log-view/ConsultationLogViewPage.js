@@ -11,9 +11,14 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import StandardizedApi from '../../../utils/standardizedApi';
+import { API_ENDPOINTS } from '../../../constants/apiEndpoints';
 import { useSession } from '../../../contexts/SessionContext';
 import { RoleUtils } from '../../../constants/roles';
 import notificationManager from '../../../utils/notification';
+import {
+  CONSULTATION_LOG_BODY_ACCESS_STRINGS,
+  canAccessConsultationLogBody
+} from '../../../utils/consultationLogBodyAccess';
 import UnifiedLoading from '../../common/UnifiedLoading';
 import MGButton from '../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
@@ -251,6 +256,7 @@ export const findRecordIdByScheduleDeepLink = (records, scheduleId) => {
 const ConsultationLogViewPage = () => {
   const { user } = useSession();
   const isAdmin = RoleUtils.isAdmin(user);
+  const canOpenConsultationLog = canAccessConsultationLogBody(user);
   const [searchParams] = useSearchParams();
 
   /**
@@ -342,8 +348,26 @@ const ConsultationLogViewPage = () => {
     }
   }, [isAdmin]);
 
+  /**
+   * 내담자 목록(필터·이름 매핑용).
+   *
+   * <p>관리자만 테넌트 전체 목록(`/admin/clients/with-stats`)을 쓴다. 상담사는 그 경로가
+   * 403 이므로 본인 담당 내담자만 돌려주는 상담사 스코프 API 를 쓴다(#1398 본인 id 강제).</p>
+   */
   const loadClients = useCallback(async() => {
     try {
+      if (!isAdmin) {
+        if (!user?.id) {
+          setClients([]);
+          return;
+        }
+        const res = await StandardizedApi.get(
+          API_ENDPOINTS.CONSULTANT_RECORDS.ASSIGNED_CLIENTS(user.id)
+        );
+        const arr = Array.isArray(res) ? res : (res?.data ?? []);
+        setClients(arr.map((c) => ({ ...c, id: c.id, name: c.name, userName: c.name })));
+        return;
+      }
       const list = await getAllClientsWithStats();
       const arr = Array.isArray(list) ? list : [];
       setClients(arr.map((item) => {
@@ -354,7 +378,7 @@ const ConsultationLogViewPage = () => {
       console.error('내담자 목록 로드 실패:', e);
       setClients([]);
     }
-  }, []);
+  }, [isAdmin, user?.id]);
 
   /** 상담사 본인 목록 응답을 목록 뷰 형식으로 정규화 */
   const normalizeConsultantRecords = useCallback((list, consultantDisplayName) => {
@@ -487,6 +511,10 @@ const ConsultationLogViewPage = () => {
   }
 
   const handleOpenModal = (recordId) => {
+    if (!canOpenConsultationLog) {
+      notificationManager.info(CONSULTATION_LOG_BODY_ACCESS_STRINGS.RESTRICTED);
+      return;
+    }
     setModalRecordId(recordId);
     setModalOpen(true);
   };
@@ -496,7 +524,7 @@ const ConsultationLogViewPage = () => {
    * (스케줄 상세 → navigate fallback / 북마크 UX)
    */
   useEffect(() => {
-    if (deepLinkAutoOpenedRef.current || loading) {
+    if (deepLinkAutoOpenedRef.current || loading || !canOpenConsultationLog) {
       return;
     }
     const scheduleId = initialQueryFilter.scheduleId;
@@ -509,7 +537,7 @@ const ConsultationLogViewPage = () => {
     }
     deepLinkAutoOpenedRef.current = true;
     handleOpenModal(recordId);
-  }, [loading, records, initialQueryFilter.scheduleId]);
+  }, [loading, records, initialQueryFilter.scheduleId, canOpenConsultationLog]);
 
   const handleModalClose = () => {
     setModalOpen(false);
@@ -722,6 +750,7 @@ const ConsultationLogViewPage = () => {
                 clientNameMap={clientNameMap}
                 consultantNameMap={consultantNameMap}
                 onCardClick={handleOpenModal}
+                showAdminWriteBadge={isAdmin}
               />
             )}
             {viewMode === VIEW_MODE_TABLE && (
@@ -730,6 +759,7 @@ const ConsultationLogViewPage = () => {
                 clientNameMap={clientNameMap}
                 consultantNameMap={consultantNameMap}
                 onRowClick={handleOpenModal}
+                showAdminWriteBadge={isAdmin}
               />
             )}
           </>
@@ -737,7 +767,7 @@ const ConsultationLogViewPage = () => {
       </ContentArea>
 
       <ConsultationLogModal
-        isOpen={modalOpen}
+        isOpen={modalOpen && canOpenConsultationLog}
         onClose={handleModalClose}
         onSave={handleModalSave}
         recordId={modalRecordId}

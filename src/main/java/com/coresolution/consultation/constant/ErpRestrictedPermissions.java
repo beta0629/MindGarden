@@ -44,6 +44,12 @@ public final class ErpRestrictedPermissions {
 
     public static final String ANNUAL_FINANCIAL_REPORT_VIEW = "ANNUAL_FINANCIAL_REPORT_VIEW";
 
+    /** 전사(본사) 통합 재무 관리 — HQErpController /branch-financial·/consolidated 게이트 */
+    public static final String HQ_FINANCIAL_MANAGE = "HQ_FINANCIAL_MANAGE";
+
+    /** 전사(본사) 대시보드·재무 보고서 조회 — HQErpController /reports 게이트 */
+    public static final String HQ_DASHBOARD_VIEW = "HQ_DASHBOARD_VIEW";
+
     /** ERP 하위 메뉴 권한 */
     public static final String TAX_MANAGE = "TAX_MANAGE";
 
@@ -73,6 +79,8 @@ public final class ErpRestrictedPermissions {
             FINANCIAL_MANAGE,
             FINANCIAL_TRANSACTION_DELETE,
             ANNUAL_FINANCIAL_REPORT_VIEW,
+            HQ_FINANCIAL_MANAGE,
+            HQ_DASHBOARD_VIEW,
             TAX_MANAGE,
             REFUND_MANAGE,
             PURCHASE_REQUEST_VIEW,

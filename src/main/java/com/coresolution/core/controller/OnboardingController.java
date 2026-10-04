@@ -23,6 +23,7 @@ import com.coresolution.core.dto.ApiResponse;
 import com.coresolution.core.constant.OnboardingConstants;
 import com.coresolution.core.security.CaptchaVerifier;
 import com.coresolution.core.service.OnboardingService;
+import com.coresolution.core.service.impl.OnboardingApprovalBlockedException;
 import com.coresolution.core.util.HttpRequestClientIp;
 import com.coresolution.core.util.OpsPermissionUtils;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -491,41 +492,39 @@ public class OnboardingController extends BaseApiController {
             OnboardingDecisionResponse response = new OnboardingDecisionResponse(
                     toAdminResponse(updated), resolveCreatedAdminAccount(updated));
 
-            if (updated.getStatus() == OnboardingStatus.ON_HOLD) {
-                return updated("온보딩 승인 프로세스 중 오류가 발생하여 보류 상태로 변경되었습니다. 재시도해주세요.",
-                        response);
+            if (updated.getStatus() == OnboardingStatus.APPROVED) {
+                return updated("온보딩 요청이 승인되었습니다.", response);
             }
-
-            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
-            return updated("온보딩 요청이 "
-                    + (payload.status() == OnboardingStatus.APPROVED ? "승인" : "거부") + "되었습니다.",
-                    response);
+            if (updated.getStatus() == OnboardingStatus.REJECTED) {
+                return updated("온보딩 요청이 거부되었습니다.", response);
+            }
+            return updated("온보딩 요청이 수정되었습니다.", response);
         } catch (IllegalArgumentException e) {
             log.error("온보딩 요청 결정 실패: id={}, status={}, error={}", id, payload.status(),
                     e.getMessage());
             throw e;
+        } catch (OnboardingApprovalBlockedException blocked) {
+            OnboardingRequest current = onboardingService.getById(id);
+            if (current.getStatus() == OnboardingStatus.APPROVED) {
+                OnboardingDecisionResponse response = new OnboardingDecisionResponse(
+                        toAdminResponse(current), resolveCreatedAdminAccount(current));
+                return updated("온보딩 요청이 승인되었습니다.", response);
+            }
+            log.warn("온보딩 승인이 차단됨: id={}, status={}, reason={}", id, current.getStatus(),
+                    blocked.getMessage());
+            throw blocked;
         } catch (RuntimeException e) {
-            // 대시보드 생성 실패 등으로 인한 롤백 시 예외 처리
             log.error("온보딩 승인 프로세스 실패 (롤백됨): id={}, status={}, error={}", id, payload.status(),
                     e.getMessage(), e);
-            // 롤백 후 상태를 다시 조회하여 실제 상태 확인
             OnboardingRequest updatedRequest = onboardingService.getById(id);
-
-            // 실제로 승인이 성공했는지 확인 (APPROVED 상태면 성공으로 처리)
             if (updatedRequest.getStatus() == OnboardingStatus.APPROVED) {
-                log.warn("RuntimeException 발생했지만 실제로는 승인 성공: id={}, status={}", id, updatedRequest.getStatus());
+                log.warn("RuntimeException 발생했지만 실제로는 승인 성공: id={}, status={}", id,
+                        updatedRequest.getStatus());
                 OnboardingDecisionResponse response = new OnboardingDecisionResponse(
                         toAdminResponse(updatedRequest), resolveCreatedAdminAccount(updatedRequest));
                 return updated("온보딩 요청이 승인되었습니다.", response);
-            } else if (updatedRequest.getStatus() == OnboardingStatus.ON_HOLD) {
-                // ON_HOLD 상태로 변경되었으면 정상 응답 (롤백 완료)
-                OnboardingDecisionResponse response =
-                        new OnboardingDecisionResponse(toAdminResponse(updatedRequest), null);
-                return updated("온보딩 승인 프로세스 중 오류가 발생하여 보류 상태로 변경되었습니다. 재시도해주세요.", response);
-            } else {
-                // 예상치 못한 상태면 예외를 다시 throw
-                throw e;
             }
+            throw e;
         }
     }
 

@@ -19,6 +19,9 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 
+const MOCK_ADMIN_USER = { id: 1, name: '관리자', role: 'ADMIN' };
+let mockSessionUser = MOCK_ADMIN_USER;
+
 jest.mock('../../../../utils/standardizedApi', () => ({
   __esModule: true,
   default: {
@@ -43,7 +46,7 @@ jest.mock('../../../../utils/notification', () => ({
 jest.mock('../../../../contexts/SessionContext', () => ({
   __esModule: true,
   useSession: () => ({
-    user: { id: 1, name: '관리자', role: 'ADMIN' },
+    user: mockSessionUser,
     isLoggedIn: true
   })
 }));
@@ -145,6 +148,7 @@ import ConsultationLogViewPage, {
   ADMIN_CONSULTATION_RECORDS_PAGE_SIZE
 } from '../ConsultationLogViewPage';
 import StandardizedApi from '../../../../utils/standardizedApi';
+import notificationManager from '../../../../utils/notification';
 
 describe('ConsultationLogViewPage — P0 핫픽스 회귀 가드 (2026-05-29)', () => {
   beforeEach(() => {
@@ -502,5 +506,53 @@ describe('ConsultationLogViewPage — saved view restore race (그록 P0)', () =
       c[1]?.startDate === '2026-03-01' && c[1]?.endDate === '2026-03-07'
     ))).toBe(true);
     expect(defaultRange.startDate).not.toBe('2026-03-01');
+  });
+});
+
+describe('ConsultationLogViewPage — 상담일지 본문 진입 권한 (사무원 제외)', () => {
+  const range = computeDefaultDateRange();
+  const row = {
+    id: 501,
+    sessionDate: range.startDate,
+    consultationDate: range.startDate,
+    clientName: '내담자S',
+    isSessionCompleted: true
+  };
+
+  beforeEach(() => {
+    StandardizedApi.get.mockReset();
+    notificationManager.info.mockClear();
+  });
+
+  afterEach(() => {
+    mockSessionUser = MOCK_ADMIN_USER;
+  });
+
+  test('ADMIN — 카드 클릭 시 상담일지 모달이 열린다', async () => {
+    mockSessionUser = MOCK_ADMIN_USER;
+    StandardizedApi.get.mockResolvedValue({ success: true, data: [row], totalCount: 1, totalPages: 1 });
+    await act(async () => {
+      render(<ConsultationLogViewPage />);
+    });
+    const card = await screen.findByLabelText(new RegExp(`상담일지 ${range.startDate} 내담자S`));
+    await act(async () => {
+      fireEvent.click(card);
+    });
+    expect(screen.getByTestId('record-modal')).toBeInTheDocument();
+    expect(notificationManager.info).not.toHaveBeenCalled();
+  });
+
+  test('STAFF — 카드를 눌러도 모달(본문)이 열리지 않고 안내만 보인다', async () => {
+    mockSessionUser = { id: 2, name: '사무원', role: 'STAFF' };
+    StandardizedApi.get.mockResolvedValue([row]);
+    await act(async () => {
+      render(<ConsultationLogViewPage />);
+    });
+    const card = await screen.findByLabelText(new RegExp(`상담일지 ${range.startDate} 내담자S`));
+    await act(async () => {
+      fireEvent.click(card);
+    });
+    expect(screen.queryByTestId('record-modal')).toBeNull();
+    expect(notificationManager.info).toHaveBeenCalledTimes(1);
   });
 });

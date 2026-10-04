@@ -95,7 +95,7 @@ export DB_HOST=114.202.247.246
 export DB_PORT=3306
 export DB_NAME=core_solution
 export DB_USERNAME=mindgarden_dev
-export DB_PASSWORD='MindGardenDev2025!@#'
+export DB_PASSWORD="${DB_PASSWORD:?DB_PASSWORD 환경변수를 설정하세요}"
 export SERVER_PORT=8080
 
 echo -e "${BLUE}   DB_HOST: ${DB_HOST}${NC}"

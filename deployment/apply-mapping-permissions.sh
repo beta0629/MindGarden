@@ -9,7 +9,7 @@ echo "🔐 매핑 권한 적용 스크립트 시작"
 echo "================================"
 
 # 서버 정보
-SERVER="beta74.cafe24.com"
+SERVER="${PROD_SERVER_HOST:?PROD_SERVER_HOST 환경변수를 설정하세요}"
 DB_NAME="mindgarden"
 
 echo "📡 운영 서버: $SERVER"

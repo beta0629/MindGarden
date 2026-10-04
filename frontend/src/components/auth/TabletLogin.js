@@ -1,3 +1,4 @@
+import logger from '../../utils/logger';
 import React, { useState, useEffect } from 'react';
 // import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -74,24 +75,24 @@ const TabletLogin = () => {
 
   // 전문적인 알림 표시 함수
   const showTooltip = (message, type = 'error') => {
-    console.log('🔔 로그인 알림 표시:', { message, type });
+    logger.debug('🔔 로그인 알림 표시:', { message, type });
     
     // 즉시 상태 업데이트
     setTooltip({ show: true, message, type });
     
     // 디버깅을 위한 추가 로그
-    console.log('🔔 툴팁 상태 설정 완료:', { show: true, message, type });
+    logger.debug('🔔 툴팁 상태 설정 완료:', { show: true, message, type });
     
     // 6초 후 자동 숨김 (더 길게)
     setTimeout(() => {
-      console.log('🔔 툴팁 자동 숨김');
+      logger.debug('🔔 툴팁 자동 숨김');
       setTooltip({ show: false, message: '', type: 'error' });
     }, 6000);
   };
 
   // 툴팁 상태 디버깅
   useEffect(() => {
-    console.log('🔔 툴팁 상태 변경:', tooltip);
+    logger.debug('🔔 툴팁 상태 변경:', tooltip);
   }, [tooltip]);
 
   useEffect(() => {
@@ -127,7 +128,7 @@ const TabletLogin = () => {
   useEffect(() => {
     // 로그인 시도 중이거나 알림 표시 중에는 세션 확인 안 함
     if (isLoading || tooltip.show) {
-      console.log('🚫 세션 확인 스킵: 로딩 중이거나 알림 표시 중');
+      logger.debug('🚫 세션 확인 스킵: 로딩 중이거나 알림 표시 중');
       return;
     }
 
@@ -142,7 +143,7 @@ const TabletLogin = () => {
         if (response.ok) {
           const result = await response.json();
           if (result.success && result.user) {
-            console.log('✅ 기존 세션 발견, 대시보드로 리다이렉트:', result.user.role);
+            logger.debug('✅ 기존 세션 발견, 대시보드로 리다이렉트:', result.user.role);
             
             // sessionManager에 사용자 정보 설정
             sessionManager.setUser(result.user, {
@@ -206,7 +207,6 @@ const TabletLogin = () => {
 
     setIsLoading(true);
     try {
-      console.log('🔐 로그인 요청 데이터:', formData);
       
       // 직접 API 호출 (SessionContext 로딩 상태 영향 방지)
       const result = await authAPI.login(formData);
@@ -247,7 +247,7 @@ const TabletLogin = () => {
         
         setDuplicateLoginModal(modalData);
       } else {
-        console.log('❌ 로그인 실패:', result.message);
+        logger.debug('❌ 로그인 실패:', result.message);
         // 로딩 해제 후 알림 표시
         setIsLoading(false);
         // 메모리에 따라 로그인 실패 시 공통 메시지 사용
@@ -302,7 +302,6 @@ const TabletLogin = () => {
       const data = await response.json();
 
       if (data.success) {
-        console.log('SMS 인증 코드 전송 성공:', data);
         setIsCodeSent(true);
         setCountdown(SMS.COUNTDOWN_DURATION);
         showTooltip(MESSAGES.SMS_SENT, 'success');
@@ -341,7 +340,6 @@ const TabletLogin = () => {
       const data = await response.json();
 
       if (data.success) {
-        console.log('SMS 인증 성공:', data);
         showTooltip(MESSAGES.SMS_VERIFY_SUCCESS, 'success');
         // 인증 성공 후 처리 - 로그인 완료 또는 다음 단계로 진행
         await handleSmsAuthSuccess();
@@ -360,7 +358,7 @@ const TabletLogin = () => {
   // SMS 인증 성공 후 처리
   const handleSmsAuthSuccess = async() => {
     try {
-      console.log('✅ SMS 인증 성공 후 로그인 처리 시작');
+      logger.debug('✅ SMS 인증 성공 후 로그인 처리 시작');
       
       // SMS 인증 성공 시 자동 로그인 처리
       // 전화번호로 사용자 조회 후 로그인
@@ -374,7 +372,6 @@ const TabletLogin = () => {
       const data = await response.json();
       
       if (data.success) {
-        console.log('✅ SMS 인증 로그인 성공:', data);
         showTooltip(t('auth:tabletLogin.msg.smsLoginSuccess'), 'success');
         
         // 로그인 성공 후 SPA 랜딩 (hard location.href 금지)
@@ -427,7 +424,7 @@ const TabletLogin = () => {
     const signupRequired = urlParams.get('signup');
     const error = urlParams.get('error');
     
-    console.log('📋 파싱된 URL 파라미터:', {
+    logger.debug('📋 파싱된 URL 파라미터:', {
       code: code ? '있음' : '없음',
       state: state ? '있음' : '없음',
       provider: provider || '없음',
@@ -437,13 +434,13 @@ const TabletLogin = () => {
     
     // 에러 파라미터가 있으면 사용자에게 표시
     if (error) {
-      console.log('❌ 에러 파라미터 감지:', error);
+      logger.debug('❌ 에러 파라미터 감지:', error);
       const decodedError = decodeURIComponent(error);
-      console.log('🔤 디코딩된 에러 메시지:', decodedError);
+      logger.debug('🔤 디코딩된 에러 메시지:', decodedError);
       
       // 에러 메시지에 "간편 회원가입이 필요합니다"가 포함되어 있으면 모달 표시
       if (decodedError.includes(t('auth:TabletLogin.t_01def405'))) {
-        console.log('🔍 간편 회원가입 필요 감지 - 에러 메시지에서');
+        logger.debug('🔍 간편 회원가입 필요 감지 - 에러 메시지에서');
         
         // URL에서 사용자 정보 파싱
         const urlProvider = urlParams.get('provider');
@@ -452,7 +449,7 @@ const TabletLogin = () => {
         const urlNickname = urlParams.get('nickname');
         const urlProviderUserId = urlParams.get('providerUserId') || '';
         
-        console.log('📋 URL에서 파싱된 사용자 정보:', {
+        logger.debug('📋 URL에서 파싱된 사용자 정보:', {
           provider: urlProvider,
           email: urlEmail,
           name: urlName,
@@ -471,7 +468,7 @@ const TabletLogin = () => {
         profileImageUrl: ''
       };
         
-        console.log('👤 소셜 사용자 정보 설정:', socialUserInfo);
+        logger.debug('👤 소셜 사용자 정보 설정:', socialUserInfo);
         
         // 알림 표시
         showTooltip(toDisplayString(OAUTH_SIGNUP_REQUIRED_PROMPT, OAUTH_SIGNUP_REQUIRED_PROMPT), 'info');
@@ -479,7 +476,7 @@ const TabletLogin = () => {
         setSocialUserInfo(socialUserInfo);
         setShowSocialSignupModal(true);
         
-        console.log('📋 모달 상태 설정 완료 - showSocialSignupModal: true');
+        logger.debug('📋 모달 상태 설정 완료 - showSocialSignupModal: true');
       } else {
         // 일반 에러는 토스트로만 표시
         showTooltip(decodedError, 'error');
@@ -487,21 +484,21 @@ const TabletLogin = () => {
       
       // URL에서 에러 파라미터 제거
       window.history.replaceState({}, document.title, '/login');
-      console.log('🧹 URL에서 에러 파라미터 제거됨');
+      logger.debug('🧹 URL에서 에러 파라미터 제거됨');
       return;
     }
     
     // 간편 회원가입 필요 파라미터가 있으면 모달 표시
     if (signupRequired === 'required' && provider) {
-      console.log('🔍 간편 회원가입 필요 감지 - signup=required 파라미터:', { signupRequired, provider });
-      console.log('🎯 모달 표시 조건 충족 - signupRequired:', signupRequired, 'provider:', provider);
+      logger.debug('🔍 간편 회원가입 필요 감지 - signup=required 파라미터:', { signupRequired, provider });
+      logger.debug('🎯 모달 표시 조건 충족 - signupRequired:', signupRequired, 'provider:', provider);
       
       const email = urlParams.get('email');
       const name = urlParams.get('name');
       const nickname = urlParams.get('nickname');
       const providerUserIdFromUrl = urlParams.get('providerUserId') || '';
       
-      console.log('📋 URL에서 파싱된 사용자 정보:', {
+      logger.debug('📋 URL에서 파싱된 사용자 정보:', {
         email: email || '없음',
         name: name || '없음',
         nickname: nickname || '없음',
@@ -517,17 +514,17 @@ const TabletLogin = () => {
         profileImageUrl: ''
       };
       
-      console.log('👤 소셜 사용자 정보 설정:', socialUserInfo);
+      logger.debug('👤 소셜 사용자 정보 설정:', socialUserInfo);
       
       // 알림 표시
       showTooltip(toDisplayString(OAUTH_SIGNUP_REQUIRED_PROMPT, OAUTH_SIGNUP_REQUIRED_PROMPT), 'info');
       
-      console.log('📋 모달 상태 설정 시작 - socialUserInfo:', socialUserInfo);
+      logger.debug('📋 모달 상태 설정 시작 - socialUserInfo:', socialUserInfo);
       setSocialUserInfo(socialUserInfo);
       setShowSocialSignupModal(true);
       
-      console.log('📋 모달 상태 설정 완료 - showSocialSignupModal: true');
-      console.log('📋 현재 상태 확인:', { 
+      logger.debug('📋 모달 상태 설정 완료 - showSocialSignupModal: true');
+      logger.debug('📋 현재 상태 확인:', { 
         showSocialSignupModal: true, 
         socialUserInfo: socialUserInfo 
       });
@@ -573,13 +570,13 @@ const TabletLogin = () => {
   const handleSocialSignupSuccess = async(response) => {
     setShowSocialSignupModal(false);
     setSocialUserInfo(null);
-    console.log('간편 회원가입 성공:', response.message);
+    logger.debug('간편 회원가입 성공:', response.message);
     
     // 회원가입 성공 후 대시보드로 리다이렉트
     if (response.userInfo) {
       // 세션 설정
       // 중앙 세션에 사용자 정보 설정
-      console.log('🔄 간편 회원가입 - 중앙 세션 설정 시작...');
+      logger.debug('🔄 간편 회원가입 - 중앙 세션 설정 시작...');
       const loginSuccess = await login(response.userInfo, {
         accessToken: response.accessToken,
         refreshToken: response.refreshToken
@@ -587,7 +584,7 @@ const TabletLogin = () => {
       
       if (loginSuccess) {
         // 세션 설정 완료 후 잠시 대기
-        console.log('⏳ 간편 회원가입 - 세션 설정 완료, 잠시 대기...');
+        logger.debug('⏳ 간편 회원가입 - 세션 설정 완료, 잠시 대기...');
         await new Promise(resolve => setTimeout(resolve, 1000));
 
         notificationManager.show(
@@ -601,10 +598,10 @@ const TabletLogin = () => {
           user: response.userInfo,
           currentTenantRole: response.currentTenantRole || null
         };
-        console.log('✅ 간편 회원가입 성공, 동적 대시보드로 이동');
+        logger.debug('✅ 간편 회원가입 성공, 동적 대시보드로 이동');
         await redirectToDynamicDashboard(authResponse, navigate);
       } else {
-        console.log('❌ 간편 회원가입 - 세션 설정 실패');
+        logger.debug('❌ 간편 회원가입 - 세션 설정 실패');
         notificationManager.show(t('auth:TabletLogin.t_53ec68ef'), 'error');
       }
     } else {
@@ -637,7 +634,7 @@ const TabletLogin = () => {
   };
 
   const handleHamburgerToggle = () => {
-    console.log('🍔 햄버거 메뉴 토글');
+    logger.debug('🍔 햄버거 메뉴 토글');
     
     // 햄버거 메뉴 상태 토글
     setIsHamburgerMenuOpen(prev => !prev);
@@ -662,7 +659,7 @@ const TabletLogin = () => {
   };
 
   const handleProfileClick = () => {
-    console.log('👤 프로필 클릭');
+    logger.debug('👤 프로필 클릭');
     
     // 로그인 상태 확인
     const user = JSON.parse(sessionStorage.getItem('user') || 'null');
@@ -688,12 +685,12 @@ const TabletLogin = () => {
           profileUrl = '/mypage';
       }
       
-      console.log(`👤 프로필 페이지로 이동: ${profileUrl}`);
+      logger.debug(`👤 프로필 페이지로 이동: ${profileUrl}`);
       navigate(profileUrl);
       
     } else {
       // 로그인되지 않은 사용자의 경우 안내 (이미 /login 이면 hard 킥 불필요)
-      console.log('👤 로그인되지 않은 사용자 - 로그인 안내');
+      logger.debug('👤 로그인되지 않은 사용자 - 로그인 안내');
       showTooltip(t('auth:common.needLoginInfo'), 'info');
     }
   };
@@ -939,7 +936,7 @@ const TabletLogin = () => {
           </div>
         </div>
 
-      {console.log('🔍 SocialSignupModal 렌더링 체크:', { 
+      {logger.debug('🔍 SocialSignupModal 렌더링 체크:', { 
         showSocialSignupModal, 
         socialUserInfo,
         isOpen: showSocialSignupModal 
@@ -947,7 +944,7 @@ const TabletLogin = () => {
       <SocialSignupModal
         isOpen={showSocialSignupModal}
         onClose={() => {
-          console.log('📋 모달 닫기 버튼 클릭');
+          logger.debug('📋 모달 닫기 버튼 클릭');
           setShowSocialSignupModal(false);
         }}
         socialUser={socialUserInfo}

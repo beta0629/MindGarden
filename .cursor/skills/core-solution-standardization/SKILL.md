@@ -34,7 +34,7 @@ Core Solution(MindGarden)의 모든 코드·UI는 **표준화 원칙**을 따릅
 
 ### 버튼·UI 색상
 - **디자인 가이드에 정의된 색상만 사용**: `mindgarden-design-system.pen`, `unified-design-tokens.css`, `AdminDashboardB0KlA.css`에 정의된 토큰만 사용. 가이드에 없는 색상 사용 금지.
-- **예외**: 삭제·환불 등 위험 액션용 danger 색상이 B0KlA/가이드에 없으면, 먼저 디자인 가이드에 추가한 후 사용. 임시로 `unified-design-tokens.css`의 `--color-danger` 사용 가능.
+- **토큰에 없는 색**: 만들지 말고 사용자에게 묻는다(`.cursor/rules/design.mdc`).
 
 ### 참조 문서
 - **디자이너 필수**: `docs/design-system/PENCIL_DESIGN_GUIDE.md` — 펜슬 가이드 숙지 후 설계
@@ -68,7 +68,6 @@ Core Solution(MindGarden)의 모든 코드·UI는 **표준화 원칙**을 따릅
   - `docs/project-management/ADMIN_LNB_LAYOUT_UNIFICATION_MEETING_HANDOFF.md` **§17** (운영 반영 준비·검사·완료 조건)
   - `docs/project-management/SETTINGS_PAGES_LAYOUT_UNIFICATION_ORCHESTRATION.md` **§1.3** (설정 UI 오케스트레이션과 동일 게이트)
   - `docs/운영반영/PRE_PRODUCTION_GO_LIVE_CHECKLIST.md`
-  - `docs/project-management/2025-12-03/CHECKLIST.md` (CSS·하드코딩 항목)
 - **검사 예시**: 저장소 루트에서 `config/shell-scripts/check-hardcode.sh`(내부: `node scripts/design-system/css-tools/check-hardcoding-enhanced.js`, `.github/workflows/code-quality-check.yml`과 동일), 커밋 시 MindGarden CI/BI 프론트 스캔, `node scripts/design-system/color-management/convert-hardcoded-colors.js`(존재 시).
 
 ### 참조 문서

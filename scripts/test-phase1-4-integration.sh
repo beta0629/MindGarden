@@ -1,4 +1,5 @@
 #!/bin/bash
+: "${SUPERADMIN_PASSWORD:?SUPERADMIN_PASSWORD 환경변수를 설정하세요}"
 
 # Phase 1-4 통합 테스트 스크립트
 # 작성일: 2025-12-03
@@ -13,10 +14,10 @@ NC='\033[0m' # No Color
 
 # 설정
 API_BASE_URL="${API_BASE_URL:-http://localhost:8080}"
-DB_HOST="${DB_HOST:-114.202.247.246}"
+DB_HOST="${DB_HOST:?DB_HOST 환경변수를 설정하세요}"
 DB_PORT="${DB_PORT:-3306}"
 DB_USER="${DB_USER:-mindgarden_dev}"
-DB_PASS="${DB_PASS:-MindGardenDev2025!@#}"
+DB_PASS="${DB_PASS:-${DB_PASSWORD:?DB_PASSWORD 환경변수를 설정하세요}}"
 DB_NAME="${DB_NAME:-core_solution}"
 
 # 테스트 결과
@@ -151,7 +152,7 @@ fi
 echo -e "${YELLOW}[2.2] 관리자 로그인...${NC}"
 LOGIN_RESPONSE=$(curl -s -X POST "${API_BASE_URL}/api/v1/auth/login" \
     -H "Content-Type: application/json" \
-    -d '{"email":"superadmin@mindgarden.com","password":"admin123"}' \
+    -d '{"email":"superadmin@mindgarden.com","password":"'"${SUPERADMIN_PASSWORD}"'"}' \
     -c "$COOKIE_FILE")
 
 # 응답에서 성공 여부 확인
@@ -279,7 +280,7 @@ echo ""
 echo -e "${YELLOW}[5.1] 상담사 테넌트 온보딩 신청...${NC}"
 TIMESTAMP=$(date +%s)
 TEST_EMAIL="test-onboarding-${TIMESTAMP}@test.com"
-ADMIN_PASSWORD="Test1234!@#"
+ADMIN_PASSWORD="${ADMIN_PASSWORD:?ADMIN_PASSWORD 환경변수를 설정하세요}"
 
 ONBOARDING_REQUEST=$(cat <<EOF
 {
@@ -318,7 +319,7 @@ if [ -n "$ONBOARDING_ID" ]; then
     ADMIN_LOGIN_RESPONSE=$(curl -s -X POST "${API_BASE_URL}/api/auth/login" \
         -H "Content-Type: application/json" \
         -c "$ADMIN_COOKIE_FILE" \
-        -d '{"email":"superadmin@mindgarden.com","password":"admin123"}')
+        -d '{"email":"superadmin@mindgarden.com","password":"'"${SUPERADMIN_PASSWORD}"'"}')
     
     if ! echo "$ADMIN_LOGIN_RESPONSE" | grep -q '"success":true'; then
         print_result "관리자 로그인" "FAIL" "온보딩 승인을 위한 관리자 로그인 실패"

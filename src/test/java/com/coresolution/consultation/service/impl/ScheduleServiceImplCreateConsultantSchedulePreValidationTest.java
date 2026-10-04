@@ -45,7 +45,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
@@ -128,23 +127,19 @@ class ScheduleServiceImplCreateConsultantSchedulePreValidationTest {
         TenantContextHolder.clear();
     }
 
-    private void stubConflictCheckAndAutoComplete() {
+    private void stubConflictCheck() {
         when(consultantAvailabilityService.isConsultantOnVacation(
                 eq(CONSULTANT_ID), any(LocalDate.class), any(LocalTime.class), any(LocalTime.class)))
                 .thenReturn(false);
         when(scheduleRepository.findByTenantIdAndConsultantIdAndDate(
                 eq(TENANT_ID), eq(CONSULTANT_ID), any(LocalDate.class)))
                 .thenReturn(Collections.emptyList());
-        when(scheduleRepository.findExpiredConfirmedSchedules(anyString(), any(LocalDate.class), any(LocalTime.class)))
-                .thenReturn(Collections.emptyList());
-        when(scheduleRepository.findByDateBeforeAndStatus(anyString(), any(LocalDate.class), any()))
-                .thenReturn(Collections.emptyList());
     }
 
     @Test
     @DisplayName("매칭 없음 시 createConsultantSchedule은 저장하지 않고 WithType과 동일 메시지로 실패")
     void createConsultantSchedule_noMapping_doesNotSave() {
-        stubConflictCheckAndAutoComplete();
+        stubConflictCheck();
         when(mappingRepository.findByTenantIdAndStatus(TENANT_ID, MappingStatus.ACTIVE))
                 .thenReturn(Collections.emptyList());
 
@@ -163,7 +158,7 @@ class ScheduleServiceImplCreateConsultantSchedulePreValidationTest {
     @Test
     @DisplayName("남은 회기 없음 시 저장하지 않고 WithType과 동일 메시지로 실패")
     void createConsultantSchedule_noRemainingSessions_doesNotSave() {
-        stubConflictCheckAndAutoComplete();
+        stubConflictCheck();
 
         User consultant = new User();
         consultant.setId(CONSULTANT_ID);
@@ -193,7 +188,7 @@ class ScheduleServiceImplCreateConsultantSchedulePreValidationTest {
     @Test
     @DisplayName("7인자 오버로드: 매칭 없음 시 저장하지 않고 유효한 매칭 메시지로 실패")
     void createConsultantSchedule_sevenArgs_noMapping_doesNotSave() {
-        stubConflictCheckAndAutoComplete();
+        stubConflictCheck();
         when(mappingRepository.findByTenantIdAndStatus(TENANT_ID, MappingStatus.ACTIVE))
                 .thenReturn(Collections.emptyList());
 
@@ -212,7 +207,7 @@ class ScheduleServiceImplCreateConsultantSchedulePreValidationTest {
     @Test
     @DisplayName("7인자 오버로드: ACTIVE이나 남은 회기 0이면 저장하지 않고 사용 가능한 회기 메시지로 실패")
     void createConsultantSchedule_sevenArgs_noRemainingSessions_doesNotSave() {
-        stubConflictCheckAndAutoComplete();
+        stubConflictCheck();
 
         User consultant = new User();
         consultant.setId(CONSULTANT_ID);
@@ -242,7 +237,7 @@ class ScheduleServiceImplCreateConsultantSchedulePreValidationTest {
     @Test
     @DisplayName("가예약: ACTIVE(회기 0)이면 저장·TENTATIVE_PENDING_PAYMENT·회기 동기화 없음")
     void createConsultantSchedule_tentative_activeZeroRemaining_savesWithoutSessionUsage() {
-        stubConflictCheckAndAutoComplete();
+        stubConflictCheck();
 
         User consultant = new User();
         consultant.setId(CONSULTANT_ID);
@@ -279,7 +274,7 @@ class ScheduleServiceImplCreateConsultantSchedulePreValidationTest {
     @Test
     @DisplayName("가예약: DEPOSIT_PENDING만 있으면 저장하지 않음 (승인 전)")
     void createConsultantSchedule_tentative_onlyDepositPending_doesNotSave() {
-        stubConflictCheckAndAutoComplete();
+        stubConflictCheck();
 
         User consultant = new User();
         consultant.setId(CONSULTANT_ID);
@@ -309,7 +304,7 @@ class ScheduleServiceImplCreateConsultantSchedulePreValidationTest {
     @Test
     @DisplayName("가예약: ACTIVE 매핑이 없으면 저장하지 않음")
     void createConsultantSchedule_tentative_noEligibleMapping_doesNotSave() {
-        stubConflictCheckAndAutoComplete();
+        stubConflictCheck();
         when(mappingRepository.findByTenantIdAndStatus(TENANT_ID, MappingStatus.ACTIVE))
                 .thenReturn(Collections.emptyList());
 

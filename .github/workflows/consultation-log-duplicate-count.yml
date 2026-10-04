@@ -1,0 +1,90 @@
+# 일정당 상담일지 중복 현황 — 읽기 전용 COUNT 집계 (개발 DB 전용)
+#
+# 목적: V20261008_001 유니크 인덱스(일정당 활성 일지 1건)를 걸기 전에, 같은 테넌트·같은 일정에
+#       활성 일지가 2건 이상인 "일정 수"와 "행 수"만 집계한다.
+#
+# 안전 장치:
+#   - SELECT COUNT 만 실행한다. SQL 은 이 파일에 고정되어 있고 입력으로 바꿀 수 없다.
+#   - 일지 본문·ID·테넌트 값을 출력하지 않는다. 출력은 테이블명과 정수 건수뿐이다.
+#   - mysql 세션을 read only 로 고정한다(--init-command).
+#   - 개발 DB 만 대상이다. DEV_* secret 만 참조하고 대상 선택 입력이 없어 운영을 가리킬 수 없다.
+#     운영 DB·프로시저 실행·UPDATE/DELETE 는 범위 밖이다.
+#   - 호스트·계정·DB 이름은 모두 secret 이다(코드 기본값 없음). 개발 서버 SSH 경유로만 접속한다.
+name: 상담일지 일정당 중복 COUNT (읽기 전용·개발)
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - '.github/workflows/consultation-log-duplicate-count.yml'
+      - 'src/main/resources/db/migration/V20261008_001__consultation_logs_unique_active_schedule.sql'
+
+permissions:
+  contents: read
+
+jobs:
+  count:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' || github.event.pull_request.head.repo.full_name == github.repository
+    steps:
+      # 개발 DB 는 개발 서버 내부에서만 접속된다(deploy-procedures-dev.yml 과 같은 SSH 경로).
+      - name: 중복 건수 집계 (SELECT COUNT 전용)
+        env:
+          SERVER_HOST: ${{ secrets.DEV_SERVER_HOST }}
+          SERVER_USER: ${{ secrets.DEV_SERVER_USER }}
+          SERVER_SSH_KEY: ${{ secrets.DEV_SERVER_SSH_KEY }}
+          DB_HOST: ${{ secrets.DEV_DB_HOST }}
+          DB_USER: ${{ secrets.DEV_DB_USER }}
+          DB_NAME: ${{ secrets.DEV_DB_NAME }}
+          DB_PASSWORD: ${{ secrets.DEV_DB_PASSWORD }}
+        run: |
+          set -euo pipefail
+          for name in SERVER_HOST SERVER_USER SERVER_SSH_KEY DB_HOST DB_USER DB_NAME DB_PASSWORD; do
+            if [ -z "${!name:-}" ]; then
+              echo "::error title=접속 정보 누락::DEV_${name} secret 을 확인하세요."
+              exit 1
+            fi
+          done
+          case "$DB_NAME" in
+            mind_garden|mind_garden_legacy_*)
+              echo "::error title=대상 DB 차단::개발 core_solution 스키마만 집계합니다."
+              exit 1
+              ;;
+          esac
+
+          SQL_FILE=$(mktemp)
+          KEY_FILE=$(mktemp)
+          trap 'rm -f "$SQL_FILE" "$KEY_FILE"' EXIT
+          cat > "$SQL_FILE" <<'SQL'
+          SELECT 'consultation_records' AS scope, COUNT(*) AS dup_schedules, COALESCE(SUM(cnt), 0) AS dup_rows
+          FROM (SELECT COUNT(*) AS cnt FROM consultation_records
+                WHERE is_deleted = 0 AND consultation_id IS NOT NULL
+                GROUP BY tenant_id, consultation_id HAVING COUNT(*) > 1) d;
+          SELECT 'institution_link_consultation_logs' AS scope, COUNT(*) AS dup_schedules, COALESCE(SUM(cnt), 0) AS dup_rows
+          FROM (SELECT COUNT(*) AS cnt FROM institution_link_consultation_logs
+                WHERE is_deleted = 0 AND schedule_id IS NOT NULL
+                GROUP BY tenant_id, schedule_id HAVING COUNT(*) > 1) d;
+          SQL
+
+          if grep -qiE '(^|[^a-z_])(insert|update|delete|drop|alter|truncate|create|replace|grant|call|set)[[:space:]]' "$SQL_FILE"; then
+            echo "::error title=SELECT 전용 위반::고정 SQL 에 쓰기 구문이 있어 중단합니다."
+            exit 1
+          fi
+
+          printf '%s\n' "$SERVER_SSH_KEY" > "$KEY_FILE"
+          chmod 600 "$KEY_FILE"
+          mkdir -p ~/.ssh
+          ssh-keyscan -H "$SERVER_HOST" >> ~/.ssh/known_hosts 2>/dev/null || true
+
+          # 비밀번호는 원격 명령행이 아니라 stdin 스크립트로만 넘긴다(ps 노출 방지).
+          echo "=== dev 일정당 활성 상담일지 중복 (건수만) ==="
+          printf 'scope\tdup_schedules\tdup_rows\n'
+          {
+            printf 'set -euo pipefail\n'
+            printf 'export MYSQL_PWD=%q\n' "$DB_PASSWORD"
+            printf 'mysql --init-command=%q -h %q -u %q %q --batch --raw --skip-column-names <<'"'"'__COUNT_SQL__'"'"'\n' \
+              "SET SESSION TRANSACTION READ ONLY" "$DB_HOST" "$DB_USER" "$DB_NAME"
+            cat "$SQL_FILE"
+            printf '__COUNT_SQL__\n'
+          } | ssh -i "$KEY_FILE" -o BatchMode=yes "${SERVER_USER}@${SERVER_HOST}" 'bash -s'
+          echo "=== 끝 — 건수만 출력 ==="

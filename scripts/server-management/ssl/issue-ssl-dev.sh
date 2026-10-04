@@ -1,13 +1,13 @@
 #!/bin/bash
 
 # 개발 서버 SSL 인증서 발급 스크립트
-# 서버 IP: 114.202.247.246
+# 서버 IP: 환경변수 SERVER_IP (GitHub Secret DEV_SERVER_HOST / PRODUCTION_HOST 와 동일 값) — 하드코딩 금지
 # 사용법: sudo ./issue-ssl-dev.sh
 
 set -e
 
 echo "=== 개발 서버 SSL 인증서 발급 시작 ==="
-echo "서버 IP: 114.202.247.246"
+echo "서버 IP: ${SERVER_IP:?SERVER_IP 환경변수를 설정하세요}"
 echo ""
 
 # 이메일 주소 (필요시 수정)

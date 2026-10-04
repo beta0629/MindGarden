@@ -44,6 +44,8 @@ jobs:
       #   UnifiedLogin 의 Apple 버튼이 렌더되지 않는다(App Store 4.8 T1 정책 준수).
       # REACT_APP_APPLE_REDIRECT_URI: Apple Service ID 에 등록한 Return URL. 미설정 시
       #   getBaseUrl() 기반 기본값(`{origin}/api/v1/auth/oauth/apple/callback`) 사용.
+      # REACT_APP_PRIVACY_CONTACT_EMAIL / _PHONE: 저장소 Variables PRIVACY_CONTACT_EMAIL / PRIVACY_CONTACT_PHONE.
+      #   미설정 시 빈 문자열 → 개인정보처리방침에 안내 문구(platformPrivacyContact.js)만 노출.
       - name: 🏗️ 프론트엔드 빌드
         env:
           # ubuntu-latest(~7Gi): 3072는 craco 빌드에 여유. self-hosted 3.8Gi에서는 재사용 금지.
@@ -51,6 +53,8 @@ jobs:
           REACT_APP_GOOGLE_CLIENT_ID: ${{ secrets.REACT_APP_GOOGLE_CLIENT_ID }}
           REACT_APP_APPLE_CLIENT_ID: ${{ secrets.REACT_APP_APPLE_CLIENT_ID }}
           REACT_APP_APPLE_REDIRECT_URI: ${{ secrets.REACT_APP_APPLE_REDIRECT_URI }}
+          REACT_APP_PRIVACY_CONTACT_EMAIL: ${{ vars.PRIVACY_CONTACT_EMAIL }}
+          REACT_APP_PRIVACY_CONTACT_PHONE: ${{ vars.PRIVACY_CONTACT_PHONE }}
         run: |
           cd frontend
           npm run build:ci

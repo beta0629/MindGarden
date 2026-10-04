@@ -1,6 +1,7 @@
 /**
  * ClientPaymentHistory — Clinic-OS 개편 화면 테스트
  * 칩 URL 쿼리 · 배지 매핑(APPROVED 포함) · 결제수단 「카드」만 · 환불 「-1」 폴백 · 빈/에러/일부 실패
+ * 세션 준비(useClientSessionReady) 후 세션 사용자 id 로만 매핑을 읽는다.
  * 스펙: docs/design/clinic-os-client-payments.md
  *
  * @author CoreSolution
@@ -13,6 +14,7 @@ import { MemoryRouter, useLocation } from 'react-router-dom';
 import StandardizedApi from '../../../utils/standardizedApi';
 import { fetchShopOrder, fetchShopOrders } from '../../../services/clientShopService';
 import { useMediaQuery } from '../../../hooks/useMediaQuery';
+import { useClientSessionReady } from '../../../hooks/useClientSessionReady';
 import { CLIENT_PAYMENT_TEST_IDS } from '../../../constants/clientPaymentHistoryConstants';
 import ClientPaymentHistory from '../ClientPaymentHistory';
 
@@ -24,6 +26,10 @@ jest.mock('../../../utils/standardizedApi', () => ({
 jest.mock('../../../services/clientShopService', () => ({
   fetchShopOrders: jest.fn(),
   fetchShopOrder: jest.fn()
+}));
+
+jest.mock('../../../hooks/useClientSessionReady', () => ({
+  useClientSessionReady: jest.fn()
 }));
 
 jest.mock('../../../hooks/useMediaQuery', () => ({
@@ -100,11 +106,10 @@ const SHOP_ORDERS = [
   { orderPublicId: 'pub-1', status: 'PAID', cashDueMinor: 50000, createdAt: '2026-09-27T10:00:00' }
 ];
 
+const API_ADMIN_MAPPINGS_CLIENT = '/api/v1/admin/mappings/client';
+
 const mockApi = ({ mappings = MAPPINGS, mappingsFail = false } = {}) => {
-  StandardizedApi.get.mockImplementation((url) => {
-    if (url === '/api/v1/auth/current-user') {
-      return Promise.resolve(USER);
-    }
+  StandardizedApi.get.mockImplementation(() => {
     if (mappingsFail) {
       return Promise.resolve(null);
     }
@@ -117,6 +122,7 @@ const waitForRows = () => screen.findAllByTestId(CLIENT_PAYMENT_TEST_IDS.ROW);
 
 beforeEach(() => {
   jest.clearAllMocks();
+  useClientSessionReady.mockReturnValue({ ready: true, user: USER, userId: USER.id });
   useMediaQuery.mockReturnValue(false);
   fetchShopOrders.mockResolvedValue(SHOP_ORDERS);
   fetchShopOrder.mockResolvedValue({ lines: [{ title: '온라인 5회기', sessionCount: 5 }] });
@@ -125,6 +131,63 @@ beforeEach(() => {
 
 afterEach(() => {
   console.warn.mockRestore();
+});
+
+describe('ClientPaymentHistory — 출처 (세션 사용자 id)', () => {
+  test('current-user 를 다시 부르지 않고 세션 id 로만 매핑을 읽는다', async() => {
+    mockApi();
+    renderScreen();
+    await waitForRows();
+    expect(StandardizedApi.get).toHaveBeenCalledTimes(1);
+    expect(StandardizedApi.get).toHaveBeenCalledWith(API_ADMIN_MAPPINGS_CLIENT, { clientId: USER.id });
+    expect(fetchShopOrders).toHaveBeenCalledWith(0, 50);
+  });
+
+  test('세션 준비 전에는 아무것도 읽지 않는다 (skeleton 유지)', () => {
+    useClientSessionReady.mockReturnValue({ ready: false, user: null, userId: null });
+    mockApi();
+    renderScreen();
+    expect(StandardizedApi.get).not.toHaveBeenCalled();
+    expect(fetchShopOrders).not.toHaveBeenCalled();
+    expect(screen.getAllByTestId(CLIENT_PAYMENT_TEST_IDS.SKELETON).length).toBeGreaterThan(0);
+  });
+
+  test('.dev 분포: 온라인 EXPIRED 14 + REFUNDED 4 + 센터 환불 1 → 5행 · 결제 193,000원 · 환불 193,000원', async() => {
+    const refundedAmounts = [1000, 1000, 90000, 100000];
+    const expired = Array.from({ length: 14 }, (_, i) => ({
+      orderPublicId: `exp-${i}`,
+      status: 'EXPIRED',
+      cashDueMinor: 1000,
+      pointsRedeemMinor: 0,
+      createdAt: '2026-09-20T10:00:00'
+    }));
+    const refunded = refundedAmounts.map((amount, i) => ({
+      orderPublicId: `ref-${i}`,
+      status: 'REFUNDED',
+      cashDueMinor: amount,
+      pointsRedeemMinor: 0,
+      createdAt: `2026-09-2${i}T10:00:00`
+    }));
+    fetchShopOrders.mockResolvedValue([...expired, ...refunded]);
+    mockApi({
+      mappings: [{
+        id: 501,
+        packageName: '단회기',
+        paymentAmount: 1000,
+        paymentStatus: 'REFUNDED',
+        effectivePaymentStatus: 'REFUNDED',
+        paymentMethod: 'CREDIT_CARD',
+        paymentSource: 'MANUAL',
+        totalSessions: 1,
+        paymentDate: '2026-09-30T10:00:00'
+      }]
+    });
+    renderScreen();
+    await waitForRows();
+    expect(rowsByProduct()).toHaveLength(5);
+    expect(screen.getByTestId(CLIENT_PAYMENT_TEST_IDS.SUMMARY).textContent)
+      .toBe('5건 · 결제 193,000원 · 환불 193,000원');
+  });
 });
 
 describe('ClientPaymentHistory — layout', () => {

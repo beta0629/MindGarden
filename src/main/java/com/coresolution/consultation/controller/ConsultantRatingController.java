@@ -3,8 +3,11 @@ package com.coresolution.consultation.controller;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import com.coresolution.consultation.dto.response.ConsultantRatingPublicResponse;
 import com.coresolution.consultation.entity.ConsultantRating;
 import com.coresolution.consultation.service.ConsultantRatingService;
+import com.coresolution.consultation.service.support.ClientPathAccessGuard;
+import com.coresolution.consultation.service.support.ResourceOwnerAccessGuard;
 import com.coresolution.core.controller.BaseApiController;
 import com.coresolution.core.dto.ApiResponse;
 import com.coresolution.core.util.PaginationUtils;
@@ -21,6 +24,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -39,14 +43,20 @@ import lombok.extern.slf4j.Slf4j;
 public class ConsultantRatingController extends BaseApiController {
 
     private final ConsultantRatingService ratingService;
+    private final ClientPathAccessGuard clientPathAccessGuard;
+    private final ResourceOwnerAccessGuard resourceOwnerAccessGuard;
 
     /**
-     * 상담 후 평가 등록
+     * 상담 후 평가 등록. 평가자는 세션 내담자로 강제한다 (본문 clientId 가 다르면 403).
      */
     @PostMapping("/create")
-    public ResponseEntity<ApiResponse<Map<String, Object>>> createRating(@RequestBody Map<String, Object> request) {
+    public ResponseEntity<ApiResponse<Map<String, Object>>> createRating(
+            @RequestBody Map<String, Object> request,
+            HttpSession session) {
+        Object requestedClientId = request.get("clientId");
+        Long clientId = resourceOwnerAccessGuard.requireRatingSubmitter(session,
+            requestedClientId == null ? null : Long.valueOf(requestedClientId.toString()));
         Long scheduleId = Long.valueOf(request.get("scheduleId").toString());
-        Long clientId = Long.valueOf(request.get("clientId").toString());
         Integer heartScore = (Integer) request.get("heartScore");
         String comment = (String) request.get("comment");
         @SuppressWarnings("unchecked")
@@ -64,10 +74,14 @@ public class ConsultantRatingController extends BaseApiController {
     }
 
     /**
-     * 평가 수정
+     * 평가 수정 (작성 내담자 본인만)
      */
     @PutMapping("/{ratingId}")
-    public ResponseEntity<ApiResponse<Map<String, Object>>> updateRating(@PathVariable Long ratingId, @RequestBody Map<String, Object> request) {
+    public ResponseEntity<ApiResponse<Map<String, Object>>> updateRating(
+            @PathVariable Long ratingId,
+            @RequestBody Map<String, Object> request,
+            HttpSession session) {
+        resourceOwnerAccessGuard.requireRatingOwner(session, ratingId, null, false);
         Integer heartScore = (Integer) request.get("heartScore");
         String comment = (String) request.get("comment");
         @SuppressWarnings("unchecked")
@@ -83,11 +97,15 @@ public class ConsultantRatingController extends BaseApiController {
     }
 
     /**
-     * 평가 삭제
+     * 평가 삭제 (작성 내담자 본인 또는 같은 테넌트 관리자·사무원)
      */
     @DeleteMapping("/{ratingId}")
-    public ResponseEntity<ApiResponse<Void>> deleteRating(@PathVariable Long ratingId, @RequestParam Long clientId) {
-        ratingService.deleteRating(ratingId, clientId);
+    public ResponseEntity<ApiResponse<Void>> deleteRating(
+            @PathVariable Long ratingId,
+            @RequestParam(required = false) Long clientId,
+            HttpSession session) {
+        Long ownerClientId = resourceOwnerAccessGuard.requireRatingOwner(session, ratingId, clientId, true);
+        ratingService.deleteRating(ratingId, ownerClientId);
 
         return deleted("평가가 삭제되었습니다.");
     }
@@ -101,15 +119,12 @@ public class ConsultantRatingController extends BaseApiController {
     }
 
     /**
-     * 관리자용 - 전체 평가 통계
+     * 관리자용 - 세션 테넌트 평가 통계 (같은 테넌트 관리자·사무원만)
      */
     @GetMapping("/admin/statistics")
-    public ResponseEntity<ApiResponse<Map<String, Object>>> getAdminRatingStatistics() {
-        log.info("💖 관리자 평가 통계 조회 시작");
-        
-        // 전체 평가 통계 조회
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getAdminRatingStatistics(HttpSession session) {
+        clientPathAccessGuard.requireTenantManager(session);
         Map<String, Object> stats = ratingService.getAdminRatingStatistics();
-        
         return success(stats);
     }
 
@@ -117,7 +132,10 @@ public class ConsultantRatingController extends BaseApiController {
      * 내담자용 - 평가 가능한 상담 목록
      */
     @GetMapping("/client/{clientId}/ratable-schedules")
-    public ResponseEntity<ApiResponse<Map<String, Object>>> getRatableSchedules(@PathVariable Long clientId) {
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getRatableSchedules(
+            @PathVariable Long clientId,
+            HttpSession session) {
+        clientPathAccessGuard.requireClientAccess(session, clientId);
         log.info("💖 평가 가능한 스케줄 조회 API 호출: clientId={}", clientId);
         
         // 실제 서비스 호출 - 완료되었지만 아직 평가하지 않은 상담만 조회
@@ -142,7 +160,7 @@ public class ConsultantRatingController extends BaseApiController {
     }
 
     /**
-     * 상담사용 - 평가 목록 조회
+     * 상담사 평가 목록 조회 (공개 응답: 내담자 id·연락처·실명 미포함)
      */
     @GetMapping("/consultant/{consultantId}")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getConsultantRatings(@PathVariable Long consultantId,
@@ -150,7 +168,7 @@ public class ConsultantRatingController extends BaseApiController {
                                                  @RequestParam(defaultValue = "10") int size) {
         // 표준화 원칙: 페이지 크기 최대 20개로 제한
         Pageable pageable = PaginationUtils.createPageable(page, size);
-        Page<ConsultantRating> ratings = ratingService.getConsultantRatings(consultantId, pageable);
+        Page<ConsultantRatingPublicResponse> ratings = ratingService.getConsultantRatings(consultantId, pageable);
 
         Map<String, Object> data = new HashMap<>();
         data.put("ratings", ratings.getContent());

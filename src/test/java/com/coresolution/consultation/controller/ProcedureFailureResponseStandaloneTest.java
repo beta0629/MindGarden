@@ -36,6 +36,7 @@ import com.coresolution.consultation.service.SalaryExportService;
 import com.coresolution.consultation.service.SalaryManagementService;
 import com.coresolution.consultation.service.SalaryScheduleService;
 import com.coresolution.consultation.service.StatisticsSchedulerService;
+import com.coresolution.consultation.service.support.ResourceOwnerAccessGuard;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -88,6 +89,9 @@ class ProcedureFailureResponseStandaloneTest {
     @Mock
     private StatisticsSchedulerService statisticsSchedulerService;
 
+    @Mock
+    private ResourceOwnerAccessGuard resourceOwnerAccessGuard;
+
     private MockMvc mockMvc;
 
     @BeforeEach
@@ -96,10 +100,11 @@ class ProcedureFailureResponseStandaloneTest {
                 salaryManagementService, plSqlSalaryManagementService, salaryScheduleService,
                 commonCodeService, dynamicPermissionService, roleCommonCodeAuthorizationService,
                 salaryExportService, auditLogService, salaryCalculationRepository, objectMapper,
-                payrollPeriodConfirmService);
+                payrollPeriodConfirmService, resourceOwnerAccessGuard);
         mockMvc = MockMvcBuilders.standaloneSetup(
                         salaryController,
-                        new PlSqlDiscountAccountingController(plSqlDiscountAccountingService),
+                        new PlSqlDiscountAccountingController(plSqlDiscountAccountingService,
+                                org.mockito.Mockito.mock(ResourceOwnerAccessGuard.class)),
                         new StatisticsManagementController(plSqlStatisticsService, statisticsSchedulerService))
                 .setControllerAdvice(new GlobalExceptionHandler())
                 .build();

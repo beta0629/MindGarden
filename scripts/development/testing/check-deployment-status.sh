@@ -10,9 +10,9 @@ echo ""
 echo "1. 서버 연결 확인..."
 for port in 8080 80 443; do
     echo -n "  포트 $port: "
-    if timeout 3 curl -s "http://beta0629.cafe24.com:$port/actuator/health" > /dev/null 2>&1; then
+    if timeout 3 curl -s "http://${DEV_SERVER_HOST:?DEV_SERVER_HOST 환경변수를 설정하세요}:$port/actuator/health" > /dev/null 2>&1; then
         echo "✅ 연결 성공"
-        BASE_URL="http://beta0629.cafe24.com:$port"
+        BASE_URL="http://${DEV_SERVER_HOST:?DEV_SERVER_HOST 환경변수를 설정하세요}:$port"
         break
     else
         echo "❌ 연결 실패"
@@ -29,7 +29,7 @@ if [ -z "$BASE_URL" ]; then
     echo ""
     echo "다음 단계:"
     echo "  1. GitHub Actions 배포 로그 확인"
-    echo "  2. 서버에서 직접 확인: ssh root@beta0629.cafe24.com"
+    echo "  2. 서버에서 직접 확인: ssh root@${DEV_SERVER_HOST:?DEV_SERVER_HOST 환경변수를 설정하세요}"
     echo "  3. 서비스 상태 확인: systemctl status mindgarden-dev"
     exit 1
 fi

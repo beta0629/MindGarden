@@ -24,6 +24,12 @@ public interface EmotionTrackingHistoryRepository extends JpaRepository<EmotionT
     List<EmotionTrackingHistory> findByClientIdAndEmotionTypeAndIsDeletedFalseOrderBySessionNumberAsc(
         Long clientId, String emotionType);
 
+    List<EmotionTrackingHistory> findByTenantIdAndClientIdAndIsDeletedFalseOrderBySessionNumberAsc(
+        String tenantId, Long clientId);
+
+    List<EmotionTrackingHistory> findByTenantIdAndClientIdAndEmotionTypeAndIsDeletedFalseOrderBySessionNumberAsc(
+        String tenantId, Long clientId, String emotionType);
+
     @Query("SELECT e FROM EmotionTrackingHistory e " +
            "WHERE e.clientId = :clientId " +
            "AND e.measuredAt BETWEEN :startDate AND :endDate " +

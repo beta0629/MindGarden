@@ -34,8 +34,8 @@ const API_ADMIN_PAYMENTS_CANCEL = '/api/v1/admin/payments/cancel';
 // nullish 가드와 fallback hex 는 defense in depth(미니파이 tree-shaking 회귀 대비)
 // 목적으로 유지하며, 운영 P0 회귀 방지를 위해 제거 금지. justification: 하드코딩
 // 게이트(`config/shell-scripts/check-hardcode.sh`)는 운영 안전 fallback 사유로 허용.
-const KAKAO_BRAND_COLOR = TABLET_LOGIN_CONSTANTS?.SOCIAL?.BUTTONS?.KAKAO?.COLOR ?? '#FEE500';
-const NAVER_BRAND_COLOR = TABLET_LOGIN_CONSTANTS?.SOCIAL?.BUTTONS?.NAVER?.COLOR ?? '#03C75A';
+const KAKAO_BRAND_COLOR = TABLET_LOGIN_CONSTANTS?.SOCIAL?.BUTTONS?.KAKAO?.COLOR ?? 'var(--mypage-kakao-bg)';
+const NAVER_BRAND_COLOR = TABLET_LOGIN_CONSTANTS?.SOCIAL?.BUTTONS?.NAVER?.COLOR ?? 'var(--mg-color-naver-green)';
 
 
 /**
@@ -59,7 +59,8 @@ const PaymentConfirmationModal = ({
   isOpen, 
   onClose, 
   mappings = [], 
-  onPaymentConfirmed 
+  onPaymentConfirmed,
+  canCancelPayment = false
 }) => {
   const { t } = useTranslation();
   const [alert, AlertModal] = useAlert();
@@ -142,8 +143,8 @@ const PaymentConfirmationModal = ({
     { value: 'CASH', label: '현금', icon: '💵', color: 'var(--mg-warning-500)', description: '현금 결제' },
     { value: 'KAKAO_PAY', label: '카카오페이', icon: '💛', color: KAKAO_BRAND_COLOR, description: '카카오페이 간편결제' },
     { value: 'NAVER_PAY', label: '네이버페이', icon: '💚', color: NAVER_BRAND_COLOR, description: '네이버페이 간편결제' },
-    { value: 'TOSS', label: '토스', icon: '🔷', color: '#0064ff', description: '토스 간편결제' },
-    { value: 'PAYPAL', label: '페이팔', icon: '🔵', color: '#0070ba', description: '페이팔 결제' },
+    { value: 'TOSS', label: '토스', icon: '🔷', color: 'var(--mg-info-500)', description: '토스 간편결제' },
+    { value: 'PAYPAL', label: '페이팔', icon: '🔵', color: 'var(--mg-primary-700)', description: '페이팔 결제' },
     { value: 'OTHER', label: '기타', icon: '💱', color: 'var(--mg-color-text-secondary)', description: '기타 결제 방법' }
   ];
 
@@ -360,18 +361,20 @@ const PaymentConfirmationModal = ({
           >
             {t('admin.actions.cancel')}
           </MGButton>
-          <MGButton
-            type="button"
-            variant="danger"
-            className={buildErpMgButtonClassName({ variant: 'danger', size: 'md', loading })}
-            onClick={handleCancelPayment}
-            loading={loading}
-            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-            disabled={selectedMappings.length === 0}
-            preventDoubleClick
-          >
-            결제 취소
-          </MGButton>
+          {canCancelPayment && (
+            <MGButton
+              type="button"
+              variant="danger"
+              className={buildErpMgButtonClassName({ variant: 'danger', size: 'md', loading })}
+              onClick={handleCancelPayment}
+              loading={loading}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+              disabled={selectedMappings.length === 0}
+              preventDoubleClick
+            >
+              결제 취소
+            </MGButton>
+          )}
           <MGButton
             type="button"
             variant="primary"

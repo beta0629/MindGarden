@@ -19,6 +19,8 @@ import { clearStoredSessionExpiry, syncStoredSessionExpiry } from './sessionExpi
 import { clearJustRefreshed, hasStoredAccessToken, hasStoredRefreshToken, isWithinAuthGraceWindow } from './sessionAuthPolicy';
 import { isBackground401KeepUser, loadSessionSecurityFlags } from './sessionSecurityFlags';
 import { isPublicSpaPath } from './publicSpaPaths';
+import { purgeAllLegacyConsultationLogLocalDrafts } from './consultationLogLocalDraft';
+import { purgeAllDraftBackups, purgeRescueBackupsOfOtherUsers } from './consultationLogDraftBackupStore';
 
 /**
  * current-user / session-info 등: `{ success, data }` 래퍼면 `data`만 사용.
@@ -117,6 +119,7 @@ class SessionManager {
     this.isLoading = false;
     this.listeners = [];
     this.lastCheckTime = 0;
+    this.lastVerifiedAt = 0;
     this.checkInProgress = false;
     this.minCheckInterval = SESSION_CHECK_INTERVAL;
     this.isProfileEditing = false; // 프로필 수정 중 플래그
@@ -406,6 +409,7 @@ class SessionManager {
 
         this.user = null;
         this.sessionInfo = null;
+        this.lastVerifiedAt = 0;
         clearStoredSessionExpiry();
         this.lastCheckTime = now;
         this.notifyListeners();
@@ -475,6 +479,7 @@ class SessionManager {
         }
 
         this.user = newUser;
+        this.lastVerifiedAt = now;
         console.log('✅ 사용자 정보 로드 완료:', this.user);
 
         // 세션 정보(비활성 타임아웃·마지막 접근 시각 등) — idle 경고용으로 항상 동기화
@@ -594,8 +599,16 @@ class SessionManager {
   applyClientLogoutCleanupPreserveSubdomain() {
     this.user = null;
     this.sessionInfo = null;
+    // 상담일지 초안: 레거시 평문 키 + 세션 암호화 백업(IndexedDB·메모리) 제거.
+    // 401 보관 백업은 남긴다 — 이 정리는 세션 만료·중복 로그인 종료에서도 불리며, 401 직전 입력을
+    // 재로그인 뒤 복원하기 위함이다. 명시적 로그아웃은 logout() 이 먼저 전량 삭제한다.
+    // IndexedDB 삭제는 비동기라 반환 Promise 를 넘겨 호출자가 끝까지 기다릴 수 있게 한다
+    // (로그아웃 리다이렉트가 먼저 일어나면 삭제가 중단되어 본문 백업이 단말에 남는다).
+    purgeAllLegacyConsultationLogLocalDrafts();
+    const draftBackupPurge = purgeAllDraftBackups({ keepRescue: true });
     clearStoredSessionExpiry();
     this.lastCheckTime = 0;
+    this.lastVerifiedAt = 0;
     this.checkInProgress = false;
 
     localStorage.removeItem('user');
@@ -626,6 +639,8 @@ class SessionManager {
     document.cookie = '_csrf=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
 
     this.notifyListeners();
+
+    return draftBackupPurge;
   }
 
   /** 로그아웃 게이트: 남은 서버 세션 한 번 더 무효화 시도(리다이렉트 없음) */
@@ -657,6 +672,14 @@ class SessionManager {
       subdomain: sessionStorage.getItem('subdomain'),
       subdomain_tenant_name: sessionStorage.getItem('subdomain_tenant_name')
     };
+    // 상담일지 초안(레거시 평문 키 + IndexedDB 암호화 백업)을 서버 로그아웃 전에 끝까지 지운다.
+    // 서버 응답 대기 중 탭을 닫아도 본문 백업이 단말에 남지 않게 하기 위함이다.
+    try {
+      purgeAllLegacyConsultationLogLocalDrafts();
+      await purgeAllDraftBackups();
+    } catch (purgeError) {
+      console.warn('⚠️ 상담일지 초안 백업 삭제 실패(로그아웃은 계속):', purgeError);
+    }
     try {
       console.log('🔓 로그아웃 시작...');
 
@@ -685,7 +708,13 @@ class SessionManager {
       console.error('❌ 서버 로그아웃 실패:', error);
       // 서버 로그아웃 실패해도 클라이언트 로그아웃은 진행
     } finally {
-      this.applyClientLogoutCleanupPreserveSubdomain();
+      // IndexedDB 초안 백업 삭제가 끝난 뒤에 리다이렉트한다.
+      // 리다이렉트가 먼저면 삭제 트랜잭션이 끊겨 상담 본문 백업이 단말에 남는다.
+      try {
+        await this.applyClientLogoutCleanupPreserveSubdomain();
+      } catch (purgeError) {
+        console.warn('⚠️ 상담일지 초안 백업 삭제 실패(로그아웃은 계속):', purgeError);
+      }
 
       console.log('✅ 클라이언트 로그아웃 완료');
 
@@ -763,6 +792,7 @@ class SessionManager {
       this.user = null;
       this.sessionInfo = null;
       this.lastCheckTime = 0;
+      this.lastVerifiedAt = 0;
 
       this.notifyListeners();
       console.log('✅ 세션 강제 초기화 완료');
@@ -775,6 +805,7 @@ class SessionManager {
       this.user = null;
       this.sessionInfo = null;
       this.lastCheckTime = 0;
+      this.lastVerifiedAt = 0;
       this.notifyListeners();
     }
   }
@@ -787,6 +818,7 @@ class SessionManager {
     this.user = null;
     this.sessionInfo = null;
     this.lastCheckTime = 0;
+    this.lastVerifiedAt = 0;
     this.notifyListeners();
     console.log('✅ localStorage 정리 완료');
   }
@@ -856,6 +888,16 @@ class SessionManager {
 
   // 사용자 정보 설정 (로그인 시 사용)
   setUser(user, tokens = null) {
+    // 계정 전환: 이전 사용자의 상담일지 초안 백업·레거시 평문 키를 먼저 제거
+    const previousUserId = this.user?.id;
+    const nextUserId = user?.id;
+    if (previousUserId != null && nextUserId != null && String(previousUserId) !== String(nextUserId)) {
+      purgeAllLegacyConsultationLogLocalDrafts();
+      void purgeAllDraftBackups();
+    } else if (previousUserId == null && nextUserId != null) {
+      // 새로고침·재로그인 직후: 이 단말에 남은 다른 사용자의 401 보관 백업만 정리한다.
+      void purgeRescueBackupsOfOtherUsers(nextUserId);
+    }
     this.user = user;
     this.sessionInfo = null; // 서버에서 가져올 예정
 
@@ -883,6 +925,15 @@ class SessionManager {
   }
 
   // Getter 메서드들
+  /**
+   * 마지막으로 current-user 200 을 받은 시각(ms). 401·네트워크 실패로 찍힌 lastCheckTime 과 구분한다.
+   *
+   * @returns {number}
+   */
+  getLastVerifiedAt() {
+    return this.lastVerifiedAt || 0;
+  }
+
   getUser() {
     // sessionManager의 user만 반환 (서버 응답 우선)
     // localStorage는 백업으로만 사용하지 않음

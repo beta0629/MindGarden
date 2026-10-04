@@ -15,6 +15,7 @@ import com.coresolution.consultation.dto.UserResponse;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.service.DynamicPermissionService;
 import com.coresolution.consultation.service.UserService;
+import com.coresolution.consultation.service.support.ClientPathAccessGuard;
 import com.coresolution.consultation.utils.SessionUtils;
 import com.coresolution.core.dto.ApiResponse;
 import jakarta.servlet.http.HttpSession;
@@ -48,6 +49,8 @@ class UserControllerLookupAuthzTest {
     private DynamicPermissionService dynamicPermissionService;
     @Mock
     private HttpSession session;
+    @Mock
+    private ClientPathAccessGuard clientPathAccessGuard;
 
     private MockedStatic<SessionUtils> sessionUtilsStatic;
     private UserController controller;
@@ -55,7 +58,7 @@ class UserControllerLookupAuthzTest {
     @BeforeEach
     void setUp() {
         sessionUtilsStatic = mockStatic(SessionUtils.class);
-        controller = new UserController(userService, dynamicPermissionService);
+        controller = new UserController(userService, dynamicPermissionService, clientPathAccessGuard);
         SecurityContextHolder.clearContext();
     }
 

@@ -36,6 +36,11 @@ import { getStatusColor, getStatusIcon } from '../../utils/codeHelper';
 import { getCommonCodes } from '../../utils/commonCodeApi';
 import notificationManager from '../../utils/notification';
 import {
+    CONSULTATION_LOG_BODY_ACCESS_STRINGS,
+    canAccessConsultationLogBody,
+    isConsultationLogBodyManager
+} from '../../utils/consultationLogBodyAccess';
+import {
   CALENDAR_EXTENDED_TYPE_KR_PUBLIC_HOLIDAY,
   CALENDAR_EXTENDED_TYPE_VACATION,
   CLIENT_SCHEDULE_NOTES_CLIENT_WIDE_UNRESOLVED_COUNT_FIELD,
@@ -574,6 +579,9 @@ const UnifiedScheduleComponent = ({
                     listParams.consultantId = selectedConsultantId;
                     console.log('🔍 상담사 필터링 적용:', selectedConsultantId);
                 }
+                if (clientIdFilter && clientIdFilter !== '') {
+                    listParams.clientId = clientIdFilter;
+                }
                 // P0: 가시 범위(startDate/endDate)를 항상 전달 → DB 레벨 필터링
                 if (calendarSkin === 'integrated' && currentRange) {
                     listParams.startDate = currentRange.startDate;
@@ -585,7 +593,7 @@ const UnifiedScheduleComponent = ({
                 // 조건이 같으면 캐시 히트, mutation 후에만 무효화.
                 const cacheKeyStartDate = calendarSkin === 'integrated' ? currentRange?.startDate || '' : '';
                 const cacheKeyEndDate = calendarSkin === 'integrated' ? currentRange?.endDate || '' : '';
-                const invalidationKey = `${selectedConsultantId || ''}_${cacheKeyStartDate}_${cacheKeyEndDate}_${refetchTrigger || 0}`;
+                const invalidationKey = `${selectedConsultantId || ''}_${clientIdFilter || ''}_${cacheKeyStartDate}_${cacheKeyEndDate}_${refetchTrigger || 0}`;
                 listParams._t = invalidationKey;
                 // P0: drain 호출 직전 page/size 명시 — Network bare query 방지 (SSOT + caller guard)
                 listParams.page = 0;
@@ -1290,7 +1298,13 @@ const UnifiedScheduleComponent = ({
     };
 
     // 상담일지 모달 핸들러
+    const consultationLogUser = { id: userId, role: userRole };
+
     const handleConsultationLogModalOpen = (scheduleData) => {
+        if (!canAccessConsultationLogBody(consultationLogUser)) {
+            notificationManager.info(CONSULTATION_LOG_BODY_ACCESS_STRINGS.RESTRICTED);
+            return;
+        }
         setSelectedSchedule(scheduleData);
         setIsConsultationLogModalOpen(true);
     };
@@ -1312,6 +1326,10 @@ const UnifiedScheduleComponent = ({
         clientId
     }) => {
         if (missingLogChipResolvingRef.current) {
+            return;
+        }
+        if (!canAccessConsultationLogBody({ id: userId, role: userRole })) {
+            notificationManager.info(CONSULTATION_LOG_BODY_ACCESS_STRINGS.RESTRICTED);
             return;
         }
         missingLogChipResolvingRef.current = true;
@@ -1590,7 +1608,7 @@ const UnifiedScheduleComponent = ({
                     onClose={handleConsultationLogModalClose}
                     scheduleData={selectedSchedule}
                     onSave={handleConsultationLogSaved}
-                    isAdmin={isAdminLikeScheduleUserRole(userRole)}
+                    isAdmin={isConsultationLogBodyManager(consultationLogUser)}
                 />
             )}
 

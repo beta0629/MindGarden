@@ -10,15 +10,18 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import com.coresolution.core.constant.OnboardingConstants;
 import com.coresolution.core.domain.onboarding.OnboardingRequest;
 import com.coresolution.core.domain.onboarding.OnboardingStatus;
 import com.coresolution.core.domain.onboarding.RiskLevel;
+import com.coresolution.core.service.impl.OnboardingApprovalBlockedException;
 import com.coresolution.core.repository.TenantRepository;
 import com.coresolution.core.repository.billing.TenantSubscriptionRepository;
 import com.coresolution.core.repository.onboarding.OnboardingRequestRepository;
@@ -123,7 +126,7 @@ class OnboardingServiceTest {
                 .thenReturn(Collections.emptyList());
         lenient().when(passwordService.encodePassword(anyString())).thenReturn("$2a$10$stubEncodedPassword");
         lenient().when(applicationContext.getBean(OnboardingServiceImpl.class))
-                .thenReturn(onboardingWorkflowBean);
+                .thenReturn(onboardingService);
         lenient()
                 .doReturn("{}")
                 .when(onboardingWorkflowBean)
@@ -242,12 +245,9 @@ class OnboardingServiceTest {
     }
 
     @Test
-    @DisplayName("승인 프로시저가 실패하면 ON_HOLD 로 끝나고 프로시저는 한 번만 호출된다")
-    void testDecide_procedureFailure_onHold_singleAttempt() {
+    @DisplayName("승인 프로시저가 실패하면 승인으로 저장하지 않고 그 사유를 던진다")
+    void testDecide_procedureFailure_staysUnapprovedWithReason() {
         when(repository.findActiveById(testId)).thenReturn(Optional.of(testRequest));
-        when(repository.findByTenantIdAndIdAndIsDeletedFalse(testTenantId, testId))
-                .thenReturn(Optional.of(testRequest));
-        when(repository.save(any(OnboardingRequest.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         java.util.Map<String, Object> approvalResult = new java.util.HashMap<>();
         approvalResult.put("success", false);
@@ -256,11 +256,13 @@ class OnboardingServiceTest {
                 anyString(), anyString(), anyString(), anyString(), anyString(), nullable(String.class)))
                         .thenReturn(approvalResult);
 
-        OnboardingRequest result =
-                onboardingService.decide(testId, OnboardingStatus.APPROVED, "test-admin", "테스트 승인");
+        assertThatThrownBy(() -> onboardingService.decide(testId, OnboardingStatus.APPROVED, "test-admin",
+                "테스트 승인"))
+                .isInstanceOf(com.coresolution.core.service.impl.OnboardingApprovalBlockedException.class)
+                .hasMessageContaining("역할 템플릿 적용 실패");
 
-        assertThat(result.getStatus()).isEqualTo(OnboardingStatus.ON_HOLD);
-        assertThat(result.getDecisionNote()).contains("역할 템플릿 적용 실패");
+        assertThat(testRequest.getStatus()).isEqualTo(OnboardingStatus.PENDING);
+        verify(repository, never()).save(any(OnboardingRequest.class));
         verify(approvalService, times(1)).processOnboardingApproval(any(Long.class), anyString(),
                 anyString(), anyString(), anyString(), anyString(), anyString(), anyString(),
                 nullable(String.class));
@@ -270,23 +272,63 @@ class OnboardingServiceTest {
     }
 
     @Test
-    @DisplayName("온보딩 승인 - 연락 이메일은 있으나 adminPassword 없으면 ON_HOLD")
-    void testDecide_Approved_missingAdminPassword_onHold() {
+    @DisplayName("온보딩 승인 - 연락 이메일은 있으나 adminPassword 없으면 사유와 함께 막힌다")
+    void testDecide_Approved_missingAdminPassword_blocked() {
         OnboardingRequest noPw = OnboardingRequest.builder().id(testId).tenantId(testTenantId)
                 .tenantName(testTenantName).requestedBy("test-requester").riskLevel(RiskLevel.LOW)
                 .checklistJson("{\"checklist\":[]}").businessType(testBusinessType)
                 .status(OnboardingStatus.PENDING).isDeleted(false).build();
 
         when(repository.findActiveById(testId)).thenReturn(Optional.of(noPw));
-        when(repository.save(any(OnboardingRequest.class))).thenAnswer(inv -> inv.getArgument(0));
 
-        OnboardingRequest result = onboardingService.decide(testId, OnboardingStatus.APPROVED,
-                "test-admin", "승인 시도");
+        assertThatThrownBy(() -> onboardingService.decide(testId, OnboardingStatus.APPROVED,
+                "test-admin", "승인 시도"))
+                .isInstanceOf(com.coresolution.core.service.impl.OnboardingApprovalBlockedException.class)
+                .hasMessageContaining("adminPassword");
 
-        assertThat(result.getStatus()).isEqualTo(OnboardingStatus.ON_HOLD);
-        assertThat(result.getDecisionNote()).contains("승인 중단");
+        assertThat(noPw.getStatus()).isEqualTo(OnboardingStatus.PENDING);
         verify(approvalService, times(0)).processOnboardingApproval(any(), anyString(), anyString(),
                 anyString(), anyString(), anyString(), anyString(), anyString(), nullable(String.class));
+    }
+
+    @Test
+    @DisplayName("한글 신청 서브도메인은 승인 프로시저 없이 사유로 막힌다")
+    void testDecide_koreanSubdomain_blockedBeforeProcedure() {
+        testRequest.setSubdomain("검증-재검-202610032055");
+        when(repository.findActiveById(testId)).thenReturn(Optional.of(testRequest));
+
+        assertThatThrownBy(() -> onboardingService.decide(testId, OnboardingStatus.APPROVED,
+                "test-admin", "승인 시도"))
+                .isInstanceOf(OnboardingApprovalBlockedException.class)
+                .hasMessage(OnboardingConstants.ERROR_ONBOARDING_SUBDOMAIN_NOT_DNS_LABEL);
+
+        assertThat(testRequest.getStatus()).isEqualTo(OnboardingStatus.PENDING);
+        verify(approvalService, never()).processOnboardingApproval(any(), anyString(), anyString(),
+                anyString(), anyString(), anyString(), anyString(), anyString(), nullable(String.class));
+    }
+
+    @Test
+    @DisplayName("유효한 영문 서브도메인은 소문자로 승인에 전달된다")
+    void testDecide_englishSubdomain_passedLowercase() {
+        testRequest.setSubdomain("MindGarden");
+        when(repository.findActiveById(testId)).thenReturn(Optional.of(testRequest));
+        when(repository.findByTenantIdAndIdAndIsDeletedFalse(testTenantId, testId))
+                .thenReturn(Optional.of(testRequest));
+        when(repository.save(any(OnboardingRequest.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        java.util.Map<String, Object> approvalResult = new java.util.HashMap<>();
+        approvalResult.put("success", true);
+        approvalResult.put("message", "온보딩 승인 완료");
+        when(approvalService.processOnboardingApproval(any(Long.class), anyString(), anyString(),
+                anyString(), anyString(), anyString(), anyString(), anyString(), eq("mindgarden")))
+                        .thenReturn(approvalResult);
+
+        OnboardingRequest result =
+                onboardingService.decide(testId, OnboardingStatus.APPROVED, "test-admin", "테스트 승인");
+
+        assertThat(result.getStatus()).isEqualTo(OnboardingStatus.APPROVED);
+        verify(approvalService).processOnboardingApproval(any(Long.class), anyString(), anyString(),
+                anyString(), anyString(), anyString(), anyString(), anyString(), eq("mindgarden"));
     }
 
     @Test

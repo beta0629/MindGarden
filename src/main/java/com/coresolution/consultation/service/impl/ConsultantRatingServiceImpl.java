@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import com.coresolution.consultation.constant.ScheduleStatus;
 import com.coresolution.consultation.constant.UserRole;
+import com.coresolution.consultation.dto.response.ConsultantRatingPublicResponse;
 import com.coresolution.consultation.entity.Branch;
 import com.coresolution.consultation.entity.ConsultantRating;
 import com.coresolution.consultation.entity.Schedule;
@@ -23,12 +24,14 @@ import com.coresolution.consultation.service.UserPersonalDataCacheService;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.core.context.TenantContextHolder;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -299,30 +302,10 @@ public class ConsultantRatingServiceImpl implements ConsultantRatingService {
             List<ConsultantRating> recentRatings = ratingRepository.findTop10ByTenantIdAndConsultantIdAndStatusOrderByRatedAtDesc(
                 tenantId, consultantId, ConsultantRating.RatingStatus.ACTIVE, PageRequest.of(0, 10));
             
-            List<Map<String, Object>> recentRatingsList = recentRatings.stream().map(rating -> {
-                Map<String, Object> ratingInfo = new HashMap<>();
-                ratingInfo.put("id", rating.getId());
-                ratingInfo.put("heartScore", rating.getHeartScore());
-                ratingInfo.put("comment", rating.getComment());
-                ratingInfo.put("clientName", rating.getIsAnonymous() ? "익명" : rating.getClient().getName());
-                ratingInfo.put("ratedAt", rating.getRatedAt());
-                ratingInfo.put("isAnonymous", rating.getIsAnonymous());
-                
-                if (rating.getRatingTags() != null) {
-                    try {
-                        @SuppressWarnings("unchecked")
-                        List<String> tags = objectMapper.readValue(rating.getRatingTags(), List.class);
-                        ratingInfo.put("tags", tags);
-                    } catch (JsonProcessingException e) {
-                        ratingInfo.put("tags", Collections.emptyList());
-                    }
-                } else {
-                    ratingInfo.put("tags", Collections.emptyList());
-                }
-                
-                return ratingInfo;
-            }).collect(Collectors.toList());
-            
+            List<ConsultantRatingPublicResponse> recentRatingsList = recentRatings.stream()
+                .map(this::toPublicResponse)
+                .collect(Collectors.toList());
+
             stats.put("recentRatings", recentRatingsList);
 
             log.info("✅ 상담사 평가 통계 조회 완료: 상담사={}, 평균점수={}, 총개수={}", 
@@ -383,11 +366,11 @@ public class ConsultantRatingServiceImpl implements ConsultantRatingService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<ConsultantRating> getConsultantRatings(Long consultantId, Pageable pageable) {
-        // 표준화 2025-12-06: deprecated 메서드 대체
+    public Page<ConsultantRatingPublicResponse> getConsultantRatings(Long consultantId, Pageable pageable) {
         String tenantId = TenantContextHolder.getRequiredTenantId();
-        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
-        return ratingRepository.findByTenantIdAndConsultantIdAndStatusOrderByRatedAtDesc(tenantId, consultantId, ConsultantRating.RatingStatus.ACTIVE, pageable);
+        return ratingRepository.findByTenantIdAndConsultantIdAndStatusOrderByRatedAtDesc(
+                tenantId, consultantId, ConsultantRating.RatingStatus.ACTIVE, pageable)
+            .map(this::toPublicResponse);
     }
 
     @Override
@@ -551,14 +534,14 @@ public class ConsultantRatingServiceImpl implements ConsultantRatingService {
 
             Map<String, Object> stats = new HashMap<>();
 
-            Long totalRatings = ratingRepository.count();
-            stats.put("totalRatings", totalRatings != null ? totalRatings : 0L);
-
             String tenantId = TenantContextHolder.getRequiredTenantId();
-            List<ConsultantRating> allRatings = ratingRepository.findByTenantId(tenantId);
-            double averageScore = allRatings.stream()
-                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
+            List<ConsultantRating> activeRatings = ratingRepository.findByTenantId(tenantId).stream()
                 .filter(rating -> rating.getStatus() == ConsultantRating.RatingStatus.ACTIVE)
+                .collect(Collectors.toList());
+            long totalRatings = activeRatings.size();
+            stats.put("totalRatings", totalRatings);
+
+            double averageScore = activeRatings.stream()
                 .mapToInt(ConsultantRating::getHeartScore)
                 .average()
                 .orElse(0.0);
@@ -573,9 +556,8 @@ public class ConsultantRatingServiceImpl implements ConsultantRatingService {
                 LocalDateTime dayStart = LocalDateTime.now().minusDays(i).withHour(0).withMinute(0).withSecond(0);
                 LocalDateTime dayEnd = dayStart.withHour(23).withMinute(59).withSecond(59);
                 
-                long dayCount = ratingRepository.findByTenantId(tenantId).stream()
-                    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
-                    .filter(rating -> rating.getStatus() == ConsultantRating.RatingStatus.ACTIVE)
+                long dayCount = activeRatings.stream()
+                    .filter(rating -> rating.getRatedAt() != null)
                     .filter(rating -> rating.getRatedAt().isAfter(dayStart) && rating.getRatedAt().isBefore(dayEnd))
                     .count();
                 
@@ -753,6 +735,46 @@ public class ConsultantRatingServiceImpl implements ConsultantRatingService {
         } catch (Exception e) {
             log.error("❌ 상담사 랭킹 조회 실패 (테넌트 전체)", e);
             return new ArrayList<>();
+        }
+    }
+
+    /**
+     * 평가 엔티티를 공개 응답으로 변환한다. 내담자는 익명 라벨 또는 마스킹 이름으로만 표시한다.
+     */
+    private ConsultantRatingPublicResponse toPublicResponse(ConsultantRating rating) {
+        boolean anonymous = Boolean.TRUE.equals(rating.getIsAnonymous());
+        return ConsultantRatingPublicResponse.builder()
+            .id(rating.getId())
+            .heartScore(rating.getHeartScore())
+            .comment(rating.getComment())
+            .tags(parseRatingTags(rating.getRatingTags()))
+            .isAnonymous(anonymous)
+            .clientName(anonymous ? ConsultantRatingPublicResponse.ANONYMOUS_CLIENT_LABEL
+                : maskedClientName(rating.getClient()))
+            .ratedAt(rating.getRatedAt())
+            .build();
+    }
+
+    /**
+     * 마스킹이 적용되지 않는 이름(1자·빈 값)은 익명 라벨로 대체해 실명이 그대로 나가지 않게 한다.
+     */
+    private String maskedClientName(User client) {
+        String name = client != null ? encryptionUtil.safeDecrypt(client.getName()) : null;
+        String masked = encryptionUtil.maskName(name);
+        if (!StringUtils.hasText(masked) || masked.equals(name)) {
+            return ConsultantRatingPublicResponse.ANONYMOUS_CLIENT_LABEL;
+        }
+        return masked;
+    }
+
+    private List<String> parseRatingTags(String ratingTags) {
+        if (ratingTags == null) {
+            return Collections.emptyList();
+        }
+        try {
+            return objectMapper.readValue(ratingTags, new TypeReference<List<String>>() { });
+        } catch (JsonProcessingException e) {
+            return Collections.emptyList();
         }
     }
 

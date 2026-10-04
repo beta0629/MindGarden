@@ -20,6 +20,7 @@ public final class ProcedureUserFacingMessages {
     public static final String PROC_UPDATE_ALL_CONSULTANT_PERFORMANCE = "UpdateAllConsultantPerformance";
     public static final String PROC_DAILY_PERFORMANCE_MONITORING = "DailyPerformanceMonitoring";
     public static final String PROC_GENERATE_QUARTERLY_FINANCIAL_REPORT = "GenerateQuarterlyFinancialReport";
+    public static final String PROC_GET_CONSOLIDATED_FINANCIAL_DATA = "GetConsolidatedFinancialData";
     public static final String QUERY_CONSOLIDATED_FINANCIAL_DATA = "ConsolidatedFinancialData";
     public static final String QUERY_FINANCIAL_REPORT = "FinancialReport";
 
@@ -33,6 +34,10 @@ public final class ProcedureUserFacingMessages {
             "할인 상태를 바꾸지 못했습니다. 잠시 후 다시 시도하고, 계속되면 관리자에게 문의해 주세요.";
     public static final String DISCOUNT_STATISTICS_FAILED =
             "할인 통계를 불러오지 못했습니다. 잠시 후 다시 시도하고, 계속되면 관리자에게 문의해 주세요.";
+    /** 지점이 없는 기관 — 지점 단위 할인 무결성 검증 대상 없음 (프로시저 미호출) */
+    public static final String DISCOUNT_INTEGRITY_NO_BRANCH =
+        "지점이 없는 기관은 지점 단위 할인 무결성 검증 대상이 없습니다.";
+
     public static final String DISCOUNT_INTEGRITY_FAILED =
             "할인 무결성 검증을 하지 못했습니다. 잠시 후 다시 시도하고, 계속되면 관리자에게 문의해 주세요.";
     public static final String DAILY_STATISTICS_FAILED =

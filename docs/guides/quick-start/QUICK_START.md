@@ -27,7 +27,7 @@ DB_HOST=your-dev-db-host          # 개발 서버 DB 호스트 주소
 DB_PORT=3306
 DB_NAME=core_solution
 DB_USERNAME=mindgarden_dev
-DB_PASSWORD=MindGardenDev2025!@#  # 실제 비밀번호로 변경
+DB_PASSWORD=<DEV_DB_PASSWORD>  # 실제 비밀번호로 변경
 ```
 
 ### 3. 환경 변수 로드

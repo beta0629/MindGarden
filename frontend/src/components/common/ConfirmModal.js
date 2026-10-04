@@ -9,10 +9,15 @@ import MGButton from './MGButton';
  * 확인 모달 컴포넌트 (단일 소스)
  * 알럿창 대신 사용할 커스텀 모달 (UnifiedModal 기반)
  * common/modals/ConfirmModal.js는 본 파일 re-export만 제공.
+ *
+ * <p>{@code onCancel} 을 주면 취소 버튼만 {@code onCancel} 을 부르고, ×·ESC·배경 클릭은 {@code onClose}
+ * (선택 보류)만 부른다. 취소 버튼이 데이터를 지우는 동작(예: 「버리기」)일 때 닫기와 구분하려고 쓴다.
+ * 주지 않으면 취소 버튼도 {@code onClose} 를 부른다(기존 동작).</p>
  */
 const ConfirmModal = ({
   isOpen,
   onClose,
+  onCancel,
   onConfirm,
   title = '확인',
   message = '정말로 진행하시겠습니까?',
@@ -92,7 +97,7 @@ const ConfirmModal = ({
             size="medium"
             className={buildErpMgButtonClassName({ variant: 'secondary', size: 'md', loading: false })}
             loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-            onClick={onClose}
+            onClick={onCancel || onClose}
           >
             {cancelText}
           </MGButton>

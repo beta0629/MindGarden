@@ -1,5 +1,6 @@
 -- MindGarden 운영 데이터베이스 설정
--- 실행 방법: mysql -u root -p < production-db-setup.sql
+-- 실행 방법: envsubst < production-db-setup.sql | mysql -u root -p
+-- 비밀번호는 env(MINDGARDEN_PROD_DB_*_PASSWORD)로만 주입 — 파일에 평문 기입·커밋 금지.
 
 -- 1. 데이터베이스 생성
 CREATE DATABASE IF NOT EXISTS mindgarden_prod 
@@ -7,19 +8,19 @@ CHARACTER SET utf8mb4
 COLLATE utf8mb4_unicode_ci;
 
 -- 2. 운영용 사용자 생성 및 권한 부여
-CREATE USER IF NOT EXISTS 'mindgarden_prod'@'localhost' IDENTIFIED BY 'MindGarden2025!@#';
-CREATE USER IF NOT EXISTS 'mindgarden_prod'@'%' IDENTIFIED BY 'MindGarden2025!@#';
+CREATE USER IF NOT EXISTS 'mindgarden_prod'@'localhost' IDENTIFIED BY '${MINDGARDEN_PROD_DB_PASSWORD}';
+CREATE USER IF NOT EXISTS 'mindgarden_prod'@'%' IDENTIFIED BY '${MINDGARDEN_PROD_DB_PASSWORD}';
 
 -- 3. 데이터베이스 권한 부여
 GRANT ALL PRIVILEGES ON mindgarden_prod.* TO 'mindgarden_prod'@'localhost';
 GRANT ALL PRIVILEGES ON mindgarden_prod.* TO 'mindgarden_prod'@'%';
 
 -- 4. 읽기 전용 사용자 (모니터링용)
-CREATE USER IF NOT EXISTS 'mindgarden_readonly'@'localhost' IDENTIFIED BY 'ReadOnly2025!';
+CREATE USER IF NOT EXISTS 'mindgarden_readonly'@'localhost' IDENTIFIED BY '${MINDGARDEN_PROD_DB_READONLY_PASSWORD}';
 GRANT SELECT ON mindgarden_prod.* TO 'mindgarden_readonly'@'localhost';
 
 -- 5. 백업용 사용자
-CREATE USER IF NOT EXISTS 'mindgarden_backup'@'localhost' IDENTIFIED BY 'Backup2025!';
+CREATE USER IF NOT EXISTS 'mindgarden_backup'@'localhost' IDENTIFIED BY '${MINDGARDEN_PROD_DB_BACKUP_PASSWORD}';
 GRANT SELECT, LOCK TABLES, SHOW VIEW, EVENT, TRIGGER ON mindgarden_prod.* TO 'mindgarden_backup'@'localhost';
 
 -- 6. 권한 적용

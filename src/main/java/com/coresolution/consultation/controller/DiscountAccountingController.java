@@ -5,6 +5,7 @@ import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.service.DiscountAccountingService;
 import com.coresolution.consultation.service.DiscountAccountingService.DiscountAccountingResult;
 import com.coresolution.consultation.service.DynamicPermissionService;
+import com.coresolution.consultation.service.support.ResourceOwnerAccessGuard;
 import com.coresolution.consultation.util.EmailLogMasking;
 import com.coresolution.consultation.utils.SessionUtils;
 import org.springframework.http.ResponseEntity;
@@ -38,6 +39,7 @@ public class DiscountAccountingController {
 
     private final DiscountAccountingService discountAccountingService;
     private final DynamicPermissionService dynamicPermissionService;
+    private final ResourceOwnerAccessGuard resourceOwnerAccessGuard;
 
     /**
      * ERP 접근 권한 체크 ({@code ErpController.checkErpAccess} 와 동일 패턴).
@@ -95,6 +97,7 @@ public class DiscountAccountingController {
             ResponseEntity<Map<String, Object>> denied = (ResponseEntity<Map<String, Object>>) accessCheck;
             return denied;
         }
+        resourceOwnerAccessGuard.requireMappingAccountingAccess(session, mappingId);
         log.info("💰 할인 회계 거래 조회: mappingId={}", mappingId);
 
         try {
@@ -136,6 +139,7 @@ public class DiscountAccountingController {
             ResponseEntity<Map<String, Object>> denied = (ResponseEntity<Map<String, Object>>) accessCheck;
             return denied;
         }
+        resourceOwnerAccessGuard.requireMappingAccountingAccess(session, mappingId);
         log.info("🔍 할인 회계 거래 검증: mappingId={}", mappingId);
 
         try {
@@ -180,6 +184,7 @@ public class DiscountAccountingController {
             ResponseEntity<Map<String, Object>> denied = (ResponseEntity<Map<String, Object>>) accessCheck;
             return denied;
         }
+        resourceOwnerAccessGuard.requireMappingAccountingAccess(session, mappingId);
 
         String reason = request.getOrDefault("reason", "사용자 요청에 의한 취소");
 
@@ -221,6 +226,7 @@ public class DiscountAccountingController {
             ResponseEntity<Map<String, Object>> denied = (ResponseEntity<Map<String, Object>>) accessCheck;
             return denied;
         }
+        resourceOwnerAccessGuard.requireMappingAccountingAccess(session, mappingId);
 
         log.info("💰 할인 회계 거래 수정: mappingId={}", mappingId);
 

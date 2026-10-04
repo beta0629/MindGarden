@@ -3,6 +3,7 @@
 # - 운영 픽스처 스키마의 테이블 데이터는 개발로 복사된다.
 # - 운영 픽스처의 루틴 본문(깨진 시그니처 포함)은 가져오지 않는다.
 # - 복사 직후 개발 스키마에 저장소의 모든 표준 프로시저가 db-diff safe-replace 로 들어온다.
+# - Flyway 소유 온보딩 프로시저(FLYWAY_SOURCES.tsv)도 표준 배포 SQL 로 함께 다시 들어온다.
 # - 개발 대상이 운영 호스트·스키마와 같으면 덤프·DROP 전에 멈춘다.
 # 필요 env: DB_HOST DB_USER DB_PASS, PROCEDURE_STAGING_TEST_DB=disposable
 set -euo pipefail
@@ -91,14 +92,22 @@ fi
 
 [ "$(q -e "SELECT label FROM ${FIXTURE_DEV}.sync_probe WHERE id=1")" = "copied" ] || fail "테이블 데이터가 복사되지 않았습니다."
 
-expected=$(cd "$ROOT/database/schema/procedures_standardized" && ls ./*_standardized.sql | sed 's#^\./##; s#_standardized\.sql$##' | sort)
+standardized=$(cd "$ROOT/database/schema/procedures_standardized" && ls ./*_standardized.sql | sed 's#^\./##; s#_standardized\.sql$##')
+flyway_owned=$(awk -F '\t' '/^[[:space:]]*#/ { next } NF > 1 { print $1 }' \
+    "$ROOT/database/schema/procedures_standardized/FLYWAY_SOURCES.tsv")
+expected=$(printf '%s\n' "$standardized" | grep . | sort)
 actual=$(q -e "SELECT ROUTINE_NAME FROM information_schema.ROUTINES WHERE ROUTINE_SCHEMA='${FIXTURE_DEV}' AND ROUTINE_TYPE='PROCEDURE' ORDER BY ROUTINE_NAME" | sort)
 if [ "$expected" != "$actual" ]; then
     diff <(printf '%s\n' "$expected") <(printf '%s\n' "$actual") >&2 || true
     fail "개발 스키마 프로시저가 저장소 목록과 다릅니다."
 fi
+while IFS= read -r name; do
+    [ -n "$name" ] || continue
+    [ "$(q -e "SELECT COUNT(*) FROM information_schema.ROUTINES WHERE ROUTINE_SCHEMA='${FIXTURE_DEV}' AND ROUTINE_NAME='${name}'")" = "1" ] \
+        || fail "Flyway 소유 온보딩 프로시저가 복사 뒤 되살아나지 않았습니다: $name"
+done <<<"$flyway_owned"
 params=$(q -e "SELECT COUNT(*) FROM information_schema.PARAMETERS WHERE SPECIFIC_SCHEMA='${FIXTURE_DEV}' AND SPECIFIC_NAME='GetIntegratedSalaryStatistics'")
 [ "$params" = "11" ] || fail "GetIntegratedSalaryStatistics 가 저장소 정의가 아닙니다 (params=$params)."
 grep -q 'summary total=' "$WORK/sync.out" || fail "프로시저별 결과 표가 없습니다."
-echo "repo procedures=$(printf '%s\n' "$expected" | wc -l | tr -d ' ') dev procedures=$(printf '%s\n' "$actual" | wc -l | tr -d ' ')"
+echo "repo procedures=$(printf '%s\n' "$expected" | wc -l | tr -d ' ') (Flyway 원본 $(printf '%s\n' "$flyway_owned" | wc -l | tr -d ' ') 포함) dev procedures=$(printf '%s\n' "$actual" | wc -l | tr -d ' ')"
 echo "PASS prod-to-dev-daily.mysql"

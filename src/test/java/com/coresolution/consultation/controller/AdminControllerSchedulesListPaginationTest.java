@@ -26,6 +26,7 @@ import com.coresolution.consultation.service.UserPersonalDataCacheService;
 import com.coresolution.consultation.service.UserService;
 import com.coresolution.consultation.service.erp.ErpService;
 import com.coresolution.consultation.service.erp.financial.FinancialTransactionService;
+import com.coresolution.consultation.service.support.ClientPathAccessGuard;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.dto.ApiResponse;
@@ -45,6 +46,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
+import org.springframework.mock.web.MockHttpSession;
 import org.springframework.security.core.context.SecurityContextHolder;
 
 /**
@@ -82,6 +84,7 @@ class AdminControllerSchedulesListPaginationTest {
     @Mock private OnboardingService onboardingService;
     @Mock private RealTimeStatisticsService realTimeStatisticsService;
     @Mock private UserRepository userRepository;
+    @Mock private ClientPathAccessGuard clientPathAccessGuard;
     @Mock private com.coresolution.consultation.service.ScheduleClientReminderSmsStatusService
             scheduleClientReminderSmsStatusService;
     @Mock private com.coresolution.consultation.repository.ClientRepository clientRepository;
@@ -122,7 +125,7 @@ class AdminControllerSchedulesListPaginationTest {
         stubFilteredSchedulesPage(20, 45L);
 
         ResponseEntity<ApiResponse<Map<String, Object>>> response =
-                adminController.getSchedules(null, null, null, null, 0, 20);
+                adminController.getSchedules(null, null, null, null, 0, 20, new MockHttpSession());
 
         assertThat(response.getBody()).isNotNull();
         assertThat(response.getBody().isSuccess()).isTrue();
@@ -142,7 +145,7 @@ class AdminControllerSchedulesListPaginationTest {
         stubFilteredSchedulesPage(PaginationUtils.DEFAULT_PAGE_SIZE, 45L);
 
         ResponseEntity<ApiResponse<Map<String, Object>>> response =
-                adminController.getSchedules(null, null, null, null, null, null);
+                adminController.getSchedules(null, null, null, null, null, null, new MockHttpSession());
 
         Map<String, Object> data = response.getBody().getData();
         assertThat(data.get("count")).isEqualTo(45L);
@@ -160,7 +163,7 @@ class AdminControllerSchedulesListPaginationTest {
         stubFilteredSchedulesPage(ADMIN_LIST_MAX_PAGE_SIZE, 250L);
 
         ResponseEntity<ApiResponse<Map<String, Object>>> response =
-                adminController.getSchedules(null, null, null, null, 0, 999);
+                adminController.getSchedules(null, null, null, null, 0, 999, new MockHttpSession());
 
         Map<String, Object> data = response.getBody().getData();
         assertThat(data.get("count")).isEqualTo(250L);
@@ -180,7 +183,7 @@ class AdminControllerSchedulesListPaginationTest {
 
         ResponseEntity<ApiResponse<Map<String, Object>>> response =
                 adminController.getSchedules(7L, "TENTATIVE_PENDING_PAYMENT",
-                        "2026-09-01", "2026-09-30", 0, 20);
+                        "2026-09-01", "2026-09-30", 0, 20, new MockHttpSession());
 
         Map<String, Object> data = response.getBody().getData();
         assertThat(data.get("consultantId")).isEqualTo(7L);

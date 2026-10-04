@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "hooks": {
+    "beforeShellExecution": [
+      {
+        "command": ".cursor/hooks/guard-shell.py",
+        "matcher": "git|gh|mysql|mariadb|psql|mongo|ssh",
+        "timeout": 10
+      }
+    ],
+    "stop": [
+      {
+        "command": ".cursor/hooks/guardrail-stop.sh",
+        "timeout": 300,
+        "loop_limit": 3
+      }
+    ]
+  }
+}

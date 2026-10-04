@@ -5,6 +5,8 @@ import java.util.Map;
 import java.util.Optional;
 import com.coresolution.consultation.dto.InstitutionLinkConsultationLogCreateRequest;
 import com.coresolution.consultation.dto.InstitutionLinkConsultationLogResponse;
+import com.coresolution.consultation.service.support.ConsultationRecordAccessGuard;
+import com.coresolution.consultation.service.support.ConsultationRecordWriter;
 
 /**
  * 타기관 연계 상담일지 서비스. 회기 {@code consultation_records} 에 쓰지 않는다.
@@ -17,23 +19,30 @@ public interface InstitutionLinkConsultationLogService {
     /**
      * 타기관 일지를 저장한다. remainingSessions·sessionSequence 검증을 하지 않는다.
      *
+     * <p>매핑·계약의 담당 상담사·내담자로 작성 권한을 다시 판정한다
+     * ({@link ConsultationRecordAccessGuard#requireInstitutionLinkAssignee}).</p>
+     *
      * @param tenantId 테넌트 ID
      * @param request 생성 요청
+     * @param writer 컨트롤러 가드가 만든 작성자 정보 (null 이면 거부)
      * @return 저장된 일지
      * @throws IllegalStateException tenantId 가 없거나 공백인 경우
-     * @throws com.coresolution.consultation.exception.EntityNotFoundException 계약·매핑이 테넌트에 없을 때
      * @throws com.coresolution.consultation.exception.ValidationException 필수값 누락 또는 회기권 매핑
+     * @throws org.springframework.security.access.AccessDeniedException 담당 상담사·관리자가 아니거나
+     *         계약·매핑이 테넌트에 없을 때(같은 403 — id 존재 비노출)
      */
     InstitutionLinkConsultationLogResponse create(String tenantId,
-            InstitutionLinkConsultationLogCreateRequest request);
+            InstitutionLinkConsultationLogCreateRequest request, ConsultationRecordWriter writer);
 
     /**
      * 레거시 스케줄 일지 payload 를 타기관 경로로 저장한다.
      *
      * @param recordData 스케줄 컨트롤러 본문
+     * @param writer 컨트롤러 가드가 만든 작성자 정보 (null 이면 거부)
      * @return 저장된 일지
      */
-    InstitutionLinkConsultationLogResponse createFromSchedulePayload(Map<String, Object> recordData);
+    InstitutionLinkConsultationLogResponse createFromSchedulePayload(Map<String, Object> recordData,
+            ConsultationRecordWriter writer);
 
     /**
      * 월말 상담내역 목록.

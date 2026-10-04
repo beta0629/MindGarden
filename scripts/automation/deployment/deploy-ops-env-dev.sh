@@ -5,7 +5,7 @@
 
 set -e
 
-DEV_SERVER="root@beta0629.cafe24.com"
+DEV_SERVER="root@${DEV_SERVER_HOST:?DEV_SERVER_HOST 환경변수를 설정하세요}"
 FRONTEND_OPS_PATH="/opt/mindgarden/frontend-ops"
 
 echo "🔧 Ops Portal 개발 서버 환경 변수 설정 중..."

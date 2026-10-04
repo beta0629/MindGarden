@@ -9,17 +9,23 @@ import static org.mockito.Mockito.when;
 
 import java.time.LocalDate;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import com.coresolution.consultation.constant.ServerErrorMessages;
+import com.coresolution.consultation.entity.User;
+import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.core.context.TenantContextHolder;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.MockedConstruction;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.SqlParameter;
 import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 import org.springframework.jdbc.core.simple.SimpleJdbcCall;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -45,6 +51,7 @@ class PlSqlConsultationRecordAlertServiceImplCatalogTest {
     private static final LocalDate CHECK_DATE = LocalDate.of(2026, 6, 14);
 
     private JdbcTemplate jdbcTemplate;
+    private UserRepository userRepository;
     private PlSqlConsultationRecordAlertServiceImpl service;
 
     @BeforeEach
@@ -53,6 +60,8 @@ class PlSqlConsultationRecordAlertServiceImplCatalogTest {
         service = new PlSqlConsultationRecordAlertServiceImpl();
         ReflectionTestUtils.setField(service, "jdbcTemplate", jdbcTemplate);
         ReflectionTestUtils.setField(service, "dbSchemaName", UT_SCHEMA);
+        userRepository = Mockito.mock(UserRepository.class);
+        ReflectionTestUtils.setField(service, "userRepository", userRepository);
     }
 
     @AfterEach
@@ -100,7 +109,7 @@ class PlSqlConsultationRecordAlertServiceImplCatalogTest {
         Map<String, Object> executeResult = new HashMap<>();
         executeResult.put("p_success", Boolean.TRUE);
         executeResult.put("p_message", "ok");
-        executeResult.put("p_alerts", java.util.List.of());
+        executeResult.put("p_alerts", "[]");
         executeResult.put("p_total_count", 0);
 
         try (MockedConstruction<SimpleJdbcCall> mocked = mockSimpleJdbcCallConstruction(executeResult)) {
@@ -113,6 +122,83 @@ class PlSqlConsultationRecordAlertServiceImplCatalogTest {
             verify(constructed, never()).withSchemaName(any());
             verify(constructed).withProcedureName("GetMissingConsultationRecordAlerts");
             assertThat(result.get("success")).isEqualTo(Boolean.TRUE);
+        }
+    }
+
+    @Test
+    @DisplayName("getMissingConsultationRecordAlerts: 메타데이터 없이 9개 인자 명시 + 오늘·대상 상태 전달 + 상담사 이름은 같은 테넌트 조회로 채움")
+    void getMissingConsultationRecordAlerts_declaresContractAndEnrichesNames() {
+        TenantContextHolder.setTenantId(UT_TENANT);
+        Map<String, Object> executeResult = new HashMap<>();
+        executeResult.put("p_success", Boolean.TRUE);
+        executeResult.put("p_message", "ok");
+        executeResult.put("p_alerts", "[{\"scheduleId\":7,\"consultantId\":10,\"scheduleDate\":\"2026-06-10\"},"
+                + "{\"scheduleId\":8,\"consultantId\":99,\"scheduleDate\":\"2026-06-09\"}]");
+        executeResult.put("p_total_count", 2);
+        User consultant = Mockito.mock(User.class);
+        when(consultant.getId()).thenReturn(10L);
+        when(consultant.getName()).thenReturn("상담사A");
+        when(userRepository.findByTenantIdAndIdIn(Mockito.eq(UT_TENANT), any())).thenReturn(List.of(consultant));
+
+        try (MockedConstruction<SimpleJdbcCall> mocked = mockSimpleJdbcCallConstruction(executeResult)) {
+            Map<String, Object> result = service.getMissingConsultationRecordAlerts(null, CHECK_DATE, CHECK_DATE);
+
+            SimpleJdbcCall constructed = mocked.constructed().get(0);
+            verify(constructed).withoutProcedureColumnMetaDataAccess();
+            ArgumentCaptor<SqlParameter[]> declared = ArgumentCaptor.forClass(SqlParameter[].class);
+            verify(constructed).declareParameters(declared.capture());
+            assertThat(declared.getAllValues().stream().flatMap(java.util.Arrays::stream).map(SqlParameter::getName))
+                    .containsExactly("p_tenant_id", "p_start_date", "p_end_date", "p_today", "p_statuses",
+                            "p_alerts", "p_total_count", "p_success", "p_message");
+            ArgumentCaptor<SqlParameterSource> params = ArgumentCaptor.forClass(SqlParameterSource.class);
+            verify(constructed).execute(params.capture());
+            assertThat(params.getValue().getValue("p_tenant_id")).isEqualTo(UT_TENANT);
+            assertThat(params.getValue().getValue("p_today")).isEqualTo(LocalDate.now());
+            assertThat(params.getValue().getValue("p_statuses")).isEqualTo("BOOKED,COMPLETED,CONFIRMED");
+
+            assertThat(result.get("success")).isEqualTo(Boolean.TRUE);
+            assertThat(result.get("totalCount")).isEqualTo(2);
+            @SuppressWarnings("unchecked")
+            List<Map<String, Object>> alerts = (List<Map<String, Object>>) result.get("alerts");
+            assertThat(alerts).extracting(a -> a.get("consultantName")).containsExactly("상담사A", null);
+        }
+    }
+
+    @Test
+    @DisplayName("getMissingConsultationRecordAlerts: 프로시저 실패면 SQL 오류 문구 없이 공용 문구 + 빈 목록")
+    void getMissingConsultationRecordAlerts_procedureFailure_returnsSharedMessage() {
+        TenantContextHolder.setTenantId(UT_TENANT);
+        Map<String, Object> executeResult = new HashMap<>();
+        executeResult.put("p_success", Boolean.FALSE);
+        executeResult.put("p_message", "상담일지 미작성 알림 조회 중 오류 발생: Unknown column 'pa.alert_type'");
+        executeResult.put("p_alerts", "[]");
+        executeResult.put("p_total_count", null);
+
+        try (MockedConstruction<SimpleJdbcCall> mocked = mockSimpleJdbcCallConstruction(executeResult)) {
+            Map<String, Object> result = service.getMissingConsultationRecordAlerts(null, CHECK_DATE, CHECK_DATE);
+
+            assertThat(result.get("success")).isEqualTo(Boolean.FALSE);
+            assertThat(String.valueOf(result.get("message"))).doesNotContain("alert_type").doesNotContain("Unknown column");
+            assertThat(result.get("alerts")).isEqualTo(List.of());
+            assertThat(result.get("totalCount")).isEqualTo(0);
+            verify(userRepository, never()).findByTenantIdAndIdIn(any(), any());
+        }
+    }
+
+    @Test
+    @DisplayName("getMissingConsultationRecordAlerts: JSON 깨짐 등 예외면 공용 500 문구·traceId 만")
+    void getMissingConsultationRecordAlerts_badJson_returnsSharedInternalError() {
+        TenantContextHolder.setTenantId(UT_TENANT);
+        Map<String, Object> executeResult = new HashMap<>();
+        executeResult.put("p_success", Boolean.TRUE);
+        executeResult.put("p_alerts", "[{broken");
+
+        try (MockedConstruction<SimpleJdbcCall> mocked = mockSimpleJdbcCallConstruction(executeResult)) {
+            Map<String, Object> result = service.getMissingConsultationRecordAlerts(null, CHECK_DATE, CHECK_DATE);
+
+            assertThat(result.get("success")).isEqualTo(Boolean.FALSE);
+            assertThat(result.get("message")).isEqualTo(ServerErrorMessages.INTERNAL_SERVER_ERROR);
+            assertThat(result.get("alerts")).isEqualTo(List.of());
         }
     }
 

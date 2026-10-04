@@ -67,7 +67,8 @@ class SystemConfigAccessPolicyTest {
                         SystemConfigAccessPolicy.WELLNESS_AUTO_SEND_ENABLED,
                         SystemConfigAccessPolicy.WELLNESS_SEND_TIME,
                         SystemConfigAccessPolicy.WELLNESS_TARGET_ROLES,
-                        SessionSecurityFlagKeys.DUPLICATE_LOGIN_ALLOWED);
+                        SessionSecurityFlagKeys.DUPLICATE_LOGIN_ALLOWED,
+                        AiPrivacyFlagKeys.PII_MASKING_ENABLED);
 
         assertThat(SystemConfigAccessPolicy.WRITABLE_KEYS)
                 .noneMatch(SystemConfigAccessPolicy::isSecretValueKey);

@@ -3,7 +3,7 @@
 -- 표준화 작업 후 프로시저가 표준을 준수하는지 종합 검증
 
 -- 사용법:
--- mysql -h beta0629.cafe24.com -u mindgarden_dev -p'MindGardenDev2025!@#' core_solution < test_procedures_comprehensive.sql
+-- MYSQL_PWD="$DB_PASSWORD" mysql -h "$DB_HOST" -u mindgarden_dev core_solution < test_procedures_comprehensive.sql
 
 SET @test_count = 0;
 SET @pass_count = 0;

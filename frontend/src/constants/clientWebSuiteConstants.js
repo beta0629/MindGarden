@@ -92,6 +92,7 @@ export const CLIENT_WEB_SUITE_COPY = Object.freeze({
   COMMUNITY_TITLE: '센터의 이야기',
   MESSAGES_TITLE: '상담사 메시지',
   MESSAGES_SUBTITLE: '상담사로부터 받은 메시지를 확인하고 답장할 수 있습니다.',
+  MESSAGES_LOADING: '불러오는 중…',
   SHOP_CATALOG_TITLE: '필요한 회기를 고르세요',
   CART_TITLE: '담은 회기 확인',
   CHECKOUT_TITLE: '주문 마무리',

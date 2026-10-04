@@ -8,10 +8,6 @@ description: 퍼블리셔(core-publisher) HTML 마크업 표준. 아토믹 디�
 core-publisher가 **core-designer 스펙**을 바탕으로 **일관된 HTML**을 작성할 때 적용하는 규칙입니다.  
 core-coder는 이 HTML을 기반으로 JSX·React·스타일을 연결합니다.
 
-## Task 모델 (위임 시)
-
-**core-publisher** Task를 띄울 때는 Cursor Task 인자에 **`model: "gemini-3.1-pro"`** 를 명시하는 것을 **권장**한다. (마크업·시맨틱 구조·BEM 중심.) 정책 정합: `docs/project-management/CORE_PLANNER_DELEGATION_ORDER.md`, `.cursor/rules/mindgarden-subagents.mdc`, `/core-solution-design-handoff`.
-
 ## 워크플로우
 
 ```
@@ -46,7 +42,7 @@ core-coder (JSX·컴포넌트화·로직·CSS)
 | 카드 컨테이너 | `mg-v2-card-container` |
 | 카드 액션 그룹 | `mg-v2-card-actions` |
 
-- 참조: `docs/design-system/v2/COMMON_UI_IMPLEMENTATION_SPEC.md`, `docs/design-system/v2/COMMON_UI_MARKUP_TEMPLATES.md`
+- 참조: `docs/design-system/v2/COMMON_UI_IMPLEMENTATION_SPEC.md`
 
 ### 2.1 시맨틱 태그 우선
 

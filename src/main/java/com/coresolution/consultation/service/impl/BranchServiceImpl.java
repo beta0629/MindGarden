@@ -26,10 +26,15 @@ import com.coresolution.core.service.impl.BaseTenantEntityServiceImpl;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.dao.DataAccessException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
+import org.springframework.transaction.TransactionException;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 import lombok.extern.slf4j.Slf4j;
 import java.time.LocalDateTime;
 
@@ -60,16 +65,28 @@ public class BranchServiceImpl extends BaseTenantEntityServiceImpl<Branch, Long>
     private final BranchRepository branchRepository;
     private final UserRepository userRepository;
 
+    /**
+     * 사용 중단된 지점 저장소를 읽을 때만 쓰는 독립 트랜잭션.
+     *
+     * <p>조회 실패를 호출자 트랜잭션과 분리하기 위해 REQUIRES_NEW 로 띄운다.
+     * 자세한 이유는 {@link #getAllActiveBranches()} 주석 참고.</p>
+     */
+    private final TransactionTemplate deprecatedBranchReadTx;
+
     @PersistenceContext
     private EntityManager entityManager;
     
     public BranchServiceImpl(
             BranchRepository branchRepository,
             TenantAccessControlService accessControlService,
-            UserRepository userRepository) {
+            UserRepository userRepository,
+            PlatformTransactionManager transactionManager) {
         super(branchRepository, accessControlService);
         this.branchRepository = branchRepository;
         this.userRepository = userRepository;
+        this.deprecatedBranchReadTx = new TransactionTemplate(transactionManager);
+        this.deprecatedBranchReadTx.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
+        this.deprecatedBranchReadTx.setReadOnly(true);
     }
     
     
@@ -283,13 +300,40 @@ public class BranchServiceImpl extends BaseTenantEntityServiceImpl<Branch, Long>
     }
     
     
+    /**
+     * 활성 지점 목록을 테넌트 범위로 조회한다.
+     *
+     * <p>Branch 는 사용 중단 대상이고(BRANCH_DEPRECATION.md) 원본 테이블은
+     * {@code branches_dropped_20260612} 로 RENAME 되었다. 환경에 따라 {@code branches} 가
+     * 없거나 접근 불가한 호환 객체로 남아 있어 조회가 실패할 수 있으므로, 그 경우
+     * 호출 화면을 500 으로 떨어뜨리지 않고 빈 목록으로 축퇴시킨다.</p>
+     *
+     * <p>조회는 반드시 {@code deprecatedBranchReadTx}(REQUIRES_NEW) 안에서 한다.
+     * 이 메서드에 {@code @Transactional} 을 걸고 안에서 예외를 삼키면, 조회 실패가 공유
+     * 트랜잭션을 rollback-only 로 표시해 두기 때문에 메서드가 정상 반환해도 커밋 시점에
+     * {@code UnexpectedRollbackException} 이 터져 결국 500 이 된다. 독립 트랜잭션으로
+     * 띄워야 실패가 이 블록 안에서 끝난다. 지연 로딩({@code branch.getManager()}) 때문에
+     * 변환까지 트랜잭션 안에서 끝내야 한다.</p>
+     *
+     * @return 현재 테넌트의 활성 지점 목록. 사용 중단된 저장소에 접근할 수 없으면 빈 목록
+     */
     @Override
-    @Transactional(readOnly = true)
     public List<BranchResponse> getAllActiveBranches() {
-        List<Branch> branches = branchRepository.findByIsDeletedFalseOrderByBranchName();
-        return branches.stream()
-                .map(this::convertToResponse)
-                .collect(Collectors.toList());
+        String tenantId = TenantContextHolder.getTenantId();
+        try {
+            return deprecatedBranchReadTx.execute(status -> {
+                List<Branch> branches = tenantId != null && !tenantId.isBlank()
+                        ? branchRepository.findByTenantIdAndIsDeletedFalseOrderByBranchName(tenantId)
+                        : branchRepository.findByIsDeletedFalseOrderByBranchName();
+                return branches.stream()
+                        .map(this::convertToResponse)
+                        .collect(Collectors.toList());
+            });
+        } catch (DataAccessException | TransactionException e) {
+            log.warn("사용 중단된 지점 저장소를 조회할 수 없어 빈 목록으로 응답합니다: tenantId={}, cause={}",
+                    tenantId, e.getMostSpecificCause().getMessage());
+            return List.of();
+        }
     }
     
     @Override

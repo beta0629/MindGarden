@@ -11,6 +11,8 @@ import java.util.stream.Collectors;
 import jakarta.validation.Valid;
 import jakarta.validation.groups.Default;
 import org.springframework.validation.annotation.Validated;
+import com.coresolution.consultation.constant.ServerErrorMessages;
+import com.coresolution.consultation.util.ServerErrorResponses;
 import com.coresolution.consultation.validation.OnAdminClientRegister;
 import com.coresolution.consultation.validation.OnAdminConsultantRegister;
 import com.coresolution.consultation.constant.UserRole;
@@ -21,7 +23,9 @@ import com.coresolution.consultation.dto.ClientRegistrationRequest;
 import com.coresolution.consultation.dto.CheckoutSameDayRequest;
 import com.coresolution.consultation.dto.ConsultantClientMappingCreateRequest;
 import com.coresolution.consultation.dto.ConsultantClientMappingResponse;
+import com.coresolution.consultation.dto.admin.BulkMappingPaymentResult;
 import com.coresolution.consultation.dto.ConsultantRegistrationRequest;
+import com.coresolution.consultation.dto.ConsultationRecordListItemResponse;
 import com.coresolution.consultation.dto.ConsultationsByDayOfWeekResponse;
 import com.coresolution.consultation.dto.CounselingEnabledUpdateRequest;
 import com.coresolution.consultation.dto.ConsultantTransferRequest;
@@ -35,8 +39,10 @@ import com.coresolution.consultation.entity.Client;
 import com.coresolution.consultation.entity.ConsultantClientMapping;
 import com.coresolution.consultation.entity.ConsultationRecord;
 import com.coresolution.consultation.entity.User;
+import com.coresolution.consultation.exception.EntityNotFoundException;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.repository.UserSocialAccountRepository;
+import com.coresolution.consultation.service.AdminBulkMappingPaymentService;
 import com.coresolution.consultation.service.AdminService;
 import com.coresolution.consultation.service.BranchService;
 import com.coresolution.consultation.service.ClientMappingListPayloadService;
@@ -51,7 +57,14 @@ import com.coresolution.consultation.service.erp.ErpService;
 import com.coresolution.consultation.service.erp.financial.FinancialTransactionService;
 import com.coresolution.consultation.service.MenuService;
 import com.coresolution.consultation.service.RealTimeStatisticsService;
+import com.coresolution.consultation.service.ScheduleAutoCompleteService;
 import com.coresolution.consultation.service.ScheduleService;
+import com.coresolution.consultation.service.support.ClientPathAccessGuard;
+import com.coresolution.consultation.service.support.DeferredExternalCalls;
+import com.coresolution.consultation.service.support.ResourceOwnerAccessGuard;
+import com.coresolution.core.security.OpsAccessGuard;
+import com.coresolution.consultation.service.support.ConsultationRecordAccessGuard;
+import com.coresolution.consultation.service.support.ConsultationRecordWriter;
 import com.coresolution.consultation.service.StoredProcedureService;
 import com.coresolution.consultation.service.UserPersonalDataCacheService;
 import com.coresolution.consultation.service.UserService;
@@ -152,10 +165,16 @@ public class AdminController extends BaseApiController {
     }
 
     private final AdminService adminService;
+    private final AdminBulkMappingPaymentService adminBulkMappingPaymentService;
     private final ClientPackagePaymentHistoryService clientPackagePaymentHistoryService;
     private final ClientMappingListPayloadService clientMappingListPayloadService;
     private final BranchService branchService;
     private final ScheduleService scheduleService;
+    private final ScheduleAutoCompleteService scheduleAutoCompleteService;
+    private final ClientPathAccessGuard clientPathAccessGuard;
+    private final ResourceOwnerAccessGuard resourceOwnerAccessGuard;
+    private final OpsAccessGuard opsAccessGuard;
+    private final ConsultationRecordAccessGuard consultationRecordAccessGuard;
     private final ConsultationRecordService consultationRecordService;
     private final DynamicPermissionService dynamicPermissionService;
     private final MenuService menuService;
@@ -185,7 +204,8 @@ public class AdminController extends BaseApiController {
      */
     @GetMapping("/consultants/with-stats/{id}")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getConsultantWithStats(
-            @PathVariable Long id) {
+            @PathVariable Long id, HttpSession session) {
+        resourceOwnerAccessGuard.requireTenantUserManagerAccess(session, "consultantId", id);
         log.info("📊 상담사 통계 조회 API 호출: consultantId={}", id);
 
         Map<String, Object> stats = consultantStatsService.getConsultantWithStats(id);
@@ -201,11 +221,7 @@ public class AdminController extends BaseApiController {
             HttpSession session) {
         log.info("📊 전체 상담사 통계 조회 API 호출");
 
-        User currentUser = SessionUtils.getCurrentUser(session);
-        if (currentUser == null) {
-            log.error("❌ 로그인이 필요합니다. 세션: {}", session != null ? session.getId() : "null");
-            throw new org.springframework.security.access.AccessDeniedException("로그인이 필요합니다.");
-        }
+        User currentUser = clientPathAccessGuard.requireTenantManager(session);
 
         // 표준화 원칙: TenantContextHolder에 이미 설정된 tenantId 우선 사용 (TenantContextFilter에서 설정됨)
         // 없으면 SessionUtils.getTenantId() 사용 (세션 → User 객체 순서로 확인)
@@ -261,6 +277,7 @@ public class AdminController extends BaseApiController {
     public ResponseEntity<ApiResponse<Map<String, Object>>> getClientWithStats(
             @PathVariable Long id,
             HttpSession session) {
+        resourceOwnerAccessGuard.requireTenantUserManagerAccess(session, "clientId", id);
         log.info("📊 내담자 통계 조회 API 호출: clientId={}", id);
 
         User currentUser = SessionUtils.getCurrentUser(session);
@@ -401,12 +418,8 @@ public class AdminController extends BaseApiController {
     @GetMapping("/consultants/with-vacation")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getAllConsultantsWithVacationInfo(
             @RequestParam String date, HttpSession session) {
+        User currentUser = clientPathAccessGuard.requireTenantManager(session);
         log.info("🔍 휴무 정보를 포함한 상담사 목록 조회: date={}", date);
-
-        User currentUser = SessionUtils.getCurrentUser(session);
-        if (currentUser == null) {
-            throw new org.springframework.security.access.AccessDeniedException("로그인이 필요합니다.");
-        }
 
         // 표준화 원칙: SessionUtils.getTenantId() 사용 (세션 → User 객체 순서로 확인)
         String tenantId = SessionUtils.getTenantId(session);
@@ -443,11 +456,7 @@ public class AdminController extends BaseApiController {
             @RequestParam(defaultValue = "month") String period, HttpSession session) {
         log.info("📊 상담사별 휴가 통계 조회: period={}", period);
 
-        User currentUser = SessionUtils.getCurrentUser(session);
-        if (currentUser == null) {
-            log.error("❌ 로그인된 사용자 정보가 없습니다");
-            throw new org.springframework.security.access.AccessDeniedException("로그인이 필요합니다.");
-        }
+        User currentUser = clientPathAccessGuard.requireTenantManager(session);
 
         // 표준화 원칙: SessionUtils.getTenantId() 사용 (세션 → User 객체 순서로 확인)
         String tenantId = SessionUtils.getTenantId(session);
@@ -558,6 +567,7 @@ public class AdminController extends BaseApiController {
     @GetMapping("/mappings/consultant/{consultantId}/clients")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getClientsByConsultantMapping(
             @PathVariable Long consultantId, HttpSession session) {
+        resourceOwnerAccessGuard.requireConsultantSelfOrManagerAccess(session, consultantId);
         ResponseEntity<?> permissionResponse = PermissionCheckUtils.checkPermission(session,
                 "MAPPING_VIEW", dynamicPermissionService);
         if (permissionResponse != null) {
@@ -795,48 +805,40 @@ public class AdminController extends BaseApiController {
     public ResponseEntity<ApiResponse<Map<String, Object>>> getMappingStats(HttpSession session) {
         log.info("📊 매칭 통계 조회 API 호출");
 
-        try {
-            ResponseEntity<?> permissionResponse = PermissionCheckUtils.checkPermission(session,
-                    "MAPPING_VIEW", dynamicPermissionService);
-            if (permissionResponse != null) {
-                throw new org.springframework.security.access.AccessDeniedException("권한이 없습니다.");
-            }
-
-            List<ConsultantClientMapping> mappings = adminService.getAllMappings();
-
-            long totalMappings = mappings.size();
-            long activeMappings = mappings.stream()
-                    .filter(m -> statusCodeHelper.isStatus("MAPPING_STATUS",
-                            m.getStatus() != null ? m.getStatus().toString() : "", "ACTIVE"))
-                    .count();
-            long completedMappings = mappings.stream()
-                    .filter(m -> statusCodeHelper.isStatus("MAPPING_STATUS",
-                            m.getStatus() != null ? m.getStatus().toString() : "", "COMPLETED"))
-                    .count();
-            long pendingMappings = mappings.stream()
-                    .filter(m -> statusCodeHelper.isStatus("MAPPING_STATUS",
-                            m.getStatus() != null ? m.getStatus().toString() : "", "PENDING"))
-                    .count();
-
-            Map<String, Object> stats = new java.util.HashMap<>();
-            stats.put("totalMappings", totalMappings);
-            stats.put("activeMappings", activeMappings);
-            stats.put("completedMappings", completedMappings);
-            stats.put("pendingMappings", pendingMappings);
-            stats.put("lastUpdated", java.time.LocalDateTime.now());
-
-            log.info("📊 매칭 통계 조회 완료: 전체={}, 활성={}, 완료={}, 대기={}", totalMappings, activeMappings,
-                    completedMappings, pendingMappings);
-
-            return success(stats);
-
-        } catch (Exception e) {
-            log.error("❌ 매칭 통계 조회 실패", e);
-            Map<String, Object> errorData = new java.util.HashMap<>();
-            errorData.put("error", "매칭 통계 조회에 실패했습니다: " + e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(ApiResponse.error("매칭 통계 조회에 실패했습니다", errorData));
+        ResponseEntity<?> permissionResponse = PermissionCheckUtils.checkPermission(session,
+                "MAPPING_VIEW", dynamicPermissionService);
+        if (permissionResponse != null) {
+            throw new org.springframework.security.access.AccessDeniedException("권한이 없습니다.");
         }
+
+        List<ConsultantClientMapping> mappings = adminService.getAllMappings();
+
+        long totalMappings = mappings.size();
+        long activeMappings = mappings.stream()
+                .filter(m -> statusCodeHelper.isStatus("MAPPING_STATUS",
+                        m.getStatus() != null ? m.getStatus().toString() : "", "ACTIVE"))
+                .count();
+        long completedMappings = mappings.stream()
+                .filter(m -> statusCodeHelper.isStatus("MAPPING_STATUS",
+                        m.getStatus() != null ? m.getStatus().toString() : "", "COMPLETED"))
+                .count();
+        long pendingMappings = mappings.stream()
+                .filter(m -> statusCodeHelper.isStatus("MAPPING_STATUS",
+                        m.getStatus() != null ? m.getStatus().toString() : "", "PENDING"))
+                .count();
+
+        Map<String, Object> stats = new java.util.HashMap<>();
+        stats.put("totalMappings", totalMappings);
+        stats.put("activeMappings", activeMappings);
+        stats.put("completedMappings", completedMappings);
+        stats.put("pendingMappings", pendingMappings);
+        stats.put("lastUpdated", java.time.LocalDateTime.now());
+
+        log.info("📊 매칭 통계 조회 완료: 전체={}, 활성={}, 완료={}, 대기={}", totalMappings, activeMappings,
+                completedMappings, pendingMappings);
+
+        return success(stats);
+
     }
 
     /**
@@ -880,109 +882,101 @@ public class AdminController extends BaseApiController {
     public ResponseEntity<ApiResponse<Map<String, Object>>> getTodayStats(HttpSession session) {
         log.info("📊 오늘의 통계 조회 API 호출");
 
-        try {
-            ResponseEntity<?> permissionResponse = PermissionCheckUtils.checkPermission(session,
-                    "DASHBOARD_VIEW", dynamicPermissionService);
-            if (permissionResponse != null) {
-                throw new org.springframework.security.access.AccessDeniedException("권한이 없습니다.");
-            }
-
-            User currentUser = SessionUtils.getCurrentUser(session);
-            // 표준화 원칙: SessionUtils.getTenantId() 사용 (세션 → User 객체 → TenantContextHolder 순서)
-            String tenantId = SessionUtils.getTenantId(session);
-            if (tenantId == null) {
-                tenantId = com.coresolution.core.context.TenantContextHolder.getTenantId();
-            }
-
-            java.time.LocalDate today = java.time.LocalDate.now();
-            java.time.LocalDate weekAgo = today.minusDays(7);
-
-            // 오늘의 통계
-            List<com.coresolution.consultation.entity.Schedule> todaySchedules =
-                    scheduleService.getSchedulesByDate(today, null);
-
-            long totalToday = todaySchedules.size();
-            long completedToday = todaySchedules.stream()
-                    .filter(s -> statusCodeHelper.isStatus("SCHEDULE_STATUS",
-                            s.getStatus() != null ? s.getStatus().toString() : "", "COMPLETED"))
-                    .count();
-            long inProgressToday = todaySchedules.stream()
-                    .filter(s -> statusCodeHelper.isStatus("SCHEDULE_STATUS",
-                            s.getStatus() != null ? s.getStatus().toString() : "", "IN_PROGRESS"))
-                    .count();
-            long cancelledToday = todaySchedules.stream()
-                    .filter(s -> statusCodeHelper.isStatus("SCHEDULE_STATUS",
-                            s.getStatus() != null ? s.getStatus().toString() : "", "CANCELLED"))
-                    .count();
-            long bookedToday = todaySchedules.stream()
-                    .filter(s -> statusCodeHelper.isStatus("SCHEDULE_STATUS",
-                            s.getStatus() != null ? s.getStatus().toString() : "", "BOOKED"))
-                    .count();
-
-            // 지난 주 동일 요일 통계 (증가율 계산용)
-            java.time.LocalDate lastWeekSameDay = today.minusDays(7);
-            List<com.coresolution.consultation.entity.Schedule> lastWeekSchedules =
-                    scheduleService.getSchedulesByDate(lastWeekSameDay, null);
-
-            long lastWeekTotal = lastWeekSchedules.size();
-            long lastWeekCompleted = lastWeekSchedules.stream()
-                    .filter(s -> statusCodeHelper.isStatus("SCHEDULE_STATUS",
-                            s.getStatus() != null ? s.getStatus().toString() : "", "COMPLETED"))
-                    .count();
-            long lastWeekBooked = lastWeekSchedules.stream()
-                    .filter(s -> statusCodeHelper.isStatus("SCHEDULE_STATUS",
-                            s.getStatus() != null ? s.getStatus().toString() : "", "BOOKED"))
-                    .count();
-
-            // 증가율 계산
-            double bookedGrowthRate = lastWeekBooked > 0
-                    ? ((double) (bookedToday - lastWeekBooked) / lastWeekBooked) * 100
-                    : 0.0;
-            double completedGrowthRate = lastWeekCompleted > 0
-                    ? ((double) (completedToday - lastWeekCompleted) / lastWeekCompleted) * 100
-                    : 0.0;
-
-            // 총 사용자 증가율 계산 (이번 주 vs 지난 주)
-            long currentWeekUsers =
-                    adminService.getAllConsultants().size() + adminService.getAllClients().size();
-            // 지난 주 사용자 수는 이번 주 기준으로 계산 (실제로는 지난 주 데이터가 필요하지만, 간단하게 현재 데이터 사용)
-            // TODO: 실제 지난 주 데이터를 조회하도록 개선 필요
-            long lastWeekUsers = currentWeekUsers; // 임시로 동일 값 사용 (실제 데이터 없음)
-            double totalUsersGrowthRate = 0.0; // 데이터가 없으면 0
-
-            Map<String, Object> stats = new java.util.HashMap<>();
-            stats.put("totalToday", totalToday);
-            stats.put("completedToday", completedToday);
-            stats.put("inProgressToday", inProgressToday);
-            stats.put("cancelledToday", cancelledToday);
-            stats.put("bookedToday", bookedToday);
-            stats.put("date", today);
-            stats.put("lastUpdated", java.time.LocalDateTime.now());
-
-            // 증가율 추가 (데이터가 있을 때만)
-            if (lastWeekBooked > 0) {
-                stats.put("bookedGrowthRate", Math.round(bookedGrowthRate * 10.0) / 10.0);
-            }
-            if (lastWeekCompleted > 0) {
-                stats.put("completedGrowthRate", Math.round(completedGrowthRate * 10.0) / 10.0);
-            }
-            if (lastWeekUsers > 0 && currentWeekUsers != lastWeekUsers) {
-                stats.put("totalUsersGrowthRate", Math.round(totalUsersGrowthRate * 10.0) / 10.0);
-            }
-
-            log.info("📊 오늘의 통계 조회 완료: 전체={}, 완료={}, 진행중={}, 취소={}, 예약 증가율={}%, 완료 증가율={}%",
-                    totalToday, completedToday, inProgressToday, cancelledToday, bookedGrowthRate,
-                    completedGrowthRate);
-
-            return success(stats);
-
-        } catch (Exception e) {
-            log.error("❌ 오늘의 통계 조회 실패", e);
-            Map<String, Object> errorData = new java.util.HashMap<>();
-            errorData.put("error", "오늘의 통계 조회에 실패했습니다: " + e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(ApiResponse.error("오늘의 통계 조회에 실패했습니다", errorData));
+        ResponseEntity<?> permissionResponse = PermissionCheckUtils.checkPermission(session,
+                "DASHBOARD_VIEW", dynamicPermissionService);
+        if (permissionResponse != null) {
+            throw new org.springframework.security.access.AccessDeniedException("권한이 없습니다.");
         }
+
+        User currentUser = SessionUtils.getCurrentUser(session);
+        // 표준화 원칙: SessionUtils.getTenantId() 사용 (세션 → User 객체 → TenantContextHolder 순서)
+        String tenantId = SessionUtils.getTenantId(session);
+        if (tenantId == null) {
+            tenantId = com.coresolution.core.context.TenantContextHolder.getTenantId();
+        }
+
+        java.time.LocalDate today = java.time.LocalDate.now();
+        java.time.LocalDate weekAgo = today.minusDays(7);
+
+        // 오늘의 통계
+        List<com.coresolution.consultation.entity.Schedule> todaySchedules =
+                scheduleService.getSchedulesByDate(today, null);
+
+        long totalToday = todaySchedules.size();
+        long completedToday = todaySchedules.stream()
+                .filter(s -> statusCodeHelper.isStatus("SCHEDULE_STATUS",
+                        s.getStatus() != null ? s.getStatus().toString() : "", "COMPLETED"))
+                .count();
+        long inProgressToday = todaySchedules.stream()
+                .filter(s -> statusCodeHelper.isStatus("SCHEDULE_STATUS",
+                        s.getStatus() != null ? s.getStatus().toString() : "", "IN_PROGRESS"))
+                .count();
+        long cancelledToday = todaySchedules.stream()
+                .filter(s -> statusCodeHelper.isStatus("SCHEDULE_STATUS",
+                        s.getStatus() != null ? s.getStatus().toString() : "", "CANCELLED"))
+                .count();
+        long bookedToday = todaySchedules.stream()
+                .filter(s -> statusCodeHelper.isStatus("SCHEDULE_STATUS",
+                        s.getStatus() != null ? s.getStatus().toString() : "", "BOOKED"))
+                .count();
+
+        // 지난 주 동일 요일 통계 (증가율 계산용)
+        java.time.LocalDate lastWeekSameDay = today.minusDays(7);
+        List<com.coresolution.consultation.entity.Schedule> lastWeekSchedules =
+                scheduleService.getSchedulesByDate(lastWeekSameDay, null);
+
+        long lastWeekTotal = lastWeekSchedules.size();
+        long lastWeekCompleted = lastWeekSchedules.stream()
+                .filter(s -> statusCodeHelper.isStatus("SCHEDULE_STATUS",
+                        s.getStatus() != null ? s.getStatus().toString() : "", "COMPLETED"))
+                .count();
+        long lastWeekBooked = lastWeekSchedules.stream()
+                .filter(s -> statusCodeHelper.isStatus("SCHEDULE_STATUS",
+                        s.getStatus() != null ? s.getStatus().toString() : "", "BOOKED"))
+                .count();
+
+        // 증가율 계산
+        double bookedGrowthRate = lastWeekBooked > 0
+                ? ((double) (bookedToday - lastWeekBooked) / lastWeekBooked) * 100
+                : 0.0;
+        double completedGrowthRate = lastWeekCompleted > 0
+                ? ((double) (completedToday - lastWeekCompleted) / lastWeekCompleted) * 100
+                : 0.0;
+
+        // 총 사용자 증가율 계산 (이번 주 vs 지난 주)
+        long currentWeekUsers =
+                adminService.getAllConsultants().size() + adminService.getAllClients().size();
+        // 지난 주 사용자 수는 이번 주 기준으로 계산 (실제로는 지난 주 데이터가 필요하지만, 간단하게 현재 데이터 사용)
+        // TODO: 실제 지난 주 데이터를 조회하도록 개선 필요
+        long lastWeekUsers = currentWeekUsers; // 임시로 동일 값 사용 (실제 데이터 없음)
+        double totalUsersGrowthRate = 0.0; // 데이터가 없으면 0
+
+        Map<String, Object> stats = new java.util.HashMap<>();
+        stats.put("totalToday", totalToday);
+        stats.put("completedToday", completedToday);
+        stats.put("inProgressToday", inProgressToday);
+        stats.put("cancelledToday", cancelledToday);
+        stats.put("bookedToday", bookedToday);
+        stats.put("date", today);
+        stats.put("lastUpdated", java.time.LocalDateTime.now());
+
+        // 증가율 추가 (데이터가 있을 때만)
+        if (lastWeekBooked > 0) {
+            stats.put("bookedGrowthRate", Math.round(bookedGrowthRate * 10.0) / 10.0);
+        }
+        if (lastWeekCompleted > 0) {
+            stats.put("completedGrowthRate", Math.round(completedGrowthRate * 10.0) / 10.0);
+        }
+        if (lastWeekUsers > 0 && currentWeekUsers != lastWeekUsers) {
+            stats.put("totalUsersGrowthRate", Math.round(totalUsersGrowthRate * 10.0) / 10.0);
+        }
+
+        log.info("📊 오늘의 통계 조회 완료: 전체={}, 완료={}, 진행중={}, 취소={}, 예약 증가율={}%, 완료 증가율={}%",
+                totalToday, completedToday, inProgressToday, cancelledToday, bookedGrowthRate,
+                completedGrowthRate);
+
+        return success(stats);
+
     }
 
     /**
@@ -995,61 +989,53 @@ public class AdminController extends BaseApiController {
             HttpSession session) {
         log.info("📊 입금 대기 통계 조회 API 호출");
 
-        try {
-            ResponseEntity<?> permissionResponse = PermissionCheckUtils.checkPermission(session,
-                    "MAPPING_VIEW", dynamicPermissionService);
-            if (permissionResponse != null) {
-                throw new org.springframework.security.access.AccessDeniedException("권한이 없습니다.");
-            }
-
-            List<ConsultantClientMapping> pendingDeposits =
-                    adminService.getPendingDepositMappings();
-            List<Map<String, Object>> payloads =
-                    clientMappingListPayloadService.buildPayloads(pendingDeposits);
-
-            List<Map<String, Object>> waitingPayloads = payloads.stream()
-                    .filter(p -> !ClientPaymentHistorySsotUtils.isRefundedOrCancelled(p))
-                    .collect(Collectors.toList());
-
-            Set<Long> waitingIds = waitingPayloads.stream()
-                    .map(AdminController::payloadMappingId)
-                    .filter(id -> id != null)
-                    .collect(Collectors.toCollection(HashSet::new));
-
-            long count = waitingPayloads.size();
-            long totalAmount = waitingPayloads.stream()
-                    .mapToLong(ClientPaymentHistorySsotUtils::resolveAmount)
-                    .sum();
-
-            long oldestHours = 0;
-            if (!waitingIds.isEmpty()) {
-                java.time.LocalDateTime now = java.time.LocalDateTime.now();
-                oldestHours = pendingDeposits.stream()
-                        .filter(m -> m.getId() != null && waitingIds.contains(m.getId()))
-                        .filter(m -> m.getCreatedAt() != null)
-                        .mapToLong(m -> java.time.Duration.between(m.getCreatedAt(), now).toHours())
-                        .max()
-                        .orElse(0L);
-            }
-
-            Map<String, Object> stats = new java.util.HashMap<>();
-            stats.put("count", count);
-            stats.put("totalAmount", totalAmount);
-            stats.put("oldestHours", oldestHours);
-            stats.put("lastUpdated", java.time.LocalDateTime.now());
-
-            log.info("📊 입금 대기 통계 조회 완료: 건수={}, 총금액={}, 최장대기={}시간", count, totalAmount,
-                    oldestHours);
-
-            return success(stats);
-
-        } catch (Exception e) {
-            log.error("❌ 입금 대기 통계 조회 실패", e);
-            Map<String, Object> errorData = new java.util.HashMap<>();
-            errorData.put("error", "입금 대기 통계 조회에 실패했습니다: " + e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(ApiResponse.error("입금 대기 통계 조회에 실패했습니다", errorData));
+        ResponseEntity<?> permissionResponse = PermissionCheckUtils.checkPermission(session,
+                "MAPPING_VIEW", dynamicPermissionService);
+        if (permissionResponse != null) {
+            throw new org.springframework.security.access.AccessDeniedException("권한이 없습니다.");
         }
+
+        List<ConsultantClientMapping> pendingDeposits =
+                adminService.getPendingDepositMappings();
+        List<Map<String, Object>> payloads =
+                clientMappingListPayloadService.buildPayloads(pendingDeposits);
+
+        List<Map<String, Object>> waitingPayloads = payloads.stream()
+                .filter(p -> !ClientPaymentHistorySsotUtils.isRefundedOrCancelled(p))
+                .collect(Collectors.toList());
+
+        Set<Long> waitingIds = waitingPayloads.stream()
+                .map(AdminController::payloadMappingId)
+                .filter(id -> id != null)
+                .collect(Collectors.toCollection(HashSet::new));
+
+        long count = waitingPayloads.size();
+        long totalAmount = waitingPayloads.stream()
+                .mapToLong(ClientPaymentHistorySsotUtils::resolveAmount)
+                .sum();
+
+        long oldestHours = 0;
+        if (!waitingIds.isEmpty()) {
+            java.time.LocalDateTime now = java.time.LocalDateTime.now();
+            oldestHours = pendingDeposits.stream()
+                    .filter(m -> m.getId() != null && waitingIds.contains(m.getId()))
+                    .filter(m -> m.getCreatedAt() != null)
+                    .mapToLong(m -> java.time.Duration.between(m.getCreatedAt(), now).toHours())
+                    .max()
+                    .orElse(0L);
+        }
+
+        Map<String, Object> stats = new java.util.HashMap<>();
+        stats.put("count", count);
+        stats.put("totalAmount", totalAmount);
+        stats.put("oldestHours", oldestHours);
+        stats.put("lastUpdated", java.time.LocalDateTime.now());
+
+        log.info("📊 입금 대기 통계 조회 완료: 건수={}, 총금액={}, 최장대기={}시간", count, totalAmount,
+                oldestHours);
+
+        return success(stats);
+
     }
 
     /**
@@ -1060,34 +1046,28 @@ public class AdminController extends BaseApiController {
             HttpSession session) {
         log.info("📅 오늘의 스케줄 조회 API 호출");
 
-        try {
-            ResponseEntity<?> permissionResponse = PermissionCheckUtils.checkPermission(session,
-                    "SCHEDULE_VIEW", dynamicPermissionService);
-            if (permissionResponse != null) {
-                throw new org.springframework.security.access.AccessDeniedException("권한이 없습니다.");
-            }
-
-            java.time.LocalDate today = java.time.LocalDate.now();
-            List<com.coresolution.consultation.entity.Schedule> schedules =
-                    scheduleService.getSchedulesByDate(today, null);
-
-            List<Map<String, Object>> scheduleData = schedules.stream().map(s -> {
-                Map<String, Object> data = new java.util.HashMap<>();
-                data.put("id", s.getId());
-                data.put("date", s.getDate());
-                data.put("startTime", s.getStartTime());
-                data.put("endTime", s.getEndTime());
-                data.put("status", s.getStatus() != null ? s.getStatus().toString() : "UNKNOWN");
-                return data;
-            }).collect(java.util.stream.Collectors.toList());
-
-            return success(scheduleData);
-
-        } catch (Exception e) {
-            log.error("❌ 오늘의 스케줄 조회 실패", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(ApiResponse.error("오늘의 스케줄 조회에 실패했습니다", null));
+        ResponseEntity<?> permissionResponse = PermissionCheckUtils.checkPermission(session,
+                "SCHEDULE_VIEW", dynamicPermissionService);
+        if (permissionResponse != null) {
+            throw new org.springframework.security.access.AccessDeniedException("권한이 없습니다.");
         }
+
+        java.time.LocalDate today = java.time.LocalDate.now();
+        List<com.coresolution.consultation.entity.Schedule> schedules =
+                scheduleService.getSchedulesByDate(today, null);
+
+        List<Map<String, Object>> scheduleData = schedules.stream().map(s -> {
+            Map<String, Object> data = new java.util.HashMap<>();
+            data.put("id", s.getId());
+            data.put("date", s.getDate());
+            data.put("startTime", s.getStartTime());
+            data.put("endTime", s.getEndTime());
+            data.put("status", s.getStatus() != null ? s.getStatus().toString() : "UNKNOWN");
+            return data;
+        }).collect(java.util.stream.Collectors.toList());
+
+        return success(scheduleData);
+
     }
 
     /**
@@ -1097,25 +1077,19 @@ public class AdminController extends BaseApiController {
     public ResponseEntity<ApiResponse<Map<String, Object>>> getFinanceSummary(HttpSession session) {
         log.info("💰 재무 요약 조회 API 호출");
 
-        try {
-            ResponseEntity<?> permissionResponse = PermissionCheckUtils.checkPermission(session,
-                    "FINANCE_VIEW", dynamicPermissionService);
-            if (permissionResponse != null) {
-                throw new org.springframework.security.access.AccessDeniedException("권한이 없습니다.");
-            }
-
-            Map<String, Object> summary = new java.util.HashMap<>();
-            summary.put("totalRevenue", 0);
-            summary.put("pendingPayments", 0);
-            summary.put("lastUpdated", java.time.LocalDateTime.now());
-
-            return success(summary);
-
-        } catch (Exception e) {
-            log.error("❌ 재무 요약 조회 실패", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(ApiResponse.error("재무 요약 조회에 실패했습니다", null));
+        ResponseEntity<?> permissionResponse = PermissionCheckUtils.checkPermission(session,
+                "FINANCE_VIEW", dynamicPermissionService);
+        if (permissionResponse != null) {
+            throw new org.springframework.security.access.AccessDeniedException("권한이 없습니다.");
         }
+
+        Map<String, Object> summary = new java.util.HashMap<>();
+        summary.put("totalRevenue", 0);
+        summary.put("pendingPayments", 0);
+        summary.put("lastUpdated", java.time.LocalDateTime.now());
+
+        return success(summary);
+
     }
 
     /**
@@ -1476,7 +1450,8 @@ public class AdminController extends BaseApiController {
      * @return ApiResponse with mappings DTO list and count
      */
     @GetMapping("/mappings/pending-payment")
-    public ResponseEntity<ApiResponse<Map<String, Object>>> getPendingPaymentMappings() {
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getPendingPaymentMappings(HttpSession session) {
+        clientPathAccessGuard.requireTenantManager(session);
         log.info("🔍 입금 대기 중인 매칭 목록 조회");
         List<ConsultantClientMappingResponse> mappings = adminService.getPendingPaymentMappings();
 
@@ -1496,7 +1471,9 @@ public class AdminController extends BaseApiController {
      * @return ApiResponse with mappings DTO list and count
      */
     @GetMapping("/mappings/payment-confirmed")
-    public ResponseEntity<ApiResponse<Map<String, Object>>> getPaymentConfirmedMappings() {
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getPaymentConfirmedMappings(
+            HttpSession session) {
+        resourceOwnerAccessGuard.requireTenantAdminAccess(session);
         log.info("🔍 입금 확인된 매칭 목록 조회");
         List<ConsultantClientMappingResponse> mappings = adminService.getPaymentConfirmedMappings();
 
@@ -1623,7 +1600,8 @@ public class AdminController extends BaseApiController {
      * 활성 매칭 목록 조회 (승인 완료)
      */
     @GetMapping("/mappings/active")
-    public ResponseEntity<ApiResponse<Map<String, Object>>> getActiveMappings() {
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getActiveMappings(HttpSession session) {
+        clientPathAccessGuard.requireTenantManager(session);
         log.info("🔍 활성 매칭 목록 조회");
         List<ConsultantClientMapping> mappings = adminService.getActiveMappings();
 
@@ -1718,7 +1696,7 @@ public class AdminController extends BaseApiController {
                 log.warn("매칭 데이터 추출 중 오류 (ID: {}): {}", mapping.getId(), e.getMessage());
                 Map<String, Object> errorData = new java.util.HashMap<>();
                 errorData.put("id", mapping.getId());
-                errorData.put("error", "데이터 추출 실패: " + e.getMessage());
+                errorData.put("error", "데이터를 불러오지 못했습니다.");
                 return errorData;
             }
         }).collect(java.util.stream.Collectors.toList());
@@ -1734,7 +1712,8 @@ public class AdminController extends BaseApiController {
      * 회기 소진된 매칭 목록 조회
      */
     @GetMapping("/mappings/sessions-exhausted")
-    public ResponseEntity<ApiResponse<Map<String, Object>>> getSessionsExhaustedMappings() {
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getSessionsExhaustedMappings(HttpSession session) {
+        clientPathAccessGuard.requireTenantManager(session);
         log.info("🔍 회기 소진된 매칭 목록 조회");
         List<ConsultantClientMapping> mappings = adminService.getSessionsExhaustedMappings();
 
@@ -1749,52 +1728,15 @@ public class AdminController extends BaseApiController {
      * 개별 매칭 조회
      */
     @GetMapping("/mappings/{mappingId}")
-    public ResponseEntity<ApiResponse<Map<String, Object>>> getMappingById(
-            @PathVariable Long mappingId) {
+    public ResponseEntity<ApiResponse<ConsultantClientMappingResponse>> getMappingById(
+            @PathVariable Long mappingId, HttpSession session) {
+        resourceOwnerAccessGuard.requireMappingManagerAccess(session, mappingId);
         log.info("🔍 매칭 ID {} 조회", mappingId);
-        ConsultantClientMapping mapping = adminService.getMappingById(mappingId);
-
+        ConsultantClientMappingResponse mapping = adminService.getMappingDetail(mappingId);
         if (mapping == null) {
-            throw new IllegalArgumentException("매칭을 찾을 수 없습니다.");
+            throw new EntityNotFoundException("매칭을 찾을 수 없습니다.");
         }
-
-        Map<String, Object> mappingData = new HashMap<>();
-        mappingData.put("id", mapping.getId());
-        mappingData.put("status",
-                mapping.getStatus() != null ? mapping.getStatus().toString() : "UNKNOWN");
-        mappingData.put("paymentStatus",
-                mapping.getPaymentStatus() != null ? mapping.getPaymentStatus().toString()
-                        : "UNKNOWN");
-        mappingData.put("paymentMethod", mapping.getPaymentMethod());
-        mappingData.put("paymentReference", mapping.getPaymentReference());
-        mappingData.put("paymentAmount", mapping.getPaymentAmount());
-        mappingData.put("paymentDate", mapping.getPaymentDate());
-        mappingData.put("totalSessions", mapping.getTotalSessions());
-        mappingData.put("remainingSessions", mapping.getRemainingSessions());
-        mappingData.put("packageName", mapping.getPackageName());
-        mappingData.put("packagePrice", mapping.getPackagePrice());
-        mappingData.put("assignedAt", mapping.getAssignedAt());
-        mappingData.put("createdAt", mapping.getCreatedAt());
-        // 옵션 B: 단건 조회에도 paymentTiming 포함 (ADVANCE / SAME_DAY_CARD / null=레거시).
-        mappingData.put("paymentTiming", mapping.getPaymentTiming());
-
-        if (mapping.getConsultant() != null) {
-            Map<String, Object> consultantData = new HashMap<>();
-            consultantData.put("id", mapping.getConsultant().getId());
-            consultantData.put("name", mapping.getConsultant().getName());
-            consultantData.put("email", mapping.getConsultant().getEmail());
-            mappingData.put("consultant", consultantData);
-        }
-
-        if (mapping.getClient() != null) {
-            Map<String, Object> clientData = new HashMap<>();
-            clientData.put("id", mapping.getClient().getId());
-            clientData.put("name", mapping.getClient().getName());
-            clientData.put("email", mapping.getClient().getEmail());
-            mappingData.put("client", clientData);
-        }
-
-        return success(mappingData);
+        return success(mapping);
     }
 
     /**
@@ -1802,7 +1744,8 @@ public class AdminController extends BaseApiController {
      */
     @PostMapping("/mappings/{mappingId}/confirm-payment")
     public ResponseEntity<ApiResponse<Map<String, Object>>> confirmPayment(
-            @PathVariable Long mappingId, @RequestBody Map<String, Object> request) {
+            @PathVariable Long mappingId, @RequestBody Map<String, Object> request, HttpSession session) {
+        resourceOwnerAccessGuard.requireMappingManagerAccess(session, mappingId);
         log.info("💰 매칭 ID {} 결제 확인 시작", mappingId);
 
         String paymentMethod = (String) request.get("paymentMethod");
@@ -1871,6 +1814,7 @@ public class AdminController extends BaseApiController {
     public ResponseEntity<ApiResponse<Map<String, Object>>> approveMapping(
             @PathVariable Long mappingId, @RequestBody Map<String, Object> request,
             HttpSession session) {
+        resourceOwnerAccessGuard.requireMappingManagerAccess(session, mappingId);
         log.info("✅ 매칭 ID {} 관리자 승인", mappingId);
 
         String adminName = (String) request.get("adminName");
@@ -1978,7 +1922,8 @@ public class AdminController extends BaseApiController {
      */
     @PostMapping("/mappings/{mappingId}/reject")
     public ResponseEntity<ApiResponse<ConsultantClientMappingResponse>> rejectMapping(
-            @PathVariable Long mappingId, @RequestBody Map<String, Object> request) {
+            @PathVariable Long mappingId, @RequestBody Map<String, Object> request, HttpSession session) {
+        resourceOwnerAccessGuard.requireMappingAdminAccess(session, mappingId);
         log.info("❌ 매칭 ID {} 관리자 거부", mappingId);
 
         String reason = (String) request.get("reason");
@@ -1993,7 +1938,8 @@ public class AdminController extends BaseApiController {
      */
     @PostMapping("/mappings/{mappingId}/use-session")
     public ResponseEntity<ApiResponse<ConsultantClientMappingResponse>> useSession(
-            @PathVariable Long mappingId) {
+            @PathVariable Long mappingId, HttpSession session) {
+        resourceOwnerAccessGuard.requireMappingAdminAccess(session, mappingId);
         log.info("📅 매칭 ID {} 회기 사용 처리", mappingId);
 
         ConsultantClientMappingResponse mapping = adminService.useSession(mappingId);
@@ -2006,7 +1952,8 @@ public class AdminController extends BaseApiController {
      */
     @PostMapping("/mappings/{mappingId}/extend-sessions")
     public ResponseEntity<ApiResponse<ConsultantClientMappingResponse>> extendSessions(
-            @PathVariable Long mappingId, @RequestBody Map<String, Object> request) {
+            @PathVariable Long mappingId, @RequestBody Map<String, Object> request, HttpSession session) {
+        resourceOwnerAccessGuard.requireMappingAdminAccess(session, mappingId);
         log.info("🔄 매칭 ID {} 회기 추가 (연장)", mappingId);
 
         Integer additionalSessions = (Integer) request.get("additionalSessions");
@@ -2393,6 +2340,7 @@ public class AdminController extends BaseApiController {
     @PutMapping("/consultants/{id}")
     public ResponseEntity<ApiResponse<Map<String, Object>>> updateConsultant(@PathVariable Long id,
             @RequestBody @Valid ConsultantRegistrationRequest request, HttpSession session) {
+        resourceOwnerAccessGuard.requireTenantUserManagerAccess(session, "consultantId", id);
         log.info("🔧 상담사 정보 수정: ID={}", id);
 
         if (request == null) {
@@ -2421,7 +2369,8 @@ public class AdminController extends BaseApiController {
      */
     @PutMapping("/consultants/{id}/grade")
     public ResponseEntity<ApiResponse<Map<String, Object>>> updateConsultantGrade(
-            @PathVariable Long id, @RequestBody Map<String, Object> request) {
+            @PathVariable Long id, @RequestBody Map<String, Object> request, HttpSession session) {
+        resourceOwnerAccessGuard.requireTenantUserAdminAccess(session, "consultantId", id);
         Object gradeObj = request != null ? request.get("grade") : null;
         String grade = gradeObj != null ? gradeObj.toString().trim() : null;
         if (grade == null || grade.isEmpty()) {
@@ -2526,6 +2475,7 @@ public class AdminController extends BaseApiController {
             @PathVariable Long id,
             @RequestParam(name = "reason", required = false) String reason,
             HttpSession session) {
+        resourceOwnerAccessGuard.requireTenantUserManagerAccess(session, "consultantId", id);
         log.info("🔧 상담사 강제 종료: ID={}, reason={}", id, reason);
         User currentAdmin = SessionUtils.getCurrentUser(session);
         Long adminUserId = currentAdmin != null ? currentAdmin.getId()
@@ -2541,12 +2491,14 @@ public class AdminController extends BaseApiController {
      */
     @PostMapping("/consultants/{id}/delete-with-transfer")
     public ResponseEntity<ApiResponse<Void>> deleteConsultantWithTransfer(@PathVariable Long id,
-            @RequestBody Map<String, Object> request) {
+            @RequestBody Map<String, Object> request, HttpSession session) {
+        resourceOwnerAccessGuard.requireTenantUserAdminAccess(session, "consultantId", id);
         Long transferToConsultantId =
                 Long.valueOf(request.get("transferToConsultantId").toString());
         String reason = (String) request.get("reason");
 
         log.info("🔄 상담사 이전 삭제: ID={}, 이전 대상={}, 사유={}", id, transferToConsultantId, reason);
+        resourceOwnerAccessGuard.requireTenantUserAdminAccess(session, "transferToConsultantId", transferToConsultantId);
         adminService.deleteConsultantWithTransfer(id, transferToConsultantId, reason);
 
         return deleted("상담사가 성공적으로 이전 처리되어 삭제되었습니다");
@@ -2557,7 +2509,8 @@ public class AdminController extends BaseApiController {
      */
     @GetMapping("/consultants/{id}/deletion-status")
     public ResponseEntity<ApiResponse<Map<String, Object>>> checkConsultantDeletionStatus(
-            @PathVariable Long id) {
+            @PathVariable Long id, HttpSession session) {
+        resourceOwnerAccessGuard.requireTenantUserManagerAccess(session, "consultantId", id);
         log.info("🔍 상담사 삭제 가능 여부 확인: ID={}", id);
         Map<String, Object> status = adminService.checkConsultantDeletionStatus(id);
 
@@ -2592,7 +2545,8 @@ public class AdminController extends BaseApiController {
     @GetMapping("/clients/{id}/deletion-status")
     @PreAuthorize("hasAnyRole('ADMIN', 'STAFF')")
     public ResponseEntity<ApiResponse<Map<String, Object>>> checkClientDeletionStatus(
-            @PathVariable Long id) {
+            @PathVariable Long id, HttpSession session) {
+        resourceOwnerAccessGuard.requireTenantUserManagerAccess(session, "clientId", id);
         log.info("🔍 내담자 삭제 가능 여부 확인: ID={}", id);
         Map<String, Object> status = adminService.checkClientDeletionStatus(id);
 
@@ -2628,10 +2582,11 @@ public class AdminController extends BaseApiController {
      */
     @PostMapping("/mappings/{id}/terminate")
     public ResponseEntity<ApiResponse<Void>> terminateMapping(@PathVariable Long id,
-            @RequestBody Map<String, Object> requestBody) {
+            @RequestBody Map<String, Object> requestBody, HttpSession session) {
+        resourceOwnerAccessGuard.requireMappingAdminAccess(session, id);
         log.info("🔧 매칭 강제 종료: ID={}", id);
         String reason = (String) requestBody.get("reason");
-        adminService.terminateMapping(id, reason);
+        DeferredExternalCalls.run(() -> adminService.terminateMapping(id, reason));
         return success("매칭이 성공적으로 종료되었습니다");
     }
 
@@ -2641,7 +2596,8 @@ public class AdminController extends BaseApiController {
      */
     @PostMapping("/mappings/{id}/cleanup-future-schedules")
     public ResponseEntity<ApiResponse<Map<String, Object>>> cleanupFutureSchedulesForMapping(
-            @PathVariable Long id) {
+            @PathVariable Long id, HttpSession session) {
+        resourceOwnerAccessGuard.requireMappingManagerAccess(session, id);
         log.info("🔧 desync-cleanup 미래 일정 정리: MappingID={}", id);
         int cancelledCount = adminService.cleanupFutureSchedulesForMapping(id);
         Map<String, Object> data = new HashMap<>();
@@ -2656,6 +2612,7 @@ public class AdminController extends BaseApiController {
     @PostMapping("/mappings/{id}/partial-refund")
     public ResponseEntity<ApiResponse<Void>> partialRefundMapping(@PathVariable Long id,
             @RequestBody Map<String, Object> requestBody, HttpSession session) {
+        resourceOwnerAccessGuard.requireMappingAdminAccess(session, id);
         log.info("🔧 매칭 부분 환불: ID={}", id);
 
         String reason = (String) requestBody.get("reason");
@@ -2682,10 +2639,10 @@ public class AdminController extends BaseApiController {
     @GetMapping("/refund-statistics")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getRefundStatistics(
             @RequestParam(defaultValue = "month") String period, HttpSession session) {
+        User currentUser = resourceOwnerAccessGuard.requireTenantAdminAccess(session);
         log.info("📊 환불 통계 조회: period={}", period);
 
-        User currentUser = SessionUtils.getCurrentUser(session);
-        String currentBranchCode = currentUser != null ? currentUser.getBranchCode() : null;
+        String currentBranchCode = currentUser.getBranchCode();
         log.info("🔍 현재 사용자 지점코드: {}", currentBranchCode);
 
         Map<String, Object> statistics =
@@ -2702,10 +2659,10 @@ public class AdminController extends BaseApiController {
             @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "20") int size,
             @RequestParam(required = false) String period,
             @RequestParam(required = false) String status, HttpSession session) {
+        User currentUser = resourceOwnerAccessGuard.requireTenantAdminAccess(session);
         log.info("📋 환불 이력 조회: page={}, size={}, period={}, status={}", page, size, period, status);
 
-        User currentUser = SessionUtils.getCurrentUser(session);
-        String currentBranchCode = currentUser != null ? currentUser.getBranchCode() : null;
+        String currentBranchCode = currentUser.getBranchCode();
         log.info("🔍 현재 사용자 지점코드: {}", currentBranchCode);
 
         Map<String, Object> result =
@@ -2718,7 +2675,8 @@ public class AdminController extends BaseApiController {
      * ERP 동기화 상태 확인
      */
     @GetMapping("/erp-sync-status")
-    public ResponseEntity<ApiResponse<Map<String, Object>>> getErpSyncStatus() {
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getErpSyncStatus(HttpSession session) {
+        resourceOwnerAccessGuard.requireTenantAdminAccess(session);
         log.info("🔄 ERP 동기화 상태 확인");
         Map<String, Object> status = adminService.getErpSyncStatus();
 
@@ -2731,7 +2689,9 @@ public class AdminController extends BaseApiController {
      */
     @PostMapping("/mappings/transfer")
     public ResponseEntity<ApiResponse<Map<String, Object>>> transferConsultant(
-            @RequestBody ConsultantTransferRequest request) {
+            @RequestBody ConsultantTransferRequest request, HttpSession session) {
+        resourceOwnerAccessGuard.requireMappingManagerAccess(session, request.getCurrentMappingId());
+        resourceOwnerAccessGuard.requireTenantUserManagerAccess(session, "newConsultantId", request.getNewConsultantId());
         log.info("🔄 상담사 변경 요청: 기존 매칭 ID={}, 새 상담사 ID={}", request.getCurrentMappingId(),
                 request.getNewConsultantId());
 
@@ -2801,7 +2761,8 @@ public class AdminController extends BaseApiController {
      */
     @GetMapping("/clients/{clientId}/transfer-history")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getTransferHistory(
-            @PathVariable Long clientId) {
+            @PathVariable Long clientId, HttpSession session) {
+        resourceOwnerAccessGuard.requireTenantUserManagerAccess(session, "clientId", clientId);
         log.info("🔍 내담자 ID {} 상담사 변경 이력 조회", clientId);
         List<ConsultantClientMapping> transferHistory = adminService.getTransferHistory(clientId);
 
@@ -2961,90 +2922,68 @@ public class AdminController extends BaseApiController {
     }
 
     /**
-     * 매칭 결제 확인
+     * 일괄 매칭 결제 확인 (관리자·사무원). 결제 대기 매칭만, 사전 검증은 전부 아니면 전무.
+     *
+     * <p>mappingIds: 정수 숫자·숫자 문자열(중복은 한 번만), 비었거나 형식 오류·최대 개수 초과 400,
+     * 다른 기관·없는 id 가 하나라도 있으면 403(아무것도 처리 안 함), 결제 대기가 아닌 매칭 포함 409.
+     * 2건 이상이면 amount 는 패키지 금액 합계와 같아야 하고 각 매칭에 자기 패키지 금액이 기록된다.</p>
      */
     @PostMapping("/mapping/payment/confirm")
     public ResponseEntity<ApiResponse<Map<String, Object>>> confirmMappingPayment(
-            @RequestBody Map<String, Object> request) {
-        log.info("결제 확인 요청: {}", request);
+            @RequestBody Map<String, Object> request, HttpSession session) {
+        List<Long> mappingIds = resourceOwnerAccessGuard.requireMappingsManagerAccess(session,
+                request.get("mappingIds"));
+        Object paymentMethod = request.get("paymentMethod");
+        log.info("일괄 결제 확인 요청: count={}", mappingIds.size());
 
-        @SuppressWarnings("unchecked")
-        List<Long> mappingIds = (List<Long>) request.get("mappingIds");
-        String paymentMethod = (String) request.get("paymentMethod");
-        Integer amount = (Integer) request.get("amount");
-        String note = (String) request.get("note");
+        BulkMappingPaymentResult result = adminBulkMappingPaymentService.confirmMappings(mappingIds,
+                paymentMethod instanceof String method ? method : null, request.get("amount"));
 
-        if (mappingIds == null || mappingIds.isEmpty()) {
-            throw new IllegalArgumentException("매칭 ID가 필요합니다.");
-        }
-
-        log.info("결제 확인 처리: mappingIds={}, method={}, amount={}, note={}", mappingIds,
-                paymentMethod, amount, note);
-
-        for (Long mappingId : mappingIds) {
-            try {
-                adminService.confirmPayment(mappingId, paymentMethod,
-                        "ADMIN_CONFIRMED_" + System.currentTimeMillis(),
-                        amount != null ? amount.longValue() : 0L);
-                log.info("매칭 ID {} 결제 확인 및 ERP 연동 완료", mappingId);
-            } catch (Exception e) {
-                log.error("매칭 ID {} 결제 확인 실패: {}", mappingId, e.getMessage());
-            }
-        }
-
-        Map<String, Object> data = new HashMap<>();
-        data.put("confirmedMappings", mappingIds);
-        data.put("paymentMethod", paymentMethod);
-        data.put("amount", amount);
-        data.put("note", note);
+        Map<String, Object> data = bulkResultData(result);
+        data.put("confirmedMappings", result.getProcessedMappingIds());
         data.put("confirmedAt", System.currentTimeMillis());
-
-        return success("결제가 성공적으로 확인되었습니다.", data);
+        return bulkResponse(result, "결제가 성공적으로 확인되었습니다.", data);
     }
 
     /**
-     * 매칭 결제 취소 — {@link AdminService#terminateMapping} 위임 (write-path SSOT).
+     * 일괄 매칭 결제 취소 (같은 기관 관리자 전용) — 매칭마다 {@link AdminService#terminateMapping} 위임 (원장 환불만, PG 호출 없음).
      *
-     * <p>메모리만 REJECTED 로 바꾸던 stub 을 제거. PENDING_PAYMENT 는 CANCELLED+REJECTED,
-     * 유료 전액은 CANCELLED+REFUNDED 로 persist 된다.</p>
+     * <p>mappingIds 규칙은 결제 확인과 같다. 이미 종료·취소된 매칭이나 쇼핑 주문(PG) 결제 매칭이 하나라도 있으면
+     * 409(아무것도 처리 안 함). 같은 요청 반복·동시 요청은 매칭 행 잠금으로 두 번째부터 건너뛰어 재환불하지 않는다.</p>
      */
     @PostMapping("/mapping/payment/cancel")
     public ResponseEntity<ApiResponse<Map<String, Object>>> cancelMappingPayment(
-            @RequestBody Map<String, Object> request) {
-        log.info("결제 취소 요청: {}", request);
-
-        @SuppressWarnings("unchecked")
-        List<Long> mappingIds = (List<Long>) request.get("mappingIds");
-
-        if (mappingIds == null || mappingIds.isEmpty()) {
-            throw new IllegalArgumentException("매칭 ID가 필요합니다.");
-        }
-
+            @RequestBody Map<String, Object> request, HttpSession session) {
+        List<Long> mappingIds = resourceOwnerAccessGuard.requireMappingsAdminAccess(session,
+                request.get("mappingIds"));
         String reason = request.get("reason") != null
                 ? String.valueOf(request.get("reason"))
                 : AdminServiceUserFacingMessages.DEFAULT_MAPPING_NOTE_REASON_ADMIN_REQUEST;
+        log.info("일괄 결제 취소 요청(terminateMapping 위임): count={}", mappingIds.size());
 
-        log.info("결제 취소 처리(terminateMapping 위임): mappingIds={}, reason={}", mappingIds, reason);
+        BulkMappingPaymentResult result = adminBulkMappingPaymentService.cancelMappings(mappingIds, reason);
 
-        List<Long> cancelledMappings = new ArrayList<>();
-        List<Long> failedMappings = new ArrayList<>();
-        for (Long mappingId : mappingIds) {
-            try {
-                adminService.terminateMapping(mappingId, reason);
-                cancelledMappings.add(mappingId);
-                log.info("매칭 ID {} 결제 취소(terminate) 완료", mappingId);
-            } catch (Exception e) {
-                failedMappings.add(mappingId);
-                log.error("매칭 ID {} 결제 취소 실패: {}", mappingId, e.getMessage());
-            }
-        }
-
-        Map<String, Object> data = new HashMap<>();
-        data.put("cancelledMappings", cancelledMappings);
-        data.put("failedMappings", failedMappings);
+        Map<String, Object> data = bulkResultData(result);
+        data.put("cancelledMappings", result.getProcessedMappingIds());
         data.put("cancelledAt", System.currentTimeMillis());
+        return bulkResponse(result, "결제가 성공적으로 취소되었습니다.", data);
+    }
 
-        return success("결제가 성공적으로 취소되었습니다.", data);
+    private static Map<String, Object> bulkResultData(BulkMappingPaymentResult result) {
+        Map<String, Object> data = new HashMap<>();
+        data.put("skippedMappings", result.getSkippedMappingIds());
+        data.put("failedMappingId", result.getFailedMappingId());
+        data.put("notProcessedMappings", result.getNotProcessedMappingIds());
+        return data;
+    }
+
+    private ResponseEntity<ApiResponse<Map<String, Object>>> bulkResponse(BulkMappingPaymentResult result,
+            String successMessage, Map<String, Object> data) {
+        if (result.isCompleted()) {
+            return success(successMessage, data);
+        }
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(ApiResponse.error(AdminServiceUserFacingMessages.MSG_BULK_MAPPING_STOPPED_ON_FAILURE, data));
     }
 
     /**
@@ -3055,11 +2994,7 @@ public class AdminController extends BaseApiController {
             @RequestParam(required = false) String period, HttpSession session) {
         log.info("📊 상담사별 상담 완료 건수 통계 조회: period={}", period);
 
-        User currentUser = SessionUtils.getCurrentUser(session);
-        if (currentUser == null) {
-            log.error("❌ 로그인된 사용자 정보가 없습니다");
-            throw new org.springframework.security.access.AccessDeniedException("로그인이 필요합니다.");
-        }
+        User currentUser = clientPathAccessGuard.requireTenantManager(session);
 
         // 표준화 원칙: SessionUtils.getTenantId() 사용 (세션 → User 객체 순서로 확인)
         String tenantId = SessionUtils.getTenantId(session);
@@ -3137,10 +3072,7 @@ public class AdminController extends BaseApiController {
             HttpSession session) {
         log.info("📊 월별 신규 내담자 유입 통계 조회: months={}", months);
 
-        User currentUser = SessionUtils.getCurrentUser(session);
-        if (currentUser == null) {
-            throw new org.springframework.security.access.AccessDeniedException("로그인이 필요합니다.");
-        }
+        User currentUser = clientPathAccessGuard.requireTenantManager(session);
 
         String tenantId = SessionUtils.getTenantId(session);
         if (tenantId == null || tenantId.isEmpty()) {
@@ -3170,10 +3102,7 @@ public class AdminController extends BaseApiController {
             HttpSession session) {
         log.info("📊 요일별 상담 건수 통계 조회: months={}", months);
 
-        User currentUser = SessionUtils.getCurrentUser(session);
-        if (currentUser == null) {
-            throw new org.springframework.security.access.AccessDeniedException("로그인이 필요합니다.");
-        }
+        User currentUser = clientPathAccessGuard.requireTenantManager(session);
 
         String tenantId = SessionUtils.getTenantId(session);
         if (tenantId == null || tenantId.isEmpty()) {
@@ -3206,10 +3135,7 @@ public class AdminController extends BaseApiController {
             HttpSession session) {
         log.info("📊 주간 예약 현황 통계 조회: weekOffset={}", weekOffset);
 
-        User currentUser = SessionUtils.getCurrentUser(session);
-        if (currentUser == null) {
-            throw new org.springframework.security.access.AccessDeniedException("로그인이 필요합니다.");
-        }
+        User currentUser = clientPathAccessGuard.requireTenantManager(session);
 
         String tenantId = SessionUtils.getTenantId(session);
         if (tenantId == null || tenantId.isEmpty()) {
@@ -3245,7 +3171,9 @@ public class AdminController extends BaseApiController {
             @RequestParam(required = false) String startDate,
             @RequestParam(required = false) String endDate,
             @RequestParam(required = false) Integer page,
-            @RequestParam(required = false) Integer size) {
+            @RequestParam(required = false) Integer size,
+            HttpSession session) {
+        clientPathAccessGuard.requireTenantManager(session);
         log.info("📅 어드민 스케줄 조회: consultantId={}, status={}, startDate={}, endDate={}, page={}, size={}",
                 consultantId, status, startDate, endDate, page, size);
 
@@ -3284,26 +3212,61 @@ public class AdminController extends BaseApiController {
     }
 
     /**
-     * 스케줄 자동 완료 처리 (수동 실행)
+     * 스케줄 자동 완료 처리 (수동 실행).
+     *
+     * <p>세션 역할이 같은 기관의 관리자·사무원일 때만 허용하고(내담자·상담사는 403, 미인증은 401),
+     * 처리 범위는 {@code TenantContext} 의 호출자 테넌트 1건으로 강제한다. 완료 전환·회기 차감은
+     * 배치와 같은 {@link ScheduleAutoCompleteService} 경로를 쓴다.</p>
+     *
+     * @param session HTTP 세션
+     * @return 처리 완료 응답
      */
     @PostMapping("/schedules/auto-complete")
-    public ResponseEntity<ApiResponse<Void>> autoCompleteSchedules() {
-        log.info("🔄 스케줄 자동 완료 처리 수동 실행");
+    public ResponseEntity<ApiResponse<Void>> autoCompleteSchedules(HttpSession session) {
+        User caller = clientPathAccessGuard.requireTenantManager(session);
+        String tenantId = clientPathAccessGuard.requireCallerTenantId(caller);
+        log.info("🔄 스케줄 자동 완료 처리 수동 실행: userId={}, role={}", caller.getId(), caller.getRole());
 
-        scheduleService.autoCompleteExpiredSchedules();
+        var result = scheduleAutoCompleteService.autoCompleteExpiredSchedulesForTenant(tenantId);
 
+        log.info("✅ 스케줄 자동 완료 처리 완료: 완료 {}건, 알림 {}건",
+                result.completedCount(), result.reminderSentCount());
         return success("스케줄 자동 완료 처리가 실행되었습니다.");
     }
 
     /**
-     * 스케줄 자동 완료 처리 및 상담일지 미작성 알림 (수동 실행)
+     * 스케줄 자동 완료 처리 및 상담일지 미작성 알림 (수동 실행).
+     *
+     * <p>2026-10-05 (#1407·#1408 검증 FAIL 보완) — 배치와 같은 run lock 으로 직렬화한다.
+     * 이미 실행 중이면 409 로 거부하고, 두 번째 실행은 이미 완료된 일정을 건너뛰어 회기를
+     * 다시 차감하지 않는다(멱등). 처리 규칙(지난 BOOKED 일정은 상담일지 유무와 무관하게
+     * 완료·차감)은 바꾸지 않는다.</p>
      */
     @PostMapping("/schedules/auto-complete-with-reminder")
-    public ResponseEntity<ApiResponse<Map<String, Object>>> autoCompleteSchedulesWithReminder() {
-        log.info("🔄 스케줄 자동 완료 처리 및 상담일지 미작성 알림 수동 실행");
+    public ResponseEntity<ApiResponse<Map<String, Object>>> autoCompleteSchedulesWithReminder(HttpSession session) {
+        User caller = clientPathAccessGuard.requireTenantManager(session);
+        clientPathAccessGuard.requireCallerTenantId(caller);
+        log.info("🔄 스케줄 자동 완료 처리 및 상담일지 미작성 알림 수동 실행: userId={}, role={}",
+                caller.getId(), caller.getRole());
 
-        Map<String, Object> result = adminService.autoCompleteSchedulesWithReminder();
-
+        Map<String, Object> result;
+        try {
+            result = scheduleAutoCompleteService.runExclusively(
+                    "autoCompleteSchedulesWithReminder",
+                    adminService::autoCompleteSchedulesWithReminder);
+        } catch (IllegalStateException e) {
+            if (!ScheduleAutoCompleteService.ALREADY_RUNNING.equals(e.getMessage())) {
+                throw e;
+            }
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(ApiResponse.error(ScheduleAutoCompleteService.ALREADY_RUNNING));
+        }
+        Object traceId = result.get(ServerErrorResponses.TRACE_ID_KEY);
+        if (traceId != null) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.error(ServerErrorMessages.INTERNAL_SERVER_ERROR,
+                            ServerErrorResponses.body(traceId.toString())));
+        }
         return success(result);
     }
 
@@ -3315,11 +3278,7 @@ public class AdminController extends BaseApiController {
             @RequestParam(required = false) String userRole, HttpSession session) {
         log.info("📊 스케줄 상태별 통계 조회 요청 - 사용자 역할: {}", userRole);
 
-        User currentUser = SessionUtils.getCurrentUser(session);
-        if (currentUser == null) {
-            log.warn("❌ 인증되지 않은 사용자");
-            throw new org.springframework.security.access.AccessDeniedException("인증이 필요합니다.");
-        }
+        User currentUser = resourceOwnerAccessGuard.requireTenantAdminAccess(session);
 
         log.info("👤 현재 사용자: {} (역할: {}, 지점코드: {})", currentUser.getUserId(), currentUser.getRole(),
                 currentUser.getBranchCode());
@@ -3466,6 +3425,7 @@ public class AdminController extends BaseApiController {
     @GetMapping("/users/{id}")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getUserById(@PathVariable Long id,
             HttpSession session) {
+        resourceOwnerAccessGuard.requireTenantUserManagerAccess(session, "userId", id);
         log.info("🔍 사용자 상세 정보 조회: ID={}", id);
 
         User currentUser = SessionUtils.getCurrentUser(session);
@@ -3504,6 +3464,7 @@ public class AdminController extends BaseApiController {
     @GetMapping("/users/{id}/social-accounts")
     public ResponseEntity<ApiResponse<List<?>>> getUserSocialAccounts(@PathVariable Long id,
             HttpSession session) {
+        resourceOwnerAccessGuard.requireTenantUserManagerAccess(session, "userId", id);
         log.info("🔍 사용자 소셜 계정 정보 조회: ID={}", id);
 
         User currentUser = SessionUtils.getCurrentUser(session);
@@ -3601,12 +3562,7 @@ public class AdminController extends BaseApiController {
 
         } catch (Exception e) {
             log.error("❌ 메뉴 목록 조회 실패: {}", e.getMessage(), e);
-
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", false);
-            response.put("message", "메뉴 목록 조회에 실패했습니다: " + e.getMessage());
-
-            return ResponseEntity.badRequest().body(response);
+            throw ServerErrorResponses.propagate(e);
         }
     }
 
@@ -3620,18 +3576,10 @@ public class AdminController extends BaseApiController {
             @RequestParam(required = false) String category,
             @RequestParam(required = false) String startDate,
             @RequestParam(required = false) String endDate, HttpSession session) {
+        User currentUser = resourceOwnerAccessGuard.requireTenantAdminAccess(session);
         try {
             log.info("🔍 재무 거래 목록 조회: 유형={}, 카테고리={}, startDate={}, endDate={}", transactionType,
                     category, startDate, endDate);
-
-            User currentUser = SessionUtils.getCurrentUser(session);
-            if (currentUser == null) {
-                log.warn("❌ 세션에서 사용자 정보를 찾을 수 없습니다.");
-                Map<String, Object> response = new HashMap<>();
-                response.put("success", false);
-                response.put("message", "로그인이 필요합니다.");
-                return ResponseEntity.status(401).body(response);
-            }
 
             String tenantId = SessionUtils.getTenantId(session);
             if (tenantId == null || tenantId.isBlank()) {
@@ -3685,18 +3633,11 @@ public class AdminController extends BaseApiController {
 
         } catch (IllegalArgumentException e) {
             log.warn("❌ 재무 거래 목록 조회: 잘못된 요청 {}", e.getMessage());
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", false);
-            response.put("message", e.getMessage());
-            return ResponseEntity.badRequest().body(response);
+            // 예외 원문을 응답에 직접 싣지 않는다 — 전역 처리기가 사용자 문구만 400 으로 내보낸다.
+            throw e;
         } catch (Exception e) {
             log.error("❌ 재무 거래 목록 조회 실패: {}", e.getMessage(), e);
-
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", false);
-            response.put("message", "재무 거래 목록 조회에 실패했습니다: " + e.getMessage());
-
-            return ResponseEntity.badRequest().body(response);
+            throw ServerErrorResponses.propagate(e);
         }
     }
 
@@ -3707,16 +3648,9 @@ public class AdminController extends BaseApiController {
     public ResponseEntity<Map<String, Object>> getBudgets(
             @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "20") int size,
             HttpSession session) {
+        resourceOwnerAccessGuard.requireTenantAdminAccess(session);
         try {
             log.info("🔍 예산 목록 조회");
-
-            User currentUser = SessionUtils.getCurrentUser(session);
-            if (currentUser == null) {
-                Map<String, Object> response = new HashMap<>();
-                response.put("success", false);
-                response.put("message", "로그인이 필요합니다.");
-                return ResponseEntity.status(401).body(response);
-            }
 
             java.util.List<com.coresolution.consultation.entity.Budget> budgets =
                     erpService.getAllActiveBudgets();
@@ -3733,12 +3667,7 @@ public class AdminController extends BaseApiController {
 
         } catch (Exception e) {
             log.error("❌ 예산 목록 조회 실패: {}", e.getMessage(), e);
-
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", false);
-            response.put("message", "예산 목록 조회에 실패했습니다: " + e.getMessage());
-
-            return ResponseEntity.badRequest().body(response);
+            throw ServerErrorResponses.propagate(e);
         }
     }
 
@@ -3781,12 +3710,7 @@ public class AdminController extends BaseApiController {
 
         } catch (Exception e) {
             log.error("❌ 세금 계산 목록 조회 실패: {}", e.getMessage(), e);
-
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", false);
-            response.put("message", "세금 계산 목록 조회에 실패했습니다: " + e.getMessage());
-
-            return ResponseEntity.badRequest().body(response);
+            throw ServerErrorResponses.propagate(e);
         }
     }
 
@@ -3823,12 +3747,7 @@ public class AdminController extends BaseApiController {
 
         } catch (Exception e) {
             log.error("❌ 세금 계산 항목 생성 실패: {}", e.getMessage(), e);
-
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", false);
-            response.put("message", "세금 계산 항목 생성에 실패했습니다: " + e.getMessage());
-
-            return ResponseEntity.badRequest().body(response);
+            throw ServerErrorResponses.propagate(e);
         }
     }
 
@@ -3897,9 +3816,14 @@ public class AdminController extends BaseApiController {
                     consultationRecordService.getConsultationRecords(consultantId, clientId,
                             startDate, endDate, pageable);
 
+            // 목록은 식별자·일자·작성자·상태만. 본문은 단건 상세(공용 가드 판정)에서만 받는다.
+            List<ConsultationRecordListItemResponse> metaItems = consultationRecords.getContent().stream()
+                    .map(ConsultationRecordListItemResponse::fromEntity)
+                    .toList();
+
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
-            response.put("data", consultationRecords.getContent());
+            response.put("data", metaItems);
             response.put("totalCount", consultationRecords.getTotalElements());
             response.put("totalPages", consultationRecords.getTotalPages());
             response.put("currentPage", consultationRecords.getNumber());
@@ -3908,14 +3832,19 @@ public class AdminController extends BaseApiController {
             return ResponseEntity.ok(response);
 
         } catch (Exception e) {
-            log.error("❌ 관리자용 상담일지 목록 조회 실패: {}", e.getMessage(), e);
-            return ResponseEntity.internalServerError().body(
-                    Map.of("success", false, "message", "상담일지 목록 조회에 실패했습니다: " + e.getMessage()));
+            return ServerErrorResponses.internalError("관리자용 상담일지 목록 조회 실패", e);
         }
     }
 
     /**
-     * 관리자용 상담일지 상세 조회
+     * 관리자용 상담일지 상세 조회.
+     *
+     * <p>공용 가드 {@link ConsultationRecordAccessGuard#requireReadAccess} 로 판정한다(작성 상담사 본인 또는
+     * 같은 테넌트 관리자 계열). 거부는 403/401 로 그대로 위임한다.</p>
+     *
+     * @param recordId 상담일지 ID
+     * @param session HTTP 세션
+     * @return 상담일지 상세
      */
     @GetMapping("/consultation-records/{recordId}")
     public ResponseEntity<Map<String, Object>> getConsultationRecord(@PathVariable Long recordId,
@@ -3923,23 +3852,7 @@ public class AdminController extends BaseApiController {
         try {
             log.info("📝 관리자용 상담일지 상세 조회 - 기록 ID: {}", recordId);
 
-            User currentUser = SessionUtils.getCurrentUser(session);
-            if (currentUser == null) {
-                return ResponseEntity.status(401)
-                        .body(Map.of("success", false, "message", "로그인이 필요합니다."));
-            }
-
-            if (!roleCommonCodeAuthorizationService.isAdminOrStaffRoleFromCommonCode(currentUser.getRole())) {
-                return ResponseEntity.status(403)
-                        .body(Map.of("success", false, "message", "관리자 권한이 필요합니다."));
-            }
-
-            com.coresolution.consultation.entity.ConsultationRecord record =
-                    consultationRecordService.getConsultationRecordById(recordId);
-
-            if (record == null) {
-                return ResponseEntity.notFound().build();
-            }
+            ConsultationRecord record = consultationRecordAccessGuard.requireReadAccess(session, recordId);
 
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
@@ -3947,15 +3860,25 @@ public class AdminController extends BaseApiController {
 
             return ResponseEntity.ok(response);
 
+        } catch (org.springframework.security.access.AccessDeniedException
+                | com.coresolution.consultation.exception.UnauthorizedException e) {
+            throw e;
         } catch (Exception e) {
-            log.error("❌ 관리자용 상담일지 상세 조회 실패: {}", e.getMessage(), e);
-            return ResponseEntity.internalServerError().body(
-                    Map.of("success", false, "message", "상담일지 상세 조회에 실패했습니다: " + e.getMessage()));
+            return ServerErrorResponses.internalError("관리자용 상담일지 상세 조회 실패", e);
         }
     }
 
     /**
-     * 관리자용 상담일지 수정
+     * 관리자용 상담일지 수정.
+     *
+     * <p>공용 가드 {@link ConsultationRecordAccessGuard#requireWriteAccess} 로 판정한다(작성 상담사 본인 또는
+     * 같은 테넌트 관리자 계열). 거부는 403/401 로 그대로 위임한다. 실제 수정자는 {@code updated_by_*} 와
+     * 수정 감사(바뀐 필드명만)에 남는다.</p>
+     *
+     * @param recordId   상담일지 ID
+     * @param recordData 수정 본문
+     * @param session    HTTP 세션
+     * @return 수정된 상담일지
      */
     @PutMapping("/consultation-records/{recordId}")
     public ResponseEntity<Map<String, Object>> updateConsultationRecord(@PathVariable Long recordId,
@@ -3963,19 +3886,9 @@ public class AdminController extends BaseApiController {
         try {
             log.info("📝 관리자용 상담일지 수정 - 기록 ID: {}", recordId);
 
-            User currentUser = SessionUtils.getCurrentUser(session);
-            if (currentUser == null) {
-                return ResponseEntity.status(401)
-                        .body(Map.of("success", false, "message", "로그인이 필요합니다."));
-            }
-
-            if (!roleCommonCodeAuthorizationService.isAdminOrStaffRoleFromCommonCode(currentUser.getRole())) {
-                return ResponseEntity.status(403)
-                        .body(Map.of("success", false, "message", "관리자 권한이 필요합니다."));
-            }
-
+            ConsultationRecordWriter writer = consultationRecordAccessGuard.requireWriteAccess(session, recordId);
             com.coresolution.consultation.entity.ConsultationRecord updatedRecord =
-                    consultationRecordService.updateConsultationRecord(recordId, recordData);
+                    consultationRecordService.updateConsultationRecord(recordId, recordData, writer);
 
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
@@ -3985,12 +3898,12 @@ public class AdminController extends BaseApiController {
             return ResponseEntity.ok(response);
 
         } catch (com.coresolution.consultation.exception.ValidationException
-                | IllegalArgumentException e) {
+                | IllegalArgumentException
+                | org.springframework.security.access.AccessDeniedException
+                | com.coresolution.consultation.exception.UnauthorizedException e) {
             throw e;
         } catch (Exception e) {
-            log.error("❌ 관리자용 상담일지 수정 실패: {}", e.getMessage(), e);
-            return ResponseEntity.internalServerError().body(
-                    Map.of("success", false, "message", "상담일지 수정에 실패했습니다: " + e.getMessage()));
+            return ServerErrorResponses.internalError("관리자용 상담일지 수정 실패", e);
         }
     }
 
@@ -3999,6 +3912,10 @@ public class AdminController extends BaseApiController {
      *
      * <p>회기수({@code sessionNumber})와 대상 일정({@code consultationId})은 쿼리 파라미터 필수.
      * 누락·불일치 시 4xx.</p>
+     *
+     * <p>존재 여부를 보기 전에 공용 가드 {@link ConsultationRecordAccessGuard#requireDeleteAccess} 로 판정한다
+     * (작성 상담사 본인 또는 같은 테넌트 관리자, 사무원 제외). 권한이 없으면 일지가 없어도 있어도 같은 403 이고
+     * 서비스는 호출하지 않는다.</p>
      *
      * @param recordId 삭제 대상 상담일지 ID
      * @param consultationId 의도한 Schedule.id
@@ -4011,21 +3928,11 @@ public class AdminController extends BaseApiController {
             @RequestParam Long consultationId,
             @RequestParam Integer sessionNumber,
             HttpSession session) {
+        log.info("📝 관리자용 상담일지 삭제 - 기록 ID: {}, consultationId={}, sessionNumber={}",
+                recordId, consultationId, sessionNumber);
+        consultationRecordAccessGuard.requireDeleteAccess(session, recordId);
+
         try {
-            log.info("📝 관리자용 상담일지 삭제 - 기록 ID: {}, consultationId={}, sessionNumber={}",
-                    recordId, consultationId, sessionNumber);
-
-            User currentUser = SessionUtils.getCurrentUser(session);
-            if (currentUser == null) {
-                return ResponseEntity.status(401)
-                        .body(Map.of("success", false, "message", "로그인이 필요합니다."));
-            }
-
-            if (!roleCommonCodeAuthorizationService.isAdminOrStaffRoleFromCommonCode(currentUser.getRole())) {
-                return ResponseEntity.status(403)
-                        .body(Map.of("success", false, "message", "관리자 권한이 필요합니다."));
-            }
-
             consultationRecordService.deleteConsultationRecord(recordId, consultationId, sessionNumber);
 
             Map<String, Object> response = new HashMap<>();
@@ -4038,9 +3945,7 @@ public class AdminController extends BaseApiController {
                 | IllegalArgumentException e) {
             throw e;
         } catch (Exception e) {
-            log.error("❌ 관리자용 상담일지 삭제 실패: {}", e.getMessage(), e);
-            return ResponseEntity.internalServerError().body(
-                    Map.of("success", false, "message", "상담일지 삭제에 실패했습니다: " + e.getMessage()));
+            return ServerErrorResponses.internalError("관리자용 상담일지 삭제 실패", e);
         }
     }
 
@@ -4100,10 +4005,7 @@ public class AdminController extends BaseApiController {
             HttpSession session) {
         log.info("💖 관리자 평가 통계 조회 요청");
 
-        User currentUser = SessionUtils.getCurrentUser(session);
-        if (currentUser == null) {
-            throw new org.springframework.security.access.AccessDeniedException("로그인이 필요합니다.");
-        }
+        User currentUser = clientPathAccessGuard.requireTenantManager(session);
 
         // 표준화 원칙: SessionUtils.getTenantId() 사용 (세션 → User 객체 순서로 확인)
         String tenantId = SessionUtils.getTenantId(session);
@@ -4176,9 +4078,7 @@ public class AdminController extends BaseApiController {
             return ResponseEntity.ok(Map.of("success", true, "message", "상담사 전문분야가 업데이트되었습니다."));
 
         } catch (Exception e) {
-            log.error("상담사 전문분야 업데이트 실패", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("success",
-                    false, "message", "상담사 전문분야 업데이트 중 오류가 발생했습니다: " + e.getMessage()));
+            return ServerErrorResponses.internalError("상담사 전문분야 업데이트 실패", e);
         }
     }
 
@@ -4240,9 +4140,7 @@ public class AdminController extends BaseApiController {
                     .ok(Map.of("success", true, "data", statistics, "message", "전문분야 통계 조회 완료"));
 
         } catch (Exception e) {
-            log.error("전문분야 통계 조회 실패", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("success",
-                    false, "message", "전문분야 통계 조회 중 오류가 발생했습니다: " + e.getMessage()));
+            return ServerErrorResponses.internalError("전문분야 통계 조회 실패", e);
         }
     }
 
@@ -4269,9 +4167,7 @@ public class AdminController extends BaseApiController {
                     expenses.size(), "message", "반복 지출 목록 조회 완료"));
 
         } catch (Exception e) {
-            log.error("반복 지출 목록 조회 실패", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("success",
-                    false, "message", "반복 지출 목록 조회 중 오류가 발생했습니다: " + e.getMessage()));
+            return ServerErrorResponses.internalError("반복 지출 목록 조회 실패", e);
         }
     }
 
@@ -4299,9 +4195,7 @@ public class AdminController extends BaseApiController {
                     .ok(Map.of("success", true, "data", statistics, "message", "반복 지출 통계 조회 완료"));
 
         } catch (Exception e) {
-            log.error("반복 지출 통계 조회 실패", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("success",
-                    false, "message", "반복 지출 통계 조회 중 오류가 발생했습니다: " + e.getMessage()));
+            return ServerErrorResponses.internalError("반복 지출 통계 조회 실패", e);
         }
     }
 
@@ -4328,9 +4222,7 @@ public class AdminController extends BaseApiController {
                     categories.size(), "message", "지출 카테고리 목록 조회 완료"));
 
         } catch (Exception e) {
-            log.error("지출 카테고리 목록 조회 실패", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("success",
-                    false, "message", "지출 카테고리 목록 조회 중 오류가 발생했습니다: " + e.getMessage()));
+            return ServerErrorResponses.internalError("지출 카테고리 목록 조회 실패", e);
         }
     }
 
@@ -4408,9 +4300,7 @@ public class AdminController extends BaseApiController {
                     consultations.size(), "totalElements", consultationRecords.getTotalElements(),
                     "message", "상담 이력 조회 완료"));
         } catch (Exception e) {
-            log.error("❌ 상담 이력 조회 중 오류 발생", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("success",
-                    false, "message", "상담 이력 조회 중 오류가 발생했습니다: " + e.getMessage()));
+            return ServerErrorResponses.internalError("상담 이력 조회 중 오류 발생", e);
         }
     }
 
@@ -4420,6 +4310,7 @@ public class AdminController extends BaseApiController {
     @PostMapping("/initialize-default-codes")
     public ResponseEntity<ApiResponse<Map<String, Object>>> initializeDefaultCodes(
             HttpSession session) {
+        opsAccessGuard.requireHqOps();
         log.info("📋 현재 테넌트 기본 공통코드 추가 요청");
 
         User currentUser = SessionUtils.getCurrentUser(session);

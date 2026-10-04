@@ -4,7 +4,9 @@ import com.coresolution.consultation.dto.AccountIntegrationRequest;
 import com.coresolution.consultation.dto.AccountIntegrationResponse;
 import com.coresolution.consultation.dto.EmailVerificationSendOutcome;
 import com.coresolution.consultation.service.AccountIntegrationService;
+import com.coresolution.consultation.service.support.ClientPathAccessGuard;
 import com.coresolution.consultation.util.EmailLogMasking;
+import jakarta.servlet.http.HttpSession;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -32,6 +34,8 @@ import lombok.extern.slf4j.Slf4j;
 public class AccountIntegrationController {
     
     private final AccountIntegrationService accountIntegrationService;
+
+    private final ClientPathAccessGuard clientPathAccessGuard;
     
     /**
      * 이메일 인증 코드 발송
@@ -164,13 +168,15 @@ public class AccountIntegrationController {
      */
     @PostMapping("/link-social")
     public ResponseEntity<AccountIntegrationResponse> linkSocialAccount(
-            @RequestParam Long userId,
+            @RequestParam(required = false) Long userId,
             @RequestParam String provider,
-            @RequestParam String providerUserId) {
+            @RequestParam String providerUserId,
+            HttpSession session) {
+        Long ownerId = clientPathAccessGuard.requireSelf(session, userId).getId();
         try {
-            log.info("SNS 계정 연결 요청: userId={}, provider={}", userId, provider);
+            log.info("SNS 계정 연결 요청: userId={}, provider={}", ownerId, provider);
             
-            boolean success = accountIntegrationService.linkSocialAccount(userId, provider, providerUserId);
+            boolean success = accountIntegrationService.linkSocialAccount(ownerId, provider, providerUserId);
             
             if (success) {
                 return ResponseEntity.ok(AccountIntegrationResponse.builder()

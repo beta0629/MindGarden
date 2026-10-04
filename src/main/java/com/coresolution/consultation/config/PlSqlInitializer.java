@@ -31,6 +31,31 @@ import lombok.extern.slf4j.Slf4j;
         matchIfMissing = true)
 public class PlSqlInitializer {
 
+    /**
+     * 개발 서버가 기동 때마다 덮어쓰는 CreateOrActivateTenant 본문.
+     * V20251222_001 은 공통코드 복사(COMMIT)와 샘플 사용자(삭제된 users.username + ROLLBACK)를 호출한다.
+     */
+    public static final String CREATE_OR_ACTIVATE_TENANT_PROCEDURE =
+            "sql/procedures/create_or_activate_tenant_approval.sql";
+
+    /**
+     * 개발 서버가 기동 때마다 덮어쓰는 CreateDefaultTenantUsers 본문.
+     * V57 은 users.username 을 INSERT 한 뒤 ROLLBACK 하므로 승인 트랜잭션을 끝낸다.
+     */
+    public static final String CREATE_DEFAULT_TENANT_USERS_PROCEDURE =
+            "sql/procedures/create_default_tenant_users.sql";
+
+    /**
+     * 기동 때마다 덮어쓰는 ProcessOnboardingApproval.
+     * 적용된 Flyway 파일은 체크섬을 바꾸지 않고, 이 스크립트가 도메인 접미사 인자를 포함한다.
+     */
+    public static final String PROCESS_ONBOARDING_APPROVAL_PROCEDURE =
+            "sql/procedures/process_onboarding_approval.sql";
+
+    /** 개발 서버가 기동 때마다 덮어쓰는 CreateTenantAdminAccount. user_id 를 쓴다. */
+    public static final String CREATE_TENANT_ADMIN_ACCOUNT_PROCEDURE =
+            "db/migration/V20251223_001__fix_create_tenant_admin_account_user_id.sql";
+
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
@@ -125,13 +150,16 @@ public class PlSqlInitializer {
         // 2. CreateOrActivateTenant 프로시저 강제 생성
         initializeCreateOrActivateTenantProcedureFromMigration();
 
+        // 2b. 샘플 사용자 프로시저가 삭제된 users.username 과 ROLLBACK 을 되돌리지 않게 강제 교체
+        initializeCreateDefaultTenantUsersProcedure();
+
         // 3. ApplyDefaultRoleTemplates 프로시저 강제 생성
         initializeApplyDefaultRoleTemplatesProcedure();
 
         // 4. CreateTenantAdminAccount 프로시저 강제 생성
         initializeCreateTenantAdminAccountProcedureFromMigration();
 
-        log.info("✅ PL/SQL 프로시저 자동 초기화 완료 (4개 프로시저 강제 생성)");
+        log.info("✅ PL/SQL 프로시저 자동 초기화 완료 (5개 프로시저 강제 생성)");
     }
 
     /**
@@ -143,8 +171,7 @@ public class PlSqlInitializer {
         try {
             log.info("📝 CreateOrActivateTenant 프로시저 강제 생성 시작");
 
-            ClassPathResource resource = new ClassPathResource(
-                    "db/migration/V20251222_001__create_create_or_activate_tenant_procedure.sql");
+            ClassPathResource resource = new ClassPathResource(CREATE_OR_ACTIVATE_TENANT_PROCEDURE);
             String sqlContent = new String(resource.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
 
             // 주석 제거 (단일 라인 주석만)
@@ -196,8 +223,8 @@ public class PlSqlInitializer {
                 throw new IllegalStateException(errorMsg);
             }
 
-            // 프로시저 파라미터 검증 (필수) - CreateOrActivateTenant는 9개 파라미터
-            if (!verifyProcedureParameters("CreateOrActivateTenant", 9)) {
+            // 프로시저 파라미터 검증 (필수) - CreateOrActivateTenant는 10개 파라미터
+            if (!verifyProcedureParameters("CreateOrActivateTenant", 10)) {
                 String errorMsg = "❌ CreateOrActivateTenant 프로시저 파라미터가 올바르지 않습니다. 프로시저 생성 실패로 애플리케이션 시작 불가";
                 log.error(errorMsg);
                 throw new IllegalStateException(errorMsg);
@@ -264,133 +291,6 @@ public class PlSqlInitializer {
         } catch (Exception e) {
             log.error("❌ 프로시저 추출 실패: {}", e.getMessage(), e);
             return null;
-        }
-    }
-
-    /**
-     * CreateOrActivateTenant 프로시저 초기화 백업 메커니즘: Flyway 마이그레이션이 실패한 경우를 대비하여 Java 코드에서도 프로시저 생성 시도
-     * @deprecated 마이그레이션 파일에서 직접 읽는 방식으로 대체됨
-     */
-    @Deprecated
-    private void initializeCreateOrActivateTenantProcedure() {
-        try {
-            log.info("📝 CreateOrActivateTenant 프로시저 초기화 시작 (백업 메커니즘)");
-
-            // 프로시저 존재 여부 확인
-            Boolean procedureExists = jdbcTemplate
-                    .queryForObject("SELECT COUNT(*) > 0 FROM information_schema.ROUTINES "
-                            + "WHERE ROUTINE_SCHEMA = DATABASE() "
-                            + "AND ROUTINE_NAME = 'CreateOrActivateTenant' "
-                            + "AND ROUTINE_TYPE = 'PROCEDURE'", Boolean.class);
-
-            if (Boolean.TRUE.equals(procedureExists)) {
-                log.info("ℹ️ CreateOrActivateTenant 프로시저가 이미 존재합니다 (Flyway 마이그레이션으로 생성됨)");
-                return;
-            }
-
-            log.warn("⚠️ CreateOrActivateTenant 프로시저가 없습니다. Java 코드에서 생성 시도...");
-
-            // UTF-8 인코딩 설정 (모든 환경에서 MySQL 사용)
-            jdbcTemplate.execute("SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci");
-
-            // SQL 파일 읽기
-            ClassPathResource resource =
-                    new ClassPathResource("sql/procedures/create_or_activate_tenant.sql");
-            String sqlContent =
-                    new String(resource.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
-
-            log.info("📄 SQL 파일 크기: {} bytes", sqlContent.length());
-
-            // DELIMITER 제거 및 프로시저 전체를 하나의 문장으로 처리
-            // 주석 제거
-            sqlContent = sqlContent.replaceAll("--[^\n]*", "");
-
-            // DELIMITER 관련 제거
-            sqlContent = sqlContent.replaceAll("(?i)DELIMITER\\s+//", "");
-            sqlContent = sqlContent.replaceAll("(?i)DELIMITER\\s+;", "");
-            sqlContent = sqlContent.replaceAll("END\\s+//", "END;");
-
-            // DROP과 CREATE 분리 (세미콜론이 아닌 CREATE PROCEDURE 기준으로)
-            String dropStatement = null;
-            String createStatement = null;
-
-            // DROP 문 추출 (DELIMITER // 이후의 DROP)
-            if (sqlContent.contains("DROP PROCEDURE")) {
-                int dropStart = sqlContent.indexOf("DROP PROCEDURE");
-                // DROP PROCEDURE IF EXISTS CreateOrActivateTenant // 형태
-                // // 까지 찾거나, CREATE PROCEDURE 전까지
-                int dropEnd = sqlContent.indexOf("CREATE PROCEDURE", dropStart);
-                if (dropEnd > dropStart) {
-                    dropStatement = sqlContent.substring(dropStart, dropEnd).trim();
-                    // // 제거
-                    dropStatement = dropStatement.replaceAll("//", "").trim();
-                    if (!dropStatement.endsWith(";")) {
-                        dropStatement += ";";
-                    }
-                }
-            }
-
-            // CREATE 문 추출 (CREATE PROCEDURE부터 외곽 END까지, 내부 핸들러 END; 오인 방지)
-            if (sqlContent.contains("CREATE PROCEDURE")) {
-                int createStart = sqlContent.indexOf("CREATE PROCEDURE");
-                createStatement = extractJdbcProcedureDdlFromContent(sqlContent, createStart);
-            }
-
-            // DROP 실행
-            if (dropStatement != null) {
-                try {
-                    jdbcTemplate.execute(dropStatement);
-                    log.info("🗑️ 기존 프로시저 삭제 완료");
-                } catch (Exception e) {
-                    log.debug("프로시저 삭제 중 오류 (무시 가능): {}", e.getMessage());
-                }
-            }
-
-            // CREATE 실행 (재시도 로직 포함)
-            if (createStatement != null) {
-                boolean created = false;
-                int maxRetries = 3;
-                for (int attempt = 1; attempt <= maxRetries; attempt++) {
-                    try {
-                        jdbcTemplate.execute(createStatement);
-                        log.info("✅ CreateOrActivateTenant 프로시저 생성 완료 (Java 코드 백업 메커니즘, 시도 {}/{})",
-                                attempt, maxRetries);
-                        created = true;
-                        break;
-                    } catch (Exception e) {
-                        log.warn("⚠️ CreateOrActivateTenant 프로시저 생성 실패 (시도 {}/{}): {}", attempt,
-                                maxRetries, e.getMessage());
-                        if (attempt < maxRetries) {
-                            try {
-                                Thread.sleep(1000 * attempt); // 지수 백오프
-                            } catch (InterruptedException ie) {
-                                Thread.currentThread().interrupt();
-                            }
-                        } else {
-                            log.error("❌ CreateOrActivateTenant 프로시저 생성 실패 (모든 시도 실패): {}",
-                                    e.getMessage(), e);
-                            log.warn("⚠️ Flyway 마이그레이션(V42)이 프로시저를 생성해야 합니다");
-                        }
-                    }
-                }
-
-                // 프로시저 생성 후 검증 (안전장치 1: 존재 여부 확인)
-                if (created) {
-                    verifyProcedureExists("CreateOrActivateTenant");
-
-                    // 안전장치 2: 프로시저 실행 테스트 (파라미터 검증)
-                    testProcedureExecution("CreateOrActivateTenant");
-                }
-            } else {
-                log.warn("⚠️ CREATE PROCEDURE 문을 찾을 수 없습니다");
-            }
-
-            log.info("✅ CreateOrActivateTenant 프로시저 초기화 완료");
-
-        } catch (IOException e) {
-            log.error("❌ SQL 파일 읽기 실패: {}", e.getMessage(), e);
-        } catch (Exception e) {
-            log.error("❌ CreateOrActivateTenant 프로시저 초기화 실패: {}", e.getMessage(), e);
         }
     }
 
@@ -613,98 +513,74 @@ public class PlSqlInitializer {
     }
 
     /**
-     * 안전장치 2: 프로시저 실행 테스트 (파라미터 검증)
-     */
-    private void testProcedureExecution(String procedureName) {
-        if (!"CreateOrActivateTenant".equals(procedureName)) {
-            return; // 다른 프로시저는 스킵
-        }
-
-        try {
-            // 프로시저 시그니처 확인
-            String signature =
-                    jdbcTemplate.queryForObject(
-                            "SELECT ROUTINE_DEFINITION FROM information_schema.ROUTINES "
-                                    + "WHERE ROUTINE_SCHEMA = DATABASE() " + "AND ROUTINE_NAME = ? "
-                                    + "AND ROUTINE_TYPE = 'PROCEDURE'",
-                            String.class, procedureName);
-
-            if (signature != null && signature.length() > 0) {
-                log.info("✅ 프로시저 시그니처 확인 완료: {} (길이: {} bytes)", procedureName, signature.length());
-
-                // 필수 키워드 확인
-                String[] requiredKeywords = {"DECLARE", "BEGIN", "END", "TRANSACTION", "COMMIT"};
-                boolean allKeywordsPresent = true;
-                for (String keyword : requiredKeywords) {
-                    if (!signature.toUpperCase().contains(keyword)) {
-                        log.warn("⚠️ 프로시저에 필수 키워드가 없습니다: {} - {}", procedureName, keyword);
-                        allKeywordsPresent = false;
-                    }
-                }
-
-                if (allKeywordsPresent) {
-                    log.info("✅ 프로시저 구조 검증 완료: {}", procedureName);
-                } else {
-                    log.warn("⚠️ 프로시저 구조 검증 실패: {}", procedureName);
-                }
-            } else {
-                log.warn("⚠️ 프로시저 정의를 찾을 수 없습니다: {}", procedureName);
-            }
-        } catch (Exception e) {
-            log.warn("⚠️ 프로시저 실행 테스트 실패 (무시 가능): {} - {}", procedureName, e.getMessage());
-        }
-    }
-
-    /**
-     * CreateDefaultTenantUsers 프로시저 초기화 백업 메커니즘: Flyway 마이그레이션이 실패한 경우를 대비하여 Java 코드에서도 프로시저 생성 시도
+     * CreateDefaultTenantUsers 를 기동 때마다 교체한다.
+     * 이미 V57 본문이 있으면 존재 검사만으로는 username INSERT 와 ROLLBACK 이 남는다.
      */
     private void initializeCreateDefaultTenantUsersProcedure() {
         try {
-            log.info("📝 CreateDefaultTenantUsers 프로시저 초기화 시작 (백업 메커니즘)");
+            log.info("📝 CreateDefaultTenantUsers 프로시저 강제 생성 시작");
 
-            // 프로시저 존재 여부 확인
-            String checkProcedureQuery = """
-                    SELECT COUNT(*) FROM information_schema.routines
-                    WHERE routine_schema = DATABASE()
-                    AND routine_name = 'CreateDefaultTenantUsers'
-                    AND routine_type = 'PROCEDURE'
-                    """;
+            ClassPathResource resource = new ClassPathResource(CREATE_DEFAULT_TENANT_USERS_PROCEDURE);
+            String sqlContent = new String(resource.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
+            sqlContent = sqlContent.replaceAll("--[^\n]*\n", "\n");
+            sqlContent = sqlContent.replaceAll("/\\*[\\s\\S]*?\\*/", "");
 
-            Integer procedureCount =
-                    jdbcTemplate.queryForObject(checkProcedureQuery, Integer.class);
-
-            if (procedureCount != null && procedureCount > 0) {
-                log.info("✅ CreateDefaultTenantUsers 프로시저가 이미 존재합니다");
-                return;
+            int createStart = sqlContent.indexOf("CREATE PROCEDURE");
+            if (createStart == -1) {
+                String errorMsg = "❌ CREATE PROCEDURE를 찾을 수 없습니다. 프로시저 생성 실패로 애플리케이션 시작 불가";
+                log.error(errorMsg);
+                throw new IllegalStateException(errorMsg);
             }
 
-            log.info("📝 CreateDefaultTenantUsers 프로시저를 생성합니다 (백업)");
-
-            // SQL 파일 읽기
-            ClassPathResource resource =
-                    new ClassPathResource("sql/procedures/create_default_tenant_users.sql");
-            String procedureSQL =
-                    new String(resource.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
-
-            log.info("📄 SQL 파일 크기: {} bytes", procedureSQL.length());
-
-            if (procedureSQL != null && !procedureSQL.trim().isEmpty()) {
-                // DELIMITER 제거 및 SQL 정리
-                procedureSQL = procedureSQL.replaceAll("DELIMITER\\s+//", "")
-                        .replaceAll("DELIMITER\\s+;", "").replaceAll("//", "");
-
-                // 프로시저 생성 실행
-                jdbcTemplate.execute(procedureSQL);
-
-                log.info("✅ CreateDefaultTenantUsers 프로시저 생성 완료 (백업)");
-
-            } else {
-                log.warn("⚠️ CreateDefaultTenantUsers 프로시저 SQL 파일을 읽을 수 없습니다");
+            String procedureSQL = extractJdbcProcedureDdlFromContent(sqlContent, createStart);
+            if (procedureSQL == null || procedureSQL.trim().isEmpty()) {
+                String errorMsg = "❌ CreateDefaultTenantUsers 프로시저 SQL을 추출할 수 없습니다. 프로시저 생성 실패로 애플리케이션 시작 불가";
+                log.error(errorMsg);
+                throw new IllegalStateException(errorMsg);
             }
 
+            try (java.sql.Connection conn = dataSource.getConnection()) {
+                try (java.sql.Statement stmt = conn.createStatement()) {
+                    stmt.execute("DROP PROCEDURE IF EXISTS CreateDefaultTenantUsers;");
+                    log.info("🗑️ 기존 CreateDefaultTenantUsers 프로시저 삭제 완료");
+                } catch (SQLException e) {
+                    log.debug("CreateDefaultTenantUsers 프로시저 삭제 중 오류 (무시 가능): {}", e.getMessage());
+                }
+
+                try (java.sql.Statement stmt = conn.createStatement()) {
+                    stmt.execute(procedureSQL);
+                    log.info("✅ CreateDefaultTenantUsers 프로시저 생성 완료");
+                } catch (SQLException e) {
+                    String errorMsg = String.format(
+                            "❌ CreateDefaultTenantUsers 프로시저 생성 실패: %s. 프로시저 생성 실패로 애플리케이션 시작 불가",
+                            e.getMessage());
+                    log.error(errorMsg);
+                    throw new IllegalStateException(errorMsg, e);
+                }
+            }
+
+            if (!verifyProcedureExists("CreateDefaultTenantUsers")) {
+                String errorMsg = "❌ CreateDefaultTenantUsers 프로시저가 생성되지 않았습니다. 프로시저 생성 실패로 애플리케이션 시작 불가";
+                log.error(errorMsg);
+                throw new IllegalStateException(errorMsg);
+            }
+
+            if (!verifyProcedureParameters("CreateDefaultTenantUsers", 5)) {
+                String errorMsg = "❌ CreateDefaultTenantUsers 프로시저 파라미터가 올바르지 않습니다. 프로시저 생성 실패로 애플리케이션 시작 불가";
+                log.error(errorMsg);
+                throw new IllegalStateException(errorMsg);
+            }
+
+            log.info("✅ CreateDefaultTenantUsers 프로시저 생성 및 검증 완료");
+        } catch (IllegalStateException e) {
+            log.error("❌❌❌ CreateDefaultTenantUsers 프로시저 생성 실패 - 애플리케이션 시작 불가");
+            throw e;
         } catch (Exception e) {
-            log.warn("⚠️ CreateDefaultTenantUsers 프로시저 초기화 실패 (Flyway에서 처리될 예정): {}",
+            String errorMsg = String.format(
+                    "❌ CreateDefaultTenantUsers 프로시저 생성 중 예외 발생: %s. 프로시저 생성 실패로 애플리케이션 시작 불가",
                     e.getMessage());
+            log.error(errorMsg, e);
+            throw new IllegalStateException(errorMsg, e);
         }
     }
 
@@ -716,8 +592,7 @@ public class PlSqlInitializer {
         try {
             log.info("📝 ProcessOnboardingApproval 프로시저 강제 생성 시작");
 
-            ClassPathResource resource = new ClassPathResource(
-                    "db/migration/V20251225_004__force_recreate_process_onboarding_approval.sql");
+            ClassPathResource resource = new ClassPathResource(PROCESS_ONBOARDING_APPROVAL_PROCEDURE);
             String sqlContent = new String(resource.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
 
             // 주석 제거 (단일 라인 주석만)
@@ -770,7 +645,7 @@ public class PlSqlInitializer {
             }
 
             // 프로시저 파라미터 검증 (필수)
-            if (!verifyProcedureParameters("ProcessOnboardingApproval", 11)) {
+            if (!verifyProcedureParameters("ProcessOnboardingApproval", 12)) {
                 String errorMsg = "❌ ProcessOnboardingApproval 프로시저 파라미터가 올바르지 않습니다. 프로시저 생성 실패로 애플리케이션 시작 불가";
                 log.error(errorMsg);
                 throw new IllegalStateException(errorMsg);
@@ -904,8 +779,7 @@ public class PlSqlInitializer {
         try {
             log.info("📝 CreateTenantAdminAccount 프로시저 강제 생성 시작");
 
-            ClassPathResource resource = new ClassPathResource(
-                    "db/migration/V20251223_001__fix_create_tenant_admin_account_user_id.sql");
+            ClassPathResource resource = new ClassPathResource(CREATE_TENANT_ADMIN_ACCOUNT_PROCEDURE);
             String sqlContent = new String(resource.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
 
             // 주석 제거 (단일 라인 주석만)

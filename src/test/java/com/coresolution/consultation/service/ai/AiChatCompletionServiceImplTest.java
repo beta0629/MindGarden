@@ -15,6 +15,11 @@ import com.coresolution.consultation.service.SystemConfigService;
 import com.coresolution.consultation.service.ai.dto.AiCompletionRequest;
 import com.coresolution.consultation.service.ai.dto.AiResponseFormat;
 import com.coresolution.consultation.service.ai.parser.AiJsonResponseParser;
+import com.coresolution.consultation.service.ai.privacy.AiPiiMaskingService;
+import com.coresolution.consultation.constant.AiPrivacyFlagKeys;
+import com.coresolution.consultation.repository.UserRepository;
+import org.mockito.ArgumentCaptor;
+import org.springframework.http.HttpEntity;
 import com.coresolution.core.context.TenantContextHolder;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.HashMap;
@@ -53,6 +58,9 @@ class AiChatCompletionServiceImplTest {
     @Mock
     private RestTemplate restTemplate;
 
+    @Mock
+    private UserRepository userRepository;
+
     private final ObjectMapper objectMapper = new ObjectMapper();
     private AiJsonResponseParser jsonResponseParser;
     private AiChatCompletionServiceImpl service;
@@ -61,7 +69,8 @@ class AiChatCompletionServiceImplTest {
     void setUp() {
         jsonResponseParser = new AiJsonResponseParser(objectMapper);
         service = new AiChatCompletionServiceImpl(
-                systemConfigService, providerResolver, jsonResponseParser, restTemplate, objectMapper);
+                systemConfigService, providerResolver, jsonResponseParser, restTemplate, objectMapper,
+                new AiPiiMaskingService(systemConfigService, userRepository));
         TenantContextHolder.clear();
     }
 
@@ -268,5 +277,62 @@ class AiChatCompletionServiceImplTest {
         assertTrue(r.isFallback());
         assertEquals("claude", r.requestedProviderId());
         assertEquals("openai", r.effectiveProviderId());
+    }
+
+    @Test
+    @DisplayName("마스킹 ON(기본) — 외부 전송 본문에 전화·이메일·이름 원문 없음")
+    void completeChat_maskingEnabled_sendsMaskedPrompt() {
+        AiChatCompletionResult r = runOpenAiWithMaskingFlag(true);
+        assertTrue(r.success());
+        String sent = captureSentBody();
+        assertFalse(sent.contains(SAMPLE_PHONE));
+        assertFalse(sent.contains(SAMPLE_EMAIL));
+        assertFalse(sent.contains(SAMPLE_NAME));
+        assertTrue(sent.contains(AiPiiMaskingService.TOKEN_PHONE));
+        assertTrue(sent.contains(AiPiiMaskingService.TOKEN_EMAIL));
+        assertTrue(sent.contains(AiPiiMaskingService.TOKEN_NAME));
+    }
+
+    @Test
+    @DisplayName("테넌트 토글 OFF — 원문 전송")
+    void completeChat_maskingDisabled_sendsOriginalPrompt() {
+        runOpenAiWithMaskingFlag(false);
+        String sent = captureSentBody();
+        assertTrue(sent.contains(SAMPLE_PHONE));
+        assertTrue(sent.contains(SAMPLE_NAME));
+    }
+
+    private static final String SAMPLE_PHONE = "010-1234-5678";
+    private static final String SAMPLE_EMAIL = "client@example.com";
+    private static final String SAMPLE_NAME = "김민지";
+
+    private AiChatCompletionResult runOpenAiWithMaskingFlag(boolean enabled) {
+        when(systemConfigService.getBooleanForTenant(
+                TENANT_ID, AiPrivacyFlagKeys.PII_MASKING_ENABLED, AiPrivacyFlagKeys.DEFAULT_PII_MASKING_ENABLED))
+                .thenReturn(enabled);
+        when(providerResolver.resolveProvider(TENANT_ID)).thenReturn("openai");
+        when(systemConfigService.getApiKeyForProvider("openai")).thenReturn("sk");
+        when(systemConfigService.getApiUrlForProvider("openai")).thenReturn("https://api.openai.com/v1/chat/completions");
+        when(systemConfigService.getModelForProvider("openai")).thenReturn("gpt-4o-mini");
+        Map<String, Object> msg = Map.of("role", "assistant", "content", "ok");
+        Map<String, Object> body = Map.of("choices", List.of(Map.of("message", msg)),
+                "usage", Map.of("prompt_tokens", 1, "completion_tokens", 1, "total_tokens", 2));
+        when(restTemplate.exchange(contains("api.openai.com"), eq(HttpMethod.POST), any(), eq(Map.class)))
+                .thenReturn(ResponseEntity.ok(body));
+        AiCompletionRequest request = AiCompletionRequest.builder()
+                .systemPrompt("sys " + SAMPLE_EMAIL)
+                .userPrompt(SAMPLE_NAME + " 님 연락처 " + SAMPLE_PHONE)
+                .tenantId(TENANT_ID)
+                .maskingIdentifiers(List.of(SAMPLE_NAME))
+                .build();
+        return service.completeChat(request);
+    }
+
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    private String captureSentBody() {
+        ArgumentCaptor<HttpEntity> captor = ArgumentCaptor.forClass(HttpEntity.class);
+        org.mockito.Mockito.verify(restTemplate).exchange(
+                contains("api.openai.com"), eq(HttpMethod.POST), captor.capture(), eq(Map.class));
+        return String.valueOf(captor.getValue().getBody());
     }
 }

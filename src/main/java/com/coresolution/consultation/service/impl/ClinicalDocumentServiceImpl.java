@@ -6,6 +6,7 @@ import com.coresolution.consultation.entity.ConsultationRecord;
 import com.coresolution.consultation.repository.ClinicalReportRepository;
 import com.coresolution.consultation.repository.ConsultationRecordRepository;
 import com.coresolution.consultation.service.ClinicalDocumentService;
+import com.coresolution.consultation.service.ai.privacy.AiPiiMaskingService;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.service.ai.AIModelProvider;
 import com.coresolution.core.service.ai.AIModelProvider.AIResponse;
@@ -17,6 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 /**
  * 임상 문서 자동 생성 서비스 구현체
@@ -34,7 +36,14 @@ public class ClinicalDocumentServiceImpl implements ClinicalDocumentService {
     private final AIModelProvider geminiModelProvider;
     private final ClinicalReportRepository clinicalReportRepository;
     private final ConsultationRecordRepository consultationRecordRepository;
+    private final AiPiiMaskingService aiPiiMaskingService;
     private final ObjectMapper objectMapper = new ObjectMapper();
+
+    private String maskForAi(ConsultationRecord record, String prompt) {
+        List<String> identifiers = aiPiiMaskingService.resolveUserIdentifiers(
+            record.getTenantId(), record.getClientId(), record.getConsultantId());
+        return aiPiiMaskingService.mask(record.getTenantId(), prompt, identifiers);
+    }
 
     @Override
     @Transactional
@@ -49,6 +58,7 @@ public class ClinicalDocumentServiceImpl implements ClinicalDocumentService {
 
             // 사용자 프롬프트
             String userPrompt = buildSOAPPrompt(transcription, record);
+            userPrompt = maskForAi(record, userPrompt);
 
             // Gemini API 호출
             AIResponse aiResponse = geminiModelProvider.analyze(
@@ -105,6 +115,7 @@ public class ClinicalDocumentServiceImpl implements ClinicalDocumentService {
 
             String systemPrompt = getClinicalExpertSystemPrompt();
             String userPrompt = buildDAPPrompt(transcription, record);
+            userPrompt = maskForAi(record, userPrompt);
 
             AIResponse aiResponse = geminiModelProvider.analyze(
                 systemPrompt, userPrompt, 2000, 0.3);
@@ -159,6 +170,7 @@ public class ClinicalDocumentServiceImpl implements ClinicalDocumentService {
 
             String systemPrompt = getDiagnosticExpertSystemPrompt();
             String userPrompt = buildDiagnosticReportPrompt(record);
+            userPrompt = maskForAi(record, userPrompt);
 
             AIResponse aiResponse = geminiModelProvider.analyze(
                 systemPrompt, userPrompt, 3000, 0.2); // 진단은 보수적으로 (낮은 temperature)

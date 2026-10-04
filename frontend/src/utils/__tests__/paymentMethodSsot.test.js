@@ -2,6 +2,7 @@ import {
   buildPaymentMethodLabelMap,
   filterCheckoutSameDayPaymentMethodCodes,
   isCardMerchantFeeEligibleFromCodes,
+  isCardPaymentMethod,
   isCheckoutSameDayPaymentMethodOption,
   mapPaymentMethodCodesToOptions,
   normalizePaymentMethodCodeValue,
@@ -105,6 +106,36 @@ describe('paymentMethodSsot', () => {
         PAYMENT_METHOD_CODE_OTHER
       ]);
       expect(options.map((o) => o.value)).not.toContain('CASH');
+    });
+  });
+  describe('isCardPaymentMethod — 결제 승인번호 행 노출 기준', () => {
+    it('공통코드가 있으면 extra_data cardMerchantFeeEligible 이 기준', () => {
+      expect(isCardPaymentMethod('CREDIT_CARD', CHECKOUT_CODES)).toBe(true);
+      expect(isCardPaymentMethod('DEBIT_CARD', CHECKOUT_CODES)).toBe(true);
+      expect(isCardPaymentMethod('CASH', CHECKOUT_CODES)).toBe(false);
+      expect(isCardPaymentMethod(PAYMENT_METHOD_CODE_BANK_TRANSFER, CHECKOUT_CODES)).toBe(false);
+      expect(isCardPaymentMethod(PAYMENT_METHOD_CODE_OTHER, CHECKOUT_CODES)).toBe(false);
+    });
+
+    it('레거시 별칭(CARD)은 공통코드 canonical 행으로 판정', () => {
+      expect(isCardPaymentMethod('CARD', CODES)).toBe(true);
+      expect(isCardPaymentMethod('카드', CODES)).toBe(true);
+    });
+
+    it('공통코드가 없으면 백엔드 SSOT 상수 기준 폴백(카드·체크·단말·레거시 CARD)', () => {
+      expect(isCardPaymentMethod('CREDIT_CARD')).toBe(true);
+      expect(isCardPaymentMethod('card_terminal')).toBe(true);
+      expect(isCardPaymentMethod('CARD')).toBe(true);
+      expect(isCardPaymentMethod('CASH')).toBe(false);
+      expect(isCardPaymentMethod('BANK_TRANSFER')).toBe(false);
+      expect(isCardPaymentMethod('OTHER')).toBe(false);
+    });
+
+    it('빈 값·비문자열은 false', () => {
+      expect(isCardPaymentMethod(null)).toBe(false);
+      expect(isCardPaymentMethod('')).toBe(false);
+      expect(isCardPaymentMethod('  ')).toBe(false);
+      expect(isCardPaymentMethod(1)).toBe(false);
     });
   });
 });

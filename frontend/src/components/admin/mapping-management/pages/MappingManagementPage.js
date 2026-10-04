@@ -16,6 +16,7 @@ import StandardizedApi from '../../../../utils/standardizedApi';
 import notificationManager from '../../../../utils/notification';
 import { useConfirm } from '../../../../hooks/useConfirm';
 import { useSession } from '../../../../contexts/SessionContext';
+import { isAdmin } from '../../../../utils/RoleUtils';
 import UnifiedLoading from '../../../common/UnifiedLoading';
 import ContentArea from '../../../dashboard-v2/content/ContentArea';
 import ContentHeader from '../../../dashboard-v2/content/ContentHeader';
@@ -776,12 +777,12 @@ const MappingManagementPage = () => {
                 getStatusVariant={getStatusVariant}
                 onView={handleMappingPeek}
                 onEdit={handleEditMapping}
-                onRefund={handleRefundMapping}
+                onRefund={isAdmin(user) ? handleRefundMapping : undefined}
                 onConfirmPayment={handleConfirmPayment}
                 onConfirmDeposit={handleConfirmDeposit}
                 onApprove={handleApproveMapping}
                 onChangePendingPackage={handleRequestChangePendingPackage}
-                onCancelPendingMapping={handleRequestCancelPendingMapping}
+                onCancelPendingMapping={isAdmin(user) ? handleRequestCancelPendingMapping : undefined}
                 cancelPendingProcessing={cancelPendingProcessing}
                 onCreateClick={() => setShowCreateModal(true)}
                 viewMode={viewMode}
@@ -835,6 +836,7 @@ const MappingManagementPage = () => {
         onClose={handlePaymentModalClose}
         mappings={pendingMappings}
         onPaymentConfirmed={handlePaymentConfirmed}
+        canCancelPayment={isAdmin(user)}
       />
 
       <PartialRefundModal

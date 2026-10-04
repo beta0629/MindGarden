@@ -14,6 +14,7 @@ import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.exception.EntityNotFoundException;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.ConsultationMessageService;
+import com.coresolution.consultation.service.support.ConsultationMessageAccessGuard;
 import com.coresolution.consultation.utils.SessionUtils;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.controller.BaseApiController;
@@ -51,33 +52,42 @@ public class ConsultationMessageController extends BaseApiController {
     private final ConsultationMessageService consultationMessageService;
     private final UserRepository userRepository;
     private final com.coresolution.consultation.service.DynamicPermissionService dynamicPermissionService;
+    private final ConsultationMessageAccessGuard accessGuard;
+
+    private static final String LOGIN_REQUIRED_MESSAGE = "로그인이 필요합니다.";
+    private static final String TENANT_REQUIRED_MESSAGE = "테넌트 정보가 없습니다.";
 
     /**
-     * 읽음 처리: 메시지 수신자 본인이면 MESSAGE_MANAGE 없이 허용 (내담자·상담사 공통).
+     * 세션 사용자 테넌트 ID (공백이면 null). 요청 파라미터·헤더의 테넌트는 사용하지 않는다.
      *
-     * @param user    현재 사용자
-     * @param message 대상 메시지
-     * @return 수신자 본인이면 true
+     * @param user 세션 사용자
+     * @return trim 된 테넌트 ID 또는 null
      */
-    private static boolean isMessageReceiver(User user, ConsultationMessage message) {
-        if (user == null || message == null) {
-            return false;
+    private static String resolveSessionTenantId(User user) {
+        String tenantId = user != null ? user.getTenantId() : null;
+        if (tenantId == null || tenantId.trim().isEmpty()) {
+            return null;
         }
-        return user.getId() != null && Objects.equals(message.getReceiverId(), user.getId());
+        return tenantId.trim();
     }
 
-    /**
-     * 권한 체크: 관리자 권한 확인
-     */
-    private boolean isAdmin(User user) {
-        if (user == null) {
-            log.warn("⚠️ isAdmin: user is null");
-            return false;
+    private static <T> ResponseEntity<ApiResponse<T>> unauthorized() {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error(LOGIN_REQUIRED_MESSAGE));
+    }
+
+    private static <T> ResponseEntity<ApiResponse<T>> tenantMissing() {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.error(TENANT_REQUIRED_MESSAGE));
+    }
+
+    private static Long toLongOrNull(Object value) {
+        if (value == null || value.toString().isBlank()) {
+            return null;
         }
-        // 동적 권한 체크로 변경
-        boolean hasAdmin = dynamicPermissionService.hasPermission(user, "MESSAGE_MANAGE");
-        log.info("🔍 isAdmin 체크: role={}, hasAdmin={}", user.getRole().name(), hasAdmin);
-        return hasAdmin;
+        try {
+            return Long.valueOf(value.toString().trim());
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException("숫자 형식이 아닌 ID 입니다.");
+        }
     }
 
     /** 웹 어드민 메시지 목록과 동일: SYSTEM 발신 → 「시스템」(senderId 0L 조회 생략) */
@@ -342,14 +352,15 @@ public class ConsultationMessageController extends BaseApiController {
         
         User currentUser = SessionUtils.getCurrentUser(session);
         if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error("로그인이 필요합니다."));
+            return unauthorized();
         }
-        String tenantId = currentUser.getTenantId();
-        if (tenantId == null || tenantId.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.error("테넌트 정보가 없습니다."));
+        String tenantId = resolveSessionTenantId(currentUser);
+        if (tenantId == null) {
+            return tenantMissing();
         }
         try {
             TenantContextHolder.setTenantId(tenantId);
+            accessGuard.assertCanReadConsultantThread(currentUser, consultantId);
             Page<ConsultationMessage> messages = consultationMessageService.getConsultantMessages(
                 consultantId, clientId, status, isRead, isImportant, isUrgent, pageable);
         
@@ -407,51 +418,21 @@ public class ConsultationMessageController extends BaseApiController {
             HttpSession session) {
         log.info("📨 내담자 메시지 목록 조회 - 내담자 ID: {}, 상담사 ID: {}", clientId, consultantId);
         
-        // 인증 체크
         User currentUser = SessionUtils.getCurrentUser(session);
         if (currentUser == null) {
-            log.warn("⚠️ 인증되지 않은 사용자");
-            throw new RuntimeException("로그인이 필요합니다.");
+            return unauthorized();
         }
-        
-        log.info("🔍 현재 사용자 정보 - ID: {}, 역할: {}, 요청한 내담자 ID: {}", 
-            currentUser.getId(), currentUser.getRole(), clientId);
-        
-        // 동적 권한 체크
-        // 1. 내담자가 자신의 메시지를 조회하는 경우 허용
-        boolean isOwnMessage = currentUser.getRole() == UserRole.CLIENT && 
-                               currentUser.getId().equals(clientId);
-        
-        log.info("🔍 자신의 메시지 체크 - 사용자 ID: {}, 요청한 내담자 ID: {}, 일치 여부: {}, 역할: {}", 
-            currentUser.getId(), clientId, currentUser.getId().equals(clientId), currentUser.getRole());
-        
-        // 2. 관리자 역할 체크 (관리자는 모든 메시지 조회 가능)
-        boolean isAdmin = currentUser.getRole() != null && currentUser.getRole().isAdmin();
-        
-        // 3. API 접근 권한이 있는 경우 허용 (상담사 등)
-        String apiPath = "/api/consultation-messages/client/" + clientId;
-        boolean hasApiAccess = dynamicPermissionService.hasApiAccess(currentUser, apiPath);
-        
-        log.info("🔍 권한 체크 - 자신의 메시지: {}, 관리자: {}, API 권한: {}", isOwnMessage, isAdmin, hasApiAccess);
-        
-        if (!isOwnMessage && !isAdmin && !hasApiAccess) {
-            log.warn("⚠️ 권한 없음 - 사용자 ID: {}, 역할: {}, 요청한 내담자 ID: {}, 자신의 메시지: {}, 관리자: {}, API 권한: {}", 
-                currentUser.getId(), currentUser.getRole(), clientId, isOwnMessage, isAdmin, hasApiAccess);
-            throw new RuntimeException("접근 권한이 없습니다.");
+        String tenantId = resolveSessionTenantId(currentUser);
+        if (tenantId == null) {
+            return tenantMissing();
         }
-        
-        String tenantId = currentUser.getTenantId();
-        if (tenantId == null || tenantId.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.error("테넌트 정보가 없습니다."));
-        }
-        
-        log.info("✅ 권한 확인 완료 - 사용자 ID: {}, 역할: {}, 요청한 내담자 ID: {}, 자신의 메시지: {}, 관리자: {}, API 권한: {}", 
-            currentUser.getId(), currentUser.getRole(), clientId, isOwnMessage, isAdmin, hasApiAccess);
-        
+
         try {
             TenantContextHolder.setTenantId(tenantId);
+            Long consultantFilter =
+                accessGuard.resolveClientThreadConsultantFilter(currentUser, clientId, consultantId);
             Page<ConsultationMessage> messages = consultationMessageService.getClientMessages(
-                clientId, consultantId, status, isRead, isImportant, isUrgent, pageable);
+                clientId, consultantFilter, status, isRead, isImportant, isUrgent, pageable);
         
         // 안전한 데이터 추출
         List<Map<String, Object>> messageData = messages.getContent().stream()
@@ -502,33 +483,24 @@ public class ConsultationMessageController extends BaseApiController {
         User currentUser = SessionUtils.getCurrentUser(session);
         if (currentUser == null) {
             log.warn("⚠️ 인증되지 않은 사용자");
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                .body(ApiResponse.error("로그인이 필요합니다."));
+            return unauthorized();
         }
-        boolean hasManage = dynamicPermissionService.hasPermission(currentUser, "MESSAGE_MANAGE");
-        String tenantId = currentUser.getTenantId();
-        if (tenantId == null || tenantId.trim().isEmpty()) {
+        String tenantId = resolveSessionTenantId(currentUser);
+        if (tenantId == null) {
             log.warn("⚠️ 테넌트 정보 없음 - 사용자 ID: {}", currentUser.getId());
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                .body(ApiResponse.error("테넌트 정보가 없습니다."));
+            return tenantMissing();
         }
-        tenantId = tenantId.trim();
 
         try {
             TenantContextHolder.setTenantId(tenantId);
             ConsultationMessage message = consultationMessageService.findActiveById(messageId)
                 .orElseThrow(() -> new EntityNotFoundException("메시지를 찾을 수 없습니다."));
 
-            if (!hasManage && !isMessageReceiver(currentUser, message)
-                    && !Objects.equals(message.getSenderId(), currentUser.getId())) {
-                log.warn("⚠️ 메시지 상세 조회 거부 - userId={}, messageId={}", currentUser.getId(), messageId);
-                return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ApiResponse.error("메시지를 조회할 권한이 없습니다."));
-            }
+            accessGuard.assertCanViewMessage(currentUser, message);
 
             log.info("📨 메시지 조회 성공 - ID: {}, 읽음 상태: {}", messageId, message.getIsRead());
 
-            if (!message.getIsRead() && (hasManage || isMessageReceiver(currentUser, message))) {
+            if (!message.getIsRead() && accessGuard.canMarkAsRead(currentUser, message)) {
                 try {
                     log.info("🔄 읽음 처리 시작 - 메시지 ID: {}", messageId);
                     consultationMessageService.markAsRead(messageId);
@@ -593,28 +565,18 @@ public class ConsultationMessageController extends BaseApiController {
 
         User currentUser = SessionUtils.getCurrentUser(session);
         if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                .body(ApiResponse.error("로그인이 필요합니다."));
+            return unauthorized();
         }
-        String tenantId = currentUser.getTenantId();
-        if (tenantId == null || tenantId.trim().isEmpty()) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                .body(ApiResponse.error("테넌트 정보가 없습니다."));
+        String tenantId = resolveSessionTenantId(currentUser);
+        if (tenantId == null) {
+            return tenantMissing();
         }
-        tenantId = tenantId.trim();
 
         try {
             TenantContextHolder.setTenantId(tenantId);
             ConsultationMessage existing = consultationMessageService.findActiveById(messageId)
                 .orElseThrow(() -> new EntityNotFoundException("메시지를 찾을 수 없습니다."));
-            boolean hasManage = dynamicPermissionService.hasPermission(currentUser, "MESSAGE_MANAGE");
-            boolean isReceiver = isMessageReceiver(currentUser, existing);
-            if (!hasManage && !isReceiver) {
-                log.warn("⚠️ 읽음 처리 거부 - userId={}, messageId={}, receiverId={}, MESSAGE_MANAGE=false",
-                    currentUser.getId(), messageId, existing.getReceiverId());
-                return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ApiResponse.error("이 메시지를 읽음 처리할 권한이 없습니다."));
-            }
+            accessGuard.assertCanMarkAsRead(currentUser, existing);
             ConsultationMessage message = consultationMessageService.markAsRead(messageId);
             Map<String, Object> messageData = new HashMap<>();
             messageData.put("id", message.getId());
@@ -668,23 +630,41 @@ public class ConsultationMessageController extends BaseApiController {
      * POST /api/consultation-messages
      */
     @PostMapping
-    public ResponseEntity<ApiResponse<Map<String, Object>>> sendMessage(@RequestBody Map<String, Object> request) {
-        log.info("📨 메시지 전송 요청: {}", request);
-        
-        Long consultantId = Long.valueOf(request.get("consultantId").toString());
-        Long clientId = Long.valueOf(request.get("clientId").toString());
-        Long consultationId = request.get("consultationId") != null ? 
-            Long.valueOf(request.get("consultationId").toString()) : null;
-        String senderType = (String) request.get("senderType");
+    public ResponseEntity<ApiResponse<Map<String, Object>>> sendMessage(
+            @RequestBody Map<String, Object> request,
+            HttpSession session) {
+        User currentUser = SessionUtils.getCurrentUser(session);
+        if (currentUser == null) {
+            return unauthorized();
+        }
+        String tenantId = resolveSessionTenantId(currentUser);
+        if (tenantId == null) {
+            return tenantMissing();
+        }
+
+        Long requestConsultantId = toLongOrNull(request.get("consultantId"));
+        Long requestClientId = toLongOrNull(request.get("clientId"));
+        Long consultationId = toLongOrNull(request.get("consultationId"));
+        String requestSenderType = (String) request.get("senderType");
         String title = (String) request.get("title");
         String content = (String) request.get("content");
         String messageType = (String) request.getOrDefault("messageType", "GENERAL");
         Boolean isImportant = (Boolean) request.getOrDefault("isImportant", false);
         Boolean isUrgent = (Boolean) request.getOrDefault("isUrgent", false);
-        
-        ConsultationMessage message = consultationMessageService.sendMessage(
-            consultantId, clientId, consultationId, senderType, 
-            title, content, messageType, isImportant, isUrgent);
+        log.info("📨 메시지 전송 요청 - userId={}, consultantId={}, clientId={}",
+            currentUser.getId(), requestConsultantId, requestClientId);
+
+        ConsultationMessage message;
+        try {
+            TenantContextHolder.setTenantId(tenantId);
+            ConsultationMessageAccessGuard.SendScope scope = accessGuard.resolveSendScope(
+                currentUser, requestConsultantId, requestClientId, requestSenderType);
+            message = consultationMessageService.sendMessage(
+                scope.consultantId(), scope.clientId(), consultationId, scope.senderType(),
+                title, content, messageType, isImportant, isUrgent);
+        } finally {
+            TenantContextHolder.clear();
+        }
         
         Map<String, Object> messageData = new HashMap<>();
         messageData.put("id", message.getId());
@@ -708,17 +688,35 @@ public class ConsultationMessageController extends BaseApiController {
     @PostMapping("/{messageId}/reply")
     public ResponseEntity<ApiResponse<Map<String, Object>>> replyToMessage(
             @PathVariable Long messageId,
-            @RequestBody Map<String, Object> request) {
+            @RequestBody Map<String, Object> request,
+            HttpSession session) {
         log.info("📨 메시지 답장 - 원본 메시지 ID: {}", messageId);
-        
+        User currentUser = SessionUtils.getCurrentUser(session);
+        if (currentUser == null) {
+            return unauthorized();
+        }
+        String tenantId = resolveSessionTenantId(currentUser);
+        if (tenantId == null) {
+            return tenantMissing();
+        }
+
         String title = (String) request.get("title");
         String content = (String) request.get("content");
         String messageType = (String) request.getOrDefault("messageType", "GENERAL");
         Boolean isImportant = (Boolean) request.getOrDefault("isImportant", false);
         Boolean isUrgent = (Boolean) request.getOrDefault("isUrgent", false);
-        
-        ConsultationMessage reply = consultationMessageService.replyToMessage(
-            messageId, title, content, messageType, isImportant, isUrgent);
+
+        ConsultationMessage reply;
+        try {
+            TenantContextHolder.setTenantId(tenantId);
+            ConsultationMessage original = consultationMessageService.findActiveById(messageId)
+                .orElseThrow(() -> new EntityNotFoundException("메시지를 찾을 수 없습니다."));
+            accessGuard.assertCanReply(currentUser, original);
+            reply = consultationMessageService.replyToMessage(
+                messageId, title, content, messageType, isImportant, isUrgent);
+        } finally {
+            TenantContextHolder.clear();
+        }
         
         Map<String, Object> messageData = new HashMap<>();
         messageData.put("id", reply.getId());
@@ -741,11 +739,25 @@ public class ConsultationMessageController extends BaseApiController {
      * DELETE /api/consultation-messages/{messageId}
      */
     @DeleteMapping("/{messageId}")
-    public ResponseEntity<ApiResponse<Void>> deleteMessage(@PathVariable Long messageId) {
+    public ResponseEntity<ApiResponse<Void>> deleteMessage(@PathVariable Long messageId, HttpSession session) {
         log.info("📨 메시지 삭제 - 메시지 ID: {}", messageId);
-        
-        consultationMessageService.deleteMessage(messageId);
-        
+        User currentUser = SessionUtils.getCurrentUser(session);
+        if (currentUser == null) {
+            return unauthorized();
+        }
+        String tenantId = resolveSessionTenantId(currentUser);
+        if (tenantId == null) {
+            return tenantMissing();
+        }
+        try {
+            TenantContextHolder.setTenantId(tenantId);
+            ConsultationMessage existing = consultationMessageService.findActiveById(messageId)
+                .orElseThrow(() -> new EntityNotFoundException("메시지를 찾을 수 없습니다."));
+            accessGuard.assertCanDelete(currentUser, existing);
+            consultationMessageService.deleteMessage(messageId);
+        } finally {
+            TenantContextHolder.clear();
+        }
         return deleted("메시지가 삭제되었습니다.");
     }
 
@@ -754,10 +766,28 @@ public class ConsultationMessageController extends BaseApiController {
      * PUT /api/consultation-messages/{messageId}/archive
      */
     @PutMapping("/{messageId}/archive")
-    public ResponseEntity<ApiResponse<Map<String, Object>>> archiveMessage(@PathVariable Long messageId) {
+    public ResponseEntity<ApiResponse<Map<String, Object>>> archiveMessage(
+            @PathVariable Long messageId,
+            HttpSession session) {
         log.info("📨 메시지 아카이브 - 메시지 ID: {}", messageId);
-        
-        ConsultationMessage message = consultationMessageService.archiveMessage(messageId);
+        User currentUser = SessionUtils.getCurrentUser(session);
+        if (currentUser == null) {
+            return unauthorized();
+        }
+        String tenantId = resolveSessionTenantId(currentUser);
+        if (tenantId == null) {
+            return tenantMissing();
+        }
+        ConsultationMessage message;
+        try {
+            TenantContextHolder.setTenantId(tenantId);
+            ConsultationMessage existing = consultationMessageService.findActiveById(messageId)
+                .orElseThrow(() -> new EntityNotFoundException("메시지를 찾을 수 없습니다."));
+            accessGuard.assertCanArchive(currentUser, existing);
+            message = consultationMessageService.archiveMessage(messageId);
+        } finally {
+            TenantContextHolder.clear();
+        }
         
         Map<String, Object> data = new HashMap<>();
         data.put("id", message.getId());

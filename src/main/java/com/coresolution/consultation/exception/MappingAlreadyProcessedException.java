@@ -33,7 +33,11 @@ public class MappingAlreadyProcessedException extends IllegalStateException {
         /** 매칭 status 가 {@code PENDING_PAYMENT} 가 아님 (이미 ACTIVE/TERMINATED 등). */
         STATUS_NOT_PENDING_PAYMENT,
         /** 동일 클라이언트 요청 ID 재사용 (Idempotency Key 충돌). */
-        DUPLICATE_REQUEST_ID
+        DUPLICATE_REQUEST_ID,
+        /** 이미 종료·취소된 매칭 (재종료·재환불 금지). */
+        ALREADY_CLOSED,
+        /** 쇼핑 주문(PG) 결제 매칭 — 일괄 결제 취소 대상 아님, 주문 환불 경로에서만 처리. */
+        SHOP_ORDER_REFUND_REQUIRED
     }
 
     private final Long mappingId;

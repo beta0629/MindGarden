@@ -6,20 +6,26 @@ import { API_ENDPOINTS } from '../../constants/apiEndpoints';
 import { isRestrictedClientProfileTier } from '../../constants/clientProfileContext';
 import notificationManager from '../../utils/notification';
 import { toDisplayString, toErrorMessage } from '../../utils/safeDisplay';
+import { hasScheduleSessionStarted } from '../../utils/scheduleSessionStart';
 import UnifiedModal from '../common/modals/UnifiedModal';
 import ConfirmModal from '../common/ConfirmModal';
 import MGButton from '../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
-import { CONSULTATION_LOG_AUTOSAVE_STRINGS, CONSULTATION_LOG_SESSION_NUMBER_STRINGS } from '../../constants/consultationLogAutosaveStrings';
+import {
+  CONSULTATION_LOG_AUTOSAVE_STRINGS,
+  CONSULTATION_LOG_SESSION_NUMBER_STRINGS,
+  formatConsultationLogAutosaveString
+} from '../../constants/consultationLogAutosaveStrings';
 import {
   buildConsultationLogFormMessages,
   validateConsultationLogForm
 } from '../../utils/consultationLogFormValidation';
 import {
-  removeConsultationLogLocalDraft,
-  writeConsultationLogLocalDraft
-} from '../../utils/consultationLogLocalDraft';
-import { useConsultationLogLocalAutosave } from '../../hooks/useConsultationLogLocalAutosave';
+  DRAFT_AUTOSAVE_STATUS,
+  formatDraftSavedAtLabel,
+  useConsultationLogDraftAutosave
+} from '../../hooks/useConsultationLogDraftAutosave';
+import { useUnsavedChangesGuard } from '../../hooks/useUnsavedChangesGuard';
 import {
   resolveSessionNumberFromSchedule,
   shouldBlockSaveForMissingSessionNumber
@@ -35,6 +41,7 @@ import ConsultationLogPrecautionsPanel from './organisms/ConsultationLogPrecauti
 import ConsultationLogFormPanel from './organisms/ConsultationLogFormPanel';
 import ConsultationLogRequiredFieldsNotice from './molecules/ConsultationLogRequiredFieldsNotice';
 import ConsultationLogSessionHeaderMeta from './molecules/ConsultationLogSessionHeaderMeta';
+import ConsultationLogAdminWriteBadge from './molecules/ConsultationLogAdminWriteBadge';
 import {
   INSTITUTION_LINK_CONSULTATION_RECORDS_API,
   buildInstitutionLinkLatestLogUrl,
@@ -87,6 +94,8 @@ const normalizeRiskAssessmentForForm = (raw) => {
 };
 
 const CONSULTATION_LOG_API_VALIDATION_ERROR_CODES = new Set(['CONSTRAINT_VIOLATION', 'BEAN_VALIDATION_ERROR']);
+
+const CONSULTATION_RECORD_DUPLICATE_ERROR_CODE = 'CONSULTATION_RECORD_DUPLICATE';
 
 /**
  * ErrorResponse.details — "field: message, field2: message2" (콤마+공백 구분) 파싱.
@@ -149,6 +158,15 @@ const applyConsultationLogApiValidationErrors = (error, setValidationErrors) => 
 };
 
 /**
+ * 같은 일정 일지 중복 생성 거부(409 CONSULTATION_RECORD_DUPLICATE) 여부.
+ *
+ * @param {unknown} error
+ * @returns {boolean}
+ */
+const isConsultationRecordDuplicateError = (error) =>
+  error?.status === 409 && error?.response?.data?.errorCode === CONSULTATION_RECORD_DUPLICATE_ERROR_CODE;
+
+/**
  * 로컬 초안 스코프 — tenantId와 함께 사용. 세션(로그인)과 별개로 단말에만 보관.
  *
  * @param {object|null} scheduleData
@@ -179,12 +197,36 @@ const ConsultationLogModal = ({
   scheduleData,
   onSave,
   recordId,
-  isAdmin = false
+  isAdmin = false,
+  routeLeaveGuard = false
 }) => {
   const { t } = useTranslation();
   const { user } = useSession();
 
-  const [loading, setLoading] = useState(false);
+  /**
+   * 로드 완료 대상 키. 모달이 열린 대상(recordId·scheduleData.id)과 같아질 때까지 로딩으로 본다.
+   *
+   * <p>이전에는 {@code loading} 초기값이 false 라 모달이 열린 직후 첫 페인트가
+   * 빈 formData 로 렌더됐다(입력칸 0자 → 2~3초 뒤 채워짐). 로드 effect 는 첫 페인트
+   * <strong>이후</strong>에 실행되고, 일정 경로는 {@code enrichScheduleSessionMeta} 를
+   * await 한 뒤에야 {@code setLoading(true)} 를 하므로 빈 화면이 더 길게 보였다.
+   * 렌더 시점에 파생되는 값으로 바꿔 첫 페인트부터 로딩으로 만든다.</p>
+   */
+  const [loadedTargetKey, setLoadedTargetKey] = useState(null);
+  const openTargetKey = useMemo(() => {
+    if (!isOpen) return '';
+    return `${recordId ?? ''}|${scheduleData?.id ?? ''}`;
+  }, [isOpen, recordId, scheduleData?.id]);
+  const openTargetKeyRef = useRef(openTargetKey);
+  openTargetKeyRef.current = openTargetKey;
+  /** 로더가 돌 대상이 아예 없으면(둘 다 없음) 로딩으로 두지 않는다 */
+  const hasLoadTarget = Boolean(recordId) || Boolean(scheduleData);
+  const dataLoaded = isOpen && loadedTargetKey === openTargetKey;
+  const loading = isOpen && hasLoadTarget && !dataLoaded;
+  /** 기존 로더의 setLoading(true/false) 호출부를 그대로 쓰기 위한 어댑터 */
+  const setLoading = useCallback((next) => {
+    setLoadedTargetKey(next ? null : openTargetKeyRef.current);
+  }, []);
   const [saving, setSaving] = useState(false);
   const [client, setClient] = useState(null);
   /** with-stats 전체 응답(client, statistics, currentConsultants 등) — 권한 있을 때만 채워짐 */
@@ -312,7 +354,14 @@ const ConsultationLogModal = ({
     return '';
   }, [scheduleData?.id, consultationRecord?.consultationId]);
 
+  /** 서버 초안은 작성자 본인 키로만 저장된다 — 관리자는 담당 상담사가 아닌 본인 id 로 조회·저장한다. */
   const draftConsultantId = useMemo(() => {
+    if (isAdmin) {
+      const adminId = user?.id;
+      if (adminId == null || adminId === '') return null;
+      const n = typeof adminId === 'number' ? adminId : parseInt(String(adminId), 10);
+      return Number.isFinite(n) ? n : null;
+    }
     const fromSchedule = scheduleData?.consultantId;
     if (fromSchedule != null && fromSchedule !== '') {
       const n = typeof fromSchedule === 'number' ? fromSchedule : parseInt(String(fromSchedule), 10);
@@ -329,60 +378,109 @@ const ConsultationLogModal = ({
       if (Number.isFinite(n)) return n;
     }
     return null;
-  }, [scheduleData?.consultantId, consultationRecord?.consultantId, user?.id]);
+  }, [isAdmin, scheduleData?.consultantId, consultationRecord?.consultantId, user?.id]);
 
   const [restoreDraftConfirmOpen, setRestoreDraftConfirmOpen] = useState(false);
+  /** 불러오기 확정 전 "작성 중 내용 덮어쓰기" 2차 확인 */
+  const [restoreOverwriteConfirmOpen, setRestoreOverwriteConfirmOpen] = useState(false);
   const [pendingRestoreDraft, setPendingRestoreDraft] = useState(null);
   const [closeWithoutSaveConfirmOpen, setCloseWithoutSaveConfirmOpen] = useState(false);
+  const [conflictConfirmOpen, setConflictConfirmOpen] = useState(false);
 
   const formDataRef = useRef(formData);
   const memoDraftRef = useRef(memoDraft);
   const contentDirtyRef = useRef(false);
   const restoreConfirmedRef = useRef(false);
+  const overwriteConfirmedRef = useRef(false);
+  /** 서버 초안 payloadJson 과 동일 스키마 — 훅이 그대로 직렬화한다 */
+  const draftSnapshotRef = useRef({ formData, memoDraft });
 
   formDataRef.current = formData;
   memoDraftRef.current = memoDraft;
+  draftSnapshotRef.current = { formData, memoDraft };
 
-  const onRestoreDraftCandidate = useCallback((draft) => {
-    setPendingRestoreDraft(draft);
+  const onRestoreCandidate = useCallback((candidate) => {
+    setPendingRestoreDraft(candidate);
     setRestoreDraftConfirmOpen(true);
   }, []);
 
+  const onConflictDetected = useCallback(() => {
+    setConflictConfirmOpen(true);
+  }, []);
+
+  const conflictResolvedRef = useRef(false);
+
+  /** 복구·충돌 해소 시 스냅샷을 폼에 반영 (초안 payloadJson 스키마와 동일) */
+  const applyRestoredDraftSnapshot = useCallback((snapshot) => {
+    if (!snapshot || typeof snapshot !== 'object') return;
+    if (snapshot.formData && typeof snapshot.formData === 'object') {
+      setFormData(snapshot.formData);
+    }
+    setMemoDraft(typeof snapshot.memoDraft === 'string' ? snapshot.memoDraft : '');
+    setMemoDirty(false);
+    contentDirtyRef.current = false;
+  }, []);
+
+  /** "임시저장된 내용이 있어요(2:03). 불러올까요?" — KST */
+  const restoreDraftMessage = useMemo(() => {
+    const savedAt = pendingRestoreDraft?.savedAt;
+    if (!Number.isFinite(savedAt)) {
+      return CONSULTATION_LOG_AUTOSAVE_STRINGS.RESTORE_MESSAGE;
+    }
+    return formatConsultationLogAutosaveString(
+      CONSULTATION_LOG_AUTOSAVE_STRINGS.RESTORE_MESSAGE_WITH_TIME,
+      formatDraftSavedAtLabel(savedAt)
+    );
+  }, [pendingRestoreDraft?.savedAt]);
+
   const {
-    localAutosaveUi,
-    localSavedAtLabel,
-    serverDraftSyncFailed,
-    resetLocalAutosaveState,
-    markRestoreHandled
-  } = useConsultationLogLocalAutosave({
-    isOpen,
-    loading,
-    tenantIdStr,
-    draftScope,
-    draftQueryConsultationId,
+    status: draftStatus,
+    savedAtLabel: draftSavedAtLabel,
+    backupKept: draftBackupKept,
+    notifyDirty,
+    saveNow: saveDraftNow,
+    discardDraft,
+    resolveRestoreCandidate,
+    loadLatestFromServer,
+    keepMineOnConflict
+  } = useConsultationLogDraftAutosave({
+    // 기록 로드가 끝난 뒤에만 초안을 조회한다 — 레코드 적용과 초안 복구가 경쟁하지 않도록
+    // 병합 판단을 한 번만 한다 (레코드 반영 → 초안 복구 여부 질의).
+    enabled: isOpen && !loading,
+    tenantId: tenantIdStr,
+    userId: user?.id,
+    consultationId: draftQueryConsultationId,
     consultantId: draftConsultantId,
-    formData,
-    memoDraft,
-    formDataRef,
-    memoDraftRef,
-    contentDirtyRef,
-    onRestoreDraftCandidate
+    legacyScope: draftScope,
+    snapshotRef: draftSnapshotRef,
+    dirtyRef: contentDirtyRef,
+    recordUpdatedAt: consultationRecord?.updatedAt,
+    onRestoreCandidate,
+    onConflictDetected
+  });
+
+  // 새로고침·탭 닫기 확인. 전체화면 라우트(routeLeaveGuard)로 띄울 때만 라우트 이동도 확인한다.
+  const { blocker: leaveBlocker, releaseGuard: releaseLeaveGuard } = useUnsavedChangesGuard({
+    when: isOpen && (contentDirtyRef.current || memoDirty),
+    enableRouteBlocker: routeLeaveGuard
   });
 
   useEffect(() => {
     if (!isOpen) {
       setRestoreDraftConfirmOpen(false);
+      setRestoreOverwriteConfirmOpen(false);
       setPendingRestoreDraft(null);
       setCloseWithoutSaveConfirmOpen(false);
+      setConflictConfirmOpen(false);
       return undefined;
     }
     return undefined;
   }, [isOpen]);
 
   const setFormDataWithDirty = useCallback((updater) => {
-    contentDirtyRef.current = true;
+    notifyDirty();
     setFormData(updater);
-  }, []);
+  }, [notifyDirty]);
 
   const requestClose = useCallback(() => {
     if (saving) return;
@@ -393,23 +491,32 @@ const ConsultationLogModal = ({
     onClose?.();
   }, [saving, memoDirty, onClose]);
 
+  /** "저장 중… / 2:03 임시저장됨 / 저장 실패(재시도 중)" — KST */
   const autosaveStatusText = useMemo(() => {
     if (saving) return CONSULTATION_LOG_AUTOSAVE_STRINGS.STATUS_FINAL_SAVING;
-    if (!tenantIdStr) return CONSULTATION_LOG_AUTOSAVE_STRINGS.STATUS_LOCAL_UNAVAILABLE;
-    if (localAutosaveUi === 'saving') return CONSULTATION_LOG_AUTOSAVE_STRINGS.STATUS_LOCAL_SAVING;
-    if (localAutosaveUi === 'failed') return CONSULTATION_LOG_AUTOSAVE_STRINGS.STATUS_LOCAL_FAILED;
-    if (localAutosaveUi === 'saved' && localSavedAtLabel) {
-      const base = `${CONSULTATION_LOG_AUTOSAVE_STRINGS.STATUS_LOCAL_SAVED_PREFIX} · ${localSavedAtLabel}`;
-      if (serverDraftSyncFailed) {
-        return `${base} · ${CONSULTATION_LOG_AUTOSAVE_STRINGS.STATUS_SERVER_DRAFT_FAILED}`;
-      }
-      return base;
+    if (!tenantIdStr) return CONSULTATION_LOG_AUTOSAVE_STRINGS.STATUS_DRAFT_UNAVAILABLE;
+    if (draftStatus === DRAFT_AUTOSAVE_STATUS.SAVING) {
+      return CONSULTATION_LOG_AUTOSAVE_STRINGS.STATUS_DRAFT_SAVING;
     }
-    if (serverDraftSyncFailed) {
-      return CONSULTATION_LOG_AUTOSAVE_STRINGS.STATUS_SERVER_DRAFT_FAILED;
+    if (draftStatus === DRAFT_AUTOSAVE_STATUS.RETRYING) {
+      return CONSULTATION_LOG_AUTOSAVE_STRINGS.STATUS_DRAFT_RETRYING;
+    }
+    if (draftStatus === DRAFT_AUTOSAVE_STATUS.FAILED) {
+      return draftBackupKept
+        ? CONSULTATION_LOG_AUTOSAVE_STRINGS.STATUS_DRAFT_FAILED
+        : CONSULTATION_LOG_AUTOSAVE_STRINGS.STATUS_DRAFT_FAILED_NOT_KEPT;
+    }
+    if (draftStatus === DRAFT_AUTOSAVE_STATUS.SAVED && draftSavedAtLabel) {
+      return formatConsultationLogAutosaveString(
+        CONSULTATION_LOG_AUTOSAVE_STRINGS.STATUS_DRAFT_SAVED_WITH_TIME,
+        draftSavedAtLabel
+      );
     }
     return '';
-  }, [saving, tenantIdStr, localAutosaveUi, localSavedAtLabel, serverDraftSyncFailed]);
+  }, [saving, tenantIdStr, draftStatus, draftSavedAtLabel, draftBackupKept]);
+
+  const autosaveStatusIsError = draftStatus === DRAFT_AUTOSAVE_STATUS.FAILED
+    || draftStatus === DRAFT_AUTOSAVE_STATUS.RETRYING;
 
   /** 일정에 유효한 내담자 ID가 있는지 (빈 문자열/NaN 제외) */
   const hasValidScheduleClientId = useMemo(() => {
@@ -561,17 +668,26 @@ const ConsultationLogModal = ({
     }
   }, [isOpen, recordId]);
 
+  /**
+   * 같은 일정이면 부모가 새 객체를 넘겨도 다시 로드하지 않는다.
+   * 다시 로드하면 loadData 가 formData 를 통째로 덮어 입력 중인 글이 사라진다.
+   */
+  const scheduleDataRef = useRef(scheduleData);
+  scheduleDataRef.current = scheduleData;
+  const scheduleLoadKey = scheduleData ? String(scheduleData.id ?? scheduleData.scheduleId ?? '') : null;
+
   useEffect(() => {
     if (!isOpen) {
       scheduleMetaRef.current = null;
       return undefined;
     }
-    if (scheduleData && !recordId) {
+    const currentSchedule = scheduleDataRef.current;
+    if (currentSchedule && !recordId) {
       let cancelled = false;
       (async() => {
         loadPriorityCodes();
         loadCompletionStatusCodes();
-        const enriched = await enrichScheduleSessionMeta(scheduleData);
+        const enriched = await enrichScheduleSessionMeta(currentSchedule);
         if (cancelled) {
           return;
         }
@@ -583,10 +699,14 @@ const ConsultationLogModal = ({
       };
     }
     return undefined;
-  }, [isOpen, scheduleData, recordId]);
+  }, [isOpen, scheduleLoadKey, recordId]);
 
   const loadDataByRecordId = async() => {
-    if (!recordId || !user?.id) return;
+    if (!recordId || !user?.id) {
+      // 로드할 수 없으면 로딩 상태로 묶어 두지 않는다 (빈 폼이 아니라 로딩이 영구 표시되는 것 방지)
+      setLoading(false);
+      return;
+    }
     try {
       contentDirtyRef.current = false;
       setLoading(true);
@@ -785,9 +905,8 @@ const ConsultationLogModal = ({
         }
 
         if (!loadedRecord) {
-        const recordUrl = isAdmin
-          ? `/api/v1/schedules/consultation-records?consultationId=${activeSchedule.id}`
-          : `/api/v1/schedules/consultation-records?consultantId=${user.id}&consultationId=${activeSchedule.id}`;
+        // 권한은 서버가 작성자(consultation_records.consultant_id)·같은 테넌트 관리자 기준으로 판정한다.
+        const recordUrl = `/api/v1/schedules/consultation-records?consultationId=${activeSchedule.id}`;
         const recordResponse = await apiGet(recordUrl);
         const recordList = recordResponse?.records ?? recordResponse?.data?.records ?? (Array.isArray(recordResponse?.data) ? recordResponse.data : Array.isArray(recordResponse) ? recordResponse : []);
         const hasRecord = recordList.length > 0 && (recordResponse?.success !== false);
@@ -861,7 +980,7 @@ const ConsultationLogModal = ({
             sessionDate: getSessionDateFromSchedule(activeSchedule),
             sessionNumber: resolveSessionNumberFromSchedule(activeSchedule),
             sessionDurationMinutes: 60,
-            isSessionCompleted: true,
+            isSessionCompleted: hasScheduleSessionStarted(activeSchedule),
             ...Object.fromEntries(
               Object.entries(autoFillData).filter(([key]) => !prev[key])
             )
@@ -874,7 +993,7 @@ const ConsultationLogModal = ({
           sessionDate: getSessionDateFromSchedule(activeSchedule),
           sessionNumber: resolveSessionNumberFromSchedule(activeSchedule),
           sessionDurationMinutes: 60,
-          isSessionCompleted: true
+          isSessionCompleted: hasScheduleSessionStarted(activeSchedule)
         }));
       }
 
@@ -897,7 +1016,7 @@ const ConsultationLogModal = ({
 
   const handleMemoChange = (e) => {
     // BadgeSelect 등과 동일하게 stopPropagation 생략 가능
-    contentDirtyRef.current = true;
+    notifyDirty();
     setMemoDraft(e?.target?.value ?? '');
     setMemoDirty(true);
   };
@@ -1052,12 +1171,11 @@ const ConsultationLogModal = ({
           isEditMode ? '상담일지가 수정되었습니다.' : t('common:consultant.ConsultationLogModal.t_41ce4bfb'),
           'success'
         );
-        if (tenantIdStr && draftScope) {
-          removeConsultationLogLocalDraft(tenantIdStr, draftScope);
-        }
         contentDirtyRef.current = false;
-        resetLocalAutosaveState();
+        await discardDraft();
         setConsultationRecord(record);
+        // 같은 화면에서 다시 저장하면 새 일지를 또 만들지 않고 방금 저장한 일지를 수정한다.
+        setIsEditMode(true);
         if (record.sessionNumber != null) {
           setFormData(prev => ({
             ...prev,
@@ -1065,7 +1183,10 @@ const ConsultationLogModal = ({
           }));
         }
         onSave && onSave(record);
-        if (recordId) onClose && onClose();
+        if (recordId) {
+          if (!memoDirty) releaseLeaveGuard();
+          onClose && onClose();
+        }
       } else {
         throw new Error(response?.message || t('common:consultant.ConsultationLogModal.t_8a91f40c'));
       }
@@ -1148,19 +1269,25 @@ const ConsultationLogModal = ({
         : recordRaw;
       const isSuccess = response && (response.success === true || (record && record.id != null));
       if (isSuccess && record) {
-        notificationManager.show(t('common:consultant.ConsultationLogModal.t_b571e260'), 'success');
-        if (tenantIdStr && draftScope) {
-          removeConsultationLogLocalDraft(tenantIdStr, draftScope);
+        if (record.isSessionCompleted === false) {
+          notificationManager.show(CONSULTATION_LOG_AUTOSAVE_STRINGS.SAVED_BEFORE_SESSION_START, 'info');
+        } else {
+          notificationManager.show(t('common:consultant.ConsultationLogModal.t_b571e260'), 'success');
         }
         contentDirtyRef.current = false;
-        resetLocalAutosaveState();
+        await discardDraft();
         onSave && onSave(record);
+        if (!memoDirty) releaseLeaveGuard();
         onClose();
       } else {
         throw new Error(response?.message || t('common:consultant.ConsultationLogModal.t_cbbfa91c'));
       }
     } catch (error) {
       console.error('완료 처리 오류:', error);
+      if (isConsultationRecordDuplicateError(error)) {
+        notificationManager.show(CONSULTATION_LOG_AUTOSAVE_STRINGS.DUPLICATE_RECORD_EXISTS, 'error');
+        return;
+      }
       const validationToast = applyConsultationLogApiValidationErrors(error, setValidationErrors);
       if (validationToast != null) {
         notificationManager.show(
@@ -1175,26 +1302,20 @@ const ConsultationLogModal = ({
     }
   };
 
-  if (!isOpen && !restoreDraftConfirmOpen && !closeWithoutSaveConfirmOpen) {
+  if (!isOpen && !restoreDraftConfirmOpen && !restoreOverwriteConfirmOpen
+    && !closeWithoutSaveConfirmOpen && !conflictConfirmOpen) {
     return null;
   }
 
   const modalTitle = `상담일지 작성${isEditMode ? ' (수정 모드)' : ''}`;
 
-  const finalizeCloseWithOptionalLocalFlush = () => {
-    if (tenantIdStr && draftScope) {
-      try {
-        writeConsultationLogLocalDraft(tenantIdStr, draftScope, {
-          formData: formDataRef.current,
-          memoDraft: memoDraftRef.current
-        });
-      } catch {
-        // 단말 초안 flush 실패는 닫기 자체는 허용
-      }
-    }
-    contentDirtyRef.current = false;
+  /** 닫기 직전 서버 초안으로 한 번 flush (실패 시 훅이 암호화 백업에 보관) */
+  const finalizeCloseWithDraftFlush = () => {
+    void saveDraftNow({ force: true });
     setMemoDirty(false);
     setCloseWithoutSaveConfirmOpen(false);
+    // 방금 「저장하지 않고 닫기」를 확인받았으므로 라우트 이동 확인을 다시 띄우지 않는다.
+    releaseLeaveGuard();
     onClose?.();
   };
 
@@ -1265,44 +1386,102 @@ const ConsultationLogModal = ({
     <ConfirmModal
       isOpen={restoreDraftConfirmOpen}
       title={CONSULTATION_LOG_AUTOSAVE_STRINGS.RESTORE_TITLE}
-      message={toDisplayString(CONSULTATION_LOG_AUTOSAVE_STRINGS.RESTORE_MESSAGE, '')}
-      confirmText="불러오기"
-      cancelText="삭제하고 계속"
+      message={toDisplayString(restoreDraftMessage, '')}
+      confirmText={CONSULTATION_LOG_AUTOSAVE_STRINGS.RESTORE_CONFIRM}
+      cancelText={CONSULTATION_LOG_AUTOSAVE_STRINGS.RESTORE_DISCARD}
       type="default"
       onConfirm={() => {
         restoreConfirmedRef.current = true;
-        if (pendingRestoreDraft) {
-          setFormData(pendingRestoreDraft.formData);
-          setMemoDraft(pendingRestoreDraft.memoDraft ?? '');
-          setMemoDirty(false);
-          contentDirtyRef.current = false;
-        }
+        setRestoreDraftConfirmOpen(false);
+        // 화면에 입력된 내용을 덮어쓰게 되므로 한 번 더 확인한다.
+        setRestoreOverwriteConfirmOpen(true);
+      }}
+      onCancel={() => {
+        // 「버리기」를 명시적으로 눌렀을 때만 서버 초안·브라우저 백업·레거시 키를 삭제한다.
+        void discardDraft();
         setPendingRestoreDraft(null);
         setRestoreDraftConfirmOpen(false);
-        markRestoreHandled();
       }}
       onClose={() => {
         if (restoreConfirmedRef.current) {
           restoreConfirmedRef.current = false;
           return;
         }
-        if (tenantIdStr && draftScope) {
-          removeConsultationLogLocalDraft(tenantIdStr, draftScope);
-        }
-        markRestoreHandled();
+        // ×·ESC·배경 클릭은 「나중에」 — 초안을 모두 남겨 두고 다음 진입 때 다시 묻는다.
         setPendingRestoreDraft(null);
         setRestoreDraftConfirmOpen(false);
+      }}
+    />
+    <ConfirmModal
+      isOpen={restoreOverwriteConfirmOpen}
+      title={CONSULTATION_LOG_AUTOSAVE_STRINGS.RESTORE_OVERWRITE_TITLE}
+      message={toDisplayString(CONSULTATION_LOG_AUTOSAVE_STRINGS.RESTORE_OVERWRITE_MESSAGE, '')}
+      confirmText={CONSULTATION_LOG_AUTOSAVE_STRINGS.RESTORE_OVERWRITE_CONFIRM}
+      cancelText={CONSULTATION_LOG_AUTOSAVE_STRINGS.RESTORE_OVERWRITE_CANCEL}
+      type="warning"
+      onConfirm={() => {
+        overwriteConfirmedRef.current = true;
+        applyRestoredDraftSnapshot(pendingRestoreDraft?.snapshot);
+        resolveRestoreCandidate();
+        setPendingRestoreDraft(null);
+        setRestoreOverwriteConfirmOpen(false);
+        restoreConfirmedRef.current = false;
+      }}
+      onClose={() => {
+        if (overwriteConfirmedRef.current) {
+          overwriteConfirmedRef.current = false;
+          return;
+        }
+        // 덮어쓰기 취소는 복구·버리기 중 어느 쪽도 고르지 않은 보류다.
+        // 서버 초안·레거시 초안을 모두 남겨 두고 다음 진입 때 다시 묻는다.
+        setPendingRestoreDraft(null);
+        setRestoreOverwriteConfirmOpen(false);
+        restoreConfirmedRef.current = false;
+      }}
+    />
+    <ConfirmModal
+      isOpen={conflictConfirmOpen}
+      title={CONSULTATION_LOG_AUTOSAVE_STRINGS.CONFLICT_TITLE}
+      message={toDisplayString(CONSULTATION_LOG_AUTOSAVE_STRINGS.CONFLICT_MESSAGE, '')}
+      confirmText={CONSULTATION_LOG_AUTOSAVE_STRINGS.CONFLICT_KEEP_MINE}
+      cancelText={CONSULTATION_LOG_AUTOSAVE_STRINGS.CONFLICT_LOAD_LATEST}
+      type="warning"
+      onConfirm={() => {
+        conflictResolvedRef.current = true;
+        setConflictConfirmOpen(false);
+        void keepMineOnConflict();
+      }}
+      onClose={() => {
+        if (conflictResolvedRef.current) {
+          conflictResolvedRef.current = false;
+          return;
+        }
+        setConflictConfirmOpen(false);
+        void (async() => {
+          const latest = await loadLatestFromServer();
+          applyRestoredDraftSnapshot(latest);
+        })();
       }}
     />
     <ConfirmModal
       isOpen={closeWithoutSaveConfirmOpen}
       title={CONSULTATION_LOG_AUTOSAVE_STRINGS.CLOSE_UNSAVED_TITLE}
       message={toDisplayString(CONSULTATION_LOG_AUTOSAVE_STRINGS.CLOSE_UNSAVED_MESSAGE, '')}
-      confirmText="닫기"
-      cancelText="계속 작성"
+      confirmText={CONSULTATION_LOG_AUTOSAVE_STRINGS.CLOSE_UNSAVED_CONFIRM}
+      cancelText={CONSULTATION_LOG_AUTOSAVE_STRINGS.CLOSE_UNSAVED_CANCEL}
       type="warning"
-      onConfirm={finalizeCloseWithOptionalLocalFlush}
+      onConfirm={finalizeCloseWithDraftFlush}
       onClose={() => setCloseWithoutSaveConfirmOpen(false)}
+    />
+    <ConfirmModal
+      isOpen={leaveBlocker?.state === 'blocked'}
+      title={CONSULTATION_LOG_AUTOSAVE_STRINGS.LEAVE_TITLE}
+      message={toDisplayString(CONSULTATION_LOG_AUTOSAVE_STRINGS.LEAVE_MESSAGE, '')}
+      confirmText={CONSULTATION_LOG_AUTOSAVE_STRINGS.LEAVE_CONFIRM}
+      cancelText={CONSULTATION_LOG_AUTOSAVE_STRINGS.LEAVE_CANCEL}
+      type="warning"
+      onConfirm={() => leaveBlocker?.proceed?.()}
+      onClose={() => leaveBlocker?.reset?.()}
     />
     <UnifiedModal
       isOpen={isOpen}
@@ -1321,7 +1500,7 @@ const ConsultationLogModal = ({
           <p
             className={[
               'mg-v2-text-sm mg-v2-consultation-log-modal__status',
-              localAutosaveUi === 'failed' || serverDraftSyncFailed
+              autosaveStatusIsError
                 ? 'mg-v2-text-danger'
                 : 'mg-v2-text-secondary'
             ].join(' ')}
@@ -1340,6 +1519,7 @@ const ConsultationLogModal = ({
             sessionDateLabel={formData.sessionDate}
             institutionLink={isInstitutionLinkLog}
           />
+          {isAdmin ? <ConsultationLogAdminWriteBadge record={consultationRecord} /> : null}
 
           <div className="mg-v2-consultation-log__layout">
             <aside className="mg-v2-consultation-log__sidebar">
@@ -1365,20 +1545,30 @@ const ConsultationLogModal = ({
             </aside>
 
             <div className="mg-v2-consultation-log__main">
-              <ConsultationLogRequiredFieldsNotice
-                sessionNumberMissing={!isInstitutionLinkLog && resolveLockedSessionNumber() == null}
-              />
+              {loading ? (
+                <div className="mg-v2-consultation-log__form-loading">
+                  <div className="mg-loading">
+                    {CONSULTATION_LOG_AUTOSAVE_STRINGS.FORM_LOADING}
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <ConsultationLogRequiredFieldsNotice
+                    sessionNumberMissing={!isInstitutionLinkLog && resolveLockedSessionNumber() == null}
+                  />
 
-              <ConsultationLogFormPanel
-                formData={formData}
-                handleInputChange={handleInputChange}
-                setFormData={setFormDataWithDirty}
-                validationErrors={validationErrors}
-                riskLevels={riskLevels}
-                goalAchievementLevels={goalAchievementLevels}
-                completionStatusOptions={completionStatusOptions}
-                loadingCodes={loadingCodes}
-              />
+                  <ConsultationLogFormPanel
+                    formData={formData}
+                    handleInputChange={handleInputChange}
+                    setFormData={setFormDataWithDirty}
+                    validationErrors={validationErrors}
+                    riskLevels={riskLevels}
+                    goalAchievementLevels={goalAchievementLevels}
+                    completionStatusOptions={completionStatusOptions}
+                    loadingCodes={loadingCodes}
+                  />
+                </>
+              )}
 
               <section
                 className="mg-v2-consultation-log-modal__precautions-wrap"

@@ -54,6 +54,15 @@ public class ConsultantClientMappingResponse {
      * 사이드바 카드의 액션 분기와 드래그 허용 여부를 결정하는 데 사용된다.
      */
     private String paymentTiming;
+
+    /** 단건 상세 전용: 복호화된 상담사 이름 (목록 응답에서는 null). */
+    private String consultantName;
+
+    /** 단건 상세 전용: 복호화된 내담자 이름 (목록 응답에서는 null). */
+    private String clientName;
+
+    private LocalDateTime assignedAt;
+    private LocalDateTime createdAt;
     
     /**
      * ConsultantClientMapping 엔티티로부터 변환
@@ -89,6 +98,8 @@ public class ConsultantClientMappingResponse {
             .adminApprovalDate(mapping.getAdminApprovalDate())
             .approvedBy(mapping.getApprovedBy())
             .paymentTiming(mapping.getPaymentTiming())
+            .assignedAt(mapping.getAssignedAt())
+            .createdAt(mapping.getCreatedAt())
             .build();
     }
     

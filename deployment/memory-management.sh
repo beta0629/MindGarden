@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # MindGarden 운영 서버 메모리 관리 스크립트
-# 서버: beta74.cafe24.com
+# 서버: $PROD_SERVER_HOST
 # 사용법: ./memory-management.sh [check|optimize|monitor|gc|restart]
 
 set -e

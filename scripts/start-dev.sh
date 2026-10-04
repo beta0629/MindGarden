@@ -59,7 +59,7 @@ else
     done < "$ENV_FILE"
     
     echo -e "${GREEN}✅ 환경 변수가 로드되었습니다.${NC}"
-    echo -e "${BLUE}📋 DB_HOST: ${DB_HOST:-beta0629.cafe24.com}${NC}"
+    echo -e "${BLUE}📋 DB_HOST: ${DB_HOST:-${DEV_SERVER_HOST:?DEV_SERVER_HOST 환경변수를 설정하세요}}${NC}"
     echo -e "${BLUE}📋 DB_NAME: ${DB_NAME:-mind_garden}${NC}"
     echo -e "${BLUE}📋 DB_USERNAME: ${DB_USERNAME:-mindgarden_dev}${NC}"
     if [ -z "$DB_PASSWORD" ]; then
@@ -77,7 +77,7 @@ echo ""
 # ================================================
 echo -e "${YELLOW}🔍 2단계: 데이터베이스 연결 설정 확인${NC}"
 
-DB_HOST_VAL=${DB_HOST:-beta0629.cafe24.com}
+DB_HOST_VAL="${DB_HOST:?DB_HOST 환경변수를 설정하세요}"
 DB_PORT_VAL=${DB_PORT:-3306}
 DB_NAME_VAL=${DB_NAME:-mind_garden}
 DB_USERNAME_VAL=${DB_USERNAME:-mindgarden_dev}

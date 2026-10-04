@@ -1,9 +1,10 @@
 /**
- * PushMonitorKpiRow — 단위 테스트 (Clinic-OS summary strip).
+ * PushMonitorKpiRow — 단위 테스트 (SettingsSummaryStrip).
  *
  * @author MindGarden core-coder
  * @since 2026-06-07
  * @updated 2026-09-05 — summary strip assertions
+ * @updated 2026-10-03 — SettingsSummaryStrip 계약
  */
 
 import React from 'react';
@@ -33,18 +34,21 @@ describe('PushMonitorKpiRow', () => {
     const { container } = render(
       <PushMonitorKpiRow kpi={baseKpi} channelBreakdown={baseChannelBreakdown} />
     );
-    expect(container.querySelector('.mapping-management-summary')).toBeInTheDocument();
-    expect(container.querySelector('.mapping-management-summary--cols-4')).toBeInTheDocument();
+    expect(screen.getByTestId('push-monitor-kpi-row')).toHaveClass('mg-v2-settings-summary');
+    expect(container.querySelector('.mapping-management-summary')).not.toBeInTheDocument();
+    expect(container.querySelectorAll('.mg-v2-settings-summary__cell')).toHaveLength(4);
     expect(screen.getByTestId('push-monitor-kpi-card-queue')).toBeInTheDocument();
     expect(screen.getByTestId('push-monitor-kpi-card-success')).toBeInTheDocument();
     expect(screen.getByTestId('push-monitor-kpi-card-failure')).toBeInTheDocument();
     expect(screen.getByTestId('push-monitor-kpi-card-skip')).toBeInTheDocument();
   });
 
-  test('K2: KPI 값이 KpiNumeral 로 노출', () => {
+  test('K2: KPI 값이 ko-KR 천단위 + 단위로 노출', () => {
     render(<PushMonitorKpiRow kpi={baseKpi} channelBreakdown={baseChannelBreakdown} />);
     const successCard = screen.getByTestId('push-monitor-kpi-card-success');
-    expect(within(successCard).getByLabelText(/1234/)).toBeInTheDocument();
+    expect(within(successCard).getByText(
+      `1,234${ADMIN_WEB_SCAFFOLD_COPY.PUSH_MONITOR_KPI_VALUE_UNIT}`
+    )).toHaveClass('mg-v2-settings-summary__value');
   });
 
   test('K3: channelBreakdown 이 success 캡션으로 매핑', () => {
@@ -71,7 +75,8 @@ describe('PushMonitorKpiRow', () => {
     render(<PushMonitorKpiRow />);
     const queueCard = screen.getByTestId('push-monitor-kpi-card-queue');
     const successCard = screen.getByTestId('push-monitor-kpi-card-success');
-    expect(within(queueCard).getByLabelText(/^0/)).toBeInTheDocument();
-    expect(within(successCard).getByLabelText(/^0/)).toBeInTheDocument();
+    const zero = `0${ADMIN_WEB_SCAFFOLD_COPY.PUSH_MONITOR_KPI_VALUE_UNIT}`;
+    expect(within(queueCard).getByText(zero)).toBeInTheDocument();
+    expect(within(successCard).getByText(zero)).toBeInTheDocument();
   });
 });

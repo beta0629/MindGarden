@@ -126,6 +126,36 @@ public final class AdminServiceUserFacingMessages {
 
     public static final String MSG_MAPPING_ALREADY_TERMINATED = "이미 종료된 매칭입니다.";
 
+    /** 일괄 결제 확인·취소 — mappingIds 누락·빈 목록 */
+    public static final String MSG_BULK_MAPPING_IDS_REQUIRED = "처리할 매칭을 하나 이상 선택해 주세요.";
+
+    /** 일괄 결제 확인·취소 — 숫자가 아닌·0 이하·범위를 넘는 id */
+    public static final String MSG_BULK_MAPPING_IDS_INVALID = "매칭 ID 형식이 올바르지 않습니다.";
+
+    /** 일괄 결제 확인·취소 — 한 번에 처리할 수 있는 개수 초과 (인자: 최대 개수) */
+    public static final String MSG_BULK_MAPPING_IDS_TOO_MANY_FMT = "한 번에 최대 %d건까지 처리할 수 있습니다.";
+
+    /** 일괄 결제 취소 — 쇼핑 주문(PG) 결제 매칭은 주문 환불 화면에서만 */
+    public static final String MSG_BULK_CANCEL_SHOP_ORDER_REFUND_REQUIRED =
+            "쇼핑 주문으로 결제된 매칭이 포함되어 있습니다. 주문 환불에서 처리해 주세요.";
+
+    /** 일괄 결제 확인 — 결제 대기가 아닌 매칭 포함 */
+    public static final String MSG_BULK_CONFIRM_NOT_PENDING_PAYMENT = "결제 대기 상태가 아닌 매칭이 포함되어 있습니다.";
+
+    /** 일괄 결제 확인 — 결제 수단 누락 */
+    public static final String MSG_BULK_CONFIRM_PAYMENT_METHOD_REQUIRED = "결제 수단을 선택해 주세요.";
+
+    /** 일괄 결제 확인 — 금액 누락·형식 오류·0 이하 */
+    public static final String MSG_BULK_CONFIRM_AMOUNT_INVALID = "결제 금액을 올바르게 입력해 주세요.";
+
+    /** 일괄 결제 확인(2건 이상) — 금액이 선택한 매칭 패키지 금액 합계와 다르거나 패키지 금액이 없는 매칭 포함 */
+    public static final String MSG_BULK_CONFIRM_AMOUNT_MISMATCH =
+            "여러 매칭을 함께 확인할 때는 결제 금액이 선택한 매칭 패키지 금액 합계와 같아야 합니다.";
+
+    /** 일괄 처리 중 일부 매칭 처리 실패 — 실패 매칭부터 나머지는 처리하지 않음 */
+    public static final String MSG_BULK_MAPPING_STOPPED_ON_FAILURE =
+            "일부 매칭을 처리하지 못해 중단했습니다. 처리 결과를 확인해 주세요.";
+
     /**
      * 옵션 B v2.0 멱등성 가드 (Q6 Carbon Copy, 2026-05-28).
      *
@@ -324,6 +354,10 @@ public final class AdminServiceUserFacingMessages {
 
     public static final String MSG_SCHEDULE_AUTO_COMPLETE_FAILED_FMT =
             "스케줄 자동 완료 처리에 실패했습니다: %s";
+
+    /** 원시 예외 문구를 노출하지 않는 자동 완료 실패 문구 (traceId 로만 추적). */
+    public static final String MSG_SCHEDULE_AUTO_COMPLETE_FAILED =
+            "스케줄 자동 완료 처리에 실패했습니다. 잠시 후 다시 시도해 주세요.";
 
     public static final String MSG_DUPLICATE_MAPPING_MERGE_SUCCESS_FMT =
             "중복 매칭 통합 완료: %d개 그룹 통합, %d개 매칭 종료";

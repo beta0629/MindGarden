@@ -8,7 +8,7 @@ echo "🔧 개발 서버 Flyway 체크섬 불일치 해결 시작..."
 echo ""
 
 # 개발 서버 정보
-DEV_SERVER_HOST="${DEV_SERVER_HOST:-114.202.247.246}"
+DEV_SERVER_HOST="${DEV_SERVER_HOST:?DEV_SERVER_HOST 환경변수를 설정하세요}"
 DEV_SERVER_USER="${DEV_SERVER_USER:-root}"
 DEV_DB_HOST="${DEV_DB_HOST:-localhost}"
 DEV_DB_NAME="${DEV_DB_NAME:-core_solution}"

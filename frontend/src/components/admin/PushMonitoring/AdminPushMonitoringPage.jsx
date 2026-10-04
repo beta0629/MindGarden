@@ -11,7 +11,7 @@
 
 import React, { useCallback, useState } from 'react';
 import AdminCommonLayout from '../../layout/AdminCommonLayout';
-import { SettingsButton, SettingsPageShell } from '../settings-shell';
+import { SettingsButton, SettingsNotice, SettingsPageShell } from '../settings-shell';
 import PushMonitorFilters from './molecules/PushMonitorFilters';
 import PushMonitorKpiRow from './molecules/PushMonitorKpiRow';
 import PushMonitorTrendSection from './organisms/PushMonitorTrendSection';
@@ -127,12 +127,17 @@ const AdminPushMonitoringPage = () => {
             isResending={isResending}
           />
           {error ? (
-            <div className="mg-push-monitor__error-banner" role="alert">
-              <span>{ADMIN_WEB_SCAFFOLD_COPY.PUSH_MONITOR_ERROR_BANNER}</span>
-              <SettingsButton type="button" variant="danger" onClick={refresh}>
-                {ADMIN_WEB_SCAFFOLD_COPY.PUSH_MONITOR_ERROR_RETRY}
-              </SettingsButton>
-            </div>
+            <SettingsNotice
+              tone="danger"
+              testId="push-monitor-error-banner"
+              actions={(
+                <SettingsButton type="button" variant="danger" onClick={refresh}>
+                  {ADMIN_WEB_SCAFFOLD_COPY.PUSH_MONITOR_ERROR_RETRY}
+                </SettingsButton>
+              )}
+            >
+              {ADMIN_WEB_SCAFFOLD_COPY.PUSH_MONITOR_ERROR_BANNER}
+            </SettingsNotice>
           ) : null}
         </SettingsPageShell>
       </div>

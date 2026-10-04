@@ -1,5 +1,6 @@
 package com.coresolution.consultation.service.impl;
 
+import java.time.Clock;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -43,6 +44,7 @@ import com.coresolution.consultation.entity.ConsultantClientMapping.MappingStatu
 import com.coresolution.consultation.entity.Schedule;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.entity.Vacation;
+import com.coresolution.consultation.exception.ScheduleSessionNotStartedException;
 import com.coresolution.consultation.repository.BranchRepository;
 import com.coresolution.consultation.repository.ClientRepository;
 import com.coresolution.consultation.repository.ConsultantClientMappingRepository;
@@ -73,12 +75,14 @@ import com.coresolution.consultation.util.ConsultationMessageTypeCodes;
 import com.coresolution.consultation.util.LeftoverOccupyingCompleteExhaust;
 import com.coresolution.consultation.util.ProvisionalConsultationLogSession;
 import com.coresolution.consultation.util.ScheduleCancelLinkedMappingReopen;
+import com.coresolution.consultation.util.ScheduleSessionStartGate;
 import com.coresolution.consultation.utils.SessionUtils;
 import com.coresolution.consultation.service.StatisticsService;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.security.TenantAccessControlService;
 import com.coresolution.core.service.impl.BaseTenantEntityServiceImpl;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -164,6 +168,12 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
      */
     private static final Set<ScheduleStatus> MISSING_LOG_TARGET_STATUSES =
             EnumSet.of(ScheduleStatus.COMPLETED, ScheduleStatus.CONFIRMED, ScheduleStatus.BOOKED);
+
+    /** 시작 전 완료 차단 판정 시간대 — 자동완료 배치와 동일 설정 */
+    @Value("${mindgarden.scheduler.schedule-auto-complete.zone:}")
+    private String sessionStartZoneId;
+
+    private Clock sessionStartClock;
 
     public ScheduleServiceImpl(
             ScheduleRepository scheduleRepository,
@@ -314,6 +324,14 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
                 || !Objects.equals(previousEndTime, intendedEndTime);
         rejectSlotChangeIfLocked(
                 previousStatus, previousDate, previousEndTime, slotWouldChange);
+
+        if (previousStatus != ScheduleStatus.COMPLETED && updateData.getStatus() == ScheduleStatus.COMPLETED) {
+            Schedule intendedSlot = new Schedule();
+            intendedSlot.setId(id);
+            intendedSlot.setDate(intendedDate);
+            intendedSlot.setStartTime(intendedStartTime);
+            requireSessionStartedForCompletion(intendedSlot);
+        }
         
         copyScheduleFields(updateData, existingSchedule);
         
@@ -586,6 +604,15 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         String tenantId = TenantContextHolder.getRequiredTenantId();
         return scheduleRepository.findByTenantIdAndId(tenantId, id)
                 .orElseThrow(() -> new RuntimeException("스케줄을 찾을 수 없습니다: " + id));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Optional<Schedule> findInTenant(String tenantId, Long id) {
+        if (tenantId == null || id == null) {
+            return Optional.empty();
+        }
+        return scheduleRepository.findByTenantIdAndId(tenantId, id);
     }
 
     @Override
@@ -1573,24 +1600,24 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<Schedule> findByConsultantId(Long consultantId) {
-        autoCompleteExpiredSchedules();
         // ⚠️ 보안: tenantId는 필수 (다른 테넌트 데이터 접근 방지)
         String tenantId = TenantContextHolder.getRequiredTenantId();
         return scheduleRepository.findByTenantIdAndConsultantId(tenantId, consultantId);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<Schedule> findByConsultantIdAndDate(Long consultantId, LocalDate date) {
-        autoCompleteExpiredSchedules();
         // ⚠️ 보안: tenantId는 필수 (다른 테넌트 데이터 접근 방지)
         String tenantId = TenantContextHolder.getRequiredTenantId();
         return scheduleRepository.findByTenantIdAndConsultantIdAndDate(tenantId, consultantId, date);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<Schedule> findByConsultantIdAndDateBetween(Long consultantId, LocalDate startDate, LocalDate endDate) {
-        autoCompleteExpiredSchedules();
         String tenantId = TenantContextHolder.getTenantId();
         if (tenantId == null) {
             log.error("❌ tenantId가 설정되지 않았습니다");
@@ -1601,24 +1628,24 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
 
 
     @Override
+    @Transactional(readOnly = true)
     public List<Schedule> findByClientId(Long clientId) {
-        autoCompleteExpiredSchedules();
         // ⚠️ 보안: tenantId는 필수 (다른 테넌트 데이터 접근 방지)
         String tenantId = TenantContextHolder.getRequiredTenantId();
         return scheduleRepository.findByTenantIdAndClientId(tenantId, clientId);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<Schedule> findByClientIdAndDate(Long clientId, LocalDate date) {
-        autoCompleteExpiredSchedules();
         // ⚠️ 보안: tenantId는 필수 (다른 테넌트 데이터 접근 방지)
         String tenantId = TenantContextHolder.getRequiredTenantId();
         return scheduleRepository.findByTenantIdAndClientIdAndDate(tenantId, clientId, date);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<Schedule> findByClientIdAndDateBetween(Long clientId, LocalDate startDate, LocalDate endDate) {
-        autoCompleteExpiredSchedules();
         // ⚠️ 보안: tenantId는 필수 (다른 테넌트 데이터 접근 방지)
         String tenantId = TenantContextHolder.getRequiredTenantId();
         return scheduleRepository.findByTenantIdAndClientIdAndDateBetween(tenantId, clientId, startDate, endDate);
@@ -1747,6 +1774,9 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
     public Schedule completeSchedule(Long scheduleId) {
         log.info("✅ 스케줄 완료: ID {}", scheduleId);
         Schedule schedule = findById(scheduleId);
+        if (schedule.getStatus() != ScheduleStatus.COMPLETED) {
+            requireSessionStartedForCompletion(schedule);
+        }
         String tenantId = TenantContextHolder.getTenantId();
         if (tenantId == null && schedule.getTenantId() != null) tenantId = schedule.getTenantId();
         if (tenantId != null) {
@@ -2294,11 +2324,10 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
 
 
     @Override
+    @Transactional(readOnly = true)
     public List<Schedule> findSchedulesByUserRole(Long userId, String userRole) {
         log.info("🔐 권한 기반 스케줄 조회: 사용자 {}, 역할 {}", userId, userRole);
-        
-        autoCompleteExpiredSchedules();
-        
+
         String tenantId = TenantContextHolder.getTenantId();
         if (tenantId == null) {
             log.error("❌ tenantId가 설정되지 않았습니다");
@@ -2318,11 +2347,10 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<Schedule> findSchedulesByUserRoleAndDate(Long userId, String userRole, LocalDate date) {
         log.info("🔐 권한 기반 특정 날짜 스케줄 조회: 사용자 {}, 역할 {}, 날짜 {}", userId, userRole, date);
-        
-        autoCompleteExpiredSchedules();
-        
+
         String tenantId = TenantContextHolder.getRequiredTenantId();
         if (scheduleAdminSeesAllTenant(userId, userRole)) {
             return scheduleRepository.findByTenantIdAndDate(tenantId, date);
@@ -3638,11 +3666,10 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
      * 권한 기반 페이지네이션 스케줄 조회 (상담사 이름 포함)
      */
     @Override
+    @Transactional(readOnly = true)
     public Page<ScheduleResponse> findSchedulesWithNamesByUserRolePaged(Long userId, String userRole, Pageable pageable) {
         log.info("🔐 권한 기반 페이지네이션 스케줄 조회 (이름 포함): 사용자 {}, 역할 {}, 페이지 {}", userId, userRole, pageable.getPageNumber());
-        
-        autoCompleteExpiredSchedules();
-        
+
         String tenantId = TenantContextHolder.getRequiredTenantId();
         Page<Schedule> schedulePage;
         if (scheduleAdminSeesAllTenant(userId, userRole)) {
@@ -4191,7 +4218,8 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             for (Schedule schedule : todayExpiredSchedules) {
                 try {
                     Schedule latestSchedule = scheduleRepository.findByTenantIdAndId(tenantId, schedule.getId()).orElse(null);
-                    if (latestSchedule != null && ScheduleStatus.CONFIRMED.equals(latestSchedule.getStatus())) {
+                    if (latestSchedule != null && ScheduleStatus.CONFIRMED.equals(latestSchedule.getStatus())
+                            && !isBeforeSessionStart(latestSchedule)) {
                         boolean hasRecord = hasConsultationRecordSsot(tenantId, latestSchedule);
                         if (hasRecord) {
                             // 패치 7.3: COMPLETED 전환 직전 멱등 회기 차감 (미결제 매핑이면 silent skip → 배치 잡 처리)
@@ -4224,7 +4252,8 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             for (Schedule schedule : pastBookedSchedules) {
                 try {
                     Schedule latestSchedule = scheduleRepository.findByTenantIdAndId(tenantId, schedule.getId()).orElse(null);
-                    if (latestSchedule != null && ScheduleStatus.BOOKED.equals(latestSchedule.getStatus())) {
+                    if (latestSchedule != null && ScheduleStatus.BOOKED.equals(latestSchedule.getStatus())
+                            && !isBeforeSessionStart(latestSchedule)) {
                         boolean hasRecord = hasConsultationRecordSsot(tenantId, latestSchedule);
                         if (hasRecord) {
                             // 패치 7.3: COMPLETED 전환 직전 멱등 회기 차감 (미결제 매핑이면 silent skip → 배치 잡 처리)
@@ -4252,7 +4281,8 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             for (Schedule schedule : pastConfirmedSchedules) {
                 try {
                     Schedule latestSchedule = scheduleRepository.findByTenantIdAndId(tenantId, schedule.getId()).orElse(null);
-                    if (latestSchedule != null && ScheduleStatus.CONFIRMED.equals(latestSchedule.getStatus())) {
+                    if (latestSchedule != null && ScheduleStatus.CONFIRMED.equals(latestSchedule.getStatus())
+                            && !isBeforeSessionStart(latestSchedule)) {
                         boolean hasRecord = hasConsultationRecordSsot(tenantId, latestSchedule);
                         if (hasRecord) {
                             // 패치 7.3: COMPLETED 전환 직전 멱등 회기 차감 (미결제 매핑이면 silent skip → 배치 잡 처리)
@@ -4282,7 +4312,8 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             for (Schedule schedule : pastInProgressSchedules) {
                 try {
                     Schedule latestSchedule = scheduleRepository.findByTenantIdAndId(tenantId, schedule.getId()).orElse(null);
-                    if (latestSchedule != null && ScheduleStatus.IN_PROGRESS.equals(latestSchedule.getStatus())) {
+                    if (latestSchedule != null && ScheduleStatus.IN_PROGRESS.equals(latestSchedule.getStatus())
+                            && !isBeforeSessionStart(latestSchedule)) {
                         boolean hasRecord = hasConsultationRecordSsot(tenantId, latestSchedule);
                         if (hasRecord) {
                             // 패치 7.3: COMPLETED 전환 직전 멱등 회기 차감 (미결제 매핑이면 silent skip → 배치 잡 처리)
@@ -5348,6 +5379,39 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
     }
 
     @Override
+    public boolean isBeforeSessionStart(Schedule schedule) {
+        return ScheduleSessionStartGate.isBeforeStart(
+                schedule, ScheduleSessionStartGate.now(sessionStartClock, sessionStartZoneId));
+    }
+
+    @Override
+    public boolean isBeforeSessionStart(String tenantId, Long scheduleId) {
+        if (tenantId == null || tenantId.isBlank() || scheduleId == null) {
+            return false;
+        }
+        return scheduleRepository.findByTenantIdAndId(tenantId, scheduleId)
+                .map(this::isBeforeSessionStart)
+                .orElse(false);
+    }
+
+    @Override
+    public void requireSessionStartedForCompletion(Schedule schedule) {
+        if (isBeforeSessionStart(schedule)) {
+            log.info("일정 시작 전 완료 요청 거부: scheduleId={}", schedule.getId());
+            throw new ScheduleSessionNotStartedException(schedule.getId());
+        }
+    }
+
+    /**
+     * 테스트용 시작 전 판정 시계 주입.
+     *
+     * @param clock 기준 시계
+     */
+    void useSessionStartClock(Clock clock) {
+        this.sessionStartClock = clock;
+    }
+
+    @Override
     @Transactional
     public void markCompletedAfterConsultationLogIfOpen(String tenantId, Long scheduleId) {
         if (tenantId == null || tenantId.isEmpty() || scheduleId == null) {
@@ -5360,6 +5424,10 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         Schedule schedule = scheduleOpt.get();
         if (!ScheduleStatus.BOOKED.equals(schedule.getStatus())
                 && !ScheduleStatus.CONFIRMED.equals(schedule.getStatus())) {
+            return;
+        }
+        if (isBeforeSessionStart(schedule)) {
+            log.info("일정 시작 전 — 상담일지 COMPLETED 승격 보류: tenantId={}, scheduleId={}", tenantId, scheduleId);
             return;
         }
         if (!consultationLogExistenceSsot.existsActiveForSchedule(tenantId, scheduleId)) {

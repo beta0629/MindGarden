@@ -4,6 +4,9 @@ import notificationManager from '../../utils/notification';
 import { toDisplayString } from '../../utils/safeDisplay';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import MGButton from './MGButton';
+import NotificationCloseButton from './NotificationCloseButton';
+import NotificationToastItem from './NotificationToastItem';
+import { resolveNotificationDuration } from '../../utils/notificationDuration';
 import '../../styles/main.css'; // Ensure main.css is imported for mg-notification styles
 import { useTranslation } from 'react-i18next';
 
@@ -44,7 +47,7 @@ const getNotificationActionVariant = (variant) => {
  * @param {string} props.variant - 알림 스타일 (success, error, warning, info)
  * @param {string} props.message - 알림 메시지
  * @param {string} props.title - 알림 제목 (modal 타입에서 사용)
- * @param {number} props.duration - 표시 시간 (ms)
+ * @param {number} [props.duration] - 표시 시간(ms). 생략 시 NOTIFICATION_DURATION 타입별 기본값
  * @param {string} props.position - 토스트 위치 (top-right, top-center, bottom-right)
  * @param {Array} props.actions - 액션 버튼들
 /**
@@ -71,7 +74,7 @@ const UnifiedNotification = ({
   variant = "info",
   message = "",
   title = "",
-  duration = 1000, // 기본 duration을 5초에서 1초로 단축
+  duration,
   position = "top-right",
   actions = [],
   autoClose = true,
@@ -114,10 +117,15 @@ const UnifiedNotification = ({
         }));
       }
 
-      if (autoClose) {
+      // 토스트는 NotificationToastItem 이 hover/focus 일시정지 타이머를 직접 관리한다.
+      if (autoClose && type !== 'toast') {
         const autoCloseTime = normalized.showCountdown
           ? (normalized.countdown * 1000)
-          : (normalized.duration || duration);
+          : resolveNotificationDuration(
+            normalized.message,
+            normalized.type || variant,
+            normalized.duration || duration
+          );
 
         setTimeout(() => {
           setNotifications(prev => prev.filter(n => n.id !== normalized.id));
@@ -131,7 +139,7 @@ const UnifiedNotification = ({
     });
 
     return unsubscribe;
-  }, [type, duration, autoClose]);
+  }, [type, duration, autoClose, variant]);
 
   // 카운트다운 타이머
   useEffect(() => {
@@ -199,48 +207,15 @@ const UnifiedNotification = ({
     return (
       <div className={`mg-notification-container mg-notification-container--${position}`}>
         {notifications.map(notification => (
-          <div
+          <NotificationToastItem
             key={notification.id}
-            className={`mg-notification mg-notification--toast mg-notification--${notification.type || variant}`}
-            onClick={() => removeNotification(notification.id)}
-          >
-            <div className="mg-notification-content">
-              <div className="mg-notification-icon">
-                {getIcon(notification.type || variant)}
-              </div>
-              <div className="mg-notification-message">
-                {toDisplayString(notification.message)}
-              </div>
-              <MGButton
-                type="button"
-                variant="outline"
-                size="small"
-                className={buildErpMgButtonClassName({
-                  variant: 'outline',
-                  size: 'sm',
-                  loading: false,
-                  className: 'mg-notification-close'
-                })}
-                preventDoubleClick={false}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  removeNotification(notification.id);
-                }}
-                aria-label={t('common.actions.close')}
-                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-              >
-                ×
-              </MGButton>
-            </div>
-            <div className="mg-notification-progress">
-              <div 
-                className="mg-notification-progress-bar"
-                style={{
-                  '--animation-duration': `${notification.duration || duration}ms`
-                }}
-              />
-            </div>
-          </div>
+            notification={notification}
+            variant={variant}
+            icon={getIcon(notification.type || variant)}
+            autoClose={autoClose}
+            closeLabel={t('common.actions.close')}
+            onDismiss={removeNotification}
+          />
         ))}
       </div>
     );
@@ -336,23 +311,11 @@ const UnifiedNotification = ({
             <div className="mg-notification-banner-message">
               {toDisplayString(notification.message)}
             </div>
-            <MGButton
-              type="button"
-              variant="outline"
-              size="small"
-              className={buildErpMgButtonClassName({
-                variant: 'outline',
-                size: 'sm',
-                loading: false,
-                className: 'mg-notification-banner-close'
-              })}
-              preventDoubleClick={false}
+            <NotificationCloseButton
+              className="mg-notification-banner-close"
+              label={t('common.actions.close')}
               onClick={() => removeNotification(notification.id)}
-              aria-label={t('common.actions.close')}
-              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-            >
-              ×
-            </MGButton>
+            />
           </div>
         ))}
       </div>

@@ -100,7 +100,7 @@ mysql -h "$DB_HOST" -P "${DB_PORT:-3306}" -u "$DB_USERNAME" -p"$DB_PASSWORD" "$D
 
 ### 표준화 프로시저 배포·검증
 
-- **워크플로**: `.github/workflows/deploy-procedures-prod.yml` (수동 `workflow_dispatch`)
+- **워크플로(운영)**: `.github/workflows/deploy-procedures-production-mysql.yml` (수동 `workflow_dispatch`, `mode=db-diff` dry-run 먼저). `deploy-procedures-prod.yml` 은 이름과 달리 개발 서버·DEV_DB 경유라 운영용이 아니다.
 - **스크립트**: `scripts/automation/deployment/deploy-standardized-procedures.sh` — 인자 `prod`일 때 운영용 SCP/SSH 경로 사용
 - **CI 시크릿**: SSH는 **`PRODUCTION_HOST` / `PRODUCTION_USER` / `PRODUCTION_SSH_KEY`** — DB는 **`PRODUCTION_DB_*`** 우선, 비어 있으면 **`DEV_DB_*`** → 최종적으로 스크립트·표준 문서의 기본값(개발 DB 정의와 맞춘 경우가 있음). **운영 DB만 대상으로 하려면 `PRODUCTION_DB_*`를 채운다.**
 - **배포되는 프로시저 이름(스크립트 내 배열)**: `CheckTimeConflict`, `GetRefundableSessions`, `GetRefundStatistics`, `ValidateIntegratedAmount`, `GetConsolidatedFinancialData`, `ProcessIntegratedSalaryCalculation`, `GetIntegratedSalaryStatistics`, `ProcessDiscountAccounting`, `UpdateDailyStatistics`, `UpdateConsultantPerformance` 등 — 스크립트 최신본을 단일 출처로 본다.
@@ -122,7 +122,7 @@ mysql -h "$DB_HOST" -P "${DB_PORT:-3306}" -u "$DB_USERNAME" -p"$DB_PASSWORD" "$D
 | `deploy-trinity-prod.yml` | Trinity 정적 (`apply.e-trinity.co.kr`) | DB 직접 없음 |
 | `deploy-ops-prod.yml` | Ops 정적 | DB 직접 없음 |
 | `deploy-ops-backend-prod.yml` | Ops 백엔드 JAR | 별도 DB·포트 — 코어와 충돌 주의 |
-| `deploy-procedures-prod.yml` | 표준화 프로시저 SQL | **스키마가 맞는 뒤** 실행 권장 |
+| `deploy-procedures-production-mysql.yml` | 표준화 프로시저 SQL(운영) | **스키마가 맞는 뒤**, db-diff dry-run 먼저 |
 
 ### shell 체크리스트에 넣을 한 줄 순서
 

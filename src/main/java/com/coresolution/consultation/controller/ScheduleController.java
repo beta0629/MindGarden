@@ -20,13 +20,16 @@ import com.coresolution.consultation.constant.ProfessionalProviderTypeConstants;
 import com.coresolution.consultation.constant.ScheduleStatus;
 import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.dto.ConsultationRecordDraftResponse;
+import com.coresolution.consultation.dto.ConsultationRecordListItemResponse;
 import com.coresolution.consultation.dto.ConsultationRecordDraftSaveRequest;
+import com.coresolution.consultation.dto.InstitutionLinkConsultationLogCreateRequest;
 import com.coresolution.consultation.dto.CumulativeConsultantCountsResponse;
 import com.coresolution.consultation.dto.CumulativeMissingConsultationLogsResponse;
 import com.coresolution.consultation.dto.MonthlyConsultantCountsResponse;
 import com.coresolution.consultation.dto.MonthlyMissingConsultationLogsResponse;
 import com.coresolution.consultation.dto.ScheduleCreateRequest;
 import com.coresolution.consultation.dto.ScheduleResponse;
+import com.coresolution.consultation.exception.ScheduleSessionNotStartedException;
 import com.coresolution.consultation.exception.ValidationException;
 import com.coresolution.consultation.entity.CommonCode;
 import com.coresolution.consultation.entity.ConsultantClientMapping;
@@ -47,6 +50,11 @@ import com.coresolution.consultation.repository.ConsultantClientMappingRepositor
 import com.coresolution.consultation.service.ScheduleListUserFieldsResolver;
 import com.coresolution.consultation.service.ScheduleMappingContextResolver;
 import com.coresolution.consultation.service.ScheduleMappingContextResolver.ScheduleMappingResponseContext;
+import com.coresolution.consultation.service.support.ClientPathAccessGuard;
+import com.coresolution.consultation.service.support.ResourceOwnerAccessGuard;
+import com.coresolution.consultation.service.support.ConsultationRecordAccessGuard;
+import com.coresolution.consultation.service.support.ConsultationRecordDraftAccessGuard;
+import com.coresolution.consultation.service.support.ConsultationRecordWriter;
 import com.coresolution.consultation.service.ScheduleService;
 import com.coresolution.consultation.util.PermissionCheckUtils;
 import com.coresolution.consultation.util.ScheduleSlotTimes;
@@ -63,6 +71,8 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.CacheControl;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -127,11 +137,20 @@ public class ScheduleController extends BaseApiController {
         return PageRequest.of(validPage, validSize);
     }
 
+    /** 초안 응답 캐시 금지 보조 헤더 (레거시 프록시 대응) */
+    private static final String DRAFT_PRAGMA_NO_CACHE = "no-cache";
+
+    /** 상담일지 작성 본문의 일정 ID 키 (= consultation_records.consultation_id). */
+    private static final String CONSULTATION_ID_FIELD = "consultationId";
+
     private final ScheduleService scheduleService;
     private final AdminService adminService;
     private final ConsultationRecordService consultationRecordService;
     private final InstitutionLinkConsultationLogWriteRouter institutionLinkConsultationLogWriteRouter;
     private final ConsultationRecordDraftService consultationRecordDraftService;
+
+    private final ConsultationRecordDraftAccessGuard consultationRecordDraftAccessGuard;
+
     private final CommonCodeService commonCodeService;
     private final RoleCommonCodeAuthorizationService roleCommonCodeAuthorizationService;
     private final ConsultantAvailabilityService consultantAvailabilityService;
@@ -147,6 +166,10 @@ public class ScheduleController extends BaseApiController {
             scheduleClientReminderSmsStatusService;
     private final com.coresolution.consultation.repository.ClientRepository clientRepository;
     private final com.coresolution.consultation.repository.ConsultantRepository consultantRepository;
+    private final ClientPathAccessGuard clientPathAccessGuard;
+    private final ResourceOwnerAccessGuard resourceOwnerAccessGuard;
+    private final com.coresolution.consultation.service.ScheduleAutoCompleteService scheduleAutoCompleteService;
+    private final ConsultationRecordAccessGuard consultationRecordAccessGuard;
 
     /**
      * 테넌트 컨텍스트가 비어 있을 때 세션 사용자의 tenantId로 보완 (상담사 대시보드 등).
@@ -198,6 +221,29 @@ public class ScheduleController extends BaseApiController {
             throw new org.springframework.security.access.AccessDeniedException(
                     "다른 사용자의 일정을 조회할 권한이 없습니다.");
         }
+    }
+
+    /**
+     * 일정 조회의 {@code userId}·{@code userRole} 쿼리 파라미터를 세션 사용자에 묶고, 서비스에 넘길 역할을 돌려준다.
+     *
+     * <p>같은 테넌트 관리자·사무원은 기존처럼 파라미터 역할을 그대로 쓴다(상담사 시점 축소 조회·모바일 STAFF 호환).
+     * 그 외 역할은 {@code userId} 가 본인이 아니면 거부하고, 역할은 요청값이 아니라 세션 사용자 역할만 쓴다
+     * (내담자가 {@code userRole=ADMIN} 으로 테넌트 전체 일정을 읽지 못하게 한다).</p>
+     *
+     * @param requestedUserId 요청 userId
+     * @param requestedRole   요청 userRole (관리자·사무원만 신뢰)
+     * @param session         HTTP 세션
+     * @return 서비스 권한 판정에 쓸 역할 문자열
+     * @throws org.springframework.security.access.AccessDeniedException 비로그인·타인 userId
+     */
+    private String resolveTrustedScheduleRole(Long requestedUserId, String requestedRole, HttpSession session) {
+        assertSelfOrAdminStaffScheduleAccess(requestedUserId, session);
+        User currentUser = SessionUtils.getCurrentUser(session);
+        clientPathAccessGuard.requireCallerTenantId(currentUser);
+        if (roleCommonCodeAuthorizationService.isAdminOrStaffRoleFromCommonCode(currentUser.getRole())) {
+            return requestedRole;
+        }
+        return currentUser.getRole().name();
     }
 
     /**
@@ -357,9 +403,9 @@ public class ScheduleController extends BaseApiController {
             throw new IllegalArgumentException("필수 파라미터가 누락되었습니다.");
         }
 
-        assertSelfOrAdminStaffScheduleAccess(userId, session);
+        String trustedRole = resolveTrustedScheduleRole(userId, userRole, session);
         
-        List<ScheduleResponse> schedules = scheduleService.findSchedulesWithNamesByUserRole(userId, userRole);
+        List<ScheduleResponse> schedules = scheduleService.findSchedulesWithNamesByUserRole(userId, trustedRole);
         log.info("✅ 스케줄 조회 완료: {}개", schedules.size());
         
         Map<String, Object> data = new HashMap<>();
@@ -401,10 +447,10 @@ public class ScheduleController extends BaseApiController {
             throw new IllegalArgumentException("필수 파라미터가 누락되었습니다.");
         }
 
-        Schedule schedule = scheduleService.findById(id);
-        if (!scheduleService.canAccessScheduleDetail(userId, userRole, schedule)) {
-            throw new org.springframework.security.access.AccessDeniedException("해당 스케줄을 조회할 권한이 없습니다.");
-        }
+        String trustedRole = resolveTrustedScheduleRole(userId, userRole, session);
+        Schedule schedule = resourceOwnerAccessGuard.requireAccessibleResource(session, "scheduleId", id,
+                tenantId -> scheduleService.findInTenant(tenantId, id),
+                found -> scheduleService.canAccessScheduleDetail(userId, trustedRole, found));
 
         Map<Long, Integer> unresolvedByScheduleId =
                 buildUnresolvedClientNoteCountByScheduleId(tenantIdVal, List.of(schedule));
@@ -437,11 +483,16 @@ public class ScheduleController extends BaseApiController {
             @RequestParam String userRole,
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String dateRange,
-            @PageableDefault(size = 10, sort = "date") Pageable pageable) {
+            @PageableDefault(size = 10, sort = "date") Pageable pageable,
+            HttpSession session) {
         
-        log.info("🔐 권한 기반 페이지네이션 스케줄 조회 요청: 사용자 {}, 역할 {}, 페이지 {}", userId, userRole, pageable.getPageNumber());
+        ensureTenantContextFromSession(session);
+        log.info("🔐 권한 기반 페이지네이션 스케줄 조회 요청: 사용자 {}, 역할 {}, 페이지 {}",
+                userId, LogSanitizer.forLog(userRole), pageable.getPageNumber());
+        String trustedRole = resolveTrustedScheduleRole(userId, userRole, session);
         
-        Page<ScheduleResponse> schedules = scheduleService.findSchedulesWithNamesByUserRolePaged(userId, userRole, pageable);
+        Page<ScheduleResponse> schedules =
+                scheduleService.findSchedulesWithNamesByUserRolePaged(userId, trustedRole, pageable);
         log.info("✅ 페이지네이션 스케줄 조회 완료: {}개 (총 {}개)", schedules.getNumberOfElements(), schedules.getTotalElements());
         return success(schedules);
     }
@@ -454,11 +505,16 @@ public class ScheduleController extends BaseApiController {
     public ResponseEntity<ApiResponse<List<ScheduleResponse>>> getSchedulesByUserRoleAndDate(
             @RequestParam Long userId,
             @RequestParam String userRole,
-            @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+            @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+            HttpSession session) {
         
-        log.info("🔐 권한 기반 특정 날짜 스케줄 조회: 사용자 {}, 역할 {}, 날짜 {}", userId, userRole, date);
+        ensureTenantContextFromSession(session);
+        log.info("🔐 권한 기반 특정 날짜 스케줄 조회: 사용자 {}, 역할 {}, 날짜 {}",
+                userId, LogSanitizer.forLog(userRole), date);
+        String trustedRole = resolveTrustedScheduleRole(userId, userRole, session);
         
-        List<ScheduleResponse> schedules = scheduleService.findScheduleResponsesByUserRoleAndDate(userId, userRole, date);
+        List<ScheduleResponse> schedules =
+                scheduleService.findScheduleResponsesByUserRoleAndDate(userId, trustedRole, date);
         log.info("✅ 특정 날짜 스케줄 조회 완료: {}개", schedules.size());
         return success(schedules);
     }
@@ -493,10 +549,10 @@ public class ScheduleController extends BaseApiController {
             throw new IllegalArgumentException("필수 파라미터가 누락되었습니다.");
         }
 
-        assertSelfOrAdminStaffScheduleAccess(userId, session);
+        String trustedRole = resolveTrustedScheduleRole(userId, userRole, session);
 
         List<ScheduleResponse> schedules = scheduleService.findScheduleResponsesByUserRoleAndDateBetween(
-            userId, userRole, startDate, endDate);
+            userId, trustedRole, startDate, endDate);
         log.info("✅ 날짜 범위 스케줄 조회 완료: {}개", schedules.size());
         return success(schedules);
     }
@@ -509,17 +565,12 @@ public class ScheduleController extends BaseApiController {
     public ResponseEntity<ApiResponse<List<Schedule>>> getConsultantSchedulesByDate(
             @PathVariable Long consultantId,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
-            @RequestParam(required = false) String userRole) {
+            @RequestParam(name = "userRole", required = false) String ignoredUserRole,
+            HttpSession session) {
         
-        log.info("📅 상담사별 특정 날짜 스케줄 조회: 상담사 {}, 날짜 {}, 요청자 역할 {}", consultantId, date, userRole);
-        
-        if (userRole != null) {
-            UserRole role = UserRole.fromString(userRole);
-            if (!roleCommonCodeAuthorizationService.isAdminOrStaffRoleFromCommonCode(role)) {
-                log.warn("❌ 관리자 권한 없음: {}", userRole);
-                throw new org.springframework.security.access.AccessDeniedException("권한이 없습니다.");
-            }
-        }
+        ensureTenantContextFromSession(session);
+        clientPathAccessGuard.requireConsultantAccess(session, consultantId);
+        log.info("📅 상담사별 특정 날짜 스케줄 조회: 상담사 {}, 날짜 {}", consultantId, date);
         
         List<Schedule> schedules = scheduleService.findByConsultantIdAndDate(consultantId, date);
         log.info("✅ 상담사별 스케줄 조회 완료: {}개", schedules.size());
@@ -534,17 +585,12 @@ public class ScheduleController extends BaseApiController {
     @GetMapping("/consultant/{consultantId}/my-schedules")
     public ResponseEntity<ApiResponse<List<ScheduleResponse>>> getMySchedules(
             @PathVariable Long consultantId,
-            @RequestParam(required = false) String userRole) {
+            @RequestParam(name = "userRole", required = false) String ignoredUserRole,
+            HttpSession session) {
         
-        log.info("📅 상담사 자신의 스케줄 조회: 상담사 {}, 요청자 역할 {}", consultantId, userRole);
-        
-        if (userRole != null) {
-            UserRole role = UserRole.fromString(userRole);
-            if (!roleCommonCodeAuthorizationService.isAdminOrStaffRoleFromCommonCode(role)) {
-                log.warn("❌ 관리자 권한 없음: {}", userRole);
-                throw new org.springframework.security.access.AccessDeniedException("권한이 없습니다.");
-            }
-        }
+        ensureTenantContextFromSession(session);
+        clientPathAccessGuard.requireConsultantAccess(session, consultantId);
+        log.info("📅 상담사 자신의 스케줄 조회: 상담사 {}", consultantId);
         
         List<Schedule> schedules = scheduleService.findByConsultantId(consultantId);
         
@@ -860,10 +906,16 @@ public class ScheduleController extends BaseApiController {
         existingSchedule.setUpdatedAt(java.time.LocalDateTime.now());
         
         try {
+            if (statusBeforeSlotUpdate != ScheduleStatus.COMPLETED
+                    && existingSchedule.getStatus() == ScheduleStatus.COMPLETED) {
+                scheduleService.requireSessionStartedForCompletion(existingSchedule);
+            }
             Schedule updatedSchedule = scheduleService.updateSchedule(id, existingSchedule);
             Map<String, Object> data = Map.of("scheduleId", updatedSchedule.getId());
             log.info("✅ 스케줄 수정 완료: ID {}", updatedSchedule.getId());
             return updated("스케줄이 성공적으로 수정되었습니다.", data);
+        } catch (ScheduleSessionNotStartedException e) {
+            throw e;
         } catch (IllegalStateException e) {
             log.warn("⚠️ 스케줄 수정 거부: id={}, message={}", id, e.getMessage());
             return ResponseEntity.badRequest()
@@ -950,7 +1002,13 @@ public class ScheduleController extends BaseApiController {
                 throw new org.springframework.security.access.AccessDeniedException("통계 조회 권한이 없습니다.");
             }
             if (tenantId != null && !tenantId.isEmpty()) {
-                statistics = scheduleService.getTodayScheduleStatisticsByTenant(tenantId);
+                String callerTenantId = clientPathAccessGuard.requireCallerTenantId(
+                        clientPathAccessGuard.requireCaller(session));
+                if (!callerTenantId.equals(tenantId.trim())) {
+                    throw new org.springframework.security.access.AccessDeniedException(
+                            "다른 테넌트의 통계를 조회할 권한이 없습니다.");
+                }
+                statistics = scheduleService.getTodayScheduleStatisticsByTenant(callerTenantId);
                 log.info("✅ 테넌트별 오늘의 스케줄 통계 조회 완료 - 테넌트 ID: {}", tenantId);
             } else {
                 String contextTenantId = TenantContextHolder.getTenantId();
@@ -978,22 +1036,20 @@ public class ScheduleController extends BaseApiController {
 
 
      /**
-     * 내담자별 스케줄 조회 (관리자만 접근 가능)
+     * 내담자별 스케줄 조회.
+     *
+     * <p>역할은 세션 사용자 기준({@link ClientPathAccessGuard}): 내담자 본인, 매칭 상담사, 같은 테넌트 관리자·사무원.
+     * {@code userRole} 파라미터는 기존 호출 호환을 위해 받기만 하고 권한 판단에 쓰지 않는다.</p>
      */
     @GetMapping("/client/{clientId}")
     public ResponseEntity<ApiResponse<List<Schedule>>> getSchedulesByClient(
             @PathVariable Long clientId,
-            @RequestParam String userRole) {
-        
-        log.info("👤 내담자별 스케줄 조회: 내담자 {}, 요청자 역할 {}", clientId, userRole);
-        
-        UserRole role = UserRole.fromString(userRole);
-        if (role == null
-                || !roleCommonCodeAuthorizationService.isAdminOrStaffRoleFromCommonCode(role)) {
-            log.warn("❌ 관리자 권한 없음: {}", userRole);
-            throw new org.springframework.security.access.AccessDeniedException("권한이 없습니다.");
-        }
-        
+            @RequestParam(required = false) String userRole,
+            HttpSession session) {
+
+        clientPathAccessGuard.requireClientAccess(session, clientId);
+        log.info("👤 내담자별 스케줄 조회: 내담자 {}", clientId);
+
         List<Schedule> schedules = scheduleService.findByClientId(clientId);
         log.info("✅ 내담자별 스케줄 조회 완료: {}개", schedules.size());
         return success(schedules);
@@ -1008,16 +1064,13 @@ public class ScheduleController extends BaseApiController {
     public ResponseEntity<ApiResponse<Map<String, Object>>> confirmSchedule(
             @PathVariable Long id,
             @RequestBody Map<String, Object> confirmData,
-            @RequestParam String userRole) {
+            @RequestParam(name = "userRole", required = false) String ignoredUserRole,
+            HttpSession session) {
         
-        log.info("✅ 예약 확정 요청: ID {}, 관리자 역할 {}", id, userRole);
-        
-        UserRole role = UserRole.fromString(userRole);
-        // STAFF == ADMIN 동등(1.0.5): 예약 확정은 STAFF 도 허용
-        if (role == null || !(role.isAdmin() || role.isStaff())) {
-            log.warn("❌ 관리자 권한 없음: {}", userRole);
-            throw new org.springframework.security.access.AccessDeniedException("관리자 권한이 필요합니다.");
-        }
+        ensureTenantContextFromSession(session);
+        // STAFF == ADMIN 동등(1.0.5): 예약 확정은 STAFF 도 허용. 역할은 세션 사용자에서만 읽는다.
+        User caller = clientPathAccessGuard.requireTenantManager(session);
+        log.info("✅ 예약 확정 요청: ID {}, 요청자 {}", id, caller.getId());
         
         String adminNote = (String) confirmData.getOrDefault("adminNote", "입금 확인 완료");
         
@@ -1034,24 +1087,29 @@ public class ScheduleController extends BaseApiController {
 
 
      /**
-     * 시간이 지난 확정된 스케줄을 자동으로 완료 처리
-     * 관리자만 호출 가능
+     * 시간이 지난 확정된 스케줄을 자동으로 완료 처리 (수동 실행).
+     *
+     * <p>역할은 <b>세션 사용자</b>에서만 읽는다. 요청 파라미터 {@code userRole} 은 기존 프론트 호환을 위해
+     * 받기만 하고 권한 판정에 쓰지 않는다 (내담자가 {@code userRole=ADMIN} 으로 위장해도 403).
+     * 처리 범위는 호출자 테넌트 1건으로 강제하며, 배치와 같은
+     * {@link com.coresolution.consultation.service.ScheduleAutoCompleteService} 경로를 써서
+     * 완료 전환·회기 차감이 중복되지 않게 한다.</p>
+     *
+     * @param ignoredUserRole 신뢰하지 않는 요청 파라미터 (호환용, 무시)
+     * @param session         HTTP 세션
+     * @return 처리 완료 응답
      */
     @PostMapping("/auto-complete")
     public ResponseEntity<ApiResponse<Void>> autoCompleteExpiredSchedules(
-            @RequestParam String userRole) {
-        log.info("🔄 자동 완료 처리 요청: 사용자 역할 {}", userRole);
-        
-        UserRole role = UserRole.fromString(userRole);
-        // STAFF == ADMIN 동등(1.0.5): 자동 완료 처리는 STAFF 도 허용
-        if (role == null || !(role.isAdmin() || role.isStaff())) {
-            log.warn("❌ 관리자 권한 없음: {}", userRole);
-            throw new org.springframework.security.access.AccessDeniedException("관리자 권한이 필요합니다.");
-        }
-        
-        scheduleService.autoCompleteExpiredSchedules();
-        
-        log.info("✅ 자동 완료 처리 완료");
+            @RequestParam(name = "userRole", required = false) String ignoredUserRole,
+            HttpSession session) {
+        User caller = clientPathAccessGuard.requireTenantManager(session);
+        String tenantId = clientPathAccessGuard.requireCallerTenantId(caller);
+        log.info("🔄 자동 완료 처리 수동 실행 요청: userId={}, role={}", caller.getId(), caller.getRole());
+
+        var result = scheduleAutoCompleteService.autoCompleteExpiredSchedulesForTenant(tenantId);
+
+        log.info("✅ 자동 완료 처리 완료: 완료 {}건, 알림 {}건", result.completedCount(), result.reminderSentCount());
         return success("시간이 지난 스케줄이 자동으로 완료 처리되었습니다.", null);
     }
 
@@ -1178,19 +1236,27 @@ public class ScheduleController extends BaseApiController {
      * 상담일지 목록 조회 (모바일·웹 공통). {@code records}는 표시용 필드({@code clientName} 등)가 채워진 맵 리스트이다.
      * GET /api/v1/schedules/consultation-records?consultantId=&amp;consultationId=&amp;page=&amp;size=
      *
+     * <p>상담일지 본문을 돌려주므로 {@link ConsultationRecordAccessGuard} 로 작성 상담사 본인 또는
+     * 같은 테넌트 관리자·사무원만 허용한다. 범위 파라미터가 하나도 없으면 빈 목록이다
+     * (테넌트 전체 dump 금지).</p>
+     *
      * @param consultantId 상담사 ID (지정 시 Spring {@link Pageable}로 전체 목록 페이지 조회)
      * @param consultationId 상담(스케줄) ID 또는 {@code schedule-} 접두 — 지정 시 해당 상담의 일지만 비페이지 목록
      * @param pageable 상담사별 목록 시 페이지·크기
+     * @param session HTTP 세션
      * @return records, totalCount, totalPages, number, last, size
      */
     @GetMapping("/consultation-records")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getConsultationRecords(
             @RequestParam(required = false) Long consultantId,
             @RequestParam(required = false) String consultationId,
-            @PageableDefault(size = 20) Pageable pageable) {
+            @PageableDefault(size = 20) Pageable pageable,
+            HttpSession session) {
 
         log.info("📝 상담일지 목록 조회 - 상담사 ID: {}, 상담 ID: {}, page={}, size={}",
             consultantId, consultationId, pageable.getPageNumber(), pageable.getPageSize());
+
+        ensureTenantContextFromSession(session);
 
         List<ConsultationRecord> recordList;
         long totalCount;
@@ -1198,6 +1264,7 @@ public class ScheduleController extends BaseApiController {
         int number;
         boolean last;
         int size;
+        boolean summaryOnly;
 
         if (consultationId != null) {
             Long consultationIdLong;
@@ -1206,13 +1273,18 @@ public class ScheduleController extends BaseApiController {
             } else {
                 consultationIdLong = Long.valueOf(consultationId);
             }
-            recordList = consultationRecordService.getConsultationRecordsByConsultationId(consultationIdLong);
+            // 일정 단위 조회는 요청 consultantId·현재 담당 상담사로 판정하지 않는다. 가드가 일지별
+            // 작성자·같은 테넌트 관리자 규칙으로 거른 목록만 돌려준다(#1408 검증 FAIL 보완).
+            recordList = consultationRecordAccessGuard
+                .requireConsultationScopeReadAccess(session, consultationIdLong);
             totalCount = recordList.size();
             totalPages = 1;
             number = 0;
             last = true;
             size = recordList.size();
+            summaryOnly = false;
         } else if (consultantId != null) {
+            consultationRecordAccessGuard.requireConsultantScopeReadAccess(session, consultantId);
             Page<ConsultationRecord> page =
                 consultationRecordService.getConsultationRecordsByConsultantId(consultantId, pageable);
             recordList = page.getContent();
@@ -1221,6 +1293,7 @@ public class ScheduleController extends BaseApiController {
             number = page.getNumber();
             last = page.isLast();
             size = page.getSize();
+            summaryOnly = true;
         } else {
             recordList = new ArrayList<>();
             totalCount = 0L;
@@ -1228,11 +1301,13 @@ public class ScheduleController extends BaseApiController {
             number = 0;
             last = true;
             size = pageable.getPageSize();
+            summaryOnly = true;
         }
 
         String tenantId = resolveTenantIdForConsultationRecordList(recordList);
         Map<Long, String> displayNameByUserId = buildScheduleListDisplayNameIndex(tenantId, recordList);
-        List<Map<String, Object>> records = convertConsultationRecordsToDisplayMaps(recordList, displayNameByUserId);
+        List<Map<String, Object>> records =
+            convertConsultationRecordsToDisplayMaps(recordList, displayNameByUserId, summaryOnly);
 
         Map<String, Object> data = new LinkedHashMap<>();
         data.put("records", records);
@@ -1252,6 +1327,12 @@ public class ScheduleController extends BaseApiController {
      *
      * <p>타기관 연계는 {@link InstitutionLinkConsultationLogWriteRouter} 에 위임만 한다.
      * 타기관 예외를 catch 하지 않는다. 필수값 키가 하나도 없는 본문은 헤더와 무관하게 기존 앱으로 보고 통과시킨다.</p>
+     *
+     * <p>회기권·타기관 모두 저장 전에 공용 가드로 판정한다. 회기권은
+     * {@link ConsultationRecordAccessGuard#requireCreateAccess}, 타기관은
+     * {@link ConsultationRecordAccessGuard#requireInstitutionLinkCreateAccess}(일정 담당 상담사 또는 같은 테넌트
+     * 관리자 계열)이며, 본문의 {@code contractId} 등 타기관 표시로 판정을 건너뛰지 않는다. 관리자가 작성해도
+     * 일지는 담당 상담사 귀속이며 실제 작성자는 {@code created_by_*} 에 남는다.</p>
      */
     @PostMapping("/consultation-records")
     public ResponseEntity<ApiResponse<Object>> createConsultationRecord(
@@ -1259,28 +1340,50 @@ public class ScheduleController extends BaseApiController {
             @RequestHeader(value = ClientPlatform.HEADER_NAME, required = false) String clientPlatformHeader,
             HttpSession session) {
         
-        log.info("📝 상담일지 작성 - 데이터: {}", recordData);
+        // 상담일지 본문은 로그에 남기지 않는다 (키 목록만).
+        log.info("📝 상담일지 작성 요청 - 본문 필드 수: {}", recordData != null ? recordData.size() : 0);
+
+        ensureTenantContextFromSession(session);
+        consultationRecordAccessGuard.requireConsultationRecordRole(session);
+        ConsultationRecordWriter writer;
+        if (institutionLinkConsultationLogWriteRouter.isInstitutionLink(recordData)) {
+            writer = consultationRecordAccessGuard.requireInstitutionLinkCreateAccess(session,
+                    InstitutionLinkConsultationLogCreateRequest.fromSchedulePayload(recordData).getScheduleId());
+        } else {
+            Long scheduleId = parseOptionalRecordScheduleId(recordData);
+            if (scheduleId == null) {
+                throw new ValidationException(CONSULTATION_ID_FIELD, null, "consultationId는 필수입니다.");
+            }
+            writer = consultationRecordAccessGuard.requireCreateAccess(session, scheduleId);
+        }
 
         Object savedRecord = institutionLinkConsultationLogWriteRouter.create(
-                recordData, ClientPlatform.fromHeader(clientPlatformHeader));
+                recordData, ClientPlatform.fromHeader(clientPlatformHeader), writer);
         
         return created("상담일지가 성공적으로 작성되었습니다.", savedRecord);
     }
     
     /**
-     /**
      * 상담일지 수정
      * PUT /api/schedules/consultation-records/{recordId}
+     *
+     * <p>공용 가드 {@link ConsultationRecordAccessGuard#requireWriteAccess} 로 판정한다(작성 상담사 본인 또는
+     * 같은 테넌트 관리자 계열). 실제 수정자는 {@code updated_by_*}·수정 감사에 남는다.</p>
      */
     @PutMapping("/consultation-records/{recordId}")
     public ResponseEntity<ApiResponse<com.coresolution.consultation.entity.ConsultationRecord>> updateConsultationRecord(
             @PathVariable Long recordId,
-            @RequestBody Map<String, Object> recordData) {
+            @RequestBody Map<String, Object> recordData,
+            HttpSession session) {
         
-        log.info("📝 상담일지 수정 - 기록 ID: {}, 데이터: {}", recordId, recordData);
+        // 상담일지 본문은 로그에 남기지 않는다.
+        log.info("📝 상담일지 수정 요청 - 기록 ID: {}, 본문 필드 수: {}",
+                recordId, recordData != null ? recordData.size() : 0);
         
+        ensureTenantContextFromSession(session);
+        ConsultationRecordWriter writer = consultationRecordAccessGuard.requireWriteAccess(session, recordId);
         com.coresolution.consultation.entity.ConsultationRecord updatedRecord = 
-            consultationRecordService.updateConsultationRecord(recordId, recordData);
+            consultationRecordService.updateConsultationRecord(recordId, recordData, writer);
         
         return updated("상담일지가 성공적으로 수정되었습니다.", updatedRecord);
     }
@@ -1305,22 +1408,17 @@ public class ScheduleController extends BaseApiController {
             HttpSession session) {
 
         ensureTenantContextFromSession(session);
-        String tenantIdVal = TenantContextHolder.getTenantId();
-        if (tenantIdVal == null || tenantIdVal.isEmpty()) {
-            log.warn("테넌트 정보 없음 - 상담일지 초안 조회 거부");
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(ApiResponse.error("테넌트 정보가 없습니다. 로그아웃 후 다시 로그인해 주세요."));
+        ResponseEntity<ApiResponse<ConsultationRecordDraftResponse>> tenantError = rejectIfNoTenantContext();
+        if (tenantError != null) {
+            return tenantError;
         }
-        User currentUser = SessionUtils.getCurrentUser(session);
-        if (currentUser == null) {
-            throw new org.springframework.security.access.AccessDeniedException("로그인이 필요합니다.");
-        }
-        assertConsultationDraftAccess(currentUser, consultantId);
         Long consultationIdLong = parseScheduleConsultationId(consultationId);
+        ConsultationRecordDraftAccessGuard.DraftOwner owner = consultationRecordDraftAccessGuard
+                .requireDraftOwner(session, consultationIdLong, consultantId);
         ConsultationRecordDraftResponse body = consultationRecordDraftService
-                .getDraft(tenantIdVal, consultationIdLong, consultantId)
+                .getDraft(owner.tenantId(), consultationIdLong, owner.ownerUserId(), owner.manager())
                 .orElse(ConsultationRecordDraftResponse.empty(consultationIdLong, consultantId));
-        return success(body);
+        return noStore(success(body));
     }
 
     /**
@@ -1345,32 +1443,95 @@ public class ScheduleController extends BaseApiController {
             HttpSession session) {
 
         ensureTenantContextFromSession(session);
-        String tenantIdVal = TenantContextHolder.getTenantId();
-        if (tenantIdVal == null || tenantIdVal.isEmpty()) {
-            log.warn("테넌트 정보 없음 - 상담일지 초안 저장 거부");
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(ApiResponse.error("테넌트 정보가 없습니다. 로그아웃 후 다시 로그인해 주세요."));
+        ResponseEntity<ApiResponse<ConsultationRecordDraftResponse>> tenantError = rejectIfNoTenantContext();
+        if (tenantError != null) {
+            return tenantError;
         }
-        User currentUser = SessionUtils.getCurrentUser(session);
-        if (currentUser == null) {
-            throw new org.springframework.security.access.AccessDeniedException("로그인이 필요합니다.");
-        }
-        assertConsultationDraftAccess(currentUser, consultantId);
         Long consultationIdLong = parseScheduleConsultationId(consultationId);
+        ConsultationRecordDraftAccessGuard.DraftOwner owner = consultationRecordDraftAccessGuard
+                .requireDraftOwner(session, consultationIdLong, consultantId);
         ConsultationRecordDraftResponse saved = consultationRecordDraftService.upsertDraft(
-                tenantIdVal,
+                owner.tenantId(),
                 consultationIdLong,
-                consultantId,
+                owner.ownerUserId(),
                 body != null ? body.getPayloadJson() : null,
-                body != null ? body.getExpectedVersion() : null);
-        return updated("상담일지 초안이 저장되었습니다.", saved);
+                body != null ? body.getExpectedVersion() : null,
+                owner.manager());
+        return noStore(updated("상담일지 초안이 저장되었습니다.", saved));
     }
 
-    private void assertConsultationDraftAccess(User currentUser, Long consultantId) {
-        if (!canRegisterOrModifyOthersSchedule(currentUser.getRole())
-                && !currentUser.getId().equals(consultantId)) {
-            throw new org.springframework.security.access.AccessDeniedException(
-                    "다른 상담사의 상담일지 초안에 접근할 권한이 없습니다.");
+    /**
+     * 상담일지 서버 초안 삭제 (버리기·확정 저장 후 정리).
+     * DELETE /api/v1/schedules/consultation-records/draft?consultationId=schedule-30&amp;consultantId=41
+     *
+     * @param consultationId 상담(스케줄) ID 또는 schedule- 접두 형식
+     * @param consultantId 상담사 ID
+     * @param session HTTP 세션
+     * @return 삭제 결과(초안 없음도 성공)
+     */
+    @DeleteMapping("/consultation-records/draft")
+    public ResponseEntity<ApiResponse<ConsultationRecordDraftResponse>> deleteConsultationRecordDraft(
+            @RequestParam String consultationId,
+            @RequestParam Long consultantId,
+            HttpSession session) {
+
+        ensureTenantContextFromSession(session);
+        ResponseEntity<ApiResponse<ConsultationRecordDraftResponse>> tenantError = rejectIfNoTenantContext();
+        if (tenantError != null) {
+            return tenantError;
+        }
+        Long consultationIdLong = parseScheduleConsultationId(consultationId);
+        ConsultationRecordDraftAccessGuard.DraftOwner owner = consultationRecordDraftAccessGuard
+                .requireDraftOwner(session, consultationIdLong, consultantId);
+        consultationRecordDraftService.deleteDraft(owner.tenantId(), consultationIdLong, owner.ownerUserId());
+        return noStore(success(ConsultationRecordDraftResponse.empty(consultationIdLong, consultantId)));
+    }
+
+    /**
+     * 초안 API 공통 — 테넌트 컨텍스트가 없으면 400 으로 거부한다 (cross-tenant 조기 차단).
+     *
+     * @return 거부 응답, 정상이면 {@code null}
+     */
+    private ResponseEntity<ApiResponse<ConsultationRecordDraftResponse>> rejectIfNoTenantContext() {
+        String tenantIdVal = TenantContextHolder.getTenantId();
+        if (tenantIdVal != null && !tenantIdVal.isEmpty()) {
+            return null;
+        }
+        log.warn("테넌트 정보 없음 - 상담일지 초안 요청 거부");
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(ApiResponse.error("테넌트 정보가 없습니다. 로그아웃 후 다시 로그인해 주세요."));
+    }
+
+    /**
+     * 상담일지 초안 응답에 캐시 금지 헤더를 붙인다 (본문이 중간 캐시·브라우저 디스크에 남지 않도록).
+     *
+     * @param <T> 응답 본문 타입
+     * @param response 원본 응답
+     * @return {@code Cache-Control: no-store} 가 적용된 응답
+     */
+    private <T> ResponseEntity<T> noStore(ResponseEntity<T> response) {
+        return ResponseEntity.status(response.getStatusCode())
+                .headers(headers -> headers.addAll(response.getHeaders()))
+                .cacheControl(CacheControl.noStore().mustRevalidate())
+                .header(HttpHeaders.PRAGMA, DRAFT_PRAGMA_NO_CACHE)
+                .body(response.getBody());
+    }
+
+    /**
+     * 상담일지 작성 본문의 일정 ID({@code consultationId})를 읽는다. 없거나 형식이 틀리면 null.
+     *
+     * @param recordData 작성 본문
+     * @return 일정 ID 또는 null
+     */
+    private static Long parseOptionalRecordScheduleId(Map<String, Object> recordData) {
+        Object raw = recordData != null ? recordData.get(CONSULTATION_ID_FIELD) : null;
+        if (raw == null || raw.toString().isBlank()) {
+            return null;
+        }
+        try {
+            return Long.valueOf(raw.toString().trim());
+        } catch (NumberFormatException e) {
+            return null;
         }
     }
 
@@ -1540,6 +1701,7 @@ public class ScheduleController extends BaseApiController {
      * {@code count} = totalElements (페이지 길이 아님). #1252 AdminController schedules envelope 정합.</p>
      *
      * @param consultantId optional consultant filter
+     * @param clientId optional client filter (같은 테넌트 안에서만 좁힘 — 관리자 계열 권한 검사 후 적용)
      * @param status optional schedule status
      * @param startDate optional start (yyyy-MM-dd)
      * @param endDate optional end (yyyy-MM-dd)
@@ -1552,6 +1714,7 @@ public class ScheduleController extends BaseApiController {
     @GetMapping("/admin")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getSchedulesForAdmin(
             @RequestParam(required = false) Long consultantId,
+            @RequestParam(required = false) Long clientId,
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String startDate,
             @RequestParam(required = false) String endDate,
@@ -1559,8 +1722,8 @@ public class ScheduleController extends BaseApiController {
             @RequestParam(required = false) Integer size,
             HttpSession session) {
         ensureTenantContextFromSession(session);
-        log.info("📅 관리자 스케줄 조회 요청 시작: consultantId={}, status={}, startDate={}, endDate={}, page={}, size={}, tenantId={}",
-                consultantId, status, startDate, endDate, page, size, TenantContextHolder.getTenantId());
+        log.info("📅 관리자 스케줄 조회 요청 시작: consultantId={}, clientId={}, status={}, startDate={}, endDate={}, page={}, size={}, tenantId={}",
+                consultantId, clientId, status, startDate, endDate, page, size, TenantContextHolder.getTenantId());
         
         User currentUser = SessionUtils.getCurrentUser(session);
         log.info("🔍 현재 사용자 확인: userId={}, role={}, userId={}", 
@@ -1612,6 +1775,7 @@ public class ScheduleController extends BaseApiController {
         Page<Schedule> schedulePage = scheduleRepository.findAdminSchedulesWithFilters(
                 tenantId,
                 consultantId,
+                clientId,
                 scheduleStatus,
                 start,
                 end,
@@ -1722,6 +1886,7 @@ public class ScheduleController extends BaseApiController {
         data.put("page", appliedPageable.getPageNumber());
         data.put("size", appliedPageable.getPageSize());
         data.put("consultantId", consultantId != null ? consultantId : "");
+        data.put("clientId", clientId != null ? clientId : "");
         data.put("status", status != null ? status : "");
         data.put("startDate", startDate != null ? startDate : "");
         data.put("endDate", endDate != null ? endDate : "");
@@ -2231,13 +2396,24 @@ public class ScheduleController extends BaseApiController {
      * @param displayNameByUserId PK별 표시명
      * @return JSON 필드 + 표시명
      */
+    /**
+     * 상담일지 엔티티를 표시용 맵으로 변환한다.
+     *
+     * @param records             변환 대상 상담일지
+     * @param displayNameByUserId 사용자 id → 표시명 인덱스
+     * @param summaryOnly         true 면 {@link ConsultationRecordListItemResponse} 요약·메타만 직렬화
+     *                            (임상 본문 비노출). false 면 엔티티 전체 (단건 편집 로드용).
+     * @return 표시용 맵 리스트
+     */
     private List<Map<String, Object>> convertConsultationRecordsToDisplayMaps(
             List<ConsultationRecord> records,
-            Map<Long, String> displayNameByUserId) {
+            Map<Long, String> displayNameByUserId,
+            boolean summaryOnly) {
         List<Map<String, Object>> out = new ArrayList<>();
         for (ConsultationRecord r : records) {
+            Object source = summaryOnly ? ConsultationRecordListItemResponse.fromEntity(r) : r;
             Map<String, Object> map = new LinkedHashMap<>(objectMapper.convertValue(
-                r, new TypeReference<Map<String, Object>>() {}));
+                source, new TypeReference<Map<String, Object>>() {}));
             String clientResolved = r.getClientId() != null
                 ? displayNameByUserId.getOrDefault(r.getClientId(), AdminServiceUserFacingMessages.DISPLAY_NAME_UNKNOWN)
                 : AdminServiceUserFacingMessages.DISPLAY_NAME_UNKNOWN;

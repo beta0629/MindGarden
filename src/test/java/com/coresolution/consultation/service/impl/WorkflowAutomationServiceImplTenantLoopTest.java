@@ -139,4 +139,26 @@ class WorkflowAutomationServiceImplTenantLoopTest {
         verify(userRepository, times(1))
             .findByRoleInAndIsDeletedFalse(eq(TENANT_B), anyList());
     }
+
+    @Test
+    @DisplayName("ForTenant 수동 실행 — 지정 테넌트만 조회하고 요청 스레드의 테넌트 컨텍스트를 복원한다")
+    void forTenant_onlyCallerTenant_andRestoresContext() {
+        when(tenantService.getAllActiveTenantIds()).thenReturn(List.of(TENANT_A, TENANT_B));
+        when(userRepository.findByRoleAndIsDeletedFalse(anyString(), anyString()))
+            .thenReturn(Collections.emptyList());
+        TenantContextHolder.setTenantId(TENANT_A);
+
+        service.sendScheduleRemindersForTenant(TENANT_A);
+        service.sendIncompleteConsultationAlertsForTenant(TENANT_A);
+        service.sendDailyPerformanceSummaryForTenant(TENANT_A);
+
+        verify(scheduleRepository, times(2))
+            .findByTenantIdAndDateAndStatusIn(eq(TENANT_A), any(LocalDate.class), anyList());
+        verify(scheduleRepository, org.mockito.Mockito.never())
+            .findByTenantIdAndDateAndStatusIn(eq(TENANT_B), any(LocalDate.class), anyList());
+        verify(userRepository, org.mockito.Mockito.never())
+            .findByRoleAndIsDeletedFalse(eq(TENANT_B), anyString());
+        verify(tenantService, org.mockito.Mockito.never()).getAllActiveTenantIds();
+        org.assertj.core.api.Assertions.assertThat(TenantContextHolder.peekTenantId()).isEqualTo(TENANT_A);
+    }
 }

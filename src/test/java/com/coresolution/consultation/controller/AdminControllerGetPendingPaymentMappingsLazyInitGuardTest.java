@@ -31,6 +31,8 @@ import com.coresolution.consultation.service.UserPersonalDataCacheService;
 import com.coresolution.consultation.service.UserService;
 import com.coresolution.consultation.service.erp.ErpService;
 import com.coresolution.consultation.service.erp.financial.FinancialTransactionService;
+import com.coresolution.consultation.service.support.ClientPathAccessGuard;
+import com.coresolution.consultation.service.support.ResourceOwnerAccessGuard;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.core.dto.ApiResponse;
 import com.coresolution.core.service.OnboardingService;
@@ -45,6 +47,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.mock.web.MockHttpSession;
 
 /**
  * {@link AdminController#getPendingPaymentMappings} /
@@ -90,6 +93,8 @@ class AdminControllerGetPendingPaymentMappingsLazyInitGuardTest {
     @Mock private OnboardingService onboardingService;
     @Mock private RealTimeStatisticsService realTimeStatisticsService;
     @Mock private UserRepository userRepository;
+    @Mock private ClientPathAccessGuard clientPathAccessGuard;
+    @Mock private ResourceOwnerAccessGuard resourceOwnerAccessGuard;
 
     @InjectMocks
     private AdminController controller;
@@ -103,7 +108,7 @@ class AdminControllerGetPendingPaymentMappingsLazyInitGuardTest {
         when(adminService.getPendingPaymentMappings()).thenReturn(List.of(dto));
 
         ResponseEntity<ApiResponse<Map<String, Object>>> response =
-                controller.getPendingPaymentMappings();
+                controller.getPendingPaymentMappings(new MockHttpSession());
 
         assertListResponse(response, "PENDING_PAYMENT");
     }
@@ -115,7 +120,7 @@ class AdminControllerGetPendingPaymentMappingsLazyInitGuardTest {
         when(adminService.getPaymentConfirmedMappings()).thenReturn(List.of(dto));
 
         ResponseEntity<ApiResponse<Map<String, Object>>> response =
-                controller.getPaymentConfirmedMappings();
+                controller.getPaymentConfirmedMappings(new MockHttpSession());
 
         assertListResponse(response, "PAYMENT_CONFIRMED");
     }

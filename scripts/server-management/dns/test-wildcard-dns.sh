@@ -16,7 +16,7 @@ NC='\033[0m' # No Color
 
 SUBDOMAIN="${1:-mindgarden}"
 FULL_DOMAIN="${SUBDOMAIN}.dev.core-solution.co.kr"
-EXPECTED_IP="114.202.247.246"
+EXPECTED_IP="${SERVER_IP:?SERVER_IP 환경변수를 설정하세요}"
 
 echo "=========================================="
 echo "와일드카드 DNS 테스트"
@@ -94,7 +94,7 @@ else
 fi
 
 echo -n "  서버 내부 curl 테스트: "
-SERVER_RESULT=$(ssh root@beta0629.cafe24.com "curl -s -o /dev/null -w '%{http_code}' -k --max-time 10 'https://${FULL_DOMAIN}/' 2>&1" || echo "000")
+SERVER_RESULT=$(ssh root@${DEV_SERVER_HOST:?DEV_SERVER_HOST 환경변수를 설정하세요} "curl -s -o /dev/null -w '%{http_code}' -k --max-time 10 'https://${FULL_DOMAIN}/' 2>&1" || echo "000")
 
 if [ "$SERVER_RESULT" == "200" ]; then
     echo -e "${GREEN}✅ HTTP 200${NC}"

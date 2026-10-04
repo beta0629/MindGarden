@@ -13,6 +13,8 @@ on:
       - 'database/schema/procedures_standardized/**'
       - 'scripts/automation/deployment/**'
       - 'scripts/database/sync/**'
+      - 'src/main/resources/db/migration/**'
+      - 'src/main/resources/sql/procedures/**'
       - 'scripts/deployment/check-deploy-no-overwrite-symbols.sh'
       - 'docs/deployment/DEPLOY_NO_OVERWRITE_GATE.md'
       - '.cursor/skills/core-solution-deployment/**'
@@ -31,6 +33,8 @@ on:
       - 'database/schema/procedures_standardized/**'
       - 'scripts/automation/deployment/**'
       - 'scripts/database/sync/**'
+      - 'src/main/resources/db/migration/**'
+      - 'src/main/resources/sql/procedures/**'
       - 'scripts/deployment/check-deploy-no-overwrite-symbols.sh'
       - 'docs/deployment/DEPLOY_NO_OVERWRITE_GATE.md'
       - '.cursor/skills/core-solution-deployment/**'
@@ -98,11 +102,20 @@ jobs:
           docker logs mg-proc-mysql | tail -50
           exit 1
 
+      - name: Flyway-owned standard procedure SQL matches latest Flyway definition
+        run: bash scripts/database/sync/flyway-procedure-extract.sh check
+
+      - name: GetMissingConsultationRecordAlerts contract (params, OUT, result JSON)
+        run: bash scripts/database/sync/get-missing-consultation-record-alerts.contract.mysql.test.sh
+
       - name: Staging CREATE + safe-replace for every deploy SQL
         run: bash scripts/automation/deployment/procedure-deploy-staging-mysql.test.sh
 
       - name: Nightly prod-to-dev copy re-applies repo routines
         run: bash scripts/database/sync/prod-to-dev-daily.mysql.test.sh
+
+      - name: Flyway-owned procedure extract tests
+        run: bash scripts/database/sync/flyway-procedure-extract.test.sh
 
       - name: Procedure deploy shell tests
         run: |

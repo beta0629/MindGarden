@@ -8,6 +8,9 @@ set -euo pipefail
 ROOT=$(cd "$(dirname "$0")/../../.." && pwd)
 SYNC_REL="scripts/database/sync/prod-to-dev-daily.sh"
 SQL_REL="database/schema/procedures_standardized/deployment"
+# 예전 번들(#1410)의 개발 전용 재적재 폴더·스크립트. 지금은 표준 배포 SQL 에 합쳐져 서버에서 지운다.
+LEGACY_DEV_SYNC_SQL_REL="database/schema/procedures_flyway_dev_sync"
+LEGACY_DEV_SYNC_APPLY_REL="scripts/database/sync/apply-flyway-procedures-dev.sh"
 
 fail() {
     echo "❌ $1" >&2
@@ -33,6 +36,9 @@ dev_sync_bundle_root_from_crontab() {
 dev_sync_bundle_build() {
     local dest="$1" std name
     mkdir -p "$dest/scripts/database/sync" "$dest/scripts/automation/deployment" "$dest/$SQL_REL"
+    # Flyway 원본에서 만든 표준 SQL 이 원본과 같을 때만 싣는다.
+    bash "$ROOT/scripts/database/sync/flyway-procedure-extract.sh" check >/dev/null \
+        || fail "Flyway 원본 표준 SQL 이 원본과 다릅니다. flyway-procedure-extract.sh generate 를 돌리세요."
     cp "$ROOT/$SYNC_REL" "$dest/scripts/database/sync/"
     cp "$ROOT/scripts/database/sync/post-dev-sync-anonymize.sql" "$dest/scripts/database/sync/"
     cp "$ROOT/scripts/database/sync/post-dev-sync-anonymize-dry-run.sql" "$dest/scripts/database/sync/"
@@ -51,6 +57,8 @@ DEV_SYNC_BUNDLE_REMOTE=$(cat <<'REMOTE'
 set -euo pipefail
 root="$1"
 sql_rel="$2"
+legacy_dev_sync_rel="$3"
+legacy_apply_rel="$4"
 tmp=$(mktemp -d "${root}/.mg-sync-bundle.XXXXXX")
 trap 'rm -rf "$tmp"' EXIT
 tar -xzf - -C "$tmp"
@@ -67,6 +75,8 @@ if [ -d "$root/$sql_rel" ]; then
 fi
 mv "$tmp/$sql_rel" "$root/$sql_rel"
 rm -rf "$root/${sql_rel}.old"
+rm -rf "$root/$legacy_dev_sync_rel" "$root/${legacy_dev_sync_rel}.old"
+rm -f "$root/$legacy_apply_rel"
 echo "remote bundle ok: $(find "$root/$sql_rel" -name '*_deploy.sql' | wc -l | tr -d ' ') sql"
 REMOTE
 )
@@ -89,7 +99,7 @@ dev_sync_bundle_main() {
     echo "야간 복사 번들 갱신: 배포 SQL ${count}개, 스크립트 6개 → crontab 기준 배포 루트"
     # 새 번들을 임시 폴더에 푼 뒤 교체한다. 저장소에서 빠진 프로시저 SQL 은 남기지 않는다.
     tar -C "$work" -czf - scripts database \
-        | ssh "$user@$DEV_SERVER_HOST" "bash -c $(printf '%q' "$DEV_SYNC_BUNDLE_REMOTE") mg-sync-bundle $(printf '%q' "$remote_root") $(printf '%q' "$SQL_REL")"
+        | ssh "$user@$DEV_SERVER_HOST" "bash -c $(printf '%q' "$DEV_SYNC_BUNDLE_REMOTE") mg-sync-bundle $(printf '%q' "$remote_root") $(printf '%q' "$SQL_REL") $(printf '%q' "$LEGACY_DEV_SYNC_SQL_REL") $(printf '%q' "$LEGACY_DEV_SYNC_APPLY_REL")"
 }
 
 if [ "${BASH_SOURCE[0]}" = "$0" ]; then

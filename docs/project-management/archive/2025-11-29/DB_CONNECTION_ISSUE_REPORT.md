@@ -19,7 +19,7 @@ host: beta0629.cafe24.com
 port: 3306  
 database: core_solution
 username: mindgarden_dev
-password: MindGardenDev2025!@#
+password: <DEV_DB_PASSWORD>
 ```
 
 #### **연결 테스트 결과**

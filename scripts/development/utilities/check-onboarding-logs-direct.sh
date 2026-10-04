@@ -4,7 +4,7 @@
 
 set -e
 
-SERVER_HOST="beta0629.cafe24.com"
+SERVER_HOST="${DEV_SERVER_HOST:?DEV_SERVER_HOST 환경변수를 설정하세요}"
 SERVER_USER="root"
 LOG_LINES="${1:-100}"
 

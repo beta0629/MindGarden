@@ -15,6 +15,7 @@ import com.coresolution.consultation.repository.ConsultantClientMappingRepositor
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.ScheduleAutoCompleteService;
 import com.coresolution.consultation.service.ScheduleAutoCompleteService.TenantAutoCompleteResult;
+import com.coresolution.consultation.service.AdminService;
 import com.coresolution.consultation.service.ScheduleService;
 import com.coresolution.consultation.service.support.ClientPathAccessGuard;
 import com.coresolution.core.context.TenantContextHolder;
@@ -53,6 +54,7 @@ class AdminControllerAutoCompleteAuthTest {
     private static final String TENANT_A = "tenant-admin-auto-complete-a";
     private static final String TENANT_B = "tenant-admin-auto-complete-b";
 
+    @Mock private AdminService adminService;
     @Mock private ScheduleService scheduleService;
     @Mock private ScheduleAutoCompleteService scheduleAutoCompleteService;
 
@@ -131,6 +133,40 @@ class AdminControllerAutoCompleteAuthTest {
             controller.autoCompleteSchedules(sessionOf(5L, UserRole.ADMIN, TENANT_B)))
             .isInstanceOf(AccessDeniedException.class);
         verifyNoCompletion();
+    }
+
+    @Test
+    @DisplayName("미작성 알림 포함 자동 완료 — 같은 기관 관리자만 200")
+    void autoCompleteWithReminder_admin_ok() {
+        controller.autoCompleteSchedulesWithReminder(sessionOf(1L, UserRole.ADMIN, TENANT_A));
+
+        verify(adminService).autoCompleteSchedulesWithReminder();
+    }
+
+    @Test
+    @DisplayName("미작성 알림 포함 자동 완료 — 내담자는 403, 처리 없음")
+    void autoCompleteWithReminder_client_forbidden() {
+        assertThatThrownBy(() ->
+            controller.autoCompleteSchedulesWithReminder(sessionOf(4L, UserRole.CLIENT, TENANT_A)))
+            .isInstanceOf(AccessDeniedException.class);
+        verify(adminService, never()).autoCompleteSchedulesWithReminder();
+    }
+
+    @Test
+    @DisplayName("미작성 알림 포함 자동 완료 — 상담사는 403, 처리 없음")
+    void autoCompleteWithReminder_consultant_forbidden() {
+        assertThatThrownBy(() ->
+            controller.autoCompleteSchedulesWithReminder(sessionOf(3L, UserRole.CONSULTANT, TENANT_A)))
+            .isInstanceOf(AccessDeniedException.class);
+        verify(adminService, never()).autoCompleteSchedulesWithReminder();
+    }
+
+    @Test
+    @DisplayName("미작성 알림 포함 자동 완료 — 미인증은 401, 처리 없음")
+    void autoCompleteWithReminder_unauthenticated() {
+        assertThatThrownBy(() -> controller.autoCompleteSchedulesWithReminder(new MockHttpSession()))
+            .isInstanceOf(UnauthorizedException.class);
+        verify(adminService, never()).autoCompleteSchedulesWithReminder();
     }
 
     private void verifyNoCompletion() {

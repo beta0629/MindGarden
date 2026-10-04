@@ -3279,8 +3279,10 @@ public class AdminController extends BaseApiController {
      * 스케줄 자동 완료 처리 및 상담일지 미작성 알림 (수동 실행)
      */
     @PostMapping("/schedules/auto-complete-with-reminder")
-    public ResponseEntity<ApiResponse<Map<String, Object>>> autoCompleteSchedulesWithReminder() {
-        log.info("🔄 스케줄 자동 완료 처리 및 상담일지 미작성 알림 수동 실행");
+    public ResponseEntity<ApiResponse<Map<String, Object>>> autoCompleteSchedulesWithReminder(HttpSession session) {
+        User caller = clientPathAccessGuard.requireTenantManager(session);
+        log.info("🔄 스케줄 자동 완료 처리 및 상담일지 미작성 알림 수동 실행: userId={}, role={}",
+                caller.getId(), caller.getRole());
 
         Map<String, Object> result = adminService.autoCompleteSchedulesWithReminder();
 

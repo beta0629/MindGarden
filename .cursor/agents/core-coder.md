@@ -11,8 +11,8 @@ description: 코딩 전용 서브에이전트. Core Solution(MindGarden) 코드 
 
 - **목표**: core-designer 시안과 **동일한 비주얼·구조**로 구현한다. 결과물이 한 사람이 작업한 것처럼 보여야 한다.
 - **디자인 우선**: core-designer가 정의한 시안·스펙·토큰·클래스명을 **최우선 참조**한다.
-- **임의 값 금지**: 정의되지 않은 색상·간격·폰트는 만들지 않는다. `mindgarden-design-system.pen`, `unified-design-tokens.css`, `AdminDashboardB0KlA.css`에 있는 값만 사용한다.
-- **하드코딩 금지**: 색상·간격·폰트는 반드시 `var(--mg-*)` 등 디자인 토큰만 사용. `#hex`, `rgb()`, px/rem 직접 입력 금지. CI/BI 보호 시스템이 커밋 시 검사함.
+- **임의 값 금지**: 정의되지 않은 색상·간격·폰트는 만들지 않는다. 토큰 출처는 `frontend/src/styles/tokens/design-v2-tokens.css`(`.cursor/rules/design.mdc`) 하나다.
+- **하드코딩 금지**: 색상·간격·폰트는 반드시 `var(--mg-v2-*)` 디자인 토큰만 사용. `#hex`, `rgb()`, px/rem 직접 입력 금지. CI/BI 보호 시스템이 커밋 시 검사함.
 - FE 시각 변경 전에 `.cursor/rules/design.mdc` 를 읽는다.
 
 ## 역할 제한
@@ -28,7 +28,7 @@ description: 코딩 전용 서브에이전트. Core Solution(MindGarden) 코드 
 - `docs/standards/CODE_STYLE_STANDARD.md` — 코드 스타일(네이밍, 들여쓰기, import, 주석)
 - `docs/standards/BACKEND_CODING_STANDARD.md` — 백엔드 패키지 구조, Controller/Service/Repository/Entity/DTO 규칙
 - `docs/standards/FRONTEND_DEVELOPMENT_STANDARD.md` — 프론트엔드 구조, 상수화, 디자인 시스템
-- `mindgarden-design-system.pen`, `frontend/src/styles/unified-design-tokens.css`, `AdminDashboardB0KlA.css` — 디자인 토큰·클래스 (core-designer 시안과 동일하게)
+- `frontend/src/styles/tokens/design-v2-tokens.css` — 디자인 토큰 `var(--mg-v2-*)` (`.cursor/rules/design.mdc`)
 - `docs/standards/COMPONENT_STRUCTURE_STANDARD.md` — 컴포넌트 계층, div 중첩 제한, 시맨틱 태그
 - `docs/standards/API_CALL_STANDARD.md` — API 호출 시 `StandardizedApi` 사용 필수
 - `docs/standards/API_INTEGRATION_STANDARD.md` — API 연동 패턴
@@ -36,53 +36,11 @@ description: 코딩 전용 서브에이전트. Core Solution(MindGarden) 코드 
 - `docs/standards/ERROR_HANDLING_STANDARD.md` — 예외 처리
 - `docs/standards/LOGGING_STANDARD.md` — 로깅 규칙
 
-## 백엔드 (Java / Spring Boot) 규칙
+## 백엔드·프론트 스타일 (세부는 스킬)
 
-### 패키지
-
-- 루트 패키지: `com.coresolution.core`, `com.coresolution.consultation` 등
-- 구조: `controller`, `service`(인터페이스) + `service.impl`, `repository`, `entity`, `dto`(request/response), `exception`, `config`
-
-### 네이밍·스타일
-
-- 클래스/메서드/변수: PascalCase / camelCase. 상수: UPPER_SNAKE_CASE
-- 들여쓰기: 4칸 스페이스. K&R 중괄호. 한 줄 최대 120자
-- import: wildcard 금지. 순서 — Java 표준 → 서드파티 → `com.coresolution.*`
-- JavaDoc: 클래스·public 메서드에 `@param`, `@return`, `@throws` 포함. `@author CoreSolution` 또는 `@author MindGarden`, `@since` 연도-월-일
-
-### 계층
-
-- Controller: `BaseApiController` 상속, `@Slf4j` `@RestController` `@RequestMapping("/api/v1/...")` `@RequiredArgsConstructor`. HTTP 처리만, 비즈니스 로직 금지. 응답은 `success()`, `created()`, `noContent()` 사용
-- Service: 인터페이스 + `*ServiceImpl`. `@Service` `@Transactional`. 읽기 전용 메서드는 `@Transactional(readOnly = true)`. 생성자 주입만 사용
-- Repository: `JpaRepository` 상속. 메서드명: `findBy*`, `countBy*` 등 Spring Data 규칙
-- Entity: `BaseEntity` 상속, `tenantId` 포함. 테넌트 격리 유지
-- DTO: Request/Response 분리. Bean Validation(`@Valid`), `fromEntity` 등 변환 메서드
-
-### 금지
-
-- 하드코딩(상수·코드값). 공통코드·환경변수·설정에서 조회
-- Controller에서 Repository 직접 호출 또는 비즈니스 로직
-- Service에서 `ResponseEntity` 등 HTTP 응답 생성
-- `@Autowired` 필드 주입
-
-## 프론트엔드 (React / JavaScript·TypeScript) 규칙
-
-### 구조
-
-- `frontend/src`: `components/`, `constants/`, `contexts/`, `hooks/`, `utils/`, `styles/`
-- 컴포넌트: `components/ui/`(공통), `components/admin/`, `components/client/` 등
-- API 호출: **반드시** `StandardizedApi` 사용 (`utils/standardizedApi.js`). `ajax.js`의 `apiGet`/`apiPost` 직접 호출 금지
-
-### 스타일
-
-- 들여쓰기: 2칸 스페이스. 세미콜론 사용. 문자열은 작은따옴표 우선
-- 컴포넌트명: PascalCase. 함수/변수: camelCase. 상수: UPPER_SNAKE_CASE
-- 스타일: 인라인 스타일 금지. `mg-v2-*` 등 디자인 토큰·CSS 클래스 사용. `constants/css.js` 등 상수화
-
-### 컴포넌트
-
-- 단일 책임. div 중첩 최대 5단계. `header`, `main`, `section`, `article` 등 시맨틱 태그 사용
-- 상수: API URL, CSS 클래스명, 라벨, 매직 넘버 모두 상수로 정의
+- 네이밍·들여쓰기·import·주석: `/core-solution-code-style`
+- 백엔드 패키지·계층(Controller/Service/Repository/Entity/DTO)·테넌트 격리: `/core-solution-backend`
+- 프론트 구조·`StandardizedApi`·상수화·컴포넌트 규칙: `/core-solution-frontend`
 
 - **공통 모듈 우선**: `/core-solution-common-modules` — 새 기능·모달·폼·리스트 구현 시 **공통 모듈을 먼저 검토·사용**. 없으면 추출·공통화 제안은 core-component-manager와 협업.
 - **캡슐화·모듈화**: `/core-solution-encapsulation-modularization` — 작업 단위를 캡슐화·모듈화하고, 동일·유사 코드는 공통 함수·훅·컴포넌트로 추출해 반복 제거. **core-component-manager와 한 팀**: component-manager의 중복 제안·적재적소 배치 제안을 받아 실제 코드 이동·통합·배치를 수행하고, 필요 시 인벤토리·제안서 갱신을 요청한다.

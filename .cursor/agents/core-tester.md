@@ -18,7 +18,7 @@ description: 테스트 전용 서브에이전트. Core Solution(MindGarden) 테�
 - **테스트 표준**: `docs/standards/TESTING_STANDARD.md` — 테스트 피라미드, 단위/통합/E2E/보안/성능 테스트 규칙, 커버리지 목표, 금지 사항
 - **에러 처리**: `docs/standards/ERROR_HANDLING_STANDARD.md` — 예외 시나리오 테스트 시 참고
 - **API 설계**: `docs/standards/API_DESIGN_STANDARD.md` — API 테스트 시 엔드포인트·응답 형식
-- **자체 검증**: `.cursor/rules/self-verify.mdc` — 보고는 그 1~7과 하드스톱을 따른다. 항목 1·5의 화면·실제 데이터는 아래 「자체 검증」절. Jest·픽스처로 그 확인을 통과 처리하지 않는다.
+- **자체 검증**: `.cursor/rules/guardrail-preflight.mdc` — 보고는 그 체크리스트와 하드스톱을 따른다.
 
 ## 테스트 피라미드 (비중)
 
@@ -36,7 +36,6 @@ description: 테스트 전용 서브에이전트. Core Solution(MindGarden) 테�
 - **구조**: Given-When-Then. `@DisplayName("한글 설명")` 필수
 - **위치**: `src/test/java/com/coresolution/{module}/` — 테스트 대상과 동일 패키지 또는 `service/`, `controller/` 등
 - **의존성**: `@Mock` 주입, `@InjectMocks` 대상 클래스. 외부·DB는 Mock
-- 돈 또는 상태를 바꾸는 저장 프로시저·외부 HTTP를 `thenReturn` 으로만 감춘 단위 테스트는 그 경로의 통과 근거가 아니다. 스텁이 실제 파라미터 모드(IN/OUT/INOUT)를 검사하지 않으면 `.cursor/rules/self-verify.mdc` 하드스톱 5에서 실패다.
 - **테넌트**: 테스트 데이터에 `tenantId` 포함. 격리 시나리오 별도 테스트
 - **데이터**: `UUID.randomUUID()`, `TestDataBuilder` 등으로 동적 생성. 프로덕션 데이터·하드코딩된 ID 금지
 - **정리**: `@AfterEach`/`@AfterAll`에서 테스트 데이터 정리 (필요 시)
@@ -79,18 +78,10 @@ description: 테스트 전용 서브에이전트. Core Solution(MindGarden) 테�
 5. **실행**: `mvn test` (백엔드), `npm test` 또는 `npx jest` (프론트), `npx playwright test` (E2E)
 6. **커버리지**: JaCoCo 리포트 확인. 목표 미달 시 우선순위 높은 코드부터 보완
 
-## 자체 검증 (규칙과 같은 흐름)
+## 자체 검증
 
-검증 보고의 SSOT는 `.cursor/rules/self-verify.mdc` 다. 실행 절차는 `.cursor/skills/core-solution-self-verify/SKILL.md` 다. 아래는 그 안의 항목 1·5를 테스터가 테스트 결과만으로 통과 처리하지 않게 하는 포인터다. 1~7 옆에 두는 두 번째 체크리스트가 아니다.
-
-- 요구사항은 구현 전 번호 목록이다. 끝나면 표(항목 / 결과 / 근거)로 통과 또는 실패를 적는다. 근거는 파일:줄, API 응답, 화면 위치. Jest가 초록이어도 요구사항 행을 통과로 적지 않는다. 실패가 있으면 머지하지 않고, 고친 뒤 다시 대조한다.
-- 실제 화면 확인은 .dev 배포 후 실제 URL 스크린샷이다. PC 1280px, 모바일 390px, 최소 2장. 공개 페이지는 로그아웃 상태. Jest 렌더는 이 확인이 아니다. 스크린샷이 없으면 미확인이다. FE를 바꾸지 않았으면 해당 없음이다.
-- 실제 데이터 확인은 .dev 데이터다. mock·픽스처·테스트 데이터 빌더로 대체하지 않는다. 예: 화면에 나온 개수, 숨김·테스트 상품이 없는지, 빈 값이 「—」만으로 나오지 않는지. 멀티테넌트는 대상 테넌트와 다른 테넌트다. 데이터가 섞이거나 MindGarden 내용이 다른 테넌트에 있으면 실패다.
-- 확인하지 않은 항목은 미확인과 이유다. 추정으로 통과시키지 않는다 (규칙 하드스톱 4).
-- 돈 또는 상태를 바꾸는 경로의 저장 프로시저·외부 HTTP를 `thenReturn` 또는 실제 파라미터 모드를 검사하지 않는 스텁으로 바꾼 테스트만으로 통과로 적지 않는다 (규칙 하드스톱 5). 2026-10-02 급여 확정은 `RecalcUnpaidSalaryCalculation` 을 Mockito `thenReturn` 으로 감쌌다. 실제 JDBC는 파라미터 4를 OUT으로 등록했고, 운영 프로시저는 그 OUT을 선언하지 않았다. `SQLException: Parameter number 4 is not an OUT parameter` 는 운영 배포 뒤에만 났다. .dev는 그 프로시저를 실행하지 않았다.
-- 운영 배포 전에 .dev에서 서버가 호출할 것과 같은 프로시저로 그 경로를 1회 실행하고, HTTP 상태와 알려진 예외가 없음을 기록한다. .dev를 호출하지 않았으면 미확인이고 운영 배포는 하지 않는다. 비밀값을 로그에 남기지 않는다. 데이터를 heal하지 않는다. 운영을 호출하지 않는다. 이 1회 실행은 core-deployer의 운영 배포 전 확인이다. 테스트 통과만으로 대신하지 않는다.
-- 화면 스모크와 배포 run은 core-deployer의 5번이다. 그 근거 없이 5번을 통과로 적지 않는다.
-- 보고는 PR 본문 「## 자체 검증」과 채팅에 같은 표, FE면 스크린샷 2장 이상, PR 번호·머지 커밋·.dev 배포 run을 남긴다.
+- 판정 기준·하드스톱은 `.cursor/rules/guardrail-preflight.mdc`(5항: 프로시저·외부 HTTP를 파라미터 모드 미검사 스텁으로 통과 금지), 실행 절차는 `.cursor/skills/core-solution-self-verify/SKILL.md`.
+- Jest·픽스처·mock 결과만으로 화면·실제 데이터·.dev 스모크 항목을 통과로 적지 않는다(미확인).
 
 ## 금지 사항 (표준과 동일)
 
@@ -98,7 +89,7 @@ description: 테스트 전용 서브에이전트. Core Solution(MindGarden) 테�
 - 테스트 간 실행 순서·데이터 의존 (각 테스트 독립)
 - 하드코딩된 ID·tenantId (동적 생성)
 - 테스트 전용이 아닌 비즈니스 로직 추가
-- 돈 또는 상태를 바꾸는 저장 프로시저·외부 HTTP를 파라미터 모드를 검사하지 않는 `thenReturn`·스텁만으로 통과 처리. 2026-10-02 급여 확정(`RecalcUnpaidSalaryCalculation`, JDBC 파라미터 4 OUT, 운영 프로시저는 OUT 미선언)이 그 실패다.
+- 돈 또는 상태를 바꾸는 저장 프로시저·외부 HTTP를 파라미터 모드를 검사하지 않는 `thenReturn`·스텁만으로 통과 처리(`guardrail-preflight.mdc` 하드스톱).
 
 ## 테스트 작성 체크리스트
 

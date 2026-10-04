@@ -1,6 +1,6 @@
 package com.coresolution.consultation.service.support;
 
-import java.util.Collection;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
@@ -8,6 +8,7 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 import com.coresolution.consultation.assessment.entity.PsychAssessmentDocument;
 import com.coresolution.consultation.assessment.repository.PsychAssessmentDocumentRepository;
+import com.coresolution.consultation.constant.admin.AdminBulkMappingConstants;
 import com.coresolution.consultation.entity.Account;
 import com.coresolution.consultation.entity.Budget;
 import com.coresolution.consultation.entity.ConsultantAvailability;
@@ -45,6 +46,7 @@ import com.coresolution.consultation.repository.SalaryCalculationRepository;
 import com.coresolution.consultation.repository.erp.accounting.AccountingEntryRepository;
 import com.coresolution.consultation.repository.erp.financial.FinancialTransactionRepository;
 import com.coresolution.consultation.repository.erp.settlement.SettlementRepository;
+import com.coresolution.consultation.util.BulkMappingIdsParser;
 import com.coresolution.consultation.util.ServerErrorResponses;
 import com.coresolution.core.domain.ErdDiagram;
 import com.coresolution.core.repository.ErdDiagramRepository;
@@ -478,30 +480,34 @@ public class ResourceOwnerAccessGuard {
     }
 
     /**
-     * 여러 매핑을 한 번에 바꾸는 관리자·사무원 API(일괄 결제 확인·취소) 검증. 모든 id 가 세션 테넌트 매핑이어야 한다.
+     * 여러 매핑을 한 번에 바꾸는 관리자·사무원 API(일괄 결제 확인) 검증. 역할 → 형식 → 테넌트 순으로 본다.
+     * 모든 id 가 세션 테넌트 매핑이어야 하며 하나라도 아니면(없는 id 포함) 요청 전체를 거부한다.
      *
      * @param session    HTTP 세션
-     * @param mappingIds 요청 본문의 매핑 ID 목록 값 (목록이 아니거나 비었거나 숫자가 아닌 값이 있으면 거부)
-     * @return 세션 사용자
-     * @throws UnauthorizedException 로그인 사용자가 없을 때
-     * @throws AccessDeniedException 관리자·사무원이 아니거나 하나라도 세션 테넌트 매핑이 아닐 때
+     * @param mappingIds 요청 본문의 매핑 ID 목록 값
+     * @return 중복 제거된 매핑 ID 목록 (요청 순서 유지)
+     * @throws UnauthorizedException    로그인 사용자가 없을 때
+     * @throws AccessDeniedException    관리자·사무원이 아니거나 하나라도 세션 테넌트 매핑이 아닐 때
+     * @throws IllegalArgumentException 목록 형식이 잘못되었거나 비었거나 최대 개수를 넘을 때
      */
     @Transactional(readOnly = true)
-    public User requireMappingsManagerAccess(HttpSession session, Object mappingIds) {
+    public List<Long> requireMappingsManagerAccess(HttpSession session, Object mappingIds) {
         return assertMappingIdsInCallerTenant(requireTenantManager(session, "mappingIds", null), mappingIds);
     }
 
     /**
-     * 여러 매핑을 한 번에 종료하는 관리자 전용 API(일괄 결제 취소 = 매핑 종료·환불) 검증. 모든 id 가 세션 테넌트 매핑이어야 한다.
+     * 여러 매핑을 한 번에 종료하는 관리자 전용 API(일괄 결제 취소 = 매핑 종료·환불) 검증. 역할 → 형식 → 테넌트 순으로 본다.
+     * 모든 id 가 세션 테넌트 매핑이어야 하며 하나라도 아니면(없는 id 포함) 요청 전체를 거부한다.
      *
      * @param session    HTTP 세션
-     * @param mappingIds 요청 본문의 매핑 ID 목록 값 (목록이 아니거나 비었거나 숫자가 아닌 값이 있으면 거부)
-     * @return 세션 관리자
-     * @throws UnauthorizedException 로그인 사용자가 없을 때
-     * @throws AccessDeniedException 관리자가 아니거나 하나라도 세션 테넌트 매핑이 아닐 때
+     * @param mappingIds 요청 본문의 매핑 ID 목록 값
+     * @return 중복 제거된 매핑 ID 목록 (요청 순서 유지)
+     * @throws UnauthorizedException    로그인 사용자가 없을 때
+     * @throws AccessDeniedException    관리자가 아니거나 하나라도 세션 테넌트 매핑이 아닐 때
+     * @throws IllegalArgumentException 목록 형식이 잘못되었거나 비었거나 최대 개수를 넘을 때
      */
     @Transactional(readOnly = true)
-    public User requireMappingsAdminAccess(HttpSession session, Object mappingIds) {
+    public List<Long> requireMappingsAdminAccess(HttpSession session, Object mappingIds) {
         return assertMappingIdsInCallerTenant(requireTenantAdmin(session, "mappingIds", null), mappingIds);
     }
 
@@ -762,17 +768,13 @@ public class ResourceOwnerAccessGuard {
         return caller;
     }
 
-    private User assertMappingIdsInCallerTenant(User caller, Object mappingIds) {
-        if (!(mappingIds instanceof Collection<?> ids) || ids.isEmpty()) {
-            throw denyResource(caller, "mappingIds", null);
+    private List<Long> assertMappingIdsInCallerTenant(User caller, Object mappingIds) {
+        List<Long> ids = BulkMappingIdsParser.parse(mappingIds,
+                AdminBulkMappingConstants.MAX_MAPPING_IDS_PER_REQUEST);
+        for (Long id : ids) {
+            loadMappingInCallerTenant(caller, id);
         }
-        for (Object rawId : ids) {
-            if (!(rawId instanceof Number)) {
-                throw denyResource(caller, "mappingIds", null);
-            }
-            loadMappingInCallerTenant(caller, ((Number) rawId).longValue());
-        }
-        return caller;
+        return ids;
     }
 
     private void assertUserInCallerTenant(User caller, String field, Long userId) {

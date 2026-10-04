@@ -92,6 +92,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -198,6 +199,8 @@ class RefundCumulativeCapIntegrationTest {
 
     @BeforeEach
     void setUp() {
+        lenient().when(mappingRepository.findByTenantIdAndIdForUpdate(anyString(), anyLong()))
+                .thenAnswer(inv -> mappingRepository.findByTenantIdAndId(inv.getArgument(0), inv.getArgument(1)));
         adminService = new AdminServiceImpl(
                 userRepository,
                 consultantRepository,

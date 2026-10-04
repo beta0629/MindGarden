@@ -6,6 +6,7 @@ import { API_ENDPOINTS } from '../../constants/apiEndpoints';
 import { isRestrictedClientProfileTier } from '../../constants/clientProfileContext';
 import notificationManager from '../../utils/notification';
 import { toDisplayString, toErrorMessage } from '../../utils/safeDisplay';
+import { hasScheduleSessionStarted } from '../../utils/scheduleSessionStart';
 import UnifiedModal from '../common/modals/UnifiedModal';
 import ConfirmModal from '../common/ConfirmModal';
 import MGButton from '../common/MGButton';
@@ -94,6 +95,8 @@ const normalizeRiskAssessmentForForm = (raw) => {
 
 const CONSULTATION_LOG_API_VALIDATION_ERROR_CODES = new Set(['CONSTRAINT_VIOLATION', 'BEAN_VALIDATION_ERROR']);
 
+const CONSULTATION_RECORD_DUPLICATE_ERROR_CODE = 'CONSULTATION_RECORD_DUPLICATE';
+
 /**
  * ErrorResponse.details — "field: message, field2: message2" (콤마+공백 구분) 파싱.
  *
@@ -153,6 +156,15 @@ const applyConsultationLogApiValidationErrors = (error, setValidationErrors) => 
   }
   return toDisplayString(data.message, '');
 };
+
+/**
+ * 같은 일정 일지 중복 생성 거부(409 CONSULTATION_RECORD_DUPLICATE) 여부.
+ *
+ * @param {unknown} error
+ * @returns {boolean}
+ */
+const isConsultationRecordDuplicateError = (error) =>
+  error?.status === 409 && error?.response?.data?.errorCode === CONSULTATION_RECORD_DUPLICATE_ERROR_CODE;
 
 /**
  * 로컬 초안 스코프 — tenantId와 함께 사용. 세션(로그인)과 별개로 단말에만 보관.
@@ -424,6 +436,7 @@ const ConsultationLogModal = ({
   const {
     status: draftStatus,
     savedAtLabel: draftSavedAtLabel,
+    backupKept: draftBackupKept,
     notifyDirty,
     saveNow: saveDraftNow,
     discardDraft,
@@ -489,7 +502,9 @@ const ConsultationLogModal = ({
       return CONSULTATION_LOG_AUTOSAVE_STRINGS.STATUS_DRAFT_RETRYING;
     }
     if (draftStatus === DRAFT_AUTOSAVE_STATUS.FAILED) {
-      return CONSULTATION_LOG_AUTOSAVE_STRINGS.STATUS_DRAFT_FAILED;
+      return draftBackupKept
+        ? CONSULTATION_LOG_AUTOSAVE_STRINGS.STATUS_DRAFT_FAILED
+        : CONSULTATION_LOG_AUTOSAVE_STRINGS.STATUS_DRAFT_FAILED_NOT_KEPT;
     }
     if (draftStatus === DRAFT_AUTOSAVE_STATUS.SAVED && draftSavedAtLabel) {
       return formatConsultationLogAutosaveString(
@@ -498,7 +513,7 @@ const ConsultationLogModal = ({
       );
     }
     return '';
-  }, [saving, tenantIdStr, draftStatus, draftSavedAtLabel]);
+  }, [saving, tenantIdStr, draftStatus, draftSavedAtLabel, draftBackupKept]);
 
   const autosaveStatusIsError = draftStatus === DRAFT_AUTOSAVE_STATUS.FAILED
     || draftStatus === DRAFT_AUTOSAVE_STATUS.RETRYING;
@@ -965,7 +980,7 @@ const ConsultationLogModal = ({
             sessionDate: getSessionDateFromSchedule(activeSchedule),
             sessionNumber: resolveSessionNumberFromSchedule(activeSchedule),
             sessionDurationMinutes: 60,
-            isSessionCompleted: true,
+            isSessionCompleted: hasScheduleSessionStarted(activeSchedule),
             ...Object.fromEntries(
               Object.entries(autoFillData).filter(([key]) => !prev[key])
             )
@@ -978,7 +993,7 @@ const ConsultationLogModal = ({
           sessionDate: getSessionDateFromSchedule(activeSchedule),
           sessionNumber: resolveSessionNumberFromSchedule(activeSchedule),
           sessionDurationMinutes: 60,
-          isSessionCompleted: true
+          isSessionCompleted: hasScheduleSessionStarted(activeSchedule)
         }));
       }
 
@@ -1254,7 +1269,11 @@ const ConsultationLogModal = ({
         : recordRaw;
       const isSuccess = response && (response.success === true || (record && record.id != null));
       if (isSuccess && record) {
-        notificationManager.show(t('common:consultant.ConsultationLogModal.t_b571e260'), 'success');
+        if (record.isSessionCompleted === false) {
+          notificationManager.show(CONSULTATION_LOG_AUTOSAVE_STRINGS.SAVED_BEFORE_SESSION_START, 'info');
+        } else {
+          notificationManager.show(t('common:consultant.ConsultationLogModal.t_b571e260'), 'success');
+        }
         contentDirtyRef.current = false;
         await discardDraft();
         onSave && onSave(record);
@@ -1265,6 +1284,10 @@ const ConsultationLogModal = ({
       }
     } catch (error) {
       console.error('완료 처리 오류:', error);
+      if (isConsultationRecordDuplicateError(error)) {
+        notificationManager.show(CONSULTATION_LOG_AUTOSAVE_STRINGS.DUPLICATE_RECORD_EXISTS, 'error');
+        return;
+      }
       const validationToast = applyConsultationLogApiValidationErrors(error, setValidationErrors);
       if (validationToast != null) {
         notificationManager.show(

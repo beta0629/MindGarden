@@ -1,5 +1,6 @@
 package com.coresolution.consultation.service.impl;
 
+import java.time.Clock;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -73,12 +74,14 @@ import com.coresolution.consultation.util.ConsultationMessageTypeCodes;
 import com.coresolution.consultation.util.LeftoverOccupyingCompleteExhaust;
 import com.coresolution.consultation.util.ProvisionalConsultationLogSession;
 import com.coresolution.consultation.util.ScheduleCancelLinkedMappingReopen;
+import com.coresolution.consultation.util.ScheduleSessionStartGate;
 import com.coresolution.consultation.utils.SessionUtils;
 import com.coresolution.consultation.service.StatisticsService;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.security.TenantAccessControlService;
 import com.coresolution.core.service.impl.BaseTenantEntityServiceImpl;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -164,6 +167,12 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
      */
     private static final Set<ScheduleStatus> MISSING_LOG_TARGET_STATUSES =
             EnumSet.of(ScheduleStatus.COMPLETED, ScheduleStatus.CONFIRMED, ScheduleStatus.BOOKED);
+
+    /** 시작 전 완료 차단 판정 시간대 — 자동완료 배치와 동일 설정 */
+    @Value("${mindgarden.scheduler.schedule-auto-complete.zone:}")
+    private String sessionStartZoneId;
+
+    private Clock sessionStartClock;
 
     public ScheduleServiceImpl(
             ScheduleRepository scheduleRepository,
@@ -5354,6 +5363,31 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
     }
 
     @Override
+    public boolean isBeforeSessionStart(Schedule schedule) {
+        return ScheduleSessionStartGate.isBeforeStart(
+                schedule, ScheduleSessionStartGate.now(sessionStartClock, sessionStartZoneId));
+    }
+
+    @Override
+    public boolean isBeforeSessionStart(String tenantId, Long scheduleId) {
+        if (tenantId == null || tenantId.isBlank() || scheduleId == null) {
+            return false;
+        }
+        return scheduleRepository.findByTenantIdAndId(tenantId, scheduleId)
+                .map(this::isBeforeSessionStart)
+                .orElse(false);
+    }
+
+    /**
+     * 테스트용 시작 전 판정 시계 주입.
+     *
+     * @param clock 기준 시계
+     */
+    void useSessionStartClock(Clock clock) {
+        this.sessionStartClock = clock;
+    }
+
+    @Override
     @Transactional
     public void markCompletedAfterConsultationLogIfOpen(String tenantId, Long scheduleId) {
         if (tenantId == null || tenantId.isEmpty() || scheduleId == null) {
@@ -5366,6 +5400,10 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         Schedule schedule = scheduleOpt.get();
         if (!ScheduleStatus.BOOKED.equals(schedule.getStatus())
                 && !ScheduleStatus.CONFIRMED.equals(schedule.getStatus())) {
+            return;
+        }
+        if (isBeforeSessionStart(schedule)) {
+            log.info("일정 시작 전 — 상담일지 COMPLETED 승격 보류: tenantId={}, scheduleId={}", tenantId, scheduleId);
             return;
         }
         if (!consultationLogExistenceSsot.existsActiveForSchedule(tenantId, scheduleId)) {

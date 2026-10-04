@@ -20,7 +20,7 @@ import { clearJustRefreshed, hasStoredAccessToken, hasStoredRefreshToken, isWith
 import { isBackground401KeepUser, loadSessionSecurityFlags } from './sessionSecurityFlags';
 import { isPublicSpaPath } from './publicSpaPaths';
 import { purgeAllLegacyConsultationLogLocalDrafts } from './consultationLogLocalDraft';
-import { purgeAllDraftBackups } from './consultationLogDraftBackupStore';
+import { purgeAllDraftBackups, purgeRescueBackupsOfOtherUsers } from './consultationLogDraftBackupStore';
 
 /**
  * current-user / session-info 등: `{ success, data }` 래퍼면 `data`만 사용.
@@ -599,11 +599,13 @@ class SessionManager {
   applyClientLogoutCleanupPreserveSubdomain() {
     this.user = null;
     this.sessionInfo = null;
-    // 상담일지 초안: 레거시 평문 키 + 암호화 백업(IndexedDB·메모리) 전량 제거.
+    // 상담일지 초안: 레거시 평문 키 + 세션 암호화 백업(IndexedDB·메모리) 제거.
+    // 401 보관 백업은 남긴다 — 이 정리는 세션 만료·중복 로그인 종료에서도 불리며, 401 직전 입력을
+    // 재로그인 뒤 복원하기 위함이다. 명시적 로그아웃은 logout() 이 먼저 전량 삭제한다.
     // IndexedDB 삭제는 비동기라 반환 Promise 를 넘겨 호출자가 끝까지 기다릴 수 있게 한다
     // (로그아웃 리다이렉트가 먼저 일어나면 삭제가 중단되어 본문 백업이 단말에 남는다).
     purgeAllLegacyConsultationLogLocalDrafts();
-    const draftBackupPurge = purgeAllDraftBackups();
+    const draftBackupPurge = purgeAllDraftBackups({ keepRescue: true });
     clearStoredSessionExpiry();
     this.lastCheckTime = 0;
     this.lastVerifiedAt = 0;
@@ -892,6 +894,9 @@ class SessionManager {
     if (previousUserId != null && nextUserId != null && String(previousUserId) !== String(nextUserId)) {
       purgeAllLegacyConsultationLogLocalDrafts();
       void purgeAllDraftBackups();
+    } else if (previousUserId == null && nextUserId != null) {
+      // 새로고침·재로그인 직후: 이 단말에 남은 다른 사용자의 401 보관 백업만 정리한다.
+      void purgeRescueBackupsOfOtherUsers(nextUserId);
     }
     this.user = user;
     this.sessionInfo = null; // 서버에서 가져올 예정

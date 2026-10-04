@@ -172,6 +172,83 @@ describe('useConsultationLogDraftAutosave', () => {
     );
   });
 
+  test('401 이면 세션 정리 전에 401 보관 백업(rescue)으로 쓰고, 실제로 남았을 때만 "보관" 상태다', async() => {
+    adapter.pushConsultationLogDraftToServer.mockResolvedValue({ ok: false, notAuthenticated: true });
+    renderHook();
+    await flushMicrotasks();
+
+    act(() => { latest.api.notifyDirty(); });
+    act(() => { jest.advanceTimersByTime(CONSULTATION_LOG_AUTOSAVE_DEBOUNCE_MS); });
+    await flushMicrotasks();
+
+    expect(backupStore.saveDraftBackup).toHaveBeenCalledWith(
+      expect.objectContaining({ userId: 41, tenantId: 'tenant-a', consultationId: 'schedule-30' }),
+      expect.any(String),
+      { rescue: true }
+    );
+    expect(latest.api.backupKept).toBe(true);
+    expect(latest.api.status).toBe(DRAFT_AUTOSAVE_STATUS.FAILED);
+  });
+
+  test('401 인데 백업이 남지 않으면(persisted=false) 로그인으로 이동하지 않고 "보관" 이라고 하지 않는다', async() => {
+    adapter.pushConsultationLogDraftToServer.mockResolvedValue({ ok: false, notAuthenticated: true });
+    backupStore.saveDraftBackup.mockResolvedValue({ memory: true, persisted: false });
+    renderHook();
+    await flushMicrotasks();
+
+    act(() => { latest.api.notifyDirty(); });
+    act(() => { jest.advanceTimersByTime(CONSULTATION_LOG_AUTOSAVE_DEBOUNCE_MS); });
+    await flushMicrotasks();
+
+    expect(sessionRedirect.redirectToLoginPageOnce).not.toHaveBeenCalled();
+    expect(latest.api.backupKept).toBe(false);
+    expect(latest.api.status).toBe(DRAFT_AUTOSAVE_STATUS.FAILED);
+  });
+
+  test('재로그인 후 401 보관 백업이 서버 초안보다 새로우면 백업 복원을 제안한다', async() => {
+    adapter.fetchConsultationLogDraftFromServer.mockResolvedValue({
+      ok: true,
+      hasDraft: true,
+      version: 3,
+      payloadJson: JSON.stringify({ formData: { mainIssues: '오래된 서버 초안' }, memoDraft: '' }),
+      updatedAt: '2026-10-04T01:00:00Z'
+    });
+    backupStore.readDraftBackup.mockResolvedValue({
+      payloadJson: JSON.stringify({ formData: { mainIssues: '401 직전 입력' }, memoDraft: '' }),
+      savedAt: Date.parse('2026-10-04T01:05:00Z')
+    });
+    const onRestoreCandidate = jest.fn();
+    renderHook({ onRestoreCandidate });
+    await flushMicrotasks();
+    await flushMicrotasks();
+
+    expect(onRestoreCandidate).toHaveBeenCalledTimes(1);
+    const candidate = onRestoreCandidate.mock.calls[0][0];
+    expect(candidate.source).toBe(DRAFT_RESTORE_SOURCE.BACKUP);
+    expect(candidate.snapshot.formData.mainIssues).toBe('401 직전 입력');
+  });
+
+  test('백업이 서버 초안보다 오래되면 서버 초안을 제안한다', async() => {
+    adapter.fetchConsultationLogDraftFromServer.mockResolvedValue({
+      ok: true,
+      hasDraft: true,
+      version: 3,
+      payloadJson: JSON.stringify({ formData: { mainIssues: '최신 서버 초안' }, memoDraft: '' }),
+      updatedAt: '2026-10-04T01:10:00Z'
+    });
+    backupStore.readDraftBackup.mockResolvedValue({
+      payloadJson: JSON.stringify({ formData: { mainIssues: '예전 백업' }, memoDraft: '' }),
+      savedAt: Date.parse('2026-10-04T01:05:00Z')
+    });
+    const onRestoreCandidate = jest.fn();
+    renderHook({ onRestoreCandidate });
+    await flushMicrotasks();
+    await flushMicrotasks();
+
+    expect(onRestoreCandidate).toHaveBeenCalledTimes(1);
+    expect(onRestoreCandidate.mock.calls[0][0].source).toBe(DRAFT_RESTORE_SOURCE.SERVER);
+  });
+
   test('본문을 localStorage 에 쓰지 않는다', async() => {
     const setItem = jest.spyOn(Storage.prototype, 'setItem');
     renderHook();

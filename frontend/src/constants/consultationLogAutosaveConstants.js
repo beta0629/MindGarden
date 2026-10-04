@@ -72,6 +72,15 @@ export const CONSULTATION_LOG_BACKUP_CRYPTO_KEY_LENGTH = 256;
 export const CONSULTATION_LOG_BACKUP_CRYPTO_IV_BYTES = 12;
 
 /**
+ * 401(세션 만료) 보관용 키를 담는 예약 레코드 키. 일정 레코드 키(`u..:t..:c..`)와 겹치지 않는다.
+ * 값은 추출 불가 CryptoKey 객체라 JS 로 키 바이트를 꺼낼 수 없다.
+ */
+export const CONSULTATION_LOG_BACKUP_RESCUE_KEY_RECORD = '__rescue_key__';
+
+/** 401 보관 백업 유지 시간(ms). 지나면 읽을 때 지운다. 레거시 로컬 초안과 같은 기준. */
+export const CONSULTATION_LOG_BACKUP_RESCUE_TTL_MS = 24 * 60 * 60 * 1000;
+
+/**
  * 폐기 대상 레거시 평문 localStorage 초안 키 접두어.
  * 배포 후 첫 로드와 로그아웃·계정 전환에서 모두 제거한다.
  */
@@ -88,6 +97,9 @@ export const CONSULTATION_LOG_DRAFT_TIME_LOCALE = 'ko-KR';
 
 /** 임시저장 시각 표시 타임존 */
 export const CONSULTATION_LOG_DRAFT_TIME_ZONE = 'Asia/Seoul';
+
+/** 일정 시작 전 여부 판정 타임존 (서버 ScheduleSessionStartGate 와 같은 기준) */
+export const CONSULTATION_LOG_SESSION_START_TIME_ZONE = CONSULTATION_LOG_DRAFT_TIME_ZONE;
 
 /** 세션 만료 후 되돌아올 화면을 로그인 흐름에 전달할 쿼리 파라미터 이름 */
 export const LOGIN_RETURN_URL_PARAM = 'redirect';

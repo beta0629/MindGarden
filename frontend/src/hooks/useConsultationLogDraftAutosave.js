@@ -138,6 +138,8 @@ export function useConsultationLogDraftAutosave({
   const [conflictDetected, setConflictDetected] = useState(false);
   /** 확정본보다 오래되어 프롬프트를 띄우지 않은 초안의 저장 시각 (표시 전용) */
   const [staleDraftSavedAt, setStaleDraftSavedAt] = useState(null);
+  /** 마지막 실패 때 브라우저 백업이 실제로 IndexedDB 에 남았는지 ('보관' 문구는 true 일 때만) */
+  const [backupKept, setBackupKept] = useState(false);
 
   const debounceTimerRef = useRef(null);
   const retryTimerRef = useRef(null);
@@ -210,10 +212,13 @@ export function useConsultationLogDraftAutosave({
 
   /**
    * 401 처리 — 입력을 절대 버리지 않는다.
-   * 1) 세션 재확인(기존 메커니즘)을 한 번 시도하고, 2) 실패 시 백업에 즉시 쓰고,
-   * 3) returnUrl 을 붙여 로그인으로 보낸다. 재로그인 후 서버 초안으로 복구된다.
+   * 1) 세션 재확인보다 <strong>먼저</strong> 401 보관 백업을 쓴다(재확인이 세션 정리·이동을 일으켜도 남도록).
+   * 2) 세션 재확인(기존 메커니즘)이 살아 있으면 그대로 계속한다(백업은 다음 저장 성공 때 지워진다).
+   * 3) 백업이 실제로 남았을 때만 returnUrl 을 붙여 로그인으로 보낸다. 재로그인 후 같은 일정을 열면
+   *    복원을 제안한다. 백업이 남지 않았으면 이동하지 않는다(화면의 입력이 유일한 사본).
    */
   const handleUnauthorized = useCallback(async(payloadJson) => {
+    const backup = await saveDraftBackup(backupScope, payloadJson, { rescue: true });
     const checkSession = checkSessionRef.current;
     if (typeof checkSession === 'function') {
       try {
@@ -222,11 +227,14 @@ export function useConsultationLogDraftAutosave({
           return false;
         }
       } catch {
-        // 아래 백업·리다이렉트로 진행
+        // 아래 이동 판단으로 진행
       }
     }
-    await saveDraftBackup(backupScope, payloadJson);
+    setBackupKept(backup.persisted);
     setStatus(DRAFT_AUTOSAVE_STATUS.FAILED);
+    if (!backup.persisted) {
+      return true;
+    }
     redirectToLoginPageOnce({ returnUrl: `${window.location.pathname}${window.location.search}` });
     return true;
   }, [backupScope]);
@@ -273,6 +281,7 @@ export function useConsultationLogDraftAutosave({
       if (result.version != null) serverVersionRef.current = result.version;
       if (result.updatedAt != null) serverUpdatedAtRef.current = result.updatedAt;
       await removeDraftBackup(backupScope);
+      setBackupKept(false);
       markSaved();
       const channel = channelRef.current;
       if (channel) {
@@ -300,10 +309,12 @@ export function useConsultationLogDraftAutosave({
     }
 
     // 실패 — 입력 보존이 최우선
-    await saveDraftBackup(backupScope, payloadJson);
     if (result.notAuthenticated) {
       const redirected = await handleUnauthorized(payloadJson);
       if (redirected) return false;
+    } else {
+      const backup = await saveDraftBackup(backupScope, payloadJson);
+      setBackupKept(backup.persisted);
     }
     if (result.versionConflict) {
       setConflictDetected(true);
@@ -347,6 +358,7 @@ export function useConsultationLogDraftAutosave({
     setStatus(DRAFT_AUTOSAVE_STATUS.IDLE);
     setSavedAtLabel('');
     setConflictDetected(false);
+    setBackupKept(false);
     if (legacyScope && tenantId) {
       removeConsultationLogLocalDraft(tenantId, legacyScope);
     }
@@ -370,7 +382,7 @@ export function useConsultationLogDraftAutosave({
     normalizedConsultantId
   ]);
 
-  /** 진입 시 복구 후보 탐색: 서버 초안 → 같은 세션 백업 → 레거시 평문 1회 */
+  /** 진입 시 복구 후보 탐색: 서버 초안·브라우저 백업(같은 세션 또는 401 보관) 중 새것 → 레거시 평문 1회 */
   useEffect(() => {
     if (!canSave) return undefined;
     const key = `${tenantId}:${normalizedConsultationId}:${normalizedConsultantId}`;
@@ -385,7 +397,16 @@ export function useConsultationLogDraftAutosave({
       });
       if (cancelled) return;
 
-      if (server.ok && server.hasDraft && server.payloadJson) {
+      // 401 보관 백업은 서버 저장이 실패한 뒤에 쓰이므로 서버 초안보다 새로울 수 있다 — 더 새로운 쪽을 제안한다.
+      const backup = await readDraftBackup(backupScope);
+      if (cancelled) return;
+      const serverUpdatedMs = server.ok && server.hasDraft && server.updatedAt ? Date.parse(server.updatedAt) : NaN;
+      const backupIsNewer = Boolean(backup)
+        && (!(server.ok && server.hasDraft && server.payloadJson)
+          || !Number.isFinite(serverUpdatedMs)
+          || backup.savedAt > serverUpdatedMs);
+
+      if (!backupIsNewer && server.ok && server.hasDraft && server.payloadJson) {
         serverVersionRef.current = server.version ?? null;
         serverUpdatedAtRef.current = server.updatedAt ?? null;
         const snapshot = safeParse(server.payloadJson);
@@ -409,10 +430,9 @@ export function useConsultationLogDraftAutosave({
       }
       if (server.ok) {
         serverVersionRef.current = server.version ?? null;
+        serverUpdatedAtRef.current = server.updatedAt ?? null;
       }
 
-      const backup = await readDraftBackup(backupScope);
-      if (cancelled) return;
       if (backup) {
         const snapshot = safeParse(backup.payloadJson);
         if (snapshot) {
@@ -567,6 +587,7 @@ export function useConsultationLogDraftAutosave({
     savedAtLabel,
     conflictDetected,
     staleDraftSavedAt,
+    backupKept,
     notifyDirty,
     saveNow,
     discardDraft,

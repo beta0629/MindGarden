@@ -599,6 +599,30 @@ public interface ScheduleService {
     void markCompletedAfterConsultationLogIfOpen(String tenantId, Long scheduleId);
 
     /**
+     * 일정 시작 시각 이전인지 판정 (완료 처리 차단 SSOT).
+     *
+     * <p>시작 전이면 일지 내용만 저장하고 회기 차감·급여 반영·COMPLETED 전이를 하지 않는다.
+     * 판정 규칙은 {@link com.coresolution.consultation.util.ScheduleSessionStartGate}.</p>
+     *
+     * @param schedule 링크 일정 (null 이면 false)
+     * @return 시작 전이면 true
+     * @author CoreSolution
+     * @since 2026-10-04
+     */
+    boolean isBeforeSessionStart(Schedule schedule);
+
+    /**
+     * 테넌트 일정 ID 로 시작 전 여부 판정 ({@link #isBeforeSessionStart(Schedule)} 위임).
+     *
+     * @param tenantId   테넌트 ID
+     * @param scheduleId 일정 ID (null·미존재면 false)
+     * @return 시작 전이면 true
+     * @author CoreSolution
+     * @since 2026-10-04
+     */
+    boolean isBeforeSessionStart(String tenantId, Long scheduleId);
+
+    /**
      * 스케줄 상태를 한글로 변환
      */
     String getStatusInKorean(String status);

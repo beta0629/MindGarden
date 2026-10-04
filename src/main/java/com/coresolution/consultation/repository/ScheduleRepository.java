@@ -1731,6 +1731,7 @@ public interface ScheduleRepository extends BaseRepository<Schedule, Long> {
      *
      * @param tenantId 테넌트 ID
      * @param consultantId 상담사 ID (null이면 전체)
+     * @param clientId 내담자 ID (null이면 전체)
      * @param status 상태 (null이면 전체)
      * @param startDate 시작일(포함, null 허용)
      * @param endDate 종료일(포함, null 허용)
@@ -1741,6 +1742,7 @@ public interface ScheduleRepository extends BaseRepository<Schedule, Long> {
     @Query(value = "SELECT s FROM Schedule s "
             + "WHERE s.tenantId = :tenantId AND s.isDeleted = false "
             + "  AND (:consultantId IS NULL OR s.consultantId = :consultantId) "
+            + "  AND (:clientId IS NULL OR s.clientId = :clientId) "
             + "  AND (:status IS NULL OR s.status = :status) "
             + "  AND (:startDate IS NULL OR s.date >= :startDate) "
             + "  AND (:endDate IS NULL OR s.date <= :endDate) "
@@ -1748,12 +1750,14 @@ public interface ScheduleRepository extends BaseRepository<Schedule, Long> {
             countQuery = "SELECT COUNT(s) FROM Schedule s "
             + "WHERE s.tenantId = :tenantId AND s.isDeleted = false "
             + "  AND (:consultantId IS NULL OR s.consultantId = :consultantId) "
+            + "  AND (:clientId IS NULL OR s.clientId = :clientId) "
             + "  AND (:status IS NULL OR s.status = :status) "
             + "  AND (:startDate IS NULL OR s.date >= :startDate) "
             + "  AND (:endDate IS NULL OR s.date <= :endDate)")
     Page<Schedule> findAdminSchedulesWithFilters(
             @Param("tenantId") String tenantId,
             @Param("consultantId") Long consultantId,
+            @Param("clientId") Long clientId,
             @Param("status") ScheduleStatus status,
             @Param("startDate") LocalDate startDate,
             @Param("endDate") LocalDate endDate,

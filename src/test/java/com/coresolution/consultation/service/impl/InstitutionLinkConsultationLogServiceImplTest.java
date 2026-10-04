@@ -21,6 +21,7 @@ import com.coresolution.consultation.entity.Client;
 import com.coresolution.consultation.entity.ConsultantClientMapping;
 import com.coresolution.consultation.entity.InstitutionLinkConsultationLog;
 import com.coresolution.consultation.entity.InstitutionLinkContract;
+import com.coresolution.consultation.exception.ConsultationRecordDuplicateException;
 import com.coresolution.consultation.exception.ValidationException;
 import com.coresolution.consultation.repository.ClientRepository;
 import com.coresolution.consultation.repository.ConsultantClientMappingRepository;
@@ -262,6 +263,90 @@ class InstitutionLinkConsultationLogServiceImplTest {
         service.create(TENANT_ID, request, WRITER);
 
         verify(scheduleService).markCompletedAfterConsultationLogIfOpen(eq(TENANT_ID), eq(436L));
+    }
+
+    @Test
+    @DisplayName("일정 시작 전 isSessionCompleted=true → 미완료로 저장, 스케줄 COMPLETED 승격 요청 없음")
+    void create_beforeSessionStart_savesNotCompletedAndNoPromotion() {
+        ConsultantClientMapping mapping = new ConsultantClientMapping();
+        mapping.setId(MAPPING_ID);
+        mapping.setPaymentTiming(PaymentTimingConstants.INSTITUTION_LINK);
+        when(consultantClientMappingRepository.findByTenantIdAndId(eq(TENANT_ID), eq(MAPPING_ID)))
+                .thenReturn(Optional.of(mapping));
+        when(institutionLinkContractRepository.findByTenantIdAndSourceMappingId(eq(TENANT_ID), eq(MAPPING_ID)))
+                .thenReturn(Optional.empty());
+        when(scheduleService.isBeforeSessionStart(TENANT_ID, 436L)).thenReturn(true);
+        when(institutionLinkConsultationLogRepository.save(any(InstitutionLinkConsultationLog.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        InstitutionLinkConsultationLogCreateRequest request = InstitutionLinkConsultationLogCreateRequest.builder()
+                .mappingId(MAPPING_ID)
+                .scheduleId(436L)
+                .clientId(9L)
+                .consultantId(7L)
+                .sessionDate(LocalDate.of(2026, 9, 14))
+                .isSessionCompleted(true)
+                .build();
+
+        InstitutionLinkConsultationLogResponse saved = service.create(TENANT_ID, request, WRITER);
+
+        assertThat(saved.getIsSessionCompleted()).isFalse();
+        assertThat(saved.getCompletedAt()).isNull();
+        verify(scheduleService, never()).markCompletedAfterConsultationLogIfOpen(any(), any());
+    }
+
+    @Test
+    @DisplayName("같은 일정에 활성 타기관 일지가 있으면 두 번째 생성 거부 (저장 없음)")
+    void create_secondLogForSameSchedule_rejected() {
+        ConsultantClientMapping mapping = new ConsultantClientMapping();
+        mapping.setId(MAPPING_ID);
+        mapping.setPaymentTiming(PaymentTimingConstants.INSTITUTION_LINK);
+        when(consultantClientMappingRepository.findByTenantIdAndId(eq(TENANT_ID), eq(MAPPING_ID)))
+                .thenReturn(Optional.of(mapping));
+        when(institutionLinkContractRepository.findByTenantIdAndSourceMappingId(eq(TENANT_ID), eq(MAPPING_ID)))
+                .thenReturn(Optional.empty());
+        InstitutionLinkConsultationLog existing = InstitutionLinkConsultationLog.builder()
+                .mappingId(MAPPING_ID)
+                .scheduleId(436L)
+                .build();
+        existing.setId(77L);
+        when(institutionLinkConsultationLogRepository
+                .findFirstByTenantIdAndScheduleIdAndIsDeletedFalseOrderByIdDesc(TENANT_ID, 436L))
+                .thenReturn(Optional.of(existing));
+
+        InstitutionLinkConsultationLogCreateRequest request = InstitutionLinkConsultationLogCreateRequest.builder()
+                .mappingId(MAPPING_ID)
+                .scheduleId(436L)
+                .clientId(9L)
+                .consultantId(7L)
+                .sessionDate(LocalDate.of(2026, 9, 14))
+                .build();
+
+        assertThatThrownBy(() -> service.create(TENANT_ID, request, WRITER))
+                .isInstanceOfSatisfying(ConsultationRecordDuplicateException.class,
+                        e -> assertThat(e.getExistingRecordId()).isEqualTo(77L));
+        verify(institutionLinkConsultationLogRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("일정 시작 전 complete → 거부, 저장·승격 없음")
+    void complete_beforeSessionStart_rejected() {
+        TenantContextHolder.setTenantId(TENANT_ID);
+        InstitutionLinkConsultationLog existing = InstitutionLinkConsultationLog.builder()
+                .mappingId(MAPPING_ID)
+                .scheduleId(436L)
+                .isSessionCompleted(false)
+                .build();
+        existing.setId(88L);
+        when(institutionLinkConsultationLogRepository.findByTenantIdAndIdAndIsDeletedFalse(eq(TENANT_ID), eq(88L)))
+                .thenReturn(Optional.of(existing));
+        when(scheduleService.isBeforeSessionStart(TENANT_ID, 436L)).thenReturn(true);
+
+        assertThatThrownBy(() -> service.complete(88L)).isInstanceOf(ValidationException.class);
+
+        assertThat(existing.getIsSessionCompleted()).isFalse();
+        verify(institutionLinkConsultationLogRepository, never()).save(any());
+        verify(scheduleService, never()).markCompletedAfterConsultationLogIfOpen(any(), any());
     }
 
     @Test

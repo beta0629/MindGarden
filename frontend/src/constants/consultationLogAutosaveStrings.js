@@ -24,7 +24,13 @@ export const CONSULTATION_LOG_AUTOSAVE_STRINGS = {
   STATUS_DRAFT_SAVED_WITH_TIME: '{time} 임시저장됨',
   STATUS_DRAFT_RETRYING: '저장 실패(재시도 중)',
   STATUS_DRAFT_FAILED: '저장 실패 — 입력은 이 브라우저에 안전하게 보관됩니다',
+  /** 브라우저 백업까지 실패(IndexedDB 불가 등) — '보관' 이라고 말하지 않는다 */
+  STATUS_DRAFT_FAILED_NOT_KEPT: '저장 실패 — 브라우저에도 보관하지 못했습니다. 창을 닫지 말고 내용을 복사해 두세요',
   STATUS_DRAFT_UNAVAILABLE: '임시저장을 사용할 수 없습니다(일정·테넌트 정보 없음)',
+  /** 서버가 일정 시작 전이라 완료 처리를 보류하고 내용만 저장했을 때 */
+  SAVED_BEFORE_SESSION_START: '일정 시작 전이라 일지 내용만 저장했습니다. 회기 차감·완료는 시작 후 저장하거나 자동완료 때 반영됩니다',
+  /** 같은 일정에 일지가 이미 있어 새로 만들지 않았을 때 (409) */
+  DUPLICATE_RECORD_EXISTS: '이 일정에는 이미 상담일지가 있습니다. 목록에서 기존 일지를 열어 수정해 주세요',
   CONFLICT_TITLE: '다른 곳에서 편집 중',
   CONFLICT_MESSAGE:
     '같은 상담일지를 다른 탭 또는 다른 기기에서 저장했습니다. 어느 쪽을 쓸지 선택해 주세요.',

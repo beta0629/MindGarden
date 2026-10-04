@@ -2645,7 +2645,7 @@ public class AdminController extends BaseApiController {
     @PostMapping("/mappings/{id}/partial-refund")
     public ResponseEntity<ApiResponse<Void>> partialRefundMapping(@PathVariable Long id,
             @RequestBody Map<String, Object> requestBody, HttpSession session) {
-        resourceOwnerAccessGuard.requireMappingManagerAccess(session, id);
+        resourceOwnerAccessGuard.requireMappingAdminAccess(session, id);
         log.info("🔧 매칭 부분 환불: ID={}", id);
 
         String reason = (String) requestBody.get("reason");

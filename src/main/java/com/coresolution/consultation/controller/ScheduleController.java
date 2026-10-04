@@ -1694,6 +1694,7 @@ public class ScheduleController extends BaseApiController {
      * {@code count} = totalElements (페이지 길이 아님). #1252 AdminController schedules envelope 정합.</p>
      *
      * @param consultantId optional consultant filter
+     * @param clientId optional client filter (같은 테넌트 안에서만 좁힘 — 관리자 계열 권한 검사 후 적용)
      * @param status optional schedule status
      * @param startDate optional start (yyyy-MM-dd)
      * @param endDate optional end (yyyy-MM-dd)
@@ -1706,6 +1707,7 @@ public class ScheduleController extends BaseApiController {
     @GetMapping("/admin")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getSchedulesForAdmin(
             @RequestParam(required = false) Long consultantId,
+            @RequestParam(required = false) Long clientId,
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String startDate,
             @RequestParam(required = false) String endDate,
@@ -1713,8 +1715,8 @@ public class ScheduleController extends BaseApiController {
             @RequestParam(required = false) Integer size,
             HttpSession session) {
         ensureTenantContextFromSession(session);
-        log.info("📅 관리자 스케줄 조회 요청 시작: consultantId={}, status={}, startDate={}, endDate={}, page={}, size={}, tenantId={}",
-                consultantId, status, startDate, endDate, page, size, TenantContextHolder.getTenantId());
+        log.info("📅 관리자 스케줄 조회 요청 시작: consultantId={}, clientId={}, status={}, startDate={}, endDate={}, page={}, size={}, tenantId={}",
+                consultantId, clientId, status, startDate, endDate, page, size, TenantContextHolder.getTenantId());
         
         User currentUser = SessionUtils.getCurrentUser(session);
         log.info("🔍 현재 사용자 확인: userId={}, role={}, userId={}", 
@@ -1766,6 +1768,7 @@ public class ScheduleController extends BaseApiController {
         Page<Schedule> schedulePage = scheduleRepository.findAdminSchedulesWithFilters(
                 tenantId,
                 consultantId,
+                clientId,
                 scheduleStatus,
                 start,
                 end,
@@ -1876,6 +1879,7 @@ public class ScheduleController extends BaseApiController {
         data.put("page", appliedPageable.getPageNumber());
         data.put("size", appliedPageable.getPageSize());
         data.put("consultantId", consultantId != null ? consultantId : "");
+        data.put("clientId", clientId != null ? clientId : "");
         data.put("status", status != null ? status : "");
         data.put("startDate", startDate != null ? startDate : "");
         data.put("endDate", endDate != null ? endDate : "");

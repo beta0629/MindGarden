@@ -579,6 +579,9 @@ const UnifiedScheduleComponent = ({
                     listParams.consultantId = selectedConsultantId;
                     console.log('🔍 상담사 필터링 적용:', selectedConsultantId);
                 }
+                if (clientIdFilter && clientIdFilter !== '') {
+                    listParams.clientId = clientIdFilter;
+                }
                 // P0: 가시 범위(startDate/endDate)를 항상 전달 → DB 레벨 필터링
                 if (calendarSkin === 'integrated' && currentRange) {
                     listParams.startDate = currentRange.startDate;
@@ -590,7 +593,7 @@ const UnifiedScheduleComponent = ({
                 // 조건이 같으면 캐시 히트, mutation 후에만 무효화.
                 const cacheKeyStartDate = calendarSkin === 'integrated' ? currentRange?.startDate || '' : '';
                 const cacheKeyEndDate = calendarSkin === 'integrated' ? currentRange?.endDate || '' : '';
-                const invalidationKey = `${selectedConsultantId || ''}_${cacheKeyStartDate}_${cacheKeyEndDate}_${refetchTrigger || 0}`;
+                const invalidationKey = `${selectedConsultantId || ''}_${clientIdFilter || ''}_${cacheKeyStartDate}_${cacheKeyEndDate}_${refetchTrigger || 0}`;
                 listParams._t = invalidationKey;
                 // P0: drain 호출 직전 page/size 명시 — Network bare query 방지 (SSOT + caller guard)
                 listParams.page = 0;

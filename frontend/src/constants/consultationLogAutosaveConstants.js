@@ -98,6 +98,9 @@ export const CONSULTATION_LOG_DRAFT_TIME_LOCALE = 'ko-KR';
 /** 임시저장 시각 표시 타임존 */
 export const CONSULTATION_LOG_DRAFT_TIME_ZONE = 'Asia/Seoul';
 
+/** 일정 시작 전 여부 판정 타임존 (서버 ScheduleSessionStartGate 와 같은 기준) */
+export const CONSULTATION_LOG_SESSION_START_TIME_ZONE = CONSULTATION_LOG_DRAFT_TIME_ZONE;
+
 /** 세션 만료 후 되돌아올 화면을 로그인 흐름에 전달할 쿼리 파라미터 이름 */
 export const LOGIN_RETURN_URL_PARAM = 'redirect';
 

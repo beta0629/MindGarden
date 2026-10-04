@@ -1,0 +1,70 @@
+# 일정당 상담일지 중복 현황 — 읽기 전용 COUNT 집계 (개발 DB 전용)
+#
+# 목적: V20261008_001 유니크 인덱스(일정당 활성 일지 1건)를 걸기 전에, 같은 테넌트·같은 일정에
+#       활성 일지가 2건 이상인 "일정 수"와 "행 수"만 집계한다.
+#
+# 안전 장치:
+#   - SELECT COUNT 만 실행한다. SQL 은 이 파일에 고정되어 있고 입력으로 바꿀 수 없다.
+#   - 일지 본문·ID·테넌트 값을 출력하지 않는다. 출력은 테이블명과 정수 건수뿐이다.
+#   - mysql 세션을 read only 로 고정한다(--init-command).
+#   - 개발 DB 만 대상이다. 운영 DB·프로시저 실행·UPDATE/DELETE 는 범위 밖이다.
+name: 상담일지 일정당 중복 COUNT (읽기 전용·개발)
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - '.github/workflows/consultation-log-duplicate-count.yml'
+      - 'src/main/resources/db/migration/V20261008_001__consultation_logs_unique_active_schedule.sql'
+
+permissions:
+  contents: read
+
+jobs:
+  count:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' || github.event.pull_request.head.repo.full_name == github.repository
+    steps:
+      - name: MySQL 클라이언트 설치
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq mysql-client
+
+      - name: 중복 건수 집계 (SELECT COUNT 전용)
+        env:
+          DB_HOST: ${{ secrets.DEV_DB_HOST }}
+          DB_USER: ${{ secrets.DEV_DB_USER }}
+          DB_NAME: ${{ secrets.DEV_DB_NAME }}
+          DB_PASSWORD: ${{ secrets.DEV_DB_PASSWORD }}
+        run: |
+          set -euo pipefail
+          if [ -z "${DB_HOST:-}" ] || [ -z "${DB_USER:-}" ] || [ -z "${DB_NAME:-}" ]; then
+            echo "::error title=DB 접속 정보 누락::DEV_DB_HOST/DEV_DB_USER/DEV_DB_NAME secret 을 확인하세요."
+            exit 1
+          fi
+
+          SQL_FILE=$(mktemp)
+          cat > "$SQL_FILE" <<'SQL'
+          SELECT 'consultation_records' AS scope, COUNT(*) AS dup_schedules, COALESCE(SUM(cnt), 0) AS dup_rows
+          FROM (SELECT COUNT(*) AS cnt FROM consultation_records
+                WHERE is_deleted = 0 AND consultation_id IS NOT NULL
+                GROUP BY tenant_id, consultation_id HAVING COUNT(*) > 1) d;
+          SELECT 'institution_link_consultation_logs' AS scope, COUNT(*) AS dup_schedules, COALESCE(SUM(cnt), 0) AS dup_rows
+          FROM (SELECT COUNT(*) AS cnt FROM institution_link_consultation_logs
+                WHERE is_deleted = 0 AND schedule_id IS NOT NULL
+                GROUP BY tenant_id, schedule_id HAVING COUNT(*) > 1) d;
+          SQL
+
+          if grep -qiE '(^|[^a-z_])(insert|update|delete|drop|alter|truncate|create|replace|grant|call|set)[[:space:]]' "$SQL_FILE"; then
+            echo "::error title=SELECT 전용 위반::고정 SQL 에 쓰기 구문이 있어 중단합니다."
+            exit 1
+          fi
+
+          echo "=== dev 일정당 활성 상담일지 중복 (건수만) ==="
+          printf 'scope\tdup_schedules\tdup_rows\n'
+          MYSQL_PWD="$DB_PASSWORD" mysql \
+            --init-command="SET SESSION TRANSACTION READ ONLY" \
+            -h "$DB_HOST" -u "$DB_USER" "$DB_NAME" \
+            --batch --raw --skip-column-names < "$SQL_FILE"
+          rm -f "$SQL_FILE"
+          echo "=== 끝 — 건수만 출력 ==="

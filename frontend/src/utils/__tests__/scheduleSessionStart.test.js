@@ -1,4 +1,10 @@
-import { formatNowInSessionZone, hasScheduleSessionStarted } from '../scheduleSessionStart';
+import {
+  SCHEDULE_SESSION_NOT_STARTED_ERROR_CODE,
+  canCompleteScheduleNow,
+  formatNowInSessionZone,
+  hasScheduleSessionStarted,
+  isScheduleSessionNotStartedError
+} from '../scheduleSessionStart';
 
 /** 판정 시간대(서버와 동일 기본값) 벽시계 2026-10-10 13:59 에 해당하는 UTC 시각 */
 const BEFORE_START_UTC = new Date('2026-10-10T04:59:00Z');
@@ -25,5 +31,22 @@ describe('hasScheduleSessionStarted', () => {
   test('날짜를 읽을 수 없으면 true — 판정은 서버에 맡긴다', () => {
     expect(hasScheduleSessionStarted(null, BEFORE_START_UTC)).toBe(true);
     expect(hasScheduleSessionStarted({ startTime: '14:00' }, BEFORE_START_UTC)).toBe(true);
+  });
+});
+
+describe('canCompleteScheduleNow / isScheduleSessionNotStartedError', () => {
+  test('관리자 완료 버튼은 시작 판정과 같은 규칙을 쓴다', () => {
+    const schedule = { date: '2026-10-10', startTime: '14:00' };
+    expect(canCompleteScheduleNow(schedule, BEFORE_START_UTC)).toBe(false);
+    expect(canCompleteScheduleNow(schedule, AT_START_UTC)).toBe(true);
+  });
+
+  test('400 + SCHEDULE_SESSION_NOT_STARTED 만 시작 전 거부로 본다', () => {
+    const rejected = { status: 400, response: { data: { errorCode: SCHEDULE_SESSION_NOT_STARTED_ERROR_CODE } } };
+    expect(isScheduleSessionNotStartedError(rejected)).toBe(true);
+    expect(isScheduleSessionNotStartedError({ status: 400, response: { data: { errorCode: 'ILLEGAL_STATE' } } }))
+      .toBe(false);
+    expect(isScheduleSessionNotStartedError({ status: 409, response: rejected.response })).toBe(false);
+    expect(isScheduleSessionNotStartedError(null)).toBe(false);
   });
 });

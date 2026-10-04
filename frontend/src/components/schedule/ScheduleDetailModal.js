@@ -42,6 +42,10 @@ import {
     isInstitutionLinkConsultationLogContext,
     resolveConsultationLogActionVisibility
 } from '../../utils/consultationLogInstitutionContext';
+import {
+    canCompleteScheduleNow,
+    isScheduleSessionNotStartedError
+} from '../../utils/scheduleSessionStart';
 
     /** 일정 상세·중첩 요약·확인 모달 z-index (부모 < 요약 < 확인) */
 const SCHEDULE_DETAIL_Z_INDEX_MAIN = 1040;
@@ -908,6 +912,10 @@ const ScheduleDetailModal = ({
             }
         } catch (error) {
             console.error('❌ 상태 변경 실패:', error);
+            if (isScheduleSessionNotStartedError(error)) {
+                notificationManager.error(t('schedule:ScheduleDetailModal.completeBeforeStartTooltip'));
+                return;
+            }
             notificationManager.error(t('schedule:ScheduleDetailModal.t_d034ac4a'));
         } finally {
             setLoading(false);
@@ -1015,6 +1023,10 @@ const ScheduleDetailModal = ({
         getStatusCodeValue(statusForDisplay),
         isVacationEvent()
     ) && canOpenConsultationLog && consultationLogActions.showView;
+    const completeActionAllowed = canCompleteScheduleNow({
+        date: toIsoDateString(displayData.sessionDate || displayData.date || displayData.apiDate),
+        startTime: displayData.startTime
+    });
 
     const buildPartySummaryRows = (kind) => {
         const dash = SCHEDULE_DETAIL_DISPLAY_PLACEHOLDER;
@@ -1258,7 +1270,11 @@ const ScheduleDetailModal = ({
                             <ActionBarButton
                                 variant="primary"
                                 onClick={() => handleStatusChange(completedStatus)}
-                                disabled={loading}
+                                disabled={loading || !completeActionAllowed}
+                                title={completeActionAllowed
+                                    ? undefined
+                                    : t('schedule:ScheduleDetailModal.completeBeforeStartTooltip')}
+                                data-testid="schedule-detail-complete"
                             >
                                 {t('schedule:ScheduleDetailModal.t_a9f9a032')}
                             </ActionBarButton>

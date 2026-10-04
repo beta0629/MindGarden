@@ -70,12 +70,15 @@ public class ConsultationRecordServiceImpl implements ConsultationRecordService 
     @Autowired
     private SalaryLateSessionAutoSyncService salaryLateSessionAutoSyncService;
 
-    /** 확정 저장 후 서버 초안 정리용 (신규 의존성 — 생성자 주입) */
-    private final ConsultationRecordDraftService consultationRecordDraftService;
-
-    public ConsultationRecordServiceImpl(ConsultationRecordDraftService consultationRecordDraftService) {
-        this.consultationRecordDraftService = consultationRecordDraftService;
-    }
+    /**
+     * 확정 저장 후 서버 초안 정리용.
+     *
+     * <p>이 클래스의 다른 의존성과 같은 필드 주입을 쓴다. 생성자를 하나라도 선언하면
+     * Mockito {@code @InjectMocks} 가 생성자 주입으로 전환되어 기존 단위 테스트의
+     * {@code @Mock} 필드가 전부 null 이 된다.</p>
+     */
+    @Autowired
+    private ConsultationRecordDraftService consultationRecordDraftService;
 
     @Override
     public Page<ConsultationRecord> getConsultationRecords(Long consultantId, Long clientId, Pageable pageable) {
@@ -693,6 +696,7 @@ public class ConsultationRecordServiceImpl implements ConsultationRecordService 
      * @param consultantId 상담사 ID
      */
     private void deleteServerDraftQuietly(String tenantId, Long consultationId, Long consultantId) {
+        if (consultationRecordDraftService == null) return;
         try {
             consultationRecordDraftService.deleteDraft(tenantId, consultationId, consultantId);
         } catch (Exception e) {

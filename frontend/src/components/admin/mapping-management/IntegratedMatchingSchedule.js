@@ -598,7 +598,7 @@ const IntegratedMatchingSchedule = () => {
    *
    * SSOT (FullCalendar v6 공식 문서): view.currentStart = 활성 월의 1일 00:00.
    * view.activeStart 는 표시 그리드 첫 가시일이며 month view 에서는 보통
-   * 이전 달의 일요일이 들어온다. PR #135 R3 의 가정 「activeStart = 활성 월 1일」
+   * 이전 달의 일요일이 들어온다. PR 135 R3 의 가정 「activeStart = 활성 월 1일」
    * 은 잘못된 가정으로, 4월 보기에서 activeStart=2026-03-29 → month=3 API
    * 호출 회귀를 유발했다.
    *
@@ -1109,7 +1109,7 @@ const IntegratedMatchingSchedule = () => {
   const handleCheckoutSameDayCompleted = () => {
     setCheckoutSameDayMapping(null);
     softRefresh(loadMappings);
-    // #865: oneshot/checkout 성공 후 캘린더 soft silent refetch
+    // PR 865: oneshot/checkout 성공 후 캘린더 soft silent refetch
     setRefetchTrigger((t) => t + 1);
   };
 

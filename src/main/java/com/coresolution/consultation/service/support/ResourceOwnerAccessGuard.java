@@ -436,9 +436,33 @@ public class ResourceOwnerAccessGuard {
     @Transactional(readOnly = true)
     public ConsultantClientMapping requireMappingAdminAccess(HttpSession session, Long mappingId) {
         User caller = requireTenantAdmin(session, "mappingId", mappingId);
-        String tenantId = clientPathAccessGuard.requireCallerTenantId(caller);
-        return load(caller, "mappingId", mappingId,
-            () -> mappingRepository.findByTenantIdAndId(tenantId, mappingId));
+        return loadMappingInCallerTenant(caller, mappingId);
+    }
+
+    /**
+     * {@link #requireMappingAdminAccess} 와 같은 검증 후, 감사 필드(적용자·처리자·변경자)에 기록할 세션 관리자를 돌려준다.
+     *
+     * @param session   HTTP 세션
+     * @param mappingId 매핑 ID (요청 본문 값. null 이면 거부)
+     * @return 세션 관리자 (요청 본문의 작업자 값은 쓰지 않는다)
+     * @throws UnauthorizedException 로그인 사용자가 없을 때
+     * @throws AccessDeniedException 관리자가 아니거나 세션 테넌트에 매핑이 없을 때
+     */
+    @Transactional(readOnly = true)
+    public User requireMappingAdminActor(HttpSession session, Long mappingId) {
+        User caller = requireTenantAdmin(session, "mappingId", mappingId);
+        loadMappingInCallerTenant(caller, mappingId);
+        return caller;
+    }
+
+    /**
+     * 감사 필드 문자열 값. 세션 사용자 id 를 쓴다 (승인자 id 기록과 같은 기준).
+     *
+     * @param actor 세션 사용자
+     * @return 사용자 id 문자열
+     */
+    public static String auditActorOf(User actor) {
+        return String.valueOf(actor.getId());
     }
 
     /**
@@ -551,6 +575,12 @@ public class ResourceOwnerAccessGuard {
             throw denyResource(caller, field, resourceId);
         }
         return caller;
+    }
+
+    private ConsultantClientMapping loadMappingInCallerTenant(User caller, Long mappingId) {
+        String tenantId = clientPathAccessGuard.requireCallerTenantId(caller);
+        return load(caller, "mappingId", mappingId,
+            () -> mappingRepository.findByTenantIdAndId(tenantId, mappingId));
     }
 
     /** 세션 테넌트 범위로 자원을 읽는다 (소유자가 테넌트 자체인 자원용). */

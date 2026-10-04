@@ -217,6 +217,56 @@ class SettlementDiscountGuardMvcTest {
     }
 
     @Test
+    @DisplayName("PL/SQL 할인 적용·환불·상태 변경 — 본문 작업자 위조값은 무시하고 세션 관리자 id 를 프로시저 서비스에 넘긴다")
+    void plSqlDiscountWrites_forgedAuditField_sessionAdminPassed() throws Exception {
+        User admin = user(ADMIN_A, UserRole.ADMIN, TENANT_A);
+        String forged = "forged-actor";
+        mockMvc.perform(req(new String[] {"POST", PLSQL + "/apply", "{\"mappingId\":" + ID + ",\"discountCode\":\"D\","
+                + "\"originalAmount\":1000,\"discountAmount\":100,\"finalAmount\":900,\"branchCode\":\"B\","
+                + "\"appliedBy\":\"" + forged + "\"}"}, admin))
+            .andExpect(status().isOk());
+        mockMvc.perform(req(new String[] {"POST", PLSQL + "/refund", "{\"mappingId\":" + ID + ",\"refundAmount\":100,"
+                + "\"refundReason\":\"r\",\"processedBy\":\"" + forged + "\"}"}, admin))
+            .andExpect(status().isOk());
+        mockMvc.perform(req(new String[] {"POST", PLSQL + "/update-status", "{\"mappingId\":" + ID
+                + ",\"newStatus\":\"S\",\"updatedBy\":\"" + forged + "\",\"reason\":\"r\"}"}, admin))
+            .andExpect(status().isOk());
+
+        String sessionActor = String.valueOf(ADMIN_A);
+        verify(plSqlDiscountAccountingService).applyDiscountAccounting(eq(ID), eq("D"), any(), any(), any(), eq("B"),
+            eq(sessionActor));
+        verify(plSqlDiscountAccountingService).processDiscountRefund(eq(ID), any(), eq("r"), eq(sessionActor));
+        verify(plSqlDiscountAccountingService).updateDiscountStatus(ID, "S", sessionActor, "r");
+        verify(plSqlDiscountAccountingService, org.mockito.Mockito.never())
+            .applyDiscountAccounting(any(), any(), any(), any(), any(), any(), eq(forged));
+        verify(plSqlDiscountAccountingService, org.mockito.Mockito.never())
+            .processDiscountRefund(any(), any(), any(), eq(forged));
+        verify(plSqlDiscountAccountingService, org.mockito.Mockito.never())
+            .updateDiscountStatus(any(), any(), eq(forged), any());
+    }
+
+    @Test
+    @DisplayName("PL/SQL 할인 적용·환불·상태 변경 — 본문에 작업자 필드가 없어도 200, 세션 관리자 id 를 넘긴다")
+    void plSqlDiscountWrites_missingAuditField_sessionAdminPassed() throws Exception {
+        User admin = user(ADMIN_A, UserRole.ADMIN, TENANT_A);
+        mockMvc.perform(req(new String[] {"POST", PLSQL + "/apply", "{\"mappingId\":" + ID + ",\"discountCode\":\"D\","
+                + "\"originalAmount\":1000,\"discountAmount\":100,\"finalAmount\":900,\"branchCode\":\"B\"}"}, admin))
+            .andExpect(status().isOk());
+        mockMvc.perform(req(new String[] {"POST", PLSQL + "/refund", "{\"mappingId\":" + ID + ",\"refundAmount\":100,"
+                + "\"refundReason\":\"r\"}"}, admin))
+            .andExpect(status().isOk());
+        mockMvc.perform(req(new String[] {"POST", PLSQL + "/update-status", "{\"mappingId\":" + ID
+                + ",\"newStatus\":\"S\",\"reason\":\"r\"}"}, admin))
+            .andExpect(status().isOk());
+
+        String sessionActor = String.valueOf(ADMIN_A);
+        verify(plSqlDiscountAccountingService).applyDiscountAccounting(eq(ID), eq("D"), any(), any(), any(), eq("B"),
+            eq(sessionActor));
+        verify(plSqlDiscountAccountingService).processDiscountRefund(eq(ID), any(), eq("r"), eq(sessionActor));
+        verify(plSqlDiscountAccountingService).updateDiscountStatus(ID, "S", sessionActor, "r");
+    }
+
+    @Test
     @DisplayName("할인 관리 — 서비스 예외 원문은 응답에 싣지 않는다")
     void discountService_failure_sanitized() throws Exception {
         RuntimeException raw = new RuntimeException(RAW_SERVICE_ERROR);

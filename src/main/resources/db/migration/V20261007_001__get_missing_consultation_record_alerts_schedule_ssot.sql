@@ -1,11 +1,12 @@
--- 생성 파일 — 직접 고치지 마세요.
--- 생성: scripts/database/sync/flyway-procedure-extract.sh generate
--- 원본: src/main/resources/db/migration/V20261007_001__get_missing_consultation_record_alerts_schedule_ssot.sql
--- 용도: 표준 프로시저 배포(개발·운영 db-diff)와 야간 운영→개발 복사 뒤 재적재.
-DELIMITER //
-
-DROP PROCEDURE IF EXISTS GetMissingConsultationRecordAlerts //
-
+-- 상담일지 미작성 알림 조회 프로시저를 실제 스키마 기준으로 다시 정의한다.
+-- 이전 정의(V20260424_002)는 performance_alerts 에 없는 컬럼(alert_type·title·message·related_entity_*·branch_code·
+-- is_resolved)을 읽어 EXIT HANDLER 로 빠졌고(p_success=FALSE, p_total_count=NULL → API 500), 집계 SELECT 의
+-- ORDER BY 도 ONLY_FULL_GROUP_BY 에서 오류였다.
+-- 미작성 판정은 ScheduleRepository#findMissingConsultationLogScheduleRowsInDateRange 와 같다:
+-- 세션 테넌트의 지난 일정(p_today 이전) 중 상태가 p_statuses 에 속하고, 같은 일정 id 의 상담일지·타기관 연계 일지가 없는 건.
+-- 대상 상태와 오늘 날짜는 호출부(Java)가 넘긴다. 이름은 암호화 컬럼이라 돌려주지 않는다(호출부가 복호화해 채운다).
+DELIMITER $$
+DROP PROCEDURE IF EXISTS GetMissingConsultationRecordAlerts$$
 CREATE PROCEDURE GetMissingConsultationRecordAlerts(
     IN p_tenant_id VARCHAR(100),
     IN p_start_date DATE,
@@ -91,6 +92,5 @@ BEGIN
             SET p_message = '상담일지 미작성 알림 조회가 완료되었습니다.';
         END IF;
     END IF;
-END //
-
+END$$
 DELIMITER ;

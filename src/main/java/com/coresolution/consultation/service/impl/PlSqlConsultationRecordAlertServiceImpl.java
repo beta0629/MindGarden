@@ -1,16 +1,28 @@
 package com.coresolution.consultation.service.impl;
 
+import java.sql.Types;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import com.coresolution.consultation.constant.MissingConsultationLogStatuses;
+import com.coresolution.consultation.entity.User;
+import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.PlSqlConsultationRecordAlertService;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.consultation.constant.ServerErrorMessages;
 import com.coresolution.consultation.util.ServerErrorResponses;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.SqlOutParameter;
+import org.springframework.jdbc.core.SqlParameter;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.simple.SimpleJdbcCall;
 import org.springframework.stereotype.Service;
@@ -29,8 +41,15 @@ import lombok.extern.slf4j.Slf4j;
 @Transactional
 public class PlSqlConsultationRecordAlertServiceImpl implements PlSqlConsultationRecordAlertService {
 
+    private static final String PROC_GET_MISSING_ALERTS = "GetMissingConsultationRecordAlerts";
+    private static final ObjectMapper ALERT_JSON = new ObjectMapper();
+    private static final TypeReference<List<Map<String, Object>>> ALERT_LIST_TYPE = new TypeReference<>() { };
+
     @Autowired
     private JdbcTemplate jdbcTemplate;
+
+    @Autowired
+    private UserRepository userRepository;
 
     /**
      * SimpleJdbcCall 카탈로그(=DB명) 명시용 SSOT.
@@ -111,6 +130,7 @@ public class PlSqlConsultationRecordAlertServiceImpl implements PlSqlConsultatio
             log.warn("⚠️ Deprecated 파라미터: branchCode는 더 이상 사용하지 않음. branchCode={}", branchCode);
         }
         String tenantId = com.coresolution.core.context.TenantContextHolder.getRequiredTenantId();
+        LocalDate today = LocalDate.now();
         log.info("📝 상담일지 미작성 알림 조회: tenantId={}, 기간={}~{}", tenantId, startDate, endDate);
         
         try {
@@ -119,23 +139,38 @@ public class PlSqlConsultationRecordAlertServiceImpl implements PlSqlConsultatio
             
             SimpleJdbcCall jdbcCall = new SimpleJdbcCall(jdbcTemplate)
                 .withCatalogName(dbSchemaName)
-                .withProcedureName("GetMissingConsultationRecordAlerts");
+                .withProcedureName(PROC_GET_MISSING_ALERTS)
+                .withoutProcedureColumnMetaDataAccess()
+                .declareParameters(
+                    new SqlParameter("p_tenant_id", Types.VARCHAR),
+                    new SqlParameter("p_start_date", Types.DATE),
+                    new SqlParameter("p_end_date", Types.DATE),
+                    new SqlParameter("p_today", Types.DATE),
+                    new SqlParameter("p_statuses", Types.VARCHAR),
+                    new SqlOutParameter("p_alerts", Types.LONGVARCHAR),
+                    new SqlOutParameter("p_total_count", Types.INTEGER),
+                    new SqlOutParameter("p_success", Types.BOOLEAN),
+                    new SqlOutParameter("p_message", Types.LONGVARCHAR));
             
-            // 표준화 2025-12-06: branchCode 대신 tenantId 사용 (프로시저가 p_tenant_id를 받도록 수정되었다고 가정)
             MapSqlParameterSource params = new MapSqlParameterSource()
-                .addValue("p_tenant_id", tenantId) // branchCode 대신 tenantId 사용
+                .addValue("p_tenant_id", tenantId)
                 .addValue("p_start_date", startDate)
-                .addValue("p_end_date", endDate);
+                .addValue("p_end_date", endDate)
+                .addValue("p_today", today)
+                .addValue("p_statuses", MissingConsultationLogStatuses.toProcedureCsv());
             
             Map<String, Object> result = jdbcCall.execute(params);
             
             Map<String, Object> response = new HashMap<>();
             response.put("success", result.get("p_success"));
             response.put("message", resolveProcedureMessage(result, response));
-            response.put("alerts", result.get("p_alerts"));
-            response.put("totalCount", result.get("p_total_count"));
+            boolean failed = Boolean.FALSE.equals(toBoolean(result.get("p_success")));
+            List<Map<String, Object>> alerts = failed ? List.of()
+                    : withConsultantNames(tenantId, parseAlerts(result.get("p_alerts")));
+            response.put("alerts", alerts);
+            response.put("totalCount", failed ? 0 : alerts.size());
             
-            log.info("✅ 상담일지 미작성 알림 조회 완료: 총 {}건", result.get("p_total_count"));
+            log.info("✅ 상담일지 미작성 알림 조회 완료: 총 {}건", alerts.size());
             
             return response;
             
@@ -403,6 +438,41 @@ public class PlSqlConsultationRecordAlertServiceImpl implements PlSqlConsultatio
      * @param errorResponse 실패 응답
      * @param traceId       추적 id
      */
+    /** 프로시저 JSON 배열(문자열) → 알림 목록. 비어 있거나 null 이면 빈 목록. */
+    private static List<Map<String, Object>> parseAlerts(Object raw) throws JsonProcessingException {
+        if (raw == null) {
+            return new ArrayList<>();
+        }
+        String json = raw.toString();
+        if (json.isBlank()) {
+            return new ArrayList<>();
+        }
+        return ALERT_JSON.readValue(json, ALERT_LIST_TYPE);
+    }
+
+    /** 프로시저는 암호화된 이름을 돌려주지 않으므로 세션 테넌트 사용자만 읽어 복호화된 이름을 채운다. */
+    private List<Map<String, Object>> withConsultantNames(String tenantId, List<Map<String, Object>> alerts) {
+        Set<Long> consultantIds = new HashSet<>();
+        for (Map<String, Object> alert : alerts) {
+            Object id = alert.get("consultantId");
+            if (id instanceof Number number) {
+                consultantIds.add(number.longValue());
+            }
+        }
+        if (consultantIds.isEmpty()) {
+            return alerts;
+        }
+        Map<Long, String> names = new HashMap<>();
+        for (User user : userRepository.findByTenantIdAndIdIn(tenantId, new ArrayList<>(consultantIds))) {
+            names.put(user.getId(), user.getName());
+        }
+        for (Map<String, Object> alert : alerts) {
+            Object id = alert.get("consultantId");
+            alert.put("consultantName", id instanceof Number number ? names.get(number.longValue()) : null);
+        }
+        return alerts;
+    }
+
     private static void putInternalError(Map<String, Object> errorResponse, String traceId) {
         errorResponse.put("message", ServerErrorMessages.INTERNAL_SERVER_ERROR);
         errorResponse.put("errorCode", ServerErrorMessages.CODE_INTERNAL_SERVER_ERROR);

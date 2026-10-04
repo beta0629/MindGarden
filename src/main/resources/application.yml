@@ -342,6 +342,10 @@ mindgarden:
       zone: ${MINDGARDEN_SCHEDULER_SCHEDULE_AUTO_COMPLETE_ZONE:Asia/Seoul}
       lock-at-most-for: ${MINDGARDEN_SCHEDULER_SCHEDULE_AUTO_COMPLETE_LOCK_AT_MOST_FOR:PT9M}
       daily-lock-at-most-for: ${MINDGARDEN_SCHEDULER_SCHEDULE_DAILY_CLEANUP_LOCK_AT_MOST_FOR:PT30M}
+      # 수동 실행(auto-complete, with-reminder)이 두 배치 이름의 ShedLock DB 락을 잡는다 — 서버 여러 대에서 한 번만.
+      manual-lock-wait-seconds: ${MINDGARDEN_SCHEDULER_SCHEDULE_AUTO_COMPLETE_MANUAL_LOCK_WAIT_SECONDS:30}
+      manual-lock-at-most-for: ${MINDGARDEN_SCHEDULER_SCHEDULE_AUTO_COMPLETE_MANUAL_LOCK_AT_MOST_FOR:PT30M}
+      manual-lock-poll-millis: ${MINDGARDEN_SCHEDULER_SCHEDULE_AUTO_COMPLETE_MANUAL_LOCK_POLL_MILLIS:500}
 
 # JWT TTL SSOT — JwtService·RefreshTokenServiceImpl 이 이 키만 참조. FE 별도 만료 상수와 드리프트 금지.
 # 세션 4h(HTTP_SESSION_MAX_INACTIVE) ≠ Access JWT 1h — 계층 분리. jwt.expiration / refresh-expiration 변경 금지.

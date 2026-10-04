@@ -18,7 +18,8 @@ cd "${ROOT_HINT:-$PWD}" 2>/dev/null || true
 ROOT=$(git rev-parse --show-toplevel 2>/dev/null) || { log "git 저장소 아님 — 건너뜀"; emit '{}'; }
 cd "$ROOT" || emit '{}'
 
-BASE_REF="${GUARDRAIL_BASE:-origin/release/dev}"
+DEV_BRANCH=$(sed -n 's/^DEV_BRANCH=//p' .cursor/harness.env 2>/dev/null | head -1)
+BASE_REF="${GUARDRAIL_BASE:-origin/${DEV_BRANCH:-release/dev}}"
 git rev-parse --verify -q "$BASE_REF" >/dev/null || { log "$BASE_REF 없음 — 건너뜀"; emit '{}'; }
 MERGE_BASE=$(git merge-base "$BASE_REF" HEAD 2>/dev/null) || emit '{}'
 CHANGED=$( { git diff --name-only "$MERGE_BASE"; git ls-files --others --exclude-standard; } | sort -u)

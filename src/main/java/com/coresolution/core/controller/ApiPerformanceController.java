@@ -1,7 +1,10 @@
 package com.coresolution.core.controller;
 
+import com.coresolution.consultation.service.support.ResourceOwnerAccessGuard;
 import com.coresolution.core.dto.ApiResponse;
 import com.coresolution.core.interceptor.ApiPerformanceInterceptor;
+import com.coresolution.core.security.OpsAccessGuard;
+import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -28,11 +31,16 @@ public class ApiPerformanceController {
 
     private final ApiPerformanceInterceptor performanceInterceptor;
 
+    private final ResourceOwnerAccessGuard resourceOwnerAccessGuard;
+
+    private final OpsAccessGuard opsAccessGuard;
+
     /**
      * 모든 API 성능 통계 조회
      */
     @GetMapping("/stats")
-    public ResponseEntity<ApiResponse<Map<String, Object>>> getAllPerformanceStats() {
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getAllPerformanceStats(HttpSession session) {
+        resourceOwnerAccessGuard.requireTenantAdminAccess(session);
         log.info("📊 API 성능 통계 조회 요청");
         
         ConcurrentHashMap<String, ApiPerformanceInterceptor.ApiStats> allStats = 
@@ -102,7 +110,9 @@ public class ApiPerformanceController {
      * 특정 API 성능 통계 조회
      */
     @GetMapping("/stats/{endpoint}")
-    public ResponseEntity<ApiResponse<Map<String, Object>>> getEndpointStats(@PathVariable String endpoint) {
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getEndpointStats(@PathVariable String endpoint,
+            HttpSession session) {
+        resourceOwnerAccessGuard.requireTenantAdminAccess(session);
         log.info("📊 특정 API 성능 통계 조회: {}", endpoint);
         
         // URL 디코딩 (공백을 + 또는 %20으로 인코딩된 경우 처리)
@@ -136,6 +146,7 @@ public class ApiPerformanceController {
      */
     @DeleteMapping("/stats")
     public ResponseEntity<ApiResponse<String>> clearPerformanceStats() {
+        opsAccessGuard.requireHqOps();
         log.info("🧹 API 성능 통계 초기화 요청");
         
         performanceInterceptor.clearStats();
@@ -148,8 +159,8 @@ public class ApiPerformanceController {
      */
     @GetMapping("/slow-apis")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getSlowApis(
-            @RequestParam(defaultValue = "500") long thresholdMs) {
-        
+            @RequestParam(defaultValue = "500") long thresholdMs, HttpSession session) {
+        resourceOwnerAccessGuard.requireTenantAdminAccess(session);
         log.info("🐌 느린 API 목록 조회 (임계값: {}ms)", thresholdMs);
         
         ConcurrentHashMap<String, ApiPerformanceInterceptor.ApiStats> allStats = 
@@ -188,8 +199,8 @@ public class ApiPerformanceController {
      */
     @GetMapping("/error-prone-apis")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getErrorProneApis(
-            @RequestParam(defaultValue = "5.0") double errorRateThreshold) {
-        
+            @RequestParam(defaultValue = "5.0") double errorRateThreshold, HttpSession session) {
+        resourceOwnerAccessGuard.requireTenantAdminAccess(session);
         log.info("🚨 에러율 높은 API 목록 조회 (임계값: {}%)", errorRateThreshold);
         
         ConcurrentHashMap<String, ApiPerformanceInterceptor.ApiStats> allStats = 

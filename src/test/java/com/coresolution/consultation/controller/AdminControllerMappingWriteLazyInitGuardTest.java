@@ -32,6 +32,7 @@ import com.coresolution.consultation.service.UserPersonalDataCacheService;
 import com.coresolution.consultation.service.UserService;
 import com.coresolution.consultation.service.erp.ErpService;
 import com.coresolution.consultation.service.erp.financial.FinancialTransactionService;
+import com.coresolution.consultation.service.support.ResourceOwnerAccessGuard;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.core.dto.ApiResponse;
 import com.coresolution.core.service.OnboardingService;
@@ -46,6 +47,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.mock.web.MockHttpSession;
 
 /**
  * Admin mapping write 엔드포인트(reject / use-session / extend-sessions) 응답 직렬화 회귀 가드.
@@ -87,6 +89,7 @@ class AdminControllerMappingWriteLazyInitGuardTest {
     @Mock private OnboardingService onboardingService;
     @Mock private RealTimeStatisticsService realTimeStatisticsService;
     @Mock private UserRepository userRepository;
+    @Mock private ResourceOwnerAccessGuard resourceOwnerAccessGuard;
 
     @InjectMocks
     private AdminController controller;
@@ -104,7 +107,7 @@ class AdminControllerMappingWriteLazyInitGuardTest {
         request.put("reason", reason);
 
         ResponseEntity<ApiResponse<ConsultantClientMappingResponse>> response =
-                controller.rejectMapping(MAPPING_ID, request);
+                controller.rejectMapping(MAPPING_ID, request, new MockHttpSession());
 
         assertDtoApiResponseSerializes(response);
     }
@@ -116,7 +119,7 @@ class AdminControllerMappingWriteLazyInitGuardTest {
         when(adminService.useSession(eq(MAPPING_ID))).thenReturn(serviceResponse);
 
         ResponseEntity<ApiResponse<ConsultantClientMappingResponse>> response =
-                controller.useSession(MAPPING_ID);
+                controller.useSession(MAPPING_ID, new MockHttpSession());
 
         assertDtoApiResponseSerializes(response);
     }
@@ -137,7 +140,7 @@ class AdminControllerMappingWriteLazyInitGuardTest {
         request.put("packagePrice", packagePrice);
 
         ResponseEntity<ApiResponse<ConsultantClientMappingResponse>> response =
-                controller.extendSessions(MAPPING_ID, request);
+                controller.extendSessions(MAPPING_ID, request, new MockHttpSession());
 
         assertDtoApiResponseSerializes(response);
     }

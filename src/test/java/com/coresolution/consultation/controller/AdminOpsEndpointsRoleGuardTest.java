@@ -113,13 +113,13 @@ class AdminOpsEndpointsRoleGuardTest {
     }
 
     @Test
-    @DisplayName("관리자 일정 목록 — 내담자 403(조회 없음), 다른 기관 관리자 403")
+    @DisplayName("관리자 일정 목록 — 내담자가 clientId 로 조회 403(조회 없음), 다른 기관 관리자 403")
     void adminSchedules_managerOfSameTenantOnly() {
-        assertDenied(() -> adminController.getSchedules(null, null, null, null, 0, 20, sessionOf(UserRole.CLIENT)));
+        assertDenied(() -> adminController.getSchedules(null, 77L, null, null, null, 0, 20, sessionOf(UserRole.CLIENT)));
 
         MockHttpSession otherTenantAdmin = sessionOf(UserRole.ADMIN);
         ((User) otherTenantAdmin.getAttribute(SessionConstants.USER_OBJECT)).setTenantId(OTHER_TENANT_ID);
-        assertDenied(() -> adminController.getSchedules(null, null, null, null, 0, 20, otherTenantAdmin));
+        assertDenied(() -> adminController.getSchedules(null, 77L, null, null, null, 0, 20, otherTenantAdmin));
         verifyNoInteractions(adminService);
     }
 

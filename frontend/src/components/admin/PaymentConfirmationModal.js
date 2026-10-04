@@ -1,12 +1,23 @@
 import React, { useState, useEffect } from 'react';
-import { apiGet } from '../../utils/ajax';
+import StandardizedApi from '../../utils/standardizedApi';
 import { getCommonCodes } from '../../utils/commonCodeApi';
 import notificationManager from '../../utils/notification';
 import UnifiedModal from '../common/modals/UnifiedModal';
 import MGButton from '../common/MGButton';
 import BadgeSelect from '../common/BadgeSelect';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
-import { TABLET_LOGIN_CONSTANTS } from '../../constants/css-variables';
+import { TABLET_LOGIN_CONSTANTS, PAYMENT_CONFIRMATION_MODAL_CONSTANTS } from '../../constants/css-variables';
+import {
+  BULK_MAPPING_ITEM_STATUS,
+  BULK_MAPPING_ITEM_STATUS_LABEL,
+  BULK_MAPPING_RESULT_MESSAGES
+} from '../../constants/bulkMappingPayment';
+import {
+  extractBulkMappingResults,
+  extractBulkMappingResultsFromError,
+  isPendingPaymentMapping,
+  resolveMappingPaymentAmount
+} from '../../utils/bulkMappingPaymentResult';
 import {
   MIN_PAYMENT_AMOUNT,
   MAX_PAYMENT_AMOUNT,
@@ -21,10 +32,6 @@ import {
 import { useAlert } from '../../hooks/useAlert';
 import './PaymentConfirmationModal.css';
 import { useTranslation } from 'react-i18next';
-
-// T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
-const API_ADMIN_PAYMENTS_CONFIRM = '/api/v1/admin/payments/confirm';
-const API_ADMIN_PAYMENTS_CANCEL = '/api/v1/admin/payments/cancel';
 
 // 외부 브랜드 SSOT (Kakao/Naver 브랜드 가이드 공식 색상) — 운영 게이트 허용.
 // follow-up: corrected identifier after typo debug (PR #16 P0 후속).
@@ -80,20 +87,9 @@ const PaymentConfirmationModal = ({
   const [paymentMethodOptions, setPaymentMethodOptions] = useState([]);
   const [loadingCodes, setLoadingCodes] = useState(false);
 
-  const API_ENDPOINTS = {
-    CONFIRM_PAYMENT: API_ADMIN_PAYMENTS_CONFIRM,
-    CANCEL_PAYMENT: API_ADMIN_PAYMENTS_CANCEL
-  };
-  
-  const PAYMENT_STATUS = {
-    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-    PENDING: 'pending',
-    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-    COMPLETED: 'completed',
-    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-    CANCELLED: 'cancelled'
-  };
-  
+  const [bulkOutcome, setBulkOutcome] = useState(null);
+  const { API_ENDPOINTS } = PAYMENT_CONFIRMATION_MODAL_CONSTANTS;
+
   const MESSAGES = {
     CONFIRM_SUCCESS: '결제가 확인되었습니다.',
     CONFIRM_ERROR: '결제 확인에 실패했습니다.',
@@ -118,24 +114,19 @@ const PaymentConfirmationModal = ({
   };
 
   useEffect(() => {
-    if (isOpen && mappings.length > 0) {
-      setSelectedMappings(mappings.filter(mapping => 
-        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-        mapping.status === PAYMENT_STATUS.PENDING
-      ));
-      
-      const totalAmount = mappings
-        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-        .filter(mapping => mapping.status === PAYMENT_STATUS.PENDING)
-        .reduce((sum, mapping) => sum + (mapping.amount || 0), 0);
-      
+    if (!isOpen) {
+      setBulkOutcome(null);
+      return;
+    }
+    if (mappings.length > 0) {
+      const pending = mappings.filter(isPendingPaymentMapping);
+      setSelectedMappings(pending);
       setPaymentData(prev => ({
         ...prev,
-        amount: totalAmount
+        amount: pending.reduce((sum, mapping) => sum + resolveMappingPaymentAmount(mapping), 0)
       }));
     }
-  // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-  }, [isOpen, mappings, PAYMENT_STATUS.PENDING]);
+  }, [isOpen, mappings]);
 
   const PAYMENT_METHOD_FALLBACK = [
     { value: 'CARD', label: '카드', icon: '💳', color: 'var(--mg-primary-500)', description: '신용카드/체크카드 결제' },
@@ -238,6 +229,57 @@ const PaymentConfirmationModal = ({
     return Object.keys(newErrors).length === 0;
   };
 
+  /**
+   * 일괄 요청 — 매칭마다 독립 처리. 전부 처리(또는 건너뜀)면 닫고, 아니면 매칭별 결과를 모달에 남긴다.
+   * 일부라도 커밋되었으면 닫을 때 목록을 새로 고친다(onPaymentConfirmed).
+   */
+  const submitBulk = async(endpoint, body, successMessage, errorMessage) => {
+    setLoading(true);
+    try {
+      const data = await StandardizedApi.post(endpoint, body);
+      const outcome = extractBulkMappingResults(data);
+      if (!outcome || outcome.summary.failed === 0) {
+        notificationManager.success(successMessage);
+        onPaymentConfirmed && onPaymentConfirmed(data);
+        onClose();
+        return;
+      }
+      setBulkOutcome({ ...outcome, committed: outcome.summary.succeeded > 0, data });
+      const retryable = selectedMappings.filter(mapping =>
+        outcome.results.some(item => item.mappingId === Number(mapping.id)
+          && item.status === BULK_MAPPING_ITEM_STATUS.FAILED));
+      setSelectedMappings(retryable);
+      setPaymentData(prev => ({
+        ...prev,
+        amount: retryable.reduce((sum, mapping) => sum + resolveMappingPaymentAmount(mapping), 0)
+      }));
+      notificationManager.warning(outcome.summary.succeeded > 0
+        ? BULK_MAPPING_RESULT_MESSAGES.PARTIAL_NOTICE
+        : BULK_MAPPING_RESULT_MESSAGES.NONE_PROCESSED_NOTICE);
+    } catch (error) {
+      console.error('일괄 결제 처리 실패:', error);
+      const outcome = extractBulkMappingResultsFromError(error);
+      if (outcome) {
+        setBulkOutcome({ ...outcome, committed: outcome.summary.succeeded > 0, data: null });
+      }
+      notificationManager.error(error?.message || errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleClose = () => {
+    if (bulkOutcome?.committed && onPaymentConfirmed) {
+      onPaymentConfirmed(bulkOutcome.data);
+      return;
+    }
+    onClose();
+  };
+
+  const resultByMappingId = new Map(
+    (bulkOutcome?.results || []).map(item => [item.mappingId, item])
+  );
+
   const handleConfirmPayment = async(e) => {
     if (e) {
       e.preventDefault();
@@ -258,37 +300,12 @@ const PaymentConfirmationModal = ({
       return;
     }
 
-    setLoading(true);
-    try {
-      const response = await fetch(API_ENDPOINTS.CONFIRM_PAYMENT, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        credentials: 'include',
-        body: JSON.stringify({
-          mappingIds: selectedMappings.map(mapping => mapping.id),
-          paymentMethod: paymentData.method,
-          amount: paymentData.amount,
-          note: paymentData.note
-        })
-      });
-
-      const data = await response.json();
-
-      if (data.success) {
-        notificationManager.success(MESSAGES.CONFIRM_SUCCESS);
-        onPaymentConfirmed && onPaymentConfirmed(data.data);
-        onClose();
-      } else {
-        throw new Error(data.message || MESSAGES.CONFIRM_ERROR);
-      }
-    } catch (error) {
-      console.error('결제 확인 실패:', error);
-      notificationManager.error(error.message || MESSAGES.CONFIRM_ERROR);
-    } finally {
-      setLoading(false);
-    }
+    await submitBulk(API_ENDPOINTS.CONFIRM_PAYMENT, {
+      mappingIds: selectedMappings.map(mapping => mapping.id),
+      paymentMethod: paymentData.method,
+      amount: paymentData.amount,
+      note: paymentData.note
+    }, MESSAGES.CONFIRM_SUCCESS, MESSAGES.CONFIRM_ERROR);
   };
 
   const handleCancelPayment = async(e) => {
@@ -302,34 +319,9 @@ const PaymentConfirmationModal = ({
       return;
     }
 
-    setLoading(true);
-    try {
-      const response = await fetch(API_ENDPOINTS.CANCEL_PAYMENT, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        credentials: 'include',
-        body: JSON.stringify({
-          mappingIds: selectedMappings.map(mapping => mapping.id)
-        })
-      });
-
-      const data = await response.json();
-
-      if (data.success) {
-        notificationManager.success(MESSAGES.CANCEL_SUCCESS);
-        onPaymentConfirmed && onPaymentConfirmed(data.data);
-        onClose();
-      } else {
-        throw new Error(data.message || MESSAGES.CANCEL_ERROR);
-      }
-    } catch (error) {
-      console.error('결제 취소 실패:', error);
-      notificationManager.error(error.message || MESSAGES.CANCEL_ERROR);
-    } finally {
-      setLoading(false);
-    }
+    await submitBulk(API_ENDPOINTS.CANCEL_PAYMENT, {
+      mappingIds: selectedMappings.map(mapping => mapping.id)
+    }, MESSAGES.CANCEL_SUCCESS, MESSAGES.CANCEL_ERROR);
   };
 
   if (!isOpen) return null;
@@ -339,7 +331,7 @@ const PaymentConfirmationModal = ({
       <AlertModal />
       <UnifiedModal
       isOpen={isOpen}
-      onClose={onClose}
+      onClose={handleClose}
       title={t('admin.actions.paymentConfirm')}
       size="auto"
       className="mg-v2-ad-b0kla"
@@ -355,7 +347,7 @@ const PaymentConfirmationModal = ({
             onClick={(e) => {
               e?.preventDefault();
               e?.stopPropagation();
-              onClose();
+              handleClose();
             }}
             disabled={loading}
           >
@@ -391,14 +383,23 @@ const PaymentConfirmationModal = ({
       }
     >
       <div className="mg-v2-modal-body">
+          {bulkOutcome && (
+            <div className="mg-v2-ad-b0kla__card mg-v2-form-section" role="status" data-testid="bulk-payment-result">
+              <h3 className="mg-v2-ad-b0kla__section-title">{BULK_MAPPING_RESULT_MESSAGES.RESULT_TITLE}</h3>
+              <p>{BULK_MAPPING_RESULT_MESSAGES.SUMMARY(bulkOutcome.summary)}</p>
+            </div>
+          )}
           {/* 매핑 목록 */}
           <div className="mg-v2-ad-b0kla__card mg-v2-form-section">
             <h3 className="mg-v2-ad-b0kla__section-title">결제 대기 중인 매핑</h3>
             <div className="mg-v2-mapping-list">
               {mappings
-                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-                .filter(mapping => mapping.status === PAYMENT_STATUS.PENDING)
-                .map(mapping => (
+                .filter(isPendingPaymentMapping)
+                .map(mapping => {
+                  const itemResult = resultByMappingId.get(Number(mapping.id));
+                  const itemDone = itemResult != null
+                    && itemResult.status !== BULK_MAPPING_ITEM_STATUS.FAILED;
+                  return (
                   <label 
                     key={mapping.id}
                     className={`mg-mapping-item ${
@@ -410,6 +411,7 @@ const PaymentConfirmationModal = ({
                       className="mg-v2-checkbox"
                       checked={selectedMappings.some(m => m.id === mapping.id)}
                       onChange={() => handleMappingToggle(mapping.id)}
+                      disabled={itemDone}
                     />
                     <div className="mg-v2-mapping-info">
                       <div className="mg-v2-mapping-client">
@@ -419,11 +421,22 @@ const PaymentConfirmationModal = ({
                         상담사: {mapping.consultantName}
                       </div>
                       <div className="mg-v2-mapping-amount">
-                        {formatCurrency(mapping.amount || 0)}
+                        {formatCurrency(resolveMappingPaymentAmount(mapping))}
                       </div>
+                      {itemResult && (
+                        <div
+                          className="mg-v2-mapping-result"
+                          data-testid={`bulk-payment-item-${mapping.id}`}
+                          data-status={itemResult.status}
+                        >
+                          <strong>{BULK_MAPPING_ITEM_STATUS_LABEL[itemResult.status] || itemResult.status}</strong>
+                          {itemResult.message ? ` · ${itemResult.message}` : ''}
+                        </div>
+                      )}
                     </div>
                   </label>
-                ))}
+                  );
+                })}
             </div>
             {errors.mappings && (
               <div className="mg-v2-error-message">{errors.mappings}</div>

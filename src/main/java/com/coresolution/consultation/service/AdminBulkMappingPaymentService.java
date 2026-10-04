@@ -7,9 +7,11 @@ import com.coresolution.consultation.dto.admin.BulkMappingPaymentResult;
 /**
  * 관리자 일괄 매칭 결제 확인·취소.
  *
- * <p>사전 검증은 전부 아니면 전무다: 상태가 맞지 않는 매칭이 하나라도 있으면 아무것도 처리하지 않는다.
- * 처리 단계는 매칭마다 독립 트랜잭션이고, 외부 알림은 각 트랜잭션 커밋 뒤(커넥션 반환 뒤)에 보낸다.
- * 형식·테넌트 검증은 호출 전에 {@code ResourceOwnerAccessGuard} 가 끝낸다.</p>
+ * <p>사전 검증(상태)에 걸리는 매칭이 하나라도 있으면 아무것도 처리하지 않는다. 처리 단계는 매칭마다 독립
+ * 트랜잭션(그 매칭의 결제·회기·ERP 는 전부 반영 아니면 전부 롤백)이고 여러 매칭을 한 트랜잭션으로 묶지 않는다.
+ * 한 매칭이 실패해도 앞서 커밋된 매칭은 유지되고 나머지 매칭도 처리하며, 결과는 매칭별로 돌려준다.
+ * 외부 알림은 각 트랜잭션 커밋 뒤(커넥션 반환 뒤)에 보낸다.
+ * 역할·형식·테넌트 검증은 호출 전에 {@code ResourceOwnerAccessGuard} 가 끝낸다.</p>
  *
  * @author CoreSolution
  * @since 2026-10-04
@@ -21,7 +23,7 @@ public interface AdminBulkMappingPaymentService {
      *
      * @param mappingIds 중복 제거·테넌트 검증된 매칭 ID
      * @param reason     취소 사유
-     * @return 처리 결과
+     * @return 매칭별 처리 결과
      * @throws com.coresolution.consultation.exception.MappingAlreadyProcessedException
      *         이미 종료·취소된 매칭 또는 쇼핑 주문 결제 매칭이 하나라도 있을 때 (아무것도 처리하지 않음)
      */
@@ -34,7 +36,7 @@ public interface AdminBulkMappingPaymentService {
      * @param mappingIds    중복 제거·테넌트 검증된 매칭 ID
      * @param paymentMethod 결제 수단
      * @param rawAmount     요청 본문의 금액 값 (정수 숫자 또는 숫자 문자열)
-     * @return 처리 결과
+     * @return 매칭별 처리 결과
      * @throws IllegalArgumentException 결제 수단·금액이 없거나 잘못되었거나 합계가 맞지 않을 때 (아무것도 처리하지 않음)
      * @throws com.coresolution.consultation.exception.MappingAlreadyProcessedException
      *         결제 대기가 아닌 매칭이 하나라도 있을 때 (아무것도 처리하지 않음)

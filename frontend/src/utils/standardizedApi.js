@@ -274,6 +274,11 @@ class StandardizedApi {
         if (error.response != null) {
             err.response = error.response;
         }
+        // ajax throwOnUnauthorized 401 — 호출자가 isAuthRequiredError 로 구분할 수 있게 유지
+        if (error.authRequired === true) {
+            err.authRequired = true;
+            err.code = error.code;
+        }
         return err;
     }
 }

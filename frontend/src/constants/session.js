@@ -255,3 +255,9 @@ export const OAUTH_SERVER_VERIFY_FAILED_MESSAGE =
  */
 export const OAUTH_ACCESS_TOKEN_REQUIRED_MESSAGE =
   '로그인 토큰을 받지 못했습니다. 다시 로그인해 주세요.';
+
+/**
+ * fetch init 표식 — 호출자가 401 을 직접 처리하는 요청(ajax {@code throwOnUnauthorized})에 붙인다.
+ * sessionManager 의 폼 제출 훅이 이 요청 뒤 세션 재확인으로 returnUrl 없이 /login 으로 보내지 않게 한다.
+ */
+export const FETCH_INIT_SKIP_FORM_SESSION_HOOK = 'mgSkipFormSessionHook';

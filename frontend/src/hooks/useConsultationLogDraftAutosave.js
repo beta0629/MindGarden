@@ -23,7 +23,11 @@ import {
   removeDraftBackup,
   saveDraftBackup
 } from '../utils/consultationLogDraftBackupStore';
-import { redirectToLoginPageOnce } from '../utils/sessionRedirect';
+import {
+  clearPendingLoginReturnUrl,
+  redirectToLoginPageOnce,
+  setPendingLoginReturnUrl
+} from '../utils/sessionRedirect';
 
 /** 자동저장 상태 머신 값 */
 export const DRAFT_AUTOSAVE_STATUS = {
@@ -219,11 +223,17 @@ export function useConsultationLogDraftAutosave({
    */
   const handleUnauthorized = useCallback(async(payloadJson) => {
     const backup = await saveDraftBackup(backupScope, payloadJson, { rescue: true });
+    const returnUrl = `${window.location.pathname}${window.location.search}`;
+    // 세션 재확인이 먼저 /login 으로 보내도 같은 일정으로 돌아오게 복귀 경로를 예약한다(백업이 남았을 때만).
+    if (backup.persisted) {
+      setPendingLoginReturnUrl(returnUrl);
+    }
     const checkSession = checkSessionRef.current;
     if (typeof checkSession === 'function') {
       try {
         const alive = await checkSession(true, { silent: true });
         if (alive) {
+          clearPendingLoginReturnUrl();
           return false;
         }
       } catch {
@@ -235,7 +245,7 @@ export function useConsultationLogDraftAutosave({
     if (!backup.persisted) {
       return true;
     }
-    redirectToLoginPageOnce({ returnUrl: `${window.location.pathname}${window.location.search}` });
+    redirectToLoginPageOnce({ returnUrl });
     return true;
   }, [backupScope]);
 

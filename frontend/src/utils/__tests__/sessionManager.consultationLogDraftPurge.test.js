@@ -46,6 +46,34 @@ describe('sessionManager — 상담일지 초안 잔존물 제거', () => {
     expect(settled).toBe(true);
   });
 
+  test('logout() 은 IndexedDB 초안 삭제가 끝난 뒤에야 서버 로그아웃을 호출한다', async() => {
+    let resolvePurge;
+    purgeAllDraftBackups.mockReturnValueOnce(new Promise((resolve) => { resolvePurge = resolve; }));
+    const originalFetch = global.fetch;
+    const fetchMock = jest.fn().mockResolvedValue({ ok: true, status: 200 });
+    global.fetch = fetchMock;
+    const redirectSpy = jest.spyOn(sessionManager, 'setPostLogoutGateBeforeRedirect')
+      .mockImplementation(() => {
+        throw new Error('stop-before-redirect');
+      });
+
+    try {
+      const pending = sessionManager.logout().catch(() => undefined);
+      await Promise.resolve();
+      await Promise.resolve();
+      expect(purgeAllLegacyConsultationLogLocalDrafts).toHaveBeenCalled();
+      expect(fetchMock).not.toHaveBeenCalled();
+
+      resolvePurge();
+      await pending;
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+      expect(String(fetchMock.mock.calls[0][0])).toContain('/api/v1/auth/logout');
+    } finally {
+      global.fetch = originalFetch;
+      redirectSpy.mockRestore();
+    }
+  });
+
   test('다른 사용자로 전환하면 이전 사용자의 초안을 제거한다', () => {
     sessionManager.user = { id: 41 };
     sessionManager.setUser({ id: 42 });

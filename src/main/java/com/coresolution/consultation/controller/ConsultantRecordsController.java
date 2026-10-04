@@ -369,6 +369,8 @@ public class ConsultantRecordsController {
             recordMap.put("isSessionCompleted", record.getIsSessionCompleted());
             recordMap.put("sessionNumber", record.getSessionNumber());
             recordMap.put("sessionDuration", record.getSessionDurationMinutes());
+            // 서버 초안이 확정본보다 오래되었는지 판단하는 기준 시각 (초안 복구 프롬프트 억제용)
+            recordMap.put("updatedAt", record.getUpdatedAt());
             
             // 상담일지 전체 필드 추가
             recordMap.put("clientCondition", record.getClientCondition());

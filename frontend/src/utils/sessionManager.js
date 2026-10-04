@@ -670,6 +670,14 @@ class SessionManager {
       subdomain: sessionStorage.getItem('subdomain'),
       subdomain_tenant_name: sessionStorage.getItem('subdomain_tenant_name')
     };
+    // 상담일지 초안(레거시 평문 키 + IndexedDB 암호화 백업)을 서버 로그아웃 전에 끝까지 지운다.
+    // 서버 응답 대기 중 탭을 닫아도 본문 백업이 단말에 남지 않게 하기 위함이다.
+    try {
+      purgeAllLegacyConsultationLogLocalDrafts();
+      await purgeAllDraftBackups();
+    } catch (purgeError) {
+      console.warn('⚠️ 상담일지 초안 백업 삭제 실패(로그아웃은 계속):', purgeError);
+    }
     try {
       console.log('🔓 로그아웃 시작...');
 

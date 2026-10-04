@@ -468,8 +468,11 @@ const ConsultationRecordScreen = () => {
   draftSnapshotRef.current = { formData, memoDraft: '' };
   const contentDirtyRef = useRef(false);
   const restoreConfirmedRef = useRef(false);
+  const overwriteConfirmedRef = useRef(false);
   const conflictResolvedRef = useRef(false);
   const [restoreDraftConfirmOpen, setRestoreDraftConfirmOpen] = useState(false);
+  /** 불러오기 확정 전 "작성 중 내용 덮어쓰기" 2차 확인 */
+  const [restoreOverwriteConfirmOpen, setRestoreOverwriteConfirmOpen] = useState(false);
   const [pendingRestoreDraft, setPendingRestoreDraft] = useState(null);
   const [conflictConfirmOpen, setConflictConfirmOpen] = useState(false);
 
@@ -499,6 +502,7 @@ const ConsultationRecordScreen = () => {
     savedAtLabel: draftSavedAtLabel,
     notifyDirty,
     discardDraft,
+    resolveRestoreCandidate,
     loadLatestFromServer,
     keepMineOnConflict
   } = useConsultationLogDraftAutosave({
@@ -510,6 +514,7 @@ const ConsultationRecordScreen = () => {
     legacyScope: draftLegacyScope,
     snapshotRef: draftSnapshotRef,
     dirtyRef: contentDirtyRef,
+    recordUpdatedAt: consultationRecord?.updatedAt,
     onRestoreCandidate,
     onConflictDetected
   });
@@ -746,9 +751,9 @@ const ConsultationRecordScreen = () => {
           type="default"
           onConfirm={() => {
             restoreConfirmedRef.current = true;
-            applyRestoredDraftSnapshot(pendingRestoreDraft?.snapshot);
-            setPendingRestoreDraft(null);
             setRestoreDraftConfirmOpen(false);
+            // 화면에 입력된 내용을 덮어쓰게 되므로 한 번 더 확인한다.
+            setRestoreOverwriteConfirmOpen(true);
           }}
           onClose={() => {
             if (restoreConfirmedRef.current) {
@@ -758,6 +763,33 @@ const ConsultationRecordScreen = () => {
             void discardDraft();
             setPendingRestoreDraft(null);
             setRestoreDraftConfirmOpen(false);
+          }}
+        />
+        <ConfirmModal
+          isOpen={restoreOverwriteConfirmOpen}
+          title={CONSULTATION_LOG_AUTOSAVE_STRINGS.RESTORE_OVERWRITE_TITLE}
+          message={toDisplayString(CONSULTATION_LOG_AUTOSAVE_STRINGS.RESTORE_OVERWRITE_MESSAGE, '')}
+          confirmText={CONSULTATION_LOG_AUTOSAVE_STRINGS.RESTORE_OVERWRITE_CONFIRM}
+          cancelText={CONSULTATION_LOG_AUTOSAVE_STRINGS.RESTORE_OVERWRITE_CANCEL}
+          type="warning"
+          onConfirm={() => {
+            overwriteConfirmedRef.current = true;
+            applyRestoredDraftSnapshot(pendingRestoreDraft?.snapshot);
+            resolveRestoreCandidate();
+            setPendingRestoreDraft(null);
+            setRestoreOverwriteConfirmOpen(false);
+            restoreConfirmedRef.current = false;
+          }}
+          onClose={() => {
+            if (overwriteConfirmedRef.current) {
+              overwriteConfirmedRef.current = false;
+              return;
+            }
+            // 덮어쓰기 취소는 복구·버리기 중 어느 쪽도 고르지 않은 보류다.
+            // 서버 초안·레거시 초안을 모두 남겨 두고 다음 진입 때 다시 묻는다.
+            setPendingRestoreDraft(null);
+            setRestoreOverwriteConfirmOpen(false);
+            restoreConfirmedRef.current = false;
           }}
         />
         <ConfirmModal

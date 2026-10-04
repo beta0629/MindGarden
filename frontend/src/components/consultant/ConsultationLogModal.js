@@ -1379,8 +1379,8 @@ const ConsultationLogModal = ({
           overwriteConfirmedRef.current = false;
           return;
         }
-        // 덮어쓰기 취소 — 초안은 지우지 않고 복구 질문만 닫는다.
-        resolveRestoreCandidate();
+        // 덮어쓰기 취소는 복구·버리기 중 어느 쪽도 고르지 않은 보류다.
+        // 서버 초안·레거시 초안을 모두 남겨 두고 다음 진입 때 다시 묻는다.
         setPendingRestoreDraft(null);
         setRestoreOverwriteConfirmOpen(false);
         restoreConfirmedRef.current = false;

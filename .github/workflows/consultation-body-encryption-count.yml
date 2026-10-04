@@ -29,12 +29,30 @@ jobs:
     # environment 를 동적으로 비울 수 없어(빈 문자열 검증 실패) 지정하지 않는다.
     # 운영 집계는 자동 트리거가 없고 사람이 target=production 으로 직접 dispatch 해야 한다.
     steps:
+      # prod-db-readonly-spot-check.yml 과 같은 정책: KST 11–19시 운영 DB 예방 점검 금지
+      - name: KST 주간 운영 점검 가드 (production 만, 11–19 skip)
+        id: kst_guard
+        env:
+          TARGET: ${{ inputs.target }}
+        run: |
+          set -euo pipefail
+          HOUR="$(TZ=Asia/Seoul date +%H)"
+          HOUR=$((10#$HOUR))
+          if [ "$TARGET" = "production" ] && [ "$HOUR" -ge 11 ] && [ "$HOUR" -le 19 ]; then
+            echo "::notice::KST ${HOUR}:00 — 운영 DB 점검 금지 시간대(11–19)라 건너뜁니다."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "skip=false" >> "$GITHUB_OUTPUT"
+
       - name: MySQL 클라이언트 설치
+        if: steps.kst_guard.outputs.skip != 'true'
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y -qq mysql-client
 
       - name: 접속 정보 해석 (값 출력 금지)
+        if: steps.kst_guard.outputs.skip != 'true'
         id: db
         env:
           TARGET: ${{ inputs.target }}
@@ -64,6 +82,7 @@ jobs:
           } >> "$GITHUB_OUTPUT"
 
       - name: 형식별 건수 집계 (SELECT COUNT 전용)
+        if: steps.kst_guard.outputs.skip != 'true'
         env:
           DB_HOST: ${{ steps.db.outputs.host }}
           DB_USER: ${{ steps.db.outputs.user }}
@@ -112,11 +131,12 @@ jobs:
             exit 1
           fi
 
-          echo "=== ${TARGET} 상담일지 본문 형식별 건수 (값 미출력) ==="
+          echo "=== ${TARGET} 상담일지 본문 형식별 건수 (값 미출력, 0건 생략) ==="
+          printf 'scope\tcol_name\tfmt\tcnt\n'
           MYSQL_PWD="$DB_PASSWORD" mysql \
             --init-command="SET SESSION TRANSACTION READ ONLY" \
             -h "$DB_HOST" -u "$DB_USER" "$DB_NAME" \
-            --batch --raw < "$SQL_FILE" | awk 'NF && $4 != 0'
+            --batch --raw --skip-column-names < "$SQL_FILE" | awk 'NF && $4 != 0'
 
           rm -f "$SQL_FILE"
           echo "=== 끝 — 건수만 출력, 본문·암호문 미출력 ==="

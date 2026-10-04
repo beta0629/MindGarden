@@ -597,6 +597,9 @@ class SessionManager {
   applyClientLogoutCleanupPreserveSubdomain() {
     this.user = null;
     this.sessionInfo = null;
+    // 상담일지 초안: 레거시 평문 키 + 암호화 백업(IndexedDB·메모리) 전량 제거
+    purgeAllLegacyConsultationLogLocalDrafts();
+    void purgeAllDraftBackups();
     clearStoredSessionExpiry();
     this.lastCheckTime = 0;
     this.lastVerifiedAt = 0;

@@ -1,5 +1,6 @@
 package com.coresolution.consultation.service.impl;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 import com.coresolution.consultation.dto.ConsultationRecordDraftResponse;
 import com.coresolution.consultation.entity.ConsultationRecordDraft;
@@ -17,6 +18,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 /**
  * 상담일지 서버 초안 서비스 구현.
+ *
+ * <p>로그에 초안 본문(payloadJson)을 남기지 않는다. 식별자·길이만 기록한다.</p>
  *
  * @author CoreSolution
  * @since 2026-04-22
@@ -61,9 +64,31 @@ public class ConsultationRecordDraftServiceImpl implements ConsultationRecordDra
         ConsultationRecordDraft entity = existing.orElseGet(() -> newDraft(tenantId, consultationId, consultantId));
         entity.setPayloadJson(payloadJson);
         ConsultationRecordDraft saved = consultationRecordDraftRepository.save(entity);
-        log.info("상담일지 서버 초안 저장: tenantId={}, consultationId={}, consultantId={}, id={}",
-                tenantId, consultationId, consultantId, saved.getId());
+        log.info("상담일지 서버 초안 저장: tenantId={}, consultationId={}, consultantId={}, id={}, payloadLength={}",
+                tenantId, consultationId, consultantId, saved.getId(), payloadJson.length());
         return toResponse(saved);
+    }
+
+    @Override
+    @Transactional
+    public boolean deleteDraft(String tenantId, Long consultationId, Long consultantId) {
+        if (tenantId == null || tenantId.isEmpty() || consultationId == null || consultantId == null) {
+            return false;
+        }
+        Optional<ConsultationRecordDraft> existing = consultationRecordDraftRepository
+                .findByTenantIdAndConsultationIdAndConsultantIdAndIsDeletedFalse(tenantId, consultationId, consultantId);
+        if (existing.isEmpty()) {
+            return false;
+        }
+        ConsultationRecordDraft draft = existing.get();
+        // 본문을 남기지 않기 위해 soft delete 와 함께 payload 를 비운다.
+        draft.setPayloadJson("{}");
+        draft.setIsDeleted(true);
+        draft.setDeletedAt(LocalDateTime.now());
+        consultationRecordDraftRepository.save(draft);
+        log.info("상담일지 서버 초안 삭제: tenantId={}, consultationId={}, consultantId={}, id={}",
+                tenantId, consultationId, consultantId, draft.getId());
+        return true;
     }
 
     private void validateTenant(String tenantId) {

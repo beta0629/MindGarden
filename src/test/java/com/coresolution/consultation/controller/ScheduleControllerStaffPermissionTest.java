@@ -118,29 +118,6 @@ class ScheduleControllerStaffPermissionTest {
                 .isInstanceOf(AccessDeniedException.class);
     }
 
-    @Test
-    @DisplayName("STAFF 가 POST /schedules/auto-complete — 200")
-    void staffAutoComplete_200() {
-        ResponseEntity<ApiResponse<Void>> response =
-                controller.autoCompleteExpiredSchedules("STAFF");
-
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        verify(scheduleService, times(1)).autoCompleteExpiredSchedules();
-    }
-
-    @Test
-    @DisplayName("ADMIN 이 POST /schedules/auto-complete — 200 (회귀)")
-    void adminAutoComplete_200() {
-        ResponseEntity<ApiResponse<Void>> response =
-                controller.autoCompleteExpiredSchedules("ADMIN");
-
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-    }
-
-    @Test
-    @DisplayName("CONSULTANT 가 POST /schedules/auto-complete — 403")
-    void consultantAutoComplete_forbidden() {
-        assertThatThrownBy(() -> controller.autoCompleteExpiredSchedules("CONSULTANT"))
-                .isInstanceOf(AccessDeniedException.class);
-    }
+    // POST /schedules/auto-complete 의 역할·테넌트 분기는 세션 기준으로 바뀌어
+    // ScheduleControllerAutoCompleteAuthTest 가 담당한다 (요청 파라미터 userRole 은 무시).
 }

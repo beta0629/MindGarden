@@ -3,6 +3,7 @@ package com.coresolution.consultation.service.support;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 import com.coresolution.consultation.assessment.entity.PsychAssessmentDocument;
 import com.coresolution.consultation.assessment.repository.PsychAssessmentDocumentRepository;
@@ -479,6 +480,30 @@ public class ResourceOwnerAccessGuard {
      */
     public User requireTenantAdminAccess(HttpSession session) {
         return requireTenantAdmin(session, "tenantAdmin", null);
+    }
+
+    /**
+     * 세션 테넌트 범위로 자원을 읽고 호출자 접근 가능 여부를 검사한다 (일정 등 자원별 접근 규칙을 서비스가 가진 자원용).
+     * 없는 id·조회 실패·접근 불가를 모두 {@link #DENIAL_RESOURCE_UNAVAILABLE} 403 으로 수렴시킨다.
+     *
+     * @param session    HTTP 세션
+     * @param field      로그용 필드 이름
+     * @param resourceId 자원 ID
+     * @param lookup     세션 테넌트 ID 로 자원을 찾는 함수
+     * @param canAccess  읽은 자원에 호출자가 접근할 수 있는지
+     * @param <T>        자원 타입
+     * @return 접근 가능한 자원
+     * @throws UnauthorizedException 로그인 사용자가 없을 때
+     * @throws AccessDeniedException 자원이 없거나 접근할 수 없을 때
+     */
+    public <T> T requireAccessibleResource(HttpSession session, String field, Long resourceId,
+            Function<String, Optional<T>> lookup, Predicate<T> canAccess) {
+        User caller = clientPathAccessGuard.requireCaller(session);
+        T resource = loadInCallerTenant(session, field, resourceId, lookup);
+        if (!canAccess.test(resource)) {
+            throw denyResource(caller, field, resourceId);
+        }
+        return resource;
     }
 
     /**

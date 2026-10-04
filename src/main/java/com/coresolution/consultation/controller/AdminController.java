@@ -1449,7 +1449,8 @@ public class AdminController extends BaseApiController {
      * @return ApiResponse with mappings DTO list and count
      */
     @GetMapping("/mappings/pending-payment")
-    public ResponseEntity<ApiResponse<Map<String, Object>>> getPendingPaymentMappings() {
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getPendingPaymentMappings(HttpSession session) {
+        clientPathAccessGuard.requireTenantManager(session);
         log.info("🔍 입금 대기 중인 매칭 목록 조회");
         List<ConsultantClientMappingResponse> mappings = adminService.getPendingPaymentMappings();
 
@@ -1596,7 +1597,8 @@ public class AdminController extends BaseApiController {
      * 활성 매칭 목록 조회 (승인 완료)
      */
     @GetMapping("/mappings/active")
-    public ResponseEntity<ApiResponse<Map<String, Object>>> getActiveMappings() {
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getActiveMappings(HttpSession session) {
+        clientPathAccessGuard.requireTenantManager(session);
         log.info("🔍 활성 매칭 목록 조회");
         List<ConsultantClientMapping> mappings = adminService.getActiveMappings();
 
@@ -1707,7 +1709,8 @@ public class AdminController extends BaseApiController {
      * 회기 소진된 매칭 목록 조회
      */
     @GetMapping("/mappings/sessions-exhausted")
-    public ResponseEntity<ApiResponse<Map<String, Object>>> getSessionsExhaustedMappings() {
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getSessionsExhaustedMappings(HttpSession session) {
+        clientPathAccessGuard.requireTenantManager(session);
         log.info("🔍 회기 소진된 매칭 목록 조회");
         List<ConsultantClientMapping> mappings = adminService.getSessionsExhaustedMappings();
 
@@ -3218,7 +3221,9 @@ public class AdminController extends BaseApiController {
             @RequestParam(required = false) String startDate,
             @RequestParam(required = false) String endDate,
             @RequestParam(required = false) Integer page,
-            @RequestParam(required = false) Integer size) {
+            @RequestParam(required = false) Integer size,
+            HttpSession session) {
+        clientPathAccessGuard.requireTenantManager(session);
         log.info("📅 어드민 스케줄 조회: consultantId={}, status={}, startDate={}, endDate={}, page={}, size={}",
                 consultantId, status, startDate, endDate, page, size);
 

@@ -645,17 +645,26 @@ const ConsultationLogModal = ({
     }
   }, [isOpen, recordId]);
 
+  /**
+   * 같은 일정이면 부모가 새 객체를 넘겨도 다시 로드하지 않는다.
+   * 다시 로드하면 loadData 가 formData 를 통째로 덮어 입력 중인 글이 사라진다.
+   */
+  const scheduleDataRef = useRef(scheduleData);
+  scheduleDataRef.current = scheduleData;
+  const scheduleLoadKey = scheduleData ? String(scheduleData.id ?? scheduleData.scheduleId ?? '') : null;
+
   useEffect(() => {
     if (!isOpen) {
       scheduleMetaRef.current = null;
       return undefined;
     }
-    if (scheduleData && !recordId) {
+    const currentSchedule = scheduleDataRef.current;
+    if (currentSchedule && !recordId) {
       let cancelled = false;
       (async() => {
         loadPriorityCodes();
         loadCompletionStatusCodes();
-        const enriched = await enrichScheduleSessionMeta(scheduleData);
+        const enriched = await enrichScheduleSessionMeta(currentSchedule);
         if (cancelled) {
           return;
         }
@@ -667,7 +676,7 @@ const ConsultationLogModal = ({
       };
     }
     return undefined;
-  }, [isOpen, scheduleData, recordId]);
+  }, [isOpen, scheduleLoadKey, recordId]);
 
   const loadDataByRecordId = async() => {
     if (!recordId || !user?.id) {

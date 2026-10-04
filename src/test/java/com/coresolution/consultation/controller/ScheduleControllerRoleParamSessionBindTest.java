@@ -25,27 +25,32 @@ import com.coresolution.consultation.service.DynamicPermissionService;
 import com.coresolution.consultation.service.RoleCommonCodeAuthorizationService;
 import com.coresolution.consultation.service.ScheduleService;
 import com.coresolution.consultation.service.support.ClientPathAccessGuard;
+import com.coresolution.consultation.service.support.ResourceOwnerAccessGuard;
 import com.coresolution.core.context.TenantContextHolder;
 import java.time.LocalDate;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Optional;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Answers;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
+import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.mock.web.MockHttpSession;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.test.util.ReflectionTestUtils;
 
 /**
  * 일정 조회 API 의 {@code userId}·{@code userRole} 쿼리 파라미터 세션 바인딩 회귀.
@@ -86,6 +91,9 @@ class ScheduleControllerRoleParamSessionBindTest {
     private ClientPathAccessGuard clientPathAccessGuard = new ClientPathAccessGuard(
             mock(ConsultantClientMappingRepository.class), guardUserRepository);
 
+    @Mock(answer = Answers.CALLS_REAL_METHODS)
+    private ResourceOwnerAccessGuard resourceOwnerAccessGuard;
+
     @InjectMocks
     private ScheduleController controller;
 
@@ -93,6 +101,7 @@ class ScheduleControllerRoleParamSessionBindTest {
     void setUp() {
         SecurityContextHolder.clearContext();
         TenantContextHolder.setTenantId(TENANT_ID);
+        ReflectionTestUtils.setField(resourceOwnerAccessGuard, "clientPathAccessGuard", clientPathAccessGuard);
         when(roleCommonCodeAuthorizationService.isAdminOrStaffRoleFromCommonCode(any()))
                 .thenAnswer(inv -> {
                     UserRole role = inv.getArgument(0);
@@ -135,14 +144,50 @@ class ScheduleControllerRoleParamSessionBindTest {
         Schedule otherClientSchedule = new Schedule();
         otherClientSchedule.setId(SCHEDULE_ID);
         otherClientSchedule.setClientId(OTHER_USER_ID);
-        when(scheduleService.findById(SCHEDULE_ID)).thenReturn(otherClientSchedule);
+        when(scheduleService.findInTenant(TENANT_ID, SCHEDULE_ID)).thenReturn(Optional.of(otherClientSchedule));
         when(scheduleService.canAccessScheduleDetail(CLIENT_ID, UserRole.CLIENT.name(), otherClientSchedule))
                 .thenReturn(false);
 
         assertThatThrownBy(() -> controller.getScheduleDetail(
                 SCHEDULE_ID, CLIENT_ID, SPOOFED_ADMIN, sessionOf(CLIENT_ID, UserRole.CLIENT)))
-                .isInstanceOf(AccessDeniedException.class);
+                .isInstanceOf(AccessDeniedException.class)
+                .hasMessage(ResourceOwnerAccessGuard.DENIAL_RESOURCE_UNAVAILABLE);
         verify(scheduleService, never()).canAccessScheduleDetail(anyLong(), eq(SPOOFED_ADMIN), any());
+    }
+
+    @Test
+    @DisplayName("단건 — 없는 일정 id 는 500 이 아니라 공통 403 문구, 예외 원문 노출 없음")
+    void detail_missingSchedule_forbiddenWithCommonMessage() {
+        when(scheduleService.findInTenant(TENANT_ID, SCHEDULE_ID)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> controller.getScheduleDetail(
+                SCHEDULE_ID, CLIENT_ID, UserRole.CLIENT.name(), sessionOf(CLIENT_ID, UserRole.CLIENT)))
+                .isInstanceOf(AccessDeniedException.class)
+                .hasMessage(ResourceOwnerAccessGuard.DENIAL_RESOURCE_UNAVAILABLE);
+        verify(scheduleService, never()).canAccessScheduleDetail(anyLong(), anyString(), any());
+    }
+
+    @Test
+    @DisplayName("단건 — 조회 실패(DB 예외)도 같은 403 문구로 수렴해 존재 여부·예외 원문을 숨긴다")
+    void detail_lookupFailure_forbiddenWithoutExceptionText() {
+        when(scheduleService.findInTenant(TENANT_ID, SCHEDULE_ID))
+                .thenThrow(new DataAccessResourceFailureException("schedules table detail"));
+
+        assertThatThrownBy(() -> controller.getScheduleDetail(
+                SCHEDULE_ID, CLIENT_ID, UserRole.CLIENT.name(), sessionOf(CLIENT_ID, UserRole.CLIENT)))
+                .isInstanceOf(AccessDeniedException.class)
+                .hasMessage(ResourceOwnerAccessGuard.DENIAL_RESOURCE_UNAVAILABLE);
+    }
+
+    @Test
+    @DisplayName("단건 — 다른 기관 일정 id 는 세션 기관으로만 조회해 403")
+    void detail_otherTenantSchedule_lookedUpInCallerTenantOnly() {
+        when(scheduleService.findInTenant(TENANT_ID, SCHEDULE_ID)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> controller.getScheduleDetail(
+                SCHEDULE_ID, ADMIN_ID, UserRole.ADMIN.name(), sessionOf(ADMIN_ID, UserRole.ADMIN)))
+                .isInstanceOf(AccessDeniedException.class);
+        verify(scheduleService, never()).findInTenant(eq(OTHER_TENANT_ID), anyLong());
     }
 
     @Test
@@ -151,7 +196,7 @@ class ScheduleControllerRoleParamSessionBindTest {
         assertThatThrownBy(() -> controller.getScheduleDetail(
                 SCHEDULE_ID, OTHER_USER_ID, SPOOFED_ADMIN, sessionOf(CLIENT_ID, UserRole.CLIENT)))
                 .isInstanceOf(AccessDeniedException.class);
-        verify(scheduleService, never()).findById(anyLong());
+        verify(scheduleService, never()).findInTenant(anyString(), anyLong());
     }
 
     @Test

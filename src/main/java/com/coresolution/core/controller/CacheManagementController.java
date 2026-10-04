@@ -1,7 +1,9 @@
 package com.coresolution.core.controller;
 
+import com.coresolution.consultation.service.support.ResourceOwnerAccessGuard;
 import com.coresolution.core.service.CacheStatsService;
 import com.coresolution.core.dto.ApiResponse;
+import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -23,13 +25,16 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class CacheManagementController {
 
+    private final ResourceOwnerAccessGuard resourceOwnerAccessGuard;
+
     private final CacheStatsService cacheStatsService;
 
     /**
      * 모든 캐시 통계 조회
      */
     @GetMapping("/stats")
-    public ResponseEntity<ApiResponse<Map<String, Object>>> getAllCacheStats() {
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getAllCacheStats(HttpSession session) {
+        resourceOwnerAccessGuard.requireTenantAdminAccess(session);
         log.info("📊 모든 캐시 통계 조회 요청");
         
         Map<String, Object> stats = cacheStatsService.getAllCacheStats();
@@ -42,7 +47,9 @@ public class CacheManagementController {
      * 특정 캐시 통계 조회
      */
     @GetMapping("/stats/{cacheName}")
-    public ResponseEntity<ApiResponse<Map<String, Object>>> getCacheStats(@PathVariable String cacheName) {
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getCacheStats(@PathVariable String cacheName,
+            HttpSession session) {
+        resourceOwnerAccessGuard.requireTenantAdminAccess(session);
         log.info("📊 캐시 통계 조회 요청: {}", cacheName);
         
         Map<String, Object> stats = cacheStatsService.getCacheStats(cacheName);
@@ -55,7 +62,8 @@ public class CacheManagementController {
      * 특정 캐시 클리어
      */
     @DeleteMapping("/{cacheName}")
-    public ResponseEntity<ApiResponse<String>> clearCache(@PathVariable String cacheName) {
+    public ResponseEntity<ApiResponse<String>> clearCache(@PathVariable String cacheName, HttpSession session) {
+        resourceOwnerAccessGuard.requireTenantAdminAccess(session);
         log.info("🧹 캐시 클리어 요청: {}", cacheName);
         
         cacheStatsService.clearCache(cacheName);
@@ -67,7 +75,8 @@ public class CacheManagementController {
      * 모든 캐시 클리어
      */
     @DeleteMapping("/all")
-    public ResponseEntity<ApiResponse<String>> clearAllCaches() {
+    public ResponseEntity<ApiResponse<String>> clearAllCaches(HttpSession session) {
+        resourceOwnerAccessGuard.requireTenantAdminAccess(session);
         log.info("🧹 모든 캐시 클리어 요청");
         
         cacheStatsService.clearAllCaches();
@@ -79,7 +88,8 @@ public class CacheManagementController {
      * 캐시 워밍업
      */
     @PostMapping("/warmup")
-    public ResponseEntity<ApiResponse<String>> warmupCache() {
+    public ResponseEntity<ApiResponse<String>> warmupCache(HttpSession session) {
+        resourceOwnerAccessGuard.requireTenantAdminAccess(session);
         log.info("🔥 캐시 워밍업 요청");
         
         cacheStatsService.warmupCache();

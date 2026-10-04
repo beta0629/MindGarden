@@ -16,6 +16,7 @@ on:
     branches: [ 'release/dev' ]
     paths:
       - 'database/schema/procedures_standardized/**'
+      - 'database/schema/procedures_flyway_dev_sync/**'
       - 'scripts/automation/deployment/deploy-standardized-procedures.sh'
       - 'scripts/automation/deployment/procedure-deploy-changed-only.sh'
       - 'scripts/automation/deployment/procedure-deploy-db-diff.sh'

@@ -8,6 +8,7 @@ set -euo pipefail
 
 ROOT=$(cd "$(dirname "$0")/../../.." && pwd)
 PROC_DIR="$ROOT/database/schema/procedures_standardized"
+DEV_SYNC_DIR="$ROOT/database/schema/procedures_flyway_dev_sync"
 RUNNER="$ROOT/scripts/automation/deployment/procedure-deploy-changed-only.sh"
 
 fail() {
@@ -26,6 +27,9 @@ export ROUTINE_ADMIN_USER="" ROUTINE_ADMIN_PASS="" ROUTINE_FALLBACK_ROOT_PASS=""
 
 bash -n "$RUNNER"
 bash "$PROC_DIR/create_deployment_files.sh" >/dev/null
+# 개발 전용 재적재 SQL 도 같은 safe-replace 경로로 검증한다. 운영 배포 폴더와는 분리돼 있다.
+bash "$ROOT/scripts/database/sync/flyway-procedure-extract.sh" check >/dev/null \
+    || fail "개발 재적재 SQL 이 원본과 다릅니다. flyway-procedure-extract.sh generate 를 돌리세요."
 
 # shellcheck disable=SC1090
 . "$RUNNER"
@@ -36,13 +40,28 @@ echo "MySQL server version: $server_version"
 table=$(mktemp "${TMPDIR:-/tmp}/mg-stage-table.XXXXXX")
 log=$(mktemp "${TMPDIR:-/tmp}/mg-stage-log.XXXXXX")
 all_log=$(mktemp "${TMPDIR:-/tmp}/mg-stage-all.XXXXXX")
-trap 'rm -f "$table" "$log" "$all_log"' EXIT
+trap 'rm -f "$table" "$log" "$all_log" "${targets:-}"' EXIT
+
+list_targets() {
+    local std name
+    for std in "$PROC_DIR"/*_standardized.sql; do
+        name=$(basename "$std" _standardized.sql)
+        printf '%s\t%s\n' "$name" "$PROC_DIR/deployment/${name}_deploy.sql"
+    done
+    awk -F '\t' '/^[[:space:]]*#/ { next } NF > 1 { print $1 }' "$DEV_SYNC_DIR/MANIFEST.tsv" \
+        | while IFS= read -r name; do
+            [ -n "$name" ] || continue
+            printf '%s\t%s\n' "$name" "$DEV_SYNC_DIR/${name}_devsync.sql"
+        done
+}
+
+targets=$(mktemp "${TMPDIR:-/tmp}/mg-stage-targets.XXXXXX")
+list_targets >"$targets"
 
 total=0
 failed=0
-for std in "$PROC_DIR"/*_standardized.sql; do
-    proc=$(basename "$std" _standardized.sql)
-    sql="$PROC_DIR/deployment/${proc}_deploy.sql"
+while IFS=$'\t' read -r proc sql; do
+    [ -n "$proc" ] || continue
     total=$((total + 1))
     reason=""
     : >"$log"
@@ -79,7 +98,8 @@ for std in "$PROC_DIR"/*_standardized.sql; do
     else
         printf '%s | success | staging+create+replace\n' "$proc" >>"$table"
     fi
-done
+done <"$targets"
+rm -f "$targets"
 
 echo "name | result | reason"
 cat "$table"

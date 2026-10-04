@@ -733,6 +733,14 @@ public interface AdminService {
      */
     ConsultantClientMapping getMappingById(Long mappingId);
 
+    /**
+     * 매핑 단건 상세 응답. 트랜잭션 안에서 상담사·내담자 이름까지 채워 반환한다(OSIV 비활성).
+     *
+     * @param mappingId 매핑 ID
+     * @return 세션 테넌트의 매핑 상세, 없으면 null
+     */
+    ConsultantClientMappingResponse getMappingDetail(Long mappingId);
+
     // ==================== 상담사 변경 시스템 ====================
 
     /**

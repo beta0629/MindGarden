@@ -77,7 +77,7 @@ export const getAllActiveThemes = async() => {
         if (cached) return cached;
 
         const response = await apiGet(API_ADMIN_CSS_THEMES_THEMES);
-        if (response.success && response.data) {
+        if (response?.success && response.data) {
             setToCache(cacheKey, response.data);
             return response.data;
         }
@@ -100,7 +100,7 @@ export const getDefaultTheme = async() => {
         if (cached) return cached;
 
         const response = await apiGet(API_ADMIN_CSS_THEMES_THEMES_DEFAULT);
-        if (response.success && response.data) {
+        if (response?.success && response.data) {
             setToCache(cacheKey, response.data);
             return response.data;
         }
@@ -125,7 +125,7 @@ export const getThemeColors = async(themeName) => {
         if (cached) return cached;
 
         const response = await apiGet(`/api/v1/admin/css-themes/themes/${themeName}/colors`);
-        if (response.success && response.data) {
+        if (response?.success && response.data) {
             setToCache(cacheKey, response.data);
             return response.data;
         }
@@ -152,7 +152,7 @@ export const getThemeColor = async(themeName, colorKey) => {
         if (cached) return cached;
 
         const response = await apiGet(`/api/v1/admin/css-themes/themes/${themeName}/colors/${colorKey}`);
-        if (response.success && response.colorValue) {
+        if (response?.success && response.colorValue) {
             setToCache(cacheKey, response.colorValue);
             return response.colorValue;
         }
@@ -179,7 +179,7 @@ export const getThemeColorsByCategory = async(themeName, category) => {
         if (cached) return cached;
 
         const response = await apiGet(`/api/v1/admin/css-themes/themes/${themeName}/categories/${category}`);
-        if (response.success && response.data) {
+        if (response?.success && response.data) {
             setToCache(cacheKey, response.data);
             return response.data;
         }
@@ -200,7 +200,7 @@ export const getThemeColorsByCategory = async(themeName, category) => {
 export const isThemeExists = async(themeName) => {
     try {
         const response = await apiGet(`/api/v1/admin/css-themes/themes/${themeName}/exists`);
-        return response.success && response.exists;
+        return Boolean(response?.success && response.exists);
     } catch (error) {
         console.error(`🎨 테마 존재 여부 확인 실패: ${themeName}`, error);
         return false;

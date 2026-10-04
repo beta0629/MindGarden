@@ -38,6 +38,7 @@ import com.coresolution.consultation.entity.Client;
 import com.coresolution.consultation.entity.ConsultantClientMapping;
 import com.coresolution.consultation.entity.ConsultationRecord;
 import com.coresolution.consultation.entity.User;
+import com.coresolution.consultation.exception.EntityNotFoundException;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.repository.UserSocialAccountRepository;
 import com.coresolution.consultation.service.AdminService;
@@ -1723,53 +1724,15 @@ public class AdminController extends BaseApiController {
      * 개별 매칭 조회
      */
     @GetMapping("/mappings/{mappingId}")
-    public ResponseEntity<ApiResponse<Map<String, Object>>> getMappingById(
+    public ResponseEntity<ApiResponse<ConsultantClientMappingResponse>> getMappingById(
             @PathVariable Long mappingId, HttpSession session) {
         resourceOwnerAccessGuard.requireMappingManagerAccess(session, mappingId);
         log.info("🔍 매칭 ID {} 조회", mappingId);
-        ConsultantClientMapping mapping = adminService.getMappingById(mappingId);
-
+        ConsultantClientMappingResponse mapping = adminService.getMappingDetail(mappingId);
         if (mapping == null) {
-            throw new IllegalArgumentException("매칭을 찾을 수 없습니다.");
+            throw new EntityNotFoundException("매칭을 찾을 수 없습니다.");
         }
-
-        Map<String, Object> mappingData = new HashMap<>();
-        mappingData.put("id", mapping.getId());
-        mappingData.put("status",
-                mapping.getStatus() != null ? mapping.getStatus().toString() : "UNKNOWN");
-        mappingData.put("paymentStatus",
-                mapping.getPaymentStatus() != null ? mapping.getPaymentStatus().toString()
-                        : "UNKNOWN");
-        mappingData.put("paymentMethod", mapping.getPaymentMethod());
-        mappingData.put("paymentReference", mapping.getPaymentReference());
-        mappingData.put("paymentAmount", mapping.getPaymentAmount());
-        mappingData.put("paymentDate", mapping.getPaymentDate());
-        mappingData.put("totalSessions", mapping.getTotalSessions());
-        mappingData.put("remainingSessions", mapping.getRemainingSessions());
-        mappingData.put("packageName", mapping.getPackageName());
-        mappingData.put("packagePrice", mapping.getPackagePrice());
-        mappingData.put("assignedAt", mapping.getAssignedAt());
-        mappingData.put("createdAt", mapping.getCreatedAt());
-        // 옵션 B: 단건 조회에도 paymentTiming 포함 (ADVANCE / SAME_DAY_CARD / null=레거시).
-        mappingData.put("paymentTiming", mapping.getPaymentTiming());
-
-        if (mapping.getConsultant() != null) {
-            Map<String, Object> consultantData = new HashMap<>();
-            consultantData.put("id", mapping.getConsultant().getId());
-            consultantData.put("name", mapping.getConsultant().getName());
-            consultantData.put("email", mapping.getConsultant().getEmail());
-            mappingData.put("consultant", consultantData);
-        }
-
-        if (mapping.getClient() != null) {
-            Map<String, Object> clientData = new HashMap<>();
-            clientData.put("id", mapping.getClient().getId());
-            clientData.put("name", mapping.getClient().getName());
-            clientData.put("email", mapping.getClient().getEmail());
-            mappingData.put("client", clientData);
-        }
-
-        return success(mappingData);
+        return success(mapping);
     }
 
     /**
@@ -2616,7 +2579,7 @@ public class AdminController extends BaseApiController {
     @PostMapping("/mappings/{id}/terminate")
     public ResponseEntity<ApiResponse<Void>> terminateMapping(@PathVariable Long id,
             @RequestBody Map<String, Object> requestBody, HttpSession session) {
-        resourceOwnerAccessGuard.requireMappingManagerAccess(session, id);
+        resourceOwnerAccessGuard.requireMappingAdminAccess(session, id);
         log.info("🔧 매칭 강제 종료: ID={}", id);
         String reason = (String) requestBody.get("reason");
         adminService.terminateMapping(id, reason);
@@ -3006,7 +2969,7 @@ public class AdminController extends BaseApiController {
     @PostMapping("/mapping/payment/cancel")
     public ResponseEntity<ApiResponse<Map<String, Object>>> cancelMappingPayment(
             @RequestBody Map<String, Object> request, HttpSession session) {
-        resourceOwnerAccessGuard.requireMappingsManagerAccess(session, request.get("mappingIds"));
+        resourceOwnerAccessGuard.requireMappingsAdminAccess(session, request.get("mappingIds"));
         log.info("결제 취소 요청: {}", request);
 
         @SuppressWarnings("unchecked")

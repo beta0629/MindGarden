@@ -1,6 +1,9 @@
 package com.coresolution.consultation.entity;
 
 import java.time.LocalDateTime;
+import java.util.Collections;
+import java.util.EnumSet;
+import java.util.Set;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -183,7 +186,15 @@ public class ConsultantClientMapping extends BaseEntity {
         SUSPENDED,              // 중단
         TERMINATED,             // 종료 (이관·병합·자연 종료 등)
         CANCELLED,              // 취소 (관리자 강제 종료·결제대기 취소 — TERMINATED와 구분)
-        SESSIONS_EXHAUSTED      // 회기 소진
+        SESSIONS_EXHAUSTED;     // 회기 소진
+
+        /**
+         * 같은 상담사·내담자 쌍에 새 매핑을 만들 때 자동 종료하는 진행 중 상태.
+         * 종료 상태(TERMINATED·CANCELLED·SESSIONS_EXHAUSTED)는 종료 시각·메모를 보존해야 하므로 넣지 않는다.
+         * ACTIVE 는 추가 패키지로 이어지고, PENDING_PAYMENT·PAYMENT_CONFIRMED 는 사후 결제 대기라 제외한다.
+         */
+        public static final Set<MappingStatus> AUTO_TERMINATE_ON_NEW_MAPPING = Collections.unmodifiableSet(
+                EnumSet.of(DEPOSIT_PENDING, DEPOSIT_CONFIRMED, INACTIVE, SUSPENDED));
     }
 
      /**

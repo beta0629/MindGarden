@@ -10,6 +10,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.EnumMap;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -916,8 +917,11 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         // 표준화 2025-12-06: 브랜치 코드 사용 금지 - branchCode는 null로 설정
         String branchCode = null;
         
+        Set<ConsultantClientMapping.MappingStatus> existingLookupStatuses =
+                EnumSet.copyOf(ConsultantClientMapping.MappingStatus.AUTO_TERMINATE_ON_NEW_MAPPING);
+        existingLookupStatuses.add(ConsultantClientMapping.MappingStatus.ACTIVE);
         List<ConsultantClientMapping> existingMappings = mappingRepository
-            .findByTenantIdAndConsultantAndClient(tenantId, consultant, clientUser);
+            .findByTenantIdAndConsultantAndClientAndStatusIn(tenantId, consultant, clientUser, existingLookupStatuses);
 
         // ACTIVE가 있으면 결제용 PENDING 행을 추가 패키지로 생성하고, 확정(approve) 시 기존 ACTIVE에 회기 합산.
         // 기존 ACTIVE는 TERMINATED/회기 소진하지 않는다 (이중 ACTIVE 금지).
@@ -938,17 +942,8 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             String terminatedStatus = getMappingStatusCode("TERMINATED");
             
             for (ConsultantClientMapping existingMapping : existingMappings) {
-                // 옵션 B (예약 우선 매칭): PENDING_PAYMENT / PAYMENT_CONFIRMED 매핑은
-                // 사후 카드 결제 대기 상태이므로 자동 TERMINATED 대상에서 제외한다.
-                // (디러티 정리는 별도 어드민 UI에서 수동 종료)
-                ConsultantClientMapping.MappingStatus currentStatus = existingMapping.getStatus();
-                if (currentStatus == ConsultantClientMapping.MappingStatus.PENDING_PAYMENT
-                        || currentStatus == ConsultantClientMapping.MappingStatus.PAYMENT_CONFIRMED) {
-                    log.info("⏸️ 옵션 B 가드: 결제 대기 매핑 자동 종료 제외: 매칭ID={}, 상태={}",
-                            existingMapping.getId(), currentStatus);
-                    continue;
-                }
-                if (currentStatus == ConsultantClientMapping.MappingStatus.ACTIVE) {
+                if (!ConsultantClientMapping.MappingStatus.AUTO_TERMINATE_ON_NEW_MAPPING
+                        .contains(existingMapping.getStatus())) {
                     continue;
                 }
                 try {
@@ -10019,6 +10014,31 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         return mapping;
     }
 
+
+    @Override
+    @Transactional(readOnly = true)
+    public ConsultantClientMappingResponse getMappingDetail(Long mappingId) {
+        String tenantId = getTenantIdOrNull();
+        if (tenantId == null || tenantId.isEmpty()) {
+            return null;
+        }
+        return mappingRepository.findByTenantIdAndId(tenantId, mappingId)
+                .map(mapping -> {
+                    ConsultantClientMappingResponse response = ConsultantClientMappingResponse.fromEntity(mapping);
+                    response.setConsultantName(decryptedNameOf(mapping.getConsultant()));
+                    response.setClientName(decryptedNameOf(mapping.getClient()));
+                    return response;
+                })
+                .orElse(null);
+    }
+
+    private String decryptedNameOf(User user) {
+        if (user == null) {
+            return null;
+        }
+        Map<String, String> decrypted = userPersonalDataCacheService.getDecryptedUserData(user);
+        return decrypted != null ? decrypted.get("name") : user.getName();
+    }
 
     @Override
     @Transactional(rollbackFor = Exception.class)

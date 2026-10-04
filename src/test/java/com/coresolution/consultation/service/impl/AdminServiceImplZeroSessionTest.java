@@ -66,6 +66,7 @@ import org.springframework.transaction.support.DefaultTransactionStatus;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyCollection;
 import static org.mockito.ArgumentMatchers.anyDouble;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
@@ -225,7 +226,8 @@ class AdminServiceImplZeroSessionTest {
 
         when(userRepository.findByTenantIdAndId(TEST_TENANT_ID, 10L)).thenReturn(Optional.of(consultant));
         when(userRepository.findByTenantIdAndId(TEST_TENANT_ID, 20L)).thenReturn(Optional.of(client));
-        when(mappingRepository.findByTenantIdAndConsultantAndClient(eq(TEST_TENANT_ID), eq(consultant), eq(client)))
+        when(mappingRepository.findByTenantIdAndConsultantAndClientAndStatusIn(
+                eq(TEST_TENANT_ID), eq(consultant), eq(client), anyCollection()))
                 .thenReturn(Collections.emptyList());
         when(mappingRepository.save(any(ConsultantClientMapping.class))).thenAnswer(inv -> inv.getArgument(0));
 

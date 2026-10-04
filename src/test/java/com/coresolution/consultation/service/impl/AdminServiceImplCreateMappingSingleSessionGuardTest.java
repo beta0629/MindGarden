@@ -61,6 +61,7 @@ import org.springframework.transaction.support.AbstractPlatformTransactionManage
 import org.springframework.transaction.support.DefaultTransactionStatus;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyCollection;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
@@ -297,7 +298,8 @@ class AdminServiceImplCreateMappingSingleSessionGuardTest {
                 .thenReturn(Optional.of(consultant));
         when(userRepository.findByTenantIdAndId(eq(TEST_TENANT_ID), eq(CLIENT_ID)))
                 .thenReturn(Optional.of(client));
-        when(mappingRepository.findByTenantIdAndConsultantAndClient(eq(TEST_TENANT_ID), eq(consultant), eq(client)))
+        when(mappingRepository.findByTenantIdAndConsultantAndClientAndStatusIn(
+                eq(TEST_TENANT_ID), eq(consultant), eq(client), anyCollection()))
                 .thenReturn(Collections.emptyList());
         // statusCodeHelper / commonCodeService 는 stubbing 하지 않음.
         // getMappingStatusCode / getPaymentStatusCode 가 null 폴백 후 enum 이름 그대로 반환하므로

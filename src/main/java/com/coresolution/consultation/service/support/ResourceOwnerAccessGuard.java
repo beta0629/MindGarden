@@ -488,17 +488,21 @@ public class ResourceOwnerAccessGuard {
      */
     @Transactional(readOnly = true)
     public User requireMappingsManagerAccess(HttpSession session, Object mappingIds) {
-        User caller = requireTenantManager(session, "mappingIds", null);
-        if (!(mappingIds instanceof Collection<?> ids) || ids.isEmpty()) {
-            throw denyResource(caller, "mappingIds", null);
-        }
-        for (Object rawId : ids) {
-            if (!(rawId instanceof Number)) {
-                throw denyResource(caller, "mappingIds", null);
-            }
-            loadMappingInCallerTenant(caller, ((Number) rawId).longValue());
-        }
-        return caller;
+        return assertMappingIdsInCallerTenant(requireTenantManager(session, "mappingIds", null), mappingIds);
+    }
+
+    /**
+     * 여러 매핑을 한 번에 종료하는 관리자 전용 API(일괄 결제 취소 = 매핑 종료·환불) 검증. 모든 id 가 세션 테넌트 매핑이어야 한다.
+     *
+     * @param session    HTTP 세션
+     * @param mappingIds 요청 본문의 매핑 ID 목록 값 (목록이 아니거나 비었거나 숫자가 아닌 값이 있으면 거부)
+     * @return 세션 관리자
+     * @throws UnauthorizedException 로그인 사용자가 없을 때
+     * @throws AccessDeniedException 관리자가 아니거나 하나라도 세션 테넌트 매핑이 아닐 때
+     */
+    @Transactional(readOnly = true)
+    public User requireMappingsAdminAccess(HttpSession session, Object mappingIds) {
+        return assertMappingIdsInCallerTenant(requireTenantAdmin(session, "mappingIds", null), mappingIds);
     }
 
     /**
@@ -754,6 +758,19 @@ public class ResourceOwnerAccessGuard {
         clientPathAccessGuard.requireCallerTenantId(caller);
         if (!clientPathAccessGuard.isTenantManager(caller)) {
             throw denyResource(caller, field, resourceId);
+        }
+        return caller;
+    }
+
+    private User assertMappingIdsInCallerTenant(User caller, Object mappingIds) {
+        if (!(mappingIds instanceof Collection<?> ids) || ids.isEmpty()) {
+            throw denyResource(caller, "mappingIds", null);
+        }
+        for (Object rawId : ids) {
+            if (!(rawId instanceof Number)) {
+                throw denyResource(caller, "mappingIds", null);
+            }
+            loadMappingInCallerTenant(caller, ((Number) rawId).longValue());
         }
         return caller;
     }

@@ -42,7 +42,7 @@ Java/Spring Boot 코드를 작성·수정할 때 이 스킬을 적용하세요.
 
 ### 공통
 
-- **하드코딩 절대 금지** (지속 제거 중 · 신규 추가 금지). 코드값·상수는 공통코드 또는 env·설정. 호스트·경로·테넌트·시크릿 소스 박기 금지 (`.cursor/rules/mindgarden-no-hardcode-cloud.mdc`). 스캔 노출 시 **같은 PR에서 전부** 정리. §17·`/core-solution-standardization`.
+- **하드코딩 절대 금지** (지속 제거 중 · 신규 추가 금지). 코드값·상수는 공통코드 또는 env·설정. 호스트·경로·테넌트·시크릿 소스 박기 금지 (`AGENTS.md §6`). 스캔 노출 시 **같은 PR에서 전부** 정리. §17·`/core-solution-standardization`.
 - JavaDoc: 클래스·public 메서드에 `@param` `@return` `@throws`. `@author CoreSolution` 또는 `@author MindGarden`, `@since` 날짜
 - 로깅: `log.info` 등 적절히 사용
 

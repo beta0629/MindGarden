@@ -17,11 +17,11 @@ description: 배포·CI/CD 워크플로 수정 시 적용. GitHub Actions, syste
 
 ## 원칙
 
-- **운영 반영 게이트 — 하드코딩**: 프로덕션·**클라우드 이전** 대비 **하드코딩 검사·CI 스캔·코드 검색에 노출된 항목은 전부 제거·토큰화/env화**한다. 예외는 문서화된 합의 목록만. **호스트·경로·테넌트·도메인 하드코딩 절대 금지** (`.cursor/rules/mindgarden-no-hardcode-cloud.mdc`). 상세: `docs/project-management/ADMIN_LNB_LAYOUT_UNIFICATION_MEETING_HANDOFF.md` **§17**, `docs/운영반영/PRE_PRODUCTION_GO_LIVE_CHECKLIST.md`. 프론트 구현 정리는 **core-coder** + `/core-solution-frontend`·`/core-solution-standardization`.
+- **운영 반영 게이트 — 하드코딩**: 프로덕션·**클라우드 이전** 대비 **하드코딩 검사·CI 스캔·코드 검색에 노출된 항목은 전부 제거·토큰화/env화**한다. 예외는 문서화된 합의 목록만. **호스트·경로·테넌트·도메인 하드코딩 절대 금지** (`AGENTS.md §6`). 상세: `docs/project-management/ADMIN_LNB_LAYOUT_UNIFICATION_MEETING_HANDOFF.md` **§17**, `docs/운영반영/PRE_PRODUCTION_GO_LIVE_CHECKLIST.md`. 프론트 구현 정리는 **core-coder** + `/core-solution-frontend`·`/core-solution-standardization`.
 - **표준 참조**: 워크플로·스크립트 수정 전에 `docs/standards/DEPLOYMENT_STANDARD.md`, `docs/troubleshooting/DEV_DEPLOYMENT_STABILITY_CHECKLIST.md` 를 반드시 참조.
 - **paths 일관성**: 백엔드/온보딩 배포 시 `application.yml`, `application-dev.yml` 등 설정 파일 변경이 배포에 반영되도록 paths에 포함되어 있는지 확인.
 - **실패 대비**: 헬스체크 실패·기동 실패 시 로그 수집(예: error.log tail), 필요 시 백업 복원·롤백 절차가 워크플로에 포함되어 있는지 확인.
-- **환경 분리**: 개발(develop)·운영(main/workflow_dispatch) 트리거와 배포 대상 서버가 표준과 일치하는지 확인.
+- **환경 분리**: 개발(`release/dev`)·운영(`release/prod`/workflow_dispatch) 트리거와 배포 대상 서버가 표준과 일치하는지 확인.
 
 ## 화면·서버 세트 배포 (필수)
 
@@ -40,54 +40,16 @@ description: 배포·CI/CD 워크플로 수정 시 적용. GitHub Actions, syste
 2. 같은 워크플로를 `mode` 비움, `procedures=<이름 쉼표 구분>`, `confirm=CONFIRM` 으로 실행. 지정한 이름만 safe-replace(스테이징 CREATE → SHOW CREATE 백업 → 교체, 실패 시 복원). 결과 표(`프로시저 | 결과 | 사유`)에 failed 가 있으면 BE 배포하지 않는다.
 3. 1번 dry-run 을 다시 돌려 차이 0 을 확인한 뒤 BE 운영 배포.
 
-2026-10 LEAVE 라벨(ERROR 1064) 수정 배치의 `procedures` 값:
-
-```
-GetIntegratedSalaryStatistics,ProcessDiscountAccounting,GetBusinessTimeSettings,UpdateBusinessTimeSetting,UpdateAllBranchDailyStatistics,UpdateAllConsultantPerformance,ApplyDiscountAccounting
-```
-
-같은 배치에서 SQL(본문)이 바뀐 나머지 15개 — DailyPerformanceMonitoring, GenerateFinancialReport, GenerateMonthlyFinancialReport, GenerateYearlyFinancialReport, GetBranchComparisonStatistics, GetBranchTrendStatistics, GetConsultationRecordMissingStatistics, GetDiscountStatistics, GetOverallBranchStatistics, ProcessBatchScheduleCompletion, ProcessDiscountRefund, ProcessScheduleAutoCompletion, TestMappingSync, UpdateDiscountStatus, ValidateMappingIntegrity — 는 운영에 기존 정의가 있으면 동작 변화가 없다(조기 반환 라벨만 추가). 운영에서 이 이름들이 없거나 1064 로 깨져 있으면 같은 2번 절차로 함께 반영한다.
-
 개발(.dev) DB 는 매일 운영 데이터 복사(`prod-to-dev-daily.sh`, 루틴 제외 덤프) 직후 저장소 SQL 44개를 safe-replace 로 다시 깐다. 운영 루틴 본문을 개발로 가져오지 않는다. 서버 쪽 스크립트·SQL 묶음은 `deploy-procedures-dev.yml` 의 `publish-dev-sync-bundle.sh` 가 갱신한다.
 
-## release/dev 머지 전 — 자체 검증 실행 (필수)
+## release/dev 머지 전 — 자체 검증
 
-- **`release/dev` 머지·배포 시 자체 검증**: 규칙을 읽는 데 그치지 말고 스킬 `.cursor/skills/core-solution-self-verify/SKILL.md`를 **실행**한다. 머지 전 1~4, 6, 7번을 실행해 PR 본문 「## 자체 검증」에 전부 PASS로 기록하고, `.dev` 배포 후 같은 스킬의 5번 스모크를 실행·보고한다. 섹션 누락이나 FAIL이 있으면 머지하지 않고 사용자에게 보고한다. FAIL에는 하드스톱(다른 사용자 데이터, 동작이 증명되지 않은 스모크, 외부 호출 중 커넥션 점유, 돈·권한 경로의 추정 PASS)이 포함되며, 이를 「남은 위험」으로 적고 PASS 처리하지 않는다.
-- 5번 스모크의 화면·데이터는 같은 규칙의 필수 확인 2·3이다. FE면 실제 URL 스크린샷(PC 1280px, 모바일 390px, 최소 2장, 공개 페이지는 로그아웃)을 붙인다. Jest·curl 200은 화면 확인이 아니다. 데이터는 .dev 실제 값이며 mock·픽스처로 대체하지 않는다. 멀티테넌트는 대상 테넌트와 다른 테넌트다. 데이터가 섞이거나 MindGarden 내용이 다른 테넌트에 있으면 FAIL이다. 표(항목 / 결과 / 근거)에 적고, 못 본 항목은 미확인이다. 추정으로 통과시키지 않는다.
+- 판정 기준은 `.cursor/rules/guardrail-preflight.mdc`, 실행 절차는 `.cursor/skills/core-solution-self-verify/SKILL.md`.
 
-## 배포 덮어쓰기 금지 · 동결 게이트 (6항 전부 PASS) — 필수
+## 배포 덮어쓰기 금지 · 동결 게이트 — 필수
 
-기능 브랜치 **부분 tip** 단독 빌드로 frontend/JAR를 통째 교체하면 IL SSOT·가예약 일지·OPEN 점유 드래그·이관 히스토리·카드 일정이 지워질 수 있다. **부분 tip 단독 PROD/SSH/Actions 배포·머지 금지. DATAFIX 0.**
-
-상세: **`docs/deployment/DEPLOY_NO_OVERWRITE_GATE.md`**  
-스크립트: **`scripts/deployment/check-deploy-no-overwrite-symbols.sh`** (1항 FAIL → exit 1)  
-CI: **`.github/workflows/deploy-no-overwrite-gate.yml`** + `deploy-production.yml` / `deploy-frontend-prod.yml` 체크아웃 직후
-
-### 규칙
-
-1. **동일 스택 + 새 커밋만 배포**. 기능 브랜치 단독 빌드로 정적 번들·JAR 통째 교체 금지.
-2. **큰 기능은 검증된 통합 tip 하나**만 올린다. 연달아 다른 “최종 빌드”로 덮지 않는다.
-3. **배포마다 prev 롤백 경로**를 남긴다.
-4. **금지**: 카드-only tip(`cf9a5138` 계열) 단독 PROD 컷오버; **6항 중 하나라도 없으면 중단·머지 금지**.
-
-### 심볼 게이트 (6항 — 전부 PASS)
-
-| # | 항목 | 필수 심볼 |
-|---|------|-----------|
-| 1 | IL SSOT / institution-link log | `ConsultationLogExistenceSsot`, `InstitutionLinkConsultationLogController`, `_institutionLinkLog` |
-| 2 | 가예약 일지 | `ProvisionalConsultationLogSession` (+ Record/Schedule 참조) |
-| 3 | OPEN 점유 드래그 차단 | `hasOpenOccupyingConsultationSchedule` / `provisional_already_has_schedule` |
-| 4 | 이관 히스토리 | `SessionTransferHistorySection` SidePeek 마운트 + `session-transfer-history` API |
-| 5 | IL 월·완료일 카드 | `CardBillingProgress` / `consultationSchedules` · **mapping 단위** (`client lifetime`/`clientConsultationSchedules` 우선 금지) |
-| 6 | prepaid 10만 비표시 | `mappingPackageDisplay` packageName-only · `초기상담료(선납)` 없음 |
-
-```bash
-./scripts/deployment/check-deploy-no-overwrite-symbols.sh --source-root .
-```
-
-### 권장 tip 순서
-
-6항 PASS 통합 tip만 **한 번** FE `/var/www/mindgarden/frontend` + JAR. 가예약 핫픽스 RUNNING이면 건드리지 않는다.
+- 부분 tip 단독 배포 금지·6항 동결 심볼 게이트: `docs/deployment/DEPLOY_NO_OVERWRITE_GATE.md`
+- CI: `.github/workflows/deploy-no-overwrite-gate.yml` (스크립트 `scripts/deployment/check-deploy-no-overwrite-symbols.sh`)
 
 ## 참조 문서
 
@@ -107,7 +69,7 @@ CI: **`.github/workflows/deploy-no-overwrite-gate.yml`** + `deploy-production.ym
 - [ ] 수정한 워크플로의 paths가 의도한 파일 변경 시에만 트리거되는지 확인
 - [ ] 헬스체크 대기 시간·타임아웃이 표준(예: 개발 90초)과 맞는지 확인
 - [ ] 실패 시 로그 수집( journalctl, error.log ) 및 필요 시 롤백 절차 포함 여부 확인
-- [ ] 배포 브랜치(develop/main) 및 수동 실행(workflow_dispatch) 여부 확인
+- [ ] 배포 브랜치(`release/dev`/`release/prod`) 및 수동 실행(workflow_dispatch) 여부 확인
 - [ ] DEPLOYMENT_STANDARD, DEV_DEPLOYMENT_STABILITY_CHECKLIST 와 충돌 없는지 확인
 - [ ] **덮어쓰기 금지 · 6항 동결**: `check-deploy-no-overwrite-symbols.sh` 전부 PASS·통합 tip만·prev 롤백 경로·DATAFIX 0
 

@@ -127,7 +127,7 @@ const data = await apiGet('/api/v1/...');
 
 ## 운영 반영 준비 — 하드코딩 (core-coder 필수 · 절대 금지)
 
-- **하드코딩 절대 금지.** 지속 제거 중 · 신규 추가 금지 · 유예 없음. (`.cursor/rules/mindgarden-no-hardcode-cloud.mdc`)
+- **하드코딩 절대 금지.** 지속 제거 중 · 신규 추가 금지 · 유예 없음. (`AGENTS.md §6`)
 - **원칙**: 검색·CI/BI·`check-hardcode`에 걸리면 **같은 작업에서 전부** 수정. 운영·클라우드 이전 게이트 = **위반 0건**.
 - **금지**: “훅이 허용했으니 나중에” — 릴리스에는 **스캔 통과 + §17** 필수.
 - **상세**: `docs/project-management/ADMIN_LNB_LAYOUT_UNIFICATION_MEETING_HANDOFF.md` **§17**, `/core-solution-standardization`.

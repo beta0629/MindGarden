@@ -382,7 +382,7 @@ git diff "$BASE"...HEAD -U0 | grep '^+' | rg -n -i \
   -e 'https?://' -e '\b[0-9]{1,3}(\.[0-9]{1,3}){3}\b' -e '#[0-9a-fA-F]{3,6}\b'
 ```
 
-- 변경 파일에서 새로 걸린 항목이 있으면 **FAIL** — 같은 PR에서 env·system_config·공통코드·디자인 토큰으로 치환 (`.cursor/rules/mindgarden-no-hardcode-cloud.mdc`).
+- 변경 파일에서 새로 걸린 항목이 있으면 **FAIL** — 같은 PR에서 env·system_config·공통코드·디자인 토큰으로 치환 (`AGENTS.md §6`).
 - 오탐은 근거와 함께 명시(예: 테스트 픽스처 전용).
 - 동결 심볼은 `./scripts/deployment/check-deploy-no-overwrite-symbols.sh --source-root .` 가 담당한다. 이 스킬이 그 스크립트를 느슨하게 만들지 않는다.
 
@@ -446,7 +446,7 @@ gh pr edit "$PR" --body-file /tmp/sv-body.md
 - `node scripts/verification/self-verify-hard-stops.test.js` — 위 두 스크립트의 픽스처 검사
 - `/core-solution-deployment` — 머지 전 이 스킬을 실행. FAIL에 하드스톱 포함
 - `/core-solution-testing` — 테스트 작성 표준
-- `.cursor/rules/mindgarden-no-hardcode-cloud.mdc` — 하드코딩 금지
+- `AGENTS.md` §6 — 하드코딩 금지
 - `scripts/design-system/css-tools/check-hardcoding-enhanced.js` — 하드코딩 스캔
 - `scripts/deployment/check-deploy-no-overwrite-symbols.sh` — 6항 동결
 

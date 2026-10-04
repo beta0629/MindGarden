@@ -1,3 +1,4 @@
+import logger from '../../utils/logger';
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import PropTypes from 'prop-types';
 import { useNavigate } from 'react-router-dom';
@@ -308,7 +309,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false, initialOpenUserId
 
     const loadConsultants = useCallback(async() => {
         try {
-            console.log('🔄 상담사 목록 로딩 시작...');
+            logger.debug('🔄 상담사 목록 로딩 시작...');
             
             // 세션 갱신을 통해 최신 tenantId 확보
             try {
@@ -351,19 +352,19 @@ const ConsultantComprehensiveManagement = ({ embedded = false, initialOpenUserId
                         return;
                     }
                     
-                    console.log('✅ tenantId 확인 완료:', retryTenantId);
+                    logger.debug('✅ tenantId 확인 완료:', retryTenantId);
                 } else {
-                    console.log('✅ tenantId 확인 완료:', tenantId);
+                    logger.debug('✅ tenantId 확인 완료:', tenantId);
                 }
             } catch (error) {
                 console.error('❌ sessionManager 사용 중 오류:', error);
             }
             
             const consultantsList = await getAllConsultantsWithStats();
-            console.log('📊 통합 API 응답:', consultantsList);
+            logger.debug('📊 통합 API 응답:', consultantsList);
             
             if (consultantsList && consultantsList.length > 0) {
-                console.log('🔍 첫 번째 아이템 구조:', consultantsList[0]);
+                logger.debug('🔍 첫 번째 아이템 구조:', consultantsList[0]);
                 
                 const consultants = consultantsList.map(item => {
                     const consultantEntity = item.consultant || {};
@@ -403,10 +404,10 @@ const ConsultantComprehensiveManagement = ({ embedded = false, initialOpenUserId
                 });
                 
                 setConsultants(consultants);
-                console.log('✅ 상담사 목록 설정 완료 (통합 API):', consultants.length, '명');
+                logger.debug('✅ 상담사 목록 설정 완료 (통합 API):', consultants.length, '명');
                 
                 if (consultants.length > 0) {
-                    console.log('🔍 변환된 첫 번째 상담사:', consultants[0]);
+                    logger.debug('🔍 변환된 첫 번째 상담사:', consultants[0]);
                 }
             } else {
                 console.warn('⚠️ 상담사 데이터 없음');
@@ -441,7 +442,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false, initialOpenUserId
 
     const loadSpecialtyCodes = useCallback(async() => {
         try {
-            console.log('🔍 전문분야 코드 로딩 시작 (테넌트 코드 전용)...');
+            logger.debug('🔍 전문분야 코드 로딩 시작 (테넌트 코드 전용)...');
             
             // tenantId는 필수이므로 세션에서 확보
             let tenantId = null;
@@ -451,14 +452,14 @@ const ConsultantComprehensiveManagement = ({ embedded = false, initialOpenUserId
                 // 먼저 현재 사용자 정보 확인
                 let user = sessionManager.getUser();
                 tenantId = user?.tenantId || sessionManager.getSessionInfo()?.tenantId;
-                console.log('🔍 초기 tenantId 확인:', tenantId);
+                logger.debug('🔍 초기 tenantId 확인:', tenantId);
                 
                 // tenantId가 없거나 유효하지 않으면 세션 강제 갱신
                 if (!tenantId || tenantId === 'unknown' || tenantId === 'default' || 
                     tenantId.startsWith('unknown-') || tenantId.startsWith('default-') ||
                     tenantId === 'tenant-unknown' || tenantId === 'tenant-default') {
                     console.warn('⚠️ tenantId가 없거나 유효하지 않음, 세션 재조회 시도...');
-                    console.log('🔄 세션 강제 갱신 시작...');
+                    logger.debug('🔄 세션 강제 갱신 시작...');
                     
                     // 세션 강제 갱신
                     await sessionManager.checkSession(true);
@@ -466,7 +467,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false, initialOpenUserId
                     // 갱신 후 다시 확인
                     user = sessionManager.getUser();
                     tenantId = user?.tenantId || sessionManager.getSessionInfo()?.tenantId;
-                    console.log('🔍 세션 갱신 후 tenantId:', tenantId);
+                    logger.debug('🔍 세션 갱신 후 tenantId:', tenantId);
                     
                     // 여전히 없으면 localStorage에서 확인
                     if (!tenantId || tenantId === 'unknown' || tenantId === 'default') {
@@ -475,7 +476,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false, initialOpenUserId
                             try {
                                 const parsedUser = JSON.parse(storedUser);
                                 tenantId = parsedUser?.tenantId;
-                                console.log('🔍 localStorage에서 tenantId 확인:', tenantId);
+                                logger.debug('🔍 localStorage에서 tenantId 확인:', tenantId);
                             } catch (e) {
                                 console.error('❌ localStorage 파싱 오류:', e);
                             }
@@ -490,7 +491,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false, initialOpenUserId
                     }
                 }
                 
-                console.log('✅ 최종 tenantId:', tenantId);
+                logger.debug('✅ 최종 tenantId:', tenantId);
             } catch (error) {
                 console.error('❌ sessionManager 사용 중 오류:', error);
                 // localStorage에서 직접 확인 시도
@@ -499,7 +500,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false, initialOpenUserId
                     if (storedUser) {
                         const parsedUser = JSON.parse(storedUser);
                         tenantId = parsedUser?.tenantId;
-                        console.log('🔍 localStorage에서 tenantId 확인 (fallback):', tenantId);
+                        logger.debug('🔍 localStorage에서 tenantId 확인 (fallback):', tenantId);
                     }
                 } catch (e) {
                     console.error('❌ localStorage 파싱 오류:', e);
@@ -515,15 +516,15 @@ const ConsultantComprehensiveManagement = ({ embedded = false, initialOpenUserId
             // 먼저 테넌트 코드 시도
             const { getTenantCodes, getCommonCodes } = await import('../../utils/commonCodeApi');
             let codes = await getTenantCodes('SPECIALTY');
-            console.log('📋 전문분야 코드 응답 (테넌트별):', codes, 'length:', codes?.length);
+            logger.debug('📋 전문분야 코드 응답 (테넌트별):', codes, 'length:', codes?.length);
             
             // 테넌트 코드가 없거나 빈 배열이면 코어 코드로 폴백
             if (!Array.isArray(codes) || codes.length === 0) {
-                console.log('🔄 테넌트 코드가 없음, 코어 코드로 폴백 시도...');
+                logger.debug('🔄 테넌트 코드가 없음, 코어 코드로 폴백 시도...');
                 try {
                     // 코어 코드 API 직접 호출
                     const coreCodes = await apiGet(API_COMMON_CODES_CORE_GROUPS_SPECIALTY);
-                    console.log('📋 코어 코드 API 응답:', coreCodes);
+                    logger.debug('📋 코어 코드 API 응답:', coreCodes);
                     
                     if (Array.isArray(coreCodes)) {
                         codes = coreCodes;
@@ -535,7 +536,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false, initialOpenUserId
                         console.warn('⚠️ 코어 코드 응답 형식이 예상과 다름:', coreCodes);
                         codes = [];
                     }
-                    console.log('📋 전문분야 코드 응답 (코어):', codes, 'length:', codes?.length);
+                    logger.debug('📋 전문분야 코드 응답 (코어):', codes, 'length:', codes?.length);
                 } catch (fallbackError) {
                     console.error('❌ 코어 코드 폴백 실패:', fallbackError);
                     codes = [];
@@ -550,7 +551,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false, initialOpenUserId
                     codeName: code.codeName || code.name || code.codeLabel || code.label
                 }));
                 setSpecialtyCodes(formattedCodes);
-                console.log('✅ 전문분야 코드 로딩 완료:', formattedCodes.length, '개');
+                logger.debug('✅ 전문분야 코드 로딩 완료:', formattedCodes.length, '개');
             } else {
                 console.warn('⚠️ 전문분야 코드가 없거나 배열이 아님:', codes);
                 setSpecialtyCodes([]);
@@ -565,11 +566,11 @@ const ConsultantComprehensiveManagement = ({ embedded = false, initialOpenUserId
     const loadAllData = useCallback(async() => {
         setLoading(true);
         try {
-            console.log('🚀 전체 데이터 로딩 시작...');
+            logger.debug('🚀 전체 데이터 로딩 시작...');
             
             // 세션 강제 갱신하여 tenantId 확보 (API 호출 전에 완료되어야 함)
             try {
-                console.log('🔄 세션 강제 갱신 시작...');
+                logger.debug('🔄 세션 강제 갱신 시작...');
                 await sessionManager.checkSession(true);
                 const user = sessionManager.getUser();
                 if (!user || !user.tenantId) {
@@ -579,13 +580,13 @@ const ConsultantComprehensiveManagement = ({ embedded = false, initialOpenUserId
                     if (storedUser) {
                         const parsedUser = JSON.parse(storedUser);
                         if (parsedUser && parsedUser.tenantId) {
-                            console.log('✅ localStorage에서 tenantId 발견:', parsedUser.tenantId);
+                            logger.debug('✅ localStorage에서 tenantId 발견:', parsedUser.tenantId);
                             // sessionManager에 설정
                             sessionManager.setUser(parsedUser);
                         }
                     }
                 } else {
-                    console.log('✅ 세션 갱신 완료, tenantId:', user.tenantId);
+                    logger.debug('✅ 세션 갱신 완료, tenantId:', user.tenantId);
                 }
             } catch (sessionError) {
                 console.warn('⚠️ 세션 갱신 실패:', sessionError);
@@ -605,7 +606,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false, initialOpenUserId
                 }
             });
 
-            console.log('✅ 전체 데이터 로딩 완료');
+            logger.debug('✅ 전체 데이터 로딩 완료');
             void loadProfessionalTypeCodes();
             void loadConsultantGradeCodes();
         } catch (error) {
@@ -653,7 +654,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false, initialOpenUserId
     useEffect(() => {
         const handleForceRefresh = (event) => {
             if (event.detail === 'consultant-management') {
-                console.log('🔄 강제 새로고침 이벤트 수신');
+                logger.debug('🔄 강제 새로고침 이벤트 수신');
                 loadAllData();
             }
         };
@@ -927,7 +928,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false, initialOpenUserId
                     return merged;
                 });
             } catch (err) {
-                console.debug('상담사 알림 채널 선호 로드 생략:', err);
+                logger.debug('상담사 알림 채널 선호 로드 생략:', err);
             }
         })();
         return () => {
@@ -981,7 +982,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false, initialOpenUserId
         
         try {
             const response = await apiGet(`${API_ENDPOINTS.ADMIN.DUPLICATE_CHECK.EMAIL}?email=${encodeURIComponent(email)}`);
-            console.log('📧 이메일 중복 확인 응답:', response);
+            logger.debug('📧 이메일 중복 확인 응답:', response);
             
             if (response && typeof response.isDuplicate === 'boolean') {
                 if (response.isDuplicate) {
@@ -1158,15 +1159,13 @@ const ConsultantComprehensiveManagement = ({ embedded = false, initialOpenUserId
                 requestData.specialization = data.specialization;
             }
             
-            console.log('📤 상담사 등록 요청 데이터:', { ...requestData, password: '***', profileImageUrl: requestData.profileImageUrl ? '(base64)' : undefined });
             
             const response = await apiPost(API_ENDPOINTS.ADMIN.CONSULTANTS.LIST, requestData, options);
-            console.log('📥 상담사 등록 응답:', response);
             
             // apiPost가 ApiResponse의 data만 추출하므로, response는 User 객체 또는 null
             // User 객체가 있으면 성공 (id 필드 확인)
             if (response && (response.id || response.userId || response.email)) {
-                console.log('✅ 상담사 등록 성공:', response);
+                logger.debug('✅ 상담사 등록 성공:', response);
                 await loadConsultants();
                 window.dispatchEvent(new CustomEvent('admin-dashboard-refresh-stats'));
                 window.dispatchEvent(new CustomEvent('showNotification', {
@@ -1289,12 +1288,12 @@ const ConsultantComprehensiveManagement = ({ embedded = false, initialOpenUserId
         if (!passwordResetConsultant) return;
 
         try {
-            console.log('🔑 상담사 비밀번호 초기화 시작:', passwordResetConsultant.id);
+            logger.debug('🔑 상담사 비밀번호 초기화 시작:', passwordResetConsultant.id);
 
             const endpoint = `/api/v1/admin/user-management/${passwordResetConsultant.id}/reset-password`;
             const response = await StandardizedApi.put(endpoint, { newPassword });
 
-            console.log('✅ 비밀번호 초기화 응답:', response);
+            logger.debug('✅ 비밀번호 초기화 응답:', response);
 
             if (response && (response.success !== false)) {
                 showSuccess(t('admin:consultantMgmt.msg.passwordResetSuccess'));

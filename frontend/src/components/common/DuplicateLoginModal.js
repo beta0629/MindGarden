@@ -1,3 +1,4 @@
+import logger from '../../utils/logger';
 import React, { useState } from 'react';
 import { AlertTriangle, XCircle, Check } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -26,7 +27,6 @@ const DuplicateLoginModal = () => {
 
     setConfirmLoading(true);
     try {
-      console.log('🔔 중복 로그인 확인 처리 시작:', duplicateLoginModal.loginData);
 
       const response = await authAPI.confirmDuplicateLogin({
         email: duplicateLoginModal.loginData.email,
@@ -38,7 +38,7 @@ const DuplicateLoginModal = () => {
       const loginPayload = response?.data || response || {};
       const loggedInUser = loginPayload.user || response?.user;
       if (loggedInUser) {
-        console.log('✅ 중복 로그인 확인 후 로그인 성공:', loggedInUser);
+        logger.debug('✅ 중복 로그인 확인 후 로그인 성공:', loggedInUser);
 
         setDuplicateLoginModal({
           isOpen: false,
@@ -46,7 +46,7 @@ const DuplicateLoginModal = () => {
           loginData: null
         });
 
-        console.log('🔐 중복 로그인 성공 - 세션에 사용자 정보 설정 시작:', loggedInUser);
+        logger.debug('🔐 중복 로그인 성공 - 세션에 사용자 정보 설정 시작:', loggedInUser);
         sessionManager.setUser(loggedInUser, {
           accessToken: loginPayload.accessToken,
           refreshToken: loginPayload.refreshToken,
@@ -56,7 +56,7 @@ const DuplicateLoginModal = () => {
         markJustLoggedIn();
         // 로그인 직후 확인은 백그라운드. 401 이어도 방금 세운 사용자를 지우지 않는다.
         await checkSession(true, { background: true });
-        console.log('✅ 세션 설정 완료 - 사용자 정보 저장됨');
+        logger.debug('✅ 세션 설정 완료 - 사용자 정보 저장됨');
 
         notificationManager.show('로그인에 성공했습니다.', 'success');
 
@@ -64,7 +64,7 @@ const DuplicateLoginModal = () => {
           user: loggedInUser,
           currentTenantRole: loginPayload.currentTenantRole || response?.currentTenantRole || null
         };
-        console.log('🎯 중복 로그인 성공 후 SPA navigate (hard reload 금지)');
+        logger.debug('🎯 중복 로그인 성공 후 SPA navigate (hard reload 금지)');
 
         setTimeout(async() => {
           try {
@@ -76,7 +76,7 @@ const DuplicateLoginModal = () => {
           }
         }, 500);
       } else {
-        console.log('❌ 중복 로그인 확인 후 로그인 실패:', response);
+        logger.debug('❌ 중복 로그인 확인 후 로그인 실패:', response);
         notificationManager.show('로그인에 실패했습니다.', 'error');
       }
     } catch (error) {
@@ -88,7 +88,7 @@ const DuplicateLoginModal = () => {
   };
 
   const handleCancel = () => {
-    console.log('❌ 중복 로그인 확인 취소');
+    logger.debug('❌ 중복 로그인 확인 취소');
 
     setDuplicateLoginModal({
       isOpen: false,

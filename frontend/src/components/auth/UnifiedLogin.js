@@ -21,6 +21,7 @@
  * @since 2025-01-XX
  */
 
+import logger from '../../utils/logger';
 import { useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -90,7 +91,7 @@ const EMPTY_MERCHANT_LEGAL = {
 };
 
 const UnifiedLogin = () => {
-  console.log('🚀 UnifiedLogin 컴포넌트 렌더링 시작');
+  logger.debug('🚀 UnifiedLogin 컴포넌트 렌더링 시작');
   const { t } = useTranslation(['common', 'auth']);
   const navigate = useNavigate();
   const location = useLocation();
@@ -105,14 +106,12 @@ const UnifiedLogin = () => {
     password: ''
   });
 
-  console.log('📋 초기 formData 상태:', formData);
   const [showPassword, setShowPassword] = useState(false);
 
   // 컴포넌트 마운트 확인
   useEffect(() => {
-    console.log('✅ UnifiedLogin 컴포넌트 마운트됨');
-    console.log('📋 마운트 시 formData:', formData);
-    console.log('🔧 handleInputChange 함수:', typeof handleInputChange);
+    logger.debug('✅ UnifiedLogin 컴포넌트 마운트됨');
+    logger.debug('🔧 handleInputChange 함수:', typeof handleInputChange);
   }, []);
 
   /** 테넌트 도메인인데 서브도메인이 없으면 잘못된 경로: 알림 후 홈으로 리다이렉트 (localhost 제외) */
@@ -177,7 +176,7 @@ const UnifiedLogin = () => {
         const urlParams = new URLSearchParams(window.location.search);
         const urlTenantId = urlParams.get('tenantId');
         if (urlTenantId) {
-          console.log('🔧 URL 파라미터에서 tenantId 감지 (로컬 테스트용): tenantId=', urlTenantId);
+          logger.debug('🔧 URL 파라미터에서 tenantId 감지 (로컬 테스트용): tenantId=', urlTenantId);
           sessionStorage.setItem('subdomain_tenant_id', urlTenantId);
         }
 
@@ -188,7 +187,7 @@ const UnifiedLogin = () => {
           && envTenantId
           && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
         ) {
-          console.log('🔧 환경 변수에서 tenantId 감지 (로컬 개발용): tenantId=', envTenantId);
+          logger.debug('🔧 환경 변수에서 tenantId 감지 (로컬 개발용): tenantId=', envTenantId);
           sessionStorage.setItem('subdomain_tenant_id', envTenantId);
         }
 
@@ -199,15 +198,15 @@ const UnifiedLogin = () => {
             setMerchantLegalFooter(null);
           }
           if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-            console.log('💡 로컬 환경: 서브도메인 없음. 테스트를 위해 다음 방법을 사용하세요:');
-            console.log('   1. URL 파라미터: ?tenantId=tenant-incheon-counseling-001');
-            console.log('   2. 환경 변수: REACT_APP_TEST_TENANT_ID=tenant-incheon-counseling-001');
-            console.log('   3. /etc/hosts 설정: coresolution.localhost → 127.0.0.1');
+            logger.debug('💡 로컬 환경: 서브도메인 없음. 테스트를 위해 다음 방법을 사용하세요:');
+            logger.debug('   1. URL 파라미터: ?tenantId=tenant-incheon-counseling-001');
+            logger.debug('   2. 환경 변수: REACT_APP_TEST_TENANT_ID=tenant-incheon-counseling-001');
+            logger.debug('   3. /etc/hosts 설정: coresolution.localhost → 127.0.0.1');
           }
           return;
         }
 
-        console.log('🔍 서브도메인 감지(SSOT): subdomain=', subdomain);
+        logger.debug('🔍 서브도메인 감지(SSOT): subdomain=', subdomain);
 
         const meta = await fetchTenantPublicHomeMeta();
         if (cancelled) {
@@ -222,7 +221,7 @@ const UnifiedLogin = () => {
 
         if (meta?.found && meta?.tenant?.tenantId) {
           const { tenantId } = meta.tenant;
-          console.log('✅ 서브도메인으로 tenant_id 조회 성공: tenantId=', tenantId);
+          logger.debug('✅ 서브도메인으로 tenant_id 조회 성공: tenantId=', tenantId);
           sessionStorage.setItem('subdomain_tenant_id', tenantId);
           sessionStorage.setItem('subdomain', subdomain);
           sessionStorage.setItem(
@@ -230,7 +229,7 @@ const UnifiedLogin = () => {
             tenantName || subdomain
           );
         } else {
-          console.log('⚠️ 서브도메인으로 테넌트를 찾을 수 없음: subdomain=', subdomain);
+          logger.debug('⚠️ 서브도메인으로 테넌트를 찾을 수 없음: subdomain=', subdomain);
         }
       } catch (error) {
         console.error('❌ 서브도메인에서 tenant_id 감지 실패:', error);
@@ -371,7 +370,7 @@ const UnifiedLogin = () => {
     if (error) {
       try {
         const decodedError = decodeURIComponent(error);
-        console.log('🔤 디코딩된 OAuth 에러 메시지:', decodedError);
+        logger.debug('🔤 디코딩된 OAuth 에러 메시지:', decodedError);
         
         // 서브도메인 관련 오류인 경우 명확한 메시지 표시 (로컬 환경에서는 원본 에러 표시)
         const isLocalEnv = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
@@ -388,7 +387,7 @@ const UnifiedLogin = () => {
         
         // URL에서 에러 파라미터 제거
         window.history.replaceState({}, document.title, '/login');
-        console.log('🧹 URL에서 에러 파라미터 제거됨');
+        logger.debug('🧹 URL에서 에러 파라미터 제거됨');
         return;
       } catch (parseError) {
         console.error('OAuth 에러 메시지 파싱 실패:', parseError);
@@ -413,7 +412,7 @@ const UnifiedLogin = () => {
       const tenantId = searchParams.get('tenantId') || sessionStorage.getItem('subdomain_tenant_id');
       const providerUpper = String(provider || '').trim().toUpperCase();
 
-      console.log('📝 간편 회원가입 필요 감지 (signup=required):', { provider: providerUpper, tenantId, email });
+      logger.debug('📝 간편 회원가입 필요 감지 (signup=required):', { provider: providerUpper, tenantId, email });
       notificationManager.show(
         OAUTH_SIGNUP_REQUIRED_PROMPT,
         'info'
@@ -472,11 +471,11 @@ const UnifiedLogin = () => {
           await checkMultiTenantAndRedirect(userData);
         } else {
           // 사용자 정보가 없어도 체크 완료로 표시 (무한 루프 방지)
-          console.log('🔍 세션 확인 완료: 로그인되지 않은 상태');
+          logger.debug('🔍 세션 확인 완료: 로그인되지 않은 상태');
         }
       } else {
         // 응답이 OK가 아니어도 체크 완료로 표시 (무한 루프 방지)
-        console.log('🔍 세션 확인 완료: 응답 상태', response.status);
+        logger.debug('🔍 세션 확인 완료: 응답 상태', response.status);
       }
     } catch (error) {
       console.error('세션 확인 오류:', error);
@@ -554,7 +553,7 @@ const UnifiedLogin = () => {
 
   // ID/PW 로그인 처리
   const handleSubmit = async(e) => {
-    console.log('🚀 handleSubmit 함수 호출됨!', e);
+    logger.debug('🚀 handleSubmit 함수 호출됨!', e);
 
     const isLocalEnv = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 
@@ -588,16 +587,15 @@ const UnifiedLogin = () => {
     };
 
     if (!actualFormData.email || !actualFormData.password) {
-      console.log('❌ 폼 데이터 유효성 검사 실패');
+      logger.debug('❌ 폼 데이터 유효성 검사 실패');
       showTooltip(LOGIN_IDENTIFIER_PASSWORD_REQUIRED, 'warning');
       return;
     }
 
-    console.log('✅ 폼 데이터 유효성 검사 통과');
+    logger.debug('✅ 폼 데이터 유효성 검사 통과');
     setIsLoading(true);
     try {
       const result = await authAPI.login(actualFormData);
-      console.log('🔐 로그인 응답:', result);
 
       // ApiResponse 래퍼 처리: result.data 또는 result 직접 사용
       const loginData = result.data || result;
@@ -639,14 +637,14 @@ const UnifiedLogin = () => {
 
       if (result.success && loginData.user) {
         // tenantId 확인 로그
-        console.log('🔍 로그인 응답 user 객체:', loginData.user);
-        console.log('🔍 로그인 응답 user.tenantId:', loginData.user.tenantId);
-        console.log('🔍 로그인 응답 userResponse:', loginData.userResponse);
-        console.log('🔍 로그인 응답 userResponse?.tenantId:', loginData.userResponse?.tenantId);
+        logger.debug('🔍 로그인 응답 user 객체:', loginData.user);
+        logger.debug('🔍 로그인 응답 user.tenantId:', loginData.user.tenantId);
+        logger.debug('🔍 로그인 응답 userResponse:', loginData.userResponse);
+        logger.debug('🔍 로그인 응답 userResponse?.tenantId:', loginData.userResponse?.tenantId);
 
         // userResponse에 tenantId가 있으면 user에도 설정
         if (loginData.userResponse && loginData.userResponse.tenantId && !loginData.user.tenantId) {
-          console.log('✅ userResponse에서 tenantId 복사:', loginData.userResponse.tenantId);
+          logger.debug('✅ userResponse에서 tenantId 복사:', loginData.userResponse.tenantId);
           loginData.user.tenantId = loginData.userResponse.tenantId;
         }
 
@@ -667,7 +665,7 @@ const UnifiedLogin = () => {
 
         // 임시 비밀번호로 로그인한 경우 비밀번호 변경 모달 표시
         if (result.data?.requiresPasswordChange || loginData.requiresPasswordChange) {
-          console.log('⚠️ 임시 비밀번호로 로그인 감지 - 비밀번호 변경 모달 표시');
+          logger.debug('⚠️ 임시 비밀번호로 로그인 감지 - 비밀번호 변경 모달 표시');
           // 입력한 비밀번호를 임시 비밀번호로 저장 (비밀번호 변경 모달에서 현재 비밀번호로 사용)
           setTempPassword(actualFormData.password);
           setIsLoading(false);
@@ -678,7 +676,7 @@ const UnifiedLogin = () => {
         // 백엔드에서 반환한 멀티 테넌트 정보 확인
         if (loginData.isMultiTenant && loginData.requiresTenantSelection && loginData.accessibleTenants) {
           // 멀티 테넌트 사용자: 테넌트 선택 화면 표시
-          console.log('🔄 멀티 테넌트 사용자 감지:', loginData.accessibleTenants);
+          logger.debug('🔄 멀티 테넌트 사용자 감지:', loginData.accessibleTenants);
           setAccessibleTenants(loginData.accessibleTenants);
           setShowTenantSelection(true);
           setIsLoading(false);
@@ -708,7 +706,7 @@ const UnifiedLogin = () => {
           setIsLoading(false);
         }
       } else {
-        console.log('❌ 로그인 실패:', result.message);
+        logger.debug('❌ 로그인 실패:', result.message);
         setIsLoading(false);
         
         // 서브도메인 관련 오류인 경우 명확한 메시지 표시 (로컬 환경에서는 원본 에러 표시)
@@ -789,7 +787,7 @@ const UnifiedLogin = () => {
     setIsLoading(true);
     try {
       const outcome = await requestGoogleSocialLogin({ accessToken, idToken });
-      console.log('🔐 Google 웹 로그인 outcome:', outcome.kind);
+      logger.debug('🔐 Google 웹 로그인 outcome:', outcome.kind);
 
       if (outcome.kind === 'authenticated') {
         setLoginSession(outcome.user, {
@@ -892,22 +890,17 @@ const UnifiedLogin = () => {
   /*
   const handleTenantSelected = async (tenantId) => {
     // TenantSelection 컴포넌트에서 직접 처리하므로 여기서는 호출만
-    console.log('🔄 테넌트 선택 요청:', tenantId);
+    logger.debug('🔄 테넌트 선택 요청:', tenantId);
   };
   */
 
   // 입력 핸들러
   const handleInputChange = (e) => {
-    console.log('🔄 handleInputChange 호출됨:', e.target.name, '값:', e.target.value);
     const { name, value } = e.target;
-    setFormData(prev => {
-      const newFormData = {
-        ...prev,
-        [name]: value
-      };
-      console.log('📝 formData 업데이트:', newFormData);
-      return newFormData;
-    });
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
   };
 
   const togglePassword = () => {
@@ -1002,8 +995,8 @@ const UnifiedLogin = () => {
                   autoComplete="username"
                   defaultValue={formData.email}
                   onChange={handleInputChange}
-                  onFocus={() => console.log('📧 이메일 필드 포커스됨')}
-                  onBlur={() => console.log('📧 이메일 필드 포커스 해제됨')}
+                  onFocus={() => logger.debug('📧 이메일 필드 포커스됨')}
+                  onBlur={() => logger.debug('📧 이메일 필드 포커스 해제됨')}
                   className="mg-v2-input"
                   placeholder={LOGIN_IDENTIFIER_PLACEHOLDER}
                   required
@@ -1020,8 +1013,8 @@ const UnifiedLogin = () => {
                     name="password"
                     defaultValue={formData.password}
                     onChange={handleInputChange}
-                    onFocus={() => console.log('🔒 비밀번호 필드 포커스됨')}
-                    onBlur={() => console.log('🔒 비밀번호 필드 포커스 해제됨')}
+                    onFocus={() => logger.debug('🔒 비밀번호 필드 포커스됨')}
+                    onBlur={() => logger.debug('🔒 비밀번호 필드 포커스 해제됨')}
                     className="mg-v2-input"
                     placeholder={t('auth:unifiedLogin.passwordPlaceholder')}
                     required
@@ -1220,7 +1213,7 @@ const UnifiedLogin = () => {
           }}
           onSuccess={async() => {
             // 비밀번호 변경 성공 시 대시보드로 리다이렉트
-            console.log('✅ 비밀번호 변경 완료 - 대시보드로 리다이렉트');
+            logger.debug('✅ 비밀번호 변경 완료 - 대시보드로 리다이렉트');
             setShowPasswordChangeModal(false);
             setTempPassword(''); // 임시 비밀번호 초기화
             
@@ -1250,7 +1243,7 @@ const UnifiedLogin = () => {
           onClose={() => setShowSocialSignupModal(false)}
           socialUser={socialUserInfo}
           onSignupSuccess={(response) => {
-            console.log('✅ 소셜 회원가입 성공:', response);
+            logger.debug('✅ 소셜 회원가입 성공:', response);
             notificationManager.show(
               OAUTH_POST_SIGNUP_LOGIN_REMINDER,
               'success'

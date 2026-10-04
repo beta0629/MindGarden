@@ -185,7 +185,6 @@ export default function OnboardingCallbackPage() {
           if (savedFormData) {
             try {
               formData = JSON.parse(savedFormData) as Record<string, unknown>;
-              console.log("[OnboardingCallback] 세션 스토리지에서 폼 데이터 로드:", formData);
               sessionStorage.removeItem('onboarding_form_data'); // 사용 후 삭제
             } catch (e) {
               console.error("세션 스토리지 데이터 파싱 실패:", e);
@@ -207,7 +206,7 @@ export default function OnboardingCallbackPage() {
 
           if (!finalTenantName || !finalRequestedBy) {
             const errorMsg = `필수 정보가 누락되었습니다. tenantName: ${finalTenantName ? '있음' : '없음'}, contactPhone: ${finalRequestedBy ? '있음' : '없음'}`;
-            console.error("[OnboardingCallback]", errorMsg, { formData, tenantName, contactPhone, contactEmail });
+            console.error("[OnboardingCallback]", errorMsg);
             setError(errorMsg);
             setStatus("fail");
             setLoading(false);

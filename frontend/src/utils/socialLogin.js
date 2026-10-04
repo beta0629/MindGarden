@@ -353,7 +353,7 @@ export const googleLogin = async() => {
 };
 
 /**
- * Apple Sign in with Apple (SIWA) — server-side auth-code 흐름 (2026-06-11, Google PR #204 패턴).
+ * Apple Sign in with Apple (SIWA) — server-side auth-code 흐름 (2026-06-11, Google PR 204 패턴).
  *
  * <p>카카오·네이버·Google 와 100% 동일 패턴. BE `/api/v1/auth/oauth2/apple/authorize` 가
  * apex 메인 도메인 기반 redirect_uri 와 `state=base64url(tenantId)+nonce` 를 포함한

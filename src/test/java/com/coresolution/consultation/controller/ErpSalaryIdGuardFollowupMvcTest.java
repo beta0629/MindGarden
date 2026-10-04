@@ -218,12 +218,15 @@ class ErpSalaryIdGuardFollowupMvcTest {
     }
 
     @Test
-    @DisplayName("역할 없음(같은 테넌트 내담자) — 모든 엔드포인트 403, 서비스 미호출")
+    @DisplayName("역할 없음(같은 테넌트 내담자·ERP/급여 권한 없는 상담사) — 모든 엔드포인트 403, 서비스 미호출")
     void client_forbidden() throws Exception {
-        for (String[] e : ENDPOINTS) {
-            mockMvc.perform(req(e, user(CLIENT_A, UserRole.CLIENT, TENANT_A)))
-                .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.data").doesNotExist());
+        for (User caller : List.of(user(CLIENT_A, UserRole.CLIENT, TENANT_A),
+                user(CONSULTANT_A, UserRole.CONSULTANT, TENANT_A))) {
+            for (String[] e : ENDPOINTS) {
+                mockMvc.perform(req(e, caller))
+                    .andExpect(status().isForbidden())
+                    .andExpect(jsonPath("$.data").doesNotExist());
+            }
         }
         verifyNoServiceCalls();
     }

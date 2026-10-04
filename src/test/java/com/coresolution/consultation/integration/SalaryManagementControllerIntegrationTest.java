@@ -572,15 +572,17 @@ class SalaryManagementControllerIntegrationTest {
         }
 
         @Test
-        @DisplayName("I-API-15: POST /approve/{calculationId} 존재하지 않는 ID → 404/400")
-        void postApprove_notFound_returnsError() throws Exception {
-            when(plSqlSalaryManagementService.approveSalaryWithErpSync(eq(999L), eq(TENANT_A), any()))
-                    .thenReturn(Map.of("success", false, "message", "급여 계산을 찾을 수 없습니다."));
+        @DisplayName("I-API-15: POST /approve/{calculationId} 없거나 다른 테넌트 ID → 공통 403, 프로시저 미호출")
+        void postApprove_notFound_returnsSharedForbidden() throws Exception {
+            when(salaryCalculationRepository.findByTenantIdAndId(TENANT_A, 999L))
+                    .thenReturn(java.util.Optional.empty());
 
             mockMvc.perform(post("/api/v1/admin/salary/approve/999")
                             .sessionAttr(SessionConstants.USER_OBJECT, adminUserWithTenant())
                             .sessionAttr(SessionConstants.TENANT_ID, TENANT_A))
-                    .andExpect(status().isBadRequest());
+                    .andExpect(status().isForbidden())
+                    .andExpect(jsonPath("$.data").doesNotExist());
+            verify(plSqlSalaryManagementService, never()).approveSalaryWithErpSync(eq(999L), any(), any());
         }
 
         @Test
@@ -638,15 +640,17 @@ class SalaryManagementControllerIntegrationTest {
         }
 
         @Test
-        @DisplayName("I-API-16: POST /pay/{calculationId} 존재하지 않는 ID → 404/400")
-        void postPay_notFound_returnsError() throws Exception {
-            when(plSqlSalaryManagementService.processSalaryPaymentWithErpSync(eq(999L), eq(TENANT_A), any()))
-                    .thenReturn(Map.of("success", false, "message", "급여 계산을 찾을 수 없습니다."));
+        @DisplayName("I-API-16: POST /pay/{calculationId} 없거나 다른 테넌트 ID → 공통 403, 프로시저 미호출")
+        void postPay_notFound_returnsSharedForbidden() throws Exception {
+            when(salaryCalculationRepository.findByTenantIdAndId(TENANT_A, 999L))
+                    .thenReturn(java.util.Optional.empty());
 
             mockMvc.perform(post("/api/v1/admin/salary/pay/999")
                             .sessionAttr(SessionConstants.USER_OBJECT, adminUserWithTenant())
                             .sessionAttr(SessionConstants.TENANT_ID, TENANT_A))
-                    .andExpect(status().isBadRequest());
+                    .andExpect(status().isForbidden())
+                    .andExpect(jsonPath("$.data").doesNotExist());
+            verify(plSqlSalaryManagementService, never()).processSalaryPaymentWithErpSync(eq(999L), any(), any());
         }
     }
 

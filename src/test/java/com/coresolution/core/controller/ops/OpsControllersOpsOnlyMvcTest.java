@@ -1,13 +1,18 @@
 package com.coresolution.core.controller.ops;
 
+import static org.mockito.Mockito.CALLS_REAL_METHODS;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.request;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.lang.reflect.Method;
+import java.util.Collection;
 import java.util.List;
 
+import com.coresolution.consultation.config.filter.JwtAuthenticationFilter;
+import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.exception.GlobalExceptionHandler;
 import com.coresolution.core.constants.SecurityRoleConstants;
 import com.coresolution.core.service.ops.DashboardService;
@@ -25,6 +30,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.web.servlet.MockMvc;
@@ -126,10 +132,34 @@ class OpsControllersOpsOnlyMvcTest {
     }
 
     @Test
-    @DisplayName("사무원·내담자 — 전부 403, 서비스 미호출")
+    @DisplayName("사무원·상담사·내담자 — 전부 403, 서비스 미호출")
     void otherRoles_forbidden() throws Exception {
         assertAllForbidden(SecurityRoleConstants.ROLE_STAFF);
-        assertAllForbidden("ROLE_CLIENT");
+        assertAllForbidden(SecurityRoleConstants.ROLE_PREFIX + UserRole.CONSULTANT.name());
+        assertAllForbidden(SecurityRoleConstants.ROLE_PREFIX + UserRole.CLIENT.name());
+    }
+
+    @Test
+    @DisplayName("Ops 포털 계정(ops_core, 기본 actorRole HQ_ADMIN) — JWT 필터가 주는 권한 그대로 조회 200")
+    void opsPortalAccount_ok() throws Exception {
+        Collection<GrantedAuthority> authorities = authoritiesFromActorRole(SecurityRoleConstants.ACTOR_ROLE_HQ_ADMIN);
+        SecurityContextHolder.getContext().setAuthentication(
+            new UsernamePasswordAuthenticationToken("ops_core", null, authorities));
+        for (String uri : OPS_READS) {
+            mockMvc.perform(request(HttpMethod.GET, uri)).andExpect(status().isOk());
+        }
+    }
+
+    @Test
+    @DisplayName("Ops 토큰이라도 actorRole ADMIN 이면 ROLE_OPS 가 없어 403")
+    void opsTokenWithAdminActorRole_forbidden() throws Exception {
+        Collection<GrantedAuthority> authorities = authoritiesFromActorRole(SecurityRoleConstants.ACTOR_ROLE_ADMIN);
+        SecurityContextHolder.getContext().setAuthentication(
+            new UsernamePasswordAuthenticationToken("ops-admin-actor", null, authorities));
+        for (String[] e : GUARDED) {
+            mockMvc.perform(request(HttpMethod.valueOf(e[0]), e[1])).andExpect(status().isForbidden());
+        }
+        verifyNoServiceCalls();
     }
 
     @Test
@@ -154,6 +184,15 @@ class OpsControllersOpsOnlyMvcTest {
     private void verifyNoServiceCalls() {
         verifyNoInteractions(dashboardService, pricingPlanService, featureFlagService, erdGenerationService,
             erdValidationService, schemaService);
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Collection<GrantedAuthority> authoritiesFromActorRole(String actorRole) throws Exception {
+        JwtAuthenticationFilter filter = mock(JwtAuthenticationFilter.class, CALLS_REAL_METHODS);
+        Method method = JwtAuthenticationFilter.class.getDeclaredMethod(
+            "createAuthoritiesFromActorRole", String.class, String.class);
+        method.setAccessible(true);
+        return (Collection<GrantedAuthority>) method.invoke(filter, "ops_core", actorRole);
     }
 
     private static void authenticate(String authority) {

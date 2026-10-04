@@ -263,7 +263,7 @@ const ConsultationRecordScreen = () => {
     },
     formInputFocus: {
       borderColor: 'var(--mg-primary-500)',
-      boxShadow: '0 0 0 3px rgba(0,123,255,0.1)'
+      boxShadow: '0 0 0 3px var(--mg-primary-100)'
     },
     buttonGroup: {
       display: 'flex',

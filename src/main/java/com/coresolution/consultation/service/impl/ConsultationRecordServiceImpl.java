@@ -10,6 +10,7 @@ import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.constant.consultation.ConsultationRecordAccessAudit;
 import com.coresolution.consultation.entity.ConsultantClientMapping;
 import com.coresolution.consultation.entity.ConsultationRecord;
+import com.coresolution.consultation.exception.ConsultationRecordDuplicateException;
 import com.coresolution.consultation.exception.ValidationException;
 import com.coresolution.consultation.repository.ConsultantClientMappingRepository;
 import com.coresolution.consultation.repository.ConsultationRecordRepository;
@@ -31,6 +32,7 @@ import com.coresolution.consultation.util.ProvisionalConsultationLogSession;
 import com.coresolution.consultation.utils.SessionUtils;
 import com.coresolution.core.context.TenantContextHolder;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -250,6 +252,7 @@ public class ConsultationRecordServiceImpl implements ConsultationRecordService 
             if (scheduleDate == null) {
                 throw new RuntimeException("일정 일자가 없습니다: " + consultationId);
             }
+            rejectIfActiveRecordExists(tenantId, consultationId);
             
             record.setConsultationId(consultationId);
             record.setClientId(clientId);
@@ -351,7 +354,14 @@ public class ConsultationRecordServiceImpl implements ConsultationRecordService 
             record.setCreatedByUserId(writer.userId());
             record.setCreatedByRole(writer.role());
             
-            ConsultationRecord savedRecord = consultationRecordRepository.save(record);
+            ConsultationRecord savedRecord;
+            try {
+                savedRecord = consultationRecordRepository.save(record);
+            } catch (DataIntegrityViolationException e) {
+                // 동시 생성 경합: DB 유니크(uk_consultation_records_active_schedule)가 두 번째 행을 거부
+                throw new ConsultationRecordDuplicateException(consultationId,
+                        findActiveRecordId(tenantId, consultationId), DUPLICATE_RECORD_MESSAGE);
+            }
             deleteServerDraftQuietly(tenantId, savedRecord.getConsultationId(),
                     resolveDraftOwnerId(guardedWriter, savedRecord));
             recordEditAudit(tenantId, savedRecord, ConsultationRecordAccessAudit.ACTION_CREATE, writer,
@@ -385,7 +395,8 @@ public class ConsultationRecordServiceImpl implements ConsultationRecordService 
             
             return savedRecord;
             
-        } catch (ValidationException | IllegalArgumentException | AccessDeniedException e) {
+        } catch (ValidationException | IllegalArgumentException | AccessDeniedException
+                | ConsultationRecordDuplicateException e) {
             throw e;
         } catch (Exception e) {
             log.error("상담일지 작성 오류:", e);
@@ -1079,6 +1090,36 @@ public class ConsultationRecordServiceImpl implements ConsultationRecordService 
         log.info("✅ 상담일지 consultationId 정규화(Consultation→Schedule): inputId={} → scheduleId={}",
                 inputId, schedule.getId());
         return schedule.getId();
+    }
+
+    /**
+     * 같은 일정에 활성 일지가 있으면 생성을 거부한다 (일정당 일지 1건).
+     *
+     * @param tenantId   테넌트 ID
+     * @param scheduleId 일정 ID (= consultationId)
+     * @throws ConsultationRecordDuplicateException 활성 일지 존재
+     */
+    private void rejectIfActiveRecordExists(String tenantId, Long scheduleId) {
+        if (consultationRecordRepository.existsByTenantIdAndConsultationIdAndIsDeletedFalse(tenantId, scheduleId)) {
+            throw new ConsultationRecordDuplicateException(scheduleId,
+                    findActiveRecordId(tenantId, scheduleId), DUPLICATE_RECORD_MESSAGE);
+        }
+    }
+
+    /**
+     * 일정의 활성 일지 ID (가장 먼저 생성된 1건, 없으면 null).
+     */
+    private Long findActiveRecordId(String tenantId, Long scheduleId) {
+        List<ConsultationRecord> active =
+                consultationRecordRepository.findByTenantIdAndConsultationIdAndIsDeletedFalse(tenantId, scheduleId);
+        if (active == null) {
+            return null;
+        }
+        return active.stream()
+                .map(ConsultationRecord::getId)
+                .filter(java.util.Objects::nonNull)
+                .min(Long::compare)
+                .orElse(null);
     }
 
     /**

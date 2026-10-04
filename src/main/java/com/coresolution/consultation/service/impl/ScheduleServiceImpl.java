@@ -5368,6 +5368,16 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
                 schedule, ScheduleSessionStartGate.now(sessionStartClock, sessionStartZoneId));
     }
 
+    @Override
+    public boolean isBeforeSessionStart(String tenantId, Long scheduleId) {
+        if (tenantId == null || tenantId.isBlank() || scheduleId == null) {
+            return false;
+        }
+        return scheduleRepository.findByTenantIdAndId(tenantId, scheduleId)
+                .map(this::isBeforeSessionStart)
+                .orElse(false);
+    }
+
     /**
      * 테스트용 시작 전 판정 시계 주입.
      *

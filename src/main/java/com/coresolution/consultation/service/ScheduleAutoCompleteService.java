@@ -484,6 +484,9 @@ public class ScheduleAutoCompleteService {
                         && !ScheduleStatus.CONFIRMED.equals(fresh.getStatus())) {
                     return false;
                 }
+                if (scheduleService.isBeforeSessionStart(fresh)) {
+                    return false;
+                }
                 scheduleService.deductSessionAtCompletionIfNeeded(fresh);
                 fresh.setStatus(ScheduleStatus.COMPLETED);
                 scheduleRepository.save(fresh);

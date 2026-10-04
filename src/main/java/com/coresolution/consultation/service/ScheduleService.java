@@ -612,6 +612,17 @@ public interface ScheduleService {
     boolean isBeforeSessionStart(Schedule schedule);
 
     /**
+     * 테넌트 일정 ID 로 시작 전 여부 판정 ({@link #isBeforeSessionStart(Schedule)} 위임).
+     *
+     * @param tenantId   테넌트 ID
+     * @param scheduleId 일정 ID (null·미존재면 false)
+     * @return 시작 전이면 true
+     * @author CoreSolution
+     * @since 2026-10-04
+     */
+    boolean isBeforeSessionStart(String tenantId, Long scheduleId);
+
+    /**
      * 스케줄 상태를 한글로 변환
      */
     String getStatusInKorean(String status);

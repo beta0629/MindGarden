@@ -11,6 +11,7 @@ import OAuthPhoneVerificationModal from './OAuthPhoneVerificationModal';
 import TenantSelection from './TenantSelection';
 import { toDisplayString } from '../../utils/safeDisplay';
 import StandardizedApi from '../../utils/standardizedApi';
+import logger from '../../utils/logger';
 import UnifiedModal from '../common/modals/UnifiedModal';
 import MGButton from '../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
@@ -121,7 +122,7 @@ const OAuth2Callback = () => {
   useEffect(() => {
     const handleOAuth2Callback = async() => {
       try {
-        console.log('🔄 OAuth2 콜백 처리 시작');
+        logger.log('🔄 OAuth2 콜백 처리 시작');
         
         // URL 파라미터에서 정보 추출
         const searchParams = new URLSearchParams(location.search);
@@ -150,7 +151,7 @@ const OAuth2Callback = () => {
         const oauthErrorParam = searchParams.get('error');
         const requiresSignup = searchParams.get('requiresSignup');
         
-        console.log('📋 OAuth2 콜백 파라미터:', { 
+        logger.log('📋 OAuth2 콜백 파라미터:', { 
           success, provider, userId, email, name, nickname, role, profileImageUrl, providerUserId, 
           branchId, branchName, branchCode, needsBranchMapping, error: oauthErrorParam, requiresSignup
         });
@@ -201,7 +202,7 @@ const OAuth2Callback = () => {
           requiresOAuthPhoneVerificationFlag === 'true' &&
           oauthPhoneVerificationToken
         ) {
-          console.log('📲 OAuth 휴대폰 매칭 필요 — OAuthPhoneVerificationModal 진입');
+          logger.log('📲 OAuth 휴대폰 매칭 필요 — OAuthPhoneVerificationModal 진입');
           setOAuthPhoneVerificationPayload({
             provider,
             phoneVerificationToken: oauthPhoneVerificationToken,
@@ -267,7 +268,7 @@ const OAuth2Callback = () => {
         
         // 계정 통합이 필요한 경우
         if (requiresAccountIntegration === 'true') {
-          console.log('🔗 OAuth2 계정 통합 필요:', { provider, email, name, nickname });
+          logger.log('🔗 OAuth2 계정 통합 필요:', { provider, email, name, nickname });
           
           // 성공 메시지 표시
           notificationManager.show(
@@ -294,14 +295,14 @@ const OAuth2Callback = () => {
         
         // 회원가입이 필요한 경우(미등록 소셜). JWT·userId가 이미 있으면 (a)~(d) 매칭 로그인으로 간주하고 이 분기는 건너뜀.
         if (requiresSignup === 'true' && !hasOAuthUserSessionParams) {
-          console.log('📝 OAuth2 회원가입 필요:', { provider, email, name, nickname });
+          logger.log('📝 OAuth2 회원가입 필요:', { provider, email, name, nickname });
           
           // 학원 시스템 회원가입 모드 확인
           const academyTenantId = sessionStorage.getItem('academy_tenant_id');
           const academySignupMode = sessionStorage.getItem('academy_signup_mode') === 'true';
           
           if (academySignupMode && academyTenantId) {
-            console.log('🎓 학원 시스템 회원가입 모드:', { tenantId: academyTenantId });
+            logger.log('🎓 학원 시스템 회원가입 모드:', { tenantId: academyTenantId });
             // 학원 시스템 회원가입 모드: 테넌트 정보 포함
             const userData = {
               provider: provider,
@@ -347,7 +348,7 @@ const OAuth2Callback = () => {
           
           // tenantId가 있으면 로그 출력
           if (detectedTenantId) {
-            console.log('✅ 서브도메인에서 추출한 tenant_id 사용: tenantId=', detectedTenantId);
+            logger.log('✅ 서브도메인에서 추출한 tenant_id 사용: tenantId=', detectedTenantId);
           }
           
           setSocialUserData(userData);
@@ -358,8 +359,8 @@ const OAuth2Callback = () => {
         }
         
         // 성공적인 OAuth2 로그인 처리 (기존 사용자·(c)(d) 이메일/파생 ID 매칭 등)
-        console.log('✅ OAuth2 로그인 성공:', { provider, userId, email, name, nickname, role });
-        console.log('🔍 OAuth2 콜백 URL 파라미터:', { userId, email, name, nickname, role, provider });
+        logger.log('✅ OAuth2 로그인 성공:', { provider, userId, email, name, nickname, role });
+        logger.log('🔍 OAuth2 콜백 URL 파라미터:', { userId, email, name, nickname, role, provider });
 
         if (!hasOAuthUserSessionParams) {
           setError('OAuth2 로그인 정보가 불완전합니다. 다시 시도해 주세요.');
@@ -391,7 +392,7 @@ const OAuth2Callback = () => {
 
         // 지점 매핑이 필요한 경우 로그인하지 않고 모달 표시
         if (userInfo.needsBranchMapping) {
-          console.log('🏢 지점 매핑 필요 - 로그인 중단하고 모달 표시');
+          logger.log('🏢 지점 매핑 필요 - 로그인 중단하고 모달 표시');
           setSocialUserData({
             provider: provider,
             email: email,
@@ -457,7 +458,7 @@ const OAuth2Callback = () => {
         const loginSuccess = await testLogin(userInfo, oauthSessionTokens, {
           requireServerVerify: true
         });
-        console.log('✅ OAuth2 중앙 세션에 사용자 정보 설정:', userInfo, 'verified=', loginSuccess);
+        logger.log('✅ OAuth2 중앙 세션에 사용자 정보 설정:', userInfo, 'verified=', loginSuccess);
 
         if (loginSuccess) {
           notificationManager.show(
@@ -541,18 +542,18 @@ const OAuth2Callback = () => {
         // 공통 리다이렉트 함수 사용
         const redirectToDashboard = (userRole) => {
           if (userRole) {
-            console.log('🎯 대시보드 리다이렉트 시작:', userRole);
-            console.log('🎯 사용자 정보:', userInfo);
+            logger.log('🎯 대시보드 리다이렉트 시작:', userRole);
+            logger.log('🎯 사용자 정보:', userInfo);
 
             checkMultiTenantAndRedirect(userRole);
           } else {
-            console.log('🎯 기본 대시보드로 리다이렉트');
+            logger.log('🎯 기본 대시보드로 리다이렉트');
             checkMultiTenantAndRedirect(USER_ROLES.CLIENT);
           }
         };
 
         if (loginSuccess) {
-          console.log('✅ 중앙 세션 로그인 성공, 멀티 테넌트 확인 후 대시보드로 리다이렉트 시작');
+          logger.log('✅ 중앙 세션 로그인 성공, 멀티 테넌트 확인 후 대시보드로 리다이렉트 시작');
           redirectToDashboard(role);
         } else {
           console.error('❌ OAuth2 서버 세션 검증 실패 — 강제 대시보드 리다이렉트 없음');
@@ -789,7 +790,7 @@ const OAuth2Callback = () => {
           onClose={() => setShowSignupModal(false)}
           socialUser={socialUserData}
           onSignupSuccess={(response) => {
-            console.log('✅ 소셜 회원가입 성공:', response);
+            logger.debug('✅ 소셜 회원가입 성공');
             notificationManager.show(
               toDisplayString(OAUTH_POST_SIGNUP_LOGIN_REMINDER, OAUTH_POST_SIGNUP_LOGIN_REMINDER),
               'success'
@@ -804,7 +805,7 @@ const OAuth2Callback = () => {
           onClose={() => setShowIntegrationModal(false)}
           socialUserInfo={socialUserData}
           onIntegrationSuccess={async(response) => {
-            console.log('계정 통합 성공:', response);
+            logger.debug('계정 통합 성공');
             setShowIntegrationModal(false);
             // 통합 성공 후 동적 대시보드로 이동
             await redirectToDynamicDashboard(response, navigate);

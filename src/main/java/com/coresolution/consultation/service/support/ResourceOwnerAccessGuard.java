@@ -2,24 +2,47 @@ package com.coresolution.consultation.service.support;
 
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Function;
 import java.util.function.Supplier;
 import com.coresolution.consultation.assessment.entity.PsychAssessmentDocument;
 import com.coresolution.consultation.assessment.repository.PsychAssessmentDocumentRepository;
+import com.coresolution.consultation.entity.Account;
+import com.coresolution.consultation.entity.Budget;
 import com.coresolution.consultation.entity.ConsultantAvailability;
+import com.coresolution.consultation.entity.ConsultantClientMapping;
 import com.coresolution.consultation.entity.ConsultantRating;
+import com.coresolution.consultation.entity.ConsultantSalaryProfile;
 import com.coresolution.consultation.entity.ConsultationAudioFile;
 import com.coresolution.consultation.entity.ConsultationRecord;
+import com.coresolution.consultation.entity.Item;
 import com.coresolution.consultation.entity.MultimodalEmotionReport;
+import com.coresolution.consultation.entity.PurchaseOrder;
+import com.coresolution.consultation.entity.PurchaseRequest;
+import com.coresolution.consultation.entity.RecurringExpense;
+import com.coresolution.consultation.entity.SalaryCalculation;
 import com.coresolution.consultation.entity.User;
+import com.coresolution.consultation.entity.erp.accounting.AccountingEntry;
 import com.coresolution.consultation.entity.erp.financial.FinancialTransaction;
 import com.coresolution.consultation.exception.UnauthorizedException;
+import com.coresolution.consultation.repository.AccountRepository;
+import com.coresolution.consultation.repository.BudgetRepository;
 import com.coresolution.consultation.repository.ConsultantAvailabilityRepository;
+import com.coresolution.consultation.repository.ConsultantClientMappingRepository;
 import com.coresolution.consultation.repository.ConsultantRatingRepository;
+import com.coresolution.consultation.repository.ConsultantSalaryProfileRepository;
 import com.coresolution.consultation.repository.ConsultationAudioFileRepository;
 import com.coresolution.consultation.repository.ConsultationRecordRepository;
+import com.coresolution.consultation.repository.ItemRepository;
 import com.coresolution.consultation.repository.MultimodalEmotionReportRepository;
+import com.coresolution.consultation.repository.PurchaseOrderRepository;
+import com.coresolution.consultation.repository.PurchaseRequestRepository;
+import com.coresolution.consultation.repository.RecurringExpenseRepository;
+import com.coresolution.consultation.repository.SalaryCalculationRepository;
+import com.coresolution.consultation.repository.erp.accounting.AccountingEntryRepository;
 import com.coresolution.consultation.repository.erp.financial.FinancialTransactionRepository;
 import com.coresolution.consultation.util.ServerErrorResponses;
+import com.coresolution.core.domain.ErdDiagram;
+import com.coresolution.core.repository.ErdDiagramRepository;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -29,10 +52,12 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * 자원 id(문서·평가·상담기록·음성파일·리포트·가용시간·재무 거래·상담사 급여)로 접근하는 API 의 소유자 가드.
+ * 자원 id(문서·평가·상담기록·음성파일·리포트·가용시간·재무 거래·ERP 조달/예산/반복 지출·상담사 급여·ERD)로
+ * 접근하는 API 의 소유자 가드.
  *
  * <p>자원을 세션 테넌트 범위로 먼저 읽고, 그 소유 내담자/상담사에 {@link ClientPathAccessGuard} 와
- * 같은 규칙(내담자 본인 · 매칭 상담사 · 같은 테넌트 관리자/사무원)을 적용한다.</p>
+ * 같은 규칙(내담자 본인 · 매칭 상담사 · 같은 테넌트 관리자/사무원)을 적용한다. 소유자가 테넌트 자체인 ERP 자원은
+ * 테넌트 범위 조회까지만 하고, 역할 검사는 해당 컨트롤러의 기존 ERP 권한 검사에 맡긴다.</p>
  *
  * <p>자원 id 로 인한 거부는 사유와 무관하게 하나의 문구({@link #DENIAL_RESOURCE_UNAVAILABLE})로 403 을
  * 돌려준다. 없는 자원·타인 자원·조회 실패가 서로 다른 상태 코드나 문구로 구분되면 그 자체가 존재 여부를
@@ -59,6 +84,17 @@ public class ResourceOwnerAccessGuard {
     private final MultimodalEmotionReportRepository multimodalReportRepository;
     private final ConsultantAvailabilityRepository availabilityRepository;
     private final FinancialTransactionRepository financialTransactionRepository;
+    private final ItemRepository itemRepository;
+    private final PurchaseRequestRepository purchaseRequestRepository;
+    private final PurchaseOrderRepository purchaseOrderRepository;
+    private final BudgetRepository budgetRepository;
+    private final RecurringExpenseRepository recurringExpenseRepository;
+    private final ConsultantSalaryProfileRepository salaryProfileRepository;
+    private final SalaryCalculationRepository salaryCalculationRepository;
+    private final ErdDiagramRepository erdDiagramRepository;
+    private final AccountingEntryRepository accountingEntryRepository;
+    private final AccountRepository accountRepository;
+    private final ConsultantClientMappingRepository mappingRepository;
 
     /**
      * 심리검사 문서(및 그 리포트) 접근 검증. 내담자 미지정 문서는 같은 테넌트 관리자·사무원만.
@@ -264,6 +300,216 @@ public class ResourceOwnerAccessGuard {
         return caller;
     }
 
+    /**
+     * ERP 아이템 id 기반 접근 검증 (세션 테넌트의 활성 아이템만).
+     *
+     * @param session HTTP 세션
+     * @param itemId  아이템 ID
+     * @return 테넌트 범위로 조회한 아이템
+     * @throws UnauthorizedException 로그인 사용자가 없을 때
+     * @throws AccessDeniedException 세션 테넌트에 아이템이 없을 때
+     */
+    @Transactional(readOnly = true)
+    public Item requireErpItemAccess(HttpSession session, Long itemId) {
+        return loadInCallerTenant(session, "itemId", itemId,
+            tenantId -> itemRepository.findByTenantIdAndIdAndActive(tenantId, itemId));
+    }
+
+    /**
+     * 구매 요청 id 기반 접근 검증 (세션 테넌트 범위).
+     *
+     * @param session           HTTP 세션
+     * @param purchaseRequestId 구매 요청 ID
+     * @return 테넌트 범위로 조회한 구매 요청
+     * @throws UnauthorizedException 로그인 사용자가 없을 때
+     * @throws AccessDeniedException 세션 테넌트에 구매 요청이 없을 때
+     */
+    @Transactional(readOnly = true)
+    public PurchaseRequest requirePurchaseRequestAccess(HttpSession session, Long purchaseRequestId) {
+        return loadInCallerTenant(session, "purchaseRequestId", purchaseRequestId,
+            tenantId -> purchaseRequestRepository.findByTenantIdAndIdWithDetails(tenantId, purchaseRequestId));
+    }
+
+    /**
+     * 구매 주문 id 기반 접근 검증 (세션 테넌트 범위).
+     *
+     * @param session         HTTP 세션
+     * @param purchaseOrderId 구매 주문 ID
+     * @return 테넌트 범위로 조회한 구매 주문
+     * @throws UnauthorizedException 로그인 사용자가 없을 때
+     * @throws AccessDeniedException 세션 테넌트에 구매 주문이 없을 때
+     */
+    @Transactional(readOnly = true)
+    public PurchaseOrder requirePurchaseOrderAccess(HttpSession session, Long purchaseOrderId) {
+        return loadInCallerTenant(session, "purchaseOrderId", purchaseOrderId,
+            tenantId -> purchaseOrderRepository.findByTenantIdAndIdWithDetails(tenantId, purchaseOrderId));
+    }
+
+    /**
+     * 예산 id 기반 접근 검증 (세션 테넌트 범위).
+     *
+     * @param session  HTTP 세션
+     * @param budgetId 예산 ID
+     * @return 테넌트 범위로 조회한 예산
+     * @throws UnauthorizedException 로그인 사용자가 없을 때
+     * @throws AccessDeniedException 세션 테넌트에 예산이 없을 때
+     */
+    @Transactional(readOnly = true)
+    public Budget requireBudgetAccess(HttpSession session, Long budgetId) {
+        return loadInCallerTenant(session, "budgetId", budgetId,
+            tenantId -> budgetRepository.findByTenantIdAndIdWithManager(tenantId, budgetId));
+    }
+
+    /**
+     * 반복 지출 id 기반 접근 검증 (세션 테넌트 범위).
+     *
+     * @param session          HTTP 세션
+     * @param recurringExpenseId 반복 지출 ID
+     * @return 테넌트 범위로 조회한 반복 지출
+     * @throws UnauthorizedException 로그인 사용자가 없을 때
+     * @throws AccessDeniedException 세션 테넌트에 반복 지출이 없을 때
+     */
+    @Transactional(readOnly = true)
+    public RecurringExpense requireRecurringExpenseAccess(HttpSession session, Long recurringExpenseId) {
+        return loadInCallerTenant(session, "recurringExpenseId", recurringExpenseId,
+            tenantId -> recurringExpenseRepository.findByTenantIdAndId(tenantId, recurringExpenseId));
+    }
+
+    /**
+     * 회계 분개 id 기반 접근 검증 (세션 테넌트 범위).
+     *
+     * @param session        HTTP 세션
+     * @param journalEntryId 분개 ID
+     * @return 테넌트 범위로 조회한 분개
+     * @throws UnauthorizedException 로그인 사용자가 없을 때
+     * @throws AccessDeniedException 세션 테넌트에 분개가 없을 때
+     */
+    @Transactional(readOnly = true)
+    public AccountingEntry requireJournalEntryAccess(HttpSession session, Long journalEntryId) {
+        return loadInCallerTenant(session, "journalEntryId", journalEntryId,
+            tenantId -> accountingEntryRepository.findByTenantIdAndId(tenantId, journalEntryId));
+    }
+
+    /**
+     * 원장 계정 id 기반 접근 검증 (세션 테넌트 범위).
+     *
+     * @param session   HTTP 세션
+     * @param accountId 계정 ID
+     * @return 테넌트 범위로 조회한 계정
+     * @throws UnauthorizedException 로그인 사용자가 없을 때
+     * @throws AccessDeniedException 세션 테넌트에 계정이 없을 때
+     */
+    @Transactional(readOnly = true)
+    public Account requireLedgerAccountAccess(HttpSession session, Long accountId) {
+        return loadInCallerTenant(session, "accountId", accountId,
+            tenantId -> accountRepository.findByTenantIdAndId(tenantId, accountId));
+    }
+
+    /**
+     * 매핑 id 기반 회계 자원(할인 회계 등) 접근 검증 (세션 테넌트 범위).
+     *
+     * @param session   HTTP 세션
+     * @param mappingId 매핑 ID
+     * @return 테넌트 범위로 조회한 매핑
+     * @throws UnauthorizedException 로그인 사용자가 없을 때
+     * @throws AccessDeniedException 세션 테넌트에 매핑이 없을 때
+     */
+    @Transactional(readOnly = true)
+    public ConsultantClientMapping requireMappingAccountingAccess(HttpSession session, Long mappingId) {
+        return loadInCallerTenant(session, "mappingId", mappingId,
+            tenantId -> mappingRepository.findByTenantIdAndId(tenantId, mappingId));
+    }
+
+    /**
+     * 급여 프로필 id 기반 접근 검증. 프로필의 상담사 본인 또는 같은 테넌트 관리자·사무원.
+     *
+     * @param session   HTTP 세션
+     * @param profileId 급여 프로필 ID
+     * @return 테넌트 범위로 조회한 급여 프로필
+     * @throws UnauthorizedException 로그인 사용자가 없을 때
+     * @throws AccessDeniedException 세션 테넌트에 프로필이 없거나 본인·관리자가 아닐 때
+     */
+    @Transactional(readOnly = true)
+    public ConsultantSalaryProfile requireSalaryProfileAccess(HttpSession session, Long profileId) {
+        User caller = clientPathAccessGuard.requireCaller(session);
+        String tenantId = clientPathAccessGuard.requireCallerTenantId(caller);
+        ConsultantSalaryProfile profile = load(caller, "salaryProfileId", profileId,
+            () -> salaryProfileRepository.findByTenantIdAndId(tenantId, profileId));
+        assertConsultantAccess(caller, profile.getConsultantId(), "salaryProfileId", profileId);
+        return profile;
+    }
+
+    /**
+     * 급여 계산 id 기반 접근 검증. 계산의 상담사 본인 또는 같은 테넌트 관리자·사무원.
+     *
+     * @param session       HTTP 세션
+     * @param calculationId 급여 계산 ID
+     * @throws UnauthorizedException 로그인 사용자가 없을 때
+     * @throws AccessDeniedException 세션 테넌트에 계산이 없거나 본인·관리자가 아닐 때
+     */
+    @Transactional(readOnly = true)
+    public void requireSalaryCalculationAccess(HttpSession session, Long calculationId) {
+        User caller = clientPathAccessGuard.requireCaller(session);
+        String tenantId = clientPathAccessGuard.requireCallerTenantId(caller);
+        SalaryCalculation calculation = load(caller, "calculationId", calculationId,
+            () -> salaryCalculationRepository.findByTenantIdAndId(tenantId, calculationId));
+        Long consultantId = calculation.getConsultant() != null ? calculation.getConsultant().getId() : null;
+        assertConsultantAccess(caller, consultantId, "calculationId", calculationId);
+    }
+
+    /**
+     * 테넌트 ERD 접근 검증. 세션 테넌트의 관리자만, 경로 테넌트가 세션 테넌트와 같을 때만 허용한다.
+     *
+     * @param session      HTTP 세션
+     * @param pathTenantId 경로 테넌트 ID (세션 테넌트와 대조만 하고 조회 기준으로 쓰지 않는다)
+     * @return 세션 테넌트 ID
+     * @throws UnauthorizedException 로그인 사용자가 없을 때
+     * @throws AccessDeniedException 관리자가 아니거나 다른 테넌트 경로일 때
+     */
+    public String requireOwnTenantErdAccess(HttpSession session, String pathTenantId) {
+        return assertOwnTenantAdmin(clientPathAccessGuard.requireCaller(session), pathTenantId);
+    }
+
+    /**
+     * 테넌트 ERD 다이어그램 접근 검증. {@link #requireOwnTenantErdAccess} + 다이어그램이 세션 테넌트 소유이거나
+     * 테넌트 없는 공개 다이어그램일 때만 허용한다.
+     *
+     * @param session      HTTP 세션
+     * @param pathTenantId 경로 테넌트 ID
+     * @param diagramId    다이어그램 ID
+     * @throws UnauthorizedException 로그인 사용자가 없을 때
+     * @throws AccessDeniedException 관리자가 아니거나 다른 테넌트 경로·다이어그램일 때
+     */
+    @Transactional(readOnly = true)
+    public void requireErdDiagramAccess(HttpSession session, String pathTenantId, String diagramId) {
+        User caller = clientPathAccessGuard.requireCaller(session);
+        String tenantId = assertOwnTenantAdmin(caller, pathTenantId);
+        ErdDiagram diagram = load(caller, "diagramId", diagramId,
+            () -> erdDiagramRepository.findByDiagramId(diagramId));
+        boolean owned = Objects.equals(tenantId, diagram.getTenantId());
+        boolean sharedPublic = diagram.getTenantId() == null && Boolean.TRUE.equals(diagram.getIsPublic());
+        if (!owned && !sharedPublic) {
+            throw denyResource(caller, "diagramId", diagramId);
+        }
+    }
+
+    /** 세션 테넌트 관리자이고 경로 테넌트가 세션 테넌트와 같은지 검증한다. 조회 기준은 항상 세션 테넌트다. */
+    private String assertOwnTenantAdmin(User caller, String pathTenantId) {
+        String tenantId = clientPathAccessGuard.requireCallerTenantId(caller);
+        if (!caller.getRole().isAdmin() || !Objects.equals(tenantId, pathTenantId)) {
+            throw denyResource(caller, "tenantId", pathTenantId);
+        }
+        return tenantId;
+    }
+
+    /** 세션 테넌트 범위로 자원을 읽는다 (소유자가 테넌트 자체인 자원용). */
+    private <T> T loadInCallerTenant(HttpSession session, String field, Long resourceId,
+            Function<String, Optional<T>> lookup) {
+        User caller = clientPathAccessGuard.requireCaller(session);
+        String tenantId = clientPathAccessGuard.requireCallerTenantId(caller);
+        return load(caller, field, resourceId, () -> lookup.apply(tenantId));
+    }
+
     private ConsultationRecord loadAccessibleRecord(User caller, Long consultationRecordId) {
         String tenantId = clientPathAccessGuard.requireCallerTenantId(caller);
         ConsultationRecord record = load(caller, "consultationRecordId", consultationRecordId,
@@ -281,7 +527,7 @@ public class ResourceOwnerAccessGuard {
      * <p>id 누락·테넌트 내 미존재·조회 실패를 모두 같은 403 으로 수렴시킨다. 조회 실패(스키마 불일치 등)를
      * 500 으로 흘리면 없는 id 와 읽을 수 있는 id 의 상태 코드가 갈려 존재 여부가 드러난다.</p>
      */
-    private <T> T load(User caller, String field, Long resourceId, Supplier<Optional<T>> lookup) {
+    private <T> T load(User caller, String field, Object resourceId, Supplier<Optional<T>> lookup) {
         if (resourceId == null) {
             throw denyResource(caller, field, null);
         }
@@ -314,7 +560,7 @@ public class ResourceOwnerAccessGuard {
         }
     }
 
-    private static AccessDeniedException denyResource(User caller, String field, Long resourceId) {
+    private static AccessDeniedException denyResource(User caller, String field, Object resourceId) {
         return ClientPathAccessGuard.denied(DENIAL_RESOURCE_UNAVAILABLE, caller, field, resourceId);
     }
 }

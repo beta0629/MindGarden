@@ -23,6 +23,8 @@ import java.util.List;
  * 
  * 표준화 완료: BaseApiController 상속, ApiResponse 사용, GlobalExceptionHandler에 위임
  * 
+ * <p>전 테넌트를 다루므로 Ops 운영자(ROLE_OPS)만 허용한다. 테넌트 관리자(ROLE_ADMIN)는 403.</p>
+ *
  * @author CoreSolution
  * @version 2.0.0
  * @since 2025-01-XX
@@ -43,7 +45,7 @@ public class PricingPlanOpsController extends BaseApiController {
      */
     @GetMapping
     public ResponseEntity<ApiResponse<List<PricingPlan>>> getPlans() {
-        OpsPermissionUtils.requireAdminOrOps();
+        OpsPermissionUtils.requireOps();
         log.debug("모든 요금제 목록 조회");
         List<PricingPlan> plans = pricingPlanService.findAllPlans();
         return success(plans);
@@ -95,7 +97,7 @@ public class PricingPlanOpsController extends BaseApiController {
      */
     @GetMapping("/addons")
     public ResponseEntity<ApiResponse<List<?>>> getAddons() {
-        OpsPermissionUtils.requireAdminOrOps();
+        OpsPermissionUtils.requireOps();
         log.debug("모든 애드온 목록 조회 (임시: 빈 배열 반환)");
         // TODO: PricingAddon 엔티티 및 서비스 구현 후 실제 데이터 반환
         return success(List.of());
@@ -110,7 +112,7 @@ public class PricingPlanOpsController extends BaseApiController {
     public ResponseEntity<ApiResponse<PricingPlan>> createPlan(
             @RequestBody @Valid PricingPlanCreateRequest request,
             Authentication authentication) {
-        OpsPermissionUtils.requireAdminOrOps();
+        OpsPermissionUtils.requireOps();
         log.info("요금제 생성 요청: planCode={}, displayName={}", request.planCode(), request.displayName());
         
         String createdBy = authentication != null && authentication.getName() != null 
@@ -131,7 +133,7 @@ public class PricingPlanOpsController extends BaseApiController {
             @PathVariable String planId,
             @RequestBody @Valid PricingPlanUpdateRequest request,
             Authentication authentication) {
-        OpsPermissionUtils.requireAdminOrOps();
+        OpsPermissionUtils.requireOps();
         log.info("요금제 수정 요청: planId={}", planId);
         
         String updatedBy = authentication != null && authentication.getName() != null 
@@ -151,7 +153,7 @@ public class PricingPlanOpsController extends BaseApiController {
     public ResponseEntity<ApiResponse<Void>> deactivatePlan(
             @PathVariable String planId,
             Authentication authentication) {
-        OpsPermissionUtils.requireAdminOrOps();
+        OpsPermissionUtils.requireOps();
         log.info("요금제 비활성화 요청: planId={}", planId);
         
         String deletedBy = authentication != null && authentication.getName() != null 

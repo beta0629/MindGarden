@@ -18,8 +18,13 @@
 #   p_domain_suffix 가 없다. 실제 호출부(OnboardingApprovalServiceImpl)와 PlSqlInitializer 는
 #   파라미터 12개인 sql/procedures/process_onboarding_approval.sql 을 쓴다.
 #   Flyway 판을 심으면 온보딩 승인이 깨지므로 pinned 로 둔다.
+#
+# CreateOrActivateTenant 주의: PlSqlInitializer 가 기동 때마다 파라미터 10개(p_domain_suffix 포함)인
+#   sql/procedures/create_or_activate_tenant_approval.sql 로 덮어쓰고 10개인지 검증한다.
+#   Flyway 최신판(V20251222_002)과 다르므로 pinned 로 둔다.
 ProcessOnboardingApproval	src/main/resources/sql/procedures/process_onboarding_approval.sql	pinned
 GenerateErdOnOnboardingApproval	src/main/resources/db/migration/V14__create_erd_generation_procedure.sql	flyway-latest
 SetupTenantCategoryMapping	src/main/resources/db/migration/V41__create_missing_onboarding_procedures.sql	flyway-latest
 ActivateDefaultComponents	src/main/resources/db/migration/V20260522_002__shop_reward_default_components_onboarding.sql	flyway-latest
 CopyDefaultTenantCodes	src/main/resources/db/migration/V20260831_002__expense_income_ssot_tenant_backfill.sql	flyway-latest
+CreateOrActivateTenant	src/main/resources/sql/procedures/create_or_activate_tenant_approval.sql	pinned

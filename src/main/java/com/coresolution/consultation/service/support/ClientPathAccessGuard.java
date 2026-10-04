@@ -296,7 +296,7 @@ public class ClientPathAccessGuard {
         return StringUtils.hasText(value) ? value.trim() : null;
     }
 
-    static void deny(String message, User caller, String field, Long requested) {
+    static void deny(String message, User caller, String field, Object requested) {
         throw denied(message, caller, field, requested);
     }
 
@@ -309,7 +309,7 @@ public class ClientPathAccessGuard {
      * @param requested 로그용 요청 값
      * @return 던질 {@link AccessDeniedException}
      */
-    static AccessDeniedException denied(String message, User caller, String field, Long requested) {
+    static AccessDeniedException denied(String message, User caller, String field, Object requested) {
         log.warn("[security] client path access denied: userId={}, role={}, {}={}",
             caller != null ? caller.getId() : null, caller != null ? caller.getRole() : null, field, requested);
         return new AccessDeniedException(message);

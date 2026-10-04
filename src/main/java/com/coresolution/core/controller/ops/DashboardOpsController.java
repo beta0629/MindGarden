@@ -20,6 +20,8 @@ import java.util.Map;
  * 
  * 표준화 완료: BaseApiController 상속, ApiResponse 사용, GlobalExceptionHandler에 위임
  * 
+ * <p>전 테넌트를 다루므로 Ops 운영자(ROLE_OPS)만 허용한다. 테넌트 관리자(ROLE_ADMIN)는 403.</p>
+ *
  * @author CoreSolution
  * @version 2.0.0
  * @since 2025-01-XX
@@ -39,8 +41,7 @@ public class DashboardOpsController extends BaseApiController {
      */
     @GetMapping("/metrics")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getMetrics() {
-        // 권한 체크: ADMIN 또는 OPS 역할이 있어야 함
-        OpsPermissionUtils.requireAdminOrOps();
+        OpsPermissionUtils.requireOps();
         
         Map<String, Object> metrics = dashboardService.getMetrics();
         return success(metrics);

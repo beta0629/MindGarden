@@ -204,7 +204,18 @@ class ResourceOwnerGuardMvcTest {
         ClientPathAccessGuard clientGuard = new ClientPathAccessGuard(mappingRepository, userRepository);
         ResourceOwnerAccessGuard ownerGuard = new ResourceOwnerAccessGuard(clientGuard, psychDocumentRepository,
             ratingRepository, recordRepository, audioFileRepository, multimodalReportRepository,
-            availabilityRepository, mock(FinancialTransactionRepository.class));
+            availabilityRepository, mock(FinancialTransactionRepository.class),
+            mock(com.coresolution.consultation.repository.ItemRepository.class),
+            mock(com.coresolution.consultation.repository.PurchaseRequestRepository.class),
+            mock(com.coresolution.consultation.repository.PurchaseOrderRepository.class),
+            mock(com.coresolution.consultation.repository.BudgetRepository.class),
+            mock(com.coresolution.consultation.repository.RecurringExpenseRepository.class),
+            mock(com.coresolution.consultation.repository.ConsultantSalaryProfileRepository.class),
+            mock(com.coresolution.consultation.repository.SalaryCalculationRepository.class),
+            mock(com.coresolution.core.repository.ErdDiagramRepository.class),
+            mock(com.coresolution.consultation.repository.erp.accounting.AccountingEntryRepository.class),
+            mock(com.coresolution.consultation.repository.AccountRepository.class),
+            mock(com.coresolution.consultation.repository.ConsultantClientMappingRepository.class));
         Object[] provided = {clientGuard, ownerGuard, ingestService, reportService, statsService,
             psychReportRepository, psychDocumentRepository, ratingService, emotionAnalysisService,
             availabilityService, environment};

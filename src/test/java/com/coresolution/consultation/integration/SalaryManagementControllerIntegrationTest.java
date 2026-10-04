@@ -3,6 +3,8 @@ package com.coresolution.consultation.integration;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -40,6 +42,8 @@ import com.coresolution.consultation.entity.SalaryProfile;
 import com.coresolution.consultation.entity.SalaryTaxCalculation;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.exception.EntityNotFoundException;
+import com.coresolution.consultation.repository.SalaryCalculationRepository;
+import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.CommonCodeService;
 import com.coresolution.consultation.service.DynamicPermissionService;
 import com.coresolution.consultation.service.PlSqlSalaryManagementService;
@@ -90,6 +94,26 @@ class SalaryManagementControllerIntegrationTest {
 
     @MockBean
     private SalaryExportService salaryExportService;
+
+    @MockBean
+    private SalaryCalculationRepository salaryCalculationRepository;
+
+    @Autowired
+    private UserRepository userRepository;
+
+    private User saveConsultantInTenantA() {
+        long suffix = Math.abs(java.util.concurrent.ThreadLocalRandom.current().nextLong());
+        User consultant = new User();
+        consultant.setId(suffix);
+        consultant.setUserId("sma-consultant-" + suffix);
+        consultant.setTenantId(TENANT_A);
+        consultant.setEmail("sma-consultant-" + suffix + "@salary.test");
+        consultant.setName("급여상담사");
+        consultant.setRole(UserRole.CONSULTANT);
+        consultant.setIsDeleted(false);
+        consultant.setPassword("$2a$10$testHashedPasswordForConsultant");
+        return userRepository.saveAndFlush(consultant);
+    }
 
     private User adminUserWithTenant() {
         User user = new User();
@@ -226,9 +250,10 @@ class SalaryManagementControllerIntegrationTest {
         @Test
         @DisplayName("I-API-02: GET /calculations/{consultantId} 정상 → 200")
         void getCalculationsByConsultant_returns200() throws Exception {
-            when(salaryManagementService.getSalaryCalculations(1L)).thenReturn(Collections.emptyList());
+            Long consultantId = saveConsultantInTenantA().getId();
+            when(salaryManagementService.getSalaryCalculations(consultantId)).thenReturn(Collections.emptyList());
 
-            mockMvc.perform(get("/api/v1/admin/salary/calculations/1")
+            mockMvc.perform(get("/api/v1/admin/salary/calculations/" + consultantId)
                             .sessionAttr(SessionConstants.USER_OBJECT, adminUserWithTenant())
                             .sessionAttr(SessionConstants.TENANT_ID, TENANT_A))
                     .andExpect(status().isOk())
@@ -374,6 +399,11 @@ class SalaryManagementControllerIntegrationTest {
                     "calculationPeriodStart", "2025-06-01",
                     "calculationPeriodEnd", "2025-06-30"
             );
+            SalaryCalculation calculation = new SalaryCalculation();
+            calculation.setId(1L);
+            calculation.setConsultant(saveConsultantInTenantA());
+            when(salaryCalculationRepository.findByTenantIdAndId(TENANT_A, 1L))
+                    .thenReturn(java.util.Optional.of(calculation));
             when(salaryManagementService.getTaxDetails(1L)).thenReturn(taxDetails);
 
             mockMvc.perform(get("/api/v1/admin/salary/tax/1")
@@ -385,15 +415,17 @@ class SalaryManagementControllerIntegrationTest {
         }
 
         @Test
-        @DisplayName("I-API-08: GET /tax/{calculationId} 존재하지 않는 ID → 404")
-        void getTaxDetails_notFound_returns404() throws Exception {
-            when(salaryManagementService.getTaxDetails(999L))
-                    .thenThrow(new EntityNotFoundException("급여 계산 정보를 찾을 수 없습니다: 999"));
+        @DisplayName("I-API-08: GET /tax/{calculationId} 없거나 다른 테넌트 ID → 공통 403")
+        void getTaxDetails_notFound_returnsSharedForbidden() throws Exception {
+            when(salaryCalculationRepository.findByTenantIdAndId(TENANT_A, 999L))
+                    .thenReturn(java.util.Optional.empty());
 
             mockMvc.perform(get("/api/v1/admin/salary/tax/999")
                             .sessionAttr(SessionConstants.USER_OBJECT, adminUserWithTenant())
                             .sessionAttr(SessionConstants.TENANT_ID, TENANT_A))
-                    .andExpect(status().isNotFound());
+                    .andExpect(status().isForbidden())
+                    .andExpect(jsonPath("$.data").doesNotExist());
+            verify(salaryManagementService, never()).getTaxDetails(999L);
         }
 
         @Test
@@ -540,15 +572,17 @@ class SalaryManagementControllerIntegrationTest {
         }
 
         @Test
-        @DisplayName("I-API-15: POST /approve/{calculationId} 존재하지 않는 ID → 404/400")
-        void postApprove_notFound_returnsError() throws Exception {
-            when(plSqlSalaryManagementService.approveSalaryWithErpSync(eq(999L), eq(TENANT_A), any()))
-                    .thenReturn(Map.of("success", false, "message", "급여 계산을 찾을 수 없습니다."));
+        @DisplayName("I-API-15: POST /approve/{calculationId} 없거나 다른 테넌트 ID → 공통 403, 프로시저 미호출")
+        void postApprove_notFound_returnsSharedForbidden() throws Exception {
+            when(salaryCalculationRepository.findByTenantIdAndId(TENANT_A, 999L))
+                    .thenReturn(java.util.Optional.empty());
 
             mockMvc.perform(post("/api/v1/admin/salary/approve/999")
                             .sessionAttr(SessionConstants.USER_OBJECT, adminUserWithTenant())
                             .sessionAttr(SessionConstants.TENANT_ID, TENANT_A))
-                    .andExpect(status().isBadRequest());
+                    .andExpect(status().isForbidden())
+                    .andExpect(jsonPath("$.data").doesNotExist());
+            verify(plSqlSalaryManagementService, never()).approveSalaryWithErpSync(eq(999L), any(), any());
         }
 
         @Test
@@ -606,15 +640,17 @@ class SalaryManagementControllerIntegrationTest {
         }
 
         @Test
-        @DisplayName("I-API-16: POST /pay/{calculationId} 존재하지 않는 ID → 404/400")
-        void postPay_notFound_returnsError() throws Exception {
-            when(plSqlSalaryManagementService.processSalaryPaymentWithErpSync(eq(999L), eq(TENANT_A), any()))
-                    .thenReturn(Map.of("success", false, "message", "급여 계산을 찾을 수 없습니다."));
+        @DisplayName("I-API-16: POST /pay/{calculationId} 없거나 다른 테넌트 ID → 공통 403, 프로시저 미호출")
+        void postPay_notFound_returnsSharedForbidden() throws Exception {
+            when(salaryCalculationRepository.findByTenantIdAndId(TENANT_A, 999L))
+                    .thenReturn(java.util.Optional.empty());
 
             mockMvc.perform(post("/api/v1/admin/salary/pay/999")
                             .sessionAttr(SessionConstants.USER_OBJECT, adminUserWithTenant())
                             .sessionAttr(SessionConstants.TENANT_ID, TENANT_A))
-                    .andExpect(status().isBadRequest());
+                    .andExpect(status().isForbidden())
+                    .andExpect(jsonPath("$.data").doesNotExist());
+            verify(plSqlSalaryManagementService, never()).processSalaryPaymentWithErpSync(eq(999L), any(), any());
         }
     }
 
@@ -625,9 +661,10 @@ class SalaryManagementControllerIntegrationTest {
         @Test
         @DisplayName("I-TENANT-01: GET /calculations/{consultantId} 현재 테넌트만 반환")
         void getCalculationsByConsultant_usesTenantContext() throws Exception {
-            when(salaryManagementService.getSalaryCalculations(1L)).thenReturn(Collections.emptyList());
+            Long consultantId = saveConsultantInTenantA().getId();
+            when(salaryManagementService.getSalaryCalculations(consultantId)).thenReturn(Collections.emptyList());
 
-            mockMvc.perform(get("/api/v1/admin/salary/calculations/1")
+            mockMvc.perform(get("/api/v1/admin/salary/calculations/" + consultantId)
                             .sessionAttr(SessionConstants.USER_OBJECT, adminUserWithTenant())
                             .sessionAttr(SessionConstants.TENANT_ID, TENANT_A))
                     .andExpect(status().isOk());

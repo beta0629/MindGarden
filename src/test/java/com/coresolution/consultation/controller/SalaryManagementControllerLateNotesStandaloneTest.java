@@ -81,6 +81,10 @@ class SalaryManagementControllerLateNotesStandaloneTest {
     @Mock
     private com.fasterxml.jackson.databind.ObjectMapper objectMapper;
 
+    /** 계산 id 소유 검사는 ErpSalaryIdGuardFollowupMvcTest 가 다룬다. 여기서는 프로시저 계약만 본다. */
+    @Mock
+    private com.coresolution.consultation.service.support.ResourceOwnerAccessGuard resourceOwnerAccessGuard;
+
     @InjectMocks
     private SalaryManagementController controller;
 

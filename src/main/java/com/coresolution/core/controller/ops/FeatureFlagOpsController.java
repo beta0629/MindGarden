@@ -24,6 +24,8 @@ import java.util.UUID;
  * 
  * 표준화 완료: BaseApiController 상속, ApiResponse 사용, GlobalExceptionHandler에 위임
  * 
+ * <p>전 테넌트를 다루므로 Ops 운영자(ROLE_OPS)만 허용한다. 테넌트 관리자(ROLE_ADMIN)는 403.</p>
+ *
  * @author CoreSolution
  * @version 2.0.0
  * @since 2025-01-XX
@@ -43,7 +45,7 @@ public class FeatureFlagOpsController extends BaseApiController {
      */
     @GetMapping
     public ResponseEntity<ApiResponse<List<FeatureFlag>>> getAll() {
-        OpsPermissionUtils.requireAdminOrOps();
+        OpsPermissionUtils.requireOps();
         log.debug("모든 Feature Flag 목록 조회");
         List<FeatureFlag> flags = featureFlagService.findAll();
         return success(flags);
@@ -55,7 +57,7 @@ public class FeatureFlagOpsController extends BaseApiController {
      */
     @GetMapping("/enabled")
     public ResponseEntity<ApiResponse<List<FeatureFlag>>> getEnabled() {
-        OpsPermissionUtils.requireAdminOrOps();
+        OpsPermissionUtils.requireOps();
         log.debug("활성화된 Feature Flag 목록 조회");
         List<FeatureFlag> flags = featureFlagService.findAllEnabled();
         return success(flags);
@@ -67,7 +69,7 @@ public class FeatureFlagOpsController extends BaseApiController {
      */
     @GetMapping("/key/{flagKey}")
     public ResponseEntity<ApiResponse<FeatureFlag>> getByFlagKey(@PathVariable String flagKey) {
-        OpsPermissionUtils.requireAdminOrOps();
+        OpsPermissionUtils.requireOps();
         log.debug("Feature Flag 조회: flagKey={}", flagKey);
         FeatureFlag flag = featureFlagService.findByFlagKey(flagKey)
             .orElseThrow(() -> new EntityNotFoundException("Feature Flag를 찾을 수 없습니다: " + flagKey));
@@ -80,7 +82,7 @@ public class FeatureFlagOpsController extends BaseApiController {
      */
     @PostMapping
     public ResponseEntity<ApiResponse<FeatureFlag>> create(@RequestBody @Valid FeatureFlagCreateRequest request) {
-        OpsPermissionUtils.requireAdminOrOps();
+        OpsPermissionUtils.requireOps();
         log.info("Feature Flag 생성 요청: flagKey={}", request.flagKey());
         
         Instant expiresAt = null;
@@ -110,7 +112,7 @@ public class FeatureFlagOpsController extends BaseApiController {
     public ResponseEntity<ApiResponse<FeatureFlag>> toggle(
             @PathVariable UUID flagId,
             @RequestBody @Valid FeatureFlagToggleRequest request) {
-        OpsPermissionUtils.requireAdminOrOps();
+        OpsPermissionUtils.requireOps();
         log.info("Feature Flag 상태 변경 요청: flagId={}, state={}", flagId, request.state());
         
         FeatureFlag updated = featureFlagService.toggle(flagId, request.state());

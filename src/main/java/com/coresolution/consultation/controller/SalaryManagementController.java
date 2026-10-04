@@ -225,10 +225,8 @@ public class SalaryManagementController extends BaseApiController {
         if (currentUser.getTenantId() != null) {
             TenantContextHolder.setTenantId(currentUser.getTenantId());
         }
-        ConsultantSalaryProfile existing = salaryManagementService.getSalaryProfileById(id);
-        if (existing.getTenantId() != null && !existing.getTenantId().equals(currentUser.getTenantId())) {
-            throw new ForbiddenException("해당 급여 프로필을 수정할 권한이 없습니다.");
-        }
+        ConsultantSalaryProfile existing = resourceOwnerAccessGuard.requireSalaryProfileAccess(session, id);
+        resourceOwnerAccessGuard.requireConsultantResourceAccess(session, request.getConsultantId());
         log.info("급여 프로필 수정: ID={}, 상담사 ID {}", id, request.getConsultantId());
         ConsultantSalaryProfile entity = toEntity(request, id, existing.getTenantId());
         ConsultantSalaryProfile updated = salaryManagementService.updateSalaryProfile(entity, request.getOptions());
@@ -338,6 +336,7 @@ public class SalaryManagementController extends BaseApiController {
             TenantContextHolder.setTenantId(currentUser.getTenantId());
         }
         requireSalaryManagePermission(session);
+        resourceOwnerAccessGuard.requireSalaryCalculationAccess(session, calculationId);
         log.info("세금 상세 조회: 사용자 {}, 계산 ID {}", currentUser.getName(), calculationId);
         Map<String, Object> taxDetails = salaryManagementService.getTaxDetails(calculationId);
         return success("세금 상세 내역을 조회했습니다.", taxDetails);

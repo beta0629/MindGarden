@@ -187,7 +187,12 @@ public class ErpController extends BaseApiController {
      * ID로 아이템 조회
      */
     @GetMapping("/items/{id}")
-    public ResponseEntity<Map<String, Object>> getItemById(@PathVariable Long id) {
+    public ResponseEntity<Map<String, Object>> getItemById(@PathVariable Long id, HttpSession session) {
+        ResponseEntity<?> accessCheck = checkErpAccess(session);
+        if (accessCheck != null) {
+            return (ResponseEntity<Map<String, Object>>) accessCheck;
+        }
+        resourceOwnerAccessGuard.requireErpItemAccess(session, id);
         log.info("아이템 조회 요청: id={}", id);
 
         Optional<Item> item = erpService.getItemById(id);
@@ -307,6 +312,7 @@ public class ErpController extends BaseApiController {
                     .body(Map.of("success", false, "message", "관리자 권한이 필요합니다."));
         }
 
+        resourceOwnerAccessGuard.requireErpItemAccess(session, id);
         log.info("아이템 수정 요청: id={}, name={}", id, request.getName());
 
         // 기존 아이템 조회
@@ -354,6 +360,7 @@ public class ErpController extends BaseApiController {
                     .body(Map.of("success", false, "message", "아이템 삭제는 테넌트 관리자(ADMIN)만 할 수 있습니다."));
         }
 
+        resourceOwnerAccessGuard.requireErpItemAccess(session, id);
         log.info("아이템 삭제 요청: id={}", id);
 
         boolean deleted = erpService.deleteItem(id);
@@ -385,6 +392,7 @@ public class ErpController extends BaseApiController {
                     .body(Map.of("success", false, "message", "관리자 권한이 필요합니다."));
         }
 
+        resourceOwnerAccessGuard.requireErpItemAccess(session, id);
         log.info("아이템 재고 업데이트 요청: id={}, quantity={}", id, quantity);
 
         boolean updated = erpService.updateItemStock(id, quantity);
@@ -452,7 +460,13 @@ public class ErpController extends BaseApiController {
      * 구매 요청 조회
      */
     @GetMapping("/purchase-requests/{id}")
-    public ResponseEntity<Map<String, Object>> getPurchaseRequestById(@PathVariable Long id) {
+    public ResponseEntity<Map<String, Object>> getPurchaseRequestById(@PathVariable Long id,
+            HttpSession session) {
+        ResponseEntity<?> accessCheck = checkErpAccess(session);
+        if (accessCheck != null) {
+            return (ResponseEntity<Map<String, Object>>) accessCheck;
+        }
+        resourceOwnerAccessGuard.requirePurchaseRequestAccess(session, id);
         log.info("구매 요청 조회: id={}", id);
 
         Optional<PurchaseRequest> request = erpService.getPurchaseRequestById(id);
@@ -730,7 +744,13 @@ public class ErpController extends BaseApiController {
      * 구매 주문 조회
      */
     @GetMapping("/purchase-orders/{id}")
-    public ResponseEntity<Map<String, Object>> getPurchaseOrderById(@PathVariable Long id) {
+    public ResponseEntity<Map<String, Object>> getPurchaseOrderById(@PathVariable Long id,
+            HttpSession session) {
+        ResponseEntity<?> accessCheck = checkErpAccess(session);
+        if (accessCheck != null) {
+            return (ResponseEntity<Map<String, Object>>) accessCheck;
+        }
+        resourceOwnerAccessGuard.requirePurchaseOrderAccess(session, id);
         log.info("구매 주문 조회: id={}", id);
 
         Optional<PurchaseOrder> order = erpService.getPurchaseOrderById(id);
@@ -754,7 +774,12 @@ public class ErpController extends BaseApiController {
      */
     @PutMapping("/purchase-orders/{id}/status")
     public ResponseEntity<Map<String, Object>> updateOrderStatus(@PathVariable Long id,
-            @RequestParam String status) {
+            @RequestParam String status, HttpSession session) {
+        ResponseEntity<?> accessCheck = checkErpAccess(session);
+        if (accessCheck != null) {
+            return (ResponseEntity<Map<String, Object>>) accessCheck;
+        }
+        resourceOwnerAccessGuard.requirePurchaseOrderAccess(session, id);
         try {
             log.info("주문 상태 업데이트: id={}, status={}", id, status);
 
@@ -777,7 +802,12 @@ public class ErpController extends BaseApiController {
      * 배송 완료 처리
      */
     @PostMapping("/purchase-orders/{id}/deliver")
-    public ResponseEntity<Map<String, Object>> markAsDelivered(@PathVariable Long id) {
+    public ResponseEntity<Map<String, Object>> markAsDelivered(@PathVariable Long id, HttpSession session) {
+        ResponseEntity<?> accessCheck = checkErpAccess(session);
+        if (accessCheck != null) {
+            return (ResponseEntity<Map<String, Object>>) accessCheck;
+        }
+        resourceOwnerAccessGuard.requirePurchaseOrderAccess(session, id);
         try {
             log.info("배송 완료 처리: id={}", id);
 
@@ -818,7 +848,12 @@ public class ErpController extends BaseApiController {
      * ID로 예산 조회
      */
     @GetMapping("/budgets/{id}")
-    public ResponseEntity<Map<String, Object>> getBudgetById(@PathVariable Long id) {
+    public ResponseEntity<Map<String, Object>> getBudgetById(@PathVariable Long id, HttpSession session) {
+        ResponseEntity<?> accessCheck = checkErpAccess(session);
+        if (accessCheck != null) {
+            return (ResponseEntity<Map<String, Object>>) accessCheck;
+        }
+        resourceOwnerAccessGuard.requireBudgetAccess(session, id);
         log.info("예산 조회: id={}", id);
 
         Optional<Budget> budget = erpService.getBudgetById(id);
@@ -1974,13 +2009,15 @@ public class ErpController extends BaseApiController {
     @PutMapping("/recurring-expenses/{id}")
     public ResponseEntity<ApiResponse<RecurringExpense>> updateRecurringExpense(
             @PathVariable Long id, @RequestBody RecurringExpense recurringExpense,
-            HttpServletRequest request) {
+            HttpSession session) {
+        ResponseEntity<?> accessCheck = checkErpAccess(session);
+        if (accessCheck != null) {
+            return (ResponseEntity<ApiResponse<RecurringExpense>>) accessCheck;
+        }
+        resourceOwnerAccessGuard.requireRecurringExpenseAccess(session, id);
         log.info("반복 지출 수정 요청: id={}", id);
 
-        User currentUser = SessionUtils.getCurrentUser(request.getSession());
-        if (currentUser == null) {
-            throw new org.springframework.security.access.AccessDeniedException("로그인이 필요합니다.");
-        }
+        User currentUser = SessionUtils.getCurrentUser(session);
 
         recurringExpense.setUpdatedBy(currentUser.getName());
         RecurringExpense updatedExpense =
@@ -1994,7 +2031,12 @@ public class ErpController extends BaseApiController {
      */
     @DeleteMapping("/recurring-expenses/{id}")
     public ResponseEntity<ApiResponse<Map<String, Object>>> deleteRecurringExpense(
-            @PathVariable Long id) {
+            @PathVariable Long id, HttpSession session) {
+        ResponseEntity<?> accessCheck = checkErpAccess(session);
+        if (accessCheck != null) {
+            return (ResponseEntity<ApiResponse<Map<String, Object>>>) accessCheck;
+        }
+        resourceOwnerAccessGuard.requireRecurringExpenseAccess(session, id);
         log.info("반복 지출 soft-delete 요청: id={}", id);
 
         boolean deleted = recurringExpenseService.deleteRecurringExpense(id);
@@ -2015,7 +2057,12 @@ public class ErpController extends BaseApiController {
     @PostMapping("/recurring-expenses/{id}/record-month")
     public ResponseEntity<ApiResponse<Map<String, Object>>> recordRecurringExpenseMonth(
             @PathVariable Long id,
-            @RequestBody RecurringExpenseRecordMonthRequest request) {
+            @RequestBody RecurringExpenseRecordMonthRequest request, HttpSession session) {
+        ResponseEntity<?> accessCheck = checkErpAccess(session);
+        if (accessCheck != null) {
+            return (ResponseEntity<ApiResponse<Map<String, Object>>>) accessCheck;
+        }
+        resourceOwnerAccessGuard.requireRecurringExpenseAccess(session, id);
         log.info("변동 반복 지출 월별 기록 요청: id={}, month={}", id,
             request != null ? request.getYearMonth() : null);
 
@@ -2041,7 +2088,12 @@ public class ErpController extends BaseApiController {
      */
     @PostMapping("/recurring-expenses/{id}/process")
     public ResponseEntity<ApiResponse<Void>> processRecurringExpense(@PathVariable Long id,
-            @RequestParam(required = false) BigDecimal customAmount) {
+            @RequestParam(required = false) BigDecimal customAmount, HttpSession session) {
+        ResponseEntity<?> accessCheck = checkErpAccess(session);
+        if (accessCheck != null) {
+            return (ResponseEntity<ApiResponse<Void>>) accessCheck;
+        }
+        resourceOwnerAccessGuard.requireRecurringExpenseAccess(session, id);
         log.info("반복 지출 수동 처리 요청: id={}, 금액={}", id, customAmount);
 
         recurringExpenseService.processRecurringExpense(id, customAmount);

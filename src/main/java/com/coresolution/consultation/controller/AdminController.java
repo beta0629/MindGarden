@@ -58,6 +58,7 @@ import com.coresolution.consultation.service.ScheduleAutoCompleteService;
 import com.coresolution.consultation.service.ScheduleService;
 import com.coresolution.consultation.service.support.ClientPathAccessGuard;
 import com.coresolution.consultation.service.support.ConsultationRecordAccessGuard;
+import com.coresolution.consultation.service.support.ConsultationRecordWriter;
 import com.coresolution.consultation.service.StoredProcedureService;
 import com.coresolution.consultation.service.UserPersonalDataCacheService;
 import com.coresolution.consultation.service.UserService;
@@ -3936,7 +3937,16 @@ public class AdminController extends BaseApiController {
     }
 
     /**
-     * 관리자용 상담일지 수정
+     * 관리자용 상담일지 수정.
+     *
+     * <p>공용 가드 {@link ConsultationRecordAccessGuard#requireWriteAccess} 로 판정한다(작성 상담사 본인 또는
+     * 같은 테넌트 관리자 계열). 거부는 403/401 로 그대로 위임한다. 실제 수정자는 {@code updated_by_*} 와
+     * 수정 감사(바뀐 필드명만)에 남는다.</p>
+     *
+     * @param recordId   상담일지 ID
+     * @param recordData 수정 본문
+     * @param session    HTTP 세션
+     * @return 수정된 상담일지
      */
     @PutMapping("/consultation-records/{recordId}")
     public ResponseEntity<Map<String, Object>> updateConsultationRecord(@PathVariable Long recordId,
@@ -3944,19 +3954,9 @@ public class AdminController extends BaseApiController {
         try {
             log.info("📝 관리자용 상담일지 수정 - 기록 ID: {}", recordId);
 
-            User currentUser = SessionUtils.getCurrentUser(session);
-            if (currentUser == null) {
-                return ResponseEntity.status(401)
-                        .body(Map.of("success", false, "message", "로그인이 필요합니다."));
-            }
-
-            if (!roleCommonCodeAuthorizationService.isAdminOrStaffRoleFromCommonCode(currentUser.getRole())) {
-                return ResponseEntity.status(403)
-                        .body(Map.of("success", false, "message", "관리자 권한이 필요합니다."));
-            }
-
+            ConsultationRecordWriter writer = consultationRecordAccessGuard.requireWriteAccess(session, recordId);
             com.coresolution.consultation.entity.ConsultationRecord updatedRecord =
-                    consultationRecordService.updateConsultationRecord(recordId, recordData);
+                    consultationRecordService.updateConsultationRecord(recordId, recordData, writer);
 
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
@@ -3966,7 +3966,9 @@ public class AdminController extends BaseApiController {
             return ResponseEntity.ok(response);
 
         } catch (com.coresolution.consultation.exception.ValidationException
-                | IllegalArgumentException e) {
+                | IllegalArgumentException
+                | org.springframework.security.access.AccessDeniedException
+                | com.coresolution.consultation.exception.UnauthorizedException e) {
             throw e;
         } catch (Exception e) {
             return ServerErrorResponses.internalError("관리자용 상담일지 수정 실패", e);

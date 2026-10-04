@@ -33,6 +33,16 @@ public class ConsultationRecordListItemResponse {
     private final Boolean isSessionCompleted;
     private final LocalDateTime createdAt;
     private final LocalDateTime updatedAt;
+    /** 마지막 작성·수정자 users.id (이름은 싣지 않는다). */
+    private final Long lastEditedById;
+    /** 마지막 작성·수정자 역할명. */
+    private final String lastEditedByRole;
+    /** 마지막 작성·수정 시각. */
+    private final LocalDateTime lastEditedAt;
+    /** 같은 테넌트 관리자 계열이 대리 작성했는지. */
+    private final boolean writtenByAdmin;
+    /** 마지막 수정자가 같은 테넌트 관리자 계열인지. */
+    private final boolean editedByAdmin;
 
     /**
      * 엔티티 → 목록 항목 변환.
@@ -51,6 +61,11 @@ public class ConsultationRecordListItemResponse {
                 .isSessionCompleted(entity.getIsSessionCompleted())
                 .createdAt(entity.getCreatedAt())
                 .updatedAt(entity.getUpdatedAt())
+                .lastEditedById(entity.getLastEditedById())
+                .lastEditedByRole(entity.getLastEditedByRole())
+                .lastEditedAt(entity.getLastEditedAt())
+                .writtenByAdmin(entity.isWrittenByAdmin())
+                .editedByAdmin(entity.isEditedByAdmin())
                 .build();
     }
 }

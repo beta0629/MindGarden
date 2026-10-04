@@ -9,6 +9,7 @@ import com.coresolution.consultation.entity.ConsultantClientMapping;
 import com.coresolution.consultation.repository.ClientRepository;
 import com.coresolution.consultation.repository.ConsultantClientMappingRepository;
 import com.coresolution.consultation.repository.InstitutionLinkContractRepository;
+import com.coresolution.consultation.service.support.ConsultationRecordWriter;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.domain.ClientPlatform;
 import lombok.RequiredArgsConstructor;
@@ -61,6 +62,25 @@ public class InstitutionLinkConsultationLogWriteRouter {
             return institutionLinkConsultationLogService.createFromSchedulePayload(recordData);
         }
         return consultationRecordService.createConsultationRecord(recordData);
+    }
+
+    /**
+     * {@link #create(Map, ClientPlatform)} 와 같되, 회기권 일지는 공용 가드
+     * ({@code ConsultationRecordAccessGuard#requireCreateAccess})를 통과한 작성자로 저장한다.
+     *
+     * @param recordData 스케줄 상담일지 본문
+     * @param platform 요청 클라이언트 채널({@code X-Client-Platform}, 로그용)
+     * @param writer 가드가 만든 작성자 정보 (회기권 경로에서 필수, 타기관 경로에서는 쓰지 않음)
+     * @return 저장된 일지
+     */
+    public Object create(Map<String, Object> recordData, ClientPlatform platform, ConsultationRecordWriter writer) {
+        TenantContextHolder.getRequiredTenantId();
+        boolean institutionLink = isInstitutionLink(recordData);
+        consultationRecordCreateRequestValidator.validate(recordData, institutionLink, platform);
+        if (institutionLink) {
+            return institutionLinkConsultationLogService.createFromSchedulePayload(recordData);
+        }
+        return consultationRecordService.createConsultationRecord(recordData, writer);
     }
 
     /**

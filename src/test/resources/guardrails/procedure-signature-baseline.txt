@@ -1,0 +1,14 @@
+# 프로시저 시그니처 베이스라인 (ProcedureSignatureGuardrailTest).
+# 형식: TODO <UNDEFINED|MISMATCH|DYNAMIC ...> # 사유/TODO (사유 필수). 줄어들기만 한다.
+# 최신 목록: mvn -o test -Dtest=ProcedureSignatureGuardrailTest → target/guardrails/procedure-signature.current.txt
+
+TODO DYNAMIC PlSqlSalaryManagementServiceImpl:routineName # 메타데이터 기반 공용 헬퍼(이름은 호출부 리터럴) — 이름을 상수 인자로 고정하면 정적 검사 가능
+TODO DYNAMIC StoredProcedureServiceImpl:procedureName # 범용 executeProcedure(procedureName) — 호출부 없음, 제거 또는 이름 화이트리스트로 교체
+TODO MISMATCH ApproveSalaryWithErpSync java=4(out=2) def=5(out=2) @PlSqlSalaryManagementServiceImpl # 레거시 스키마 폴백 arity(표준 정의 standard:ApproveSalaryWithErpSync_standardized.sql) — 운영 정의 확인 후 폴백 호출 제거
+TODO MISMATCH CalculateSalaryPreview java=10(out=6) def=11(out=7) @PlSqlSalaryManagementServiceImpl # 레거시 스키마 폴백 arity(표준 정의 standard:CalculateSalaryPreview_standardized.sql) — 운영 정의 확인 후 폴백 호출 제거
+TODO MISMATCH CalculateSalaryPreview java=9(out=6) def=11(out=7) @PlSqlSalaryManagementServiceImpl # 레거시 스키마 폴백 arity(표준 정의 standard:CalculateSalaryPreview_standardized.sql) — 운영 정의 확인 후 폴백 호출 제거
+TODO MISMATCH CheckTimeConflict java=7(out=2) def=8(out=2) @StoredProcedureServiceImpl # 레거시 스키마 폴백 arity(표준 정의 standard:CheckTimeConflict_standardized.sql) — 운영 정의 확인 후 폴백 호출 제거
+TODO MISMATCH ProcessIntegratedSalaryCalculation java=11(out=7) def=13(out=8) @PlSqlSalaryManagementServiceImpl # 레거시 스키마 폴백 arity(표준 정의 standard:ProcessIntegratedSalaryCalculation_standardized.sql) — 운영 정의 확인 후 폴백 호출 제거
+TODO MISMATCH ProcessIntegratedSalaryCalculation java=12(out=7) def=13(out=8) @PlSqlSalaryManagementServiceImpl # 레거시 스키마 폴백 arity(표준 정의 standard:ProcessIntegratedSalaryCalculation_standardized.sql) — 운영 정의 확인 후 폴백 호출 제거
+TODO MISMATCH ProcessSalaryPaymentWithErpSync java=4(out=2) def=5(out=2) @PlSqlSalaryManagementServiceImpl # 레거시 스키마 폴백 arity(표준 정의 standard:ProcessSalaryPaymentWithErpSync_standardized.sql) — 운영 정의 확인 후 폴백 호출 제거
+TODO UNDEFINED UpdateMappingInfo @StoredProcedureServiceImpl # 표준 배포 SQL 밖에만 정의(database/schema/mapping_update_procedures.sql 외 3) — procedures_standardized 로 이동

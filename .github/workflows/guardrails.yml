@@ -1,0 +1,130 @@
+name: 🛡️ Guardrails (PR)
+
+# 반복 실수 유형을 PR 단계에서 자동 FAIL 시킨다. 기존 위반은 래칫 베이스라인(줄어들기만)으로 통과시키고 신규만 막는다.
+#   1) 관리자 API 역할 가드 누락     — AdminApiGuardCoverageTest (+ 대표 403 매트릭스 AdminApiRoleMatrixGuardrailMvcTest)
+#   2) 프로시저 호출 ↔ 표준 배포 SQL — ProcedureSignatureGuardrailTest
+#   3) 비밀값 커밋                   — gitleaks(PR 새 커밋만) + ApplicationYmlSecretDefaultsTest
+#   4) 운영 머지 게이트              — base=release/prod 이면 BE/FE 빌드도 같은 워크플로에서 실행
+# 베이스라인: src/test/resources/guardrails/*.txt, 저장소 루트 .gitleaksignore
+# required check 지정(브랜치 보호)은 이 파일에서 바꾸지 않는다. 체크 이름은 각 job 의 name 이다.
+
+on:
+  pull_request:
+    branches: [ 'release/dev', 'release/prod' ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: guardrails-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  GUARDRAIL_TESTS: AdminApiGuardCoverageTest,ProcedureSignatureGuardrailTest,ApplicationYmlSecretDefaultsTest,AdminApiRoleMatrixGuardrailMvcTest
+  GITLEAKS_VERSION: '8.30.1'
+  GITLEAKS_SHA256: 551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb
+
+jobs:
+  guardrail-be:
+    name: Guardrail BE (admin guard · procedure · yml secret)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java 17
+        uses: actions/setup-java@v5
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Run guardrail tests only
+        run: |
+          mvn -B -ntp test -Dtest="$GUARDRAIL_TESTS" -Dsurefire.failIfNoSpecifiedTests=false
+
+      - name: Upload current violation lists
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: guardrail-current-lists
+          path: target/guardrails/*.txt
+          if-no-files-found: ignore
+          retention-days: 7
+
+  guardrail-secrets:
+    name: Guardrail secrets (gitleaks PR diff)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout (history without blobs)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          filter: blob:none
+
+      - name: Install gitleaks (pinned + sha256)
+        run: |
+          tarball="gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+          curl -fsSL -o "$RUNNER_TEMP/$tarball" \
+            "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/${tarball}"
+          echo "${GITLEAKS_SHA256}  $RUNNER_TEMP/$tarball" | sha256sum -c -
+          tar -xzf "$RUNNER_TEMP/$tarball" -C "$RUNNER_TEMP" gitleaks
+          echo "$RUNNER_TEMP" >> "$GITHUB_PATH"
+
+      - name: Scan PR commits only
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          if [ -z "$BASE_SHA" ]; then
+            echo "pull_request 이벤트가 아니어서 건너뜀"
+            exit 0
+          fi
+          bash scripts/ci/guardrail-gitleaks-diff.sh "$BASE_SHA" "$HEAD_SHA"
+
+  prod-gate-be-build:
+    name: Prod gate · BE build
+    if: github.base_ref == 'release/prod'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java 17
+        uses: actions/setup-java@v5
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Backend package (same as deploy)
+        run: mvn -B -ntp clean package -DskipTests
+
+  prod-gate-fe-build:
+    name: Prod gate · FE build
+    if: github.base_ref == 'release/prod'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v6
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Frontend build (same script as deploy)
+        run: npm run build:ci

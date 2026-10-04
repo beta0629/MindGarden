@@ -442,7 +442,9 @@ public class ConsultantController extends BaseApiController {
             @PathVariable Long id,
             @RequestBody Map<String, Object> recordData) {
         
-        log.info("상담일지 작성 - 상담사 ID: {}, 데이터: {}", id, recordData);
+        // 상담일지 본문은 로그에 남기지 않는다.
+        log.info("상담일지 작성 - 상담사 ID: {}, 본문 필드 수: {}",
+                id, recordData != null ? recordData.size() : 0);
         
         return created("상담일지가 성공적으로 작성되었습니다.", recordData);
     }
@@ -457,7 +459,9 @@ public class ConsultantController extends BaseApiController {
             @PathVariable Long recordId,
             @RequestBody Map<String, Object> recordData) {
         
-        log.info("상담일지 수정 - 상담사 ID: {}, 기록 ID: {}, 데이터: {}", id, recordId, recordData);
+        // 상담일지 본문은 로그에 남기지 않는다.
+        log.info("상담일지 수정 - 상담사 ID: {}, 기록 ID: {}, 본문 필드 수: {}",
+                id, recordId, recordData != null ? recordData.size() : 0);
         
         return updated("상담일지가 성공적으로 수정되었습니다.", recordData);
     }

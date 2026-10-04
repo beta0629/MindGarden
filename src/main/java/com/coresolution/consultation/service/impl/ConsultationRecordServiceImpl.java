@@ -143,7 +143,8 @@ public class ConsultationRecordServiceImpl implements ConsultationRecordService 
 
     @Override
     public ConsultationRecord createConsultationRecord(Map<String, Object> recordData) {
-        log.info("📝 상담일지 작성 - 데이터: {}", recordData);
+        // 상담일지 본문은 로그에 남기지 않는다.
+        log.info("📝 상담일지 작성 - 본문 필드 수: {}", recordData != null ? recordData.size() : 0);
         String tenantId = TenantContextHolder.getRequiredTenantId();
         try {
             ConsultationRecord record = new ConsultationRecord();
@@ -309,7 +310,9 @@ public class ConsultationRecordServiceImpl implements ConsultationRecordService 
 
     @Override
     public ConsultationRecord updateConsultationRecord(Long recordId, Map<String, Object> recordData) {
-        log.info("📝 상담일지 수정 - 기록 ID: {}, 데이터: {}", recordId, recordData);
+        // 상담일지 본문은 로그에 남기지 않는다.
+        log.info("📝 상담일지 수정 - 기록 ID: {}, 본문 필드 수: {}",
+                recordId, recordData != null ? recordData.size() : 0);
         String tenantId = TenantContextHolder.getRequiredTenantId();
         Optional<ConsultationRecord> recordOpt = consultationRecordRepository.findByTenantIdAndId(tenantId, recordId);
         if (recordOpt.isEmpty() || recordOpt.get().getIsDeleted()) {

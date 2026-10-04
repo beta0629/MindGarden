@@ -13,6 +13,7 @@ import com.coresolution.consultation.service.ClientStatsService;
 import com.coresolution.consultation.service.ConsultationRecordService;
 import com.coresolution.consultation.service.DynamicPermissionService;
 import com.coresolution.consultation.service.ScheduleService;
+import com.coresolution.consultation.service.support.ConsultationRecordAccessGuard;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.util.PermissionCheckUtils;
 import com.coresolution.consultation.utils.SessionUtils;
@@ -45,6 +46,7 @@ import lombok.extern.slf4j.Slf4j;
 public class ConsultantRecordsController {
 
     private final ConsultationRecordService consultationRecordService;
+    private final ConsultationRecordAccessGuard consultationRecordAccessGuard;
     private final DynamicPermissionService dynamicPermissionService;
     private final UserRepository userRepository;
     private final ScheduleService scheduleService;
@@ -267,17 +269,12 @@ public class ConsultantRecordsController {
                         .body(Map.of("success", false, "message", "테넌트 정보가 없습니다."));
             }
             tenantId = tenantId.trim();
-            // 상담기록 조회
-            var record = consultationRecordService.getConsultationRecordById(recordId);
-            
-            if (record == null) {
-                Map<String, Object> response = new HashMap<>();
-                response.put("success", false);
-                response.put("message", "상담기록을 찾을 수 없습니다.");
-                return ResponseEntity.notFound().build();
-            }
-            
-            // 상담사 ID 검증
+            // 상담일지 본문 반환 전 소유자 검증 (작성 상담사 본인 또는 같은 테넌트 관리자·사무원).
+            // 테넌트 내 기록이 없으면 존재 여부를 드러내지 않고 403.
+            var record = consultationRecordAccessGuard
+                    .requireConsultationRecordReadAccess(session, recordId);
+
+            // 경로 상담사 id 와 기록의 작성 상담사가 다르면 거부 (경로-자원 불일치).
             if (!record.getConsultantId().equals(consultantId)) {
                 Map<String, Object> response = new HashMap<>();
                 response.put("success", false);
@@ -349,6 +346,9 @@ public class ConsultantRecordsController {
             response.put("data", recordMap);
             
             return ResponseEntity.ok(response);
+        } catch (AccessDeniedException | com.coresolution.consultation.exception.UnauthorizedException e) {
+            // 가드 거부는 그대로 GlobalExceptionHandler(403/401)에 위임 — 400 으로 삼키지 않는다.
+            throw e;
         } catch (Exception e) {
             log.error("상담기록 상세 조회 실패: consultantId={}, recordId={}, error={}", consultantId, recordId, e.getMessage(), e);
             

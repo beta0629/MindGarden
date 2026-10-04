@@ -149,6 +149,16 @@ class CssThemeControllerWriteGuardMvcTest {
         verify(cssThemeService, never()).deleteTheme(anyString());
     }
 
+    @Test
+    @DisplayName("기본 테마 데이터 없음 — 익명 조회 404(500 아님), 응답에 데이터 없음")
+    void defaultTheme_missing_notFound() throws Exception {
+        when(cssThemeService.getDefaultTheme()).thenReturn(Optional.empty());
+        mockMvc.perform(get(BASE + "/themes/default"))
+            .andExpect(status().isNotFound())
+            .andExpect(jsonPath("$.success").value(false))
+            .andExpect(jsonPath("$.data").doesNotExist());
+    }
+
     private static List<MockHttpServletRequestBuilder> writes() {
         return List.of(
             post(BASE + "/themes").contentType(MediaType.APPLICATION_JSON).content(METADATA_BODY),

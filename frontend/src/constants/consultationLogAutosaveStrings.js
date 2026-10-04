@@ -33,7 +33,14 @@ export const CONSULTATION_LOG_AUTOSAVE_STRINGS = {
   LEAVE_TITLE: '작성 중인 내용',
   LEAVE_MESSAGE: '저장하지 않은 변경이 있습니다. 이 화면을 떠날까요?',
   LEAVE_CONFIRM: '떠나기',
-  LEAVE_CANCEL: '계속 작성'
+  LEAVE_CANCEL: '계속 작성',
+  FORM_LOADING: '상담일지를 불러오는 중…',
+  /** 작성 중 내용 위에 임시저장을 덮어쓸 때 한 번 더 확인 */
+  RESTORE_OVERWRITE_TITLE: '작성 중인 내용 덮어쓰기',
+  RESTORE_OVERWRITE_MESSAGE:
+    '지금 화면에 입력된 내용이 임시저장 내용으로 바뀝니다. 불러올까요?',
+  RESTORE_OVERWRITE_CONFIRM: '덮어쓰고 불러오기',
+  RESTORE_OVERWRITE_CANCEL: '취소'
 };
 
 /**

@@ -171,6 +171,12 @@ export const API_ENDPOINTS = {
   CLIENT_CONTEXT: {
     CONTEXT_PROFILE: (clientId) => `/api/v1/clients/${clientId}/context-profile`
   },
+
+  /** 상담사 스코프 (본인 consultantId 강제 — 관리자 전용 경로의 403 대체) */
+  CONSULTANT_RECORDS: {
+    ASSIGNED_CLIENTS: (consultantId) =>
+      `/api/v1/admin/consultant-records/${consultantId}/clients`
+  },
   
   COMMON_CODE: {
     LIST: '/api/v1/common-codes',

@@ -189,7 +189,30 @@ const ConsultationLogModal = ({
   const { t } = useTranslation();
   const { user } = useSession();
 
-  const [loading, setLoading] = useState(false);
+  /**
+   * 로드 완료 대상 키. 모달이 열린 대상(recordId·scheduleData.id)과 같아질 때까지 로딩으로 본다.
+   *
+   * <p>이전에는 {@code loading} 초기값이 false 라 모달이 열린 직후 첫 페인트가
+   * 빈 formData 로 렌더됐다(입력칸 0자 → 2~3초 뒤 채워짐). 로드 effect 는 첫 페인트
+   * <strong>이후</strong>에 실행되고, 일정 경로는 {@code enrichScheduleSessionMeta} 를
+   * await 한 뒤에야 {@code setLoading(true)} 를 하므로 빈 화면이 더 길게 보였다.
+   * 렌더 시점에 파생되는 값으로 바꿔 첫 페인트부터 로딩으로 만든다.</p>
+   */
+  const [loadedTargetKey, setLoadedTargetKey] = useState(null);
+  const openTargetKey = useMemo(() => {
+    if (!isOpen) return '';
+    return `${recordId ?? ''}|${scheduleData?.id ?? ''}`;
+  }, [isOpen, recordId, scheduleData?.id]);
+  const openTargetKeyRef = useRef(openTargetKey);
+  openTargetKeyRef.current = openTargetKey;
+  /** 로더가 돌 대상이 아예 없으면(둘 다 없음) 로딩으로 두지 않는다 */
+  const hasLoadTarget = Boolean(recordId) || Boolean(scheduleData);
+  const dataLoaded = isOpen && loadedTargetKey === openTargetKey;
+  const loading = isOpen && hasLoadTarget && !dataLoaded;
+  /** 기존 로더의 setLoading(true/false) 호출부를 그대로 쓰기 위한 어댑터 */
+  const setLoading = useCallback((next) => {
+    setLoadedTargetKey(next ? null : openTargetKeyRef.current);
+  }, []);
   const [saving, setSaving] = useState(false);
   const [client, setClient] = useState(null);
   /** with-stats 전체 응답(client, statistics, currentConsultants 등) — 권한 있을 때만 채워짐 */
@@ -337,6 +360,8 @@ const ConsultationLogModal = ({
   }, [scheduleData?.consultantId, consultationRecord?.consultantId, user?.id]);
 
   const [restoreDraftConfirmOpen, setRestoreDraftConfirmOpen] = useState(false);
+  /** 불러오기 확정 전 "작성 중 내용 덮어쓰기" 2차 확인 */
+  const [restoreOverwriteConfirmOpen, setRestoreOverwriteConfirmOpen] = useState(false);
   const [pendingRestoreDraft, setPendingRestoreDraft] = useState(null);
   const [closeWithoutSaveConfirmOpen, setCloseWithoutSaveConfirmOpen] = useState(false);
   const [conflictConfirmOpen, setConflictConfirmOpen] = useState(false);
@@ -345,6 +370,7 @@ const ConsultationLogModal = ({
   const memoDraftRef = useRef(memoDraft);
   const contentDirtyRef = useRef(false);
   const restoreConfirmedRef = useRef(false);
+  const overwriteConfirmedRef = useRef(false);
   /** 서버 초안 payloadJson 과 동일 스키마 — 훅이 그대로 직렬화한다 */
   const draftSnapshotRef = useRef({ formData, memoDraft });
 
@@ -392,9 +418,12 @@ const ConsultationLogModal = ({
     notifyDirty,
     saveNow: saveDraftNow,
     discardDraft,
+    resolveRestoreCandidate,
     loadLatestFromServer,
     keepMineOnConflict
   } = useConsultationLogDraftAutosave({
+    // 기록 로드가 끝난 뒤에만 초안을 조회한다 — 레코드 적용과 초안 복구가 경쟁하지 않도록
+    // 병합 판단을 한 번만 한다 (레코드 반영 → 초안 복구 여부 질의).
     enabled: isOpen && !loading,
     tenantId: tenantIdStr,
     userId: user?.id,
@@ -403,6 +432,7 @@ const ConsultationLogModal = ({
     legacyScope: draftScope,
     snapshotRef: draftSnapshotRef,
     dirtyRef: contentDirtyRef,
+    recordUpdatedAt: consultationRecord?.updatedAt,
     onRestoreCandidate,
     onConflictDetected
   });
@@ -416,6 +446,7 @@ const ConsultationLogModal = ({
   useEffect(() => {
     if (!isOpen) {
       setRestoreDraftConfirmOpen(false);
+      setRestoreOverwriteConfirmOpen(false);
       setPendingRestoreDraft(null);
       setCloseWithoutSaveConfirmOpen(false);
       setConflictConfirmOpen(false);
@@ -638,7 +669,11 @@ const ConsultationLogModal = ({
   }, [isOpen, scheduleData, recordId]);
 
   const loadDataByRecordId = async() => {
-    if (!recordId || !user?.id) return;
+    if (!recordId || !user?.id) {
+      // 로드할 수 없으면 로딩 상태로 묶어 두지 않는다 (빈 폼이 아니라 로딩이 영구 표시되는 것 방지)
+      setLoading(false);
+      return;
+    }
     try {
       contentDirtyRef.current = false;
       setLoading(true);
@@ -1221,7 +1256,8 @@ const ConsultationLogModal = ({
     }
   };
 
-  if (!isOpen && !restoreDraftConfirmOpen && !closeWithoutSaveConfirmOpen && !conflictConfirmOpen) {
+  if (!isOpen && !restoreDraftConfirmOpen && !restoreOverwriteConfirmOpen
+    && !closeWithoutSaveConfirmOpen && !conflictConfirmOpen) {
     return null;
   }
 
@@ -1308,9 +1344,9 @@ const ConsultationLogModal = ({
       type="default"
       onConfirm={() => {
         restoreConfirmedRef.current = true;
-        applyRestoredDraftSnapshot(pendingRestoreDraft?.snapshot);
-        setPendingRestoreDraft(null);
         setRestoreDraftConfirmOpen(false);
+        // 화면에 입력된 내용을 덮어쓰게 되므로 한 번 더 확인한다.
+        setRestoreOverwriteConfirmOpen(true);
       }}
       onClose={() => {
         if (restoreConfirmedRef.current) {
@@ -1321,6 +1357,33 @@ const ConsultationLogModal = ({
         void discardDraft();
         setPendingRestoreDraft(null);
         setRestoreDraftConfirmOpen(false);
+      }}
+    />
+    <ConfirmModal
+      isOpen={restoreOverwriteConfirmOpen}
+      title={CONSULTATION_LOG_AUTOSAVE_STRINGS.RESTORE_OVERWRITE_TITLE}
+      message={toDisplayString(CONSULTATION_LOG_AUTOSAVE_STRINGS.RESTORE_OVERWRITE_MESSAGE, '')}
+      confirmText={CONSULTATION_LOG_AUTOSAVE_STRINGS.RESTORE_OVERWRITE_CONFIRM}
+      cancelText={CONSULTATION_LOG_AUTOSAVE_STRINGS.RESTORE_OVERWRITE_CANCEL}
+      type="warning"
+      onConfirm={() => {
+        overwriteConfirmedRef.current = true;
+        applyRestoredDraftSnapshot(pendingRestoreDraft?.snapshot);
+        resolveRestoreCandidate();
+        setPendingRestoreDraft(null);
+        setRestoreOverwriteConfirmOpen(false);
+        restoreConfirmedRef.current = false;
+      }}
+      onClose={() => {
+        if (overwriteConfirmedRef.current) {
+          overwriteConfirmedRef.current = false;
+          return;
+        }
+        // 덮어쓰기 취소는 복구·버리기 중 어느 쪽도 고르지 않은 보류다.
+        // 서버 초안·레거시 초안을 모두 남겨 두고 다음 진입 때 다시 묻는다.
+        setPendingRestoreDraft(null);
+        setRestoreOverwriteConfirmOpen(false);
+        restoreConfirmedRef.current = false;
       }}
     />
     <ConfirmModal
@@ -1418,20 +1481,30 @@ const ConsultationLogModal = ({
             </aside>
 
             <div className="mg-v2-consultation-log__main">
-              <ConsultationLogRequiredFieldsNotice
-                sessionNumberMissing={!isInstitutionLinkLog && resolveLockedSessionNumber() == null}
-              />
+              {loading ? (
+                <div className="mg-v2-consultation-log__form-loading">
+                  <div className="mg-loading">
+                    {CONSULTATION_LOG_AUTOSAVE_STRINGS.FORM_LOADING}
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <ConsultationLogRequiredFieldsNotice
+                    sessionNumberMissing={!isInstitutionLinkLog && resolveLockedSessionNumber() == null}
+                  />
 
-              <ConsultationLogFormPanel
-                formData={formData}
-                handleInputChange={handleInputChange}
-                setFormData={setFormDataWithDirty}
-                validationErrors={validationErrors}
-                riskLevels={riskLevels}
-                goalAchievementLevels={goalAchievementLevels}
-                completionStatusOptions={completionStatusOptions}
-                loadingCodes={loadingCodes}
-              />
+                  <ConsultationLogFormPanel
+                    formData={formData}
+                    handleInputChange={handleInputChange}
+                    setFormData={setFormDataWithDirty}
+                    validationErrors={validationErrors}
+                    riskLevels={riskLevels}
+                    goalAchievementLevels={goalAchievementLevels}
+                    completionStatusOptions={completionStatusOptions}
+                    loadingCodes={loadingCodes}
+                  />
+                </>
+              )}
 
               <section
                 className="mg-v2-consultation-log-modal__precautions-wrap"

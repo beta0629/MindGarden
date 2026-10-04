@@ -78,6 +78,23 @@ function safeParse(json) {
 }
 
 /**
+ * 초안이 확정 저장본보다 과거인지 판단한다.
+ *
+ * <p>둘 중 하나라도 파싱할 수 없으면 "오래되지 않음"으로 본다 — 복구 기회를 없애는 쪽보다
+ * 사용자에게 물어보는 쪽이 안전하다.</p>
+ *
+ * @param {string|number|null|undefined} draftUpdatedAt 초안 갱신 시각
+ * @param {string|number|null|undefined} recordUpdatedAt 확정 저장본 갱신 시각
+ * @returns {boolean} 초안이 확정본보다 오래되었으면 true
+ */
+export function isDraftStale(draftUpdatedAt, recordUpdatedAt) {
+  const draftMs = draftUpdatedAt == null ? NaN : Date.parse(String(draftUpdatedAt));
+  const recordMs = recordUpdatedAt == null ? NaN : Date.parse(String(recordUpdatedAt));
+  if (!Number.isFinite(draftMs) || !Number.isFinite(recordMs)) return false;
+  return draftMs < recordMs;
+}
+
+/**
  * 상담일지 작성·수정 화면 공통 초안 자동저장 훅 (모달·전체화면 공용).
  *
  * <p>저장 우선순위는 <strong>서버 초안</strong>이다. 서버 저장이 실패하거나 오프라인일
@@ -99,6 +116,8 @@ function safeParse(json) {
  * @param {{ type: string, id: string }|null} params.legacyScope 레거시 localStorage 키 스코프
  * @param {import('react').MutableRefObject<object>} params.snapshotRef 저장할 스냅샷 ref
  * @param {import('react').MutableRefObject<boolean>} params.dirtyRef 미저장 변경 여부 ref
+ * @param {string|number|null} [params.recordUpdatedAt] 확정 저장본 갱신 시각.
+ *        서버 초안이 이 시각보다 과거면 복구 프롬프트를 띄우지 않는다(삭제하지 않음).
  * @param {(candidate: { snapshot: object, savedAt: number, source: string }) => void} [params.onRestoreCandidate]
  * @param {() => void} [params.onConflictDetected]
  * @returns {object} 상태·조작 API
@@ -114,12 +133,15 @@ export function useConsultationLogDraftAutosave({
   legacyScope,
   snapshotRef,
   dirtyRef,
+  recordUpdatedAt,
   onRestoreCandidate,
   onConflictDetected
 }) {
   const [status, setStatus] = useState(DRAFT_AUTOSAVE_STATUS.IDLE);
   const [savedAtLabel, setSavedAtLabel] = useState('');
   const [conflictDetected, setConflictDetected] = useState(false);
+  /** 확정본보다 오래되어 프롬프트를 띄우지 않은 초안의 저장 시각 (표시 전용) */
+  const [staleDraftSavedAt, setStaleDraftSavedAt] = useState(null);
 
   const debounceTimerRef = useRef(null);
   const retryTimerRef = useRef(null);
@@ -129,6 +151,10 @@ export function useConsultationLogDraftAutosave({
   const restoreCheckedKeyRef = useRef('');
   const channelRef = useRef(null);
   const editorInstanceIdRef = useRef(`${Date.now()}-${Math.random().toString(36).slice(2)}`);
+  /** 레거시 평문 초안 정리 보류 — 사용자가 불러오기/버리기를 고른 뒤에 지운다 */
+  const legacyPurgePendingRef = useRef(false);
+  const recordUpdatedAtRef = useRef(recordUpdatedAt);
+  recordUpdatedAtRef.current = recordUpdatedAt;
 
   const sessionCtx = useContext(SessionContext);
   const checkSessionRef = useRef(sessionCtx?.checkSession);
@@ -300,8 +326,21 @@ export function useConsultationLogDraftAutosave({
     onConflictDetected
   ]);
 
+  /**
+   * 복구 프롬프트에서 사용자가 선택을 끝냈을 때 호출한다.
+   *
+   * <p>레거시 평문 초안은 프롬프트가 보이는 동안 남겨 두므로(중간 이탈 시 입력 보존),
+   * 선택이 끝난 이 시점에 정리한다. "버리기"는 {@link discardDraft} 가 별도로 처리한다.</p>
+   */
+  const resolveRestoreCandidate = useCallback(() => {
+    if (!legacyPurgePendingRef.current) return;
+    legacyPurgePendingRef.current = false;
+    purgeLegacyDrafts();
+  }, [purgeLegacyDrafts]);
+
   /** 확정 저장·버리기 — 서버 초안과 브라우저 백업·레거시 키를 모두 지운다. */
   const discardDraft = useCallback(async() => {
+    legacyPurgePendingRef.current = false;
     clearTimers();
     retryAttemptRef.current = 0;
     dirtyRef.current = false;
@@ -351,6 +390,13 @@ export function useConsultationLogDraftAutosave({
         serverUpdatedAtRef.current = server.updatedAt ?? null;
         const snapshot = safeParse(server.payloadJson);
         purgeLegacyDrafts();
+        // 확정 저장이 초안보다 나중이면 그 초안은 이미 반영된 과거 내용이다.
+        // 복구 프롬프트를 띄우면 확정본을 옛 초안으로 되돌릴 위험이 있어 표시만 하고 묻지 않는다.
+        // (#1409 후속: 삭제는 하지 않는다 — 데이터 보존)
+        if (isDraftStale(server.updatedAt, recordUpdatedAtRef.current)) {
+          setStaleDraftSavedAt(server.updatedAt ? Date.parse(server.updatedAt) : null);
+          return;
+        }
         if (snapshot) {
           onRestoreCandidate?.({
             snapshot,
@@ -379,14 +425,18 @@ export function useConsultationLogDraftAutosave({
         return;
       }
 
-      // 서버·백업 모두 없을 때만 레거시 평문 초안을 1회 제안하고 즉시 정리한다.
+      // 서버·백업 모두 없을 때만 레거시 평문 초안을 1회 제안한다.
       const legacy = legacyScope ? readLegacyConsultationLogLocalDraft(tenantId, legacyScope) : null;
       if (legacy) {
+        // 프롬프트를 띄우는 순간 지우면, 사용자가 선택하기 전에 새로고침·탭 닫기가 일어나면
+        // 입력이 영구히 사라진다. 불러오기·버리기 중 하나를 고른 뒤에 정리한다.
+        legacyPurgePendingRef.current = true;
         onRestoreCandidate?.({
           snapshot: { formData: legacy.formData, memoDraft: legacy.memoDraft },
           savedAt: legacy.savedAt,
           source: DRAFT_RESTORE_SOURCE.LEGACY_LOCAL
         });
+        return;
       }
       purgeLegacyDrafts();
     })();
@@ -516,9 +566,11 @@ export function useConsultationLogDraftAutosave({
     status,
     savedAtLabel,
     conflictDetected,
+    staleDraftSavedAt,
     notifyDirty,
     saveNow,
     discardDraft,
+    resolveRestoreCandidate,
     loadLatestFromServer,
     keepMineOnConflict
   };

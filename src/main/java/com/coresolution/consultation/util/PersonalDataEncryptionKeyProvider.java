@@ -50,9 +50,13 @@ public class PersonalDataEncryptionKeyProvider {
     private static final String DEFAULT_LEGACY_KEY_ID = "legacy";
     private static final String DEFAULT_DELIMITER = ",";
     private static final String KEY_VALUE_DELIMITER = ":";
-    /** dev/local 프로파일에서 키/IV 미설정 시 사용하는 폴백 값 (기동용) */
-    private static final String DEV_FALLBACK_IV = "dev-iv-16-bytes!!";
-    private static final String DEV_FALLBACK_KEY = "dev-encryption-key-32-bytes-long!!!!";
+    /** 코드 내 폴백 키가 허용되지 않는 프로파일에서 안내할 환경변수 이름 */
+    private static final String KEY_ENV_NAMES =
+        "PERSONAL_DATA_ENCRYPTION_KEYS/PERSONAL_DATA_ENCRYPTION_IVS "
+            + "(또는 단일 키 PERSONAL_DATA_ENCRYPTION_KEY/PERSONAL_DATA_ENCRYPTION_IV)";
+    /** 설정 파일(application-local.yml · application-test.yml)에서 키를 받는 프로파일 */
+    private static final String PROFILE_LOCAL = "local";
+    private static final String PROFILE_TEST = "test";
 
     @Value("${encryption.personal-data.active-key-id:}")
     private String activeKeyId;
@@ -84,21 +88,10 @@ public class PersonalDataEncryptionKeyProvider {
     public void initialize() {
         Map<String, String> parsedKeys = parseConfigMap(keyVersions, "key");
         Map<String, String> parsedIvs = parseConfigMap(ivVersions, "iv");
-        boolean devOrLocal = isDevOrLocalProfile();
 
         if (parsedKeys.isEmpty()) {
             if (!StringUtils.hasText(legacyKey)) {
-                if (devOrLocal) {
-                    log.warn("⚠️ [dev/local] 암호화 키가 설정되지 않았습니다. 개발용 폴백 키로 기동합니다.");
-                    parsedKeys = new LinkedHashMap<>();
-                    parsedKeys.put(DEFAULT_LEGACY_KEY_ID, DEV_FALLBACK_KEY);
-                    parsedIvs = new LinkedHashMap<>();
-                    parsedIvs.put(DEFAULT_LEGACY_KEY_ID, DEV_FALLBACK_IV);
-                } else {
-                    throw new IllegalStateException(
-                        "암호화 키가 설정되지 않았습니다. 환경변수 PERSONAL_DATA_ENCRYPTION_KEY 또는 PERSONAL_DATA_ENCRYPTION_KEYS를 확인하세요."
-                    );
-                }
+                throw new IllegalStateException(missingKeyMessage());
             } else {
                 log.warn("🔐 다중 키 설정이 비어 있습니다. legacy 키를 사용합니다.");
                 parsedKeys = new LinkedHashMap<>();
@@ -117,12 +110,8 @@ public class PersonalDataEncryptionKeyProvider {
             String ivValue = parsedIvs.getOrDefault(keyId, legacyIv);
 
             if (!StringUtils.hasText(ivValue)) {
-                if (devOrLocal) {
-                    ivValue = DEV_FALLBACK_IV;
-                    log.warn("⚠️ [dev/local] IV가 비어 있어 keyId={} 에 개발용 IV를 사용합니다.", keyId);
-                } else {
-                    throw new IllegalStateException(String.format("IV가 설정되지 않았습니다. keyId=%s", keyId));
-                }
+                throw new IllegalStateException(String.format(
+                    "IV가 설정되지 않았습니다. keyId=%s. 환경변수 %s 를 확인하세요.", keyId, KEY_ENV_NAMES));
             }
 
             KeyMaterial keyMaterial = buildKeyMaterial(keyId, keyValue, ivValue);
@@ -137,13 +126,7 @@ public class PersonalDataEncryptionKeyProvider {
         }
 
         if (keyMaterialById.isEmpty()) {
-            if (devOrLocal) {
-                log.warn("⚠️ [dev/local] 유효한 암호화 키가 없습니다. 개발용 폴백 키로 기동합니다.");
-                KeyMaterial fallback = buildKeyMaterial(DEFAULT_LEGACY_KEY_ID, DEV_FALLBACK_KEY, DEV_FALLBACK_IV);
-                keyMaterialById.put(DEFAULT_LEGACY_KEY_ID, fallback);
-            } else {
-                throw new IllegalStateException("유효한 암호화 키를 초기화할 수 없습니다.");
-            }
+            throw new IllegalStateException("유효한 암호화 키를 초기화할 수 없습니다. " + missingKeyMessage());
         }
 
         if (!StringUtils.hasText(activeKeyId) || !keyMaterialById.containsKey(activeKeyId)) {
@@ -292,16 +275,45 @@ public class PersonalDataEncryptionKeyProvider {
         }
     }
 
-    private boolean isDevOrLocalProfile() {
+    /**
+     * 키 미설정 기동 실패 메시지. 프로파일별로 키를 어디서 넣어야 하는지 안내한다.
+     *
+     * <p>코드 내 폴백 키는 제거됐다. {@code local}/{@code test} 는 설정 파일
+     * ({@code application-local.yml} · {@code application-test.yml}) 에서, 그 외
+     * 모든 프로파일({@code dev}·{@code prod} 포함) 은 환경변수에서만 키를 받는다.</p>
+     *
+     * @return 기동 실패 메시지
+     */
+    private String missingKeyMessage() {
+        String activeProfiles = String.join(",", environment == null
+            ? new String[0] : environment.getActiveProfiles());
+        if (isConfigFileKeyProfile()) {
+            return String.format(
+                "암호화 키가 설정되지 않았습니다. 프로파일=[%s] — application-%s.yml 의 encryption.personal-data.key"
+                    + " 설정을 확인하세요.",
+                activeProfiles, isProfileActive(PROFILE_TEST) ? PROFILE_TEST : PROFILE_LOCAL);
+        }
+        return String.format(
+            "암호화 키가 설정되지 않았습니다. 프로파일=[%s] — 개인정보 평문 저장을 막기 위해 기동을 중단합니다."
+                + " 환경변수 %s 를 주입하세요 (코드·설정 폴백 키 없음).",
+            activeProfiles, KEY_ENV_NAMES);
+    }
+
+    /**
+     * 설정 파일에서 키를 받는 프로파일({@code local}·{@code test}) 인지 여부.
+     *
+     * @return local 또는 test 프로파일이면 true
+     */
+    private boolean isConfigFileKeyProfile() {
+        return isProfileActive(PROFILE_LOCAL) || isProfileActive(PROFILE_TEST);
+    }
+
+    private boolean isProfileActive(String profile) {
         if (environment == null) {
             return false;
         }
         String[] actives = environment.getActiveProfiles();
-        if (actives.length == 0) {
-            return false;
-        }
-        return Arrays.stream(actives)
-                .anyMatch(p -> "dev".equalsIgnoreCase(p) || "local".equalsIgnoreCase(p));
+        return Arrays.stream(actives).anyMatch(profile::equalsIgnoreCase);
     }
 }
 

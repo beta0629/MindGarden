@@ -44,6 +44,7 @@ import com.coresolution.consultation.entity.ConsultantClientMapping.MappingStatu
 import com.coresolution.consultation.entity.Schedule;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.entity.Vacation;
+import com.coresolution.consultation.exception.ScheduleSessionNotStartedException;
 import com.coresolution.consultation.repository.BranchRepository;
 import com.coresolution.consultation.repository.ClientRepository;
 import com.coresolution.consultation.repository.ConsultantClientMappingRepository;
@@ -323,6 +324,14 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
                 || !Objects.equals(previousEndTime, intendedEndTime);
         rejectSlotChangeIfLocked(
                 previousStatus, previousDate, previousEndTime, slotWouldChange);
+
+        if (previousStatus != ScheduleStatus.COMPLETED && updateData.getStatus() == ScheduleStatus.COMPLETED) {
+            Schedule intendedSlot = new Schedule();
+            intendedSlot.setId(id);
+            intendedSlot.setDate(intendedDate);
+            intendedSlot.setStartTime(intendedStartTime);
+            requireSessionStartedForCompletion(intendedSlot);
+        }
         
         copyScheduleFields(updateData, existingSchedule);
         
@@ -1765,6 +1774,9 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
     public Schedule completeSchedule(Long scheduleId) {
         log.info("✅ 스케줄 완료: ID {}", scheduleId);
         Schedule schedule = findById(scheduleId);
+        if (schedule.getStatus() != ScheduleStatus.COMPLETED) {
+            requireSessionStartedForCompletion(schedule);
+        }
         String tenantId = TenantContextHolder.getTenantId();
         if (tenantId == null && schedule.getTenantId() != null) tenantId = schedule.getTenantId();
         if (tenantId != null) {
@@ -4206,7 +4218,8 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             for (Schedule schedule : todayExpiredSchedules) {
                 try {
                     Schedule latestSchedule = scheduleRepository.findByTenantIdAndId(tenantId, schedule.getId()).orElse(null);
-                    if (latestSchedule != null && ScheduleStatus.CONFIRMED.equals(latestSchedule.getStatus())) {
+                    if (latestSchedule != null && ScheduleStatus.CONFIRMED.equals(latestSchedule.getStatus())
+                            && !isBeforeSessionStart(latestSchedule)) {
                         boolean hasRecord = hasConsultationRecordSsot(tenantId, latestSchedule);
                         if (hasRecord) {
                             // 패치 7.3: COMPLETED 전환 직전 멱등 회기 차감 (미결제 매핑이면 silent skip → 배치 잡 처리)
@@ -4239,7 +4252,8 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             for (Schedule schedule : pastBookedSchedules) {
                 try {
                     Schedule latestSchedule = scheduleRepository.findByTenantIdAndId(tenantId, schedule.getId()).orElse(null);
-                    if (latestSchedule != null && ScheduleStatus.BOOKED.equals(latestSchedule.getStatus())) {
+                    if (latestSchedule != null && ScheduleStatus.BOOKED.equals(latestSchedule.getStatus())
+                            && !isBeforeSessionStart(latestSchedule)) {
                         boolean hasRecord = hasConsultationRecordSsot(tenantId, latestSchedule);
                         if (hasRecord) {
                             // 패치 7.3: COMPLETED 전환 직전 멱등 회기 차감 (미결제 매핑이면 silent skip → 배치 잡 처리)
@@ -4267,7 +4281,8 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             for (Schedule schedule : pastConfirmedSchedules) {
                 try {
                     Schedule latestSchedule = scheduleRepository.findByTenantIdAndId(tenantId, schedule.getId()).orElse(null);
-                    if (latestSchedule != null && ScheduleStatus.CONFIRMED.equals(latestSchedule.getStatus())) {
+                    if (latestSchedule != null && ScheduleStatus.CONFIRMED.equals(latestSchedule.getStatus())
+                            && !isBeforeSessionStart(latestSchedule)) {
                         boolean hasRecord = hasConsultationRecordSsot(tenantId, latestSchedule);
                         if (hasRecord) {
                             // 패치 7.3: COMPLETED 전환 직전 멱등 회기 차감 (미결제 매핑이면 silent skip → 배치 잡 처리)
@@ -4297,7 +4312,8 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             for (Schedule schedule : pastInProgressSchedules) {
                 try {
                     Schedule latestSchedule = scheduleRepository.findByTenantIdAndId(tenantId, schedule.getId()).orElse(null);
-                    if (latestSchedule != null && ScheduleStatus.IN_PROGRESS.equals(latestSchedule.getStatus())) {
+                    if (latestSchedule != null && ScheduleStatus.IN_PROGRESS.equals(latestSchedule.getStatus())
+                            && !isBeforeSessionStart(latestSchedule)) {
                         boolean hasRecord = hasConsultationRecordSsot(tenantId, latestSchedule);
                         if (hasRecord) {
                             // 패치 7.3: COMPLETED 전환 직전 멱등 회기 차감 (미결제 매핑이면 silent skip → 배치 잡 처리)
@@ -5376,6 +5392,14 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         return scheduleRepository.findByTenantIdAndId(tenantId, scheduleId)
                 .map(this::isBeforeSessionStart)
                 .orElse(false);
+    }
+
+    @Override
+    public void requireSessionStartedForCompletion(Schedule schedule) {
+        if (isBeforeSessionStart(schedule)) {
+            log.info("일정 시작 전 완료 요청 거부: scheduleId={}", schedule.getId());
+            throw new ScheduleSessionNotStartedException(schedule.getId());
+        }
     }
 
     /**

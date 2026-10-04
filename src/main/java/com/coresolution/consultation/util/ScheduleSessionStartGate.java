@@ -23,6 +23,13 @@ import com.coresolution.consultation.entity.Schedule;
  */
 public final class ScheduleSessionStartGate {
 
+    /** 시작 전 완료 요청 거부 문구 (관리자·수동 완료 경로 400 응답). */
+    public static final String COMPLETION_BEFORE_START_MESSAGE =
+            "일정 시작 전에는 완료 처리할 수 없습니다. 일정 시작 이후 다시 시도해 주세요.";
+
+    /** 시작 전 완료 요청 거부 오류 코드. */
+    public static final String COMPLETION_BEFORE_START_ERROR_CODE = "SCHEDULE_SESSION_NOT_STARTED";
+
     private ScheduleSessionStartGate() {
     }
 

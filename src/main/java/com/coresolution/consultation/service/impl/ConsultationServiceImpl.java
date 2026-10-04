@@ -634,6 +634,12 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
     @Override
     public Consultation completeConsultation(Long consultationId, String notes, int rating) {
         Consultation consultation = findActiveByIdOrThrow(consultationId);
+        for (com.coresolution.consultation.entity.Schedule linked : scheduleRepository
+                .findByTenantIdAndConsultationId(consultation.getTenantId(), consultationId)) {
+            if (!ScheduleStatus.COMPLETED.equals(linked.getStatus())) {
+                scheduleService.requireSessionStartedForCompletion(linked);
+            }
+        }
         consultation.setStatus("COMPLETED");
         consultation.setEndTime(LocalDateTime.now().toLocalTime());
         consultation.setConsultantNotes(notes);
@@ -2719,7 +2725,8 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
             
             for (com.coresolution.consultation.entity.Schedule schedule : schedules) {
                 // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
-                if (!ScheduleStatus.COMPLETED.equals(schedule.getStatus())) {
+                if (!ScheduleStatus.COMPLETED.equals(schedule.getStatus())
+                        && !scheduleService.isBeforeSessionStart(schedule)) {
                     // 패치 7.3: COMPLETED 전환 직전 멱등 회기 차감 (미결제 매핑이면 silent skip → 배치 잡 처리)
                     scheduleService.deductSessionAtCompletionIfNeeded(schedule);
                     // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용

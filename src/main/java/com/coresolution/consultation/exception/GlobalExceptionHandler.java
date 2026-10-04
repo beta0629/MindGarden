@@ -12,6 +12,7 @@ import com.coresolution.consultation.constant.LifecycleState;
 import com.coresolution.consultation.constant.ServerErrorMessages;
 import com.coresolution.consultation.constant.ShopRefundConstants;
 import com.coresolution.consultation.util.ClientMessageSanitizer;
+import com.coresolution.consultation.util.ScheduleSessionStartGate;
 import com.coresolution.consultation.util.ServerErrorResponses;
 import com.coresolution.core.dto.ErrorResponse;
 import com.coresolution.core.service.impl.OnboardingApprovalBlockedException;
@@ -518,6 +519,23 @@ public class GlobalExceptionHandler {
         body.put("method", request.getMethod());
 
         return ResponseEntity.status(HttpStatus.CONFLICT).body(body);
+    }
+
+    /**
+     * 일정 시작 전 완료 요청 — HTTP 400 (상태·회기·급여 변경 없음).
+     */
+    @ExceptionHandler(ScheduleSessionNotStartedException.class)
+    public ResponseEntity<ErrorResponse> handleScheduleSessionNotStarted(
+            ScheduleSessionNotStartedException e, HttpServletRequest request) {
+        log.info("[SCHEDULE_SESSION_NOT_STARTED] scheduleId={} path={}", e.getScheduleId(), request.getRequestURI());
+        ErrorResponse error = ErrorResponse.of(
+            e.getMessage(),
+            ScheduleSessionStartGate.COMPLETION_BEFORE_START_ERROR_CODE,
+            HttpStatus.BAD_REQUEST.value(),
+            request.getRequestURI(),
+            request.getMethod()
+        );
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
     }
 
     /**

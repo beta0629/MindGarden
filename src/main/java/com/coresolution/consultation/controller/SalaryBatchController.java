@@ -50,7 +50,7 @@ public class SalaryBatchController {
      * 급여 배치 실행.
      *
      * <p>권한(같은 테넌트 관리자 + {@code SALARY_MANAGE})을 본문 검증보다 먼저 본다. 비관리자는 본문이 비었거나
-     * 형식이 틀려도 400 이 아니라 403 을 받고 서비스는 호출되지 않는다 (#1420).</p>
+     * 형식이 틀려도 400 이 아니라 403 을 받고 서비스는 호출되지 않는다.</p>
      */
     @PostMapping("/execute")
     public ResponseEntity<Map<String, Object>> executeBatch(

@@ -59,8 +59,8 @@ public class InputValidationConfig {
         /**
          * SQL 키워드 패턴(exec·execute 등)을 <b>경로</b>에서만 건너뛰는 정확한 API 경로.
          *
-         * <p>급여 배치 {@code can-execute}·{@code execute} 는 경로에 "execute" 가 들어 있어 역할과 무관하게 400 이었다
-         * (#1420). 정확히 이 경로만 허용하고, 쿼리 문자열은 계속 SQL 패턴을 검사한다. XSS·경로 순회·명령어 주입 검사는
+         * <p>급여 배치 {@code can-execute}·{@code execute} 는 경로에 "execute" 가 들어 있다.
+         * 정확히 이 경로만 허용하고, 쿼리 문자열은 계속 SQL 패턴을 검사한다. XSS·경로 순회·명령어 주입 검사는
          * 그대로 적용된다. 새 경로 추가는 같은 방식(앵커된 정확 일치)으로만 한다.</p>
          */
         static final Pattern SQL_KEYWORD_PATH_ALLOWLIST =

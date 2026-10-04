@@ -15,6 +15,7 @@ import com.coresolution.consultation.constant.consultation.ConsultationRecordAcc
 import com.coresolution.consultation.entity.ClinicalReport;
 import com.coresolution.consultation.entity.ConsultationRecord;
 import com.coresolution.consultation.entity.InstitutionLinkConsultationLog;
+import com.coresolution.consultation.entity.Schedule;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.exception.UnauthorizedException;
 import com.coresolution.consultation.repository.ClinicalReportRepository;
@@ -33,7 +34,7 @@ import org.springframework.mock.web.MockHttpSession;
 import org.springframework.security.access.AccessDeniedException;
 
 /**
- * {@link ConsultationRecordAccessGuard} 단건 읽기 권한 매트릭스.
+ * {@link ConsultationRecordAccessGuard} 단건 읽기·쓰기(작성·수정) 권한 매트릭스.
  *
  * <p>정책: 작성 상담사 본인 + 같은 테넌트 관리자 계열만 허용. 다른 상담사·내담자·다른 테넌트는 403,
  * 미인증 401. 감사 기록에는 본문이 들어가지 않는다.</p>
@@ -55,9 +56,12 @@ class ConsultationRecordAccessGuardTest {
     private static final long REPORT_ID = 7001L;
     private static final long LINK_LOG_ID = 8001L;
     private static final String BODY_TEXT = "본문 유출 감지 문구";
+    /** 담당 상담사가 OTHER_CONSULTANT 인 일정 (작성 판정용). */
+    private static final long SCHEDULE_ID = 502L;
 
     private ConsultationRecordAccessLogService accessLogService;
     private ConsultationRecordAccessGuard guard;
+    private ScheduleRepository scheduleRepository;
 
     @BeforeEach
     void setUp() {
@@ -68,8 +72,18 @@ class ConsultationRecordAccessGuardTest {
         InstitutionLinkConsultationLogRepository linkRepository = mock(InstitutionLinkConsultationLogRepository.class);
         ClientPathAccessGuard clientGuard = new ClientPathAccessGuard(
             mock(ConsultantClientMappingRepository.class), mock(UserRepository.class));
+        scheduleRepository = mock(ScheduleRepository.class);
         guard = new ConsultationRecordAccessGuard(clientGuard, reportRepository, accessLogService,
-            recordRepository, linkRepository, mock(ScheduleRepository.class));
+            recordRepository, linkRepository, scheduleRepository);
+
+        Schedule schedule = new Schedule();
+        schedule.setId(SCHEDULE_ID);
+        schedule.setTenantId(TENANT_A);
+        schedule.setConsultantId(OTHER_CONSULTANT);
+        schedule.setClientId(CLIENT);
+        schedule.setIsDeleted(false);
+        when(scheduleRepository.findByTenantIdAndId(TENANT_A, SCHEDULE_ID)).thenReturn(Optional.of(schedule));
+        when(scheduleRepository.findByTenantIdAndId(TENANT_B, SCHEDULE_ID)).thenReturn(Optional.empty());
 
         ConsultationRecord record = new ConsultationRecord();
         record.setId(RECORD_ID);
@@ -197,6 +211,108 @@ class ConsultationRecordAccessGuardTest {
             .anyMatch(c -> ConsultationRecordAccessAudit.RESULT_DENIED.equals(c.result())
                 && Long.valueOf(OTHER_CONSULTANT).equals(c.actorId()));
         assertThat(captor.getAllValues()).allSatisfy(c -> assertThat(c.toString()).doesNotContain(BODY_TEXT));
+    }
+
+    // ---- 쓰기(수정) ----
+
+    @Test
+    @DisplayName("수정 — 작성 상담사·같은 테넌트 ADMIN·STAFF 허용, 작성자 정보가 판정 대상 일지에 묶인다")
+    void write_authorAndManagers_allowed() {
+        ConsultationRecordWriter author = guard.requireWriteAccess(
+            session(AUTHOR, UserRole.CONSULTANT, TENANT_A), RECORD_ID);
+        assertThat(author.userId()).isEqualTo(AUTHOR);
+        assertThat(author.tenantManager()).isFalse();
+        assertThat(author.matchesRecord(RECORD_ID)).isTrue();
+
+        ConsultationRecordWriter admin = guard.requireWriteAccess(session(ADMIN, UserRole.ADMIN, TENANT_A), RECORD_ID);
+        assertThat(admin.userId()).isEqualTo(ADMIN);
+        assertThat(admin.role()).isEqualTo(UserRole.ADMIN.name());
+        assertThat(admin.tenantManager()).isTrue();
+        assertThat(guard.requireWriteAccess(session(STAFF, UserRole.STAFF, TENANT_A), RECORD_ID).tenantManager())
+            .isTrue();
+    }
+
+    @Test
+    @DisplayName("수정 — 다른 상담사·내담자·다른 테넌트 관리자 403, 미인증 401")
+    void write_denied() {
+        assertThatThrownBy(() -> guard.requireWriteAccess(
+            session(OTHER_CONSULTANT, UserRole.CONSULTANT, TENANT_A), RECORD_ID))
+            .isInstanceOf(AccessDeniedException.class);
+        assertThatThrownBy(() -> guard.requireWriteAccess(session(CLIENT, UserRole.CLIENT, TENANT_A), RECORD_ID))
+            .isInstanceOf(AccessDeniedException.class);
+        assertThatThrownBy(() -> guard.requireWriteAccess(session(ADMIN, UserRole.ADMIN, TENANT_B), RECORD_ID))
+            .isInstanceOf(AccessDeniedException.class);
+        assertThatThrownBy(() -> guard.requireWriteAccess(new MockHttpSession(), RECORD_ID))
+            .isInstanceOf(UnauthorizedException.class);
+    }
+
+    @Test
+    @DisplayName("canWrite 는 canRead 와 같은 규칙이다")
+    void canWrite_sameAsCanRead() {
+        User admin = user(ADMIN, UserRole.ADMIN, TENANT_A);
+        User other = user(OTHER_CONSULTANT, UserRole.CONSULTANT, TENANT_A);
+        assertThat(guard.canWrite(admin, TENANT_A, TENANT_A, AUTHOR)).isTrue();
+        assertThat(guard.canWrite(other, TENANT_A, TENANT_A, AUTHOR)).isFalse();
+        assertThat(guard.canWrite(admin, TENANT_A, TENANT_B, AUTHOR)).isFalse();
+    }
+
+    // ---- 쓰기(작성) ----
+
+    @Test
+    @DisplayName("작성 — 일정 담당 상담사·같은 테넌트 관리자 허용, 판정 대상 일정에 묶인다")
+    void create_assigneeAndManagers_allowed() {
+        ConsultationRecordWriter assignee = guard.requireCreateAccess(
+            session(OTHER_CONSULTANT, UserRole.CONSULTANT, TENANT_A), SCHEDULE_ID);
+        assertThat(assignee.matchesSchedule(SCHEDULE_ID)).isTrue();
+        assertThat(assignee.tenantManager()).isFalse();
+
+        ConsultationRecordWriter admin = guard.requireCreateAccess(
+            session(ADMIN, UserRole.ADMIN, TENANT_A), SCHEDULE_ID);
+        assertThat(admin.userId()).isEqualTo(ADMIN);
+        assertThat(admin.tenantManager()).isTrue();
+        assertThat(admin.matchesSchedule(SCHEDULE_ID)).isTrue();
+        assertThat(admin.matchesSchedule(SCHEDULE_ID + 1)).isFalse();
+    }
+
+    @Test
+    @DisplayName("작성 — 담당 아닌 상담사(과거 작성자 포함)·내담자·다른 테넌트 관리자 403, 미인증 401, 일정 없음 403")
+    void create_denied() {
+        assertThatThrownBy(() -> guard.requireCreateAccess(
+            session(AUTHOR, UserRole.CONSULTANT, TENANT_A), SCHEDULE_ID))
+            .isInstanceOf(AccessDeniedException.class);
+        assertThatThrownBy(() -> guard.requireCreateAccess(session(CLIENT, UserRole.CLIENT, TENANT_A), SCHEDULE_ID))
+            .isInstanceOf(AccessDeniedException.class);
+        assertThatThrownBy(() -> guard.requireCreateAccess(session(ADMIN, UserRole.ADMIN, TENANT_B), SCHEDULE_ID))
+            .isInstanceOf(AccessDeniedException.class);
+        assertThatThrownBy(() -> guard.requireCreateAccess(new MockHttpSession(), SCHEDULE_ID))
+            .isInstanceOf(UnauthorizedException.class);
+        assertThatThrownBy(() -> guard.requireCreateAccess(session(ADMIN, UserRole.ADMIN, TENANT_A), null))
+            .isInstanceOf(AccessDeniedException.class);
+    }
+
+    @Test
+    @DisplayName("작성·수정 판정도 감사 로그(CREATE·EDIT)를 남긴다")
+    void write_isAudited() {
+        guard.requireCreateAccess(session(ADMIN, UserRole.ADMIN, TENANT_A), SCHEDULE_ID);
+        guard.requireWriteAccess(session(ADMIN, UserRole.ADMIN, TENANT_A), RECORD_ID);
+        ArgumentCaptor<ConsultationRecordAccessLogService.ConsultationRecordAccessCommand> captor =
+            ArgumentCaptor.forClass(ConsultationRecordAccessLogService.ConsultationRecordAccessCommand.class);
+        verify(accessLogService, atLeastOnce()).record(captor.capture());
+        assertThat(captor.getAllValues())
+            .anyMatch(c -> ConsultationRecordAccessAudit.ACTION_CREATE.equals(c.action())
+                && ConsultationRecordAccessAudit.RESULT_ALLOWED.equals(c.result()))
+            .anyMatch(c -> ConsultationRecordAccessAudit.ACTION_EDIT.equals(c.action())
+                && ConsultationRecordAccessAudit.RESULT_ALLOWED.equals(c.result()));
+        assertThat(captor.getAllValues()).allSatisfy(c -> assertThat(c.toString()).doesNotContain(BODY_TEXT));
+    }
+
+    private static User user(long id, UserRole role, String tenantId) {
+        User u = new User();
+        u.setId(id);
+        u.setUserId("u-" + id);
+        u.setRole(role);
+        u.setTenantId(tenantId);
+        return u;
     }
 
     private static MockHttpSession session(long id, UserRole role, String tenantId) {

@@ -87,7 +87,8 @@ public class ConsultationRecordAccessGuard {
     public User requireConsultantScopeReadAccess(HttpSession session, Long consultantId) {
         User caller = clientPathAccessGuard.requireCaller(session);
         clientPathAccessGuard.requireCallerTenantId(caller);
-        assertAuthorOrManager(caller, consultantId, "consultantId", consultantId);
+        // 관리자는 대상 상담사가 같은 테넌트에 있을 때만, 상담사는 본인 id 일 때만 통과한다.
+        clientPathAccessGuard.assertCanAccessConsultant(caller, consultantId);
         return caller;
     }
 
@@ -108,6 +109,10 @@ public class ConsultationRecordAccessGuard {
         User caller = clientPathAccessGuard.requireCaller(session);
         String tenantId = clientPathAccessGuard.requireCallerTenantId(caller);
         if (clientPathAccessGuard.isTenantManager(caller)) {
+            // 관리자도 테넌트 안에 있는 일정·일지만 열 수 있다 (타 테넌트 id 는 거부).
+            if (!existsInTenant(tenantId, consultationId)) {
+                deny(DENIAL_RECORD_UNAVAILABLE, caller, "consultationId", consultationId);
+            }
             return caller;
         }
         Long ownerConsultantId = resolveConsultationOwner(tenantId, consultationId);
@@ -195,6 +200,15 @@ public class ConsultationRecordAccessGuard {
             return;
         }
         deny(DENIAL_AUTHOR_ONLY, caller, field, requestedId);
+    }
+
+    private boolean existsInTenant(String tenantId, Long consultationId) {
+        if (consultationId == null) {
+            return false;
+        }
+        return scheduleRepository.findByTenantIdAndId(tenantId, consultationId).isPresent()
+            || !consultationRecordRepository
+                .findByTenantIdAndConsultationIdAndIsDeletedFalse(tenantId, consultationId).isEmpty();
     }
 
     private Long resolveConsultationOwner(String tenantId, Long consultationId) {

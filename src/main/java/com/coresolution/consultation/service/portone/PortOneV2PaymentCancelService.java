@@ -58,7 +58,7 @@ public class PortOneV2PaymentCancelService {
     static final String CANCEL_BODY_AMOUNT = "amount";
 
     /** 포트원 V2 요청 멱등 키 헤더 — 같은 키 재요청은 PortOne 이 한 번만 처리한다. */
-    static final String HEADER_IDEMPOTENCY_KEY = "Idempotency-Key";
+    static final String HEADER_IDEMPOTENCY_KEY = PortOneIdempotencyKeyHeader.HEADER_NAME;
 
     /** 포트원 V2 Payment 응답 — 금액 객체. */
     static final String PAYMENT_FIELD_AMOUNT = "amount";
@@ -244,9 +244,7 @@ public class PortOneV2PaymentCancelService {
         HttpHeaders headers = new HttpHeaders();
         headers.set(HttpHeaders.AUTHORIZATION, "PortOne " + apiSecret);
         headers.setContentType(MediaType.APPLICATION_JSON);
-        if (StringUtils.hasText(idempotencyKey)) {
-            headers.set(HEADER_IDEMPOTENCY_KEY, idempotencyKey);
-        }
+        PortOneIdempotencyKeyHeader.apply(headers, idempotencyKey);
 
         Map<String, Object> body = new LinkedHashMap<>();
         body.put("reason", reason);

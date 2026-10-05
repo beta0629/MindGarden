@@ -92,12 +92,36 @@ class PortOneV2PaymentCancelServiceTest {
 
         ArgumentCaptor<HttpEntity> captor = ArgumentCaptor.forClass(HttpEntity.class);
         verify(restTemplate, times(3)).exchange(any(), eq(HttpMethod.POST), captor.capture(), eq(String.class));
-        assertEquals("key-full", captor.getAllValues().get(0).getHeaders()
+        assertEquals("\"key-full\"", captor.getAllValues().get(0).getHeaders()
                 .getFirst(PortOneV2PaymentCancelService.HEADER_IDEMPOTENCY_KEY));
-        assertEquals("key-part", captor.getAllValues().get(1).getHeaders()
+        assertEquals("\"key-part\"", captor.getAllValues().get(1).getHeaders()
                 .getFirst(PortOneV2PaymentCancelService.HEADER_IDEMPOTENCY_KEY));
         assertFalse(captor.getAllValues().get(2).getHeaders()
                 .containsKey(PortOneV2PaymentCancelService.HEADER_IDEMPOTENCY_KEY));
+    }
+
+    @Test
+    @DisplayName("멱등 키 재시도 — 같은 요청 재시도 시 따옴표로 감싼 동일 헤더 값")
+    void cancel_idempotencyKeyHeader_sameOnRetry() {
+        stubActiveConfig();
+        when(restTemplate.exchange(any(), eq(HttpMethod.GET), any(HttpEntity.class), eq(String.class)))
+                .thenReturn(new ResponseEntity<>("{\"status\":\"PAID\"}", HttpStatus.OK));
+        when(restTemplate.exchange(any(), eq(HttpMethod.POST), any(HttpEntity.class), eq(String.class)))
+                .thenThrow(new RestClientException("timeout"))
+                .thenReturn(new ResponseEntity<>("{}", HttpStatus.OK));
+
+        String key = "mg-shop-refund-pay-1-c0-a10";
+        assertFalse(service.cancelPaymentAmount(TENANT, PAYMENT_ID, "partial", BigDecimal.TEN, key));
+        assertTrue(service.cancelPaymentAmount(TENANT, PAYMENT_ID, "partial", BigDecimal.TEN, key));
+
+        ArgumentCaptor<HttpEntity> captor = ArgumentCaptor.forClass(HttpEntity.class);
+        verify(restTemplate, times(2)).exchange(any(), eq(HttpMethod.POST), captor.capture(), eq(String.class));
+        String first = captor.getAllValues().get(0).getHeaders()
+                .getFirst(PortOneV2PaymentCancelService.HEADER_IDEMPOTENCY_KEY);
+        String second = captor.getAllValues().get(1).getHeaders()
+                .getFirst(PortOneV2PaymentCancelService.HEADER_IDEMPOTENCY_KEY);
+        assertEquals("\"" + key + "\"", first);
+        assertEquals(first, second);
     }
 
     @Test

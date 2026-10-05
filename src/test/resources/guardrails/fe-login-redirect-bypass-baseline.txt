@@ -1,0 +1,44 @@
+# FE 로그인 직접 이동 래칫 베이스라인 (scripts/verification/check-login-redirect-bypass.js) — 줄어들기만 한다.
+# 401·세션 만료 이동은 sessionRedirect.redirectToLoginPageOnce(보관 백업·returnUrl)만. 기존 직접 이동은 여기 남기고 신규는 막는다.
+# 고치면 체크가 "베이스라인 정리 필요" 로 실패하므로 해당 줄을 지우거나 개수를 줄인다. 최신 목록: node scripts/verification/check-login-redirect-bypass.js --list
+
+LOGIN_NAV frontend/src/components/academy/AcademyRegister.js :: navigate x1
+LOGIN_NAV frontend/src/components/admin/AdminKakaoAlimtalkSettingsPage.js :: navigate x1
+LOGIN_NAV frontend/src/components/admin/AdminShopCatalogSkuEditorPage.js :: navigate x1
+LOGIN_NAV frontend/src/components/admin/AdminShopCatalogSkusPage.js :: navigate x1
+LOGIN_NAV frontend/src/components/admin/AdminShopOrdersPage.js :: navigate x1
+LOGIN_NAV frontend/src/components/admin/AdminShopPointPoliciesPage.js :: navigate x1
+LOGIN_NAV frontend/src/components/admin/AdminShopProductEditorPage.js :: navigate x1
+LOGIN_NAV frontend/src/components/admin/AdminShopProductsPage.js :: navigate x1
+LOGIN_NAV frontend/src/components/admin/AdminTenantSmsSettingsPage.js :: navigate x1
+LOGIN_NAV frontend/src/components/admin/billing/PaymentMethodsPage.js :: navigate x1
+LOGIN_NAV frontend/src/components/admin/billing/SubscriptionsPage.js :: navigate x1
+LOGIN_NAV frontend/src/components/admin/institution-link/InstitutionLinkAdminPage.js :: navigate x1
+LOGIN_NAV frontend/src/components/admin/manual-notification/AdminManualNotificationPage.js :: navigate x1
+LOGIN_NAV frontend/src/components/admin/sms-templates/SmsTemplateManagementPage.js :: navigate x1
+LOGIN_NAV frontend/src/components/admin/system/AdminTestNotificationPage.js :: navigate x1
+LOGIN_NAV frontend/src/components/auth/BranchLogin.js :: navigate x1
+LOGIN_NAV frontend/src/components/auth/MobileLogin.js :: navigate x1
+LOGIN_NAV frontend/src/components/auth/OAuth2Callback.js :: navigate x15
+LOGIN_NAV frontend/src/components/auth/ResetPassword.js :: navigate x1
+LOGIN_NAV frontend/src/components/auth/SocialSignupModal.js :: navigate x1
+LOGIN_NAV frontend/src/components/auth/TabletRegister.js :: navigate x1
+LOGIN_NAV frontend/src/components/auth/UnifiedLogin.js :: navigate x4
+LOGIN_NAV frontend/src/components/client/ClientSettings.js :: navigate x7
+LOGIN_NAV frontend/src/components/common/MypageSettingsRedirects.jsx :: <Navigate> x2
+LOGIN_NAV frontend/src/components/common/ProtectedRoute.js :: <Navigate> x1
+LOGIN_NAV frontend/src/components/consultation/ConsultationHistory.js :: navigate x1
+LOGIN_NAV frontend/src/components/consultation/ConsultationReport.js :: navigate x1
+LOGIN_NAV frontend/src/components/dashboard/CommonDashboard.js :: navigate x2
+LOGIN_NAV frontend/src/components/dashboard/DynamicDashboard.js :: navigate x1
+LOGIN_NAV frontend/src/components/dashboard/widgets/common/HeaderWidget.js :: navigate x2
+LOGIN_NAV frontend/src/components/erp/ErpDashboard.js :: navigate x1
+LOGIN_NAV frontend/src/components/erp/IntegratedFinanceDashboard.js :: navigate x2
+LOGIN_NAV frontend/src/components/homepage/Homepage.js :: navigate x1
+LOGIN_NAV frontend/src/components/layout/SimpleHamburgerMenu.js :: navigate x1
+LOGIN_NAV frontend/src/components/layout/SimpleHeader.js :: navigate x2
+LOGIN_NAV frontend/src/components/mypage/ProfileEdit.js :: navigate x1
+LOGIN_NAV frontend/src/components/tenant/MerchantLegalSettings.js :: navigate x1
+LOGIN_NAV frontend/src/components/tenant/TenantProfile.js :: navigate x1
+LOGIN_NAV frontend/src/hooks/useClientShopAuth.js :: navigate x1
+LOGIN_NAV frontend/src/utils/sessionManager.js :: location.replace x1

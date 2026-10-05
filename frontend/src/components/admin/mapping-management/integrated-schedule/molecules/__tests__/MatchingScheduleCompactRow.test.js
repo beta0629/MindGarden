@@ -17,6 +17,9 @@ jest.mock('react-i18next', () => ({
       if (key === 'integratedSchedule.sidebar.compactRemainingSessions') {
         return `남은 ${opts?.count}회`;
       }
+      if (key === 'integratedSchedule.sidebar.compactInstitutionLink') {
+        return typeof opts === 'string' ? opts : '기관연계';
+      }
       return key;
     }
   })
@@ -166,6 +169,7 @@ describe('MatchingScheduleCompactRow', () => {
       />
     );
     expect(screen.getByTestId('engagement-type-badge')).toHaveTextContent('기관연동');
-    expect(screen.getByText('남은 0회')).toBeInTheDocument();
+    expect(screen.getByText('기관연계')).toBeInTheDocument();
+    expect(screen.queryByText('남은 0회')).not.toBeInTheDocument();
   });
 });

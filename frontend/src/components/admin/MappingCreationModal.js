@@ -29,6 +29,7 @@ import FormInput from '../common/FormInput';
 import { toDisplayString } from '../../utils/safeDisplay';
 import { generatePaymentReferenceNumber } from '../../utils/paymentReferenceNumber';
 import { isCardPaymentMethod } from '../../utils/paymentMethodSsot';
+import { alignMappingCreatePaymentMethod } from '../../utils/mappingPaymentScheduleGate';
 import SafeText from '../common/SafeText';
 import '../schedule/ScheduleB0KlA.css';
 import './MappingCreationModal.css';
@@ -473,6 +474,18 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
       const isSameDayCard = paymentInfo.paymentTiming === PAYMENT_TIMING_SAME_DAY_CARD;
       const isInstitutionLink = institutionClient
         || paymentInfo.paymentTiming === PAYMENT_TIMING_INSTITUTION_LINK;
+      const submittedPaymentTiming = isInstitutionLink
+        ? PAYMENT_TIMING_INSTITUTION_LINK
+        : paymentInfo.paymentTiming;
+      const submittedPaymentMethod = alignMappingCreatePaymentMethod({
+        nextTiming: submittedPaymentTiming,
+        paymentMethod: paymentInfo.paymentMethod,
+        previousTiming: paymentInfo.paymentTiming,
+        codes: paymentMethodCodes
+      });
+      const submittedPaymentReference = submittedPaymentMethod !== paymentInfo.paymentMethod
+        ? generateReferenceNumber(submittedPaymentMethod)
+        : paymentInfo.paymentReference;
       
       // 단일 패키지 정보만 전송
       const finalNotes = paymentInfo.notes || '';
@@ -496,17 +509,15 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
         packageId: isInstitutionLink ? PAYMENT_TIMING_INSTITUTION_LINK : paymentInfo.packageId,
         packagePrice: isInstitutionLink ? institutionAmount : paymentInfo.packagePrice,
         paymentAmount: isInstitutionLink ? institutionAmount : paymentInfo.packagePrice,
-        paymentMethod: paymentInfo.paymentMethod,
-        paymentReference: paymentInfo.paymentReference,
+        paymentMethod: submittedPaymentMethod,
+        paymentReference: submittedPaymentReference,
         mappingType: 'NEW',
         // P0 핫픽스 2026-05-28 (사용자 보고 + PAYMENT_TIMING_NULL_DEBUG.md H1):
         // 옵션 B 결제 방식 의도(ADVANCE / SAME_DAY_CARD)를 백엔드에 전달.
         // 백엔드 ConsultantClientMappingCreateRequest.paymentTiming 으로 바인딩되어
         // consultant_client_mappings.payment_timing 컬럼에 저장된다.
         // 이전: 필드 누락 → Jackson null 바인딩 → DB NULL → 사이드바 SAME_DAY_CARD 분기 깨짐.
-        paymentTiming: isInstitutionLink
-          ? PAYMENT_TIMING_INSTITUTION_LINK
-          : paymentInfo.paymentTiming
+        paymentTiming: submittedPaymentTiming
       };
       const response = await apiPost(API_ENDPOINTS.ADMIN.MAPPINGS.LIST, mappingData);
       // P1 핫픽스 2026-05-28: lastUsedPackage setItem 제거. 자동 적용 useEffect 와 한 쌍으로
@@ -1009,7 +1020,23 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
                       name="mapping-creation-payment-timing"
                       value={option.value}
                       checked={isSelected}
-                      onChange={() => setPaymentInfo(prev => ({ ...prev, paymentTiming: option.value }))}
+                      onChange={() => setPaymentInfo((prev) => {
+                        const paymentMethod = alignMappingCreatePaymentMethod({
+                          nextTiming: option.value,
+                          paymentMethod: prev.paymentMethod,
+                          previousTiming: prev.paymentTiming,
+                          codes: paymentMethodCodes
+                        });
+                        const methodChanged = paymentMethod !== prev.paymentMethod;
+                        return {
+                          ...prev,
+                          paymentTiming: option.value,
+                          paymentMethod,
+                          paymentReference: methodChanged
+                            ? generateReferenceNumber(paymentMethod)
+                            : prev.paymentReference
+                        };
+                      })}
                       className="mg-v2-mapping-creation-modal__payment-timing-card-input"
                     />
                     <span className="mg-v2-mapping-creation-modal__payment-timing-card-icon" aria-hidden="true">

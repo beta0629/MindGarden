@@ -610,7 +610,7 @@ describe('MappingCreationModal — P0 핫픽스 + STEP swap', () => {
       fireEvent.click(screen.getByText('common:action.next'));
     });
     await waitFor(() => expect(screen.getByText('타기관내담자')).toBeInTheDocument());
-    expect(screen.getByTestId('engagement-type-badge')).toHaveTextContent('기관연동');
+    expect(screen.getByTestId('engagement-type-badge')).toHaveTextContent('기관연계');
     fireEvent.click(screen.getByText('타기관내담자'));
     await act(async () => {
       fireEvent.click(screen.getByText('common:action.next'));

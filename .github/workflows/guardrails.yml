@@ -4,7 +4,8 @@ name: 🛡️ Guardrails (PR)
 #   1) 관리자 API 역할 가드 누락     — AdminApiGuardCoverageTest (+ 대표 403 매트릭스 AdminApiRoleMatrixGuardrailMvcTest)
 #   2) 프로시저 호출 ↔ 표준 배포 SQL — ProcedureSignatureGuardrailTest
 #   3) 비밀값 커밋                   — gitleaks(PR 새 커밋만) + ApplicationYmlSecretDefaultsTest
-#   4) 운영 머지 게이트              — base=release/prod 이면 BE/FE 빌드도 같은 워크플로에서 실행
+#   4) FE 관리자 목록 전체 조회·page/size 누락 — scripts/verification/check-fe-admin-list-paging.js
+#   5) 운영 머지 게이트              — base=release/prod 이면 BE/FE 빌드도 같은 워크플로에서 실행
 # 베이스라인: src/test/resources/guardrails/*.txt, 저장소 루트 .gitleaksignore
 # required check 지정(브랜치 보호)은 이 파일에서 바꾸지 않는다. 체크 이름은 각 job 의 name 이다.
 
@@ -84,6 +85,25 @@ jobs:
             exit 0
           fi
           bash scripts/ci/guardrail-gitleaks-diff.sh "$BASE_SHA" "$HEAD_SHA"
+
+  guardrail-fe-admin-list-paging:
+    name: Guardrail FE (admin list paging)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Checker self-test
+        run: node scripts/verification/check-fe-admin-list-paging.test.js
+
+      - name: Check fetch-all / missing page·size (ratchet baseline)
+        run: node scripts/verification/check-fe-admin-list-paging.js
 
   prod-gate-be-build:
     name: Prod gate · BE build

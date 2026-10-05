@@ -77,7 +77,7 @@ public class AdminManualNotificationController extends BaseApiController {
     private final ClientPathAccessGuard clientPathAccessGuard;
 
     /**
-     * 다중 SMS 발송. 본문·사유는 1건 공통, 수신자는 1~50명. rate-limit 잔여 부족 시 0건 발송.
+     * 다중 SMS 발송. 본문·사유는 1건 공통, 수신자는 서버 상한(notification.manual.max-recipients) 이하. rate-limit 잔여 부족 시 0건 발송.
      *
      * @param request 요청
      * @param session HTTP 세션

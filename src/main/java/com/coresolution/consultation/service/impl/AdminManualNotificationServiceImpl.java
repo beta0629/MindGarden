@@ -33,7 +33,6 @@ import com.coresolution.consultation.util.PhoneLogMasking;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -45,13 +44,15 @@ import lombok.extern.slf4j.Slf4j;
  * rate-limiter 를 사용하며, 배치 단위로 UUID(batch_id) 를 부여한다(기획 Q4). rate-limit 잔여가 요청
  * 수신자 수보다 부족하면 0건 발송으로 전체 차단(기획 Q5)한다.
  *
+ * <p>발송 메서드는 트랜잭션 어노테이션을 두지 않는다. NOT_SUPPORTED 도 트랜잭션 동기화를 켜서 조회 커넥션이
+ * 외부 호출(SMS·알림톡·푸시) 동안 묶일 수 있다. 조회·감사로그는 각 저장소·로거의 짧은 트랜잭션으로 끝난다.
+ *
  * @author MindGarden
  * @since 2026-05-23
  */
 @Slf4j
 @Service
 @RequiredArgsConstructor
-@Transactional
 public class AdminManualNotificationServiceImpl implements AdminManualNotificationService {
 
     /** rate-limit 잔여 < 요청 수신자 수일 때 배치 전체 차단(0건 발송). */
@@ -92,7 +93,6 @@ public class AdminManualNotificationServiceImpl implements AdminManualNotificati
     private final ManualNotificationProperties manualNotificationProperties;
 
     @Override
-    @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public BulkNotificationResponse sendBulkSms(String tenantId, User currentUser,
             BulkSmsManualRequest request) {
         Objects.requireNonNull(tenantId, "tenantId");
@@ -227,7 +227,6 @@ public class AdminManualNotificationServiceImpl implements AdminManualNotificati
     }
 
     @Override
-    @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public BulkNotificationResponse sendBulkAlimtalk(String tenantId, User currentUser,
             BulkAlimtalkManualRequest request) {
         Objects.requireNonNull(tenantId, "tenantId");
@@ -386,7 +385,6 @@ public class AdminManualNotificationServiceImpl implements AdminManualNotificati
     }
 
     @Override
-    @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public BulkNotificationResponse sendBulkPush(String tenantId, User currentUser,
             BulkPushManualRequest request) {
         Objects.requireNonNull(tenantId, "tenantId");

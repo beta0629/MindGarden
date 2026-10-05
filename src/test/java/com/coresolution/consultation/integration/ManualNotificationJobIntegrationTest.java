@@ -1,6 +1,9 @@
 package com.coresolution.consultation.integration;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -39,6 +42,7 @@ import com.coresolution.consultation.constant.ManualNotificationJobStatus;
 import com.coresolution.consultation.constant.ManualNotificationRecipientMode;
 import com.coresolution.consultation.constant.SessionConstants;
 import com.coresolution.consultation.constant.UserRole;
+import com.coresolution.consultation.dto.BulkSmsManualRequest;
 import com.coresolution.consultation.dto.ManualNotificationJobRequest;
 import com.coresolution.consultation.dto.MobilePushBroadcastResult;
 import com.coresolution.consultation.dto.TestNotificationChannel;
@@ -84,6 +88,10 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 /**
  * 수동 발송 작업 통합 테스트(H2): 전체 내담자·제외, 서버 대상 규칙, 확인 인원 = 발송 인원, 상한 500/501,
  * 멱등 키, 청크·재개·중복 실행 방지, 프로바이더 호출 시 트랜잭션·커넥션 0, 로그 번호 마스킹, 권한 403.
+ *
+ * <p>프로바이더 호출 시점 커넥션 0 은 스텁 안에서 바로 단언한다: 작업 경로(ManualNotificationJobWorker →
+ * ManualNotificationDispatchGateway)와 기존 즉시 발송 경로(AdminManualNotificationController →
+ * AdminManualNotificationServiceImpl).
  *
  * @author MindGarden
  * @since 2026-10-05
@@ -227,6 +235,12 @@ class ManualNotificationJobIntegrationTest {
         for (int i = 0; i < 7; i++) {
             saveClient(tenantId, true, true, true);
         }
+        doAnswer(inv -> {
+            assertConnectionReleasedAtCall();
+            recordBoundary("dispatchSms");
+            smsPhones.add(inv.getArgument(0));
+            return new NotificationDispatchHelper.DispatchResult(true, null, null, null, null);
+        }).when(dispatchHelper).dispatchSms(anyString(), anyString());
         ManualNotificationJobRequest request = allClients(List.of(), false);
         JsonNode preview = data(perform(PREVIEW_URL, request, admin(tenantId)).andExpect(status().isOk()));
         int confirmed = preview.get("finalCount").asInt();
@@ -348,6 +362,31 @@ class ManualNotificationJobIntegrationTest {
     }
 
     @Test
+    @DisplayName("기존 즉시 발송(POST /sms)도 프로바이더 호출 시 트랜잭션·커넥션 0")
+    void legacyBulkSms_providerCallOutsideTransaction() throws Exception {
+        User first = saveClient(tenantId, true, true, true);
+        User second = saveClient(tenantId, true, true, true);
+        doAnswer(inv -> {
+            assertConnectionReleasedAtCall();
+            recordBoundary("dispatchSms");
+            smsPhones.add(inv.getArgument(0));
+            return new NotificationDispatchHelper.DispatchResult(true, null, null, null, null);
+        }).when(dispatchHelper).dispatchSms(anyString(), anyString());
+        BulkSmsManualRequest request = BulkSmsManualRequest.builder()
+            .userIds(List.of(first.getId(), second.getId()))
+            .content("기존 즉시 발송 경로 확인")
+            .reason("커넥션 점유 0 검증")
+            .build();
+
+        perform(BASE + "/sms", request, admin(tenantId))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.successCount").value(2));
+
+        verify(dispatchHelper, times(2)).dispatchSms(anyString(), anyString());
+        assertExternalCallsOutsideTransaction(2);
+    }
+
+    @Test
     @DisplayName("프로바이더 호출 중 서버가 멈춘 뒤 재개: 멈춘 수신자는 결과 미상 FAILED, 남은 PENDING 만 보내고 중복 기록·중복 호출 없음")
     void resume_afterCrash_noDuplicateDispatch() throws Exception {
         for (int i = 0; i < 7; i++) {
@@ -465,6 +504,7 @@ class ManualNotificationJobIntegrationTest {
         List<Integer> requestSizes = new CopyOnWriteArrayList<>();
         when(mobilePushDispatchService.dispatchAdminAnnouncement(anyString(), anyList(), anyString(), anyString(),
                 anyString())).thenAnswer(inv -> {
+                    assertConnectionReleasedAtCall();
                     recordBoundary("dispatchAdminAnnouncement");
                     List<Long> ids = inv.getArgument(1);
                     requestSizes.add(ids.size());
@@ -659,6 +699,15 @@ class ManualNotificationJobIntegrationTest {
             TransactionSynchronizationManager.isSynchronizationActive(),
             TransactionSynchronizationManager.hasResource(entityManagerFactory),
             activeConnections()));
+    }
+
+    /** 프로바이더 호출 시점: 트랜잭션·동기화 없음, EntityManager·커넥션 바인딩 없음, Hikari 사용 중 커넥션 0. */
+    private void assertConnectionReleasedAtCall() throws SQLException {
+        assertFalse(TransactionSynchronizationManager.isActualTransactionActive());
+        assertFalse(TransactionSynchronizationManager.isSynchronizationActive());
+        assertNull(TransactionSynchronizationManager.getResource(entityManagerFactory));
+        assertNull(TransactionSynchronizationManager.getResource(dataSource));
+        assertEquals(0, dataSource.unwrap(HikariDataSource.class).getHikariPoolMXBean().getActiveConnections());
     }
 
     private void assertExternalCallsOutsideTransaction(int expectedCalls) {

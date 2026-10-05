@@ -11,11 +11,13 @@
 
 import React, { useMemo } from 'react';
 import PropTypes from 'prop-types';
-import { Link, useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
+import FeatureUnavailable from '../../common/molecules/FeatureUnavailable';
 import {
   CLIENT_REWARD_FETCH_FAILED_COPY,
   CLIENT_REWARD_UNAVAILABLE_COPY,
   CLIENT_SHOP_FETCH_FAILED_COPY,
+  CLIENT_SHOP_GATE_HOME_LABEL,
   CLIENT_SHOP_SESSION_LOADING_COPY,
   CLIENT_SHOP_TEST_IDS,
   CLIENT_SHOP_UNAVAILABLE_COPY
@@ -107,12 +109,16 @@ const ClientTenantComponentGate = ({ componentCode, children }) => {
 
 function ShopComponentUnavailablePage({ title, description, testId }) {
   return (
-    <div className="client-shop client-shop__gate-unavailable" data-testid={testId}>
-      <h1 className="client-shop__page-title">{title}</h1>
-      <p className="client-shop__message">{description}</p>
-      <Link to={CLIENT_DASHBOARD_ROUTES.DASHBOARD} className="client-shop__cta client-shop__cta--secondary">
-        홈으로 돌아가기
-      </Link>
+    <div
+      className="client-shop feature-unavailable-host feature-unavailable-host--viewport"
+      data-testid={testId}
+    >
+      <FeatureUnavailable
+        title={title}
+        description={description}
+        actionLabel={CLIENT_SHOP_GATE_HOME_LABEL}
+        actionHref={CLIENT_DASHBOARD_ROUTES.DASHBOARD}
+      />
     </div>
   );
 }

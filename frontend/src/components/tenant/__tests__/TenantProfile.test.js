@@ -212,7 +212,7 @@ describe('TenantProfile UI/UX (2026-05-27)', () => {
       expect(illustrations.length).toBeGreaterThanOrEqual(2);
       illustrations.forEach((svg) => {
         expect(svg.getAttribute('aria-hidden')).toBe('true');
-        expect(svg.getAttribute('viewBox')).toBe('0 0 100 100');
+        expect(svg.getAttribute('viewBox')).toBe('0 0 24 24');
       });
     });
 

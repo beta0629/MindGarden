@@ -1,15 +1,23 @@
-/* Clinic-OS Tenant Branding Home v3 — token-only (D11 no hex fallback) */
+/* Clinic-OS Tenant Branding Home v3 — token-only (D11 no hex fallback)
+   Public intro is light-pinned (.mg-theme-light-pinned / data-theme=light).
+   Surfaces use semantic tokens so text and background stay on one layer. */
+.common-page-template.mg-tenant-home-body,
 .mg-tenant-home-body {
   margin: 0;
-  background: var(--mg-v2-color-neutral-100);
+  background: var(--mg-v2-color-surface-bg);
+  background-color: var(--mg-v2-color-surface-bg);
 }
 
 .mg-tenant-home {
-  --brand: var(--tenant-primary, var(--cs-teal-700));
+  --brand: var(--tenant-primary, var(--mg-v2-color-primary-main));
   --th-ink: var(--mg-v2-color-text-primary);
   --th-muted: var(--mg-v2-color-text-secondary);
-  --th-surface: var(--mg-warm-gray-50);
-  --th-wash: var(--mg-warm-gray-100);
+  --th-surface: var(--mg-v2-color-surface-bg);
+  --th-wash: var(--mg-v2-color-neutral-100);
+  --th-line: var(--mg-v2-color-border-default);
+  --th-cta-bg: var(--mg-v2-color-primary-solid);
+  --th-cta-bg-hover: var(--mg-v2-color-primary-hover);
+  --th-cta-fg: var(--mg-v2-color-text-on-solid);
   min-height: 100vh;
   display: flex;
   flex-direction: column;
@@ -42,7 +50,7 @@
   justify-content: space-between;
   gap: 1rem;
   padding: 1rem 1.5rem;
-  border-bottom: 1px solid var(--mg-v2-color-border-main);
+  border-bottom: 1px solid var(--th-line);
 }
 
 .mg-tenant-home__chrome-left {
@@ -56,6 +64,7 @@
 .mg-tenant-home__center-name {
   font-weight: 700;
   font-size: 1rem;
+  color: var(--th-ink);
 }
 
 .mg-tenant-home__host {
@@ -71,8 +80,8 @@
   height: 2.25rem;
   padding: 0 1rem;
   border-radius: 999px;
-  border: 1px solid var(--mg-v2-color-border-main);
-  background: var(--mg-white);
+  border: 1px solid var(--mg-v2-color-border-strong);
+  background: var(--mg-v2-color-surface-card);
   color: var(--th-ink);
   font-size: 0.875rem;
   cursor: pointer;
@@ -80,8 +89,8 @@
 }
 
 .mg-tenant-home__ghost-login:hover {
-  border-color: var(--brand);
-  color: var(--brand);
+  border-color: var(--mg-v2-color-primary-main);
+  color: var(--mg-v2-color-primary-main);
 }
 
 .mg-tenant-home__main {
@@ -103,6 +112,7 @@
   font-size: clamp(1.85rem, 4vw, 2.5rem);
   line-height: 1.25;
   font-weight: 800;
+  color: var(--th-ink);
 }
 
 .mg-tenant-home__h1-name,
@@ -130,29 +140,37 @@
   padding: 0 1.35rem;
   border: none;
   border-radius: 999px;
-  background: var(--th-ink);
-  color: var(--mg-white);
+  background: var(--th-cta-bg);
+  color: var(--th-cta-fg);
   font-size: 0.9375rem;
   font-weight: 600;
   cursor: pointer;
-  transition: transform 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+  transition: transform 0.2s ease, background 0.2s ease;
 }
 
 .mg-tenant-home__cta-primary:hover {
-  background: var(--brand);
-  box-shadow: 0 6px 18px color-mix(in srgb, var(--th-ink) 12%, transparent);
+  background: var(--th-cta-bg-hover);
 }
 
 .mg-tenant-home__cta-text {
   color: var(--th-ink);
   font-size: 0.9375rem;
   text-decoration: underline;
-  text-underline-offset: 3px;
+  text-decoration-color: var(--mg-v2-color-border-strong);
+  text-underline-offset: 4px;
   transition: color 0.2s ease;
 }
 
 .mg-tenant-home__cta-text:hover {
-  color: var(--brand);
+  color: var(--mg-v2-color-text-link);
+  text-decoration-color: currentColor;
+}
+
+.mg-tenant-home__ghost-login:focus-visible,
+.mg-tenant-home__cta-primary:focus-visible,
+.mg-tenant-home__cta-text:focus-visible {
+  outline: 2px solid var(--mg-v2-color-border-focus);
+  outline-offset: 2px;
 }
 
 .mg-tenant-home__wash {
@@ -177,6 +195,7 @@
   margin: 0 0 0.5rem;
   font-size: 1rem;
   font-weight: 700;
+  color: var(--th-ink);
 }
 
 .mg-tenant-home__wash-body {

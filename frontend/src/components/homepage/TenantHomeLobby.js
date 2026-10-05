@@ -89,8 +89,12 @@ const TenantHomeLobby = () => {
 
   if (loading) {
     return (
-      <CommonPageTemplate title="센터 홈" description="심리상담센터 홈" bodyClass="mg-tenant-home-body">
-        <div className="mg-tenant-home mg-tenant-home--loading" aria-busy="true">
+      <CommonPageTemplate title="센터 홈" description="심리상담센터 홈" bodyClass="mg-tenant-home-body mg-theme-light-pinned">
+        <div
+          className="mg-tenant-home mg-tenant-home--loading mg-theme-light-pinned"
+          data-theme="light"
+          aria-busy="true"
+        >
           <p className="mg-tenant-home__loading-text">불러오는 중…</p>
         </div>
       </CommonPageTemplate>
@@ -101,11 +105,12 @@ const TenantHomeLobby = () => {
     <CommonPageTemplate
       title={`${centerName} — 심리상담센터`}
       description={`${centerName} 홈. 예약과 안내는 로그인 후 이어집니다.`}
-      bodyClass="mg-tenant-home-body"
+      bodyClass="mg-tenant-home-body mg-theme-light-pinned"
     >
       <div
-        className={`mg-tenant-home${entered ? ' mg-tenant-home--entered' : ''}`}
+        className={`mg-tenant-home mg-theme-light-pinned${entered ? ' mg-tenant-home--entered' : ''}`}
         style={styleVars}
+        data-theme="light"
         data-testid="tenant-home-lobby"
       >
         <header className="mg-tenant-home__chrome" role="banner">

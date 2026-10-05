@@ -1,6 +1,7 @@
 package com.coresolution.consultation.dto;
 
 import java.util.List;
+import com.coresolution.consultation.validation.WithinManualRecipientLimit;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.Size;
@@ -14,7 +15,7 @@ import lombok.Setter;
  * 어드민 수동 다중 푸시 broadcast 요청 DTO.
  *
  * <p>{@code AdminManualNotificationService.sendBulkPush(...)} 가 사용하며, SMS·알림톡 채널과
- * 동일하게 50명 상한 + 발송 사유 필수 정책을 적용한다. 푸시는 본문 1000자 / 제목 50자까지 허용
+ * 동일하게 notification.manual.max-recipients 상한 + 발송 사유 필수 정책을 적용한다. 푸시는 본문 1000자 / 제목 50자까지 허용
  * (Expo Push API 메시지 페이로드 한도 내).
  *
  * <p>2026-05-27 — PHONE 모드 가드: 푸시 채널은 FCM/Expo 토큰이 사용자 매핑에 강하게 결합되어
@@ -31,16 +32,16 @@ import lombok.Setter;
 @AllArgsConstructor
 public class BulkPushManualRequest {
 
-    /** 현재 테넌트 사용자 PK 목록 (중복 허용 안 함, 1~50명). */
+    /** 현재 테넌트 사용자 PK 목록 (중복 허용 안 함, 1명 이상, 상한은 notification.manual.max-recipients). */
     @NotEmpty(message = "수신자 목록은 1명 이상이어야 합니다.")
-    @Size(max = 50, message = "한 번에 최대 50명까지 발송할 수 있습니다.")
+    @WithinManualRecipientLimit
     private List<Long> userIds;
 
     /**
      * 푸시 채널 가드 — 임의 휴대전화 발송은 미지원(2026-05-27). 클라이언트가 실수로 채워 보낸 경우
      * 서비스 layer 가 {@code PHONE_NOT_SUPPORTED_FOR_PUSH} 배치 에러 코드로 전체 차단한다.
      */
-    @Size(max = 50, message = "전화번호는 최대 50개까지 허용됩니다.")
+    @WithinManualRecipientLimit
     private List<@Size(max = 20) String> phoneNumbers;
 
     /** 푸시 제목 — Expo title. */

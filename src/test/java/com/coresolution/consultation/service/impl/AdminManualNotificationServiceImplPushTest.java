@@ -14,6 +14,7 @@ import static org.mockito.Mockito.when;
 
 import java.util.Arrays;
 import java.util.Collections;
+import com.coresolution.consultation.config.ManualNotificationProperties;
 import com.coresolution.consultation.dto.BulkNotificationResponse;
 import com.coresolution.consultation.dto.BulkPushManualRequest;
 import com.coresolution.consultation.dto.BulkRecipientResult;
@@ -32,6 +33,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 /**
@@ -72,6 +74,8 @@ class AdminManualNotificationServiceImplPushTest {
     private PersonalDataEncryptionUtil encryptionUtil;
     @Mock
     private MobilePushDispatchService mobilePushDispatchService;
+    @Spy
+    private ManualNotificationProperties manualNotificationProperties = new ManualNotificationProperties();
 
     @InjectMocks
     private AdminManualNotificationServiceImpl service;

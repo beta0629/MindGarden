@@ -35,4 +35,16 @@ class OnboardingAdminContactEmailSupportTest {
                 "{\"contactEmail\":\"01012345678\"}", objectMapper)).isNull();
         assertThat(OnboardingAdminContactEmailSupport.readNormalized(null, objectMapper)).isNull();
     }
+
+    @Test
+    @DisplayName("암호문 contactEmail 은 null 이고 원문을 돌려주지 않는다")
+    void readNormalized_ciphertext_isNull() throws Exception {
+        String cipher = "k1::QUJDREVGRw==";
+        String json = "{\"contactEmail\":\"" + cipher + "\"}";
+
+        assertThat(OnboardingAdminContactEmailSupport.readNormalized(json, objectMapper)).isNull();
+        assertThat(OnboardingAdminContactEmailSupport.visible(cipher)).isNull();
+        String omitted = OnboardingAdminContactEmailSupport.omitCipherContactEmail(json, objectMapper);
+        assertThat(omitted).doesNotContain(cipher);
+    }
 }

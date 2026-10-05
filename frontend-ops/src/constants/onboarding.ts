@@ -6,7 +6,7 @@
  * @version 1.1.0
  */
 
-import { OnboardingStatus } from "@/types/shared";
+import type { OnboardingStatus } from "@/types/shared";
 
 /**
  * 온보딩 상태 라벨 — 신청 심사 화면 문구
@@ -106,6 +106,7 @@ export const ONBOARDING_MESSAGES = {
 export const ONBOARDING_FACT_LABELS = {
   BUSINESS_TYPE: "업종",
   SCALE: "규모",
+  TENANT_ID: "테넌트 ID",
   DOMAIN: "도메인",
   PHONE: "대표 전화",
   REPRESENTATIVE_EMAIL: "대표 이메일",

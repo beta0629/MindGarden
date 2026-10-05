@@ -184,11 +184,11 @@ public final class AdminServiceUserFacingMessages {
     public static final String MSG_MAPPING_AMOUNT_BELOW_REFUND_FLOOR =
             "새 금액이 실제 결제액에서 이미 환불한 금액을 뺀 금액보다 적어 바꾸지 않았습니다. 환불로 처리하거나 금액을 다시 확인해 주세요.";
 
-    /** 패키지 금액 조정 INCOME 적요: 패키지명, 이전 금액, 새 금액, 차액(부호 포함). */
+    /** 패키지 금액 조정 전표 적요: 패키지명, 이전 금액, 새 금액, 차액(부호 포함). */
     public static final String DESC_MAPPING_PACKAGE_PRICE_ADJUSTMENT_FMT =
             "패키지 금액 조정 - %s (%,d원 → %,d원, 차액 %+,d원)";
 
-    /** 패키지 금액 조정 INCOME 비고: 수정자. */
+    /** 패키지 금액 조정 전표 비고: 수정자. */
     public static final String REMARKS_MAPPING_PACKAGE_PRICE_ADJUSTMENT_ACTOR_FMT = "수정자: %s";
 
     /**

@@ -108,7 +108,7 @@ public final class FinancialTransactionConstants {
     public static final int PARTIAL_REFUND_RELATED_ENTITY_SEQ_START = 2;
 
     /**
-     * 입금 확인된 매칭의 패키지 금액 변경 조정 INCOME relatedEntityType 접두사.
+     * 입금 확인된 매칭의 패키지 금액 변경 조정 전표(증액 INCOME·감액 EXPENSE) relatedEntityType 접두사.
      * 전체 값: {@code MAPPING_PACKAGE_ADJUSTMENT_V{변경 전 매칭 version}}, relatedEntityId = 매칭 ID.
      * {@code uk_financial_transactions_dedupe}(테넌트·매칭·타입·거래유형·삭제여부) 가 같은 변경(같은 version)의
      * 두 번째 조정 전표를 DB 에서 거부한다 — 이 값이 조정 전표의 멱등 키다.
@@ -116,7 +116,7 @@ public final class FinancialTransactionConstants {
     public static final String RELATED_ENTITY_MAPPING_PACKAGE_ADJUSTMENT_PREFIX = "MAPPING_PACKAGE_ADJUSTMENT_V";
 
     /**
-     * 수입 세부카테고리 — 입금 확인된 매칭의 패키지 금액 증감 조정(차액만, 감액은 음수).
+     * 세부카테고리 — 입금 확인된 매칭의 패키지 금액 증감 조정(차액만). 증액은 INCOME, 감액은 수입 감소 EXPENSE(양수).
      */
     public static final String SUBCATEGORY_PACKAGE_PRICE_ADJUSTMENT = "PACKAGE_PRICE_ADJUSTMENT";
 
@@ -187,7 +187,7 @@ public final class FinancialTransactionConstants {
     }
 
     /**
-     * 패키지 금액 조정 INCOME 의 relatedEntityType (멱등 키).
+     * 패키지 금액 조정 전표의 relatedEntityType (멱등 키).
      *
      * @param baseVersion 변경 전 매칭 version
      * @return {@code MAPPING_PACKAGE_ADJUSTMENT_V{baseVersion}}

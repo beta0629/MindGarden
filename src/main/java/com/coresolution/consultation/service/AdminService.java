@@ -237,8 +237,8 @@ public interface AdminService {
     Client updateClient(Long id, ClientRegistrationRequest request);
 
     /**
-     * 매칭 정보 수정 — 매칭 변경과 (입금 확인된 매칭의 금액 변경이면) 차액 조정 전표를 한 트랜잭션에서 처리한다.
-     * 외부 알림은 {@link MappingUpdateService} 가 커밋 뒤로 미룬다.
+     * 매칭 정보 수정 (JPA 만). 입금 확인된 매칭의 금액 차액 조정 전표는 {@link MappingUpdateService} 가 같은 트랜잭션에서
+     * 남긴다 — 매칭 수정은 그 진입점으로만 부른다.
      *
      * @param id 매칭 ID
      * @param request 수정 요청
@@ -246,6 +246,17 @@ public interface AdminService {
      * @return 수정된 매칭
      */
     ConsultantClientMappingResponse updateMapping(Long id, ConsultantClientMappingCreateRequest request, String updatedBy);
+
+    /**
+     * 매칭 수정 전 금액·회기 변경 판정 ({@link MappingUpdateService} 트랜잭션에 참여).
+     *
+     * @param id 매칭 ID
+     * @param request 수정 요청
+     * @return 변경 판정
+     * @throws com.coresolution.consultation.exception.MappingErpSyncFailedException 동기화 경로 없는 매칭의 금액·회기 변경
+     */
+    com.coresolution.consultation.dto.MappingPackageChange inspectMappingPackageChange(Long id,
+            ConsultantClientMappingCreateRequest request);
 
     /**
      * 가계약(PENDING_PAYMENT) 매칭의 패키지·가격·총 회기만 동일 매핑에 갱신한다.

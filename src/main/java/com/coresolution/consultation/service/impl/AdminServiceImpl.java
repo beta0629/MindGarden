@@ -39,6 +39,7 @@ import com.coresolution.consultation.dto.AdminListPageResult;
 import com.coresolution.consultation.dto.ClientRegistrationRequest;
 import com.coresolution.consultation.dto.ConsultantClientMappingCreateRequest;
 import com.coresolution.consultation.dto.ConsultantClientMappingResponse;
+import com.coresolution.consultation.dto.MappingPackageChange;
 import com.coresolution.consultation.dto.ConsultantRegistrationRequest;
 import com.coresolution.consultation.dto.ConsultationsByDayOfWeekResponse;
 import com.coresolution.consultation.dto.NewClientMonthlyItemResponse;
@@ -115,7 +116,6 @@ import com.coresolution.consultation.service.RefundAutoCancelNotificationService
 import com.coresolution.consultation.service.ScheduleService;
 import com.coresolution.consultation.service.SalaryLateSessionAutoSyncService;
 import com.coresolution.consultation.service.SalaryTaxRateLookupService;
-import com.coresolution.consultation.service.MappingPackageLedgerService;
 import com.coresolution.consultation.service.StoredProcedureService;
 import com.coresolution.consultation.constant.LifecycleState;
 import com.coresolution.consultation.dto.lifecycle.Actor;
@@ -248,7 +248,6 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
     private final FinancialTransactionRepository financialTransactionRepository;
     private final AmountManagementService amountManagementService;
     private final StoredProcedureService storedProcedureService;
-    private final MappingPackageLedgerService mappingPackageLedgerService;
     private final UserRoleAssignmentRepository userRoleAssignmentRepository;
     private final TenantRoleRepository tenantRoleRepository;
     private final UserRoleQueryService userRoleQueryService;
@@ -7053,27 +7052,21 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
     }
 
     /**
-     * 매칭 수정 — 매칭 변경과 재무 조정 전표를 한 트랜잭션에서 처리한다. 둘 중 하나라도 실패하면 둘 다 롤백된다.
+     * 매칭 수정 전 금액·회기 변경 판정 — {@code MappingUpdateService} 트랜잭션에 참여한다.
      *
-     * <p>입금 확인된(APPROVED·DEP) 매칭의 금액 변경만 {@link MappingPackageLedgerService} 가 차액 조정 INCOME 을
-     * 남긴다(감액은 음수, 기존 전표는 그대로). 감액은 새 금액이 (결제액 − 누적 환불액) 이상이어야 한다.
-     * 회기만 바뀌면 금액 변동이 없으므로 전표를 쓰지 않는다. UpdateMappingInfo 는 부르지 않는다 — 같은 매칭 필드를
-     * 이 JPA 수정이 같은 트랜잭션·영속성 컨텍스트에서 고친다.</p>
+     * <p>입금 확인된(APPROVED·DEP) 매칭의 금액 변경이면 조정 전표 대상이다. 동기화 경로가 없는 매칭(쇼핑·타기관 연계·추가
+     * 패키지)의 금액·회기 변경과 변경 전 금액이 없는 입금 매칭의 금액 변경은 여기서 거부한다.</p>
      *
      * @param id 매칭 ID
      * @param dto 수정 요청
-     * @param updatedBy 수정자
-     * @return 수정된 매칭
-     * @throws MappingErpSyncFailedException 조정 전표 기록 실패(롤백), 또는 동기화 경로 없는 매칭(쇼핑·타기관 연계·추가
-     *         패키지)의 금액·회기 변경
-     * @throws com.coresolution.consultation.exception.MappingAmountBelowRefundFloorException 감액 하한 미만
+     * @return 변경 판정 (같은 트랜잭션의 영속 매칭 포함)
+     * @throws MappingErpSyncFailedException 동기화 경로 없는 매칭의 금액·회기 변경
      */
     @Override
     @Transactional
-    public ConsultantClientMappingResponse updateMapping(Long id, ConsultantClientMappingCreateRequest dto, String updatedBy) {
+    public MappingPackageChange inspectMappingPackageChange(Long id, ConsultantClientMappingCreateRequest dto) {
         ConsultantClientMapping mapping = mappingRepository.findByTenantIdAndId(getTenantId(), id)
                 .orElseThrow(() -> new RuntimeException(AdminServiceUserFacingMessages.MSG_MAPPING_NOT_FOUND));
-
         Long oldPackagePrice = mapping.getPackagePrice();
         long baseVersion = mapping.getVersion() != null ? mapping.getVersion() : 0L;
         boolean priceChanged = dto.getPackagePrice() != null && !dto.getPackagePrice().equals(oldPackagePrice);
@@ -7092,25 +7085,23 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         if (ledgerAdjustment && oldPackagePrice == null) {
             throw MappingErpSyncFailedException.unsupported(id);
         }
-        if (ledgerAdjustment && dto.getPackagePrice() < oldPackagePrice) {
-            mappingPackageLedgerService.assertDecreaseAllowed(mapping, dto.getPackagePrice());
-        }
+        return new MappingPackageChange(mapping, ledgerAdjustment,
+                oldPackagePrice != null ? oldPackagePrice : 0L,
+                dto.getPackagePrice() != null ? dto.getPackagePrice() : (oldPackagePrice != null ? oldPackagePrice : 0L),
+                baseVersion);
+    }
 
-        ConsultantClientMappingResponse response = applyMappingUpdate(mapping, dto, updatedBy);
-
-        if (ledgerAdjustment) {
-            String actor = updatedBy != null && !updatedBy.isEmpty()
-                    ? updatedBy
-                    : AdminServiceUserFacingMessages.ERP_MAPPING_PROCEDURE_ACTOR_FALLBACK;
-            try {
-                mappingPackageLedgerService.recordPackagePriceAdjustment(mapping, oldPackagePrice,
-                        dto.getPackagePrice(), baseVersion, actor);
-            } catch (RuntimeException e) {
-                log.error("❌ 패키지 금액 조정 전표 기록 실패 — 매칭 수정 롤백: mappingId={}", id, e);
-                throw MappingErpSyncFailedException.of(id, e);
-            }
-        }
-        return response;
+    /**
+     * 매칭 수정(JPA). 재무 조정 전표는 {@code MappingUpdateService} 가 같은 트랜잭션에서
+     * {@code MappingPackageLedgerService} 로 남긴다. UpdateMappingInfo 는 부르지 않는다 — 같은 매칭 필드를 이 JPA 수정이
+     * 같은 트랜잭션·영속성 컨텍스트에서 고친다.
+     */
+    @Override
+    @Transactional
+    public ConsultantClientMappingResponse updateMapping(Long id, ConsultantClientMappingCreateRequest dto, String updatedBy) {
+        ConsultantClientMapping mapping = mappingRepository.findByTenantIdAndId(getTenantId(), id)
+                .orElseThrow(() -> new RuntimeException(AdminServiceUserFacingMessages.MSG_MAPPING_NOT_FOUND));
+        return applyMappingUpdate(mapping, dto, updatedBy);
     }
 
     private ConsultantClientMappingResponse applyMappingUpdate(ConsultantClientMapping mapping,

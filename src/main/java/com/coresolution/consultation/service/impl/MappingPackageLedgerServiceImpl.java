@@ -29,6 +29,9 @@ import lombok.extern.slf4j.Slf4j;
 /**
  * 입금 확인된 매칭의 패키지 금액 변경 재무 전표 writer.
  *
+ * <p>증액은 차액 INCOME, 감액은 차액 EXPENSE(수입 감소 조정) 1건이다. 전표 금액은 엔티티·분개 규칙상 0 이상이라
+ * 음수 INCOME 대신 환불과 같은 방식(양수 EXPENSE)으로 수입 감소를 남긴다. 기존 전표는 지우거나 고치지 않는다.</p>
+ *
  * <p>모든 메서드는 {@link Propagation#MANDATORY} — 매칭 수정 트랜잭션 밖에서 부르면 실패한다. 조정 전표는
  * {@code saveAndFlush} 로 바로 INSERT 해 UNIQUE 위반이 호출자 안에서 드러나게 한다(커밋 시점 예외로 새지 않음).
  * 분개(AccountingEntry 는 금액 ≥ 0)·실시간 통계·외부 호출은 하지 않는다.</p>
@@ -74,18 +77,20 @@ public class MappingPackageLedgerServiceImpl implements MappingPackageLedgerServ
         BigDecimal vatRate = salaryTaxRateLookupService.getVatRate(tenantId);
         TaxCalculationUtil.TaxCalculationResult tax =
                 TaxCalculationUtil.calculateTaxFromPayment(BigDecimal.valueOf(Math.abs(delta)), vatRate);
-        BigDecimal sign = BigDecimal.valueOf(Long.signum(delta));
+        FinancialTransaction.TransactionType type = delta > 0L
+                ? FinancialTransaction.TransactionType.INCOME
+                : FinancialTransaction.TransactionType.EXPENSE;
         String packageName = StringUtils.hasText(mapping.getPackageName())
                 ? mapping.getPackageName()
                 : AdminServiceUserFacingMessages.FALLBACK_PACKAGE_DISPLAY_NAME;
 
         FinancialTransaction adjustment = FinancialTransaction.builder()
-                .transactionType(FinancialTransaction.TransactionType.INCOME)
+                .transactionType(type)
                 .category(FinancialTransactionConstants.CATEGORY_CONSULTATION_FEE)
                 .subcategory(FinancialTransactionConstants.SUBCATEGORY_PACKAGE_PRICE_ADJUSTMENT)
-                .amount(tax.getAmountIncludingTax().multiply(sign))
-                .taxAmount(tax.getVatAmount().multiply(sign))
-                .amountBeforeTax(tax.getAmountExcludingTax().multiply(sign))
+                .amount(tax.getAmountIncludingTax())
+                .taxAmount(tax.getVatAmount())
+                .amountBeforeTax(tax.getAmountExcludingTax())
                 .withholdingTaxAmount(BigDecimal.ZERO)
                 .cardMerchantFeeAmount(BigDecimal.ZERO)
                 .taxIncluded(true)
@@ -105,8 +110,8 @@ public class MappingPackageLedgerServiceImpl implements MappingPackageLedgerServ
         adjustment.setTenantId(tenantId);
 
         FinancialTransaction saved = financialTransactionRepository.saveAndFlush(adjustment);
-        log.info("패키지 금액 조정 INCOME 기록: mappingId={}, txId={}, delta={}, baseVersion={}",
-                mapping.getId(), saved.getId(), delta, baseVersion);
+        log.info("패키지 금액 조정 전표 기록: mappingId={}, txId={}, type={}, delta={}, baseVersion={}",
+                mapping.getId(), saved.getId(), type, delta, baseVersion);
         return Optional.of(saved);
     }
 

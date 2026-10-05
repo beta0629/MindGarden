@@ -11,4 +11,3 @@ TODO MISMATCH CheckTimeConflict java=7(out=2) def=8(out=2) @StoredProcedureServi
 TODO MISMATCH ProcessIntegratedSalaryCalculation java=11(out=7) def=13(out=8) @PlSqlSalaryManagementServiceImpl # 레거시 스키마 폴백 arity(표준 정의 standard:ProcessIntegratedSalaryCalculation_standardized.sql) — 운영 정의 확인 후 폴백 호출 제거
 TODO MISMATCH ProcessIntegratedSalaryCalculation java=12(out=7) def=13(out=8) @PlSqlSalaryManagementServiceImpl # 레거시 스키마 폴백 arity(표준 정의 standard:ProcessIntegratedSalaryCalculation_standardized.sql) — 운영 정의 확인 후 폴백 호출 제거
 TODO MISMATCH ProcessSalaryPaymentWithErpSync java=4(out=2) def=5(out=2) @PlSqlSalaryManagementServiceImpl # 레거시 스키마 폴백 arity(표준 정의 standard:ProcessSalaryPaymentWithErpSync_standardized.sql) — 운영 정의 확인 후 폴백 호출 제거
-TODO UNDEFINED UpdateMappingInfo @StoredProcedureServiceImpl # 표준 배포 SQL 밖에만 정의(database/schema/mapping_update_procedures.sql 외 3) — procedures_standardized 로 이동

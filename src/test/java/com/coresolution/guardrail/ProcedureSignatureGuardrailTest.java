@@ -40,7 +40,9 @@ import org.junit.jupiter.api.Test;
  * 클래스패스 SQL(소스에서 {@code "*.sql"} 리터럴을 읽어 해석)의 {@code CREATE PROCEDURE} 정의.</p>
  *
  * <p>위반 종류: {@code UNDEFINED}(표준 배포 SQL 에 정의 없음) · {@code MISMATCH}(파라미터 수 불일치) ·
- * {@code DYNAMIC}(이름을 정적으로 해석 불가). 기존 위반은 {@code guardrails/procedure-signature-baseline.txt}
+ * {@code DYNAMIC}(이름을 정적으로 해석 불가) · {@code NODEPLOY}(Java 가 부르는 표준 프로시저인데
+ * {@code deployment/<이름>_deploy.sql} 이 없거나 원본과 달라 운영 db-diff·배포 대상에서 빠짐) ·
+ * {@code NESTED}(표준 프로시저 본문의 {@code CALL} 대상이 표준 세트·PlSqlInitializer 어디에도 없음). 기존 위반은 {@code guardrails/procedure-signature-baseline.txt}
  * ({@code TODO}) 에 사유와 함께 두고, 신규 위반·정리된 항목은 FAIL.</p>
  *
  * @author CoreSolution
@@ -56,6 +58,8 @@ class ProcedureSignatureGuardrailTest {
     static final Path STANDARD_DIR = Path.of("database/schema/procedures_standardized");
     static final Path FLYWAY_DIR = RESOURCES_ROOT.resolve("db/migration");
     static final String STANDARD_SUFFIX = "_standardized.sql";
+    static final Path DEPLOY_DIR = STANDARD_DIR.resolve("deployment");
+    static final String DEPLOY_SUFFIX = "_deploy.sql";
     static final String INITIALIZER = "PlSqlInitializer.java";
 
     private static final Pattern CALL_LITERAL = Pattern.compile(
@@ -71,6 +75,7 @@ class ProcedureSignatureGuardrailTest {
     private static final Pattern CREATE_PROCEDURE = Pattern.compile(
         "(?i)CREATE\\s+(?:DEFINER\\s*=\\s*\\S+\\s+)?PROCEDURE\\s+(?:IF\\s+NOT\\s+EXISTS\\s+)?"
             + "(?:`?\\w+`?\\.)?`?(\\w+)`?\\s*\\(");
+    private static final Pattern NESTED_CALL = Pattern.compile("(?i)\\bCALL\\s+(?:`?\\w+`?\\.)?`?(\\w+)`?\\s*\\(");
     private static final Pattern SQL_RESOURCE_LITERAL = Pattern.compile("\"([\\w./-]+\\.sql)\"");
     private static final int REGION_LIMIT = 6000;
     private static final int BUILDER_LOOKBACK = 400;
@@ -109,7 +114,12 @@ class ProcedureSignatureGuardrailTest {
                 violations.put("MISMATCH " + c.name() + " java=" + fmt(c) + " def=" + d.total() + "(out=" + d.out()
                     + ") @" + c.file(), d.source());
             }
+            String deployProblem = deployProblem(d);
+            if (deployProblem != null) {
+                violations.put("NODEPLOY " + d.name() + " @" + c.file(), deployProblem);
+            }
         }
+        violations.putAll(nestedCallViolations(defs));
         System.out.println("[guardrail2] Java 호출 " + calls.size() + "건 · 정의 " + defs.size() + "개 · 위반 "
             + violations.size() + "건");
         Files.createDirectories(CURRENT_OUT.getParent());
@@ -122,6 +132,45 @@ class ProcedureSignatureGuardrailTest {
                 + " 맞추거나, 정의를 표준 배포 SQL 에 추가하세요");
         assertTrue(failures.isEmpty(), GuardrailBaseline.report("프로시저 시그니처", failures)
             + "\n  (전체 현재 목록: " + CURRENT_OUT + ")");
+    }
+
+    /** 표준 정의면 deployment/ 사본이 원본과 같아야 운영 db-diff·배포 대상이 된다. 문제 없으면 null. */
+    static String deployProblem(Definition d) throws IOException {
+        String prefix = "standard:";
+        if (!d.source().startsWith(prefix)) {
+            return null;
+        }
+        String standardName = d.source().substring(prefix.length());
+        String proc = standardName.substring(0, standardName.length() - STANDARD_SUFFIX.length());
+        Path deploy = DEPLOY_DIR.resolve(proc + DEPLOY_SUFFIX);
+        if (!Files.isRegularFile(deploy)) {
+            return "배포 SQL 없음(" + deploy + ") — create_deployment_files.sh 로 생성";
+        }
+        if (Files.mismatch(STANDARD_DIR.resolve(standardName), deploy) != -1L) {
+            return "배포 SQL 이 원본과 다름(" + deploy + ") — create_deployment_files.sh 로 재생성";
+        }
+        return null;
+    }
+
+    /** 표준 프로시저 본문의 CALL 대상이 표준 세트·PlSqlInitializer 정의에 있는지. */
+    static Map<String, String> nestedCallViolations(Map<String, Definition> defs) throws IOException {
+        Map<String, String> result = new TreeMap<>();
+        List<Path> standard;
+        try (Stream<Path> s = Files.list(STANDARD_DIR)) {
+            standard = s.filter(p -> p.getFileName().toString().endsWith(STANDARD_SUFFIX)).sorted().toList();
+        }
+        for (Path p : standard) {
+            String sql = stripSqlComments(Files.readString(p, StandardCharsets.UTF_8));
+            String caller = p.getFileName().toString().replace(STANDARD_SUFFIX, "");
+            Matcher m = NESTED_CALL.matcher(sql);
+            while (m.find()) {
+                String callee = m.group(1);
+                if (!defs.containsKey(callee.toLowerCase(Locale.ROOT))) {
+                    result.put("NESTED " + caller + "->" + callee, definedElsewhere(callee));
+                }
+            }
+        }
+        return result;
     }
 
     private static String fmt(JavaCall c) {

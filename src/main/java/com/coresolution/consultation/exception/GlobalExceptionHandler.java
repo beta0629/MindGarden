@@ -541,6 +541,31 @@ public class GlobalExceptionHandler {
     }
 
     /**
+     * 매칭 입금 확인·패키지 수정의 재무(ERP) 동기화 실패 — 매칭 변경 없이 422.
+     *
+     * @since 2026-10-05
+     */
+    @ExceptionHandler(MappingErpSyncFailedException.class)
+    public ResponseEntity<Map<String, Object>> handleMappingErpSyncFailed(
+            MappingErpSyncFailedException e, HttpServletRequest request) {
+        log.warn("[MAPPING_ERP_SYNC_FAILED] mappingId={} cause={} path={}",
+                e.getMappingId(), e.getCause() != null ? e.getCause().getClass().getSimpleName() : null,
+                request.getRequestURI(), e.getCause());
+
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("success", false);
+        body.put("code", MappingErpSyncFailedException.ERROR_CODE);
+        body.put("errorCode", MappingErpSyncFailedException.ERROR_CODE);
+        body.put("mappingId", e.getMappingId());
+        body.put("message", e.getMessage());
+        body.put("status", HttpStatus.UNPROCESSABLE_ENTITY.value());
+        body.put("timestamp", java.time.LocalDateTime.now().toString());
+        body.put("path", request.getRequestURI());
+        body.put("method", request.getMethod());
+        return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(body);
+    }
+
+    /**
      * 일정당 상담일지 1건 — 중복 생성 HTTP 409 (기존 일지 ID 포함, 본문 미포함).
      */
     @ExceptionHandler(ConsultationRecordDuplicateException.class)

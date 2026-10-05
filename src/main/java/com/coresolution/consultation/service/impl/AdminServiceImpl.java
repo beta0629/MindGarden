@@ -38,6 +38,7 @@ import com.coresolution.consultation.constant.userprofile.UserProfileServiceUser
 import com.coresolution.consultation.dto.AdminListPageResult;
 import com.coresolution.consultation.dto.ClientRegistrationRequest;
 import com.coresolution.consultation.dto.ConsultantClientMappingCreateRequest;
+import com.coresolution.consultation.dto.MappingPackageErpSyncPlan;
 import com.coresolution.consultation.dto.ConsultantClientMappingResponse;
 import com.coresolution.consultation.dto.ConsultantRegistrationRequest;
 import com.coresolution.consultation.dto.ConsultationsByDayOfWeekResponse;
@@ -73,6 +74,7 @@ import com.coresolution.consultation.repository.CommonCodeRepository;
 import com.coresolution.consultation.exception.AdminDeleteBlockedException;
 import com.coresolution.consultation.exception.EntityNotFoundException;
 import com.coresolution.consultation.exception.MappingAlreadyProcessedException;
+import com.coresolution.consultation.exception.MappingErpSyncFailedException;
 import com.coresolution.consultation.exception.RefundLedgerNotRecordedException;
 import com.coresolution.consultation.service.AdminRequestIdempotencyService;
 import com.coresolution.consultation.repository.ClientRepository;
@@ -1140,6 +1142,16 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         } catch (Exception e) {
             log.error("💰 [비동기] 상담료 수입 거래 트랜잭션 실행 실패: MappingID={}, Error: {}", mapping.getId(), e.getMessage(), e);
         }
+    }
+
+    /**
+     * 상담료 입금 INCOME 을 현재 트랜잭션에 참여해 쓴다. 금액 미결정·기록 실패는 예외로 올려 호출자가 롤백한다.
+     * 이미 같은 INCOME 이 있으면 멱등 정상 종료.
+     *
+     * @param mapping 입금 확인된 매핑
+     */
+    public void createConsultationIncomeTransactionInCurrentTransaction(ConsultantClientMapping mapping) {
+        createConsultationIncomeTransaction(mapping, true);
     }
 
     /**
@@ -4519,74 +4531,38 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             log.info("📦 추가 매칭 입금 확인 — 가예약 확정 스킵(승인 시 ACTIVE 합산): MappingID={}", mappingId);
         }
 
-        // Path B/쇼핑: ensure 가 유일한 INCOME writer. UpdateMappingInfo(REQUIRES_NEW)는 rem 을 선커밋하므로
-        // ensure 실패 시 rem↑·INCOME 없음 누수가 난다 — 쇼핑 링크면 프로시저 동기화 스킵(JPA rem 은 현재 TX 유지).
+        // Path B/쇼핑: ensure 가 유일한 INCOME writer — 여기서는 INCOME 을 쓰지 않는다.
         boolean shopLinked = isShopOrderLinkedMapping(savedMapping);
 
+        // 입금 INCOME 은 이 트랜잭션에 참여해 쓴다. 실패하면 입금 확인·회기 충전까지 롤백하고 422(재시도 가능).
+        // UpdateMappingInfo 는 부르지 않는다: 같은 매칭 행을 별도 커넥션에서 고치고(잠금·버전 충돌)
+        // 방금 쓴 INCOME 과 같은 키로 INCOME 을 다시 넣는 중복 쓰기라 항상 실패하거나 이중 기표가 된다.
         try {
             if (effectiveAmount == null || effectiveAmount <= 0) {
                 log.warn("⚠️ 입금 확인 ERP 거래 스킵: MappingID={}, packagePrice={}, paymentAmount={} (유효 금액 없음)",
                         mappingId, mapping.getPackagePrice(), mapping.getPaymentAmount());
             } else if (isAdditionalMapping) {
-                log.info("🔄 추가 매칭 입금 확인 - 추가 회기에 대한 ERP 거래 생성 (별도 트랜잭션): MappingID={}", mappingId);
-                String tenantIdForTx = getTenantIdFromMapping(savedMapping);
-                if (tenantIdForTx == null) tenantIdForTx = getTenantIdOrNull();
-                if (tenantIdForTx == null || tenantIdForTx.isEmpty()) {
-                    throw new IllegalStateException(String.format(
-                            AdminServiceUserFacingMessages.MSG_TENANT_REQUIRED_MAPPING_ID_FMT, mappingId));
-                }
-                runInNewTransaction(tenantIdForTx, () -> createAdditionalSessionIncomeTransaction(savedMapping, effectiveAmount));
+                log.info("🔄 추가 매칭 입금 확인 - 추가 회기 ERP 거래 생성: MappingID={}", mappingId);
+                createAdditionalSessionIncomeTransaction(savedMapping, effectiveAmount);
                 log.info("💚 입금 확인 ERP 거래 생성 완료 (추가 매칭): MappingID={}, Amount={}", mappingId, effectiveAmount);
             } else if (shopLinked) {
-                // Path B/쇼핑: stale packagePrice 로 async INCOME 쓰지 않음 — ensure 가 SSOT writer
+                // Path B/쇼핑: stale packagePrice 로 INCOME 쓰지 않음 — ensure 가 SSOT writer
                 log.info(
                         "🛒 쇼핑 매핑 confirmDeposit — INCOME 억제(ensure 전용): MappingID={}, effectiveAmount={}",
                         mappingId,
                         effectiveAmount);
             } else {
-                log.info("🆕 신규 매칭 입금 확인 - 전체 패키지에 대한 ERP 거래 생성 (별도 트랜잭션): MappingID={}", mappingId);
-                createConsultationIncomeTransactionAsync(savedMapping);
+                log.info("🆕 신규 매칭 입금 확인 - 전체 패키지 ERP 거래 생성: MappingID={}", mappingId);
+                createConsultationIncomeTransactionInCurrentTransaction(savedMapping);
                 log.info("💚 입금 확인 ERP 거래 생성 완료 (신규 매칭): MappingID={}", mappingId);
             }
-        } catch (Exception e) {
-            log.error("❌ 입금 확인 ERP 거래 생성 실패 (입금 확인은 완료됨): MappingID={}, Error={}", mappingId, e.getMessage(), e);
+        } catch (RuntimeException e) {
+            log.error("❌ 입금 확인 ERP 거래 생성 실패 — 입금 확인 롤백: MappingID={}", mappingId, e);
+            throw MappingErpSyncFailedException.of(mappingId, e);
         }
 
         if (institutionLinkTiming && effectiveAmount != null && effectiveAmount > 0) {
             syncInstitutionLinkContractPrepaidAmount(savedMapping, effectiveAmount);
-        }
-
-        // 입금 확인 후 ERP 매핑 정보 동기화 (유효 금액이 있을 때만 — INCOME 경로와 동일, 불필요한 프로시저/롤백 방지)
-        // 쇼핑 Path B: UpdateMappingInfo 는 REQUIRES_NEW 로 rem 을 선커밋 → ensure 실패 시 rem↑·INCOME 없음.
-        // JPA rem 충전은 현재 TX 에 남기고, ensure 와 동일 원자 단위로 롤백되게 프로시저 동기화는 스킵.
-        if (shopLinked) {
-            log.info(
-                    "🛒 쇼핑 매핑 confirmDeposit — ERP UpdateMappingInfo 스킵(rem+INCOME 동일 TX): MappingID={}",
-                    mappingId);
-        } else if (effectiveAmount != null && effectiveAmount > 0) {
-            String tenantIdForProc = getTenantIdFromMapping(savedMapping);
-            if (tenantIdForProc == null) tenantIdForProc = getTenantIdOrNull();
-            if (tenantIdForProc == null || tenantIdForProc.isEmpty()) {
-                throw new IllegalStateException(String.format(
-                        AdminServiceUserFacingMessages.MSG_TENANT_REQUIRED_ERP_MAPPING_SYNC_FMT, mappingId));
-            }
-            runInNewTransaction(tenantIdForProc, () -> {
-                log.info("🔄 입금 확인 완료, ERP 매핑 정보 동기화 프로시저 호출: mappingId={}", mappingId);
-                Map<String, Object> procedureResult = storedProcedureService.updateMappingInfo(
-                    mappingId,
-                    savedMapping.getPackageName(),
-                    savedMapping.getPackagePrice() != null ? savedMapping.getPackagePrice().doubleValue() : 0.0,
-                    savedMapping.getTotalSessions() != null ? savedMapping.getTotalSessions() : 0,
-                    AdminServiceUserFacingMessages.ERP_MAPPING_PROCEDURE_ACTION_DEPOSIT_CONFIRMED
-                );
-                if (Boolean.TRUE.equals(procedureResult.get("success"))) {
-                    log.info("✅ ERP 매핑 정보 동기화 완료: mappingId={}, message={}", mappingId, procedureResult.get("message"));
-                } else {
-                    log.warn("⚠️ ERP 매핑 정보 동기화 실패: mappingId={}, message={}", mappingId, procedureResult.get("message"));
-                }
-            });
-        } else {
-            log.debug("입금 확인 ERP 매핑 프로시저 스킵(유효 금액 없음): mappingId={}", mappingId);
         }
 
         // 컨트롤러에서 mapping.getConsultant()/getClient() 접근 시 no Session 방지
@@ -7075,9 +7051,65 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         return response;
     }
 
+    /**
+     * 입금 확인된(INCOME 이 있는) 매칭의 금액·회기 변경이면 UpdateMappingInfo 인자를 돌려준다. 입금 전이거나 금액·회기가
+     * 그대로면 비어 있다. 상태값 오류는 여기서 거부해 동기화만 되고 수정은 실패하는 일을 막는다.
+     *
+     * @param id 매칭 ID
+     * @param dto 수정 요청
+     * @param updatedBy 수정자
+     * @return 동기화 인자 (불필요하면 empty)
+     * @throws MappingErpSyncFailedException 동기화 경로 없는 매칭(쇼핑·타기관 연계·추가 패키지)의 금액·회기 변경
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public Optional<MappingPackageErpSyncPlan> planMappingPackageErpSync(Long id,
+            ConsultantClientMappingCreateRequest dto, String updatedBy) {
+        ConsultantClientMapping mapping = mappingRepository.findByTenantIdAndId(getTenantId(), id)
+                .orElseThrow(() -> new RuntimeException(AdminServiceUserFacingMessages.MSG_MAPPING_NOT_FOUND));
+        if (dto.getStatus() != null) {
+            ConsultantClientMapping.MappingStatus.valueOf(dto.getStatus());
+        }
+        if (dto.getPaymentStatus() != null) {
+            ConsultantClientMapping.PaymentStatus.valueOf(dto.getPaymentStatus());
+        }
+        boolean priceChanged = dto.getPackagePrice() != null
+                && !dto.getPackagePrice().equals(mapping.getPackagePrice());
+        boolean sessionsChanged = dto.getTotalSessions() != null
+                && !dto.getTotalSessions().equals(mapping.getTotalSessions());
+        ConsultantClientMapping.PaymentStatus paymentStatus = mapping.getPaymentStatus();
+        boolean depositIncomePosted = paymentStatus == ConsultantClientMapping.PaymentStatus.APPROVED
+                || paymentStatus == ConsultantClientMapping.PaymentStatus.DEP;
+        if (!depositIncomePosted || (!priceChanged && !sessionsChanged)) {
+            return Optional.empty();
+        }
+        if (isShopOrderLinkedMapping(mapping) || isInstitutionLinkPaymentTiming(mapping)
+                || isAdditionalPackageMappingNotes(mapping.getNotes())) {
+            throw MappingErpSyncFailedException.unsupported(id);
+        }
+        String name = dto.getPackageName() != null ? dto.getPackageName() : mapping.getPackageName();
+        Long price = dto.getPackagePrice() != null ? dto.getPackagePrice() : mapping.getPackagePrice();
+        Integer total = dto.getTotalSessions() != null ? dto.getTotalSessions() : mapping.getTotalSessions();
+        String actor = updatedBy != null && !updatedBy.isEmpty()
+                ? updatedBy
+                : AdminServiceUserFacingMessages.ERP_MAPPING_PROCEDURE_ACTOR_FALLBACK;
+        return Optional.of(new MappingPackageErpSyncPlan(id, name, price != null ? price.doubleValue() : 0.0,
+                total != null ? total : 0, actor));
+    }
+
+    /**
+     * 매칭 수정(JPA). ERP 동기화(UpdateMappingInfo)는 호출하지 않는다 — {@code MappingUpdateService} 가
+     * 트랜잭션 밖에서 먼저 실행한다. 프로시저는 자체 COMMIT 하고 같은 행·version 을 고치므로 이 트랜잭션 안에서
+     * 부르면 행 잠금 대기·낙관적 잠금 충돌이 난다.
+     */
     @Override
     @Transactional
     public ConsultantClientMappingResponse updateMapping(Long id, ConsultantClientMappingCreateRequest dto, String updatedBy) {
+        return applyMappingUpdate(id, dto, updatedBy);
+    }
+
+    private ConsultantClientMappingResponse applyMappingUpdate(Long id, ConsultantClientMappingCreateRequest dto,
+            String updatedBy) {
         ConsultantClientMapping mapping = mappingRepository.findByTenantIdAndId(getTenantId(), id)
                 .orElseThrow(() -> new RuntimeException(AdminServiceUserFacingMessages.MSG_MAPPING_NOT_FOUND));
         
@@ -7122,36 +7154,6 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                                 (dto.getTotalSessions() != null && oldTotalSessions != null && !dto.getTotalSessions().equals(oldTotalSessions)) ||
                                 (dto.getPackagePrice() != null && oldPackagePrice == null) ||
                                 (dto.getTotalSessions() != null && oldTotalSessions == null);
-        
-        if (packageChanged) {
-            String tenantId = getTenantIdFromMapping(savedMapping);
-            if (tenantId == null) tenantId = getTenantIdOrNull();
-            runInNewTransaction(tenantId, () -> {
-                log.info("🔄 패키지 정보 변경 감지, ERP 재무 거래 동기화 프로시저 호출: mappingId={}", id);
-
-                String procedureUpdatedBy = updatedBy != null && !updatedBy.isEmpty()
-                    ? updatedBy
-                    : (savedMapping.getConsultant() != null && savedMapping.getConsultant().getName() != null
-                        ? savedMapping.getConsultant().getName()
-                        : "System");
-
-                Map<String, Object> procedureResult = storedProcedureService.updateMappingInfo(
-                    id,
-                    savedMapping.getPackageName(),
-                    savedMapping.getPackagePrice() != null ? savedMapping.getPackagePrice().doubleValue() : 0.0,
-                    savedMapping.getTotalSessions(),
-                    procedureUpdatedBy
-                );
-
-                if ((Boolean) procedureResult.getOrDefault("success", false)) {
-                    log.info("✅ ERP 재무 거래 동기화 완료: mappingId={}, message={}",
-                            id, procedureResult.get("message"));
-                } else {
-                    log.warn("⚠️ ERP 재무 거래 동기화 실패: mappingId={}, message={}",
-                            id, procedureResult.get("message"));
-                }
-            });
-        }
         
         try {
             if (savedMapping.getConsultant() != null && savedMapping.getClient() != null) {

@@ -67,7 +67,7 @@ jobs:
       # scp-action: strip_components: 2 → target 아래 prod-health-snapshot.sh 로 평탄화.
       - name: 스냅샷 업로드용 원격 디렉터리 준비
         if: steps.kst_guard.outputs.skip != 'true'
-        uses: appleboy/ssh-action@master
+        uses: appleboy/ssh-action@c4f70287fc37c43b14b30b407224bbbc8e8c6327 # master 2026-08-16 (v1.2.5+10) 고정
         with:
           host: ${{ secrets.PRODUCTION_HOST }}
           username: ${{ secrets.PRODUCTION_USER }}
@@ -95,7 +95,7 @@ jobs:
 
       - name: 원격에서 스냅샷 실행
         if: steps.kst_guard.outputs.skip != 'true'
-        uses: appleboy/ssh-action@master
+        uses: appleboy/ssh-action@c4f70287fc37c43b14b30b407224bbbc8e8c6327 # master 2026-08-16 (v1.2.5+10) 고정
         with:
           host: ${{ secrets.PRODUCTION_HOST }}
           username: ${{ secrets.PRODUCTION_USER }}
@@ -127,7 +127,7 @@ jobs:
         id: health_check
         if: steps.kst_guard.outputs.skip != 'true'
         continue-on-error: true
-        uses: appleboy/ssh-action@master
+        uses: appleboy/ssh-action@c4f70287fc37c43b14b30b407224bbbc8e8c6327 # master 2026-08-16 (v1.2.5+10) 고정
         with:
           host: ${{ secrets.PRODUCTION_HOST }}
           username: ${{ secrets.PRODUCTION_USER }}

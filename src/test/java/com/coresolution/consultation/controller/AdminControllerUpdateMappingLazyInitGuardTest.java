@@ -27,11 +27,11 @@ import com.coresolution.consultation.service.ConsultantRatingService;
 import com.coresolution.consultation.service.ConsultantStatsService;
 import com.coresolution.consultation.service.ConsultationRecordService;
 import com.coresolution.consultation.service.DynamicPermissionService;
+import com.coresolution.consultation.service.MappingUpdateService;
 import com.coresolution.consultation.service.MenuService;
 import com.coresolution.consultation.service.RealTimeStatisticsService;
 import com.coresolution.consultation.service.RoleCommonCodeAuthorizationService;
 import com.coresolution.consultation.service.ScheduleService;
-import com.coresolution.consultation.service.StoredProcedureService;
 import com.coresolution.consultation.service.UserPersonalDataCacheService;
 import com.coresolution.consultation.service.UserService;
 import com.coresolution.consultation.service.erp.ErpService;
@@ -84,7 +84,7 @@ class AdminControllerUpdateMappingLazyInitGuardTest {
     @Mock private ConsultantRatingService consultantRatingService;
     @Mock private UserSocialAccountRepository userSocialAccountRepository;
     @Mock private UserService userService;
-    @Mock private StoredProcedureService storedProcedureService;
+    @Mock private MappingUpdateService mappingUpdateService;
     @Mock private PersonalDataEncryptionUtil personalDataEncryptionUtil;
     @Mock private UserPersonalDataCacheService userPersonalDataCacheService;
     @Mock private ConsultantStatsService consultantStatsService;
@@ -149,7 +149,7 @@ class AdminControllerUpdateMappingLazyInitGuardTest {
                 .paymentTiming(request.getPaymentTiming())
                 .build();
 
-        when(adminService.updateMapping(eq(MAPPING_ID), eq(request), eq("관리자 테스트")))
+        when(mappingUpdateService.update(eq(MAPPING_ID), eq(request), eq("관리자 테스트")))
                 .thenReturn(serviceResponse);
 
         User admin = new User();

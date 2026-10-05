@@ -172,6 +172,14 @@ public final class AdminServiceUserFacingMessages {
     public static final String MSG_REFUND_LEDGER_NOT_RECORDED =
             "환불 전표를 기록하지 못해 처리를 취소했습니다. 잠시 후 다시 시도해 주세요.";
 
+    /** 입금 확인 수입 전표 또는 매칭 패키지 ERP 동기화 실패 — 매칭 변경 없음(롤백). */
+    public static final String MSG_MAPPING_ERP_SYNC_FAILED =
+            "재무(ERP) 거래를 기록하지 못해 처리를 취소했습니다. 매칭은 바뀌지 않았습니다. 잠시 후 다시 시도해 주세요.";
+
+    /** 입금 확인된 쇼핑·타기관 연계·추가 패키지 매칭의 금액·회기 변경 — ERP 동기화 경로 없음. */
+    public static final String MSG_MAPPING_ERP_SYNC_UNSUPPORTED =
+            "입금 확인된 이 매칭은 여기서 금액·회기를 바꾸면 재무(ERP) 거래와 맞출 수 없어 처리하지 않았습니다. 환불 또는 추가 패키지로 처리해 주세요.";
+
     /**
      * 옵션 B v2.0 멱등성 가드 (Q6 Carbon Copy, 2026-05-28).
      *
@@ -465,6 +473,9 @@ public final class AdminServiceUserFacingMessages {
 
     /** ERP 매핑 동기화 프로시저에 전달하는 처리 구분 표시 */
     public static final String ERP_MAPPING_PROCEDURE_ACTION_DEPOSIT_CONFIRMED = "입금확인";
+
+    /** UpdateMappingInfo p_updated_by — 수정자 이름이 없을 때. */
+    public static final String ERP_MAPPING_PROCEDURE_ACTOR_FALLBACK = "System";
 
     public static final String NOTES_DUPLICATE_MAPPING_MERGE_TERMINATED = "중복 매칭 통합으로 종료됨";
 

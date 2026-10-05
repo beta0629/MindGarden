@@ -15,9 +15,14 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.time.Clock;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.Optional;
 import java.util.Properties;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 import jakarta.persistence.EntityManagerFactory;
 
@@ -27,6 +32,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.mock.env.MockEnvironment;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import com.coresolution.core.constant.KrPublicDataMessages;
@@ -46,6 +52,7 @@ import com.zaxxer.hikari.HikariPoolMXBean;
 class KrPublicDataServiceTest {
 
     private static final String BIZ = "120-81-47521";
+    private static final String BIZ_BAD = "120-81-47522";
     private static final String OPENING = "2020-01-15";
     private static final String REP = "홍길동";
     private static final Clock CLOCK = Clock.fixed(
@@ -81,7 +88,7 @@ class KrPublicDataServiceTest {
         properties.getJuso().setApiUrl(urls.getProperty("juso.api-url"));
         properties.getJuso().setMaxResults(2);
         properties.setMinOpeningYear(1900);
-        service = new KrPublicDataService(krPublicDataClient, properties, objectMapper, CLOCK);
+        service = new KrPublicDataService(krPublicDataClient, properties, objectMapper, CLOCK, new MockEnvironment());
         lenient().when(hikariDataSource.getHikariPoolMXBean()).thenReturn(hikariPoolMXBean);
         lenient().when(hikariPoolMXBean.getActiveConnections()).thenAnswer(invocation -> 0);
     }
@@ -121,7 +128,7 @@ class KrPublicDataServiceTest {
     @DisplayName("반례: 체크섬이 틀린 번호는 거절한다")
     void invalidChecksumIsRejected() {
         BusinessLookupRequest request = BusinessLookupRequest.builder()
-                .businessRegistrationNumber("120-81-47522")
+                .businessRegistrationNumber(BIZ_BAD)
                 .openingDate(OPENING)
                 .representativeName(REP)
                 .build();
@@ -274,6 +281,222 @@ class KrPublicDataServiceTest {
         assertEquals("04524", result.getItems().get(0).getZipCode());
     }
 
+    @Test
+    @DisplayName("스텁 on: 키 없으면 진위 일치·계속사업자이고 외부 호출을 하지 않는다")
+    void stubOnWithoutKeyReturnsContinuingMatch() {
+        enableDevStub();
+
+        BusinessVerificationResult result = service.lookup(validRequest());
+
+        assertEquals(Boolean.TRUE, result.getAuthenticityMatch());
+        assertEquals(KrPublicDataMessages.overallMatch(), result.getOverallStatus());
+        assertEquals(KrPublicDataMessages.businessContinue(), result.getBusinessStatus());
+        assertEquals(KrPublicDataStubSamples.taxType(), result.getTaxType());
+        assertTrue(result.getCheckedAt() != null && !result.getCheckedAt().isBlank());
+        verify(krPublicDataClient, never()).fetchStatus(anyString());
+        verify(krPublicDataClient, never()).fetchValidate(anyString(), anyString(), anyString());
+    }
+
+    @Test
+    @DisplayName("스텁 on: capabilities 는 사업자·주소 모두 사용 가능")
+    void stubOnEnablesCapabilitiesWithoutKeys() {
+        enableDevStub();
+
+        KrPublicDataCapabilities caps = service.capabilities();
+
+        assertTrue(caps.isBusinessLookupEnabled());
+        assertTrue(caps.isAddressSearchEnabled());
+    }
+
+    @Test
+    @DisplayName("스텁 off: 개발 프로필이어도 키 없으면 미확인이고 capabilities 는 꺼진다")
+    void stubOffKeepsLookupUnconfirmed() {
+        properties.getStub().setEnabled(false);
+        properties.getStub().setProfile("dev");
+        rebuild("dev");
+
+        BusinessVerificationResult result = service.lookup(validRequest());
+        KrPublicDataCapabilities caps = service.capabilities();
+
+        assertEquals(KrPublicDataMessages.overallUnconfirmed(), result.getOverallStatus());
+        assertFalse(caps.isBusinessLookupEnabled());
+        assertFalse(caps.isAddressSearchEnabled());
+        verify(krPublicDataClient, never()).fetchStatus(anyString());
+    }
+
+    @Test
+    @DisplayName("반례: production 프로필은 스텁 플래그가 켜져도 미확인")
+    void productionProfileIgnoresStub() {
+        properties.getStub().setEnabled(true);
+        properties.getStub().setProfile("production");
+        rebuild("production");
+
+        BusinessVerificationResult result = service.lookup(validRequest());
+
+        assertEquals(KrPublicDataMessages.overallUnconfirmed(), result.getOverallStatus());
+        verify(krPublicDataClient, never()).fetchStatus(anyString());
+    }
+
+    @Test
+    @DisplayName("반례: prod 프로필은 스텁 플래그가 켜져도 미확인")
+    void prodProfileIgnoresStub() {
+        properties.getStub().setEnabled(true);
+        properties.getStub().setProfile("prod");
+        rebuild("prod");
+
+        assertEquals(KrPublicDataMessages.overallUnconfirmed(), service.lookup(validRequest()).getOverallStatus());
+        verify(krPublicDataClient, never()).fetchStatus(anyString());
+    }
+
+    @Test
+    @DisplayName("반례: dev 가 아닌 프로필과 빈 프로필·Environment 없음은 스텁하지 않는다")
+    void stubRequiresDevProfile() {
+        properties.getStub().setEnabled(true);
+        properties.getStub().setProfile("dev");
+        rebuild("local");
+        assertEquals(KrPublicDataMessages.overallUnconfirmed(), service.lookup(validRequest()).getOverallStatus());
+
+        properties.getStub().setProfile("");
+        rebuild("dev");
+        assertEquals(KrPublicDataMessages.overallUnconfirmed(), service.lookup(validRequest()).getOverallStatus());
+
+        service = new KrPublicDataService(krPublicDataClient, properties, objectMapper, CLOCK, null);
+        properties.getStub().setProfile("dev");
+        assertEquals(KrPublicDataMessages.overallUnconfirmed(), service.lookup(validRequest()).getOverallStatus());
+        verify(krPublicDataClient, never()).fetchStatus(anyString());
+    }
+
+    @Test
+    @DisplayName("반례: 스텁이 켜져도 키가 있으면 실제 클라이언트 결과만 쓴다")
+    void stubOnWithKeyUsesRemoteClient() {
+        enableDevStub();
+        when(krPublicDataClient.isBusinessLookupConfigured()).thenReturn(true);
+        when(krPublicDataClient.fetchStatus(anyString())).thenAnswer(invocation -> {
+            assertOutsideTransaction();
+            return Optional.of(statusBody("", "tax"));
+        });
+
+        BusinessVerificationResult result = service.lookup(validRequest());
+
+        assertEquals(KrPublicDataMessages.overallUnregistered(), result.getOverallStatus());
+        verify(krPublicDataClient, never()).fetchValidate(anyString(), anyString(), anyString());
+    }
+
+    @Test
+    @DisplayName("반례: 스텁이 켜져도 KST 내일은 거절하고 오늘은 성공")
+    void stubRespectsKstDateBoundary() {
+        enableDevStub();
+        String today = LocalDate.now(CLOCK).toString();
+        String tomorrow = LocalDate.now(CLOCK).plusDays(1).toString();
+
+        IllegalArgumentException ex = org.junit.jupiter.api.Assertions.assertThrows(
+                IllegalArgumentException.class, () -> service.lookup(requestOn(tomorrow)));
+        assertEquals(KrPublicDataMessages.openingInvalid(), ex.getMessage());
+
+        BusinessVerificationResult result = service.lookup(requestOn(today));
+        assertEquals(KrPublicDataMessages.overallMatch(), result.getOverallStatus());
+        verify(krPublicDataClient, never()).fetchStatus(anyString());
+    }
+
+    @Test
+    @DisplayName("반례: 스텁이 켜져도 체크섬 오류는 거절")
+    void stubRejectsInvalidChecksum() {
+        enableDevStub();
+
+        org.junit.jupiter.api.Assertions.assertThrows(IllegalArgumentException.class,
+                () -> service.lookup(BusinessLookupRequest.builder()
+                        .businessRegistrationNumber(BIZ_BAD)
+                        .openingDate(OPENING)
+                        .representativeName(REP)
+                        .build()));
+        verify(krPublicDataClient, never()).fetchStatus(anyString());
+    }
+
+    @Test
+    @DisplayName("스텁 on: 주소 키 없으면 샘플을 반환하고 외부 호출을 하지 않는다")
+    void stubAddressReturnsSamples() {
+        enableDevStub();
+
+        AddressSearchResult result = service.searchAddress("sejong");
+
+        assertTrue(result.isEnabled());
+        assertEquals(KrPublicDataStubSamples.addresses(), result.getItems());
+        assertFalse(result.getItems().isEmpty());
+        verify(krPublicDataClient, never()).fetchAddresses(anyString());
+    }
+
+    @Test
+    @DisplayName("반례: 스텁 주소도 검색어 길이와 결과 상한을 지킨다")
+    void stubAddressKeepsKeywordAndCapRules() {
+        enableDevStub();
+        org.junit.jupiter.api.Assertions.assertThrows(IllegalArgumentException.class,
+                () -> service.searchAddress("한"));
+
+        properties.getJuso().setMaxResults(1);
+        AddressSearchResult capped = service.searchAddress("sejong");
+        assertEquals(1, capped.getItems().size());
+        assertEquals(KrPublicDataStubSamples.addresses().get(0).getRoadAddress(),
+                capped.getItems().get(0).getRoadAddress());
+    }
+
+    @Test
+    @DisplayName("반례: 스텁이 켜져도 주소 키가 있으면 실제 검색 결과만 쓴다")
+    void stubOnWithAddressKeyUsesRemoteClient() {
+        enableDevStub();
+        when(krPublicDataClient.isAddressSearchConfigured()).thenReturn(true);
+        when(krPublicDataClient.fetchAddresses(anyString())).thenAnswer(invocation -> {
+            assertOutsideTransaction();
+            return Optional.of("{\"results\":{\"common\":{\"errorCode\":\"0\"},\"juso\":"
+                    + "{\"roadAddr\":\"remote-road\",\"zipNo\":\"10\"}}}");
+        });
+
+        AddressSearchResult result = service.searchAddress("sejong");
+
+        assertTrue(result.isEnabled());
+        assertEquals(1, result.getItems().size());
+        assertEquals("remote-road", result.getItems().get(0).getRoadAddress());
+    }
+
+    @Test
+    @DisplayName("반례: 스텁 조회를 동시에 두 번 해도 외부 호출은 없다")
+    void concurrentStubLookupsDoNotCallRemote() throws Exception {
+        enableDevStub();
+        ExecutorService pool = Executors.newFixedThreadPool(2);
+        CountDownLatch start = new CountDownLatch(1);
+        try {
+            Future<BusinessVerificationResult> first = pool.submit(() -> {
+                start.await();
+                return service.lookup(validRequest());
+            });
+            Future<BusinessVerificationResult> second = pool.submit(() -> {
+                start.await();
+                return service.lookup(validRequest());
+            });
+            start.countDown();
+            assertEquals(KrPublicDataMessages.overallMatch(), first.get().getOverallStatus());
+            assertEquals(KrPublicDataMessages.businessContinue(), second.get().getBusinessStatus());
+            verify(krPublicDataClient, never()).fetchStatus(anyString());
+        } finally {
+            pool.shutdownNow();
+        }
+    }
+
+    @Test
+    @DisplayName("스텁 on: 온보딩 checklist 에도 같은 성공 결과를 넣는다")
+    void enrichUsesStubWhenEnabled() throws Exception {
+        enableDevStub();
+
+        String json = service.enrichOnboardingChecklist("{\"merchantLegal\":{"
+                + "\"businessRegistrationNumber\":\"" + BIZ + "\","
+                + "\"openingDate\":\"" + OPENING + "\","
+                + "\"representativeName\":\"" + REP + "\"}}");
+
+        JsonNode verification = objectMapper.readTree(json).path("merchantLegal").path("businessVerification");
+        assertEquals(KrPublicDataMessages.overallMatch(), verification.path("overallStatus").asText());
+        assertEquals(KrPublicDataMessages.businessContinue(), verification.path("businessStatus").asText());
+        assertTrue(verification.path("authenticityMatch").asBoolean());
+    }
+
     private void assertOutsideTransaction() {
         assertFalse(TransactionSynchronizationManager.isActualTransactionActive());
         assertFalse(TransactionSynchronizationManager.isSynchronizationActive());
@@ -282,11 +505,29 @@ class KrPublicDataServiceTest {
     }
 
     private static BusinessLookupRequest validRequest() {
+        return requestOn(OPENING);
+    }
+
+    private static BusinessLookupRequest requestOn(String openingDate) {
         return BusinessLookupRequest.builder()
                 .businessRegistrationNumber(BIZ)
-                .openingDate(OPENING)
+                .openingDate(openingDate)
                 .representativeName(REP)
                 .build();
+    }
+
+    private void enableDevStub() {
+        properties.getStub().setEnabled(true);
+        properties.getStub().setProfile("dev");
+        rebuild("dev");
+    }
+
+    private void rebuild(String... activeProfiles) {
+        MockEnvironment env = new MockEnvironment();
+        if (activeProfiles.length > 0) {
+            env.setActiveProfiles(activeProfiles);
+        }
+        service = new KrPublicDataService(krPublicDataClient, properties, objectMapper, CLOCK, env);
     }
 
     private static String statusBody(String code, String taxType) {

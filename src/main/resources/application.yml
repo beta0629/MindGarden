@@ -286,6 +286,13 @@ mindgarden:
       keyword-min-length: 2
       keyword-max-length: 80
       current-page: 1
+    # 개발 전용 조회 스텁. 기본은 꺼 두고 application-dev.yml 에서만 켠다.
+    stub:
+      enabled: false
+      profile: ""
+      blocked-profiles:
+        - prod
+        - production
   # =====================================================
   # 사용자 라이프사이클(자동 파기·익명화·휴면·cutoff·PII 스크러빙) 통합 정책.
   # 정책서 v1.2 (docs/standards/USER_LIFECYCLE_TERMINATION_POLICY.md) §0.1 Q9~Q11 / §10.9 반영.

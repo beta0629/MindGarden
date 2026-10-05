@@ -135,6 +135,11 @@ notification:
 mindgarden:
   branch:
     enabled: ${MINDGARDEN_BRANCH_ENABLED:true}
+  # 키가 없을 때 국세청·도로명주소 조회를 성공으로 대체. dev 프로필에서만 적용된다.
+  kr-public-data:
+    stub:
+      enabled: ${KR_PUBLIC_DATA_STUB_ENABLED:true}
+      profile: ${KR_PUBLIC_DATA_STUB_PROFILE:dev}
 
 # AI 모니터링 Phase 1 — Discord webhook (Zero-Cost, $0)
 # 미설정(빈 값) 시 SchedulerFailureNotifier 빈 자체가 등록되지 않아 graceful skip(no-op).

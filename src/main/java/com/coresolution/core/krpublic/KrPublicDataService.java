@@ -14,6 +14,8 @@ import java.util.Optional;
 import java.util.regex.Pattern;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.env.Environment;
+import org.springframework.core.env.Profiles;
 import org.springframework.stereotype.Service;
 
 import com.coresolution.core.constant.KrPublicDataMessages;
@@ -28,6 +30,7 @@ import lombok.extern.slf4j.Slf4j;
 /**
  * 온보딩·테넌트 사업자정보·Ops 가 함께 쓰는 국세청·도로명주소 서비스.
  * 외부 호출은 트랜잭션 밖에서만 하고, 결과와 무관하게 저장을 막지 않는다.
+ * 개발 프로필에서 스텁이 켜져 있고 키가 없으면 조회만 성공으로 대체한다.
  *
  * <p>TODO: 과학기술정보통신부 '모두의 AI' 공식 오픈(12월) 이후 공공 AI 검색과
  * 추가로 개방된 API 연동을 검토한다. 지금은 구현하지 않는다.
@@ -62,16 +65,18 @@ public class KrPublicDataService {
     private final KrPublicDataProperties properties;
     private final ObjectMapper objectMapper;
     private final Clock clock;
+    private final Environment environment;
 
     /**
      * @param krPublicDataClient HTTP 클라이언트
      * @param properties         설정
      * @param objectMapper       JSON
+     * @param environment        활성 프로필. 스텁은 개발 프로필에서만 허용
      */
     @Autowired
     public KrPublicDataService(KrPublicDataClient krPublicDataClient, KrPublicDataProperties properties,
-            ObjectMapper objectMapper) {
-        this(krPublicDataClient, properties, objectMapper, Clock.system(resolveZone(properties)));
+            ObjectMapper objectMapper, Environment environment) {
+        this(krPublicDataClient, properties, objectMapper, Clock.system(resolveZone(properties)), environment);
     }
 
     /**
@@ -79,13 +84,15 @@ public class KrPublicDataService {
      * @param properties         설정
      * @param objectMapper       JSON
      * @param clock              개업일자 상한(KST) 기준 시계
+     * @param environment        활성 프로필. 없으면 스텁을 켜지 않는다
      */
     KrPublicDataService(KrPublicDataClient krPublicDataClient, KrPublicDataProperties properties,
-            ObjectMapper objectMapper, Clock clock) {
+            ObjectMapper objectMapper, Clock clock, Environment environment) {
         this.krPublicDataClient = krPublicDataClient;
         this.properties = properties;
         this.objectMapper = objectMapper;
         this.clock = clock;
+        this.environment = environment;
     }
 
     /**
@@ -93,8 +100,8 @@ public class KrPublicDataService {
      */
     public KrPublicDataCapabilities capabilities() {
         return KrPublicDataCapabilities.builder()
-                .businessLookupEnabled(krPublicDataClient.isBusinessLookupConfigured())
-                .addressSearchEnabled(krPublicDataClient.isAddressSearchConfigured())
+                .businessLookupEnabled(businessLookupEnabled())
+                .addressSearchEnabled(addressSearchEnabled())
                 .build();
     }
 
@@ -181,10 +188,14 @@ public class KrPublicDataService {
      * @return 최대 건수가 잘린 결과. 키 없으면 enabled=false
      */
     public AddressSearchResult searchAddress(String keyword) {
-        if (!krPublicDataClient.isAddressSearchConfigured()) {
+        if (!addressSearchEnabled()) {
             return AddressSearchResult.builder().enabled(false).items(List.of()).build();
         }
         String normalized = requireKeyword(keyword);
+        if (useAddressStub()) {
+            log.info("stub address");
+            return AddressSearchResult.builder().enabled(true).items(stubAddresses()).build();
+        }
         Optional<String> body = krPublicDataClient.fetchAddresses(normalized);
         if (body.isEmpty()) {
             return AddressSearchResult.builder().enabled(true).items(List.of()).build();
@@ -193,6 +204,10 @@ public class KrPublicDataService {
     }
 
     private BusinessVerificationResult lookupRemote(String formatted, String openingIso, String representative) {
+        if (useBusinessStub()) {
+            log.info("stub business");
+            return stubVerified(BusinessRegistrationNumberValidator.normalizeDigits(formatted));
+        }
         if (!krPublicDataClient.isBusinessLookupConfigured()) {
             log.info("nts lookup skipped: key or url missing");
             return unconfirmed();
@@ -426,6 +441,77 @@ public class KrPublicDataService {
             return trimmed.substring(0, TAX_TYPE_MAX);
         }
         return trimmed;
+    }
+
+    private boolean businessLookupEnabled() {
+        return krPublicDataClient.isBusinessLookupConfigured() || useBusinessStub();
+    }
+
+    private boolean addressSearchEnabled() {
+        return krPublicDataClient.isAddressSearchConfigured() || useAddressStub();
+    }
+
+    /**
+     * 스텁은 켜져 있고, 금지 프로필이 아니며, 설정된 개발 프로필이 활성일 때만 동작한다.
+     *
+     * @return 스텁 허용 여부
+     */
+    private boolean stubActive() {
+        KrPublicDataProperties.Stub stub = properties.getStub();
+        if (stub == null || !stub.isEnabled() || environment == null) {
+            return false;
+        }
+        if (profileListed(KrPublicDataProperties.STUB_PROFILE_DENY) || profileListed(stub.getBlockedProfiles())) {
+            log.info("stub blocked");
+            return false;
+        }
+        String profile = stub.getProfile();
+        if (profile == null || profile.isBlank()) {
+            return false;
+        }
+        return environment.acceptsProfiles(Profiles.of(profile.trim()));
+    }
+
+    private boolean useBusinessStub() {
+        return stubActive() && !krPublicDataClient.isBusinessLookupConfigured();
+    }
+
+    private boolean useAddressStub() {
+        return stubActive() && !krPublicDataClient.isAddressSearchConfigured();
+    }
+
+    private boolean profileListed(List<String> profiles) {
+        if (profiles == null || environment == null) {
+            return false;
+        }
+        for (String profile : profiles) {
+            if (profile == null || profile.isBlank()) {
+                continue;
+            }
+            if (environment.acceptsProfiles(Profiles.of(profile.trim()))) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private BusinessVerificationResult stubVerified(String digits) {
+        return BusinessVerificationResult.builder()
+                .authenticityMatch(Boolean.TRUE)
+                .businessStatus(KrPublicDataMessages.businessContinue())
+                .taxType(sanitizeTaxType(KrPublicDataStubSamples.taxType(), digits))
+                .checkedAt(now())
+                .overallStatus(KrPublicDataMessages.overallMatch())
+                .build();
+    }
+
+    private List<AddressSearchResult.AddressItem> stubAddresses() {
+        List<AddressSearchResult.AddressItem> items = KrPublicDataStubSamples.addresses();
+        int max = Math.max(properties.getJuso().getMaxResults(), 1);
+        if (items.size() > max) {
+            return List.copyOf(items.subList(0, max));
+        }
+        return items;
     }
 
     private BusinessVerificationResult unconfirmed() {

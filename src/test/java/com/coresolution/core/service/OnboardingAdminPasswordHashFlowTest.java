@@ -219,7 +219,7 @@ class OnboardingAdminPasswordHashFlowTest {
                 null, null, objectMapper, null, null, null, null);
         try {
             ReflectionTestUtils.invokeMethod(approvalImpl, "createAdminAccountDirectly", "tenant-flow-test",
-                    contactEmail, "흐름 테스트 기관", adminPasswordHash, "ops-actor", "CONSULTATION");
+                    contactEmail, "k1::QUJDRA", "흐름 테스트 기관", adminPasswordHash, "ops-actor", "CONSULTATION");
         } catch (RuntimeException ignored) {
             // INSERT 이후 원장 역할 할당 단계는 목 환경에서 실패할 수 있다 — 비밀번호 검증과 무관
         }
@@ -367,6 +367,11 @@ class OnboardingAdminPasswordHashFlowTest {
         String passed = approveAndCaptureHash(legacy);
 
         assertThat(OnboardingAdminPasswordSupport.isBcryptHash(passed)).isTrue();
+        assertThat(legacy.getChecklistJson()).doesNotContain(rawPassword);
+        Map<String, Object> rewritten = objectMapper.readValue(legacy.getChecklistJson(),
+                new TypeReference<Map<String, Object>>() {});
+        assertThat(OnboardingAdminPasswordSupport.isBcryptHash(
+                OnboardingAdminPasswordSupport.readStoredValue(rewritten))).isTrue();
         verify(passwordService, times(1)).encodePassword(rawPassword);
         assertThat(loginWith(contactEmail, passed, rawPassword).isAuthenticated()).isTrue();
     }

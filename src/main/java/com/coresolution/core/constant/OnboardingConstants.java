@@ -96,6 +96,13 @@ public class OnboardingConstants {
             "관리자 연락 이메일(contactEmail)이 없거나 올바르지 않아 승인을 진행할 수 없습니다. "
                     + "신청서의 관리자 이메일을 확인한 뒤 다시 승인해주세요.";
 
+    /**
+     * 관리자 이메일을 공통 암호화 유틸로 저장 형식으로 바꾸지 못하면 승인하지 않는다.
+     * 평문 이메일로 대체하지 않는다.
+     */
+    public static final String ERROR_ONBOARDING_ADMIN_EMAIL_ENCRYPTION_UNAVAILABLE =
+            "관리자 이메일을 저장 형식으로 바꿀 수 없어 승인을 진행할 수 없습니다.";
+
     /** CAPTCHA(Turnstile) 검증이 활성화된 환경에서 토큰 미제출 */
     public static final String ERROR_ONBOARDING_CAPTCHA_TOKEN_REQUIRED =
             "보안 확인(CAPTCHA) 토큰이 필요합니다.";

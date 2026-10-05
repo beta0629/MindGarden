@@ -1025,7 +1025,7 @@ const ScheduleDetailModal = ({
     ) && canOpenConsultationLog && consultationLogActions.showView;
     const completeActionAllowed = canCompleteScheduleNow({
         date: toIsoDateString(displayData.sessionDate || displayData.date || displayData.apiDate),
-        startTime: displayData.startTime
+        startTime: displayData.apiStartTime || displayData.startTime
     });
 
     const buildPartySummaryRows = (kind) => {

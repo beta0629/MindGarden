@@ -8,30 +8,11 @@
  * @since 2026-10-04
  */
 import { CONSULTATION_LOG_SESSION_START_TIME_ZONE } from '../constants/consultationLogAutosaveConstants';
-
-const pad2 = (n) => String(n).padStart(2, '0');
-
-const toDateKey = (date) => {
-  if (Array.isArray(date) && date.length >= 3) {
-    return `${date[0]}-${pad2(date[1])}-${pad2(date[2])}`;
-  }
-  if (typeof date === 'string' && /^\d{4}-\d{2}-\d{2}/.test(date)) {
-    return date.slice(0, 10);
-  }
-  return null;
-};
-
-const toTimeKey = (time) => {
-  if (time == null || time === '') {
-    return '00:00';
-  }
-  if (Array.isArray(time) && time.length >= 2) {
-    return `${pad2(time[0])}:${pad2(time[1])}`;
-  }
-  const text = String(time);
-  const hm = (text.includes('T') ? text.split('T')[1] : text).slice(0, 5);
-  return /^\d{2}:\d{2}$/.test(hm) ? hm : null;
-};
+import {
+  formatDateTimeKeyInZone,
+  parseScheduleDateKey,
+  parseScheduleTimeKey
+} from './zonedDateTime';
 
 /**
  * 판정 타임존 기준 현재 시각 'YYYY-MM-DDTHH:mm'.
@@ -39,31 +20,25 @@ const toTimeKey = (time) => {
  * @param {Date} now
  * @returns {string}
  */
-export const formatNowInSessionZone = (now = new Date()) => {
-  const parts = new Intl.DateTimeFormat('en-CA', {
-    timeZone: CONSULTATION_LOG_SESSION_START_TIME_ZONE,
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    hourCycle: 'h23'
-  }).formatToParts(now);
-  const get = (type) => parts.find((p) => p.type === type)?.value ?? '00';
-  return `${get('year')}-${get('month')}-${get('day')}T${get('hour')}:${get('minute')}`;
-};
+export const formatNowInSessionZone = (now = new Date()) =>
+  formatDateTimeKeyInZone(now, CONSULTATION_LOG_SESSION_START_TIME_ZONE);
 
 /**
  * 일정이 시작됐는지 (date + startTime, startTime 없으면 그날 00:00).
- * 날짜를 읽을 수 없으면 true — 서버 판정에 맡긴다.
+ * 시각은 zonedDateTime.parseScheduleTimeKey 로만 읽는다('오후 07:00', 'HH:mm[:ss]', ISO).
+ * startTime 이 오프셋 ISO 이고 date 가 없으면 startTime 의 운영 타임존 날짜를 쓴다.
+ * 날짜·시각을 읽을 수 없으면 true — 서버 판정에 맡긴다.
  *
  * @param {{ date?: *, startTime?: * }|null|undefined} schedule
  * @param {Date} [now]
  * @returns {boolean}
  */
 export const hasScheduleSessionStarted = (schedule, now = new Date()) => {
-  const dateKey = toDateKey(schedule?.date);
-  const timeKey = toTimeKey(schedule?.startTime);
+  const zone = CONSULTATION_LOG_SESSION_START_TIME_ZONE;
+  const rawStart = schedule?.startTime;
+  const dateKey = parseScheduleDateKey(schedule?.date, zone)
+    ?? (typeof rawStart === 'string' && rawStart.includes('T') ? parseScheduleDateKey(rawStart, zone) : null);
+  const timeKey = rawStart == null || rawStart === '' ? '00:00' : parseScheduleTimeKey(rawStart, zone);
   if (!dateKey || !timeKey) {
     return true;
   }

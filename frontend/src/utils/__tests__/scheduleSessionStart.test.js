@@ -41,6 +41,23 @@ describe('canCompleteScheduleNow / isScheduleSessionNotStartedError', () => {
     expect(canCompleteScheduleNow(schedule, AT_START_UTC)).toBe(true);
   });
 
+  test('#1438 화면 형식 "오후 hh:mm" — 시작 전 비활성, 시작 후 활성', () => {
+    const evening = { date: '2026-10-10', startTime: '오후 07:00' };
+    expect(canCompleteScheduleNow(evening, new Date('2026-10-10T09:59:00Z'))).toBe(false);
+    expect(canCompleteScheduleNow(evening, new Date('2026-10-10T10:00:00Z'))).toBe(true);
+    const morning = { date: '2026-10-10', startTime: '오전 09:30' };
+    expect(canCompleteScheduleNow(morning, new Date('2026-10-10T00:29:00Z'))).toBe(false);
+    expect(canCompleteScheduleNow(morning, new Date('2026-10-10T00:30:00Z'))).toBe(true);
+  });
+
+  test('오프셋 ISO startTime 은 date 없이도 운영 타임존 날짜·시각으로 판정', () => {
+    const iso = { startTime: '2026-10-10T05:00:00Z' };
+    expect(canCompleteScheduleNow(iso, BEFORE_START_UTC)).toBe(false);
+    expect(canCompleteScheduleNow(iso, AT_START_UTC)).toBe(true);
+    const local = { date: '2026-10-10', startTime: '2026-10-10T14:00:00' };
+    expect(canCompleteScheduleNow(local, BEFORE_START_UTC)).toBe(false);
+  });
+
   test('400 + SCHEDULE_SESSION_NOT_STARTED 만 시작 전 거부로 본다', () => {
     const rejected = { status: 400, response: { data: { errorCode: SCHEDULE_SESSION_NOT_STARTED_ERROR_CODE } } };
     expect(isScheduleSessionNotStartedError(rejected)).toBe(true);

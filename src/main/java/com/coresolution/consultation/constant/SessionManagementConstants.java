@@ -223,7 +223,14 @@ public final class SessionManagementConstants {
      */
     public static final String REQUEST_ATTR_SESSION_TERMINATED_DUPLICATE =
             "mg.session.terminated.duplicate";
-    
+
+    /**
+     * Host 가 가리키는 테넌트와 세션 {@code tenantId} 가 다를 때.
+     * 중복 로그인 종료가 아니다. 공유 쿠키를 지우고 그 Host 에서 다시 로그인한다.
+     */
+    public static final String REQUEST_ATTR_HOST_TENANT_MISMATCH =
+            "mg.session.host.tenant.mismatch";
+
     /**
      * 최대 세션 수 초과 메시지
      */

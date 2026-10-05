@@ -12,6 +12,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatus;
 import org.springframework.lang.NonNull;
 import org.springframework.web.filter.OncePerRequestFilter;
+import com.coresolution.core.util.HttpRequestClientIp;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -367,17 +368,7 @@ public class RateLimitingConfig {
         }
 
         private String getClientIpAddress(HttpServletRequest request) {
-            String xForwardedFor = request.getHeader("X-Forwarded-For");
-            if (xForwardedFor != null && !xForwardedFor.isEmpty()) {
-                return xForwardedFor.split(",")[0].trim();
-            }
-
-            String xRealIp = request.getHeader("X-Real-IP");
-            if (xRealIp != null && !xRealIp.isEmpty()) {
-                return xRealIp;
-            }
-
-            return request.getRemoteAddr();
+            return HttpRequestClientIp.resolve(request);
         }
     }
 

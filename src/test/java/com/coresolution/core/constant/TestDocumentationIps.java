@@ -22,4 +22,16 @@ public final class TestDocumentationIps {
 
     /** RFC 5737 documentation block — X-Real-IP 프록시 홉 시나리오용 (PR #293). */
     public static final String DOC_NET_2_PROXY_HOP = "198.51.100.7";
+
+    /** 로컬 nginx가 앱에 붙는 IPv4 루프백. */
+    public static final String LOOPBACK_V4 = "127.0.0.1";
+
+    /** 로컬 nginx가 앱에 붙는 IPv6 루프백. */
+    public static final String LOOPBACK_V6 = "::1";
+
+    /** Cloudflare 공개 대역 104.16.0.0/13 안의 테스트 피어. */
+    public static final String CLOUDFLARE_RANGE_SAMPLE = "104.16.1.1";
+
+    /** 위 샘플이 속하는 CIDR. 운영 대역 목록과 같은 값이며 테스트에서만 이 상수를 쓴다. */
+    public static final String CLOUDFLARE_SAMPLE_CIDR = "104.16.0.0/13";
 }

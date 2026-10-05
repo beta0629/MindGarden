@@ -54,10 +54,11 @@ class RefreshTokenServiceImplMetadataTest {
     private RefreshTokenServiceImpl refreshTokenService;
 
     @Test
-    @DisplayName("U4 — 모바일 User-Agent + X-Forwarded-For + X-Device-Id 헤더가 모두 기록되어야 함")
+    @DisplayName("U4 — 모바일 User-Agent + 연결 주소 + X-Device-Id 가 기록되고 위조된 X-Forwarded-For 는 무시된다")
     void recordsMobileMetadataFromRequest() {
         when(passwordService.encodeSecret(REFRESH_TOKEN)).thenReturn("hash-value");
-        when(httpRequest.getHeader("X-Forwarded-For")).thenReturn(FORWARDED_IP);
+        when(httpRequest.getRemoteAddr()).thenReturn(FORWARDED_IP);
+        when(httpRequest.getHeader("X-Forwarded-For")).thenReturn(TestDocumentationIps.DOC_NET_2_EXAMPLE);
         when(httpRequest.getHeader("User-Agent")).thenReturn(USER_AGENT_MOBILE);
         when(httpRequest.getHeader("X-Device-Id")).thenReturn(DEVICE_ID);
         when(refreshTokenRepository.save(any(RefreshToken.class)))
@@ -71,7 +72,7 @@ class RefreshTokenServiceImplMetadataTest {
 
         RefreshToken saved = captor.getValue();
         assertThat(saved.getIpAddress())
-            .as("X-Forwarded-For 헤더가 우선 적용되어야 함")
+            .as("신뢰하지 않는 피어의 X-Forwarded-For 는 무시하고 연결 주소를 기록한다")
             .isEqualTo(FORWARDED_IP);
         assertThat(saved.getUserAgent())
             .as("User-Agent 헤더가 기록되어야 함")
@@ -109,8 +110,9 @@ class RefreshTokenServiceImplMetadataTest {
     @DisplayName("웹 User-Agent (Mozilla 등) 는 device_id NULL 유지 (모바일 식별자가 아님)")
     void webUserAgentDoesNotPopulateDeviceId() {
         when(passwordService.encodeSecret(REFRESH_TOKEN)).thenReturn("hash-value");
+        when(httpRequest.getRemoteAddr()).thenReturn(TestDocumentationIps.DOC_NET_2_PROXY_HOP);
         when(httpRequest.getHeader("X-Forwarded-For")).thenReturn(null);
-        when(httpRequest.getHeader("X-Real-IP")).thenReturn(TestDocumentationIps.DOC_NET_2_PROXY_HOP);
+        when(httpRequest.getHeader("X-Real-IP")).thenReturn(TestDocumentationIps.DOC_NET_3_EXAMPLE);
         when(httpRequest.getHeader("User-Agent"))
             .thenReturn("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) Chrome/120");
         when(refreshTokenRepository.save(any(RefreshToken.class)))
@@ -124,7 +126,7 @@ class RefreshTokenServiceImplMetadataTest {
 
         RefreshToken saved = captor.getValue();
         assertThat(saved.getIpAddress())
-            .as("X-Forwarded-For 부재 시 X-Real-IP 가 사용되어야 함")
+            .as("신뢰하지 않는 피어의 X-Real-IP 는 무시하고 연결 주소를 기록한다")
             .isEqualTo(TestDocumentationIps.DOC_NET_2_PROXY_HOP);
         assertThat(saved.getUserAgent()).startsWith("Mozilla/5.0");
         assertThat(saved.getDeviceId())

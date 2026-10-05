@@ -36,6 +36,16 @@ on:
   workflow_dispatch:
     # 수동 실행 가능
 
+# 서비스 단위 배포 큐(공통 규칙): 같은 서버 프로그램을 건드리는 배포는 같은 그룹, cancel-in-progress=false(진행 중 배포는 끝까지).
+#   운영 Core 서버 deploy-svc-prod-core-backend / 운영 Core 화면 deploy-svc-prod-core-frontend / 운영 Trinity deploy-svc-prod-trinity-frontend
+#   개발 Core 서버 deploy-svc-dev-core-backend (deploy-backend-dev · deploy-onboarding-dev · deploy-dev 가 같은 mindgarden-dev.service 를 재시작)
+# 운영 화면과 서버는 일부러 다른 그룹이다. 화면 워크플로의 set-gate 가 같은 SHA 서버 run 성공을 기다리므로
+# 같은 그룹이면 서로 기다리다 멈춘다. 화면+서버 같은 SHA 세트·서버 먼저 보장은 set-gate 가 맡는다.
+# GitHub 규칙상 같은 그룹 대기열은 1건이라, 더 새 run 이 들어오면 앞서 대기 중이던 run 은 취소된다(진행 중 run 은 유지).
+concurrency:
+  group: deploy-svc-dev-core-backend
+  cancel-in-progress: false
+
 jobs:
   build-onboarding:
     name: 🏗️ 온보딩 백엔드 빌드 (ubuntu-latest)
@@ -169,6 +179,23 @@ jobs:
     needs: build-onboarding
     runs-on: [self-hosted, linux, deploy]
     steps:
+    # 배포 확인 스크립트만 받는다(컴파일 없음). checkout 은 작업 폴더를 비우므로 산출물 수신보다 먼저 둔다.
+    - name: 📥 배포 확인 스크립트 체크아웃
+      uses: actions/checkout@v4
+      with:
+        sparse-checkout: scripts/deployment
+        sparse-checkout-cone-mode: true
+
+    - name: 🔧 공개 URL 설정 확인
+      env:
+        PUBLIC_BASE_URL: ${{ vars.DEV_PUBLIC_BASE_URL }}
+      run: |
+        if [ -z "$PUBLIC_BASE_URL" ]; then
+          echo "::error::repository variable DEV_PUBLIC_BASE_URL 이 비어 있습니다. 배포 후 공개 URL 헬스체크에 필요합니다."
+          exit 1
+        fi
+        echo "✅ 공개 URL 헬스체크 대상: ${PUBLIC_BASE_URL%/}/actuator/health"
+
     - name: 📥 빌드 산출물 수신
       uses: actions/download-artifact@v4
       with:
@@ -196,6 +223,16 @@ jobs:
         script: |
           echo "SSH 연결 테스트 성공: $(date)"
           
+    # 서버 시간은 바꾸지 않는다. 기준(vars.CLOCK_SKEW_WARN_SECONDS, 기본 30초)을 넘으면 큰 경고만 남긴다.
+    - name: 🕒 서버 시간 차이 확인
+      env:
+        CLOCK_SKEW_SSH_HOST: ${{ secrets.DEV_SERVER_HOST }}
+        CLOCK_SKEW_SSH_USER: ${{ secrets.DEV_SERVER_USER }}
+        CLOCK_SKEW_SSH_KEY: ${{ secrets.DEV_SERVER_SSH_KEY }}
+        CLOCK_SKEW_WARN_SECONDS: ${{ vars.CLOCK_SKEW_WARN_SECONDS || '30' }}
+        CLOCK_SKEW_LABEL: 개발 서버
+      run: bash scripts/deployment/check-server-clock-skew.sh
+
     - name: 🚀 개발 서버 배포 준비
       uses: appleboy/ssh-action@c4f70287fc37c43b14b30b407224bbbc8e8c6327 # master 2026-08-16 (v1.2.5+10) 고정
       with:
@@ -518,17 +555,16 @@ jobs:
             echo "=========================================="
             sudo journalctl -u mindgarden-dev.service --no-pager -n 500 | grep -i -E "(온보딩|onboarding|ProcessOnboardingApproval|프로시저 실행|프로시저 결과|프로시저 실행 실패|권한 그룹|commonCodes|roleCodes|permissionGroups|Transaction.*rolled back|프로세스가 false를 반환)" | tail -n 200 || echo "온보딩 관련 로그 없음"
             
-            # 서비스가 실행 중이면 경고만 출력하고 계속 진행
-            if sudo systemctl is-active --quiet mindgarden-dev.service; then
-              echo ""
-              echo "⚠️ 헬스체크 실패했지만 서비스는 실행 중입니다. 계속 진행합니다."
-              exit 0
-            else
-              echo ""
-              echo "❌ 서비스가 실행되지 않았습니다."
-              exit 1
-            fi
+            echo ""
+            echo "::error::헬스체크 5회 모두 실패 — 서비스가 떠 있어도 배포를 실패 처리합니다."
+            exit 1
           fi
+
+    # 공개 URL(nginx 경유)로 헬스를 본다. 200·UP 이 아니면 배포 실패.
+    - name: 🌐 공개 URL 헬스체크
+      env:
+        PUBLIC_BASE_URL: ${{ vars.DEV_PUBLIC_BASE_URL }}
+      run: bash scripts/deployment/public-health-check.sh "$PUBLIC_BASE_URL"
 
     - name: 📋 온보딩 프로세스 로그 확인
       uses: appleboy/ssh-action@c4f70287fc37c43b14b30b407224bbbc8e8c6327 # master 2026-08-16 (v1.2.5+10) 고정

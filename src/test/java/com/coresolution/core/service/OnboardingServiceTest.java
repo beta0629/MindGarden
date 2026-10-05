@@ -17,6 +17,8 @@ import static org.mockito.Mockito.when;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import com.coresolution.consultation.dto.EmailResponse;
+import com.coresolution.consultation.service.EmailService;
 import com.coresolution.core.constant.OnboardingConstants;
 import com.coresolution.core.domain.onboarding.OnboardingRequest;
 import com.coresolution.core.domain.onboarding.OnboardingStatus;
@@ -38,6 +40,7 @@ import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationContext;
+import org.springframework.test.util.ReflectionTestUtils;
 import com.coresolution.core.security.PasswordService;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
@@ -79,6 +82,9 @@ class OnboardingServiceTest {
     @Mock
     private PasswordService passwordService;
 
+    @Mock
+    private EmailService emailService;
+
     /** 워크플로에서 getBean으로 조회되는 온보딩 서비스(초기화 단계 스텁용) */
     @Mock
     private OnboardingServiceImpl onboardingWorkflowBean;
@@ -107,8 +113,9 @@ class OnboardingServiceTest {
         testId = 42L;
 
         testRequest = OnboardingRequest.builder().id(testId).tenantId(testTenantId)
-                .tenantName(testTenantName).requestedBy("test-requester").riskLevel(RiskLevel.LOW)
-                .checklistJson("{\"checklist\":[],\"adminPassword\":\"ValidPass123!\"}")
+                .tenantName(testTenantName).requestedBy("01012345678").riskLevel(RiskLevel.LOW)
+                .checklistJson("{\"checklist\":[],\"adminPassword\":\"ValidPass123!\","
+                        + "\"contactEmail\":\"ops-admin@example.com\"}")
                 .businessType(testBusinessType).status(OnboardingStatus.PENDING).isDeleted(false)
                 .build();
 
@@ -225,8 +232,8 @@ class OnboardingServiceTest {
         approvalResult.put("success", true);
         approvalResult.put("message", "온보딩 승인 완료");
         when(approvalService.processOnboardingApproval(any(Long.class), anyString(), anyString(),
-                anyString(), anyString(), anyString(), anyString(), anyString(), nullable(String.class)))
-                        .thenReturn(approvalResult);
+                anyString(), anyString(), anyString(), eq("ops-admin@example.com"), anyString(),
+                nullable(String.class))).thenReturn(approvalResult);
 
         OnboardingRequest result =
                 onboardingService.decide(testId, OnboardingStatus.APPROVED, "test-admin", "테스트 승인");
@@ -237,8 +244,8 @@ class OnboardingServiceTest {
         assertThat(result.getDecisionNote()).isEqualTo("테스트 승인");
         verify(repository, atLeastOnce()).save(any(OnboardingRequest.class));
         verify(approvalService, times(1)).processOnboardingApproval(any(Long.class), anyString(),
-                anyString(), anyString(), anyString(), anyString(), anyString(), anyString(),
-                nullable(String.class));
+                anyString(), anyString(), anyString(), anyString(), eq("ops-admin@example.com"),
+                anyString(), nullable(String.class));
         verify(errorHandlingService).executeWithRetry(any(),
                 eq(OnboardingDecisionDeadline.DECISION_MAX_ATTEMPTS),
                 eq(OnboardingDecisionDeadline.DECISION_RETRY_DELAY_MS));
@@ -275,8 +282,9 @@ class OnboardingServiceTest {
     @DisplayName("온보딩 승인 - 연락 이메일은 있으나 adminPassword 없으면 사유와 함께 막힌다")
     void testDecide_Approved_missingAdminPassword_blocked() {
         OnboardingRequest noPw = OnboardingRequest.builder().id(testId).tenantId(testTenantId)
-                .tenantName(testTenantName).requestedBy("test-requester").riskLevel(RiskLevel.LOW)
-                .checklistJson("{\"checklist\":[]}").businessType(testBusinessType)
+                .tenantName(testTenantName).requestedBy("01012345678").riskLevel(RiskLevel.LOW)
+                .checklistJson("{\"checklist\":[],\"contactEmail\":\"ops-admin@example.com\"}")
+                .businessType(testBusinessType)
                 .status(OnboardingStatus.PENDING).isDeleted(false).build();
 
         when(repository.findActiveById(testId)).thenReturn(Optional.of(noPw));
@@ -357,5 +365,91 @@ class OnboardingServiceTest {
         long count = onboardingService.countByStatus(OnboardingStatus.PENDING);
 
         assertThat(count).isEqualTo(5L);
+    }
+
+    @Test
+    @DisplayName("승인 시 관리자 이메일은 checklist contactEmail 이고 신청 휴대폰이 아니다")
+    void testDecide_Approved_adminEmailFromContactEmail() {
+        testRequest.setChecklistJson("{\"adminPassword\":\"ValidPass123!\","
+                + "\"contactEmail\":\"  Ops-Admin@Example.COM \"}");
+        when(repository.findActiveById(testId)).thenReturn(Optional.of(testRequest));
+        when(repository.findByTenantIdAndIdAndIsDeletedFalse(testTenantId, testId))
+                .thenReturn(Optional.of(testRequest));
+        when(repository.save(any(OnboardingRequest.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        java.util.Map<String, Object> approvalResult = new java.util.HashMap<>();
+        approvalResult.put("success", true);
+        approvalResult.put("message", "온보딩 승인 완료");
+        when(approvalService.processOnboardingApproval(any(Long.class), anyString(), anyString(),
+                anyString(), anyString(), anyString(), eq("ops-admin@example.com"), anyString(),
+                nullable(String.class))).thenReturn(approvalResult);
+
+        OnboardingRequest result =
+                onboardingService.decide(testId, OnboardingStatus.APPROVED, "test-admin", "테스트 승인");
+
+        assertThat(result.getStatus()).isEqualTo(OnboardingStatus.APPROVED);
+        verify(approvalService).processOnboardingApproval(any(Long.class), anyString(), anyString(),
+                anyString(), anyString(), anyString(), eq("ops-admin@example.com"), anyString(),
+                nullable(String.class));
+        verify(approvalService, never()).processOnboardingApproval(any(Long.class), anyString(),
+                anyString(), anyString(), anyString(), anyString(), eq("01012345678"), anyString(),
+                nullable(String.class));
+    }
+
+    @Test
+    @DisplayName("관리자 이메일이 없으면 승인을 막고 테넌트·계정을 만들지 않는다")
+    void testDecide_Approved_missingContactEmail_blockedWithoutPartialCommit() {
+        OnboardingRequest pending = OnboardingRequest.builder().id(testId).tenantId(null)
+                .tenantName(testTenantName).requestedBy("01012345678").riskLevel(RiskLevel.LOW)
+                .checklistJson("{\"adminPassword\":\"ValidPass123!\"}").businessType(testBusinessType)
+                .status(OnboardingStatus.PENDING).isDeleted(false).build();
+        when(repository.findActiveById(testId)).thenReturn(Optional.of(pending));
+
+        assertThatThrownBy(() -> onboardingService.decide(testId, OnboardingStatus.APPROVED,
+                "test-admin", "승인 시도"))
+                .isInstanceOf(OnboardingApprovalBlockedException.class)
+                .hasMessage(OnboardingConstants.ERROR_ONBOARDING_ADMIN_CONTACT_EMAIL_REQUIRED_FOR_APPROVAL);
+
+        assertThat(pending.getStatus()).isEqualTo(OnboardingStatus.PENDING);
+        assertThat(pending.getTenantId()).isNull();
+        verify(repository, never()).save(any(OnboardingRequest.class));
+        verify(tenantRepository, never()).save(any());
+        verify(approvalService, never()).processOnboardingApproval(any(), anyString(), anyString(),
+                anyString(), anyString(), anyString(), anyString(), anyString(), nullable(String.class));
+    }
+
+    @Test
+    @DisplayName("contactEmail 이 휴대폰이면 그 번호로 관리자 계정을 만들지 않고 승인을 막는다")
+    void testDecide_Approved_phoneAsContactEmail_blockedWithoutPartialCommit() {
+        OnboardingRequest pending = OnboardingRequest.builder().id(testId).tenantId(testTenantId)
+                .tenantName(testTenantName).requestedBy("01012345678").riskLevel(RiskLevel.LOW)
+                .checklistJson("{\"adminPassword\":\"ValidPass123!\",\"contactEmail\":\"01012345678\"}")
+                .businessType(testBusinessType).status(OnboardingStatus.PENDING).isDeleted(false)
+                .build();
+        when(repository.findActiveById(testId)).thenReturn(Optional.of(pending));
+
+        assertThatThrownBy(() -> onboardingService.decide(testId, OnboardingStatus.APPROVED,
+                "test-admin", "승인 시도"))
+                .isInstanceOf(OnboardingApprovalBlockedException.class)
+                .hasMessage(OnboardingConstants.ERROR_ONBOARDING_ADMIN_CONTACT_EMAIL_REQUIRED_FOR_APPROVAL);
+
+        assertThat(pending.getStatus()).isEqualTo(OnboardingStatus.PENDING);
+        verify(repository, never()).save(any(OnboardingRequest.class));
+        verify(approvalService, never()).processOnboardingApproval(any(), anyString(), anyString(),
+                anyString(), anyString(), anyString(), anyString(), anyString(), nullable(String.class));
+    }
+
+    @Test
+    @DisplayName("승인 완료 메일 수신자는 checklist contactEmail 이다")
+    void sendOnboardingApprovalEmail_usesContactEmailNotRequestedBy() {
+        testRequest.setStatus(OnboardingStatus.APPROVED);
+        when(emailService.sendTemplateEmail(anyString(), anyString(), any(), any()))
+                .thenReturn(EmailResponse.builder().success(true).build());
+
+        ReflectionTestUtils.invokeMethod(onboardingService, "sendOnboardingApprovalEmail", testRequest,
+                testTenantId);
+
+        verify(emailService).sendTemplateEmail(anyString(), eq("ops-admin@example.com"), any(), any());
+        verify(emailService, never()).sendTemplateEmail(anyString(), eq("01012345678"), any(), any());
     }
 }

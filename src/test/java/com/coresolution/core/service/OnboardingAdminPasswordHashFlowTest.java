@@ -174,7 +174,7 @@ class OnboardingAdminPasswordHashFlowTest {
 
     private OnboardingRequest createWithChecklist(String checklistJson) {
         OnboardingRequest saved = onboardingService.create("tenant-flow-test", "흐름 테스트 기관",
-                contactEmail, RiskLevel.LOW, checklistJson, "CONSULTATION");
+                "01055556666", RiskLevel.LOW, checklistJson, "CONSULTATION");
         saved.setId(501L);
         return saved;
     }
@@ -188,6 +188,7 @@ class OnboardingAdminPasswordHashFlowTest {
         Map<String, Object> checklist = new HashMap<>();
         checklist.put("adminPassword", password);
         checklist.put("brandName", "브랜드");
+        checklist.put("contactEmail", contactEmail);
         return objectMapper.writeValueAsString(checklist);
     }
 
@@ -198,14 +199,16 @@ class OnboardingAdminPasswordHashFlowTest {
         Map<String, Object> approvalResult = new HashMap<>();
         approvalResult.put("success", true);
         approvalResult.put("message", "ok");
+        ArgumentCaptor<String> emailCaptor = ArgumentCaptor.forClass(String.class);
         ArgumentCaptor<String> hashCaptor = ArgumentCaptor.forClass(String.class);
         when(approvalService.processOnboardingApproval(any(Long.class), anyString(), anyString(),
-                anyString(), anyString(), anyString(), anyString(), hashCaptor.capture(),
+                anyString(), anyString(), anyString(), emailCaptor.capture(), hashCaptor.capture(),
                 nullable(String.class))).thenReturn(approvalResult);
 
         OnboardingRequest result =
                 onboardingService.decide(request.getId(), OnboardingStatus.APPROVED, "ops-actor", "승인");
         assertThat(result.getStatus()).isEqualTo(OnboardingStatus.APPROVED);
+        assertThat(emailCaptor.getValue()).isEqualTo(contactEmail);
         return hashCaptor.getValue();
     }
 
@@ -357,7 +360,7 @@ class OnboardingAdminPasswordHashFlowTest {
     @DisplayName("레거시 평문 행은 승인 시 한 번만 해시되고 원 비밀번호로 로그인 가능")
     void approve_legacyPlaintextRow_encodedOnce() throws Exception {
         OnboardingRequest legacy = OnboardingRequest.builder().id(502L).tenantId("tenant-legacy")
-                .tenantName("레거시 기관").requestedBy(contactEmail).riskLevel(RiskLevel.LOW)
+                .tenantName("레거시 기관").requestedBy("01055556666").riskLevel(RiskLevel.LOW)
                 .checklistJson(checklistWithPassword(rawPassword)).businessType("CONSULTATION")
                 .status(OnboardingStatus.PENDING).isDeleted(false).version(0L).build();
 

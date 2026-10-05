@@ -39,6 +39,7 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.jdbc.core.JdbcTemplate;
+import com.coresolution.core.security.OnboardingAdminContactEmailSupport;
 import com.coresolution.core.security.OnboardingAdminPasswordSupport;
 import com.coresolution.core.security.PasswordService;
 import org.springframework.stereotype.Service;
@@ -498,12 +499,15 @@ public class OnboardingServiceImpl implements OnboardingService {
         }
 
         if (status == OnboardingStatus.APPROVED) {
+            // 관리자 계정·메일은 checklist contactEmail 만 사용. 휴대폰(requestedBy)으로 대체하지 않는다.
+            // 테넌트 ID 저장·삭제 테넌트 복구보다 먼저 막아 부분 커밋이 없게 한다.
+            final String contactEmail = requireAdminContactEmail(request);
             log.info("테넌트 생성 진행: requestedBy={}, tenantName={}", EmailLogMasking.maskForLog(request.getRequestedBy()),
                     request.getTenantName());
 
             String tenantIdValue = request.getTenantId();
             if (tenantIdValue == null || tenantIdValue.trim().isEmpty()) {
-                String email = request.getRequestedBy();
+                String email = contactEmail;
                 if (email != null && !email.trim().isEmpty()) {
                     List<Tenant> deletedTenants = tenantRepository
                             .findDeletedByContactEmailIgnoreCase(email.trim().toLowerCase());
@@ -588,7 +592,6 @@ public class OnboardingServiceImpl implements OnboardingService {
                 throw new OnboardingApprovalBlockedException(errorMessage);
             }
 
-            String contactEmail = request.getRequestedBy(); // 기본값: requestedBy
             String adminPasswordHash = null;
             String subdomain = request.getSubdomain(); // 온보딩 요청의 서브도메인
             Map<String, String> dashboardTemplates = null;
@@ -3180,7 +3183,15 @@ public class OnboardingServiceImpl implements OnboardingService {
      */
     private void sendOnboardingApprovalEmail(OnboardingRequest request, String tenantId) {
         try {
-            String contactEmail = request.getRequestedBy(); // requestedBy가 이메일 주소
+            String contactEmail;
+            try {
+                contactEmail = OnboardingAdminContactEmailSupport.readNormalized(
+                        request.getChecklistJson(), objectMapper);
+            } catch (JsonProcessingException e) {
+                log.warn("승인 메일 수신 이메일을 읽지 못해 발송을 건너뜁니다: requestId={}, error={}",
+                        request.getId(), e.getMessage());
+                return;
+            }
             log.info("온보딩 승인 완료 이메일 발송 시작: requestId={}, tenantId={}, contactEmail={}",
                     request.getId(), tenantId, EmailLogMasking.maskForLog(contactEmail));
 
@@ -3201,6 +3212,32 @@ public class OnboardingServiceImpl implements OnboardingService {
             log.error("온보딩 승인 완료 이메일 발송 중 오류: requestId={}, error={}", request.getId(),
                     e.getMessage(), e);
         }
+    }
+
+    /**
+     * 승인에 쓸 관리자 로그인 이메일. checklist_json.contactEmail 만 인정한다.
+     *
+     * @param request 온보딩 요청
+     * @return trim·소문자로 정규화된 이메일
+     * @throws OnboardingApprovalBlockedException 이메일이 없거나 형식이 아니거나 JSON 을 읽을 수 없을 때
+     */
+    private String requireAdminContactEmail(OnboardingRequest request) {
+        final String email;
+        try {
+            email = OnboardingAdminContactEmailSupport.readNormalized(request.getChecklistJson(),
+                    objectMapper);
+        } catch (JsonProcessingException e) {
+            log.error("checklistJson 파싱 실패: requestId={}, error={}", request.getId(), e.getMessage());
+            throw new OnboardingApprovalBlockedException(
+                    OnboardingConstants.ERROR_ONBOARDING_CHECKLIST_PARSE_FOR_APPROVAL
+                            + " (" + e.getMessage() + ")");
+        }
+        if (email == null) {
+            log.error("관리자 연락 이메일이 없어 승인을 중단: requestId={}", request.getId());
+            throw new OnboardingApprovalBlockedException(
+                    OnboardingConstants.ERROR_ONBOARDING_ADMIN_CONTACT_EMAIL_REQUIRED_FOR_APPROVAL);
+        }
+        return email;
     }
 
     /**

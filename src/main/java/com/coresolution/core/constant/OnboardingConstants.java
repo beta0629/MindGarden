@@ -81,6 +81,21 @@ public class OnboardingConstants {
     /** checklist_json 안의 관리자 초기 비밀번호 키. 저장 값은 항상 BCrypt 해시(신규) — 응답·로그에 노출 금지 */
     public static final String CHECKLIST_KEY_ADMIN_PASSWORD = "adminPassword";
 
+    /**
+     * checklist_json 최상위 관리자 연락 이메일.
+     * 신청 화면이 저장하는 값이며, 승인 시 테넌트 관리자 계정의 이메일·로그인 식별자로 쓴다.
+     * {@code requestedBy}(신청 휴대폰)와 다르다.
+     */
+    public static final String CHECKLIST_KEY_CONTACT_EMAIL = "contactEmail";
+
+    /**
+     * 승인 시 관리자 연락 이메일이 없거나 이메일 형식이 아님.
+     * 휴대폰 번호로 대체하지 않고 요청은 PENDING 으로 남긴다.
+     */
+    public static final String ERROR_ONBOARDING_ADMIN_CONTACT_EMAIL_REQUIRED_FOR_APPROVAL =
+            "관리자 연락 이메일(contactEmail)이 없거나 올바르지 않아 승인을 진행할 수 없습니다. "
+                    + "신청서의 관리자 이메일을 확인한 뒤 다시 승인해주세요.";
+
     /** CAPTCHA(Turnstile) 검증이 활성화된 환경에서 토큰 미제출 */
     public static final String ERROR_ONBOARDING_CAPTCHA_TOKEN_REQUIRED =
             "보안 확인(CAPTCHA) 토큰이 필요합니다.";

@@ -82,7 +82,7 @@ class MvpOnboardingFlowIntegrationTest {
             testTenantName,
             testEmail,
             RiskLevel.LOW,
-            String.format("{\"adminPassword\": \"%s\"}", testPassword),
+            String.format("{\"adminPassword\": \"%s\", \"contactEmail\": \"%s\"}", testPassword, testEmail),
             "CONSULTATION"
         );
         
@@ -177,7 +177,7 @@ class MvpOnboardingFlowIntegrationTest {
             academyTenantName,
             academyEmail,
             RiskLevel.LOW,
-            String.format("{\"adminPassword\": \"%s\"}", academyPassword),
+            String.format("{\"adminPassword\": \"%s\", \"contactEmail\": \"%s\"}", academyPassword, academyEmail),
             "ACADEMY"
         );
         
@@ -222,7 +222,7 @@ class MvpOnboardingFlowIntegrationTest {
             testTenantName,
             testEmail,
             RiskLevel.LOW,
-            String.format("{\"adminPassword\": \"%s\"}", testPassword),
+            String.format("{\"adminPassword\": \"%s\", \"contactEmail\": \"%s\"}", testPassword, testEmail),
             "CONSULTATION"
         );
         

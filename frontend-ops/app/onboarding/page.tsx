@@ -7,6 +7,7 @@ import { OnboardingRequest } from "@/types/onboarding";
 import { OnboardingStatus } from "@/types/shared";
 import { ONBOARDING_MESSAGES, ONBOARDING_PATHS, type OnboardingListFilter } from "@/constants/onboarding";
 import { isOnboardingListFilter } from "@/utils/onboardingUtils";
+import { onboardingListCache } from "@/utils/onboardingListCache";
 import OnboardingCardList from "@/components/onboarding/OnboardingCardList";
 
 function OnboardingPageContent() {
@@ -17,27 +18,57 @@ function OnboardingPageContent() {
     ? (statusParam as OnboardingStatus)
     : undefined;
 
-  const [allRequests, setAllRequests] = useState<OnboardingRequest[]>([]);
-  const [loading, setLoading] = useState(true);
+  const cachedRequests = onboardingListCache.read();
+  const [allRequests, setAllRequests] = useState<OnboardingRequest[]>(cachedRequests ?? []);
+  const [loading, setLoading] = useState(cachedRequests === null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    let active = true;
+
+    const unsubscribe = onboardingListCache.subscribe((rows) => {
+      if (!active) {
+        return;
+      }
+      setAllRequests(rows);
+      setError(null);
+      setLoading(false);
+    });
+
     const loadData = async () => {
-      try {
+      const hasCache = onboardingListCache.read() !== null;
+      if (!hasCache) {
         setLoading(true);
-        setError(null);
+      }
+      setError(null);
+      try {
         const result = await fetchAllOnboarding();
-        setAllRequests(Array.isArray(result) ? result : []);
+        if (!active) {
+          return;
+        }
+        const rows = Array.isArray(result) ? result : [];
+        onboardingListCache.publish(rows);
       } catch (err) {
+        if (!active) {
+          return;
+        }
         console.error("온보딩 페이지 데이터 로드 실패:", err);
-        setError(err instanceof Error ? err.message : ONBOARDING_MESSAGES.ERROR_BODY);
-        setAllRequests([]);
+        if (onboardingListCache.read() === null) {
+          setError(err instanceof Error ? err.message : ONBOARDING_MESSAGES.ERROR_BODY);
+          setAllRequests([]);
+        }
       } finally {
-        setLoading(false);
+        if (active) {
+          setLoading(false);
+        }
       }
     };
 
-    loadData();
+    void loadData();
+    return () => {
+      active = false;
+      unsubscribe();
+    };
   }, []);
 
   const applyFilter = (filter: OnboardingListFilter) => {

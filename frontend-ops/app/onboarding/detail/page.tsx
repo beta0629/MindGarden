@@ -1,15 +1,17 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useCallback, useEffect, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 
 import { OnboardingDecisionForm } from "@/components/onboarding/OnboardingDecisionForm";
-import { fetchOnboardingDetail } from "@/services/onboardingService";
+import { fetchAllOnboarding, fetchOnboardingDetail } from "@/services/onboardingService";
 import { OnboardingRequest } from "@/types/onboarding";
 import { ONBOARDING_MESSAGES, ONBOARDING_PATHS } from "@/constants/onboarding";
 import { buildOnboardingFacts, getStatusLabel } from "@/utils/onboardingUtils";
 import { formatOnboardingDate } from "@/utils/dateUtils";
+import { onboardingListCache } from "@/utils/onboardingListCache";
+import { applyRefreshedOnboardingViews } from "@/utils/onboardingViewRefresh";
 
 function OnboardingDetailPageContent() {
   const searchParams = useSearchParams();
@@ -66,6 +68,25 @@ function OnboardingDetailPageContent() {
     loadDetail();
   }, [id, router]);
 
+  const refreshAfterDecision = useCallback(async () => {
+    if (!id) {
+      return;
+    }
+    await applyRefreshedOnboardingViews({
+      fetchDetail: () => fetchOnboardingDetail(id),
+      fetchList: () => fetchAllOnboarding(),
+      detailFailureMessage: ONBOARDING_MESSAGES.ERROR_BODY,
+      listFailureMessage: ONBOARDING_MESSAGES.ERROR_BODY,
+      applyDetail: (next) => {
+        setDetail(next);
+        setError(null);
+      },
+      applyList: (rows) => {
+        onboardingListCache.publish(rows);
+      }
+    });
+  }, [id]);
+
   if (loading) {
     return (
       <section className="ops-onboarding">
@@ -121,6 +142,7 @@ function OnboardingDetailPageContent() {
           requestId={String(detail.id)}
           initialStatus={detail.status}
           onDecided={(updated) => setDetail(updated)}
+          onRefresh={refreshAfterDecision}
         />
       </div>
     </section>

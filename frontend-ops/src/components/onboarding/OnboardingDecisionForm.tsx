@@ -9,7 +9,7 @@ import { decideOnboarding } from "@/services/onboardingClient";
 import { OnboardingRequest } from "@/types/onboarding";
 import { OnboardingStatus } from "@/types/shared";
 import { isClientApiErrorNotified } from "@/utils/clientApiError";
-import { saveOnboardingDecision, withSavingReleased } from "@/utils/onboardingDecisionSave";
+import { saveOnboardingDecision, settleOnboardingDecision, withSavingReleased } from "@/utils/onboardingDecisionSave";
 import { getOpsAuthSession } from "@/utils/opsAuthSession";
 import { getStatusLabel, resolveInitialDecision } from "@/utils/onboardingUtils";
 import notificationManager from "@/utils/notification";
@@ -18,9 +18,10 @@ interface Props {
   requestId: string;
   initialStatus: OnboardingStatus;
   onDecided?: (request: OnboardingRequest) => void;
+  onRefresh?: () => Promise<void>;
 }
 
-export function OnboardingDecisionForm({ requestId, initialStatus, onDecided }: Props) {
+export function OnboardingDecisionForm({ requestId, initialStatus, onDecided, onRefresh }: Props) {
   const router = useRouter();
   const [status, setStatus] = useState<OnboardingStatus>(resolveInitialDecision(initialStatus));
   const [note, setNote] = useState("");
@@ -50,25 +51,34 @@ export function OnboardingDecisionForm({ requestId, initialStatus, onDecided }: 
     // React 18 startTransition does not track an async callback, so isPending can stay true.
     void withSavingReleased(
       async () => {
-        const result = await saveOnboardingDecision({
-          decide: () =>
-            decideOnboarding(requestId, {
-              status,
-              actorId,
-              note: note.trim().length ? note.trim() : undefined,
+        const result = await settleOnboardingDecision({
+          save: () =>
+            saveOnboardingDecision({
+              decide: () =>
+                decideOnboarding(requestId, {
+                  status,
+                  actorId,
+                  note: note.trim().length ? note.trim() : undefined,
+                }),
+              isNotified: isClientApiErrorNotified,
+              notifySuccess: (message) => notificationManager.success(message),
+              notifyError: (message) => notificationManager.error(message),
+              successMessage: ONBOARDING_MESSAGES.SAVE_SUCCESS,
+              failureMessage: ONBOARDING_MESSAGES.SAVE_FAILED,
             }),
-          isNotified: isClientApiErrorNotified,
-          notifySuccess: (message) => notificationManager.success(message),
-          notifyError: (message) => notificationManager.error(message),
-          successMessage: ONBOARDING_MESSAGES.SAVE_SUCCESS,
-          failureMessage: ONBOARDING_MESSAGES.SAVE_FAILED,
+          onSaved: (saved) => {
+            if (saved.updated?.status) {
+              setStatus(resolveInitialDecision(saved.updated.status));
+              onDecided?.(saved.updated);
+            }
+          },
+          refresh: async () => {
+            await onRefresh?.();
+          },
+          failureMessage: ONBOARDING_MESSAGES.ERROR_BODY,
         });
         if (result.saveError) {
           console.error("[OnboardingDecisionForm] 결정 저장 실패");
-        }
-        if (result.updated?.status) {
-          setStatus(resolveInitialDecision(result.updated.status));
-          onDecided?.(result.updated);
         }
         setSaveError(result.saveError);
       },

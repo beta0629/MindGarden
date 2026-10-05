@@ -11,6 +11,7 @@ import com.coresolution.consultation.util.EmailLogMasking;
 import com.coresolution.consultation.util.OAuth2DomainUtil;
 import com.coresolution.core.constant.OnboardingConstants;
 import com.coresolution.core.security.OnboardingAdminEmailCipher;
+import com.coresolution.core.security.TenantAdminUserIdAllocator;
 import com.coresolution.core.domain.onboarding.OnboardingRequest;
 import com.coresolution.core.repository.RoleTemplateRepository;
 import com.coresolution.core.service.OnboardingApprovalService;
@@ -87,8 +88,9 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
                 ? OnboardingAdminEmailCipher.prepare(contactEmail.trim().toLowerCase(java.util.Locale.ROOT))
                 : null;
         final String emailCipher = adminEmail == null ? null : adminEmail.cipher();
-        final String procedureUserIdBase =
-                adminEmail == null ? null : adminEmail.procedureUserIdBase();
+        final String procedureUserIdBase = adminEmail == null
+                ? null
+                : TenantAdminUserIdAllocator.allocate(tenantId);
 
         String requestedSubdomain = TenantHostLabel.explicitDnsLabelOrNull(subdomain);
         String domainSuffix = resolveApprovalDomainSuffix();
@@ -686,7 +688,7 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
                 cs.setString(8, adminPasswordHash); // 추가: BCrypt 해시된 비밀번호
                 cs.setString(9, subdomain); // 추가: 서브도메인
                 cs.setString(10, domainSuffix); // 환경 설정의 도메인 접미사
-                cs.setString(11, procedureUserIdBase); // 암호화 전 로컬 파트. users.user_id VARCHAR(50)
+                cs.setString(11, procedureUserIdBase); // adm- 베이스. 이메일 로컬 파트가 아니다.
 
                 // OUT 파라미터 등록
                 cs.registerOutParameter(12, Types.BOOLEAN); // p_success
@@ -1290,35 +1292,27 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
             return;
         }
 
-        // 사용자 ID 생성 (평문 이메일의 로컬 파트, 전역 중복 체크). 암호문에는 @ 가 없다.
-        String plainEmail = contactEmail.toLowerCase().trim();
-        String localPart = plainEmail.substring(0, plainEmail.indexOf('@'));
-        String base = localPart.replaceAll("[^a-zA-Z0-9]", "").toLowerCase();
-        if (base.isEmpty()) {
-            base = "admin";
-        }
-
+        // 이메일 로컬 파트를 user_id 로 쓰지 않는다. 같은 테넌트의 삭제 행까지 UK 에 걸린다.
+        String base = TenantAdminUserIdAllocator.allocate(tenantId);
         String userId = base;
         int suffix = 1;
 
-        // user_id는 전역적으로 UNIQUE하므로 중복 체크
-        while (true) {
+        while (suffix <= 1000) {
             Integer count = null;
             try {
                 count = jdbcTemplate.queryForObject(
-                        "SELECT COUNT(*) FROM users WHERE user_id = ? AND (is_deleted IS NULL OR is_deleted = FALSE)",
-                        Integer.class, userId);
+                        "SELECT COUNT(*) FROM users WHERE tenant_id = ? AND user_id = ?",
+                        Integer.class, tenantId, userId);
             } catch (org.springframework.dao.EmptyResultDataAccessException e) {
-                count = 0; // 결과 없음 = 사용 가능
+                count = 0;
             } catch (Exception e) {
                 log.error("user_id 중복 체크 실패: userId={}, error={}", userId, e.getMessage(), e);
-                // 예외 발생 시 기본값 사용
                 break;
             }
             if (count == null || count == 0) {
-                break; // 사용 가능한 user_id
+                break;
             }
-            userId = base + suffix;
+            userId = TenantAdminUserIdAllocator.withSuffix(base, suffix);
             suffix++;
         }
 

@@ -1,5 +1,6 @@
 package com.coresolution.consultation.config;
 
+import com.coresolution.consultation.dto.TestNotificationChannel;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import lombok.Getter;
 import lombok.Setter;
@@ -26,6 +27,9 @@ public class ManualNotificationProperties {
 
     /** 발송 확인 단계에서 보여 줄 수신자 미리보기 인원. */
     private int previewSize;
+
+    /** 전체 내담자 모드에서 받을 수 있는 제외 id 수 상한. */
+    private int maxExclusions;
 
     /** 비동기 발송 작업 설정. */
     private Job job = new Job();
@@ -58,6 +62,23 @@ public class ManualNotificationProperties {
         private Channel alimtalk = new Channel();
         /** 푸시 프로바이더 한도. */
         private Channel push = new Channel();
+
+        /**
+         * 채널별 한도.
+         *
+         * @param channel 발송 채널
+         * @return 채널 한도
+         */
+        public Channel forChannel(TestNotificationChannel channel) {
+            switch (channel) {
+                case SMS:
+                    return sms;
+                case ALIMTALK:
+                    return alimtalk;
+                default:
+                    return push;
+            }
+        }
     }
 
     /**

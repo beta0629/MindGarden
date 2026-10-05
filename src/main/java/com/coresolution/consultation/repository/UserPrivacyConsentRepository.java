@@ -1,5 +1,6 @@
 package com.coresolution.consultation.repository;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import com.coresolution.consultation.entity.UserPrivacyConsent;
@@ -49,6 +50,18 @@ public interface UserPrivacyConsentRepository extends JpaRepository<UserPrivacyC
      */
     @Query("SELECT upc.marketingConsent FROM UserPrivacyConsent upc WHERE upc.tenantId = :tenantId AND upc.userId = :userId ORDER BY upc.consentDate DESC")
     Optional<Boolean> findLatestMarketingConsentByTenantIdAndUserId(@Param("tenantId") String tenantId, @Param("userId") Long userId);
+
+    /**
+     * 여러 사용자의 동의 이력 일괄 조회 (tenantId 필터링). 사용자별 최신값은 호출측이 consentDate 로 고른다.
+     *
+     * @param tenantId 테넌트 ID
+     * @param userIds  사용자 PK 목록
+     * @return 동의 이력 (사용자·최신순)
+     */
+    @Query("SELECT upc FROM UserPrivacyConsent upc WHERE upc.tenantId = :tenantId AND upc.userId IN :userIds"
+        + " ORDER BY upc.userId ASC, upc.consentDate DESC, upc.id DESC")
+    List<UserPrivacyConsent> findByTenantIdAndUserIdInOrderByConsentDateDesc(@Param("tenantId") String tenantId,
+            @Param("userIds") Collection<Long> userIds);
     
     // ==================== @Deprecated 메서드 (하위 호환성) ====================
     

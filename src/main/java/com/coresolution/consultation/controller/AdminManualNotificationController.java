@@ -9,11 +9,17 @@ import com.coresolution.consultation.dto.BulkNotificationResponse;
 import com.coresolution.consultation.dto.BulkPushManualRequest;
 import com.coresolution.consultation.dto.BulkRecipientResult;
 import com.coresolution.consultation.dto.BulkSmsManualRequest;
+import com.coresolution.consultation.dto.ManualNotificationJobRequest;
+import com.coresolution.consultation.dto.ManualNotificationJobResponse;
 import com.coresolution.consultation.dto.TestNotificationAlimtalkTemplate;
 import com.coresolution.consultation.dto.TestNotificationRecipient;
 import com.coresolution.consultation.entity.User;
+import com.coresolution.consultation.exception.ManualNotificationJobException;
 import com.coresolution.consultation.service.AdminManualNotificationService;
 import com.coresolution.consultation.service.AdminTestNotificationService;
+import com.coresolution.consultation.service.ManualNotificationJobService;
+import com.coresolution.consultation.service.support.ClientPathAccessGuard;
+import com.coresolution.consultation.service.support.ResourceOwnerAccessGuard;
 import com.coresolution.consultation.service.impl.AdminTestNotificationRateLimiter.Decision;
 import com.coresolution.consultation.utils.SessionUtils;
 import com.coresolution.core.controller.BaseApiController;
@@ -66,6 +72,9 @@ public class AdminManualNotificationController extends BaseApiController {
     private final AdminManualNotificationService manualService;
     private final AdminTestNotificationService singleService;
     private final AdminTestNotificationProperties properties;
+    private final ManualNotificationJobService jobService;
+    private final ResourceOwnerAccessGuard resourceOwnerAccessGuard;
+    private final ClientPathAccessGuard clientPathAccessGuard;
 
     /**
      * 다중 SMS 발송. 본문·사유는 1건 공통, 수신자는 1~50명. rate-limit 잔여 부족 시 0건 발송.
@@ -249,6 +258,88 @@ public class AdminManualNotificationController extends BaseApiController {
         Page<BulkNotificationResponse> result = manualService.getBatchHistory(
             tenantId, currentUser, PageRequest.of(Math.max(page, 0), pageSize));
         return success(result);
+    }
+
+    /**
+     * 수동 발송 화면 설정(서버 단일 수신자 상한). 테넌트 관리자 전용.
+     *
+     * @param session HTTP 세션
+     * @return 설정
+     */
+    @GetMapping("/config")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> getJobConfig(HttpSession session) {
+        resourceOwnerAccessGuard.requireTenantAdminAccess(session);
+        return success(jobService.getConfig());
+    }
+
+    /**
+     * 발송 확인 단계 — 서버가 대상 집합을 확정해 인원·제외·마스킹 미리보기·토큰을 돌려준다(저장·발송 없음).
+     *
+     * @param request 요청
+     * @param session HTTP 세션
+     * @return 미리보기
+     */
+    @PostMapping("/jobs/preview")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> previewJob(@Valid @RequestBody ManualNotificationJobRequest request,
+            HttpSession session) {
+        User caller = resourceOwnerAccessGuard.requireTenantAdminAccess(session);
+        String tenantId = clientPathAccessGuard.requireCallerTenantId(caller);
+        try {
+            return success(jobService.preview(tenantId, request));
+        } catch (ManualNotificationJobException e) {
+            return jobError(e);
+        }
+    }
+
+    /**
+     * 발송 작업 생성 — 미리보기 토큰과 같은 대상일 때만 만들고 작업 id 를 바로 돌려준다(발송은 백그라운드).
+     * 같은 멱등 키 재요청은 기존 작업을 200 으로 돌려준다.
+     *
+     * @param request 요청
+     * @param session HTTP 세션
+     * @return 작업
+     */
+    @PostMapping("/jobs")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> createJob(@Valid @RequestBody ManualNotificationJobRequest request,
+            HttpSession session) {
+        User caller = resourceOwnerAccessGuard.requireTenantAdminAccess(session);
+        String tenantId = clientPathAccessGuard.requireCallerTenantId(caller);
+        try {
+            ManualNotificationJobResponse job = jobService.createJob(tenantId, caller, request);
+            HttpStatus status = job.isDuplicateRequest() ? HttpStatus.OK : HttpStatus.ACCEPTED;
+            return ResponseEntity.status(status).body(ApiResponse.success(job));
+        } catch (ManualNotificationJobException e) {
+            return jobError(e);
+        }
+    }
+
+    /**
+     * 발송 작업 진행·요약. {@code includeRecords=true} 면 수신자별 발송 기록·청크·중복 요약을 포함한다.
+     *
+     * @param jobId          작업 UUID
+     * @param includeRecords 수신자별 기록 포함
+     * @param session        HTTP 세션
+     * @return 작업
+     */
+    @GetMapping("/jobs/{jobId}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> getJob(@PathVariable("jobId") String jobId,
+            @RequestParam(value = "includeRecords", required = false, defaultValue = "false") boolean includeRecords,
+            HttpSession session) {
+        User caller = resourceOwnerAccessGuard.requireTenantAdminAccess(session);
+        String tenantId = clientPathAccessGuard.requireCallerTenantId(caller);
+        try {
+            return success(jobService.getJob(tenantId, jobId, includeRecords));
+        } catch (ManualNotificationJobException e) {
+            return jobError(e);
+        }
+    }
+
+    private ResponseEntity<ErrorResponse> jobError(ManualNotificationJobException e) {
+        return error(e.getMessage(), e.getErrorCode(), e.getStatus());
     }
 
     /**

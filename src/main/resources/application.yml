@@ -718,6 +718,7 @@ notification:
   manual:
     max-recipients: ${NOTIFICATION_MANUAL_MAX_RECIPIENTS:500}
     preview-size: ${NOTIFICATION_MANUAL_PREVIEW_SIZE:10}
+    max-exclusions: ${NOTIFICATION_MANUAL_MAX_EXCLUSIONS:5000}
     job:
       # REAL = 프로바이더 실호출 / DRY_RUN = 같은 기록 경로, 프로바이더 호출만 생략(.dev 는 application-dev.yml)
       provider-mode: ${MANUAL_NOTIFICATION_PROVIDER_MODE:REAL}

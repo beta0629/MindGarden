@@ -564,6 +564,9 @@ export const SHOP_PAYMENT_RETURN_COPY = {
 export const SHOP_BANNER_PLACEHOLDER_COPY =
   '테넌트 배너·환영 문구는 설정 연동 후 표시됩니다.';
 
+/** 기능 비활성·조회 실패 게이트 CTA — 라이브 문구 */
+export const CLIENT_SHOP_GATE_HOME_LABEL = '홈으로 돌아가기';
+
 /** TenantComponent off 시 직접 URL·빈 API 응답과 정합되는 안내 */
 export const CLIENT_SHOP_UNAVAILABLE_COPY = {
   TITLE: '온라인 쇼핑을 이용할 수 없습니다',

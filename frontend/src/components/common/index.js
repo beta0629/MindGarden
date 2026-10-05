@@ -24,6 +24,10 @@ export {
 } from './molecules/TableActionCell';
 export { default as EmptyState } from './EmptyState';
 export {
+  default as FeatureUnavailable,
+  FEATURE_UNAVAILABLE_ICON
+} from './molecules/FeatureUnavailable';
+export {
   default as StatsGrid,
   StatisticsGrid,
   StatsCardGrid,

@@ -7,10 +7,10 @@
 
 import React, { useMemo } from 'react';
 import PropTypes from 'prop-types';
-import { Link } from 'react-router-dom';
 import AdminCommonLayout from '../../layout/AdminCommonLayout';
 import { ContentArea } from '../../dashboard-v2/content';
 import SafeText from '../../common/SafeText';
+import FeatureUnavailable from '../../common/molecules/FeatureUnavailable';
 import {
   ADMIN_SHOP_CATALOG_UNAVAILABLE_COPY,
   ADMIN_SHOP_GATE_BACK_TO_DASHBOARD_LABEL,
@@ -43,10 +43,11 @@ const AdminTenantComponentGate = ({ componentCode, children, layoutTitle }) => {
 
   return (
     <AdminCommonLayout title={resolvedLayoutTitle}>
-      <ContentArea>
+      <ContentArea className="admin-shop-gate-page" ariaLabel={resolvedLayoutTitle}>
         <AdminShopComponentUnavailablePage
           title={ADMIN_SHOP_CATALOG_UNAVAILABLE_COPY.TITLE}
           description={ADMIN_SHOP_CATALOG_UNAVAILABLE_COPY.DESCRIPTION}
+          breadcrumb={resolvedLayoutTitle}
           testId={`admin-tenant-component-gate--${componentCode}`}
         />
       </ContentArea>
@@ -54,26 +55,24 @@ const AdminTenantComponentGate = ({ componentCode, children, layoutTitle }) => {
   );
 };
 
-function AdminShopComponentUnavailablePage({ title, description, testId }) {
+function AdminShopComponentUnavailablePage({ title, description, breadcrumb, testId }) {
   return (
-    <section
-      className="admin-shop-gate admin-shop-gate__unavailable"
-      data-testid={testId}
-      aria-labelledby="admin-shop-gate-title"
-    >
-      <h1 id="admin-shop-gate-title" className="admin-shop-gate__title">
-        <SafeText tag="span">{title}</SafeText>
-      </h1>
-      <p className="admin-shop-gate__message">
-        <SafeText tag="span">{description}</SafeText>
-      </p>
-      <Link
-        to={ADMIN_ROUTES.DASHBOARD}
-        className="admin-shop-gate__nav-link"
+    <>
+      <nav className="admin-shop-gate__breadcrumb" aria-label="breadcrumb">
+        <SafeText>{breadcrumb}</SafeText>
+      </nav>
+      <div
+        className="admin-shop-gate admin-shop-gate__unavailable"
+        data-testid={testId}
       >
-        {ADMIN_SHOP_GATE_BACK_TO_DASHBOARD_LABEL}
-      </Link>
-    </section>
+        <FeatureUnavailable
+          title={title}
+          description={description}
+          actionLabel={ADMIN_SHOP_GATE_BACK_TO_DASHBOARD_LABEL}
+          actionHref={ADMIN_ROUTES.DASHBOARD}
+        />
+      </div>
+    </>
   );
 }
 

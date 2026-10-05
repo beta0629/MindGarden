@@ -41,12 +41,6 @@ export const ADMIN_LIST_DRAIN_PAGE_SIZE = 200;
 /** adminListGetAllPages 안전 상한 — 무한 루프 방지. */
 export const ADMIN_LIST_GET_ALL_MAX_PAGES = 500;
 
-/**
- * page0 불완전 시 size=total 단일 follow-up 허용 상한.
- * {@link ADMIN_LIST_GET_ALL_MAX_PAGES} 와 동일 (prod scale &lt;300 / count≤500).
- */
-export const ADMIN_LIST_GET_ALL_SIZE_EQ_COUNT_MAX = ADMIN_LIST_GET_ALL_MAX_PAGES;
-
 /** 기본 목록 키 후보 (envelope 객체) — clients 포함해 listConfig 누락 시 [] 방지. */
 const ADMIN_LIST_ITEM_KEYS = Object.freeze(['clients', 'mappings', 'content', 'items', 'data', 'schedules']);
 
@@ -114,6 +108,7 @@ function splitPathAndQuery(path) {
 
 /**
  * Admin 목록 쿼리 파라미터 — page/size 는 항상 numeric 포함.
+ * size 는 1 ~ {@link ADMIN_LIST_DRAIN_PAGE_SIZE} 로 캡한다 (size=total 전체 조회 금지).
  *
  * @param {Object} [options={}]
  * @param {number|string} [options.page]
@@ -123,8 +118,9 @@ function splitPathAndQuery(path) {
  */
 export function buildAdminListParams(options = {}) {
   const merged = { ...(options || {}) };
-  merged.page = toAdminListPageNumber(merged.page, ADMIN_DASHBOARD_LIST_PAGE);
-  merged.size = toAdminListPageNumber(merged.size, ADMIN_DASHBOARD_LIST_PAGE_SIZE);
+  merged.page = Math.max(0, toAdminListPageNumber(merged.page, ADMIN_DASHBOARD_LIST_PAGE));
+  const size = toAdminListPageNumber(merged.size, ADMIN_DASHBOARD_LIST_PAGE_SIZE);
+  merged.size = Math.min(Math.max(1, size), ADMIN_LIST_DRAIN_PAGE_SIZE);
   return merged;
 }
 
@@ -184,9 +180,9 @@ export function adminClientsWithMappingGet(extra = {}, apiOptions = {}) {
 /**
  * with-mapping-info 전체 페이지 drain (page/size SSOT).
  * 단일 페이지는 {@link adminClientsWithMappingGet} 유지 (대시보드 KPI 등).
- * listKey: clients — count 우선 total + size=total fast-path.
+ * listKey: clients — count 우선 total, 페이지 단위 drain.
  *
- * 첫 요청 size 기본값: {@link ADMIN_LIST_GET_ALL_SIZE_EQ_COUNT_MAX} (500).
+ * 첫 요청 size 기본값: {@link ADMIN_LIST_DRAIN_PAGE_SIZE}.
  * 대시보드 쿼리의 size=20 은 GetAll 에 전파하지 않는다.
  * caller 가 extra.size 를 명시(own property + non-null)한 경우에만 그대로 사용.
  *
@@ -204,7 +200,7 @@ export function adminClientsWithMappingGetAll(extra = {}, apiOptions = {}) {
   const merged = {
     ...ADMIN_DASHBOARD_CLIENTS_WITH_MAPPING_QUERY,
     ...safeExtra,
-    ...(hasExplicitSize ? {} : { size: ADMIN_LIST_GET_ALL_SIZE_EQ_COUNT_MAX })
+    ...(hasExplicitSize ? {} : { size: ADMIN_LIST_DRAIN_PAGE_SIZE })
   };
   return adminListGetAllPages(
     API_ENDPOINTS.ADMIN.CLIENTS.WITH_MAPPING_INFO,
@@ -413,9 +409,7 @@ function resolveAdminListPage(response, config, listKey) {
  *
  * 전략:
  * 1) page0 조회
- * 2) total &gt; items.length 이고 total ≤ {@link ADMIN_LIST_GET_ALL_SIZE_EQ_COUNT_MAX} 이면
- *    size=total 단일 follow-up 우선 (clients.length === count 목표)
- * 3) size 무시 등으로 불완전하면 기존 multi-page drain 폴백
+ * 2) total &gt; items.length 이면 page/size 단위 multi-page drain (size=total 단일 전체 조회 금지)
  *
  * 종료 조건: collected >= total / 빈 페이지 / items.length &lt; drainPageSize / maxPages 상한.
  * Multi-page 진입 시 requested pageSize 대비 수집 건수 비교로 막지 않는다
@@ -457,32 +451,11 @@ export async function adminListGetAllPages(path, options = {}, apiOptions = {}, 
   const resolved = resolveAdminListPage(firstResponse, config, listKey);
   listKey = resolved.listKey;
   let total = resolved.total;
-  let allItems = resolved.items.slice();
+  const allItems = resolved.items.slice();
   let lastResponse = firstResponse;
   const firstPageItemCount = resolved.items.length;
 
   const needsMore = () => total != null && allItems.length < total;
-
-  if (allItems.length > 0 && needsMore()
-      && total <= ADMIN_LIST_GET_ALL_SIZE_EQ_COUNT_MAX) {
-    const fullResponse = await adminListGet(
-      path,
-      { ...baseOptions, page: startPage, size: total },
-      apiOptions
-    );
-    lastResponse = fullResponse;
-    const fullResolved = resolveAdminListPage(fullResponse, config, listKey);
-    if (fullResolved.listKey != null) {
-      listKey = fullResolved.listKey;
-    }
-    if (fullResolved.total != null) {
-      total = fullResolved.total;
-    }
-    if (fullResolved.items.length >= (total != null ? total : 0)
-        || fullResolved.items.length > allItems.length) {
-      allItems = fullResolved.items.slice();
-    }
-  }
 
   // Multi-page drain: do NOT gate on allItems.length >= requested pageSize.
   // BE may truncate (e.g. size=500 requested → 20 items, count=73); still drain.
@@ -696,5 +669,99 @@ export function adminScheduleControllerListGetAll(extra = {}, apiOptions = {}) {
       getItems: (r) => (r && Array.isArray(r.schedules) ? r.schedules : []),
       getTotal: (r) => (r == null ? undefined : (r.totalElements ?? r.count))
     }
+  );
+}
+
+/** pending 목록 listConfig — envelope `{ [listKey], count }` */
+const pendingListConfig = (listKey) => ({
+  listKey,
+  getItems: (r) => {
+    if (Array.isArray(r)) {
+      return r;
+    }
+    const body = r && typeof r === 'object' && r.data && !Array.isArray(r.data) ? r.data : r;
+    return body && Array.isArray(body[listKey]) ? body[listKey] : [];
+  },
+  getTotal: (r) => extractAdminListTotal(r)
+});
+
+/**
+ * 결제 대기 매칭(pending-payment) 한 페이지 (page/size SSOT).
+ *
+ * @param {Object} [extra={}] page/size 등
+ * @param {Object} [apiOptions={}]
+ * @returns {Promise<*>} `{ mappings, count, page, size }`
+ */
+export function adminPendingPaymentMappingsGet(extra = {}, apiOptions = {}) {
+  return adminListGet(API_ENDPOINTS.ADMIN.MAPPINGS.PENDING_PAYMENT, { ...(extra || {}) }, apiOptions);
+}
+
+/**
+ * 결제 대기 매칭 전체 — page/size 단위 drain (집계·병합용).
+ *
+ * @param {Object} [extra={}]
+ * @param {Object} [apiOptions={}]
+ * @returns {Promise<*>} `{ mappings, count }`
+ */
+export function adminPendingPaymentMappingsGetAll(extra = {}, apiOptions = {}) {
+  return adminListGetAllPages(
+    API_ENDPOINTS.ADMIN.MAPPINGS.PENDING_PAYMENT,
+    { size: ADMIN_LIST_DRAIN_PAGE_SIZE, ...(extra || {}) },
+    apiOptions,
+    pendingListConfig('mappings')
+  );
+}
+
+/**
+ * 입금 확인 대기 매칭(pending-deposit) 한 페이지 (page/size SSOT).
+ *
+ * @param {Object} [extra={}]
+ * @param {Object} [apiOptions={}]
+ * @returns {Promise<*>} `{ mappings, count, page, size }`
+ */
+export function adminPendingDepositMappingsGet(extra = {}, apiOptions = {}) {
+  return adminListGet(API_ENDPOINTS.ADMIN.MAPPINGS.PENDING_DEPOSIT, { ...(extra || {}) }, apiOptions);
+}
+
+/**
+ * 입금 확인 대기 매칭 전체 — page/size 단위 drain.
+ *
+ * @param {Object} [extra={}]
+ * @param {Object} [apiOptions={}]
+ * @returns {Promise<*>} `{ mappings, count }`
+ */
+export function adminPendingDepositMappingsGetAll(extra = {}, apiOptions = {}) {
+  return adminListGetAllPages(
+    API_ENDPOINTS.ADMIN.MAPPINGS.PENDING_DEPOSIT,
+    { size: ADMIN_LIST_DRAIN_PAGE_SIZE, ...(extra || {}) },
+    apiOptions,
+    pendingListConfig('mappings')
+  );
+}
+
+/**
+ * 회기 추가 입금 대기(session-extensions/pending-payment) 한 페이지 (page/size SSOT).
+ *
+ * @param {Object} [extra={}]
+ * @param {Object} [apiOptions={}]
+ * @returns {Promise<*>} `{ requests, count, page, size }`
+ */
+export function adminSessionExtensionPendingPaymentGet(extra = {}, apiOptions = {}) {
+  return adminListGet(API_ENDPOINTS.ADMIN.SESSION_EXTENSIONS.PENDING_PAYMENT, { ...(extra || {}) }, apiOptions);
+}
+
+/**
+ * 회기 추가 입금 대기 전체 — page/size 단위 drain.
+ *
+ * @param {Object} [extra={}]
+ * @param {Object} [apiOptions={}]
+ * @returns {Promise<*>} `{ requests, count }`
+ */
+export function adminSessionExtensionPendingPaymentGetAll(extra = {}, apiOptions = {}) {
+  return adminListGetAllPages(
+    API_ENDPOINTS.ADMIN.SESSION_EXTENSIONS.PENDING_PAYMENT,
+    { size: ADMIN_LIST_DRAIN_PAGE_SIZE, ...(extra || {}) },
+    apiOptions,
+    pendingListConfig('requests')
   );
 }

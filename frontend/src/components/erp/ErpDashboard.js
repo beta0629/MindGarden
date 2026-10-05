@@ -7,6 +7,7 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
+import { adminPendingPaymentMappingsGetAll } from '../../api/adminListFetch';
 import { useNavigate } from 'react-router-dom';
 import { useSession } from '../../contexts/SessionContext';
 import { sessionManager } from '../../utils/sessionManager';
@@ -242,9 +243,7 @@ const ErpDashboard = ({ user: propUser }) => {
     const { startDate, endDate } = getPeriodRange(periodKey);
 
     try {
-      const pendingRaw = await StandardizedApi.get(
-        API_ENDPOINTS.ADMIN.MAPPINGS.PENDING_PAYMENT
-      );
+      const pendingRaw = await adminPendingPaymentMappingsGetAll();
       setPendingConsultation(sumPendingConsultationFees(pendingRaw));
     } catch (err) {
       if (isDevEnv) {

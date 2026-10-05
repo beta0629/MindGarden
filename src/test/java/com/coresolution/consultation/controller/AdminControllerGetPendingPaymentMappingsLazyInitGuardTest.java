@@ -108,9 +108,39 @@ class AdminControllerGetPendingPaymentMappingsLazyInitGuardTest {
         when(adminService.getPendingPaymentMappings()).thenReturn(List.of(dto));
 
         ResponseEntity<ApiResponse<Map<String, Object>>> response =
-                controller.getPendingPaymentMappings(new MockHttpSession());
+                controller.getPendingPaymentMappings(new MockHttpSession(), null, null);
 
         assertListResponse(response, "PENDING_PAYMENT");
+    }
+
+    @Test
+    @DisplayName("pending-payment page/size — 현재 페이지만, count 는 전체 건수, size 상한 200")
+    void getPendingPaymentMappings_pagesAndKeepsTotalCount() {
+        List<ConsultantClientMappingResponse> all = new java.util.ArrayList<>();
+        for (int i = 0; i < 25; i++) {
+            all.add(sampleDto("PENDING_PAYMENT", "PENDING"));
+        }
+        when(adminService.getPendingPaymentMappings()).thenReturn(all);
+
+        Map<String, Object> second = controller.getPendingPaymentMappings(new MockHttpSession(), 1, 20)
+                .getBody().getData();
+        assertEquals(5, ((List<?>) second.get("mappings")).size());
+        assertEquals(25, second.get("count"));
+        assertEquals(1, second.get("page"));
+
+        Map<String, Object> defaults = controller.getPendingPaymentMappings(new MockHttpSession(), null, null)
+                .getBody().getData();
+        assertEquals(20, ((List<?>) defaults.get("mappings")).size());
+        assertEquals(25, defaults.get("count"));
+
+        Map<String, Object> capped = controller.getPendingPaymentMappings(new MockHttpSession(), 0, 100_000)
+                .getBody().getData();
+        assertEquals(200, capped.get("size"));
+
+        Map<String, Object> beyond = controller.getPendingPaymentMappings(new MockHttpSession(), 9, 20)
+                .getBody().getData();
+        assertEquals(0, ((List<?>) beyond.get("mappings")).size());
+        assertEquals(25, beyond.get("count"));
     }
 
     @Test

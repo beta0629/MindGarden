@@ -1,5 +1,6 @@
 /**
- * AdminDashboardV2 회기 소진율 — loadStats가 adminMappingsListGetAll 목록을 집계에 넣는다.
+ * AdminDashboardV2 회기 소진율 — loadStats가 mappings 첫 페이지(adminMappingsListGet, size 상한) 목록을 집계에 넣는다.
+ * 대시보드는 전체 drain(adminMappingsListGetAll) 금지.
  * mappings/stats 건수 KPI는 유지. page size로 목록을 자르지 않는다.
  *
  * @author CoreSolution
@@ -107,6 +108,7 @@ jest.mock('../../../api/adminListFetch', () => {
   const actual = jest.requireActual('../../../api/adminListFetch');
   return {
     ...actual,
+    adminMappingsListGet: jest.fn(() => Promise.resolve({ mappings: [], count: 0 })),
     adminMappingsListGetAll: jest.fn(() => Promise.resolve({ mappings: [], count: 0 }))
   };
 });
@@ -162,7 +164,13 @@ jest.mock('../../../utils/notification', () => ({
 const fs = require('fs');
 const path = require('path');
 
-const { adminMappingsListGetAll } = require('../../../api/adminListFetch');
+const {
+  adminMappingsListGet,
+  adminMappingsListGetAll,
+  ADMIN_LIST_DRAIN_PAGE_SIZE
+} = require('../../../api/adminListFetch');
+
+const FIRST_PAGE_QUERY = { page: 0, size: ADMIN_LIST_DRAIN_PAGE_SIZE };
 const AdminDashboardV2 = require('../AdminDashboardV2').default;
 
 const SESSION_BURN_EMPTY = '활성 배정의 회기 소진 데이터가 없습니다';
@@ -201,11 +209,12 @@ async function sessionBurnSection() {
 describe('AdminDashboardV2 session burn mappings', () => {
   beforeEach(() => {
     global.fetch = jest.fn(() => Promise.resolve(jsonOk({ success: true, data: {} })));
+    adminMappingsListGet.mockReset();
+    adminMappingsListGet.mockResolvedValue({ mappings: [], count: 0 });
     adminMappingsListGetAll.mockReset();
-    adminMappingsListGetAll.mockResolvedValue({ mappings: [], count: 0 });
   });
 
-  test('loadStats는 빈 배열을 고정하지 않고 adminMappingsListGetAll을 호출한다', () => {
+  test('loadStats는 빈 배열을 고정하지 않고 mappings 첫 페이지만 호출한다 (전체 drain 금지)', () => {
     const src = fs.readFileSync(
       path.join(__dirname, '..', 'AdminDashboardV2.js'),
       'utf8'
@@ -215,7 +224,9 @@ describe('AdminDashboardV2 session burn mappings', () => {
     );
     expect(loadStatsMatch).not.toBeNull();
     const loadStatsSrc = loadStatsMatch[0];
-    expect(loadStatsSrc).toMatch(/adminMappingsListGetAll\(\)/);
+    expect(loadStatsSrc).toMatch(/adminMappingsListGet\(ADMIN_DASHBOARD_SESSION_BURN_MAPPINGS_QUERY\)/);
+    expect(loadStatsSrc).not.toMatch(/GetAll\(/);
+    expect(loadStatsSrc).not.toMatch(/size:\s*total/);
     expect(loadStatsSrc).toMatch(/resolveSessionBurnMappingList\(mappingsListPayload\)/);
     expect(loadStatsSrc).toMatch(/API_ENDPOINTS\.ADMIN\.MAPPINGS\.STATS/);
     expect(loadStatsSrc).not.toMatch(/setMappingsListForSessionBurn\(\s*\[\s*\]\s*\)/);
@@ -224,16 +235,17 @@ describe('AdminDashboardV2 session burn mappings', () => {
   });
 
   test('배정이 없으면 빈 문구만 보인다', async() => {
-    adminMappingsListGetAll.mockResolvedValue({ mappings: [], count: 0 });
+    adminMappingsListGet.mockResolvedValue({ mappings: [], count: 0 });
     renderDashboard();
 
     const section = await sessionBurnSection();
     expect(within(section).getByText(SESSION_BURN_EMPTY)).toBeInTheDocument();
-    expect(adminMappingsListGetAll).toHaveBeenCalledWith();
+    expect(adminMappingsListGet).toHaveBeenCalledWith(FIRST_PAGE_QUERY);
+    expect(adminMappingsListGetAll).not.toHaveBeenCalled();
   });
 
   test('활성 배정이 있으면 소진률 행이 1건 이상이고 빈 문구는 없다', async() => {
-    adminMappingsListGetAll.mockResolvedValue({
+    adminMappingsListGet.mockResolvedValue({
       mappings: [buildActiveMapping(1, 4)],
       count: 1
     });
@@ -253,7 +265,7 @@ describe('AdminDashboardV2 session burn mappings', () => {
     for (let id = 1; id <= count; id += 1) {
       mappings.push(buildActiveMapping(id, id));
     }
-    adminMappingsListGetAll.mockResolvedValue({ mappings, count });
+    adminMappingsListGet.mockResolvedValue({ mappings, count });
     renderDashboard();
 
     const section = await sessionBurnSection();
@@ -263,6 +275,7 @@ describe('AdminDashboardV2 session burn mappings', () => {
     const names = within(section).getAllByText(/^상담사\d+$/);
     expect(names[0]).toHaveTextContent(`상담사${count}`);
     expect(within(section).queryByText(SESSION_BURN_EMPTY)).not.toBeInTheDocument();
-    expect(adminMappingsListGetAll).toHaveBeenCalledWith();
+    expect(adminMappingsListGet).toHaveBeenCalledWith(FIRST_PAGE_QUERY);
+    expect(adminMappingsListGetAll).not.toHaveBeenCalled();
   });
 });

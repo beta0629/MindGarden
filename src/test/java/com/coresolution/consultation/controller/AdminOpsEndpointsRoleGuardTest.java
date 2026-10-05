@@ -99,7 +99,7 @@ class AdminOpsEndpointsRoleGuardTest {
         for (UserRole denied : new UserRole[] {UserRole.CLIENT, UserRole.CONSULTANT}) {
             MockHttpSession session = sessionOf(denied);
             assertDenied(() -> adminController.getActiveMappings(session));
-            assertDenied(() -> adminController.getPendingPaymentMappings(session));
+            assertDenied(() -> adminController.getPendingPaymentMappings(session, null, null));
             assertDenied(() -> adminController.getSessionsExhaustedMappings(session));
         }
         assertThatThrownBy(() -> adminController.getActiveMappings(new MockHttpSession()))
@@ -107,8 +107,8 @@ class AdminOpsEndpointsRoleGuardTest {
         verifyNoInteractions(adminService);
 
         when(adminService.getPendingPaymentMappings()).thenReturn(Collections.emptyList());
-        adminController.getPendingPaymentMappings(sessionOf(UserRole.STAFF));
-        adminController.getPendingPaymentMappings(sessionOf(UserRole.ADMIN));
+        adminController.getPendingPaymentMappings(sessionOf(UserRole.STAFF), null, null);
+        adminController.getPendingPaymentMappings(sessionOf(UserRole.ADMIN), null, null);
         verify(adminService, times(2)).getPendingPaymentMappings();
     }
 

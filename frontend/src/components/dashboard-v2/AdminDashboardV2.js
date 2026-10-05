@@ -129,14 +129,19 @@ import {
   DASHBOARD_KPI_ZONE_REFRESH_TEST_ID,
   MAPPING_STATUS_ACTIVE,
   ADMIN_DASHBOARD_CLIENTS_WITH_MAPPING_QUERY,
+  ADMIN_DASHBOARD_LIST_PAGE,
   ADMIN_SCHEDULES_TENTATIVE_PENDING_QUERY,
   DASHBOARD_SCHEDULE_PENDING_LIST_LOAD_ERROR
 } from '../../constants/adminDashboardWidgetConstants';
 import {
   adminClientsWithMappingGet,
-  adminMappingsListGetAll,
   adminSchedulesListGet,
-  buildAdminListUrl
+  buildAdminListUrl,
+  adminMappingsListGet,
+  adminPendingPaymentMappingsGetAll,
+  adminPendingDepositMappingsGetAll,
+  adminSessionExtensionPendingPaymentGetAll,
+  ADMIN_LIST_DRAIN_PAGE_SIZE
 } from '../../api/adminListFetch';
 import {
   buildDepositPendingQueue,
@@ -155,7 +160,11 @@ const buildAdminDashboardClientsWithMappingUrl = () => buildAdminListUrl(
   ADMIN_DASHBOARD_CLIENTS_WITH_MAPPING_QUERY
 );
 // KPI 건수: API_ENDPOINTS.ADMIN.MAPPINGS.STATS
-// 회기 소진율 목록: adminMappingsListGetAll (통합스케줄과 동일 전체 drain)
+// 회기 소진율 목록: mappings 첫 페이지만 (대시보드 전체 조회 금지)
+const ADMIN_DASHBOARD_SESSION_BURN_MAPPINGS_QUERY = Object.freeze({
+  page: ADMIN_DASHBOARD_LIST_PAGE,
+  size: ADMIN_LIST_DRAIN_PAGE_SIZE
+});
 const API_ADMIN_CONSULTANT_RATING_STATS = '/api/v1/admin/consultant-rating-stats';
 const API_ADMIN_STATISTICS_CONSULTATION_COMPLETION = '/api/v1/admin/statistics/consultation-completion';
 const API_ADMIN_STATISTICS_NEW_CLIENTS = API_ENDPOINTS.ADMIN.STATISTICS.NEW_CLIENTS;
@@ -274,7 +283,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
   const [integratedDataRankDownSet, setIntegratedDataRankDownSet] = useState(() => new Set());
   const previousRankByConsultantIdRef = useRef(new Map());
   /**
-   * §D 회기 소진율 — adminMappingsListGetAll 로 받은 배정 전체.
+   * §D 회기 소진율 — mappings 첫 페이지(최대 ADMIN_LIST_DRAIN_PAGE_SIZE) 기준.
    * 건수 KPI(mappings/stats)와 분리. 집계 전에는 빈 배열.
    */
   const [mappingsListForSessionBurn, setMappingsListForSessionBurn] = useState([]);
@@ -554,7 +563,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
         StandardizedApi.get(API_ADMIN_STATISTICS_CONSULTATION_COMPLETION),
         StandardizedApi.get(API_ADMIN_STATISTICS_NEW_CLIENTS, { months: DASHBOARD_CHART_ROLLING_MONTHS }),
         StandardizedApi.get(API_ADMIN_STATISTICS_CONSULTATIONS_BY_DOW, { months: DASHBOARD_CHART_ROLLING_MONTHS }),
-        adminMappingsListGetAll()
+        adminMappingsListGet(ADMIN_DASHBOARD_SESSION_BURN_MAPPINGS_QUERY)
       ]);
       const consultantsRes = settled[0].status === 'fulfilled' ? settled[0].value : dummyFailedResponse();
       const clientsRes = settled[1].status === 'fulfilled' ? settled[1].value : dummyFailedResponse();
@@ -748,9 +757,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
    */
   const loadPendingPaymentStats = useCallback(async() => {
     try {
-      const mappingData = await StandardizedApi.get(
-        API_ENDPOINTS.ADMIN.MAPPINGS.PENDING_PAYMENT
-      );
+      const mappingData = await adminPendingPaymentMappingsGetAll();
       const { count, totalAmount } = aggregatePendingPaymentStats(mappingData);
       setPendingPaymentStats({ count, totalAmount });
     } catch (error) {
@@ -768,8 +775,8 @@ const AdminDashboardV2 = ({ user: propUser }) => {
   const loadPendingDepositQueue = useCallback(async() => {
     try {
       const [mappingData, extensionData] = await Promise.all([
-        StandardizedApi.get(API_ENDPOINTS.ADMIN.MAPPINGS.PENDING_DEPOSIT),
-        StandardizedApi.get(API_ENDPOINTS.ADMIN.SESSION_EXTENSIONS.PENDING_PAYMENT)
+        adminPendingDepositMappingsGetAll(),
+        adminSessionExtensionPendingPaymentGetAll()
       ]);
       const rawMappings = mappingData?.mappings
         ?? mappingData?.data?.mappings
@@ -1681,7 +1688,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
 
           {/*
             §D 회기 소진율 (2026-07-29) — ACTIVE 매핑 used/total 가중 집계.
-            목록은 adminMappingsListGetAll. 건수 KPI는 mappings/stats.
+            목록은 mappings 첫 페이지. 건수 KPI는 mappings/stats.
           */}
           <SessionBurnRateSection items={sessionBurnRateItems} />
         </div>

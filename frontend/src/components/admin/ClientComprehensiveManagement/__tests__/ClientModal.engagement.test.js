@@ -73,7 +73,7 @@ describe('ClientModal 연계 유형', () => {
   it('일반 회기면 기관 칸을 숨긴다', () => {
     renderModal({ engagementType: CLIENT_ENGAGEMENT_TYPE.SESSION_TICKET });
     expect(screen.queryByText('등록된 기관이 없습니다.')).not.toBeInTheDocument();
-    expect(screen.getByText('배정 시 기관연동 배지가 표시됩니다.', { exact: false })).toBeInTheDocument();
+    expect(screen.getByText('배정 시 기관연계 배지가 표시됩니다.', { exact: false })).toBeInTheDocument();
   });
 
   it('타기관 연계면 기관 선택·신규가 열린다', async() => {

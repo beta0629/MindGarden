@@ -12,6 +12,7 @@ import '../../styles/main.css';
 import SafeText from '../common/SafeText';
 import ActionBarButton from '../common/ActionBarButton';
 import { toDisplayString, toSafeNumber } from '../../utils/safeDisplay';
+import { extractServerErrorMessage } from '../../utils/ajax';
 import { useNavigate } from 'react-router-dom';
 import { ADMIN_ROUTES } from '../../constants/adminRoutes';
 import {
@@ -829,7 +830,10 @@ const ScheduleDetailModal = ({
                 notificationManager.error(t('schedule:ScheduleDetailModal.completeBeforeStartTooltip'));
                 return;
             }
-            notificationManager.error(t('schedule:ScheduleDetailModal.t_d034ac4a'));
+            const serverMessage = extractServerErrorMessage(error?.response?.data);
+            notificationManager.error(serverMessage
+                ? t('schedule:ScheduleDetailModal.t_d034ac4a', { message: toDisplayString(serverMessage, '') })
+                : t('schedule:ScheduleDetailModal.t_6a68eb67'));
         } finally {
             setLoading(false);
         }

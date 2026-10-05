@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import com.coresolution.consultation.cache.TenantCommonCodeCacheEvictor;
 import com.coresolution.consultation.entity.CommonCode;
 import com.coresolution.consultation.repository.CommonCodeRepository;
 import com.coresolution.consultation.support.TenantOnboardingSalaryAndFinancialSeedDefinitions;
@@ -89,6 +90,7 @@ public class OnboardingServiceImpl implements OnboardingService {
     private final org.springframework.transaction.PlatformTransactionManager transactionManager;
     @Qualifier("onboardingPostApprovalExecutor")
     private final Executor onboardingPostApprovalExecutor;
+    private final TenantCommonCodeCacheEvictor tenantCommonCodeCacheEvictor;
     @jakarta.persistence.PersistenceContext
     private jakarta.persistence.EntityManager entityManager;
 
@@ -2311,7 +2313,7 @@ public class OnboardingServiceImpl implements OnboardingService {
                     OnboardingConstants.TENANT_SEED_DESC_MS_SESSIONS_EXHAUSTED, null,
                     OnboardingConstants.TENANT_SEED_SORT_MAPPING_STATUS_7, createdByValue);
 
-            // 전문가 유형(테넌트별 표시·분류): 기본 상담사 1건
+            // 전문가 유형(테넌트별): 상담사·놀이치료·언어치료. ABA 는 코드 관리에서만 추가.
             addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId,
                     OnboardingConstants.TENANT_COMMON_CODE_GROUP_PROFESSIONAL_PROVIDER_TYPE,
                     OnboardingConstants.TENANT_SEED_CODE_VALUE_PROFESSIONAL_PROVIDER_DEFAULT,
@@ -2320,6 +2322,24 @@ public class OnboardingServiceImpl implements OnboardingService {
                     OnboardingConstants.TENANT_SEED_DESC_PROFESSIONAL_PROVIDER_DEFAULT,
                     OnboardingConstants.TENANT_SEED_EXTRA_PROFESSIONAL_PROVIDER_DEFAULT,
                     OnboardingConstants.TENANT_COMMON_CODE_DEFAULT_SORT_ORDER, createdByValue);
+            addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId,
+                    OnboardingConstants.TENANT_COMMON_CODE_GROUP_PROFESSIONAL_PROVIDER_TYPE,
+                    OnboardingConstants.TENANT_SEED_CODE_VALUE_PROFESSIONAL_PROVIDER_PLAY_THERAPY,
+                    OnboardingConstants.TENANT_SEED_LABEL_PROFESSIONAL_PROVIDER_PLAY_THERAPY,
+                    OnboardingConstants.TENANT_SEED_LABEL_PROFESSIONAL_PROVIDER_PLAY_THERAPY,
+                    OnboardingConstants.TENANT_SEED_DESC_PROFESSIONAL_PROVIDER_PLAY_THERAPY,
+                    OnboardingConstants.TENANT_SEED_EXTRA_PROFESSIONAL_PROVIDER_PLAY_THERAPY,
+                    OnboardingConstants.TENANT_SEED_SORT_PROFESSIONAL_PROVIDER_PLAY_THERAPY,
+                    createdByValue);
+            addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId,
+                    OnboardingConstants.TENANT_COMMON_CODE_GROUP_PROFESSIONAL_PROVIDER_TYPE,
+                    OnboardingConstants.TENANT_SEED_CODE_VALUE_PROFESSIONAL_PROVIDER_SPEECH_THERAPY,
+                    OnboardingConstants.TENANT_SEED_LABEL_PROFESSIONAL_PROVIDER_SPEECH_THERAPY,
+                    OnboardingConstants.TENANT_SEED_LABEL_PROFESSIONAL_PROVIDER_SPEECH_THERAPY,
+                    OnboardingConstants.TENANT_SEED_DESC_PROFESSIONAL_PROVIDER_SPEECH_THERAPY,
+                    OnboardingConstants.TENANT_SEED_EXTRA_PROFESSIONAL_PROVIDER_SPEECH_THERAPY,
+                    OnboardingConstants.TENANT_SEED_SORT_PROFESSIONAL_PROVIDER_SPEECH_THERAPY,
+                    createdByValue);
 
             // 급여·ERP 필수 공통코드 (테넌트 행; 코어 폴백만 가정하지 않음). 시드 정의 동기화:
             // TenantOnboardingSalaryAndFinancialSeedDefinitions
@@ -2336,6 +2356,7 @@ public class OnboardingServiceImpl implements OnboardingService {
                 commonCodeRepository.saveAll(codesToInsert);
                 log.info(OnboardingConstants.LOG_MSG_TENANT_COMMON_CODES_BATCH_SAVE_OK, tenantId,
                         codesToInsert.size());
+                tenantCommonCodeCacheEvictor.evictTenantAndCoreCodesAfterCommit();
             } else {
                 log.info(OnboardingConstants.LOG_MSG_TENANT_COMMON_CODES_ALL_EXIST, tenantId);
             }

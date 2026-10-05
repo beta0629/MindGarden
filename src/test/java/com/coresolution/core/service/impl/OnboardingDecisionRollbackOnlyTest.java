@@ -20,6 +20,7 @@ import java.util.Collections;
 import java.util.Optional;
 import java.util.concurrent.Executor;
 import javax.sql.DataSource;
+import com.coresolution.consultation.cache.TenantCommonCodeCacheEvictor;
 import com.coresolution.consultation.repository.CommonCodeRepository;
 import com.coresolution.consultation.service.CommonCodeService;
 import com.coresolution.consultation.service.EmailService;
@@ -120,7 +121,8 @@ class OnboardingDecisionRollbackOnlyTest {
                 mock(CommonCodeRepository.class), preValidationService, errorHandlingService,
                 mock(AccountingService.class), mock(PermissionGroupService.class),
                 mock(TenantRoleRepository.class), applicationContext, mock(EmailService.class),
-                mock(JdbcTemplate.class), transactionManager, mock(Executor.class));
+                mock(JdbcTemplate.class), transactionManager, mock(Executor.class),
+                mock(TenantCommonCodeCacheEvictor.class));
 
         ProxyFactory proxyFactory = new ProxyFactory(target);
         proxyFactory.setProxyTargetClass(true);

@@ -460,6 +460,33 @@ public class OnboardingConstants {
     /** 시드: extra_data (systemAuthorityRole, isDefault, sortOrder). */
     public static final String TENANT_SEED_EXTRA_PROFESSIONAL_PROVIDER_DEFAULT =
             "{\"systemAuthorityRole\":\"CONSULTANT\",\"isDefault\":true,\"sortOrder\":0}";
+
+    /** 시드: 놀이치료 유형. ABA 는 기본 시드에 넣지 않고 코드 관리에서만 추가한다. */
+    public static final String TENANT_SEED_CODE_VALUE_PROFESSIONAL_PROVIDER_PLAY_THERAPY = "PLAY_THERAPY";
+
+    public static final String TENANT_SEED_LABEL_PROFESSIONAL_PROVIDER_PLAY_THERAPY = "놀이치료";
+
+    public static final String TENANT_SEED_DESC_PROFESSIONAL_PROVIDER_PLAY_THERAPY =
+            "전문가 유형(놀이치료) — 테넌트 공통 선택지";
+
+    public static final String TENANT_SEED_EXTRA_PROFESSIONAL_PROVIDER_PLAY_THERAPY =
+            "{\"systemAuthorityRole\":\"CONSULTANT\",\"isDefault\":false,\"sortOrder\":10}";
+
+    public static final int TENANT_SEED_SORT_PROFESSIONAL_PROVIDER_PLAY_THERAPY = 10;
+
+    /** 시드: 언어치료 유형. */
+    public static final String TENANT_SEED_CODE_VALUE_PROFESSIONAL_PROVIDER_SPEECH_THERAPY = "SPEECH_THERAPY";
+
+    public static final String TENANT_SEED_LABEL_PROFESSIONAL_PROVIDER_SPEECH_THERAPY = "언어치료";
+
+    public static final String TENANT_SEED_DESC_PROFESSIONAL_PROVIDER_SPEECH_THERAPY =
+            "전문가 유형(언어치료) — 테넌트 공통 선택지";
+
+    public static final String TENANT_SEED_EXTRA_PROFESSIONAL_PROVIDER_SPEECH_THERAPY =
+            "{\"systemAuthorityRole\":\"CONSULTANT\",\"isDefault\":false,\"sortOrder\":20}";
+
+    public static final int TENANT_SEED_SORT_PROFESSIONAL_PROVIDER_SPEECH_THERAPY = 20;
+
     public static final String TENANT_BUSINESS_TYPE_CONSULTATION = "CONSULTATION";
     public static final String TENANT_BUSINESS_TYPE_COUNSELING = "COUNSELING";
     public static final String TENANT_BUSINESS_TYPE_ACADEMY = "ACADEMY";

@@ -38,7 +38,10 @@ import '../../../../styles/unified-design-tokens.css';
 import '../../../../styles/dashboard-tokens-extension.css';
 import '../MappingManagementPage.css';
 import { API_ENDPOINTS } from '../../../../constants/apiEndpoints';
-import { adminMappingsListGet } from '../../../../api/adminListFetch';
+import {
+  adminMappingsListGet,
+  adminPendingPaymentMappingsGetAll
+} from '../../../../api/adminListFetch';
 import {
   ADMIN_DASHBOARD_LIST_PAGE,
   ADMIN_DASHBOARD_LIST_PAGE_SIZE
@@ -283,7 +286,7 @@ const MappingManagementPage = () => {
       await runResourceLoad(options, setLoading, async() => {
         const [response, pendingRaw, dirtyRaw] = await Promise.all([
           adminMappingsListGet(),
-          StandardizedApi.get(API_ENDPOINTS.ADMIN.MAPPINGS.PENDING_PAYMENT),
+          adminPendingPaymentMappingsGetAll(),
           StandardizedApi.get(API_ENDPOINTS.ADMIN.MAPPINGS.PENDING_PAYMENT_DIRTY, {
             ageHours: PENDING_PAYMENT_DIRTY_DEFAULT_AGE_HOURS,
             page: ADMIN_DASHBOARD_LIST_PAGE,

@@ -84,7 +84,7 @@ jobs:
       # checkout 생략: 원격 인라인 SSH 스크립트만 사용 (JAR/앱 코드 미배포)
       - name: 원격 롤링 재시작 (비활성→전환→구활성)
         if: steps.kst_guard.outputs.skip != 'true'
-        uses: appleboy/ssh-action@master
+        uses: appleboy/ssh-action@c4f70287fc37c43b14b30b407224bbbc8e8c6327 # master 2026-08-16 (v1.2.5+10) 고정
         with:
           host: ${{ secrets.PRODUCTION_HOST }}
           username: ${{ secrets.PRODUCTION_USER }}

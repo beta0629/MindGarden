@@ -230,6 +230,62 @@ class ScheduleServiceImplManualCompletionBeforeStartTest {
         assertUnchanged(ScheduleStatus.CONFIRMED);
     }
 
+    @Test
+    @DisplayName("확정 때 이미 차감된 CONFIRMED 일정(잔여 0, 소진 매핑) → 완료 허용, 추가 차감 없음")
+    void updateSchedule_alreadyDeductedConfirmed_remainingZero_completesWithoutDeduction() {
+        useClockAt(SESSION_DATE.atTime(SESSION_START).plusMinutes(10));
+        schedule.setStatus(ScheduleStatus.CONFIRMED);
+        markDeducted(1, 1, MappingStatus.SESSIONS_EXHAUSTED);
+
+        Schedule saved = scheduleService.updateSchedule(SCHEDULE_ID, statusOnly(ScheduleStatus.COMPLETED));
+
+        assertThat(saved.getStatus()).isEqualTo(ScheduleStatus.COMPLETED);
+        assertThat(mapping.getUsedSessions()).isEqualTo(1);
+        assertThat(mapping.getRemainingSessions()).isZero();
+        verify(mappingRepository, never()).save(any(ConsultantClientMapping.class));
+        verify(sessionSyncService, never()).syncAfterSessionUsage(anyLong(), anyLong(), anyLong());
+    }
+
+    @Test
+    @DisplayName("다회기 마지막 회차(10/10, 잔여 0, ACTIVE) 완료 → 허용, 재요청해도 차감 0")
+    void updateSchedule_lastSessionOfPackage_remainingZero_completesIdempotently() {
+        useClockAt(SESSION_DATE.atTime(SESSION_START).plusMinutes(10));
+        schedule.setStatus(ScheduleStatus.CONFIRMED);
+        schedule.setSessionSequence(10);
+        markDeducted(10, 10, MappingStatus.ACTIVE);
+
+        Schedule saved = scheduleService.updateSchedule(SCHEDULE_ID, statusOnly(ScheduleStatus.COMPLETED));
+        assertThat(saved.getStatus()).isEqualTo(ScheduleStatus.COMPLETED);
+
+        scheduleService.updateSchedule(SCHEDULE_ID, statusOnly(ScheduleStatus.COMPLETED));
+
+        assertThat(mapping.getUsedSessions()).isEqualTo(10);
+        assertThat(mapping.getRemainingSessions()).isZero();
+        verify(mappingRepository, never()).save(any(ConsultantClientMapping.class));
+        verify(salaryLateSessionAutoSyncService, times(1)).syncAfterScheduleCompleted(any(Schedule.class));
+    }
+
+    @Test
+    @DisplayName("이미 차감된 일정이라도 시작 전 완료는 그대로 400 (#1438 차단 유지)")
+    void updateSchedule_alreadyDeducted_beforeStart_stillRejected() {
+        useClockAt(SESSION_DATE.atTime(SESSION_START).minusMinutes(30));
+        schedule.setStatus(ScheduleStatus.CONFIRMED);
+        markDeducted(1, 1, MappingStatus.SESSIONS_EXHAUSTED);
+
+        assertThatThrownBy(() -> scheduleService.updateSchedule(SCHEDULE_ID, statusOnly(ScheduleStatus.COMPLETED)))
+                .isInstanceOf(ScheduleSessionNotStartedException.class);
+
+        assertThat(schedule.getStatus()).isEqualTo(ScheduleStatus.CONFIRMED);
+        verify(scheduleRepository, never()).save(any(Schedule.class));
+    }
+
+    private void markDeducted(int total, int used, MappingStatus status) {
+        mapping.setTotalSessions(total);
+        mapping.setUsedSessions(used);
+        mapping.setRemainingSessions(total - used);
+        mapping.setStatus(status);
+    }
+
     private void assertUnchanged() {
         assertUnchanged(ScheduleStatus.BOOKED);
     }

@@ -57,6 +57,9 @@ public class PortOneV2PaymentCancelService {
     /** 포트원 V2 cancel 요청 body — 부분 취소 금액. */
     static final String CANCEL_BODY_AMOUNT = "amount";
 
+    /** 포트원 V2 요청 멱등 키 헤더 — 같은 키 재요청은 PortOne 이 한 번만 처리한다. */
+    static final String HEADER_IDEMPOTENCY_KEY = PortOneIdempotencyKeyHeader.HEADER_NAME;
+
     /** 포트원 V2 Payment 응답 — 금액 객체. */
     static final String PAYMENT_FIELD_AMOUNT = "amount";
 
@@ -90,6 +93,19 @@ public class PortOneV2PaymentCancelService {
      * @return 성공(또는 이미 취소) 시 true
      */
     public boolean cancelPayment(String tenantId, String paymentId, String reason) {
+        return cancelPayment(tenantId, paymentId, reason, null);
+    }
+
+    /**
+     * {@link #cancelPayment(String, String, String)} + PortOne 멱등 키.
+     *
+     * @param tenantId       테넌트 ID
+     * @param paymentId      포트원/내부 결제 ID
+     * @param reason         취소 사유
+     * @param idempotencyKey PortOne {@code Idempotency-Key} (없으면 헤더 생략)
+     * @return 성공(또는 이미 취소) 시 true
+     */
+    public boolean cancelPayment(String tenantId, String paymentId, String reason, String idempotencyKey) {
         if (!StringUtils.hasText(tenantId) || !StringUtils.hasText(paymentId)) {
             return false;
         }
@@ -105,7 +121,7 @@ public class PortOneV2PaymentCancelService {
             return true;
         }
 
-        return postCancel(trimmedPaymentId, apiSecret, cancelReason, null);
+        return postCancel(trimmedPaymentId, apiSecret, cancelReason, null, idempotencyKey);
     }
 
     /**
@@ -122,6 +138,21 @@ public class PortOneV2PaymentCancelService {
      * @return 성공 시 true
      */
     public boolean cancelPaymentAmount(String tenantId, String paymentId, String reason, BigDecimal amount) {
+        return cancelPaymentAmount(tenantId, paymentId, reason, amount, null);
+    }
+
+    /**
+     * {@link #cancelPaymentAmount(String, String, String, BigDecimal)} + PortOne 멱등 키.
+     *
+     * @param tenantId       테넌트 ID
+     * @param paymentId      포트원/내부 결제 ID
+     * @param reason         취소 사유
+     * @param amount         취소 금액 (0 초과)
+     * @param idempotencyKey PortOne {@code Idempotency-Key} (없으면 헤더 생략)
+     * @return 성공 시 true
+     */
+    public boolean cancelPaymentAmount(
+            String tenantId, String paymentId, String reason, BigDecimal amount, String idempotencyKey) {
         if (!StringUtils.hasText(tenantId) || !StringUtils.hasText(paymentId)
                 || amount == null || amount.signum() <= 0) {
             return false;
@@ -136,7 +167,7 @@ public class PortOneV2PaymentCancelService {
             log.info("포트원 V2 결제 이미 전액 취소됨 — 부분 취소 생략 paymentId={}", trimmedPaymentId);
             return true;
         }
-        if (postCancel(trimmedPaymentId, apiSecret, resolveCancelReason(reason), amount)) {
+        if (postCancel(trimmedPaymentId, apiSecret, resolveCancelReason(reason), amount, idempotencyKey)) {
             return true;
         }
         if (before.isEmpty()) {
@@ -201,7 +232,8 @@ public class PortOneV2PaymentCancelService {
         return apiSecret;
     }
 
-    private boolean postCancel(String paymentId, String apiSecret, String reason, BigDecimal amount) {
+    private boolean postCancel(
+            String paymentId, String apiSecret, String reason, BigDecimal amount, String idempotencyKey) {
         URI uri = UriComponentsBuilder
                 .fromHttpUrl(PORTONE_V2_PAYMENTS_BASE_URL)
                 .pathSegment(paymentId, "cancel")
@@ -212,6 +244,7 @@ public class PortOneV2PaymentCancelService {
         HttpHeaders headers = new HttpHeaders();
         headers.set(HttpHeaders.AUTHORIZATION, "PortOne " + apiSecret);
         headers.setContentType(MediaType.APPLICATION_JSON);
+        PortOneIdempotencyKeyHeader.apply(headers, idempotencyKey);
 
         Map<String, Object> body = new LinkedHashMap<>();
         body.put("reason", reason);

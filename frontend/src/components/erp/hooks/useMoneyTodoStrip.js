@@ -6,6 +6,7 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
+import { adminPendingPaymentMappingsGetAll } from '../../../api/adminListFetch';
 import StandardizedApi from '../../../utils/standardizedApi';
 import { getCommonCodes } from '../../../utils/commonCodeApi';
 import { API_ENDPOINTS } from '../../../constants/apiEndpoints';
@@ -52,9 +53,7 @@ export function useMoneyTodoStrip(periodKey) {
     const { startDate, endDate } = getPeriodRange(resolvedKey);
 
     try {
-      const pendingRaw = await StandardizedApi.get(
-        API_ENDPOINTS.ADMIN.MAPPINGS.PENDING_PAYMENT
-      );
+      const pendingRaw = await adminPendingPaymentMappingsGetAll();
       setPendingConsultation(sumPendingConsultationFees(pendingRaw));
     } catch (err) {
       if (isDevEnv) {

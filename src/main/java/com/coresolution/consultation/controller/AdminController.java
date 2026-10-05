@@ -40,6 +40,7 @@ import com.coresolution.consultation.entity.ConsultantClientMapping;
 import com.coresolution.consultation.entity.ConsultationRecord;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.exception.EntityNotFoundException;
+import com.coresolution.consultation.exception.RefundLedgerNotRecordedException;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.repository.UserSocialAccountRepository;
 import com.coresolution.consultation.service.AdminBulkMappingPaymentService;
@@ -60,12 +61,13 @@ import com.coresolution.consultation.service.RealTimeStatisticsService;
 import com.coresolution.consultation.service.ScheduleAutoCompleteService;
 import com.coresolution.consultation.service.ScheduleService;
 import com.coresolution.consultation.service.support.ClientPathAccessGuard;
+import com.coresolution.consultation.service.MappingTerminationService;
+import com.coresolution.consultation.service.MappingUpdateService;
 import com.coresolution.consultation.service.support.DeferredExternalCalls;
 import com.coresolution.consultation.service.support.ResourceOwnerAccessGuard;
 import com.coresolution.core.security.OpsAccessGuard;
 import com.coresolution.consultation.service.support.ConsultationRecordAccessGuard;
 import com.coresolution.consultation.service.support.ConsultationRecordWriter;
-import com.coresolution.consultation.service.StoredProcedureService;
 import com.coresolution.consultation.service.UserPersonalDataCacheService;
 import com.coresolution.consultation.service.UserService;
 import com.coresolution.consultation.util.DashboardTrendPeriodUtils;
@@ -73,6 +75,7 @@ import com.coresolution.consultation.util.EmailLogMasking;
 import com.coresolution.consultation.util.LoginIdentifierUtils;
 import com.coresolution.consultation.constant.admin.AdminServiceUserFacingMessages;
 import com.coresolution.consultation.util.LoginIdentifierUtils;
+import com.coresolution.consultation.util.AdminListPaging;
 import com.coresolution.consultation.util.PermissionCheckUtils;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.consultation.util.ClientPaymentHistorySsotUtils;
@@ -145,6 +148,21 @@ public class AdminController extends BaseApiController {
             "본인 매칭 정보만 조회할 수 있습니다.";
 
     /**
+     * 목록 envelope — {@code {listKey: 현재 페이지, count: 전체 건수, page, size}} ({@link AdminListPaging}).
+     */
+    private static <T> Map<String, Object> toPagedListData(String listKey, List<T> all, Integer page,
+            Integer size) {
+        com.coresolution.consultation.dto.AdminListPageResult<T> paged = AdminListPaging.slice(all, page, size);
+        int[] resolved = AdminListPaging.resolve(page, size);
+        Map<String, Object> data = new HashMap<>();
+        data.put(listKey, paged.getContent());
+        data.put("count", Math.toIntExact(paged.getTotalCount()));
+        data.put("page", resolved[0]);
+        data.put("size", resolved[1]);
+        return data;
+    }
+
+    /**
      * Admin list endpoints: page/size missing → force defaults (never full dump).
      * Hard max = {@link #ADMIN_LIST_MAX_PAGE_SIZE} (not global 50).
      *
@@ -166,6 +184,8 @@ public class AdminController extends BaseApiController {
 
     private final AdminService adminService;
     private final AdminBulkMappingPaymentService adminBulkMappingPaymentService;
+    private final MappingTerminationService mappingTerminationService;
+    private final MappingUpdateService mappingUpdateService;
     private final ClientPackagePaymentHistoryService clientPackagePaymentHistoryService;
     private final ClientMappingListPayloadService clientMappingListPayloadService;
     private final BranchService branchService;
@@ -183,7 +203,6 @@ public class AdminController extends BaseApiController {
     private final ConsultantRatingService consultantRatingService;
     private final UserSocialAccountRepository userSocialAccountRepository;
     private final UserService userService;
-    private final StoredProcedureService storedProcedureService;
     private final PersonalDataEncryptionUtil personalDataEncryptionUtil;
     private final UserPersonalDataCacheService userPersonalDataCacheService;
     private final ConsultantStatsService consultantStatsService;
@@ -1397,51 +1416,6 @@ public class AdminController extends BaseApiController {
 
 
     /**
-     * 매칭 정보 수정 (ERP 연동)
-     */
-    @PostMapping("/mappings/{mappingId}/update")
-    public ResponseEntity<ApiResponse<Map<String, Object>>> updateMappingInfo(
-            @PathVariable Long mappingId, @RequestBody Map<String, Object> updateRequest,
-            HttpSession session) {
-        log.info("🔄 매칭 정보 수정 요청: mappingId={}, request={}", mappingId, updateRequest);
-
-        ResponseEntity<?> permissionResponse = PermissionCheckUtils.checkPermission(session,
-                "MAPPING_MANAGE", dynamicPermissionService);
-        if (permissionResponse != null) {
-            throw new org.springframework.security.access.AccessDeniedException("권한이 없습니다.");
-        }
-
-        User currentUser = SessionUtils.getCurrentUser(session);
-        if (currentUser == null) {
-            throw new org.springframework.security.access.AccessDeniedException("로그인이 필요합니다.");
-        }
-
-        Map<String, Object> permissionResult = storedProcedureService.checkMappingUpdatePermission(
-                mappingId, currentUser.getId(), currentUser.getRole().toString());
-
-        if (!(Boolean) permissionResult.get("canUpdate")) {
-            throw new IllegalArgumentException((String) permissionResult.get("reason"));
-        }
-
-        String newPackageName = (String) updateRequest.get("packageName");
-        Double newPackagePrice = ((Number) updateRequest.get("packagePrice")).doubleValue();
-        Integer newTotalSessions = ((Number) updateRequest.get("totalSessions")).intValue();
-
-        Map<String, Object> updateResult = storedProcedureService.updateMappingInfo(mappingId,
-                newPackageName, newPackagePrice, newTotalSessions, currentUser.getName());
-
-        if ((Boolean) updateResult.get("success")) {
-            log.info("✅ 매칭 정보 수정 완료: mappingId={}", mappingId);
-            return updated((String) updateResult.get("message"), updateResult);
-        } else {
-            log.error("❌ 매칭 정보 수정 실패: mappingId={}, message={}", mappingId,
-                    updateResult.get("message"));
-            throw new IllegalArgumentException((String) updateResult.get("message"));
-        }
-    }
-
-
-    /**
      * 입금 대기 중인 매칭 목록 조회
      *
      * <p>응답 data 는 {@code { mappings, count }} 형태를 유지한다.
@@ -1450,16 +1424,13 @@ public class AdminController extends BaseApiController {
      * @return ApiResponse with mappings DTO list and count
      */
     @GetMapping("/mappings/pending-payment")
-    public ResponseEntity<ApiResponse<Map<String, Object>>> getPendingPaymentMappings(HttpSession session) {
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getPendingPaymentMappings(HttpSession session,
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer size) {
         clientPathAccessGuard.requireTenantManager(session);
-        log.info("🔍 입금 대기 중인 매칭 목록 조회");
+        log.info("🔍 입금 대기 중인 매칭 목록 조회 page={} size={}", page, size);
         List<ConsultantClientMappingResponse> mappings = adminService.getPendingPaymentMappings();
-
-        Map<String, Object> data = new HashMap<>();
-        data.put("mappings", mappings);
-        data.put("count", mappings.size());
-
-        return success(data);
+        return success(toPagedListData("mappings", mappings, page, size));
     }
 
     /**
@@ -1493,7 +1464,9 @@ public class AdminController extends BaseApiController {
      */
     @GetMapping("/mappings/pending-deposit")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getPendingDepositMappings(
-            HttpSession session) {
+            HttpSession session,
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer size) {
         log.info("🔔 입금 확인 대기 매칭 조회 요청");
 
         User currentUser = SessionUtils.getCurrentUser(session);
@@ -1526,12 +1499,8 @@ public class AdminController extends BaseApiController {
             responseData.add(payload);
         }
 
-        Map<String, Object> data = new HashMap<>();
-        data.put("mappings", responseData);
-        data.put("count", responseData.size());
-
         log.info("✅ 입금 확인 대기 매칭 조회 완료: {}개", responseData.size());
-        return success("입금 확인 대기 매칭 조회 완료", data);
+        return success("입금 확인 대기 매칭 조회 완료", toPagedListData("mappings", responseData, page, size));
     }
 
     /**
@@ -1757,8 +1726,8 @@ public class AdminController extends BaseApiController {
         log.info("💰 요청 데이터 - paymentMethod: {}, paymentReference: {}, paymentAmount: {}",
                 paymentMethod, paymentReference, paymentAmount);
 
-        ConsultantClientMapping mapping = adminService.confirmPayment(mappingId, paymentMethod,
-                paymentReference, paymentAmount);
+        ConsultantClientMapping mapping = DeferredExternalCalls.run(() -> adminService.confirmPayment(mappingId,
+                paymentMethod, paymentReference, paymentAmount));
 
         log.info("💰 매칭 ID {} 결제 확인 완료 (미수금 상태)", mappingId);
 
@@ -1819,7 +1788,8 @@ public class AdminController extends BaseApiController {
 
         String adminName = (String) request.get("adminName");
 
-        ConsultantClientMapping mapping = adminService.approveMapping(mappingId, adminName);
+        ConsultantClientMapping mapping = DeferredExternalCalls.run(
+                () -> adminService.approveMapping(mappingId, adminName));
 
         log.info("✅ 매칭 ID {} 관리자 승인 완료", mappingId);
 
@@ -2235,7 +2205,7 @@ public class AdminController extends BaseApiController {
         String currentBranchCode = currentUser.getBranchCode();
         log.info("🔧 현재 사용자 지점코드: {}", currentBranchCode);
 
-        ConsultantClientMapping mapping = adminService.createMapping(request);
+        ConsultantClientMapping mapping = DeferredExternalCalls.run(() -> adminService.createMapping(request));
 
         log.info("🔧 생성된 매칭 지점코드: {}", mapping.getBranchCode());
 
@@ -2438,7 +2408,7 @@ public class AdminController extends BaseApiController {
         User currentUser = SessionUtils.getCurrentUser(session);
         String updatedBy = currentUser != null ? currentUser.getName() : "System";
 
-        ConsultantClientMappingResponse response = adminService.updateMapping(id, request, updatedBy);
+        ConsultantClientMappingResponse response = mappingUpdateService.update(id, request, updatedBy);
         return updated("매칭 정보가 성공적으로 수정되었습니다", response);
     }
 
@@ -2586,7 +2556,7 @@ public class AdminController extends BaseApiController {
         resourceOwnerAccessGuard.requireMappingAdminAccess(session, id);
         log.info("🔧 매칭 강제 종료: ID={}", id);
         String reason = (String) requestBody.get("reason");
-        DeferredExternalCalls.run(() -> adminService.terminateMapping(id, reason));
+        DeferredExternalCalls.run(() -> mappingTerminationService.terminate(id, reason));
         return success("매칭이 성공적으로 종료되었습니다");
     }
 
@@ -2629,7 +2599,8 @@ public class AdminController extends BaseApiController {
             throw new IllegalArgumentException("환불 회기수는 숫자여야 합니다.");
         }
 
-        adminService.partialRefundMapping(id, refundSessions, reason);
+        int sessionsToRefund = refundSessions;
+        DeferredExternalCalls.run(() -> adminService.partialRefundMapping(id, sessionsToRefund, reason));
         return success(String.format("%d회기 부분 환불이 성공적으로 처리되었습니다", refundSessions));
     }
 
@@ -2824,7 +2795,8 @@ public class AdminController extends BaseApiController {
         log.info("💰 현재 매핑 상태 - status: {}, paymentStatus: {}", existingMapping.getStatus(),
                 existingMapping.getPaymentStatus());
 
-        ConsultantClientMapping mapping = adminService.confirmDeposit(mappingId, depositReference);
+        ConsultantClientMapping mapping = DeferredExternalCalls.run(
+                () -> adminService.confirmDeposit(mappingId, depositReference));
 
         log.info("💰 매칭 ID {} 입금 확인 완료 (현금 수입)", mappingId);
 
@@ -2922,11 +2894,12 @@ public class AdminController extends BaseApiController {
     }
 
     /**
-     * 일괄 매칭 결제 확인 (관리자·사무원). 결제 대기 매칭만, 사전 검증은 전부 아니면 전무.
+     * 일괄 매칭 결제 확인 (관리자·사무원). 결제 대기 매칭만. 사전 검증에 걸리면 요청 전체를 거부한다.
      *
      * <p>mappingIds: 정수 숫자·숫자 문자열(중복은 한 번만), 비었거나 형식 오류·최대 개수 초과 400,
-     * 다른 기관·없는 id 가 하나라도 있으면 403(아무것도 처리 안 함), 결제 대기가 아닌 매칭 포함 409.
-     * 2건 이상이면 amount 는 패키지 금액 합계와 같아야 하고 각 매칭에 자기 패키지 금액이 기록된다.</p>
+     * 다른 기관·없는 id 가 하나라도 있으면 403(아무것도 처리 안 함), 결제 대기가 아닌 매칭 포함 409(아무것도 처리 안 함).
+     * 2건 이상이면 amount 는 패키지 금액 합계와 같아야 하고 각 매칭에 자기 패키지 금액이 기록된다.
+     * 처리는 매칭마다 독립 트랜잭션이며 응답 {@code results} 에 매칭별 결과(SUCCEEDED·FAILED·SKIPPED)를 담는다.</p>
      */
     @PostMapping("/mapping/payment/confirm")
     public ResponseEntity<ApiResponse<Map<String, Object>>> confirmMappingPayment(
@@ -2949,7 +2922,8 @@ public class AdminController extends BaseApiController {
      * 일괄 매칭 결제 취소 (같은 기관 관리자 전용) — 매칭마다 {@link AdminService#terminateMapping} 위임 (원장 환불만, PG 호출 없음).
      *
      * <p>mappingIds 규칙은 결제 확인과 같다. 이미 종료·취소된 매칭이나 쇼핑 주문(PG) 결제 매칭이 하나라도 있으면
-     * 409(아무것도 처리 안 함). 같은 요청 반복·동시 요청은 매칭 행 잠금으로 두 번째부터 건너뛰어 재환불하지 않는다.</p>
+     * 409(아무것도 처리 안 함). 같은 요청 반복·동시 요청은 매칭 행 잠금으로 두 번째부터 건너뛰어 재환불하지 않는다.
+     * 처리는 매칭마다 독립 트랜잭션이며 응답 {@code results} 에 매칭별 결과를 담는다.</p>
      */
     @PostMapping("/mapping/payment/cancel")
     public ResponseEntity<ApiResponse<Map<String, Object>>> cancelMappingPayment(
@@ -2970,20 +2944,54 @@ public class AdminController extends BaseApiController {
     }
 
     private static Map<String, Object> bulkResultData(BulkMappingPaymentResult result) {
+        List<Map<String, Object>> items = new ArrayList<>(result.getItems().size());
+        for (BulkMappingPaymentResult.Item item : result.getItems()) {
+            Map<String, Object> row = new HashMap<>();
+            row.put("mappingId", item.getMappingId());
+            row.put("status", item.getStatus().name());
+            row.put("code", item.getCode());
+            row.put("message", item.getMessage());
+            items.add(row);
+        }
+        Map<String, Object> summary = new HashMap<>();
+        summary.put("total", result.getItems().size());
+        summary.put("succeeded", result.getProcessedMappingIds().size());
+        summary.put("failed", result.getFailedMappingIds().size());
+        summary.put("skipped", result.getSkippedMappingIds().size());
+
         Map<String, Object> data = new HashMap<>();
+        data.put("results", items);
+        data.put("summary", summary);
         data.put("skippedMappings", result.getSkippedMappingIds());
-        data.put("failedMappingId", result.getFailedMappingId());
-        data.put("notProcessedMappings", result.getNotProcessedMappingIds());
+        data.put("failedMappings", result.getFailedMappingIds());
+        data.put("allSucceeded", result.isAllSucceededOrSkipped());
         return data;
     }
 
+    /**
+     * 일괄 처리 응답. 이번 요청으로 커밋된 매칭이 하나라도 있으면 일부 실패여도 200 + 매칭별 결과로 답한다
+     * (커밋된 매칭이 있는데 요청 전체를 실패로 답하지 않는다). 커밋된 매칭 없이 실패만 있으면 422(전부 환불 전표
+     * 미기록) 또는 409 로 답한다.
+     */
     private ResponseEntity<ApiResponse<Map<String, Object>>> bulkResponse(BulkMappingPaymentResult result,
             String successMessage, Map<String, Object> data) {
-        if (result.isCompleted()) {
+        if (result.isAllSucceededOrSkipped()) {
             return success(successMessage, data);
         }
+        if (!result.getProcessedMappingIds().isEmpty()) {
+            return success(AdminServiceUserFacingMessages.MSG_BULK_MAPPING_PARTIAL_FAILURE, data);
+        }
+        List<BulkMappingPaymentResult.Item> failures = result.getItems().stream()
+                .filter(item -> item.getStatus() == BulkMappingPaymentResult.ItemStatus.FAILED)
+                .collect(Collectors.toList());
+        boolean allLedgerFailures = failures.stream()
+                .allMatch(item -> RefundLedgerNotRecordedException.ERROR_CODE.equals(item.getCode()));
+        if (allLedgerFailures) {
+            return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
+                    .body(ApiResponse.error(failures.get(0).getMessage(), data));
+        }
         return ResponseEntity.status(HttpStatus.CONFLICT)
-                .body(ApiResponse.error(AdminServiceUserFacingMessages.MSG_BULK_MAPPING_STOPPED_ON_FAILURE, data));
+                .body(ApiResponse.error(AdminServiceUserFacingMessages.MSG_BULK_MAPPING_ALL_FAILED, data));
     }
 
     /**
@@ -3156,6 +3164,7 @@ public class AdminController extends BaseApiController {
      * page/size missing → force defaults (never full dump); in-memory slice like mappings.
      *
      * @param consultantId optional consultant filter
+     * @param clientId     optional client filter (호출자 테넌트 안에서만 좁힘 — 관리자 권한 검사 후 적용)
      * @param status       optional schedule status filter
      * @param startDate    optional start date (yyyy-MM-dd)
      * @param endDate      optional end date (yyyy-MM-dd)
@@ -3167,6 +3176,7 @@ public class AdminController extends BaseApiController {
     @GetMapping("/schedules")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getSchedules(
             @RequestParam(required = false) Long consultantId,
+            @RequestParam(required = false) Long clientId,
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String startDate,
             @RequestParam(required = false) String endDate,
@@ -3174,8 +3184,8 @@ public class AdminController extends BaseApiController {
             @RequestParam(required = false) Integer size,
             HttpSession session) {
         clientPathAccessGuard.requireTenantManager(session);
-        log.info("📅 어드민 스케줄 조회: consultantId={}, status={}, startDate={}, endDate={}, page={}, size={}",
-                consultantId, status, startDate, endDate, page, size);
+        log.info("📅 어드민 스케줄 조회: consultantId={}, clientId={}, status={}, startDate={}, endDate={}, "
+                + "page={}, size={}", consultantId, clientId, status, startDate, endDate, page, size);
 
         java.time.LocalDate start = null;
         java.time.LocalDate end = null;
@@ -3193,7 +3203,7 @@ public class AdminController extends BaseApiController {
 
         Pageable applied = resolveAdminListPageable(page, size);
         com.coresolution.consultation.dto.AdminListPageResult<Map<String, Object>> pageResult =
-                adminService.getSchedulesFilteredPaged(consultantId, status, start, end, applied);
+                adminService.getSchedulesFilteredPaged(consultantId, clientId, status, start, end, applied);
         List<Map<String, Object>> schedules = pageResult.getContent();
         long total = pageResult.getTotalCount();
         log.info("📅 어드민 스케줄 조회 완료 - 전체 {}개, 페이지 {}건 (page={}, size={})",
@@ -3205,6 +3215,7 @@ public class AdminController extends BaseApiController {
         data.put("page", applied.getPageNumber());
         data.put("size", applied.getPageSize());
         data.put("consultantId", consultantId);
+        data.put("clientId", clientId);
         data.put("status", status);
         data.put("startDate", startDate);
         data.put("endDate", endDate);

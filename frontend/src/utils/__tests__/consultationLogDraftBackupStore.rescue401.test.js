@@ -2,7 +2,7 @@
  * 401 보관 백업 회귀 — 세션 정리 뒤에도 IndexedDB 에 일지 백업이 실제로 남고, 재로드(메모리·세션 키
  * 소실) 뒤에도 복호화되는지. 명시적 로그아웃·다른 사용자·보관 기간 경과에서는 지워지는지.
  *
- * jsdom 에는 IndexedDB 가 없어 최소 인메모리 구현을 쓴다(값은 참조 그대로 보관 — CryptoKey 포함).
+ * jsdom 에는 IndexedDB 가 없어 최소 인메모리 구현({@code testUtils/fakeIndexedDb})을 쓴다.
  *
  * @author CoreSolution
  * @since 2026-10-04
@@ -13,106 +13,11 @@ import {
   CONSULTATION_LOG_BACKUP_DB_NAME,
   CONSULTATION_LOG_BACKUP_RESCUE_TTL_MS
 } from '../../constants/consultationLogAutosaveConstants';
+import { createFakeIndexedDb } from '../../testUtils/fakeIndexedDb';
 
 jest.mock('../consultationLogLocalDraft', () => ({
   purgeAllLegacyConsultationLogLocalDrafts: jest.fn()
 }));
-
-const createFakeIndexedDb = () => {
-  const databases = new Map();
-  const later = (fn) => setTimeout(fn, 0);
-
-  const makeRequest = (tx, run) => {
-    const req = { result: undefined, onsuccess: null, onerror: null };
-    tx.pending += 1;
-    later(() => {
-      req.result = run();
-      if (req.onsuccess) req.onsuccess();
-      tx.settle();
-    });
-    return req;
-  };
-
-  const makeTx = (db) => {
-    const tx = {
-      pending: 0,
-      oncomplete: null,
-      onerror: null,
-      onabort: null,
-      settle() {
-        tx.pending -= 1;
-        if (tx.pending === 0) {
-          later(() => { if (tx.pending === 0 && tx.oncomplete) tx.oncomplete(); });
-        }
-      },
-      objectStore(name) {
-        const data = db.stores.get(name);
-        return {
-          get: (key) => makeRequest(tx, () => data.get(key)),
-          put: (value, key) => makeRequest(tx, () => { data.set(key, value); return key; }),
-          delete: (key) => makeRequest(tx, () => { data.delete(key); return undefined; }),
-          clear: () => makeRequest(tx, () => { data.clear(); return undefined; }),
-          openCursor: () => {
-            const keys = Array.from(data.keys());
-            let index = 0;
-            const req = { result: null, onsuccess: null };
-            const step = () => {
-              tx.pending += 1;
-              later(() => {
-                if (index < keys.length) {
-                  const key = keys[index];
-                  req.result = {
-                    key,
-                    value: data.get(key),
-                    continue: () => { index += 1; step(); }
-                  };
-                } else {
-                  req.result = null;
-                }
-                if (req.onsuccess) req.onsuccess();
-                tx.settle();
-              });
-            };
-            step();
-            return req;
-          }
-        };
-      }
-    };
-    later(() => { if (tx.pending === 0 && tx.oncomplete) tx.oncomplete(); });
-    return tx;
-  };
-
-  return {
-    open(name) {
-      const req = { result: null, onupgradeneeded: null, onsuccess: null, onerror: null };
-      later(() => {
-        let db = databases.get(name);
-        const isNew = !db;
-        if (!db) {
-          db = {
-            stores: new Map(),
-            objectStoreNames: { contains: (n) => db.stores.has(n) },
-            createObjectStore: (n) => { db.stores.set(n, new Map()); },
-            transaction: () => makeTx(db),
-            close: () => {}
-          };
-          databases.set(name, db);
-        }
-        req.result = db;
-        if (isNew && req.onupgradeneeded) req.onupgradeneeded();
-        if (req.onsuccess) req.onsuccess();
-      });
-      return req;
-    },
-    rawEntries(name) {
-      const db = databases.get(name);
-      const out = [];
-      db?.stores.forEach((data) => data.forEach((value, key) => out.push([key, value])));
-      return out;
-    }
-  };
-};
 
 const SCOPE = { userId: 41, tenantId: 'tenant-a', consultationId: 'schedule-30' };
 const OTHER_USER_SCOPE = { userId: 99, tenantId: 'tenant-a', consultationId: 'schedule-77' };

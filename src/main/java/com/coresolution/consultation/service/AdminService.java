@@ -237,9 +237,20 @@ public interface AdminService {
     Client updateClient(Long id, ClientRegistrationRequest request);
 
     /**
-     * 매칭 정보 수정
+     * 매칭 정보 수정 (JPA 만 — ERP 동기화는 {@link MappingUpdateService} 가 트랜잭션 밖에서 먼저 실행)
      */
     ConsultantClientMappingResponse updateMapping(Long id, ConsultantClientMappingCreateRequest request, String updatedBy);
+
+    /**
+     * 매칭 수정 전 ERP 동기화(UpdateMappingInfo) 필요 여부·인자 (읽기 트랜잭션).
+     *
+     * @param id 매칭 ID
+     * @param request 수정 요청
+     * @param updatedBy 수정자
+     * @return 동기화 인자, 불필요하면 empty
+     */
+    java.util.Optional<com.coresolution.consultation.dto.MappingPackageErpSyncPlan> planMappingPackageErpSync(
+            Long id, ConsultantClientMappingCreateRequest request, String updatedBy);
 
     /**
      * 가계약(PENDING_PAYMENT) 매칭의 패키지·가격·총 회기만 동일 매핑에 갱신한다.
@@ -447,6 +458,16 @@ public interface AdminService {
      * @return 쇼핑 주문 환불 경로 대상이면 true
      */
     boolean requiresShopOrderRefund(Long mappingId);
+
+    /**
+     * 단건 종료 경로 판정 — 쇼핑 주문(Path B)으로 결제된 매칭이면 그 주문 공개 ID.
+     * 결제 대기 매칭·원장 결제 매칭은 empty ({@link #terminateMapping(Long, String)} 경로).
+     *
+     * @param mappingId 매칭 ID
+     * @return Path B 주문 공개 ID (없으면 empty)
+     * @throws com.coresolution.consultation.exception.MappingAlreadyProcessedException 이미 종료·취소된 매칭
+     */
+    java.util.Optional<String> findTerminationShopOrderPublicId(Long mappingId);
 
     /**
      * 결제 확인 처리 (미수금 상태)
@@ -797,6 +818,7 @@ public interface AdminService {
      * 관리자 스케줄 목록 DB 페이징 — 필터를 저장소로 푸시.
      *
      * @param consultantId 상담사 ID (nullable)
+     * @param clientId     내담자 ID (nullable, 호출자 테넌트 안에서만 좁힘)
      * @param status       상태 문자열 (nullable, ALL 무시)
      * @param startDate    시작일 (nullable)
      * @param endDate      종료일 (nullable)
@@ -806,7 +828,8 @@ public interface AdminService {
      * @since 2026-09-23
      */
     AdminListPageResult<Map<String, Object>> getSchedulesFilteredPaged(
-            Long consultantId, String status, LocalDate startDate, LocalDate endDate, Pageable pageable);
+            Long consultantId, Long clientId, String status, LocalDate startDate, LocalDate endDate,
+            Pageable pageable);
 
     /**
      * 상담사별 상담 완료 건수 통계 조회

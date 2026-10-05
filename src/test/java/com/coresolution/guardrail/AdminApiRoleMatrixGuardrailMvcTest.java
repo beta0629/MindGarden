@@ -33,6 +33,7 @@ import com.coresolution.consultation.repository.ConsultantClientMappingRepositor
 import com.coresolution.consultation.repository.ConsultationRecordAccessLogRepository;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.AdminService;
+import com.coresolution.consultation.service.MappingTerminationService;
 import com.coresolution.consultation.service.SalaryManagementService;
 import com.coresolution.consultation.service.support.ClientPathAccessGuard;
 import com.coresolution.consultation.service.support.ResourceOwnerAccessGuard;
@@ -83,6 +84,7 @@ class AdminApiRoleMatrixGuardrailMvcTest {
     private static final String MAPPING_PAYMENT_CANCEL = "/api/v1/admin/mapping/payment/cancel";
 
     private AdminService adminService;
+    private MappingTerminationService mappingTerminationService;
     private ConsultationRecordAccessLogRepository accessLogRepository;
     private SalaryManagementService salaryManagementService;
     private ConsultantClientMappingRepository mappingRepository;
@@ -94,6 +96,7 @@ class AdminApiRoleMatrixGuardrailMvcTest {
         SecurityContextHolder.clearContext();
         TenantContextHolder.clear();
         adminService = mock(AdminService.class);
+        mappingTerminationService = mock(MappingTerminationService.class);
         accessLogRepository = mock(ConsultationRecordAccessLogRepository.class);
         salaryManagementService = mock(SalaryManagementService.class);
         ObjectProvider<BranchRepository> branchProvider = mock(ObjectProvider.class);
@@ -105,7 +108,8 @@ class AdminApiRoleMatrixGuardrailMvcTest {
         ClientPathAccessGuard clientGuard = new ClientPathAccessGuard(mappingRepository, mock(UserRepository.class));
         ResourceOwnerAccessGuard ownerGuard =
             build(ResourceOwnerAccessGuard.class, clientGuard, branchProvider, mappingRepository);
-        Object[] provided = {clientGuard, ownerGuard, adminService, accessLogRepository, salaryManagementService};
+        Object[] provided = {clientGuard, ownerGuard, adminService, mappingTerminationService, accessLogRepository,
+            salaryManagementService};
         mockMvc = MockMvcBuilders.standaloneSetup(
                 build(AdminController.class, provided),
                 build(ConsultationRecordAccessLogAdminController.class, provided),
@@ -174,7 +178,7 @@ class AdminApiRoleMatrixGuardrailMvcTest {
     void terminateMapping_sameTenantAdminOnly() throws Exception {
         assertMappingTerminationAdminOnly(AdminApiRoleMatrixGuardrailMvcTest::terminate);
         mockMvc.perform(terminate(user(ADMIN_A, UserRole.ADMIN, TENANT_A), null)).andExpect(status().isOk());
-        verify(adminService).terminateMapping(MAPPING_A, "guardrail");
+        verify(mappingTerminationService).terminate(MAPPING_A, "guardrail");
     }
 
     @Test
@@ -202,6 +206,7 @@ class AdminApiRoleMatrixGuardrailMvcTest {
         }
         mockMvc.perform(request.apply(null, null)).andExpect(status().isUnauthorized());
         verify(adminService, never()).terminateMapping(anyLong(), any());
+        verify(mappingTerminationService, never()).terminate(anyLong(), any());
     }
 
     private static MockHttpServletRequestBuilder terminate(User caller, String contextTenantId) {

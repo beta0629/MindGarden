@@ -16,9 +16,8 @@ describe('AdminDashboardV2 pending-payment KPI SSOT', () => {
 
   test('KPI load uses PENDING_PAYMENT endpoint only (not pending-deposit merge)', () => {
     expect(dashboardJs).toMatch(/loadPendingPaymentStats/);
-    expect(dashboardJs).toMatch(
-      /API_ENDPOINTS\.ADMIN\.MAPPINGS\.PENDING_PAYMENT/
-    );
+    // pending-payment 는 공통 목록 모듈(page/size) 경유
+    expect(dashboardJs).toMatch(/adminPendingPaymentMappingsGetAll\(\)/);
     expect(dashboardJs).toMatch(/aggregatePendingPaymentStats/);
     expect(dashboardJs).toMatch(/PENDING_PAYMENT_KPI_LABEL/);
     // KPI 경로에서 pending-deposit + session-extension 병합 금지
@@ -26,8 +25,8 @@ describe('AdminDashboardV2 pending-payment KPI SSOT', () => {
       /const loadPendingPaymentStats = useCallback\(async\(\) => \{[\s\S]*?\}, \[t\]\);/
     );
     expect(loadFnMatch).not.toBeNull();
-    expect(loadFnMatch[0]).not.toMatch(/PENDING_DEPOSIT/);
-    expect(loadFnMatch[0]).not.toMatch(/SESSION_EXTENSIONS/);
+    expect(loadFnMatch[0]).not.toMatch(/PENDING_DEPOSIT|PendingDeposit/);
+    expect(loadFnMatch[0]).not.toMatch(/SESSION_EXTENSIONS|SessionExtension/);
     expect(loadFnMatch[0]).not.toMatch(/buildDepositPendingQueue/);
   });
 
@@ -43,6 +42,8 @@ describe('AdminDashboardV2 pending-payment KPI SSOT', () => {
   test('입금 확인 대기 위젯은 별도 loadPendingDepositQueue 유지', () => {
     expect(dashboardJs).toMatch(/loadPendingDepositQueue/);
     expect(dashboardJs).toMatch(/buildDepositPendingQueue/);
-    expect(dashboardJs).toMatch(/MAPPINGS\.PENDING_DEPOSIT/);
+    expect(dashboardJs).toMatch(/adminPendingDepositMappingsGetAll\(\)/);
+    expect(dashboardJs).toMatch(/adminSessionExtensionPendingPaymentGetAll\(\)/);
+    expect(dashboardJs).not.toMatch(/StandardizedApi\.get\(API_ENDPOINTS\.ADMIN\.MAPPINGS\.PENDING_(DEPOSIT|PAYMENT)\b/);
   });
 });

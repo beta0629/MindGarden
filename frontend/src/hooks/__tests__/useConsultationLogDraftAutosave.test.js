@@ -28,7 +28,10 @@ jest.mock('../../utils/consultationLogDraftBackupStore', () => ({
   saveDraftBackup: jest.fn()
 }));
 jest.mock('../../utils/sessionRedirect', () => ({
-  redirectToLoginPageOnce: jest.fn()
+  redirectToLoginPageOnce: jest.fn(),
+  setPendingLoginReturnUrl: jest.fn(),
+  clearPendingLoginReturnUrl: jest.fn(),
+  registerLoginRedirectRescue: jest.fn(() => () => {})
 }));
 
 const BASE_PARAMS = {

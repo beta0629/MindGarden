@@ -11,9 +11,11 @@ import java.util.regex.Pattern;
 import com.coresolution.consultation.constant.admin.AdminBulkMappingConstants;
 import com.coresolution.consultation.constant.admin.AdminServiceUserFacingMessages;
 import com.coresolution.consultation.dto.admin.BulkMappingPaymentResult;
+import com.coresolution.consultation.dto.admin.BulkMappingPaymentResult.ItemStatus;
 import com.coresolution.consultation.entity.ConsultantClientMapping;
 import com.coresolution.consultation.entity.ConsultantClientMapping.MappingStatus;
 import com.coresolution.consultation.exception.MappingAlreadyProcessedException;
+import com.coresolution.consultation.exception.RefundLedgerNotRecordedException;
 import com.coresolution.consultation.repository.ConsultantClientMappingRepository;
 import com.coresolution.consultation.service.AdminBulkMappingPaymentService;
 import com.coresolution.consultation.service.AdminService;
@@ -29,8 +31,8 @@ import org.springframework.util.StringUtils;
  *
  * <p>이 빈에는 트랜잭션 선언을 두지 않는다. {@code NOT_SUPPORTED} 도 동기화 구간을 열어 조회 중 바인딩된
  * EntityManager 가 커넥션을 구간 끝까지 쥐므로, 외부 알림 시점에 커넥션 점유가 0 이 되지 않는다.
- * 매칭마다 {@link AdminService} 프록시를 통해 독립 트랜잭션으로 처리하고, 그 안에서 등록된 외부 알림은
- * {@link DeferredExternalCalls} 로 커밋·커넥션 반환 뒤에 보낸다.
+ * 매칭마다 {@link AdminService} 프록시를 통해 독립 트랜잭션으로 처리하고(실패한 매칭만 롤백, 나머지는 계속 처리),
+ * 그 안에서 등록된 외부 알림은 {@link DeferredExternalCalls} 로 커밋·커넥션 반환 뒤에 보낸다.
  * 일괄 취소는 원장(재무 전표) 환불만 하며 PG(PortOne) 를 호출하지 않는다 — 쇼핑 주문 결제 매칭은 사전 검증에서 거부.</p>
  *
  * @author CoreSolution
@@ -125,34 +127,42 @@ public class AdminBulkMappingPaymentServiceImpl implements AdminBulkMappingPayme
     }
 
     /**
-     * 매칭마다 독립 트랜잭션으로 처리한다. 다른 요청이 먼저 처리한 매칭(409)은 건너뛰고,
-     * 그 밖의 실패가 나면 그 매칭부터 나머지는 처리하지 않는다.
+     * 매칭마다 독립 트랜잭션으로 처리한다. 다른 요청이 먼저 처리한 매칭(409)은 건너뛰고, 실패한 매칭은 그 매칭만
+     * 롤백된 채 결과에 원인을 남기며 나머지 매칭은 계속 처리한다. 앞서 커밋된 매칭은 되돌리지 않는다.
      */
     private static BulkMappingPaymentResult execute(List<Long> mappingIds, LongConsumer action) {
-        List<Long> processed = new ArrayList<>();
-        List<Long> skipped = new ArrayList<>();
-        for (int i = 0; i < mappingIds.size(); i++) {
-            Long mappingId = mappingIds.get(i);
-            try {
-                DeferredExternalCalls.run(() -> action.accept(mappingId));
-                processed.add(mappingId);
-            } catch (MappingAlreadyProcessedException e) {
-                log.info("일괄 처리 — 이미 처리된 매칭 건너뜀: mappingId={}, reason={}", mappingId, e.getReason());
-                skipped.add(mappingId);
-            } catch (RuntimeException e) {
-                log.error("일괄 처리 실패로 중단: mappingId={}, error={}", mappingId, e.getClass().getSimpleName(), e);
-                return BulkMappingPaymentResult.builder()
-                        .processedMappingIds(processed)
-                        .skippedMappingIds(skipped)
-                        .failedMappingId(mappingId)
-                        .notProcessedMappingIds(new ArrayList<>(mappingIds.subList(i + 1, mappingIds.size())))
-                        .build();
-            }
+        List<BulkMappingPaymentResult.Item> items = new ArrayList<>(mappingIds.size());
+        for (Long mappingId : mappingIds) {
+            items.add(processOne(mappingId, action));
         }
-        return BulkMappingPaymentResult.builder()
-                .processedMappingIds(processed)
-                .skippedMappingIds(skipped)
-                .notProcessedMappingIds(List.of())
+        return BulkMappingPaymentResult.builder().items(items).build();
+    }
+
+    private static BulkMappingPaymentResult.Item processOne(Long mappingId, LongConsumer action) {
+        try {
+            DeferredExternalCalls.run(() -> action.accept(mappingId));
+            return item(mappingId, ItemStatus.SUCCEEDED, null, null);
+        } catch (MappingAlreadyProcessedException e) {
+            log.info("일괄 처리 — 이미 처리된 매칭 건너뜀: mappingId={}, reason={}", mappingId, e.getReason());
+            return item(mappingId, ItemStatus.SKIPPED, e.getReason().name(), e.getMessage());
+        } catch (RefundLedgerNotRecordedException e) {
+            log.error("일괄 처리 — 환불 전표 미기록으로 매칭 롤백: mappingId={}", mappingId, e);
+            return item(mappingId, ItemStatus.FAILED, RefundLedgerNotRecordedException.ERROR_CODE, e.getMessage());
+        } catch (RuntimeException e) {
+            log.error("일괄 처리 — 매칭 처리 실패(롤백): mappingId={}, error={}", mappingId,
+                    e.getClass().getSimpleName(), e);
+            return item(mappingId, ItemStatus.FAILED, AdminBulkMappingConstants.ITEM_FAILURE_CODE_PROCESSING_FAILED,
+                    AdminServiceUserFacingMessages.MSG_BULK_MAPPING_ITEM_FAILED);
+        }
+    }
+
+    private static BulkMappingPaymentResult.Item item(Long mappingId, ItemStatus status, String code,
+            String message) {
+        return BulkMappingPaymentResult.Item.builder()
+                .mappingId(mappingId)
+                .status(status)
+                .code(code)
+                .message(message)
                 .build();
     }
 

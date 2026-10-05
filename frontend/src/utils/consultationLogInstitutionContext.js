@@ -105,16 +105,50 @@ export function buildInstitutionLinkLatestLogUrl(scheduleData) {
   return `${INSTITUTION_LINK_CONSULTATION_RECORDS_API}/latest?${params.toString()}`;
 }
 
+/** 일정 상세에서 상담일지 진입 버튼을 두는 상태 코드 (예약 BOOKED·취소 제외). */
+export const CONSULTATION_LOG_ENTRY_STATUSES = Object.freeze([
+  'CONFIRMED',
+  'IN_PROGRESS',
+  'COMPLETED',
+  'TENTATIVE_PENDING_PAYMENT'
+]);
+
+/** 상담일지 진입 버튼 모드 — 일지 있으면 보기/수정, 없거나 미조회면 작성. */
+export const CONSULTATION_LOG_ENTRY_MODE = Object.freeze({
+  WRITE: 'write',
+  VIEW: 'view'
+});
+
 /**
- * 일정 상세 모달 — 작성/보기 버튼 상호배타.
+ * 일정 상세 상담일지 진입 버튼 하나의 노출·모드 (상담사·관리자 화면 공통).
  *
- * @param {boolean|null|undefined} hasConsultationRecord
- * @returns {{ showWrite: boolean, showView: boolean }}
+ * <p>본문 권한은 canAccessConsultationLogBody(사무원·내담자 제외)로만 거른다. 수정 가능 여부는
+ * 서버(작성 상담사·같은 테넌트 관리자)가 판정하므로 화면에서 따로 판정하지 않는다.
+ * 일지가 있으면 상태(CONFIRMED·COMPLETED 등)와 무관하게 보기/수정, 없거나 조회 전·실패(null)면 작성
+ * (일지 모달이 기존 기록을 다시 불러오므로 진입점은 유지한다).</p>
+ *
+ * @param {{
+ *   statusCode: string|null|undefined,
+ *   hasConsultationRecord: boolean|null|undefined,
+ *   isVacation?: boolean,
+ *   canAccessBody: boolean
+ * }} params
+ * @returns {{ visible: boolean, mode: string|null }}
  */
-export function resolveConsultationLogActionVisibility(hasConsultationRecord) {
+export function resolveScheduleConsultationLogEntry({
+  statusCode,
+  hasConsultationRecord,
+  isVacation = false,
+  canAccessBody
+}) {
+  if (isVacation || !canAccessBody || !CONSULTATION_LOG_ENTRY_STATUSES.includes(statusCode)) {
+    return { visible: false, mode: null };
+  }
   return {
-    showWrite: hasConsultationRecord === false,
-    showView: hasConsultationRecord === true
+    visible: true,
+    mode: hasConsultationRecord === true
+      ? CONSULTATION_LOG_ENTRY_MODE.VIEW
+      : CONSULTATION_LOG_ENTRY_MODE.WRITE
   };
 }
 

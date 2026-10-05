@@ -65,8 +65,9 @@ procedure_deploy_bind_target() {
     export SERVER SERVER_USER DB_HOST DB_USER DB_PASS DB_NAME
 }
 
-# 저장소 SQL 과 information_schema.PARAMETERS 가 다른 프로시저만 고른다.
-# confirm 이 CONFIRM 이 아니면 SELECT 만 하고 끝난다.
+# 저장소 SQL 과 information_schema(PARAMETERS 시그니처 + ROUTINE_DEFINITION 정규화 본문 해시)가 다른 프로시저만 고른다.
+# confirm 이 CONFIRM 이 아니거나 PROCEDURE_DEPLOY_DB_DIFF_HASH_REPORT=1 이면 SELECT 만 하고 끝난다.
+# 본문은 HEX 로 임시 파일에만 받고 출력하지 않는다(해시만).
 procedure_deploy_db_diff_gate() {
     local snap list confirm_label
     procedure_deploy_bind_target
@@ -91,6 +92,11 @@ procedure_deploy_db_diff_gate() {
         fail "db-diff 비교에 실패했습니다. DDL 은 하지 않았습니다."
     fi
     rm -f "$snap"
+    if [ "${PROCEDURE_DEPLOY_DB_DIFF_HASH_REPORT:-}" = "1" ]; then
+        rm -f "$list"
+        echo "db-diff hash-report (읽기 전용). CREATE/DROP 하지 않습니다."
+        exit 0
+    fi
     if [ "${PROCEDURE_DEPLOY_DB_DIFF_CONFIRM:-}" != "CONFIRM" ]; then
         rm -f "$list"
         echo "db-diff dry-run. CREATE/DROP 하지 않습니다."
@@ -109,7 +115,7 @@ procedure_deploy_db_diff_gate() {
 
 procedure_deploy_fetch_parameter_snapshot() {
     local sql
-    sql="SELECT 'P', SPECIFIC_NAME, ORDINAL_POSITION, IFNULL(PARAMETER_MODE,''), IFNULL(PARAMETER_NAME,''), IFNULL(DATA_TYPE,'') FROM information_schema.PARAMETERS WHERE SPECIFIC_SCHEMA = DATABASE() AND ROUTINE_TYPE = 'PROCEDURE' UNION ALL SELECT 'R', ROUTINE_NAME, 0, '', '', '' FROM information_schema.ROUTINES WHERE ROUTINE_SCHEMA = DATABASE() AND ROUTINE_TYPE = 'PROCEDURE' ORDER BY 2, 1, 3"
+    sql="SELECT 'P', SPECIFIC_NAME, ORDINAL_POSITION, IFNULL(PARAMETER_MODE,''), IFNULL(PARAMETER_NAME,''), IFNULL(DATA_TYPE,'') FROM information_schema.PARAMETERS WHERE SPECIFIC_SCHEMA = DATABASE() AND ROUTINE_TYPE = 'PROCEDURE' UNION ALL SELECT 'R', ROUTINE_NAME, 0, '', '', '' FROM information_schema.ROUTINES WHERE ROUTINE_SCHEMA = DATABASE() AND ROUTINE_TYPE = 'PROCEDURE' UNION ALL SELECT 'B', ROUTINE_NAME, 0, '', '', IFNULL(HEX(ROUTINE_DEFINITION),'') FROM information_schema.ROUTINES WHERE ROUTINE_SCHEMA = DATABASE() AND ROUTINE_TYPE = 'PROCEDURE' ORDER BY 2, 1, 3"
     if [ "${PROCEDURE_DEPLOY_LOCAL_APPLY:-}" = "1" ]; then
         procedure_deploy_mysql_dispatch query "$sql"
         return $?
@@ -124,6 +130,10 @@ mysql -h "$DB_HOST" -u "$DB_USER" "$DB_NAME" -N --batch -e "$sql"
 ENDSSH
 }
 
+if [ "${PROCEDURE_DEPLOY_MODE:-}" = "db-diff-hash" ]; then
+    export PROCEDURE_DEPLOY_DB_DIFF_HASH_REPORT=1
+    procedure_deploy_db_diff_gate
+fi
 if [ "${PROCEDURE_DEPLOY_MODE:-}" = "db-diff" ]; then
     procedure_deploy_db_diff_gate
 fi

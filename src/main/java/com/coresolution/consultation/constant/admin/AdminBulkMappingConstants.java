@@ -14,6 +14,9 @@ public final class AdminBulkMappingConstants {
     /** 일괄 결제 확인 시 결제 참조값 접두사 (뒤에 처리 시각 epoch millis) */
     public static final String BULK_CONFIRM_PAYMENT_REFERENCE_PREFIX = "ADMIN_CONFIRMED_";
 
+    /** 매칭별 결과 — 원인을 안내할 수 없는 처리 실패 코드 (그 매칭 변경은 롤백) */
+    public static final String ITEM_FAILURE_CODE_PROCESSING_FAILED = "BULK_ITEM_PROCESSING_FAILED";
+
     private AdminBulkMappingConstants() {
     }
 }

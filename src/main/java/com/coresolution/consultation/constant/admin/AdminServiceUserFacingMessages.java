@@ -152,9 +152,33 @@ public final class AdminServiceUserFacingMessages {
     public static final String MSG_BULK_CONFIRM_AMOUNT_MISMATCH =
             "여러 매칭을 함께 확인할 때는 결제 금액이 선택한 매칭 패키지 금액 합계와 같아야 합니다.";
 
-    /** 일괄 처리 중 일부 매칭 처리 실패 — 실패 매칭부터 나머지는 처리하지 않음 */
-    public static final String MSG_BULK_MAPPING_STOPPED_ON_FAILURE =
-            "일부 매칭을 처리하지 못해 중단했습니다. 처리 결과를 확인해 주세요.";
+    /** 일괄 처리 — 일부 매칭만 처리됨(처리된 매칭은 반영 유지, 실패 매칭은 롤백) */
+    public static final String MSG_BULK_MAPPING_PARTIAL_FAILURE =
+            "일부 매칭을 처리하지 못했습니다. 처리된 매칭은 반영되었으니 매칭별 결과를 확인해 주세요.";
+
+    /** 일괄 처리 — 이번 요청으로 처리된 매칭이 없음(모든 매칭 실패, 변경 없음) */
+    public static final String MSG_BULK_MAPPING_ALL_FAILED =
+            "선택한 매칭을 처리하지 못했습니다. 변경된 내용은 없으니 매칭별 결과를 확인해 주세요.";
+
+    /** 일괄 처리 매칭별 결과 — 원인을 안내할 수 없는 처리 실패(그 매칭 변경은 롤백) */
+    public static final String MSG_BULK_MAPPING_ITEM_FAILED =
+            "이 매칭은 처리하지 못해 변경 없이 그대로 두었습니다. 잠시 후 다시 시도해 주세요.";
+
+    /** 환불 전표 기록 실패 — 기관 세율 공통코드 미설정 (매칭 변경 롤백). */
+    public static final String MSG_REFUND_LEDGER_TAX_RATE_NOT_CONFIGURED =
+            "환불 전표를 만들 수 없어 처리를 취소했습니다. 기관 세율 공통코드(SALARY_TAX_RATE)를 설정한 뒤 다시 시도해 주세요.";
+
+    /** 환불 전표 기록 실패 — 그 밖의 원인 (매칭 변경 롤백). */
+    public static final String MSG_REFUND_LEDGER_NOT_RECORDED =
+            "환불 전표를 기록하지 못해 처리를 취소했습니다. 잠시 후 다시 시도해 주세요.";
+
+    /** 입금 확인 수입 전표 또는 매칭 패키지 ERP 동기화 실패 — 매칭 변경 없음(롤백). */
+    public static final String MSG_MAPPING_ERP_SYNC_FAILED =
+            "재무(ERP) 거래를 기록하지 못해 처리를 취소했습니다. 매칭은 바뀌지 않았습니다. 잠시 후 다시 시도해 주세요.";
+
+    /** 입금 확인된 쇼핑·타기관 연계·추가 패키지 매칭의 금액·회기 변경 — ERP 동기화 경로 없음. */
+    public static final String MSG_MAPPING_ERP_SYNC_UNSUPPORTED =
+            "입금 확인된 이 매칭은 여기서 금액·회기를 바꾸면 재무(ERP) 거래와 맞출 수 없어 처리하지 않았습니다. 환불 또는 추가 패키지로 처리해 주세요.";
 
     /**
      * 옵션 B v2.0 멱등성 가드 (Q6 Carbon Copy, 2026-05-28).
@@ -449,6 +473,9 @@ public final class AdminServiceUserFacingMessages {
 
     /** ERP 매핑 동기화 프로시저에 전달하는 처리 구분 표시 */
     public static final String ERP_MAPPING_PROCEDURE_ACTION_DEPOSIT_CONFIRMED = "입금확인";
+
+    /** UpdateMappingInfo p_updated_by — 수정자 이름이 없을 때. */
+    public static final String ERP_MAPPING_PROCEDURE_ACTOR_FALLBACK = "System";
 
     public static final String NOTES_DUPLICATE_MAPPING_MERGE_TERMINATED = "중복 매칭 통합으로 종료됨";
 

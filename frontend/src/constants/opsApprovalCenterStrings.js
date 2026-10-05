@@ -33,6 +33,7 @@ export const OAC_EMPTY = {
 
 export const OAC_ERRORS = {
   LOAD_FAILED: '승인 대기 목록을 불러오지 못했습니다.',
+  SECTION_PARTIAL_PREFIX: '일부 항목을 불러오지 못했습니다:',
   APPROVE_FAILED: '승인 처리에 실패했습니다.',
   REJECT_FAILED: '반려 처리에 실패했습니다.',
   NO_USER: '사용자 정보를 찾을 수 없습니다. 다시 로그인해주세요.'

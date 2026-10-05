@@ -1,11 +1,13 @@
 package com.coresolution.consultation.controller;
 
+import com.coresolution.consultation.dto.AdminListPageResult;
 import com.coresolution.consultation.dto.SessionExtensionRequestResponse;
 import com.coresolution.consultation.entity.SessionExtensionRequest;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.exception.EntityNotFoundException;
 import com.coresolution.consultation.service.SessionExtensionService;
 import com.coresolution.consultation.service.UserService;
+import com.coresolution.consultation.util.AdminListPaging;
 import com.coresolution.consultation.utils.SessionUtils;
 import com.coresolution.core.controller.BaseApiController;
 import com.coresolution.core.dto.ApiResponse;
@@ -25,6 +27,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
@@ -259,12 +262,19 @@ public class SessionExtensionController extends BaseApiController {
      * 입금 확인 대기 중인 요청 목록
      */
     @GetMapping("/pending-payment")
-    public ResponseEntity<ApiResponse<Map<String, Object>>> getPendingPaymentRequests() {
-        log.info("입금 확인 대기 중인 회기 추가 요청 목록 조회");
-        
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getPendingPaymentRequests(
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer size) {
+        log.info("입금 확인 대기 중인 회기 추가 요청 목록 조회 page={} size={}", page, size);
+
         List<SessionExtensionRequest> requests = sessionExtensionService.getPendingPaymentRequests();
-        
-        return success("입금 확인 대기 중인 요청 목록을 성공적으로 조회했습니다.", toRequestListData(requests));
+        AdminListPageResult<SessionExtensionRequest> paged = AdminListPaging.slice(requests, page, size);
+        int[] resolved = AdminListPaging.resolve(page, size);
+        Map<String, Object> data = toRequestListData(paged.getContent());
+        data.put("count", Math.toIntExact(paged.getTotalCount()));
+        data.put("page", resolved[0]);
+        data.put("size", resolved[1]);
+        return success("입금 확인 대기 중인 요청 목록을 성공적으로 조회했습니다.", data);
     }
     
     /**

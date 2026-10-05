@@ -325,11 +325,20 @@ export async function purgeAllDraftBackups(options = {}) {
     await runStoreRequest('readwrite', (store) => store.clear());
     return;
   }
-  const entries = await readAllEntries();
-  const sessionOnly = entries
-    .filter(([recordKey, value]) => !isRescueKeyRecord(recordKey) && value?.rescue !== true)
-    .map(([recordKey]) => recordKey);
-  await deleteKeys(sessionOnly);
+  // 읽기·삭제를 한 readwrite 트랜잭션에서 한다. 세션 정리 직후 로그인 이동 보관 백업이 같은 키에 쓰여도
+  // 읽기와 삭제 사이에 끼어 보관 백업이 지워지지 않는다(트랜잭션 직렬화).
+  await runStoreRequest('readwrite', (store) => {
+    const req = store.openCursor();
+    req.onsuccess = () => {
+      const cursor = req.result;
+      if (!cursor) return;
+      if (!isRescueKeyRecord(cursor.key) && cursor.value?.rescue !== true) {
+        store.delete(cursor.key);
+      }
+      cursor.continue();
+    };
+    return null;
+  });
 }
 
 /**

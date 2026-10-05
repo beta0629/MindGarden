@@ -5,6 +5,8 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -32,6 +34,7 @@ import com.coresolution.consultation.constant.FinancialTransactionConstants;
 import com.coresolution.consultation.constant.ScheduleStatus;
 import com.coresolution.consultation.constant.SessionConstants;
 import com.coresolution.consultation.constant.UserRole;
+import com.coresolution.consultation.constant.admin.AdminBulkMappingConstants;
 import com.coresolution.consultation.entity.ConsultantClientMapping;
 import com.coresolution.consultation.entity.ConsultantClientMapping.MappingStatus;
 import com.coresolution.consultation.entity.Schedule;
@@ -61,6 +64,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -72,7 +76,8 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 /**
  * POST /api/v1/admin/mapping/payment/{confirm,cancel} — H2 실제 트랜잭션·행 잠금·원장으로 돈 반례를 고정한다.
  *
- * <p>테스트 트랜잭션을 두지 않아 운영처럼 매칭마다 커밋된다. 외부 알림 빈만 목으로 바꿔 호출 시점의
+ * <p>테스트 트랜잭션을 두지 않아 운영처럼 매칭마다 커밋된다. 일정 저장소는 실제 빈을 감싸(spy) 특정 매칭 처리 중에만
+ * 실패를 주입한다. 외부 알림 빈만 목으로 바꿔 호출 시점의
  * 트랜잭션·커넥션 점유(Hikari active)를 기록한다. PortOne 취소·쇼핑 주문 환불 빈은 호출되지 않아야 한다.</p>
  *
  * @author CoreSolution
@@ -82,7 +87,7 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 @AutoConfigureMockMvc(addFilters = false)
 @ActiveProfiles("test")
 @WithMockAdminSecurityContext
-@DisplayName("일괄 결제 확인·취소 — 원장 환불 1회·전부 아니면 전무·외부 알림은 커넥션 반환 뒤")
+@DisplayName("일괄 결제 확인·취소 — 원장 환불 1회·매칭별 원자성·매칭별 결과·외부 알림은 커넥션 반환 뒤")
 class AdminBulkMappingPaymentIntegrationTest {
 
     private static final String CANCEL_URL = "/api/v1/admin/mapping/payment/cancel";
@@ -99,7 +104,7 @@ class AdminBulkMappingPaymentIntegrationTest {
     @Autowired private ObjectMapper objectMapper;
     @Autowired private UserRepository userRepository;
     @Autowired private ConsultantClientMappingRepository mappingRepository;
-    @Autowired private ScheduleRepository scheduleRepository;
+    @SpyBean private ScheduleRepository scheduleRepository;
     @Autowired private FinancialTransactionRepository financialTransactionRepository;
     @Autowired private DataSource dataSource;
     @Autowired private EntityManagerFactory entityManagerFactory;
@@ -117,6 +122,8 @@ class AdminBulkMappingPaymentIntegrationTest {
     private String tenantId;
     private User consultant;
     private User client;
+    /** 2번째 매칭 전용 내담자 — 이 내담자의 매칭 처리 중에만 실패를 주입한다 */
+    private User secondClient;
 
     @BeforeEach
     void setUp() {
@@ -171,8 +178,8 @@ class AdminBulkMappingPaymentIntegrationTest {
         assertThat(boundaries).extracting(CallBoundary::call)
                 .contains("sendRefundCompleted", "dispatchRefundAutoCancelNotification");
         assertExternalCallsOutsideTransaction();
-        verify(portOneV2PaymentCancelService, never()).cancelPayment(any(), any(), any());
-        verify(portOneV2PaymentCancelService, never()).cancelPaymentAmount(any(), any(), any(), any());
+        verify(portOneV2PaymentCancelService, never()).cancelPayment(any(), any(), any(), any());
+        verify(portOneV2PaymentCancelService, never()).cancelPaymentAmount(any(), any(), any(), any(), any());
         verify(adminShopOrderRefundService, never()).refundPaidOrder(any(), any(), any());
     }
 
@@ -317,6 +324,59 @@ class AdminBulkMappingPaymentIntegrationTest {
 
         assertThat(reload(active).getStatus()).isEqualTo(MappingStatus.ACTIVE);
         assertRefundExpenses(active, 0);
+    }
+
+    @Test
+    @DisplayName("2번째 매칭 실패(전표·매칭 저장 뒤 일정 취소 단계) — 1·3번째 커밋 유지, 2번째만 롤백(전표 0·매칭 그대로), "
+            + "요청 전체 409 아님(200 + 매칭별 결과)")
+    void cancel_secondItemFails_firstCommitted_perItemResultsAccurate() throws Exception {
+        secondClient = saveUser(tenantId, UserRole.CLIENT, "내담자2");
+        ConsultantClientMapping first = saveMapping(MappingStatus.ACTIVE, 10, 6);
+        ConsultantClientMapping second = mappingRepository.saveAndFlush(
+                newMapping(tenantId, consultant, secondClient, MappingStatus.ACTIVE, 10, 6));
+        createdMappingIds.add(second.getId());
+        ConsultantClientMapping third = saveMapping(MappingStatus.ACTIVE, 10, 6);
+        doThrow(new IllegalStateException("simulated schedule store failure"))
+                .when(scheduleRepository).findByTenantIdAndConsultantIdAndClientIdAndDateGreaterThanEqual(
+                        eq(tenantId), eq(consultant.getId()), eq(secondClient.getId()), any(LocalDate.class));
+
+        perform(CANCEL_URL, Map.of("mappingIds", List.of(first.getId(), second.getId(), third.getId())))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.allSucceeded").value(false))
+                .andExpect(jsonPath("$.data.summary.succeeded").value(2))
+                .andExpect(jsonPath("$.data.summary.failed").value(1))
+                .andExpect(jsonPath("$.data.summary.skipped").value(0))
+                .andExpect(jsonPath("$.data.results[0].mappingId").value(first.getId()))
+                .andExpect(jsonPath("$.data.results[0].status").value("SUCCEEDED"))
+                .andExpect(jsonPath("$.data.results[1].mappingId").value(second.getId()))
+                .andExpect(jsonPath("$.data.results[1].status").value("FAILED"))
+                .andExpect(jsonPath("$.data.results[1].code")
+                        .value(AdminBulkMappingConstants.ITEM_FAILURE_CODE_PROCESSING_FAILED))
+                .andExpect(jsonPath("$.data.results[1].message").value(
+                        org.hamcrest.Matchers.not(org.hamcrest.Matchers.containsString("simulated"))))
+                .andExpect(jsonPath("$.data.results[2].mappingId").value(third.getId()))
+                .andExpect(jsonPath("$.data.results[2].status").value("SUCCEEDED"))
+                .andExpect(jsonPath("$.data.cancelledMappings.length()").value(2))
+                .andExpect(jsonPath("$.data.failedMappings[0]").value(second.getId()));
+
+        assertThat(reload(first).getStatus()).isEqualTo(MappingStatus.CANCELLED);
+        assertRefundExpenses(first, 1);
+        assertThat(reload(third).getStatus()).isEqualTo(MappingStatus.CANCELLED);
+        assertRefundExpenses(third, 1);
+        ConsultantClientMapping secondAfter = reload(second);
+        assertThat(secondAfter.getStatus()).isEqualTo(MappingStatus.ACTIVE);
+        assertThat(secondAfter.getRemainingSessions()).isEqualTo(6);
+        assertRefundExpenses(second, 0);
+        assertThat(refundSum(second)).isZero();
+        assertExternalCallsOutsideTransaction();
+
+        // 같은 요청 재시도: 커밋된 매칭은 사전 검증에서 409(재환불 없음), 원장 그대로
+        org.mockito.Mockito.reset(scheduleRepository);
+        perform(CANCEL_URL, Map.of("mappingIds", List.of(first.getId(), second.getId(), third.getId())))
+                .andExpect(status().isConflict());
+        assertRefundExpenses(first, 1);
+        assertRefundExpenses(third, 1);
+        assertRefundExpenses(second, 0);
     }
 
     @Test

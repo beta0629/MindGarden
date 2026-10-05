@@ -14,10 +14,6 @@ name: 상담일지 일정당 중복 COUNT (읽기 전용·개발)
 
 on:
   workflow_dispatch:
-  pull_request:
-    paths:
-      - '.github/workflows/consultation-log-duplicate-count.yml'
-      - 'src/main/resources/db/migration/V20261008_001__consultation_logs_unique_active_schedule.sql'
 
 permissions:
   contents: read
@@ -25,7 +21,6 @@ permissions:
 jobs:
   count:
     runs-on: ubuntu-latest
-    if: github.event_name == 'workflow_dispatch' || github.event.pull_request.head.repo.full_name == github.repository
     steps:
       # 개발 DB 는 개발 서버 내부에서만 접속된다(deploy-procedures-dev.yml 과 같은 SSH 경로).
       - name: 중복 건수 집계 (SELECT COUNT 전용)

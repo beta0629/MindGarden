@@ -105,6 +105,12 @@ export const CONSULTATION_LOG_SESSION_START_TIME_ZONE = CONSULTATION_LOG_DRAFT_T
 export const LOGIN_RETURN_URL_PARAM = 'redirect';
 
 /**
+ * 로그인 이동 직전 보관 백업(암호화·IndexedDB)을 기다리는 최대 시간.
+ * 저장소가 응답하지 않아도 만료된 세션 화면에 갇히지 않도록 이 시간 뒤에는 이동한다.
+ */
+export const LOGIN_REDIRECT_RESCUE_TIMEOUT_MS = 4000;
+
+/**
  * 상담일지 모달 "큰 본문" textarea 공통 최대 글자수.
  *
  * 적용 대상 (슈퍼블록 4개 + 풀폭 진행 평가):

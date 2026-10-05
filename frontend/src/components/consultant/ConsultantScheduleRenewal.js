@@ -25,6 +25,7 @@ import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import './ConsultantScheduleRenewal.css';
 import { SCHEDULE_API } from '../../constants/api';
 import { useTranslation } from 'react-i18next';
+import { canCompleteScheduleNow } from '../../utils/scheduleSessionStart';
 
 /**
  * 데스크탑 진입 기준 — 디자인 핸드오프 §4.2 (--mg-breakpoint-lg = 1024px 동치).
@@ -112,6 +113,29 @@ const ScheduleSkeleton = () => (
   </div>
 );
 
+/** 상담 완료 버튼 판정 입력 — 시각 형식은 scheduleSessionStart 가 공통 파서로 읽는다. */
+const toCompletionSchedule = (schedule) => ({
+  date: schedule?.date || schedule?.scheduleDate || schedule?.startTime,
+  startTime: schedule?.startTime
+});
+
+const CompleteConsultationButton = ({ schedule, className, onComplete }) => {
+  const { t } = useTranslation();
+  const allowed = canCompleteScheduleNow(toCompletionSchedule(schedule));
+  return (
+    <button
+      className={className}
+      onClick={() => onComplete?.(schedule)}
+      type="button"
+      disabled={!allowed}
+      title={allowed ? undefined : t('schedule:ScheduleDetailModal.completeBeforeStartTooltip')}
+      data-testid="consultant-schedule-complete"
+    >
+      상담 완료
+    </button>
+  );
+};
+
 const BottomSheet = ({ schedule, onClose, onStartConsultation, onCompleteConsultation, onWriteLog }) => {
   const { t } = useTranslation();
   if (!schedule) return null;
@@ -163,13 +187,11 @@ const BottomSheet = ({ schedule, onClose, onStartConsultation, onCompleteConsult
               </button>
             )}
             {status === 'ACTIVE' && (
-              <button
+              <CompleteConsultationButton
+                schedule={schedule}
                 className="cr-bottomsheet__btn cr-bottomsheet__btn--primary"
-                onClick={() => onCompleteConsultation?.(schedule)}
-                type="button"
-              >
-                상담 완료
-              </button>
+                onComplete={onCompleteConsultation}
+              />
             )}
             <button
               className="cr-bottomsheet__btn cr-bottomsheet__btn--secondary"
@@ -497,13 +519,11 @@ const ConsultantScheduleRenewal = () => {
                         </button>
                       )}
                       {status === 'ACTIVE' && (
-                        <button
+                        <CompleteConsultationButton
+                          schedule={schedule}
                           className="cr-schedule-detail__action-btn cr-schedule-detail__action-btn--primary"
-                          onClick={() => handleCompleteConsultation(schedule)}
-                          type="button"
-                        >
-                          상담 완료
-                        </button>
+                          onComplete={handleCompleteConsultation}
+                        />
                       )}
                       <button
                         className="cr-schedule-detail__action-btn cr-schedule-detail__action-btn--secondary"

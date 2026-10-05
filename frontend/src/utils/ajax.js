@@ -8,7 +8,10 @@ import {
   API_STATUS,
   API_ERROR_MESSAGES
 } from '../constants/api';
-import { SESSION_VERIFY_FETCH_RETRY_DELAYS_MS } from '../constants/session';
+import {
+  FETCH_INIT_SKIP_FORM_SESSION_HOOK,
+  SESSION_VERIFY_FETCH_RETRY_DELAYS_MS
+} from '../constants/session';
 import csrfTokenManager from './csrfTokenManager';
 import { getDefaultApiHeaders } from './apiHeaders';
 import { isTransientNetworkError, notifyTransientNetworkIssue } from './networkErrorUtils';
@@ -149,6 +152,71 @@ const redactSensitivePayloadForLog = (data) => {
   return out;
 };
 
+/** {@link isAuthRequiredError} 가 true 인 오류의 code — 호출자가 401 을 다른 실패와 구분한다. */
+export const AJAX_AUTH_REQUIRED_CODE = 'AUTH_REQUIRED';
+
+/**
+ * opt-in 옵션 {@code throwOnUnauthorized: true} 로 요청했을 때, refresh 재시도 뒤에도 401 이면 던지는 오류.
+ * 이 경우 공용 모듈은 로그인 이동·null 반환을 하지 않는다 — 이동(returnUrl 포함)은 호출자가 결정한다.
+ *
+ * @param {unknown} body 응답 본문
+ * @returns {Error & { status: number, code: string, authRequired: true, response: object }}
+ */
+const buildAuthRequiredError = (body) => {
+  const err = new Error(getErrorMessage(API_STATUS.UNAUTHORIZED));
+  err.status = API_STATUS.UNAUTHORIZED;
+  err.code = AJAX_AUTH_REQUIRED_CODE;
+  err.authRequired = true;
+  err.response = { status: API_STATUS.UNAUTHORIZED, data: body ?? {} };
+  return err;
+};
+
+/**
+ * {@code throwOnUnauthorized} 요청이면 fetch init 에 표식을 붙여 sessionManager 폼 제출 훅의 세션 재확인
+ * (returnUrl 없는 /login 이동)을 건너뛰게 한다. 401 처리는 호출자 몫이다.
+ *
+ * @param {object} requestOptions
+ * @param {boolean|undefined} throwOnUnauthorized
+ * @returns {object}
+ */
+const withCallerOwnedUnauthorized = (requestOptions, throwOnUnauthorized) => (
+  throwOnUnauthorized === true
+    ? { ...requestOptions, [FETCH_INIT_SKIP_FORM_SESSION_HOOK]: true }
+    : requestOptions
+);
+
+/**
+ * {@code throwOnUnauthorized} 요청의 401(인증 만료) 오류인지.
+ *
+ * @param {unknown} error
+ * @returns {boolean}
+ */
+export const isAuthRequiredError = (error) => Boolean(
+  error && typeof error === 'object' && error.authRequired === true
+);
+
+/**
+ * {@code throwOnUnauthorized} 요청의 401·403 처리 — 로그인 이동 없이 호출자에게 넘긴다.
+ * 401 은 바로, 403 은 세션 재확인(이동 없음)으로 세션이 끊긴 것이 확인될 때만 인증 만료 오류를 던진다.
+ * 세션이 살아 있는 403(권한 부족)은 호출부의 일반 오류 처리로 간다.
+ *
+ * @param {Response} response
+ * @param {string} requestUrl
+ * @param {boolean} authGraceAtStart
+ * @param {unknown} body 응답 본문
+ * @returns {Promise<void>}
+ * @throws {Error} 인증 만료({@link isAuthRequiredError} true)
+ */
+const throwIfCallerOwnedAuthLost = async(response, requestUrl, authGraceAtStart, body) => {
+  if (response.status === API_STATUS.UNAUTHORIZED) {
+    throw buildAuthRequiredError(body);
+  }
+  if (response.status === API_STATUS.FORBIDDEN
+      && await checkSessionAndRedirect(response, requestUrl, { authGraceAtStart, redirect: false })) {
+    throw buildAuthRequiredError(body);
+  }
+};
+
 /**
  * 401 시 refresh 후 원 요청 재시도 가능 여부 (Expo client 와 동일)
  * @param {string} requestUrl
@@ -172,12 +240,20 @@ const tryRefreshAccessTokenForRetry = async(requestUrl, alreadyRetried) => {
  *
  * @param {Response} response
  * @param {string} [requestUrl=''] 원 요청 URL (soft-fail 매칭용)
- * @param {{ authGraceAtStart?: boolean }} [options]
+ * @param {{ authGraceAtStart?: boolean, redirect?: boolean }} [options]
  *   authGraceAtStart: 원 요청 시작 시점의 auth grace 여부. 응답이 TTL 뒤에 도착해도 킥하지 않는다.
- * @returns {Promise<boolean>} true 이면 로그인으로 리다이렉트됨
+ *   redirect: false 이면 세션 소실을 판정만 하고 이동하지 않는다(호출자가 401 을 직접 처리하는 요청).
+ * @returns {Promise<boolean>} true 이면 세션 소실(redirect !== false 이면 로그인으로 리다이렉트됨)
  */
 export const checkSessionAndRedirect = async(response, requestUrl = '', options = {}) => {
   const authGraceAtStart = options.authGraceAtStart === true;
+  const shouldRedirect = options.redirect !== false;
+  const kickToLogin = () => {
+    if (shouldRedirect) {
+      redirectToLoginPageOnce();
+    }
+    return true;
+  };
   const isLocalEnv = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
   if (isLocalEnv) {
     return false;
@@ -243,8 +319,7 @@ export const checkSessionAndRedirect = async(response, requestUrl = '', options 
             const refreshed = await refreshAccessTokenPair();
             if (!refreshed) {
               logger.debug('🔐 refresh 실패 - 로그인 페이지로 리다이렉트');
-              redirectToLoginPageOnce();
-              return true;
+              return kickToLogin();
             }
 
             // refresh 200 후 explicit Bearer 로만 재검증 — fall-through 킥 금지
@@ -269,8 +344,7 @@ export const checkSessionAndRedirect = async(response, requestUrl = '', options 
               }
               if (retryVerify.status === 401) {
                 logger.debug('🔐 refresh 후 verify 401 - 로그인 페이지로 리다이렉트');
-                redirectToLoginPageOnce();
-                return true;
+                return kickToLogin();
               }
               logger.debug('🔐 refresh 후 verify 비-401:', retryVerify.status);
               return false;
@@ -283,8 +357,7 @@ export const checkSessionAndRedirect = async(response, requestUrl = '', options 
 
           // 토큰 없음 + grace 밖 + current-user 401
           logger.debug('🔐 세션 없음 - 로그인 페이지로 리다이렉트 (서브도메인 유지)');
-          redirectToLoginPageOnce();
-          return true;
+          return kickToLogin();
         }
         logger.debug('🔐 세션 재확인 실패(리다이렉트 없음):', verifyStatus);
         return false;
@@ -337,7 +410,13 @@ export const handleError = (error, status, body) => {
 // GET 요청
 export const apiGet = async(endpoint, params = {}, options = {}) => {
   try {
-    const { unwrapApiEnvelope: unwrapApiEnvelopeOption, headers: optionHeaders, _authRetry, ...fetchOptions } = options;
+    const {
+      unwrapApiEnvelope: unwrapApiEnvelopeOption,
+      headers: optionHeaders,
+      _authRetry,
+      throwOnUnauthorized,
+      ...fetchOptions
+    } = options;
     // endpoint가 이미 전체 URL인지 확인 (http:// 또는 https://로 시작)
     const isFullUrl = endpoint.startsWith('http://') || endpoint.startsWith('https://');
     
@@ -387,6 +466,9 @@ export const apiGet = async(endpoint, params = {}, options = {}) => {
           && await tryRefreshAccessTokenForRetry(url, _authRetry === true)) {
         return apiGet(endpoint, params, { ...options, _authRetry: true });
       }
+      if (throwOnUnauthorized === true) {
+        await throwIfCallerOwnedAuthLost(response, url, authGraceAtStart, jsonData);
+      }
 
       // 400 Bad Request는 tenantId 부족 등 클라이언트 오류이므로 로그인 페이지로 리다이렉트
       if (response.status === 400) {
@@ -434,7 +516,8 @@ export const apiGet = async(endpoint, params = {}, options = {}) => {
       }
       
       // 세션 체크 및 리다이렉트
-      const redirected = await checkSessionAndRedirect(response, url, { authGraceAtStart });
+      const redirected = throwOnUnauthorized !== true
+        && await checkSessionAndRedirect(response, url, { authGraceAtStart });
       if (redirected) {
       return null; // 리다이렉트됨
       }
@@ -481,6 +564,9 @@ export const apiGet = async(endpoint, params = {}, options = {}) => {
     // ApiResponse 래퍼가 없으면 그대로 반환
     return jsonData;
   } catch (error) {
+    if (isAuthRequiredError(error)) {
+      throw error;
+    }
     // 400 Bad Request는 tenantId 부족 등 클라이언트 오류이므로 로그인 페이지로 리다이렉트
     if (error.status === 400) {
       const errorMessage = error.message || '';
@@ -586,10 +672,10 @@ export const apiPost = async(endpoint, data = {}, options = {}) => {
       data: redactSensitivePayloadForLog(data)
     });
 
-    const { _authRetry, ...requestOptions } = options;
+    const { _authRetry, throwOnUnauthorized, ...requestOptions } = options;
     const authGraceAtStart = isWithinAuthGraceWindow();
     const response = await csrfTokenManager.post(endpoint, data, {
-      ...requestOptions,
+      ...withCallerOwnedUnauthorized(requestOptions, throwOnUnauthorized),
       headers: { ...getDefaultHeaders(), ...requestOptions.headers }
     });
 
@@ -603,9 +689,13 @@ export const apiPost = async(endpoint, data = {}, options = {}) => {
           && await tryRefreshAccessTokenForRetry(requestUrl, _authRetry === true)) {
         return apiPost(endpoint, data, { ...options, _authRetry: true });
       }
+      if (throwOnUnauthorized === true) {
+        await throwIfCallerOwnedAuthLost(response, requestUrl, authGraceAtStart, jsonData);
+      }
 
       // 세션 체크 및 리다이렉트
-      const redirected = await checkSessionAndRedirect(response, requestUrl, { authGraceAtStart });
+      const redirected = throwOnUnauthorized !== true
+        && await checkSessionAndRedirect(response, requestUrl, { authGraceAtStart });
       if (redirected) {
         return null; // 리다이렉트됨
       }
@@ -637,10 +727,10 @@ export const apiPost = async(endpoint, data = {}, options = {}) => {
 // PUT 요청 (CSRF 토큰 자동 포함)
 export const apiPut = async(endpoint, data = {}, options = {}) => {
   try {
-    const { _authRetry, ...requestOptions } = options;
+    const { _authRetry, throwOnUnauthorized, ...requestOptions } = options;
     const authGraceAtStart = isWithinAuthGraceWindow();
     const response = await csrfTokenManager.put(endpoint, data, {
-      ...requestOptions,
+      ...withCallerOwnedUnauthorized(requestOptions, throwOnUnauthorized),
       headers: { ...getDefaultHeaders(), ...requestOptions.headers }
     });
 
@@ -671,9 +761,13 @@ export const apiPut = async(endpoint, data = {}, options = {}) => {
           && await tryRefreshAccessTokenForRetry(requestUrl, _authRetry === true)) {
         return apiPut(endpoint, data, { ...options, _authRetry: true });
       }
+      if (throwOnUnauthorized === true) {
+        await throwIfCallerOwnedAuthLost(response, requestUrl, authGraceAtStart, jsonData);
+      }
 
       // 세션 체크 및 리다이렉트
-      const redirected = await checkSessionAndRedirect(response, requestUrl, { authGraceAtStart });
+      const redirected = throwOnUnauthorized !== true
+        && await checkSessionAndRedirect(response, requestUrl, { authGraceAtStart });
       if (redirected) {
         return null; // 리다이렉트됨
       }
@@ -704,10 +798,10 @@ export const apiPut = async(endpoint, data = {}, options = {}) => {
 // PATCH 요청 (CSRF 토큰 자동 포함)
 export const apiPatch = async(endpoint, data = {}, options = {}) => {
   try {
-    const { _authRetry, ...requestOptions } = options;
+    const { _authRetry, throwOnUnauthorized, ...requestOptions } = options;
     const authGraceAtStart = isWithinAuthGraceWindow();
     const response = await csrfTokenManager.patch(endpoint, data, {
-      ...requestOptions,
+      ...withCallerOwnedUnauthorized(requestOptions, throwOnUnauthorized),
       headers: { ...getDefaultHeaders(), ...requestOptions.headers }
     });
 
@@ -737,8 +831,12 @@ export const apiPatch = async(endpoint, data = {}, options = {}) => {
           && await tryRefreshAccessTokenForRetry(requestUrl, _authRetry === true)) {
         return apiPatch(endpoint, data, { ...options, _authRetry: true });
       }
+      if (throwOnUnauthorized === true) {
+        await throwIfCallerOwnedAuthLost(response, requestUrl, authGraceAtStart, jsonData);
+      }
 
-      const redirected = await checkSessionAndRedirect(response, requestUrl, { authGraceAtStart });
+      const redirected = throwOnUnauthorized !== true
+        && await checkSessionAndRedirect(response, requestUrl, { authGraceAtStart });
       if (redirected) {
         return null;
       }
@@ -828,10 +926,10 @@ export const apiPostFormData = async(endpoint, formData, options = {}) => {
 // DELETE 요청 (CSRF 토큰 자동 포함)
 export const apiDelete = async(endpoint, options = {}) => {
   try {
-    const { _authRetry, ...requestOptions } = options;
+    const { _authRetry, throwOnUnauthorized, ...requestOptions } = options;
     const authGraceAtStart = isWithinAuthGraceWindow();
     const response = await csrfTokenManager.delete(endpoint, {
-      ...requestOptions,
+      ...withCallerOwnedUnauthorized(requestOptions, throwOnUnauthorized),
       headers: { ...getDefaultHeaders(), ...requestOptions.headers }
     });
 
@@ -845,9 +943,13 @@ export const apiDelete = async(endpoint, options = {}) => {
           && await tryRefreshAccessTokenForRetry(requestUrl, _authRetry === true)) {
         return apiDelete(endpoint, { ...options, _authRetry: true });
       }
+      if (throwOnUnauthorized === true) {
+        await throwIfCallerOwnedAuthLost(response, requestUrl, authGraceAtStart, jsonData);
+      }
 
       // 세션 체크 및 리다이렉트
-      const redirected = await checkSessionAndRedirect(response, requestUrl, { authGraceAtStart });
+      const redirected = throwOnUnauthorized !== true
+        && await checkSessionAndRedirect(response, requestUrl, { authGraceAtStart });
       if (redirected) {
         return null; // 리다이렉트됨
       }

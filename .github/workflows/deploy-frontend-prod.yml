@@ -5,8 +5,10 @@
 #
 # SSH: PRODUCTION_HOST, PRODUCTION_USER, PRODUCTION_SSH_KEY (deploy-production·Trinity 운영과 동일)
 #
-# deploy-production.yml 에도 프론트 업로드가 포함되어 있으나, JAR·DB·Nginx 전체 없이
-# 프론트만 빠르게 갱신할 때 이 워크플로를 사용한다.
+# 운영 화면(Core SPA)을 올리는 유일한 워크플로다. deploy-production.yml 은 프론트를 빌드·업로드하지 않는다.
+# 화면+서버 세트(같은 SHA): set-gate 가 같은 SHA 의 deploy-production.yml run 이 있으면 success 까지 기다리고,
+# 실패·취소면 화면을 올리지 않는다. 업로드 직전 release/prod tip 이 이 SHA 와 다르면 옛 화면으로 덮지 않는다.
+# 스크립트: scripts/deployment/frontend-prod-set-gate.sh
 
 name: 🎨 Frontend (CoreSolution) 운영 배포
 
@@ -16,6 +18,7 @@ on:
     paths:
       - "frontend/**"
       - ".github/workflows/deploy-frontend-prod.yml"
+      - "scripts/deployment/frontend-prod-set-gate.sh"
   workflow_dispatch:
     inputs:
       deploy_ref:
@@ -24,6 +27,16 @@ on:
         default: "release/prod"
         type: string
 
+# 서비스 단위 배포 큐(공통 규칙): 같은 서버 프로그램을 건드리는 배포는 같은 그룹, cancel-in-progress=false(진행 중 배포는 끝까지).
+#   운영 Core 서버 deploy-svc-prod-core-backend / 운영 Core 화면 deploy-svc-prod-core-frontend / 운영 Trinity deploy-svc-prod-trinity-frontend
+#   개발 Core 서버 deploy-svc-dev-core-backend (deploy-backend-dev · deploy-onboarding-dev · deploy-dev 가 같은 mindgarden-dev.service 를 재시작)
+# 운영 화면과 서버는 일부러 다른 그룹이다. 화면 워크플로의 set-gate 가 같은 SHA 서버 run 성공을 기다리므로
+# 같은 그룹이면 서로 기다리다 멈춘다. 화면+서버 같은 SHA 세트·서버 먼저 보장은 set-gate 가 맡는다.
+# GitHub 규칙상 같은 그룹 대기열은 1건이라, 더 새 run 이 들어오면 앞서 대기 중이던 run 은 취소된다(진행 중 run 은 유지).
+concurrency:
+  group: deploy-svc-prod-core-frontend
+  cancel-in-progress: false
+
 jobs:
   # 빌드·SSH 배포(reusable)·실패 알람 모두 ubuntu-latest.
   # self-hosted mindgarden-deploy(~3.8Gi)는 JAR·스왑과 공존 시 NODE 2048도 OOM-kill됨.
@@ -31,6 +44,8 @@ jobs:
   build:
     name: 🏗️ Core 프론트엔드 빌드 (운영)
     runs-on: ubuntu-latest
+    outputs:
+      deploy_sha: ${{ steps.sha.outputs.deploy_sha }}
     steps:
       - name: 🛡️ 운영 배포 ref 가드 (release/prod만 허용)
         id: guard
@@ -52,6 +67,10 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: ${{ steps.guard.outputs.deploy_ref }}
+
+      - name: 📌 배포 SHA 기록
+        id: sha
+        run: echo "deploy_sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
 
       # 동결 게이트: 6항 전부 PASS 없으면 FE 운영 배포 중단 (부분 tip 금지 · DATAFIX 0)
       # 문서: docs/deployment/DEPLOY_NO_OVERWRITE_GATE.md
@@ -135,9 +154,34 @@ jobs:
           name: core-frontend-prod-static-site-artifact
           path: _gha_static_site_upload/
 
+  # 화면+서버 같은 SHA 세트: 서버(deploy-production.yml) 먼저, 실패면 화면 보류, tip 앞서면 덮지 않음.
+  set-gate:
+    name: 🔗 화면·서버 같은 SHA 세트 게이트
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    permissions:
+      contents: read
+      actions: read
+    outputs:
+      deploy: ${{ steps.gate.outputs.deploy }}
+    steps:
+      - name: 📥 코드 체크아웃
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.build.outputs.deploy_sha }}
+
+      - name: 🔗 같은 SHA 서버 배포 대기 + tip 확인
+        id: gate
+        env:
+          GH_TOKEN: ${{ github.token }}
+          DEPLOY_SHA: ${{ needs.build.outputs.deploy_sha }}
+        run: bash scripts/deployment/frontend-prod-set-gate.sh
+
   deploy:
     name: 📤 Core 프론트 운영 서버 배포
-    needs: build
+    needs: [build, set-gate]
+    if: needs.set-gate.outputs.deploy == 'true'
     uses: ./.github/workflows/reusable-static-site-ssh-deploy.yml
     with:
       site_label: Core 프론트(운영)
@@ -160,7 +204,7 @@ jobs:
   # 참고: docs/project-management/2026-06-11/AI_MONITORING_ROADMAP.md §6 Phase 1
   notify-discord-on-failure:
     name: 🚨 Discord 실패 알람
-    needs: [build, deploy]
+    needs: [build, set-gate, deploy]
     if: failure()
     # self-hosted 연기 / ubuntu-latest intentional.
     runs-on: ubuntu-latest

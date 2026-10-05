@@ -2,6 +2,7 @@ package com.coresolution.consultation.entity;
 
 import com.coresolution.consultation.constant.ShopCheckoutConstants;
 import com.coresolution.consultation.constant.ShopClientOrderStatus;
+import java.time.LocalDateTime;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -72,4 +73,18 @@ public class ShopClientOrder extends BaseEntity {
     @Column(name = "checkout_source", nullable = false, length = 16)
     @Builder.Default
     private String checkoutSource = ShopCheckoutConstants.CHECKOUT_SOURCE_CART;
+
+    /**
+     * 어드민 전액 환불 PG 취소 진행 임대 만료 시각. 이 시각 전에는 다른 환불 요청이 PG 취소를 부르지 않는다.
+     * null 이면 진행 중인 환불 없음.
+     */
+    @Column(name = "refund_pg_lease_until")
+    private LocalDateTime refundPgLeaseUntil;
+
+    /**
+     * 어드민 전액 환불 PG 취소를 요청한 시각(마지막). 값이 있으면 PG 취소가 이미 반영됐을 수 있으므로
+     * 재시도는 PortOne 누적 취소액으로 잔액을 다시 계산하고, 잔액 0 이면 PG 호출 없이 Clinic 반영만 한다.
+     */
+    @Column(name = "refund_pg_attempted_at")
+    private LocalDateTime refundPgAttemptedAt;
 }

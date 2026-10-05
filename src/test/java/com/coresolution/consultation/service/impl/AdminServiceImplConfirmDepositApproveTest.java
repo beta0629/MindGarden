@@ -1,7 +1,6 @@
 package com.coresolution.consultation.service.impl;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 import com.coresolution.consultation.constant.admin.AdminServiceUserFacingMessages;
@@ -9,6 +8,7 @@ import com.coresolution.consultation.constant.InstitutionLinkConstants;
 import com.coresolution.consultation.entity.ConsultantClientMapping;
 import com.coresolution.consultation.entity.ShopClientOrderLine;
 import com.coresolution.consultation.entity.User;
+import com.coresolution.consultation.exception.MappingErpSyncFailedException;
 import com.coresolution.consultation.repository.ConsultantClientMappingRepository;
 import com.coresolution.consultation.repository.CommonCodeRepository;
 import com.coresolution.consultation.repository.ConsultantRatingRepository;
@@ -250,7 +250,6 @@ class AdminServiceImplConfirmDepositApproveTest {
                 null,
                 org.mockito.Mockito.mock(com.coresolution.consultation.repository.InstitutionLinkContractRepository.class),
                 shopClientOrderLineRepository,
-                org.mockito.Mockito.mock(org.springframework.beans.factory.ObjectProvider.class),
                 org.mockito.Mockito.mock(com.coresolution.consultation.repository.PaymentRepository.class));
         adminService = Mockito.spy(real);
         TenantContextHolder.setTenantId(TEST_TENANT_ID);
@@ -262,45 +261,44 @@ class AdminServiceImplConfirmDepositApproveTest {
     }
 
     @Test
-    @DisplayName("confirmDeposit 시 mapping 저장 및 createConsultationIncomeTransactionAsync 호출")
-    void confirmDeposit_savesMappingAndCallsCreateConsultationIncomeTransactionAsync() {
+    @DisplayName("confirmDeposit 시 mapping 저장 및 입금 INCOME 을 현재 트랜잭션에서 기록, UpdateMappingInfo 미호출")
+    void confirmDeposit_savesMappingAndWritesIncomeInCurrentTransaction() {
         Long mappingId = 1L;
         ConsultantClientMapping mapping = buildMappingForConfirmDeposit(mappingId);
 
         when(mappingRepository.findByTenantIdAndId(eq(TEST_TENANT_ID), eq(mappingId))).thenReturn(Optional.of(mapping));
         when(mappingRepository.save(any(ConsultantClientMapping.class))).thenAnswer(inv -> inv.getArgument(0));
-        doNothing().when(adminService).createConsultationIncomeTransactionAsync(any(ConsultantClientMapping.class));
-        when(storedProcedureService.updateMappingInfo(any(), any(), anyDouble(), anyInt(), any()))
-                .thenReturn(Map.of("success", true, "message", "OK"));
+        doNothing().when(adminService).createConsultationIncomeTransactionInCurrentTransaction(any(ConsultantClientMapping.class));
 
         ConsultantClientMapping result = adminService.confirmDeposit(mappingId, "REF-001");
 
         assertNotNull(result);
         verify(mappingRepository).save(any(ConsultantClientMapping.class));
-        verify(adminService).createConsultationIncomeTransactionAsync(any(ConsultantClientMapping.class));
-        verify(storedProcedureService).updateMappingInfo(any(), any(), anyDouble(), anyInt(), any());
+        verify(adminService).createConsultationIncomeTransactionInCurrentTransaction(any(ConsultantClientMapping.class));
+        verify(storedProcedureService, never()).updateMappingInfo(any(), any(), anyDouble(), anyInt(), any());
         verify(scheduleService).finalizeTentativeSchedulesAfterDepositConfirmed(any(ConsultantClientMapping.class));
         verify(mappingSettlementNotificationHelper).notifyAfterMappingSettlement(
                 any(ConsultantClientMapping.class), eq(TEST_TENANT_ID), eq(MappingSettlementScenario.DEPOSIT_CONFIRMED));
     }
 
     @Test
-    @DisplayName("confirmDeposit: updateMappingInfo가 RuntimeException이어도 입금 확인 결과 반환")
-    void confirmDeposit_returnsMappingWhenUpdateMappingInfoThrows() {
+    @DisplayName("confirmDeposit: 입금 INCOME 기록 실패면 MappingErpSyncFailedException — 성공 응답·입금 알림 없음")
+    void confirmDeposit_incomeFailure_throwsAndSkipsNotification() {
         Long mappingId = 3L;
         ConsultantClientMapping mapping = buildMappingForConfirmDeposit(mappingId);
 
         when(mappingRepository.findByTenantIdAndId(eq(TEST_TENANT_ID), eq(mappingId))).thenReturn(Optional.of(mapping));
         when(mappingRepository.save(any(ConsultantClientMapping.class))).thenAnswer(inv -> inv.getArgument(0));
-        doNothing().when(adminService).createConsultationIncomeTransactionAsync(any(ConsultantClientMapping.class));
-        when(storedProcedureService.updateMappingInfo(any(), any(), anyDouble(), anyInt(), any()))
-                .thenThrow(new RuntimeException("프로시저 실패"));
+        Mockito.doThrow(new IllegalStateException("ledger down"))
+                .when(adminService).createConsultationIncomeTransactionInCurrentTransaction(any(ConsultantClientMapping.class));
 
-        ConsultantClientMapping result = adminService.confirmDeposit(mappingId, "REF-002");
+        MappingErpSyncFailedException ex = org.junit.jupiter.api.Assertions.assertThrows(
+                MappingErpSyncFailedException.class, () -> adminService.confirmDeposit(mappingId, "REF-002"));
 
-        assertNotNull(result);
-        verify(mappingRepository).save(any(ConsultantClientMapping.class));
-        verify(scheduleService).finalizeTentativeSchedulesAfterDepositConfirmed(any(ConsultantClientMapping.class));
+        assertEquals(mappingId, ex.getMappingId());
+        org.junit.jupiter.api.Assertions.assertFalse(ex.getMessage().contains("ledger down"));
+        verify(storedProcedureService, never()).updateMappingInfo(any(), any(), anyDouble(), anyInt(), any());
+        verify(mappingSettlementNotificationHelper, never()).notifyAfterMappingSettlement(any(), any(), any());
     }
 
     @Test
@@ -316,7 +314,7 @@ class AdminServiceImplConfirmDepositApproveTest {
 
         assertNotNull(result);
         verify(storedProcedureService, never()).updateMappingInfo(any(), any(), anyDouble(), anyInt(), any());
-        verify(adminService, never()).createConsultationIncomeTransactionAsync(any(ConsultantClientMapping.class));
+        verify(adminService, never()).createConsultationIncomeTransactionInCurrentTransaction(any(ConsultantClientMapping.class));
         verify(scheduleService).finalizeTentativeSchedulesAfterDepositConfirmed(any(ConsultantClientMapping.class));
     }
 
@@ -349,7 +347,7 @@ class AdminServiceImplConfirmDepositApproveTest {
         assertNotNull(result);
         assertEquals(10, result.getRemainingSessions());
         verify(storedProcedureService, never()).updateMappingInfo(any(), any(), anyDouble(), anyInt(), any());
-        verify(adminService, never()).createConsultationIncomeTransactionAsync(any(ConsultantClientMapping.class));
+        verify(adminService, never()).createConsultationIncomeTransactionInCurrentTransaction(any(ConsultantClientMapping.class));
         verify(scheduleService).finalizeTentativeSchedulesAfterDepositConfirmed(any(ConsultantClientMapping.class));
     }
 
@@ -379,14 +377,13 @@ class AdminServiceImplConfirmDepositApproveTest {
 
         when(mappingRepository.findByTenantIdAndId(eq(TEST_TENANT_ID), eq(mappingId))).thenReturn(Optional.of(mapping));
         when(mappingRepository.save(any(ConsultantClientMapping.class))).thenAnswer(inv -> inv.getArgument(0));
-        when(storedProcedureService.updateMappingInfo(any(), any(), anyDouble(), anyInt(), any()))
-                .thenReturn(Map.of("success", true, "message", "OK"));
 
         ConsultantClientMapping result = adminService.confirmDeposit(mappingId, "REF-ADD");
 
         assertEquals(0, result.getRemainingSessions());
         verify(scheduleService, never()).finalizeTentativeSchedulesAfterDepositConfirmed(any());
-        verify(adminService, never()).createConsultationIncomeTransactionAsync(any());
+        verify(adminService, never()).createConsultationIncomeTransactionInCurrentTransaction(any());
+        verify(storedProcedureService, never()).updateMappingInfo(any(), any(), anyDouble(), anyInt(), any());
     }
 
     @Test
@@ -401,15 +398,13 @@ class AdminServiceImplConfirmDepositApproveTest {
 
         when(mappingRepository.findByTenantIdAndId(eq(TEST_TENANT_ID), eq(mappingId))).thenReturn(Optional.of(mapping));
         when(mappingRepository.save(any(ConsultantClientMapping.class))).thenAnswer(inv -> inv.getArgument(0));
-        doNothing().when(adminService).createConsultationIncomeTransactionAsync(any(ConsultantClientMapping.class));
-        when(storedProcedureService.updateMappingInfo(any(), any(), anyDouble(), anyInt(), any()))
-                .thenReturn(Map.of("success", true, "message", "OK"));
+        doNothing().when(adminService).createConsultationIncomeTransactionInCurrentTransaction(any(ConsultantClientMapping.class));
 
         ConsultantClientMapping result = adminService.confirmDeposit(mappingId, "REF-IL");
 
         assertEquals(0, result.getRemainingSessions());
         verify(scheduleService, never()).finalizeTentativeSchedulesAfterDepositConfirmed(any());
-        verify(adminService).createConsultationIncomeTransactionAsync(any(ConsultantClientMapping.class));
+        verify(adminService).createConsultationIncomeTransactionInCurrentTransaction(any(ConsultantClientMapping.class));
     }
 
     @Test
@@ -424,15 +419,13 @@ class AdminServiceImplConfirmDepositApproveTest {
 
         when(mappingRepository.findByTenantIdAndId(eq(TEST_TENANT_ID), eq(mappingId))).thenReturn(Optional.of(mapping));
         when(mappingRepository.save(any(ConsultantClientMapping.class))).thenAnswer(inv -> inv.getArgument(0));
-        doNothing().when(adminService).createConsultationIncomeTransactionAsync(any(ConsultantClientMapping.class));
-        when(storedProcedureService.updateMappingInfo(any(), any(), anyDouble(), anyInt(), any()))
-                .thenReturn(Map.of("success", true, "message", "OK"));
+        doNothing().when(adminService).createConsultationIncomeTransactionInCurrentTransaction(any(ConsultantClientMapping.class));
 
         ConsultantClientMapping result = adminService.confirmDeposit(mappingId, "REF-ADV");
 
         assertEquals(8, result.getRemainingSessions());
         verify(scheduleService).finalizeTentativeSchedulesAfterDepositConfirmed(any(ConsultantClientMapping.class));
-        verify(adminService).createConsultationIncomeTransactionAsync(any(ConsultantClientMapping.class));
+        verify(adminService).createConsultationIncomeTransactionInCurrentTransaction(any(ConsultantClientMapping.class));
     }
 
     @Test
@@ -446,9 +439,7 @@ class AdminServiceImplConfirmDepositApproveTest {
 
         when(mappingRepository.findByTenantIdAndId(eq(TEST_TENANT_ID), eq(mappingId))).thenReturn(Optional.of(mapping));
         when(mappingRepository.save(any(ConsultantClientMapping.class))).thenAnswer(inv -> inv.getArgument(0));
-        doNothing().when(adminService).createConsultationIncomeTransactionAsync(any(ConsultantClientMapping.class));
-        when(storedProcedureService.updateMappingInfo(any(), any(), anyDouble(), anyInt(), any()))
-                .thenReturn(Map.of("success", true, "message", "OK"));
+        doNothing().when(adminService).createConsultationIncomeTransactionInCurrentTransaction(any(ConsultantClientMapping.class));
 
         ConsultantClientMapping result = adminService.confirmDeposit(mappingId, "REF-NULL-REMAINING");
 

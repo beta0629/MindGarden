@@ -15,10 +15,12 @@ import java.util.List;
 import java.util.Optional;
 
 import com.coresolution.consultation.constant.admin.AdminBulkMappingConstants;
+import com.coresolution.consultation.constant.admin.AdminServiceUserFacingMessages;
 import com.coresolution.consultation.dto.admin.BulkMappingPaymentResult;
 import com.coresolution.consultation.entity.ConsultantClientMapping;
 import com.coresolution.consultation.entity.ConsultantClientMapping.MappingStatus;
 import com.coresolution.consultation.exception.MappingAlreadyProcessedException;
+import com.coresolution.consultation.exception.RefundLedgerNotRecordedException;
 import com.coresolution.consultation.repository.ConsultantClientMappingRepository;
 import com.coresolution.consultation.service.AdminService;
 import com.coresolution.core.context.TenantContextHolder;
@@ -112,24 +114,45 @@ class AdminBulkMappingPaymentServiceImplTest {
                 MappingAlreadyProcessedException.Reason.ALREADY_CLOSED, "closed"))
                 .when(adminService).terminateMapping(eq(1L), any());
         BulkMappingPaymentResult result = service.cancelMappings(List.of(1L, 2L), "r");
-        assertThat(result.isCompleted()).isTrue();
+        assertThat(result.isAllSucceededOrSkipped()).isTrue();
         assertThat(result.getSkippedMappingIds()).containsExactly(1L);
         assertThat(result.getProcessedMappingIds()).containsExactly(2L);
+        assertThat(result.getItems().get(0).getCode())
+                .isEqualTo(MappingAlreadyProcessedException.Reason.ALREADY_CLOSED.name());
     }
 
     @Test
-    @DisplayName("취소 — 처리 중 다른 실패면 그 매칭부터 중단하고 남은 매칭은 처리하지 않음")
-    void cancel_unexpectedFailure_stops() {
+    @DisplayName("취소 — 2번째 매칭 실패: 그 매칭만 FAILED(내부 오류 문구 미노출), 1·3번째는 처리, 요청 순서대로 결과")
+    void cancel_unexpectedFailure_onlyThatItemFails_restContinue() {
         givenMapping(1L, MappingStatus.ACTIVE, 100_000L);
         givenMapping(2L, MappingStatus.ACTIVE, 100_000L);
         givenMapping(3L, MappingStatus.ACTIVE, 100_000L);
-        doThrow(new IllegalStateException("db")).when(adminService).terminateMapping(eq(2L), any());
+        doThrow(new IllegalStateException("db internal detail")).when(adminService).terminateMapping(eq(2L), any());
         BulkMappingPaymentResult result = service.cancelMappings(List.of(1L, 2L, 3L), "r");
-        assertThat(result.isCompleted()).isFalse();
-        assertThat(result.getProcessedMappingIds()).containsExactly(1L);
-        assertThat(result.getFailedMappingId()).isEqualTo(2L);
-        assertThat(result.getNotProcessedMappingIds()).containsExactly(3L);
-        verify(adminService, never()).terminateMapping(eq(3L), any());
+        assertThat(result.isAllSucceededOrSkipped()).isFalse();
+        assertThat(result.getProcessedMappingIds()).containsExactly(1L, 3L);
+        assertThat(result.getFailedMappingIds()).containsExactly(2L);
+        assertThat(result.getItems()).extracting(BulkMappingPaymentResult.Item::getMappingId)
+                .containsExactly(1L, 2L, 3L);
+        BulkMappingPaymentResult.Item failed = result.getItems().get(1);
+        assertThat(failed.getStatus()).isEqualTo(BulkMappingPaymentResult.ItemStatus.FAILED);
+        assertThat(failed.getCode()).isEqualTo(AdminBulkMappingConstants.ITEM_FAILURE_CODE_PROCESSING_FAILED);
+        assertThat(failed.getMessage()).isEqualTo(AdminServiceUserFacingMessages.MSG_BULK_MAPPING_ITEM_FAILED)
+                .doesNotContain("db internal detail");
+        verify(adminService).terminateMapping(eq(3L), any());
+    }
+
+    @Test
+    @DisplayName("취소 — 환불 전표 미기록 실패는 REFUND_LEDGER_NOT_RECORDED 코드·안내 문구로 남김")
+    void cancel_ledgerFailure_reportedWithCode() {
+        givenMapping(1L, MappingStatus.ACTIVE, 100_000L);
+        doThrow(RefundLedgerNotRecordedException.of(1L, new IllegalStateException("x")))
+                .when(adminService).terminateMapping(eq(1L), any());
+        BulkMappingPaymentResult result = service.cancelMappings(List.of(1L), "r");
+        BulkMappingPaymentResult.Item item = result.getItems().get(0);
+        assertThat(item.getStatus()).isEqualTo(BulkMappingPaymentResult.ItemStatus.FAILED);
+        assertThat(item.getCode()).isEqualTo(RefundLedgerNotRecordedException.ERROR_CODE);
+        assertThat(item.getMessage()).isEqualTo(AdminServiceUserFacingMessages.MSG_REFUND_LEDGER_NOT_RECORDED);
     }
 
     @Test

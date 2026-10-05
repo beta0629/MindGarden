@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import notificationManager from '../../utils/notification';
+import { formatDateKeyInZone } from '../../utils/zonedDateTime';
 import { useConfirm } from '../../hooks/useConfirm';
 import { useNavigate } from 'react-router-dom';
 import { RoleUtils, USER_ROLES } from '../../constants/roles';
@@ -105,7 +106,8 @@ import {
 import {
   adminClientsWithMappingGet,
   adminSchedulesListGet,
-  buildAdminListUrl
+  buildAdminListUrl,
+  adminPendingDepositMappingsGetAll
 } from '../../api/adminListFetch';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 공유 모듈(buildAdminListUrl) SSOT
@@ -117,7 +119,6 @@ const API_ADMIN_CONSULTANT_RATING_STATS = '/api/v1/admin/consultant-rating-stats
 const API_ADMIN_VACATION_STATISTICS = '/api/v1/admin/vacation-statistics?period=month';
 const API_ADMIN_STATISTICS_CONSULTATION_COMPLETION = '/api/v1/admin/statistics/consultation-completion';
 const API_ADMIN_REFUND_STATISTICS = '/api/v1/admin/refund-statistics?period=month';
-const API_ADMIN_MAPPINGS_PENDING_DEPOSIT = '/api/v1/admin/mappings/pending-deposit';
 const API_ADMIN_SCHEDULES_AUTO_COMPLETE = '/api/v1/admin/schedules/auto-complete';
 const API_ADMIN_SCHEDULES_AUTO_COMPLETE_WITH_REMINDER = '/api/v1/admin/schedules/auto-complete-with-reminder';
 const API_ADMIN_DUPLICATE_MAPPINGS = '/api/v1/admin/duplicate-mappings';
@@ -312,7 +313,7 @@ const AdminDashboard = ({ user: propUser }) => {
         setLoading(true);
         try {
             const [consultantsRes, clientsRes, mappingStatsRes, ratingRes, consultationRes] = await Promise.all([
-                fetch(`/api/v1/admin/consultants/with-vacation?date=${new Date().toISOString().split('T')[0]}`),
+                fetch(`/api/v1/admin/consultants/with-vacation?date=${formatDateKeyInZone()}`),
                 fetch(buildAdminDashboardClientsWithMappingUrl()),
                 fetch(API_ENDPOINTS.ADMIN.MAPPINGS.STATS),
                 fetch(API_ADMIN_CONSULTANT_RATING_STATS),
@@ -460,7 +461,7 @@ const AdminDashboard = ({ user: propUser }) => {
 
     const loadPendingDepositStats = useCallback(async() => {
         try {
-            const data = await StandardizedApi.get(API_ADMIN_MAPPINGS_PENDING_DEPOSIT);
+            const data = await adminPendingDepositMappingsGetAll();
             const rawMappings = data?.mappings ?? data?.data?.mappings ?? (Array.isArray(data) ? data : []);
             const pendingList = (Array.isArray(rawMappings) ? rawMappings : [])
                 .filter(shouldIncludeInDepositPendingQueue);

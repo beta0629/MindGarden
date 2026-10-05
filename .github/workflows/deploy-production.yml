@@ -5,8 +5,14 @@ name: 🚀 Core Solution 운영 배포
 
 # 운영 배포 동시 실행 가드: cutover 시퀀스(atomic mv → INCOMING JAR 회수) 중 두 번째 런이 SCP 단계에
 # 도달하면 race condition 발생. cancel-in-progress=false 로 큐잉(2026-06-02 13:42 UTC run 26823743074 재발 방지).
+# 서비스 단위 배포 큐(공통 규칙): 같은 서버 프로그램을 건드리는 배포는 같은 그룹, cancel-in-progress=false(진행 중 배포는 끝까지).
+#   운영 Core 서버 deploy-svc-prod-core-backend / 운영 Core 화면 deploy-svc-prod-core-frontend / 운영 Trinity deploy-svc-prod-trinity-frontend
+#   개발 Core 서버 deploy-svc-dev-core-backend (deploy-backend-dev · deploy-onboarding-dev · deploy-dev 가 같은 mindgarden-dev.service 를 재시작)
+# 운영 화면과 서버는 일부러 다른 그룹이다. 화면 워크플로의 set-gate 가 같은 SHA 서버 run 성공을 기다리므로
+# 같은 그룹이면 서로 기다리다 멈춘다. 화면+서버 같은 SHA 세트·서버 먼저 보장은 set-gate 가 맡는다.
+# GitHub 규칙상 같은 그룹 대기열은 1건이라, 더 새 run 이 들어오면 앞서 대기 중이던 run 은 취소된다(진행 중 run 은 유지).
 concurrency:
-  group: deploy-production
+  group: deploy-svc-prod-core-backend
   cancel-in-progress: false
 
 #
@@ -28,11 +34,16 @@ concurrency:
 # 서버 EnvironmentFile 등에 SESSION_COOKIE_DOMAIN=core-solution.co.kr 를 넣는다(비밀 아님, RFC 6265 선행 점 없음).
 # 예시: deployment/mindgarden.prod-env.example — 앱 재시작 후 브라우저에서 JSESSIONID Domain 확인.
 #
-# 표준 프로시저 통합: PRODUCTION_DB_PASSWORD 가 있으면 본 워크플로에서
-# deploy-standardized-procedures.sh prod(DEPLOY_TARGET=production_mysql) 를 서비스 재시작 전에 실행합니다.
-# 없으면 Notice 후 스킵 — 별도 「표준화 프로시저 배포 (운영 MySQL)」 워크플로도 계속 사용 가능.
+# 표준 프로시저 통합: 본 워크플로에서 deploy-standardized-procedures.sh prod(DEPLOY_TARGET=production_mysql) 를
+# 서비스 재시작 전에 실행한다. 대상 DB 는 PRODUCTION_DB_NAME(없으면 core_solution) 하나이고, mind_garden 은 스크립트가 거부한다.
+# PRODUCTION_DB_PASSWORD 가 없거나 적용이 실패하면 배포 실패다. 별도 「표준화 프로시저 배포 (운영 MySQL)」 워크플로도 그대로 쓸 수 있다.
 # DB 계정: 기본 PRODUCTION_DB_USER=mindgarden. 1227 시 PRODUCTION_DB_PROCEDURE_* → PRODUCTION_MYSQL_ROOT_PASSWORD → root+앱비번.
 # push 트리거: 본 파일 변경만으로도 코어 운영 배포 워크플로가 실행됨(paths에 포함).
+#
+# 프론트(SPA): 이 워크플로는 프론트를 빌드·업로드·백업하지 않는다(BE·FE 동시 쓰기로 인한 tar 경합 방지).
+# 화면은 deploy-frontend-prod.yml 만 배포하고, 그 워크플로가 같은 SHA 의 본 워크플로 성공을 기다린 뒤
+# release/prod tip 과 같을 때만 올린다(화면+서버 같은 SHA 세트, 서버 먼저).
+# 옛 DB(mind_garden) 대상 업로드·적용 단계는 없다. 남은 단계는 실패하면 배포 실패다.
 
 on:
   push:
@@ -191,18 +202,22 @@ jobs:
         chmod +x scripts/deployment/check-deploy-no-overwrite-symbols.sh
         ./scripts/deployment/check-deploy-no-overwrite-symbols.sh --source-root .
 
+    # 배포 후 공개 URL 헬스체크 대상. 변경 전에 확인해 설정 누락으로 배포 도중 멈추지 않게 한다.
+    - name: 🔧 공개 URL 설정 확인
+      env:
+        PUBLIC_BASE_URL: ${{ vars.PRODUCTION_PUBLIC_BASE_URL }}
+      run: |
+        if [ -z "$PUBLIC_BASE_URL" ]; then
+          echo "::error::repository variable PRODUCTION_PUBLIC_BASE_URL 이 비어 있습니다. 배포 후 공개 URL 헬스체크에 필요합니다."
+          exit 1
+        fi
+        echo "✅ 공개 URL 헬스체크 대상: ${PUBLIC_BASE_URL%/}/actuator/health"
+
     - name: ☕ Java 17 설정
       uses: actions/setup-java@v5
       with:
         java-version: '17'
         distribution: 'temurin'
-        
-    - name: 📦 Node.js 20 설정
-      uses: actions/setup-node@v6
-      with:
-        node-version: '20'
-        cache: 'npm'
-        cache-dependency-path: frontend/package-lock.json
         
     - name: 🔧 Maven 캐시 설정
       uses: actions/cache@v4
@@ -214,31 +229,6 @@ jobs:
     - name: 🏗️ 백엔드 빌드
       run: mvn clean package -DskipTests
       
-    - name: 📦 프론트엔드 의존성 설치
-      run: |
-        cd frontend
-        npm install
-        
-    - name: 🏗️ 프론트엔드 빌드
-      env:
-        # self-hosted mindgarden-deploy(~3.8Gi) OOM(137) 완화 — FE 전용 워크플로와 동일
-        NODE_OPTIONS: --max-old-space-size=3072
-      run: |
-        cd frontend
-        npm run build:ci
-
-    - name: 📌 Capture expected main.*.js hash
-      id: fe-main-hash
-      run: |
-        set -euo pipefail
-        MAIN=$(basename $(ls frontend/build/static/js/main.*.js | head -1))
-        if [ -z "$MAIN" ]; then
-          echo "::error::main.*.js 빌드 산출물 없음"
-          exit 1
-        fi
-        echo "expected_main_js=$MAIN" >> "$GITHUB_OUTPUT"
-        echo "✅ EXPECTED_MAIN_JS=$MAIN"
-        
     - name: 🔍 변경된 파일 감지
       id: changed-files
       run: |
@@ -250,7 +240,6 @@ jobs:
           # 수동 실행 시: 모든 파일이 변경된 것으로 간주 (전체 배포)
           echo "📋 수동 실행: 모든 파일 배포"
           echo "backend_changed=true" >> $GITHUB_OUTPUT
-          echo "frontend_changed=true" >> $GITHUB_OUTPUT
           echo "config_changed=true" >> $GITHUB_OUTPUT
           echo "sql_procedures_changed=true" >> $GITHUB_OUTPUT
         else
@@ -269,15 +258,6 @@ jobs:
           else
             echo "⏭️ 백엔드 변경 없음 - 업로드 스킵"
             echo "backend_changed=false" >> $GITHUB_OUTPUT
-          fi
-          
-          # 프론트엔드 변경 감지
-          if grep -qE "^frontend/" /tmp/changed_files.txt; then
-            echo "✅ 프론트엔드 변경 감지됨"
-            echo "frontend_changed=true" >> $GITHUB_OUTPUT
-          else
-            echo "⏭️ 프론트엔드 변경 없음 - 업로드 스킵"
-            echo "frontend_changed=false" >> $GITHUB_OUTPUT
           fi
           
           # 설정 파일 변경 감지
@@ -302,13 +282,10 @@ jobs:
         
         echo ""
         echo "📋 변경 감지 결과:"
-        echo "  백엔드: ${{ steps.changed-files.outputs.backend_changed }}"
-        echo "  프론트엔드: ${{ steps.changed-files.outputs.frontend_changed }}"
-        echo "  설정 파일: ${{ steps.changed-files.outputs.config_changed }}"
-        echo "  SQL 프로시저: ${{ steps.changed-files.outputs.sql_procedures_changed }}"
+        grep -E '^(backend|config|sql_procedures)_changed=' "$GITHUB_OUTPUT"
         
     - name: 🔍 SSH 연결 테스트
-      uses: appleboy/ssh-action@master
+      uses: appleboy/ssh-action@c4f70287fc37c43b14b30b407224bbbc8e8c6327 # master 2026-08-16 (v1.2.5+10) 고정
       with:
         host: ${{ secrets.PRODUCTION_HOST }}
         username: ${{ secrets.PRODUCTION_USER }}
@@ -326,8 +303,18 @@ jobs:
           
           echo "🔧 서버 상태 확인 완료 (SSH 보호됨)"
           
+    # 서버 시간은 바꾸지 않는다. 기준(vars.CLOCK_SKEW_WARN_SECONDS, 기본 30초)을 넘으면 큰 경고만 남긴다.
+    - name: 🕒 서버 시간 차이 확인
+      env:
+        CLOCK_SKEW_SSH_HOST: ${{ secrets.PRODUCTION_HOST }}
+        CLOCK_SKEW_SSH_USER: ${{ secrets.PRODUCTION_USER }}
+        CLOCK_SKEW_SSH_KEY: ${{ secrets.PRODUCTION_SSH_KEY }}
+        CLOCK_SKEW_WARN_SECONDS: ${{ vars.CLOCK_SKEW_WARN_SECONDS || '30' }}
+        CLOCK_SKEW_LABEL: 운영 서버
+      run: bash scripts/deployment/check-server-clock-skew.sh
+
     - name: 🚀 서버 배포
-      uses: appleboy/ssh-action@master
+      uses: appleboy/ssh-action@c4f70287fc37c43b14b30b407224bbbc8e8c6327 # master 2026-08-16 (v1.2.5+10) 고정
       with:
         host: ${{ secrets.PRODUCTION_HOST }}
         username: ${{ secrets.PRODUCTION_USER }}
@@ -355,18 +342,7 @@ jobs:
             echo "✅ 백업 완료: $BACKUP_FILE"
           fi
           
-          # 프론트엔드 백업
-          if [ -d frontend ]; then
-            BACKUP_DIR="/var/www/mindgarden/backups"
-            mkdir -p $BACKUP_DIR
-            FRONTEND_BACKUP_FILE="$BACKUP_DIR/frontend.backup.$(date +%Y%m%d_%H%M%S).tar.gz"
-            # 같은 타임스탬프 파일이 있으면 초까지 포함한 타임스탬프 사용
-            while [ -f "$FRONTEND_BACKUP_FILE" ]; do
-              FRONTEND_BACKUP_FILE="$BACKUP_DIR/frontend.backup.$(date +%Y%m%d_%H%M%S.%N | cut -b1-19).tar.gz"
-            done
-            tar -czf "$FRONTEND_BACKUP_FILE" frontend/
-            echo "✅ 프론트엔드 백업 완료: $FRONTEND_BACKUP_FILE"
-          fi
+          # 프론트엔드 백업·업로드는 deploy-frontend-prod.yml 만 한다(동시 쓰기 중 tar 방지).
           
           # 백업 보관: 유형별 최신 5개만 유지 (개발 배포와 동일·디스크 누적 방지)
           BACKUP_DIR="/var/www/mindgarden/backups"
@@ -384,10 +360,6 @@ jobs:
           
           # /tmp/ 디렉토리의 기존 SQL 파일 및 디렉토리 정리
           echo "🧹 /tmp/ 디렉토리 정리 중..."
-          rm -rf /tmp/production_all_missing_procedures.sql
-          rm -rf /tmp/mapping_update_procedures_mysql.sql
-          rm -rf /tmp/production_mapping_procedures.sql
-          rm -rf /tmp/business_time_procedures_final.sql
           rm -rf /tmp/update_all_role_menus.sql
           rm -f /tmp/*.sql
           rm -f /tmp/*_proc.log
@@ -410,107 +382,6 @@ jobs:
     - name: ⏭️ 백엔드 파일 업로드 스킵
       if: steps.changed-files.outputs.backend_changed != 'true'
       run: echo "⏭️ 백엔드 변경 없음 - 업로드 스킵됨"
-        
-    # Core 테넌트·app Nginx root: /var/www/mindgarden/frontend (core-solution-prod.conf)
-    # 과거 /var/www/html/ 업로드는 이 경로와 불일치하여 운영 SPA가 구버전으로 고정됨
-    # P0 race guard:
-    #  - tip 이 앞서 나가면 FE 업로드 스킵 (stale index.html — BE jar 는 계속)
-    #  - SHA==tip 만으로는 업로드하지 않는다. 같은 SHA 의 프론트 전용 배포가
-    #    이미 성공했으면 BE 빌드(REACT_APP_* 미주입)가 index.html 을 덮지 않는다.
-    - name: 🛡️ FE tip race guard (skip stale overwrite)
-      id: fe-tip-guard
-      if: steps.changed-files.outputs.frontend_changed == 'true'
-      env:
-        GH_TOKEN: ${{ github.token }}
-      run: |
-        set -euo pipefail
-        git fetch origin release/prod
-        HEAD_SHA=$(git rev-parse HEAD)
-        TIP_SHA=$(git rev-parse origin/release/prod)
-        echo "HEAD=$HEAD_SHA"
-        echo "origin/release/prod tip=$TIP_SHA"
-        FE_SAME_SHA_SUCCESS=false
-        if ! FE_RUNS=$(gh run list \
-          --repo "$GITHUB_REPOSITORY" \
-          --workflow deploy-frontend-prod.yml \
-          --commit "$HEAD_SHA" \
-          --limit 20 \
-          --json databaseId,conclusion,status,headSha); then
-          echo "::error::frontend deploy run list failed — refuse BE frontend upload"
-          exit 1
-        fi
-        FE_COUNT=$(printf '%s' "$FE_RUNS" | jq '[.[] | select(.conclusion=="success" and .status=="completed" and .headSha=="'"$HEAD_SHA"'")] | length')
-        echo "frontend-only success runs for SHA=$FE_COUNT"
-        if [ "$FE_COUNT" != "0" ]; then
-          FE_SAME_SHA_SUCCESS=true
-        fi
-        # SHA==tip 만으로는 업로드하지 않는다. 같은 SHA 프론트 전용 배포가 success 면
-        # BE 빌드(REACT_APP_* 미주입) index.html 덮어쓰기와 main-hash 검증을 건너뛴다.
-        if [ "$HEAD_SHA" != "$TIP_SHA" ]; then
-          echo "skip_fe_upload=true" >> "$GITHUB_OUTPUT"
-          echo "skip_reason=tip-ahead" >> "$GITHUB_OUTPUT"
-          echo "::warning::tip moved ahead — skip FE overwrite to avoid stale index (HEAD!=tip)"
-        elif [ "$FE_SAME_SHA_SUCCESS" = "true" ]; then
-          echo "skip_fe_upload=true" >> "$GITHUB_OUTPUT"
-          echo "skip_reason=fe-same-sha-published" >> "$GITHUB_OUTPUT"
-          echo "::warning::frontend-only deploy already published this SHA — skip BE frontend upload and FE main-hash check"
-        else
-          echo "skip_fe_upload=false" >> "$GITHUB_OUTPUT"
-          echo "skip_reason=upload" >> "$GITHUB_OUTPUT"
-        fi
-
-    - name: 📤 프론트엔드 파일 업로드
-      if: steps.changed-files.outputs.frontend_changed == 'true' && steps.fe-tip-guard.outputs.skip_fe_upload != 'true'
-      uses: appleboy/scp-action@v0.1.7
-      with:
-        host: ${{ secrets.PRODUCTION_HOST }}
-        username: ${{ secrets.PRODUCTION_USER }}
-        key: ${{ secrets.PRODUCTION_SSH_KEY }}
-        port: 22
-        timeout: 120s
-        source: "frontend/build/*"
-        target: "/var/www/mindgarden/frontend/"
-        strip_components: 2
-        overwrite: true
-
-    - name: 🔒 FE main-hash 검증 (index.html)
-      if: steps.changed-files.outputs.frontend_changed == 'true' && steps.fe-tip-guard.outputs.skip_fe_upload != 'true'
-      env:
-        EXPECTED_MAIN_JS: ${{ steps.fe-main-hash.outputs.expected_main_js }}
-      uses: appleboy/ssh-action@master
-      with:
-        host: ${{ secrets.PRODUCTION_HOST }}
-        username: ${{ secrets.PRODUCTION_USER }}
-        key: ${{ secrets.PRODUCTION_SSH_KEY }}
-        port: 22
-        timeout: 60s
-        envs: EXPECTED_MAIN_JS
-        script: |
-          set -euo pipefail
-          INDEX=/var/www/mindgarden/frontend/index.html
-          if [ -z "${EXPECTED_MAIN_JS:-}" ]; then
-            echo "::error::EXPECTED_MAIN_JS 비어 있음"
-            exit 1
-          fi
-          if [ ! -f "$INDEX" ]; then
-            echo "::error::index.html 없음: $INDEX"
-            exit 1
-          fi
-          if ! grep -qF "$EXPECTED_MAIN_JS" "$INDEX"; then
-            echo "::error::index.html 이 expected main ($EXPECTED_MAIN_JS) 을 참조하지 않음 — stale overwrite 차단"
-            grep -oE 'main\.[a-f0-9]+\.js' "$INDEX" | head -5 || true
-            exit 1
-          fi
-          echo "✅ index.html contains $EXPECTED_MAIN_JS"
-        
-    - name: ⏭️ 프론트엔드 파일 업로드 스킵
-      if: steps.changed-files.outputs.frontend_changed != 'true' || steps.fe-tip-guard.outputs.skip_fe_upload == 'true'
-      run: |
-        if [ "${{ steps.fe-tip-guard.outputs.skip_fe_upload }}" = "true" ]; then
-          echo "⏭️ FE overwrite skipped (${{ steps.fe-tip-guard.outputs.skip_reason }}) — upload and FE main-hash check skipped"
-        else
-          echo "⏭️ 프론트엔드 변경 없음 - 업로드 스킵됨"
-        fi
         
     - name: 📤 설정 파일 업로드
       if: steps.changed-files.outputs.config_changed == 'true'
@@ -555,20 +426,6 @@ jobs:
         strip_components: 3
         overwrite: true
         
-    # PL/SQL 프로시저 업로드는 필요할 때만 수동으로 실행
-    # - name: 📤 PL/SQL 프로시저 업로드
-    #   uses: appleboy/scp-action@v0.1.7
-    #   with:
-    #     host: ${{ secrets.PRODUCTION_HOST }}
-    #     username: ${{ secrets.PRODUCTION_USER }}
-    #     key: ${{ secrets.PRODUCTION_SSH_KEY }}
-    #     port: 22
-    #     timeout: 120s
-    #     source: "sql/production_all_missing_procedures.sql"
-    #     target: "/tmp/"
-    #     strip_components: 1
-    #     overwrite: true
-        
     - name: 📤 메뉴 업데이트 SQL 업로드
       if: steps.changed-files.outputs.sql_procedures_changed == 'true'
       uses: appleboy/scp-action@v0.1.7
@@ -581,63 +438,6 @@ jobs:
         source: "src/main/resources/sql/update_all_role_menus.sql"
         target: "/tmp/"
         strip_components: 3
-        overwrite: true
-        
-    - name: 📤 매핑 수정 프로시저 업로드
-      if: steps.changed-files.outputs.sql_procedures_changed == 'true'
-      uses: appleboy/scp-action@v0.1.7
-      with:
-        host: ${{ secrets.PRODUCTION_HOST }}
-        username: ${{ secrets.PRODUCTION_USER }}
-        key: ${{ secrets.PRODUCTION_SSH_KEY }}
-        port: 22
-        timeout: 120s
-        # DELIMITER 없음 + Java 7인자 시그니처(StoredProcedureServiceImpl)와 일치
-        source: "database/schema/mapping_update_procedures_mysql_no_delimiter.sql"
-        target: "/tmp/"
-        strip_components: 2
-        overwrite: true
-
-    - name: 📤 production_mapping_procedures.sql 업로드
-      if: steps.changed-files.outputs.sql_procedures_changed == 'true'
-      uses: appleboy/scp-action@v0.1.7
-      with:
-        host: ${{ secrets.PRODUCTION_HOST }}
-        username: ${{ secrets.PRODUCTION_USER }}
-        key: ${{ secrets.PRODUCTION_SSH_KEY }}
-        port: 22
-        timeout: 120s
-        source: "database/schema/production_mapping_procedures.sql"
-        target: "/tmp/"
-        strip_components: 2
-        overwrite: true
-
-    - name: 📤 business_time_procedures_final.sql 업로드
-      if: steps.changed-files.outputs.sql_procedures_changed == 'true'
-      uses: appleboy/scp-action@v0.1.7
-      with:
-        host: ${{ secrets.PRODUCTION_HOST }}
-        username: ${{ secrets.PRODUCTION_USER }}
-        key: ${{ secrets.PRODUCTION_SSH_KEY }}
-        port: 22
-        timeout: 120s
-        source: "database/schema/business_time_procedures_final.sql"
-        target: "/tmp/"
-        strip_components: 2
-        overwrite: true
-
-    - name: 📤 production_all_missing_procedures.sql 업로드
-      if: steps.changed-files.outputs.sql_procedures_changed == 'true'
-      uses: appleboy/scp-action@v0.1.7
-      with:
-        host: ${{ secrets.PRODUCTION_HOST }}
-        username: ${{ secrets.PRODUCTION_USER }}
-        key: ${{ secrets.PRODUCTION_SSH_KEY }}
-        port: 22
-        timeout: 120s
-        source: "database/schema/production_all_missing_procedures.sql"
-        target: "/tmp/"
-        strip_components: 2
         overwrite: true
         
     # 메시지 권한 SQL 업로드 - 권한 오류로 주석 처리
@@ -692,8 +492,8 @@ jobs:
       run: |
         set -euo pipefail
         if [ -z "${{ secrets.PRODUCTION_DB_PASSWORD }}" ]; then
-          echo "::notice::PRODUCTION_DB_PASSWORD 가 비어 있어 표준 프로시저 배포를 건너뜁니다. Secret 등록 시 이후 운영 배포마다 자동 적용됩니다."
-          exit 0
+          echo "::error::PRODUCTION_DB_PASSWORD 가 비어 있어 표준 프로시저를 배포할 수 없습니다. 운영 배포를 중단합니다."
+          exit 1
         fi
         if [ -z "${{ secrets.PRODUCTION_HOST }}" ] || [ -z "${{ secrets.PRODUCTION_SSH_KEY }}" ]; then
           echo "::error::PRODUCTION_HOST 또는 PRODUCTION_SSH_KEY 가 비어 있습니다."
@@ -741,29 +541,6 @@ jobs:
         chmod +x scripts/automation/deployment/deploy-standardized-procedures.sh
         bash scripts/automation/deployment/deploy-standardized-procedures.sh prod
 
-    - name: 🔧 프론트엔드 파일 권한 설정
-      uses: appleboy/ssh-action@master
-      with:
-        host: ${{ secrets.PRODUCTION_HOST }}
-        username: ${{ secrets.PRODUCTION_USER }}
-        key: ${{ secrets.PRODUCTION_SSH_KEY }}
-        port: 22
-        timeout: 120s
-        command_timeout: 10m
-        script: |
-          # Core Solution SPA (Nginx root)
-          sudo mkdir -p /var/www/mindgarden/frontend
-          sudo chown -R www-data:www-data /var/www/mindgarden/frontend/
-          sudo chmod -R 755 /var/www/mindgarden/frontend/
-          sudo find /var/www/mindgarden/frontend/ -name "*.css" -exec chmod 644 {} \;
-          sudo find /var/www/mindgarden/frontend/ -name "*.js" -exec chmod 644 {} \;
-          # 레거시: 다른 vhost가 /var/www/html 을 쓰는 경우 유지
-          if [ -d /var/www/html ]; then
-            sudo chown -R www-data:www-data /var/www/html/ 2>/dev/null || true
-            sudo chmod -R 755 /var/www/html/ 2>/dev/null || true
-          fi
-          echo "✅ 프론트엔드 파일 권한 설정 완료"
-        
     # 참고: 메뉴 구조 업데이트는 필요할 때만 수동으로 실행
         
     # ============================================================================
@@ -1123,7 +900,7 @@ jobs:
         overwrite: true
 
     - name: 🔄 블루그린 백엔드·Nginx 적용
-      uses: appleboy/ssh-action@master
+      uses: appleboy/ssh-action@c4f70287fc37c43b14b30b407224bbbc8e8c6327 # master 2026-08-16 (v1.2.5+10) 고정
       env:
         # B8 hotfix (2026-06-12): script: | 블록에 ${{ }} expression 이 1개라도 있으면
         # GitHub Actions parser 가 블록 전체를 expression interpolation input 으로 평가하여
@@ -1552,189 +1329,13 @@ jobs:
           echo "ℹ️ DB 스키마 업데이트는 별도 워크플로우에서 수동 실행하세요"
           echo "ℹ️ Actions > 'Fix Production Database' 워크플로우 사용"
           
-          # 메시지 관리 권한 확인 (SQL 파일 업로드는 주석 처리됨)
-          # B8 (P0 보안, 2026-06-12): 저장소 평문 비밀번호 → $PRODUCTION_DB_PASSWORD 환경변수 치환
-          # PRODUCTION_DB_PASSWORD 가 비어 있으면 mysql 호출은 건너뛰어 silent fail 방지
-          echo "🔧 메시지 관리 권한 확인 시작..."
-          if [ -z "${PRODUCTION_DB_PASSWORD:-}" ]; then
-            echo "::warning::PRODUCTION_DB_PASSWORD 가 비어 있음 — 메시지 관리 권한 확인 스킵"
-            EXISTING_COUNT=0
-          else
-            EXISTING_COUNT=$(mysql -u mindgarden -p"$PRODUCTION_DB_PASSWORD" mind_garden -N -e "SELECT COUNT(*) FROM role_permissions WHERE permission_code IN ('MESSAGE_MANAGE', 'MESSAGE_VIEW') AND role_name='BRANCH_SUPER_ADMIN' AND is_active=true;" 2>/dev/null || echo "0")
-          fi
-          
-          if [ "$EXISTING_COUNT" -eq "0" ]; then
-            echo "⚠️ 메시지 권한이 없음 - 수동으로 SQL 실행 필요"
-            echo "⚠️ 운영 서버 SSH 접속 후 SQL 실행:"
-            echo "   mysql -u mindgarden -p\"\$DB_PASSWORD\" mind_garden < /path/to/sql/add_message_management_permissions_force.sql"
-          else
-            echo "✅ 메시지 관리 권한이 이미 존재함 (${EXISTING_COUNT}개)"
-          fi
-          
-          # 매핑 수정 프로시저 배포
-          # 주의: DROP을 제거하면 CREATE만 남아 이미 존재 시 ERROR 1304 (already exists) 발생.
-          # mapping_update_procedures_mysql_no_delimiter.sql 은 DROP + CREATE 포함 → root로 일괄 적용.
-          echo "🔧 매핑 수정 프로시저 배포 시작..."
-          MAPPING_SQL=""
-          if [ -f /tmp/mapping_update_procedures_mysql_no_delimiter.sql ]; then
-            MAPPING_SQL="/tmp/mapping_update_procedures_mysql_no_delimiter.sql"
-          elif [ -f /tmp/mapping_update_procedures_mysql.sql ]; then
-            MAPPING_SQL="/tmp/mapping_update_procedures_mysql.sql"
-          fi
-          if [ -n "$MAPPING_SQL" ]; then
-            echo "📋 매핑 수정 프로시저 파일: $MAPPING_SQL"
-            # B8 (P0 보안, 2026-06-12): 저장소 평문 비밀번호 → $PRODUCTION_DB_PASSWORD 치환
-            # root 우선 시도 → 실패 시 mindgarden DB 사용자로 재시도. 둘 다 PRODUCTION_DB_PASSWORD 사용 (현 운영 정책 동일 비밀번호).
-            if [ -z "${PRODUCTION_DB_PASSWORD:-}" ]; then
-              echo "::warning::PRODUCTION_DB_PASSWORD 가 비어 있음 — 매핑 수정 프로시저 배포 스킵"
-              DEPLOY_RESULT=1
-            else
-              echo "📋 프로시저 배포 실행 (DROP+CREATE, root 우선)..."
-              sudo mysql -h "$MG_LOCAL_DB_HOST" -u root -p"$PRODUCTION_DB_PASSWORD" mind_garden < "$MAPPING_SQL" 2>&1 | tee /tmp/procedure_deploy.log
-              DEPLOY_RESULT=${PIPESTATUS[0]}
-              if [ "$DEPLOY_RESULT" -ne 0 ]; then
-                echo "⚠️ root 적용 실패(DEPLOY_RESULT=$DEPLOY_RESULT) — DB 계정으로 재시도..."
-                mysql -h "$MG_LOCAL_DB_HOST" -u mindgarden -p"$PRODUCTION_DB_PASSWORD" mind_garden < "$MAPPING_SQL" 2>&1 | tee /tmp/procedure_deploy_retry.log
-                DEPLOY_RESULT=${PIPESTATUS[0]}
-                rm -f /tmp/procedure_deploy_retry.log
-              fi
-            fi
-            if [ "$DEPLOY_RESULT" -eq 0 ]; then
-              echo "✅ 매핑 수정 프로시저 배포 완료"
-            else
-              echo "❌ 매핑 수정 프로시저 배포 실패"
-              cat /tmp/procedure_deploy.log 2>/dev/null || true
-              echo "⚠️ 프로시저 배포 실패해도 서비스는 계속 진행"
-            fi
-            rm -f /tmp/procedure_deploy.log
-            echo "📋 최종 프로시저 확인:"
-            if [ -z "${PRODUCTION_DB_PASSWORD:-}" ]; then
-              echo "::warning::PRODUCTION_DB_PASSWORD 비어 있음 — 프로시저 조회 스킵"
-            else
-            mysql -h "$MG_LOCAL_DB_HOST" -u mindgarden -p"$PRODUCTION_DB_PASSWORD" mind_garden -e "
-            SELECT 
-                ROUTINE_NAME,
-                CREATED,
-                LAST_ALTERED,
-                CASE 
-                    WHEN ROUTINE_DEFINITION LIKE '%tax_included%' THEN '✅ 최신버전'
-                    ELSE '⚠️ 구버전'
-                END AS '버전'
-            FROM information_schema.ROUTINES 
-            WHERE ROUTINE_SCHEMA = 'mind_garden' 
-            AND ROUTINE_TYPE = 'PROCEDURE' 
-            AND ROUTINE_NAME = 'UpdateMappingInfo';
-            " 2>/dev/null || true
-            fi
-            rm -f /tmp/mapping_update_procedures_mysql_no_delimiter.sql /tmp/mapping_update_procedures_mysql.sql
-          else
-            echo "⚠️ 매핑 수정 프로시저 파일을 찾을 수 없습니다 (/tmp/mapping_update_procedures_mysql_no_delimiter.sql 또는 .sql)"
-          fi
-          
-          # 매핑 프로시저 (운영용) 배포
-          # B8 (P0 보안, 2026-06-12): 저장소 평문 비밀번호 → $PRODUCTION_DB_PASSWORD 치환
-          echo "🔧 매핑 프로시저 (운영용) 배포 시작..."
-          if [ -f /tmp/production_mapping_procedures.sql ]; then
-            echo "📋 매핑 프로시저 (운영용) 파일 확인됨"
-            if [ -z "${PRODUCTION_DB_PASSWORD:-}" ]; then
-              echo "::warning::PRODUCTION_DB_PASSWORD 비어 있음 — 매핑 프로시저 (운영용) 배포 스킵"
-            else
-              mysql -h "$MG_LOCAL_DB_HOST" -u mindgarden -p"$PRODUCTION_DB_PASSWORD" mind_garden < /tmp/production_mapping_procedures.sql 2>&1 | tee /tmp/production_mapping_proc.log || true
-              
-              if [ ${PIPESTATUS[0]} -eq 0 ]; then
-                echo "✅ 매핑 프로시저 (운영용) 배포 완료"
-              else
-                echo "⚠️ 매핑 프로시저 (운영용) 배포 중 오류 발생 (계속 진행)"
-                cat /tmp/production_mapping_proc.log | tail -20 || true
-              fi
-            fi
-            rm -f /tmp/production_mapping_procedures.sql /tmp/production_mapping_proc.log
-          else
-            echo "⚠️ 매핑 프로시저 (운영용) 파일을 찾을 수 없습니다"
-          fi
-          
-          # 업무 시간 프로시저 배포
-          # B8 (P0 보안, 2026-06-12): 저장소 평문 비밀번호 → $PRODUCTION_DB_PASSWORD 치환
-          echo "🔧 업무 시간 프로시저 배포 시작..."
-          if [ -f /tmp/business_time_procedures_final.sql ]; then
-            echo "📋 업무 시간 프로시저 파일 확인됨"
-            if [ -z "${PRODUCTION_DB_PASSWORD:-}" ]; then
-              echo "::warning::PRODUCTION_DB_PASSWORD 비어 있음 — 업무 시간 프로시저 배포 스킵"
-            else
-              mysql -h "$MG_LOCAL_DB_HOST" -u mindgarden -p"$PRODUCTION_DB_PASSWORD" mind_garden < /tmp/business_time_procedures_final.sql 2>&1 | tee /tmp/business_time_proc.log || true
-              
-              if [ ${PIPESTATUS[0]} -eq 0 ]; then
-                echo "✅ 업무 시간 프로시저 배포 완료"
-              else
-                echo "⚠️ 업무 시간 프로시저 배포 중 오류 발생 (계속 진행)"
-                cat /tmp/business_time_proc.log | tail -20 || true
-              fi
-            fi
-            rm -f /tmp/business_time_procedures_final.sql /tmp/business_time_proc.log
-          else
-            echo "⚠️ 업무 시간 프로시저 파일을 찾을 수 없습니다"
-          fi
-          
-          # PL/SQL 프로시저 등록
-          # B8 (P0 보안, 2026-06-12): 저장소 평문 비밀번호 → $PRODUCTION_DB_PASSWORD 환경변수 치환
-          # mysql 비밀번호는 따옴표 처리로 특수문자 안전
-          echo "🔧 PL/SQL 프로시저 등록 시작..."
-          if [ -f /tmp/production_all_missing_procedures.sql ]; then
-            # 파일 내용 확인
-            echo "📋 파일 내용 확인:"
-            head -5 /tmp/production_all_missing_procedures.sql
-            # 환경변수 명시적 설정 (DB_PASSWORD 는 워크플로 env 의 PRODUCTION_DB_PASSWORD 로부터 주입)
-            export DB_HOST="$MG_LOCAL_DB_HOST"
-            export DB_USERNAME="mindgarden"
-            export DB_PASSWORD="${PRODUCTION_DB_PASSWORD:-}"
-            export DB_NAME="mind_garden"
-            
-            echo "📋 MySQL 연결 정보 확인..."
-            echo "DB_HOST: $DB_HOST"
-            echo "DB_USERNAME: $DB_USERNAME"
-            echo "DB_NAME: $DB_NAME"
-            
-            if [ -z "$DB_PASSWORD" ]; then
-              echo "::warning::PRODUCTION_DB_PASSWORD 비어 있음 — PL/SQL 프로시저 등록 스킵"
-            else
-            # MySQL 연결 테스트 (따옴표로 특수문자 안전)
-            mysql -h "$DB_HOST" -u "$DB_USERNAME" -p"$DB_PASSWORD" -e "SELECT 1;" "$DB_NAME"
-            
-            if [ $? -eq 0 ]; then
-              echo "✅ MySQL 연결 성공 - 프로시저 등록 시작"
-              mysql -h "$DB_HOST" -u "$DB_USERNAME" -p"$DB_PASSWORD" "$DB_NAME" < /tmp/production_all_missing_procedures.sql
-              
-              if [ $? -eq 0 ]; then
-                echo "✅ 모든 누락된 PL/SQL 프로시저 등록 완료"
-                
-                # 등록된 프로시저 확인
-                echo "📋 등록된 프로시저 목록:"
-                mysql -h "$DB_HOST" -u "$DB_USERNAME" -p"$DB_PASSWORD" "$DB_NAME" -e "
-                SELECT ROUTINE_NAME, CREATED 
-                FROM information_schema.ROUTINES 
-                WHERE ROUTINE_SCHEMA = DATABASE() 
-                AND ROUTINE_TYPE = 'PROCEDURE' 
-                ORDER BY CREATED DESC;
-                "
-              else
-                echo "❌ PL/SQL 프로시저 등록 실패"
-                exit 1
-              fi
-            else
-              echo "❌ MySQL 연결 실패 - 프로시저 등록 건너뜀"
-            fi
-            fi
-            
-            rm -f /tmp/production_all_missing_procedures.sql
-          else
-            echo "⚠️ PL/SQL 프로시저 파일을 찾을 수 없습니다"
-          fi
-          
+          # 이 step 은 DB 에 쓰지 않는다. 프로시저는 「표준 프로시저 배포」 step 이 운영 DB(core_solution)에만 적용한다.
+
     # env sync step 들이 run 마커에 남긴 변경 키를 1회만 반영한다. 트래픽 슬롯은 재시작하지 않는다.
     #  - backend_changed=true : 위 블루그린 step 이 새 env 로 비활성 슬롯을 기동·전환했으므로 검증만.
     #  - 그 외               : 트래픽 없는 슬롯만 1회 재시작 (실행 중일 때만). 트래픽 슬롯은 다음 백엔드 cutover 에서 반영.
     - name: ♻️ env 변경 반영 (트래픽 없는 슬롯 1회 재시작)
-      uses: appleboy/ssh-action@master
+      uses: appleboy/ssh-action@c4f70287fc37c43b14b30b407224bbbc8e8c6327 # master 2026-08-16 (v1.2.5+10) 고정
       env:
         BACKEND_CHANGED: ${{ steps.changed-files.outputs.backend_changed }}
         SYNC_RUN_KEY: ${{ github.run_id }}-${{ github.run_attempt }}
@@ -1824,7 +1425,7 @@ jobs:
           fi
 
     - name: 🏥 헬스체크
-      uses: appleboy/ssh-action@master
+      uses: appleboy/ssh-action@c4f70287fc37c43b14b30b407224bbbc8e8c6327 # master 2026-08-16 (v1.2.5+10) 고정
       with:
         host: ${{ secrets.PRODUCTION_HOST }}
         username: ${{ secrets.PRODUCTION_USER }}
@@ -1917,21 +1518,22 @@ jobs:
                 if [ -f /var/www/mindgarden/logs/mindgarden-prod.log ]; then
                   tail -50 /var/www/mindgarden/logs/mindgarden-prod.log
                 fi
-                echo "⚠️ HTTP 헬스체크 실패했지만 배포는 계속 진행됩니다."
+                echo "::error::트래픽 슬롯 HTTP 헬스체크 실패 — 배포를 실패 처리합니다."
+                exit 1
               fi
             fi
           done
           
-          # 프론트엔드(SPA 엔트리) 확인 — 트래픽 슬롯 포트 직접
-          fe_code=$(curl -sS -o /dev/null -w '%{http_code}' -m 15 "http://${MG_BACKEND_BIND_HOST}:${ACTIVE_PORT}/login" 2>/dev/null || echo "000")
-          if echo "$fe_code" | grep -qE '^(200|301|302|303|304)$'; then
-            echo "✅ 프론트엔드 엔트리(/login) 응답 정상 (HTTP $fe_code)"
-          else
-            echo "❌ 프론트엔드 접근 실패 (HTTP $fe_code, 기대: 2xx/3xx)"
-          fi
+          # 프론트엔드(SPA) 헬스는 deploy-frontend-prod.yml(공개 URL·main-hash)에서 본다. BE 슬롯 포트는 SPA 를 서빙하지 않는다.
           
           echo "🎉 배포 완료!"
           
+    # 사용자가 실제로 들어오는 공개 URL(nginx·CDN 경유)로 헬스를 본다. 200·UP 이 아니면 배포 실패.
+    - name: 🌐 공개 URL 헬스체크
+      env:
+        PUBLIC_BASE_URL: ${{ vars.PRODUCTION_PUBLIC_BASE_URL }}
+      run: bash scripts/deployment/public-health-check.sh "$PUBLIC_BASE_URL"
+
     - name: 🔍 서버 상태 상세 확인 (디버깅)
       uses: appleboy/ssh-action@v1.1.0
       with:
@@ -2005,7 +1607,7 @@ jobs:
           echo "=================================="
           
     - name: 🧹 메모리 정리
-      uses: appleboy/ssh-action@master
+      uses: appleboy/ssh-action@c4f70287fc37c43b14b30b407224bbbc8e8c6327 # master 2026-08-16 (v1.2.5+10) 고정
       with:
         host: ${{ secrets.PRODUCTION_HOST }}
         username: ${{ secrets.PRODUCTION_USER }}

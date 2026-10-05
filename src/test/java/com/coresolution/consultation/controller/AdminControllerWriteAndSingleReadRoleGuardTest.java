@@ -30,6 +30,7 @@ import com.coresolution.consultation.repository.ConsultantClientMappingRepositor
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.repository.UserSocialAccountRepository;
 import com.coresolution.consultation.service.AdminBulkMappingPaymentService;
+import com.coresolution.consultation.service.MappingTerminationService;
 import com.coresolution.consultation.service.AdminService;
 import com.coresolution.consultation.service.ClientStatsService;
 import com.coresolution.consultation.service.ConsultantStatsService;
@@ -109,6 +110,7 @@ class AdminControllerWriteAndSingleReadRoleGuardTest {
 
     @Mock private AdminService adminService;
     @Mock private AdminBulkMappingPaymentService adminBulkMappingPaymentService;
+    @Mock private MappingTerminationService mappingTerminationService;
     @Mock private RealTimeStatisticsService realTimeStatisticsService;
     @Mock private ConsultantStatsService consultantStatsService;
     @Mock private ClientStatsService clientStatsService;
@@ -163,9 +165,8 @@ class AdminControllerWriteAndSingleReadRoleGuardTest {
         when(clientStatsService.getClientWithStats(anyString(), anyLong())).thenReturn(new HashMap<>());
         when(roleCommonCodeAuthorizationService.isAdminOrStaffRoleFromCommonCode(any())).thenReturn(true);
         when(onboardingService.addDefaultTenantCommonCodes(anyString(), anyString())).thenReturn(0);
-        BulkMappingPaymentResult completed = BulkMappingPaymentResult.builder()
-                .processedMappingIds(List.of(MAPPING_ID)).skippedMappingIds(List.of())
-                .notProcessedMappingIds(List.of()).build();
+        BulkMappingPaymentResult completed = bulkResult(
+                bulkItem(MAPPING_ID, BulkMappingPaymentResult.ItemStatus.SUCCEEDED, null));
         when(adminBulkMappingPaymentService.confirmMappings(any(), any(), any())).thenReturn(completed);
         when(adminBulkMappingPaymentService.cancelMappings(any(), any())).thenReturn(completed);
     }
@@ -218,7 +219,7 @@ class AdminControllerWriteAndSingleReadRoleGuardTest {
         verify(adminBulkMappingPaymentService).confirmMappings(List.of(MAPPING_ID), "CARD", null);
         verify(adminBulkMappingPaymentService, never()).cancelMappings(any(), any());
         verify(adminService, never()).partialRefundMapping(anyLong(), anyInt(), any());
-        verify(adminService, never()).terminateMapping(anyLong(), any());
+        verify(mappingTerminationService, never()).terminate(anyLong(), any());
     }
 
     @Test
@@ -230,7 +231,7 @@ class AdminControllerWriteAndSingleReadRoleGuardTest {
         }
         verify(adminService).rejectMapping(MAPPING_ID, "reason");
         verify(adminService).partialRefundMapping(MAPPING_ID, 1, "reason");
-        verify(adminService).terminateMapping(MAPPING_ID, "reason");
+        verify(mappingTerminationService).terminate(MAPPING_ID, "reason");
         verify(adminService).deleteConsultantWithTransfer(CONSULTANT_ID, NEW_CONSULTANT_ID, "reason");
         verify(adminBulkMappingPaymentService).confirmMappings(List.of(MAPPING_ID), "CARD", null);
         verify(adminBulkMappingPaymentService).cancelMappings(List.of(MAPPING_ID),
@@ -317,17 +318,56 @@ class AdminControllerWriteAndSingleReadRoleGuardTest {
     }
 
     @Test
-    @DisplayName("일괄 처리 중 실패로 중단되면 409 + 처리·미처리 목록 (성공 응답 아님)")
-    void bulkPayment_stoppedOnFailure_conflict() {
-        when(adminBulkMappingPaymentService.cancelMappings(any(), any())).thenReturn(BulkMappingPaymentResult.builder()
-                .processedMappingIds(List.of()).skippedMappingIds(List.of()).failedMappingId(MAPPING_ID)
-                .notProcessedMappingIds(List.of()).build());
+    @DisplayName("일괄 처리 — 커밋된 매칭 없이 실패만 있으면 409 + 매칭별 결과 (성공 응답 아님)")
+    void bulkPayment_allFailed_conflictWithItems() {
+        when(adminBulkMappingPaymentService.cancelMappings(any(), any())).thenReturn(bulkResult(
+                bulkItem(MAPPING_ID, BulkMappingPaymentResult.ItemStatus.FAILED,
+                        AdminBulkMappingConstants.ITEM_FAILURE_CODE_PROCESSING_FAILED)));
         ResponseEntity<?> response = controller.cancelMappingPayment(Map.of("mappingIds", List.of(MAPPING_ID)),
                 sessionOf(UserRole.ADMIN, TENANT_ID));
         assertThat(response.getStatusCode().value()).isEqualTo(409);
         ApiResponse<?> body = (ApiResponse<?>) response.getBody();
         assertThat(body).isNotNull();
         assertThat(body.isSuccess()).isFalse();
+        assertThat(body.getMessage()).isEqualTo(AdminServiceUserFacingMessages.MSG_BULK_MAPPING_ALL_FAILED);
+        @SuppressWarnings("unchecked")
+        Map<String, Object> data = (Map<String, Object>) body.getData();
+        assertThat(data.get("failedMappings")).isEqualTo(List.of(MAPPING_ID));
+        assertThat((List<?>) data.get("results")).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("일괄 처리 — 앞 매칭 커밋 뒤 다음 매칭 실패: 요청 전체 409 금지, 200 + 매칭별 결과(성공·실패)")
+    void bulkPayment_partialFailure_okWithPerItemResults() {
+        long second = MAPPING_ID + 1;
+        when(adminBulkMappingPaymentService.cancelMappings(any(), any())).thenReturn(bulkResult(
+                bulkItem(MAPPING_ID, BulkMappingPaymentResult.ItemStatus.SUCCEEDED, null),
+                bulkItem(second, BulkMappingPaymentResult.ItemStatus.FAILED,
+                        AdminBulkMappingConstants.ITEM_FAILURE_CODE_PROCESSING_FAILED)));
+        ResponseEntity<?> response = controller.cancelMappingPayment(Map.of("mappingIds", List.of(MAPPING_ID)),
+                sessionOf(UserRole.ADMIN, TENANT_ID));
+        assertThat(response.getStatusCode().value()).isEqualTo(200);
+        ApiResponse<?> body = (ApiResponse<?>) response.getBody();
+        assertThat(body).isNotNull();
+        assertThat(body.getMessage()).isEqualTo(AdminServiceUserFacingMessages.MSG_BULK_MAPPING_PARTIAL_FAILURE);
+        @SuppressWarnings("unchecked")
+        Map<String, Object> data = (Map<String, Object>) body.getData();
+        assertThat(data.get("cancelledMappings")).isEqualTo(List.of(MAPPING_ID));
+        assertThat(data.get("failedMappings")).isEqualTo(List.of(second));
+        assertThat(data.get("allSucceeded")).isEqualTo(false);
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> results = (List<Map<String, Object>>) data.get("results");
+        assertThat(results).extracting(row -> row.get("status")).containsExactly("SUCCEEDED", "FAILED");
+    }
+
+    private static BulkMappingPaymentResult.Item bulkItem(long mappingId, BulkMappingPaymentResult.ItemStatus status,
+            String code) {
+        return BulkMappingPaymentResult.Item.builder().mappingId(mappingId).status(status).code(code)
+                .message(code == null ? null : AdminServiceUserFacingMessages.MSG_BULK_MAPPING_ITEM_FAILED).build();
+    }
+
+    private static BulkMappingPaymentResult bulkResult(BulkMappingPaymentResult.Item... items) {
+        return BulkMappingPaymentResult.builder().items(List.of(items)).build();
     }
 
     @Test

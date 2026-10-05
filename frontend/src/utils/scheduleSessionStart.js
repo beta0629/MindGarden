@@ -8,30 +8,16 @@
  * @since 2026-10-04
  */
 import { CONSULTATION_LOG_SESSION_START_TIME_ZONE } from '../constants/consultationLogAutosaveConstants';
+import {
+  formatDateTimeKeyInZone,
+  parseScheduleDateKey,
+  parseScheduleTimeKey
+} from './zonedDateTime';
+import logger from './logger';
 
-const pad2 = (n) => String(n).padStart(2, '0');
-
-const toDateKey = (date) => {
-  if (Array.isArray(date) && date.length >= 3) {
-    return `${date[0]}-${pad2(date[1])}-${pad2(date[2])}`;
-  }
-  if (typeof date === 'string' && /^\d{4}-\d{2}-\d{2}/.test(date)) {
-    return date.slice(0, 10);
-  }
-  return null;
-};
-
-const toTimeKey = (time) => {
-  if (time == null || time === '') {
-    return '00:00';
-  }
-  if (Array.isArray(time) && time.length >= 2) {
-    return `${pad2(time[0])}:${pad2(time[1])}`;
-  }
-  const text = String(time);
-  const hm = (text.includes('T') ? text.split('T')[1] : text).slice(0, 5);
-  return /^\d{2}:\d{2}$/.test(hm) ? hm : null;
-};
+/** 시작 시각 해석 실패 경고 — 화면은 버튼을 켜 두고 서버가 최종 판정한다. */
+export const SCHEDULE_START_PARSE_FAILED_WARNING =
+  '[scheduleSessionStart] 일정 시작 시각을 읽지 못해 화면 판정을 건너뜁니다(서버가 최종 판정)';
 
 /**
  * 판정 타임존 기준 현재 시각 'YYYY-MM-DDTHH:mm'.
@@ -39,32 +25,35 @@ const toTimeKey = (time) => {
  * @param {Date} now
  * @returns {string}
  */
-export const formatNowInSessionZone = (now = new Date()) => {
-  const parts = new Intl.DateTimeFormat('en-CA', {
-    timeZone: CONSULTATION_LOG_SESSION_START_TIME_ZONE,
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    hourCycle: 'h23'
-  }).formatToParts(now);
-  const get = (type) => parts.find((p) => p.type === type)?.value ?? '00';
-  return `${get('year')}-${get('month')}-${get('day')}T${get('hour')}:${get('minute')}`;
-};
+export const formatNowInSessionZone = (now = new Date()) =>
+  formatDateTimeKeyInZone(now, CONSULTATION_LOG_SESSION_START_TIME_ZONE);
+
+/** 값이 있는 첫 후보 (null·undefined·'' 는 건너뜀). */
+const pickPresent = (...values) => values.find((value) => value != null && value !== '');
 
 /**
  * 일정이 시작됐는지 (date + startTime, startTime 없으면 그날 00:00).
- * 날짜를 읽을 수 없으면 true — 서버 판정에 맡긴다.
+ * API 원본 필드(apiDate·apiStartTime)를 표시용 필드(date·startTime)보다 먼저 읽는다.
+ * 시각은 zonedDateTime.parseScheduleTimeKey 로만 읽는다('오후 07:00', 'HH:mm[:ss]', ISO).
+ * startTime 이 오프셋 ISO 이고 date 가 없으면 startTime 의 운영 타임존 날짜를 쓴다.
+ * 날짜·시각을 읽을 수 없으면 경고를 남기고 true — 최종 판정은 서버(SCHEDULE_SESSION_NOT_STARTED).
  *
- * @param {{ date?: *, startTime?: * }|null|undefined} schedule
+ * @param {{ apiDate?: *, date?: *, sessionDate?: *, apiStartTime?: *, startTime?: * }|null|undefined} schedule
  * @param {Date} [now]
  * @returns {boolean}
  */
 export const hasScheduleSessionStarted = (schedule, now = new Date()) => {
-  const dateKey = toDateKey(schedule?.date);
-  const timeKey = toTimeKey(schedule?.startTime);
+  if (schedule == null) {
+    return true;
+  }
+  const zone = CONSULTATION_LOG_SESSION_START_TIME_ZONE;
+  const rawStart = pickPresent(schedule.apiStartTime, schedule.startTime);
+  const rawDate = pickPresent(schedule.apiDate, schedule.date, schedule.sessionDate);
+  const dateKey = parseScheduleDateKey(rawDate, zone)
+    ?? (typeof rawStart === 'string' && rawStart.includes('T') ? parseScheduleDateKey(rawStart, zone) : null);
+  const timeKey = rawStart == null ? '00:00' : parseScheduleTimeKey(rawStart, zone);
   if (!dateKey || !timeKey) {
+    logger.warn(SCHEDULE_START_PARSE_FAILED_WARNING, { date: rawDate ?? null, startTime: rawStart ?? null });
     return true;
   }
   return formatNowInSessionZone(now) >= `${dateKey}T${timeKey}`;

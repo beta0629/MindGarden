@@ -66,7 +66,7 @@ jobs:
           path: _static_site_upload
 
       - name: 🔍 SSH 연결 테스트
-        uses: appleboy/ssh-action@master
+        uses: appleboy/ssh-action@c4f70287fc37c43b14b30b407224bbbc8e8c6327 # master 2026-08-16 (v1.2.5+10) 고정
         with:
           host: ${{ secrets.ssh_host }}
           username: ${{ secrets.ssh_user }}
@@ -78,7 +78,7 @@ jobs:
             echo "서버 정보: $(uname -a)"
 
       - name: 💾 배포 전 기존 파일 백업
-        uses: appleboy/ssh-action@master
+        uses: appleboy/ssh-action@c4f70287fc37c43b14b30b407224bbbc8e8c6327 # master 2026-08-16 (v1.2.5+10) 고정
         with:
           host: ${{ secrets.ssh_host }}
           username: ${{ secrets.ssh_user }}
@@ -116,7 +116,7 @@ jobs:
           overwrite: true
 
       - name: 🔄 배포 완료 및 검증
-        uses: appleboy/ssh-action@master
+        uses: appleboy/ssh-action@c4f70287fc37c43b14b30b407224bbbc8e8c6327 # master 2026-08-16 (v1.2.5+10) 고정
         with:
           host: ${{ secrets.ssh_host }}
           username: ${{ secrets.ssh_user }}
@@ -170,7 +170,7 @@ jobs:
         env:
           HEALTH_URLS_ECHO: ${{ inputs.health_urls }}
           HEALTH_REQUIRE_ALL: ${{ inputs.health_require_all_urls }}
-        uses: appleboy/ssh-action@master
+        uses: appleboy/ssh-action@c4f70287fc37c43b14b30b407224bbbc8e8c6327 # master 2026-08-16 (v1.2.5+10) 고정
         with:
           host: ${{ secrets.ssh_host }}
           username: ${{ secrets.ssh_user }}

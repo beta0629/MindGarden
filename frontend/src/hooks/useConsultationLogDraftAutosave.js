@@ -23,7 +23,12 @@ import {
   removeDraftBackup,
   saveDraftBackup
 } from '../utils/consultationLogDraftBackupStore';
-import { redirectToLoginPageOnce } from '../utils/sessionRedirect';
+import {
+  clearPendingLoginReturnUrl,
+  redirectToLoginPageOnce,
+  registerLoginRedirectRescue,
+  setPendingLoginReturnUrl
+} from '../utils/sessionRedirect';
 
 /** 자동저장 상태 머신 값 */
 export const DRAFT_AUTOSAVE_STATUS = {
@@ -153,6 +158,8 @@ export function useConsultationLogDraftAutosave({
   const legacyPurgePendingRef = useRef(false);
   const recordUpdatedAtRef = useRef(recordUpdatedAt);
   recordUpdatedAtRef.current = recordUpdatedAt;
+  /** 서버 초안에 아직 반영되지 않은 입력이 있는지 (저장 중·실패 포함) — 로그인 이동 직전 보관 여부 판단 */
+  const unsavedRef = useRef(false);
 
   const sessionCtx = useContext(SessionContext);
   const checkSessionRef = useRef(sessionCtx?.checkSession);
@@ -219,11 +226,17 @@ export function useConsultationLogDraftAutosave({
    */
   const handleUnauthorized = useCallback(async(payloadJson) => {
     const backup = await saveDraftBackup(backupScope, payloadJson, { rescue: true });
+    const returnUrl = `${window.location.pathname}${window.location.search}`;
+    // 세션 재확인이 먼저 /login 으로 보내도 같은 일정으로 돌아오게 복귀 경로를 예약한다(백업이 남았을 때만).
+    if (backup.persisted) {
+      setPendingLoginReturnUrl(returnUrl);
+    }
     const checkSession = checkSessionRef.current;
     if (typeof checkSession === 'function') {
       try {
         const alive = await checkSession(true, { silent: true });
         if (alive) {
+          clearPendingLoginReturnUrl();
           return false;
         }
       } catch {
@@ -235,7 +248,7 @@ export function useConsultationLogDraftAutosave({
     if (!backup.persisted) {
       return true;
     }
-    redirectToLoginPageOnce({ returnUrl: `${window.location.pathname}${window.location.search}` });
+    redirectToLoginPageOnce({ returnUrl });
     return true;
   }, [backupScope]);
 
@@ -280,6 +293,7 @@ export function useConsultationLogDraftAutosave({
     if (result.ok) {
       if (result.version != null) serverVersionRef.current = result.version;
       if (result.updatedAt != null) serverUpdatedAtRef.current = result.updatedAt;
+      if (!dirtyRef.current) unsavedRef.current = false;
       await removeDraftBackup(backupScope);
       setBackupKept(false);
       markSaved();
@@ -355,6 +369,7 @@ export function useConsultationLogDraftAutosave({
     clearTimers();
     retryAttemptRef.current = 0;
     dirtyRef.current = false;
+    unsavedRef.current = false;
     setStatus(DRAFT_AUTOSAVE_STATUS.IDLE);
     setSavedAtLabel('');
     setConflictDetected(false);
@@ -477,8 +492,26 @@ export function useConsultationLogDraftAutosave({
   const [dirtySignal, setDirtySignal] = useState(0);
   const notifyDirty = useCallback(() => {
     dirtyRef.current = true;
+    unsavedRef.current = true;
     setDirtySignal((n) => n + 1);
   }, [dirtyRef]);
+
+  /**
+   * 공용 로그인 이동(활동 ping·세션 확인·요청 401 등 모든 경로) 직전 보관 백업.
+   * 이동이 확정되는 순간의 입력을 동기로 캡처해 디바운스 저장 전 마지막 입력까지 남기고,
+   * 백업이 실제로 남았을 때만 같은 화면을 returnUrl 로 돌려준다.
+   */
+  useEffect(() => {
+    if (!canSave) return undefined;
+    return registerLoginRedirectRescue(() => {
+      if (!unsavedRef.current && !dirtyRef.current) return { persisted: false };
+      const payloadJson = safeStringify(snapshotRef.current);
+      if (payloadJson == null) return { persisted: false };
+      const returnUrl = `${window.location.pathname}${window.location.search}`;
+      return saveDraftBackup(backupScope, payloadJson, { rescue: true })
+        .then((backup) => ({ persisted: backup.persisted, returnUrl }));
+    });
+  }, [canSave, dirtyRef, snapshotRef, backupScope]);
 
   useEffect(() => {
     if (!canSave || !dirtyRef.current) return undefined;

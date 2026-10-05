@@ -4,9 +4,17 @@ import {
   hasInstitutionLinkLatestLog,
   isInstitutionLinkConsultationLogContext,
   mapInstitutionLinkLogToConsultationRecord,
-  resolveConsultationLogActionVisibility,
-  resolveConsultationScheduleId
+  resolveConsultationScheduleId,
+  resolveScheduleConsultationLogEntry,
+  CONSULTATION_LOG_ENTRY_MODE
 } from '../consultationLogInstitutionContext';
+
+const entry = (statusCode, hasConsultationRecord, extra = {}) => resolveScheduleConsultationLogEntry({
+  statusCode,
+  hasConsultationRecord,
+  canAccessBody: true,
+  ...extra
+});
 
 describe('consultationLogInstitutionContext', () => {
   test('schedule paymentTiming INSTITUTION_LINK → true', () => {
@@ -88,25 +96,24 @@ describe('consultationLogInstitutionContext', () => {
       { id: 453, mappingId: 265, paymentTiming: 'INSTITUTION_LINK', status: 'CONFIRMED' }
     );
     expect(hasRecord).toBe(false);
-    expect(resolveConsultationLogActionVisibility(hasRecord)).toEqual({
-      showWrite: true,
-      showView: false
+    expect(entry('CONFIRMED', hasRecord)).toEqual({ visible: true, mode: CONSULTATION_LOG_ENTRY_MODE.WRITE });
+  });
+
+  test('resolveScheduleConsultationLogEntry — 일지 있으면 CONFIRMED·IN_PROGRESS·COMPLETED 모두 보기/수정', () => {
+    ['CONFIRMED', 'IN_PROGRESS', 'COMPLETED', 'TENTATIVE_PENDING_PAYMENT'].forEach((status) => {
+      expect(entry(status, true)).toEqual({ visible: true, mode: CONSULTATION_LOG_ENTRY_MODE.VIEW });
+      expect(entry(status, false)).toEqual({ visible: true, mode: CONSULTATION_LOG_ENTRY_MODE.WRITE });
+      expect(entry(status, null)).toEqual({ visible: true, mode: CONSULTATION_LOG_ENTRY_MODE.WRITE });
     });
   });
 
-  test('resolveConsultationLogActionVisibility — 작성/보기 상호배타', () => {
-    expect(resolveConsultationLogActionVisibility(true)).toEqual({
-      showWrite: false,
-      showView: true
-    });
-    expect(resolveConsultationLogActionVisibility(false)).toEqual({
-      showWrite: true,
-      showView: false
-    });
-    expect(resolveConsultationLogActionVisibility(null)).toEqual({
-      showWrite: false,
-      showView: false
-    });
+  test('resolveScheduleConsultationLogEntry — 본문 권한 없음(사무원·내담자)·휴가·BOOKED·CANCELLED 는 숨김', () => {
+    const hidden = { visible: false, mode: null };
+    expect(entry('CONFIRMED', true, { canAccessBody: false })).toEqual(hidden);
+    expect(entry('COMPLETED', true, { isVacation: true })).toEqual(hidden);
+    expect(entry('BOOKED', true)).toEqual(hidden);
+    expect(entry('CANCELLED', true)).toEqual(hidden);
+    expect(entry(null, true)).toEqual(hidden);
   });
 
   test('map institution log keeps body fields for reopen', () => {

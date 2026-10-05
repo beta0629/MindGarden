@@ -51,6 +51,12 @@ class OnboardingApprovalProcedureSchemaTest {
         assertThat(adminAccount).contains(
                 "IN p_admin_user_id VARCHAR(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
         assertThat(adminAccount).doesNotContain("SUBSTRING_INDEX(p_contact_email");
+        assertThat(adminAccount).contains("UK_users_tenant_user_id");
+        assertThat(adminAccount).contains(
+                "tenant_id COLLATE utf8mb4_unicode_ci = p_tenant_id COLLATE utf8mb4_unicode_ci");
+        assertThat(adminAccount).doesNotContain(
+                "user_id COLLATE utf8mb4_unicode_ci = v_user_id COLLATE utf8mb4_unicode_ci\n"
+                        + "                    AND (is_deleted IS NULL OR is_deleted = FALSE)");
         assertThat(approvalProcedure).contains(
                 "IN p_contact_email VARCHAR(512) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
         assertThat(approvalProcedure).contains(

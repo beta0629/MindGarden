@@ -4,6 +4,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockingDetails;
 import static org.mockito.Mockito.verify;
@@ -27,6 +29,7 @@ import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.core.constant.OnboardingConstants;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.security.OnboardingAdminEmailCipher;
+import com.coresolution.core.security.TenantAdminUserIdAllocator;
 import com.coresolution.core.service.TenantDashboardService;
 import com.coresolution.consultation.util.OAuth2DomainUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -120,7 +123,11 @@ class OnboardingAdminEmailCipherFlowTest {
                 "승인", PLAIN_EMAIL, "stored-hash", "label");
 
         verify(callableStatement).setString(7, prepared.cipher());
-        verify(callableStatement).setString(11, "admin");
+        verify(callableStatement).setString(eq(11), argThat(userId -> userId != null
+                && userId.startsWith(TenantAdminUserIdAllocator.PREFIX)
+                && !userId.equals("admin")
+                && userId.indexOf('@') < 0
+                && userId.length() <= TenantAdminUserIdAllocator.MAX_BASE_LENGTH));
         assertStoredCipherMatchesLogin(prepared.cipher());
     }
 

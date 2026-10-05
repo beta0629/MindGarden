@@ -61,14 +61,13 @@ public class UserIdGeneratorImpl implements UserIdGenerator {
         String candidate = base.toLowerCase();
         int suffix = 1;
         
-        // 전역 중복 체크 및 순번 증가 (user_id는 전역적으로 unique해야 함)
-        // UK_r43af9ap4edm43mmtq01oddj6 제약 조건: user_id는 전역적으로 unique
-        while (userRepository.existsByUserId(candidate)) {
+        // UK_users_tenant_user_id: (tenant_id, user_id) 는 삭제 행까지 유일하다.
+        while (userRepository.existsByTenantIdAndUserIdIncludingDeleted(tenantId, candidate)) {
             candidate = String.format("%s%d", base.toLowerCase(), suffix++);
-            log.debug("사용자 ID 중복 감지 (전역), 순번 증가: candidate={}", candidate);
+            log.debug("사용자 ID 중복 감지 (테넌트, 삭제 포함), 순번 증가: candidate={}", candidate);
         }
         
-        log.info("✅ 전역 사용자 ID 생성 완료: email={}, tenantId={}, userId={}", 
+        log.info("✅ 테넌트 사용자 ID 생성 완료: email={}, tenantId={}, userId={}", 
                 EmailLogMasking.maskForLog(normalizedEmail), tenantId, candidate);
         
         return candidate;
@@ -87,11 +86,11 @@ public class UserIdGeneratorImpl implements UserIdGenerator {
         String base = normalizedDigits;
         String candidate = base;
         int suffix = 1;
-        while (userRepository.existsByUserId(candidate)) {
+        while (userRepository.existsByTenantIdAndUserIdIncludingDeleted(tenantId, candidate)) {
             candidate = base + suffix++;
-            log.debug("사용자 ID 중복 감지 (전화 기반, 전역), 순번 증가: candidate={}", candidate);
+            log.debug("사용자 ID 중복 감지 (전화 기반, 테넌트, 삭제 포함), 순번 증가: candidate={}", candidate);
         }
-        log.info("✅ 전역 사용자 ID 생성 완료(전화): tenantId={}, userId={}", tenantId, candidate);
+        log.info("✅ 테넌트 사용자 ID 생성 완료(전화): tenantId={}, userId={}", tenantId, candidate);
         return candidate;
     }
 }

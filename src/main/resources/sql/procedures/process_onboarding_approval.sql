@@ -4,7 +4,8 @@
 -- p_domain_suffix 는 CreateOrActivateTenant 의 같은 인자로 그대로 전달한다.
 -- p_contact_email 은 Java 가 EmailAttributeConverter 와 같은 safeEncrypt 로 만든 암호문이다.
 -- users.email 은 VARCHAR(512) (V20260614_002). 이 인자도 VARCHAR(512).
--- p_admin_user_id 는 암호화 전 로컬 파트. users.user_id VARCHAR(50) (V20251208_002).
+-- p_admin_user_id 는 TenantAdminUserIdAllocator 베이스. 이메일 로컬 파트가 아니다.
+-- users.user_id VARCHAR(50). 유일성은 (tenant_id, user_id) (V20261011_001).
 
 DROP PROCEDURE IF EXISTS ProcessOnboardingApproval;
 

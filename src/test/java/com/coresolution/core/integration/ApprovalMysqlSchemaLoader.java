@@ -66,6 +66,8 @@ final class ApprovalMysqlSchemaLoader {
             for (String path : DDL) {
                 ScriptUtils.executeSqlScript(connection, new ClassPathResource(path));
             }
+            ScriptUtils.executeSqlScript(connection, new ClassPathResource(
+                    "db/migration/V20261011_001__users_tenant_user_id_unique.sql"));
             for (String path : PROCEDURES) {
                 installProcedure(connection, path);
             }

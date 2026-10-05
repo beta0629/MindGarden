@@ -297,7 +297,7 @@ public class StoredProcedureServiceImpl implements StoredProcedureService {
                 connection -> connection.prepareCall("{CALL UpdateMappingInfo(?, ?, ?, ?, ?, ?, ?, ?)}"),
                 (CallableStatementCallback<Map<String, Object>>) cs -> {
                     // [2026-05-22] 핫픽스: tenant_id IN 파라미터 누락 복구 (SOLAPI_NOTIFICATION_MISS_DEBUG.md 결함 #3)
-                    // DB 프로시저 시그니처(database/schema/mapping_update_procedures_mysql.sql L12-21):
+                    // DB 프로시저 시그니처(database/schema/procedures_standardized/UpdateMappingInfo_standardized.sql):
                     //   1 IN p_mapping_id, 2 IN p_new_package_name, 3 IN p_new_package_price,
                     //   4 IN p_new_total_sessions, 5 IN p_tenant_id, 6 IN p_updated_by,
                     //   7 OUT p_success, 8 OUT p_message

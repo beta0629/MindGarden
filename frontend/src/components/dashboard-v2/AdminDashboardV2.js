@@ -8,6 +8,7 @@
  */
 
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { formatDateKeyInZone } from '../../utils/zonedDateTime';
 import useMonthlyConsultantCounts from '../../hooks/useMonthlyConsultantCounts';
 import useCumulativeMissingConsultationLogs from '../../hooks/useCumulativeMissingConsultationLogs';
 import useCumulativeConsultantCounts from '../../hooks/useCumulativeConsultantCounts';
@@ -546,7 +547,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
       /** fetch 실패(rejected) 시 res.ok 체크를 통과하지 않도록 쓰는 더미 */
       const dummyFailedResponse = () => ({ ok: false, json: () => Promise.resolve({}) });
       const settled = await Promise.allSettled([
-        fetch(`/api/v1/admin/consultants/with-vacation?date=${new Date().toISOString().split('T')[0]}`, { headers, credentials: 'include' }),
+        fetch(`/api/v1/admin/consultants/with-vacation?date=${formatDateKeyInZone()}`, { headers, credentials: 'include' }),
         fetch(buildAdminDashboardClientsWithMappingUrl(), { headers, credentials: 'include' }),
         StandardizedApi.get(API_ENDPOINTS.ADMIN.MAPPINGS.STATS),
         fetch(API_ADMIN_CONSULTANT_RATING_STATS, { headers, credentials: 'include' }),

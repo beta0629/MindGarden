@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import notificationManager from '../../utils/notification';
+import { formatDateKeyInZone } from '../../utils/zonedDateTime';
 import { useConfirm } from '../../hooks/useConfirm';
 import { useNavigate } from 'react-router-dom';
 import { RoleUtils, USER_ROLES } from '../../constants/roles';
@@ -312,7 +313,7 @@ const AdminDashboard = ({ user: propUser }) => {
         setLoading(true);
         try {
             const [consultantsRes, clientsRes, mappingStatsRes, ratingRes, consultationRes] = await Promise.all([
-                fetch(`/api/v1/admin/consultants/with-vacation?date=${new Date().toISOString().split('T')[0]}`),
+                fetch(`/api/v1/admin/consultants/with-vacation?date=${formatDateKeyInZone()}`),
                 fetch(buildAdminDashboardClientsWithMappingUrl()),
                 fetch(API_ENDPOINTS.ADMIN.MAPPINGS.STATS),
                 fetch(API_ADMIN_CONSULTANT_RATING_STATS),

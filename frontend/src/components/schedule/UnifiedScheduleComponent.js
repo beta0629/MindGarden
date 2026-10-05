@@ -64,6 +64,7 @@ import './ScheduleB0KlA.css';
 import { useTranslation } from 'react-i18next';
 import { formatLocalDateYmd } from '../../utils/erpFinanceDisplay';
 import { getVacationMinSelectableDate } from '../../constants/consultantAvailabilityConstants';
+import { formatDateKeyInZone } from '../../utils/zonedDateTime';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 // ScheduleController admin — AdminController /api/v1/admin/schedules 와 혼용 금지
@@ -501,7 +502,7 @@ const UnifiedScheduleComponent = ({
     const loadConsultants = useCallback(async() => {
         try {
             setLoadingConsultants(true);
-            const dateStr = new Date().toISOString().split('T')[0];
+            const dateStr = formatDateKeyInZone();
             console.log('👥 상담사 목록 로드 시작: date=', dateStr);
             
             const response = await apiGet(`/api/v1/admin/consultants/with-vacation?date=${dateStr}`);

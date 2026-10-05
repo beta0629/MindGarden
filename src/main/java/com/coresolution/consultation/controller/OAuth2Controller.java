@@ -39,6 +39,7 @@ import com.coresolution.consultation.util.OAuth2DomainUtil;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.consultation.utils.SessionUtils;
 import com.coresolution.core.controller.BaseApiController;
+import com.coresolution.core.util.HttpRequestClientIp;
 import com.coresolution.core.dto.ApiResponse;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -4814,7 +4815,7 @@ public class OAuth2Controller extends BaseApiController {
                         sessionId,
                         SessionManagementConstants.END_REASON_DUPLICATE_LOGIN);
             }
-            String clientIp = request.getRemoteAddr();
+            String clientIp = HttpRequestClientIp.resolve(request);
             String userAgent = request.getHeader("User-Agent");
             userSessionService.createSession(user, sessionId, clientIp, userAgent,
                     SessionManagementConstants.LOGIN_TYPE_SOCIAL, socialProvider);

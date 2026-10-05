@@ -15,6 +15,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import com.coresolution.consultation.service.SecurityAlertService;
+import com.coresolution.core.util.HttpRequestClientIp;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -270,17 +271,7 @@ public class AuditLoggingConfig {
          * 클라이언트 IP 주소 추출
          */
         private String getClientIpAddress(HttpServletRequest request) {
-            String xForwardedFor = request.getHeader("X-Forwarded-For");
-            if (xForwardedFor != null && !xForwardedFor.isEmpty()) {
-                return xForwardedFor.split(",")[0].trim();
-            }
-            
-            String xRealIp = request.getHeader("X-Real-IP");
-            if (xRealIp != null && !xRealIp.isEmpty()) {
-                return xRealIp;
-            }
-            
-            return request.getRemoteAddr();
+            return HttpRequestClientIp.resolve(request);
         }
     }
 }

@@ -110,8 +110,8 @@ class OnboardingControllerTest {
     @DisplayName("실검증 모드에서 verify 실패 시 IllegalArgumentException")
     void create_whenCaptchaVerifyFails_throws() {
         when(captchaVerifier.requiresCaptchaToken()).thenReturn(true);
-        when(httpRequest.getHeader("X-Forwarded-For"))
-                .thenReturn(TestDocumentationIps.DOC_NET_2_EXAMPLE + ", 10.0.0.1");
+        when(httpRequest.getRemoteAddr()).thenReturn(TestDocumentationIps.DOC_NET_2_EXAMPLE);
+        lenient().when(httpRequest.getHeader("X-Forwarded-For")).thenReturn(TestDocumentationIps.DOC_NET_3_EXAMPLE);
         when(captchaVerifier.verify("tok", TestDocumentationIps.DOC_NET_2_EXAMPLE)).thenReturn(false);
 
         OnboardingCreateRequest payload = new OnboardingCreateRequest(null, "테넌트", "a@b.com", RiskLevel.LOW,
@@ -120,6 +120,7 @@ class OnboardingControllerTest {
         assertThatThrownBy(() -> onboardingController.create(payload, httpSession, httpRequest))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage(OnboardingConstants.ERROR_ONBOARDING_CAPTCHA_VERIFICATION_FAILED);
+        verify(captchaVerifier).verify("tok", TestDocumentationIps.DOC_NET_2_EXAMPLE);
     }
 
     @Test

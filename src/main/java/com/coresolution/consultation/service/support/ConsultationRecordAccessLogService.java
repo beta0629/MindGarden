@@ -6,6 +6,7 @@ import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
 import java.util.HexFormat;
 import com.coresolution.consultation.constant.consultation.ConsultationRecordAccessAudit;
+import com.coresolution.core.util.HttpRequestClientIp;
 import com.coresolution.consultation.entity.ConsultationRecordAccessLog;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.repository.ConsultationRecordAccessLogRepository;
@@ -39,8 +40,6 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 public class ConsultationRecordAccessLogService {
 
     private static final String HASH_ALGORITHM = "SHA-256";
-    private static final String HEADER_X_FORWARDED_FOR = "X-Forwarded-For";
-    private static final String HEADER_X_REAL_IP = "X-Real-IP";
     private static final String HEADER_USER_AGENT = "User-Agent";
 
     private final ConsultationRecordAccessLogRepository consultationRecordAccessLogRepository;
@@ -128,18 +127,7 @@ public class ConsultationRecordAccessLogService {
     }
 
     private static String resolveClientIp(HttpServletRequest request) {
-        if (request == null) {
-            return null;
-        }
-        String forwarded = request.getHeader(HEADER_X_FORWARDED_FOR);
-        if (forwarded != null && !forwarded.isBlank()) {
-            return forwarded.split(",")[0].trim();
-        }
-        String realIp = request.getHeader(HEADER_X_REAL_IP);
-        if (realIp != null && !realIp.isBlank()) {
-            return realIp;
-        }
-        return request.getRemoteAddr();
+        return HttpRequestClientIp.resolve(request);
     }
 
     /**

@@ -52,6 +52,8 @@ application-*.yml
 *.properties
 # Exception: Spring MessageSource i18n bundles (NOT secrets — UI/audit labels)
 !src/main/resources/messages_ko.properties
+# Exception: JUnit 플랫폼 설정 (비밀 아님 — 전역 테스트 확장 자동 등록)
+!src/test/resources/junit-platform.properties
 # Android local.properties는 각 개발자 환경에 따라 달라지므로 제외
 mobile/android/local.properties
 

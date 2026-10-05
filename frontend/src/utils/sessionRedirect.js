@@ -1,8 +1,15 @@
 /**
  * 인증 실패 시 로그인으로 이동 — 모듈 단일 플래그로 중복 리다이렉트 방지.
+ *
+ * <p>401·세션 만료로 로그인에 보내는 모든 경로는 {@link redirectToLoginPageOnce} 를 지난다.
+ * 이동 직전 등록된 보관 백업({@link registerLoginRedirectRescue})을 먼저 실행해 작성 중 입력을 남긴다.
+ * 화면이 직접 {@code /login} 으로 보내면 이 처리를 건너뛰므로 CI(check-login-redirect-bypass)가 막는다.</p>
  */
 
-import { LOGIN_RETURN_URL_PARAM } from '../constants/consultationLogAutosaveConstants';
+import {
+  LOGIN_REDIRECT_RESCUE_TIMEOUT_MS,
+  LOGIN_RETURN_URL_PARAM
+} from '../constants/consultationLogAutosaveConstants';
 
 let redirectScheduled = false;
 
@@ -66,6 +73,44 @@ export const clearPendingLoginReturnUrl = () => {
   pendingReturnPath = '';
 };
 
+/** 로그인 이동 직전 실행할 보관 백업 — 화면 공통 훅이 등록한다. */
+const loginRedirectRescues = new Set();
+
+/**
+ * 로그인 이동 직전 보관 백업을 등록한다.
+ *
+ * <p>rescue 는 <strong>호출되는 순간 동기로</strong> 현재 입력을 캡처하고 저장 Promise 를 돌려줘야 한다
+ * (이동·언마운트가 뒤따르므로 이후 상태를 읽으면 늦다).</p>
+ *
+ * @param {() => ({ persisted: boolean, returnUrl?: string }|Promise<{ persisted: boolean, returnUrl?: string }>)} rescue
+ * @returns {() => void} 등록 해제
+ */
+export const registerLoginRedirectRescue = (rescue) => {
+  if (typeof rescue !== 'function') return () => {};
+  loginRedirectRescues.add(rescue);
+  return () => {
+    loginRedirectRescues.delete(rescue);
+  };
+};
+
+const startLoginRedirectRescues = () => {
+  const pending = [];
+  loginRedirectRescues.forEach((rescue) => {
+    try {
+      pending.push(Promise.resolve(rescue()));
+    } catch {
+      // 한 화면의 백업 실패가 다른 화면 백업·로그인 이동을 막지 않게 한다
+    }
+  });
+  return pending;
+};
+
+const pickRescueReturnPath = (results) => {
+  const kept = results.find((r) => r.status === 'fulfilled' && r.value && r.value.persisted === true
+    && sanitizeSameOriginReturnPath(r.value.returnUrl));
+  return kept ? kept.value.returnUrl : '';
+};
+
 /**
  * 로그인 페이지로 한 번만 이동합니다.
  *
@@ -93,7 +138,26 @@ export const redirectToLoginPageOnce = (options = {}) => {
     /* private mode 등 */
   }
   const explicitSearch = typeof options.search === 'string' ? options.search : '';
-  const search = explicitSearch || buildLoginReturnSearch(options.returnUrl || pendingReturnPath);
-  window.location.href = `${window.location.origin}/login${search}`;
+  const navigate = (rescueReturnPath) => {
+    const search = explicitSearch
+      || buildLoginReturnSearch(options.returnUrl || rescueReturnPath || pendingReturnPath);
+    window.location.href = `${window.location.origin}/login${search}`;
+  };
+  const pending = startLoginRedirectRescues();
+  if (pending.length === 0) {
+    navigate('');
+    return true;
+  }
+  let navigated = false;
+  const navigateOnce = (rescueReturnPath) => {
+    if (navigated) return;
+    navigated = true;
+    navigate(rescueReturnPath);
+  };
+  const timer = setTimeout(() => navigateOnce(''), LOGIN_REDIRECT_RESCUE_TIMEOUT_MS);
+  void Promise.allSettled(pending).then((results) => {
+    clearTimeout(timer);
+    navigateOnce(pickRescueReturnPath(results));
+  });
   return true;
 };

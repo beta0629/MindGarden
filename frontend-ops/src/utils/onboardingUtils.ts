@@ -372,7 +372,5 @@ export function buildMerchantLegalFacts(checklist: Record<string, unknown>): Onb
       value: firstText(verification.checkedAt) || KR_PUBLIC_DATA_COPY.UNCONFIRMED,
       emphasize: false
     }
-  );
-
-  return facts;
+  ];
 }

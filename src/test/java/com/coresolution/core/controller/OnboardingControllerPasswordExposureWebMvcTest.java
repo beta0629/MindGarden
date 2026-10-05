@@ -26,6 +26,7 @@ import com.coresolution.core.constants.SecurityRoleConstants;
 import com.coresolution.core.domain.onboarding.OnboardingRequest;
 import com.coresolution.core.domain.onboarding.OnboardingStatus;
 import com.coresolution.core.domain.onboarding.RiskLevel;
+import com.coresolution.core.krpublic.KrPublicDataService;
 import com.coresolution.core.security.CaptchaVerifier;
 import com.coresolution.core.service.OnboardingService;
 import com.coresolution.integrationtest.onboarding.OnboardingControllerMvcTestApplication;
@@ -90,6 +91,9 @@ class OnboardingControllerPasswordExposureWebMvcTest {
 
     @MockBean
     private OAuth2DomainUtil oauth2DomainUtil;
+
+    @MockBean
+    private KrPublicDataService krPublicDataService;
 
     private String rawPassword;
     private String storedHash;

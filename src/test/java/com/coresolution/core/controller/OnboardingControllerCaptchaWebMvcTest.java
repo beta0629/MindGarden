@@ -2,6 +2,7 @@ package com.coresolution.core.controller;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -18,11 +19,13 @@ import com.coresolution.core.constant.OnboardingConstants;
 import com.coresolution.core.domain.onboarding.OnboardingRequest;
 import com.coresolution.core.domain.onboarding.OnboardingStatus;
 import com.coresolution.core.domain.onboarding.RiskLevel;
+import com.coresolution.core.krpublic.KrPublicDataService;
 import com.coresolution.core.security.CaptchaVerifier;
 import com.coresolution.core.service.OnboardingService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -70,6 +73,15 @@ class OnboardingControllerCaptchaWebMvcTest {
 
     @MockBean
     private OAuth2DomainUtil oauth2DomainUtil;
+
+    @MockBean
+    private KrPublicDataService krPublicDataService;
+
+    @BeforeEach
+    void keepChecklistWhenPublicDataIsStubbed() {
+        lenient().when(krPublicDataService.enrichOnboardingChecklist(any()))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+    }
 
     private String buildCreateBody(boolean includeCaptchaToken, String captchaTokenValue) throws Exception {
         Map<String, Object> m = new LinkedHashMap<>();

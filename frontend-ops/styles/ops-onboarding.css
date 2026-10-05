@@ -294,6 +294,23 @@
   color: var(--mg-v2-color-text-secondary);
 }
 
+.ops-onboarding__detail-side {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-v2-space-4);
+  min-width: 0;
+}
+
+.ops-onboarding__recheck {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-v2-space-2);
+  padding: var(--mg-v2-space-4);
+  background: var(--ops-color-bg-card);
+  border: 1px solid var(--mg-v2-color-neutral-200);
+  border-radius: var(--mg-v2-radius-lg);
+}
+
 @media (max-width: 48rem) {
   .ops-onboarding__title {
     font-size: var(--mg-v2-font-size-h2);

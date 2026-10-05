@@ -1,5 +1,6 @@
 package com.coresolution.core.dto;
 
+import com.coresolution.core.krpublic.BusinessVerificationResult;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -25,6 +26,12 @@ public class MerchantLegalDto {
     private String mailOrderReportNumber;
     private String refundPolicyText;
     private String productPriceGuideText;
+
+    /** 개업일자 YYYY-MM-DD. settings_json.krPublicData 에만 저장한다. */
+    private String openingDate;
+
+    /** 국세청 조회 결과. settings_json.krPublicData 에만 저장한다. */
+    private BusinessVerificationResult businessVerification;
 
     /** 등록 상태: UNREGISTERED | IN_PROGRESS | COMPLETE */
     private String registrationStatus;

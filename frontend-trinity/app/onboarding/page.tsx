@@ -34,6 +34,8 @@ import {
   formatBusinessRegistrationNumber,
   isValidBusinessRegistrationNumber,
 } from "../../utils/businessRegistrationNumber";
+import { openingDateError, representativeNameError } from "../../utils/merchantLegalFields";
+import { fetchPublicCapabilities, searchPublicAddresses } from "../../utils/krPublicDataApi";
 
 function getStepHeader(step: number): { title: string; subtitle: string } {
   const headers = TRINITY_CONSTANTS.ONBOARDING_V2.STEP_HEADERS as Record<
@@ -63,6 +65,7 @@ export default function OnboardingPage() {
   const prevStepRef = useRef<number>(1);
   const [transitionDirection, setTransitionDirection] = useState<"forward" | "backward">("forward");
   const [bizNumberError, setBizNumberError] = useState<string | null>(null);
+  const [addressSearchEnabled, setAddressSearchEnabled] = useState(false);
 
   const {
     step,
@@ -126,6 +129,24 @@ export default function OnboardingPage() {
 
   const { setLayoutState } = useOnboardingLayout();
   const totalDisplaySteps = TRINITY_CONSTANTS.ONBOARDING_STEPS_V2.length;
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchPublicCapabilities()
+      .then((caps) => {
+        if (!cancelled) {
+          setAddressSearchEnabled(Boolean(caps?.addressSearchEnabled));
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setAddressSearchEnabled(false);
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     if (showWelcome) {
@@ -441,6 +462,8 @@ export default function OnboardingPage() {
     }
     return Boolean(
       formData.representativeName?.trim() &&
+        !representativeNameError(formData.representativeName) &&
+        !openingDateError(formData.openingDate || "") &&
         formData.businessLandline?.trim() &&
         formData.businessAddress?.trim()
     );
@@ -475,8 +498,17 @@ export default function OnboardingPage() {
         setError(BUSINESS_REGISTRATION_INVALID_MESSAGE);
         return;
       }
+      const repError = representativeNameError(formData.representativeName || "");
+      if (repError) {
+        setError(repError);
+        return;
+      }
+      const openingError = openingDateError(formData.openingDate || "");
+      if (openingError) {
+        setError(openingError);
+        return;
+      }
       if (
-        !formData.representativeName?.trim() ||
         !formData.businessLandline?.trim() ||
         !formData.businessAddress?.trim()
       ) {
@@ -564,6 +596,8 @@ export default function OnboardingPage() {
                   setFormData={setFormData}
                   bizNumberError={bizNumberError}
                   setBizNumberError={setBizNumberError}
+                  addressSearchEnabled={addressSearchEnabled}
+                  onSearchAddress={searchPublicAddresses}
                 />
               )}
             </StepTransition>

@@ -19,4 +19,5 @@ public class ManualNotificationConfigResponse {
 
     private int maxRecipients;
     private int previewSize;
+    private int maxExclusions;
 }

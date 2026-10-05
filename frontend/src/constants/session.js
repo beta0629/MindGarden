@@ -55,11 +55,18 @@ export const API_HEADER_SESSION_FRESH_MS = 30 * 1000;
 export const SESSION_ACTIVITY_PING_INTERVAL_MS = 45 * 1000;
 
 /**
+ * 사용자가 지켜보는 장시간 작업(발송 진행 조회 등)이 입력 없이도 같은 활동 ping 경로(공유 스로틀·401 공용 처리)로
+ * 세션을 유지하도록 window 에 보내는 이벤트. 직접 dispatch 하지 말고 utils/sessionActivity 의 notifySessionActivity 사용.
+ */
+export const SESSION_ACTIVITY_PROGRAMMATIC_EVENT = 'mg:session-activity';
+
+/**
  * SessionContext 활동 ping에 등록하는 DOM 이벤트(공유 스로틀).
  * 키보드·마우스·터치·스크롤·휠 모두 동일 onActivity → silent checkSession.
  * (일부 환경에서 scroll이 document에 전달되지 않아 wheel로 보완)
  */
 export const SESSION_ACTIVITY_EVENTS = Object.freeze([
+  SESSION_ACTIVITY_PROGRAMMATIC_EVENT,
   'keydown',
   'input',
   'pointerdown',

@@ -76,7 +76,7 @@ export const ADMIN_ROUTES = {
     TENANT_SMS_SETTINGS: '/admin/tenant-sms-settings',
     /** 어드민 SMS·카카오 알림톡 테스트 발송 도구 (본인·DB 사용자 대상 운영 사고 재현·예방) */
     TEST_NOTIFICATION: '/admin/test-notification',
-    /** 어드민 SMS·카카오 알림톡 수동 일괄 발송 도구 (최대 50명, 감사로그 필수 — P1.3) */
+    /** 어드민 SMS·카카오 알림톡 수동 일괄 발송 도구 (수신자 상한은 서버 설정, 감사로그 필수 — P1.3) */
     MANUAL_NOTIFICATION: '/admin/manual-notification',
     /** 트랜잭션 SMS 템플릿 관리 (글로벌 + 테넌트 override) */
     SMS_TEMPLATES: '/admin/sms-templates',

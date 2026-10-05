@@ -7,6 +7,7 @@
  * @author MindGarden
  * @since 2026-05-23
  * @updated 2026-10-03 — SettingsSectionPanel 이관, 커스텀 입력·카드 그림자 제거
+ * @updated 2026-10-05 — 발송 확인·진행 모달(발송 작업) 배치
  */
 
 .mg-manual-notif-form {
@@ -51,21 +52,6 @@
   color: var(--mg-v2-color-text-primary);
   white-space: pre-wrap;
   word-break: break-word;
-}
-
-.mg-manual-notif-form__summary {
-  display: flex;
-  flex-direction: column;
-  gap: var(--mg-v2-space-2);
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  color: var(--mg-v2-color-text-primary);
-}
-
-.mg-manual-notif-form__summary li {
-  font-size: var(--mg-v2-font-size-body-md);
-  line-height: var(--mg-v2-font-line-height-body);
 }
 
 /* ===== PHONE 모드 — 전화번호 직접 입력 ===== */
@@ -129,16 +115,6 @@
 .mg-manual-notif-recipient-picker__chip-remove:hover,
 .mg-manual-notif-recipient-picker__chip-remove:focus {
   color: var(--mg-v2-color-semantic-error-dark);
-}
-
-.mg-manual-notif-form__confirm-checkbox {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--mg-v2-space-2);
-  margin-top: var(--mg-v2-space-4);
-  font-size: var(--mg-v2-font-size-body-md);
-  color: var(--mg-v2-color-text-primary);
-  cursor: pointer;
 }
 
 .mg-manual-notif-form__variable-label {
@@ -277,4 +253,64 @@
   .mg-manual-notif-recipient-picker__counter {
     text-align: right;
   }
+}
+
+/* ===== 발송 확인 모달 (.mg-manual-notif-confirm) ===== */
+
+.mg-manual-notif-confirm,
+.mg-manual-notif-progress {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-v2-space-3);
+  min-width: 0;
+  color: var(--mg-v2-color-text-primary);
+}
+
+.mg-manual-notif-confirm__section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-v2-space-2);
+  padding-block-start: var(--mg-v2-space-3);
+  border-block-start: var(--mg-v2-border-width-thin) solid var(--mg-v2-color-neutral-300);
+}
+
+.mg-manual-notif-confirm__list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-v2-space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.mg-manual-notif-confirm__list-item {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--mg-v2-space-3);
+  font-size: var(--mg-v2-font-size-body-md);
+}
+
+.mg-manual-notif-confirm__message-title {
+  margin: 0;
+  font-weight: var(--mg-v2-font-weight-semibold);
+}
+
+.mg-manual-notif-confirm__message {
+  margin: 0;
+  font-family: inherit;
+  font-size: var(--mg-v2-font-size-body-md);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* ===== 발송 진행 모달 (.mg-manual-notif-progress) ===== */
+
+.mg-manual-notif-progress__status {
+  margin: 0;
+  font-weight: var(--mg-v2-font-weight-semibold);
+}
+
+.mg-manual-notif-progress__bar {
+  width: 100%;
+  accent-color: var(--mg-v2-color-primary-main);
 }

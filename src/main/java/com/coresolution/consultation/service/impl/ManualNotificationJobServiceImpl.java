@@ -93,6 +93,7 @@ public class ManualNotificationJobServiceImpl implements ManualNotificationJobSe
         return ManualNotificationConfigResponse.builder()
             .maxRecipients(properties.getMaxRecipients())
             .previewSize(properties.getPreviewSize())
+            .maxExclusions(properties.getMaxExclusions())
             .build();
     }
 

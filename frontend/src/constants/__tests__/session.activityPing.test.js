@@ -1,5 +1,6 @@
 import {
   SESSION_ACTIVITY_EVENTS,
+  SESSION_ACTIVITY_PROGRAMMATIC_EVENT,
   SESSION_ACTIVITY_PING_INTERVAL_MS,
   SESSION_CHECK_COOLDOWN_MS
 } from '../session';
@@ -15,6 +16,7 @@ describe('SESSION_ACTIVITY_PING_INTERVAL_MS', () => {
 describe('SESSION_ACTIVITY_EVENTS', () => {
   test('키보드·마우스·터치·스크롤·휠·이동 실질 활동을 모두 포함한다', () => {
     const required = [
+      SESSION_ACTIVITY_PROGRAMMATIC_EVENT,
       'keydown',
       'input',
       'pointerdown',

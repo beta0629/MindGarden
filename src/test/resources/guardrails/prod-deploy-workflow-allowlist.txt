@@ -1,0 +1,62 @@
+# 운영 배포 워크플로 정적 검사 허용 목록 (scripts/verification/check-prod-deploy-workflows.js)
+# 줄어들기만 한다. 새 항목을 여기에 추가해서 통과시키지 않는다 — 단계를 실패 시 배포 실패로 고친다.
+# 2026-10-05 최초 작성 시 검토: 남은 항목은 진단 출력(journalctl·status·tail·ls), 오래된 백업 정리,
+# 없을 수 있는 키 조회(grep), 접속 준비(ssh-keyscan·unset), 옛 DB 이름 차단 가드(case mind_garden)뿐이다.
+# 비활성 슬롯 restart 는 바로 다음 is-active 확인이 실패 시 exit 1 이다.
+# 형식: <종류> <파일> :: <공백 정리한 줄>   (같은 줄이 여러 번이면 그 횟수만큼)
+MIND_GARDEN .github/workflows/deploy-procedures-prod.yml :: mind_garden|mind_garden_legacy_*)
+MIND_GARDEN .github/workflows/deploy-procedures-production-mysql.yml :: echo "::error::mind_garden 잔존 객체 정리 절차: docs/운영반영/MIND_GARDEN_LEGACY_CLEANUP_GUIDE.md"
+MIND_GARDEN .github/workflows/deploy-procedures-production-mysql.yml :: mind_garden|mind_garden_legacy_*)
+OR_TRUE .github/actions/sync-prod-env-key/action.yml :: _existing=$(sudo grep -E "^[[:space:]]*${_pkey}=" "$PROD_ENV_FILE" 2>/dev/null | tail -n1 || true)
+OR_TRUE .github/actions/sync-prod-env-key/action.yml :: _line=$(sudo grep -E "^[[:space:]]*${_dkey}=" "$PROD_ENV_FILE" 2>/dev/null | tail -n1 || true)
+OR_TRUE .github/actions/sync-prod-env-key/action.yml :: _line=$(sudo grep -E "^[[:space:]]*${k}=" "$PROD_ENV_FILE" 2>/dev/null | tail -n1 || true)
+OR_TRUE .github/actions/sync-prod-env-key/action.yml :: sudo chown -R "$MKDIR_CHOWN_USER" "$dirv" 2>/dev/null || true
+OR_TRUE .github/actions/sync-prod-env-key/action.yml :: sudo chown -R "$MKDIR_CHOWN_USER" "$dirv" 2>/dev/null || true
+OR_TRUE .github/actions/sync-prod-env-key/action.yml :: sudo cp -p "$PROD_ENV_FILE" "$BACKUP_FILE" 2>/dev/null || true
+OR_TRUE .github/workflows/deploy-ops-backend-prod.yml :: ls -la "$OPS_BASE" || true
+OR_TRUE .github/workflows/deploy-ops-backend-prod.yml :: ls -la build/libs/ 2>/dev/null || true
+OR_TRUE .github/workflows/deploy-ops-backend-prod.yml :: sudo chmod +x "$OPS_BASE/app.jar" || true
+OR_TRUE .github/workflows/deploy-ops-backend-prod.yml :: sudo chown root:root "$OPS_BASE/app.jar" || true
+OR_TRUE .github/workflows/deploy-procedures-prod.yml :: [ -n "$h" ] && ssh-keyscan -H "$h" >> ~/.ssh/known_hosts 2>/dev/null || true
+OR_TRUE .github/workflows/deploy-procedures-production-mysql.yml :: unset PROD_SSH_JUMP_HOST 2>/dev/null || true
+OR_TRUE .github/workflows/deploy-procedures-production-mysql.yml :: unset PROD_SSH_JUMP_USER 2>/dev/null || true
+OR_TRUE .github/workflows/deploy-production.yml :: curl -sS "http://${MG_BACKEND_BIND_HOST}:${INACTIVE_PORT}/actuator/health" | head -c 400 || true
+OR_TRUE .github/workflows/deploy-production.yml :: curl -sS -m 5 -D - "http://${MG_BACKEND_BIND_HOST}:${INACTIVE_PORT}/actuator/health" | head -c 500 || true
+OR_TRUE .github/workflows/deploy-production.yml :: export "$kv" 2>/dev/null || true
+OR_TRUE .github/workflows/deploy-production.yml :: export "$kv" 2>/dev/null || true
+OR_TRUE .github/workflows/deploy-production.yml :: find "$HOME" -maxdepth 1 -name '.mindgarden-env-sync-changed.*' -mtime +1 -delete 2>/dev/null || true
+OR_TRUE .github/workflows/deploy-production.yml :: grep -E "^(sql/|database/schema/).*\.sql$" /tmp/changed_files.txt > /tmp/changed_sql_files.txt || true
+OR_TRUE .github/workflows/deploy-production.yml :: if [ -z "${DB_HOST:-}" ]; then export "$kv" 2>/dev/null || true; fi
+OR_TRUE .github/workflows/deploy-production.yml :: if [ -z "${DB_NAME:-}" ]; then export "$kv" 2>/dev/null || true; fi
+OR_TRUE .github/workflows/deploy-production.yml :: if [ -z "${DB_PASSWORD:-}" ]; then export "$kv" 2>/dev/null || true; fi
+OR_TRUE .github/workflows/deploy-production.yml :: if [ -z "${DB_USERNAME:-}" ]; then export "$kv" 2>/dev/null || true; fi
+OR_TRUE .github/workflows/deploy-production.yml :: ls -lh "${NEW_IDLE_HOME}/app.jar" || true
+OR_TRUE .github/workflows/deploy-production.yml :: ls -t "${extra[@]}" 2>/dev/null | tail -n +6 | xargs -r rm -f || true
+OR_TRUE .github/workflows/deploy-production.yml :: ls -t "${extra[@]}" 2>/dev/null | tail -n +6 | xargs -r rm -f || true
+OR_TRUE .github/workflows/deploy-production.yml :: ls -t app.jar.backup.* 2>/dev/null | tail -n +6 | xargs -r rm -f || true
+OR_TRUE .github/workflows/deploy-production.yml :: ls -t app.jar.backup.* 2>/dev/null | tail -n +6 | xargs -r rm -f || true
+OR_TRUE .github/workflows/deploy-production.yml :: ls -t frontend.backup.*.tar.gz 2>/dev/null | tail -n +6 | xargs -r rm -f || true
+OR_TRUE .github/workflows/deploy-production.yml :: ls -t frontend.backup.*.tar.gz 2>/dev/null | tail -n +6 | xargs -r rm -f || true
+OR_TRUE .github/workflows/deploy-production.yml :: sed -E 's/(-p|--password=)[^ ]*/\1***/g; s/password[=:][^ ]*/password=***/Ig' "$FLYWAY_003_ERR_FILE" | head -20 || true
+OR_TRUE .github/workflows/deploy-production.yml :: ssh-keyscan -H "${{ secrets.PRODUCTION_HOST }}" >> ~/.ssh/known_hosts 2>/dev/null || true
+OR_TRUE .github/workflows/deploy-production.yml :: sudo journalctl -u "$ACTIVE_UNIT" --no-pager -n 100 | tail -50 || true
+OR_TRUE .github/workflows/deploy-production.yml :: sudo journalctl -u "$ACTIVE_UNIT" --no-pager -n 50 || true
+OR_TRUE .github/workflows/deploy-production.yml :: sudo journalctl -u "$ACTIVE_UNIT" --no-pager -n 80 | tail -50 || true
+OR_TRUE .github/workflows/deploy-production.yml :: sudo journalctl -u "$INACTIVE_UNIT" --no-pager -n 80 || true
+OR_TRUE .github/workflows/deploy-production.yml :: sudo journalctl -u "$INACTIVE_UNIT" --no-pager -n 80 || true
+OR_TRUE .github/workflows/deploy-production.yml :: sudo journalctl -u mindgarden-core-blue.service --no-pager -n 25 || true
+OR_TRUE .github/workflows/deploy-production.yml :: sudo journalctl -u mindgarden-core-green.service --no-pager -n 25 || true
+OR_TRUE .github/workflows/deploy-production.yml :: sudo systemctl restart "$INACTIVE_UNIT" || true
+OR_TRUE .github/workflows/deploy-production.yml :: sudo systemctl status "$ACTIVE_UNIT" --no-pager -l | head -40 || true
+OR_TRUE .github/workflows/deploy-production.yml :: sudo systemctl status "$INACTIVE_UNIT" --no-pager -l | head -40 || true
+OR_TRUE .github/workflows/deploy-production.yml :: sudo systemctl status mindgarden-core-blue.service --no-pager -l | head -20 || true
+OR_TRUE .github/workflows/deploy-production.yml :: sudo systemctl status mindgarden-core-green.service --no-pager -l | head -20 || true
+OR_TRUE .github/workflows/deploy-production.yml :: sudo systemctl status mindgarden.service --no-pager -l | head -15 || true
+OR_TRUE .github/workflows/deploy-production.yml :: sudo tail -n 40 "/var/log/mindgarden/core-${INACTIVE}-error.log" 2>/dev/null || true
+OR_TRUE .github/workflows/deploy-production.yml :: sudo tail -n 40 "/var/log/mindgarden/core-${INACTIVE}.log" 2>/dev/null || true
+OR_TRUE .github/workflows/deploy-production.yml :: unset PROD_SSH_JUMP_HOST 2>/dev/null || true
+OR_TRUE .github/workflows/deploy-production.yml :: unset PROD_SSH_JUMP_USER 2>/dev/null || true
+OR_TRUE .github/workflows/deploy-production.yml :: | tail -40 || true
+OR_TRUE .github/workflows/reusable-static-site-ssh-deploy.yml :: curl_err=$(cat "$curl_err_file" 2>/dev/null || true)
+OR_TRUE .github/workflows/reusable-static-site-ssh-deploy.yml :: grep -oE 'main\.[a-f0-9]+\.js' "$html_tmp" | head -5 || true
+OR_TRUE .github/workflows/reusable-static-site-ssh-deploy.yml :: grep -oE 'main\.[a-f0-9]+\.js' /var/www/${{ inputs.remote_html_dir }}/index.html | head -5 || true

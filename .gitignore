@@ -91,6 +91,9 @@ deployment/*template*
 # Exception: Flyway migration SQL (filenames may contain "template", e.g. role_templates)
 !src/main/resources/db/migration/
 !src/main/resources/db/migration/*.sql
+# Exception: 승인 경로 MySQL 테스트의 role_templates DDL·픽스처 (비밀 아님)
+!src/test/resources/mysql/onboarding-approval/01_role_templates.sql
+!src/test/resources/mysql/onboarding-approval/12_role_template_fixture.sql
 
 # Exception: dashboard-v2 templates folder (atomic design)
 !frontend/src/components/dashboard-v2/templates/

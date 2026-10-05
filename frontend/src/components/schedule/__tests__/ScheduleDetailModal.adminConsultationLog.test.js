@@ -128,8 +128,9 @@ const renderModal = (schedule, onConsultationLogOpen = jest.fn()) => render(
 );
 
 describe.each([
-  ['ADMIN', { id: 1, role: 'ADMIN' }]
-])('ScheduleDetailModal 관리자 상담일지 진입점 (%s)', (_label, sessionUser) => {
+  ['ADMIN', { id: 1, role: 'ADMIN' }],
+  ['CONSULTANT', { id: 41, role: 'CONSULTANT' }]
+])('ScheduleDetailModal 상담일지 진입점 (%s)', (_label, sessionUser) => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockSessionUser = sessionUser;
@@ -163,6 +164,33 @@ describe.each([
 
     expect(onConsultationLogOpen).toHaveBeenCalledWith(expect.objectContaining({ id: schedule.id }));
     expect(mockNavigate).not.toHaveBeenCalled();
+  });
+
+  test('CONFIRMED + 일지 존재(시작 전 완료 불가 일정) → 같은 자리에 「보기/수정」, 작성 버튼 없음', async() => {
+    mockGet.mockResolvedValue({ records: [{ id: 463 }] });
+    const onConsultationLogOpen = jest.fn();
+    const schedule = buildSchedule({ id: 511, status: 'CONFIRMED', statusCode: 'CONFIRMED' });
+
+    renderModal(schedule, onConsultationLogOpen);
+
+    const button = await screen.findByTestId('schedule-detail-open-consultation-log');
+    expect(button).toHaveTextContent('상담일지 보기/수정');
+    expect(screen.queryByTestId('schedule-detail-write-consultation-log')).not.toBeInTheDocument();
+    button.click();
+
+    expect(onConsultationLogOpen).toHaveBeenCalledWith(expect.objectContaining({ id: 511 }));
+    expect(mockNavigate).not.toHaveBeenCalled();
+  });
+
+  test('CONFIRMED + 일지 0건 → 「상담일지 작성」', async() => {
+    mockGet.mockResolvedValue({ records: [] });
+
+    renderModal(buildSchedule({ status: 'CONFIRMED', statusCode: 'CONFIRMED' }));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('schedule-detail-write-consultation-log')).toHaveTextContent('상담일지 작성');
+    });
+    expect(screen.queryByTestId('schedule-detail-open-consultation-log')).not.toBeInTheDocument();
   });
 });
 

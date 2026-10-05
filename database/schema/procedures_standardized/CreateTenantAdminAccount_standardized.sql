@@ -1,15 +1,10 @@
--- CreateTenantAdminAccount. PlSqlInitializer 가 기동 때마다 이 파일을 강제 적용한다.
--- 적용된 Flyway V20251223_001 은 수정하지 않는다. 그 파일의 p_contact_email 은 VARCHAR(100) 이고
--- 이메일 로컬 파트로 user_id 를 만든다. 암호문에는 @ 가 없어 그 방식으로는 user_id 가 깨진다.
--- p_contact_email: Java safeEncrypt 결과. users.email VARCHAR(512) NOT NULL (V20260614_002).
--- p_admin_user_id: TenantAdminUserIdAllocator 가 만든 베이스. 이메일 로컬 파트가 아니다.
--- users.user_id VARCHAR(50). 유일성은 (tenant_id, user_id) — V20261011_001 UK_users_tenant_user_id.
--- 중복 판정은 soft-delete 를 빼지 않는다. UNIQUE 가 삭제 행을 포함하기 때문이다.
--- 이 파일은 암호화를 구현하지 않는다. 받은 이메일을 그대로 users.email 에 넣는다.
+-- 생성 파일 — 직접 고치지 마세요.
+-- 생성: scripts/database/sync/flyway-procedure-extract.sh generate
+-- 원본: src/main/resources/sql/procedures/create_tenant_admin_account.sql
+-- 용도: 표준 프로시저 배포(개발·운영 db-diff)와 야간 운영→개발 복사 뒤 재적재.
+DELIMITER //
 
-DROP PROCEDURE IF EXISTS CreateTenantAdminAccount;
-
-DELIMITER $$
+DROP PROCEDURE IF EXISTS CreateTenantAdminAccount //
 
 CREATE PROCEDURE CreateTenantAdminAccount(
     IN p_tenant_id VARCHAR(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
@@ -83,6 +78,6 @@ BEGIN
             SET p_message = CONCAT('관리자 계정이 생성되었습니다. (user_id: ', v_user_id, ')');
         END IF;
     END IF;
-END$$
+END //
 
 DELIMITER ;

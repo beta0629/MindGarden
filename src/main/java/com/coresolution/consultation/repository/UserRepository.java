@@ -184,6 +184,21 @@ public interface UserRepository extends BaseRepository<User, Long> {
     @Deprecated
     @Query("SELECT CASE WHEN COUNT(u) > 0 THEN true ELSE false END FROM User u WHERE u.userId = ?1 AND u.isDeleted = false")
     boolean existsByUserId(String userId);
+
+    /**
+     * 같은 테넌트의 user_id 점유 여부. 삭제 행을 포함한다.
+     *
+     * <p>{@code UK_users_tenant_user_id (tenant_id, user_id)} 는 soft-delete 를 빼지 않는다.
+     * 활성 행만 보면 INSERT 가 중복 키로 거절된다.</p>
+     *
+     * @param tenantId 테넌트 ID
+     * @param userId   로그인 식별자
+     * @return 삭제 여부를 가리지 않고 같은 쌍이 있으면 true
+     */
+    @Query("SELECT CASE WHEN COUNT(u) > 0 THEN true ELSE false END FROM User u "
+            + "WHERE u.tenantId = :tenantId AND u.userId = :userId")
+    boolean existsByTenantIdAndUserIdIncludingDeleted(
+            @Param("tenantId") String tenantId, @Param("userId") String userId);
     
     /**
      * 테넌트별 만료된 사용자 데이터 조회 (테넌트 필터링)

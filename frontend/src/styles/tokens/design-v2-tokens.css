@@ -106,6 +106,8 @@
   --mg-v2-color-text-disabled: #94A3B8;
   --mg-v2-color-text-placeholder: #64748B;
   --mg-v2-color-text-inverse: #FFFFFF;
+  /* White on primary-solid. Stays #FFFFFF when the theme inverts (7.49:1 on #0E5F5A). */
+  --mg-v2-color-text-on-solid: #FFFFFF;
   --mg-v2-color-text-link: #0E5F5A;
   --mg-v2-color-text-link-hover: #0A4F4B;
   --mg-v2-color-text-on-sidebar-active: #F8FAFC;
@@ -514,6 +516,99 @@
   --mg-v2-border-elevation-1: 1px solid #334155;
   --mg-v2-border-elevation-2: 1px solid #64748B;
   --mg-v2-border-elevation-3: 1px solid #94A3B8;
+}
+
+/* ================================================================
+   2b. LIGHT PIN — public intro stays on the light semantic layer
+   color-scheme alone does not undo @media (prefers-color-scheme: dark)
+   values inherited from :root. Redeclare the same semantic set the dark
+   block overrides, at the pinned subtree.
+   ================================================================ */
+[data-theme="light"],
+.mg-theme-light-pinned {
+  color-scheme: light;
+
+  --mg-v2-color-primary-main: #0E5F5A;
+  --mg-v2-color-primary-light: #145A55;
+  --mg-v2-color-primary-dark: #0A4F4B;
+  --mg-v2-color-primary-hover: #0A4F4B;
+  --mg-v2-color-primary-active: #0A4F4B;
+  --mg-v2-color-primary-subtle: #DCE8E5;
+  --mg-v2-color-primary-solid: #0E5F5A;
+
+  --mg-v2-color-secondary-main: #475569;
+  --mg-v2-color-secondary-light: #64748B;
+  --mg-v2-color-secondary-dark: #334155;
+
+  --mg-v2-color-accent-main: #145A55;
+  --mg-v2-color-accent-light: #4AA99E;
+  --mg-v2-color-accent-dark: #0A4F4B;
+  --mg-v2-color-accent-subtle: #E4EEEC;
+
+  --mg-v2-color-neutral-50: #FAF9F7;
+  --mg-v2-color-neutral-100: #F5F3EF;
+  --mg-v2-color-neutral-200: #EBE6DF;
+  --mg-v2-color-neutral-300: #D4CFC8;
+  --mg-v2-color-neutral-400: #B8B2A8;
+  --mg-v2-color-neutral-500: #94A3B8;
+  --mg-v2-color-neutral-600: #64748B;
+  --mg-v2-color-neutral-700: #475569;
+  --mg-v2-color-neutral-800: #1E293B;
+  --mg-v2-color-neutral-900: #0F172A;
+
+  --mg-v2-color-semantic-success: #059669;
+  --mg-v2-color-semantic-success-light: #ECFDF5;
+  --mg-v2-color-semantic-success-dark: #047857;
+
+  --mg-v2-color-semantic-warning: #D97706;
+  --mg-v2-color-semantic-warning-light: #FFFBEB;
+  --mg-v2-color-semantic-warning-dark: #B45309;
+
+  --mg-v2-color-semantic-error: #A84848;
+  --mg-v2-color-semantic-error-light: #F3E8E8;
+  --mg-v2-color-semantic-error-dark: #8F3D3D;
+
+  --mg-v2-color-semantic-info: #0284C7;
+  --mg-v2-color-semantic-info-light: #F0F9FF;
+  --mg-v2-color-semantic-info-dark: #0369A1;
+
+  --mg-v2-color-money-income: var(--color-red-700, #B91C1C);
+  --mg-v2-color-money-expense: #1D4ED8;
+
+  --mg-v2-color-surface-bg: #FAF9F7;
+  --mg-v2-color-surface-card: #FFFFFF;
+  --mg-v2-color-surface-raised: #FFFFFF;
+  --mg-v2-color-surface-overlay: #FFFFFF;
+  --mg-v2-color-surface-sidebar: #0F172A;
+  --mg-v2-color-surface-disabled: #EBE6DF;
+  --mg-v2-color-surface-hover: rgba(15, 23, 42, 0.04);
+  --mg-v2-color-surface-active: rgba(15, 23, 42, 0.08);
+  --mg-v2-color-surface-stone: #F5F3EF;
+
+  --mg-v2-color-text-primary: #0F172A;
+  --mg-v2-color-text-secondary: #475569;
+  --mg-v2-color-text-tertiary: #64748B;
+  --mg-v2-color-text-disabled: #94A3B8;
+  --mg-v2-color-text-placeholder: #64748B;
+  --mg-v2-color-text-inverse: #FFFFFF;
+  --mg-v2-color-text-on-solid: #FFFFFF;
+  --mg-v2-color-text-link: #0E5F5A;
+  --mg-v2-color-text-link-hover: #0A4F4B;
+  --mg-v2-color-text-on-sidebar-active: #F8FAFC;
+
+  --mg-v2-color-border-default: #D4CFC8;
+  --mg-v2-color-border-subtle: #EBE6DF;
+  --mg-v2-color-border-strong: #86807A;
+  --mg-v2-color-border-light: #EBE6DF;
+  --mg-v2-color-border-dark: #94A3B8;
+  --mg-v2-color-border-focus: #0D9488;
+
+  --mg-v2-color-state-hover: rgba(15, 23, 42, 0.04);
+  --mg-v2-color-state-active: rgba(15, 23, 42, 0.08);
+  --mg-v2-color-state-selected: rgba(14, 95, 90, 0.12);
+  --mg-v2-color-state-focus-ring: rgba(13, 148, 136, 0.25);
+  --mg-v2-color-state-disabled-bg: #EBE6DF;
+  --mg-v2-color-state-disabled-text: #94A3B8;
 }
 
 /* ================================================================

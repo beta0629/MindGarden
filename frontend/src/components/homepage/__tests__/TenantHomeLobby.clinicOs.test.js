@@ -34,6 +34,23 @@ describe('TenantHomeLobby v3 locks', () => {
     expect(css).toMatch(/--brand/);
   });
 
+  test('OS dark intro is light-pinned and the hero login uses solid teal', () => {
+    expect(js).toMatch(/mg-theme-light-pinned/);
+    expect(js).toMatch(/data-theme="light"/);
+    expect(js).toMatch(/mg-tenant-home-body mg-theme-light-pinned/);
+    expect(js).toMatch(/mg-tenant-home--loading mg-theme-light-pinned/);
+    expect(css).toMatch(/--th-cta-bg:\s*var\(--mg-v2-color-primary-solid\)/);
+    expect(css).toMatch(/--th-cta-fg:\s*var\(--mg-v2-color-text-on-solid\)/);
+    expect(css).toMatch(/--th-surface:\s*var\(--mg-v2-color-surface-bg\)/);
+    expect(css).toMatch(/--th-wash:\s*var\(--mg-v2-color-neutral-100\)/);
+    expect(css).toMatch(/border:\s*1px solid var\(--mg-v2-color-border-strong\)/);
+    expect(css).not.toMatch(/border-main/);
+    expect(css).not.toMatch(/--mg-warm-gray/);
+    expect(css).not.toMatch(/--mg-white/);
+    expect(css).not.toMatch(/background:\s*var\(--th-ink\)/);
+    expect(css).not.toMatch(/background:\s*var\(--brand\)/);
+  });
+
   test('home products list uses ConsultationPackagePublicList molecule', () => {
     expect(js).toMatch(/ConsultationPackagePublicList/);
     expect(js).toMatch(/consultationPackages/);

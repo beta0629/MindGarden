@@ -1,5 +1,7 @@
 package com.coresolution.consultation.config;
 
+import java.util.ArrayList;
+import java.util.List;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import lombok.Data;
 
@@ -22,6 +24,11 @@ public class MindgardenSecurityProperties {
      * 앱 레이어 IP 기준 레이트리밋
      */
     private RateLimit rateLimit = new RateLimit();
+
+    /**
+     * 클라이언트 IP 판정. 신뢰 프록시 대역과 그 프록시가 덮어쓰는 헤더 이름만 인정한다.
+     */
+    private ClientIp clientIp = new ClientIp();
 
     /**
      * CAPTCHA(Turnstile 등) 검증 — 비활성화 시 백엔드 검증 생략
@@ -109,5 +116,31 @@ public class MindgardenSecurityProperties {
          * Turnstile site key(클라이언트 위젯용) — 공개 API로 내려줄 때 사용; 평문 기본값 없음
          */
         private String siteKey = "";
+    }
+
+    /**
+     * 바로 앞 TCP 피어가 {@link TrustedProxy#cidrs} 에 있을 때만 {@link TrustedProxy#header} 를 클라이언트 IP로 쓴다.
+     */
+    @Data
+    public static class ClientIp {
+
+        private List<TrustedProxy> trustedProxies = new ArrayList<>();
+
+        /**
+         * 신뢰 프록시 한 종류. 헤더 이름과 대역은 설정 파일에서만 온다.
+         */
+        @Data
+        public static class TrustedProxy {
+
+            /**
+             * 이 대역의 프록시가 덮어쓰는 헤더. 비어 있으면 그 규칙은 쓰지 않는다.
+             */
+            private String header = "";
+
+            /**
+             * 바로 앞 피어 CIDR. 여기 없으면 전달 헤더를 무시하고 연결 주소를 쓴다.
+             */
+            private List<String> cidrs = new ArrayList<>();
+        }
     }
 }

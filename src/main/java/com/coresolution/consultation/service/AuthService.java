@@ -29,7 +29,7 @@ public interface AuthService {
      *
      * @param email    로그인 식별자
      * @param password 비밀번호
-     * @param request  HTTP 요청 (X-Forwarded-For, User-Agent, X-Device-Id 추출용; null 허용)
+     * @param request  HTTP 요청 (클라이언트 IP, User-Agent, X-Device-Id 추출용; null 허용)
      * @return 인증 응답
      * @since 2026-06-13
      */
@@ -75,7 +75,7 @@ public interface AuthService {
      * 토큰 갱신 — HTTP 요청 메타데이터를 refresh_token_store 에 함께 기록.
      *
      * @param refreshToken 리프레시 토큰 JWT
-     * @param request      HTTP 요청 (X-Forwarded-For, User-Agent, X-Device-Id 추출용; null 허용)
+     * @param request      HTTP 요청 (클라이언트 IP, User-Agent, X-Device-Id 추출용; null 허용)
      * @return 인증 응답
      * @since 2026-06-13
      */

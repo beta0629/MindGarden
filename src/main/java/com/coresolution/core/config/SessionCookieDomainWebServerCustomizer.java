@@ -14,8 +14,10 @@ import com.coresolution.consultation.config.SessionCookieSupport;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * OAuth 콜백(apex)과 테넌트 서브도메인(SPA)이 달라도 JSESSIONID를 공유하려면
- * {@code Set-Cookie}의 {@code Domain}을 apex에 맞춰야 한다.
+ * 운영에서 OAuth 콜백(apex)과 테넌트 서브도메인이 세션 쿠키를 나눌 때만
+ * {@code Set-Cookie}의 {@code Domain}을 둔다.
+ * {@code dev} 프로파일은 host-only 다. parent Domain 은 테넌트 Host 끼리 JSESSIONID 를 공유한다.
+ * dev OAuth 는 {@code oauthExchangeCode} 로 apex 세션 없이 JWT 를 수령한다.
  * <p>
  * {@code server.servlet.session.cookie.domain: ${SESSION_COOKIE_DOMAIN:}} 처럼 YAML에 빈 문자열을 두면
  * Spring Boot 3.x는 {@code alwaysApplyingWhenNonNull} 기준으로 빈 문자열도 적용해 {@code Domain=""} 로 이어질 수 있어,
@@ -46,6 +48,13 @@ public class SessionCookieDomainWebServerCustomizer
      */
     @Override
     public void customize(ConfigurableServletWebServerFactory factory) {
+        if (SessionCookieSupport.isDevHostOnlyProfile(environment)) {
+            if (factory instanceof AbstractServletWebServerFactory servletFactory) {
+                servletFactory.getSession().getCookie().setDomain(null);
+            }
+            log.info("dev 프로파일 — 세션 쿠키 Domain 미적용(host-only). OAuth 는 oauthExchangeCode");
+            return;
+        }
         String domain = SessionCookieSupport.normalizeSessionCookieDomain(
                 environment.getProperty("SESSION_COOKIE_DOMAIN"));
         if (domain == null) {

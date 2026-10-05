@@ -11,7 +11,7 @@ import { OnboardingStatus } from "@/types/shared";
 import { isClientApiErrorNotified } from "@/utils/clientApiError";
 import { saveOnboardingDecision, settleOnboardingDecision, withSavingReleased } from "@/utils/onboardingDecisionSave";
 import { getOpsAuthSession } from "@/utils/opsAuthSession";
-import { getStatusLabel, resolveInitialDecision } from "@/utils/onboardingUtils";
+import { applyOnboardingDecisionResponse, getStatusLabel, resolveInitialDecision } from "@/utils/onboardingUtils";
 import notificationManager from "@/utils/notification";
 
 interface Props {
@@ -68,8 +68,9 @@ export function OnboardingDecisionForm({ requestId, initialStatus, onDecided, on
             }),
           onSaved: (saved) => {
             if (saved.updated?.status) {
-              setStatus(resolveInitialDecision(saved.updated.status));
-              onDecided?.(saved.updated);
+              const next = applyOnboardingDecisionResponse(saved.updated, saved.adminAccount);
+              setStatus(resolveInitialDecision(next.status));
+              onDecided?.(next);
             }
           },
           refresh: async () => {

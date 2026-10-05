@@ -130,7 +130,7 @@ public class AcademyRegistrationController extends BaseApiController {
         
             // 사용자 생성
             User user = new User();
-            user.setUserId(generateUniqueUserId(email));
+            user.setUserId(generateUniqueUserId(email, currentTenantId));
             user.setEmail(email);
             user.setPassword(passwordService.encodePassword(request.getPassword()));
             user.setName(encryptionUtil.safeEncrypt(request.getName().trim()));
@@ -191,16 +191,16 @@ public class AcademyRegistrationController extends BaseApiController {
     /**
      * 고유한 사용자 ID 생성
      */
-    private String generateUniqueUserId(String email) {
+    private String generateUniqueUserId(String email, String tenantId) {
         String baseUsername = email.split("@")[0];
         String userId = baseUsername;
         int suffix = 1;
-        
-        while (userRepository.existsByUserId(userId)) {
+
+        while (userRepository.existsByTenantIdAndUserIdIncludingDeleted(tenantId, userId)) {
             userId = baseUsername + suffix;
             suffix++;
         }
-        
+
         return userId;
     }
     
@@ -246,7 +246,7 @@ public class AcademyRegistrationController extends BaseApiController {
         
             // 사용자 생성
             User user = new User();
-            user.setUserId(generateUniqueUserId(email, currentTenantId));
+            user.setUserId(generateUniqueSocialUserId(email, currentTenantId));
             user.setEmail(email);
             user.setPassword(passwordService.encodePassword(request.getPassword()));
             user.setName(encryptionUtil.safeEncrypt(request.getName().trim()));
@@ -318,16 +318,16 @@ public class AcademyRegistrationController extends BaseApiController {
     /**
      * 테넌트별 고유 사용자 ID 생성
      */
-    private String generateUniqueUserId(String email, String tenantId) {
+    private String generateUniqueSocialUserId(String email, String tenantId) {
         String baseUsername = email.split("@")[0];
         String userId = baseUsername;
         int suffix = 1;
-        
-        while (userRepository.existsByUserId(userId)) {
+
+        while (userRepository.existsByTenantIdAndUserIdIncludingDeleted(tenantId, userId)) {
             userId = baseUsername + "_" + suffix;
             suffix++;
         }
-        
+
         return userId;
     }
 }

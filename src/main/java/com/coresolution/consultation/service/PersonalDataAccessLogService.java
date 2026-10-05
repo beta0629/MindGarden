@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import com.coresolution.consultation.entity.PersonalDataAccessLog;
+import com.coresolution.core.util.HttpRequestClientIp;
 import com.coresolution.consultation.repository.PersonalDataAccessLogRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -228,16 +229,6 @@ public class PersonalDataAccessLogService {
      * @return 클라이언트 IP 주소
      */
     private String getClientIpAddress(HttpServletRequest request) {
-        String xForwardedFor = request.getHeader("X-Forwarded-For");
-        if (xForwardedFor != null && !xForwardedFor.isEmpty()) {
-            return xForwardedFor.split(",")[0].trim();
-        }
-        
-        String xRealIp = request.getHeader("X-Real-IP");
-        if (xRealIp != null && !xRealIp.isEmpty()) {
-            return xRealIp;
-        }
-        
-        return request.getRemoteAddr();
+        return HttpRequestClientIp.resolve(request);
     }
 }

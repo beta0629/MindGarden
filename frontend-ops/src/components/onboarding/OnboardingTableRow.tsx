@@ -7,6 +7,7 @@ import Link from "next/link";
 import { OnboardingRequest } from "@/types/onboarding";
 import { ONBOARDING_MESSAGES } from "@/constants/onboarding";
 import { formatOnboardingDate } from "@/utils/dateUtils";
+import { mapOnboardingDisplay } from "@/utils/onboardingUtils";
 import RiskBadge from "./RiskBadge";
 import StatusBadge from "./StatusBadge";
 
@@ -15,11 +16,12 @@ interface OnboardingTableRowProps {
 }
 
 export default function OnboardingTableRow({ request }: OnboardingTableRowProps) {
+  const display = mapOnboardingDisplay(request);
   return (
     <tr>
       <td>
-        <div className="table-primary">{request.tenantName}</div>
-        <div className="table-secondary">{request.tenantId}</div>
+        <div className="table-primary">{display.tenantName || ONBOARDING_MESSAGES.EMPTY_VALUE}</div>
+        <div className="table-secondary">{display.tenantId || ONBOARDING_MESSAGES.EMPTY_VALUE}</div>
       </td>
       <td>{request.requestedBy}</td>
       <td>

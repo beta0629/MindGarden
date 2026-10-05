@@ -2,6 +2,9 @@ package com.coresolution.consultation.service.impl;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.coresolution.consultation.repository.UserRepository;
@@ -30,16 +33,17 @@ class UserIdGeneratorImplTest {
     @Test
     @DisplayName("generateUniqueUserIdFromPhone: 중복 없으면 정규화 번호 그대로 반환")
     void fromPhone_noCollision_returnsDigits() {
-        when(userRepository.existsByUserId("01012345678")).thenReturn(false);
+        when(userRepository.existsByTenantIdAndUserIdIncludingDeleted(TENANT, "01012345678")).thenReturn(false);
 
         assertThat(generator.generateUniqueUserIdFromPhone("01012345678", TENANT)).isEqualTo("01012345678");
+        verify(userRepository, never()).existsByUserId(anyString());
     }
 
     @Test
-    @DisplayName("generateUniqueUserIdFromPhone: 전역 중복 시 숫자 접미사 부여")
+    @DisplayName("generateUniqueUserIdFromPhone: 같은 테넌트 점유(삭제 포함) 시 숫자 접미사 부여")
     void fromPhone_collision_appendsSuffix() {
-        when(userRepository.existsByUserId("01012345678")).thenReturn(true);
-        when(userRepository.existsByUserId("010123456781")).thenReturn(false);
+        when(userRepository.existsByTenantIdAndUserIdIncludingDeleted(TENANT, "01012345678")).thenReturn(true);
+        when(userRepository.existsByTenantIdAndUserIdIncludingDeleted(TENANT, "010123456781")).thenReturn(false);
 
         assertThat(generator.generateUniqueUserIdFromPhone("01012345678", TENANT)).isEqualTo("010123456781");
     }
@@ -63,9 +67,10 @@ class UserIdGeneratorImplTest {
     @Test
     @DisplayName("generateUniqueUserId: 이메일 로컬파트로 base 생성 후 중복 시 접미사")
     void fromEmail_collision_appendsSuffix() {
-        when(userRepository.existsByUserId("localuser")).thenReturn(true);
-        when(userRepository.existsByUserId("localuser1")).thenReturn(false);
+        when(userRepository.existsByTenantIdAndUserIdIncludingDeleted(TENANT, "localuser")).thenReturn(true);
+        when(userRepository.existsByTenantIdAndUserIdIncludingDeleted(TENANT, "localuser1")).thenReturn(false);
 
         assertThat(generator.generateUniqueUserId("LocalUser@example.com", TENANT)).isEqualTo("localuser1");
+        verify(userRepository, never()).existsByUserId(anyString());
     }
 }

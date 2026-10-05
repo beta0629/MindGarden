@@ -301,11 +301,17 @@ export function mergeUnpaidSoftMappings(baseList, ...pendingLists) {
       return;
     }
     if (pendingOnly) {
-      // pending-payment/dirty SSOT 가 page 목록보다 우선 (필드 보강 + status 유지)
-      byId.set(id, preferRicherUnpaidSoftMapping(existing, {
+      // pending-payment/dirty SSOT 가 page 목록보다 우선.
+      // 필드 수가 같으면 preferRicher 가 page 행을 뒤에 깔아 status 가 ACTIVE 로 되돌아간다.
+      // unpaid status 는 pending 행(없으면 PENDING_PAYMENT)으로 고정한다.
+      const merged = preferRicherUnpaidSoftMapping(existing, {
         ...existing,
         ...normalized
-      }));
+      });
+      const pendingStatus = normalized.status != null && normalized.status !== ''
+        ? normalized.status
+        : MAPPING_STATUS.PENDING_PAYMENT;
+      byId.set(id, { ...merged, status: pendingStatus });
       return;
     }
     byId.set(id, preferRicherUnpaidSoftMapping(existing, normalized));

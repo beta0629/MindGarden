@@ -1,5 +1,6 @@
 package com.coresolution.core.security;
 
+import com.coresolution.core.util.HttpRequestClientIp;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.env.Environment;
@@ -225,17 +226,7 @@ public class SecurityFilter implements Filter {
      * 클라이언트 IP 추출
      */
     private String getClientIP(HttpServletRequest request) {
-        String xForwardedFor = request.getHeader("X-Forwarded-For");
-        if (xForwardedFor != null && !xForwardedFor.isEmpty()) {
-            return xForwardedFor.split(",")[0].trim();
-        }
-        
-        String xRealIP = request.getHeader("X-Real-IP");
-        if (xRealIP != null && !xRealIP.isEmpty()) {
-            return xRealIP;
-        }
-        
-        return request.getRemoteAddr();
+        return HttpRequestClientIp.resolve(request);
     }
 
     /**

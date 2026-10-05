@@ -1,5 +1,8 @@
 package com.coresolution.core.krpublic;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 import lombok.Data;
@@ -15,8 +18,14 @@ import lombok.Data;
 @ConfigurationProperties(prefix = "mindgarden.kr-public-data")
 public class KrPublicDataProperties {
 
+    /**
+     * 스텁을 절대 허용하지 않는 프로필. 설정으로 빼도 이 목록은 유지한다.
+     */
+    static final List<String> STUB_PROFILE_DENY = List.of("prod", "production");
+
     private Nts nts = new Nts();
     private Juso juso = new Juso();
+    private Stub stub = new Stub();
     private String zoneId = "Asia/Seoul";
     private int minOpeningYear = 1900;
 
@@ -48,5 +57,17 @@ public class KrPublicDataProperties {
         private int keywordMinLength = 2;
         private int keywordMaxLength = 80;
         private int currentPage = 1;
+    }
+
+    /**
+     * 개발 프로필에서 키가 없을 때만 조회를 성공으로 대체한다.
+     * 샘플 문구는 {@code content/kr-public-data-stub.properties}.
+     */
+    @Data
+    public static class Stub {
+        private boolean enabled = false;
+        /** 이 프로필이 활성일 때만 스텁. 비어 있으면 스텁하지 않는다. */
+        private String profile = "";
+        private List<String> blockedProfiles = new ArrayList<>(STUB_PROFILE_DENY);
     }
 }

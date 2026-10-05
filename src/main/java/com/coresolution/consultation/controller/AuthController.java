@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import com.coresolution.consultation.constant.UserRole;
+import com.coresolution.core.util.HttpRequestClientIp;
 import com.coresolution.consultation.dto.AuthRequest;
 import com.coresolution.consultation.dto.AuthResponse;
 import com.coresolution.consultation.dto.BranchLoginRequest;
@@ -1564,32 +1565,7 @@ public class AuthController extends BaseApiController {
      * @return 클라이언트 IP 주소
      */
     private String getClientIpAddress(jakarta.servlet.http.HttpServletRequest request) {
-        String xForwardedFor = request.getHeader("X-Forwarded-For");
-        if (xForwardedFor != null && !xForwardedFor.isEmpty() && !"unknown".equalsIgnoreCase(xForwardedFor)) {
-            return xForwardedFor.split(",")[0].trim();
-        }
-        
-        String xRealIp = request.getHeader("X-Real-IP");
-        if (xRealIp != null && !xRealIp.isEmpty() && !"unknown".equalsIgnoreCase(xRealIp)) {
-            return xRealIp;
-        }
-        
-        String xForwarded = request.getHeader("X-Forwarded");
-        if (xForwarded != null && !xForwarded.isEmpty() && !"unknown".equalsIgnoreCase(xForwarded)) {
-            return xForwarded;
-        }
-        
-        String forwardedFor = request.getHeader("Forwarded-For");
-        if (forwardedFor != null && !forwardedFor.isEmpty() && !"unknown".equalsIgnoreCase(forwardedFor)) {
-            return forwardedFor;
-        }
-        
-        String forwarded = request.getHeader("Forwarded");
-        if (forwarded != null && !forwarded.isEmpty() && !"unknown".equalsIgnoreCase(forwarded)) {
-            return forwarded;
-        }
-        
-        return request.getRemoteAddr();
+        return HttpRequestClientIp.resolve(request);
     }
     
     /**

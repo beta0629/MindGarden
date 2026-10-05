@@ -85,7 +85,7 @@ public class SuperAdminController extends BaseApiController {
             }
         }
         if (tenantId != null && !tenantId.isEmpty()) {
-            if (userRepository.existsByTenantIdAndUserId(tenantId, request.getUserId())) {
+            if (userRepository.existsByTenantIdAndUserIdIncludingDeleted(tenantId, request.getUserId())) {
                 throw new RuntimeException("이미 존재하는 사용자 ID입니다.");
             }
         } else {

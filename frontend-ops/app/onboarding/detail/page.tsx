@@ -5,15 +5,18 @@ import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 
 import { OnboardingDecisionForm } from "@/components/onboarding/OnboardingDecisionForm";
-import { fetchAllOnboarding, fetchOnboardingDetail } from "@/services/onboardingService";
+import { fetchOnboardingDetail } from "@/services/onboardingService";
 import { OnboardingRequest } from "@/types/onboarding";
 import { ONBOARDING_MESSAGES, ONBOARDING_PATHS } from "@/constants/onboarding";
 import { KR_PUBLIC_DATA_COPY } from "@/content/krPublicData";
 import { recheckBusinessRegistration, type BusinessLookupResult } from "@/services/krPublicDataApi";
-import { buildOnboardingFacts, getStatusLabel, readOnboardingChecklist } from "@/utils/onboardingUtils";
+import {
+  buildOnboardingFacts,
+  getStatusLabel,
+  mapOnboardingDisplay,
+  readOnboardingChecklist
+} from "@/utils/onboardingUtils";
 import { formatOnboardingDate } from "@/utils/dateUtils";
-import { onboardingListCache } from "@/utils/onboardingListCache";
-import { applyRefreshedOnboardingViews } from "@/utils/onboardingViewRefresh";
 
 function coreApiBaseConfigured(): boolean {
   if (typeof window !== "undefined" && (window as { __CORE_API_BASE_URL__?: string }).__CORE_API_BASE_URL__) {
@@ -163,19 +166,13 @@ function OnboardingDetailPageContent() {
     if (!id) {
       return;
     }
-    await applyRefreshedOnboardingViews({
-      fetchDetail: () => fetchOnboardingDetail(id),
-      fetchList: () => fetchAllOnboarding(),
-      detailFailureMessage: ONBOARDING_MESSAGES.ERROR_BODY,
-      listFailureMessage: ONBOARDING_MESSAGES.ERROR_BODY,
-      applyDetail: (next) => {
-        setDetail(next);
-        setError(null);
-      },
-      applyList: (rows) => {
-        onboardingListCache.publish(rows);
-      }
-    });
+    try {
+      const next = await fetchOnboardingDetail(id);
+      setDetail(next);
+      setError(null);
+    } catch (err) {
+      console.error(`온보딩 상세 다시 조회 실패 (id: ${id})`, err);
+    }
   }, [id]);
 
   if (loading) {
@@ -197,6 +194,7 @@ function OnboardingDetailPageContent() {
     );
   }
 
+  const display = mapOnboardingDisplay(detail);
   const facts = buildOnboardingFacts(detail);
 
   return (
@@ -207,7 +205,7 @@ function OnboardingDetailPageContent() {
         {ONBOARDING_MESSAGES.PAGE_TITLE}
       </p>
       <h1 id="ops-onboarding-detail-title" className="ops-onboarding__title">
-        {detail.tenantName || ONBOARDING_MESSAGES.EMPTY_VALUE}
+        {display.tenantName || ONBOARDING_MESSAGES.EMPTY_VALUE}
       </h1>
       <p className="ops-onboarding__sub">
         {getStatusLabel(detail.status)}

@@ -7,6 +7,7 @@ import com.coresolution.consultation.service.JwtService;
 import com.coresolution.consultation.service.RefreshTokenService;
 import jakarta.servlet.http.HttpServletRequest;
 import com.coresolution.core.security.PasswordService;
+import com.coresolution.core.util.HttpRequestClientIp;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -190,19 +191,7 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
      * IP 주소 추출
      */
     private String extractIpAddress(HttpServletRequest request) {
-        if (request == null) {
-            return null;
-        }
-        
-        String ip = request.getHeader("X-Forwarded-For");
-        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
-            ip = request.getHeader("X-Real-IP");
-        }
-        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
-            ip = request.getRemoteAddr();
-        }
-        
-        return ip;
+        return HttpRequestClientIp.resolve(request);
     }
     
     /**

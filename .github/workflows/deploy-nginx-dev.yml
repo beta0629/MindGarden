@@ -199,11 +199,17 @@ jobs:
           fi
           if [ -f "$CORE_SOLUTION_DEV_CONF" ]; then
             echo "🌐 Nginx 통합 설정 업데이트 중..."
-            for DEST_NAME in core-solution-dev core-solution-dev.conf; do
-              sudo cp "$CORE_SOLUTION_DEV_CONF" "/etc/nginx/sites-available/$DEST_NAME"
-              sudo ln -sf "/etc/nginx/sites-available/$DEST_NAME" "/etc/nginx/sites-enabled/$DEST_NAME"
-            done
-            echo "✅ 통합 설정 파일 적용 완료"
+            # sites-enabled 는 http 컨텍스트에서 전부 include 된다.
+            # 같은 파일을 core-solution-dev 와 core-solution-dev.conf 에 동시에 두면
+            # real_ip_header 가 두 번 들어가 nginx -t 가 실패한다 (run 37284462345).
+            # 활성 이름은 수동 통합 배포(deploy-dev.yml)와 같은 core-solution-dev 하나만 둔다.
+            sudo cp "$CORE_SOLUTION_DEV_CONF" /etc/nginx/sites-available/core-solution-dev
+            sudo ln -sf /etc/nginx/sites-available/core-solution-dev /etc/nginx/sites-enabled/core-solution-dev
+            if [ -e /etc/nginx/sites-enabled/core-solution-dev.conf ] || [ -L /etc/nginx/sites-enabled/core-solution-dev.conf ]; then
+              sudo rm -f /etc/nginx/sites-enabled/core-solution-dev.conf
+              echo "  removed duplicate sites-enabled/core-solution-dev.conf"
+            fi
+            echo "✅ 통합 설정 파일 적용 완료 (sites-enabled/core-solution-dev 단일)"
           fi
           
           # app.dev 등 테넌트 Host 전용 sites-enabled 가 wildcard OAuth location 을 가리는 경우 제거
@@ -242,15 +248,38 @@ jobs:
           sudo chown -R www-data:www-data /var/www/html-ops
           sudo chmod -R 755 /var/www/html-ops
           
-          # Nginx 설정 테스트
-          if sudo nginx -t; then
-            sudo systemctl reload nginx
-            echo "✅ Nginx 설정 업데이트 완료"
-          else
+          # Nginx 설정 테스트 후 프로세스에 반영.
+          # inactive 에서 reload 만 하면 "nginx.service is not active, cannot reload" 인데
+          # 스텝은 성공으로 끝나 설정이 안 올라간다 (run 37286723926, Cloudflare 521).
+          # appleboy script_stop 기본값이 false 라 set -e 와 명시적 exit 1 을 같이 둔다.
+          set -e
+          if ! sudo nginx -t; then
             echo "❌ Nginx 설정 오류 - 수동 확인 필요"
-            sudo nginx -t
+            sudo nginx -t || true
             exit 1
           fi
+          if sudo systemctl is-active --quiet nginx; then
+            echo "nginx is active — reload (stop 하지 않음)"
+            if ! sudo systemctl reload nginx; then
+              echo "❌ nginx reload 실패"
+              sudo systemctl status nginx --no-pager || true
+              exit 1
+            fi
+          else
+            echo "nginx is inactive — start"
+            if ! sudo systemctl start nginx; then
+              echo "❌ nginx start 실패"
+              sudo systemctl status nginx --no-pager || true
+              exit 1
+            fi
+          fi
+          echo "nginx active 확인:"
+          if ! sudo systemctl is-active nginx; then
+            echo "❌ nginx is not active after start/reload"
+            sudo systemctl status nginx --no-pager || true
+            exit 1
+          fi
+          echo "✅ Nginx 설정 업데이트 완료"
           
     - name: ✅ Nginx 설정 배포 완료
       run: |

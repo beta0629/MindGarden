@@ -51,8 +51,8 @@ public class SessionCookieSerializerConfig {
             }
 
             String domain = sessionCookieSupport.resolveDomain();
+            serializer.setDomainName(domain);
             if (domain != null) {
-                serializer.setDomainName(domain);
                 log.info("Spring Session CookieSerializer Domain 적용(SESSION_COOKIE_DOMAIN): {}", domain);
             } else {
                 log.info(

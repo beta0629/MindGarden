@@ -1,0 +1,38 @@
+# 승인 경로 MySQL 통합 테스트. 운영 Flyway 와 PlSqlInitializer 는 끈다.
+# 스키마는 테스트가 개발 DB SHOW CREATE 와 저장소 프로시저 파일만 올린다.
+spring:
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      connection-init-sql: ""
+  jpa:
+    show-sql: false
+    hibernate:
+      ddl-auto: none
+      naming:
+        implicit-strategy: org.hibernate.boot.model.naming.ImplicitNamingStrategyJpaCompliantImpl
+    database-platform: org.hibernate.dialect.MySQLDialect
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+        format_sql: false
+        use_sql_comments: false
+        hbm2ddl:
+          auto: none
+  flyway:
+    enabled: false
+  security:
+    oauth2:
+      domain:
+        # prod/dev 가 아닌 프로파일은 main-domains 가 정확히 1개여야 승인 접미사를 만든다.
+        main-domains: approval.example.test
+
+mindgarden:
+  plsql-initializer:
+    enabled: false
+
+logging:
+  level:
+    root: WARN
+    org.hibernate.SQL: WARN
+    org.hibernate.orm.jdbc.bind: WARN

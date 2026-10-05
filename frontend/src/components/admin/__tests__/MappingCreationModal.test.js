@@ -506,6 +506,8 @@ describe('MappingCreationModal — P0 핫픽스 + STEP swap', () => {
     await waitFor(() => expect(apiPost).toHaveBeenCalledTimes(1));
     const [, postedBody] = apiPost.mock.calls[0];
     expect(postedBody).toHaveProperty('paymentTiming', 'SAME_DAY_CARD');
+    // 사후 카드는 선납 기본값 BANK_TRANSFER 를 그대로 보내지 않는다.
+    expect(postedBody).toHaveProperty('paymentMethod', 'CARD');
     // 옵션 B: 사후 카드 결제 시 신규 배정에 회기 즉시 부여하지 않고 PENDING_PAYMENT 유지
     expect(postedBody).toHaveProperty('remainingSessions', 0);
     expect(postedBody).toHaveProperty('totalSessions', 5);

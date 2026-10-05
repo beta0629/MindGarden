@@ -17,6 +17,7 @@ const files = {
   page: path.join(root, 'app/tenants/page.tsx'),
   constants: path.join(root, 'src/constants/opsTenants.ts'),
   shell: path.join(root, 'src/constants/opsShell.ts'),
+  nav: path.join(root, 'src/constants/opsNav.ts'),
   card: path.join(root, 'src/components/tenants/TenantCenterCard.tsx'),
   strip: path.join(root, 'src/components/tenants/TenantSummaryStrip.tsx'),
   overflow: path.join(root, 'src/components/tenants/TenantOverflowMenu.tsx'),
@@ -41,6 +42,7 @@ function read(p) {
 const page = read(files.page);
 const constants = read(files.constants);
 const shell = read(files.shell);
+const nav = read(files.nav);
 const card = read(files.card);
 const strip = read(files.strip);
 const overflow = read(files.overflow);
@@ -105,13 +107,12 @@ const checks = [
   { ok: opsService.includes('TenantStatus.SUSPENDED'), msg: 'BE uses TenantStatus enum' },
   {
     ok: (() => {
-      const lnb = shell.slice(shell.indexOf('OPS_SHELL_LNB_ITEMS'));
-      const tenantsAt = lnb.indexOf('OPS_SHELL_PATHS.TENANTS');
-      const pgAt = lnb.indexOf('OPS_SHELL_PATHS.PG_APPROVAL');
-      const overviewAt = lnb.indexOf('OPS_SHELL_PATHS.OVERVIEW');
-      return tenantsAt >= 0 && pgAt > tenantsAt && overviewAt > pgAt;
+      const tenantsAt = nav.indexOf('TENANTS: "테넌트"');
+      const listAt = nav.indexOf('TENANT_LIST: "/tenants"');
+      const pgAt = nav.indexOf('PG_APPROVAL: "/pg-approval"');
+      return tenantsAt >= 0 && listAt > tenantsAt && pgAt > listAt;
     })(),
-    msg: 'LNB order tenants → PG → 현황'
+    msg: 'LNB 테넌트 목록 is before PG 승인'
   },
   {
     ok: !page.includes('TITLE') || !/\btenantId\b/.test(

@@ -7,6 +7,7 @@ import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.util.EmailLogMasking;
 import com.coresolution.consultation.utils.SessionUtils;
 import com.coresolution.core.context.TenantContextHolder;
+import com.coresolution.core.util.HttpRequestClientIp;
 import com.coresolution.core.util.LocalProfileGuard;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
@@ -660,17 +661,7 @@ public class TenantContextFilter implements Filter {
      * @return 클라이언트 IP 주소
      */
     private String getClientIP(HttpServletRequest request) {
-        String xForwardedFor = request.getHeader("X-Forwarded-For");
-        if (xForwardedFor != null && !xForwardedFor.isEmpty()) {
-            return xForwardedFor.split(",")[0].trim();
-        }
-
-        String xRealIP = request.getHeader("X-Real-IP");
-        if (xRealIP != null && !xRealIP.isEmpty()) {
-            return xRealIP;
-        }
-
-        return request.getRemoteAddr();
+        return HttpRequestClientIp.resolve(request);
     }
 
     /**

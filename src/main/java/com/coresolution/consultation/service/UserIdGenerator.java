@@ -11,8 +11,9 @@ package com.coresolution.consultation.service;
 public interface UserIdGenerator {
     
     /**
-     * 테넌트별 고유한 사용자 ID 생성
-     * 이메일 기반으로 사용자 ID을 생성하며, 테넌트 내에서 중복되지 않도록 보장
+     * 테넌트별 고유한 사용자 ID 생성.
+     * 이메일 로컬 파트로 베이스를 만들고, {@code (tenant_id, user_id)} 복합 UNIQUE 와 같이
+     * 삭제 행까지 포함해 같은 테넌트 안에서만 중복을 피한다.
      * 
      * @param email 사용자 이메일 주소 (필수)
      * @param tenantId 테넌트 ID (필수, 테넌트별 중복 체크용)
@@ -22,7 +23,8 @@ public interface UserIdGenerator {
     String generateUniqueUserId(String email, String tenantId);
 
     /**
-     * 정규화된 휴대폰 숫자열만으로 사용자 ID를 만들고, 전역 {@code existsByUserId}로 중복 시 접미사를 붙입니다.
+     * 정규화된 휴대폰 숫자열만으로 사용자 ID를 만들고, 같은 테넌트의
+     * {@code existsByTenantIdAndUserIdIncludingDeleted} 로 중복 시 접미사를 붙입니다.
      *
      * @param normalizedDigits {@link com.coresolution.consultation.util.LoginIdentifierUtils#normalizeKoreanMobileDigits(String)} 결과
      * @param tenantId         테넌트 ID (검증용)

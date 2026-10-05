@@ -201,14 +201,15 @@ describe('mappingManagement.loading', () => {
   });
 
   test('fetch resolve 후 loading → loaded 전환', async() => {
-    let resolveMappings;
+    let releaseFetch;
+    const released = new Promise((resolve) => {
+      releaseFetch = resolve;
+    });
     mockStandardizedApiGet.mockImplementation((url) => {
       if (url === '/api/v1/common-codes/groups/MAPPING_STATUS') {
         return Promise.resolve([]);
       }
-      return new Promise((resolve) => {
-        resolveMappings = () => resolve(EMPTY_MAPPINGS);
-      });
+      return released.then(() => EMPTY_MAPPINGS);
     });
 
     render(<MappingManagementPage />);
@@ -216,7 +217,7 @@ describe('mappingManagement.loading', () => {
     expect(screen.getByTestId('unified-loading')).toBeInTheDocument();
 
     await act(async() => {
-      resolveMappings();
+      releaseFetch();
     });
 
     await waitFor(() => {

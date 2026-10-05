@@ -55,7 +55,8 @@ import lombok.NoArgsConstructor;
     },
     uniqueConstraints = {
         @UniqueConstraint(name = "UK_users_email_tenant", columnNames = {"email", "tenant_id"}),
-        @UniqueConstraint(name = "UK_users_user_id", columnNames = {"user_id"}) // 표준화 2025-12-08: DB 컬럼명도 user_id로 변경
+        // V20261011_001: 전역 user_id UNIQUE 는 soft-delete 행이 다른 테넌트 INSERT 를 막는다.
+        @UniqueConstraint(name = "UK_users_tenant_user_id", columnNames = {"tenant_id", "user_id"})
     }
 )
 @Data
@@ -76,7 +77,7 @@ public class User extends BaseEntity implements Serializable {
     
     @NotBlank(message = "사용자 ID는 필수입니다.")
     @Size(min = 2, max = 50, message = "사용자 ID는 2자 이상 50자 이하여야 합니다.")
-    @Column(name = "user_id", nullable = false, unique = true, length = 50) // 표준화 2025-12-08: DB 컬럼명도 user_id로 변경
+    @Column(name = "user_id", nullable = false, length = 50) // 유일성은 (tenant_id, user_id). V20261011_001
     private String userId; // 표준화 2025-12-08: username -> userId 필드명 변경
     
     @NotBlank(message = "이메일은 필수입니다.")

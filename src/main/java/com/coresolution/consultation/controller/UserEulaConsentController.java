@@ -6,6 +6,7 @@ import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.service.UserEulaConsentService;
 import com.coresolution.consultation.utils.SessionUtils;
 import com.coresolution.core.context.TenantContextHolder;
+import com.coresolution.core.util.HttpRequestClientIp;
 import com.coresolution.core.controller.BaseApiController;
 import com.coresolution.core.dto.ApiResponse;
 import jakarta.servlet.http.HttpServletRequest;
@@ -95,14 +96,6 @@ public class UserEulaConsentController extends BaseApiController {
     }
 
     private static String resolveClientIpAddress(HttpServletRequest request) {
-        String xForwardedFor = request.getHeader("X-Forwarded-For");
-        if (xForwardedFor != null && !xForwardedFor.isBlank()) {
-            return xForwardedFor.split(",")[0].trim();
-        }
-        String xRealIp = request.getHeader("X-Real-IP");
-        if (xRealIp != null && !xRealIp.isBlank()) {
-            return xRealIp.trim();
-        }
-        return request.getRemoteAddr();
+        return HttpRequestClientIp.resolve(request);
     }
 }

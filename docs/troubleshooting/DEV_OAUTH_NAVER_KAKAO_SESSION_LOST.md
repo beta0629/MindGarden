@@ -25,13 +25,17 @@
 
 **결론: 서브도메인 전용 콜백이 꼭 필요하지는 않습니다.** 두 가지 방식 모두 가능합니다.
 
-### 방식 A: 루트 도메인 콜백 + 세션 쿠키 Domain 설정 (현재 적용)
+### 방식 A: 루트 도메인 콜백 + parent 세션 쿠키 Domain (사용하지 않음)
 
-- **콜백 URL**: `https://dev.core-solution.co.kr/api/auth/naver/callback` (그대로 루트 도메인)
-- **세션 쿠키**: `Domain=dev.core-solution.co.kr` 로 설정 (RFC 6265: 선행 점 불허) → `dev.core-solution.co.kr` 및 **모든 서브도메인**(mindgarden 등)에서 동일 쿠키 전송
-- **장점**: 네이버/카카오 개발자 콘솔에 **기존 루트 도메인 콜백만** 등록하면 됨. 서브도메인용 URL 추가 불필요.
-- **설정**: `config/environments/development/dev.env` 에 `SESSION_COOKIE_DOMAIN=dev.core-solution.co.kr` (선행 점 없음), `NAVER_REDIRECT_URI`/`KAKAO_REDIRECT_URI` 는 `https://dev.core-solution.co.kr/...` 유지.  
-  앱은 `SESSION_COOKIE_DOMAIN` 이 비어 있지 않을 때만 세션 쿠키 `Domain` 을 설정한다(`SessionCookieDomainWebServerCustomizer`). YAML 에 `domain: ${SESSION_COOKIE_DOMAIN:}` 형태의 빈 기본값은 쓰지 않는다(Spring Boot 3.x에서 빈 문자열이 Domain에 적용될 수 있음).
+- parent `Domain` 은 `*.dev` 테넌트 Host 가 같은 `JSESSIONID` 를 받게 한다. 다른 테넌트 접속이 이전 세션으로 이어진다.
+- dev 프로파일은 이 Domain 을 **신규 쿠키에 넣지 않는다** (host-only).
+
+### 방식 C: apex 콜백 + 일회용 oauthExchangeCode (현재 적용)
+
+- **콜백 URL**: `https://dev.core-solution.co.kr/api/auth/naver/callback` (루트 도메인 유지)
+- **세션 쿠키**: Domain 없음 (host-only). mindgarden 과 mindcare 는 `JSESSIONID` 를 공유하지 않는다.
+- **OAuth**: 콜백이 `oauthExchangeCode` 를 테넌트 프론트 쿼리에 넣고, SPA 가 `POST /api/v1/auth/oauth2/web-session-tokens` 로 1회 교환한다. apex 의 host-only 쿠키가 없어도 JWT 를 받는다 (`OAUTH_WEB_SESSION_EXCHANGE_CODE_ENABLED` 기본 true).
+- **설정**: `application-dev.yml` 에 `server.servlet.session.cookie.domain` 을 두지 않는다. `dev.env` 의 `SESSION_COOKIE_DOMAIN` 은 예전 parent 쿠키를 `Max-Age=0` 으로 지울 때만 쓴다.
 
 ### 방식 B: 서브도메인 콜백 (콜백과 프론트 동일 호스트)
 
@@ -40,32 +44,31 @@
 - **장점**: 쿠키 도메인 설정 불필요.
 - **단점**: 네이버/카카오 개발자 콘솔에 **서브도메인 콜백 URL**을 추가로 등록해야 함.
 
-**현재 저장소 설정**: **방식 A** (루트 도메인 콜백 + `SESSION_COOKIE_DOMAIN=dev.core-solution.co.kr`, RFC 6265 준수로 선행 점 없음) 로 통일해 두었습니다.
+**현재 저장소 설정**: **방식 C** (apex 콜백 + host-only 세션 쿠키 + `oauthExchangeCode`). parent Domain 으로 서브도메인 세션을 공유하지 않는다.
 
 ---
 
 ## 조치 (반영됨)
 
 1. **config/environments/development/dev.env**
-   - `SESSION_COOKIE_DOMAIN=dev.core-solution.co.kr` 로 **세션 쿠키를 서브도메인과 공유** (선행 점 없음: RFC 6265/Chrome invalid 방지)
-   - `NAVER_REDIRECT_URI`, `KAKAO_REDIRECT_URI` 는 **루트 도메인** 유지:  
-     `https://dev.core-solution.co.kr/api/auth/naver/callback`,  
-     `https://dev.core-solution.co.kr/api/auth/kakao/callback`
-   - `OAUTH2_BASE_URL` = 로그인 성공 후 리다이렉트할 프론트(mindgarden 등)
+   - `SESSION_COOKIE_DOMAIN` 은 신규 `Set-Cookie` Domain 이 아니다. 예전 parent 쿠키 만료용이다.
+   - `NAVER_REDIRECT_URI`, `KAKAO_REDIRECT_URI` 는 **루트 도메인** 유지.
+   - `OAUTH_WEB_SESSION_EXCHANGE_CODE_ENABLED=true` — 콜백 Host 와 테넌트 Host 가 달라도 JWT 교환.
 
 2. **세션 쿠키 Domain**
-   - 환경 변수 `SESSION_COOKIE_DOMAIN` 이 설정된 경우에만 적용 (`SessionCookieDomainWebServerCustomizer`). 미설정 시 호스트 전용 쿠키(로컬 기본).
-   - OAuth 콜백·`SessionCookieRenewalFilter` 갱신 Set-Cookie 는 `SessionCookieSupport` 로 Domain/HttpOnly/SameSite/Secure/Max-Age 를 동일하게 맞춤 (속성 불일치 시 브라우저가 갱신을 무시할 수 있음).
+   - `dev` 프로파일은 `SESSION_COOKIE_DOMAIN` 이 있어도 Domain 을 쓰지 않는다 (`SessionCookieSupport`).
+   - Path / HttpOnly / SameSite / Secure 는 그대로다.
+   - Host 테넌트와 세션 tenantId 가 다르면 세션을 끊고 그 Host 에서 다시 로그인한다. apex 는 테넌트 라벨이 없어 OAuth 콜백 세션을 유지한다.
 
 3. **네이버/Kakao 개발자 콘솔**
-   - **방식 A** 사용 시: 기존처럼 **루트 도메인**만 등록하면 됨.  
+   - **방식 C** 사용 시: 기존처럼 **루트 도메인**만 등록하면 됨.  
      `https://dev.core-solution.co.kr/api/auth/naver/callback`,  
      `https://dev.core-solution.co.kr/api/auth/kakao/callback`
    - (방식 B로 바꿀 경우에만) 서브도메인 URL 추가 등록
 
 4. **서버 반영**
-   - 개발 서버 env에 `SESSION_COOKIE_DOMAIN=dev.core-solution.co.kr` 및 위 redirect URI 반영 후 **앱 재시작**  
-     `sudo systemctl restart mindgarden-dev`
+   - 개발 서버는 host-only 세션 쿠키로 기동한다. parent Domain 을 다시 넣지 않는다.
+   - 반영은 앱 재시작 후 확인한다.
 
 ## OAuth 진입 경로 (참고)
 

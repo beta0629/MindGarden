@@ -6,6 +6,7 @@ name: 🛡️ Guardrails (PR)
 #   3) 비밀값 커밋                   — gitleaks(PR 새 커밋만) + ApplicationYmlSecretDefaultsTest
 #   4) FE 관리자 목록 전체 조회·page/size 누락 — scripts/verification/check-fe-admin-list-paging.js
 #   4b) FE 표시용 시각을 판정 입력으로 사용·다국어 ${...} 미보간 — scripts/verification/check-fe-display-string-logic.js
+#   4c) FE 401 공용 처리 우회 로그인 직접 이동 — scripts/verification/check-login-redirect-bypass.js
 #   5) 운영 머지 게이트              — base=release/prod 이면 BE/FE 빌드도 같은 워크플로에서 실행
 #   6) 운영 배포 워크플로 실패 삼킴·옛 DB — scripts/verification/check-prod-deploy-workflows.js (|| true · continue-on-error · non-fatal · mind_garden)
 # 베이스라인: src/test/resources/guardrails/*.txt, 저장소 루트 .gitleaksignore
@@ -125,6 +126,25 @@ jobs:
 
       - name: Check display time → logic / raw ${...} in i18n (ratchet baseline)
         run: node scripts/verification/check-fe-display-string-logic.js
+
+  guardrail-fe-login-redirect-bypass:
+    name: Guardrail FE (login redirect bypassing shared 401 handling)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Checker self-test
+        run: node scripts/verification/check-login-redirect-bypass.test.js
+
+      - name: Check direct /login navigation outside sessionRedirect (ratchet baseline)
+        run: node scripts/verification/check-login-redirect-bypass.js
 
   guardrail-prod-deploy-workflows:
     name: Guardrail deploy workflows (prod static)

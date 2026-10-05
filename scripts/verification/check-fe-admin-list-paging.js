@@ -305,4 +305,4 @@ if (require.main === module) {
   process.exit(main());
 }
 
-module.exports = { scanFile, collect, stripComments, callArgs, walk, readBaseline };
+module.exports = { scanFile, collect, stripComments, callArgs, firstArg, walk, readBaseline };

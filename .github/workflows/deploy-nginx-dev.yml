@@ -248,15 +248,38 @@ jobs:
           sudo chown -R www-data:www-data /var/www/html-ops
           sudo chmod -R 755 /var/www/html-ops
           
-          # Nginx 설정 테스트
-          if sudo nginx -t; then
-            sudo systemctl reload nginx
-            echo "✅ Nginx 설정 업데이트 완료"
-          else
+          # Nginx 설정 테스트 후 프로세스에 반영.
+          # inactive 에서 reload 만 하면 "nginx.service is not active, cannot reload" 인데
+          # 스텝은 성공으로 끝나 설정이 안 올라간다 (run 37286723926, Cloudflare 521).
+          # appleboy script_stop 기본값이 false 라 set -e 와 명시적 exit 1 을 같이 둔다.
+          set -e
+          if ! sudo nginx -t; then
             echo "❌ Nginx 설정 오류 - 수동 확인 필요"
-            sudo nginx -t
+            sudo nginx -t || true
             exit 1
           fi
+          if sudo systemctl is-active --quiet nginx; then
+            echo "nginx is active — reload (stop 하지 않음)"
+            if ! sudo systemctl reload nginx; then
+              echo "❌ nginx reload 실패"
+              sudo systemctl status nginx --no-pager || true
+              exit 1
+            fi
+          else
+            echo "nginx is inactive — start"
+            if ! sudo systemctl start nginx; then
+              echo "❌ nginx start 실패"
+              sudo systemctl status nginx --no-pager || true
+              exit 1
+            fi
+          fi
+          echo "nginx active 확인:"
+          if ! sudo systemctl is-active nginx; then
+            echo "❌ nginx is not active after start/reload"
+            sudo systemctl status nginx --no-pager || true
+            exit 1
+          fi
+          echo "✅ Nginx 설정 업데이트 완료"
           
     - name: ✅ Nginx 설정 배포 완료
       run: |

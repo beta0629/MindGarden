@@ -28,6 +28,7 @@ type TenantCenterCardProps = {
   onDetail: (tenant: OpsTenantItem) => void;
   onSuspend: (tenant: OpsTenantItem) => void;
   onResume: (tenant: OpsTenantItem) => void;
+  onCloseTenant: (tenant: OpsTenantItem) => void;
 };
 
 function statusClass(status: string): string {
@@ -49,7 +50,8 @@ export default function TenantCenterCard({
   tenant,
   onDetail,
   onSuspend,
-  onResume
+  onResume,
+  onCloseTenant
 }: TenantCenterCardProps) {
   const router = useRouter();
   const centerName = toDisplayString(tenant.name, OPS_TENANT_LABELS.TITLE);
@@ -102,6 +104,7 @@ export default function TenantCenterCard({
           onDetail={() => onDetail(tenant)}
           onSuspend={() => onSuspend(tenant)}
           onResume={() => onResume(tenant)}
+          onCloseTenant={() => onCloseTenant(tenant)}
           onViewPg={handleViewPg}
         />
       </div>

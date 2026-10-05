@@ -9,6 +9,7 @@ import com.coresolution.core.repository.billing.TenantSubscriptionRepository;
 import com.coresolution.core.service.billing.SubscriptionPlanChangeService;
 import com.coresolution.core.service.billing.SubscriptionRefundService;
 import com.coresolution.core.service.billing.SubscriptionService;
+import com.coresolution.core.tenant.TenantCloseMessages;
 import com.coresolution.consultation.service.PaymentGatewayService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -318,6 +319,22 @@ public class SubscriptionServiceImpl implements SubscriptionService {
             subscriptionId, newPlanId, changeType, priceDifference);
         
         return toResponse(subscription);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public boolean hasEffectiveSubscription(String tenantId, LocalDate today) {
+        if (tenantId == null || tenantId.isBlank()) {
+            return false;
+        }
+        LocalDate effectiveOn = today != null
+                ? today
+                : LocalDate.now(TenantCloseMessages.ZONE_SEOUL);
+        return subscriptionRepository
+                .findByTenantIdAndStatusAndIsDeletedFalse(
+                        tenantId.trim(), TenantSubscription.SubscriptionStatus.ACTIVE)
+                .stream()
+                .anyMatch(subscription -> subscription.isActive() && subscription.isEffective(effectiveOn));
     }
     
     private TenantSubscription.BillingCycle parseBillingCycle(String billingCycle) {

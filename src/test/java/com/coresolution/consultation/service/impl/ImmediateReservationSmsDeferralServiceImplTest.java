@@ -16,6 +16,8 @@ import com.coresolution.consultation.repository.ImmediateReservationSmsPendingRe
 import com.coresolution.consultation.repository.ScheduleRepository;
 import com.coresolution.consultation.service.BatchNotificationDispatchService;
 import com.coresolution.core.context.TenantContextHolder;
+import com.coresolution.core.tenant.TenantAccessDecision;
+import com.coresolution.core.tenant.TenantAccessEvaluator;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -28,6 +30,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -364,5 +367,54 @@ class ImmediateReservationSmsDeferralServiceImplTest {
                 any(), any(), any(), any());
         verify(batchNotificationDispatchService, never()).dispatchReservationReminderD2(any());
         verify(batchNotificationDispatchService, never()).dispatchReservationImmediateLate(any());
+    }
+
+    @Test
+    @DisplayName("processDuePending — SUSPENDED 테넌트는 발송하지 않고 pending 을 유지")
+    void processDuePending_suspendedSkipsDispatch() {
+        ImmediateReservationSmsPending pending = pendingDue();
+        TenantAccessEvaluator evaluator = mock(TenantAccessEvaluator.class);
+        when(evaluator.decide(TENANT_ID, null)).thenReturn(TenantAccessDecision.DENY_SUSPENDED);
+        service.setTenantAccessEvaluator(evaluator);
+        when(pendingRepository.findDuePending(
+                eq(ImmediateReservationSmsPendingStatus.PENDING), any(LocalDateTime.class)))
+                .thenReturn(Collections.singletonList(pending));
+
+        int processed = service.processDuePending();
+
+        assertThat(processed).isZero();
+        assertThat(pending.getStatus()).isEqualTo(ImmediateReservationSmsPendingStatus.PENDING);
+        verify(batchNotificationDispatchService, never()).dispatchReservationImmediateLate(any());
+        verify(scheduleRepository, never()).findByTenantIdAndId(any(), any());
+    }
+
+    @Test
+    @DisplayName("processDuePending — CLOSED 테넌트는 발송하지 않고 SKIPPED_CANCELLED")
+    void processDuePending_closedMarksSkipped() {
+        ImmediateReservationSmsPending pending = pendingDue();
+        TenantAccessEvaluator evaluator = mock(TenantAccessEvaluator.class);
+        when(evaluator.decide(TENANT_ID, null)).thenReturn(TenantAccessDecision.DENY_CLOSED);
+        service.setTenantAccessEvaluator(evaluator);
+        when(pendingRepository.findDuePending(
+                eq(ImmediateReservationSmsPendingStatus.PENDING), any(LocalDateTime.class)))
+                .thenReturn(Collections.singletonList(pending));
+
+        int processed = service.processDuePending();
+
+        assertThat(processed).isEqualTo(1);
+        assertThat(pending.getStatus()).isEqualTo(ImmediateReservationSmsPendingStatus.SKIPPED_CANCELLED);
+        verify(batchNotificationDispatchService, never()).dispatchReservationImmediateLate(any());
+    }
+
+    private static ImmediateReservationSmsPending pendingDue() {
+        ImmediateReservationSmsPending pending = ImmediateReservationSmsPending.builder()
+                .tenantId(TENANT_ID)
+                .scheduleId(10L)
+                .templateCode(BatchNotificationTemplateCodes.RESERVATION_IMMEDIATE_LATE)
+                .fireAt(LocalDateTime.of(2026, 7, 30, 9, 0))
+                .status(ImmediateReservationSmsPendingStatus.PENDING)
+                .build();
+        pending.setId(9L);
+        return pending;
     }
 }

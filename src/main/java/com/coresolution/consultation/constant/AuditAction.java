@@ -95,7 +95,16 @@ public enum AuditAction {
 
     /** 어드민 온라인 주문 soft-delete (허용 상태만). */
     SHOP_ORDER_SOFT_DELETE(
-            "SHOP_ORDER_SOFT_DELETE", "enums.AuditAction.SHOP_ORDER_SOFT_DELETE");
+            "SHOP_ORDER_SOFT_DELETE", "enums.AuditAction.SHOP_ORDER_SOFT_DELETE"),
+
+    /**
+     * Ops 테넌트 정지 (ACTIVE → SUSPENDED).
+     * suspended_at 컬럼이 생기기 전까지 이 행의 created_at 이 정지 시각이다.
+     */
+    TENANT_SUSPENDED("TENANT_SUSPENDED", "enums.AuditAction.TENANT_SUSPENDED"),
+
+    /** Ops 테넌트 종료 (SUSPENDED → CLOSED). */
+    TENANT_CLOSED("TENANT_CLOSED", "enums.AuditAction.TENANT_CLOSED");
 
     private final String code;
     private final String messageKey;

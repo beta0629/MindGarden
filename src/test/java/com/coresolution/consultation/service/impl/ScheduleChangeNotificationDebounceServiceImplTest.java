@@ -3,6 +3,7 @@ package com.coresolution.consultation.service.impl;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -21,6 +22,8 @@ import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.NotificationService;
 import com.coresolution.consultation.service.UserPersonalDataCacheService;
 import com.coresolution.core.context.TenantContextHolder;
+import com.coresolution.core.tenant.TenantAccessDecision;
+import com.coresolution.core.tenant.TenantAccessEvaluator;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -283,5 +286,28 @@ class ScheduleChangeNotificationDebounceServiceImplTest {
         assertThat(processed).isEqualTo(1);
         verify(notificationService, never()).sendScheduleChanged(any(), any(), any(), any());
         assertThat(pending.getStatus()).isEqualTo(ScheduleChangeNotificationPendingStatus.SKIPPED_DUPLICATE);
+    }
+
+    @Test
+    @DisplayName("processDue: SUSPENDED 테넌트는 일정 변경 문자를 보내지 않음")
+    void processDue_suspendedDoesNotSend() {
+        ScheduleChangeNotificationPending pending = ScheduleChangeNotificationPending.builder()
+                .tenantId(TENANT_ID)
+                .scheduleId(SCHEDULE_ID)
+                .fireAt(LocalDateTime.now(clock).minusMinutes(1))
+                .status(ScheduleChangeNotificationPendingStatus.PENDING)
+                .build();
+        TenantAccessEvaluator evaluator = mock(TenantAccessEvaluator.class);
+        when(evaluator.decide(TENANT_ID, null)).thenReturn(TenantAccessDecision.DENY_SUSPENDED);
+        service.setTenantAccessEvaluator(evaluator);
+        when(pendingRepository.findDuePending(
+                eq(ScheduleChangeNotificationPendingStatus.PENDING), any(LocalDateTime.class)))
+                .thenReturn(List.of(pending));
+
+        int processed = service.processDuePending();
+
+        assertThat(processed).isZero();
+        verify(notificationService, never()).sendScheduleChanged(any(), any(), any(), any());
+        assertThat(pending.getStatus()).isEqualTo(ScheduleChangeNotificationPendingStatus.PENDING);
     }
 }

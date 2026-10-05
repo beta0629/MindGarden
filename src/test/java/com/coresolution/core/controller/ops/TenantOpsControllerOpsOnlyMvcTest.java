@@ -1,5 +1,7 @@
 package com.coresolution.core.controller.ops;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -18,7 +20,11 @@ import com.coresolution.core.constants.SecurityRoleConstants;
 import com.coresolution.core.repository.TenantRepository;
 import com.coresolution.core.repository.TenantRoleRepository;
 import com.coresolution.core.repository.UserRoleAssignmentRepository;
+import com.coresolution.core.service.ops.TenantCloseService;
 import com.coresolution.core.service.ops.TenantOpsService;
+import com.coresolution.core.tenant.TenantCloseDecision;
+import com.coresolution.core.tenant.TenantCloseMessages;
+import com.coresolution.core.tenant.TenantCloseRejectedException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -46,19 +52,21 @@ class TenantOpsControllerOpsOnlyMvcTest {
     private static final String TENANT_ID = "tenant-ops-only-a";
 
     private TenantOpsService tenantOpsService;
+    private TenantCloseService tenantCloseService;
     private MockMvc mockMvc;
 
     @BeforeEach
     void setUp() {
         SecurityContextHolder.clearContext();
         tenantOpsService = mock(TenantOpsService.class);
-        TenantOpsController controller = new TenantOpsController(tenantOpsService,
+        tenantCloseService = mock(TenantCloseService.class);
+        TenantOpsController controller = new TenantOpsController(tenantOpsService, tenantCloseService,
             mock(TenantRepository.class), mock(UserRepository.class), mock(TenantRoleRepository.class),
             mock(UserRoleAssignmentRepository.class));
         mockMvc = MockMvcBuilders.standaloneSetup(controller)
             .setControllerAdvice(new GlobalExceptionHandler())
             .build();
-        when(tenantOpsService.listTenants()).thenReturn(List.of(Map.of("tenantId", TENANT_ID)));
+        when(tenantOpsService.listTenants(false)).thenReturn(List.of(Map.of("tenantId", TENANT_ID)));
         when(tenantOpsService.getTenantDetail(TENANT_ID)).thenReturn(Map.of("tenantId", TENANT_ID));
     }
 
@@ -93,6 +101,7 @@ class TenantOpsControllerOpsOnlyMvcTest {
             .andExpect(status().isForbidden()).andExpect(jsonPath("$.data").doesNotExist());
         mockMvc.perform(post(BASE + "/" + TENANT_ID + "/suspend")).andExpect(status().isForbidden());
         mockMvc.perform(post(BASE + "/" + TENANT_ID + "/resume")).andExpect(status().isForbidden());
+        mockMvc.perform(post(BASE + "/" + TENANT_ID + "/close")).andExpect(status().isForbidden());
         mockMvc.perform(get(BASE + "/" + TENANT_ID + "/admins")).andExpect(status().isForbidden());
         verifyNoInteractions(tenantOpsService);
     }
@@ -115,8 +124,25 @@ class TenantOpsControllerOpsOnlyMvcTest {
             .andExpect(jsonPath("$.data[0].tenantId").value(TENANT_ID));
         mockMvc.perform(get(BASE + "/" + TENANT_ID)).andExpect(status().isOk())
             .andExpect(jsonPath("$.data.tenantId").value(TENANT_ID));
-        verify(tenantOpsService).listTenants();
+        verify(tenantOpsService).listTenants(false);
         verify(tenantOpsService).getTenantDetail(TENANT_ID);
+    }
+
+    @Test
+    @DisplayName("Ops — includeClosed=true 와 종료 거절 코드")
+    void ops_includeClosed_andCloseRejected() throws Exception {
+        authenticate(SecurityRoleConstants.ROLE_OPS);
+        when(tenantOpsService.listTenants(true)).thenReturn(List.of(Map.of("tenantId", TENANT_ID, "status", "CLOSED")));
+        when(tenantCloseService.closeTenant(eq(TENANT_ID), any()))
+                .thenThrow(new TenantCloseRejectedException(TenantCloseDecision.GRACE_NOT_ELAPSED));
+
+        mockMvc.perform(get(BASE).param(TenantCloseMessages.PARAM_INCLUDE_CLOSED, "true"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data[0].status").value("CLOSED"));
+        mockMvc.perform(post(BASE + "/" + TENANT_ID + "/close"))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.errorCode").value(TenantCloseMessages.CODE_GRACE_NOT_ELAPSED))
+                .andExpect(jsonPath("$.message").value(TenantCloseMessages.MESSAGE_GRACE_NOT_ELAPSED));
     }
 
     private static void authenticate(String authority) {

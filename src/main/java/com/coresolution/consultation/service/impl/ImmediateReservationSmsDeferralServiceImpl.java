@@ -17,6 +17,8 @@ import com.coresolution.consultation.service.BatchNotificationDispatchService;
 import com.coresolution.consultation.service.ImmediateReservationSmsDeferralService;
 import com.coresolution.consultation.util.ReservationSmsBusinessHours;
 import com.coresolution.core.context.TenantContextHolder;
+import com.coresolution.core.tenant.TenantAccessDecision;
+import com.coresolution.core.tenant.TenantAccessEvaluator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -39,6 +41,7 @@ public class ImmediateReservationSmsDeferralServiceImpl
     private final BatchNotificationDispatchService batchNotificationDispatchService;
     private final ImmediateReservationSmsProperties properties;
     private final Clock clock;
+    private TenantAccessEvaluator tenantAccessEvaluator;
 
     /**
      * 운영용 생성자 (Asia/Seoul 시계).
@@ -78,6 +81,16 @@ public class ImmediateReservationSmsDeferralServiceImpl
         this.batchNotificationDispatchService = batchNotificationDispatchService;
         this.properties = properties;
         this.clock = clock;
+    }
+
+    /**
+     * 정지·종료 테넌트 발송 차단. 테스트 생성자는 넣지 않아도 된다.
+     *
+     * @param tenantAccessEvaluator 접근 판정
+     */
+    @Autowired(required = false)
+    public void setTenantAccessEvaluator(TenantAccessEvaluator tenantAccessEvaluator) {
+        this.tenantAccessEvaluator = tenantAccessEvaluator;
     }
 
     @Override
@@ -218,6 +231,10 @@ public class ImmediateReservationSmsDeferralServiceImpl
             mark(pending, ImmediateReservationSmsPendingStatus.SKIPPED_CANCELLED);
             return true;
         }
+        if (skipWhenTenantAccessDenied(pending, tenantId)) {
+            return pending.getStatus() != null
+                    && !ImmediateReservationSmsPendingStatus.PENDING.equals(pending.getStatus());
+        }
 
         String previousTenant = TenantContextHolder.getTenantId();
         try {
@@ -280,6 +297,26 @@ public class ImmediateReservationSmsDeferralServiceImpl
                     scheduleId);
             return null;
         }
+    }
+
+    /**
+     * @return 이번 폴링에서 발송을 건너뛰면 true
+     */
+    private boolean skipWhenTenantAccessDenied(ImmediateReservationSmsPending pending, String tenantId) {
+        if (tenantAccessEvaluator == null) {
+            return false;
+        }
+        TenantAccessDecision decision = tenantAccessEvaluator.decide(tenantId, null);
+        if (decision.isAllowed()) {
+            return false;
+        }
+        if (decision == TenantAccessDecision.DENY_CLOSED) {
+            log.info("종료 테넌트 즉시 예약 문자 생략: tenantId={}", tenantId);
+            mark(pending, ImmediateReservationSmsPendingStatus.SKIPPED_CANCELLED);
+            return true;
+        }
+        log.info("정지 테넌트 즉시 예약 문자 생략(재개 후 재시도): tenantId={}", tenantId);
+        return true;
     }
 
     private void mark(ImmediateReservationSmsPending pending, String status) {

@@ -7,6 +7,9 @@ import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.util.EmailLogMasking;
 import com.coresolution.consultation.utils.SessionUtils;
 import com.coresolution.core.context.TenantContextHolder;
+import com.coresolution.core.tenant.TenantAccessDecision;
+import com.coresolution.core.tenant.TenantAccessEvaluator;
+import com.coresolution.core.tenant.TenantAccessMessages;
 import com.coresolution.core.util.LocalProfileGuard;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
@@ -37,6 +40,7 @@ public class TenantContextFilter implements Filter {
     // 브랜치 개념 제거: BranchRepository 의존성 제거됨 (표준화 2025-12-05)
     private final com.coresolution.core.repository.TenantRepository tenantRepository;
     private final org.springframework.core.env.Environment environment;
+    private final TenantAccessEvaluator tenantAccessEvaluator;
     @org.springframework.beans.factory.annotation.Autowired(required = false)
     private UserRepository userRepository;
 
@@ -44,10 +48,29 @@ public class TenantContextFilter implements Filter {
     @org.springframework.beans.factory.annotation.Value("${local.default-tenant-id:${LOCAL_DEFAULT_TENANT_ID:}}")
     private String localDefaultTenantId;
 
+    /**
+     * 테스트 호환 생성자. 평가기가 없으면 상태 차단을 하지 않는다.
+     *
+     * @param tenantRepository 테넌트 저장소
+     * @param environment      프로파일
+     */
     public TenantContextFilter(com.coresolution.core.repository.TenantRepository tenantRepository,
                                org.springframework.core.env.Environment environment) {
+        this(tenantRepository, environment, null);
+    }
+
+    /**
+     * @param tenantRepository       테넌트 저장소
+     * @param environment            프로파일
+     * @param tenantAccessEvaluator  정지·종료 접근 판정. null 이면 차단하지 않는다
+     */
+    @org.springframework.beans.factory.annotation.Autowired
+    public TenantContextFilter(com.coresolution.core.repository.TenantRepository tenantRepository,
+                               org.springframework.core.env.Environment environment,
+                               TenantAccessEvaluator tenantAccessEvaluator) {
         this.tenantRepository = tenantRepository;
         this.environment = environment;
+        this.tenantAccessEvaluator = tenantAccessEvaluator;
     }
     
     /**
@@ -199,6 +222,10 @@ public class TenantContextFilter implements Filter {
                 log.debug("Business type context set from filter: {}", businessType);
             }
 
+            if (isTenantAccessDenied(tenantId, requestURI, (HttpServletResponse) response)) {
+                return;
+            }
+
             // 다음 필터로 진행
             chain.doFilter(request, response);
 
@@ -206,6 +233,38 @@ public class TenantContextFilter implements Filter {
             // 요청 종료 시 TenantContext 정리 (메모리 누수 방지)
             TenantContextHolder.clear();
         }
+    }
+
+    /**
+     * 정지·종료 테넌트면 상수 코드로 막고 체인을 타지 않는다. Ops 경로는 정책이 허용한다.
+     *
+     * @param tenantId 해석된 테넌트 ID
+     * @param requestUri 요청 URI
+     * @param httpResponse 응답
+     * @return 막았으면 true
+     * @throws IOException 응답 기록 실패
+     */
+    private boolean isTenantAccessDenied(String tenantId, String requestUri, HttpServletResponse httpResponse)
+            throws IOException {
+        if (tenantAccessEvaluator == null) {
+            return false;
+        }
+        TenantAccessDecision decision = tenantAccessEvaluator.decide(tenantId, requestUri);
+        if (decision.isAllowed()) {
+            return false;
+        }
+        log.info("테넌트 접근 차단: tenantId={}, decision={}, uri={}", tenantId, decision, requestUri);
+        httpResponse.setStatus(TenantAccessMessages.DENY_HTTP_STATUS);
+        httpResponse.setContentType("application/json;charset=UTF-8");
+        String errorJson = "{\"success\":false,\"message\":\""
+                + TenantAccessMessages.DENY_MESSAGE
+                + "\",\"errorCode\":\""
+                + TenantAccessMessages.DENY_CODE
+                + "\",\"status\":"
+                + TenantAccessMessages.DENY_HTTP_STATUS
+                + "}";
+        httpResponse.getWriter().write(errorJson);
+        return true;
     }
 
     /**

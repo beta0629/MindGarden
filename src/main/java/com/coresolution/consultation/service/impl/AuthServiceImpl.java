@@ -33,6 +33,9 @@ import com.coresolution.consultation.util.LoginIdentifierUtils;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.consultation.util.TokenLogMasking;
 import com.coresolution.core.context.TenantContextHolder;
+import com.coresolution.core.tenant.TenantAccessDecision;
+import com.coresolution.core.tenant.TenantAccessEvaluator;
+import com.coresolution.core.tenant.TenantAccessMessages;
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.List;
 import java.util.ArrayList;
@@ -118,6 +121,9 @@ public class AuthServiceImpl implements AuthService {
     @Autowired(required = false)
     private AuthTokenRevocationService authTokenRevocationService;
 
+    @Autowired(required = false)
+    private TenantAccessEvaluator tenantAccessEvaluator;
+
     /** Refresh JWT TTL (ms) — SSOT: {@code jwt.refresh-expiration} (JwtService·RefreshTokenServiceImpl 동일 키). */
     @Value("${jwt.refresh-expiration:604800000}")
     private long refreshExpirationMs;
@@ -156,6 +162,11 @@ public class AuthServiceImpl implements AuthService {
                 // 사용자 정보 조회
                 User user = userService.findByLoginPrincipal(email)
                     .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다: " + email));
+
+                AuthResponse tenantDenied = tenantAccessDeniedResponse(user);
+                if (tenantDenied != null) {
+                    return tenantDenied;
+                }
                 
                 // 임시 비밀번호로 로그인 차단 (isPasswordChanged = false인 경우)
                 if (user.getIsPasswordChanged() != null && !user.getIsPasswordChanged()) {
@@ -271,6 +282,11 @@ public class AuthServiceImpl implements AuthService {
             if (lifecycleState == null || !LifecycleState.ACTIVE_LIKE_STATES.contains(lifecycleState)) {
                 log.warn("Refresh denied: userId={}, lifecycleState={}", user.getId(), lifecycleState);
                 return AuthResponse.failure("계정이 비활성 상태입니다.");
+            }
+
+            AuthResponse tenantDenied = tenantAccessDeniedResponse(user);
+            if (tenantDenied != null) {
+                return tenantDenied;
             }
 
             // 리프레시 토큰 유효성 검사
@@ -720,6 +736,25 @@ public class AuthServiceImpl implements AuthService {
     }
     
     /**
+     * 정지·종료 테넌트 로그인·리프레시를 막는다. 판정은 {@link TenantAccessEvaluator} 만 사용한다.
+     *
+     * @param user 인증된 사용자
+     * @return 막으면 실패 응답, 허용이면 null
+     */
+    private AuthResponse tenantAccessDeniedResponse(User user) {
+        if (user == null || tenantAccessEvaluator == null) {
+            return null;
+        }
+        TenantAccessDecision decision = tenantAccessEvaluator.decide(user.getTenantId(), null);
+        if (decision.isAllowed()) {
+            return null;
+        }
+        log.warn("테넌트 접근 차단: userId={}, tenantId={}, decision={}",
+                user.getId(), user.getTenantId(), decision);
+        return AuthResponse.failure(TenantAccessMessages.DENY_MESSAGE);
+    }
+
+    /**
      * 입점사(코어솔루션 테넌트)만 접근 가능하도록 검증
      * Trinity 회사 직원(ADMIN/OPS 역할 + tenant_id가 NULL)은 메인 웹앱에 로그인할 수 없음
      * Trinity 직원은 Ops Portal(ops.e-trinity.co.kr)을 사용해야 함
@@ -1124,6 +1159,10 @@ public class AuthServiceImpl implements AuthService {
      */
     private AuthResponse finalizeAuthenticatedSession(User user, String sessionId, String clientIp,
             String userAgent) {
+        AuthResponse tenantDenied = tenantAccessDeniedResponse(user);
+        if (tenantDenied != null) {
+            return tenantDenied;
+        }
         if (user.getIsPasswordChanged() != null && !user.getIsPasswordChanged()) {
             log.warn("❌ 임시 비밀번호로 로그인 시도 차단: userId={}", user.getId());
             return AuthResponse.failure("임시 비밀번호로는 로그인할 수 없습니다. 이메일로 발송된 비밀번호 변경 링크를 통해 비밀번호를 변경한 후 로그인해주세요.");

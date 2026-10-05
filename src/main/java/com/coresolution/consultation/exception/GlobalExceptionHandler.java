@@ -16,6 +16,8 @@ import com.coresolution.consultation.util.ScheduleSessionStartGate;
 import com.coresolution.consultation.util.ServerErrorResponses;
 import com.coresolution.core.dto.ErrorResponse;
 import com.coresolution.core.service.impl.OnboardingApprovalBlockedException;
+import com.coresolution.core.tenant.TenantCloseMessages;
+import com.coresolution.core.tenant.TenantCloseRejectedException;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import org.slf4j.Logger;
@@ -603,6 +605,22 @@ public class GlobalExceptionHandler {
             request.getMethod()
         );
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+    }
+
+    /**
+     * 테넌트 종료 거절 — HTTP 409. 코드와 상수 문구만 반환한다.
+     */
+    @ExceptionHandler(TenantCloseRejectedException.class)
+    public ResponseEntity<ErrorResponse> handleTenantCloseRejected(
+            TenantCloseRejectedException e, HttpServletRequest request) {
+        log.info("[TENANT_CLOSE_REJECTED] code={} path={}", e.getErrorCode(), request.getRequestURI());
+        ErrorResponse error = ErrorResponse.of(
+                e.getMessage(),
+                e.getErrorCode(),
+                TenantCloseMessages.REJECT_HTTP_STATUS,
+                request.getRequestURI(),
+                request.getMethod());
+        return ResponseEntity.status(TenantCloseMessages.REJECT_HTTP_STATUS).body(error);
     }
 
     /**

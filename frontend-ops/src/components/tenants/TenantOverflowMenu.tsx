@@ -10,7 +10,7 @@ import {
 } from '@/constants/opsTenants';
 
 /**
- * TenantOverflowMenu — 상세 · 정지/재개 (remove action 없음)
+ * TenantOverflowMenu — 상세 · 정지/재개/종료
  *
  * @author CoreSolution
  * @since 2026-09-08
@@ -21,6 +21,7 @@ type TenantOverflowMenuProps = {
   onDetail: () => void;
   onSuspend: () => void;
   onResume: () => void;
+  onCloseTenant: () => void;
   onViewPg?: () => void;
 };
 
@@ -29,6 +30,7 @@ export default function TenantOverflowMenu({
   onDetail,
   onSuspend,
   onResume,
+  onCloseTenant,
   onViewPg
 }: TenantOverflowMenuProps) {
   const [open, setOpen] = useState(false);
@@ -58,6 +60,7 @@ export default function TenantOverflowMenu({
 
   const showSuspend = status === OPS_TENANT_STATUS.ACTIVE;
   const showResume = status === OPS_TENANT_STATUS.SUSPENDED;
+  const showClose = status === OPS_TENANT_STATUS.SUSPENDED;
 
   return (
     <div className={OPS_TENANT_CSS.OVERFLOW} ref={rootRef}>
@@ -116,6 +119,21 @@ export default function TenantOverflowMenu({
                 }}
               >
                 {OPS_TENANT_LABELS.MENU_RESUME}
+              </button>
+            </li>
+          ) : null}
+          {showClose ? (
+            <li role="none">
+              <button
+                type="button"
+                role="menuitem"
+                className={`${OPS_TENANT_CSS.OVERFLOW_ITEM} ${OPS_TENANT_CSS.OVERFLOW_ITEM_CLOSE}`}
+                onClick={() => {
+                  setOpen(false);
+                  onCloseTenant();
+                }}
+              >
+                {OPS_TENANT_LABELS.MENU_CLOSE}
               </button>
             </li>
           ) : null}

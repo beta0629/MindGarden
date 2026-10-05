@@ -1,15 +1,16 @@
-import { readFileSync } from "fs";
-import { join } from "path";
+import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import { describe, it } from "node:test";
+import { fileURLToPath } from "node:url";
 
-import { ONBOARDING_FACT_LABELS, ONBOARDING_MESSAGES } from "@/constants/onboarding";
-import { OnboardingRequest } from "@/types/onboarding";
-
+import { ONBOARDING_FACT_LABELS, ONBOARDING_MESSAGES } from "../constants/onboarding.ts";
+import type { OnboardingRequest } from "../types/onboarding.ts";
 import {
   applyOnboardingDecisionResponse,
   buildOnboardingFacts,
   mapOnboardingDisplay,
-  OnboardingFact
-} from "./onboardingUtils";
+  type OnboardingFact
+} from "./onboardingUtils.ts";
 
 const CONTACT_EMAIL = "owner@example.com";
 const OTHER_EMAIL = "other@example.com";
@@ -55,17 +56,17 @@ describe("approved onboarding detail block", () => {
     const display = mapOnboardingDisplay(approved);
     const facts = buildOnboardingFacts(approved);
 
-    expect(display.tenantId).toBe(TENANT_ID);
-    expect(display.tenantName).toBe(TENANT_NAME);
-    expect(display.subdomain).toBe(SUBDOMAIN);
-    expect(fact(facts, "tenantId")?.label).toBe(ONBOARDING_FACT_LABELS.TENANT_ID);
-    expect(fact(facts, "tenantId")?.value).toBe(TENANT_ID);
-    expect(fact(facts, "domain")?.value).toBe(SUBDOMAIN);
-    expect(fact(facts, "representativeEmail")?.value).toBe(CONTACT_EMAIL);
-    expect(fact(facts, "loginEmail")?.value).toBe(CONTACT_EMAIL);
-    expect(fact(facts, "representativeEmail")?.value).not.toBe(OTHER_EMAIL);
-    expect(fact(facts, "loginEmail")?.value).not.toBe(PHONE);
-    expect(facts.some((item) => item.value.includes("secret-hash"))).toBe(false);
+    assert.equal(display.tenantId, TENANT_ID);
+    assert.equal(display.tenantName, TENANT_NAME);
+    assert.equal(display.subdomain, SUBDOMAIN);
+    assert.equal(fact(facts, "tenantId")?.label, ONBOARDING_FACT_LABELS.TENANT_ID);
+    assert.equal(fact(facts, "tenantId")?.value, TENANT_ID);
+    assert.equal(fact(facts, "domain")?.value, SUBDOMAIN);
+    assert.equal(fact(facts, "representativeEmail")?.value, CONTACT_EMAIL);
+    assert.equal(fact(facts, "loginEmail")?.value, CONTACT_EMAIL);
+    assert.notEqual(fact(facts, "representativeEmail")?.value, OTHER_EMAIL);
+    assert.notEqual(fact(facts, "loginEmail")?.value, PHONE);
+    assert.equal(facts.some((item) => item.value.includes("secret-hash")), false);
   });
 
   it("does not use adminEmail or requestedBy when contactEmail is absent", () => {
@@ -79,9 +80,9 @@ describe("approved onboarding detail block", () => {
       })
     }));
 
-    expect(fact(facts, "representativeEmail")?.value).toBe(ONBOARDING_MESSAGES.EMPTY_VALUE);
-    expect(fact(facts, "loginEmail")?.value).toBe(ONBOARDING_MESSAGES.EMPTY_VALUE);
-    expect(fact(facts, "tenantId")?.value).toBe(TENANT_ID);
+    assert.equal(fact(facts, "representativeEmail")?.value, ONBOARDING_MESSAGES.EMPTY_VALUE);
+    assert.equal(fact(facts, "loginEmail")?.value, ONBOARDING_MESSAGES.EMPTY_VALUE);
+    assert.equal(fact(facts, "tenantId")?.value, TENANT_ID);
   });
 
   it("hides ciphertext instead of printing it", () => {
@@ -92,9 +93,9 @@ describe("approved onboarding detail block", () => {
       checklistJson: JSON.stringify({ contactEmail: CIPHER, adminEmail: OTHER_EMAIL })
     }));
 
-    expect(fact(facts, "loginEmail")?.value).toBe(ONBOARDING_MESSAGES.EMPTY_VALUE);
-    expect(fact(facts, "representativeEmail")?.value).toBe(ONBOARDING_MESSAGES.EMPTY_VALUE);
-    expect(facts.some((item) => item.value.includes(CIPHER))).toBe(false);
+    assert.equal(fact(facts, "loginEmail")?.value, ONBOARDING_MESSAGES.EMPTY_VALUE);
+    assert.equal(fact(facts, "representativeEmail")?.value, ONBOARDING_MESSAGES.EMPTY_VALUE);
+    assert.equal(facts.some((item) => item.value.includes(CIPHER)), false);
   });
 });
 
@@ -104,9 +105,9 @@ describe("onboarding detail before approval", () => {
       checklistJson: JSON.stringify({ contactEmail: CONTACT_EMAIL, adminEmail: OTHER_EMAIL })
     }));
 
-    expect(fact(facts, "tenantId")).toBeUndefined();
-    expect(fact(facts, "representativeEmail")?.value).toBe(CONTACT_EMAIL);
-    expect(fact(facts, "loginEmail")?.value).toBe(CONTACT_EMAIL);
+    assert.equal(fact(facts, "tenantId"), undefined);
+    assert.equal(fact(facts, "representativeEmail")?.value, CONTACT_EMAIL);
+    assert.equal(fact(facts, "loginEmail")?.value, CONTACT_EMAIL);
   });
 });
 
@@ -137,28 +138,28 @@ describe("approval response updates only the detail mapping", () => {
     const facts = buildOnboardingFacts(updated);
     const card = mapOnboardingDisplay(updated);
 
-    expect(card.tenantId).toBe(fact(facts, "tenantId")?.value);
-    expect(card.tenantName).toBe(TENANT_NAME);
-    expect(card.subdomain).toBe(fact(facts, "domain")?.value);
-    expect(card.contactEmail).toBe(CONTACT_EMAIL);
-    expect(fact(facts, "loginEmail")?.value).toBe(CONTACT_EMAIL);
-    expect(fact(facts, "representativeEmail")?.value).toBe(CONTACT_EMAIL);
+    assert.equal(card.tenantId, fact(facts, "tenantId")?.value);
+    assert.equal(card.tenantName, TENANT_NAME);
+    assert.equal(card.subdomain, fact(facts, "domain")?.value);
+    assert.equal(card.contactEmail, CONTACT_EMAIL);
+    assert.equal(fact(facts, "loginEmail")?.value, CONTACT_EMAIL);
+    assert.equal(fact(facts, "representativeEmail")?.value, CONTACT_EMAIL);
   });
 
   it("does not refetch the onboarding list from the detail page", () => {
     const detailSource = readFileSync(
-      join(__dirname, "../../app/onboarding/detail/page.tsx"),
+      fileURLToPath(new URL("../../app/onboarding/detail/page.tsx", import.meta.url)),
       "utf8"
     );
     const cardSource = readFileSync(
-      join(__dirname, "../components/onboarding/OnboardingCardList.tsx"),
+      fileURLToPath(new URL("../components/onboarding/OnboardingCardList.tsx", import.meta.url)),
       "utf8"
     );
 
-    expect(detailSource.includes("fetchAllOnboarding")).toBe(false);
-    expect(detailSource.includes("window.location.reload")).toBe(false);
-    expect(detailSource.includes("fetchOnboardingDetail")).toBe(true);
-    expect(detailSource.includes("mapOnboardingDisplay")).toBe(true);
-    expect(cardSource.includes("mapOnboardingDisplay")).toBe(true);
+    assert.equal(detailSource.includes("fetchAllOnboarding"), false);
+    assert.equal(detailSource.includes("window.location.reload"), false);
+    assert.equal(detailSource.includes("fetchOnboardingDetail"), true);
+    assert.equal(detailSource.includes("mapOnboardingDisplay"), true);
+    assert.equal(cardSource.includes("mapOnboardingDisplay"), true);
   });
 });

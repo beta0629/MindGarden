@@ -17,8 +17,8 @@ import {
   type OnboardingRiskLevel
 } from "@/constants/onboarding";
 import { KR_PUBLIC_DATA_COPY } from "@/content/krPublicData";
-import { OnboardingRequest } from "@/types/onboarding";
-import { OnboardingStatus } from "@/types/shared";
+import type { OnboardingRequest } from "@/types/onboarding";
+import type { OnboardingStatus } from "@/types/shared";
 
 const SECRET_KEY_SET = new Set<string>(ONBOARDING_SECRET_KEYS);
 

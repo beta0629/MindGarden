@@ -6,7 +6,7 @@
  * @version 1.1.0
  */
 
-import { OnboardingStatus } from "@/types/shared";
+import type { OnboardingStatus } from "@/types/shared";
 
 /**
  * 온보딩 상태 라벨 — 신청 심사 화면 문구

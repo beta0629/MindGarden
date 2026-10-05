@@ -41,7 +41,8 @@ import {
   OAC_MODAL,
   OAC_PAGE_TITLE,
   OAC_SUPER_SUBTITLE,
-  OAC_TABLE
+  OAC_TABLE,
+  OAC_TYPE_LABELS
 } from '../../../constants/opsApprovalCenterStrings';
 import '../../../styles/unified-design-tokens.css';
 import '../ErpCommon.css';
@@ -61,6 +62,7 @@ const OpsApprovalCenter = ({ mode = 'admin' }) => {
   const [todayCount, setTodayCount] = useState(0);
   const [rejectedCount, setRejectedCount] = useState(0);
   const [error, setError] = useState('');
+  const [failedSections, setFailedSections] = useState([]);
   const [selectedItem, setSelectedItem] = useState(null);
   const [showApproveModal, setShowApproveModal] = useState(false);
   const [showRejectModal, setShowRejectModal] = useState(false);
@@ -77,6 +79,7 @@ const OpsApprovalCenter = ({ mode = 'admin' }) => {
       setPendingCount(Number(data.pendingCount) || 0);
       setTodayCount(Number(data.todayCount) || 0);
       setRejectedCount(Number(data.rejectedCount) || 0);
+      setFailedSections(Array.isArray(data.failedSections) ? data.failedSections : []);
     };
     try {
       if (silent) {
@@ -89,6 +92,7 @@ const OpsApprovalCenter = ({ mode = 'admin' }) => {
       console.error('승인 센터 로드 실패:', err);
       setError(err?.message || OAC_ERRORS.LOAD_FAILED);
       setItems([]);
+      setFailedSections([]);
     } finally {
       if (!silent) {
         setLoading(false);
@@ -333,6 +337,17 @@ const OpsApprovalCenter = ({ mode = 'admin' }) => {
             {error ? (
               <div className="ops-approval-error" role="alert">
                 <SafeErrorDisplay error={error} variant="banner" />
+              </div>
+            ) : null}
+
+            {!error && failedSections.length > 0 ? (
+              <div className="ops-approval-error" role="status" data-testid="ops-approval-partial-error">
+                <SafeErrorDisplay
+                  error={`${OAC_ERRORS.SECTION_PARTIAL_PREFIX} ${failedSections
+                    .map((type) => OAC_TYPE_LABELS[type] || type)
+                    .join(', ')}`}
+                  variant="banner"
+                />
               </div>
             ) : null}
 

@@ -79,10 +79,11 @@ public class Tenant extends BaseEntity {
      * 예: mycompany.dev.core-solution.co.kr의 "mycompany" 부분
      * 선택적 필드 (온보딩 시 입력받음)
      *
-     * <p>종료 시 NULL 로 비운다. 개발 DB DDL(2026-10-05)은
-     * {@code subdomain varchar(100) DEFAULT NULL}, {@code UNIQUE KEY idx_subdomain (subdomain)} 이다.
-     * 인덱스는 유지한다. InnoDB UNIQUE 는 NULL 을 서로 다른 값으로 본다.</p>
-     * <p>{@code deleted_at} 은 {@code timestamp NULL} 이다. 종료 시각을 넣으며, 소수 초는 초 단위로 잘린다.</p>
+     * <p>개발 DB DDL(2026-10-05)은 {@code subdomain varchar(100) DEFAULT NULL},
+     * {@code UNIQUE KEY idx_subdomain (subdomain)} 이다.
+     * 종료 시 비우기는 {@code tenant.close.release-identity} 가 켜진 뒤에만 한다. 기본은 유지한다.</p>
+     * <p>{@code deleted_at} 은 {@code timestamp NULL} 이다. 종료 시각을 넣으며, 소수 초는 초 단위로 잘린다.
+     * {@code is_deleted} 는 {@code tinyint(1) DEFAULT 0} 로 존재한다.</p>
      *
      * <p>TODO: 마이그레이션 후 활성화 — 아래 컬럼은 스키마에 아직 없으므로 매핑하지 않는다.
      * 매핑을 켜면 컬럼이 없는 환경에서 조회가 실패한다.

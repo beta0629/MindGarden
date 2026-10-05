@@ -23,6 +23,7 @@ import com.coresolution.core.repository.TenantRepository;
 import com.coresolution.core.tenant.TenantCloseDecision;
 import com.coresolution.core.tenant.TenantCloseMessages;
 import com.coresolution.core.tenant.TenantClosePolicy;
+import com.coresolution.core.tenant.TenantCloseProperties;
 import com.coresolution.core.tenant.TenantCloseRejectedException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -35,7 +36,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 /**
- * 종료 처리. 행은 남기고 상태·삭제 플래그·서브도메인·설정만 바꾼다.
+ * 종료 처리. 기본은 상태·삭제 플래그·deleted_at·감사만 바꾼다.
  *
  * @author CoreSolution
  * @since 2026-10-05
@@ -68,14 +69,15 @@ class TenantCloseServiceTest {
         tenantCloseService = new TenantCloseService(
                 tenantRepository,
                 tenantClosePolicy,
+                new TenantCloseProperties(),
                 auditLogService,
                 Clock.fixed(NOW_INSTANT, SEOUL),
                 objectMapper);
     }
 
     @Test
-    @DisplayName("허용되면 CLOSED·is_deleted·deleted_at 을 남기고 서브도메인과 설정 키를 비운다")
-    void closeAllowed_updatesIdentityWithoutRemovingRow() throws Exception {
+    @DisplayName("기본 설정이면 CLOSED·is_deleted·deleted_at 만 남기고 서브도메인과 설정은 유지한다")
+    void closeAllowed_keepsSubdomainUntilIdentityRelease() throws Exception {
         Tenant tenant = suspendedTenant();
         when(tenantRepository.findByTenantId(TENANT_ID)).thenReturn(Optional.of(tenant));
         when(tenantClosePolicy.evaluate(any(Tenant.class), any(LocalDateTime.class)))
@@ -85,14 +87,14 @@ class TenantCloseServiceTest {
         Map<String, Object> result = tenantCloseService.closeTenant(TENANT_ID, "ops-user");
 
         assertThat(result.get(TenantOpsListItem.STATUS)).isEqualTo("CLOSED");
-        assertThat(result.get(TenantOpsListItem.SUBDOMAIN)).isNull();
+        assertThat(result.get(TenantOpsListItem.SUBDOMAIN)).isEqualTo("center-label");
         assertThat(tenant.getStatus()).isEqualTo(TenantStatus.CLOSED);
         assertThat(tenant.getIsDeleted()).isTrue();
         assertThat(tenant.getDeletedAt()).isEqualTo(LocalDateTime.of(2026, 4, 2, 12, 0));
-        assertThat(tenant.getSubdomain()).isNull();
+        assertThat(tenant.getSubdomain()).isEqualTo("center-label");
         JsonNode settings = objectMapper.readTree(tenant.getSettingsJson());
-        assertThat(settings.has(TenantCloseMessages.SETTINGS_KEY_SUBDOMAIN)).isFalse();
-        assertThat(settings.has(TenantCloseMessages.SETTINGS_KEY_DOMAIN)).isFalse();
+        assertThat(settings.get(TenantCloseMessages.SETTINGS_KEY_SUBDOMAIN).asText()).isEqualTo("center-label");
+        assertThat(settings.get(TenantCloseMessages.SETTINGS_KEY_DOMAIN).asText()).isEqualTo("center.example");
         assertThat(settings.get("theme").asText()).isEqualTo("clinic");
         verify(tenantRepository, never()).delete(any(Tenant.class));
 
@@ -103,6 +105,36 @@ class TenantCloseServiceTest {
         assertThat(audit.getBeforeJson()).contains("center-label");
         assertThat(audit.getMetadataJson()).contains("ops-user");
         assertThat(audit.getAfterJson()).contains("CLOSED");
+        assertThat(audit.getAfterJson()).contains("center-label");
+    }
+
+    @Test
+    @DisplayName("release-identity 가 켜지면 서브도메인과 설정 키를 비운다")
+    void closeAllowed_releaseIdentityClearsSubdomainAndSettings() throws Exception {
+        TenantCloseProperties properties = new TenantCloseProperties();
+        properties.setReleaseIdentity(true);
+        TenantCloseService releasing = new TenantCloseService(
+                tenantRepository,
+                tenantClosePolicy,
+                properties,
+                auditLogService,
+                Clock.fixed(NOW_INSTANT, SEOUL),
+                objectMapper);
+        Tenant tenant = suspendedTenant();
+        when(tenantRepository.findByTenantId(TENANT_ID)).thenReturn(Optional.of(tenant));
+        when(tenantClosePolicy.evaluate(any(Tenant.class), any(LocalDateTime.class)))
+                .thenReturn(TenantCloseDecision.ALLOWED);
+        when(tenantRepository.save(any(Tenant.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        Map<String, Object> result = releasing.closeTenant(TENANT_ID, "ops-user");
+
+        assertThat(result.get(TenantOpsListItem.SUBDOMAIN)).isNull();
+        assertThat(tenant.getSubdomain()).isNull();
+        assertThat(tenant.getIsDeleted()).isTrue();
+        JsonNode settings = objectMapper.readTree(tenant.getSettingsJson());
+        assertThat(settings.has(TenantCloseMessages.SETTINGS_KEY_SUBDOMAIN)).isFalse();
+        assertThat(settings.has(TenantCloseMessages.SETTINGS_KEY_DOMAIN)).isFalse();
+        assertThat(settings.get("theme").asText()).isEqualTo("clinic");
     }
 
     @Test

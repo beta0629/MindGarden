@@ -14,6 +14,7 @@ import com.coresolution.core.repository.TenantRepository;
 import com.coresolution.core.tenant.TenantCloseDecision;
 import com.coresolution.core.tenant.TenantCloseMessages;
 import com.coresolution.core.tenant.TenantClosePolicy;
+import com.coresolution.core.tenant.TenantCloseProperties;
 import com.coresolution.core.tenant.TenantCloseRejectedException;
 import com.coresolution.core.tenant.TenantSettingsIdentityCleaner;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -26,7 +27,9 @@ import org.springframework.transaction.annotation.Transactional;
 /**
  * 테넌트 종료(close).
  *
- * <p>행은 지우지 않고 status=CLOSED, is_deleted=true, deleted_at 만 남긴다.
+ * <p>행은 지우지 않고 status=CLOSED, is_deleted=true, deleted_at, 감사 로그만 남긴다.
+ * subdomain 과 settings_json 의 subdomain·domain 비우기는
+ * {@code tenant.close.release-identity} 가 켜진 때(기본 꺼짐, 마이그레이션 후)만 한다.
  * 관련 데이터 파기는 보관 기간 정책이 정해진 뒤의 일이다.</p>
  *
  * <p>TODO: 보관 기간이 지난 종료 테넌트의 데이터 파기 배치는 이 서비스에 넣지 않는다.</p>
@@ -40,6 +43,7 @@ public class TenantCloseService {
 
     private final TenantRepository tenantRepository;
     private final TenantClosePolicy tenantClosePolicy;
+    private final TenantCloseProperties tenantCloseProperties;
     private final AuditLogService auditLogService;
     private final Clock clock;
     private final ObjectMapper objectMapper;
@@ -55,8 +59,9 @@ public class TenantCloseService {
     public TenantCloseService(
             TenantRepository tenantRepository,
             TenantClosePolicy tenantClosePolicy,
+            TenantCloseProperties tenantCloseProperties,
             AuditLogService auditLogService) {
-        this(tenantRepository, tenantClosePolicy, auditLogService,
+        this(tenantRepository, tenantClosePolicy, tenantCloseProperties, auditLogService,
                 Clock.system(TenantCloseMessages.ZONE_SEOUL), new ObjectMapper());
     }
 
@@ -67,11 +72,13 @@ public class TenantCloseService {
     TenantCloseService(
             TenantRepository tenantRepository,
             TenantClosePolicy tenantClosePolicy,
+            TenantCloseProperties tenantCloseProperties,
             AuditLogService auditLogService,
             Clock clock,
             ObjectMapper objectMapper) {
         this.tenantRepository = tenantRepository;
         this.tenantClosePolicy = tenantClosePolicy;
+        this.tenantCloseProperties = tenantCloseProperties;
         this.auditLogService = auditLogService;
         this.clock = clock;
         this.objectMapper = objectMapper;
@@ -100,15 +107,15 @@ public class TenantCloseService {
         String beforeJson = writeJson(beforeSnapshot(tenant, previousSubdomain, previousDomain));
 
         // TODO: 마이그레이션 후 활성화 — previous_subdomain, previous_domain, suspended_at, closed_by
-        // 컬럼이 없는 동안 엔티티에 매핑하지 않는다. 원본 subdomain·domain 과 처리자는 감사 로그에 남긴다.
+        // 컬럼이 없는 동안 엔티티에 매핑하지 않는다. 원본은 감사 로그에 남긴다.
         stageDeferredCloseColumns(previousSubdomain, previousDomain, normalizedClosedBy);
 
         tenant.setStatus(TenantStatus.CLOSED);
         tenant.setIsDeleted(true);
         tenant.setDeletedAt(now);
-        tenant.setSubdomain(null);
-        tenant.setSettingsJson(TenantSettingsIdentityCleaner.stripSubdomainAndDomain(
-                tenant.getSettingsJson(), objectMapper));
+        if (tenantCloseProperties.isReleaseIdentity()) {
+            releaseIdentity(tenant);
+        }
 
         Tenant saved = tenantRepository.save(tenant);
         auditLogService.record(AuditLog.builder()
@@ -123,6 +130,18 @@ public class TenantCloseService {
                 .build());
         log.info("Ops 테넌트 종료: tenantId={}", saved.getTenantId());
         return TenantOpsListItem.from(saved);
+    }
+
+    /**
+     * 마이그레이션 후 활성화. subdomain 을 비우고 settings_json 의 subdomain·domain 을 지운다.
+     * previous_* 컬럼 매핑이 켜진 커밋과 함께 {@code tenant.close.release-identity} 를 켠다.
+     *
+     * @param tenant 종료 대상
+     */
+    private void releaseIdentity(Tenant tenant) {
+        tenant.setSubdomain(null);
+        tenant.setSettingsJson(TenantSettingsIdentityCleaner.stripSubdomainAndDomain(
+                tenant.getSettingsJson(), objectMapper));
     }
 
     /**

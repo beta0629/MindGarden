@@ -54,6 +54,8 @@ application-*.yml
 !src/main/resources/messages_ko.properties
 # 공공데이터 화면 문구 (비밀 아님)
 !src/main/resources/content/kr-public-data-messages.properties
+# 개발 스텁 샘플 주소·과세유형 (비밀 아님)
+!src/main/resources/content/kr-public-data-stub.properties
 # 공공데이터 테스트용 로컬 URL (비밀 아님)
 !src/test/resources/kr-public-data-test.properties
 # Exception: JUnit 플랫폼 설정 (비밀 아님 — 전역 테스트 확장 자동 등록)

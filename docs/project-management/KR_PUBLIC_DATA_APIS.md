@@ -34,7 +34,7 @@
 | `DATA_GO_KR_SERVICE_KEY` | 사업자 조회 결과 `미확인`. data.go.kr 디코딩 키를 넣는다. |
 | `JUSO_CONFM_KEY` | 주소 검색 UI 를 숨긴다. 수기 입력은 유지한다. |
 
-개발 배포는 `.github/workflows/deploy-backend-dev.yml` 만 `/etc/mindgarden/dev.env` 에 넣는다. 둘 다 비면 배포는 성공하고 기능만 꺼진다.
+개발 배포는 `.github/workflows/deploy-backend-dev.yml` 만 `/etc/mindgarden/dev.env` 에 넣는다. 둘 다 비면 배포는 성공한다. `dev` 프로필이고 `mindgarden.kr-public-data.stub.enabled` 가 켜져 있으면(`KR_PUBLIC_DATA_STUB_ENABLED`, 개발 기본값 true) 키가 없는 조회만 `KrPublicDataService` 가 성공으로 대체한다. 샘플은 `content/kr-public-data-stub.properties`. 키가 있으면 실제 클라이언트다. `prod`·`production` 프로필에서는 플래그와 무관하게 스텁하지 않는다.
 
 ## 화면
 

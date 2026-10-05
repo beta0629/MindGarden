@@ -62,12 +62,12 @@ import com.coresolution.consultation.service.ScheduleAutoCompleteService;
 import com.coresolution.consultation.service.ScheduleService;
 import com.coresolution.consultation.service.support.ClientPathAccessGuard;
 import com.coresolution.consultation.service.MappingTerminationService;
+import com.coresolution.consultation.service.MappingUpdateService;
 import com.coresolution.consultation.service.support.DeferredExternalCalls;
 import com.coresolution.consultation.service.support.ResourceOwnerAccessGuard;
 import com.coresolution.core.security.OpsAccessGuard;
 import com.coresolution.consultation.service.support.ConsultationRecordAccessGuard;
 import com.coresolution.consultation.service.support.ConsultationRecordWriter;
-import com.coresolution.consultation.service.StoredProcedureService;
 import com.coresolution.consultation.service.UserPersonalDataCacheService;
 import com.coresolution.consultation.service.UserService;
 import com.coresolution.consultation.util.DashboardTrendPeriodUtils;
@@ -185,6 +185,7 @@ public class AdminController extends BaseApiController {
     private final AdminService adminService;
     private final AdminBulkMappingPaymentService adminBulkMappingPaymentService;
     private final MappingTerminationService mappingTerminationService;
+    private final MappingUpdateService mappingUpdateService;
     private final ClientPackagePaymentHistoryService clientPackagePaymentHistoryService;
     private final ClientMappingListPayloadService clientMappingListPayloadService;
     private final BranchService branchService;
@@ -202,7 +203,6 @@ public class AdminController extends BaseApiController {
     private final ConsultantRatingService consultantRatingService;
     private final UserSocialAccountRepository userSocialAccountRepository;
     private final UserService userService;
-    private final StoredProcedureService storedProcedureService;
     private final PersonalDataEncryptionUtil personalDataEncryptionUtil;
     private final UserPersonalDataCacheService userPersonalDataCacheService;
     private final ConsultantStatsService consultantStatsService;
@@ -1416,51 +1416,6 @@ public class AdminController extends BaseApiController {
 
 
     /**
-     * 매칭 정보 수정 (ERP 연동)
-     */
-    @PostMapping("/mappings/{mappingId}/update")
-    public ResponseEntity<ApiResponse<Map<String, Object>>> updateMappingInfo(
-            @PathVariable Long mappingId, @RequestBody Map<String, Object> updateRequest,
-            HttpSession session) {
-        log.info("🔄 매칭 정보 수정 요청: mappingId={}, request={}", mappingId, updateRequest);
-
-        ResponseEntity<?> permissionResponse = PermissionCheckUtils.checkPermission(session,
-                "MAPPING_MANAGE", dynamicPermissionService);
-        if (permissionResponse != null) {
-            throw new org.springframework.security.access.AccessDeniedException("권한이 없습니다.");
-        }
-
-        User currentUser = SessionUtils.getCurrentUser(session);
-        if (currentUser == null) {
-            throw new org.springframework.security.access.AccessDeniedException("로그인이 필요합니다.");
-        }
-
-        Map<String, Object> permissionResult = storedProcedureService.checkMappingUpdatePermission(
-                mappingId, currentUser.getId(), currentUser.getRole().toString());
-
-        if (!(Boolean) permissionResult.get("canUpdate")) {
-            throw new IllegalArgumentException((String) permissionResult.get("reason"));
-        }
-
-        String newPackageName = (String) updateRequest.get("packageName");
-        Double newPackagePrice = ((Number) updateRequest.get("packagePrice")).doubleValue();
-        Integer newTotalSessions = ((Number) updateRequest.get("totalSessions")).intValue();
-
-        Map<String, Object> updateResult = storedProcedureService.updateMappingInfo(mappingId,
-                newPackageName, newPackagePrice, newTotalSessions, currentUser.getName());
-
-        if ((Boolean) updateResult.get("success")) {
-            log.info("✅ 매칭 정보 수정 완료: mappingId={}", mappingId);
-            return updated((String) updateResult.get("message"), updateResult);
-        } else {
-            log.error("❌ 매칭 정보 수정 실패: mappingId={}, message={}", mappingId,
-                    updateResult.get("message"));
-            throw new IllegalArgumentException((String) updateResult.get("message"));
-        }
-    }
-
-
-    /**
      * 입금 대기 중인 매칭 목록 조회
      *
      * <p>응답 data 는 {@code { mappings, count }} 형태를 유지한다.
@@ -2453,7 +2408,7 @@ public class AdminController extends BaseApiController {
         User currentUser = SessionUtils.getCurrentUser(session);
         String updatedBy = currentUser != null ? currentUser.getName() : "System";
 
-        ConsultantClientMappingResponse response = adminService.updateMapping(id, request, updatedBy);
+        ConsultantClientMappingResponse response = mappingUpdateService.update(id, request, updatedBy);
         return updated("매칭 정보가 성공적으로 수정되었습니다", response);
     }
 

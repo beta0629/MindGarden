@@ -44,7 +44,6 @@ import com.coresolution.core.repository.UserRoleAssignmentRepository;
 import com.coresolution.core.security.PasswordService;
 import com.coresolution.core.service.UserRoleQueryService;
 import com.coresolution.core.util.StatusCodeHelper;
-import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.AfterEach;
@@ -61,8 +60,6 @@ import org.springframework.transaction.support.AbstractPlatformTransactionManage
 import org.springframework.transaction.support.DefaultTransactionStatus;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyDouble;
-import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.never;
@@ -235,9 +232,7 @@ class AdminServiceImplMappingSettlementNotificationBaselineTest {
 
         when(mappingRepository.findByTenantIdAndId(eq(TEST_TENANT_ID), eq(mappingId))).thenReturn(Optional.of(mapping));
         when(mappingRepository.save(any(ConsultantClientMapping.class))).thenAnswer(inv -> inv.getArgument(0));
-        doNothing().when(adminService).createConsultationIncomeTransactionAsync(any(ConsultantClientMapping.class));
-        when(storedProcedureService.updateMappingInfo(any(), any(), anyDouble(), anyInt(), any()))
-                .thenReturn(Map.of("success", true));
+        doNothing().when(adminService).createConsultationIncomeTransactionInCurrentTransaction(any(ConsultantClientMapping.class));
 
         adminService.confirmDeposit(mappingId, "REF-DEP-001");
 

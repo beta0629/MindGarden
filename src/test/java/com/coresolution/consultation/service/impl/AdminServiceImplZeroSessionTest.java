@@ -1,7 +1,6 @@
 package com.coresolution.consultation.service.impl;
 
 import java.util.Collections;
-import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -71,6 +70,7 @@ import static org.mockito.ArgumentMatchers.anyDouble;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -258,16 +258,14 @@ class AdminServiceImplZeroSessionTest {
 
         when(mappingRepository.findByTenantIdAndId(TEST_TENANT_ID, mappingId)).thenReturn(Optional.of(mapping));
         when(mappingRepository.save(any(ConsultantClientMapping.class))).thenAnswer(inv -> inv.getArgument(0));
-        doNothing().when(adminService).createConsultationIncomeTransactionAsync(any(ConsultantClientMapping.class));
-        when(storedProcedureService.updateMappingInfo(any(), any(), anyDouble(), anyInt(), any()))
-                .thenReturn(Map.of("success", true, "message", "OK"));
+        doNothing().when(adminService).createConsultationIncomeTransactionInCurrentTransaction(any(ConsultantClientMapping.class));
 
         ConsultantClientMapping result = adminService.confirmDeposit(mappingId, "REF-001");
 
         assertNotNull(result);
         assertEquals(0, result.getRemainingSessions());
-        verify(adminService).createConsultationIncomeTransactionAsync(any(ConsultantClientMapping.class));
-        verify(storedProcedureService).updateMappingInfo(eq(mappingId), any(), eq(50000.0), eq(0), any());
+        verify(adminService).createConsultationIncomeTransactionInCurrentTransaction(any(ConsultantClientMapping.class));
+        verify(storedProcedureService, never()).updateMappingInfo(any(), any(), anyDouble(), anyInt(), any());
     }
 
     @Test
@@ -279,16 +277,14 @@ class AdminServiceImplZeroSessionTest {
 
         when(mappingRepository.findByTenantIdAndId(TEST_TENANT_ID, mappingId)).thenReturn(Optional.of(mapping));
         when(mappingRepository.save(any(ConsultantClientMapping.class))).thenAnswer(inv -> inv.getArgument(0));
-        doNothing().when(adminService).createConsultationIncomeTransactionAsync(any(ConsultantClientMapping.class));
-        when(storedProcedureService.updateMappingInfo(any(), any(), anyDouble(), anyInt(), any()))
-                .thenReturn(Map.of("success", true, "message", "OK"));
+        doNothing().when(adminService).createConsultationIncomeTransactionInCurrentTransaction(any(ConsultantClientMapping.class));
 
         ConsultantClientMapping result = adminService.confirmDeposit(mappingId, "REF-002");
 
         assertNotNull(result);
         assertEquals(1, result.getRemainingSessions());
-        verify(adminService).createConsultationIncomeTransactionAsync(any(ConsultantClientMapping.class));
-        verify(storedProcedureService).updateMappingInfo(eq(mappingId), any(), eq(150000.0), eq(1), any());
+        verify(adminService).createConsultationIncomeTransactionInCurrentTransaction(any(ConsultantClientMapping.class));
+        verify(storedProcedureService, never()).updateMappingInfo(any(), any(), anyDouble(), anyInt(), any());
     }
 
     private ConsultantClientMapping buildMappingForConfirmDeposit(Long mappingId, int totalSessions, long packagePrice) {

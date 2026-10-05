@@ -164,12 +164,74 @@ public class SessionCookieSupport {
     /**
      * {@code SESSION_COOKIE_DOMAIN}. 공백/미설정이면 null (호스트 전용).
      * <p>RFC 6265: 선행 {@code .} 은 제거한다(Chrome invalid Domain 방지).</p>
+     * <p>{@code dev} 프로파일은 값이 있어도 null 이다. parent Domain 은
+     * mindgarden/mindcare 같은 테넌트 Host 가 같은 JSESSIONID 를 받게 한다.
+     * OAuth apex 콜백은 쿠키 공유 대신 일회용 {@code oauthExchangeCode} 를 쓴다.</p>
      *
      * @return 도메인 또는 null
      * @see com.coresolution.core.config.SessionCookieDomainWebServerCustomizer
      */
     public String resolveDomain() {
+        if (isDevHostOnlyProfile(environment)) {
+            return null;
+        }
         return normalizeSessionCookieDomain(environment.getProperty("SESSION_COOKIE_DOMAIN"));
+    }
+
+    /**
+     * dev 에서 예전 parent Domain 쿠키를 {@code Max-Age=0} 으로 지울 때 쓰는 Domain.
+     * 신규 JSESSIONID 에는 넣지 않는다.
+     *
+     * @return 레거시 공유 Domain 또는 null
+     */
+    public String resolveLegacySharedDomain() {
+        if (!isDevHostOnlyProfile(environment)) {
+            return null;
+        }
+        return normalizeSessionCookieDomain(environment.getProperty("SESSION_COOKIE_DOMAIN"));
+    }
+
+    /**
+     * parent Domain 으로 남아 있는 JSESSIONID 만료 헤더.
+     * Path/HttpOnly/SameSite/Secure 는 신규 쿠키와 같고 Domain 만 레거시 값이다.
+     *
+     * @param request Secure 판단용 (nullable)
+     * @return Set-Cookie 값. 지울 Domain 이 없으면 null
+     */
+    public String buildLegacySharedDomainExpiryHeader(HttpServletRequest request) {
+        String legacyDomain = resolveLegacySharedDomain();
+        if (legacyDomain == null) {
+            return null;
+        }
+        return ResponseCookie
+                .from(SessionConstants.SESSION_COOKIE_NAME, "")
+                .path("/")
+                .httpOnly(resolveHttpOnly())
+                .secure(resolveSecure(request))
+                .sameSite(resolveSameSite())
+                .maxAge(0)
+                .domain(legacyDomain)
+                .build()
+                .toString();
+    }
+
+    /**
+     * 공유 dev 서버 프로파일인지.
+     * {@code dev} 만 host-only. {@code local}·운영은 이 메서드가 false 다.
+     *
+     * @param environment Spring Environment (null 이면 false)
+     * @return active profile 에 {@code dev} 가 있으면 true
+     */
+    public static boolean isDevHostOnlyProfile(Environment environment) {
+        if (environment == null) {
+            return false;
+        }
+        for (String profile : environment.getActiveProfiles()) {
+            if ("dev".equals(profile)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**

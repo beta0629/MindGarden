@@ -61,6 +61,14 @@ public class SessionBasedAuthenticationFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, 
                                   FilterChain filterChain) throws ServletException, IOException {
         
+        if (Boolean.TRUE.equals(request.getAttribute(
+                SessionManagementConstants.REQUEST_ATTR_HOST_TENANT_MISMATCH))) {
+            SecurityContextHolder.clearContext();
+            log.info("Host/tenant 불일치 — 세션 복원 생략, 해당 Host 에서 재로그인");
+            filterChain.doFilter(request, response);
+            return;
+        }
+
         String requestPath = request.getRequestURI();
         log.info("🔍 SessionBasedAuthenticationFilter 실행: {}", requestPath);
         

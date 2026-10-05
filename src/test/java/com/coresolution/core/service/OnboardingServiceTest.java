@@ -242,6 +242,8 @@ class OnboardingServiceTest {
         assertThat(result.getStatus()).isEqualTo(OnboardingStatus.APPROVED);
         assertThat(result.getDecidedBy()).isEqualTo("test-admin");
         assertThat(result.getDecisionNote()).isEqualTo("테스트 승인");
+        assertThat(result.getChecklistJson()).doesNotContain("ValidPass123!");
+        assertThat(result.getChecklistJson()).contains("$2a$10$stubEncodedPassword");
         verify(repository, atLeastOnce()).save(any(OnboardingRequest.class));
         verify(approvalService, times(1)).processOnboardingApproval(any(Long.class), anyString(),
                 anyString(), anyString(), anyString(), anyString(), eq("ops-admin@example.com"),

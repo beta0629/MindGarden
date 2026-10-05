@@ -1,0 +1,40 @@
+-- source: dev DB (production D-1 copy), 2026-10-05
+-- AUTO_INCREMENT start values and DEFINER removed. Columns, lengths, and constraints are unchanged.
+-- queried_at: 2026-10-05 14:44:43 KST
+CREATE TABLE `role_templates` (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `role_template_id` varchar(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '역할 템플릿 UUID',
+  `template_code` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '템플릿 코드',
+  `name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '템플릿명',
+  `name_ko` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '템플릿명 (한글)',
+  `name_en` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '템플릿명 (영문)',
+  `business_type` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '업종 (ACADEMY, CONSULTATION 등)',
+  `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci COMMENT '설명',
+  `description_ko` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci COMMENT '설명 (한글)',
+  `description_en` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci COMMENT '설명 (영문)',
+  `is_active` tinyint(1) DEFAULT '1' COMMENT '활성화 여부',
+  `display_order` int DEFAULT '0' COMMENT '표시 순서',
+  `is_system_template` tinyint(1) DEFAULT '0' COMMENT '시스템 템플릿 여부 (HQ가 정의한 필수 템플릿)',
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `deleted_at` timestamp NULL DEFAULT NULL,
+  `is_deleted` tinyint(1) DEFAULT '0',
+  `version` bigint DEFAULT '0',
+  `lang_code` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT 'ko',
+  `created_by` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `updated_by` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `tenant_id` varchar(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `is_admin_role` tinyint(1) DEFAULT '0' COMMENT '관리자 역할 여부 (온보딩 시 관리자 계정에 할당되는 역할). TRUE인 역할이 각 업종의 관리자 역할입니다.',
+  `default_widgets_json` json DEFAULT NULL COMMENT '역할별 기본 위젯 설정 (JSON)',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `role_template_id` (`role_template_id`),
+  UNIQUE KEY `template_code` (`template_code`),
+  KEY `idx_role_template_id` (`role_template_id`),
+  KEY `idx_template_code` (`template_code`),
+  KEY `idx_business_type` (`business_type`),
+  KEY `idx_is_active` (`is_active`),
+  KEY `idx_display_order` (`display_order`),
+  KEY `idx_is_deleted` (`is_deleted`),
+  KEY `idx_is_admin_role` (`is_admin_role`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='업종별 기본 역할 템플릿 테이블'
+;

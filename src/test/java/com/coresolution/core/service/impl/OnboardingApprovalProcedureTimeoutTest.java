@@ -5,6 +5,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.contains;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -19,6 +20,8 @@ import javax.sql.DataSource;
 import com.coresolution.consultation.util.OAuth2DomainUtil;
 import com.coresolution.core.repository.RoleTemplateRepository;
 import com.coresolution.core.repository.onboarding.OnboardingRequestRepository;
+import com.coresolution.consultation.converter.PersonalDataEncryptionContextHolder;
+import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.core.service.TenantDashboardService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.AfterEach;
@@ -32,6 +35,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationContext;
 import org.springframework.core.env.Environment;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.transaction.PlatformTransactionManager;
 import jakarta.persistence.EntityManager;
 
@@ -95,6 +99,7 @@ class OnboardingApprovalProcedureTimeoutTest {
     @AfterEach
     void tearDown() {
         OnboardingDecisionDeadline.close();
+        ReflectionTestUtils.setField(PersonalDataEncryptionContextHolder.class, "instance", null);
     }
 
     @Test
@@ -123,8 +128,8 @@ class OnboardingApprovalProcedureTimeoutTest {
         OnboardingDecisionDeadline.bindDeadlineEpochMillis(System.currentTimeMillis() - 1_000L);
         stubConnection();
         when(callableStatement.execute()).thenReturn(false);
-        when(callableStatement.getBoolean(11)).thenReturn(false);
-        when(callableStatement.getString(12)).thenReturn("역할 템플릿 적용 실패");
+        when(callableStatement.getBoolean(12)).thenReturn(false);
+        when(callableStatement.getString(13)).thenReturn("역할 템플릿 적용 실패");
 
         Map<String, Object> result = approvalService.processOnboardingApproval(78L, "tenant-78",
                 "검증 테넌트", "COUNSELING", "ops-actor", "승인", "admin@example.com",
@@ -133,13 +138,16 @@ class OnboardingApprovalProcedureTimeoutTest {
         assertThat(result.get("success")).isEqualTo(false);
         assertThat(String.valueOf(result.get("message"))).contains("역할 템플릿 적용 실패");
         verify(connection).prepareCall(
-                eq("{CALL ProcessOnboardingApproval(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)}"));
+                eq("{CALL ProcessOnboardingApproval(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)}"));
         verify(callableStatement).setString(10, ".dev.core-solution.co.kr");
         verify(callableStatement).setQueryTimeout(1);
         verify(transactionManager, never()).getTransaction(any());
     }
 
     private void stubConnection() throws SQLException {
+        PersonalDataEncryptionUtil encryptionUtil = mock(PersonalDataEncryptionUtil.class);
+        when(encryptionUtil.safeEncrypt(anyString())).thenReturn("k1::QUJDRA");
+        ReflectionTestUtils.setField(PersonalDataEncryptionContextHolder.class, "instance", encryptionUtil);
         when(jdbcTemplate.getDataSource()).thenReturn(dataSource);
         when(dataSource.getConnection()).thenReturn(connection);
         when(connection.createStatement()).thenReturn(statement);

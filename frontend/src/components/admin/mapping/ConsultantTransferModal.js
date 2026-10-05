@@ -9,6 +9,7 @@ import MGButton from '../../common/MGButton';
 import CustomSelect from '../../common/CustomSelect';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import { useTranslation } from 'react-i18next';
+import { formatDateKeyInZone } from '../../../utils/zonedDateTime';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_ADMIN_MAPPINGS_TRANSFER = '/api/v1/admin/mappings/transfer';
@@ -72,7 +73,7 @@ const ConsultantTransferModal = ({
   // 상담사 목록 로드
   const loadConsultants = async() => {
     try {
-      const today = new Date().toISOString().split('T')[0];
+      const today = formatDateKeyInZone();
       const response = await fetch(`/api/admin/consultants/with-vacation?date=${today}`);
       const data = await response.json();
       

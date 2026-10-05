@@ -14,6 +14,7 @@ import {
   ADMIN_DASHBOARD_CLIENTS_WITH_MAPPING_QUERY,
   ADMIN_MAPPINGS_PAGED_LIST_QUERY
 } from '../../constants/adminDashboardWidgetConstants';
+import { ADMIN_LIST_DRAIN_PAGE_SIZE } from '../../api/adminListFetch';
 import StandardizedApi from '../standardizedApi';
 
 jest.mock('../standardizedApi', () => ({
@@ -56,18 +57,16 @@ describe('adminPagedListApi (shim → adminListFetch)', () => {
     );
   });
 
-  test('fetchAdminClientsWithMappingInfoAll drains via size=count follow-up GetAll', async () => {
-    // page0 incomplete (20/25) → adminListGetAllPages size=total fast-path (page=0,size=25)
+  test('fetchAdminClientsWithMappingInfoAll drains page by page (size=total 금지)', async () => {
     const page0 = Array.from({ length: 20 }, (_, i) => ({ id: i + 1 }));
-    const all25 = Array.from({ length: 25 }, (_, i) => ({ id: i + 1 }));
+    const page1 = Array.from({ length: 5 }, (_, i) => ({ id: i + 21 }));
     StandardizedApi.get
       .mockResolvedValueOnce({ clients: page0, count: 25, page: 0, size: 20 })
-      .mockResolvedValueOnce({ clients: all25, count: 25, page: 0, size: 25 });
+      .mockResolvedValueOnce({ clients: page1, count: 25, page: 1, size: 20 });
 
     const result = await fetchAdminClientsWithMappingInfoAll();
 
     expect(result.clients).toHaveLength(25);
-    expect(result.count).toBe(25);
     expect(result.clients.length).toBe(result.count);
     expect(StandardizedApi.get).toHaveBeenCalledTimes(2);
     expect(StandardizedApi.get).toHaveBeenNthCalledWith(
@@ -76,14 +75,14 @@ describe('adminPagedListApi (shim → adminListFetch)', () => {
       expect.objectContaining({
         view: ADMIN_DASHBOARD_CLIENTS_WITH_MAPPING_QUERY.view,
         page: 0,
-        size: ADMIN_DASHBOARD_CLIENTS_WITH_MAPPING_QUERY.size
+        size: ADMIN_LIST_DRAIN_PAGE_SIZE
       }),
       {}
     );
     expect(StandardizedApi.get).toHaveBeenNthCalledWith(
       2,
       '/api/v1/admin/clients/with-mapping-info',
-      expect.objectContaining({ page: 0, size: 25 }),
+      expect.objectContaining({ page: 1, size: 20 }),
       {}
     );
   });

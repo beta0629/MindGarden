@@ -9,6 +9,7 @@
  */
 
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { ADMIN_LIST_DRAIN_PAGE_SIZE, buildAdminListParams } from '../../../api/adminListFetch';
 import { useSearchParams } from 'react-router-dom';
 import StandardizedApi from '../../../utils/standardizedApi';
 import { API_ENDPOINTS } from '../../../constants/apiEndpoints';
@@ -57,14 +58,14 @@ const TAB_LABELS = {
   [VIEW_MODE_LIST]: '목록',
   [VIEW_MODE_TABLE]: '테이블'
 };
-// BE AdminController.ADMIN_CONSULTATION_RECORDS_MAX_PAGE_SIZE 와 동일 (size 상한 200).
-// 단일 페이지만 요청하면 DESC 정렬 때문에 월 초 데이터가 잘릴 수 있음 → 전 페이지 수집 필수.
+// 공통 목록 모듈 size 상한(ADMIN_LIST_DRAIN_PAGE_SIZE) 과 동일.
+// 단일 페이지만 요청하면 DESC 정렬 때문에 월 초 데이터가 잘릴 수 있음 → 기간 안에서 페이지 수집.
 // 참고: docs/project-management/2026-05-29/CONSULTATION_LOG_VIEW_APRIL_MISSING_DEBUG.md
-export const ADMIN_CONSULTATION_RECORDS_PAGE_SIZE = 200;
-/** 전체 모드 안전 상한: 50 pages × 200 = 10_000 rows */
-export const ADMIN_CONSULTATION_RECORDS_MAX_PAGES = 50;
+export const ADMIN_CONSULTATION_RECORDS_PAGE_SIZE = ADMIN_LIST_DRAIN_PAGE_SIZE;
+/** 기간 스코프 수집 안전 상한 (기간 없는 전체 모드는 없다). */
+export const ADMIN_CONSULTATION_RECORDS_MAX_PAGES = 10;
 // 진입 시 기본 표시 기간 = "지난 달 1일 ~ 이번 달 말일".
-// 사용자가 startDate/endDate 를 직접 비우면 null 전송 → 백엔드 전체 모드 (페이지네이션).
+// 사용자가 startDate/endDate 를 비워도 기본 기간으로 보완한다 — 기간 없는 전체 조회 금지.
 const DEFAULT_RANGE_MONTHS_BEFORE = 1;
 
 /**
@@ -143,11 +144,11 @@ export const fetchAllAdminConsultationRecords = async(
   let page = 0;
 
   while (page < maxPages) {
-    const params = {
+    const params = buildAdminListParams({
       ...(baseParams || {}),
       page,
       size: pageSize
-    };
+    });
     const response = await apiGet(endpoint, params, { unwrapApiEnvelope: false });
     const normalized = normalizeAdminConsultationRecordsPage(response, pageSize);
     accumulated.push(...normalized.data);
@@ -426,9 +427,10 @@ const ConsultationLogViewPage = () => {
           if (clientId != null) params.clientId = clientId;
           // P0 핫픽스 2026-05-29: 기간 필터를 백엔드로 전달.
           // (이전: 클라이언트 사이드 필터만 사용 → MAX_PAGE_SIZE=20 캡으로 4월 데이터 미노출)
-          if (startDate) params.startDate = startDate;
-          if (endDate) params.endDate = endDate;
-          // 전 페이지 수집 (size=200). 단일 page0 만 받으면 DESC 정렬로 월 초 누락.
+          const fallbackRange = computeDefaultDateRange();
+          params.startDate = startDate || fallbackRange.startDate;
+          params.endDate = endDate || fallbackRange.endDate;
+          // 기간 스코프 안에서 page/size 수집. 단일 page0 만 받으면 DESC 정렬로 월 초 누락.
           const list = await fetchAllAdminConsultationRecords(StandardizedApi.get, params);
           if (isStale()) return;
           setRecords(Array.isArray(list) ? list : []);

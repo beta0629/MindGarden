@@ -1,8 +1,9 @@
 # 자동 path push 없음(또는 제한적) — 상세는 본 파일 on: 블록 참고
 # 수동 단일 진입: .github/workflows/deploy.yml (inputs: env + target)
 # 운영 배포 단일 진입점: Core → (선택) Core React만 → Trinity → Ops(프론트) → Ops(백엔드) → 표준 프로시저… (gh run watch)
-# Core React만 JAR 없이: inputs.run_core_frontend → deploy-frontend-prod.yml
-# run_core_frontend default=false 유지: run_core(true) 시 FE 이중 배포·Actions 분 낭비 방지
+# Core 화면: inputs.run_core_frontend → deploy-frontend-prod.yml (deploy-production.yml 은 화면을 올리지 않는다)
+# 화면+서버 세트: run_core(서버) 성공 후 run_core_frontend(화면)를 같은 release/prod 에서 순서대로 실행한다.
+# 화면 워크플로의 set-gate 가 같은 SHA 서버 run 성공을 다시 확인한다.
 # 온보딩 백엔드: 저장소에 deploy-onboarding-prod 가 없으므로 Core 운영 범위·수동 배포를 별도 확인한다.
 #
 # 필요 권한: GITHUB_TOKEN 에 actions: write (워크플로 디스패치)
@@ -22,10 +23,10 @@ on:
         type: boolean
         default: true
       run_core_frontend:
-        # default false: run_core 와 동시 true 시 FE 이중 배포·Actions 분 낭비 방지
-        description: "Core React만 운영 (deploy-frontend-prod). run_core 와 동시 true면 프론트가 중복 배포됨"
+        # default true: deploy-production.yml 은 화면을 올리지 않으므로 Core 화면은 이 단계로만 나간다.
+        description: "Core 화면 운영 (deploy-frontend-prod). run_core 다음에 실행되며 같은 SHA 서버 성공을 확인한 뒤 올린다"
         type: boolean
-        default: false
+        default: true
       run_trinity:
         description: "Trinity 정적 프론트 운영 (deploy-trinity-prod)"
         type: boolean

@@ -7,9 +7,14 @@
 
 import StandardizedApi from '../../../utils/standardizedApi';
 import { ERP_API } from '../../../constants/api';
-import { SALARY_API_ENDPOINTS, SALARY_STATUS } from '../../../constants/salaryConstants';
+import {
+  SALARY_API_ENDPOINTS,
+  SALARY_PENDING_APPROVAL_LOOKBACK_MONTHS,
+  SALARY_STATUS
+} from '../../../constants/salaryConstants';
 import { OAC_TYPE_LABELS } from '../../../constants/opsApprovalCenterStrings';
 import { toDisplayString } from '../../../utils/safeDisplay';
+import { formatDateKeyInZone } from '../../../utils/zonedDateTime';
 
 export const OAC_ITEM_TYPE = {
   PURCHASE: 'PURCHASE',
@@ -142,10 +147,29 @@ async function fetchPurchasePending(mode) {
 }
 
 /**
+ * 급여 승인 대기 조회 기간 — 운영 타임존 기준 (이번 달 - (N-1))월 1일 ~ 이번 달 말일.
+ * BE GET /salary/calculations 는 startDate·endDate 필수(없으면 400).
+ *
+ * @param {Date} [now=new Date()]
+ * @returns {{ startDate: string, endDate: string }}
+ */
+export function buildSalaryPendingPeriod(now = new Date()) {
+  const [year, month] = formatDateKeyInZone(now).split('-').map(Number);
+  const startMonthIndex = month - SALARY_PENDING_APPROVAL_LOOKBACK_MONTHS;
+  const start = new Date(Date.UTC(year, startMonthIndex, 1));
+  const lastDay = new Date(Date.UTC(year, month, 0)).getUTCDate();
+  const pad2 = (n) => String(n).padStart(2, '0');
+  return {
+    startDate: `${start.getUTCFullYear()}-${pad2(start.getUTCMonth() + 1)}-01`,
+    endDate: `${year}-${pad2(month)}-${pad2(lastDay)}`
+  };
+}
+
+/**
  * @returns {Promise<object[]>}
  */
 async function fetchSalaryPending() {
-  const list = await StandardizedApi.get(SALARY_API_ENDPOINTS.CALCULATIONS);
+  const list = await StandardizedApi.get(SALARY_API_ENDPOINTS.CALCULATIONS, buildSalaryPendingPeriod());
   return asArray(list)
     .filter((row) => {
       const status = String(row?.status ?? row?.calculationStatus ?? '').toUpperCase();
@@ -158,23 +182,18 @@ async function fetchSalaryPending() {
  * @returns {Promise<object[]>}
  */
 async function fetchRefundPending() {
-  try {
-    const result = await StandardizedApi.get(REFUND_HISTORY_ENDPOINT, {
-      page: 0,
-      size: 50,
-      status: 'REQUESTED'
-    });
-    const rows = asArray(result?.history ?? result?.refunds ?? result?.content ?? result);
-    return rows
-      .filter((row) => {
-        const status = String(row?.status ?? row?.refundStatus ?? 'REQUESTED').toUpperCase();
-        return status === 'REQUESTED' || status === 'PENDING';
-      })
-      .map(mapRefundItem);
-  } catch (err) {
-    console.warn('환불 대기 목록 조회 생략:', err?.message || err);
-    return [];
-  }
+  const result = await StandardizedApi.get(REFUND_HISTORY_ENDPOINT, {
+    page: 0,
+    size: 50,
+    status: 'REQUESTED'
+  });
+  const rows = asArray(result?.history ?? result?.refunds ?? result?.content ?? result);
+  return rows
+    .filter((row) => {
+      const status = String(row?.status ?? row?.refundStatus ?? 'REQUESTED').toUpperCase();
+      return status === 'REQUESTED' || status === 'PENDING';
+    })
+    .map(mapRefundItem);
 }
 
 /**
@@ -225,14 +244,31 @@ export async function loadOpsApprovalInbox(options = {}) {
     };
   }
 
-  const [purchaseItems, salaryItems, refundItems, extras] = await Promise.all([
-    fetchPurchasePending('admin'),
-    fetchSalaryPending(),
-    fetchRefundPending(),
+  const sections = [
+    { type: OAC_ITEM_TYPE.PURCHASE, load: () => fetchPurchasePending('admin') },
+    { type: OAC_ITEM_TYPE.SALARY, load: fetchSalaryPending },
+    { type: OAC_ITEM_TYPE.REFUND, load: fetchRefundPending }
+  ];
+  const [settled, extras] = await Promise.all([
+    Promise.allSettled(sections.map((section) => section.load())),
     fetchPurchaseSummaryExtras()
   ]);
 
-  const items = [...purchaseItems, ...salaryItems, ...refundItems].sort((a, b) => {
+  const failedSections = [];
+  const loaded = [];
+  settled.forEach((result, index) => {
+    if (result.status === 'fulfilled') {
+      loaded.push(...result.value);
+      return;
+    }
+    console.warn(`승인 센터 섹션 로드 실패: ${sections[index].type}`, result.reason?.message || result.reason);
+    failedSections.push(sections[index].type);
+  });
+  if (failedSections.length === sections.length) {
+    throw settled[0].reason;
+  }
+
+  const items = loaded.sort((a, b) => {
     const ta = a.createdAt ? new Date(a.createdAt).getTime() : 0;
     const tb = b.createdAt ? new Date(b.createdAt).getTime() : 0;
     return tb - ta;
@@ -244,7 +280,8 @@ export async function loadOpsApprovalInbox(options = {}) {
     items,
     pendingCount: items.length,
     todayCount: todayPending + extras.todayProcessedCount,
-    rejectedCount: extras.rejectedCount
+    rejectedCount: extras.rejectedCount,
+    failedSections
   };
 }
 

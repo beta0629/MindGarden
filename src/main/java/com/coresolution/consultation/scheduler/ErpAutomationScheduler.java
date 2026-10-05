@@ -356,7 +356,7 @@ public class ErpAutomationScheduler {
 
     /**
      * 매월 나가는 돈(반복 지출) catch-up — 매일 02:15 KST.
-     * 페이지 로드 catch-up과 동일 로직; cron은 누락 월 보완용.
+     * 화면 진입은 쓰기 요청을 보내지 않는다(읽기 전용) — 누락 월 보완은 이 cron(테넌트별·멱등·ShedLock)이 담당.
      */
     @Scheduled(cron = "${scheduler.recurring-expense.cron:0 15 2 * * *}")
     @SchedulerLock(

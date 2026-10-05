@@ -272,4 +272,151 @@ if printf '%s\n' "$multi" | grep -q 'secret-not-printed'; then
     fail "password printed"
 fi
 
+# 본문 해시 정규화: DEFINER·주석·공백·대소문자·구분자·백틱·특성 차이는 같은 해시, 실제 본문 변경은 다른 해시.
+body_hash() {
+    bash "$DIFF" --body-hash "$@"
+}
+FIX="$WORKDIR/fixtures"
+mkdir -p "$FIX"
+cat > "$FIX/base.sql" <<'EOF'
+DROP PROCEDURE IF EXISTS MgHashProbe;
+DELIMITER //
+CREATE PROCEDURE MgHashProbe(
+    IN p_tenant_id VARCHAR(100),
+    OUT p_count INT
+)
+proc_main: BEGIN
+    DECLARE v_note VARCHAR(50) DEFAULT 'Keep Case';
+    SELECT COUNT(*) INTO p_count FROM schedules WHERE tenant_id = p_tenant_id AND note <> v_note;
+    IF p_count > 1 THEN
+        LEAVE proc_main;
+    END IF;
+END //
+DELIMITER ;
+EOF
+cat > "$FIX/variant.sql" <<'EOF'
+-- 헤더 주석
+# 해시 주석
+DROP PROCEDURE IF EXISTS `MgHashProbe`;
+delimiter $$
+CREATE DEFINER=`deploy`@`%` PROCEDURE IF NOT EXISTS `core`.`MgHashProbe`(IN p_tenant_id VARCHAR(100), OUT p_count INT)
+    COMMENT 'probe BEGIN marker'
+    NOT DETERMINISTIC
+    READS SQL DATA
+    SQL SECURITY INVOKER
+PROC_MAIN:   begin
+    /* 블록
+       주석 */
+    declare v_note varchar(50) default 'Keep Case';   -- 줄 끝 주석
+    select count(*) into p_count from `schedules`
+        where `tenant_id` = p_tenant_id and note <> v_note;  # 해시 주석
+    if p_count > 1 then leave PROC_MAIN; end if;
+END$$
+delimiter ;
+EOF
+printf '%s\r\n' 'proc_main: BEGIN' \
+    "  DECLARE v_note VARCHAR(50) DEFAULT 'Keep Case';" \
+    '  -- db 쪽 주석' \
+    '  SELECT COUNT(*) INTO p_count FROM schedules WHERE tenant_id = p_tenant_id AND note <> v_note;' \
+    '  IF p_count > 1 THEN LEAVE proc_main; END IF;' \
+    'END' > "$FIX/db_same.txt"
+sed "s/'Keep Case'/'keep case'/" "$FIX/base.sql" > "$FIX/literal_case.sql"
+sed 's/p_count > 1/p_count > 2/' "$FIX/base.sql" > "$FIX/changed_number.sql"
+sed 's/note <> v_note;/note <> v_note AND is_deleted = 0;/' "$FIX/base.sql" > "$FIX/changed_where.sql"
+sed 's/LEAVE proc_main;/SELECT 1;/' "$FIX/db_same.txt" > "$FIX/db_changed.txt"
+
+h_base=$(body_hash repo MgHashProbe < "$FIX/base.sql") || fail "base hash failed"
+h_variant=$(body_hash repo MgHashProbe < "$FIX/variant.sql") || fail "variant hash failed"
+h_db_same=$(body_hash db < "$FIX/db_same.txt") || fail "db hash failed"
+h_literal=$(body_hash repo MgHashProbe < "$FIX/literal_case.sql")
+h_number=$(body_hash repo MgHashProbe < "$FIX/changed_number.sql")
+h_where=$(body_hash repo MgHashProbe < "$FIX/changed_where.sql")
+h_db_changed=$(body_hash db < "$FIX/db_changed.txt")
+[ "${#h_base}" -eq 64 ] || fail "hash length: $h_base"
+[ "$h_base" = "$h_variant" ] || fail "DEFINER/comment/whitespace/case/delimiter/backtick/characteristic variant changed the hash"
+[ "$h_base" = "$h_db_same" ] || fail "repo body and ROUTINE_DEFINITION-style body hash differ"
+[ "$h_base" != "$h_literal" ] || fail "string literal change must change the hash"
+[ "$h_base" != "$h_number" ] || fail "numeric change must change the hash"
+[ "$h_base" != "$h_where" ] || fail "added predicate must change the hash"
+[ "$h_base" != "$h_db_changed" ] || fail "db body change must change the hash"
+# ROUTINE_DEFINITION 은 문자열 이스케이프를 풀어 저장한다: 저장소 'a\nb', 'it\'s', 'x''y' == DB 저장형.
+cat > "$FIX/escape.sql" <<'EOF'
+DELIMITER //
+CREATE PROCEDURE MgEscProbe() BEGIN SELECT 'a\nb', 'it\'s', 'x''y', 'b\\n', "dq\"x", 'p\%\_'; END //
+DELIMITER ;
+EOF
+printf "BEGIN SELECT 'a\nb', 'it's', 'x'y', 'b\\\\n', \"dq\"x\", 'p\\\\%%\\\\_'; END" > "$FIX/db_escape.txt"
+h_esc_repo=$(body_hash repo MgEscProbe < "$FIX/escape.sql") || fail "escape repo hash failed"
+h_esc_db=$(body_hash db < "$FIX/db_escape.txt") || fail "escape db hash failed"
+[ "$h_esc_repo" = "$h_esc_db" ] || fail "decoded string literal form must match ROUTINE_DEFINITION"
+sed 's/a\\nb/a\\tb/' "$FIX/escape.sql" > "$FIX/escape_changed.sql"
+[ "$(body_hash repo MgEscProbe < "$FIX/escape_changed.sql")" != "$h_esc_db" ] || fail "escape change must change the hash"
+
+if body_hash repo OtherProc < "$FIX/base.sql" 2>/dev/null; then
+    fail "missing procedure must fail"
+fi
+
+# 스냅샷 B 행(HEX ROUTINE_DEFINITION): 같은 본문은 차이 없음, 다른 본문은 body 차이로 목록에 오른다.
+python3 - "$ROOT" "$WORKDIR/snap.tsv" "$WORKDIR/snap-body.tsv" <<'PY'
+import sys
+from pathlib import Path
+
+root, src, out = Path(sys.argv[1]), Path(sys.argv[2]), Path(sys.argv[3])
+deploy_dir = root / "database/schema/procedures_standardized/deployment"
+
+def db_style_body(name):
+    text = (deploy_dir / f"{name}_deploy.sql").read_text(encoding="utf-8")
+    idx = text.find("CREATE PROCEDURE " + name + "(")
+    depth = 0
+    for i in range(text.find("(", idx), len(text)):
+        if text[i] == "(":
+            depth += 1
+        elif text[i] == ")":
+            depth -= 1
+            if depth == 0:
+                break
+    return text[i + 1:text.rfind("//")].strip()
+
+rows = src.read_text(encoding="utf-8").splitlines()
+rows.append("B\tUpdateBusinessTimeSetting\t0\t\t\t" + db_style_body("UpdateBusinessTimeSetting").encode("utf-8").hex().upper())
+rows.append("B\tCalculateSalaryPreview\t0\t\t\t" + "BEGIN SELECT 1; END".encode("utf-8").hex().upper())
+out.write_text("\n".join(rows) + "\n", encoding="utf-8")
+PY
+grep -q '^DELIMITER //' "$ROOT/database/schema/procedures_standardized/deployment/UpdateBusinessTimeSetting_deploy.sql" \
+    || fail "fixture expects // delimiter in UpdateBusinessTimeSetting_deploy.sql"
+
+: > "$LIST"
+body_out=$(PROCEDURE_DEPLOY_DB_DIFF_SNAPSHOT="$WORKDIR/snap-body.tsv" \
+    PROCEDURE_DEPLOY_DB_DIFF_LIST="$LIST" \
+    PROCEDURE_DEPLOY_DB_DIFF_CONFIRM="CONFIRM" \
+    bash "$DIFF") || fail "body diff exit: $body_out"
+printf '%s\n' "$body_out" | grep -qE $'^DIFF\tCalculateSalaryPreview\tbody\trepo=[0-9a-f]{16}\tdb=[0-9a-f]{16}$' \
+    || fail "body diff missing: $body_out"
+if printf '%s\n' "$body_out" | grep -q $'DIFF\tUpdateBusinessTimeSetting\t'; then
+    fail "identical body was listed: $body_out"
+fi
+grep -q 'CalculateSalaryPreview_deploy.sql' "$LIST" || fail "body diff not in apply list"
+grep -q 'GetIntegratedSalaryStatistics_deploy.sql' "$LIST" || fail "signature diff dropped from apply list"
+if printf '%s\n' "$body_out" | grep -qiE 'SELECT 1|DECLARE|proc_main'; then
+    fail "body text printed"
+fi
+
+: > "$LIST"
+report=$(PROCEDURE_DEPLOY_DB_DIFF_SNAPSHOT="$WORKDIR/snap-body.tsv" \
+    PROCEDURE_DEPLOY_DB_DIFF_LIST="$LIST" \
+    PROCEDURE_DEPLOY_DB_DIFF_CONFIRM="CONFIRM" \
+    bash "$DIFF" --hash-report) || fail "hash-report exit: $report"
+printf '%s\n' "$report" | grep -qE $'^HASH\tUpdateBusinessTimeSetting\trepo=([0-9a-f]{16})\tdb=[0-9a-f]{16}\tstatus=same$' \
+    || fail "same row missing: $report"
+printf '%s\n' "$report" | grep -qE $'^HASH\tCalculateSalaryPreview\trepo=[0-9a-f]{16}\tdb=[0-9a-f]{16}\tstatus=differ$' \
+    || fail "differ row missing: $report"
+printf '%s\n' "$report" | grep -qE $'^HASH\tTestMappingSync\trepo=[0-9a-f]{16}\tdb=-\tstatus=unavailable$' \
+    || fail "unavailable row missing: $report"
+printf '%s\n' "$report" | grep -qE '^hash-report procedures repo=[0-9]+ same=1 differ=1 missing=0 unavailable=[0-9]+$' \
+    || fail "hash-report summary missing: $report"
+if printf '%s\n' "$report" | grep -vE $'^(HASH\t[A-Za-z0-9_]+\trepo=[0-9a-f-]+\tdb=[0-9a-f-]+\tstatus=[a-z]+|hash-report procedures .*)$'; then
+    fail "hash-report printed something other than name/hash/status"
+fi
+[ ! -s "$LIST" ] || fail "hash-report wrote an apply list"
+
 echo "procedure-deploy-db-diff.test.sh PASS"

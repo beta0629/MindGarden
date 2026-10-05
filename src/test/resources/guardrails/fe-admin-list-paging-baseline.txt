@@ -1,0 +1,7 @@
+# FE 관리자 목록 페이징 래칫 베이스라인 (scripts/verification/check-fe-admin-list-paging.js) — 줄어들기만 한다.
+# FETCH_ALL = size: total|count 류 전체 조회. NO_PAGING = 목록 엔드포인트를 page/size 없이 호출.
+# 고치면 체크가 "베이스라인 정리 필요" 로 실패하므로 해당 줄을 지운다. 최신 목록: node scripts/verification/check-fe-admin-list-paging.js --list
+# 남은 항목: 상담사 선택 옵션(드롭다운)용 with-stats 전체 목록 — BE 가 페이징 파라미터를 받지 않음.
+
+NO_PAGING frontend/src/components/admin/mapping-management/integrated-schedule/molecules/MappingScheduleSidePeekContent.js :: StandardizedApi.get ADMIN.CONSULTANTS.WITH_STATS
+NO_PAGING frontend/src/components/admin/mapping/SessionSuccessionWizardModal.js :: StandardizedApi.get ADMIN.CONSULTANTS.WITH_STATS

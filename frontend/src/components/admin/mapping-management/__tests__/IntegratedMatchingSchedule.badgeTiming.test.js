@@ -143,7 +143,9 @@ jest.mock('../../../../api/adminListFetch', () => ({
   adminMappingsListGet: jest.fn(),
   adminMappingsListGetAll: jest.fn(),
   adminSchedulesListGetAll: jest.fn(),
-  adminClientsWithMappingGetAll: jest.fn()
+  adminClientsWithMappingGetAll: jest.fn(),
+  adminPendingPaymentMappingsGetAll: jest.fn(),
+  adminSessionExtensionPendingPaymentGetAll: jest.fn()
 }));
 
 import IntegratedMatchingSchedule from '../IntegratedMatchingSchedule';
@@ -153,7 +155,9 @@ import {
   adminMappingsListGet,
   adminMappingsListGetAll,
   adminSchedulesListGetAll,
-  adminClientsWithMappingGetAll
+  adminClientsWithMappingGetAll,
+  adminPendingPaymentMappingsGetAll,
+  adminSessionExtensionPendingPaymentGetAll
 } from '../../../../api/adminListFetch';
 
 const FIXED_DATE_ISO = '2026-06-15T09:00:00.000Z';
@@ -266,6 +270,12 @@ beforeEach(() => {
     pushOrder('adminClientsWithMappingGetAll');
     return Promise.resolve({ clients: [] });
   });
+  adminPendingPaymentMappingsGetAll.mockImplementation(
+    () => StandardizedApi.get('/api/v1/admin/mappings/pending-payment')
+  );
+  adminSessionExtensionPendingPaymentGetAll.mockImplementation(
+    () => StandardizedApi.get('/api/v1/admin/session-extensions/pending-payment')
+  );
 
   useSession.mockImplementation(() => ({
     user: { id: 1, name: 'Admin', role: 'ADMIN', tenantId: 'tenant-A' }

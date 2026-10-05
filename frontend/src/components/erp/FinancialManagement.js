@@ -441,11 +441,6 @@ const FinancialManagement = () => {
       setLoading(true);
       setError(null);
       try {
-        try {
-          await StandardizedApi.post(ERP_API.RECURRING_EXPENSES_CATCH_UP, {});
-        } catch {
-          // catch-up 실패 시에도 장부 목록은 로드
-        }
         const pageForRequest = pagination.currentPage;
         const now = new Date();
         const toStr = (d) => formatLocalDateYmd(d);

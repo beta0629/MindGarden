@@ -3,7 +3,9 @@ package com.coresolution.core.service.impl;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.verify;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -12,11 +14,13 @@ import java.util.UUID;
 import java.util.concurrent.Executor;
 import java.util.stream.Collectors;
 
+import com.coresolution.consultation.cache.TenantCommonCodeCacheEvictor;
 import com.coresolution.consultation.entity.CommonCode;
 import com.coresolution.consultation.repository.CommonCodeRepository;
 import com.coresolution.consultation.service.CommonCodeService;
 import com.coresolution.consultation.service.EmailService;
 import com.coresolution.consultation.service.erp.accounting.AccountingService;
+import com.coresolution.core.constant.OnboardingConstants;
 import com.coresolution.core.repository.TenantRoleRepository;
 import com.coresolution.core.repository.TenantRepository;
 import com.coresolution.core.repository.billing.TenantSubscriptionRepository;
@@ -78,6 +82,8 @@ class OnboardingDefaultTenantCommonCodesSeedTest {
     private CommonCodeService commonCodeService;
     @Mock
     private CommonCodeRepository commonCodeRepository;
+    @Mock
+    private TenantCommonCodeCacheEvictor tenantCommonCodeCacheEvictor;
     @Mock
     private OnboardingPreValidationService preValidationService;
     @Mock
@@ -205,5 +211,32 @@ class OnboardingDefaultTenantCommonCodesSeedTest {
         assertThat(commonCodeRepository.findTenantCodesByGroup(tenantId, "SALARY_TYPE")).isNotEmpty();
         assertThat(commonCodeRepository.findTenantCodesByGroup(tenantId, "CONSULTANT_GRADE"))
                 .isNotEmpty();
+    }
+
+    @Test
+    @DisplayName("insertDefaultTenantCommonCodes 후 전문가 유형은 상담·놀이·언어만 시드한다")
+    void insertDefaultTenantCommonCodes_seedsProfessionalProviderTypesWithoutAba() {
+        String tenantId = "tenant-ppt-" + UUID.randomUUID();
+
+        ReflectionTestUtils.invokeMethod(onboardingService, "insertDefaultTenantCommonCodes", tenantId,
+                "unit-test-user");
+
+        List<CommonCode> types = commonCodeRepository.findTenantCodesByGroup(tenantId,
+                OnboardingConstants.TENANT_COMMON_CODE_GROUP_PROFESSIONAL_PROVIDER_TYPE);
+
+        assertThat(types).extracting(CommonCode::getCodeValue).containsExactly(
+                OnboardingConstants.TENANT_SEED_CODE_VALUE_PROFESSIONAL_PROVIDER_DEFAULT,
+                OnboardingConstants.TENANT_SEED_CODE_VALUE_PROFESSIONAL_PROVIDER_PLAY_THERAPY,
+                OnboardingConstants.TENANT_SEED_CODE_VALUE_PROFESSIONAL_PROVIDER_SPEECH_THERAPY);
+        assertThat(types).extracting(CommonCode::getCodeValue).doesNotContain("ABA");
+        assertThat(types).extracting(CommonCode::getSortOrder).containsExactly(
+                OnboardingConstants.TENANT_COMMON_CODE_DEFAULT_SORT_ORDER,
+                OnboardingConstants.TENANT_SEED_SORT_PROFESSIONAL_PROVIDER_PLAY_THERAPY,
+                OnboardingConstants.TENANT_SEED_SORT_PROFESSIONAL_PROVIDER_SPEECH_THERAPY);
+        assertThat(types).allSatisfy(code -> assertThat(code.getExtraData())
+                .contains("systemAuthorityRole")
+                .contains("CONSULTANT"));
+        assertThat(types.get(0).getExtraData()).contains("\"isDefault\":true");
+        verify(tenantCommonCodeCacheEvictor, atLeastOnce()).evictTenantAndCoreCodesAfterCommit();
     }
 }

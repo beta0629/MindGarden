@@ -15,6 +15,7 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
+import com.coresolution.consultation.cache.TenantCommonCodeCacheEvictor;
 import com.coresolution.consultation.constant.ConsultationPackageCodeConstants;
 import com.coresolution.consultation.constant.ExpenseCommonCodeSsotConstants;
 import com.coresolution.consultation.constant.TenantCommonCodeAutoValueConstants;
@@ -63,6 +64,9 @@ class TenantCommonCodeServiceImplTest {
     @Mock
     private ObjectMapper objectMapper;
 
+    @Mock
+    private TenantCommonCodeCacheEvictor tenantCommonCodeCacheEvictor;
+
     @InjectMocks
     private TenantCommonCodeServiceImpl tenantCommonCodeService;
 
@@ -77,6 +81,7 @@ class TenantCommonCodeServiceImplTest {
         tenantCommonCodeService.updateTenantCode(TENANT, 10L, request);
 
         verify(commonCodeRepository).findByTenantIdAndId(eq(TENANT), eq(10L));
+        verify(tenantCommonCodeCacheEvictor).evictTenantAndCoreCodesAfterCommit();
     }
 
     @Test

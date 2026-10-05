@@ -1,5 +1,6 @@
 package com.coresolution.consultation.service.impl;
 
+import com.coresolution.consultation.cache.TenantCommonCodeCacheEvictor;
 import com.coresolution.consultation.constant.ConsultationPackageCodeConstants;
 import com.coresolution.consultation.constant.ExpenseCommonCodeSsotConstants;
 import com.coresolution.consultation.constant.TenantCommonCodeAutoValueConstants;
@@ -53,6 +54,7 @@ public class TenantCommonCodeServiceImpl implements TenantCommonCodeService {
     private final FinancialTransactionRepository financialTransactionRepository;
     private final RecurringExpenseRepository recurringExpenseRepository;
     private final ObjectMapper objectMapper;
+    private final TenantCommonCodeCacheEvictor tenantCommonCodeCacheEvictor;
 
     @Override
     public List<CodeGroupMetadata> getTenantCodeGroups(String tenantId) {
@@ -131,6 +133,7 @@ public class TenantCommonCodeServiceImpl implements TenantCommonCodeService {
         try {
             CommonCode savedCode = commonCodeRepository.save(code);
             log.info("테넌트 공통코드 생성 완료: id={}, codeValue={}", savedCode.getId(), savedCode.getCodeValue());
+            tenantCommonCodeCacheEvictor.evictTenantAndCoreCodesAfterCommit();
             return toResponse(savedCode);
         } catch (DataIntegrityViolationException ex) {
             throw new IllegalArgumentException(
@@ -197,7 +200,8 @@ public class TenantCommonCodeServiceImpl implements TenantCommonCodeService {
 
         CommonCode updatedCode = commonCodeRepository.save(code);
         log.info("테넌트 공통코드 수정 완료: id={}", updatedCode.getId());
-        
+        tenantCommonCodeCacheEvictor.evictTenantAndCoreCodesAfterCommit();
+
         return toResponse(updatedCode);
     }
 
@@ -213,6 +217,7 @@ public class TenantCommonCodeServiceImpl implements TenantCommonCodeService {
         if (Boolean.TRUE.equals(code.getIsDeleted())) {
             softDeleteMatchingRecurringExpenses(tenantId, code.getCodeValue());
             log.info("테넌트 공통코드 삭제 멱등 완료(이미 삭제됨): id={}", codeId);
+            tenantCommonCodeCacheEvictor.evictTenantAndCoreCodesAfterCommit();
             return;
         }
 
@@ -225,6 +230,7 @@ public class TenantCommonCodeServiceImpl implements TenantCommonCodeService {
         softDeleteMatchingRecurringExpenses(tenantId, code.getCodeValue());
 
         log.info("테넌트 공통코드 삭제 완료: id={}", codeId);
+        tenantCommonCodeCacheEvictor.evictTenantAndCoreCodesAfterCommit();
     }
 
     @Override
@@ -238,7 +244,8 @@ public class TenantCommonCodeServiceImpl implements TenantCommonCodeService {
         CommonCode updatedCode = commonCodeRepository.save(code);
         
         log.info("테넌트 공통코드 활성화 토글 완료: id={}, isActive={}", codeId, isActive);
-        
+        tenantCommonCodeCacheEvictor.evictTenantAndCoreCodesAfterCommit();
+
         return toResponse(updatedCode);
     }
 
@@ -253,7 +260,8 @@ public class TenantCommonCodeServiceImpl implements TenantCommonCodeService {
         CommonCode updatedCode = commonCodeRepository.save(code);
         
         log.info("테넌트 공통코드 정렬 순서 변경 완료: id={}, newOrder={}", codeId, newOrder);
-        
+        tenantCommonCodeCacheEvictor.evictTenantAndCoreCodesAfterCommit();
+
         return toResponse(updatedCode);
     }
 

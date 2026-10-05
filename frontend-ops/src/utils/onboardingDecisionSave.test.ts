@@ -276,7 +276,11 @@ describe("OnboardingDecisionForm", () => {
     assert.equal(source.includes("router.refresh"), false);
   });
 
-  it("reloads list and detail through the existing fetches after a decision", () => {
+  it("updates only the detail block after a decision", () => {
+    const formSource = readFileSync(
+      fileURLToPath(new URL("../components/onboarding/OnboardingDecisionForm.tsx", import.meta.url)),
+      "utf8",
+    );
     const detailSource = readFileSync(
       fileURLToPath(new URL("../../app/onboarding/detail/page.tsx", import.meta.url)),
       "utf8",
@@ -286,10 +290,13 @@ describe("OnboardingDecisionForm", () => {
       "utf8",
     );
 
-    assert.equal(detailSource.includes("applyRefreshedOnboardingViews"), true);
+    assert.equal(detailSource.includes("applyRefreshedOnboardingViews"), false);
+    assert.equal(detailSource.includes("fetchAllOnboarding"), false);
     assert.equal(detailSource.includes("fetchOnboardingDetail"), true);
-    assert.equal(detailSource.includes("fetchAllOnboarding"), true);
+    assert.equal(detailSource.includes("mapOnboardingDisplay"), true);
+    assert.equal(detailSource.includes("buildOnboardingFacts"), true);
     assert.equal(detailSource.includes("onRefresh={refreshAfterDecision}"), true);
+    assert.equal(formSource.includes("applyOnboardingDecisionResponse"), true);
     assert.equal(detailSource.includes("window.location.reload"), false);
     assert.equal(detailSource.includes("router.refresh"), false);
     assert.equal(listSource.includes("onboardingListCache"), true);

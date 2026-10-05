@@ -626,7 +626,9 @@ export const useOnboarding = () => {
         setSubdomainPreview(result.previewDomain || null);
       } else {
         setSubdomainDuplicateChecked(false);
-        setSubdomainDuplicateError(result.message || '사용할 수 없는 서브도메인입니다.');
+        setSubdomainDuplicateError(
+          result.message || TRINITY_CONSTANTS.MESSAGES.ERROR_SUBDOMAIN_UNAVAILABLE
+        );
         setSubdomainPreview(null);
       }
     } catch (err) {
@@ -678,10 +680,39 @@ export const useOnboarding = () => {
       return;
     }
 
+    const emailValidation = validateEmailFormat(formData.contactEmail || "");
+    if (!emailValidation.valid) {
+      setError(emailValidation.error || TRINITY_CONSTANTS.MESSAGES.ERROR_EMAIL_REQUIRED);
+      return;
+    }
+
     setLoading(true);
     setError(null);
 
     try {
+      const subdomain = formData.subdomain?.trim();
+      if (subdomain) {
+        const subdomainResult = await checkSubdomainDuplicate(subdomain);
+        if (
+          !subdomainResult.isValid ||
+          !subdomainResult.available ||
+          subdomainResult.isDuplicate
+        ) {
+          setSubdomainDuplicateChecked(false);
+          setSubdomainDuplicateError(
+            subdomainResult.message || TRINITY_CONSTANTS.MESSAGES.ERROR_SUBDOMAIN_UNAVAILABLE
+          );
+          setSubdomainPreview(null);
+          setError(
+            subdomainResult.message || TRINITY_CONSTANTS.MESSAGES.ERROR_SUBDOMAIN_UNAVAILABLE
+          );
+          return;
+        }
+        setSubdomainDuplicateChecked(true);
+        setSubdomainDuplicateError(null);
+        setSubdomainPreview(subdomainResult.previewDomain || null);
+      }
+
       const normalizedPhone = normalizeKoreanMobileDigits(formData.contactPhone);
       const request: OnboardingCreateRequest = {
         tenantId: undefined,
@@ -698,7 +729,7 @@ export const useOnboarding = () => {
         checklistJson: JSON.stringify({
           contactPhone: normalizedPhone,
           phoneVerified: true,
-          contactEmail: formData.contactEmail?.trim() || undefined,
+          contactEmail: formData.contactEmail.trim(),
           planId: formData.planId,
           adminPassword: formData.adminPassword,
           paymentMethodId: formData.paymentMethodId,

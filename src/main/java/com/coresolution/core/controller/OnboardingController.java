@@ -597,14 +597,15 @@ public class OnboardingController extends BaseApiController {
     }
 
     /**
-     * 응답에 넣을 이메일. 엔티티 값이 정규화되면 그 값을, 아니면 신청서의 contactEmail 을 쓴다.
+     * 응답에 넣을 이메일. 엔티티 값이 평문 이메일로 보이면 그 값을, 아니면 신청서의 contactEmail 을 쓴다.
+     * 사용자 이메일이 암호문이면 암호문을 반환하지 않는다.
      *
      * @param adminUser 조회된 관리자
      * @param contactEmail 신청서의 정규화 이메일
      * @return 로그인에 쓰는 이메일
      */
     private static String visibleAdminEmail(User adminUser, String contactEmail) {
-        String normalized = OnboardingAdminContactEmailSupport.normalize(adminUser.getEmail());
+        String normalized = OnboardingAdminContactEmailSupport.visible(adminUser.getEmail());
         return normalized != null ? normalized : contactEmail;
     }
 

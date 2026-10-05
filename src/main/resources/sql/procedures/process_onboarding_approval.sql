@@ -2,6 +2,10 @@
 -- Flyway 는 세미콜론으로 나누므로 db/migration 의 기존 파일은 수정하지 않는다.
 -- p_request_id 는 BIGINT. Java setLong 및 V20260402_001 과 같다.
 -- p_domain_suffix 는 CreateOrActivateTenant 의 같은 인자로 그대로 전달한다.
+-- p_contact_email 은 Java 가 EmailAttributeConverter 와 같은 safeEncrypt 로 만든 암호문이다.
+-- users.email 은 VARCHAR(512) (V20260614_002). 이 인자도 VARCHAR(512).
+-- p_admin_user_id 는 TenantAdminUserIdAllocator 베이스. 이메일 로컬 파트가 아니다.
+-- users.user_id VARCHAR(50). 유일성은 (tenant_id, user_id) (V20261011_001).
 
 DROP PROCEDURE IF EXISTS ProcessOnboardingApproval;
 
@@ -14,10 +18,11 @@ CREATE PROCEDURE ProcessOnboardingApproval(
     IN p_business_type VARCHAR(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
     IN p_approved_by VARCHAR(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
     IN p_decision_note TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
-    IN p_contact_email VARCHAR(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+    IN p_contact_email VARCHAR(512) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
     IN p_admin_password_hash VARCHAR(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
     IN p_subdomain VARCHAR(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
     IN p_domain_suffix VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+    IN p_admin_user_id VARCHAR(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
     OUT p_success BOOLEAN,
     OUT p_message TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci
 )
@@ -99,7 +104,7 @@ proc_label: BEGIN
 
                 CALL CreateTenantAdminAccount(
                     p_tenant_id, p_contact_email, p_tenant_name,
-                    p_admin_password_hash, p_approved_by,
+                    p_admin_password_hash, p_approved_by, p_admin_user_id,
                     @admin_success, @admin_message
                 );
 

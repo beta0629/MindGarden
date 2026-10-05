@@ -208,6 +208,13 @@ export default function OnboardingCallbackPage() {
             return;
           }
 
+          if (!finalContactEmail.trim()) {
+            setError(TRINITY_CONSTANTS.MESSAGES.ERROR_EMAIL_REQUIRED);
+            setStatus("fail");
+            setLoading(false);
+            return;
+          }
+
           let paymentMethodId: string | undefined = undefined;
 
           // 1. 결제 타입에 따른 처리
@@ -234,11 +241,12 @@ export default function OnboardingCallbackPage() {
             riskLevel: defaultRiskLevel as "LOW" | "MEDIUM" | "HIGH", // 공통 코드에서 동적으로 가져온 값
             businessType: toStr(formData.businessType),
             adminPassword: toStr(formData.adminPassword), // 관리자 계정 비밀번호 (checklistJson에 포함)
+            subdomain: toStr(formData.subdomain) || undefined,
             ...(storedCaptchaToken ? { captchaToken: storedCaptchaToken } : {}),
             checklistJson: JSON.stringify({
               contactPhone: finalRequestedBy,
               phoneVerified: true,
-              contactEmail: finalContactEmail || undefined,
+              contactEmail: finalContactEmail.trim(),
               planId: toStr(formData.planId),
               adminPassword: toStr(formData.adminPassword), // 관리자 계정 비밀번호 (승인 시 사용)
               paymentMethodId,
@@ -249,6 +257,7 @@ export default function OnboardingCallbackPage() {
               amount: paymentType === "pay" ? formData.amount : undefined,
               regionCode: formData.regionCode || undefined, // 지역 코드 추가
               brandName: formData.brandName || undefined, // 브랜드명 추가
+              subdomain: toStr(formData.subdomain) || undefined,
               dashboardTemplates: formData.dashboardTemplates || {}, // 대시보드 템플릿 설정
             }),
           };

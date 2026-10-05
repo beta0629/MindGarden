@@ -2,6 +2,8 @@ package com.coresolution.core.security;
 
 import java.util.Locale;
 import java.util.Map;
+import com.coresolution.consultation.converter.PersonalDataEncryptionContextHolder;
+import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.core.constant.OnboardingConstants;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -17,6 +19,12 @@ import jakarta.mail.internet.InternetAddress;
  * @since 2026-10-05
  */
 public final class OnboardingAdminContactEmailSupport {
+
+    /**
+     * {@link PersonalDataEncryptionUtil} 암호문({@code keyId::} / {@code keyId:v2::}) 구분.
+     * 복호화되지 않은 값은 응답·화면에 넣지 않는다.
+     */
+    private static final String CIPHERTEXT_DELIMITER = "::";
 
     private static final TypeReference<Map<String, Object>> CHECKLIST_TYPE =
             new TypeReference<Map<String, Object>>() {};
@@ -45,7 +53,68 @@ public final class OnboardingAdminContactEmailSupport {
         if (!(raw instanceof String text)) {
             return null;
         }
-        return normalize(text);
+        return visible(text);
+    }
+
+    /**
+     * 화면·응답에 넣을 이메일.
+     * {@link PersonalDataEncryptionContextHolder} 에 유틸이 있으면 {@code safeDecrypt} 후 정규화한다.
+     * 암호문이 평문 이메일로 풀리지 않으면 null 이고, 암호문 원문은 돌려주지 않는다.
+     *
+     * @param raw 원문 또는 암호문
+     * @return 정규화된 이메일 또는 null
+     */
+    public static String visible(String raw) {
+        if (raw == null) {
+            return null;
+        }
+        String candidate = decryptForDisplay(raw);
+        if (candidate == null || candidate.indexOf(CIPHERTEXT_DELIMITER) >= 0) {
+            return null;
+        }
+        return normalize(candidate);
+    }
+
+    /**
+     * 응답 checklist 에서 복호화되지 않은 contactEmail 암호문을 뺀다.
+     * 평문·형식 오류 값은 그대로 둔다.
+     *
+     * @param checklistJson 비밀번호 키를 뺀 checklist JSON
+     * @param objectMapper  Jackson ObjectMapper
+     * @return 암호문 contactEmail 이 제거된 JSON. 입력이 null 이면 null
+     */
+    public static String omitCipherContactEmail(String checklistJson, ObjectMapper objectMapper) {
+        if (checklistJson == null || checklistJson.isBlank() || objectMapper == null) {
+            return checklistJson;
+        }
+        try {
+            Map<String, Object> checklist = objectMapper.readValue(checklistJson, CHECKLIST_TYPE);
+            if (checklist == null) {
+                return checklistJson;
+            }
+            Object raw = checklist.get(OnboardingConstants.CHECKLIST_KEY_CONTACT_EMAIL);
+            if (!(raw instanceof String text) || visible(text) != null
+                    || text.indexOf(CIPHERTEXT_DELIMITER) < 0) {
+                return checklistJson;
+            }
+            checklist.remove(OnboardingConstants.CHECKLIST_KEY_CONTACT_EMAIL);
+            return objectMapper.writeValueAsString(checklist);
+        } catch (JsonProcessingException ex) {
+            return checklistJson;
+        }
+    }
+
+    private static String decryptForDisplay(String raw) {
+        PersonalDataEncryptionUtil util = PersonalDataEncryptionContextHolder.get();
+        if (util == null) {
+            return raw;
+        }
+        try {
+            String decrypted = util.safeDecrypt(raw);
+            return decrypted == null ? raw : decrypted;
+        } catch (RuntimeException ex) {
+            return null;
+        }
     }
 
     /**

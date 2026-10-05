@@ -22,6 +22,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import com.coresolution.core.constant.OnboardingConstants;
 import com.coresolution.core.domain.Tenant;
 import com.coresolution.core.domain.onboarding.OnboardingRequest;
 import com.coresolution.core.domain.onboarding.OnboardingStatus;
@@ -219,7 +220,7 @@ class OnboardingAdminPasswordHashFlowTest {
                 null, null, objectMapper, null, null, null, null);
         try {
             ReflectionTestUtils.invokeMethod(approvalImpl, "createAdminAccountDirectly", "tenant-flow-test",
-                    contactEmail, "흐름 테스트 기관", adminPasswordHash, "ops-actor", "CONSULTATION");
+                    contactEmail, "k1::QUJDRA", "흐름 테스트 기관", adminPasswordHash, "ops-actor", "CONSULTATION");
         } catch (RuntimeException ignored) {
             // INSERT 이후 원장 역할 할당 단계는 목 환경에서 실패할 수 있다 — 비밀번호 검증과 무관
         }
@@ -339,12 +340,14 @@ class OnboardingAdminPasswordHashFlowTest {
     }
 
     @Test
-    @DisplayName("반례: null checklist 는 그대로 통과(인코딩 없음)")
-    void create_nullChecklist_passesThrough() {
-        OnboardingRequest saved = createWithChecklist(null);
+    @DisplayName("checklist 가 없으면 비밀번호를 해시하지 않고 이메일 필수 메시지로 거절한다")
+    void create_nullChecklist_rejectsMissingEmailWithoutHashing() {
+        assertThatThrownBy(() -> createWithChecklist(null))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage(OnboardingConstants.ERROR_ONBOARDING_CONTACT_EMAIL_REQUIRED_ON_CREATE);
 
-        assertThat(saved.getChecklistJson()).isNull();
         verify(passwordService, never()).encodePassword(anyString());
+        verify(repository, never()).save(any(OnboardingRequest.class));
     }
 
     @Test
@@ -367,6 +370,11 @@ class OnboardingAdminPasswordHashFlowTest {
         String passed = approveAndCaptureHash(legacy);
 
         assertThat(OnboardingAdminPasswordSupport.isBcryptHash(passed)).isTrue();
+        assertThat(legacy.getChecklistJson()).doesNotContain(rawPassword);
+        Map<String, Object> rewritten = objectMapper.readValue(legacy.getChecklistJson(),
+                new TypeReference<Map<String, Object>>() {});
+        assertThat(OnboardingAdminPasswordSupport.isBcryptHash(
+                OnboardingAdminPasswordSupport.readStoredValue(rewritten))).isTrue();
         verify(passwordService, times(1)).encodePassword(rawPassword);
         assertThat(loginWith(contactEmail, passed, rawPassword).isAuthenticated()).isTrue();
     }

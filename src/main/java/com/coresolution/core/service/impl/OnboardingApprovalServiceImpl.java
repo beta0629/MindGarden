@@ -10,6 +10,8 @@ import java.util.Map;
 import com.coresolution.consultation.util.EmailLogMasking;
 import com.coresolution.consultation.util.OAuth2DomainUtil;
 import com.coresolution.core.constant.OnboardingConstants;
+import com.coresolution.core.security.OnboardingAdminEmailCipher;
+import com.coresolution.core.security.TenantAdminUserIdAllocator;
 import com.coresolution.core.domain.onboarding.OnboardingRequest;
 import com.coresolution.core.repository.RoleTemplateRepository;
 import com.coresolution.core.service.OnboardingApprovalService;
@@ -81,6 +83,14 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
             throw new RuntimeException(
                     OnboardingConstants.MSG_ADMIN_CREATE_BLOCKED_NO_PASSWORD_HASH);
         }
+        // 프로시저·JDBC 모두 JPA 를 거치지 않으므로, 저장 전에 컨버터와 같은 암호문을 한 번만 만든다.
+        final OnboardingAdminEmailCipher.Prepared adminEmail = contactEmailPresent
+                ? OnboardingAdminEmailCipher.prepare(contactEmail.trim().toLowerCase(java.util.Locale.ROOT))
+                : null;
+        final String emailCipher = adminEmail == null ? null : adminEmail.cipher();
+        final String procedureUserIdBase = adminEmail == null
+                ? null
+                : TenantAdminUserIdAllocator.allocate(tenantId);
 
         String requestedSubdomain = TenantHostLabel.explicitDnsLabelOrNull(subdomain);
         String domainSuffix = resolveApprovalDomainSuffix();
@@ -91,7 +101,7 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
             Map<String, Object> procedureResult =
                     processOnboardingApprovalLegacy(requestId, tenantId, tenantName, businessType,
                             approvedBy, decisionNote, contactEmail, adminPasswordHash,
-                            requestedSubdomain, domainSuffix);
+                            requestedSubdomain, domainSuffix, emailCipher, procedureUserIdBase);
             Boolean procedureSuccess = (Boolean) procedureResult.get("success");
             String procedureMessage = (String) procedureResult.get("message");
 
@@ -105,7 +115,8 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
                 log.info("✅ 프로시저 실행 성공. 대시보드·관리자 테넌트 역할 정합성 보강 실행: {}", procedureMessage);
                 copyMerchantLegalFromOnboardingRequest(requestId, tenantId);
                 return completeApprovalWithDashboardAndRoles(requestId, tenantId, tenantName,
-                        businessType, approvedBy, contactEmail, adminPasswordHash, procedureMessage);
+                        businessType, approvedBy, contactEmail, emailCipher, adminPasswordHash,
+                        procedureMessage);
             }
             if (OnboardingDecisionDeadline.isHalted(procedureResult)
                     || !OnboardingDecisionDeadline.fallbackAllowed()) {
@@ -183,7 +194,8 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
                     && !adminPasswordHash.trim().isEmpty()) {
                 // updateProcessingStatus 제거: 별도 트랜잭션에서 version 충돌 발생
                 StepResult adminResult = executeStepAdminAccountCreation(requestId, tenantId,
-                        contactEmail, tenantName, adminPasswordHash, approvedBy, businessType);
+                        contactEmail, emailCipher, tenantName, adminPasswordHash, approvedBy,
+                        businessType);
                 stepResults.put(OnboardingConstants.STEP_ADMIN_CREATE, adminResult);
 
                 if (!adminResult.isSuccess()) {
@@ -296,13 +308,13 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
      */
     private Map<String, Object> completeApprovalWithDashboardAndRoles(Long requestId,
             String tenantId, String tenantName, String businessType, String approvedBy,
-            String contactEmail, String adminPasswordHash, String priorMessage) {
+            String contactEmail, String emailCipher, String adminPasswordHash, String priorMessage) {
 
         Map<String, Object> stepResults = new HashMap<>();
         if (contactEmail != null && !contactEmail.trim().isEmpty() && adminPasswordHash != null
                 && !adminPasswordHash.trim().isEmpty()) {
             StepResult adminResult = executeStepAdminAccountCreation(requestId, tenantId, contactEmail,
-                    tenantName, adminPasswordHash, approvedBy, businessType);
+                    emailCipher, tenantName, adminPasswordHash, approvedBy, businessType);
             stepResults.put(OnboardingConstants.STEP_ADMIN_CREATE, adminResult);
             if (!adminResult.isSuccess()) {
                 throw new RuntimeException(OnboardingConstants.MSG_ADMIN_CREATE_FAILED + ": "
@@ -489,15 +501,15 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
      * Step 3: 관리자 계정 생성
      */
     private StepResult executeStepAdminAccountCreation(Long requestId, String tenantId,
-            String contactEmail, String tenantName, String adminPasswordHash, String approvedBy,
-            String businessType) {
+            String contactEmail, String emailCipher, String tenantName, String adminPasswordHash,
+            String approvedBy, String businessType) {
         log.info(OnboardingConstants.LOG_SEPARATOR);
         log.info("📋 Step 3: 관리자 계정 생성");
         log.info(OnboardingConstants.LOG_SEPARATOR);
 
         try {
-            createAdminAccountDirectly(tenantId, contactEmail, tenantName, adminPasswordHash,
-                    approvedBy, businessType);
+            createAdminAccountDirectly(tenantId, contactEmail, emailCipher, tenantName,
+                    adminPasswordHash, approvedBy, businessType);
             log.info("✅ Step 3 성공: 관리자 계정 생성 완료 - tenantId={}, email={}", tenantId, EmailLogMasking.maskForLog(contactEmail));
             return StepResult.success(OnboardingConstants.MSG_ADMIN_CREATE_COMPLETE);
         } catch (Exception e) {
@@ -611,7 +623,7 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
     private Map<String, Object> processOnboardingApprovalLegacy(Long requestId,
             String tenantId, String tenantName, String businessType, String approvedBy,
             String decisionNote, String contactEmail, String adminPasswordHash, String subdomain,
-            String domainSuffix) {
+            String domainSuffix, String emailCipher, String procedureUserIdBase) {
 
         log.info(
                 "온보딩 승인 프로세스 시작 (레거시): requestId={}, tenantId={}, tenantName={}, contactEmail={}, subdomain={}",
@@ -645,7 +657,7 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
             }
 
             try (CallableStatement cs = connection.prepareCall(
-                    "{CALL ProcessOnboardingApproval(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)}")) {
+                    "{CALL ProcessOnboardingApproval(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)}")) {
 
                 // 프로시저 실행 타임아웃 설정 (초 단위)
                 cs.setQueryTimeout(OnboardingDecisionDeadline.statementTimeoutSeconds());
@@ -672,15 +684,16 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
                 cs.setString(4, businessType);
                 cs.setString(5, approvedBy);
                 cs.setString(6, decisionNote);
-                cs.setString(7, contactEmail); // 추가: 연락 이메일
+                cs.setString(7, emailCipher); // 공통 암호화 유틸이 만든 users.email 저장값
                 cs.setString(8, adminPasswordHash); // 추가: BCrypt 해시된 비밀번호
                 cs.setString(9, subdomain); // 추가: 서브도메인
                 cs.setString(10, domainSuffix); // 환경 설정의 도메인 접미사
+                cs.setString(11, procedureUserIdBase); // adm- 베이스. 이메일 로컬 파트가 아니다.
 
                 // OUT 파라미터 등록
-                cs.registerOutParameter(11, Types.BOOLEAN); // p_success
-                cs.registerOutParameter(12, Types.VARCHAR); // p_message
-                log.info("OUT 파라미터 등록 완료: [11] success (BOOLEAN), [12] message (VARCHAR)");
+                cs.registerOutParameter(12, Types.BOOLEAN); // p_success
+                cs.registerOutParameter(13, Types.VARCHAR); // p_message
+                log.info("OUT 파라미터 등록 완료: [12] success (BOOLEAN), [13] message (VARCHAR)");
 
                 // 프로시저 실행
                 log.info("==========================================");
@@ -735,14 +748,14 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
                 String message = null;
 
                 try {
-                    success = cs.getBoolean(11);
-                    log.info("프로시저 OUT 파라미터 [11] (success) 읽기: {}", success);
+                    success = cs.getBoolean(12);
+                    log.info("프로시저 OUT 파라미터 [12] (success) 읽기: {}", success);
                 } catch (SQLException e) {
-                    log.error("프로시저 OUT 파라미터 [11] (success) 읽기 실패: {}", e.getMessage(), e);
+                    log.error("프로시저 OUT 파라미터 [12] (success) 읽기 실패: {}", e.getMessage(), e);
                     // VARCHAR로 읽어보기 시도
                     try {
-                        Object successObj = cs.getObject(11);
-                        log.info("프로시저 OUT 파라미터 [11] (success) 원본 값: {}, 타입: {}", successObj,
+                        Object successObj = cs.getObject(12);
+                        log.info("프로시저 OUT 파라미터 [12] (success) 원본 값: {}, 타입: {}", successObj,
                                 successObj != null ? successObj.getClass().getName() : "null");
                         if (successObj instanceof Boolean) {
                             success = (Boolean) successObj;
@@ -754,24 +767,24 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
                                     || "true".equalsIgnoreCase((String) successObj);
                         }
                     } catch (SQLException e2) {
-                        log.error("프로시저 OUT 파라미터 [11] (success) 대체 읽기 실패: {}", e2.getMessage());
+                        log.error("프로시저 OUT 파라미터 [12] (success) 대체 읽기 실패: {}", e2.getMessage());
                     }
                 }
 
                 try {
-                    message = cs.getString(12);
-                    log.info("프로시저 OUT 파라미터 [12] (message) 읽기: {}", message);
+                    message = cs.getString(13);
+                    log.info("프로시저 OUT 파라미터 [13] (message) 읽기: {}", message);
                 } catch (SQLException e) {
-                    log.error("프로시저 OUT 파라미터 [12] (message) 읽기 실패: {}", e.getMessage(), e);
+                    log.error("프로시저 OUT 파라미터 [13] (message) 읽기 실패: {}", e.getMessage(), e);
                     // TEXT로 읽어보기 시도
                     try {
-                        Object messageObj = cs.getObject(12);
-                        log.info("프로시저 OUT 파라미터 [12] (message) 원본 값: {}", messageObj);
+                        Object messageObj = cs.getObject(13);
+                        log.info("프로시저 OUT 파라미터 [13] (message) 원본 값: {}", messageObj);
                         if (messageObj != null) {
                             message = messageObj.toString();
                         }
                     } catch (SQLException e2) {
-                        log.error("프로시저 OUT 파라미터 [12] (message) 대체 읽기 실패: {}", e2.getMessage());
+                        log.error("프로시저 OUT 파라미터 [13] (message) 대체 읽기 실패: {}", e2.getMessage());
                     }
                 }
 
@@ -1019,7 +1032,7 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
                             fallbackMessage.append("관리자=비밀번호해시없음, ");
                         } else {
                             try {
-                                createAdminAccountDirectly(tenantId, contactEmail, tenantName,
+                                createAdminAccountDirectly(tenantId, contactEmail, emailCipher, tenantName,
                                         adminPasswordHash, approvedBy, businessType);
                                 fallbackMessage.append("관리자=OK");
                             } catch (Exception e) {
@@ -1059,7 +1072,7 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
                     if (contactEmail != null && !contactEmail.trim().isEmpty()
                             && adminPasswordHash != null && !adminPasswordHash.trim().isEmpty()) {
                         try {
-                            createAdminAccountDirectly(tenantId, contactEmail, tenantName,
+                            createAdminAccountDirectly(tenantId, contactEmail, emailCipher, tenantName,
                                     adminPasswordHash, approvedBy, businessType);
                             log.info("관리자 계정 생성 완료 (Java 직접 생성)");
                         } catch (Exception e) {
@@ -1179,11 +1192,11 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
             throw new RuntimeException(OnboardingConstants.MSG_ADMIN_DIRECTOR_ROLE_ASSIGNMENT_FAILED
                     + " (지원하지 않는 업종: " + businessType + ")");
         }
-        String email = contactEmail.toLowerCase().trim();
+        String email = contactEmail;
         Long userPk;
         try {
             userPk = jdbcTemplate.queryForObject(
-                    "SELECT id FROM users WHERE tenant_id = ? AND LOWER(TRIM(email)) = ? AND role = 'ADMIN' "
+                    "SELECT id FROM users WHERE tenant_id = ? AND email = ? AND role = 'ADMIN' "
                             + "AND (is_deleted IS NULL OR is_deleted = FALSE) LIMIT 1",
                     Long.class, tenantId, email);
         } catch (org.springframework.dao.EmptyResultDataAccessException e) {
@@ -1249,16 +1262,20 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
     /**
      * 관리자 계정을 직접 생성 (프로시저 실패 시 fallback)
      */
-    private void createAdminAccountDirectly(String tenantId, String contactEmail, String tenantName,
-            String adminPasswordHash, String approvedBy, String businessType) {
+    private void createAdminAccountDirectly(String tenantId, String contactEmail, String emailCipher,
+            String tenantName, String adminPasswordHash, String approvedBy, String businessType) {
         log.info("관리자 계정 직접 생성 시작: tenantId={}, email={}", tenantId, EmailLogMasking.maskForLog(contactEmail));
+        if (emailCipher == null || emailCipher.isBlank() || emailCipher.indexOf('@') >= 0) {
+            throw new OnboardingApprovalBlockedException(
+                    OnboardingConstants.ERROR_ONBOARDING_ADMIN_EMAIL_ENCRYPTION_UNAVAILABLE);
+        }
 
-        // 이미 존재하는지 확인
+        // 이미 존재하는지 확인. email 은 암호문이라 대소문자 변환하지 않는다.
         Integer existingCount = null;
         try {
             existingCount = jdbcTemplate.queryForObject(
                     "SELECT COUNT(*) FROM users WHERE tenant_id = ? AND email = ? AND role = 'ADMIN' AND (is_deleted IS NULL OR is_deleted = FALSE)",
-                    Integer.class, tenantId, contactEmail.toLowerCase().trim());
+                    Integer.class, tenantId, emailCipher);
         } catch (org.springframework.dao.EmptyResultDataAccessException e) {
             log.warn("관리자 계정 존재 확인 쿼리 결과 없음 (0으로 처리): tenantId={}, email={}", tenantId,
                     EmailLogMasking.maskForLog(contactEmail));
@@ -1271,44 +1288,37 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
 
         if (existingCount != null && existingCount > 0) {
             log.info("관리자 계정이 이미 존재합니다: {}", EmailLogMasking.maskForLog(contactEmail));
-            ensureAdminDirectorRoleAssignment(tenantId, businessType, contactEmail, approvedBy);
+            ensureAdminDirectorRoleAssignment(tenantId, businessType, emailCipher, approvedBy);
             return;
         }
 
-        // 사용자 ID 생성 (이메일의 로컬 파트, 전역 중복 체크)
-        String localPart = contactEmail.substring(0, contactEmail.indexOf('@'));
-        String base = localPart.replaceAll("[^a-zA-Z0-9]", "").toLowerCase();
-        if (base.isEmpty()) {
-            base = "admin";
-        }
-
+        // 이메일 로컬 파트를 user_id 로 쓰지 않는다. 같은 테넌트의 삭제 행까지 UK 에 걸린다.
+        String base = TenantAdminUserIdAllocator.allocate(tenantId);
         String userId = base;
         int suffix = 1;
 
-        // user_id는 전역적으로 UNIQUE하므로 중복 체크
-        while (true) {
+        while (suffix <= 1000) {
             Integer count = null;
             try {
                 count = jdbcTemplate.queryForObject(
-                        "SELECT COUNT(*) FROM users WHERE user_id = ? AND (is_deleted IS NULL OR is_deleted = FALSE)",
-                        Integer.class, userId);
+                        "SELECT COUNT(*) FROM users WHERE tenant_id = ? AND user_id = ?",
+                        Integer.class, tenantId, userId);
             } catch (org.springframework.dao.EmptyResultDataAccessException e) {
-                count = 0; // 결과 없음 = 사용 가능
+                count = 0;
             } catch (Exception e) {
                 log.error("user_id 중복 체크 실패: userId={}, error={}", userId, e.getMessage(), e);
-                // 예외 발생 시 기본값 사용
                 break;
             }
             if (count == null || count == 0) {
-                break; // 사용 가능한 user_id
+                break;
             }
-            userId = base + suffix;
+            userId = TenantAdminUserIdAllocator.withSuffix(base, suffix);
             suffix++;
         }
 
-        String email = contactEmail.toLowerCase().trim();
+        String email = emailCipher;
 
-        // 관리자 계정 생성
+        // 관리자 계정 생성. email 컬럼에는 공통 암호화 결과만 넣는다.
         try {
             jdbcTemplate.update("INSERT INTO users ("
                     + "    tenant_id, user_id, email, password, name, role, "
@@ -1329,7 +1339,7 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
             try {
                 finalCount = jdbcTemplate.queryForObject(
                         "SELECT COUNT(*) FROM users WHERE tenant_id = ? AND email = ? AND role = 'ADMIN' AND (is_deleted IS NULL OR is_deleted = FALSE)",
-                        Integer.class, tenantId, email);
+                        Integer.class, tenantId, emailCipher);
             } catch (org.springframework.dao.EmptyResultDataAccessException ex) {
                 finalCount = 0; // 결과 없음
             } catch (Exception ex) {
@@ -1339,13 +1349,13 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
             }
             if (finalCount != null && finalCount > 0) {
                 log.info("관리자 계정이 이미 존재합니다 (중복 키 오류 후 확인): {}", EmailLogMasking.maskForLog(email));
-                ensureAdminDirectorRoleAssignment(tenantId, businessType, contactEmail, approvedBy);
+                ensureAdminDirectorRoleAssignment(tenantId, businessType, emailCipher, approvedBy);
                 return;
             }
             throw e; // 다른 오류면 재발생
         }
 
-        ensureAdminDirectorRoleAssignment(tenantId, businessType, contactEmail, approvedBy);
+        ensureAdminDirectorRoleAssignment(tenantId, businessType, emailCipher, approvedBy);
         log.info("관리자 계정 생성 완료: email={}, tenantId={}", EmailLogMasking.maskForLog(email), tenantId);
     }
 

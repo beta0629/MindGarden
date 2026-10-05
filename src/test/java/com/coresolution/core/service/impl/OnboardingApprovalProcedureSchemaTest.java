@@ -30,6 +30,8 @@ class OnboardingApprovalProcedureSchemaTest {
         String usernameRenamed = read("db/migration/V20251208_002__rename_username_to_user_id.sql");
         String codeCopy = read("db/migration/V20260831_002__expense_income_ssot_tenant_backfill.sql");
         String adminAccount = read(PlSqlInitializer.CREATE_TENANT_ADMIN_ACCOUNT_PROCEDURE);
+        String approvalProcedure = read(PlSqlInitializer.PROCESS_ONBOARDING_APPROVAL_PROCEDURE);
+        String emailColumn = read("db/migration/V20260614_002__normalize_pii_columns_to_512.sql");
 
         assertThat(previousTenantProcedure).contains("CALL CopyDefaultTenantCodes");
         assertThat(previousTenantProcedure).contains("CALL CreateDefaultTenantUsers");
@@ -41,6 +43,24 @@ class OnboardingApprovalProcedureSchemaTest {
         assertThat(codeCopy).contains("COMMIT");
         assertThat(adminAccount).contains("user_id, tenant_id, email, password");
         assertThat(adminAccount).doesNotContain("username");
+        assertThat(PlSqlInitializer.CREATE_TENANT_ADMIN_ACCOUNT_PROCEDURE)
+                .isEqualTo("sql/procedures/create_tenant_admin_account.sql");
+        assertThat(emailColumn).contains("MODIFY COLUMN email VARCHAR(512) NOT NULL");
+        assertThat(adminAccount).contains(
+                "IN p_contact_email VARCHAR(512) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
+        assertThat(adminAccount).contains(
+                "IN p_admin_user_id VARCHAR(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
+        assertThat(adminAccount).doesNotContain("SUBSTRING_INDEX(p_contact_email");
+        assertThat(adminAccount).contains("UK_users_tenant_user_id");
+        assertThat(adminAccount).contains(
+                "tenant_id COLLATE utf8mb4_unicode_ci = p_tenant_id COLLATE utf8mb4_unicode_ci");
+        assertThat(adminAccount).doesNotContain(
+                "user_id COLLATE utf8mb4_unicode_ci = v_user_id COLLATE utf8mb4_unicode_ci\n"
+                        + "                    AND (is_deleted IS NULL OR is_deleted = FALSE)");
+        assertThat(approvalProcedure).contains(
+                "IN p_contact_email VARCHAR(512) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
+        assertThat(approvalProcedure).contains(
+                "IN p_admin_user_id VARCHAR(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
 
         String executableTenantProcedure = stripLineComments(forcedTenantProcedure);
         assertThat(PlSqlInitializer.CREATE_OR_ACTIVATE_TENANT_PROCEDURE)

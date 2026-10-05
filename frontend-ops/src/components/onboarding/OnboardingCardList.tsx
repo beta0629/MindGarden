@@ -16,7 +16,8 @@ import {
   getRequesterDisplayName,
   getRiskLabel,
   getStatusLabel,
-  isHighRisk
+  isHighRisk,
+  mapOnboardingDisplay
 } from "@/utils/onboardingUtils";
 import { formatOnboardingDate } from "@/utils/dateUtils";
 
@@ -71,6 +72,7 @@ export default function OnboardingCardList({
       ) : (
         <ul className="ops-onboarding__cards">
           {visibleRequests.map((request) => {
+            const display = mapOnboardingDisplay(request);
             const riskLabel = getRiskLabel(request.riskLevel);
             const highRisk = isHighRisk(request.riskLevel);
             return (
@@ -80,7 +82,7 @@ export default function OnboardingCardList({
                   href={`${ONBOARDING_PATHS.DETAIL}?id=${encodeURIComponent(String(request.id))}`}
                 >
                   <strong className="ops-onboarding__card-title">
-                    {request.tenantName || ONBOARDING_MESSAGES.EMPTY_VALUE}
+                    {display.tenantName || ONBOARDING_MESSAGES.EMPTY_VALUE}
                   </strong>
                   <span className="ops-onboarding__card-status">
                     {getStatusLabel(request.status)}

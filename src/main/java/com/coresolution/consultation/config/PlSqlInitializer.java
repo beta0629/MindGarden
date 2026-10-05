@@ -52,9 +52,12 @@ public class PlSqlInitializer {
     public static final String PROCESS_ONBOARDING_APPROVAL_PROCEDURE =
             "sql/procedures/process_onboarding_approval.sql";
 
-    /** 개발 서버가 기동 때마다 덮어쓰는 CreateTenantAdminAccount. user_id 를 쓴다. */
+    /**
+     * 기동 때마다 덮어쓰는 CreateTenantAdminAccount.
+     * 적용된 V20251223_001 은 평문 이메일·VARCHAR(100) 이라 런타임 소스로 쓰지 않는다.
+     */
     public static final String CREATE_TENANT_ADMIN_ACCOUNT_PROCEDURE =
-            "db/migration/V20251223_001__fix_create_tenant_admin_account_user_id.sql";
+            "sql/procedures/create_tenant_admin_account.sql";
 
     @Autowired
     private JdbcTemplate jdbcTemplate;
@@ -645,7 +648,7 @@ public class PlSqlInitializer {
             }
 
             // 프로시저 파라미터 검증 (필수)
-            if (!verifyProcedureParameters("ProcessOnboardingApproval", 12)) {
+            if (!verifyProcedureParameters("ProcessOnboardingApproval", 13)) {
                 String errorMsg = "❌ ProcessOnboardingApproval 프로시저 파라미터가 올바르지 않습니다. 프로시저 생성 실패로 애플리케이션 시작 불가";
                 log.error(errorMsg);
                 throw new IllegalStateException(errorMsg);
@@ -831,8 +834,8 @@ public class PlSqlInitializer {
                 throw new IllegalStateException(errorMsg);
             }
 
-            // 프로시저 파라미터 검증 (필수) - CreateTenantAdminAccount는 7개 파라미터
-            if (!verifyProcedureParameters("CreateTenantAdminAccount", 7)) {
+            // IN 6 (이메일 VARCHAR(512), user_id VARCHAR(50)) + OUT 2
+            if (!verifyProcedureParameters("CreateTenantAdminAccount", 8)) {
                 String errorMsg = "❌ CreateTenantAdminAccount 프로시저 파라미터가 올바르지 않습니다. 프로시저 생성 실패로 애플리케이션 시작 불가";
                 log.error(errorMsg);
                 throw new IllegalStateException(errorMsg);

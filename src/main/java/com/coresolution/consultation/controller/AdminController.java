@@ -2415,7 +2415,7 @@ public class AdminController extends BaseApiController {
     /**
      * 가계약(PENDING_PAYMENT) 전용 패키지·가격 수정 — 동일 매핑 write SSOT.
      *
-     * <p>일반 {@code PUT /mappings/{id}} 는 remaining=total-used·ERP UpdateMappingInfo 를 타므로
+     * <p>일반 {@code PUT /mappings/{id}} 는 remaining=total-used·입금 확인 매칭 금액 조정 전표를 타므로
      * PENDING 에 재사용하지 않는다. 본 엔드포인트는 패키지 필드만 갱신하며 스케줄/ERP/FT 를 건드리지 않는다.
      * 연결된 스케줄 start_time 과거 여부와 무관(ScheduleSlotGuard 미호출).</p>
      */

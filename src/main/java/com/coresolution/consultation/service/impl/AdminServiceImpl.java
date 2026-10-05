@@ -38,7 +38,6 @@ import com.coresolution.consultation.constant.userprofile.UserProfileServiceUser
 import com.coresolution.consultation.dto.AdminListPageResult;
 import com.coresolution.consultation.dto.ClientRegistrationRequest;
 import com.coresolution.consultation.dto.ConsultantClientMappingCreateRequest;
-import com.coresolution.consultation.dto.MappingPackageErpSyncPlan;
 import com.coresolution.consultation.dto.ConsultantClientMappingResponse;
 import com.coresolution.consultation.dto.ConsultantRegistrationRequest;
 import com.coresolution.consultation.dto.ConsultationsByDayOfWeekResponse;
@@ -116,6 +115,7 @@ import com.coresolution.consultation.service.RefundAutoCancelNotificationService
 import com.coresolution.consultation.service.ScheduleService;
 import com.coresolution.consultation.service.SalaryLateSessionAutoSyncService;
 import com.coresolution.consultation.service.SalaryTaxRateLookupService;
+import com.coresolution.consultation.service.MappingPackageLedgerService;
 import com.coresolution.consultation.service.StoredProcedureService;
 import com.coresolution.consultation.constant.LifecycleState;
 import com.coresolution.consultation.dto.lifecycle.Actor;
@@ -248,6 +248,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
     private final FinancialTransactionRepository financialTransactionRepository;
     private final AmountManagementService amountManagementService;
     private final StoredProcedureService storedProcedureService;
+    private final MappingPackageLedgerService mappingPackageLedgerService;
     private final UserRoleAssignmentRepository userRoleAssignmentRepository;
     private final TenantRoleRepository tenantRoleRepository;
     private final UserRoleQueryService userRoleQueryService;
@@ -7052,66 +7053,69 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
     }
 
     /**
-     * 입금 확인된(INCOME 이 있는) 매칭의 금액·회기 변경이면 UpdateMappingInfo 인자를 돌려준다. 입금 전이거나 금액·회기가
-     * 그대로면 비어 있다. 상태값 오류는 여기서 거부해 동기화만 되고 수정은 실패하는 일을 막는다.
+     * 매칭 수정 — 매칭 변경과 재무 조정 전표를 한 트랜잭션에서 처리한다. 둘 중 하나라도 실패하면 둘 다 롤백된다.
+     *
+     * <p>입금 확인된(APPROVED·DEP) 매칭의 금액 변경만 {@link MappingPackageLedgerService} 가 차액 조정 INCOME 을
+     * 남긴다(감액은 음수, 기존 전표는 그대로). 감액은 새 금액이 (결제액 − 누적 환불액) 이상이어야 한다.
+     * 회기만 바뀌면 금액 변동이 없으므로 전표를 쓰지 않는다. UpdateMappingInfo 는 부르지 않는다 — 같은 매칭 필드를
+     * 이 JPA 수정이 같은 트랜잭션·영속성 컨텍스트에서 고친다.</p>
      *
      * @param id 매칭 ID
      * @param dto 수정 요청
      * @param updatedBy 수정자
-     * @return 동기화 인자 (불필요하면 empty)
-     * @throws MappingErpSyncFailedException 동기화 경로 없는 매칭(쇼핑·타기관 연계·추가 패키지)의 금액·회기 변경
+     * @return 수정된 매칭
+     * @throws MappingErpSyncFailedException 조정 전표 기록 실패(롤백), 또는 동기화 경로 없는 매칭(쇼핑·타기관 연계·추가
+     *         패키지)의 금액·회기 변경
+     * @throws com.coresolution.consultation.exception.MappingAmountBelowRefundFloorException 감액 하한 미만
      */
     @Override
-    @Transactional(readOnly = true)
-    public Optional<MappingPackageErpSyncPlan> planMappingPackageErpSync(Long id,
-            ConsultantClientMappingCreateRequest dto, String updatedBy) {
+    @Transactional
+    public ConsultantClientMappingResponse updateMapping(Long id, ConsultantClientMappingCreateRequest dto, String updatedBy) {
         ConsultantClientMapping mapping = mappingRepository.findByTenantIdAndId(getTenantId(), id)
                 .orElseThrow(() -> new RuntimeException(AdminServiceUserFacingMessages.MSG_MAPPING_NOT_FOUND));
-        if (dto.getStatus() != null) {
-            ConsultantClientMapping.MappingStatus.valueOf(dto.getStatus());
-        }
-        if (dto.getPaymentStatus() != null) {
-            ConsultantClientMapping.PaymentStatus.valueOf(dto.getPaymentStatus());
-        }
-        boolean priceChanged = dto.getPackagePrice() != null
-                && !dto.getPackagePrice().equals(mapping.getPackagePrice());
+
+        Long oldPackagePrice = mapping.getPackagePrice();
+        long baseVersion = mapping.getVersion() != null ? mapping.getVersion() : 0L;
+        boolean priceChanged = dto.getPackagePrice() != null && !dto.getPackagePrice().equals(oldPackagePrice);
         boolean sessionsChanged = dto.getTotalSessions() != null
                 && !dto.getTotalSessions().equals(mapping.getTotalSessions());
         ConsultantClientMapping.PaymentStatus paymentStatus = mapping.getPaymentStatus();
         boolean depositIncomePosted = paymentStatus == ConsultantClientMapping.PaymentStatus.APPROVED
                 || paymentStatus == ConsultantClientMapping.PaymentStatus.DEP;
-        if (!depositIncomePosted || (!priceChanged && !sessionsChanged)) {
-            return Optional.empty();
-        }
-        if (isShopOrderLinkedMapping(mapping) || isInstitutionLinkPaymentTiming(mapping)
-                || isAdditionalPackageMappingNotes(mapping.getNotes())) {
+        boolean ledgerAdjustment = depositIncomePosted && priceChanged;
+
+        if (depositIncomePosted && (priceChanged || sessionsChanged)
+                && (isShopOrderLinkedMapping(mapping) || isInstitutionLinkPaymentTiming(mapping)
+                        || isAdditionalPackageMappingNotes(mapping.getNotes()))) {
             throw MappingErpSyncFailedException.unsupported(id);
         }
-        String name = dto.getPackageName() != null ? dto.getPackageName() : mapping.getPackageName();
-        Long price = dto.getPackagePrice() != null ? dto.getPackagePrice() : mapping.getPackagePrice();
-        Integer total = dto.getTotalSessions() != null ? dto.getTotalSessions() : mapping.getTotalSessions();
-        String actor = updatedBy != null && !updatedBy.isEmpty()
-                ? updatedBy
-                : AdminServiceUserFacingMessages.ERP_MAPPING_PROCEDURE_ACTOR_FALLBACK;
-        return Optional.of(new MappingPackageErpSyncPlan(id, name, price != null ? price.doubleValue() : 0.0,
-                total != null ? total : 0, actor));
+        if (ledgerAdjustment && oldPackagePrice == null) {
+            throw MappingErpSyncFailedException.unsupported(id);
+        }
+        if (ledgerAdjustment && dto.getPackagePrice() < oldPackagePrice) {
+            mappingPackageLedgerService.assertDecreaseAllowed(mapping, dto.getPackagePrice());
+        }
+
+        ConsultantClientMappingResponse response = applyMappingUpdate(mapping, dto, updatedBy);
+
+        if (ledgerAdjustment) {
+            String actor = updatedBy != null && !updatedBy.isEmpty()
+                    ? updatedBy
+                    : AdminServiceUserFacingMessages.ERP_MAPPING_PROCEDURE_ACTOR_FALLBACK;
+            try {
+                mappingPackageLedgerService.recordPackagePriceAdjustment(mapping, oldPackagePrice,
+                        dto.getPackagePrice(), baseVersion, actor);
+            } catch (RuntimeException e) {
+                log.error("❌ 패키지 금액 조정 전표 기록 실패 — 매칭 수정 롤백: mappingId={}", id, e);
+                throw MappingErpSyncFailedException.of(id, e);
+            }
+        }
+        return response;
     }
 
-    /**
-     * 매칭 수정(JPA). ERP 동기화(UpdateMappingInfo)는 호출하지 않는다 — {@code MappingUpdateService} 가
-     * 트랜잭션 밖에서 먼저 실행한다. 프로시저는 자체 COMMIT 하고 같은 행·version 을 고치므로 이 트랜잭션 안에서
-     * 부르면 행 잠금 대기·낙관적 잠금 충돌이 난다.
-     */
-    @Override
-    @Transactional
-    public ConsultantClientMappingResponse updateMapping(Long id, ConsultantClientMappingCreateRequest dto, String updatedBy) {
-        return applyMappingUpdate(id, dto, updatedBy);
-    }
-
-    private ConsultantClientMappingResponse applyMappingUpdate(Long id, ConsultantClientMappingCreateRequest dto,
-            String updatedBy) {
-        ConsultantClientMapping mapping = mappingRepository.findByTenantIdAndId(getTenantId(), id)
-                .orElseThrow(() -> new RuntimeException(AdminServiceUserFacingMessages.MSG_MAPPING_NOT_FOUND));
+    private ConsultantClientMappingResponse applyMappingUpdate(ConsultantClientMapping mapping,
+            ConsultantClientMappingCreateRequest dto, String updatedBy) {
+        Long id = mapping.getId();
         
         log.info("🔄 매핑 정보 수정: id={}, packageName={}, packagePrice={}, totalSessions={}, consultantId={}", 
                 id, dto.getPackageName(), dto.getPackagePrice(), dto.getTotalSessions(), dto.getConsultantId());

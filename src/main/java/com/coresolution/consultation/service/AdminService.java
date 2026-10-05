@@ -237,20 +237,15 @@ public interface AdminService {
     Client updateClient(Long id, ClientRegistrationRequest request);
 
     /**
-     * 매칭 정보 수정 (JPA 만 — ERP 동기화는 {@link MappingUpdateService} 가 트랜잭션 밖에서 먼저 실행)
-     */
-    ConsultantClientMappingResponse updateMapping(Long id, ConsultantClientMappingCreateRequest request, String updatedBy);
-
-    /**
-     * 매칭 수정 전 ERP 동기화(UpdateMappingInfo) 필요 여부·인자 (읽기 트랜잭션).
+     * 매칭 정보 수정 — 매칭 변경과 (입금 확인된 매칭의 금액 변경이면) 차액 조정 전표를 한 트랜잭션에서 처리한다.
+     * 외부 알림은 {@link MappingUpdateService} 가 커밋 뒤로 미룬다.
      *
      * @param id 매칭 ID
      * @param request 수정 요청
      * @param updatedBy 수정자
-     * @return 동기화 인자, 불필요하면 empty
+     * @return 수정된 매칭
      */
-    java.util.Optional<com.coresolution.consultation.dto.MappingPackageErpSyncPlan> planMappingPackageErpSync(
-            Long id, ConsultantClientMappingCreateRequest request, String updatedBy);
+    ConsultantClientMappingResponse updateMapping(Long id, ConsultantClientMappingCreateRequest request, String updatedBy);
 
     /**
      * 가계약(PENDING_PAYMENT) 매칭의 패키지·가격·총 회기만 동일 매핑에 갱신한다.

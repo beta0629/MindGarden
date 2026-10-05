@@ -21,9 +21,7 @@ jest.mock('../../../../api/admin/manualNotificationApi', () => {
     searchRecipients: jest.fn().mockResolvedValue([]),
     fetchCommonCodeTemplates: jest.fn().mockResolvedValue([]),
     fetchLiveTemplates: jest.fn().mockResolvedValue([]),
-    sendSmsBatch: jest.fn(),
-    sendAlimtalkBatch: jest.fn(),
-    sendPushBatch: jest.fn()
+    fetchManualNotificationConfig: jest.fn().mockResolvedValue({ maxRecipients: 500 })
   };
 });
 

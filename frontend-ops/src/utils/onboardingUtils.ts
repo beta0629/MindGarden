@@ -16,6 +16,7 @@ import {
   type OnboardingListFilter,
   type OnboardingRiskLevel
 } from "@/constants/onboarding";
+import { KR_PUBLIC_DATA_COPY } from "@/content/krPublicData";
 import { OnboardingRequest } from "@/types/onboarding";
 import { OnboardingStatus } from "@/types/shared";
 
@@ -222,6 +223,69 @@ export function buildOnboardingFacts(request: OnboardingRequest): OnboardingFact
       label: ONBOARDING_FACT_LABELS.RISK,
       value: getRiskLabel(request.riskLevel),
       emphasize: isHighRisk(request.riskLevel)
+    },
+    ...buildMerchantLegalFacts(checklist)
+  ];
+}
+
+function merchantLegalOf(checklist: Record<string, unknown>): Record<string, unknown> {
+  const raw = checklist.merchantLegal;
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
+    return {};
+  }
+  return raw as Record<string, unknown>;
+}
+
+export function buildMerchantLegalFacts(checklist: Record<string, unknown>): OnboardingFact[] {
+  const legal = merchantLegalOf(checklist);
+  const verificationRaw = legal.businessVerification;
+  const verification =
+    verificationRaw && typeof verificationRaw === "object" && !Array.isArray(verificationRaw)
+      ? (verificationRaw as Record<string, unknown>)
+      : {};
+  const empty = ONBOARDING_MESSAGES.EMPTY_VALUE;
+  return [
+    {
+      id: "businessRegistrationNumber",
+      label: KR_PUBLIC_DATA_COPY.BIZ_NUMBER,
+      value: firstText(legal.businessRegistrationNumber) || empty,
+      emphasize: false
+    },
+    {
+      id: "representativeName",
+      label: KR_PUBLIC_DATA_COPY.REPRESENTATIVE,
+      value: firstText(legal.representativeName) || empty,
+      emphasize: false
+    },
+    {
+      id: "openingDate",
+      label: KR_PUBLIC_DATA_COPY.OPENING_DATE,
+      value: firstText(legal.openingDate) || empty,
+      emphasize: false
+    },
+    {
+      id: "verificationMatch",
+      label: KR_PUBLIC_DATA_COPY.MATCH,
+      value: firstText(verification.overallStatus) || KR_PUBLIC_DATA_COPY.UNCONFIRMED,
+      emphasize: false
+    },
+    {
+      id: "verificationStatus",
+      label: KR_PUBLIC_DATA_COPY.STATUS,
+      value: firstText(verification.businessStatus) || KR_PUBLIC_DATA_COPY.UNCONFIRMED,
+      emphasize: false
+    },
+    {
+      id: "verificationTax",
+      label: KR_PUBLIC_DATA_COPY.TAX,
+      value: firstText(verification.taxType) || KR_PUBLIC_DATA_COPY.UNCONFIRMED,
+      emphasize: false
+    },
+    {
+      id: "verificationCheckedAt",
+      label: KR_PUBLIC_DATA_COPY.CHECKED_AT,
+      value: firstText(verification.checkedAt) || KR_PUBLIC_DATA_COPY.UNCONFIRMED,
+      emphasize: false
     }
   ];
 }

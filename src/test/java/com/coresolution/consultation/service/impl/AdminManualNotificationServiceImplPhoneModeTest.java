@@ -15,6 +15,7 @@ import static org.mockito.Mockito.when;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import com.coresolution.consultation.config.ManualNotificationProperties;
 import com.coresolution.consultation.dto.BulkAlimtalkManualRequest;
 import com.coresolution.consultation.dto.BulkNotificationResponse;
 import com.coresolution.consultation.dto.BulkPushManualRequest;
@@ -35,6 +36,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 /**
@@ -80,6 +82,8 @@ class AdminManualNotificationServiceImplPhoneModeTest {
     private PersonalDataEncryptionUtil encryptionUtil;
     @Mock
     private MobilePushDispatchService mobilePushDispatchService;
+    @Spy
+    private ManualNotificationProperties manualNotificationProperties = new ManualNotificationProperties();
 
     @InjectMocks
     private AdminManualNotificationServiceImpl service;
@@ -267,7 +271,8 @@ class AdminManualNotificationServiceImplPhoneModeTest {
     @Test
     @DisplayName("SMS — userIds 30 + phoneNumbers 21 = 51 합산 → RECIPIENTS_LIMIT_EXCEEDED 배치 차단")
     void sendBulkSms_overLimit_combined51_returnsLimitExceeded() {
-        // 50명 상한은 합산. userIds 30 + phoneNumbers 21 = 51 → 차단.
+        // 상한(notification.manual.max-recipients)은 합산. 상한 50 설정에서 userIds 30 + phoneNumbers 21 = 51 → 차단.
+        manualNotificationProperties.setMaxRecipients(50);
         List<Long> userIds = new java.util.ArrayList<>();
         for (long i = 1L; i <= 30L; i++) {
             userIds.add(i);
@@ -288,6 +293,7 @@ class AdminManualNotificationServiceImplPhoneModeTest {
         assertThat(response.getBatchErrorCode())
             .isEqualTo(AdminManualNotificationServiceImpl.ERROR_CODE_RECIPIENTS_LIMIT_EXCEEDED);
         assertThat(response.getTotalCount()).isEqualTo(51);
+        assertThat(response.getBatchErrorMessage()).contains("최대 50명");
         assertThat(response.getResults()).isEqualTo(Collections.emptyList());
 
         verify(rateLimiter, never()).tryAcquire(anyString(), anyLong());

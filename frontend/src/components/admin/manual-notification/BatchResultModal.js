@@ -39,14 +39,18 @@ const SKIPPED_ERROR_CODES = new Set([
 ]);
 
 /**
- * 결과 행을 SENT / SKIPPED / FAILED 로 분류. SMS/알림톡은 SKIPPED 가 없으므로 SENT/FAILED 로 양분.
+ * 결과 행을 SENT / SKIPPED / FAILED 로 분류. 발송 작업 기록은 {@code status} 를 그대로 쓰고,
+ * 즉시 발송 응답은 success·errorCode 로 판정한다.
  *
- * @param {object} row BulkRecipientResult
+ * @param {object} row BulkRecipientResult 또는 발송 작업 수신자 기록
  * @returns {'SENT'|'SKIPPED'|'FAILED'}
  */
 const classifyRow = (row) => {
   if (!row) {
     return 'FAILED';
+  }
+  if (row.status === 'SKIPPED') {
+    return 'SKIPPED';
   }
   if (row.success !== false) {
     return 'SENT';

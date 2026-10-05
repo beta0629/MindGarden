@@ -20,6 +20,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.transaction.TestTransaction;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
@@ -82,7 +83,7 @@ class MvpOnboardingFlowIntegrationTest {
             testTenantName,
             testEmail,
             RiskLevel.LOW,
-            String.format("{\"adminPassword\": \"%s\"}", testPassword),
+            String.format("{\"adminPassword\": \"%s\", \"contactEmail\": \"%s\"}", testPassword, testEmail),
             "CONSULTATION"
         );
         
@@ -177,7 +178,7 @@ class MvpOnboardingFlowIntegrationTest {
             academyTenantName,
             academyEmail,
             RiskLevel.LOW,
-            String.format("{\"adminPassword\": \"%s\"}", academyPassword),
+            String.format("{\"adminPassword\": \"%s\", \"contactEmail\": \"%s\"}", academyPassword, academyEmail),
             "ACADEMY"
         );
         
@@ -222,7 +223,7 @@ class MvpOnboardingFlowIntegrationTest {
             testTenantName,
             testEmail,
             RiskLevel.LOW,
-            String.format("{\"adminPassword\": \"%s\"}", testPassword),
+            String.format("{\"adminPassword\": \"%s\", \"contactEmail\": \"%s\"}", testPassword, testEmail),
             "CONSULTATION"
         );
         
@@ -254,6 +255,13 @@ class MvpOnboardingFlowIntegrationTest {
      * 승인이 막히면 이후 프로비저닝 검증은 건너뛴다. 막힌 요청은 승인으로 남지 않는다.
      */
     private OnboardingRequest decideApprovedOrAbort(Long requestId, String note) {
+        // decide() 는 테스트 트랜잭션을 멈추고 새 트랜잭션에서 요청을 다시 읽는다.
+        // 생성 INSERT 가 커밋되기 전에는 그 조회가 요청을 찾지 못한다.
+        if (TestTransaction.isActive()) {
+            TestTransaction.flagForCommit();
+            TestTransaction.end();
+            TestTransaction.start();
+        }
         try {
             OnboardingRequest decided = onboardingService.decide(requestId, OnboardingStatus.APPROVED,
                     "system-admin", note);

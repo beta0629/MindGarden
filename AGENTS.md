@@ -51,7 +51,7 @@
 
 ## 8. 완료 전 실행할 체크
 - 검증 규칙 `.cursor/rules/guardrail-preflight.mdc` 순서대로. 상세 명령: `.cursor/skills/core-solution-self-verify/SKILL.md`
-- 검사 스크립트: `mvn -o -q test -Dtest='AdminApiGuardCoverageTest,ProcedureSignatureGuardrailTest,ApplicationYmlSecretDefaultsTest,AdminApiRoleMatrixGuardrailMvcTest' -Dsurefire.failIfNoSpecifiedTests=false` · `scripts/ci/guardrail-gitleaks-diff.sh origin/release/dev` · `node scripts/verification/check-client-admin-own-id.js --changed <목록>` · `node scripts/verification/check-external-call-connection.js --changed <목록>` · `node scripts/design-system/css-tools/check-hardcoding-enhanced.js` · `node scripts/verification/check-fe-admin-list-paging.js` (FE 관리자 목록 전체 조회·page/size 누락, 래칫 베이스라인)
+- 검사 스크립트: `mvn -o -q test -Dtest='AdminApiGuardCoverageTest,ProcedureSignatureGuardrailTest,ApplicationYmlSecretDefaultsTest,AdminApiRoleMatrixGuardrailMvcTest' -Dsurefire.failIfNoSpecifiedTests=false` · `scripts/ci/guardrail-gitleaks-diff.sh origin/release/dev` · `node scripts/verification/check-client-admin-own-id.js --changed <목록>` · `node scripts/verification/check-external-call-connection.js --changed <목록>` · `node scripts/design-system/css-tools/check-hardcoding-enhanced.js` · `node scripts/verification/check-fe-admin-list-paging.js` (FE 관리자 목록 전체 조회·page/size 누락, 래칫 베이스라인) · `node scripts/verification/check-recipient-limit-literals.js` (발송 수신자 상한 숫자 리터럴, 허용 목록 래칫)
 - BE 테스트는 CI에서 `-DskipTests` 라 로컬에서 직접 실행한다. 완료 시 stop 훅(`.cursor/hooks/guardrail-stop.sh`)이 변경 영역의 가드레일·관련 테스트를 자동 실행한다.
 
 ## 9. 어디를 보나 (필요할 때만)

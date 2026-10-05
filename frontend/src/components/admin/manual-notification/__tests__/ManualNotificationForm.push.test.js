@@ -1,15 +1,14 @@
 /**
- * 어드민 수동 발송 폼 — 푸시 채널(2026-05-25) 단위 테스트.
+ * 어드민 수동 발송 폼 — 푸시 채널 단위 테스트.
  *
  * - 채널 선택 탭(TabChipRow)에 "푸시 알림" 옵션이 노출되는지
  * - 푸시 선택 시 제목·본문 input/textarea 가 렌더링되는지
- * - 5명 이하는 즉시 발송 → `sendPushBatch` 호출 + 결과 모달 노출
- * - SKIPPED(PUSH_NO_TOKEN) 행이 결과 모달 스킵 상세 섹션에 표기되는지
+ * - 대상 확인 → 확인 모달 「○명에게 발송」 → 발송 작업 생성(payload 검증) → 종료 시 결과 모달
+ * - SKIPPED(PUSH_NO_TOKEN) 기록이 결과 모달 스킵 상세 섹션에 표기되는지
  *
  * @author MindGarden
  * @since 2026-05-25
  */
-
 import React from 'react';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 
@@ -19,7 +18,7 @@ jest.mock('../../../../i18n', () => ({
   default: { t: (key) => key }
 }));
 
-// 1. api 모듈을 통째로 mock — sendPushBatch / sendSmsBatch / sendAlimtalkBatch 모두 jest.fn 으로.
+// 1. api 모듈 mock — 발송 작업(preview/create/fetch) 은 jest.fn.
 jest.mock('../../../../api/admin/manualNotificationApi', () => {
   const actual = jest.requireActual('../../../../api/admin/manualNotificationApi');
   return {
@@ -28,14 +27,17 @@ jest.mock('../../../../api/admin/manualNotificationApi', () => {
     searchRecipients: jest.fn().mockResolvedValue([]),
     fetchCommonCodeTemplates: jest.fn().mockResolvedValue([]),
     fetchLiveTemplates: jest.fn().mockResolvedValue([]),
-    sendSmsBatch: jest.fn(),
-    sendAlimtalkBatch: jest.fn(),
-    sendPushBatch: jest.fn()
+    fetchManualNotificationConfig: jest.fn().mockResolvedValue({ maxRecipients: 500, previewSize: 5 }),
+    previewManualNotificationJob: jest.fn(),
+    createManualNotificationJob: jest.fn(),
+    fetchManualNotificationJob: jest.fn()
   };
 });
 
 import {
-  sendPushBatch,
+  previewManualNotificationJob,
+  createManualNotificationJob,
+  fetchManualNotificationJob,
   MANUAL_NOTIFICATION_ERROR_CODES
 } from '../../../../api/admin/manualNotificationApi';
 
@@ -109,29 +111,12 @@ jest.mock('../RecipientPicker', () => ({
 }));
 
 // 5. BatchResultModal — 결과 노출 검증을 위해 실제 구현 사용. SKIPPED 분류는 실제 코드 검증 대상.
-// 실제 ko 문구로 키를 풀어 라벨·placeholder 기반 쿼리가 운영 화면과 같게 동작하도록 한다.
+// 실제 ko(admin) 문구로 키를 풀어 라벨·placeholder 기반 쿼리가 운영 화면과 같게 동작하도록 한다.
 jest.mock('react-i18next', () => {
-  const koManualNotification = jest.requireActual('../../../../locales/ko/manualNotification.json');
-  const lookup = (key) => {
-    const parts = String(key).replace(/^manualNotification\./, '').split('.');
-    const value = parts.reduce((node, part) => (node && typeof node === 'object' ? node[part] : undefined), koManualNotification);
-    return typeof value === 'string' ? value : undefined;
-  };
+  const { translateKo } = jest.requireActual('../../../../testUtils/manualNotificationKoTranslate');
   return {
     __esModule: true,
-    useTranslation: () => ({
-      t: (key, defOrOpts, opts) => {
-        const hasDefault = typeof defOrOpts === 'string';
-        const variables = hasDefault ? (opts || {}) : (defOrOpts || {});
-        const fallback = lookup(key) || (hasDefault
-          ? defOrOpts
-          : (variables.defaultValue || key));
-        return Object.entries(variables).reduce(
-          (acc, [name, value]) => acc.replace(new RegExp(`{{${name}}}`, 'g'), String(value)),
-          fallback
-        );
-      }
-    })
+    useTranslation: () => ({ t: translateKo })
   };
 });
 
@@ -166,90 +151,83 @@ describe('ManualNotificationForm — 푸시 채널', () => {
     expect(document.getElementById('mg-manual-notif-sms-content')).not.toBeInTheDocument();
   });
 
-  it('5명 이하 + 모든 필수 필드 입력 시 즉시 sendPushBatch 호출 + 결과 모달 노출', async() => {
-    sendPushBatch.mockResolvedValueOnce({
-      batchId: 'batch-1',
-      channel: 'PUSH',
-      startedAt: '2026-05-25T22:00:00',
-      totalCount: 1,
-      successCount: 1,
-      failureCount: 0,
-      results: [
-        {
-          userId: 101,
-          name: '홍길동',
-          phoneMasked: '[push]',
-          success: true,
-          errorCode: null,
-          errorMessage: null,
-          solapiGroupId: null,
-          solapiMessageId: 'rcpt-101',
-          logId: 8001
-        }
-      ]
-    });
-
+  const fillPushAndSubmit = async(title, body) => {
     setup();
     selectPushChannel();
     fireEvent.click(screen.getByTestId('add-recipient'));
-
-    fireEvent.change(document.getElementById('mg-manual-notif-push-title'), {
-      target: { value: '운영 점검 안내' }
-    });
-    fireEvent.change(document.getElementById('mg-manual-notif-push-body'), {
-      target: { value: '내일 새벽 2시 점검 예정입니다.' }
-    });
+    fireEvent.change(document.getElementById('mg-manual-notif-push-title'), { target: { value: title } });
+    fireEvent.change(document.getElementById('mg-manual-notif-push-body'), { target: { value: body } });
     fillReason();
+    fireEvent.click(screen.getByText('발송 대상 확인'));
+    const confirmDialog = await screen.findByRole('dialog', { name: '발송 확인' });
+    fireEvent.click(within(confirmDialog).getByText('1명에게 발송'));
+  };
 
-    fireEvent.click(screen.getByText('발송하기'));
+  const mockJobLifecycle = (record) => {
+    previewManualNotificationJob.mockResolvedValueOnce({
+      finalCount: 1,
+      excludedCount: 0,
+      ineligibleCount: 0,
+      ineligibleReasons: {},
+      maxRecipients: 500,
+      previewRecipients: [{ userId: 101, nameMasked: '홍*동', phoneMasked: '[push]' }],
+      messagePreview: { title: '운영 점검 안내', body: '본문' },
+      snapshotToken: 'snap-1'
+    });
+    createManualNotificationJob.mockResolvedValueOnce({ jobId: 'job-1', status: 'PENDING', totalCount: 1 });
+    const sent = record.status === 'SENT' ? 1 : 0;
+    const terminal = {
+      jobId: 'job-1',
+      channel: 'PUSH',
+      status: 'COMPLETED',
+      totalCount: 1,
+      sentCount: sent,
+      failedCount: 0,
+      skippedCount: 1 - sent,
+      remainingCount: 0
+    };
+    fetchManualNotificationJob
+      .mockResolvedValueOnce(terminal)
+      .mockResolvedValueOnce({ ...terminal, records: [record] });
+  };
 
-    await waitFor(() => expect(sendPushBatch).toHaveBeenCalledTimes(1));
+  it('대상 확인 → 「1명에게 발송」 → 발송 작업 생성 → 종료 시 결과 모달 노출', async() => {
+    mockJobLifecycle({
+      seq: 0, userId: 101, nameMasked: '홍*동', phoneMasked: '[push]', status: 'SENT', providerResultCode: 'OK'
+    });
 
-    const payload = sendPushBatch.mock.calls[0][0];
+    await fillPushAndSubmit('운영 점검 안내', '내일 새벽 2시 점검 예정입니다.');
+
+    await waitFor(() => expect(createManualNotificationJob).toHaveBeenCalledTimes(1));
+    const previewPayload = previewManualNotificationJob.mock.calls[0][0];
+    const payload = createManualNotificationJob.mock.calls[0][0];
+    expect(payload.channel).toBe('PUSH');
+    expect(payload.recipientMode).toBe('SELECTED');
     expect(payload.userIds).toEqual([101]);
+    expect(payload.phoneNumbers).toBeUndefined();
     expect(payload.title).toBe('운영 점검 안내');
     expect(payload.body).toBe('내일 새벽 2시 점검 예정입니다.');
     expect(payload.reason).toContain('운영팀 결정');
+    expect(payload.snapshotToken).toBe('snap-1');
+    expect(payload.idempotencyKey).toEqual(expect.any(String));
+    expect({ ...payload, snapshotToken: undefined, idempotencyKey: undefined })
+      .toEqual({ ...previewPayload, snapshotToken: undefined, idempotencyKey: undefined });
 
-    // 결과 모달이 노출되어야 한다(UnifiedModal mock 의 dialog 노출).
-    await waitFor(() =>
-      expect(screen.getAllByRole('dialog').some((d) => d.getAttribute('aria-label') === '발송 결과'))
-        .toBe(true)
-    );
+    await screen.findByRole('dialog', { name: '발송 결과' });
   });
 
-  it('SKIPPED(PUSH_NO_TOKEN) 결과는 결과 모달 "스킵 상세" 섹션에 errorCode/사유와 함께 표기된다', async() => {
-    sendPushBatch.mockResolvedValueOnce({
-      batchId: 'batch-2',
-      channel: 'PUSH',
-      startedAt: '2026-05-25T22:05:00',
-      totalCount: 1,
-      successCount: 0,
-      failureCount: 1,
-      results: [
-        {
-          userId: 101,
-          name: '홍길동',
-          phoneMasked: '[push]',
-          success: false,
-          errorCode: MANUAL_NOTIFICATION_ERROR_CODES.PUSH_NO_TOKEN,
-          errorMessage: '푸시 토큰이 없는 사용자',
-          solapiGroupId: null,
-          solapiMessageId: null,
-          logId: 8002
-        }
-      ]
+  it('SKIPPED(PUSH_NO_TOKEN) 기록은 결과 모달 "스킵 상세" 섹션에 errorCode 와 함께 표기된다', async() => {
+    mockJobLifecycle({
+      seq: 0,
+      userId: 101,
+      nameMasked: '홍*동',
+      phoneMasked: '[push]',
+      status: 'SKIPPED',
+      errorCode: MANUAL_NOTIFICATION_ERROR_CODES.PUSH_NO_TOKEN,
+      errorMessage: '푸시 토큰이 없는 사용자'
     });
 
-    setup();
-    selectPushChannel();
-    fireEvent.click(screen.getByTestId('add-recipient'));
-    fireEvent.change(document.getElementById('mg-manual-notif-push-title'), { target: { value: '공지' } });
-    fireEvent.change(document.getElementById('mg-manual-notif-push-body'), { target: { value: '본문' } });
-    fillReason();
-    fireEvent.click(screen.getByText('발송하기'));
-
-    await waitFor(() => expect(sendPushBatch).toHaveBeenCalledTimes(1));
+    await fillPushAndSubmit('공지', '본문');
 
     const resultDialog = await screen.findByRole('dialog', { name: '발송 결과' });
     expect(within(resultDialog).getByText('스킵 상세')).toBeInTheDocument();

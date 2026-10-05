@@ -143,3 +143,10 @@ ops:
     # 2026-06-12 (PR-8/9 role SSOT): HQ_ADMIN → ADMIN (4종 SSOT 정착).
     # 운영 application.yml 기본값은 별도 PR 에서 ENV 주입으로 정리.
     role: "ADMIN"
+
+# 수동 발송 작업 — 테스트는 워커를 직접 호출한다(백그라운드 실행·복구 스케줄러 끔).
+notification:
+  manual:
+    job:
+      auto-launch: false
+      recovery-enabled: false

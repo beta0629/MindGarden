@@ -24,7 +24,8 @@ const EXTERNAL = [
   /\bsendAlimTalk\s*\(/,
   /\bdispatchAlimtalk\s*\(/,
   /\bdispatchSms\s*\(/,
-  /\bkakaoAlimTalkService\s*\.\s*[A-Za-z_][\w]*\s*\(/
+  /\bkakaoAlimTalkService\s*\.\s*[A-Za-z_][\w]*\s*\(/,
+  /\bkrPublicDataClient\s*\.\s*[A-Za-z_][\w]*\s*\(/
 ];
 
 function parseArgs(argv) {

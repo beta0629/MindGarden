@@ -19,6 +19,7 @@ import java.util.Optional;
 
 import com.coresolution.consultation.config.SessionCookieSupport;
 import com.coresolution.consultation.config.SessionTimeoutProperties;
+import com.coresolution.consultation.constant.OAuthSessionTestAddresses;
 import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.repository.UserRepository;
@@ -130,7 +131,7 @@ class OAuth2ControllerWebOAuthSessionTest {
     void persistOAuthDbUserSession_callsCreateSession() throws Exception {
         User user = sampleUser();
         MockHttpServletRequest request = new MockHttpServletRequest();
-        request.setRemoteAddr("203.0.113.10");
+        request.setRemoteAddr(OAuthSessionTestAddresses.WEB);
         request.addHeader("User-Agent", "Mozilla/5.0 OAuthWebTest");
         MockHttpSession session = new MockHttpSession();
 
@@ -139,7 +140,7 @@ class OAuth2ControllerWebOAuthSessionTest {
         method.setAccessible(true);
         method.invoke(controller, request, session, user, "KAKAO");
 
-        verify(userSessionService).createSession(eq(user), eq(session.getId()), eq("203.0.113.10"),
+        verify(userSessionService).createSession(eq(user), eq(session.getId()), eq(OAuthSessionTestAddresses.WEB),
                 eq("Mozilla/5.0 OAuthWebTest"), eq("SOCIAL"), eq("KAKAO"));
     }
 
@@ -168,7 +169,7 @@ class OAuth2ControllerWebOAuthSessionTest {
                 .thenReturn(Optional.of(user));
 
         MockHttpServletRequest request = new MockHttpServletRequest();
-        request.setRemoteAddr("198.51.100.20");
+        request.setRemoteAddr(OAuthSessionTestAddresses.MOBILE);
         request.addHeader("User-Agent", "MindGardenMobile/1.0");
         MockHttpSession session = new MockHttpSession();
         session.setAttribute("oauth2_tenant_id", TENANT_ID);
@@ -182,7 +183,7 @@ class OAuth2ControllerWebOAuthSessionTest {
 
         assertThat(response.getStatusCode().is2xxSuccessful()).isTrue();
         verify(userSessionService).createSession(eq(user), eq(session.getId()),
-                eq("198.51.100.20"), eq("MindGardenMobile/1.0"), eq("SOCIAL"), eq("KAKAO"));
+                eq(OAuthSessionTestAddresses.MOBILE), eq("MindGardenMobile/1.0"), eq("SOCIAL"), eq("KAKAO"));
     }
 
     @Test

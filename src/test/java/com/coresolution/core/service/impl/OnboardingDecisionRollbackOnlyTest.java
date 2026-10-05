@@ -206,7 +206,7 @@ class OnboardingDecisionRollbackOnlyTest {
     private static OnboardingRequest pendingRequest() {
         return OnboardingRequest.builder().id(REQUEST_ID).tenantId(TENANT_ID).tenantName("검증 테넌트")
                 .requestedBy("applicant@example.com").riskLevel(RiskLevel.LOW)
-                .checklistJson("{\"checklist\":[],\"adminPassword\":\"ValidPass123!\"}")
+                .checklistJson("{\"checklist\":[],\"adminPassword\":\"ValidPass123!\",\"contactEmail\":\"applicant@example.com\"}")
                 .businessType("CONSULTATION").status(OnboardingStatus.PENDING).isDeleted(false).build();
     }
 }

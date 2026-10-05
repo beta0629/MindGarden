@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
+import com.coresolution.consultation.config.ManualNotificationProperties;
 import com.coresolution.consultation.dto.BulkAlimtalkManualRequest;
 import com.coresolution.consultation.dto.BulkNotificationResponse;
 import com.coresolution.consultation.dto.BulkPushManualRequest;
@@ -43,13 +44,15 @@ import lombok.extern.slf4j.Slf4j;
  * rate-limiter 를 사용하며, 배치 단위로 UUID(batch_id) 를 부여한다(기획 Q4). rate-limit 잔여가 요청
  * 수신자 수보다 부족하면 0건 발송으로 전체 차단(기획 Q5)한다.
  *
+ * <p>발송 메서드는 트랜잭션 어노테이션을 두지 않는다. NOT_SUPPORTED 도 트랜잭션 동기화를 켜서 조회 커넥션이
+ * 외부 호출(SMS·알림톡·푸시) 동안 묶일 수 있다. 조회·감사로그는 각 저장소·로거의 짧은 트랜잭션으로 끝난다.
+ *
  * @author MindGarden
  * @since 2026-05-23
  */
 @Slf4j
 @Service
 @RequiredArgsConstructor
-@Transactional
 public class AdminManualNotificationServiceImpl implements AdminManualNotificationService {
 
     /** rate-limit 잔여 < 요청 수신자 수일 때 배치 전체 차단(0건 발송). */
@@ -79,9 +82,6 @@ public class AdminManualNotificationServiceImpl implements AdminManualNotificati
     /** 푸시 broadcast 전용 placeholder — admin_test_notification_logs.recipient_phone_masked NOT NULL 충족. */
     public static final String PUSH_PHONE_PLACEHOLDER = "[push]";
 
-    /** 한 배치당 합산 수신자 상한 — userIds + phoneNumbers ≤ {@value}. */
-    public static final int MAX_RECIPIENTS_PER_BATCH = 50;
-
     private final UserRepository userRepository;
     private final AdminTestNotificationLogRepository logRepository;
     private final AdminTestNotificationLogger logger;
@@ -90,6 +90,7 @@ public class AdminManualNotificationServiceImpl implements AdminManualNotificati
     private final AlimtalkTemplateMappingResolver templateMappingResolver;
     private final PersonalDataEncryptionUtil encryptionUtil;
     private final MobilePushDispatchService mobilePushDispatchService;
+    private final ManualNotificationProperties manualNotificationProperties;
 
     @Override
     public BulkNotificationResponse sendBulkSms(String tenantId, User currentUser,
@@ -110,11 +111,12 @@ public class AdminManualNotificationServiceImpl implements AdminManualNotificati
                 ERROR_CODE_RECIPIENTS_REQUIRED,
                 "수신자 또는 전화번호 중 최소 1개를 지정해야 합니다.");
         }
-        // 50명 합산 상한 — 컨트롤러 Bean Validation 은 userIds/phoneNumbers 각각 50 이하만 보장.
-        if (totalRecipients > MAX_RECIPIENTS_PER_BATCH) {
+        // 합산 상한 — 컨트롤러 Bean Validation 은 userIds/phoneNumbers 각각 상한 이하만 보장.
+        int maxRecipients = manualNotificationProperties.getMaxRecipients();
+        if (totalRecipients > maxRecipients) {
             return blockedResponse(batchId, TestNotificationChannel.SMS, startedAt,
                 totalRecipients, ERROR_CODE_RECIPIENTS_LIMIT_EXCEEDED,
-                "한 번에 최대 " + MAX_RECIPIENTS_PER_BATCH + "명까지 발송할 수 있습니다."
+                "한 번에 최대 " + maxRecipients + "명까지 발송할 수 있습니다."
                     + " (요청=" + totalRecipients + ", userIds=" + orderedIds.size()
                     + ", phoneNumbers=" + orderedPhones.size() + ")");
         }
@@ -243,10 +245,11 @@ public class AdminManualNotificationServiceImpl implements AdminManualNotificati
                 ERROR_CODE_RECIPIENTS_REQUIRED,
                 "수신자 또는 전화번호 중 최소 1개를 지정해야 합니다.");
         }
-        if (totalRecipients > MAX_RECIPIENTS_PER_BATCH) {
+        int maxRecipients = manualNotificationProperties.getMaxRecipients();
+        if (totalRecipients > maxRecipients) {
             return blockedResponse(batchId, TestNotificationChannel.ALIMTALK, startedAt,
                 totalRecipients, ERROR_CODE_RECIPIENTS_LIMIT_EXCEEDED,
-                "한 번에 최대 " + MAX_RECIPIENTS_PER_BATCH + "명까지 발송할 수 있습니다."
+                "한 번에 최대 " + maxRecipients + "명까지 발송할 수 있습니다."
                     + " (요청=" + totalRecipients + ", userIds=" + orderedIds.size()
                     + ", phoneNumbers=" + orderedPhones.size() + ")");
         }

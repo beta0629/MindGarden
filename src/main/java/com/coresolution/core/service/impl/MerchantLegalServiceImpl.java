@@ -1,11 +1,17 @@
 package com.coresolution.core.service.impl;
 
+import java.util.LinkedHashMap;
+import java.util.Map;
 import com.coresolution.core.domain.Tenant;
 import com.coresolution.core.dto.MerchantLegalDto;
 import com.coresolution.core.dto.MerchantLegalUpdateRequest;
+import com.coresolution.core.krpublic.BusinessVerificationResult;
 import com.coresolution.core.repository.TenantRepository;
 import com.coresolution.core.service.MerchantLegalService;
 import com.coresolution.core.util.BusinessRegistrationNumberValidator;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -29,13 +35,15 @@ public class MerchantLegalServiceImpl implements MerchantLegalService {
     private static final String STATUS_REGISTERED = "REGISTERED";
     private static final String STATUS_PRIVATE = "PRIVATE";
     private static final String STATUS_PUBLIC = "PUBLIC";
+    private static final String SETTINGS_KEY = "krPublicData";
 
     private final TenantRepository tenantRepository;
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Override
     public MerchantLegalDto getForTenant(String tenantId) {
         Tenant tenant = requireTenant(tenantId);
-        return toDto(
+        MerchantLegalDto dto = toDto(
                 tenant.getName(),
                 tenant.getBusinessRegistrationNumber(),
                 tenant.getRepresentativeName(),
@@ -44,6 +52,8 @@ public class MerchantLegalServiceImpl implements MerchantLegalService {
                 tenant.getMailOrderReportNumber(),
                 tenant.getRefundPolicyText(),
                 tenant.getProductPriceGuideText());
+        applyStoredPublicData(dto, tenant.getSettingsJson());
+        return dto;
     }
 
     @Override
@@ -66,9 +76,13 @@ public class MerchantLegalServiceImpl implements MerchantLegalService {
         tenant.setMailOrderReportNumber(blankToNull(request.getMailOrderReportNumber()));
         tenant.setRefundPolicyText(blankToNull(request.getRefundPolicyText()));
         tenant.setProductPriceGuideText(blankToNull(request.getProductPriceGuideText()));
+        mergePublicDataSettings(tenant, request);
         tenantRepository.save(tenant);
 
-        log.info("사업자·약관 저장 완료: tenantId={}", tenantId);
+        log.info("사업자·약관 저장 완료: tenantId={} verification={}", tenantId,
+                request.getBusinessVerification() == null
+                        ? "none"
+                        : request.getBusinessVerification().getOverallStatus());
         return getForTenant(tenantId);
     }
 
@@ -154,5 +168,73 @@ public class MerchantLegalServiceImpl implements MerchantLegalService {
 
     private static String nullToEmpty(String v) {
         return v == null ? "" : v;
+    }
+
+    private void mergePublicDataSettings(Tenant tenant, MerchantLegalUpdateRequest request) {
+        Map<String, Object> root = readSettingsObject(tenant.getSettingsJson());
+        if (root == null) {
+            log.warn("tenant settings_json is not an object; skip krPublicData merge tenantId={}", tenant.getTenantId());
+            return;
+        }
+        boolean clear = isBlank(request.getBusinessRegistrationNumber());
+        if (clear) {
+            root.remove(SETTINGS_KEY);
+        } else {
+            Map<String, Object> block = new LinkedHashMap<>();
+            if (!isBlank(request.getOpeningDate())) {
+                block.put("openingDate", request.getOpeningDate().trim());
+            }
+            if (request.getBusinessVerification() != null) {
+                block.put("businessVerification", objectMapper.convertValue(
+                        request.getBusinessVerification(), new TypeReference<Map<String, Object>>() {
+                        }));
+            }
+            if (block.isEmpty()) {
+                root.remove(SETTINGS_KEY);
+            } else {
+                root.put(SETTINGS_KEY, block);
+            }
+        }
+        try {
+            tenant.setSettingsJson(objectMapper.writeValueAsString(root));
+        } catch (Exception ex) {
+            log.warn("krPublicData settings write failed: type={}", ex.getClass().getSimpleName());
+        }
+    }
+
+    private void applyStoredPublicData(MerchantLegalDto dto, String settingsJson) {
+        Map<String, Object> root = readSettingsObject(settingsJson);
+        if (root == null) {
+            return;
+        }
+        Object raw = root.get(SETTINGS_KEY);
+        if (!(raw instanceof Map<?, ?> block)) {
+            return;
+        }
+        Object opening = block.get("openingDate");
+        if (opening != null && !String.valueOf(opening).isBlank()) {
+            dto.setOpeningDate(String.valueOf(opening).trim());
+        }
+        Object verification = block.get("businessVerification");
+        if (verification instanceof Map<?, ?>) {
+            dto.setBusinessVerification(objectMapper.convertValue(verification, BusinessVerificationResult.class));
+        }
+    }
+
+    private Map<String, Object> readSettingsObject(String settingsJson) {
+        if (settingsJson == null || settingsJson.isBlank()) {
+            return new LinkedHashMap<>();
+        }
+        try {
+            JsonNode node = objectMapper.readTree(settingsJson);
+            if (!node.isObject()) {
+                return null;
+            }
+            return objectMapper.convertValue(node, new TypeReference<LinkedHashMap<String, Object>>() {
+            });
+        } catch (Exception ex) {
+            log.warn("tenant settings_json read failed: type={}", ex.getClass().getSimpleName());
+            return null;
+        }
     }
 }

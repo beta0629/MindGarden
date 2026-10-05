@@ -64,6 +64,7 @@ export interface OnboardingFormData {
   /** Clinic-OS 사업자·약관 */
   businessRegistrationNumber: string;
   representativeName: string;
+  openingDate: string;
   businessLandline: string;
   businessAddress: string;
   mailOrderReportNumber: string;
@@ -99,6 +100,7 @@ export const useOnboarding = () => {
     subscriptionId: "",
     businessRegistrationNumber: "",
     representativeName: "",
+    openingDate: "",
     businessLandline: "",
     businessAddress: "",
     mailOrderReportNumber: "",
@@ -711,6 +713,7 @@ export const useOnboarding = () => {
               ? formatBusinessRegistrationNumber(formData.businessRegistrationNumber)
               : undefined,
             representativeName: formData.representativeName?.trim() || undefined,
+            openingDate: formData.openingDate?.trim() || undefined,
             businessLandline: formData.businessLandline?.trim() || undefined,
             businessAddress: formData.businessAddress?.trim() || undefined,
             mailOrderReportNumber: formData.mailOrderReportNumber?.trim() || undefined,

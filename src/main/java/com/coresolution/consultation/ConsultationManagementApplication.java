@@ -17,6 +17,7 @@ import com.coresolution.consultation.config.BatchNotificationProperties;
 import com.coresolution.consultation.config.ExpoPushProperties;
 import com.coresolution.consultation.config.ImmediateReservationSmsProperties;
 import com.coresolution.consultation.config.LifecycleCutoffProperties;
+import com.coresolution.consultation.config.ManualNotificationProperties;
 import com.coresolution.consultation.config.MobileAppVersionProperties;
 import com.coresolution.consultation.config.MindgardenSecurityProperties;
 import com.coresolution.consultation.config.NotificationRetentionProperties;
@@ -68,7 +69,9 @@ import com.coresolution.core.config.KiccEasypayProperties;
         LifecycleCutoffProperties.class,
         PiiScrubberProperties.class,
         ScheduleChangeNotificationProperties.class,
-        ImmediateReservationSmsProperties.class
+        ImmediateReservationSmsProperties.class,
+        ManualNotificationProperties.class,
+        com.coresolution.core.krpublic.KrPublicDataProperties.class
 })
 public class ConsultationManagementApplication {
 

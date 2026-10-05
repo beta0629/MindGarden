@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import com.coresolution.consultation.config.AdminTestNotificationProperties;
+import com.coresolution.consultation.config.ManualNotificationProperties;
 import com.coresolution.consultation.dto.BulkAlimtalkManualRequest;
 import com.coresolution.consultation.dto.BulkNotificationResponse;
 import com.coresolution.consultation.dto.BulkPushManualRequest;
@@ -54,7 +55,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * {@code AdminManualNotificationController} MockMvc 통합 테스트(P1.2).
  *
  * <p>커버리지: 단일·다중 SMS·알림톡 정상 발송, batch_id 일관성, rate-limit 부족 전체 차단,
- * 수신자 누락(전화번호 부재) 부분 실패, 권한 거부, 50명 초과 거부, 템플릿 매핑 누락 차단.
+ * 수신자 누락(전화번호 부재) 부분 실패, 권한 거부, 수신자 상한 초과 거부, 템플릿 매핑 누락 차단.
  *
  * @author MindGarden
  * @since 2026-05-23
@@ -83,6 +84,9 @@ class AdminManualNotificationControllerIntegrationTest {
 
     @MockBean
     private AdminTestNotificationProperties properties;
+
+    @Autowired
+    private ManualNotificationProperties manualNotificationProperties;
 
     @BeforeEach
     void setTenantContext() {
@@ -338,23 +342,26 @@ class AdminManualNotificationControllerIntegrationTest {
     }
 
     @Test
-    @DisplayName("POST /sms — userIds.size() > 50 시 400 BadRequest")
+    @DisplayName("POST /sms — userIds.size() > notification.manual.max-recipients 시 400, 메시지에 상한값")
     @WithMockUser(roles = {"ADMIN"})
     void sendBulkSms_whenSizeExceedsCap_returns400() throws Exception {
+        int max = manualNotificationProperties.getMaxRecipients();
         List<Long> overflow = new ArrayList<>();
-        for (long i = 1; i <= 51; i++) {
+        for (long i = 1; i <= max + 1; i++) {
             overflow.add(i);
         }
         BulkSmsManualRequest request = BulkSmsManualRequest.builder()
             .userIds(overflow)
             .content("over cap")
-            .reason("P1.2 통합 — Q2 50명 상한")
+            .reason("PR AD — 단일 상한 설정")
             .build();
 
-        mockMvc.perform(post("/api/v1/admin/manual-notifications/sms")
+        String body = mockMvc.perform(post("/api/v1/admin/manual-notifications/sms")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
-            .andExpect(status().isBadRequest());
+            .andExpect(status().isBadRequest())
+            .andReturn().getResponse().getContentAsString();
+        org.assertj.core.api.Assertions.assertThat(body).contains(String.valueOf(max));
 
         verify(manualService, never()).sendBulkSms(anyString(), any(User.class),
             any(BulkSmsManualRequest.class));

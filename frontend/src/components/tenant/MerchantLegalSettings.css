@@ -20,6 +20,22 @@
   font-weight: var(--mg-v2-font-weight-semibold);
 }
 
+.merchant-legal-settings__notice,
+.merchant-legal-settings__verification {
+  margin: var(--mg-v2-space-2) 0;
+}
+
+.merchant-legal-settings__address-search,
+.merchant-legal-settings__address-hit {
+  margin-top: var(--mg-v2-space-2);
+}
+
+.merchant-legal-settings__address-hits {
+  list-style: none;
+  margin: var(--mg-v2-space-2) 0 0;
+  padding: 0;
+}
+
 .merchant-legal-settings__preview-rail {
   scroll-margin-top: var(--mg-v2-space-4);
 }

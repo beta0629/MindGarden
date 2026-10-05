@@ -13,12 +13,16 @@
 # 사용 예:
 #   NON_INTERACTIVE=1 /opt/mindgarden/scripts/database/sync/prod-to-dev-daily.sh
 #
-# 권장 스케줄: 매일 새벽(예: 03:30 KST) — crontab.example 참고 (CRON_TZ=Asia/Seoul)
+# 권장 스케줄: 매일 새벽 03:30 KST — crontab.example 참고 (CRON_TZ=Asia/Seoul)
+# 복원·PII·프로시저 db-diff 가 끝난 뒤 개발 백엔드를 재기동한다.
+# 운영 시간(11~20시 KST)에는 재기동을 동반한 동기화를 시작하지 않는다.
+# SKIP_BACKEND_RESTART=1 이면 재기동만 건너뛴다.
 #
 set -euo pipefail
 
 # cron은 최소 PATH만 잡는 경우가 많음 — mysql/mysqldump/gunzip 찾기 실패 방지
-export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:${PATH:-}"
+# DEV_BACKEND_TEST_PATH 는 재기동 단위 테스트가 가짜 sudo/curl 을 앞에 두기 위한 값이다. 운영 env 에 넣지 않는다.
+export PATH="${DEV_BACKEND_TEST_PATH:+${DEV_BACKEND_TEST_PATH}:}/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:${PATH:-}"
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 umask 077
@@ -82,6 +86,78 @@ if dev_target_is_production; then
   die "개발 DB 호스트·스키마가 운영과 같습니다. 복사·DROP·프로시저 재배포를 하지 않습니다."
 fi
 
+# 11~20시 KST(11:00–20:59)는 운영 시간. 03:30 배치는 이 구간 밖이다.
+in_operator_hours() {
+  local hour
+  hour="$(TZ=Asia/Seoul date +%H)"
+  hour=$((10#$hour))
+  if (( hour >= 11 && hour <= 20 )); then
+    return 0
+  fi
+  return 1
+}
+
+# 복원·PII·프로시저 db-diff 성공 후에만 호출한다. 앞 단계가 실패하면 set -e 로 여기까지 오지 않는다.
+restart_dev_backend() {
+  if dev_target_is_production; then
+    die "개발 DB 호스트·스키마가 운영과 같습니다. 개발 백엔드를 재기동하지 않습니다."
+  fi
+  if [[ "${SKIP_BACKEND_RESTART:-0}" == "1" ]]; then
+    log "SKIP_BACKEND_RESTART=1 — 개발 백엔드 재기동을 건너뜁니다."
+    return 0
+  fi
+  if in_operator_hours; then
+    die "운영 시간(11~20시 KST)에는 개발 백엔드를 재기동하지 않습니다. 03:30 동기화 직후에만 재기동합니다."
+  fi
+
+  local service url wait_sec interval since elapsed code
+  service="${DEV_BACKEND_SERVICE:-mindgarden-dev.service}"
+  url="${DEV_BACKEND_HEALTH_URL:-http://127.0.0.1:8080/actuator/health}"
+  wait_sec="${DEV_BACKEND_HEALTH_WAIT_SECONDS:-600}"
+  interval="${DEV_BACKEND_HEALTH_INTERVAL_SECONDS:-5}"
+  [[ "$wait_sec" =~ ^[0-9]+$ ]] || die "DEV_BACKEND_HEALTH_WAIT_SECONDS 가 정수가 아닙니다: ${wait_sec}"
+  [[ "$interval" =~ ^[0-9]+$ && "$interval" -ge 1 ]] || die "DEV_BACKEND_HEALTH_INTERVAL_SECONDS 는 1 이상의 정수여야 합니다: ${interval}"
+  command -v curl >/dev/null 2>&1 || die "curl 이 없습니다. 헬스체크를 할 수 없습니다."
+
+  log "개발 백엔드 재기동: service=${service} health=${url} wait=${wait_sec}s"
+  since="$(date '+%Y-%m-%d %H:%M:%S')"
+  if [[ -n "${DEV_BACKEND_RESTART_CMD:-}" ]]; then
+    bash -c "$DEV_BACKEND_RESTART_CMD" || die "개발 백엔드 재기동 명령이 실패했습니다."
+  else
+    sudo -n systemctl restart "$service" \
+      || die "개발 백엔드 재기동 실패: sudo -n systemctl restart ${service} (cron 사용자가 root가 아니면 sudoers 필요)"
+  fi
+
+  elapsed=0
+  code="000"
+  while (( elapsed < wait_sec )); do
+    code="$(curl -s -o /dev/null -w "%{http_code}" --connect-timeout 3 --max-time 12 "$url" 2>/dev/null || echo "000")"
+    if [[ "$code" == "200" ]]; then
+      log "개발 백엔드 헬스 확인: ${url} HTTP ${code} (${elapsed}s)"
+      break
+    fi
+    sleep "$interval"
+    elapsed=$((elapsed + interval))
+  done
+  if [[ "$code" != "200" ]]; then
+    die "개발 백엔드 헬스 실패: ${wait_sec}s 안에 ${url} 이 HTTP 200이 아닙니다 (last=${code})."
+  fi
+
+  log "Flyway 적용 결과는 서비스 로그에서 확인합니다 (Successfully applied / Migrating schema)."
+  if sudo -n journalctl -u "$service" --since "$since" --no-pager -n 200 2>/dev/null \
+      | grep -E -i 'flyway|migrating schema|successfully applied'; then
+    log "위 줄이 이번 재기동 구간의 Flyway 로그입니다."
+  else
+    log "WARN: journalctl 에서 Flyway 줄을 읽지 못했습니다. 확인: sudo journalctl -u ${service} --since '${since}' --no-pager -n 200"
+  fi
+}
+
+# 테스트 전용. cron 은 인자를 넘기지 않는다. 환경 파일에 넣지 않는다.
+if [[ "${1:-}" == "--restart-only" ]]; then
+  restart_dev_backend
+  exit $?
+fi
+
 PROD_MYSQL_USER="${PROD_MYSQL_USER:-}"
 EXTRA_DUMP_OPTS="${EXTRA_DUMP_OPTS:-}"
 # 운영 덤프 계정에 SHOW ROUTINE 등이 없을 때 1 — 프로시저/이벤트는 Flyway·배포로 보완
@@ -137,6 +213,10 @@ mysqldump_prod() {
     $EXTRA_DUMP_OPTS \
     "$PROD_DB_NAME"
 }
+
+if [[ "${SKIP_BACKEND_RESTART:-0}" != "1" ]] && in_operator_hours; then
+  die "운영 시간(11~20시 KST)에는 재기동을 동반한 동기화를 시작하지 않습니다. 03:30 배치를 쓰거나, 재기동 없이 돌릴 때만 SKIP_BACKEND_RESTART=1 입니다."
+fi
 
 if [[ "$NON_INTERACTIVE" != "1" ]]; then
   echo "개발 DB '${DEV_DB_NAME}' @ ${DEV_MYSQL_HOST} 데이터가 덮어씌워집니다. 계속하려면 yes 입력:"
@@ -222,5 +302,8 @@ redeploy_dev_procedures_from_repo() {
 
 # Flyway 소유 온보딩 프로시저(FLYWAY_SOURCES.tsv)도 표준 배포 SQL 에 들어 있어 이 db-diff 로 함께 되살아난다.
 redeploy_dev_procedures_from_repo
+
+# 복원·PII·프로시저가 모두 끝난 뒤에만 재기동한다. 운영에만 없는 Flyway 버전은 기동 때 적용된다.
+restart_dev_backend
 
 log "=== 완료: 개발 DB=${DEV_DB_NAME}, 참고 D-1 날짜 라벨=$(yesterday_ymd_dash) ==="

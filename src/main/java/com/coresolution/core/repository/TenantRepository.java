@@ -76,6 +76,23 @@ public interface TenantRepository extends JpaRepository<Tenant, Long> {
      */
     @Query("SELECT t FROM Tenant t WHERE t.isDeleted = false ORDER BY t.name ASC")
     List<Tenant> findAllNotDeletedOrderByName();
+
+    /**
+     * Ops 목록 기본값. CLOSED 는 숨긴다.
+     *
+     * @return 종료가 아닌 미삭제 테넌트
+     */
+    @Query("SELECT t FROM Tenant t WHERE t.isDeleted = false AND t.status <> 'CLOSED' ORDER BY t.name ASC")
+    List<Tenant> findOpsVisibleTenants();
+
+    /**
+     * Ops 목록 {@code includeClosed=true}. CLOSED 는 is_deleted 여도 포함한다.
+     *
+     * @return 운영 목록
+     */
+    @Query("SELECT t FROM Tenant t WHERE (t.isDeleted = false AND t.status <> 'CLOSED') "
+            + "OR t.status = 'CLOSED' ORDER BY t.name ASC")
+    List<Tenant> findOpsTenantsIncludingClosed();
     
     /**
      * tenant_id 존재 여부 확인

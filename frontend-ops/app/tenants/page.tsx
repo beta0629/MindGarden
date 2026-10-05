@@ -18,14 +18,42 @@ import {
   toDisplayString
 } from '@/constants/opsTenants';
 import {
+  closeOpsTenant,
   fetchOpsTenants,
+  replaceTenantItem,
   resumeOpsTenant,
   suspendOpsTenant,
   type OpsTenantItem
 } from '@/services/tenantOpsService';
 import notificationManager from '@/utils/notification';
 
-type ConfirmAction = 'suspend' | 'resume' | null;
+type ConfirmAction = 'suspend' | 'resume' | 'close' | null;
+
+function confirmCopy(action: ConfirmAction): {
+  title: string;
+  message: string;
+  confirmLabel: string;
+} {
+  if (action === 'suspend') {
+    return {
+      title: OPS_TENANT_LABELS.CONFIRM_SUSPEND_TITLE,
+      message: OPS_TENANT_LABELS.CONFIRM_SUSPEND_MESSAGE,
+      confirmLabel: OPS_TENANT_LABELS.CONFIRM_SUSPEND_OK
+    };
+  }
+  if (action === 'close') {
+    return {
+      title: OPS_TENANT_LABELS.CONFIRM_CLOSE_TITLE,
+      message: OPS_TENANT_LABELS.CONFIRM_CLOSE_MESSAGE,
+      confirmLabel: OPS_TENANT_LABELS.CONFIRM_CLOSE_OK
+    };
+  }
+  return {
+    title: OPS_TENANT_LABELS.CONFIRM_RESUME_TITLE,
+    message: OPS_TENANT_LABELS.CONFIRM_RESUME_MESSAGE,
+    confirmLabel: OPS_TENANT_LABELS.CONFIRM_RESUME_OK
+  };
+}
 
 /**
  * Ops 테넌트 본문 — quiet header → strip3 → search → center cards
@@ -45,12 +73,13 @@ export default function TenantsPage() {
   const [confirmAction, setConfirmAction] = useState<ConfirmAction>(null);
   const [confirmTenant, setConfirmTenant] = useState<OpsTenantItem | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [includeClosed, setIncludeClosed] = useState(false);
 
   const loadTenants = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
-      const data = await fetchOpsTenants();
+      const data = await fetchOpsTenants(includeClosed);
       setTenants(data);
     } catch (err) {
       console.error('[TenantsPage] load failed:', err);
@@ -60,7 +89,7 @@ export default function TenantsPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [includeClosed]);
 
   useEffect(() => {
     loadTenants();
@@ -112,6 +141,11 @@ export default function TenantsPage() {
     setConfirmAction('resume');
   };
 
+  const openClose = (tenant: OpsTenantItem) => {
+    setConfirmTenant(tenant);
+    setConfirmAction('close');
+  };
+
   const closeConfirm = () => {
     if (submitting) {
       return;
@@ -129,13 +163,27 @@ export default function TenantsPage() {
       if (confirmAction === 'suspend') {
         await suspendOpsTenant(confirmTenant.tenantId);
         notificationManager.success(OPS_TENANT_LABELS.SUSPEND_SUCCESS);
-      } else {
+        setConfirmAction(null);
+        setConfirmTenant(null);
+        await loadTenants();
+      } else if (confirmAction === 'resume') {
         await resumeOpsTenant(confirmTenant.tenantId);
         notificationManager.success(OPS_TENANT_LABELS.RESUME_SUCCESS);
+        setConfirmAction(null);
+        setConfirmTenant(null);
+        await loadTenants();
+      } else {
+        const updated = await closeOpsTenant(confirmTenant.tenantId);
+        notificationManager.success(OPS_TENANT_LABELS.CLOSE_SUCCESS);
+        setTenants((current) => replaceTenantItem(current, updated));
+        setDetailTenant((current) =>
+          current && current.tenantId === updated.tenantId
+            ? { ...current, ...updated }
+            : current
+        );
+        setConfirmAction(null);
+        setConfirmTenant(null);
       }
-      setConfirmAction(null);
-      setConfirmTenant(null);
-      await loadTenants();
     } catch (err) {
       console.error('[TenantsPage] status change failed:', err);
       notificationManager.error(
@@ -150,6 +198,7 @@ export default function TenantsPage() {
     tenants.length === 0
       ? OPS_TENANT_LABELS.EMPTY_ALL
       : OPS_TENANT_LABELS.EMPTY_FILTER;
+  const confirm = confirmCopy(confirmAction);
 
   return (
     <div className={OPS_TENANT_CSS.PAGE}>
@@ -179,6 +228,15 @@ export default function TenantsPage() {
           placeholder={OPS_TENANT_LABELS.SEARCH_PLACEHOLDER}
           aria-label={OPS_TENANT_LABELS.SEARCH_ARIA}
         />
+        <label className={OPS_TENANT_CSS.INCLUDE_CLOSED}>
+          <input
+            type="checkbox"
+            checked={includeClosed}
+            onChange={(event) => setIncludeClosed(event.target.checked)}
+            aria-label={OPS_TENANT_LABELS.INCLUDE_CLOSED_ARIA}
+          />
+          {OPS_TENANT_LABELS.INCLUDE_CLOSED}
+        </label>
       </div>
 
       <section
@@ -235,6 +293,7 @@ export default function TenantsPage() {
                   onDetail={setDetailTenant}
                   onSuspend={openSuspend}
                   onResume={openResume}
+                  onCloseTenant={openClose}
                 />
               </li>
             ))}
@@ -283,23 +342,11 @@ export default function TenantsPage() {
 
       <ConfirmModal
         open={!!confirmAction && !!confirmTenant}
-        title={
-          confirmAction === 'suspend'
-            ? OPS_TENANT_LABELS.CONFIRM_SUSPEND_TITLE
-            : OPS_TENANT_LABELS.CONFIRM_RESUME_TITLE
-        }
-        message={
-          confirmAction === 'suspend'
-            ? OPS_TENANT_LABELS.CONFIRM_SUSPEND_MESSAGE
-            : OPS_TENANT_LABELS.CONFIRM_RESUME_MESSAGE
-        }
-        confirmLabel={
-          confirmAction === 'suspend'
-            ? OPS_TENANT_LABELS.CONFIRM_SUSPEND_OK
-            : OPS_TENANT_LABELS.CONFIRM_RESUME_OK
-        }
+        title={confirm.title}
+        message={confirm.message}
+        confirmLabel={confirm.confirmLabel}
         cancelLabel={OPS_TENANT_LABELS.CONFIRM_CANCEL}
-        variant={confirmAction === 'suspend' ? 'outlineWarn' : 'warning'}
+        variant={confirmAction === 'resume' ? 'warning' : 'outlineWarn'}
         loading={submitting}
         onConfirm={handleConfirm}
         onCancel={closeConfirm}

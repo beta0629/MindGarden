@@ -5,7 +5,9 @@ import com.coresolution.core.dto.ApiResponse;
 import com.coresolution.core.repository.TenantRepository;
 import com.coresolution.core.repository.TenantRoleRepository;
 import com.coresolution.core.repository.UserRoleAssignmentRepository;
+import com.coresolution.core.service.ops.TenantCloseService;
 import com.coresolution.core.service.ops.TenantOpsService;
+import com.coresolution.core.tenant.TenantCloseMessages;
 import com.coresolution.core.util.OpsPermissionUtils;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.repository.UserRepository;
@@ -36,6 +38,7 @@ import java.util.stream.Collectors;
 public class TenantOpsController extends BaseApiController {
 
     private final TenantOpsService tenantOpsService;
+    private final TenantCloseService tenantCloseService;
     private final TenantRepository tenantRepository;
     private final UserRepository userRepository;
     private final TenantRoleRepository tenantRoleRepository;
@@ -48,10 +51,12 @@ public class TenantOpsController extends BaseApiController {
      * @return 테넌트 목록
      */
     @GetMapping
-    public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getTenants() {
+    public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getTenants(
+            @RequestParam(name = TenantCloseMessages.PARAM_INCLUDE_CLOSED, defaultValue = "false")
+            boolean includeClosed) {
         OpsPermissionUtils.requireOps();
-        List<Map<String, Object>> tenantList = tenantOpsService.listTenants();
-        log.info("Ops Portal 테넌트 목록 조회 완료: {}개", tenantList.size());
+        List<Map<String, Object>> tenantList = tenantOpsService.listTenants(includeClosed);
+        log.info("Ops Portal 테넌트 목록 조회 완료: {}개, includeClosed={}", tenantList.size(), includeClosed);
         return success(tenantList);
     }
 
@@ -97,6 +102,22 @@ public class TenantOpsController extends BaseApiController {
             @PathVariable String tenantId) {
         OpsPermissionUtils.requireOps();
         Map<String, Object> updated = tenantOpsService.resumeTenant(tenantId);
+        return success(updated);
+    }
+
+    /**
+     * 테넌트 종료 (SUSPENDED → CLOSED). 유예가 지나고 유효 구독이 없을 때만 허용한다.
+     * POST /api/v1/ops/tenants/{tenantId}/close
+     *
+     * @param tenantId 테넌트 ID
+     * @return 갱신된 테넌트
+     */
+    @PostMapping("/{tenantId}/close")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> closeTenant(
+            @PathVariable String tenantId) {
+        OpsPermissionUtils.requireOps();
+        Map<String, Object> updated = tenantCloseService.closeTenant(
+                tenantId, OpsPermissionUtils.currentActorName());
         return success(updated);
     }
 

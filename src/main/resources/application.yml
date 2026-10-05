@@ -898,6 +898,11 @@ scheduler:
     enabled: ${SCHEDULER_CLIENT_GRADE_AUTO_ENABLED:true}
     cron: ${SCHEDULER_CLIENT_GRADE_AUTO_CRON:0 15 3 * * ?}  # 매일 새벽 3시 15분
 
+# 테넌트 종료. SUSPENDED 이후 grace-days(Asia/Seoul 자정 경계)가 지나야 CLOSED.
+tenant:
+  close:
+    grace-days: ${TENANT_CLOSE_GRACE_DAYS:30}
+
 # =====================================================
 # 보안 설정 (보안 표준화 + 민감정보 보호)
 # =====================================================

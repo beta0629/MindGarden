@@ -23,6 +23,10 @@ export const OPS_TENANT_STATUS_LABELS: Record<string, string> = {
   [OPS_TENANT_STATUS.CLOSED]: '종료'
 } as const;
 
+export const OPS_TENANT_QUERY = {
+  INCLUDE_CLOSED: 'includeClosed=true'
+} as const;
+
 export const OPS_TENANT_STRIP_FILTER = {
   ALL: 'ALL',
   ACTIVE: 'ACTIVE',
@@ -49,6 +53,7 @@ export const OPS_TENANT_LABELS = {
   MENU_DETAIL: '상세',
   MENU_SUSPEND: '정지',
   MENU_RESUME: '재개',
+  MENU_CLOSE: '종료',
   MENU_PG_VIEW: '결제 연결 보기',
   DETAIL_TITLE: '센터 상세',
   DETAIL_CLOSE: '닫기',
@@ -65,7 +70,13 @@ export const OPS_TENANT_LABELS = {
   CONFIRM_RESUME_TITLE: '센터 재개',
   CONFIRM_RESUME_MESSAGE: '이 센터를 다시 운영중으로 전환할까요?',
   CONFIRM_RESUME_OK: '재개',
+  CONFIRM_CLOSE_TITLE: '센터 종료',
+  CONFIRM_CLOSE_MESSAGE:
+    '정지 유예가 지난 센터를 종료할까요? 종료하면 다시 운영중으로 되돌릴 수 없습니다.',
+  CONFIRM_CLOSE_OK: '종료',
   CONFIRM_CANCEL: '취소',
+  INCLUDE_CLOSED: '종료된 센터 보기',
+  INCLUDE_CLOSED_ARIA: '종료된 센터를 목록에 포함',
   EMPTY_ALL: '등록된 센터가 없습니다.',
   EMPTY_FILTER: '조건에 맞는 센터가 없습니다.',
   RESET_FILTER: '필터 초기화',
@@ -75,6 +86,7 @@ export const OPS_TENANT_LABELS = {
   ENTER_NO_SUBDOMAIN: '서브도메인이 없어 센터로 이동할 수 없습니다.',
   SUSPEND_SUCCESS: '센터를 정지했습니다.',
   RESUME_SUCCESS: '센터를 재개했습니다.',
+  CLOSE_SUCCESS: '센터를 종료했습니다.',
   COUNT_PLACEHOLDER: '—'
 } as const;
 
@@ -106,6 +118,8 @@ export const OPS_TENANT_CSS = {
   OVERFLOW_TRIGGER: 'ops-tenants-overflow__trigger',
   OVERFLOW_MENU: 'ops-tenants-overflow__menu',
   OVERFLOW_ITEM: 'ops-tenants-overflow__item',
+  OVERFLOW_ITEM_CLOSE: 'ops-tenants-overflow__item--close',
+  INCLUDE_CLOSED: 'ops-tenants__include-closed',
   EMPTY: 'ops-tenants__empty',
   DETAIL_DL: 'ops-tenants-detail'
 } as const;

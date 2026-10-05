@@ -262,6 +262,18 @@
   outline: none;
 }
 
+.ops-tenants-overflow__item--close {
+  color: var(--mg-v2-color-semantic-error);
+}
+
+.ops-tenants__include-closed {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--mg-v2-space-2);
+  color: var(--mg-v2-color-text-secondary);
+  font-size: var(--mg-v2-font-size-caption);
+}
+
 .ops-tenants__empty {
   display: flex;
   flex-direction: column;

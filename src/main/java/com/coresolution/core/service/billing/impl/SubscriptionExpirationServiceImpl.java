@@ -1,11 +1,12 @@
 package com.coresolution.core.service.billing.impl;
-import com.coresolution.core.context.TenantContextHolder;
-
 import com.coresolution.core.domain.TenantSubscription;
 import com.coresolution.core.repository.billing.TenantSubscriptionRepository;
 import com.coresolution.core.service.billing.SubscriptionExpirationService;
+import com.coresolution.core.tenant.TenantAccessDecision;
+import com.coresolution.core.tenant.TenantAccessEvaluator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,6 +32,17 @@ import java.util.stream.Collectors;
 public class SubscriptionExpirationServiceImpl implements SubscriptionExpirationService {
     
     private final TenantSubscriptionRepository subscriptionRepository;
+    private TenantAccessEvaluator tenantAccessEvaluator;
+
+    /**
+     * 정지·종료 테넌트는 만료 처리하지 않는다.
+     *
+     * @param tenantAccessEvaluator 접근 판정
+     */
+    @Autowired(required = false)
+    public void setTenantAccessEvaluator(TenantAccessEvaluator tenantAccessEvaluator) {
+        this.tenantAccessEvaluator = tenantAccessEvaluator;
+    }
     
     @Override
     public int processExpiredSubscriptions() {
@@ -47,6 +59,11 @@ public class SubscriptionExpirationServiceImpl implements SubscriptionExpiration
         int processedCount = 0;
         for (TenantSubscription subscription : expiredSubscriptions) {
             try {
+                if (isTenantAccessDenied(subscription.getTenantId())) {
+                    log.info("테넌트 접근 차단으로 구독 만료 처리 생략: tenantId={}, subscriptionId={}",
+                            subscription.getTenantId(), subscription.getSubscriptionId());
+                    continue;
+                }
                 // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
                 subscription.setStatus(TenantSubscription.SubscriptionStatus.SUSPENDED);
                 subscription.setAutoRenewal(false);
@@ -63,6 +80,14 @@ public class SubscriptionExpirationServiceImpl implements SubscriptionExpiration
         
         log.info("만료된 구독 처리 완료: 총 {}개 처리", processedCount);
         return processedCount;
+    }
+
+    private boolean isTenantAccessDenied(String tenantId) {
+        if (tenantAccessEvaluator == null) {
+            return false;
+        }
+        TenantAccessDecision decision = tenantAccessEvaluator.decide(tenantId, null);
+        return !decision.isAllowed();
     }
     
     @Override

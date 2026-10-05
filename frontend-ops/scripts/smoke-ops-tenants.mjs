@@ -31,6 +31,10 @@ const files = {
   opsService: path.join(
     root,
     '../src/main/java/com/coresolution/core/service/ops/TenantOpsService.java'
+  ),
+  listItem: path.join(
+    root,
+    '../src/main/java/com/coresolution/core/service/ops/TenantOpsListItem.java'
   )
 };
 
@@ -50,6 +54,7 @@ const api = read(files.api);
 const service = read(files.service);
 const controller = read(files.controller);
 const opsService = read(files.opsService);
+const listItem = read(files.listItem);
 
 const checks = [
   { ok: constants.includes("TITLE: '테넌트'"), msg: 'quiet header title 테넌트' },
@@ -101,7 +106,7 @@ const checks = [
   { ok: service.includes('resumeOpsTenant'), msg: 'FE resume service' },
   { ok: controller.includes('/suspend'), msg: 'BE suspend endpoint' },
   { ok: controller.includes('/resume'), msg: 'BE resume endpoint' },
-  { ok: opsService.includes('subdomain'), msg: 'BE list includes subdomain' },
+  { ok: listItem.includes('subdomain') && opsService.includes('TenantOpsListItem'), msg: 'BE list includes subdomain' },
   { ok: opsService.includes('TenantStatus.SUSPENDED'), msg: 'BE uses TenantStatus enum' },
   {
     ok: (() => {

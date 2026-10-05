@@ -56,7 +56,8 @@ export const OPS_API_PATHS = {
     DETAIL: (tenantId: string) => `/ops/tenants/${tenantId}`,
     ADMINS: (tenantId: string) => `/ops/tenants/${tenantId}/admins`,
     SUSPEND: (tenantId: string) => `/ops/tenants/${tenantId}/suspend`,
-    RESUME: (tenantId: string) => `/ops/tenants/${tenantId}/resume`
+    RESUME: (tenantId: string) => `/ops/tenants/${tenantId}/resume`,
+    CLOSE: (tenantId: string) => `/ops/tenants/${tenantId}/close`
   },
 
   // PG 승인 (센터 PG 설정 운영 승인)

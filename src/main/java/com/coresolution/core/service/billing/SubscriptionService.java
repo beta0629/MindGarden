@@ -3,6 +3,7 @@ package com.coresolution.core.service.billing;
 import com.coresolution.core.controller.dto.billing.SubscriptionCreateRequest;
 import com.coresolution.core.controller.dto.billing.SubscriptionResponse;
 
+import java.time.LocalDate;
 import java.util.List;
 
 /**
@@ -81,5 +82,19 @@ public interface SubscriptionService {
      * 구독 요금제 변경 (업그레이드/다운그레이드 통합)
      */
     SubscriptionResponse changePlan(String subscriptionId, String newPlanId, boolean applyImmediately);
+
+    /**
+     * 유효 구독이 있는지.
+     *
+     * <p>{@code tenant_subscriptions} 에서 status=ACTIVE, is_deleted=false 이고
+     * {@link com.coresolution.core.domain.TenantSubscription#isActive()} 와
+     * {@link com.coresolution.core.domain.TenantSubscription#isEffective(LocalDate)} 를
+     * 만족하는 행이 있으면 true. {@code tenants.subscription_status} 는 사용하지 않는다.</p>
+     *
+     * @param tenantId 테넌트 ID
+     * @param today    기준일. null 이면 Asia/Seoul 오늘
+     * @return 유효 구독이 있으면 true
+     */
+    boolean hasEffectiveSubscription(String tenantId, LocalDate today);
 }
 

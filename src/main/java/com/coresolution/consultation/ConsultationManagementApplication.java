@@ -24,6 +24,8 @@ import com.coresolution.consultation.config.NotificationRetentionProperties;
 import com.coresolution.consultation.config.PiiScrubberProperties;
 import com.coresolution.consultation.config.ScheduleChangeNotificationProperties;
 import com.coresolution.core.config.KiccEasypayProperties;
+import com.coresolution.core.krpublic.KrPublicDataProperties;
+import com.coresolution.core.tenant.TenantCloseProperties;
 
 /**
  * 코어솔루션 통합 상담관리 시스템 메인 애플리케이션
@@ -71,7 +73,8 @@ import com.coresolution.core.config.KiccEasypayProperties;
         ScheduleChangeNotificationProperties.class,
         ImmediateReservationSmsProperties.class,
         ManualNotificationProperties.class,
-        com.coresolution.core.krpublic.KrPublicDataProperties.class
+        KrPublicDataProperties.class,
+        TenantCloseProperties.class
 })
 public class ConsultationManagementApplication {
 

@@ -1,21 +1,27 @@
 package com.coresolution.core.service.ops;
 
+import com.coresolution.consultation.constant.AuditAction;
+import com.coresolution.consultation.entity.AuditLog;
+import com.coresolution.consultation.service.AuditLogService;
 import com.coresolution.core.domain.Tenant;
 import com.coresolution.core.domain.Tenant.TenantStatus;
 import com.coresolution.core.repository.TenantRepository;
+import com.coresolution.core.tenant.TenantCloseMessages;
+import com.coresolution.core.util.OpsPermissionUtils;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
  * Ops Portal 테넌트 목록·정지/재개 서비스.
- * CLOSED/삭제는 제공하지 않음. ACTIVE ↔ SUSPENDED 만 허용.
+ * 종료는 {@link TenantCloseService}. ACTIVE → SUSPENDED 만 정지하고, 재개는 SUSPENDED → ACTIVE 만 허용한다.
  *
  * @author CoreSolution
  * @since 2026-09-08
@@ -27,16 +33,19 @@ import java.util.stream.Collectors;
 public class TenantOpsService {
 
     private final TenantRepository tenantRepository;
+    private final AuditLogService auditLogService;
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     /**
-     * 삭제되지 않은 테넌트 목록 (subdomain 포함).
-     *
+     * @param includeClosed true 이면 CLOSED 를 포함한다
      * @return Ops 목록 payload
      */
-    public List<Map<String, Object>> listTenants() {
-        List<Tenant> tenants = tenantRepository.findAllNotDeletedOrderByName();
+    public List<Map<String, Object>> listTenants(boolean includeClosed) {
+        List<Tenant> tenants = includeClosed
+                ? tenantRepository.findOpsTenantsIncludingClosed()
+                : tenantRepository.findOpsVisibleTenants();
         return tenants.stream()
-                .map(this::toListItem)
+                .map(TenantOpsListItem::from)
                 .collect(Collectors.toList());
     }
 
@@ -49,7 +58,7 @@ public class TenantOpsService {
      */
     public Map<String, Object> getTenantDetail(String tenantId) {
         Tenant tenant = requireTenant(tenantId);
-        return toListItem(tenant);
+        return TenantOpsListItem.from(tenant);
     }
 
     /**
@@ -69,8 +78,16 @@ public class TenantOpsService {
         }
         tenant.setStatus(TenantStatus.SUSPENDED);
         Tenant saved = tenantRepository.save(tenant);
+        auditLogService.record(AuditLog.builder()
+                .tenantId(saved.getTenantId())
+                .actorRole(TenantCloseMessages.ACTOR_ROLE_OPS)
+                .action(AuditAction.TENANT_SUSPENDED)
+                .entityType(TenantCloseMessages.ENTITY_TYPE_TENANT)
+                .entityId(saved.getId())
+                .metadataJson(suspendMetadataJson())
+                .build());
         log.info("Ops 테넌트 정지: tenantId={}", tenantId);
-        return toListItem(saved);
+        return TenantOpsListItem.from(saved);
     }
 
     /**
@@ -91,7 +108,17 @@ public class TenantOpsService {
         tenant.setStatus(TenantStatus.ACTIVE);
         Tenant saved = tenantRepository.save(tenant);
         log.info("Ops 테넌트 재개: tenantId={}", tenantId);
-        return toListItem(saved);
+        return TenantOpsListItem.from(saved);
+    }
+
+    private String suspendMetadataJson() {
+        try {
+            return objectMapper.writeValueAsString(
+                    java.util.Map.of("actor", OpsPermissionUtils.currentActorName()));
+        } catch (JsonProcessingException ex) {
+            log.warn("정지 감사 metadata 직렬화 실패: {}", ex.getClass().getSimpleName());
+            return "{}";
+        }
     }
 
     private Tenant requireTenant(String tenantId) {
@@ -100,18 +127,5 @@ public class TenantOpsService {
         }
         return tenantRepository.findByTenantIdAndIsDeletedFalse(tenantId.trim())
                 .orElseThrow(() -> new IllegalArgumentException("테넌트를 찾을 수 없습니다: " + tenantId));
-    }
-
-    private Map<String, Object> toListItem(Tenant tenant) {
-        Map<String, Object> tenantMap = new HashMap<>();
-        tenantMap.put("tenantId", tenant.getTenantId());
-        tenantMap.put("name", tenant.getName());
-        tenantMap.put("businessType", tenant.getBusinessType());
-        tenantMap.put("status", tenant.getStatus() != null ? tenant.getStatus().name() : null);
-        tenantMap.put("subdomain", tenant.getSubdomain());
-        tenantMap.put("contactEmail", tenant.getContactEmail());
-        tenantMap.put("contactPhone", tenant.getContactPhone());
-        tenantMap.put("contactPerson", tenant.getContactPerson());
-        return tenantMap;
     }
 }

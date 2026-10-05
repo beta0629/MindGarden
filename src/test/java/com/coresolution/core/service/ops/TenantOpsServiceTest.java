@@ -1,5 +1,7 @@
 package com.coresolution.core.service.ops;
 
+import com.coresolution.consultation.constant.AuditAction;
+import com.coresolution.consultation.service.AuditLogService;
 import com.coresolution.core.domain.Tenant;
 import com.coresolution.core.domain.Tenant.TenantStatus;
 import com.coresolution.core.repository.TenantRepository;
@@ -36,6 +38,9 @@ class TenantOpsServiceTest {
     @Mock
     private TenantRepository tenantRepository;
 
+    @Mock
+    private AuditLogService auditLogService;
+
     @InjectMocks
     private TenantOpsService tenantOpsService;
 
@@ -55,9 +60,9 @@ class TenantOpsServiceTest {
     @Test
     @DisplayName("목록에 subdomain 포함")
     void listTenants_includesSubdomain() {
-        when(tenantRepository.findAllNotDeletedOrderByName()).thenReturn(List.of(activeTenant));
+        when(tenantRepository.findOpsVisibleTenants()).thenReturn(List.of(activeTenant));
 
-        List<Map<String, Object>> result = tenantOpsService.listTenants();
+        List<Map<String, Object>> result = tenantOpsService.listTenants(false);
 
         assertThat(result).hasSize(1);
         assertThat(result.get(0).get("subdomain")).isEqualTo("maeum");
@@ -77,6 +82,9 @@ class TenantOpsServiceTest {
         assertThat(result.get("status")).isEqualTo("SUSPENDED");
         assertThat(activeTenant.getStatus()).isEqualTo(TenantStatus.SUSPENDED);
         verify(tenantRepository).save(activeTenant);
+        verify(auditLogService).record(org.mockito.ArgumentMatchers.argThat(log ->
+                log.getAction() == AuditAction.TENANT_SUSPENDED
+                        && TENANT_ID.equals(log.getTenantId())));
     }
 
     @Test

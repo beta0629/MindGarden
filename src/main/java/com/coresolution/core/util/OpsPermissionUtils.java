@@ -1,6 +1,7 @@
 package com.coresolution.core.util;
 
 import com.coresolution.core.constants.SecurityRoleConstants;
+import com.coresolution.core.tenant.TenantCloseMessages;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
@@ -76,6 +77,23 @@ public class OpsPermissionUtils {
 
         log.debug("권한 체크 성공: principal={}, authorities={}",
             auth.getPrincipal(), auth.getAuthorities());
+    }
+
+    /**
+     * 현재 인증 이름. 없거나 익명이면 {@link com.coresolution.core.tenant.TenantCloseMessages#ACTOR_UNKNOWN}.
+     *
+     * @return 처리자 이름
+     */
+    public static String currentActorName() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated() || isAnonymous(auth)) {
+            return TenantCloseMessages.ACTOR_UNKNOWN;
+        }
+        String name = auth.getName();
+        if (name == null || name.isBlank()) {
+            return TenantCloseMessages.ACTOR_UNKNOWN;
+        }
+        return name.trim();
     }
 
     /**

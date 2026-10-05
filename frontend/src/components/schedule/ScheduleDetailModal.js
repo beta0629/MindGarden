@@ -40,7 +40,8 @@ import {
     buildInstitutionLinkLatestLogUrl,
     hasInstitutionLinkLatestLog,
     isInstitutionLinkConsultationLogContext,
-    resolveConsultationLogActionVisibility
+    resolveScheduleConsultationLogEntry,
+    CONSULTATION_LOG_ENTRY_MODE
 } from '../../utils/consultationLogInstitutionContext';
 import {
     canCompleteScheduleNow,
@@ -53,34 +54,6 @@ const SCHEDULE_DETAIL_Z_INDEX_PARTY_QUICK = 1140;
 const SCHEDULE_DETAIL_Z_INDEX_CONFIRM = 1240;
 /** 요약에서 비어 있음 표시 */
 const SCHEDULE_DETAIL_DISPLAY_PLACEHOLDER = '\u2014';
-
-/**
- * 상담일지 deep link("보기/수정") 노출 가능한 상태 코드.
- *
- * <p>2026-06-05 P1 운영 신고 픽스: 진행 중(CONFIRMED) · 예약(BOOKED) 일정에서 "보기/수정" 이 노출되어
- * 사용자 의도(작성 버튼만)를 위반함. SSOT 안전망으로 COMPLETED 단일로 제한한다.
- * 진행 중/예약 단계는 동일 모달의 "상담일지 작성" 버튼 경로만 사용한다.</p>
- */
-const CONSULTATION_LOG_LINK_VISIBLE_STATUSES = Object.freeze([
-    'COMPLETED'
-]);
-
-/**
- * 「상담일지 작성」 버튼 노출 가능 상태 코드.
- *
- * <p>2026-09-12 운영 신고 픽스: 완료(COMPLETED) 처리된 일정에 일지가 없으면 푸터에 「다시 예약」만
- * 남아 상담사가 일지를 쓸 수 없었다. 「보기/수정」 링크는 record 존재 시에만 노출되므로,
- * 「완료 처리 먼저 → 일지 나중」 순서에서 작성 진입점이 사라진다.</p>
- *
- * <p>2026-09-15 P0: 가예약(TENTATIVE_PENDING_PAYMENT)도 작성 허용.
- * BE는 SAME_DAY_CARD 매핑에 remaining 미차감으로 sessionSequence를 부여한다.</p>
- */
-const CONSULTATION_LOG_WRITE_ACTION_STATUSES = Object.freeze([
-    'CONFIRMED',
-    'IN_PROGRESS',
-    'COMPLETED',
-    'TENTATIVE_PENDING_PAYMENT'
-]);
 
 /** 예약 변경(날짜·시간) 액션 가능 상태 — status 유지, date/start/end 만 PUT */
 const RESCHEDULE_ACTION_ELIGIBLE_STATUSES = Object.freeze([
@@ -253,66 +226,6 @@ function buildUserManagementOpenPath(type, id) {
         path += `&id=${id}`;
     }
     return path;
-}
-
-/**
- * 상담일지 deep link("보기/수정") 가 노출 가능한 일정인지 판정.
- * - 과거 또는 당일 (date <= today) 일정만 노출 (미래 제외)
- * - 상태가 COMPLETED 인 경우만 (BOOKED·CONFIRMED·TENTATIVE·CANCELLED 모두 제외)
- *   → 진행 중·예약 일정은 "상담일지 작성" 버튼으로 분기됨
- * - 휴가 이벤트는 비활성
- *
- * @param {object} schedule
- * @param {string} statusCode 정규화된 상태 코드
- * @param {boolean} isVacation 휴가 이벤트 여부
- * @param {Date} [now]
- * @returns {boolean}
- */
-function shouldShowConsultationLogLink(schedule, statusCode, isVacation, now = new Date()) {
-    if (!schedule || isVacation) {
-        return false;
-    }
-    if (!CONSULTATION_LOG_LINK_VISIBLE_STATUSES.includes(statusCode)) {
-        return false;
-    }
-    const sessionDate = toIsoDateString(
-        schedule.sessionDate || schedule.date || schedule.apiDate
-    );
-    if (!sessionDate) {
-        return false;
-    }
-    const todayIso = toIsoDateString(now);
-    if (!todayIso) {
-        return false;
-    }
-    return sessionDate <= todayIso;
-}
-
-/**
- * 「상담일지 작성」 버튼 노출 여부.
- * - CONFIRMED·IN_PROGRESS·TENTATIVE_PENDING_PAYMENT: 항상 노출 (record 있으면 수정 모드)
- * - COMPLETED: record 확정(true) 이면 「보기/수정」 링크가 담당하므로 숨김.
- *   미작성(false)·미조회(null, 조회 실패 포함) 는 노출 — 작성 진입점 유실 방지
- * - 그 외 상태(BOOKED·CANCELLED)·휴가·본문 권한 없는 역할(내담자·사무원)은 제외
- *
- * @param {string} statusCode 정규화된 상태 코드
- * @param {boolean|null} hasConsultationRecord 일지 존재 여부 (null = 미조회)
- * @param {boolean} isVacation
- * @param {boolean} bodyAccessDenied canAccessConsultationLogBody 가 false 인지
- * @returns {boolean}
- */
-function shouldShowConsultationLogWriteAction(statusCode, hasConsultationRecord, isVacation, bodyAccessDenied) {
-    if (isVacation || bodyAccessDenied) {
-        return false;
-    }
-    if (!CONSULTATION_LOG_WRITE_ACTION_STATUSES.includes(statusCode)) {
-        return false;
-    }
-    // 「보기/수정」 링크 대상 상태(COMPLETED)에서는 record 확정 시에만 링크에 양보 — 상호배타 유지
-    if (CONSULTATION_LOG_LINK_VISIBLE_STATUSES.includes(statusCode)) {
-        return hasConsultationRecord !== true;
-    }
-    return true;
 }
 
 /**
@@ -1011,21 +924,15 @@ const ScheduleDetailModal = ({
     const lifetimeSessionPast = lifetimeSessionInfo.past;
     const lifetimeSessionCurrent = lifetimeSessionInfo.current;
     const lifetimeSessionTotal = lifetimeSessionInfo.total;
-    const consultationLogActions = resolveConsultationLogActionVisibility(hasConsultationRecord);
-    const consultationLogWriteVisible = shouldShowConsultationLogWriteAction(
-        statusCodeForActions,
+    const consultationLogEntry = resolveScheduleConsultationLogEntry({
+        statusCode: statusCodeForActions,
         hasConsultationRecord,
-        isVacationEvent(),
-        !canOpenConsultationLog
-    );
-    const consultationLogLinkVisible = shouldShowConsultationLogLink(
-        displayData,
-        getStatusCodeValue(statusForDisplay),
-        isVacationEvent()
-    ) && canOpenConsultationLog && consultationLogActions.showView;
+        isVacation: isVacationEvent(),
+        canAccessBody: canOpenConsultationLog
+    });
     const completeActionAllowed = canCompleteScheduleNow({
-        date: toIsoDateString(displayData.sessionDate || displayData.date || displayData.apiDate),
-        startTime: displayData.apiStartTime || displayData.startTime
+        date: displayData.apiDate ?? displayData.sessionDate ?? displayData.date,
+        startTime: displayData.apiStartTime ?? displayData.startTime
     });
 
     const buildPartySummaryRows = (kind) => {
@@ -1147,6 +1054,40 @@ const ScheduleDetailModal = ({
             );
         }
 
+        /** 상담일지 진입 버튼 하나 — 일지 있으면 「보기/수정」, 없으면 「작성」(공통 규칙). */
+        const renderConsultationLogEntryButton = (writeTestId) => {
+            if (!consultationLogEntry.visible) {
+                return null;
+            }
+            if (consultationLogEntry.mode === CONSULTATION_LOG_ENTRY_MODE.VIEW) {
+                return (
+                    <ActionBarButton
+                        variant="outline"
+                        className="schedule-detail-modal__btn--log-link"
+                        onClick={handleOpenConsultationLogView}
+                        disabled={loading}
+                        aria-label={t(
+                            'schedule:ScheduleDetailModal.openConsultationLogViewAria',
+                            { date: toIsoDateString(displayData.sessionDate || displayData.date || displayData.apiDate) || '' }
+                        )}
+                        data-testid="schedule-detail-open-consultation-log"
+                    >
+                        {t('schedule:ScheduleDetailModal.openConsultationLogView')}
+                    </ActionBarButton>
+                );
+            }
+            return (
+                <ActionBarButton
+                    variant="outline"
+                    onClick={handleWriteConsultationLog}
+                    disabled={loading}
+                    data-testid={writeTestId}
+                >
+                    {t('schedule:ScheduleDetailModal.t_a0658140')}
+                </ActionBarButton>
+            );
+        };
+
         const renderRescheduleButton = () => (
             showRescheduleAction ? (
                 <ActionBarButton
@@ -1172,16 +1113,7 @@ const ScheduleDetailModal = ({
             <>
                 {paymentActions.showSameDayPaymentActivation ? (
                     <>
-                        {consultationLogWriteVisible && (
-                            <ActionBarButton
-                                variant="outline"
-                                onClick={handleWriteConsultationLog}
-                                disabled={loading}
-                                data-testid="schedule-detail-write-consultation-log-tentative"
-                            >
-                                {t('schedule:ScheduleDetailModal.t_a0658140')}
-                            </ActionBarButton>
-                        )}
+                        {renderConsultationLogEntryButton('schedule-detail-write-consultation-log-tentative')}
                         {typeof onCheckoutSameDay === 'function' ? (
                             <ActionBarButton
                                 variant="primary"
@@ -1214,16 +1146,7 @@ const ScheduleDetailModal = ({
                 ) : isBookedOrTentativePending() && (
                     <>
                         {renderRescheduleButton()}
-                        {consultationLogWriteVisible && (
-                            <ActionBarButton
-                                variant="outline"
-                                onClick={handleWriteConsultationLog}
-                                disabled={loading}
-                                data-testid="schedule-detail-write-consultation-log-tentative"
-                            >
-                                {t('schedule:ScheduleDetailModal.t_a0658140')}
-                            </ActionBarButton>
-                        )}
+                        {renderConsultationLogEntryButton('schedule-detail-write-consultation-log-tentative')}
                         {paymentActions.showScheduleConfirm && (
                             <ActionBarButton
                                 variant="primary"
@@ -1248,25 +1171,10 @@ const ScheduleDetailModal = ({
                     const completedStatus = scheduleStatusOptions.find(opt =>
                         opt.value === 'COMPLETED' || opt.label?.includes(t('schedule:ScheduleDetailModal.t_8d868037'))
                     )?.value || 'COMPLETED';
-                    /**
-                     * 작성 vs 보기/수정 상호배타 SSOT.
-                     * - 미작성(false) → 작성만 / 작성됨(true) → 보기·수정만(COMPLETED 가드)
-                     * - 조회 중(null) → 둘 다 비노출
-                     */
-                    const showWriteConsultationLog = canOpenConsultationLog && consultationLogActions.showWrite;
                     return (
                         <>
                             {renderRescheduleButton()}
-                            {showWriteConsultationLog && (
-                                <ActionBarButton
-                                    variant="outline"
-                                    onClick={handleWriteConsultationLog}
-                                    disabled={loading}
-                                    data-testid="schedule-detail-write-consultation-log"
-                                >
-                                    {t('schedule:ScheduleDetailModal.t_a0658140')}
-                                </ActionBarButton>
-                            )}
+                            {renderConsultationLogEntryButton('schedule-detail-write-consultation-log')}
                             <ActionBarButton
                                 variant="primary"
                                 onClick={() => handleStatusChange(completedStatus)}
@@ -1292,19 +1200,9 @@ const ScheduleDetailModal = ({
                     const bookedStatus = scheduleStatusOptions.find(opt =>
                         opt.value === 'BOOKED' || opt.label?.includes(t('schedule:ScheduleDetailModal.t_17f4b478'))
                     )?.value || 'BOOKED';
-                    const showWriteConsultationLogCompleted = canOpenConsultationLog && consultationLogActions.showWrite;
                     return (
                         <>
-                            {showWriteConsultationLogCompleted && (
-                                <ActionBarButton
-                                    variant="outline"
-                                    onClick={handleWriteConsultationLog}
-                                    disabled={loading}
-                                    data-testid="schedule-detail-write-consultation-log-completed"
-                                >
-                                    {t('schedule:ScheduleDetailModal.t_a0658140')}
-                                </ActionBarButton>
-                            )}
+                            {renderConsultationLogEntryButton('schedule-detail-write-consultation-log-completed')}
                             <ActionBarButton
                                 variant="outline"
                                 onClick={() => handleStatusChange(bookedStatus)}
@@ -1352,21 +1250,6 @@ const ScheduleDetailModal = ({
                         gap="md"
                         className="schedule-detail-modal__footer-actions mg-v2-ad-b0kla__modal-actions"
                     >
-                        {consultationLogLinkVisible && (
-                            <ActionBarButton
-                                variant="outline"
-                                className="schedule-detail-modal__btn--log-link"
-                                onClick={handleOpenConsultationLogView}
-                                disabled={loading}
-                                aria-label={t(
-                                    'schedule:ScheduleDetailModal.openConsultationLogViewAria',
-                                    { date: toIsoDateString(displayData.sessionDate || displayData.date || displayData.apiDate) || '' }
-                                )}
-                                data-testid="schedule-detail-open-consultation-log"
-                            >
-                                {t('schedule:ScheduleDetailModal.openConsultationLogView')}
-                            </ActionBarButton>
-                        )}
                         {renderMainActions()}
                     </ActionBar>
                 )}
@@ -1670,12 +1553,8 @@ export {
     resolveModalSessionSequence,
     resolveModalLifetimeSessionInfo,
     resolveConsultationLogOpenStrategy,
-    shouldShowConsultationLogLink,
-    shouldShowConsultationLogWriteAction,
     shouldShowRescheduleAction,
     toIsoDateString,
     buildUserManagementOpenPath,
-    CONSULTATION_LOG_LINK_VISIBLE_STATUSES,
-    CONSULTATION_LOG_WRITE_ACTION_STATUSES,
     RESCHEDULE_ACTION_ELIGIBLE_STATUSES
 };

@@ -111,6 +111,9 @@ jobs:
       - name: Staging CREATE + safe-replace for every deploy SQL
         run: bash scripts/automation/deployment/procedure-deploy-staging-mysql.test.sh
 
+      - name: db-diff normalized body hash matches ROUTINE_DEFINITION (same/differ/missing)
+        run: bash scripts/automation/deployment/procedure-deploy-db-diff.mysql.test.sh
+
       - name: Nightly prod-to-dev copy re-applies repo routines
         run: bash scripts/database/sync/prod-to-dev-daily.mysql.test.sh
 

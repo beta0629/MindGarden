@@ -29,7 +29,7 @@ on:
         type: string
         default: ""
       mode:
-        description: "비우면 변경 파일만. db-diff 는 DB 파라미터와 저장소 SQL이 다른 프로시저만"
+        description: "비우면 변경 파일만. db-diff 는 DB 파라미터·정규화 본문 해시가 저장소 SQL과 다른 프로시저만. db-diff-hash 는 이름·해시·상태만 출력(읽기 전용)"
         required: false
         type: string
         default: ""

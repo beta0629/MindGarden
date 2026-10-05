@@ -208,13 +208,81 @@ class OnboardingServiceTest {
         when(repository.save(any(OnboardingRequest.class))).thenReturn(testRequest);
 
         OnboardingRequest result = onboardingService.create(testTenantId, testTenantName,
-                "test-requester", RiskLevel.LOW, "{\"checklist\": []}", testBusinessType);
+                "test-requester", RiskLevel.LOW,
+                "{\"checklist\":[],\"contactEmail\":\"owner@example.com\"}", testBusinessType);
 
         assertThat(result).isNotNull();
         assertThat(result.getTenantId()).isEqualTo(testTenantId);
         assertThat(result.getTenantName()).isEqualTo(testTenantName);
         assertThat(result.getStatus()).isEqualTo(OnboardingStatus.PENDING);
         verify(repository, times(1)).save(any(OnboardingRequest.class));
+    }
+
+    @Test
+    @DisplayName("신청 생성: contactEmail 이 없으면 저장하지 않고 필수 상수 메시지로 거절한다")
+    void testCreate_missingContactEmail_rejected() {
+        assertThatThrownBy(() -> onboardingService.create(testTenantId, testTenantName,
+                "01012345678", RiskLevel.LOW, "{\"checklist\":[]}", testBusinessType))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage(OnboardingConstants.ERROR_ONBOARDING_CONTACT_EMAIL_REQUIRED_ON_CREATE);
+
+        verify(repository, never()).save(any(OnboardingRequest.class));
+    }
+
+    @Test
+    @DisplayName("신청 생성: contactEmail 형식이 아니면 저장하지 않고 형식 상수 메시지로 거절한다")
+    void testCreate_invalidContactEmail_rejected() {
+        assertThatThrownBy(() -> onboardingService.create(testTenantId, testTenantName,
+                "01012345678", RiskLevel.LOW,
+                "{\"contactEmail\":\"01012345678\"}", testBusinessType))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage(OnboardingConstants.ERROR_ONBOARDING_CONTACT_EMAIL_INVALID_ON_CREATE);
+
+        verify(repository, never()).save(any(OnboardingRequest.class));
+    }
+
+    @Test
+    @DisplayName("신청 생성: 테넌트에 있는 서브도메인은 가용성 검사와 같은 문장으로 거절한다")
+    void testCreate_duplicateTenantSubdomain_usesCheckMessage() {
+        when(tenantRepository.existsBySubdomain("taken-center")).thenReturn(true);
+
+        OnboardingService.SubdomainCheckResult check =
+                onboardingService.checkSubdomainDuplicate("taken-center");
+
+        assertThat(check.message())
+                .isEqualTo(OnboardingConstants.ERROR_ONBOARDING_SUBDOMAIN_TAKEN_BY_TENANT);
+        assertThat(check.isDuplicate()).isTrue();
+
+        assertThatThrownBy(() -> onboardingService.create(testTenantId, testTenantName,
+                "01012345678", RiskLevel.LOW,
+                "{\"contactEmail\":\"owner@example.com\",\"subdomain\":\"taken-center\"}",
+                testBusinessType))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage(check.message());
+
+        verify(repository, never()).save(any(OnboardingRequest.class));
+    }
+
+    @Test
+    @DisplayName("신청 생성: 진행 중 신청과 서브도메인이 같으면 가용성 검사와 같은 문장으로 거절한다")
+    void testCreate_duplicatePendingSubdomain_usesCheckMessage() {
+        when(tenantRepository.existsBySubdomain("pending-center")).thenReturn(false);
+        when(repository.existsBySubdomainAndPendingStatus("pending-center")).thenReturn(true);
+
+        OnboardingService.SubdomainCheckResult check =
+                onboardingService.checkSubdomainDuplicate("pending-center");
+
+        assertThat(check.message())
+                .isEqualTo(OnboardingConstants.ERROR_ONBOARDING_SUBDOMAIN_TAKEN_BY_REQUEST);
+
+        assertThatThrownBy(() -> onboardingService.create(testTenantId, testTenantName,
+                "01012345678", RiskLevel.LOW,
+                "{\"contactEmail\":\"owner@example.com\",\"subdomain\":\"Pending-Center\"}",
+                testBusinessType))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage(check.message());
+
+        verify(repository, never()).save(any(OnboardingRequest.class));
     }
 
     @Test

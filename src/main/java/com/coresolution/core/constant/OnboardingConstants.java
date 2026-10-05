@@ -78,6 +78,34 @@ public class OnboardingConstants {
     public static final String ERROR_ONBOARDING_ADMIN_PASSWORD_REQUIRED_ON_CREATE =
             "관리자 초기 비밀번호(adminPassword)는 필수입니다. checklist_json 또는 요청 본문에 포함해주세요.";
 
+    /**
+     * 신청 생성 시 관리자 연락 이메일이 없음.
+     * 화면 {@code ERROR_EMAIL_REQUIRED} 와 같은 문장이다.
+     */
+    public static final String ERROR_ONBOARDING_CONTACT_EMAIL_REQUIRED_ON_CREATE =
+            "이메일을 입력해주세요.";
+
+    /**
+     * 신청 생성 시 contactEmail 이 이메일 형식이 아님.
+     * 화면 {@code ERROR_EMAIL_INVALID} 와 같은 문장이다.
+     */
+    public static final String ERROR_ONBOARDING_CONTACT_EMAIL_INVALID_ON_CREATE =
+            "올바른 이메일 형식이 아닙니다. (예: user@example.com)";
+
+    /**
+     * 테넌트에 이미 있는 서브도메인.
+     * 가용성 API({@code checkSubdomainDuplicate})와 신청 생성이 이 문장만 쓴다.
+     */
+    public static final String ERROR_ONBOARDING_SUBDOMAIN_TAKEN_BY_TENANT =
+            "이미 사용 중인 서브도메인입니다. 다른 서브도메인을 선택해주세요.";
+
+    /**
+     * 진행 중 온보딩 신청에 이미 있는 서브도메인.
+     * 가용성 API와 신청 생성이 이 문장만 쓴다.
+     */
+    public static final String ERROR_ONBOARDING_SUBDOMAIN_TAKEN_BY_REQUEST =
+            "이미 신청 중인 서브도메인입니다. 다른 서브도메인을 선택해주세요.";
+
     /** checklist_json 안의 관리자 초기 비밀번호 키. 저장 값은 항상 BCrypt 해시(신규) — 응답·로그에 노출 금지 */
     public static final String CHECKLIST_KEY_ADMIN_PASSWORD = "adminPassword";
 

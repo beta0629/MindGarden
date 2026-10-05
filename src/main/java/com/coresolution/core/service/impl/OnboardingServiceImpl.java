@@ -158,6 +158,8 @@ public class OnboardingServiceImpl implements OnboardingService {
 
         log.info("온보딩 요청 생성 - region: {}, brandName: {}", region, brandName);
 
+        requireContactEmailOnCreate(checklistJson);
+
         // subdomain 추출 (checklistJson에서)
         String subdomain = null;
         if (checklistJson != null && !checklistJson.trim().isEmpty()) {
@@ -173,6 +175,8 @@ public class OnboardingServiceImpl implements OnboardingService {
                 log.debug("checklistJson에서 subdomain 추출 실패: {}", e.getMessage());
             }
         }
+
+        rejectUnavailableSubdomainOnCreate(subdomain);
 
         OnboardingRequest entity =
                 OnboardingRequest.builder().tenantId(tenantId).subdomain(subdomain) // 서브도메인 저장
@@ -248,6 +252,56 @@ public class OnboardingServiceImpl implements OnboardingService {
         }
     }
 
+    /**
+     * 신청 생성에 관리자 연락 이메일이 있는지 확인한다.
+     * 형식 판정은 승인과 같은 {@link OnboardingAdminContactEmailSupport#normalize} 이다.
+     *
+     * @param checklistJson 비밀번호 해시가 반영된 checklist_json
+     */
+    private void requireContactEmailOnCreate(String checklistJson) {
+        if (checklistJson == null || checklistJson.isBlank()) {
+            throw new IllegalArgumentException(
+                    OnboardingConstants.ERROR_ONBOARDING_CONTACT_EMAIL_REQUIRED_ON_CREATE);
+        }
+        Map<String, Object> checklist;
+        try {
+            checklist = objectMapper.readValue(checklistJson,
+                    new TypeReference<Map<String, Object>>() {});
+        } catch (JsonProcessingException e) {
+            throw new IllegalArgumentException(
+                    OnboardingConstants.ERROR_ONBOARDING_CHECKLIST_MERGE_FAILED, e);
+        }
+        if (checklist == null) {
+            throw new IllegalArgumentException(
+                    OnboardingConstants.ERROR_ONBOARDING_CONTACT_EMAIL_REQUIRED_ON_CREATE);
+        }
+        Object raw = checklist.get(OnboardingConstants.CHECKLIST_KEY_CONTACT_EMAIL);
+        if (!(raw instanceof String text) || text.isBlank()) {
+            throw new IllegalArgumentException(
+                    OnboardingConstants.ERROR_ONBOARDING_CONTACT_EMAIL_REQUIRED_ON_CREATE);
+        }
+        if (OnboardingAdminContactEmailSupport.normalize(text) == null) {
+            throw new IllegalArgumentException(
+                    OnboardingConstants.ERROR_ONBOARDING_CONTACT_EMAIL_INVALID_ON_CREATE);
+        }
+    }
+
+    /**
+     * 신청 생성 시 서브도메인이 있으면 가용성 API와 같은 {@link #checkSubdomainDuplicate(String)} 로 막는다.
+     * 비어 있으면 선택 값이므로 검사하지 않는다. 사용자 문장은 검사 결과의 message 만 쓴다.
+     *
+     * @param subdomain checklist 에서 정규화한 서브도메인. 없으면 null
+     */
+    private void rejectUnavailableSubdomainOnCreate(String subdomain) {
+        if (subdomain == null || subdomain.isBlank()) {
+            return;
+        }
+        OnboardingService.SubdomainCheckResult checkResult = checkSubdomainDuplicate(subdomain);
+        if (!checkResult.isValid() || !checkResult.available() || checkResult.isDuplicate()) {
+            throw new IllegalArgumentException(checkResult.message());
+        }
+    }
+
     @Override
     @Transactional(propagation = Propagation.REQUIRED, rollbackFor = Exception.class)
     public OnboardingRequest update(Long requestId, String tenantName, String subdomain,
@@ -292,8 +346,7 @@ public class OnboardingServiceImpl implements OnboardingService {
                             checkSubdomainDuplicate(normalizedSubdomain, request.getId());
                     if (!checkResult.isValid() || !checkResult.available()
                             || checkResult.isDuplicate()) {
-                        throw new IllegalArgumentException(
-                                String.format("서브도메인을 사용할 수 없습니다: %s", checkResult.message()));
+                        throw new IllegalArgumentException(checkResult.message());
                     }
                     request.setSubdomain(normalizedSubdomain);
                     log.info("✅ 서브도메인 수정: {}", normalizedSubdomain);
@@ -2869,7 +2922,7 @@ public class OnboardingServiceImpl implements OnboardingService {
         if (existsInTenants) {
             log.warn("서브도메인 중복 (테넌트): subdomain={}", normalizedSubdomain);
             return new OnboardingService.SubdomainCheckResult(true, false,
-                    "이미 사용 중인 서브도메인입니다. 다른 서브도메인을 선택해주세요.", true);
+                    OnboardingConstants.ERROR_ONBOARDING_SUBDOMAIN_TAKEN_BY_TENANT, true);
         }
 
         // 5. 온보딩 요청 테이블에서 중복 확인 (PENDING, IN_REVIEW, ON_HOLD 상태만)
@@ -2885,7 +2938,7 @@ public class OnboardingServiceImpl implements OnboardingService {
             log.warn("서브도메인 중복 (온보딩 요청): subdomain={}, excludeRequestId={}", normalizedSubdomain,
                     excludeRequestId);
             return new OnboardingService.SubdomainCheckResult(true, false,
-                    "이미 신청 중인 서브도메인입니다. 다른 서브도메인을 선택해주세요.", true);
+                    OnboardingConstants.ERROR_ONBOARDING_SUBDOMAIN_TAKEN_BY_REQUEST, true);
         }
 
         log.info("서브도메인 사용 가능: subdomain={}, excludeRequestId={}", normalizedSubdomain,

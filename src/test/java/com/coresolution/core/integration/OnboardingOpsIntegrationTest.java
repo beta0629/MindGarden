@@ -99,7 +99,7 @@ class OnboardingOpsIntegrationTest {
             testTenantName,
             "test-requester",
             RiskLevel.LOW,
-            "{\"checklist\": []}",
+            "{\"checklist\":[],\"contactEmail\":\"owner@example.com\"}",
             testBusinessType
         );
         
@@ -149,7 +149,7 @@ class OnboardingOpsIntegrationTest {
             testTenantName,
             "test-requester",
             RiskLevel.LOW,
-            "{\"checklist\": []}",
+            "{\"checklist\":[],\"contactEmail\":\"owner@example.com\"}",
             testBusinessType
         );
         
@@ -257,7 +257,7 @@ class OnboardingOpsIntegrationTest {
             testTenantName,
             "test-requester",
             RiskLevel.LOW,
-            "{\"checklist\": []}",
+            "{\"checklist\":[],\"contactEmail\":\"owner@example.com\"}",
             testBusinessType
         );
         

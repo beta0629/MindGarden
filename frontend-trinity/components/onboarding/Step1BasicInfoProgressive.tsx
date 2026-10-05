@@ -188,15 +188,10 @@ export default function Step1BasicInfoProgressive({
     },
     {
       id: 'contactEmail',
-      label: '이메일 (선택)',
-      required: false,
-      validation: (value: string) => {
-        if (!value || !value.trim()) {
-          return true;
-        }
-        return validateEmailFormat(value).valid;
-      },
-      placeholder: TRINITY_CONSTANTS.MESSAGES.PLACEHOLDER_EMAIL_OPTIONAL,
+      label: '이메일',
+      required: true,
+      validation: (value: string) => validateEmailFormat(value).valid,
+      placeholder: TRINITY_CONSTANTS.MESSAGES.PLACEHOLDER_EMAIL,
     },
     {
       id: 'adminPassword',
@@ -338,7 +333,7 @@ export default function Step1BasicInfoProgressive({
       return phoneResult.valid && phoneVerified;
     }
 
-    if (currentField.id === 'contactEmail' && value.trim()) {
+    if (currentField.id === 'contactEmail') {
       return validateEmailFormat(value).valid;
     }
 
@@ -610,11 +605,9 @@ export default function Step1BasicInfoProgressive({
                 onChange={(e) => {
                   const inputValue = e.target.value;
                   handleFieldChange(field.id, inputValue);
-                  if (field.id === 'contactEmail' && inputValue.trim()) {
+                  if (field.id === 'contactEmail') {
                     const emailValidation = validateEmailFormat(inputValue);
                     setEmailFormatError(emailValidation.valid ? null : emailValidation.error || null);
-                  } else if (field.id === 'contactEmail') {
-                    setEmailFormatError(null);
                   }
                 }}
                 onBlur={(e) => {

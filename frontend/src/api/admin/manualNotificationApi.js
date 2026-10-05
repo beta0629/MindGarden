@@ -3,7 +3,8 @@
  *
  * - 백엔드 컨트롤러: AdminManualNotificationController (P1.2)
  * - Base: /api/v1/admin/manual-notifications
- * - 권한: USER_ROLES.ADMIN / USER_ROLES.STAFF (그 외 403)
+ * - 권한: USER_ROLES.ADMIN / USER_ROLES.STAFF (그 외 403).
+ *   발송 작업(config·jobs/preview·jobs·jobs/{id}) 은 테넌트 ADMIN 전용.
  * - 모든 호출은 StandardizedApi 를 통해 수행되며, tenantId 헤더 및
  *   에러 핸들링은 표준 래퍼가 처리한다.
  *
@@ -51,8 +52,46 @@ export const MANUAL_NOTIFICATION_ENDPOINTS = Object.freeze({
    * @returns {string}
    */
   BATCH_DETAIL: (batchId) => `${BASE_PATH}/batches/${encodeURIComponent(String(batchId ?? ''))}`,
-  HISTORY: `${BASE_PATH}/history`
+  HISTORY: `${BASE_PATH}/history`,
+  CONFIG: `${BASE_PATH}/config`,
+  JOB_PREVIEW: `${BASE_PATH}/jobs/preview`,
+  JOBS: `${BASE_PATH}/jobs`,
+  /**
+   * @param {string} jobId
+   * @returns {string}
+   */
+  JOB_DETAIL: (jobId) => `${BASE_PATH}/jobs/${encodeURIComponent(String(jobId ?? ''))}`
 });
+
+/** 수신자 모드 (ManualNotificationJobRequest.recipientMode). */
+export const MANUAL_NOTIFICATION_RECIPIENT_MODE = Object.freeze({
+  SELECTED: 'SELECTED',
+  ALL_CLIENTS: 'ALL_CLIENTS'
+});
+
+/** 발송 작업 상태 (ManualNotificationJobStatus). */
+export const MANUAL_NOTIFICATION_JOB_STATUS = Object.freeze({
+  PENDING: 'PENDING',
+  RUNNING: 'RUNNING',
+  COMPLETED: 'COMPLETED',
+  FAILED: 'FAILED'
+});
+
+/** 수신자별 발송 상태 (ManualNotificationDeliveryStatus). */
+export const MANUAL_NOTIFICATION_DELIVERY_STATUS = Object.freeze({
+  PENDING: 'PENDING',
+  DISPATCHING: 'DISPATCHING',
+  SENT: 'SENT',
+  FAILED: 'FAILED',
+  SKIPPED: 'SKIPPED'
+});
+
+/**
+ * @param {string} status 작업 상태
+ * @returns {boolean} 종료 상태면 true
+ */
+export const isManualNotificationJobTerminal = (status) => status === MANUAL_NOTIFICATION_JOB_STATUS.COMPLETED
+  || status === MANUAL_NOTIFICATION_JOB_STATUS.FAILED;
 
 /** 채널 enum (백엔드 BulkNotificationResponse.channel 과 동일 문자열). */
 export const MANUAL_NOTIFICATION_CHANNEL = Object.freeze({
@@ -85,12 +124,29 @@ export const MANUAL_NOTIFICATION_ERROR_CODES = Object.freeze({
   PHONE_NOT_SUPPORTED_FOR_PUSH: 'PHONE_NOT_SUPPORTED_FOR_PUSH',
   /** 2026-05-27 userIds·phoneNumbers 모두 비어 있음. */
   RECIPIENTS_REQUIRED: 'RECIPIENTS_REQUIRED',
-  /** 2026-05-27 userIds + phoneNumbers 합산 50명 초과. */
-  RECIPIENTS_LIMIT_EXCEEDED: 'RECIPIENTS_LIMIT_EXCEEDED'
+  /** 최종 수신자 수가 서버 상한(notification.manual.max-recipients) 초과. */
+  RECIPIENTS_LIMIT_EXCEEDED: 'RECIPIENTS_LIMIT_EXCEEDED',
+  /** 확인(미리보기) 이후 대상 집합이 바뀜 — 다시 확인 필요. */
+  RECIPIENT_SET_CHANGED: 'RECIPIENT_SET_CHANGED',
+  /** 제외 목록 상한 초과. */
+  EXCLUSIONS_LIMIT_EXCEEDED: 'EXCLUSIONS_LIMIT_EXCEEDED',
+  /** 요청 형식 오류. */
+  INVALID_REQUEST: 'INVALID_REQUEST',
+  /** 발송 작업 없음(다른 테넌트 포함). */
+  JOB_NOT_FOUND: 'JOB_NOT_FOUND',
+  /** 발송 시점에 대상 조건을 잃어 건너뜀. */
+  RECIPIENT_NO_LONGER_ELIGIBLE: 'RECIPIENT_NO_LONGER_ELIGIBLE',
+  /** 프로바이더 호출 중 서버 중단 — 중복 방지를 위해 재발송하지 않음. */
+  DISPATCH_OUTCOME_UNKNOWN: 'DISPATCH_OUTCOME_UNKNOWN'
 });
 
-/** 수신자 최대 선택 인원 (백엔드 검증과 동일하게 유지: 1~50). */
-export const MANUAL_NOTIFICATION_MAX_RECIPIENTS = 50;
+/**
+ * 서버 상한(GET config)을 못 받았을 때만 쓰는 폴백. 실제 상한은 서버 {@code notification.manual.max-recipients}.
+ */
+export const MANUAL_NOTIFICATION_FALLBACK_MAX_RECIPIENTS = 500;
+
+/** 발송 작업 진행 조회 간격(ms). */
+export const MANUAL_NOTIFICATION_JOB_POLL_INTERVAL_MS = 2000;
 
 /** 발송 사유 최대 길이 (백엔드 @Size 와 동일). */
 export const MANUAL_NOTIFICATION_REASON_MAX_LENGTH = 500;
@@ -221,7 +277,7 @@ export const fetchLiveTemplates = async() => {
  * SMS 일괄 발송 (BulkSmsManualRequest).
  *
  * <p>2026-05-27 — {@code phoneNumbers} 필드 추가(PHONE 모드). {@code userIds} 와 합산하여
- * 최대 50명. 둘 다 비어 있으면 백엔드가 {@code RECIPIENTS_REQUIRED} 로 차단한다.
+ * 서버 상한(notification.manual.max-recipients) 이하. 둘 다 비어 있으면 {@code RECIPIENTS_REQUIRED}.
  *
  * @param {{ userIds?: number[], phoneNumbers?: string[], content: string, reason: string }} payload
  * @returns {Promise<any>}
@@ -238,7 +294,7 @@ export const sendSmsBatch = async(payload) => {
  * 카카오 알림톡 일괄 발송 (BulkAlimtalkManualRequest).
  *
  * <p>2026-05-27 — {@code phoneNumbers} 필드 추가(PHONE 모드). {@code userIds} 와 합산하여
- * 최대 50명. 솔라피 검수 통과 후 PHONE 모드 알림톡 정상화.
+ * 서버 상한 이하. 솔라피 검수 통과 후 PHONE 모드 알림톡 정상화.
  *
  * @param {{
  *   userIds?: number[],
@@ -310,6 +366,76 @@ export const fetchHistory = async(params = {}) => {
 };
 
 /**
+ * 발송 작업 화면 설정(서버 단일 수신자 상한).
+ * @returns {Promise<{maxRecipients:number, previewSize:number, maxExclusions:number}>}
+ */
+export const fetchManualNotificationConfig = async() => {
+  return StandardizedApi.get(MANUAL_NOTIFICATION_ENDPOINTS.CONFIG);
+};
+
+/**
+ * 발송 확인 단계 — 서버가 대상 집합을 확정해 인원·제외·마스킹 미리보기·snapshotToken 을 돌려준다.
+ * @param {object} payload ManualNotificationJobRequest
+ * @returns {Promise<any>}
+ */
+export const previewManualNotificationJob = async(payload) => {
+  try {
+    return await StandardizedApi.post(MANUAL_NOTIFICATION_ENDPOINTS.JOB_PREVIEW, payload);
+  } catch (err) {
+    throw wrapError(err, '발송 대상 확인에 실패했습니다.');
+  }
+};
+
+/**
+ * 발송 작업 생성 — 작업 id 를 바로 돌려주고 발송은 서버 백그라운드에서 진행된다.
+ * @param {object} payload ManualNotificationJobRequest (+ idempotencyKey, snapshotToken)
+ * @returns {Promise<any>}
+ */
+export const createManualNotificationJob = async(payload) => {
+  try {
+    return await StandardizedApi.post(MANUAL_NOTIFICATION_ENDPOINTS.JOBS, payload);
+  } catch (err) {
+    throw wrapError(err, '발송 작업을 시작하지 못했습니다.');
+  }
+};
+
+/**
+ * 발송 작업 진행·요약.
+ * @param {string} jobId
+ * @param {{ includeRecords?: boolean }} [options]
+ * @returns {Promise<any>}
+ */
+export const fetchManualNotificationJob = async(jobId, { includeRecords = false } = {}) => {
+  return StandardizedApi.get(MANUAL_NOTIFICATION_ENDPOINTS.JOB_DETAIL(jobId),
+    includeRecords ? { includeRecords: true } : {});
+};
+
+/**
+ * 발송 작업 API 오류에서 errorCode·메시지를 꺼낸다.
+ * @param {*} err
+ * @returns {{ code: (string|null), message: (string|null), status: (number|null) }}
+ */
+export const extractManualNotificationJobError = (err) => {
+  const data = err?.response?.data ?? null;
+  return {
+    code: data?.errorCode ?? err?.code ?? null,
+    message: data?.message ?? err?.message ?? null,
+    status: err?.status ?? err?.response?.status ?? null
+  };
+};
+
+/**
+ * 멱등 키 생성(발송 확인 1회당 1개).
+ * @returns {string}
+ */
+export const createManualNotificationIdempotencyKey = () => {
+  if (typeof window !== 'undefined' && window.crypto && typeof window.crypto.randomUUID === 'function') {
+    return window.crypto.randomUUID();
+  }
+  return `mn-${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
+};
+
+/**
  * BulkNotificationResponse 정규화 헬퍼. 표준 envelope/raw 모두 수용.
  * @param {*} response
  * @returns {{
@@ -359,7 +485,11 @@ export default {
   MANUAL_NOTIFICATION_CHANNEL,
   MANUAL_NOTIFICATION_TEMPLATE_SOURCE,
   MANUAL_NOTIFICATION_ERROR_CODES,
-  MANUAL_NOTIFICATION_MAX_RECIPIENTS,
+  MANUAL_NOTIFICATION_RECIPIENT_MODE,
+  MANUAL_NOTIFICATION_JOB_STATUS,
+  MANUAL_NOTIFICATION_DELIVERY_STATUS,
+  MANUAL_NOTIFICATION_FALLBACK_MAX_RECIPIENTS,
+  MANUAL_NOTIFICATION_JOB_POLL_INTERVAL_MS,
   MANUAL_NOTIFICATION_REASON_MAX_LENGTH,
   MANUAL_NOTIFICATION_REASON_RECOMMENDED_MIN_LENGTH,
   MANUAL_NOTIFICATION_SMS_CONTENT_MAX_LENGTH,
@@ -377,5 +507,12 @@ export default {
   sendPushBatch,
   fetchBatchDetail,
   fetchHistory,
+  fetchManualNotificationConfig,
+  previewManualNotificationJob,
+  createManualNotificationJob,
+  fetchManualNotificationJob,
+  extractManualNotificationJobError,
+  createManualNotificationIdempotencyKey,
+  isManualNotificationJobTerminal,
   normalizeBulkResponse
 };

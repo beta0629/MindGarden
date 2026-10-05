@@ -2,15 +2,14 @@
  * 어드민 SMS·카카오 알림톡 수동 일괄 발송 폼 (Organism).
  *
  * - 채널: SMS / 알림톡 (`TabChipRow`)
- * - 수신자: `RecipientPicker` 분자 (50명 상한)
+ * - 수신 대상: 직접 선택 / 전체 내담자(제외할 사람만 선택). 최종 대상은 서버가 확정한다.
+ * - 수신자 상한: 서버 설정(GET config)값, 못 받으면 폴백.
  * - 알림톡: 템플릿 선택(공통코드/라이브 토글) + 변수 입력 + 본문 미리보기
  *   (회귀 방지를 위해 `TestNotificationForm` 의 알림톡 섹션 UX 를 동일 구조로 차용)
  * - 발송 사유: 필수, 30자 미만 권장 warning (hard limit X)
- * - 발송 흐름:
- *    ≤ 5명 → 즉시 API 호출
- *    ≥ 6명 → `UnifiedModal` 2-step (STEP_1 미리보기 → STEP_2 최종 확인 체크박스)
- * - 응답 결과 → `BatchResultModal` 노출, 성공 시 부모 `onBatchSent` 호출하여
- *   `ManualNotificationBatchHistory` 자동 새로고침.
+ * - 발송 흐름: 서버 미리보기(최종 인원·제외·마스킹 미리보기·snapshotToken) → 확인 모달 「○명에게 발송」
+ *   → 발송 작업 생성(즉시 작업 id) → 진행 모달(폴링) → 종료 시 `BatchResultModal` 로 수신자별 결과.
+ *   확인 이후 대상이 바뀌면 서버가 409 로 막고 다시 확인하게 한다.
  *
  * 디자인 토큰: `unified-design-tokens.css` 만 사용. 인라인 스타일 0건.
  * React #130 방어: `toDisplayString` 적용.
@@ -23,20 +22,23 @@
  * @since 2026-05-23
  */
 
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { SettingsButton, SettingsNotice, SettingsSectionPanel } from '../settings-shell';
 import TabChipRow from '../../common/TabChipRow';
 import StatusBadge from '../../common/StatusBadge';
 import SettingSwitchRow from '../../common/molecules/SettingSwitchRow';
-import UnifiedModal from '../../common/modals/UnifiedModal';
 import { toDisplayString } from '../../../utils/safeDisplay';
 import { normalizeApiListPayload } from '../../../constants/adminWebScaffold';
+import { USER_ROLES } from '../../../constants/roles';
+import useManualNotificationLimit from '../../../hooks/useManualNotificationLimit';
+import useManualNotificationJobPolling from '../../../hooks/useManualNotificationJobPolling';
 import {
   MANUAL_NOTIFICATION_CHANNEL,
   MANUAL_NOTIFICATION_TEMPLATE_SOURCE,
   MANUAL_NOTIFICATION_ERROR_CODES,
-  MANUAL_NOTIFICATION_MAX_RECIPIENTS,
+  MANUAL_NOTIFICATION_RECIPIENT_MODE,
+  MANUAL_NOTIFICATION_DELIVERY_STATUS,
   MANUAL_NOTIFICATION_REASON_MAX_LENGTH,
   MANUAL_NOTIFICATION_REASON_RECOMMENDED_MIN_LENGTH,
   MANUAL_NOTIFICATION_SMS_CONTENT_MAX_LENGTH,
@@ -48,31 +50,59 @@ import {
   searchRecipients,
   fetchCommonCodeTemplates,
   fetchLiveTemplates,
-  sendSmsBatch,
-  sendAlimtalkBatch,
-  sendPushBatch,
-  normalizeBulkResponse
+  previewManualNotificationJob,
+  createManualNotificationJob,
+  extractManualNotificationJobError,
+  createManualNotificationIdempotencyKey
 } from '../../../api/admin/manualNotificationApi';
 import RecipientPicker from './RecipientPicker';
 import BatchResultModal from './BatchResultModal';
+import ManualNotificationJobConfirmModal from './ManualNotificationJobConfirmModal';
+import ManualNotificationJobProgressModal from './ManualNotificationJobProgressModal';
 import './ManualNotificationForm.css';
 
 const FORM_CLASS = 'mg-manual-notif-form';
 const RECIPIENT_DEBOUNCE_MS = 300;
-const IMMEDIATE_SEND_THRESHOLD = 5;
 const ADMIN_ROUTES_TEST_NOTIFICATION = '/admin/test-notification';
 
-/** UnifiedModal 단계 식별자. */
-const CONFIRM_STEP = Object.freeze({
-  CLOSED: 'closed',
-  STEP_1: 'step1',
-  STEP_2: 'step2'
-});
+/**
+ * 발송 작업 응답(includeRecords) → BatchResultModal 입력 형태.
+ * @param {object} job ManualNotificationJobResponse
+ * @returns {object}
+ */
+export const mapJobToBatchResult = (job) => {
+  const records = Array.isArray(job?.records) ? job.records : [];
+  return {
+    batchId: job?.jobId ?? '',
+    channel: job?.channel ?? '',
+    startedAt: job?.startedAt ?? job?.createdAt ?? '',
+    totalCount: Number(job?.totalCount ?? records.length),
+    successCount: Number(job?.sentCount ?? 0),
+    failureCount: Number(job?.failedCount ?? 0),
+    batchErrorCode: job?.errorCode ?? null,
+    batchErrorMessage: null,
+    success: job?.status !== 'FAILED',
+    results: records.map((r) => ({
+      userId: r?.userId ?? null,
+      name: r?.nameMasked ?? '',
+      phoneMasked: r?.phoneMasked ?? '',
+      status: r?.status ?? null,
+      success: r?.status === MANUAL_NOTIFICATION_DELIVERY_STATUS.SENT,
+      errorCode: r?.errorCode ?? (r?.status === MANUAL_NOTIFICATION_DELIVERY_STATUS.SENT ? null : r?.providerResultCode ?? null),
+      errorMessage: r?.errorMessage ?? null
+    }))
+  };
+};
 
 const ManualNotificationForm = ({ onBatchSent }) => {
   const { t } = useTranslation('admin');
+  const { maxRecipients, maxExclusions } = useManualNotificationLimit();
 
   const [channel, setChannel] = useState(MANUAL_NOTIFICATION_CHANNEL.SMS);
+  const [recipientMode, setRecipientMode] = useState(MANUAL_NOTIFICATION_RECIPIENT_MODE.SELECTED);
+  const isAllMode = recipientMode === MANUAL_NOTIFICATION_RECIPIENT_MODE.ALL_CLIENTS;
+  const [excludedUsers, setExcludedUsers] = useState([]);
+  const [marketing, setMarketing] = useState(false);
 
   const [recipientQuery, setRecipientQuery] = useState('');
   const [recipientOptions, setRecipientOptions] = useState([]);
@@ -98,10 +128,18 @@ const ManualNotificationForm = ({ onBatchSent }) => {
 
   const [reason, setReason] = useState('');
 
-  const [confirmStep, setConfirmStep] = useState(CONFIRM_STEP.CLOSED);
-  const [confirmChecked, setConfirmChecked] = useState(false);
+  const [preview, setPreview] = useState(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [confirmError, setConfirmError] = useState(null);
+  const [recipientSetChanged, setRecipientSetChanged] = useState(false);
+  const [formError, setFormError] = useState(null);
+  const idempotencyKeyRef = useRef(null);
 
   const [submitting, setSubmitting] = useState(false);
+  const [jobId, setJobId] = useState(null);
+  const [createdJob, setCreatedJob] = useState(null);
+  const { job, done: jobDone, error: jobPollError } = useManualNotificationJobPolling(jobId);
   const [resultModalOpen, setResultModalOpen] = useState(false);
   const [lastResult, setLastResult] = useState(null);
 
@@ -110,7 +148,9 @@ const ManualNotificationForm = ({ onBatchSent }) => {
     const handle = window.setTimeout(async() => {
       setRecipientLoading(true);
       try {
-        const raw = await searchRecipients({ search: recipientQuery.trim() });
+        const raw = await searchRecipients(isAllMode
+          ? { search: recipientQuery.trim(), role: USER_ROLES.CLIENT }
+          : { search: recipientQuery.trim() });
         if (cancelled) {
           return;
         }
@@ -130,7 +170,7 @@ const ManualNotificationForm = ({ onBatchSent }) => {
       cancelled = true;
       window.clearTimeout(handle);
     };
-  }, [recipientQuery]);
+  }, [recipientQuery, isAllMode]);
 
   useEffect(() => {
     let cancelled = false;
@@ -183,11 +223,16 @@ const ManualNotificationForm = ({ onBatchSent }) => {
   // 2026-05-27 — PHONE 모드 지원 채널(SMS·알림톡). PUSH 는 토큰 매핑 필수라서 PHONE 미지원.
   const isPhoneModeChannel = channel === MANUAL_NOTIFICATION_CHANNEL.SMS
     || channel === MANUAL_NOTIFICATION_CHANNEL.ALIMTALK;
+  const showPhoneInput = isPhoneModeChannel && !isAllMode;
   const totalRecipients = selectedUsers.length
-    + (isPhoneModeChannel ? phoneList.length : 0);
+    + (showPhoneInput ? phoneList.length : 0);
+  const exclusionsOverLimit = isAllMode && maxExclusions != null && excludedUsers.length > maxExclusions;
 
   const isAllRequiredFilled = useMemo(() => {
-    if (totalRecipients === 0 || totalRecipients > MANUAL_NOTIFICATION_MAX_RECIPIENTS) {
+    if (!isAllMode && (totalRecipients === 0 || totalRecipients > maxRecipients)) {
+      return false;
+    }
+    if (exclusionsOverLimit) {
       return false;
     }
     if (reasonTrimmedLength === 0 || reason.length > MANUAL_NOTIFICATION_REASON_MAX_LENGTH) {
@@ -216,8 +261,8 @@ const ManualNotificationForm = ({ onBatchSent }) => {
       return !value || !String(value).trim();
     });
     return !missingRequired;
-  }, [totalRecipients, reasonTrimmedLength, reason, channel, smsContent, pushTitle, pushBody,
-    templateCode, templateVariableDefs, templateParams]);
+  }, [isAllMode, totalRecipients, maxRecipients, exclusionsOverLimit, reasonTrimmedLength, reason, channel,
+    smsContent, pushTitle, pushBody, templateCode, templateVariableDefs, templateParams]);
 
   /**
    * 사용자 입력 휴대전화를 검증한다 — 단계: trim → 정규화(하이픈·공백 제거) → 정규식 → 중복.
@@ -259,14 +304,14 @@ const ManualNotificationForm = ({ onBatchSent }) => {
       setPhoneError(t('manualNotification.phone.duplicate'));
       return;
     }
-    if (selectedUsers.length + phoneList.length >= MANUAL_NOTIFICATION_MAX_RECIPIENTS) {
-      setPhoneError(t('manualNotification.phone.limitReached'));
+    if (selectedUsers.length + phoneList.length >= maxRecipients) {
+      setPhoneError(t('manualNotification.phone.limitReached', { max: maxRecipients }));
       return;
     }
     setPhoneList((prev) => [...prev, normalized]);
     setPhoneDraft('');
     setPhoneError('');
-  }, [phoneDraft, phoneList, selectedUsers.length, t]);
+  }, [phoneDraft, phoneList, selectedUsers.length, maxRecipients, t]);
 
   const removePhone = useCallback((index) => {
     setPhoneList((prev) => prev.filter((_, i) => i !== index));
@@ -287,17 +332,25 @@ const ManualNotificationForm = ({ onBatchSent }) => {
     }
   }, [channel, phoneList.length, phoneDraft, phoneError]);
 
-  const buildPayload = useCallback(() => {
-    const userIds = selectedUsers
+  const buildJobPayload = useCallback(() => {
+    const toIds = (list) => list
       .map((u) => Number(u.userId))
       .filter((n) => Number.isFinite(n) && n > 0);
-    // PUSH 채널은 PHONE 모드 미지원 — 백엔드 가드와 일관되도록 payload 에 phoneNumbers 포함 X.
-    const includePhones = channel !== MANUAL_NOTIFICATION_CHANNEL.PUSH && phoneList.length > 0;
     const base = {
-      userIds,
+      channel,
+      recipientMode,
       reason: reason.trim(),
-      ...(includePhones ? { phoneNumbers: phoneList } : {})
+      marketing
     };
+    if (isAllMode) {
+      base.excludeIds = toIds(excludedUsers);
+    } else {
+      base.userIds = toIds(selectedUsers);
+      // PUSH 채널은 PHONE 모드 미지원 — 백엔드 가드와 일관되도록 payload 에 phoneNumbers 포함 X.
+      if (channel !== MANUAL_NOTIFICATION_CHANNEL.PUSH && phoneList.length > 0) {
+        base.phoneNumbers = phoneList;
+      }
+    }
     if (channel === MANUAL_NOTIFICATION_CHANNEL.SMS) {
       return { ...base, content: smsContent.trim() };
     }
@@ -312,101 +365,128 @@ const ManualNotificationForm = ({ onBatchSent }) => {
         : MANUAL_NOTIFICATION_TEMPLATE_SOURCE.COMMON_CODE,
       templateParams: templateParams || {}
     };
-  }, [selectedUsers, phoneList, reason, channel, smsContent, pushTitle, pushBody, templateCode,
-    templatesLive, templateParams]);
+  }, [channel, recipientMode, reason, marketing, isAllMode, excludedUsers, selectedUsers, phoneList,
+    smsContent, pushTitle, pushBody, templateCode, templatesLive, templateParams]);
+
+  const describeJobError = useCallback((err) => {
+    const { code, message } = extractManualNotificationJobError(err);
+    if (message) {
+      return message;
+    }
+    const resolvedCode = code || MANUAL_NOTIFICATION_ERROR_CODES.SEND_FAILED;
+    return t(`manualNotification.errors.${resolvedCode}`, {
+      max: maxRecipients,
+      defaultValue: t('manualNotification.errors.sendFailed')
+    });
+  }, [maxRecipients, t]);
+
+  const runPreview = useCallback(async() => {
+    if (!isAllRequiredFilled || previewLoading || submitting) {
+      return;
+    }
+    setFormError(null);
+    setPreviewLoading(true);
+    try {
+      const res = await previewManualNotificationJob(buildJobPayload());
+      if (!res) {
+        return;
+      }
+      setPreview(res);
+      idempotencyKeyRef.current = createManualNotificationIdempotencyKey();
+      setRecipientSetChanged(false);
+      setConfirmError(null);
+      setConfirmOpen(true);
+    } catch (err) {
+      console.error('수동 발송 대상 확인 실패:', err);
+      setFormError(describeJobError(err));
+    } finally {
+      setPreviewLoading(false);
+    }
+  }, [isAllRequiredFilled, previewLoading, submitting, buildJobPayload, describeJobError]);
 
   const closeConfirm = useCallback(() => {
-    setConfirmStep(CONFIRM_STEP.CLOSED);
-    setConfirmChecked(false);
-  }, []);
+    if (submitting) {
+      return;
+    }
+    setConfirmOpen(false);
+    setConfirmError(null);
+    setRecipientSetChanged(false);
+  }, [submitting]);
 
-  const doSend = useCallback(async() => {
-    if (!isAllRequiredFilled || submitting) {
+  const handleConfirmSend = useCallback(async() => {
+    if (!preview || submitting) {
       return;
     }
     setSubmitting(true);
+    setConfirmError(null);
     try {
-      const payload = buildPayload();
-      let response;
-      if (channel === MANUAL_NOTIFICATION_CHANNEL.SMS) {
-        response = await sendSmsBatch(payload);
-      } else if (channel === MANUAL_NOTIFICATION_CHANNEL.PUSH) {
-        response = await sendPushBatch(payload);
-      } else {
-        response = await sendAlimtalkBatch(payload);
-      }
-
-      const normalized = normalizeBulkResponse(response);
-      const success = response?.success !== false;
-      setLastResult({
-        ...normalized,
-        success,
-        message: response?.message ?? null
+      const res = await createManualNotificationJob({
+        ...buildJobPayload(),
+        idempotencyKey: idempotencyKeyRef.current,
+        snapshotToken: preview.snapshotToken
       });
-      closeConfirm();
-      setResultModalOpen(true);
-
-      const batchBlocked = !success
-        || (normalized.batchErrorCode != null && normalized.successCount === 0);
-      if (!batchBlocked && typeof onBatchSent === 'function') {
-        onBatchSent(normalized);
+      if (!res) {
+        return;
       }
+      setConfirmOpen(false);
+      setCreatedJob(res);
+      setJobId(res.jobId || null);
     } catch (err) {
-      console.error('수동 발송 실패:', err);
-      const code = err?.code
-        ?? err?.response?.data?.errorCode
-        ?? MANUAL_NOTIFICATION_ERROR_CODES.SEND_FAILED;
-      const message = err?.response?.data?.message
-        || err?.message
-        || t(`manualNotification.errors.${code}`, t('manualNotification.errors.sendFailed'));
-      setLastResult({
-        batchId: '',
-        channel,
-        startedAt: '',
-        totalCount: totalRecipients,
-        successCount: 0,
-        failureCount: totalRecipients,
-        batchErrorCode: code,
-        batchErrorMessage: message,
-        results: [],
-        success: false,
-        message
-      });
-      closeConfirm();
-      setResultModalOpen(true);
+      console.error('수동 발송 작업 시작 실패:', err);
+      const { code } = extractManualNotificationJobError(err);
+      if (code === MANUAL_NOTIFICATION_ERROR_CODES.RECIPIENT_SET_CHANGED) {
+        setRecipientSetChanged(true);
+      }
+      setConfirmError(describeJobError(err));
     } finally {
       setSubmitting(false);
     }
-  }, [isAllRequiredFilled, submitting, buildPayload, channel, totalRecipients, closeConfirm,
-    onBatchSent, t]);
+  }, [preview, submitting, buildJobPayload, describeJobError]);
+
+  const handleRecheck = useCallback(() => {
+    setConfirmOpen(false);
+    runPreview();
+  }, [runPreview]);
+
+  useEffect(() => {
+    if (!jobDone || !job) {
+      return;
+    }
+    setLastResult(mapJobToBatchResult(job));
+    setJobId(null);
+    setResultModalOpen(true);
+    if (typeof onBatchSent === 'function') {
+      onBatchSent(job);
+    }
+  }, [jobDone, job, onBatchSent]);
+
+  const handleProgressClose = useCallback(() => {
+    setJobId(null);
+    if (typeof onBatchSent === 'function') {
+      onBatchSent(job);
+    }
+  }, [job, onBatchSent]);
 
   const handleSendClick = () => {
-    if (!isAllRequiredFilled || submitting) {
-      return;
-    }
-    if (totalRecipients <= IMMEDIATE_SEND_THRESHOLD) {
-      doSend();
-      return;
-    }
-    setConfirmStep(CONFIRM_STEP.STEP_1);
-    setConfirmChecked(false);
+    runPreview();
   };
+
+  const recipientModeOptions = useMemo(() => [
+    { key: MANUAL_NOTIFICATION_RECIPIENT_MODE.SELECTED, label: t('manualNotification.job.modeSelected') },
+    { key: MANUAL_NOTIFICATION_RECIPIENT_MODE.ALL_CLIENTS, label: t('manualNotification.job.modeAll') }
+  ], [t]);
+
+  const handleRecipientModeChange = useCallback((next) => {
+    setRecipientMode(next);
+    setRecipientQuery('');
+    setMaxExceededWarning(false);
+  }, []);
 
   const channelOptions = useMemo(() => [
     { key: MANUAL_NOTIFICATION_CHANNEL.SMS, label: t('manualNotification.channel.sms', 'SMS') },
     { key: MANUAL_NOTIFICATION_CHANNEL.ALIMTALK, label: t('manualNotification.channel.alimtalk') },
     { key: MANUAL_NOTIFICATION_CHANNEL.PUSH, label: t('manualNotification.channel.push') }
   ], [t]);
-
-  const channelLabel = useMemo(() => {
-    if (channel === MANUAL_NOTIFICATION_CHANNEL.SMS) {
-      return t('manualNotification.channel.sms', 'SMS');
-    }
-    if (channel === MANUAL_NOTIFICATION_CHANNEL.PUSH) {
-      return t('manualNotification.channel.push');
-    }
-    return t('manualNotification.channel.alimtalk');
-  }, [channel, t]);
 
   const handleLimitExceeded = useCallback(() => {
     setMaxExceededWarning(true);
@@ -416,60 +496,6 @@ const ManualNotificationForm = ({ onBatchSent }) => {
   const handleResultClose = useCallback(() => {
     setResultModalOpen(false);
   }, []);
-
-  const renderConfirmSummary = () => (
-    <ul className={`${FORM_CLASS}__summary`}>
-      <li>
-        <strong>{t('manualNotification.summary.channel')}:</strong>{' '}
-        {channelLabel}
-      </li>
-      <li>
-        <strong>{t('manualNotification.summary.recipientCount')}:</strong>{' '}
-        {t('manualNotification.summary.recipientCountValue', {
-          count: totalRecipients,
-          defaultValue: '{{count}}명'
-        })}
-        {phoneList.length > 0 && (
-          <span className={`${FORM_CLASS}__hint`}>
-            {' '}
-            ({t('manualNotification.summary.recipientCountValue', {
-              count: selectedUsers.length,
-              defaultValue: '{{count}}명'
-            })}
-            {' + '}
-            {t('manualNotification.phone.summaryRow', {
-              count: phoneList.length,
-              defaultValue: '전화번호 직접 입력 {{count}}건'
-            })})
-          </span>
-        )}
-      </li>
-      {phoneList.length > 0 && (
-        <li>
-          <strong>{t('manualNotification.phone.title')}:</strong>{' '}
-          {phoneList.map((p) => maskManualNotificationPhoneForDisplay(p)).join(', ')}
-        </li>
-      )}
-      {channel === MANUAL_NOTIFICATION_CHANNEL.ALIMTALK && templateCode && (
-        <>
-          <li>
-            <strong>{t('manualNotification.summary.templateCode')}:</strong>{' '}
-            {toDisplayString(templateCode, '-')}
-          </li>
-          <li>
-            <strong>{t('manualNotification.summary.templateSource')}:</strong>{' '}
-            {templatesLive
-              ? MANUAL_NOTIFICATION_TEMPLATE_SOURCE.SOLAPI
-              : MANUAL_NOTIFICATION_TEMPLATE_SOURCE.COMMON_CODE}
-          </li>
-        </>
-      )}
-      <li>
-        <strong>{t('manualNotification.summary.reason')}:</strong>{' '}
-        {toDisplayString(reason, '-')}
-      </li>
-    </ul>
-  );
 
   return (
     <article className={FORM_CLASS} aria-label={t('manualNotification.page.title')}>
@@ -496,41 +522,90 @@ const ManualNotificationForm = ({ onBatchSent }) => {
 
       <SettingsSectionPanel
         headingLevel={3}
-        title={t('manualNotification.recipient.title')}
+        title={t('manualNotification.job.modeLabel')}
       >
-        <RecipientPicker
-          value={selectedUsers}
-          onChange={setSelectedUsers}
-          query={recipientQuery}
-          onQueryChange={setRecipientQuery}
-          options={recipientOptions}
-          loading={recipientLoading}
-          maxCount={MANUAL_NOTIFICATION_MAX_RECIPIENTS - (isPhoneModeChannel ? phoneList.length : 0)}
-          onLimitExceeded={handleLimitExceeded}
+        <TabChipRow
+          items={recipientModeOptions}
+          activeKey={recipientMode}
+          onChange={handleRecipientModeChange}
+          ariaLabel={t('manualNotification.job.modeLabel')}
         />
-        {maxExceededWarning && (
-          <p className={`${FORM_CLASS}__inline-error`} role="alert">
-            {t('manualNotification.recipient.maxError', {
-              max: MANUAL_NOTIFICATION_MAX_RECIPIENTS,
-              defaultValue: '최대 {{max}}명까지 선택할 수 있습니다.'
-            })}
+        {isAllMode && (
+          <p className="mg-v2-settings-field__hint" data-testid="manual-notif-all-mode-hint">
+            {t('manualNotification.job.allModeHint')}
           </p>
         )}
-        {isPhoneModeChannel && (selectedUsers.length > 0 || phoneList.length > 0) && (
-          <p className="mg-v2-settings-field__hint">
-            {t('manualNotification.recipient.totalCounter', {
-              total: totalRecipients,
-              max: MANUAL_NOTIFICATION_MAX_RECIPIENTS,
-              users: selectedUsers.length,
-              phones: phoneList.length,
-              defaultValue:
-                '총 수신자 {{total}} / {{max}} (등록 {{users}}명 + 전화번호 {{phones}}건)'
-            })}
-          </p>
-        )}
+        <SettingSwitchRow
+          id="manual-notif-marketing"
+          label={t('manualNotification.job.marketingLabel')}
+          checked={marketing}
+          onCheckedChange={(next) => setMarketing(Boolean(next))}
+          ariaLabel={t('manualNotification.job.marketingLabel')}
+        />
       </SettingsSectionPanel>
 
-      {isPhoneModeChannel && (
+      {isAllMode ? (
+        <SettingsSectionPanel
+          headingLevel={3}
+          title={t('manualNotification.job.excludeTitle')}
+          description={t('manualNotification.job.excludeHint')}
+        >
+          <RecipientPicker
+            value={excludedUsers}
+            onChange={setExcludedUsers}
+            query={recipientQuery}
+            onQueryChange={setRecipientQuery}
+            options={recipientOptions}
+            loading={recipientLoading}
+            maxCount={maxExclusions ?? Number.MAX_SAFE_INTEGER}
+            onLimitExceeded={handleLimitExceeded}
+            requirePhone={false}
+          />
+          {(maxExceededWarning || exclusionsOverLimit) && (
+            <p className={`${FORM_CLASS}__inline-error`} role="alert">
+              {t('manualNotification.job.excludeMaxError', { max: maxExclusions })}
+            </p>
+          )}
+        </SettingsSectionPanel>
+      ) : (
+        <SettingsSectionPanel
+          headingLevel={3}
+          title={t('manualNotification.recipient.title', { max: maxRecipients })}
+        >
+          <RecipientPicker
+            value={selectedUsers}
+            onChange={setSelectedUsers}
+            query={recipientQuery}
+            onQueryChange={setRecipientQuery}
+            options={recipientOptions}
+            loading={recipientLoading}
+            maxCount={maxRecipients - (showPhoneInput ? phoneList.length : 0)}
+            onLimitExceeded={handleLimitExceeded}
+          />
+          {maxExceededWarning && (
+            <p className={`${FORM_CLASS}__inline-error`} role="alert">
+              {t('manualNotification.recipient.maxError', {
+                max: maxRecipients,
+                defaultValue: '최대 {{max}}명까지 선택할 수 있습니다.'
+              })}
+            </p>
+          )}
+          {showPhoneInput && (selectedUsers.length > 0 || phoneList.length > 0) && (
+            <p className="mg-v2-settings-field__hint">
+              {t('manualNotification.recipient.totalCounter', {
+                total: totalRecipients,
+                max: maxRecipients,
+                users: selectedUsers.length,
+                phones: phoneList.length,
+                defaultValue:
+                  '총 수신자 {{total}} / {{max}} (등록 {{users}}명 + 전화번호 {{phones}}건)'
+              })}
+            </p>
+          )}
+        </SettingsSectionPanel>
+      )}
+
+      {showPhoneInput && (
         <SettingsSectionPanel
           headingLevel={3}
           title={t('manualNotification.phone.title')}
@@ -561,7 +636,7 @@ const ManualNotificationForm = ({ onBatchSent }) => {
               disabled={
                 !phoneDraft.trim()
                   || Boolean(phoneError)
-                  || selectedUsers.length + phoneList.length >= MANUAL_NOTIFICATION_MAX_RECIPIENTS
+                  || selectedUsers.length + phoneList.length >= maxRecipients
               }
               onClick={addPhone}
             >
@@ -846,99 +921,44 @@ const ManualNotificationForm = ({ onBatchSent }) => {
         </div>
       </SettingsSectionPanel>
 
+      {formError && (
+        <SettingsNotice tone="danger" role="alert" testId="manual-notif-form-error">
+          {toDisplayString(formError, '')}
+        </SettingsNotice>
+      )}
+
       <div className="mg-v2-settings-actions">
         <SettingsButton
           type="button"
           variant="primary"
           preventDoubleClick
-          loading={submitting}
-          disabled={!isAllRequiredFilled || submitting}
+          loading={previewLoading}
+          disabled={!isAllRequiredFilled || previewLoading || submitting || Boolean(jobId)}
           onClick={handleSendClick}
         >
-          {submitting
-            ? t('manualNotification.submit.sending')
-            : t('manualNotification.submit.send')}
+          {previewLoading
+            ? t('manualNotification.job.previewing')
+            : t('manualNotification.job.preview')}
         </SettingsButton>
       </div>
 
-      <UnifiedModal
-        isOpen={confirmStep === CONFIRM_STEP.STEP_1}
+      <ManualNotificationJobConfirmModal
+        isOpen={confirmOpen}
+        preview={preview}
+        submitting={submitting}
+        errorMessage={confirmError}
+        setChanged={recipientSetChanged}
         onClose={closeConfirm}
-        title={t('manualNotification.submit.confirmStep1Title')}
-        subtitle={t('manualNotification.submit.confirmStep1Subtitle')}
-        size="medium"
-        actions={(
-          <>
-            <SettingsButton
-              type="button"
-              variant="outline"
-              preventDoubleClick
-              onClick={closeConfirm}
-            >
-              {t('manualNotification.submit.cancel')}
-            </SettingsButton>
-            <SettingsButton
-              type="button"
-              variant="primary"
-              preventDoubleClick
-              onClick={() => {
-                setConfirmStep(CONFIRM_STEP.STEP_2);
-                setConfirmChecked(false);
-              }}
-            >
-              {t('manualNotification.submit.confirmStep1Next')}
-            </SettingsButton>
-          </>
-        )}
-      >
-        {renderConfirmSummary()}
-      </UnifiedModal>
+        onConfirm={handleConfirmSend}
+        onRecheck={handleRecheck}
+      />
 
-      <UnifiedModal
-        isOpen={confirmStep === CONFIRM_STEP.STEP_2}
-        onClose={closeConfirm}
-        title={t('manualNotification.submit.confirmStep2Title')}
-        subtitle={t('manualNotification.submit.confirmStep2Subtitle')}
-        size="small"
-        variant="confirm"
-        loading={submitting}
-        actions={(
-          <>
-            <SettingsButton
-              type="button"
-              variant="outline"
-              preventDoubleClick
-              onClick={closeConfirm}
-              disabled={submitting}
-            >
-              {t('manualNotification.submit.cancel')}
-            </SettingsButton>
-            <SettingsButton
-              type="button"
-              variant="danger"
-              preventDoubleClick
-              loading={submitting}
-              disabled={!confirmChecked || submitting}
-              onClick={doSend}
-            >
-              {t('manualNotification.submit.confirmStep2Send')}
-            </SettingsButton>
-          </>
-        )}
-      >
-        {renderConfirmSummary()}
-        <label className={`${FORM_CLASS}__confirm-checkbox`}>
-          <input
-            type="checkbox"
-            checked={confirmChecked}
-            onChange={(e) => setConfirmChecked(e.target.checked)}
-            disabled={submitting}
-          />
-          <span>
-            {t('manualNotification.submit.confirmCheckbox')}
-          </span>
-        </label>
-      </UnifiedModal>
+      <ManualNotificationJobProgressModal
+        isOpen={Boolean(jobId)}
+        job={job || createdJob}
+        pollError={jobPollError}
+        onClose={handleProgressClose}
+      />
 
       <BatchResultModal
         isOpen={resultModalOpen}

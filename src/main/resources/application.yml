@@ -714,6 +714,33 @@ kakao:
 notification:
   batch:
     alimtalk-enabled: ${NOTIFICATION_BATCH_ALIMTALK_ENABLED:false}
+  # 어드민 수동 다중 발송(SMS·알림톡·푸시) — 수신자 상한 단일 설정 + 비동기 발송 작업 (PR AD, 2026-10-05)
+  manual:
+    max-recipients: ${NOTIFICATION_MANUAL_MAX_RECIPIENTS:500}
+    preview-size: ${NOTIFICATION_MANUAL_PREVIEW_SIZE:10}
+    max-exclusions: ${NOTIFICATION_MANUAL_MAX_EXCLUSIONS:5000}
+    job:
+      # REAL = 프로바이더 실호출 / DRY_RUN = 같은 기록 경로, 프로바이더 호출만 생략(.dev 는 application-dev.yml)
+      provider-mode: ${MANUAL_NOTIFICATION_PROVIDER_MODE:REAL}
+      auto-launch: ${MANUAL_NOTIFICATION_JOB_AUTO_LAUNCH:true}
+      lease-seconds: ${MANUAL_NOTIFICATION_JOB_LEASE_SECONDS:120}
+      recovery-enabled: ${MANUAL_NOTIFICATION_JOB_RECOVERY_ENABLED:true}
+      recovery-interval-ms: ${MANUAL_NOTIFICATION_JOB_RECOVERY_INTERVAL_MS:60000}
+      pending-grace-seconds: ${MANUAL_NOTIFICATION_JOB_PENDING_GRACE_SECONDS:30}
+      recovery-batch-size: ${MANUAL_NOTIFICATION_JOB_RECOVERY_BATCH_SIZE:5}
+      executor-pool-size: ${MANUAL_NOTIFICATION_JOB_EXECUTOR_POOL_SIZE:2}
+      executor-queue-capacity: ${MANUAL_NOTIFICATION_JOB_EXECUTOR_QUEUE_CAPACITY:50}
+      # 솔라피(SMS·알림톡): 수신자별 결과가 필요해 요청 1건 = 메시지 1건(send-many/detail 단건). 청크는 기록·로그·점유 갱신 단위.
+      sms:
+        chunk-size: ${MANUAL_NOTIFICATION_SMS_CHUNK_SIZE:100}
+        per-second: ${MANUAL_NOTIFICATION_SMS_PER_SECOND:10}
+      alimtalk:
+        chunk-size: ${MANUAL_NOTIFICATION_ALIMTALK_CHUNK_SIZE:100}
+        per-second: ${MANUAL_NOTIFICATION_ALIMTALK_PER_SECOND:10}
+      # Expo Push API: 요청당 최대 100건(MobilePushDispatchConstants.EXPO_MESSAGES_PER_REQUEST_MAX), 프로젝트당 초당 600건
+      push:
+        chunk-size: ${MANUAL_NOTIFICATION_PUSH_CHUNK_SIZE:100}
+        per-second: ${MANUAL_NOTIFICATION_PUSH_PER_SECOND:600}
 
 # =====================================================
 # 어드민 도구 — SMS·카카오 알림톡 테스트 발송 (2026-05-22)

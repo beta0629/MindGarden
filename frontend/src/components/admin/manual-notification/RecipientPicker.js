@@ -3,8 +3,9 @@
  *
  * - 검색 입력(debounce 300ms) + 검색 결과 리스트 + 선택된 수신자 칩(Chip)
  * - 공통 모듈 우선 정책: 선택 행위 자체는 `BadgeSelect multiple={true}` 위임.
- * - 50명 상한(`MANUAL_NOTIFICATION_MAX_RECIPIENTS`) 가드: 초과 시도 시
+ * - 상한(`maxCount`, 부모가 서버 설정값 전달) 가드: 초과 시도 시
  *   `onLimitExceeded` 콜백을 트리거(부모가 인라인 경고 노출).
+ * - `requirePhone=false` 이면 휴대전화 없는 사람도 고를 수 있다(전체 발송 제외 목록용).
  * - 모든 표시 값은 `toDisplayString` 으로 React #130(객체 자식 렌더) 방어.
  * - 인라인 스타일 0건. 모든 토큰은 CSS 클래스 + `unified-design-tokens.css`.
  *
@@ -27,7 +28,7 @@ import React, { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { SettingsButton } from '../settings-shell';
 import { toDisplayString } from '../../../utils/safeDisplay';
-import { MANUAL_NOTIFICATION_MAX_RECIPIENTS } from '../../../api/admin/manualNotificationApi';
+import { MANUAL_NOTIFICATION_FALLBACK_MAX_RECIPIENTS } from '../../../api/admin/manualNotificationApi';
 
 const RECIPIENT_PICKER_CLASS = 'mg-manual-notif-recipient-picker';
 
@@ -96,7 +97,8 @@ const RecipientChip = ({ recipient, onRemove, removeAriaLabel }) => (
  *   loading?: boolean,
  *   maxCount?: number,
  *   onLimitExceeded?: function,
- *   disabled?: boolean
+ *   disabled?: boolean,
+ *   requirePhone?: boolean
  * }} props
  */
 const RecipientPicker = ({
@@ -106,9 +108,10 @@ const RecipientPicker = ({
   onQueryChange,
   options = [],
   loading = false,
-  maxCount = MANUAL_NOTIFICATION_MAX_RECIPIENTS,
+  maxCount = MANUAL_NOTIFICATION_FALLBACK_MAX_RECIPIENTS,
   onLimitExceeded,
-  disabled = false
+  disabled = false,
+  requirePhone = true
 }) => {
   const { t } = useTranslation('admin');
 
@@ -128,7 +131,7 @@ const RecipientPicker = ({
     if (disabled) {
       return;
     }
-    if (!recipient || !recipient.hasPhone) {
+    if (!recipient || (requirePhone && !recipient.hasPhone)) {
       return;
     }
     if (selectedIds.has(String(recipient.userId))) {
@@ -141,7 +144,7 @@ const RecipientPicker = ({
       return;
     }
     onChange([...value, recipient]);
-  }, [disabled, selectedIds, value, maxCount, onLimitExceeded, onChange]);
+  }, [disabled, requirePhone, selectedIds, value, maxCount, onLimitExceeded, onChange]);
 
   const handleRemove = useCallback((recipient) => {
     if (disabled) {
@@ -161,16 +164,16 @@ const RecipientPicker = ({
       }
       return;
     }
-    const addable = visibleAddable.filter((opt) => opt.hasPhone).slice(0, remaining);
+    const eligible = visibleAddable.filter((opt) => !requirePhone || opt.hasPhone);
+    const addable = eligible.slice(0, remaining);
     if (addable.length === 0) {
       return;
     }
-    if (visibleAddable.filter((opt) => opt.hasPhone).length > remaining
-      && typeof onLimitExceeded === 'function') {
+    if (eligible.length > remaining && typeof onLimitExceeded === 'function') {
       onLimitExceeded();
     }
     onChange([...value, ...addable]);
-  }, [disabled, maxCount, value, visibleAddable, onLimitExceeded, onChange]);
+  }, [disabled, requirePhone, maxCount, value, visibleAddable, onLimitExceeded, onChange]);
 
   const handleClearAll = useCallback(() => {
     if (disabled) {
@@ -248,7 +251,7 @@ const RecipientPicker = ({
           <ul className={`${RECIPIENT_PICKER_CLASS}__results-list`}>
             {normalizedOptions.map((opt) => {
               const selected = selectedIds.has(String(opt.userId));
-              const cantSelect = !opt.hasPhone;
+              const cantSelect = requirePhone && !opt.hasPhone;
               return (
                 <li
                   key={String(opt.userId)}
@@ -261,7 +264,7 @@ const RecipientPicker = ({
                     <span className={`${RECIPIENT_PICKER_CLASS}__result-meta`}>
                       {toDisplayString(opt.role, '역할 미지정')}
                       {' · '}
-                      {cantSelect
+                      {!opt.hasPhone
                         ? t('manualNotification.recipient.noPhone')
                         : toDisplayString(opt.phoneMasked, '번호 없음')}
                     </span>

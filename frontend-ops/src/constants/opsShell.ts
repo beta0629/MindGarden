@@ -1,43 +1,23 @@
 /**
- * Ops Shell Phase 1 — LNB IA · quiet chrome labels (과밀 금지: 3항만)
- * LNB 순서: 테넌트 · PG 승인 · 현황
+ * Ops Shell paths kept for existing screens.
+ * Rail labels and order live in opsNav.ts.
  *
  * @author CoreSolution
  * @since 2026-09-08
  */
 
+import { OPS_NAV_PATH } from './opsNav';
+
 export const OPS_SHELL_BRAND = 'Ops' as const;
 
 export const OPS_SHELL_PRODUCT_COPY = 'ops · 테넌트 격리' as const;
 
-export const OPS_SHELL_LNB_LABELS = {
-  OVERVIEW: '현황',
-  PG_APPROVAL: 'PG 승인',
-  TENANTS: '테넌트'
-} as const;
-
 export const OPS_SHELL_PATHS = {
-  OVERVIEW: '/dashboard',
-  PG_APPROVAL: '/pg-approval',
-  TENANTS: '/tenants',
+  OVERVIEW: OPS_NAV_PATH.OVERVIEW,
+  PG_APPROVAL: OPS_NAV_PATH.PG_APPROVAL,
+  TENANTS: OPS_NAV_PATH.TENANT_LIST,
   LOGIN: '/auth/login'
 } as const;
-
-/** Phase 1 primary LNB — 테넌트(main) · PG 승인 · 현황(summary) */
-export const OPS_SHELL_LNB_ITEMS = [
-  {
-    href: OPS_SHELL_PATHS.TENANTS,
-    label: OPS_SHELL_LNB_LABELS.TENANTS
-  },
-  {
-    href: OPS_SHELL_PATHS.PG_APPROVAL,
-    label: OPS_SHELL_LNB_LABELS.PG_APPROVAL
-  },
-  {
-    href: OPS_SHELL_PATHS.OVERVIEW,
-    label: OPS_SHELL_LNB_LABELS.OVERVIEW
-  }
-] as const;
 
 export const OPS_OVERVIEW_COPY = {
   TITLE: '현황',
@@ -53,12 +33,3 @@ export const OPS_PUBLIC_PATH_PREFIXES = [
   '/api/auth/login',
   '/api/auth/logout'
 ] as const;
-
-export const OPS_SHELL_CHROME = {
-  MENU_LABEL: '메뉴',
-  BACK_LABEL: '뒤로',
-  MENU_GLYPH: '☰',
-  BACK_GLYPH: '←',
-  NAV_LABEL: 'Ops 좌측 메뉴',
-  LOGIN: '로그인'
-} as const;

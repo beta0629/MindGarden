@@ -4,6 +4,7 @@ name: 🔒 Deploy no-overwrite freeze gate (6-item)
 # session-transfer-history / CardBillingProgress / prepaid 10만 비표시
 # 하나라도 FAIL → job fail (배포·머지 중단). DATAFIX 0 · 부분 tip 금지.
 # 문서: docs/deployment/DEPLOY_NO_OVERWRITE_GATE.md
+# freeze-gate 는 운영 화면 같은 SHA 세트 게이트(frontend-prod-set-gate.sh) 테스트도 돌린다.
 # procedure-staging-mysql: 일회용 MySQL 8.0(개발·운영과 같은 메이저)에 저장소의 모든 배포 SQL 을
 # 실제 safe-replace 경로로 적용하고, 야간 운영→개발 복사 후 루틴 재적용을 끝까지 검사한다.
 
@@ -16,6 +17,9 @@ on:
       - 'src/main/resources/db/migration/**'
       - 'src/main/resources/sql/procedures/**'
       - 'scripts/deployment/check-deploy-no-overwrite-symbols.sh'
+      - 'scripts/deployment/frontend-prod-set-gate.sh'
+      - 'scripts/deployment/frontend-prod-set-gate.test.sh'
+      - '.github/workflows/deploy-unified-production.yml'
       - 'docs/deployment/DEPLOY_NO_OVERWRITE_GATE.md'
       - '.cursor/skills/core-solution-deployment/**'
       - '.github/workflows/deploy-no-overwrite-gate.yml'
@@ -36,6 +40,9 @@ on:
       - 'src/main/resources/db/migration/**'
       - 'src/main/resources/sql/procedures/**'
       - 'scripts/deployment/check-deploy-no-overwrite-symbols.sh'
+      - 'scripts/deployment/frontend-prod-set-gate.sh'
+      - 'scripts/deployment/frontend-prod-set-gate.test.sh'
+      - '.github/workflows/deploy-unified-production.yml'
       - 'docs/deployment/DEPLOY_NO_OVERWRITE_GATE.md'
       - '.cursor/skills/core-solution-deployment/**'
       - '.github/workflows/deploy-no-overwrite-gate.yml'
@@ -65,6 +72,9 @@ jobs:
         run: |
           chmod +x scripts/deployment/check-deploy-no-overwrite-symbols.sh
           ./scripts/deployment/check-deploy-no-overwrite-symbols.sh --source-root .
+
+      - name: Frontend prod same-SHA set gate tests
+        run: bash scripts/deployment/frontend-prod-set-gate.test.sh
 
   procedure-staging-mysql:
     name: Procedure staging CREATE (MySQL 8.0, all deploy SQL)

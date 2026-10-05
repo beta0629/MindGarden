@@ -325,6 +325,8 @@ export const TRINITY_CONSTANTS = {
     // 이메일 관련 에러
     ERROR_EMAIL_REQUIRED: '이메일을 입력해주세요.',
     ERROR_EMAIL_INVALID: '올바른 이메일 형식이 아닙니다. (예: user@example.com)',
+    /** 가용성 API message 가 비어 있을 때만 쓰는 폴백. 중복 문장은 서버 응답을 그대로 쓴다. */
+    ERROR_SUBDOMAIN_UNAVAILABLE: '사용할 수 없는 서브도메인입니다.',
     ERROR_EMAIL_LOCAL_REQUIRED: '이메일 아이디를 입력해주세요.',
     ERROR_EMAIL_LOCAL_TOO_LONG: '이메일 아이디는 64자 이하여야 합니다.',
     ERROR_EMAIL_LOCAL_INVALID: '이메일 아이디에 사용할 수 없는 문자가 포함되어 있습니다.',

@@ -22,6 +22,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import com.coresolution.core.constant.OnboardingConstants;
 import com.coresolution.core.domain.Tenant;
 import com.coresolution.core.domain.onboarding.OnboardingRequest;
 import com.coresolution.core.domain.onboarding.OnboardingStatus;
@@ -339,12 +340,14 @@ class OnboardingAdminPasswordHashFlowTest {
     }
 
     @Test
-    @DisplayName("반례: null checklist 는 그대로 통과(인코딩 없음)")
-    void create_nullChecklist_passesThrough() {
-        OnboardingRequest saved = createWithChecklist(null);
+    @DisplayName("checklist 가 없으면 비밀번호를 해시하지 않고 이메일 필수 메시지로 거절한다")
+    void create_nullChecklist_rejectsMissingEmailWithoutHashing() {
+        assertThatThrownBy(() -> createWithChecklist(null))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage(OnboardingConstants.ERROR_ONBOARDING_CONTACT_EMAIL_REQUIRED_ON_CREATE);
 
-        assertThat(saved.getChecklistJson()).isNull();
         verify(passwordService, never()).encodePassword(anyString());
+        verify(repository, never()).save(any(OnboardingRequest.class));
     }
 
     @Test

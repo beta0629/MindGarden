@@ -17,7 +17,6 @@ import {
 import { STATUS } from '../../constants/schedule';
 import {
   ADMIN_LIST_FETCH_MARKER,
-  ADMIN_LIST_GET_ALL_SIZE_EQ_COUNT_MAX,
   adminClientsWithMappingGet,
   adminClientsWithMappingGetAll,
   adminClientsWithStatsGet,
@@ -31,8 +30,19 @@ import {
   adminScheduleControllerListGetAll,
   buildAdminListParams,
   buildAdminListUrl,
-  ADMIN_LIST_DRAIN_PAGE_SIZE
+  ADMIN_LIST_DRAIN_PAGE_SIZE,
+  adminPendingPaymentMappingsGetAll,
+  adminPendingDepositMappingsGet,
+  adminPendingDepositMappingsGetAll,
+  adminSessionExtensionPendingPaymentGetAll
 } from '../adminListFetch';
+
+const pendingFns = {
+  adminPendingPaymentMappingsGetAll,
+  adminPendingDepositMappingsGet,
+  adminPendingDepositMappingsGetAll,
+  adminSessionExtensionPendingPaymentGetAll
+};
 
 jest.mock('../../utils/standardizedApi', () => ({
   __esModule: true,
@@ -205,23 +215,13 @@ describe('adminListFetch', () => {
     const scheduleId = (n) => ({ id: n, scheduleId: n, status: 'TENTATIVE_PENDING_PAYMENT' });
     const clientId = (n) => ({ id: n, name: `client-${n}` });
 
-    it('adminMappingsListGetAll — size=total fast-path after drain size 200', async() => {
+    it('adminMappingsListGetAll — page 단위 drain (size=total 단일 전체 조회 금지)', async() => {
       const total = ADMIN_LIST_DRAIN_PAGE_SIZE + 45;
       const page0 = Array.from({ length: ADMIN_LIST_DRAIN_PAGE_SIZE }, (_, i) => mappingId(i + 1));
-      const allItems = Array.from({ length: total }, (_, i) => mappingId(i + 1));
+      const page1 = Array.from({ length: 45 }, (_, i) => mappingId(ADMIN_LIST_DRAIN_PAGE_SIZE + i + 1));
       StandardizedApi.get
-        .mockResolvedValueOnce({
-          mappings: page0,
-          count: total,
-          page: 0,
-          size: ADMIN_LIST_DRAIN_PAGE_SIZE
-        })
-        .mockResolvedValueOnce({
-          mappings: allItems,
-          count: total,
-          page: 0,
-          size: total
-        });
+        .mockResolvedValueOnce({ mappings: page0, count: total, page: 0, size: ADMIN_LIST_DRAIN_PAGE_SIZE })
+        .mockResolvedValueOnce({ mappings: page1, count: total, page: 1, size: ADMIN_LIST_DRAIN_PAGE_SIZE });
 
       const result = await adminMappingsListGetAll();
 
@@ -229,17 +229,15 @@ describe('adminListFetch', () => {
       expect(result.count).toBe(total);
       expect(StandardizedApi.get).toHaveBeenCalledTimes(2);
       expect(StandardizedApi.get).toHaveBeenNthCalledWith(
-        1,
-        API_ENDPOINTS.ADMIN.MAPPINGS.LIST,
-        expect.objectContaining({ page: 0, size: ADMIN_LIST_DRAIN_PAGE_SIZE }),
-        {}
-      );
-      expect(StandardizedApi.get).toHaveBeenNthCalledWith(
         2,
         API_ENDPOINTS.ADMIN.MAPPINGS.LIST,
-        expect.objectContaining({ page: 0, size: total }),
+        expect.objectContaining({ page: 1, size: ADMIN_LIST_DRAIN_PAGE_SIZE }),
         {}
       );
+      StandardizedApi.get.mock.calls.forEach(([, params]) => {
+        expect(params.size).toBeLessThanOrEqual(ADMIN_LIST_DRAIN_PAGE_SIZE);
+        expect(params.size).not.toBe(total);
+      });
     });
 
     it('adminMappingsListGetAll — size always forced even if extra omits size', async() => {
@@ -281,23 +279,13 @@ describe('adminListFetch', () => {
       );
     });
 
-    it('adminSchedulesListGetAll — size=total fast-path after drain size 200', async() => {
+    it('adminSchedulesListGetAll — page 단위 drain (size=total 단일 전체 조회 금지)', async() => {
       const total = ADMIN_LIST_DRAIN_PAGE_SIZE + 45;
       const page0 = Array.from({ length: ADMIN_LIST_DRAIN_PAGE_SIZE }, (_, i) => scheduleId(i + 1));
-      const allItems = Array.from({ length: total }, (_, i) => scheduleId(i + 1));
+      const page1 = Array.from({ length: 45 }, (_, i) => scheduleId(ADMIN_LIST_DRAIN_PAGE_SIZE + i + 1));
       StandardizedApi.get
-        .mockResolvedValueOnce({
-          schedules: page0,
-          count: total,
-          page: 0,
-          size: ADMIN_LIST_DRAIN_PAGE_SIZE
-        })
-        .mockResolvedValueOnce({
-          schedules: allItems,
-          count: total,
-          page: 0,
-          size: total
-        });
+        .mockResolvedValueOnce({ schedules: page0, count: total, page: 0, size: ADMIN_LIST_DRAIN_PAGE_SIZE })
+        .mockResolvedValueOnce({ schedules: page1, count: total, page: 1, size: ADMIN_LIST_DRAIN_PAGE_SIZE });
 
       const result = await adminSchedulesListGetAll();
 
@@ -317,7 +305,7 @@ describe('adminListFetch', () => {
       expect(StandardizedApi.get).toHaveBeenNthCalledWith(
         2,
         API_ADMIN_SCHEDULES,
-        expect.objectContaining({ page: 0, size: total }),
+        expect.objectContaining({ page: 1, size: ADMIN_LIST_DRAIN_PAGE_SIZE }),
         {}
       );
     });
@@ -371,103 +359,32 @@ describe('adminListFetch', () => {
       expect(ADMIN_LIST_FETCH_MARKER).toBe('p0-schedules-admin-page-size-20260924');
     });
 
-    it('adminClientsWithMappingGetAll — first request size=cap (500) when caller omits size', async() => {
-      const page0 = Array.from({ length: 20 }, (_, i) => clientId(i + 1));
-      const all73 = Array.from({ length: 73 }, (_, i) => clientId(i + 1));
-      StandardizedApi.get
-        .mockResolvedValueOnce({ clients: page0, count: 73, page: 0, size: 500 })
-        .mockResolvedValueOnce({ clients: all73, count: 73, page: 0, size: 73 });
+    it('adminClientsWithMappingGetAll — first request size=ADMIN_LIST_DRAIN_PAGE_SIZE when caller omits size', async() => {
+      StandardizedApi.get.mockResolvedValueOnce({
+        clients: Array.from({ length: 3 }, (_, i) => clientId(i + 1)),
+        count: 3,
+        page: 0,
+        size: ADMIN_LIST_DRAIN_PAGE_SIZE
+      });
 
-      const result = await adminClientsWithMappingGetAll();
+      await adminClientsWithMappingGetAll();
 
-      expect(result.clients).toHaveLength(73);
-      expect(result.count).toBe(73);
-      expect(ADMIN_LIST_GET_ALL_SIZE_EQ_COUNT_MAX).toBe(500);
       expect(StandardizedApi.get).toHaveBeenNthCalledWith(
         1,
         API_ENDPOINTS.ADMIN.CLIENTS.WITH_MAPPING_INFO,
-        expect.objectContaining({
-          view: 'summary',
-          page: 0,
-          size: ADMIN_LIST_GET_ALL_SIZE_EQ_COUNT_MAX
-        }),
+        expect.objectContaining({ view: 'summary', page: 0, size: ADMIN_LIST_DRAIN_PAGE_SIZE }),
         {}
       );
-      expect(StandardizedApi.get.mock.calls[0][1].size).toBe(500);
       expect(StandardizedApi.get.mock.calls[0][1].size).not.toBe(20);
     });
 
-    it('adminClientsWithMappingGetAll — size=total fast-path after size=cap truncate (73 total)', async() => {
-      const page0 = Array.from({ length: 20 }, (_, i) => clientId(i + 1));
-      const all73 = Array.from({ length: 73 }, (_, i) => clientId(i + 1));
-      StandardizedApi.get
-        .mockResolvedValueOnce({ clients: page0, count: 73, page: 0, size: 500 })
-        .mockResolvedValueOnce({ clients: all73, count: 73, page: 0, size: 73 });
-
-      const result = await adminClientsWithMappingGetAll();
-
-      expect(result.clients).toHaveLength(73);
-      expect(result.count).toBe(73);
-      expect(result.clients.length).toBe(result.count);
-      expect(StandardizedApi.get).toHaveBeenCalledTimes(2);
-      expect(StandardizedApi.get).toHaveBeenNthCalledWith(
-        1,
-        API_ENDPOINTS.ADMIN.CLIENTS.WITH_MAPPING_INFO,
-        expect.objectContaining({ view: 'summary', page: 0, size: 500 }),
-        {}
-      );
-      expect(StandardizedApi.get).toHaveBeenNthCalledWith(
-        2,
-        API_ENDPOINTS.ADMIN.CLIENTS.WITH_MAPPING_INFO,
-        expect.objectContaining({ page: 0, size: 73 }),
-        {}
-      );
-    });
-
-    it('adminClientsWithMappingGetAll — nested data.clients + prefer count over wrong totalElements', async() => {
-      const page0 = Array.from({ length: 20 }, (_, i) => clientId(i + 1));
-      const all40 = Array.from({ length: 40 }, (_, i) => clientId(i + 1));
-      StandardizedApi.get
-        .mockResolvedValueOnce({
-          data: { clients: page0, count: 40 },
-          totalElements: 20,
-          page: 0,
-          size: 500
-        })
-        .mockResolvedValueOnce({
-          data: { clients: all40, count: 40 },
-          totalElements: 20,
-          page: 0,
-          size: 40
-        });
-
-      const result = await adminClientsWithMappingGetAll();
-
-      expect(result.clients).toHaveLength(40);
-      expect(result.count).toBe(40);
-      expect(StandardizedApi.get).toHaveBeenCalledTimes(2);
-      expect(StandardizedApi.get).toHaveBeenNthCalledWith(
-        1,
-        API_ENDPOINTS.ADMIN.CLIENTS.WITH_MAPPING_INFO,
-        expect.objectContaining({ page: 0, size: 500 }),
-        {}
-      );
-      expect(StandardizedApi.get).toHaveBeenNthCalledWith(
-        2,
-        API_ENDPOINTS.ADMIN.CLIENTS.WITH_MAPPING_INFO,
-        expect.objectContaining({ page: 0, size: 40 }),
-        {}
-      );
-    });
-
-    it('adminClientsWithMappingGetAll — size=cap truncated + size=count ignored → multi-page drain', async() => {
+    it('adminClientsWithMappingGetAll — BE truncate(20/73) 이어도 size=total 요청 없이 page drain', async() => {
       const page0 = Array.from({ length: 20 }, (_, i) => clientId(i + 1));
       const page1 = Array.from({ length: 20 }, (_, i) => clientId(i + 21));
       const page2 = Array.from({ length: 20 }, (_, i) => clientId(i + 41));
       const page3 = Array.from({ length: 13 }, (_, i) => clientId(i + 61));
       StandardizedApi.get
-        .mockResolvedValueOnce({ clients: page0, count: 73, page: 0, size: 500 })
-        .mockResolvedValueOnce({ clients: page0, count: 73, page: 0, size: 73 })
+        .mockResolvedValueOnce({ clients: page0, count: 73, page: 0, size: 20 })
         .mockResolvedValueOnce({ clients: page1, count: 73, page: 1, size: 20 })
         .mockResolvedValueOnce({ clients: page2, count: 73, page: 2, size: 20 })
         .mockResolvedValueOnce({ clients: page3, count: 73, page: 3, size: 20 });
@@ -475,47 +392,40 @@ describe('adminListFetch', () => {
       const result = await adminClientsWithMappingGetAll();
 
       expect(result.clients).toHaveLength(73);
-      expect(result.count).toBe(73);
-      expect(StandardizedApi.get).toHaveBeenCalledTimes(5);
-      expect(StandardizedApi.get).toHaveBeenNthCalledWith(
-        1,
-        API_ENDPOINTS.ADMIN.CLIENTS.WITH_MAPPING_INFO,
-        expect.objectContaining({ page: 0, size: 500 }),
-        {}
-      );
+      expect(result.clients.length).toBe(result.count);
+      expect(StandardizedApi.get).toHaveBeenCalledTimes(4);
+      StandardizedApi.get.mock.calls.forEach(([, params]) => {
+        expect(params.size).not.toBe(73);
+        expect(params.size).toBeLessThanOrEqual(ADMIN_LIST_DRAIN_PAGE_SIZE);
+      });
+    });
+
+    it('adminClientsWithMappingGetAll — nested data.clients + prefer count over wrong totalElements', async() => {
+      const page0 = Array.from({ length: 20 }, (_, i) => clientId(i + 1));
+      const page1 = Array.from({ length: 20 }, (_, i) => clientId(i + 21));
+      StandardizedApi.get
+        .mockResolvedValueOnce({ data: { clients: page0, count: 40 }, totalElements: 20, page: 0, size: 20 })
+        .mockResolvedValueOnce({ data: { clients: page1, count: 40 }, totalElements: 20, page: 1, size: 20 });
+
+      const result = await adminClientsWithMappingGetAll();
+
+      expect(result.clients).toHaveLength(40);
+      expect(result.count).toBe(40);
+      expect(StandardizedApi.get).toHaveBeenCalledTimes(2);
       expect(StandardizedApi.get).toHaveBeenNthCalledWith(
         2,
-        API_ENDPOINTS.ADMIN.CLIENTS.WITH_MAPPING_INFO,
-        expect.objectContaining({ page: 0, size: 73 }),
-        {}
-      );
-      expect(StandardizedApi.get).toHaveBeenNthCalledWith(
-        3,
         API_ENDPOINTS.ADMIN.CLIENTS.WITH_MAPPING_INFO,
         expect.objectContaining({ page: 1, size: 20 }),
         {}
       );
-      expect(StandardizedApi.get).toHaveBeenNthCalledWith(
-        4,
-        API_ENDPOINTS.ADMIN.CLIENTS.WITH_MAPPING_INFO,
-        expect.objectContaining({ page: 2, size: 20 }),
-        {}
-      );
-      expect(StandardizedApi.get).toHaveBeenNthCalledWith(
-        5,
-        API_ENDPOINTS.ADMIN.CLIENTS.WITH_MAPPING_INFO,
-        expect.objectContaining({ page: 3, size: 20 }),
-        {}
-      );
     });
 
-    it('adminClientsWithMappingGetAll — size=total ignored falls back to multi-page drain', async() => {
+    it('adminClientsWithMappingGetAll — 45건 page drain (마지막 짧은 페이지에서 종료)', async() => {
       const page0 = Array.from({ length: 20 }, (_, i) => clientId(i + 1));
       const page1 = Array.from({ length: 20 }, (_, i) => clientId(i + 21));
       const page2 = Array.from({ length: 5 }, (_, i) => clientId(i + 41));
       StandardizedApi.get
-        .mockResolvedValueOnce({ clients: page0, count: 45, page: 0, size: 500 })
-        .mockResolvedValueOnce({ clients: page0, count: 45, page: 0, size: 45 })
+        .mockResolvedValueOnce({ clients: page0, count: 45, page: 0, size: 20 })
         .mockResolvedValueOnce({ clients: page1, count: 45, page: 1, size: 20 })
         .mockResolvedValueOnce({ clients: page2, count: 45, page: 2, size: 20 });
 
@@ -523,17 +433,11 @@ describe('adminListFetch', () => {
 
       expect(result.clients).toHaveLength(45);
       expect(result.count).toBe(45);
-      expect(StandardizedApi.get).toHaveBeenCalledTimes(4);
-      expect(StandardizedApi.get).toHaveBeenNthCalledWith(
-        2,
-        API_ENDPOINTS.ADMIN.CLIENTS.WITH_MAPPING_INFO,
-        expect.objectContaining({ page: 0, size: 45 }),
-        {}
-      );
+      expect(StandardizedApi.get).toHaveBeenCalledTimes(3);
       expect(StandardizedApi.get).toHaveBeenNthCalledWith(
         3,
         API_ENDPOINTS.ADMIN.CLIENTS.WITH_MAPPING_INFO,
-        expect.objectContaining({ page: 1, size: 20 }),
+        expect.objectContaining({ page: 2, size: 20 }),
         {}
       );
     });
@@ -551,7 +455,7 @@ describe('adminListFetch', () => {
       expect(StandardizedApi.get).toHaveBeenCalledTimes(1);
       const params = StandardizedApi.get.mock.calls[0][1];
       expect(params.size).toBe(100);
-      expect(params.size).not.toBe(ADMIN_LIST_GET_ALL_SIZE_EQ_COUNT_MAX);
+      expect(params.size).not.toBe(ADMIN_LIST_DRAIN_PAGE_SIZE);
       expect(params.page).toBe(0);
       expect(params.view).toBe('summary');
     });
@@ -568,8 +472,7 @@ describe('adminListFetch', () => {
 
       expect(StandardizedApi.get).toHaveBeenCalledTimes(1);
       const params = StandardizedApi.get.mock.calls[0][1];
-      expect(params.size).toBe(ADMIN_LIST_GET_ALL_SIZE_EQ_COUNT_MAX);
-      expect(params.size).toBe(500);
+      expect(params.size).toBe(ADMIN_LIST_DRAIN_PAGE_SIZE);
       expect(params.page).toBe(0);
       expect(params.view).toBe('summary');
       expect(Object.prototype.hasOwnProperty.call(params, 'size')).toBe(true);
@@ -580,7 +483,7 @@ describe('adminListFetch', () => {
     it('adminScheduleControllerListGetAll — drains /api/v1/schedules/admin (not AdminController)', async() => {
       const total = ADMIN_LIST_DRAIN_PAGE_SIZE + 23;
       const page0 = Array.from({ length: ADMIN_LIST_DRAIN_PAGE_SIZE }, (_, i) => scheduleId(i + 1));
-      const allItems = Array.from({ length: total }, (_, i) => scheduleId(i + 1));
+      const page1 = Array.from({ length: 23 }, (_, i) => scheduleId(ADMIN_LIST_DRAIN_PAGE_SIZE + i + 1));
       StandardizedApi.get
         .mockResolvedValueOnce({
           schedules: page0,
@@ -589,10 +492,10 @@ describe('adminListFetch', () => {
           size: ADMIN_LIST_DRAIN_PAGE_SIZE
         })
         .mockResolvedValueOnce({
-          schedules: allItems,
+          schedules: page1,
           count: total,
-          page: 0,
-          size: total
+          page: 1,
+          size: ADMIN_LIST_DRAIN_PAGE_SIZE
         });
 
       const result = await adminScheduleControllerListGetAll({
@@ -620,8 +523,8 @@ describe('adminListFetch', () => {
         2,
         API_SCHEDULE_CONTROLLER_ADMIN,
         expect.objectContaining({
-          page: 0,
-          size: total
+          page: 1,
+          size: ADMIN_LIST_DRAIN_PAGE_SIZE
         }),
         {}
       );
@@ -715,7 +618,7 @@ describe('adminListFetch', () => {
         clients: items,
         count: 5,
         page: 0,
-        size: 500
+        size: ADMIN_LIST_DRAIN_PAGE_SIZE
       });
 
       const result = await adminClientsWithMappingGetAll();
@@ -728,7 +631,7 @@ describe('adminListFetch', () => {
         expect.objectContaining({
           view: 'summary',
           page: 0,
-          size: ADMIN_LIST_GET_ALL_SIZE_EQ_COUNT_MAX
+          size: ADMIN_LIST_DRAIN_PAGE_SIZE
         }),
         {}
       );
@@ -759,6 +662,45 @@ describe('adminListFetch', () => {
       expect(StandardizedApi.get).toHaveBeenCalledWith(
         API_ENDPOINTS.ADMIN.MAPPINGS.LIST,
         expect.objectContaining({ size: ADMIN_LIST_DRAIN_PAGE_SIZE }),
+        {}
+      );
+    });
+  });
+
+  describe('size 상한·pending 목록 공통 모듈', () => {
+    it('buildAdminListParams — size 는 ADMIN_LIST_DRAIN_PAGE_SIZE 로 캡, 음수 page 는 0', () => {
+      expect(buildAdminListParams({ page: -1, size: 100000 })).toEqual(
+        expect.objectContaining({ page: 0, size: ADMIN_LIST_DRAIN_PAGE_SIZE })
+      );
+      expect(buildAdminListParams({ size: 0 }).size).toBe(1);
+    });
+
+    it.each([
+      ['adminPendingPaymentMappingsGetAll', API_ENDPOINTS.ADMIN.MAPPINGS.PENDING_PAYMENT, 'mappings'],
+      ['adminPendingDepositMappingsGetAll', API_ENDPOINTS.ADMIN.MAPPINGS.PENDING_DEPOSIT, 'mappings'],
+      ['adminSessionExtensionPendingPaymentGetAll', API_ENDPOINTS.ADMIN.SESSION_EXTENSIONS.PENDING_PAYMENT, 'requests']
+    ])('%s — page/size drain, count=전체', async(fnName, endpoint, key) => {
+      const page0 = Array.from({ length: ADMIN_LIST_DRAIN_PAGE_SIZE }, (_, i) => ({ id: i + 1 }));
+      const page1 = [{ id: ADMIN_LIST_DRAIN_PAGE_SIZE + 1 }];
+      StandardizedApi.get
+        .mockResolvedValueOnce({ [key]: page0, count: page0.length + 1, page: 0, size: ADMIN_LIST_DRAIN_PAGE_SIZE })
+        .mockResolvedValueOnce({ [key]: page1, count: page0.length + 1, page: 1, size: ADMIN_LIST_DRAIN_PAGE_SIZE });
+
+      const result = await pendingFns[fnName]();
+
+      expect(result[key]).toHaveLength(page0.length + 1);
+      expect(StandardizedApi.get).toHaveBeenNthCalledWith(1, endpoint,
+        expect.objectContaining({ page: 0, size: ADMIN_LIST_DRAIN_PAGE_SIZE }), {});
+      expect(StandardizedApi.get).toHaveBeenNthCalledWith(2, endpoint,
+        expect.objectContaining({ page: 1, size: ADMIN_LIST_DRAIN_PAGE_SIZE }), {});
+    });
+
+    it('pending 한 페이지 조회도 page/size 포함', async() => {
+      StandardizedApi.get.mockResolvedValueOnce({ mappings: [], count: 0 });
+      await pendingFns.adminPendingDepositMappingsGet();
+      expect(StandardizedApi.get).toHaveBeenCalledWith(
+        API_ENDPOINTS.ADMIN.MAPPINGS.PENDING_DEPOSIT,
+        expect.objectContaining({ page: 0, size: ADMIN_DASHBOARD_LIST_PAGE_SIZE }),
         {}
       );
     });

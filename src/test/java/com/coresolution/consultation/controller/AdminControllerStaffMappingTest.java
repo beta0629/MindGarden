@@ -133,7 +133,7 @@ class AdminControllerStaffMappingTest {
                 .thenReturn(Collections.emptyList());
 
         ResponseEntity<ApiResponse<Map<String, Object>>> response =
-                controller.getPendingDepositMappings(session);
+                controller.getPendingDepositMappings(session, null, null);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
     }
@@ -187,7 +187,7 @@ class AdminControllerStaffMappingTest {
         sessionUtilsStatic.when(() -> SessionUtils.getCurrentUser(session))
                 .thenReturn(userWithRole(UserRole.CONSULTANT));
 
-        assertThatThrownBy(() -> controller.getPendingDepositMappings(session))
+        assertThatThrownBy(() -> controller.getPendingDepositMappings(session, null, null))
                 .isInstanceOf(AccessDeniedException.class);
     }
 
@@ -212,7 +212,7 @@ class AdminControllerStaffMappingTest {
                 .thenReturn(Collections.emptyList());
 
         ResponseEntity<ApiResponse<Map<String, Object>>> response =
-                controller.getPendingDepositMappings(session);
+                controller.getPendingDepositMappings(session, null, null);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
     }

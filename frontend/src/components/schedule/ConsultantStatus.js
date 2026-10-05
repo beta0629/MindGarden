@@ -5,6 +5,7 @@ import { ProfileCard } from '../ui/Card/index';
 import './ConsultantStatus.css';
 import SafeText from '../common/SafeText';
 import { toDisplayString } from '../../utils/safeDisplay';
+import { formatDateKeyInZone } from '../../utils/zonedDateTime';
 
 /**
  * 상담사 현황 컴포넌트
@@ -35,7 +36,7 @@ const ConsultantStatus = () => {
             console.log('👥 상담사 현황 로드 시작');
             
             // 오늘 날짜로 휴가 정보를 포함한 상담사 목록 조회
-            const today = new Date().toISOString().split('T')[0];
+            const today = formatDateKeyInZone();
             const response = await apiGet(`/api/v1/admin/consultants/with-vacation?date=${today}`);
             
             if (response.success) {
@@ -82,7 +83,7 @@ const ConsultantStatus = () => {
      */
     const calculateConsultantStatus = async(consultant) => {
         try {
-            const today = new Date().toISOString().split('T')[0];
+            const today = formatDateKeyInZone();
             console.log(`🔍 상담사 ${consultant.name} (ID: ${consultant.id}) 상태 계산 시작`);
             
             const response = await apiGet(`/api/v1/schedules?userId=${consultant.id}&userRole=CONSULTANT`);

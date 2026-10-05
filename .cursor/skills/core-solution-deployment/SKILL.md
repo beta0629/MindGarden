@@ -28,7 +28,7 @@ description: 배포·CI/CD 워크플로 수정 시 적용. GitHub Actions, syste
 같은 기능의 화면(관리자·내담자 UI)과 API는 한 변경 세트다. 한쪽만 수정하고 끝내지 않는다.
 
 - 배포도 한 세트다. 화면 커밋과 서버 커밋을 서로 다른 시점에 운영에 올리지 않는다. **한 커밋(또는 같은 SHA)** 에 화면과 서버가 같이 들어가야 한다.
-- 프론트 전용 워크플로만 먼저 성공시키고, 같은 SHA의 백엔드 배포가 그 화면을 다른 빌드로 덮어쓰지 않게 한다. 백엔드 워크플로의 **프론트 업로드 스킵 가드**(같은 SHA의 프론트 운영 배포가 이미 success면 업로드하지 않음)를 깨지 말 것.
+- 운영 반영도 한 세트(같은 SHA)다. 운영 화면은 `deploy-frontend-prod.yml` 만 올린다(`deploy-production.yml` 은 프론트를 빌드·업로드하지 않음). 화면 워크플로의 **같은 SHA 세트 게이트**(`scripts/deployment/frontend-prod-set-gate.sh`: 같은 SHA 서버 배포 success 대기, 실패면 화면 보류, tip 앞서면 덮지 않음)를 깨지 말 것.
 - 사용자 트래픽이 받는 슬롯은 세트 배포 중 재시작으로 로그인 이탈을 만들지 않는다. **비활성 슬롯 헬스 통과 후**에만 전환한다.
 - 분야·테넌트·호스트 하드코딩 금지. 공통코드·env.
 
@@ -36,7 +36,7 @@ description: 배포·CI/CD 워크플로 수정 시 적용. GitHub Actions, syste
 
 프로시저 시그니처·본문이 바뀐 BE 를 운영에 올릴 때는 **운영 프로시저 배포 → BE 운영 배포** 순서다. BE 가 먼저 나가면 새 JDBC 호출이 옛 프로시저와 맞지 않아 통계·급여·할인 API 가 실패한다.
 
-1. `deploy-procedures-production-mysql.yml` 을 `mode=db-diff`, `confirm` 비움으로 실행(dry-run). DDL 없음. 로그의 차이 목록을 PR·이슈에 남긴다. db-diff 는 **파라미터만** 비교하므로 본문만 바뀐 프로시저(예: `LEAVE` 라벨 수정)는 여기 안 나올 수 있다.
+1. `deploy-procedures-production-mysql.yml` 을 `mode=db-diff`, `confirm` 비움으로 실행(dry-run). DDL 없음. 로그의 차이 목록을 PR·이슈에 남긴다. db-diff 는 파라미터와 **정규화 본문 해시**(DEFINER·주석·공백·대소문자·구분자 무시, `ROUTINE_DEFINITION` 기준)를 비교하므로 본문만 바뀐 프로시저도 `body` 로 나온다. 본문 없이 이름·해시·상태만 보려면 `mode=db-diff-hash`(읽기 전용).
 2. 같은 워크플로를 `mode` 비움, `procedures=<이름 쉼표 구분>`, `confirm=CONFIRM` 으로 실행. 지정한 이름만 safe-replace(스테이징 CREATE → SHOW CREATE 백업 → 교체, 실패 시 복원). 결과 표(`프로시저 | 결과 | 사유`)에 failed 가 있으면 BE 배포하지 않는다.
 3. 1번 dry-run 을 다시 돌려 차이 0 을 확인한 뒤 BE 운영 배포.
 

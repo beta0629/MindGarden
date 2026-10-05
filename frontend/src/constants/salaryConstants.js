@@ -89,6 +89,9 @@ export const EMAIL_TEMPLATE_LABELS = {
   [EMAIL_TEMPLATE.TAX_REPORT]: '세금 내역서'
 };
 
+/** 승인 센터 급여 승인 대기 조회 기간 — 운영 타임존 기준 이번 달 포함 최근 N개월 */
+export const SALARY_PENDING_APPROVAL_LOOKBACK_MONTHS = 3;
+
 export const SALARY_API_ENDPOINTS = {
   CALCULATE: '/api/v1/admin/salary/calculate',
   CALCULATIONS: '/api/v1/admin/salary/calculations',

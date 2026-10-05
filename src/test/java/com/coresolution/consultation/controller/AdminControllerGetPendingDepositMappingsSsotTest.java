@@ -168,7 +168,7 @@ class AdminControllerGetPendingDepositMappingsSsotTest {
                 .thenReturn(List.of(refundedPayload, pendingPayload));
 
         ResponseEntity<ApiResponse<Map<String, Object>>> response =
-                controller.getPendingDepositMappings(session);
+                controller.getPendingDepositMappings(session, null, null);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         ApiResponse<Map<String, Object>> body = response.getBody();

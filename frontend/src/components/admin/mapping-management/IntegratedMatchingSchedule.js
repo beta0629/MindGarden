@@ -126,7 +126,9 @@ import { toErrorMessage } from '../../../utils/safeDisplay';
 import {
   adminClientsWithMappingGetAll,
   adminMappingsListGetAll,
-  adminSchedulesListGetAll
+  adminSchedulesListGetAll,
+  adminPendingPaymentMappingsGetAll,
+  adminSessionExtensionPendingPaymentGetAll
 } from '../../../api/adminListFetch';
 import {
   ADMIN_DASHBOARD_LIST_PAGE,
@@ -754,15 +756,14 @@ const IntegratedMatchingSchedule = () => {
           mappingsStatsRaw
         ] = await Promise.all([
           adminMappingsListGetAll().catch(() => null),
-          StandardizedApi.get(API_ENDPOINTS.ADMIN.MAPPINGS.PENDING_PAYMENT).catch(() => null),
+          adminPendingPaymentMappingsGetAll().catch(() => null),
           StandardizedApi.get(API_ENDPOINTS.ADMIN.MAPPINGS.PENDING_PAYMENT_DIRTY, {
             ageHours: PENDING_PAYMENT_DIRTY_DEFAULT_AGE_HOURS,
             page: ADMIN_DASHBOARD_LIST_PAGE,
             size: ADMIN_DASHBOARD_LIST_PAGE_SIZE
           }).catch(() => null),
           adminSchedulesListGetAll({ startDate, endDate }).catch(() => null),
-          StandardizedApi.get(API_ENDPOINTS.ADMIN.SESSION_EXTENSIONS.PENDING_PAYMENT)
-            .catch(() => null),
+          adminSessionExtensionPendingPaymentGetAll().catch(() => null),
           StandardizedApi.get(API_ENDPOINTS.ADMIN.MAPPINGS.STATS).catch(() => null)
         ]);
 

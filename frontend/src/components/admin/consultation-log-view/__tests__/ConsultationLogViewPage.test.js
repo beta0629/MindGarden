@@ -145,7 +145,8 @@ import ConsultationLogViewPage, {
   computeDefaultDateRange,
   fetchAllAdminConsultationRecords,
   normalizeAdminConsultationRecordsPage,
-  ADMIN_CONSULTATION_RECORDS_PAGE_SIZE
+  ADMIN_CONSULTATION_RECORDS_PAGE_SIZE,
+  ADMIN_CONSULTATION_RECORDS_MAX_PAGES
 } from '../ConsultationLogViewPage';
 import StandardizedApi from '../../../../utils/standardizedApi';
 import notificationManager from '../../../../utils/notification';
@@ -240,6 +241,22 @@ describe('ConsultationLogViewPage — P0 핫픽스 회귀 가드 (2026-05-29)', 
       expect(apiGet.mock.calls[1][1]).toEqual(expect.objectContaining({ page: 1, size: 200 }));
       expect(list.map((r) => r.id)).toEqual([1, 2]);
       expect(list.some((r) => r.sessionDate === '2026-08-01')).toBe(true);
+    });
+
+    test('공통 목록 모듈 규칙 — size 상한 200, 페이지 상한에서 멈춘다 (전체 dump 금지)', async () => {
+      const apiGet = jest.fn().mockResolvedValue({
+        success: true,
+        data: [{ id: 1 }],
+        totalCount: 100000,
+        totalPages: 100000
+      });
+      await fetchAllAdminConsultationRecords(apiGet, { startDate: '2026-08-01', endDate: '2026-09-30' }, {
+        pageSize: 100000
+      });
+      expect(apiGet).toHaveBeenCalledTimes(ADMIN_CONSULTATION_RECORDS_MAX_PAGES);
+      apiGet.mock.calls.forEach(([, params]) => {
+        expect(params.size).toBe(200);
+      });
     });
   });
 
@@ -340,7 +357,7 @@ describe('ConsultationLogViewPage — P0 핫픽스 회귀 가드 (2026-05-29)', 
     }
   });
 
-  test('사용자가 startDate/endDate 를 모두 지우면 백엔드에 미전송 (전체 모드)', async () => {
+  test('사용자가 startDate/endDate 를 모두 지워도 기본 기간으로 보완 — 기간 없는 전체 조회 금지', async () => {
     await act(async () => {
       render(<ConsultationLogViewPage />);
     });
@@ -360,9 +377,13 @@ describe('ConsultationLogViewPage — P0 핫픽스 회귀 가드 (2026-05-29)', 
     await waitFor(() => expect(StandardizedApi.get).toHaveBeenCalledTimes(3));
 
     const last = StandardizedApi.get.mock.calls[StandardizedApi.get.mock.calls.length - 1];
-    expect(last[1]).not.toHaveProperty('startDate');
-    expect(last[1]).not.toHaveProperty('endDate');
-    expect(last[1]).toEqual(expect.objectContaining({ page: 0, size: 200 }));
+    const fallback = computeDefaultDateRange();
+    expect(last[1]).toEqual(expect.objectContaining({
+      page: 0,
+      size: 200,
+      startDate: fallback.startDate,
+      endDate: fallback.endDate
+    }));
     expect(last[2]).toEqual({ unwrapApiEnvelope: false });
   });
 

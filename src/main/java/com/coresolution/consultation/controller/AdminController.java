@@ -73,6 +73,7 @@ import com.coresolution.consultation.util.EmailLogMasking;
 import com.coresolution.consultation.util.LoginIdentifierUtils;
 import com.coresolution.consultation.constant.admin.AdminServiceUserFacingMessages;
 import com.coresolution.consultation.util.LoginIdentifierUtils;
+import com.coresolution.consultation.util.AdminListPaging;
 import com.coresolution.consultation.util.PermissionCheckUtils;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.consultation.util.ClientPaymentHistorySsotUtils;
@@ -143,6 +144,21 @@ public class AdminController extends BaseApiController {
      */
     private static final String DENIAL_MESSAGE_CLIENT_MAPPING_OWNERSHIP =
             "본인 매칭 정보만 조회할 수 있습니다.";
+
+    /**
+     * 목록 envelope — {@code {listKey: 현재 페이지, count: 전체 건수, page, size}} ({@link AdminListPaging}).
+     */
+    private static <T> Map<String, Object> toPagedListData(String listKey, List<T> all, Integer page,
+            Integer size) {
+        com.coresolution.consultation.dto.AdminListPageResult<T> paged = AdminListPaging.slice(all, page, size);
+        int[] resolved = AdminListPaging.resolve(page, size);
+        Map<String, Object> data = new HashMap<>();
+        data.put(listKey, paged.getContent());
+        data.put("count", Math.toIntExact(paged.getTotalCount()));
+        data.put("page", resolved[0]);
+        data.put("size", resolved[1]);
+        return data;
+    }
 
     /**
      * Admin list endpoints: page/size missing → force defaults (never full dump).
@@ -1450,16 +1466,13 @@ public class AdminController extends BaseApiController {
      * @return ApiResponse with mappings DTO list and count
      */
     @GetMapping("/mappings/pending-payment")
-    public ResponseEntity<ApiResponse<Map<String, Object>>> getPendingPaymentMappings(HttpSession session) {
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getPendingPaymentMappings(HttpSession session,
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer size) {
         clientPathAccessGuard.requireTenantManager(session);
-        log.info("🔍 입금 대기 중인 매칭 목록 조회");
+        log.info("🔍 입금 대기 중인 매칭 목록 조회 page={} size={}", page, size);
         List<ConsultantClientMappingResponse> mappings = adminService.getPendingPaymentMappings();
-
-        Map<String, Object> data = new HashMap<>();
-        data.put("mappings", mappings);
-        data.put("count", mappings.size());
-
-        return success(data);
+        return success(toPagedListData("mappings", mappings, page, size));
     }
 
     /**
@@ -1493,7 +1506,9 @@ public class AdminController extends BaseApiController {
      */
     @GetMapping("/mappings/pending-deposit")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getPendingDepositMappings(
-            HttpSession session) {
+            HttpSession session,
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer size) {
         log.info("🔔 입금 확인 대기 매칭 조회 요청");
 
         User currentUser = SessionUtils.getCurrentUser(session);
@@ -1526,12 +1541,8 @@ public class AdminController extends BaseApiController {
             responseData.add(payload);
         }
 
-        Map<String, Object> data = new HashMap<>();
-        data.put("mappings", responseData);
-        data.put("count", responseData.size());
-
         log.info("✅ 입금 확인 대기 매칭 조회 완료: {}개", responseData.size());
-        return success("입금 확인 대기 매칭 조회 완료", data);
+        return success("입금 확인 대기 매칭 조회 완료", toPagedListData("mappings", responseData, page, size));
     }
 
     /**

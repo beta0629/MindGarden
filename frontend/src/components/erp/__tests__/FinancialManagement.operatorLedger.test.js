@@ -422,4 +422,30 @@ describe('FinancialManagement Operator Ledger Phase 2', () => {
     expect(screen.queryByTestId('financial-calendar-view')).not.toBeInTheDocument();
     expect(screen.getByText(FM_TAX_DISCLOSURE.TITLE)).toBeInTheDocument();
   });
+
+  it('읽기 전용 진입 — /erp/financial 진입 시 non-GET 요청(catch-up 포함) 0건', async() => {
+    StandardizedApi.put = jest.fn();
+    StandardizedApi.patch = jest.fn();
+    const fetchSpy = jest.spyOn(global, 'fetch').mockResolvedValue({ ok: true, json: async() => ({}) });
+    render(
+      <MemoryRouter initialEntries={['/erp/financial']}>
+        <Routes>
+          <Route path="/erp/financial" element={<FinancialManagement />} />
+        </Routes>
+      </MemoryRouter>
+    );
+    await waitFor(() => {
+      expect(screen.getByTestId('operator-ledger-summary')).toBeInTheDocument();
+    });
+    await waitFor(() => {
+      expect(StandardizedApi.get).toHaveBeenCalled();
+    });
+    expect(StandardizedApi.post).not.toHaveBeenCalled();
+    expect(StandardizedApi.put).not.toHaveBeenCalled();
+    expect(StandardizedApi.patch).not.toHaveBeenCalled();
+    expect(StandardizedApi.delete).not.toHaveBeenCalled();
+    const nonGetFetch = fetchSpy.mock.calls.filter(([, init]) => init?.method && init.method.toUpperCase() !== 'GET');
+    expect(nonGetFetch).toEqual([]);
+    fetchSpy.mockRestore();
+  });
 });

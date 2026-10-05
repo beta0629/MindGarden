@@ -610,9 +610,16 @@ public class OnboardingServiceImpl implements OnboardingService {
                         // 생성 시 이미 해시됨 — 재인코딩하면 원 비밀번호로 로그인 불가
                         adminPasswordHash = storedAdminPassword;
                     } else if (storedAdminPassword != null) {
-                        // 해시 저장 도입 전 레거시 평문 행 호환
+                        // 해시 저장 도입 전 레거시 평문 행. 이 요청 행만 해시로 바꿔 같은 트랜잭션에 남긴다.
                         log.warn("레거시 평문 adminPassword 행을 승인 시점에 해시: requestId={}", requestId);
                         adminPasswordHash = passwordService.encodePassword(storedAdminPassword);
+                        checklist.put(OnboardingConstants.CHECKLIST_KEY_ADMIN_PASSWORD, adminPasswordHash);
+                        try {
+                            request.setChecklistJson(objectMapper.writeValueAsString(checklist));
+                        } catch (JsonProcessingException writeError) {
+                            throw new OnboardingApprovalBlockedException(
+                                    OnboardingConstants.ERROR_ONBOARDING_CHECKLIST_PARSE_FOR_APPROVAL);
+                        }
                     } else if (contactEmailPresent) {
                         log.warn("checklistJson에 adminPassword가 없음: requestId={}", requestId);
                     }
@@ -871,6 +878,7 @@ public class OnboardingServiceImpl implements OnboardingService {
                 && request.getDecisionNote().contains("[시스템 오류]")) {
             noteToPersist = request.getDecisionNote();
         }
+        requestToSave.setChecklistJson(request.getChecklistJson());
         requestToSave.setStatus(finalStatus);
         requestToSave.setDecidedBy(actorId);
         requestToSave.setDecisionAt(DateTimeFormatter.ISO_INSTANT.format(Instant.now()));

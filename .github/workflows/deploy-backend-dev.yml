@@ -224,7 +224,7 @@ jobs:
         rm -f "$OUT"
 
     - name: 🔍 개발 서버 SSH 연결 테스트
-      uses: appleboy/ssh-action@master
+      uses: appleboy/ssh-action@c4f70287fc37c43b14b30b407224bbbc8e8c6327 # master 2026-08-16 (v1.2.5+10) 고정
       with:
         host: ${{ secrets.DEV_SERVER_HOST }}
         username: ${{ secrets.DEV_SERVER_USER }}
@@ -242,7 +242,7 @@ jobs:
     # '🚀 개발 서버 배포 준비'(서비스 stop) 이전에 둔다 — 실패 시 서비스를 멈추지 않고 배포만 중단.
     # ============================================================================
     - name: 🔑 OPS_ADMIN_PASSWORD env 자동 주입
-      uses: appleboy/ssh-action@master
+      uses: appleboy/ssh-action@c4f70287fc37c43b14b30b407224bbbc8e8c6327 # master 2026-08-16 (v1.2.5+10) 고정
       with:
         host: ${{ secrets.DEV_SERVER_HOST }}
         username: ${{ secrets.DEV_SERVER_USER }}
@@ -311,7 +311,7 @@ jobs:
         ssh_key: ${{ secrets.DEV_SERVER_SSH_KEY }}
 
     - name: 🚀 개발 서버 배포 준비
-      uses: appleboy/ssh-action@master
+      uses: appleboy/ssh-action@c4f70287fc37c43b14b30b407224bbbc8e8c6327 # master 2026-08-16 (v1.2.5+10) 고정
       with:
         host: ${{ secrets.DEV_SERVER_HOST }}
         username: ${{ secrets.DEV_SERVER_USER }}
@@ -479,7 +479,7 @@ jobs:
     #   gh secret set MINDGARDEN_HQ_TENANT_ID --env dev --body 'tenant-incheon-counseling-001' --repo beta0629/MindGarden
     # ============================================================================
     - name: 🏷️ MINDGARDEN_HQ_TENANT_ID env 자동 주입 + 검증
-      uses: appleboy/ssh-action@master
+      uses: appleboy/ssh-action@c4f70287fc37c43b14b30b407224bbbc8e8c6327 # master 2026-08-16 (v1.2.5+10) 고정
       with:
         host: ${{ secrets.DEV_SERVER_HOST }}
         username: ${{ secrets.DEV_SERVER_USER }}
@@ -540,7 +540,7 @@ jobs:
     # ============================================================================
 
     - name: 🔄 개발 서버 서비스 재시작
-      uses: appleboy/ssh-action@master
+      uses: appleboy/ssh-action@c4f70287fc37c43b14b30b407224bbbc8e8c6327 # master 2026-08-16 (v1.2.5+10) 고정
       with:
         host: ${{ secrets.DEV_SERVER_HOST }}
         username: ${{ secrets.DEV_SERVER_USER }}
@@ -784,7 +784,7 @@ jobs:
     # 운영(deploy-production.yml) 의 동일 step 과 패턴 일치 — dev 는 단일 systemd unit.
     # ============================================================================
     - name: 🍎 Apple SIWA env 자동 주입 + 검증
-      uses: appleboy/ssh-action@master
+      uses: appleboy/ssh-action@c4f70287fc37c43b14b30b407224bbbc8e8c6327 # master 2026-08-16 (v1.2.5+10) 고정
       with:
         host: ${{ secrets.DEV_SERVER_HOST }}
         username: ${{ secrets.DEV_SERVER_USER }}
@@ -879,7 +879,7 @@ jobs:
     #       BE 가 fallback "dummy" 송신 → 401 invalid_client. Apple SIWA env 자동 주입(위) 동일 패턴.
     # ============================================================================
     - name: 🟢 Google OAuth env 자동 주입 + 검증
-      uses: appleboy/ssh-action@master
+      uses: appleboy/ssh-action@c4f70287fc37c43b14b30b407224bbbc8e8c6327 # master 2026-08-16 (v1.2.5+10) 고정
       with:
         host: ${{ secrets.DEV_SERVER_HOST }}
         username: ${{ secrets.DEV_SERVER_USER }}
@@ -965,7 +965,7 @@ jobs:
     # 운영(deploy-production.yml) 의 동일 step 과 패턴 일치 — dev 는 단일 systemd unit.
     # ============================================================================
     - name: 🔗 OAuth 4종 REGISTERED_URLS env 자동 주입 + 검증
-      uses: appleboy/ssh-action@master
+      uses: appleboy/ssh-action@c4f70287fc37c43b14b30b407224bbbc8e8c6327 # master 2026-08-16 (v1.2.5+10) 고정
       with:
         host: ${{ secrets.DEV_SERVER_HOST }}
         username: ${{ secrets.DEV_SERVER_USER }}
@@ -1058,7 +1058,7 @@ jobs:
     # 정책: 4종 모두 비면 step skip, 일부만 채워져도 채워진 키만 graceful 반영 (기존 BE Converter 동작 영향 최소화).
     # ============================================================================
     - name: 🔑 PII KEY/IV 회전 env 자동 주입 + 검증
-      uses: appleboy/ssh-action@master
+      uses: appleboy/ssh-action@c4f70287fc37c43b14b30b407224bbbc8e8c6327 # master 2026-08-16 (v1.2.5+10) 고정
       with:
         host: ${{ secrets.DEV_SERVER_HOST }}
         username: ${{ secrets.DEV_SERVER_USER }}
@@ -1154,7 +1154,7 @@ jobs:
     # 운영(deploy-production.yml) 의 동일 step 과 패턴 일치 — dev 는 단일 systemd unit.
     # ============================================================================
     - name: 🖼️ Profile Image Upload env 자동 주입 + 검증
-      uses: appleboy/ssh-action@master
+      uses: appleboy/ssh-action@c4f70287fc37c43b14b30b407224bbbc8e8c6327 # master 2026-08-16 (v1.2.5+10) 고정
       env:
         PROFILE_IMAGE_UPLOAD_DIR: ${{ secrets.PROFILE_IMAGE_UPLOAD_DIR }}
       with:
@@ -1240,7 +1240,7 @@ jobs:
     # 미러: deploy-production.yml 의 BG cutover 패턴 (운영은 blue/green 이라 본 문제 비해당).
     # ============================================================================
     - name: 🔁 dev.env 일괄 반영 재시작 + 헬스 검증 (P2 transient 502 차단)
-      uses: appleboy/ssh-action@master
+      uses: appleboy/ssh-action@c4f70287fc37c43b14b30b407224bbbc8e8c6327 # master 2026-08-16 (v1.2.5+10) 고정
       with:
         host: ${{ secrets.DEV_SERVER_HOST }}
         username: ${{ secrets.DEV_SERVER_USER }}
@@ -1332,7 +1332,7 @@ jobs:
     # ============================================================================
 
     - name: 🏥 개발 서버 헬스체크
-      uses: appleboy/ssh-action@master
+      uses: appleboy/ssh-action@c4f70287fc37c43b14b30b407224bbbc8e8c6327 # master 2026-08-16 (v1.2.5+10) 고정
       with:
         host: ${{ secrets.DEV_SERVER_HOST }}
         username: ${{ secrets.DEV_SERVER_USER }}
@@ -1370,7 +1370,7 @@ jobs:
           exit 1
 
     - name: 🔍 dev DB clients.phone 컬럼 폭 검증 (Flyway 미적용 조기 감지)
-      uses: appleboy/ssh-action@master
+      uses: appleboy/ssh-action@c4f70287fc37c43b14b30b407224bbbc8e8c6327 # master 2026-08-16 (v1.2.5+10) 고정
       with:
         host: ${{ secrets.DEV_SERVER_HOST }}
         username: ${{ secrets.DEV_SERVER_USER }}

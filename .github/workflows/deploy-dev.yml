@@ -191,7 +191,7 @@ jobs:
         echo "self-hosted: compile/package 없음"
 
     - name: 🔍 개발 서버 SSH 연결 테스트
-      uses: appleboy/ssh-action@master
+      uses: appleboy/ssh-action@c4f70287fc37c43b14b30b407224bbbc8e8c6327 # master 2026-08-16 (v1.2.5+10) 고정
       with:
         host: ${{ secrets.DEV_SERVER_HOST }}
         username: ${{ secrets.DEV_SERVER_USER }}
@@ -203,7 +203,7 @@ jobs:
           echo "서버 정보: $(uname -a)"
           
     - name: 🚀 개발 서버 배포 준비
-      uses: appleboy/ssh-action@master
+      uses: appleboy/ssh-action@c4f70287fc37c43b14b30b407224bbbc8e8c6327 # master 2026-08-16 (v1.2.5+10) 고정
       with:
         host: ${{ secrets.DEV_SERVER_HOST }}
         username: ${{ secrets.DEV_SERVER_USER }}
@@ -380,7 +380,7 @@ jobs:
         overwrite: true
         
     - name: 🔄 개발 서버 서비스 재시작
-      uses: appleboy/ssh-action@master
+      uses: appleboy/ssh-action@c4f70287fc37c43b14b30b407224bbbc8e8c6327 # master 2026-08-16 (v1.2.5+10) 고정
       with:
         host: ${{ secrets.DEV_SERVER_HOST }}
         username: ${{ secrets.DEV_SERVER_USER }}
@@ -594,7 +594,7 @@ jobs:
           fi
           
     - name: 🏥 개발 서버 헬스체크
-      uses: appleboy/ssh-action@master
+      uses: appleboy/ssh-action@c4f70287fc37c43b14b30b407224bbbc8e8c6327 # master 2026-08-16 (v1.2.5+10) 고정
       with:
         host: ${{ secrets.DEV_SERVER_HOST }}
         username: ${{ secrets.DEV_SERVER_USER }}

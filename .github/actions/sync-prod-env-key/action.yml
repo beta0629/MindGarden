@@ -115,7 +115,7 @@ runs:
         fi
 
     - name: 🔄 secrets sync (PRESERVE/sed/RESTORE/FAIL-FAST)
-      uses: appleboy/ssh-action@master
+      uses: appleboy/ssh-action@c4f70287fc37c43b14b30b407224bbbc8e8c6327 # master 2026-08-16 (v1.2.5+10) 고정
       env:
         SYNC_STEP_NAME: ${{ inputs.step_name }}
         SYNC_ENV_FILE: ${{ inputs.env_path }}

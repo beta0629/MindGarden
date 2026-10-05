@@ -137,7 +137,7 @@ jobs:
           echo "self-hosted: Gradle/Java 빌드 없음. JAR=$JAR_PATH"
 
       - name: 🔍 운영 서버 SSH 연결 테스트
-        uses: appleboy/ssh-action@master
+        uses: appleboy/ssh-action@c4f70287fc37c43b14b30b407224bbbc8e8c6327 # master 2026-08-16 (v1.2.5+10) 고정
         with:
           host: ${{ secrets.PRODUCTION_HOST }}
           username: ${{ secrets.PRODUCTION_USER }}
@@ -148,7 +148,7 @@ jobs:
             echo "SSH 연결 테스트 성공: $(date)"
 
       - name: 💾 배포 전 JAR 백업 (운영 서버)
-        uses: appleboy/ssh-action@master
+        uses: appleboy/ssh-action@c4f70287fc37c43b14b30b407224bbbc8e8c6327 # master 2026-08-16 (v1.2.5+10) 고정
         with:
           host: ${{ secrets.PRODUCTION_HOST }}
           username: ${{ secrets.PRODUCTION_USER }}
@@ -211,7 +211,7 @@ jobs:
           ssh_key: ${{ secrets.PRODUCTION_SSH_KEY }}
 
       - name: 🔄 JAR를 app.jar 로 정리 및 서비스 재시작
-        uses: appleboy/ssh-action@master
+        uses: appleboy/ssh-action@c4f70287fc37c43b14b30b407224bbbc8e8c6327 # master 2026-08-16 (v1.2.5+10) 고정
         with:
           host: ${{ secrets.PRODUCTION_HOST }}
           username: ${{ secrets.PRODUCTION_USER }}
@@ -246,7 +246,7 @@ jobs:
             fi
 
       - name: 🏥 Actuator 헬스체크 (localhost:8080)
-        uses: appleboy/ssh-action@master
+        uses: appleboy/ssh-action@c4f70287fc37c43b14b30b407224bbbc8e8c6327 # master 2026-08-16 (v1.2.5+10) 고정
         with:
           host: ${{ secrets.PRODUCTION_HOST }}
           username: ${{ secrets.PRODUCTION_USER }}

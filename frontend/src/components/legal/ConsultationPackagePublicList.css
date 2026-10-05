@@ -2,9 +2,9 @@
 .mg-consultation-package-public {
   --cpp-ink: var(--mg-v2-color-text-primary);
   --cpp-muted: var(--mg-v2-color-text-secondary);
-  --cpp-line: var(--mg-v2-color-border-main, var(--mg-v2-color-neutral-300));
-  --cpp-surface: var(--mg-warm-gray-50, var(--mg-v2-color-neutral-50));
-  --cpp-row: var(--mg-white, var(--mg-v2-color-neutral-0));
+  --cpp-line: var(--mg-v2-color-border-default);
+  --cpp-surface: var(--mg-v2-color-surface-bg);
+  --cpp-row: var(--mg-v2-color-surface-card);
   color: var(--cpp-ink);
   padding: var(--mg-spacing-lg, 1.5rem) var(--mg-spacing-md, 1rem);
 }
@@ -26,6 +26,7 @@
   font-size: 1.125rem;
   font-weight: 700;
   line-height: 1.35;
+  color: var(--cpp-ink);
   word-break: keep-all;
 }
 
@@ -78,6 +79,7 @@
 .mg-consultation-package-public__name {
   font-weight: 700;
   font-size: 0.9375rem;
+  color: var(--cpp-ink);
   word-break: keep-all;
 }
 
@@ -92,6 +94,7 @@
   flex-shrink: 0;
   font-weight: 600;
   font-size: 0.9375rem;
+  color: var(--cpp-ink);
   white-space: nowrap;
   word-break: keep-all;
 }

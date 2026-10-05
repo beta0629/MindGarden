@@ -1,6 +1,7 @@
 package com.coresolution.core.security;
 
 import com.coresolution.core.context.TenantContextHolder;
+import com.coresolution.core.util.HttpRequestClientIp;
 import com.coresolution.core.domain.SecurityAuditLog;
 import com.coresolution.core.repository.SecurityAuditLogRepository;
 import lombok.RequiredArgsConstructor;
@@ -129,17 +130,7 @@ public class SecurityAuditAspect {
      * 클라이언트 IP 주소 추출
      */
     private String getClientIpAddress(HttpServletRequest request) {
-        String xForwardedFor = request.getHeader("X-Forwarded-For");
-        if (xForwardedFor != null && !xForwardedFor.isEmpty()) {
-            return xForwardedFor.split(",")[0].trim();
-        }
-        
-        String xRealIp = request.getHeader("X-Real-IP");
-        if (xRealIp != null && !xRealIp.isEmpty()) {
-            return xRealIp;
-        }
-        
-        return request.getRemoteAddr();
+        return HttpRequestClientIp.resolve(request);
     }
 }
 

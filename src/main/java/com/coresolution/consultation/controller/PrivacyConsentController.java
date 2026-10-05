@@ -2,6 +2,7 @@ package com.coresolution.consultation.controller;
 
 import java.util.Map;
 import com.coresolution.consultation.entity.User;
+import com.coresolution.core.util.HttpRequestClientIp;
 import com.coresolution.consultation.service.PrivacyConsentService;
 import com.coresolution.consultation.utils.SessionUtils;
 import org.springframework.http.ResponseEntity;
@@ -126,16 +127,6 @@ public class PrivacyConsentController {
      * 클라이언트 IP 주소 추출
      */
     private String getClientIpAddress(HttpServletRequest request) {
-        String xForwardedFor = request.getHeader("X-Forwarded-For");
-        if (xForwardedFor != null && !xForwardedFor.isEmpty()) {
-            return xForwardedFor.split(",")[0].trim();
-        }
-        
-        String xRealIp = request.getHeader("X-Real-IP");
-        if (xRealIp != null && !xRealIp.isEmpty()) {
-            return xRealIp;
-        }
-        
-        return request.getRemoteAddr();
+        return HttpRequestClientIp.resolve(request);
     }
 }

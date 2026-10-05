@@ -226,6 +226,33 @@ describe('pendingPaymentAggregation', () => {
     );
   });
 
+  test('mergeUnpaidSoftMappings: 동일 id ACTIVE page 는 PENDING_PAYMENT 로 덮고 페이지 필드는 유지', () => {
+    const base = [{
+      id: 279,
+      status: 'ACTIVE',
+      clientName: 'SoftUnpaidClient',
+      remainingSessions: 1,
+      consultantName: 'c',
+      packageName: 'pkg',
+      paymentTiming: 'SAME_DAY_CARD',
+      hasConsultationSchedule: true
+    }];
+    const pending = {
+      mappings: [{
+        id: 279,
+        status: 'PENDING_PAYMENT',
+        clientName: 'SoftUnpaidClient',
+        paymentTiming: 'SAME_DAY_CARD',
+        remainingSessions: 1
+      }]
+    };
+    const [merged] = mergeUnpaidSoftMappings(base, pending);
+    expect(merged.status).toBe('PENDING_PAYMENT');
+    expect(merged.consultantName).toBe('c');
+    expect(merged.packageName).toBe('pkg');
+    expect(merged.hasConsultationSchedule).toBe(true);
+  });
+
   test('mergeUnpaidSoftMappings: PAYMENT_CONFIRMED 등 pendingLists 비-PENDING 제외', () => {
     const base = [{ id: 1, status: 'ACTIVE' }];
     const pending = {

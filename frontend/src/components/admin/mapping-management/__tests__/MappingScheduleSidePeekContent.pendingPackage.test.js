@@ -21,11 +21,15 @@ jest.mock('react-i18next', () => ({
   })
 }));
 
-jest.mock('../../../../utils/safeDisplay', () => ({
-  __esModule: true,
-  toDisplayString: (v, fallback = '') => (v == null || v === '' ? fallback : String(v)),
-  toErrorMessage: (err, fallback) => err?.message || fallback
-}));
+jest.mock('../../../../utils/safeDisplay', () => {
+  const actual = jest.requireActual('../../../../utils/safeDisplay');
+  return {
+    __esModule: true,
+    ...actual,
+    toDisplayString: (v, fallback = '') => (v == null || v === '' ? fallback : String(v)),
+    toErrorMessage: (err, fallback) => err?.message || fallback
+  };
+});
 
 jest.mock('../../../../utils/packagePricing', () => ({
   __esModule: true,

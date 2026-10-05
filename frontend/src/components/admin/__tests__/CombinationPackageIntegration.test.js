@@ -84,6 +84,15 @@ describe('조합 패키지 생성 및 배정 모달 정합성 검증 (E2E/Integr
       if (params?.codeGroup === 'CONSULTATION_PACKAGE') {
         return Promise.resolve({ codes: basePackages });
       }
+      if (typeof url === 'string' && url.includes('with-mapping-info')) {
+        return Promise.resolve({
+          clients: [{ id: 1, name: '내담자A' }],
+          count: 1
+        });
+      }
+      if (typeof url === 'string' && url.includes('/mappings')) {
+        return Promise.resolve({ mappings: [], count: 0 });
+      }
       return Promise.resolve({});
     });
 
@@ -122,7 +131,8 @@ describe('조합 패키지 생성 및 배정 모달 정합성 검증 (E2E/Integr
     // 데이터 로드 대기
     await waitFor(() => expect(StandardizedApi.get).toHaveBeenCalled());
 
-    // 기본 정보 입력
+    // 기본 정보 입력 — 신규는 코드 자동 발급이 기본이고, 수동을 켜야 placeholder 입력이 나온다.
+    fireEvent.click(screen.getByRole('radio', { name: '수동' }));
     const codeValueInput = screen.getByPlaceholderText('예: BASIC, SINGLE_80000');
     fireEvent.change(codeValueInput, { target: { value: 'COMBO_1' } });
 

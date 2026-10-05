@@ -40,7 +40,13 @@ jest.mock('./utils/unifiedLayoutSystem', () => ({
 }));
 
 jest.mock('./utils/designSystemHelper', () => ({
-  initializeDynamicThemeSystem: jest.fn()
+  __esModule: true,
+  initializeDynamicThemeSystem: () => Promise.resolve()
+}));
+
+jest.mock('./components/common/ProtectedRoute', () => ({
+  __esModule: true,
+  default: ({ children }) => children
 }));
 
 import App from './App';

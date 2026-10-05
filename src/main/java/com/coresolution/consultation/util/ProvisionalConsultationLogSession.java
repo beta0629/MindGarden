@@ -1,8 +1,6 @@
 package com.coresolution.consultation.util;
 
-import com.coresolution.consultation.constant.MappingStatusConstants;
 import com.coresolution.consultation.entity.ConsultantClientMapping;
-import com.coresolution.consultation.entity.ConsultantClientMapping.MappingStatus;
 
 /**
  * 가예약(SAME_DAY_CARD / PENDING_PAYMENT) 상담일지용 회차 부여.
@@ -25,15 +23,11 @@ public final class ProvisionalConsultationLogSession {
      * @return PENDING_PAYMENT + paymentTiming=SAME_DAY_CARD 이면 true
      */
     public static boolean isSameDayCardPendingPayment(ConsultantClientMapping mapping) {
-        if (mapping == null || mapping.getStatus() == null) {
+        if (mapping == null) {
             return false;
         }
-        if (mapping.getStatus() != MappingStatus.PENDING_PAYMENT) {
-            return false;
-        }
-        String paymentTiming = mapping.getPaymentTiming();
-        return paymentTiming != null
-                && MappingStatusConstants.PAYMENT_TIMING_SAME_DAY_CARD.equalsIgnoreCase(paymentTiming);
+        return MappingPaymentScheduleGate.isSameDayCardPendingPayment(
+                mapping.getStatus(), mapping.getPaymentTiming());
     }
 
     /**

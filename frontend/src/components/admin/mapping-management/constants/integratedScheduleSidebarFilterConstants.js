@@ -3,8 +3,8 @@
  *
  * - `canConfirmedScheduleForMapping`: 확정 예약(회기 차감) — 백엔드 `validateMappingForSchedule` +
  *   `validateRemainingSessions`와 정합 (ACTIVE + 남은 회기 1 이상, 또는 타기관 연계).
- * - `canTentativeBeforeDepositScheduleForMapping`: 가예약 — `validateMappingForTentativeBeforeDepositSchedule`과 정합
- *   (ACTIVE만. 승인 대기 DEPOSIT_PENDING은 캘린더 드롭·가예약 불가).
+ * - `canTentativeBeforeDepositScheduleForMapping`: 가예약 — `MappingPaymentScheduleGate`와 정합
+ *   (ACTIVE, 또는 PENDING_PAYMENT + SAME_DAY_CARD. 선납 결제 대기·승인 대기 DEPOSIT_PENDING은 불가).
  * - `canScheduleForMapping`: remainingSessions > 0이면 드래그 허용, 0이면 불가.
  *   타기관 연계(INSTITUTION_LINK)는 회기권이 아니므로 rem=0이어도 허용.
  *   남은 회기수만큼 다중 스케줄 생성을 허용하며, 확정 예약 또는 가예약 경로 중 하나를 만족해야 함.
@@ -25,6 +25,7 @@
  */
 
 import { isInstitutionLinkEngagement } from '../../../../constants/clientEngagementType';
+import { allowsTentativeBeforeDeposit } from '../../../../utils/mappingPaymentScheduleGate';
 import {
   isUnpaidSoftMapping,
   PENDING_PAYMENT_KPI_LABEL
@@ -171,6 +172,7 @@ export const canConfirmedScheduleForMapping = (mapping) =>
 
 /**
  * 입금 전 가예약 등록 가능 매핑 여부 (회기 0이어도 허용).
+ * ACTIVE, 또는 사후 카드 결제 대기. 기관연계·선납 결제 대기는 불가.
  *
  * @param {object} [mapping] - 배정 DTO
  * @returns {boolean}
@@ -179,8 +181,7 @@ export const canTentativeBeforeDepositScheduleForMapping = (mapping) => {
   if (isInstitutionLinkMapping(mapping)) {
     return false;
   }
-  const s = mapping?.status;
-  return s === MAPPING_STATUS_ACTIVE;
+  return allowsTentativeBeforeDeposit(mapping);
 };
 
 /**

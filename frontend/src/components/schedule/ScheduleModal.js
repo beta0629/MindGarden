@@ -528,8 +528,9 @@ const ScheduleModalNew = ({
                                             </label>
                                             <p className="mg-v2-ad-details-step__tentative-hint" role="note">
                                                 <SafeText>
-                                                    활성(ACTIVE) 배정에서만 가능합니다. 결제·입금이 확정되면
-                                                    일정이 확정되고 회기가 차감됩니다.
+                                                    활성 배정 또는 사후 카드 결제 대기에서 가능합니다.
+                                                    선납 결제 대기는 입금 전에 가예약할 수 없습니다.
+                                                    결제·입금이 확정되면 일정이 확정되고 회기가 차감됩니다.
                                                 </SafeText>
                                             </p>
                                         </div>

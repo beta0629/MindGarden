@@ -338,6 +338,20 @@ describe('integratedScheduleSidebarFilterConstants', () => {
     it('PAYMENT_CONFIRMED이면 false', () => {
       expect(canTentativeBeforeDepositScheduleForMapping({ status: MAPPING_STATUS_PAYMENT_CONFIRMED })).toBe(false);
     });
+
+    it('PENDING_PAYMENT + SAME_DAY_CARD 이면 true', () => {
+      expect(canTentativeBeforeDepositScheduleForMapping({
+        status: MAPPING_STATUS_PENDING_PAYMENT,
+        paymentTiming: PAYMENT_TIMING_SAME_DAY_CARD
+      })).toBe(true);
+    });
+
+    it('PENDING_PAYMENT + ADVANCE 이면 false (선납 입금 전 가예약 불가)', () => {
+      expect(canTentativeBeforeDepositScheduleForMapping({
+        status: MAPPING_STATUS_PENDING_PAYMENT,
+        paymentTiming: PAYMENT_TIMING_ADVANCE
+      })).toBe(false);
+    });
   });
 
   describe('isPaymentConfirmed', () => {

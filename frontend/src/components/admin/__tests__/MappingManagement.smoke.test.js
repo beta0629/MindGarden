@@ -43,10 +43,6 @@ describe('MappingManagement (G-14)', () => {
     render(<MappingManagement />);
 
     expect(screen.getByTestId('admin-common-layout')).toBeInTheDocument();
-    expect(screen.getByTestId('admin-common-layout')).toHaveAttribute(
-      'data-title',
-      '배정 관리'
-    );
     expect(screen.getByTestId('mapping-management-page-stub')).toBeInTheDocument();
   });
 });

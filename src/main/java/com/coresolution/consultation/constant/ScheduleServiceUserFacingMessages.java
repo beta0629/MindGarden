@@ -32,6 +32,13 @@ public final class ScheduleServiceUserFacingMessages {
     public static final String MSG_INSTITUTION_LINK_NOT_PROVISIONAL =
             "기관연계 일정은 가예약으로 등록할 수 없습니다.";
 
+    /**
+     * 결제 대기 매핑에 묶인 일정은 확정·점유 전환하지 않는다.
+     * 사후 카드 가예약 생성은 유지하고, 확정은 입금 또는 당일 카드 결제 이후다.
+     */
+    public static final String MSG_UNPAID_PENDING_SCHEDULE_CONFIRM_DENIED =
+            "결제 대기 매칭은 일정을 확정할 수 없습니다. 입금 확인 또는 당일 카드 결제 후 진행해 주세요.";
+
     private ScheduleServiceUserFacingMessages() {
     }
 }

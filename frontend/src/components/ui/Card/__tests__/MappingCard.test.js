@@ -17,6 +17,7 @@ jest.mock('react-i18next', () => ({
         'common.labels.consultant': '상담사',
         'common.labels.client': '내담자',
         'admin.actions.paymentConfirm': '결제 확인',
+        'admin:mapping.card.actions.confirmAndActivate': '입금 확인 후 활성화',
         'common.actions.edit': '수정'
       };
       return labels[key] || key;
@@ -76,7 +77,7 @@ describe('MappingCard detailed Primary1+overflow', () => {
       />
     );
 
-    expect(screen.getByRole('button', { name: '결제 확인' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '입금 확인 후 활성화' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: '더보기' })).toBeInTheDocument();
   });
 
@@ -91,7 +92,7 @@ describe('MappingCard detailed Primary1+overflow', () => {
       />
     );
 
-    fireEvent.click(screen.getByRole('button', { name: '결제 확인' }));
+    fireEvent.click(screen.getByRole('button', { name: '입금 확인 후 활성화' }));
     expect(onView).not.toHaveBeenCalled();
   });
 

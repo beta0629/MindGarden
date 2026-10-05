@@ -73,6 +73,7 @@ import com.coresolution.consultation.service.ScheduleService;
 import com.coresolution.consultation.service.SessionSyncService;
 import com.coresolution.consultation.util.ConsultationMessageTypeCodes;
 import com.coresolution.consultation.util.LeftoverOccupyingCompleteExhaust;
+import com.coresolution.consultation.util.MappingPaymentScheduleGate;
 import com.coresolution.consultation.util.ProvisionalConsultationLogSession;
 import com.coresolution.consultation.util.ScheduleCancelLinkedMappingReopen;
 import com.coresolution.consultation.util.ScheduleSessionStartGate;
@@ -312,6 +313,9 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         LocalDate previousDate = existingSchedule.getDate();
         LocalTime previousStartTime = existingSchedule.getStartTime();
         LocalTime previousEndTime = existingSchedule.getEndTime();
+        ScheduleStatus intendedStatus = updateData.getStatus() != null
+                ? updateData.getStatus() : previousStatus;
+        rejectUnpaidPendingConfirmTransition(existingSchedule, previousStatus, intendedStatus);
 
         // 완료·취소 스케줄: 슬롯(date/start/end)이 실제로 바뀔 때만 거부 (동일 값 재저장·상태만 변경은 허용)
         LocalDate intendedDate = updateData.getDate() != null ? updateData.getDate() : previousDate;
@@ -1686,11 +1690,83 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         return saved;
     }
 
+    /**
+     * 결제 대기 매핑에 묶인 일정을 확정·점유 전환하지 않는다.
+     * 취소·가예약 유지·이미 같은 상태 재저장은 막지 않는다.
+     *
+     * @param schedule 저장 전 일정
+     * @param previousStatus 변경 전 상태
+     * @param intendedStatus 요청 상태. null 이면 변경 없음
+     */
+    private void rejectUnpaidPendingConfirmTransition(Schedule schedule, ScheduleStatus previousStatus,
+            ScheduleStatus intendedStatus) {
+        if (schedule == null || intendedStatus == null || previousStatus == intendedStatus) {
+            return;
+        }
+        boolean confirming = intendedStatus == ScheduleStatus.CONFIRMED
+                || intendedStatus == ScheduleStatus.BOOKED
+                || intendedStatus == ScheduleStatus.IN_PROGRESS;
+        if (!confirming) {
+            return;
+        }
+        if (!scheduleConfirmAllowed(schedule)) {
+            throw new IllegalStateException(
+                    ScheduleServiceUserFacingMessages.MSG_UNPAID_PENDING_SCHEDULE_CONFIRM_DENIED);
+        }
+    }
+
+    /**
+     * 일정에 묶인 매핑이 확정을 허용하는지. 매핑이 없고 가예약 상태이면 거절한다.
+     *
+     * @param schedule 일정
+     * @return 확정해도 되면 true
+     */
+    private boolean scheduleConfirmAllowed(Schedule schedule) {
+        if (schedule == null) {
+            return false;
+        }
+        ConsultantClientMapping linked = resolveMappingForPaymentGate(schedule);
+        if (linked != null) {
+            return MappingPaymentScheduleGate.allowsScheduleConfirm(
+                    linked.getStatus(), linked.getPaymentTiming());
+        }
+        return schedule.getStatus() != ScheduleStatus.TENTATIVE_PENDING_PAYMENT;
+    }
+
+    /**
+     * 결제 게이트용 매핑. {@code mappingId} 가 없으면 null. 테넌트 밖으로 조회하지 않는다.
+     *
+     * @param schedule 일정
+     * @return 같은 테넌트의 매핑, 없으면 null
+     */
+    private ConsultantClientMapping resolveMappingForPaymentGate(Schedule schedule) {
+        if (schedule == null || schedule.getMappingId() == null) {
+            return null;
+        }
+        String tenantId = TenantContextHolder.getTenantId();
+        if (tenantId == null || tenantId.isBlank()) {
+            tenantId = schedule.getTenantId();
+        }
+        if (tenantId == null || tenantId.isBlank()) {
+            return null;
+        }
+        Optional<ConsultantClientMapping> found = mappingRepository.findByTenantIdAndId(
+                tenantId, schedule.getMappingId());
+        if (found == null || found.isEmpty()) {
+            return null;
+        }
+        return found.get();
+    }
+
     @Override
     public Schedule confirmSchedule(Long scheduleId, String adminNote) {
         log.info("✅ 예약 확정: ID {}, 관리자 메모: {}", scheduleId, adminNote);
         Schedule schedule = findById(scheduleId);
-        
+        if (!scheduleConfirmAllowed(schedule)) {
+            throw new IllegalStateException(
+                    ScheduleServiceUserFacingMessages.MSG_UNPAID_PENDING_SCHEDULE_CONFIRM_DENIED);
+        }
+
         // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
         schedule.setStatus(ScheduleStatus.CONFIRMED);
         
@@ -1976,7 +2052,8 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
                 MappingStatus.ACTIVE);
         for (ConsultantClientMapping mapping : activeMappings) {
             if (mappingMatchesConsultantClientPair(mapping, consultantId, clientId)
-                    && !isInstitutionLinkPaymentTiming(mapping)) {
+                    && MappingPaymentScheduleGate.allowsTentativeBeforeDeposit(
+                            mapping.getStatus(), mapping.getPaymentTiming())) {
                 log.debug("가예약 허용 매칭: status=ACTIVE, mappingId={}", mapping.getId());
                 return true;
             }
@@ -1988,7 +2065,8 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
                 MappingStatus.PENDING_PAYMENT);
         for (ConsultantClientMapping mapping : pendingPaymentMappings) {
             if (mappingMatchesConsultantClientPair(mapping, consultantId, clientId)
-                    && isSameDayCardPaymentTiming(mapping)) {
+                    && MappingPaymentScheduleGate.allowsTentativeBeforeDeposit(
+                            mapping.getStatus(), mapping.getPaymentTiming())) {
                 log.debug("가예약 허용 매칭: status=PENDING_PAYMENT, paymentTiming=SAME_DAY_CARD, mappingId={}",
                         mapping.getId());
                 return true;
@@ -3185,7 +3263,16 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             Optional<ConsultantClientMapping> byScheduleMapping = mappingRepository.findByTenantIdAndId(
                     tenantId, scheduleForSequence.getMappingId());
             if (byScheduleMapping.isPresent()) {
-                MappingStatus scheduleMappingStatus = byScheduleMapping.get().getStatus();
+                ConsultantClientMapping linkedMapping = byScheduleMapping.get();
+                MappingStatus scheduleMappingStatus = linkedMapping.getStatus();
+                if (MappingPaymentScheduleGate.blocksSessionConsumeFallback(
+                        scheduleMappingStatus, linkedMapping.getPaymentTiming())) {
+                    log.warn("미결제 매핑은 회기 차감·다른 매핑 대체 차감 없음: "
+                                    + "scheduleId={}, mappingId={}, status={}, paymentTiming={}",
+                            scheduleForSequence.getId(), linkedMapping.getId(),
+                            scheduleMappingStatus, linkedMapping.getPaymentTiming());
+                    return;
+                }
                 if (scheduleMappingStatus == MappingStatus.ACTIVE
                         || scheduleMappingStatus == MappingStatus.SESSIONS_EXHAUSTED) {
                     mappingOpt = byScheduleMapping;

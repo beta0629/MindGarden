@@ -106,6 +106,7 @@ export const ONBOARDING_MESSAGES = {
 export const ONBOARDING_FACT_LABELS = {
   BUSINESS_TYPE: "업종",
   SCALE: "규모",
+  TENANT_ID: "테넌트 ID",
   DOMAIN: "도메인",
   PHONE: "대표 전화",
   REPRESENTATIVE_EMAIL: "대표 이메일",

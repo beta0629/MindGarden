@@ -285,6 +285,8 @@ class OnboardingControllerPasswordExposureWebMvcTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.password").doesNotExist())
                 .andExpect(jsonPath("$.data.id").value(77))
+                .andExpect(jsonPath("$.data.contactEmail").value(ownerEmail))
+                .andExpect(jsonPath("$.data.tenantId").value("tenant-pw-test"))
                 .andReturn();
 
         assertNoPasswordMaterial(result.getResponse().getContentAsString());
@@ -311,6 +313,11 @@ class OnboardingControllerPasswordExposureWebMvcTest {
                         .content(objectMapper.writeValueAsString(body)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.adminAccount.email").value(ownerEmail))
+                .andExpect(jsonPath("$.data.adminAccount.tenantId").value("tenant-pw-test"))
+                .andExpect(jsonPath("$.data.adminAccount.tenantName").value("테스트 기관"))
+                .andExpect(jsonPath("$.data.request.contactEmail").value(ownerEmail))
+                .andExpect(jsonPath("$.data.request.tenantId").value("tenant-pw-test"))
+                .andExpect(jsonPath("$.data.request.tenantName").value("테스트 기관"))
                 .andExpect(jsonPath("$.data.adminAccount.password").doesNotExist())
                 .andExpect(jsonPath("$.data.request.password").doesNotExist())
                 .andReturn();
@@ -341,7 +348,39 @@ class OnboardingControllerPasswordExposureWebMvcTest {
                         .content(objectMapper.writeValueAsString(body)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.adminAccount.email").value(ownerEmail))
+                .andExpect(jsonPath("$.data.request.contactEmail").value(ownerEmail))
                 .andExpect(jsonPath("$.data.adminAccount.password").doesNotExist());
+    }
+
+    @Test
+    @DisplayName("OPS 승인 응답: 사용자 이메일이 암호문이면 암호문을 내보내지 않고 contactEmail 을 쓴다")
+    void opsDecision_ciphertextUserEmail_isNotExposed() throws Exception {
+        loginAsOps();
+        stored.setStatus(OnboardingStatus.APPROVED);
+        stored.setSubdomain("sample-center");
+        when(onboardingService.decide(eq(77L), eq(OnboardingStatus.APPROVED), any(), any()))
+                .thenReturn(stored);
+        String cipher = "k1::QUJDREVGRw==";
+        User admin = new User();
+        admin.setEmail(cipher);
+        when(userRepository.findByEmailAndTenantId(ownerEmail, "tenant-pw-test"))
+                .thenReturn(Optional.of(admin));
+
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("status", "APPROVED");
+        body.put("actorId", "ops-user");
+
+        MvcResult result = mockMvc.perform(post(OPS_BASE + "/requests/77/decision")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(body)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.adminAccount.email").value(ownerEmail))
+                .andExpect(jsonPath("$.data.request.contactEmail").value(ownerEmail))
+                .andExpect(jsonPath("$.data.request.tenantId").value("tenant-pw-test"))
+                .andExpect(jsonPath("$.data.request.subdomain").value("sample-center"))
+                .andReturn();
+
+        assertThat(result.getResponse().getContentAsString()).doesNotContain(cipher);
     }
 
     @Test

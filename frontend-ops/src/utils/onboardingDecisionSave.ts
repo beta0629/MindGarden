@@ -1,6 +1,13 @@
+export interface DecisionAdminAccount {
+  email?: string | null;
+  tenantId?: string | null;
+  tenantName?: string | null;
+}
+
 export interface DecisionSaveResult<TRequest> {
   saveError: string;
   updated: TRequest | null;
+  adminAccount?: DecisionAdminAccount | null;
 }
 
 /**
@@ -37,7 +44,12 @@ function rejectedDecisionMessage(
  * 응답이 실패이면 성공 알림을 띄우지 않는다.
  */
 export async function saveOnboardingDecision<TRequest extends { status?: string }>(input: {
-  decide: () => Promise<{ request?: TRequest; success?: boolean; message?: string } | null | undefined>;
+  decide: () => Promise<{
+    request?: TRequest;
+    adminAccount?: DecisionAdminAccount | null;
+    success?: boolean;
+    message?: string;
+  } | null | undefined>;
   isNotified: (error: unknown) => boolean;
   notifySuccess: (message: string) => void;
   notifyError: (message: string) => void;
@@ -49,18 +61,18 @@ export async function saveOnboardingDecision<TRequest extends { status?: string 
     const rejected = rejectedDecisionMessage(response, input.failureMessage);
     if (rejected) {
       input.notifyError(rejected);
-      return { saveError: rejected, updated: null };
+      return { saveError: rejected, updated: null, adminAccount: null };
     }
     const request = response?.request;
     const updated = request?.status ? request : null;
     input.notifySuccess(input.successMessage);
-    return { saveError: "", updated };
+    return { saveError: "", updated, adminAccount: response?.adminAccount ?? null };
   } catch (error) {
     const message = readDecisionFailureMessage(error, input.failureMessage);
     if (!input.isNotified(error)) {
       input.notifyError(message);
     }
-    return { saveError: message, updated: null };
+    return { saveError: message, updated: null, adminAccount: null };
   }
 }
 

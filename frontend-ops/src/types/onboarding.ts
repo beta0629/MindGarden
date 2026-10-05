@@ -21,6 +21,8 @@ export interface OnboardingRequest {
   businessLandline?: string | null;
   businessAddress?: string | null;
   initializationStatusJson?: string | null; // 초기화 작업 단계별 상태 (JSON)
+  /** 승인·로그인과 같은 checklist contactEmail. 암호문은 서버가 넣지 않는다. */
+  contactEmail?: string | null;
 }
 
 export interface OnboardingDecisionPayload {

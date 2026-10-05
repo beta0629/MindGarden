@@ -504,7 +504,8 @@ server:
         # Domain 값은 SessionCookieSupport.normalizeSessionCookieDomain 으로 선행 점 제거.
         # OAuth·SessionCookieRenewalFilter Set-Cookie 도 SessionCookieSupport 로 동일 Domain/Base64 정합.
         # 쿠키 Domain 만으로 부족한 경우: OAUTH_WEB_SESSION_EXCHANGE_CODE_ENABLED + TTL (일회용 opaque 코드).
-        # 운영/개발: EnvironmentFile 등에 SESSION_COOKIE_DOMAIN (RFC 6265: 선행 점 없음).
+        # 운영: EnvironmentFile SESSION_COOKIE_DOMAIN (RFC 6265: 선행 점 없음).
+        # dev 프로파일은 parent Domain 을 적용하지 않는다(host-only). OAuth 는 oauthExchangeCode.
         # deployment/mindgarden.prod-env.example 참고.
         # OAuth2(카카오/네이버 등) 외부 리다이렉트 콜백에서는 SameSite=strict일 경우 세션 쿠키가 전송되지 않아
         # state 검증/세션 연속성이 깨질 수 있으므로 Lax로 설정합니다.

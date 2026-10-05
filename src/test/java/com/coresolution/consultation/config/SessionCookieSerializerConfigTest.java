@@ -66,4 +66,26 @@ class SessionCookieSerializerConfigTest {
         assertThat(ReflectionTestUtils.getField(serializer, "domainName")).isNull();
         assertThat(ReflectionTestUtils.getField(serializer, "useBase64Encoding")).isEqualTo(true);
     }
+
+    @Test
+    @DisplayName("dev 프로파일은 기존 Domain 을 지워 host-only 로 둔다")
+    void customizer_devProfile_clearsDomain() {
+        MockEnvironment env = new MockEnvironment();
+        env.setActiveProfiles("dev");
+        env.setProperty("SESSION_COOKIE_DOMAIN", "parent.example");
+        env.setProperty("server.servlet.session.cookie.http-only", "true");
+        env.setProperty("server.servlet.session.cookie.same-site", "Lax");
+        SessionCookieSupport support = new SessionCookieSupport(env);
+
+        DefaultCookieSerializerCustomizer customizer =
+                new SessionCookieSerializerConfig().sessionCookieDomainSerializerCustomizer(support);
+        DefaultCookieSerializer serializer = new DefaultCookieSerializer();
+        serializer.setDomainName("parent.example");
+        customizer.customize(serializer);
+
+        assertThat(ReflectionTestUtils.getField(serializer, "domainName")).isNull();
+        assertThat(ReflectionTestUtils.getField(serializer, "cookiePath")).isEqualTo("/");
+        assertThat(ReflectionTestUtils.getField(serializer, "sameSite")).isEqualTo("Lax");
+        assertThat(ReflectionTestUtils.getField(serializer, "useHttpOnlyCookie")).isEqualTo(true);
+    }
 }

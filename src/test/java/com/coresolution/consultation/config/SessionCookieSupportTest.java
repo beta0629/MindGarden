@@ -137,6 +137,48 @@ class SessionCookieSupportTest {
     }
 
     @Test
+    @DisplayName("dev 프로파일은 SESSION_COOKIE_DOMAIN 이 있어도 host-only, 레거시 parent 만 만료")
+    void devProfile_omitsDomain_andExpiresLegacyParentOnly() {
+        MockEnvironment env = new MockEnvironment();
+        env.setActiveProfiles("dev");
+        env.setProperty("SESSION_COOKIE_DOMAIN", "parent.example");
+        env.setProperty("server.servlet.session.cookie.http-only", "true");
+        env.setProperty("server.servlet.session.cookie.secure", "true");
+        env.setProperty("server.servlet.session.cookie.same-site", "Lax");
+        SessionCookieSupport support = new SessionCookieSupport(env);
+        MockHttpServletRequest request = new MockHttpServletRequest();
+
+        String live = support.buildJsessionSetCookieHeader(SESSION_ID, MAX_AGE, request);
+        String legacy = support.buildLegacySharedDomainExpiryHeader(request);
+
+        assertThat(support.resolveDomain()).isNull();
+        assertThat(live).doesNotContain("Domain=");
+        assertThat(live).contains("Path=/");
+        assertThat(live).contains("Max-Age=" + MAX_AGE);
+        assertThat(live).containsIgnoringCase("HttpOnly");
+        assertThat(live).containsIgnoringCase("Secure");
+        assertThat(live).containsIgnoringCase("SameSite=Lax");
+        assertThat(legacy).contains("Domain=parent.example");
+        assertThat(legacy).contains("Max-Age=0");
+        assertThat(legacy).containsIgnoringCase("SameSite=Lax");
+        assertThat(legacy).containsIgnoringCase("HttpOnly");
+        assertThat(legacy).containsIgnoringCase("Secure");
+    }
+
+    @Test
+    @DisplayName("dev 가 아니면 SESSION_COOKIE_DOMAIN 을 그대로 쓴다")
+    void nonDev_stillAppliesDomain() {
+        MockEnvironment env = new MockEnvironment();
+        env.setActiveProfiles("prod");
+        env.setProperty("SESSION_COOKIE_DOMAIN", "parent.example");
+        SessionCookieSupport support = new SessionCookieSupport(env);
+
+        assertThat(support.resolveDomain()).isEqualTo("parent.example");
+        assertThat(support.resolveLegacySharedDomain()).isNull();
+        assertThat(support.buildLegacySharedDomainExpiryHeader(new MockHttpServletRequest())).isNull();
+    }
+
+    @Test
     @DisplayName("store-type 미설정(서블릿 세션)이면 쿠키 값은 raw sessionId")
     void build_nonRedis_keepsRawSessionId() {
         MockEnvironment env = new MockEnvironment();

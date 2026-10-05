@@ -13,6 +13,11 @@ import {
   parseScheduleDateKey,
   parseScheduleTimeKey
 } from './zonedDateTime';
+import logger from './logger';
+
+/** 시작 시각 해석 실패 경고 — 화면은 버튼을 켜 두고 서버가 최종 판정한다. */
+export const SCHEDULE_START_PARSE_FAILED_WARNING =
+  '[scheduleSessionStart] 일정 시작 시각을 읽지 못해 화면 판정을 건너뜁니다(서버가 최종 판정)';
 
 /**
  * 판정 타임존 기준 현재 시각 'YYYY-MM-DDTHH:mm'.
@@ -23,23 +28,32 @@ import {
 export const formatNowInSessionZone = (now = new Date()) =>
   formatDateTimeKeyInZone(now, CONSULTATION_LOG_SESSION_START_TIME_ZONE);
 
+/** 값이 있는 첫 후보 (null·undefined·'' 는 건너뜀). */
+const pickPresent = (...values) => values.find((value) => value != null && value !== '');
+
 /**
  * 일정이 시작됐는지 (date + startTime, startTime 없으면 그날 00:00).
+ * API 원본 필드(apiDate·apiStartTime)를 표시용 필드(date·startTime)보다 먼저 읽는다.
  * 시각은 zonedDateTime.parseScheduleTimeKey 로만 읽는다('오후 07:00', 'HH:mm[:ss]', ISO).
  * startTime 이 오프셋 ISO 이고 date 가 없으면 startTime 의 운영 타임존 날짜를 쓴다.
- * 날짜·시각을 읽을 수 없으면 true — 서버 판정에 맡긴다.
+ * 날짜·시각을 읽을 수 없으면 경고를 남기고 true — 최종 판정은 서버(SCHEDULE_SESSION_NOT_STARTED).
  *
- * @param {{ date?: *, startTime?: * }|null|undefined} schedule
+ * @param {{ apiDate?: *, date?: *, sessionDate?: *, apiStartTime?: *, startTime?: * }|null|undefined} schedule
  * @param {Date} [now]
  * @returns {boolean}
  */
 export const hasScheduleSessionStarted = (schedule, now = new Date()) => {
+  if (schedule == null) {
+    return true;
+  }
   const zone = CONSULTATION_LOG_SESSION_START_TIME_ZONE;
-  const rawStart = schedule?.startTime;
-  const dateKey = parseScheduleDateKey(schedule?.date, zone)
+  const rawStart = pickPresent(schedule.apiStartTime, schedule.startTime);
+  const rawDate = pickPresent(schedule.apiDate, schedule.date, schedule.sessionDate);
+  const dateKey = parseScheduleDateKey(rawDate, zone)
     ?? (typeof rawStart === 'string' && rawStart.includes('T') ? parseScheduleDateKey(rawStart, zone) : null);
-  const timeKey = rawStart == null || rawStart === '' ? '00:00' : parseScheduleTimeKey(rawStart, zone);
+  const timeKey = rawStart == null ? '00:00' : parseScheduleTimeKey(rawStart, zone);
   if (!dateKey || !timeKey) {
+    logger.warn(SCHEDULE_START_PARSE_FAILED_WARNING, { date: rawDate ?? null, startTime: rawStart ?? null });
     return true;
   }
   return formatNowInSessionZone(now) >= `${dateKey}T${timeKey}`;

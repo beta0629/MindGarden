@@ -106,6 +106,7 @@ class OnboardingControllerPasswordExposureWebMvcTest {
         Map<String, Object> checklist = new LinkedHashMap<>();
         checklist.put("adminPassword", storedHash);
         checklist.put("contactPhone", SENSITIVE_PHONE);
+        checklist.put("contactEmail", ownerEmail);
         checklist.put("brandName", "브랜드");
 
         stored = OnboardingRequest.builder()
@@ -315,6 +316,32 @@ class OnboardingControllerPasswordExposureWebMvcTest {
                 .andReturn();
 
         assertNoPasswordMaterial(result.getResponse().getContentAsString());
+    }
+
+    @Test
+    @DisplayName("OPS 승인 응답: 평문 저장 이메일은 컨버터 조회가 비어도 contactEmail 로 찾는다")
+    void opsDecision_adminAccountFromPlaintextEmailWhenConverterMisses() throws Exception {
+        loginAsOps();
+        stored.setStatus(OnboardingStatus.APPROVED);
+        stored.setRequestedBy("01012345678");
+        when(onboardingService.decide(eq(77L), eq(OnboardingStatus.APPROVED), any(), any()))
+                .thenReturn(stored);
+        when(userRepository.findByEmailAndTenantId(ownerEmail, "tenant-pw-test"))
+                .thenReturn(Optional.empty());
+        User admin = new User();
+        admin.setEmail(ownerEmail);
+        when(userRepository.findByTenantId("tenant-pw-test")).thenReturn(List.of(admin));
+
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("status", "APPROVED");
+        body.put("actorId", "ops-user");
+
+        mockMvc.perform(post(OPS_BASE + "/requests/77/decision")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(body)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.adminAccount.email").value(ownerEmail))
+                .andExpect(jsonPath("$.data.adminAccount.password").doesNotExist());
     }
 
     @Test

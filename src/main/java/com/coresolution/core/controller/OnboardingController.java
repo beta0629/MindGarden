@@ -3,6 +3,7 @@ package com.coresolution.core.controller;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import com.coresolution.consultation.config.MindgardenSecurityProperties;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.exception.EntityNotFoundException;
@@ -22,10 +23,12 @@ import com.coresolution.core.domain.onboarding.OnboardingStatus;
 import com.coresolution.core.dto.ApiResponse;
 import com.coresolution.core.constant.OnboardingConstants;
 import com.coresolution.core.security.CaptchaVerifier;
+import com.coresolution.core.security.OnboardingAdminContactEmailSupport;
 import com.coresolution.core.service.OnboardingService;
 import com.coresolution.core.service.impl.OnboardingApprovalBlockedException;
 import com.coresolution.core.util.HttpRequestClientIp;
 import com.coresolution.core.util.OpsPermissionUtils;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.data.domain.Page;
@@ -530,25 +533,76 @@ public class OnboardingController extends BaseApiController {
 
     /**
      * 승인 완료 건의 생성된 관리자 계정 요약. 비밀번호는 신청자만 알고 있으므로 반환하지 않는다.
+     * 이메일은 checklist contactEmail 이다. 프로시저는 평문을 넣고 JPA 조회는 암호화 컨버터를 타므로,
+     * 컨버터 조회가 비면 테넌트 사용자를 복호화해 같은 이메일과 맞춘다.
      */
     private OnboardingDecisionResponse.AdminAccountInfo resolveCreatedAdminAccount(
             OnboardingRequest request) {
         if (request.getStatus() != OnboardingStatus.APPROVED || request.getTenantId() == null) {
             return null;
         }
-        String contactEmail = request.getRequestedBy();
-        if (contactEmail == null || contactEmail.trim().isEmpty()) {
+        String contactEmail;
+        try {
+            contactEmail = OnboardingAdminContactEmailSupport.readNormalized(request.getChecklistJson(),
+                    objectMapper);
+        } catch (JsonProcessingException e) {
+            log.warn("관리자 계정 조회용 contactEmail 파싱 실패 (무시): {}", e.getMessage());
+            return null;
+        }
+        if (contactEmail == null) {
             return null;
         }
         try {
-            return userRepository.findByEmailAndTenantId(contactEmail, request.getTenantId())
+            return findAdminUserByContactEmail(contactEmail, request.getTenantId())
                     .map(adminUser -> new OnboardingDecisionResponse.AdminAccountInfo(
-                            adminUser.getEmail(), request.getTenantId(), request.getTenantName()))
+                            visibleAdminEmail(adminUser, contactEmail), request.getTenantId(),
+                            request.getTenantName()))
                     .orElse(null);
         } catch (Exception e) {
             log.warn("관리자 계정 정보 조회 실패 (무시): {}", e.getMessage());
             return null;
         }
+    }
+
+    /**
+     * 테넌트 관리자를 연락 이메일로 찾는다.
+     * {@code findByEmailAndTenantId} 는 이메일 컨버터로 암호문과 맞추고,
+     * 프로시저가 넣은 평문은 조회된 엔티티의 복호화 값으로 맞춘다.
+     *
+     * @param contactEmail 정규화된 관리자 이메일
+     * @param tenantId 테넌트 ID
+     * @return 일치하는 사용자
+     */
+    private Optional<User> findAdminUserByContactEmail(String contactEmail, String tenantId) {
+        Optional<User> byConverted = userRepository.findByEmailAndTenantId(contactEmail, tenantId);
+        if (byConverted.isPresent()) {
+            return byConverted;
+        }
+        List<User> users = userRepository.findByTenantId(tenantId);
+        if (users == null || users.isEmpty()) {
+            return Optional.empty();
+        }
+        for (User user : users) {
+            if (user == null) {
+                continue;
+            }
+            if (contactEmail.equals(OnboardingAdminContactEmailSupport.normalize(user.getEmail()))) {
+                return Optional.of(user);
+            }
+        }
+        return Optional.empty();
+    }
+
+    /**
+     * 응답에 넣을 이메일. 엔티티 값이 정규화되면 그 값을, 아니면 신청서의 contactEmail 을 쓴다.
+     *
+     * @param adminUser 조회된 관리자
+     * @param contactEmail 신청서의 정규화 이메일
+     * @return 로그인에 쓰는 이메일
+     */
+    private static String visibleAdminEmail(User adminUser, String contactEmail) {
+        String normalized = OnboardingAdminContactEmailSupport.normalize(adminUser.getEmail());
+        return normalized != null ? normalized : contactEmail;
     }
 
     /**

@@ -30,9 +30,15 @@ line=$(sed -n "${n}p" "$f")
 [ "$line" = "NONE" ] && exit 0
 echo "$line"
 EOF
+# git stub: ls-remote → tip, fetch → 성공, diff → SET_GATE_TEST_FE_DIFF(0 같음 / 1 다름 / 그 외 오류)
 cat >"$WORKDIR/bin/git" <<'EOF'
 #!/bin/bash
-printf '%s\trefs/heads/release/prod\n' "${SET_GATE_TEST_TIP:?}"
+case "$1" in
+    ls-remote) printf '%s\trefs/heads/release/prod\n' "${SET_GATE_TEST_TIP:?}" ;;
+    fetch) exit 0 ;;
+    diff) exit "${SET_GATE_TEST_FE_DIFF:-1}" ;;
+    *) exit 2 ;;
+esac
 EOF
 chmod +x "$WORKDIR/bin/gh" "$WORKDIR/bin/git"
 
@@ -78,6 +84,13 @@ fi
 out=$(run_gate "11 completed success" "$OTHER") || fail "tip ahead should exit 0: $out"
 grep -q '^deploy=false$' "$WORKDIR/out" || fail "tip ahead: deploy=false expected"
 grep -q '^reason=tip-ahead$' "$WORKDIR/out" || fail "tip ahead reason missing"
+
+out=$(SET_GATE_TEST_FE_DIFF=0 run_gate "11 completed success" "$OTHER") || fail "tip ahead without FE diff should pass: $out"
+grep -q '^deploy=true$' "$WORKDIR/out" || fail "tip ahead without FE diff: deploy=true expected (later BE-only push makes no FE run)"
+
+if out=$(SET_GATE_TEST_FE_DIFF=128 run_gate "11 completed success" "$OTHER"); then
+    fail "FE diff error must block the frontend: $out"
+fi
 
 if PATH="$WORKDIR/bin:$PATH" DEPLOY_SHA="not-a-sha" GITHUB_REPOSITORY="owner/repo" GITHUB_OUTPUT="$WORKDIR/out" \
     bash "$GATE" >/dev/null 2>&1; then

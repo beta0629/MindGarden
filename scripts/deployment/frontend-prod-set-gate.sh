@@ -2,7 +2,8 @@
 # 운영 화면(프론트)·서버(백엔드) 같은 SHA 세트 게이트. deploy-frontend-prod.yml 이 업로드 직전에 부른다.
 #   1) 같은 SHA 의 서버 워크플로 run 이 있으면 끝날 때까지 기다린다. success 가 아니면 exit 1 (화면이 서버보다 앞서지 않게).
 #   2) 서버 run 이 없으면(프론트만 바뀐 push) 바로 다음 단계.
-#   3) 배포 브랜치 tip 이 DEPLOY_SHA 와 다르면 deploy=false (옛 빌드로 덮지 않음. 최신 SHA 의 run 이 올린다).
+#   3) 배포 브랜치 tip 이 DEPLOY_SHA 와 다르면: DEPLOY_SHA..tip 사이 frontend/ 변경이 없으면 deploy=true(같은 화면),
+#      있으면 deploy=false (옛 빌드로 덮지 않음. frontend/ 를 바꾼 뒤 push 의 run 이 올린다).
 # 결과: GITHUB_OUTPUT 에 deploy=true|false, reason=...
 #
 # 필요 env: DEPLOY_SHA, GH_TOKEN(Actions 읽기), GITHUB_REPOSITORY
@@ -70,9 +71,19 @@ fi
 
 tip=$(git ls-remote origin "refs/heads/$BRANCH" | awk '{print $1}') || fail "$BRANCH tip 을 읽지 못했습니다."
 [ -n "$tip" ] || fail "$BRANCH tip 을 읽지 못했습니다."
-if [ "$tip" != "$DEPLOY_SHA" ]; then
-    echo "::warning::$BRANCH tip 이 앞서 나갔습니다. 옛 화면으로 덮지 않습니다(최신 SHA 의 run 이 올립니다)."
-    emit false tip-ahead
+if [ "$tip" = "$DEPLOY_SHA" ]; then
+    emit true same-sha-set
     exit 0
 fi
-emit true same-sha-set
+# 뒤 push 가 frontend/ 를 안 바꿨으면 그 push 는 화면 run 을 만들지 않는다 → 이 SHA 화면이 tip 화면과 같으므로 올린다.
+git fetch -q --depth=1 origin "$tip" || fail "$BRANCH tip 커밋을 가져오지 못했습니다."
+if git diff --quiet "$DEPLOY_SHA" "$tip" -- frontend/; then
+    echo "$BRANCH tip 이 앞서 있지만 frontend/ 변경이 없어 같은 화면입니다. 진행합니다."
+    emit true frontend-unchanged-to-tip
+    exit 0
+else
+    rc=$?
+    [ "$rc" -eq 1 ] || fail "frontend/ 차이를 확인하지 못했습니다(rc=$rc). 화면을 올리지 않습니다."
+fi
+echo "::warning::$BRANCH tip 에 frontend/ 변경이 더 있습니다. 옛 화면으로 덮지 않습니다(그 push 의 화면 run 이 올립니다)."
+emit false tip-ahead

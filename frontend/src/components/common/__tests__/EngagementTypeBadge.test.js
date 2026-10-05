@@ -7,14 +7,14 @@ import {
 } from '../../../constants/mappingEngagementType';
 
 describe('EngagementTypeBadge', () => {
-  it('타기관 연계면 기관연동 배지를 그린다', () => {
+  it('타기관 연계면 기관연계 배지를 그린다', () => {
     render(
       <EngagementTypeBadge
         mapping={{ paymentTiming: MAPPING_ENGAGEMENT_TYPE.INSTITUTION_LINK, remainingSessions: 0 }}
       />
     );
     const badge = screen.getByTestId(ENGAGEMENT_TYPE_BADGE_TEST_ID);
-    expect(badge).toHaveTextContent('기관연동');
+    expect(badge).toHaveTextContent('기관연계');
     expect(badge).toHaveAttribute('data-engagement-type', MAPPING_ENGAGEMENT_TYPE.INSTITUTION_LINK);
   });
 

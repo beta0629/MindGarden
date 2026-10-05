@@ -59,9 +59,9 @@ describe('MappingListRow', () => {
     expect(screen.getByText('N/A')).toBeInTheDocument();
   });
 
-  it('타기관 연계 배정에 기관연동 배지를 표시한다', () => {
+  it('타기관 연계 배정에 기관연계 배지를 표시한다', () => {
     renderComponent({ paymentTiming: 'INSTITUTION_LINK', remainingSessions: 0 });
-    expect(screen.getByTestId('engagement-type-badge')).toHaveTextContent('기관연동');
+    expect(screen.getByTestId('engagement-type-badge')).toHaveTextContent('기관연계');
   });
 
   it('IL: 최초 상담일은 이 매핑 consultationSchedules MIN, client lifetime 제외', () => {

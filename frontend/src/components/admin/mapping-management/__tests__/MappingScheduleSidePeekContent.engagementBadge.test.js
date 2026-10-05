@@ -136,7 +136,7 @@ describe('MappingScheduleSidePeekContent engagement badge', () => {
 
     const badges = screen.getAllByTestId('engagement-type-badge');
     expect(badges).toHaveLength(1);
-    expect(badges[0]).toHaveTextContent('기관연동');
+    expect(badges[0]).toHaveTextContent('기관연계');
     expect(screen.getByTestId('side-peek-status-fact').querySelectorAll(
       '[data-testid="engagement-type-badge"]'
     )).toHaveLength(1);

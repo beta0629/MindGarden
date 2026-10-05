@@ -50,7 +50,7 @@
 
 ### 3.3 기관연동 (IL 전용 분기)
 
-- `EngagementTypeBadge`(기관연동) 슬롯은 기존 유지 — **상태 행에 배지 1개만** (이중 렌더 금지)
+- `EngagementTypeBadge`(기관연계) 슬롯은 기존 유지 — **상태 행에 배지 1개만** (이중 렌더 금지)
 - **스코프 결정 (고정)**: **mappingId = 카드 단위**. 동일 내담자의 형제 IL 매핑·종료 SAME_DAY 일정은 **이 카드에 섞지 않음**.
   - 근거: `INSTITUTION_LINK_DATA_GAP_AUDIT` DUP LEAVE — ACTIVE IL 245/265 **이력 스케줄 분리 유지**
   - 계약(contract) 월청구는 재무 SSOT와 별개. 카드 청구 스캔 표시는 매핑 단위로 일관 적용
@@ -100,7 +100,7 @@
 - [ ] Side Peek(기관연동): `월 청구 일정` 아코디언 — 내담자 IL union(`institutionLinkConsultationSchedules`). 예: 최가을 mapping 265 Peek에 8/31·9/7·9/14 3건, 카드 265 누적은 1 유지
 - [ ] Side Peek/카드: 재무에 선납 FT 있을 때만 `초기 결제 완료` 짧은 배지 (금액·10만 문구 없음)
 - [ ] Side Peek: 월말 N일 전 `월말이 다가옵니다. 기관 청구를 진행해 주세요.` 안내
-- [ ] Side Peek 상태 행: 「기관연동」 배지 **1개** (mute/본문에 동일 문구 이중 렌더 금지)
+- [ ] Side Peek 상태 행: 「기관연계」 배지 **1개** (mute/본문에 동일 문구 이중 렌더 금지)
 - [ ] React #130 방어(`safeDisplay` / `SafeText`)
 - [ ] 하드코딩 색·매직 문구 최소화(상태 라벨 상수화)
 - [ ] 단위 테스트: 진행 문구·IL 매핑 스코프·Peek union·초기결제 배지·월말 안내·빈 목록·객체 방어

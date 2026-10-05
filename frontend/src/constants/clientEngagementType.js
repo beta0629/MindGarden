@@ -22,7 +22,7 @@ export const CLIENT_ENGAGEMENT_TYPE_LABELS = Object.freeze({
 });
 
 /** 배정·스케줄 칩에만 쓰는 짧은 배지. rem 으로 추정하지 않는다. */
-export const INSTITUTION_LINK_BADGE_LABEL = '기관연동';
+export const INSTITUTION_LINK_BADGE_LABEL = '기관연계';
 
 export const ENGAGEMENT_TYPE_BADGE_TEST_ID = 'engagement-type-badge';
 

@@ -80,7 +80,7 @@ describe('MappingScheduleCard Clinic-OS v2.1', () => {
     expect(packageEl.closest('.integrated-schedule__card-meta')).toBeNull();
   });
 
-  it('shows 기관연동 badge for INSTITUTION_LINK without remaining mute', () => {
+  it('shows 기관연계 badge for INSTITUTION_LINK without remaining mute', () => {
     render(
       <MappingScheduleCard
         mapping={{
@@ -91,7 +91,7 @@ describe('MappingScheduleCard Clinic-OS v2.1', () => {
         }}
       />
     );
-    expect(screen.getByTestId('engagement-type-badge')).toHaveTextContent('기관연동');
+    expect(screen.getByTestId('engagement-type-badge')).toHaveTextContent('기관연계');
     // mute(잔여·날짜)는 Side Peek로 이동 — 카드에는 배지·진행만
     expect(screen.queryByTestId('mapping-card-meta-mute')).not.toBeInTheDocument();
     expect(screen.queryByTestId('mapping-card-todo-pill')).not.toBeInTheDocument();

@@ -158,7 +158,7 @@ describe('MatchingScheduleCompactRow', () => {
     expect(screen.queryByText('일정 정리 필요')).not.toBeInTheDocument();
   });
 
-  it('shows 기관연동 badge without using remaining as a signal', () => {
+  it('shows 기관연계 badge without using remaining as a signal', () => {
     render(
       <MatchingScheduleCompactRow
         mapping={{
@@ -168,8 +168,8 @@ describe('MatchingScheduleCompactRow', () => {
         }}
       />
     );
-    expect(screen.getByTestId('engagement-type-badge')).toHaveTextContent('기관연동');
-    expect(screen.getByText('기관연계')).toBeInTheDocument();
+    expect(screen.getByTestId('engagement-type-badge')).toHaveTextContent('기관연계');
+    expect(screen.getAllByText('기관연계').length).toBeGreaterThanOrEqual(2);
     expect(screen.queryByText('남은 0회')).not.toBeInTheDocument();
   });
 });

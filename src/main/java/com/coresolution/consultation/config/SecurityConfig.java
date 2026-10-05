@@ -149,6 +149,8 @@ public class SecurityConfig {
                         "/api/v1/onboarding/requests/{id:\\d+}").authenticated()
                     // 공개 온보딩: captcha·POST create·public 조회·email/subdomain-check
                     .requestMatchers("/api/v1/onboarding/**").permitAll()
+                    // 비로그인 온보딩 신청자용 공공데이터 프록시. 인증 경로는 /api/v1/kr-public-data/**
+                    .requestMatchers("/api/v1/public/kr-public-data/**").permitAll()
                     // /api/v1/ops/onboarding/** permitAll 제거 — /api/v1/ops/** authenticated 적용
                     // 공개 엔드포인트: Trinity 온보딩에서 사용하는 요금제 조회 API
                     .requestMatchers(
@@ -289,6 +291,8 @@ public class SecurityConfig {
                         "/api/v1/onboarding/requests/{id:\\d+}").authenticated()
                     // 공개 온보딩: captcha·POST create·public 조회·email/subdomain-check
                     .requestMatchers("/api/v1/onboarding/**").permitAll()
+                    // 비로그인 온보딩 신청자용 공공데이터 프록시. 인증 경로는 /api/v1/kr-public-data/**
+                    .requestMatchers("/api/v1/public/kr-public-data/**").permitAll()
                     // /api/v1/ops/onboarding/** permitAll 제거 — /api/v1/ops/** authenticated 적용
                     // 공개 엔드포인트: Trinity 온보딩에서 사용하는 요금제 조회 API
                     .requestMatchers(
@@ -389,6 +393,7 @@ public class SecurityConfig {
             new AntPathRequestMatcher("/api/v1/erp/finance/transactions/**", HttpMethod.DELETE.name()),
             new AntPathRequestMatcher("/api/v1/accounts/integration/**"),
             new AntPathRequestMatcher("/api/v1/onboarding/**"),
+            new AntPathRequestMatcher("/api/v1/public/kr-public-data/**"),
             new AntPathRequestMatcher("/api/v1/ops/onboarding/**"),
             new AntPathRequestMatcher("/api/v1/ops/auth/**"),
             new AntPathRequestMatcher("/api/v1/payments/webhooks/**")

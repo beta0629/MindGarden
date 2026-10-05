@@ -80,6 +80,16 @@ public class MindgardenSecurityProperties {
          * 기본 30은 스팸·스캔 완화와 정상 사용자 경험 사이 균형값이며, 트래픽 패턴에 따라 운영에서 조정한다.
          */
         private int onboardingPublicRequestsPerMinute = 30;
+
+        /**
+         * 비로그인 공공데이터 프록시({@code /api/v1/public/kr-public-data/}) IP당 분당 허용 수.
+         */
+        private int krPublicDataRequestsPerMinute = 20;
+
+        /**
+         * 비로그인 공공데이터 프록시 URI 접두.
+         */
+        private String krPublicDataPathPrefix = "/api/v1/public/kr-public-data/";
     }
 
     @Data

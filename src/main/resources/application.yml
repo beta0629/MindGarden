@@ -263,6 +263,29 @@ mindgarden:
       # 공개 온보딩 접두(GET 검사 등). POST+onboarding-create-path 정확 일치는 위 버킷만 적용(중복 카운트 방지)
       onboarding-public-path-prefix: /api/v1/onboarding/
       onboarding-public-requests-per-minute: 30
+      kr-public-data-path-prefix: /api/v1/public/kr-public-data/
+      kr-public-data-requests-per-minute: 20
+  kr-public-data:
+    zone-id: Asia/Seoul
+    min-opening-year: 1900
+    nts:
+      api-key: ${DATA_GO_KR_SERVICE_KEY:}
+      status-url: https://api.odcloud.kr/api/nts-businessman/v1/status
+      validate-url: https://api.odcloud.kr/api/nts-businessman/v1/validate
+      connect-timeout-ms: 1500
+      read-timeout-ms: 2500
+      max-attempts: 2
+    juso:
+      confm-key: ${JUSO_CONFM_KEY:}
+      api-url: https://business.juso.go.kr/addrlink/addrLinkApi.do
+      result-type: json
+      connect-timeout-ms: 1500
+      read-timeout-ms: 2500
+      max-attempts: 2
+      max-results: 10
+      keyword-min-length: 2
+      keyword-max-length: 80
+      current-page: 1
   # =====================================================
   # 사용자 라이프사이클(자동 파기·익명화·휴면·cutoff·PII 스크러빙) 통합 정책.
   # 정책서 v1.2 (docs/standards/USER_LIFECYCLE_TERMINATION_POLICY.md) §0.1 Q9~Q11 / §10.9 반영.

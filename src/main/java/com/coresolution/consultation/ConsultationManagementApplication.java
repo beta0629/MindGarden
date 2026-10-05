@@ -70,7 +70,8 @@ import com.coresolution.core.config.KiccEasypayProperties;
         PiiScrubberProperties.class,
         ScheduleChangeNotificationProperties.class,
         ImmediateReservationSmsProperties.class,
-        ManualNotificationProperties.class
+        ManualNotificationProperties.class,
+        com.coresolution.core.krpublic.KrPublicDataProperties.class
 })
 public class ConsultationManagementApplication {
 

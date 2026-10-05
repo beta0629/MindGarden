@@ -32,6 +32,13 @@ import {
   isValidBusinessRegistrationNumberOrEmpty,
   resolveBizSaveErrorMessage
 } from '../../utils/businessRegistrationNumber';
+import { KR_PUBLIC_DATA_COPY } from '../../content/krPublicData';
+import {
+  fetchKrPublicDataCapabilities,
+  lookupBusinessRegistration,
+  searchKrAddresses
+} from '../../utils/krPublicDataApi';
+import { openingDateError, representativeNameError } from '../../utils/merchantOpeningDate';
 import {
   LEGAL_PUBLIC_LABELS,
   LEGAL_PUBLIC_PATHS
@@ -43,6 +50,7 @@ import './MerchantLegalSettings.css';
 const EMPTY_FORM = {
   businessRegistrationNumber: '',
   representativeName: '',
+  openingDate: '',
   businessLandline: '',
   businessAddress: '',
   mailOrderReportNumber: '',
@@ -97,6 +105,7 @@ function normalizeGuideFields(raw = {}) {
     form: {
       businessRegistrationNumber: raw.businessRegistrationNumber ?? '',
       representativeName: raw.representativeName ?? '',
+      openingDate: raw.openingDate ?? '',
       businessLandline: raw.businessLandline ?? '',
       businessAddress: raw.businessAddress ?? '',
       mailOrderReportNumber: raw.mailOrderReportNumber ?? '',
@@ -124,7 +133,14 @@ const MerchantLegalSettings = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [bizError, setBizError] = useState('');
+  const [fieldError, setFieldError] = useState('');
   const [loadError, setLoadError] = useState(null);
+  const [verification, setVerification] = useState(null);
+  const [addressSearchEnabled, setAddressSearchEnabled] = useState(false);
+  const [addressHits, setAddressHits] = useState([]);
+  const [addressMessage, setAddressMessage] = useState('');
+  const [addressSearching, setAddressSearching] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   const load = useCallback(async () => {
     if (!tenantId) return;
@@ -141,6 +157,7 @@ const MerchantLegalSettings = () => {
         mailOrderStatusLabel: data?.mailOrderStatusLabel || '미등록',
         sitePublicStatusLabel: data?.sitePublicStatusLabel || '비공개'
       });
+      setVerification(data?.businessVerification || null);
     } catch (err) {
       console.error(err);
       setLoadError('사업자·약관 정보를 불러오지 못했습니다.');
@@ -150,10 +167,62 @@ const MerchantLegalSettings = () => {
   }, [tenantId]);
 
   useEffect(() => {
+    let cancelled = false;
+    fetchKrPublicDataCapabilities()
+      .then((caps) => {
+        if (!cancelled) {
+          setAddressSearchEnabled(Boolean(caps?.addressSearchEnabled));
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setAddressSearchEnabled(false);
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
     if (!sessionLoading && isLoggedIn && tenantId) {
       load();
     }
   }, [sessionLoading, isLoggedIn, tenantId, load]);
+
+  const refreshLookup = async () => {
+    setRefreshing(true);
+    setFieldError('');
+    try {
+      const result = await lookupBusinessRegistration({
+        businessRegistrationNumber: form.businessRegistrationNumber,
+        openingDate: form.openingDate,
+        representativeName: form.representativeName
+      });
+      setVerification(result || null);
+    } catch (err) {
+      setFieldError(err?.message || KR_PUBLIC_DATA_COPY.OVERALL_UNCONFIRMED);
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
+  const searchAddress = async () => {
+    setAddressSearching(true);
+    setAddressMessage('');
+    try {
+      const items = await searchKrAddresses(form.businessAddress || '');
+      setAddressHits(items);
+      if (!items.length) {
+        setAddressMessage(KR_PUBLIC_DATA_COPY.ADDRESS_EMPTY);
+      }
+    } catch {
+      setAddressHits([]);
+      setAddressMessage(KR_PUBLIC_DATA_COPY.ADDRESS_FAILED);
+    } finally {
+      setAddressSearching(false);
+    }
+  };
 
   const liveStatus = useMemo(() => deriveMerchantLegalStatusLabels(form), [form]);
   const previewCenterName =
@@ -193,6 +262,14 @@ const MerchantLegalSettings = () => {
       focusBizNumberField();
       return;
     }
+    const repError = representativeNameError(form.representativeName);
+    const dateError = openingDateError(form.openingDate);
+    if (repError || dateError) {
+      setFieldError(repError || dateError);
+      notificationManager.show(repError || dateError, 'error');
+      return;
+    }
+    setFieldError('');
     try {
       setSaving(true);
       const { form: sanitizedForm } = normalizeGuideFields(form);
@@ -209,6 +286,7 @@ const MerchantLegalSettings = () => {
         businessRegistrationNumber:
           data?.businessRegistrationNumber ?? payload.businessRegistrationNumber,
         representativeName: data?.representativeName ?? payload.representativeName,
+        openingDate: data?.openingDate ?? payload.openingDate,
         businessLandline: data?.businessLandline ?? payload.businessLandline,
         businessAddress: data?.businessAddress ?? payload.businessAddress,
         mailOrderReportNumber: data?.mailOrderReportNumber ?? payload.mailOrderReportNumber,
@@ -224,6 +302,7 @@ const MerchantLegalSettings = () => {
         sitePublicStatusLabel: data?.sitePublicStatusLabel || liveStatus.sitePublicStatusLabel
       });
       setBizError('');
+      setVerification(data?.businessVerification || null);
       notificationManager.show('사업자·약관이 저장되었습니다.', 'success');
     } catch (err) {
       const bizSaveMsg = resolveBizSaveErrorMessage(err);
@@ -359,6 +438,45 @@ const MerchantLegalSettings = () => {
                         placeholder="대표 이름"
                       />
                     </label>
+                    <p className="merchant-legal-settings__notice">{KR_PUBLIC_DATA_COPY.PRIVACY_NOTICE}</p>
+                    <label className="mg-v2-settings-field merchant-legal-settings__field">
+                      <span className="mg-v2-form-label">{KR_PUBLIC_DATA_COPY.LABEL_OPENING_DATE}</span>
+                      <input
+                        type="date"
+                        className="mg-v2-form-input"
+                        value={form.openingDate}
+                        onChange={onChange('openingDate')}
+                        data-testid="merchant-legal-opening-date"
+                      />
+                    </label>
+                    {fieldError && (
+                      <p className="merchant-legal-settings__field-error" role="alert">
+                        {fieldError}
+                      </p>
+                    )}
+                    <div className="merchant-legal-settings__verification" data-testid="merchant-legal-verification">
+                      <span className="mg-v2-form-label">{KR_PUBLIC_DATA_COPY.LABEL_VERIFICATION}</span>
+                      <p>
+                        {KR_PUBLIC_DATA_COPY.LABEL_MATCH} {verification?.overallStatus || KR_PUBLIC_DATA_COPY.OVERALL_UNCONFIRMED}
+                      </p>
+                      <p>
+                        {KR_PUBLIC_DATA_COPY.LABEL_STATUS} {verification?.businessStatus || KR_PUBLIC_DATA_COPY.OVERALL_UNCONFIRMED}
+                      </p>
+                      <p>
+                        {KR_PUBLIC_DATA_COPY.LABEL_TAX} {verification?.taxType || KR_PUBLIC_DATA_COPY.OVERALL_UNCONFIRMED}
+                      </p>
+                      <p>
+                        {KR_PUBLIC_DATA_COPY.LABEL_CHECKED_AT} {verification?.checkedAt || KR_PUBLIC_DATA_COPY.OVERALL_UNCONFIRMED}
+                      </p>
+                      <button
+                        type="button"
+                        className="mg-v2-settings-button"
+                        onClick={refreshLookup}
+                        disabled={refreshing}
+                      >
+                        {KR_PUBLIC_DATA_COPY.REFRESH}
+                      </button>
+                    </div>
                     <label className="mg-v2-settings-field merchant-legal-settings__field">
                       <span className="mg-v2-form-label">유선전화</span>
                       <input
@@ -378,6 +496,38 @@ const MerchantLegalSettings = () => {
                         onChange={onChange('businessAddress')}
                         placeholder="주소"
                       />
+                      {addressSearchEnabled && (
+                        <button
+                          type="button"
+                          className="mg-v2-settings-button merchant-legal-settings__address-search"
+                          onClick={searchAddress}
+                          disabled={addressSearching}
+                        >
+                          {addressSearching
+                            ? KR_PUBLIC_DATA_COPY.ADDRESS_SEARCHING
+                            : KR_PUBLIC_DATA_COPY.ADDRESS_SEARCH}
+                        </button>
+                      )}
+                      {addressMessage && <p className="mg-v2-settings-muted">{addressMessage}</p>}
+                      {addressHits.length > 0 && (
+                        <ul className="merchant-legal-settings__address-hits">
+                          {addressHits.map((item) => (
+                            <li key={`${item.zipCode}-${item.roadAddress}`}>
+                              <button
+                                type="button"
+                                className="merchant-legal-settings__address-hit"
+                                onClick={() => {
+                                  setForm((prev) => ({ ...prev, businessAddress: item.roadAddress }));
+                                  setAddressHits([]);
+                                  setAddressMessage('');
+                                }}
+                              >
+                                {item.zipCode} {item.roadAddress}
+                              </button>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
                     </label>
                   </div>
                 </SettingsSectionPanel>

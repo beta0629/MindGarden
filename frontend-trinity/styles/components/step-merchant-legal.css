@@ -2,8 +2,26 @@
  * 온보딩 Step7 사업자·약관 스타일
  */
 
-.trinity-merchant-legal__note {
+.trinity-merchant-legal__note,
+.trinity-merchant-legal__notice {
   margin: 0 0 var(--spacing-lg);
+}
+
+.trinity-merchant-legal__address-search,
+.trinity-merchant-legal__address-hit {
+  margin-top: var(--spacing-sm);
+  padding: var(--spacing-sm) var(--spacing-md);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-md);
+  background-color: var(--bg-secondary);
+  color: inherit;
+  cursor: pointer;
+}
+
+.trinity-merchant-legal__address-hits {
+  list-style: none;
+  margin: var(--spacing-sm) 0 0;
+  padding: 0;
 }
 
 .trinity-merchant-legal__section {

@@ -18,6 +18,8 @@ import com.coresolution.core.constant.OnboardingConstants;
 import com.coresolution.core.domain.onboarding.OnboardingRequest;
 import com.coresolution.core.domain.onboarding.RiskLevel;
 import com.coresolution.core.security.CaptchaVerifier;
+import com.coresolution.core.constant.KrPublicDataMessages;
+import com.coresolution.core.krpublic.KrPublicDataService;
 import com.coresolution.core.service.OnboardingService;
 import com.coresolution.core.constant.TestDocumentationIps;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -58,6 +60,9 @@ class OnboardingControllerTest {
 
     @Mock
     private MindgardenSecurityProperties mindgardenSecurityProperties;
+
+    @Mock
+    private KrPublicDataService krPublicDataService;
 
     @Mock
     private HttpSession httpSession;
@@ -123,6 +128,7 @@ class OnboardingControllerTest {
         when(captchaVerifier.requiresCaptchaToken()).thenReturn(false);
         lenient().when(objectMapper.writeValueAsString(any()))
                 .thenReturn("{\"adminPassword\":\"ValidPass1!\"}");
+        when(krPublicDataService.enrichOnboardingChecklist(any())).thenAnswer(invocation -> invocation.getArgument(0));
 
         OnboardingRequest created = new OnboardingRequest();
         created.setId(1L);
@@ -141,6 +147,21 @@ class OnboardingControllerTest {
         assertThat(response.getBody()).isNotNull();
         assertThat(response.getBody().getData().id()).isEqualTo(1L);
         verify(captchaVerifier, never()).verify(any(), any());
+    }
+
+    @Test
+    @DisplayName("사업자번호 누락이면 서비스 create 를 호출하지 않는다")
+    void create_whenBusinessNumberMissing_doesNotPersist() throws Exception {
+        when(captchaVerifier.requiresCaptchaToken()).thenReturn(false);
+        lenient().when(objectMapper.writeValueAsString(any())).thenReturn("{}");
+        when(krPublicDataService.enrichOnboardingChecklist(any()))
+                .thenThrow(new IllegalArgumentException(KrPublicDataMessages.bizRequired()));
+
+        assertThatThrownBy(() -> onboardingController.create(basePayload(), httpSession, httpRequest))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage(KrPublicDataMessages.bizRequired());
+
+        verify(onboardingService, never()).create(any(), any(), any(), any(), any(), any());
     }
 
     @Test

@@ -3257,9 +3257,12 @@ public class OnboardingServiceImpl implements OnboardingService {
             }
             Map<String, Object> ml = (Map<String, Object>) raw;
             String biz = stringOrNull(ml.get("businessRegistrationNumber"));
-            if (biz != null
-                    && !com.coresolution.core.util.BusinessRegistrationNumberValidator
-                            .isValidRequired(biz)) {
+            if (biz == null) {
+                throw new IllegalArgumentException(
+                        com.coresolution.core.constant.KrPublicDataMessages.bizRequired());
+            }
+            if (!com.coresolution.core.util.BusinessRegistrationNumberValidator
+                    .isValidRequired(biz)) {
                 throw new IllegalArgumentException(
                         com.coresolution.core.util.BusinessRegistrationNumberValidator.INVALID_MESSAGE);
             }

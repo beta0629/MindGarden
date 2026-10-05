@@ -24,6 +24,7 @@ import com.coresolution.core.dto.ApiResponse;
 import com.coresolution.core.constant.OnboardingConstants;
 import com.coresolution.core.security.CaptchaVerifier;
 import com.coresolution.core.security.OnboardingAdminContactEmailSupport;
+import com.coresolution.core.krpublic.KrPublicDataService;
 import com.coresolution.core.service.OnboardingService;
 import com.coresolution.core.service.impl.OnboardingApprovalBlockedException;
 import com.coresolution.core.util.HttpRequestClientIp;
@@ -78,6 +79,7 @@ public class OnboardingController extends BaseApiController {
     private final CaptchaVerifier captchaVerifier;
     private final MindgardenSecurityProperties mindgardenSecurityProperties;
     private final OAuth2DomainUtil oauth2DomainUtil;
+    private final KrPublicDataService krPublicDataService;
 
     /**
      * 온보딩 접근 권한 확인 /** 온보딩은 새로운 테넌트를 등록하는 것이므로, 이미 테넌트에 속한 사용자는 접근할 수 없음 /**
@@ -304,6 +306,7 @@ public class OnboardingController extends BaseApiController {
                 }
 
                 finalChecklistJson = objectMapper.writeValueAsString(checklist);
+                finalChecklistJson = krPublicDataService.enrichOnboardingChecklist(finalChecklistJson);
                 log.info(
                         "checklistJson 병합 완료: hasAdminPassword={}, hasRegionCode={}, hasBrandName={}, hasSubdomain={}",
                         checklist.containsKey(OnboardingConstants.CHECKLIST_KEY_ADMIN_PASSWORD),

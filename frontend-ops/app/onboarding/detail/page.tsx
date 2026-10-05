@@ -8,10 +8,101 @@ import { OnboardingDecisionForm } from "@/components/onboarding/OnboardingDecisi
 import { fetchAllOnboarding, fetchOnboardingDetail } from "@/services/onboardingService";
 import { OnboardingRequest } from "@/types/onboarding";
 import { ONBOARDING_MESSAGES, ONBOARDING_PATHS } from "@/constants/onboarding";
-import { buildOnboardingFacts, getStatusLabel } from "@/utils/onboardingUtils";
+import { KR_PUBLIC_DATA_COPY } from "@/content/krPublicData";
+import { recheckBusinessRegistration, type BusinessLookupResult } from "@/services/krPublicDataApi";
+import { buildOnboardingFacts, getStatusLabel, readOnboardingChecklist } from "@/utils/onboardingUtils";
 import { formatOnboardingDate } from "@/utils/dateUtils";
 import { onboardingListCache } from "@/utils/onboardingListCache";
 import { applyRefreshedOnboardingViews } from "@/utils/onboardingViewRefresh";
+
+function coreApiBaseConfigured(): boolean {
+  if (typeof window !== "undefined" && (window as { __CORE_API_BASE_URL__?: string }).__CORE_API_BASE_URL__) {
+    return true;
+  }
+  return Boolean(process.env.NEXT_PUBLIC_CORE_API_BASE_URL);
+}
+
+function merchantLegalFields(checklistJson?: string | null): {
+  businessRegistrationNumber: string;
+  openingDate: string;
+  representativeName: string;
+} | null {
+  const checklist = readOnboardingChecklist(checklistJson);
+  const raw = checklist.merchantLegal;
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
+    return null;
+  }
+  const legal = raw as Record<string, unknown>;
+  const businessRegistrationNumber = typeof legal.businessRegistrationNumber === "string"
+    ? legal.businessRegistrationNumber.trim()
+    : "";
+  const openingDate = typeof legal.openingDate === "string" ? legal.openingDate.trim() : "";
+  const representativeName = typeof legal.representativeName === "string"
+    ? legal.representativeName.trim()
+    : "";
+  if (!businessRegistrationNumber || !openingDate || !representativeName) {
+    return null;
+  }
+  return { businessRegistrationNumber, openingDate, representativeName };
+}
+
+function OnboardingRecheck({ checklistJson }: { checklistJson?: string | null }) {
+  const fields = merchantLegalFields(checklistJson);
+  const [pending, setPending] = useState(false);
+  const [live, setLive] = useState<BusinessLookupResult | null>(null);
+  const [failed, setFailed] = useState(false);
+
+  if (!coreApiBaseConfigured() || !fields) {
+    return null;
+  }
+
+  const onRecheck = async () => {
+    setPending(true);
+    setFailed(false);
+    try {
+      const result = await recheckBusinessRegistration(fields);
+      setLive(result);
+    } catch {
+      setFailed(true);
+    } finally {
+      setPending(false);
+    }
+  };
+
+  return (
+    <div className="ops-onboarding__recheck">
+      <p className="ops-onboarding__note">{KR_PUBLIC_DATA_COPY.PRIVACY_NOTICE}</p>
+      <button type="button" className="ops-onboarding__primary" disabled={pending} onClick={onRecheck}>
+        {KR_PUBLIC_DATA_COPY.RECHECK}
+      </button>
+      {failed ? (
+        <p className="ops-onboarding__save-error" role="alert">
+          {KR_PUBLIC_DATA_COPY.RECHECK_FAILED}
+        </p>
+      ) : null}
+      {live ? (
+        <dl className="ops-onboarding__facts">
+          <div className="ops-onboarding__fact">
+            <dt>{KR_PUBLIC_DATA_COPY.MATCH}</dt>
+            <dd>{live.overallStatus || KR_PUBLIC_DATA_COPY.UNCONFIRMED}</dd>
+          </div>
+          <div className="ops-onboarding__fact">
+            <dt>{KR_PUBLIC_DATA_COPY.STATUS}</dt>
+            <dd>{live.businessStatus || KR_PUBLIC_DATA_COPY.UNCONFIRMED}</dd>
+          </div>
+          <div className="ops-onboarding__fact">
+            <dt>{KR_PUBLIC_DATA_COPY.TAX}</dt>
+            <dd>{live.taxType || KR_PUBLIC_DATA_COPY.UNCONFIRMED}</dd>
+          </div>
+          <div className="ops-onboarding__fact">
+            <dt>{KR_PUBLIC_DATA_COPY.CHECKED_AT}</dt>
+            <dd>{live.checkedAt || KR_PUBLIC_DATA_COPY.UNCONFIRMED}</dd>
+          </div>
+        </dl>
+      ) : null}
+    </div>
+  );
+}
 
 function OnboardingDetailPageContent() {
   const searchParams = useSearchParams();
@@ -138,12 +229,15 @@ function OnboardingDetailPageContent() {
             </div>
           ))}
         </dl>
-        <OnboardingDecisionForm
-          requestId={String(detail.id)}
-          initialStatus={detail.status}
-          onDecided={(updated) => setDetail(updated)}
-          onRefresh={refreshAfterDecision}
-        />
+        <div className="ops-onboarding__detail-side">
+          <OnboardingRecheck checklistJson={detail.checklistJson} />
+          <OnboardingDecisionForm
+            requestId={String(detail.id)}
+            initialStatus={detail.status}
+            onDecided={(updated) => setDetail(updated)}
+            onRefresh={refreshAfterDecision}
+          />
+        </div>
       </div>
     </section>
   );

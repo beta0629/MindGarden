@@ -3,6 +3,7 @@ package com.coresolution.core.controller;
 import com.coresolution.core.dto.ApiResponse;
 import com.coresolution.core.dto.MerchantLegalDto;
 import com.coresolution.core.dto.MerchantLegalUpdateRequest;
+import com.coresolution.core.krpublic.KrPublicDataService;
 import com.coresolution.core.security.TenantAccessControlService;
 import com.coresolution.core.service.MerchantLegalService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -29,6 +30,7 @@ public class TenantMerchantLegalController extends BaseApiController {
 
     private final MerchantLegalService merchantLegalService;
     private final TenantAccessControlService accessControlService;
+    private final KrPublicDataService krPublicDataService;
 
     @Operation(summary = "사업자·약관 조회")
     @GetMapping
@@ -44,6 +46,9 @@ public class TenantMerchantLegalController extends BaseApiController {
             @PathVariable String tenantId,
             @RequestBody MerchantLegalUpdateRequest request) {
         accessControlService.validateTenantAccess(tenantId);
+        if (request != null) {
+            krPublicDataService.prepareMerchantLegalSave(request);
+        }
         return success(merchantLegalService.saveForTenant(tenantId, request));
     }
 }

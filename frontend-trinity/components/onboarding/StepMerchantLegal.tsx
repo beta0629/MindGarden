@@ -2,9 +2,12 @@
  * Step 7: 사업자·약관 (Clinic-OS merchant legal)
  */
 
+import { useState } from "react";
 import { COMPONENT_CSS } from "../../constants/css-variables";
+import { KR_PUBLIC_DATA_COPY } from "../../content/krPublicData";
 import { TRINITY_CONSTANTS } from "../../constants/trinity";
 import type { OnboardingFormData } from "../../hooks/useOnboarding";
+import type { AddressItem } from "../../utils/krPublicDataApi";
 import {
   BUSINESS_REGISTRATION_INVALID_MESSAGE,
   formatBusinessRegistrationNumber,
@@ -19,6 +22,8 @@ interface StepMerchantLegalProps {
   ) => void;
   bizNumberError: string | null;
   setBizNumberError: (error: string | null) => void;
+  addressSearchEnabled?: boolean;
+  onSearchAddress?: (keyword: string) => Promise<AddressItem[]>;
 }
 
 const ML = TRINITY_CONSTANTS.MERCHANT_LEGAL;
@@ -28,7 +33,12 @@ export default function StepMerchantLegal({
   setFormData,
   bizNumberError,
   setBizNumberError,
+  addressSearchEnabled = false,
+  onSearchAddress,
 }: StepMerchantLegalProps) {
+  const [addressHits, setAddressHits] = useState<AddressItem[]>([]);
+  const [addressMessage, setAddressMessage] = useState<string | null>(null);
+  const [addressSearching, setAddressSearching] = useState(false);
   const updateField = (key: keyof OnboardingFormData, value: string) => {
     setFormData((prev) => ({ ...prev, [key]: value }));
   };
@@ -56,6 +66,26 @@ export default function StepMerchantLegal({
     setBizNumberError(null);
   };
 
+  const searchAddress = async () => {
+    if (!onSearchAddress) {
+      return;
+    }
+    setAddressSearching(true);
+    setAddressMessage(null);
+    try {
+      const items = await onSearchAddress(formData.businessAddress || "");
+      setAddressHits(items);
+      if (items.length === 0) {
+        setAddressMessage(KR_PUBLIC_DATA_COPY.ADDRESS_EMPTY);
+      }
+    } catch {
+      setAddressHits([]);
+      setAddressMessage(KR_PUBLIC_DATA_COPY.ADDRESS_FAILED);
+    } finally {
+      setAddressSearching(false);
+    }
+  };
+
   const centerName =
     (formData.tenantName && formData.tenantName.trim()) ||
     (formData.brandName && formData.brandName.trim()) ||
@@ -79,6 +109,7 @@ export default function StepMerchantLegal({
       <p className={`${COMPONENT_CSS.ONBOARDING.TEXT_SECONDARY} trinity-merchant-legal__note`}>
         {ML.MAIL_ORDER_NOTE}
       </p>
+      <p className="trinity-merchant-legal__notice">{KR_PUBLIC_DATA_COPY.PRIVACY_NOTICE}</p>
 
       <section className="trinity-merchant-legal__section" aria-labelledby="ml-biz">
         <h4 id="ml-biz" className={COMPONENT_CSS.ONBOARDING.LABEL}>
@@ -135,6 +166,23 @@ export default function StepMerchantLegal({
         </div>
 
         <div className={COMPONENT_CSS.ONBOARDING.FIELD}>
+          <label className={COMPONENT_CSS.ONBOARDING.LABEL} htmlFor="ml-opening">
+            {KR_PUBLIC_DATA_COPY.LABEL_OPENING_DATE}{" "}
+            <span className="trinity-progressive-field__required" aria-hidden="true">
+              *
+            </span>
+          </label>
+          <input
+            id="ml-opening"
+            type="date"
+            className={COMPONENT_CSS.ONBOARDING.INPUT}
+            value={formData.openingDate || ""}
+            onChange={(e) => updateField("openingDate", e.target.value)}
+            data-testid="onboarding-merchant-legal-opening-date"
+          />
+        </div>
+
+        <div className={COMPONENT_CSS.ONBOARDING.FIELD}>
           <label className={COMPONENT_CSS.ONBOARDING.LABEL} htmlFor="ml-landline">
             {ML.LABEL_LANDLINE}{" "}
             <span className="trinity-progressive-field__required" aria-hidden="true">
@@ -168,6 +216,40 @@ export default function StepMerchantLegal({
             placeholder={ML.PLACEHOLDER_ADDRESS}
             autoComplete="street-address"
           />
+          {addressSearchEnabled && onSearchAddress && (
+            <button
+              type="button"
+              className="trinity-merchant-legal__address-search"
+              onClick={searchAddress}
+              disabled={addressSearching}
+            >
+              {addressSearching
+                ? KR_PUBLIC_DATA_COPY.ADDRESS_SEARCHING
+                : KR_PUBLIC_DATA_COPY.ADDRESS_SEARCH}
+            </button>
+          )}
+          {addressMessage && (
+            <p className={COMPONENT_CSS.ONBOARDING.TEXT_SECONDARY}>{addressMessage}</p>
+          )}
+          {addressHits.length > 0 && (
+            <ul className="trinity-merchant-legal__address-hits">
+              {addressHits.map((item) => (
+                <li key={`${item.zipCode}-${item.roadAddress}`}>
+                  <button
+                    type="button"
+                    className="trinity-merchant-legal__address-hit"
+                    onClick={() => {
+                      updateField("businessAddress", item.roadAddress);
+                      setAddressHits([]);
+                      setAddressMessage(null);
+                    }}
+                  >
+                    {item.zipCode} {item.roadAddress}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
       </section>
 

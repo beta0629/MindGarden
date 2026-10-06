@@ -1012,6 +1012,7 @@ const UnifiedLogin = () => {
                     id="password"
                     type={showPassword ? 'text' : 'password'}
                     name="password"
+                    autoComplete="current-password"
                     defaultValue={formData.password}
                     onChange={handleInputChange}
                     onFocus={() => logger.debug('🔒 비밀번호 필드 포커스됨')}

@@ -756,6 +756,7 @@ const TabletLogin = () => {
                   <input
                     type={showPassword ? 'text' : 'password'}
                     name="password"
+                    autoComplete="current-password"
                     value={formData.password}
                     onChange={handleInputChange}
                     className={TABLET_LOGIN_CSS.INPUT}

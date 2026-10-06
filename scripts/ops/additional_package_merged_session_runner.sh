@@ -93,7 +93,7 @@ assert_generated_safe() {
     die "generated SQL creates a permanent object"
   fi
   if grep -iE '^[[:space:]]*insert[[:space:]]+into[[:space:]]+' "$file" \
-      | grep -viE '^[[:space:]]*insert[[:space:]]+into[[:space:]]+(tmp_[A-Za-z0-9_]+|repair_allowlist)([^A-Za-z0-9_]|$)' >/dev/null; then
+      | grep -viE '^[[:space:]]*insert[[:space:]]+into[[:space:]]+(tmp_[A-Za-z0-9_]+|repair_allowlist|repair_expected_before)([^A-Za-z0-9_]|$)' >/dev/null; then
     die "generated SQL inserts into a base table"
   fi
   if grep -iE '^[[:space:]]*update[[:space:]]+' "$file" \
@@ -228,8 +228,51 @@ cmd_list() {
   mysql_exec "SET SESSION TRANSACTION READ ONLY" "$RESTORE_SQL"
 }
 
+emit_expected_before() {
+  cat <<'EOF'
+CREATE TEMPORARY TABLE repair_expected_before (
+    additional_mapping_id BIGINT NOT NULL,
+    schedule_id BIGINT NOT NULL,
+    target_mapping_id BIGINT NOT NULL,
+    total_sessions INT NOT NULL,
+    used_sessions INT NOT NULL,
+    remaining_sessions INT NOT NULL,
+    target_status VARCHAR(40) NOT NULL,
+    target_version BIGINT NOT NULL,
+    schedule_status VARCHAR(40) NOT NULL,
+    schedule_session_sequence INT NOT NULL,
+    schedule_version BIGINT NOT NULL,
+    schedule_mapping_id BIGINT NOT NULL,
+    apply_session_sequence INT NOT NULL,
+    PRIMARY KEY (additional_mapping_id, schedule_id)
+);
+EOF
+  if [ -z "${expect_before:-}" ]; then
+    return 0
+  fi
+  [ -f "$expect_before" ] || die "expect-before file missing"
+  local line raw count=0
+  local eb_add eb_sch eb_tgt eb_total eb_used eb_rem eb_status eb_ver
+  local eb_sch_status eb_seq eb_sch_ver eb_sch_map eb_apply
+  while IFS= read -r line || [ -n "$line" ]; do
+    raw="${line%%#*}"
+    raw="$(printf '%s' "$raw" | tr -d '[:space:]')"
+    [ -z "$raw" ] && continue
+    if ! [[ "$raw" =~ ^[0-9]+,[0-9]+,[0-9]+,[0-9]+,[0-9]+,[0-9]+,[A-Z_]+,[0-9]+,[A-Z_]+,[0-9]+,[0-9]+,[0-9]+,[0-9]+$ ]]; then
+      die "expect-before line must be additional,schedule,target,total,used,remaining,status,version,schedule_status,sequence,schedule_version,schedule_mapping,apply_sequence"
+    fi
+    IFS=',' read -r eb_add eb_sch eb_tgt eb_total eb_used eb_rem eb_status eb_ver eb_sch_status eb_seq eb_sch_ver eb_sch_map eb_apply <<<"$raw"
+    count=$((count + 1))
+    echo "INSERT INTO repair_expected_before (additional_mapping_id, schedule_id, target_mapping_id, total_sessions, used_sessions, remaining_sessions, target_status, target_version, schedule_status, schedule_session_sequence, schedule_version, schedule_mapping_id, apply_session_sequence) VALUES (${eb_add}, ${eb_sch}, ${eb_tgt}, ${eb_total}, ${eb_used}, ${eb_rem}, '${eb_status}', ${eb_ver}, '${eb_sch_status}', ${eb_seq}, ${eb_sch_ver}, ${eb_sch_map}, ${eb_apply});"
+  done <"$expect_before"
+  if [ "$count" -lt 1 ]; then
+    die "expect-before file has no data row"
+  fi
+}
+
 cmd_repair() {
   local allowlist="" mode="dry-run" backup_dir=""
+  expect_before=""
   while [ "$#" -gt 0 ]; do
     case "$1" in
       --allowlist)
@@ -242,6 +285,10 @@ cmd_repair() {
         ;;
       --backup-dir)
         backup_dir="$2"
+        shift 2
+        ;;
+      --expect-before)
+        expect_before="$2"
         shift 2
         ;;
       *)
@@ -357,6 +404,7 @@ cmd_repair() {
     echo "CREATE TEMPORARY TABLE tmp_plan AS"
     plan_body
     echo ";"
+    emit_expected_before
     cat "$TAIL_SQL"
     echo "$ending"
   } >"${work}/apply.sql"
@@ -377,7 +425,7 @@ cmd_repair() {
 
 usage() {
   echo "usage: DB_HOST DB_USER DB_PASSWORD DB_NAME $0 list" >&2
-  echo "       DB_* REPAIR_CONFIRM $0 repair --allowlist FILE --mode dry-run|apply --backup-dir DIR" >&2
+  echo "       DB_* REPAIR_CONFIRM $0 repair --allowlist FILE --mode dry-run|apply --backup-dir DIR [--expect-before FILE]" >&2
   exit 1
 }
 
@@ -389,6 +437,18 @@ main() {
   case "$cmd" in
     list) cmd_list "$@" ;;
     repair) cmd_repair "$@" ;;
+    query)
+      require_db_env
+      sql_file="${1:-}"
+      [ -f "$sql_file" ] || die "query file missing"
+      if grep -qiE '(^|[^a-z_@])(insert|update|delete|drop|alter|truncate|create|replace|grant|call|set)[[:space:]]' "$sql_file"; then
+        die "query file contains a write statement"
+      fi
+      if grep -qiE 'financial_transactions|salary_|payout|into[[:space:]]+outfile|load_file' "$sql_file"; then
+        die "query file touches a forbidden object"
+      fi
+      mysql_exec "SET SESSION TRANSACTION READ ONLY" "$sql_file"
+      ;;
     *) usage ;;
   esac
 }

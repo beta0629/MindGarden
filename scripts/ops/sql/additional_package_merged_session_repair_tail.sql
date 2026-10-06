@@ -391,6 +391,34 @@ PREPARE st FROM @s;
 EXECUTE st;
 DEALLOCATE PREPARE st;
 
+SET @pin_n = (SELECT COUNT(*) FROM repair_expected_before);
+SET @pin_bad = (
+    SELECT COUNT(*)
+    FROM repair_expected_before e
+    LEFT JOIN tmp_apply_ready r
+        ON r.additional_mapping_id = e.additional_mapping_id
+       AND r.schedule_id = e.schedule_id
+    WHERE r.schedule_id IS NULL
+       OR NOT (r.target_mapping_id <=> e.target_mapping_id)
+       OR NOT (r.target_total_sessions <=> e.total_sessions)
+       OR NOT (r.target_used_sessions <=> e.used_sessions)
+       OR NOT (r.target_remaining_sessions <=> e.remaining_sessions)
+       OR NOT (r.target_status <=> e.target_status)
+       OR NOT (r.target_version <=> e.target_version)
+       OR NOT (r.schedule_status <=> e.schedule_status)
+       OR NOT (r.schedule_session_sequence <=> e.schedule_session_sequence)
+       OR NOT (r.schedule_version <=> e.schedule_version)
+       OR NOT (r.schedule_mapping_id <=> e.schedule_mapping_id)
+       OR NOT (r.apply_session_sequence <=> e.apply_session_sequence)
+       OR NOT (r.labeled_by_mapping_id <=> 1)
+);
+SET @c = IF(@pin_n = 0 OR (@pin_bad = 0 AND @pin_n = @allow_n), 1, 0);
+SET @n = 'expected_before_image';
+SET @s = IF(@c, CONCAT('SELECT ''OK  ', @n, ''' AS assert_result'), CONCAT('SELECT 1 FROM `ASSERT_FAILED__', @n, '`'));
+PREPARE st FROM @s;
+EXECUTE st;
+DEALLOCATE PREPARE st;
+
 UPDATE consultant_client_mappings t
 INNER JOIN tmp_target_delta d
     ON d.tenant_id = t.tenant_id

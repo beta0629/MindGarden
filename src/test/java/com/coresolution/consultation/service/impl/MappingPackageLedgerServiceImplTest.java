@@ -84,7 +84,7 @@ class MappingPackageLedgerServiceImplTest {
         assertThat(ft.getRelatedEntityId()).isEqualTo(MAPPING_ID);
         assertThat(ft.getTenantId()).isEqualTo(tenantId);
         assertThat(ft.getTaxAmount().add(ft.getAmountBeforeTax())).isEqualByComparingTo(ft.getAmount());
-        verify(financialTransactionRepository, never()).delete(any());
+        verify(financialTransactionRepository, never()).delete(any(FinancialTransaction.class));
     }
 
     @Test

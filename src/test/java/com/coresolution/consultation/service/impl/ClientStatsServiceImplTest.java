@@ -23,6 +23,7 @@ import java.util.Arrays;
 import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.constant.LifecycleState;
 import com.coresolution.consultation.constant.ScheduleStatus;
+import com.coresolution.consultation.constant.ClientEngagementTypeConstants;
 import com.coresolution.consultation.entity.Client;
 import com.coresolution.consultation.entity.ConsultantClientMapping;
 import com.coresolution.consultation.entity.User;
@@ -234,6 +235,47 @@ class ClientStatsServiceImplTest {
 
         assertNotNull(result.get("client"));
         assertEquals(0L, result.get("currentConsultants"));
+    }
+
+    @Test
+    @DisplayName("getClientWithStats: clients 행의 partnerInstitutionId를 with-stats client 맵에 포함한다")
+    void getClientWithStats_includesPartnerInstitutionIdFromClientsRow() {
+        User user = User.builder()
+            .userId("c-inst")
+            .email("inst@test.com")
+            .password("pw")
+            .name("최가을")
+            .role(UserRole.CLIENT)
+            .build();
+        user.setId(CLIENT_USER_ID);
+        user.setTenantId(TENANT);
+        user.setIsActive(true);
+
+        Client clientsRow = new Client();
+        clientsRow.setId(CLIENT_USER_ID);
+        clientsRow.setTenantId(TENANT);
+        clientsRow.setEngagementType(ClientEngagementTypeConstants.INSTITUTION_LINK);
+        clientsRow.setPartnerInstitutionId(1L);
+        clientsRow.setInstitutionName("인천광역시 자립지원전담기관");
+        clientsRow.setInstitutionPrepaid(true);
+        clientsRow.setInstitutionPrepaidAmount(100000L);
+
+        when(userRepository.findByTenantIdAndId(TENANT, CLIENT_USER_ID)).thenReturn(Optional.of(user));
+        when(clientRepository.findByTenantIdAndIdIncludingDeleted(TENANT, CLIENT_USER_ID))
+            .thenReturn(Optional.of(clientsRow));
+        when(mappingRepository.findByClientIdAndStatusNot(eq(TENANT), eq(CLIENT_USER_ID), any()))
+            .thenReturn(Collections.emptyList());
+        when(scheduleRepository.countByClientId(TENANT, CLIENT_USER_ID)).thenReturn(0L);
+
+        Map<String, Object> result = clientStatsService.getClientWithStats(TENANT, CLIENT_USER_ID);
+
+        @SuppressWarnings("unchecked")
+        Map<String, Object> clientMap = (Map<String, Object>) result.get("client");
+        assertNotNull(clientMap);
+        assertEquals(1L, clientMap.get("partnerInstitutionId"));
+        assertEquals(ClientEngagementTypeConstants.INSTITUTION_LINK, clientMap.get("engagementType"));
+        assertEquals(Boolean.TRUE, clientMap.get("institutionPrepaid"));
+        assertEquals("인천광역시 자립지원전담기관", clientMap.get("institutionName"));
     }
 
     @Test

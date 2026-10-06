@@ -62,6 +62,7 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
  *   <li>결제 완료 매칭의 확정은 기존처럼 1회 차감, 재요청은 추가 차감 없음.</li>
  *   <li>내담자 세션·다른 테넌트 관리자 세션의 확정은 거절되고 일정·회기는 그대로.</li>
  *   <li>확정된 결제 대기 일정은 상담일지를 작성할 수 있고 잔여는 그대로.</li>
+ *   <li>결제 확인(입금 전)도 같다: 확정·취소 때 같은 쌍 ACTIVE 매칭으로 차감·복원하지 않고, 입금 확인에서 1회 차감.</li>
  * </ul>
  *
  * @author CoreSolution
@@ -76,6 +77,7 @@ class TentativeConfirmBeforePaymentIntegrationTest {
 
     private static final long PACKAGE_PRICE = 100_000L;
     private static final int TOTAL_SESSIONS = 10;
+    private static final int SIBLING_USED = 3;
     /** 세션 속성이 아니라 확정 요청 userRole 쿼리 값으로만 쓰는 키. */
     private static final String ROLE_HINT_KEY = "tcbRoleHint";
 
@@ -269,6 +271,134 @@ class TentativeConfirmBeforePaymentIntegrationTest {
         Schedule schedule = saveSchedule(mapping, ScheduleStatus.TENTATIVE_PENDING_PAYMENT);
         confirm(schedule, adminSession()).andExpect(status().isOk());
 
+        perform(post("/api/v1/schedules/consultation-records"),
+                session(consultant.getId(), UserRole.CONSULTANT, tenantId), consultationRecordBody(schedule))
+                .andExpect(status().is2xxSuccessful());
+
+        assertSessions(mapping, 0, 0);
+        assertThat(reloadSchedule(schedule).getSessionSequence()).isEqualTo(1);
+    }
+
+    // ── 결제 확인(입금 전) PAYMENT_CONFIRMED ──
+
+    @Test
+    @DisplayName("결제 확인(입금 전): 확정 200·재확정 200, 이 매칭·같은 쌍 ACTIVE 매칭 모두 회기 불변 → 입금 확인에서 이 매칭만 1회 차감·INCOME 1건, 재요청 반영 없음")
+    void paymentConfirmed_confirmThenDeposit_noFallbackAndDeductsOnceAtDeposit() throws Exception {
+        ConsultantClientMapping sibling = saveMapping(MappingStatus.ACTIVE, PaymentStatus.APPROVED,
+                PaymentTimingConstants.ADVANCE, TOTAL_SESSIONS - SIBLING_USED);
+        setUsed(sibling, SIBLING_USED);
+        ConsultantClientMapping paid = saveMapping(MappingStatus.PAYMENT_CONFIRMED, PaymentStatus.CONFIRMED,
+                PaymentTimingConstants.ADVANCE, 0);
+        Schedule schedule = saveSchedule(paid, ScheduleStatus.TENTATIVE_PENDING_PAYMENT);
+
+        confirm(schedule, adminSession()).andExpect(status().isOk());
+        assertThat(reloadSchedule(schedule).getStatus()).isEqualTo(ScheduleStatus.CONFIRMED);
+        assertThat(reloadSchedule(schedule).getMappingId()).isEqualTo(paid.getId());
+        assertSessions(paid, 0, 0);
+        assertSessions(sibling, SIBLING_USED, TOTAL_SESSIONS - SIBLING_USED);
+
+        confirm(schedule, adminSession()).andExpect(status().isOk());
+        assertSessions(paid, 0, 0);
+        assertSessions(sibling, SIBLING_USED, TOTAL_SESSIONS - SIBLING_USED);
+
+        perform(post("/api/v1/admin/mappings/{id}/confirm-deposit", paid.getId()), adminSession(),
+                Map.of("depositReference", "tcb-pc-dep"))
+                .andExpect(status().isOk());
+        assertSessions(paid, 1, TOTAL_SESSIONS - 1);
+        assertSessions(sibling, SIBLING_USED, TOTAL_SESSIONS - SIBLING_USED);
+        assertThat(incomeRows(paid)).hasSize(1);
+        assertThat(incomeRows(sibling)).isEmpty();
+        assertThat(reloadSchedule(schedule).getSessionSequence()).isEqualTo(1);
+
+        perform(post("/api/v1/admin/mappings/{id}/confirm-deposit", paid.getId()), adminSession(),
+                Map.of("depositReference", "tcb-pc-dep"));
+        confirm(schedule, adminSession());
+        assertSessions(paid, 1, TOTAL_SESSIONS - 1);
+        assertSessions(sibling, SIBLING_USED, TOTAL_SESSIONS - SIBLING_USED);
+        assertThat(incomeRows(paid)).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("결제 확인(입금 전): 이미 예약된(BOOKED) 일정 확정도 같은 쌍 ACTIVE 매칭을 차감하지 않는다")
+    void paymentConfirmed_bookedConfirm_noFallback() throws Exception {
+        ConsultantClientMapping sibling = saveMapping(MappingStatus.ACTIVE, PaymentStatus.APPROVED,
+                PaymentTimingConstants.ADVANCE, TOTAL_SESSIONS);
+        ConsultantClientMapping paid = saveMapping(MappingStatus.PAYMENT_CONFIRMED, PaymentStatus.CONFIRMED,
+                PaymentTimingConstants.ADVANCE, 0);
+        Schedule schedule = saveSchedule(paid, ScheduleStatus.BOOKED);
+
+        confirm(schedule, adminSession()).andExpect(status().isOk());
+
+        assertSessions(paid, 0, 0);
+        assertSessions(sibling, 0, TOTAL_SESSIONS);
+    }
+
+    @Test
+    @DisplayName("결제 확인(입금 전): 확정 후 입금 전에 취소하면 회차만 지우고 같은 쌍 ACTIVE 매칭 잔여를 복원하지 않는다")
+    void paymentConfirmed_cancelBeforeDeposit_noRestoreToOtherMapping() throws Exception {
+        ConsultantClientMapping sibling = saveMapping(MappingStatus.ACTIVE, PaymentStatus.APPROVED,
+                PaymentTimingConstants.ADVANCE, TOTAL_SESSIONS - SIBLING_USED);
+        setUsed(sibling, SIBLING_USED);
+        ConsultantClientMapping paid = saveMapping(MappingStatus.PAYMENT_CONFIRMED, PaymentStatus.CONFIRMED,
+                PaymentTimingConstants.ADVANCE, 0);
+        Schedule schedule = saveSchedule(paid, ScheduleStatus.TENTATIVE_PENDING_PAYMENT);
+        confirm(schedule, adminSession()).andExpect(status().isOk());
+        assertThat(reloadSchedule(schedule).getSessionSequence()).isEqualTo(1);
+
+        perform(put("/api/v1/schedules/{id}", schedule.getId()), adminSession(),
+                Map.of("status", ScheduleStatus.CANCELLED.name()))
+                .andExpect(status().isOk());
+
+        Schedule after = reloadSchedule(schedule);
+        assertThat(after.getStatus()).isEqualTo(ScheduleStatus.CANCELLED);
+        assertThat(after.getSessionSequence()).isNull();
+        assertSessions(sibling, SIBLING_USED, TOTAL_SESSIONS - SIBLING_USED);
+        TenantContextHolder.setTenantId(tenantId);
+        assertThat(mappingRepository.findById(paid.getId()).orElseThrow().getUsedSessions()).isZero();
+        assertThat(incomeRows(paid)).isEmpty();
+    }
+
+    @Test
+    @DisplayName("결제 확인(입금 전): 확정된 일정은 상담일지 작성 가능, 회기 불변")
+    void paymentConfirmed_confirmedScheduleAllowsConsultationLog() throws Exception {
+        ConsultantClientMapping paid = saveMapping(MappingStatus.PAYMENT_CONFIRMED, PaymentStatus.CONFIRMED,
+                PaymentTimingConstants.ADVANCE, 0);
+        Schedule schedule = saveSchedule(paid, ScheduleStatus.TENTATIVE_PENDING_PAYMENT);
+        confirm(schedule, adminSession()).andExpect(status().isOk());
+
+        perform(post("/api/v1/schedules/consultation-records"),
+                session(consultant.getId(), UserRole.CONSULTANT, tenantId), consultationRecordBody(schedule))
+                .andExpect(status().is2xxSuccessful());
+
+        assertSessions(paid, 0, 0);
+    }
+
+    @Test
+    @DisplayName("결제 확인(입금 전): 내담자 403·다른 테넌트 관리자 거절, 일정·회기 그대로")
+    void paymentConfirmed_clientAndOtherTenantRejected() throws Exception {
+        ConsultantClientMapping paid = saveMapping(MappingStatus.PAYMENT_CONFIRMED, PaymentStatus.CONFIRMED,
+                PaymentTimingConstants.ADVANCE, 0);
+        Schedule schedule = saveSchedule(paid, ScheduleStatus.TENTATIVE_PENDING_PAYMENT);
+        String otherTenant = "tcb-other-" + UUID.randomUUID().toString().substring(0, 8);
+
+        confirm(schedule, session(client.getId(), UserRole.CLIENT, tenantId)).andExpect(status().isForbidden());
+        int otherStatus = confirm(schedule, session(1L, UserRole.ADMIN, otherTenant))
+                .andReturn().getResponse().getStatus();
+
+        assertThat(otherStatus).isBetween(400, 499);
+        assertThat(reloadSchedule(schedule).getStatus()).isEqualTo(ScheduleStatus.TENTATIVE_PENDING_PAYMENT);
+        assertThat(reloadSchedule(schedule).getSessionSequence()).isNull();
+        assertSessions(paid, 0, 0);
+    }
+
+    private void setUsed(ConsultantClientMapping mapping, int used) {
+        TenantContextHolder.setTenantId(tenantId);
+        ConsultantClientMapping m = mappingRepository.findById(mapping.getId()).orElseThrow();
+        m.setUsedSessions(used);
+        mappingRepository.saveAndFlush(m);
+    }
+
+    private Map<String, Object> consultationRecordBody(Schedule schedule) {
         Map<String, Object> record = new HashMap<>();
         record.put("consultationId", schedule.getId());
         record.put("clientId", client.getId());
@@ -281,12 +411,7 @@ class TentativeConfirmBeforePaymentIntegrationTest {
         record.put("clientResponse", "tcb-it");
         record.put("riskAssessment", "LOW");
         record.put("progressEvaluation", "tcb-it");
-        perform(post("/api/v1/schedules/consultation-records"),
-                session(consultant.getId(), UserRole.CONSULTANT, tenantId), record)
-                .andExpect(status().is2xxSuccessful());
-
-        assertSessions(mapping, 0, 0);
-        assertThat(reloadSchedule(schedule).getSessionSequence()).isEqualTo(1);
+        return record;
     }
 
     private ResultActions confirm(Schedule schedule, Map<String, Object> sessionAttrs) throws Exception {

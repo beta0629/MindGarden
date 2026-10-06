@@ -1,0 +1,61 @@
+/* PackageExpiryReminderModal — 회기권 만료 임박 (warning 토큰, 특이사항 모달과 분리) */
+
+.package-expiry-reminder-modal__intro {
+  margin-bottom: var(--mg-v2-space-4, 1rem);
+  padding: var(--mg-v2-space-4, 1rem);
+  border: 1px solid var(--mg-color-warning-600);
+  border-radius: var(--mg-v2-radius-md, 0.5rem);
+  background: color-mix(
+    in srgb,
+    var(--mg-color-warning-500) 8%,
+    var(--mg-color-surface-primary)
+  );
+}
+
+.package-expiry-reminder-modal__lead {
+  margin: 0;
+  line-height: 1.55;
+  font-weight: 600;
+  color: var(--mg-color-text-primary);
+}
+
+.package-expiry-reminder-modal__session {
+  margin: var(--mg-v2-space-3, 0.75rem) 0 0;
+  color: var(--mg-color-text-secondary);
+  font-weight: 500;
+}
+
+.package-expiry-reminder-modal__consultant {
+  display: block;
+  margin-top: var(--mg-v2-space-1, 0.25rem);
+  color: var(--mg-color-text-secondary);
+}
+
+.package-expiry-reminder-modal__section {
+  margin-top: var(--mg-v2-space-2, 0.5rem);
+}
+
+.package-expiry-reminder-modal__section-title {
+  color: var(--mg-color-warning-700);
+  font-weight: 700;
+}
+
+.package-expiry-reminder-modal__summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--mg-v2-space-2, 0.5rem);
+  margin: 0;
+  color: var(--mg-color-text-primary);
+  font-weight: 600;
+}
+
+.package-expiry-reminder-modal__hint {
+  margin: var(--mg-v2-space-3, 0.75rem) 0 0;
+  color: var(--mg-color-text-secondary);
+  line-height: 1.55;
+}
+
+.package-expiry-reminder-modal__confirm-btn {
+  min-width: 7.5rem;
+}

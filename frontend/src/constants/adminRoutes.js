@@ -113,6 +113,8 @@ export const ADMIN_ROUTES = {
     /** 결제/구독 — 구독 관리 라우트 (테넌트 결제·구독 SSOT 분리, 옵션 C, 2026-05-27) */
     BILLING_SUBSCRIPTIONS: '/admin/billing/subscriptions',
     /** 결제/구독 — 결제 수단 관리 라우트 (테넌트 결제·구독 SSOT 분리, 옵션 C, 2026-05-27) */
-    BILLING_PAYMENT_METHODS: '/admin/billing/payment-methods'
+    BILLING_PAYMENT_METHODS: '/admin/billing/payment-methods',
+    /** 타기관 연계 등록 + 기관 마스터 (회기 매핑 화면과 분리) */
+    INSTITUTION_LINKS: '/admin/institution-links'
 };
 

@@ -1,9 +1,12 @@
 package com.coresolution.consultation.service.impl;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
+import com.coresolution.consultation.constant.FinancialTransactionConstants;
 import com.coresolution.consultation.constant.admin.AdminServiceUserFacingMessages;
+import com.coresolution.consultation.entity.erp.financial.FinancialTransaction;
 import com.coresolution.consultation.constant.InstitutionLinkConstants;
 import com.coresolution.consultation.entity.ConsultantClientMapping;
 import com.coresolution.consultation.entity.ShopClientOrderLine;
@@ -72,6 +75,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyDouble;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.never;
@@ -365,6 +369,7 @@ class AdminServiceImplConfirmDepositApproveTest {
         assertNotNull(result);
         verify(mappingRepository).save(any(ConsultantClientMapping.class));
         assertEquals(ConsultantClientMapping.MappingStatus.ACTIVE, result.getStatus());
+        verify(scheduleService, never()).reassignConsumingSchedulesOntoTargetAndDeduct(any(), any(), any());
     }
 
     @Test
@@ -377,6 +382,15 @@ class AdminServiceImplConfirmDepositApproveTest {
 
         when(mappingRepository.findByTenantIdAndId(eq(TEST_TENANT_ID), eq(mappingId))).thenReturn(Optional.of(mapping));
         when(mappingRepository.save(any(ConsultantClientMapping.class))).thenAnswer(inv -> inv.getArgument(0));
+        FinancialTransaction postedAdditionalIncome = FinancialTransaction.builder()
+                .transactionType(FinancialTransaction.TransactionType.INCOME)
+                .relatedEntityType(FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING_ADDITIONAL)
+                .amount(new BigDecimal("100000"))
+                .status(FinancialTransaction.TransactionStatus.COMPLETED)
+                .build();
+        when(financialTransactionRepository.findByTenantIdAndRelatedEntityIdAndRelatedEntityTypeAndIsDeletedFalse(
+                eq(TEST_TENANT_ID), eq(mappingId), anyString()))
+                .thenReturn(List.of(postedAdditionalIncome));
 
         ConsultantClientMapping result = adminService.confirmDeposit(mappingId, "REF-ADD");
 
@@ -384,6 +398,69 @@ class AdminServiceImplConfirmDepositApproveTest {
         verify(scheduleService, never()).finalizeTentativeSchedulesAfterDepositConfirmed(any());
         verify(adminService, never()).createConsultationIncomeTransactionInCurrentTransaction(any());
         verify(storedProcedureService, never()).updateMappingInfo(any(), any(), anyDouble(), anyInt(), any());
+    }
+
+    @Test
+    @DisplayName("추가 매칭 단독 입금 확인 후 승인: self 차감 없이 타깃 재귀속만 위임, 일반 입금 INCOME 아님")
+    void confirmDepositThenApprove_additionalMapping_reassignsWithoutSelfDeduct() {
+        Long additionalId = 60L;
+        Long activeId = 103L;
+        User consultant = new User();
+        consultant.setId(11L);
+        consultant.setTenantId(TEST_TENANT_ID);
+        User client = new User();
+        client.setId(21L);
+        client.setTenantId(TEST_TENANT_ID);
+
+        ConsultantClientMapping additional = buildMappingForConfirmDeposit(additionalId);
+        additional.setConsultant(consultant);
+        additional.setClient(client);
+        additional.setTotalSessions(3);
+        additional.setRemainingSessions(0);
+        additional.setUsedSessions(0);
+        additional.setNotes(String.format(
+                AdminServiceUserFacingMessages.NOTES_ADDITIONAL_MAPPING_LINE_FMT, activeId, 3));
+
+        ConsultantClientMapping active = new ConsultantClientMapping();
+        active.setId(activeId);
+        active.setTenantId(TEST_TENANT_ID);
+        active.setConsultant(consultant);
+        active.setClient(client);
+        active.setStatus(ConsultantClientMapping.MappingStatus.ACTIVE);
+        active.setPackageName("기존패키지");
+        active.setTotalSessions(15);
+        active.setRemainingSessions(12);
+        active.setUsedSessions(3);
+
+        when(mappingRepository.findByTenantIdAndId(eq(TEST_TENANT_ID), eq(additionalId)))
+                .thenReturn(Optional.of(additional));
+        when(mappingRepository.findByTenantIdAndId(eq(TEST_TENANT_ID), eq(activeId)))
+                .thenReturn(Optional.of(active));
+        when(mappingRepository.save(any(ConsultantClientMapping.class))).thenAnswer(inv -> inv.getArgument(0));
+        FinancialTransaction postedAdditionalIncome = FinancialTransaction.builder()
+                .transactionType(FinancialTransaction.TransactionType.INCOME)
+                .relatedEntityType(FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING_ADDITIONAL)
+                .amount(new BigDecimal("100000"))
+                .status(FinancialTransaction.TransactionStatus.COMPLETED)
+                .build();
+        when(financialTransactionRepository.findByTenantIdAndRelatedEntityIdAndRelatedEntityTypeAndIsDeletedFalse(
+                eq(TEST_TENANT_ID), eq(additionalId), anyString()))
+                .thenReturn(List.of(postedAdditionalIncome));
+
+        ConsultantClientMapping deposited = adminService.confirmDeposit(additionalId, "REF-ADD-MERGE");
+        assertEquals(0, deposited.getRemainingSessions());
+        assertEquals(ConsultantClientMapping.MappingStatus.DEPOSIT_PENDING, deposited.getStatus());
+
+        ConsultantClientMapping merged = adminService.approveMapping(additionalId, "AdminMerge");
+
+        assertEquals(ConsultantClientMapping.MappingStatus.TERMINATED, merged.getStatus());
+        assertEquals(18, active.getTotalSessions());
+        assertEquals(15, active.getRemainingSessions());
+        assertEquals(3, active.getUsedSessions());
+        verify(scheduleService, never()).finalizeTentativeSchedulesAfterDepositConfirmed(any());
+        verify(scheduleService).reassignConsumingSchedulesOntoTargetAndDeduct(
+                eq(TEST_TENANT_ID), eq(additionalId), eq(active));
+        verify(adminService, never()).createConsultationIncomeTransactionInCurrentTransaction(any());
     }
 
     @Test
@@ -503,6 +580,8 @@ class AdminServiceImplConfirmDepositApproveTest {
         assertEquals(15, active.getTotalSessions());
         assertEquals(12, active.getRemainingSessions());
         assertEquals(3, active.getUsedSessions());
+        verify(scheduleService).reassignConsumingSchedulesOntoTargetAndDeduct(
+                eq(TEST_TENANT_ID), eq(additionalId), eq(active));
     }
 
     @Test

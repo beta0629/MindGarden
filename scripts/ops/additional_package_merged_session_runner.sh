@@ -1,13 +1,14 @@
 #!/usr/bin/env bash
 # 추가 패키지 병합 회기 목록·보정.
 # DB_HOST DB_USER DB_PASSWORD DB_NAME 은 환경 변수. 이 스크립트는 그 값을 출력하지 않는다.
-# list: 고정 SELECT 만, 세션 READ ONLY.
+# list: 회기 불일치 SELECT 와 상담료 INCOME 잔존 SELECT. 둘 다 세션 READ ONLY.
 # repair: 허용 목록 파일이 비어 있으면 DB 에 접속하지 않는다.
 #         기본 종료는 ROLLBACK. COMMIT 은 --mode apply 와 REPAIR_CONFIRM=CONFIRM 이 같이 있을 때만.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 SELECT_SQL="${ROOT}/scripts/ops/sql/additional_package_merged_session_mismatch_select.sql"
+INCOME_SQL="${ROOT}/scripts/ops/sql/consultation_income_leftover_select.sql"
 TAIL_SQL="${ROOT}/scripts/ops/sql/additional_package_merged_session_repair_tail.sql"
 
 die() {
@@ -55,6 +56,16 @@ assert_select_readonly() {
   fi
   if grep -qiE 'financial_transactions|into[[:space:]]+outfile|load_file' "$SELECT_SQL"; then
     die "list SQL file touches a forbidden object"
+  fi
+}
+
+assert_income_select_readonly() {
+  [ -f "$INCOME_SQL" ] || die "income list SQL file missing"
+  if grep -qiE '(^|[^a-z_@])(insert|update|delete|drop|alter|truncate|create|replace|grant|call|set)[[:space:]]' "$INCOME_SQL"; then
+    die "income list SQL file contains a write statement"
+  fi
+  if grep -qiE 'into[[:space:]]+outfile|load_file' "$INCOME_SQL"; then
+    die "income list SQL file touches a forbidden object"
   fi
 }
 
@@ -196,8 +207,11 @@ plan_body() {
 cmd_list() {
   require_db_env
   assert_select_readonly
+  assert_income_select_readonly
   echo "=== additional package merged session mismatch (read only) ==="
   mysql_exec "SET SESSION TRANSACTION READ ONLY" "$SELECT_SQL"
+  echo "=== consultation income leftover (read only) ==="
+  mysql_exec "SET SESSION TRANSACTION READ ONLY" "$INCOME_SQL"
 }
 
 cmd_repair() {

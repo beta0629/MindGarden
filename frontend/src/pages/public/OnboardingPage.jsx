@@ -22,6 +22,9 @@ import OnboardingTemplate from '../../components/public/templates/OnboardingTemp
 import OnboardingSegmentedControl from '../../components/public/molecules/OnboardingSegmentedControl';
 import PublicErrorBoundary from '../../components/public/organisms/PublicErrorBoundary';
 import StandardizedApi from '../../utils/standardizedApi';
+import usePasswordPolicyField from '../../hooks/usePasswordPolicyField';
+import PasswordPolicyInput from '../../components/common/PasswordPolicyInput';
+import { resolveUserFacingApiErrorMessage } from '../../utils/userFacingApiErrorMessage';
 import './OnboardingPage.css';
 
 const TOTAL_STEPS = 4;
@@ -42,7 +45,9 @@ const ROUTES = Object.freeze({
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const DOMAIN_PATTERN = /^[a-z0-9][a-z0-9-]*[a-z0-9]$/;
 const PHONE_PATTERN = /^[0-9]{9,11}$/;
-const MIN_PASSWORD_LENGTH = 8;
+const ONBOARDING_INPUT_CLASS = 'mg-v2-onboarding-form__input';
+const ONBOARDING_INPUT_ERROR_CLASS = 'mg-v2-onboarding-form__input--error';
+const ONBOARDING_ERROR_CLASS = 'mg-v2-onboarding-form__error';
 
 const INITIAL_FORM_DATA = Object.freeze({
   tenantName: '',
@@ -82,6 +87,8 @@ const OnboardingPage = () => {
   const [currentStep, setCurrentStep] = useState(FIRST_STEP);
   const [formData, setFormData] = useState({ ...INITIAL_FORM_DATA });
   const [errors, setErrors] = useState({});
+  const passwordField = usePasswordPolicyField({ requireConfirm: true });
+  const { clearError: clearPasswordError, validate: validatePassword } = passwordField;
   const [domainStatus, setDomainStatus] = useState('idle');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
@@ -98,6 +105,9 @@ const OnboardingPage = () => {
     });
     if (name === 'domain' && domainStatus !== 'idle') {
       setDomainStatus('idle');
+    }
+    if (name === 'password' || name === 'passwordConfirm') {
+      clearPasswordError();
     }
   }, [domainStatus]);
 
@@ -176,14 +186,6 @@ const OnboardingPage = () => {
       } else if (!EMAIL_PATTERN.test(formData.adminEmail)) {
         newErrors.adminEmail = t('public.onboarding.errorAdminEmailFormat', '올바른 이메일 형식이 아닙니다.');
       }
-      if (!formData.password) {
-        newErrors.password = t('public.onboarding.errorPasswordRequired', '비밀번호를 입력해주세요.');
-      } else if (formData.password.length < MIN_PASSWORD_LENGTH) {
-        newErrors.password = t('public.onboarding.errorPasswordLength', '비밀번호는 8자 이상이어야 합니다.');
-      }
-      if (formData.password !== formData.passwordConfirm) {
-        newErrors.passwordConfirm = t('public.onboarding.errorPasswordMismatch', '비밀번호가 일치하지 않습니다.');
-      }
       if (!formData.terms) {
         newErrors.terms = t('public.onboarding.errorTermsRequired', '이용약관에 동의해주세요.');
       }
@@ -191,9 +193,10 @@ const OnboardingPage = () => {
         newErrors.privacy = t('public.onboarding.errorPrivacyRequired', '개인정보 처리방침에 동의해주세요.');
       }
     }
+    const passwordOk = step !== 2 || validatePassword(formData.password, formData.passwordConfirm);
     setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  }, [formData, t]);
+    return Object.keys(newErrors).length === 0 && passwordOk;
+  }, [formData, t, validatePassword]);
 
   const isCurrentStepValid = useMemo(() => {
     if (currentStep === 0) {
@@ -211,8 +214,7 @@ const OnboardingPage = () => {
         formData.adminName.trim()
         && formData.adminEmail.trim()
         && formData.password
-        && formData.password.length >= MIN_PASSWORD_LENGTH
-        && formData.password === formData.passwordConfirm
+        && formData.passwordConfirm
         && formData.terms
         && formData.privacy
       );
@@ -246,8 +248,11 @@ const OnboardingPage = () => {
         marketingConsent: formData.marketing,
       });
       setCurrentStep(COMPLETE_STEP);
-    } catch {
-      setSubmitError(t('public.onboarding.errorSubmitFailed', '신청 처리 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.'));
+    } catch (error) {
+      setSubmitError(resolveUserFacingApiErrorMessage(
+        error,
+        t('public.onboarding.errorSubmitFailed', '신청 처리 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.')
+      ));
     } finally {
       setIsSubmitting(false);
     }
@@ -596,23 +601,18 @@ const OnboardingPage = () => {
                 {t('public.onboarding.v2.password', '비밀번호')}
                 <span className="mg-v2-onboarding-form__required" aria-hidden="true">*</span>
               </label>
-              <input
+              <PasswordPolicyInput
+                field={passwordField}
                 id="password"
                 name="password"
-                type="password"
-                className={`mg-v2-onboarding-form__input${errors.password ? ' mg-v2-onboarding-form__input--error' : ''}`}
+                className={ONBOARDING_INPUT_CLASS}
+                errorInputClassName={ONBOARDING_INPUT_ERROR_CLASS}
+                errorClassName={ONBOARDING_ERROR_CLASS}
+                placeholder=""
                 value={formData.password}
                 onChange={handleChange}
                 aria-required="true"
-                aria-invalid={Boolean(errors.password)}
-                aria-describedby={errors.password ? 'password-error' : undefined}
-                autoComplete="new-password"
               />
-              {errors.password && (
-                <span id="password-error" className="mg-v2-onboarding-form__error" role="alert">
-                  {errors.password}
-                </span>
-              )}
             </div>
 
             <div className="mg-v2-onboarding-form__field">
@@ -620,23 +620,18 @@ const OnboardingPage = () => {
                 {t('public.onboarding.v2.passwordConfirm', '비밀번호 확인')}
                 <span className="mg-v2-onboarding-form__required" aria-hidden="true">*</span>
               </label>
-              <input
+              <PasswordPolicyInput
+                field={passwordField}
+                confirm
                 id="passwordConfirm"
                 name="passwordConfirm"
-                type="password"
-                className={`mg-v2-onboarding-form__input${errors.passwordConfirm ? ' mg-v2-onboarding-form__input--error' : ''}`}
+                className={ONBOARDING_INPUT_CLASS}
+                errorInputClassName={ONBOARDING_INPUT_ERROR_CLASS}
+                errorClassName={ONBOARDING_ERROR_CLASS}
                 value={formData.passwordConfirm}
                 onChange={handleChange}
                 aria-required="true"
-                aria-invalid={Boolean(errors.passwordConfirm)}
-                aria-describedby={errors.passwordConfirm ? 'passwordConfirm-error' : undefined}
-                autoComplete="new-password"
               />
-              {errors.passwordConfirm && (
-                <span id="passwordConfirm-error" className="mg-v2-onboarding-form__error" role="alert">
-                  {errors.passwordConfirm}
-                </span>
-              )}
             </div>
 
             <div className="mg-v2-onboarding-form__terms">

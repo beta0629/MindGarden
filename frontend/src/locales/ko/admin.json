@@ -2316,6 +2316,8 @@
       "deleteError": "상담사 삭제 중 오류가 발생했습니다.",
       "passwordResetSuccess": "비밀번호가 성공적으로 초기화되었습니다.",
       "passwordResetFailed": "비밀번호 초기화에 실패했습니다.",
+      "passwordPolicy": "비밀번호는 {{min}}~{{max}}자이며, 영문 대문자·소문자·숫자·특수문자({{specials}})를 각각 1자 이상 포함해야 합니다. 허용된 문자만 사용할 수 있고, 연속된 문자 3자와 같은 문자 3회 반복은 사용할 수 없습니다.",
+      "passwordOptionalHint": "비우면 임시 비밀번호로 등록됩니다.",
       "submitError": "작업 중 오류가 발생했습니다."
     }
   },

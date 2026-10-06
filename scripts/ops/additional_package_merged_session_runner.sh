@@ -713,9 +713,9 @@ load_income_denylist() {
 
 # 허용 목록 매칭·전표가 거부 목록·선례와 겹치면 DB 접속 전에 중단한다.
 assert_income_scope() {
-  local raw m tx amt d
+  local raw m tx d
   for raw in "${INCOME_ROWS[@]}"; do
-    IFS=',' read -r m tx amt <<<"$raw"
+    IFS=, read -r m tx _ <<<"$raw"
     for d in "${DENY_IDS[@]}"; do
       [ "$m" != "$d" ] || die "income allowlist contains a denied mapping"
     done
@@ -728,9 +728,9 @@ assert_income_scope() {
 income_id_lists() {
   INCOME_MAP_IDS=""
   INCOME_TX_IDS=""
-  local raw m tx amt
+  local raw m tx
   for raw in "${INCOME_ROWS[@]}"; do
-    IFS=',' read -r m tx amt <<<"$raw"
+    IFS=, read -r m tx _ <<<"$raw"
     INCOME_MAP_IDS="${INCOME_MAP_IDS:+$INCOME_MAP_IDS,}${m}"
     INCOME_TX_IDS="${INCOME_TX_IDS:+$INCOME_TX_IDS,}${tx}"
   done

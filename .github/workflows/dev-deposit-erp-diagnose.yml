@@ -52,9 +52,9 @@ jobs:
     steps:
       - name: 입력 검증
         env:
-          IN_SINCE: ${{ inputs.since || '2026-10-06 12:40' }}
-          IN_UNTIL: ${{ inputs.until || '2026-10-06 12:50' }}
-          IN_IDS: ${{ inputs.mapping_ids || '315,314' }}
+          IN_SINCE: ${{ inputs.since || '2026-10-06 12:15' }}
+          IN_UNTIL: ${{ inputs.until || '2026-10-06 12:22' }}
+          IN_IDS: ${{ inputs.mapping_ids || '315' }}
           IN_CTX: ${{ inputs.context_lines || '80' }}
         run: |
           set -euo pipefail
@@ -73,9 +73,9 @@ jobs:
           DB_USER: ${{ secrets.DEV_DB_USER }}
           DB_NAME: ${{ secrets.DEV_DB_NAME }}
           DB_PASSWORD: ${{ secrets.DEV_DB_PASSWORD }}
-          IN_SINCE: ${{ inputs.since || '2026-10-06 12:40' }}
-          IN_UNTIL: ${{ inputs.until || '2026-10-06 12:50' }}
-          IN_IDS: ${{ inputs.mapping_ids || '315,314' }}
+          IN_SINCE: ${{ inputs.since || '2026-10-06 12:15' }}
+          IN_UNTIL: ${{ inputs.until || '2026-10-06 12:22' }}
+          IN_IDS: ${{ inputs.mapping_ids || '315' }}
           IN_CTX: ${{ inputs.context_lines || '80' }}
         run: |
           set -euo pipefail
@@ -154,7 +154,7 @@ jobs:
           printf '%s\n' "$LOG" | grep -n -E "(mappingId|MappingID|mapping_id|매칭ID|매칭 ID)[=: ]*($IDRE)([^0-9]|$)|/mappings/($IDRE)/|confirm-deposit|confirmDeposit|confirm-payment|confirmPayment" | head -300 || echo '(없음)'
           echo "=== (3)(4) SQL·트랜잭션·커넥션 키워드 (줄번호 순서) ==="
           printf '%s\n' "$LOG" | grep -n -i -E 'insert|into|financial_transactions|update|consultant_client_mappings|[^a-z]call[^a-z]|commit|rollback|afterStatement|afterTransaction|connection release|Transaction|422|ERROR' \
-            | grep -v -E 'TenantContextFilter|XssFilter|CommonCodeServiceImpl' | head -1500 || echo '(없음)'
+            | grep -v -E 'TenantContextFilter|XssFilter|CommonCodeServiceImpl|SessionBasedAuthenticationFilter|UserSessionServiceImpl' | head -3000 || echo '(없음)'
           echo "=== app log files ==="
           sudo ls -la /var/log/mindgarden/ 2>/dev/null || true
           for f in /var/log/mindgarden/dev*.log; do

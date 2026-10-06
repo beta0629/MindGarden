@@ -1688,8 +1688,9 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
     }
 
     /**
-     * 운영자 장부·OFD에 포함할 posted 거래 여부. 판정은 {@link FinancialTransactionValidity#isValid} 만 쓴다
-     * (미삭제 + CANCELLED·REJECTED 제외 — 리포트·결산과 같은 유효 거래 조건).
+     * 운영자 장부·기간 대시보드({@code getBranchFinancialData}) posted 여부.
+     * 판정은 {@link FinancialTransactionValidity#isValid} 만 쓴다 (미삭제 + CANCELLED·REJECTED 제외).
+     * COMPLETED 전용 합계({@link #getTotalIncome}) 와는 범위가 다를 수 있다.
      *
      * @param transaction 재무 거래
      * @return posted이면 true

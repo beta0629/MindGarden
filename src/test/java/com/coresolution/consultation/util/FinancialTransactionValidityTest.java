@@ -23,6 +23,8 @@ class FinancialTransactionValidityTest {
     void excludedStatuses_areCancelledAndRejected() {
         assertThat(FinancialTransactionValidity.EXCLUDED_STATUSES)
                 .containsExactlyInAnyOrder(TransactionStatus.CANCELLED, TransactionStatus.REJECTED);
+        assertThat(FinancialTransactionValidity.EXCLUDED_STATUSES)
+                .doesNotContain(TransactionStatus.COMPLETED, TransactionStatus.PENDING, TransactionStatus.APPROVED);
     }
 
     @ParameterizedTest(name = "{0}")
@@ -41,11 +43,25 @@ class FinancialTransactionValidityTest {
     }
 
     @Test
-    @DisplayName("JPQL 조건은 soft delete 를 함께 제외")
-    void jpqlCondition_excludesSoftDeleted() {
+    @DisplayName("JPQL 유효 조건은 soft delete 를 제외하고 COMPLETED 제한은 없다")
+    void jpqlCondition_excludesSoftDeletedWithoutCompletedFilter() {
         assertThat(FinancialTransactionValidity.JPQL_VALID_CONDITION_F).startsWith("f.isDeleted = false AND ");
+        assertThat(FinancialTransactionValidity.JPQL_VALID_CONDITION_F).doesNotContain("COMPLETED");
         assertThat(FinancialTransactionValidity.nativeValidCondition("ft")).startsWith("ft.is_deleted = FALSE AND ");
         assertThat(FinancialTransactionValidity.nativeValidCondition(null)).startsWith("is_deleted = FALSE AND ");
+        int cancelled = FinancialTransactionValidity.nativeValidCondition("ft").indexOf("'CANCELLED'");
+        int rejected = FinancialTransactionValidity.nativeValidCondition("ft").indexOf("'REJECTED'");
+        assertThat(cancelled).isLessThan(rejected);
+    }
+
+    @Test
+    @DisplayName("COMPLETED 대시보드 조건은 COMPLETED 와 제외 상태를 함께 가진다")
+    void jpqlCompletedAndValid_keepsCompletedAndExcludedStatuses() {
+        String jpql = FinancialTransactionValidity.JPQL_COMPLETED_AND_VALID_CONDITION_F;
+        assertThat(jpql).contains("COMPLETED");
+        for (TransactionStatus status : FinancialTransactionValidity.EXCLUDED_STATUSES) {
+            assertThat(jpql).contains(status.name());
+        }
     }
 
     @Test
@@ -60,12 +76,14 @@ class FinancialTransactionValidityTest {
         assertThat(FinancialTransactionValidity.isValid(tx(TransactionStatus.COMPLETED, false))).isTrue();
         assertThat(FinancialTransactionValidity.isValidStatusCode(null)).isTrue();
         assertThat(FinancialTransactionValidity.isValidStatusCode(" ")).isTrue();
+        assertThat(FinancialTransactionValidity.isCompletedAndValid(tx(TransactionStatus.PENDING, false))).isFalse();
+        assertThat(FinancialTransactionValidity.isCompletedAndValid(tx(TransactionStatus.COMPLETED, false))).isTrue();
     }
 
     private static FinancialTransaction tx(TransactionStatus status, boolean deleted) {
-        FinancialTransaction tx = new FinancialTransaction();
-        tx.setStatus(status);
-        tx.setIsDeleted(deleted);
-        return tx;
+        FinancialTransaction transaction = new FinancialTransaction();
+        transaction.setStatus(status);
+        transaction.setIsDeleted(deleted);
+        return transaction;
     }
 }

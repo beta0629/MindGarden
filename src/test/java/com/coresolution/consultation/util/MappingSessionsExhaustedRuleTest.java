@@ -25,6 +25,7 @@ class MappingSessionsExhaustedRuleTest {
         assertThat(MappingSessionsExhaustedRule.shouldMarkExhausted(MappingStatus.ACTIVE, -1)).isTrue();
         assertThat(MappingSessionsExhaustedRule.shouldMarkExhausted(MappingStatus.ACTIVE, 1)).isFalse();
         assertThat(MappingSessionsExhaustedRule.shouldMarkExhausted(MappingStatus.ACTIVE, null)).isFalse();
+        assertThat(MappingSessionsExhaustedRule.allowsTransitionFrom(MappingStatus.ACTIVE)).isTrue();
     }
 
     @ParameterizedTest(name = "{0} + 잔여 0 → 소진 아님")
@@ -32,6 +33,7 @@ class MappingSessionsExhaustedRuleTest {
     @DisplayName("활성이 아닌 상태는 잔여 0 이어도 소진으로 바꾸지 않는다")
     void nonActive_neverMarked(MappingStatus status) {
         assertThat(MappingSessionsExhaustedRule.shouldMarkExhausted(status, 0)).isFalse();
+        assertThat(MappingSessionsExhaustedRule.allowsTransitionFrom(status)).isFalse();
     }
 
     @Test

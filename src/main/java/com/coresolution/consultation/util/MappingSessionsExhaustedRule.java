@@ -25,7 +25,10 @@ public final class MappingSessionsExhaustedRule {
      * @return {@link MappingStatus#ACTIVE} 이면 true
      */
     public static boolean allowsTransitionFrom(MappingStatus status) {
-        return status == MappingStatus.ACTIVE;
+        if (status != MappingStatus.ACTIVE) {
+            return false;
+        }
+        return !MappingPaymentScheduleGate.isAwaitingDeposit(status);
     }
 
     /**

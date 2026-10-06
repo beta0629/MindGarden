@@ -322,11 +322,12 @@ public interface FinancialTransactionRepository extends JpaRepository<FinancialT
     Long countPendingApprovalsDeprecated();
     
     /**
-     * 기간별 총 수입 조회 (tenantId 필터링, {@link FinancialTransactionValidity} 유효 거래만)
+     * 기간별 총 수입 조회 (tenantId 필터링). COMPLETED 만 합산하고 취소·거부·삭제는 제외.
      */
     @Query("SELECT COALESCE(SUM(f.amount), 0) FROM FinancialTransaction f " +
            "WHERE f.tenantId = :tenantId AND f.transactionType = 'INCOME' " +
-           "AND f.transactionDate BETWEEN :startDate AND :endDate AND " + FinancialTransactionValidity.JPQL_VALID_CONDITION_F + "")
+           "AND f.transactionDate BETWEEN :startDate AND :endDate AND " +
+           FinancialTransactionValidity.JPQL_COMPLETED_AND_VALID_CONDITION_F)
     BigDecimal sumIncomeByDateRange(@Param("tenantId") String tenantId, @Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate);
     
     /**
@@ -339,11 +340,12 @@ public interface FinancialTransactionRepository extends JpaRepository<FinancialT
     BigDecimal sumIncomeByDateRangeDeprecated(@Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate);
     
     /**
-     * 기간별 총 지출 조회 (tenantId 필터링, {@link FinancialTransactionValidity} 유효 거래만)
+     * 기간별 총 지출 조회 (tenantId 필터링). COMPLETED 만 합산하고 취소·거부·삭제는 제외.
      */
     @Query("SELECT COALESCE(SUM(f.amount), 0) FROM FinancialTransaction f " +
            "WHERE f.tenantId = :tenantId AND f.transactionType = 'EXPENSE' " +
-           "AND f.transactionDate BETWEEN :startDate AND :endDate AND " + FinancialTransactionValidity.JPQL_VALID_CONDITION_F + "")
+           "AND f.transactionDate BETWEEN :startDate AND :endDate AND " +
+           FinancialTransactionValidity.JPQL_COMPLETED_AND_VALID_CONDITION_F)
     BigDecimal sumExpenseByDateRange(@Param("tenantId") String tenantId, @Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate);
     
     /**
@@ -361,7 +363,8 @@ public interface FinancialTransactionRepository extends JpaRepository<FinancialT
     @Query("SELECT f.category, COALESCE(SUM(f.amount), 0), COUNT(f) " +
            "FROM FinancialTransaction f " +
            "WHERE f.tenantId = :tenantId AND f.transactionType = 'INCOME' " +
-           "AND f.transactionDate BETWEEN :startDate AND :endDate AND " + FinancialTransactionValidity.JPQL_VALID_CONDITION_F + " " +
+           "AND f.transactionDate BETWEEN :startDate AND :endDate AND " +
+           FinancialTransactionValidity.JPQL_COMPLETED_AND_VALID_CONDITION_F + " " +
            "GROUP BY f.category ORDER BY SUM(f.amount) DESC")
     List<Object[]> getIncomeByCategory(@Param("tenantId") String tenantId, @Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate);
     
@@ -382,7 +385,8 @@ public interface FinancialTransactionRepository extends JpaRepository<FinancialT
     @Query("SELECT f.category, COALESCE(SUM(f.amount), 0), COUNT(f) " +
            "FROM FinancialTransaction f " +
            "WHERE f.tenantId = :tenantId AND f.transactionType = 'EXPENSE' " +
-           "AND f.transactionDate BETWEEN :startDate AND :endDate AND " + FinancialTransactionValidity.JPQL_VALID_CONDITION_F + " " +
+           "AND f.transactionDate BETWEEN :startDate AND :endDate AND " +
+           FinancialTransactionValidity.JPQL_COMPLETED_AND_VALID_CONDITION_F + " " +
            "GROUP BY f.category ORDER BY SUM(f.amount) DESC")
     List<Object[]> getExpenseByCategory(@Param("tenantId") String tenantId, @Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate);
     
@@ -404,7 +408,7 @@ public interface FinancialTransactionRepository extends JpaRepository<FinancialT
            "f.transactionType, COALESCE(SUM(f.amount), 0) " +
            "FROM FinancialTransaction f " +
            "WHERE f.tenantId = :tenantId AND f.transactionDate BETWEEN :startDate AND :endDate " +
-           "AND " + FinancialTransactionValidity.JPQL_VALID_CONDITION_F + " " +
+           "AND " + FinancialTransactionValidity.JPQL_COMPLETED_AND_VALID_CONDITION_F + " " +
            "GROUP BY YEAR(f.transactionDate), MONTH(f.transactionDate), f.transactionType " +
            "ORDER BY year, month")
     List<Object[]> getMonthlyFinancialData(@Param("tenantId") String tenantId, @Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate);
@@ -542,10 +546,11 @@ public interface FinancialTransactionRepository extends JpaRepository<FinancialT
         FinancialTransaction.TransactionType transactionType, String subcategory, LocalDate startDate, LocalDate endDate);
 
     /**
-     * ERP P0-2 결산용 — 거래 유형별 amount 합계 ({@link FinancialTransactionValidity} 유효 거래만).
+     * ERP P0-2 결산용 — 거래 유형별 amount 합계.
      *
-     * <p>합의서 §4.3: 마감 시 SUM(amount) GROUP BY transaction_type 산식. status 가 PENDING/APPROVED 인
-     * 거래도 마감 합산에 포함되고, 취소·거부·soft delete 는 제외한다(리포트·대시보드와 같은 유효 거래 조건).</p>
+     * <p>합의서 §4.3: 마감 시 SUM(amount) GROUP BY transaction_type 산식. 원래 status 제한이 없어
+     * PENDING/APPROVED 도 포함한다. 이 PR 은 COMPLETED 로 좁히지 않고 취소·거부·soft delete 만 제외한다.
+     * 재무 대시보드 SUM({@code sumIncomeByDateRange}) 은 COMPLETED 전용이므로 결산과 숫자가 다를 수 있다.</p>
      *
      * @param tenantId 테넌트 ID
      * @param type 거래 유형 (INCOME/EXPENSE/RECEIVABLES)

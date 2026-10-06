@@ -13,6 +13,7 @@
 
 # 회기·매핑 회기 동기화
 **/*Session*Test.java
+**/*MappingSessionsExhausted*Test.java
 
 # ERP·재무·정산
 **/*Erp*Test.java

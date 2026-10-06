@@ -9,13 +9,18 @@ import com.coresolution.consultation.entity.erp.financial.FinancialTransaction;
 import com.coresolution.consultation.entity.erp.financial.FinancialTransaction.TransactionStatus;
 
 /**
- * 재무 집계(일·월·연 리포트, 대시보드, 결산·정산, 할인 요약 등)에 넣는 「유효 거래」 판정 SSOT.
+ * 재무 집계에서 취소·거부·삭제 거래를 빼는 제외 조건 SSOT.
  *
- * <p>유효 거래 = 미삭제({@code is_deleted = false}) 이면서 상태가 취소({@link TransactionStatus#CANCELLED})·
- * 거부({@link TransactionStatus#REJECTED})가 아닌 거래. 대기·승인·완료와 상태 미기록(null)은 포함한다.
- * 운영자 장부·재무 대시보드 합계와 같은 조건이며, 모든 집계는 이 클래스의 판정·조건 문자열만 쓴다.</p>
+ * <p>유효(제외 대상이 아님) = 미삭제({@code is_deleted = false}) 이면서 상태가
+ * 취소({@link TransactionStatus#CANCELLED})·거부({@link TransactionStatus#REJECTED})가 아닌 거래.
+ * 대기·승인·완료와 상태 미기록(null)은 이 판정만으로는 포함된다.</p>
  *
- * <p>JPQL {@code @Query} 는 컴파일 상수가 필요해 {@link #JPQL_VALID_CONDITION_F} 를 이어 붙이고,
+ * <p>이 판정은 COMPLETED 전용 합계를 대체하지 않는다. 원래 {@code status = COMPLETED} 이던
+ * 대시보드 SUM({@code sumIncomeByDateRange} 등)은 {@link #JPQL_COMPLETED_AND_VALID_CONDITION_F} 를
+ * 쓴다. 일·월·연 리포트와 결산({@code sumAmountForCloseByType})처럼 원래 상태 제한이 없던
+ * 경로는 {@link #isValid} / {@link #JPQL_VALID_CONDITION_F} 만 추가한다.</p>
+ *
+ * <p>JPQL {@code @Query} 는 컴파일 상수가 필요해 아래 문자열을 이어 붙이고,
  * 네이티브 SQL 은 {@link #nativeValidCondition(String)} 로 만든다. 제외 상태를 바꾸면 세 곳이 함께 바뀐다
  * ({@code FinancialTransactionValidityTest} 가 상수와 {@link #EXCLUDED_STATUSES} 일치를 검사).</p>
  *
@@ -33,16 +38,23 @@ public final class FinancialTransactionValidity {
 
     /**
      * JPQL 유효 거래 조건 (엔티티 별칭 {@code f}). {@link #EXCLUDED_STATUSES} 와 같은 상태를 제외한다.
+     * COMPLETED 제한은 넣지 않는다.
      */
     public static final String JPQL_VALID_CONDITION_F = "f.isDeleted = false AND (f.status IS NULL OR f.status NOT IN ("
             + STATUS_ENUM_PREFIX + "CANCELLED, "
             + STATUS_ENUM_PREFIX + "REJECTED))";
 
+    /**
+     * 원래 COMPLETED 만 합산하던 대시보드 쿼리용. COMPLETED 를 유지하고 취소·거부·삭제를 명시적으로 제외한다.
+     */
+    public static final String JPQL_COMPLETED_AND_VALID_CONDITION_F =
+            "f.status = " + STATUS_ENUM_PREFIX + "COMPLETED AND " + JPQL_VALID_CONDITION_F;
+
     private FinancialTransactionValidity() {
     }
 
     /**
-     * 집계에 넣을 유효 거래인지.
+     * 집계에 넣을 유효 거래인지 (취소·거부·삭제 제외). COMPLETED 여부는 보지 않는다.
      *
      * @param transaction 거래 (null 이면 false)
      * @return 미삭제이고 취소·거부가 아니면 true
@@ -52,6 +64,16 @@ public final class FinancialTransactionValidity {
             return false;
         }
         return isValidStatus(transaction.getStatus());
+    }
+
+    /**
+     * 대시보드 COMPLETED 합계에 넣을 거래인지.
+     *
+     * @param transaction 거래
+     * @return 유효하고 상태가 COMPLETED 이면 true
+     */
+    public static boolean isCompletedAndValid(FinancialTransaction transaction) {
+        return isValid(transaction) && transaction.getStatus() == TransactionStatus.COMPLETED;
     }
 
     /**
@@ -79,7 +101,7 @@ public final class FinancialTransactionValidity {
     }
 
     /**
-     * 네이티브 SQL 유효 거래 조건.
+     * 네이티브 SQL 유효 거래 조건. COMPLETED 제한은 넣지 않는다.
      *
      * @param alias {@code financial_transactions} 별칭. 비어 있으면 별칭 없이 컬럼명만 쓴다
      * @return {@code is_deleted = FALSE AND (status IS NULL OR status NOT IN (...))}

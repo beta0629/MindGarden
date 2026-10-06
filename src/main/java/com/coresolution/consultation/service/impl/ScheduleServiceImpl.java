@@ -1848,7 +1848,13 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
     @Override
     public Schedule confirmSchedule(Long scheduleId, String adminNote) {
         log.info("✅ 예약 확정: ID {}, 관리자 메모: {}", scheduleId, adminNote);
-        Schedule schedule = findById(scheduleId);
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        Schedule schedule = scheduleRepository.findByTenantIdAndIdForUpdate(tenantId, scheduleId)
+                .orElseThrow(() -> {
+                    log.warn("일정 없음: tenantId={}, scheduleId={}", tenantId, scheduleId);
+                    return new com.coresolution.consultation.exception.EntityNotFoundException(
+                            ScheduleServiceUserFacingMessages.MSG_SCHEDULE_NOT_FOUND);
+                });
         ScheduleStatus currentStatus = schedule.getStatus();
         if (ScheduleStatusTransitionPolicy.isAlreadyConfirmed(currentStatus)) {
             log.info("이미 확정된 일정 재확정 요청 — 변경 없음: scheduleId={}", scheduleId);

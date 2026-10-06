@@ -1,3 +1,5 @@
 # additional_mapping_id,schedule_id
 # 확정 1건. 추가 285, 일정 478. 대상 36 은 notes 의 첫 activeMappingId 에서 읽는다.
+# 2026-10-06 21:09 KST 운영 적용 완료 (run 37461127672, 사후 재조회 POST_COMMIT_MATCH=yes).
+# 다시 돌려도 목록 SELECT 가 이 쌍을 더 잡지 않아 백업 단계에서 쓰기 없이 중단된다.
 285,478

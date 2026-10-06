@@ -8,6 +8,11 @@
 # main 과 release/prod 는 이 PR 에서 갱신하지 않는다.
 # 나중에 운영에서 돌리려면 release/prod 에 트리거 파일 또는 허용 목록을 푸시하거나,
 # 워크플로 파일이 기본 브랜치에 있는 뒤 workflow_dispatch 한다.
+#
+# prod-income 잡: 상담료 INCOME 매출 취소 준비. 대상은 income-sales-cancel-allowlist-prod.txt,
+# 테넌트는 triggers/income_sales_cancel_prod.env 에만 둔다. 이 잡은 읽기 전용 재확인(probe)과
+# 백업(backup)만 한다. apply 는 반대 전표 방식이 승인되기 전까지 DB 에 접속하지 않고 실패한다.
+# KST 11:00–20:00 에는 우회 없이 실패한다. pull_request 실행은 release/prod 대상의 별도 실행 브랜치에서만.
 
 name: 추가 패키지 병합 회기 보정 (dry-run 기본)
 
@@ -17,12 +22,31 @@ on:
     paths:
       - 'scripts/ops/triggers/additional_package_merged_session_repair.env'
       - 'scripts/ops/additional-package-merged-session-repair-allowlist-prod.txt'
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches: [release/prod]
+    paths:
+      - 'scripts/ops/triggers/income_sales_cancel_prod.env'
   workflow_dispatch:
     inputs:
       force_incident:
-        description: 'KST 11–19 주간 스킵 가드 우회 (명시적 장애 대응만)'
+        description: 'KST 11–19 주간 스킵 가드 우회 (명시적 장애 대응만, 회기 잡만)'
         type: boolean
         default: false
+      target:
+        description: 'session = 회기 보정 잡, income = 매출 취소 준비 잡'
+        type: choice
+        options: [session, income]
+        default: session
+      income_mode:
+        description: 'income 잡 모드 (probe = 읽기 전용 재확인, backup = 재확인 + 백업, apply = 미승인으로 거부)'
+        type: choice
+        options: [probe, backup, apply]
+        default: probe
+      confirm:
+        description: 'income apply 에만. 정확히 CONFIRM'
+        type: string
+        default: ''
 
 permissions:
   contents: read
@@ -33,6 +57,7 @@ concurrency:
 
 jobs:
   prod-repair:
+    if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.target != 'income')
     runs-on: ubuntu-latest
     environment: production
     timeout-minutes: 30
@@ -145,7 +170,7 @@ jobs:
           if-no-files-found: ignore
 
   dev-repair:
-    if: github.event_name == 'workflow_dispatch'
+    if: github.event_name == 'workflow_dispatch' && inputs.target != 'income'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -263,3 +288,157 @@ jobs:
           name: additional-package-session-backup-dev-${{ github.run_id }}
           path: ${{ runner.temp }}/additional-package-session-backup
           if-no-files-found: ignore
+
+  prod-income:
+    if: (github.event_name == 'workflow_dispatch' && inputs.target == 'income') || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && github.head_ref != 'release/dev')
+    runs-on: ubuntu-latest
+    environment: production
+    timeout-minutes: 20
+    concurrency:
+      group: income-sales-cancel-prod
+      cancel-in-progress: false
+    steps:
+      - name: KST 운영 시간 가드 (11:00–20:00 실패, 우회 없음)
+        run: |
+          set -euo pipefail
+          HOUR="$(TZ=Asia/Seoul date +%H)"
+          HOUR=$((10#$HOUR))
+          echo "Asia/Seoul hour=${HOUR}"
+          if [ "$HOUR" -ge 11 ] && [ "$HOUR" -le 19 ]; then
+            echo "::error::KST ${HOUR}:00 is within 11:00-20:00. No database connection. Re-run after 20:00 KST."
+            exit 1
+          fi
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Resolve income mode and confirmation
+        id: gate
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          INPUT_MODE: ${{ inputs.income_mode }}
+          INPUT_CONFIRM: ${{ inputs.confirm }}
+        run: |
+          set -euo pipefail
+          F=scripts/ops/triggers/income_sales_cancel_prod.env
+          test -f "$F"
+          test -f scripts/ops/income-sales-cancel-allowlist-prod.txt
+          test -f scripts/ops/income-sales-cancel-precedent.txt
+          test -f scripts/ops/income-sales-cancel-denylist.txt
+          get_kv() {
+            local key="$1"
+            local line
+            line="$(grep -E "^${key}=" "$F" | tail -n 1 || true)"
+            printf '%s' "${line#*=}" | sed -e "s/^['\"]//" -e "s/['\"]$//"
+          }
+          if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+            MODE="${INPUT_MODE:-probe}"
+            CONFIRM="${INPUT_CONFIRM:-}"
+          else
+            MODE="$(get_kv MODE)"
+            CONFIRM="$(get_kv CONFIRM)"
+            MODE="${MODE:-probe}"
+          fi
+          case "$MODE" in
+            probe|backup) ;;
+            apply)
+              if [ "$CONFIRM" != "CONFIRM" ]; then
+                echo "::error::income apply requires CONFIRM"
+                exit 1
+              fi
+              echo "::error::income apply is not prepared. The reversal method for #1493 item 2 is pending a leader decision. No database connection."
+              exit 1
+              ;;
+            *)
+              echo "::error::income mode must be probe, backup, or apply"
+              exit 1
+              ;;
+          esac
+          echo "mode=$MODE" >> "$GITHUB_OUTPUT"
+
+      - name: Setup MySQL client
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq mysql-client
+
+      - name: Read-only recheck (income targets, precedent, journal)
+        env:
+          DB_HOST: ${{ secrets.PRODUCTION_DB_HOST }}
+          DB_HOST_FALLBACK: ${{ secrets.PRODUCTION_HOST }}
+          DB_USER: ${{ secrets.PRODUCTION_DB_USER }}
+          DB_NAME: ${{ secrets.PRODUCTION_DB_NAME }}
+          DB_PASSWORD: ${{ secrets.PRODUCTION_DB_PASSWORD }}
+        run: |
+          set -euo pipefail
+          if [ -z "${DB_HOST:-}" ]; then DB_HOST="${DB_HOST_FALLBACK:-}"; fi
+          for name in DB_HOST DB_USER DB_NAME DB_PASSWORD; do
+            if [ -z "${!name:-}" ]; then
+              echo "::error::Required production DB secret is empty (${name})"
+              exit 1
+            fi
+            echo "::add-mask::${!name}"
+          done
+          export DB_HOST DB_USER DB_NAME DB_PASSWORD
+          chmod +x scripts/ops/additional_package_merged_session_runner.sh
+          scripts/ops/additional_package_merged_session_runner.sh income-probe \
+            --allowlist scripts/ops/income-sales-cancel-allowlist-prod.txt \
+            --precedent scripts/ops/income-sales-cancel-precedent.txt \
+            --denylist scripts/ops/income-sales-cancel-denylist.txt \
+            --tenant-env scripts/ops/triggers/income_sales_cancel_prod.env
+
+      - name: Item 1 session post-check (read only; drift after new bookings on the target is expected)
+        continue-on-error: true
+        env:
+          DB_HOST: ${{ secrets.PRODUCTION_DB_HOST }}
+          DB_HOST_FALLBACK: ${{ secrets.PRODUCTION_HOST }}
+          DB_USER: ${{ secrets.PRODUCTION_DB_USER }}
+          DB_NAME: ${{ secrets.PRODUCTION_DB_NAME }}
+          DB_PASSWORD: ${{ secrets.PRODUCTION_DB_PASSWORD }}
+        run: |
+          set -euo pipefail
+          if [ -z "${DB_HOST:-}" ]; then DB_HOST="${DB_HOST_FALLBACK:-}"; fi
+          for name in DB_HOST DB_USER DB_NAME DB_PASSWORD; do
+            if [ -z "${!name:-}" ]; then
+              echo "::error::Required production DB secret is empty (${name})"
+              exit 1
+            fi
+            echo "::add-mask::${!name}"
+          done
+          export DB_HOST DB_USER DB_NAME DB_PASSWORD
+          unset REPAIR_CONFIRM || true
+          scripts/ops/additional_package_merged_session_runner.sh verify \
+            --expect-before scripts/ops/additional-package-merged-session-repair-expect-285-478.txt
+
+      - name: Backup income rows (no write)
+        if: steps.gate.outputs.mode == 'backup'
+        env:
+          DB_HOST: ${{ secrets.PRODUCTION_DB_HOST }}
+          DB_HOST_FALLBACK: ${{ secrets.PRODUCTION_HOST }}
+          DB_USER: ${{ secrets.PRODUCTION_DB_USER }}
+          DB_NAME: ${{ secrets.PRODUCTION_DB_NAME }}
+          DB_PASSWORD: ${{ secrets.PRODUCTION_DB_PASSWORD }}
+        run: |
+          set -euo pipefail
+          if [ -z "${DB_HOST:-}" ]; then DB_HOST="${DB_HOST_FALLBACK:-}"; fi
+          for name in DB_HOST DB_USER DB_NAME DB_PASSWORD; do
+            if [ -z "${!name:-}" ]; then
+              echo "::error::Required production DB secret is empty (${name})"
+              exit 1
+            fi
+            echo "::add-mask::${!name}"
+          done
+          export DB_HOST DB_USER DB_NAME DB_PASSWORD
+          scripts/ops/additional_package_merged_session_runner.sh income-backup \
+            --allowlist scripts/ops/income-sales-cancel-allowlist-prod.txt \
+            --precedent scripts/ops/income-sales-cancel-precedent.txt \
+            --denylist scripts/ops/income-sales-cancel-denylist.txt \
+            --tenant-env scripts/ops/triggers/income_sales_cancel_prod.env \
+            --backup-dir "${RUNNER_TEMP}/income-sales-cancel-backup"
+
+      - name: Upload income backup artifact
+        if: steps.gate.outputs.mode == 'backup'
+        uses: actions/upload-artifact@v4
+        with:
+          name: income-sales-cancel-backup-prod-${{ github.run_id }}
+          path: ${{ runner.temp }}/income-sales-cancel-backup
+          if-no-files-found: error

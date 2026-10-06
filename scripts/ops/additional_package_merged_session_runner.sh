@@ -6,6 +6,9 @@
 # repair --mode dry-run|apply: 기본은 덤프 후 트랜잭션. --skip-backup 이면 덤프를 생략한다.
 #         기본 종료는 ROLLBACK. COMMIT 은 --mode apply 와 REPAIR_CONFIRM=CONFIRM 이 같이 있을 때만.
 # verify: 기대 파일의 전값에서 후값을 계산해 새 READ ONLY 세션으로 대조한다. 불일치는 보고만 하고 되돌리지 않는다.
+# income-probe: 매출 취소 허용 목록·선례의 전표·분개 형태를 READ ONLY 로 읽는다. 적요 원문은 출력하지 않는다.
+# income-backup: 같은 범위의 전표·매칭·분개 행을 덤프한다. KST 11:00–20:00 에는 거부한다. 쓰기 없음.
+# 덤프는 --no-create-info 다. DROP/CREATE TABLE 이 들어가지 않는다.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
@@ -159,6 +162,8 @@ mysqldump_where() {
     --no-tablespaces
     --set-gtid-purged=OFF
     --skip-comments
+    --no-create-info
+    --skip-extended-insert
   )
   if mysqldump --help 2>/dev/null | grep -q column-statistics; then
     flags+=(--column-statistics=0)
@@ -859,11 +864,69 @@ cmd_income_probe() {
   mysql_exec "SET SESSION TRANSACTION READ ONLY" "${work}/probe.sql"
 }
 
+# 운영 시간 KST 11:00–20:00 에는 DB 에 접속하지 않는다.
+assert_outside_kst_operating_hours() {
+  local hour
+  hour="$(TZ=Asia/Seoul date +%H)"
+  hour=$((10#$hour))
+  if [ "$hour" -ge 11 ] && [ "$hour" -le 19 ]; then
+    die "KST ${hour}:00 is within 11:00-20:00 operating hours; refusing to connect"
+  fi
+}
+
+cmd_income_backup() {
+  local allowlist="" precedent="" denylist="" tenant_env="" backup_dir=""
+  while [ "$#" -gt 0 ]; do
+    case "$1" in
+      --allowlist) allowlist="$2"; shift 2 ;;
+      --precedent) precedent="$2"; shift 2 ;;
+      --denylist) denylist="$2"; shift 2 ;;
+      --tenant-env) tenant_env="$2"; shift 2 ;;
+      --backup-dir) backup_dir="$2"; shift 2 ;;
+      *) die "unknown income-backup argument" ;;
+    esac
+  done
+  [ -n "$allowlist" ] && [ -n "$precedent" ] && [ -n "$denylist" ] && [ -n "$tenant_env" ] && [ -n "$backup_dir" ] \
+    || die "income-backup needs --allowlist --precedent --denylist --tenant-env --backup-dir"
+  load_tenant_env "$tenant_env"
+  load_income_allowlist "$allowlist" || die "income allowlist is empty"
+  load_income_precedent "$precedent"
+  load_income_denylist "$denylist"
+  assert_income_scope
+  income_id_lists
+  assert_outside_kst_operating_hours
+  require_db_env
+
+  local t="$INCOME_TENANT"
+  local maps="${INCOME_MAP_IDS},${PREC_MAPPING}"
+  local txs="${INCOME_TX_IDS},${PREC_INCOME_TX},${PREC_CANCEL_TX}"
+  local ft_where="tenant_id = '${t}' AND (id IN (${txs}) OR (related_entity_id IN (${maps}) AND related_entity_type LIKE 'CONSULTANT_CLIENT_MAPPING%'))"
+  local ft_ids="SELECT f.id FROM financial_transactions f WHERE f.tenant_id = '${t}' AND (f.id IN (${txs}) OR (f.related_entity_id IN (${maps}) AND f.related_entity_type LIKE 'CONSULTANT_CLIENT_MAPPING%'))"
+
+  mkdir -p "$backup_dir"
+  echo "=== income backup rows (artifact only, no transaction) ==="
+  mysqldump_where financial_transactions "$ft_where" "${backup_dir}/financial_transactions.sql"
+  mysqldump_where consultant_client_mappings "tenant_id = '${t}' AND id IN (${maps})" \
+    "${backup_dir}/consultant_client_mappings.sql"
+  mysqldump_where accounting_entries "tenant_id = '${t}' AND financial_transaction_id IN (${ft_ids})" \
+    "${backup_dir}/accounting_entries.sql"
+  mysqldump_where erp_journal_entry_lines \
+    "tenant_id = '${t}' AND journal_entry_id IN (SELECT a.id FROM accounting_entries a WHERE a.tenant_id = '${t}' AND a.financial_transaction_id IN (${ft_ids}))" \
+    "${backup_dir}/erp_journal_entry_lines.sql"
+  # 덤프 본문은 로그에 찍지 않는다. 적요·notes 가 들어 있다. 행 수만 남긴다.
+  local f
+  for f in financial_transactions consultant_client_mappings accounting_entries erp_journal_entry_lines; do
+    echo "backup ${f}: rows=$(grep -c '^INSERT INTO' "${backup_dir}/${f}.sql" || true)"
+  done
+}
+
 usage() {
   echo "usage: DB_HOST DB_USER DB_PASSWORD DB_NAME $0 list" >&2
   echo "       DB_* $0 repair --allowlist FILE --mode backup --backup-dir DIR" >&2
   echo "       DB_* REPAIR_CONFIRM $0 repair --allowlist FILE --mode dry-run|apply [--backup-dir DIR] [--skip-backup] [--expect-before FILE]" >&2
   echo "       DB_* $0 verify --expect-before FILE" >&2
+  echo "       DB_* $0 income-probe --allowlist FILE --precedent FILE --denylist FILE --tenant-env FILE" >&2
+  echo "       DB_* $0 income-backup --allowlist FILE --precedent FILE --denylist FILE --tenant-env FILE --backup-dir DIR" >&2
   exit 1
 }
 
@@ -877,6 +940,7 @@ main() {
     repair) cmd_repair "$@" ;;
     verify) cmd_verify "$@" ;;
     income-probe) cmd_income_probe "$@" ;;
+    income-backup) cmd_income_backup "$@" ;;
     query)
       require_db_env
       sql_file="${1:-}"

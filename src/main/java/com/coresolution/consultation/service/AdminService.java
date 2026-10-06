@@ -478,12 +478,6 @@ public interface AdminService {
      * 입금 확인 처리 (현금 수입)
      */
     ConsultantClientMapping confirmDeposit(Long mappingId, String depositReference);
-    
-    /**
-     * 상담료 수입 거래 자동 생성 (독립적인 트랜잭션에서 실행)
-     * 트랜잭션 커밋 후 별도로 호출하여 부모 트랜잭션에 영향을 주지 않음
-     */
-    void createConsultationIncomeTransactionAsync(ConsultantClientMapping mapping);
 
     /**
      * Path B PAID 후 상담 매핑 입금 INCOME 존재·금액 SSOT 보장.
@@ -492,7 +486,6 @@ public interface AdminService {
      * 존재만으로 COMPLETED 하지 않는다.
      * 존재 검증은 입금 쓰기와 같은 {@code REQUIRES_NEW} 안에서만 한다.
      * 부모 트랜잭션(MySQL REPEATABLE READ) 재조회는 커밋된 전표를 못 봐 false-fail 이 되므로 하지 않는다.
-     * {@link #createConsultationIncomeTransactionAsync} 는 실패를 삼키므로 이 경로에서 쓰지 않는다.
      * <p>레거시 Path A — claim=null 위임.</p>
      *
      * @param mapping 상담 매핑

@@ -1856,28 +1856,11 @@ class AdminServiceImplShopOrderMappingRefundExpenseTest {
         ConsultantClientMapping mapping = buildMapping(MAPPING_ID, 10, cashDue);
         mapping.setPaymentMethod(com.coresolution.consultation.constant.PaymentMethodSsotConstants.CODE_CASH);
 
-        com.coresolution.consultation.entity.ShopClientOrder order =
-                com.coresolution.consultation.entity.ShopClientOrder.builder()
-                        .publicId("SHOP-20260917-003")
-                        .cashDueMinor(cashDue)
-                        .build();
-        com.coresolution.consultation.entity.ShopClientOrderLine line =
-                com.coresolution.consultation.entity.ShopClientOrderLine.builder()
-                        .clientOrder(order)
-                        .titleSnapshot("상담 10회")
-                        .sessionCountSnapshot(10)
-                        .quantity(1)
-                        .lineTotalMinor(cashDue)
-                        .consultantClientMappingId(MAPPING_ID)
-                        .build();
         com.coresolution.consultation.repository.ShopClientOrderLineRepository shopLineRepo =
                 org.mockito.Mockito.mock(
                         com.coresolution.consultation.repository.ShopClientOrderLineRepository.class);
         com.coresolution.consultation.repository.PaymentRepository paymentRepo =
                 org.mockito.Mockito.mock(com.coresolution.consultation.repository.PaymentRepository.class);
-        when(shopLineRepo.findByTenantIdAndConsultantClientMappingIdInAndIsDeletedFalseOrderByIdDesc(
-                        eq(TEST_TENANT_ID), eq(List.of(MAPPING_ID))))
-                .thenReturn(List.of(line));
         adminService = rebuildAdminService(shopLineRepo, paymentRepo);
 
         when(mappingRepository.findByTenantIdAndId(TEST_TENANT_ID, MAPPING_ID))

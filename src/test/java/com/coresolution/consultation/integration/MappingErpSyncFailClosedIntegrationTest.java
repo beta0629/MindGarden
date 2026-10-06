@@ -257,8 +257,8 @@ class MappingErpSyncFailClosedIntegrationTest {
     }
 
     @Test
-    @DisplayName("단독 결제 확인 — 호출자 트랜잭션을 롤백해도 REQUIRES_NEW INCOME은 남는다")
-    void confirmPayment_standalone_commitsIncomeOutsideCallerRollback() {
+    @DisplayName("단독 결제 확인 — 호출자 트랜잭션을 롤백하면 INCOME 0건 (결제 확인은 INCOME 을 쓰지 않는다)")
+    void confirmPayment_standalone_writesNoIncomeEvenWhenCallerRollsBack() {
         ConsultantClientMapping mapping = saveMapping(MappingStatus.PENDING_PAYMENT, PaymentStatus.PENDING, 0);
         TransactionTemplate caller = new TransactionTemplate(transactionManager);
         caller.executeWithoutResult(status -> {
@@ -269,7 +269,7 @@ class MappingErpSyncFailClosedIntegrationTest {
         ConsultantClientMapping after = reload(mapping);
         assertThat(after.getStatus()).isEqualTo(MappingStatus.PENDING_PAYMENT);
         assertThat(after.getPaymentStatus()).isEqualTo(PaymentStatus.PENDING);
-        assertThat(incomeRows(mapping)).hasSize(1);
+        assertThat(incomeRows(mapping)).isEmpty();
     }
 
     @Test

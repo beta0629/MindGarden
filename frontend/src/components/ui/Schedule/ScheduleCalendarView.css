@@ -83,29 +83,26 @@
     box-shadow: var(--cs-shadow-sm-multi);
 }
 
-/* 취소된 예약: 상태 텍스트로 구분 — 풀 카드 좌측 레일 제거, 컴팩트만 유지 */
+/* 취소된 예약: 상태 텍스트로 구분. 위험색 레일·배지는 쓰지 않는다. */
 .mg-v2-ad-calendar-event--cancelled {
     background-color: var(--mg-color-surface-sub);
 }
 .mg-v2-ad-calendar-event--cancelled.mg-v2-ad-calendar-event--compact {
-    border-left-color: var(--mg-error-500) !important;
+    background-color: var(--mg-v2-color-neutral-200);
 }
 .mg-v2-ad-calendar-event--cancelled .mg-v2-ad-calendar-event__client {
     text-decoration: line-through;
     color: var(--mg-color-text-secondary);
 }
 .mg-v2-ad-calendar-event__badge--cancelled {
-    flex-shrink: 0;
-    font-size: 9px;
-    font-weight: 700;
-    padding: 1px 4px;
-    border-radius: 4px;
-    background-color: var(--mg-error-500);
-    color: var(--mg-white);
+    flex: none;
+    padding-inline: var(--mg-v2-space-1);
+    border-radius: var(--mg-v2-radius-sm);
+    background-color: var(--mg-badge-status-neutral-bg);
+    color: var(--mg-badge-status-neutral-text);
+    font-size: var(--font-size-xs);
+    font-weight: var(--mg-v2-font-weight-semibold);
     text-decoration: none;
-}
-.mg-v2-ad-calendar-event--compact .mg-v2-ad-calendar-event__badge--cancelled {
-    margin-left: auto;
 }
 
 .mg-v2-ad-calendar-event__engagement {
@@ -127,8 +124,25 @@
 }
 
 .mg-v2-ad-calendar-event--compact:hover {
-    transform: translateY(-1px);
-    box-shadow: var(--cs-shadow-soft);
+    transform: none;
+    box-shadow: none;
+}
+
+/* 비통합 월간 칩 좌측 레일. 색은 상태 modifier. 인라인 borderLeftColor 대체. */
+.mg-v2-ad-calendar-event--compact.mg-v2-ad-calendar-event--status-booked {
+    border-left-color: var(--mg-v2-color-primary-main);
+}
+.mg-v2-ad-calendar-event--compact.mg-v2-ad-calendar-event--status-confirmed {
+    border-left-color: var(--mg-v2-color-semantic-success-dark);
+}
+.mg-v2-ad-calendar-event--compact.mg-v2-ad-calendar-event--status-completed {
+    border-left-color: var(--mg-v2-color-neutral-600);
+}
+.mg-v2-ad-calendar-event--compact.mg-v2-ad-calendar-event--status-tentative {
+    border-left-color: var(--mg-v2-color-semantic-warning-dark);
+}
+.mg-v2-ad-calendar-event--compact.mg-v2-ad-calendar-event--status-cancelled {
+    border-left-color: var(--mg-v2-color-neutral-500);
 }
 
 .mg-v2-ad-calendar-event--compact .mg-v2-ad-calendar-event__time {
@@ -149,11 +163,13 @@
 }
 
 .mg-v2-ad-calendar-event--compact .mg-v2-ad-calendar-event__engagement {
-    flex: 0 1 auto;
-    min-width: 0;
-    max-width: 100%;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    flex: none;
+}
+
+.mg-v2-ad-calendar-event__same-day {
+    flex: none;
+    font-weight: var(--mg-v2-font-weight-semibold);
+    color: var(--mg-v2-color-semantic-warning-dark);
     white-space: nowrap;
 }
 
@@ -225,7 +241,9 @@
 
 .mg-v2-ad-calendar-event--vacation .mg-v2-ad-calendar-event__icon {
     color: var(--mg-secondary-500);
-    flex-shrink: 0;
+    flex: none;
+    width: var(--mg-v2-space-3);
+    height: var(--mg-v2-space-3);
 }
 
 .mg-v2-ad-calendar-event--vacation .mg-v2-ad-calendar-event__client {

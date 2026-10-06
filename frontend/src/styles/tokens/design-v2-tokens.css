@@ -177,6 +177,7 @@
   /* ----------------------------------------------------------
      3. SPACE — 4px grid
      ---------------------------------------------------------- */
+  --mg-v2-space-0-5: 0.125rem;
   --mg-v2-space-1: 0.25rem;
   --mg-v2-space-2: 0.5rem;
   --mg-v2-space-3: 0.75rem;
@@ -239,6 +240,8 @@
   --mg-v2-border-width-thin: 1px;
   --mg-v2-border-width-normal: 1px;
   --mg-v2-border-width-thick: 2px;
+  /* 상태 점·문자 링·기관연계 사각. ScheduleReminderSmsBadge 가 이미 참조. */
+  --mg-size-dot-sm: 0.375rem;
   --mg-v2-border-width-focus: 1px;
   --mg-v2-border-elevation-1: none;
   --mg-v2-border-elevation-2: none;

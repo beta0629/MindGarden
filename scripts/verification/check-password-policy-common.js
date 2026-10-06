@@ -16,6 +16,12 @@
  *   PASSWORD_PAYLOAD_NO_POLICY <파일> — 비밀번호 키(password·newPassword·adminPassword 등)에 값을 실어
  *                                     API 를 부르는데 공통 정책 모듈을 import 하지 않는 파일.
  *                                     현재 비밀번호 입력만 있는 파일(로그인)은 제외.
+ *   PASSWORD_VALIDATOR_DEF <파일> xN — 비밀번호 검증 함수 정의(validatePassword·isValidPassword 등)인데
+ *                                     utils/loginPasswordPolicy 를 import 하지 않는 파일(독자 규칙).
+ *                                     검증 함수는 loginPasswordPolicy.getLoginPasswordViolationCode 하나뿐이고
+ *                                     다른 이름은 그 함수에 위임만 한다.
+ *   PASSWORD_RULE_LITERAL <파일> xN — 공통 모듈 밖의 비밀번호 규칙 리터럴: 비밀번호 값에 대한 정규식 test/match,
+ *                                     복잡도 lookahead 정규식 `(?=.*[`, 비밀번호 길이와 2 이상 숫자 비교.
  *
  * 허용 목록 항목: `<종류> <파일> :: <사유>` — 사유 필수. 위반이 사라진 항목이 남아 있어도 exit 1.
  *
@@ -52,6 +58,14 @@ const FIELD_CONFIG = /\btype\s*:\s*['"]password['"]/g;
 const PAYLOAD_KEY = /(?<![\w.'"$-])(?:password|newPassword|adminPassword|tempPassword|initialPassword)\s*:(?!\s*(?:''|""|``))/;
 const VALIDATE_CALL = /\.validate\s*\(/;
 const VALIDATE_ALIAS = /\bvalidate\s*:\s*(\w+)/g;
+const POLICY_FN_IMPORT = /(?:from\s+|require\(\s*)['"][^'"]*\/loginPasswordPolicy['"]/;
+const VALIDATOR_DEF = /(?:\b(?:const|let|var)\s+|\bfunction\s+)(?:validate|isValid|check|verify|test|is|has)\w*Passw(?:or)?d\w*\s*(?:=|\()/gi;
+const RULE_LITERALS = [
+  /\/[^/\n]+\/[gimsuy]*\.test\(\s*[\w.]*passw/gi,
+  /\b\w*passw\w*(?:\.\w+)*\s*\.match\(\s*\//gi,
+  /\(\?=\.\*\[/g,
+  /\b\w*passw\w*(?:\.\w+)*\.(?:trim\(\)\.)?length\s*(?:<|>|<=|>=)\s*(?:[2-9]|\d{2,})/gi
+];
 const API_CALL = /\b(?:StandardizedApi\.(?:post|put|patch)|apiPost|apiPut|apiPatch|csrfTokenManager\.(?:post|put|patch)|axios\.(?:post|put|patch)|fetch)\s*\(/;
 
 function parseArgs(argv) {
@@ -155,6 +169,14 @@ function scanFile(rel, rawText) {
   const loginOnly = inputs.current > 0 && inputs.raw === 0 && inputs.policy === 0;
   if (PAYLOAD_KEY.test(text) && API_CALL.test(text) && !SHARED_IMPORT.test(text) && !loginOnly) {
     found.push(`PASSWORD_PAYLOAD_NO_POLICY ${rel}`);
+  }
+  const defs = (text.match(VALIDATOR_DEF) || []).length;
+  if (defs > 0 && !POLICY_FN_IMPORT.test(text)) {
+    found.push(`PASSWORD_VALIDATOR_DEF ${rel} x${defs}`);
+  }
+  const rules = RULE_LITERALS.reduce((n, re) => n + (text.match(re) || []).length, 0);
+  if (rules > 0) {
+    found.push(`PASSWORD_RULE_LITERAL ${rel} x${rules}`);
   }
   return found;
 }

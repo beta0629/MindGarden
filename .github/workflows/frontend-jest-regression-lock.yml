@@ -45,6 +45,7 @@ jobs:
         src/utils/__tests__/clientMall.test.js
         src/utils/__tests__/loginPasswordPolicy.test.js
         src/utils/__tests__/loginPasswordPolicy.parity.test.js
+        src/utils/__tests__/passwordValidatorDelegation.test.js
         src/components/admin/__tests__/consultantComprehensiveManagement.passwordPolicy.test.js
         src/components/admin/ClientComprehensiveManagement/__tests__/ClientModal.passwordPolicy.test.js
         src/components/admin/__tests__/StaffManagement.passwordPolicy.test.js

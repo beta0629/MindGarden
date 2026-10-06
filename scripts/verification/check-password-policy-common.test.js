@@ -39,6 +39,14 @@ const VALIDATE_ALIAS = 'const { validate: validatePassword } = passwordField;\nc
 const FIELD_CONFIG = "const fields = [{ name: 'pw', type: 'password' }];\n";
 const PAYLOAD = "await StandardizedApi.post(URL, { email, password: form.password });\n";
 const PAYLOAD_EMPTY = "const init = { password: '' };\nawait StandardizedApi.post(URL, { email });\n";
+const IMPORT_POLICY_FN = "import { isLoginPasswordCompliant } from '../utils/loginPasswordPolicy';\n";
+const OWN_VALIDATOR = 'export const validatePassword = (pw) => pw != null;\n';
+const OWN_VALIDATOR_FN = 'function isValidPassword(pw) { return !!pw; }\n';
+const DELEGATING_VALIDATOR = 'export const isValidPassword = (pw) => isLoginPasswordCompliant(pw);\n';
+const REGEX_TEST = 'const ok = /[A-Z]/.test(form.password);\n';
+const LOOKAHEAD = 'const RE = /^(?=.*[a-z])(?=.*\\d).{8,}$/;\n';
+const LENGTH_RULE = 'if (newPassword.length < 8) return false;\n';
+const NON_EMPTY = 'const filled = form.password.trim().length > 0;\n';
 const COMMENT_ONLY = '// <input type="password" />\n/* StandardizedApi.post(URL, { password: x }) */\nconst ok = 1;\n';
 
 const tests = {
@@ -64,6 +72,20 @@ const tests = {
     assert.deepStrictEqual(scanFile(REL, PAYLOAD), [`PASSWORD_PAYLOAD_NO_POLICY ${REL}`]);
     assert.deepStrictEqual(scanFile(REL, IMPORT_SHARED + PAYLOAD), []);
     assert.deepStrictEqual(scanFile(REL, PAYLOAD_EMPTY), []);
+  },
+  '공통 정책 함수 없이 만든 비밀번호 검증 함수는 위반, 위임하면 통과': () => {
+    assert.deepStrictEqual(scanFile(REL, OWN_VALIDATOR), [`PASSWORD_VALIDATOR_DEF ${REL} x1`]);
+    assert.deepStrictEqual(scanFile(REL, OWN_VALIDATOR_FN), [`PASSWORD_VALIDATOR_DEF ${REL} x1`]);
+    assert.deepStrictEqual(scanFile(REL, IMPORT_SHARED + OWN_VALIDATOR), [`PASSWORD_VALIDATOR_DEF ${REL} x1`]);
+    assert.deepStrictEqual(scanFile(REL, IMPORT_POLICY_FN + DELEGATING_VALIDATOR), []);
+    assert.deepStrictEqual(scanFile(REL, VALIDATE_ALIAS), []);
+  },
+  '공통 모듈 밖 비밀번호 정규식·길이 규칙은 위반(공통 함수를 import 해도)': () => {
+    assert.deepStrictEqual(scanFile(REL, REGEX_TEST), [`PASSWORD_RULE_LITERAL ${REL} x1`]);
+    assert.deepStrictEqual(scanFile(REL, LOOKAHEAD), [`PASSWORD_RULE_LITERAL ${REL} x1`]);
+    assert.deepStrictEqual(scanFile(REL, IMPORT_POLICY_FN + LENGTH_RULE), [`PASSWORD_RULE_LITERAL ${REL} x1`]);
+    assert.deepStrictEqual(scanFile(REL, NON_EMPTY), []);
+    assert.deepStrictEqual(scanFile('frontend/src/utils/loginPasswordPolicy.js', REGEX_TEST + LOOKAHEAD), []);
   },
   '주석·공통 모듈 파일은 통과': () => {
     assert.deepStrictEqual(scanFile(REL, COMMENT_ONLY), []);

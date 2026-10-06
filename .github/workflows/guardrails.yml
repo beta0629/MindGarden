@@ -164,7 +164,7 @@ jobs:
       - name: Checker self-test
         run: node scripts/verification/check-password-policy-common.test.js
 
-      - name: Check password inputs/payloads use usePasswordPolicyField + PasswordPolicyInput (allowlist with reasons)
+      - name: Check password inputs/payloads/validators use the single shared policy module (allowlist with reasons)
         run: node scripts/verification/check-password-policy-common.js
 
   guardrail-recipient-limit-literals:

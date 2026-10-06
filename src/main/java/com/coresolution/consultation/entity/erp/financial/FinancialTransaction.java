@@ -94,9 +94,9 @@ public class FinancialTransaction extends BaseEntity {
      * 거래 금액(총액).
      * 업무 규칙에 따라 세전·세포함·순액 등 의미가 달라질 수 있으므로
      * {@link #taxIncluded}, {@link #taxAmount}, {@link #amountBeforeTax}와 함께 해석합니다.
+     * 패키지 금액 조정 INCOME은 감액 차액을 음수로 둔다.
      */
     @NotNull(message = "거래 금액은 필수입니다.")
-    @DecimalMin(value = "0.0", message = "거래 금액은 0 이상이어야 합니다.")
     @Column(name = "amount", nullable = false, precision = 15, scale = 2)
     private BigDecimal amount;
     
@@ -182,8 +182,8 @@ public class FinancialTransaction extends BaseEntity {
      * 부가세(VAT) 등 세액.
      * 일반적으로 이 필드는 부가세 금액을 뜻합니다.
      * 원천징수 예정액(예: 사업소득 3.3%)은 별도 필드·맥락에서 관리하며, 동일 필드에 혼용하지 않도록 주의합니다.
+     * 패키지 금액 조정 INCOME의 감액은 본전표와 같은 부호(음수)로 둔다.
      */
-    @DecimalMin(value = "0.0", message = "세금 금액은 0 이상이어야 합니다.")
     @Column(name = "tax_amount", precision = 15, scale = 2)
     @Builder.Default
     private BigDecimal taxAmount = BigDecimal.ZERO;
@@ -199,8 +199,8 @@ public class FinancialTransaction extends BaseEntity {
     /**
      * 세전 금액(과세 표준에 해당하는 금액 등).
      * {@link #taxIncluded}, {@link #amount}, {@link #taxAmount}와의 관계는 업무 규칙에 따릅니다.
+     * 패키지 금액 조정 INCOME의 감액은 본전표와 같은 부호(음수)로 둔다.
      */
-    @DecimalMin(value = "0.0", message = "세전 금액은 0 이상이어야 합니다.")
     @Column(name = "amount_before_tax", precision = 15, scale = 2)
     private BigDecimal amountBeforeTax;
 
@@ -254,9 +254,7 @@ public class FinancialTransaction extends BaseEntity {
         if (cardMerchantFeeAmount == null) {
             cardMerchantFeeAmount = BigDecimal.ZERO;
         }
-        if (amount != null && cardMerchantFeeAmount.compareTo(amount) > 0) {
-            cardMerchantFeeAmount = amount;
-        }
+        clampCardMerchantFeeToPositiveAmount();
     }
     
     @PreUpdate
@@ -270,7 +268,20 @@ public class FinancialTransaction extends BaseEntity {
         if (cardMerchantFeeAmount == null) {
             cardMerchantFeeAmount = BigDecimal.ZERO;
         }
-        if (amount != null && cardMerchantFeeAmount.compareTo(amount) > 0) {
+        clampCardMerchantFeeToPositiveAmount();
+    }
+
+    /**
+     * 수수료는 양수 거래 금액을 넘지 않게 한다. 음수 조정 INCOME에는 적용하지 않는다.
+     */
+    private void clampCardMerchantFeeToPositiveAmount() {
+        if (amount == null || cardMerchantFeeAmount == null) {
+            return;
+        }
+        if (amount.compareTo(BigDecimal.ZERO) <= 0) {
+            return;
+        }
+        if (cardMerchantFeeAmount.compareTo(amount) > 0) {
             cardMerchantFeeAmount = amount;
         }
     }

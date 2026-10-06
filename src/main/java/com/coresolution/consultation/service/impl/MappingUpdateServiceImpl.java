@@ -18,7 +18,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * 매칭 수정 — 판정·감액 하한·매칭 변경·차액 조정 전표를 한 트랜잭션(한 커넥션)에서 처리한다.
+     * 매칭 수정 — 판정·감액 하한·매칭 변경·차액 조정 INCOME을 한 트랜잭션(한 커넥션)에서 처리한다.
  *
  * <p>어느 단계든 실패하면 전부 롤백되고 422(오류 코드 포함)로 응답한다. 부분 성공은 없다. 트랜잭션 안에서 미룬 외부
  * 호출은 커밋·커넥션 반환 뒤 실행되고, 롤백이면 버린다({@link DeferredExternalCalls}).</p>

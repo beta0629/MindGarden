@@ -69,7 +69,7 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
  * <ul>
  *   <li>입금 확인: INCOME 기록 실패면 422, 입금 상태·회기·전표 모두 그대로. 성공이면 INCOME 1건, 재요청은 반영 안 됨.</li>
  *   <li>수정(PUT): 입금 확인된 매칭의 금액 변경은 매칭 변경과 차액 조정 INCOME 을 한 트랜잭션에서 남긴다. 기존 전표는
- *       그대로다. 감액은 (결제액 − 누적 환불액) 이상만 허용한다. 전표 실패면 422·매칭 변경 없음. 같은 요청 재전송·같은
+ *       그대로다. 감액은 (결제액 − 누적 환불액) 이상만 허용하고 음수 INCOME 조정 1건이다. 전표 실패면 422·매칭 변경 없음. 같은 요청 재전송·같은
  *       변경의 두 번째 기록은 전표를 늘리지 않는다({@code uk_financial_transactions_dedupe}). UpdateMappingInfo 는
  *       부르지 않는다.</li>
  * </ul>
@@ -222,7 +222,7 @@ class MappingErpSyncFailClosedIntegrationTest {
     }
 
     @Test
-    @DisplayName("증액 후 원래 금액으로 감액(하한=결제액) — 200, +20,000 INCOME / 20,000 수입 감소 EXPENSE, 순수입=결제액")
+    @DisplayName("증액 후 원래 금액으로 감액(하한=결제액) — 200, +차액 INCOME / 음수 INCOME, 순수입=결제액")
     void updateMapping_increaseThenDecreaseToPaid_writesTwoAdjustments() throws Exception {
         ConsultantClientMapping mapping = paidMappingWithBaseIncome();
 
@@ -233,18 +233,21 @@ class MappingErpSyncFailClosedIntegrationTest {
         assertThat(reload(mapping).getPackagePrice()).isEqualTo(PACKAGE_PRICE);
         List<FinancialTransaction> adjustments = adjustmentRows(mapping);
         assertThat(adjustments).hasSize(2);
-        assertThat(adjustments).filteredOn(t -> t.getTransactionType() == FinancialTransaction.TransactionType.INCOME)
+        assertThat(adjustments).allMatch(t -> t.getTransactionType() == FinancialTransaction.TransactionType.INCOME);
+        assertThat(adjustments).noneMatch(t -> t.getTransactionType() == FinancialTransaction.TransactionType.EXPENSE);
+        assertThat(adjustments).filteredOn(t -> t.getAmount().signum() > 0)
                 .singleElement().extracting(FinancialTransaction::getAmount)
                 .satisfies(a -> assertThat(a).isEqualByComparingTo(BigDecimal.valueOf(INCREASED_PRICE - PACKAGE_PRICE)));
-        assertThat(adjustments).filteredOn(t -> t.getTransactionType() == FinancialTransaction.TransactionType.EXPENSE)
+        assertThat(adjustments).filteredOn(t -> t.getAmount().signum() < 0)
                 .singleElement().extracting(FinancialTransaction::getAmount)
-                .satisfies(a -> assertThat(a).isEqualByComparingTo(BigDecimal.valueOf(INCREASED_PRICE - PACKAGE_PRICE)));
+                .satisfies(a -> assertThat(a).isEqualByComparingTo(
+                        BigDecimal.valueOf(PACKAGE_PRICE - INCREASED_PRICE)));
         assertThat(netConsultationIncome(mapping)).isEqualByComparingTo(BigDecimal.valueOf(PACKAGE_PRICE));
         assertBaseIncomeUntouched(mapping);
     }
 
     @Test
-    @DisplayName("감액 — 하한(결제액 − 부분환불) 초과 금액: 200, 차액 수입 감소 EXPENSE 1건. 재전송해도 1건")
+    @DisplayName("감액 — 하한(결제액 − 부분환불) 초과 금액: 200, 차액 음수 INCOME 1건. 재전송해도 1건")
     void updateMapping_paidDecreaseAboveFloor_writesNegativeAdjustmentOnce() throws Exception {
         ConsultantClientMapping mapping = paidMappingWithBaseIncome();
         savePartialRefund(mapping, PARTIAL_REFUNDED);
@@ -263,7 +266,7 @@ class MappingErpSyncFailClosedIntegrationTest {
     }
 
     @Test
-    @DisplayName("감액 — 하한과 정확히 같은 금액: 200, 차액 수입 감소 EXPENSE 1건. 재전송해도 1건")
+    @DisplayName("감액 — 하한과 정확히 같은 금액: 200, 차액 음수 INCOME 1건. 재전송해도 1건")
     void updateMapping_paidDecreaseExactlyToFloor_allowed() throws Exception {
         ConsultantClientMapping mapping = paidMappingWithBaseIncome();
         savePartialRefund(mapping, PARTIAL_REFUNDED);
@@ -316,21 +319,31 @@ class MappingErpSyncFailClosedIntegrationTest {
     // ── 매칭 수정 (PUT): 회기 ──
 
     @Test
-    @DisplayName("입금 확인 매칭 회기 증가·감소 — 200, 총·잔여 회기 반영, 금액 변동 없으니 전표 0건")
-    void updateMapping_paidSessionChanges_noLedgerRows() throws Exception {
+    @DisplayName("입금 확인 매칭 회기 증가 — 200, 총·잔여 회기 반영, 금액 변동 없으니 전표 0건")
+    void updateMapping_paidSessionIncrease_noLedgerRows() throws Exception {
         ConsultantClientMapping mapping = paidMappingWithBaseIncome();
 
         putPackage(mapping, PACKAGE_PRICE, TOTAL_SESSIONS + 2).andExpect(status().isOk());
+
         ConsultantClientMapping increased = reload(mapping);
         assertThat(increased.getTotalSessions()).isEqualTo(TOTAL_SESSIONS + 2);
         assertThat(increased.getRemainingSessions()).isEqualTo(TOTAL_SESSIONS + 2);
+        assertThat(adjustmentRows(mapping)).isEmpty();
+        assertBaseIncomeUntouched(mapping);
+        verify(storedProcedureService, never()).updateMappingInfo(any(), any(), anyDouble(), anyInt(), any());
+    }
+
+    @Test
+    @DisplayName("입금 확인 매칭 회기 감소 — 200, 총·잔여 회기 반영, 전표 0건. 재전송해도 전표 없음")
+    void updateMapping_paidSessionDecrease_noLedgerRows() throws Exception {
+        ConsultantClientMapping mapping = paidMappingWithBaseIncome();
 
         putPackage(mapping, PACKAGE_PRICE, TOTAL_SESSIONS - 3).andExpect(status().isOk());
         putPackage(mapping, PACKAGE_PRICE, TOTAL_SESSIONS - 3).andExpect(status().isOk());
+
         ConsultantClientMapping decreased = reload(mapping);
         assertThat(decreased.getTotalSessions()).isEqualTo(TOTAL_SESSIONS - 3);
         assertThat(decreased.getRemainingSessions()).isEqualTo(TOTAL_SESSIONS - 3);
-
         assertThat(adjustmentRows(mapping)).isEmpty();
         assertBaseIncomeUntouched(mapping);
         verify(storedProcedureService, never()).updateMappingInfo(any(), any(), anyDouble(), anyInt(), any());
@@ -571,22 +584,21 @@ class MappingErpSyncFailClosedIntegrationTest {
                 .toList();
     }
 
-    /** 본전표 INCOME + 조정 INCOME − 조정 EXPENSE (환불 EXPENSE 제외). */
+    /** 본전표 INCOME + 조정 INCOME(음수 감액 포함). 환불 EXPENSE 제외. */
     private BigDecimal netConsultationIncome(ConsultantClientMapping mapping) {
-        BigDecimal base = incomeRows(mapping).stream()
+        return mappingRows(mapping).stream()
+                .filter(t -> t.getTransactionType() == FinancialTransaction.TransactionType.INCOME)
                 .map(FinancialTransaction::getAmount)
+                .filter(java.util.Objects::nonNull)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
-        return adjustmentRows(mapping).stream()
-                .map(t -> t.getTransactionType() == FinancialTransaction.TransactionType.INCOME
-                        ? t.getAmount() : t.getAmount().negate())
-                .reduce(base, BigDecimal::add);
     }
 
     private void assertDecreaseAdjustment(FinancialTransaction adj, long decrease) {
-        assertThat(adj.getTransactionType()).isEqualTo(FinancialTransaction.TransactionType.EXPENSE);
+        assertThat(adj.getTransactionType()).isEqualTo(FinancialTransaction.TransactionType.INCOME);
         assertThat(adj.getSubcategory()).isEqualTo(FinancialTransactionConstants.SUBCATEGORY_PACKAGE_PRICE_ADJUSTMENT);
-        assertThat(adj.getAmount()).isEqualByComparingTo(BigDecimal.valueOf(decrease));
+        assertThat(adj.getAmount()).isEqualByComparingTo(BigDecimal.valueOf(-decrease));
         assertThat(adj.getTaxAmount().add(adj.getAmountBeforeTax())).isEqualByComparingTo(adj.getAmount());
+        assertThat(adj.getAmount().signum()).isNegative();
     }
 
     private List<FinancialTransaction> mappingRows(ConsultantClientMapping mapping) {

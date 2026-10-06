@@ -7,7 +7,8 @@
       "VACATION": "휴가",
       "COMPLETED": "완료",
       "CANCELLED": "취소됨",
-      "TENTATIVE_PENDING_PAYMENT": "가예약"
+      "TENTATIVE_PENDING_PAYMENT": "가예약",
+      "unknown": "상태 없음"
     },
     "scheduleType": {
       "CONSULTATION": "상담",

@@ -10,8 +10,11 @@
 /** i18n schedule 네임스페이스의 상태 라벨 prefix. */
 export const SCHEDULE_STATUS_LABEL_I18N_PREFIX = 'schedule:constants.status.';
 
-/** 라벨을 찾지 못했을 때의 공통 표시. */
+/** translate 가 없을 때만 쓰는 unknown 라벨 defaultValue. */
 export const SCHEDULE_STATUS_LABEL_FALLBACK = '상태 없음';
+
+/** 라벨을 찾지 못했을 때의 i18n 키. */
+export const SCHEDULE_STATUS_UNKNOWN_I18N_KEY = `${SCHEDULE_STATUS_LABEL_I18N_PREFIX}unknown`;
 
 const readText = (value) => (value == null ? '' : String(value).trim());
 
@@ -37,11 +40,25 @@ const readCodeLabel = (row) => {
  * @param {{ codes?: Array<Record<string, *>>, translate?: Function, fallback?: string }} [options]
  * @returns {string}
  */
+const resolveUnknownLabel = (options) => {
+  if (options.fallback) {
+    return options.fallback;
+  }
+  if (typeof options.translate === 'function') {
+    const translated = readText(options.translate(SCHEDULE_STATUS_UNKNOWN_I18N_KEY, {
+      defaultValue: SCHEDULE_STATUS_LABEL_FALLBACK
+    }));
+    if (translated && translated !== SCHEDULE_STATUS_UNKNOWN_I18N_KEY) {
+      return translated;
+    }
+  }
+  return SCHEDULE_STATUS_LABEL_FALLBACK;
+};
+
 export function resolveScheduleStatusDisplayLabel(status, options = {}) {
-  const fallback = options.fallback || SCHEDULE_STATUS_LABEL_FALLBACK;
   const code = readText(status);
   if (!code) {
-    return fallback;
+    return resolveUnknownLabel(options);
   }
 
   const rows = Array.isArray(options.codes) ? options.codes : [];
@@ -64,5 +81,5 @@ export function resolveScheduleStatusDisplayLabel(status, options = {}) {
     }
   }
 
-  return fallback;
+  return resolveUnknownLabel(options);
 }

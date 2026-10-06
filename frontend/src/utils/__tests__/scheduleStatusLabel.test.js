@@ -1,6 +1,7 @@
 import {
   SCHEDULE_STATUS_LABEL_FALLBACK,
   SCHEDULE_STATUS_LABEL_I18N_PREFIX,
+  SCHEDULE_STATUS_UNKNOWN_I18N_KEY,
   resolveScheduleStatusDisplayLabel
 } from '../scheduleStatusLabel';
 
@@ -31,12 +32,22 @@ describe('resolveScheduleStatusDisplayLabel', () => {
     expect(resolveScheduleStatusDisplayLabel('COMPLETED', { translate })).toBe('완료');
   });
 
-  test('라벨이 없으면 원문 대신 공통 폴백', () => {
+  test('라벨이 없으면 unknown i18n, translate 가 없으면 defaultValue 상수', () => {
+    const translateSpy = jest.fn((key, opts = {}) => {
+      if (key === SCHEDULE_STATUS_UNKNOWN_I18N_KEY) {
+        return '상태 없음';
+      }
+      return translate(key, opts);
+    });
+
     expect(resolveScheduleStatusDisplayLabel('UNKNOWN_STATUS', {
       codes: [{ value: 'UNKNOWN_STATUS', label: 'UNKNOWN_STATUS' }],
-      translate
-    })).toBe(SCHEDULE_STATUS_LABEL_FALLBACK);
-    expect(resolveScheduleStatusDisplayLabel('', { translate })).toBe(SCHEDULE_STATUS_LABEL_FALLBACK);
+      translate: translateSpy
+    })).toBe('상태 없음');
+    expect(translateSpy).toHaveBeenCalledWith(SCHEDULE_STATUS_UNKNOWN_I18N_KEY, {
+      defaultValue: SCHEDULE_STATUS_LABEL_FALLBACK
+    });
+    expect(resolveScheduleStatusDisplayLabel('', { translate: translateSpy })).toBe('상태 없음');
     expect(resolveScheduleStatusDisplayLabel(null)).toBe(SCHEDULE_STATUS_LABEL_FALLBACK);
   });
 });

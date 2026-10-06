@@ -21,12 +21,15 @@ import java.util.stream.Collectors;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.coresolution.core.util.StatusCodeHelper;
+import com.coresolution.consultation.constant.ClientEngagementTypeConstants;
+import com.coresolution.consultation.constant.ClientInstitutionLinkBinder;
 import com.coresolution.consultation.constant.ClientRegistrationConstants;
 import com.coresolution.consultation.constant.MappingStatusConstants;
-import com.coresolution.consultation.constant.admin.AdminServiceUserFacingMessages;
-import com.coresolution.consultation.constant.userprofile.UserProfileServiceUserFacingMessages;
+import com.coresolution.consultation.constant.PaymentTimingConstants;
 import com.coresolution.consultation.constant.ScheduleStatus;
 import com.coresolution.consultation.constant.UserRole;
+import com.coresolution.consultation.constant.admin.AdminServiceUserFacingMessages;
+import com.coresolution.consultation.constant.userprofile.UserProfileServiceUserFacingMessages;
 import com.coresolution.consultation.dto.ClientRegistrationRequest;
 import com.coresolution.consultation.dto.ConsultantClientMappingCreateRequest;
 import com.coresolution.consultation.dto.ConsultantClientMappingResponse;
@@ -58,6 +61,7 @@ import com.coresolution.consultation.exception.EntityNotFoundException;
 import com.coresolution.consultation.exception.MappingAlreadyProcessedException;
 import com.coresolution.consultation.service.AdminRequestIdempotencyService;
 import com.coresolution.consultation.repository.ClientRepository;
+import com.coresolution.consultation.repository.PartnerInstitutionRepository;
 import com.coresolution.consultation.repository.ConsultantClientMappingRepository;
 import com.coresolution.consultation.repository.ConsultantRatingRepository;
 import com.coresolution.consultation.repository.ConsultantRepository;
@@ -204,6 +208,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
     private final UserLifecycleService userLifecycleService;
     private final AdminRequestIdempotencyService adminRequestIdempotencyService;
     private final SalaryTaxRateLookupService salaryTaxRateLookupService;
+    private final PartnerInstitutionRepository partnerInstitutionRepository;
 
     @Override
     public User registerConsultant(ConsultantRegistrationRequest request) {
@@ -617,6 +622,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         client.setEmergencyPhone(encryptOptionalPiiForStorage(request.getEmergencyPhone()));
         client.setConsultationPurpose(trimToNull(request.getConsultationPurpose()));
         client.setConsultationHistory(trimToNull(request.getConsultationHistory()));
+        applyClientEngagementFields(client, request);
         client.setIsDeleted(false);
         client.setCreatedAt(savedUser.getCreatedAt());
         client.setUpdatedAt(savedUser.getUpdatedAt());
@@ -841,10 +847,9 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         mapping.setResponsibility(dto.getResponsibility());
         mapping.setSpecialConsiderations(dto.getSpecialConsiderations());
         mapping.setBranchCode(null); // 표준화 2025-12-06: 브랜치 코드 사용 금지
-        // 옵션 B 결제 방식 의도(ADVANCE / SAME_DAY_CARD)를 매핑에 보존.
-        // 사이드바 카드 액션 분기와 드래그 허용 여부 결정에 사용된다.
-        // null 은 레거시(ADVANCE 동등) 로 취급하므로 별도 디폴트를 강제하지 않는다.
-        mapping.setPaymentTiming(dto.getPaymentTiming());
+        // 결제 방식 의도(ADVANCE / SAME_DAY_CARD / INSTITUTION_LINK)를 매핑에 보존.
+        // 타기관 내담자면 등록 유형이 SSOT — 배정 생성 시 INSTITUTION_LINK 게이트.
+        mapping.setPaymentTiming(resolvePaymentTimingForNewMapping(tenantId, clientUser.getId(), dto.getPaymentTiming()));
 
         ConsultantClientMapping savedMapping = mappingRepository.save(mapping);
 
@@ -1557,10 +1562,13 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
 
         // 입금 확인 시 회기 채우기: remainingSessions가 0이고 totalSessions > 0이면 사용 가능 회기 설정.
         // 추가 패키지 행은 approve 시 기존 ACTIVE에 합산 후 TERMINATED 되므로 self remaining 채우기를 스킵한다.
+        // 타기관 연계는 회기권이 아니므로 remaining 을 채우지 않는다 (선납은 입금확인만).
         Integer total = mapping.getTotalSessions();
         Integer remaining = mapping.getRemainingSessions();
         int used = mapping.getUsedSessions() != null ? mapping.getUsedSessions() : 0;
-        if (!isAdditionalMapping && total != null && total > 0 && remaining != null && remaining == 0) {
+        if (!isAdditionalMapping
+                && !PaymentTimingConstants.isInstitutionLink(mapping.getPaymentTiming())
+                && total != null && total > 0 && remaining != null && remaining == 0) {
             mapping.setRemainingSessions(Math.max(0, total - used));
         }
 
@@ -2740,6 +2748,16 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             // 표준화 2025-12-05: tenantId 필터링 필수
             List<ConsultantClientMapping> allMappings = mappingRepository.findAllWithDetailsByTenantId(tenantId);
             log.info("🔍 매칭 수: {}", allMappings.size());
+
+            List<Long> mappingInfoClientIds = clientUsers.stream()
+                    .map(User::getId)
+                    .filter(id -> id != null)
+                    .collect(Collectors.toList());
+            Map<Long, String> engagementTypeByClientId = new HashMap<>();
+            if (!mappingInfoClientIds.isEmpty()) {
+                clientRepository.findByTenantIdAndIdInAndIsDeletedFalse(tenantId, mappingInfoClientIds)
+                        .forEach(row -> engagementTypeByClientId.put(row.getId(), row.getEngagementType()));
+            }
             
             List<Map<String, Object>> result = new ArrayList<>();
 
@@ -2785,6 +2803,8 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 clientData.put("updatedAt", user.getUpdatedAt());
                 clientData.put("branchCode", null); // 표준화 2025-12-06: 브랜치 코드 사용 금지
                 clientData.put("profileImageUrl", user.getProfileImageUrl());
+                clientData.put("engagementType", engagementTypeByClientId.getOrDefault(
+                        user.getId(), ClientEngagementTypeConstants.SESSION_TICKET));
                 
                 log.info("👤 통합 내담자 데이터 - ID: {}, 이름: '{}', 전화번호: '{}'", 
                     user.getId(), clientName, phone);
@@ -3261,6 +3281,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             if (request.getConsultationHistory() != null) {
                 client.setConsultationHistory(trimToNull(request.getConsultationHistory()));
             }
+            applyClientEngagementFields(client, request);
             persistedClient = clientRepository.save(client);
         } else {
             Client client = new Client();
@@ -3280,6 +3301,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             client.setEmergencyPhone(encryptOptionalPiiForStorage(request.getEmergencyPhone()));
             client.setConsultationPurpose(trimToNull(request.getConsultationPurpose()));
             client.setConsultationHistory(trimToNull(request.getConsultationHistory()));
+            applyClientEngagementFields(client, request);
             client.setIsDeleted(false);
             client.setCreatedAt(savedUser.getCreatedAt());
             client.setUpdatedAt(savedUser.getUpdatedAt());
@@ -3304,6 +3326,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         response.setAddressDetail(savedUser.getAddressDetail());
         response.setPostalCode(savedUser.getPostalCode());
         response.setVehiclePlate(persistedClient.getVehiclePlate());
+        copyClientEngagementToResponse(response, persistedClient);
         response.setIsDeleted(Boolean.FALSE.equals(savedUser.getIsActive()));
         response.setCreatedAt(savedUser.getCreatedAt());
         response.setUpdatedAt(savedUser.getUpdatedAt());
@@ -3336,7 +3359,9 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         
         if (dto.getTotalSessions() != null) {
             mapping.setTotalSessions(dto.getTotalSessions());
-            mapping.setRemainingSessions(dto.getTotalSessions() - mapping.getUsedSessions());
+            if (!PaymentTimingConstants.isInstitutionLink(mapping.getPaymentTiming())) {
+                mapping.setRemainingSessions(dto.getTotalSessions() - mapping.getUsedSessions());
+            }
         }
         
         if (dto.getStatus() != null) {
@@ -8357,6 +8382,92 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         if (postalCode != null && !postalCode.trim().isEmpty()) {
             user.setPostalCode(postalCode.trim());
         }
+    }
+
+    /**
+     * 내담자 등록·수정의 연계 유형과 기관 필드. 일반 회기면 기관 칸을 비운다.
+     *
+     * @param client 내담자 행
+     * @param request 등록/수정 요청
+     */
+    private void applyClientEngagementFields(Client client, ClientRegistrationRequest request) {
+        String engagementType = ClientEngagementTypeConstants.normalizeOrThrow(request.getEngagementType());
+        client.setEngagementType(engagementType);
+        if (!ClientEngagementTypeConstants.isInstitutionLink(engagementType)) {
+            clearClientInstitutionFields(client);
+            return;
+        }
+        if (request.getPartnerInstitutionId() == null) {
+            throw new IllegalArgumentException(ClientEngagementTypeConstants.MSG_INSTITUTION_REQUIRED);
+        }
+        if (request.getInstitutionPrepaid() == null) {
+            throw new IllegalArgumentException(ClientEngagementTypeConstants.MSG_PREPAID_REQUIRED);
+        }
+        if (Boolean.TRUE.equals(request.getInstitutionPrepaid())) {
+            if (request.getInstitutionPrepaidDate() == null) {
+                throw new IllegalArgumentException(ClientEngagementTypeConstants.MSG_PREPAID_DATE_REQUIRED);
+            }
+            if (request.getInstitutionPrepaidAmount() == null) {
+                throw new IllegalArgumentException(ClientEngagementTypeConstants.MSG_PREPAID_AMOUNT_REQUIRED);
+            }
+        }
+        String tenantId = client.getTenantId();
+        if (tenantId == null || tenantId.isBlank()) {
+            tenantId = getTenantIdOrNull();
+        }
+        ClientInstitutionLinkBinder.bind(
+                client,
+                request.getPartnerInstitutionId(),
+                partnerInstitutionRepository,
+                tenantId);
+        client.setInstitutionPrepaid(request.getInstitutionPrepaid());
+        if (Boolean.TRUE.equals(request.getInstitutionPrepaid())) {
+            client.setInstitutionPrepaidDate(request.getInstitutionPrepaidDate());
+            client.setInstitutionPrepaidAmount(request.getInstitutionPrepaidAmount());
+        } else {
+            client.setInstitutionPrepaidDate(null);
+            client.setInstitutionPrepaidAmount(null);
+        }
+    }
+
+    private static void clearClientInstitutionFields(Client client) {
+        ClientInstitutionLinkBinder.clear(client);
+    }
+
+    private static void copyClientEngagementToResponse(Client target, Client source) {
+        if (target == null || source == null) {
+            return;
+        }
+        target.setEngagementType(source.getEngagementType());
+        target.setPartnerInstitutionId(source.getPartnerInstitutionId());
+        target.setInstitutionName(source.getInstitutionName());
+        target.setInstitutionContactName(source.getInstitutionContactName());
+        target.setInstitutionContactPhone(source.getInstitutionContactPhone());
+        target.setInstitutionDocumentPhone(source.getInstitutionDocumentPhone());
+        target.setInstitutionDocumentEmail(source.getInstitutionDocumentEmail());
+        target.setInstitutionPrepaid(source.getInstitutionPrepaid());
+        target.setInstitutionPrepaidDate(source.getInstitutionPrepaidDate());
+        target.setInstitutionPrepaidAmount(source.getInstitutionPrepaidAmount());
+    }
+
+    /**
+     * 배정 생성 시 타기관 내담자면 INSTITUTION_LINK 게이트를 강제한다.
+     *
+     * @param tenantId 테넌트
+     * @param clientId 내담자 ID
+     * @param requestedTiming 요청 paymentTiming
+     * @return 저장할 paymentTiming
+     */
+    private String resolvePaymentTimingForNewMapping(String tenantId, Long clientId, String requestedTiming) {
+        if (tenantId != null && clientId != null) {
+            Optional<Client> clientRow = clientRepository.findByTenantIdAndIdIncludingDeleted(tenantId, clientId);
+            if (clientRow != null
+                    && clientRow.isPresent()
+                    && ClientEngagementTypeConstants.isInstitutionLink(clientRow.get().getEngagementType())) {
+                return PaymentTimingConstants.INSTITUTION_LINK;
+            }
+        }
+        return requestedTiming;
     }
 
     /**

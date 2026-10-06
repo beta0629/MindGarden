@@ -13,6 +13,7 @@ import { toDisplayString } from '../../../../../utils/safeDisplay';
 import {
   MAPPING_STATUS_ACTIVE,
   MAPPING_STATUS_PENDING_PAYMENT,
+  isInstitutionLinkMapping,
   isSameDayCardPending,
   normalizedRemainingSessions
 } from '../../constants/integratedScheduleSidebarFilterConstants';
@@ -152,9 +153,10 @@ export const resolveMappingScheduleDesync = (mapping) => {
     };
   }
 
-  // ACTIVE + remaining <= 0 (SESSIONS_EXHAUSTED 미전이)
+  // ACTIVE + remaining <= 0 (SESSIONS_EXHAUSTED 미전이). 타기관 연계는 회기권이 아니므로 제외.
   if (
     status === MAPPING_STATUS_ACTIVE
+    && !isInstitutionLinkMapping(mapping)
     && normalizedRemainingSessions(mapping) <= 0
   ) {
     return {

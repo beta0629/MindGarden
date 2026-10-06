@@ -22,6 +22,7 @@ import java.util.stream.Collectors;
 import com.coresolution.consultation.constant.BatchNotificationTemplateCodes;
 import com.coresolution.consultation.constant.ConsultationType;
 import com.coresolution.consultation.constant.MappingHistoryEventType;
+import com.coresolution.consultation.constant.PaymentTimingConstants;
 import com.coresolution.consultation.constant.ScheduleServiceUserFacingMessages;
 import com.coresolution.consultation.constant.ScheduleStatus;
 import com.coresolution.consultation.constant.UserRole;
@@ -134,17 +135,6 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
     private final NotificationBatchSendLogRepository notificationBatchSendLogRepository;
     private final SalaryLateSessionAutoSyncService salaryLateSessionAutoSyncService;
     private final ObjectMapper sessionHistoryObjectMapper = new ObjectMapper();
-
-    /**
-     * 옵션 B 결제 의도 코드 — 매핑 {@code payment_timing} 컬럼 값.
-     * <ul>
-     *   <li>{@code "ADVANCE"} — 선납 입금 (기본/현행 흐름)</li>
-     *   <li>{@link #PAYMENT_TIMING_SAME_DAY_CARD} — 당일 방문 카드 결제 후 활성화 (옵션 B)</li>
-     *   <li>{@code null} — 레거시 매핑(마이그레이션 V20260606_006 이전). ADVANCE 와 동등 취급.</li>
-     * </ul>
-     * 신규 코드는 새 상수 클래스 분리 시 {@code PaymentTimingConstants} 로 이전될 예정.
-     */
-    private static final String PAYMENT_TIMING_SAME_DAY_CARD = "SAME_DAY_CARD";
 
     /**
      * R5 (2026-06-06) — «상담일지 미작성(누락)» 응답 대상 상태 집합 SSOT.
@@ -1246,6 +1236,12 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
                     "가예약 확정 시 회기 차감은 활성·입금대기 매핑에서만 가능합니다. mappingId="
                             + mappingId + ", status=" + mappingStatus);
         }
+        if (PaymentTimingConstants.isInstitutionLink(freshMapping.getPaymentTiming())) {
+            persistInstitutionLinkVisitSequence(scheduleForSequence, freshMapping);
+            log.info("타기관 연계 방문 회차 저장(회기 차감 없음): mappingId={}, scheduleId={}",
+                    mappingId, scheduleForSequence != null ? scheduleForSequence.getId() : null);
+            return;
+        }
         Integer remaining = freshMapping.getRemainingSessions();
         if (remaining == null || remaining <= 0) {
             throw new IllegalStateException(
@@ -1777,7 +1773,11 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
      * 레거시(NULL paymentTiming)는 ADVANCE 동등 취급이므로 false 를 반환한다.
      */
     private boolean isSameDayCardPaymentTiming(ConsultantClientMapping mapping) {
-        return mapping != null && PAYMENT_TIMING_SAME_DAY_CARD.equalsIgnoreCase(mapping.getPaymentTiming());
+        return mapping != null && PaymentTimingConstants.isSameDayCard(mapping.getPaymentTiming());
+    }
+
+    private boolean isInstitutionLinkPaymentTiming(ConsultantClientMapping mapping) {
+        return mapping != null && PaymentTimingConstants.isInstitutionLink(mapping.getPaymentTiming());
     }
 
     /**
@@ -1914,6 +1914,10 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             if (mapping.getConsultant().getId().equals(consultantId) && 
                 mapping.getClient().getId().equals(clientId)) {
                 
+                if (isInstitutionLinkPaymentTiming(mapping)) {
+                    log.debug("타기관 연계 매핑 — 회기 잔여 게이트 생략: mappingId={}", mapping.getId());
+                    return true;
+                }
                 Integer remainingSessions = mapping.getRemainingSessions();
                 log.debug("남은 회기 수: {}", remainingSessions);
                 
@@ -2654,6 +2658,46 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
                 schedule.getId(), mapping.getId(), sequence);
     }
 
+    /**
+     * 타기관 연계 방문 회차. 회기 {@code remainingSessions} 가 아니라 점유 상담 일정 건수로 매긴다.
+     * 일지 {@code sessionNumber} 가 {@code sessionSequence} 와 맞도록 일정 저장 시 스탬프한다.
+     *
+     * @param schedule 저장된 일정
+     * @param mapping 타기관 연계 매핑
+     */
+    private void persistInstitutionLinkVisitSequence(Schedule schedule, ConsultantClientMapping mapping) {
+        if (schedule == null || schedule.getId() == null || mapping == null || mapping.getId() == null) {
+            return;
+        }
+        if (schedule.getSessionSequence() != null) {
+            if (schedule.getMappingId() == null) {
+                schedule.setMappingId(mapping.getId());
+                scheduleRepository.save(schedule);
+            }
+            return;
+        }
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        Long consultantId = mapping.getConsultant() != null
+                ? mapping.getConsultant().getId() : schedule.getConsultantId();
+        Long clientId = mapping.getClient() != null
+                ? mapping.getClient().getId() : schedule.getClientId();
+        long occupyingCount = 0L;
+        if (consultantId != null && clientId != null) {
+            occupyingCount = scheduleRepository.countOccupyingConsultationSchedulesForMapping(
+                    tenantId,
+                    mapping.getId(),
+                    consultantId,
+                    clientId,
+                    ScheduleStatus.occupyingStatusesForProvisionalMapping());
+        }
+        int sequence = occupyingCount < 1L ? 1 : (int) occupyingCount;
+        schedule.setMappingId(mapping.getId());
+        schedule.setSessionSequence(sequence);
+        scheduleRepository.save(schedule);
+        log.info("타기관 연계 방문 회차 저장: scheduleId={}, mappingId={}, sessionSequence={}",
+                schedule.getId(), mapping.getId(), sequence);
+    }
+
      /**
      * 매칭의 회기 사용 처리
      */
@@ -2678,6 +2722,12 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             MappingStatus mappingStatus = freshMapping.getStatus();
             if (mappingStatus != MappingStatus.ACTIVE && mappingStatus != MappingStatus.SESSIONS_EXHAUSTED) {
                 log.warn("회기 차감 불가 매핑 상태: mappingId={}, status={}", mappingId, mappingStatus);
+                return;
+            }
+            if (isInstitutionLinkPaymentTiming(freshMapping)) {
+                persistInstitutionLinkVisitSequence(scheduleForSequence, freshMapping);
+                log.info("타기관 연계 방문 회차 저장(회기 차감 없음): mappingId={}, scheduleId={}",
+                        mappingId, scheduleForSequence != null ? scheduleForSequence.getId() : null);
                 return;
             }
             Integer remaining = freshMapping.getRemainingSessions();

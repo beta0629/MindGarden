@@ -79,9 +79,10 @@ import org.springframework.transaction.support.TransactionTemplate;
  * 결제 확인 → 입금 확인 → 취소 전 구간의 상담료 INCOME 원자성 — H2 실제 트랜잭션(테스트 트랜잭션 없음).
  *
  * <ul>
- *   <li>결제 확인은 INCOME 을 쓰지 않는다. 입금 확인이 어느 단계에서 실패하든 INCOME 0건·회기 변화 0.</li>
+ *   <li>결제 확인은 INCOME 을 쓰지 않는다. 단독·원샷, 일반·추가 패키지 모두 입금 확인 422 이면 INCOME 0건·회기 변화 0.</li>
  *   <li>실패 후 재시도 성공이면 INCOME 정확히 1건. 동시 입금 확인 2회도 1건.</li>
- *   <li>입금 확인 성공 후 취소는 INCOME 취소 1건·순액 0. 입금 확인 전 취소는 남은 INCOME 을 취소한다.</li>
+ *   <li>입금 확인 성공 후 취소는 원 INCOME 을 CANCELLED 1건으로 두고 환불 EXPENSE 는 없다. 순액 0.</li>
+ *   <li>입금 전 추가 패키지 취소: 새 경로는 INCOME 0건. 옛 행이 있으면 그 행만 CANCELLED, 순액 0.</li>
  *   <li>결제·입금 확인을 감싼 바깥 트랜잭션이 롤백되면 INCOME 0건 — REQUIRES_NEW·선커밋이 다시 들어오면 실패한다.</li>
  * </ul>
  *
@@ -158,6 +159,7 @@ class DepositIncomeAtomicityIntegrationTest {
         ConsultantClientMapping mapping = saveMapping(MappingStatus.PENDING_PAYMENT, PaymentStatus.PENDING, "");
         confirmPaymentOk(mapping);
         assertThat(mappingIncomeRows(mapping)).as("결제 확인은 INCOME 을 쓰지 않는다").isEmpty();
+        SessionCounts beforeDeposit = sessionCounts(mapping);
 
         doThrow(new SalaryTaxRateNotConfiguredException(TAX_CODE_GROUP_HINT, "VAT", null))
                 .when(salaryTaxRateLookupService).getVatRate(anyString());
@@ -166,6 +168,7 @@ class DepositIncomeAtomicityIntegrationTest {
                 .andExpect(jsonPath("$.code").value(MappingErpSyncFailedException.ERROR_CODE));
 
         assertPaymentConfirmedUnchanged(mapping);
+        assertSessionCountsUnchanged(mapping, beforeDeposit);
         assertThat(mappingIncomeRows(mapping)).isEmpty();
     }
 
@@ -174,6 +177,7 @@ class DepositIncomeAtomicityIntegrationTest {
     void confirmPaymentThenDeposit_failureAfterIncomeInsert_leavesNoIncome() throws Exception {
         ConsultantClientMapping mapping = saveMapping(MappingStatus.PENDING_PAYMENT, PaymentStatus.PENDING, "");
         confirmPaymentOk(mapping);
+        SessionCounts beforeDeposit = sessionCounts(mapping);
         failOnCompletedIncomeSave();
 
         confirmDeposit(mapping, "dia-dep-after-insert")
@@ -182,6 +186,7 @@ class DepositIncomeAtomicityIntegrationTest {
         reset(financialTransactionRepository);
 
         assertPaymentConfirmedUnchanged(mapping);
+        assertSessionCountsUnchanged(mapping, beforeDeposit);
         assertThat(mappingIncomeRows(mapping)).isEmpty();
     }
 
@@ -191,6 +196,7 @@ class DepositIncomeAtomicityIntegrationTest {
         ConsultantClientMapping mapping = saveMapping(MappingStatus.PENDING_PAYMENT, PaymentStatus.PENDING, "");
         Schedule tentative = saveSchedule(mapping, ScheduleStatus.TENTATIVE_PENDING_PAYMENT, LocalDate.now().plusDays(7));
         confirmPaymentOk(mapping);
+        SessionCounts beforeDeposit = sessionCounts(mapping);
         doThrow(new IllegalStateException("dia-session-apply-failure"))
                 .when(scheduleService).finalizeTentativeSchedulesAfterDepositConfirmed(any());
 
@@ -199,6 +205,7 @@ class DepositIncomeAtomicityIntegrationTest {
 
         assertThat(httpStatus).isBetween(400, 599);
         assertPaymentConfirmedUnchanged(mapping);
+        assertSessionCountsUnchanged(mapping, beforeDeposit);
         assertThat(mappingIncomeRows(mapping)).isEmpty();
         assertThat(scheduleRepository.findById(tentative.getId()).orElseThrow().getStatus())
                 .isEqualTo(ScheduleStatus.TENTATIVE_PENDING_PAYMENT);
@@ -209,6 +216,7 @@ class DepositIncomeAtomicityIntegrationTest {
     void checkoutSameDay_postStepFailsAfterIncome_leavesNoIncome() throws Exception {
         ConsultantClientMapping mapping = saveMapping(MappingStatus.PENDING_PAYMENT, PaymentStatus.PENDING, "");
         Schedule sameDay = saveSchedule(mapping, ScheduleStatus.BOOKED, LocalDate.now());
+        SessionCounts before = sessionCounts(mapping);
         doThrow(new IllegalStateException("dia-post-step-failure"))
                 .when(scheduleService).useSessionForSpecificMapping(anyString(), anyLong(), anyLong(), anyLong(), any());
 
@@ -225,15 +233,54 @@ class DepositIncomeAtomicityIntegrationTest {
         assertThat(after.getPaymentStatus()).isEqualTo(PaymentStatus.PENDING);
         assertThat(after.getRemainingSessions()).isZero();
         assertThat(after.getUsedSessions()).isZero();
+        assertSessionCountsUnchanged(mapping, before);
+        assertThat(mappingIncomeRows(mapping)).isEmpty();
+    }
+
+    @Test
+    @DisplayName("[1] 원샷 결제 — INCOME 기록 실패(422) — INCOME 0건, 회기 변화 0, 결제 대기 그대로")
+    void checkoutSameDay_incomeWriteFails_leavesNoIncomeAndNoSessionChange() throws Exception {
+        ConsultantClientMapping mapping = saveMapping(MappingStatus.PENDING_PAYMENT, PaymentStatus.PENDING, "");
+        SessionCounts before = sessionCounts(mapping);
+        doThrow(new SalaryTaxRateNotConfiguredException(TAX_CODE_GROUP_HINT, "VAT", null))
+                .when(salaryTaxRateLookupService).getVatRate(anyString());
+
+        checkout(mapping, UUID.randomUUID().toString())
+                .andExpect(status().isUnprocessableEntity())
+                .andExpect(jsonPath("$.code").value(MappingErpSyncFailedException.ERROR_CODE));
+
+        ConsultantClientMapping after = reload(mapping);
+        assertThat(after.getStatus()).isEqualTo(MappingStatus.PENDING_PAYMENT);
+        assertThat(after.getPaymentStatus()).isEqualTo(PaymentStatus.PENDING);
+        assertSessionCountsUnchanged(mapping, before);
+        assertThat(mappingIncomeRows(mapping)).isEmpty();
+    }
+
+    @Test
+    @DisplayName("[1] 원샷 추가 패키지 — INCOME 기록 실패(422) — 추가 회기 INCOME 0건, 회기 변화 0")
+    void checkoutSameDayAdditional_incomeWriteFails_leavesNoIncomeAndNoSessionChange() throws Exception {
+        ConsultantClientMapping mapping = saveAdditionalMapping();
+        SessionCounts before = sessionCounts(mapping);
+        doThrow(new SalaryTaxRateNotConfiguredException(TAX_CODE_GROUP_HINT, "VAT", null))
+                .when(salaryTaxRateLookupService).getVatRate(anyString());
+
+        checkout(mapping, UUID.randomUUID().toString())
+                .andExpect(status().isUnprocessableEntity())
+                .andExpect(jsonPath("$.code").value(MappingErpSyncFailedException.ERROR_CODE));
+
+        ConsultantClientMapping after = reload(mapping);
+        assertThat(after.getStatus()).isEqualTo(MappingStatus.PENDING_PAYMENT);
+        assertThat(after.getPaymentStatus()).isEqualTo(PaymentStatus.PENDING);
+        assertSessionCountsUnchanged(mapping, before);
         assertThat(mappingIncomeRows(mapping)).isEmpty();
     }
 
     @Test
     @DisplayName("[1] 추가 매칭 입금 확인 — 추가 회기 INCOME 완료 처리 실패(422) — 추가 회기 INCOME 0건")
     void additionalMappingDeposit_completionFails_leavesNoAdditionalIncome() throws Exception {
-        ConsultantClientMapping mapping = saveMapping(MappingStatus.PENDING_PAYMENT, PaymentStatus.PENDING,
-                AdminServiceUserFacingMessages.NOTES_ADDITIONAL_MAPPING_MARKER + " dia " + TOTAL_SESSIONS + "회");
+        ConsultantClientMapping mapping = saveAdditionalMapping();
         confirmPaymentOk(mapping);
+        SessionCounts beforeDeposit = sessionCounts(mapping);
         failOnCompletedIncomeSave();
 
         confirmDeposit(mapping, "dia-dep-additional")
@@ -242,6 +289,7 @@ class DepositIncomeAtomicityIntegrationTest {
         reset(financialTransactionRepository);
 
         assertPaymentConfirmedUnchanged(mapping);
+        assertSessionCountsUnchanged(mapping, beforeDeposit);
         assertThat(mappingIncomeRows(mapping)).isEmpty();
     }
 
@@ -249,6 +297,7 @@ class DepositIncomeAtomicityIntegrationTest {
     @DisplayName("[변이 가드] 결제·입금 확인 성공 후 바깥 트랜잭션 롤백 — INCOME 0건 (REQUIRES_NEW·선커밋이면 실패)")
     void paymentAndDepositInsideRolledBackCaller_leaveNoIncome() {
         ConsultantClientMapping mapping = saveMapping(MappingStatus.PENDING_PAYMENT, PaymentStatus.PENDING, "");
+        SessionCounts before = sessionCounts(mapping);
         Long mappingId = mapping.getId();
         new TransactionTemplate(transactionManager).executeWithoutResult(status -> {
             adminService.confirmPayment(mappingId, "CARD", "dia-outer-pay", PACKAGE_PRICE);
@@ -259,6 +308,7 @@ class DepositIncomeAtomicityIntegrationTest {
         ConsultantClientMapping after = reload(mapping);
         assertThat(after.getStatus()).isEqualTo(MappingStatus.PENDING_PAYMENT);
         assertThat(after.getRemainingSessions()).isZero();
+        assertSessionCountsUnchanged(mapping, before);
         assertThat(mappingIncomeRows(mapping)).isEmpty();
     }
 
@@ -388,6 +438,129 @@ class DepositIncomeAtomicityIntegrationTest {
         assertSingleCancelledIncomeAndNetZero(mapping);
     }
 
+    @Test
+    @DisplayName("[2] 추가 패키지 입금 확인 422 후 재시도 성공 — ADDITIONAL INCOME 정확히 1건")
+    void additionalDepositFailsThenRetrySucceeds_writesExactlyOneIncome() throws Exception {
+        ConsultantClientMapping mapping = saveAdditionalMapping();
+        confirmPaymentOk(mapping);
+        doThrow(new SalaryTaxRateNotConfiguredException(TAX_CODE_GROUP_HINT, "VAT", null))
+                .when(salaryTaxRateLookupService).getVatRate(anyString());
+        confirmDeposit(mapping, "dia-dep-add-retry").andExpect(status().isUnprocessableEntity());
+
+        configureTaxRates();
+        confirmDeposit(mapping, "dia-dep-add-retry").andExpect(status().isOk());
+
+        assertThat(mappingIncomeRows(mapping)).hasSize(1);
+        assertThat(mappingIncomeRows(mapping).get(0).getRelatedEntityType())
+                .isEqualTo(FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING_ADDITIONAL);
+        assertThat(postedIncomeRows(mapping)).hasSize(1);
+
+        int replay = confirmDeposit(mapping, "dia-dep-add-retry-again").andReturn().getResponse().getStatus();
+        assertThat(replay).isNotEqualTo(200);
+        assertThat(mappingIncomeRows(mapping)).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("[2] 원샷 422 후 재시도 성공 — INCOME 정확히 1건")
+    void checkoutSameDayFailsThenRetrySucceeds_writesExactlyOneIncome() throws Exception {
+        ConsultantClientMapping mapping = saveMapping(MappingStatus.PENDING_PAYMENT, PaymentStatus.PENDING, "");
+        doThrow(new SalaryTaxRateNotConfiguredException(TAX_CODE_GROUP_HINT, "VAT", null))
+                .when(salaryTaxRateLookupService).getVatRate(anyString());
+        checkout(mapping, UUID.randomUUID().toString()).andExpect(status().isUnprocessableEntity());
+        assertThat(mappingIncomeRows(mapping)).isEmpty();
+
+        configureTaxRates();
+        checkout(mapping, UUID.randomUUID().toString()).andExpect(status().isOk());
+
+        assertThat(mappingIncomeRows(mapping)).hasSize(1);
+        assertThat(postedIncomeRows(mapping)).hasSize(1);
+        assertThat(reload(mapping).getPaymentStatus()).isEqualTo(PaymentStatus.APPROVED);
+    }
+
+    @Test
+    @DisplayName("[3] 추가 패키지 입금 확인 후 취소 — INCOME 취소 1건, 환불 EXPENSE 0건, 순액 0")
+    void additionalCancelAfterDeposit_reversesIncomeExactlyOnce() throws Exception {
+        ConsultantClientMapping mapping = saveAdditionalMapping();
+        confirmPaymentOk(mapping);
+        confirmDeposit(mapping, "dia-dep-add-cancel").andExpect(status().isOk());
+        assertThat(postedIncomeRows(mapping)).hasSize(1);
+
+        terminate(mapping).andExpect(status().isOk());
+
+        assertSingleCancelledIncomeAndNetZero(mapping);
+        assertThat(mappingIncomeRows(mapping).get(0).getRelatedEntityType())
+                .isEqualTo(FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING_ADDITIONAL);
+        assertThat(reload(mapping).getStatus()).isEqualTo(MappingStatus.CANCELLED);
+    }
+
+    @Test
+    @DisplayName("[4] 입금 전 추가 패키지 취소 — 결제 확인은 INCOME 을 쓰지 않아 0건")
+    void additionalCancelBeforeDeposit_leavesNoIncome() throws Exception {
+        ConsultantClientMapping mapping = saveAdditionalMapping();
+        confirmPaymentOk(mapping);
+        assertThat(mappingIncomeRows(mapping)).isEmpty();
+
+        terminate(mapping).andExpect(status().isOk());
+
+        assertThat(mappingIncomeRows(mapping)).isEmpty();
+        assertThat(postedNet(mapping)).isZero();
+        assertThat(reload(mapping).getStatus()).isEqualTo(MappingStatus.CANCELLED);
+    }
+
+    @Test
+    @DisplayName("[4] 입금 전 추가 패키지에 옛 ADDITIONAL INCOME — 원행 CANCELLED 1건, 순액 0, 반대전표 없음")
+    void additionalCancelBeforeDeposit_withLeftover_cancelsOriginalNetZero() throws Exception {
+        ConsultantClientMapping mapping = saveAdditionalMapping(MappingStatus.PAYMENT_CONFIRMED, PaymentStatus.CONFIRMED);
+        saveLeftoverPostedIncome(mapping,
+                FinancialTransactionConstants.CATEGORY_CONSULTATION_LEGACY,
+                FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING_ADDITIONAL,
+                PACKAGE_PRICE);
+
+        terminate(mapping).andExpect(status().isOk());
+
+        assertSingleCancelledIncomeAndNetZero(mapping);
+        assertThat(mappingIncomeRows(mapping).get(0).getRelatedEntityType())
+                .isEqualTo(FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING_ADDITIONAL);
+        assertThat(mappingLedgerRows(mapping)).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("[기존 데이터] 옛 카테고리·다른 금액의 본전표 INCOME 이 있으면 입금 확인은 두 번째 전표를 만들지 않는다")
+    void depositWithLegacyMappingSlotIncome_doesNotCreateSecondRow() throws Exception {
+        ConsultantClientMapping mapping = saveMapping(MappingStatus.PAYMENT_CONFIRMED, PaymentStatus.CONFIRMED, "");
+        long legacyAmount = PACKAGE_PRICE - 1L;
+        saveLeftoverPostedIncome(mapping,
+                FinancialTransactionConstants.CATEGORY_CONSULTATION_LEGACY,
+                FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING,
+                legacyAmount);
+
+        confirmDeposit(mapping, "dia-dep-legacy").andExpect(status().isOk());
+
+        List<FinancialTransaction> incomes = mappingIncomeRows(mapping);
+        assertThat(incomes).hasSize(1);
+        assertThat(incomes.get(0).getCategory()).isEqualTo(FinancialTransactionConstants.CATEGORY_CONSULTATION_LEGACY);
+        assertThat(incomes.get(0).getAmount()).isEqualByComparingTo(BigDecimal.valueOf(legacyAmount));
+        assertThat(incomes.get(0).getRelatedEntityType())
+                .isEqualTo(FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING);
+    }
+
+    @Test
+    @DisplayName("[기존 데이터] 추가 패키지에 본전표 슬롯 옛 INCOME 이 있으면 ADDITIONAL 전표를 더 만들지 않는다")
+    void additionalDepositWithLegacyMappingSlotIncome_doesNotCreateSecondRow() throws Exception {
+        ConsultantClientMapping mapping = saveAdditionalMapping(MappingStatus.PAYMENT_CONFIRMED, PaymentStatus.CONFIRMED);
+        saveLeftoverPostedIncome(mapping,
+                FinancialTransactionConstants.CATEGORY_CONSULTATION_LEGACY,
+                FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING,
+                PACKAGE_PRICE);
+
+        confirmDeposit(mapping, "dia-dep-add-legacy").andExpect(status().isOk());
+
+        List<FinancialTransaction> incomes = mappingIncomeRows(mapping);
+        assertThat(incomes).hasSize(1);
+        assertThat(incomes.get(0).getRelatedEntityType())
+                .isEqualTo(FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING);
+    }
+
     // ── 공통 검증 ──
 
     private void assertPaymentConfirmedUnchanged(ConsultantClientMapping mapping) {
@@ -397,6 +570,18 @@ class DepositIncomeAtomicityIntegrationTest {
         assertThat(after.getTotalSessions()).isEqualTo(TOTAL_SESSIONS);
         assertThat(after.getRemainingSessions()).isZero();
         assertThat(after.getUsedSessions()).isZero();
+    }
+
+    private SessionCounts sessionCounts(ConsultantClientMapping mapping) {
+        ConsultantClientMapping current = reload(mapping);
+        int total = current.getTotalSessions() == null ? 0 : current.getTotalSessions();
+        int used = current.getUsedSessions() == null ? 0 : current.getUsedSessions();
+        int remaining = current.getRemainingSessions() == null ? 0 : current.getRemainingSessions();
+        return new SessionCounts(total, used, remaining);
+    }
+
+    private void assertSessionCountsUnchanged(ConsultantClientMapping mapping, SessionCounts before) {
+        assertThat(sessionCounts(mapping)).isEqualTo(before);
     }
 
     private void assertSingleCancelledIncomeAndNetZero(ConsultantClientMapping mapping) {
@@ -488,6 +673,11 @@ class DepositIncomeAtomicityIntegrationTest {
                 Map.of("reason", "dia-cancel"));
     }
 
+    private ResultActions checkout(ConsultantClientMapping mapping, String requestId) throws Exception {
+        return perform(post("/api/v1/admin/mappings/{id}/checkout-same-day", mapping.getId())
+                .header("X-Request-Id", requestId), checkoutBody());
+    }
+
     private Map<String, Object> checkoutBody() {
         Map<String, Object> body = new HashMap<>();
         body.put("paymentMethod", "CARD");
@@ -509,24 +699,71 @@ class DepositIncomeAtomicityIntegrationTest {
     }
 
     private void saveLeftoverPostedIncome(ConsultantClientMapping mapping) {
+        saveLeftoverPostedIncome(mapping,
+                FinancialTransactionConstants.CATEGORY_CONSULTATION_FEE,
+                FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING,
+                PACKAGE_PRICE);
+    }
+
+    private void saveLeftoverPostedIncome(ConsultantClientMapping mapping, String category,
+            String relatedEntityType, long amount) {
         FinancialTransaction leftover = FinancialTransaction.builder()
                 .transactionType(FinancialTransaction.TransactionType.INCOME)
-                .category(FinancialTransactionConstants.CATEGORY_CONSULTATION_FEE)
-                .subcategory("CONSULTATION_FEE")
-                .amount(BigDecimal.valueOf(PACKAGE_PRICE))
+                .category(category)
+                .subcategory(FinancialTransactionConstants.SUBCATEGORY_ADDITIONAL_CONSULTATION)
+                .amount(BigDecimal.valueOf(amount))
                 .description("dia-leftover-income")
                 .transactionDate(LocalDate.now())
                 .relatedEntityId(mapping.getId())
-                .relatedEntityType(FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING)
+                .relatedEntityType(relatedEntityType)
                 .taxIncluded(true)
                 .taxAmount(BigDecimal.ZERO)
                 .withholdingTaxAmount(BigDecimal.ZERO)
-                .amountBeforeTax(BigDecimal.valueOf(PACKAGE_PRICE))
+                .amountBeforeTax(BigDecimal.valueOf(amount))
                 .cardMerchantFeeAmount(BigDecimal.ZERO)
                 .status(FinancialTransaction.TransactionStatus.COMPLETED)
                 .build();
         leftover.setTenantId(tenantId);
         financialTransactionDelegate().saveAndFlush(leftover);
+    }
+
+    private ConsultantClientMapping saveAdditionalMapping() {
+        return saveAdditionalMapping(MappingStatus.PENDING_PAYMENT, PaymentStatus.PENDING);
+    }
+
+    private ConsultantClientMapping saveAdditionalMapping(MappingStatus status, PaymentStatus paymentStatus) {
+        return saveMapping(status, paymentStatus,
+                AdminServiceUserFacingMessages.NOTES_ADDITIONAL_MAPPING_MARKER + " dia " + TOTAL_SESSIONS + "회");
+    }
+
+    private static final class SessionCounts {
+        private final int total;
+        private final int used;
+        private final int remaining;
+
+        private SessionCounts(int total, int used, int remaining) {
+            this.total = total;
+            this.used = used;
+            this.remaining = remaining;
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            if (!(other instanceof SessionCounts counts)) {
+                return false;
+            }
+            return total == counts.total && used == counts.used && remaining == counts.remaining;
+        }
+
+        @Override
+        public int hashCode() {
+            return java.util.Objects.hash(total, used, remaining);
+        }
+
+        @Override
+        public String toString() {
+            return "total=" + total + ", used=" + used + ", remaining=" + remaining;
+        }
     }
 
     private FinancialTransactionRepository financialTransactionDelegate() {

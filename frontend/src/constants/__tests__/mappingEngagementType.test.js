@@ -31,12 +31,12 @@ describe('mappingEngagementType', () => {
     expect(isInstitutionLinkEngagement(mapping.paymentTiming)).toBe(false);
   });
 
-  it('paymentTiming=INSTITUTION_LINK 이면 기관연동이고 바우처가 아니다', () => {
+  it('paymentTiming=INSTITUTION_LINK 이면 기관연계이고 바우처가 아니다', () => {
     const mapping = { paymentTiming: 'INSTITUTION_LINK', remainingSessions: 0 };
     expect(resolveMappingEngagementType(mapping)).toBe(MAPPING_ENGAGEMENT_TYPE.INSTITUTION_LINK);
     expect(shouldRenderEngagementTypeBadge(mapping)).toBe(true);
     expect(isVoucherEngagement(mapping.paymentTiming)).toBe(false);
-    expect(MAPPING_ENGAGEMENT_TYPE_LABELS[MAPPING_ENGAGEMENT_TYPE.INSTITUTION_LINK]).toBe('기관연동');
+    expect(MAPPING_ENGAGEMENT_TYPE_LABELS[MAPPING_ENGAGEMENT_TYPE.INSTITUTION_LINK]).toBe('기관연계');
   });
 
   it('engagementType 이 paymentTiming 보다 우선하고 VOUCHER 는 타기관이 아니다', () => {

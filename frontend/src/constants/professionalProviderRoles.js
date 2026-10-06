@@ -260,7 +260,14 @@ export async function fetchProfessionalProviderTypeSelectOptions(deps = {}) {
 export const PROFESSIONAL_PROVIDER_TYPE_LABELS = {
   DEFAULT_COUNSELOR: '상담사',
   PLAY_THERAPY: '놀이치료',
-  SPEECH_THERAPY: '언어치료'
+  SPEECH_THERAPY: '언어치료',
+  ABA_THERAPY: 'ABA',
+  ART_THERAPY: '미술치료',
+  MUSIC_THERAPY: '음악치료',
+  OCCUPATIONAL_THERAPY: '작업치료',
+  SENSORY_INTEGRATION: '감각통합치료',
+  COGNITIVE_THERAPY: '인지학습치료',
+  CLINICAL_PSYCHOLOGIST: '임상심리사(심리검사)'
 };
 
 /**

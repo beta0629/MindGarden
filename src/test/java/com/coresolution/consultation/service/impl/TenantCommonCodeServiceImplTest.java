@@ -15,7 +15,9 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
+import com.coresolution.consultation.cache.TenantCommonCodeCacheEvictor;
 import com.coresolution.consultation.constant.ConsultationPackageCodeConstants;
+import com.coresolution.consultation.constant.ProfessionalProviderTypeConstants;
 import com.coresolution.consultation.constant.ExpenseCommonCodeSsotConstants;
 import com.coresolution.consultation.constant.TenantCommonCodeAutoValueConstants;
 import com.coresolution.consultation.dto.CommonCodeCreateRequest;
@@ -63,8 +65,39 @@ class TenantCommonCodeServiceImplTest {
     @Mock
     private ObjectMapper objectMapper;
 
+    @Mock
+    private TenantCommonCodeCacheEvictor tenantCommonCodeCacheEvictor;
+
     @InjectMocks
     private TenantCommonCodeServiceImpl tenantCommonCodeService;
+
+    @Test
+    @DisplayName("getTenantCodeGroups: code_type=TENANT 이면 PROFESSIONAL_PROVIDER_TYPE 이 목록에 포함된다")
+    void getTenantCodeGroups_includesProfessionalProviderTypeWhenMetadataIsTenant() {
+        CodeGroupMetadata providerType = CodeGroupMetadata.builder()
+            .groupName(ProfessionalProviderTypeConstants.CODE_GROUP)
+            .codeType("TENANT")
+            .koreanName("전문가유형")
+            .isActive(true)
+            .build();
+        CodeGroupMetadata other = CodeGroupMetadata.builder()
+            .groupName("CONSULTATION_PACKAGE")
+            .codeType("TENANT")
+            .koreanName("상담패키지")
+            .isActive(true)
+            .build();
+        when(codeGroupMetadataRepository.findTenantCodeGroups()).thenReturn(List.of(other, providerType));
+
+        List<CodeGroupMetadata> groups = tenantCommonCodeService.getTenantCodeGroups(TENANT);
+
+        assertEquals(2, groups.size());
+        assertTrue(groups.stream().anyMatch(group ->
+            ProfessionalProviderTypeConstants.CODE_GROUP.equals(group.getGroupName())
+                && "TENANT".equals(group.getCodeType())
+                && Boolean.TRUE.equals(group.getIsActive())
+                && "전문가유형".equals(group.getKoreanName())));
+        verify(codeGroupMetadataRepository).findTenantCodeGroups();
+    }
 
     @Test
     @DisplayName("updateTenantCode: 경로의 tenantId로 findByTenantIdAndId 호출")
@@ -77,6 +110,7 @@ class TenantCommonCodeServiceImplTest {
         tenantCommonCodeService.updateTenantCode(TENANT, 10L, request);
 
         verify(commonCodeRepository).findByTenantIdAndId(eq(TENANT), eq(10L));
+        verify(tenantCommonCodeCacheEvictor).evictTenantAndCoreCodesAfterCommit();
     }
 
     @Test

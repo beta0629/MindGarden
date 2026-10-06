@@ -4,7 +4,9 @@
 import {
   resolveTenantCodeOverrideStatus,
   buildTenantGlobalDiffRows,
-  getOverrideStatusLabel
+  getOverrideStatusLabel,
+  findCoreCodeMatch,
+  isCoreCommonCodeRow
 } from '../tenantCommonCodeDiff';
 
 describe('tenantCommonCodeDiff', () => {
@@ -33,6 +35,38 @@ describe('tenantCommonCodeDiff', () => {
     const activeRow = rows.find((r) => r.field === '활성');
     expect(labelRow.changed).toBe(true);
     expect(activeRow.changed).toBe(true);
+  });
+
+  test('테넌트 행은 글로벌이 아니므로 센터 전용', () => {
+    const tenantRow = {
+      id: 876,
+      codeValue: 'VERIFY_TEST_THERAPY',
+      codeLabel: '검증치료',
+      tenantId: 'tenant-incheon-counseling-002',
+      isActive: true
+    };
+    expect(isCoreCommonCodeRow(tenantRow)).toBe(false);
+    expect(resolveTenantCodeOverrideStatus(tenantRow, tenantRow)).toBe('tenant_only');
+    expect(findCoreCodeMatch([tenantRow], 'VERIFY_TEST_THERAPY')).toBeNull();
+  });
+
+  test('같은 codeValue 의 코어 행만 글로벌 비교에 쓴다', () => {
+    const tenantRow = {
+      id: 876,
+      codeValue: 'PLAY_THERAPY',
+      codeLabel: '놀이치료',
+      tenantId: 'tenant-a',
+      isActive: true
+    };
+    const coreRow = {
+      id: 3,
+      codeValue: 'PLAY_THERAPY',
+      codeLabel: '놀이치료',
+      tenantId: null,
+      isActive: true
+    };
+    expect(findCoreCodeMatch([tenantRow, coreRow], 'PLAY_THERAPY')).toBe(coreRow);
+    expect(resolveTenantCodeOverrideStatus(tenantRow, coreRow)).toBe('global_match');
   });
 
   test('getOverrideStatusLabel returns Korean labels', () => {

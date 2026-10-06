@@ -38,3 +38,11 @@ export const buildManyStaff = (count = G2_ROW_VISIBILITY_MIN) =>
     isActive: true,
     createdAt: '2026-01-15T00:00:00.000Z'
   }));
+
+describe('userManagementGateFixtures', () => {
+  it('exports row builders', () => {
+    expect(buildManyClients(1)).toHaveLength(1);
+    expect(buildManyConsultants(1)).toHaveLength(1);
+    expect(buildManyStaff(1)).toHaveLength(1);
+  });
+});

@@ -34,6 +34,7 @@ import {
 } from '../../utils/missingConsultationLogNavigation';
 import { getStatusColor, getStatusIcon } from '../../utils/codeHelper';
 import { getCommonCodes } from '../../utils/commonCodeApi';
+import { resolveScheduleStatusDisplayLabel } from '../../utils/scheduleStatusLabel';
 import notificationManager from '../../utils/notification';
 import {
     CONSULTATION_LOG_BODY_ACCESS_STRINGS,
@@ -319,10 +320,10 @@ const UnifiedScheduleComponent = ({
         }
     };
 
-    const convertStatusToKorean = (status) => {
-        const statusOption = scheduleStatusOptions.find(option => option.value === status);
-        return statusOption ? statusOption.label : status || t('schedule:UnifiedScheduleComponent.t_8916b639');
-    };
+    const convertStatusToKorean = (status) => resolveScheduleStatusDisplayLabel(status, {
+        codes: scheduleStatusOptions,
+        translate: t
+    });
 
     const convertConsultationTypeToKorean = (consultationType) => {
         const typeMap = {
@@ -1077,7 +1078,9 @@ const UnifiedScheduleComponent = ({
             let { consultantName } = event.extendedProps;
             if (!consultantName || consultantName === 'undefined' || consultantName === t('schedule:UnifiedScheduleComponent.t_8916b639')) {
                 if (event.extendedProps.consultantId && event.extendedProps.consultantId !== 'undefined') {
-                    consultantName = t('schedule:UnifiedScheduleComponent.t_b09a1acc');
+                    consultantName = t('schedule:UnifiedScheduleComponent.t_b09a1acc', {
+                        consultantId: event.extendedProps.consultantId
+                    });
                 } else {
                     consultantName = t('schedule:UnifiedScheduleComponent.t_44b8c965');
                 }
@@ -1527,6 +1530,7 @@ const UnifiedScheduleComponent = ({
             <ScheduleCalendarView
                 events={filteredEvents}
                 userRole={userRole}
+                scheduleStatusOptions={scheduleStatusOptions}
                 onDateClick={handleDateClick}
                 onEventClick={handleEventClick}
                 onEventDrop={handleEventDrop}

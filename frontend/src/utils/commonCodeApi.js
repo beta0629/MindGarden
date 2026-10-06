@@ -397,3 +397,52 @@ export const getCoreCodesAPI = async(codeGroup) => {
     }
 };
 
+/**
+ * 코어(tenant_id 없음) 코드만 조회한다.
+ * 통합 조회는 현재 테넌트 행을 포함해 배지가 자기 자신과 같아진다.
+ *
+ * @param {string} codeGroup 코드 그룹
+ * @returns {Promise<Array>}
+ */
+export const getCoreCodesByGroup = async(codeGroup) => {
+    if (!codeGroup) {
+        return [];
+    }
+    try {
+        const response = await StandardizedApi.get(
+            `${API_BASE}/core/groups/${encodeURIComponent(codeGroup)}`
+        );
+        return unwrapCommonCodeRows(response);
+    } catch (error) {
+        console.error('코어 코드 그룹 조회 실패:', error);
+        return [];
+    }
+};
+
+/**
+ * StandardizedApi 가 풀어 준 공통코드 목록.
+ *
+ * @param {*} response
+ * @returns {Array}
+ */
+function unwrapCommonCodeRows(response) {
+    if (Array.isArray(response)) {
+        return response;
+    }
+    if (!response || typeof response !== 'object') {
+        return [];
+    }
+    if (Array.isArray(response.codes)) {
+        return response.codes;
+    }
+    if (response.success && response.data) {
+        if (Array.isArray(response.data)) {
+            return response.data;
+        }
+        if (Array.isArray(response.data.codes)) {
+            return response.data.codes;
+        }
+    }
+    return [];
+}
+

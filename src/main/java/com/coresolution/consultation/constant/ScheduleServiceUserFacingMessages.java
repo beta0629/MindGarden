@@ -33,11 +33,14 @@ public final class ScheduleServiceUserFacingMessages {
             "기관연계 일정은 가예약으로 등록할 수 없습니다.";
 
     /**
-     * 결제 대기 매핑에 묶인 일정은 확정·점유 전환하지 않는다.
-     * 사후 카드 가예약 생성은 유지하고, 확정은 입금 또는 당일 카드 결제 이후다.
+     * 같은 테넌트에서 연결 매칭을 찾을 수 없는 가예약 일정은 확정·점유 전환하지 않는다.
+     * 결제 대기 매칭의 가예약 확정은 허용한다(회기 차감은 결제 후).
      */
-    public static final String MSG_UNPAID_PENDING_SCHEDULE_CONFIRM_DENIED =
-            "결제 대기 매칭은 일정을 확정할 수 없습니다. 입금 확인 또는 당일 카드 결제 후 진행해 주세요.";
+    public static final String MSG_TENTATIVE_WITHOUT_MAPPING_CONFIRM_DENIED =
+            "연결된 매칭을 찾을 수 없어 가예약 일정을 확정할 수 없습니다. 매칭을 확인한 뒤 다시 시도해 주세요.";
+
+    /** 같은 테넌트에 없는 일정 id로 확정·당일 결제 대상을 지정한 경우. */
+    public static final String MSG_SCHEDULE_NOT_FOUND = "일정을 찾을 수 없습니다.";
 
     private ScheduleServiceUserFacingMessages() {
     }

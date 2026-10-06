@@ -2998,6 +2998,7 @@
       },
       "legend": {
         "sameDayPending": "[당일결제 점선] = 당일 결제 대기 가예약 (결제 후 일반 일정으로 전환)",
+        "institutionLink": "기관연계",
         "missingConsultationLogs": "상담일지 미작성",
         "missingConsultationLogsAllDone": "이번 달 모든 일정의 상담일지가 작성되었습니다",
         "missingConsultationLogsItemAria": "{{name}}, 미작성 {{count}}건",
@@ -3365,7 +3366,7 @@
     }
   },
   "ConsultationCompletionStats": {
-    "t_180f1c39": "${year}년 ${month}월",
+    "t_180f1c39": "{{year}}년 {{month}}월",
     "t_d6ebcb35": "주니어",
     "t_68a6a8b6": "시니어",
     "t_de4b2ea8": "엑스퍼트",

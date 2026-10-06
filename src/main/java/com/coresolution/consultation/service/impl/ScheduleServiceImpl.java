@@ -607,7 +607,11 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         // ⚠️ 보안: tenantId는 필수 (다른 테넌트 데이터 접근 방지)
         String tenantId = TenantContextHolder.getRequiredTenantId();
         return scheduleRepository.findByTenantIdAndId(tenantId, id)
-                .orElseThrow(() -> new RuntimeException("스케줄을 찾을 수 없습니다: " + id));
+                .orElseThrow(() -> {
+                    log.warn("일정 없음: tenantId={}, scheduleId={}", tenantId, id);
+                    return new com.coresolution.consultation.exception.EntityNotFoundException(
+                            ScheduleServiceUserFacingMessages.MSG_SCHEDULE_NOT_FOUND);
+                });
     }
 
     @Override
@@ -1381,6 +1385,81 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
     }
 
     /**
+     * {@inheritDoc}
+     */
+    @Override
+    public int reassignConsumingSchedulesOntoTargetAndDeduct(
+            String tenantId, Long sourceMappingId, ConsultantClientMapping targetActive) {
+        if (sourceMappingId == null || targetActive == null || targetActive.getId() == null) {
+            return 0;
+        }
+        if (sourceMappingId.equals(targetActive.getId())) {
+            return 0;
+        }
+        if (targetActive.getConsultant() == null || targetActive.getClient() == null
+                || targetActive.getConsultant().getId() == null
+                || targetActive.getClient().getId() == null) {
+            log.warn("추가 패키지 일정 재귀속 skip: target consultant/client 없음. sourceMappingId={}, targetId={}",
+                    sourceMappingId, targetActive.getId());
+            return 0;
+        }
+        String resolvedTenantId = tenantId;
+        if (resolvedTenantId == null || resolvedTenantId.isBlank()) {
+            resolvedTenantId = targetActive.getTenantId();
+        }
+        if (resolvedTenantId == null || resolvedTenantId.isBlank()) {
+            resolvedTenantId = TenantContextHolder.getTenantId();
+        }
+        if (resolvedTenantId == null || resolvedTenantId.isBlank()) {
+            log.warn("추가 패키지 일정 재귀속 skip: tenantId 없음. sourceMappingId={}", sourceMappingId);
+            return 0;
+        }
+
+        List<Schedule> queried = scheduleRepository.findByTenantIdAndMappingIdAndStatusIn(
+                resolvedTenantId,
+                sourceMappingId,
+                ScheduleStatus.occupyingStatusesForConsultationScheduleHistory());
+        if (queried == null || queried.isEmpty()) {
+            return 0;
+        }
+        List<Schedule> schedules = new ArrayList<>(queried);
+        schedules.sort(Comparator
+                .comparing(Schedule::getDate, Comparator.nullsLast(Comparator.naturalOrder()))
+                .thenComparing(Schedule::getStartTime, Comparator.nullsLast(Comparator.naturalOrder()))
+                .thenComparing(Schedule::getId, Comparator.nullsLast(Comparator.naturalOrder())));
+
+        Long consultantId = targetActive.getConsultant().getId();
+        Long clientId = targetActive.getClient().getId();
+        int deducted = 0;
+        for (Schedule schedule : schedules) {
+            if (schedule == null) {
+                continue;
+            }
+            if (schedule.getStatus() == ScheduleStatus.TENTATIVE_PENDING_PAYMENT) {
+                schedule.setStatus(ScheduleStatus.BOOKED);
+                scheduleRepository.save(schedule);
+                notifyTentativeScheduleBookedAfterDeposit(schedule, resolvedTenantId);
+            }
+            if (!isConsultationScheduleForSessionDeduction(schedule)) {
+                schedule.setMappingId(targetActive.getId());
+                scheduleRepository.save(schedule);
+                continue;
+            }
+            // 소스 행 회차는 차감 없이 붙은 라벨이다. 남겨 두면 타깃 used >= seq 가 차감을 건너뛴다.
+            if (schedule.getSessionSequence() != null && sourceMappingId.equals(schedule.getMappingId())) {
+                schedule.setSessionSequence(null);
+                scheduleRepository.save(schedule);
+            }
+            useSessionForSpecificMapping(
+                    resolvedTenantId, targetActive.getId(), consultantId, clientId, schedule);
+            deducted++;
+        }
+        log.info("추가 패키지 일정 재귀속·차감: sourceMappingId={}, targetMappingId={}, deducted={}",
+                sourceMappingId, targetActive.getId(), deducted);
+        return deducted;
+    }
+
+    /**
      * 가예약에서 이미 회차만 부여된 일정이 결제 후 잔여가 채워지면, 회차 재부여 없이 remaining만 차감한다.
      *
      * @param tenantId 테넌트 ID
@@ -1449,10 +1528,10 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
     }
 
     /**
-     * 가예약 SAME_DAY_CARD 매핑 일정에 회기 차감 없이 sessionSequence를 부여한다.
+     * 결제 대기 회기권 매핑 일정에 회기 차감 없이 sessionSequence를 부여한다.
      *
      * @param schedule 대상 일정
-     * @param mapping SAME_DAY_CARD PENDING_PAYMENT 매핑
+     * @param mapping 결제 대기 회기권 매핑
      * @param persist true이면 repository save
      * @return 새로 부여했으면 true
      */
@@ -1478,7 +1557,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
     }
 
     /**
-     * 가예약 회차 부여 대상인지 — PENDING_PAYMENT + SAME_DAY_CARD + 회차 없음.
+     * 차감 없는 회차 부여 대상인지 — MappingPaymentScheduleGate#allowsProvisionalSequenceWithoutDeduction + 회차 없음.
      *
      * @param schedule 일정
      * @param mapping 매핑
@@ -1491,7 +1570,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         if (schedule.getSessionSequence() != null) {
             return false;
         }
-        if (!ProvisionalConsultationLogSession.isSameDayCardPendingPayment(mapping)) {
+        if (!ProvisionalConsultationLogSession.isProvisionalWithoutDeduction(mapping)) {
             return false;
         }
         return isConsultationScheduleForSessionDeduction(schedule);
@@ -1691,7 +1770,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
     }
 
     /**
-     * 결제 대기 매핑에 묶인 일정을 확정·점유 전환하지 않는다.
+     * {@link MappingPaymentScheduleGate#allowsScheduleConfirm} 이 거절하는 일정의 확정·점유 전환을 막는다.
      * 취소·가예약 유지·이미 같은 상태 재저장은 막지 않는다.
      *
      * @param schedule 저장 전 일정
@@ -1711,12 +1790,13 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         }
         if (!scheduleConfirmAllowed(schedule)) {
             throw new IllegalStateException(
-                    ScheduleServiceUserFacingMessages.MSG_UNPAID_PENDING_SCHEDULE_CONFIRM_DENIED);
+                    ScheduleServiceUserFacingMessages.MSG_TENTATIVE_WITHOUT_MAPPING_CONFIRM_DENIED);
         }
     }
 
     /**
      * 일정에 묶인 매핑이 확정을 허용하는지. 매핑이 없고 가예약 상태이면 거절한다.
+     * 결제 대기 매핑의 확정은 허용하며, 회기 차감은 {@link #useSessionForMapping} 의 결제 게이트가 막는다.
      *
      * @param schedule 일정
      * @return 확정해도 되면 true
@@ -1764,7 +1844,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         Schedule schedule = findById(scheduleId);
         if (!scheduleConfirmAllowed(schedule)) {
             throw new IllegalStateException(
-                    ScheduleServiceUserFacingMessages.MSG_UNPAID_PENDING_SCHEDULE_CONFIRM_DENIED);
+                    ScheduleServiceUserFacingMessages.MSG_TENTATIVE_WITHOUT_MAPPING_CONFIRM_DENIED);
         }
 
         // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
@@ -3346,10 +3426,13 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
     }
 
     /**
-     * 예약 취소 시 매핑 회기 1회 복원. {@code sessionSequence}가 있는 일정만 복원(실제 차감된 회기).
+     * 예약 취소 시 실제로 차감된 회기만 1회 복원한다.
      *
-     * <p>복원 성공 시에만 해당 일정의 {@code sessionSequence}를 해제한다.
-     * 다른 일정·COMPLETED 회차·전면 재부여는 수행하지 않는다.</p>
+     * <p>차감 판정은 일정이 라벨된 매핑에서 {@code usedSessions &gt;= sessionSequence} 이고
+     * 그 매핑이 회기 차감 대상일 때다. 차감 없이 붙은 회차(가예약·추가 패키지 행)는
+     * 회차를 해제만 하고 잔여를 올리지 않는다. 라벨된 매핑이 있으면 다른 ACTIVE로
+     * 원복을 넘기지 않는다. 복원 또는 회차 해제에 성공한 일정의 {@code sessionSequence}만
+     * 비워 재취소가 한 번 더 원복하지 않게 한다.</p>
      */
     private void restoreSessionForMappingIfDeducted(Schedule schedule) {
         if (schedule == null || schedule.getSessionSequence() == null) {
@@ -3369,32 +3452,86 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         }
         Integer restoredSequence = schedule.getSessionSequence();
         try {
-            Optional<ConsultantClientMapping> mappingOpt = resolveMappingForSessionRestore(
+            ConsultantClientMapping mapping = resolveMappingForConsumedSessionRestore(
                     tenantId, schedule, consultantId, clientId);
-            if (mappingOpt.isEmpty()) {
+            if (mapping == null) {
                 log.warn("⚠️ 회기 복원 대상 매핑 없음: scheduleId={}, consultantId={}, clientId={}",
                         schedule.getId(), consultantId, clientId);
                 return;
             }
-            ConsultantClientMapping mapping = mappingOpt.get();
-            if (mapping.getStatus() == MappingStatus.PENDING_PAYMENT
-                    && isSameDayCardPaymentTiming(mapping)) {
-                schedule.setSessionSequence(null);
-                scheduleRepository.save(schedule);
+            if (MappingPaymentScheduleGate.blocksSessionConsumeFallback(
+                    mapping.getStatus(), mapping.getPaymentTiming())) {
+                clearScheduleSessionSequence(schedule);
                 log.info("가예약 회차 해제(잔여 복원 없음): scheduleId={}, mappingId={}, remaining={}",
                         schedule.getId(), mapping.getId(), mapping.getRemainingSessions());
                 return;
             }
+            if (!scheduleConsumedSessionOnMapping(mapping, schedule)) {
+                if (schedule.getMappingId() != null) {
+                    clearScheduleSessionSequence(schedule);
+                    log.info("회기 미차감 일정 취소 — 원복 없음: scheduleId={}, mappingId={}, sequence={}, used={}",
+                            schedule.getId(), mapping.getId(), restoredSequence, mapping.getUsedSessions());
+                }
+                return;
+            }
             mapping.restoreSession();
             mappingRepository.save(mapping);
-            // A-lite: 복원 성공한 해당 스케줄만 sessionSequence 해제 (전면 재부여 금지)
-            schedule.setSessionSequence(null);
-            scheduleRepository.save(schedule);
+            clearScheduleSessionSequence(schedule);
             log.info("✅ 예약 취소로 회기 1회 복원: scheduleId={}, mappingId={}, clearedSessionSequence={}, 남은 회기={}",
                     schedule.getId(), mapping.getId(), restoredSequence, mapping.getRemainingSessions());
         } catch (Exception e) {
             log.warn("회기 복원 처리 실패(취소는 계속): scheduleId={}, {}", schedule.getId(), e.getMessage(), e);
         }
+    }
+
+    /**
+     * 이 일정이 해당 매핑에서 회기를 실제로 소비했는지.
+     *
+     * <p>차감 경로의 멱등 가드({@code usedSessions &gt;= sessionSequence})와 같은 기준이다.
+     * 회기 차감 대상이 아닌 매핑(종료·결제 대기)은 소비로 보지 않는다.</p>
+     *
+     * @param mapping 일정에 라벨된 매핑
+     * @param schedule 회차가 있는 일정
+     * @return 소비했으면 true
+     */
+    private boolean scheduleConsumedSessionOnMapping(ConsultantClientMapping mapping, Schedule schedule) {
+        if (mapping == null || schedule == null || schedule.getSessionSequence() == null) {
+            return false;
+        }
+        if (!MappingPaymentScheduleGate.allowsSessionConsume(
+                mapping.getStatus(), mapping.getPaymentTiming())) {
+            return false;
+        }
+        int used = mapping.getUsedSessions() == null ? 0 : mapping.getUsedSessions();
+        return used > 0 && used >= schedule.getSessionSequence();
+    }
+
+    /**
+     * 원복 대상 매핑. 일정에 mappingId가 있으면 그 행만 보고 다른 ACTIVE로 넘기지 않는다.
+     * mappingId가 없는 과거 일정만 최신 ACTIVE/소진 매핑으로 폴백한다.
+     *
+     * @param tenantId 테넌트 ID
+     * @param schedule 취소 일정
+     * @param consultantId 상담사 ID
+     * @param clientId 내담자 ID
+     * @return 원복 후보 매핑, 없으면 null
+     */
+    private ConsultantClientMapping resolveMappingForConsumedSessionRestore(
+            String tenantId, Schedule schedule, Long consultantId, Long clientId) {
+        if (schedule.getMappingId() != null) {
+            return mappingRepository.findByTenantIdAndId(tenantId, schedule.getMappingId()).orElse(null);
+        }
+        return resolveMappingForSessionRestore(tenantId, schedule, consultantId, clientId).orElse(null);
+    }
+
+    /**
+     * 취소된 일정의 회차만 해제한다. 다른 일정의 순번은 바꾸지 않는다.
+     *
+     * @param schedule 대상 일정
+     */
+    private void clearScheduleSessionSequence(Schedule schedule) {
+        schedule.setSessionSequence(null);
+        scheduleRepository.save(schedule);
     }
 
     /**
@@ -3612,6 +3749,11 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
                 ConsultantClientMapping mapping = byId.get();
                 if (mapping.getStatus() == ConsultantClientMapping.MappingStatus.ACTIVE
                         || mapping.getStatus() == ConsultantClientMapping.MappingStatus.SESSIONS_EXHAUSTED) {
+                    return byId;
+                }
+                // 결제 대기 매핑의 회차는 차감 없이 붙은 것이라 다른 결제 매핑으로 복원을 넘기지 않는다.
+                if (MappingPaymentScheduleGate.blocksSessionConsumeFallback(
+                        mapping.getStatus(), mapping.getPaymentTiming())) {
                     return byId;
                 }
                 log.warn("일정 mappingId 매핑이 ACTIVE/SESSIONS_EXHAUSTED 아님 — fallback: scheduleId={}, mappingId={}, status={}",

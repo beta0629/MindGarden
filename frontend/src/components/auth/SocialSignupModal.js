@@ -393,7 +393,7 @@ const SocialSignupModal = ({
         <div className="social-signup-modal">
           <section
             className="social-signup-modal__provider"
-            aria-label={toDisplayString(t('auth:SocialSignupModal.t_58fd029d'))}
+            aria-label={toDisplayString(t('auth:SocialSignupModal.t_58fd029d', { providerLabel }))}
           >
             <span
               className="social-signup-modal__provider-badge"
@@ -406,7 +406,7 @@ const SocialSignupModal = ({
             </span>
             <span className="social-signup-modal__provider-name">
               {toDisplayString(
-                t('auth:SocialSignupModal.t_3bfa55ba')
+                t('auth:SocialSignupModal.t_3bfa55ba', { providerLabel, providerAction })
               )}
             </span>
           </section>

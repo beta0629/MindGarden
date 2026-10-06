@@ -31,6 +31,7 @@ import com.coresolution.consultation.constant.ClientRegistrationConstants;
 import com.coresolution.consultation.constant.InstitutionLinkConstants;
 import com.coresolution.consultation.constant.MappingStatusConstants;
 import com.coresolution.consultation.constant.PaymentTimingConstants;
+import com.coresolution.consultation.constant.ScheduleServiceUserFacingMessages;
 import com.coresolution.consultation.constant.ScheduleStatus;
 import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.constant.admin.AdminServiceUserFacingMessages;
@@ -121,6 +122,7 @@ import com.coresolution.consultation.constant.LifecycleState;
 import com.coresolution.consultation.dto.lifecycle.Actor;
 import com.coresolution.consultation.service.UserLifecycleService;
 import com.coresolution.consultation.service.UserService;
+import com.coresolution.consultation.service.support.ConsultationDepositIncomeLedger;
 import com.coresolution.consultation.service.support.DeferredExternalCalls;
 import com.coresolution.consultation.dto.PaymentSource;
 import com.coresolution.consultation.entity.Payment;
@@ -1087,61 +1089,13 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         mapping.setPaymentAmount(paymentAmount);
         
         ConsultantClientMapping savedMapping = mappingRepository.save(mapping);
-        
-        try {
-            boolean isAdditionalMapping = isAdditionalPackageMappingNotes(savedMapping.getNotes());
-            if (isAdditionalMapping) {
-                log.info("🔄 추가 매칭 입금 확인 - 추가 회기에 대한 ERP 거래 생성 (별도 트랜잭션)");
-                String mappingTenantId = getTenantIdFromMapping(savedMapping);
-                if (mappingTenantId == null) {
-                    mappingTenantId = getTenantIdOrNull();
-                }
-                final String txTenantId = mappingTenantId;
-                runInNewTransaction(txTenantId, () -> createAdditionalSessionIncomeTransaction(savedMapping, paymentAmount));
-            } else if (isShopOrderLinkedMapping(savedMapping)) {
-                // Path B/쇼핑: ensureConsultationDepositIncome 이 유일한 INCOME writer
-                log.info(
-                        "🛒 쇼핑 매핑 confirmPayment — INCOME 억제(ensure 전용): MappingID={}, paymentAmount={}",
-                        mappingId,
-                        paymentAmount);
-            } else {
-                log.info("🆕 신규 매칭 입금 확인 - 전체 패키지에 대한 ERP 거래 생성 (별도 트랜잭션)");
-                createConsultationIncomeTransactionAsync(savedMapping);
-            }
-            log.info("💚 매칭 입금 확인으로 인한 상담료 수입 거래 자동 생성 완료: MappingID={}, PaymentAmount={}, 추가매칭={}",
-                mappingId, paymentAmount, isAdditionalMapping);
-        } catch (Exception e) {
-            log.error("상담료 수입 거래 자동 생성 실패: {}", e.getMessage(), e);
-        }
-        // ERP 수입 등록은 입금 확인(confirm-deposit)에서만 수행. 결제 확인(confirm-payment)에서는 호출하지 않음.
+        // 상담료 INCOME 은 입금 확인(confirmDeposit) 트랜잭션에서만 쓴다. 여기서 쓰면 입금 확인 실패·취소 후에도 남는다.
 
         // 컨트롤러에서 mapping.getConsultant()/getClient() 접근 시 no Session 방지: 같은 트랜잭션 내에서 lazy 초기화
         Hibernate.initialize(savedMapping.getConsultant());
         Hibernate.initialize(savedMapping.getClient());
         notifyMappingSettlement(savedMapping, MappingSettlementScenario.PAYMENT_CONFIRMED);
         return savedMapping;
-    }
-
-     /**
-     * 상담료 수입 거래 자동 생성 (중앙화된 금액 관리 사용)
-     * runInNewTransaction(REQUIRES_NEW)로 별도 트랜잭션에서 실행되며, 실패해도 부모 트랜잭션이
-     * rollback-only로 마크되지 않음. rollback-only 발생 시 내부 서비스 예외가 원인.
-     */
-    public void createConsultationIncomeTransactionAsync(ConsultantClientMapping mapping) {
-        String tenantId = getTenantIdFromMapping(mapping);
-        if (tenantId == null || tenantId.isEmpty()) {
-            tenantId = TenantContextHolder.getTenantId();
-        }
-        if (tenantId == null || tenantId.isEmpty()) {
-            throw new IllegalStateException(String.format(
-                    AdminServiceUserFacingMessages.MSG_TENANT_REQUIRED_CONSULTATION_INCOME_FMT, mapping.getId()));
-        }
-        final String tenantIdForCallback = tenantId;
-        try {
-            runInNewTransaction(tenantIdForCallback, () -> createConsultationIncomeTransaction(mapping));
-        } catch (Exception e) {
-            log.error("💰 [비동기] 상담료 수입 거래 트랜잭션 실행 실패: MappingID={}, Error: {}", mapping.getId(), e.getMessage(), e);
-        }
     }
 
     /**
@@ -1486,7 +1440,6 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
     /**
      * Path B PAID 후 상담 매핑 입금 INCOME 존재·금액 SSOT 보장.
      * <p>
-     * {@link #createConsultationIncomeTransactionAsync} 는 예외를 삼키므로 사용하지 않는다.
      * 쓰기는 기존 {@link #createConsultationIncomeTransaction} SSOT 를
      * {@link #runInNewTransaction}({@code REQUIRES_NEW}) 안에서 호출한다.
      * posted INCOME 이 있어도 주문 PAID SSOT(cashDue/PG APPROVED 우선)와 합계가 다르거나,
@@ -1651,8 +1604,11 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 mapping.getId());
         final Long expectedForTx = expectedAmount;
         runEnsureWrite(tenantIdForTx, isolateInNewTx, () -> {
-            createConsultationIncomeTransaction(mapping, true);
-            requireStrictlyAttributedDepositIncome(tenantIdForTx, mapping, expectedForTx);
+            boolean verifyInThisPersistenceContext =
+                    createConsultationIncomeTransaction(mapping, true);
+            if (verifyInThisPersistenceContext) {
+                requireStrictlyAttributedDepositIncome(tenantIdForTx, mapping, expectedForTx);
+            }
         });
         log.info(
                 "✅ Path B PAID 입금 INCOME 보장 완료: tenantId={}, mappingId={}, expectedSsot={}",
@@ -1817,7 +1773,11 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             ConsultantClientMapping mapping, String tenantId, Long expectedAmount) {
         Long expected = expectedAmount != null ? expectedAmount : resolveConsultationIncomeAmount(mapping);
         if (expected == null || expected <= 0L) {
-            createConsultationIncomeTransaction(mapping, true);
+            boolean verifyInThisPersistenceContext =
+                    createConsultationIncomeTransaction(mapping, true);
+            if (!verifyInThisPersistenceContext) {
+                return;
+            }
             Long afterAmount = resolveConsultationIncomeAmount(mapping);
             if (afterAmount == null || afterAmount <= 0L) {
                 throw new IllegalStateException(String.format(
@@ -1848,8 +1808,11 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             requireStrictlyAttributedDepositIncome(tenantId, mapping, expected);
             return;
         }
-        createConsultationIncomeTransaction(mapping, true);
-        requireStrictlyAttributedDepositIncome(tenantId, mapping, expected);
+        boolean verifyInThisPersistenceContext =
+                createConsultationIncomeTransaction(mapping, true);
+        if (verifyInThisPersistenceContext) {
+            requireStrictlyAttributedDepositIncome(tenantId, mapping, expected);
+        }
     }
 
     /**
@@ -3093,24 +3056,23 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 .orElse(BigDecimal.ZERO);
     }
 
-    private void createConsultationIncomeTransaction(ConsultantClientMapping mapping) {
-        createConsultationIncomeTransaction(mapping, false);
-    }
-
     /**
      * 상담료 입금 INCOME SSOT 작성.
      * <p>
-     * {@code throwOnSkip=false}(confirmDeposit 비동기 등): 금액 불가·중복 검사 예외 시 조용히 return.
-     * {@code throwOnSkip=true}({@link #ensureConsultationDepositIncome}·환불 수리): 금액 불가·중복 검사 예외는
-     * 재전파. 이미 중복 INCOME 이 있으면 멱등 정상 종료.
+     * {@code throwOnSkip=false}: 금액 불가·중복 검사 예외 시 조용히 return.
+     * {@code throwOnSkip=true}(입금 확인·{@link #ensureConsultationDepositIncome}·환불 수리): 금액 불가·중복 검사
+     * 예외는 재전파. 이미 중복 INCOME 이 있으면 멱등 정상 종료. 현재 호출처는 모두 true 다.
      * </p>
      *
      * @param mapping 상담 매핑
      * @param throwOnSkip 스킵 조건에서 예외를 던질지
+     * @return 이 영속성 컨텍스트에서 사후 조회가 안전하면 true.
+     *         주문 스코프 unique 레이스로 승자 행을 다른 트랜잭션에서 확인했으면 false
+     *         (실패한 insert 가 남은 세션을 조회하면 auto-flush {@code AssertionFailure} 가 난다).
      * @author MindGarden
      * @since 2026-09-19
      */
-    private void createConsultationIncomeTransaction(ConsultantClientMapping mapping, boolean throwOnSkip) {
+    private boolean createConsultationIncomeTransaction(ConsultantClientMapping mapping, boolean throwOnSkip) {
         log.info("💰 [중앙화] 상담료 수입 거래 생성 시작: MappingID={}", mapping.getId());
 
         boolean institutionLinkPrepaid = isInstitutionLinkPaymentTiming(mapping);
@@ -3136,7 +3098,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                                 FinancialTransaction.TransactionType.INCOME)) {
                     log.warn("🚫 타기관 선납 중복 거래 방지: MappingID={} 수입 거래가 이미 존재합니다. 정상 종료합니다.",
                             mapping.getId());
-                    return;
+                    return true;
                 }
             } else if (tenantIdForDup != null && !tenantIdForDup.isEmpty()) {
                 ShopOrderIncomeClaim claimForDup = DEPOSIT_INCOME_CLAIM.get();
@@ -3151,7 +3113,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                                 "🚫 중복 거래 방지(현재 주문 귀속): MappingID={} orderPublicId={} posted INCOME 존재. 정상 종료.",
                                 mapping.getId(),
                                 claimForDup.getOrderPublicId());
-                        return;
+                        return true;
                     }
                     Long shopOrderId = resolveShopOrderEntityIdForPathBIncome(
                             tenantIdForDup, mapping.getId());
@@ -3170,7 +3132,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                                 tenantIdForDup,
                                 mapping.getId(),
                                 orderPublicId);
-                        return;
+                        return true;
                     }
                     relatedEntityIdForCreate = shopOrderId;
                     relatedEntityTypeForCreate =
@@ -3185,7 +3147,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                                 "🚫 중복 거래 방지(주문 스코프): MappingID={} shopOrderId={} SHOP_ORDER_CONSULTATION INCOME 존재. 정상 종료.",
                                 mapping.getId(),
                                 shopOrderId);
-                        return;
+                        return true;
                     }
                     log.info(
                             "Path B PAID ERP: 주문 스코프 INCOME 기표: tenantId={}, mappingId={}, shopOrderId={}, orderPublicId={}",
@@ -3193,10 +3155,17 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                             mapping.getId(),
                             shopOrderId,
                             claimForDup.getOrderPublicId());
-                } else if (hasPostedConsultationDepositIncome(tenantIdForDup, mapping.getId())) {
+                } else if (ConsultationDepositIncomeLedger.hasPostedMappingSlotIncome(
+                        financialTransactionRepository, tenantIdForDup, mapping.getId())) {
+                    // 본전표·추가 회기 슬롯. 카테고리·금액이 다른 옛 결제확인 행도 여기 걸린다.
                     log.warn("🚫 중복 거래 방지: MappingID={}에 대한 posted 수입 거래가 이미 존재합니다. 정상 종료합니다.",
                             mapping.getId());
-                    return; // posted 중복은 정상적인 상황이므로 예외 없이 종료 (CANCELLED 는 재생성 허용)
+                    return true;
+                } else if (hasPostedConsultationDepositIncome(tenantIdForDup, mapping.getId())) {
+                    // 주문 스코프(SHOP_ORDER_CONSULTATION) posted INCOME. 매핑 슬롯 키와 다르다.
+                    log.warn("🚫 중복 거래 방지: MappingID={}에 대한 주문 스코프 posted 수입 거래가 이미 존재합니다. 정상 종료합니다.",
+                            mapping.getId());
+                    return true;
                 }
             }
         } catch (IllegalStateException e) {
@@ -3208,7 +3177,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                         "중복 거래 확인 중 오류: MappingID=" + mapping.getId() + ", error=" + e.getMessage(),
                         e);
             }
-            return; // 예외 발생 시에도 정상 종료하여 부모 트랜잭션에 영향을 주지 않음
+            return true; // 예외 발생 시에도 정상 종료하여 부모 트랜잭션에 영향을 주지 않음
         }
         
         Long accurateAmount = resolveConsultationIncomeAmount(mapping);
@@ -3219,7 +3188,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 throw new IllegalStateException(
                         "유효한 거래 금액을 결정할 수 없습니다: MappingID=" + mapping.getId());
             }
-            return;
+            return true;
         }
         
         AmountManagementService.AmountConsistencyResult consistency = 
@@ -3276,7 +3245,8 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         try {
             response = financialTransactionService.createTransaction(request, null);
         } catch (DataIntegrityViolationException div) {
-            // uk_financial_transactions_dedupe — 이메일 오매핑 금지, 환불/fulfill 전용 메시지로 재포장
+            // 실패한 insert 가 남은 세션을 조회하면 auto-flush AssertionFailure(null id).
+            // 주문 스코프만 새 트랜잭션에서 승자 행을 보고, 보이면 이 세션은 더 조회하지 않는다.
             log.warn(
                     "Path B PAID ERP: INCOME create unique 충돌 MappingID={} relatedEntityId={} relatedEntityType={} root={}",
                     mapping.getId(),
@@ -3285,80 +3255,31 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                     NestedExceptionUtils.getMostSpecificCause(div).getMessage());
             if (!institutionLinkPrepaid
                     && FinancialTransactionConstants.RELATED_ENTITY_SHOP_ORDER_CONSULTATION
-                            .equals(relatedEntityTypeForCreate)) {
-                // 주문 스코프 키 충돌 — 동일 주문 재시도 레이스. 슬롯 전환·heal·soft-delete 금지.
-                // 상대 커밋이 이미 주문 스코프 INCOME 을 남겼으면 멱등 성공.
-                List<FinancialTransaction> racedAttributed =
-                        findAttributedPostedDepositIncomeForCurrentOrder(
-                                tenantId, mapping.getId(), mapping);
-                boolean orderScopedExists = !racedAttributed.isEmpty();
-                if (!orderScopedExists
-                        && relatedEntityIdForCreate != null
-                        && StringUtils.hasText(tenantId)) {
-                    orderScopedExists = financialTransactionRepository
-                            .existsByTenantIdAndRelatedEntityIdAndRelatedEntityTypeAndTransactionTypeAndIsDeletedFalse(
-                                    tenantId,
-                                    relatedEntityIdForCreate,
-                                    FinancialTransactionConstants.RELATED_ENTITY_SHOP_ORDER_CONSULTATION,
-                                    FinancialTransaction.TransactionType.INCOME);
-                }
-                if (orderScopedExists) {
-                    log.warn(
-                            "Path B PAID ERP: 주문 스코프 INCOME UK 레이스 — 기존 행 확인, 멱등 성공: "
-                                    + "MappingID={} shopOrderId={} attributedCount={}",
-                            mapping.getId(),
-                            relatedEntityIdForCreate,
-                            racedAttributed.size());
-                    return;
-                }
-                if (throwOnSkip) {
-                    throw new IllegalStateException(String.format(
-                            AdminServiceUserFacingMessages.MSG_SHOP_INCOME_ORDER_SCOPED_UK_RACE_RETRY_FMT,
-                            mapping.getId(),
-                            relatedEntityIdForCreate), div);
-                }
-                return;
-            } else if (!institutionLinkPrepaid
-                    && FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING
-                            .equals(relatedEntityTypeForCreate)) {
-                // 비-Path B 본전표 레이스 — ADDITIONAL 1회 재시도
-                String additionalType =
-                        FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING_ADDITIONAL;
-                boolean additionalFree = !financialTransactionRepository
-                        .existsByTenantIdAndRelatedEntityIdAndRelatedEntityTypeAndTransactionTypeAndIsDeletedFalse(
-                                tenantId,
-                                mapping.getId(),
-                                additionalType,
-                                FinancialTransaction.TransactionType.INCOME);
-                if (additionalFree) {
-                    request.setRelatedEntityType(additionalType);
-                    request.setRelatedEntityId(mapping.getId());
-                    try {
-                        response = financialTransactionService.createTransaction(request, null);
-                        relatedEntityTypeForCreate = additionalType;
-                        relatedEntityIdForCreate = mapping.getId();
-                    } catch (DataIntegrityViolationException div2) {
-                        throw new IllegalStateException(String.format(
-                                AdminServiceUserFacingMessages.MSG_SHOP_INCOME_UNIQUE_CONFLICT_FMT,
-                                mapping.getId(),
-                                additionalType), div2);
-                    }
-                } else if (throwOnSkip) {
-                    throw new IllegalStateException(String.format(
-                            AdminServiceUserFacingMessages.MSG_SHOP_INCOME_UNIQUE_SLOTS_FULL_FMT,
-                            tenantId,
-                            mapping.getId()), div);
-                } else {
-                    return;
-                }
-            } else if (throwOnSkip) {
-                throw new IllegalStateException(String.format(
-                        AdminServiceUserFacingMessages.MSG_SHOP_INCOME_UNIQUE_CONFLICT_FMT,
+                            .equals(relatedEntityTypeForCreate)
+                    && shopOrderConsultationIncomeExistsInNewTransaction(
+                            tenantId, relatedEntityIdForCreate)) {
+                log.warn(
+                        "Path B PAID ERP: 주문 스코프 INCOME UK 레이스 — 다른 트랜잭션의 기존 행 확인, 멱등 성공: "
+                                + "MappingID={} shopOrderId={}",
                         mapping.getId(),
-                        relatedEntityTypeForCreate), div);
-            } else {
-                return;
+                        relatedEntityIdForCreate);
+                return false;
             }
+            if (!throwOnSkip) {
+                return true;
+            }
+            if (!institutionLinkPrepaid
+                    && FinancialTransactionConstants.RELATED_ENTITY_SHOP_ORDER_CONSULTATION
+                            .equals(relatedEntityTypeForCreate)) {
+                throw new IllegalStateException(String.format(
+                        AdminServiceUserFacingMessages.MSG_SHOP_INCOME_ORDER_SCOPED_UK_RACE_RETRY_FMT,
+                        mapping.getId(),
+                        relatedEntityIdForCreate), div);
+            }
+            throw new IllegalStateException(String.format(
+                    AdminServiceUserFacingMessages.MSG_SHOP_INCOME_UNIQUE_CONFLICT_FMT,
+                    mapping.getId(),
+                    relatedEntityTypeForCreate), div);
         }
         if (response == null || response.getId() == null) {
             if (throwOnSkip) {
@@ -3367,7 +3288,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                         mapping.getId()));
             }
             log.error("❌ createTransaction 응답 없음: MappingID={}", mapping.getId());
-            return;
+            return true;
         }
 
         try {
@@ -3384,7 +3305,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                         "❌ 생성 INCOME 재조회 실패: MappingID={}, txId={}",
                         mapping.getId(),
                         response.getId());
-                return;
+                return true;
             }
             transaction.complete(); // 완료 상태로 변경
             transaction.setApprovedAt(java.time.LocalDateTime.now());
@@ -3412,6 +3333,45 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         
         log.info("✅ [중앙화] 상담료 수입 거래 생성 완료: MappingID={}, AccurateAmount={}원, institutionLinkPrepaid={}, relatedEntityId={}, relatedEntityType={}",
             mapping.getId(), accurateAmount, institutionLinkPrepaid, relatedEntityIdForCreate, relatedEntityTypeForCreate);
+        return true;
+    }
+
+    /**
+     * 주문 스코프 INCOME unique 레이스의 승자 행을 현재 영속성 컨텍스트 밖에서 확인한다.
+     *
+     * @param tenantId 테넌트 ID
+     * @param shopOrderId shop_client_orders.id
+     * @return 삭제되지 않은 SHOP_ORDER_CONSULTATION INCOME 이 있으면 true
+     */
+    private boolean shopOrderConsultationIncomeExistsInNewTransaction(String tenantId, Long shopOrderId) {
+        if (!StringUtils.hasText(tenantId) || shopOrderId == null || transactionManager == null) {
+            return false;
+        }
+        org.springframework.transaction.support.TransactionTemplate template =
+                new org.springframework.transaction.support.TransactionTemplate(transactionManager);
+        template.setPropagationBehavior(
+                org.springframework.transaction.TransactionDefinition.PROPAGATION_REQUIRES_NEW);
+        template.setReadOnly(true);
+        try {
+            Boolean exists = template.execute(status -> financialTransactionRepository
+                    .existsByTenantIdAndRelatedEntityIdAndRelatedEntityTypeAndTransactionTypeAndIsDeletedFalse(
+                            tenantId,
+                            shopOrderId,
+                            FinancialTransactionConstants.RELATED_ENTITY_SHOP_ORDER_CONSULTATION,
+                            FinancialTransaction.TransactionType.INCOME));
+            return Boolean.TRUE.equals(exists);
+        } catch (org.springframework.transaction.TransactionSuspensionNotSupportedException ex) {
+            // JpaTransactionManager 는 일시정지를 지원한다. 미지원 매니저는 별도 세션을 열 수 없다.
+            log.warn(
+                    "주문 스코프 INCOME 승자 확인을 현재 호출에서 수행합니다(트랜잭션 일시정지 미지원): shopOrderId={}",
+                    shopOrderId);
+            return financialTransactionRepository
+                    .existsByTenantIdAndRelatedEntityIdAndRelatedEntityTypeAndTransactionTypeAndIsDeletedFalse(
+                            tenantId,
+                            shopOrderId,
+                            FinancialTransactionConstants.RELATED_ENTITY_SHOP_ORDER_CONSULTATION,
+                            FinancialTransaction.TransactionType.INCOME);
+        }
     }
 
     /**
@@ -3545,7 +3505,13 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
     }
     
      /**
-     * 추가 회기 수입 거래 자동 생성 (추가 매칭용)
+     * 추가 회기 수입 거래 생성 (추가 매칭 입금 확인용). 입금 확인 트랜잭션에 참여하며,
+     * 중복 확인·기록·완료 처리 중 실패는 예외로 올려 입금 확인 전체를 롤백시킨다.
+     * 이미 같은 추가 회기 INCOME 이 있으면 멱등 정상 종료.
+     *
+     * @param mapping 추가 매칭
+     * @param additionalPaymentAmount 추가 결제 금액
+     * @throws IllegalStateException 테넌트 미확인·중복 확인 실패·기록 응답 없음·완료 처리 실패
      */
     private void createAdditionalSessionIncomeTransaction(ConsultantClientMapping mapping, Long additionalPaymentAmount) {
         log.info("💰 [중앙화] 추가 회기 수입 거래 생성 시작: MappingID={}, AdditionalAmount={}",
@@ -3554,32 +3520,34 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         Long transactionAmount = additionalPaymentAmount != null ? additionalPaymentAmount : 0L;
 
         if (transactionAmount <= 0) {
-            log.warn("❌ 유효한 추가 결제 금액이 없습니다: MappingID={}", mapping.getId());
-            return;
+            throw new IllegalStateException(String.format(
+                    AdminServiceUserFacingMessages.MSG_ADDITIONAL_INCOME_AMOUNT_MISSING_FMT, mapping.getId()));
         }
-
-        try {
-            String tenantId = TenantContextHolder.getTenantId();
-            boolean exists = financialTransactionRepository
-                .existsByTenantIdAndRelatedEntityIdAndRelatedEntityTypeAndTransactionTypeAndIsDeletedFalse(
-                    tenantId, mapping.getId(),
-                    FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING_ADDITIONAL,
-                    FinancialTransaction.TransactionType.INCOME);
-            if (exists) {
-                log.warn("🚫 중복 거래 방지: MappingID={}에 대한 추가 회기 수입 거래가 이미 존재합니다.", mapping.getId());
-                return;
-            }
-        } catch (Exception e) {
-            log.error("❌ 추가 회기 중복 거래 확인 중 오류: MappingID={}, Error={}", mapping.getId(), e.getMessage(), e);
-            return;
-        }
-
-        int additionalSessions = extractAdditionalSessionsFromNotes(mapping.getNotes());
 
         String tenantIdForAdditional = getTenantIdFromMapping(mapping);
         if (tenantIdForAdditional == null || tenantIdForAdditional.isEmpty()) {
             tenantIdForAdditional = TenantContextHolder.getTenantId();
         }
+        if (tenantIdForAdditional == null || tenantIdForAdditional.isEmpty()) {
+            throw new IllegalStateException(String.format(
+                    AdminServiceUserFacingMessages.MSG_TENANT_REQUIRED_CONSULTATION_INCOME_FMT, mapping.getId()));
+        }
+
+        boolean exists;
+        try {
+            exists = ConsultationDepositIncomeLedger.hasPostedMappingSlotIncome(
+                    financialTransactionRepository, tenantIdForAdditional, mapping.getId());
+        } catch (RuntimeException e) {
+            throw new IllegalStateException(String.format(
+                    AdminServiceUserFacingMessages.MSG_ADDITIONAL_INCOME_DUP_CHECK_FAILED_FMT, mapping.getId()), e);
+        }
+        if (exists) {
+            log.warn("🚫 중복 거래 방지: MappingID={}에 대한 추가 회기 수입 거래가 이미 존재합니다.", mapping.getId());
+            return;
+        }
+
+        int additionalSessions = extractAdditionalSessionsFromNotes(mapping.getNotes());
+
         BigDecimal withholdingAdditional = resolveFreelanceWithholdingTaxAmount(tenantIdForAdditional, mapping,
                 transactionAmount);
         BigDecimal grossAdditionalBd = BigDecimal.valueOf(transactionAmount);
@@ -3627,24 +3595,21 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         
         com.coresolution.consultation.dto.FinancialTransactionResponse response = 
             financialTransactionService.createTransaction(request, null);
-        
-        try {
-            String ftTenantIdForReload = getTenantIdFromMapping(mapping);
-            if (ftTenantIdForReload == null || ftTenantIdForReload.isEmpty()) {
-                ftTenantIdForReload = TenantContextHolder.getTenantId();
-            }
-            FinancialTransaction transaction = (ftTenantIdForReload != null && !ftTenantIdForReload.isEmpty() && response.getId() != null)
-                ? financialTransactionRepository.findByTenantIdAndId(ftTenantIdForReload, response.getId()).orElse(null)
-                : null;
-            if (transaction != null) {
-                transaction.complete(); // 완료 상태로 변경
-                transaction.setApprovedAt(java.time.LocalDateTime.now());
-                financialTransactionRepository.save(transaction);
-                log.info("💚 추가 회기 거래 즉시 완료 처리: TransactionID={}", response.getId());
-            }
-        } catch (Exception e) {
-            log.error("추가 회기 거래 완료 처리 실패: {}", e.getMessage(), e);
+        if (response == null || response.getId() == null) {
+            throw new IllegalStateException(String.format(
+                    AdminServiceUserFacingMessages.MSG_ADDITIONAL_INCOME_CREATE_RESPONSE_MISSING_FMT,
+                    mapping.getId()));
         }
+
+        FinancialTransaction transaction = financialTransactionRepository
+                .findByTenantIdAndId(tenantIdForAdditional, response.getId())
+                .orElseThrow(() -> new IllegalStateException(String.format(
+                        AdminServiceUserFacingMessages.MSG_ADDITIONAL_INCOME_RELOAD_FAILED_FMT,
+                        mapping.getId(), response.getId())));
+        transaction.complete();
+        transaction.setApprovedAt(java.time.LocalDateTime.now());
+        financialTransactionRepository.save(transaction);
+        log.info("💚 추가 회기 거래 즉시 완료 처리: TransactionID={}", response.getId());
         
         log.info("✅ [중앙화] 추가 회기 수입 거래 생성 완료: MappingID={}, AdditionalAmount={}원, AdditionalSessions={}회", 
             mapping.getId(), transactionAmount, additionalSessions);
@@ -4688,9 +4653,9 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
      * n회 패키지: 잔여 n → 차감 → 잔여 n-1 → approveMapping 호출 후 ACTIVE 도달.
      * 가예약이 없는 경우: 회기 부여만 수행되고 차감은 0회.
      * <p>
-     * 클래스 레벨 {@code @Transactional} 안에서 모두 실행되며, ERP RECEIVABLE 거래는 confirmPayment 내부의
-     * {@code runInNewTransaction(...)} (PROPAGATION_REQUIRES_NEW)로 분리되어 부모 트랜잭션 rollback-only
-     * 마킹을 방지한다. {@code @Version} 낙관적 잠금이 useSession 차감 경합 시 OCC를 자동 적용한다.
+     * 클래스 레벨 {@code @Transactional} 안에서 모두 실행되며, 상담료 INCOME 은 confirmDeposit 이 이 트랜잭션에서
+     * 한 번만 쓴다(어느 단계든 실패하면 회기·INCOME 모두 롤백). {@code @Version} 낙관적 잠금이 useSession 차감
+     * 경합 시 OCC를 자동 적용한다.
      *
      * @param mappingId 대상 매핑 ID (PENDING_PAYMENT 상태여야 함)
      * @param paymentMethod 결제 방식
@@ -4813,8 +4778,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                         mappingId);
 
         try {
-            // Step 1: confirmPayment (paymentStatus → CONFIRMED, status → PAYMENT_CONFIRMED).
-            //   내부에서 ERP RECEIVABLE 거래를 runInNewTransaction(REQUIRES_NEW)로 분리.
+            // Step 1: confirmPayment (상담료 INCOME 은 쓰지 않는다 — Step 2 confirmDeposit 이 이 트랜잭션에서 쓴다).
             confirmPayment(mappingId, paymentMethod, paymentReference, paymentAmount);
 
             // Step 2: confirmDeposit (paymentStatus → APPROVED, status → DEPOSIT_PENDING + 회기 부여).
@@ -4881,8 +4845,9 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
     /**
      * 당일 결제 후 지정 일정에 대해 잔여 회기를 타겟 차감한다.
      * <p>
-     * {@code sameDaySessionScheduleId} 가 null 이면 no-op. 일정을 찾지 못하면 warn 로그만 남기고
-     * 라벨 배치 차감 결과에 의존한다. 이미 used &gt;= sessionSequence 이면
+     * {@code sameDaySessionScheduleId} 가 null 이면 no-op. 지정한 id가 같은 테넌트에 없으면
+     * {@link EntityNotFoundException}(404)으로 결제를 롤백한다. 없는 일정을 건너뛰면
+     * 결제만 성공하고 지정 회기 차감이 사라진다. 이미 used &gt;= sessionSequence 이면
      * {@link ScheduleService#useSessionForSpecificMapping} 내부에서 멱등 skip.
      *
      * @param tenantId 테넌트 ID
@@ -4908,9 +4873,9 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         Optional<Schedule> scheduleOpt =
                 scheduleRepository.findByTenantIdAndId(tenantId, sameDaySessionScheduleId);
         if (scheduleOpt.isEmpty()) {
-            log.warn("sameDaySessionScheduleId rem 차감 skip: 일정 없음. tenantId={}, scheduleId={}, mappingId={}",
+            log.warn("sameDaySessionScheduleId 일정 없음: tenantId={}, scheduleId={}, mappingId={}",
                     tenantId, sameDaySessionScheduleId, mappingId);
-            return;
+            throw new EntityNotFoundException(ScheduleServiceUserFacingMessages.MSG_SCHEDULE_NOT_FOUND);
         }
         Schedule schedule = scheduleOpt.get();
         log.info("sameDaySessionScheduleId rem 타겟 차감: mappingId={}, scheduleId={}, status={}, sessionSequence={}",
@@ -8042,12 +8007,24 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         int refundedSessions = mapping.getRemainingSessions();
         int totalSessions = mapping.getTotalSessions();
         long alreadyPartialRefunded = sumActivePartialRefundAmount(tenantId, id);
-        // 미사용 전액 무효(remaining==total): INCOME 취소 + EXPENSE 환불 스킵 (이중 차감 방지)
-        // 부분 환불(0<remaining<total): 원본 INCOME 유지 + EXPENSE 환불 경로
-        // remaining==0: 이미 소진된 수입은 유지(정상 종료). 결제 void 감지가 어려우면 INCOME 유지
-        // 기존 부분환불 EXPENSE 가 있으면 INCOME 취소 시 부분환불분이 이중 차감되므로 EXPENSE 경로로 처리한다.
-        final boolean unusedFullVoid = totalSessions > 0 && refundedSessions == totalSessions
+        // 입금 확인 전(paymentStatus != APPROVED) 미사용 매칭: 회기가 부여되지 않아 remaining 이 0 이어도 전액 무효.
+        // 남아 있는 posted INCOME 은 취소한다(입금 확인 전 INCOME 은 수입이 아니다).
+        int usedSessions = mapping.getUsedSessions() != null ? mapping.getUsedSessions() : 0;
+        final boolean preDepositVoid = mapping.getPaymentStatus() != ConsultantClientMapping.PaymentStatus.APPROVED
+                && usedSessions == 0
                 && alreadyPartialRefunded <= 0;
+        // 추가 패키지 행은 입금 확인 후에도 회기를 자기 remaining 에 채우지 않는다.
+        // 사용 회기 0 이면 수입을 유지할 소진이 아니므로 전액 무효다.
+        final boolean additionalPackageUnused = isAdditionalPackageMappingNotes(mapping.getNotes())
+                && usedSessions == 0
+                && alreadyPartialRefunded <= 0;
+        // 미사용 전액 무효(remaining==total, 입금 전, 미사용 추가 패키지): INCOME 취소 + EXPENSE 환불 스킵
+        // 부분 환불(0<remaining<total): 원본 INCOME 유지 + EXPENSE 환불 경로
+        // remaining==0 이고 추가 패키지가 아님: 이미 소진된 수입은 유지(정상 종료)
+        // 기존 부분환불 EXPENSE 가 있으면 INCOME 취소 시 부분환불분이 이중 차감되므로 EXPENSE 경로로 처리한다.
+        final boolean unusedFullVoid = preDepositVoid
+                || additionalPackageUnused
+                || (totalSessions > 0 && refundedSessions == totalSessions && alreadyPartialRefunded <= 0);
         long refundAmount = calculateRefundableAmount(mapping.getPackagePrice(), totalSessions,
                 resolveOriginalTotalSessions(mapping), refundedSessions, alreadyPartialRefunded);
         // 환불 전표는 매칭 변경과 같은 트랜잭션에서 기록한다. 기록하지 못하면 매칭 변경까지 롤백(fail-closed).
@@ -9661,9 +9638,8 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             }
             log.info("✅ ERP 환불 데이터 전송 성공: MappingID={}, Amount={}", mapping.getId(), refundAmount);
             if (unusedFullVoid) {
-                int cancelled = financialTransactionService.cancelRelatedPostedIncomeTransactions(
-                        mapping.getId(),
-                        FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING);
+                int cancelled = ConsultationDepositIncomeLedger.cancelPostedMappingSlotIncome(
+                        financialTransactionService, mapping.getId());
                 log.info("🛑 미사용 전액 무효: MappingID={}, CANCELLED INCOME={}건, EXPENSE 환불 스킵",
                         mapping.getId(), cancelled);
                 return;
@@ -12591,6 +12567,9 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         log.info("✅ 추가 패키지 회기 합산: targetActiveId={}, +{}회, packageName 유지={}, total={}, remaining={}",
                 targetActive.getId(), sessionsToAdd, targetPackageNameBefore,
                 targetActive.getTotalSessions(), targetActive.getRemainingSessions());
+
+        scheduleService.reassignConsumingSchedulesOntoTargetAndDeduct(
+                tenantId, additionalMapping.getId(), targetActive);
 
         additionalMapping.setStatus(ConsultantClientMapping.MappingStatus.TERMINATED);
         additionalMapping.setTerminatedAt(LocalDateTime.now());

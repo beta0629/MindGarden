@@ -154,7 +154,12 @@
 }
 
 .integrated-schedule__compact-row-secondary .mg-engagement-type-badge {
-  flex-shrink: 0;
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .integrated-schedule__compact-row-sep {

@@ -12,6 +12,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -97,6 +98,49 @@ class TenantCommonCodeServiceImplTest {
                 && Boolean.TRUE.equals(group.getIsActive())
                 && "전문가유형".equals(group.getKoreanName())));
         verify(codeGroupMetadataRepository).findTenantCodeGroups();
+    }
+
+    @Test
+    @DisplayName("createTenantCode: 요청 테넌트 tenant_id로 저장되고 다른 테넌트 조회에는 없다")
+    void createTenantCode_persistsRequestTenantAndHidesFromOtherTenant() {
+        String owner = "tenant-incheon-counseling-002";
+        String other = "tenant-other";
+        String group = ProfessionalProviderTypeConstants.CODE_GROUP;
+        stubTenantGroupMetadata(group);
+
+        List<CommonCode> store = new ArrayList<>();
+        when(commonCodeRepository.findTenantCodeByGroupAndValue(owner, group, "VERIFY_TEST_THERAPY"))
+            .thenReturn(Optional.empty());
+        when(commonCodeRepository.save(any(CommonCode.class))).thenAnswer(invocation -> {
+            CommonCode saved = invocation.getArgument(0);
+            saved.setId(876L);
+            store.add(saved);
+            return saved;
+        });
+        when(commonCodeRepository.findDeletedTenantCodesByGroup(any(), eq(group))).thenReturn(List.of());
+        when(commonCodeRepository.findTenantCodesByGroup(any(), eq(group))).thenAnswer(invocation -> {
+            String tenantId = invocation.getArgument(0);
+            return store.stream()
+                .filter(row -> tenantId.equals(row.getTenantId()) && group.equals(row.getCodeGroup()))
+                .toList();
+        });
+
+        CommonCodeCreateRequest request = CommonCodeCreateRequest.builder()
+            .codeGroup(group)
+            .codeValue("VERIFY_TEST_THERAPY")
+            .codeLabel("검증치료")
+            .koreanName("검증치료")
+            .sortOrder(100)
+            .isActive(true)
+            .build();
+
+        var response = tenantCommonCodeService.createTenantCode(owner, request);
+
+        assertEquals(876L, response.getId());
+        assertEquals(owner, response.getTenantId());
+        assertEquals(owner, store.get(0).getTenantId());
+        assertEquals(1, tenantCommonCodeService.getTenantCodesByGroup(owner, group).size());
+        assertTrue(tenantCommonCodeService.getTenantCodesByGroup(other, group).isEmpty());
     }
 
     @Test

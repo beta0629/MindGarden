@@ -119,6 +119,11 @@
     flex-direction: row;
     align-items: center;
     gap: 6px;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    overflow: hidden;
+    box-sizing: border-box;
 }
 
 .mg-v2-ad-calendar-event--compact:hover {
@@ -133,12 +138,23 @@
 }
 
 .mg-v2-ad-calendar-event--compact .mg-v2-ad-calendar-event__client {
+    flex: 1 1 auto;
+    min-width: 0;
     font-size: var(--font-size-xs);
     font-weight: 600;
     color: var(--mg-color-text-main);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+}
+
+.mg-v2-ad-calendar-event--compact .mg-v2-ad-calendar-event__engagement {
+    flex: 0 1 auto;
+    min-width: 0;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .mg-v2-ad-calendar-event__header {

@@ -193,7 +193,7 @@ const ClientCard = ({
                 role: 'button',
                 tabIndex: 0,
                 onKeyDown: keyboardActivation,
-                'aria-label': t('common:ui.ClientCard.t_210b3445')
+                'aria-label': t('common:ui.ClientCard.t_210b3445', { displayName })
             };
 
         if (scheduleSelect) {

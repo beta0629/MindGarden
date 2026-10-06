@@ -2,6 +2,7 @@
 
 .integrated-schedule__compact-row {
   position: relative;
+  container: mg-compact-row / inline-size;
   display: flex;
   align-items: center;
   gap: var(--mg-spacing-sm);
@@ -50,11 +51,12 @@
 }
 
 .integrated-schedule__compact-row-accent {
-  flex-shrink: 0;
-  align-self: stretch;
-  width: 3px;
-  min-height: var(--mg-spacing-lg);
-  border-radius: var(--mg-radius-sm, 6px);
+  flex: none;
+  align-self: center;
+  width: var(--mg-size-dot-sm);
+  height: var(--mg-size-dot-sm);
+  min-height: 0;
+  border-radius: var(--mg-v2-radius-pill);
   background-color: var(--mg-color-primary-main, var(--mg-primary-500));
 }
 
@@ -153,12 +155,13 @@
   margin-left: var(--mg-spacing-1, 0.25rem);
 }
 
-.integrated-schedule__compact-row-secondary .mg-engagement-type-badge {
-  flex: 0 1 auto;
-  min-width: 0;
-  max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
+.integrated-schedule__compact-row-secondary .mg-engagement-type-badge,
+.integrated-schedule__compact-row .mg-schedule-event-marks .mg-engagement-type-badge {
+  flex: none;
+  min-width: auto;
+  max-width: none;
+  overflow: visible;
+  text-overflow: clip;
   white-space: nowrap;
 }
 

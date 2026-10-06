@@ -239,5 +239,31 @@
   },
   "RescheduleScheduleModal": {
     "t_a1423935": "예약 변경에 실패했습니다."
+  },
+  "calendar": {
+    "compact": {
+      "cancelledBadge": "취소",
+      "sameDayPrefix": "당일",
+      "sameDayAria": "당일 결제 대기",
+      "clientNameFallback": "이름 없음"
+    },
+    "unresolved": {
+      "both": "이 일정 미해소 {{schedule}}건 · 내담자 전체 {{client}}건",
+      "scheduleOnly": "미해소 {{count}}건",
+      "clientOnly": "내담자 미해소 {{count}}건"
+    },
+    "reminderSms": {
+      "aria": {
+        "SENT": "문자 발송됨",
+        "PENDING": "문자 발송 예정",
+        "FAILED": "문자 발송 실패"
+      }
+    },
+    "legend": {
+      "status": "상태",
+      "sms": "문자 발송",
+      "unresolved": "미해소",
+      "hint": "표식에 마우스를 올리면 내용이 보입니다"
+    }
   }
 }

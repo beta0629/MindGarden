@@ -2,8 +2,10 @@
 # 추가 패키지 병합 회기 목록·보정.
 # DB_HOST DB_USER DB_PASSWORD DB_NAME 은 환경 변수. 이 스크립트는 그 값을 출력하지 않는다.
 # list: 회기 불일치 SELECT 와 상담료 INCOME 잔존 SELECT. 둘 다 세션 READ ONLY.
-# repair: 허용 목록 파일이 비어 있으면 DB 에 접속하지 않는다.
+# repair --mode backup: 덤프만 쓴다. 트랜잭션을 시작하지 않는다.
+# repair --mode dry-run|apply: 기본은 덤프 후 트랜잭션. --skip-backup 이면 덤프를 생략한다.
 #         기본 종료는 ROLLBACK. COMMIT 은 --mode apply 와 REPAIR_CONFIRM=CONFIRM 이 같이 있을 때만.
+# verify: 기대 파일의 전값에서 후값을 계산해 새 READ ONLY 세션으로 대조한다. 불일치는 보고만 하고 되돌리지 않는다.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
@@ -228,6 +230,25 @@ cmd_list() {
   mysql_exec "SET SESSION TRANSACTION READ ONLY" "$RESTORE_SQL"
 }
 
+load_expect_rows() {
+  EXPECT_ROWS=()
+  [ -n "${expect_before:-}" ] || return 0
+  [ -f "$expect_before" ] || die "expect-before file missing"
+  local line raw
+  while IFS= read -r line || [ -n "$line" ]; do
+    raw="${line%%#*}"
+    raw="$(printf '%s' "$raw" | tr -d '[:space:]')"
+    [ -z "$raw" ] && continue
+    if ! [[ "$raw" =~ ^[0-9]+,[0-9]+,[0-9]+,[0-9]+,[0-9]+,[0-9]+,[A-Z_]+,[0-9]+,[A-Z_]+,[0-9]+,[0-9]+,[0-9]+,[0-9]+$ ]]; then
+      die "expect-before line must be additional,schedule,target,total,used,remaining,status,version,schedule_status,sequence,schedule_version,schedule_mapping,apply_sequence"
+    fi
+    EXPECT_ROWS+=("$raw")
+  done <"$expect_before"
+  if [ "${#EXPECT_ROWS[@]}" -lt 1 ]; then
+    die "expect-before file has no data row"
+  fi
+}
+
 emit_expected_before() {
   cat <<'EOF'
 CREATE TEMPORARY TABLE repair_expected_before (
@@ -250,78 +271,32 @@ EOF
   if [ -z "${expect_before:-}" ]; then
     return 0
   fi
-  [ -f "$expect_before" ] || die "expect-before file missing"
-  local line raw count=0
+  load_expect_rows
+  local raw
   local eb_add eb_sch eb_tgt eb_total eb_used eb_rem eb_status eb_ver
   local eb_sch_status eb_seq eb_sch_ver eb_sch_map eb_apply
-  while IFS= read -r line || [ -n "$line" ]; do
-    raw="${line%%#*}"
-    raw="$(printf '%s' "$raw" | tr -d '[:space:]')"
-    [ -z "$raw" ] && continue
-    if ! [[ "$raw" =~ ^[0-9]+,[0-9]+,[0-9]+,[0-9]+,[0-9]+,[0-9]+,[A-Z_]+,[0-9]+,[A-Z_]+,[0-9]+,[0-9]+,[0-9]+,[0-9]+$ ]]; then
-      die "expect-before line must be additional,schedule,target,total,used,remaining,status,version,schedule_status,sequence,schedule_version,schedule_mapping,apply_sequence"
-    fi
+  for raw in "${EXPECT_ROWS[@]}"; do
     IFS=',' read -r eb_add eb_sch eb_tgt eb_total eb_used eb_rem eb_status eb_ver eb_sch_status eb_seq eb_sch_ver eb_sch_map eb_apply <<<"$raw"
-    count=$((count + 1))
     echo "INSERT INTO repair_expected_before (additional_mapping_id, schedule_id, target_mapping_id, total_sessions, used_sessions, remaining_sessions, target_status, target_version, schedule_status, schedule_session_sequence, schedule_version, schedule_mapping_id, apply_session_sequence) VALUES (${eb_add}, ${eb_sch}, ${eb_tgt}, ${eb_total}, ${eb_used}, ${eb_rem}, '${eb_status}', ${eb_ver}, '${eb_sch_status}', ${eb_seq}, ${eb_sch_ver}, ${eb_sch_map}, ${eb_apply});"
-  done <"$expect_before"
-  if [ "$count" -lt 1 ]; then
-    die "expect-before file has no data row"
+  done
+}
+
+assert_text_readonly() {
+  local file="$1"
+  [ -f "$file" ] || die "read SQL file missing"
+  if grep -qiE '(^|[^a-z_@])(insert|update|delete|drop|alter|truncate|create|replace|grant|call|set)[[:space:]]' "$file"; then
+    die "generated read SQL contains a write statement"
+  fi
+  if grep -qiE 'financial_transactions|salary_|payout|into[[:space:]]+outfile|load_file' "$file"; then
+    die "generated read SQL touches a forbidden object"
   fi
 }
 
-cmd_repair() {
-  local allowlist="" mode="dry-run" backup_dir=""
-  expect_before=""
-  while [ "$#" -gt 0 ]; do
-    case "$1" in
-      --allowlist)
-        allowlist="$2"
-        shift 2
-        ;;
-      --mode)
-        mode="$2"
-        shift 2
-        ;;
-      --backup-dir)
-        backup_dir="$2"
-        shift 2
-        ;;
-      --expect-before)
-        expect_before="$2"
-        shift 2
-        ;;
-      *)
-        die "unknown repair argument"
-        ;;
-    esac
-  done
-  [ -n "$allowlist" ] || die "--allowlist is required"
-  [ -n "$backup_dir" ] || die "--backup-dir is required"
-  case "$mode" in
-    dry-run|apply) ;;
-    *) die "--mode must be dry-run or apply" ;;
-  esac
-  if [ "$mode" = "apply" ] && [ "${REPAIR_CONFIRM:-}" != "CONFIRM" ]; then
-    die "apply requires REPAIR_CONFIRM=CONFIRM"
-  fi
-  if ! load_allowlist "$allowlist"; then
-    echo "허용 목록이 비어 있어 보정은 수행하지 않습니다."
-    exit 0
-  fi
-  require_db_env
-  assert_select_readonly
-  [ -f "$TAIL_SQL" ] || die "repair tail missing"
-
-  local work ending
+write_plan_backup() {
+  local backup_dir="$1"
+  local work
   work="$(mktemp -d)"
   WORK_DIRS+=("$work")
-  if [ "$mode" = "apply" ]; then
-    ending="COMMIT;"
-  else
-    ending="ROLLBACK;"
-  fi
-
   {
     allowlist_preamble
     echo "CREATE TEMPORARY TABLE tmp_plan AS"
@@ -394,7 +369,18 @@ cmd_repair() {
     "${backup_dir}/schedules.sql"
   # 덤프 본문은 로그에 찍지 않는다. notes 가 들어 있을 수 있다.
   echo "backup files written (mappings, schedules)"
+}
 
+run_repair_transaction() {
+  local mode="$1"
+  local work ending
+  work="$(mktemp -d)"
+  WORK_DIRS+=("$work")
+  if [ "$mode" = "apply" ]; then
+    ending="COMMIT;"
+  else
+    ending="ROLLBACK;"
+  fi
   {
     allowlist_preamble
     echo "START TRANSACTION;"
@@ -423,9 +409,230 @@ cmd_repair() {
   echo "=== repair transaction finished ending=${ending} ==="
 }
 
+cmd_repair() {
+  local allowlist="" mode="dry-run" backup_dir="" skip_backup=0
+  expect_before=""
+  while [ "$#" -gt 0 ]; do
+    case "$1" in
+      --allowlist)
+        allowlist="$2"
+        shift 2
+        ;;
+      --mode)
+        mode="$2"
+        shift 2
+        ;;
+      --backup-dir)
+        backup_dir="$2"
+        shift 2
+        ;;
+      --expect-before)
+        expect_before="$2"
+        shift 2
+        ;;
+      --skip-backup)
+        skip_backup=1
+        shift
+        ;;
+      *)
+        die "unknown repair argument"
+        ;;
+    esac
+  done
+  [ -n "$allowlist" ] || die "--allowlist is required"
+  case "$mode" in
+    backup|dry-run|apply) ;;
+    *) die "--mode must be backup, dry-run, or apply" ;;
+  esac
+  if [ "$mode" = "backup" ] && [ "$skip_backup" -eq 1 ]; then
+    die "--skip-backup cannot be combined with backup mode"
+  fi
+  if [ "$mode" = "apply" ] && [ "${REPAIR_CONFIRM:-}" != "CONFIRM" ]; then
+    die "apply requires REPAIR_CONFIRM=CONFIRM"
+  fi
+  if [ "$skip_backup" -eq 0 ] && [ -z "$backup_dir" ]; then
+    die "--backup-dir is required"
+  fi
+  if ! load_allowlist "$allowlist"; then
+    echo "허용 목록이 비어 있어 보정은 수행하지 않습니다."
+    exit 0
+  fi
+  if [ "$mode" != "backup" ]; then
+    [ -f "$TAIL_SQL" ] || die "repair tail missing"
+  fi
+  require_db_env
+  assert_select_readonly
+  if [ "$skip_backup" -eq 0 ]; then
+    write_plan_backup "$backup_dir"
+  fi
+  if [ "$mode" = "backup" ]; then
+    echo "backup only; no transaction"
+    return 0
+  fi
+  run_repair_transaction "$mode"
+}
+
+cmd_verify() {
+  expect_before=""
+  while [ "$#" -gt 0 ]; do
+    case "$1" in
+      --expect-before)
+        expect_before="$2"
+        shift 2
+        ;;
+      *)
+        die "unknown verify argument"
+        ;;
+    esac
+  done
+  [ -n "$expect_before" ] || die "--expect-before is required"
+  load_expect_rows
+  require_db_env
+
+  # 매칭 version 은 행당 1 이고 used/remaining 은 일정 건수만큼 움직인다. tail 의 UPDATE 와 같다.
+  declare -A pin_total pin_used pin_rem pin_ver pin_status pin_delta
+  declare -A sch_tgt sch_apply sch_ver sch_status sch_before_map sch_before_seq
+  local raw map_ids="" sch_ids=""
+  local eb_add eb_sch eb_tgt eb_total eb_used eb_rem eb_status eb_ver
+  local eb_sch_status eb_seq eb_sch_ver eb_sch_map eb_apply
+  for raw in "${EXPECT_ROWS[@]}"; do
+    IFS=',' read -r eb_add eb_sch eb_tgt eb_total eb_used eb_rem eb_status eb_ver eb_sch_status eb_seq eb_sch_ver eb_sch_map eb_apply <<<"$raw"
+    if [ -n "${pin_delta[$eb_tgt]+x}" ]; then
+      if [ "${pin_total[$eb_tgt]}" != "$eb_total" ] \
+        || [ "${pin_used[$eb_tgt]}" != "$eb_used" ] \
+        || [ "${pin_rem[$eb_tgt]}" != "$eb_rem" ] \
+        || [ "${pin_ver[$eb_tgt]}" != "$eb_ver" ] \
+        || [ "${pin_status[$eb_tgt]}" != "$eb_status" ]; then
+        die "expect-before rows disagree on the target before image"
+      fi
+      pin_delta[$eb_tgt]=$((pin_delta[$eb_tgt] + 1))
+    else
+      pin_total[$eb_tgt]="$eb_total"
+      pin_used[$eb_tgt]="$eb_used"
+      pin_rem[$eb_tgt]="$eb_rem"
+      pin_ver[$eb_tgt]="$eb_ver"
+      pin_status[$eb_tgt]="$eb_status"
+      pin_delta[$eb_tgt]=1
+      map_ids="${map_ids:+$map_ids,}${eb_tgt}"
+    fi
+    if [ -n "${sch_apply[$eb_sch]+x}" ]; then
+      die "expect-before lists the same schedule more than once"
+    fi
+    sch_tgt[$eb_sch]="$eb_tgt"
+    sch_apply[$eb_sch]="$eb_apply"
+    sch_ver[$eb_sch]="$eb_sch_ver"
+    sch_status[$eb_sch]="$eb_sch_status"
+    sch_before_map[$eb_sch]="$eb_sch_map"
+    sch_before_seq[$eb_sch]="$eb_seq"
+    sch_ids="${sch_ids:+$sch_ids,}${eb_sch}"
+  done
+
+  local work
+  work="$(mktemp -d)"
+  WORK_DIRS+=("$work")
+  cat >"${work}/verify.sql" <<EOF
+SELECT 'mapping' AS row_kind,
+       id,
+       total_sessions,
+       used_sessions,
+       remaining_sessions,
+       version,
+       status,
+       CAST(NULL AS SIGNED) AS mapping_id,
+       CAST(NULL AS SIGNED) AS session_sequence
+FROM consultant_client_mappings
+WHERE id IN (${map_ids})
+UNION ALL
+SELECT 'schedule',
+       id,
+       CAST(NULL AS SIGNED),
+       CAST(NULL AS SIGNED),
+       CAST(NULL AS SIGNED),
+       version,
+       status,
+       mapping_id,
+       session_sequence
+FROM schedules
+WHERE id IN (${sch_ids});
+EOF
+  assert_text_readonly "${work}/verify.sql"
+
+  echo "=== post-commit readback (read only, new session) ==="
+  declare -A printed_map
+  for raw in "${EXPECT_ROWS[@]}"; do
+    IFS=',' read -r eb_add eb_sch eb_tgt eb_total eb_used eb_rem eb_status eb_ver eb_sch_status eb_seq eb_sch_ver eb_sch_map eb_apply <<<"$raw"
+    if [ -z "${printed_map[$eb_tgt]+x}" ]; then
+      echo "before_pin mapping id=${eb_tgt} total=${pin_total[$eb_tgt]} used=${pin_used[$eb_tgt]} remaining=${pin_rem[$eb_tgt]} version=${pin_ver[$eb_tgt]} status=${pin_status[$eb_tgt]}"
+      echo "expected_after mapping id=${eb_tgt} total=${pin_total[$eb_tgt]} used=$((pin_used[$eb_tgt] + pin_delta[$eb_tgt])) remaining=$((pin_rem[$eb_tgt] - pin_delta[$eb_tgt])) version=$((pin_ver[$eb_tgt] + 1)) status=${pin_status[$eb_tgt]}"
+      printed_map[$eb_tgt]=1
+    fi
+    echo "before_pin schedule id=${eb_sch} mapping_id=${sch_before_map[$eb_sch]} session_sequence=${sch_before_seq[$eb_sch]} version=${sch_ver[$eb_sch]} status=${sch_status[$eb_sch]}"
+    echo "expected_after schedule id=${eb_sch} mapping_id=${sch_tgt[$eb_sch]} session_sequence=${sch_apply[$eb_sch]} version=$((sch_ver[$eb_sch] + 1)) status=${sch_status[$eb_sch]}"
+  done
+
+  mysql_query_to "SET SESSION TRANSACTION READ ONLY" "${work}/verify.sql" "${work}/actual.tsv"
+
+  declare -A got_map got_sch
+  local kind="" id="" total="" used="" rem="" version="" status="" mapping_id="" seq=""
+  local match=1
+  while IFS=$'\t' read -r kind id total used rem version status mapping_id seq || [ -n "$kind" ]; do
+    [ -z "$kind" ] && continue
+    [ "$kind" = "row_kind" ] && continue
+    if [ "$kind" = "mapping" ]; then
+      got_map[$id]=1
+      echo "actual mapping id=${id} total=${total} used=${used} remaining=${rem} version=${version} status=${status}"
+      if [ -z "${pin_delta[$id]+x}" ] \
+        || [ "$total" != "${pin_total[$id]}" ] \
+        || [ "$used" != "$((pin_used[$id] + pin_delta[$id]))" ] \
+        || [ "$rem" != "$((pin_rem[$id] - pin_delta[$id]))" ] \
+        || [ "$version" != "$((pin_ver[$id] + 1))" ] \
+        || [ "$status" != "${pin_status[$id]}" ]; then
+        match=0
+      fi
+    elif [ "$kind" = "schedule" ]; then
+      got_sch[$id]=1
+      echo "actual schedule id=${id} mapping_id=${mapping_id} session_sequence=${seq} version=${version} status=${status}"
+      if [ -z "${sch_apply[$id]+x}" ] \
+        || [ "$mapping_id" != "${sch_tgt[$id]}" ] \
+        || [ "$seq" != "${sch_apply[$id]}" ] \
+        || [ "$version" != "$((sch_ver[$id] + 1))" ] \
+        || [ "$status" != "${sch_status[$id]}" ]; then
+        match=0
+      fi
+    else
+      echo "actual unexpected row_kind=${kind}"
+      match=0
+    fi
+  done <"${work}/actual.tsv"
+
+  local tgt sid
+  for tgt in "${!pin_delta[@]}"; do
+    if [ -z "${got_map[$tgt]+x}" ]; then
+      echo "actual mapping id=${tgt} MISSING"
+      match=0
+    fi
+  done
+  for sid in "${!sch_apply[@]}"; do
+    if [ -z "${got_sch[$sid]+x}" ]; then
+      echo "actual schedule id=${sid} MISSING"
+      match=0
+    fi
+  done
+
+  if [ "$match" -eq 1 ]; then
+    echo "POST_COMMIT_MATCH=yes"
+    return 0
+  fi
+  echo "POST_COMMIT_MATCH=no"
+  echo "::error::committed rows differ from the expected after image; leaving the committed rows in place"
+  exit 1
+}
+
 usage() {
   echo "usage: DB_HOST DB_USER DB_PASSWORD DB_NAME $0 list" >&2
-  echo "       DB_* REPAIR_CONFIRM $0 repair --allowlist FILE --mode dry-run|apply --backup-dir DIR [--expect-before FILE]" >&2
+  echo "       DB_* $0 repair --allowlist FILE --mode backup --backup-dir DIR" >&2
+  echo "       DB_* REPAIR_CONFIRM $0 repair --allowlist FILE --mode dry-run|apply [--backup-dir DIR] [--skip-backup] [--expect-before FILE]" >&2
+  echo "       DB_* $0 verify --expect-before FILE" >&2
   exit 1
 }
 
@@ -437,16 +644,12 @@ main() {
   case "$cmd" in
     list) cmd_list "$@" ;;
     repair) cmd_repair "$@" ;;
+    verify) cmd_verify "$@" ;;
     query)
       require_db_env
       sql_file="${1:-}"
       [ -f "$sql_file" ] || die "query file missing"
-      if grep -qiE '(^|[^a-z_@])(insert|update|delete|drop|alter|truncate|create|replace|grant|call|set)[[:space:]]' "$sql_file"; then
-        die "query file contains a write statement"
-      fi
-      if grep -qiE 'financial_transactions|salary_|payout|into[[:space:]]+outfile|load_file' "$sql_file"; then
-        die "query file touches a forbidden object"
-      fi
+      assert_text_readonly "$sql_file"
       mysql_exec "SET SESSION TRANSACTION READ ONLY" "$sql_file"
       ;;
     *) usage ;;

@@ -5,9 +5,14 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyDouble;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -17,7 +22,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.math.BigDecimal;
 import java.sql.SQLException;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -28,20 +35,25 @@ import javax.sql.DataSource;
 
 import com.coresolution.consultation.constant.FinancialTransactionConstants;
 import com.coresolution.consultation.constant.InstitutionLinkConstants;
+import com.coresolution.consultation.constant.ScheduleStatus;
 import com.coresolution.consultation.constant.SessionConstants;
 import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.entity.ConsultantClientMapping;
 import com.coresolution.consultation.entity.ConsultantClientMapping.MappingStatus;
 import com.coresolution.consultation.entity.ConsultantClientMapping.PaymentStatus;
+import com.coresolution.consultation.entity.Schedule;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.entity.erp.financial.FinancialTransaction;
 import com.coresolution.consultation.exception.MappingErpSyncFailedException;
 import com.coresolution.consultation.exception.SalaryTaxRateNotConfiguredException;
 import com.coresolution.consultation.repository.ConsultantClientMappingRepository;
+import com.coresolution.consultation.repository.ScheduleRepository;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.repository.erp.financial.FinancialTransactionRepository;
 import com.coresolution.consultation.service.MappingSettlementNotificationHelper;
+import com.coresolution.consultation.service.RealTimeStatisticsService;
 import com.coresolution.consultation.service.SalaryTaxRateLookupService;
+import com.coresolution.consultation.service.erp.accounting.AccountingService;
 import com.coresolution.consultation.service.StoredProcedureService;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.integrationtest.support.WithMockAdminSecurityContext;
@@ -56,8 +68,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.test.util.AopTestUtils;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
@@ -96,7 +110,10 @@ class MappingErpSyncFailClosedIntegrationTest {
     @Autowired private ObjectMapper objectMapper;
     @Autowired private UserRepository userRepository;
     @Autowired private ConsultantClientMappingRepository mappingRepository;
-    @Autowired private FinancialTransactionRepository financialTransactionRepository;
+    @Autowired private ScheduleRepository scheduleRepository;
+    @SpyBean private FinancialTransactionRepository financialTransactionRepository;
+    @SpyBean private RealTimeStatisticsService realTimeStatisticsService;
+    @SpyBean private AccountingService accountingService;
     @Autowired private DataSource dataSource;
     @Autowired private EntityManagerFactory entityManagerFactory;
     @Autowired private JdbcTemplate jdbcTemplate;
@@ -107,6 +124,7 @@ class MappingErpSyncFailClosedIntegrationTest {
 
     private final List<CallBoundary> procedureCalls = new CopyOnWriteArrayList<>();
     private final List<Long> createdMappingIds = new ArrayList<>();
+    private final List<Long> createdScheduleIds = new ArrayList<>();
     private final List<Long> createdUserIds = new ArrayList<>();
     private String tenantId;
     private User consultant;
@@ -127,6 +145,7 @@ class MappingErpSyncFailClosedIntegrationTest {
     void tearDown() {
         TenantContextHolder.setTenantId(tenantId);
         financialTransactionRepository.deleteAll(financialTransactionRepository.findByTenantId(tenantId));
+        createdScheduleIds.forEach(scheduleRepository::deleteById);
         createdMappingIds.forEach(mappingRepository::deleteById);
         createdUserIds.forEach(userRepository::deleteById);
         TenantContextHolder.clear();
@@ -182,6 +201,67 @@ class MappingErpSyncFailClosedIntegrationTest {
                 Map.of("depositReference", "it-dep-retry"));
         assertThat(incomeRows(mapping)).hasSize(1);
         assertThat(reload(mapping).getRemainingSessions()).isEqualTo(10);
+        verify(storedProcedureService, never()).updateMappingInfo(any(), any(), anyDouble(), anyInt(), any());
+    }
+
+    @Test
+    @DisplayName("입금 확인 + INCOME 저장 후 완료 처리 실패 — 422, 전표 0건, 회기 그대로, 커밋 전 분개 없음")
+    void confirmDeposit_failureAfterIncomeInsert_rollsBackIncomeAndSkipsStatistics() throws Exception {
+        ConsultantClientMapping mapping = saveMapping(MappingStatus.PAYMENT_CONFIRMED, PaymentStatus.CONFIRMED, 0);
+        FinancialTransactionRepository delegate = financialTransactionDelegate();
+        doAnswer(invocation -> {
+            FinancialTransaction entity = invocation.getArgument(0);
+            FinancialTransaction saved = delegate.save(entity);
+            if (saved.getStatus() == FinancialTransaction.TransactionStatus.COMPLETED) {
+                throw new IllegalStateException("post-insert completion failure");
+            }
+            return saved;
+        }).when(financialTransactionRepository).save(any(FinancialTransaction.class));
+
+        try {
+            perform(post("/api/v1/admin/mappings/{id}/confirm-deposit", mapping.getId()),
+                    Map.of("depositReference", "it-dep-after-insert"))
+                    .andExpect(status().isUnprocessableEntity())
+                    .andExpect(jsonPath("$.code").value(MappingErpSyncFailedException.ERROR_CODE));
+        } finally {
+            reset(financialTransactionRepository);
+        }
+
+        ConsultantClientMapping after = reload(mapping);
+        assertThat(after.getPaymentStatus()).isEqualTo(PaymentStatus.CONFIRMED);
+        assertThat(after.getStatus()).isEqualTo(MappingStatus.PAYMENT_CONFIRMED);
+        assertThat(after.getRemainingSessions()).isZero();
+        assertThat(after.getUsedSessions()).isZero();
+        assertThat(incomeRows(mapping)).isEmpty();
+        verify(accountingService, never()).createJournalEntryFromTransaction(any(FinancialTransaction.class));
+        verify(realTimeStatisticsService, never()).updateFinancialStatisticsOnPayment(
+                isNull(), anyLong(), any(LocalDate.class));
+        verify(storedProcedureService, never()).updateMappingInfo(any(), any(), anyDouble(), anyInt(), any());
+    }
+
+    @Test
+    @DisplayName("가예약 1건 입금 확인 성공 후 재요청 — INCOME 1건, 회기 차감 1회")
+    void confirmDeposit_withOneTentative_writesIncomeOnceAndDeductsOnce() throws Exception {
+        ConsultantClientMapping mapping = saveMapping(MappingStatus.PAYMENT_CONFIRMED, PaymentStatus.CONFIRMED, 0);
+        saveTentative(mapping);
+
+        perform(post("/api/v1/admin/mappings/{id}/confirm-deposit", mapping.getId()),
+                Map.of("depositReference", "it-dep-tentative"))
+                .andExpect(status().isOk());
+
+        ConsultantClientMapping after = reload(mapping);
+        assertThat(after.getPaymentStatus()).isEqualTo(PaymentStatus.APPROVED);
+        assertThat(after.getUsedSessions()).isEqualTo(1);
+        assertThat(after.getRemainingSessions()).isEqualTo(9);
+        assertThat(incomeRows(mapping)).hasSize(1);
+        verify(accountingService, atLeastOnce()).createJournalEntryFromTransaction(any(FinancialTransaction.class));
+
+        perform(post("/api/v1/admin/mappings/{id}/confirm-deposit", mapping.getId()),
+                Map.of("depositReference", "it-dep-tentative"));
+        ConsultantClientMapping retried = reload(mapping);
+        assertThat(incomeRows(mapping)).hasSize(1);
+        assertThat(retried.getUsedSessions()).isEqualTo(1);
+        assertThat(retried.getRemainingSessions()).isEqualTo(9);
         verify(storedProcedureService, never()).updateMappingInfo(any(), any(), anyDouble(), anyInt(), any());
     }
 
@@ -337,6 +417,60 @@ class MappingErpSyncFailClosedIntegrationTest {
 
     private ConsultantClientMapping reload(ConsultantClientMapping mapping) {
         return mappingRepository.findById(mapping.getId()).orElseThrow();
+    }
+
+    private FinancialTransactionRepository financialTransactionDelegate() {
+        Object candidate = financialTransactionRepository;
+        if (org.springframework.aop.support.AopUtils.isAopProxy(candidate)) {
+            candidate = AopTestUtils.getUltimateTargetObject(candidate);
+        }
+        org.mockito.MockingDetails details = org.mockito.Mockito.mockingDetails(candidate);
+        if (!details.isMock()) {
+            throw new IllegalStateException("financial transaction repository is not a spy");
+        }
+        Object answer = details.getMockHandler().getMockSettings().getDefaultAnswer();
+        Object delegated = readDelegatedObject(answer);
+        if (!(delegated instanceof FinancialTransactionRepository delegate)
+                || delegate == financialTransactionRepository) {
+            throw new IllegalStateException("financial transaction repository delegate unresolved: "
+                    + (answer == null ? "null" : answer.getClass().getName()));
+        }
+        return delegate;
+    }
+
+    private static Object readDelegatedObject(Object answer) {
+        Class<?> type = answer.getClass();
+        while (type != null) {
+            try {
+                java.lang.reflect.Field field = type.getDeclaredField("delegatedObject");
+                field.setAccessible(true);
+                return field.get(answer);
+            } catch (NoSuchFieldException ignored) {
+                type = type.getSuperclass();
+            } catch (IllegalAccessException e) {
+                throw new IllegalStateException(e);
+            }
+        }
+        return null;
+    }
+
+    private Schedule saveTentative(ConsultantClientMapping mapping) {
+        Schedule schedule = new Schedule();
+        schedule.setTenantId(tenantId);
+        schedule.setConsultantId(consultant.getId());
+        schedule.setClientId(client.getId());
+        schedule.setMappingId(mapping.getId());
+        schedule.setDate(LocalDate.now().plusDays(7));
+        schedule.setStartTime(LocalTime.of(10, 0));
+        schedule.setEndTime(LocalTime.of(10, 50));
+        schedule.setStatus(ScheduleStatus.TENTATIVE_PENDING_PAYMENT);
+        schedule.setScheduleType("CONSULTATION");
+        schedule.setConsultationType("INDIVIDUAL");
+        schedule.setTitle("mes-it-tentative");
+        schedule.setIsDeleted(false);
+        Schedule saved = scheduleRepository.saveAndFlush(schedule);
+        createdScheduleIds.add(saved.getId());
+        return saved;
     }
 
     private ConsultantClientMapping saveMapping(MappingStatus status, PaymentStatus paymentStatus, int remaining) {

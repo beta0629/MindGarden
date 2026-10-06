@@ -51,7 +51,12 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
+import org.springframework.transaction.support.TransactionTemplate;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -87,6 +92,7 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
     private final CardMerchantFeeResolutionService cardMerchantFeeResolutionService;
     private final SalaryTaxRateLookupService salaryTaxRateLookupService;
     private final PaymentMethodSsotService paymentMethodSsotService;
+    private final PlatformTransactionManager transactionManager;
 
     @Override
     public FinancialTransactionResponse createTransaction(FinancialTransactionRequest request, User currentUser) {
@@ -139,54 +145,134 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
         }
         
         FinancialTransaction savedTransaction = financialTransactionRepository.save(transaction);
-        
+        deferStatisticsAndJournalUntilCommit(savedTransaction, request);
+
+        log.info("✅ 회계 거래 생성 완료: ID={}", savedTransaction.getId());
+        return convertToResponse(savedTransaction);
+    }
+
+    /**
+     * 통계·분개를 이 거래 INSERT 가 커밋된 뒤에만 실행한다.
+     *
+     * <p>저장 직후 {@code REQUIRES_NEW} 참여자를 부르면 미커밋 INSERT 가 바깥 입금 트랜잭션과
+     * 따로 확정될 수 있다. 이후 재조회·검증이 실패하면 매칭·회기만 롤백되고 INCOME 은 남는다.
+     * 활성 동기화가 없으면(이미 트랜잭션 밖) 즉시 실행한다.
+     *
+     * @param savedTransaction 방금 저장한 거래
+     * @param request 생성 요청
+     */
+    private void deferStatisticsAndJournalUntilCommit(FinancialTransaction savedTransaction,
+            FinancialTransactionRequest request) {
+        Long transactionId = savedTransaction.getId();
+        String tenantId = savedTransaction.getTenantId();
+        String transactionType = request.getTransactionType();
+        String subcategory = savedTransaction.getSubcategory();
+        Long amount = savedTransaction.getAmount() == null ? null : savedTransaction.getAmount().longValue();
+        LocalDate transactionDate = savedTransaction.getTransactionDate();
+        Long relatedEntityId = savedTransaction.getRelatedEntityId();
+
+        Runnable sideEffects = () -> runStatisticsAndJournalAfterCommit(
+                transactionId, tenantId, transactionType, subcategory, amount, transactionDate, relatedEntityId);
+        if (!TransactionSynchronizationManager.isSynchronizationActive()) {
+            sideEffects.run();
+            return;
+        }
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                sideEffects.run();
+            }
+        });
+    }
+
+    /**
+     * 커밋된 거래를 새 트랜잭션에서 다시 읽어 통계와 분개를 갱신한다.
+     * 실패는 기록만 하고 이미 커밋된 거래는 롤백하지 않는다.
+     *
+     * @param transactionId 거래 ID
+     * @param tenantId 테넌트 ID
+     * @param transactionType 거래 유형
+     * @param subcategory 하위 분류
+     * @param amount 금액
+     * @param transactionDate 거래일
+     * @param relatedEntityId 연관 엔티티 ID
+     */
+    private void runStatisticsAndJournalAfterCommit(Long transactionId, String tenantId, String transactionType,
+            String subcategory, Long amount, LocalDate transactionDate, Long relatedEntityId) {
+        String previousTenantId = TenantContextHolder.peekTenantId();
+        try {
+            if (tenantId != null && !tenantId.isEmpty()) {
+                TenantContextHolder.setTenantId(tenantId);
+            }
+            // afterCommit 시점에는 부모 커넥션이 아직 바인딩되어 REQUIRED 가 이미 커밋된 트랜잭션에 합류한다.
+            TransactionTemplate requiresNew = new TransactionTemplate(transactionManager);
+            requiresNew.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
+            requiresNew.executeWithoutResult(status -> applyStatisticsAndJournal(
+                    transactionId, tenantId, transactionType, subcategory, amount, transactionDate, relatedEntityId));
+        } catch (RuntimeException e) {
+            log.error("❌ 회계 거래 생성 후 통계·분개 실패: transactionId={}, error={}",
+                    transactionId, e.getMessage(), e);
+        } finally {
+            TenantContextHolder.setTenantIdOrClear(previousTenantId);
+        }
+    }
+
+    /**
+     * 통계 갱신과 분개 생성을 각각 실패해도 나머지를 계속한다.
+     *
+     * @param transactionId 거래 ID
+     * @param tenantId 테넌트 ID
+     * @param transactionType 거래 유형
+     * @param subcategory 하위 분류
+     * @param amount 금액
+     * @param transactionDate 거래일
+     * @param relatedEntityId 연관 엔티티 ID
+     */
+    private void applyStatisticsAndJournal(Long transactionId, String tenantId, String transactionType,
+            String subcategory, Long amount, LocalDate transactionDate, Long relatedEntityId) {
         try {
             // 표준화 2025-12-06: branchCode는 더 이상 사용하지 않음
             String incomeType = getSafeCodeName("TRANSACTION_TYPE", "INCOME", "INCOME");
-            if (incomeType.equals(request.getTransactionType())) {
+            if (incomeType.equals(transactionType)) {
                 realTimeStatisticsService.updateFinancialStatisticsOnPayment(
-                    null, // 표준화 2025-12-06: branchCode는 더 이상 사용하지 않음
-                    savedTransaction.getAmount().longValue(),
-                    savedTransaction.getTransactionDate()
-                );
+                        null,
+                        amount,
+                        transactionDate);
             } else {
                 String expenseType = getSafeCodeName("TRANSACTION_TYPE", "EXPENSE", "EXPENSE");
                 String refundType = resolveExpenseSubcategoryCodeValue("CONSULTATION_REFUND");
                 String partialRefundType = resolveExpenseSubcategoryCodeValue("CONSULTATION_PARTIAL_REFUND");
-                
-                if (expenseType.equals(request.getTransactionType()) && 
-                    (refundType.equals(savedTransaction.getSubcategory()) ||
-                     partialRefundType.equals(savedTransaction.getSubcategory()))) {
-                    if (savedTransaction.getRelatedEntityId() != null) {
-                        realTimeStatisticsService.updateStatisticsOnRefund(
-                            null, // 상담사 ID (추후 매핑에서 조회)
-                            null, // 표준화 2025-12-06: branchCode는 더 이상 사용하지 않음
-                            savedTransaction.getAmount().longValue(),
-                            savedTransaction.getTransactionDate()
-                        );
-                    }
+                if (expenseType.equals(transactionType)
+                        && (refundType.equals(subcategory) || partialRefundType.equals(subcategory))
+                        && relatedEntityId != null) {
+                    realTimeStatisticsService.updateStatisticsOnRefund(
+                            null,
+                            null,
+                            amount,
+                            transactionDate);
                 }
             }
-            
-            log.info("✅ 회계 거래 생성시 실시간 통계 업데이트 완료: transactionId={}", savedTransaction.getId());
+            log.info("✅ 회계 거래 생성시 실시간 통계 업데이트 완료: transactionId={}", transactionId);
         } catch (Exception e) {
             log.error("❌ 회계 거래 생성시 실시간 통계 업데이트 실패: {}", e.getMessage(), e);
         }
-        
+
         // ERP 연동: FinancialTransaction에서 분개 자동 생성
         // 표준 문서: docs/standards/ERP_ADVANCEMENT_STANDARD.md
         try {
-            if (accountingService != null && savedTransaction.getTenantId() != null) {
-                accountingService.createJournalEntryFromTransaction(savedTransaction);
-                log.info("✅ 회계 거래에서 분개 자동 생성 완료: transactionId={}", savedTransaction.getId());
+            if (accountingService != null && tenantId != null) {
+                FinancialTransaction persisted = financialTransactionRepository
+                        .findByTenantIdAndId(tenantId, transactionId)
+                        .orElse(null);
+                if (persisted != null) {
+                    accountingService.createJournalEntryFromTransaction(persisted);
+                    log.info("✅ 회계 거래에서 분개 자동 생성 완료: transactionId={}", persisted.getId());
+                }
             }
         } catch (Exception e) {
-            log.error("❌ 회계 거래에서 분개 자동 생성 실패: transactionId={}, error={}", 
-                savedTransaction.getId(), e.getMessage(), e);
+            log.error("❌ 회계 거래에서 분개 자동 생성 실패: transactionId={}, error={}",
+                    transactionId, e.getMessage(), e);
         }
-        
-        log.info("✅ 회계 거래 생성 완료: ID={}", savedTransaction.getId());
-        return convertToResponse(savedTransaction);
     }
     
     @Override

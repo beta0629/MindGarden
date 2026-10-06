@@ -71,6 +71,10 @@ import ScheduleNotesReminderModal from './integrated-schedule/molecules/Schedule
 import { useScheduleNotesReminder } from './integrated-schedule/hooks/useScheduleNotesReminder';
 import PackageExpiryReminderModal from './integrated-schedule/molecules/PackageExpiryReminderModal';
 import { usePackageExpiryReminder } from './integrated-schedule/hooks/usePackageExpiryReminder';
+import {
+  MAPPING_ENGAGEMENT_TYPE,
+  MAPPING_ENGAGEMENT_TYPE_LABELS
+} from '../../../constants/mappingEngagementType';
 import '../../../styles/unified-design-tokens.css';
 import './IntegratedMatchingSchedule.css';
 import {
@@ -1598,7 +1602,11 @@ const IntegratedMatchingSchedule = () => {
                       aria-hidden="true"
                     />
                     <span className="integrated-schedule__legend-text">
-                      {t('admin:mapping.schedule.legend.institutionLink')}
+                      {t('admin:mapping.schedule.legend.institutionLink', {
+                        defaultValue: MAPPING_ENGAGEMENT_TYPE_LABELS[
+                          MAPPING_ENGAGEMENT_TYPE.INSTITUTION_LINK
+                        ]
+                      })}
                     </span>
                   </p>
                 </>

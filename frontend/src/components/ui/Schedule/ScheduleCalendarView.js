@@ -1,10 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import { Calendar as CalendarIcon, AlertCircle, Info } from 'lucide-react';
 import { toDisplayString } from '../../../utils/safeDisplay';
+import { resolveScheduleStatusDisplayLabel } from '../../../utils/scheduleStatusLabel';
 import {
   CALENDAR_EXTENDED_TYPE_KR_PUBLIC_HOLIDAY,
   CALENDAR_EXTENDED_TYPE_VACATION,
@@ -104,8 +106,10 @@ const ScheduleCalendarView = ({
      * 「activeStart = 활성 월 1일」가정은 잘못된 것으로, 4월 보기에서
      * activeStart=2026-03-29 → month=3 API 호출 회귀를 유발했다.
      */
-    onMonthChange
+    onMonthChange,
+    scheduleStatusOptions = []
 }) => {
+    const { t } = useTranslation();
     const calendarRef = useRef(null);
     const calendarWrapperRef = useRef(null);
     /** 날짜 클릭으로 일간 확대하기 직전 뷰(month/week). 툴바「전체 보기」복귀용 */
@@ -497,7 +501,10 @@ const ScheduleCalendarView = ({
         // 일반 스케줄 이벤트 렌더링
         const clientName = toDisplayString(extendedProps.clientName, '이름 없음');
         const consultantName = toDisplayString(extendedProps.consultantName, '');
-        const statusKorean = toDisplayString(extendedProps.statusKorean, '상태 없음');
+        const statusLabel = resolveScheduleStatusDisplayLabel(
+            extendedProps?.status,
+            { codes: scheduleStatusOptions, translate: t }
+        );
         const borderColor = event.backgroundColor || 'var(--mg-primary-500)';
         const scheduleNotesUnresolvedCount = parseClientScheduleNotesUnresolvedCount(
             extendedProps?.[CLIENT_SCHEDULE_NOTES_UNRESOLVED_COUNT_FIELD]
@@ -542,9 +549,9 @@ const ScheduleCalendarView = ({
 
         // 월간 뷰: 컴팩트 렌더링 (시간 + 내담자명만). 통합 스케줄은 좌측 Dot + 텍스트(전면 fill 완화).
         if (isMonthView) {
-            const fullTooltip = `${clientName}${sessionTitleSuffix} · ${consultantName} · ${statusKorean}${unresolvedTitleSuffix}`;
+            const fullTooltip = `${clientName}${sessionTitleSuffix} · ${consultantName} · ${statusLabel}${unresolvedTitleSuffix}`;
             const integratedMonthLabel =
-                `${eventInfo.timeText} · ${clientName}${sessionTitleSuffix} · ${statusKorean}${unresolvedTitleSuffix}`;
+                `${eventInfo.timeText} · ${clientName}${sessionTitleSuffix} · ${statusLabel}${unresolvedTitleSuffix}`;
             const integratedMod = integratedMonthEventLayout ? ' mg-v2-ad-calendar-event--integrated-month' : '';
             const unresolvedMod = scheduleNotesUnresolvedCount > 0
                 ? ' mg-v2-ad-calendar-event--client-notes-unresolved'
@@ -603,7 +610,7 @@ const ScheduleCalendarView = ({
         return (
             <div
                 className={`mg-v2-ad-calendar-event${pastClass}${cancelledClass}`.trim()}
-                title={`${clientName} - ${statusKorean}`}
+                title={`${clientName} - ${statusLabel}`}
             >
                 <div className="mg-v2-ad-calendar-event__time">{eventInfo.timeText}</div>
                 <div className="mg-v2-ad-calendar-event__title">
@@ -621,7 +628,7 @@ const ScheduleCalendarView = ({
                         <span className="counselor-name">{consultantName}</span>
                     )}
                 </div>
-                <div className="mg-v2-ad-calendar-event__status">{statusKorean}</div>
+                <div className="mg-v2-ad-calendar-event__status">{statusLabel}</div>
             </div>
         );
     };

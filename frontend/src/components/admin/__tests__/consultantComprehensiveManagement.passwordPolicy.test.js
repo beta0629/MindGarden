@@ -41,6 +41,10 @@ jest.mock('../../../utils/commonCodeApi', () => ({
   getCommonCodes: jest.fn().mockResolvedValue([])
 }));
 
+jest.mock('../../../utils/menuApi', () => ({
+  getLnbMenus: jest.fn().mockResolvedValue([])
+}));
+
 jest.mock('../../../utils/sessionManager', () => ({
   sessionManager: {
     getUser: () => ({ id: 'admin-test', tenantId: 'tenant-test', role: 'ADMIN' }),

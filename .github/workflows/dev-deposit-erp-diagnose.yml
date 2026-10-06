@@ -5,7 +5,7 @@
 #       journald/앱 로그를 grep 하고 개발 DB 를 SELECT 만 한다.
 #
 # 안전 장치 (consultation-log-duplicate-count.yml 과 같은 방식):
-#   - workflow_dispatch 전용. push/pull_request 트리거 없음.
+#   - workflow_dispatch, 그리고 이 파일만 바꾸는 release/dev pull_request. push 트리거 없음.
 #   - 개발 서버(DEV_* secret)만 대상. 운영 서버·운영 DB 를 가리키는 입력 없음.
 #   - 서버에서 journalctl/grep/systemctl show/ps 읽기만 한다. 재기동·파일 쓰기·힐 없음.
 #   - DB 는 SELECT 만, mysql 세션을 --init-command 로 READ ONLY 고정. SQL 은 이 파일에 고정,
@@ -16,6 +16,9 @@
 name: 입금 확인 ERP 진단 (읽기 전용·개발)
 
 on:
+  pull_request:
+    branches: [release/dev]
+    paths: ['.github/workflows/dev-deposit-erp-diagnose.yml']
   workflow_dispatch:
     inputs:
       since:
@@ -49,10 +52,10 @@ jobs:
     steps:
       - name: 입력 검증
         env:
-          IN_SINCE: ${{ inputs.since }}
-          IN_UNTIL: ${{ inputs.until }}
-          IN_IDS: ${{ inputs.mapping_ids }}
-          IN_CTX: ${{ inputs.context_lines }}
+          IN_SINCE: ${{ inputs.since || '2026-10-06 12:40' }}
+          IN_UNTIL: ${{ inputs.until || '2026-10-06 12:50' }}
+          IN_IDS: ${{ inputs.mapping_ids || '315,314' }}
+          IN_CTX: ${{ inputs.context_lines || '80' }}
         run: |
           set -euo pipefail
           TS_RE='^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}(:[0-9]{2})?$'
@@ -70,10 +73,10 @@ jobs:
           DB_USER: ${{ secrets.DEV_DB_USER }}
           DB_NAME: ${{ secrets.DEV_DB_NAME }}
           DB_PASSWORD: ${{ secrets.DEV_DB_PASSWORD }}
-          IN_SINCE: ${{ inputs.since }}
-          IN_UNTIL: ${{ inputs.until }}
-          IN_IDS: ${{ inputs.mapping_ids }}
-          IN_CTX: ${{ inputs.context_lines }}
+          IN_SINCE: ${{ inputs.since || '2026-10-06 12:40' }}
+          IN_UNTIL: ${{ inputs.until || '2026-10-06 12:50' }}
+          IN_IDS: ${{ inputs.mapping_ids || '315,314' }}
+          IN_CTX: ${{ inputs.context_lines || '80' }}
         run: |
           set -euo pipefail
           for name in SERVER_HOST SERVER_USER SERVER_SSH_KEY DB_HOST DB_USER DB_NAME DB_PASSWORD; do

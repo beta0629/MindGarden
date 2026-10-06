@@ -72,6 +72,11 @@
   color: var(--slot-icon-color, var(--mg-gray-500));
 }
 
+.mg-v2-time-slot-occupy-hint {
+  font-size: var(--font-size-xs);
+  color: var(--mg-error-500);
+}
+
 .time-slot-grid-loading {
   display: flex;
   justify-content: center;

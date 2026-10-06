@@ -2198,6 +2198,11 @@ textarea.mg-v2-textarea {
   color: var(--ad-b0kla-text-secondary);
 }
 
+.mg-v2-ad-b0kla .mg-v2-ad-ts-item__occupy-hint {
+  font-size: var(--font-size-xs);
+  color: var(--mg-error-500);
+}
+
 .mg-v2-ad-b0kla .mg-v2-ad-ts-item--selected .mg-v2-ad-ts-item__duration {
   color: var(--ad-b0kla-green);
 }

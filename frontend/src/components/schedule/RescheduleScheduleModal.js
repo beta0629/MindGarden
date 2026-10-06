@@ -287,6 +287,7 @@ const RescheduleScheduleModal = ({
                 setErrors([]);
               }}
               excludeScheduleId={schedulePayload.id}
+              calendarEvents={events}
               onCodeOptionsLoaded={handleCodeOptionsLoaded}
             />
           </div>

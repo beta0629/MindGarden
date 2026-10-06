@@ -79,6 +79,7 @@ export const STATUS_TEXT_COLORS = {
 export const SCHEDULE_STATUSES_OCCUPYING_TIME_SLOT_FOR_CONFLICT = new Set([
   STATUS.BOOKED,
   STATUS.CONFIRMED,
+  STATUS.COMPLETED,
   'IN_PROGRESS',
   'TENTATIVE_PENDING_PAYMENT'
 ]);
@@ -95,64 +96,95 @@ export function isScheduleStatusOccupyingTimeSlotForConflict(status) {
  * @param {object} schedule
  * @returns {string|null} 대문자 코드 또는 null
  */
+const OCCUPYING_STATUS_KNOWN = [
+  'BOOKED',
+  'CONFIRMED',
+  'COMPLETED',
+  'CANCELLED',
+  'VACATION',
+  'AVAILABLE',
+  'IN_PROGRESS',
+  'TENTATIVE_PENDING_PAYMENT'
+];
+
+function isDeletedOccupancyFlag(schedule) {
+  if (!schedule) {
+    return false;
+  }
+  if (schedule.deletedAt) {
+    return true;
+  }
+  const flag = schedule.isDeleted;
+  return flag === true || flag === 1 || flag === '1' || flag === 'true';
+}
+
+function resolveStatusRawToCode(raw) {
+  if (raw == null || raw === '') {
+    return null;
+  }
+  if (typeof raw === 'object') {
+    const nested = raw.name ?? raw.value ?? raw.status ?? raw.statusCode ?? raw.code;
+    if (nested != null && nested !== raw) {
+      return resolveStatusRawToCode(nested);
+    }
+    if (raw.displayName) {
+      return resolveStatusRawToCode(String(raw.displayName));
+    }
+    return null;
+  }
+  const s = String(raw).trim();
+  if (!s || s === '[OBJECT OBJECT]') {
+    return null;
+  }
+  const upper = s.toUpperCase();
+  if (OCCUPYING_STATUS_KNOWN.includes(upper)) {
+    return upper;
+  }
+  if (/취소|취소됨/.test(s)) {
+    return STATUS.CANCELLED;
+  }
+  if (/가예약|TENTATIVE_PENDING_PAYMENT|결제\s*대기\s*\(가예약\)/.test(s)) {
+    return 'TENTATIVE_PENDING_PAYMENT';
+  }
+  if (/예약됨|예약/.test(s)) {
+    return STATUS.BOOKED;
+  }
+  if (/완료|완료됨/.test(s)) {
+    return STATUS.COMPLETED;
+  }
+  if (/확정|확정됨/.test(s)) {
+    return STATUS.CONFIRMED;
+  }
+  if (/휴가/.test(s)) {
+    return STATUS.VACATION;
+  }
+  if (/가능/.test(s)) {
+    return STATUS.AVAILABLE;
+  }
+  return upper;
+}
+
 export function resolveScheduleStatusCodeForConflict(schedule) {
   if (!schedule) {
     return null;
   }
-  if (schedule.isDeleted === true || schedule.deletedAt) {
+  if (isDeletedOccupancyFlag(schedule)) {
     return null;
   }
-  const codeRaw =
-    schedule.statusCode != null && String(schedule.statusCode).trim() !== ''
-      ? String(schedule.statusCode).trim()
-      : null;
-  if (codeRaw) {
-    return codeRaw.toUpperCase();
+  const fromStatusCode = resolveStatusRawToCode(schedule.statusCode);
+  if (fromStatusCode) {
+    return fromStatusCode;
   }
-  const st = schedule.status;
-  if (st == null || st === '') {
-    return null;
-  }
-  if (typeof st === 'string') {
-    const s = st.trim();
-    const upper = s.toUpperCase();
-    const known = ['BOOKED', 'CONFIRMED', 'COMPLETED', 'CANCELLED', 'VACATION', 'AVAILABLE', 'IN_PROGRESS', 'TENTATIVE_PENDING_PAYMENT'];
-    if (known.includes(upper)) {
-      return upper;
-    }
-    if (/취소|취소됨/.test(s)) {
-      return STATUS.CANCELLED;
-    }
-    if (/가예약|TENTATIVE_PENDING_PAYMENT|결제\s*대기\s*\(가예약\)/.test(s)) {
-      return 'TENTATIVE_PENDING_PAYMENT';
-    }
-    if (/예약됨|예약/.test(s)) {
-      return STATUS.BOOKED;
-    }
-    if (/완료|완료됨/.test(s)) {
-      return STATUS.COMPLETED;
-    }
-    if (/확정|확정됨/.test(s)) {
-      return STATUS.CONFIRMED;
-    }
-    if (/휴가/.test(s)) {
-      return STATUS.VACATION;
-    }
-    if (/가능/.test(s)) {
-      return STATUS.AVAILABLE;
-    }
-    return upper;
-  }
-  return String(st).toUpperCase();
+  return resolveStatusRawToCode(schedule.status);
 }
 
-/** 기존 스케줄 안내 영역에 표시할지 (취소·완료는 예약 슬롯 점유 안내에서 제외) */
+/** 기존 스케줄 안내 영역에 표시할지 (취소·가용만 숨김. 완료는 슬롯 점유와 맞춤) */
 export function isScheduleShownInExistingBookingsList(schedule) {
   const code = resolveScheduleStatusCodeForConflict(schedule);
   if (!code) {
     return false;
   }
-  if (code === STATUS.CANCELLED || code === STATUS.COMPLETED || code === STATUS.AVAILABLE) {
+  if (code === STATUS.CANCELLED || code === STATUS.AVAILABLE) {
     return false;
   }
   return true;
@@ -686,6 +718,55 @@ export const BUSINESS_HOURS_DISPLAY = {
 
 export const TIME_SLOT_INTERVAL = 30; // 30분 간격
 export const TIME_SLOT_DURATION = 30; // 30분 슬롯
+
+/** 슬롯 시각 문자열 구분자 (HH:mm) */
+export const TIME_SLOT_HM_SEPARATOR = ':';
+
+/** 슬롯 시각 부분 개수 (시, 분) */
+export const TIME_SLOT_HM_PART_COUNT = 2;
+
+/** YYYY-MM-DD 구분자 */
+export const DATE_YMD_SEPARATOR = '-';
+
+/** YYYY-MM-DD 부분 개수 */
+export const DATE_YMD_PART_COUNT = 3;
+
+/** Date#getMonth 보정 (1월 = 0) */
+export const MONTH_INDEX_OFFSET = 1;
+
+/** 지난 슬롯 그리드 배지 */
+export const TIME_SLOT_PAST_BADGE_TEXT = '과';
+
+/** 충돌 슬롯 그리드 배지 */
+export const TIME_SLOT_CONFLICT_BADGE_TEXT = '충';
+
+/** 사용 가능 슬롯 그리드 배지 */
+export const TIME_SLOT_AVAILABLE_BADGE_TEXT = '가';
+
+/** 휴가 슬롯 그리드 배지 */
+export const TIME_SLOT_VACATION_BADGE_TEXT = '휴';
+
+/** 선택 슬롯 그리드 배지 */
+export const TIME_SLOT_SELECTED_BADGE_TEXT = '선';
+
+/** 사용 불가 슬롯 그리드 배지 */
+export const TIME_SLOT_UNAVAILABLE_BADGE_TEXT = '불';
+
+/** 충돌 칸에 점유 시작 시각을 붙일 때 접두 라벨 */
+export const TIME_SLOT_OCCUPYING_START_HINT_LABEL = '점유';
+
+/** B0KlA 충돌 칸 점유 시작 힌트 클래스 */
+export const TIME_SLOT_OCCUPY_HINT_CLASS = 'mg-v2-ad-ts-item__occupy-hint';
+
+/** 레거시 충돌 칸 점유 시작 힌트 클래스 */
+export const TIME_SLOT_OCCUPY_HINT_LEGACY_CLASS = 'mg-v2-time-slot-occupy-hint';
+
+/** end 누락 시 점유 종료 추론에 쓰는 기본 상담 분 (공통코드 DURATION 50_MIN과 동일 계열) */
+export const DEFAULT_INFERRED_SCHEDULE_DURATION_MINUTES = 50;
+
+/** 지난 슬롯 클릭 안내 — 시작 시각 기준, 리드타임 버퍼 없음 */
+export const TIME_SLOT_PAST_CLICK_MESSAGE =
+  '해당 시간은 이미 지났습니다.\n현재 시간 이후의 시간을 선택해주세요.';
 
 export const MIN_CONSULTATION_DURATION = 30; // 최소 30분
 export const MAX_CONSULTATION_DURATION = 180; // 최대 3시간

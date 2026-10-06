@@ -19,8 +19,8 @@ class ScheduleStatusOccupiesTimeForConflictCheckTest {
     @ParameterizedTest
     @EnumSource(
             value = ScheduleStatus.class,
-            names = {"BOOKED", "CONFIRMED", "IN_PROGRESS", "TENTATIVE_PENDING_PAYMENT"})
-    @DisplayName("활성 예약 상태는 슬롯을 점유한다")
+            names = {"BOOKED", "CONFIRMED", "IN_PROGRESS", "TENTATIVE_PENDING_PAYMENT", "COMPLETED"})
+    @DisplayName("활성 예약·완료 상태는 슬롯을 점유한다")
     void occupyingStatuses_returnTrue(ScheduleStatus status) {
         assertThat(status.occupiesTimeForConflictCheck()).isTrue();
     }
@@ -28,8 +28,8 @@ class ScheduleStatusOccupiesTimeForConflictCheckTest {
     @ParameterizedTest
     @EnumSource(
             value = ScheduleStatus.class,
-            names = {"CANCELLED", "COMPLETED", "AVAILABLE", "VACATION"})
-    @DisplayName("취소·완료·가용·휴가는 슬롯을 점유하지 않는다")
+            names = {"CANCELLED", "AVAILABLE", "VACATION"})
+    @DisplayName("취소·가용·휴가는 슬롯을 점유하지 않는다")
     void nonOccupyingStatuses_returnFalse(ScheduleStatus status) {
         assertThat(status.occupiesTimeForConflictCheck()).isFalse();
     }
@@ -38,5 +38,18 @@ class ScheduleStatusOccupiesTimeForConflictCheckTest {
     @DisplayName("CANCELLED는 재예약 가능(비점유)이다")
     void cancelled_doesNotOccupy() {
         assertThat(ScheduleStatus.CANCELLED.occupiesTimeForConflictCheck()).isFalse();
+    }
+
+    @Test
+    @DisplayName("occupyingStatusesForTimeConflict 목록에 COMPLETED 포함, CANCELLED 미포함")
+    void occupyingStatusesForTimeConflict_includesCompleted() {
+        assertThat(ScheduleStatus.occupyingStatusesForTimeConflict()).containsExactlyInAnyOrder(
+                ScheduleStatus.BOOKED,
+                ScheduleStatus.TENTATIVE_PENDING_PAYMENT,
+                ScheduleStatus.CONFIRMED,
+                ScheduleStatus.IN_PROGRESS,
+                ScheduleStatus.COMPLETED);
+        assertThat(ScheduleStatus.occupyingStatusesForTimeConflict())
+                .doesNotContain(ScheduleStatus.CANCELLED, ScheduleStatus.AVAILABLE, ScheduleStatus.VACATION);
     }
 }

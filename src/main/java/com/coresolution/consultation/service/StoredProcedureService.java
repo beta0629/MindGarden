@@ -47,7 +47,8 @@ public interface StoredProcedureService {
     List<Map<String, Object>> executeProcedure(String procedureName, Map<String, Object> parameters);
     
     /**
-     * 매핑 정보 수정 (ERP 연동)
+     * 매핑 정보 수정 — 매칭 필드만 (재무 전표 없음, 호출자 트랜잭션에 참여). 현재 Java 호출 경로 없음:
+     * 매칭 수정은 JPA + MappingPackageLedgerService 가 한 트랜잭션에서 처리한다.
      * @param mappingId 매핑 ID
      * @param newPackageName 새로운 패키지명
      * @param newPackagePrice 새로운 패키지 가격

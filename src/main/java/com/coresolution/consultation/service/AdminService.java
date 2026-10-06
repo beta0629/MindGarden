@@ -237,20 +237,26 @@ public interface AdminService {
     Client updateClient(Long id, ClientRegistrationRequest request);
 
     /**
-     * 매칭 정보 수정 (JPA 만 — ERP 동기화는 {@link MappingUpdateService} 가 트랜잭션 밖에서 먼저 실행)
-     */
-    ConsultantClientMappingResponse updateMapping(Long id, ConsultantClientMappingCreateRequest request, String updatedBy);
-
-    /**
-     * 매칭 수정 전 ERP 동기화(UpdateMappingInfo) 필요 여부·인자 (읽기 트랜잭션).
+     * 매칭 정보 수정 (JPA 만). 입금 확인된 매칭의 금액 차액 조정 전표는 {@link MappingUpdateService} 가 같은 트랜잭션에서
+     * 남긴다 — 매칭 수정은 그 진입점으로만 부른다.
      *
      * @param id 매칭 ID
      * @param request 수정 요청
      * @param updatedBy 수정자
-     * @return 동기화 인자, 불필요하면 empty
+     * @return 수정된 매칭
      */
-    java.util.Optional<com.coresolution.consultation.dto.MappingPackageErpSyncPlan> planMappingPackageErpSync(
-            Long id, ConsultantClientMappingCreateRequest request, String updatedBy);
+    ConsultantClientMappingResponse updateMapping(Long id, ConsultantClientMappingCreateRequest request, String updatedBy);
+
+    /**
+     * 매칭 수정 전 금액·회기 변경 판정 ({@link MappingUpdateService} 트랜잭션에 참여).
+     *
+     * @param id 매칭 ID
+     * @param request 수정 요청
+     * @return 변경 판정
+     * @throws com.coresolution.consultation.exception.MappingErpSyncFailedException 동기화 경로 없는 매칭의 금액·회기 변경
+     */
+    com.coresolution.consultation.dto.MappingPackageChange inspectMappingPackageChange(Long id,
+            ConsultantClientMappingCreateRequest request);
 
     /**
      * 가계약(PENDING_PAYMENT) 매칭의 패키지·가격·총 회기만 동일 매핑에 갱신한다.

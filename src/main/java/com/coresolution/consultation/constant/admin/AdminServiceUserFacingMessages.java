@@ -180,6 +180,17 @@ public final class AdminServiceUserFacingMessages {
     public static final String MSG_MAPPING_ERP_SYNC_UNSUPPORTED =
             "입금 확인된 이 매칭은 여기서 금액·회기를 바꾸면 재무(ERP) 거래와 맞출 수 없어 처리하지 않았습니다. 환불 또는 추가 패키지로 처리해 주세요.";
 
+    /** 입금 확인된 매칭 감액 — 새 금액이 (결제액 − 누적 환불액) 미만. 매칭·전표 변경 없음. */
+    public static final String MSG_MAPPING_AMOUNT_BELOW_REFUND_FLOOR =
+            "새 금액이 실제 결제액에서 이미 환불한 금액을 뺀 금액보다 적어 바꾸지 않았습니다. 환불로 처리하거나 금액을 다시 확인해 주세요.";
+
+    /** 패키지 금액 조정 전표 적요: 패키지명, 이전 금액, 새 금액, 차액(부호 포함). */
+    public static final String DESC_MAPPING_PACKAGE_PRICE_ADJUSTMENT_FMT =
+            "패키지 금액 조정 - %s (%,d원 → %,d원, 차액 %+,d원)";
+
+    /** 패키지 금액 조정 전표 비고: 수정자. */
+    public static final String REMARKS_MAPPING_PACKAGE_PRICE_ADJUSTMENT_ACTOR_FMT = "수정자: %s";
+
     /**
      * 옵션 B v2.0 멱등성 가드 (Q6 Carbon Copy, 2026-05-28).
      *

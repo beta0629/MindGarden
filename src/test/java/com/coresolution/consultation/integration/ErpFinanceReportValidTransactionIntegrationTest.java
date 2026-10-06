@@ -27,9 +27,9 @@ import org.springframework.transaction.annotation.Transactional;
 /**
  * 재무 리포트·대시보드·결산 합계의 유효 거래 조건 일치 — H2 실제 리포지토리·서비스.
  *
- * <p>같은 날짜에 완료·대기 수입, 취소·거부 수입, soft delete 수입, 완료·취소 지출을 둔다.
- * 일·월·연 리포트, 운영자 기간 대시보드, 결산 합계는 유효 거래(취소·거부·삭제 제외)로 같고,
- * COMPLETED 전용 재무 대시보드 SUM({@code getFinancialDashboard}) 은 PENDING 을 넣지 않는다.</p>
+ * <p>같은 날짜에 완료·대기·승인 수입, 취소·거부 수입, soft delete 수입, 완료·취소 지출을 둔다.
+ * 일·월·연 리포트, 운영자 기간 대시보드, 결산 합계, COMPLETED 재무 대시보드 SUM 은 모두
+ * {@code FinancialTransactionValidity} (미삭제 COMPLETED) 로 같은 숫자다.</p>
  *
  * @author CoreSolution
  * @since 2026-10-06
@@ -37,17 +37,13 @@ import org.springframework.transaction.annotation.Transactional;
 @SpringBootTest(classes = com.coresolution.consultation.ConsultationManagementApplication.class)
 @ActiveProfiles("test")
 @Transactional
-@DisplayName("ERP 리포트 — 취소·거부·삭제 거래 제외, 대시보드 순익과 일치")
+@DisplayName("ERP 리포트 — 유효 거래는 미삭제 COMPLETED 만, 대시보드와 일치")
 class ErpFinanceReportValidTransactionIntegrationTest {
 
     private static final LocalDate REPORT_DATE = LocalDate.of(2026, 3, 15);
     private static final BigDecimal COMPLETED_INCOME = BigDecimal.valueOf(100_000L);
-    private static final BigDecimal PENDING_INCOME = BigDecimal.valueOf(20_000L);
-    private static final BigDecimal EXPECTED_REPORT_INCOME = COMPLETED_INCOME.add(PENDING_INCOME);
     private static final BigDecimal EXPECTED_EXPENSE = BigDecimal.valueOf(40_000L);
-    private static final BigDecimal EXPECTED_REPORT_NET = EXPECTED_REPORT_INCOME.subtract(EXPECTED_EXPENSE);
-    private static final BigDecimal EXPECTED_COMPLETED_DASHBOARD_INCOME = COMPLETED_INCOME;
-    private static final BigDecimal EXPECTED_COMPLETED_DASHBOARD_NET = COMPLETED_INCOME.subtract(EXPECTED_EXPENSE);
+    private static final BigDecimal EXPECTED_NET = COMPLETED_INCOME.subtract(EXPECTED_EXPENSE);
 
     @Autowired private FinancialTransactionRepository financialTransactionRepository;
     @Autowired private ErpService erpService;
@@ -63,6 +59,7 @@ class ErpFinanceReportValidTransactionIntegrationTest {
 
         save(tenantId, TransactionType.INCOME, TransactionStatus.COMPLETED, 100_000L, false);
         save(tenantId, TransactionType.INCOME, TransactionStatus.PENDING, 20_000L, false);
+        save(tenantId, TransactionType.INCOME, TransactionStatus.APPROVED, 15_000L, false);
         save(tenantId, TransactionType.INCOME, TransactionStatus.CANCELLED, 50_000L, false);
         save(tenantId, TransactionType.INCOME, TransactionStatus.REJECTED, 30_000L, false);
         save(tenantId, TransactionType.INCOME, TransactionStatus.COMPLETED, 10_000L, true);
@@ -78,59 +75,60 @@ class ErpFinanceReportValidTransactionIntegrationTest {
     }
 
     @Test
-    @DisplayName("일간 리포트 — 취소·거부·삭제 수입 제외, 순익 = 대시보드 순익")
-    void dailyReport_excludesInvalidAndMatchesDashboard() {
-        Map<String, Object> report = erpService.getDailyFinanceReport(REPORT_DATE.toString(), null);
-
-        assertThat(total(report, "dailyIncome")).isEqualByComparingTo(EXPECTED_REPORT_INCOME);
-        assertThat(total(report, "dailyExpenses")).isEqualByComparingTo(EXPECTED_EXPENSE);
-        assertThat((BigDecimal) report.get("dailyNetIncome")).isEqualByComparingTo(EXPECTED_REPORT_NET);
-        assertThat((BigDecimal) report.get("dailyNetIncome")).isEqualByComparingTo(operatorDashboardNet());
-    }
-
-    @Test
-    @DisplayName("월간 리포트 — 취소·거부·삭제 수입 제외, 순익 = 대시보드 순익")
-    void monthlyReport_excludesInvalidAndMatchesDashboard() {
-        Map<String, Object> report = erpService.getMonthlyFinanceReport(
+    @DisplayName("일간·월간 리포트와 재무 대시보드 합계가 같다 (PENDING/APPROVED/CANCELLED/REJECTED 존재)")
+    void dailyAndMonthlyReports_matchDashboardCompletedTotals() {
+        FinancialDashboardResponse dashboard =
+                financialTransactionService.getFinancialDashboard(REPORT_DATE, REPORT_DATE);
+        Map<String, Object> daily = erpService.getDailyFinanceReport(REPORT_DATE.toString(), null);
+        Map<String, Object> monthly = erpService.getMonthlyFinanceReport(
                 String.valueOf(REPORT_DATE.getYear()), String.valueOf(REPORT_DATE.getMonthValue()), null);
 
-        assertThat(total(report, "monthlyIncome")).isEqualByComparingTo(EXPECTED_REPORT_INCOME);
-        assertThat(total(report, "monthlyExpenses")).isEqualByComparingTo(EXPECTED_EXPENSE);
-        assertThat((BigDecimal) report.get("monthlyNetIncome")).isEqualByComparingTo(operatorDashboardNet());
+        assertThat(dashboard.getTotalIncome()).isEqualByComparingTo(COMPLETED_INCOME);
+        assertThat(dashboard.getTotalExpense()).isEqualByComparingTo(EXPECTED_EXPENSE);
+        assertThat(dashboard.getNetProfit()).isEqualByComparingTo(EXPECTED_NET);
+        assertThat(total(daily, "dailyIncome")).isEqualByComparingTo(dashboard.getTotalIncome());
+        assertThat(total(daily, "dailyExpenses")).isEqualByComparingTo(dashboard.getTotalExpense());
+        assertThat((BigDecimal) daily.get("dailyNetIncome")).isEqualByComparingTo(dashboard.getNetProfit());
+        assertThat(total(monthly, "monthlyIncome")).isEqualByComparingTo(dashboard.getTotalIncome());
+        assertThat(total(monthly, "monthlyExpenses")).isEqualByComparingTo(dashboard.getTotalExpense());
+        assertThat((BigDecimal) monthly.get("monthlyNetIncome")).isEqualByComparingTo(dashboard.getNetProfit());
+        assertThat((BigDecimal) daily.get("dailyNetIncome")).isEqualByComparingTo(operatorDashboardNet());
     }
 
     @Test
-    @DisplayName("연간 리포트 — 취소·거부·삭제 수입 제외")
-    void yearlyReport_excludesInvalid() {
+    @DisplayName("연간 리포트 — 미삭제 COMPLETED 만, 대시보드와 일치")
+    void yearlyReport_matchesDashboard() {
+        FinancialDashboardResponse dashboard =
+                financialTransactionService.getFinancialDashboard(REPORT_DATE, REPORT_DATE);
         Map<String, Object> report = erpService.getYearlyFinanceReport(String.valueOf(REPORT_DATE.getYear()));
 
-        assertThat(total(report, "yearlyIncome")).isEqualByComparingTo(EXPECTED_REPORT_INCOME);
-        assertThat(total(report, "yearlyExpenses")).isEqualByComparingTo(EXPECTED_EXPENSE);
-        assertThat((BigDecimal) report.get("yearlyNetIncome")).isEqualByComparingTo(EXPECTED_REPORT_NET);
+        assertThat(total(report, "yearlyIncome")).isEqualByComparingTo(dashboard.getTotalIncome());
+        assertThat(total(report, "yearlyExpenses")).isEqualByComparingTo(dashboard.getTotalExpense());
+        assertThat((BigDecimal) report.get("yearlyNetIncome")).isEqualByComparingTo(dashboard.getNetProfit());
     }
 
     @Test
-    @DisplayName("COMPLETED 재무 대시보드 SUM 은 PENDING 을 넣지 않아 리포트·운영자 대시보드와 다를 수 있다")
-    void financialDashboardTotals_completedOnly_unlikeReport() {
-        FinancialDashboardResponse dashboard = financialTransactionService.getFinancialDashboard(REPORT_DATE, REPORT_DATE);
+    @DisplayName("재무 대시보드 월별 데이터도 COMPLETED 만")
+    void financialDashboardMonthlyData_completedOnly() {
+        FinancialDashboardResponse dashboard =
+                financialTransactionService.getFinancialDashboard(REPORT_DATE, REPORT_DATE);
 
-        assertThat(dashboard.getTotalIncome()).isEqualByComparingTo(EXPECTED_COMPLETED_DASHBOARD_INCOME);
-        assertThat(dashboard.getTotalExpense()).isEqualByComparingTo(EXPECTED_EXPENSE);
-        assertThat(dashboard.getNetProfit()).isEqualByComparingTo(EXPECTED_COMPLETED_DASHBOARD_NET);
         assertThat(dashboard.getMonthlyData()).hasSize(1);
-        assertThat(dashboard.getMonthlyData().get(0).getIncome()).isEqualByComparingTo(EXPECTED_COMPLETED_DASHBOARD_INCOME);
+        assertThat(dashboard.getMonthlyData().get(0).getIncome()).isEqualByComparingTo(COMPLETED_INCOME);
         assertThat(dashboard.getMonthlyData().get(0).getExpense()).isEqualByComparingTo(EXPECTED_EXPENSE);
-        assertThat(dashboard.getNetProfit()).isNotEqualByComparingTo(operatorDashboardNet());
-        assertThat(dashboard.getTotalIncome().add(PENDING_INCOME)).isEqualByComparingTo(EXPECTED_REPORT_INCOME);
     }
 
     @Test
-    @DisplayName("결산 합계 — 취소·거부·삭제 거래 제외")
-    void closeSums_excludeInvalid() {
+    @DisplayName("결산 합계 — 미삭제 COMPLETED 만, 대시보드와 일치")
+    void closeSums_matchDashboard() {
+        FinancialDashboardResponse dashboard =
+                financialTransactionService.getFinancialDashboard(REPORT_DATE, REPORT_DATE);
         assertThat(financialTransactionRepository.sumAmountForCloseByType(
-                tenantId, TransactionType.INCOME, REPORT_DATE, REPORT_DATE)).isEqualByComparingTo(EXPECTED_REPORT_INCOME);
+                tenantId, TransactionType.INCOME, REPORT_DATE, REPORT_DATE))
+                .isEqualByComparingTo(dashboard.getTotalIncome());
         assertThat(financialTransactionRepository.sumAmountForCloseByType(
-                tenantId, TransactionType.EXPENSE, REPORT_DATE, REPORT_DATE)).isEqualByComparingTo(EXPECTED_EXPENSE);
+                tenantId, TransactionType.EXPENSE, REPORT_DATE, REPORT_DATE))
+                .isEqualByComparingTo(dashboard.getTotalExpense());
     }
 
     private BigDecimal operatorDashboardNet() {

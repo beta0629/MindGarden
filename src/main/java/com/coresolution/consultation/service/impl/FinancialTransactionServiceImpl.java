@@ -1559,7 +1559,7 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
      * 재무 데이터 조회
      * 표준화 2025-12-06: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음
      * <p>
-     * 운영자 콕핏 SSOT: 미삭제 + {@link #isPostedForOperator} (CANCELLED/REJECTED 제외) 거래만 합산.
+     * 운영자 콕핏 SSOT: 미삭제 COMPLETED({@link #isPostedForOperator}) 거래만 합산.
      * 수입 mix는 {@code incomeCategoryBreakdown}(INCOME only)를 사용한다.
      * </p>
      */
@@ -1689,8 +1689,8 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
 
     /**
      * 운영자 장부·기간 대시보드({@code getBranchFinancialData}) posted 여부.
-     * 판정은 {@link FinancialTransactionValidity#isValid} 만 쓴다 (미삭제 + CANCELLED·REJECTED 제외).
-     * COMPLETED 전용 합계({@link #getTotalIncome}) 와는 범위가 다를 수 있다.
+     * 판정은 {@link FinancialTransactionValidity#isValid} 만 쓴다 (미삭제 COMPLETED).
+     * 재무 대시보드 SUM({@link #getTotalIncome}) 과 같은 조건이다.
      *
      * @param transaction 재무 거래
      * @return posted이면 true

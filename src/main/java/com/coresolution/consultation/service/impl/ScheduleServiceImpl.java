@@ -77,7 +77,9 @@ import com.coresolution.consultation.util.LeftoverOccupyingCompleteExhaust;
 import com.coresolution.consultation.util.MappingPaymentScheduleGate;
 import com.coresolution.consultation.util.ProvisionalConsultationLogSession;
 import com.coresolution.consultation.util.ScheduleCancelLinkedMappingReopen;
+import com.coresolution.consultation.util.ScheduleCancelMappingStatusRule;
 import com.coresolution.consultation.util.ScheduleSessionStartGate;
+import com.coresolution.consultation.service.support.DeferredExternalCalls;
 import com.coresolution.consultation.util.ScheduleStatusTransitionPolicy;
 import com.coresolution.consultation.utils.SessionUtils;
 import com.coresolution.consultation.service.StatisticsService;
@@ -1881,14 +1883,67 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         
         Schedule saved = scheduleRepository.save(schedule);
         deductSessionForScheduleIfNeeded(saved);
-        tryDispatchScheduleConfirmedExternalNotification(saved);
-        try {
-            mobilePushDispatchService.dispatchBookingConfirmed(
-                    saved.getTenantId(), saved, SessionUtils.getCurrentUserId());
-        } catch (Exception ex) {
-            log.warn("예약 확정 푸시 실패: scheduleId={}", saved.getId(), ex);
+        Runnable confirmedExternalCalls = buildScheduleConfirmedExternalCalls(saved);
+        if (!DeferredExternalCalls.deferIfActive(confirmedExternalCalls)) {
+            confirmedExternalCalls.run();
         }
         return saved;
+    }
+
+    /**
+     * 확정 트랜잭션 안에서 수신자·문구를 준비하고, 실제 알림·푸시는 반환된 Runnable 에서만 보낸다.
+     * 컨트롤러가 {@link DeferredExternalCalls#run} 으로 감싸면 커밋·커넥션 반환 뒤에 실행된다.
+     *
+     * @param schedule 확정된 일정
+     * @return 외부 호출 Runnable
+     */
+    private Runnable buildScheduleConfirmedExternalCalls(Schedule schedule) {
+        User client = null;
+        String consultantName = "상담사";
+        String dateStr = "";
+        String timeStr = "";
+        String tenantId = TenantContextHolder.getTenantId();
+        if (tenantId == null || tenantId.isEmpty()) {
+            log.warn("예약 확정 알림: TenantContext 비어 있음, 발송 생략 scheduleId={}", schedule.getId());
+        } else if (schedule.getClientId() == null) {
+            log.debug("예약 확정 알림: clientId 없음 scheduleId={}", schedule.getId());
+        } else {
+            client = findUserByTenantContext(schedule.getTenantId(), schedule.getClientId()).orElse(null);
+            if (client == null) {
+                log.warn("예약 확정 알림: 내담자 User 미조회 scheduleId={}, clientId={}",
+                        schedule.getId(), schedule.getClientId());
+            } else {
+                consultantName = resolveConsultantDisplayNameForAlimTalk(schedule);
+                dateStr = schedule.getDate() != null ? schedule.getDate().toString() : "";
+                if (schedule.getStartTime() != null && schedule.getEndTime() != null) {
+                    timeStr = schedule.getStartTime() + "-" + schedule.getEndTime();
+                } else if (schedule.getStartTime() != null) {
+                    timeStr = schedule.getStartTime().toString();
+                }
+            }
+        }
+        User notificationClient = client;
+        String notificationConsultantName = consultantName;
+        String notificationDate = dateStr;
+        String notificationTime = timeStr;
+        Long actorUserId = SessionUtils.getCurrentUserId();
+        return () -> {
+            if (notificationClient != null) {
+                try {
+                    notificationService.sendConsultationConfirmed(
+                            notificationClient, notificationConsultantName, notificationDate, notificationTime);
+                } catch (Exception e) {
+                    log.warn("예약 확정 알림 발송 실패(본 처리 롤백 없음): scheduleId={}, {}",
+                            schedule.getId(), e.getMessage());
+                }
+            }
+            try {
+                mobilePushDispatchService.dispatchBookingConfirmed(
+                        schedule.getTenantId(), schedule, actorUserId);
+            } catch (Exception ex) {
+                log.warn("예약 확정 푸시 실패: scheduleId={}", schedule.getId(), ex);
+            }
+        };
     }
     
     /**
@@ -3558,18 +3613,11 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
     }
 
     /**
-     * 일정 CANCELLED 전이 시 연결된 매칭을 동기 취소한다 (AdminService 순환 DI 회피).
+     * 일정 CANCELLED 전이 후 연결 매핑 상태를 바꿀지 판정한다.
      *
      * <p>순서: 일정 취소 → 회기 복원(호출부) → 본 메서드.
-     * ERP 환불({@code terminateMapping})은 호출하지 않는다.</p>
-     *
-     * <ul>
-     *   <li>PENDING_PAYMENT → CANCELLED + paymentStatus REJECTED, remainingSessions=0</li>
-     *   <li>ACTIVE 등 결제완료 계열 + 복원 후 remainingSessions &gt; 0 → 매칭/형제 일정 일괄 취소 금지
-     *       (해당 일정 CANCELLED + 회기 복원만; 「남은 회기 배정」큐 유지)</li>
-     *   <li>ACTIVE 등 + remainingSessions == 0 → CANCELLED + audit notes (완료 강제 없음)</li>
-     *   <li>이미 CANCELLED/TERMINATED → no-op (멱등)</li>
-     * </ul>
+     * {@link ScheduleCancelMappingStatusRule} 이 거절하면 매핑 상태·형제 일정을 건드리지 않는다.
+     * 매핑 종료·INCOME 취소는 {@code terminateMapping} 만 한다.</p>
      *
      * @param schedule CANCELLED 로 전이된 일정
      * @author MindGarden
@@ -3592,46 +3640,10 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
 
         ConsultantClientMapping mapping = mappingOpt.get();
         MappingStatus status = mapping.getStatus();
-        if (status == MappingStatus.CANCELLED || status == MappingStatus.TERMINATED) {
-            log.debug("일정 취소 매칭 동기 멱등 skip: mappingId={}, status={}", mapping.getId(), status);
-            return;
+        if (!ScheduleCancelMappingStatusRule.allowsMappingStatusChangeFromScheduleCancel(status)) {
+            log.info("일정 취소는 매핑 상태를 바꾸지 않음: scheduleId={}, mappingId={}, status={}",
+                    schedule.getId(), mapping.getId(), status);
         }
-
-        // ACTIVE/결제완료 계열 + rem>0: 매칭 CANCELLED·형제 점유 일정 일괄 취소 금지
-        Integer remainingSessions = mapping.getRemainingSessions();
-        if (status != MappingStatus.PENDING_PAYMENT
-                && remainingSessions != null
-                && remainingSessions > 0) {
-            log.info(
-                    "일정 취소 매칭 동기 skip (ACTIVE rem>0 보호): scheduleId={}, mappingId={}, status={}, remainingSessions={}",
-                    schedule.getId(), mapping.getId(), status, remainingSessions);
-            return;
-        }
-
-        int extraCancelled = cancelRemainingOccupyingSchedulesForLinkedMapping(
-                mapping, tenantId, schedule);
-
-        if (status == MappingStatus.PENDING_PAYMENT) {
-            mapping.setStatus(MappingStatus.CANCELLED);
-            mapping.setPaymentStatus(ConsultantClientMapping.PaymentStatus.REJECTED);
-            mapping.setRemainingSessions(0);
-        } else {
-            // ACTIVE rem==0 등: ERP 환불 없이 CANCELLED 만. 완료(COMPLETED) 강제 없음.
-            mapping.setStatus(MappingStatus.CANCELLED);
-        }
-        mapping.setTerminatedAt(LocalDateTime.now());
-
-        String auditLine = String.format(
-                AdminServiceUserFacingMessages.NOTES_SCHEDULE_CANCEL_LINKED_MAPPING_LINE_FMT,
-                LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")),
-                schedule.getId() != null ? schedule.getId() : 0L,
-                extraCancelled);
-        String currentNotes = mapping.getNotes() != null ? mapping.getNotes() : "";
-        mapping.setNotes(currentNotes.isEmpty() ? auditLine : currentNotes + "\n" + auditLine);
-        mappingRepository.save(mapping);
-
-        log.info("✅ 일정 취소 → 매칭 동기 취소: scheduleId={}, mappingId={}, status={}, extraCancelled={}",
-                schedule.getId(), mapping.getId(), mapping.getStatus(), extraCancelled);
     }
 
     /**

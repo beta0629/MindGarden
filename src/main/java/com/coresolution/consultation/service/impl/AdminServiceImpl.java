@@ -9638,8 +9638,18 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             }
             log.info("✅ ERP 환불 데이터 전송 성공: MappingID={}, Amount={}", mapping.getId(), refundAmount);
             if (unusedFullVoid) {
-                int cancelled = ConsultationDepositIncomeLedger.cancelPostedMappingSlotIncome(
-                        financialTransactionService, mapping.getId());
+                List<ConsultantClientMapping> pairMappings = List.of();
+                if (mapping.getConsultant() != null && mapping.getClient() != null) {
+                    List<ConsultantClientMapping> found = mappingRepository
+                            .findByTenantIdAndConsultantAndClient(
+                                    mapping.getTenantId() != null ? mapping.getTenantId() : getTenantId(),
+                                    mapping.getConsultant(), mapping.getClient());
+                    if (found != null) {
+                        pairMappings = found;
+                    }
+                }
+                int cancelled = ConsultationDepositIncomeLedger.cancelPostedIncomeForTerminatedMapping(
+                        financialTransactionService, mapping, pairMappings);
                 log.info("🛑 미사용 전액 무효: MappingID={}, CANCELLED INCOME={}건, EXPENSE 환불 스킵",
                         mapping.getId(), cancelled);
                 return;

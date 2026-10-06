@@ -548,9 +548,9 @@ public interface FinancialTransactionRepository extends JpaRepository<FinancialT
     /**
      * ERP P0-2 결산용 — 거래 유형별 amount 합계.
      *
-     * <p>합의서 §4.3: 마감 시 SUM(amount) GROUP BY transaction_type 산식. 원래 status 제한이 없어
-     * PENDING/APPROVED 도 포함한다. 이 PR 은 COMPLETED 로 좁히지 않고 취소·거부·soft delete 만 제외한다.
-     * 재무 대시보드 SUM({@code sumIncomeByDateRange}) 은 COMPLETED 전용이므로 결산과 숫자가 다를 수 있다.</p>
+     * <p>합의서 §4.3: 마감 시 SUM(amount) GROUP BY transaction_type 산식.
+     * 유효 거래는 {@link FinancialTransactionValidity} (미삭제 COMPLETED) 와 같다.
+     * 이미 마감된 기간을 다시 조회·재마감하면 PENDING 등이 빠지면서 숫자가 바뀔 수 있다(의도된 동작).</p>
      *
      * @param tenantId 테넌트 ID
      * @param type 거래 유형 (INCOME/EXPENSE/RECEIVABLES)

@@ -23,3 +23,4 @@
 
 # 일정
 **/*Schedule*Test.java
+**/*MergedAddon*Test.java

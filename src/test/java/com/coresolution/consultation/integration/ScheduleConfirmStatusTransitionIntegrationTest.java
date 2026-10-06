@@ -43,7 +43,6 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
-import org.springframework.transaction.annotation.Transactional;
 
 /**
  * 일정 확정 상태 전이 — H2 실제 서비스·컨트롤러.
@@ -63,7 +62,6 @@ import org.springframework.transaction.annotation.Transactional;
 @SpringBootTest(classes = com.coresolution.consultation.ConsultationManagementApplication.class)
 @AutoConfigureMockMvc(addFilters = false)
 @ActiveProfiles("test")
-@Transactional
 @WithMockAdminSecurityContext
 @DisplayName("일정 확정 상태 전이 — 확정 불가 상태 409·회기 변화 0")
 class ScheduleConfirmStatusTransitionIntegrationTest {

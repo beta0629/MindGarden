@@ -10,7 +10,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 
 /**
- * {@link FinancialTransactionValidity} — 판정·JPQL·네이티브 조건이 같은 제외 상태를 쓰는지.
+ * {@link FinancialTransactionValidity} — 유효 거래는 미삭제 COMPLETED 만.
  *
  * @author CoreSolution
  * @since 2026-10-06
@@ -19,63 +19,63 @@ import org.junit.jupiter.params.provider.EnumSource;
 class FinancialTransactionValidityTest {
 
     @Test
-    @DisplayName("제외 상태는 취소·거부")
-    void excludedStatuses_areCancelledAndRejected() {
+    @DisplayName("제외 상태는 COMPLETED 가 아닌 모든 상태")
+    void excludedStatuses_areNonCompleted() {
         assertThat(FinancialTransactionValidity.EXCLUDED_STATUSES)
-                .containsExactlyInAnyOrder(TransactionStatus.CANCELLED, TransactionStatus.REJECTED);
+                .containsExactlyInAnyOrder(
+                        TransactionStatus.PENDING,
+                        TransactionStatus.APPROVED,
+                        TransactionStatus.CANCELLED,
+                        TransactionStatus.REJECTED);
         assertThat(FinancialTransactionValidity.EXCLUDED_STATUSES)
-                .doesNotContain(TransactionStatus.COMPLETED, TransactionStatus.PENDING, TransactionStatus.APPROVED);
+                .doesNotContain(TransactionStatus.COMPLETED);
     }
 
     @ParameterizedTest(name = "{0}")
     @EnumSource(TransactionStatus.class)
-    @DisplayName("JPQL·네이티브 조건 문자열이 제외 상태 집합과 일치")
-    void conditionStrings_matchExcludedStatuses(TransactionStatus status) {
-        boolean excluded = FinancialTransactionValidity.EXCLUDED_STATUSES.contains(status);
-        String jpqlToken = "$TransactionStatus." + status.name() + ",";
-        String jpqlLastToken = "$TransactionStatus." + status.name() + ")";
+    @DisplayName("JPQL·네이티브·판정이 COMPLETED 만 유효")
+    void conditionStrings_includeOnlyCompleted(TransactionStatus status) {
+        boolean completed = status == TransactionStatus.COMPLETED;
         String jpql = FinancialTransactionValidity.JPQL_VALID_CONDITION_F;
-        assertThat(jpql.contains(jpqlToken) || jpql.contains(jpqlLastToken)).isEqualTo(excluded);
-        assertThat(FinancialTransactionValidity.nativeValidCondition("ft").contains("'" + status.name() + "'"))
-                .isEqualTo(excluded);
-        assertThat(FinancialTransactionValidity.isValidStatus(status)).isEqualTo(!excluded);
-        assertThat(FinancialTransactionValidity.isValidStatusCode(status.name().toLowerCase())).isEqualTo(!excluded);
-    }
-
-    @Test
-    @DisplayName("JPQL 유효 조건은 soft delete 를 제외하고 COMPLETED 제한은 없다")
-    void jpqlCondition_excludesSoftDeletedWithoutCompletedFilter() {
-        assertThat(FinancialTransactionValidity.JPQL_VALID_CONDITION_F).startsWith("f.isDeleted = false AND ");
-        assertThat(FinancialTransactionValidity.JPQL_VALID_CONDITION_F).doesNotContain("COMPLETED");
-        assertThat(FinancialTransactionValidity.nativeValidCondition("ft")).startsWith("ft.is_deleted = FALSE AND ");
-        assertThat(FinancialTransactionValidity.nativeValidCondition(null)).startsWith("is_deleted = FALSE AND ");
-        int cancelled = FinancialTransactionValidity.nativeValidCondition("ft").indexOf("'CANCELLED'");
-        int rejected = FinancialTransactionValidity.nativeValidCondition("ft").indexOf("'REJECTED'");
-        assertThat(cancelled).isLessThan(rejected);
-    }
-
-    @Test
-    @DisplayName("COMPLETED 대시보드 조건은 COMPLETED 와 제외 상태를 함께 가진다")
-    void jpqlCompletedAndValid_keepsCompletedAndExcludedStatuses() {
-        String jpql = FinancialTransactionValidity.JPQL_COMPLETED_AND_VALID_CONDITION_F;
         assertThat(jpql).contains("COMPLETED");
-        for (TransactionStatus status : FinancialTransactionValidity.EXCLUDED_STATUSES) {
-            assertThat(jpql).contains(status.name());
-        }
+        assertThat(jpql).doesNotContain("PENDING");
+        assertThat(FinancialTransactionValidity.nativeValidCondition("ft"))
+                .contains("status = 'COMPLETED'");
+        assertThat(FinancialTransactionValidity.nativeValidCondition("ft"))
+                .doesNotContain("PENDING");
+        assertThat(FinancialTransactionValidity.isValidStatus(status)).isEqualTo(completed);
+        assertThat(FinancialTransactionValidity.isValidStatusCode(status.name().toLowerCase()))
+                .isEqualTo(completed);
     }
 
     @Test
-    @DisplayName("엔티티 판정 — null·삭제·취소·거부는 무효, 상태 미기록·대기·완료는 유효")
+    @DisplayName("JPQL·네이티브 유효 조건은 미삭제 COMPLETED")
+    void jpqlCondition_isDeletedFalseAndCompleted() {
+        assertThat(FinancialTransactionValidity.JPQL_VALID_CONDITION_F)
+                .isEqualTo(FinancialTransactionValidity.JPQL_COMPLETED_AND_VALID_CONDITION_F);
+        assertThat(FinancialTransactionValidity.JPQL_VALID_CONDITION_F).startsWith("f.isDeleted = false AND ");
+        assertThat(FinancialTransactionValidity.JPQL_VALID_CONDITION_F).contains("COMPLETED");
+        assertThat(FinancialTransactionValidity.nativeValidCondition("ft"))
+                .isEqualTo("ft.is_deleted = FALSE AND ft.status = 'COMPLETED'");
+        assertThat(FinancialTransactionValidity.nativeValidCondition(null))
+                .isEqualTo("is_deleted = FALSE AND status = 'COMPLETED'");
+        assertThat(FinancialTransactionValidity.nativeValidCondition(" ")).isEqualTo(
+                "is_deleted = FALSE AND status = 'COMPLETED'");
+    }
+
+    @Test
+    @DisplayName("엔티티 판정 — COMPLETED 미삭제만 유효")
     void isValid_entity() {
         assertThat(FinancialTransactionValidity.isValid(null)).isFalse();
         assertThat(FinancialTransactionValidity.isValid(tx(TransactionStatus.COMPLETED, true))).isFalse();
         assertThat(FinancialTransactionValidity.isValid(tx(TransactionStatus.CANCELLED, false))).isFalse();
         assertThat(FinancialTransactionValidity.isValid(tx(TransactionStatus.REJECTED, false))).isFalse();
-        assertThat(FinancialTransactionValidity.isValid(tx(null, false))).isTrue();
-        assertThat(FinancialTransactionValidity.isValid(tx(TransactionStatus.PENDING, false))).isTrue();
+        assertThat(FinancialTransactionValidity.isValid(tx(null, false))).isFalse();
+        assertThat(FinancialTransactionValidity.isValid(tx(TransactionStatus.PENDING, false))).isFalse();
+        assertThat(FinancialTransactionValidity.isValid(tx(TransactionStatus.APPROVED, false))).isFalse();
         assertThat(FinancialTransactionValidity.isValid(tx(TransactionStatus.COMPLETED, false))).isTrue();
-        assertThat(FinancialTransactionValidity.isValidStatusCode(null)).isTrue();
-        assertThat(FinancialTransactionValidity.isValidStatusCode(" ")).isTrue();
+        assertThat(FinancialTransactionValidity.isValidStatusCode(null)).isFalse();
+        assertThat(FinancialTransactionValidity.isValidStatusCode(" ")).isFalse();
         assertThat(FinancialTransactionValidity.isCompletedAndValid(tx(TransactionStatus.PENDING, false))).isFalse();
         assertThat(FinancialTransactionValidity.isCompletedAndValid(tx(TransactionStatus.COMPLETED, false))).isTrue();
     }

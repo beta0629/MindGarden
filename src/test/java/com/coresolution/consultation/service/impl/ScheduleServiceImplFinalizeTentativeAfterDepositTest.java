@@ -203,7 +203,8 @@ class ScheduleServiceImplFinalizeTentativeAfterDepositTest {
         verify(scheduleRepository, times(4)).save(scheduleCaptor.capture());
         assertThat(scheduleCaptor.getAllValues()).allMatch(s -> s.getStatus() == ScheduleStatus.BOOKED);
 
-        // 회차는 remaining 기반(6,7)이 아니라 점유 gap-fill(정책 A). 날짜순이면 t1 → t2.
+        // 회차: 정책 A(점유 gap-fill). 라벨 일정 점유 집합이 비어 있고 usedSessions=0 이면 1,2.
+        // remaining=5 카운터식(10-5+1=6)은 #1482 라벨 점유·#1492 병합 후 remaining 팽창과 맞지 않는다.
         assertThat(t1.getSessionSequence()).isEqualTo(1);
         assertThat(t2.getSessionSequence()).isEqualTo(2);
         assertThat(t1.getMappingId()).isEqualTo(MAPPING_ID);

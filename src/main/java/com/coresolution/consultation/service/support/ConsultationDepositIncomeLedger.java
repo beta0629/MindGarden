@@ -1,9 +1,16 @@
 package com.coresolution.consultation.service.support;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import com.coresolution.consultation.constant.FinancialTransactionConstants;
+import com.coresolution.consultation.constant.admin.AdminServiceUserFacingMessages;
+import com.coresolution.consultation.entity.ConsultantClientMapping;
 import com.coresolution.consultation.entity.erp.financial.FinancialTransaction;
 import com.coresolution.consultation.repository.erp.financial.FinancialTransactionRepository;
 import com.coresolution.consultation.service.erp.financial.FinancialTransactionService;
@@ -34,6 +41,8 @@ public final class ConsultationDepositIncomeLedger {
     public static final List<String> MAPPING_SLOT_RELATED_ENTITY_TYPES = List.of(
             FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING,
             FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING_ADDITIONAL);
+
+    private static final Pattern MERGED_TARGET_MAPPING_ID = Pattern.compile("targetActiveMappingId=(\\d+)");
 
     private ConsultationDepositIncomeLedger() {
     }
@@ -86,6 +95,77 @@ public final class ConsultationDepositIncomeLedger {
                     mappingId, relatedEntityType);
         }
         return cancelled;
+    }
+
+    /**
+     * 종료 대상 매핑과 그 매핑으로 병합된 추가 패키지 행의 posted INCOME 을 모두 취소한다.
+     * 이미 CANCELLED 인 행은 {@code cancelRelatedPostedIncomeTransactions} 가 건너뛰어 멱등이다.
+     *
+     * @param financialTransactionService 재무 거래 서비스
+     * @param target 강제 종료하는 매핑
+     * @param pairMappings 같은 상담사·내담자 쌍의 매핑 목록 (null 이면 대상만)
+     * @return 취소한 건수 합
+     */
+    public static int cancelPostedIncomeForTerminatedMapping(
+            FinancialTransactionService financialTransactionService,
+            ConsultantClientMapping target,
+            List<ConsultantClientMapping> pairMappings) {
+        if (financialTransactionService == null || target == null || target.getId() == null) {
+            return 0;
+        }
+        int cancelled = 0;
+        for (Long mappingId : mappingIdsWhoseIncomeIsReversedOnTermination(target, pairMappings)) {
+            cancelled += cancelPostedMappingSlotIncome(financialTransactionService, mappingId);
+        }
+        return cancelled;
+    }
+
+    /**
+     * 종료 시 INCOME 을 되돌릴 매핑 ID. 대상 본인과 notes 에 병합 완료 마커와
+     * {@code targetActiveMappingId=대상ID} 가 있는 추가 패키지 행.
+     *
+     * @param target 종료 대상
+     * @param pairMappings 같은 쌍의 매핑
+     * @return 중복 없는 ID 목록 (대상이 앞)
+     */
+    public static List<Long> mappingIdsWhoseIncomeIsReversedOnTermination(
+            ConsultantClientMapping target, List<ConsultantClientMapping> pairMappings) {
+        Set<Long> ids = new LinkedHashSet<>();
+        if (target == null || target.getId() == null) {
+            return List.of();
+        }
+        ids.add(target.getId());
+        if (pairMappings == null) {
+            return new ArrayList<>(ids);
+        }
+        for (ConsultantClientMapping other : pairMappings) {
+            if (other == null || other.getId() == null || target.getId().equals(other.getId())) {
+                continue;
+            }
+            if (isMergedIntoTarget(other, target.getId())) {
+                ids.add(other.getId());
+            }
+        }
+        return new ArrayList<>(ids);
+    }
+
+    /**
+     * 추가 패키지가 이 타깃으로 병합되었는지.
+     *
+     * @param source 추가 패키지 매핑
+     * @param targetMappingId 타깃 ACTIVE 매핑 ID
+     * @return 병합 완료 notes 가 타깃을 가리키면 true
+     */
+    public static boolean isMergedIntoTarget(ConsultantClientMapping source, Long targetMappingId) {
+        if (source == null || targetMappingId == null) {
+            return false;
+        }
+        String notes = source.getNotes();
+        if (notes == null || !notes.contains(AdminServiceUserFacingMessages.NOTES_ADDITIONAL_MAPPING_MERGED_MARKER)) {
+            return false;
+        }
+        Matcher matcher = MERGED_TARGET_MAPPING_ID.matcher(notes);
+        return matcher.find() && targetMappingId.equals(Long.parseLong(matcher.group(1)));
     }
 
     /**

@@ -437,6 +437,15 @@ class AdminServiceImplConfirmDepositApproveTest {
         when(mappingRepository.findByTenantIdAndId(eq(TEST_TENANT_ID), eq(activeId)))
                 .thenReturn(Optional.of(active));
         when(mappingRepository.save(any(ConsultantClientMapping.class))).thenAnswer(inv -> inv.getArgument(0));
+        FinancialTransaction postedAdditionalIncome = FinancialTransaction.builder()
+                .transactionType(FinancialTransaction.TransactionType.INCOME)
+                .relatedEntityType(FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING_ADDITIONAL)
+                .amount(new BigDecimal("100000"))
+                .status(FinancialTransaction.TransactionStatus.COMPLETED)
+                .build();
+        when(financialTransactionRepository.findByTenantIdAndRelatedEntityIdAndRelatedEntityTypeAndIsDeletedFalse(
+                eq(TEST_TENANT_ID), eq(additionalId), anyString()))
+                .thenReturn(List.of(postedAdditionalIncome));
 
         ConsultantClientMapping deposited = adminService.confirmDeposit(additionalId, "REF-ADD-MERGE");
         assertEquals(0, deposited.getRemainingSessions());

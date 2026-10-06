@@ -51,7 +51,7 @@ description: Core Solution(MindGarden) 배포·CI/CD 전담 서브에이전트. 
 
 ## 반드시 참조
 
-- `/core-solution-deployment` 스킬
+- `/core-solution-deployment` 스킬 — 특히 **「배포 덮어쓰기 금지 (기능 소실 방지)」** (동일 스택+새 커밋만·번들/JAR 체크리스트·개발=운영 해시·prev 롤백·통합 스택 단일 배포)
 - `docs/standards/DEPLOYMENT_STANDARD.md`
 - `docs/troubleshooting/DEV_DEPLOYMENT_STABILITY_CHECKLIST.md`
 

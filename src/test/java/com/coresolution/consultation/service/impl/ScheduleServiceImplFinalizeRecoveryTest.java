@@ -490,4 +490,112 @@ class ScheduleServiceImplFinalizeRecoveryTest {
         verify(mappingRepository, never()).save(any(ConsultantClientMapping.class));
         verify(sessionSyncService, never()).syncAfterSessionUsage(anyLong(), anyLong(), anyLong());
     }
+
+    @Test
+    @DisplayName("추가 패키지 병합: 라벨 일정 1건을 타깃에 재귀속하고 회기를 1회만 차감")
+    void reassignConsumingSchedules_additionalPackage_deductsOnceOnTarget() {
+        Long sourceMappingId = 3200L;
+        Long targetMappingId = 3150L;
+        Long scheduleId = 5460L;
+
+        ConsultantClientMapping target = new ConsultantClientMapping();
+        target.setId(targetMappingId);
+        target.setTenantId(TENANT_ID);
+        target.setConsultant(user(CONSULTANT_USER_ID));
+        target.setClient(user(CLIENT_USER_ID));
+        target.setStatus(MappingStatus.ACTIVE);
+        target.setTotalSessions(18);
+        target.setUsedSessions(3);
+        target.setRemainingSessions(15);
+
+        Schedule labeled = buildSchedule(
+                scheduleId, ScheduleStatus.BOOKED, LocalDate.of(2026, 10, 6), LocalTime.of(11, 0));
+        labeled.setMappingId(sourceMappingId);
+        labeled.setSessionSequence(1);
+
+        when(scheduleRepository.findByTenantIdAndMappingIdAndStatusIn(
+                eq(TENANT_ID), eq(sourceMappingId), any(Collection.class)))
+                .thenReturn(List.of(labeled))
+                .thenReturn(List.of());
+        when(mappingRepository.findByTenantIdAndId(eq(TENANT_ID), eq(targetMappingId)))
+                .thenReturn(Optional.of(target));
+        when(mappingRepository.save(any(ConsultantClientMapping.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(scheduleRepository.save(any(Schedule.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(scheduleRepository.findDeductedConsultationSchedulesForMapping(
+                eq(TENANT_ID), eq(targetMappingId), eq(CONSULTANT_USER_ID), eq(CLIENT_USER_ID),
+                any(Collection.class)))
+                .thenReturn(List.of(
+                        occupied(101L, 1),
+                        occupied(102L, 2),
+                        occupied(103L, 3)));
+
+        int deducted = scheduleService.reassignConsumingSchedulesOntoTargetAndDeduct(
+                TENANT_ID, sourceMappingId, target);
+        int second = scheduleService.reassignConsumingSchedulesOntoTargetAndDeduct(
+                TENANT_ID, sourceMappingId, target);
+
+        assertThat(deducted).isEqualTo(1);
+        assertThat(second).isZero();
+        assertThat(labeled.getMappingId()).isEqualTo(targetMappingId);
+        assertThat(labeled.getSessionSequence()).isEqualTo(4);
+        assertThat(labeled.getStatus()).isEqualTo(ScheduleStatus.BOOKED);
+        assertThat(target.getUsedSessions()).isEqualTo(4);
+        assertThat(target.getRemainingSessions()).isEqualTo(14);
+        assertThat(target.getTotalSessions()).isEqualTo(18);
+        verify(sessionSyncService, times(1)).syncAfterSessionUsage(
+                eq(targetMappingId), eq(CONSULTANT_USER_ID), eq(CLIENT_USER_ID));
+    }
+
+    @Test
+    @DisplayName("추가 패키지 병합: 가예약은 BOOKED로 확정한 뒤 타깃에서 1회 차감")
+    void reassignConsumingSchedules_tentative_confirmsThenDeductsOnce() {
+        Long sourceMappingId = 3201L;
+        Long targetMappingId = 3151L;
+
+        ConsultantClientMapping target = new ConsultantClientMapping();
+        target.setId(targetMappingId);
+        target.setTenantId(TENANT_ID);
+        target.setConsultant(user(CONSULTANT_USER_ID));
+        target.setClient(user(CLIENT_USER_ID));
+        target.setStatus(MappingStatus.ACTIVE);
+        target.setTotalSessions(8);
+        target.setUsedSessions(0);
+        target.setRemainingSessions(8);
+
+        Schedule tentative = buildSchedule(
+                5461L, ScheduleStatus.TENTATIVE_PENDING_PAYMENT,
+                LocalDate.of(2026, 10, 7), LocalTime.of(15, 0));
+        tentative.setMappingId(sourceMappingId);
+        tentative.setSessionSequence(1);
+
+        when(scheduleRepository.findByTenantIdAndMappingIdAndStatusIn(
+                eq(TENANT_ID), eq(sourceMappingId), any(Collection.class)))
+                .thenReturn(List.of(tentative));
+        when(mappingRepository.findByTenantIdAndId(eq(TENANT_ID), eq(targetMappingId)))
+                .thenReturn(Optional.of(target));
+        when(mappingRepository.save(any(ConsultantClientMapping.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(scheduleRepository.save(any(Schedule.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(scheduleRepository.findDeductedConsultationSchedulesForMapping(
+                eq(TENANT_ID), eq(targetMappingId), eq(CONSULTANT_USER_ID), eq(CLIENT_USER_ID),
+                any(Collection.class)))
+                .thenReturn(List.of());
+
+        int deducted = scheduleService.reassignConsumingSchedulesOntoTargetAndDeduct(
+                TENANT_ID, sourceMappingId, target);
+
+        assertThat(deducted).isEqualTo(1);
+        assertThat(tentative.getStatus()).isEqualTo(ScheduleStatus.BOOKED);
+        assertThat(tentative.getMappingId()).isEqualTo(targetMappingId);
+        assertThat(tentative.getSessionSequence()).isEqualTo(1);
+        assertThat(target.getUsedSessions()).isEqualTo(1);
+        assertThat(target.getRemainingSessions()).isEqualTo(7);
+    }
+
+    private Schedule occupied(Long id, int sequence) {
+        Schedule schedule = buildSchedule(
+                id, ScheduleStatus.COMPLETED, LocalDate.of(2026, 9, sequence), LocalTime.of(9, 0));
+        schedule.setMappingId(3150L);
+        schedule.setSessionSequence(sequence);
+        return schedule;
+    }
 }

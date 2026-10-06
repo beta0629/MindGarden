@@ -1,6 +1,7 @@
 package com.coresolution.consultation.service.support;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -14,6 +15,7 @@ import com.coresolution.consultation.entity.ConsultantClientMapping;
 import com.coresolution.consultation.entity.erp.financial.FinancialTransaction;
 import com.coresolution.consultation.repository.erp.financial.FinancialTransactionRepository;
 import com.coresolution.consultation.service.erp.financial.FinancialTransactionService;
+import com.coresolution.consultation.util.FinancialTransactionValidity;
 
 /**
  * 매핑 상담료 INCOME 의 중복 판정·취소 기준.
@@ -147,6 +149,151 @@ public final class ConsultationDepositIncomeLedger {
             }
         }
         return new ArrayList<>(ids);
+    }
+
+    /**
+     * 부분 사용 후 종료·부분 환불에서 병합 추가 패키지(B) 수입을 되돌릴지 판정한다.
+     * <p>
+     * 병합은 B 회기를 타깃(A) 한 행의 총·잔여 회기에 더할 뿐 패키지별 사용을 남기지 않으므로
+     * 「기본 회기 먼저 소진」 규칙(사용자 결정 2026-10-07)으로 판정한다. 병합 때 A 로 옮겨온
+     * B 일정도 A 사용 회기에 들어 있다.
+     * </p>
+     * <ul>
+     *   <li>대상 B: notes 가 이 타깃을 가리키는 병합 행 중 유효(미삭제 COMPLETED) INCOME 이 남은 행.
+     *       이미 취소된 B 는 앞선 환불에서 되돌린 것이므로 넣지 않는다.</li>
+     *   <li>B 회기 합: 각 B 행의 {@code totalSessions} (병합 시 바꾸지 않는 컬럼).</li>
+     *   <li>B 미사용: {@code 원래 총회기 - 사용 회기 >= B 회기 합} 이고 {@code 잔여 회기 >= B 회기 합}.
+     *       뒤 조건은 앞선 부분 환불이 B 회기까지 빼 갔으면 되돌리지 않기 위한 보수 조건이다.</li>
+     * </ul>
+     * 판정할 수 없으면(B 회기 미기록 등) 되돌리지 않는다.
+     *
+     * @param repository 재무 거래 저장소
+     * @param tenantId 테넌트 ID
+     * @param target 종료·환불 대상 A (행 잠금 상태)
+     * @param pairMappings 같은 상담사·내담자 쌍의 매핑
+     * @param originalTotalSessions 부분 환불 차감 전 A 총회기 (병합 회기 포함)
+     * @return 판정 결과 (되돌리지 않으면 {@link MergedAddonRefund#none()})
+     */
+    public static MergedAddonRefund resolveMergedAddonRefund(FinancialTransactionRepository repository,
+            String tenantId, ConsultantClientMapping target, List<ConsultantClientMapping> pairMappings,
+            int originalTotalSessions) {
+        if (repository == null || tenantId == null || tenantId.isEmpty() || target == null
+                || target.getId() == null || pairMappings == null) {
+            return MergedAddonRefund.none();
+        }
+        List<Long> addonIds = new ArrayList<>();
+        int addonSessions = 0;
+        long addonIncome = 0L;
+        for (ConsultantClientMapping other : pairMappings) {
+            if (other == null || other.getId() == null || target.getId().equals(other.getId())
+                    || !isMergedIntoTarget(other, target.getId())) {
+                continue;
+            }
+            if (other.getTenantId() != null && !tenantId.equals(other.getTenantId())) {
+                continue;
+            }
+            long income = sumValidMappingSlotIncome(repository, tenantId, other.getId());
+            if (income <= 0L) {
+                continue;
+            }
+            Integer sessions = other.getTotalSessions();
+            if (sessions == null || sessions < 1) {
+                return MergedAddonRefund.none();
+            }
+            addonIds.add(other.getId());
+            addonSessions += sessions;
+            addonIncome += income;
+        }
+        if (addonIds.isEmpty()) {
+            return MergedAddonRefund.none();
+        }
+        int used = target.getUsedSessions() != null ? target.getUsedSessions() : 0;
+        int remaining = target.getRemainingSessions() != null ? target.getRemainingSessions() : 0;
+        if (!isMergedAddonUnused(originalTotalSessions, used, remaining, addonSessions)) {
+            return MergedAddonRefund.none();
+        }
+        return new MergedAddonRefund(true, List.copyOf(addonIds), addonSessions, addonIncome);
+    }
+
+    /**
+     * 기본 회기 먼저 소진 규칙에서 병합 B 회기가 전부 남아 있는지.
+     *
+     * @param originalTotalSessions 부분 환불 차감 전 A 총회기 (병합 회기 포함)
+     * @param usedSessions A 사용 회기
+     * @param remainingSessions A 잔여 회기
+     * @param addonSessions 병합 B 회기 합
+     * @return B 미사용이면 true
+     */
+    public static boolean isMergedAddonUnused(int originalTotalSessions, int usedSessions, int remainingSessions,
+            int addonSessions) {
+        if (addonSessions < 1) {
+            return false;
+        }
+        return originalTotalSessions - usedSessions >= addonSessions && remainingSessions >= addonSessions;
+    }
+
+    /**
+     * 판정이 되돌리기로 정한 B 행의 유효 INCOME 을 모두 취소한다. 호출자 트랜잭션 안에서 실행한다.
+     *
+     * @param financialTransactionService 재무 거래 서비스
+     * @param addon 판정 결과
+     * @return 취소한 건수
+     */
+    public static int cancelMergedAddonIncome(FinancialTransactionService financialTransactionService,
+            MergedAddonRefund addon) {
+        if (financialTransactionService == null || addon == null || !addon.reversible()) {
+            return 0;
+        }
+        int cancelled = 0;
+        for (Long addonId : addon.addonMappingIds()) {
+            cancelled += cancelPostedMappingSlotIncome(financialTransactionService, addonId);
+        }
+        return cancelled;
+    }
+
+    /**
+     * 매핑 두 슬롯의 유효 INCOME 금액 합. 취소 대상({@code cancelRelatedPostedIncomeTransactions})과 같은 조건이다.
+     */
+    private static long sumValidMappingSlotIncome(FinancialTransactionRepository repository, String tenantId,
+            Long mappingId) {
+        BigDecimal sum = BigDecimal.ZERO;
+        for (String relatedEntityType : MAPPING_SLOT_RELATED_ENTITY_TYPES) {
+            List<FinancialTransaction> rows = repository
+                    .findByTenantIdAndRelatedEntityIdAndRelatedEntityTypeAndIsDeletedFalse(
+                            tenantId, mappingId, relatedEntityType);
+            if (rows == null) {
+                continue;
+            }
+            for (FinancialTransaction row : rows) {
+                if (row == null || row.getTransactionType() != FinancialTransaction.TransactionType.INCOME
+                        || !FinancialTransactionValidity.isValid(row) || row.getAmount() == null) {
+                    continue;
+                }
+                sum = sum.add(row.getAmount());
+            }
+        }
+        return sum.setScale(0, RoundingMode.DOWN).longValue();
+    }
+
+    /**
+     * 병합 추가 패키지 되돌리기 판정 결과.
+     *
+     * @param reversible B 수입을 취소하고 환불에 넣을지
+     * @param addonMappingIds 되돌릴 B 매핑 ID
+     * @param addonSessions B 회기 합
+     * @param addonIncomeAmount 취소할 B 유효 INCOME 금액 합 (환불액에 더하는 B 가격)
+     */
+    public record MergedAddonRefund(boolean reversible, List<Long> addonMappingIds, int addonSessions,
+            long addonIncomeAmount) {
+
+        /**
+         * 되돌리지 않음.
+         *
+         * @return 빈 결과
+         */
+        public static MergedAddonRefund none() {
+            return new MergedAddonRefund(false, List.of(), 0, 0L);
+        }
     }
 
     /**

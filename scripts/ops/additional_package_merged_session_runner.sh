@@ -9,6 +9,7 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 SELECT_SQL="${ROOT}/scripts/ops/sql/additional_package_merged_session_mismatch_select.sql"
 INCOME_SQL="${ROOT}/scripts/ops/sql/consultation_income_leftover_select.sql"
+RESTORE_SQL="${ROOT}/scripts/ops/sql/session_restore_used_shortfall_select.sql"
 TAIL_SQL="${ROOT}/scripts/ops/sql/additional_package_merged_session_repair_tail.sql"
 
 die() {
@@ -66,6 +67,16 @@ assert_income_select_readonly() {
   fi
   if grep -qiE 'into[[:space:]]+outfile|load_file' "$INCOME_SQL"; then
     die "income list SQL file touches a forbidden object"
+  fi
+}
+
+assert_restore_select_readonly() {
+  [ -f "$RESTORE_SQL" ] || die "restore shortfall SQL file missing"
+  if grep -qiE '(^|[^a-z_@])(insert|update|delete|drop|alter|truncate|create|replace|grant|call|set)[[:space:]]' "$RESTORE_SQL"; then
+    die "restore shortfall SQL file contains a write statement"
+  fi
+  if grep -qiE 'financial_transactions|salary_|payout|into[[:space:]]+outfile|load_file' "$RESTORE_SQL"; then
+    die "restore shortfall SQL file touches a forbidden object"
   fi
 }
 
@@ -208,10 +219,13 @@ cmd_list() {
   require_db_env
   assert_select_readonly
   assert_income_select_readonly
+  assert_restore_select_readonly
   echo "=== additional package merged session mismatch (read only) ==="
   mysql_exec "SET SESSION TRANSACTION READ ONLY" "$SELECT_SQL"
   echo "=== consultation income leftover (read only) ==="
   mysql_exec "SET SESSION TRANSACTION READ ONLY" "$INCOME_SQL"
+  echo "=== session restore used shortfall (read only) ==="
+  mysql_exec "SET SESSION TRANSACTION READ ONLY" "$RESTORE_SQL"
 }
 
 cmd_repair() {

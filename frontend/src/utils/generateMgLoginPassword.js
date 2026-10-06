@@ -54,6 +54,18 @@ export function isMgLoginPasswordCompliant(password) {
 }
 
 /**
+ * 선택 입력 비밀번호. 비어 있거나 공백만이면 임시 비밀번호 등록으로 통과한다.
+ * 값이 있으면 {@link isMgLoginPasswordCompliant} 만 사용한다.
+ * @param {unknown} password
+ * @returns {boolean} true 이면 제출을 막는다
+ */
+export function shouldBlockOptionalMgLoginPassword(password) {
+  const value = password == null ? '' : String(password);
+  if (value.trim() === '') return false;
+  return !isMgLoginPasswordCompliant(value);
+}
+
+/**
  * 정책을 만족하는 임의 비밀번호 (crypto.getRandomValues 기반).
  * @param {number} [length=14] — 최소 12, 최대 32로 클램프
  * @returns {string}

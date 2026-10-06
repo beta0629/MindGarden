@@ -13,6 +13,12 @@ package com.coresolution.consultation.constant;
  */
 public final class FinancialTransactionConstants {
 
+    /**
+     * 입금 커밋 이후 통계·분개 실패 로그 태그.
+     * grep 은 이 문자열만 본다.
+     */
+    public static final String ERP_POST_COMMIT_SIDE_EFFECT_FAILED = "ERP_POST_COMMIT_SIDE_EFFECT_FAILED";
+
     /** 상담료 카테고리 (통일된 표준값) */
     public static final String CATEGORY_CONSULTATION_FEE = "상담료";
 

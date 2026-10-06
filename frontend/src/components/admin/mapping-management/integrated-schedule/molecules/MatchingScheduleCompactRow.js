@@ -27,8 +27,8 @@ import {
   INSTITUTION_LINK_LABEL,
   isInstitutionLinkMapping
 } from '../../constants/integratedScheduleSidebarFilterConstants';
-import ScheduleReminderSmsBadge from './ScheduleReminderSmsBadge';
-import EngagementTypeBadge from '../../../../common/EngagementTypeBadge';
+import { resolveScheduleReminderSmsDisplay } from '../utils/scheduleReminderSmsDisplay';
+import ScheduleEventMarks from './ScheduleEventMarks';
 import './MatchingScheduleCompactRow.css';
 
 const STATUS_ACCENT_CLASS = {
@@ -93,9 +93,18 @@ const MatchingScheduleCompactRow = ({
   const statusSegment = showDesyncText
     ? desyncBadgeLabel
     : scheduleStatusLabel;
+  const smsDisplay = resolveScheduleReminderSmsDisplay(mapping?.clientReminderSms);
+  const smsAria = smsDisplay
+    ? t(`schedule:calendar.reminderSms.aria.${smsDisplay.status}`)
+    : '';
+  const institutionTitle = isInstitutionLinkMapping(mapping)
+    ? t('mapping.schedule.legend.institutionLink')
+    : '';
   const secondaryTitle = [
     secondaryLabel,
     statusSegment,
+    institutionTitle,
+    smsAria,
     showSessionsInProgressHint ? desyncTooltip : '',
     showDesyncText ? desyncTooltip : ''
   ].filter(Boolean).join(' | ');
@@ -130,10 +139,10 @@ const MatchingScheduleCompactRow = ({
 
   let ariaLabel;
   if (onOpenPeek) {
-    ariaLabel = `${partiesLabel} 상세 보기`;
-    if (desyncTooltip) {
-      ariaLabel = `${ariaLabel} — ${desyncTooltip}`;
-    }
+    const markerSuffix = [institutionTitle, smsAria, desyncTooltip].filter(Boolean).join(' · ');
+    ariaLabel = markerSuffix
+      ? `${partiesLabel} 상세 보기 · ${markerSuffix}`
+      : `${partiesLabel} 상세 보기`;
   }
 
   return (
@@ -169,7 +178,6 @@ const MatchingScheduleCompactRow = ({
         </span>
       )}
       <span className="integrated-schedule__compact-row-secondary" title={secondaryTitle}>
-        <EngagementTypeBadge mapping={mapping} />
         <SafeText>{secondaryLabel}</SafeText>
         {statusSegment ? (
           <>
@@ -181,11 +189,13 @@ const MatchingScheduleCompactRow = ({
             </SafeText>
           </>
         ) : null}
-        <ScheduleReminderSmsBadge
-          sms={mapping?.clientReminderSms}
-          compact
-        />
       </span>
+      <ScheduleEventMarks
+        mapping={mapping}
+        sms={mapping?.clientReminderSms}
+        compact
+        institutionTitle={institutionTitle}
+      />
     </div>
   );
 };

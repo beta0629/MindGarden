@@ -42,6 +42,30 @@ export const STATUS_LABELS = {
   [STATUS.TENTATIVE_PENDING_PAYMENT]: '가예약'
 };
 
+/**
+ * 월간 컴팩트 칩의 상태 modifier.
+ * 색은 CSS `__dot--*` / `--status-*` 와 v2 토큰이 담당한다.
+ * STATUS_COLORS 는 주간·일간 등 다른 화면이 쓰므로 값을 바꾸지 않는다.
+ *
+ * @param {unknown} status
+ * @returns {'booked'|'confirmed'|'completed'|'cancelled'|'tentative'|''}
+ */
+export function resolveCompactScheduleStatusModifier(status) {
+  const code = status == null ? '' : String(status).trim().toUpperCase();
+  if (code === STATUS.TENTATIVE_PENDING_PAYMENT) {
+    return 'tentative';
+  }
+  if (
+    code === STATUS.BOOKED
+    || code === STATUS.CONFIRMED
+    || code === STATUS.COMPLETED
+    || code === STATUS.CANCELLED
+  ) {
+    return code.toLowerCase();
+  }
+  return '';
+}
+
 export const STATUS_COLORS = {
   [STATUS.AVAILABLE]: 'var(--mg-success-500)',    // 초록색
   // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용

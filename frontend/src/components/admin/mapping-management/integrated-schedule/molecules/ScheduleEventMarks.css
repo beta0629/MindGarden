@@ -1,0 +1,92 @@
+/**
+ * 칩 끝 표식 묶음.
+ * 단계 B 기준 224px 는 @container 가 var() 를 받지 못해 px 리터럴이다.
+ * 사이드바 행(mg-compact-row) 기준값은 월간 칩과 같게 두었고 검증 실측이 필요하다.
+ */
+
+.mg-schedule-event-marks {
+  flex: none;
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  gap: var(--mg-v2-space-1);
+  margin-inline-start: auto;
+}
+
+.mg-schedule-event-marks__institution {
+  display: inline-flex;
+  flex: none;
+  line-height: 0;
+}
+
+/* 넓을 때: 기관연계 글자 배지는 줄어들지 않는다 */
+.mg-schedule-event-marks .mg-engagement-type-badge {
+  flex: none;
+  min-width: auto;
+  max-width: none;
+  overflow: visible;
+  text-overflow: clip;
+  padding-inline: var(--mg-v2-space-1);
+  white-space: nowrap;
+}
+
+/*
+ * 단계 B (하네스 < 224px): ■ 사각, 끝 패딩 안 절대 위치.
+ * 10px = space-2 + space-0-5. 2px = space-0-5.
+ */
+@container mg-month-event (width < 224px) {
+  .mg-v2-ad-calendar-event--integrated-month:has(.mg-schedule-event-marks) {
+    padding-inline-end: calc(var(--mg-v2-space-2) + var(--mg-v2-space-0-5));
+  }
+
+  .mg-v2-ad-calendar-event--integrated-month .mg-schedule-event-marks {
+    position: absolute;
+    inset-block: 0;
+    inset-inline-end: var(--mg-v2-space-0-5);
+    margin-inline-start: 0;
+    flex-direction: column-reverse;
+    justify-content: center;
+    gap: var(--mg-v2-space-1);
+  }
+
+  .mg-v2-ad-calendar-event--integrated-month .mg-schedule-event-marks .mg-engagement-type-badge {
+    inline-size: var(--mg-size-dot-sm);
+    block-size: var(--mg-size-dot-sm);
+    min-inline-size: var(--mg-size-dot-sm);
+    padding: 0;
+    overflow: hidden;
+    border-radius: var(--mg-v2-radius-none);
+    background-color: var(--mg-v2-color-semantic-info-dark);
+    color: transparent;
+    font-size: 0;
+  }
+}
+
+/* 사이드바 행. 224px 는 월간 칩 단계 B 와 같은 값. 검증 실측 필요. */
+@container mg-compact-row (width < 224px) {
+  .integrated-schedule__compact-row:has(.mg-schedule-event-marks) {
+    padding-inline-end: calc(var(--mg-v2-space-2) + var(--mg-v2-space-0-5));
+  }
+
+  .integrated-schedule__compact-row .mg-schedule-event-marks {
+    position: absolute;
+    inset-block: 0;
+    inset-inline-end: var(--mg-v2-space-0-5);
+    margin-inline-start: 0;
+    flex-direction: column-reverse;
+    justify-content: center;
+    gap: var(--mg-v2-space-1);
+  }
+
+  .integrated-schedule__compact-row .mg-schedule-event-marks .mg-engagement-type-badge {
+    inline-size: var(--mg-size-dot-sm);
+    block-size: var(--mg-size-dot-sm);
+    min-inline-size: var(--mg-size-dot-sm);
+    padding: 0;
+    overflow: hidden;
+    border-radius: var(--mg-v2-radius-none);
+    background-color: var(--mg-v2-color-semantic-info-dark);
+    color: transparent;
+    font-size: 0;
+  }
+}

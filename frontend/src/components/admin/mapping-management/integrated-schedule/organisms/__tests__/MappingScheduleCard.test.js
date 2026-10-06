@@ -80,6 +80,25 @@ describe('MappingScheduleCard Clinic-OS v2.1', () => {
     expect(packageEl.closest('.integrated-schedule__card-meta')).toBeNull();
   });
 
+  it('shows 기관연동 badge for INSTITUTION_LINK and keeps remaining text', () => {
+    render(
+      <MappingScheduleCard
+        mapping={{
+          ...MOCK_MAPPING,
+          paymentTiming: 'INSTITUTION_LINK',
+          remainingSessions: 0
+        }}
+      />
+    );
+    expect(screen.getByTestId('engagement-type-badge')).toHaveTextContent('기관연동');
+    expect(screen.getByTestId('mapping-card-meta-mute')).toHaveTextContent('잔여 0 · 일정 미등록');
+  });
+
+  it('does not render voucher badge when voucher data is missing', () => {
+    render(<MappingScheduleCard mapping={MOCK_MAPPING} />);
+    expect(screen.queryByTestId('engagement-type-badge')).not.toBeInTheDocument();
+  });
+
   it('renders mute meta with remaining and schedule unregistered', () => {
     render(<MappingScheduleCard mapping={MOCK_MAPPING} />);
     expect(screen.getByTestId('mapping-card-meta-mute')).toHaveTextContent('잔여 8 · 일정 미등록');

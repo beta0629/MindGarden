@@ -11,6 +11,7 @@ import { useNavigate } from 'react-router-dom';
 import MGButton from '../../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../../erp/common/erpMgButtonProps';
 import { StatusBadge, ENTITY_ROW_ACTIONS_LAYOUT } from '../../../common';
+import EngagementTypeBadge from '../../../common/EngagementTypeBadge';
 import MappingEntityRowActions from '../molecules/MappingEntityRowActions';
 import SessionProgressIndicator from '../molecules/SessionProgressIndicator';
 import { renderCompactPackageName } from '../../../../utils/packagePricing';
@@ -114,6 +115,7 @@ const MappingListRow = ({
             >
               {statusLabel}
             </StatusBadge>
+            <EngagementTypeBadge mapping={mapping} />
             {isErpIntegrated && (
               <span className="mg-v2-mapping-list-row__erp">
                 ERP

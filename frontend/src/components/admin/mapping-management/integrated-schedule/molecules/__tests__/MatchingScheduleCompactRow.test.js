@@ -149,4 +149,18 @@ describe('MatchingScheduleCompactRow', () => {
     expect(screen.getByText('일정 등록 · 7/20')).toBeInTheDocument();
     expect(screen.queryByText('일정 정리 필요')).not.toBeInTheDocument();
   });
+
+  it('shows 기관연동 badge without using remaining as a signal', () => {
+    render(
+      <MatchingScheduleCompactRow
+        mapping={{
+          ...MOCK_MAPPING,
+          paymentTiming: 'INSTITUTION_LINK',
+          remainingSessions: 0
+        }}
+      />
+    );
+    expect(screen.getByTestId('engagement-type-badge')).toHaveTextContent('기관연동');
+    expect(screen.getByText('남은 0회')).toBeInTheDocument();
+  });
 });

@@ -8,6 +8,17 @@
   min-height: 0;
 }
 
+.integrated-schedule__card-engagement {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--mg-v2-space-1, var(--mg-spacing-xs));
+}
+
+.integrated-schedule__card-engagement:empty {
+  display: none;
+}
+
 .integrated-schedule__card-todo-pill {
   display: inline-flex;
   align-items: center;

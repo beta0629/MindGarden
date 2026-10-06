@@ -109,6 +109,7 @@ const MappingScheduleCard = ({
         hasConsultationSchedule={mapping?.hasConsultationSchedule}
         nextConsultationDate={mapping?.nextConsultationDate}
         paymentTiming={mapping?.paymentTiming}
+        engagementType={mapping?.engagementType ?? mapping?.mappingEngagementType}
       />
     </div>
     <CardActionGroup
@@ -140,6 +141,8 @@ MappingScheduleCard.propTypes = {
     id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
     status: PropTypes.string,
     paymentTiming: PropTypes.string,
+    engagementType: PropTypes.string,
+    mappingEngagementType: PropTypes.string,
     consultantName: PropTypes.string,
     clientName: PropTypes.string,
     packageName: PropTypes.string,

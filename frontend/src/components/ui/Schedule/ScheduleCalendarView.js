@@ -38,6 +38,7 @@ import {
   INTEGRATED_MONTH_CHIP_I18N,
   buildIntegratedMonthChipCopy
 } from './integratedMonthChipCopy';
+import { buildScheduleCalendarMoreLinkText } from './scheduleCalendarI18n';
 import {
   getKrPublicHolidayNameForLocalDate,
   getKrSubstituteHolidayEveHintForLocalDate
@@ -279,6 +280,8 @@ const ScheduleCalendarView = ({
             click: zoomOutToPreviousView
         }
     }), [zoomOutToPreviousView]);
+
+    const moreLinkText = useMemo(() => buildScheduleCalendarMoreLinkText(t), [t]);
 
     const headerToolbar = useMemo(() => ({
         left: 'prev,next today',
@@ -705,6 +708,7 @@ const ScheduleCalendarView = ({
                 selectMirror={true}
                 dayMaxEvents={8}
                 moreLinkClick="popover"
+                moreLinkText={moreLinkText}
                 weekends={true}
                 events={events}
                 dayCellClassNames={dayCellClassNamesForKrHoliday}

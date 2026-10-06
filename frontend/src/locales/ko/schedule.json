@@ -264,6 +264,7 @@
       "sms": "문자 발송",
       "unresolved": "미해소",
       "hint": "표식에 마우스를 올리면 내용이 보입니다"
-    }
+    },
+    "moreLink_other": "+{{count}}건"
   }
 }

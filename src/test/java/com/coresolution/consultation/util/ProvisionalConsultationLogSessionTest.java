@@ -61,6 +61,19 @@ class ProvisionalConsultationLogSessionTest {
     }
 
     @Test
+    @DisplayName("선납 결제 대기 rem=0 도 차감 없이 회차 1을 부여한다")
+    void advancePendingRemZero_grantsFirstSequenceWithoutDeduction() {
+        ConsultantClientMapping mapping = mapping(MappingStatus.PENDING_PAYMENT,
+                "ADVANCE", 0, 0, 1);
+
+        Integer sequence = ProvisionalConsultationLogSession.computeSequenceWithoutDeduction(mapping);
+
+        assertThat(sequence).isEqualTo(1);
+        assertThat(mapping.getRemainingSessions()).isZero();
+        assertThat(mapping.getUsedSessions()).isZero();
+    }
+
+    @Test
     @DisplayName("일반 ACTIVE rem=0 은 회차를 부여하지 않는다")
     void regularActiveRemZero_doesNotGrant() {
         ConsultantClientMapping mapping = mapping(MappingStatus.ACTIVE, "ADVANCE", 0, 10, 10);

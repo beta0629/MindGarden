@@ -1,14 +1,16 @@
 package com.coresolution.consultation.util;
 
 import com.coresolution.consultation.constant.PaymentTimingConstants;
+import com.coresolution.consultation.constant.ScheduleStatus;
 import com.coresolution.consultation.entity.ConsultantClientMapping.MappingStatus;
 
 /**
- * 매핑 결제 상태·결제 시점으로 일정 확정·회기 차감·입금 전 가예약을 판정하는 공통 게이트.
+ * 매핑 결제 상태·결제 시점으로 일정 확정·회기 차감·상담일지·입금 전 가예약을 판정하는 공통 게이트.
  *
- * <p>선납(ADVANCE)은 입금 전 {@code remainingSessions=0} 이며 결제 대기에서 확정·차감하지 않는다.
- * 사후 카드({@code SAME_DAY_CARD})는 결제 대기 가예약 생성만 허용하고, 확정·회기 차감은 결제 후다.
- * 회기 표시({@code usedSessions} 와 {@code sessionSequence})는 이 게이트의 책임이 아니다.</p>
+ * <p>결제 대기(미입금·{@code SAME_DAY_CARD} 포함)는 입금 전에 일정 확정과 상담일지를 허용한다.
+ * 그 시점의 회기 차감·다른 매핑으로의 대체 차감은 거절한다. 차감과 ERP 수입은 입금 확인 경로가 맡는다.
+ * 이미 결제된 매핑의 확정·차감은 기존과 같다.
+ * 회기 표시({@code usedSessions} 와 {@code sessionSequence}) 산식 자체는 이 게이트의 책임이 아니다.</p>
  *
  * @author CoreSolution
  * @since 2026-10-05
@@ -29,7 +31,7 @@ public final class MappingPaymentScheduleGate {
     }
 
     /**
-     * 사후 카드 결제 대기인지. 가예약 생성 대상이며 확정·차감 대상이 아니다.
+     * 사후 카드 결제 대기인지. 가예약 생성 대상이다. 확정·일지는 허용하고 차감은 입금 후다.
      *
      * @param status 매핑 상태
      * @param paymentTiming 매핑 {@code payment_timing}
@@ -62,7 +64,8 @@ public final class MappingPaymentScheduleGate {
     /**
      * 일정 확정(CONFIRMED·가예약에서 점유 확정으로의 전이) 허용.
      *
-     * <p>결제 대기는 결제 시점과 무관하게 거절한다. SAME_DAY_CARD 도 결제 전 확정 예외가 아니다.</p>
+     * <p>결제 대기(선납·시점 없음·사후 카드)도 입금 전 확정을 허용한다.
+     * 회기 차감 여부는 {@link #allowsSessionConsume} 이 따로 판정한다.</p>
      *
      * @param status 매핑 상태
      * @param paymentTiming 매핑 {@code payment_timing}
@@ -72,24 +75,71 @@ public final class MappingPaymentScheduleGate {
         if (status == null) {
             return false;
         }
-        if (isSameDayCardPendingPayment(status, paymentTiming) || isUnpaidPendingPayment(status)) {
-            return false;
-        }
+        // 선납·사후 카드·시점 없음(paymentTiming) 모두 확정한다. 차감은 allowsSessionConsume.
         return true;
     }
 
     /**
      * 이 매핑에 묶인 일정의 회기를 다른 매핑으로 대체 차감하면 안 되는지.
      *
-     * <p>결제 대기 매핑은 {@code usedSessions} 를 올리지 않고, 같은 상담사·내담자의
-     * 다른 ACTIVE 매핑으로 차감을 넘기지 않는다.</p>
+     * <p>결제 대기는 확정을 허용해도 {@code usedSessions} 를 올리지 않고,
+     * 같은 상담사·내담자의 다른 ACTIVE 매핑으로 차감을 넘기지 않는다.</p>
      *
      * @param status 일정에 묶인 매핑 상태
      * @param paymentTiming 매핑 {@code payment_timing}
      * @return 대체 차감을 막으면 true
      */
     public static boolean blocksSessionConsumeFallback(MappingStatus status, String paymentTiming) {
-        return isUnpaidPendingPayment(status) && !allowsScheduleConfirm(status, paymentTiming);
+        return isUnpaidPendingPayment(status);
+    }
+
+    /**
+     * 결제 대기 매핑에 회기 차감 없이 상담일지용 회차 라벨을 부여할 수 있는지.
+     *
+     * <p>선납·시점 없음·사후 카드 결제 대기 모두 대상이다. 잔여 회기는 바꾸지 않는다.</p>
+     *
+     * @param status 매핑 상태
+     * @param paymentTiming 매핑 {@code payment_timing}
+     * @return 미차감 라벨을 허용하면 true
+     */
+    public static boolean allowsUnpaidSessionLabelWithoutConsume(MappingStatus status, String paymentTiming) {
+        return isUnpaidPendingPayment(status);
+    }
+
+    /**
+     * 상담일지 작성 허용.
+     *
+     * <p>확정된 결제 대기 일정도 포함한다. 결제 대기는 회기 차감 없이 작성한다.
+     * 취소·휴가·빈 슬롯은 거절한다.</p>
+     *
+     * @param status 매핑 상태
+     * @param paymentTiming 매핑 {@code payment_timing}
+     * @param scheduleStatus 일정 상태
+     * @return 일지를 써도 되면 true
+     */
+    public static boolean allowsConsultationLog(MappingStatus status, String paymentTiming,
+            ScheduleStatus scheduleStatus) {
+        if (!isConsultationLogScheduleStatus(scheduleStatus)) {
+            return false;
+        }
+        if (isUnpaidPendingPayment(status)) {
+            return allowsUnpaidSessionLabelWithoutConsume(status, paymentTiming);
+        }
+        return status != null;
+    }
+
+    /**
+     * 상담일지를 붙일 수 있는 일정 상태.
+     *
+     * @param scheduleStatus 일정 상태
+     * @return 작성 대상 상태이면 true
+     */
+    private static boolean isConsultationLogScheduleStatus(ScheduleStatus scheduleStatus) {
+        return scheduleStatus == ScheduleStatus.CONFIRMED
+                || scheduleStatus == ScheduleStatus.IN_PROGRESS
+                || scheduleStatus == ScheduleStatus.COMPLETED
+                || scheduleStatus == ScheduleStatus.BOOKED
+                || scheduleStatus == ScheduleStatus.TENTATIVE_PENDING_PAYMENT;
     }
 
     /**

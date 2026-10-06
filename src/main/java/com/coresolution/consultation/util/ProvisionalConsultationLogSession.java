@@ -35,13 +35,14 @@ public final class ProvisionalConsultationLogSession {
      *
      * <p>remaining &gt; 0 이면 기존 차감 직전 산식 {@code total - remaining + 1}.
      * remaining &lt;= 0 이면 {@code usedSessions + 1} (월결제 전 가예약).
-     * 가예약이 아니면 null.</p>
+     * 결제 대기(선납·사후 카드·시점 없음)가 아니면 null.</p>
      *
      * @param mapping 매칭
-     * @return 부여할 회차, 일반 매핑이면 null
+     * @return 부여할 회차, 결제 대기가 아니면 null
      */
     public static Integer computeSequenceWithoutDeduction(ConsultantClientMapping mapping) {
-        if (!isSameDayCardPendingPayment(mapping)) {
+        if (mapping == null || !MappingPaymentScheduleGate.allowsUnpaidSessionLabelWithoutConsume(
+                mapping.getStatus(), mapping.getPaymentTiming())) {
             return null;
         }
         Integer totalSessions = mapping.getTotalSessions();

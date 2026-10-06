@@ -12,6 +12,7 @@ import '../../styles/main.css';
 import SafeText from '../common/SafeText';
 import ActionBarButton from '../common/ActionBarButton';
 import { toDisplayString, toSafeNumber } from '../../utils/safeDisplay';
+import { resolveScheduleActionFailureMessage } from '../../utils/scheduleActionFailureMessage';
 import { extractServerErrorMessage } from '../../utils/ajax';
 import { useNavigate } from 'react-router-dom';
 import { ADMIN_ROUTES } from '../../constants/adminRoutes';
@@ -569,7 +570,12 @@ const ScheduleDetailModal = ({
             }
         } catch (error) {
             console.error('❌ 예약 취소 실패:', error);
-            notificationManager.error(t('schedule:ScheduleDetailModal.t_dc4ce696'));
+            notificationManager.error(resolveScheduleActionFailureMessage(
+                t,
+                error,
+                'schedule:ScheduleDetailModal.t_dc4ce696',
+                'schedule:ScheduleDetailModal.t_4659e40d'
+            ));
         } finally {
             setLoading(false);
             setShowCancelConfirm(false);
@@ -606,7 +612,12 @@ const ScheduleDetailModal = ({
             }
         } catch (error) {
             console.error('❌ 예약 확정 실패:', error);
-            notificationManager.error(t('schedule:ScheduleDetailModal.t_fd96349e'));
+            notificationManager.error(resolveScheduleActionFailureMessage(
+                t,
+                error,
+                'schedule:ScheduleDetailModal.t_fd96349e',
+                'schedule:ScheduleDetailModal.t_6e90da17'
+            ));
         } finally {
             setLoading(false);
             setShowConfirmModal(false);

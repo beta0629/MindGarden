@@ -977,4 +977,66 @@ class ConsultationRecordServiceImplConsultationIdSsotTest {
         verify(consultationRecordRepository).save(captor.capture());
         assertThat(captor.getValue().getSessionNumber()).isEqualTo(1);
     }
+
+    @Test
+    @DisplayName("결제 대기 확정 일정은 회기 차감 없이 상담일지를 작성한다")
+    void create_confirmedPendingPayment_allowsLogWithoutSessionConsume() {
+        Long scheduleId = 920L;
+        Long mappingId = 8802L;
+        Long clientId = 20L;
+        Long consultantId = 10L;
+        LocalDate scheduleDate = LocalDate.of(2026, 10, 6);
+
+        Schedule schedule = new Schedule();
+        schedule.setId(scheduleId);
+        schedule.setTenantId(TENANT_ID);
+        schedule.setClientId(clientId);
+        schedule.setConsultantId(consultantId);
+        schedule.setStatus(ScheduleStatus.CONFIRMED);
+        schedule.setIsDeleted(false);
+        schedule.setDate(scheduleDate);
+        schedule.setMappingId(mappingId);
+        schedule.setScheduleType("CONSULTATION");
+
+        ConsultantClientMapping pending = new ConsultantClientMapping();
+        pending.setId(mappingId);
+        pending.setStatus(MappingStatus.PENDING_PAYMENT);
+        pending.setPaymentTiming("ADVANCE");
+        pending.setTotalSessions(1);
+        pending.setRemainingSessions(0);
+        pending.setUsedSessions(0);
+
+        when(scheduleRepository.findByTenantIdAndId(TENANT_ID, scheduleId))
+                .thenReturn(Optional.of(schedule));
+        when(mappingRepository.findByTenantIdAndId(TENANT_ID, mappingId))
+                .thenReturn(Optional.of(pending));
+        when(scheduleRepository.save(any(Schedule.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(consultationRecordRepository.save(any(ConsultationRecord.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+        when(consultationRecordAlertService.resolveConsultationRecordAlert(eq(scheduleId), any()))
+                .thenReturn(Map.of("success", true));
+
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("consultationId", scheduleId);
+        payload.put("clientId", clientId);
+        payload.put("consultantId", consultantId);
+        payload.put("sessionDate", "2026-10-06");
+
+        User admin = new User();
+        admin.setId(1L);
+        admin.setRole(UserRole.ADMIN);
+
+        try (MockedStatic<SessionUtils> session = mockStatic(SessionUtils.class)) {
+            session.when(() -> SessionUtils.getCurrentUser(null)).thenReturn(admin);
+            ConsultationRecord saved = service.createConsultationRecord(payload);
+            assertThat(saved.getSessionNumber()).isEqualTo(1);
+            assertThat(saved.getConsultationId()).isEqualTo(scheduleId);
+        }
+
+        assertThat(schedule.getSessionSequence()).isEqualTo(1);
+        assertThat(pending.getUsedSessions()).isZero();
+        assertThat(pending.getRemainingSessions()).isZero();
+        verify(mappingRepository, never()).save(any(ConsultantClientMapping.class));
+        verify(scheduleService, never()).deductSessionAtCompletionIfNeeded(any());
+    }
 }

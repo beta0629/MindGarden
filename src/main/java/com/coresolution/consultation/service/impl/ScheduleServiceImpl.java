@@ -1478,7 +1478,8 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
     }
 
     /**
-     * 가예약 회차 부여 대상인지 — PENDING_PAYMENT + SAME_DAY_CARD + 회차 없음.
+     * 가예약 회차 부여 대상인지 — 결제 대기(선납·사후 카드·시점 없음) + 회차 없음.
+     * 잔여 회기는 차감하지 않는다.
      *
      * @param schedule 일정
      * @param mapping 매핑
@@ -1491,7 +1492,12 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         if (schedule.getSessionSequence() != null) {
             return false;
         }
-        if (!ProvisionalConsultationLogSession.isSameDayCardPendingPayment(mapping)) {
+        if (!MappingPaymentScheduleGate.allowsUnpaidSessionLabelWithoutConsume(
+                mapping.getStatus(), mapping.getPaymentTiming())) {
+            return false;
+        }
+        if (!MappingPaymentScheduleGate.allowsConsultationLog(
+                mapping.getStatus(), mapping.getPaymentTiming(), schedule.getStatus())) {
             return false;
         }
         return isConsultationScheduleForSessionDeduction(schedule);

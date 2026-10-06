@@ -2,8 +2,8 @@
  * 매핑 결제 상태·결제 시점 게이트.
  * 백엔드 `MappingPaymentScheduleGate` 와 같은 판정이다.
  *
- * 선납(ADVANCE) 결제 대기는 가예약·확정·회기 차감 불가.
- * 사후 카드(SAME_DAY_CARD) 결제 대기는 가예약만 허용하고 확정·차감은 결제 후다.
+ * 결제 대기(미입금·사후 카드)는 입금 전 확정·상담일지를 허용하고 회기 차감은 거절한다.
+ * 사후 카드 결제 대기는 가예약 생성도 허용한다. 선납 결제 대기는 가예약 생성은 거절한다.
  * 회기 표시(usedSessions / sessionSequence)는 이 모듈의 책임이 아니다.
  *
  * @author CoreSolution
@@ -80,7 +80,8 @@ export const allowsTentativeBeforeDeposit = (mapping) => {
 };
 
 /**
- * 일정 확정 허용. 결제 대기는 시점과 무관하게 거절한다.
+ * 일정 확정 허용. 결제 대기(미입금·사후 카드)도 입금 전에 확정할 수 있다.
+ * 회기 차감은 blocksSessionConsumeFallback 이 막는다.
  *
  * @param {object|null|undefined} mapping
  * @returns {boolean}
@@ -89,14 +90,12 @@ export const allowsScheduleConfirm = (mapping) => {
   if (!mapping || typeof mapping !== 'object' || !mapping.status) {
     return false;
   }
-  if (isSameDayCardPendingPayment(mapping) || isUnpaidPendingPaymentStatus(mapping.status)) {
-    return false;
-  }
   return true;
 };
 
 /**
  * 이 매핑의 회기를 다른 매핑으로 대체 차감하면 안 되는지.
+ * 결제 대기는 확정을 허용해도 대체 차감을 막는다.
  *
  * @param {object|null|undefined} mapping
  * @returns {boolean}
@@ -105,7 +104,50 @@ export const blocksSessionConsumeFallback = (mapping) => {
   if (!mapping || typeof mapping !== 'object') {
     return false;
   }
-  return isUnpaidPendingPaymentStatus(mapping.status) && !allowsScheduleConfirm(mapping);
+  return isUnpaidPendingPaymentStatus(mapping.status);
+};
+
+/** 상담일지를 붙일 수 있는 일정 상태. 백엔드 MappingPaymentScheduleGate 와 같다. */
+const CONSULTATION_LOG_SCHEDULE_STATUSES = Object.freeze([
+  'CONFIRMED',
+  'IN_PROGRESS',
+  'COMPLETED',
+  'BOOKED',
+  'TENTATIVE_PENDING_PAYMENT'
+]);
+
+/**
+ * 결제 대기 매핑에 회기 차감 없이 회차 라벨을 부여할 수 있는지.
+ *
+ * @param {object|null|undefined} mapping
+ * @returns {boolean}
+ */
+export const allowsUnpaidSessionLabelWithoutConsume = (mapping) => {
+  if (!mapping || typeof mapping !== 'object') {
+    return false;
+  }
+  return isUnpaidPendingPaymentStatus(mapping.status);
+};
+
+/**
+ * 상담일지 작성 허용. 확정된 결제 대기 일정도 포함한다.
+ *
+ * @param {object|null|undefined} mapping
+ * @param {string|null|undefined} scheduleStatus
+ * @returns {boolean}
+ */
+export const allowsConsultationLog = (mapping, scheduleStatus) => {
+  const statusCode = normalizeCode(scheduleStatus);
+  if (!CONSULTATION_LOG_SCHEDULE_STATUSES.includes(statusCode)) {
+    return false;
+  }
+  if (!mapping || typeof mapping !== 'object' || !mapping.status) {
+    return false;
+  }
+  if (isUnpaidPendingPaymentStatus(mapping.status)) {
+    return allowsUnpaidSessionLabelWithoutConsume(mapping);
+  }
+  return true;
 };
 
 /**

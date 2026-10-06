@@ -1,7 +1,10 @@
 package com.coresolution.consultation.service.impl;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
+
+import com.coresolution.consultation.entity.erp.financial.FinancialTransaction;
 
 import com.coresolution.consultation.constant.admin.AdminServiceUserFacingMessages;
 import com.coresolution.consultation.constant.InstitutionLinkConstants;
@@ -75,6 +78,7 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -426,6 +430,49 @@ class AdminServiceImplConfirmDepositApproveTest {
         assertEquals(8, result.getRemainingSessions());
         verify(scheduleService).finalizeTentativeSchedulesAfterDepositConfirmed(any(ConsultantClientMapping.class));
         verify(adminService).createConsultationIncomeTransactionInCurrentTransaction(any(ConsultantClientMapping.class));
+    }
+
+    @Test
+    @DisplayName("입금 확인 재호출은 추가 ERP·가예약 마무리를 하지 않는다")
+    void confirmDeposit_secondCall_doesNotWriteAnotherIncome() {
+        Long mappingId = 93L;
+        ConsultantClientMapping mapping = buildMappingForConfirmDeposit(mappingId);
+
+        when(mappingRepository.findByTenantIdAndId(eq(TEST_TENANT_ID), eq(mappingId)))
+                .thenReturn(Optional.of(mapping));
+        when(mappingRepository.save(any(ConsultantClientMapping.class))).thenAnswer(inv -> inv.getArgument(0));
+        doNothing().when(adminService)
+                .createConsultationIncomeTransactionInCurrentTransaction(any(ConsultantClientMapping.class));
+
+        adminService.confirmDeposit(mappingId, "REF-ONCE");
+        assertThrows(IllegalStateException.class, () -> adminService.confirmDeposit(mappingId, "REF-AGAIN"));
+
+        verify(adminService, times(1))
+                .createConsultationIncomeTransactionInCurrentTransaction(any(ConsultantClientMapping.class));
+        verify(scheduleService, times(1))
+                .finalizeTentativeSchedulesAfterDepositConfirmed(any(ConsultantClientMapping.class));
+        verify(financialTransactionService, never()).createTransaction(any(), any());
+    }
+
+    @Test
+    @DisplayName("이미 기표된 입금 INCOME 이 있으면 재호출해도 전표를 추가하지 않는다")
+    void createConsultationIncome_existingPostedIncome_isIdempotent() {
+        ConsultantClientMapping mapping = buildMappingForConfirmDeposit(94L);
+        mapping.setPaymentAmount(100000L);
+        FinancialTransaction existing = FinancialTransaction.builder()
+                .transactionType(FinancialTransaction.TransactionType.INCOME)
+                .amount(new BigDecimal("100000"))
+                .category("CONSULTATION")
+                .build();
+        when(financialTransactionRepository
+                .findByTenantIdAndRelatedEntityIdAndRelatedEntityTypeAndIsDeletedFalse(
+                        eq(TEST_TENANT_ID), eq(94L), any()))
+                .thenReturn(List.of(existing));
+
+        adminService.createConsultationIncomeTransactionInCurrentTransaction(mapping);
+        adminService.createConsultationIncomeTransactionInCurrentTransaction(mapping);
+
+        verify(financialTransactionService, never()).createTransaction(any(), any());
     }
 
     @Test

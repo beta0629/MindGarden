@@ -1,6 +1,7 @@
 package com.coresolution.consultation.util;
 
 import com.coresolution.consultation.constant.PaymentTimingConstants;
+import com.coresolution.consultation.constant.ScheduleStatus;
 import com.coresolution.consultation.entity.ConsultantClientMapping.MappingStatus;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -8,7 +9,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * 결제 상태 게이트 판정. 선납 입금 전 확정 금지, 사후 카드 가예약만 허용.
+ * 결제 상태 게이트 판정. 결제 대기는 입금 전 확정·일지를 허용하고 차감은 거절한다.
  *
  * @author CoreSolution
  * @since 2026-10-05
@@ -17,38 +18,48 @@ import static org.assertj.core.api.Assertions.assertThat;
 class MappingPaymentScheduleGateTest {
 
     @Test
-    @DisplayName("선납 결제 대기는 가예약·확정·차감 모두 거절")
-    void advancePendingPayment_deniesTentativeConfirmAndConsume() {
+    @DisplayName("선납 결제 대기는 가예약·차감은 거절하고 확정·일지는 허용")
+    void advancePendingPayment_allowsConfirmAndLogWithoutConsume() {
         MappingStatus status = MappingStatus.PENDING_PAYMENT;
         String timing = PaymentTimingConstants.ADVANCE;
 
         assertThat(MappingPaymentScheduleGate.allowsTentativeBeforeDeposit(status, timing)).isFalse();
-        assertThat(MappingPaymentScheduleGate.allowsScheduleConfirm(status, timing)).isFalse();
+        assertThat(MappingPaymentScheduleGate.allowsScheduleConfirm(status, timing)).isTrue();
         assertThat(MappingPaymentScheduleGate.allowsSessionConsume(status, timing)).isFalse();
         assertThat(MappingPaymentScheduleGate.blocksSessionConsumeFallback(status, timing)).isTrue();
+        assertThat(MappingPaymentScheduleGate.allowsUnpaidSessionLabelWithoutConsume(status, timing)).isTrue();
+        assertThat(MappingPaymentScheduleGate.allowsConsultationLog(
+                status, timing, ScheduleStatus.CONFIRMED)).isTrue();
     }
 
     @Test
-    @DisplayName("결제 시점 null(레거시 선납) 결제 대기도 확정·차감 거절")
-    void nullTimingPendingPayment_deniesConfirmAndConsume() {
+    @DisplayName("결제 시점 null(레거시 선납) 결제 대기는 확정 허용·차감 거절")
+    void nullTimingPendingPayment_allowsConfirmDeniesConsume() {
         MappingStatus status = MappingStatus.PENDING_PAYMENT;
 
         assertThat(MappingPaymentScheduleGate.allowsTentativeBeforeDeposit(status, null)).isFalse();
-        assertThat(MappingPaymentScheduleGate.allowsScheduleConfirm(status, null)).isFalse();
+        assertThat(MappingPaymentScheduleGate.allowsScheduleConfirm(status, null)).isTrue();
+        assertThat(MappingPaymentScheduleGate.allowsSessionConsume(status, null)).isFalse();
         assertThat(MappingPaymentScheduleGate.blocksSessionConsumeFallback(status, null)).isTrue();
+        assertThat(MappingPaymentScheduleGate.allowsConsultationLog(
+                status, null, ScheduleStatus.CONFIRMED)).isTrue();
     }
 
     @Test
-    @DisplayName("사후 카드 결제 대기는 가예약만 허용하고 확정·차감은 거절")
-    void sameDayCardPending_allowsTentativeOnly() {
+    @DisplayName("사후 카드 결제 대기는 가예약·확정·일지를 허용하고 차감은 거절")
+    void sameDayCardPending_allowsTentativeConfirmAndLogWithoutConsume() {
         MappingStatus status = MappingStatus.PENDING_PAYMENT;
         String timing = "same_day_card";
 
         assertThat(MappingPaymentScheduleGate.isSameDayCardPendingPayment(status, timing)).isTrue();
         assertThat(MappingPaymentScheduleGate.allowsTentativeBeforeDeposit(status, timing)).isTrue();
-        assertThat(MappingPaymentScheduleGate.allowsScheduleConfirm(status, timing)).isFalse();
+        assertThat(MappingPaymentScheduleGate.allowsScheduleConfirm(status, timing)).isTrue();
         assertThat(MappingPaymentScheduleGate.allowsSessionConsume(status, timing)).isFalse();
         assertThat(MappingPaymentScheduleGate.blocksSessionConsumeFallback(status, timing)).isTrue();
+        assertThat(MappingPaymentScheduleGate.allowsConsultationLog(
+                status, timing, ScheduleStatus.TENTATIVE_PENDING_PAYMENT)).isTrue();
+        assertThat(MappingPaymentScheduleGate.allowsConsultationLog(
+                status, timing, ScheduleStatus.CANCELLED)).isFalse();
     }
 
     @Test

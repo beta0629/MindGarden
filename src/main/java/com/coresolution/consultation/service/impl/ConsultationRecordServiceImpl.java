@@ -28,6 +28,7 @@ import com.coresolution.consultation.service.support.ConsultationRecordEditAudit
 import com.coresolution.consultation.service.support.ConsultationRecordWriter;
 import com.coresolution.consultation.util.ConsultationRecordChangedFields;
 import com.coresolution.consultation.util.ConsultationRecordLinkedScheduleCompletion;
+import com.coresolution.consultation.util.MappingPaymentScheduleGate;
 import com.coresolution.consultation.util.ProvisionalConsultationLogSession;
 import com.coresolution.consultation.utils.SessionUtils;
 import com.coresolution.core.context.TenantContextHolder;
@@ -268,7 +269,7 @@ public class ConsultationRecordServiceImpl implements ConsultationRecordService 
             record.setSessionDate(scheduleDate);
             
             // sessionNumber = Schedule.sessionSequence SSOT. null→1 폴백 금지.
-            // 가예약(SAME_DAY_CARD/PENDING_PAYMENT)은 remaining=0 이어도 잔여 미차감 회차 부여.
+            // 결제 대기 확정 일정은 게이트가 허용할 때만 잔여 미차감 회차를 부여한다.
             Integer sessionSequence = ensureScheduleSessionSequence(scheduleForSessionDate);
             if (requestedSessionNumber == null) {
                 requestedSessionNumber = sessionSequence;
@@ -615,7 +616,7 @@ public class ConsultationRecordServiceImpl implements ConsultationRecordService 
 
     /**
      * 일정의 sessionSequence를 SSOT로 확보한다. 이미 있으면 그대로 반환.
-     * 가예약(SAME_DAY_CARD/PENDING_PAYMENT)이고 null이면 remaining 차감 없이 부여한다.
+     * 결제 대기(선납·사후 카드)이고 일지 게이트가 허용하면 remaining 차감 없이 부여한다.
      * 일반 매핑의 remaining=0·회차 없음은 부여하지 않는다.
      *
      * @param schedule 대상 일정
@@ -628,6 +629,13 @@ public class ConsultationRecordServiceImpl implements ConsultationRecordService 
             return existing;
         }
         ConsultantClientMapping mapping = resolveMappingForSessionGrant(schedule);
+        if (mapping != null && !MappingPaymentScheduleGate.allowsConsultationLog(
+                mapping.getStatus(), mapping.getPaymentTiming(), schedule.getStatus())) {
+            throw new ValidationException(
+                    "sessionSequence",
+                    null,
+                    "이 일정에는 상담일지를 작성할 수 없습니다: " + schedule.getId());
+        }
         Integer granted = ProvisionalConsultationLogSession.computeSequenceWithoutDeduction(mapping);
         if (granted == null) {
             throw new ValidationException(

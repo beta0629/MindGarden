@@ -34,6 +34,10 @@ jobs:
         src/components/admin/mapping-management/integrated-schedule/organisms/__tests__/MappingScheduleCard.clinicOsChrome.test.js
         src/components/admin/mapping-management/__tests__/IntegratedMatchingSchedule.test.js
         src/components/admin/mapping-management/__tests__/IntegratedMatchingSchedule.softRefetchNoRemount.test.js
+        src/components/admin/mapping-management/integrated-schedule/molecules/__tests__/ScheduleEventMarks.reserve.test.js
+        src/components/ui/Schedule/__tests__/ScheduleCalendarView.i18n.test.js
+        src/components/ui/Schedule/__tests__/ScheduleCalendarView.responsive390.test.js
+        src/components/ui/Schedule/__tests__/useCalendarDragEscapeCancel.test.js
         src/contexts/__tests__/SessionContext.heartbeatKeepsEditor.test.js
         src/components/layout/__tests__/AdminCommonLayout.softRefreshLoading.test.js
         src/utils/__tests__/sessionUserIdentity.test.js

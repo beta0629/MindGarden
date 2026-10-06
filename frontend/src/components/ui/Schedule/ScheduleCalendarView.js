@@ -17,12 +17,29 @@ import {
   SCHEDULE_TOTAL_SESSIONS_FIELD,
   STATUS,
   resolveCalendarSessionLabel,
+  resolveCompactScheduleStatusModifier,
   parseClientScheduleNotesClientWideUnresolvedCount,
   parseClientScheduleNotesUnresolvedCount
 } from '../../../constants/schedule';
 import { CLIENT_REMINDER_SMS_FIELD } from '../../../constants/scheduleClientReminderSms';
+import {
+  MAPPING_ENGAGEMENT_TYPE,
+  MAPPING_ENGAGEMENT_TYPE_LABELS,
+  resolveMappingEngagementType,
+  shouldRenderEngagementTypeBadge
+} from '../../../constants/mappingEngagementType';
+import { resolveScheduleReminderSmsDisplay } from '../../admin/mapping-management/integrated-schedule/utils/scheduleReminderSmsDisplay';
 import ScheduleReminderSmsBadge from '../../admin/mapping-management/integrated-schedule/molecules/ScheduleReminderSmsBadge';
+import ScheduleEventMarks from '../../admin/mapping-management/integrated-schedule/molecules/ScheduleEventMarks';
 import EngagementTypeBadge from '../../common/EngagementTypeBadge';
+import { SAME_DAY_PENDING_EVENT_CLASS } from '../../schedule/utils/sameDayPendingEventDecorator';
+import {
+  INTEGRATED_MONTH_CHIP_I18N,
+  buildIntegratedMonthChipCopy,
+  formatIntegratedMonthChipShortTime
+} from './integratedMonthChipCopy';
+import { SCHEDULE_CALENDAR_I18N, buildScheduleCalendarTextOptions } from './scheduleCalendarI18n';
+import useCalendarDragEscapeCancel from './useCalendarDragEscapeCancel';
 import {
   getKrPublicHolidayNameForLocalDate,
   getKrSubstituteHolidayEveHintForLocalDate
@@ -52,7 +69,6 @@ const CALENDAR_VIEW_WEEK = 'timeGridWeek';
 const CALENDAR_VIEW_DAY = 'timeGridDay';
 const CALENDAR_VIEWS_ZOOM_FROM = new Set([CALENDAR_VIEW_MONTH, CALENDAR_VIEW_WEEK]);
 const ZOOM_OUT_BUTTON_ID = 'zoomOut';
-const ZOOM_OUT_BUTTON_TEXT = '전체 보기';
 /** opacity fade 전용. transform/scale 금지(DnD 히트테스트 보호). --animation-duration-fast(0.15s)와 맞춤 */
 const VIEW_FADE_CLASS = 'mg-v2-schedule-calendar-view--fading';
 const VIEW_FADE_MS = 150;
@@ -129,6 +145,7 @@ const ScheduleCalendarView = ({
     /** datesSet에서 day→month/week 이탈 시에만 줌 상태 해제 (확대 직전 헤더 갱신 레이스 방지) */
     const lastViewTypeRef = useRef(null);
     const [isDayZoomed, setIsDayZoomed] = useState(false);
+    useCalendarDragEscapeCancel();
 
     const updateCalendarSize = useCallback(() => {
         const calendarApi = calendarRef.current?.getApi?.();
@@ -280,10 +297,12 @@ const ScheduleCalendarView = ({
 
     const customButtons = useMemo(() => ({
         [ZOOM_OUT_BUTTON_ID]: {
-            text: ZOOM_OUT_BUTTON_TEXT,
+            text: t(SCHEDULE_CALENDAR_I18N.toolbar.zoomOut),
             click: zoomOutToPreviousView
         }
-    }), [zoomOutToPreviousView]);
+    }), [t, zoomOutToPreviousView]);
+
+    const calendarTextOptions = useMemo(() => buildScheduleCalendarTextOptions(t), [t]);
 
     const headerToolbar = useMemo(() => ({
         left: 'prev,next today',
@@ -531,20 +550,35 @@ const ScheduleCalendarView = ({
             const vacTitle = toDisplayString(event.title, '휴무');
             return (
                 <div className={`mg-v2-ad-calendar-event mg-v2-ad-calendar-event--vacation${pastClass}`.trim()} title={vacTitle}>
-                    <CalendarIcon size={14} className="mg-v2-ad-calendar-event__icon" style={{ color: event.backgroundColor }} />
+                    <CalendarIcon className="mg-v2-ad-calendar-event__icon" />
                     <span className="mg-v2-ad-calendar-event__client">{vacTitle}</span>
                 </div>
             );
         }
 
         // 일반 스케줄 이벤트 렌더링
-        const clientName = toDisplayString(extendedProps.clientName, '이름 없음');
+        const clientNameFallback = t(INTEGRATED_MONTH_CHIP_I18N.clientNameFallback);
+        const clientName = toDisplayString(extendedProps.clientName, clientNameFallback);
         const consultantName = toDisplayString(extendedProps.consultantName, '');
         const statusLabel = resolveScheduleStatusDisplayLabel(
             extendedProps?.status,
             { codes: scheduleStatusOptions, translate: t }
         );
-        const borderColor = event.backgroundColor || 'var(--mg-primary-500)';
+        const statusModifier = resolveCompactScheduleStatusModifier(extendedProps?.status);
+        const statusModClass = statusModifier ? ` mg-v2-ad-calendar-event--status-${statusModifier}` : '';
+        const eventClassList = Array.isArray(event.classNames) ? event.classNames : [];
+        const isSameDayPending = extendedProps?.isSameDayPending === true
+            || eventClassList.includes(SAME_DAY_PENDING_EVENT_CLASS);
+        const engagementType = resolveMappingEngagementType(extendedProps);
+        const showInstitutionMark = shouldRenderEngagementTypeBadge(engagementType);
+        const institutionLabel = !showInstitutionMark
+            ? ''
+            : (engagementType === MAPPING_ENGAGEMENT_TYPE.INSTITUTION_LINK
+                ? t(INTEGRATED_MONTH_CHIP_I18N.institutionLink)
+                : toDisplayString(MAPPING_ENGAGEMENT_TYPE_LABELS[engagementType], ''));
+        const reminderSms = resolveScheduleReminderSmsDisplay(
+            extendedProps?.[CLIENT_REMINDER_SMS_FIELD]
+        );
         const scheduleNotesUnresolvedCount = parseClientScheduleNotesUnresolvedCount(
             extendedProps?.[CLIENT_SCHEDULE_NOTES_UNRESOLVED_COUNT_FIELD]
         );
@@ -574,60 +608,72 @@ const ScheduleCalendarView = ({
             && !isCancelled
             && !isVacationScheduleRow
             && (scheduleNotesUnresolvedCount > 0 || clientWideNotesUnresolvedCount > 0);
-        let unresolvedTitleSuffix = '';
-        if (showUnresolvedMonthIndicator) {
-            if (scheduleNotesUnresolvedCount > 0 && clientWideNotesUnresolvedCount > 0) {
-                unresolvedTitleSuffix =
-                    ` · 이 일정 미해소 ${scheduleNotesUnresolvedCount}건 · 내담자 전체 ${clientWideNotesUnresolvedCount}건`;
-            } else if (scheduleNotesUnresolvedCount > 0) {
-                unresolvedTitleSuffix = ` · 미해소 ${scheduleNotesUnresolvedCount}건`;
-            } else {
-                unresolvedTitleSuffix = ` · 내담자 미해소 ${clientWideNotesUnresolvedCount}건`;
-            }
-        }
+        const chipCopy = buildIntegratedMonthChipCopy({
+            translate: t,
+            timeText: eventInfo.timeText,
+            clientName,
+            sessionAriaLabel: sessionInfo.ariaLabel,
+            statusLabel,
+            isSameDayPending,
+            institutionLabel,
+            reminderSmsStatus: reminderSms?.status,
+            scheduleUnresolvedCount: showUnresolvedMonthIndicator ? scheduleNotesUnresolvedCount : 0,
+            clientWideUnresolvedCount: showUnresolvedMonthIndicator ? clientWideNotesUnresolvedCount : 0
+        });
+        const sameDayPrefix = isSameDayPending ? (
+            <span className="mg-v2-ad-calendar-event__same-day" aria-hidden="true">
+                {chipCopy.sameDayPrefix}
+            </span>
+        ) : null;
 
-        // 월간 뷰: 컴팩트 렌더링 (시간 + 내담자명만). 통합 스케줄은 좌측 Dot + 텍스트(전면 fill 완화).
+        // 월간 뷰: 컴팩트 렌더링. 통합 스케줄은 상태 점 + 끝 표식.
         if (isMonthView) {
-            const fullTooltip = `${clientName}${sessionTitleSuffix} · ${consultantName} · ${statusLabel}${unresolvedTitleSuffix}`;
-            const integratedMonthLabel =
-                `${eventInfo.timeText} · ${clientName}${sessionTitleSuffix} · ${statusLabel}${unresolvedTitleSuffix}`;
+            const unresolvedSuffix = chipCopy.unresolvedText ? ` · ${chipCopy.unresolvedText}` : '';
+            const fullTooltip = `${clientName}${sessionTitleSuffix} · ${consultantName} · ${statusLabel}${unresolvedSuffix}`;
             const integratedMod = integratedMonthEventLayout ? ' mg-v2-ad-calendar-event--integrated-month' : '';
             const unresolvedMod = scheduleNotesUnresolvedCount > 0
                 ? ' mg-v2-ad-calendar-event--client-notes-unresolved'
                 : (clientWideNotesUnresolvedCount > 0 ? ' mg-v2-ad-calendar-event--client-notes-client-wide' : '');
-            const dotMonthStyle = integratedMonthEventLayout
-                ? (showUnresolvedMonthIndicator ? undefined : { backgroundColor: borderColor })
-                : undefined;
+            const dotClass = statusModifier
+                ? `mg-v2-ad-calendar-event__dot mg-v2-ad-calendar-event__dot--${statusModifier}`
+                : 'mg-v2-ad-calendar-event__dot';
+            const monthLabel = integratedMonthEventLayout ? chipCopy.ariaLabel : fullTooltip;
             return (
                 <div
-                    className={`mg-v2-ad-calendar-event mg-v2-ad-calendar-event--compact${integratedMod}${unresolvedMod}${pastClass}${cancelledClass}`.trim()}
-                    title={appendScheduleMoveLockTooltip(
-                        integratedMonthEventLayout ? integratedMonthLabel : fullTooltip,
-                        sourceLockReason
-                    )}
-                    aria-label={integratedMonthEventLayout ? integratedMonthLabel : fullTooltip}
+                    className={`mg-v2-ad-calendar-event mg-v2-ad-calendar-event--compact${integratedMod}${statusModClass}${unresolvedMod}${pastClass}${cancelledClass}`.trim()}
+                    title={appendScheduleMoveLockTooltip(monthLabel, sourceLockReason)}
+                    aria-label={monthLabel}
                     aria-disabled={sourceLockReason ? 'true' : undefined}
-                    style={integratedMonthEventLayout ? undefined : { borderLeftColor: borderColor }}
                 >
+                    {sameDayPrefix}
                     {integratedMonthEventLayout && (
-                        <span
-                            className="mg-v2-ad-calendar-event__dot"
-                            style={dotMonthStyle}
-                            aria-hidden="true"
-                        />
+                        <span className={dotClass} aria-hidden="true" />
                     )}
-                    <span className="mg-v2-ad-calendar-event__time">{eventInfo.timeText}</span>
+                    <span className="mg-v2-ad-calendar-event__time">
+                        {integratedMonthEventLayout ? (
+                            <>
+                                <span className="mg-v2-ad-calendar-event__time-full">{eventInfo.timeText}</span>
+                                <span className="mg-v2-ad-calendar-event__time-short">
+                                    {formatIntegratedMonthChipShortTime(event.start)}
+                                </span>
+                            </>
+                        ) : eventInfo.timeText}
+                    </span>
                     <span className="mg-v2-ad-calendar-event__client">{clientName}</span>
-                    <ScheduleReminderSmsBadge
-                        sms={extendedProps?.[CLIENT_REMINDER_SMS_FIELD]}
-                        compact
-                        stopPropagation
-                        className="mg-v2-ad-calendar-event__reminder-sms"
-                    />
-                    <EngagementTypeBadge
-                        source={extendedProps}
-                        className="mg-v2-ad-calendar-event__engagement"
-                    />
+                    {!integratedMonthEventLayout && (
+                        <>
+                            <ScheduleReminderSmsBadge
+                                sms={extendedProps?.[CLIENT_REMINDER_SMS_FIELD]}
+                                compact
+                                stopPropagation
+                                className="mg-v2-ad-calendar-event__reminder-sms"
+                            />
+                            <EngagementTypeBadge
+                                source={extendedProps}
+                                className="mg-v2-ad-calendar-event__engagement"
+                            />
+                        </>
+                    )}
                     {sessionLabel ? (
                         <span
                             className={`mg-v2-ad-calendar-event__sessions${sessionVariantClass}`.trim()}
@@ -637,13 +683,35 @@ const ScheduleCalendarView = ({
                         </span>
                     ) : null}
                     {showUnresolvedMonthIndicator && scheduleNotesUnresolvedCount > 0 && (
-                        <AlertCircle className="mg-v2-ad-calendar-event__unresolved-icon" size={14} aria-hidden="true" />
+                        <AlertCircle
+                            className="mg-v2-ad-calendar-event__unresolved-icon"
+                            title={chipCopy.unresolvedText}
+                            aria-hidden="true"
+                        />
                     )}
                     {showUnresolvedMonthIndicator && scheduleNotesUnresolvedCount === 0 && clientWideNotesUnresolvedCount > 0 && (
-                        <Info className="mg-v2-ad-calendar-event__unresolved-icon mg-v2-ad-calendar-event__unresolved-icon--client-wide" size={14} aria-hidden="true" />
+                        <Info
+                            className="mg-v2-ad-calendar-event__unresolved-icon mg-v2-ad-calendar-event__unresolved-icon--client-wide"
+                            title={chipCopy.unresolvedText}
+                            aria-hidden="true"
+                        />
                     )}
                     {isCancelled && (
-                        <span className="mg-v2-ad-calendar-event__badge mg-v2-ad-calendar-event__badge--cancelled" aria-label="취소">취소</span>
+                        <span
+                            className="mg-v2-ad-calendar-event__badge mg-v2-ad-calendar-event__badge--cancelled"
+                            aria-hidden="true"
+                        >
+                            {chipCopy.cancelledBadge}
+                        </span>
+                    )}
+                    {integratedMonthEventLayout && (
+                        <ScheduleEventMarks
+                            source={extendedProps}
+                            sms={extendedProps?.[CLIENT_REMINDER_SMS_FIELD]}
+                            compact
+                            stopPropagation
+                            institutionTitle={institutionLabel}
+                        />
                     )}
                 </div>
             );
@@ -658,6 +726,7 @@ const ScheduleCalendarView = ({
             >
                 <div className="mg-v2-ad-calendar-event__time">{eventInfo.timeText}</div>
                 <div className="mg-v2-ad-calendar-event__title">
+                    {sameDayPrefix}
                     <span className="client-name">{clientName}</span>
                     <ScheduleReminderSmsBadge
                         sms={extendedProps?.[CLIENT_REMINDER_SMS_FIELD]}
@@ -691,6 +760,7 @@ const ScheduleCalendarView = ({
                 selectMirror={true}
                 dayMaxEvents={8}
                 moreLinkClick="popover"
+                {...calendarTextOptions}
                 weekends={true}
                 events={events}
                 dayCellClassNames={dayCellClassNamesForKrHoliday}

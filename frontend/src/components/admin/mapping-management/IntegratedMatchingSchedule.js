@@ -146,7 +146,7 @@ import { buildMonthDateRangeYmd } from '../../../utils/dateUtils';
 const CLIENT_FILTER_IDLE_FALLBACK_MS = 500;
 
 const SIDEBAR_COLLAPSED_STORAGE_KEY = 'mg.integratedSchedule.sidebarCollapsed';
-const SIDEBAR_AUTO_COLLAPSE_BREAKPOINT_PX = 1280;
+const SIDEBAR_AUTO_COLLAPSE_BREAKPOINT_PX = 1408;
 const SESSION_SUCCESSION_HIGHLIGHT_CLEAR_MS = 8000;
 const INTEGRATED_SCHEDULE_DEFAULT_SAVED_VIEW = buildIntegratedScheduleDefaultSavedView(
   SIDEBAR_DENSITY_COMFORTABLE
@@ -640,7 +640,7 @@ const IntegratedMatchingSchedule = () => {
   const userOverrideSidebarRef = useRef(readStoredBoolean(SIDEBAR_COLLAPSED_STORAGE_KEY) !== null);
 
   /**
-   * 1280px 이하에서 자동 접힘 (사용자 명시적 토글 이전까지만 적용).
+   * 1408px 이하에서 자동 접힘 (사용자 명시적 토글 이전까지만 적용).
    * 사용자가 한 번 토글하면 userOverrideSidebarRef=true 가 되어 자동 접힘이 더는 강제되지 않음.
    */
   useEffect(() => {

@@ -19,6 +19,55 @@ const DIFF_FIELDS = [
 ];
 
 /**
+ * 공통코드 행의 tenantId. camelCase·snake_case 둘 다 읽는다.
+ *
+ * @param {Record<string, *>|null|undefined} row
+ * @returns {string|null|undefined}
+ */
+export function readCommonCodeTenantId(row) {
+  if (!row || typeof row !== 'object') {
+    return undefined;
+  }
+  if (row.tenantId !== undefined) {
+    return row.tenantId;
+  }
+  return row.tenant_id;
+}
+
+/**
+ * tenant_id 가 없는 코어(글로벌) 행인지.
+ * 테넌트 행을 글로벌로 보면 자기 자신과 같아 「글로벌 동일」로 오인한다.
+ *
+ * @param {Record<string, *>|null|undefined} row
+ * @returns {boolean}
+ */
+export function isCoreCommonCodeRow(row) {
+  if (!row || typeof row !== 'object') {
+    return false;
+  }
+  const tenantId = readCommonCodeTenantId(row);
+  return tenantId == null || String(tenantId).trim() === '';
+}
+
+/**
+ * 같은 codeValue 의 코어 행만 고른다. 테넌트 행은 건너뛴다.
+ *
+ * @param {Array<Record<string, *>>|null|undefined} rows
+ * @param {string|null|undefined} codeValue
+ * @returns {Record<string, *>|null}
+ */
+export function findCoreCodeMatch(rows, codeValue) {
+  if (codeValue == null || String(codeValue).trim() === '') {
+    return null;
+  }
+  const target = String(codeValue);
+  const match = (Array.isArray(rows) ? rows : []).find((row) =>
+    row && String(row.codeValue) === target && isCoreCommonCodeRow(row)
+  );
+  return match || null;
+}
+
+/**
  * @param {Record<string, *>|null|undefined} tenantRow
  * @param {Record<string, *>|null|undefined} globalRow
  * @returns {'override'|'tenant_only'|'global_match'}
@@ -27,7 +76,7 @@ export function resolveTenantCodeOverrideStatus(tenantRow, globalRow) {
   if (!tenantRow) {
     return 'tenant_only';
   }
-  if (!globalRow) {
+  if (!isCoreCommonCodeRow(globalRow)) {
     return 'tenant_only';
   }
   const differs = DIFF_FIELDS.some(({ key }) => {

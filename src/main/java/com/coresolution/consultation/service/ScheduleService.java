@@ -640,6 +640,21 @@ public interface ScheduleService {
     boolean isBeforeSessionStart(String tenantId, Long scheduleId);
 
     /**
+     * 일정 이동 대상 시각이 현재(설정 시간대, 기본 KST)보다 이전이면 거부한다.
+     *
+     * <p>드래그·예약 변경 모달·API 등 일정 일시를 바꾸는 모든 경로가 이 판정만 쓴다.
+     * 판정 규칙은 {@link com.coresolution.consultation.util.ScheduleMoveTargetGate}.
+     * 원래 일시가 지났는지는 보지 않는다.</p>
+     *
+     * @param scheduleId 대상 일정 ID (로그용, null 허용)
+     * @param target     이동 대상 일시 (null 이면 판정 생략)
+     * @throws com.coresolution.consultation.exception.ScheduleMoveToPastException 과거 시각이면
+     * @author CoreSolution
+     * @since 2026-10-06
+     */
+    void requireMoveTargetNotInPast(Long scheduleId, java.time.LocalDateTime target);
+
+    /**
      * 관리자·수동 완료 요청 전 시작 여부를 강제한다 (시작 전이면 400, 상태·회기·급여 변경 없음).
      *
      * @param schedule 완료하려는 일정 (변경 예정 date/startTime 반영본)

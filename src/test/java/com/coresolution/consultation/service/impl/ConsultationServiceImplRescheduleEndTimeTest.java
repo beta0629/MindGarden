@@ -9,12 +9,14 @@ import com.coresolution.consultation.constant.ScheduleStatus;
 import com.coresolution.consultation.dto.EmailResponse;
 import com.coresolution.consultation.entity.Consultation;
 import com.coresolution.consultation.entity.Schedule;
+import com.coresolution.consultation.exception.ScheduleMoveToPastException;
 import com.coresolution.consultation.repository.ConsultationRepository;
 import com.coresolution.consultation.repository.ScheduleRepository;
 import com.coresolution.consultation.service.EmailService;
 import com.coresolution.consultation.service.ImmediateReservationSmsDeferralService;
 import com.coresolution.consultation.service.MobilePushDispatchService;
 import com.coresolution.consultation.service.ScheduleChangeNotificationDebounceService;
+import com.coresolution.consultation.service.ScheduleService;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.security.TenantAccessControlService;
 import org.junit.jupiter.api.AfterEach;
@@ -29,8 +31,12 @@ import org.mockito.quality.Strictness;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
@@ -66,6 +72,8 @@ class ConsultationServiceImplRescheduleEndTimeTest {
     private MobilePushDispatchService mobilePushDispatchService;
     @Mock
     private EmailService emailService;
+    @Mock
+    private ScheduleService scheduleService;
 
     private ConsultationServiceImpl service;
     private Consultation consultation;
@@ -80,6 +88,7 @@ class ConsultationServiceImplRescheduleEndTimeTest {
             scheduleChangeNotificationDebounceService);
         ReflectionTestUtils.setField(service, "mobilePushDispatchService", mobilePushDispatchService);
         ReflectionTestUtils.setField(service, "emailService", emailService);
+        ReflectionTestUtils.setField(service, "scheduleService", scheduleService);
 
         TenantContextHolder.setTenantId(TENANT_ID);
         when(emailService.sendTemplateEmail(anyString(), anyString(), anyString(), any()))
@@ -141,5 +150,28 @@ class ConsultationServiceImplRescheduleEndTimeTest {
 
         assertThat(saved.getEndTime()).isEqualTo(LocalTime.of(9, 50));
         assertThat(linkedSchedule.getEndTime()).isEqualTo(LocalTime.of(9, 50));
+    }
+
+    @Test
+    @DisplayName("재예약 대상 시각을 일정 이동 공통 판정(requireMoveTargetNotInPast)에 넘긴다")
+    void reschedule_delegatesMoveTargetGate() {
+        LocalDateTime target = LocalDateTime.of(OLD_DATE.plusDays(2), LocalTime.of(10, 0));
+
+        service.rescheduleConsultation(CONSULTATION_ID, target);
+
+        verify(scheduleService).requireMoveTargetNotInPast(null, target);
+    }
+
+    @Test
+    @DisplayName("과거 시각 재예약 → ScheduleMoveToPastException, 상담·연결 일정 저장 없음")
+    void reschedule_toPast_rejectedWithoutSave() {
+        LocalDateTime target = LocalDateTime.of(OLD_DATE, LocalTime.of(9, 0));
+        doThrow(new ScheduleMoveToPastException(null)).when(scheduleService).requireMoveTargetNotInPast(null, target);
+
+        assertThatThrownBy(() -> service.rescheduleConsultation(CONSULTATION_ID, target))
+            .isInstanceOf(ScheduleMoveToPastException.class);
+        verify(consultationRepository, never()).save(any(Consultation.class));
+        verify(scheduleRepository, never()).save(any(Schedule.class));
+        assertThat(consultation.getStartTime()).isEqualTo(OLD_START);
     }
 }

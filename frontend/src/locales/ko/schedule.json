@@ -72,6 +72,9 @@
       "unauthorized": "권한이 없습니다.",
       "serverError": "서버 오류가 발생했습니다."
     },
+    "scheduleMove": {
+      "toPast": "현재 시각 이전으로는 일정을 옮길 수 없습니다. 지금 이후의 시간을 선택해 주세요."
+    },
     "successMessage": {
       "loadSuccess": "스케줄이 성공적으로 로드되었습니다.",
       "saveSuccess": "스케줄이 성공적으로 저장되었습니다.",

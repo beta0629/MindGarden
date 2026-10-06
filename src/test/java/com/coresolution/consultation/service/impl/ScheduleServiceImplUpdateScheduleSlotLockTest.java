@@ -37,7 +37,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.core.context.SecurityContextHolder;
 
 /**
- * {@link ScheduleServiceImpl#updateSchedule} 완료·취소·과거 슬롯 변경 잠금 검증.
+ * {@link ScheduleServiceImpl#updateSchedule} 완료·취소 슬롯 변경 잠금 검증.
+ * 과거 판정은 이동 후 시각 기준({@code ScheduleServiceImplMoveTargetPastTest}).
  */
 @ExtendWith(MockitoExtension.class)
 @DisplayName("ScheduleServiceImpl updateSchedule 슬롯 잠금")
@@ -109,21 +110,19 @@ class ScheduleServiceImplUpdateScheduleSlotLockTest {
     }
 
     @Test
-    @DisplayName("과거 날짜 CONFIRMED + 슬롯 변경 → IllegalStateException")
-    void updateSchedule_pastDateSlotChange_throws() {
+    @DisplayName("과거 날짜 CONFIRMED → 미래 슬롯 이동은 허용 (원래 일시가 지난 것만으로 잠그지 않음)")
+    void updateSchedule_pastDateToFutureSlotChange_allows() {
         LocalDate yesterday = LocalDate.now(ReservationSmsBusinessHours.ZONE_SEOUL).minusDays(1);
+        LocalDate tomorrow = LocalDate.now(ReservationSmsBusinessHours.ZONE_SEOUL).plusDays(1);
         Schedule existing = baseSchedule(ScheduleStatus.CONFIRMED, yesterday);
-        Schedule patch = slotPatch(
-                LocalDate.now(ReservationSmsBusinessHours.ZONE_SEOUL).plusDays(1),
-                LocalTime.of(14, 0),
-                LocalTime.of(15, 0));
+        Schedule patch = slotPatch(tomorrow, LocalTime.of(14, 0), LocalTime.of(15, 0));
         stubFind(existing);
+        when(scheduleRepository.save(any(Schedule.class))).thenAnswer(inv -> inv.getArgument(0));
 
-        assertThatThrownBy(() -> scheduleService.updateSchedule(SCHEDULE_ID, patch))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessage(ScheduleServiceUserFacingMessages.MSG_PAST_SLOT_CHANGE_DENIED);
+        Schedule saved = scheduleService.updateSchedule(SCHEDULE_ID, patch);
 
-        verify(scheduleRepository, never()).save(any());
+        assertThat(saved.getDate()).isEqualTo(tomorrow);
+        verify(scheduleRepository).save(any(Schedule.class));
     }
 
     @Test

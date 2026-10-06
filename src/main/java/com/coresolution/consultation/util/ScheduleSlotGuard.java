@@ -7,7 +7,7 @@ import com.coresolution.consultation.constant.ScheduleServiceUserFacingMessages;
 import com.coresolution.consultation.constant.ScheduleStatus;
 
 /**
- * 스케줄 일시(슬롯) 변경 잠금 — 완료·취소·과거 공통 판정.
+ * 스케줄 일시(슬롯) 변경 잠금 — 완료·취소 상태 판정과 슬롯 과거 여부 유틸.
  *
  * <p>과거 판정은 Asia/Seoul({@link ReservationSmsBusinessHours#ZONE_SEOUL}) 기준:
  * 날짜가 오늘 이전이거나, 당일이면서 종료 시각이 현재보다 이전.</p>
@@ -43,23 +43,20 @@ public final class ScheduleSlotGuard {
     }
 
     /**
-     * 슬롯 변경이 잠긴 경우 사용자 메시지, 허용이면 null.
+     * 상태로 슬롯 변경이 잠긴 경우 사용자 메시지, 허용이면 null.
      *
-     * @param status  변경 전 상태
-     * @param date    변경 전 날짜
-     * @param endTime 변경 전 종료 시각
+     * <p>원래 일시가 지났다는 이유로는 잠그지 않는다. 이동 후 시각의 과거 여부는
+     * {@link ScheduleMoveTargetGate} 가 판정한다(지난 일정도 미래로는 다시 옮길 수 있어야 한다).</p>
+     *
+     * @param status 변경 전 상태
      * @return 거부 메시지 또는 null
      */
-    public static String resolveSlotChangeDenyMessage(
-            ScheduleStatus status, LocalDate date, LocalTime endTime) {
+    public static String resolveSlotChangeDenyMessage(ScheduleStatus status) {
         if (status == ScheduleStatus.COMPLETED) {
             return ScheduleServiceUserFacingMessages.MSG_COMPLETED_SLOT_CHANGE_DENIED;
         }
         if (status == ScheduleStatus.CANCELLED) {
             return ScheduleServiceUserFacingMessages.MSG_CANCELLED_SLOT_CHANGE_DENIED;
-        }
-        if (isScheduleSlotInPast(date, endTime)) {
-            return ScheduleServiceUserFacingMessages.MSG_PAST_SLOT_CHANGE_DENIED;
         }
         return null;
     }

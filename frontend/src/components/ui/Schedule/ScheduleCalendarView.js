@@ -29,6 +29,13 @@ import {
   getKrSubstituteHolidayEveHintForLocalDate
 } from '../../../utils/krPublicHolidays';
 import { USER_ROLES, mapLegacyRole } from '../../../constants/roles';
+import {
+  getScheduleMoveToPastMessage,
+  isScheduleMoveSourceLocked,
+  isScheduleMoveTargetInPast,
+  resolveCalendarDropTargetStart,
+  resolveScheduleMoveTarget
+} from '../../../utils/scheduleMoveGuard';
 import './ScheduleCalendarView.css';
 
 const KR_PUBLIC_HOLIDAY_DAY_BADGE_CLASS = 'mg-v2-ad-calendar-day-holiday-badge';
@@ -82,6 +89,8 @@ const ScheduleCalendarView = ({
     onEventClick,
     onEventDrop,
     onEventResize,
+    /** 드래그가 과거 시각 칸에서 끝나 이동이 거부됐을 때 (message: string) => void */
+    onEventMoveRejected,
     onExternalEventReceive,
     integratedMonthEventLayout = false,
     calendarSkin,
@@ -391,9 +400,13 @@ const ScheduleCalendarView = ({
         });
     };
 
+    /** 마지막 eventAllow 가 «과거 시각 칸» 때문에 거부했는지 — eventDragStop 에서 사유 안내용 */
+    const moveRejectedToPastRef = useRef(false);
+
     /**
-     * 완료·취소·과거 스케줄의 드래그·리사이즈 사전 차단 (FullCalendar eventAllow).
-     * 원본 잠금은 extendedProps.slotDragLocked(매핑 시점 SSOT)로 판정한다.
+     * 드래그·리사이즈 사전 차단 (FullCalendar eventAllow).
+     * 원본 잠금은 완료·취소 상태만(extendedProps.slotDragLocked, 매핑 시점 SSOT).
+     * 놓을 칸이 현재 시각 이전이면 놓을 수 없음으로 표시한다(scheduleMoveGuard).
      *
      * 외부 사이드바 매핑 드롭은 holiday/vacation/slotDragLocked 보다 **최우선** 허용.
      * eventAllow=false 이면 eventReceive 미발화 → 부모 토스트 SSOT silent FAIL.
@@ -420,11 +433,28 @@ const ScheduleCalendarView = ({
         if (props.slotDragLocked === true) {
             return false;
         }
-        return !isScheduleCalendarDragLocked({
-            status: props.status,
-            start: draggedEvent?.start,
-            end: draggedEvent?.end
-        });
+        if (isScheduleMoveSourceLocked({ status: props.status })) {
+            return false;
+        }
+        const targetInPast = isScheduleMoveTargetInPast(resolveScheduleMoveTarget(
+            draggedEvent?.start,
+            resolveCalendarDropTargetStart(dropInfo, draggedEvent),
+            dropInfo?.end
+        ));
+        moveRejectedToPastRef.current = targetInPast;
+        return !targetInPast;
+    };
+
+    const handleEventDragStart = () => {
+        moveRejectedToPastRef.current = false;
+    };
+
+    const handleEventDragStop = () => {
+        if (!moveRejectedToPastRef.current) {
+            return;
+        }
+        moveRejectedToPastRef.current = false;
+        onEventMoveRejected?.(getScheduleMoveToPastMessage());
     };
 
     /**
@@ -659,6 +689,8 @@ const ScheduleCalendarView = ({
                 eventDrop={onEventDrop}
                 eventResize={onEventResize || onEventDrop}
                 eventAllow={handleEventAllow}
+                eventDragStart={handleEventDragStart}
+                eventDragStop={handleEventDragStop}
                 eventReceive={acceptExternalCalendarDrops ? handleEventReceive : undefined}
                 editable={!disableCalendarEventDrag && isScheduleCalendarEditableRole(userRole)}
                 droppable={acceptExternalCalendarDrops && isScheduleDropAdminRole(userRole)}

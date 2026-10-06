@@ -589,6 +589,23 @@ public class GlobalExceptionHandler {
     }
 
     /**
+     * 일정을 현재 시각 이전으로 이동 요청 — HTTP 400 (일정 변경 없음).
+     */
+    @ExceptionHandler(ScheduleMoveToPastException.class)
+    public ResponseEntity<ErrorResponse> handleScheduleMoveToPast(
+            ScheduleMoveToPastException e, HttpServletRequest request) {
+        log.info("[SCHEDULE_MOVE_TO_PAST] scheduleId={} path={}", e.getScheduleId(), request.getRequestURI());
+        ErrorResponse error = ErrorResponse.of(
+            e.getMessage(),
+            e.getErrorCode(),
+            HttpStatus.BAD_REQUEST.value(),
+            request.getRequestURI(),
+            request.getMethod()
+        );
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+    }
+
+    /**
      * 일정 시작 전 완료 요청 — HTTP 400 (상태·회기·급여 변경 없음).
      */
     @ExceptionHandler(ScheduleSessionNotStartedException.class)

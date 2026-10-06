@@ -598,6 +598,7 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
     @Override
     public Consultation rescheduleConsultation(Long consultationId, LocalDateTime newDateTime) {
         Consultation consultation = findActiveByIdOrThrow(consultationId);
+        scheduleService.requireMoveTargetNotInPast(null, newDateTime);
         LocalDate previousDate = consultation.getConsultationDate();
         LocalTime previousStart = consultation.getStartTime();
         LocalTime previousEnd = consultation.getEndTime();

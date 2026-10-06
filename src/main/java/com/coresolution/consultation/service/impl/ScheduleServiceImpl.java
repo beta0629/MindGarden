@@ -76,6 +76,7 @@ import com.coresolution.consultation.util.LeftoverOccupyingCompleteExhaust;
 import com.coresolution.consultation.util.MappingPaymentScheduleGate;
 import com.coresolution.consultation.util.ProvisionalConsultationLogSession;
 import com.coresolution.consultation.util.ScheduleCancelLinkedMappingReopen;
+import com.coresolution.consultation.util.ScheduleMoveTargetGate;
 import com.coresolution.consultation.util.ScheduleSessionStartGate;
 import com.coresolution.consultation.utils.SessionUtils;
 import com.coresolution.consultation.service.StatisticsService;
@@ -326,8 +327,11 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         boolean slotWouldChange = !Objects.equals(previousDate, intendedDate)
                 || !Objects.equals(previousStartTime, intendedStartTime)
                 || !Objects.equals(previousEndTime, intendedEndTime);
-        rejectSlotChangeIfLocked(
-                previousStatus, previousDate, previousEndTime, slotWouldChange);
+        rejectSlotChangeIfLocked(previousStatus, slotWouldChange);
+        if (slotWouldChange) {
+            requireMoveTargetNotInPast(id, ScheduleMoveTargetGate.resolveMoveTarget(
+                    previousDate, previousStartTime, intendedDate, intendedStartTime, intendedEndTime));
+        }
 
         if (previousStatus != ScheduleStatus.COMPLETED && updateData.getStatus() == ScheduleStatus.COMPLETED) {
             Schedule intendedSlot = new Schedule();
@@ -517,30 +521,23 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
     }
 
     /**
-     * 완료·취소·과거 스케줄의 일시(슬롯) 변경을 거부한다.
+     * 완료·취소 스케줄의 일시(슬롯) 변경을 거부한다.
      *
-     * <p>과거 판정: Asia/Seoul 기준 날짜가 오늘 이전이거나,
-     * 당일이면서 종료 시각이 현재 시각 이후가 아닌 경우({@code now.isAfter(endTime)}).</p>
+     * <p>원래 일시가 지난 것만으로는 거부하지 않는다. 이동 후 시각은
+     * {@link #requireMoveTargetNotInPast} 가 판정한다.</p>
      *
      * @param previousStatus 변경 전 상태
-     * @param previousDate 변경 전 날짜
-     * @param previousEndTime 변경 전 종료 시각
      * @param slotWouldChange date/startTime/endTime 중 하나라도 변경되는지
      * @throws IllegalStateException 잠금 대상에서 슬롯 변경 시
      */
-    private void rejectSlotChangeIfLocked(
-            ScheduleStatus previousStatus,
-            LocalDate previousDate,
-            LocalTime previousEndTime,
-            boolean slotWouldChange) {
+    private void rejectSlotChangeIfLocked(ScheduleStatus previousStatus, boolean slotWouldChange) {
         if (!slotWouldChange) {
             return;
         }
         String denyMessage = com.coresolution.consultation.util.ScheduleSlotGuard
-                .resolveSlotChangeDenyMessage(previousStatus, previousDate, previousEndTime);
+                .resolveSlotChangeDenyMessage(previousStatus);
         if (denyMessage != null) {
-            log.warn("❌ 스케줄 슬롯 변경 거부: status={}, date={}, endTime={}, message={}",
-                    previousStatus, previousDate, previousEndTime, denyMessage);
+            log.warn("❌ 스케줄 슬롯 변경 거부: status={}, message={}", previousStatus, denyMessage);
             throw new IllegalStateException(denyMessage);
         }
     }
@@ -5621,6 +5618,15 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         return scheduleRepository.findByTenantIdAndId(tenantId, scheduleId)
                 .map(this::isBeforeSessionStart)
                 .orElse(false);
+    }
+
+    @Override
+    public void requireMoveTargetNotInPast(Long scheduleId, LocalDateTime target) {
+        if (ScheduleMoveTargetGate.isTargetInPast(
+                target, ScheduleSessionStartGate.now(sessionStartClock, sessionStartZoneId))) {
+            log.info("과거 시각으로 일정 이동 거부: scheduleId={}, target={}", scheduleId, target);
+            throw new com.coresolution.consultation.exception.ScheduleMoveToPastException(scheduleId);
+        }
     }
 
     @Override

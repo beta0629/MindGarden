@@ -21,13 +21,17 @@ import {
 import { API_SCHEDULE_CONTROLLER_ADMIN } from '../../constants/adminDashboardWidgetConstants';
 import {
   buildScheduleDatetimeUpdateBody,
-  getScheduleCalendarDragLockedMessage,
   hasConsultantScheduleTimeOverlap,
-  isPastDateOnly,
-  isScheduleCalendarDragLocked,
-  resolveMovedScheduleEnd,
-  SCHEDULE_DRAG_TO_PAST_DATE_MESSAGE
+  resolveMovedScheduleEnd
 } from '../../utils/scheduleRescheduleUtils';
+import {
+  getScheduleMoveSourceLockedMessage,
+  getScheduleMoveToPastMessage,
+  isScheduleMoveSourceLocked,
+  isScheduleMoveTargetInPast,
+  resolveScheduleMoveFailureMessage,
+  resolveScheduleMoveTarget
+} from '../../utils/scheduleMoveGuard';
 import {
   buildMissingConsultationLogFallbackRoute,
   resolveMissingLogSchedule
@@ -673,11 +677,7 @@ const UnifiedScheduleComponent = ({
                         return null;
                     }
                     
-                    const isDragLocked = isScheduleCalendarDragLocked({
-                        status: schedule.status,
-                        start: startDateStr,
-                        end: endDateStr
-                    });
+                    const isDragLocked = isScheduleMoveSourceLocked({ status: schedule.status });
                     return {
                         id: schedule.id,
                         title: schedule.title || t('schedule:UnifiedScheduleComponent.t_c023a4c5'),
@@ -827,11 +827,7 @@ const UnifiedScheduleComponent = ({
                             return null;
                         }
                         
-                        const isDragLocked = isScheduleCalendarDragLocked({
-                            status: schedule.status,
-                            start: startDateStr,
-                            end: endDateStr
-                        });
+                        const isDragLocked = isScheduleMoveSourceLocked({ status: schedule.status });
                         return {
                             id: schedule.id,
                             title: schedule.title || t('schedule:UnifiedScheduleComponent.t_c023a4c5'),
@@ -1216,12 +1212,8 @@ const UnifiedScheduleComponent = ({
         const status = event.extendedProps?.status;
         const originalStart = info.oldEvent?.start ?? event.start;
         const originalEnd = info.oldEvent?.end ?? event.end;
-        const lockedMessage = getScheduleCalendarDragLockedMessage({
-            status,
-            start: originalStart,
-            end: originalEnd
-        });
-        // 완료·취소·과거 스케줄은 드래그/리사이즈 이동 불가
+        // 완료·취소 스케줄만 잠금. 원래 시각이 지났어도 미래로는 다시 옮길 수 있다.
+        const lockedMessage = getScheduleMoveSourceLockedMessage({ status });
         if (lockedMessage) {
             info.revert();
             notificationManager.warning(lockedMessage);
@@ -1231,9 +1223,9 @@ const UnifiedScheduleComponent = ({
         const newStart = event.start;
         const newEnd = resolveMovedScheduleEnd(newStart, event.end, originalStart, originalEnd);
 
-        if (isPastDateOnly(newStart)) {
+        if (isScheduleMoveTargetInPast(resolveScheduleMoveTarget(originalStart, newStart, newEnd))) {
             info.revert();
-            notificationManager.warning(SCHEDULE_DRAG_TO_PAST_DATE_MESSAGE);
+            notificationManager.warning(getScheduleMoveToPastMessage());
             return;
         }
 
@@ -1256,11 +1248,19 @@ const UnifiedScheduleComponent = ({
         } catch (error) {
             console.error('스케줄 이동 오류:', error);
             info.revert();
-            notificationManager.error(t('schedule:UnifiedScheduleComponent.t_68ed75e7'));
+            notificationManager.error(resolveScheduleMoveFailureMessage(
+                error, t('schedule:UnifiedScheduleComponent.t_68ed75e7')));
         }
     };
 
     const handleEventResize = handleEventDrop;
+
+    /** 드래그 중 놓을 수 없는 칸(과거 시각)에서 놓았을 때 사유 안내 */
+    const handleEventMoveRejected = (message) => {
+        if (message) {
+            notificationManager.warning(message);
+        }
+    };
 
     const handleModalClose = () => {
         setIsModalOpen(false);
@@ -1535,6 +1535,7 @@ const UnifiedScheduleComponent = ({
                 onEventClick={handleEventClick}
                 onEventDrop={handleEventDrop}
                 onEventResize={handleEventResize}
+                onEventMoveRejected={handleEventMoveRejected}
                 onExternalEventReceive={onDropFromExternal}
                 integratedMonthEventLayout={integratedMonthEventLayout}
                 calendarSkin={calendarSkin}

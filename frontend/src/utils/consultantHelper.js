@@ -309,9 +309,9 @@ export const formatConsultantClientCount = (consultant) => {
     const max = consultant.maxClients || 0;
     
     if (max > 0) {
-        return i18n.t('common:utils.consultantHelper.t_3b0a6d32');
+        return i18n.t('common:utils.consultantHelper.t_3b0a6d32', { current, max });
     }
-    return i18n.t('common:utils.consultantHelper.t_ecb515b1');
+    return i18n.t('common:utils.consultantHelper.t_ecb515b1', { current });
 };
 
 /**

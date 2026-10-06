@@ -65,8 +65,8 @@ const formatNotifTime = (dateString) => {
   const diffHour = Math.floor(diffMs / 3600000);
 
   if (diffMin < 1) return i18n.t('common:common.NotificationCenter.t_aec5ef39');
-  if (diffMin < 60) return i18n.t('common:common.NotificationCenter.t_96b0d060');
-  if (diffHour < 24) return i18n.t('common:common.NotificationCenter.t_310782ab');
+  if (diffMin < 60) return i18n.t('common:common.NotificationCenter.t_96b0d060', { diffMin });
+  if (diffHour < 24) return i18n.t('common:common.NotificationCenter.t_310782ab', { diffHour });
 
   return `${date.getMonth() + 1}/${date.getDate()} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
 };

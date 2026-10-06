@@ -152,7 +152,10 @@ const applyConsultationLogApiValidationErrors = (error, setValidationErrors) => 
     return fieldMap[keys[0]];
   }
   if (keys.length > 1) {
-    return i18n.t('common:consultant.ConsultationLogModal.t_ec4468bd');
+    return i18n.t('common:consultant.ConsultationLogModal.t_ec4468bd', {
+      firstField: fieldMap[keys[0]],
+      extraCount: keys.length - 1
+    });
   }
   return toDisplayString(data.message, '');
 };
@@ -742,14 +745,14 @@ const ConsultationLogModal = ({
           // 기본 정보만으로 설정
           setClient({ 
             id: cId, 
-            name: record.clientName || t('common:consultant.ConsultationLogModal.t_7941899e'),
+            name: record.clientName || t('common:consultant.ConsultationLogModal.t_7941899e', { clientId: cId }),
             email: record.clientEmail || '',
             phone: record.clientPhone || ''
           });
           setClientWithStats({ 
             client: { 
               id: cId, 
-              name: record.clientName || t('common:consultant.ConsultationLogModal.t_7941899e'),
+              name: record.clientName || t('common:consultant.ConsultationLogModal.t_7941899e', { clientId: cId }),
               email: record.clientEmail || '',
               phone: record.clientPhone || ''
             } 

@@ -3366,7 +3366,7 @@
     }
   },
   "ConsultationCompletionStats": {
-    "t_180f1c39": "${year}년 ${month}월",
+    "t_180f1c39": "{{year}}년 {{month}}월",
     "t_d6ebcb35": "주니어",
     "t_68a6a8b6": "시니어",
     "t_de4b2ea8": "엑스퍼트",

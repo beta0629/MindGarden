@@ -74,7 +74,9 @@ export const validateFormData = (formData) => {
         errors.codeValue = i18n.t('common:utils.tenantCodeUtils.t_ba8caead');
         isValid = false;
     } else if (formData.codeValue.length > VALIDATION.CODE_VALUE_MAX_LENGTH) {
-        errors.codeValue = i18n.t('common:utils.tenantCodeUtils.t_1174495e');
+        errors.codeValue = i18n.t('common:utils.tenantCodeUtils.t_1174495e', {
+            max: VALIDATION.CODE_VALUE_MAX_LENGTH
+        });
         isValid = false;
     }
 
@@ -82,7 +84,9 @@ export const validateFormData = (formData) => {
         errors.codeLabel = i18n.t('common:utils.tenantCodeUtils.t_a9424678');
         isValid = false;
     } else if (formData.codeLabel.length > VALIDATION.CODE_LABEL_MAX_LENGTH) {
-        errors.codeLabel = i18n.t('common:utils.tenantCodeUtils.t_7d5fc97c');
+        errors.codeLabel = i18n.t('common:utils.tenantCodeUtils.t_7d5fc97c', {
+            max: VALIDATION.CODE_LABEL_MAX_LENGTH
+        });
         isValid = false;
     }
 
@@ -90,18 +94,25 @@ export const validateFormData = (formData) => {
         errors.koreanName = i18n.t('common:utils.tenantCodeUtils.t_bdfd7551');
         isValid = false;
     } else if (formData.koreanName.length > VALIDATION.KOREAN_NAME_MAX_LENGTH) {
-        errors.koreanName = i18n.t('common:utils.tenantCodeUtils.t_58d81f11');
+        errors.koreanName = i18n.t('common:utils.tenantCodeUtils.t_58d81f11', {
+            max: VALIDATION.KOREAN_NAME_MAX_LENGTH
+        });
         isValid = false;
     }
 
     // 선택적 필드 검증
     if (formData.codeDescription && formData.codeDescription.length > VALIDATION.DESCRIPTION_MAX_LENGTH) {
-        errors.codeDescription = i18n.t('common:utils.tenantCodeUtils.t_5034fb9f');
+        errors.codeDescription = i18n.t('common:utils.tenantCodeUtils.t_5034fb9f', {
+            max: VALIDATION.DESCRIPTION_MAX_LENGTH
+        });
         isValid = false;
     }
 
     if (formData.sortOrder < VALIDATION.SORT_ORDER_MIN || formData.sortOrder > VALIDATION.SORT_ORDER_MAX) {
-        errors.sortOrder = i18n.t('common:utils.tenantCodeUtils.t_d08f803f');
+        errors.sortOrder = i18n.t('common:utils.tenantCodeUtils.t_d08f803f', {
+            min: VALIDATION.SORT_ORDER_MIN,
+            max: VALIDATION.SORT_ORDER_MAX
+        });
         isValid = false;
     }
 

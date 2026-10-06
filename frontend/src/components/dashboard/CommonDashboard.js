@@ -138,14 +138,17 @@ const CommonDashboard = ({ user: propUser }) => {
           } else if (daysDiff === 1) {
             timeAgo = t('common:dashboard.CommonDashboard.t_623b0456');
           } else if (daysDiff < 7) {
-            timeAgo = t('common:dashboard.CommonDashboard.t_a9427798');
+            timeAgo = t('common:dashboard.CommonDashboard.t_a9427798', { daysDiff });
           } else {
-            timeAgo = t('common:dashboard.CommonDashboard.t_7e205ec8');
+            timeAgo = t('common:dashboard.CommonDashboard.t_7e205ec8', { weeks: Math.floor(daysDiff / 7) });
           }
           
           recentActivities.push({
             type: 'schedule',
-            title: t('common:dashboard.CommonDashboard.t_0b53d412'),
+            title: t('common:dashboard.CommonDashboard.t_0b53d412', {
+              consultantName: schedule.consultantName,
+              statusLabel: getStatusLabel(schedule.status)
+            }),
             time: timeAgo,
             details: `${schedule.date} ${schedule.startTime} - ${schedule.endTime}`
           });
@@ -316,9 +319,9 @@ const CommonDashboard = ({ user: propUser }) => {
           } else if (daysDiff === 1) {
             timeAgo = t('common:dashboard.CommonDashboard.t_623b0456');
           } else if (daysDiff < 7) {
-            timeAgo = t('common:dashboard.CommonDashboard.t_a9427798');
+            timeAgo = t('common:dashboard.CommonDashboard.t_a9427798', { daysDiff });
           } else {
-            timeAgo = t('common:dashboard.CommonDashboard.t_7e205ec8');
+            timeAgo = t('common:dashboard.CommonDashboard.t_7e205ec8', { weeks: Math.floor(daysDiff / 7) });
           }
           
           let displayName = t('common:dashboard.CommonDashboard.t_82bba86b');
@@ -326,7 +329,9 @@ const CommonDashboard = ({ user: propUser }) => {
           if (schedule.clientName && schedule.clientName !== 'null' && schedule.clientName !== 'undefined' && schedule.clientName.trim() !== '') {
             displayName = schedule.clientName;
           } else if (schedule.consultantName && schedule.consultantName !== 'null' && schedule.consultantName !== 'undefined' && schedule.consultantName.trim() !== '') {
-            displayName = t('common:dashboard.CommonDashboard.t_70875dc6');
+            displayName = t('common:dashboard.CommonDashboard.t_70875dc6', {
+              consultantName: schedule.consultantName
+            });
           } else if (schedule.title && schedule.title.trim() !== '') {
             displayName = schedule.title;
           }
@@ -334,7 +339,10 @@ const CommonDashboard = ({ user: propUser }) => {
           if (displayName !== t('common:dashboard.CommonDashboard.t_82bba86b') || schedule.clientId) {
             recentActivities.push({
               type: 'schedule',
-              title: t('common:dashboard.CommonDashboard.t_9533079f'),
+              title: t('common:dashboard.CommonDashboard.t_9533079f', {
+                displayName,
+                statusLabel: getStatusLabel(schedule.status)
+              }),
               time: timeAgo,
               details: `${schedule.date} ${schedule.startTime} - ${schedule.endTime}`
             });
@@ -419,7 +427,7 @@ const CommonDashboard = ({ user: propUser }) => {
           if (stats.totalUsers > 0) {
             recentActivities.push({
               type: 'profile',
-              title: t('common:dashboard.CommonDashboard.t_f936a2a6'),
+              title: t('common:dashboard.CommonDashboard.t_f936a2a6', { totalUsers: stats.totalUsers }),
               time: t('common:dashboard.CommonDashboard.t_2bdce5e8'),
               details: t('common:dashboard.CommonDashboard.t_0032cd55')
             });
@@ -428,7 +436,9 @@ const CommonDashboard = ({ user: propUser }) => {
           if (stats.todayConsultations > 0) {
             recentActivities.push({
               type: 'schedule',
-              title: t('common:dashboard.CommonDashboard.t_ff62af5f'),
+              title: t('common:dashboard.CommonDashboard.t_ff62af5f', {
+                todayConsultations: stats.todayConsultations
+              }),
               time: t('common:dashboard.CommonDashboard.t_2bdce5e8'),
               details: t('common:dashboard.CommonDashboard.t_a02347c2')
             });

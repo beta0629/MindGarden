@@ -8,11 +8,13 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.clearInvocations;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -50,10 +52,13 @@ import com.coresolution.consultation.repository.ConsultantClientMappingRepositor
 import com.coresolution.consultation.repository.ScheduleRepository;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.repository.erp.financial.FinancialTransactionRepository;
+import com.coresolution.consultation.service.AdminService;
 import com.coresolution.consultation.service.MappingSettlementNotificationHelper;
 import com.coresolution.consultation.service.RealTimeStatisticsService;
 import com.coresolution.consultation.service.SalaryTaxRateLookupService;
+import com.coresolution.consultation.service.ScheduleService;
 import com.coresolution.consultation.service.erp.accounting.AccountingService;
+import com.coresolution.consultation.service.erp.financial.FinancialTransactionService;
 import com.coresolution.consultation.service.StoredProcedureService;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.integrationtest.support.WithMockAdminSecurityContext;
@@ -76,7 +81,9 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
+import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
+import org.springframework.transaction.support.TransactionTemplate;
 
 /**
  * 매칭 입금 확인·수정의 재무(ERP) 동기화 실패를 삼키지 않는다 — H2 실제 트랜잭션(테스트 트랜잭션 없음)으로 커밋 여부를 본다.
@@ -114,6 +121,10 @@ class MappingErpSyncFailClosedIntegrationTest {
     @SpyBean private FinancialTransactionRepository financialTransactionRepository;
     @SpyBean private RealTimeStatisticsService realTimeStatisticsService;
     @SpyBean private AccountingService accountingService;
+    @SpyBean private ScheduleService scheduleService;
+    @SpyBean private FinancialTransactionService financialTransactionService;
+    @Autowired private AdminService adminService;
+    @Autowired private PlatformTransactionManager transactionManager;
     @Autowired private DataSource dataSource;
     @Autowired private EntityManagerFactory entityManagerFactory;
     @Autowired private JdbcTemplate jdbcTemplate;
@@ -202,6 +213,63 @@ class MappingErpSyncFailClosedIntegrationTest {
         assertThat(incomeRows(mapping)).hasSize(1);
         assertThat(reload(mapping).getRemainingSessions()).isEqualTo(10);
         verify(storedProcedureService, never()).updateMappingInfo(any(), any(), anyDouble(), anyInt(), any());
+    }
+
+    @Test
+    @DisplayName("원샷 결제 — 바깥 트랜잭션이 롤백되면 INCOME 0건. 생성은 입금 확인 한 번만")
+    void checkoutSameDay_outerRollback_leavesNoIncome() throws Exception {
+        ConsultantClientMapping mapping = saveMapping(MappingStatus.PENDING_PAYMENT, PaymentStatus.PENDING, 0);
+        clearInvocations(financialTransactionService);
+        doThrow(new IllegalStateException("oneshot-outer-rollback"))
+                .when(scheduleService).finalizeTentativeSchedulesAfterDepositConfirmed(any());
+        try {
+            perform(post("/api/v1/admin/mappings/{id}/checkout-same-day", mapping.getId())
+                            .header("X-Request-Id", UUID.randomUUID().toString()),
+                    checkoutBody())
+                    .andExpect(status().isBadRequest());
+        } finally {
+            reset(scheduleService);
+        }
+
+        ConsultantClientMapping after = reload(mapping);
+        assertThat(after.getStatus()).isEqualTo(MappingStatus.PENDING_PAYMENT);
+        assertThat(after.getPaymentStatus()).isEqualTo(PaymentStatus.PENDING);
+        assertThat(incomeRows(mapping)).isEmpty();
+        verify(financialTransactionService, never()).createTransaction(any(), any());
+    }
+
+    @Test
+    @DisplayName("원샷 결제 성공 — INCOME 정확히 1건, 생성 시도 1회")
+    void checkoutSameDay_success_writesIncomeOnce() throws Exception {
+        ConsultantClientMapping mapping = saveMapping(MappingStatus.PENDING_PAYMENT, PaymentStatus.PENDING, 0);
+        clearInvocations(financialTransactionService);
+
+        perform(post("/api/v1/admin/mappings/{id}/checkout-same-day", mapping.getId())
+                        .header("X-Request-Id", UUID.randomUUID().toString()),
+                checkoutBody())
+                .andExpect(status().isOk());
+
+        ConsultantClientMapping after = reload(mapping);
+        assertThat(after.getStatus()).isEqualTo(MappingStatus.ACTIVE);
+        assertThat(after.getPaymentStatus()).isEqualTo(PaymentStatus.APPROVED);
+        assertThat(incomeRows(mapping)).hasSize(1);
+        verify(financialTransactionService, times(1)).createTransaction(any(), any());
+    }
+
+    @Test
+    @DisplayName("단독 결제 확인 — 호출자 트랜잭션을 롤백해도 REQUIRES_NEW INCOME은 남는다")
+    void confirmPayment_standalone_commitsIncomeOutsideCallerRollback() {
+        ConsultantClientMapping mapping = saveMapping(MappingStatus.PENDING_PAYMENT, PaymentStatus.PENDING, 0);
+        TransactionTemplate caller = new TransactionTemplate(transactionManager);
+        caller.executeWithoutResult(status -> {
+            adminService.confirmPayment(mapping.getId(), "CARD", "standalone-pay", PACKAGE_PRICE);
+            status.setRollbackOnly();
+        });
+
+        ConsultantClientMapping after = reload(mapping);
+        assertThat(after.getStatus()).isEqualTo(MappingStatus.PENDING_PAYMENT);
+        assertThat(after.getPaymentStatus()).isEqualTo(PaymentStatus.PENDING);
+        assertThat(incomeRows(mapping)).hasSize(1);
     }
 
     @Test
@@ -362,6 +430,14 @@ class MappingErpSyncFailClosedIntegrationTest {
         assertThat(status).isBetween(400, 499);
         assertThat(reload(mapping).getPackagePrice()).isEqualTo(PACKAGE_PRICE);
         verify(storedProcedureService, never()).updateMappingInfo(any(), any(), anyDouble(), anyInt(), any());
+    }
+
+    private Map<String, Object> checkoutBody() {
+        Map<String, Object> body = new HashMap<>();
+        body.put("paymentMethod", "CARD");
+        body.put("paymentReference", "oneshot-it");
+        body.put("paymentAmount", PACKAGE_PRICE);
+        return body;
     }
 
     private Map<String, Object> priceChange(long price) {

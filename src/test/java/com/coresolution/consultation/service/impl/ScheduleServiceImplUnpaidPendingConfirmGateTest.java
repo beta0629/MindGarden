@@ -9,6 +9,9 @@ import com.coresolution.consultation.entity.Schedule;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.repository.ConsultantClientMappingRepository;
 import com.coresolution.consultation.repository.ScheduleRepository;
+import com.coresolution.consultation.repository.UserRepository;
+import com.coresolution.consultation.service.MobilePushDispatchService;
+import com.coresolution.consultation.service.NotificationService;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.security.TenantAccessControlService;
 import java.lang.reflect.Method;
@@ -60,6 +63,12 @@ class ScheduleServiceImplUnpaidPendingConfirmGateTest {
     private TenantAccessControlService accessControlService;
     @Mock
     private ConsultantClientMappingRepository mappingRepository;
+    @Mock
+    private UserRepository userRepository;
+    @Mock
+    private NotificationService notificationService;
+    @Mock
+    private MobilePushDispatchService mobilePushDispatchService;
 
     @InjectMocks
     private ScheduleServiceImpl scheduleService;

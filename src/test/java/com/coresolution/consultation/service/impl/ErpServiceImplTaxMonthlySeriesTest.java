@@ -97,6 +97,8 @@ class ErpServiceImplTaxMonthlySeriesTest {
         incomeMarch.setTaxAmount(new BigDecimal("100000"));
         incomeMarch.setWithholdingTaxAmount(new BigDecimal("33000"));
         incomeMarch.setTransactionDate(LocalDate.of(2026, 3, 10));
+        incomeMarch.setStatus(FinancialTransaction.TransactionStatus.COMPLETED);
+        incomeMarch.setIsDeleted(false);
 
         when(financialTransactionRepository
                 .findByTenantIdAndTransactionDateBetweenAndIsDeletedFalse(

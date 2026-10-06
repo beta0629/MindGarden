@@ -31,6 +31,7 @@ import com.coresolution.consultation.constant.ClientRegistrationConstants;
 import com.coresolution.consultation.constant.InstitutionLinkConstants;
 import com.coresolution.consultation.constant.MappingStatusConstants;
 import com.coresolution.consultation.constant.PaymentTimingConstants;
+import com.coresolution.consultation.constant.ScheduleServiceUserFacingMessages;
 import com.coresolution.consultation.constant.ScheduleStatus;
 import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.constant.admin.AdminServiceUserFacingMessages;
@@ -4844,8 +4845,9 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
     /**
      * 당일 결제 후 지정 일정에 대해 잔여 회기를 타겟 차감한다.
      * <p>
-     * {@code sameDaySessionScheduleId} 가 null 이면 no-op. 일정을 찾지 못하면 warn 로그만 남기고
-     * 라벨 배치 차감 결과에 의존한다. 이미 used &gt;= sessionSequence 이면
+     * {@code sameDaySessionScheduleId} 가 null 이면 no-op. 지정한 id가 같은 테넌트에 없으면
+     * {@link EntityNotFoundException}(404)으로 결제를 롤백한다. 없는 일정을 건너뛰면
+     * 결제만 성공하고 지정 회기 차감이 사라진다. 이미 used &gt;= sessionSequence 이면
      * {@link ScheduleService#useSessionForSpecificMapping} 내부에서 멱등 skip.
      *
      * @param tenantId 테넌트 ID
@@ -4871,9 +4873,9 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         Optional<Schedule> scheduleOpt =
                 scheduleRepository.findByTenantIdAndId(tenantId, sameDaySessionScheduleId);
         if (scheduleOpt.isEmpty()) {
-            log.warn("sameDaySessionScheduleId rem 차감 skip: 일정 없음. tenantId={}, scheduleId={}, mappingId={}",
+            log.warn("sameDaySessionScheduleId 일정 없음: tenantId={}, scheduleId={}, mappingId={}",
                     tenantId, sameDaySessionScheduleId, mappingId);
-            return;
+            throw new EntityNotFoundException(ScheduleServiceUserFacingMessages.MSG_SCHEDULE_NOT_FOUND);
         }
         Schedule schedule = scheduleOpt.get();
         log.info("sameDaySessionScheduleId rem 타겟 차감: mappingId={}, scheduleId={}, status={}, sessionSequence={}",
@@ -12565,6 +12567,9 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         log.info("✅ 추가 패키지 회기 합산: targetActiveId={}, +{}회, packageName 유지={}, total={}, remaining={}",
                 targetActive.getId(), sessionsToAdd, targetPackageNameBefore,
                 targetActive.getTotalSessions(), targetActive.getRemainingSessions());
+
+        scheduleService.reassignConsumingSchedulesOntoTargetAndDeduct(
+                tenantId, additionalMapping.getId(), targetActive);
 
         additionalMapping.setStatus(ConsultantClientMapping.MappingStatus.TERMINATED);
         additionalMapping.setTerminatedAt(LocalDateTime.now());

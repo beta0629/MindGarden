@@ -39,6 +39,9 @@ public final class ScheduleServiceUserFacingMessages {
     public static final String MSG_TENTATIVE_WITHOUT_MAPPING_CONFIRM_DENIED =
             "연결된 매칭을 찾을 수 없어 가예약 일정을 확정할 수 없습니다. 매칭을 확인한 뒤 다시 시도해 주세요.";
 
+    /** 같은 테넌트에 없는 일정 id로 확정·당일 결제 대상을 지정한 경우. */
+    public static final String MSG_SCHEDULE_NOT_FOUND = "일정을 찾을 수 없습니다.";
+
     private ScheduleServiceUserFacingMessages() {
     }
 }

@@ -449,6 +449,23 @@ public interface ScheduleService {
             Long clientUserId, Schedule schedule);
 
     /**
+     * 추가 패키지 병합: 소스 매핑에 라벨된 회기 소비 일정을 타깃 ACTIVE로 재귀속하고
+     * 일정마다 타깃 회기를 정확히 1회 차감한다.
+     *
+     * <p>가예약({@code TENTATIVE_PENDING_PAYMENT})은 {@code BOOKED}로 확정한 뒤
+     * {@link #useSessionForSpecificMapping} 으로 타깃 순번을 부여하며 차감한다.
+     * 소스 행에 차감 없이 붙은 회차는 비운다. 남겨 두면 {@code used &gt;= sessionSequence}
+     * 가드가 타깃 차감을 건너뛴다. 이미 타깃으로 옮겨진 일정은 소스 조회에 없으므로 재호출은 멱등이다.</p>
+     *
+     * @param tenantId 테넌트 ID
+     * @param sourceMappingId 추가 패키지 매핑 ID
+     * @param targetActive 회기가 이미 합산된 타깃 ACTIVE 매핑
+     * @return 차감한 상담 일정 수
+     */
+    int reassignConsumingSchedulesOntoTargetAndDeduct(
+            String tenantId, Long sourceMappingId, ConsultantClientMapping targetActive);
+
+    /**
      * 가예약 SAME_DAY_CARD 일정에 회기 차감 없이 {@code sessionSequence}를 부여한다.
      *
      * <p>PENDING_PAYMENT + SAME_DAY_CARD 매핑만 대상. remaining/used 는 유지한다.

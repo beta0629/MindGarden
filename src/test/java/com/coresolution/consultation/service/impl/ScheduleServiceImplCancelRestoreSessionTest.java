@@ -1,6 +1,8 @@
 package com.coresolution.consultation.service.impl;
 
+import com.coresolution.consultation.constant.ScheduleServiceUserFacingMessages;
 import com.coresolution.consultation.constant.ScheduleStatus;
+import com.coresolution.consultation.exception.EntityNotFoundException;
 import com.coresolution.consultation.entity.ConsultantClientMapping;
 import com.coresolution.consultation.entity.ConsultantClientMapping.MappingStatus;
 import com.coresolution.consultation.entity.Schedule;
@@ -28,6 +30,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
@@ -432,5 +435,122 @@ class ScheduleServiceImplCancelRestoreSessionTest {
         verify(scheduleRepository, never())
                 .findByTenantIdAndConsultantIdAndClientIdAndDateGreaterThanEqual(
                         any(), any(), any(), any(LocalDate.class));
+    }
+
+    @Test
+    @DisplayName("재귀속된 일정 취소는 타깃 ACTIVE에서 1회만 원복")
+    void cancelSchedule_reassignedToTarget_restoresTargetOnce() {
+        Long targetId = 3150L;
+        Schedule schedule = bookedOnMapping(targetId, 4);
+        ConsultantClientMapping target = activeMapping(targetId, 18, 4, 14);
+        ConsultantClientMapping other = activeMapping(999L, 10, 3, 7);
+
+        when(scheduleRepository.findByTenantIdAndId(eq(TENANT_ID), eq(SCHEDULE_ID)))
+                .thenReturn(Optional.of(schedule));
+        when(scheduleRepository.save(any(Schedule.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(mappingRepository.findByTenantIdAndId(eq(TENANT_ID), eq(targetId)))
+                .thenReturn(Optional.of(target));
+        when(mappingRepository.save(any(ConsultantClientMapping.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        scheduleService.cancelSchedule(SCHEDULE_ID, "재귀속 일정 취소");
+
+        assertThat(target.getUsedSessions()).isEqualTo(3);
+        assertThat(target.getRemainingSessions()).isEqualTo(15);
+        assertThat(other.getUsedSessions()).isEqualTo(3);
+        assertThat(schedule.getSessionSequence()).isNull();
+        assertThat(schedule.getMappingId()).isEqualTo(targetId);
+        verify(mappingRepository, never()).findActiveOrExhaustedListByTenantIdAndConsultantIdAndClientId(
+                any(), any(), any());
+    }
+
+    @Test
+    @DisplayName("차감된 적 없는 추가 패키지 일정 취소는 타깃 사용 회기를 원복하지 않음")
+    void cancelSchedule_neverDeductedAdditionalLabel_doesNotRestoreTarget() {
+        Long additionalId = 3200L;
+        Long targetId = 3150L;
+        Schedule schedule = bookedOnMapping(additionalId, 1);
+        ConsultantClientMapping additional = activeMapping(additionalId, 3, 3, 0);
+        additional.setStatus(MappingStatus.TERMINATED);
+        ConsultantClientMapping target = activeMapping(targetId, 15, 3, 12);
+
+        when(scheduleRepository.findByTenantIdAndId(eq(TENANT_ID), eq(SCHEDULE_ID)))
+                .thenReturn(Optional.of(schedule));
+        when(scheduleRepository.save(any(Schedule.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(mappingRepository.findByTenantIdAndId(eq(TENANT_ID), eq(additionalId)))
+                .thenReturn(Optional.of(additional));
+
+        scheduleService.cancelSchedule(SCHEDULE_ID, "미차감 일정 취소");
+
+        assertThat(target.getUsedSessions()).isEqualTo(3);
+        assertThat(target.getRemainingSessions()).isEqualTo(12);
+        assertThat(additional.getUsedSessions()).isEqualTo(3);
+        assertThat(additional.getRemainingSessions()).isZero();
+        assertThat(schedule.getSessionSequence()).isNull();
+        verify(mappingRepository, never()).save(any(ConsultantClientMapping.class));
+        verify(mappingRepository, never()).findActiveOrExhaustedListByTenantIdAndConsultantIdAndClientId(
+                any(), any(), any());
+    }
+
+    @Test
+    @DisplayName("같은 일정 이중 취소는 타깃 회기를 1회만 원복")
+    void cancelSchedule_twice_restoresOnlyOnce() {
+        Long targetId = 3150L;
+        Schedule schedule = bookedOnMapping(targetId, 4);
+        ConsultantClientMapping target = activeMapping(targetId, 18, 4, 14);
+
+        when(scheduleRepository.findByTenantIdAndId(eq(TENANT_ID), eq(SCHEDULE_ID)))
+                .thenReturn(Optional.of(schedule));
+        when(scheduleRepository.save(any(Schedule.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(mappingRepository.findByTenantIdAndId(eq(TENANT_ID), eq(targetId)))
+                .thenReturn(Optional.of(target));
+        when(mappingRepository.save(any(ConsultantClientMapping.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        scheduleService.cancelSchedule(SCHEDULE_ID, "첫 취소");
+        schedule.setStatus(ScheduleStatus.BOOKED);
+        scheduleService.cancelSchedule(SCHEDULE_ID, "재취소");
+
+        assertThat(target.getUsedSessions()).isEqualTo(3);
+        assertThat(target.getRemainingSessions()).isEqualTo(15);
+        assertThat(schedule.getSessionSequence()).isNull();
+    }
+
+    @Test
+    @DisplayName("없는 일정 id 확정은 EntityNotFoundException")
+    void confirmSchedule_missingId_throwsEntityNotFound() {
+        Long missingId = 9999L;
+        when(scheduleRepository.findByTenantIdAndId(eq(TENANT_ID), eq(missingId)))
+                .thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> scheduleService.confirmSchedule(missingId, "확정"))
+                .isInstanceOf(EntityNotFoundException.class)
+                .hasMessage(ScheduleServiceUserFacingMessages.MSG_SCHEDULE_NOT_FOUND);
+    }
+
+    private Schedule bookedOnMapping(Long mappingId, int sequence) {
+        Schedule schedule = new Schedule();
+        schedule.setId(SCHEDULE_ID);
+        schedule.setStatus(ScheduleStatus.BOOKED);
+        schedule.setConsultantId(CONSULTANT_ID);
+        schedule.setClientId(CLIENT_ID);
+        schedule.setSessionSequence(sequence);
+        schedule.setMappingId(mappingId);
+        schedule.setDate(LocalDate.now().plusDays(1));
+        return schedule;
+    }
+
+    private ConsultantClientMapping activeMapping(Long id, int total, int used, int remaining) {
+        ConsultantClientMapping mapping = new ConsultantClientMapping();
+        mapping.setId(id);
+        mapping.setTotalSessions(total);
+        mapping.setUsedSessions(used);
+        mapping.setRemainingSessions(remaining);
+        mapping.setStatus(MappingStatus.ACTIVE);
+        User consultant = new User();
+        consultant.setId(CONSULTANT_ID);
+        User client = new User();
+        client.setId(CLIENT_ID);
+        mapping.setConsultant(consultant);
+        mapping.setClient(client);
+        return mapping;
     }
 }

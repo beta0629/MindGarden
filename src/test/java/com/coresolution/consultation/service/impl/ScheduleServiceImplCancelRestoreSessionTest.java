@@ -451,9 +451,6 @@ class ScheduleServiceImplCancelRestoreSessionTest {
         when(mappingRepository.findByTenantIdAndId(eq(TENANT_ID), eq(targetId)))
                 .thenReturn(Optional.of(target));
         when(mappingRepository.save(any(ConsultantClientMapping.class))).thenAnswer(inv -> inv.getArgument(0));
-        when(mappingRepository.findActiveOrExhaustedListByTenantIdAndConsultantIdAndClientId(
-                eq(TENANT_ID), eq(CONSULTANT_ID), eq(CLIENT_ID)))
-                .thenReturn(List.of(other));
 
         scheduleService.cancelSchedule(SCHEDULE_ID, "재귀속 일정 취소");
 
@@ -462,6 +459,8 @@ class ScheduleServiceImplCancelRestoreSessionTest {
         assertThat(other.getUsedSessions()).isEqualTo(3);
         assertThat(schedule.getSessionSequence()).isNull();
         assertThat(schedule.getMappingId()).isEqualTo(targetId);
+        verify(mappingRepository, never()).findActiveOrExhaustedListByTenantIdAndConsultantIdAndClientId(
+                any(), any(), any());
     }
 
     @Test
@@ -479,9 +478,6 @@ class ScheduleServiceImplCancelRestoreSessionTest {
         when(scheduleRepository.save(any(Schedule.class))).thenAnswer(inv -> inv.getArgument(0));
         when(mappingRepository.findByTenantIdAndId(eq(TENANT_ID), eq(additionalId)))
                 .thenReturn(Optional.of(additional));
-        when(mappingRepository.findActiveOrExhaustedListByTenantIdAndConsultantIdAndClientId(
-                eq(TENANT_ID), eq(CONSULTANT_ID), eq(CLIENT_ID)))
-                .thenReturn(List.of(target));
 
         scheduleService.cancelSchedule(SCHEDULE_ID, "미차감 일정 취소");
 
@@ -491,6 +487,8 @@ class ScheduleServiceImplCancelRestoreSessionTest {
         assertThat(additional.getRemainingSessions()).isZero();
         assertThat(schedule.getSessionSequence()).isNull();
         verify(mappingRepository, never()).save(any(ConsultantClientMapping.class));
+        verify(mappingRepository, never()).findActiveOrExhaustedListByTenantIdAndConsultantIdAndClientId(
+                any(), any(), any());
     }
 
     @Test

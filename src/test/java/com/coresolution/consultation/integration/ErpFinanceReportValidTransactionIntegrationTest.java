@@ -27,9 +27,9 @@ import org.springframework.transaction.annotation.Transactional;
 /**
  * 재무 리포트·대시보드·결산 합계의 유효 거래 조건 일치 — H2 실제 리포지토리·서비스.
  *
- * <p>같은 날짜에 완료·대기 수입, 취소·거부 수입, soft delete 수입, 완료·취소 지출을 두고
- * 일·월·연 리포트, 운영자 재무 대시보드, 재무 대시보드 합계, 결산 합계가 모두 같은 수입·지출·순익을 내는지 본다.
- * 다른 테넌트 거래는 어느 합계에도 섞이지 않는다.</p>
+ * <p>같은 날짜에 완료·대기 수입, 취소·거부 수입, soft delete 수입, 완료·취소 지출을 둔다.
+ * 일·월·연 리포트, 운영자 기간 대시보드, 결산 합계는 유효 거래(취소·거부·삭제 제외)로 같고,
+ * COMPLETED 전용 재무 대시보드 SUM({@code getFinancialDashboard}) 은 PENDING 을 넣지 않는다.</p>
  *
  * @author CoreSolution
  * @since 2026-10-06

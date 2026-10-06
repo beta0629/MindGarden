@@ -589,6 +589,23 @@ public class GlobalExceptionHandler {
     }
 
     /**
+     * 지난 일정 이동·과거로 이동·과거 시작 생성 요청 — HTTP 400 (일정 변경 없음).
+     */
+    @ExceptionHandler(SchedulePastTimeException.class)
+    public ResponseEntity<ErrorResponse> handleSchedulePastTime(
+            SchedulePastTimeException e, HttpServletRequest request) {
+        log.info("[{}] scheduleId={} path={}", e.getErrorCode(), e.getScheduleId(), request.getRequestURI());
+        ErrorResponse error = ErrorResponse.of(
+            e.getMessage(),
+            e.getErrorCode(),
+            HttpStatus.BAD_REQUEST.value(),
+            request.getRequestURI(),
+            request.getMethod()
+        );
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+    }
+
+    /**
      * 일정 시작 전 완료 요청 — HTTP 400 (상태·회기·급여 변경 없음).
      */
     @ExceptionHandler(ScheduleSessionNotStartedException.class)

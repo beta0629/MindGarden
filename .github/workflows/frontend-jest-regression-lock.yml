@@ -1,6 +1,6 @@
 name: 🧪 FE jest regression lock (PR)
 
-# PR 마다 이미 PASS 된 프론트 동작(로그인 처리중 · 통합스케줄 배지 한 줄 · soft refresh · 내담자 몰)을
+# PR 마다 이미 PASS 된 프론트 동작(로그인 처리중 · 통합스케줄 배지 한 줄 · soft refresh · 내담자 몰 · 일정 과거 이동·생성 잠금)을
 # jest 로 잠근다. 하나라도 FAIL → job fail (머지 차단은 branch protection required check 로 지정).
 # 전체 스위트는 기존 무관 실패가 있어 여기서 돌리지 않는다. 잠금 대상은 아래 목록만.
 # 규칙: .cursor/rules/frontend-no-overwrite.mdc
@@ -47,6 +47,11 @@ jobs:
         src/pages/client/shop/__tests__/ClientMallBuyNowNoCartPut.test.js
         src/utils/__tests__/clientMallBuyNow.test.js
         src/utils/__tests__/clientMall.test.js
+        src/utils/__tests__/scheduleMoveGuard.test.js
+        src/utils/__tests__/scheduleExternalDropGuards.test.js
+        src/components/ui/Schedule/__tests__/ScheduleCalendarView.moveTargetPast.test.js
+        src/components/ui/Schedule/__tests__/ScheduleCalendarView.dayZoom.test.js
+        src/components/schedule/__tests__/UnifiedScheduleComponent.moveTargetPast.test.js
     steps:
       - name: Checkout
         uses: actions/checkout@v4

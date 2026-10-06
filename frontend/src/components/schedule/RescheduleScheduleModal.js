@@ -9,9 +9,15 @@ import notificationManager from '../../utils/notification';
 import {
   buildScheduleDatetimeUpdateBody,
   combineDateAndTimeHm,
-  hasConsultantScheduleTimeOverlap,
-  isPastDateOnly
+  hasConsultantScheduleTimeOverlap
 } from '../../utils/scheduleRescheduleUtils';
+import {
+  getScheduleMoveSourceLockedMessage,
+  getScheduleMoveToPastMessage,
+  isScheduleMoveSourceLocked,
+  isScheduleMoveTargetInPast,
+  resolveScheduleMoveFailureMessage
+} from '../../utils/scheduleMoveGuard';
 import ScheduleTimeSelectionPanel from './ScheduleTimeSelectionPanel';
 import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import './ScheduleB0KlA.css';
@@ -23,7 +29,6 @@ const BTN_SAVE = '저장';
 const BTN_CANCEL = '취소';
 const SUCCESS_MSG = '예약 시간이 변경되었습니다.';
 const ERR_END_BEFORE_START = '종료 시간은 시작 시간보다 이후여야 합니다.';
-const ERR_PAST_DATE = '과거 날짜로는 예약을 변경할 수 없습니다.';
 const ERR_CONFLICT = '해당 시간대에 이미 예약 또는 휴가가 있어 변경할 수 없습니다.';
 const ERR_INCOMPLETE = '일정 정보가 불완전합니다. 캘린더에서 다시 열어주세요.';
 const ERR_SLOT_REQUIRED = '시간대를 선택해주세요.';
@@ -159,14 +164,26 @@ const RescheduleScheduleModal = ({
       next.push(ERR_SLOT_REQUIRED);
       return next;
     }
+    const originDate = schedulePayload.apiDate || schedulePayload.date || dateStr;
+    const originStart = combineDateAndTimeHm(
+      originDate,
+      toHm(schedulePayload.apiStartTime ?? schedulePayload.startTime)
+    );
+    if (isScheduleMoveSourceLocked({ status: schedulePayload.status, start: originStart })) {
+      next.push(getScheduleMoveSourceLockedMessage({
+        status: schedulePayload.status,
+        start: originStart
+      }));
+      return next;
+    }
     const startD = combineDateAndTimeHm(dateStr, selectedTimeSlot.time);
     const endD = combineDateAndTimeHm(dateStr, selectedTimeSlot.endTime);
     if (Number.isNaN(startD.getTime()) || Number.isNaN(endD.getTime())) {
       next.push(ERR_INCOMPLETE);
       return next;
     }
-    if (isPastDateOnly(startD)) {
-      next.push(ERR_PAST_DATE);
+    if (isScheduleMoveTargetInPast(startD)) {
+      next.push(getScheduleMoveToPastMessage());
     }
     if (endD.getTime() <= startD.getTime()) {
       next.push(ERR_END_BEFORE_START);
@@ -202,7 +219,9 @@ const RescheduleScheduleModal = ({
       onClose?.();
     } catch (e) {
       console.error('예약 변경 실패:', e);
-      notificationManager.error(e?.message || t('schedule:RescheduleScheduleModal.t_a1423935'));
+      notificationManager.error(
+        resolveScheduleMoveFailureMessage(e, e?.message || t('schedule:RescheduleScheduleModal.t_a1423935'))
+      );
     } finally {
       setSaving(false);
     }

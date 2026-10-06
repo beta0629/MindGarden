@@ -21,7 +21,6 @@ import {
   parseClientScheduleNotesClientWideUnresolvedCount,
   parseClientScheduleNotesUnresolvedCount
 } from '../../../constants/schedule';
-import { isScheduleCalendarDragLocked } from '../../../utils/scheduleRescheduleUtils';
 import { CLIENT_REMINDER_SMS_FIELD } from '../../../constants/scheduleClientReminderSms';
 import {
   MAPPING_ENGAGEMENT_TYPE,
@@ -46,6 +45,16 @@ import {
   getKrSubstituteHolidayEveHintForLocalDate
 } from '../../../utils/krPublicHolidays';
 import { USER_ROLES, mapLegacyRole } from '../../../constants/roles';
+import {
+  appendScheduleMoveLockTooltip,
+  getScheduleCreateInPastMessage,
+  getScheduleMoveSourceLockedMessage,
+  getScheduleMoveToPastMessage,
+  isScheduleMoveSourceLocked,
+  isScheduleMoveTargetInPast,
+  resolveCalendarDropTargetStart,
+  resolveScheduleMoveTarget
+} from '../../../utils/scheduleMoveGuard';
 import './ScheduleCalendarView.css';
 
 const KR_PUBLIC_HOLIDAY_DAY_BADGE_CLASS = 'mg-v2-ad-calendar-day-holiday-badge';
@@ -98,6 +107,8 @@ const ScheduleCalendarView = ({
     onEventClick,
     onEventDrop,
     onEventResize,
+    /** 드래그가 과거 시각 칸에서 끝나 이동이 거부됐을 때 (message: string) => void */
+    onEventMoveRejected,
     onExternalEventReceive,
     integratedMonthEventLayout = false,
     calendarSkin,
@@ -250,8 +261,16 @@ const ScheduleCalendarView = ({
             zoomToDayView(info.date, viewType);
             return;
         }
+        if (isScheduleMoveTargetInPast(info?.date)) {
+            onEventMoveRejected?.(getScheduleCreateInPastMessage());
+            return;
+        }
         onDateClick?.(info);
-    }, [onDateClick, zoomToDayView]);
+    }, [onDateClick, onEventMoveRejected, zoomToDayView]);
+
+    const handleSelectAllow = useCallback((selectInfo) => {
+        return !isScheduleMoveTargetInPast(selectInfo?.start);
+    }, []);
 
     const handleDatesSet = useCallback((arg) => {
         const viewType = arg.view?.type;
@@ -393,26 +412,25 @@ const ScheduleCalendarView = ({
             }
             return [];
         }
-        const eventDate = new Date(arg.event.start);
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        eventDate.setHours(0, 0, 0, 0);
-        
-        return eventDate < today ? ['fc-event-past'] : [];
+        return isScheduleMoveSourceLocked({
+            status: arg.event.extendedProps?.status,
+            start: arg.event.start
+        }) ? ['fc-event-past'] : [];
     };
 
-    // 과거 또는 완료·취소 예약 여부 (디저블 스타일 적용 대상)
-    const isEventPastOrCompleted = (ev) => {
-        return isScheduleCalendarDragLocked({
-            status: ev.extendedProps?.status,
-            start: ev.start,
-            end: ev.end
-        });
-    };
+    // 완료·취소 또는 시작이 지난 일정 — 드래그 핸들 비활성·흐림 스타일
+    const isEventPastOrCompleted = (ev) => isScheduleMoveSourceLocked({
+        status: ev.extendedProps?.status,
+        start: ev.start
+    });
+
+    /** 마지막 eventAllow 가 «과거 시각 칸» 때문에 거부했는지 — eventDragStop 에서 사유 안내용 */
+    const moveRejectedToPastRef = useRef(false);
 
     /**
-     * 완료·취소·과거 스케줄의 드래그·리사이즈 사전 차단 (FullCalendar eventAllow).
-     * 원본 잠금은 extendedProps.slotDragLocked(매핑 시점 SSOT)로 판정한다.
+     * 드래그·리사이즈 사전 차단 (FullCalendar eventAllow).
+     * 원본 잠금은 완료·취소 또는 시작이 지난 일정(scheduleMoveGuard).
+     * 놓을 칸이 현재 시각 이전이면 놓을 수 없음으로 표시한다.
      *
      * 외부 사이드바 매핑 드롭은 holiday/vacation/slotDragLocked 보다 **최우선** 허용.
      * eventAllow=false 이면 eventReceive 미발화 → 부모 토스트 SSOT silent FAIL.
@@ -439,11 +457,28 @@ const ScheduleCalendarView = ({
         if (props.slotDragLocked === true) {
             return false;
         }
-        return !isScheduleCalendarDragLocked({
-            status: props.status,
-            start: draggedEvent?.start,
-            end: draggedEvent?.end
-        });
+        if (isScheduleMoveSourceLocked({ status: props.status, start: draggedEvent?.start })) {
+            return false;
+        }
+        const targetInPast = isScheduleMoveTargetInPast(resolveScheduleMoveTarget(
+            draggedEvent?.start,
+            resolveCalendarDropTargetStart(dropInfo, draggedEvent),
+            dropInfo?.end
+        ));
+        moveRejectedToPastRef.current = targetInPast;
+        return !targetInPast;
+    };
+
+    const handleEventDragStart = () => {
+        moveRejectedToPastRef.current = false;
+    };
+
+    const handleEventDragStop = () => {
+        if (!moveRejectedToPastRef.current) {
+            return;
+        }
+        moveRejectedToPastRef.current = false;
+        onEventMoveRejected?.(getScheduleMoveToPastMessage());
     };
 
     /**
@@ -495,6 +530,10 @@ const ScheduleCalendarView = ({
             return null;
         }
         const { extendedProps } = event;
+        const sourceLockReason = getScheduleMoveSourceLockedMessage({
+            status: extendedProps?.status,
+            start: event.start
+        });
         const isMonthView = eventInfo.view?.type === CALENDAR_VIEW_MONTH;
         const isPastOrCompleted = isEventPastOrCompleted(event);
         const pastClass = isPastOrCompleted ? ' mg-v2-ad-calendar-event--past' : '';
@@ -602,8 +641,9 @@ const ScheduleCalendarView = ({
             return (
                 <div
                     className={`mg-v2-ad-calendar-event mg-v2-ad-calendar-event--compact${integratedMod}${statusModClass}${unresolvedMod}${pastClass}${cancelledClass}`.trim()}
-                    title={monthLabel}
+                    title={appendScheduleMoveLockTooltip(monthLabel, sourceLockReason)}
                     aria-label={monthLabel}
+                    aria-disabled={sourceLockReason ? 'true' : undefined}
                 >
                     {sameDayPrefix}
                     {integratedMonthEventLayout && (
@@ -681,7 +721,8 @@ const ScheduleCalendarView = ({
         return (
             <div
                 className={`mg-v2-ad-calendar-event${pastClass}${cancelledClass}`.trim()}
-                title={`${clientName} - ${statusLabel}`}
+                title={appendScheduleMoveLockTooltip(`${clientName} - ${statusLabel}`, sourceLockReason)}
+                aria-disabled={sourceLockReason ? 'true' : undefined}
             >
                 <div className="mg-v2-ad-calendar-event__time">{eventInfo.timeText}</div>
                 <div className="mg-v2-ad-calendar-event__title">
@@ -728,10 +769,13 @@ const ScheduleCalendarView = ({
                 eventClassNames={eventClassNames}
                 eventContent={renderEventContent}
                 dateClick={handleDateClick}
+                selectAllow={handleSelectAllow}
                 eventClick={onEventClick}
                 eventDrop={onEventDrop}
                 eventResize={onEventResize || onEventDrop}
                 eventAllow={handleEventAllow}
+                eventDragStart={handleEventDragStart}
+                eventDragStop={handleEventDragStop}
                 eventReceive={acceptExternalCalendarDrops ? handleEventReceive : undefined}
                 editable={!disableCalendarEventDrag && isScheduleCalendarEditableRole(userRole)}
                 droppable={acceptExternalCalendarDrops && isScheduleDropAdminRole(userRole)}

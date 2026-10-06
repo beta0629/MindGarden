@@ -1,0 +1,144 @@
+# 운영 보정 실행 전용. 이 파일만 바꾸는 release/prod pull_request 에서만 돈다.
+# 추가 285, 일정 478, 대상 36 한 건. 전값이 기대와 다르면 갱신 전에 실패하고 롤백한다.
+# 백업 덤프를 artifact 로 올린 뒤에만 apply 가 실행된다. 업로드 실패 시 apply 는 실행되지 않는다.
+# apply 가 COMMIT 한 뒤 새 세션에서 후값을 읽는다. 기대와 다르면 실패로 보고하고 되돌리지 않는다.
+# 2026-10-06 20:00 KST 이전과 KST 11–19 에는 DB 에 접속하지 않는다.
+# 우회 입력은 없다. 머지하지 않는다. 이 파일을 푸시해도 PR 을 열기 전에는 실행되지 않는다.
+
+name: 운영 회기 보정 285→36 (1건)
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches: [release/prod]
+    paths:
+      - '.github/workflows/prod-session-repair-285-478-pr-run.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: prod-session-repair-285-478-pr-run-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+
+jobs:
+  prod-repair-one:
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    environment: production
+    timeout-minutes: 30
+    steps:
+      - name: KST gate before any database connection
+        id: kst_guard
+        run: |
+          set -euo pipefail
+          NOW="$(TZ=Asia/Seoul date +%Y%m%d%H%M)"
+          HOUR="$(TZ=Asia/Seoul date +%H)"
+          HOUR=$((10#$HOUR))
+          echo "Asia/Seoul now=${NOW} hour=${HOUR}"
+          if [ "$NOW" -lt 202610062000 ]; then
+            echo "::notice::Before 2026-10-06 20:00 KST. Skipping without a database connection."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if [ "$HOUR" -ge 11 ] && [ "$HOUR" -le 19 ]; then
+            echo "::notice::KST ${HOUR}:00 is in 11–19. Skipping without a database connection."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "skip=false" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout
+        if: success() && steps.kst_guard.outputs.skip != 'true'
+        uses: actions/checkout@v4
+
+      - name: Setup MySQL client
+        if: success() && steps.kst_guard.outputs.skip != 'true'
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq mysql-client
+
+      - name: Backup rows before any write
+        if: success() && steps.kst_guard.outputs.skip != 'true'
+        env:
+          DB_HOST: ${{ secrets.PRODUCTION_DB_HOST }}
+          DB_HOST_FALLBACK: ${{ secrets.PRODUCTION_HOST }}
+          DB_USER: ${{ secrets.PRODUCTION_DB_USER }}
+          DB_NAME: ${{ secrets.PRODUCTION_DB_NAME }}
+          DB_PASSWORD: ${{ secrets.PRODUCTION_DB_PASSWORD }}
+        run: |
+          set -euo pipefail
+          if [ -z "${DB_HOST:-}" ]; then DB_HOST="${DB_HOST_FALLBACK:-}"; fi
+          for name in DB_HOST DB_USER DB_NAME DB_PASSWORD; do
+            if [ -z "${!name:-}" ]; then
+              echo "::error::Required production DB secret is empty (${name})"
+              exit 1
+            fi
+            echo "::add-mask::${!name}"
+          done
+          export DB_HOST DB_USER DB_NAME DB_PASSWORD
+          unset REPAIR_CONFIRM || true
+          chmod +x scripts/ops/additional_package_merged_session_runner.sh
+          scripts/ops/additional_package_merged_session_runner.sh repair \
+            --allowlist scripts/ops/additional-package-merged-session-repair-allowlist-prod.txt \
+            --mode backup \
+            --backup-dir repair-backup-285-478
+
+      - name: Upload row backup
+        if: success() && steps.kst_guard.outputs.skip != 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: prod-repair-backup-285-478
+          path: repair-backup-285-478
+          if-no-files-found: error
+
+      - name: Apply one repair when the before image matches
+        if: success() && steps.kst_guard.outputs.skip != 'true'
+        env:
+          DB_HOST: ${{ secrets.PRODUCTION_DB_HOST }}
+          DB_HOST_FALLBACK: ${{ secrets.PRODUCTION_HOST }}
+          DB_USER: ${{ secrets.PRODUCTION_DB_USER }}
+          DB_NAME: ${{ secrets.PRODUCTION_DB_NAME }}
+          DB_PASSWORD: ${{ secrets.PRODUCTION_DB_PASSWORD }}
+          REPAIR_CONFIRM: CONFIRM
+        run: |
+          set -euo pipefail
+          if [ -z "${DB_HOST:-}" ]; then DB_HOST="${DB_HOST_FALLBACK:-}"; fi
+          for name in DB_HOST DB_USER DB_NAME DB_PASSWORD; do
+            if [ -z "${!name:-}" ]; then
+              echo "::error::Required production DB secret is empty (${name})"
+              exit 1
+            fi
+            echo "::add-mask::${!name}"
+          done
+          export DB_HOST DB_USER DB_NAME DB_PASSWORD REPAIR_CONFIRM
+          chmod +x scripts/ops/additional_package_merged_session_runner.sh
+          scripts/ops/additional_package_merged_session_runner.sh repair \
+            --allowlist scripts/ops/additional-package-merged-session-repair-allowlist-prod.txt \
+            --expect-before scripts/ops/additional-package-merged-session-repair-expect-285-478.txt \
+            --mode apply \
+            --skip-backup
+
+      - name: Re-read committed rows in a new session
+        if: success() && steps.kst_guard.outputs.skip != 'true'
+        env:
+          DB_HOST: ${{ secrets.PRODUCTION_DB_HOST }}
+          DB_HOST_FALLBACK: ${{ secrets.PRODUCTION_HOST }}
+          DB_USER: ${{ secrets.PRODUCTION_DB_USER }}
+          DB_NAME: ${{ secrets.PRODUCTION_DB_NAME }}
+          DB_PASSWORD: ${{ secrets.PRODUCTION_DB_PASSWORD }}
+        run: |
+          set -euo pipefail
+          if [ -z "${DB_HOST:-}" ]; then DB_HOST="${DB_HOST_FALLBACK:-}"; fi
+          for name in DB_HOST DB_USER DB_NAME DB_PASSWORD; do
+            if [ -z "${!name:-}" ]; then
+              echo "::error::Required production DB secret is empty (${name})"
+              exit 1
+            fi
+            echo "::add-mask::${!name}"
+          done
+          export DB_HOST DB_USER DB_NAME DB_PASSWORD
+          unset REPAIR_CONFIRM || true
+          chmod +x scripts/ops/additional_package_merged_session_runner.sh
+          scripts/ops/additional_package_merged_session_runner.sh verify \
+            --expect-before scripts/ops/additional-package-merged-session-repair-expect-285-478.txt

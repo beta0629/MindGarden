@@ -2910,22 +2910,47 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             return Collections.emptySet();
         }
         try {
-            List<ScheduleStatus> occupying = ScheduleStatus.occupyingStatusesForProvisionalMapping();
-            List<Long> ids = scheduleRepository.findDistinctMappingIdsWithOccupyingSchedules(
-                    tenantId, occupying);
-            Set<Long> result = new HashSet<>();
-            if (ids != null) {
-                for (Long id : ids) {
-                    if (id != null) {
-                        result.add(id);
-                    }
-                }
-            }
-            return result;
+            return collectMappingIdsWithStatuses(
+                    tenantId, ScheduleStatus.occupyingStatusesForConsultationScheduleHistory());
         } catch (Exception e) {
             log.warn("getMappingIdsWithOccupyingConsultationSchedules 실패: {}", e.getMessage());
             return Collections.emptySet();
         }
+    }
+
+    @Override
+    public Set<Long> getMappingIdsWithOpenOccupyingConsultationSchedules(String tenantId) {
+        if (tenantId == null || tenantId.isEmpty()) {
+            return Collections.emptySet();
+        }
+        try {
+            return collectMappingIdsWithStatuses(
+                    tenantId, ScheduleStatus.occupyingStatusesForProvisionalMapping());
+        } catch (Exception e) {
+            log.warn("getMappingIdsWithOpenOccupyingConsultationSchedules 실패: {}", e.getMessage());
+            return Collections.emptySet();
+        }
+    }
+
+    /**
+     * mappingId 점유 배치 조회 공통.
+     *
+     * @param tenantId 테넌트 ID
+     * @param occupying 상태 목록
+     * @return mappingId 집합
+     */
+    private Set<Long> collectMappingIdsWithStatuses(String tenantId, List<ScheduleStatus> occupying) {
+        List<Long> ids = scheduleRepository.findDistinctMappingIdsWithOccupyingSchedules(
+                tenantId, occupying);
+        Set<Long> result = new HashSet<>();
+        if (ids != null) {
+            for (Long id : ids) {
+                if (id != null) {
+                    result.add(id);
+                }
+            }
+        }
+        return result;
     }
 
     @Override
@@ -2934,7 +2959,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             return Collections.emptySet();
         }
         try {
-            List<ScheduleStatus> occupying = ScheduleStatus.occupyingStatusesForProvisionalMapping();
+            List<ScheduleStatus> occupying = ScheduleStatus.occupyingStatusesForConsultationScheduleHistory();
             List<Object[]> rows = scheduleRepository.findConsultantClientPairsOccupyingSchedules(
                     tenantId, occupying);
             Set<String> keys = new HashSet<>();

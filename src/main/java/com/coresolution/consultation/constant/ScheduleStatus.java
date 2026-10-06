@@ -81,27 +81,51 @@ public enum ScheduleStatus {
     }
 
     /**
-     * 가예약 단일 일정 규칙(provisional mapping guard) 및 카드 {@code hasConsultationSchedule} enrich 점유 여부.
-     * BOOKED / TENTATIVE_PENDING_PAYMENT / CONFIRMED / COMPLETED / IN_PROGRESS 포함 (fail-closed).
+     * 가예약 rem=0 일정등록 차단용 OPEN 점유.
+     * BOOKED / TENTATIVE_PENDING_PAYMENT / CONFIRMED / IN_PROGRESS.
+     * COMPLETED는 이력이므로 차단하지 않는다({@link #occupiesForConsultationScheduleHistory()}).
      * CANCELLED·AVAILABLE·VACATION 제외. 시간 슬롯 충돌({@link #occupiesTimeForConflictCheck()})과는 별도 SSOT.
      *
-     * @return 매핑에 상담 일정이 이미 있는 것으로 간주하면 true
+     * @return 현재 매핑에 미완료 상담 일정이 있어 가예약을 막으면 true
      */
     public boolean occupiesForProvisionalMappingGuard() {
         return this == BOOKED
                 || this == TENTATIVE_PENDING_PAYMENT
                 || this == CONFIRMED
-                || this == COMPLETED
                 || this == IN_PROGRESS;
     }
 
     /**
-     * {@link #occupiesForProvisionalMappingGuard()} 가 true 인 상태 목록.
-     * {@code findDistinctMappingIdsWithOccupyingSchedules} 등 쿼리 status 인자에 사용.
+     * 카드 {@code hasConsultationSchedule}(일정 이력 있음) 표시용.
+     * OPEN 점유 + COMPLETED. 일정등록 가드와는 별도.
      *
-     * @return 불변 점유 상태 목록
+     * @return 상담 일정 이력이 있으면 true
+     */
+    public boolean occupiesForConsultationScheduleHistory() {
+        return occupiesForProvisionalMappingGuard() || this == COMPLETED;
+    }
+
+    /**
+     * {@link #occupiesForProvisionalMappingGuard()} 가 true 인 OPEN 상태 목록.
+     * 가예약 rem=0 차단·{@code hasOpenOccupyingConsultationSchedule} enrich 쿼리 status 인자.
+     *
+     * @return 불변 OPEN 점유 상태 목록
      */
     public static List<ScheduleStatus> occupyingStatusesForProvisionalMapping() {
+        return List.of(
+                BOOKED,
+                TENTATIVE_PENDING_PAYMENT,
+                CONFIRMED,
+                IN_PROGRESS);
+    }
+
+    /**
+     * {@link #occupiesForConsultationScheduleHistory()} 가 true 인 상태 목록.
+     * 카드 {@code hasConsultationSchedule} enrich 쿼리 status 인자.
+     *
+     * @return 불변 이력 상태 목록 (OPEN + COMPLETED)
+     */
+    public static List<ScheduleStatus> occupyingStatusesForConsultationScheduleHistory() {
         return List.of(
                 BOOKED,
                 TENTATIVE_PENDING_PAYMENT,

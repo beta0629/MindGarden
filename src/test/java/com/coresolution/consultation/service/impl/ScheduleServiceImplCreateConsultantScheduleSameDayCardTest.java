@@ -453,11 +453,37 @@ class ScheduleServiceImplCreateConsultantScheduleSameDayCardTest {
         assertThat(captor.getValue().getMappingId()).isEqualTo(mappingId);
     }
 
-    // ===== 15. COMPLETED 점유 → 가예약 재등록 차단 + status 목록에 COMPLETED 전달 =====
+    // ===== 15. COMPLETED 이력만 → 신규 가예약 허용. OPEN TENTATIVE 현재 매핑만 차단 =====
     @Test
-    @DisplayName("[15] SAME_DAY_CARD pending + rem=0 + occupying COMPLETED → MSG_PROVISIONAL_ALREADY_HAS_SCHEDULE")
-    void provisional_existingOccupyingCompleted_throws() {
+    @DisplayName("[15] SAME_DAY_CARD pending + rem=0 + 과거 COMPLETED만(OPEN 없음) → create 허용")
+    void provisional_completedHistoryOnly_allowsCreate() {
         Long mappingId = 8805L;
+        ConsultantClientMapping mapping = buildMapping(
+                mappingId, MappingStatus.PENDING_PAYMENT, PAYMENT_TIMING_SAME_DAY_CARD, 0);
+        stubMappingsByStatus(Collections.emptyList(), List.of(mapping));
+        when(scheduleRepository.countOccupyingConsultationSchedulesForMapping(
+                eq(TENANT_ID), eq(mappingId), eq(CONSULTANT_ID), eq(CLIENT_ID), any()))
+                .thenReturn(0L);
+        stubScheduleSave();
+
+        Schedule saved = callCreate(true);
+
+        assertThat(saved.getId()).isEqualTo(999L);
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<List<ScheduleStatus>> statusesCaptor = ArgumentCaptor.forClass(List.class);
+        verify(scheduleRepository).countOccupyingConsultationSchedulesForMapping(
+                eq(TENANT_ID), eq(mappingId), eq(CONSULTANT_ID), eq(CLIENT_ID), statusesCaptor.capture());
+        assertThat(statusesCaptor.getValue())
+                .doesNotContain(ScheduleStatus.COMPLETED)
+                .containsExactlyInAnyOrderElementsOf(ScheduleStatus.occupyingStatusesForProvisionalMapping());
+        verify(scheduleRepository, never()).countOccupyingConsultationSchedulesForConsultantClient(
+                anyString(), anyLong(), anyLong(), any());
+    }
+
+    @Test
+    @DisplayName("[15b] SAME_DAY_CARD pending + rem=0 + 현재 매핑 TENTATIVE OPEN → 차단")
+    void provisional_sameMappingTentativeOpen_throws() {
+        Long mappingId = 8807L;
         ConsultantClientMapping mapping = buildMapping(
                 mappingId, MappingStatus.PENDING_PAYMENT, PAYMENT_TIMING_SAME_DAY_CARD, 0);
         stubMappingsByStatus(Collections.emptyList(), List.of(mapping));
@@ -468,19 +494,11 @@ class ScheduleServiceImplCreateConsultantScheduleSameDayCardTest {
                 .hasMessage(ScheduleServiceUserFacingMessages.MSG_PROVISIONAL_ALREADY_HAS_SCHEDULE);
 
         verify(scheduleRepository, never()).save(any(Schedule.class));
-
-        @SuppressWarnings("unchecked")
-        ArgumentCaptor<List<ScheduleStatus>> statusesCaptor = ArgumentCaptor.forClass(List.class);
-        verify(scheduleRepository).countOccupyingConsultationSchedulesForMapping(
-                eq(TENANT_ID), eq(mappingId), eq(CONSULTANT_ID), eq(CLIENT_ID), statusesCaptor.capture());
-        assertThat(statusesCaptor.getValue())
-                .contains(ScheduleStatus.COMPLETED, ScheduleStatus.IN_PROGRESS)
-                .containsExactlyInAnyOrderElementsOf(ScheduleStatus.occupyingStatusesForProvisionalMapping());
     }
 
     @Test
-    @DisplayName("[16] rem=0 + mapping_id 미연결(countForMapping=0)이나 동일 쌍 점유 → fail-closed")
-    void provisional_pairOccupancyDifferentOrNullMappingId_throws() {
+    @DisplayName("[16] rem=0 + 다른 mapping 쌍 COMPLETED(countForMapping=0) → 신규 가예약 허용")
+    void provisional_pairCompletedHistory_allowsCreate() {
         Long mappingId = 8806L;
         ConsultantClientMapping mapping = buildMapping(
                 mappingId, MappingStatus.PENDING_PAYMENT, PAYMENT_TIMING_SAME_DAY_CARD, 0);
@@ -491,11 +509,12 @@ class ScheduleServiceImplCreateConsultantScheduleSameDayCardTest {
         when(scheduleRepository.countOccupyingConsultationSchedulesForConsultantClient(
                 eq(TENANT_ID), eq(CONSULTANT_ID), eq(CLIENT_ID), any()))
                 .thenReturn(1L);
+        stubScheduleSave();
 
-        assertThatThrownBy(() -> callCreate(true))
-                .isInstanceOf(RuntimeException.class)
-                .hasMessage(ScheduleServiceUserFacingMessages.MSG_PROVISIONAL_ALREADY_HAS_SCHEDULE);
+        Schedule saved = callCreate(true);
 
-        verify(scheduleRepository, never()).save(any(Schedule.class));
+        assertThat(saved.getId()).isEqualTo(999L);
+        verify(scheduleRepository, never()).countOccupyingConsultationSchedulesForConsultantClient(
+                anyString(), anyLong(), anyLong(), any());
     }
 }

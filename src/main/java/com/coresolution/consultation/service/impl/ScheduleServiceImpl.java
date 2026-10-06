@@ -1856,15 +1856,16 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
     }
 
     /**
-     * 가예약(effectiveTentative) 생성 시 동일 매핑에 이미 점유 일정이 있으면 fail-closed.
+     * 가예약(effectiveTentative) 생성 시 현재 매핑에 OPEN 점유 일정이 있으면 fail-closed.
      *
      * <p>점유 SSOT: {@link ScheduleStatus#occupyingStatusesForProvisionalMapping()}
-     * (BOOKED / TENTATIVE_PENDING_PAYMENT / CONFIRMED / COMPLETED / IN_PROGRESS; CANCELLED 제외).
+     * (BOOKED / TENTATIVE_PENDING_PAYMENT / CONFIRMED / IN_PROGRESS; COMPLETED·CANCELLED 제외).
+     * 단회기 당일카드는 매 회기 새 매핑이므로 과거 COMPLETED(다른 mappingId·레거시 null mapping_id)는 이력이며 차단하지 않는다.
      * remainingSessions &gt; 0 이면 복수 스케줄 허용(의도적 예외).
      * 시간 슬롯 충돌({@link ScheduleStatus#occupiesTimeForConflictCheck()})과는 별도.</p>
      *
      * @param mapping resolve된 매핑 (null이면 스킵)
-     * @throws RuntimeException 점유 일정 존재 + rem &lt;= 0
+     * @throws RuntimeException 현재 매핑 OPEN 점유 + rem &lt;= 0
      */
     private void assertProvisionalMappingNotAlreadyOccupied(ConsultantClientMapping mapping) {
         if (mapping == null || mapping.getId() == null) {
@@ -1878,22 +1879,16 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         List<ScheduleStatus> occupyingStatuses = ScheduleStatus.occupyingStatusesForProvisionalMapping();
         Long consultantId = mapping.getConsultant() != null ? mapping.getConsultant().getId() : null;
         Long clientId = mapping.getClient() != null ? mapping.getClient().getId() : null;
-        // mapping_id 일치 또는 legacy(null mapping_id + 동일 상담사·내담자)
+        // 현재 mapping_id 또는 legacy(null mapping_id + 동일 상담사·내담자) OPEN만.
+        // 다른 mappingId 의 COMPLETED/OPEN 쌍 점유는 #991 범위 — 여기서 머지하지 않음.
         if (consultantId != null && clientId != null) {
             long forMapping = scheduleRepository.countOccupyingConsultationSchedulesForMapping(
                     tenantId, mapping.getId(), consultantId, clientId, occupyingStatuses);
             if (forMapping > 0) {
                 throw new RuntimeException(ScheduleServiceUserFacingMessages.MSG_PROVISIONAL_ALREADY_HAS_SCHEDULE);
             }
-            // 다른 mappingId 에 묶인 동일 쌍 점유도 fail-closed (ops pair 케이스)
-            long forPair = scheduleRepository.countOccupyingConsultationSchedulesForConsultantClient(
-                    tenantId, consultantId, clientId, occupyingStatuses);
-            if (forPair > 0) {
-                throw new RuntimeException(ScheduleServiceUserFacingMessages.MSG_PROVISIONAL_ALREADY_HAS_SCHEDULE);
-            }
             return;
         }
-        // consultant/client 미해석 시 mappingId 전용 배치로 최소 fail-closed 유지
         List<Long> occupiedMappingIds = scheduleRepository.findDistinctMappingIdsWithOccupyingSchedules(
                 tenantId, occupyingStatuses);
         if (occupiedMappingIds != null && occupiedMappingIds.contains(mapping.getId())) {

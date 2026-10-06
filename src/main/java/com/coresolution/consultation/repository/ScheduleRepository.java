@@ -348,10 +348,10 @@ public interface ScheduleRepository extends BaseRepository<Schedule, Long> {
 
     /**
      * 날짜 무관, 점유 상태인 상담 일정이 있는 (상담사 ID, 내담자 ID) 쌍 목록.
-     * 호출부 status 인자 SSOT: {@code ScheduleStatus#occupyingStatusesForProvisionalMapping}
+     * 호출부 status 인자 SSOT: {@code ScheduleStatus#occupyingStatusesForConsultationScheduleHistory}
      * (BOOKED / TENTATIVE_PENDING_PAYMENT / CONFIRMED / COMPLETED / IN_PROGRESS).
      * 레거시 {@code mapping_id IS NULL} COMPLETED 일정 등도 쌍 기준으로 잡기 위한
-     * 카드 {@code hasConsultationSchedule} enrich 용.
+     * 카드 {@code hasConsultationSchedule} 이력 표시 enrich 용.
      */
     @Query("SELECT s.consultantId, s.clientId FROM Schedule s WHERE s.tenantId = :tenantId AND s.isDeleted = false "
             + "AND s.status IN :statuses "
@@ -363,9 +363,9 @@ public interface ScheduleRepository extends BaseRepository<Schedule, Long> {
 
     /**
      * 점유 상태 상담 일정이 1건 이상인 mappingId 목록 (과거·미래 무관).
-     * 호출부 status 인자 SSOT: {@code ScheduleStatus#occupyingStatusesForProvisionalMapping}
-     * (BOOKED / TENTATIVE_PENDING_PAYMENT / CONFIRMED / COMPLETED / IN_PROGRESS).
-     * 통합 스케줄 카드 {@code hasConsultationSchedule} enrich·가예약 단일 일정 가드 용.
+     * 호출부 status 인자: 이력 enrich는
+     * {@code ScheduleStatus#occupyingStatusesForConsultationScheduleHistory},
+     * 가예약 OPEN 가드는 {@code occupyingStatusesForProvisionalMapping}.
      * <p>주의: {@code mapping_id IS NULL} 레거시 행은 결과에 포함되지 않음 —
      * 쌍 점유는 {@link #findConsultantClientPairsOccupyingSchedules} 병행.</p>
      */
@@ -1456,8 +1456,8 @@ public interface ScheduleRepository extends BaseRepository<Schedule, Long> {
 
     /**
      * 상담사·내담자 쌍 기준 점유 상담 일정 수 (mapping_id 값 무관, 과거·미래 무관).
-     * 가예약 생성 fail-closed — 다른 mappingId에 묶인 점유 일정도 동일 쌍이면 차단.
-     * 호출부 status 인자 SSOT: {@code ScheduleStatus#occupyingStatusesForProvisionalMapping}.
+     * 쌍 점유 카운트. 가예약 rem=0 차단은 현재 mappingId OPEN만 사용하며 이 쿼리를 호출하지 않는다.
+     * 호출부 status 인자는 이력 enrich 등에서 전달.
      */
     @Query("SELECT COUNT(s) FROM Schedule s WHERE s.tenantId = :tenantId "
             + "AND s.isDeleted = false "

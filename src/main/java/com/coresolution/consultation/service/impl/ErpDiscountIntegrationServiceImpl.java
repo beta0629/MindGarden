@@ -13,6 +13,7 @@ import com.coresolution.consultation.entity.PackageDiscount;
 import com.coresolution.consultation.repository.erp.financial.FinancialTransactionRepository;
 import com.coresolution.consultation.service.DiscountAccountingService;
 import com.coresolution.consultation.service.ErpDiscountIntegrationService;
+import com.coresolution.consultation.util.FinancialTransactionValidity;
 import com.coresolution.core.context.TenantContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -101,13 +102,17 @@ public class ErpDiscountIntegrationServiceImpl implements ErpDiscountIntegration
                 .findByTenantIdAndTransactionTypeAndTransactionDateBetweenAndIsDeletedFalse(
                     tenantId, FinancialTransaction.TransactionType.EXPENSE, start, end)
                 .stream()
+                .filter(FinancialTransactionValidity::isValid)
                 .filter(t -> t.getCategory() != null && t.getCategory().contains("할인"))
                 .collect(Collectors.toList());
             
             // 2. 매출 거래 조회 (테넌트 기반, branchCode 필터링 제거)
             List<FinancialTransaction> revenueTransactions = financialTransactionRepository
                 .findByTenantIdAndTransactionTypeAndTransactionDateBetweenAndIsDeletedFalse(
-                    tenantId, FinancialTransaction.TransactionType.INCOME, start, end);
+                    tenantId, FinancialTransaction.TransactionType.INCOME, start, end)
+                .stream()
+                .filter(FinancialTransactionValidity::isValid)
+                .collect(Collectors.toList());
             
             // 3. 통계 계산
             BigDecimal totalRevenue = revenueTransactions.stream()

@@ -45,6 +45,7 @@ import com.coresolution.consultation.entity.Schedule;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.entity.Vacation;
 import com.coresolution.consultation.exception.ScheduleSessionNotStartedException;
+import com.coresolution.consultation.exception.ScheduleStatusTransitionException;
 import com.coresolution.consultation.repository.BranchRepository;
 import com.coresolution.consultation.repository.ClientRepository;
 import com.coresolution.consultation.repository.ConsultantClientMappingRepository;
@@ -77,6 +78,7 @@ import com.coresolution.consultation.util.MappingPaymentScheduleGate;
 import com.coresolution.consultation.util.ProvisionalConsultationLogSession;
 import com.coresolution.consultation.util.ScheduleCancelLinkedMappingReopen;
 import com.coresolution.consultation.util.ScheduleSessionStartGate;
+import com.coresolution.consultation.util.ScheduleStatusTransitionPolicy;
 import com.coresolution.consultation.utils.SessionUtils;
 import com.coresolution.consultation.service.StatisticsService;
 import com.coresolution.core.context.TenantContextHolder;
@@ -1782,6 +1784,11 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         if (schedule == null || intendedStatus == null || previousStatus == intendedStatus) {
             return;
         }
+        if (!ScheduleStatusTransitionPolicy.allowsReoccupy(previousStatus, intendedStatus)) {
+            throw new ScheduleStatusTransitionException(schedule.getId(), previousStatus,
+                    ScheduleStatusTransitionPolicy.REOCCUPY_NOT_ALLOWED_ERROR_CODE,
+                    ScheduleServiceUserFacingMessages.MSG_SCHEDULE_TERMINAL_REOCCUPY_DENIED);
+        }
         boolean confirming = intendedStatus == ScheduleStatus.CONFIRMED
                 || intendedStatus == ScheduleStatus.BOOKED
                 || intendedStatus == ScheduleStatus.IN_PROGRESS;
@@ -1842,6 +1849,16 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
     public Schedule confirmSchedule(Long scheduleId, String adminNote) {
         log.info("✅ 예약 확정: ID {}, 관리자 메모: {}", scheduleId, adminNote);
         Schedule schedule = findById(scheduleId);
+        ScheduleStatus currentStatus = schedule.getStatus();
+        if (ScheduleStatusTransitionPolicy.isAlreadyConfirmed(currentStatus)) {
+            log.info("이미 확정된 일정 재확정 요청 — 변경 없음: scheduleId={}", scheduleId);
+            return schedule;
+        }
+        if (!ScheduleStatusTransitionPolicy.allowsConfirm(currentStatus)) {
+            throw new ScheduleStatusTransitionException(scheduleId, currentStatus,
+                    ScheduleStatusTransitionPolicy.CONFIRM_NOT_ALLOWED_ERROR_CODE,
+                    ScheduleServiceUserFacingMessages.MSG_SCHEDULE_STATUS_NOT_CONFIRMABLE);
+        }
         if (!scheduleConfirmAllowed(schedule)) {
             throw new IllegalStateException(
                     ScheduleServiceUserFacingMessages.MSG_TENTATIVE_WITHOUT_MAPPING_CONFIRM_DENIED);

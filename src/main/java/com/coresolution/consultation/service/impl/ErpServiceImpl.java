@@ -33,6 +33,7 @@ import com.coresolution.consultation.service.erp.financial.FinancialTransactionS
 import com.coresolution.consultation.service.SalaryTaxRateLookupService;
 import com.coresolution.consultation.service.UserService;
 import com.coresolution.consultation.util.ErpMonthlyTaxBreakdownHelper;
+import com.coresolution.consultation.util.FinancialTransactionValidity;
 import com.coresolution.consultation.util.TaxCalculationUtil;
 import com.coresolution.core.service.impl.BaseTenantAwareService;
 import org.springframework.stereotype.Service;
@@ -899,7 +900,9 @@ public class ErpServiceImpl extends BaseTenantAwareService implements ErpService
             List<com.coresolution.consultation.dto.FinancialTransactionResponse> branchTransactions = 
                 financialTransactionService.getTransactionsByBranch(null, null, null, null, null, 
                     org.springframework.data.domain.PageRequest.of(0, 10000))
-                    .getContent();
+                    .getContent().stream()
+                    .filter(t -> FinancialTransactionValidity.isValidStatusCode(t.getStatus()))
+                    .collect(Collectors.toList());
             
             log.info("📊 거래 데이터 조회 완료: 테넌트={}, 건수={}건", tenantId, branchTransactions.size());
             
@@ -1064,7 +1067,9 @@ public class ErpServiceImpl extends BaseTenantAwareService implements ErpService
         try {
             List<com.coresolution.consultation.dto.FinancialTransactionResponse> transactions = 
                 financialTransactionService.getTransactions(org.springframework.data.domain.PageRequest.of(0, 10000))
-                    .getContent();
+                    .getContent().stream()
+                    .filter(t -> FinancialTransactionValidity.isValidStatusCode(t.getStatus()))
+                    .collect(Collectors.toList());
             
             log.info("📊 실시간 재무 데이터 - 전체 거래 건수: {}", transactions.size());
             
@@ -1401,7 +1406,9 @@ public class ErpServiceImpl extends BaseTenantAwareService implements ErpService
             List<com.coresolution.consultation.dto.FinancialTransactionResponse> transactions = 
                 financialTransactionService.getTransactions(
                     org.springframework.data.domain.PageRequest.of(0, 1000)
-                ).getContent();
+                ).getContent().stream()
+                .filter(t -> FinancialTransactionValidity.isValidStatusCode(t.getStatus()))
+                .collect(Collectors.toList());
             
             BigDecimal totalIncome = transactions.stream()
                 .filter(t -> "INCOME".equals(t.getTransactionType()))
@@ -1519,7 +1526,9 @@ public class ErpServiceImpl extends BaseTenantAwareService implements ErpService
         try {
             List<com.coresolution.consultation.dto.FinancialTransactionResponse> transactions = 
                 financialTransactionService.getTransactions(org.springframework.data.domain.PageRequest.of(0, 1000))
-                    .getContent();
+                    .getContent().stream()
+                    .filter(t -> FinancialTransactionValidity.isValidStatusCode(t.getStatus()))
+                    .collect(Collectors.toList());
             BigDecimal totalIncome = transactions.stream()
                 .filter(t -> "INCOME".equals(t.getTransactionType()))
                 .map(com.coresolution.consultation.dto.FinancialTransactionResponse::getAmount)
@@ -1610,7 +1619,9 @@ public class ErpServiceImpl extends BaseTenantAwareService implements ErpService
             List<com.coresolution.consultation.dto.FinancialTransactionResponse> transactions = 
                 financialTransactionService.getTransactions(
                     org.springframework.data.domain.PageRequest.of(0, 1000)
-                ).getContent();
+                ).getContent().stream()
+                .filter(t -> FinancialTransactionValidity.isValidStatusCode(t.getStatus()))
+                .collect(Collectors.toList());
             
             BigDecimal consultationRevenue = transactions.stream()
                 .filter(t -> "INCOME".equals(t.getTransactionType()))
@@ -1642,7 +1653,9 @@ public class ErpServiceImpl extends BaseTenantAwareService implements ErpService
             List<com.coresolution.consultation.dto.FinancialTransactionResponse> transactions = 
                 financialTransactionService.getTransactions(
                     org.springframework.data.domain.PageRequest.of(0, 1000)
-                ).getContent();
+                ).getContent().stream()
+                .filter(t -> FinancialTransactionValidity.isValidStatusCode(t.getStatus()))
+                .collect(Collectors.toList());
             
             Map<String, BigDecimal> expenseByCategory = new HashMap<>();
             transactions.stream()
@@ -1700,7 +1713,9 @@ public class ErpServiceImpl extends BaseTenantAwareService implements ErpService
         List<FinancialTransaction> allTransactions = financialTransactionRepository
             .findByTenantIdAndTransactionDateAndIsDeletedFalse(tenantId, targetDate);
         
-        List<FinancialTransaction> dailyTransactions = allTransactions;
+        List<FinancialTransaction> dailyTransactions = allTransactions.stream()
+            .filter(FinancialTransactionValidity::isValid)
+            .collect(Collectors.toList());
         
         log.info("📊 일간 리포트 - 전체 거래: {}건 (tenantId: {})", 
             allTransactions.size(), tenantId);
@@ -1802,7 +1817,9 @@ public class ErpServiceImpl extends BaseTenantAwareService implements ErpService
         List<FinancialTransaction> allTransactions = financialTransactionRepository
             .findByTenantIdAndTransactionDateBetweenAndIsDeletedFalse(tenantId, startDate, endDate);
         
-        List<FinancialTransaction> monthlyTransactions = allTransactions;
+        List<FinancialTransaction> monthlyTransactions = allTransactions.stream()
+            .filter(FinancialTransactionValidity::isValid)
+            .collect(Collectors.toList());
         
         log.info("📊 월간 리포트 - 전체 거래: {}건 (tenantId: {})", 
             allTransactions.size(), tenantId);
@@ -1923,7 +1940,9 @@ public class ErpServiceImpl extends BaseTenantAwareService implements ErpService
         LocalDate startDate = LocalDate.of(yearInt, 1, 1);
         LocalDate endDate = LocalDate.of(yearInt, 12, 31);
         List<FinancialTransaction> allInYear = financialTransactionRepository
-            .findByTenantIdAndTransactionDateBetweenAndIsDeletedFalse(tenantId, startDate, endDate);
+            .findByTenantIdAndTransactionDateBetweenAndIsDeletedFalse(tenantId, startDate, endDate).stream()
+            .filter(FinancialTransactionValidity::isValid)
+            .collect(Collectors.toList());
         List<Map<String, Object>> months = ErpMonthlyTaxBreakdownHelper.buildMonthlySeriesForYear(yearInt, allInYear);
 
         Map<Integer, Map<String, BigDecimal>> salaryByMonth = loadSalaryStoredTaxByMonth(
@@ -2012,7 +2031,9 @@ public class ErpServiceImpl extends BaseTenantAwareService implements ErpService
         String tenantId = getTenantId();
         yearlyReport.put("tenantId", tenantId);
         List<FinancialTransaction> yearlyTransactions = financialTransactionRepository
-            .findByTenantIdAndTransactionDateBetweenAndIsDeletedFalse(tenantId, startDate, endDate);
+            .findByTenantIdAndTransactionDateBetweenAndIsDeletedFalse(tenantId, startDate, endDate).stream()
+            .filter(FinancialTransactionValidity::isValid)
+            .collect(Collectors.toList());
         
         Map<String, Object> yearlyIncome = new HashMap<>();
         BigDecimal consultationRevenue = yearlyTransactions.stream()

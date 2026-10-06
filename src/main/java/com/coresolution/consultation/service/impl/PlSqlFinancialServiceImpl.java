@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import com.coresolution.consultation.service.PlSqlFinancialService;
+import com.coresolution.consultation.util.FinancialTransactionValidity;
 import com.coresolution.core.context.TenantContextHolder;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jdbc.core.CallableStatementCallback;
@@ -77,8 +78,8 @@ public class PlSqlFinancialServiceImpl implements PlSqlFinancialService {
                 FROM financial_transactions 
                 WHERE tenant_id = ?
                 AND transaction_date BETWEEN ? AND ? 
-                AND is_deleted = FALSE
-                """;
+                AND %s
+                """.formatted(FinancialTransactionValidity.nativeValidCondition(null));
             
             Map<String, Object> result = jdbcTemplate.queryForMap(sql, tenantId, startDate, endDate);
             
@@ -276,8 +277,8 @@ public class PlSqlFinancialServiceImpl implements PlSqlFinancialService {
                 WHERE ft.tenant_id = ?
                     AND ft.transaction_date BETWEEN DATE(CONCAT(?, '-', LPAD(?, 2, '0'), '-01')) 
                     AND LAST_DAY(DATE(CONCAT(?, '-', LPAD(?, 2, '0'), '-01')))
-                    AND ft.is_deleted = FALSE
-                """;
+                    AND %s
+                """.formatted(FinancialTransactionValidity.nativeValidCondition("ft"));
             
             List<Map<String, Object>> reportData = jdbcTemplate.query(sql,
                 new Object[]{year, month, tenantId, year, month, year, month},
@@ -385,10 +386,10 @@ public class PlSqlFinancialServiceImpl implements PlSqlFinancialService {
                 FROM financial_transactions ft
                 WHERE ft.tenant_id = ?
                 AND YEAR(ft.transaction_date) = ?
-                AND ft.is_deleted = FALSE
+                AND %s
                 GROUP BY ft.branch_code
                 ORDER BY total_revenue DESC
-                """;
+                """.formatted(FinancialTransactionValidity.nativeValidCondition("ft"));
             
             List<Map<String, Object>> reportData = jdbcTemplate.query(sql,
                 new Object[]{year, tenantId, year},
@@ -500,11 +501,11 @@ public class PlSqlFinancialServiceImpl implements PlSqlFinancialService {
             FROM financial_transactions ft
             WHERE ft.tenant_id = ?
             AND ft.transaction_date BETWEEN ? AND ?
-            AND ft.is_deleted = FALSE
+            AND %s
             AND ft.branch_code IS NOT NULL
             GROUP BY ft.branch_code
             ORDER BY revenue DESC
-            """;
+            """.formatted(FinancialTransactionValidity.nativeValidCondition("ft"));
         
         return jdbcTemplate.query(sql,
             new Object[]{tenantId, startDate, endDate},
@@ -541,12 +542,12 @@ public class PlSqlFinancialServiceImpl implements PlSqlFinancialService {
                 WHERE ft.tenant_id = ?
                     AND ft.transaction_date BETWEEN DATE(CONCAT(?, '-', LPAD(?, 2, '0'), '-01')) 
                     AND LAST_DAY(DATE(CONCAT(?, '-', LPAD(?, 2, '0'), '-01')))
-                    AND ft.is_deleted = FALSE
+                    AND %s
                     AND ft.transaction_type = 'EXPENSE'
                 GROUP BY ft.category
                 HAVING total_amount > 0
                 ORDER BY total_amount DESC
-                """;
+                """.formatted(FinancialTransactionValidity.nativeValidCondition("ft"));
             
             return jdbcTemplate.query(sql,
                 new Object[]{tenantId, year, month, year, month},
@@ -587,12 +588,12 @@ public class PlSqlFinancialServiceImpl implements PlSqlFinancialService {
                 FROM financial_transactions ft
                 WHERE ft.tenant_id = ?
                     AND ft.transaction_date BETWEEN ? AND ?
-                    AND ft.is_deleted = FALSE
+                    AND %s
                     AND ft.transaction_type = 'EXPENSE'
                 GROUP BY ft.category
                 HAVING total_amount > 0
                 ORDER BY total_amount DESC
-                """;
+                """.formatted(FinancialTransactionValidity.nativeValidCondition("ft"));
             
             return jdbcTemplate.query(sql,
                 new Object[]{tenantId, startDate, endDate},

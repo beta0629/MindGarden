@@ -44,6 +44,7 @@ import com.coresolution.consultation.service.UserPersonalDataCacheService;
 import com.coresolution.consultation.util.CardMerchantFeeFromPaymentJsonUtil;
 import com.coresolution.consultation.util.EmailLogMasking;
 import com.coresolution.consultation.util.ErpMonthlyTaxBreakdownHelper;
+import com.coresolution.consultation.util.FinancialTransactionValidity;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.service.impl.BaseTenantAwareService;
@@ -835,6 +836,7 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
                     .findByTenantIdAndCategoryAndIsDeletedFalse(tenantId, taxCategory);
             
             List<FinancialTransaction> filteredTaxTransactions = taxTransactions.stream()
+                    .filter(FinancialTransactionValidity::isValid)
                     .filter(t -> !t.getTransactionDate().isBefore(startDate) && !t.getTransactionDate().isAfter(endDate))
                     .collect(Collectors.toList());
             
@@ -848,6 +850,7 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
                     .findByTenantIdAndCategoryAndIsDeletedFalse(tenantId, consultationFeeCategory);
             
             BigDecimal totalVatAmount = paymentTransactions.stream()
+                    .filter(FinancialTransactionValidity::isValid)
                     .filter(t -> !t.getTransactionDate().isBefore(startDate) && !t.getTransactionDate().isAfter(endDate))
                     .filter(t -> t.getTaxAmount() != null)
                     .map(FinancialTransaction::getTaxAmount)
@@ -1688,22 +1691,14 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
     }
 
     /**
-     * 운영자 장부·OFD에 포함할 posted 거래 여부.
-     * 미삭제 전제에서 CANCELLED·REJECTED를 제외한다 (가계약·미결제·취소 수입 제외).
+     * 운영자 장부·OFD에 포함할 posted 거래 여부. 판정은 {@link FinancialTransactionValidity#isValid} 만 쓴다
+     * (미삭제 + CANCELLED·REJECTED 제외 — 리포트·결산과 같은 유효 거래 조건).
      *
      * @param transaction 재무 거래
      * @return posted이면 true
      */
     private boolean isPostedForOperator(FinancialTransaction transaction) {
-        if (transaction == null) {
-            return false;
-        }
-        FinancialTransaction.TransactionStatus status = transaction.getStatus();
-        if (status == null) {
-            return true;
-        }
-        return status != FinancialTransaction.TransactionStatus.CANCELLED
-                && status != FinancialTransaction.TransactionStatus.REJECTED;
+        return FinancialTransactionValidity.isValid(transaction);
     }
 
     /**

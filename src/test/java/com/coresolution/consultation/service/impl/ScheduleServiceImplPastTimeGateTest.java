@@ -328,6 +328,53 @@ class ScheduleServiceImplPastTimeGateTest {
         verify(scheduleRepository, never()).save(any());
     }
 
+    @Test
+    @DisplayName("지난 일정 모달 편집 — 같은 일시를 다시 보내고 제목·메모만 변경 → 이동 판정 없이 저장")
+    void pastSchedule_modalEditSameSlotWithNonTimeFields_allowed() {
+        stubFind(schedule(ScheduleStatus.CONFIRMED, TODAY.minusDays(1), ELEVEN, ELEVEN_FIFTY));
+        Schedule patch = slot(TODAY.minusDays(1), ELEVEN, ELEVEN_FIFTY);
+        patch.setTitle("제목만 수정");
+        patch.setDescription("메모만 수정");
+
+        Schedule saved = scheduleService.updateSchedule(SCHEDULE_ID, patch);
+
+        assertThat(saved.getTitle()).isEqualTo("제목만 수정");
+        assertThat(saved.getDate()).isEqualTo(TODAY.minusDays(1));
+        verify(scheduleRepository).save(any(Schedule.class));
+    }
+
+    @Test
+    @DisplayName("반복·일괄 생성 — 회차마다 판정, 과거 회차만 CREATE_IN_PAST·미저장, 미래 회차는 저장")
+    void bulkCreate_pastOccurrenceRejectedIndividually() {
+        java.util.List<LocalDateTime> occurrences = java.util.List.of(
+                TODAY.minusDays(7).atTime(ELEVEN),
+                TODAY.atTime(13, 59),
+                TODAY.atTime(14, 0),
+                TODAY.plusDays(7).atTime(ELEVEN));
+        java.util.List<String> rejected = new java.util.ArrayList<>();
+        int created = 0;
+
+        for (LocalDateTime occurrence : occurrences) {
+            Schedule incoming = new Schedule();
+            incoming.setDate(occurrence.toLocalDate());
+            incoming.setStartTime(occurrence.toLocalTime());
+            incoming.setEndTime(occurrence.toLocalTime().plusMinutes(50));
+            incoming.setTitle("bulk-" + occurrence);
+            try {
+                scheduleService.createSchedule(incoming);
+                created++;
+            } catch (SchedulePastTimeException e) {
+                rejected.add(e.getErrorCode());
+            }
+        }
+
+        assertThat(rejected).containsExactly(
+                ScheduleSlotGuard.Denial.CREATE_IN_PAST.getErrorCode(),
+                ScheduleSlotGuard.Denial.CREATE_IN_PAST.getErrorCode());
+        assertThat(created).isEqualTo(2);
+        verify(scheduleRepository, org.mockito.Mockito.times(2)).save(any(Schedule.class));
+    }
+
     private void useKstNow(LocalDateTime kstNow) {
         scheduleService.useSessionStartClock(Clock.fixed(
                 kstNow.atZone(ReservationSmsBusinessHours.ZONE_SEOUL).toInstant(),

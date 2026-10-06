@@ -228,6 +228,33 @@ class ScheduleControllerPastTimeGateTest {
     }
 
     @Test
+    @DisplayName("내담자(비관리자)가 본인 참여 일정을 이동 → AccessDenied, 판정·저장 없음")
+    void clientRole_move_rejected() {
+        MockHttpSession clientSession = sessionOf(existing.getClientId(), UserRole.CLIENT);
+
+        assertThatThrownBy(() ->
+            controller.updateSchedule(SCHEDULE_ID, slotBody(FUTURE_DATE, "11:00", "11:50"), clientSession))
+            .isInstanceOf(AccessDeniedException.class);
+        verify(scheduleService, never()).requireMoveTimesNotInPast(any(), any(), any());
+        verify(scheduleService, never()).updateSchedule(anyLong(), any(Schedule.class));
+    }
+
+    @Test
+    @DisplayName("지난 일정 모달 편집 — 일시는 그대로 보내고 제목·메모만 변경 → 이동 판정 없이 저장")
+    void pastSchedule_modalEditNonTimeFields_allowed() {
+        Map<String, Object> body = slotBody(PAST_DATE, "11:00", "11:50");
+        body.put("title", "제목만 수정");
+        body.put("description", "메모만 수정");
+
+        ResponseEntity<ApiResponse<Map<String, Object>>> response =
+            controller.updateSchedule(SCHEDULE_ID, body, session);
+
+        assertThat(response.getStatusCode().is2xxSuccessful()).isTrue();
+        verify(scheduleService, never()).requireMoveTimesNotInPast(any(), any(), any());
+        verify(scheduleService).updateSchedule(eq(SCHEDULE_ID), any(Schedule.class));
+    }
+
+    @Test
     @DisplayName("과거 시작으로 일정 생성 → SchedulePastTimeException, createConsultantSchedule 미호출")
     void create_pastStart_rejected() {
         doThrow(new SchedulePastTimeException(null, ScheduleSlotGuard.Denial.CREATE_IN_PAST))

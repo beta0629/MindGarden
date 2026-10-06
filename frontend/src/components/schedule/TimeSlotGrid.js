@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import UnifiedLoading from '../common/UnifiedLoading';
 import SafeText from '../common/SafeText';
-import { API_BASE_URL } from '../../constants/api';
+import { SCHEDULE_API } from '../../constants/api';
 import notificationManager from '../../utils/notification';
+import StandardizedApi from '../../utils/standardizedApi';
 import '../../styles/main.css';
 import './TimeSlotGrid.css';
 import { 
@@ -57,12 +59,15 @@ const TimeSlotGrid = ({
     variant = 'default', // 'default' | 'b0kla' — B0KlA 모달용 아토믹 클래스
     excludeScheduleId = null,
     occupyingHints = null,
-    calendarEvents = null
+    calendarEvents = null,
+    onOccupancyLoadFailed = null
 }) => {
+    const { t } = useTranslation();
     // date prop을 selectedDate로 사용
     const selectedDate = date;
     const [timeSlots, setTimeSlots] = useState([]);
     const [existingSchedules, setExistingSchedules] = useState([]);
+    const [scheduleLoadFailed, setScheduleLoadFailed] = useState(false);
     const [loading, setLoading] = useState(false);
     const [consultantInfo, setConsultantInfo] = useState(null);
     const [vacationInfo, setVacationInfo] = useState(null);
@@ -108,7 +113,7 @@ const TimeSlotGrid = ({
         if (consultantInfo) {
             generateTimeSlots();
         }
-    }, [consultantInfo, duration, vacationInfo, existingSchedules, excludeScheduleId, occupyingHints, calendarEvents]);
+    }, [consultantInfo, duration, vacationInfo, existingSchedules, excludeScheduleId, occupyingHints, calendarEvents, scheduleLoadFailed]);
 
     // 선택된 시간 슬롯이 변경될 때마다 슬롯 가용성 업데이트
     useEffect(() => {
@@ -122,33 +127,9 @@ const TimeSlotGrid = ({
      */
     const loadConsultantInfo = async() => {
         try {
-            const response = await fetch(`${API_BASE_URL}/api/v1/consultants/${consultantId}`, {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                credentials: 'include'
-            });
-
-            if (!response.ok) {
-                setDefaultConsultantInfo();
-                return;
-            }
-            const text = await response.text();
-            let result;
-            try {
-                result = JSON.parse(text);
-            } catch (parseError) {
-                const pos = parseError.message.match(/position (\d+)/)?.[1];
-                const snippet = pos != null && text.length > 0
-                    ? text.slice(Math.max(0, Number(pos) - 80), Number(pos) + 80)
-                    : text.slice(0, 200);
-                console.error('상담사 정보 JSON 파싱 실패:', parseError.message, { snippet });
-                setDefaultConsultantInfo();
-                return;
-            }
-            if (result.success && result.data) {
-                setConsultantInfo(result.data);
+            const data = await StandardizedApi.get(`/api/v1/consultants/${consultantId}`);
+            if (data && typeof data === 'object' && data.consultationHours) {
+                setConsultantInfo(data);
             } else {
                 setDefaultConsultantInfo();
             }
@@ -190,35 +171,25 @@ const TimeSlotGrid = ({
 
             console.log('휴가 정보 로드:', { consultantId, dateStr });
 
-            const response = await fetch(`/api/v1/consultants/availability/vacations?date=${dateStr}`, {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                credentials: 'include'
-            });
-
-            if (response.ok) {
-                const result = await response.json();
-                console.log('휴가 정보 API 응답:', result);
-                if (result.success && result.data) {
-                    // API 응답 구조: {data: {consultantId: {date: vacationInfo}}}
-                    const consultantData = result.data[consultantId];
-                    if (consultantData && consultantData[dateStr]) {
-                        const vacationInfo = consultantData[dateStr];
-                        setVacationInfo(vacationInfo);
-                        console.log('휴가 정보 설정:', vacationInfo);
-                    } else {
-                        setVacationInfo(null);
-                        console.log('해당 상담사의 휴가 정보 없음');
-                    }
+            const payload = await StandardizedApi.get(
+                '/api/v1/consultants/availability/vacations',
+                { date: dateStr }
+            );
+            const vacationMap = payload && payload.success && payload.data ? payload.data : payload;
+            console.log('휴가 정보 API 응답:', vacationMap);
+            if (vacationMap && typeof vacationMap === 'object') {
+                const consultantData = vacationMap[consultantId];
+                if (consultantData && consultantData[dateStr]) {
+                    const nextVacationInfo = consultantData[dateStr];
+                    setVacationInfo(nextVacationInfo);
+                    console.log('휴가 정보 설정:', nextVacationInfo);
                 } else {
                     setVacationInfo(null);
-                    console.log('휴가 정보 없음');
+                    console.log('해당 상담사의 휴가 정보 없음');
                 }
             } else {
-                console.error('휴가 정보 로드 실패:', response.status);
                 setVacationInfo(null);
+                console.log('휴가 정보 없음');
             }
         } catch (error) {
             console.error('휴가 정보 로드 실패:', error);
@@ -302,7 +273,7 @@ const TimeSlotGrid = ({
                         time: timeString,
                         endTime: slotEndTime,
                         duration: duration,
-                        available: !isVacationTime && !isPastTime && !hasConflict,
+                        available: !scheduleLoadFailed && !isVacationTime && !isPastTime && !hasConflict,
                         conflict: hasConflict,
                         occupyingStartHint: occupyingStartHint,
                         vacation: isVacationTime,
@@ -415,51 +386,53 @@ const TimeSlotGrid = ({
 /**
      * 기존 스케줄 로드
      */
+    const markScheduleLoadFailed = () => {
+        setExistingSchedules([]);
+        setScheduleLoadFailed(true);
+        if (typeof onOccupancyLoadFailed === 'function') {
+            onOccupancyLoadFailed();
+        }
+    };
+
     const loadExistingSchedules = async() => {
-        // consultantId가 유효하지 않으면 요청하지 않음
+        // consultantId가 유효하지 않으면 빈 목록을 가능으로 보지 않는다
         if (!consultantId || consultantId === 'undefined' || consultantId === 'null') {
             console.warn('⚠️ TimeSlotGrid: consultantId가 유효하지 않음:', consultantId);
+            markScheduleLoadFailed();
             setLoading(false);
             return;
         }
 
         setLoading(true);
+        setScheduleLoadFailed(false);
         try {
             // 날짜를 로컬 시간대로 처리하여 시간대 변환 문제 방지
             const year = date.getFullYear();
             const month = String(date.getMonth() + 1).padStart(2, '0');
             const day = String(date.getDate()).padStart(2, '0');
             const dateStr = `${year}-${month}-${day}`;
-            
-            const scheduleUrl = `${API_BASE_URL}/api/v1/schedules/consultant/${consultantId}/date?date=${dateStr}`;
+            const endpoint = `${SCHEDULE_API.SCHEDULES_BY_CONSULTANT}/${encodeURIComponent(String(consultantId))}/date`;
             console.log('🔍 TimeSlotGrid: 스케줄 로드 요청:', {
                 consultantId,
                 dateStr,
-                url: scheduleUrl
+                url: endpoint
             });
 
-            const response = await fetch(scheduleUrl, {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                credentials: 'include'
+            const list = await StandardizedApi.get(endpoint, { date: dateStr }, {
+                throwOnUnauthorized: true
             });
-
-            console.log('📥 TimeSlotGrid: 응답 상태:', response.status, response.statusText);
-
-            if (response.ok) {
-                const body = await response.json();
-                const list = body.data ?? body;
-                const schedules = Array.isArray(list) ? list : [];
-                console.log('✅ TimeSlotGrid: 스케줄 로드 성공:', schedules);
-                setExistingSchedules(schedules);
-                updateSlotAvailability(schedules);
-            } else {
-                console.error('❌ TimeSlotGrid: 스케줄 로드 실패:', response.status, response.statusText);
+            if (!Array.isArray(list)) {
+                console.error('❌ TimeSlotGrid: 스케줄 응답이 목록이 아님');
+                markScheduleLoadFailed();
+                return;
             }
+            console.log('✅ TimeSlotGrid: 스케줄 로드 성공:', list);
+            setScheduleLoadFailed(false);
+            setExistingSchedules(list);
+            updateSlotAvailability(list, false);
         } catch (error) {
             console.error('기존 스케줄 로드 실패:', error);
+            markScheduleLoadFailed();
         } finally {
             setLoading(false);
         }
@@ -469,7 +442,7 @@ const TimeSlotGrid = ({
      * 선택된 시간에 따른 슬롯 가용성 업데이트
      */
     const updateSlotsForSelectedTime = () => {
-        if (!selectedTimeSlot) return;
+        if (scheduleLoadFailed || !selectedTimeSlot) return;
         
         setTimeSlots(prevSlots => 
             prevSlots.map(slot => {
@@ -517,7 +490,7 @@ const TimeSlotGrid = ({
 /**
      * 슬롯 가용성 업데이트
      */
-    const updateSlotAvailability = (schedules) => {
+    const updateSlotAvailability = (schedules, blocked = scheduleLoadFailed) => {
         const merged = mergeOccupancySchedules({
             schedules,
             occupyingHints,
@@ -531,7 +504,7 @@ const TimeSlotGrid = ({
                 const conflictResult = resolveSlotConflict(slot, merged);
                 return {
                     ...slot,
-                    available: !conflictResult.conflict && !slot.past && !slot.vacation,
+                    available: !blocked && !conflictResult.conflict && !slot.past && !slot.vacation,
                     conflict: conflictResult.conflict,
                     occupyingStartHint: conflictResult.occupyingStartHm
                 };
@@ -627,6 +600,9 @@ const TimeSlotGrid = ({
      * 시간 슬롯 클릭 핸들러
      */
     const handleSlotClick = (slot) => {
+        if (scheduleLoadFailed) {
+            return;
+        }
         if (slot.past) {
             notificationManager.show(TIME_SLOT_PAST_CLICK_MESSAGE, 'info');
             return;
@@ -725,6 +701,12 @@ const TimeSlotGrid = ({
                 </div>
             </div>
 
+            {scheduleLoadFailed && (
+                <p className="mg-v2-ad-ts__load-error" role="alert">
+                    {t('schedule:TimeSlotGrid.loadFailed')}
+                </p>
+            )}
+
             <div className={useB0kla ? 'mg-v2-ad-ts__legend' : 'time-slot-grid-legend'}>
                 <div className={useB0kla ? 'mg-v2-ad-ts__legend-item' : 'time-slot-legend-item'}>
                     <span className={useB0kla ? 'mg-v2-ad-ts__legend-dot mg-v2-ad-ts__legend-dot--available' : 'time-slot-legend-color time-slot-legend-color--available'} />
@@ -760,6 +742,7 @@ const TimeSlotGrid = ({
                                     key={slot.id}
                                     className={useB0kla ? `mg-v2-ad-ts-item ${getSlotModifierClass(slot)}` : getSlotLegacyClass(slot)}
                                     onClick={() => handleSlotClick(slot)}
+                                    aria-disabled={scheduleLoadFailed || !slot.available}
                                     title={toDisplayString(
                                         `${slot.time} - ${slot.endTime} (${duration}분)${
                                             slot.conflict && slot.occupyingStartHint
@@ -769,7 +752,7 @@ const TimeSlotGrid = ({
                                         ''
                                     )}
                                     role="button"
-                                    tabIndex={0}
+                                    tabIndex={scheduleLoadFailed || !slot.available ? -1 : 0}
                                     onKeyDown={(e) => {
                                         if (e.key === 'Enter' || e.key === ' ') {
                                             e.preventDefault();

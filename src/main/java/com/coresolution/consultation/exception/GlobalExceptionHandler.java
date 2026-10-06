@@ -606,6 +606,23 @@ public class GlobalExceptionHandler {
     }
 
     /**
+     * 일정 생성 시간 겹침 — HTTP 409. 사유 문구는 응답 {@code message} 에 싣는다.
+     */
+    @ExceptionHandler(ScheduleTimeConflictException.class)
+    public ResponseEntity<ErrorResponse> handleScheduleTimeConflict(
+            ScheduleTimeConflictException e, HttpServletRequest request) {
+        log.info("[SCHEDULE_TIME_CONFLICT] path={} message={}", request.getRequestURI(), e.getMessage());
+        ErrorResponse error = ErrorResponse.of(
+            e.getMessage(),
+            ScheduleTimeConflictException.ERROR_CODE,
+            HttpStatus.CONFLICT.value(),
+            request.getRequestURI(),
+            request.getMethod()
+        );
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
+    }
+
+    /**
      * lifecycle §3.6 전이 그래프 위반 — HTTP 409 (시스템 오류 아님).
      */
     @ExceptionHandler(IllegalStateTransitionException.class)

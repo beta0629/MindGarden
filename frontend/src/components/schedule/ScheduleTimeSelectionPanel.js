@@ -28,6 +28,7 @@ const API_COMMON_CODES_GROUPS_DURATION = '/api/v1/common-codes/groups/DURATION';
  * @param {Array} [props.occupyingHints] — 점유 보강용 일정(동일 상담사·당일만 병합)
  * @param {Array} [props.calendarEvents] — 월간 캘린더 이벤트(동일 상담사·당일만 병합)
  * @param {function({consultationTypeOptions: Array, durationOptions: Array}): void} [props.onCodeOptionsLoaded]
+ * @param {function(): void} [props.onOccupancyLoadFailed] — 일정 조회 실패 시 시간 선택 초기화
  * @author CoreSolution
  * @since 2026-04-02
  */
@@ -44,7 +45,8 @@ const ScheduleTimeSelectionPanel = ({
   excludeScheduleId,
   occupyingHints,
   calendarEvents,
-  onCodeOptionsLoaded
+  onCodeOptionsLoaded,
+  onOccupancyLoadFailed
 }) => {
   const { t } = useTranslation();
   const [consultationTypeOptions, setConsultationTypeOptions] = useState([]);
@@ -232,6 +234,7 @@ const ScheduleTimeSelectionPanel = ({
         excludeScheduleId={excludeScheduleId}
         occupyingHints={occupyingHints}
         calendarEvents={calendarEvents}
+        onOccupancyLoadFailed={onOccupancyLoadFailed}
       />
     </div>
   );

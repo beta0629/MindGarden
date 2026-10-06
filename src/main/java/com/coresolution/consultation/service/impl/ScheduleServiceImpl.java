@@ -45,6 +45,7 @@ import com.coresolution.consultation.entity.Schedule;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.entity.Vacation;
 import com.coresolution.consultation.exception.ScheduleSessionNotStartedException;
+import com.coresolution.consultation.exception.ScheduleTimeConflictException;
 import com.coresolution.consultation.repository.BranchRepository;
 import com.coresolution.consultation.repository.ClientRepository;
 import com.coresolution.consultation.repository.ConsultantClientMappingRepository;
@@ -645,9 +646,9 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         log.info("📅 상담사 스케줄 생성: 상담사 {}, 내담자 {}, 날짜 {}, 가예약={} (요청={})", consultantId, clientId, date,
                 effectiveTentative, tentativeBeforeDeposit);
 
-        if (hasTimeConflict(consultantId, date, startTime, endTime, null)) {
-            throw new RuntimeException("해당 시간대에 이미 스케줄이 존재합니다.");
-        }
+        rejectIfTimeSlotOccupied(
+                hasTimeConflict(consultantId, date, startTime, endTime, null),
+                ScheduleServiceUserFacingMessages.MSG_TIME_SLOT_ALREADY_OCCUPIED);
 
         if (effectiveTentative) {
             if (!validateMappingForTentativeBeforeDepositSchedule(consultantId, clientId)) {
@@ -753,9 +754,9 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         log.info("📅 상담사 스케줄 생성 (상담유형 포함): 상담사 {}, 내담자 {}, 날짜 {}, 상담유형 {}, tenantId={}, 가예약={} (요청={})",
                 consultantId, clientId, date, consultationType, tenantId, effectiveTentative, tentativeBeforeDeposit);
 
-        if (hasTimeConflict(consultantId, date, startTime, endTime, null)) {
-            throw new RuntimeException("해당 시간대에 이미 스케줄이 존재합니다.");
-        }
+        rejectIfTimeSlotOccupied(
+                hasTimeConflict(consultantId, date, startTime, endTime, null),
+                ScheduleServiceUserFacingMessages.MSG_TIME_SLOT_ALREADY_OCCUPIED);
 
         if (effectiveTentative) {
             if (!validateMappingForTentativeBeforeDepositSchedule(consultantId, clientId)) {
@@ -839,9 +840,9 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             throw new RuntimeException("사용 가능한 회기가 없습니다.");
         }
         
-        if (hasTimeConflictWithType(consultantId, date, startTime, consultationType, null)) {
-            throw new RuntimeException("해당 시간대에 이미 스케줄이 존재하거나 시간이 충돌합니다.");
-        }
+        rejectIfTimeSlotOccupied(
+                hasTimeConflictWithType(consultantId, date, startTime, consultationType, null),
+                ScheduleServiceUserFacingMessages.MSG_TIME_SLOT_CONFLICT_OR_TOO_CLOSE);
         
         LocalTime endTime = calculateEndTime(startTime, consultationType);
         
@@ -1932,6 +1933,18 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         return scheduleRepository.save(schedule);
     }
 
+
+    /**
+     * 시간 겹침은 비즈니스 충돌이다. {@link ScheduleTimeConflictException} 으로 올려 409 와 사유를 돌려준다.
+     *
+     * @param occupied 겹침·간격 부족이면 true
+     * @param message  사용자 사유
+     */
+    private void rejectIfTimeSlotOccupied(boolean occupied, String message) {
+        if (occupied) {
+            throw new ScheduleTimeConflictException(message);
+        }
+    }
 
     @Override
     public boolean hasTimeConflict(Long consultantId, LocalDate date, LocalTime startTime, LocalTime endTime, Long excludeScheduleId) {

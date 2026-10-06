@@ -461,7 +461,7 @@ public class OnboardingConstants {
     public static final String TENANT_SEED_EXTRA_PROFESSIONAL_PROVIDER_DEFAULT =
             "{\"systemAuthorityRole\":\"CONSULTANT\",\"isDefault\":true,\"sortOrder\":0}";
 
-    /** 시드: 놀이치료 유형. ABA 는 기본 시드에 넣지 않고 코드 관리에서만 추가한다. */
+    /** 시드: 놀이치료 유형. */
     public static final String TENANT_SEED_CODE_VALUE_PROFESSIONAL_PROVIDER_PLAY_THERAPY = "PLAY_THERAPY";
 
     public static final String TENANT_SEED_LABEL_PROFESSIONAL_PROVIDER_PLAY_THERAPY = "놀이치료";
@@ -486,6 +486,100 @@ public class OnboardingConstants {
             "{\"systemAuthorityRole\":\"CONSULTANT\",\"isDefault\":false,\"sortOrder\":20}";
 
     public static final int TENANT_SEED_SORT_PROFESSIONAL_PROVIDER_SPEECH_THERAPY = 20;
+
+    /** 시드: ABA. 시스템 권한은 CONSULTANT, 전문화는 code_value. */
+    public static final String TENANT_SEED_CODE_VALUE_PROFESSIONAL_PROVIDER_ABA_THERAPY = "ABA_THERAPY";
+
+    public static final String TENANT_SEED_LABEL_PROFESSIONAL_PROVIDER_ABA_THERAPY = "ABA";
+
+    public static final String TENANT_SEED_DESC_PROFESSIONAL_PROVIDER_ABA_THERAPY =
+            "전문가 유형(ABA) — 테넌트 공통 선택지";
+
+    public static final String TENANT_SEED_EXTRA_PROFESSIONAL_PROVIDER_ABA_THERAPY =
+            "{\"systemAuthorityRole\":\"CONSULTANT\",\"isDefault\":false,\"sortOrder\":30}";
+
+    public static final int TENANT_SEED_SORT_PROFESSIONAL_PROVIDER_ABA_THERAPY = 30;
+
+    /** 시드: 미술치료. */
+    public static final String TENANT_SEED_CODE_VALUE_PROFESSIONAL_PROVIDER_ART_THERAPY = "ART_THERAPY";
+
+    public static final String TENANT_SEED_LABEL_PROFESSIONAL_PROVIDER_ART_THERAPY = "미술치료";
+
+    public static final String TENANT_SEED_DESC_PROFESSIONAL_PROVIDER_ART_THERAPY =
+            "전문가 유형(미술치료) — 테넌트 공통 선택지";
+
+    public static final String TENANT_SEED_EXTRA_PROFESSIONAL_PROVIDER_ART_THERAPY =
+            "{\"systemAuthorityRole\":\"CONSULTANT\",\"isDefault\":false,\"sortOrder\":40}";
+
+    public static final int TENANT_SEED_SORT_PROFESSIONAL_PROVIDER_ART_THERAPY = 40;
+
+    /** 시드: 음악치료. */
+    public static final String TENANT_SEED_CODE_VALUE_PROFESSIONAL_PROVIDER_MUSIC_THERAPY = "MUSIC_THERAPY";
+
+    public static final String TENANT_SEED_LABEL_PROFESSIONAL_PROVIDER_MUSIC_THERAPY = "음악치료";
+
+    public static final String TENANT_SEED_DESC_PROFESSIONAL_PROVIDER_MUSIC_THERAPY =
+            "전문가 유형(음악치료) — 테넌트 공통 선택지";
+
+    public static final String TENANT_SEED_EXTRA_PROFESSIONAL_PROVIDER_MUSIC_THERAPY =
+            "{\"systemAuthorityRole\":\"CONSULTANT\",\"isDefault\":false,\"sortOrder\":50}";
+
+    public static final int TENANT_SEED_SORT_PROFESSIONAL_PROVIDER_MUSIC_THERAPY = 50;
+
+    /** 시드: 작업치료. */
+    public static final String TENANT_SEED_CODE_VALUE_PROFESSIONAL_PROVIDER_OCCUPATIONAL_THERAPY =
+            "OCCUPATIONAL_THERAPY";
+
+    public static final String TENANT_SEED_LABEL_PROFESSIONAL_PROVIDER_OCCUPATIONAL_THERAPY = "작업치료";
+
+    public static final String TENANT_SEED_DESC_PROFESSIONAL_PROVIDER_OCCUPATIONAL_THERAPY =
+            "전문가 유형(작업치료) — 테넌트 공통 선택지";
+
+    public static final String TENANT_SEED_EXTRA_PROFESSIONAL_PROVIDER_OCCUPATIONAL_THERAPY =
+            "{\"systemAuthorityRole\":\"CONSULTANT\",\"isDefault\":false,\"sortOrder\":60}";
+
+    public static final int TENANT_SEED_SORT_PROFESSIONAL_PROVIDER_OCCUPATIONAL_THERAPY = 60;
+
+    /** 시드: 감각통합치료. */
+    public static final String TENANT_SEED_CODE_VALUE_PROFESSIONAL_PROVIDER_SENSORY_INTEGRATION =
+            "SENSORY_INTEGRATION";
+
+    public static final String TENANT_SEED_LABEL_PROFESSIONAL_PROVIDER_SENSORY_INTEGRATION = "감각통합치료";
+
+    public static final String TENANT_SEED_DESC_PROFESSIONAL_PROVIDER_SENSORY_INTEGRATION =
+            "전문가 유형(감각통합치료) — 테넌트 공통 선택지";
+
+    public static final String TENANT_SEED_EXTRA_PROFESSIONAL_PROVIDER_SENSORY_INTEGRATION =
+            "{\"systemAuthorityRole\":\"CONSULTANT\",\"isDefault\":false,\"sortOrder\":70}";
+
+    public static final int TENANT_SEED_SORT_PROFESSIONAL_PROVIDER_SENSORY_INTEGRATION = 70;
+
+    /** 시드: 인지학습치료. */
+    public static final String TENANT_SEED_CODE_VALUE_PROFESSIONAL_PROVIDER_COGNITIVE_THERAPY = "COGNITIVE_THERAPY";
+
+    public static final String TENANT_SEED_LABEL_PROFESSIONAL_PROVIDER_COGNITIVE_THERAPY = "인지학습치료";
+
+    public static final String TENANT_SEED_DESC_PROFESSIONAL_PROVIDER_COGNITIVE_THERAPY =
+            "전문가 유형(인지학습치료) — 테넌트 공통 선택지";
+
+    public static final String TENANT_SEED_EXTRA_PROFESSIONAL_PROVIDER_COGNITIVE_THERAPY =
+            "{\"systemAuthorityRole\":\"CONSULTANT\",\"isDefault\":false,\"sortOrder\":80}";
+
+    public static final int TENANT_SEED_SORT_PROFESSIONAL_PROVIDER_COGNITIVE_THERAPY = 80;
+
+    /** 시드: 임상심리사(심리검사). */
+    public static final String TENANT_SEED_CODE_VALUE_PROFESSIONAL_PROVIDER_CLINICAL_PSYCHOLOGIST =
+            "CLINICAL_PSYCHOLOGIST";
+
+    public static final String TENANT_SEED_LABEL_PROFESSIONAL_PROVIDER_CLINICAL_PSYCHOLOGIST = "임상심리사(심리검사)";
+
+    public static final String TENANT_SEED_DESC_PROFESSIONAL_PROVIDER_CLINICAL_PSYCHOLOGIST =
+            "전문가 유형(임상심리사(심리검사)) — 테넌트 공통 선택지";
+
+    public static final String TENANT_SEED_EXTRA_PROFESSIONAL_PROVIDER_CLINICAL_PSYCHOLOGIST =
+            "{\"systemAuthorityRole\":\"CONSULTANT\",\"isDefault\":false,\"sortOrder\":90}";
+
+    public static final int TENANT_SEED_SORT_PROFESSIONAL_PROVIDER_CLINICAL_PSYCHOLOGIST = 90;
 
     public static final String TENANT_BUSINESS_TYPE_CONSULTATION = "CONSULTATION";
     public static final String TENANT_BUSINESS_TYPE_COUNSELING = "COUNSELING";

@@ -25,6 +25,7 @@ import {
   resolveMovedScheduleEnd
 } from '../../utils/scheduleRescheduleUtils';
 import {
+  getScheduleCreateInPastMessage,
   getScheduleMoveSourceLockedMessage,
   getScheduleMoveToPastMessage,
   isScheduleMoveSourceLocked,
@@ -677,7 +678,10 @@ const UnifiedScheduleComponent = ({
                         return null;
                     }
                     
-                    const isDragLocked = isScheduleMoveSourceLocked({ status: schedule.status });
+                    const isDragLocked = isScheduleMoveSourceLocked({
+                        status: schedule.status,
+                        start: startDateStr
+                    });
                     return {
                         id: schedule.id,
                         title: schedule.title || t('schedule:UnifiedScheduleComponent.t_c023a4c5'),
@@ -827,7 +831,10 @@ const UnifiedScheduleComponent = ({
                             return null;
                         }
                         
-                        const isDragLocked = isScheduleMoveSourceLocked({ status: schedule.status });
+                        const isDragLocked = isScheduleMoveSourceLocked({
+                            status: schedule.status,
+                            start: startDateStr
+                        });
                         return {
                             id: schedule.id,
                             title: schedule.title || t('schedule:UnifiedScheduleComponent.t_c023a4c5'),
@@ -1023,11 +1030,11 @@ const UnifiedScheduleComponent = ({
         
         // 관리자·스텝은 스케줄/휴가 선택 모달 표시
         if (isAdminLikeScheduleUserRole(userRole)) {
-            if (isPastDate) {
-                notificationManager.warning(t('schedule:UnifiedScheduleComponent.t_6a4cece6'));
+            if (isScheduleMoveTargetInPast(info.date)) {
+                notificationManager.warning(getScheduleCreateInPastMessage());
                 return;
             }
-            
+
             setSelectedDate(info.date);
             setSelectedInfo(info);
             setIsDateActionModalOpen(true);
@@ -1213,7 +1220,7 @@ const UnifiedScheduleComponent = ({
         const originalStart = info.oldEvent?.start ?? event.start;
         const originalEnd = info.oldEvent?.end ?? event.end;
         // 완료·취소 스케줄만 잠금. 원래 시각이 지났어도 미래로는 다시 옮길 수 있다.
-        const lockedMessage = getScheduleMoveSourceLockedMessage({ status });
+        const lockedMessage = getScheduleMoveSourceLockedMessage({ status, start: originalStart });
         if (lockedMessage) {
             info.revert();
             notificationManager.warning(lockedMessage);

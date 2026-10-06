@@ -110,8 +110,7 @@ describe('UnifiedScheduleComponent 일정 이동 — 이동 후 시각 판정', 
     expect(notificationManager.warning).toHaveBeenCalledWith(expect.stringContaining('일정을 옮길 수 없습니다'));
   });
 
-  test('이미 지난 일정(어제 11:00)을 미래 칸(모레 11:00)으로 → PUT 호출', async() => {
-    StandardizedApi.put.mockResolvedValue({ scheduleId: 501 });
+  test('이미 지난 일정(어제 11:00)을 미래 칸으로 → API 미호출 + 지난 일정 안내', async() => {
     const calendar = await renderAndGetDrop();
     const info = dropInfo({ oldStart: at(-1, 11), newStart: at(2, 11) });
 
@@ -119,10 +118,9 @@ describe('UnifiedScheduleComponent 일정 이동 — 이동 후 시각 판정', 
       await calendar.onEventDrop(info);
     });
 
-    expect(StandardizedApi.put).toHaveBeenCalledTimes(1);
-    expect(StandardizedApi.put.mock.calls[0][0]).toBe('/api/v1/schedules/501');
-    expect(info.revert).not.toHaveBeenCalled();
-    expect(notificationManager.warning).not.toHaveBeenCalled();
+    expect(StandardizedApi.put).not.toHaveBeenCalled();
+    expect(info.revert).toHaveBeenCalled();
+    expect(notificationManager.warning).toHaveBeenCalledWith(expect.stringContaining('지난 일정'));
   });
 
   test('완료 일정은 미래 칸이어도 API 미호출 + 완료 잠금 안내', async() => {
@@ -160,5 +158,19 @@ describe('UnifiedScheduleComponent 일정 이동 — 이동 후 시각 판정', 
       calendar.onEventMoveRejected('사유');
     });
     expect(notificationManager.warning).toHaveBeenCalledWith('사유');
+  });
+
+  test('과거 슬롯 클릭(생성)은 API 미호출 + 안내', async() => {
+    const calendar = await renderAndGetDrop();
+    await act(async() => {
+      calendar.onDateClick({
+        date: at(-1, 11),
+        dateStr: 'past',
+        view: { type: 'timeGridDay' }
+      });
+    });
+    expect(StandardizedApi.put).not.toHaveBeenCalled();
+    expect(StandardizedApi.post).not.toHaveBeenCalled();
+    expect(notificationManager.warning).toHaveBeenCalledWith(expect.stringContaining('등록할 수 없습니다'));
   });
 });

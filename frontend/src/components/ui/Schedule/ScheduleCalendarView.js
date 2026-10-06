@@ -30,6 +30,9 @@ import {
 } from '../../../utils/krPublicHolidays';
 import { USER_ROLES, mapLegacyRole } from '../../../constants/roles';
 import {
+  appendScheduleMoveLockTooltip,
+  getScheduleCreateInPastMessage,
+  getScheduleMoveSourceLockedMessage,
   getScheduleMoveToPastMessage,
   isScheduleMoveSourceLocked,
   isScheduleMoveTargetInPast,
@@ -242,8 +245,16 @@ const ScheduleCalendarView = ({
             zoomToDayView(info.date, viewType);
             return;
         }
+        if (isScheduleMoveTargetInPast(info?.date)) {
+            onEventMoveRejected?.(getScheduleCreateInPastMessage());
+            return;
+        }
         onDateClick?.(info);
-    }, [onDateClick, zoomToDayView]);
+    }, [onDateClick, onEventMoveRejected, zoomToDayView]);
+
+    const handleSelectAllow = useCallback((selectInfo) => {
+        return !isScheduleMoveTargetInPast(selectInfo?.start);
+    }, []);
 
     const handleDatesSet = useCallback((arg) => {
         const viewType = arg.view?.type;
@@ -433,7 +444,7 @@ const ScheduleCalendarView = ({
         if (props.slotDragLocked === true) {
             return false;
         }
-        if (isScheduleMoveSourceLocked({ status: props.status })) {
+        if (isScheduleMoveSourceLocked({ status: props.status, start: draggedEvent?.start })) {
             return false;
         }
         const targetInPast = isScheduleMoveTargetInPast(resolveScheduleMoveTarget(
@@ -506,6 +517,10 @@ const ScheduleCalendarView = ({
             return null;
         }
         const { extendedProps } = event;
+        const sourceLockReason = getScheduleMoveSourceLockedMessage({
+            status: extendedProps?.status,
+            start: event.start
+        });
         const isMonthView = eventInfo.view?.type === CALENDAR_VIEW_MONTH;
         const isPastOrCompleted = isEventPastOrCompleted(event);
         const pastClass = isPastOrCompleted ? ' mg-v2-ad-calendar-event--past' : '';
@@ -592,7 +607,10 @@ const ScheduleCalendarView = ({
             return (
                 <div
                     className={`mg-v2-ad-calendar-event mg-v2-ad-calendar-event--compact${integratedMod}${unresolvedMod}${pastClass}${cancelledClass}`.trim()}
-                    title={integratedMonthEventLayout ? integratedMonthLabel : fullTooltip}
+                    title={appendScheduleMoveLockTooltip(
+                        integratedMonthEventLayout ? integratedMonthLabel : fullTooltip,
+                        sourceLockReason
+                    )}
                     aria-label={integratedMonthEventLayout ? integratedMonthLabel : fullTooltip}
                     style={integratedMonthEventLayout ? undefined : { borderLeftColor: borderColor }}
                 >
@@ -640,7 +658,7 @@ const ScheduleCalendarView = ({
         return (
             <div
                 className={`mg-v2-ad-calendar-event${pastClass}${cancelledClass}`.trim()}
-                title={`${clientName} - ${statusLabel}`}
+                title={appendScheduleMoveLockTooltip(`${clientName} - ${statusLabel}`, sourceLockReason)}
             >
                 <div className="mg-v2-ad-calendar-event__time">{eventInfo.timeText}</div>
                 <div className="mg-v2-ad-calendar-event__title">
@@ -685,6 +703,7 @@ const ScheduleCalendarView = ({
                 eventClassNames={eventClassNames}
                 eventContent={renderEventContent}
                 dateClick={handleDateClick}
+                selectAllow={handleSelectAllow}
                 eventClick={onEventClick}
                 eventDrop={onEventDrop}
                 eventResize={onEventResize || onEventDrop}

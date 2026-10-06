@@ -1,16 +1,21 @@
 /**
- * scheduleMoveGuard — 이동 후 시각 과거 판정·원본 상태 잠금·실패 문구
+ * scheduleMoveGuard — 원래 시작·이동 후 시각 과거 판정·원본 상태 잠금·실패 문구
  *
  * 기준 현재 = 2026-10-06 14:00 KST (Asia/Seoul).
  */
 import {
+  SCHEDULE_CREATE_IN_PAST_ERROR_CODE,
+  SCHEDULE_MOVE_FROM_PAST_ERROR_CODE,
   SCHEDULE_MOVE_TO_PAST_ERROR_CODE,
+  appendScheduleMoveLockTooltip,
+  getScheduleCreateInPastMessage,
+  getScheduleMoveFromPastMessage,
   getScheduleMoveSourceLockedMessage,
   getScheduleMoveToPastMessage,
   isScheduleMoveSourceLocked,
   isScheduleMoveTargetInPast,
   isScheduleMoveTargetKeyInPast,
-  isScheduleMoveToPastError,
+  isSchedulePastTimeError,
   resolveCalendarDropTargetStart,
   resolveScheduleMoveFailureMessage,
   resolveScheduleMoveTarget
@@ -84,26 +89,59 @@ describe('scheduleMoveGuard', () => {
     expect(resolveCalendarDropTargetStart({ start: null }, dragged)).toBeNull();
   });
 
-  test('원본 잠금은 완료·취소만 — 지난 BOOKED 일정은 잠그지 않음', () => {
-    expect(isScheduleMoveSourceLocked({ status: 'COMPLETED' })).toBe(true);
-    expect(isScheduleMoveSourceLocked({ status: 'CANCELLED' })).toBe(true);
-    expect(isScheduleMoveSourceLocked({ status: 'BOOKED' })).toBe(false);
-    expect(getScheduleMoveSourceLockedMessage({ status: 'COMPLETED' })).toBe(SCHEDULE_DRAG_LOCKED_COMPLETED_MESSAGE);
-    expect(getScheduleMoveSourceLockedMessage({ status: 'CANCELLED' })).toBe(SCHEDULE_DRAG_LOCKED_CANCELLED_MESSAGE);
-    expect(getScheduleMoveSourceLockedMessage({ status: 'BOOKED' })).toBeNull();
+  test('원본 잠금은 완료·취소 또는 지난 시작 — 미래 BOOKED 는 잠그지 않음', () => {
+    expect(isScheduleMoveSourceLocked({ status: 'COMPLETED' }, NOW)).toBe(true);
+    expect(isScheduleMoveSourceLocked({ status: 'CANCELLED' }, NOW)).toBe(true);
+    expect(isScheduleMoveSourceLocked({
+      status: 'BOOKED',
+      start: localDate(2026, 10, 6, 11, 0)
+    }, NOW)).toBe(true);
+    expect(isScheduleMoveSourceLocked({
+      status: 'BOOKED',
+      start: localDate(2026, 10, 8, 11, 0)
+    }, NOW)).toBe(false);
+    expect(getScheduleMoveSourceLockedMessage({ status: 'COMPLETED' }, NOW))
+      .toBe(SCHEDULE_DRAG_LOCKED_COMPLETED_MESSAGE);
+    expect(getScheduleMoveSourceLockedMessage({ status: 'CANCELLED' }, NOW))
+      .toBe(SCHEDULE_DRAG_LOCKED_CANCELLED_MESSAGE);
+    expect(getScheduleMoveSourceLockedMessage({
+      status: 'BOOKED',
+      start: localDate(2026, 10, 6, 11, 0)
+    }, NOW)).toBe('t:schedule:constants.scheduleMove.fromPast');
+    expect(getScheduleMoveSourceLockedMessage({
+      status: 'BOOKED',
+      start: localDate(2026, 10, 8, 11, 0)
+    }, NOW)).toBeNull();
   });
 
   test('안내 문구는 i18n 키(ko 리소스 존재)', () => {
     expect(getScheduleMoveToPastMessage()).toBe('t:schedule:constants.scheduleMove.toPast');
+    expect(getScheduleMoveFromPastMessage()).toBe('t:schedule:constants.scheduleMove.fromPast');
+    expect(getScheduleCreateInPastMessage()).toBe('t:schedule:constants.scheduleMove.createInPast');
     expect(koSchedule.constants.scheduleMove.toPast).toEqual(expect.any(String));
+    expect(koSchedule.constants.scheduleMove.fromPast).toEqual(expect.any(String));
+    expect(koSchedule.constants.scheduleMove.createInPast).toEqual(expect.any(String));
+  });
+
+  test('appendScheduleMoveLockTooltip — 사유가 있으면 title 뒤에 붙임', () => {
+    expect(appendScheduleMoveLockTooltip('내담자 · 확정됨', '지난 일정')).toBe('내담자 · 확정됨 — 지난 일정');
+    expect(appendScheduleMoveLockTooltip('내담자', null)).toBe('내담자');
   });
 
   describe('resolveScheduleMoveFailureMessage', () => {
-    test('400 SCHEDULE_MOVE_TO_PAST → 과거 이동 안내', () => {
-      const error = { status: 400, response: { data: { errorCode: SCHEDULE_MOVE_TO_PAST_ERROR_CODE } } };
-      expect(isScheduleMoveToPastError(error)).toBe(true);
-      expect(resolveScheduleMoveFailureMessage(error, 'fallback'))
+    test('400 세 errorCode → 각각 i18n 안내', () => {
+      const fromPast = { status: 400, response: { data: { errorCode: SCHEDULE_MOVE_FROM_PAST_ERROR_CODE } } };
+      const toPast = { status: 400, response: { data: { errorCode: SCHEDULE_MOVE_TO_PAST_ERROR_CODE } } };
+      const create = { status: 400, response: { data: { errorCode: SCHEDULE_CREATE_IN_PAST_ERROR_CODE } } };
+      expect(isSchedulePastTimeError(fromPast)).toBe(true);
+      expect(isSchedulePastTimeError(toPast)).toBe(true);
+      expect(isSchedulePastTimeError(create)).toBe(true);
+      expect(resolveScheduleMoveFailureMessage(fromPast, 'fallback'))
+        .toBe('t:schedule:constants.scheduleMove.fromPast');
+      expect(resolveScheduleMoveFailureMessage(toPast, 'fallback'))
         .toBe('t:schedule:constants.scheduleMove.toPast');
+      expect(resolveScheduleMoveFailureMessage(create, 'fallback'))
+        .toBe('t:schedule:constants.scheduleMove.createInPast');
     });
 
     test('그 외 400 은 서버 사유(완료 일정 등)', () => {

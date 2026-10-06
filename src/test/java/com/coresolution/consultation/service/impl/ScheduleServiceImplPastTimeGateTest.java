@@ -13,7 +13,7 @@ import com.coresolution.consultation.constant.ScheduleServiceUserFacingMessages;
 import com.coresolution.consultation.constant.ScheduleStatus;
 import com.coresolution.consultation.entity.Schedule;
 import com.coresolution.consultation.exception.EntityNotFoundException;
-import com.coresolution.consultation.exception.ScheduleMoveToPastException;
+import com.coresolution.consultation.exception.SchedulePastTimeException;
 import com.coresolution.consultation.repository.NotificationBatchSendLogRepository;
 import com.coresolution.consultation.repository.ScheduleRepository;
 import com.coresolution.consultation.service.ImmediateReservationSmsDeferralService;
@@ -23,7 +23,7 @@ import com.coresolution.consultation.service.ScheduleChangeNotificationDebounceS
 import com.coresolution.consultation.service.ScheduleCreatedNotificationHelper;
 import com.coresolution.consultation.service.ScheduleListUserFieldsResolver;
 import com.coresolution.consultation.util.ReservationSmsBusinessHours;
-import com.coresolution.consultation.util.ScheduleMoveTargetGate;
+import com.coresolution.consultation.util.SchedulePastTimeGate;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.security.TenantAccessControlService;
 import java.time.Clock;
@@ -45,18 +45,18 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.context.SecurityContextHolder;
 
 /**
- * {@link ScheduleServiceImpl#updateSchedule} — 이동 후 시각만으로 과거 판정(KST 고정 시계).
+ * {@link ScheduleServiceImpl} — 원래 시작 또는 이동 후 시각이 현재(KST) 이전이면 이동 거부.
+ * 생성도 같은 시계로 과거 시작을 거부한다. 완료·취소 등 상태만 바꾸는 요청은 허용.
  *
- * <p>현재 = 2026-10-06 14:00 KST. 10/7 11:00 → 10/6 11:00 이동은 거부, 이미 지난 10/6 11:00 일정은
- * 미래로 다시 옮길 수 있어야 한다.</p>
+ * <p>현재 = 2026-10-06 14:00 KST.</p>
  *
  * @author CoreSolution
  * @since 2026-10-06
  */
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
-@DisplayName("ScheduleServiceImpl updateSchedule 이동 후 시각 과거 판정")
-class ScheduleServiceImplMoveTargetPastTest {
+@DisplayName("ScheduleServiceImpl 과거 시각 이동·생성 판정")
+class ScheduleServiceImplPastTimeGateTest {
 
     private static final String TENANT_ID = "tenant-move-target";
     private static final String OTHER_TENANT_ID = "tenant-move-target-other";
@@ -102,21 +102,21 @@ class ScheduleServiceImplMoveTargetPastTest {
     }
 
     @Test
-    @DisplayName("10/7 11:00 → 10/6 11:00(현재 14:00 이전) 이동 → ScheduleMoveToPastException, 저장 없음")
-    void moveToPast_rejected() {
+    @DisplayName("미래 → 과거(10/6 11:00) 이동 → SCHEDULE_MOVE_TO_PAST, 저장 없음")
+    void futureToPast_rejected() {
         stubFind(schedule(ScheduleStatus.CONFIRMED, TODAY.plusDays(1), ELEVEN, ELEVEN_FIFTY));
 
         assertThatThrownBy(() -> scheduleService.updateSchedule(SCHEDULE_ID, slot(TODAY, ELEVEN, ELEVEN_FIFTY)))
-                .isInstanceOf(ScheduleMoveToPastException.class)
-                .hasMessage(ScheduleMoveTargetGate.MOVE_TO_PAST_MESSAGE)
-                .extracting(e -> ((ScheduleMoveToPastException) e).getErrorCode())
-                .isEqualTo(ScheduleMoveTargetGate.MOVE_TO_PAST_ERROR_CODE);
+                .isInstanceOf(SchedulePastTimeException.class)
+                .hasMessage(SchedulePastTimeGate.Denial.MOVE_TO_PAST.getMessage())
+                .extracting(e -> ((SchedulePastTimeException) e).getErrorCode())
+                .isEqualTo(SchedulePastTimeGate.Denial.MOVE_TO_PAST.getErrorCode());
         verify(scheduleRepository, never()).save(any());
     }
 
     @Test
     @DisplayName("미래 → 미래 이동 → 저장")
-    void moveToFuture_allowed() {
+    void futureToFuture_allowed() {
         stubFind(schedule(ScheduleStatus.CONFIRMED, TODAY.plusDays(1), ELEVEN, ELEVEN_FIFTY));
 
         Schedule saved = scheduleService.updateSchedule(SCHEDULE_ID, slot(TODAY.plusDays(2), ELEVEN, ELEVEN_FIFTY));
@@ -126,48 +126,40 @@ class ScheduleServiceImplMoveTargetPastTest {
     }
 
     @Test
-    @DisplayName("이미 지난 일정(10/6 11:00, 잘못 옮겨진 일정)을 미래로 재이동 → 저장")
-    void pastScheduleMovedToFuture_allowed() {
+    @DisplayName("지난 일정(10/6 11:00)을 미래로 이동 → SCHEDULE_MOVE_FROM_PAST, 저장 없음")
+    void pastScheduleMovedToFuture_rejected() {
         stubFind(schedule(ScheduleStatus.CONFIRMED, TODAY, ELEVEN, ELEVEN_FIFTY));
 
-        Schedule saved = scheduleService.updateSchedule(SCHEDULE_ID, slot(TODAY.plusDays(1), ELEVEN, ELEVEN_FIFTY));
-
-        assertThat(saved.getDate()).isEqualTo(TODAY.plusDays(1));
-        assertThat(saved.getStartTime()).isEqualTo(ELEVEN);
-        verify(scheduleRepository).save(any(Schedule.class));
-    }
-
-    @Test
-    @DisplayName("지난 일정을 오늘 현재 이후 시각(15:00)으로 재이동 → 저장")
-    void pastScheduleMovedToLaterToday_allowed() {
-        stubFind(schedule(ScheduleStatus.BOOKED, TODAY.minusDays(2), ELEVEN, ELEVEN_FIFTY));
-
-        Schedule saved = scheduleService.updateSchedule(
-                SCHEDULE_ID, slot(TODAY, LocalTime.of(15, 0), LocalTime.of(15, 50)));
-
-        assertThat(saved.getStartTime()).isEqualTo(LocalTime.of(15, 0));
-    }
-
-    @Test
-    @DisplayName("지난 일정을 다른 과거 시각으로 이동 → 거부")
-    void pastScheduleMovedToPast_rejected() {
-        stubFind(schedule(ScheduleStatus.CONFIRMED, TODAY, ELEVEN, ELEVEN_FIFTY));
-
-        assertThatThrownBy(() -> scheduleService.updateSchedule(
-                SCHEDULE_ID, slot(TODAY, LocalTime.of(13, 0), LocalTime.of(13, 50))))
-                .isInstanceOf(ScheduleMoveToPastException.class);
+        assertThatThrownBy(() ->
+                scheduleService.updateSchedule(SCHEDULE_ID, slot(TODAY.plusDays(1), ELEVEN, ELEVEN_FIFTY)))
+                .isInstanceOf(SchedulePastTimeException.class)
+                .extracting(e -> ((SchedulePastTimeException) e).getErrorCode())
+                .isEqualTo(SchedulePastTimeGate.Denial.MOVE_FROM_PAST.getErrorCode());
         verify(scheduleRepository, never()).save(any());
     }
 
     @Test
-    @DisplayName("COMPLETED 일정은 미래로도 이동 불가 — 기존 문구 유지(과거 이동 예외 아님)")
+    @DisplayName("지난 일정을 오늘 현재 이후 시각으로 이동 → SCHEDULE_MOVE_FROM_PAST")
+    void pastScheduleMovedToLaterToday_rejected() {
+        stubFind(schedule(ScheduleStatus.BOOKED, TODAY.minusDays(2), ELEVEN, ELEVEN_FIFTY));
+
+        assertThatThrownBy(() -> scheduleService.updateSchedule(
+                SCHEDULE_ID, slot(TODAY, LocalTime.of(15, 0), LocalTime.of(15, 50))))
+                .isInstanceOf(SchedulePastTimeException.class)
+                .extracting(e -> ((SchedulePastTimeException) e).getErrorCode())
+                .isEqualTo(SchedulePastTimeGate.Denial.MOVE_FROM_PAST.getErrorCode());
+        verify(scheduleRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("COMPLETED 일정은 미래로도 이동 불가 — 기존 문구 유지(과거 시각 예외 아님)")
     void completed_existingErrorUnchanged() {
         stubFind(schedule(ScheduleStatus.COMPLETED, TODAY.minusDays(1), ELEVEN, ELEVEN_FIFTY));
 
         assertThatThrownBy(() -> scheduleService.updateSchedule(
                 SCHEDULE_ID, slot(TODAY.plusDays(1), ELEVEN, ELEVEN_FIFTY)))
                 .isInstanceOf(IllegalStateException.class)
-                .isNotInstanceOf(ScheduleMoveToPastException.class)
+                .isNotInstanceOf(SchedulePastTimeException.class)
                 .hasMessage(ScheduleServiceUserFacingMessages.MSG_COMPLETED_SLOT_CHANGE_DENIED);
         verify(scheduleRepository, never()).save(any());
     }
@@ -189,7 +181,7 @@ class ScheduleServiceImplMoveTargetPastTest {
         stubFind(schedule(ScheduleStatus.CONFIRMED, TODAY.plusDays(1), ELEVEN, ELEVEN_FIFTY));
         assertThatThrownBy(() -> scheduleService.updateSchedule(
                 SCHEDULE_ID, slot(TODAY, LocalTime.of(13, 59), LocalTime.of(14, 49))))
-                .isInstanceOf(ScheduleMoveToPastException.class);
+                .isInstanceOf(SchedulePastTimeException.class);
 
         stubFind(schedule(ScheduleStatus.CONFIRMED, TODAY.plusDays(1), ELEVEN, ELEVEN_FIFTY));
         assertThat(scheduleService.updateSchedule(
@@ -209,7 +201,7 @@ class ScheduleServiceImplMoveTargetPastTest {
         stubFind(schedule(ScheduleStatus.CONFIRMED, TODAY.plusDays(3), ELEVEN, ELEVEN_FIFTY));
         assertThatThrownBy(() -> scheduleService.updateSchedule(
                 SCHEDULE_ID, slot(TODAY, LocalTime.of(23, 30), LocalTime.of(23, 59))))
-                .isInstanceOf(ScheduleMoveToPastException.class);
+                .isInstanceOf(SchedulePastTimeException.class);
 
         stubFind(schedule(ScheduleStatus.CONFIRMED, TODAY.plusDays(3), ELEVEN, ELEVEN_FIFTY));
         assertThat(scheduleService.updateSchedule(
@@ -225,19 +217,21 @@ class ScheduleServiceImplMoveTargetPastTest {
 
         assertThatThrownBy(() -> scheduleService.updateSchedule(
                 SCHEDULE_ID, slot(TODAY, LocalTime.of(23, 30), LocalTime.of(23, 59))))
-                .isInstanceOf(ScheduleMoveToPastException.class);
+                .isInstanceOf(SchedulePastTimeException.class);
     }
 
     @Test
-    @DisplayName("진행 중 일정 종료만 늘림(리사이즈, 새 종료 미래) → 허용 / 새 종료 과거 → 거부")
-    void endOnlyResize_judgedByNewEnd() {
-        stubFind(schedule(ScheduleStatus.CONFIRMED, TODAY, LocalTime.of(13, 30), LocalTime.of(14, 20)));
-        assertThat(scheduleService.updateSchedule(SCHEDULE_ID, endOnly(LocalTime.of(14, 40))).getEndTime())
-                .isEqualTo(LocalTime.of(14, 40));
+    @DisplayName("미래 일정 종료만 늘림(리사이즈)은 허용, 지난 일정 리사이즈는 MOVE_FROM_PAST")
+    void endOnlyResize_originPastRejected() {
+        stubFind(schedule(ScheduleStatus.CONFIRMED, TODAY.plusDays(1), ELEVEN, ELEVEN_FIFTY));
+        assertThat(scheduleService.updateSchedule(SCHEDULE_ID, endOnly(LocalTime.of(12, 30))).getEndTime())
+                .isEqualTo(LocalTime.of(12, 30));
 
-        stubFind(schedule(ScheduleStatus.CONFIRMED, TODAY, LocalTime.of(13, 0), LocalTime.of(13, 50)));
-        assertThatThrownBy(() -> scheduleService.updateSchedule(SCHEDULE_ID, endOnly(LocalTime.of(13, 40))))
-                .isInstanceOf(ScheduleMoveToPastException.class);
+        stubFind(schedule(ScheduleStatus.CONFIRMED, TODAY, LocalTime.of(13, 30), LocalTime.of(14, 20)));
+        assertThatThrownBy(() -> scheduleService.updateSchedule(SCHEDULE_ID, endOnly(LocalTime.of(14, 40))))
+                .isInstanceOf(SchedulePastTimeException.class)
+                .extracting(e -> ((SchedulePastTimeException) e).getErrorCode())
+                .isEqualTo(SchedulePastTimeGate.Denial.MOVE_FROM_PAST.getErrorCode());
     }
 
     @Test
@@ -248,6 +242,18 @@ class ScheduleServiceImplMoveTargetPastTest {
         patch.setTitle("memo");
 
         assertThat(scheduleService.updateSchedule(SCHEDULE_ID, patch).getTitle()).isEqualTo("memo");
+    }
+
+    @Test
+    @DisplayName("지난 일정 상태만 취소 → 허용(일시 변경 아님)")
+    void pastSchedule_statusCancel_allowed() {
+        stubFind(schedule(ScheduleStatus.BOOKED, TODAY.minusDays(1), ELEVEN, ELEVEN_FIFTY));
+        Schedule patch = new Schedule();
+        patch.setStatus(ScheduleStatus.CANCELLED);
+
+        assertThat(scheduleService.updateSchedule(SCHEDULE_ID, patch).getStatus())
+                .isEqualTo(ScheduleStatus.CANCELLED);
+        verify(scheduleRepository).save(any(Schedule.class));
     }
 
     @Test
@@ -274,12 +280,47 @@ class ScheduleServiceImplMoveTargetPastTest {
     }
 
     @Test
-    @DisplayName("requireMoveTargetNotInPast — 과거 거부, null 대상 판정 생략")
-    void requireMoveTargetNotInPast_direct() {
-        assertThatThrownBy(() -> scheduleService.requireMoveTargetNotInPast(9L, TODAY.atTime(13, 0)))
-                .isInstanceOf(ScheduleMoveToPastException.class);
-        scheduleService.requireMoveTargetNotInPast(9L, TODAY.atTime(15, 0));
-        scheduleService.requireMoveTargetNotInPast(9L, null);
+    @DisplayName("requireMoveTimesNotInPast — 원래·목적지 과거 거부, null 은 해당 축 생략")
+    void requireMoveTimesNotInPast_direct() {
+        assertThatThrownBy(() ->
+                scheduleService.requireMoveTimesNotInPast(9L, TODAY.atTime(13, 0), TODAY.atTime(15, 0)))
+                .isInstanceOf(SchedulePastTimeException.class)
+                .extracting(e -> ((SchedulePastTimeException) e).getErrorCode())
+                .isEqualTo(SchedulePastTimeGate.Denial.MOVE_FROM_PAST.getErrorCode());
+        assertThatThrownBy(() ->
+                scheduleService.requireMoveTimesNotInPast(9L, TODAY.plusDays(1).atTime(11, 0), TODAY.atTime(13, 0)))
+                .isInstanceOf(SchedulePastTimeException.class)
+                .extracting(e -> ((SchedulePastTimeException) e).getErrorCode())
+                .isEqualTo(SchedulePastTimeGate.Denial.MOVE_TO_PAST.getErrorCode());
+        scheduleService.requireMoveTimesNotInPast(9L, TODAY.atTime(15, 0), TODAY.atTime(16, 0));
+        scheduleService.requireMoveTimesNotInPast(9L, null, null);
+    }
+
+    @Test
+    @DisplayName("requireCreateStartNotInPast — 과거 거부, 현재·이후·날짜 null 허용")
+    void requireCreateStartNotInPast_direct() {
+        assertThatThrownBy(() -> scheduleService.requireCreateStartNotInPast(TODAY, LocalTime.of(13, 59)))
+                .isInstanceOf(SchedulePastTimeException.class)
+                .extracting(e -> ((SchedulePastTimeException) e).getErrorCode())
+                .isEqualTo(SchedulePastTimeGate.Denial.CREATE_IN_PAST.getErrorCode());
+        scheduleService.requireCreateStartNotInPast(TODAY, LocalTime.of(14, 0));
+        scheduleService.requireCreateStartNotInPast(TODAY.plusDays(1), ELEVEN);
+        scheduleService.requireCreateStartNotInPast(null, ELEVEN);
+    }
+
+    @Test
+    @DisplayName("createSchedule 과거 시작 → CREATE_IN_PAST, 저장 없음")
+    void createSchedule_pastStart_rejected() {
+        Schedule incoming = new Schedule();
+        incoming.setDate(TODAY);
+        incoming.setStartTime(ELEVEN);
+        incoming.setTitle("past-create");
+
+        assertThatThrownBy(() -> scheduleService.createSchedule(incoming))
+                .isInstanceOf(SchedulePastTimeException.class)
+                .extracting(e -> ((SchedulePastTimeException) e).getErrorCode())
+                .isEqualTo(SchedulePastTimeGate.Denial.CREATE_IN_PAST.getErrorCode());
+        verify(scheduleRepository, never()).save(any());
     }
 
     private void useKstNow(LocalDateTime kstNow) {

@@ -12,7 +12,9 @@ import {
   hasConsultantScheduleTimeOverlap
 } from '../../utils/scheduleRescheduleUtils';
 import {
+  getScheduleMoveSourceLockedMessage,
   getScheduleMoveToPastMessage,
+  isScheduleMoveSourceLocked,
   isScheduleMoveTargetInPast,
   resolveScheduleMoveFailureMessage
 } from '../../utils/scheduleMoveGuard';
@@ -160,6 +162,18 @@ const RescheduleScheduleModal = ({
     }
     if (!selectedTimeSlot?.time || !selectedTimeSlot?.endTime) {
       next.push(ERR_SLOT_REQUIRED);
+      return next;
+    }
+    const originDate = schedulePayload.apiDate || schedulePayload.date || dateStr;
+    const originStart = combineDateAndTimeHm(
+      originDate,
+      toHm(schedulePayload.apiStartTime ?? schedulePayload.startTime)
+    );
+    if (isScheduleMoveSourceLocked({ status: schedulePayload.status, start: originStart })) {
+      next.push(getScheduleMoveSourceLockedMessage({
+        status: schedulePayload.status,
+        start: originStart
+      }));
       return next;
     }
     const startD = combineDateAndTimeHm(dateStr, selectedTimeSlot.time);

@@ -1,11 +1,11 @@
 /**
- * 일정 일시 이동(캘린더 드래그·리사이즈·예약 변경 모달) 허용 판정 SSOT.
+ * 일정 생성·일시 이동(캘린더 드래그·리사이즈·예약 변경 모달) 과거 시각 판정 SSOT.
  *
- * - 원래 일정: 완료·취소 상태만 잠근다. 원래 시각이 지났다는 이유로는 잠그지 않는다
- *   (잘못 지난 시각으로 옮겨진 일정도 화면에서 미래로 다시 옮길 수 있어야 한다).
- * - 이동 후 시각: 운영 타임존(서버 ScheduleMoveTargetGate 와 동일) 현재 시각보다 이전이면 거부.
- *   PUT 본문(buildScheduleDatetimeUpdateBody)과 같은 벽시계 값으로 판정한다.
- * 최종 판정은 서버(400 SCHEDULE_MOVE_TO_PAST)가 한다.
+ * - 원래 일정: 완료·취소 상태이거나 시작 시각이 지났으면 이동 잠금(드래그 핸들 비활성).
+ * - 이동 후 시각: 운영 타임존 현재 시각보다 이전이면 거부.
+ * - 생성: 시작이 현재보다 이전이면 칸 선택 불가.
+ * PUT 본문(buildScheduleDatetimeUpdateBody)과 같은 벽시계 값으로 판정한다.
+ * 최종 판정은 서버(400 SCHEDULE_MOVE_FROM_PAST / SCHEDULE_MOVE_TO_PAST / SCHEDULE_CREATE_IN_PAST)가 한다.
  *
  * @author CoreSolution
  * @since 2026-10-06
@@ -19,18 +19,34 @@ import {
   isScheduleStatusSlotLocked
 } from './scheduleRescheduleUtils';
 
-/** 서버 과거 이동 거부 오류 코드 (ScheduleMoveTargetGate.MOVE_TO_PAST_ERROR_CODE). */
+/** 서버 과거 이동·생성 거부 오류 코드 (SchedulePastTimeGate.Denial). */
+export const SCHEDULE_MOVE_FROM_PAST_ERROR_CODE = 'SCHEDULE_MOVE_FROM_PAST';
 export const SCHEDULE_MOVE_TO_PAST_ERROR_CODE = 'SCHEDULE_MOVE_TO_PAST';
+export const SCHEDULE_CREATE_IN_PAST_ERROR_CODE = 'SCHEDULE_CREATE_IN_PAST';
 
-/** 과거 시각 이동 거부 안내 문구 i18n 키 */
+export const SCHEDULE_PAST_TIME_ERROR_CODES = [
+  SCHEDULE_MOVE_FROM_PAST_ERROR_CODE,
+  SCHEDULE_MOVE_TO_PAST_ERROR_CODE,
+  SCHEDULE_CREATE_IN_PAST_ERROR_CODE
+];
+
+/** 과거 시각 거부 안내 문구 i18n 키 */
+export const SCHEDULE_MOVE_FROM_PAST_I18N_KEY = 'schedule:constants.scheduleMove.fromPast';
 export const SCHEDULE_MOVE_TO_PAST_I18N_KEY = 'schedule:constants.scheduleMove.toPast';
+export const SCHEDULE_CREATE_IN_PAST_I18N_KEY = 'schedule:constants.scheduleMove.createInPast';
 
 const HTTP_BAD_REQUEST = 400;
+
+const PAST_TIME_I18N_BY_CODE = {
+  [SCHEDULE_MOVE_FROM_PAST_ERROR_CODE]: SCHEDULE_MOVE_FROM_PAST_I18N_KEY,
+  [SCHEDULE_MOVE_TO_PAST_ERROR_CODE]: SCHEDULE_MOVE_TO_PAST_I18N_KEY,
+  [SCHEDULE_CREATE_IN_PAST_ERROR_CODE]: SCHEDULE_CREATE_IN_PAST_I18N_KEY
+};
 
 const isValidDate = (value) => value instanceof Date && !Number.isNaN(value.getTime());
 
 /**
- * 'YYYY-MM-DD' + 'HH:mm' 이동 대상이 현재(운영 타임존)보다 이전인지.
+ * 'YYYY-MM-DD' + 'HH:mm' 대상이 현재(운영 타임존)보다 이전인지.
  *
  * @param {string} dateKey YYYY-MM-DD
  * @param {string} timeKey HH:mm
@@ -49,7 +65,7 @@ export const isScheduleMoveTargetKeyInPast = (dateKey, timeKey, now = new Date()
 };
 
 /**
- * 이동 후 시작 시각(로컬 Date, FullCalendar·모달 값)이 현재보다 이전인지.
+ * 시작 시각(로컬 Date, FullCalendar·모달 값)이 현재보다 이전인지.
  *
  * @param {Date|string|number|null|undefined} targetStart
  * @param {Date} [now]
@@ -68,7 +84,7 @@ export const isScheduleMoveTargetInPast = (targetStart, now = new Date()) => {
 };
 
 /**
- * 판정할 이동 대상 시각 (서버 ScheduleMoveTargetGate.resolveMoveTarget 과 동일 규칙).
+ * 판정할 이동 대상 시각 (서버 SchedulePastTimeGate.resolveMoveTarget 과 동일 규칙).
  * 시작이 바뀌면 새 시작, 시작은 그대로이고 종료만 바뀌면(리사이즈) 새 종료.
  *
  * @param {Date|null|undefined} originalStart 이동 전 시작
@@ -105,49 +121,84 @@ export const resolveCalendarDropTargetStart = (dropInfo, draggedEvent) => {
 };
 
 /**
- * 원래 일정 상태로 이동이 잠겼는지 (완료·취소만).
+ * 원래 일정 이동이 잠겼는지 (완료·취소 또는 시작 시각이 지남).
  *
- * @param {{ status?: * }} params
+ * @param {{ status?: *, start?: * }} params
+ * @param {Date} [now]
  * @returns {boolean}
  */
-export const isScheduleMoveSourceLocked = ({ status } = {}) => isScheduleStatusSlotLocked(status);
+export const isScheduleMoveSourceLocked = ({ status, start } = {}, now = new Date()) =>
+  isScheduleStatusSlotLocked(status) || isScheduleMoveTargetInPast(start, now);
 
 /**
- * 원래 일정 상태 잠금 안내 문구 (완료·취소), 없으면 null.
+ * 원래 일정 이동 잠금 안내 문구. 없으면 null.
  *
- * @param {{ status?: * }} params
+ * @param {{ status?: *, start?: * }} params
+ * @param {Date} [now]
  * @returns {string|null}
  */
-export const getScheduleMoveSourceLockedMessage = ({ status } = {}) =>
-  getScheduleCalendarDragLockedMessage({ status });
+export const getScheduleMoveSourceLockedMessage = ({ status, start } = {}, now = new Date()) => {
+  const statusMessage = getScheduleCalendarDragLockedMessage({ status });
+  if (statusMessage) {
+    return statusMessage;
+  }
+  if (isScheduleMoveTargetInPast(start, now)) {
+    return getScheduleMoveFromPastMessage();
+  }
+  return null;
+};
 
 /**
- * 과거 시각 이동 거부 안내 문구.
+ * 기존 title 에 이동 잠금 사유를 붙인다 (캘린더 tooltip).
  *
+ * @param {string} title
+ * @param {string|null|undefined} lockMessage
  * @returns {string}
  */
+export const appendScheduleMoveLockTooltip = (title, lockMessage) => {
+  if (!lockMessage) {
+    return title || '';
+  }
+  if (!title) {
+    return lockMessage;
+  }
+  return `${title} — ${lockMessage}`;
+};
+
+export const getScheduleMoveFromPastMessage = () => i18n.t(SCHEDULE_MOVE_FROM_PAST_I18N_KEY);
+
 export const getScheduleMoveToPastMessage = () => i18n.t(SCHEDULE_MOVE_TO_PAST_I18N_KEY);
 
+export const getScheduleCreateInPastMessage = () => i18n.t(SCHEDULE_CREATE_IN_PAST_I18N_KEY);
+
+const errorCodeOf = (error) => error?.response?.data?.errorCode;
+
 /**
- * 서버가 과거 이동을 거부한 응답인지.
+ * 서버가 과거 시각 이동·생성을 거부한 응답인지.
  *
  * @param {*} error StandardizedApi 오류
  * @returns {boolean}
  */
+export const isSchedulePastTimeError = (error) =>
+  error?.status === HTTP_BAD_REQUEST
+  && SCHEDULE_PAST_TIME_ERROR_CODES.includes(errorCodeOf(error));
+
+/** @deprecated isSchedulePastTimeError 사용 */
 export const isScheduleMoveToPastError = (error) =>
   error?.status === HTTP_BAD_REQUEST
-  && error?.response?.data?.errorCode === SCHEDULE_MOVE_TO_PAST_ERROR_CODE;
+  && errorCodeOf(error) === SCHEDULE_MOVE_TO_PAST_ERROR_CODE;
 
 /**
- * 이동 실패 토스트 문구 — 과거 이동은 안내 문구, 그 외 400 은 서버 사유, 없으면 fallback.
+ * 이동·생성 실패 토스트 문구 — 3 errorCode 는 i18n, 그 외 400 은 서버 사유, 없으면 fallback.
  *
  * @param {*} error StandardizedApi 오류
  * @param {string} fallback 사유 없는 실패 문구
  * @returns {string}
  */
 export const resolveScheduleMoveFailureMessage = (error, fallback) => {
-  if (isScheduleMoveToPastError(error)) {
-    return getScheduleMoveToPastMessage();
+  const i18nKey = PAST_TIME_I18N_BY_CODE[errorCodeOf(error)];
+  if (error?.status === HTTP_BAD_REQUEST && i18nKey) {
+    return i18n.t(i18nKey);
   }
   if (error?.status === HTTP_BAD_REQUEST) {
     const serverMessage = extractServerErrorMessageFromError(error);

@@ -19,7 +19,9 @@ import com.coresolution.consultation.service.NotificationService;
 import com.coresolution.consultation.service.ScheduleChangeNotificationDebounceService;
 import com.coresolution.consultation.service.ScheduleCreatedNotificationHelper;
 import com.coresolution.consultation.service.ScheduleListUserFieldsResolver;
+import com.coresolution.consultation.exception.SchedulePastTimeException;
 import com.coresolution.consultation.util.ReservationSmsBusinessHours;
+import com.coresolution.consultation.util.SchedulePastTimeGate;
 import com.coresolution.consultation.util.ScheduleSlotGuard;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.security.TenantAccessControlService;
@@ -38,7 +40,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 
 /**
  * {@link ScheduleServiceImpl#updateSchedule} 완료·취소 슬롯 변경 잠금 검증.
- * 과거 판정은 이동 후 시각 기준({@code ScheduleServiceImplMoveTargetPastTest}).
+ * 과거 판정은 원래 시작·이동 후 시각 공통 게이트({@code ScheduleServiceImplPastTimeGateTest}).
  */
 @ExtendWith(MockitoExtension.class)
 @DisplayName("ScheduleServiceImpl updateSchedule 슬롯 잠금")
@@ -110,19 +112,19 @@ class ScheduleServiceImplUpdateScheduleSlotLockTest {
     }
 
     @Test
-    @DisplayName("과거 날짜 CONFIRMED → 미래 슬롯 이동은 허용 (원래 일시가 지난 것만으로 잠그지 않음)")
-    void updateSchedule_pastDateToFutureSlotChange_allows() {
+    @DisplayName("과거 날짜 CONFIRMED → 미래 슬롯 이동은 SCHEDULE_MOVE_FROM_PAST")
+    void updateSchedule_pastDateToFutureSlotChange_rejected() {
         LocalDate yesterday = LocalDate.now(ReservationSmsBusinessHours.ZONE_SEOUL).minusDays(1);
         LocalDate tomorrow = LocalDate.now(ReservationSmsBusinessHours.ZONE_SEOUL).plusDays(1);
         Schedule existing = baseSchedule(ScheduleStatus.CONFIRMED, yesterday);
         Schedule patch = slotPatch(tomorrow, LocalTime.of(14, 0), LocalTime.of(15, 0));
         stubFind(existing);
-        when(scheduleRepository.save(any(Schedule.class))).thenAnswer(inv -> inv.getArgument(0));
 
-        Schedule saved = scheduleService.updateSchedule(SCHEDULE_ID, patch);
-
-        assertThat(saved.getDate()).isEqualTo(tomorrow);
-        verify(scheduleRepository).save(any(Schedule.class));
+        assertThatThrownBy(() -> scheduleService.updateSchedule(SCHEDULE_ID, patch))
+                .isInstanceOf(SchedulePastTimeException.class)
+                .extracting(e -> ((SchedulePastTimeException) e).getErrorCode())
+                .isEqualTo(SchedulePastTimeGate.Denial.MOVE_FROM_PAST.getErrorCode());
+        verify(scheduleRepository, never()).save(any());
     }
 
     @Test

@@ -9,7 +9,8 @@ import com.coresolution.consultation.constant.ScheduleStatus;
 import com.coresolution.consultation.dto.EmailResponse;
 import com.coresolution.consultation.entity.Consultation;
 import com.coresolution.consultation.entity.Schedule;
-import com.coresolution.consultation.exception.ScheduleMoveToPastException;
+import com.coresolution.consultation.exception.SchedulePastTimeException;
+import com.coresolution.consultation.util.SchedulePastTimeGate;
 import com.coresolution.consultation.repository.ConsultationRepository;
 import com.coresolution.consultation.repository.ScheduleRepository;
 import com.coresolution.consultation.service.EmailService;
@@ -153,23 +154,26 @@ class ConsultationServiceImplRescheduleEndTimeTest {
     }
 
     @Test
-    @DisplayName("재예약 대상 시각을 일정 이동 공통 판정(requireMoveTargetNotInPast)에 넘긴다")
-    void reschedule_delegatesMoveTargetGate() {
+    @DisplayName("재예약 시각을 일정 이동 공통 판정(requireMoveTimesNotInPast)에 원래 시작과 함께 넘긴다")
+    void reschedule_delegatesMoveTimesGate() {
         LocalDateTime target = LocalDateTime.of(OLD_DATE.plusDays(2), LocalTime.of(10, 0));
 
         service.rescheduleConsultation(CONSULTATION_ID, target);
 
-        verify(scheduleService).requireMoveTargetNotInPast(null, target);
+        verify(scheduleService).requireMoveTimesNotInPast(
+            null, LocalDateTime.of(OLD_DATE, OLD_START), target);
     }
 
     @Test
-    @DisplayName("과거 시각 재예약 → ScheduleMoveToPastException, 상담·연결 일정 저장 없음")
+    @DisplayName("과거 시각 재예약 → SchedulePastTimeException, 상담·연결 일정 저장 없음")
     void reschedule_toPast_rejectedWithoutSave() {
         LocalDateTime target = LocalDateTime.of(OLD_DATE, LocalTime.of(9, 0));
-        doThrow(new ScheduleMoveToPastException(null)).when(scheduleService).requireMoveTargetNotInPast(null, target);
+        doThrow(new SchedulePastTimeException(null, SchedulePastTimeGate.Denial.MOVE_TO_PAST))
+            .when(scheduleService).requireMoveTimesNotInPast(
+                null, LocalDateTime.of(OLD_DATE, OLD_START), target);
 
         assertThatThrownBy(() -> service.rescheduleConsultation(CONSULTATION_ID, target))
-            .isInstanceOf(ScheduleMoveToPastException.class);
+            .isInstanceOf(SchedulePastTimeException.class);
         verify(consultationRepository, never()).save(any(Consultation.class));
         verify(scheduleRepository, never()).save(any(Schedule.class));
         assertThat(consultation.getStartTime()).isEqualTo(OLD_START);

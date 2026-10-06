@@ -59,6 +59,17 @@ describe('scheduleExternalDropGuards', () => {
       expect(r.userMessage).toBe(EXTERNAL_DROP_NO_REMAINING_SESSIONS_MESSAGE);
     });
 
+    it('returns ok for INSTITUTION_LINK ACTIVE rem=0', () => {
+      const r = assertExternalMappingDropAllowed({
+        consultantId: 'x',
+        clientId: 'y',
+        status: 'ACTIVE',
+        paymentTiming: 'INSTITUTION_LINK',
+        remainingSessions: 0
+      });
+      expect(r).toEqual({ ok: true });
+    });
+
     it('returns not_scheduleable for DEPOSIT_PENDING (승인 대기)', () => {
       const r = assertExternalMappingDropAllowed({
         consultantId: 'x',

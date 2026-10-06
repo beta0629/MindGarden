@@ -1,10 +1,13 @@
 package com.coresolution.consultation.service.impl;
 
 import com.coresolution.consultation.constant.UserRole;
+import com.coresolution.consultation.constant.ClientEngagementTypeConstants;
+import com.coresolution.consultation.constant.PaymentTimingConstants;
 import com.coresolution.consultation.constant.admin.AdminServiceUserFacingMessages;
 import com.coresolution.consultation.dto.ConsultantClientMappingCreateRequest;
 import com.coresolution.consultation.entity.ConsultantClientMapping;
 import com.coresolution.consultation.entity.ConsultantClientMapping.MappingStatus;
+import com.coresolution.consultation.entity.Client;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.repository.ClientRepository;
 import com.coresolution.consultation.repository.CommonCodeRepository;
@@ -273,6 +276,23 @@ class AdminServiceImplCreateMappingPendingPaymentGuardTest {
         assertThat(saveCaptor.getAllValues().stream()
                 .noneMatch(m -> m.getId() != null && m.getId().equals(202L)
                         && m.getStatus() != MappingStatus.ACTIVE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("타기관 내담자면 요청 timing 과 무관하게 INSTITUTION_LINK")
+    void createMapping_institutionClient_forcesInstitutionLinkTiming() {
+        Client institutionClient = new Client();
+        institutionClient.setId(CLIENT_ID);
+        institutionClient.setEngagementType(ClientEngagementTypeConstants.INSTITUTION_LINK);
+        stubCreateFlowWithSave(List.of());
+        when(clientRepository.findByTenantIdAndIdIncludingDeleted(TEST_TENANT_ID, CLIENT_ID))
+                .thenReturn(Optional.of(institutionClient));
+        ConsultantClientMappingCreateRequest dto = newRequest();
+        dto.setPaymentTiming("ADVANCE");
+
+        ConsultantClientMapping created = adminService.createMapping(dto);
+
+        assertThat(created.getPaymentTiming()).isEqualTo(PaymentTimingConstants.INSTITUTION_LINK);
     }
 
     private ConsultantClientMapping newExistingMapping(Long id, MappingStatus status) {

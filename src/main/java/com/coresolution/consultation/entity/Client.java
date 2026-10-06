@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
+import com.coresolution.consultation.constant.ClientEngagementTypeConstants;
 import com.coresolution.consultation.converter.EmailAttributeConverter;
 import com.coresolution.consultation.converter.PersonalNameAttributeConverter;
 import com.coresolution.consultation.converter.PhoneAttributeConverter;
@@ -90,6 +91,42 @@ public class Client extends AuditableTenantBase {
     @Convert(converter = PhoneAttributeConverter.class)
     @Column(name = "emergency_phone", length = 512)
     private String emergencyPhone;
+
+    /**
+     * 내담자 연계 유형. 기본 일반 회기. 타기관이면 배정이 INSTITUTION_LINK 게이트를 탄다.
+     *
+     * @since 2026-09-14
+     */
+    @Column(name = "engagement_type", nullable = false, length = 32)
+    private String engagementType = ClientEngagementTypeConstants.SESSION_TICKET;
+
+    @Column(name = "institution_name", length = 200)
+    private String institutionName;
+
+    @Convert(converter = PersonalNameAttributeConverter.class)
+    @Column(name = "institution_contact_name", length = 512)
+    private String institutionContactName;
+
+    @Convert(converter = PhoneAttributeConverter.class)
+    @Column(name = "institution_contact_phone", length = 512)
+    private String institutionContactPhone;
+
+    @Convert(converter = PhoneAttributeConverter.class)
+    @Column(name = "institution_document_phone", length = 512)
+    private String institutionDocumentPhone;
+
+    @Convert(converter = EmailAttributeConverter.class)
+    @Column(name = "institution_document_email", length = 512)
+    private String institutionDocumentEmail;
+
+    @Column(name = "institution_prepaid")
+    private Boolean institutionPrepaid;
+
+    @Column(name = "institution_prepaid_date")
+    private LocalDate institutionPrepaidDate;
+
+    @Column(name = "institution_prepaid_amount")
+    private Long institutionPrepaidAmount;
     
     @Column(name = "medical_history", columnDefinition = "TEXT")
     private String medicalHistory;

@@ -19,7 +19,7 @@ const CONSULTANT_SCHEDULE_TITLE_ID = 'consultant-schedule-page-title';
  *
  * 옵션 A 적용 (2026-05-23 핫픽스):
  *   - `integratedMonthEventLayout` + `calendarSkin="integrated"` 전파
- *   - 회기 라벨(`0/2회`), 공휴일 분홍 배경, `--mg-calendar-*` 토큰 cascade 자동 노출
+ *   - 회차 칩(`16회기`), 공휴일 분홍 배경, `--mg-calendar-*` 토큰 cascade 자동 노출
  *   - SSOT: docs/project-management/2026-05-23/CALENDAR_OPTION_A_DESIGN_HANDOFF.md §3
  *
  * @author Core Solution

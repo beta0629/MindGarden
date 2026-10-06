@@ -1100,11 +1100,11 @@ emit_income_cancel_sql() {
     IFS=, read -r m tx amt <<<"$raw"
     echo "INSERT INTO tmp_income_cancel (mapping_id, tx_id, amount) VALUES (${m}, ${tx}, ${amt});"
   done
-  echo "CREATE TEMPORARY TABLE tmp_income_expected (tx_id BIGINT PRIMARY KEY, version BIGINT NOT NULL, desc_sha CHAR(64) NOT NULL, after_len INT NOT NULL, after_sha CHAR(64) NOT NULL);"
+  echo "CREATE TEMPORARY TABLE tmp_income_expected (tx_id BIGINT PRIMARY KEY, version BIGINT NOT NULL, desc_sha BINARY(32) NOT NULL, after_len INT NOT NULL, after_sha BINARY(32) NOT NULL);"
   while IFS=$'\t' read -r id _rm _rtype _ttype _st _am ver _del _dlen dsha alen asha; do
     [[ "$id" =~ ^[0-9]+$ && "$ver" =~ ^[0-9]+$ && "$alen" =~ ^[0-9]+$ ]] || die "before snapshot has a malformed row"
     [[ "$dsha" =~ ^[0-9a-f]{64}$ && "$asha" =~ ^[0-9a-f]{64}$ ]] || die "before snapshot has a malformed hash"
-    echo "INSERT INTO tmp_income_expected (tx_id, version, desc_sha, after_len, after_sha) VALUES (${id}, ${ver}, '${dsha}', ${alen}, '${asha}');"
+    echo "INSERT INTO tmp_income_expected (tx_id, version, desc_sha, after_len, after_sha) VALUES (${id}, ${ver}, UNHEX('${dsha}'), ${alen}, UNHEX('${asha}'));"
   done <"$before_file"
   cat <<EOF
 START TRANSACTION;
@@ -1113,13 +1113,13 @@ SELECT m.id FROM consultant_client_mappings m WHERE m.tenant_id = '${t}' AND m.i
 CREATE TEMPORARY TABLE tmp_income_before AS
 SELECT ft.id, ft.related_entity_id, ft.related_entity_type, ft.transaction_type, ft.status, ft.amount,
        ft.version, ft.is_deleted + 0 AS is_deleted, CHAR_LENGTH(ft.description) AS desc_len,
-       SHA2(ft.description, 256) AS desc_sha,
+       UNHEX(SHA2(ft.description, 256)) AS desc_sha,
        CHAR_LENGTH(CONCAT(ft.description, ${suffix})) AS after_len,
-       SHA2(CONCAT(ft.description, ${suffix}), 256) AS after_sha
+       UNHEX(SHA2(CONCAT(ft.description, ${suffix}), 256)) AS after_sha
 FROM financial_transactions ft
 WHERE ft.tenant_id = '${t}' AND ft.id IN (${txs});
 SELECT 'BEFORE' AS phase, b.id, b.related_entity_id AS mapping_id, b.transaction_type, b.status, b.amount,
-       b.version, b.desc_len, LEFT(b.desc_sha, 12) AS desc_sha12
+       b.version, b.desc_len, LOWER(LEFT(HEX(b.desc_sha), 12)) AS desc_sha12
 FROM tmp_income_before b ORDER BY b.id;
 EOF
   emit_assert "allowlist_no_denied_mapping" "SELECT COUNT(*) = 0 FROM tmp_income_cancel WHERE mapping_id IN (${deny})"
@@ -1143,7 +1143,7 @@ WHERE ft.tenant_id = '${t}'
 SET @rc = ROW_COUNT();
 EOF
   emit_assert "update_row_count" "SELECT @rc = ${n}"
-  emit_assert "after_matches_expected" "SELECT COUNT(*) = ${n} FROM financial_transactions ft INNER JOIN tmp_income_expected e ON e.tx_id = ft.id WHERE ft.tenant_id = '${t}' AND ft.status = 'CANCELLED' AND ft.version = e.version + 1 AND CHAR_LENGTH(ft.description) = e.after_len AND SHA2(ft.description, 256) = e.after_sha"
+  emit_assert "after_matches_expected" "SELECT COUNT(*) = ${n} FROM financial_transactions ft INNER JOIN tmp_income_expected e ON e.tx_id = ft.id WHERE ft.tenant_id = '${t}' AND ft.status = 'CANCELLED' AND ft.version = e.version + 1 AND CHAR_LENGTH(ft.description) = e.after_len AND UNHEX(SHA2(ft.description, 256)) = e.after_sha"
   cat <<EOF
 SELECT 'AFTER' AS phase, ft.id, ft.related_entity_id AS mapping_id, ft.transaction_type, ft.status, ft.amount,
        ft.version, CHAR_LENGTH(ft.description) AS desc_len, LEFT(SHA2(ft.description, 256), 12) AS desc_sha12

@@ -8,7 +8,7 @@
  * @author CoreSolution
  * @since 2026-10-06
  */
-import React from 'react';
+import React, { useCallback, useLayoutEffect } from 'react';
 import PropTypes from 'prop-types';
 import { PASSWORD_AUTOCOMPLETE, PASSWORD_POLICY_CSS } from '../../constants/passwordPolicyUi';
 
@@ -52,18 +52,27 @@ PasswordPolicyError.propTypes = {
 
 
 /**
- * 정책 힌트 문구만.
+ * 정책 힌트 문구만 — 값·오류 여부와 관계없이 항상 그린다.
+ * 토글 버튼 래퍼 밖 등 입력란과 떨어진 곳에 둘 때 `PasswordPolicyInput hintExternal` 과 같은 id 로 쓴다.
  */
-export const PasswordPolicyHint = ({ field, id, className = PASSWORD_POLICY_CSS.HELP }) => (
-  <small id={hintIdOf(id)} className={className}>
-    {field.hint}
-  </small>
+export const PasswordPolicyHint = ({
+  field,
+  id,
+  className = PASSWORD_POLICY_CSS.HELP,
+  as: Tag = 'small',
+  suffix
+}) => (
+  <Tag id={hintIdOf(id)} className={className || undefined}>
+    {suffix ? `${field.hint} ${suffix}` : field.hint}
+  </Tag>
 );
 
 PasswordPolicyHint.propTypes = {
   field: PropTypes.shape({ hint: PropTypes.string }).isRequired,
   id: PropTypes.string,
-  className: PropTypes.string
+  className: PropTypes.string,
+  as: PropTypes.elementType,
+  suffix: PropTypes.string
 };
 
 
@@ -71,7 +80,7 @@ const PasswordPolicyInput = ({
   field,
   confirm = false,
   revealed = false,
-  showHint = true,
+  hintExternal = false,
   showError = true,
   id,
   className = PASSWORD_POLICY_CSS.INPUT,
@@ -81,11 +90,32 @@ const PasswordPolicyInput = ({
   placeholder,
   autoComplete = PASSWORD_AUTOCOMPLETE.NEW,
   'aria-describedby': ariaDescribedBy,
+  value,
+  onChange,
   ...rest
 }) => {
+  const { markPending, settlePending, pending } = field;
+  const inputRef = confirm ? field.confirmInputRef : field.inputRef;
+
+  const handleChange = useCallback((event) => {
+    if (markPending) {
+      markPending();
+    }
+    if (onChange) {
+      onChange(event);
+    }
+  }, [markPending, onChange]);
+
+  useLayoutEffect(() => {
+    const node = inputRef && inputRef.current;
+    if (pending && settlePending && (!node || value === undefined || node.value === String(value ?? ''))) {
+      settlePending();
+    }
+  }, [pending, settlePending, value, inputRef]);
+
   const message = confirm ? field.confirmErrorMessage : field.errorMessage;
   const hasError = Boolean(message);
-  const withHint = showHint && !confirm;
+  const withHint = !confirm;
   const inputClassName = hasError && errorInputClassName ? `${className} ${errorInputClassName}` : className;
   const resolvedPlaceholder = placeholder !== undefined ? placeholder : (confirm ? undefined : field.placeholder);
 
@@ -93,6 +123,9 @@ const PasswordPolicyInput = ({
     <>
       <input
         {...rest}
+        ref={inputRef}
+        value={value}
+        onChange={handleChange}
         id={id}
         type={revealed ? 'text' : 'password'}
         className={inputClassName}
@@ -105,7 +138,7 @@ const PasswordPolicyInput = ({
           ariaDescribedBy
         )}
       />
-      {withHint ? <PasswordPolicyHint field={field} id={id} className={hintClassName} /> : null}
+      {withHint && !hintExternal ? <PasswordPolicyHint field={field} id={id} className={hintClassName} /> : null}
       {showError ? (
         <PasswordPolicyError field={field} confirm={confirm} id={id} className={errorClassName} />
       ) : null}
@@ -118,11 +151,18 @@ PasswordPolicyInput.propTypes = {
     errorMessage: PropTypes.string,
     confirmErrorMessage: PropTypes.string,
     hint: PropTypes.string,
-    placeholder: PropTypes.string
+    placeholder: PropTypes.string,
+    pending: PropTypes.bool,
+    markPending: PropTypes.func,
+    settlePending: PropTypes.func,
+    inputRef: PropTypes.shape({ current: PropTypes.any }),
+    confirmInputRef: PropTypes.shape({ current: PropTypes.any })
   }).isRequired,
+  value: PropTypes.string,
+  onChange: PropTypes.func,
   confirm: PropTypes.bool,
   revealed: PropTypes.bool,
-  showHint: PropTypes.bool,
+  hintExternal: PropTypes.bool,
   showError: PropTypes.bool,
   id: PropTypes.string,
   className: PropTypes.string,

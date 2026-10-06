@@ -2369,12 +2369,14 @@
     "minCardAmountTitle": "결제 안내",
     "minCardAmount": "카드 결제는 {{amount}}원 이상이어야 합니다"
   },
+  "apiError": {
+    "generic": "요청을 처리하지 못했습니다. 잠시 후 다시 시도하고, 계속되면 관리자에게 문의해 주세요."
+  },
   "passwordPolicy": {
     "hint": "{{min}}~{{max}}자, 영문 대·소문자·숫자·특수문자({{specials}}) 각 1자 이상, 연속 문자(예: abc, 123)·동일 문자 3회 반복·일반적인 단어·패턴은 사용할 수 없습니다.",
     "placeholder": "영문 대·소문자·숫자·{{specials}} 포함 {{min}}~{{max}}자",
     "optionalHint": "비우면 임시 비밀번호로 등록됩니다.",
     "guidance": "비밀번호는 {{min}}~{{max}}자이며, 영문 대문자·소문자·숫자·특수문자({{specials}})를 각각 1자 이상 포함해야 합니다. 허용된 문자만 사용할 수 있고, 연속된 문자 3자와 같은 문자 3회 반복, 일반적인 단어·패턴은 사용할 수 없습니다.",
-    "requestFailed": "요청에 실패했습니다.",
     "violation": {
       "required": "비밀번호를 입력해주세요.",
       "confirmRequired": "비밀번호 확인을 입력해주세요.",

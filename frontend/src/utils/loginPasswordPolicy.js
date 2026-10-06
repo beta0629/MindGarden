@@ -45,8 +45,17 @@ function hasSequentialRun(password) {
   return false;
 }
 
-function containsCommonSubstring(password) {
-  const lower = password.toLowerCase();
+/**
+ * 일반 단어 포함 여부 — 대소문자 무시 부분 일치(서버 PasswordPolicy.isCommonPattern 과 같음).
+ *
+ * @param {unknown} plain
+ * @returns {boolean}
+ */
+export function containsLoginPasswordCommonSubstring(plain) {
+  if (plain == null) {
+    return false;
+  }
+  const lower = String(plain).toLowerCase();
   return LOGIN_PASSWORD_COMMON_SUBSTRINGS.some((p) => lower.includes(p));
 }
 
@@ -85,7 +94,7 @@ export function getLoginPasswordViolationCode(plain) {
   if (REPEAT_PATTERN.test(password)) {
     return LOGIN_PASSWORD_VIOLATION.REPEATED_FORBIDDEN;
   }
-  if (containsCommonSubstring(password)) {
+  if (containsLoginPasswordCommonSubstring(password)) {
     return LOGIN_PASSWORD_VIOLATION.COMMON_PATTERN;
   }
   return null;
@@ -193,36 +202,4 @@ export function getPasswordPolicyHint(t, options = {}) {
  */
 export function getPasswordPolicyPlaceholder(t) {
   return resolveT(t)(PASSWORD_POLICY_I18N.PLACEHOLDER, POLICY_PARAMS);
-}
-
-/**
- * API 오류에서 비밀번호 관련 서버 문구 추출 (message → error → errors 맵 → Error.message → i18n 기본 문구).
- *
- * @param {Error & { response?: { data?: Record<string, unknown> } }} [error]
- * @param {Function} [t]
- * @returns {string}
- */
-export function getPasswordPolicyApiErrorMessage(error, t) {
-  const data = error && error.response && error.response.data;
-  if (data && typeof data === 'object') {
-    const candidates = [data.message, data.error];
-    for (let i = 0; i < candidates.length; i += 1) {
-      if (typeof candidates[i] === 'string' && candidates[i].trim()) {
-        return candidates[i].trim();
-      }
-    }
-    const errs = data.errors;
-    if (errs && typeof errs === 'object' && !Array.isArray(errs)) {
-      const parts = Object.values(errs)
-        .map((v) => (typeof v === 'string' ? v.trim() : ''))
-        .filter(Boolean);
-      if (parts.length > 0) {
-        return parts.join(' ');
-      }
-    }
-  }
-  if (error && typeof error.message === 'string' && error.message.trim()) {
-    return error.message.trim();
-  }
-  return resolveT(t)(PASSWORD_POLICY_I18N.REQUEST_FAILED);
 }

@@ -195,7 +195,8 @@ const ConsultantRegistrationWidget = ({ widget, user }) => {
       showNotification('필수 항목을 모두 입력해주세요.', 'warning');
       return;
     }
-    if (!passwordField.validate(formData.password)) {
+    const committedPassword = passwordField.validateCommitted(formData.password);
+    if (!committedPassword.valid) {
       return;
     }
     
@@ -223,7 +224,7 @@ const ConsultantRegistrationWidget = ({ widget, user }) => {
     const requestData = {
       userId: formData.userId?.trim(),
       email: formData.email?.trim(),
-      password: formData.password,
+      password: committedPassword.value,
       name: formData.name?.trim(),
       phone: formData.phone?.trim(),
       professionalTypeCode: formData.professionalTypeCode || DEFAULT_PROFESSIONAL_TYPE_CODE_VALUE,
@@ -705,7 +706,7 @@ const ConsultantRegistrationWidget = ({ widget, user }) => {
                 <MGButton
                   type="submit"
                   variant="primary"
-                  disabled={submitting || Object.keys(validationErrors).length > 0}
+                  disabled={submitting || Object.keys(validationErrors).length > 0 || passwordField.pending}
                   className={buildErpMgButtonClassName({
                     variant: 'primary',
                     size: 'md',

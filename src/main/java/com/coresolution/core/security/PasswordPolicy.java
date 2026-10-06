@@ -32,8 +32,8 @@ public final class PasswordPolicy {
 
     /**
      * 비밀번호에 포함될 수 없는 일반 부분 문자열(대소문자 무시).
-     * 프론트 {@code frontend/src/constants/passwordPolicyUi.js} 와 같아야 하며,
-     * {@code src/test/resources/password-policy/login-password-policy-parity.json} 로 양쪽을 검사한다.
+     * {@code src/test/resources/password-policy/login-password-policy-parity.json} 의 commonSubstrings 와 같아야 한다
+     * (PasswordPolicyParityFixtureTest). 프론트 {@code constants/passwordPolicyUi.js} 는 이 픽스처에서만 읽는다.
      */
     public static final List<String> LOGIN_PASSWORD_COMMON_SUBSTRINGS = List.of(
         "password", "123456", "qwerty", "admin", "user",

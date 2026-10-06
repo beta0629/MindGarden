@@ -7,8 +7,8 @@ import notificationManager from '../../utils/notification';
 import MGButton from '../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import usePasswordPolicyField from '../../hooks/usePasswordPolicyField';
-import PasswordPolicyInput, { PasswordPolicyError } from '../common/PasswordPolicyInput';
-import { getPasswordPolicyApiErrorMessage } from '../../utils/loginPasswordPolicy';
+import PasswordPolicyInput, { PasswordPolicyError, PasswordPolicyHint } from '../common/PasswordPolicyInput';
+import { resolveUserFacingApiErrorMessage } from '../../utils/userFacingApiErrorMessage';
 import './AuthPageCommon.css';
 
 const AUTH_INPUT_CLASS = 'mg-v2-input';
@@ -76,7 +76,8 @@ const ResetPassword = () => {
   const handleSubmit = async(e) => {
     e.preventDefault();
     
-    if (!passwordField.validate(formData.newPassword, formData.confirmPassword)) {
+    const committed = passwordField.validateCommitted(formData.newPassword, formData.confirmPassword);
+    if (!committed.valid) {
       return;
     }
 
@@ -85,8 +86,8 @@ const ResetPassword = () => {
     try {
       const response = await apiPost(API_AUTH_PASSWORD_RESET_RESET, {
         token: token,
-        newPassword: formData.newPassword,
-        confirmPassword: formData.confirmPassword
+        newPassword: committed.value,
+        confirmPassword: committed.confirmValue
       });
 
       if (response.success) {
@@ -97,7 +98,7 @@ const ResetPassword = () => {
       }
     } catch (error) {
       console.error('비밀번호 재설정 실패:', error);
-      notificationManager.error(getPasswordPolicyApiErrorMessage(error));
+      notificationManager.error(resolveUserFacingApiErrorMessage(error));
     } finally {
       setIsLoading(false);
     }
@@ -150,7 +151,7 @@ const ResetPassword = () => {
                     <PasswordPolicyInput
                       field={passwordField}
                       revealed={showPassword}
-                      showHint={false}
+                      hintExternal
                       showError={false}
                       id="newPassword"
                       name="newPassword"
@@ -201,14 +202,14 @@ const ResetPassword = () => {
 
                 <div className="mg-v2-auth-hint mg-v2-auth-hint--password">
                   <p><Info size={16} strokeWidth={1.75} aria-hidden="true" /> <strong>비밀번호 요구사항</strong></p>
-                  <p>{passwordField.hint}</p>
+                  <PasswordPolicyHint field={passwordField} id="newPassword" as="p" className="" />
                 </div>
 
                 <MGButton
                   type="submit"
                   variant="primary"
                   className={`${buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: isLoading })} mg-v2-button-primary`}
-                  disabled={isLoading || !formData.newPassword || !formData.confirmPassword}
+                  disabled={isLoading || !formData.newPassword || !formData.confirmPassword || passwordField.pending}
                   loading={isLoading}
                   loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                   preventDoubleClick={false}

@@ -88,7 +88,7 @@ const OnboardingPage = () => {
   const [formData, setFormData] = useState({ ...INITIAL_FORM_DATA });
   const [errors, setErrors] = useState({});
   const passwordField = usePasswordPolicyField({ requireConfirm: true });
-  const { clearError: clearPasswordError, validate: validatePassword } = passwordField;
+  const { clearError: clearPasswordError, validateCommitted: validateCommittedPassword, pending: passwordPending } = passwordField;
   const [domainStatus, setDomainStatus] = useState('idle');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
@@ -193,10 +193,10 @@ const OnboardingPage = () => {
         newErrors.privacy = t('public.onboarding.errorPrivacyRequired', '개인정보 처리방침에 동의해주세요.');
       }
     }
-    const passwordOk = step !== 2 || validatePassword(formData.password, formData.passwordConfirm);
+    const passwordOk = step !== 2 || validateCommittedPassword(formData.password, formData.passwordConfirm).valid;
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0 && passwordOk;
-  }, [formData, t, validatePassword]);
+  }, [formData, t, validateCommittedPassword]);
 
   const isCurrentStepValid = useMemo(() => {
     if (currentStep === 0) {
@@ -230,6 +230,8 @@ const OnboardingPage = () => {
 
   const handleSubmit = useCallback(async () => {
     if (!validateStep(LAST_INPUT_STEP)) return;
+    const committedPassword = validateCommittedPassword(formData.password, formData.passwordConfirm);
+    if (!committedPassword.valid) return;
     setIsSubmitting(true);
     setSubmitError('');
     try {
@@ -242,7 +244,7 @@ const OnboardingPage = () => {
         email: formData.email,
         adminName: formData.adminName,
         adminEmail: formData.adminEmail,
-        password: formData.password,
+        password: committedPassword.value,
         termsAccepted: formData.terms,
         privacyAccepted: formData.privacy,
         marketingConsent: formData.marketing,
@@ -256,7 +258,7 @@ const OnboardingPage = () => {
     } finally {
       setIsSubmitting(false);
     }
-  }, [formData, t, validateStep]);
+  }, [formData, t, validateStep, validateCommittedPassword]);
 
   const handleNext = useCallback(() => {
     if (currentStep === COMPLETE_STEP) {
@@ -304,7 +306,7 @@ const OnboardingPage = () => {
       type="button"
       className="mg-v2-onboarding-form__cta"
       onClick={handleNext}
-      disabled={!isCurrentStepValid || isSubmitting}
+      disabled={!isCurrentStepValid || isSubmitting || passwordPending}
       aria-busy={isSubmitting}
     >
       {isSubmitting && <span className="mg-v2-onboarding-form__cta-spinner" aria-hidden="true" />}

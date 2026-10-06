@@ -209,13 +209,14 @@ const ConsultantManagement = ({ onUpdate, showToast }) => {
             newErrors.professionalTypeCode = ERR_PROFESSIONAL_TYPE_REQUIRED;
         }
         setFormErrors(newErrors);
-        const passwordOk = passwordField.validate(form.password);
-        return Object.keys(newErrors).length === 0 && passwordOk;
+        const committedPassword = passwordField.validateCommitted(form.password);
+        return Object.keys(newErrors).length === 0 && committedPassword.valid ? committedPassword : null;
     };
 
     const handleSubmit = async(e) => {
         e.preventDefault();
-        if (!validateCreateForm()) {
+        const committedPassword = validateCreateForm();
+        if (!committedPassword) {
             return;
         }
         try {
@@ -227,7 +228,7 @@ const ConsultantManagement = ({ onUpdate, showToast }) => {
             const payload = {
                 userId: (form.userId || '').trim(),
                 email: (form.email || '').trim(),
-                password: form.password,
+                password: committedPassword.value,
                 name: (form.name || '').trim(),
                 phone: (form.phone || '').trim(),
                 specialization: (form.specialization || '').trim(),
@@ -490,7 +491,7 @@ const ConsultantManagement = ({ onUpdate, showToast }) => {
                             <Button variant="secondary" onClick={() => setShowModal(false)}>
                                 {t('admin.actions.cancel')}
                             </Button>
-                            <Button variant="primary" type="submit">
+                            <Button variant="primary" type="submit" disabled={passwordField.pending}>
                                 등록
                             </Button>
                         </div>

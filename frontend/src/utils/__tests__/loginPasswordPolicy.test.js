@@ -2,7 +2,6 @@ import '../../i18n';
 import {
   formatPasswordPolicyError,
   getFirstLoginPasswordViolationMessage,
-  getPasswordPolicyApiErrorMessage,
   getPasswordPolicyHint,
   validatePasswordPolicyInput
 } from '../loginPasswordPolicy';
@@ -64,11 +63,5 @@ describe('문구(i18n)', () => {
   test('allowEmpty 힌트는 임시 비밀번호 안내를 붙인다', () => {
     expect(getPasswordPolicyHint(undefined, { allowEmpty: true })).toContain('임시 비밀번호');
     expect(getPasswordPolicyHint()).not.toContain('임시 비밀번호');
-  });
-
-  test('API 오류: message → errors 맵 → 기본 문구', () => {
-    expect(getPasswordPolicyApiErrorMessage({ response: { data: { message: ' 서버 사유 ' } } })).toBe('서버 사유');
-    expect(getPasswordPolicyApiErrorMessage({ response: { data: { errors: { a: 'A', b: 'B' } } } })).toBe('A B');
-    expect(getPasswordPolicyApiErrorMessage(undefined)).toBe('요청에 실패했습니다.');
   });
 });

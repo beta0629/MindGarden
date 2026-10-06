@@ -9,7 +9,7 @@ import {
   LOGIN_PASSWORD_MAX_LENGTH,
   LOGIN_PASSWORD_MIN_LENGTH
 } from '../../constants/passwordPolicyUi';
-import { getLoginPasswordViolationCode } from '../loginPasswordPolicy';
+import { containsLoginPasswordCommonSubstring, getLoginPasswordViolationCode } from '../loginPasswordPolicy';
 import { generateMgLoginPassword, isMgLoginPasswordCompliant } from '../generateMgLoginPassword';
 import { webcrypto } from 'crypto';
 
@@ -43,6 +43,20 @@ describe('loginPasswordPolicy ↔ 서버 PasswordPolicy 픽스처', () => {
       expect(isMgLoginPasswordCompliant(casePassword(c))).toBe(code === null);
     }
   );
+
+  test.each(fixture.commonSubstringMatches.map((m) => [m.text, m.matches]))(
+    '일반 단어 대소문자 무시 부분 일치 "%s" → %s',
+    (text, matches) => {
+      expect(containsLoginPasswordCommonSubstring(text)).toBe(matches);
+    }
+  );
+
+  test('일반 단어 목록 항목마다 대소문자를 섞은 일치 사례가 있다', () => {
+    const positives = fixture.commonSubstringMatches.filter((m) => m.matches).map((m) => m.text);
+    LOGIN_PASSWORD_COMMON_SUBSTRINGS.forEach((entry) => {
+      expect(positives.some((t) => t.toLowerCase().includes(entry) && t !== t.toLowerCase())).toBe(true);
+    });
+  });
 
   test('생성 비밀번호는 항상 정책을 통과한다', () => {
     for (let i = 0; i < 50; i += 1) {

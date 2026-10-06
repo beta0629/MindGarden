@@ -6,7 +6,7 @@
  */
 import '../../../../i18n';
 import React from 'react';
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import PasswordChangeModal from '../PasswordChangeModal';
 import { getPasswordPolicyHint } from '../../../../utils/loginPasswordPolicy';
@@ -120,5 +120,39 @@ describe('PasswordChangeModal', () => {
     expect(onSuccess).toHaveBeenCalled();
     expect(onClose).toHaveBeenCalled();
     expect(notificationManager.show).toHaveBeenCalledWith(expect.any(String), 'info');
+  });
+
+  it('입력 직후 즉시 제출하면 POST 본문에 입력한 새 비밀번호가 들어간다', async() => {
+    renderOpen({ tempPassword: 'Tmpfake7!Q' });
+    const dialog = screen.getByRole('dialog');
+    fireEvent.change(within(dialog).getByLabelText('새 비밀번호'), {
+      target: { name: 'newPassword', value: 'Newfake8@Z' }
+    });
+    fireEvent.change(within(dialog).getByLabelText('새 비밀번호 확인'), {
+      target: { name: 'confirmPassword', value: 'Newfake8@Z' }
+    });
+    fireEvent.submit(dialog.querySelector('form'));
+
+    await waitFor(() => expect(StandardizedApi.post).toHaveBeenCalledTimes(1));
+    expect(StandardizedApi.post.mock.calls[0][1]).toEqual(expect.objectContaining({
+      newPassword: 'Newfake8@Z',
+      confirmPassword: 'Newfake8@Z'
+    }));
+  });
+
+  it('새 비밀번호가 빈 값이면 제출해도 POST 하지 않는다', async() => {
+    renderOpen({ tempPassword: 'Tmpfake7!Q' });
+    const dialog = screen.getByRole('dialog');
+    fireEvent.submit(dialog.querySelector('form'));
+
+    expect(await within(dialog).findByText('비밀번호를 입력해주세요.')).toBeInTheDocument();
+    expect(StandardizedApi.post).not.toHaveBeenCalled();
+  });
+
+  it('임시 비밀번호로 현재 비밀번호가 미리 채워져도 정책 안내는 항상 보인다', () => {
+    renderOpen({ tempPassword: 'Tmpfake7!Q' });
+    const hint = screen.getByRole('dialog').querySelector('#mypage-pw-new-policy-hint');
+    expect(hint).toBeTruthy();
+    expect(hint.textContent).toContain(getPasswordPolicyHint());
   });
 });

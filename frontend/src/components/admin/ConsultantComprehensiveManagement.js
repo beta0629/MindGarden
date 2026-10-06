@@ -1362,10 +1362,11 @@ const ConsultantComprehensiveManagement = ({ embedded = false, initialOpenUserId
                     }));
                     return;
                 }
-                if (!consultantPasswordField.validate(formData.password)) {
+                const committedPassword = consultantPasswordField.validateCommitted(formData.password);
+                if (!committedPassword.valid) {
                     return;
                 }
-                result = await createConsultant(formData);
+                result = await createConsultant({ ...formData, password: committedPassword.value });
             } else if (modalType === 'edit') {
                 const phoneNorm = normalizeKoreanMobileDigits(String(formData.phone ?? '').trim());
                 const baseline = consultantEditPhoneBaselineRef.current || '';
@@ -2296,6 +2297,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false, initialOpenUserId
         const isCreateSubmitDisabled = modalType === 'create' && (
             (emailTrimmed !== '' && emailCheckStatus !== 'available')
             || (phoneNeedCheck && consultantPhoneCheckStatus !== 'available')
+            || consultantPasswordField.pending
         );
         return (
             <>

@@ -34,8 +34,9 @@ const RAW_CUSTOM = '<MGInput type="password" value={v} />\n';
 const CURRENT = '<input type="password" autoComplete="current-password" name="password" />\n';
 const CURRENT_CONST = '<input type={show ? \'text\' : \'password\'} autoComplete={PASSWORD_AUTOCOMPLETE.CURRENT} />\n';
 const POLICY_INPUT = '<PasswordPolicyInput field={passwordField} type="password" value={v} />\n';
-const VALIDATE = 'if (!passwordField.validate(form.password)) return;\n';
-const VALIDATE_ALIAS = 'const { validate: validatePassword } = passwordField;\nconst ok = validatePassword(a, b);\n';
+const VALIDATE = 'if (!passwordField.validateCommitted(form.password).valid) return;\n';
+const VALIDATE_LEGACY = 'if (!passwordField.validate(form.password)) return;\n';
+const VALIDATE_ALIAS = 'const { validateCommitted: validatePassword } = passwordField;\nconst ok = validatePassword(a, b);\n';
 const FIELD_CONFIG = "const fields = [{ name: 'pw', type: 'password' }];\n";
 const PAYLOAD = "await StandardizedApi.post(URL, { email, password: form.password });\n";
 const PAYLOAD_EMPTY = "const init = { password: '' };\nawait StandardizedApi.post(URL, { email });\n";
@@ -47,6 +48,14 @@ const REGEX_TEST = 'const ok = /[A-Z]/.test(form.password);\n';
 const LOOKAHEAD = 'const RE = /^(?=.*[a-z])(?=.*\\d).{8,}$/;\n';
 const LENGTH_RULE = 'if (newPassword.length < 8) return false;\n';
 const NON_EMPTY = 'const filled = form.password.trim().length > 0;\n';
+const HINT_SHOW_FALSE = '<PasswordPolicyInput field={f} showHint={false} />\nif (!f.validateCommitted(v).valid) return;\n';
+const HINT_EXTERNAL_OK = '<PasswordPolicyInput field={f} hintExternal id="pw" />\n<PasswordPolicyHint field={f} id="pw" />\n'
+  + 'if (!f.validateCommitted(v).valid) return;\n';
+const HINT_EXTERNAL_MISSING = '<PasswordPolicyInput field={f} hintExternal id="pw" />\nif (!f.validateCommitted(v).valid) return;\n';
+const HINT_CONDITIONAL = '<PasswordPolicyInput field={f} hintExternal id="pw" />\n'
+  + '{!f.errorMessage ? <PasswordPolicyHint field={f} id="pw" /> : null}\nif (!f.validateCommitted(v).valid) return;\n';
+const HINT_RAW = IMPORT_SHARED + '<PasswordPolicyInput field={f} hintExternal />\n<PasswordPolicyHint field={f} />\n'
+  + '<small>{f.hint}</small>\nif (!f.validateCommitted(v).valid) return;\n';
 const COMMENT_ONLY = '// <input type="password" />\n/* StandardizedApi.post(URL, { password: x }) */\nconst ok = 1;\n';
 
 const tests = {
@@ -60,8 +69,9 @@ const tests = {
     assert.deepStrictEqual(scanFile(REL, CURRENT_CONST), []);
     assert.deepStrictEqual(scanFile(REL, CURRENT + PAYLOAD), []);
   },
-  'PasswordPolicyInput 은 validate 를 불러야 통과': () => {
+  'PasswordPolicyInput 은 validateCommitted 를 불러야 통과(제출 시점 값 확정)': () => {
     assert.deepStrictEqual(scanFile(REL, POLICY_INPUT), [`POLICY_INPUT_NO_VALIDATE ${REL}`]);
+    assert.deepStrictEqual(scanFile(REL, POLICY_INPUT + VALIDATE_LEGACY), [`POLICY_INPUT_NO_VALIDATE ${REL}`]);
     assert.deepStrictEqual(scanFile(REL, POLICY_INPUT + VALIDATE), []);
     assert.deepStrictEqual(scanFile(REL, POLICY_INPUT + VALIDATE_ALIAS), []);
   },
@@ -86,6 +96,14 @@ const tests = {
     assert.deepStrictEqual(scanFile(REL, IMPORT_POLICY_FN + LENGTH_RULE), [`PASSWORD_RULE_LITERAL ${REL} x1`]);
     assert.deepStrictEqual(scanFile(REL, NON_EMPTY), []);
     assert.deepStrictEqual(scanFile('frontend/src/utils/loginPasswordPolicy.js', REGEX_TEST + LOOKAHEAD), []);
+  },
+  '정책 힌트를 숨기는 코드는 위반, 외부 힌트 컴포넌트를 항상 그리면 통과': () => {
+    assert.deepStrictEqual(scanFile(REL, HINT_SHOW_FALSE), [`POLICY_HINT_HIDDEN ${REL}`]);
+    assert.deepStrictEqual(scanFile(REL, HINT_EXTERNAL_MISSING), [`POLICY_HINT_HIDDEN ${REL}`]);
+    assert.deepStrictEqual(scanFile(REL, HINT_CONDITIONAL), [`POLICY_HINT_HIDDEN ${REL}`]);
+    assert.deepStrictEqual(scanFile(REL, HINT_RAW), [`POLICY_HINT_HIDDEN ${REL}`]);
+    assert.deepStrictEqual(scanFile(REL, HINT_EXTERNAL_OK), []);
+    assert.deepStrictEqual(scanFile(REL, POLICY_INPUT + VALIDATE), []);
   },
   '주석·공통 모듈 파일은 통과': () => {
     assert.deepStrictEqual(scanFile(REL, COMMENT_ONLY), []);

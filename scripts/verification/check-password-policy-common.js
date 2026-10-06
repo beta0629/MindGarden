@@ -11,8 +11,9 @@
  *   RAW_PASSWORD_INPUT <파일> xN   — JSX 요소의 type 이 password 인데 PasswordPolicyInput 이 아니고
  *                                     autoComplete="current-password"(로그인·본인 확인)도 아닌 것.
  *   PASSWORD_FIELD_CONFIG <파일> xN — 폼 설정 객체의 type: 'password' (공통 렌더러로 우회).
- *   POLICY_INPUT_NO_VALIDATE <파일> — PasswordPolicyInput 을 그리지만 field.validate 를 부르지 않는 파일
- *                                     (안내만 보이고 제출은 막히지 않음).
+ *   POLICY_INPUT_NO_VALIDATE <파일> — PasswordPolicyInput 을 그리지만 field.validateCommitted 를 부르지 않는 파일
+ *                                     (안내만 보이고 제출은 막히지 않음). 제출 본문은 validateCommitted 가
+ *                                     돌려준 value 를 써야 입력 직후 제출에도 빈 값이 나가지 않는다.
  *   PASSWORD_PAYLOAD_NO_POLICY <파일> — 비밀번호 키(password·newPassword·adminPassword 등)에 값을 실어
  *                                     API 를 부르는데 공통 정책 모듈을 import 하지 않는 파일.
  *                                     현재 비밀번호 입력만 있는 파일(로그인)은 제외.
@@ -22,6 +23,10 @@
  *                                     다른 이름은 그 함수에 위임만 한다.
  *   PASSWORD_RULE_LITERAL <파일> xN — 공통 모듈 밖의 비밀번호 규칙 리터럴: 비밀번호 값에 대한 정규식 test/match,
  *                                     복잡도 lookahead 정규식 `(?=.*[`, 비밀번호 길이와 2 이상 숫자 비교.
+ *   POLICY_HINT_HIDDEN <파일>       — 정책 힌트를 숨길 수 있는 코드: PasswordPolicyInput 의 showHint 속성,
+ *                                     조건부 `<PasswordPolicyHint`(&& · ?), 공통 컴포넌트 없이 `{field.hint}` 직접 렌더,
+ *                                     hintExternal 인데 같은 파일에 `<PasswordPolicyHint` 없음.
+ *                                     힌트는 값·오류와 관계없이 항상 보여야 한다.
  *
  * 허용 목록 항목: `<종류> <파일> :: <사유>` — 사유 필수. 위반이 사라진 항목이 남아 있어도 exit 1.
  *
@@ -56,8 +61,8 @@ const TYPE_PASSWORD = /\btype\s*=\s*(?:"password"|'password'|\{[^}]*['"]password
 const CURRENT_PASSWORD = /\bautoComplete\s*=\s*(?:"current-password"|'current-password'|\{\s*PASSWORD_AUTOCOMPLETE\.CURRENT\s*\})/;
 const FIELD_CONFIG = /\btype\s*:\s*['"]password['"]/g;
 const PAYLOAD_KEY = /(?<![\w.'"$-])(?:password|newPassword|adminPassword|tempPassword|initialPassword)\s*:(?!\s*(?:''|""|``))/;
-const VALIDATE_CALL = /\.validate\s*\(/;
-const VALIDATE_ALIAS = /\bvalidate\s*:\s*(\w+)/g;
+const VALIDATE_CALL = /\.validateCommitted\s*\(/;
+const VALIDATE_ALIAS = /\bvalidateCommitted\s*:\s*(\w+)/g;
 const POLICY_FN_IMPORT = /(?:from\s+|require\(\s*)['"][^'"]*\/loginPasswordPolicy['"]/;
 const VALIDATOR_DEF = /(?:\b(?:const|let|var)\s+|\bfunction\s+)(?:validate|isValid|check|verify|test|is|has)\w*Passw(?:or)?d\w*\s*(?:=|\()/gi;
 const RULE_LITERALS = [
@@ -66,6 +71,10 @@ const RULE_LITERALS = [
   /\(\?=\.\*\[/g,
   /\b\w*passw\w*(?:\.\w+)*\.(?:trim\(\)\.)?length\s*(?:<|>|<=|>=)\s*(?:[2-9]|\d{2,})/gi
 ];
+const HOOK_IMPORT = /(?:from\s+|require\(\s*)['"][^'"]*\/usePasswordPolicyField['"]/;
+const HINT_COMPONENT = /<PasswordPolicyHint\b/;
+const HINT_CONDITIONAL = /(?:&&|\?)\s*\(?\s*<PasswordPolicyHint\b/;
+const HINT_RAW = /\{\s*`?\$?\{?\s*\w+\.hint\b/;
 const API_CALL = /\b(?:StandardizedApi\.(?:post|put|patch)|apiPost|apiPut|apiPatch|csrfTokenManager\.(?:post|put|patch)|axios\.(?:post|put|patch)|fetch)\s*\(/;
 
 function parseArgs(argv) {
@@ -134,7 +143,33 @@ function passwordInputs(text) {
   return out;
 }
 
-/** field.validate(...) 또는 구조분해 별칭(`validate: validatePassword`) 호출 여부. */
+/** 정책 힌트를 숨길 수 있는 패턴이 있으면 true. */
+function hidesPolicyHint(text) {
+  let hidden = false;
+  let external = false;
+  let m;
+  JSX_OPEN.lastIndex = 0;
+  while ((m = JSX_OPEN.exec(text)) !== null) {
+    if (m[1] !== 'PasswordPolicyInput') {
+      continue;
+    }
+    const tag = jsxTagText(text, m.index) || '';
+    hidden = hidden || /\bshowHint\b/.test(tag);
+    external = external || /\bhintExternal\b/.test(tag);
+  }
+  if (external && !HINT_COMPONENT.test(text)) {
+    hidden = true;
+  }
+  if (HINT_CONDITIONAL.test(text)) {
+    hidden = true;
+  }
+  if (HOOK_IMPORT.test(text) && HINT_RAW.test(text)) {
+    hidden = true;
+  }
+  return hidden;
+}
+
+/** field.validateCommitted(...) 또는 구조분해 별칭(`validateCommitted: validatePassword`) 호출 여부. */
 function callsValidate(text) {
   if (VALIDATE_CALL.test(text)) {
     return true;
@@ -169,6 +204,9 @@ function scanFile(rel, rawText) {
   const loginOnly = inputs.current > 0 && inputs.raw === 0 && inputs.policy === 0;
   if (PAYLOAD_KEY.test(text) && API_CALL.test(text) && !SHARED_IMPORT.test(text) && !loginOnly) {
     found.push(`PASSWORD_PAYLOAD_NO_POLICY ${rel}`);
+  }
+  if (hidesPolicyHint(text)) {
+    found.push(`POLICY_HINT_HIDDEN ${rel}`);
   }
   const defs = (text.match(VALIDATOR_DEF) || []).length;
   if (defs > 0 && !POLICY_FN_IMPORT.test(text)) {

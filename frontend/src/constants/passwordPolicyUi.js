@@ -1,33 +1,31 @@
 /**
  * 로그인 비밀번호 저장 정책 — 프론트 단일 상수 파일.
  *
- * 값은 백엔드 {@code com.coresolution.core.security.PasswordPolicy} 와 같아야 한다.
- * 양쪽 모두 {@code src/test/resources/password-policy/login-password-policy-parity.json} 픽스처로 검사한다
- * (BE PasswordPolicyParityFixtureTest · FE loginPasswordPolicy.parity.test.js).
+ * 길이·허용 특수문자·일반 단어 목록은 BE/FE 공용 픽스처
+ * {@code src/test/resources/password-policy/login-password-policy-parity.json} 에서만 읽는다(FE 사본 없음).
+ * BE {@code com.coresolution.core.security.PasswordPolicy} 는 PasswordPolicyParityFixtureTest 가 같은 픽스처로 검사한다.
+ * 픽스처 import 는 craco.config.js 의 ModuleScopePlugin 허용 파일 1개로만 열어 둔다.
  * 검증 로직은 {@code utils/loginPasswordPolicy.js}, 화면 입력은 {@code hooks/usePasswordPolicyField.js}·
  * {@code components/common/PasswordPolicyInput.js} 만 사용한다.
  *
  * @author CoreSolution
  */
+import loginPasswordPolicyFixture from '../../../src/test/resources/password-policy/login-password-policy-parity.json';
 
 /** @type {number} */
-export const LOGIN_PASSWORD_MIN_LENGTH = 8;
+export const LOGIN_PASSWORD_MIN_LENGTH = loginPasswordPolicyFixture.minLength;
 
 /** @type {number} */
-export const LOGIN_PASSWORD_MAX_LENGTH = 100;
+export const LOGIN_PASSWORD_MAX_LENGTH = loginPasswordPolicyFixture.maxLength;
 
 /** @type {string} */
-export const LOGIN_PASSWORD_ALLOWED_SPECIALS = '@$!%*?&';
+export const LOGIN_PASSWORD_ALLOWED_SPECIALS = loginPasswordPolicyFixture.allowedSpecials;
 
 /** 연속 문자(abc·321)·동일 문자 반복 금지 길이. */
 export const LOGIN_PASSWORD_FORBIDDEN_RUN_LENGTH = 3;
 
-/** 포함 금지 일반 부분 문자열(대소문자 무시). */
-export const LOGIN_PASSWORD_COMMON_SUBSTRINGS = Object.freeze([
-  'password', '123456', 'qwerty', 'admin', 'user',
-  'password123', 'admin123', 'test123', 'hello123',
-  'welcome', 'login', 'letmein', 'master', 'secret'
-]);
+/** 포함 금지 일반 부분 문자열(대소문자 무시 부분 일치). 서버 PasswordPolicy.LOGIN_PASSWORD_COMMON_SUBSTRINGS 와 같은 픽스처 목록. */
+export const LOGIN_PASSWORD_COMMON_SUBSTRINGS = Object.freeze([...loginPasswordPolicyFixture.commonSubstrings]);
 
 /** 정책 위반 코드 (BE collectLoginStorageViolations 키와 같음, 검사 순서대로). */
 export const LOGIN_PASSWORD_VIOLATION = Object.freeze({
@@ -56,7 +54,6 @@ export const PASSWORD_POLICY_I18N = Object.freeze({
   PLACEHOLDER: 'common:passwordPolicy.placeholder',
   OPTIONAL_HINT: 'common:passwordPolicy.optionalHint',
   GUIDANCE: 'common:passwordPolicy.guidance',
-  REQUEST_FAILED: 'common:passwordPolicy.requestFailed',
   VIOLATION_PREFIX: 'common:passwordPolicy.violation.'
 });
 

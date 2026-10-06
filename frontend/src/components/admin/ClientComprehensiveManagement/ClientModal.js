@@ -362,8 +362,12 @@ const ClientModal = ({
             }
         }
         setErrors(newErrors);
-        const passwordOk = type !== 'create' || clientPasswordField.validate(formData.password);
-        return Object.keys(newErrors).length === 0 && passwordOk;
+        const committedPassword = type === 'create' ? clientPasswordField.validateCommitted(formData.password) : null;
+        const passwordOk = !committedPassword || committedPassword.valid;
+        return {
+            ok: Object.keys(newErrors).length === 0 && passwordOk,
+            form: committedPassword ? { ...formData, password: committedPassword.value } : formData
+        };
     };
 
     const handleClientPhoneDuplicateCheck = useCallback(async() => {
@@ -472,9 +476,11 @@ const ClientModal = ({
 
     const handleSubmit = async(e) => {
         e.preventDefault();
-        if (!validateForm()) {
+        const validation = validateForm();
+        if (!validation.ok) {
             return undefined;
         }
+        const submitForm = validation.form;
         const plateRaw = formData.vehiclePlate;
         if (plateRaw != null && String(plateRaw).trim() !== '' && !isValidVehiclePlateOptional(plateRaw)) {
             setVehiclePlateError(VALIDATION_MESSAGES.INVALID_VEHICLE_PLATE);
@@ -496,10 +502,10 @@ const ClientModal = ({
                 return undefined;
             }
         }
-        let payloadForSave = formData;
+        let payloadForSave = submitForm;
         try {
-            payloadForSave = await ensurePartnerInstitutionOnForm(formData);
-            if (payloadForSave !== formData) {
+            payloadForSave = await ensurePartnerInstitutionOnForm(submitForm);
+            if (payloadForSave !== submitForm) {
                 setFormData(payloadForSave);
             }
         } catch (error) {
@@ -1315,6 +1321,7 @@ const ClientModal = ({
                         }}
                         preventDoubleClick={true}
                         clickDelay={1000}
+                        disabled={type === 'create' && clientPasswordField.pending}
                     >
                         {getSubmitText()}
                     </MGButton>

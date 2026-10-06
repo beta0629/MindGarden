@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { getPasswordPolicyApiErrorMessage } from '../../utils/loginPasswordPolicy';
+import { resolveUserFacingApiErrorMessage } from '../../utils/userFacingApiErrorMessage';
 import usePasswordPolicyField from '../../hooks/usePasswordPolicyField';
-import PasswordPolicyInput, { PasswordPolicyError } from '../common/PasswordPolicyInput';
+import PasswordPolicyInput, { PasswordPolicyError, PasswordPolicyHint } from '../common/PasswordPolicyInput';
 import UnifiedModal from '../common/modals/UnifiedModal';
 import MGButton from '../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
@@ -41,14 +41,15 @@ const PasswordResetModal = ({
         e.preventDefault();
         setSubmitError('');
 
-        if (!passwordField.validate(newPassword, confirmPassword)) return;
+        const committed = passwordField.validateCommitted(newPassword, confirmPassword);
+        if (!committed.valid) return;
 
         setIsSubmitting(true);
         try {
-            await onConfirm(newPassword);
+            await onConfirm(committed.value);
         } catch (error) {
             console.error('비밀번호 초기화 요청 오류:', error);
-            setSubmitError(getPasswordPolicyApiErrorMessage(error));
+            setSubmitError(resolveUserFacingApiErrorMessage(error));
         } finally {
             setIsSubmitting(false);
         }
@@ -85,6 +86,7 @@ const PasswordResetModal = ({
                         size="medium"
                         className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: isSubmitting })}
                         loading={isSubmitting}
+                        disabled={passwordField.pending}
                         loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                         preventDoubleClick={false}
                     >
@@ -97,9 +99,7 @@ const PasswordResetModal = ({
                 <p className="mg-v2-info-text">
                     <strong>{userName}</strong> {userTypeLabel}의 비밀번호를 초기화합니다.
                 </p>
-                <p className="mg-v2-info-text">
-                    {passwordField.hint}
-                </p>
+                <PasswordPolicyHint field={passwordField} id="newPassword" as="p" className="mg-v2-info-text" />
             </div>
 
             <form
@@ -120,7 +120,7 @@ const PasswordResetModal = ({
                         <PasswordPolicyInput
                             field={passwordField}
                             revealed={showPassword}
-                            showHint={false}
+                            hintExternal
                             showError={false}
                             id="newPassword"
                             errorInputClassName={RESET_INPUT_ERROR_CLASS}

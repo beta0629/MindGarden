@@ -560,7 +560,8 @@ const StaffManagement = ({ embedded = false }) => {
         setCreateFormErrors(fieldErrors);
         return;
       }
-      const passwordOk = staffPasswordField.validate((createForm.password || '').trim());
+      const committedPassword = staffPasswordField.validateCommitted(createForm.password);
+      const passwordOk = committedPassword.valid;
       if (Object.keys(fieldErrors).length > 0) {
         setCreateFormErrors(fieldErrors);
         return;
@@ -579,7 +580,7 @@ const StaffManagement = ({ embedded = false }) => {
         const payload = {
           email,
           name,
-          password: (createForm.password || '').trim() || undefined,
+          password: committedPassword.value.trim() || undefined,
           phone: (createForm.phone || '').trim() || undefined,
           profileImageUrl: (createForm.profileImageUrl || '').trim() || undefined,
           rrnFirst6: (createForm.rrnFirst6 || '').trim() || undefined,
@@ -1410,7 +1411,7 @@ const StaffManagement = ({ embedded = false }) => {
               variant="primary"
               className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: createStaffModal.submitting })}
               onClick={handleCreateStaffSubmit}
-              disabled={createStaffModal.submitting || !(createForm.email || '').trim()}
+              disabled={createStaffModal.submitting || !(createForm.email || '').trim() || staffPasswordField.pending}
               loading={createStaffModal.submitting}
               loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               preventDoubleClick={false}

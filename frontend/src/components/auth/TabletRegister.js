@@ -22,7 +22,7 @@ import { TermsOfServiceContent } from '../common/TermsOfService';
 import { PrivacyPolicyContent } from '../common/PrivacyPolicy';
 import '../common/PrivacyPolicy.css';
 import usePasswordPolicyField from '../../hooks/usePasswordPolicyField';
-import PasswordPolicyInput, { PasswordPolicyError } from '../common/PasswordPolicyInput';
+import PasswordPolicyInput, { PasswordPolicyError, PasswordPolicyHint } from '../common/PasswordPolicyInput';
 import './AuthPageCommon.css';
 
 const REGISTER_INPUT_ERROR_CLASS = 'mg-v2-input error';
@@ -247,7 +247,7 @@ const TabletRegister = () => {
       newErrors.email = VALIDATION_MESSAGES.INVALID_EMAIL_FORMAT;
     }
 
-    const passwordOk = passwordField.validate(formData.password, formData.confirmPassword);
+    const committedPassword = passwordField.validateCommitted(formData.password, formData.confirmPassword);
 
     if (!formData.phone.trim()) {
       newErrors.phone = VALIDATION_MESSAGES.REQUIRED_PHONE;
@@ -271,13 +271,14 @@ const TabletRegister = () => {
     }
 
     setErrors(newErrors);
-    return Object.keys(newErrors).length === 0 && passwordOk;
+    return Object.keys(newErrors).length === 0 && committedPassword.valid ? committedPassword : null;
   };
 
   const handleSubmit = async(e) => {
     e.preventDefault();
 
-    if (!validateForm()) {
+    const committedPassword = validateForm();
+    if (!committedPassword) {
       return;
     }
 
@@ -317,8 +318,8 @@ const TabletRegister = () => {
       const payload = {
         name: formData.name.trim(),
         email: formData.email.trim(),
-        password: formData.password,
-        confirmPassword: formData.confirmPassword,
+        password: committedPassword.value,
+        confirmPassword: committedPassword.confirmValue,
         phone: normalizeKoreanMobileDigits(formData.phone.trim()),
         gender: formData.gender || 'OTHER',
         agreeTerms: formData.agreeTerms,
@@ -468,7 +469,7 @@ const TabletRegister = () => {
                   <PasswordPolicyInput
                     field={passwordField}
                     revealed={showPassword}
-                    showHint={false}
+                    hintExternal
                     showError={false}
                     id="password"
                     name="password"
@@ -487,9 +488,7 @@ const TabletRegister = () => {
                   </button>
                 </div>
                 <PasswordPolicyError field={passwordField} id="password" className={REGISTER_ERROR_TEXT_CLASS} />
-                {!passwordField.errorMessage ? (
-                  <small className="mg-v2-form-help">{passwordField.hint}</small>
-                ) : null}
+                <PasswordPolicyHint field={passwordField} id="password" />
               </div>
 
               <div className="mg-v2-form-group">
@@ -610,7 +609,7 @@ const TabletRegister = () => {
               type="submit"
               variant="primary"
               className={`${buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: isLoading })} mg-v2-button-primary`}
-              disabled={isLoading}
+              disabled={isLoading || passwordField.pending}
               loading={isLoading}
               loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               preventDoubleClick={false}

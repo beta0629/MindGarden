@@ -57,6 +57,8 @@ jobs:
         src/components/academy/__tests__/AcademyRegister.passwordPolicy.test.js
         src/components/dashboard/widgets/consultation/__tests__/RegistrationWidgets.passwordPolicy.test.js
         src/pages/public/__tests__/OnboardingPage.test.jsx
+        src/components/common/__tests__/PasswordPolicyInput.commitTiming.test.js
+        src/utils/__tests__/userFacingApiErrorMessage.test.js
     steps:
       - name: Checkout
         uses: actions/checkout@v4

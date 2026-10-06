@@ -43,6 +43,19 @@ jobs:
         src/pages/client/shop/__tests__/ClientMallBuyNowNoCartPut.test.js
         src/utils/__tests__/clientMallBuyNow.test.js
         src/utils/__tests__/clientMall.test.js
+        src/utils/__tests__/loginPasswordPolicy.test.js
+        src/utils/__tests__/loginPasswordPolicy.parity.test.js
+        src/components/admin/__tests__/consultantComprehensiveManagement.passwordPolicy.test.js
+        src/components/admin/ClientComprehensiveManagement/__tests__/ClientModal.passwordPolicy.test.js
+        src/components/admin/__tests__/StaffManagement.passwordPolicy.test.js
+        src/components/admin/__tests__/ConsultantManagement.passwordPolicy.test.js
+        src/components/admin/__tests__/PasswordResetModal.test.js
+        src/components/mypage/components/__tests__/PasswordChangeModal.test.js
+        src/components/auth/__tests__/ResetPassword.passwordPolicy.test.js
+        src/components/auth/__tests__/TabletRegister.passwordPolicy.test.js
+        src/components/academy/__tests__/AcademyRegister.passwordPolicy.test.js
+        src/components/dashboard/widgets/consultation/__tests__/RegistrationWidgets.passwordPolicy.test.js
+        src/pages/public/__tests__/OnboardingPage.test.jsx
     steps:
       - name: Checkout
         uses: actions/checkout@v4

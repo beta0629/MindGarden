@@ -7,6 +7,7 @@ name: 🛡️ Guardrails (PR)
 #   4) FE 관리자 목록 전체 조회·page/size 누락 — scripts/verification/check-fe-admin-list-paging.js
 #   4b) FE 표시용 시각을 판정 입력으로 사용(래칫)·다국어 JSON ${ 잔존(하드 실패, 허용 목록 없음) — scripts/verification/check-fe-display-string-logic.js
 #   4c) FE 401 공용 처리 우회 로그인 직접 이동 — scripts/verification/check-login-redirect-bypass.js
+#   4e) FE 비밀번호 입력·검증 공통 모듈 미사용(화면별 정책 재구현) — scripts/verification/check-password-policy-common.js
 #   4d) 발송 수신자 상한 숫자 리터럴(DTO @Size·FE MAX_RECIPIENTS·문구 최대 N명) — scripts/verification/check-recipient-limit-literals.js
 #   5) 운영 머지 게이트              — base=release/prod 이면 BE/FE 빌드도 같은 워크플로에서 실행
 #   6) 운영 배포 워크플로 실패 삼킴·옛 DB — scripts/verification/check-prod-deploy-workflows.js (|| true · continue-on-error · non-fatal · mind_garden)
@@ -146,6 +147,25 @@ jobs:
 
       - name: Check direct /login navigation outside sessionRedirect (ratchet baseline)
         run: node scripts/verification/check-login-redirect-bypass.js
+
+  guardrail-fe-password-policy-common:
+    name: Guardrail FE (password policy shared module)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Checker self-test
+        run: node scripts/verification/check-password-policy-common.test.js
+
+      - name: Check password inputs/payloads use usePasswordPolicyField + PasswordPolicyInput (allowlist with reasons)
+        run: node scripts/verification/check-password-policy-common.js
 
   guardrail-recipient-limit-literals:
     name: Guardrail recipient limit literals (single server limit)

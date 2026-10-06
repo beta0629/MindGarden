@@ -21,7 +21,12 @@ import UnifiedModal from '../common/modals/UnifiedModal';
 import { TermsOfServiceContent } from '../common/TermsOfService';
 import { PrivacyPolicyContent } from '../common/PrivacyPolicy';
 import '../common/PrivacyPolicy.css';
+import usePasswordPolicyField from '../../hooks/usePasswordPolicyField';
+import PasswordPolicyInput, { PasswordPolicyError } from '../common/PasswordPolicyInput';
 import './AuthPageCommon.css';
+
+const REGISTER_INPUT_ERROR_CLASS = 'mg-v2-input error';
+const REGISTER_ERROR_TEXT_CLASS = 'mg-v2-error-text';
 import { useTranslation } from 'react-i18next';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
@@ -57,6 +62,7 @@ const TabletRegister = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState({});
+  const passwordField = usePasswordPolicyField({ requireConfirm: true });
   const [emailCheckStatus, setEmailCheckStatus] = useState(null); // 'checking' | 'duplicate' | 'available' | null
   const [isCheckingEmail, setIsCheckingEmail] = useState(false);
   const [phoneCheckStatus, setPhoneCheckStatus] = useState(null); // 'checking' | 'duplicate' | 'available' | null
@@ -215,6 +221,9 @@ const TabletRegister = () => {
     if (name === 'phone') {
       setPhoneCheckStatus(null);
     }
+    if (name === 'password' || name === 'confirmPassword') {
+      passwordField.clearError();
+    }
   };
 
   const togglePassword = (field) => {
@@ -238,17 +247,7 @@ const TabletRegister = () => {
       newErrors.email = VALIDATION_MESSAGES.INVALID_EMAIL_FORMAT;
     }
 
-    if (!formData.password) {
-      newErrors.password = t('auth:TabletRegister.t_f2e5e9cb');
-    } else if (formData.password.length < 8) {
-      newErrors.password = t('auth:TabletRegister.t_c1b8b5d4');
-    }
-
-    if (!formData.confirmPassword) {
-      newErrors.confirmPassword = t('auth:TabletRegister.t_ecdaae18');
-    } else if (formData.password !== formData.confirmPassword) {
-      newErrors.confirmPassword = t('auth:TabletRegister.t_c3b85cd6');
-    }
+    const passwordOk = passwordField.validate(formData.password, formData.confirmPassword);
 
     if (!formData.phone.trim()) {
       newErrors.phone = VALIDATION_MESSAGES.REQUIRED_PHONE;
@@ -272,7 +271,7 @@ const TabletRegister = () => {
     }
 
     setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    return Object.keys(newErrors).length === 0 && passwordOk;
   };
 
   const handleSubmit = async(e) => {
@@ -466,16 +465,17 @@ const TabletRegister = () => {
               <div className="mg-v2-form-group">
                 <label htmlFor="password" className="mg-v2-form-label">비밀번호 *</label>
                 <div className="mg-v2-password-wrapper">
-                  <input
-                    type={showPassword ? 'text' : 'password'}
+                  <PasswordPolicyInput
+                    field={passwordField}
+                    revealed={showPassword}
+                    showHint={false}
+                    showError={false}
                     id="password"
                     name="password"
-                    className={`mg-v2-form-input ${errors.password ? 'mg-v2-input error' : ''}`}
-                    placeholder="8자 이상 입력하세요"
+                    errorInputClassName={REGISTER_INPUT_ERROR_CLASS}
                     value={formData.password}
                     onChange={handleInputChange}
                     required
-                    minLength="8"
                   />
                   <button
                     type="button"
@@ -486,22 +486,27 @@ const TabletRegister = () => {
                     {showPassword ? <EyeOff size={16} strokeWidth={1.75} aria-hidden="true" /> : <Eye size={16} strokeWidth={1.75} aria-hidden="true" />}
                   </button>
                 </div>
-                {errors.password && <span className="mg-v2-error-text">{errors.password}</span>}
+                <PasswordPolicyError field={passwordField} id="password" className={REGISTER_ERROR_TEXT_CLASS} />
+                {!passwordField.errorMessage ? (
+                  <small className="mg-v2-form-help">{passwordField.hint}</small>
+                ) : null}
               </div>
 
               <div className="mg-v2-form-group">
                 <label htmlFor="confirmPassword" className="mg-v2-form-label">비밀번호 확인 *</label>
                 <div className="mg-v2-password-wrapper">
-                  <input
-                    type={showConfirmPassword ? 'text' : 'password'}
+                  <PasswordPolicyInput
+                    field={passwordField}
+                    confirm
+                    revealed={showConfirmPassword}
+                    showError={false}
                     id="confirmPassword"
                     name="confirmPassword"
-                    className={`mg-v2-form-input ${errors.confirmPassword ? 'mg-v2-input error' : ''}`}
+                    errorInputClassName={REGISTER_INPUT_ERROR_CLASS}
                     placeholder="비밀번호를 다시 입력하세요"
                     value={formData.confirmPassword}
                     onChange={handleInputChange}
                     required
-                    minLength="8"
                   />
                   <button
                     type="button"
@@ -512,7 +517,7 @@ const TabletRegister = () => {
                     {showConfirmPassword ? <EyeOff size={16} strokeWidth={1.75} aria-hidden="true" /> : <Eye size={16} strokeWidth={1.75} aria-hidden="true" />}
                   </button>
                 </div>
-                {errors.confirmPassword && <span className="mg-v2-error-text">{errors.confirmPassword}</span>}
+                <PasswordPolicyError field={passwordField} confirm id="confirmPassword" className={REGISTER_ERROR_TEXT_CLASS} />
               </div>
             </div>
 

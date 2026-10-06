@@ -2,6 +2,7 @@
  * 칩 끝 표식 묶음.
  * 단계 B 기준 224px 는 @container 가 var() 를 받지 못해 px 리터럴이다.
  * 사이드바 행(mg-compact-row) 기준값은 월간 칩과 같게 두었고 검증 실측이 필요하다.
+ * 절대 위치일 때 끝 여백은 --mg-schedule-event-marks-reserve(design-v2-tokens) 하나만 쓴다.
  */
 
 .mg-schedule-event-marks {
@@ -31,12 +32,12 @@
 }
 
 /*
- * 단계 B (하네스 < 224px): ■ 사각, 끝 패딩 안 절대 위치.
- * 10px = space-2 + space-0-5. 2px = space-0-5.
+ * 단계 B (하네스 < 224px): ■ 사각, 끝 패딩 안 절대 위치. 월 그리드·더보기 팝오버 공통.
+ * 칩 패딩 선택자는 IntegratedMatchingSchedule.css 칩 기본 padding-inline(특이도 0,3,0)보다 높아야 한다.
  */
 @container mg-month-event (width < 224px) {
-  .mg-v2-ad-calendar-event--integrated-month:has(.mg-schedule-event-marks) {
-    padding-inline-end: calc(var(--mg-v2-space-2) + var(--mg-v2-space-0-5));
+  .mg-v2-ad-calendar-event.mg-v2-ad-calendar-event--compact.mg-v2-ad-calendar-event--integrated-month:has(.mg-schedule-event-marks) {
+    padding-inline-end: var(--mg-schedule-event-marks-reserve);
   }
 
   .mg-v2-ad-calendar-event--integrated-month .mg-schedule-event-marks {
@@ -50,9 +51,9 @@
   }
 
   .mg-v2-ad-calendar-event--integrated-month .mg-schedule-event-marks .mg-engagement-type-badge {
-    inline-size: var(--mg-size-dot-sm);
-    block-size: var(--mg-size-dot-sm);
-    min-inline-size: var(--mg-size-dot-sm);
+    inline-size: var(--mg-schedule-event-marks-size);
+    block-size: var(--mg-schedule-event-marks-size);
+    min-inline-size: var(--mg-schedule-event-marks-size);
     padding: 0;
     overflow: hidden;
     border-radius: var(--mg-v2-radius-none);
@@ -62,10 +63,13 @@
   }
 }
 
-/* 사이드바 행. 224px 는 월간 칩 단계 B 와 같은 값. 검증 실측 필요. */
+/*
+ * 사이드바 행. 224px 는 월간 칩 단계 B 와 같은 값. 검증 실측 필요.
+ * 행 자신이 컨테이너라 행 패딩은 쿼리할 수 없다. 흐름 마지막 칸(secondary)에 여백을 둔다.
+ */
 @container mg-compact-row (width < 224px) {
-  .integrated-schedule__compact-row:has(.mg-schedule-event-marks) {
-    padding-inline-end: calc(var(--mg-v2-space-2) + var(--mg-v2-space-0-5));
+  .integrated-schedule__compact-row:has(.mg-schedule-event-marks) .integrated-schedule__compact-row-secondary {
+    margin-inline-end: var(--mg-schedule-event-marks-reserve);
   }
 
   .integrated-schedule__compact-row .mg-schedule-event-marks {
@@ -79,9 +83,9 @@
   }
 
   .integrated-schedule__compact-row .mg-schedule-event-marks .mg-engagement-type-badge {
-    inline-size: var(--mg-size-dot-sm);
-    block-size: var(--mg-size-dot-sm);
-    min-inline-size: var(--mg-size-dot-sm);
+    inline-size: var(--mg-schedule-event-marks-size);
+    block-size: var(--mg-schedule-event-marks-size);
+    min-inline-size: var(--mg-schedule-event-marks-size);
     padding: 0;
     overflow: hidden;
     border-radius: var(--mg-v2-radius-none);

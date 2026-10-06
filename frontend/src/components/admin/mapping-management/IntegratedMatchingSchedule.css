@@ -1038,7 +1038,7 @@
 /* 당일 칩은 「당일」만큼 더 필요. 글자 배지 기준 249px. */
 @container mg-month-event (width < 249px) {
   .integrated-schedule__calendar-wrapper--integrated .integrated-schedule__event--same-day-pending .mg-v2-ad-calendar-event--integrated-month:has(.mg-schedule-event-marks) {
-    padding-inline-end: calc(var(--mg-v2-space-2) + var(--mg-v2-space-0-5));
+    padding-inline-end: var(--mg-schedule-event-marks-reserve);
   }
 
   .integrated-schedule__calendar-wrapper--integrated .integrated-schedule__event--same-day-pending .mg-schedule-event-marks {
@@ -1051,9 +1051,9 @@
   }
 
   .integrated-schedule__calendar-wrapper--integrated .integrated-schedule__event--same-day-pending .mg-schedule-event-marks .mg-engagement-type-badge {
-    inline-size: var(--mg-size-dot-sm);
-    block-size: var(--mg-size-dot-sm);
-    min-inline-size: var(--mg-size-dot-sm);
+    inline-size: var(--mg-schedule-event-marks-size);
+    block-size: var(--mg-schedule-event-marks-size);
+    min-inline-size: var(--mg-schedule-event-marks-size);
     padding: 0;
     overflow: hidden;
     border-radius: var(--mg-v2-radius-none);

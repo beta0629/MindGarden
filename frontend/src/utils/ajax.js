@@ -102,6 +102,15 @@ export const extractServerErrorMessage = (body) => {
 };
 
 /**
+ * 던져진 API 오류(StandardizedApi·ajax)의 응답 본문에서 서버 메시지를 꺼낸다.
+ * @param {unknown} error
+ * @returns {string} 없으면 빈 문자열
+ */
+export const extractServerErrorMessageFromError = (error) => (
+  extractServerErrorMessage(error?.response?.data)
+);
+
+/**
  * HTTP 응답이 있는 오류의 사용자 문구 — 서버 메시지 우선, 없으면 status 기반 문구.
  * @param {number} status
  * @param {unknown} body

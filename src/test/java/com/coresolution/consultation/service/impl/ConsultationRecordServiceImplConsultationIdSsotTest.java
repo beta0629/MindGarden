@@ -514,6 +514,65 @@ class ConsultationRecordServiceImplConsultationIdSsotTest {
     }
 
     @Test
+    @DisplayName("create: 확정된 선납 결제 대기 일정 + 회차 없음 → 회차 부여, remaining/used 미차감")
+    void create_confirmedAdvancePending_grantsSequenceWithoutDeduction() {
+        Long scheduleId = 9102L;
+        Long mappingId = 8102L;
+        Long clientId = 221L;
+        Long consultantId = 111L;
+
+        Schedule schedule = new Schedule();
+        schedule.setId(scheduleId);
+        schedule.setTenantId(TENANT_ID);
+        schedule.setClientId(clientId);
+        schedule.setConsultantId(consultantId);
+        schedule.setStatus(ScheduleStatus.CONFIRMED);
+        schedule.setIsDeleted(false);
+        schedule.setDate(LocalDate.of(2026, 10, 6));
+        schedule.setSessionSequence(null);
+        schedule.setMappingId(mappingId);
+
+        ConsultantClientMapping mapping = new ConsultantClientMapping();
+        mapping.setId(mappingId);
+        mapping.setTenantId(TENANT_ID);
+        mapping.setStatus(MappingStatus.PENDING_PAYMENT);
+        mapping.setPaymentTiming(com.coresolution.consultation.constant.PaymentTimingConstants.ADVANCE);
+        mapping.setRemainingSessions(0);
+        mapping.setUsedSessions(0);
+        mapping.setTotalSessions(10);
+
+        when(scheduleRepository.findByTenantIdAndId(TENANT_ID, scheduleId))
+                .thenReturn(Optional.of(schedule));
+        when(mappingRepository.findByTenantIdAndId(TENANT_ID, mappingId))
+                .thenReturn(Optional.of(mapping));
+        when(scheduleRepository.save(any(Schedule.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(consultationRecordRepository.save(any(ConsultationRecord.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+        when(consultationRecordAlertService.resolveConsultationRecordAlert(eq(scheduleId), any()))
+                .thenReturn(Map.of("success", true));
+
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("consultationId", scheduleId);
+        payload.put("clientId", clientId);
+        payload.put("consultantId", consultantId);
+
+        User admin = new User();
+        admin.setId(1L);
+        admin.setRole(UserRole.ADMIN);
+
+        try (MockedStatic<SessionUtils> session = mockStatic(SessionUtils.class)) {
+            session.when(() -> SessionUtils.getCurrentUser(null)).thenReturn(admin);
+            ConsultationRecord saved = service.createConsultationRecord(payload);
+            assertThat(saved.getSessionNumber()).isEqualTo(1);
+            assertThat(schedule.getSessionSequence()).isEqualTo(1);
+            assertThat(mapping.getRemainingSessions()).isZero();
+            assertThat(mapping.getUsedSessions()).isZero();
+        }
+
+        verify(mappingRepository, never()).save(any());
+    }
+
+    @Test
     @DisplayName("create: 일반 ACTIVE rem=0 + sessionSequence null → 차단, remaining 불변")
     void create_regularActiveRemZero_stillBlocked() {
         Long scheduleId = 910L;

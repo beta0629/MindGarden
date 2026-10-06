@@ -54,15 +54,51 @@ const tests = {
     const json = JSON.stringify({ A: { bad: '실패: ${error.message}', ok: '실패: {{message}}' } });
     assert.deepStrictEqual(scanLocale(LOCALE, json), [`I18N_RAW_TEMPLATE ${LOCALE} :: A.bad`]);
   },
-  '신규 위반은 실패, 베이스라인이면 통과': () => {
-    const dir = fixture({ [REL]: BARE_DISPLAY, [LOCALE]: '{"k":"${x}"}' });
+  '닫는 중괄호 없는 ${ 도 I18N_RAW_TEMPLATE': () => {
+    const json = JSON.stringify({ A: { cut: '실패: ${error.message' } });
+    assert.deepStrictEqual(scanLocale(LOCALE, json), [`I18N_RAW_TEMPLATE ${LOCALE} :: A.cut`]);
+  },
+  '시각 판정 신규 위반은 실패, 베이스라인이면 통과': () => {
+    const dir = fixture({ [REL]: BARE_DISPLAY });
     const bl = path.join(dir, 'bl.txt');
     write(bl, '');
     assert.strictEqual(run(['--root', dir, '--baseline', bl]).code, 1);
     const lines = run(['--root', dir, '--list']).out.trim();
-    assert.strictEqual(lines.split('\n').length, 2);
+    assert.strictEqual(lines.split('\n').length, 1);
     write(bl, `# c\n${lines}\n`);
     assert.strictEqual(run(['--root', dir, '--baseline', bl]).code, 0);
+  },
+  '다국어 ${ 는 베이스라인에 넣어도 실패 (허용 목록 없음)': () => {
+    const dir = fixture({ [LOCALE]: '{"k":"${x}"}' });
+    const bl = path.join(dir, 'bl.txt');
+    const lines = run(['--root', dir, '--list']).out.trim();
+    assert.strictEqual(lines, `I18N_RAW_TEMPLATE ${LOCALE} :: k`);
+    write(bl, `${lines}\n`);
+    const res = run(['--root', dir, '--baseline', bl]);
+    assert.strictEqual(res.code, 1);
+    assert.ok(res.out.includes('허용 목록 없음'));
+  },
+  '고친 다국어 항목이라도 베이스라인에 I18N_ 줄이 남으면 실패': () => {
+    const dir = fixture({ [LOCALE]: '{"k":"{{x}}"}' });
+    const bl = path.join(dir, 'bl.txt');
+    write(bl, `I18N_RAW_TEMPLATE ${LOCALE} :: k\n`);
+    const res = run(['--root', dir, '--baseline', bl]);
+    assert.strictEqual(res.code, 1);
+    assert.ok(res.out.includes('베이스라인에 둘 수 없습니다'));
+  },
+  'Expo 다국어 JSON 도 검사한다': () => {
+    const expo = 'expo-app/src/i18n/translations/ko.json';
+    const dir = fixture({ [expo]: '{"a":{"b":"${n}회"}}' });
+    const bl = path.join(dir, 'bl.txt');
+    write(bl, '');
+    const res = run(['--root', dir, '--baseline', bl]);
+    assert.strictEqual(res.code, 1);
+    assert.ok(res.out.includes(`I18N_RAW_TEMPLATE ${expo} :: a.b`));
+  },
+  '저장소 베이스라인 파일에 I18N_ 줄이 없다': () => {
+    const text = fs.readFileSync(path.join(ROOT, 'src/test/resources/guardrails/fe-display-string-logic-baseline.txt'), 'utf8');
+    const strict = text.split('\n').map((l) => l.trim()).filter((l) => l.startsWith('I18N_'));
+    assert.deepStrictEqual(strict, []);
   },
   '고친 항목이 베이스라인에 남으면 실패': () => {
     const dir = fixture({ [REL]: API_FIRST });

@@ -1078,7 +1078,9 @@ const UnifiedScheduleComponent = ({
             let { consultantName } = event.extendedProps;
             if (!consultantName || consultantName === 'undefined' || consultantName === t('schedule:UnifiedScheduleComponent.t_8916b639')) {
                 if (event.extendedProps.consultantId && event.extendedProps.consultantId !== 'undefined') {
-                    consultantName = t('schedule:UnifiedScheduleComponent.t_b09a1acc');
+                    consultantName = t('schedule:UnifiedScheduleComponent.t_b09a1acc', {
+                        consultantId: event.extendedProps.consultantId
+                    });
                 } else {
                     consultantName = t('schedule:UnifiedScheduleComponent.t_44b8c965');
                 }

@@ -37,6 +37,12 @@ describe('mappingPaymentScheduleGate', () => {
     expect(blocksSessionConsumeFallback({ status: 'ACTIVE', paymentTiming: 'ADVANCE' })).toBe(false);
   });
 
+  test('상태 없는 매핑은 확정 거절', () => {
+    expect(allowsScheduleConfirm(null)).toBe(false);
+    expect(allowsScheduleConfirm({ paymentTiming: 'ADVANCE' })).toBe(false);
+    expect(blocksSessionConsumeFallback(null)).toBe(false);
+  });
+
   test('사후 카드로 바꾸면 계좌이체 기본값이 카드가 되고, 다시 고른 계좌이체는 유지', () => {
     expect(defaultSameDayCardPaymentMethod(null)).toBe('CARD');
     expect(alignMappingCreatePaymentMethod({

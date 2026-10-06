@@ -3,10 +3,11 @@ package com.coresolution.consultation.util;
 import com.coresolution.consultation.entity.ConsultantClientMapping;
 
 /**
- * 가예약(SAME_DAY_CARD / PENDING_PAYMENT) 상담일지용 회차 부여.
+ * 결제 대기(PENDING_PAYMENT) 회기권 일정의 상담일지용 회차 부여.
  *
- * <p>월결제 예정 매핑은 remainingSessions=0 이어도 잔여를 차감하지 않고
- * 일정 {@code sessionSequence}를 부여할 수 있다. 일반 매핑은 대상이 아니다.</p>
+ * <p>결제 전 매핑은 remainingSessions=0 이어도 잔여를 차감하지 않고
+ * 일정 {@code sessionSequence}를 부여할 수 있다. 대상 판정은
+ * {@link MappingPaymentScheduleGate#allowsProvisionalSequenceWithoutDeduction} 이다.</p>
  *
  * @author MindGarden
  * @since 2026-09-14
@@ -31,18 +32,31 @@ public final class ProvisionalConsultationLogSession {
     }
 
     /**
+     * 차감 없이 회차만 부여하는 결제 대기 회기권 매핑인지.
+     *
+     * @param mapping 매칭
+     * @return 결제 대기 + 회기권 결제 시점(선납·null·사후 카드)이면 true
+     */
+    public static boolean isProvisionalWithoutDeduction(ConsultantClientMapping mapping) {
+        if (mapping == null) {
+            return false;
+        }
+        return MappingPaymentScheduleGate.allowsProvisionalSequenceWithoutDeduction(
+                mapping.getStatus(), mapping.getPaymentTiming());
+    }
+
+    /**
      * remaining 차감 없이 부여할 1-based 회차.
      *
      * <p>remaining &gt; 0 이면 기존 차감 직전 산식 {@code total - remaining + 1}.
-     * remaining &lt;= 0 이면 {@code usedSessions + 1} (월결제 전 가예약).
-     * 결제 대기(선납·사후 카드·시점 없음)가 아니면 null.</p>
+     * remaining &lt;= 0 이면 {@code usedSessions + 1} (결제 전).
+     * 결제 대기 회기권이 아니면 null.</p>
      *
      * @param mapping 매칭
      * @return 부여할 회차, 결제 대기가 아니면 null
      */
     public static Integer computeSequenceWithoutDeduction(ConsultantClientMapping mapping) {
-        if (mapping == null || !MappingPaymentScheduleGate.allowsUnpaidSessionLabelWithoutConsume(
-                mapping.getStatus(), mapping.getPaymentTiming())) {
+        if (!isProvisionalWithoutDeduction(mapping)) {
             return null;
         }
         Integer totalSessions = mapping.getTotalSessions();

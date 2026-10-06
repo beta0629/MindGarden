@@ -12,8 +12,7 @@ import '../../styles/main.css';
 import SafeText from '../common/SafeText';
 import ActionBarButton from '../common/ActionBarButton';
 import { toDisplayString, toSafeNumber } from '../../utils/safeDisplay';
-import { resolveScheduleActionFailureMessage } from '../../utils/scheduleActionFailureMessage';
-import { extractServerErrorMessage } from '../../utils/ajax';
+import { extractServerErrorMessageFromError } from '../../utils/ajax';
 import { useNavigate } from 'react-router-dom';
 import { ADMIN_ROUTES } from '../../constants/adminRoutes';
 import {
@@ -64,6 +63,22 @@ const RESCHEDULE_ACTION_ELIGIBLE_STATUSES = Object.freeze([
     'CONFIRMED',
     'IN_PROGRESS'
 ]);
+
+/**
+ * 실패 토스트 문구 — 서버 사유가 있으면 {{message}} 로 보간, 없으면 사유 없는 문구.
+ *
+ * @param {Function} t i18n 번역 함수
+ * @param {unknown} error 던져진 API 오류
+ * @param {string} withMessageKey `{{message}}` 를 가진 문구 키
+ * @param {string} fallbackKey 사유 없는 문구 키
+ * @returns {string}
+ */
+function resolveServerFailureMessage(t, error, withMessageKey, fallbackKey) {
+    const serverMessage = toDisplayString(extractServerErrorMessageFromError(error), '');
+    return serverMessage
+        ? t(withMessageKey, { message: serverMessage })
+        : t(fallbackKey);
+}
 
 /**
  * 일정 상세 모달의 "누적 상담" 라벨용 lifetime 합산 정보 산출.
@@ -570,12 +585,8 @@ const ScheduleDetailModal = ({
             }
         } catch (error) {
             console.error('❌ 예약 취소 실패:', error);
-            notificationManager.error(resolveScheduleActionFailureMessage(
-                t,
-                error,
-                'schedule:ScheduleDetailModal.t_dc4ce696',
-                'schedule:ScheduleDetailModal.t_4659e40d'
-            ));
+            notificationManager.error(resolveServerFailureMessage(t, error,
+                'schedule:ScheduleDetailModal.t_dc4ce696', 'schedule:ScheduleDetailModal.t_4659e40d'));
         } finally {
             setLoading(false);
             setShowCancelConfirm(false);
@@ -612,12 +623,8 @@ const ScheduleDetailModal = ({
             }
         } catch (error) {
             console.error('❌ 예약 확정 실패:', error);
-            notificationManager.error(resolveScheduleActionFailureMessage(
-                t,
-                error,
-                'schedule:ScheduleDetailModal.t_fd96349e',
-                'schedule:ScheduleDetailModal.t_6e90da17'
-            ));
+            notificationManager.error(resolveServerFailureMessage(t, error,
+                'schedule:ScheduleDetailModal.t_fd96349e', 'schedule:ScheduleDetailModal.t_6e90da17'));
         } finally {
             setLoading(false);
             setShowConfirmModal(false);
@@ -841,10 +848,8 @@ const ScheduleDetailModal = ({
                 notificationManager.error(t('schedule:ScheduleDetailModal.completeBeforeStartTooltip'));
                 return;
             }
-            const serverMessage = extractServerErrorMessage(error?.response?.data);
-            notificationManager.error(serverMessage
-                ? t('schedule:ScheduleDetailModal.t_d034ac4a', { message: toDisplayString(serverMessage, '') })
-                : t('schedule:ScheduleDetailModal.t_6a68eb67'));
+            notificationManager.error(resolveServerFailureMessage(t, error,
+                'schedule:ScheduleDetailModal.t_d034ac4a', 'schedule:ScheduleDetailModal.t_6a68eb67'));
         } finally {
             setLoading(false);
         }
@@ -1384,7 +1389,9 @@ const ScheduleDetailModal = ({
                                 <span className="schedule-detail-modal__summary-value">
                                     <SafeText>
                                         {toSafeNumber(clientNotesUnresolvedCount, 0) > 0
-                                            ? t('schedule:ScheduleDetailModal.t_bb03a4c6')
+                                            ? t('schedule:ScheduleDetailModal.t_bb03a4c6', {
+                                                unresolvedCount: toSafeNumber(clientNotesUnresolvedCount, 0)
+                                            })
                                             : t('schedule:ScheduleDetailModal.t_d58fa73a')}
                                     </SafeText>
                                 </span>

@@ -420,7 +420,7 @@ const fetchRoleInfoFromCommonCode = async(userRole) => {
     };
   }
   
-  throw new Error(i18n.t('common:utils.widgetVisibilityUtils.t_97567d43'));
+  throw new Error(i18n.t('common:utils.widgetVisibilityUtils.t_97567d43', { userRole }));
 };
 
 /**

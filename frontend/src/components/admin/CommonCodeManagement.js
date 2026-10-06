@@ -782,6 +782,7 @@ const CommonCodeManagement = () => {
                                     isOpen={showAddForm}
                                     code={editingCode}
                                     fixedCodeGroup={editingCode ? null : selectedGroup}
+                                    existingCodes={groupCodes}
                                     codeGroups={codeGroups}
                                     onClose={handleCancelForm}
                                     onSubmit={handleFormSubmit}

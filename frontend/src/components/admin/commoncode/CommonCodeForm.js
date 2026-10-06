@@ -12,6 +12,7 @@ import {
     getParentCodeGroupForSubcategory,
     isSubcategoryCodeGroup
 } from '../../../utils/commonCodeParentGroups';
+import { nextCommonCodeSortOrder } from '../../../utils/commonCodeSortOrder';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_COMMON_CODES = '/api/v1/common-codes';
@@ -38,6 +39,7 @@ const CommonCodeForm = ({
     isOpen = true,
     title: titleProp,
     fixedCodeGroup = null,
+    existingCodes = [],
     cancelText: cancelTextProp,
     submitText: submitTextProp
 }) => {
@@ -74,6 +76,7 @@ const CommonCodeForm = ({
     const showParentField = isSubcategoryCodeGroup(resolvedCodeGroup);
     const autoCodeOnCreate = !code && supportsAutoCodeValue(resolvedCodeGroup);
     const lockCodeGroup = Boolean(fixedCodeGroup);
+    const createSortOrder = nextCommonCodeSortOrder(existingCodes);
 
     const loadCommonCodeGroupOptions = useCallback(async() => {
         try {
@@ -141,7 +144,7 @@ const CommonCodeForm = ({
                 codeValue: '',
                 codeLabel: '',
                 codeDescription: '',
-                sortOrder: 0,
+                sortOrder: createSortOrder,
                 isActive: true,
                 parentCodeGroup: parentGroup,
                 parentCodeValue: '',
@@ -150,7 +153,7 @@ const CommonCodeForm = ({
                 colorCode: ''
             });
         }
-    }, [code, fixedCodeGroup]);
+    }, [code, fixedCodeGroup, createSortOrder]);
 
     useEffect(() => {
         if (!lockCodeGroup) {

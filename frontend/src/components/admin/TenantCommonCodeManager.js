@@ -22,10 +22,14 @@ import {
   deleteTenantCode,
   toggleTenantCodeActive
 } from '../../utils/tenantCommonCodeApi';
-import { getCommonCodes } from '../../utils/commonCodeApi';
+import { getCoreCodesByGroup } from '../../utils/commonCodeApi';
 import { supportsAutoCodeValue } from '../../constants/tenantCodeConstants';
 import { getCodeGroupKoreanNameSync, loadCodeGroupMetadata } from '../../utils/codeHelper';
-import { resolveTenantCodeOverrideStatus } from '../../utils/tenantCommonCodeDiff';
+import {
+  findCoreCodeMatch,
+  resolveTenantCodeOverrideStatus
+} from '../../utils/tenantCommonCodeDiff';
+import { nextCommonCodeSortOrder } from '../../utils/commonCodeSortOrder';
 import { normalizeTenantCommonCodeRow } from '../../constants/professionalProviderRoles';
 import notificationManager from '../../utils/notification';
 import { useConfirm } from '../../hooks/useConfirm';
@@ -116,7 +120,7 @@ const TenantCommonCodeManager = () => {
       return cached;
     }
     try {
-      const globalRows = await getCommonCodes(groupName, false);
+      const globalRows = await getCoreCodesByGroup(groupName);
       const normalized = (globalRows || [])
         .map((row) => normalizeTenantCommonCodeRow(row))
         .filter(Boolean);
@@ -130,9 +134,7 @@ const TenantCommonCodeManager = () => {
 
   const enrichCodesWithOverride = useCallback((tenantRows, globalRows) =>
     tenantRows.map((code) => {
-      const globalMatch = (globalRows || []).find(
-        (g) => g.codeValue === code.codeValue
-      );
+      const globalMatch = findCoreCodeMatch(globalRows, code.codeValue);
       return {
         ...code,
         overrideStatus: resolveTenantCodeOverrideStatus(code, globalMatch)
@@ -275,7 +277,7 @@ const TenantCommonCodeManager = () => {
     setPeekGlobalLoading(true);
     try {
       const globalRows = await loadGlobalCodesForGroup(code.codeGroup);
-      const match = (globalRows || []).find((g) => g.codeValue === code.codeValue) || null;
+      const match = findCoreCodeMatch(globalRows, code.codeValue);
       setPeekGlobalCode(match);
     } finally {
       setPeekGlobalLoading(false);
@@ -293,7 +295,9 @@ const TenantCommonCodeManager = () => {
       ...EMPTY_FORM,
       codeGroup: defaultGroup,
       parentCodeGroup: pg,
-      sortOrder: codes.filter((c) => c.codeGroup === defaultGroup).length
+      sortOrder: nextCommonCodeSortOrder(
+        codes.filter((c) => c.codeGroup === defaultGroup)
+      )
     });
     setShowModal(true);
   };

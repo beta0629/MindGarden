@@ -117,7 +117,7 @@ jest.mock('../../../utils/tenantCommonCodeApi', () => ({
 
 jest.mock('../../../utils/commonCodeApi', () => ({
   __esModule: true,
-  getCommonCodes: jest.fn()
+  getCoreCodesByGroup: jest.fn()
 }));
 
 jest.mock('../../../utils/codeHelper', () => ({
@@ -159,7 +159,7 @@ function rebindMocks() {
     })
   );
 
-  commonCodeApi.getCommonCodes.mockImplementation(() => Promise.resolve([]));
+  commonCodeApi.getCoreCodesByGroup.mockImplementation(() => Promise.resolve([]));
 }
 
 describe('TenantCommonCodeManager fetch guard', () => {
@@ -184,10 +184,10 @@ describe('TenantCommonCodeManager fetch guard', () => {
     expect(tenantCommonCodeApi.getTenantCodesByGroup).toHaveBeenCalledWith('ROLE');
     expect(tenantCommonCodeApi.getTenantCodesByGroup).toHaveBeenCalledWith('ALIMTALK_CONFIG');
 
-    expect(commonCodeApi.getCommonCodes.mock.calls.length).toBeLessThanOrEqual(3);
-    expect(commonCodeApi.getCommonCodes).toHaveBeenCalledWith('ADDRESS_TYPE', false);
-    expect(commonCodeApi.getCommonCodes).toHaveBeenCalledWith('ROLE', false);
-    expect(commonCodeApi.getCommonCodes).toHaveBeenCalledWith('ALIMTALK_CONFIG', false);
+    expect(commonCodeApi.getCoreCodesByGroup.mock.calls.length).toBeLessThanOrEqual(3);
+    expect(commonCodeApi.getCoreCodesByGroup).toHaveBeenCalledWith('ADDRESS_TYPE');
+    expect(commonCodeApi.getCoreCodesByGroup).toHaveBeenCalledWith('ROLE');
+    expect(commonCodeApi.getCoreCodesByGroup).toHaveBeenCalledWith('ALIMTALK_CONFIG');
 
     expect(codeHelper.loadCodeGroupMetadata).toHaveBeenCalledTimes(1);
   });

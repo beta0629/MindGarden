@@ -40,6 +40,7 @@ import {
   formatIntegratedMonthChipShortTime
 } from './integratedMonthChipCopy';
 import { SCHEDULE_CALENDAR_I18N, buildScheduleCalendarTextOptions } from './scheduleCalendarI18n';
+import useCalendarDragEscapeCancel from './useCalendarDragEscapeCancel';
 import {
   getKrPublicHolidayNameForLocalDate,
   getKrSubstituteHolidayEveHintForLocalDate
@@ -133,6 +134,7 @@ const ScheduleCalendarView = ({
     /** datesSet에서 day→month/week 이탈 시에만 줌 상태 해제 (확대 직전 헤더 갱신 레이스 방지) */
     const lastViewTypeRef = useRef(null);
     const [isDayZoomed, setIsDayZoomed] = useState(false);
+    useCalendarDragEscapeCancel();
 
     const updateCalendarSize = useCallback(() => {
         const calendarApi = calendarRef.current?.getApi?.();

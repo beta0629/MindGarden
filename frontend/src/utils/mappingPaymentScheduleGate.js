@@ -2,7 +2,7 @@
  * 매핑 결제 상태·결제 시점 게이트.
  * 백엔드 `MappingPaymentScheduleGate` 와 같은 판정이다.
  *
- * 결제 대기 매핑의 일정도 확정할 수 있다. 회기 차감·다른 매핑 대체 차감은 결제 후에만 한다.
+ * 결제 대기·결제 확인(입금 전) 매핑의 일정도 확정할 수 있다. 회기 차감·다른 매핑 대체 차감은 입금 확인 후에만 한다.
  * 선납(ADVANCE) 결제 대기는 가예약을 새로 만들 수 없고, 사후 카드(SAME_DAY_CARD) 결제 대기는 가예약을 허용한다.
  * 회기 표시(usedSessions / sessionSequence)는 이 모듈의 책임이 아니다.
  *
@@ -19,6 +19,9 @@ import {
 
 /** 백엔드 MappingStatus.PENDING_PAYMENT */
 export const GATE_STATUS_PENDING_PAYMENT = 'PENDING_PAYMENT';
+
+/** 백엔드 MappingStatus.PAYMENT_CONFIRMED */
+export const GATE_STATUS_PAYMENT_CONFIRMED = 'PAYMENT_CONFIRMED';
 
 /** 백엔드 MappingStatus.ACTIVE */
 export const GATE_STATUS_ACTIVE = 'ACTIVE';
@@ -44,6 +47,16 @@ const normalizeCode = (value) => {
  */
 export const isUnpaidPendingPaymentStatus = (status) =>
   normalizeCode(status) === GATE_STATUS_PENDING_PAYMENT;
+
+/**
+ * 입금 확인 전(결제 대기·결제 확인) 상태인지.
+ *
+ * @param {string|null|undefined} status
+ * @returns {boolean}
+ */
+export const isAwaitingDepositStatus = (status) =>
+  isUnpaidPendingPaymentStatus(status)
+  || normalizeCode(status) === GATE_STATUS_PAYMENT_CONFIRMED;
 
 /**
  * PENDING_PAYMENT + SAME_DAY_CARD.
@@ -89,7 +102,7 @@ export const allowsScheduleConfirm = (mapping) =>
   Boolean(mapping && typeof mapping === 'object' && mapping.status);
 
 /**
- * 이 매핑의 회기를 다른 매핑으로 대체 차감하면 안 되는지.
+ * 이 매핑의 회기를 다른 매핑으로 대체 차감·복원하면 안 되는지. 입금 확인 전이면 true.
  *
  * @param {object|null|undefined} mapping
  * @returns {boolean}
@@ -98,7 +111,7 @@ export const blocksSessionConsumeFallback = (mapping) => {
   if (!mapping || typeof mapping !== 'object') {
     return false;
   }
-  return isUnpaidPendingPaymentStatus(mapping.status);
+  return isAwaitingDepositStatus(mapping.status);
 };
 
 /**

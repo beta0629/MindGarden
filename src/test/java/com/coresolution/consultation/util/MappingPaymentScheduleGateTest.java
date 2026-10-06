@@ -8,7 +8,8 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * 결제 상태 게이트 판정. 결제 대기도 일정 확정은 허용하고, 회기 차감·대체 차감은 결제 후에만 한다.
+ * 결제 상태 게이트 판정. 입금 확인 전(결제 대기·결제 확인)도 일정 확정은 허용하고,
+ * 회기 차감·대체 차감은 입금 확인 후에만 한다.
  *
  * @author CoreSolution
  * @since 2026-10-05
@@ -94,18 +95,38 @@ class MappingPaymentScheduleGateTest {
     }
 
     @Test
-    @DisplayName("승인 대기·결제 확인은 가예약 거절, 확정 판정 통과, 차감 없는 회차 부여 대상 아님")
-    void depositPendingAndPaymentConfirmed_areNotUnpaidPending() {
-        assertThat(MappingPaymentScheduleGate.allowsTentativeBeforeDeposit(
-                MappingStatus.DEPOSIT_PENDING, PaymentTimingConstants.ADVANCE)).isFalse();
-        assertThat(MappingPaymentScheduleGate.allowsTentativeBeforeDeposit(
-                MappingStatus.PAYMENT_CONFIRMED, PaymentTimingConstants.ADVANCE)).isFalse();
-        assertThat(MappingPaymentScheduleGate.allowsScheduleConfirm(
-                MappingStatus.DEPOSIT_PENDING, PaymentTimingConstants.ADVANCE)).isTrue();
-        assertThat(MappingPaymentScheduleGate.blocksSessionConsumeFallback(
-                MappingStatus.PAYMENT_CONFIRMED, PaymentTimingConstants.SAME_DAY_CARD)).isFalse();
+    @DisplayName("결제 확인(입금 전)은 가예약 거절, 확정 허용, 차감·대체 차감 거절, 회기권이면 차감 없는 회차 부여")
+    void paymentConfirmed_awaitsDeposit_blocksConsumeAndFallback() {
+        MappingStatus status = MappingStatus.PAYMENT_CONFIRMED;
+
+        assertThat(MappingPaymentScheduleGate.isAwaitingDeposit(status)).isTrue();
+        for (String timing : new String[] {PaymentTimingConstants.ADVANCE, null, PaymentTimingConstants.SAME_DAY_CARD}) {
+            assertThat(MappingPaymentScheduleGate.allowsTentativeBeforeDeposit(status, timing)).isFalse();
+            assertThat(MappingPaymentScheduleGate.allowsScheduleConfirm(status, timing)).isTrue();
+            assertThat(MappingPaymentScheduleGate.allowsSessionConsume(status, timing)).isFalse();
+            assertThat(MappingPaymentScheduleGate.blocksSessionConsumeFallback(status, timing)).isTrue();
+            assertThat(MappingPaymentScheduleGate.allowsProvisionalSequenceWithoutDeduction(status, timing)).isTrue();
+        }
         assertThat(MappingPaymentScheduleGate.allowsProvisionalSequenceWithoutDeduction(
-                MappingStatus.DEPOSIT_PENDING, PaymentTimingConstants.SAME_DAY_CARD)).isFalse();
+                status, PaymentTimingConstants.INSTITUTION_LINK)).isFalse();
+        assertThat(MappingPaymentScheduleGate.blocksSessionConsumeFallback(
+                status, PaymentTimingConstants.INSTITUTION_LINK)).isTrue();
+    }
+
+    @Test
+    @DisplayName("승인 대기(입금 확인 후)는 입금 전이 아니다 — 차감 허용, 대체 차감 차단 없음, 차감 없는 회차 부여 대상 아님")
+    void depositPending_isNotAwaitingDeposit() {
+        MappingStatus status = MappingStatus.DEPOSIT_PENDING;
+
+        assertThat(MappingPaymentScheduleGate.isAwaitingDeposit(status)).isFalse();
+        assertThat(MappingPaymentScheduleGate.allowsTentativeBeforeDeposit(status, PaymentTimingConstants.ADVANCE))
+                .isFalse();
+        assertThat(MappingPaymentScheduleGate.allowsScheduleConfirm(status, PaymentTimingConstants.ADVANCE)).isTrue();
+        assertThat(MappingPaymentScheduleGate.allowsSessionConsume(status, PaymentTimingConstants.ADVANCE)).isTrue();
+        assertThat(MappingPaymentScheduleGate.blocksSessionConsumeFallback(status, PaymentTimingConstants.ADVANCE))
+                .isFalse();
+        assertThat(MappingPaymentScheduleGate.allowsProvisionalSequenceWithoutDeduction(
+                status, PaymentTimingConstants.SAME_DAY_CARD)).isFalse();
     }
 
     @Test

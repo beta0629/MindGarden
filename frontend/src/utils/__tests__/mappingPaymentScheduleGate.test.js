@@ -31,6 +31,14 @@ describe('mappingPaymentScheduleGate', () => {
     expect(blocksSessionConsumeFallback({ status: 'ACTIVE', paymentTiming: 'ADVANCE' })).toBe(false);
   });
 
+  test('결제 확인(입금 전)은 확정 허용, 대체 차감 거절', () => {
+    const mapping = { status: 'PAYMENT_CONFIRMED', paymentTiming: 'ADVANCE' };
+    expect(allowsTentativeBeforeDeposit(mapping)).toBe(false);
+    expect(allowsScheduleConfirm(mapping)).toBe(true);
+    expect(blocksSessionConsumeFallback(mapping)).toBe(true);
+    expect(blocksSessionConsumeFallback({ status: 'DEPOSIT_PENDING', paymentTiming: 'ADVANCE' })).toBe(false);
+  });
+
   test('상태 없는 매핑은 확정 거절', () => {
     expect(allowsScheduleConfirm(null)).toBe(false);
     expect(allowsScheduleConfirm({ paymentTiming: 'ADVANCE' })).toBe(false);

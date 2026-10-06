@@ -152,7 +152,7 @@ class ScheduleServiceImplUnpaidPendingConfirmGateTest {
     @DisplayName("같은 테넌트에서 매칭을 찾을 수 없는 가예약은 확정을 거절한다")
     void confirmSchedule_tentativeWithoutMapping_rejected() {
         Schedule schedule = tentativeSchedule();
-        when(scheduleRepository.findByTenantIdAndId(eq(TENANT_ID), eq(SCHEDULE_ID)))
+        when(scheduleRepository.findByTenantIdAndIdForUpdate(eq(TENANT_ID), eq(SCHEDULE_ID)))
                 .thenReturn(Optional.of(schedule));
         when(mappingRepository.findByTenantIdAndId(eq(TENANT_ID), eq(PENDING_MAPPING_ID)))
                 .thenReturn(Optional.empty());
@@ -251,6 +251,8 @@ class ScheduleServiceImplUnpaidPendingConfirmGateTest {
     }
 
     private void stubScheduleAndMapping(Schedule schedule, ConsultantClientMapping pending) {
+        when(scheduleRepository.findByTenantIdAndIdForUpdate(eq(TENANT_ID), eq(SCHEDULE_ID)))
+                .thenReturn(Optional.of(schedule));
         when(scheduleRepository.findByTenantIdAndId(eq(TENANT_ID), eq(SCHEDULE_ID)))
                 .thenReturn(Optional.of(schedule));
         when(mappingRepository.findByTenantIdAndId(eq(TENANT_ID), eq(PENDING_MAPPING_ID)))

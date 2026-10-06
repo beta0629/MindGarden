@@ -143,7 +143,7 @@ class ScheduleServiceImplConfirmScheduleAlimTalkTest {
         clientUser.setId(CLIENT_USER_ID);
         clientUser.setName("enc-name-cl");
 
-        when(scheduleRepository.findByTenantIdAndId(eq(TENANT_ID), eq(SCHEDULE_ID)))
+        when(scheduleRepository.findByTenantIdAndIdForUpdate(eq(TENANT_ID), eq(SCHEDULE_ID)))
             .thenReturn(Optional.of(schedule));
         when(scheduleRepository.save(any(Schedule.class))).thenAnswer(inv -> inv.getArgument(0));
 
@@ -177,7 +177,7 @@ class ScheduleServiceImplConfirmScheduleAlimTalkTest {
         schedule.setConsultantId(CONSULTANT_USER_ID);
         schedule.setClientId(null);
 
-        when(scheduleRepository.findByTenantIdAndId(eq(TENANT_ID), eq(SCHEDULE_ID)))
+        when(scheduleRepository.findByTenantIdAndIdForUpdate(eq(TENANT_ID), eq(SCHEDULE_ID)))
             .thenReturn(Optional.of(schedule));
         when(scheduleRepository.save(any(Schedule.class))).thenAnswer(inv -> inv.getArgument(0));
 

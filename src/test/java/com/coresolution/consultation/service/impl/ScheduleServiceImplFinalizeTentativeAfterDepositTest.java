@@ -167,7 +167,20 @@ class ScheduleServiceImplFinalizeTentativeAfterDepositTest {
                 eq(ScheduleStatus.TENTATIVE_PENDING_PAYMENT)))
                 .thenReturn(tentatives);
 
-        when(scheduleRepository.save(any(Schedule.class))).thenAnswer(inv -> inv.getArgument(0));
+        java.util.List<Schedule> labeledForMapping = new java.util.ArrayList<>();
+        when(scheduleRepository.findDeductedConsultationSchedulesForMapping(
+                eq(TENANT_ID), eq(MAPPING_ID), eq(CONSULTANT_USER_ID), eq(CLIENT_USER_ID),
+                any()))
+                .thenAnswer(inv -> new java.util.ArrayList<>(labeledForMapping));
+        when(scheduleRepository.save(any(Schedule.class))).thenAnswer(inv -> {
+            Schedule saved = inv.getArgument(0);
+            if (saved.getSessionSequence() != null) {
+                labeledForMapping.removeIf(existing -> saved.getId() != null
+                        && saved.getId().equals(existing.getId()));
+                labeledForMapping.add(saved);
+            }
+            return saved;
+        });
 
         ConsultantClientMapping fresh = new ConsultantClientMapping();
         fresh.setId(MAPPING_ID);
@@ -190,8 +203,9 @@ class ScheduleServiceImplFinalizeTentativeAfterDepositTest {
         verify(scheduleRepository, times(4)).save(scheduleCaptor.capture());
         assertThat(scheduleCaptor.getAllValues()).allMatch(s -> s.getStatus() == ScheduleStatus.BOOKED);
 
-        assertThat(t1.getSessionSequence()).isEqualTo(6);
-        assertThat(t2.getSessionSequence()).isEqualTo(7);
+        // 회차는 remaining 기반(6,7)이 아니라 점유 gap-fill(정책 A). 날짜순이면 t1 → t2.
+        assertThat(t1.getSessionSequence()).isEqualTo(1);
+        assertThat(t2.getSessionSequence()).isEqualTo(2);
         assertThat(t1.getMappingId()).isEqualTo(MAPPING_ID);
         assertThat(t2.getMappingId()).isEqualTo(MAPPING_ID);
 

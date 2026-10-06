@@ -1,3 +1,5 @@
+import fs from 'fs';
+import path from 'path';
 import {
   SCHEDULE_STATUS_LABEL_FALLBACK,
   SCHEDULE_STATUS_LABEL_I18N_PREFIX,
@@ -8,7 +10,8 @@ import {
 const translate = (key, opts = {}) => {
   const table = {
     [`${SCHEDULE_STATUS_LABEL_I18N_PREFIX}COMPLETED`]: '완료',
-    [`${SCHEDULE_STATUS_LABEL_I18N_PREFIX}TENTATIVE_PENDING_PAYMENT`]: '가예약'
+    [`${SCHEDULE_STATUS_LABEL_I18N_PREFIX}TENTATIVE_PENDING_PAYMENT`]: '가예약',
+    [`${SCHEDULE_STATUS_LABEL_I18N_PREFIX}IN_PROGRESS`]: '진행중'
   };
   if (table[key]) {
     return table[key];
@@ -30,6 +33,12 @@ describe('resolveScheduleStatusDisplayLabel', () => {
       translate
     })).toBe('가예약');
     expect(resolveScheduleStatusDisplayLabel('COMPLETED', { translate })).toBe('완료');
+    expect(resolveScheduleStatusDisplayLabel('IN_PROGRESS', { translate })).toBe('진행중');
+    const schedule = JSON.parse(fs.readFileSync(
+      path.resolve(__dirname, '../../locales/ko/schedule.json'),
+      'utf8'
+    ));
+    expect(schedule.constants.status.IN_PROGRESS).toBe('진행중');
   });
 
   test('라벨이 없으면 unknown i18n, translate 가 없으면 defaultValue 상수', () => {

@@ -4,6 +4,7 @@
       "AVAILABLE": "가능",
       "BOOKED": "예약됨",
       "CONFIRMED": "확정됨",
+      "IN_PROGRESS": "진행중",
       "VACATION": "휴가",
       "COMPLETED": "완료",
       "CANCELLED": "취소됨",

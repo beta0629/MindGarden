@@ -1,0 +1,94 @@
+# 운영 읽기 전용 이력. 이 파일만 바꾸는 release/prod pull_request 에서만 돈다.
+# 매칭 32, 245, 265. 쓰기는 없다.
+# 2026-10-06 20:00 KST 이전과 KST 11–19 에는 DB 에 접속하지 않는다.
+# 우회 입력은 없다. 머지하지 않는다. 실행이 끝나면 이 PR 을 닫는다.
+
+name: 운영 회기 이력 32·245·265 (읽기 전용)
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches: [release/prod]
+    paths:
+      - '.github/workflows/prod-mapping-session-history-pr-run.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: prod-mapping-session-history-pr-run-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+
+jobs:
+  prod-history:
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    environment: production
+    timeout-minutes: 20
+    steps:
+      - name: KST gate before any database connection
+        id: kst_guard
+        run: |
+          set -euo pipefail
+          NOW="$(TZ=Asia/Seoul date +%Y%m%d%H%M)"
+          HOUR="$(TZ=Asia/Seoul date +%H)"
+          HOUR=$((10#$HOUR))
+          echo "Asia/Seoul now=${NOW} hour=${HOUR}"
+          if [ "$NOW" -lt 202610062000 ]; then
+            echo "::notice::Before 2026-10-06 20:00 KST. Skipping without a database connection."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if [ "$HOUR" -ge 11 ] && [ "$HOUR" -le 19 ]; then
+            echo "::notice::KST ${HOUR}:00 is in 11–19. Skipping without a database connection."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "skip=false" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout
+        if: steps.kst_guard.outputs.skip != 'true'
+        uses: actions/checkout@v4
+
+      - name: Setup MySQL client
+        if: steps.kst_guard.outputs.skip != 'true'
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq mysql-client
+
+      - name: Read-only history
+        if: steps.kst_guard.outputs.skip != 'true'
+        env:
+          DB_HOST: ${{ secrets.PRODUCTION_DB_HOST }}
+          DB_HOST_FALLBACK: ${{ secrets.PRODUCTION_HOST }}
+          DB_USER: ${{ secrets.PRODUCTION_DB_USER }}
+          DB_NAME: ${{ secrets.PRODUCTION_DB_NAME }}
+          DB_PASSWORD: ${{ secrets.PRODUCTION_DB_PASSWORD }}
+        run: |
+          set -euo pipefail
+          SQL=scripts/ops/sql/mapping_session_history_32_245_265_select.sql
+          if grep -qiE '(^|[^a-z_@])(insert|update|delete|drop|alter|truncate|create|replace|grant|call|set)[[:space:]]' "$SQL"; then
+            echo "::error::history SQL contains a write statement"
+            exit 1
+          fi
+          if grep -qiE 'financial_transactions|salary_|payout|into[[:space:]]+outfile|load_file' "$SQL"; then
+            echo "::error::history SQL touches a forbidden object"
+            exit 1
+          fi
+          if [ -z "${DB_HOST:-}" ]; then DB_HOST="${DB_HOST_FALLBACK:-}"; fi
+          for name in DB_HOST DB_USER DB_NAME DB_PASSWORD; do
+            if [ -z "${!name:-}" ]; then
+              echo "::error::Required production DB secret is empty (${name})"
+              exit 1
+            fi
+            echo "::add-mask::${!name}"
+          done
+          CNF="$(mktemp)"
+          umask 077
+          printf '[client]\nhost=%s\nport=3306\nuser=%s\ndefault-character-set=utf8mb4\n' \
+            "$DB_HOST" "$DB_USER" >"$CNF"
+          chmod 600 "$CNF"
+          export MYSQL_PWD="${DB_PASSWORD}"
+          mysql --defaults-extra-file="$CNF" --batch --connect-timeout=20 \
+            --init-command="SET SESSION TRANSACTION READ ONLY" "$DB_NAME" <"$SQL"
+          rm -f "$CNF"

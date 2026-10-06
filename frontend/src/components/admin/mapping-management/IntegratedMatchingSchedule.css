@@ -908,24 +908,28 @@
   block-size: var(--mg-size-dot-sm);
   min-inline-size: var(--mg-size-dot-sm);
   border-radius: var(--mg-v2-radius-pill);
-  background-color: var(--mg-v2-color-neutral-600);
+  background-color: var(--mg-month-event-status-color);
   align-self: center;
 }
 
-.integrated-schedule__calendar-wrapper--integrated .mg-v2-ad-calendar-event--integrated-month .mg-v2-ad-calendar-event__dot--booked {
-  background-color: var(--mg-v2-color-primary-main);
+/* 상태 색 한 곳. 점과 가장 좁은 단계의 시작 테두리가 같이 쓴다. */
+.integrated-schedule__calendar-wrapper--integrated .mg-v2-ad-calendar-event--integrated-month {
+  --mg-month-event-status-color: var(--mg-v2-color-neutral-600);
 }
-.integrated-schedule__calendar-wrapper--integrated .mg-v2-ad-calendar-event--integrated-month .mg-v2-ad-calendar-event__dot--confirmed {
-  background-color: var(--mg-v2-color-semantic-success-dark);
+.integrated-schedule__calendar-wrapper--integrated .mg-v2-ad-calendar-event--integrated-month.mg-v2-ad-calendar-event--status-booked {
+  --mg-month-event-status-color: var(--mg-v2-color-primary-main);
 }
-.integrated-schedule__calendar-wrapper--integrated .mg-v2-ad-calendar-event--integrated-month .mg-v2-ad-calendar-event__dot--completed {
-  background-color: var(--mg-v2-color-neutral-600);
+.integrated-schedule__calendar-wrapper--integrated .mg-v2-ad-calendar-event--integrated-month.mg-v2-ad-calendar-event--status-confirmed {
+  --mg-month-event-status-color: var(--mg-v2-color-semantic-success-dark);
 }
-.integrated-schedule__calendar-wrapper--integrated .mg-v2-ad-calendar-event--integrated-month .mg-v2-ad-calendar-event__dot--tentative {
-  background-color: var(--mg-v2-color-semantic-warning-dark);
+.integrated-schedule__calendar-wrapper--integrated .mg-v2-ad-calendar-event--integrated-month.mg-v2-ad-calendar-event--status-completed {
+  --mg-month-event-status-color: var(--mg-v2-color-neutral-600);
 }
-.integrated-schedule__calendar-wrapper--integrated .mg-v2-ad-calendar-event--integrated-month .mg-v2-ad-calendar-event__dot--cancelled {
-  background-color: var(--mg-v2-color-neutral-500);
+.integrated-schedule__calendar-wrapper--integrated .mg-v2-ad-calendar-event--integrated-month.mg-v2-ad-calendar-event--status-tentative {
+  --mg-month-event-status-color: var(--mg-v2-color-semantic-warning-dark);
+}
+.integrated-schedule__calendar-wrapper--integrated .mg-v2-ad-calendar-event--integrated-month.mg-v2-ad-calendar-event--status-cancelled {
+  --mg-month-event-status-color: var(--mg-v2-color-neutral-500);
 }
 
 .integrated-schedule__calendar-wrapper--integrated .mg-v2-ad-calendar-event--integrated-month.mg-v2-ad-calendar-event--client-notes-unresolved .mg-v2-ad-calendar-event__dot,
@@ -941,6 +945,10 @@
   font-size: var(--font-size-xs);
   font-weight: var(--mg-v2-font-weight-medium);
   color: var(--mg-v2-color-text-secondary);
+}
+
+.integrated-schedule__calendar-wrapper--integrated .mg-v2-ad-calendar-event--integrated-month .mg-v2-ad-calendar-event__time-short {
+  display: none;
 }
 
 .integrated-schedule__calendar-wrapper--integrated .mg-v2-ad-calendar-event--integrated-month .mg-v2-ad-calendar-event__client {
@@ -1038,7 +1046,7 @@
 /* 당일 칩은 「당일」만큼 더 필요. 글자 배지 기준 249px. */
 @container mg-month-event (width < 249px) {
   .integrated-schedule__calendar-wrapper--integrated .integrated-schedule__event--same-day-pending .mg-v2-ad-calendar-event--integrated-month:has(.mg-schedule-event-marks) {
-    padding-inline-end: calc(var(--mg-v2-space-2) + var(--mg-v2-space-0-5));
+    padding-inline-end: var(--mg-schedule-event-marks-reserve);
   }
 
   .integrated-schedule__calendar-wrapper--integrated .integrated-schedule__event--same-day-pending .mg-schedule-event-marks {
@@ -1051,9 +1059,9 @@
   }
 
   .integrated-schedule__calendar-wrapper--integrated .integrated-schedule__event--same-day-pending .mg-schedule-event-marks .mg-engagement-type-badge {
-    inline-size: var(--mg-size-dot-sm);
-    block-size: var(--mg-size-dot-sm);
-    min-inline-size: var(--mg-size-dot-sm);
+    inline-size: var(--mg-schedule-event-marks-size);
+    block-size: var(--mg-schedule-event-marks-size);
+    min-inline-size: var(--mg-schedule-event-marks-size);
     padding: 0;
     overflow: hidden;
     border-radius: var(--mg-v2-radius-none);
@@ -1085,7 +1093,7 @@
   }
 }
 
-/* 단계 F < 109px: 두 줄. 하한 85px. */
+/* 단계 F < 109px: 두 줄. 시간은 24시 HH:mm 으로 줄인다(오전/오후 글자 잘림 방지). */
 @container mg-month-event (width < 109px) {
   .integrated-schedule__calendar-wrapper--integrated .mg-v2-ad-calendar-event--compact.mg-v2-ad-calendar-event--integrated-month {
     flex-wrap: wrap;
@@ -1095,6 +1103,48 @@
   .integrated-schedule__calendar-wrapper--integrated .mg-v2-ad-calendar-event--integrated-month .mg-v2-ad-calendar-event__client {
     order: 1;
     flex-basis: 100%;
+  }
+
+  .integrated-schedule__calendar-wrapper--integrated .mg-v2-ad-calendar-event--integrated-month .mg-v2-ad-calendar-event__time-full {
+    display: none;
+  }
+
+  .integrated-schedule__calendar-wrapper--integrated .mg-v2-ad-calendar-event--integrated-month .mg-v2-ad-calendar-event__time-short {
+    display: inline;
+  }
+}
+
+/*
+ * 단계 G < 64px (모바일 390 월 그리드): 시간 줄 전폭, 이름 줄 끝에 표식.
+ * 점 대신 시작 테두리로 상태 색을 남긴다. 표식 끝 여백(0,4,0)보다 높은 선택자.
+ */
+@container mg-month-event (width < 64px) {
+  .integrated-schedule__calendar-wrapper--integrated .fc-daygrid-event-harness .mg-v2-ad-calendar-event.mg-v2-ad-calendar-event--compact.mg-v2-ad-calendar-event--integrated-month {
+    padding-inline: var(--mg-v2-space-0-5);
+    border-inline-start: var(--mg-v2-border-width-thick) solid var(--mg-month-event-status-color);
+  }
+
+  .integrated-schedule__calendar-wrapper--integrated .mg-v2-ad-calendar-event--integrated-month .mg-v2-ad-calendar-event__dot {
+    display: none;
+  }
+
+  /* 점 링 대신 칩 안쪽 링으로 미해소를 남긴다 */
+  .integrated-schedule__calendar-wrapper--integrated .fc-daygrid-event-harness .mg-v2-ad-calendar-event--integrated-month.mg-v2-ad-calendar-event--client-notes-unresolved,
+  .integrated-schedule__calendar-wrapper--integrated .fc-daygrid-event-harness .mg-v2-ad-calendar-event--integrated-month.mg-v2-ad-calendar-event--client-notes-client-wide {
+    box-shadow: inset 0 0 0 var(--mg-v2-border-width-thin) var(--mg-v2-color-text-primary);
+  }
+
+  .integrated-schedule__calendar-wrapper--integrated .mg-v2-ad-calendar-event--integrated-month .mg-v2-ad-calendar-event__time {
+    flex-basis: 100%;
+  }
+
+  .integrated-schedule__calendar-wrapper--integrated .mg-v2-ad-calendar-event--integrated-month .mg-v2-ad-calendar-event__client {
+    flex: 1 1 0;
+  }
+
+  .integrated-schedule__calendar-wrapper--integrated .fc-daygrid-event-harness .mg-v2-ad-calendar-event--integrated-month .mg-schedule-event-marks {
+    position: static;
+    order: 2;
   }
 }
 

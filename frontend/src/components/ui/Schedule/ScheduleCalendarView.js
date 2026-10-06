@@ -36,8 +36,11 @@ import EngagementTypeBadge from '../../common/EngagementTypeBadge';
 import { SAME_DAY_PENDING_EVENT_CLASS } from '../../schedule/utils/sameDayPendingEventDecorator';
 import {
   INTEGRATED_MONTH_CHIP_I18N,
-  buildIntegratedMonthChipCopy
+  buildIntegratedMonthChipCopy,
+  formatIntegratedMonthChipShortTime
 } from './integratedMonthChipCopy';
+import { SCHEDULE_CALENDAR_I18N, buildScheduleCalendarTextOptions } from './scheduleCalendarI18n';
+import useCalendarDragEscapeCancel from './useCalendarDragEscapeCancel';
 import {
   getKrPublicHolidayNameForLocalDate,
   getKrSubstituteHolidayEveHintForLocalDate
@@ -57,7 +60,6 @@ const CALENDAR_VIEW_WEEK = 'timeGridWeek';
 const CALENDAR_VIEW_DAY = 'timeGridDay';
 const CALENDAR_VIEWS_ZOOM_FROM = new Set([CALENDAR_VIEW_MONTH, CALENDAR_VIEW_WEEK]);
 const ZOOM_OUT_BUTTON_ID = 'zoomOut';
-const ZOOM_OUT_BUTTON_TEXT = '전체 보기';
 /** opacity fade 전용. transform/scale 금지(DnD 히트테스트 보호). --animation-duration-fast(0.15s)와 맞춤 */
 const VIEW_FADE_CLASS = 'mg-v2-schedule-calendar-view--fading';
 const VIEW_FADE_MS = 150;
@@ -132,6 +134,7 @@ const ScheduleCalendarView = ({
     /** datesSet에서 day→month/week 이탈 시에만 줌 상태 해제 (확대 직전 헤더 갱신 레이스 방지) */
     const lastViewTypeRef = useRef(null);
     const [isDayZoomed, setIsDayZoomed] = useState(false);
+    useCalendarDragEscapeCancel();
 
     const updateCalendarSize = useCallback(() => {
         const calendarApi = calendarRef.current?.getApi?.();
@@ -275,10 +278,12 @@ const ScheduleCalendarView = ({
 
     const customButtons = useMemo(() => ({
         [ZOOM_OUT_BUTTON_ID]: {
-            text: ZOOM_OUT_BUTTON_TEXT,
+            text: t(SCHEDULE_CALENDAR_I18N.toolbar.zoomOut),
             click: zoomOutToPreviousView
         }
-    }), [zoomOutToPreviousView]);
+    }), [t, zoomOutToPreviousView]);
+
+    const calendarTextOptions = useMemo(() => buildScheduleCalendarTextOptions(t), [t]);
 
     const headerToolbar = useMemo(() => ({
         left: 'prev,next today',
@@ -604,7 +609,16 @@ const ScheduleCalendarView = ({
                     {integratedMonthEventLayout && (
                         <span className={dotClass} aria-hidden="true" />
                     )}
-                    <span className="mg-v2-ad-calendar-event__time">{eventInfo.timeText}</span>
+                    <span className="mg-v2-ad-calendar-event__time">
+                        {integratedMonthEventLayout ? (
+                            <>
+                                <span className="mg-v2-ad-calendar-event__time-full">{eventInfo.timeText}</span>
+                                <span className="mg-v2-ad-calendar-event__time-short">
+                                    {formatIntegratedMonthChipShortTime(event.start)}
+                                </span>
+                            </>
+                        ) : eventInfo.timeText}
+                    </span>
                     <span className="mg-v2-ad-calendar-event__client">{clientName}</span>
                     {!integratedMonthEventLayout && (
                         <>
@@ -705,6 +719,7 @@ const ScheduleCalendarView = ({
                 selectMirror={true}
                 dayMaxEvents={8}
                 moreLinkClick="popover"
+                {...calendarTextOptions}
                 weekends={true}
                 events={events}
                 dayCellClassNames={dayCellClassNamesForKrHoliday}

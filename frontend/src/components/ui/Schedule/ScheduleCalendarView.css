@@ -485,6 +485,34 @@
     text-overflow: ellipsis;
 }
 
+/*
+ * 모바일 툴바: 제목 한 줄 전폭, 이동·보기 버튼은 다음 줄.
+ * 767px = --mg-breakpoint-tablet(768px) 미만. @media 는 var() 를 받지 못해 px 리터럴이다.
+ */
+@media (max-width: 767px) {
+    .mg-v2-schedule-calendar-view .fc .fc-header-toolbar {
+        flex-wrap: wrap;
+        gap: var(--mg-v2-space-2);
+    }
+
+    .mg-v2-schedule-calendar-view .fc .fc-header-toolbar > .fc-toolbar-chunk:nth-child(2) {
+        order: -1;
+        flex: 1 0 100%;
+        text-align: center;
+    }
+
+    .mg-v2-schedule-calendar-view .fc .fc-toolbar-title {
+        font-size: var(--mg-v2-font-size-h2);
+        white-space: nowrap;
+    }
+
+    .mg-v2-schedule-calendar-view .fc .fc-button {
+        padding: var(--mg-v2-space-1) var(--mg-v2-space-2);
+        font-size: var(--mg-v2-font-size-caption);
+        white-space: nowrap;
+    }
+}
+
 /* FullCalendar .fc-timegrid-col-bg(z-index 2, 주말·09시 이전 비영업 오버레이)보다 위여야 일정 클릭 가능 */
 .mg-v2-schedule-calendar-view .fc-timegrid-col-events {
     position: relative;

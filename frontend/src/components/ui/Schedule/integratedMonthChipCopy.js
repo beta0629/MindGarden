@@ -113,3 +113,24 @@ export function buildIntegratedMonthChipCopy(input) {
     reminderSmsAria
   };
 }
+
+const CLOCK_DIGITS = 2;
+
+/**
+ * 좁은 칩(두 줄 단계 이하)용 24시 HH:mm. 오전/오후 글자 없이 시간이 잘리지 않게 한다.
+ *
+ * @param {Date|string|number|null|undefined} start
+ * @returns {string}
+ */
+export function formatIntegratedMonthChipShortTime(start) {
+  if (start == null) {
+    return '';
+  }
+  const date = start instanceof Date ? start : new Date(start);
+  if (Number.isNaN(date.getTime())) {
+    return '';
+  }
+  const hours = String(date.getHours()).padStart(CLOCK_DIGITS, '0');
+  const minutes = String(date.getMinutes()).padStart(CLOCK_DIGITS, '0');
+  return `${hours}:${minutes}`;
+}

@@ -907,7 +907,7 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
         for (Object[] row : results) {
             Integer year = (Integer) row[0];
             Integer month = (Integer) row[1];
-            String type = (String) row[2];
+            String type = row[2] == null ? null : row[2].toString();
             BigDecimal amount = (BigDecimal) row[3];
             
             String monthKey = year + "-" + String.format("%02d", month);
@@ -922,12 +922,9 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
                     .build()
             );
             
-            String incomeType = getSafeCodeName("TRANSACTION_TYPE", "INCOME", "INCOME");
-            String expenseType = getSafeCodeName("TRANSACTION_TYPE", "EXPENSE", "EXPENSE");
-            
-            if (incomeType.equals(type)) {
+            if (FinancialTransaction.TransactionType.INCOME.name().equals(type)) {
                 data.setIncome(data.getIncome().add(amount));
-            } else if (expenseType.equals(type)) {
+            } else if (FinancialTransaction.TransactionType.EXPENSE.name().equals(type)) {
                 data.setExpense(data.getExpense().add(amount));
             }
             

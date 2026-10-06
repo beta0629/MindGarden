@@ -48,7 +48,8 @@ import { isValidKoreanMobileDigits, normalizeKoreanMobileDigits } from '../../ut
 import { isValidVehiclePlateOptional } from '../../utils/validationUtils';
 import { toDisplayString } from '../../utils/safeDisplay';
 import SafeText from '../common/SafeText';
-import { generateMgLoginPassword } from '../../utils/generateMgLoginPassword';
+import { generateMgLoginPassword, shouldBlockOptionalMgLoginPassword } from '../../utils/generateMgLoginPassword';
+import { resolveUserFacingApiErrorMessage } from '../../utils/userFacingApiErrorMessage';
 import { maskEncryptedDisplay } from '../../utils/codeHelper';
 import { CONSULTANT_COMP_SPECIALTY, CONSULTANT_COMP_PASSWORD_RESET } from '../../constants/consultantComprehensiveStrings';
 import { ADMIN_ROUTES } from '../../constants/adminRoutes';
@@ -56,8 +57,10 @@ import { API_ENDPOINTS } from '../../constants/apiEndpoints';
 import NotificationChannelPreferenceSection from '../mypage/components/NotificationChannelPreferenceSection';
 import { NOTIFICATION_CHANNEL_PREFERENCE_VALUE } from '../../constants/notificationChannelPreference';
 import {
+    LOGIN_PASSWORD_ALLOWED_SPECIALS,
     LOGIN_PASSWORD_FIELD_PLACEHOLDER,
-    LOGIN_PASSWORD_POLICY_HINT_ONE_LINE
+    LOGIN_PASSWORD_MAX_LENGTH,
+    LOGIN_PASSWORD_MIN_LENGTH
 } from '../../constants/passwordPolicyUi';
 import {
     TENANT_CONSULTANT_GRADE_CODES_PATH,
@@ -157,6 +160,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false, initialOpenUserId
     const [isCheckingConsultantPhone, setIsCheckingConsultantPhone] = useState(false);
     const consultantEditPhoneBaselineRef = useRef('');
     const [vehiclePlateError, setVehiclePlateError] = useState('');
+    const [passwordPolicyError, setPasswordPolicyError] = useState(false);
     const [modalSubmitLoading, setModalSubmitLoading] = useState(false);
     const [deleteConfirmLoading, setDeleteConfirmLoading] = useState(false);
     const { viewMode, setViewMode } = useViewModePreference({
@@ -859,6 +863,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false, initialOpenUserId
             });
         }
         setVehiclePlateError('');
+        setPasswordPolicyError(false);
         setShowModal(true);
     }, [loadSpecialtyCodes, loadProfessionalTypeCodes, loadConsultantGradeCodes]);
 
@@ -869,6 +874,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false, initialOpenUserId
         setConsultantPhoneCheckStatus(null);
         consultantEditPhoneBaselineRef.current = '';
         setVehiclePlateError('');
+        setPasswordPolicyError(false);
         setFormData({
             name: '',
             email: '',
@@ -956,6 +962,9 @@ const ConsultantComprehensiveManagement = ({ embedded = false, initialOpenUserId
                 } else {
                     setVehiclePlateError('');
                 }
+            }
+            if (name === 'password') {
+                setPasswordPolicyError(false);
             }
         }, []);
     
@@ -1182,7 +1191,13 @@ const ConsultantComprehensiveManagement = ({ embedded = false, initialOpenUserId
         } catch (error) {
             console.error('상담사 등록 오류:', error);
             window.dispatchEvent(new CustomEvent('showNotification', {
-                detail: { message: t('admin:consultantMgmt.msg.createError'), type: 'error' }
+                detail: {
+                    message: resolveUserFacingApiErrorMessage(
+                        error,
+                        t('admin:consultantMgmt.msg.createError')
+                    ),
+                    type: 'error'
+                }
             }));
             return { success: false };
         }
@@ -1254,7 +1269,13 @@ const ConsultantComprehensiveManagement = ({ embedded = false, initialOpenUserId
         } catch (error) {
             console.error('상담사 수정 오류:', error);
             window.dispatchEvent(new CustomEvent('showNotification', {
-                detail: { message: t('admin:consultantMgmt.msg.updateError'), type: 'error' }
+                detail: {
+                    message: resolveUserFacingApiErrorMessage(
+                        error,
+                        t('admin:consultantMgmt.msg.updateError')
+                    ),
+                    type: 'error'
+                }
             }));
             return { success: false };
         }
@@ -1278,7 +1299,13 @@ const ConsultantComprehensiveManagement = ({ embedded = false, initialOpenUserId
         } catch (error) {
             console.error('상담사 삭제 오류:', error);
             window.dispatchEvent(new CustomEvent('showNotification', {
-                detail: { message: t('admin:consultantMgmt.msg.deleteError'), type: 'error' }
+                detail: {
+                    message: resolveUserFacingApiErrorMessage(
+                        error,
+                        t('admin:consultantMgmt.msg.deleteError')
+                    ),
+                    type: 'error'
+                }
             }));
             return { success: false };
         }
@@ -1338,6 +1365,11 @@ const ConsultantComprehensiveManagement = ({ embedded = false, initialOpenUserId
                     }));
                     return;
                 }
+                if (shouldBlockOptionalMgLoginPassword(formData.password)) {
+                    setPasswordPolicyError(true);
+                    return;
+                }
+                setPasswordPolicyError(false);
                 result = await createConsultant(formData);
             } else if (modalType === 'edit') {
                 const phoneNorm = normalizeKoreanMobileDigits(String(formData.phone ?? '').trim());
@@ -1360,7 +1392,13 @@ const ConsultantComprehensiveManagement = ({ embedded = false, initialOpenUserId
         } catch (error) {
             console.error('모달 제출 오류:', error);
             window.dispatchEvent(new CustomEvent('showNotification', {
-                detail: { message: t('admin:consultantMgmt.msg.submitError'), type: 'error' }
+                detail: {
+                    message: resolveUserFacingApiErrorMessage(
+                        error,
+                        t('admin:consultantMgmt.msg.submitError')
+                    ),
+                    type: 'error'
+                }
             }));
         } finally {
             setModalSubmitLoading(false);
@@ -2076,18 +2114,35 @@ const ConsultantComprehensiveManagement = ({ embedded = false, initialOpenUserId
                     </div>
                     {modalType === 'create' && (
                         <div className="mg-v2-form-group">
-                            <label className="mg-v2-form-label">{t('admin:ConsultantComprehensiveManagement.t_81973897')}</label>
+                            <label htmlFor="consultant-password" className="mg-v2-form-label">{t('admin:ConsultantComprehensiveManagement.t_81973897')}</label>
                             <input
                                 type="password"
+                                id="consultant-password"
                                 name="password"
                                 value={formData.password || ''}
                                 onChange={handleFormChange}
                                 placeholder={LOGIN_PASSWORD_FIELD_PLACEHOLDER}
-                                className="mg-v2-form-input"
+                                className={`mg-v2-form-input${passwordPolicyError ? ' mg-v2-form-input--error' : ''}`}
+                                aria-invalid={passwordPolicyError ? true : undefined}
+                                aria-describedby={passwordPolicyError ? 'consultant-password-policy-error' : 'consultant-password-help'}
+                                autoComplete="new-password"
                             />
-                            <small className="mg-v2-form-help">
-                                {LOGIN_PASSWORD_POLICY_HINT_ONE_LINE} 비우면 임시 비밀번호로 등록됩니다.
+                            <small id="consultant-password-help" className="mg-v2-form-help">
+                                {t('admin:consultantMgmt.msg.passwordOptionalHint')}
                             </small>
+                            {passwordPolicyError ? (
+                                <small
+                                    id="consultant-password-policy-error"
+                                    className="mg-v2-form-help mg-v2-form-help--error"
+                                    role="alert"
+                                >
+                                    {t('admin:consultantMgmt.msg.passwordPolicy', {
+                                        min: LOGIN_PASSWORD_MIN_LENGTH,
+                                        max: LOGIN_PASSWORD_MAX_LENGTH,
+                                        specials: LOGIN_PASSWORD_ALLOWED_SPECIALS
+                                    })}
+                                </small>
+                            ) : null}
                         </div>
                     )}
                     <div className="mg-v2-form-group">

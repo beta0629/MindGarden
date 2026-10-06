@@ -1449,10 +1449,10 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
     }
 
     /**
-     * 가예약 SAME_DAY_CARD 매핑 일정에 회기 차감 없이 sessionSequence를 부여한다.
+     * 결제 대기 회기권 매핑 일정에 회기 차감 없이 sessionSequence를 부여한다.
      *
      * @param schedule 대상 일정
-     * @param mapping SAME_DAY_CARD PENDING_PAYMENT 매핑
+     * @param mapping 결제 대기 회기권 매핑
      * @param persist true이면 repository save
      * @return 새로 부여했으면 true
      */
@@ -1478,7 +1478,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
     }
 
     /**
-     * 가예약 회차 부여 대상인지 — PENDING_PAYMENT + SAME_DAY_CARD + 회차 없음.
+     * 차감 없는 회차 부여 대상인지 — MappingPaymentScheduleGate#allowsProvisionalSequenceWithoutDeduction + 회차 없음.
      *
      * @param schedule 일정
      * @param mapping 매핑
@@ -1491,7 +1491,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         if (schedule.getSessionSequence() != null) {
             return false;
         }
-        if (!ProvisionalConsultationLogSession.isSameDayCardPendingPayment(mapping)) {
+        if (!ProvisionalConsultationLogSession.isProvisionalWithoutDeduction(mapping)) {
             return false;
         }
         return isConsultationScheduleForSessionDeduction(schedule);
@@ -1691,7 +1691,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
     }
 
     /**
-     * 결제 대기 매핑에 묶인 일정을 확정·점유 전환하지 않는다.
+     * {@link MappingPaymentScheduleGate#allowsScheduleConfirm} 이 거절하는 일정의 확정·점유 전환을 막는다.
      * 취소·가예약 유지·이미 같은 상태 재저장은 막지 않는다.
      *
      * @param schedule 저장 전 일정
@@ -1711,12 +1711,13 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         }
         if (!scheduleConfirmAllowed(schedule)) {
             throw new IllegalStateException(
-                    ScheduleServiceUserFacingMessages.MSG_UNPAID_PENDING_SCHEDULE_CONFIRM_DENIED);
+                    ScheduleServiceUserFacingMessages.MSG_TENTATIVE_WITHOUT_MAPPING_CONFIRM_DENIED);
         }
     }
 
     /**
      * 일정에 묶인 매핑이 확정을 허용하는지. 매핑이 없고 가예약 상태이면 거절한다.
+     * 결제 대기 매핑의 확정은 허용하며, 회기 차감은 {@link #useSessionForMapping} 의 결제 게이트가 막는다.
      *
      * @param schedule 일정
      * @return 확정해도 되면 true
@@ -1764,7 +1765,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         Schedule schedule = findById(scheduleId);
         if (!scheduleConfirmAllowed(schedule)) {
             throw new IllegalStateException(
-                    ScheduleServiceUserFacingMessages.MSG_UNPAID_PENDING_SCHEDULE_CONFIRM_DENIED);
+                    ScheduleServiceUserFacingMessages.MSG_TENTATIVE_WITHOUT_MAPPING_CONFIRM_DENIED);
         }
 
         // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
@@ -3377,8 +3378,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
                 return;
             }
             ConsultantClientMapping mapping = mappingOpt.get();
-            if (mapping.getStatus() == MappingStatus.PENDING_PAYMENT
-                    && isSameDayCardPaymentTiming(mapping)) {
+            if (ProvisionalConsultationLogSession.isProvisionalWithoutDeduction(mapping)) {
                 schedule.setSessionSequence(null);
                 scheduleRepository.save(schedule);
                 log.info("가예약 회차 해제(잔여 복원 없음): scheduleId={}, mappingId={}, remaining={}",

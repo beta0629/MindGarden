@@ -42,13 +42,9 @@ const ScheduleHeader = ({
     'integratedSchedule.filter.clientLabel',
     { defaultValue: '내담자 필터' }
   );
-  const clientFilterSelectedLabelTemplate = t(
-    'integratedSchedule.filter.clientSelected',
-    { count: 0, defaultValue: '내담자 {{count}}명' }
-  );
   const buildSelectedLabel = (count) => t(
     'integratedSchedule.filter.clientSelected',
-    { count, defaultValue: clientFilterSelectedLabelTemplate.replace('{{count}}', String(count)) }
+    { count, defaultValue: '내담자 {{count}}명' }
   );
   const clientFilterAriaLabel = t(
     'integratedSchedule.filter.ariaLabel',

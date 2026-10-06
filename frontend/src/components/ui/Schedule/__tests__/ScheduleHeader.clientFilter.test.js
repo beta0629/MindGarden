@@ -131,7 +131,7 @@ describe('ScheduleHeader — 내담자 다중 필터 (calendarSkin=integrated �
       />
     );
 
-    const trigger = screen.getByRole('combobox');
+    const trigger = screen.getByRole('combobox', { name: /내담자 필터/ });
     fireEvent.click(trigger);
 
     const dialog = screen.getByRole('dialog');
@@ -163,7 +163,7 @@ describe('ScheduleHeader — 내담자 다중 필터 (calendarSkin=integrated �
         })}
       />
     );
-    fireEvent.click(screen.getByRole('combobox'));
+    fireEvent.click(screen.getByRole('combobox', { name: /내담자 필터/ }));
     const dialog = screen.getByRole('dialog');
     const firstOption = within(dialog).getAllByRole('option')[0];
     fireEvent.click(firstOption);

@@ -83,7 +83,7 @@ if [ -n "$FE_FILES" ] && [ -x frontend/node_modules/.bin/craco ]; then
   if [ "$RC" = "142" ]; then
     log "jest 시간 초과 — 차단하지 않음"
   elif [ "$RC" != "0" ]; then
-    LINES=$(grep -E '^[[:space:]]*● ' "$FE_LOG" | sed -E 's/^[[:space:]]*● //' | redact | awk '!seen[$0]++' | head -n 15)
+    LINES=$(grep -E '^[[:space:]]*● ' "$FE_LOG" | sed -E 's/^[[:space:]]*● //' | grep -Ev '^Console$' | redact | awk '!seen[$0]++' | head -n 15)
     [ -n "$LINES" ] || LINES="jest 실패(exit $RC) — $FE_LOG 확인"
     while IFS= read -r l; do add_fail "jest: $l — 테스트 기대값 또는 구현을 고치세요"; done <<< "$LINES"
   fi

@@ -129,6 +129,32 @@ class MappingTerminateMergedAddonIncomeIntegrationTest {
         assertThat(reloadIncome(incomeB).getStatus()).isEqualTo(TransactionStatus.COMPLETED);
     }
 
+    @Test
+    @DisplayName("다른 타깃으로 병합된 같은 쌍 행·다른 테넌트의 같은 관련 ID INCOME 은 취소하지 않는다")
+    void terminateTarget_keepsIncomeMergedIntoOtherTargetAndOtherTenant() {
+        ConsultantClientMapping target = saveMapping(MappingStatus.ACTIVE, PaymentStatus.APPROVED, 10, 0, 10, 800_000L);
+        ConsultantClientMapping otherTarget = saveMapping(MappingStatus.ACTIVE, PaymentStatus.APPROVED, 8, 3, 5, 600_000L);
+        ConsultantClientMapping mergedIntoOther = saveMapping(
+                MappingStatus.TERMINATED, PaymentStatus.APPROVED, 5, 5, 0, 400_000L);
+        mergedIntoOther.setNotes(String.format(
+                AdminServiceUserFacingMessages.NOTES_ADDITIONAL_MAPPING_MERGED_FMT, otherTarget.getId(), 5));
+        mappingRepository.saveAndFlush(mergedIntoOther);
+        FinancialTransaction incomeTarget = saveIncome(target.getId(),
+                FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING, 800_000L);
+        FinancialTransaction incomeMergedIntoOther = saveIncome(mergedIntoOther.getId(),
+                FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING, 400_000L);
+        String otherTenantId = "mtmb-" + UUID.randomUUID().toString().replace("-", "").substring(0, 26);
+        FinancialTransaction otherTenantIncome = saveIncome(otherTenantId, target.getId(),
+                FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING, 800_000L);
+
+        adminService.terminateMapping(target.getId(), "mtma-void-scope");
+
+        assertThat(reloadIncome(incomeTarget).getStatus()).isEqualTo(TransactionStatus.CANCELLED);
+        assertThat(reloadIncome(incomeMergedIntoOther).getStatus()).isEqualTo(TransactionStatus.COMPLETED);
+        assertThat(reloadIncome(otherTenantIncome).getStatus()).isEqualTo(TransactionStatus.COMPLETED);
+        assertThat(reloadMapping(otherTarget).getStatus()).isEqualTo(MappingStatus.ACTIVE);
+    }
+
     private ConsultantClientMapping reloadMapping(ConsultantClientMapping mapping) {
         return mappingRepository.findByTenantIdAndId(tenantId, mapping.getId()).orElseThrow();
     }
@@ -157,6 +183,11 @@ class MappingTerminateMergedAddonIncomeIntegrationTest {
     }
 
     private FinancialTransaction saveIncome(Long mappingId, String relatedEntityType, long amount) {
+        return saveIncome(tenantId, mappingId, relatedEntityType, amount);
+    }
+
+    private FinancialTransaction saveIncome(String ownerTenantId, Long mappingId, String relatedEntityType,
+            long amount) {
         FinancialTransaction tx = FinancialTransaction.builder()
                 .transactionType(TransactionType.INCOME)
                 .category("CONSULTATION")
@@ -172,7 +203,7 @@ class MappingTerminateMergedAddonIncomeIntegrationTest {
                 .relatedEntityId(mappingId)
                 .relatedEntityType(relatedEntityType)
                 .build();
-        tx.setTenantId(tenantId);
+        tx.setTenantId(ownerTenantId);
         tx.setIsDeleted(false);
         return financialTransactionRepository.saveAndFlush(tx);
     }

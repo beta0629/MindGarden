@@ -1899,7 +1899,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
      */
     private Runnable buildScheduleConfirmedExternalCalls(Schedule schedule) {
         User client = null;
-        String consultantName = "상담사";
+        String consultantName = "";
         String dateStr = "";
         String timeStr = "";
         String tenantId = TenantContextHolder.getTenantId();

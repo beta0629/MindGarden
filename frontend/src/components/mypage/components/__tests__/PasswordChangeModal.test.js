@@ -8,7 +8,7 @@ import React from 'react';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import PasswordChangeModal from '../PasswordChangeModal';
-import { LOGIN_PASSWORD_POLICY_HINT_ONE_LINE } from '../../../../constants/passwordPolicyUi';
+import { getPasswordPolicyHint } from '../../../../utils/loginPasswordPolicy';
 import StandardizedApi from '../../../../utils/standardizedApi';
 import notificationManager from '../../../../utils/notification';
 
@@ -50,7 +50,7 @@ describe('PasswordChangeModal', () => {
     const dialog = screen.getByRole('dialog');
     const hintParagraph = dialog.querySelector('.mg-mypage-password-form__hint');
     expect(hintParagraph).toBeTruthy();
-    expect(hintParagraph.textContent).toContain(LOGIN_PASSWORD_POLICY_HINT_ONE_LINE);
+    expect(hintParagraph.textContent).toContain(getPasswordPolicyHint());
   });
 
   it('정책에 맞지 않는 새 비밀번호 입력 시 클라이언트 오류 메시지를 표시한다', async() => {
@@ -62,9 +62,27 @@ describe('PasswordChangeModal', () => {
 
     await waitFor(() => {
       expect(
-        within(dialog).getByText('비밀번호는 최소 8자 이상이어야 합니다.')
+        within(dialog).getByText(/비밀번호는 최소 8자 이상이어야 합니다\./)
       ).toBeInTheDocument();
     });
+  });
+
+  it('대문자 없는 새 비밀번호는 변경 API 를 부르지 않고 정책 안내를 표시한다', async() => {
+    renderOpen();
+    const dialog = screen.getByRole('dialog');
+    await userEvent.type(within(dialog).getByLabelText('현재 비밀번호'), 'Oldfake7!Q');
+    const input = within(dialog).getByLabelText('새 비밀번호');
+    await userEvent.type(input, 'noupper1!x');
+    await userEvent.type(within(dialog).getByLabelText('새 비밀번호 확인'), 'noupper1!x');
+
+    const alert = await within(dialog).findByText(/대문자를 포함해야/);
+    expect(alert).toHaveAttribute('role', 'alert');
+    expect(alert).toHaveTextContent('특수문자');
+    expect(input).toHaveAttribute('aria-invalid', 'true');
+    const submitBtn = within(dialog).getByRole('button', { name: '비밀번호 변경' });
+    expect(submitBtn).toBeDisabled();
+    await userEvent.click(submitBtn);
+    expect(StandardizedApi.post).not.toHaveBeenCalled();
   });
 
   it('제출(비밀번호 변경) primary 버튼이 DOM에 보인다 — 폼 유효 시 활성화되어 제출 가능', async() => {

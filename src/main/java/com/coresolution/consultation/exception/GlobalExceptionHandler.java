@@ -15,6 +15,7 @@ import com.coresolution.consultation.util.ClientMessageSanitizer;
 import com.coresolution.consultation.util.ScheduleSessionStartGate;
 import com.coresolution.consultation.util.ServerErrorResponses;
 import com.coresolution.core.dto.ErrorResponse;
+import com.coresolution.core.security.PasswordService;
 import com.coresolution.core.service.impl.OnboardingApprovalBlockedException;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
@@ -606,6 +607,23 @@ public class GlobalExceptionHandler {
     }
 
     /**
+     * 일정 생성 시간 겹침 — HTTP 409. 사유 문구는 응답 {@code message} 에 싣는다.
+     */
+    @ExceptionHandler(ScheduleTimeConflictException.class)
+    public ResponseEntity<ErrorResponse> handleScheduleTimeConflict(
+            ScheduleTimeConflictException e, HttpServletRequest request) {
+        log.info("[SCHEDULE_TIME_CONFLICT] path={} message={}", request.getRequestURI(), e.getMessage());
+        ErrorResponse error = ErrorResponse.of(
+            e.getMessage(),
+            ScheduleTimeConflictException.ERROR_CODE,
+            HttpStatus.CONFLICT.value(),
+            request.getRequestURI(),
+            request.getMethod()
+        );
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
+    }
+
+    /**
      * lifecycle §3.6 전이 그래프 위반 — HTTP 409 (시스템 오류 아님).
      */
     @ExceptionHandler(IllegalStateTransitionException.class)
@@ -992,6 +1010,24 @@ public class GlobalExceptionHandler {
     private static boolean isTemporalType(Class<?> type) {
         return type != null && (TemporalAccessor.class.isAssignableFrom(type)
                 || java.util.Date.class.isAssignableFrom(type));
+    }
+
+    /**
+     * 로그인 비밀번호 저장 정책 위반 — HTTP 400.
+     * 사유는 예외 메시지(정책 문구)를 {@link ErrorResponse#getMessage()} 에 싣는다.
+     */
+    @ExceptionHandler(PasswordService.InvalidPasswordException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidPassword(
+            PasswordService.InvalidPasswordException e, HttpServletRequest request) {
+        log.info("[INVALID_PASSWORD] path={} message={}", request.getRequestURI(), e.getMessage());
+        ErrorResponse error = ErrorResponse.of(
+            e.getMessage(),
+            PasswordService.InvalidPasswordException.ERROR_CODE,
+            HttpStatus.BAD_REQUEST.value(),
+            request.getRequestURI(),
+            request.getMethod()
+        );
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
     }
 
     /**

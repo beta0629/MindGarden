@@ -229,3 +229,12 @@
     border: 2px solid var(--ios-border-dark);
   }
 }
+
+.mg-v2-ad-ts__load-error {
+  margin-bottom: var(--mg-v2-space-3);
+  padding: var(--mg-v2-space-3) var(--mg-v2-space-4);
+  border-radius: var(--mg-v2-radius-md);
+  background-color: var(--mg-v2-color-semantic-error-light);
+  color: var(--mg-v2-color-semantic-error-dark);
+  font-size: var(--mg-v2-font-size-body-sm);
+}

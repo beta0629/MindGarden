@@ -330,7 +330,9 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         
         // 기존 비활성화된 상담사 확인 (재활성화)
         Optional<User> existingConsultant = userRepository.findByTenantIdAndUserIdAndIsActive(tenantId, userId, false);
-        
+        userService.rejectIfPhoneAlreadyRegistered(request.getPhone(), tenantId,
+                existingConsultant.map(User::getId).orElse(null));
+
         if (existingConsultant.isPresent()) {
             // 기존 상담사 재활성화
             User consultant = existingConsultant.get();

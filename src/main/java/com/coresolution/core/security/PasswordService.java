@@ -130,9 +130,21 @@ public class PasswordService {
     }
     
     /**
-     * 비밀번호 예외
+     * 로그인 비밀번호 저장 정책 위반.
+     *
+     * <p>{@link com.coresolution.consultation.exception.GlobalExceptionHandler} 가 HTTP 400 과
+     * 이 예외의 메시지(정책 문구)를 돌려준다.</p>
      */
     public static class InvalidPasswordException extends RuntimeException {
+
+        private static final long serialVersionUID = 1L;
+
+        /** 응답 {@code errorCode}. 화면은 {@code message} 를 정책 사유로 쓴다. */
+        public static final String ERROR_CODE = "INVALID_PASSWORD";
+
+        /**
+         * @param message 사용자에게 보여줄 정책 위반 문구
+         */
         public InvalidPasswordException(String message) {
             super(message);
         }

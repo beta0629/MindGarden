@@ -12,7 +12,7 @@ import '../../styles/main.css';
 import SafeText from '../common/SafeText';
 import ActionBarButton from '../common/ActionBarButton';
 import { toDisplayString, toSafeNumber } from '../../utils/safeDisplay';
-import { extractServerErrorMessageFromError } from '../../utils/ajax';
+import { resolveServerFailureMessage } from '../../utils/serverFailureMessage';
 import { useNavigate } from 'react-router-dom';
 import { ADMIN_ROUTES } from '../../constants/adminRoutes';
 import {
@@ -63,22 +63,6 @@ const RESCHEDULE_ACTION_ELIGIBLE_STATUSES = Object.freeze([
     'CONFIRMED',
     'IN_PROGRESS'
 ]);
-
-/**
- * 실패 토스트 문구 — 서버 사유가 있으면 {{message}} 로 보간, 없으면 사유 없는 문구.
- *
- * @param {Function} t i18n 번역 함수
- * @param {unknown} error 던져진 API 오류
- * @param {string} withMessageKey `{{message}}` 를 가진 문구 키
- * @param {string} fallbackKey 사유 없는 문구 키
- * @returns {string}
- */
-function resolveServerFailureMessage(t, error, withMessageKey, fallbackKey) {
-    const serverMessage = toDisplayString(extractServerErrorMessageFromError(error), '');
-    return serverMessage
-        ? t(withMessageKey, { message: serverMessage })
-        : t(fallbackKey);
-}
 
 /**
  * 일정 상세 모달의 "누적 상담" 라벨용 lifetime 합산 정보 산출.

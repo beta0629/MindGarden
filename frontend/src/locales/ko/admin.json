@@ -2100,7 +2100,6 @@
       "emailLabel": "이메일",
       "emailPlaceholder": "example@email.com",
       "passwordLabel": "비밀번호",
-      "passwordHelpSuffix": " 비우면 임시 비밀번호로 등록됩니다.",
       "gradeLabel": "등급",
       "consultationSectionTitle": "상담 정보",
       "consultationPurposeLabel": "상담 목적",

@@ -3,6 +3,8 @@ package com.coresolution.consultation.integration;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 
 import java.math.BigDecimal;
@@ -32,6 +34,9 @@ import com.coresolution.consultation.repository.ConsultantClientMappingRepositor
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.repository.erp.financial.FinancialTransactionRepository;
 import com.coresolution.consultation.service.AdminService;
+import com.coresolution.consultation.service.NotificationService;
+import com.coresolution.consultation.service.RefundAutoCancelNotificationService;
+import com.coresolution.consultation.service.SalaryTaxRateLookupService;
 import com.coresolution.consultation.service.erp.financial.FinancialTransactionService;
 import com.coresolution.core.context.TenantContextHolder;
 import org.junit.jupiter.api.AfterEach;
@@ -41,6 +46,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.test.context.ActiveProfiles;
 
@@ -65,12 +71,16 @@ class MappingMergedAddonPartialUseRefundIntegrationTest {
     private static final int TOTAL_MERGED = SESSIONS_A + SESSIONS_B;
     private static final int CONCURRENT_REQUESTS = 2;
     private static final long WAIT_SECONDS = 60L;
+    private static final BigDecimal TEST_VAT_RATE = new BigDecimal("0.10");
 
     @Autowired private AdminService adminService;
     @Autowired private UserRepository userRepository;
     @Autowired private ConsultantClientMappingRepository mappingRepository;
     @Autowired private FinancialTransactionRepository financialTransactionRepository;
     @SpyBean private FinancialTransactionService financialTransactionService;
+    @MockBean private SalaryTaxRateLookupService salaryTaxRateLookupService;
+    @MockBean private NotificationService notificationService;
+    @MockBean private RefundAutoCancelNotificationService refundAutoCancelNotificationService;
 
     private String tenantId;
     private User consultant;
@@ -78,6 +88,7 @@ class MappingMergedAddonPartialUseRefundIntegrationTest {
 
     @BeforeEach
     void setUp() {
+        doReturn(TEST_VAT_RATE).when(salaryTaxRateLookupService).getVatRate(anyString());
         tenantId = "mmpu-" + UUID.randomUUID().toString().replace("-", "").substring(0, 26);
         TenantContextHolder.setTenantId(tenantId);
         consultant = saveUser(UserRole.CONSULTANT, "상담사");

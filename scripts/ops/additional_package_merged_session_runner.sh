@@ -628,6 +628,237 @@ EOF
   exit 1
 }
 
+assert_income_read_safe() {
+  local file="$1"
+  [ -f "$file" ] || die "income read SQL file missing"
+  if grep -qiE '(^|[^a-z_@])(insert|update|delete|drop|alter|truncate|create|replace|grant|call|set)[[:space:]]' "$file"; then
+    die "income read SQL contains a write statement"
+  fi
+  if grep -qiE 'into[[:space:]]+outfile|load_file' "$file"; then
+    die "income read SQL touches a forbidden object"
+  fi
+}
+
+load_tenant_env() {
+  local file="$1"
+  [ -f "$file" ] || die "tenant env file missing"
+  local line
+  line="$(grep -E '^TENANT_ID=' "$file" | tail -n 1 || true)"
+  INCOME_TENANT="${line#TENANT_ID=}"
+  [ -n "$INCOME_TENANT" ] || die "TENANT_ID is empty in the tenant env file"
+  if ! [[ "$INCOME_TENANT" =~ ^[A-Za-z0-9._:-]+$ ]]; then
+    die "TENANT_ID has unsupported characters"
+  fi
+}
+
+load_income_allowlist() {
+  local file="$1"
+  INCOME_ROWS=()
+  [ -f "$file" ] || die "income allowlist file missing"
+  local line
+  while IFS= read -r line || [ -n "$line" ]; do
+    line="${line%%#*}"
+    line="$(printf '%s' "$line" | tr -d '[:space:]')"
+    [ -z "$line" ] && continue
+    if ! [[ "$line" =~ ^[1-9][0-9]*,[1-9][0-9]*,[1-9][0-9]*$ ]]; then
+      die "income allowlist line must be mapping_id,income_tx_id,amount"
+    fi
+    INCOME_ROWS+=("$line")
+  done <"$file"
+  [ "${#INCOME_ROWS[@]}" -gt 0 ] || return 1
+  local dup
+  dup="$(printf '%s\n' "${INCOME_ROWS[@]}" | cut -d, -f1 | sort | uniq -d || true)"
+  [ -z "$dup" ] || die "income allowlist repeats a mapping"
+  dup="$(printf '%s\n' "${INCOME_ROWS[@]}" | cut -d, -f2 | sort | uniq -d || true)"
+  [ -z "$dup" ] || die "income allowlist repeats a transaction"
+  return 0
+}
+
+load_income_precedent() {
+  local file="$1"
+  [ -f "$file" ] || die "income precedent file missing"
+  local line rows=()
+  while IFS= read -r line || [ -n "$line" ]; do
+    line="${line%%#*}"
+    line="$(printf '%s' "$line" | tr -d '[:space:]')"
+    [ -z "$line" ] && continue
+    if ! [[ "$line" =~ ^[1-9][0-9]*,[1-9][0-9]*,[1-9][0-9]*$ ]]; then
+      die "income precedent line must be mapping_id,income_tx_id,cancel_tx_id"
+    fi
+    rows+=("$line")
+  done <"$file"
+  [ "${#rows[@]}" -eq 1 ] || die "income precedent file must have exactly one data row"
+  IFS=',' read -r PREC_MAPPING PREC_INCOME_TX PREC_CANCEL_TX <<<"${rows[0]}"
+}
+
+load_income_denylist() {
+  local file="$1"
+  DENY_IDS=()
+  [ -f "$file" ] || die "income denylist file missing"
+  local line
+  while IFS= read -r line || [ -n "$line" ]; do
+    line="${line%%#*}"
+    line="$(printf '%s' "$line" | tr -d '[:space:]')"
+    [ -z "$line" ] && continue
+    [[ "$line" =~ ^[1-9][0-9]*$ ]] || die "income denylist line must be a mapping id"
+    DENY_IDS+=("$line")
+  done <"$file"
+  [ "${#DENY_IDS[@]}" -gt 0 ] || die "income denylist is empty"
+}
+
+# 허용 목록 매칭·전표가 거부 목록·선례와 겹치면 DB 접속 전에 중단한다.
+assert_income_scope() {
+  local raw m tx amt d
+  for raw in "${INCOME_ROWS[@]}"; do
+    IFS=',' read -r m tx amt <<<"$raw"
+    for d in "${DENY_IDS[@]}"; do
+      [ "$m" != "$d" ] || die "income allowlist contains a denied mapping"
+    done
+    [ "$m" != "$PREC_MAPPING" ] || die "income allowlist contains the precedent mapping"
+    [ "$tx" != "$PREC_INCOME_TX" ] || die "income allowlist contains the precedent income"
+    [ "$tx" != "$PREC_CANCEL_TX" ] || die "income allowlist contains the precedent cancel entry"
+  done
+}
+
+income_id_lists() {
+  INCOME_MAP_IDS=""
+  INCOME_TX_IDS=""
+  local raw m tx amt
+  for raw in "${INCOME_ROWS[@]}"; do
+    IFS=',' read -r m tx amt <<<"$raw"
+    INCOME_MAP_IDS="${INCOME_MAP_IDS:+$INCOME_MAP_IDS,}${m}"
+    INCOME_TX_IDS="${INCOME_TX_IDS:+$INCOME_TX_IDS,}${tx}"
+  done
+}
+
+# 적요·비고 원문은 출력하지 않는다. 상품명은 {package} 로, 사유는 코드 기본 문구일 때만 보인다.
+emit_income_probe_sql() {
+  local t="$1" maps="$2" txs="$3"
+  cat <<EOF
+SELECT 'ft_column' AS section, COLUMN_NAME, COLUMN_TYPE, IS_NULLABLE,
+       COLUMN_DEFAULT IS NOT NULL AS has_default, EXTRA
+FROM information_schema.COLUMNS
+WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'financial_transactions'
+ORDER BY ORDINAL_POSITION;
+
+SELECT 'mapping' AS section, m.id, m.status, m.payment_status, m.deposit_confirmed + 0 AS deposit_confirmed,
+       m.payment_date IS NOT NULL AS has_payment_date, m.total_sessions, m.used_sessions,
+       m.remaining_sessions, m.package_price, m.payment_amount, m.version, m.is_deleted + 0 AS is_deleted,
+       m.terminated_at IS NOT NULL AS has_terminated_at, m.updated_at
+FROM consultant_client_mappings m
+WHERE m.tenant_id = '${t}' AND m.id IN (${maps})
+ORDER BY m.id;
+
+SELECT 'tx' AS section, ft.id, ft.related_entity_id, ft.related_entity_type, ft.transaction_type,
+       ft.category, ft.subcategory, ft.category_code_id, ft.subcategory_code_id,
+       ft.amount, ft.amount_before_tax, ft.tax_amount, ft.withholding_tax_amount,
+       ft.card_merchant_fee_amount, ft.tax_included + 0 AS tax_included, ft.status, ft.transaction_date,
+       ft.approver_id IS NOT NULL AS has_approver, ft.approved_at IS NOT NULL AS has_approved_at,
+       CHAR_LENGTH(ft.approval_comment) AS approval_comment_len,
+       ft.department IS NOT NULL AS has_department, ft.project_code IS NOT NULL AS has_project_code,
+       ft.branch_code IS NOT NULL AS has_branch_code,
+       ft.is_deleted + 0 AS is_deleted, ft.deleted_at IS NOT NULL AS has_deleted_at, ft.version,
+       ft.created_at, ft.updated_at,
+       SUBSTRING_INDEX(ft.description, ' - ', 1) AS desc_head,
+       CHAR_LENGTH(ft.description) AS desc_len,
+       CASE
+           WHEN ft.transaction_type <> 'EXPENSE' OR ft.description IS NULL THEN NULL
+           WHEN REGEXP_REPLACE(
+                    REPLACE(ft.description, IFNULL(NULLIF(m.package_name, ''), CHAR(1)), '{package}'),
+                    '사유: [^)]*', '사유: {reason}')
+                REGEXP '^[^-]+ - [{]package[}] [(][0-9]+회기 환불, 사유: [{]reason[}][)]( .부가세 분리: 공급가 [0-9,]+원, 부가세 [0-9,]+원.)?$'
+           THEN REGEXP_REPLACE(
+                    REPLACE(ft.description, IFNULL(NULLIF(m.package_name, ''), CHAR(1)), '{package}'),
+                    '사유: [^)]*', '사유: {reason}')
+           ELSE CONCAT('{withheld len=', CHAR_LENGTH(ft.description), '}')
+       END AS expense_desc_template,
+       CASE WHEN ft.description LIKE '%사유: %' THEN
+           CASE WHEN SUBSTRING_INDEX(SUBSTRING_INDEX(ft.description, '사유: ', -1), ')', 1)
+                     IN ('관리자 처리', '기타', '환불테스트')
+                THEN SUBSTRING_INDEX(SUBSTRING_INDEX(ft.description, '사유: ', -1), ')', 1)
+                ELSE CONCAT('{custom len=',
+                            CHAR_LENGTH(SUBSTRING_INDEX(SUBSTRING_INDEX(ft.description, '사유: ', -1), ')', 1)),
+                            '}')
+           END
+       END AS desc_reason,
+       ft.description LIKE CONCAT('%', m.package_name, '%') AS desc_has_package_name,
+       CASE WHEN ft.remarks IS NULL THEN 'NULL'
+            WHEN ft.remarks LIKE 'orderPublicId=%' THEN 'ORDER_REF'
+            ELSE CONCAT('OTHER len=', CHAR_LENGTH(ft.remarks)) END AS remarks_kind
+FROM financial_transactions ft
+LEFT JOIN consultant_client_mappings m
+    ON m.tenant_id = ft.tenant_id AND m.id = ft.related_entity_id
+WHERE ft.tenant_id = '${t}'
+  AND (
+      ft.id IN (${txs})
+      OR (ft.related_entity_id IN (${maps}) AND ft.related_entity_type LIKE 'CONSULTANT_CLIENT_MAPPING%')
+  )
+ORDER BY ft.related_entity_id, ft.id;
+
+SELECT 'journal' AS section, ae.id AS entry_id, ae.financial_transaction_id, ae.entry_type, ae.amount,
+       ae.balance_sheet_category, ae.subcategory, ae.approval_status, ae.entry_status,
+       ae.posted_at IS NOT NULL AS has_posted_at, ae.related_transaction_type,
+       ae.total_debit, ae.total_credit, ae.is_deleted + 0 AS is_deleted, ae.entry_date, ae.created_at,
+       (SELECT COUNT(*) FROM erp_journal_entry_lines l
+         WHERE l.tenant_id = ae.tenant_id AND l.journal_entry_id = ae.id) AS line_count
+FROM accounting_entries ae
+INNER JOIN financial_transactions ft
+    ON ft.tenant_id = ae.tenant_id AND ft.id = ae.financial_transaction_id
+WHERE ae.tenant_id = '${t}'
+  AND (
+      ft.id IN (${txs})
+      OR (ft.related_entity_id IN (${maps}) AND ft.related_entity_type LIKE 'CONSULTANT_CLIENT_MAPPING%')
+  )
+ORDER BY ae.financial_transaction_id, ae.id;
+
+SELECT 'journal_line' AS section, l.journal_entry_id, l.line_number, l.account_id,
+       l.debit_amount, l.credit_amount, l.is_deleted + 0 AS is_deleted,
+       SUBSTRING_INDEX(l.description, ' - ', 1) AS line_desc_head
+FROM erp_journal_entry_lines l
+INNER JOIN accounting_entries ae
+    ON ae.tenant_id = l.tenant_id AND ae.id = l.journal_entry_id
+INNER JOIN financial_transactions ft
+    ON ft.tenant_id = ae.tenant_id AND ft.id = ae.financial_transaction_id
+WHERE l.tenant_id = '${t}'
+  AND (
+      ft.id IN (${txs})
+      OR (ft.related_entity_id IN (${maps}) AND ft.related_entity_type LIKE 'CONSULTANT_CLIENT_MAPPING%')
+  )
+ORDER BY l.journal_entry_id, l.line_number;
+EOF
+}
+
+cmd_income_probe() {
+  local allowlist="" precedent="" denylist="" tenant_env=""
+  while [ "$#" -gt 0 ]; do
+    case "$1" in
+      --allowlist) allowlist="$2"; shift 2 ;;
+      --precedent) precedent="$2"; shift 2 ;;
+      --denylist) denylist="$2"; shift 2 ;;
+      --tenant-env) tenant_env="$2"; shift 2 ;;
+      *) die "unknown income-probe argument" ;;
+    esac
+  done
+  [ -n "$allowlist" ] && [ -n "$precedent" ] && [ -n "$denylist" ] && [ -n "$tenant_env" ] \
+    || die "income-probe needs --allowlist --precedent --denylist --tenant-env"
+  load_tenant_env "$tenant_env"
+  load_income_allowlist "$allowlist" || die "income allowlist is empty"
+  load_income_precedent "$precedent"
+  load_income_denylist "$denylist"
+  assert_income_scope
+  income_id_lists
+  require_db_env
+  local work
+  work="$(mktemp -d)"
+  WORK_DIRS+=("$work")
+  emit_income_probe_sql "$INCOME_TENANT" \
+    "${INCOME_MAP_IDS},${PREC_MAPPING}" \
+    "${INCOME_TX_IDS},${PREC_INCOME_TX},${PREC_CANCEL_TX}" >"${work}/probe.sql"
+  assert_income_read_safe "${work}/probe.sql"
+  echo "=== income sales cancel probe (read only) ==="
+  mysql_exec "SET SESSION TRANSACTION READ ONLY" "${work}/probe.sql"
+}
+
 usage() {
   echo "usage: DB_HOST DB_USER DB_PASSWORD DB_NAME $0 list" >&2
   echo "       DB_* $0 repair --allowlist FILE --mode backup --backup-dir DIR" >&2
@@ -645,6 +876,7 @@ main() {
     list) cmd_list "$@" ;;
     repair) cmd_repair "$@" ;;
     verify) cmd_verify "$@" ;;
+    income-probe) cmd_income_probe "$@" ;;
     query)
       require_db_env
       sql_file="${1:-}"

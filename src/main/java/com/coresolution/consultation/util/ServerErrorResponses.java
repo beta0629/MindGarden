@@ -16,6 +16,7 @@ import com.coresolution.consultation.exception.ProcedureExecutionException;
 import com.coresolution.consultation.exception.TaxIntegrityException;
 import com.coresolution.consultation.exception.UnauthorizedException;
 import com.coresolution.consultation.exception.ValidationException;
+import com.coresolution.core.security.PasswordService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.convert.ConversionFailedException;
 import org.springframework.http.HttpStatus;
@@ -45,6 +46,7 @@ public final class ServerErrorResponses {
     private static final List<Class<? extends Throwable>> MAPPED_BUSINESS_EXCEPTIONS = List.of(
             IllegalArgumentException.class,
             IllegalStateException.class,
+            PasswordService.InvalidPasswordException.class,
             ValidationException.class,
             EntityNotFoundException.class,
             UnauthorizedException.class,

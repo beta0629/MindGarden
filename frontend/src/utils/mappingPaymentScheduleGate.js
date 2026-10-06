@@ -2,8 +2,8 @@
  * 매핑 결제 상태·결제 시점 게이트.
  * 백엔드 `MappingPaymentScheduleGate` 와 같은 판정이다.
  *
- * 선납(ADVANCE) 결제 대기는 가예약·확정·회기 차감 불가.
- * 사후 카드(SAME_DAY_CARD) 결제 대기는 가예약만 허용하고 확정·차감은 결제 후다.
+ * 결제 대기 매핑의 일정도 확정할 수 있다. 회기 차감·다른 매핑 대체 차감은 결제 후에만 한다.
+ * 선납(ADVANCE) 결제 대기는 가예약을 새로 만들 수 없고, 사후 카드(SAME_DAY_CARD) 결제 대기는 가예약을 허용한다.
  * 회기 표시(usedSessions / sessionSequence)는 이 모듈의 책임이 아니다.
  *
  * @author CoreSolution
@@ -80,20 +80,13 @@ export const allowsTentativeBeforeDeposit = (mapping) => {
 };
 
 /**
- * 일정 확정 허용. 결제 대기는 시점과 무관하게 거절한다.
+ * 일정 확정 허용. 상태가 있는 매핑이면 결제 대기여도 허용한다(차감은 결제 후).
  *
  * @param {object|null|undefined} mapping
  * @returns {boolean}
  */
-export const allowsScheduleConfirm = (mapping) => {
-  if (!mapping || typeof mapping !== 'object' || !mapping.status) {
-    return false;
-  }
-  if (isSameDayCardPendingPayment(mapping) || isUnpaidPendingPaymentStatus(mapping.status)) {
-    return false;
-  }
-  return true;
-};
+export const allowsScheduleConfirm = (mapping) =>
+  Boolean(mapping && typeof mapping === 'object' && mapping.status);
 
 /**
  * 이 매핑의 회기를 다른 매핑으로 대체 차감하면 안 되는지.
@@ -105,7 +98,7 @@ export const blocksSessionConsumeFallback = (mapping) => {
   if (!mapping || typeof mapping !== 'object') {
     return false;
   }
-  return isUnpaidPendingPaymentStatus(mapping.status) && !allowsScheduleConfirm(mapping);
+  return isUnpaidPendingPaymentStatus(mapping.status);
 };
 
 /**

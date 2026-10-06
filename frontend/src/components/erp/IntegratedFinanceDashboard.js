@@ -2809,7 +2809,10 @@ const JournalEntryCreateModal = ({ onClose, onRefresh }) => {
     
     const { totalDebit, totalCredit } = calculateTotals();
     if (totalDebit !== totalCredit) {
-      newErrors.balance = t('erp:IntegratedFinanceDashboard.t_06797db7');
+      newErrors.balance = t('erp:IntegratedFinanceDashboard.t_06797db7', {
+        totalDebit: formatCurrency(totalDebit),
+        totalCredit: formatCurrency(totalCredit)
+      });
     }
     
     setErrors(newErrors);
@@ -3509,7 +3512,10 @@ const JournalEntryEditModal = ({ entry, onClose, onRefresh }) => {
     
     const { totalDebit, totalCredit } = calculateTotals();
     if (totalDebit !== totalCredit) {
-      newErrors.balance = t('erp:IntegratedFinanceDashboard.t_06797db7');
+      newErrors.balance = t('erp:IntegratedFinanceDashboard.t_06797db7', {
+        totalDebit: formatCurrency(totalDebit),
+        totalCredit: formatCurrency(totalCredit)
+      });
     }
     
     setErrors(newErrors);

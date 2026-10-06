@@ -120,16 +120,19 @@ const RecentActivitiesWidget = ({ widget, user }) => {
       let timeAgo;
       if (diffDays === 0) {
         const diffHours = Math.floor(diffTime / (1000 * 60 * 60));
-        timeAgo = diffHours === 0 ? '방금 전' : t('common:dashboard.RecentActivitiesWidget.t_1ae9fb85');
+        timeAgo = diffHours === 0 ? '방금 전' : t('common:dashboard.RecentActivitiesWidget.t_1ae9fb85', { diffHours });
       } else if (diffDays < 7) {
-        timeAgo = t('common:dashboard.RecentActivitiesWidget.t_da3b8e4b');
+        timeAgo = t('common:dashboard.RecentActivitiesWidget.t_da3b8e4b', { diffDays });
       } else {
-        timeAgo = t('common:dashboard.RecentActivitiesWidget.t_d18346fb');
+        timeAgo = t('common:dashboard.RecentActivitiesWidget.t_d18346fb', { weeks: Math.floor(diffDays / 7) });
       }
       
       activities.push({
         type: 'schedule',
-        title: t('common:dashboard.RecentActivitiesWidget.t_0b53d412'),
+        title: t('common:dashboard.RecentActivitiesWidget.t_0b53d412', {
+          consultantName: schedule.consultantName,
+          statusLabel: getStatusLabel(schedule.status)
+        }),
         time: timeAgo,
         details: `${schedule.date} ${schedule.startTime} - ${schedule.endTime}`
       });
@@ -167,11 +170,11 @@ const RecentActivitiesWidget = ({ widget, user }) => {
       let timeAgo;
       if (diffDays === 0) {
         const diffHours = Math.floor(diffTime / (1000 * 60 * 60));
-        timeAgo = diffHours === 0 ? '방금 전' : t('common:dashboard.RecentActivitiesWidget.t_1ae9fb85');
+        timeAgo = diffHours === 0 ? '방금 전' : t('common:dashboard.RecentActivitiesWidget.t_1ae9fb85', { diffHours });
       } else if (diffDays < 7) {
-        timeAgo = t('common:dashboard.RecentActivitiesWidget.t_da3b8e4b');
+        timeAgo = t('common:dashboard.RecentActivitiesWidget.t_da3b8e4b', { diffDays });
       } else {
-        timeAgo = t('common:dashboard.RecentActivitiesWidget.t_d18346fb');
+        timeAgo = t('common:dashboard.RecentActivitiesWidget.t_d18346fb', { weeks: Math.floor(diffDays / 7) });
       }
 
       let displayName = t('common:dashboard.RecentActivitiesWidget.t_82bba86b');
@@ -186,7 +189,10 @@ const RecentActivitiesWidget = ({ widget, user }) => {
       if (displayName !== t('common:dashboard.RecentActivitiesWidget.t_82bba86b') || schedule.clientId) {
         activities.push({
           type: 'schedule',
-          title: t('common:dashboard.RecentActivitiesWidget.t_9533079f'),
+          title: t('common:dashboard.RecentActivitiesWidget.t_9533079f', {
+            displayName,
+            statusLabel: getStatusLabel(schedule.status)
+          }),
           time: timeAgo,
           details: `${schedule.date} ${schedule.startTime} - ${schedule.endTime}`
         });
@@ -208,7 +214,7 @@ const RecentActivitiesWidget = ({ widget, user }) => {
     if (data?.totalUsers > 0) {
       activities.push({
         type: 'profile',
-        title: t('common:dashboard.RecentActivitiesWidget.t_62be4f58'),
+        title: t('common:dashboard.RecentActivitiesWidget.t_62be4f58', { totalUsers: data.totalUsers }),
         time: t('common:dashboard.RecentActivitiesWidget.t_2bdce5e8'),
         details: t('common:dashboard.RecentActivitiesWidget.t_0032cd55')
       });
@@ -217,7 +223,9 @@ const RecentActivitiesWidget = ({ widget, user }) => {
     if (data?.todayConsultations > 0) {
       activities.push({
         type: 'schedule',
-        title: t('common:dashboard.RecentActivitiesWidget.t_8a236019'),
+        title: t('common:dashboard.RecentActivitiesWidget.t_8a236019', {
+          todayConsultations: data.todayConsultations
+        }),
         time: t('common:dashboard.RecentActivitiesWidget.t_2bdce5e8'),
         details: t('common:dashboard.RecentActivitiesWidget.t_a02347c2')
       });

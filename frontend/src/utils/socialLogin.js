@@ -29,6 +29,7 @@ import { redirectToLoginPageOnce } from './sessionRedirect';
 import notificationManager from './notification';
 import { cachedApiCall, CACHE_CONFIG } from './apiCache';
 import i18n from '../i18n';
+import { toErrorMessage } from './safeDisplay';
 
 let oauth2Config = null;
 
@@ -103,7 +104,7 @@ export const kakaoLogin = async() => {
       const hasSubdomain = !defaultSubdomains.includes(firstLabel) && hostParts.length > 2;
 
       if (!hasSubdomain) {
-        const friendlyMessage = i18n.t('common:utils.socialLogin.t_9caeef26');
+        const friendlyMessage = i18n.t('common:utils.socialLogin.t_9caeef26', { host });
         console.error('⚠️ 서브도메인 없음:', friendlyMessage);
         notificationManager.show(friendlyMessage, 'error');
         throw new Error(i18n.t('common:utils.socialLogin.t_11aa9c1b'));
@@ -128,13 +129,13 @@ export const kakaoLogin = async() => {
           errorMessage = errorData.message;
           // 서브도메인 관련 오류인 경우 명확한 메시지로 변환
           if (errorMessage.includes(i18n.t('common:utils.socialLogin.t_73976704')) || errorMessage.includes(i18n.t('common:utils.socialLogin.t_b1f35800'))) {
-            errorMessage = i18n.t('common:utils.socialLogin.t_9caeef26');
+            errorMessage = i18n.t('common:utils.socialLogin.t_9caeef26', { host });
           }
         } else if (errorData.data && errorData.data.message) {
           errorMessage = errorData.data.message;
           // 서브도메인 관련 오류인 경우 명확한 메시지로 변환
           if (errorMessage.includes(i18n.t('common:utils.socialLogin.t_73976704')) || errorMessage.includes(i18n.t('common:utils.socialLogin.t_b1f35800'))) {
-            errorMessage = i18n.t('common:utils.socialLogin.t_9caeef26');
+            errorMessage = i18n.t('common:utils.socialLogin.t_9caeef26', { host });
           }
         }
       } catch (parseError) {
@@ -171,7 +172,7 @@ export const kakaoLogin = async() => {
     }
   } catch (error) {
     console.error('카카오 로그인 상세 오류:', error);
-    notificationManager.show(i18n.t('common:utils.socialLogin.t_8cdad74b'), 'error');
+    notificationManager.show(i18n.t('common:utils.socialLogin.t_8cdad74b', { message: toErrorMessage(error, '') }), 'error');
   }
 };
 
@@ -192,7 +193,7 @@ export const naverLogin = async() => {
       const hasSubdomain = !defaultSubdomains.includes(firstLabel) && hostParts.length > 2;
 
       if (!hasSubdomain) {
-        const friendlyMessage = i18n.t('common:utils.socialLogin.t_9caeef26');
+        const friendlyMessage = i18n.t('common:utils.socialLogin.t_9caeef26', { host });
         console.error('⚠️ 서브도메인 없음:', friendlyMessage);
         notificationManager.show(friendlyMessage, 'error');
         throw new Error(i18n.t('common:utils.socialLogin.t_11aa9c1b'));
@@ -214,13 +215,13 @@ export const naverLogin = async() => {
           errorMessage = errorData.message;
           // 서브도메인 관련 오류인 경우 명확한 메시지로 변환
           if (errorMessage.includes(i18n.t('common:utils.socialLogin.t_73976704')) || errorMessage.includes(i18n.t('common:utils.socialLogin.t_b1f35800'))) {
-            errorMessage = i18n.t('common:utils.socialLogin.t_9caeef26');
+            errorMessage = i18n.t('common:utils.socialLogin.t_9caeef26', { host });
           }
         } else if (errorData.data && errorData.data.message) {
           errorMessage = errorData.data.message;
           // 서브도메인 관련 오류인 경우 명확한 메시지로 변환
           if (errorMessage.includes(i18n.t('common:utils.socialLogin.t_73976704')) || errorMessage.includes(i18n.t('common:utils.socialLogin.t_b1f35800'))) {
-            errorMessage = i18n.t('common:utils.socialLogin.t_9caeef26');
+            errorMessage = i18n.t('common:utils.socialLogin.t_9caeef26', { host });
           }
         }
       } catch (parseError) {
@@ -286,7 +287,7 @@ export const googleLogin = async() => {
       const hasSubdomain = !defaultSubdomains.includes(firstLabel) && hostParts.length > 2;
 
       if (!hasSubdomain) {
-        const friendlyMessage = i18n.t('common:utils.socialLogin.t_9caeef26');
+        const friendlyMessage = i18n.t('common:utils.socialLogin.t_9caeef26', { host });
         console.error('⚠️ 서브도메인 없음:', friendlyMessage);
         notificationManager.show(friendlyMessage, 'error');
         throw new Error(i18n.t('common:utils.socialLogin.t_11aa9c1b'));
@@ -308,13 +309,13 @@ export const googleLogin = async() => {
           errorMessage = errorData.message;
           if (errorMessage.includes(i18n.t('common:utils.socialLogin.t_73976704'))
               || errorMessage.includes(i18n.t('common:utils.socialLogin.t_b1f35800'))) {
-            errorMessage = i18n.t('common:utils.socialLogin.t_9caeef26');
+            errorMessage = i18n.t('common:utils.socialLogin.t_9caeef26', { host });
           }
         } else if (errorData.data && errorData.data.message) {
           errorMessage = errorData.data.message;
           if (errorMessage.includes(i18n.t('common:utils.socialLogin.t_73976704'))
               || errorMessage.includes(i18n.t('common:utils.socialLogin.t_b1f35800'))) {
-            errorMessage = i18n.t('common:utils.socialLogin.t_9caeef26');
+            errorMessage = i18n.t('common:utils.socialLogin.t_9caeef26', { host });
           }
         }
       } catch (parseError) {
@@ -380,7 +381,7 @@ export const appleLogin = async() => {
       const hasSubdomain = !defaultSubdomains.includes(firstLabel) && hostParts.length > 2;
 
       if (!hasSubdomain) {
-        const friendlyMessage = i18n.t('common:utils.socialLogin.t_9caeef26');
+        const friendlyMessage = i18n.t('common:utils.socialLogin.t_9caeef26', { host });
         console.error('⚠️ 서브도메인 없음:', friendlyMessage);
         notificationManager.show(friendlyMessage, 'error');
         throw new Error(i18n.t('common:utils.socialLogin.t_11aa9c1b'));
@@ -402,13 +403,13 @@ export const appleLogin = async() => {
           errorMessage = errorData.message;
           if (errorMessage.includes(i18n.t('common:utils.socialLogin.t_73976704'))
               || errorMessage.includes(i18n.t('common:utils.socialLogin.t_b1f35800'))) {
-            errorMessage = i18n.t('common:utils.socialLogin.t_9caeef26');
+            errorMessage = i18n.t('common:utils.socialLogin.t_9caeef26', { host });
           }
         } else if (errorData.data && errorData.data.message) {
           errorMessage = errorData.data.message;
           if (errorMessage.includes(i18n.t('common:utils.socialLogin.t_73976704'))
               || errorMessage.includes(i18n.t('common:utils.socialLogin.t_b1f35800'))) {
-            errorMessage = i18n.t('common:utils.socialLogin.t_9caeef26');
+            errorMessage = i18n.t('common:utils.socialLogin.t_9caeef26', { host });
           }
         }
       } catch (parseError) {

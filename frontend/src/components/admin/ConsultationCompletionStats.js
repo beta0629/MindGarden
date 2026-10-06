@@ -46,7 +46,7 @@ const ConsultationCompletionStats = () => {
             const year = date.getFullYear();
             const month = String(date.getMonth() + 1).padStart(2, '0');
             const period = `${year}-${month}`;
-            const label = t('admin:ConsultationCompletionStats.t_180f1c39');
+            const label = t('admin:ConsultationCompletionStats.t_180f1c39', { year, month });
             options.push({ value: period, label });
         }
         

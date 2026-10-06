@@ -3,11 +3,13 @@
  *
  * 규칙 순서·코드는 백엔드 PasswordPolicy.collectLoginStorageViolations 와 같다.
  * 상수는 constants/passwordPolicyUi.js 만, 문구는 i18n(common:passwordPolicy.*) 만 쓴다.
+ * i18n 초기화(src/i18n)는 앱 진입점이 맡고, 이 모듈은 같은 i18next 기본 인스턴스만 읽는다
+ * (utils/common·validationUtils 가 import 해도 i18n 초기화 부수효과가 생기지 않게).
  *
  * @author CoreSolution
  * @since 2026-10-06
  */
-import i18n from '../i18n';
+import i18n from 'i18next';
 import {
   LOGIN_PASSWORD_ALLOWED_SPECIALS,
   LOGIN_PASSWORD_COMMON_SUBSTRINGS,

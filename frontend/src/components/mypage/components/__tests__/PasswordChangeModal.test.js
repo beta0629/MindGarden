@@ -4,6 +4,7 @@
  * 불안정하므로, 역할+접근 가능한 이름+`mg-v2-button-primary` 등 DOM 클래스 계약으로 primary를 검증한다.
  * @see docs/standards/TESTING_STANDARD.md
  */
+import '../../../../i18n';
 import React from 'react';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';

@@ -10,6 +10,7 @@
  * @since 2026-06-16
  */
 
+import '../../../i18n';
 import React from 'react';
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';

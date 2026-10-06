@@ -154,9 +154,9 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
     /**
      * 통계·분개를 이 거래 INSERT 가 커밋된 뒤에만 실행한다.
      *
-     * <p>저장 직후 {@code REQUIRES_NEW} 참여자를 부르면 미커밋 INSERT 가 바깥 입금 트랜잭션과
-     * 따로 확정될 수 있다. 이후 재조회·검증이 실패하면 매칭·회기만 롤백되고 INCOME 은 남는다.
+     * <p>커밋 전 부가 작업이 입금 트랜잭션을 rollback-only 로 만들지 않게 한다.
      * 활성 동기화가 없으면(이미 트랜잭션 밖) 즉시 실행한다.
+     * 통계 실패와 분개 실패는 각각 로그하고 입금 행은 되돌리지 않는다.
      *
      * @param savedTransaction 방금 저장한 거래
      * @param request 생성 요청
@@ -210,8 +210,8 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
             requiresNew.executeWithoutResult(status -> applyStatisticsAndJournal(
                     transactionId, tenantId, transactionType, subcategory, amount, transactionDate, relatedEntityId));
         } catch (RuntimeException e) {
-            log.error("❌ 회계 거래 생성 후 통계·분개 실패: transactionId={}, error={}",
-                    transactionId, e.getMessage(), e);
+            logPostCommitSideEffectFailure(
+                    "TRANSACTION", transactionId, tenantId, transactionType, relatedEntityId, amount, e);
         } finally {
             TenantContextHolder.setTenantIdOrClear(previousTenantId);
         }
@@ -254,7 +254,8 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
             }
             log.info("✅ 회계 거래 생성시 실시간 통계 업데이트 완료: transactionId={}", transactionId);
         } catch (Exception e) {
-            log.error("❌ 회계 거래 생성시 실시간 통계 업데이트 실패: {}", e.getMessage(), e);
+            logPostCommitSideEffectFailure(
+                    "STATISTICS", transactionId, tenantId, transactionType, relatedEntityId, amount, e);
         }
 
         // ERP 연동: FinancialTransaction에서 분개 자동 생성
@@ -270,9 +271,33 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
                 }
             }
         } catch (Exception e) {
-            log.error("❌ 회계 거래에서 분개 자동 생성 실패: transactionId={}, error={}",
-                    transactionId, e.getMessage(), e);
+            logPostCommitSideEffectFailure(
+                    "JOURNAL", transactionId, tenantId, transactionType, relatedEntityId, amount, e);
         }
+    }
+
+    /**
+     * 커밋 이후 통계 또는 분개 실패를 같은 태그로 남긴다. 입금 행은 여기서 되돌리지 않는다.
+     *
+     * @param sideEffect STATISTICS, JOURNAL, TRANSACTION
+     * @param transactionId 거래 ID
+     * @param tenantId 테넌트 ID
+     * @param transactionType 거래 유형
+     * @param relatedEntityId 거래에 담긴 관련 엔티티 ID
+     * @param amount 금액
+     * @param error 원인
+     */
+    private void logPostCommitSideEffectFailure(String sideEffect, Long transactionId, String tenantId,
+            String transactionType, Long relatedEntityId, Long amount, Exception error) {
+        log.error("{} sideEffect={} tenantId={} transactionId={} relatedEntityId={} transactionType={} amount={}",
+                FinancialTransactionConstants.ERP_POST_COMMIT_SIDE_EFFECT_FAILED,
+                sideEffect,
+                tenantId,
+                transactionId,
+                relatedEntityId,
+                transactionType,
+                amount,
+                error);
     }
     
     @Override

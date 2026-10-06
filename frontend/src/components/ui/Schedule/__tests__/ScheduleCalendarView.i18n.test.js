@@ -2,6 +2,7 @@
  * ScheduleCalendarView — FullCalendar 영어 기본 문구를 i18n 으로 덮는다 (#1486 후속, gate-1486)
  *
  * - 더보기 링크: "+N more" → schedule:calendar.moreLink (i18next 복수형 _other, {{count}} 보간)
+ * - 툴바 버튼 today/month/week/day · 전체 보기 · 종일 · 접근성 힌트
  *
  * @author CoreSolution
  * @since 2026-10-06
@@ -58,7 +59,7 @@ const renderView = () => {
   return globalThis.__FC_I18N_PROPS;
 };
 
-beforeAll(async () => {
+beforeAll(async() => {
   await i18n.changeLanguage('ko');
 });
 
@@ -83,5 +84,29 @@ describe('더보기 링크 문구', () => {
     const value = parent[`${leaf[leaf.length - 1]}_other`];
     expect(value).toContain('{{count}}');
     expect(raw).not.toContain('${');
+  });
+});
+
+describe('툴바·종일·힌트 문구', () => {
+  test('보기 버튼과 오늘 버튼이 한국어다', () => {
+    const props = renderView();
+    expect(props.buttonText).toEqual({ today: '오늘', month: '월', week: '주', day: '일' });
+    Object.values(props.buttonText).forEach((text) => {
+      expect(text).not.toMatch(/^(today|month|week|day)$/i);
+    });
+  });
+
+  test('일간 확대 복귀 버튼 문구도 i18n 이다', () => {
+    const props = renderView();
+    expect(props.customButtons.zoomOut.text).toBe('전체 보기');
+  });
+
+  test('종일·닫기·이전/다음·보기 힌트·더보기 힌트가 영어 기본값이 아니다', () => {
+    const props = renderView();
+    expect(props.allDayText).toBe('종일');
+    expect(props.closeHint).toBe('닫기');
+    expect(props.buttonHints).toEqual({ prev: '이전', next: '다음', today: '오늘' });
+    expect(props.viewHint('월')).toBe('월 보기');
+    expect(props.moreLinkHint(4)).toBe('일정 4건 더 보기');
   });
 });

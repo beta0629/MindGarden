@@ -265,6 +265,19 @@
       "unresolved": "미해소",
       "hint": "표식에 마우스를 올리면 내용이 보입니다"
     },
-    "moreLink_other": "+{{count}}건"
+    "moreLink_other": "+{{count}}건",
+    "moreLinkHint_other": "일정 {{count}}건 더 보기",
+    "allDay": "종일",
+    "closeHint": "닫기",
+    "toolbar": {
+      "today": "오늘",
+      "month": "월",
+      "week": "주",
+      "day": "일",
+      "zoomOut": "전체 보기",
+      "prevHint": "이전",
+      "nextHint": "다음",
+      "viewHint": "{{view}} 보기"
+    }
   }
 }

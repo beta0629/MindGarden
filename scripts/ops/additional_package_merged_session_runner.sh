@@ -8,6 +8,10 @@
 # verify: 기대 파일의 전값에서 후값을 계산해 새 READ ONLY 세션으로 대조한다. 불일치는 보고만 하고 되돌리지 않는다.
 # income-probe: 매출 취소 허용 목록·선례의 전표·분개 형태를 READ ONLY 로 읽는다. 적요 원문은 출력하지 않는다.
 # income-backup: 같은 범위의 전표·매칭·분개 행을 덤프한다. KST 11:00–20:00 에는 거부한다. 쓰기 없음.
+# income-cancel: 허용 목록 INCOME 을 CANCELLED 로만 바꾼다(#1491 cancelRelatedPostedIncomeTransactions 와 같은 상태 전이).
+#         환불 EXPENSE·분개·반대 전표는 만들지 않는다. 적요 끝에 " [CANCEL_REASON]" 을 덧붙인다.
+#         backup → dry-run|apply 순서. apply 는 workflow_dispatch + INCOME_CANCEL_CONFIRM=CONFIRM + KST 가드.
+# income-cancel-verify: 새 READ ONLY 세션에서 backup 스냅샷 대비 전값 유지 또는 후값을 대조한다.
 # 덤프는 --no-create-info 다. DROP/CREATE TABLE 이 들어가지 않는다.
 set -euo pipefail
 
@@ -920,6 +924,345 @@ cmd_income_backup() {
   done
 }
 
+# 매출 취소 사유. 파일 값만 쓰고 SQL 에는 16진 리터럴로 넣는다.
+load_cancel_reason() {
+  local file="$1"
+  local line
+  line="$(grep -E '^CANCEL_REASON=' "$file" | tail -n 1 || true)"
+  CANCEL_REASON="${line#CANCEL_REASON=}"
+  [ -n "$CANCEL_REASON" ] || die "CANCEL_REASON is empty in the tenant env file"
+  [ "${#CANCEL_REASON}" -le 100 ] || die "CANCEL_REASON is longer than 100 characters"
+  case "$CANCEL_REASON" in
+    *[\'\"\`\\\;\$\[\]]*) die "CANCEL_REASON has unsupported characters" ;;
+  esac
+  if printf '%s' "$CANCEL_REASON" | LC_ALL=C grep -q '[[:cntrl:]]'; then
+    die "CANCEL_REASON has control characters"
+  fi
+  CANCEL_REASON_HEX="$(printf '%s' "$CANCEL_REASON" | od -An -tx1 | tr -d ' \n')"
+  [ -n "$CANCEL_REASON_HEX" ] || die "CANCEL_REASON could not be encoded"
+}
+
+# 운영 COMMIT 은 workflow_dispatch 실행에서만. DB 접속 전에 확인한다.
+assert_income_apply_allowed() {
+  [ "${GITHUB_EVENT_NAME:-}" = "workflow_dispatch" ] \
+    || die "income apply runs only from workflow_dispatch (event=${GITHUB_EVENT_NAME:-none}); no database connection"
+  [ "${INCOME_CANCEL_CONFIRM:-}" = "CONFIRM" ] \
+    || die "income apply requires INCOME_CANCEL_CONFIRM=CONFIRM; no database connection"
+  assert_outside_kst_operating_hours
+}
+
+income_cancel_load_scope() {
+  local allowlist="$1" denylist="$2" tenant_env="$3"
+  load_tenant_env "$tenant_env"
+  load_cancel_reason "$tenant_env"
+  load_income_allowlist "$allowlist" || die "income allowlist is empty"
+  load_income_denylist "$denylist"
+  PREC_MAPPING="" PREC_INCOME_TX="" PREC_CANCEL_TX=""
+  assert_income_scope
+  income_id_lists
+}
+
+income_cancel_suffix_sql() {
+  echo "CONCAT(' [', CONVERT(X'${CANCEL_REASON_HEX}' USING utf8mb4), ']')"
+}
+
+# 전값 스냅샷. 적요는 길이·SHA-256 만 남긴다.
+emit_income_before_sql() {
+  local t="$1" txs="$2" suffix
+  suffix="$(income_cancel_suffix_sql)"
+  cat <<EOF
+SELECT ft.id, ft.related_entity_id, ft.related_entity_type, ft.transaction_type, ft.status,
+       ft.amount, ft.version, ft.is_deleted + 0,
+       CHAR_LENGTH(ft.description), SHA2(ft.description, 256),
+       CHAR_LENGTH(CONCAT(ft.description, ${suffix})),
+       SHA2(CONCAT(ft.description, ${suffix}), 256)
+FROM financial_transactions ft
+WHERE ft.tenant_id = '${t}' AND ft.id IN (${txs})
+ORDER BY ft.id;
+EOF
+}
+
+# income_before.tsv 열: id mapping type tx_type status amount version is_deleted
+#                        desc_len desc_sha after_len after_sha
+assert_income_before_file() {
+  local file="$1"
+  [ -f "$file" ] || die "income before snapshot missing; run --mode backup first"
+  local rows
+  rows="$(grep -c . "$file" || true)"
+  [ "$rows" -eq "${#INCOME_ROWS[@]}" ] \
+    || die "income before snapshot has ${rows} rows; expected ${#INCOME_ROWS[@]}"
+  local raw m tx amt id rm rtype ttype st am ver del _rest found
+  for raw in "${INCOME_ROWS[@]}"; do
+    IFS=, read -r m tx amt <<<"$raw"
+    found=0
+    while IFS=$'\t' read -r id rm rtype ttype st am ver del _rest; do
+      [ "$id" = "$tx" ] || continue
+      found=1
+      [ "$rm" = "$m" ] || die "tx ${tx}: related mapping ${rm} is not ${m}"
+      case "$rtype" in
+        CONSULTANT_CLIENT_MAPPING|CONSULTANT_CLIENT_MAPPING_ADDITIONAL) ;;
+        *) die "tx ${tx}: related entity type is not a mapping slot" ;;
+      esac
+      [ "$ttype" = "INCOME" ] || die "tx ${tx}: type ${ttype} is not INCOME"
+      [ "$st" = "COMPLETED" ] || die "tx ${tx}: status ${st} is not COMPLETED"
+      [ "${am%.00}" = "$amt" ] || die "tx ${tx}: amount ${am} is not ${amt}"
+      [ "$del" = "0" ] || die "tx ${tx}: row is deleted"
+      [[ "$ver" =~ ^[0-9]+$ ]] || die "tx ${tx}: version is not numeric"
+    done <"$file"
+    [ "$found" -eq 1 ] || die "tx ${tx}: not found in tenant"
+  done
+}
+
+income_cancel_backup() {
+  local backup_dir="$1"
+  local t="$INCOME_TENANT"
+  local txs="$INCOME_TX_IDS" maps="$INCOME_MAP_IDS"
+  local work
+  work="$(mktemp -d)"
+  WORK_DIRS+=("$work")
+  mkdir -p "$backup_dir"
+  # 실패한 백업이 남긴 스냅샷으로 dry-run/apply 가 이어지지 않게, 검증을 통과한 뒤에만 제자리에 둔다.
+  rm -f "${backup_dir}/income_before.tsv"
+  echo "=== income cancel backup (artifact only, no transaction) ==="
+  mysqldump_where financial_transactions "tenant_id = '${t}' AND id IN (${txs})" \
+    "${backup_dir}/financial_transactions.sql"
+  mysqldump_where consultant_client_mappings "tenant_id = '${t}' AND id IN (${maps})" \
+    "${backup_dir}/consultant_client_mappings.sql"
+  mysqldump_where accounting_entries "tenant_id = '${t}' AND financial_transaction_id IN (${txs})" \
+    "${backup_dir}/accounting_entries.sql"
+  mysqldump_where erp_journal_entry_lines \
+    "tenant_id = '${t}' AND journal_entry_id IN (SELECT a.id FROM accounting_entries a WHERE a.tenant_id = '${t}' AND a.financial_transaction_id IN (${txs}))" \
+    "${backup_dir}/erp_journal_entry_lines.sql"
+  local f
+  for f in financial_transactions consultant_client_mappings accounting_entries erp_journal_entry_lines; do
+    if grep -qiE '^[[:space:]]*(drop|create)[[:space:]]' "${backup_dir}/${f}.sql"; then
+      die "backup ${f} contains DROP/CREATE"
+    fi
+    echo "backup ${f}: rows=$(grep -c '^INSERT INTO' "${backup_dir}/${f}.sql" || true)"
+  done
+  emit_income_before_sql "$t" "$txs" >"${work}/before.sql"
+  assert_income_read_safe "${work}/before.sql"
+  mysql_query_to "SET SESSION TRANSACTION READ ONLY" "${work}/before.sql" "${work}/before.raw"
+  tail -n +2 "${work}/before.raw" >"${work}/income_before.tsv"
+  assert_income_before_file "${work}/income_before.tsv"
+  mv "${work}/income_before.tsv" "${backup_dir}/income_before.tsv"
+  echo "before snapshot rows=$(grep -c . "${backup_dir}/income_before.tsv")"
+}
+
+assert_income_cancel_sql_safe() {
+  local file="$1"
+  [ -f "$file" ] || die "generated income cancel SQL missing"
+  if grep -qiE 'into[[:space:]]+outfile|load_file|accounting_entries|erp_journal_entry_lines|consultant_client_mappings[^;]*set[[:space:]]' "$file"; then
+    die "generated income cancel SQL touches a forbidden object"
+  fi
+  if grep -qiE '^[[:space:]]*(commit|rollback)[[:space:]]*;[[:space:]]*$' "$file"; then
+    die "generated income cancel SQL must not commit; the runner appends one ending"
+  fi
+  if grep -iE '^[[:space:]]*create[[:space:]]+' "$file" | grep -viE '^[[:space:]]*create[[:space:]]+temporary[[:space:]]+table[[:space:]]+tmp_' >/dev/null; then
+    die "generated income cancel SQL creates a permanent object"
+  fi
+  if grep -iE '^[[:space:]]*insert[[:space:]]+into[[:space:]]+' "$file" \
+      | grep -viE '^[[:space:]]*insert[[:space:]]+into[[:space:]]+tmp_[A-Za-z0-9_]+([^A-Za-z0-9_]|$)' >/dev/null; then
+    die "generated income cancel SQL inserts into a base table"
+  fi
+  local updates
+  updates="$(grep -ciE '^[[:space:]]*update[[:space:]]+' "$file" || true)"
+  [ "$updates" -eq 1 ] || die "generated income cancel SQL must have exactly one UPDATE"
+  grep -qiE '^[[:space:]]*update[[:space:]]+financial_transactions[[:space:]]+ft([[:space:]]|$)' "$file" \
+    || die "generated income cancel SQL updates a forbidden table"
+  if grep -qiE '^[[:space:]]*(delete|drop|alter|truncate|grant|call|replace)[[:space:]]' "$file"; then
+    die "generated income cancel SQL contains a forbidden statement"
+  fi
+}
+
+emit_assert() {
+  local name="$1" cond="$2"
+  cat <<EOF
+SET @n = '${name}';
+SET @c = (${cond});
+SET @s = IF(@c, CONCAT('SELECT ''OK  ', @n, ''' AS assert_result'), CONCAT('SELECT 1 FROM \`ASSERT_FAILED__', @n, '\`'));
+PREPARE st FROM @s;
+EXECUTE st;
+DEALLOCATE PREPARE st;
+EOF
+}
+
+# 한 트랜잭션. 잠금 → 전값 대조 → UPDATE 1회 → 후값 대조. 어느 assert 든 실패하면 오류로 끊겨 롤백된다.
+emit_income_cancel_sql() {
+  local before_file="$1"
+  local t="$INCOME_TENANT" txs="$INCOME_TX_IDS" maps="$INCOME_MAP_IDS"
+  local n="${#INCOME_ROWS[@]}" suffix deny raw m tx amt
+  local id _rm _rtype _ttype _st _am ver _del _dlen dsha alen asha
+  suffix="$(income_cancel_suffix_sql)"
+  deny="$(IFS=,; echo "${DENY_IDS[*]}")"
+  echo "CREATE TEMPORARY TABLE tmp_income_cancel (mapping_id BIGINT PRIMARY KEY, tx_id BIGINT NOT NULL UNIQUE, amount DECIMAL(19,2) NOT NULL);"
+  for raw in "${INCOME_ROWS[@]}"; do
+    IFS=, read -r m tx amt <<<"$raw"
+    echo "INSERT INTO tmp_income_cancel (mapping_id, tx_id, amount) VALUES (${m}, ${tx}, ${amt});"
+  done
+  echo "CREATE TEMPORARY TABLE tmp_income_expected (tx_id BIGINT PRIMARY KEY, version BIGINT NOT NULL, desc_sha CHAR(64) NOT NULL, after_len INT NOT NULL, after_sha CHAR(64) NOT NULL);"
+  while IFS=$'\t' read -r id _rm _rtype _ttype _st _am ver _del _dlen dsha alen asha; do
+    [[ "$id" =~ ^[0-9]+$ && "$ver" =~ ^[0-9]+$ && "$alen" =~ ^[0-9]+$ ]] || die "before snapshot has a malformed row"
+    [[ "$dsha" =~ ^[0-9a-f]{64}$ && "$asha" =~ ^[0-9a-f]{64}$ ]] || die "before snapshot has a malformed hash"
+    echo "INSERT INTO tmp_income_expected (tx_id, version, desc_sha, after_len, after_sha) VALUES (${id}, ${ver}, '${dsha}', ${alen}, '${asha}');"
+  done <"$before_file"
+  cat <<EOF
+START TRANSACTION;
+SELECT ft.id FROM financial_transactions ft WHERE ft.tenant_id = '${t}' AND ft.id IN (${txs}) FOR UPDATE;
+SELECT m.id FROM consultant_client_mappings m WHERE m.tenant_id = '${t}' AND m.id IN (${maps}) FOR SHARE;
+CREATE TEMPORARY TABLE tmp_income_before AS
+SELECT ft.id, ft.related_entity_id, ft.related_entity_type, ft.transaction_type, ft.status, ft.amount,
+       ft.version, ft.is_deleted + 0 AS is_deleted, CHAR_LENGTH(ft.description) AS desc_len,
+       SHA2(ft.description, 256) AS desc_sha,
+       CHAR_LENGTH(CONCAT(ft.description, ${suffix})) AS after_len,
+       SHA2(CONCAT(ft.description, ${suffix}), 256) AS after_sha
+FROM financial_transactions ft
+WHERE ft.tenant_id = '${t}' AND ft.id IN (${txs});
+SELECT 'BEFORE' AS phase, b.id, b.related_entity_id AS mapping_id, b.transaction_type, b.status, b.amount,
+       b.version, b.desc_len, LEFT(b.desc_sha, 12) AS desc_sha12
+FROM tmp_income_before b ORDER BY b.id;
+EOF
+  emit_assert "allowlist_no_denied_mapping" "SELECT COUNT(*) = 0 FROM tmp_income_cancel WHERE mapping_id IN (${deny})"
+  emit_assert "before_row_count" "SELECT COUNT(*) = ${n} FROM tmp_income_before"
+  emit_assert "before_matches_allowlist" "SELECT COUNT(*) = ${n} FROM tmp_income_before b INNER JOIN tmp_income_cancel a ON a.tx_id = b.id AND a.mapping_id = b.related_entity_id AND a.amount = b.amount WHERE b.transaction_type = 'INCOME' AND b.status = 'COMPLETED' AND b.is_deleted = 0 AND b.related_entity_type IN ('CONSULTANT_CLIENT_MAPPING', 'CONSULTANT_CLIENT_MAPPING_ADDITIONAL') AND b.desc_sha IS NOT NULL"
+  emit_assert "before_matches_backup_snapshot" "SELECT COUNT(*) = ${n} FROM tmp_income_before b INNER JOIN tmp_income_expected e ON e.tx_id = b.id AND e.version = b.version AND e.desc_sha = b.desc_sha AND e.after_len = b.after_len AND e.after_sha = b.after_sha"
+  emit_assert "description_fits_column" "SELECT COUNT(*) = 0 FROM tmp_income_before b WHERE b.after_len > (SELECT IFNULL(c.CHARACTER_MAXIMUM_LENGTH, 0) FROM information_schema.COLUMNS c WHERE c.TABLE_SCHEMA = DATABASE() AND c.TABLE_NAME = 'financial_transactions' AND c.COLUMN_NAME = 'description')"
+  emit_assert "mapping_no_deposit" "SELECT COUNT(*) = ${n} FROM consultant_client_mappings m INNER JOIN tmp_income_cancel a ON a.mapping_id = m.id WHERE m.tenant_id = '${t}' AND IFNULL(m.deposit_confirmed + 0, 0) = 0 AND IFNULL(m.is_deleted + 0, 0) = 0"
+  cat <<EOF
+UPDATE financial_transactions ft
+INNER JOIN tmp_income_cancel a ON a.tx_id = ft.id AND a.mapping_id = ft.related_entity_id AND a.amount = ft.amount
+SET ft.status = 'CANCELLED',
+    ft.description = CONCAT(ft.description, ${suffix}),
+    ft.version = ft.version + 1,
+    ft.updated_at = NOW(6)
+WHERE ft.tenant_id = '${t}'
+  AND ft.id IN (${txs})
+  AND ft.transaction_type = 'INCOME'
+  AND ft.status = 'COMPLETED'
+  AND ft.is_deleted = 0;
+SET @rc = ROW_COUNT();
+EOF
+  emit_assert "update_row_count" "SELECT @rc = ${n}"
+  emit_assert "after_matches_expected" "SELECT COUNT(*) = ${n} FROM financial_transactions ft INNER JOIN tmp_income_expected e ON e.tx_id = ft.id WHERE ft.tenant_id = '${t}' AND ft.status = 'CANCELLED' AND ft.version = e.version + 1 AND CHAR_LENGTH(ft.description) = e.after_len AND SHA2(ft.description, 256) = e.after_sha"
+  cat <<EOF
+SELECT 'AFTER' AS phase, ft.id, ft.related_entity_id AS mapping_id, ft.transaction_type, ft.status, ft.amount,
+       ft.version, CHAR_LENGTH(ft.description) AS desc_len, LEFT(SHA2(ft.description, 256), 12) AS desc_sha12
+FROM financial_transactions ft
+WHERE ft.tenant_id = '${t}' AND ft.id IN (${txs})
+ORDER BY ft.id;
+EOF
+}
+
+cmd_income_cancel() {
+  local allowlist="" denylist="" tenant_env="" backup_dir="" mode=""
+  while [ "$#" -gt 0 ]; do
+    case "$1" in
+      --allowlist) allowlist="$2"; shift 2 ;;
+      --denylist) denylist="$2"; shift 2 ;;
+      --tenant-env) tenant_env="$2"; shift 2 ;;
+      --backup-dir) backup_dir="$2"; shift 2 ;;
+      --mode) mode="$2"; shift 2 ;;
+      *) die "unknown income-cancel argument" ;;
+    esac
+  done
+  [ -n "$allowlist" ] && [ -n "$denylist" ] && [ -n "$tenant_env" ] && [ -n "$backup_dir" ] \
+    || die "income-cancel needs --allowlist --denylist --tenant-env --backup-dir --mode"
+  case "$mode" in
+    backup|dry-run|apply) ;;
+    *) die "income-cancel --mode must be backup, dry-run, or apply" ;;
+  esac
+  if [ "$mode" = "apply" ]; then
+    assert_income_apply_allowed
+  fi
+  income_cancel_load_scope "$allowlist" "$denylist" "$tenant_env"
+
+  if [ "$mode" = "backup" ]; then
+    require_db_env
+    income_cancel_backup "$backup_dir"
+    return 0
+  fi
+
+  local before_file="${backup_dir}/income_before.tsv"
+  assert_income_before_file "$before_file"
+  [ -s "${backup_dir}/financial_transactions.sql" ] || die "financial_transactions backup missing; run --mode backup first"
+  require_db_env
+
+  local work ending
+  work="$(mktemp -d)"
+  WORK_DIRS+=("$work")
+  if [ "$mode" = "apply" ]; then
+    ending="COMMIT;"
+  else
+    ending="ROLLBACK;"
+  fi
+  emit_income_cancel_sql "$before_file" >"${work}/body.sql"
+  assert_income_cancel_sql_safe "${work}/body.sql"
+  { cat "${work}/body.sql"; echo "$ending"; } >"${work}/apply.sql"
+  echo "=== income cancel transaction rows=${#INCOME_ROWS[@]} ending=${ending} ==="
+  mysql_exec "SET SESSION sql_safe_updates = 0" "${work}/apply.sql"
+  echo "=== income cancel transaction finished ending=${ending} ==="
+}
+
+# 새 READ ONLY 세션. --expect before 는 변경 없음, after 는 커밋된 후값을 대조한다.
+cmd_income_cancel_verify() {
+  local allowlist="" denylist="" tenant_env="" backup_dir="" expect=""
+  while [ "$#" -gt 0 ]; do
+    case "$1" in
+      --allowlist) allowlist="$2"; shift 2 ;;
+      --denylist) denylist="$2"; shift 2 ;;
+      --tenant-env) tenant_env="$2"; shift 2 ;;
+      --backup-dir) backup_dir="$2"; shift 2 ;;
+      --expect) expect="$2"; shift 2 ;;
+      *) die "unknown income-cancel-verify argument" ;;
+    esac
+  done
+  [ -n "$allowlist" ] && [ -n "$denylist" ] && [ -n "$tenant_env" ] && [ -n "$backup_dir" ] \
+    || die "income-cancel-verify needs --allowlist --denylist --tenant-env --backup-dir --expect"
+  case "$expect" in
+    before|after) ;;
+    *) die "income-cancel-verify --expect must be before or after" ;;
+  esac
+  income_cancel_load_scope "$allowlist" "$denylist" "$tenant_env"
+  local before_file="${backup_dir}/income_before.tsv"
+  assert_income_before_file "$before_file"
+  require_db_env
+  local work
+  work="$(mktemp -d)"
+  WORK_DIRS+=("$work")
+  emit_income_before_sql "$INCOME_TENANT" "$INCOME_TX_IDS" >"${work}/now.sql"
+  assert_income_read_safe "${work}/now.sql"
+  mysql_query_to "SET SESSION TRANSACTION READ ONLY" "${work}/now.sql" "${work}/now.raw"
+  tail -n +2 "${work}/now.raw" >"${work}/now.tsv"
+
+  local ok=1 id rm rtype ttype st am ver del dlen dsha alen asha
+  local nid nrm nrtype nttype nst nam nver ndel ndlen ndsha _nalen _nasha
+  printf 'phase\tid\tmapping_id\tstatus\tamount\tversion\tdesc_len\tdesc_sha12\n'
+  while IFS=$'\t' read -r id rm rtype ttype st am ver del dlen dsha alen asha; do
+    printf 'BEFORE\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' "$id" "$rm" "$st" "$am" "$ver" "$dlen" "${dsha:0:12}"
+    local line
+    line="$(awk -F'\t' -v k="$id" '$1 == k' "${work}/now.tsv")"
+    if [ -z "$line" ]; then
+      echo "NOW	${id}	missing"
+      ok=0
+      continue
+    fi
+    IFS=$'\t' read -r nid nrm nrtype nttype nst nam nver ndel ndlen ndsha _nalen _nasha <<<"$line"
+    printf 'NOW\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' "$nid" "$nrm" "$nst" "$nam" "$nver" "$ndlen" "${ndsha:0:12}"
+    [ "$nrm" = "$rm" ] && [ "$nrtype" = "$rtype" ] && [ "$nttype" = "$ttype" ] && [ "$nam" = "$am" ] && [ "$ndel" = "$del" ] || ok=0
+    if [ "$expect" = "before" ]; then
+      [ "$nst" = "$st" ] && [ "$nver" = "$ver" ] && [ "$ndlen" = "$dlen" ] && [ "$ndsha" = "$dsha" ] || ok=0
+    else
+      [ "$nst" = "CANCELLED" ] && [ "$nver" = "$((ver + 1))" ] && [ "$ndlen" = "$alen" ] && [ "$ndsha" = "$asha" ] || ok=0
+    fi
+  done <"$before_file"
+  if [ "$ok" -eq 1 ]; then
+    echo "READBACK_MATCH=yes expect=${expect}"
+    return 0
+  fi
+  echo "READBACK_MATCH=no expect=${expect}"
+  die "income readback differs from the expected ${expect} image; nothing was changed by this check"
+}
+
 usage() {
   echo "usage: DB_HOST DB_USER DB_PASSWORD DB_NAME $0 list" >&2
   echo "       DB_* $0 repair --allowlist FILE --mode backup --backup-dir DIR" >&2
@@ -927,6 +1270,9 @@ usage() {
   echo "       DB_* $0 verify --expect-before FILE" >&2
   echo "       DB_* $0 income-probe --allowlist FILE --precedent FILE --denylist FILE --tenant-env FILE" >&2
   echo "       DB_* $0 income-backup --allowlist FILE --precedent FILE --denylist FILE --tenant-env FILE --backup-dir DIR" >&2
+  echo "       DB_* $0 income-cancel --mode backup|dry-run --allowlist FILE --denylist FILE --tenant-env FILE --backup-dir DIR" >&2
+  echo "       DB_* GITHUB_EVENT_NAME=workflow_dispatch INCOME_CANCEL_CONFIRM=CONFIRM $0 income-cancel --mode apply ..." >&2
+  echo "       DB_* $0 income-cancel-verify --expect before|after --allowlist FILE --denylist FILE --tenant-env FILE --backup-dir DIR" >&2
   exit 1
 }
 
@@ -941,6 +1287,8 @@ main() {
     verify) cmd_verify "$@" ;;
     income-probe) cmd_income_probe "$@" ;;
     income-backup) cmd_income_backup "$@" ;;
+    income-cancel) cmd_income_cancel "$@" ;;
+    income-cancel-verify) cmd_income_cancel_verify "$@" ;;
     query)
       require_db_env
       sql_file="${1:-}"

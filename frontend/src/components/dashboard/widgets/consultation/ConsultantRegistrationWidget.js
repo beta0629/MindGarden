@@ -25,12 +25,19 @@ import {
 import { useNotification } from '../../../../contexts/NotificationContext';
 import { validateEmail, validatePhone } from '../../../../utils/validationUtils';
 import { generateMgLoginPassword } from '../../../../utils/generateMgLoginPassword';
+import usePasswordPolicyField from '../../../../hooks/usePasswordPolicyField';
+import PasswordPolicyInput from '../../../common/PasswordPolicyInput';
+import { resolveUserFacingApiErrorMessage } from '../../../../utils/userFacingApiErrorMessage';
 import StandardizedApi from '../../../../utils/standardizedApi';
 import './ConsultantRegistrationWidget.css';
 import MGButton from '../../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../../erp/common/erpMgButtonProps';
 import { API_ENDPOINTS } from '../../../../constants/apiEndpoints';
 import { useTranslation } from 'react-i18next';
+
+const WIDGET_INPUT_CLASS = 'form-control';
+const WIDGET_INPUT_ERROR_CLASS = 'error';
+const WIDGET_FIELD_ERROR_CLASS = 'field-error';
 
 const ConsultantRegistrationWidget = ({ widget, user }) => {
   const { t } = useTranslation();
@@ -56,6 +63,7 @@ const ConsultantRegistrationWidget = ({ widget, user }) => {
     professionalTypeCode: DEFAULT_PROFESSIONAL_TYPE_CODE_VALUE
   });
   const [validationErrors, setValidationErrors] = useState({});
+  const passwordField = usePasswordPolicyField();
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState(null);
   const [professionalTypeOptions, setProfessionalTypeOptions] = useState([]);
@@ -103,6 +111,10 @@ const ConsultantRegistrationWidget = ({ widget, user }) => {
     const newErrors = { ...validationErrors };
     
     switch (name) {
+      case 'password':
+        passwordField.clearError();
+        delete newErrors[name];
+        break;
       case 'email':
         if (value && !validateEmail(value)) {
           newErrors[name] = '올바른 이메일 형식이 아닙니다.';
@@ -133,7 +145,7 @@ const ConsultantRegistrationWidget = ({ widget, user }) => {
         break;
       default:
         // 필수 필드 검사
-        if (['userId', 'name', 'email', 'password', 'phone'].includes(name) && !value.trim()) {
+        if (['userId', 'name', 'email', 'phone'].includes(name) && !value.trim()) {
           newErrors[name] = '이 필드는 필수입니다.';
         } else {
           delete newErrors[name];
@@ -176,11 +188,14 @@ const ConsultantRegistrationWidget = ({ widget, user }) => {
     e.preventDefault();
     
     // 필수 필드 검사
-    const requiredFields = ['userId', 'name', 'email', 'password', 'phone'];
+    const requiredFields = ['userId', 'name', 'email', 'phone'];
     const missingFields = requiredFields.filter(field => !formData[field]?.trim());
     
     if (missingFields.length > 0) {
       showNotification('필수 항목을 모두 입력해주세요.', 'warning');
+      return;
+    }
+    if (!passwordField.validate(formData.password)) {
       return;
     }
     
@@ -230,7 +245,7 @@ const ConsultantRegistrationWidget = ({ widget, user }) => {
       handleRegistrationSuccess(response);
     } catch (error) {
       console.error('❌ 상담사 등록 실패:', error);
-      const message = error.message || '상담사 등록 중 오류가 발생했습니다.';
+      const message = resolveUserFacingApiErrorMessage(error, t('common:dashboard.ConsultantRegistrationWidget.registerFailed'));
       setSubmitError(message);
       showNotification(message, 'error');
     } finally {
@@ -258,6 +273,7 @@ const ConsultantRegistrationWidget = ({ widget, user }) => {
       professionalTypeCode: professionalTypeOptions[0]?.value || DEFAULT_PROFESSIONAL_TYPE_CODE_VALUE
     });
     setValidationErrors({});
+    passwordField.clearError();
   };
 
   // 폼 닫기
@@ -432,22 +448,17 @@ const ConsultantRegistrationWidget = ({ widget, user }) => {
                     <label htmlFor="password" className="form-label">
                       {t('common:dashboard.ConsultantRegistrationWidget.t_81973897')} <span className="required">*</span>
                     </label>
-                    <input
-                      type="password"
+                    <PasswordPolicyInput
+                      field={passwordField}
                       id="password"
                       name="password"
                       value={formData.password}
                       onChange={handleInputChange}
                       required
-                      className={`form-control ${getFieldError('password') ? 'error' : ''}`}
-                      placeholder={t('common:dashboard.ConsultantRegistrationWidget.t_6669670d')}
+                      className={WIDGET_INPUT_CLASS}
+                      errorInputClassName={WIDGET_INPUT_ERROR_CLASS}
+                      errorClassName={WIDGET_FIELD_ERROR_CLASS}
                     />
-                    {getFieldError('password') && (
-                      <div className="field-error">
-                        
-                        {getFieldError('password')}
-                      </div>
-                    )}
                   </div>
 
                   <div className="form-group">

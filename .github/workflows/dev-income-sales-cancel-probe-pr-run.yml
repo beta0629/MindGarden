@@ -1,0 +1,87 @@
+# DEV 읽기 전용. 이 파일만 바꾸는 release/dev pull_request 에서만 돈다.
+# 매출 취소 선례(허용 목록·선례 파일)의 전표·분개 형태를 읽는다. 쓰기 없음. 운영 시크릿 없음.
+# 머지하지 않는다. 끝나면 이 PR 을 닫는다.
+
+name: DEV 매출 취소 선례 프로브 (읽기 전용)
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches: [release/dev]
+    paths:
+      - '.github/workflows/dev-income-sales-cancel-probe-pr-run.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  dev-income-probe:
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup MySQL client
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq mysql-client
+
+      - name: Income sales-cancel probe on DEV (read only)
+        env:
+          JUMP_HOST: ${{ secrets.DEV_SERVER_HOST }}
+          JUMP_USER: ${{ secrets.DEV_SERVER_USER }}
+          JUMP_KEY: ${{ secrets.DEV_SERVER_SSH_KEY }}
+          DB_HOST: ${{ secrets.DEV_DB_HOST }}
+          DB_USER: ${{ secrets.DEV_DB_USER }}
+          DB_NAME: ${{ secrets.DEV_DB_NAME }}
+          DB_PASSWORD: ${{ secrets.DEV_DB_PASSWORD }}
+        run: |
+          set -euo pipefail
+          for name in JUMP_HOST JUMP_USER JUMP_KEY DB_HOST DB_USER DB_NAME DB_PASSWORD; do
+            if [ -z "${!name:-}" ]; then
+              echo "::error::Required DEV secret is empty (${name})"
+              exit 1
+            fi
+            echo "::add-mask::${!name}"
+          done
+          case "$DB_NAME" in
+            mind_garden|mind_garden_legacy_*)
+              echo "::error::DEV job refuses the legacy schema name"
+              exit 1
+              ;;
+          esac
+          case "$JUMP_HOST" in
+            *[!A-Za-z0-9._:-]*) echo "::error::jump host has unsupported characters"; exit 1 ;;
+          esac
+          case "$JUMP_USER" in
+            *[!A-Za-z0-9._-]*) echo "::error::jump user has unsupported characters"; exit 1 ;;
+          esac
+          case "$DB_HOST" in
+            *[!A-Za-z0-9._:%-]*) echo "::error::DB host has unsupported characters"; exit 1 ;;
+          esac
+          KEY_FILE="$(mktemp)"
+          chmod 600 "$KEY_FILE"
+          printf '%s\n' "$JUMP_KEY" > "$KEY_FILE"
+          SOCK="$(mktemp -u)"
+          LOCAL_PORT="$(python3 -c 'import socket; s=socket.socket(); s.bind(("127.0.0.1",0)); print(s.getsockname()[1]); s.close()')"
+          cleanup() {
+            ssh -i "$KEY_FILE" -S "$SOCK" -O exit "${JUMP_USER}@${JUMP_HOST}" >/dev/null 2>&1 || true
+            rm -f "$KEY_FILE"
+          }
+          trap cleanup EXIT
+          mkdir -p ~/.ssh
+          ssh-keyscan -H "$JUMP_HOST" >> ~/.ssh/known_hosts 2>/dev/null || true
+          ssh -i "$KEY_FILE" -o BatchMode=yes -o ExitOnForwardFailure=yes \
+            -M -S "$SOCK" -f -N \
+            -L "127.0.0.1:${LOCAL_PORT}:${DB_HOST}:3306" \
+            "${JUMP_USER}@${JUMP_HOST}"
+          export DB_HOST=127.0.0.1
+          export DB_PORT="$LOCAL_PORT"
+          chmod +x scripts/ops/additional_package_merged_session_runner.sh
+          scripts/ops/additional_package_merged_session_runner.sh income-probe \
+            --allowlist scripts/ops/income-sales-cancel-allowlist-prod.txt \
+            --precedent scripts/ops/income-sales-cancel-precedent.txt \
+            --denylist scripts/ops/income-sales-cancel-denylist.txt \
+            --tenant-env scripts/ops/triggers/income_sales_cancel_prod.env

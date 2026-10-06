@@ -182,7 +182,8 @@ export function isScheduleStatusSlotLocked(status) {
 }
 
 /**
- * 완료·취소·과거로 DnD/리사이즈가 잠긴지.
+ * 완료·취소·과거 일정인지 — 캘린더 흐림(past) 표시용.
+ * 이동 허용 판정이 아니다. 이동은 scheduleMoveGuard(원본은 완료·취소 또는 지난 시작, 목적지는 과거 시각)로 판정한다.
  * @param {{ status?: *, start?: *, end?: * }} params
  * @returns {boolean}
  */
@@ -194,7 +195,7 @@ export function isScheduleCalendarDragLocked({ status, start, end } = {}) {
 }
 
 /**
- * DnD/리사이즈 잠금 시 사용자 경고 문구.
+ * 완료·취소·과거 일정 경고 문구. start 를 넘기지 않으면 완료·취소만 판정한다(scheduleMoveGuard).
  * @param {{ status?: *, start?: *, end?: * }} params
  * @returns {string|null}
  */

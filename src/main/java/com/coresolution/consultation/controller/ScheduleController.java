@@ -29,6 +29,7 @@ import com.coresolution.consultation.dto.MonthlyConsultantCountsResponse;
 import com.coresolution.consultation.dto.MonthlyMissingConsultationLogsResponse;
 import com.coresolution.consultation.dto.ScheduleCreateRequest;
 import com.coresolution.consultation.dto.ScheduleResponse;
+import com.coresolution.consultation.exception.SchedulePastTimeException;
 import com.coresolution.consultation.exception.ScheduleSessionNotStartedException;
 import com.coresolution.consultation.exception.ValidationException;
 import com.coresolution.consultation.entity.CommonCode;
@@ -57,6 +58,7 @@ import com.coresolution.consultation.service.support.ConsultationRecordDraftAcce
 import com.coresolution.consultation.service.support.ConsultationRecordWriter;
 import com.coresolution.consultation.service.ScheduleService;
 import com.coresolution.consultation.util.PermissionCheckUtils;
+import com.coresolution.consultation.util.ScheduleSlotGuard;
 import com.coresolution.consultation.util.ScheduleSlotTimes;
 import com.coresolution.consultation.util.UserRoleCapabilityUtils;
 import com.coresolution.consultation.utils.SessionUtils;
@@ -729,14 +731,9 @@ public class ScheduleController extends BaseApiController {
         }
         
         LocalDate date = LocalDate.parse(request.getDate());
-        if (date.isBefore(LocalDate.now())) {
-            log.warn("❌ 과거 날짜 예약 생성 거부: date={}", date);
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(ApiResponse.error("과거 날짜에는 예약할 수 없습니다."));
-        }
-        
         LocalTime startTime = LocalTime.parse(request.getStartTime());
         LocalTime endTime = LocalTime.parse(request.getEndTime());
+        scheduleService.requireCreateStartNotInPast(date, startTime);
         
         boolean isOnVacation = consultantAvailabilityService.isConsultantOnVacation(
             request.getConsultantId(), 
@@ -839,30 +836,29 @@ public class ScheduleController extends BaseApiController {
         if (isScheduleSlotChangeRequested(
                 updateData, dateBeforeSlotUpdate, startBeforeSlotUpdate, endBeforeSlotUpdate)) {
             String denyMessage = com.coresolution.consultation.util.ScheduleSlotGuard
-                    .resolveSlotChangeDenyMessage(
-                            statusBeforeSlotUpdate, dateBeforeSlotUpdate, endBeforeSlotUpdate);
+                    .resolveSlotChangeDenyMessage(statusBeforeSlotUpdate);
             if (denyMessage != null) {
                 log.warn("❌ 스케줄 슬롯 변경 거부: scheduleId={}, status={}, date={}, message={}",
                         id, statusBeforeSlotUpdate, dateBeforeSlotUpdate, denyMessage);
                 return ResponseEntity.badRequest()
                         .body(ApiResponse.error(denyMessage));
             }
+            scheduleService.requireMoveTimesNotInPast(id,
+                    ScheduleSlotGuard.toDateTime(dateBeforeSlotUpdate, startBeforeSlotUpdate),
+                    ScheduleSlotGuard.resolveMoveTarget(
+                            dateBeforeSlotUpdate,
+                            startBeforeSlotUpdate,
+                            parseRequestedSlotValue(updateData, "date", LocalDate::parse),
+                            parseRequestedSlotValue(updateData, "startTime", LocalTime::parse),
+                            parseRequestedSlotValue(updateData, "endTime", LocalTime::parse)));
         }
         
         if (updateData.containsKey("date")) {
             String dateStr = (String) updateData.get("date");
             try {
                 java.time.LocalDate newDate = java.time.LocalDate.parse(dateStr);
-                if (newDate.isBefore(java.time.LocalDate.now(
-                        com.coresolution.consultation.util.ReservationSmsBusinessHours.ZONE_SEOUL))) {
-                    log.warn("❌ 과거 날짜로 스케줄 수정 거부: newDate={}", newDate);
-                    return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                        .body(ApiResponse.error("과거 날짜에는 예약할 수 없습니다."));
-                }
                 existingSchedule.setDate(newDate);
                 log.info("📝 스케줄 날짜 변경: {}", dateStr);
-            } catch (IllegalArgumentException e) {
-                throw e;
             } catch (Exception e) {
                 log.warn("⚠️ 유효하지 않은 날짜 형식: {}", dateStr);
                 throw new IllegalArgumentException("유효하지 않은 날짜 형식입니다: " + dateStr);
@@ -914,7 +910,7 @@ public class ScheduleController extends BaseApiController {
             Map<String, Object> data = Map.of("scheduleId", updatedSchedule.getId());
             log.info("✅ 스케줄 수정 완료: ID {}", updatedSchedule.getId());
             return updated("스케줄이 성공적으로 수정되었습니다.", data);
-        } catch (ScheduleSessionNotStartedException e) {
+        } catch (ScheduleSessionNotStartedException | SchedulePastTimeException e) {
             throw e;
         } catch (IllegalStateException e) {
             log.warn("⚠️ 스케줄 수정 거부: id={}, message={}", id, e.getMessage());
@@ -1653,6 +1649,23 @@ public class ScheduleController extends BaseApiController {
         }
         
         return schedule;
+    }
+
+    /**
+     * 요청 본문의 슬롯 값(date/startTime/endTime) 파싱. 키가 없거나 형식 오류면 null
+     * (형식 오류는 이후 필드 반영 단계에서 IllegalArgumentException 으로 응답).
+     */
+    private static <T> T parseRequestedSlotValue(
+            Map<String, Object> updateData, String key, java.util.function.Function<String, T> parser) {
+        Object raw = updateData == null ? null : updateData.get(key);
+        if (raw == null) {
+            return null;
+        }
+        try {
+            return parser.apply(raw.toString());
+        } catch (java.time.format.DateTimeParseException e) {
+            return null;
+        }
     }
 
     /**

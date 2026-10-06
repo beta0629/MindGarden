@@ -117,8 +117,8 @@ export const SCHEDULE_API = {
   /** Phase1 — 다음 상담 준비 */
   consultantUpcomingPreparation: (consultantId: string | number) =>
     `/api/v1/schedules/consultants/${encodeURIComponent(String(consultantId))}/upcoming-preparation`,
-  /** 내담자 본인 예약 — 어드민 일정 등록과 혼동 금지 */
-  SCHEDULE_CREATE: '/api/v1/schedules',
+  /** 내담자 본인 가예약 신청 (웹 CLIENT_BOOKING_API.CREATE 와 동일) — 어드민 일정 등록과 혼동 금지 */
+  SCHEDULE_CREATE: '/api/v1/clients/me/bookings',
   /** 웹 ScheduleModal SSOT — ADMIN/STAFF 상담 일정 등록 */
   SCHEDULE_CREATE_CONSULTANT: '/api/v1/schedules/consultant',
   scheduleDetail: (id: string | number) => `/api/v1/schedules/${id}`,

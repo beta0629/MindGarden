@@ -16,6 +16,7 @@ import com.coresolution.consultation.service.EmailService;
 import com.coresolution.consultation.service.ImmediateReservationSmsDeferralService;
 import com.coresolution.consultation.service.MobilePushDispatchService;
 import com.coresolution.consultation.service.ScheduleChangeNotificationDebounceService;
+import com.coresolution.consultation.service.ScheduleService;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.security.TenantAccessControlService;
 import org.junit.jupiter.api.AfterEach;
@@ -73,6 +74,8 @@ class ConsultationServiceImplRescheduleReminderTest {
     private MobilePushDispatchService mobilePushDispatchService;
     @Mock
     private EmailService emailService;
+    @Mock
+    private ScheduleService scheduleService;
 
     private ConsultationServiceImpl service;
     private Consultation consultation;
@@ -87,6 +90,7 @@ class ConsultationServiceImplRescheduleReminderTest {
             scheduleChangeNotificationDebounceService);
         ReflectionTestUtils.setField(service, "mobilePushDispatchService", mobilePushDispatchService);
         ReflectionTestUtils.setField(service, "emailService", emailService);
+        ReflectionTestUtils.setField(service, "scheduleService", scheduleService);
 
         TenantContextHolder.setTenantId(TENANT_ID);
         when(emailService.sendTemplateEmail(anyString(), anyString(), anyString(), any()))

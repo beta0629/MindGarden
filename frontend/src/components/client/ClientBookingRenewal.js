@@ -1,8 +1,9 @@
 /**
  * ClientBookingRenewal — 예약하기 리뉴얼 (4단계 스텝 플로우)
  *
- * Step 1: 상담사 선택, Step 2: 시간 선택, Step 3: 결제/확인, Step 4: 완료
+ * Step 1: 상담사 선택, Step 2: 시간 선택, Step 3: 신청 확인, Step 4: 완료
  * ClientAppShell 레이아웃 내에서 렌더링.
+ * 내담자 직접 예약은 가예약으로 접수되고 센터 확정 후 확정된다. 회기 차감은 결제 후에만.
  *
  * @author MindGarden
  * @since 2026-05-12
@@ -13,29 +14,36 @@ import { useNavigate } from 'react-router-dom';
 import {
   Star, Check, Calendar, Search
 } from 'lucide-react';
-import { useSession } from '../../contexts/SessionContext';
 import { useToast } from '../../contexts/ToastContext';
 import TenantAwareApiClient from '../../utils/TenantAwareApiClient';
+import StandardizedApi from '../../utils/standardizedApi';
+import { getCommonCodes } from '../../utils/commonCodeUtils';
+import {
+  buildClientBookingPayload,
+  expandAvailabilityForDate,
+  pickDefaultConsultationType
+} from '../../utils/clientBookingRequest';
+import { CLIENT_BOOKING_API } from '../../constants/api';
+import { CONSULTATION_TYPE_CODE_GROUP } from '../../constants/schedule';
 import Avatar from '../common/Avatar';
 import './ClientBookingRenewal.css';
 import { useTranslation } from 'react-i18next';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_CONSULTANTS = '/api/v1/consultants';
-const API_CONSULTATIONS = '/api/v1/consultations';
 
-
-const STEP_LABELS = ['상담사 선택', '시간 선택', '결제 확인', '완료'];
+const STEP_LABELS = ['상담사 선택', '시간 선택', '신청 확인', '완료'];
 const SPECIALTY_FILTERS = ['전체', '우울', '불안', '대인관계', '자존감', '스트레스', '진로'];
 const SORT_OPTIONS = [
   { key: 'rating', label: '평점순' },
   { key: 'name', label: '이름순' }
 ];
 
-const PAYMENT_OPTIONS = [
-  { key: 'session', label: '보유 회기 차감' },
-  { key: 'card', label: '카드 결제' }
-];
+const toLocalDateStr = (d) => {
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${d.getFullYear()}-${mm}-${dd}`;
+};
 
 const generateDateRange = (days = 7) => {
   const dates = [];
@@ -44,7 +52,7 @@ const generateDateRange = (days = 7) => {
     const d = new Date(today);
     d.setDate(today.getDate() + i);
     dates.push({
-      dateStr: d.toISOString().split('T')[0],
+      dateStr: toLocalDateStr(d),
       weekday: d.toLocaleDateString('ko-KR', { weekday: 'short' }),
       day: d.getDate()
     });
@@ -55,7 +63,6 @@ const generateDateRange = (days = 7) => {
 const ClientBookingRenewal = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { user } = useSession();
   const { showToast } = useToast();
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(true);
@@ -68,9 +75,9 @@ const ClientBookingRenewal = () => {
   const [dateRange] = useState(() => generateDateRange(7));
   const [selectedDate, setSelectedDate] = useState(null);
   const [timeSlots, setTimeSlots] = useState([]);
-  const [selectedTime, setSelectedTime] = useState(null);
+  const [selectedSlot, setSelectedSlot] = useState(null);
 
-  const [paymentMethod, setPaymentMethod] = useState('session');
+  const [consultationType, setConsultationType] = useState(null);
   const [submitting, setSubmitting] = useState(false);
 
   const loadConsultants = useCallback(async() => {
@@ -91,25 +98,35 @@ const ClientBookingRenewal = () => {
     loadConsultants();
   }, [loadConsultants]);
 
+  useEffect(() => {
+    let cancelled = false;
+    getCommonCodes(CONSULTATION_TYPE_CODE_GROUP)
+      .then((codes) => {
+        if (!cancelled) setConsultationType(pickDefaultConsultationType(codes));
+      })
+      .catch(() => {
+        if (!cancelled) setConsultationType(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const loadTimeSlots = useCallback(async(consultantId, dateStr) => {
     if (!consultantId || !dateStr) return;
     try {
       const res = await TenantAwareApiClient.get(
-        `/api/v1/consultants/${consultantId}/availability`,
-        { date: dateStr }
+        `/api/v1/consultants/${consultantId}/availability`
       );
-      const slots = Array.isArray(res) ? res : res?.data || res?.content || [];
-      if (slots.length > 0) {
-        setTimeSlots(slots.map((s) => s.startTime || s.time || s));
-      } else {
-        setTimeSlots(['10:00', '11:00', '14:00', '15:00', '16:00']);
-      }
-    } catch {
-      setTimeSlots(['10:00', '11:00', '14:00', '15:00', '16:00']);
+      setTimeSlots(expandAvailabilityForDate(res, dateStr));
+    } catch (err) {
+      console.error('상담 가능 시간 로드 실패:', err);
+      setTimeSlots([]);
     }
   }, []);
 
   useEffect(() => {
+    setSelectedSlot(null);
     if (selectedConsultant && selectedDate) {
       const cId = selectedConsultant.id || selectedConsultant.consultantId;
       loadTimeSlots(cId, selectedDate);
@@ -136,18 +153,23 @@ const ClientBookingRenewal = () => {
     try {
       setSubmitting(true);
       const cId = selectedConsultant?.id || selectedConsultant?.consultantId;
-      await TenantAwareApiClient.post(API_CONSULTATIONS, {
-        consultantId: cId,
-        date: selectedDate,
-        startTime: selectedTime,
-        paymentMethod,
-        clientId: user?.id
-      });
-      showToast({ message: '예약이 완료되었습니다.', type: 'success' });
+      await StandardizedApi.post(
+        CLIENT_BOOKING_API.CREATE,
+        buildClientBookingPayload({
+          consultantId: cId,
+          date: selectedDate,
+          slot: selectedSlot,
+          consultationType: consultationType?.value
+        })
+      );
+      showToast({ message: '예약 신청이 접수되었습니다. 센터 확정 후 안내드립니다.', type: 'success' });
       setStep(4);
     } catch (err) {
-      console.error('예약 실패:', err);
-      showToast({ message: '예약에 실패했습니다. 다시 시도해주세요.', type: 'error' });
+      console.error('예약 신청 실패:', err);
+      showToast({
+        message: err?.message || '예약 신청에 실패했습니다. 다시 시도해주세요.',
+        type: 'error'
+      });
     } finally {
       setSubmitting(false);
     }
@@ -155,8 +177,8 @@ const ClientBookingRenewal = () => {
 
   const canProceed = () => {
     if (step === 1) return !!selectedConsultant;
-    if (step === 2) return !!selectedDate && !!selectedTime;
-    if (step === 3) return !!paymentMethod;
+    if (step === 2) return !!selectedDate && !!selectedSlot;
+    if (step === 3) return !!consultationType?.value && !!selectedSlot;
     return false;
   };
 
@@ -262,7 +284,7 @@ const ClientBookingRenewal = () => {
   );
 
   const getFooterLabel = () => {
-    if (step === 3) return submitting ? '처리 중...' : '결제하기';
+    if (step === 3) return submitting ? '처리 중...' : '예약 신청';
     return '다음 단계로';
   };
 
@@ -283,7 +305,6 @@ const ClientBookingRenewal = () => {
             aria-checked={selectedDate === d.dateStr}
             onClick={() => {
               setSelectedDate(d.dateStr);
-              setSelectedTime(null);
             }}
           >
             <span className="client-booking__date-weekday">{d.weekday}</span>
@@ -296,20 +317,26 @@ const ClientBookingRenewal = () => {
         <>
           <p className="client-booking__time-label">가용 시간</p>
           <div className="client-booking__time-slots" role="radiogroup" aria-label="시간 선택">
-            {timeSlots.map((t) => (
-              <button
-                key={t}
-                className={`client-booking__time-chip ${
-                  selectedTime === t ? 'client-booking__time-chip--selected' : ''
-                }`}
-                role="radio"
-                aria-checked={selectedTime === t}
-                onClick={() => setSelectedTime(t)}
-              >
-                {t}
-              </button>
-            ))}
+            {timeSlots.map((slot) => {
+              const isSelected = selectedSlot?.startTime === slot.startTime;
+              return (
+                <button
+                  key={slot.startTime}
+                  className={`client-booking__time-chip ${
+                    isSelected ? 'client-booking__time-chip--selected' : ''
+                  }`}
+                  role="radio"
+                  aria-checked={isSelected}
+                  onClick={() => setSelectedSlot(slot)}
+                >
+                  {slot.startTime}
+                </button>
+              );
+            })}
           </div>
+          {timeSlots.length === 0 && (
+            <p className="client-booking__empty-slots">선택한 날짜에 상담 가능한 시간이 없습니다.</p>
+          )}
         </>
       )}
     </div>
@@ -341,39 +368,19 @@ const ClientBookingRenewal = () => {
         </div>
         <div className="client-booking__summary-row">
           <span className="client-booking__summary-label">시간</span>
-          <span className="client-booking__summary-value">{selectedTime || '-'}</span>
+          <span className="client-booking__summary-value">
+            {selectedSlot ? `${selectedSlot.startTime} - ${selectedSlot.endTime}` : '-'}
+          </span>
         </div>
         <div className="client-booking__summary-row">
-          <span className="client-booking__summary-label">비용</span>
-          <span className="client-booking__summary-value">50,000원</span>
+          <span className="client-booking__summary-label">상담 유형</span>
+          <span className="client-booking__summary-value">{consultationType?.label || '-'}</span>
         </div>
       </div>
 
-      <div className="client-booking__payment-section">
-        <h3 className="client-booking__payment-title">결제 수단</h3>
-        <div className="client-booking__payment-options">
-          {PAYMENT_OPTIONS.map((opt) => (
-            <div
-              key={opt.key}
-              className={`client-booking__payment-option ${
-                paymentMethod === opt.key ? 'client-booking__payment-option--selected' : ''
-              }`}
-              role="radio"
-              aria-checked={paymentMethod === opt.key}
-              tabIndex={0}
-              onClick={() => setPaymentMethod(opt.key)}
-              onKeyDown={(e) => e.key === 'Enter' && setPaymentMethod(opt.key)}
-            >
-              <div
-                className={`client-booking__payment-radio ${
-                  paymentMethod === opt.key ? 'client-booking__payment-radio--checked' : ''
-                }`}
-              />
-              <span className="client-booking__payment-text">{opt.label}</span>
-            </div>
-          ))}
-        </div>
-      </div>
+      <p className="client-booking__notice">
+        예약 신청은 가예약으로 접수되며 센터 확정 후 예약이 확정됩니다. 회기는 결제 완료 후에 차감됩니다.
+      </p>
     </div>
   );
 
@@ -382,7 +389,8 @@ const ClientBookingRenewal = () => {
       <div className="client-booking__check-circle">
         <Check size={40} aria-hidden />
       </div>
-      <h2 className="client-booking__complete-title">예약이 완료되었습니다!</h2>
+      <h2 className="client-booking__complete-title">예약 신청이 접수되었습니다</h2>
+      <p className="client-booking__notice">센터 확정 후 예약이 확정됩니다.</p>
 
       <div className="client-booking__complete-info">
         <div className="client-booking__summary-row">
@@ -401,7 +409,7 @@ const ClientBookingRenewal = () => {
                   weekday: 'short'
                 })
               : '-'}{' '}
-            {selectedTime || ''}
+            {selectedSlot?.startTime || ''}
           </span>
         </div>
       </div>

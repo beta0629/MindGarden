@@ -235,7 +235,7 @@ export default function BookingComplete() {
               marginTop: 24,
             }}
           >
-            예약이 완료되었습니다
+            예약 신청이 접수되었습니다 (센터 확정 후 확정)
           </Text>
           <Text
             style={{

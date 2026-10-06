@@ -15,6 +15,11 @@ import ActionBarButton from '../common/ActionBarButton';
 import notificationManager from '../../utils/notification';
 import { useSession } from '../../contexts/SessionContext';
 import StandardizedApi from '../../utils/standardizedApi';
+import {
+  getScheduleCreateInPastMessage,
+  isScheduleMoveTargetKeyInPast,
+  resolveScheduleMoveFailureMessage
+} from '../../utils/scheduleMoveGuard';
 import '../../styles/modules/schedule-modal.css';
 import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import './ScheduleB0KlA.css';
@@ -228,7 +233,11 @@ const ScheduleModalNew = ({
             const month = String(effectiveSelectedDate.getMonth() + 1).padStart(2, '0');
             const day = String(effectiveSelectedDate.getDate()).padStart(2, '0');
             const dateString = `${year}-${month}-${day}`;
-            
+            if (isScheduleMoveTargetKeyInPast(dateString, startTime)) {
+                notificationManager.warning(getScheduleCreateInPastMessage());
+                return;
+            }
+
             const scheduleData = {
                 consultantId: selectedConsultant.originalId || selectedConsultant.id,
                 clientId: selectedClient.originalId || selectedClient.id,
@@ -268,8 +277,10 @@ const ScheduleModalNew = ({
                 typeof error?.message === 'string' && error.message.trim()
                     ? error.message.trim()
                     : '';
-            const displayMessage =
-                fromBody || fromMessage || '스케줄 생성 중 오류가 발생했습니다.';
+            const displayMessage = resolveScheduleMoveFailureMessage(
+                error,
+                fromBody || fromMessage || '스케줄 생성 중 오류가 발생했습니다.'
+            );
             notificationManager.error(displayMessage);
             if (
                 displayMessage.includes('회기') ||

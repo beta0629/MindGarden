@@ -12,6 +12,10 @@ import {
   isSameDayCardPending,
   normalizedRemainingSessions
 } from '../components/admin/mapping-management/constants/integratedScheduleSidebarFilterConstants';
+import {
+  getScheduleCreateInPastMessage,
+  isScheduleMoveTargetInPast
+} from './scheduleMoveGuard';
 
 export const EXTERNAL_DROP_INVALID_PAYLOAD_MESSAGE = '배정 정보가 올바르지 않습니다.';
 
@@ -235,22 +239,41 @@ export function assertExternalMappingDropAllowed(mappingPayload, options = {}) {
 }
 
 /**
- * 드롭 날짜가 오늘(자정 기준) 이전이면 차단
+ * 드롭 시각이 현재보다 이전이면 차단. 날짜만 있는 값(자정)은 당일 허용·전날 거부.
+ * 판정은 scheduleMoveGuard(서버 ScheduleSlotGuard 와 동일 벽시계).
  *
  * @param {Date|string|number} dropDate
+ * @param {Date} [now]
  * @returns {{ ok: true } | { ok: false, kind: 'past_date', userMessage: string }}
  */
-export function assertDropDateNotPast(dropDate) {
+export function assertDropDateNotPast(dropDate, now = new Date()) {
   const drop = dropDate instanceof Date ? dropDate : new Date(dropDate);
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const dropDateOnly = new Date(drop);
-  dropDateOnly.setHours(0, 0, 0, 0);
-  if (dropDateOnly.getTime() < today.getTime()) {
+  if (Number.isNaN(drop.getTime())) {
+    return { ok: true };
+  }
+  const dateOnly = drop.getHours() === 0
+    && drop.getMinutes() === 0
+    && drop.getSeconds() === 0
+    && drop.getMilliseconds() === 0;
+  if (dateOnly) {
+    const today = new Date(now.getTime());
+    today.setHours(0, 0, 0, 0);
+    const dropDay = new Date(drop.getTime());
+    dropDay.setHours(0, 0, 0, 0);
+    if (dropDay.getTime() < today.getTime()) {
+      return {
+        ok: false,
+        kind: 'past_date',
+        userMessage: getScheduleCreateInPastMessage()
+      };
+    }
+    return { ok: true };
+  }
+  if (isScheduleMoveTargetInPast(drop, now)) {
     return {
       ok: false,
       kind: 'past_date',
-      userMessage: EXTERNAL_DROP_PAST_DATE_MESSAGE
+      userMessage: getScheduleCreateInPastMessage()
     };
   }
   return { ok: true };

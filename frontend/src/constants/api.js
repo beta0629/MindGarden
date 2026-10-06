@@ -258,6 +258,11 @@ export const MESSAGE_API = {
   GET_MESSAGE_DETAIL: (messageId) => `/api/v1/consultation-messages/${messageId}`
 };
 
+// 내담자 직접 예약 — 가예약 신청 (앱 expo-app SCHEDULE_API.SCHEDULE_CREATE 와 동일 엔드포인트)
+export const CLIENT_BOOKING_API = {
+  CREATE: '/api/v1/clients/me/bookings'
+};
+
 // 상담 관련 API (표준화 2025-12-05: /api/v1/ 경로 적용)
 export const CONSULTATION_API = {
   // 상담 목록

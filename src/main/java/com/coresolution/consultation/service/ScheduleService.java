@@ -669,6 +669,20 @@ public interface ScheduleService {
     void requireCreateStartNotInPast(LocalDate date, LocalTime startTime);
 
     /**
+     * 상담사·내담자 쌍에 입금 전 가예약을 만들 수 있는 매칭이 있는지 (현재 테넌트).
+     *
+     * <p>{@link #createConsultantSchedule} 의 가예약 분기와 같은 판정
+     * ({@link com.coresolution.consultation.util.MappingPaymentScheduleGate#allowsTentativeBeforeDeposit}).</p>
+     *
+     * @param consultantId 상담사 사용자 ID
+     * @param clientId     내담자 사용자 ID
+     * @return 허용 매칭이 있으면 true
+     * @author CoreSolution
+     * @since 2026-10-06
+     */
+    boolean allowsTentativeBeforeDepositForPair(Long consultantId, Long clientId);
+
+    /**
      * 관리자·수동 완료 요청 전 시작 여부를 강제한다 (시작 전이면 400, 상태·회기·급여 변경 없음).
      *
      * @param schedule 완료하려는 일정 (변경 예정 date/startTime 반영본)

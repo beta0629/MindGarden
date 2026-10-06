@@ -247,6 +247,9 @@ export const SCHEDULE_TYPE_LABELS = {
   [SCHEDULE_TYPES.OTHER]: '기타'
 };
 
+/** 공통코드 그룹 — 상담 유형(서버 CONSULTATION_TYPE 검증과 동일) */
+export const CONSULTATION_TYPE_CODE_GROUP = 'CONSULTATION_TYPE';
+
 export const CONSULTATION_TYPES = {
   INDIVIDUAL: 'INDIVIDUAL',
   FAMILY: 'FAMILY',

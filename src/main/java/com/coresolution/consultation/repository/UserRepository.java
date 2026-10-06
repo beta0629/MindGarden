@@ -9,6 +9,8 @@ import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.entity.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import jakarta.persistence.LockModeType;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -35,6 +37,19 @@ public interface UserRepository extends BaseRepository<User, Long> {
      */
     @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId AND u.id = :id")
     Optional<User> findByTenantIdAndIdIgnoringDeleted(@Param("tenantId") String tenantId, @Param("id") Long id);
+
+    /**
+     * 테넌트·PK로 활성 사용자 행을 쓰기 잠금으로 조회한다.
+     *
+     * <p>같은 상담사 슬롯에 대한 내담자 예약 신청을 직렬화(중복·동시 신청 차단)할 때 트랜잭션 첫 조회로 쓴다.</p>
+     *
+     * @param tenantId 테넌트 ID
+     * @param id 사용자 PK
+     * @return 사용자 Optional
+     */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId AND u.id = :id AND u.isDeleted = false")
+    Optional<User> findByTenantIdAndIdForUpdate(@Param("tenantId") String tenantId, @Param("id") Long id);
 
     /**
      * Apple Sign in with Apple {@code sub} 식별자로 사용자 조회.

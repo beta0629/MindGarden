@@ -23,7 +23,7 @@ import { SkeletonLoader } from '@/components/atoms/SkeletonLoader';
 import { EmptyState } from '@/components/atoms/EmptyState';
 import { useConsultantAvailability, type AvailableSlot } from '@/api/hooks/useBooking';
 
-const STEP_LABELS = ['상담사 선택', '시간 선택', '결제'];
+const STEP_LABELS = ['상담사 선택', '시간 선택', '신청'];
 const DAYS_IN_WEEK = 7;
 
 export default function BookingTimeSelect() {

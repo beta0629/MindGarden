@@ -338,6 +338,17 @@
   margin-top: var(--mg-spacing-lg);
 }
 
+.client-booking__notice {
+  margin-top: var(--mg-spacing-lg);
+  font-size: var(--mg-font-size-sm);
+  color: var(--mg-color-text-secondary);
+}
+
+.client-booking__empty-slots {
+  font-size: var(--mg-font-size-sm);
+  color: var(--mg-color-text-secondary);
+}
+
 .client-booking__payment-title {
   font-size: var(--mg-font-size-base);
   font-weight: var(--mg-font-weight-semibold);

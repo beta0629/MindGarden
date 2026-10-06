@@ -6,9 +6,21 @@
  */
 import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiGet, apiPost } from '../client';
-import { CONSULTANT_API, SCHEDULE_API } from '../endpoints';
+import { COMMON_CODE_API, CONSULTANT_API, SCHEDULE_API } from '../endpoints';
 import { unwrapApiResponse } from '../unwrapApiResponse';
 import { CONSULTATION_QUERY_KEYS } from './useConsultations';
+import {
+  expandWeeklyAvailability,
+  pickDefaultConsultationType,
+  type AvailableSlot,
+  type ConsultationTypeOption,
+  type CreateBookingRequest,
+} from './clientBookingPayload';
+
+export type { AvailableSlot, ConsultationTypeOption, CreateBookingRequest };
+
+/** 공통코드 그룹 — 상담 유형(서버 가예약 신청 검증과 동일) */
+export const CONSULTATION_TYPE_CODE_GROUP = 'CONSULTATION_TYPE';
 
 export interface Consultant {
   id: number;
@@ -20,27 +32,10 @@ export interface Consultant {
   bio?: string;
 }
 
-export interface AvailableSlot {
-  date: string;
-  startTime: string;
-  endTime: string;
-  isAvailable: boolean;
-}
-
 export interface AvailabilityResponse {
   consultantId: number;
   consultantName: string;
   slots: AvailableSlot[];
-}
-
-interface CreateBookingRequest {
-  consultantId: number;
-  scheduledDate: string;
-  startTime: string;
-  endTime: string;
-  sessionType: string;
-  paymentMethod: 'SESSION_DEDUCT' | 'TOSS_PAYMENT';
-  memo?: string;
 }
 
 const BOOKING_QUERY_KEYS = {
@@ -50,6 +45,7 @@ const BOOKING_QUERY_KEYS = {
     [...BOOKING_QUERY_KEYS.consultants(), filters] as const,
   availability: (consultantId: string | number, weekStart: string) =>
     [...BOOKING_QUERY_KEYS.all, 'availability', consultantId, weekStart] as const,
+  consultationTypes: () => [...BOOKING_QUERY_KEYS.all, 'consultationTypes'] as const,
 };
 
 interface ConsultantFilters {
@@ -132,12 +128,28 @@ export function useConsultantAvailability(
 ) {
   return useQuery<AvailabilityResponse>({
     queryKey: BOOKING_QUERY_KEYS.availability(consultantId!, weekStart!),
-    queryFn: () =>
-      apiGet<AvailabilityResponse>(CONSULTANT_API.consultantAvailability(consultantId!), {
-        weekStart,
-      }),
+    queryFn: async () => {
+      const raw = await apiGet<unknown>(CONSULTANT_API.consultantAvailability(consultantId!));
+      return {
+        consultantId: Number(consultantId),
+        consultantName: '',
+        slots: expandWeeklyAvailability(raw, weekStart!),
+      };
+    },
     enabled: !!consultantId && !!weekStart,
     staleTime: 1000 * 60 * 3,
+  });
+}
+
+/** 가예약 신청에 쓸 상담 유형(공통코드 CONSULTATION_TYPE 활성 첫 행). 없으면 null. */
+export function useDefaultConsultationType() {
+  return useQuery<ConsultationTypeOption | null>({
+    queryKey: BOOKING_QUERY_KEYS.consultationTypes(),
+    queryFn: async () => {
+      const raw = await apiGet<unknown>(COMMON_CODE_API.group(CONSULTATION_TYPE_CODE_GROUP));
+      return pickDefaultConsultationType(raw);
+    },
+    staleTime: 1000 * 60 * 10,
   });
 }
 

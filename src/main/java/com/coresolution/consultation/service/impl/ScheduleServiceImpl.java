@@ -63,6 +63,7 @@ import com.coresolution.consultation.service.MobilePushDispatchService;
 import com.coresolution.consultation.service.NotificationService;
 import com.coresolution.consultation.service.PlSqlScheduleValidationService;
 import com.coresolution.consultation.service.ScheduleChangeNotificationDebounceService;
+import com.coresolution.consultation.service.support.DeferredExternalCalls;
 import com.coresolution.consultation.service.ScheduleCreatedNotificationHelper;
 import com.coresolution.consultation.service.ScheduleListUserFieldsResolver;
 import com.coresolution.consultation.service.ScheduleMappingContextResolver;
@@ -1175,6 +1176,9 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             return;
         }
         final Schedule scheduleAfterCommit = schedule;
+        if (DeferredExternalCalls.deferIfActive(() -> executeImmediateReservationNotification(scheduleAfterCommit))) {
+            return;
+        }
         if (TransactionSynchronizationManager.isSynchronizationActive()) {
             TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
                 @Override
@@ -2126,6 +2130,11 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
      * @param clientId 내담자 사용자 ID
      * @return 허용되면 true
      */
+    @Override
+    public boolean allowsTentativeBeforeDepositForPair(Long consultantId, Long clientId) {
+        return validateMappingForTentativeBeforeDepositSchedule(consultantId, clientId);
+    }
+
     private boolean validateMappingForTentativeBeforeDepositSchedule(Long consultantId, Long clientId) {
         log.debug("🔗 가예약 매칭 검증: 상담사 {}, 내담자 {}", consultantId, clientId);
         String tenantId = TenantContextHolder.getRequiredTenantId();

@@ -1,6 +1,6 @@
 /**
- * Step 3: 결제/확인
- * 예약 요약 + 보유 회기 차감 확정 (잔여 회기는 서버 매칭 API 기준)
+ * Step 3: 신청 확인
+ * 예약 요약 + 가예약 신청. 센터 확정 후 확정되며 회기 차감은 결제 완료 후 서버가 1회만 처리한다.
  *
  * @author MindGarden
  * @since 2026-05-12
@@ -9,7 +9,6 @@ import { useMemo } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useQueryClient } from '@tanstack/react-query';
 import * as Haptics from 'expo-haptics';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { Calendar, Clock, Ticket } from 'lucide-react-native';
@@ -18,12 +17,12 @@ import { toDisplayString } from '@/utils/safeDisplay';
 import { AppTopBar } from '@/components/app-chrome/AppTopBar';
 import { ProgressBar } from '@/components/molecules/ProgressBar';
 import { Avatar } from '@/components/atoms/Avatar';
-import { useCreateBooking } from '@/api/hooks/useBooking';
-import { useSessionBalance, PAYMENT_QUERY_KEYS } from '@/api/hooks/usePayments';
+import { useCreateBooking, useDefaultConsultationType } from '@/api/hooks/useBooking';
+import { buildCreateBookingRequest } from '@/api/hooks/clientBookingPayload';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { useTenantStore } from '@/stores/useTenantStore';
 
-const STEP_LABELS = ['상담사 선택', '시간 선택', '결제'];
+const STEP_LABELS = ['상담사 선택', '시간 선택', '신청'];
 
 function extractErrorMessage(error: unknown, fallback: string): string {
   if (
@@ -43,7 +42,6 @@ function extractErrorMessage(error: unknown, fallback: string): string {
 export default function BookingPayment() {
   const theme = useTheme();
   const router = useRouter();
-  const queryClient = useQueryClient();
   const params = useLocalSearchParams<{
     consultantId: string;
     consultantName: string;
@@ -56,8 +54,8 @@ export default function BookingPayment() {
   const tenantId = useTenantStore((s) => s.tenantId);
   const clientId = user?.id;
 
-  const { data: balance, isLoading: balanceLoading } = useSessionBalance(clientId);
-  const remainingSessions = balance?.remainingSessions ?? 0;
+  const { data: consultationType, isLoading: consultationTypeLoading } =
+    useDefaultConsultationType();
 
   const createBooking = useCreateBooking();
 
@@ -91,11 +89,8 @@ export default function BookingPayment() {
       Alert.alert('로그인 필요', '다시 로그인한 뒤 예약을 진행해 주세요.');
       return;
     }
-    if (remainingSessions < 1) {
-      Alert.alert(
-        '보유 회기 없음',
-        '잔여 회기가 없습니다. 회기·결제 메뉴에서 패키지를 구매한 뒤 다시 예약해 주세요.',
-      );
+    if (!consultationType) {
+      Alert.alert('상담 유형 없음', '기관에 등록된 상담 유형이 없습니다. 센터에 문의해 주세요.');
       return;
     }
 
@@ -103,15 +98,15 @@ export default function BookingPayment() {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     }
     try {
-      await createBooking.mutateAsync({
-        consultantId: Number(params.consultantId),
-        scheduledDate: String(params.date),
-        startTime: String(params.startTime),
-        endTime: String(params.endTime),
-        sessionType: 'REGULAR',
-        paymentMethod: 'SESSION_DEDUCT',
-      });
-      await queryClient.invalidateQueries({ queryKey: PAYMENT_QUERY_KEYS.all });
+      await createBooking.mutateAsync(
+        buildCreateBookingRequest({
+          consultantId: String(params.consultantId),
+          date: String(params.date),
+          startTime: String(params.startTime),
+          endTime: String(params.endTime),
+          consultationType: consultationType.value,
+        }),
+      );
       router.push({
         pathname: '/(client)/(booking)/complete',
         params: {
@@ -122,26 +117,26 @@ export default function BookingPayment() {
         },
       });
     } catch (e) {
-      const msg = extractErrorMessage(e, '예약 처리 중 문제가 발생했습니다. 다시 시도해 주세요.');
-      Alert.alert('예약 실패', msg);
+      const msg = extractErrorMessage(e, '예약 신청 중 문제가 발생했습니다. 다시 시도해 주세요.');
+      Alert.alert('예약 신청 실패', msg);
     }
   };
 
-  const sessionDeductDesc = balanceLoading
-    ? '잔여 회기를 불러오는 중…'
-    : `잔여 ${remainingSessions}회기`;
+  const consultationTypeDesc = consultationTypeLoading
+    ? '상담 유형을 불러오는 중…'
+    : toDisplayString(consultationType?.label, '등록된 상담 유형 없음');
 
   const canConfirm =
     paramsReady &&
     !!tenantId &&
     clientId != null &&
-    !balanceLoading &&
-    remainingSessions >= 1 &&
+    !consultationTypeLoading &&
+    !!consultationType &&
     !createBooking.isPending;
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: theme.colors.bgMain }]} edges={['top']}>
-      <AppTopBar title="결제" canGoBack />
+      <AppTopBar title="예약 신청" canGoBack />
       <ProgressBar currentStep={3} totalSteps={3} labels={STEP_LABELS} />
 
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
@@ -212,7 +207,7 @@ export default function BookingPayment() {
           </View>
         </Animated.View>
 
-        {/* 결제: 예약 확정은 보유 회기 차감만 지원. 카드 패키지는 회기·결제 메뉴. */}
+        {/* 가예약 신청 안내: 센터 확정 후 확정, 회기 차감은 결제 완료 후 */}
         <Animated.View entering={FadeInDown.delay(100).springify()}>
           <Text
             style={[
@@ -224,7 +219,7 @@ export default function BookingPayment() {
               },
             ]}
           >
-            결제 방법
+            신청 안내
           </Text>
 
           <View
@@ -236,7 +231,7 @@ export default function BookingPayment() {
                 borderRadius: theme.borderRadius.xl,
               },
             ]}
-            accessibilityLabel="보유 회기 차감"
+            accessibilityLabel="상담 유형"
             accessibilityRole="text"
           >
             <View style={styles.paymentLeft}>
@@ -249,7 +244,7 @@ export default function BookingPayment() {
                     color: theme.colors.textMain,
                   }}
                 >
-                  보유 회기 차감
+                  상담 유형
                 </Text>
                 <Text
                   style={{
@@ -258,38 +253,21 @@ export default function BookingPayment() {
                     color: theme.colors.textSecondary,
                   }}
                 >
-                  {sessionDeductDesc}
+                  {consultationTypeDesc}
                 </Text>
               </View>
             </View>
           </View>
 
-          {remainingSessions < 1 && !balanceLoading && (
-            <Pressable
-              onPress={() => router.push('/(client)/(more)/sessions-payment/extend')}
-              style={({ pressed }) => [
-                styles.extendHint,
-                {
-                  borderColor: theme.colors.border,
-                  backgroundColor: pressed ? theme.colors.accentSoft : theme.colors.surface,
-                  borderRadius: theme.borderRadius.lg,
-                },
-              ]}
-              accessibilityRole="button"
-              accessibilityLabel="회기 연장 및 패키지 구매"
-            >
-              <Text
-                style={{
-                  fontFamily: theme.fontFamily.medium,
-                  fontSize: theme.fontSize.sm,
-                  color: theme.colors.primary,
-                  textAlign: 'center',
-                }}
-              >
-                회기가 없으시면 회기 연장·패키지 구매로 이동
-              </Text>
-            </Pressable>
-          )}
+          <Text
+            style={{
+              fontFamily: theme.fontFamily.regular,
+              fontSize: theme.fontSize.sm,
+              color: theme.colors.textSecondary,
+            }}
+          >
+            예약 신청은 가예약으로 접수되며 센터 확정 후 예약이 확정됩니다. 회기는 결제 완료 후에 차감됩니다.
+          </Text>
         </Animated.View>
       </ScrollView>
 
@@ -314,7 +292,7 @@ export default function BookingPayment() {
               borderRadius: theme.borderRadius.lg,
             },
           ]}
-          accessibilityLabel="예약 확정"
+          accessibilityLabel="예약 신청"
           accessibilityRole="button"
         >
           <Text
@@ -324,7 +302,7 @@ export default function BookingPayment() {
               color: theme.colors.textOnPrimary,
             }}
           >
-            {createBooking.isPending ? '처리 중...' : '예약 확정'}
+            {createBooking.isPending ? '처리 중...' : '예약 신청'}
           </Text>
         </Pressable>
       </View>
@@ -374,12 +352,6 @@ const styles = StyleSheet.create({
   paymentText: {
     marginLeft: 12,
     gap: 2,
-  },
-  extendHint: {
-    marginTop: 4,
-    paddingVertical: 14,
-    paddingHorizontal: 12,
-    borderWidth: 1,
   },
   bottomBar: {
     position: 'absolute',

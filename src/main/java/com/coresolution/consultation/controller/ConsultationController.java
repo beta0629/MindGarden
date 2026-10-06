@@ -6,10 +6,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import com.coresolution.consultation.constant.UserRole;
+import com.coresolution.consultation.dto.ConsultationCreateRequest;
+import com.coresolution.consultation.dto.ConsultationCreateResponse;
 import com.coresolution.consultation.entity.Consultation;
 import com.coresolution.consultation.entity.User;
+import com.coresolution.consultation.exception.UnauthorizedException;
+import com.coresolution.consultation.exception.ValidationException;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.ConsultationService;
+import com.coresolution.consultation.service.RoleCommonCodeAuthorizationService;
 import com.coresolution.consultation.service.support.ClientPathAccessGuard;
 import com.coresolution.consultation.utils.SessionUtils;
 import com.coresolution.core.annotation.RequireBusinessType;
@@ -32,6 +37,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -48,9 +54,15 @@ import lombok.extern.slf4j.Slf4j;
 @RequireBusinessType(value = "CONSULTATION", message = "상담 관리 기능은 상담소에서만 사용할 수 있습니다.")
 public class ConsultationController extends BaseApiController {
     
+    private static final String MSG_LOGIN_REQUIRED = "로그인이 필요합니다.";
+    private static final String MSG_CONSULTATION_CREATE_STAFF_ONLY =
+            "상담 요청은 센터에서 등록합니다. 내담자 예약은 예약하기 화면에서 신청해 주세요.";
+    private static final String MSG_CONSULTATION_PARTY_INVALID = "현재 기관의 내담자·상담사가 아닙니다.";
+
     private final ConsultationService consultationService;
     private final UserRepository userRepository;
     private final ClientPathAccessGuard clientPathAccessGuard;
+    private final RoleCommonCodeAuthorizationService roleCommonCodeAuthorizationService;
 
     /**
      * 세션 기준 테넌트 컨텍스트 설정 (서비스 계층의 테넌트 스코프 조회용)
@@ -181,18 +193,54 @@ public class ConsultationController extends BaseApiController {
     // === 상담 예약 및 관리 ===
     
     /**
-     * 상담 예약 생성
+     * 상담 요청 생성 — 센터(관리자·사무원) 전용, 명시 DTO.
      * POST /api/v1/consultations
+     *
+     * <p>내담자 직접 예약은 {@code POST /api/v1/clients/me/bookings} (가예약)이다.
+     * 테넌트는 TenantContextHolder, 내담자·상담사는 같은 테넌트 사용자여야 한다.</p>
      */
     @PostMapping
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<ApiResponse<Consultation>> createConsultation(@RequestBody Consultation consultation) {
-        log.info("상담 예약 생성 - clientId: {}, consultantId: {}", 
-                consultation.getClientId(), consultation.getConsultantId());
-        
+    public ResponseEntity<ApiResponse<ConsultationCreateResponse>> createConsultation(
+            @Valid @RequestBody ConsultationCreateRequest request, HttpSession session) {
+        User currentUser = SessionUtils.getCurrentUser(session);
+        if (currentUser == null) {
+            throw new UnauthorizedException(MSG_LOGIN_REQUIRED);
+        }
+        if (!roleCommonCodeAuthorizationService.isAdminOrStaffRoleFromCommonCode(currentUser.getRole())) {
+            log.warn("상담 요청 생성 거부(역할): userId={}, role={}", currentUser.getId(), currentUser.getRole());
+            throw new AccessDeniedException(MSG_CONSULTATION_CREATE_STAFF_ONLY);
+        }
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        if (currentUser.getTenantId() == null || !tenantId.equals(currentUser.getTenantId())) {
+            throw new AccessDeniedException(MSG_CONSULTATION_CREATE_STAFF_ONLY);
+        }
+        requireTenantUser(tenantId, request.getClientId(), true);
+        requireTenantUser(tenantId, request.getConsultantId(), false);
+        log.info("상담 요청 생성 - clientId: {}, consultantId: {}", request.getClientId(), request.getConsultantId());
+
+        Consultation consultation = new Consultation();
+        consultation.setTenantId(tenantId);
+        consultation.setClientId(request.getClientId());
+        consultation.setConsultantId(request.getConsultantId());
+        consultation.setConsultationDate(request.getConsultationDate());
+        consultation.setStartTime(request.getStartTime());
+        consultation.setEndTime(request.getEndTime());
+        consultation.setTitle(request.getTitle());
+        consultation.setConsultationMethod(request.getConsultationMethod());
+        consultation.setConsultantNotes(request.getNotes());
+
         Consultation createdConsultation = consultationService.createConsultationRequest(consultation);
-        
-        return created("상담 예약이 성공적으로 생성되었습니다.", createdConsultation);
+        return created("상담 예약이 성공적으로 생성되었습니다.", ConsultationCreateResponse.fromEntity(createdConsultation));
+    }
+
+    private void requireTenantUser(String tenantId, Long userId, boolean client) {
+        User user = userRepository.findByTenantIdAndId(tenantId, userId).orElse(null);
+        boolean roleOk = user != null && user.getRole() != null
+                && (client ? user.getRole().isClient() : user.resolvesAsProfessionalProvider());
+        if (!roleOk) {
+            throw new ValidationException(client ? "clientId" : "consultantId", userId, MSG_CONSULTATION_PARTY_INVALID);
+        }
     }
     
     /**

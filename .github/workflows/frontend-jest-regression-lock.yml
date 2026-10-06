@@ -48,6 +48,7 @@ jobs:
         src/components/ui/Schedule/__tests__/ScheduleCalendarView.moveTargetPast.test.js
         src/components/ui/Schedule/__tests__/ScheduleCalendarView.dayZoom.test.js
         src/components/schedule/__tests__/UnifiedScheduleComponent.moveTargetPast.test.js
+        src/utils/__tests__/clientBookingRequest.test.js
     steps:
       - name: Checkout
         uses: actions/checkout@v4

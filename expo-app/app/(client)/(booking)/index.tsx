@@ -21,7 +21,7 @@ import { EmptyState } from '@/components/atoms/EmptyState';
 import { SkeletonCard } from '@/components/atoms/SkeletonLoader';
 import { useAvailableConsultants, type Consultant } from '@/api/hooks/useBooking';
 
-const STEP_LABELS = ['상담사 선택', '시간 선택', '결제'];
+const STEP_LABELS = ['상담사 선택', '시간 선택', '신청'];
 const SPECIALTIES = ['전체', '우울', '불안', '가족', '학업', '대인관계', '자존감', '스트레스'];
 
 export default function BookingConsultantSelect() {

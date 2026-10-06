@@ -1,0 +1,73 @@
+# 임시: #1493 매출 취소 DEV dry-run(ROLLBACK) 1회 실행용. 실행 후 PR 을 닫고 브랜치를 지운다.
+name: TEMP DEV income cancel dry-run (#1493)
+
+on:
+  pull_request:
+    branches: [release/dev]
+    paths:
+      - '.github/workflows/dev-income-cancel-dry-run-pr-run.yml'
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  dev-dry-run:
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Environment API readable with GITHUB_TOKEN (production has no reviewers, so a refusal is expected)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set +e
+          bash scripts/ops/assert_environment_required_reviewers.sh production
+          echo "assert_exit=$?"
+          bash scripts/ops/assert_environment_required_reviewers.sh production-data-fix
+          echo "assert_exit_data_fix=$?"
+          exit 0
+
+      - name: Setup MySQL client
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq mysql-client
+
+      - name: DEV backup, ROLLBACK dry-run, new-session readback
+        env:
+          JUMP_HOST: ${{ secrets.DEV_SERVER_HOST }}
+          JUMP_USER: ${{ secrets.DEV_SERVER_USER }}
+          JUMP_KEY: ${{ secrets.DEV_SERVER_SSH_KEY }}
+          DB_HOST: ${{ secrets.DEV_DB_HOST }}
+          DB_USER: ${{ secrets.DEV_DB_USER }}
+          DB_NAME: ${{ secrets.DEV_DB_NAME }}
+          DB_PASSWORD: ${{ secrets.DEV_DB_PASSWORD }}
+        run: |
+          set -euo pipefail
+          for name in JUMP_HOST JUMP_USER JUMP_KEY DB_HOST DB_USER DB_NAME DB_PASSWORD; do
+            if [ -z "${!name:-}" ]; then
+              echo "::error::Required DEV secret is empty (${name})"
+              exit 1
+            fi
+            echo "::add-mask::${!name}"
+          done
+          # shellcheck disable=SC1091
+          source scripts/ops/dev_db_tunnel_open.sh
+          unset INCOME_CANCEL_CONFIRM || true
+          echo "apply refusal on pull_request (no connection expected):"
+          if GITHUB_EVENT_NAME=pull_request INCOME_CANCEL_CONFIRM=CONFIRM scripts/ops/additional_package_merged_session_runner.sh \
+               income-cancel --mode apply --allowlist x --denylist x --tenant-env x --backup-dir x; then
+            echo "::error::apply was not refused"; exit 1
+          fi
+          R=scripts/ops/additional_package_merged_session_runner.sh
+          chmod +x "$R"
+          ARGS=(--allowlist scripts/ops/income-sales-cancel-allowlist-prod.txt
+                --denylist scripts/ops/income-sales-cancel-denylist.txt
+                --tenant-env scripts/ops/triggers/income_sales_cancel_prod.env
+                --backup-dir "${RUNNER_TEMP}/income-sales-cancel-backup-dev")
+          "$R" income-cancel --mode backup "${ARGS[@]}"
+          "$R" income-cancel --mode dry-run "${ARGS[@]}"
+          "$R" income-cancel-verify --expect before "${ARGS[@]}"

@@ -1579,7 +1579,7 @@ class ShopOrderFulfillmentServiceImplTest {
                 .createShopOrderMappingRefundExpense(any(), any(), any(), any(), any(), any(), any());
         verify(adminService, never()).ensureConsultationDepositIncomeInCurrentTransaction(any(), any());
         verify(adminService, never()).ensureConsultationDepositIncome(any(), any());
-        verify(adminService, never()).createConsultationIncomeTransactionAsync(any());
+        verify(adminService, never()).ensureConsultationDepositIncome(any());
     }
 
     @Test

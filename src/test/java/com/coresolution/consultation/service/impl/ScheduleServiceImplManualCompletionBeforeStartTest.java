@@ -279,6 +279,32 @@ class ScheduleServiceImplManualCompletionBeforeStartTest {
         verify(scheduleRepository, never()).save(any(Schedule.class));
     }
 
+    @Test
+    @DisplayName("지난 일정(어제) 완료 — 같은 일시를 함께 보내도 이동 판정 없이 COMPLETED, 차감 1회")
+    void updateSchedule_pastScheduleCompleteWithSameSlot_allowed() {
+        useClockAt(SESSION_DATE.plusDays(1).atTime(SESSION_START));
+        Schedule update = statusOnly(ScheduleStatus.COMPLETED);
+        update.setDate(SESSION_DATE);
+        update.setStartTime(schedule.getStartTime());
+        update.setEndTime(schedule.getEndTime());
+
+        Schedule saved = scheduleService.updateSchedule(SCHEDULE_ID, update);
+
+        assertThat(saved.getStatus()).isEqualTo(ScheduleStatus.COMPLETED);
+        assertThat(saved.getDate()).isEqualTo(SESSION_DATE);
+        assertThat(mapping.getUsedSessions()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("지난 일정(어제) 취소 — 상태 변경은 과거 판정 없이 허용")
+    void updateSchedule_pastScheduleCancel_allowed() {
+        useClockAt(SESSION_DATE.plusDays(1).atTime(SESSION_START));
+
+        Schedule saved = scheduleService.updateSchedule(SCHEDULE_ID, statusOnly(ScheduleStatus.CANCELLED));
+
+        assertThat(saved.getStatus()).isEqualTo(ScheduleStatus.CANCELLED);
+    }
+
     private void markDeducted(int total, int used, MappingStatus status) {
         mapping.setTotalSessions(total);
         mapping.setUsedSessions(used);

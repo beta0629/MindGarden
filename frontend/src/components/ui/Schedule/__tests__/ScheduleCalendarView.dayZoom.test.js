@@ -133,8 +133,8 @@ describe('ScheduleCalendarView — 날짜 클릭 일간 확대', () => {
 
     const captured = getLastFullCalendarProps();
     const info = {
-      date: new Date('2026-08-20T09:00:00'),
-      dateStr: '2026-08-20',
+      date: new Date('2026-12-20T09:00:00'),
+      dateStr: '2026-12-20',
       view: { type: 'timeGridDay' }
     };
 
@@ -328,5 +328,61 @@ describe('ScheduleCalendarView — 날짜 클릭 일간 확대', () => {
     render(<ScheduleCalendarView {...baseProps()} />);
     const captured = getLastFullCalendarProps();
     expect(captured.eventMinHeight).toBe(64);
+  });
+
+  test('지난 일정 eventAllow=false (드래그 시작 잠금)', () => {
+    render(<ScheduleCalendarView {...baseProps()} />);
+    const captured = getLastFullCalendarProps();
+    const pastStart = new Date('2026-10-05T11:00:00');
+    const futureDrop = new Date();
+    futureDrop.setDate(futureDrop.getDate() + 2);
+    expect(captured.eventAllow(
+      { start: futureDrop },
+      { extendedProps: { status: 'BOOKED' }, start: pastStart }
+    )).toBe(false);
+  });
+
+  test('selectAllow: 지난 칸은 false, 미래 칸은 true', () => {
+    render(<ScheduleCalendarView {...baseProps()} />);
+    const captured = getLastFullCalendarProps();
+    expect(captured.selectAllow).toEqual(expect.any(Function));
+    expect(captured.selectAllow({ start: new Date('2026-10-05T11:00:00') })).toBe(false);
+    const future = new Date();
+    future.setDate(future.getDate() + 3);
+    future.setHours(11, 0, 0, 0);
+    expect(captured.selectAllow({ start: future })).toBe(true);
+  });
+
+  test('일간 과거 칸 dateClick → onDateClick 미호출 + 생성 거부 안내', () => {
+    const onDateClick = jest.fn();
+    const onEventMoveRejected = jest.fn();
+    render(<ScheduleCalendarView {...baseProps({ onDateClick, onEventMoveRejected })} />);
+    const captured = getLastFullCalendarProps();
+    act(() => {
+      captured.dateClick({
+        date: new Date('2026-10-05T11:00:00'),
+        dateStr: '2026-10-05',
+        view: { type: 'timeGridDay' }
+      });
+    });
+    expect(onDateClick).not.toHaveBeenCalled();
+    expect(onEventMoveRejected).toHaveBeenCalledWith(expect.stringContaining('등록할 수 없습니다'));
+  });
+
+  test('renderEventContent title 에 지난 일정 이동 불가 사유', () => {
+    render(<ScheduleCalendarView {...baseProps()} />);
+    const captured = getLastFullCalendarProps();
+    const node = captured.eventContent({
+      event: {
+        display: 'auto',
+        start: new Date('2026-10-05T11:00:00'),
+        backgroundColor: 'var(--mg-primary-500)',
+        title: 'evt',
+        extendedProps: { status: 'BOOKED', clientName: '내담자A', consultantName: '상담사B' }
+      },
+      view: { type: 'timeGridDay' },
+      timeText: '11:00'
+    });
+    expect(node.props.title).toEqual(expect.stringContaining('지난 일정'));
   });
 });

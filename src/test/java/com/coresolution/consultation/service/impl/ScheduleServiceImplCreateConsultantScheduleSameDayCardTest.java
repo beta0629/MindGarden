@@ -127,6 +127,7 @@ class ScheduleServiceImplCreateConsultantScheduleSameDayCardTest {
     @BeforeEach
     void setUp() {
         TenantContextHolder.setTenantId(TENANT_ID);
+        ScheduleSessionClockFixtures.pinBeforeFixtures(scheduleService);
         // 시간 충돌 검증 우회 — 모든 시나리오 공통.
         when(consultantAvailabilityService.isConsultantOnVacation(
                 eq(CONSULTANT_ID), any(LocalDate.class), any(LocalTime.class), any(LocalTime.class)))

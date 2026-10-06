@@ -76,7 +76,7 @@ import com.coresolution.consultation.util.LeftoverOccupyingCompleteExhaust;
 import com.coresolution.consultation.util.MappingPaymentScheduleGate;
 import com.coresolution.consultation.util.ProvisionalConsultationLogSession;
 import com.coresolution.consultation.util.ScheduleCancelLinkedMappingReopen;
-import com.coresolution.consultation.util.ScheduleMoveTargetGate;
+import com.coresolution.consultation.util.SchedulePastTimeGate;
 import com.coresolution.consultation.util.ScheduleSessionStartGate;
 import com.coresolution.consultation.utils.SessionUtils;
 import com.coresolution.consultation.service.StatisticsService;
@@ -269,6 +269,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
     @Override
     public Schedule createSchedule(Schedule schedule) {
         log.info("📅 스케줄 생성: {}", schedule.getTitle());
+        requireCreateStartNotInPast(schedule.getDate(), schedule.getStartTime());
         
         String tenantId = TenantContextHolder.getTenantId();
         Schedule createdSchedule;
@@ -329,8 +330,10 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
                 || !Objects.equals(previousEndTime, intendedEndTime);
         rejectSlotChangeIfLocked(previousStatus, slotWouldChange);
         if (slotWouldChange) {
-            requireMoveTargetNotInPast(id, ScheduleMoveTargetGate.resolveMoveTarget(
-                    previousDate, previousStartTime, intendedDate, intendedStartTime, intendedEndTime));
+            requireMoveTimesNotInPast(id,
+                    SchedulePastTimeGate.toDateTime(previousDate, previousStartTime),
+                    SchedulePastTimeGate.resolveMoveTarget(
+                            previousDate, previousStartTime, intendedDate, intendedStartTime, intendedEndTime));
         }
 
         if (previousStatus != ScheduleStatus.COMPLETED && updateData.getStatus() == ScheduleStatus.COMPLETED) {
@@ -523,8 +526,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
     /**
      * 완료·취소 스케줄의 일시(슬롯) 변경을 거부한다.
      *
-     * <p>원래 일시가 지난 것만으로는 거부하지 않는다. 이동 후 시각은
-     * {@link #requireMoveTargetNotInPast} 가 판정한다.</p>
+     * <p>원래·이동 후 시각의 과거 여부는 {@link #requireMoveTimesNotInPast} 가 판정한다.</p>
      *
      * @param previousStatus 변경 전 상태
      * @param slotWouldChange date/startTime/endTime 중 하나라도 변경되는지
@@ -638,6 +640,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
     @Override
     public Schedule createConsultantSchedule(Long consultantId, Long clientId, LocalDate date,
             LocalTime startTime, LocalTime endTime, String title, String description, boolean tentativeBeforeDeposit) {
+        requireCreateStartNotInPast(date, startTime);
         if (tentativeBeforeDeposit && hasInstitutionLinkMappingForPair(consultantId, clientId)) {
             throw new RuntimeException(ScheduleServiceUserFacingMessages.MSG_INSTITUTION_LINK_NOT_PROVISIONAL);
         }
@@ -746,6 +749,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             log.warn("⚠️ Deprecated 파라미터: branchCode는 더 이상 사용하지 않음. branchCode={}", branchCode);
         }
         String tenantId = com.coresolution.core.context.TenantContextHolder.getTenantId();
+        requireCreateStartNotInPast(date, startTime);
         if (tentativeBeforeDeposit && hasInstitutionLinkMappingForPair(consultantId, clientId)) {
             throw new RuntimeException(ScheduleServiceUserFacingMessages.MSG_INSTITUTION_LINK_NOT_PROVISIONAL);
         }
@@ -831,6 +835,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
                                                   String title, String description) {
         log.info("📅 상담사 스케줄 생성 (유형 기반): 상담사 {}, 내담자 {}, 날짜 {}, 유형 {}", 
                 consultantId, clientId, date, consultationType.getDisplayName());
+        requireCreateStartNotInPast(date, startTime);
         
         if (!validateMappingForSchedule(consultantId, clientId)) {
             throw new RuntimeException("상담사와 내담자 간의 유효한 매칭이 없거나 승인되지 않았습니다.");
@@ -5259,6 +5264,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
     @Override
     public Schedule createBranchSchedule(Long branchId, Schedule schedule) {
         log.info("🏢 지점별 스케줄 생성: branchId={}, schedule={}", branchId, schedule.getTitle());
+        requireCreateStartNotInPast(schedule.getDate(), schedule.getStartTime());
         
         try {
             String tenantId = TenantContextHolder.getTenantId();
@@ -5621,11 +5627,24 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
     }
 
     @Override
-    public void requireMoveTargetNotInPast(Long scheduleId, LocalDateTime target) {
-        if (ScheduleMoveTargetGate.isTargetInPast(
-                target, ScheduleSessionStartGate.now(sessionStartClock, sessionStartZoneId))) {
-            log.info("과거 시각으로 일정 이동 거부: scheduleId={}, target={}", scheduleId, target);
-            throw new com.coresolution.consultation.exception.ScheduleMoveToPastException(scheduleId);
+    public void requireMoveTimesNotInPast(Long scheduleId, LocalDateTime originStart, LocalDateTime target) {
+        SchedulePastTimeGate.Denial denial = SchedulePastTimeGate.resolveMoveDenial(
+                originStart, target, ScheduleSessionStartGate.now(sessionStartClock, sessionStartZoneId));
+        if (denial != null) {
+            log.info("일정 이동 거부({}): scheduleId={}, origin={}, target={}",
+                    denial.getErrorCode(), scheduleId, originStart, target);
+            throw new com.coresolution.consultation.exception.SchedulePastTimeException(scheduleId, denial);
+        }
+    }
+
+    @Override
+    public void requireCreateStartNotInPast(LocalDate date, LocalTime startTime) {
+        LocalDateTime start = SchedulePastTimeGate.toDateTime(date, startTime);
+        SchedulePastTimeGate.Denial denial = SchedulePastTimeGate.resolveCreateDenial(
+                start, ScheduleSessionStartGate.now(sessionStartClock, sessionStartZoneId));
+        if (denial != null) {
+            log.info("일정 생성 거부({}): start={}", denial.getErrorCode(), start);
+            throw new com.coresolution.consultation.exception.SchedulePastTimeException(null, denial);
         }
     }
 

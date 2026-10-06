@@ -29,7 +29,7 @@ import com.coresolution.consultation.dto.MonthlyConsultantCountsResponse;
 import com.coresolution.consultation.dto.MonthlyMissingConsultationLogsResponse;
 import com.coresolution.consultation.dto.ScheduleCreateRequest;
 import com.coresolution.consultation.dto.ScheduleResponse;
-import com.coresolution.consultation.exception.ScheduleMoveToPastException;
+import com.coresolution.consultation.exception.SchedulePastTimeException;
 import com.coresolution.consultation.exception.ScheduleSessionNotStartedException;
 import com.coresolution.consultation.exception.ValidationException;
 import com.coresolution.consultation.entity.CommonCode;
@@ -58,7 +58,7 @@ import com.coresolution.consultation.service.support.ConsultationRecordDraftAcce
 import com.coresolution.consultation.service.support.ConsultationRecordWriter;
 import com.coresolution.consultation.service.ScheduleService;
 import com.coresolution.consultation.util.PermissionCheckUtils;
-import com.coresolution.consultation.util.ScheduleMoveTargetGate;
+import com.coresolution.consultation.util.SchedulePastTimeGate;
 import com.coresolution.consultation.util.ScheduleSlotTimes;
 import com.coresolution.consultation.util.UserRoleCapabilityUtils;
 import com.coresolution.consultation.utils.SessionUtils;
@@ -731,14 +731,9 @@ public class ScheduleController extends BaseApiController {
         }
         
         LocalDate date = LocalDate.parse(request.getDate());
-        if (date.isBefore(LocalDate.now())) {
-            log.warn("❌ 과거 날짜 예약 생성 거부: date={}", date);
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(ApiResponse.error("과거 날짜에는 예약할 수 없습니다."));
-        }
-        
         LocalTime startTime = LocalTime.parse(request.getStartTime());
         LocalTime endTime = LocalTime.parse(request.getEndTime());
+        scheduleService.requireCreateStartNotInPast(date, startTime);
         
         boolean isOnVacation = consultantAvailabilityService.isConsultantOnVacation(
             request.getConsultantId(), 
@@ -848,12 +843,14 @@ public class ScheduleController extends BaseApiController {
                 return ResponseEntity.badRequest()
                         .body(ApiResponse.error(denyMessage));
             }
-            scheduleService.requireMoveTargetNotInPast(id, ScheduleMoveTargetGate.resolveMoveTarget(
-                    dateBeforeSlotUpdate,
-                    startBeforeSlotUpdate,
-                    parseRequestedSlotValue(updateData, "date", LocalDate::parse),
-                    parseRequestedSlotValue(updateData, "startTime", LocalTime::parse),
-                    parseRequestedSlotValue(updateData, "endTime", LocalTime::parse)));
+            scheduleService.requireMoveTimesNotInPast(id,
+                    SchedulePastTimeGate.toDateTime(dateBeforeSlotUpdate, startBeforeSlotUpdate),
+                    SchedulePastTimeGate.resolveMoveTarget(
+                            dateBeforeSlotUpdate,
+                            startBeforeSlotUpdate,
+                            parseRequestedSlotValue(updateData, "date", LocalDate::parse),
+                            parseRequestedSlotValue(updateData, "startTime", LocalTime::parse),
+                            parseRequestedSlotValue(updateData, "endTime", LocalTime::parse)));
         }
         
         if (updateData.containsKey("date")) {
@@ -913,7 +910,7 @@ public class ScheduleController extends BaseApiController {
             Map<String, Object> data = Map.of("scheduleId", updatedSchedule.getId());
             log.info("✅ 스케줄 수정 완료: ID {}", updatedSchedule.getId());
             return updated("스케줄이 성공적으로 수정되었습니다.", data);
-        } catch (ScheduleSessionNotStartedException | ScheduleMoveToPastException e) {
+        } catch (ScheduleSessionNotStartedException | SchedulePastTimeException e) {
             throw e;
         } catch (IllegalStateException e) {
             log.warn("⚠️ 스케줄 수정 거부: id={}, message={}", id, e.getMessage());

@@ -45,8 +45,7 @@ public final class ScheduleSlotGuard {
     /**
      * 상태로 슬롯 변경이 잠긴 경우 사용자 메시지, 허용이면 null.
      *
-     * <p>원래 일시가 지났다는 이유로는 잠그지 않는다. 이동 후 시각의 과거 여부는
-     * {@link ScheduleMoveTargetGate} 가 판정한다(지난 일정도 미래로는 다시 옮길 수 있어야 한다).</p>
+     * <p>원래·이동 후 시각의 과거 여부는 {@link SchedulePastTimeGate} 가 따로 판정한다.</p>
      *
      * @param status 변경 전 상태
      * @return 거부 메시지 또는 null

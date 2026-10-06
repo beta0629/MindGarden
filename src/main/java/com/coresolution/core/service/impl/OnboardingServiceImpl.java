@@ -2313,33 +2313,8 @@ public class OnboardingServiceImpl implements OnboardingService {
                     OnboardingConstants.TENANT_SEED_DESC_MS_SESSIONS_EXHAUSTED, null,
                     OnboardingConstants.TENANT_SEED_SORT_MAPPING_STATUS_7, createdByValue);
 
-            // 전문가 유형(테넌트별): 상담사·놀이치료·언어치료. ABA 는 코드 관리에서만 추가.
-            addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId,
-                    OnboardingConstants.TENANT_COMMON_CODE_GROUP_PROFESSIONAL_PROVIDER_TYPE,
-                    OnboardingConstants.TENANT_SEED_CODE_VALUE_PROFESSIONAL_PROVIDER_DEFAULT,
-                    OnboardingConstants.TENANT_SEED_LABEL_PROFESSIONAL_PROVIDER_DEFAULT,
-                    OnboardingConstants.TENANT_SEED_LABEL_PROFESSIONAL_PROVIDER_DEFAULT,
-                    OnboardingConstants.TENANT_SEED_DESC_PROFESSIONAL_PROVIDER_DEFAULT,
-                    OnboardingConstants.TENANT_SEED_EXTRA_PROFESSIONAL_PROVIDER_DEFAULT,
-                    OnboardingConstants.TENANT_COMMON_CODE_DEFAULT_SORT_ORDER, createdByValue);
-            addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId,
-                    OnboardingConstants.TENANT_COMMON_CODE_GROUP_PROFESSIONAL_PROVIDER_TYPE,
-                    OnboardingConstants.TENANT_SEED_CODE_VALUE_PROFESSIONAL_PROVIDER_PLAY_THERAPY,
-                    OnboardingConstants.TENANT_SEED_LABEL_PROFESSIONAL_PROVIDER_PLAY_THERAPY,
-                    OnboardingConstants.TENANT_SEED_LABEL_PROFESSIONAL_PROVIDER_PLAY_THERAPY,
-                    OnboardingConstants.TENANT_SEED_DESC_PROFESSIONAL_PROVIDER_PLAY_THERAPY,
-                    OnboardingConstants.TENANT_SEED_EXTRA_PROFESSIONAL_PROVIDER_PLAY_THERAPY,
-                    OnboardingConstants.TENANT_SEED_SORT_PROFESSIONAL_PROVIDER_PLAY_THERAPY,
-                    createdByValue);
-            addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId,
-                    OnboardingConstants.TENANT_COMMON_CODE_GROUP_PROFESSIONAL_PROVIDER_TYPE,
-                    OnboardingConstants.TENANT_SEED_CODE_VALUE_PROFESSIONAL_PROVIDER_SPEECH_THERAPY,
-                    OnboardingConstants.TENANT_SEED_LABEL_PROFESSIONAL_PROVIDER_SPEECH_THERAPY,
-                    OnboardingConstants.TENANT_SEED_LABEL_PROFESSIONAL_PROVIDER_SPEECH_THERAPY,
-                    OnboardingConstants.TENANT_SEED_DESC_PROFESSIONAL_PROVIDER_SPEECH_THERAPY,
-                    OnboardingConstants.TENANT_SEED_EXTRA_PROFESSIONAL_PROVIDER_SPEECH_THERAPY,
-                    OnboardingConstants.TENANT_SEED_SORT_PROFESSIONAL_PROVIDER_SPEECH_THERAPY,
-                    createdByValue);
+            // 전문가 유형 기본 시드 10종. 시스템 권한은 CONSULTANT, 전문화는 code_value.
+            addProfessionalProviderTypeSeeds(codesToInsert, existingCodeKeys, tenantId, createdByValue);
 
             // 급여·ERP 필수 공통코드 (테넌트 행; 코어 폴백만 가정하지 않음). 시드 정의 동기화:
             // TenantOnboardingSalaryAndFinancialSeedDefinitions
@@ -2366,6 +2341,86 @@ public class OnboardingServiceImpl implements OnboardingService {
                     e.getMessage(), e);
             throw e;
         }
+    }
+
+    /**
+     * 상담센터 전문가 유형 기본 시드 10종.
+     * 시스템 권한은 CONSULTANT 이고, 전문화는 PROFESSIONAL_PROVIDER_TYPE code_value 이다.
+     * isDefault 는 DEFAULT_COUNSELOR 만 true.
+     */
+    private void addProfessionalProviderTypeSeeds(List<CommonCode> codesToInsert, Set<String> existingCodeKeys,
+            String tenantId, String createdByValue) {
+        addProfessionalProviderTypeSeed(codesToInsert, existingCodeKeys, tenantId, createdByValue,
+                OnboardingConstants.TENANT_SEED_CODE_VALUE_PROFESSIONAL_PROVIDER_DEFAULT,
+                OnboardingConstants.TENANT_SEED_LABEL_PROFESSIONAL_PROVIDER_DEFAULT,
+                OnboardingConstants.TENANT_SEED_DESC_PROFESSIONAL_PROVIDER_DEFAULT,
+                OnboardingConstants.TENANT_SEED_EXTRA_PROFESSIONAL_PROVIDER_DEFAULT,
+                OnboardingConstants.TENANT_COMMON_CODE_DEFAULT_SORT_ORDER);
+        addProfessionalProviderTypeSeed(codesToInsert, existingCodeKeys, tenantId, createdByValue,
+                OnboardingConstants.TENANT_SEED_CODE_VALUE_PROFESSIONAL_PROVIDER_PLAY_THERAPY,
+                OnboardingConstants.TENANT_SEED_LABEL_PROFESSIONAL_PROVIDER_PLAY_THERAPY,
+                OnboardingConstants.TENANT_SEED_DESC_PROFESSIONAL_PROVIDER_PLAY_THERAPY,
+                OnboardingConstants.TENANT_SEED_EXTRA_PROFESSIONAL_PROVIDER_PLAY_THERAPY,
+                OnboardingConstants.TENANT_SEED_SORT_PROFESSIONAL_PROVIDER_PLAY_THERAPY);
+        addProfessionalProviderTypeSeed(codesToInsert, existingCodeKeys, tenantId, createdByValue,
+                OnboardingConstants.TENANT_SEED_CODE_VALUE_PROFESSIONAL_PROVIDER_SPEECH_THERAPY,
+                OnboardingConstants.TENANT_SEED_LABEL_PROFESSIONAL_PROVIDER_SPEECH_THERAPY,
+                OnboardingConstants.TENANT_SEED_DESC_PROFESSIONAL_PROVIDER_SPEECH_THERAPY,
+                OnboardingConstants.TENANT_SEED_EXTRA_PROFESSIONAL_PROVIDER_SPEECH_THERAPY,
+                OnboardingConstants.TENANT_SEED_SORT_PROFESSIONAL_PROVIDER_SPEECH_THERAPY);
+        addProfessionalProviderTypeSeed(codesToInsert, existingCodeKeys, tenantId, createdByValue,
+                OnboardingConstants.TENANT_SEED_CODE_VALUE_PROFESSIONAL_PROVIDER_ABA_THERAPY,
+                OnboardingConstants.TENANT_SEED_LABEL_PROFESSIONAL_PROVIDER_ABA_THERAPY,
+                OnboardingConstants.TENANT_SEED_DESC_PROFESSIONAL_PROVIDER_ABA_THERAPY,
+                OnboardingConstants.TENANT_SEED_EXTRA_PROFESSIONAL_PROVIDER_ABA_THERAPY,
+                OnboardingConstants.TENANT_SEED_SORT_PROFESSIONAL_PROVIDER_ABA_THERAPY);
+        addProfessionalProviderTypeSeed(codesToInsert, existingCodeKeys, tenantId, createdByValue,
+                OnboardingConstants.TENANT_SEED_CODE_VALUE_PROFESSIONAL_PROVIDER_ART_THERAPY,
+                OnboardingConstants.TENANT_SEED_LABEL_PROFESSIONAL_PROVIDER_ART_THERAPY,
+                OnboardingConstants.TENANT_SEED_DESC_PROFESSIONAL_PROVIDER_ART_THERAPY,
+                OnboardingConstants.TENANT_SEED_EXTRA_PROFESSIONAL_PROVIDER_ART_THERAPY,
+                OnboardingConstants.TENANT_SEED_SORT_PROFESSIONAL_PROVIDER_ART_THERAPY);
+        addProfessionalProviderTypeSeed(codesToInsert, existingCodeKeys, tenantId, createdByValue,
+                OnboardingConstants.TENANT_SEED_CODE_VALUE_PROFESSIONAL_PROVIDER_MUSIC_THERAPY,
+                OnboardingConstants.TENANT_SEED_LABEL_PROFESSIONAL_PROVIDER_MUSIC_THERAPY,
+                OnboardingConstants.TENANT_SEED_DESC_PROFESSIONAL_PROVIDER_MUSIC_THERAPY,
+                OnboardingConstants.TENANT_SEED_EXTRA_PROFESSIONAL_PROVIDER_MUSIC_THERAPY,
+                OnboardingConstants.TENANT_SEED_SORT_PROFESSIONAL_PROVIDER_MUSIC_THERAPY);
+        addProfessionalProviderTypeSeed(codesToInsert, existingCodeKeys, tenantId, createdByValue,
+                OnboardingConstants.TENANT_SEED_CODE_VALUE_PROFESSIONAL_PROVIDER_OCCUPATIONAL_THERAPY,
+                OnboardingConstants.TENANT_SEED_LABEL_PROFESSIONAL_PROVIDER_OCCUPATIONAL_THERAPY,
+                OnboardingConstants.TENANT_SEED_DESC_PROFESSIONAL_PROVIDER_OCCUPATIONAL_THERAPY,
+                OnboardingConstants.TENANT_SEED_EXTRA_PROFESSIONAL_PROVIDER_OCCUPATIONAL_THERAPY,
+                OnboardingConstants.TENANT_SEED_SORT_PROFESSIONAL_PROVIDER_OCCUPATIONAL_THERAPY);
+        addProfessionalProviderTypeSeed(codesToInsert, existingCodeKeys, tenantId, createdByValue,
+                OnboardingConstants.TENANT_SEED_CODE_VALUE_PROFESSIONAL_PROVIDER_SENSORY_INTEGRATION,
+                OnboardingConstants.TENANT_SEED_LABEL_PROFESSIONAL_PROVIDER_SENSORY_INTEGRATION,
+                OnboardingConstants.TENANT_SEED_DESC_PROFESSIONAL_PROVIDER_SENSORY_INTEGRATION,
+                OnboardingConstants.TENANT_SEED_EXTRA_PROFESSIONAL_PROVIDER_SENSORY_INTEGRATION,
+                OnboardingConstants.TENANT_SEED_SORT_PROFESSIONAL_PROVIDER_SENSORY_INTEGRATION);
+        addProfessionalProviderTypeSeed(codesToInsert, existingCodeKeys, tenantId, createdByValue,
+                OnboardingConstants.TENANT_SEED_CODE_VALUE_PROFESSIONAL_PROVIDER_COGNITIVE_THERAPY,
+                OnboardingConstants.TENANT_SEED_LABEL_PROFESSIONAL_PROVIDER_COGNITIVE_THERAPY,
+                OnboardingConstants.TENANT_SEED_DESC_PROFESSIONAL_PROVIDER_COGNITIVE_THERAPY,
+                OnboardingConstants.TENANT_SEED_EXTRA_PROFESSIONAL_PROVIDER_COGNITIVE_THERAPY,
+                OnboardingConstants.TENANT_SEED_SORT_PROFESSIONAL_PROVIDER_COGNITIVE_THERAPY);
+        addProfessionalProviderTypeSeed(codesToInsert, existingCodeKeys, tenantId, createdByValue,
+                OnboardingConstants.TENANT_SEED_CODE_VALUE_PROFESSIONAL_PROVIDER_CLINICAL_PSYCHOLOGIST,
+                OnboardingConstants.TENANT_SEED_LABEL_PROFESSIONAL_PROVIDER_CLINICAL_PSYCHOLOGIST,
+                OnboardingConstants.TENANT_SEED_DESC_PROFESSIONAL_PROVIDER_CLINICAL_PSYCHOLOGIST,
+                OnboardingConstants.TENANT_SEED_EXTRA_PROFESSIONAL_PROVIDER_CLINICAL_PSYCHOLOGIST,
+                OnboardingConstants.TENANT_SEED_SORT_PROFESSIONAL_PROVIDER_CLINICAL_PSYCHOLOGIST);
+    }
+
+    /**
+     * 전문가 유형 시드 한 행. 그룹은 PROFESSIONAL_PROVIDER_TYPE 으로 고정한다.
+     */
+    private void addProfessionalProviderTypeSeed(List<CommonCode> codesToInsert, Set<String> existingCodeKeys,
+            String tenantId, String createdByValue, String codeValue, String label, String description,
+            String extraData, int sortOrder) {
+        addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId,
+                OnboardingConstants.TENANT_COMMON_CODE_GROUP_PROFESSIONAL_PROVIDER_TYPE,
+                codeValue, label, label, description, extraData, sortOrder, createdByValue);
     }
 
     /**

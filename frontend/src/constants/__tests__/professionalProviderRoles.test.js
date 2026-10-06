@@ -13,10 +13,30 @@ import {
   normalizeTenantCommonCodeRow,
   mergeProfessionalProviderTypeCodeRows,
   fetchProfessionalProviderTypeSelectOptions,
+  getProfessionalProviderTypeLabel,
+  PROFESSIONAL_PROVIDER_TYPE_LABELS,
   TENANT_PROFESSIONAL_PROVIDER_TYPE_CODES_PATH
 } from '../professionalProviderRoles';
 
 describe('professionalProviderRoles', () => {
+  test('PROFESSIONAL_PROVIDER_TYPE_LABELS fallback covers the default seed of 10', () => {
+    expect(PROFESSIONAL_PROVIDER_TYPE_LABELS).toEqual({
+      DEFAULT_COUNSELOR: '상담사',
+      PLAY_THERAPY: '놀이치료',
+      SPEECH_THERAPY: '언어치료',
+      ABA_THERAPY: 'ABA',
+      ART_THERAPY: '미술치료',
+      MUSIC_THERAPY: '음악치료',
+      OCCUPATIONAL_THERAPY: '작업치료',
+      SENSORY_INTEGRATION: '감각통합치료',
+      COGNITIVE_THERAPY: '인지학습치료',
+      CLINICAL_PSYCHOLOGIST: '임상심리사(심리검사)'
+    });
+    expect(Object.keys(PROFESSIONAL_PROVIDER_TYPE_LABELS)).toHaveLength(10);
+    expect(getProfessionalProviderTypeLabel('ABA_THERAPY')).toBe('ABA');
+    expect(getProfessionalProviderTypeLabel('CLINICAL_PSYCHOLOGIST')).toBe('임상심리사(심리검사)');
+  });
+
   test('extractTenantCommonCodeGroupList unwraps data', () => {
     expect(extractTenantCommonCodeGroupList(null)).toEqual([]);
     expect(extractTenantCommonCodeGroupList({ data: [{ codeValue: 'A' }] })).toEqual([

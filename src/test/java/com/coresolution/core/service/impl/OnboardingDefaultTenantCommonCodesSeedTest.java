@@ -214,8 +214,8 @@ class OnboardingDefaultTenantCommonCodesSeedTest {
     }
 
     @Test
-    @DisplayName("insertDefaultTenantCommonCodes 후 전문가 유형은 상담·놀이·언어만 시드한다")
-    void insertDefaultTenantCommonCodes_seedsProfessionalProviderTypesWithoutAba() {
+    @DisplayName("insertDefaultTenantCommonCodes 후 전문가 유형 기본 시드는 10종이다")
+    void insertDefaultTenantCommonCodes_seedsProfessionalProviderTypesFullSet() {
         String tenantId = "tenant-ppt-" + UUID.randomUUID();
 
         ReflectionTestUtils.invokeMethod(onboardingService, "insertDefaultTenantCommonCodes", tenantId,
@@ -225,18 +225,34 @@ class OnboardingDefaultTenantCommonCodesSeedTest {
                 OnboardingConstants.TENANT_COMMON_CODE_GROUP_PROFESSIONAL_PROVIDER_TYPE);
 
         assertThat(types).extracting(CommonCode::getCodeValue).containsExactly(
-                OnboardingConstants.TENANT_SEED_CODE_VALUE_PROFESSIONAL_PROVIDER_DEFAULT,
-                OnboardingConstants.TENANT_SEED_CODE_VALUE_PROFESSIONAL_PROVIDER_PLAY_THERAPY,
-                OnboardingConstants.TENANT_SEED_CODE_VALUE_PROFESSIONAL_PROVIDER_SPEECH_THERAPY);
-        assertThat(types).extracting(CommonCode::getCodeValue).doesNotContain("ABA");
+                "DEFAULT_COUNSELOR",
+                "PLAY_THERAPY",
+                "SPEECH_THERAPY",
+                "ABA_THERAPY",
+                "ART_THERAPY",
+                "MUSIC_THERAPY",
+                "OCCUPATIONAL_THERAPY",
+                "SENSORY_INTEGRATION",
+                "COGNITIVE_THERAPY",
+                "CLINICAL_PSYCHOLOGIST");
+        assertThat(types).extracting(CommonCode::getCodeLabel).containsExactly(
+                "상담사",
+                "놀이치료",
+                "언어치료",
+                "ABA",
+                "미술치료",
+                "음악치료",
+                "작업치료",
+                "감각통합치료",
+                "인지학습치료",
+                "임상심리사(심리검사)");
         assertThat(types).extracting(CommonCode::getSortOrder).containsExactly(
-                OnboardingConstants.TENANT_COMMON_CODE_DEFAULT_SORT_ORDER,
-                OnboardingConstants.TENANT_SEED_SORT_PROFESSIONAL_PROVIDER_PLAY_THERAPY,
-                OnboardingConstants.TENANT_SEED_SORT_PROFESSIONAL_PROVIDER_SPEECH_THERAPY);
+                0, 10, 20, 30, 40, 50, 60, 70, 80, 90);
         assertThat(types).allSatisfy(code -> assertThat(code.getExtraData())
-                .contains("systemAuthorityRole")
-                .contains("CONSULTANT"));
+                .contains("\"systemAuthorityRole\":\"CONSULTANT\""));
         assertThat(types.get(0).getExtraData()).contains("\"isDefault\":true");
+        assertThat(types.stream().skip(1)).allSatisfy(code ->
+                assertThat(code.getExtraData()).contains("\"isDefault\":false"));
         verify(tenantCommonCodeCacheEvictor, atLeastOnce()).evictTenantAndCoreCodesAfterCommit();
     }
 }

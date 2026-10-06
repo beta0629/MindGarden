@@ -34,6 +34,22 @@ public final class AdminServiceUserFacingMessages {
     public static final String MSG_TENANT_REQUIRED_CONSULTATION_INCOME_FMT =
             "테넌트는 필수입니다. tenantId 없이 상담료 수입 거래를 생성할 수 없습니다. MappingID=%d";
 
+    /** 추가 회기 INCOME — 금액이 없어 입금 확인을 롤백할 때. */
+    public static final String MSG_ADDITIONAL_INCOME_AMOUNT_MISSING_FMT =
+            "유효한 추가 결제 금액이 없습니다: MappingID=%d";
+
+    /** 추가 회기 INCOME — 중복 조회가 실패해 입금 확인을 롤백할 때. */
+    public static final String MSG_ADDITIONAL_INCOME_DUP_CHECK_FAILED_FMT =
+            "추가 회기 중복 거래 확인 중 오류: MappingID=%d";
+
+    /** 추가 회기 INCOME — 생성 응답이 없어 입금 확인을 롤백할 때. */
+    public static final String MSG_ADDITIONAL_INCOME_CREATE_RESPONSE_MISSING_FMT =
+            "추가 회기 INCOME createTransaction 응답 없음: MappingID=%d";
+
+    /** 추가 회기 INCOME — 생성 행 재조회가 실패해 입금 확인을 롤백할 때. */
+    public static final String MSG_ADDITIONAL_INCOME_RELOAD_FAILED_FMT =
+            "추가 회기 INCOME 재조회 실패: MappingID=%d, txId=%s";
+
     public static final String MSG_TENANT_REQUIRED_MAPPING_ID_FMT =
             "테넌트는 필수입니다. MappingID=%d";
 

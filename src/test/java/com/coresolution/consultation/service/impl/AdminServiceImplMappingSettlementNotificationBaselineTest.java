@@ -212,10 +212,10 @@ class AdminServiceImplMappingSettlementNotificationBaselineTest {
 
         when(mappingRepository.findByTenantIdAndId(eq(TEST_TENANT_ID), eq(mappingId))).thenReturn(Optional.of(mapping));
         when(mappingRepository.save(any(ConsultantClientMapping.class))).thenAnswer(inv -> inv.getArgument(0));
-        doNothing().when(adminService).createConsultationIncomeTransactionAsync(any(ConsultantClientMapping.class));
 
         adminService.confirmPayment(mappingId, "CARD", "REF-PAY-001", 100_000L);
 
+        verify(financialTransactionService, never()).createTransaction(any(), any());
         verify(mappingSettlementNotificationHelper).notifyAfterMappingSettlement(
                 any(ConsultantClientMapping.class), eq(TEST_TENANT_ID), eq(MappingSettlementScenario.PAYMENT_CONFIRMED));
         verify(consultationMessageService, never()).sendMessage(any(), any(), any(), any(), any(), any(), any(), any(),

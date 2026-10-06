@@ -3378,7 +3378,8 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
                 return;
             }
             ConsultantClientMapping mapping = mappingOpt.get();
-            if (ProvisionalConsultationLogSession.isProvisionalWithoutDeduction(mapping)) {
+            if (MappingPaymentScheduleGate.blocksSessionConsumeFallback(
+                    mapping.getStatus(), mapping.getPaymentTiming())) {
                 schedule.setSessionSequence(null);
                 scheduleRepository.save(schedule);
                 log.info("가예약 회차 해제(잔여 복원 없음): scheduleId={}, mappingId={}, remaining={}",
@@ -3612,6 +3613,11 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
                 ConsultantClientMapping mapping = byId.get();
                 if (mapping.getStatus() == ConsultantClientMapping.MappingStatus.ACTIVE
                         || mapping.getStatus() == ConsultantClientMapping.MappingStatus.SESSIONS_EXHAUSTED) {
+                    return byId;
+                }
+                // 결제 대기 매핑의 회차는 차감 없이 붙은 것이라 다른 결제 매핑으로 복원을 넘기지 않는다.
+                if (MappingPaymentScheduleGate.blocksSessionConsumeFallback(
+                        mapping.getStatus(), mapping.getPaymentTiming())) {
                     return byId;
                 }
                 log.warn("일정 mappingId 매핑이 ACTIVE/SESSIONS_EXHAUSTED 아님 — fallback: scheduleId={}, mappingId={}, status={}",

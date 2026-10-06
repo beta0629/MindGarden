@@ -4242,7 +4242,22 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         }
         int total = mapping.getTotalSessions() != null ? mapping.getTotalSessions() : 0;
         return calculateRefundableAmount(mapping.getPackagePrice(), total - addonSessions,
-                resolveOriginalTotalSessions(mapping) - addonSessions, targetRefundSessions, alreadyRefunded);
+                resolveRefundBasisOriginalTotalSessions(mapping, addonRefund) - addonSessions,
+                targetRefundSessions, alreadyRefunded);
+    }
+
+    /**
+     * 환불 단가 분모로 쓰는 원래 총회기. 앞선 부분 환불로 이미 되돌린 병합 B 회기는 A 회기가 아니므로 뺀다.
+     *
+     * @param mapping 대상 A
+     * @param addonRefund 병합 B 판정 결과
+     * @return 원래 총회기 (현재 총회기 이상)
+     */
+    private static int resolveRefundBasisOriginalTotalSessions(ConsultantClientMapping mapping,
+            ConsultationDepositIncomeLedger.MergedAddonRefund addonRefund) {
+        int total = mapping.getTotalSessions() != null ? mapping.getTotalSessions() : 0;
+        int reversed = addonRefund != null ? addonRefund.reversedAddonSessions() : 0;
+        return Math.max(total, resolveOriginalTotalSessions(mapping) - reversed);
     }
 
     /**
@@ -8089,7 +8104,8 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             refundAmount = ledgerRefundAmount + addonRefund.addonIncomeAmount();
         } else {
             ledgerRefundAmount = calculateRefundableAmount(mapping.getPackagePrice(), totalSessions,
-                    resolveOriginalTotalSessions(mapping), refundedSessions, alreadyPartialRefunded);
+                    resolveRefundBasisOriginalTotalSessions(mapping, addonRefund), refundedSessions,
+                    alreadyPartialRefunded);
             refundAmount = ledgerRefundAmount;
         }
         // 환불 전표는 매칭 변경과 같은 트랜잭션에서 기록한다. 기록하지 못하면 매칭 변경까지 롤백(fail-closed).
@@ -8660,7 +8676,8 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                     lastAddedPrice, lastAddedSessions, refundSessions, refundAmount);
         } else if (mapping.getPackagePrice() != null && mapping.getTotalSessions() > 0) {
             refundAmount = calculateRefundableAmount(mapping.getPackagePrice(), mapping.getTotalSessions(),
-                    resolveOriginalTotalSessions(mapping), refundSessions, alreadyPartialRefunded);
+                    resolveRefundBasisOriginalTotalSessions(mapping, resolvedAddon), refundSessions,
+                    alreadyPartialRefunded);
             calculationMethod = "전체 패키지 비례 계산";
             log.info("💰 전체 패키지 비례 계산: 전체가격={}, 전체회기={}, 환불회기={}, 환불금액={}", 
                     mapping.getPackagePrice(), mapping.getTotalSessions(), refundSessions, refundAmount);

@@ -165,7 +165,8 @@ public final class ConsultationDepositIncomeLedger {
      *   <li>B 미사용: {@code 원래 총회기 - 사용 회기 >= B 회기 합} 이고 {@code 잔여 회기 >= B 회기 합}.
      *       뒤 조건은 앞선 부분 환불이 B 회기까지 빼 갔으면 되돌리지 않기 위한 보수 조건이다.</li>
      * </ul>
-     * 판정할 수 없으면(B 회기 미기록 등) 되돌리지 않는다.
+     * 판정할 수 없으면(B 회기 미기록 등) 되돌리지 않는다. INCOME 이 있었으나 모두 취소된 병합 행(앞선 환불로
+     * 되돌린 B)의 회기는 {@link MergedAddonRefund#reversedAddonSessions()} 로 따로 돌려준다.
      *
      * @param repository 재무 거래 저장소
      * @param tenantId 테넌트 ID
@@ -184,6 +185,8 @@ public final class ConsultationDepositIncomeLedger {
         List<Long> addonIds = new ArrayList<>();
         int addonSessions = 0;
         long addonIncome = 0L;
+        int reversedSessions = 0;
+        boolean undeterminable = false;
         for (ConsultantClientMapping other : pairMappings) {
             if (other == null || other.getId() == null || target.getId().equals(other.getId())
                     || !isMergedIntoTarget(other, target.getId())) {
@@ -192,27 +195,33 @@ public final class ConsultationDepositIncomeLedger {
             if (other.getTenantId() != null && !tenantId.equals(other.getTenantId())) {
                 continue;
             }
-            long income = sumValidMappingSlotIncome(repository, tenantId, other.getId());
+            List<FinancialTransaction> incomeRows = findMappingSlotIncomeRows(repository, tenantId, other.getId());
+            long income = sumValidIncome(incomeRows);
+            Integer sessions = other.getTotalSessions();
+            boolean sessionsRecorded = sessions != null && sessions >= 1;
             if (income <= 0L) {
+                if (!incomeRows.isEmpty() && sessionsRecorded) {
+                    reversedSessions += sessions;
+                }
                 continue;
             }
-            Integer sessions = other.getTotalSessions();
-            if (sessions == null || sessions < 1) {
-                return MergedAddonRefund.none();
+            if (!sessionsRecorded) {
+                undeterminable = true;
+                continue;
             }
             addonIds.add(other.getId());
             addonSessions += sessions;
             addonIncome += income;
         }
-        if (addonIds.isEmpty()) {
-            return MergedAddonRefund.none();
+        if (addonIds.isEmpty() || undeterminable) {
+            return MergedAddonRefund.none(reversedSessions);
         }
         int used = target.getUsedSessions() != null ? target.getUsedSessions() : 0;
         int remaining = target.getRemainingSessions() != null ? target.getRemainingSessions() : 0;
-        if (!isMergedAddonUnused(originalTotalSessions, used, remaining, addonSessions)) {
-            return MergedAddonRefund.none();
+        if (!isMergedAddonUnused(originalTotalSessions - reversedSessions, used, remaining, addonSessions)) {
+            return MergedAddonRefund.none(reversedSessions);
         }
-        return new MergedAddonRefund(true, List.copyOf(addonIds), addonSessions, addonIncome);
+        return new MergedAddonRefund(true, List.copyOf(addonIds), addonSessions, addonIncome, reversedSessions);
     }
 
     /**
@@ -251,12 +260,9 @@ public final class ConsultationDepositIncomeLedger {
         return cancelled;
     }
 
-    /**
-     * 매핑 두 슬롯의 유효 INCOME 금액 합. 취소 대상({@code cancelRelatedPostedIncomeTransactions})과 같은 조건이다.
-     */
-    private static long sumValidMappingSlotIncome(FinancialTransactionRepository repository, String tenantId,
-            Long mappingId) {
-        BigDecimal sum = BigDecimal.ZERO;
+    private static List<FinancialTransaction> findMappingSlotIncomeRows(FinancialTransactionRepository repository,
+            String tenantId, Long mappingId) {
+        List<FinancialTransaction> incomeRows = new ArrayList<>();
         for (String relatedEntityType : MAPPING_SLOT_RELATED_ENTITY_TYPES) {
             List<FinancialTransaction> rows = repository
                     .findByTenantIdAndRelatedEntityIdAndRelatedEntityTypeAndIsDeletedFalse(
@@ -265,10 +271,21 @@ public final class ConsultationDepositIncomeLedger {
                 continue;
             }
             for (FinancialTransaction row : rows) {
-                if (row == null || row.getTransactionType() != FinancialTransaction.TransactionType.INCOME
-                        || !FinancialTransactionValidity.isValid(row) || row.getAmount() == null) {
-                    continue;
+                if (row != null && row.getTransactionType() == FinancialTransaction.TransactionType.INCOME) {
+                    incomeRows.add(row);
                 }
+            }
+        }
+        return incomeRows;
+    }
+
+    /**
+     * 유효 INCOME 금액 합. 취소 대상({@code cancelRelatedPostedIncomeTransactions})과 같은 조건이다.
+     */
+    private static long sumValidIncome(List<FinancialTransaction> incomeRows) {
+        BigDecimal sum = BigDecimal.ZERO;
+        for (FinancialTransaction row : incomeRows) {
+            if (FinancialTransactionValidity.isValid(row) && row.getAmount() != null) {
                 sum = sum.add(row.getAmount());
             }
         }
@@ -282,9 +299,11 @@ public final class ConsultationDepositIncomeLedger {
      * @param addonMappingIds 되돌릴 B 매핑 ID
      * @param addonSessions B 회기 합
      * @param addonIncomeAmount 취소할 B 유효 INCOME 금액 합 (환불액에 더하는 B 가격)
+     * @param reversedAddonSessions 앞선 환불로 이미 되돌린 B 회기 합 (INCOME 이 있었으나 모두 취소된 병합 행).
+     *        A 단가 분모(원래 총회기)에서 뺀다.
      */
     public record MergedAddonRefund(boolean reversible, List<Long> addonMappingIds, int addonSessions,
-            long addonIncomeAmount) {
+            long addonIncomeAmount, int reversedAddonSessions) {
 
         /**
          * 되돌리지 않음.
@@ -292,7 +311,17 @@ public final class ConsultationDepositIncomeLedger {
          * @return 빈 결과
          */
         public static MergedAddonRefund none() {
-            return new MergedAddonRefund(false, List.of(), 0, 0L);
+            return none(0);
+        }
+
+        /**
+         * 되돌리지 않음. 이미 되돌린 B 회기만 기록한다.
+         *
+         * @param reversedAddonSessions 이미 되돌린 B 회기 합
+         * @return 결과
+         */
+        public static MergedAddonRefund none(int reversedAddonSessions) {
+            return new MergedAddonRefund(false, List.of(), 0, 0L, Math.max(0, reversedAddonSessions));
         }
     }
 

@@ -20,7 +20,6 @@ import {
   parseClientScheduleNotesClientWideUnresolvedCount,
   parseClientScheduleNotesUnresolvedCount
 } from '../../../constants/schedule';
-import { isScheduleCalendarDragLocked } from '../../../utils/scheduleRescheduleUtils';
 import { CLIENT_REMINDER_SMS_FIELD } from '../../../constants/scheduleClientReminderSms';
 import ScheduleReminderSmsBadge from '../../admin/mapping-management/integrated-schedule/molecules/ScheduleReminderSmsBadge';
 import EngagementTypeBadge from '../../common/EngagementTypeBadge';
@@ -394,30 +393,25 @@ const ScheduleCalendarView = ({
             }
             return [];
         }
-        const eventDate = new Date(arg.event.start);
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        eventDate.setHours(0, 0, 0, 0);
-        
-        return eventDate < today ? ['fc-event-past'] : [];
+        return isScheduleMoveSourceLocked({
+            status: arg.event.extendedProps?.status,
+            start: arg.event.start
+        }) ? ['fc-event-past'] : [];
     };
 
-    // 과거 또는 완료·취소 예약 여부 (디저블 스타일 적용 대상)
-    const isEventPastOrCompleted = (ev) => {
-        return isScheduleCalendarDragLocked({
-            status: ev.extendedProps?.status,
-            start: ev.start,
-            end: ev.end
-        });
-    };
+    // 완료·취소 또는 시작이 지난 일정 — 드래그 핸들 비활성·흐림 스타일
+    const isEventPastOrCompleted = (ev) => isScheduleMoveSourceLocked({
+        status: ev.extendedProps?.status,
+        start: ev.start
+    });
 
     /** 마지막 eventAllow 가 «과거 시각 칸» 때문에 거부했는지 — eventDragStop 에서 사유 안내용 */
     const moveRejectedToPastRef = useRef(false);
 
     /**
      * 드래그·리사이즈 사전 차단 (FullCalendar eventAllow).
-     * 원본 잠금은 완료·취소 상태만(extendedProps.slotDragLocked, 매핑 시점 SSOT).
-     * 놓을 칸이 현재 시각 이전이면 놓을 수 없음으로 표시한다(scheduleMoveGuard).
+     * 원본 잠금은 완료·취소 또는 시작이 지난 일정(scheduleMoveGuard).
+     * 놓을 칸이 현재 시각 이전이면 놓을 수 없음으로 표시한다.
      *
      * 외부 사이드바 매핑 드롭은 holiday/vacation/slotDragLocked 보다 **최우선** 허용.
      * eventAllow=false 이면 eventReceive 미발화 → 부모 토스트 SSOT silent FAIL.
@@ -612,6 +606,7 @@ const ScheduleCalendarView = ({
                         sourceLockReason
                     )}
                     aria-label={integratedMonthEventLayout ? integratedMonthLabel : fullTooltip}
+                    aria-disabled={sourceLockReason ? 'true' : undefined}
                     style={integratedMonthEventLayout ? undefined : { borderLeftColor: borderColor }}
                 >
                     {integratedMonthEventLayout && (
@@ -659,6 +654,7 @@ const ScheduleCalendarView = ({
             <div
                 className={`mg-v2-ad-calendar-event${pastClass}${cancelledClass}`.trim()}
                 title={appendScheduleMoveLockTooltip(`${clientName} - ${statusLabel}`, sourceLockReason)}
+                aria-disabled={sourceLockReason ? 'true' : undefined}
             >
                 <div className="mg-v2-ad-calendar-event__time">{eventInfo.timeText}</div>
                 <div className="mg-v2-ad-calendar-event__title">

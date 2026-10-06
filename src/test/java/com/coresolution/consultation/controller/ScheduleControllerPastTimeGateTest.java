@@ -33,7 +33,7 @@ import com.coresolution.consultation.service.InstitutionLinkConsultationLogWrite
 import com.coresolution.consultation.service.RoleCommonCodeAuthorizationService;
 import com.coresolution.consultation.service.ScheduleListUserFieldsResolver;
 import com.coresolution.consultation.service.ScheduleService;
-import com.coresolution.consultation.util.SchedulePastTimeGate;
+import com.coresolution.consultation.util.ScheduleSlotGuard;
 import com.coresolution.core.dto.ApiResponse;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.LocalDate;
@@ -140,7 +140,7 @@ class ScheduleControllerPastTimeGateTest {
     @Test
     @DisplayName("지난 일정 이동을 서비스가 거부하면 SchedulePastTimeException 전파, 저장 없음")
     void pastScheduleMove_propagatesFromPast() {
-        doThrow(new SchedulePastTimeException(SCHEDULE_ID, SchedulePastTimeGate.Denial.MOVE_FROM_PAST))
+        doThrow(new SchedulePastTimeException(SCHEDULE_ID, ScheduleSlotGuard.Denial.MOVE_FROM_PAST))
             .when(scheduleService).requireMoveTimesNotInPast(eq(SCHEDULE_ID), any(), any());
 
         assertThatThrownBy(() ->
@@ -155,7 +155,7 @@ class ScheduleControllerPastTimeGateTest {
     @DisplayName("과거 시각 이동 → SchedulePastTimeException 전파, 저장 없음")
     void moveToPast_propagatesWithErrorCode() {
         existing.setDate(FUTURE_DATE);
-        doThrow(new SchedulePastTimeException(SCHEDULE_ID, SchedulePastTimeGate.Denial.MOVE_TO_PAST))
+        doThrow(new SchedulePastTimeException(SCHEDULE_ID, ScheduleSlotGuard.Denial.MOVE_TO_PAST))
             .when(scheduleService).requireMoveTimesNotInPast(eq(SCHEDULE_ID), any(LocalDateTime.class),
                 any(LocalDateTime.class));
 
@@ -169,7 +169,7 @@ class ScheduleControllerPastTimeGateTest {
     @DisplayName("서비스 단계 과거 거부를 errorCode 없는 400 으로 바꾸지 않고 전파")
     void serviceMoveToPast_notSwallowedByIllegalStateCatch() {
         when(scheduleService.updateSchedule(eq(SCHEDULE_ID), any(Schedule.class)))
-            .thenThrow(new SchedulePastTimeException(SCHEDULE_ID, SchedulePastTimeGate.Denial.MOVE_TO_PAST));
+            .thenThrow(new SchedulePastTimeException(SCHEDULE_ID, ScheduleSlotGuard.Denial.MOVE_TO_PAST));
 
         assertThatThrownBy(() ->
             controller.updateSchedule(SCHEDULE_ID, slotBody(FUTURE_DATE, "11:00", "11:50"), session))
@@ -230,7 +230,7 @@ class ScheduleControllerPastTimeGateTest {
     @Test
     @DisplayName("과거 시작으로 일정 생성 → SchedulePastTimeException, createConsultantSchedule 미호출")
     void create_pastStart_rejected() {
-        doThrow(new SchedulePastTimeException(null, SchedulePastTimeGate.Denial.CREATE_IN_PAST))
+        doThrow(new SchedulePastTimeException(null, ScheduleSlotGuard.Denial.CREATE_IN_PAST))
             .when(scheduleService).requireCreateStartNotInPast(PAST_DATE, START);
 
         assertThatThrownBy(() -> controller.createConsultantSchedule(createRequest(PAST_DATE, false), session))
@@ -244,7 +244,7 @@ class ScheduleControllerPastTimeGateTest {
     @Test
     @DisplayName("과거 시작 가예약 생성 → SchedulePastTimeException, 저장 없음")
     void create_tentativePastStart_rejected() {
-        doThrow(new SchedulePastTimeException(null, SchedulePastTimeGate.Denial.CREATE_IN_PAST))
+        doThrow(new SchedulePastTimeException(null, ScheduleSlotGuard.Denial.CREATE_IN_PAST))
             .when(scheduleService).requireCreateStartNotInPast(PAST_DATE, START);
 
         assertThatThrownBy(() -> controller.createConsultantSchedule(createRequest(PAST_DATE, true), session))

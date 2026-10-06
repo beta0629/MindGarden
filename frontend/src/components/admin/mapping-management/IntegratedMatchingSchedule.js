@@ -101,6 +101,7 @@ import {
   EXTERNAL_DROP_PROVISIONAL_ALREADY_HAS_SCHEDULE_MESSAGE,
   EXTERNAL_DROP_PROVISIONAL_TOAST_DURATION_MS
 } from '../../../utils/scheduleExternalDropGuards';
+import { startOfLocalCalendarDay } from '../../../utils/scheduleMoveGuard';
 import { USER_ROLES, mapLegacyRole } from '../../../constants/roles';
 import { API_ENDPOINTS } from '../../../constants/apiEndpoints';
 import { useTranslation } from 'react-i18next';
@@ -1025,7 +1026,7 @@ const IntegratedMatchingSchedule = () => {
       hasConsultationSchedule: mapping.hasConsultationSchedule === true,
       hasOpenOccupyingConsultationSchedule: mapping.hasOpenOccupyingConsultationSchedule === true
     };
-    handleDropFromExternal(new Date(), mappingPayload);
+    handleDropFromExternal(startOfLocalCalendarDay(), mappingPayload);
   };
 
   /**

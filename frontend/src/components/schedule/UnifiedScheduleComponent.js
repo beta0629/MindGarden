@@ -1219,7 +1219,7 @@ const UnifiedScheduleComponent = ({
         const status = event.extendedProps?.status;
         const originalStart = info.oldEvent?.start ?? event.start;
         const originalEnd = info.oldEvent?.end ?? event.end;
-        // 완료·취소 스케줄만 잠금. 원래 시각이 지났어도 미래로는 다시 옮길 수 있다.
+        // 완료·취소이거나 시작 시각이 지난 일정은 이동 잠금(지난 일정은 상태 변경만).
         const lockedMessage = getScheduleMoveSourceLockedMessage({ status, start: originalStart });
         if (lockedMessage) {
             info.revert();

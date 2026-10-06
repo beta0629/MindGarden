@@ -76,7 +76,7 @@ import com.coresolution.consultation.util.LeftoverOccupyingCompleteExhaust;
 import com.coresolution.consultation.util.MappingPaymentScheduleGate;
 import com.coresolution.consultation.util.ProvisionalConsultationLogSession;
 import com.coresolution.consultation.util.ScheduleCancelLinkedMappingReopen;
-import com.coresolution.consultation.util.SchedulePastTimeGate;
+import com.coresolution.consultation.util.ScheduleSlotGuard;
 import com.coresolution.consultation.util.ScheduleSessionStartGate;
 import com.coresolution.consultation.utils.SessionUtils;
 import com.coresolution.consultation.service.StatisticsService;
@@ -331,8 +331,8 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         rejectSlotChangeIfLocked(previousStatus, slotWouldChange);
         if (slotWouldChange) {
             requireMoveTimesNotInPast(id,
-                    SchedulePastTimeGate.toDateTime(previousDate, previousStartTime),
-                    SchedulePastTimeGate.resolveMoveTarget(
+                    ScheduleSlotGuard.toDateTime(previousDate, previousStartTime),
+                    ScheduleSlotGuard.resolveMoveTarget(
                             previousDate, previousStartTime, intendedDate, intendedStartTime, intendedEndTime));
         }
 
@@ -5628,7 +5628,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
 
     @Override
     public void requireMoveTimesNotInPast(Long scheduleId, LocalDateTime originStart, LocalDateTime target) {
-        SchedulePastTimeGate.Denial denial = SchedulePastTimeGate.resolveMoveDenial(
+        ScheduleSlotGuard.Denial denial = ScheduleSlotGuard.resolveMoveDenial(
                 originStart, target, ScheduleSessionStartGate.now(sessionStartClock, sessionStartZoneId));
         if (denial != null) {
             log.info("일정 이동 거부({}): scheduleId={}, origin={}, target={}",
@@ -5639,8 +5639,8 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
 
     @Override
     public void requireCreateStartNotInPast(LocalDate date, LocalTime startTime) {
-        LocalDateTime start = SchedulePastTimeGate.toDateTime(date, startTime);
-        SchedulePastTimeGate.Denial denial = SchedulePastTimeGate.resolveCreateDenial(
+        LocalDateTime start = ScheduleSlotGuard.toDateTime(date, startTime);
+        ScheduleSlotGuard.Denial denial = ScheduleSlotGuard.resolveCreateDenial(
                 start, ScheduleSessionStartGate.now(sessionStartClock, sessionStartZoneId));
         if (denial != null) {
             log.info("일정 생성 거부({}): start={}", denial.getErrorCode(), start);

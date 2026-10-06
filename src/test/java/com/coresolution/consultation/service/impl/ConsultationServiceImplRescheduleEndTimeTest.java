@@ -10,7 +10,7 @@ import com.coresolution.consultation.dto.EmailResponse;
 import com.coresolution.consultation.entity.Consultation;
 import com.coresolution.consultation.entity.Schedule;
 import com.coresolution.consultation.exception.SchedulePastTimeException;
-import com.coresolution.consultation.util.SchedulePastTimeGate;
+import com.coresolution.consultation.util.ScheduleSlotGuard;
 import com.coresolution.consultation.repository.ConsultationRepository;
 import com.coresolution.consultation.repository.ScheduleRepository;
 import com.coresolution.consultation.service.EmailService;
@@ -168,7 +168,7 @@ class ConsultationServiceImplRescheduleEndTimeTest {
     @DisplayName("과거 시각 재예약 → SchedulePastTimeException, 상담·연결 일정 저장 없음")
     void reschedule_toPast_rejectedWithoutSave() {
         LocalDateTime target = LocalDateTime.of(OLD_DATE, LocalTime.of(9, 0));
-        doThrow(new SchedulePastTimeException(null, SchedulePastTimeGate.Denial.MOVE_TO_PAST))
+        doThrow(new SchedulePastTimeException(null, ScheduleSlotGuard.Denial.MOVE_TO_PAST))
             .when(scheduleService).requireMoveTimesNotInPast(
                 null, LocalDateTime.of(OLD_DATE, OLD_START), target);
 

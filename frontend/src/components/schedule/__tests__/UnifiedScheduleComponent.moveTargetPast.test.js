@@ -1,6 +1,6 @@
 /**
- * UnifiedScheduleComponent handleEventDrop — 과거 칸 드롭은 API 호출 전 차단·안내,
- * 이미 지난 일정을 미래 칸으로 옮기면 PUT 호출. 서버 400 사유는 그대로 안내.
+ * UnifiedScheduleComponent handleEventDrop — 과거 칸 드롭·지난 일정 이동은 API 호출 전 차단·안내.
+ * 미래→미래 이동만 PUT. 서버 400 사유는 그대로 안내.
  *
  * @author CoreSolution
  * @since 2026-10-06
@@ -108,6 +108,19 @@ describe('UnifiedScheduleComponent 일정 이동 — 이동 후 시각 판정', 
     expect(StandardizedApi.put).not.toHaveBeenCalled();
     expect(info.revert).toHaveBeenCalled();
     expect(notificationManager.warning).toHaveBeenCalledWith(expect.stringContaining('일정을 옮길 수 없습니다'));
+  });
+
+  test('미래 일정을 미래 칸으로 → PUT 호출', async() => {
+    StandardizedApi.put.mockResolvedValue({});
+    const calendar = await renderAndGetDrop();
+    const info = dropInfo({ oldStart: at(1, 11), newStart: at(2, 11) });
+
+    await act(async() => {
+      await calendar.onEventDrop(info);
+    });
+
+    expect(StandardizedApi.put).toHaveBeenCalled();
+    expect(info.revert).not.toHaveBeenCalled();
   });
 
   test('이미 지난 일정(어제 11:00)을 미래 칸으로 → API 미호출 + 지난 일정 안내', async() => {

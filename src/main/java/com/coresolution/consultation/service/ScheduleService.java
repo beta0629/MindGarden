@@ -643,7 +643,7 @@ public interface ScheduleService {
      * 원래 시작 또는 이동 후 시각이 현재(설정 시간대, 기본 KST)보다 이전이면 이동을 거부한다.
      *
      * <p>드래그·예약 변경 모달·API 등 일정 일시를 바꾸는 모든 경로가 이 판정만 쓴다.
-     * 판정 규칙은 {@link com.coresolution.consultation.util.SchedulePastTimeGate}.
+     * 판정 규칙은 {@link com.coresolution.consultation.util.ScheduleSlotGuard}.
      * 상태만 바꾸는 요청(완료·취소·노쇼 등)은 호출하지 않는다.</p>
      *
      * @param scheduleId  대상 일정 ID (로그용, null 허용)
@@ -658,7 +658,7 @@ public interface ScheduleService {
     /**
      * 생성할 일정·가예약의 시작이 현재(설정 시간대, 기본 KST)보다 이전이면 거부한다.
      *
-     * <p>판정 규칙은 {@link com.coresolution.consultation.util.SchedulePastTimeGate}.</p>
+     * <p>판정 규칙은 {@link com.coresolution.consultation.util.ScheduleSlotGuard}.</p>
      *
      * @param date      시작 날짜 (null 이면 판정 생략)
      * @param startTime 시작 시각 (null 이면 자정)

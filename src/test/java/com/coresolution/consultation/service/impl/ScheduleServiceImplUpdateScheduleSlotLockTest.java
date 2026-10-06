@@ -21,7 +21,6 @@ import com.coresolution.consultation.service.ScheduleCreatedNotificationHelper;
 import com.coresolution.consultation.service.ScheduleListUserFieldsResolver;
 import com.coresolution.consultation.exception.SchedulePastTimeException;
 import com.coresolution.consultation.util.ReservationSmsBusinessHours;
-import com.coresolution.consultation.util.SchedulePastTimeGate;
 import com.coresolution.consultation.util.ScheduleSlotGuard;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.security.TenantAccessControlService;
@@ -123,7 +122,7 @@ class ScheduleServiceImplUpdateScheduleSlotLockTest {
         assertThatThrownBy(() -> scheduleService.updateSchedule(SCHEDULE_ID, patch))
                 .isInstanceOf(SchedulePastTimeException.class)
                 .extracting(e -> ((SchedulePastTimeException) e).getErrorCode())
-                .isEqualTo(SchedulePastTimeGate.Denial.MOVE_FROM_PAST.getErrorCode());
+                .isEqualTo(ScheduleSlotGuard.Denial.MOVE_FROM_PAST.getErrorCode());
         verify(scheduleRepository, never()).save(any());
     }
 
@@ -142,6 +141,22 @@ class ScheduleServiceImplUpdateScheduleSlotLockTest {
 
         assertThat(saved.getTitle()).isEqualTo("new-title");
         verify(scheduleRepository).save(any(Schedule.class));
+    }
+
+    @Test
+    @DisplayName("미래 CONFIRMED → 과거 슬롯 이동은 SCHEDULE_MOVE_TO_PAST")
+    void updateSchedule_futureToPastSlotChange_rejected() {
+        LocalDate tomorrow = LocalDate.now(ReservationSmsBusinessHours.ZONE_SEOUL).plusDays(1);
+        LocalDate yesterday = LocalDate.now(ReservationSmsBusinessHours.ZONE_SEOUL).minusDays(1);
+        Schedule existing = baseSchedule(ScheduleStatus.CONFIRMED, tomorrow);
+        Schedule patch = slotPatch(yesterday, LocalTime.of(14, 0), LocalTime.of(15, 0));
+        stubFind(existing);
+
+        assertThatThrownBy(() -> scheduleService.updateSchedule(SCHEDULE_ID, patch))
+                .isInstanceOf(SchedulePastTimeException.class)
+                .extracting(e -> ((SchedulePastTimeException) e).getErrorCode())
+                .isEqualTo(ScheduleSlotGuard.Denial.MOVE_TO_PAST.getErrorCode());
+        verify(scheduleRepository, never()).save(any());
     }
 
     @Test

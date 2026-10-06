@@ -14,6 +14,7 @@ import com.coresolution.consultation.constant.ScheduleStatus;
 import com.coresolution.consultation.entity.Schedule;
 import com.coresolution.consultation.exception.EntityNotFoundException;
 import com.coresolution.consultation.exception.SchedulePastTimeException;
+import com.coresolution.consultation.repository.ConsultantClientMappingRepository;
 import com.coresolution.consultation.repository.NotificationBatchSendLogRepository;
 import com.coresolution.consultation.repository.ScheduleRepository;
 import com.coresolution.consultation.service.ImmediateReservationSmsDeferralService;
@@ -23,7 +24,7 @@ import com.coresolution.consultation.service.ScheduleChangeNotificationDebounceS
 import com.coresolution.consultation.service.ScheduleCreatedNotificationHelper;
 import com.coresolution.consultation.service.ScheduleListUserFieldsResolver;
 import com.coresolution.consultation.util.ReservationSmsBusinessHours;
-import com.coresolution.consultation.util.SchedulePastTimeGate;
+import com.coresolution.consultation.util.ScheduleSlotGuard;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.security.TenantAccessControlService;
 import java.time.Clock;
@@ -68,6 +69,8 @@ class ScheduleServiceImplPastTimeGateTest {
     @Mock
     private ScheduleRepository scheduleRepository;
     @Mock
+    private ConsultantClientMappingRepository mappingRepository;
+    @Mock
     private TenantAccessControlService accessControlService;
     @Mock
     private NotificationService notificationService;
@@ -93,6 +96,8 @@ class ScheduleServiceImplPastTimeGateTest {
         SecurityContextHolder.clearContext();
         useKstNow(TODAY.atTime(14, 0));
         when(scheduleRepository.save(any(Schedule.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(mappingRepository.findActiveExhaustedOrPendingPaymentListByTenantIdAndConsultantIdAndClientId(
+                any(), any(), any())).thenReturn(java.util.List.of());
     }
 
     @AfterEach
@@ -108,9 +113,9 @@ class ScheduleServiceImplPastTimeGateTest {
 
         assertThatThrownBy(() -> scheduleService.updateSchedule(SCHEDULE_ID, slot(TODAY, ELEVEN, ELEVEN_FIFTY)))
                 .isInstanceOf(SchedulePastTimeException.class)
-                .hasMessage(SchedulePastTimeGate.Denial.MOVE_TO_PAST.getMessage())
+                .hasMessage(ScheduleSlotGuard.Denial.MOVE_TO_PAST.getMessage())
                 .extracting(e -> ((SchedulePastTimeException) e).getErrorCode())
-                .isEqualTo(SchedulePastTimeGate.Denial.MOVE_TO_PAST.getErrorCode());
+                .isEqualTo(ScheduleSlotGuard.Denial.MOVE_TO_PAST.getErrorCode());
         verify(scheduleRepository, never()).save(any());
     }
 
@@ -134,7 +139,7 @@ class ScheduleServiceImplPastTimeGateTest {
                 scheduleService.updateSchedule(SCHEDULE_ID, slot(TODAY.plusDays(1), ELEVEN, ELEVEN_FIFTY)))
                 .isInstanceOf(SchedulePastTimeException.class)
                 .extracting(e -> ((SchedulePastTimeException) e).getErrorCode())
-                .isEqualTo(SchedulePastTimeGate.Denial.MOVE_FROM_PAST.getErrorCode());
+                .isEqualTo(ScheduleSlotGuard.Denial.MOVE_FROM_PAST.getErrorCode());
         verify(scheduleRepository, never()).save(any());
     }
 
@@ -147,7 +152,7 @@ class ScheduleServiceImplPastTimeGateTest {
                 SCHEDULE_ID, slot(TODAY, LocalTime.of(15, 0), LocalTime.of(15, 50))))
                 .isInstanceOf(SchedulePastTimeException.class)
                 .extracting(e -> ((SchedulePastTimeException) e).getErrorCode())
-                .isEqualTo(SchedulePastTimeGate.Denial.MOVE_FROM_PAST.getErrorCode());
+                .isEqualTo(ScheduleSlotGuard.Denial.MOVE_FROM_PAST.getErrorCode());
         verify(scheduleRepository, never()).save(any());
     }
 
@@ -231,7 +236,7 @@ class ScheduleServiceImplPastTimeGateTest {
         assertThatThrownBy(() -> scheduleService.updateSchedule(SCHEDULE_ID, endOnly(LocalTime.of(14, 40))))
                 .isInstanceOf(SchedulePastTimeException.class)
                 .extracting(e -> ((SchedulePastTimeException) e).getErrorCode())
-                .isEqualTo(SchedulePastTimeGate.Denial.MOVE_FROM_PAST.getErrorCode());
+                .isEqualTo(ScheduleSlotGuard.Denial.MOVE_FROM_PAST.getErrorCode());
     }
 
     @Test
@@ -286,12 +291,12 @@ class ScheduleServiceImplPastTimeGateTest {
                 scheduleService.requireMoveTimesNotInPast(9L, TODAY.atTime(13, 0), TODAY.atTime(15, 0)))
                 .isInstanceOf(SchedulePastTimeException.class)
                 .extracting(e -> ((SchedulePastTimeException) e).getErrorCode())
-                .isEqualTo(SchedulePastTimeGate.Denial.MOVE_FROM_PAST.getErrorCode());
+                .isEqualTo(ScheduleSlotGuard.Denial.MOVE_FROM_PAST.getErrorCode());
         assertThatThrownBy(() ->
                 scheduleService.requireMoveTimesNotInPast(9L, TODAY.plusDays(1).atTime(11, 0), TODAY.atTime(13, 0)))
                 .isInstanceOf(SchedulePastTimeException.class)
                 .extracting(e -> ((SchedulePastTimeException) e).getErrorCode())
-                .isEqualTo(SchedulePastTimeGate.Denial.MOVE_TO_PAST.getErrorCode());
+                .isEqualTo(ScheduleSlotGuard.Denial.MOVE_TO_PAST.getErrorCode());
         scheduleService.requireMoveTimesNotInPast(9L, TODAY.atTime(15, 0), TODAY.atTime(16, 0));
         scheduleService.requireMoveTimesNotInPast(9L, null, null);
     }
@@ -302,7 +307,7 @@ class ScheduleServiceImplPastTimeGateTest {
         assertThatThrownBy(() -> scheduleService.requireCreateStartNotInPast(TODAY, LocalTime.of(13, 59)))
                 .isInstanceOf(SchedulePastTimeException.class)
                 .extracting(e -> ((SchedulePastTimeException) e).getErrorCode())
-                .isEqualTo(SchedulePastTimeGate.Denial.CREATE_IN_PAST.getErrorCode());
+                .isEqualTo(ScheduleSlotGuard.Denial.CREATE_IN_PAST.getErrorCode());
         scheduleService.requireCreateStartNotInPast(TODAY, LocalTime.of(14, 0));
         scheduleService.requireCreateStartNotInPast(TODAY.plusDays(1), ELEVEN);
         scheduleService.requireCreateStartNotInPast(null, ELEVEN);
@@ -319,7 +324,7 @@ class ScheduleServiceImplPastTimeGateTest {
         assertThatThrownBy(() -> scheduleService.createSchedule(incoming))
                 .isInstanceOf(SchedulePastTimeException.class)
                 .extracting(e -> ((SchedulePastTimeException) e).getErrorCode())
-                .isEqualTo(SchedulePastTimeGate.Denial.CREATE_IN_PAST.getErrorCode());
+                .isEqualTo(ScheduleSlotGuard.Denial.CREATE_IN_PAST.getErrorCode());
         verify(scheduleRepository, never()).save(any());
     }
 

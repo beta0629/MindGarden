@@ -15,7 +15,11 @@ import ActionBarButton from '../common/ActionBarButton';
 import notificationManager from '../../utils/notification';
 import { useSession } from '../../contexts/SessionContext';
 import StandardizedApi from '../../utils/standardizedApi';
-import { resolveScheduleMoveFailureMessage } from '../../utils/scheduleMoveGuard';
+import {
+  getScheduleCreateInPastMessage,
+  isScheduleMoveTargetKeyInPast,
+  resolveScheduleMoveFailureMessage
+} from '../../utils/scheduleMoveGuard';
 import '../../styles/modules/schedule-modal.css';
 import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import './ScheduleB0KlA.css';
@@ -229,7 +233,11 @@ const ScheduleModalNew = ({
             const month = String(effectiveSelectedDate.getMonth() + 1).padStart(2, '0');
             const day = String(effectiveSelectedDate.getDate()).padStart(2, '0');
             const dateString = `${year}-${month}-${day}`;
-            
+            if (isScheduleMoveTargetKeyInPast(dateString, startTime)) {
+                notificationManager.warning(getScheduleCreateInPastMessage());
+                return;
+            }
+
             const scheduleData = {
                 consultantId: selectedConsultant.originalId || selectedConsultant.id,
                 clientId: selectedClient.originalId || selectedClient.id,

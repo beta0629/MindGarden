@@ -19,7 +19,7 @@ import {
   isScheduleStatusSlotLocked
 } from './scheduleRescheduleUtils';
 
-/** 서버 과거 이동·생성 거부 오류 코드 (SchedulePastTimeGate.Denial). */
+/** 서버 과거 이동·생성 거부 오류 코드 (ScheduleSlotGuard.Denial). */
 export const SCHEDULE_MOVE_FROM_PAST_ERROR_CODE = 'SCHEDULE_MOVE_FROM_PAST';
 export const SCHEDULE_MOVE_TO_PAST_ERROR_CODE = 'SCHEDULE_MOVE_TO_PAST';
 export const SCHEDULE_CREATE_IN_PAST_ERROR_CODE = 'SCHEDULE_CREATE_IN_PAST';
@@ -44,6 +44,24 @@ const PAST_TIME_I18N_BY_CODE = {
 };
 
 const isValidDate = (value) => value instanceof Date && !Number.isNaN(value.getTime());
+
+/**
+ * 로컬 달력일 00:00. 카드 «일정 등록»처럼 시각이 없는 기본 날짜에 쓴다.
+ * 날짜만 있는 값(자정)은 당일 허용·전날 거부 판정과 짝을 이룬다.
+ *
+ * @param {Date} [from]
+ * @returns {Date}
+ */
+export const startOfLocalCalendarDay = (from = new Date()) => {
+  const day = from instanceof Date ? new Date(from.getTime()) : new Date();
+  if (Number.isNaN(day.getTime())) {
+    const fallback = new Date();
+    fallback.setHours(0, 0, 0, 0);
+    return fallback;
+  }
+  day.setHours(0, 0, 0, 0);
+  return day;
+};
 
 /**
  * 'YYYY-MM-DD' + 'HH:mm' 대상이 현재(운영 타임존)보다 이전인지.

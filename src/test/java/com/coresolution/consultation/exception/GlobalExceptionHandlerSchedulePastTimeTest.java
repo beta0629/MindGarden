@@ -2,7 +2,7 @@ package com.coresolution.consultation.exception;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.coresolution.consultation.util.SchedulePastTimeGate;
+import com.coresolution.consultation.util.ScheduleSlotGuard;
 import com.coresolution.core.dto.ErrorResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import org.junit.jupiter.api.DisplayName;
@@ -29,7 +29,7 @@ class GlobalExceptionHandlerSchedulePastTimeTest {
         Mockito.when(request.getRequestURI()).thenReturn("/api/v1/schedules/1");
         Mockito.when(request.getMethod()).thenReturn("PUT");
 
-        for (SchedulePastTimeGate.Denial denial : SchedulePastTimeGate.Denial.values()) {
+        for (ScheduleSlotGuard.Denial denial : ScheduleSlotGuard.Denial.values()) {
             ResponseEntity<ErrorResponse> response =
                     handler.handleSchedulePastTime(new SchedulePastTimeException(1L, denial), request);
 

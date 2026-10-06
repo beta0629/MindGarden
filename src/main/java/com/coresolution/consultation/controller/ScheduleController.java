@@ -58,7 +58,7 @@ import com.coresolution.consultation.service.support.ConsultationRecordDraftAcce
 import com.coresolution.consultation.service.support.ConsultationRecordWriter;
 import com.coresolution.consultation.service.ScheduleService;
 import com.coresolution.consultation.util.PermissionCheckUtils;
-import com.coresolution.consultation.util.SchedulePastTimeGate;
+import com.coresolution.consultation.util.ScheduleSlotGuard;
 import com.coresolution.consultation.util.ScheduleSlotTimes;
 import com.coresolution.consultation.util.UserRoleCapabilityUtils;
 import com.coresolution.consultation.utils.SessionUtils;
@@ -844,8 +844,8 @@ public class ScheduleController extends BaseApiController {
                         .body(ApiResponse.error(denyMessage));
             }
             scheduleService.requireMoveTimesNotInPast(id,
-                    SchedulePastTimeGate.toDateTime(dateBeforeSlotUpdate, startBeforeSlotUpdate),
-                    SchedulePastTimeGate.resolveMoveTarget(
+                    ScheduleSlotGuard.toDateTime(dateBeforeSlotUpdate, startBeforeSlotUpdate),
+                    ScheduleSlotGuard.resolveMoveTarget(
                             dateBeforeSlotUpdate,
                             startBeforeSlotUpdate,
                             parseRequestedSlotValue(updateData, "date", LocalDate::parse),

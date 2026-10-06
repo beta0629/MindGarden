@@ -18,7 +18,8 @@ import {
   isSchedulePastTimeError,
   resolveCalendarDropTargetStart,
   resolveScheduleMoveFailureMessage,
-  resolveScheduleMoveTarget
+  resolveScheduleMoveTarget,
+  startOfLocalCalendarDay
 } from '../scheduleMoveGuard';
 import {
   SCHEDULE_DRAG_LOCKED_CANCELLED_MESSAGE,
@@ -121,6 +122,17 @@ describe('scheduleMoveGuard', () => {
     expect(koSchedule.constants.scheduleMove.toPast).toEqual(expect.any(String));
     expect(koSchedule.constants.scheduleMove.fromPast).toEqual(expect.any(String));
     expect(koSchedule.constants.scheduleMove.createInPast).toEqual(expect.any(String));
+  });
+
+  test('startOfLocalCalendarDay — 시각을 00:00:00.000 으로 맞춘다', () => {
+    const day = startOfLocalCalendarDay(localDate(2026, 10, 6, 14, 30));
+    expect(day.getFullYear()).toBe(2026);
+    expect(day.getMonth()).toBe(9);
+    expect(day.getDate()).toBe(6);
+    expect(day.getHours()).toBe(0);
+    expect(day.getMinutes()).toBe(0);
+    expect(day.getSeconds()).toBe(0);
+    expect(day.getMilliseconds()).toBe(0);
   });
 
   test('appendScheduleMoveLockTooltip — 사유가 있으면 title 뒤에 붙임', () => {

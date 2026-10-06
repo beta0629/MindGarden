@@ -1,6 +1,6 @@
 /**
  * ScheduleCalendarView — 드래그 중 과거 시각 칸은 놓을 수 없음(eventAllow=false),
- * 그 칸에서 놓으면 사유 안내(onEventMoveRejected), 지난 일정은 미래 칸으로 이동 허용.
+ * 그 칸에서 놓으면 사유 안내(onEventMoveRejected). 지난 일정은 미래 칸으로도 이동 불가.
  *
  * @author CoreSolution
  * @since 2026-10-06
@@ -77,18 +77,19 @@ describe('ScheduleCalendarView 과거 시각 이동 차단', () => {
     expect(props.onEventDrop).not.toHaveBeenCalled();
   });
 
-  test('이미 지난 일정(slotDragLocked 아님)을 미래 칸으로 → 놓기 허용, 사유 안내 없음', () => {
+  test('이미 지난 일정을 미래 칸으로 → 놓을 수 없음(원본 잠금), 목적지 사유 안내 없음', () => {
     const { props, fc } = renderView();
     act(() => {
       fc.eventDragStart();
     });
     const allowed = fc.eventAllow({ start: hoursFromNow(48), allDay: false }, bookedEvent(hoursFromNow(-30)));
-    expect(allowed).toBe(true);
+    expect(allowed).toBe(false);
 
     act(() => {
       fc.eventDragStop();
     });
     expect(props.onEventMoveRejected).not.toHaveBeenCalled();
+    expect(props.onEventDrop).not.toHaveBeenCalled();
   });
 
   test('과거 칸을 지나 미래 칸에서 놓으면 마지막 판정(허용) 기준 → 안내 없음', () => {

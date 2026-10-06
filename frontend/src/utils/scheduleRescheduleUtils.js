@@ -183,7 +183,7 @@ export function isScheduleStatusSlotLocked(status) {
 
 /**
  * 완료·취소·과거 일정인지 — 캘린더 흐림(past) 표시용.
- * 이동 허용 판정이 아니다. 이동은 scheduleMoveGuard(원본은 완료·취소만, 과거는 이동 후 시각)로 판정한다.
+ * 이동 허용 판정이 아니다. 이동은 scheduleMoveGuard(원본은 완료·취소 또는 지난 시작, 목적지는 과거 시각)로 판정한다.
  * @param {{ status?: *, start?: *, end?: * }} params
  * @returns {boolean}
  */

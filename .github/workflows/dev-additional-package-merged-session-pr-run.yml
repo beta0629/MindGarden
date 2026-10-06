@@ -1,5 +1,5 @@
 # DEV 확인 전용. 이 파일만 바꾸는 release/dev pull_request 에서만 돈다.
-# 목록 SELECT 와 보정 dry-run 한 번. 확인 플래그를 넘기지 않는다.
+# 목록 SELECT(회기 불일치, 상담료 INCOME 잔존)와 보정 dry-run 한 번. 확인 플래그를 넘기지 않는다.
 # 운영 시크릿·운영 environment·push·workflow_dispatch 는 없다.
 # 머지하지 않는다. 본 변경은 목록·보정 워크플로가 있는 쪽 PR 이다.
 

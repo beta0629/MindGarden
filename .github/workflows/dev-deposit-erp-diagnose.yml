@@ -52,9 +52,9 @@ jobs:
     steps:
       - name: 입력 검증
         env:
-          IN_SINCE: ${{ inputs.since || '2026-10-06 12:15' }}
-          IN_UNTIL: ${{ inputs.until || '2026-10-06 12:22' }}
-          IN_IDS: ${{ inputs.mapping_ids || '315' }}
+          IN_SINCE: ${{ inputs.since || '2026-10-06 12:02' }}
+          IN_UNTIL: ${{ inputs.until || '2026-10-06 12:09' }}
+          IN_IDS: ${{ inputs.mapping_ids || '314' }}
           IN_CTX: ${{ inputs.context_lines || '80' }}
         run: |
           set -euo pipefail
@@ -73,9 +73,9 @@ jobs:
           DB_USER: ${{ secrets.DEV_DB_USER }}
           DB_NAME: ${{ secrets.DEV_DB_NAME }}
           DB_PASSWORD: ${{ secrets.DEV_DB_PASSWORD }}
-          IN_SINCE: ${{ inputs.since || '2026-10-06 12:15' }}
-          IN_UNTIL: ${{ inputs.until || '2026-10-06 12:22' }}
-          IN_IDS: ${{ inputs.mapping_ids || '315' }}
+          IN_SINCE: ${{ inputs.since || '2026-10-06 12:02' }}
+          IN_UNTIL: ${{ inputs.until || '2026-10-06 12:09' }}
+          IN_IDS: ${{ inputs.mapping_ids || '314' }}
           IN_CTX: ${{ inputs.context_lines || '80' }}
         run: |
           set -euo pipefail

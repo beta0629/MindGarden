@@ -1,10 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { AUTH_API } from '../../../constants/api';
-import {
-  getFirstLoginPasswordViolationMessage,
-  getPasswordPolicyApiErrorMessage,
-  LOGIN_PASSWORD_POLICY_HINT_ONE_LINE
-} from '../../../constants/passwordPolicyUi';
+import { getPasswordPolicyApiErrorMessage } from '../../../utils/loginPasswordPolicy';
+import usePasswordPolicyField from '../../../hooks/usePasswordPolicyField';
+import PasswordPolicyInput, { PasswordPolicyError } from '../../common/PasswordPolicyInput';
 import StandardizedApi from '../../../utils/standardizedApi';
 import UnifiedModal from '../../common/modals/UnifiedModal';
 import MGButton from '../../common/MGButton';
@@ -23,9 +21,10 @@ const PasswordChangeModal = ({ isOpen, onClose, onSuccess, tempPassword }) => {
 
   const [validation, setValidation] = useState({
     currentPassword: { isValid: true, message: '' },
-    newPassword: { isValid: true, message: '' },
-    confirmPassword: { isValid: true, message: '' }
+    newPassword: { isValid: true, message: '' }
   });
+  const passwordField = usePasswordPolicyField({ requireConfirm: true });
+  const { validate: validateNewPassword, clearError: clearPasswordError } = passwordField;
   const [isLoading, setIsLoading] = useState(false);
   const [submitError, setSubmitError] = useState('');
   const [showPassword, setShowPassword] = useState({
@@ -34,7 +33,7 @@ const PasswordChangeModal = ({ isOpen, onClose, onSuccess, tempPassword }) => {
     confirm: false
   });
 
-  const validateField = useCallback((fieldName, value, currentPassword = '', newPassword = '') => {
+  const validateField = useCallback((fieldName, value, currentPassword = '') => {
     let isValid = true;
     let message = '';
 
@@ -46,27 +45,9 @@ const PasswordChangeModal = ({ isOpen, onClose, onSuccess, tempPassword }) => {
         }
         break;
       case 'newPassword':
-        if (!value.trim()) {
+        if (value.trim() && value === currentPassword) {
           isValid = false;
-          message = t('common:mypage.PasswordChangeModal.t_b0bdea92');
-        } else {
-          const policyMsg = getFirstLoginPasswordViolationMessage(value);
-          if (policyMsg) {
-            isValid = false;
-            message = policyMsg;
-          } else if (value === currentPassword) {
-            isValid = false;
-            message = t('common:mypage.PasswordChangeModal.t_89a14bed');
-          }
-        }
-        break;
-      case 'confirmPassword':
-        if (!value.trim()) {
-          isValid = false;
-          message = t('common:mypage.PasswordChangeModal.t_ecdaae18');
-        } else if (value !== newPassword) {
-          isValid = false;
-          message = t('common:mypage.PasswordChangeModal.t_3b1a1c12');
+          message = t('common:mypage.PasswordChangeModal.t_89a14bed');
         }
         break;
       default:
@@ -85,33 +66,34 @@ const PasswordChangeModal = ({ isOpen, onClose, onSuccess, tempPassword }) => {
     });
     setValidation({
       currentPassword: { isValid: true, message: '' },
-      newPassword: { isValid: true, message: '' },
-      confirmPassword: { isValid: true, message: '' }
+      newPassword: { isValid: true, message: '' }
     });
+    clearPasswordError();
     setShowPassword({
       current: false,
       new: false,
       confirm: false
     });
     setSubmitError('');
-  }, [isOpen, tempPassword]);
+  }, [isOpen, tempPassword, clearPasswordError]);
 
   useEffect(() => {
     if (!isOpen) return;
-    const currentResult = validateField('currentPassword', formData.currentPassword, formData.currentPassword, formData.newPassword);
-    const newResult = validateField('newPassword', formData.newPassword, formData.currentPassword, formData.newPassword);
-    const confirmResult = validateField(
-      'confirmPassword',
-      formData.confirmPassword,
-      formData.currentPassword,
-      formData.newPassword
-    );
+    const currentResult = validateField('currentPassword', formData.currentPassword, formData.currentPassword);
+    const newResult = validateField('newPassword', formData.newPassword, formData.currentPassword);
+    validateNewPassword(formData.newPassword, formData.confirmPassword);
     setValidation({
       currentPassword: currentResult,
-      newPassword: newResult,
-      confirmPassword: confirmResult
+      newPassword: newResult
     });
-  }, [formData.currentPassword, formData.newPassword, formData.confirmPassword, isOpen, validateField]);
+  }, [
+    formData.currentPassword,
+    formData.newPassword,
+    formData.confirmPassword,
+    isOpen,
+    validateField,
+    validateNewPassword
+  ]);
 
   const handleInputChange = useCallback((e) => {
     const { name, value } = e.target;
@@ -125,17 +107,20 @@ const PasswordChangeModal = ({ isOpen, onClose, onSuccess, tempPassword }) => {
     return (
       validation.currentPassword.isValid &&
       validation.newPassword.isValid &&
-      validation.confirmPassword.isValid
+      !passwordField.errorCode &&
+      !passwordField.confirmErrorCode
     );
   }, [
     validation.currentPassword.isValid,
     validation.newPassword.isValid,
-    validation.confirmPassword.isValid
+    passwordField.errorCode,
+    passwordField.confirmErrorCode
   ]);
 
   const handleSubmit = async(e) => {
     e.preventDefault();
-    if (!validateForm()) return;
+    const policyOk = validateNewPassword(formData.newPassword, formData.confirmPassword);
+    if (!policyOk || !validateForm()) return;
 
     setIsLoading(true);
     setSubmitError('');
@@ -239,16 +224,19 @@ const PasswordChangeModal = ({ isOpen, onClose, onSuccess, tempPassword }) => {
             새 비밀번호
           </label>
           <div className="mg-mypage-password-form__input-wrap">
-            <input
-              type={showPassword.new ? 'text' : 'password'}
+            <PasswordPolicyInput
+              field={passwordField}
+              revealed={showPassword.new}
+              showHint={false}
+              showError={false}
               id="mypage-pw-new"
               name="newPassword"
               className="mg-mypage-password-form__input"
+              errorInputClassName=""
               value={formData.newPassword}
               onChange={handleInputChange}
               placeholder="새 비밀번호"
               disabled={isLoading}
-              autoComplete="new-password"
             />
             <MGButton
               type="button"
@@ -269,13 +257,14 @@ const PasswordChangeModal = ({ isOpen, onClose, onSuccess, tempPassword }) => {
               {showPassword.new ? '숨김' : t('common:mypage.PasswordChangeModal.t_a61d568e')}
             </MGButton>
           </div>
-          {!validation.newPassword.isValid ? (
+          <PasswordPolicyError field={passwordField} id="mypage-pw-new" className="mg-mypage-password-form__error" />
+          {!passwordField.errorMessage && !validation.newPassword.isValid ? (
             <p className="mg-mypage-password-form__error">
               <SafeText>{validation.newPassword.message}</SafeText>
             </p>
           ) : null}
           <p className="mg-mypage-password-form__hint">
-            {`${LOGIN_PASSWORD_POLICY_HINT_ONE_LINE} 변경 시 현재 비밀번호와 달라야 합니다.`}
+            {`${passwordField.hint} ${t('common:mypage.PasswordChangeModal.mustDifferFromCurrent')}`}
           </p>
         </div>
 
@@ -284,16 +273,19 @@ const PasswordChangeModal = ({ isOpen, onClose, onSuccess, tempPassword }) => {
             새 비밀번호 확인
           </label>
           <div className="mg-mypage-password-form__input-wrap">
-            <input
-              type={showPassword.confirm ? 'text' : 'password'}
+            <PasswordPolicyInput
+              field={passwordField}
+              confirm
+              revealed={showPassword.confirm}
+              showError={false}
               id="mypage-pw-confirm"
               name="confirmPassword"
               className="mg-mypage-password-form__input"
+              errorInputClassName=""
               value={formData.confirmPassword}
               onChange={handleInputChange}
               placeholder="새 비밀번호 확인"
               disabled={isLoading}
-              autoComplete="new-password"
             />
             <MGButton
               type="button"
@@ -314,11 +306,12 @@ const PasswordChangeModal = ({ isOpen, onClose, onSuccess, tempPassword }) => {
               {showPassword.confirm ? '숨김' : t('common:mypage.PasswordChangeModal.t_a61d568e')}
             </MGButton>
           </div>
-          {!validation.confirmPassword.isValid ? (
-            <p className="mg-mypage-password-form__error">
-              <SafeText>{validation.confirmPassword.message}</SafeText>
-            </p>
-          ) : null}
+          <PasswordPolicyError
+            field={passwordField}
+            confirm
+            id="mypage-pw-confirm"
+            className="mg-mypage-password-form__error"
+          />
         </div>
 
         {submitError ? (

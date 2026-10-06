@@ -1,0 +1,3 @@
+# additional_mapping_id,schedule_id
+# 목록 SELECT 로 확정한 쌍만 한 줄에 하나 적는다.
+# 데이터 행이 없으면 보정 워크플로는 DB 에 접속하지 않는다.

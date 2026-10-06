@@ -649,6 +649,9 @@ public interface ScheduleRepository extends BaseRepository<Schedule, Long> {
      * 회기 차감이 완료된 일정에만 부여되므로, 본 가드가 회기 차감 SSOT 와 일치한다.
      * (예: CANCELLED + 환불 처리된 일정, TENTATIVE_PENDING_PAYMENT 가예약 등은 제외)</p>
      *
+     * <p>2026-09-14: 취소 후 {@code session_sequence} 가 클리어되지 않은 잔존 데이터도
+     * lifetime 에 넣지 않도록 {@code status &lt;&gt; CANCELLED} 를 명시한다.</p>
+     *
      * @param tenantId 멀티테넌트 ID
      * @param clientId 내담자 ID
      * @param scheduleDate 기준 일정의 date
@@ -657,6 +660,7 @@ public interface ScheduleRepository extends BaseRepository<Schedule, Long> {
      */
     @Query("SELECT COUNT(s) FROM Schedule s WHERE s.tenantId = :tenantId AND s.clientId = :clientId AND s.isDeleted = false "
             + "AND s.sessionSequence IS NOT NULL "
+            + "AND s.status <> com.coresolution.consultation.constant.ScheduleStatus.CANCELLED "
             + "AND (s.date < :scheduleDate OR (s.date = :scheduleDate AND s.id <= :scheduleId))")
     long countSequenceUpToSchedule(
             @Param("tenantId") String tenantId,
@@ -1565,8 +1569,8 @@ public interface ScheduleRepository extends BaseRepository<Schedule, Long> {
      * 클라이언트별 lifetime sequence 카운트 배치용 후보 로드.
      *
      * <p>{@link #countSequenceUpToSchedule(String, Long, LocalDate, Long)} 과 동일하게
-     * {@code sessionSequence IS NOT NULL} 인 일정만 대상으로 한다. 이후 호출 측에서 (date, id)
-     * prefix 누적을 in-memory 로 계산해 scheduleId별 누적값을 만든다.</p>
+     * {@code sessionSequence IS NOT NULL} 이고 {@code status &lt;&gt; CANCELLED} 인 일정만 대상으로 한다.
+     * 이후 호출 측에서 (date, id) prefix 누적을 in-memory 로 계산해 scheduleId별 누적값을 만든다.</p>
      *
      * @param tenantId 테넌트 ID
      * @param clientIds 내담자 ID 목록
@@ -1578,6 +1582,7 @@ public interface ScheduleRepository extends BaseRepository<Schedule, Long> {
             + "WHERE s.tenantId = :tenantId "
             + "  AND s.isDeleted = false "
             + "  AND s.sessionSequence IS NOT NULL "
+            + "  AND s.status <> com.coresolution.consultation.constant.ScheduleStatus.CANCELLED "
             + "  AND s.clientId IS NOT NULL "
             + "  AND s.clientId IN :clientIds "
             + "  AND s.date <= :maxDate "

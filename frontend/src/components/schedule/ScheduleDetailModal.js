@@ -18,6 +18,8 @@ import {
     SCHEDULE_REMAINING_SESSIONS_FIELD,
     SCHEDULE_SESSION_SEQUENCE_FIELD,
     SCHEDULE_TOTAL_SESSIONS_FIELD,
+    SCHEDULE_USED_SESSIONS_FIELD,
+    formatSessionSequenceLabel,
     parseScheduleSessionCount
 } from '../../constants/schedule';
 import ClientSummaryField from '../consultant/molecules/ClientSummaryField';
@@ -60,21 +62,6 @@ const RESCHEDULE_ACTION_ELIGIBLE_STATUSES = Object.freeze([
 ]);
 
 /**
- * 모달의 회기 라벨(사용/총) 계산.
- *
- * <p>로직 우선순위:
- * <ol>
- *   <li>백엔드 합산값({@code combinedUsedSessions}/{@code combinedTotalSessions}) 이 있으면 SSOT 로 사용.</li>
- *   <li>없으면 {@code pastSessionCount} + 매핑 단위 사용 회기로 합산. 매핑 단위는
- *       {@code sessionSequence}(1-based) 우선, 없으면 ({@code totalSessions} - {@code remainingSessions}) fallback.</li>
- *   <li>{@code pastSessionCount} null/0/음수 → 0 으로 안전 처리 (신규 내담자 정책).</li>
- *   <li>단회기({@code totalSessions <= 1}) 또는 매핑 정보 부족 시 null 반환 (모달 비표시).</li>
- * </ol>
- *
- * @param {object} schedule 모달에 표시중인 schedule 객체
- * @returns {{ used: number|null, total: number|null }}
- */
-/**
  * 일정 상세 모달의 "누적 상담" 라벨용 lifetime 합산 정보 산출.
  *
  * <p>백엔드 SSOT ({@code clientLifetimeSessionCount}) 가 있으면 우선 사용.
@@ -104,6 +91,16 @@ function resolveModalLifetimeSessionInfo(schedule) {
     return { past: 0, current: 0, total: null };
 }
 
+/**
+ * 모달의 사용/잔여 회기 라벨. 매핑 remainingSessions(및 usedSessions)가 SSOT.
+ *
+ * <p>{@code sessionSequence} 는 회기 회차 라벨 전용이며 잔여를 만들지 않는다.
+ * remainingSessions 가 숫자(0 포함)이면 잔여로 쓰고, used 는 usedSessions 또는
+ * (total - remaining) 이다. remaining 이 없을 때만 레거시 sequence fallback.</p>
+ *
+ * @param {object} schedule 모달에 표시중인 schedule 객체
+ * @returns {{ used: number|null, total: number|null, remaining: number|null }}
+ */
 function resolveModalSessionInfo(schedule) {
     if (!schedule) {
         return { used: null, total: null, remaining: null };
@@ -114,29 +111,59 @@ function resolveModalSessionInfo(schedule) {
     if (total === null || total < 1) {
         return { used: null, total: null, remaining: null };
     }
+    const remainingFromMapping = parseScheduleSessionCount(
+        schedule[SCHEDULE_REMAINING_SESSIONS_FIELD] ?? schedule.remainingSessions
+    );
+    const usedFromMapping = parseScheduleSessionCount(
+        schedule[SCHEDULE_USED_SESSIONS_FIELD] ?? schedule.usedSessions
+    );
+    if (remainingFromMapping !== null && remainingFromMapping <= total) {
+        const remaining = remainingFromMapping;
+        const used = usedFromMapping !== null && usedFromMapping <= total
+            ? usedFromMapping
+            : total - remaining;
+        return { used, total, remaining };
+    }
+    if (usedFromMapping !== null && usedFromMapping <= total) {
+        return {
+            used: usedFromMapping,
+            total,
+            remaining: Math.max(0, total - usedFromMapping)
+        };
+    }
     const sequence = parseScheduleSessionCount(
         schedule[SCHEDULE_SESSION_SEQUENCE_FIELD] ?? schedule.sessionSequence
     );
-    let used = null;
-    let remaining = null;
     if (sequence !== null && sequence > 0) {
-        used = Math.min(sequence, total);
-        remaining = Math.max(0, total - used);
-    } else {
-        remaining = parseScheduleSessionCount(
-            schedule[SCHEDULE_REMAINING_SESSIONS_FIELD] ?? schedule.remainingSessions
-        );
-        if (remaining !== null && remaining >= 0 && remaining <= total) {
-            used = total - remaining;
-        }
+        const used = Math.min(sequence, total);
+        return { used, total, remaining: Math.max(0, total - used) };
     }
-    if (used === null) {
-        return { used: null, total: null, remaining: null };
+    return { used: null, total: null, remaining: null };
+}
+
+/**
+ * 이 일정의 회차(sessionSequence). 잔여·사용(매핑 차감)과 숫자를 섞지 않는다.
+ *
+ * @param {object} schedule
+ * @returns {number|null}
+ */
+function resolveModalSessionSequence(schedule) {
+    if (!schedule) {
+        return null;
     }
-    if (remaining === null) {
-        remaining = Math.max(0, total - used);
+    const sequence = parseScheduleSessionCount(
+        schedule[SCHEDULE_SESSION_SEQUENCE_FIELD] ?? schedule.sessionSequence
+    );
+    if (sequence === null || sequence < 1) {
+        return null;
     }
-    return { used, total, remaining };
+    const total = parseScheduleSessionCount(
+        schedule[SCHEDULE_TOTAL_SESSIONS_FIELD] ?? schedule.totalSessions
+    );
+    if (total !== null && total >= 1) {
+        return Math.min(sequence, total);
+    }
+    return sequence;
 }
 
 /**
@@ -888,6 +915,7 @@ const ScheduleDetailModal = ({
     const canPartyQuickSummary = showNotesTab;
     const { parsedClientName, parsedConsultantName } = partyNameParse;
     const sessionInfo = resolveModalSessionInfo(displayData);
+    const sessionSequence = resolveModalSessionSequence(displayData);
     const lifetimeSessionInfo = resolveModalLifetimeSessionInfo(displayData);
     const lifetimeSessionPast = lifetimeSessionInfo.past;
     const lifetimeSessionCurrent = lifetimeSessionInfo.current;
@@ -1263,6 +1291,19 @@ const ScheduleDetailModal = ({
                                 <SafeText>{displayData.startTime}</SafeText> - <SafeText>{displayData.endTime}</SafeText>
                             </span>
                         </div>
+                        {!isVacationEvent() && sessionSequence !== null && (
+                            <div
+                                className="schedule-detail-modal__summary-item schedule-detail-modal__summary-item--session-sequence"
+                                data-testid="schedule-detail-session-sequence"
+                            >
+                                <span className="schedule-detail-modal__summary-label">
+                                    {t('schedule:ScheduleDetailModal.sessionSequenceLabel')}
+                                </span>
+                                <span className="schedule-detail-modal__summary-value">
+                                    <SafeText>{formatSessionSequenceLabel(sessionSequence)}</SafeText>
+                                </span>
+                            </div>
+                        )}
                         {!isVacationEvent() && sessionInfo.total !== null && sessionInfo.used !== null && (
                             <div
                                 className="schedule-detail-modal__summary-item schedule-detail-modal__summary-item--sessions"
@@ -1488,6 +1529,7 @@ const ScheduleDetailModal = ({
 export default ScheduleDetailModal;
 export {
     resolveModalSessionInfo,
+    resolveModalSessionSequence,
     resolveModalLifetimeSessionInfo,
     resolveConsultationLogOpenStrategy,
     shouldShowConsultationLogLink,

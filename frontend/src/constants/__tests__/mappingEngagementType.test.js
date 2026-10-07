@@ -1,6 +1,7 @@
 import {
   MAPPING_ENGAGEMENT_TYPE,
   MAPPING_ENGAGEMENT_TYPE_LABELS,
+  getEngagementTypeLabelSegments,
   isInstitutionLinkEngagement,
   isVoucherEngagement,
   normalizeEngagementTypeValue,
@@ -55,6 +56,19 @@ describe('mappingEngagementType', () => {
     expect(shouldRenderEngagementTypeBadge({})).toBe(false);
     expect(shouldRenderEngagementTypeBadge({ paymentTiming: 'SAME_DAY_CARD' })).toBe(false);
     expect(shouldRenderEngagementTypeBadge(MAPPING_ENGAGEMENT_TYPE.SESSION_TICKET)).toBe(false);
+  });
+
+  it('기관연계 라벨은 length/2 두 조각이고 바우처는 한 조각이다', () => {
+    const institution = MAPPING_ENGAGEMENT_TYPE_LABELS[MAPPING_ENGAGEMENT_TYPE.INSTITUTION_LINK];
+    const voucher = MAPPING_ENGAGEMENT_TYPE_LABELS[MAPPING_ENGAGEMENT_TYPE.VOUCHER];
+    expect(getEngagementTypeLabelSegments(MAPPING_ENGAGEMENT_TYPE.INSTITUTION_LINK)).toEqual([
+      institution.slice(0, Math.floor(institution.length / 2)),
+      institution.slice(Math.floor(institution.length / 2))
+    ]);
+    expect(getEngagementTypeLabelSegments(MAPPING_ENGAGEMENT_TYPE.INSTITUTION_LINK).join(''))
+      .toBe(institution);
+    expect(getEngagementTypeLabelSegments(MAPPING_ENGAGEMENT_TYPE.VOUCHER)).toEqual([voucher]);
+    expect(getEngagementTypeLabelSegments(null)).toEqual([]);
   });
 
   it('캘린더 이벤트에 paymentTiming 만 복사하고 remaining 은 그대로 둔다', () => {

@@ -1308,7 +1308,8 @@
   align-items: center;
   gap: var(--mg-v2-space-2);
   margin: 0 0 var(--mg-v2-space-2) 0;
-  padding: var(--mg-v2-space-1) var(--mg-v2-space-2);
+  padding-block: var(--mg-v2-space-1);
+  padding-inline: 0;
   font-size: var(--mg-v2-font-size-caption);
   color: var(--mg-v2-color-semantic-warning);
 }

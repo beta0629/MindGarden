@@ -172,6 +172,111 @@ describe('좁은 폭에서도 글자 배지', () => {
     expect(badgeLineRule[0]).toMatch(/flex-basis:\s*100%;/);
   });
 
+  /**
+   * 390 월 칩(~36px): nowrap 네 글자(~48px)가 칩 overflow:hidden 에 「기관연」만 남긴다.
+   * 좁은 단계(@container width < 64px) 공통 칩 컨텍스트에서만 nowrap 을 풀어 2줄(기관/연계)을 허용한다.
+   * Badge.css 기본·넓은 표식 nowrap·말줄임 금지는 유지한다.
+   */
+  test('64px 미만 월 칩 컨텍스트에서만 기관연계 배지 nowrap 을 해제하고 말줄임하지 않는다', () => {
+    const marksCss = fs.readFileSync(path.resolve(__dirname, '..', 'ScheduleEventMarks.css'), 'utf8');
+    const imsCss = fs.readFileSync(
+      path.resolve(SRC, 'components', 'admin', 'mapping-management', 'IntegratedMatchingSchedule.css'),
+      'utf8'
+    );
+    const commonBadgeCss = fs.readFileSync(
+      path.resolve(SRC, 'components', 'common', 'Badge.css'),
+      'utf8'
+    );
+
+    const extractContainerBlock = (css, header) => {
+      const start = css.indexOf(header);
+      if (start < 0) {
+        return '';
+      }
+      let depth = 0;
+      for (let i = css.indexOf('{', start); i < css.length; i += 1) {
+        if (css[i] === '{') depth += 1;
+        if (css[i] === '}') {
+          depth -= 1;
+          if (depth === 0) {
+            return css.slice(start, i + 1);
+          }
+        }
+      }
+      return '';
+    };
+
+    const NARROW_QUERY = '@container mg-month-event (width < 64px)';
+    const marksNarrow = extractContainerBlock(marksCss, NARROW_QUERY);
+    const imsNarrow = extractContainerBlock(imsCss, NARROW_QUERY);
+    const narrowChipBadgeCss = `${marksNarrow}\n${imsNarrow}`;
+
+    expect(marksNarrow.length + imsNarrow.length).toBeGreaterThan(0);
+
+    const badgeRules = [];
+    const rulePattern = /([^{}]*\.mg-engagement-type-badge[^{}]*)\{([^}]*)\}/g;
+    let match = rulePattern.exec(narrowChipBadgeCss);
+    while (match) {
+      badgeRules.push({ selector: match[1].trim(), body: match[2] });
+      match = rulePattern.exec(narrowChipBadgeCss);
+    }
+    expect(badgeRules.length).toBeGreaterThan(0);
+
+    const wrapOverride = badgeRules.find(({ body }) => /white-space:\s*normal/.test(body));
+    expect(wrapOverride).toBeDefined();
+    expect(wrapOverride.selector).toMatch(/mg-v2-ad-calendar-event--integrated-month/);
+    expect(wrapOverride.selector).toMatch(/mg-schedule-event-marks/);
+    expect(wrapOverride.body).not.toMatch(/white-space:\s*nowrap/);
+    expect(wrapOverride.body).not.toMatch(/text-overflow:\s*ellipsis/);
+    expect(wrapOverride.body).not.toMatch(/overflow:\s*hidden/);
+    expect(wrapOverride.body).toMatch(/overflow:\s*visible/);
+    expect(wrapOverride.body).toMatch(/max-inline-size:\s*100%/);
+    expect(wrapOverride.body).toMatch(/height:\s*auto/);
+
+    const baseMarksBadge = marksCss.match(
+      /^\.mg-schedule-event-marks \.mg-engagement-type-badge \{[^}]*\}/m
+    );
+    expect(baseMarksBadge).not.toBeNull();
+    expect(baseMarksBadge[0]).toMatch(/white-space:\s*nowrap/);
+
+    expect(commonBadgeCss).toMatch(
+      /\.mg-common-badge \{[^}]*white-space:\s*nowrap/
+    );
+    expect(commonBadgeCss).toMatch(
+      /\.mg-engagement-type-badge \{[^}]*white-space:\s*nowrap/
+    );
+  });
+
+  /**
+   * 주간/일 ~74px 열: 제목 밖 직계 __engagement 에 월 좁은 칩과 같은 wrap 을 적용한다.
+   * Badge.css·넓은 표식 nowrap 은 유지한다.
+   */
+  test('주간/일 제목 밖 __engagement 배지에 월 좁은 칩과 같은 wrap 이 적용된다', () => {
+    const marksCss = fs.readFileSync(path.resolve(__dirname, '..', 'ScheduleEventMarks.css'), 'utf8');
+    const weekDayWrap = marksCss.match(
+      /\.mg-v2-ad-calendar-event:not\(\.mg-v2-ad-calendar-event--compact\)\s*>\s*\.mg-v2-ad-calendar-event__engagement\s*\{[^}]*\}/
+    );
+    expect(weekDayWrap).not.toBeNull();
+    expect(weekDayWrap[0]).toMatch(/white-space:\s*normal/);
+    expect(weekDayWrap[0]).toMatch(/word-break:\s*break-all/);
+    expect(weekDayWrap[0]).toMatch(/max-inline-size:\s*100%/);
+    expect(weekDayWrap[0]).toMatch(/height:\s*auto/);
+    expect(weekDayWrap[0]).toMatch(/overflow:\s*visible/);
+    expect(weekDayWrap[0]).toMatch(/padding-block:\s*var\(--mg-v2-space-0-5\)/);
+    expect(weekDayWrap[0]).toMatch(/padding-inline:\s*0/);
+    expect(weekDayWrap[0]).toMatch(/font-size:\s*var\(--mg-v2-font-size-caption\)/);
+    expect(weekDayWrap[0]).not.toMatch(/text-overflow:\s*ellipsis/);
+    expect(weekDayWrap[0]).not.toMatch(/overflow:\s*hidden/);
+    expect(weekDayWrap[0]).not.toMatch(/white-space:\s*nowrap/);
+
+    const weekPad = marksCss.match(
+      /\.mg-v2-ad-calendar-event:not\(\.mg-v2-ad-calendar-event--compact\):has\(>\s*\.mg-v2-ad-calendar-event__engagement\)\s*\{[^}]*\}/
+    );
+    expect(weekPad).not.toBeNull();
+    expect(weekPad[0]).toMatch(/padding-inline:\s*var\(--mg-v2-space-0-5\)/);
+    expect(weekPad[0]).toMatch(/min-inline-size:\s*0/);
+  });
+
   test('좁은 사이드바 행에서도 끝 표식은 글자 배지', () => {
     const { container } = render(
       <div className="integrated-schedule__sidebar-narrow-probe">

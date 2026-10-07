@@ -20,7 +20,6 @@
   flex: 0 1 auto;
   min-inline-size: 0;
   max-inline-size: 100%;
-  line-height: 0;
 }
 
 .mg-schedule-event-marks .mg-engagement-type-badge {

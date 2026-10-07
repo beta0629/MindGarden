@@ -11,9 +11,8 @@
 
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
-import ConsultationLogViewPage, {
-  CONSULTATION_LOG_VIEW_SURFACE
-} from './consultation-log-view/ConsultationLogViewPage';
+import ConsultationLogViewPage from './consultation-log-view/ConsultationLogViewPage';
+import { CONSULTATION_LOG_VIEW_SURFACE } from '../../constants/consultantSuite';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import '../../styles/main.css';
 import '../../styles/unified-design-tokens.css';

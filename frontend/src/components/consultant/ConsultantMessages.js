@@ -468,6 +468,7 @@ const ConsultantMessages = () => {
                 className={`consultant-messages__row${message.isRead ? '' : ' consultant-messages__row--unread'}`}
                 onClick={() => handleMessageClick(message)}
                 data-testid={CONSULTANT_SUITE_TEST_ID.MESSAGE_ROW}
+                data-gnb-chrome-free="true"
               >
                 <span className="consultant-messages__row-head">
                   <span className="consultant-messages__row-chips">

@@ -455,10 +455,10 @@ const ConsultantAvailability = () => {
                               <span className="consultant-availability__slot-actions">
                                 <MGButton
                                   variant="outline"
-                                  size="small"
+                                  size="medium"
                                   className={buildErpMgButtonClassName({
                                     variant: 'outline',
-                                    size: 'sm',
+                                    size: 'md',
                                     loading: false,
                                     className: 'consultant-availability__icon-btn'
                                   })}
@@ -475,10 +475,10 @@ const ConsultantAvailability = () => {
                                 </MGButton>
                                 <MGButton
                                   variant="outline"
-                                  size="small"
+                                  size="medium"
                                   className={buildErpMgButtonClassName({
                                     variant: 'outline',
-                                    size: 'sm',
+                                    size: 'md',
                                     loading: false,
                                     className: 'consultant-availability__icon-btn'
                                   })}

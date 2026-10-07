@@ -80,6 +80,12 @@ export const CONSULTANT_SALARY_FILTER = {
   PAID: 'paid'
 };
 
+/** 상담일지 조회 화면 표면 — admin(기존) / consultant(/consultant/consultation-logs 스위트 셸) */
+export const CONSULTATION_LOG_VIEW_SURFACE = {
+  ADMIN: 'admin',
+  CONSULTANT: 'consultant'
+};
+
 export const CONSULTANT_SUITE_TEST_ID = {
   SCHEDULE_PAGE: 'consultant-schedule-page',
   SCHEDULE_EMPTY: 'consultant-schedule-empty',

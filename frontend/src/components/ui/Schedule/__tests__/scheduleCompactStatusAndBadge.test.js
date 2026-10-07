@@ -86,4 +86,44 @@ describe('통합스케줄 월간·주간 상태와 컴팩트 배지', () => {
       /mg-v2-ad-calendar-event__engagement[\s\S]*mg-v2-ad-calendar-event__status/
     );
   });
+
+  test('모바일+주간(timeGridWeek)에서만 EngagementTypeBadge 를 렌더하지 않는다', () => {
+    const source = fs.readFileSync(CALENDAR_JS, 'utf8');
+    expect(source).toMatch(/from\s+['"][^'"]*constants\/breakpoints['"]/);
+    expect(source).toMatch(/MEDIA_QUERIES\.MOBILE_ONLY/);
+    expect(source).toMatch(/from\s+['"][^'"]*hooks\/useMediaQuery['"]/);
+    expect(source).toMatch(/useMediaQuery\(\s*MEDIA_QUERIES\.MOBILE_ONLY\s*\)/);
+    // 뷰포트 분기 숫자 하드코딩 금지(MEDIA_QUERIES SSOT). 주석 속 390 언급과 구분.
+    expect(source).not.toMatch(/max-width:\s*390|innerWidth\s*[<>=]+\s*390|\b390px\b/);
+
+    const weekDay = extractWeekDayRenderBlock(source);
+    expect(weekDay).toMatch(/isWeekView/);
+    expect(weekDay).toMatch(/CALENDAR_VIEW_WEEK/);
+    expect(weekDay).toMatch(/showEngagementBadgeOnChip/);
+    expect(weekDay).toMatch(/isWeekView\s*&&\s*isMobileViewport/);
+    expect(weekDay).toMatch(/showEngagementBadgeOnChip\s*\?\s*\([\s\S]*<EngagementTypeBadge/);
+  });
+
+  test('좁은 칩 wrap CSS 에 break-all / anywhere 가 없고 keep-all 이다', () => {
+    const marksCss = fs.readFileSync(
+      path.resolve(
+        __dirname,
+        '..',
+        '..',
+        '..',
+        'admin',
+        'mapping-management',
+        'integrated-schedule',
+        'molecules',
+        'ScheduleEventMarks.css'
+      ),
+      'utf8'
+    );
+    expect(marksCss).not.toMatch(/word-break:\s*break-all/);
+    expect(marksCss).not.toMatch(/overflow-wrap:\s*anywhere/);
+    expect(marksCss).toMatch(/word-break:\s*keep-all/);
+    expect(marksCss).not.toMatch(
+      /:has\(>\s*\.mg-v2-ad-calendar-event__engagement\)\s*\{[^}]*padding-inline:\s*var\(--mg-v2-space-0-5\)/
+    );
+  });
 });

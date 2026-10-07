@@ -68,6 +68,12 @@ const INSTITUTION_MAPPING = {
 
 const badgeHtml = (root) => root.querySelector('[data-testid="engagement-type-badge"]').outerHTML;
 
+/** 라벨이 __seg 로 나뉘어도 배지 testid + textContent 로 센다. */
+const countInstitutionBadges = (root) => {
+  const badges = root.querySelectorAll('[data-testid="engagement-type-badge"]');
+  return Array.from(badges).filter((el) => el.textContent === INSTITUTION_LABEL).length;
+};
+
 const renderDetailBadge = () => {
   const { container, unmount } = render(<EngagementTypeBadge source={INSTITUTION_SOURCE} />);
   const html = badgeHtml(container);
@@ -91,14 +97,14 @@ describe('기관연계 글자 배지 — 세 곳 동일 렌더', () => {
       <ScheduleEventMarks source={INSTITUTION_SOURCE} institutionTitle={INSTITUTION_LABEL} />
     );
     expect(badgeHtml(container)).toBe(detail);
-    expect(screen.getAllByText(INSTITUTION_LABEL)).toHaveLength(1);
+    expect(countInstitutionBadges(container)).toBe(1);
   });
 
   test('사이드바 행은 일정 상세와 같은 배지 DOM 이고 「기관연계」 글자는 한 곳만', () => {
     const detail = renderDetailBadge();
     const { container } = render(<MatchingScheduleCompactRow mapping={INSTITUTION_MAPPING} />);
     expect(badgeHtml(container)).toBe(detail);
-    expect(screen.getAllByText(INSTITUTION_LABEL)).toHaveLength(1);
+    expect(countInstitutionBadges(container)).toBe(1);
 
     const secondary = container.querySelector('.integrated-schedule__compact-row-secondary');
     expect(secondary.textContent).not.toContain(INSTITUTION_LABEL);
@@ -174,7 +180,8 @@ describe('좁은 폭에서도 글자 배지', () => {
 
   /**
    * 390 월 칩(~36px): nowrap 네 글자(~48px)가 칩 overflow:hidden 에 「기관연」만 남긴다.
-   * 좁은 단계(@container width < 64px) 공통 칩 컨텍스트에서만 nowrap 을 풀어 2줄(기관/연계)을 허용한다.
+   * 좁은 단계(@container width < 64px) 공통 칩 컨텍스트에서만 nowrap 을 풀어
+   * 의도된 2+2(기관/연계)만 허용한다. break-all / anywhere 금지.
    * Badge.css 기본·넓은 표식 nowrap·말줄임 금지는 유지한다.
    */
   test('64px 미만 월 칩 컨텍스트에서만 기관연계 배지 nowrap 을 해제하고 말줄임하지 않는다', () => {
@@ -214,7 +221,7 @@ describe('좁은 폭에서도 글자 배지', () => {
     expect(marksNarrow.length + imsNarrow.length).toBeGreaterThan(0);
 
     const badgeRules = [];
-    const rulePattern = /([^{}]*\.mg-engagement-type-badge[^{}]*)\{([^}]*)\}/g;
+    const rulePattern = /([^{}]*\.mg-engagement-type-badge(?!__)[^{}]*)\{([^}]*)\}/g;
     let match = rulePattern.exec(narrowChipBadgeCss);
     while (match) {
       badgeRules.push({ selector: match[1].trim(), body: match[2] });
@@ -229,6 +236,9 @@ describe('좁은 폭에서도 글자 배지', () => {
     expect(wrapOverride.body).not.toMatch(/white-space:\s*nowrap/);
     expect(wrapOverride.body).not.toMatch(/text-overflow:\s*ellipsis/);
     expect(wrapOverride.body).not.toMatch(/overflow:\s*hidden/);
+    expect(wrapOverride.body).not.toMatch(/word-break:\s*break-all/);
+    expect(wrapOverride.body).not.toMatch(/overflow-wrap:\s*anywhere/);
+    expect(wrapOverride.body).toMatch(/word-break:\s*keep-all/);
     expect(wrapOverride.body).toMatch(/overflow:\s*visible/);
     expect(wrapOverride.body).toMatch(/max-inline-size:\s*100%/);
     expect(wrapOverride.body).toMatch(/height:\s*auto/);
@@ -245,11 +255,19 @@ describe('좁은 폭에서도 글자 배지', () => {
     expect(commonBadgeCss).toMatch(
       /\.mg-engagement-type-badge \{[^}]*white-space:\s*nowrap/
     );
+    const engagementBadgeCss = fs.readFileSync(
+      path.resolve(SRC, 'components', 'common', 'EngagementTypeBadge.css'),
+      'utf8'
+    );
+    expect(engagementBadgeCss).toMatch(
+      /\.mg-engagement-type-badge__seg \{[^}]*white-space:\s*nowrap/
+    );
+    expect(commonBadgeCss).not.toMatch(/mg-engagement-type-badge__seg/);
   });
 
   /**
    * 주간/일 ~74px 열: 제목 밖 직계 __engagement 에 월 좁은 칩과 같은 wrap 을 적용한다.
-   * Badge.css·넓은 표식 nowrap 은 유지한다.
+   * break-all 금지 · keep-all + 의도 분리점(__seg)만. Badge.css·넓은 표식 nowrap 유지.
    */
   test('주간/일 제목 밖 __engagement 배지에 월 좁은 칩과 같은 wrap 이 적용된다', () => {
     const marksCss = fs.readFileSync(path.resolve(__dirname, '..', 'ScheduleEventMarks.css'), 'utf8');
@@ -258,8 +276,11 @@ describe('좁은 폭에서도 글자 배지', () => {
     );
     expect(weekDayWrap).not.toBeNull();
     expect(weekDayWrap[0]).toMatch(/white-space:\s*normal/);
-    expect(weekDayWrap[0]).toMatch(/word-break:\s*break-all/);
-    expect(weekDayWrap[0]).toMatch(/max-inline-size:\s*100%/);
+    expect(weekDayWrap[0]).toMatch(/word-break:\s*keep-all/);
+    expect(weekDayWrap[0]).not.toMatch(/word-break:\s*break-all/);
+    expect(weekDayWrap[0]).not.toMatch(/overflow-wrap:\s*anywhere/);
+    expect(weekDayWrap[0]).toMatch(/width:\s*calc\(100%\s*\+\s*\(var\(--mg-v2-space-3\)\s*\*\s*2\)\)/);
+    expect(weekDayWrap[0]).toMatch(/margin-inline:\s*calc\(var\(--mg-v2-space-3\)\s*\*\s*-1\)/);
     expect(weekDayWrap[0]).toMatch(/height:\s*auto/);
     expect(weekDayWrap[0]).toMatch(/overflow:\s*visible/);
     expect(weekDayWrap[0]).toMatch(/padding-block:\s*var\(--mg-v2-space-0-5\)/);
@@ -269,12 +290,30 @@ describe('좁은 폭에서도 글자 배지', () => {
     expect(weekDayWrap[0]).not.toMatch(/overflow:\s*hidden/);
     expect(weekDayWrap[0]).not.toMatch(/white-space:\s*nowrap/);
 
-    const weekPad = marksCss.match(
-      /\.mg-v2-ad-calendar-event:not\(\.mg-v2-ad-calendar-event--compact\):has\(>\s*\.mg-v2-ad-calendar-event__engagement\)\s*\{[^}]*\}/
+    // 모바일+주간 배지 미렌더로 대체 — 예전 :has(__engagement) padding-inline 축소 금지
+    expect(marksCss).not.toMatch(
+      /\.mg-v2-ad-calendar-event:not\(\.mg-v2-ad-calendar-event--compact\):has\(>\s*\.mg-v2-ad-calendar-event__engagement\)\s*\{[^}]*padding-inline/
     );
-    expect(weekPad).not.toBeNull();
-    expect(weekPad[0]).toMatch(/padding-inline:\s*var\(--mg-v2-space-0-5\)/);
-    expect(weekPad[0]).toMatch(/min-inline-size:\s*0/);
+
+    expect(marksCss).toMatch(
+      /\.mg-v2-ad-calendar-event__engagement\s+\.mg-engagement-type-badge__seg\s*\{[^}]*white-space:\s*nowrap/
+    );
+    expect(marksCss).not.toMatch(/word-break:\s*break-all/);
+    expect(marksCss).not.toMatch(/overflow-wrap:\s*anywhere/);
+  });
+
+  test('기관연계 배지 DOM 은 __seg 분리점 구조이고 textContent 는 전체 라벨이다', () => {
+    const { container } = render(
+      <ScheduleEventMarks source={INSTITUTION_SOURCE} institutionTitle={INSTITUTION_LABEL} />
+    );
+    const badge = container.querySelector('[data-testid="engagement-type-badge"]');
+    expect(badge).not.toBeNull();
+    expect(badge.textContent).toBe(INSTITUTION_LABEL);
+    expect(badge.getAttribute('aria-label')).toBe(INSTITUTION_LABEL);
+    const segs = badge.querySelectorAll('.mg-engagement-type-badge__seg');
+    expect(segs.length).toBe(2);
+    expect(Array.from(segs).map((n) => n.textContent).join('')).toBe(INSTITUTION_LABEL);
+    expect(badge.querySelectorAll('wbr').length).toBe(1);
   });
 
   test('좁은 사이드바 행에서도 끝 표식은 글자 배지', () => {
@@ -286,7 +325,9 @@ describe('좁은 폭에서도 글자 배지', () => {
       </div>
     );
     const marks = container.querySelector('.mg-schedule-event-marks');
-    expect(within(marks).getByText(INSTITUTION_LABEL)).toBeInTheDocument();
+    expect(countInstitutionBadges(marks)).toBe(1);
+    expect(marks.querySelector('[data-testid="engagement-type-badge"]'))
+      .toHaveTextContent(INSTITUTION_LABEL);
   });
 });
 

@@ -62,7 +62,8 @@
  * - 월: @container < 64px (모바일 390 월 칩 ~36px). nowrap 네 글자(~48px)가
  *   칩 overflow:hidden 에 「기관연」만 남기는 것을 막는다.
  * - 주간/일: 제목 밖 직계 `.mg-v2-ad-calendar-event__engagement` (~74px 열).
- *   넓은 폭에서는 word-break 만으로 한 줄이 유지된다.
+ * - wrap 시 의도된 분리점(__seg + wbr)만 허용. break-all / anywhere 금지
+ *   → 허용 줄 패턴은 「기관연계」(1줄) 또는 「기관/연계」(2+2) 뿐.
  * Badge.css·넓은 표식(.mg-schedule-event-marks) nowrap·사이드바·상세·범례는 불변.
  * @container 조건의 px 는 var() 를 받지 못해 리터럴이다(단계 G 64px 경계와 동일).
  */
@@ -74,8 +75,8 @@
     height: auto;
     overflow: visible;
     white-space: normal;
-    word-break: break-all;
-    overflow-wrap: anywhere;
+    word-break: keep-all;
+    overflow-wrap: normal;
     text-align: center;
     /* 가로 패딩 0: .dev 월 칩 내부 ~20px에서도 scrollWidth<=clientWidth */
     padding-block: var(--mg-v2-space-0-5);
@@ -84,37 +85,42 @@
     line-height: var(--mg-v2-font-line-height-caption);
   }
 
+  .mg-v2-ad-calendar-event--compact.mg-v2-ad-calendar-event--integrated-month .mg-schedule-event-marks .mg-engagement-type-badge__seg {
+    display: inline-block;
+    white-space: nowrap;
+  }
+
   .mg-v2-ad-calendar-event.mg-v2-ad-calendar-event--compact.mg-v2-ad-calendar-event--integrated-month:has(.mg-schedule-event-marks) {
     height: auto;
   }
 }
 
 /*
- * 주간/일 풀 카드(기관연계 배지 직계 보유): 기본 padding-inline(space-3≈12px×2)은
- * 390 열(~26px)에서 내용 폭을 ~2px로 줄여 글자가 들어가지 않는다.
- * 배지가 있는 카드만 가로 패딩을 space-0-5로 줄여 글자당 줄바꿈(break-all) 공간을 확보한다.
+ * 주간/일 풀 카드: 제목(nowrap) 밖 직계 배지 — 월 좁은 칩과 동일 wrap(의도 분리점만).
+ * 모바일+주간은 EngagementTypeBadge 미렌더(ScheduleCalendarView)로 대체하므로
+ * 예전 26px 카드 padding-inline 축소(:has > __engagement)는 두지 않는다.
+ * 데스크톱 좁은 열(~45px)에서는 카드 패딩을 유지한 채 배지만 가로로 패딩만큼
+ * 상쇄해 2글자(「기관」) 폭을 확보한다.
  */
-.mg-v2-ad-calendar-event:not(.mg-v2-ad-calendar-event--compact):has(> .mg-v2-ad-calendar-event__engagement) {
-  padding-inline: var(--mg-v2-space-0-5);
-  min-inline-size: 0;
-  max-inline-size: 100%;
-  box-sizing: border-box;
-  height: auto;
-}
-
-/* 주간/일 풀 카드: 제목(nowrap) 밖 직계 배지 — 위 월 좁은 칩과 동일 wrap */
 .mg-v2-ad-calendar-event:not(.mg-v2-ad-calendar-event--compact) > .mg-v2-ad-calendar-event__engagement {
   display: block;
   box-sizing: border-box;
-  max-inline-size: 100%;
+  width: calc(100% + (var(--mg-v2-space-3) * 2));
+  max-inline-size: none;
+  margin-inline: calc(var(--mg-v2-space-3) * -1);
   height: auto;
   overflow: visible;
   white-space: normal;
-  word-break: break-all;
-  overflow-wrap: anywhere;
+  word-break: keep-all;
+  overflow-wrap: normal;
   text-align: center;
   padding-block: var(--mg-v2-space-0-5);
   padding-inline: 0;
   font-size: var(--mg-v2-font-size-caption);
   line-height: var(--mg-v2-font-line-height-caption);
+}
+
+.mg-v2-ad-calendar-event:not(.mg-v2-ad-calendar-event--compact) > .mg-v2-ad-calendar-event__engagement .mg-engagement-type-badge__seg {
+  display: inline-block;
+  white-space: nowrap;
 }

@@ -132,6 +132,7 @@
     align-items: center;
     gap: var(--mg-v2-space-2);
     margin: 0 0 var(--mg-v2-space-2);
+    padding-inline: var(--mg-schedule-legend-inline-pad);
     font-size: var(--font-size-xs);
     color: var(--mg-v2-color-text-secondary);
 }

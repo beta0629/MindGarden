@@ -135,6 +135,43 @@ describe('좁은 폭에서도 글자 배지', () => {
     expect(badge.getAttribute('data-engagement-type')).toBe('INSTITUTION_LINK');
   });
 
+  test('표식 안 배지는 「기관연계」 네 글자 전부이고 말줄임하지 않는다', () => {
+    const { container } = render(
+      <ScheduleEventMarks source={INSTITUTION_SOURCE} institutionTitle={INSTITUTION_LABEL} />
+    );
+    const badge = container.querySelector('.mg-schedule-event-marks .mg-engagement-type-badge');
+    expect(badge).not.toBeNull();
+    expect(badge.textContent).toBe(INSTITUTION_LABEL);
+    expect(INSTITUTION_LABEL).toHaveLength(4);
+
+    const marksCss = fs.readFileSync(path.resolve(__dirname, '..', 'ScheduleEventMarks.css'), 'utf8');
+    const badgeBlock = marksCss.match(/\.mg-schedule-event-marks \.mg-engagement-type-badge \{[^}]*\}/);
+    expect(badgeBlock).not.toBeNull();
+    expect(badgeBlock[0]).not.toMatch(/text-overflow:\s*ellipsis/);
+    expect(badgeBlock[0]).not.toMatch(/overflow:\s*hidden/);
+    expect(badgeBlock[0]).toMatch(/white-space:\s*nowrap/);
+
+    const commonBadgeCss = fs.readFileSync(path.resolve(SRC, 'components', 'common', 'Badge.css'), 'utf8');
+    expect(commonBadgeCss).toMatch(/\.mg-common-badge \{[^}]*display:\s*inline-flex;[^}]*justify-content:\s*center;/);
+  });
+
+  test('64px 미만 월 칩은 기관연계 배지를 다음 줄 전폭으로 내린다', () => {
+    const pageCss = fs.readFileSync(
+      path.resolve(SRC, 'components', 'admin', 'mapping-management', 'IntegratedMatchingSchedule.css'),
+      'utf8'
+    );
+    const stageG = pageCss.match(/@container mg-month-event \(width < 64px\) \{[\s\S]*?\n\}/);
+    expect(stageG).not.toBeNull();
+    const unwrapRule = stageG[0].match(
+      /\.mg-schedule-event-marks:has\(\.mg-schedule-event-marks__institution\) \{[^}]*\}/
+    );
+    expect(unwrapRule).not.toBeNull();
+    expect(unwrapRule[0]).toMatch(/display:\s*contents;/);
+    const badgeLineRule = stageG[0].match(/\.mg-schedule-event-marks__institution \{[^}]*\}/);
+    expect(badgeLineRule).not.toBeNull();
+    expect(badgeLineRule[0]).toMatch(/flex-basis:\s*100%;/);
+  });
+
   test('좁은 사이드바 행에서도 끝 표식은 글자 배지', () => {
     const { container } = render(
       <div className="integrated-schedule__sidebar-narrow-probe">
@@ -209,6 +246,18 @@ describe('범례', () => {
     expect(badge.getAttribute('data-engagement-type')).toBe('INSTITUTION_LINK');
     expect(badge.outerHTML.replace(/\s?mg-schedule-marks-legend__institution/, '')).toBe(detail);
     expect(legend.textContent).toContain(SCHEDULE_JSON.calendar.legend.institution);
+  });
+
+  test('기관연계 범례는 글자 배지 하나뿐이고 ■ 사각 범례가 없다', () => {
+    const { container } = renderExpandedLegend();
+    expect(container.querySelectorAll('[data-testid="engagement-type-badge"]')).toHaveLength(1);
+
+    const pageDir = path.resolve(SRC, 'components', 'admin', 'mapping-management');
+    const pageJs = fs.readFileSync(path.resolve(pageDir, 'IntegratedMatchingSchedule.js'), 'utf8');
+    const pageCss = fs.readFileSync(path.resolve(pageDir, 'IntegratedMatchingSchedule.css'), 'utf8');
+    expect(pageJs).not.toMatch(/institution-link"/);
+    expect(pageJs).not.toMatch(/legend\.institutionLink/);
+    expect(pageCss).not.toMatch(/legend(-swatch)?--institution-link/);
   });
 
   test('문자 원 표식 설명이 범례에 있다', () => {

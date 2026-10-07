@@ -1118,6 +1118,27 @@
     position: static;
     order: 2;
   }
+
+  /*
+   * 기관연계 글자 배지는 이름 옆 남는 좁은 폭이나 문자 원 표식 옆에 넣지 않는다.
+   * 표식 래퍼를 풀어 1줄 시간 + 문자 원 표식, 2줄 이름 전폭, 3줄 배지 전폭(「기관연계」 네 글자)으로 둔다.
+   */
+  .integrated-schedule__calendar-wrapper--integrated .fc-daygrid-event-harness .mg-v2-ad-calendar-event--integrated-month .mg-schedule-event-marks:has(.mg-schedule-event-marks__institution) {
+    display: contents;
+  }
+
+  .integrated-schedule__calendar-wrapper--integrated .fc-daygrid-event-harness .mg-v2-ad-calendar-event--integrated-month:has(.mg-schedule-event-marks__institution) .mg-v2-ad-calendar-event__time {
+    flex: 1 1 auto;
+  }
+
+  .integrated-schedule__calendar-wrapper--integrated .fc-daygrid-event-harness .mg-v2-ad-calendar-event--integrated-month:has(.mg-schedule-event-marks__institution) .mg-v2-ad-calendar-event__client {
+    flex: 1 1 100%;
+  }
+
+  .integrated-schedule__calendar-wrapper--integrated .fc-daygrid-event-harness .mg-v2-ad-calendar-event--integrated-month .mg-schedule-event-marks__institution {
+    order: 3;
+    flex-basis: 100%;
+  }
 }
 
 /* 지난 날짜는 칩이 아니라 셀에서만 구분한다. */
@@ -1329,25 +1350,6 @@
 .fc-event.integrated-schedule__event--institution-link .fc-event-title {
   color: var(--mg-v2-color-semantic-info-dark);
   font-style: normal;
-}
-
-.integrated-schedule__legend--institution-link {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--mg-v2-space-2);
-  margin: 0 0 var(--mg-v2-space-2) 0;
-  padding: var(--mg-v2-space-1) var(--mg-v2-space-2);
-  font-size: var(--mg-v2-font-size-caption);
-  color: var(--mg-v2-color-semantic-info-dark);
-}
-
-.integrated-schedule__legend-swatch--institution-link {
-  display: inline-block;
-  width: var(--mg-size-dot-sm);
-  height: var(--mg-size-dot-sm);
-  border: none;
-  background: var(--mg-v2-color-semantic-info-dark);
-  border-radius: var(--mg-v2-radius-none);
 }
 
 /* 컴팩트 월간: 당일 테두리는 thin 점선. 기관연계 파란 테두리·바탕은 끈다. */

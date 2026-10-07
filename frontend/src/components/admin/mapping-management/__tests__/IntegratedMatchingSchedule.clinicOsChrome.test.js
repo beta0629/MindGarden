@@ -278,7 +278,8 @@ describe('IntegratedMatchingSchedule Clinic-OS chrome', () => {
     expect(institutionBlock[0]).toMatch(/solid/);
     expect(institutionBlock[0]).not.toMatch(/dashed/);
     expect(institutionBlock[0]).not.toMatch(/#[0-9A-Fa-f]{3,8}/);
-    expect(scheduleJs).toMatch(/legend-swatch--institution-link/);
+    // 기관연계 범례는 ScheduleLegend 글자 배지 하나만 — ■ 사각 범례는 두지 않는다
+    expect(scheduleJs).not.toMatch(/legend-swatch--institution-link/);
     expect(scheduleJs).toMatch(/legend-swatch--same-day/);
   });
 });

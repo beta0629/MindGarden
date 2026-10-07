@@ -7,6 +7,7 @@ import interactionPlugin from '@fullcalendar/interaction';
 import { Calendar as CalendarIcon, AlertCircle, Info } from 'lucide-react';
 import { toDisplayString } from '../../../utils/safeDisplay';
 import { resolveScheduleStatusDisplayLabel } from '../../../utils/scheduleStatusLabel';
+import { resolveCalendarSlotTimeRange } from '../../../utils/scheduleCalendarSlotRange';
 import {
   CALENDAR_EXTENDED_TYPE_KR_PUBLIC_HOLIDAY,
   CALENDAR_EXTENDED_TYPE_VACATION,
@@ -135,6 +136,8 @@ const ScheduleCalendarView = ({
     const lastViewTypeRef = useRef(null);
     const [isDayZoomed, setIsDayZoomed] = useState(false);
     useCalendarDragEscapeCancel();
+    /** 주·일 시간축 — 업무 종료(20시대 포함) 기본 + 더 늦은/이른 일정까지 */
+    const slotTimeRange = useMemo(() => resolveCalendarSlotTimeRange(events), [events]);
 
     const updateCalendarSize = useCallback(() => {
         const calendarApi = calendarRef.current?.getApi?.();
@@ -737,8 +740,8 @@ const ScheduleCalendarView = ({
                 droppable={acceptExternalCalendarDrops && isScheduleDropAdminRole(userRole)}
                 height="100%"
                 eventMinHeight={EVENT_MIN_HEIGHT_PX}
-                slotMinTime="08:00:00"
-                slotMaxTime="20:00:00"
+                slotMinTime={slotTimeRange.slotMinTime}
+                slotMaxTime={slotTimeRange.slotMaxTime}
                 slotDuration="00:30:00"
                 scrollTime="09:00:00"
                 scrollTimeReset={false}

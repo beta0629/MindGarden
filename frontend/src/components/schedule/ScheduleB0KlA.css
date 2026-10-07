@@ -528,7 +528,7 @@
   gap: var(--mg-spacing-xs, 0.25rem);
   width: 100%;
   min-height: 40px;
-  padding: var(--mg-spacing-sm, 0.5rem) var(--mg-spacing-md, 1rem);
+  padding: var(--mg-spacing-sm, 0.5rem) var(--mg-schedule-legend-inline-pad);
   font-family: inherit;
   font-size: var(--font-size-sm);
   font-weight: 600;
@@ -583,7 +583,7 @@
   flex-wrap: wrap;
   justify-content: space-between;
   gap: 1rem;
-  padding: var(--mg-spacing-sm, 0.5rem) var(--mg-spacing-md, 1rem) var(--mg-spacing-md, 1rem);
+  padding: var(--mg-spacing-sm, 0.5rem) var(--mg-schedule-legend-inline-pad) var(--mg-spacing-md, 1rem);
   border-top: 1px solid var(--ad-b0kla-border, var(--mg-color-border-main));
 }
 

@@ -4,6 +4,7 @@
  * SSOT(2026-10-07): 기관연계는 어디서나 일정 상세와 같은 EngagementTypeBadge 글자 배지다.
  * #1486 의 @container < 224px ■ 축소(color: transparent, font-size: 0)는 폐기했다.
  * - 월간 칩·팝오버: 표식이 안 들어가면 다음 줄로 내린다(칩 기본 규칙보다 높은 특이도)
+ * - 기관연계 배지는 말줄임하지 않는다. 칩이 줄바꿈·전폭 다음 줄로 높이를 키운다
  * - 사이드바 행·당일 칩: 표식을 절대 위치 ■ 로 바꾸는 규칙이 없다
  *
  * @author CoreSolution
@@ -105,11 +106,18 @@ describe('ScheduleEventMarks 좁은 폭 — 글자 배지 유지', () => {
     );
   });
 
-  test('폭이 끝까지 모자라면 글자 배지는 말줄임한다(빈 패딩·■ 아님)', () => {
+  test('폭이 끝까지 모자라면 글자 배지는 말줄임하지 않고 칩이 줄바꿈한다', () => {
     const body = ruleBody(MARKS_CSS, '.mg-schedule-event-marks .mg-engagement-type-badge');
-    expect(body).toContain('max-inline-size: 100%');
-    expect(body).toContain('text-overflow: ellipsis');
+    expect(body).not.toBeNull();
+    expect(body).not.toMatch(/text-overflow:\s*ellipsis/);
+    expect(body).not.toMatch(/overflow:\s*hidden/);
     expect(body).toContain('white-space: nowrap');
+    expect(body).toMatch(/overflow:\s*visible/);
+
+    const wrapBlock = extractContainerBlock(MARKS_CSS, MONTH_WRAP_QUERY);
+    const wrapBody = ruleBody(wrapBlock, CHIP_WRAP_SELECTOR);
+    expect(wrapBody).toContain('flex-wrap: wrap');
+    expect(wrapBody).toMatch(/height:\s*auto/);
   });
 
   test('표식 묶음은 절대 위치로 바뀌지 않는다', () => {

@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Clinic-OS · 상담사 급여 정산 TO-BE</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+<style>
+:root{
+  --ink:#0F172A; --ink2:#334155; --sub:#475569; --mute:#64748B; --dis:#94A3B8;
+  --canvas:#FAF9F7; --white:#FFFFFF; --line:#E2E8F0; --line-soft:#F1F5F9;
+  --primary:#0E5F5A; --on-primary:#FAF9F7; --lnb:#0F172A;
+  --sel-bg:#E2E8F0; --sel-line:#94A3B8;
+  --ok-bg:#E6F2F1; --wait-bg:#F1F5F9;
+  --s8:8px; --s12:12px; --s16:16px; --s24:24px; --s32:32px;
+  --r12:12px; --r8:8px; --btn-h:36px; --chip-h:32px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Pretendard,system-ui,sans-serif;background:#E8EEF2;color:var(--ink);font-size:0.875rem;line-height:1.5;-webkit-font-smoothing:antialiased}
+.note{margin:12px 16px;padding:10px 12px;background:#FFFDF7;border:1px solid #F5D78E;border-radius:10px;font-size:0.75rem;color:#92400E}
+.shell{display:grid;grid-template-columns:260px 1fr;min-height:100vh;width:1440px;max-width:100%;margin:0 auto;background:var(--canvas)}
+.lnb{background:var(--lnb);color:#E2E8F0;padding:16px 12px}
+.lnb .brand{font-size:0.75rem;font-weight:600;color:rgba(226,232,240,.55);padding:8px 12px 12px}
+.lnb a{display:flex;align-items:center;height:40px;padding:0 12px;border-radius:8px;color:rgba(226,232,240,.82);text-decoration:none;font-size:0.875rem;margin-bottom:2px}
+.lnb a.on{background:var(--primary);color:#fff;font-weight:700}
+.main{display:flex;flex-direction:column;min-width:0;background:var(--canvas)}
+.top{height:64px;background:var(--white);border-bottom:1px solid #E8E4DC;display:flex;align-items:center;padding:0 24px;gap:16px;flex:none}
+.top .logo{font-weight:700;font-size:0.875rem;white-space:nowrap}
+.top .search{flex:1;display:flex;justify-content:center}
+.top .search span{width:min(360px,70%);height:40px;border:1px solid var(--line);border-radius:999px;display:flex;align-items:center;padding:0 16px;color:var(--mute)}
+.top .user{display:flex;align-items:center;gap:10px;font-size:0.8125rem;color:var(--sub);white-space:nowrap}
+.top .av{width:32px;height:32px;border-radius:50%;background:#F5F3EF}
+.stage{padding:32px 64px 40px;min-width:0} /* SSOT: LNB+64 → x324, right 64 → x1376 @1440 */
+.h-row{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;margin-bottom:6px}
+h1{font-size:1.75rem;font-weight:700;letter-spacing:-0.03em;line-height:1.2}
+.subline{font-size:0.8125rem;color:var(--mute);margin-bottom:var(--s16)}
+.notice{display:flex;align-items:flex-start;gap:10px;padding:12px 16px;background:#F1F5F9;border:1px solid #94A3B8;border-radius:var(--r12);margin-bottom:var(--s24);font-size:0.8125rem;color:var(--sub)}
+.strip{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:var(--s16)}
+.strip .c{background:var(--white);border:1px solid var(--line);border-radius:var(--r12);padding:14px 16px;box-shadow:none}
+.strip .lab{font-size:0.75rem;color:var(--mute);font-weight:600;margin-bottom:4px}
+.strip .val{font-size:1.25rem;font-weight:800;letter-spacing:-0.03em;font-variant-numeric:tabular-nums}
+.strip .val.pri{color:var(--ink)}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:var(--s16)}
+.chip{height:var(--chip-h);padding:0 12px;border-radius:8px;border:1px solid #E2E8F0;background:#fff;font-size:0.75rem;font-weight:700;display:inline-flex;align-items:center;color:var(--mute);box-sizing:border-box}
+.chip.on{background:#E2E8F0;border:1px solid #94A3B8;color:var(--ink)}
+.list{display:flex;flex-direction:column;gap:12px}
+.card{background:var(--white);border:1px solid var(--line);border-radius:var(--r12);padding:var(--s24);box-shadow:none}
+.card-h{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:var(--s16)}
+.card-h h2{font-size:1.125rem;font-weight:700;letter-spacing:-0.02em}
+.pill{font-size:0.6875rem;font-weight:700;padding:4px 10px;border-radius:999px}
+.pill.wait{background:var(--wait-bg);color:var(--sub)}
+.pill.ok{background:var(--wait-bg);color:var(--sub)}
+.rows{border-top:1px solid var(--line)}
+.row{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center;min-height:44px;padding:10px 0;border-bottom:1px solid var(--line-soft);font-size:0.875rem}
+.row:last-child{border-bottom:0}
+.row .lab{color:var(--sub)}
+.row .amt{font-variant-numeric:tabular-nums;font-weight:600;letter-spacing:-0.01em}
+.row .amt.dim{color:var(--mute);font-weight:500}
+.row .amt.plus{color:var(--ink)}
+.row .amt.minus{color:#1D4ED8}
+.row.net .lab{font-weight:700;color:var(--ink)}
+.row.net .amt{font-size:1.125rem;font-weight:800;color:var(--ink)}
+.chrome-cap{margin-top:16px;font-size:0.6875rem;color:var(--dis)}
+@media (max-width:800px){
+  .shell{grid-template-columns:1fr}
+  .lnb{display:none}
+  .stage{padding:16px}
+  .strip{grid-template-columns:1fr}
+  h1{font-size:1.375rem}
+  .top .search{display:none}
+}
+</style>
+</head>
+<body>
+<div class="shell">
+  <aside class="lnb">
+    <div class="brand">상담</div>
+    <a>대시보드</a>
+    <a>일정 관리</a>
+    <a>내담자 조회</a>
+    <a>상담 기록</a>
+    <a class="on">급여 정산</a>
+  </aside>
+  <div class="main">
+    <header class="top">
+      <div class="logo">마인드가든심리상담센터</div>
+      <div class="search"><span>통합 검색...</span></div>
+      <div class="user"><span class="av"></span><span>상담사 · 세션 잔여 3:59:00</span></div>
+    </header>
+    <div class="stage">
+      <div class="h-row"><h1>급여 정산</h1></div>
+      <p class="subline">관리자가 확정한 결과만 표시됩니다</p>
+
+      <div class="notice">일반 매출·수입·지출 리포트는 이 화면에서 제공하지 않습니다. 문의는 센터 관리자에게 해 주세요.</div>
+
+      <div class="strip">
+        <div class="c"><div class="lab">최근 실수령</div><div class="val pri">4,332,160원</div></div>
+        <div class="c"><div class="lab">지급 대기</div><div class="val">1건</div></div>
+        <div class="c"><div class="lab">지급 완료</div><div class="val">1건</div></div>
+      </div>
+
+      <div class="chips">
+        <span class="chip on">전체</span>
+        <span class="chip">지급 대기</span>
+        <span class="chip">지급됨</span>
+      </div>
+
+      <div class="list">
+        <article class="card">
+          <div class="card-h">
+            <h2>2026년 9월</h2>
+            <span class="pill wait">지급 대기</span>
+          </div>
+          <div class="rows">
+            <div class="row"><span class="lab">월 회기</span><span class="amt dim">111회</span></div>
+            <div class="row"><span class="lab">상담·심리검사 급여</span><span class="amt">4,440,000원</span></div>
+            <div class="row"><span class="lab">식대·교통비</span><span class="amt plus">+40,000원</span></div>
+            <div class="row"><span class="lab">총 급여 (세전)</span><span class="amt">4,480,000원</span></div>
+            <div class="row"><span class="lab">세금 공제</span><span class="amt minus">−147,840원</span></div>
+            <div class="row net"><span class="lab">실수령액 (세후)</span><span class="amt">4,332,160원</span></div>
+            <div class="row"><span class="lab">정산 수단</span><span class="amt dim">—</span></div>
+          </div>
+        </article>
+
+        <article class="card">
+          <div class="card-h">
+            <h2>2026년 8월</h2>
+            <span class="pill ok">지급됨</span>
+          </div>
+          <div class="rows">
+            <div class="row"><span class="lab">월 회기</span><span class="amt dim">98회</span></div>
+            <div class="row"><span class="lab">상담·심리검사 급여</span><span class="amt">3,920,000원</span></div>
+            <div class="row"><span class="lab">식대·교통비</span><span class="amt plus">+40,000원</span></div>
+            <div class="row"><span class="lab">총 급여 (세전)</span><span class="amt">3,960,000원</span></div>
+            <div class="row"><span class="lab">세금 공제</span><span class="amt minus">−130,680원</span></div>
+            <div class="row net"><span class="lab">실수령액 (세후)</span><span class="amt">3,829,320원</span></div>
+            <div class="row"><span class="lab">정산 수단</span><span class="amt dim">—</span></div>
+          </div>
+        </article>
+      </div>
+
+          </div>
+  </div>
+</div>
+</body>
+</html>

@@ -282,4 +282,17 @@ describe('IntegratedMatchingSchedule Clinic-OS chrome', () => {
     expect(scheduleJs).not.toMatch(/legend-swatch--institution-link/);
     expect(scheduleJs).toMatch(/legend-swatch--same-day/);
   });
+
+  test('당일결제 범례는 가로 padding(space-2)이 없고 안내 줄과 같은 시작선이다', () => {
+    const sameDayLegend = scheduleCss.match(
+      /\.integrated-schedule__legend--same-day\s*\{[^}]+\}/
+    );
+    expect(sameDayLegend).not.toBeNull();
+    expect(sameDayLegend[0]).toMatch(/padding-block:\s*var\(--mg-v2-space-1\)/);
+    expect(sameDayLegend[0]).toMatch(/padding-inline:\s*0/);
+    expect(sameDayLegend[0]).not.toMatch(/padding:\s*var\(--mg-v2-space-1\)\s+var\(--mg-v2-space-2\)/);
+    expect(sameDayLegend[0]).not.toMatch(/padding-left:\s*var\(--mg-v2-space-2\)/);
+    expect(sameDayLegend[0]).not.toMatch(/padding-inline:\s*var\(--mg-v2-space-2\)/);
+    expect(sameDayLegend[0]).not.toMatch(/8px/);
+  });
 });

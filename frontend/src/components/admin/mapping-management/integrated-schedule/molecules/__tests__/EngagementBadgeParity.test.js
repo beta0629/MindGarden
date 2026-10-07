@@ -247,6 +247,29 @@ describe('좁은 폭에서도 글자 배지', () => {
     );
   });
 
+  /**
+   * 주간/일 ~74px 열: 제목 밖 직계 __engagement 에 월 좁은 칩과 같은 wrap 을 적용한다.
+   * Badge.css·넓은 표식 nowrap 은 유지한다.
+   */
+  test('주간/일 제목 밖 __engagement 배지에 월 좁은 칩과 같은 wrap 이 적용된다', () => {
+    const marksCss = fs.readFileSync(path.resolve(__dirname, '..', 'ScheduleEventMarks.css'), 'utf8');
+    const weekDayWrap = marksCss.match(
+      /\.mg-v2-ad-calendar-event:not\(\.mg-v2-ad-calendar-event--compact\)\s*>\s*\.mg-v2-ad-calendar-event__engagement\s*\{[^}]*\}/
+    );
+    expect(weekDayWrap).not.toBeNull();
+    expect(weekDayWrap[0]).toMatch(/white-space:\s*normal/);
+    expect(weekDayWrap[0]).toMatch(/word-break:\s*break-all/);
+    expect(weekDayWrap[0]).toMatch(/max-inline-size:\s*100%/);
+    expect(weekDayWrap[0]).toMatch(/height:\s*auto/);
+    expect(weekDayWrap[0]).toMatch(/overflow:\s*visible/);
+    expect(weekDayWrap[0]).toMatch(/padding-block:\s*var\(--mg-v2-space-0-5\)/);
+    expect(weekDayWrap[0]).toMatch(/padding-inline:\s*var\(--mg-v2-space-0-5\)/);
+    expect(weekDayWrap[0]).toMatch(/font-size:\s*var\(--mg-v2-font-size-caption\)/);
+    expect(weekDayWrap[0]).not.toMatch(/text-overflow:\s*ellipsis/);
+    expect(weekDayWrap[0]).not.toMatch(/overflow:\s*hidden/);
+    expect(weekDayWrap[0]).not.toMatch(/white-space:\s*nowrap/);
+  });
+
   test('좁은 사이드바 행에서도 끝 표식은 글자 배지', () => {
     const { container } = render(
       <div className="integrated-schedule__sidebar-narrow-probe">

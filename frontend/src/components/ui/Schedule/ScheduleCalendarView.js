@@ -681,6 +681,7 @@ const ScheduleCalendarView = ({
         }
 
         // 주간/일간 뷰: 풀 카드 유지 (상태 텍스트로 구분 — 좌측 색 레일 없음)
+        // 기관연계 배지는 __title(nowrap+overflow:hidden) 밖 형제로 두어 좁은 열(~74px) 잘림·겹침을 막는다.
         return (
             <div
                 className={`mg-v2-ad-calendar-event${pastClass}${cancelledClass}`.trim()}
@@ -695,14 +696,14 @@ const ScheduleCalendarView = ({
                         stopPropagation
                         className="mg-v2-ad-calendar-event__reminder-sms"
                     />
-                    <EngagementTypeBadge
-                        source={extendedProps}
-                        className="mg-v2-ad-calendar-event__engagement"
-                    />
                     {consultantName && (
                         <span className="counselor-name">{consultantName}</span>
                     )}
                 </div>
+                <EngagementTypeBadge
+                    source={extendedProps}
+                    className="mg-v2-ad-calendar-event__engagement"
+                />
                 <div className="mg-v2-ad-calendar-event__status">{statusLabel}</div>
             </div>
         );

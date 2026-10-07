@@ -37,6 +37,11 @@ const IMS_CSS = fs.readFileSync(
   ),
   'utf8'
 );
+const UNIFIED_TOKENS_CSS = fs.readFileSync(
+  path.resolve(SRC, 'styles', 'unified-design-tokens.css'),
+  'utf8'
+);
+const TOGGLE_EXCLUDE = ':not(.mg-v2-schedule-legend__toggle)';
 
 /**
  * @param {string} css
@@ -191,5 +196,46 @@ describe('안내 패널 공통 inline pad 정렬', () => {
       'padding: var(--mg-spacing-sm) var(--mg-spacing-lg) var(--mg-spacing-md);'
     ].join('\n');
     expect(usesInlinePadToken(otherPadBody, INLINE_PAD_TOKEN)).toBe(false);
+  });
+
+  test('전역 button 강제 padding·ellipsis 네 그룹이 안내 패널 토글을 제외한다', () => {
+    const sectionStart = UNIFIED_TOKENS_CSS.indexOf('전체 버튼 스타일 통합 및 최적화');
+    expect(sectionStart).toBeGreaterThan(-1);
+    const section = UNIFIED_TOKENS_CSS.slice(sectionStart);
+
+    const media768Rel = section.indexOf('@media (max-width: 768px)');
+    const media480Rel = section.indexOf('@media (max-width: 480px)');
+    expect(media768Rel).toBeGreaterThan(-1);
+    expect(media480Rel).toBeGreaterThan(media768Rel);
+
+    const beforeInner = section.slice(0, section.indexOf('/* 버튼 내부 텍스트 최적화 */'));
+    const innerTo768 = section.slice(
+      section.indexOf('/* 버튼 내부 텍스트 최적화 */'),
+      media768Rel
+    );
+    const block768 = section.slice(media768Rel, media480Rel);
+    const block480 = section.slice(media480Rel, media480Rel + 800);
+
+    const firstButtonLine = (chunk) => {
+      const match = chunk.match(/^[ \t]*button:not\([^;\n]+/m);
+      return match ? match[0].trim() : '';
+    };
+
+    const groups = [
+      firstButtonLine(beforeInner),
+      firstButtonLine(innerTo768),
+      firstButtonLine(block768),
+      firstButtonLine(block480)
+    ];
+    expect(groups.every(Boolean)).toBe(true);
+    expect(groups[1]).toMatch(/span\s*,?\s*$/);
+    groups.forEach((selector) => {
+      expect(selector).toContain(TOGGLE_EXCLUDE);
+    });
+  });
+
+  test('반례: 전역 button 해머가 토글을 제외하지 않으면 390 시작선이 어긋난다', () => {
+    const missingExclude = 'button:not(.mg-v2-nav-icon):not(.mg-v2-header-menu-row):not([data-gnb-chrome-free="true"])';
+    expect(missingExclude.includes(TOGGLE_EXCLUDE)).toBe(false);
   });
 });

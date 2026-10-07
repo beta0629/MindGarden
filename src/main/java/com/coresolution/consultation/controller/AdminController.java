@@ -583,9 +583,17 @@ public class AdminController extends BaseApiController {
     /**
      * /** 상담사별 매칭된 내담자 목록 조회 (스케줄 등록용)
      */
+    /**
+     * 상담사별 매칭 내담자 목록.
+     * <p>page/size 생략 시 전체(하위 호환). 지정 시 Spring page 0-base로 슬라이스하며
+     * totalElements/totalPages 를 함께 반환한다. lastSessionDate 는 Client 엔티티 값(없으면 null).
+     */
     @GetMapping("/mappings/consultant/{consultantId}/clients")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getClientsByConsultantMapping(
-            @PathVariable Long consultantId, HttpSession session) {
+            @PathVariable Long consultantId,
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer size,
+            HttpSession session) {
         resourceOwnerAccessGuard.requireConsultantSelfOrManagerAccess(session, consultantId);
         ResponseEntity<?> permissionResponse = PermissionCheckUtils.checkPermission(session,
                 "MAPPING_VIEW", dynamicPermissionService);
@@ -694,6 +702,13 @@ public class AdminController extends BaseApiController {
                                             mapping.getClient().getCreatedAt() != null
                                                     ? mapping.getClient().getCreatedAt().toString()
                                                     : ""));
+                            // Client.lastSessionDate — 매핑 응답에 하위 호환으로 추가 (없으면 null)
+                            if (mapping.getClient().getLastSessionDate() != null) {
+                                data.put("lastSessionDate",
+                                        mapping.getClient().getLastSessionDate().toString());
+                            } else {
+                                data.put("lastSessionDate", null);
+                            }
                         }
 
                         data.put("totalSessions", mapping.getTotalSessions());
@@ -726,9 +741,37 @@ public class AdminController extends BaseApiController {
             log.warn("⚠️ 매칭 데이터가 있지만 필터링으로 인해 모두 제외되었습니다. 결제상태를 확인하세요.");
         }
 
+        // assignedAt 최신순 (FE 기존 정렬과 동일)
+        activeMappings.sort((a, b) -> {
+            Object aAt = a.get("assignedAt");
+            Object bAt = b.get("assignedAt");
+            String aStr = aAt != null ? aAt.toString() : "";
+            String bStr = bAt != null ? bAt.toString() : "";
+            return bStr.compareTo(aStr);
+        });
+
         Map<String, Object> data = new HashMap<>();
-        data.put("mappings", activeMappings);
-        data.put("count", activeMappings.size());
+        int totalElements = activeMappings.size();
+        if (page != null || size != null) {
+            int pageIndex = page != null && page >= 0 ? page : 0;
+            int pageSize = size != null && size > 0
+                    ? Math.min(size, AdminListPaging.MAX_PAGE_SIZE)
+                    : PaginationUtils.DEFAULT_PAGE_SIZE;
+            int from = Math.min(pageIndex * pageSize, totalElements);
+            int to = Math.min(from + pageSize, totalElements);
+            List<Map<String, Object>> pageSlice = activeMappings.subList(from, to);
+            int totalPages = pageSize <= 0 ? 0 : (int) Math.ceil((double) totalElements / pageSize);
+            data.put("mappings", pageSlice);
+            data.put("count", pageSlice.size());
+            data.put("totalElements", totalElements);
+            data.put("totalPages", totalPages);
+            data.put("currentPage", pageIndex);
+            data.put("size", pageSize);
+        } else {
+            data.put("mappings", activeMappings);
+            data.put("count", totalElements);
+            data.put("totalElements", totalElements);
+        }
 
         return success(data);
     }

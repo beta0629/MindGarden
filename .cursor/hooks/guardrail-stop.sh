@@ -37,31 +37,6 @@ mkdir -p "$LOG_DIR"
 run_with_timeout() { perl -e 'alarm shift; exec @ARGV or exit 127' "$@"; }
 redact() { perl -pe 's/((?:password|passwd|secret|token|api[-_]?key|private[-_]?key)[^:=\n]{0,20}[:=]\s*)[^\s,"]+/$1***/gi'; }
 
-# Cloud/agent VMs may ship Maven under ~/.local without PATH — resolve before exec (exit 127 방지).
-resolve_mvn() {
-  if command -v mvn >/dev/null 2>&1; then
-    command -v mvn
-    return 0
-  fi
-  for candidate in \
-    "${HOME}/.local/bin/mvn" \
-    "${HOME}/.local/apache-maven-3.9.6/bin/mvn" \
-    "${HOME}/.sdkman/candidates/maven/current/bin/mvn" \
-    /usr/local/bin/mvn \
-    /opt/maven/bin/mvn
-  do
-    if [ -x "$candidate" ]; then
-      printf '%s\n' "$candidate"
-      return 0
-    fi
-  done
-  return 1
-}
-MVN_BIN=$(resolve_mvn) || MVN_BIN=""
-if [ -n "$MVN_BIN" ]; then
-  export PATH="$(dirname "$MVN_BIN"):${PATH:-/usr/bin:/bin}"
-fi
-
 FAILS=""
 add_fail() { FAILS="${FAILS}- $1"$'\n'; }
 
@@ -80,23 +55,19 @@ if printf '%s\n' "$CODE" | grep -Eq "$BE_RE"; then
   [ -n "$RELATED" ] && TESTS="$TESTS,$RELATED"
   TESTS=$(printf '%s' "$TESTS" | tr ',' '\n' | awk 'NF && !seen[$0]++' | paste -sd, -)
   BE_LOG="$LOG_DIR/maven.log"
-  if [ -z "$MVN_BIN" ]; then
-    add_fail "maven 없음(exit 127) — PATH에 mvn 설치 또는 ~/.local/apache-maven-*/bin/mvn 확인"
-  else
-    log "$MVN_BIN -o test -Dtest=$TESTS (timeout ${MAVEN_TIMEOUT}s)"
-    START=$(date +%s)
-    run_with_timeout "$MAVEN_TIMEOUT" "$MVN_BIN" -o -q -B test -Dtest="$TESTS" -Dsurefire.failIfNoSpecifiedTests=false \
-      >"$BE_LOG" 2>&1
-    RC=$?
-    log "maven exit=$RC ($(( $(date +%s) - START ))s) log=$BE_LOG"
-    if [ "$RC" = "142" ]; then
-      log "maven 시간 초과 — 차단하지 않음(CI Guardrail BE 가 최종 게이트). 수동: mvn -o test -Dtest=$TESTS"
-    elif [ "$RC" != "0" ]; then
-      LINES=$( { grep -E '^  - ' "$BE_LOG"; grep -E '^\[ERROR\]   [A-Za-z]' "$BE_LOG" | grep -v 'AdminApiGuardCoverageTest\.\|ProcedureSignatureGuardrailTest\.\|ApplicationYmlSecretDefaultsTest\.'; \
-        grep -E '^\[ERROR\] .*\.java:\[[0-9]+' "$BE_LOG"; } | sed -E 's/^  - //; s/^\[ERROR\] +//' | redact | awk '!seen[$0]++' | head -n 30)
-      [ -n "$LINES" ] || LINES="maven 실패(exit $RC) — $BE_LOG 확인 후 mvn -o test -Dtest=$TESTS 재실행"
-      while IFS= read -r l; do add_fail "$l"; done <<< "$LINES"
-    fi
+  log "mvn -o test -Dtest=$TESTS (timeout ${MAVEN_TIMEOUT}s)"
+  START=$(date +%s)
+  run_with_timeout "$MAVEN_TIMEOUT" mvn -o -q -B test -Dtest="$TESTS" -Dsurefire.failIfNoSpecifiedTests=false \
+    >"$BE_LOG" 2>&1
+  RC=$?
+  log "maven exit=$RC ($(( $(date +%s) - START ))s) log=$BE_LOG"
+  if [ "$RC" = "142" ]; then
+    log "maven 시간 초과 — 차단하지 않음(CI Guardrail BE 가 최종 게이트). 수동: mvn -o test -Dtest=$TESTS"
+  elif [ "$RC" != "0" ]; then
+    LINES=$( { grep -E '^  - ' "$BE_LOG"; grep -E '^\[ERROR\]   [A-Za-z]' "$BE_LOG" | grep -v 'AdminApiGuardCoverageTest\.\|ProcedureSignatureGuardrailTest\.\|ApplicationYmlSecretDefaultsTest\.'; \
+      grep -E '^\[ERROR\] .*\.java:\[[0-9]+' "$BE_LOG"; } | sed -E 's/^  - //; s/^\[ERROR\] +//' | redact | awk '!seen[$0]++' | head -n 30)
+    [ -n "$LINES" ] || LINES="maven 실패(exit $RC) — $BE_LOG 확인 후 mvn -o test -Dtest=$TESTS 재실행"
+    while IFS= read -r l; do add_fail "$l"; done <<< "$LINES"
   fi
 fi
 

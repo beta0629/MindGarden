@@ -1,0 +1,27 @@
+# PR 필수 BE 테스트 묶음 (결제 · 회기 · ERP · 일정)
+# 실행: mvn -B -ntp test -Pci-be-critical   (CI: .github/workflows/guardrails.yml 의 guardrail-be-critical-tests job)
+#
+# 형식: maven-surefire-plugin includesFile. 한 줄에 패턴 하나, 빈 줄과 # 줄은 무시한다.
+# 패턴은 src/test/java 기준 상대 경로이며 *IntegrationTest.java 도 이 묶음에서는 함께 실행된다.
+# 확장: 영역을 늘릴 때는 이 파일에 패턴 줄만 추가한다(pom·워크플로 수정 불필요).
+# 묶음 안의 테스트를 @Disabled·skip 처리해 통과시키지 않는다(.cursor/rules/self-verify.mdc).
+
+# 결제·입금·환불
+**/*Payment*Test.java
+**/*Deposit*Test.java
+**/*Refund*Test.java
+**/AdminServiceImplTerminate*Test.java
+
+# 회기·매핑 회기 동기화
+**/*Session*Test.java
+**/*MappingSessionsExhausted*Test.java
+
+# ERP·재무·정산
+**/*Erp*Test.java
+**/erp/**/*Test.java
+**/*Financ*Test.java
+**/*Settlement*Test.java
+
+# 일정
+**/*Schedule*Test.java
+**/*MergedAddon*Test.java

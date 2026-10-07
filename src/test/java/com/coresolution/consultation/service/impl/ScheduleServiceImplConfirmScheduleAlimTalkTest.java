@@ -23,12 +23,15 @@ import com.coresolution.consultation.service.ScheduleListUserFieldsResolver;
 import com.coresolution.consultation.service.SessionSyncService;
 import com.coresolution.consultation.service.StatisticsService;
 import com.coresolution.consultation.service.UserPersonalDataCacheService;
+import com.coresolution.consultation.service.support.DeferredExternalCalls;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.security.TenantAccessControlService;
 import com.coresolution.core.service.DashboardIntegrationService;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import org.junit.jupiter.api.AfterEach;
@@ -40,6 +43,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
@@ -143,7 +147,7 @@ class ScheduleServiceImplConfirmScheduleAlimTalkTest {
         clientUser.setId(CLIENT_USER_ID);
         clientUser.setName("enc-name-cl");
 
-        when(scheduleRepository.findByTenantIdAndId(eq(TENANT_ID), eq(SCHEDULE_ID)))
+        when(scheduleRepository.findByTenantIdAndIdForUpdate(eq(TENANT_ID), eq(SCHEDULE_ID)))
             .thenReturn(Optional.of(schedule));
         when(scheduleRepository.save(any(Schedule.class))).thenAnswer(inv -> inv.getArgument(0));
 
@@ -177,12 +181,61 @@ class ScheduleServiceImplConfirmScheduleAlimTalkTest {
         schedule.setConsultantId(CONSULTANT_USER_ID);
         schedule.setClientId(null);
 
-        when(scheduleRepository.findByTenantIdAndId(eq(TENANT_ID), eq(SCHEDULE_ID)))
+        when(scheduleRepository.findByTenantIdAndIdForUpdate(eq(TENANT_ID), eq(SCHEDULE_ID)))
             .thenReturn(Optional.of(schedule));
         when(scheduleRepository.save(any(Schedule.class))).thenAnswer(inv -> inv.getArgument(0));
 
         scheduleService.confirmSchedule(SCHEDULE_ID, "메모");
 
         verify(notificationService, never()).sendConsultationConfirmed(any(), any(), any(), any());
+    }
+
+    @Test
+    @DisplayName("DeferredExternalCalls 구간이면 확정 반환 뒤에 알림을 보낸다")
+    void confirmSchedule_defersNotificationUntilAfterActionReturns() {
+        Schedule schedule = bookedSchedule();
+        User consultantUser = new User();
+        consultantUser.setId(CONSULTANT_USER_ID);
+        consultantUser.setName("enc-name-c");
+        User clientUser = new User();
+        clientUser.setId(CLIENT_USER_ID);
+        clientUser.setName("enc-name-cl");
+
+        when(scheduleRepository.findByTenantIdAndIdForUpdate(eq(TENANT_ID), eq(SCHEDULE_ID)))
+                .thenReturn(Optional.of(schedule));
+        when(scheduleRepository.save(any(Schedule.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(userRepository.findByTenantIdAndId(eq(TENANT_ID), eq(CLIENT_USER_ID)))
+                .thenReturn(Optional.of(clientUser));
+        when(userRepository.findByTenantIdAndId(eq(TENANT_ID), eq(CONSULTANT_USER_ID)))
+                .thenReturn(Optional.of(consultantUser));
+        Map<String, String> consultantDecrypted = new HashMap<>();
+        consultantDecrypted.put("name", "이상담");
+        when(userPersonalDataCacheService.getDecryptedUserData(eq(consultantUser))).thenReturn(consultantDecrypted);
+
+        List<String> events = new ArrayList<>();
+        org.mockito.Mockito.doAnswer(inv -> {
+            events.add("notify");
+            return true;
+        }).when(notificationService).sendConsultationConfirmed(any(), any(), any(), any());
+
+        DeferredExternalCalls.run(() -> {
+            scheduleService.confirmSchedule(SCHEDULE_ID, "관리자 확인");
+            events.add("after-confirm");
+        });
+
+        assertThat(events).containsExactly("after-confirm", "notify");
+    }
+
+    private Schedule bookedSchedule() {
+        Schedule schedule = new Schedule();
+        schedule.setId(SCHEDULE_ID);
+        schedule.setTenantId(TENANT_ID);
+        schedule.setStatus(ScheduleStatus.BOOKED);
+        schedule.setConsultantId(CONSULTANT_USER_ID);
+        schedule.setClientId(CLIENT_USER_ID);
+        schedule.setDate(LocalDate.of(2026, 5, 1));
+        schedule.setStartTime(LocalTime.of(10, 0));
+        schedule.setEndTime(LocalTime.of(11, 0));
+        return schedule;
     }
 }

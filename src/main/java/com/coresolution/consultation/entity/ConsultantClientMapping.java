@@ -19,6 +19,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import com.coresolution.consultation.util.MappingSessionsExhaustedRule;
 
  /**
  * 상담사-내담자 매핑 엔티티
@@ -265,7 +266,7 @@ public class ConsultantClientMapping extends BaseEntity {
         this.remainingSessions--;
         this.usedSessions++;
         
-        if (this.remainingSessions <= 0) {
+        if (MappingSessionsExhaustedRule.shouldMarkExhausted(this.status, this.remainingSessions)) {
             this.status = MappingStatus.SESSIONS_EXHAUSTED;
             this.endDate = LocalDateTime.now();
         }
@@ -343,7 +344,7 @@ public class ConsultantClientMapping extends BaseEntity {
         int newTotal = Math.max(currentUsed, Math.max(0, currentTotal - sessionsToReverse));
         this.remainingSessions = newRemaining;
         this.totalSessions = newTotal;
-        if (newRemaining <= 0 && this.status == MappingStatus.ACTIVE) {
+        if (MappingSessionsExhaustedRule.shouldMarkExhausted(this.status, newRemaining)) {
             this.status = MappingStatus.SESSIONS_EXHAUSTED;
             this.endDate = LocalDateTime.now();
         }
@@ -352,7 +353,8 @@ public class ConsultantClientMapping extends BaseEntity {
     /**
      * 회기 승계용 소스 차감. usedSessions는 변경하지 않고 remaining·total만 N만큼 줄인다.
      *
-     * <p>PLAN §8: remaining→0이면 {@link MappingStatus#SESSIONS_EXHAUSTED}로 전이.</p>
+     * <p>PLAN §8: remaining→0이면 {@link MappingStatus#SESSIONS_EXHAUSTED}로 전이(활성 매핑만,
+     * {@link MappingSessionsExhaustedRule}).</p>
      *
      * @param sessionCount 차감할 회기 수 (1 이상, remaining 이하)
      * @throws IllegalArgumentException 회기 수가 유효하지 않거나 remaining 초과
@@ -368,7 +370,7 @@ public class ConsultantClientMapping extends BaseEntity {
         }
         this.remainingSessions = currentRemaining - sessionCount;
         this.totalSessions = Math.max(0, currentTotal - sessionCount);
-        if (this.remainingSessions <= 0) {
+        if (MappingSessionsExhaustedRule.shouldMarkExhausted(this.status, this.remainingSessions)) {
             this.status = MappingStatus.SESSIONS_EXHAUSTED;
             this.endDate = LocalDateTime.now();
         }
@@ -379,7 +381,8 @@ public class ConsultantClientMapping extends BaseEntity {
      *
      * <p>leftover occupying rem은 불변식 {@code total == used + remaining}에서 아직 used에
      * 잡히지 않은 슬롯이다. rem을 1 줄일 때 usedSessions도 1 증가시키고 totalSessions는
-     * 유지한다. rem→0이면 {@link MappingStatus#SESSIONS_EXHAUSTED}로 전이한다.</p>
+     * 유지한다. rem→0이면 {@link MappingStatus#SESSIONS_EXHAUSTED}로 전이한다(활성 매핑만,
+     * {@link MappingSessionsExhaustedRule}).</p>
      *
      * @return rem이 1 줄었으면 true
      * @author MindGarden
@@ -393,7 +396,7 @@ public class ConsultantClientMapping extends BaseEntity {
         this.remainingSessions = currentRemaining - 1;
         int currentUsed = this.usedSessions == null ? 0 : this.usedSessions;
         this.usedSessions = currentUsed + 1;
-        if (this.remainingSessions <= 0) {
+        if (MappingSessionsExhaustedRule.shouldMarkExhausted(this.status, this.remainingSessions)) {
             this.status = MappingStatus.SESSIONS_EXHAUSTED;
             this.endDate = LocalDateTime.now();
         }

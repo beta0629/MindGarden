@@ -4224,6 +4224,72 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
     }
 
     /**
+     * 병합 B 를 되돌릴 때 A 몫 환불액. B 회기를 뺀 A 회기·원래 회기로 {@link #calculateRefundableAmount} 를 쓴다.
+     *
+     * @param mapping 대상 A
+     * @param addonRefund 되돌리기로 판정된 B
+     * @param refundSessionsIncludingAddon 환불 회기 (B 회기 포함)
+     * @param alreadyRefunded 이미 환불한 A 금액 (활성 부분 환불 EXPENSE 합)
+     * @return A 몫 환불액 (0 이상)
+     */
+    private static long calculateTargetOnlyRefundableAmount(ConsultantClientMapping mapping,
+            ConsultationDepositIncomeLedger.MergedAddonRefund addonRefund, int refundSessionsIncludingAddon,
+            long alreadyRefunded) {
+        int addonSessions = addonRefund.addonSessions();
+        int targetRefundSessions = refundSessionsIncludingAddon - addonSessions;
+        if (targetRefundSessions <= 0) {
+            return 0L;
+        }
+        int total = mapping.getTotalSessions() != null ? mapping.getTotalSessions() : 0;
+        return calculateRefundableAmount(mapping.getPackagePrice(), total - addonSessions,
+                resolveRefundBasisOriginalTotalSessions(mapping, addonRefund) - addonSessions,
+                targetRefundSessions, alreadyRefunded);
+    }
+
+    /**
+     * 환불 단가 분모로 쓰는 원래 총회기. 앞선 부분 환불로 이미 되돌린 병합 B 회기는 A 회기가 아니므로 뺀다.
+     *
+     * @param mapping 대상 A
+     * @param addonRefund 병합 B 판정 결과
+     * @return 원래 총회기 (현재 총회기 이상)
+     */
+    private static int resolveRefundBasisOriginalTotalSessions(ConsultantClientMapping mapping,
+            ConsultationDepositIncomeLedger.MergedAddonRefund addonRefund) {
+        int total = mapping.getTotalSessions() != null ? mapping.getTotalSessions() : 0;
+        int reversed = addonRefund != null ? addonRefund.reversedAddonSessions() : 0;
+        return Math.max(total, resolveOriginalTotalSessions(mapping) - reversed);
+    }
+
+    /**
+     * 병합 B 되돌리기 판정. 판정은 {@link ConsultationDepositIncomeLedger#resolveMergedAddonRefund} 한 곳에서만 한다.
+     *
+     * @param tenantId 테넌트 ID
+     * @param mapping 행 잠금된 A
+     * @return 판정 결과
+     */
+    private ConsultationDepositIncomeLedger.MergedAddonRefund resolveMergedAddonRefund(
+            String tenantId, ConsultantClientMapping mapping) {
+        return ConsultationDepositIncomeLedger.resolveMergedAddonRefund(financialTransactionRepository, tenantId,
+                mapping, findPairMappings(mapping), resolveOriginalTotalSessions(mapping));
+    }
+
+    /**
+     * 같은 테넌트·상담사·내담자 쌍의 매핑 목록.
+     *
+     * @param mapping 기준 매핑
+     * @return 쌍 매핑 (없으면 빈 목록)
+     */
+    private List<ConsultantClientMapping> findPairMappings(ConsultantClientMapping mapping) {
+        if (mapping == null || mapping.getConsultant() == null || mapping.getClient() == null) {
+            return List.of();
+        }
+        List<ConsultantClientMapping> found = mappingRepository.findByTenantIdAndConsultantAndClient(
+                mapping.getTenantId() != null ? mapping.getTenantId() : getTenantId(),
+                mapping.getConsultant(), mapping.getClient());
+        return found != null ? found : List.of();
+    }
+
+    /**
      * 부분 환불 차감 전 원래 총 회기.
      *
      * <p>원래 회기 수를 저장하는 컬럼은 없다. {@link #partialRefundMapping} 은 totalSessions 를 줄이는
@@ -8025,11 +8091,27 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         final boolean unusedFullVoid = preDepositVoid
                 || additionalPackageUnused
                 || (totalSessions > 0 && refundedSessions == totalSessions && alreadyPartialRefunded <= 0);
-        long refundAmount = calculateRefundableAmount(mapping.getPackagePrice(), totalSessions,
-                resolveOriginalTotalSessions(mapping), refundedSessions, alreadyPartialRefunded);
+        // 부분 사용 종료: 병합 B 회기를 쓰지 않았으면 B 수입 취소 + 환불액에 B 가격 포함.
+        // A 몫은 B 회기를 뺀 A 회기로 계산하고, 전표(EXPENSE)는 A 몫만 남긴다(B 는 INCOME 취소로 이미 빠짐).
+        ConsultationDepositIncomeLedger.MergedAddonRefund addonRefund = unusedFullVoid
+                ? ConsultationDepositIncomeLedger.MergedAddonRefund.none()
+                : resolveMergedAddonRefund(tenantId, mapping);
+        long ledgerRefundAmount;
+        long refundAmount;
+        if (addonRefund.reversible()) {
+            ledgerRefundAmount = calculateTargetOnlyRefundableAmount(
+                    mapping, addonRefund, refundedSessions, alreadyPartialRefunded);
+            refundAmount = ledgerRefundAmount + addonRefund.addonIncomeAmount();
+        } else {
+            ledgerRefundAmount = calculateRefundableAmount(mapping.getPackagePrice(), totalSessions,
+                    resolveRefundBasisOriginalTotalSessions(mapping, addonRefund), refundedSessions,
+                    alreadyPartialRefunded);
+            refundAmount = ledgerRefundAmount;
+        }
         // 환불 전표는 매칭 변경과 같은 트랜잭션에서 기록한다. 기록하지 못하면 매칭 변경까지 롤백(fail-closed).
         if (unusedFullVoid || refundAmount > 0L) {
-            sendRefundToErp(mapping, refundedSessions, refundAmount, reason, unusedFullVoid);
+            sendRefundToErp(mapping, refundedSessions, refundAmount, ledgerRefundAmount, reason, unusedFullVoid,
+                    addonRefund);
         } else {
             log.info("환불할 금액 없음 — 환불 전표 생략: MappingID={}, remaining={}, alreadyPartialRefunded={}",
                     id, refundedSessions, alreadyPartialRefunded);
@@ -8568,14 +8650,34 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                     mapping.getPackagePrice(), alreadyPartialRefunded));
         }
         
-        if (lastAddedSessions > 0 && lastAddedPrice > 0 && refundSessions <= lastAddedSessions) {
+        // 병합 B 회기가 전부 남아 있고 이번 환불이 B 회기를 모두 덮으면 B 수입 취소 + 환불액에 B 가격 포함.
+        // 덮지 못하면(환불 회기 < B 회기) B 를 쪼갤 수 없으므로 현행 계산을 유지한다.
+        ConsultationDepositIncomeLedger.MergedAddonRefund resolvedAddon = resolveMergedAddonRefund(tenantId, mapping);
+        ConsultationDepositIncomeLedger.MergedAddonRefund addonRefund =
+                resolvedAddon.reversible() && refundSessions >= resolvedAddon.addonSessions()
+                        ? resolvedAddon
+                        : ConsultationDepositIncomeLedger.MergedAddonRefund.none();
+        long ledgerRefundAmount = 0L;
+        if (addonRefund.reversible()) {
+            ledgerRefundAmount = calculateTargetOnlyRefundableAmount(
+                    mapping, addonRefund, refundSessions, alreadyPartialRefunded);
+            if (mapping.getPackagePrice() != null && mapping.getPackagePrice() > 0) {
+                ledgerRefundAmount = Math.min(ledgerRefundAmount, mapping.getPackagePrice() - alreadyPartialRefunded);
+            }
+            refundAmount = ledgerRefundAmount + addonRefund.addonIncomeAmount();
+            calculationMethod = "병합 추가 패키지 미사용 포함";
+            log.info("💰 병합 추가 패키지 미사용 환불: addonIds={}, addon회기={}, addon금액={}, A몫={}",
+                    addonRefund.addonMappingIds(), addonRefund.addonSessions(),
+                    addonRefund.addonIncomeAmount(), ledgerRefundAmount);
+        } else if (lastAddedSessions > 0 && lastAddedPrice > 0 && refundSessions <= lastAddedSessions) {
             refundAmount = (lastAddedPrice * refundSessions) / lastAddedSessions;
             calculationMethod = "최근 추가 패키지 기준";
             log.info("💰 최근 추가 패키지 기준 환불: 추가가격={}, 추가회기={}, 환불회기={}, 환불금액={}", 
                     lastAddedPrice, lastAddedSessions, refundSessions, refundAmount);
         } else if (mapping.getPackagePrice() != null && mapping.getTotalSessions() > 0) {
             refundAmount = calculateRefundableAmount(mapping.getPackagePrice(), mapping.getTotalSessions(),
-                    resolveOriginalTotalSessions(mapping), refundSessions, alreadyPartialRefunded);
+                    resolveRefundBasisOriginalTotalSessions(mapping, resolvedAddon), refundSessions,
+                    alreadyPartialRefunded);
             calculationMethod = "전체 패키지 비례 계산";
             log.info("💰 전체 패키지 비례 계산: 전체가격={}, 전체회기={}, 환불회기={}, 환불금액={}", 
                     mapping.getPackagePrice(), mapping.getTotalSessions(), refundSessions, refundAmount);
@@ -8583,9 +8685,12 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             log.warn("❌ 환불 금액 계산 불가: 패키지 가격 정보 없음");
             throw new RuntimeException(AdminServiceUserFacingMessages.MSG_REFUND_AMOUNT_CALCULATION_IMPOSSIBLE);
         }
-        if (mapping.getPackagePrice() != null && mapping.getPackagePrice() > 0) {
-            // 누적 환불(기환불 + 이번 환불)은 결제액을 넘지 않는다 — 계산 방식과 무관한 최종 상한
-            refundAmount = Math.min(refundAmount, mapping.getPackagePrice() - alreadyPartialRefunded);
+        if (!addonRefund.reversible()) {
+            if (mapping.getPackagePrice() != null && mapping.getPackagePrice() > 0) {
+                // 누적 환불(기환불 + 이번 환불)은 결제액을 넘지 않는다 — 계산 방식과 무관한 최종 상한
+                refundAmount = Math.min(refundAmount, mapping.getPackagePrice() - alreadyPartialRefunded);
+            }
+            ledgerRefundAmount = refundAmount;
         }
         
         log.info("💰 부분 환불 금액 계산 완료: 환불회기={}, 계산방식={}, 환불금액={}원", 
@@ -8593,11 +8698,18 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         
         // 부분환불: ERP 페이로드 전송 + 부분 환불 전표(단일 write + 멱등)를 매칭 변경과 같은 트랜잭션에서 기록한다.
         // 전표를 기록하지 못하면 회기 차감까지 롤백(fail-closed). 전액 CONSULTATION_REFUND FT 는 생성하지 않음.
+        // 병합 B 를 되돌리면 B INCOME 을 같은 트랜잭션에서 취소하고 EXPENSE 는 A 몫만 남긴다.
         try {
             if (!sendRefundPayloadToErp(mapping, refundSessions, refundAmount, reason, false)) {
                 throw new IllegalStateException("ERP 부분 환불 페이로드 전송 실패");
             }
-            createPartialConsultationRefundTransaction(mapping, refundSessions, refundAmount, reason);
+            int addonCancelled = ConsultationDepositIncomeLedger.cancelMergedAddonIncome(
+                    financialTransactionService, addonRefund);
+            if (addonCancelled > 0) {
+                log.info("🛑 부분 환불 — 병합 추가 패키지 INCOME 취소: MappingID={}, addonIds={}, CANCELLED={}건",
+                        id, addonRefund.addonMappingIds(), addonCancelled);
+            }
+            createPartialConsultationRefundTransaction(mapping, refundSessions, ledgerRefundAmount, reason);
         } catch (RuntimeException e) {
             log.error("❌ 부분 환불 전표 기록 실패(매칭 변경 롤백): MappingID={}, cause={}",
                     id, e.getClass().getSimpleName(), e);
@@ -9624,29 +9736,40 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
      *       EXPENSE도 스킵되고, 이미 소진된 INCOME은 취소하지 않는다.</li>
      * </ul>
      *
-     * @param mapping           대상 매핑
-     * @param refundedSessions  환불 회기 수
-     * @param refundAmount      환불 금액
-     * @param reason            사유
-     * @param unusedFullVoid    미사용 전액 무효 여부
+     * @param mapping            대상 매핑
+     * @param refundedSessions   환불 회기 수
+     * @param refundAmount       내담자 환불 금액 (병합 B 되돌림 포함)
+     * @param ledgerRefundAmount EXPENSE 로 남길 금액 (A 몫)
+     * @param reason             사유
+     * @param unusedFullVoid     미사용 전액 무효 여부
+     * @param addonRefund        병합 B 되돌리기 판정
      */
     private void sendRefundToErp(ConsultantClientMapping mapping, int refundedSessions, long refundAmount,
-            String reason, boolean unusedFullVoid) {
+            long ledgerRefundAmount, String reason, boolean unusedFullVoid,
+            ConsultationDepositIncomeLedger.MergedAddonRefund addonRefund) {
         try {
             if (!sendRefundPayloadToErp(mapping, refundedSessions, refundAmount, reason, unusedFullVoid)) {
                 throw new IllegalStateException("ERP 환불 페이로드 전송 실패");
             }
             log.info("✅ ERP 환불 데이터 전송 성공: MappingID={}, Amount={}", mapping.getId(), refundAmount);
             if (unusedFullVoid) {
-                int cancelled = ConsultationDepositIncomeLedger.cancelPostedMappingSlotIncome(
-                        financialTransactionService, mapping.getId());
+                int cancelled = ConsultationDepositIncomeLedger.cancelPostedIncomeForTerminatedMapping(
+                        financialTransactionService, mapping, findPairMappings(mapping));
                 log.info("🛑 미사용 전액 무효: MappingID={}, CANCELLED INCOME={}건, EXPENSE 환불 스킵",
                         mapping.getId(), cancelled);
                 return;
             }
-            createConsultationRefundTransaction(mapping, refundedSessions, refundAmount, reason);
-            log.info("💚 환불 거래 자동 생성 완료: MappingID={}, RefundAmount={}",
-                    mapping.getId(), refundAmount);
+            int addonCancelled = ConsultationDepositIncomeLedger.cancelMergedAddonIncome(
+                    financialTransactionService, addonRefund);
+            if (addonCancelled > 0) {
+                log.info("🛑 병합 추가 패키지 미사용 — INCOME 취소: MappingID={}, addonIds={}, CANCELLED={}건",
+                        mapping.getId(), addonRefund.addonMappingIds(), addonCancelled);
+            }
+            if (ledgerRefundAmount > 0L) {
+                createConsultationRefundTransaction(mapping, refundedSessions, ledgerRefundAmount, reason);
+                log.info("💚 환불 거래 자동 생성 완료: MappingID={}, LedgerRefundAmount={}, RefundAmount={}",
+                        mapping.getId(), ledgerRefundAmount, refundAmount);
+            }
         } catch (RuntimeException e) {
             log.error("❌ 환불 전표 기록 실패(매칭 변경 롤백): MappingID={}, cause={}",
                     mapping.getId(), e.getClass().getSimpleName(), e);

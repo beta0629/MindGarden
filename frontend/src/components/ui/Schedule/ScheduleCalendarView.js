@@ -47,6 +47,8 @@ import {
   getKrSubstituteHolidayEveHintForLocalDate
 } from '../../../utils/krPublicHolidays';
 import { USER_ROLES, mapLegacyRole } from '../../../constants/roles';
+import { MEDIA_QUERIES } from '../../../constants/breakpoints';
+import useMediaQuery from '../../../hooks/useMediaQuery';
 import './ScheduleCalendarView.css';
 
 const KR_PUBLIC_HOLIDAY_DAY_BADGE_CLASS = 'mg-v2-ad-calendar-day-holiday-badge';
@@ -127,6 +129,8 @@ const ScheduleCalendarView = ({
     scheduleStatusOptions = []
 }) => {
     const { t } = useTranslation();
+    /** 스케줄 CSS 767px 계열과 동일 — MEDIA_QUERIES.MOBILE_ONLY (390 리터럴 금지) */
+    const isMobileViewport = useMediaQuery(MEDIA_QUERIES.MOBILE_ONLY);
     const calendarRef = useRef(null);
     const calendarWrapperRef = useRef(null);
     /** 날짜 클릭으로 일간 확대하기 직전 뷰(month/week). 툴바「전체 보기」복귀용 */
@@ -681,13 +685,24 @@ const ScheduleCalendarView = ({
         }
 
         // 주간/일간 뷰: 풀 카드 유지 (상태 텍스트로 구분 — 좌측 색 레일 없음)
-        // 기관연계 배지는 __title(nowrap+overflow:hidden) 밖 형제로 두어 좁은 열(~74px) 잘림·겹침을 막는다.
+        // 기관연계 배지는 __time 안 인라인(시간 텍스트 + 배지)으로 두어 슬롯 높이·연속 일정 겹침을 막는다.
+        // 모바일 뷰포트 + 주간(timeGridWeek) 칩만 배지를 렌더하지 않는다(일간·데스크톱 주간은 유지).
+        const isWeekView = eventInfo.view?.type === CALENDAR_VIEW_WEEK;
+        const showEngagementBadgeOnChip = !(isWeekView && isMobileViewport);
         return (
             <div
                 className={`mg-v2-ad-calendar-event${pastClass}${cancelledClass}`.trim()}
                 title={`${clientName} - ${statusLabel}`}
             >
-                <div className="mg-v2-ad-calendar-event__time">{eventInfo.timeText}</div>
+                <div className="mg-v2-ad-calendar-event__time">
+                    <span className="mg-v2-ad-calendar-event__time-text">{eventInfo.timeText}</span>
+                    {showEngagementBadgeOnChip ? (
+                        <EngagementTypeBadge
+                            source={extendedProps}
+                            className="mg-v2-ad-calendar-event__engagement"
+                        />
+                    ) : null}
+                </div>
                 <div className="mg-v2-ad-calendar-event__title">
                     {sameDayPrefix}
                     <span className="client-name">{clientName}</span>
@@ -700,10 +715,6 @@ const ScheduleCalendarView = ({
                         <span className="counselor-name">{consultantName}</span>
                     )}
                 </div>
-                <EngagementTypeBadge
-                    source={extendedProps}
-                    className="mg-v2-ad-calendar-event__engagement"
-                />
                 <div className="mg-v2-ad-calendar-event__status">{statusLabel}</div>
             </div>
         );

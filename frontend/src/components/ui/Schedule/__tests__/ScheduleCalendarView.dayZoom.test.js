@@ -311,16 +311,16 @@ describe('ScheduleCalendarView — 날짜 클릭 일간 확대', () => {
     expect(fadeBlock?.[0] || '').not.toMatch(/transform:\s*scale|zoom\s*:/);
   });
 
-  test('CSS: 일/주 풀 카드는 overflow visible + 토큰 min-height (클리핑 방지)', () => {
+  test('CSS: 일/주 풀 카드는 슬롯 하네스 맞춤 (overflow hidden · height 100% · min-height 0)', () => {
     const css = fs.readFileSync(CSS_PATH, 'utf8');
     expect(css).toMatch(
-      /\.mg-v2-ad-calendar-event\s*\{[^}]*overflow:\s*visible/
+      /\.mg-v2-ad-calendar-event\s*\{[^}]*overflow:\s*hidden/
     );
     expect(css).toMatch(
-      /\.mg-v2-ad-calendar-event\s*\{[^}]*min-height:\s*var\(--mg-v2-space-16/
-    );
-    expect(css).not.toMatch(
       /\.mg-v2-ad-calendar-event\s*\{[^}]*height:\s*100%/
+    );
+    expect(css).toMatch(
+      /\.mg-v2-ad-calendar-event\s*\{[^}]*min-height:\s*0/
     );
   });
 

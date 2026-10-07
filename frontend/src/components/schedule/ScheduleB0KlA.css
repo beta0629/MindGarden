@@ -1880,18 +1880,19 @@
 }
 
 /* ===== Calendar Event Block (B0KlA) ===== */
+/* 주/일: FC 하네스(height:100%)에 맞춤. 배지 블록 height:auto·min-height 4rem 로 슬롯 초과 금지. */
 .mg-v2-ad-calendar-event {
   background-color: var(--mg-gray-50);
   border: 1px solid var(--mg-gray-300);
   border-radius: 6px;
-  padding: var(--mg-v2-space-2, 0.5rem) var(--mg-v2-space-3, 0.75rem);
+  padding: var(--mg-v2-space-1, 0.25rem) var(--mg-v2-space-2, 0.5rem);
   display: flex;
   flex-direction: column;
-  gap: var(--mg-v2-space-1, 0.25rem);
+  gap: var(--mg-v2-space-0-5, 0.125rem);
   box-shadow: var(--cs-shadow-xs);
-  overflow: visible;
-  min-height: var(--mg-v2-space-16, 4rem);
-  height: auto;
+  overflow: hidden;
+  min-height: 0;
+  height: 100%;
   box-sizing: border-box;
 }
 

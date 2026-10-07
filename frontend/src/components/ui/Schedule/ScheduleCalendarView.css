@@ -34,7 +34,7 @@
     color: inherit !important;
 }
 
-/* 주간/일간 풀 카드 — 텍스트 클리핑 방지 (토큰 min-height, overflow visible) */
+/* 주간/일간 풀 카드 — FC 하네스 높이에 맞춤(배지 블록 height:auto 로 슬롯 초과 금지) */
 .mg-v2-ad-calendar-event {
     position: relative;
     display: flex;
@@ -44,14 +44,14 @@
     border: 1px solid var(--cs-brown-300);
     border-left-width: 1px;
     border-left-style: solid;
-    padding: var(--mg-v2-space-2, var(--mg-spacing-sm, 8px)) var(--mg-v2-space-3, 0.75rem);
-    overflow: visible;
+    padding: var(--mg-v2-space-1, 0.25rem) var(--mg-v2-space-2, 0.5rem);
+    overflow: hidden;
     transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
     cursor: pointer;
-    min-height: var(--mg-v2-space-16, 4rem);
-    height: auto;
+    min-height: 0;
+    height: 100%;
     box-sizing: border-box;
-    gap: var(--mg-v2-space-1, 0.25rem);
+    gap: var(--mg-v2-space-0-5, 0.125rem);
 }
 
 /* 월간 컴팩트는 좌측 악센트 유지 */
@@ -107,6 +107,24 @@
 
 .mg-v2-ad-calendar-event__engagement {
     flex-shrink: 0;
+}
+
+/* 주/일 풀 카드: 시간 행에 배지 인라인 (시간 shrink/ellipsis + 배지 flex-shrink:0) */
+.mg-v2-ad-calendar-event:not(.mg-v2-ad-calendar-event--compact) > .mg-v2-ad-calendar-event__time {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: var(--mg-v2-space-1);
+    min-width: 0;
+    width: 100%;
+}
+
+.mg-v2-ad-calendar-event:not(.mg-v2-ad-calendar-event--compact) .mg-v2-ad-calendar-event__time-text {
+    min-width: 0;
+    flex: 1 1 auto;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 /* 월간 뷰 컴팩트 이벤트 (다중 이벤트 시 공간 절약) - core-designer 스펙 */

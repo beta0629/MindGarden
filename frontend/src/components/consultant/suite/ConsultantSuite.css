@@ -1,0 +1,228 @@
+/**
+ * Consultant suite — /consultant/* 공유 셸·카드·칩·버튼 (SSOT: /consultant/dashboard mg-v2)
+ * 흰 카드 + slate 테두리 on warm stage · shadow 없음 · 콘텐츠 선택 slate · 버튼 h36 r8 · 칩 h32 r8
+ * 토큰: styles/tokens/design-v2-tokens-refine.css (--mg-v2-consultant-*)
+ *
+ * @author CoreSolution
+ * @since 2026-10-07
+ */
+
+.consultant-suite {
+  --button-height-default: var(--mg-v2-consultant-control-height);
+  --button-height-sm: var(--mg-v2-consultant-chip-height);
+  --mg-button-radius: var(--mg-v2-consultant-control-radius);
+  width: 100%;
+  min-width: 0;
+  color: var(--mg-v2-color-text-primary);
+}
+
+.consultant-suite__container {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  min-width: 0;
+}
+
+.consultant-suite .mg-v2-content-area {
+  background-color: var(--mg-v2-consultant-surface-stage);
+}
+
+.consultant-suite .mg-v2-content-header {
+  padding-top: var(--mg-v2-space-2);
+  margin-bottom: var(--mg-v2-space-4);
+}
+
+.consultant-suite__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-v2-space-4);
+  width: 100%;
+  min-width: 0;
+}
+
+/* ===== 카드 · 패널 ===== */
+.consultant-suite__panel {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  padding: var(--mg-v2-space-4) var(--mg-v2-space-6) var(--mg-v2-space-6);
+  background: var(--mg-v2-consultant-surface-card);
+  border: var(--mg-v2-border-width-thin) solid var(--mg-v2-consultant-border-card);
+  border-radius: var(--mg-v2-consultant-card-radius);
+  box-shadow: none;
+}
+
+/* ===== 요약 (ConsultantSummaryStrip 재사용 · 셀 = 개별 흰 카드) ===== */
+.consultant-suite .consultant-summary-strip.consultant-suite__summary {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--mg-v2-space-3);
+  padding: 0;
+  margin-bottom: 0;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+}
+
+.consultant-suite .consultant-suite__summary .consultant-summary-strip__cell {
+  padding: var(--mg-v2-space-3) var(--mg-v2-space-4);
+  background: var(--mg-v2-consultant-surface-card);
+  border: var(--mg-v2-border-width-thin) solid var(--mg-v2-consultant-border-card);
+  border-radius: var(--mg-v2-consultant-card-radius);
+  box-shadow: none;
+}
+
+.consultant-suite .consultant-suite__summary .consultant-summary-strip__label {
+  color: var(--mg-v2-color-text-tertiary);
+}
+
+.consultant-suite .consultant-suite__summary .consultant-summary-strip__value {
+  color: var(--mg-v2-consultant-money-ink);
+}
+
+/* ===== 버튼 (MGButton h36 r8 · ghost = 흰 + slate 테두리 · teal hover wash 금지) ===== */
+.consultant-suite .mg-button.mg-button--outline,
+.consultant-suite .mg-button.mg-button--ghost:not(.consultant-summary-strip__cell) {
+  background-color: var(--mg-v2-consultant-surface-card);
+  color: var(--mg-v2-color-text-primary);
+  border-color: var(--mg-v2-consultant-border-card);
+  font-weight: var(--mg-v2-font-weight-bold);
+  box-shadow: none;
+}
+
+.consultant-suite .mg-button.mg-button--outline:hover:not(.mg-button--disabled):not(.mg-button--loading),
+.consultant-suite .mg-button.mg-button--ghost:not(.consultant-summary-strip__cell):hover:not(.mg-button--disabled):not(.mg-button--loading) {
+  background-color: var(--mg-v2-consultant-chip-neutral-bg);
+  color: var(--mg-v2-color-text-primary);
+  box-shadow: none;
+}
+
+.consultant-suite .mg-button.mg-button--primary:hover:not(.mg-button--disabled):not(.mg-button--loading) {
+  box-shadow: none;
+}
+
+.consultant-suite .mg-button.mg-button--with-icon {
+  gap: var(--mg-v2-space-2);
+}
+
+/* ===== 필터·뷰 토글 칩 (h32 r8 · 선택 slate) ===== */
+.consultant-suite-chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--mg-v2-space-2);
+  min-width: 0;
+}
+
+.consultant-suite .consultant-suite-chips .mg-button.consultant-suite-chip {
+  width: auto;
+  flex: 0 0 auto;
+  font-size: var(--mg-v2-font-size-caption);
+  font-weight: var(--mg-v2-font-weight-bold);
+  color: var(--mg-v2-color-text-tertiary);
+}
+
+/* unified-design-tokens 모바일 [class*="mg-button"] padding !important 가 내부 span 까지 잡아 칩이 3중 패딩이 됨 */
+.consultant-suite .consultant-suite-chips .mg-button.consultant-suite-chip .mg-button__content,
+.consultant-suite .consultant-suite-chips .mg-button.consultant-suite-chip .mg-button__text {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 !important;
+}
+
+.consultant-suite .consultant-suite-chips .mg-button.consultant-suite-chip.consultant-suite-chip--selected,
+.consultant-suite .consultant-suite-chips .mg-button.consultant-suite-chip.consultant-suite-chip--selected:hover:not(.mg-button--disabled) {
+  background-color: var(--mg-v2-consultant-selection-bg);
+  border-color: var(--mg-v2-consultant-selection-border);
+  color: var(--mg-v2-color-text-primary);
+}
+
+/* ===== 안내 (slate notice) ===== */
+.consultant-suite-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--mg-v2-space-2);
+  margin: 0;
+  padding: var(--mg-v2-space-3) var(--mg-v2-space-4);
+  background: var(--mg-v2-consultant-notice-bg);
+  border: var(--mg-v2-border-width-thin) solid var(--mg-v2-consultant-notice-border);
+  border-radius: var(--mg-v2-consultant-card-radius);
+  font-size: var(--mg-v2-font-size-caption);
+  line-height: var(--mg-v2-font-line-height-body);
+  color: var(--mg-v2-color-text-secondary);
+}
+
+.consultant-suite-notice__icon {
+  display: inline-flex;
+  flex-shrink: 0;
+  color: var(--mg-v2-color-text-tertiary);
+}
+
+.consultant-suite-notice__text {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+/* ===== 상태 칩 (StatusBadge 재사용 · slate · 틸/초록 필 금지) ===== */
+.consultant-suite .mg-v2-status-badge.consultant-suite-status {
+  background-color: var(--mg-v2-consultant-chip-neutral-bg);
+  color: var(--mg-v2-consultant-chip-neutral-text);
+  border: 0;
+  font-size: var(--mg-v2-font-size-caption);
+  font-weight: var(--mg-v2-font-weight-bold);
+  white-space: nowrap;
+}
+
+.consultant-suite .mg-v2-status-badge.consultant-suite-status span {
+  color: var(--mg-v2-consultant-chip-neutral-text);
+}
+
+/* ===== 금액 「N원」 ===== */
+.consultant-suite-money {
+  font-variant-numeric: tabular-nums;
+  font-weight: var(--mg-v2-font-weight-semibold);
+  letter-spacing: var(--mg-v2-font-letter-spacing-tight);
+  color: var(--mg-v2-consultant-money-ink);
+  white-space: nowrap;
+}
+
+.consultant-suite-money--strong {
+  font-size: var(--mg-v2-font-size-h2);
+  font-weight: var(--mg-v2-font-weight-bold);
+}
+
+.consultant-suite-money--out {
+  color: var(--mg-v2-consultant-money-out);
+}
+
+.consultant-suite-money--muted {
+  font-weight: var(--mg-v2-font-weight-medium);
+  color: var(--mg-v2-color-text-tertiary);
+}
+
+/* ===== Empty · caption ===== */
+.consultant-suite .mg-v2-empty-state.consultant-suite-empty {
+  padding: var(--mg-v2-space-8) var(--mg-v2-space-4);
+  color: var(--mg-v2-color-text-tertiary);
+}
+
+.consultant-suite-caption {
+  margin: var(--mg-v2-space-3) 0 0;
+  font-size: var(--mg-v2-font-size-caption);
+  line-height: var(--mg-v2-font-line-height-body);
+  color: var(--mg-v2-color-text-tertiary);
+}
+
+/* ===== 모바일 (390 · 가로 스크롤 금지) ===== */
+@media (max-width: 767px) {
+  .consultant-suite {
+    overflow-x: hidden;
+  }
+
+  .consultant-suite .consultant-summary-strip.consultant-suite__summary {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .consultant-suite__panel {
+    padding: var(--mg-v2-space-3);
+  }
+}

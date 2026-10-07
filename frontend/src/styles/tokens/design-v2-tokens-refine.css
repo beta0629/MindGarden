@@ -273,6 +273,33 @@
     var(--mg-v2-refine-landing-feature-icon-bg-start) 0%,
     var(--mg-v2-refine-landing-feature-icon-bg-end) 100%
   );
+
+  /* ────────────────────────────────────────────────────────────────
+     Consultant suite — /consultant/* (SSOT: /consultant/dashboard mg-v2)
+     흰 카드 + slate 테두리 on warm stage · 콘텐츠 선택 = slate (teal ring/wash 금지)
+     관리자 stone 패널(surface-stone / border-default)과 분리된 역할 표면.
+     ──────────────────────────────────────────────────────────────── */
+  --mg-v2-consultant-surface-stage: var(--mg-v2-color-surface-bg);
+  --mg-v2-consultant-surface-card: var(--mg-v2-color-surface-card);
+  --mg-v2-consultant-border-card: var(--cs-slate-200);
+  --mg-v2-consultant-border-soft: var(--cs-slate-100);
+  --mg-v2-consultant-selection-bg: var(--cs-slate-200);
+  --mg-v2-consultant-selection-border: var(--mg-v2-color-border-dark);
+  --mg-v2-consultant-chip-neutral-bg: var(--cs-slate-100);
+  --mg-v2-consultant-chip-neutral-text: var(--mg-v2-color-text-secondary);
+  --mg-v2-consultant-notice-bg: var(--cs-slate-100);
+  --mg-v2-consultant-notice-border: var(--mg-v2-color-border-dark);
+  --mg-v2-consultant-holiday-bg: color-mix(in srgb, var(--mg-v2-color-neutral-100) 60%, var(--mg-v2-color-surface-card));
+  --mg-v2-consultant-calendar-sun: var(--mg-error-600);
+  --mg-v2-consultant-calendar-sat: var(--mg-v2-color-money-expense);
+  --mg-v2-consultant-money-ink: var(--mg-v2-color-text-primary);
+  --mg-v2-consultant-money-out: var(--mg-v2-color-money-expense);
+  --mg-v2-consultant-control-height: 2.25rem;
+  --mg-v2-consultant-chip-height: var(--mg-v2-component-height-sm);
+  --mg-v2-consultant-control-radius: var(--mg-v2-radius-lg);
+  --mg-v2-consultant-card-radius: var(--mg-v2-radius-panel);
+  --mg-v2-consultant-calendar-min-height: 45rem;
+  --mg-v2-consultant-calendar-min-height-mobile: 32rem;
 }
 
 /* ================================================================
@@ -321,6 +348,13 @@
     --mg-v2-refine-landing-cta-shadow: none;
     --mg-v2-refine-landing-proof-logo-opacity: 0.8;
     --mg-v2-refine-landing-trust-badge-opacity: 0.85;
+
+    --mg-v2-consultant-border-card: var(--mg-v2-color-border-default);
+    --mg-v2-consultant-border-soft: var(--mg-v2-color-border-subtle);
+    --mg-v2-consultant-selection-bg: var(--mg-v2-color-neutral-200);
+    --mg-v2-consultant-chip-neutral-bg: var(--mg-v2-color-neutral-100);
+    --mg-v2-consultant-notice-bg: var(--mg-v2-color-neutral-100);
+    --mg-v2-consultant-holiday-bg: var(--mg-v2-color-neutral-100);
   }
 }
 
@@ -368,6 +402,13 @@
   --mg-v2-refine-landing-cta-shadow: none;
   --mg-v2-refine-landing-proof-logo-opacity: 0.8;
   --mg-v2-refine-landing-trust-badge-opacity: 0.85;
+
+  --mg-v2-consultant-border-card: var(--mg-v2-color-border-default);
+  --mg-v2-consultant-border-soft: var(--mg-v2-color-border-subtle);
+  --mg-v2-consultant-selection-bg: var(--mg-v2-color-neutral-200);
+  --mg-v2-consultant-chip-neutral-bg: var(--mg-v2-color-neutral-100);
+  --mg-v2-consultant-notice-bg: var(--mg-v2-color-neutral-100);
+  --mg-v2-consultant-holiday-bg: var(--mg-v2-color-neutral-100);
 }
 
 /* ================================================================

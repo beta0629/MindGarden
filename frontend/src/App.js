@@ -30,6 +30,7 @@ import ConsultantClientManagementRenewal from './components/consultant/Consultan
 import ConsultantRecordsRenewal from './components/consultant/ConsultantRecordsRenewal';
 import ConsultantMoreHub from './components/consultant/ConsultantMoreHub';
 import ConsultantSalarySettlement from './components/consultant/ConsultantSalarySettlement';
+import ConsultantSalarySettlementPage from './components/consultant/ConsultantSalarySettlementPage';
 import ConsultantSessionKpiPage from './components/consultant/ConsultantSessionKpiPage';
 import ConsultantMindWeatherInboxPage from './components/consultant/ConsultantMindWeatherInboxPage';
 import ClientMessageScreen from './components/client/ClientMessageScreen';
@@ -687,12 +688,8 @@ function AppContent() {
               path="/consultant/salary-settlement"
               element={(
                 <ProtectedRoute requiredRoles={[USER_ROLES.CONSULTANT]}>
-                  <AdminCommonLayout title={t('common:misc.App.t_943bafd7')}>
-                    <div className="mg-v2-ad-b0kla">
-                      <div className="mg-v2-ad-b0kla__container">
-                        <ConsultantSalarySettlement />
-                      </div>
-                    </div>
+                  <AdminCommonLayout title={t('common:misc.App.t_943bafd7')} className="mg-v2-dashboard-layout">
+                    <ConsultantSalarySettlementPage />
                   </AdminCommonLayout>
                 </ProtectedRoute>
               )}

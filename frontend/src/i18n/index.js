@@ -39,6 +39,7 @@ import koSmsTemplate from '../locales/ko/smsTemplate.json';
 import koMypage from '../locales/ko/mypage.json';
 import koCommunity from '../locales/ko/community.json';
 import koAccountDeletion from '../locales/ko/accountDeletion.json';
+import koConsultantSuite from '../locales/ko/consultantSuite.json';
 
 const SUPPORTED_LANGUAGES = ['ko'];
 const FALLBACK_LANGUAGE = 'ko';
@@ -125,7 +126,8 @@ i18n
         smsTemplate: koSmsTemplate,
         mypage: koMypage,
         community: koCommunity,
-        accountDeletion: koAccountDeletion
+        accountDeletion: koAccountDeletion,
+        consultantSuite: koConsultantSuite
       }
     },
     supportedLngs: SUPPORTED_LANGUAGES,
@@ -148,7 +150,8 @@ i18n
       'smsTemplate',
       'mypage',
       'community',
-      'accountDeletion'
+      'accountDeletion',
+      'consultantSuite'
     ],
     interpolation: {
       escapeValue: false

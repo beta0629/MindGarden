@@ -56,3 +56,32 @@
     flex-basis: 0;
   }
 }
+
+/*
+ * 단계 G < 64px (모바일 390 월 칩 ~36px).
+ * nowrap 네 글자(~48px)는 칩 overflow:hidden 에 「기관연」만 남긴다.
+ * Badge.css·넓은 표식(.mg-schedule-event-marks) nowrap 은 유지하고,
+ * 월간 칩 컨텍스트에서만 white-space 를 풀어 「기관/연계」 2+2 줄바꿈을 허용한다.
+ * @container 조건의 px 는 var() 를 받지 못해 리터럴이다(단계 G 64px 경계와 동일).
+ */
+@container mg-month-event (width < 64px) {
+  .mg-v2-ad-calendar-event--compact.mg-v2-ad-calendar-event--integrated-month .mg-schedule-event-marks .mg-engagement-type-badge {
+    display: block;
+    box-sizing: border-box;
+    max-inline-size: 100%;
+    height: auto;
+    overflow: visible;
+    white-space: normal;
+    word-break: break-all;
+    overflow-wrap: anywhere;
+    text-align: center;
+    padding-block: var(--mg-v2-space-0-5);
+    padding-inline: var(--mg-v2-space-0-5);
+    font-size: var(--mg-v2-font-size-caption);
+    line-height: var(--mg-v2-font-line-height-caption);
+  }
+
+  .mg-v2-ad-calendar-event.mg-v2-ad-calendar-event--compact.mg-v2-ad-calendar-event--integrated-month:has(.mg-schedule-event-marks) {
+    height: auto;
+  }
+}

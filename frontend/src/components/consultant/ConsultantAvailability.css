@@ -561,3 +561,121 @@
   font-size: var(--mg-font-size-sm);
   line-height: 1.4;
 }
+
+/* ===== 스위트 셸 — 요일 카드(흰 카드 · slate 칩 · 슬롯 행) ===== */
+.consultant-availability__grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--mg-v2-space-4);
+}
+
+.consultant-availability__day {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-v2-space-3);
+  min-width: 0;
+  padding: var(--mg-v2-space-4);
+  background: var(--mg-v2-consultant-surface-card);
+  border: var(--mg-v2-border-width-thin) solid var(--mg-v2-consultant-border-card);
+  border-radius: var(--mg-v2-consultant-card-radius);
+}
+
+.consultant-availability__day-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mg-v2-space-2);
+}
+
+.consultant-availability__day-title {
+  margin: 0;
+  font-size: var(--mg-v2-font-size-body-lg);
+  font-weight: var(--mg-v2-font-weight-bold);
+  color: var(--mg-v2-color-text-primary);
+}
+
+.consultant-availability__day-count {
+  display: inline-flex;
+  align-items: center;
+  height: var(--mg-v2-consultant-chip-height);
+  padding: 0 var(--mg-v2-space-2);
+  background: var(--mg-v2-consultant-chip-neutral-bg);
+  border: var(--mg-v2-border-width-thin) solid var(--mg-v2-consultant-border-card);
+  border-radius: var(--mg-v2-consultant-control-radius);
+  font-size: var(--mg-v2-font-size-caption);
+  font-weight: var(--mg-v2-font-weight-semibold);
+  color: var(--mg-v2-consultant-chip-neutral-text);
+}
+
+.consultant-availability__no-slots {
+  margin: 0;
+  font-size: var(--mg-v2-font-size-body-md);
+  color: var(--mg-v2-color-text-tertiary);
+}
+
+.consultant-availability__slots {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.consultant-availability__slot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mg-v2-space-2);
+  padding: var(--mg-v2-space-2) 0;
+}
+
+.consultant-availability__slot + .consultant-availability__slot {
+  border-top: var(--mg-v2-border-width-thin) solid var(--mg-v2-consultant-border-soft);
+}
+
+.consultant-availability__slot-time {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--mg-v2-space-1);
+  min-width: 0;
+  font-size: var(--mg-v2-font-size-body-md);
+  font-weight: var(--mg-v2-font-weight-semibold);
+  font-variant-numeric: tabular-nums;
+  color: var(--mg-v2-color-text-primary);
+}
+
+.consultant-availability__slot-duration {
+  margin-left: var(--mg-v2-space-1);
+  font-size: var(--mg-v2-font-size-caption);
+  font-weight: var(--mg-v2-font-weight-regular);
+  color: var(--mg-v2-color-text-tertiary);
+}
+
+.consultant-availability__slot-actions {
+  display: inline-flex;
+  flex-shrink: 0;
+  gap: var(--mg-v2-space-1);
+}
+
+.consultant-suite .consultant-availability__icon-btn.mg-button {
+  width: var(--mg-v2-consultant-control-height);
+  min-width: var(--mg-v2-consultant-control-height);
+  height: var(--mg-v2-consultant-control-height);
+  padding: 0;
+}
+
+@media (max-width: 1199px) {
+  .consultant-availability__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 767px) {
+  .consultant-availability__grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .consultant-suite .consultant-availability__icon-btn.mg-button {
+    padding: 0 !important;
+  }
+}

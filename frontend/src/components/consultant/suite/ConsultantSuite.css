@@ -212,10 +212,190 @@
   color: var(--mg-v2-color-text-tertiary);
 }
 
+/* ===== 툴바 (검색 + 칩 한 줄) ===== */
+.consultant-suite-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--mg-v2-space-3);
+  min-width: 0;
+}
+
+.consultant-suite-search {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex: 1 1 var(--mg-v2-breakpoint-sm);
+  min-width: 0;
+  max-width: var(--mg-v2-breakpoint-sm);
+}
+
+.consultant-suite-search__icon {
+  position: absolute;
+  left: var(--mg-v2-space-3);
+  display: inline-flex;
+  color: var(--mg-v2-color-text-tertiary);
+  pointer-events: none;
+}
+
+.consultant-suite-search__input {
+  width: 100%;
+  height: var(--mg-v2-consultant-control-height);
+  box-sizing: border-box;
+  padding: 0 var(--mg-v2-space-3) 0 var(--mg-v2-space-10);
+  background: var(--mg-v2-consultant-surface-card);
+  border: var(--mg-v2-border-width-thin) solid var(--mg-v2-consultant-border-card);
+  border-radius: var(--mg-v2-consultant-control-radius);
+  font-size: var(--mg-v2-font-size-body-md);
+  color: var(--mg-v2-color-text-primary);
+  box-shadow: none;
+}
+
+.consultant-suite-search__input::placeholder {
+  color: var(--mg-v2-color-text-placeholder);
+}
+
+.consultant-suite-search__input:focus-visible {
+  outline: none;
+  border-color: var(--mg-v2-consultant-selection-border);
+  box-shadow: var(--mg-v2-shadow-focus);
+}
+
+/* ===== 카드 그리드 ===== */
+.consultant-suite-card-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--mg-v2-space-3);
+  min-width: 0;
+}
+
+@media (max-width: 1199px) {
+  .consultant-suite-card-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* ===== 상담 일지 카드 (records·logs 공유) ===== */
+.consultant-suite-record-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-v2-space-3);
+  min-width: 0;
+  padding: var(--mg-v2-space-4);
+  background: var(--mg-v2-consultant-surface-card);
+  border: var(--mg-v2-border-width-thin) solid var(--mg-v2-consultant-border-card);
+  border-radius: var(--mg-v2-consultant-card-radius);
+  box-shadow: none;
+}
+
+.consultant-suite-record-card__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mg-v2-space-2);
+}
+
+.consultant-suite-record-card__date {
+  font-size: var(--mg-v2-font-size-body-md);
+  font-weight: var(--mg-v2-font-weight-bold);
+  font-variant-numeric: tabular-nums;
+  color: var(--mg-v2-color-text-primary);
+}
+
+.consultant-suite-record-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-v2-space-1);
+  margin: 0;
+}
+
+.consultant-suite-record-card__row {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--mg-v2-space-3);
+  font-size: var(--mg-v2-font-size-body-md);
+}
+
+.consultant-suite-record-card__row dt {
+  color: var(--mg-v2-color-text-tertiary);
+}
+
+.consultant-suite-record-card__row dd {
+  min-width: 0;
+  margin: 0;
+  color: var(--mg-v2-color-text-primary);
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+.consultant-suite-record-card__client {
+  font-weight: var(--mg-v2-font-weight-semibold);
+}
+
+.consultant-suite-record-card__row--meta {
+  font-size: var(--mg-v2-font-size-caption);
+}
+
+.consultant-suite-record-card__foot {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: var(--mg-v2-space-3);
+  border-top: var(--mg-v2-border-width-thin) solid var(--mg-v2-consultant-border-soft);
+}
+
+/* ===== 로딩 ===== */
+.consultant-suite-loading {
+  padding: var(--mg-v2-space-8) var(--mg-v2-space-4);
+}
+
+/* ===== 공용 내담자 카드(ClientCard) — 스위트 안에서만 흰 카드 + slate 상태칩 ===== */
+.consultant-suite .mg-client-card.mg-client-card--detailed {
+  background: var(--mg-v2-consultant-surface-card);
+  border: var(--mg-v2-border-width-thin) solid var(--mg-v2-consultant-border-card);
+  border-radius: var(--mg-v2-consultant-card-radius);
+  box-shadow: none;
+  backdrop-filter: none;
+}
+
+.consultant-suite .mg-client-card.mg-client-card--detailed:hover,
+.consultant-suite .mg-client-card.mg-client-card--detailed:focus-visible {
+  border-color: var(--mg-v2-consultant-selection-border);
+  box-shadow: none;
+  transform: none;
+}
+
+/* unified-design-tokens 의 status-badge--active/scheduled/completed/warning 이 background-color !important 로 색을 강제함 */
+.consultant-suite .mg-client-card .mg-client-card__status-badge {
+  background-color: var(--mg-v2-consultant-chip-neutral-bg) !important;
+  color: var(--mg-v2-consultant-chip-neutral-text);
+  border: var(--mg-v2-border-width-thin) solid var(--mg-v2-consultant-border-card);
+  box-shadow: none;
+}
+
+.consultant-suite .mg-client-card .mg-client-card__progress-section {
+  background: var(--mg-v2-consultant-surface-stage);
+}
+
+/* unified-design-tokens 가 768px 이하에서 .mg-client-card--detailed 를 display:none 처리함 */
+@media (max-width: 768px) {
+  .consultant-suite .consultant-suite-card-grid .mg-client-card.mg-client-card--detailed {
+    display: flex;
+  }
+}
+
 /* ===== 모바일 (390 · 가로 스크롤 금지) ===== */
 @media (max-width: 767px) {
   .consultant-suite {
     overflow-x: hidden;
+  }
+
+  .consultant-suite-search {
+    flex-basis: 100%;
+    max-width: none;
+  }
+
+  .consultant-suite-card-grid {
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .consultant-suite .consultant-summary-strip.consultant-suite__summary {
@@ -225,4 +405,56 @@
   .consultant-suite__panel {
     padding: var(--mg-v2-space-3);
   }
+}
+
+/* ===== 상담 일지 조회(consultant surface) — 필터 h36 slate · 저장 뷰 강등 ===== */
+.consultant-suite.consultant-logs .mg-v2-consultation-log-filter {
+  margin-bottom: 0;
+}
+
+.consultant-suite.consultant-logs .mg-v2-consultation-log-filter__select,
+.consultant-suite.consultant-logs .mg-v2-consultation-log-filter__input {
+  height: var(--mg-v2-consultant-control-height);
+  padding: 0 var(--mg-v2-space-3);
+  font-size: var(--mg-v2-font-size-body-md);
+  background: var(--mg-v2-consultant-surface-card);
+  border: var(--mg-v2-border-width-thin) solid var(--mg-v2-consultant-border-card);
+  border-radius: var(--mg-v2-consultant-control-radius);
+}
+
+.consultant-suite.consultant-logs .mg-v2-consultation-log-filter__select:focus,
+.consultant-suite.consultant-logs .mg-v2-consultation-log-filter__input:focus {
+  border-color: var(--mg-v2-consultant-selection-border);
+  box-shadow: var(--mg-v2-shadow-focus);
+}
+
+.consultant-suite.consultant-logs .consultant-logs__saved-view .mg-v2-saved-view-controls {
+  flex-wrap: wrap;
+  gap: var(--mg-v2-space-2);
+}
+
+.consultant-suite.consultant-logs .consultant-logs__saved-view .mg-v2-saved-view-chip,
+.consultant-suite.consultant-logs .consultant-logs__saved-view .mg-v2-saved-view-chip-wrap {
+  background: var(--mg-v2-consultant-chip-neutral-bg);
+  border-color: var(--mg-v2-consultant-border-card);
+  color: var(--mg-v2-consultant-chip-neutral-text);
+}
+
+.consultant-suite.consultant-logs .consultant-logs__saved-view .mg-v2-saved-view-chip--active,
+.consultant-suite.consultant-logs .consultant-logs__saved-view .mg-v2-saved-view-chip-wrap--active,
+.consultant-suite.consultant-logs .consultant-logs__saved-view .mg-v2-saved-view-chip-wrap--active .mg-v2-saved-view-chip {
+  background: var(--mg-v2-consultant-chip-neutral-bg);
+  border-color: var(--mg-v2-consultant-border-card);
+  color: var(--mg-v2-color-text-primary);
+}
+
+.consultant-suite.consultant-logs .consultant-logs__saved-view .mg-v2-saved-view-controls__save-btn,
+.consultant-suite.consultant-logs .consultant-logs__saved-view .mg-v2-saved-view-controls__delete-btn {
+  color: var(--mg-v2-color-text-secondary);
+  font-weight: var(--mg-v2-font-weight-semibold);
+}
+
+.consultant-suite.consultant-logs .consultant-logs__saved-view .mg-v2-saved-view-controls__save-btn:hover,
+.consultant-suite.consultant-logs .consultant-logs__saved-view .mg-v2-saved-view-controls__delete-btn:hover {
+  color: var(--mg-v2-color-text-primary);
 }

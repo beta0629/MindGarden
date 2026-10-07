@@ -3,9 +3,17 @@ import UnifiedLoading from '../../components/common/UnifiedLoading';
 import { useSession } from '../../hooks/useSession';
 import { sessionManager } from '../../utils/sessionManager';
 import StandardizedApi from '../../utils/standardizedApi';
+import { AlertTriangle, Clock, Pencil, Plus, RefreshCw, ShieldAlert, Trash2 } from 'lucide-react';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
-import ContentArea from '../dashboard-v2/content/ContentArea';
-import ContentHeader from '../dashboard-v2/content/ContentHeader';
+import EmptyState from '../common/EmptyState';
+import ConsultantSuitePage from './suite/ConsultantSuitePage';
+import ConsultantSuiteButton from './suite/ConsultantSuiteButton';
+import {
+  CONSULTANT_SUITE_BUTTON_VARIANT,
+  CONSULTANT_SUITE_CLASS,
+  CONSULTANT_SUITE_NS,
+  CONSULTANT_SUITE_TEST_ID
+} from '../../constants/consultantSuite';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import MGButton from '../common/MGButton';
 import UnifiedModal from '../common/modals/UnifiedModal';
@@ -29,6 +37,8 @@ const API_COMMON_CODES_GROUPS_DURATION = '/api/v1/common-codes/groups/DURATION';
 
 const CONSULTANT_AVAILABILITY_TITLE_ID = 'consultant-availability-page-title';
 const CONSULTANT_AVAILABILITY_FORM_ID = 'consultant-availability-slot-form';
+const ACTION_ICON_SIZE = 16;
+const EMPTY_ICON_SIZE = 40;
 
 /** JS Date#getDay() (0=일) → DayOfWeek enum 키 */
 const JS_DAY_TO_DAY_OF_WEEK = [
@@ -91,6 +101,7 @@ const nextAllowedYmdForDayOfWeek = (dayOfWeekKey) => {
 
 const ConsultantAvailability = () => {
   const { t } = useTranslation();
+  const { t: tSuite } = useTranslation(CONSULTANT_SUITE_NS);
   const { user, isLoggedIn, isLoading: sessionLoading } = useSession();
   const [availability, setAvailability] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -296,17 +307,16 @@ const ConsultantAvailability = () => {
   const pageShell = (body, options = {}) => {
     const { title = t('common:consultant.ConsultantAvailability.t_09b4a1ce'), subtitle = t('common:consultant.ConsultantAvailability.t_eecb782f'), actions } = options;
     return (
-      <ContentArea ariaLabel="상담 가능 시간">
-        <ContentHeader
-          title={title}
-          subtitle={subtitle}
-          titleId={CONSULTANT_AVAILABILITY_TITLE_ID}
-          actions={actions}
-        />
-        <section aria-labelledby={CONSULTANT_AVAILABILITY_TITLE_ID}>
-          {body}
-        </section>
-      </ContentArea>
+      <ConsultantSuitePage
+        title={title}
+        subtitle={subtitle}
+        titleId={CONSULTANT_AVAILABILITY_TITLE_ID}
+        actions={actions}
+        ariaLabel={title}
+        testId={CONSULTANT_SUITE_TEST_ID.AVAILABILITY_PAGE}
+      >
+        {body}
+      </ConsultantSuitePage>
     );
   };
 
@@ -323,29 +333,22 @@ const ConsultantAvailability = () => {
 
   const headerActions = (
     <>
-      <MGButton
-        variant="primary"
-        className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: false })}
-        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+      <ConsultantSuiteButton
+        variant={CONSULTANT_SUITE_BUTTON_VARIANT.PRIMARY}
+        icon={<Plus size={ACTION_ICON_SIZE} aria-hidden />}
         onClick={() => {
           setSelectedDate(getMinSelectableDateYmd());
           setShowAddModal(true);
         }}
-        preventDoubleClick={false}
       >
-        <i className="bi bi-plus-circle" />
-        상담 가능 시간 추가
-      </MGButton>
-      <MGButton
-        variant="outline"
-        className={buildErpMgButtonClassName({ variant: 'outline', size: 'md', loading: false })}
-        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+        {tSuite('actions.addAvailability')}
+      </ConsultantSuiteButton>
+      <ConsultantSuiteButton
+        icon={<RefreshCw size={ACTION_ICON_SIZE} aria-hidden />}
         onClick={loadAvailability}
-        preventDoubleClick={false}
       >
-        <i className="bi bi-arrow-clockwise" />
-        {t('common.actions.refresh')}
-      </MGButton>
+        {tSuite('actions.refresh')}
+      </ConsultantSuiteButton>
     </>
   );
 
@@ -353,162 +356,150 @@ const ConsultantAvailability = () => {
     if (sessionLoading) {
       return (
         <div className="consultant-availability__session-load" aria-busy="true" aria-live="polite">
-          <UnifiedLoading type="inline" text="가용성을 불러오는 중..." />
+          <UnifiedLoading type="inline" text={tSuite('availability.loading')} />
         </div>
       );
     }
     if (!isLoggedIn || !user) {
-      return (
-        <>
-          {pageShell(
-            <div className="consultant-availability-error-container">
-              <div className="consultant-availability-error-box consultant-availability-error-box--login">
-                <i className="bi bi-exclamation-triangle consultant-availability-error-icon" />
-                <h3 className="consultant-availability-error-title">로그인이 필요합니다</h3>
-                <p className="consultant-availability-error-message">상담 가능 시간을 관리하려면 로그인해주세요.</p>
-                <MGButton
-                  variant="primary"
-                  className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: false })}
-                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                  onClick={() => { redirectToLoginPageOnce(); }}
-                  preventDoubleClick={false}
-                >
-                  <i className="bi bi-box-arrow-in-right" />
-                  로그인하기
-                </MGButton>
-              </div>
-            </div>,
-            { subtitle: t('common:consultant.ConsultantAvailability.t_4f3fe0b5') }
-          )}
-        </>
+      return pageShell(
+        <section className={CONSULTANT_SUITE_CLASS.PANEL}>
+          <EmptyState
+            className={CONSULTANT_SUITE_CLASS.EMPTY}
+            icon={<AlertTriangle size={EMPTY_ICON_SIZE} aria-hidden />}
+            title={tSuite('availability.loginTitle')}
+            description={tSuite('availability.loginDescription')}
+            action={(
+              <ConsultantSuiteButton onClick={() => { redirectToLoginPageOnce(); }}>
+                {tSuite('actions.login')}
+              </ConsultantSuiteButton>
+            )}
+          />
+        </section>,
+        { subtitle: t('common:consultant.ConsultantAvailability.t_4f3fe0b5') }
       );
     }
     if (!hasPermission) {
-      return (
-        <>
-          {pageShell(
-            <div className="consultant-availability-error-container">
-              <div className="consultant-availability-error-box consultant-availability-error-box--permission">
-                <i className="bi bi-shield-exclamation consultant-availability-error-icon" />
-                <h3 className="consultant-availability-error-title">접근 권한이 없습니다</h3>
-                <p className="consultant-availability-error-message">상담 가능 시간 관리는 상담사 또는 관리자만 접근할 수 있습니다.</p>
-                <p className="consultant-availability-error-detail">
-                  현재 사용자 역할: {userRole || t('common:consultant.ConsultantAvailability.t_d58fa73a')}
-                </p>
-                <MGButton
-                  variant="warning"
-                  className={buildErpMgButtonClassName({ variant: 'warning', size: 'md', loading: false })}
-                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                  onClick={() => window.history.back()}
-                  preventDoubleClick={false}
-                >
-                  <i className="bi bi-arrow-left" />
-                  이전 페이지로
-                </MGButton>
-              </div>
-            </div>,
-            { subtitle: t('common:consultant.ConsultantAvailability.t_466a86db') }
-          )}
-        </>
+      return pageShell(
+        <section className={CONSULTANT_SUITE_CLASS.PANEL}>
+          <EmptyState
+            className={CONSULTANT_SUITE_CLASS.EMPTY}
+            icon={<ShieldAlert size={EMPTY_ICON_SIZE} aria-hidden />}
+            title={tSuite('availability.permissionTitle')}
+            description={`${tSuite('availability.permissionDescription')} ${tSuite('availability.roleLabel', {
+              role: userRole || t('common:consultant.ConsultantAvailability.t_d58fa73a')
+            })}`}
+            action={(
+              <ConsultantSuiteButton onClick={() => window.history.back()}>
+                {tSuite('actions.back')}
+              </ConsultantSuiteButton>
+            )}
+          />
+        </section>,
+        { subtitle: t('common:consultant.ConsultantAvailability.t_466a86db') }
       );
     }
     return (
       <>
         {pageShell(
-          <div className="consultant-availability-container">
+          <>
             {loading && (
-              <UnifiedLoading type="inline" text="가용성 데이터를 불러오는 중..." />
-            )}
-
-            {error && (
-              <div className="error-container">
-                <div className="alert alert-danger" role="alert">
-                  <i className="bi bi-exclamation-triangle-fill" />
-                  {error}
-                </div>
+              <div className={CONSULTANT_SUITE_CLASS.LOADING} aria-busy="true" aria-live="polite">
+                <UnifiedLoading type="inline" text={tSuite('availability.loading')} />
               </div>
             )}
 
-            {!loading && !error && (
-              <div className="availability-content">
-                {availability.length === 0 ? (
-                  <div className="empty-state">
-                    <i className="bi bi-clock" />
-                    <h3>설정된 상담 가능 시간이 없습니다</h3>
-                    <p>상담 가능한 시간을 추가해보세요.</p>
-                  </div>
-                ) : (
-                  <div className="availability-grid">
-                    {DAYS_OF_WEEK.map(day => (
-                      <div key={day.key} className="day-card">
-                        <div className="day-header">
-                          <SafeText tag="h3" className="day-title">{day.label}</SafeText>
-                          <span className="day-count">
-                            {groupedAvailability[day.key]?.length || 0}개 시간
-                          </span>
-                        </div>
+            {error && (
+              <div className="alert alert-danger" role="alert">
+                <i className="bi bi-exclamation-triangle-fill" />
+                {error}
+              </div>
+            )}
 
-                        <div className="time-slots">
-                          {groupedAvailability[day.key]?.map(slot => (
-                            <div key={slot.id} className="time-slot">
-                              <div className="time-info">
-                                <span className="time-range">
-                                  <SafeText>{slot.startTime}</SafeText> - <SafeText>{slot.endTime}</SafeText>
-                                </span>
-                                <span className="time-duration">
-                                  {slot.duration}분
-                                </span>
-                              </div>
-                              <div className="time-actions">
+            {!loading && !error && (availability.length === 0 ? (
+              <section className={CONSULTANT_SUITE_CLASS.PANEL}>
+                <EmptyState
+                  className={CONSULTANT_SUITE_CLASS.EMPTY}
+                  icon={<Clock size={EMPTY_ICON_SIZE} aria-hidden />}
+                  title={tSuite('availability.emptyTitle')}
+                  description={tSuite('availability.emptyDescription')}
+                />
+              </section>
+            ) : (
+              <section className="consultant-availability__grid" aria-label={tSuite('availability.listAria')}>
+                {DAYS_OF_WEEK.map((day) => {
+                  const daySlots = groupedAvailability[day.key] || [];
+                  return (
+                    <article key={day.key} className="consultant-availability__day">
+                      <header className="consultant-availability__day-head">
+                        <SafeText tag="h3" className="consultant-availability__day-title">{day.label}</SafeText>
+                        <span className="consultant-availability__day-count">
+                          {tSuite('availability.dayCount', { count: daySlots.length })}
+                        </span>
+                      </header>
+                      {daySlots.length === 0 ? (
+                        <p className="consultant-availability__no-slots">{tSuite('availability.noSlots')}</p>
+                      ) : (
+                        <ul className="consultant-availability__slots">
+                          {daySlots.map((slot) => (
+                            <li key={slot.id} className="consultant-availability__slot">
+                              <span className="consultant-availability__slot-time">
+                                <SafeText>{slot.startTime}</SafeText>
+                                {' – '}
+                                <SafeText>{slot.endTime}</SafeText>
+                                {slot.duration != null ? (
+                                  <span className="consultant-availability__slot-duration">
+                                    {tSuite('availability.durationUnit', { count: slot.duration })}
+                                  </span>
+                                ) : null}
+                              </span>
+                              <span className="consultant-availability__slot-actions">
                                 <MGButton
                                   variant="outline"
-                                  size="small"
+                                  size="medium"
                                   className={buildErpMgButtonClassName({
                                     variant: 'outline',
-                                    size: 'sm',
+                                    size: 'md',
                                     loading: false,
-                                    className: 'btn btn-sm btn-outline-primary'
+                                    className: 'consultant-availability__icon-btn'
                                   })}
                                   loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                   onClick={() => {
                                     setSelectedDate(nextAllowedYmdForDayOfWeek(slot.dayOfWeek));
                                     setEditingSlot(slot);
                                   }}
-                                  title={t('common.actions.edit')}
+                                  aria-label={tSuite('actions.edit')}
+                                  title={tSuite('actions.edit')}
+                                  preventDoubleClick={false}
                                 >
-                                  <i className="bi bi-pencil" />
+                                  <Pencil size={ACTION_ICON_SIZE} aria-hidden />
                                 </MGButton>
                                 <MGButton
                                   variant="outline"
-                                  size="small"
+                                  size="medium"
                                   className={buildErpMgButtonClassName({
                                     variant: 'outline',
-                                    size: 'sm',
+                                    size: 'md',
                                     loading: false,
-                                    className: 'btn btn-sm btn-outline-danger'
+                                    className: 'consultant-availability__icon-btn'
                                   })}
                                   loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                                   onClick={() => handleDeleteAvailability(slot.id)}
-                                  title={t('common.actions.delete')}
+                                  aria-label={tSuite('actions.delete')}
+                                  title={tSuite('actions.delete')}
                                 >
-                                  <i className="bi bi-trash" />
+                                  <Trash2 size={ACTION_ICON_SIZE} aria-hidden />
                                 </MGButton>
-                              </div>
-                            </div>
-                          )) || (
-                            <div className="no-slots">
-                              <i className="bi bi-dash-circle" />
-                              <span>설정된 시간이 없습니다</span>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-          </div>,
+                              </span>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </article>
+                  );
+                })}
+              </section>
+            ))}
+          </>,
           { actions: headerActions }
         )}
 
@@ -536,7 +527,7 @@ const ConsultantAvailability = () => {
   };
 
   return (
-    <AdminCommonLayout title="가능 시간">
+    <AdminCommonLayout className="mg-v2-dashboard-layout">
       {renderContent()}
     </AdminCommonLayout>
   );

@@ -51,9 +51,15 @@
   margin-bottom: var(--mg-v2-space-4);
 }
 
+/* ContentCard 기본(--ad-b0kla-radius 24 + shadow) 대신 suite slate panel */
+.mg-v2-content-card.consultant-dashboard-v2__missing-logs-card,
 .consultant-dashboard-v2__missing-logs-card {
   width: 100%;
   min-width: 0;
+  background: var(--mg-v2-consultant-surface-card);
+  border: var(--mg-v2-border-width-thin) solid var(--mg-v2-consultant-border-card);
+  border-radius: var(--mg-v2-consultant-card-radius);
+  box-shadow: none;
 }
 
 .consultant-dashboard-v2__missing-logs-section {
@@ -178,7 +184,7 @@
   padding: var(--mg-v2-space-4) var(--mg-v2-space-5);
   background: var(--mg-v2-color-neutral-50);
   border: 1px solid var(--mg-v2-color-neutral-300);
-  border-radius: var(--mg-v2-radius-lg);
+  border-radius: var(--mg-v2-consultant-card-radius);
 }
 
 .consultant-incomplete-alert__text {
@@ -225,7 +231,7 @@
 .mg-v2-next-consultation-card {
   background: var(--mg-v2-color-neutral-50);
   border: 1px solid var(--mg-v2-color-neutral-300);
-  border-radius: var(--mg-v2-radius-lg);
+  border-radius: var(--mg-v2-consultant-card-radius);
   box-shadow: none;
   margin-bottom: var(--mg-v2-space-4);
   padding: var(--mg-v2-space-5);
@@ -320,7 +326,7 @@
 .mg-v2-urgent-clients-section {
   background: var(--mg-v2-color-neutral-50);
   border: 1px solid var(--mg-v2-color-neutral-300);
-  border-radius: var(--mg-v2-radius-lg);
+  border-radius: var(--mg-v2-consultant-card-radius);
   box-shadow: none;
   margin-bottom: var(--mg-v2-space-4);
   padding: var(--mg-v2-space-5);

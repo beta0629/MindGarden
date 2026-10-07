@@ -24,7 +24,35 @@ export const CONSULTANT_SUITE_CLASS = {
   MONEY_OUT: 'consultant-suite-money--out',
   MONEY_MUTED: 'consultant-suite-money--muted',
   EMPTY: 'consultant-suite-empty',
-  CAPTION: 'consultant-suite-caption'
+  CAPTION: 'consultant-suite-caption',
+  TOOLBAR: 'consultant-suite-toolbar',
+  SEARCH: 'consultant-suite-search',
+  CARD_GRID: 'consultant-suite-card-grid',
+  RECORD_CARD: 'consultant-suite-record-card',
+  LOADING: 'consultant-suite-loading'
+};
+
+export const CONSULTANT_SUITE_BUTTON_VARIANT = {
+  PRIMARY: 'primary',
+  GHOST: 'outline'
+};
+
+export const CONSULTANT_CLIENT_STATUS_FILTER = {
+  ALL: 'ALL',
+  ACTIVE: 'ACTIVE',
+  INACTIVE: 'INACTIVE',
+  PENDING: 'PENDING',
+  COMPLETED: 'COMPLETED',
+  SUSPENDED: 'SUSPENDED'
+};
+
+export const CONSULTANT_MESSAGE_TYPE_FILTER = {
+  ALL: 'ALL',
+  GENERAL: 'GENERAL',
+  FOLLOW_UP: 'FOLLOW_UP',
+  HOMEWORK: 'HOMEWORK',
+  REMINDER: 'REMINDER',
+  URGENT: 'URGENT'
 };
 
 /** 금액 부호 — 공제는 수학 마이너스(U+2212), 수당은 「+」 */
@@ -52,9 +80,22 @@ export const CONSULTANT_SALARY_FILTER = {
   PAID: 'paid'
 };
 
+/** 상담일지 조회 화면 표면 — admin(기존) / consultant(/consultant/consultation-logs 스위트 셸) */
+export const CONSULTATION_LOG_VIEW_SURFACE = {
+  ADMIN: 'admin',
+  CONSULTANT: 'consultant'
+};
+
 export const CONSULTANT_SUITE_TEST_ID = {
   SCHEDULE_PAGE: 'consultant-schedule-page',
   SCHEDULE_EMPTY: 'consultant-schedule-empty',
   SALARY_PAGE: 'consultant-salary-page',
-  SALARY_CARD: 'consultant-salary-month-card'
+  SALARY_CARD: 'consultant-salary-month-card',
+  AVAILABILITY_PAGE: 'consultant-availability-page',
+  CLIENTS_PAGE: 'consultant-clients-page',
+  MESSAGES_PAGE: 'consultant-messages-page',
+  MESSAGE_ROW: 'consultant-message-row',
+  RECORDS_PAGE: 'consultant-records-page',
+  RECORD_CARD: 'consultant-record-card',
+  LOGS_PAGE: 'consultant-logs-page'
 };

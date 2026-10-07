@@ -9,10 +9,23 @@ import { useNotification } from '../../contexts/NotificationContext';
 import { apiGet, apiPost } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
-import { ContentArea, ContentHeader } from '../dashboard-v2/content';
-import { CONSULTANT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import MGButton from '../common/MGButton';
+import EmptyState from '../common/EmptyState';
+import StatusBadge from '../common/StatusBadge';
+import SafeText from '../common/SafeText';
+import { MessageSquare, Plus } from 'lucide-react';
+import ConsultantSuitePage from './suite/ConsultantSuitePage';
+import ConsultantSearchField from './suite/ConsultantSearchField';
+import ConsultantFilterChips from './suite/ConsultantFilterChips';
+import ConsultantSuiteButton from './suite/ConsultantSuiteButton';
+import {
+  CONSULTANT_MESSAGE_TYPE_FILTER,
+  CONSULTANT_SUITE_BUTTON_VARIANT,
+  CONSULTANT_SUITE_CLASS,
+  CONSULTANT_SUITE_NS,
+  CONSULTANT_SUITE_TEST_ID
+} from '../../constants/consultantSuite';
 import './ConsultantMessages.css';
 import { USER_ROLES } from '../../constants/roles';
 import { useTranslation } from 'react-i18next';
@@ -26,6 +39,11 @@ const API_CONSULTATION_MESSAGES = '/api/v1/consultation-messages';
  * 내담자들과의 메시지 목록을 확인하고 새 메시지를 전송할 수 있는 화면
  */
 const CONSULTANT_MESSAGES_TITLE_ID = 'consultant-messages-title';
+const CONSULTANT_MESSAGES_SEARCH_ID = 'consultant-messages-search';
+const ACTION_ICON_SIZE = 16;
+const EMPTY_ICON_SIZE = 40;
+const MESSAGE_PREVIEW_MAX = 100;
+const MESSAGE_TYPE_FILTER_ORDER = Object.values(CONSULTANT_MESSAGE_TYPE_FILTER);
 
 /** 메시지 카드 하단 상대/출처 표기용 문구 (사용자 노출) */
 const MESSAGE_COUNTERPARTY_COPY = {
@@ -64,6 +82,7 @@ function getMessageCounterpartyLine(message) {
 
 const ConsultantMessages = () => {
   const { t } = useTranslation();
+  const { t: tSuite } = useTranslation(CONSULTANT_SUITE_NS);
   const navigate = useNavigate();
   const { user, isLoggedIn, isLoading: sessionLoading } = useSession();
   const { markMessageAsRead } = useNotification();
@@ -262,282 +281,251 @@ const ConsultantMessages = () => {
     });
   };
 
-  if (sessionLoading) {
-    return (
-      <AdminCommonLayout title={t('admin.labels.message')}>
-        <ContentArea ariaLabel="메시지 페이지 로딩">
-          <ContentHeader
-            title="메시지 관리"
-            subtitle="세션 정보를 불러오는 중입니다. 잠시만 기다려 주세요."
-            titleId={CONSULTANT_MESSAGES_TITLE_ID}
+  const typeFilterItems = MESSAGE_TYPE_FILTER_ORDER.map((key) => ({
+    key,
+    label: tSuite(`messages.type.${key}`)
+  }));
+
+  const openSendModal = () => setShowSendModal(true);
+
+  const newMessageAction = (
+    <ConsultantSuiteButton
+      variant={CONSULTANT_SUITE_BUTTON_VARIANT.PRIMARY}
+      icon={<Plus size={ACTION_ICON_SIZE} aria-hidden />}
+      onClick={openSendModal}
+      disabled={!isLoggedIn}
+    >
+      {tSuite('actions.newMessage')}
+    </ConsultantSuiteButton>
+  );
+
+  const renderPage = (body) => (
+    <AdminCommonLayout className="mg-v2-dashboard-layout">
+      <ConsultantSuitePage
+        title={tSuite('messages.title')}
+        subtitle={tSuite('messages.subtitle')}
+        titleId={CONSULTANT_MESSAGES_TITLE_ID}
+        actions={newMessageAction}
+        ariaLabel={tSuite('messages.ariaLabel')}
+        testId={CONSULTANT_SUITE_TEST_ID.MESSAGES_PAGE}
+      >
+        {body}
+      </ConsultantSuitePage>
+
+      {/* 새 메시지 작성 모달 */}
+      <UnifiedModal
+        isOpen={showSendModal}
+        onClose={() => setShowSendModal(false)}
+        title="새 메시지 작성"
+        size="auto"
+        showCloseButton={true}
+        backdropClick={true}
+        actions={
+          <>
+            <MGButton
+              variant="secondary"
+              className={buildErpMgButtonClassName({ variant: 'secondary', size: 'md', loading: false })}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+              onClick={() => setShowSendModal(false)}
+            >
+              {t('common.actions.cancel')}
+            </MGButton>
+            <MGButton
+              variant="primary"
+              className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: false })}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+              onClick={handleSendMessage}
+            >
+              전송
+            </MGButton>
+          </>
+        }
+      >
+        <div className="mg-v2-form-group">
+          <label className="mg-v2-label">받는 사람 *</label>
+          <CustomSelect
+            className="mg-v2-select"
+            value={newMessage.clientId ?? ''}
+            onChange={(val) => setNewMessage({ ...newMessage, clientId: val })}
+            options={[
+              { value: '', label: '내담자를 선택하세요' },
+              ...clients.map(client => ({
+                value: client.id,
+                label: `${client.name} (${client.email})`
+              }))
+            ]}
+            placeholder="내담자를 선택하세요"
           />
-          <div
-            className="consultant-messages__session-load"
-            aria-busy="true"
-            aria-live="polite"
-          >
-            <UnifiedLoading
-              type="inline"
-              text="세션 정보를 불러오는 중..."
-              variant="pulse"
+        </div>
+        <div className="mg-v2-form-group">
+          <label className="mg-v2-label">메시지 유형</label>
+          <BadgeSelect
+            className="mg-v2-form-badge-select"
+            value={newMessage.messageType}
+            onChange={(val) => setNewMessage({ ...newMessage, messageType: val })}
+            options={messageTypes.map((type) => ({
+              value: type.value,
+              label: type.label
+            }))}
+            placeholder={t('common.messages.pleaseSelect')}
+          />
+        </div>
+        <div className="mg-v2-form-group">
+          <label className="mg-v2-label">제목 *</label>
+          <input
+            type="text"
+            className="mg-v2-input"
+            value={newMessage.title}
+            onChange={(e) => setNewMessage({ ...newMessage, title: e.target.value })}
+            placeholder="메시지 제목을 입력하세요"
+          />
+        </div>
+        <div className="mg-v2-form-group">
+          <label className="mg-v2-label">내용 *</label>
+          <textarea
+            className="mg-v2-textarea"
+            value={newMessage.content}
+            onChange={(e) => setNewMessage({ ...newMessage, content: e.target.value })}
+            placeholder="메시지 내용을 입력하세요"
+            rows={6}
+          />
+        </div>
+        <div className="mg-flex mg-gap-md">
+          <label className="mg-checkbox">
+            <input
+              type="checkbox"
+              checked={newMessage.isImportant}
+              onChange={(e) => setNewMessage({ ...newMessage, isImportant: e.target.checked })}
             />
-          </div>
-        </ContentArea>
-      </AdminCommonLayout>
+            <span>중요</span>
+          </label>
+          <label className="mg-checkbox">
+            <input
+              type="checkbox"
+              checked={newMessage.isUrgent}
+              onChange={(e) => setNewMessage({ ...newMessage, isUrgent: e.target.checked })}
+            />
+            <span>{t('admin.labels.urgent')}</span>
+          </label>
+        </div>
+      </UnifiedModal>
+    </AdminCommonLayout>
+  );
+
+  if (sessionLoading) {
+    return renderPage(
+      <div className={CONSULTANT_SUITE_CLASS.LOADING} aria-busy="true" aria-live="polite">
+        <UnifiedLoading type="inline" text={tSuite('messages.sessionLoading')} variant="pulse" />
+      </div>
     );
   }
 
   if (!isLoggedIn) {
-    return (
-      <AdminCommonLayout title={t('admin.labels.message')}>
-        <ContentArea ariaLabel="메시지">
-          <div className="consultant-messages-login-required">
-            <h3>로그인이 필요합니다.</h3>
-          </div>
-        </ContentArea>
-      </AdminCommonLayout>
+    return renderPage(
+      <section className={CONSULTANT_SUITE_CLASS.PANEL}>
+        <EmptyState className={CONSULTANT_SUITE_CLASS.EMPTY} title={tSuite('messages.loginRequired')} />
+      </section>
     );
   }
 
-  return (
-    <AdminCommonLayout title={t('admin.labels.message')}>
-      <ContentArea ariaLabel="상담사 메시지 관리">
-        <ContentHeader
-          title="메시지 관리"
-          subtitle="내담자들과의 메시지를 관리할 수 있습니다."
-          titleId={CONSULTANT_MESSAGES_TITLE_ID}
-        />
-
-        {/* 검색 및 필터 */}
-        <div className="consultant-messages-search-container">
-          <div className="consultant-messages-search-field">
-            <div className="consultant-messages-search-input-container">
-              <i className="bi bi-search consultant-messages-search-icon" />
-              <input
-                type="text"
-                placeholder="제목, 내용, 내담자명으로 검색..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="consultant-messages-search-input"
-              />
-            </div>
-          </div>
-          
-          <div className="consultant-messages-filter-container">
-            <BadgeSelect
-              value={filterStatus}
-              onChange={(val) => setFilterStatus(val)}
-              options={[
-                { value: 'ALL', label: '전체 유형' },
-                ...messageTypes.map((type) => ({
-                  value: type.value,
-                  label: type.label
-                }))
-              ]}
-              placeholder={t('common.messages.pleaseSelect')}
-              className="mg-v2-form-badge-select consultant-messages-filter-select"
-            />
-          </div>
-
-          <MGButton
-            onClick={() => setShowSendModal(true)}
-            variant="primary"
-            className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: false })}
-            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-          >
-            새 메시지
-          </MGButton>
+  const renderList = () => {
+    if (loading) {
+      return (
+        <div className={CONSULTANT_SUITE_CLASS.LOADING} aria-busy="true" aria-live="polite">
+          <UnifiedLoading type="inline" text={tSuite('messages.loading')} variant="pulse" />
         </div>
-
-        {/* 로딩 상태 — 목록 영역만 인라인 로더 (헤더·검색은 유지) */}
-        {loading && (
-          <div
-            className="consultant-messages__list-load"
-            aria-busy="true"
-            aria-live="polite"
-          >
-            <UnifiedLoading
-              type="inline"
-              text="메시지를 불러오는 중..."
-              variant="pulse"
-            />
-          </div>
-        )}
-
-        {/* 메시지 목록 */}
-        {!loading && (
-          <div>
-            {filteredMessages.length === 0 ? (
-              <div className="consultant-messages-empty">
-                <i className="bi bi-chat-dots consultant-messages-empty-icon" />
-                <h3 className="consultant-messages-empty-title">
-                  {messages.length === 0 ? "전송된 메시지가 없습니다" : "검색 결과가 없습니다"}
-                </h3>
-                <p className="consultant-messages-empty-description">
-                  {messages.length === 0 ? "아직 전송한 메시지가 없습니다." : "다른 검색어를 사용해보세요."}
-                </p>
-                {messages.length === 0 && (
-                  <MGButton
-                    onClick={() => setShowSendModal(true)}
-                    variant="primary"
-                    className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: false, className: 'consultant-messages-empty-btn' })}
-                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                  >
-                    첫 메시지 보내기
-                  </MGButton>
-                )}
-              </div>
-            ) : (
-              <div className="mg-grid mg-grid-cols-3 mg-gap-md">
-                {filteredMessages.map((message) => {
-                  const typeInfo = getMessageTypeInfo(message.messageType);
-                  
-                  return (
-                    <div
-                      key={message.id}
-                      onClick={() => handleMessageClick(message)}
-                      className="mg-v2-card mg-cursor-pointer"
-                    >
-                      <div className="mg-flex mg-justify-between mg-align-center mg-mb-md">
-                        <div className="mg-flex mg-align-center mg-gap-sm">
-                          <span className={`mg-badge mg-badge-${typeInfo.value === 'GENERAL' ? 'secondary' : typeInfo.value === 'FOLLOW_UP' ? 'primary' : typeInfo.value === 'HOMEWORK' ? 'success' : typeInfo.value === 'REMINDER' ? 'warning' : 'danger'}`}>
-                            {typeInfo.label}
-                          </span>
-                          {message.isImportant && (
-                            <span className="mg-badge mg-badge-warning mg-v2-text-xs">중요</span>
-                          )}
-                          {message.isUrgent && (
-                            <span className="mg-badge mg-badge-danger mg-v2-text-xs">{t('admin.labels.urgent')}</span>
-                          )}
-                        </div>
-                        <span className="mg-v2-text-xs mg-v2-color-text-secondary">
-                          {formatDate(message.createdAt)}
-                        </span>
-                      </div>
-                      
-                      <h4 className="mg-h5 mg-mb-sm mg-v2-text-center">
-                        {message.title}
-                      </h4>
-                      
-                      <p className="mg-v2-text-sm mg-v2-color-text-secondary mg-mb-md">
-                        {(message.content || '').substring(0, 100)}{(message.content || '').length > 100 ? '...' : ''}
-                      </p>
-                      
-                      <div className="mg-flex mg-justify-between mg-align-center mg-pt-md mg-border-top">
-                        <span className="mg-v2-text-sm mg-v2-color-text-secondary">
-                          {getMessageCounterpartyLine(message)}
-                        </span>
-                        <span className={`mg-badge ${message.isRead ? 'mg-badge-success' : 'mg-badge-secondary'} mg-v2-text-xs`}>
-                          {message.isRead ? '읽음' : '안읽음'}
-                        </span>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
+      );
+    }
+    if (filteredMessages.length === 0) {
+      const hasMessages = messages.length > 0;
+      return (
+        <section className={CONSULTANT_SUITE_CLASS.PANEL}>
+          <EmptyState
+            className={CONSULTANT_SUITE_CLASS.EMPTY}
+            icon={<MessageSquare size={EMPTY_ICON_SIZE} aria-hidden />}
+            title={hasMessages ? tSuite('messages.filterEmptyTitle') : tSuite('messages.emptyTitle')}
+            description={hasMessages
+              ? tSuite('messages.filterEmptyDescription')
+              : tSuite('messages.emptyDescription')}
+            action={hasMessages ? null : (
+              <ConsultantSuiteButton onClick={openSendModal}>{tSuite('actions.firstMessage')}</ConsultantSuiteButton>
             )}
-          </div>
-        )}
+          />
+        </section>
+      );
+    }
+    return (
+      <ul className="consultant-messages__list" aria-label={tSuite('messages.listAria')}>
+        {filteredMessages.map((message) => {
+          const typeKey = getMessageTypeInfo(message.messageType).value;
+          const preview = (message.content || '').length > MESSAGE_PREVIEW_MAX
+            ? `${(message.content || '').substring(0, MESSAGE_PREVIEW_MAX)}…`
+            : (message.content || '');
+          return (
+            <li key={message.id}>
+              <button
+                type="button"
+                className={`consultant-messages__row${message.isRead ? '' : ' consultant-messages__row--unread'}`}
+                onClick={() => handleMessageClick(message)}
+                data-testid={CONSULTANT_SUITE_TEST_ID.MESSAGE_ROW}
+                data-gnb-chrome-free="true"
+              >
+                <span className="consultant-messages__row-head">
+                  <span className="consultant-messages__row-chips">
+                    <StatusBadge variant="neutral" className={CONSULTANT_SUITE_CLASS.STATUS}>
+                      {tSuite(`messages.type.${typeKey}`)}
+                    </StatusBadge>
+                    {message.isImportant ? (
+                      <StatusBadge variant="neutral" className={CONSULTANT_SUITE_CLASS.STATUS}>
+                        {tSuite('messages.important')}
+                      </StatusBadge>
+                    ) : null}
+                    {message.isUrgent ? (
+                      <StatusBadge variant="neutral" className={CONSULTANT_SUITE_CLASS.STATUS}>
+                        {tSuite('messages.urgent')}
+                      </StatusBadge>
+                    ) : null}
+                  </span>
+                  <time className="consultant-messages__row-time">{formatDate(message.createdAt)}</time>
+                </span>
+                <SafeText tag="strong" className="consultant-messages__row-title">{message.title}</SafeText>
+                <SafeText tag="span" className="consultant-messages__row-preview">{preview}</SafeText>
+                <span className="consultant-messages__row-foot">
+                  <span className="consultant-messages__row-counterparty">
+                    {getMessageCounterpartyLine(message)}
+                  </span>
+                  <span className="consultant-messages__row-read">
+                    {message.isRead ? tSuite('messages.read') : tSuite('messages.unread')}
+                  </span>
+                </span>
+              </button>
+            </li>
+          );
+        })}
+      </ul>
+    );
+  };
 
-        {/* 새 메시지 작성 모달 */}
-        <UnifiedModal
-          isOpen={showSendModal}
-          onClose={() => setShowSendModal(false)}
-          title="새 메시지 작성"
-          size="auto"
-          showCloseButton={true}
-          backdropClick={true}
-          actions={
-            <>
-              <MGButton
-                variant="secondary"
-                className={buildErpMgButtonClassName({ variant: 'secondary', size: 'md', loading: false })}
-                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                onClick={() => setShowSendModal(false)}
-              >
-                {t('common.actions.cancel')}
-              </MGButton>
-              <MGButton
-                variant="primary"
-                className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: false })}
-                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                onClick={handleSendMessage}
-              >
-                전송
-              </MGButton>
-            </>
-          }
-        >
-          <div className="mg-v2-form-group">
-            <label className="mg-v2-label">받는 사람 *</label>
-            <CustomSelect
-              className="mg-v2-select"
-              value={newMessage.clientId ?? ''}
-              onChange={(val) => setNewMessage({ ...newMessage, clientId: val })}
-              options={[
-                { value: '', label: '내담자를 선택하세요' },
-                ...clients.map(client => ({
-                  value: client.id,
-                  label: `${client.name} (${client.email})`
-                }))
-              ]}
-              placeholder="내담자를 선택하세요"
-            />
-          </div>
-          <div className="mg-v2-form-group">
-            <label className="mg-v2-label">메시지 유형</label>
-            <BadgeSelect
-              className="mg-v2-form-badge-select"
-              value={newMessage.messageType}
-              onChange={(val) => setNewMessage({ ...newMessage, messageType: val })}
-              options={messageTypes.map((type) => ({
-                value: type.value,
-                label: type.label
-              }))}
-              placeholder={t('common.messages.pleaseSelect')}
-            />
-          </div>
-          <div className="mg-v2-form-group">
-            <label className="mg-v2-label">제목 *</label>
-            <input
-              type="text"
-              className="mg-v2-input"
-              value={newMessage.title}
-              onChange={(e) => setNewMessage({ ...newMessage, title: e.target.value })}
-              placeholder="메시지 제목을 입력하세요"
-            />
-          </div>
-          <div className="mg-v2-form-group">
-            <label className="mg-v2-label">내용 *</label>
-            <textarea
-              className="mg-v2-textarea"
-              value={newMessage.content}
-              onChange={(e) => setNewMessage({ ...newMessage, content: e.target.value })}
-              placeholder="메시지 내용을 입력하세요"
-              rows={6}
-            />
-          </div>
-          <div className="mg-flex mg-gap-md">
-            <label className="mg-checkbox">
-              <input
-                type="checkbox"
-                checked={newMessage.isImportant}
-                onChange={(e) => setNewMessage({ ...newMessage, isImportant: e.target.checked })}
-              />
-              <span>중요</span>
-            </label>
-            <label className="mg-checkbox">
-              <input
-                type="checkbox"
-                checked={newMessage.isUrgent}
-                onChange={(e) => setNewMessage({ ...newMessage, isUrgent: e.target.checked })}
-              />
-              <span>{t('admin.labels.urgent')}</span>
-            </label>
-          </div>
-        </UnifiedModal>
-      </ContentArea>
-    </AdminCommonLayout>
+  return renderPage(
+    <>
+      <div className={CONSULTANT_SUITE_CLASS.TOOLBAR}>
+        <ConsultantSearchField
+          id={CONSULTANT_MESSAGES_SEARCH_ID}
+          value={searchTerm}
+          onChange={setSearchTerm}
+          placeholder={tSuite('messages.searchPlaceholder')}
+          ariaLabel={tSuite('messages.searchAria')}
+        />
+        <ConsultantFilterChips
+          items={typeFilterItems}
+          activeKey={filterStatus}
+          onChange={setFilterStatus}
+          ariaLabel={tSuite('messages.typeFilterAria')}
+          testIdPrefix="consultant-messages-type"
+        />
+      </div>
+      {renderList()}
+    </>
   );
 };
 

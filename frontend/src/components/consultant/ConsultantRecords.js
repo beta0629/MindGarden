@@ -3,15 +3,20 @@ import { useSession } from '../../contexts/SessionContext';
 import StandardizedApi from '../../utils/standardizedApi';
 import { getCommonCodes } from '../../utils/commonCodeUtils';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { AlertTriangle } from 'lucide-react';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import UnifiedLoading from '../common/UnifiedLoading';
-import ContentArea from '../dashboard-v2/content/ContentArea';
-import ContentHeader from '../dashboard-v2/content/ContentHeader';
+import EmptyState from '../common/EmptyState';
+import ConsultantSuitePage from './suite/ConsultantSuitePage';
+import ConsultantSuiteButton from './suite/ConsultantSuiteButton';
 import ConsultantRecordFilterBlock from './records/ConsultantRecordFilterBlock';
 import ConsultantRecordListBlock from './records/ConsultantRecordListBlock';
 import ConsultationLogModal from './ConsultationLogModal';
-import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
-import MGButton from '../common/MGButton';
+import {
+  CONSULTANT_SUITE_CLASS,
+  CONSULTANT_SUITE_NS,
+  CONSULTANT_SUITE_TEST_ID
+} from '../../constants/consultantSuite';
 import {
   buildConsultantConsultationRecordRoute,
   buildConsultantConsultationRecordsRoute,
@@ -27,8 +32,11 @@ import './ConsultantRecords.css';
 import { useTranslation } from 'react-i18next';
 import i18n from '../../i18n';
 
+const CONSULTANT_RECORDS_TITLE_ID = 'consultant-records-title';
+const ERROR_ICON_SIZE = 40;
+
 const ConsultantRecords = () => {
-  const { t } = useTranslation();
+  const { t } = useTranslation(CONSULTANT_SUITE_NS);
   const { user, isLoggedIn, isLoading: sessionLoading } = useSession();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -195,105 +203,96 @@ const ConsultantRecords = () => {
     setModalRecordId(null);
   };
 
-  const renderContent = () => {
+  const renderBody = () => {
     if (sessionLoading) {
       return (
-        <div className="consultant-records__session-load" aria-busy="true" aria-live="polite">
-          <UnifiedLoading type="inline" text="세션 정보를 불러오는 중..." />
+        <div className={CONSULTANT_SUITE_CLASS.LOADING} aria-busy="true" aria-live="polite">
+          <UnifiedLoading type="inline" text={t('records.sessionLoading')} />
         </div>
       );
     }
     if (!isLoggedIn) {
       return (
-        <ContentArea>
-          <div className="consultant-records-login-required consultant-records__center-pad-lg">
-            <h3>로그인이 필요합니다.</h3>
-            <p>상담 기록을 보려면 로그인해주세요.</p>
-          </div>
-        </ContentArea>
+        <section className={CONSULTANT_SUITE_CLASS.PANEL}>
+          <EmptyState
+            className={CONSULTANT_SUITE_CLASS.EMPTY}
+            title={t('records.loginRequired')}
+            description={t('records.loginRequiredDescription')}
+          />
+        </section>
       );
     }
     return (
-      <div className="mg-v2-ad-b0kla mg-v2-consultation-log-view">
-        <div className="mg-v2-ad-b0kla__container">
-          <ContentArea>
-            <ContentHeader
-              title="상담 기록 조회"
-              subtitle={incompleteListMode
-                ? '미작성 일지는 홈의 「상담일지 누락」에서 작성할 수 있습니다.'
-                : '작성된 상담 기록들을 확인할 수 있습니다.'}
-              icon="journal-text"
+      <>
+        <ConsultantRecordFilterBlock
+          searchTerm={searchTerm}
+          onSearchTermChange={setSearchTerm}
+          filterStatus={filterStatus}
+          onFilterStatusChange={(value) => {
+            setIncompleteListMode(false);
+            setFilterStatus(value);
+          }}
+          statusOptions={statusOptions}
+        />
+
+        {loading && (
+          <div className={CONSULTANT_SUITE_CLASS.LOADING} aria-busy="true" aria-live="polite">
+            <UnifiedLoading type="inline" text={t('records.loading')} />
+          </div>
+        )}
+
+        {!loading && error && (
+          <section className={CONSULTANT_SUITE_CLASS.PANEL} role="alert">
+            <EmptyState
+              className={CONSULTANT_SUITE_CLASS.EMPTY}
+              icon={<AlertTriangle size={ERROR_ICON_SIZE} aria-hidden />}
+              title={error}
+              action={(
+                <ConsultantSuiteButton onClick={loadRecords} disabled={loading}>
+                  {t('actions.retry')}
+                </ConsultantSuiteButton>
+              )}
             />
+          </section>
+        )}
 
-            <ConsultantRecordFilterBlock
-              searchTerm={searchTerm}
-              onSearchTermChange={setSearchTerm}
-              filterStatus={filterStatus}
-              onFilterStatusChange={(value) => {
-                setIncompleteListMode(false);
-                setFilterStatus(value);
-              }}
-              statusOptions={statusOptions}
-            />
+        {!loading && !error && (
+          <ConsultantRecordListBlock
+            records={filteredRecords}
+            onViewRecord={handleViewRecord}
+            onWriteRecord={handleWriteRecord}
+            onNavigateSchedule={handleNavigateSchedule}
+            onNavigateDashboard={incompleteListMode ? handleNavigateDashboard : undefined}
+            emptyTitle={incompleteListMode
+              ? CONSULTANT_RECORDS_INCOMPLETE_EMPTY_TITLE
+              : undefined}
+            emptyDesc={incompleteListMode
+              ? CONSULTANT_RECORDS_INCOMPLETE_EMPTY_DESC
+              : undefined}
+            scheduleCtaLabel={incompleteListMode
+              ? CONSULTANT_RECORDS_INCOMPLETE_SCHEDULE_CTA
+              : undefined}
+            dashboardCtaLabel={incompleteListMode
+              ? CONSULTANT_RECORDS_INCOMPLETE_DASHBOARD_CTA
+              : undefined}
+          />
+        )}
+      </>
+    );
+  };
 
-            {loading && (
-              <div className="consultant-records__loading">
-                <div className="spinner-border text-primary" role="status">
-                  <span className="visually-hidden">{t('common.messages.loading')}</span>
-                </div>
-                <p className="consultant-records__loading-text">상담 기록을 불러오는 중...</p>
-              </div>
-            )}
-
-            {error && (
-              <div className="alert alert-danger d-flex align-items-center justify-content-between" role="alert">
-                <div>
-                  <i className="bi bi-exclamation-triangle-fill me-2" />
-                  {error}
-                </div>
-                <MGButton
-                  variant="outline"
-                  size="small"
-                  className={buildErpMgButtonClassName({
-                    variant: 'outline',
-                    size: 'sm',
-                    loading: false,
-                    className: 'btn btn-outline-danger btn-sm'
-                  })}
-                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                  onClick={loadRecords}
-                  disabled={loading}
-                >
-                  <i className="bi bi-arrow-clockwise me-1" />
-                  재시도
-                </MGButton>
-              </div>
-            )}
-
-            {!loading && !error && (
-              <ConsultantRecordListBlock
-                records={filteredRecords}
-                onViewRecord={handleViewRecord}
-                onWriteRecord={handleWriteRecord}
-                onNavigateSchedule={handleNavigateSchedule}
-                onNavigateDashboard={incompleteListMode ? handleNavigateDashboard : undefined}
-                emptyTitle={incompleteListMode
-                  ? CONSULTANT_RECORDS_INCOMPLETE_EMPTY_TITLE
-                  : undefined}
-                emptyDesc={incompleteListMode
-                  ? CONSULTANT_RECORDS_INCOMPLETE_EMPTY_DESC
-                  : undefined}
-                scheduleCtaLabel={incompleteListMode
-                  ? CONSULTANT_RECORDS_INCOMPLETE_SCHEDULE_CTA
-                  : undefined}
-                dashboardCtaLabel={incompleteListMode
-                  ? CONSULTANT_RECORDS_INCOMPLETE_DASHBOARD_CTA
-                  : undefined}
-              />
-            )}
-          </ContentArea>
-        </div>
-
+  return (
+    <AdminCommonLayout className="mg-v2-dashboard-layout">
+      <ConsultantSuitePage
+        title={t('records.title')}
+        subtitle={incompleteListMode ? t('records.incompleteSubtitle') : t('records.subtitle')}
+        titleId={CONSULTANT_RECORDS_TITLE_ID}
+        ariaLabel={t('records.ariaLabel')}
+        testId={CONSULTANT_SUITE_TEST_ID.RECORDS_PAGE}
+      >
+        {renderBody()}
+      </ConsultantSuitePage>
+      {isLoggedIn ? (
         <ConsultationLogModal
           isOpen={modalOpen}
           onClose={handleModalClose}
@@ -301,13 +300,7 @@ const ConsultantRecords = () => {
           recordId={modalRecordId}
           isAdmin={false}
         />
-      </div>
-    );
-  };
-
-  return (
-    <AdminCommonLayout title="상담 기록">
-      {renderContent()}
+      ) : null}
     </AdminCommonLayout>
   );
 };

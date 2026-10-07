@@ -44,6 +44,7 @@ import UserManagementPage from './components/admin/UserManagementPage';
 import MappingManagement from './components/admin/MappingManagement';
 import InstitutionLinkAdminPage from './components/admin/institution-link/InstitutionLinkAdminPage';
 import ConsultationLogView from './components/admin/ConsultationLogView';
+import { CONSULTATION_LOG_VIEW_SURFACE } from './constants/consultantSuite';
 import IntegratedMatchingScheduleManagement from './components/admin/IntegratedMatchingScheduleManagement';
 import CommonCodeManagement from './components/admin/CommonCodeManagement';
 import StatisticsModal from './components/common/StatisticsModal';
@@ -1020,7 +1021,7 @@ function AppContent() {
             <Route path="/consultant/client/:id" element={<ConsultantClientList />} />
             <Route path="/consultant/availability" element={<ConsultantAvailability />} />
             <Route path="/consultant/consultation-records" element={<ConsultantRecords />} />
-            <Route path="/consultant/consultation-logs" element={<ConsultationLogView />} />
+            <Route path="/consultant/consultation-logs" element={<ConsultationLogView surface={CONSULTATION_LOG_VIEW_SURFACE.CONSULTANT} />} />
             <Route path="/consultant/reports" element={<ConsultantRecords />} />
             <Route path="/consultant/messages" element={<ConsultantMessages />} />
             

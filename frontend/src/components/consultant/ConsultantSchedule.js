@@ -13,7 +13,7 @@ import ConsultantSuitePage from './suite/ConsultantSuitePage';
 import ConsultantFilterChips from './suite/ConsultantFilterChips';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import useConsultantIncompleteRecordCount from '../../hooks/useConsultantIncompleteRecordCount';
-import { buildConsultantScheduleSummary } from '../../utils/consultantScheduleSummary';
+import { buildConsultantScheduleSummary, doesRangeCoverCurrentWeek } from '../../utils/consultantScheduleSummary';
 import { useSession } from '../../contexts/SessionContext';
 import { USER_ROLES } from '../../constants/roles';
 import {
@@ -62,6 +62,13 @@ const ConsultantSchedule = () => {
     user,
     onCheckoutCompleted: handleCheckoutReload
   });
+
+  const handleScheduleEventsChange = useCallback((events, loadedRange) => {
+    if (!doesRangeCoverCurrentWeek(loadedRange, new Date())) {
+      return;
+    }
+    setScheduleEvents(events);
+  }, []);
 
   const handleRefresh = useCallback(() => {
     setRefetchTrigger((n) => n + 1);
@@ -171,7 +178,7 @@ const ConsultantSchedule = () => {
           integratedMonthEventLayout
           calendarSkin="integrated"
           refetchTrigger={refetchTrigger}
-          onScheduleEventsChange={setScheduleEvents}
+          onScheduleEventsChange={handleScheduleEventsChange}
           onCheckoutSameDayFromDetail={onCheckoutSameDayFromDetail}
         />
         <EmptyState

@@ -3907,7 +3907,29 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         } else {
             throw new RuntimeException("스케줄 조회 권한이 없습니다.");
         }
-        
+
+        return toScheduleResponsesWithVacations(
+                tenantId, schedules, getVacationSchedules(userId, userRole, null, null));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ScheduleResponse> findSchedulesWithNamesByUserRoleAndDateBetween(
+            Long userId, String userRole, LocalDate startDate, LocalDate endDate) {
+        if (startDate == null || endDate == null) {
+            throw new IllegalArgumentException("startDate와 endDate는 모두 필요합니다.");
+        }
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        List<Schedule> schedules = findSchedulesByUserRoleAndDateBetween(userId, userRole, startDate, endDate);
+        return toScheduleResponsesWithVacations(
+                tenantId, schedules, getVacationSchedules(userId, userRole, startDate, endDate));
+    }
+
+    /**
+     * 일정 엔티티를 목록 DTO 로 변환한 뒤 휴가 DTO 를 뒤에 붙인다 (전량·날짜 범위 경로 공용).
+     */
+    private List<ScheduleResponse> toScheduleResponsesWithVacations(
+            String tenantId, List<Schedule> schedules, List<ScheduleResponse> vacationDtos) {
         Map<String, ConsultantClientMapping> mappingLookup =
                 ScheduleMappingContextResolver.buildActiveOrExhaustedMappingLookup(tenantId, mappingRepository);
         Map<Long, String> vehiclePlateByClientId = buildVehiclePlateByClientId(tenantId, schedules);
@@ -3916,13 +3938,12 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             .map(schedule -> convertToScheduleDto(
                     schedule, mappingLookup, vehiclePlateByClientId, vehiclePlateByConsultantId))
             .collect(java.util.stream.Collectors.toList());
-        
-        List<ScheduleResponse> vacationDtos = getVacationSchedules(userId, userRole);
+
         scheduleDtos.addAll(vacationDtos);
-        
-        log.info("📅 총 스케줄 데이터: 일반 {}개, 휴가 {}개, 합계 {}개", 
+
+        log.info("📅 총 스케줄 데이터: 일반 {}개, 휴가 {}개, 합계 {}개",
                 schedules.size(), vacationDtos.size(), scheduleDtos.size());
-        
+
         return scheduleDtos;
     }
 
@@ -3994,19 +4015,28 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
     }
 
      /**
-     * 휴가 데이터를 ScheduleDto로 변환
+     * 휴가 데이터를 ScheduleDto로 변환.
+     * startDate·endDate 가 모두 있으면 vacation_date 양끝 포함 범위만 DB 에서 조회하고, 하나라도 없으면 전량 조회.
      */
-    private List<ScheduleResponse> getVacationSchedules(Long userId, String userRole) {
-        log.info("🏖️ 휴가 스케줄 조회: 사용자 {}, 역할 {}", userId, userRole);
-        
+    private List<ScheduleResponse> getVacationSchedules(
+            Long userId, String userRole, LocalDate startDate, LocalDate endDate) {
+        boolean ranged = startDate != null && endDate != null;
+        log.info("🏖️ 휴가 스케줄 조회: 사용자 {}, 역할 {}, 기간 {} ~ {}", userId, userRole, startDate, endDate);
+
         String tenantId = TenantContextHolder.getRequiredTenantId();
         List<Vacation> vacations;
         if (scheduleAdminSeesAllTenant(userId, userRole)) {
             // 표준화 2025-12-06: 테넌트 필터링 필수
-            vacations = vacationRepository.findByTenantIdAndIsDeletedFalseOrderByVacationDateAsc(tenantId);
+            vacations = ranged
+                    ? vacationRepository.findByTenantIdAndDateRange(tenantId, startDate, endDate)
+                    : vacationRepository.findByTenantIdAndIsDeletedFalseOrderByVacationDateAsc(tenantId);
         } else if (scheduleUsesConsultantOwnScope(userId, userRole)) {
             // 표준화 2025-12-06: 테넌트 필터링 필수
-            vacations = vacationRepository.findByTenantIdAndConsultantIdAndIsDeletedFalseOrderByVacationDateAsc(tenantId, userId);
+            vacations = ranged
+                    ? vacationRepository.findByTenantIdAndConsultantIdAndDateRange(
+                            tenantId, userId, startDate, endDate)
+                    : vacationRepository.findByTenantIdAndConsultantIdAndIsDeletedFalseOrderByVacationDateAsc(
+                            tenantId, userId);
         } else {
             return new ArrayList<>();
         }

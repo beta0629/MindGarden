@@ -58,12 +58,11 @@
 }
 
 /*
- * 공통 좁은 칩 컨텍스트 wrap (월/주간/일).
- * - 월: @container < 64px (모바일 390 월 칩 ~36px). nowrap 네 글자(~48px)가
- *   칩 overflow:hidden 에 「기관연」만 남기는 것을 막는다.
- * - 주간/일: 제목 밖 직계 `.mg-v2-ad-calendar-event__engagement` (~74px 열).
- * - wrap 시 의도된 분리점(__seg + wbr)만 허용. break-all / anywhere 금지
- *   → 허용 줄 패턴은 「기관연계」(1줄) 또는 「기관/연계」(2+2) 뿐.
+ * 월 좁은 칩 컨텍스트 wrap (@container < 64px).
+ * nowrap 네 글자(~48px)가 칩 overflow:hidden 에 「기관연」만 남기는 것을 막는다.
+ * wrap 시 의도된 분리점(__seg + wbr)만 허용. break-all / anywhere 금지
+ * → 허용 줄 패턴은 「기관연계」(1줄) 또는 「기관/연계」(2+2) 뿐.
+ * 주/일 풀 카드 배지는 __time 인라인이며 아래 블록 규칙을 쓰지 않는다.
  * Badge.css·넓은 표식(.mg-schedule-event-marks) nowrap·사이드바·상세·범례는 불변.
  * @container 조건의 px 는 var() 를 받지 못해 리터럴이다(단계 G 64px 경계와 동일).
  */
@@ -96,31 +95,29 @@
 }
 
 /*
- * 주간/일 풀 카드: 제목(nowrap) 밖 직계 배지 — 월 좁은 칩과 동일 wrap(의도 분리점만).
- * 모바일+주간은 EngagementTypeBadge 미렌더(ScheduleCalendarView)로 대체하므로
- * 예전 26px 카드 padding-inline 축소(:has > __engagement)는 두지 않는다.
- * 데스크톱 좁은 열(~45px)에서는 카드 패딩을 유지한 채 배지만 가로로 패딩만큼
- * 상쇄해 2글자(「기관」) 폭을 확보한다.
+ * 주간/일 풀 카드: __time 안 인라인 배지(시간 텍스트 + 배지).
+ * 직계 > .__engagement 블록 wrap·height:auto·음수 margin-inline 폭 확장은 두지 않는다.
+ * 모바일+주간은 EngagementTypeBadge 미렌더(ScheduleCalendarView). 일간·데스크톱 주간은 동일 인라인.
+ * 네 글자 한 줄·말줄임/잘림 금지. Badge.css 기본은 변경하지 않는다.
  */
-.mg-v2-ad-calendar-event:not(.mg-v2-ad-calendar-event--compact) > .mg-v2-ad-calendar-event__engagement {
-  display: block;
+.mg-v2-ad-calendar-event:not(.mg-v2-ad-calendar-event--compact) > .mg-v2-ad-calendar-event__time > .mg-v2-ad-calendar-event__engagement,
+.mg-v2-ad-calendar-event:not(.mg-v2-ad-calendar-event--compact) > .mg-v2-ad-calendar-event__time > .mg-engagement-type-badge {
+  flex: none;
+  flex-shrink: 0;
   box-sizing: border-box;
-  width: calc(100% + (var(--mg-v2-space-3) * 2));
   max-inline-size: none;
-  margin-inline: calc(var(--mg-v2-space-3) * -1);
-  height: auto;
   overflow: visible;
-  white-space: normal;
+  white-space: nowrap;
   word-break: keep-all;
   overflow-wrap: normal;
-  text-align: center;
   padding-block: var(--mg-v2-space-0-5);
-  padding-inline: 0;
-  font-size: var(--mg-v2-font-size-caption);
+  padding-inline: var(--mg-v2-space-0-5);
+  font-size: var(--mg-font-size-2xs);
   line-height: var(--mg-v2-font-line-height-caption);
 }
 
-.mg-v2-ad-calendar-event:not(.mg-v2-ad-calendar-event--compact) > .mg-v2-ad-calendar-event__engagement .mg-engagement-type-badge__seg {
+.mg-v2-ad-calendar-event:not(.mg-v2-ad-calendar-event--compact) > .mg-v2-ad-calendar-event__time > .mg-v2-ad-calendar-event__engagement .mg-engagement-type-badge__seg,
+.mg-v2-ad-calendar-event:not(.mg-v2-ad-calendar-event--compact) > .mg-v2-ad-calendar-event__time > .mg-engagement-type-badge .mg-engagement-type-badge__seg {
   display: inline-block;
   white-space: nowrap;
 }

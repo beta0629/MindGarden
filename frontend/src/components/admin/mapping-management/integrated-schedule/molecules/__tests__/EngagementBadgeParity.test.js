@@ -266,37 +266,40 @@ describe('좁은 폭에서도 글자 배지', () => {
   });
 
   /**
-   * 주간/일 ~74px 열: 제목 밖 직계 __engagement 에 월 좁은 칩과 같은 wrap 을 적용한다.
-   * break-all 금지 · keep-all + 의도 분리점(__seg)만. Badge.css·넓은 표식 nowrap 유지.
+   * 주간/일: __time 안 인라인 배지(네 글자 한 줄). 직계 블록 wrap·음수 margin·height:auto 금지.
+   * break-all 금지 · Badge.css·넓은 표식 nowrap 유지. 월 @container <64px 2+2 는 유지.
    */
-  test('주간/일 제목 밖 __engagement 배지에 월 좁은 칩과 같은 wrap 이 적용된다', () => {
+  test('주간/일 __time 인라인 __engagement 배지는 nowrap 소형 배지이고 직계 블록 규칙이 없다', () => {
     const marksCss = fs.readFileSync(path.resolve(__dirname, '..', 'ScheduleEventMarks.css'), 'utf8');
-    const weekDayWrap = marksCss.match(
-      /\.mg-v2-ad-calendar-event:not\(\.mg-v2-ad-calendar-event--compact\)\s*>\s*\.mg-v2-ad-calendar-event__engagement\s*\{[^}]*\}/
+    expect(marksCss).not.toMatch(
+      /\.mg-v2-ad-calendar-event:not\(\.mg-v2-ad-calendar-event--compact\)\s*>\s*\.mg-v2-ad-calendar-event__engagement\s*\{/
     );
-    expect(weekDayWrap).not.toBeNull();
-    expect(weekDayWrap[0]).toMatch(/white-space:\s*normal/);
-    expect(weekDayWrap[0]).toMatch(/word-break:\s*keep-all/);
-    expect(weekDayWrap[0]).not.toMatch(/word-break:\s*break-all/);
-    expect(weekDayWrap[0]).not.toMatch(/overflow-wrap:\s*anywhere/);
-    expect(weekDayWrap[0]).toMatch(/width:\s*calc\(100%\s*\+\s*\(var\(--mg-v2-space-3\)\s*\*\s*2\)\)/);
-    expect(weekDayWrap[0]).toMatch(/margin-inline:\s*calc\(var\(--mg-v2-space-3\)\s*\*\s*-1\)/);
-    expect(weekDayWrap[0]).toMatch(/height:\s*auto/);
-    expect(weekDayWrap[0]).toMatch(/overflow:\s*visible/);
-    expect(weekDayWrap[0]).toMatch(/padding-block:\s*var\(--mg-v2-space-0-5\)/);
-    expect(weekDayWrap[0]).toMatch(/padding-inline:\s*0/);
-    expect(weekDayWrap[0]).toMatch(/font-size:\s*var\(--mg-v2-font-size-caption\)/);
-    expect(weekDayWrap[0]).not.toMatch(/text-overflow:\s*ellipsis/);
-    expect(weekDayWrap[0]).not.toMatch(/overflow:\s*hidden/);
-    expect(weekDayWrap[0]).not.toMatch(/white-space:\s*nowrap/);
+    expect(marksCss).not.toMatch(/margin-inline:\s*calc\(var\(--mg-v2-space-3\)\s*\*\s*-1\)/);
+
+    const inlineBadge = marksCss.match(
+      /\.mg-v2-ad-calendar-event:not\(\.mg-v2-ad-calendar-event--compact\)\s*>\s*\.mg-v2-ad-calendar-event__time\s*>\s*\.mg-v2-ad-calendar-event__engagement[\s\S]*?\{[^}]*\}/
+    );
+    expect(inlineBadge).not.toBeNull();
+    expect(inlineBadge[0]).toMatch(/white-space:\s*nowrap/);
+    expect(inlineBadge[0]).toMatch(/flex-shrink:\s*0|flex:\s*none/);
+    expect(inlineBadge[0]).toMatch(/overflow:\s*visible/);
+    expect(inlineBadge[0]).toMatch(/font-size:\s*var\(--mg-font-size-2xs\)/);
+    expect(inlineBadge[0]).toMatch(/padding-inline:\s*var\(--mg-v2-space-0-5\)/);
+    expect(inlineBadge[0]).not.toMatch(/height:\s*auto/);
+    expect(inlineBadge[0]).not.toMatch(/text-overflow:\s*ellipsis/);
+    expect(inlineBadge[0]).not.toMatch(/overflow:\s*hidden/);
+    expect(inlineBadge[0]).not.toMatch(/word-break:\s*break-all/);
+    expect(inlineBadge[0]).not.toMatch(/overflow-wrap:\s*anywhere/);
 
     // 모바일+주간 배지 미렌더로 대체 — 예전 :has(__engagement) padding-inline 축소 금지
     expect(marksCss).not.toMatch(
       /\.mg-v2-ad-calendar-event:not\(\.mg-v2-ad-calendar-event--compact\):has\(>\s*\.mg-v2-ad-calendar-event__engagement\)\s*\{[^}]*padding-inline/
     );
 
+    // 월 좁은 칩 2+2 wrap 유지
+    expect(marksCss).toMatch(/@container mg-month-event \(width < 64px\)/);
     expect(marksCss).toMatch(
-      /\.mg-v2-ad-calendar-event__engagement\s+\.mg-engagement-type-badge__seg\s*\{[^}]*white-space:\s*nowrap/
+      /\.mg-engagement-type-badge__seg\s*\{[^}]*white-space:\s*nowrap/
     );
     expect(marksCss).not.toMatch(/word-break:\s*break-all/);
     expect(marksCss).not.toMatch(/overflow-wrap:\s*anywhere/);

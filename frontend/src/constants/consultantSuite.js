@@ -28,22 +28,41 @@ export const CONSULTANT_SUITE_CLASS = {
   TOOLBAR: 'consultant-suite-toolbar',
   SEARCH: 'consultant-suite-search',
   CARD_GRID: 'consultant-suite-card-grid',
+  CARD_LIST: 'consultant-suite-card-list',
+  CARD: 'consultant-suite-card',
+  CARD_ROW: 'consultant-suite-card--row',
+  CARD_HEAD: 'consultant-suite-card__head',
+  CARD_HEAD_TEXT: 'consultant-suite-card__head-text',
+  CARD_TITLE: 'consultant-suite-card__title',
+  CARD_TIME: 'consultant-suite-card__time',
+  CARD_BODY: 'consultant-suite-card__body',
+  CARD_META: 'consultant-suite-card__meta',
+  CARD_FOOT: 'consultant-suite-card__foot',
+  PILL: 'consultant-suite-pill',
+  AVATAR: 'consultant-suite-avatar',
+  ICON_BTN: 'consultant-suite-icon-btn',
   RECORD_CARD: 'consultant-suite-record-card',
-  LOADING: 'consultant-suite-loading'
+  LOADING: 'consultant-suite-loading',
+  PAGINATION: 'consultant-suite-pagination'
 };
+
+/** 상담사 스위트 목록 기본 page size (관리자 목록과 동일 20) */
+export const CONSULTANT_SUITE_PAGE_SIZE = 20;
 
 export const CONSULTANT_SUITE_BUTTON_VARIANT = {
   PRIMARY: 'primary',
   GHOST: 'outline'
 };
 
+/** 매핑 status 필터 — API mapping.status 그대로 (시뮬레이션·client.status 금지) */
 export const CONSULTANT_CLIENT_STATUS_FILTER = {
   ALL: 'ALL',
   ACTIVE: 'ACTIVE',
+  PENDING_PAYMENT: 'PENDING_PAYMENT',
+  SESSIONS_EXHAUSTED: 'SESSIONS_EXHAUSTED',
+  SUSPENDED: 'SUSPENDED',
   INACTIVE: 'INACTIVE',
-  PENDING: 'PENDING',
-  COMPLETED: 'COMPLETED',
-  SUSPENDED: 'SUSPENDED'
+  TERMINATED: 'TERMINATED'
 };
 
 export const CONSULTANT_MESSAGE_TYPE_FILTER = {
@@ -52,8 +71,28 @@ export const CONSULTANT_MESSAGE_TYPE_FILTER = {
   FOLLOW_UP: 'FOLLOW_UP',
   HOMEWORK: 'HOMEWORK',
   REMINDER: 'REMINDER',
-  URGENT: 'URGENT'
+  URGENT: 'URGENT',
+  PAYMENT_COMPLETION: 'PAYMENT_COMPLETION'
 };
+
+/**
+ * 메시지 유형 정규화 — 알 수 없으면 GENERAL.
+ * PAYMENT_COMPLETION 은 GENERAL 로 폴스루하지 않는다.
+ *
+ * @param {string} [messageType]
+ * @returns {string}
+ */
+export function resolveConsultantMessageType(messageType) {
+  const normalized = typeof messageType === 'string'
+    ? messageType.trim().toUpperCase()
+    : '';
+  if (!normalized) {
+    return CONSULTANT_MESSAGE_TYPE_FILTER.GENERAL;
+  }
+  const known = Object.values(CONSULTANT_MESSAGE_TYPE_FILTER)
+    .filter((key) => key !== CONSULTANT_MESSAGE_TYPE_FILTER.ALL);
+  return known.includes(normalized) ? normalized : CONSULTANT_MESSAGE_TYPE_FILTER.GENERAL;
+}
 
 /** 금액 부호 — 공제는 수학 마이너스(U+2212), 수당은 「+」 */
 export const CONSULTANT_MONEY_SIGN = {

@@ -1,681 +1,101 @@
-/* 상담사 상담 가능 시간 관리 스타일 */
+/**
+ * ConsultantAvailability — 스위트 슬롯 행 + 모달 폼 (Bootstrap 제거)
+ * 토큰: --mg-v2-consultant-*
+ *
+ * @author CoreSolution
+ * @since 2026-10-07
+ */
 
-/* 세션 로딩: AdminCommonLayout 유지, 본문만 인라인 로더 */
 .consultant-availability__session-load {
   display: flex;
   align-items: center;
   justify-content: center;
   width: 100%;
-  min-height: calc(var(--spacing-xl) * 6);
+  min-height: calc(var(--mg-v2-space-16) * 2);
 }
 
-.consultant-availability-container {
-  padding: 20px;
-  max-width: 1200px;
-  margin: 0 auto;
-}
-
-/* 헤더 */
-.availability-header {
-  margin-bottom: 30px;
-  text-align: center;
-}
-
-.availability-title {
-  font-size: 2rem;
-  font-weight: 600;
-  color: var(--mg-color-text-main);
-  margin-bottom: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-}
-
-.availability-title i {
-  color: #3498db;
-}
-
-.availability-subtitle {
-  color: #7f8c8d;
-  font-size: 1.1rem;
-  margin: 0;
-}
-
-/* 액션 버튼 */
-.availability-actions {
-  display: flex;
-  gap: 15px;
-  margin-bottom: 30px;
-  justify-content: center;
-  flex-wrap: wrap;
-}
-
-.availability-actions .btn {
-  padding: 12px 24px;
-  border-radius: 8px;
-  font-weight: 500;
-  transition: all 0.3s ease;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  border: none;
-  cursor: pointer;
-}
-
-.mg-btn--primary {
-  background: #3498db;
-  color: var(--mg-white);
-}
-
-.mg-btn--primary:hover {
-  background: #2980b9;
-  transform: translateY(-1px);
-}
-
-.btn-outline-secondary {
-  background: transparent;
-  color: var(--mg-secondary-500);
-  border: 2px solid var(--mg-secondary-500);
-}
-
-.btn-outline-secondary:hover {
-  background: var(--mg-secondary-500);
-  color: var(--mg-white);
-  transform: translateY(-1px);
-}
-
-/* 로딩 상태 */
-.loading-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 60px 20px;
-  text-align: center;
-}
-
-.loading-container p {
-  margin-top: 15px;
-  color: #7f8c8d;
-  font-size: 1.1rem;
-}
-
-/* 오류 상태 */
-.error-container {
-  margin-bottom: 20px;
-}
-
-.error-container .alert {
-  padding: 15px 20px;
-  border-radius: 10px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-/* 빈 상태 */
-.empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 80px 20px;
-  text-align: center;
-  color: #7f8c8d;
-}
-
-.empty-state i {
-  font-size: 4rem;
-  margin-bottom: 20px;
-  opacity: 0.5;
-}
-
-.empty-state h3 {
-  margin-bottom: 10px;
-  color: var(--mg-color-text-main);
-}
-
-.empty-state p {
-  margin: 0;
-  font-size: 1.1rem;
-}
-
-/* 상담 가능 시간 그리드 */
-.availability-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 25px;
-  margin-top: 20px;
-}
-
-/* 요일 카드 */
-.day-card {
-  background: var(--mg-white);
-  border-radius: 15px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
-  transition: all 0.3s ease;
-  overflow: hidden;
-  border: 1px solid var(--mg-color-border-main);
-}
-
-.day-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px var(--mg-shadow-medium);
-}
-
-.day-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 20px 20px 15px;
-  background: linear-gradient(135deg, var(--mg-gray-100) 0%, var(--mg-color-border-main) 100%);
-  border-bottom: 1px solid var(--mg-color-border-main);
-}
-
-.day-title {
-  font-size: 1.2rem;
-  font-weight: 600;
-  color: var(--mg-color-text-main);
-  margin: 0;
-}
-
-.day-count {
-  background: #3498db;
-  color: var(--mg-white);
-  padding: 4px 12px;
-  border-radius: 20px;
-  font-size: 0.85rem;
-  font-weight: 500;
-}
-
-/* 시간 슬롯 */
-.time-slots {
-  padding: 20px;
-  max-height: 300px;
-  overflow-y: auto;
-}
-
-.time-slot {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px 15px;
-  margin-bottom: 10px;
-  background: var(--mg-gray-100);
-  border-radius: 8px;
-  border: 1px solid var(--mg-color-border-main);
-  transition: all 0.3s ease;
-}
-
-.time-slot:hover {
-  background: var(--mg-color-border-main);
-  transform: translateX(2px);
-}
-
-.time-slot:last-child {
-  margin-bottom: 0;
-}
-
-.time-info {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.time-range {
-  font-weight: 600;
-  color: var(--mg-color-text-main);
-  font-size: 1rem;
-}
-
-.time-duration {
-  font-size: 0.85rem;
-  color: var(--mg-secondary-500);
-}
-
-.time-actions {
-  display: flex;
-  gap: 8px;
-}
-
-.time-actions .btn,
-.time-actions .mg-button {
-  padding: 6px 10px;
-  border-radius: 6px;
-  font-size: 0.85rem;
-  transition: all 0.3s ease;
-  border: none;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.btn-outline-primary {
-  background: transparent;
-  color: #3498db;
-  border: 1px solid #3498db;
-}
-
-.btn-outline-primary:hover {
-  background: #3498db;
-  color: var(--mg-white);
-}
-
-.btn-outline-danger {
-  background: transparent;
-  color: var(--mg-error-500);
-  border: 1px solid var(--mg-error-500);
-}
-
-.btn-outline-danger:hover {
-  background: var(--mg-error-500);
-  color: var(--mg-white);
-}
-
-.no-slots {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 30px 20px;
-  color: var(--mg-secondary-500);
-  text-align: center;
-}
-
-.no-slots i {
-  font-size: 2rem;
-  margin-bottom: 10px;
-  opacity: 0.5;
-}
-
-.no-slots span {
-  font-size: 0.95rem;
-}
-
-/* 모달 스타일 */
-.mg-modal__overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: var(--mg-overlay);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  padding: 20px;
-}
-
-.availability-modal {
-  background: var(--mg-white);
-  border-radius: 15px;
-  box-shadow: 0 10px 40px var(--mg-shadow-medium);
-  max-width: 500px;
+.consultant-availability__slot-card.consultant-suite-card--row {
   width: 100%;
-  max-height: 90vh;
-  overflow-y: auto;
-  color: var(--mg-color-text-main);
 }
 
-.mg-modal__header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 25px 30px 20px;
-  border-bottom: 1px solid var(--mg-color-border-main);
-  background: linear-gradient(135deg, var(--mg-gray-100) 0%, var(--mg-color-border-main) 100%);
-  border-radius: 15px 15px 0 0;
-}
-
-.modal-title {
-  font-size: 1.5rem;
-  font-weight: 600;
-  color: var(--mg-color-text-main);
-  margin: 0;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.modal-title i {
-  color: #3498db;
-}
-
-.modal-close-btn {
-  background: none;
-  border: none;
-  font-size: 1.5rem;
-  color: var(--mg-secondary-500);
-  cursor: pointer;
-  padding: 5px;
-  border-radius: 50%;
-  width: 35px;
-  height: 35px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.3s ease;
-}
-
-.modal-close-btn:hover {
-  background: var(--mg-color-border-main);
-  color: var(--mg-color-text-main);
-}
-
-.mg-modal__body {
-  padding: 30px;
-  color: var(--mg-color-text-main);
-}
-
-.mg-form__group {
-  margin-bottom: 20px;
-}
-
-.form-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 20px;
-}
-
-.mg-form__label {
-  display: block;
-  font-weight: 600;
-  color: var(--mg-color-text-main);
-  margin-bottom: 8px;
-  font-size: 0.95rem;
-}
-
-.form-control {
-  width: 100%;
-  padding: 12px 15px;
-  border: 2px solid var(--mg-color-border-main);
-  border-radius: 8px;
-  font-size: 1rem;
-  transition: all 0.3s ease;
-  background: var(--mg-white);
-  color: var(--mg-color-text-main);
-}
-
-.form-control:focus {
-  outline: none;
-  border-color: #3498db;
-  box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
-}
-
-.form-control.is-invalid {
-  border-color: var(--mg-error-500);
-}
-
-.invalid-feedback {
-  display: block;
-  width: 100%;
-  margin-top: 5px;
-  font-size: 0.875rem;
-  color: var(--mg-error-500);
-}
-
-.form-check {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.form-check-input {
-  width: 18px;
-  height: 18px;
-  margin: 0;
-  cursor: pointer;
-}
-
-.form-check-label {
-  margin: 0;
-  cursor: pointer;
-  font-weight: 500;
-  color: var(--mg-color-text-main);
-}
-
-.mg-modal__footer {
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  gap: var(--spacing-md);
-  padding: 20px 30px 30px;
-  border-top: 1px solid var(--mg-color-border-main);
-  background: var(--mg-gray-100);
-  border-radius: 0 0 15px 15px;
-}
-
-.mg-modal__footer .btn {
-  padding: 10px 20px;
-  border-radius: 8px;
-  font-weight: 500;
-  transition: all 0.3s ease;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  border: none;
-  cursor: pointer;
-}
-
-.mg-btn--primary {
-  background: #3498db;
-  color: var(--mg-white);
-}
-
-.mg-btn--primary:hover {
-  background: #2980b9;
-  transform: translateY(-1px);
-}
-
-.mg-btn--secondary {
-  background: var(--mg-secondary-500);
-  color: var(--mg-white);
-}
-
-.mg-btn--secondary:hover {
-  background: #5a6268;
-  transform: translateY(-1px);
-}
-
-/* 반응형 디자인 */
-@media (max-width: 768px) {
-  .consultant-availability-container {
-    padding: 15px;
-  }
-  
-  .availability-actions {
-    flex-direction: column;
-    align-items: center;
-  }
-  
-  .availability-actions .btn {
-    width: 100%;
-    max-width: 300px;
-    justify-content: center;
-  }
-  
-  .availability-grid {
-    grid-template-columns: 1fr;
-    gap: 20px;
-  }
-  
-  .form-row {
-    grid-template-columns: 1fr;
-    gap: 15px;
-  }
-  
-  .mg-modal__overlay {
-    padding: 10px;
-  }
-  
-  .availability-modal {
-    max-height: 95vh;
-  }
-  
-  .mg-modal__header,
-  .mg-modal__body,
-  .mg-modal__footer {
-    padding: 20px;
-  }
-  
-  .mg-modal__footer {
-    flex-direction: column;
-  }
-  
-  .mg-modal__footer .btn {
-    width: 100%;
-    justify-content: center;
-  }
-}
-
-@media (max-width: 480px) {
-  .availability-title {
-    font-size: 1.5rem;
-  }
-  
-  .day-header {
-    padding: 15px;
-  }
-  
-  .time-slots {
-    padding: 15px;
-  }
-  
-  .time-slot {
-    padding: 10px 12px;
-  }
-  
-  .time-actions {
-    flex-direction: column;
-    gap: 5px;
-  }
-}
-
-/* D-2 lead-days helper (토큰만 사용) */
-.consultant-availability-lead-helper {
-  margin: var(--mg-spacing-sm) 0 0;
-  color: var(--mg-color-text-secondary);
-  font-size: var(--mg-font-size-sm);
-  line-height: 1.4;
-}
-
-/* ===== 스위트 셸 — 요일 카드(흰 카드 · slate 칩 · 슬롯 행) ===== */
-.consultant-availability__grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: var(--mg-v2-space-4);
-}
-
-.consultant-availability__day {
+.consultant-availability__slot-main {
   display: flex;
   flex-direction: column;
-  gap: var(--mg-v2-space-3);
+  gap: var(--mg-v2-consultant-meta-gap);
   min-width: 0;
-  padding: var(--mg-v2-space-4);
+  flex: 1 1 auto;
+}
+
+.consultant-availability__slot-main .consultant-suite-card__meta {
+  margin: 0;
+}
+
+.consultant-availability__slot-aside {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--mg-v2-space-2);
+  flex: 0 0 auto;
+}
+
+.consultant-availability-lead-helper {
+  margin: var(--mg-v2-space-1) 0 0;
+  color: var(--mg-v2-color-text-secondary);
+  font-size: var(--mg-v2-consultant-card-meta-size);
+  line-height: var(--mg-v2-font-line-height-body);
+}
+
+.availability-modal__form .mg-v2-form-input,
+.availability-modal__form .mg-v2-form-select {
+  width: 100%;
+  height: var(--mg-v2-component-height-md);
+  box-sizing: border-box;
+  padding: 0 var(--mg-v2-space-3);
   background: var(--mg-v2-consultant-surface-card);
   border: var(--mg-v2-border-width-thin) solid var(--mg-v2-consultant-border-card);
-  border-radius: var(--mg-v2-consultant-card-radius);
-}
-
-.consultant-availability__day-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--mg-v2-space-2);
-}
-
-.consultant-availability__day-title {
-  margin: 0;
-  font-size: var(--mg-v2-font-size-body-lg);
-  font-weight: var(--mg-v2-font-weight-bold);
-  color: var(--mg-v2-color-text-primary);
-}
-
-.consultant-availability__day-count {
-  display: inline-flex;
-  align-items: center;
-  height: var(--mg-v2-consultant-chip-height);
-  padding: 0 var(--mg-v2-space-2);
-  background: var(--mg-v2-consultant-chip-neutral-bg);
-  border: var(--mg-v2-border-width-thin) solid var(--mg-v2-consultant-border-card);
   border-radius: var(--mg-v2-consultant-control-radius);
-  font-size: var(--mg-v2-font-size-caption);
-  font-weight: var(--mg-v2-font-weight-semibold);
-  color: var(--mg-v2-consultant-chip-neutral-text);
-}
-
-.consultant-availability__no-slots {
-  margin: 0;
   font-size: var(--mg-v2-font-size-body-md);
-  color: var(--mg-v2-color-text-tertiary);
-}
-
-.consultant-availability__slots {
-  display: flex;
-  flex-direction: column;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.consultant-availability__slot {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--mg-v2-space-2);
-  padding: var(--mg-v2-space-2) 0;
-}
-
-.consultant-availability__slot + .consultant-availability__slot {
-  border-top: var(--mg-v2-border-width-thin) solid var(--mg-v2-consultant-border-soft);
-}
-
-.consultant-availability__slot-time {
-  display: inline-flex;
-  align-items: baseline;
-  gap: var(--mg-v2-space-1);
-  min-width: 0;
-  font-size: var(--mg-v2-font-size-body-md);
-  font-weight: var(--mg-v2-font-weight-semibold);
-  font-variant-numeric: tabular-nums;
   color: var(--mg-v2-color-text-primary);
 }
 
-.consultant-availability__slot-duration {
-  margin-left: var(--mg-v2-space-1);
-  font-size: var(--mg-v2-font-size-caption);
-  font-weight: var(--mg-v2-font-weight-regular);
-  color: var(--mg-v2-color-text-tertiary);
+.availability-modal__form .mg-v2-form-input:focus,
+.availability-modal__form .mg-v2-form-select:focus {
+  outline: none;
+  border-color: var(--mg-v2-consultant-selection-border);
+  box-shadow: var(--mg-v2-shadow-focus);
 }
 
-.consultant-availability__slot-actions {
+.availability-modal__form .mg-v2-form-input--error {
+  border-color: var(--mg-error-600);
+}
+
+.availability-modal__form .mg-v2-form-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--mg-v2-space-3);
+}
+
+.availability-modal__form .mg-v2-form-checkbox {
   display: inline-flex;
-  flex-shrink: 0;
-  gap: var(--mg-v2-space-1);
+  align-items: center;
+  gap: var(--mg-v2-space-2);
+  cursor: pointer;
+  color: var(--mg-v2-color-text-primary);
 }
 
-.consultant-suite .consultant-availability__icon-btn.mg-button {
-  width: var(--mg-v2-consultant-control-height);
-  min-width: var(--mg-v2-consultant-control-height);
-  height: var(--mg-v2-consultant-control-height);
-  padding: 0;
+.availability-modal__form .mg-v2-form-checkbox__input {
+  width: var(--mg-v2-space-4);
+  height: var(--mg-v2-space-4);
+  accent-color: var(--mg-v2-consultant-selection-border);
 }
 
-@media (max-width: 1199px) {
-  .consultant-availability__grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
+.availability-modal__form .mg-v2-form-error {
+  margin: var(--mg-v2-space-1) 0 0;
+  color: var(--mg-error-600);
+  font-size: var(--mg-v2-consultant-card-meta-size);
 }
 
 @media (max-width: 767px) {
-  .consultant-availability__grid {
+  .availability-modal__form .mg-v2-form-row {
     grid-template-columns: minmax(0, 1fr);
-  }
-
-  .consultant-suite .consultant-availability__icon-btn.mg-button {
-    padding: 0 !important;
   }
 }

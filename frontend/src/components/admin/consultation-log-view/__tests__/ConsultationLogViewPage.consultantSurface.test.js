@@ -35,6 +35,11 @@ jest.mock('../../ClientComprehensiveManagement/molecules/SavedViewControls', () 
   default: () => <div data-testid="saved-view-controls" />
 }));
 
+jest.mock('../../ClientComprehensiveManagement/molecules/SaveViewModal', () => ({
+  __esModule: true,
+  default: () => null
+}));
+
 jest.mock('../../../../utils/consultantHelper', () => ({
   __esModule: true,
   getAllConsultantsWithStats: jest.fn().mockResolvedValue([]),
@@ -105,13 +110,12 @@ describe('ConsultationLogViewPage — consultant surface', () => {
     expect(within(chipGroups[0]).getByRole('button', { name: '목록' })).toHaveAttribute('aria-pressed', 'true');
   });
 
-  it('순서: 칩 → 필터 → 저장 뷰(강등) → 결과', async() => {
+  it('순서: 칩 → 필터 → 결과 · 헤더에 기본보기/저장/조회', async() => {
     const { container } = renderPage(CONSULTATION_LOG_VIEW_SURFACE.CONSULTANT);
     await screen.findAllByTestId(CONSULTANT_SUITE_TEST_ID.RECORD_CARD);
     const order = [
       container.querySelector(`.${CONSULTANT_SUITE_CLASS.CHIPS}`),
       container.querySelector('.mg-v2-consultation-log-filter'),
-      container.querySelector('.consultant-logs__saved-view'),
       container.querySelector(`.${CONSULTANT_SUITE_CLASS.CARD_GRID}`)
     ];
     order.forEach((el) => expect(el).not.toBeNull());
@@ -119,15 +123,47 @@ describe('ConsultationLogViewPage — consultant surface', () => {
       // eslint-disable-next-line no-bitwise
       expect(order[i - 1].compareDocumentPosition(order[i]) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     }
+    expect(screen.getByRole('button', { name: '기본 보기로' })).toHaveClass('mg-button--outline');
+    expect(screen.getByRole('button', { name: '현재 뷰 저장' })).toHaveClass('mg-button--outline');
+    expect(screen.getByRole('button', { name: '조회' })).toHaveClass('mg-button--outline');
   });
 
   it('결과 카드: records 와 공용 카드 · 완료 「일지 보기」/미완료 「일지 작성」 ghost', async() => {
     renderPage(CONSULTATION_LOG_VIEW_SURFACE.CONSULTANT);
     const cards = await screen.findAllByTestId(CONSULTANT_SUITE_TEST_ID.RECORD_CARD);
     expect(cards).toHaveLength(2);
-    const labels = cards.map((card) => within(card).getByRole('button').textContent);
+    const labels = cards.map((card) => within(card).getByRole('button', { name: /일지/ }).textContent);
     expect(labels).toEqual(expect.arrayContaining(['일지 보기', '일지 작성']));
-    cards.forEach((card) => expect(within(card).getByRole('button')).toHaveClass('mg-button--outline'));
+    cards.forEach((card) => expect(within(card).getByRole('button', { name: /일지/ })).toHaveClass('mg-button--outline'));
+  });
+
+  it('내담자 필터: clientId 전달 + 클라이언트 필터로 2건 → 2건', async() => {
+    renderPage(CONSULTATION_LOG_VIEW_SURFACE.CONSULTANT);
+    await screen.findAllByTestId(CONSULTANT_SUITE_TEST_ID.RECORD_CARD);
+    expect(StandardizedApi.get).toHaveBeenCalledWith(
+      expect.stringContaining('/consultation-records'),
+      expect.objectContaining({ page: 0, size: expect.any(Number) })
+    );
+    const twoForClient = [
+      { ...RECORDS[0], id: 3100, clientId: 500 },
+      { ...RECORDS[0], id: 3101, clientId: 500, sessionNumber: 4 }
+    ];
+    StandardizedApi.get.mockImplementation((url, params) => {
+      if (String(url).includes('/consultation-records')) {
+        expect(params).toEqual(expect.objectContaining({ clientId: 500 }));
+        return Promise.resolve(twoForClient);
+      }
+      if (String(url).includes('/clients')) {
+        return Promise.resolve([{ id: 500, name: '이민지' }, { id: 501, name: '박서준' }]);
+      }
+      return Promise.resolve([]);
+    });
+    // 필터 섹션에서 내담자 선택
+    const clientSelect = screen.getByLabelText(/내담자/);
+    fireEvent.change(clientSelect, { target: { value: '500' } });
+    await waitFor(() => {
+      expect(screen.getAllByTestId(CONSULTANT_SUITE_TEST_ID.RECORD_CARD)).toHaveLength(2);
+    });
   });
 
   it('빈 결과: DS EmptyState', async() => {

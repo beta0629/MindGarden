@@ -22,11 +22,17 @@
   max-inline-size: 100%;
 }
 
+/*
+ * 공통 Badge 의 inline-flex·가운데 정렬에서는 글자가 익명 flex 항목이라 말줄임이 걸리지 않고
+ * 양옆이 잘린다(「기관연계」→「관연」). 표식 안에서만 블록 + 시작 정렬로 바꿔 「기관…」으로 줄인다.
+ */
 .mg-schedule-event-marks .mg-engagement-type-badge {
+  display: block;
   flex: none;
   min-width: auto;
   max-inline-size: 100%;
   overflow: hidden;
+  text-align: start;
   text-overflow: ellipsis;
   padding-inline: var(--mg-v2-space-1);
   white-space: nowrap;

@@ -41,6 +41,10 @@ jobs:
         src/components/ui/Schedule/__tests__/ScheduleCalendarView.responsive390.test.js
         src/components/ui/Schedule/__tests__/useCalendarDragEscapeCancel.test.js
         src/components/schedule/__tests__/UnifiedScheduleComponent.consultantDateRange.test.js
+        src/components/schedule/__tests__/UnifiedScheduleComponent.rangeFetchDedupe.test.js
+        src/utils/__tests__/scheduleRangeFetchDedupe.test.js
+        src/components/ui/Schedule/__tests__/ScheduleCalendarView.lateSlot.test.js
+        src/utils/__tests__/scheduleCalendarSlotRange.test.js
         src/components/consultant/__tests__/ConsultantSchedule.suite.test.js
         src/utils/__tests__/consultantScheduleSummary.test.js
         src/contexts/__tests__/SessionContext.heartbeatKeepsEditor.test.js

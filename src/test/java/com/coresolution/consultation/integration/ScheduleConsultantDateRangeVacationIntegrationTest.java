@@ -222,7 +222,7 @@ class ScheduleConsultantDateRangeVacationIntegrationTest {
     }
 
     @Test
-    @DisplayName("성능 기준 — 24개월 픽스처에서 날짜 분기의 쿼리 수·payload 가 무파라미터보다 작다")
+    @DisplayName("성능 기준 — 24개월 픽스처에서 날짜 분기의 행·payload 는 무파라미터보다 작고 쿼리 수는 넘지 않는다")
     void dateRange_reducesStatementsAndPayloadVersusFullFetch() throws Exception {
         LocalDate firstMonth = RANGE_START.withDayOfMonth(1).minusMonths(PERF_MONTHS / 2);
         for (int m = 0; m < PERF_MONTHS; m++) {
@@ -244,7 +244,8 @@ class ScheduleConsultantDateRangeVacationIntegrationTest {
 
         assertThat(full.rows).isEqualTo(PERF_MONTHS * (PERF_SCHEDULES_PER_MONTH + PERF_VACATIONS_PER_MONTH));
         assertThat(range.rows).isPositive().isLessThan(full.rows);
-        assertThat(range.statements).isLessThan(full.statements);
+        // 목록 변환이 일괄 조회라 두 분기 모두 행 수와 무관한 상수 쿼리 — 범위 분기가 더 많으면 회귀
+        assertThat(range.statements).isLessThanOrEqualTo(full.statements);
         assertThat(range.bytes).isLessThan(full.bytes);
     }
 

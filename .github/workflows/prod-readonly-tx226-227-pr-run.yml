@@ -1,0 +1,72 @@
+# 운영 읽기 전용 1회 확인: INCOME tx 226/227 (매칭 196/197) 현재 상태.
+# 2026-10-07 재학 승인(16:53 KST, 운영 시간 중 보정 반영 OK)에 따른 보정 전 사전 확인.
+# READ ONLY 트랜잭션에서 SELECT 만 한다. UPDATE/INSERT/DELETE/DDL 없음.
+# 이 파일만 바꾸는 release/prod pull_request 에서만 돈다. 머지하지 않는다. 실행 후 닫는다.
+name: 운영 읽기 전용 tx 226·227 확인
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches: [release/prod]
+    paths:
+      - '.github/workflows/prod-readonly-tx226-227-pr-run.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  prod-read:
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    environment: production
+    timeout-minutes: 10
+    steps:
+      - name: Setup MySQL client
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq mysql-client
+
+      - name: Read-only select
+        env:
+          DB_HOST: ${{ secrets.PRODUCTION_DB_HOST }}
+          DB_HOST_FALLBACK: ${{ secrets.PRODUCTION_HOST }}
+          DB_USER: ${{ secrets.PRODUCTION_DB_USER }}
+          DB_NAME: ${{ secrets.PRODUCTION_DB_NAME }}
+          MYSQL_PWD: ${{ secrets.PRODUCTION_DB_PASSWORD }}
+        run: |
+          set -euo pipefail
+          if [ -z "${DB_HOST:-}" ]; then DB_HOST="${DB_HOST_FALLBACK:-}"; fi
+          for name in DB_HOST DB_USER DB_NAME MYSQL_PWD; do
+            if [ -z "${!name:-}" ]; then echo "::error::empty secret ${name}"; exit 1; fi
+            echo "::add-mask::${!name}"
+          done
+          echo "KST now: $(TZ=Asia/Seoul date '+%Y-%m-%d %H:%M:%S')"
+          T="tenant-incheon-counseling-001"
+          mysql -h "$DB_HOST" -u "$DB_USER" "$DB_NAME" --table <<SQL
+          SET SESSION TRANSACTION READ ONLY;
+          START TRANSACTION READ ONLY;
+          SELECT 'tx' AS section, ft.id, ft.tenant_id, ft.transaction_type, ft.related_entity_type,
+                 ft.related_entity_id, ft.amount, ft.status, ft.is_deleted + 0 AS is_deleted, ft.version,
+                 ft.updated_at, CHAR_LENGTH(ft.description) AS desc_len, LEFT(SHA2(ft.description, 256), 12) AS desc_sha12
+            FROM financial_transactions ft WHERE ft.id IN (226, 227) ORDER BY ft.id;
+          SELECT 'planned_where_count' AS section, COUNT(*) AS n
+            FROM financial_transactions
+           WHERE tenant_id = '${T}' AND id IN (226, 227) AND related_entity_id IN (196, 197)
+             AND transaction_type = 'INCOME' AND status <> 'CANCELLED' AND amount = 75000 AND is_deleted = 0;
+          SELECT 'slot_rows_196_197' AS section, ft.id, ft.transaction_type, ft.related_entity_type,
+                 ft.related_entity_id, ft.amount, ft.status, ft.is_deleted + 0 AS is_deleted
+            FROM financial_transactions ft
+           WHERE ft.tenant_id = '${T}' AND ft.related_entity_id IN (196, 197)
+             AND ft.related_entity_type LIKE 'CONSULTANT_CLIENT_MAPPING%' ORDER BY ft.id;
+          SELECT 'mapping' AS section, m.id, m.tenant_id, m.status, m.payment_status,
+                 m.deposit_confirmed + 0 AS deposit_confirmed, m.is_deleted + 0 AS is_deleted, m.version
+            FROM consultant_client_mappings m WHERE m.tenant_id = '${T}' AND m.id IN (196, 197) ORDER BY m.id;
+          SELECT 'journal' AS section, ae.id, ae.financial_transaction_id, ae.entry_status, ae.approval_status,
+                 ae.amount, ae.is_deleted + 0 AS is_deleted,
+                 (SELECT COUNT(*) FROM erp_journal_entry_lines l WHERE l.tenant_id = ae.tenant_id AND l.journal_entry_id = ae.id) AS line_count
+            FROM accounting_entries ae WHERE ae.tenant_id = '${T}' AND ae.financial_transaction_id IN (226, 227) ORDER BY ae.id;
+          SELECT 'fk_refs_to_financial_transactions' AS section, TABLE_NAME, COLUMN_NAME
+            FROM information_schema.KEY_COLUMN_USAGE
+           WHERE TABLE_SCHEMA = DATABASE() AND REFERENCED_TABLE_NAME = 'financial_transactions' ORDER BY TABLE_NAME;
+          ROLLBACK;
+          SQL

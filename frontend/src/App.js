@@ -44,7 +44,7 @@ import UserManagementPage from './components/admin/UserManagementPage';
 import MappingManagement from './components/admin/MappingManagement';
 import InstitutionLinkAdminPage from './components/admin/institution-link/InstitutionLinkAdminPage';
 import ConsultationLogView from './components/admin/ConsultationLogView';
-import { CONSULTATION_LOG_VIEW_SURFACE } from './components/admin/consultation-log-view/ConsultationLogViewPage';
+import { CONSULTATION_LOG_VIEW_SURFACE } from './constants/consultantSuite';
 import IntegratedMatchingScheduleManagement from './components/admin/IntegratedMatchingScheduleManagement';
 import CommonCodeManagement from './components/admin/CommonCodeManagement';
 import StatisticsModal from './components/common/StatisticsModal';

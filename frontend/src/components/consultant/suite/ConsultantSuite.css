@@ -364,11 +364,23 @@
   transform: none;
 }
 
+/* unified-design-tokens 의 status-badge--active/scheduled/completed/warning 이 background-color !important 로 색을 강제함 */
 .consultant-suite .mg-client-card .mg-client-card__status-badge {
-  background-color: var(--mg-v2-consultant-chip-neutral-bg);
+  background-color: var(--mg-v2-consultant-chip-neutral-bg) !important;
   color: var(--mg-v2-consultant-chip-neutral-text);
   border: var(--mg-v2-border-width-thin) solid var(--mg-v2-consultant-border-card);
   box-shadow: none;
+}
+
+.consultant-suite .mg-client-card .mg-client-card__progress-section {
+  background: var(--mg-v2-consultant-surface-stage);
+}
+
+/* unified-design-tokens 가 768px 이하에서 .mg-client-card--detailed 를 display:none 처리함 */
+@media (max-width: 768px) {
+  .consultant-suite .consultant-suite-card-grid .mg-client-card.mg-client-card--detailed {
+    display: flex;
+  }
 }
 
 /* ===== 모바일 (390 · 가로 스크롤 금지) ===== */
@@ -404,6 +416,7 @@
 .consultant-suite.consultant-logs .mg-v2-consultation-log-filter__input {
   height: var(--mg-v2-consultant-control-height);
   padding: 0 var(--mg-v2-space-3);
+  font-size: var(--mg-v2-font-size-body-md);
   background: var(--mg-v2-consultant-surface-card);
   border: var(--mg-v2-border-width-thin) solid var(--mg-v2-consultant-border-card);
   border-radius: var(--mg-v2-consultant-control-radius);

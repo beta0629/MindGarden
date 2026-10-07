@@ -51,7 +51,8 @@ import ConsultantRecordCard from '../../consultant/suite/ConsultantRecordCard';
 import {
   CONSULTANT_SUITE_CLASS,
   CONSULTANT_SUITE_NS,
-  CONSULTANT_SUITE_TEST_ID
+  CONSULTANT_SUITE_TEST_ID,
+  CONSULTATION_LOG_VIEW_SURFACE
 } from '../../../constants/consultantSuite';
 import '../ConsultationLogViewPage.css';
 
@@ -68,10 +69,6 @@ const VIEW_MODE_TABLE = 'table';
 const VIEW_MODES = [VIEW_MODE_CALENDAR, VIEW_MODE_LIST, VIEW_MODE_TABLE];
 const CONSULTANT_EMPTY_ICON_SIZE = 40;
 
-export const CONSULTATION_LOG_VIEW_SURFACE = {
-  ADMIN: 'admin',
-  CONSULTANT: 'consultant'
-};
 const TAB_LABELS = {
   [VIEW_MODE_CALENDAR]: '캘린더',
   [VIEW_MODE_LIST]: '목록',

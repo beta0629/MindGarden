@@ -664,22 +664,8 @@ public class ScheduleController extends BaseApiController {
         
         List<ScheduleResponse> schedules;
         if (startDate != null && endDate != null) {
-            List<Schedule> scheduleList = scheduleService.findSchedulesByUserRoleAndDateBetween(
+            schedules = scheduleService.findSchedulesWithNamesByUserRoleAndDateBetween(
                     consultantId, UserRole.CONSULTANT.name(), startDate, endDate);
-            String tenantId = TenantContextHolder.getTenantId();
-            if (tenantId == null || tenantId.isEmpty()) {
-                tenantId = currentUser.getTenantId();
-            }
-            Map<String, ConsultantClientMapping> mappingLookup =
-                    ScheduleMappingContextResolver.buildActiveOrExhaustedMappingLookup(
-                            tenantId, consultantClientMappingRepository);
-            Map<Long, String> vehiclePlateByClientId = buildVehiclePlateByClientId(tenantId, scheduleList);
-            Map<Long, String> vehiclePlateByConsultantId =
-                    buildVehiclePlateByConsultantId(tenantId, scheduleList);
-            schedules = scheduleList.stream()
-                .map(schedule -> convertToScheduleResponse(
-                        schedule, 0, 0, mappingLookup, vehiclePlateByClientId, vehiclePlateByConsultantId))
-                .collect(java.util.stream.Collectors.toList());
         } else {
             schedules = scheduleService.findSchedulesWithNamesByUserRole(consultantId, UserRole.CONSULTANT.name());
         }

@@ -163,8 +163,9 @@ describe('월간 컴팩트 칩 소스 계약', () => {
     );
     expect(source).toMatch(/ScheduleEventMarks/);
     expect(marksJs).toContain('aria-hidden="true"');
-    expect(marksCss).toContain('@container mg-month-event (width < 224px)');
-    expect(marksCss).toContain('@container mg-compact-row (width < 224px)');
+    expect(marksCss).toContain('@container mg-month-event (width >= 109px)');
+    expect(marksCss).not.toContain('(width < 224px)');
+    expect(marksCss).not.toMatch(/color:\s*transparent/);
     expect(marksCss).toContain('var(--mg-v2-space-0-5)');
     expect(marksCss).not.toMatch(/transform\s*:/);
     expect(marksCss).not.toMatch(/scale\s*\(/);
@@ -193,7 +194,8 @@ describe('월간 컴팩트 칩 소스 계약', () => {
     expect(scheduleJson.calendar.reminderSms.aria.PENDING).toBe('문자 발송 예정');
     expect(scheduleJson.calendar.reminderSms.aria.FAILED).toBe('문자 발송 실패');
     expect(scheduleJson.calendar.legend.status).toBe('상태');
-    expect(scheduleJson.calendar.legend.sms).toBe('문자 발송');
+    expect(scheduleJson.calendar.legend.sms).toContain('문자 발송됨');
+    expect(scheduleJson.calendar.legend.institution).toContain('기관연계');
     expect(scheduleJson.calendar.legend.unresolved).toBe('미해소');
     expect(scheduleJson.calendar.legend.hint).toContain('마우스');
   });

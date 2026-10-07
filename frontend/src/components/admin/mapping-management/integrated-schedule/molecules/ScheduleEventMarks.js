@@ -1,6 +1,7 @@
 /**
  * ScheduleEventMarks — 칩 끝 표식 묶음 (기관연계 · 문자 발송).
- * 모양 전환은 CSS 컨테이너 쿼리만 담당한다. prop 으로 ■/글자를 바꾸지 않는다.
+ * 기관연계는 폭과 관계없이 일정 상세와 같은 EngagementTypeBadge 글자 배지다.
+ * 문자 발송은 ScheduleReminderSmsBadge 원 표식이며 툴팁·aria 로 구분한다.
  */
 
 import React from 'react';

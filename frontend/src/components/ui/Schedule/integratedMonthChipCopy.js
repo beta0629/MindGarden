@@ -18,6 +18,7 @@ export const INTEGRATED_MONTH_CHIP_I18N = Object.freeze({
     FAILED: 'schedule:calendar.reminderSms.aria.FAILED'
   }),
   legendStatus: 'schedule:calendar.legend.status',
+  legendInstitution: 'schedule:calendar.legend.institution',
   legendSms: 'schedule:calendar.legend.sms',
   legendUnresolved: 'schedule:calendar.legend.unresolved',
   legendHint: 'schedule:calendar.legend.hint'

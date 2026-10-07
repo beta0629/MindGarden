@@ -77,8 +77,9 @@
     word-break: break-all;
     overflow-wrap: anywhere;
     text-align: center;
+    /* 가로 패딩 0: .dev 월 칩 내부 ~20px에서도 scrollWidth<=clientWidth */
     padding-block: var(--mg-v2-space-0-5);
-    padding-inline: var(--mg-v2-space-0-5);
+    padding-inline: 0;
     font-size: var(--mg-v2-font-size-caption);
     line-height: var(--mg-v2-font-line-height-caption);
   }
@@ -86,6 +87,19 @@
   .mg-v2-ad-calendar-event.mg-v2-ad-calendar-event--compact.mg-v2-ad-calendar-event--integrated-month:has(.mg-schedule-event-marks) {
     height: auto;
   }
+}
+
+/*
+ * 주간/일 풀 카드(기관연계 배지 직계 보유): 기본 padding-inline(space-3≈12px×2)은
+ * 390 열(~26px)에서 내용 폭을 ~2px로 줄여 글자가 들어가지 않는다.
+ * 배지가 있는 카드만 가로 패딩을 space-0-5로 줄여 글자당 줄바꿈(break-all) 공간을 확보한다.
+ */
+.mg-v2-ad-calendar-event:not(.mg-v2-ad-calendar-event--compact):has(> .mg-v2-ad-calendar-event__engagement) {
+  padding-inline: var(--mg-v2-space-0-5);
+  min-inline-size: 0;
+  max-inline-size: 100%;
+  box-sizing: border-box;
+  height: auto;
 }
 
 /* 주간/일 풀 카드: 제목(nowrap) 밖 직계 배지 — 위 월 좁은 칩과 동일 wrap */
@@ -100,7 +114,7 @@
   overflow-wrap: anywhere;
   text-align: center;
   padding-block: var(--mg-v2-space-0-5);
-  padding-inline: var(--mg-v2-space-0-5);
+  padding-inline: 0;
   font-size: var(--mg-v2-font-size-caption);
   line-height: var(--mg-v2-font-line-height-caption);
 }

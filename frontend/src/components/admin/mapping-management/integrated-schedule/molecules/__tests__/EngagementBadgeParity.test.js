@@ -263,11 +263,18 @@ describe('좁은 폭에서도 글자 배지', () => {
     expect(weekDayWrap[0]).toMatch(/height:\s*auto/);
     expect(weekDayWrap[0]).toMatch(/overflow:\s*visible/);
     expect(weekDayWrap[0]).toMatch(/padding-block:\s*var\(--mg-v2-space-0-5\)/);
-    expect(weekDayWrap[0]).toMatch(/padding-inline:\s*var\(--mg-v2-space-0-5\)/);
+    expect(weekDayWrap[0]).toMatch(/padding-inline:\s*0/);
     expect(weekDayWrap[0]).toMatch(/font-size:\s*var\(--mg-v2-font-size-caption\)/);
     expect(weekDayWrap[0]).not.toMatch(/text-overflow:\s*ellipsis/);
     expect(weekDayWrap[0]).not.toMatch(/overflow:\s*hidden/);
     expect(weekDayWrap[0]).not.toMatch(/white-space:\s*nowrap/);
+
+    const weekPad = marksCss.match(
+      /\.mg-v2-ad-calendar-event:not\(\.mg-v2-ad-calendar-event--compact\):has\(>\s*\.mg-v2-ad-calendar-event__engagement\)\s*\{[^}]*\}/
+    );
+    expect(weekPad).not.toBeNull();
+    expect(weekPad[0]).toMatch(/padding-inline:\s*var\(--mg-v2-space-0-5\)/);
+    expect(weekPad[0]).toMatch(/min-inline-size:\s*0/);
   });
 
   test('좁은 사이드바 행에서도 끝 표식은 글자 배지', () => {

@@ -4,10 +4,13 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import com.coresolution.consultation.constant.ScheduleStatus;
 import com.coresolution.consultation.entity.Schedule;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -24,6 +27,18 @@ import org.springframework.stereotype.Repository;
  * @Deprecated - 표준화 2025-12-07: branchCode 파라미터는 레거시 호환용
  */
 public interface ScheduleRepository extends BaseRepository<Schedule, Long> {
+
+    /**
+     * 일정 확정처럼 회기가 움직일 수 있는 쓰기 전에 행 잠금으로 읽는다.
+     * 같은 일정에 동시 확정이 들어와도 두 번째 요청은 첫 요청 커밋 뒤의 상태를 본다.
+     *
+     * @param tenantId 테넌트 ID
+     * @param id       일정 ID
+     * @return 잠금 획득한 일정
+     */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT s FROM Schedule s WHERE s.tenantId = :tenantId AND s.id = :id AND s.isDeleted = false")
+    Optional<Schedule> findByTenantIdAndIdForUpdate(@Param("tenantId") String tenantId, @Param("id") Long id);
 
     // ==================== 상담사별 스케줄 조회 ====================
     

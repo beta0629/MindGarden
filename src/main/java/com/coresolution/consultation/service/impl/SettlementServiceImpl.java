@@ -8,6 +8,7 @@ import com.coresolution.consultation.repository.erp.settlement.SettlementReposit
 import com.coresolution.consultation.repository.erp.settlement.SettlementRuleRepository;
 import com.coresolution.consultation.service.erp.settlement.SettlementCalculationEngine;
 import com.coresolution.consultation.service.erp.settlement.SettlementService;
+import com.coresolution.consultation.util.FinancialTransactionValidity;
 import com.coresolution.core.context.TenantContextHolder;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -87,6 +88,7 @@ public class SettlementServiceImpl implements SettlementService {
         List<FinancialTransaction> transactions = financialTransactionRepository
             .findByTenantIdAndIsDeletedFalse(tenantId)
             .stream()
+            .filter(FinancialTransactionValidity::isValid)
             .filter(t -> !t.getTransactionDate().isBefore(startDate) 
                       && !t.getTransactionDate().isAfter(endDate))
             .filter(t -> t.getTransactionType() == FinancialTransaction.TransactionType.INCOME)

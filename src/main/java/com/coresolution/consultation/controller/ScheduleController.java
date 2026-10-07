@@ -51,10 +51,11 @@ import com.coresolution.consultation.service.ScheduleListUserFieldsResolver;
 import com.coresolution.consultation.service.ScheduleMappingContextResolver;
 import com.coresolution.consultation.service.ScheduleMappingContextResolver.ScheduleMappingResponseContext;
 import com.coresolution.consultation.service.support.ClientPathAccessGuard;
-import com.coresolution.consultation.service.support.ResourceOwnerAccessGuard;
 import com.coresolution.consultation.service.support.ConsultationRecordAccessGuard;
 import com.coresolution.consultation.service.support.ConsultationRecordDraftAccessGuard;
 import com.coresolution.consultation.service.support.ConsultationRecordWriter;
+import com.coresolution.consultation.service.support.DeferredExternalCalls;
+import com.coresolution.consultation.service.support.ResourceOwnerAccessGuard;
 import com.coresolution.consultation.service.ScheduleService;
 import com.coresolution.consultation.util.PermissionCheckUtils;
 import com.coresolution.consultation.util.ScheduleSlotTimes;
@@ -1074,7 +1075,8 @@ public class ScheduleController extends BaseApiController {
         
         String adminNote = (String) confirmData.getOrDefault("adminNote", "입금 확인 완료");
         
-        Schedule confirmedSchedule = scheduleService.confirmSchedule(id, adminNote);
+        Schedule confirmedSchedule = DeferredExternalCalls.run(
+                () -> scheduleService.confirmSchedule(id, adminNote));
         
         Map<String, Object> data = Map.of(
             "scheduleId", confirmedSchedule.getId(),

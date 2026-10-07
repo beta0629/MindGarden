@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import javax.sql.DataSource;
 import com.coresolution.consultation.service.PlSqlStatisticsService;
+import com.coresolution.consultation.util.FinancialTransactionValidity;
 import com.coresolution.core.context.TenantContextHolder;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -345,8 +346,9 @@ public class PlSqlStatisticsServiceImpl implements PlSqlStatisticsService {
                             LEFT JOIN financial_transactions ft ON ft.related_entity_id = s.id
                                 AND ft.related_entity_type = 'CONSULTATION_INCOME'
                                 AND ft.transaction_type = 'INCOME'
+                                AND %s
                             WHERE s.date = ? AND s.branch_code = ? AND s.is_deleted = false
-                            """;
+                            """.formatted(FinancialTransactionValidity.nativeValidCondition("ft"));
 
             List<Map<String, Object>> javaResults = jdbcTemplate.queryForList(javaStatsQuery,
                     java.sql.Date.valueOf(statDate), branchCode);

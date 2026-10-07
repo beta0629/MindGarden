@@ -102,8 +102,8 @@ class ScheduleServiceImplCancelLinkedMappingSyncTest {
     }
 
     @Test
-    @DisplayName("cancelSchedule — PENDING_PAYMENT 매칭을 CANCELLED + REJECTED 로 닫는다")
-    void cancelSchedule_closesLinkedPendingPaymentMapping() {
+    @DisplayName("cancelSchedule — PENDING_PAYMENT 매칭은 일정만 취소하고 매핑 상태는 유지한다")
+    void cancelSchedule_doesNotCloseLinkedPendingPaymentMapping() {
         Schedule schedule = buildSchedule(SCHEDULE_ID, MAPPING_ID, ScheduleStatus.BOOKED);
         ConsultantClientMapping mapping = pendingPaymentMapping(MAPPING_ID);
 
@@ -112,26 +112,19 @@ class ScheduleServiceImplCancelLinkedMappingSyncTest {
         when(scheduleRepository.save(any(Schedule.class))).thenAnswer(inv -> inv.getArgument(0));
         when(mappingRepository.findByTenantIdAndId(eq(TENANT_ID), eq(MAPPING_ID)))
                 .thenReturn(Optional.of(mapping));
-        when(mappingRepository.save(any(ConsultantClientMapping.class)))
-                .thenAnswer(inv -> inv.getArgument(0));
-        when(scheduleRepository.findByTenantIdAndConsultantIdAndClientIdAndDateGreaterThanEqual(
-                eq(TENANT_ID), eq(CONSULTANT_ID), eq(CLIENT_ID), any(LocalDate.class)))
-                .thenReturn(List.of(schedule));
 
         Schedule result = scheduleService.cancelSchedule(SCHEDULE_ID, "캘린더 취소");
 
         assertThat(result.getStatus()).isEqualTo(ScheduleStatus.CANCELLED);
-        assertThat(mapping.getStatus()).isEqualTo(MappingStatus.CANCELLED);
-        assertThat(mapping.getPaymentStatus()).isEqualTo(PaymentStatus.REJECTED);
-        assertThat(mapping.getTerminatedAt()).isNotNull();
-        assertThat(mapping.getRemainingSessions()).isZero();
-        assertThat(mapping.getNotes()).contains("일정 취소로 매칭 동기 취소");
-        verify(mappingRepository, atLeastOnce()).save(mapping);
+        assertThat(mapping.getStatus()).isEqualTo(MappingStatus.PENDING_PAYMENT);
+        assertThat(mapping.getPaymentStatus()).isEqualTo(PaymentStatus.PENDING);
+        assertThat(mapping.getTerminatedAt()).isNull();
+        verify(mappingRepository, never()).save(any(ConsultantClientMapping.class));
     }
 
     @Test
-    @DisplayName("updateSchedule — CANCELLED 전이 시 PENDING_PAYMENT 매칭 동기 취소")
-    void updateSchedule_toCancelled_closesLinkedPendingPaymentMapping() {
+    @DisplayName("updateSchedule — CANCELLED 전이 시 PENDING_PAYMENT 매핑을 닫지 않는다")
+    void updateSchedule_toCancelled_doesNotCloseLinkedPendingPaymentMapping() {
         Schedule existing = buildSchedule(SCHEDULE_ID, MAPPING_ID, ScheduleStatus.TENTATIVE_PENDING_PAYMENT);
         existing.setTenantId(TENANT_ID);
         ConsultantClientMapping mapping = pendingPaymentMapping(MAPPING_ID);
@@ -141,11 +134,6 @@ class ScheduleServiceImplCancelLinkedMappingSyncTest {
         when(scheduleRepository.save(any(Schedule.class))).thenAnswer(inv -> inv.getArgument(0));
         when(mappingRepository.findByTenantIdAndId(eq(TENANT_ID), eq(MAPPING_ID)))
                 .thenReturn(Optional.of(mapping));
-        when(mappingRepository.save(any(ConsultantClientMapping.class)))
-                .thenAnswer(inv -> inv.getArgument(0));
-        when(scheduleRepository.findByTenantIdAndConsultantIdAndClientIdAndDateGreaterThanEqual(
-                eq(TENANT_ID), eq(CONSULTANT_ID), eq(CLIENT_ID), any(LocalDate.class)))
-                .thenReturn(List.of(existing));
 
         Schedule updateData = new Schedule();
         updateData.setStatus(ScheduleStatus.CANCELLED);
@@ -153,9 +141,8 @@ class ScheduleServiceImplCancelLinkedMappingSyncTest {
         Schedule result = scheduleService.updateSchedule(SCHEDULE_ID, updateData);
 
         assertThat(result.getStatus()).isEqualTo(ScheduleStatus.CANCELLED);
-        assertThat(mapping.getStatus()).isEqualTo(MappingStatus.CANCELLED);
-        assertThat(mapping.getPaymentStatus()).isEqualTo(PaymentStatus.REJECTED);
-        verify(mappingRepository, atLeastOnce()).save(mapping);
+        assertThat(mapping.getStatus()).isEqualTo(MappingStatus.PENDING_PAYMENT);
+        verify(mappingRepository, never()).save(any(ConsultantClientMapping.class));
     }
 
     @Test
@@ -190,11 +177,6 @@ class ScheduleServiceImplCancelLinkedMappingSyncTest {
         when(scheduleRepository.save(any(Schedule.class))).thenAnswer(inv -> inv.getArgument(0));
         when(mappingRepository.findByTenantIdAndId(eq(TENANT_ID), eq(MAPPING_ID)))
                 .thenReturn(Optional.of(mapping));
-        when(mappingRepository.save(any(ConsultantClientMapping.class)))
-                .thenAnswer(inv -> inv.getArgument(0));
-        when(scheduleRepository.findByTenantIdAndConsultantIdAndClientIdAndDateGreaterThanEqual(
-                eq(TENANT_ID), eq(CONSULTANT_ID), eq(CLIENT_ID), any(LocalDate.class)))
-                .thenReturn(List.of(schedule));
 
         Schedule result = scheduleService.cancelSchedule(SCHEDULE_ID, "취소");
 
@@ -268,8 +250,63 @@ class ScheduleServiceImplCancelLinkedMappingSyncTest {
         verify(scheduleRepository, never())
                 .findByTenantIdAndConsultantIdAndClientIdAndDateGreaterThanEqual(
                         any(), any(), any(), any(LocalDate.class));
-        // 회기 복원 save 는 허용, CANCELLED 전이용 매칭 저장은 없어야 함 → status 유지로 검증
-        verify(mappingRepository, atLeastOnce()).save(mapping);
+        verify(mappingRepository).save(mapping);
+    }
+
+    @Test
+    @DisplayName("cancelSchedule — ACTIVE 잔여 0 유료 매핑도 CANCELLED 로 닫지 않는다")
+    void cancelSchedule_activeMappingZeroRemaining_keepsMappingOpen() {
+        Schedule schedule = buildSchedule(SCHEDULE_ID, MAPPING_ID, ScheduleStatus.CONFIRMED);
+        schedule.setSessionSequence(1);
+        ConsultantClientMapping mapping = activeMappingWithRemaining(MAPPING_ID, 0);
+        mapping.setUsedSessions(10);
+        mapping.setTotalSessions(10);
+
+        when(scheduleRepository.findByTenantIdAndId(eq(TENANT_ID), eq(SCHEDULE_ID)))
+                .thenReturn(Optional.of(schedule));
+        when(scheduleRepository.save(any(Schedule.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(mappingRepository.findByTenantIdAndId(eq(TENANT_ID), eq(MAPPING_ID)))
+                .thenReturn(Optional.of(mapping));
+        when(mappingRepository.save(any(ConsultantClientMapping.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+
+        Schedule result = scheduleService.cancelSchedule(SCHEDULE_ID, "잔여 0 유료 일정 취소");
+
+        assertThat(result.getStatus()).isEqualTo(ScheduleStatus.CANCELLED);
+        assertThat(mapping.getStatus()).isEqualTo(MappingStatus.ACTIVE);
+        assertThat(mapping.getTerminatedAt()).isNull();
+        assertThat(mapping.getRemainingSessions()).isEqualTo(1);
+        assertThat(mapping.getUsedSessions()).isEqualTo(9);
+        assertThat(schedule.getSessionSequence()).isNull();
+    }
+
+    @Test
+    @DisplayName("cancelSchedule — PAYMENT_CONFIRMED 잔여 0 은 다른 매핑으로 복원하지 않고 매핑도 닫지 않는다")
+    void cancelSchedule_paymentConfirmedZeroRemaining_noRestoreToOtherMapping() {
+        Schedule schedule = buildSchedule(SCHEDULE_ID, MAPPING_ID, ScheduleStatus.CONFIRMED);
+        schedule.setSessionSequence(1);
+        ConsultantClientMapping mapping = pendingPaymentMapping(MAPPING_ID);
+        mapping.setStatus(MappingStatus.PAYMENT_CONFIRMED);
+        mapping.setPaymentStatus(PaymentStatus.CONFIRMED);
+        mapping.setRemainingSessions(0);
+        mapping.setUsedSessions(0);
+        ConsultantClientMapping siblingActive = activeMappingWithRemaining(999L, 4);
+
+        when(scheduleRepository.findByTenantIdAndId(eq(TENANT_ID), eq(SCHEDULE_ID)))
+                .thenReturn(Optional.of(schedule));
+        when(scheduleRepository.save(any(Schedule.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(mappingRepository.findByTenantIdAndId(eq(TENANT_ID), eq(MAPPING_ID)))
+                .thenReturn(Optional.of(mapping));
+
+        Schedule result = scheduleService.cancelSchedule(SCHEDULE_ID, "입금 전 결제확인 일정 취소");
+
+        assertThat(result.getStatus()).isEqualTo(ScheduleStatus.CANCELLED);
+        assertThat(mapping.getStatus()).isEqualTo(MappingStatus.PAYMENT_CONFIRMED);
+        assertThat(mapping.getRemainingSessions()).isZero();
+        assertThat(siblingActive.getRemainingSessions()).isEqualTo(4);
+        verify(mappingRepository, never()).save(any(ConsultantClientMapping.class));
+        verify(mappingRepository, never()).findActiveOrExhaustedListByTenantIdAndConsultantIdAndClientId(
+                any(), any(), any());
     }
 
     private ConsultantClientMapping pendingPaymentMapping(Long mappingId) {

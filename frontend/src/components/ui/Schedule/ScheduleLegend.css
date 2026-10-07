@@ -125,3 +125,53 @@
         width: 100%;
     }
 }
+
+.mg-schedule-marks-legend {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--mg-v2-space-2);
+    margin: 0 0 var(--mg-v2-space-2);
+    font-size: var(--font-size-xs);
+    color: var(--mg-v2-color-text-secondary);
+}
+
+.mg-schedule-marks-legend__item {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--mg-v2-space-1);
+}
+
+.mg-schedule-marks-legend__status,
+.mg-schedule-marks-legend__institution,
+.mg-schedule-marks-legend__sms,
+.mg-schedule-marks-legend__unresolved {
+    display: inline-block;
+    inline-size: var(--mg-size-dot-sm);
+    block-size: var(--mg-size-dot-sm);
+    box-sizing: border-box;
+}
+
+.mg-schedule-marks-legend__status {
+    border-radius: var(--mg-v2-radius-pill);
+    background-color: var(--mg-v2-color-primary-main);
+}
+
+.mg-schedule-marks-legend__institution {
+    border-radius: var(--mg-v2-radius-none);
+    background-color: var(--mg-v2-color-semantic-info-dark);
+}
+
+.mg-schedule-marks-legend__sms {
+    border-radius: var(--mg-v2-radius-pill);
+    border: var(--mg-v2-border-width-thick) solid var(--mg-v2-color-semantic-success-dark);
+    background-color: transparent;
+}
+
+.mg-schedule-marks-legend__unresolved {
+    border-radius: var(--mg-v2-radius-pill);
+    background-color: var(--mg-v2-color-semantic-warning-dark);
+    box-shadow:
+        0 0 0 var(--mg-v2-border-width-thin) var(--mg-v2-color-surface-stone),
+        0 0 0 var(--mg-v2-border-width-thick) var(--mg-v2-color-text-primary);
+}

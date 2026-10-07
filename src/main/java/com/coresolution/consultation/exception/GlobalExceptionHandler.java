@@ -632,6 +632,24 @@ public class GlobalExceptionHandler {
     }
 
     /**
+     * 일정 상태 전이 불가(취소·완료 일정 확정·재점유 등) — HTTP 409. 상태·회기 변경 없음.
+     */
+    @ExceptionHandler(ScheduleStatusTransitionException.class)
+    public ResponseEntity<ErrorResponse> handleScheduleStatusTransition(
+            ScheduleStatusTransitionException e, HttpServletRequest request) {
+        log.info("[SCHEDULE_STATUS_TRANSITION] scheduleId={} status={} errorCode={} path={}",
+                e.getScheduleId(), e.getCurrentStatus(), e.getErrorCode(), request.getRequestURI());
+        ErrorResponse error = ErrorResponse.of(
+            e.getMessage(),
+            e.getErrorCode(),
+            HttpStatus.CONFLICT.value(),
+            request.getRequestURI(),
+            request.getMethod()
+        );
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
+    }
+
+    /**
      * 어드민 강제 종료(삭제) 가드가 발동된 경우 처리.
      *
      * <p>의도된 비즈니스 차단 흐름이므로 HTTP {@code 409 Conflict} + 정형화된 JSON 본문으로

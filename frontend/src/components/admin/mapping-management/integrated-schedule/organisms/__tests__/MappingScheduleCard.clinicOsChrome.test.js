@@ -237,8 +237,9 @@ describe('MappingScheduleCard.clinicOsChrome', () => {
       /\.integrated-schedule__card--selected[\s\S]*?\.mg-v2-card-container\s*\{[^}]+\}/
     );
     expect(selectedCardBlock).not.toBeNull();
-    expect(selectedCardBlock[0]).toMatch(/#E2E8F0/);
-    expect(selectedCardBlock[0]).toMatch(/#94A3B8/);
+    expect(selectedCardBlock[0]).toMatch(/background-color:\s*var\(--cs-slate-200\)/);
+    expect(selectedCardBlock[0]).toMatch(/solid var\(--mg-v2-color-border-dark\)/);
+    expect(selectedCardBlock[0]).not.toMatch(/#[0-9a-fA-F]{3,8}\b/);
     expect(selectedCardBlock[0]).not.toMatch(/status-btn/);
     expect(selectedCardBlock[0]).not.toMatch(/filter-label/);
   });

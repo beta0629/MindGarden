@@ -754,15 +754,15 @@
 }
 
 /*
- * Clinic-OS sidebar card selected (SSOT5) — paper/#E2E8F0 → fill #E2E8F0 + border #94A3B8
+ * Clinic-OS sidebar card selected (SSOT5) — fill slate-200 + border slate-400(border-dark) 토큰
  * tabs/status-btn v3 선택 크롬은 이 규칙과 분리 (변경 금지).
  */
 .integrated-schedule__sidebar
   .integrated-schedule__list
   > li.integrated-schedule__card--selected
   .mg-v2-card-container {
-  background-color: #E2E8F0;
-  border: 1px solid #94A3B8;
+  background-color: var(--cs-slate-200);
+  border: var(--mg-v2-border-width-thin) solid var(--mg-v2-color-border-dark);
   box-shadow: none;
 }
 

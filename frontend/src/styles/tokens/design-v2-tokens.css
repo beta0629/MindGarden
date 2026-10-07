@@ -250,6 +250,8 @@
   --mg-schedule-event-marks-reserve: calc(
     var(--mg-v2-space-0-5) + var(--mg-schedule-event-marks-size) + var(--mg-v2-space-1)
   );
+  /* 안내 패널 제목 토글·범례·본문 가로 inset 공유 */
+  --mg-schedule-legend-inline-pad: var(--mg-spacing-md);
   --mg-v2-border-width-focus: 1px;
   --mg-v2-border-elevation-1: none;
   --mg-v2-border-elevation-2: none;

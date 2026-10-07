@@ -1,7 +1,7 @@
 /**
  * 칩 끝 표식 묶음.
  * 기관연계는 폭과 관계없이 일정 상세와 같은 EngagementTypeBadge 글자 배지다. ■ 로 줄이지 않는다.
- * 폭이 모자라면 월간 칩은 표식을 다음 줄로 내리고, 그래도 모자라면 배지 글자를 말줄임한다.
+ * 폭이 모자라면 월간 칩은 표식을 다음 줄로 내리고 칩 높이를 키운다. 배지 글자는 말줄임하지 않는다.
  * @container 조건의 px 는 var() 를 받지 못해 리터럴이다(단계 F 109px 와 같은 경계).
  */
 
@@ -9,6 +9,7 @@
   flex: none;
   display: inline-flex;
   flex-direction: row;
+  flex-wrap: wrap;
   align-items: center;
   gap: var(--mg-v2-space-1);
   max-inline-size: 100%;
@@ -17,23 +18,18 @@
 
 .mg-schedule-event-marks__institution {
   display: inline-flex;
-  flex: 0 1 auto;
-  min-inline-size: 0;
+  flex: none;
   max-inline-size: 100%;
 }
 
 /*
- * 공통 Badge 의 inline-flex·가운데 정렬에서는 글자가 익명 flex 항목이라 말줄임이 걸리지 않고
- * 양옆이 잘린다(「기관연계」→「관연」). 표식 안에서만 블록 + 시작 정렬로 바꿔 「기관…」으로 줄인다.
+ * 공통 Badge 는 inline-flex·가운데 정렬이다. 표식 안에서 overflow:hidden 을 걸면
+ * 글자가 잘린다. 네 글자는 nowrap 으로 붙이고, 모자란 폭은 래퍼·칩이 다음 줄로 넘긴다.
  */
 .mg-schedule-event-marks .mg-engagement-type-badge {
-  display: block;
   flex: none;
   min-width: auto;
-  max-inline-size: 100%;
-  overflow: hidden;
-  text-align: start;
-  text-overflow: ellipsis;
+  overflow: visible;
   padding-inline: var(--mg-v2-space-1);
   white-space: nowrap;
 }
@@ -44,10 +40,16 @@
  * 선택자는 IntegratedMatchingSchedule.css 칩 기본 규칙(특이도 0,3,0)보다 높다.
  * 단계 F(< 109px) 두 줄 배치는 IntegratedMatchingSchedule.css 가 맡는다.
  */
+.mg-v2-ad-calendar-event.mg-v2-ad-calendar-event--compact.mg-v2-ad-calendar-event--integrated-month:has(.mg-schedule-event-marks) {
+  flex-wrap: wrap;
+  height: auto;
+}
+
 @container mg-month-event (width >= 109px) {
   .mg-v2-ad-calendar-event.mg-v2-ad-calendar-event--compact.mg-v2-ad-calendar-event--integrated-month:has(.mg-schedule-event-marks) {
     flex-wrap: wrap;
     row-gap: var(--mg-v2-space-0-5);
+    height: auto;
   }
 
   .mg-v2-ad-calendar-event--compact.mg-v2-ad-calendar-event--integrated-month:has(.mg-schedule-event-marks) .mg-v2-ad-calendar-event__client {

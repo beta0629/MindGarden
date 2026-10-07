@@ -1121,7 +1121,7 @@
 
   /*
    * 기관연계 글자 배지는 이름 옆 남는 좁은 폭이나 문자 원 표식 옆에 넣지 않는다.
-   * 표식 래퍼를 풀어 1줄 시간 + 문자 원 표식, 2줄 이름 전폭, 3줄 배지 전폭(「기관…」 이상)으로 둔다.
+   * 표식 래퍼를 풀어 1줄 시간 + 문자 원 표식, 2줄 이름 전폭, 3줄 배지 전폭(「기관연계」 네 글자)으로 둔다.
    */
   .integrated-schedule__calendar-wrapper--integrated .fc-daygrid-event-harness .mg-v2-ad-calendar-event--integrated-month .mg-schedule-event-marks:has(.mg-schedule-event-marks__institution) {
     display: contents;

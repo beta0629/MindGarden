@@ -135,15 +135,21 @@ describe('좁은 폭에서도 글자 배지', () => {
     expect(badge.getAttribute('data-engagement-type')).toBe('INSTITUTION_LINK');
   });
 
-  test('표식 안 배지는 왼쪽 정렬 말줄임이다 (가운데 정렬 양쪽 잘림 「관연」 방지)', () => {
+  test('표식 안 배지는 「기관연계」 네 글자 전부이고 말줄임하지 않는다', () => {
+    const { container } = render(
+      <ScheduleEventMarks source={INSTITUTION_SOURCE} institutionTitle={INSTITUTION_LABEL} />
+    );
+    const badge = container.querySelector('.mg-schedule-event-marks .mg-engagement-type-badge');
+    expect(badge).not.toBeNull();
+    expect(badge.textContent).toBe(INSTITUTION_LABEL);
+    expect(INSTITUTION_LABEL).toHaveLength(4);
+
     const marksCss = fs.readFileSync(path.resolve(__dirname, '..', 'ScheduleEventMarks.css'), 'utf8');
     const badgeBlock = marksCss.match(/\.mg-schedule-event-marks \.mg-engagement-type-badge \{[^}]*\}/);
     expect(badgeBlock).not.toBeNull();
-    expect(badgeBlock[0]).toMatch(/display:\s*block;/);
-    expect(badgeBlock[0]).toMatch(/text-align:\s*start;/);
-    expect(badgeBlock[0]).toMatch(/overflow:\s*hidden;/);
-    expect(badgeBlock[0]).toMatch(/text-overflow:\s*ellipsis;/);
-    expect(badgeBlock[0]).not.toMatch(/justify-content:\s*center/);
+    expect(badgeBlock[0]).not.toMatch(/text-overflow:\s*ellipsis/);
+    expect(badgeBlock[0]).not.toMatch(/overflow:\s*hidden/);
+    expect(badgeBlock[0]).toMatch(/white-space:\s*nowrap/);
 
     const commonBadgeCss = fs.readFileSync(path.resolve(SRC, 'components', 'common', 'Badge.css'), 'utf8');
     expect(commonBadgeCss).toMatch(/\.mg-common-badge \{[^}]*display:\s*inline-flex;[^}]*justify-content:\s*center;/);

@@ -6,21 +6,33 @@ import AdminCommonLayout from '../layout/AdminCommonLayout';
 import ClientDetailModal from './ClientDetailModal';
 import UnifiedLoading from '../../components/common/UnifiedLoading';
 import notificationManager from '../../utils/notification';
-import { Users, Info, Search, AlertTriangle, List, CheckCircle, XCircle, Clock, CheckCircle2, PauseCircle } from 'lucide-react';
-import FilterBadge from './molecules/FilterBadge';
+import { Users, Info, AlertTriangle } from 'lucide-react';
 import ClientCard from '../ui/Card/ClientCard';
-import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
-import MGButton from '../common/MGButton';
-import { ContentArea, ContentHeader, ContentSection } from '../dashboard-v2/content';
+import EmptyState from '../common/EmptyState';
+import ConsultantSuitePage from './suite/ConsultantSuitePage';
+import ConsultantNotice from './suite/ConsultantNotice';
+import ConsultantSearchField from './suite/ConsultantSearchField';
+import ConsultantFilterChips from './suite/ConsultantFilterChips';
+import ConsultantSuiteButton from './suite/ConsultantSuiteButton';
+import {
+  CONSULTANT_CLIENT_STATUS_FILTER,
+  CONSULTANT_SUITE_CLASS,
+  CONSULTANT_SUITE_NS,
+  CONSULTANT_SUITE_TEST_ID
+} from '../../constants/consultantSuite';
 import '../../styles/unified-design-tokens.css';
 import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import './ConsultantClientList.css';
 import { useTranslation } from 'react-i18next';
 
 const CONSULTANT_CLIENT_LIST_TITLE_ID = 'consultant-client-list-title';
+const CONSULTANT_CLIENT_SEARCH_ID = 'consultant-client-search';
+const NOTICE_ICON_SIZE = 16;
+const EMPTY_ICON_SIZE = 40;
+const CLIENT_FILTER_ORDER = Object.values(CONSULTANT_CLIENT_STATUS_FILTER);
 
 const ConsultantClientList = () => {
-  const { t } = useTranslation();
+  const { t } = useTranslation(CONSULTANT_SUITE_NS);
   const { user, isLoggedIn, isLoading: sessionLoading } = useSession();
   const { id: clientIdFromUrl } = useParams();
   const navigate = useNavigate();
@@ -32,15 +44,6 @@ const ConsultantClientList = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('ALL');
   const isModalOpeningRef = useRef(false);
-
-  const FILTER_CONFIG = [
-    { value: 'ALL', label: '전체', icon: List, activeColor: 'var(--mg-color-primary-main)' },
-    { value: 'ACTIVE', label: '활성', icon: CheckCircle, activeColor: 'var(--mg-success-600)' },
-    { value: 'INACTIVE', label: '비활성', icon: XCircle, activeColor: 'var(--mg-secondary-500)' },
-    { value: 'PENDING', label: '대기중', icon: Clock, activeColor: 'var(--mg-warning-600)' },
-    { value: 'COMPLETED', label: '완료', icon: CheckCircle2, activeColor: 'var(--mg-success-700)' },
-    { value: 'SUSPENDED', label: '일시정지', icon: PauseCircle, activeColor: 'var(--mg-error-600)' }
-  ];
 
   const loadClients = useCallback(async() => {
     try {
@@ -117,11 +120,11 @@ const ConsultantClientList = () => {
       }
     } catch (err) {
       console.error('❌ 내담자 목록 로드 중 오류:', err);
-      setError('내담자 목록을 불러오는 중 오류가 발생했습니다.');
+      setError(t('clients.loadError'));
     } finally {
       setLoading(false);
     }
-  }, [user?.id]);
+  }, [user?.id, t]);
 
   const statusCounts = useMemo(() => {
     return {
@@ -216,171 +219,128 @@ const ConsultantClientList = () => {
     }
   };
 
-  const authShell = (mainBody) => (
-    <div className="mg-v2-ad-b0kla">
-      <div className="mg-v2-ad-b0kla__container">
-        <ContentArea ariaLabel="내담자 목록">
-          <ContentHeader
-            title="내담자 목록"
-            subtitle="나와 연계된 내담자들을 조회할 수 있습니다."
-            titleId={CONSULTANT_CLIENT_LIST_TITLE_ID}
-          />
-          <main aria-labelledby={CONSULTANT_CLIENT_LIST_TITLE_ID}>
-            {mainBody}
-          </main>
-        </ContentArea>
-      </div>
-    </div>
+  const filterItems = CLIENT_FILTER_ORDER.map((key) => ({
+    key,
+    label: t('clients.filterLabel', {
+      label: t(`clients.status.${key}`),
+      count: statusCounts[key] || 0
+    })
+  }));
+
+  const renderPage = (body) => (
+    <AdminCommonLayout className="mg-v2-dashboard-layout">
+      <ConsultantSuitePage
+        title={t('clients.title')}
+        subtitle={t('clients.subtitle')}
+        titleId={CONSULTANT_CLIENT_LIST_TITLE_ID}
+        ariaLabel={t('clients.ariaLabel')}
+        testId={CONSULTANT_SUITE_TEST_ID.CLIENTS_PAGE}
+      >
+        {body}
+      </ConsultantSuitePage>
+      {showClientModal && selectedClient && (
+        <ClientDetailModal
+          client={selectedClient}
+          isOpen={showClientModal}
+          onClose={handleCloseModal}
+          onSave={handleSaveClient}
+        />
+      )}
+    </AdminCommonLayout>
   );
 
   if (sessionLoading) {
-    return (
-      <AdminCommonLayout title="내담자 목록">
-        {authShell(
-          <UnifiedLoading type="inline" text="내담자 목록을 불러오는 중..." />
-        )}
-      </AdminCommonLayout>
+    return renderPage(
+      <div className={CONSULTANT_SUITE_CLASS.LOADING} aria-busy="true" aria-live="polite">
+        <UnifiedLoading type="inline" text={t('clients.loading')} />
+      </div>
     );
   }
 
   if (!isLoggedIn) {
-    return (
-      <AdminCommonLayout title="내담자 목록">
-        {authShell(
-          <div className="consultant-client-list-login-required">
-            <h3>로그인이 필요합니다.</h3>
-          </div>
-        )}
-      </AdminCommonLayout>
+    return renderPage(
+      <section className={CONSULTANT_SUITE_CLASS.PANEL}>
+        <EmptyState className={CONSULTANT_SUITE_CLASS.EMPTY} title={t('clients.loginRequired')} />
+      </section>
     );
   }
 
-  return (
-    <AdminCommonLayout title="내담자 목록">
-      <div className="mg-v2-ad-b0kla">
-        <div className="mg-v2-ad-b0kla__container">
-          <ContentArea ariaLabel="내담자 목록">
-            <ContentHeader
-              title="내담자 목록"
-              subtitle="나와 연계된 내담자들을 조회할 수 있습니다."
-              titleId={CONSULTANT_CLIENT_LIST_TITLE_ID}
-            />
-
-            <main aria-labelledby={CONSULTANT_CLIENT_LIST_TITLE_ID}>
-        <div className="mg-v2-alert mg-v2-alert--info">
-          <Info size={20} />
-          내담자 생성, 수정, 삭제는 관리자와 스태프만 가능합니다.
+  const renderList = () => {
+    if (loading) {
+      return (
+        <div className={CONSULTANT_SUITE_CLASS.LOADING} aria-busy="true" aria-live="polite">
+          <UnifiedLoading type="inline" text={t('clients.loading')} />
         </div>
+      );
+    }
+    if (error) {
+      return (
+        <section className={CONSULTANT_SUITE_CLASS.PANEL} role="alert">
+          <EmptyState
+            className={CONSULTANT_SUITE_CLASS.EMPTY}
+            icon={<AlertTriangle size={EMPTY_ICON_SIZE} aria-hidden />}
+            title={error}
+            action={<ConsultantSuiteButton onClick={loadClients}>{t('actions.retry')}</ConsultantSuiteButton>}
+          />
+        </section>
+      );
+    }
+    if (filteredClients.length === 0) {
+      const hasClients = clients.length > 0;
+      return (
+        <section className={CONSULTANT_SUITE_CLASS.PANEL} role="status" aria-live="polite">
+          <EmptyState
+            className={CONSULTANT_SUITE_CLASS.EMPTY}
+            icon={<Users size={EMPTY_ICON_SIZE} aria-hidden />}
+            title={hasClients
+              ? t('clients.filterEmptyTitle', { label: t(`clients.status.${filterStatus}`) })
+              : t('clients.emptyTitle')}
+            description={hasClients ? t('clients.filterEmptyDescription') : t('clients.emptyDescription')}
+            action={hasClients ? (
+              <ConsultantSuiteButton onClick={() => setFilterStatus(CONSULTANT_CLIENT_STATUS_FILTER.ALL)}>
+                {t('actions.showAll')}
+              </ConsultantSuiteButton>
+            ) : null}
+          />
+        </section>
+      );
+    }
+    return (
+      <section className={CONSULTANT_SUITE_CLASS.CARD_GRID} aria-label={t('clients.listAria')}>
+        {filteredClients.map((client) => (
+          <ClientCard
+            key={client.id}
+            client={client}
+            onClick={handleViewClient}
+            variant="detailed"
+            showActions={false}
+          />
+        ))}
+      </section>
+    );
+  };
 
-        <ContentSection noCard={true}>
-          <div className="client-list-controls">
-            <div className="client-search-input-wrapper">
-              <Search size={18} />
-              <input
-                type="text"
-                className="client-search-input"
-                placeholder="이름, 이메일, 전화번호로 검색..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
-
-            <div className="client-filter-badges">
-              {FILTER_CONFIG.map(filter => (
-                <FilterBadge
-                  key={filter.value}
-                  label={filter.label}
-                  value={filter.value}
-                  count={statusCounts[filter.value] || 0}
-                  icon={filter.icon}
-                  isActive={filterStatus === filter.value}
-                  onClick={handleFilterClick}
-                  activeColor={filter.activeColor}
-                />
-              ))}
-            </div>
-          </div>
-        </ContentSection>
-
-        <ContentSection noCard={true}>
-          {loading && (
-            <UnifiedLoading type="inline" text="내담자 목록을 불러오는 중..." />
-          )}
-
-          {error && (
-            <div className="client-list-error-state">
-              <AlertTriangle size={48} />
-              <div className="client-list-error-state__message">{error}</div>
-              <MGButton
-                variant="primary"
-                className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: false, className: 'mg-v2-client-view-btn' })}
-                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                onClick={loadClients}
-              >
-                {t('common.labels.retry')}
-              </MGButton>
-            </div>
-          )}
-
-          {!loading && !error && (
-            filteredClients.length === 0 ? (
-              <div 
-                role="status" 
-                aria-live="polite" 
-                className="client-list-empty-state"
-              >
-                <Users size={64} />
-                <h3 className="client-list-empty-state__title">
-                  {clients.length === 0
-                    ? '연계된 내담자가 없습니다'
-                    : `${FILTER_CONFIG.find(f => f.value === filterStatus)?.label || filterStatus} 상태의 내담자가 없습니다`
-                  }
-                </h3>
-                <p className="client-list-empty-state__description">
-                  {clients.length === 0
-                    ? '아직 나와 연계된 내담자가 없습니다.'
-                    : '다른 상태를 선택하거나 검색어를 변경해보세요.'
-                  }
-                </p>
-                {clients.length > 0 && (
-                  <MGButton
-                    variant="primary"
-                    className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: false, className: 'mg-v2-client-view-btn' })}
-                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                    onClick={() => setFilterStatus('ALL')}
-                  >
-                    전체 상태 보기
-                  </MGButton>
-                )}
-              </div>
-            ) : (
-              <div className="client-card-grid">
-                {filteredClients.map(client => (
-                  <ClientCard
-                    key={client.id}
-                    client={client}
-                    onClick={handleViewClient}
-                    variant="detailed"
-                  />
-                ))}
-              </div>
-            )
-          )}
-        </ContentSection>
-            </main>
-
-            {showClientModal && selectedClient && (
-              <ClientDetailModal
-                client={selectedClient}
-                isOpen={showClientModal}
-                onClose={handleCloseModal}
-                onSave={handleSaveClient}
-              />
-            )}
-          </ContentArea>
-        </div>
+  return renderPage(
+    <>
+      <ConsultantNotice icon={<Info size={NOTICE_ICON_SIZE} />}>{t('clients.notice')}</ConsultantNotice>
+      <div className={CONSULTANT_SUITE_CLASS.TOOLBAR}>
+        <ConsultantSearchField
+          id={CONSULTANT_CLIENT_SEARCH_ID}
+          value={searchTerm}
+          onChange={setSearchTerm}
+          placeholder={t('clients.searchPlaceholder')}
+          ariaLabel={t('clients.searchAria')}
+        />
+        <ConsultantFilterChips
+          items={filterItems}
+          activeKey={filterStatus}
+          onChange={handleFilterClick}
+          ariaLabel={t('clients.filterAria')}
+          testIdPrefix="consultant-clients-filter"
+        />
       </div>
-    </AdminCommonLayout>
+      {renderList()}
+    </>
   );
 };
 

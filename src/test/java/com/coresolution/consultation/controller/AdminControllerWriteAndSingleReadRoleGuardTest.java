@@ -384,12 +384,15 @@ class AdminControllerWriteAndSingleReadRoleGuardTest {
     @DisplayName("상담사별 내담자 목록 — 다른 상담사 id 를 넣은 상담사·내담자·다른 기관 관리자 403, 서비스 호출 없음")
     void clientsByConsultant_selfOrManagerOnly() {
         assertResourceDenied("consultant other id",
-                () -> controller.getClientsByConsultantMapping(CONSULTANT_ID, sessionOf(UserRole.CONSULTANT, TENANT_ID)));
+                () -> controller.getClientsByConsultantMapping(CONSULTANT_ID, null, null,
+                        sessionOf(UserRole.CONSULTANT, TENANT_ID)));
         assertResourceDenied("client",
-                () -> controller.getClientsByConsultantMapping(CONSULTANT_ID, sessionOf(UserRole.CLIENT, TENANT_ID)));
+                () -> controller.getClientsByConsultantMapping(CONSULTANT_ID, null, null,
+                        sessionOf(UserRole.CLIENT, TENANT_ID)));
         assertResourceDenied("admin foreign consultant",
-                () -> controller.getClientsByConsultantMapping(FOREIGN_USER_ID, sessionOf(UserRole.ADMIN, TENANT_ID)));
-        assertThatThrownBy(() -> controller.getClientsByConsultantMapping(CONSULTANT_ID,
+                () -> controller.getClientsByConsultantMapping(FOREIGN_USER_ID, null, null,
+                        sessionOf(UserRole.ADMIN, TENANT_ID)));
+        assertThatThrownBy(() -> controller.getClientsByConsultantMapping(CONSULTANT_ID, null, null,
                 sessionOf(UserRole.ADMIN, OTHER_TENANT_ID))).isInstanceOf(AccessDeniedException.class);
         assertNoServiceCalls();
 

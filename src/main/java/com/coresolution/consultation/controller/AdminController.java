@@ -18,6 +18,7 @@ import com.coresolution.consultation.validation.OnAdminConsultantRegister;
 import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.constant.ClientEngagementTypeConstants;
 import com.coresolution.consultation.constant.PaymentTimingConstants;
+import com.coresolution.consultation.constant.ScheduleStatus;
 import com.coresolution.consultation.dto.ClientPackagePaymentHistoryResponse;
 import com.coresolution.consultation.dto.ClientRegistrationRequest;
 import com.coresolution.consultation.dto.CheckoutSameDayRequest;
@@ -41,6 +42,7 @@ import com.coresolution.consultation.entity.ConsultationRecord;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.exception.EntityNotFoundException;
 import com.coresolution.consultation.exception.RefundLedgerNotRecordedException;
+import com.coresolution.consultation.repository.ScheduleRepository;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.repository.UserSocialAccountRepository;
 import com.coresolution.consultation.service.AdminBulkMappingPaymentService;
@@ -217,6 +219,7 @@ public class AdminController extends BaseApiController {
             scheduleClientReminderSmsStatusService;
     private final com.coresolution.consultation.repository.ClientRepository clientRepository;
     private final com.coresolution.consultation.repository.ConsultantRepository consultantRepository;
+    private final ScheduleRepository scheduleRepository;
 
     /**
      * /** 상담사 통계 정보 조회 (캐시 사용) /** GET /api/admin/consultants/with-stats/{id}
@@ -586,7 +589,10 @@ public class AdminController extends BaseApiController {
     /**
      * 상담사별 매칭 내담자 목록.
      * <p>page/size 생략 시 전체(하위 호환). 지정 시 Spring page 0-base로 슬라이스하며
-     * totalElements/totalPages 를 함께 반환한다. lastSessionDate 는 Client 엔티티 값(없으면 null).
+     * totalElements/totalPages 를 함께 반환한다.
+     * lastSessionDate 는 mapping.getClient()({@link User})가 아니라,
+     * 상담사·내담자 스코프 COMPLETED 일정의 MAX(date) SSOT(없으면 null).
+     * {@link Client#getLastSessionDate()} 는 {@code @Transient} 이므로 DB 조회만으로는 채울 수 없다.
      */
     @GetMapping("/mappings/consultant/{consultantId}/clients")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getClientsByConsultantMapping(
@@ -648,6 +654,15 @@ public class AdminController extends BaseApiController {
                     m.getId(), m.getPaymentStatus(), m.getStatus());
         }
 
+        // ConsultantServiceImpl 과 동일 SSOT: 상담사·내담자 COMPLETED 일정 MAX(date)
+        List<Long> mappingClientIdsForLastSession = mappings.stream()
+                .map(m -> m.getClient() != null ? m.getClient().getId() : null)
+                .filter(java.util.Objects::nonNull)
+                .distinct()
+                .collect(Collectors.toList());
+        Map<Long, LocalDate> lastSessionDateByClientId = loadLastCompletedSessionDatesByConsultantAndClients(
+                tenantId, consultantId, mappingClientIdsForLastSession);
+
         List<Map<String, Object>> activeMappings = mappings.stream()
                 .filter(mapping -> {
                     // 표준화 2025-12-08: 필터링 로직 개선 - 모든 활성 매핑 포함
@@ -702,13 +717,11 @@ public class AdminController extends BaseApiController {
                                             mapping.getClient().getCreatedAt() != null
                                                     ? mapping.getClient().getCreatedAt().toString()
                                                     : ""));
-                            // Client.lastSessionDate — 매핑 응답에 하위 호환으로 추가 (없으면 null)
-                            if (mapping.getClient().getLastSessionDate() != null) {
-                                data.put("lastSessionDate",
-                                        mapping.getClient().getLastSessionDate().toString());
-                            } else {
-                                data.put("lastSessionDate", null);
-                            }
+                            // mapping.client 는 User — lastSessionDate 는 스케줄 SSOT 맵에서 채움
+                            LocalDate lastSessionDate =
+                                    lastSessionDateByClientId.get(mapping.getClient().getId());
+                            data.put("lastSessionDate",
+                                    lastSessionDate != null ? lastSessionDate.toString() : null);
                         }
 
                         data.put("totalSessions", mapping.getTotalSessions());
@@ -774,6 +787,41 @@ public class AdminController extends BaseApiController {
         }
 
         return success(data);
+    }
+
+    /**
+     * 상담사·내담자별 COMPLETED 일정 최근일 배치 조회.
+     * {@link com.coresolution.consultation.service.impl.ConsultantServiceImpl} 과 동일 SSOT.
+     *
+     * @param tenantId 테넌트 ID
+     * @param consultantId 상담사 ID
+     * @param clientIds 내담자 ID 목록
+     * @return clientId → MAX(COMPLETED schedule.date)
+     */
+    private Map<Long, LocalDate> loadLastCompletedSessionDatesByConsultantAndClients(
+            String tenantId, Long consultantId, List<Long> clientIds) {
+        if (tenantId == null || tenantId.isBlank() || consultantId == null
+                || clientIds == null || clientIds.isEmpty()) {
+            return Map.of();
+        }
+        try {
+            List<Object[]> rows = scheduleRepository.findMaxCompletedSessionDateByConsultantAndClientIds(
+                    tenantId, consultantId, clientIds, ScheduleStatus.COMPLETED);
+            Map<Long, LocalDate> out = new HashMap<>();
+            for (Object[] row : rows) {
+                if (row == null || row.length < 2 || row[0] == null || row[1] == null) {
+                    continue;
+                }
+                Long cid = ((Number) row[0]).longValue();
+                LocalDate maxDate = (LocalDate) row[1];
+                out.put(cid, maxDate);
+            }
+            return out;
+        } catch (Exception e) {
+            log.warn("⚠️ 상담사 매칭 내담자 lastSessionDate 배치 조회 실패: tenantId={}, consultantId={}, error={}",
+                    tenantId, consultantId, e.getMessage());
+            return Map.of();
+        }
     }
 
     /**

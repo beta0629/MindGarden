@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useSession } from '../../contexts/SessionContext';
-import StandardizedApi from '../../utils/standardizedApi';
 import { getCommonCodes } from '../../utils/commonCodeUtils';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { AlertTriangle } from 'lucide-react';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import UnifiedLoading from '../common/UnifiedLoading';
 import EmptyState from '../common/EmptyState';
+import MGPagination from '../common/MGPagination';
 import ConsultantSuitePage from './suite/ConsultantSuitePage';
 import ConsultantSuiteButton from './suite/ConsultantSuiteButton';
 import ConsultantRecordFilterBlock from './records/ConsultantRecordFilterBlock';
@@ -15,8 +15,13 @@ import ConsultationLogModal from './ConsultationLogModal';
 import {
   CONSULTANT_SUITE_CLASS,
   CONSULTANT_SUITE_NS,
+  CONSULTANT_SUITE_PAGE_SIZE,
   CONSULTANT_SUITE_TEST_ID
 } from '../../constants/consultantSuite';
+import {
+  fetchConsultantSuitePagedList,
+  toServerPageIndex
+} from '../../utils/consultantSuiteListApi';
 import {
   buildConsultantConsultationRecordRoute,
   buildConsultantConsultationRecordsRoute,
@@ -42,6 +47,8 @@ const ConsultantRecords = () => {
   const [searchParams] = useSearchParams();
   const deepLinkHandledRef = useRef(false);
   const [records, setRecords] = useState([]);
+  const [totalElements, setTotalElements] = useState(0);
+  const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -89,9 +96,21 @@ const ConsultantRecords = () => {
         throw new Error(i18n.t('error:consultant.ConsultantRecords.t_cfaf61dd'));
       }
 
-      const response = await StandardizedApi.get(`/api/v1/admin/consultant-records/${user.id}/consultation-records`);
-      const data = response?.data || response || [];
-      setRecords(Array.isArray(data) ? data : []);
+      const params = {};
+      if (clientIdFilter) {
+        params.clientId = clientIdFilter;
+      }
+      const result = await fetchConsultantSuitePagedList(
+        `/api/v1/admin/consultant-records/${user.id}/consultation-records`,
+        params,
+        {
+          page: toServerPageIndex(page),
+          size: CONSULTANT_SUITE_PAGE_SIZE,
+          itemKeys: ['data', 'content', 'items', 'records']
+        }
+      );
+      setRecords(result.items || []);
+      setTotalElements(result.totalElements != null ? result.totalElements : (result.items || []).length);
     } catch (err) {
       console.error('❌ 상담 기록 로드 중 오류:', err);
       let errorMessage = '상담 기록을 불러오는 중 오류가 발생했습니다.';
@@ -105,10 +124,12 @@ const ConsultantRecords = () => {
       }
 
       setError(errorMessage);
+      setRecords([]);
+      setTotalElements(0);
     } finally {
       setLoading(false);
     }
-  }, [user?.id]);
+  }, [user?.id, page, clientIdFilter]);
 
   useEffect(() => {
     if (deepLinkHandledRef.current) {
@@ -257,25 +278,41 @@ const ConsultantRecords = () => {
         )}
 
         {!loading && !error && (
-          <ConsultantRecordListBlock
-            records={filteredRecords}
-            onViewRecord={handleViewRecord}
-            onWriteRecord={handleWriteRecord}
-            onNavigateSchedule={handleNavigateSchedule}
-            onNavigateDashboard={incompleteListMode ? handleNavigateDashboard : undefined}
-            emptyTitle={incompleteListMode
-              ? CONSULTANT_RECORDS_INCOMPLETE_EMPTY_TITLE
-              : undefined}
-            emptyDesc={incompleteListMode
-              ? CONSULTANT_RECORDS_INCOMPLETE_EMPTY_DESC
-              : undefined}
-            scheduleCtaLabel={incompleteListMode
-              ? CONSULTANT_RECORDS_INCOMPLETE_SCHEDULE_CTA
-              : undefined}
-            dashboardCtaLabel={incompleteListMode
-              ? CONSULTANT_RECORDS_INCOMPLETE_DASHBOARD_CTA
-              : undefined}
-          />
+          <>
+            <ConsultantRecordListBlock
+              records={filteredRecords}
+              onViewRecord={handleViewRecord}
+              onWriteRecord={handleWriteRecord}
+              onNavigateSchedule={handleNavigateSchedule}
+              onNavigateDashboard={incompleteListMode ? handleNavigateDashboard : undefined}
+              emptyTitle={incompleteListMode
+                ? CONSULTANT_RECORDS_INCOMPLETE_EMPTY_TITLE
+                : undefined}
+              emptyDesc={incompleteListMode
+                ? CONSULTANT_RECORDS_INCOMPLETE_EMPTY_DESC
+                : undefined}
+              scheduleCtaLabel={incompleteListMode
+                ? CONSULTANT_RECORDS_INCOMPLETE_SCHEDULE_CTA
+                : undefined}
+              dashboardCtaLabel={incompleteListMode
+                ? CONSULTANT_RECORDS_INCOMPLETE_DASHBOARD_CTA
+                : undefined}
+            />
+            {totalElements > CONSULTANT_SUITE_PAGE_SIZE ? (
+              <nav className={CONSULTANT_SUITE_CLASS.PAGINATION} aria-label={t('records.listAria')}>
+                <MGPagination
+                  currentPage={page}
+                  totalPages={Math.max(1, Math.ceil(totalElements / CONSULTANT_SUITE_PAGE_SIZE))}
+                  totalItems={totalElements}
+                  itemsPerPage={CONSULTANT_SUITE_PAGE_SIZE}
+                  onPageChange={setPage}
+                  showInfo={false}
+                  showItemsPerPage={false}
+                  variant="compact"
+                />
+              </nav>
+            ) : null}
+          </>
         )}
       </>
     );

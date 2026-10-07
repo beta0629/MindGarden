@@ -300,6 +300,31 @@
   --mg-v2-consultant-card-radius: var(--mg-v2-radius-panel);
   --mg-v2-consultant-calendar-min-height: 45rem;
   --mg-v2-consultant-calendar-min-height-mobile: 32rem;
+
+  /* ── Consultant suite card density (P1 follow-up · #1521) ── */
+  --mg-v2-consultant-card-title-size: 1rem;
+  --mg-v2-consultant-card-title-weight: var(--mg-v2-font-weight-bold);
+  --mg-v2-consultant-card-title-tracking: var(--mg-v2-font-letter-spacing-tight);
+  --mg-v2-consultant-card-body-size: var(--mg-v2-font-size-body-md);
+  --mg-v2-consultant-card-meta-size: 0.8125rem;
+  --mg-v2-consultant-card-time-size: var(--mg-v2-font-size-caption);
+  --mg-v2-consultant-pill-size: 0.6875rem;
+  --mg-v2-consultant-pill-weight: var(--mg-v2-font-weight-bold);
+  --mg-v2-consultant-pill-padding: var(--mg-v2-space-1) 0.625rem;
+  --mg-v2-consultant-pill-radius: var(--mg-v2-radius-pill);
+  --mg-v2-consultant-card-pad: var(--mg-v2-space-6);
+  --mg-v2-consultant-row-pad: var(--mg-v2-space-4) var(--mg-v2-space-6);
+  --mg-v2-consultant-card-gap: var(--mg-v2-space-3);
+  --mg-v2-consultant-row-min-height: 4.5rem;
+  --mg-v2-consultant-row-gap: var(--mg-v2-space-4);
+  --mg-v2-consultant-meta-gap: calc(var(--mg-v2-space-1) + var(--mg-v2-space-0-5));
+  --mg-v2-consultant-foot-gap: var(--mg-v2-space-3);
+  --mg-v2-consultant-foot-pad-top: var(--mg-v2-space-2);
+  --mg-v2-consultant-avatar-size: var(--mg-v2-space-12);
+  --mg-v2-consultant-avatar-weight: 800;
+  --mg-v2-consultant-icon-btn-size: var(--mg-v2-consultant-control-height);
+  --mg-v2-consultant-content-pad: var(--mg-v2-space-2) var(--mg-v2-space-8) var(--mg-v2-space-8);
+  --mg-v2-consultant-content-pad-mobile: 0;
 }
 
 /* ================================================================

@@ -1,6 +1,6 @@
 /**
  * ConsultantRecordCard — 상담 일지 카드 (records·logs 공유)
- * 일시 · 회기 · 내담자 · slate 상태칩 · ghost h36 액션. 틸/초록 뱃지·primary 없음.
+ * ConsultantSuiteCard 기반 · 날짜 타이틀 · 회기/내담자 body · foot 필+ghost 액션
  *
  * @author CoreSolution
  * @since 2026-10-07
@@ -10,9 +10,9 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { useTranslation } from 'react-i18next';
 import { FileText } from 'lucide-react';
-import StatusBadge from '../../common/StatusBadge';
 import SafeText from '../../common/SafeText';
 import ConsultantSuiteButton from './ConsultantSuiteButton';
+import ConsultantSuiteCard, { ConsultantSuitePill } from './ConsultantSuiteCard';
 import { toDisplayString } from '../../../utils/safeDisplay';
 import {
   CONSULTANT_SUITE_CLASS,
@@ -44,7 +44,6 @@ const ConsultantRecordCard = ({ record, onOpen, showClient }) => {
   const sessionDate = record.sessionDate ?? record.consultationDate;
   const sessionNumber = Number(record.sessionNumber) || 0;
   const isCompleted = record.isSessionCompleted === true;
-  const updatedAt = record.updatedAt ?? record.createdAt;
   const sessionLabel = sessionNumber > 0
     ? t('records.sessionUnit', { count: sessionNumber })
     : toDisplayString(record.title, t('records.untitled'));
@@ -52,44 +51,33 @@ const ConsultantRecordCard = ({ record, onOpen, showClient }) => {
   const dateLabel = toRecordDateLabel(sessionDate);
 
   return (
-    <article
+    <ConsultantSuiteCard
+      testId={CONSULTANT_SUITE_TEST_ID.RECORD_CARD}
       className={CONSULTANT_SUITE_CLASS.RECORD_CARD}
-      data-testid={CONSULTANT_SUITE_TEST_ID.RECORD_CARD}
-    >
-      <header className="consultant-suite-record-card__head">
-        <time className="consultant-suite-record-card__date" dateTime={dateLabel}>{dateLabel}</time>
-        <StatusBadge variant="neutral" className={CONSULTANT_SUITE_CLASS.STATUS}>
-          {isCompleted ? t('records.completed') : t('records.incomplete')}
-        </StatusBadge>
-      </header>
-      <dl className="consultant-suite-record-card__body">
-        <div className="consultant-suite-record-card__row">
-          <dt>{t('records.sessionLabel')}</dt>
-          <dd><SafeText>{sessionLabel}</SafeText></dd>
-        </div>
-        {showClient ? (
-          <div className="consultant-suite-record-card__row">
-            <dt>{t('records.clientLabel')}</dt>
-            <dd className="consultant-suite-record-card__client"><SafeText>{clientName}</SafeText></dd>
-          </div>
-        ) : null}
-        {updatedAt ? (
-          <div className="consultant-suite-record-card__row consultant-suite-record-card__row--meta">
-            <dt>{t('records.updatedLabel')}</dt>
-            <dd>{toRecordDateLabel(updatedAt)}</dd>
-          </div>
-        ) : null}
-      </dl>
-      <footer className="consultant-suite-record-card__foot">
-        <ConsultantSuiteButton
-          icon={<FileText size={ACTION_ICON_SIZE} aria-hidden />}
-          onClick={() => onOpen(record.id)}
-          ariaLabel={t('records.openAria', { date: dateLabel, client: clientName })}
-        >
-          {isCompleted ? t('actions.viewLog') : t('actions.writeLog')}
-        </ConsultantSuiteButton>
-      </footer>
-    </article>
+      title={dateLabel}
+      body={(
+        <>
+          <SafeText tag="p" className="consultant-suite-record-card__session">{sessionLabel}</SafeText>
+          {showClient ? (
+            <SafeText tag="p" className="consultant-suite-record-card__client">{clientName}</SafeText>
+          ) : null}
+        </>
+      )}
+      foot={(
+        <>
+          <ConsultantSuitePill>
+            {isCompleted ? t('records.completed') : t('records.incomplete')}
+          </ConsultantSuitePill>
+          <ConsultantSuiteButton
+            icon={<FileText size={ACTION_ICON_SIZE} aria-hidden />}
+            onClick={() => onOpen(record.id)}
+            ariaLabel={t('records.openAria', { date: dateLabel, client: clientName })}
+          >
+            {isCompleted ? t('actions.viewLog') : t('actions.writeLog')}
+          </ConsultantSuiteButton>
+        </>
+      )}
+    />
   );
 };
 

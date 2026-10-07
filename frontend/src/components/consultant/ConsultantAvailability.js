@@ -1,13 +1,16 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import UnifiedLoading from '../../components/common/UnifiedLoading';
 import { useSession } from '../../hooks/useSession';
-import { sessionManager } from '../../utils/sessionManager';
 import StandardizedApi from '../../utils/standardizedApi';
-import { AlertTriangle, Clock, Pencil, Plus, RefreshCw, ShieldAlert, Trash2 } from 'lucide-react';
+import { AlertTriangle, Clock, Plus, RefreshCw, ShieldAlert } from 'lucide-react';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import EmptyState from '../common/EmptyState';
 import ConsultantSuitePage from './suite/ConsultantSuitePage';
 import ConsultantSuiteButton from './suite/ConsultantSuiteButton';
+import ConsultantSuiteCard, {
+  CONSULTANT_SUITE_CARD_VARIANT,
+  ConsultantSuitePill
+} from './suite/ConsultantSuiteCard';
 import {
   CONSULTANT_SUITE_BUTTON_VARIANT,
   CONSULTANT_SUITE_CLASS,
@@ -17,10 +20,12 @@ import {
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import MGButton from '../common/MGButton';
 import UnifiedModal from '../common/modals/UnifiedModal';
+import EntityRowActions from '../common/molecules/EntityRowActions';
 import SafeText from '../common/SafeText';
 import { toDisplayString } from '../../utils/safeDisplay';
 import { redirectToLoginPageOnce } from '../../utils/sessionRedirect';
 import { formatLocalDateYmd } from '../../utils/erpFinanceDisplay';
+import useConfirm from '../../hooks/useConfirm';
 import {
   AVAILABILITY_MIN_LEAD_DAYS,
   getAvailabilityMinSelectableDate
@@ -30,6 +35,22 @@ import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import './ConsultantAvailability.css';
 import { RoleUtils } from '../../constants/roles';
 import { useTranslation } from 'react-i18next';
+
+/**
+ * HH:mm[:ss] → HH:mm
+ * @param {string} [value]
+ * @returns {string}
+ */
+const stripSeconds = (value) => {
+  if (!value || typeof value !== 'string') {
+    return '';
+  }
+  const parts = value.split(':');
+  if (parts.length >= 2) {
+    return `${parts[0].padStart(2, '0')}:${parts[1].padStart(2, '0')}`;
+  }
+  return value;
+};
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_COMMON_CODES_GROUPS_DURATION = '/api/v1/common-codes/groups/DURATION';
@@ -103,6 +124,7 @@ const ConsultantAvailability = () => {
   const { t } = useTranslation();
   const { t: tSuite } = useTranslation(CONSULTANT_SUITE_NS);
   const { user, isLoggedIn, isLoading: sessionLoading } = useSession();
+  const [confirm, ConfirmModal] = useConfirm();
   const [availability, setAvailability] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -277,32 +299,44 @@ const ConsultantAvailability = () => {
   // 상담 가능 시간 삭제
   const handleDeleteAvailability = async(id) => {
     try {
-      console.log('🗑️ 상담 가능 시간 삭제:', id);
-
       const response = await StandardizedApi.delete(`/api/v1/consultants/availability/${id}`);
-      
       if (Array.isArray(response) || response?.success || response?.id || response?.success === undefined) {
-        console.log('✅ 상담 가능 시간 삭제 성공');
         await loadAvailability();
       } else {
-        console.error('❌ 상담 가능 시간 삭제 실패:', response?.message);
         setError(response?.message || t('common:consultant.ConsultantAvailability.t_dcdc1896'));
       }
     } catch (err) {
-      console.error('❌ 상담 가능 시간 삭제 중 오류:', err);
       setError(err?.message || t('common:consultant.ConsultantAvailability.t_422803c0'));
     }
   };
 
-  // 요일별 상담 가능 시간 그룹화
-  const groupedAvailability = availability.reduce((acc, slot) => {
-    const day = slot.dayOfWeek;
-    if (!acc[day]) {
-      acc[day] = [];
+  const requestDeleteAvailability = async(slot) => {
+    const ok = await confirm({
+      title: tSuite('availability.deleteConfirmTitle'),
+      message: tSuite('availability.deleteConfirmBody'),
+      confirmLabel: tSuite('actions.delete'),
+      cancelLabel: t('common.actions.cancel'),
+      variant: 'danger'
+    });
+    if (ok) {
+      await handleDeleteAvailability(slot.id);
     }
-    acc[day].push(slot);
-    return acc;
-  }, {});
+  };
+
+  /** 슬롯이 있는 요일만 · 요일 순서 유지 */
+  const slotsWithDays = useMemo(() => {
+    const dayOrder = DAYS_OF_WEEK.map((d) => d.key);
+    return [...availability]
+      .filter((slot) => slot && slot.dayOfWeek)
+      .sort((a, b) => {
+        const ai = dayOrder.indexOf(a.dayOfWeek);
+        const bi = dayOrder.indexOf(b.dayOfWeek);
+        if (ai !== bi) {
+          return ai - bi;
+        }
+        return String(a.startTime || '').localeCompare(String(b.startTime || ''));
+      });
+  }, [availability, DAYS_OF_WEEK]);
 
   const pageShell = (body, options = {}) => {
     const { title = t('common:consultant.ConsultantAvailability.t_09b4a1ce'), subtitle = t('common:consultant.ConsultantAvailability.t_eecb782f'), actions } = options;
@@ -408,14 +442,22 @@ const ConsultantAvailability = () => {
               </div>
             )}
 
-            {error && (
-              <div className="alert alert-danger" role="alert">
-                <i className="bi bi-exclamation-triangle-fill" />
-                {error}
-              </div>
-            )}
+            {error ? (
+              <section className={CONSULTANT_SUITE_CLASS.PANEL} role="alert">
+                <EmptyState
+                  className={CONSULTANT_SUITE_CLASS.EMPTY}
+                  icon={<AlertTriangle size={EMPTY_ICON_SIZE} aria-hidden />}
+                  title={error}
+                  action={(
+                    <ConsultantSuiteButton onClick={loadAvailability}>
+                      {tSuite('actions.retry')}
+                    </ConsultantSuiteButton>
+                  )}
+                />
+              </section>
+            ) : null}
 
-            {!loading && !error && (availability.length === 0 ? (
+            {!loading && !error && (slotsWithDays.length === 0 ? (
               <section className={CONSULTANT_SUITE_CLASS.PANEL}>
                 <EmptyState
                   className={CONSULTANT_SUITE_CLASS.EMPTY}
@@ -425,79 +467,58 @@ const ConsultantAvailability = () => {
                 />
               </section>
             ) : (
-              <section className="consultant-availability__grid" aria-label={tSuite('availability.listAria')}>
-                {DAYS_OF_WEEK.map((day) => {
-                  const daySlots = groupedAvailability[day.key] || [];
+              <ul className={CONSULTANT_SUITE_CLASS.CARD_LIST} aria-label={tSuite('availability.listAria')}>
+                {slotsWithDays.map((slot) => {
+                  const day = DAYS_OF_WEEK.find((d) => d.key === slot.dayOfWeek);
+                  const dayLabel = day?.label || slot.dayOfWeek;
+                  const start = stripSeconds(slot.startTime);
+                  const end = stripSeconds(slot.endTime);
+                  const isActive = slot.isActive !== false;
                   return (
-                    <article key={day.key} className="consultant-availability__day">
-                      <header className="consultant-availability__day-head">
-                        <SafeText tag="h3" className="consultant-availability__day-title">{day.label}</SafeText>
-                        <span className="consultant-availability__day-count">
-                          {tSuite('availability.dayCount', { count: daySlots.length })}
-                        </span>
-                      </header>
-                      {daySlots.length === 0 ? (
-                        <p className="consultant-availability__no-slots">{tSuite('availability.noSlots')}</p>
-                      ) : (
-                        <ul className="consultant-availability__slots">
-                          {daySlots.map((slot) => (
-                            <li key={slot.id} className="consultant-availability__slot">
-                              <span className="consultant-availability__slot-time">
-                                <SafeText>{slot.startTime}</SafeText>
-                                {' – '}
-                                <SafeText>{slot.endTime}</SafeText>
-                                {slot.duration != null ? (
-                                  <span className="consultant-availability__slot-duration">
-                                    {tSuite('availability.durationUnit', { count: slot.duration })}
-                                  </span>
-                                ) : null}
-                              </span>
-                              <span className="consultant-availability__slot-actions">
-                                <MGButton
-                                  variant="outline"
-                                  size="medium"
-                                  className={buildErpMgButtonClassName({
-                                    variant: 'outline',
-                                    size: 'md',
-                                    loading: false,
-                                    className: 'consultant-availability__icon-btn'
-                                  })}
-                                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                                  onClick={() => {
-                                    setSelectedDate(nextAllowedYmdForDayOfWeek(slot.dayOfWeek));
-                                    setEditingSlot(slot);
-                                  }}
-                                  aria-label={tSuite('actions.edit')}
-                                  title={tSuite('actions.edit')}
-                                  preventDoubleClick={false}
-                                >
-                                  <Pencil size={ACTION_ICON_SIZE} aria-hidden />
-                                </MGButton>
-                                <MGButton
-                                  variant="outline"
-                                  size="medium"
-                                  className={buildErpMgButtonClassName({
-                                    variant: 'outline',
-                                    size: 'md',
-                                    loading: false,
-                                    className: 'consultant-availability__icon-btn'
-                                  })}
-                                  loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                                  onClick={() => handleDeleteAvailability(slot.id)}
-                                  aria-label={tSuite('actions.delete')}
-                                  title={tSuite('actions.delete')}
-                                >
-                                  <Trash2 size={ACTION_ICON_SIZE} aria-hidden />
-                                </MGButton>
-                              </span>
-                            </li>
-                          ))}
-                        </ul>
-                      )}
-                    </article>
+                    <li key={slot.id}>
+                      <ConsultantSuiteCard
+                        variant={CONSULTANT_SUITE_CARD_VARIANT.ROW}
+                        className="consultant-availability__slot-card"
+                      >
+                        <div className="consultant-availability__slot-main">
+                          <SafeText tag="h3" className={CONSULTANT_SUITE_CLASS.CARD_TITLE}>
+                            {tSuite('availability.slotTitle', { day: dayLabel })}
+                          </SafeText>
+                          <SafeText tag="p" className={CONSULTANT_SUITE_CLASS.CARD_META}>
+                            {tSuite('availability.slotTimeRange', { start, end })}
+                          </SafeText>
+                        </div>
+                        <div className="consultant-availability__slot-aside">
+                          <ConsultantSuitePill>
+                            {isActive
+                              ? tSuite('availability.active')
+                              : tSuite('availability.inactive')}
+                          </ConsultantSuitePill>
+                          <EntityRowActions
+                            ariaLabel={tSuite('availability.actionsAria')}
+                            items={[
+                              {
+                                id: 'edit',
+                                label: tSuite('actions.edit'),
+                                onClick: () => {
+                                  setSelectedDate(nextAllowedYmdForDayOfWeek(slot.dayOfWeek));
+                                  setEditingSlot(slot);
+                                }
+                              },
+                              {
+                                id: 'delete',
+                                label: tSuite('actions.delete'),
+                                variant: 'destructive',
+                                onClick: () => requestDeleteAvailability(slot)
+                              }
+                            ]}
+                          />
+                        </div>
+                      </ConsultantSuiteCard>
+                    </li>
                   );
                 })}
-              </section>
+              </ul>
             ))}
           </>,
           { actions: headerActions }
@@ -522,6 +543,7 @@ const ConsultantAvailability = () => {
             minSelectableDate={getMinSelectableDateYmd()}
           />
         )}
+        {ConfirmModal}
       </>
     );
   };
@@ -547,6 +569,7 @@ const AvailabilityModal = ({
   minSelectableDate
 }) => {
   const { t } = useTranslation();
+  const { t: tSuite } = useTranslation(CONSULTANT_SUITE_NS);
   const [formData, setFormData] = useState({
     dayOfWeek: dayOfWeekFromYmd(selectedDate) || initialData?.dayOfWeek || 'MONDAY',
     startTime: initialData?.startTime || '09:00',
@@ -676,7 +699,6 @@ const AvailabilityModal = ({
             onClick={onClose}
             preventDoubleClick={false}
           >
-            <i className="bi bi-x-circle" />
             {t('common.actions.cancel')}
           </MGButton>
           <MGButton
@@ -688,135 +710,140 @@ const AvailabilityModal = ({
             loadingText={ERP_MG_BUTTON_LOADING_TEXT}
             preventDoubleClick={false}
           >
-            <i className="bi bi-check-circle" />
-            {initialData ? '수정' : t('common:consultant.ConsultantAvailability.t_57942995')}
+            {initialData ? tSuite('actions.edit') : t('common:consultant.ConsultantAvailability.t_57942995')}
           </MGButton>
         </>
       )}
     >
-        <form id={CONSULTANT_AVAILABILITY_FORM_ID} onSubmit={handleSubmit} className="modal-body availability-modal__form">
-          <div className="form-group">
-            <label className="form-label" htmlFor="availability-selected-date">
-              {t('common:consultant.ConsultantAvailability.t_selected_date_label')} *
-            </label>
-            <input
-              id="availability-selected-date"
-              type="date"
-              name="selectedDate"
-              value={selectedDate}
-              min={minSelectableDate}
-              onChange={handleSelectedDateChange}
-              className={`form-control ${errors.selectedDate ? 'is-invalid' : ''}`}
-              required
-            />
-            <p className="consultant-availability-lead-helper">
-              {t('common:consultant.ConsultantAvailability.t_lead_days_helper', {
-                days: AVAILABILITY_MIN_LEAD_DAYS
-              })}
-            </p>
-            {errors.selectedDate && (
-              <div className="invalid-feedback">{errors.selectedDate}</div>
-            )}
-          </div>
+      <form
+        id={CONSULTANT_AVAILABILITY_FORM_ID}
+        onSubmit={handleSubmit}
+        className="mg-v2-form availability-modal__form"
+      >
+        <div className="mg-v2-form-group">
+          <label className="mg-v2-label" htmlFor="availability-selected-date">
+            {t('common:consultant.ConsultantAvailability.t_selected_date_label')} *
+          </label>
+          <input
+            id="availability-selected-date"
+            type="date"
+            name="selectedDate"
+            value={selectedDate}
+            min={minSelectableDate}
+            onChange={handleSelectedDateChange}
+            className={`mg-v2-form-input${errors.selectedDate ? ' mg-v2-form-input--error' : ''}`}
+            required
+          />
+          <p className="consultant-availability-lead-helper">
+            {t('common:consultant.ConsultantAvailability.t_lead_days_helper', {
+              days: AVAILABILITY_MIN_LEAD_DAYS
+            })}
+          </p>
+          {errors.selectedDate ? (
+            <p className="mg-v2-form-error" role="alert">{errors.selectedDate}</p>
+          ) : null}
+        </div>
 
-          <div className="form-group">
-            <label className="form-label">요일 *</label>
-            <input
-              type="text"
-              name="dayOfWeekDisplay"
-              value={toDisplayString(selectedDayLabel, formData.dayOfWeek)}
-              className="form-control"
-              readOnly
-              aria-readonly="true"
-            />
-            <input type="hidden" name="dayOfWeek" value={formData.dayOfWeek} />
-          </div>
+        <div className="mg-v2-form-group">
+          <label className="mg-v2-label" htmlFor="availability-day-display">요일 *</label>
+          <input
+            id="availability-day-display"
+            type="text"
+            name="dayOfWeekDisplay"
+            value={toDisplayString(selectedDayLabel, formData.dayOfWeek)}
+            className="mg-v2-form-input"
+            readOnly
+            aria-readonly="true"
+          />
+          <input type="hidden" name="dayOfWeek" value={formData.dayOfWeek} />
+        </div>
 
-          <div className="form-row">
-            <div className="form-group">
-              <label className="form-label">시작 시간 *</label>
-              <select
-                name="startTime"
-                value={formData.startTime}
-                onChange={handleInputChange}
-                className={`form-control ${errors.startTime ? 'is-invalid' : ''}`}
-                required
-              >
-                {timeSlots.map(slot => (
-                  <option key={slot.value} value={slot.value}>
-                    {toDisplayString(slot.label, '—')}
-                  </option>
-                ))}
-              </select>
-              {errors.startTime && (
-                <div className="invalid-feedback">{errors.startTime}</div>
-              )}
-            </div>
-
-            <div className="form-group">
-              <label className="form-label">종료 시간 *</label>
-              <select
-                name="endTime"
-                value={formData.endTime}
-                onChange={handleInputChange}
-                className={`form-control ${errors.endTime ? 'is-invalid' : ''}`}
-                required
-              >
-                {timeSlots.map(slot => (
-                  <option key={slot.value} value={slot.value}>
-                    {toDisplayString(slot.label, '—')}
-                  </option>
-                ))}
-              </select>
-              {errors.endTime && (
-                <div className="invalid-feedback">{errors.endTime}</div>
-              )}
-            </div>
-          </div>
-
-          <div className="form-group">
-            <label className="form-label">상담 시간 (분) *</label>
+        <div className="mg-v2-form-row">
+          <div className="mg-v2-form-group">
+            <label className="mg-v2-label" htmlFor="availability-start-time">시작 시간 *</label>
             <select
-              name="duration"
-              value={formData.duration}
+              id="availability-start-time"
+              name="startTime"
+              value={formData.startTime}
               onChange={handleInputChange}
-              className={`form-control ${errors.duration ? 'is-invalid' : ''}`}
+              className={`mg-v2-form-select${errors.startTime ? ' mg-v2-form-input--error' : ''}`}
               required
             >
-              {durationOptions && durationOptions.length > 0 ? (
-                durationOptions.map(option => (
-                  <option key={option.value} value={option.value}>
-                    {`${toDisplayString(option.icon, '')} ${toDisplayString(option.label, '—')}`.trim()}
-                  </option>
-                ))
-              ) : (
-                <option disabled>시간 옵션을 불러오는 중...</option>
-              )}
+              {timeSlots.map((slot) => (
+                <option key={slot.value} value={slot.value}>
+                  {toDisplayString(slot.label, '—')}
+                </option>
+              ))}
             </select>
-            {errors.duration && (
-              <div className="invalid-feedback">{errors.duration}</div>
-            )}
+            {errors.startTime ? (
+              <p className="mg-v2-form-error" role="alert">{errors.startTime}</p>
+            ) : null}
           </div>
 
-          <div className="form-group">
-            <div className="form-check">
-              <input
-                type="checkbox"
-                name="isActive"
-                checked={formData.isActive}
-                onChange={(e) => setFormData(prev => ({
-                  ...prev,
-                  isActive: e.target.checked
-                }))}
-                className="form-check-input"
-                id="isActive"
-              />
-              <label className="form-check-label" htmlFor="isActive">
-                활성화
-              </label>
-            </div>
+          <div className="mg-v2-form-group">
+            <label className="mg-v2-label" htmlFor="availability-end-time">종료 시간 *</label>
+            <select
+              id="availability-end-time"
+              name="endTime"
+              value={formData.endTime}
+              onChange={handleInputChange}
+              className={`mg-v2-form-select${errors.endTime ? ' mg-v2-form-input--error' : ''}`}
+              required
+            >
+              {timeSlots.map((slot) => (
+                <option key={slot.value} value={slot.value}>
+                  {toDisplayString(slot.label, '—')}
+                </option>
+              ))}
+            </select>
+            {errors.endTime ? (
+              <p className="mg-v2-form-error" role="alert">{errors.endTime}</p>
+            ) : null}
           </div>
-        </form>
+        </div>
+
+        <div className="mg-v2-form-group">
+          <label className="mg-v2-label" htmlFor="availability-duration">상담 시간 (분) *</label>
+          <select
+            id="availability-duration"
+            name="duration"
+            value={formData.duration}
+            onChange={handleInputChange}
+            className={`mg-v2-form-select${errors.duration ? ' mg-v2-form-input--error' : ''}`}
+            required
+          >
+            {durationOptions && durationOptions.length > 0 ? (
+              durationOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {toDisplayString(option.label, '—')}
+                </option>
+              ))
+            ) : (
+              <option disabled>시간 옵션을 불러오는 중...</option>
+            )}
+          </select>
+          {errors.duration ? (
+            <p className="mg-v2-form-error" role="alert">{errors.duration}</p>
+          ) : null}
+        </div>
+
+        <div className="mg-v2-form-group">
+          <label className="mg-v2-form-checkbox" htmlFor="isActive">
+            <input
+              type="checkbox"
+              name="isActive"
+              checked={formData.isActive}
+              onChange={(e) => setFormData((prev) => ({
+                ...prev,
+                isActive: e.target.checked
+              }))}
+              className="mg-v2-form-checkbox__input"
+              id="isActive"
+            />
+            <span className="mg-v2-form-checkbox__label">활성화</span>
+          </label>
+        </div>
+      </form>
     </UnifiedModal>
   );
 };

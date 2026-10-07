@@ -114,6 +114,18 @@ describe('ConsultantSchedule suite 수용', () => {
     expect(panel).toHaveTextContent('일정 등록·배정은 관리자·스태프 화면에서 처리합니다.');
   });
 
+  it('툴바 CSS: status-chips 는 absolute/고정 toolbar-rows 가 아닌 문서 흐름', () => {
+    const fs = require('fs');
+    const path = require('path');
+    const css = fs.readFileSync(
+      path.resolve(__dirname, '../ConsultantScheduleSuite.css'),
+      'utf8'
+    );
+    expect(css).toMatch(/\.consultant-schedule__status-chips\s*\{[^}]*position:\s*static/s);
+    expect(css).not.toMatch(/--consultant-schedule-toolbar-rows/);
+    expect(css).not.toMatch(/position:\s*absolute/);
+  });
+
   it('새로고침: refetchTrigger 증가 + 일지 미작성 재조회', () => {
     render(<ConsultantSchedule />);
     const before = mockUnifiedProps.current.refetchTrigger;

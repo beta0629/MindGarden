@@ -25,11 +25,16 @@
 
 .consultant-suite .mg-v2-content-area {
   background-color: var(--mg-v2-consultant-surface-stage);
+  padding: var(--mg-v2-consultant-content-pad);
 }
 
 .consultant-suite .mg-v2-content-header {
-  padding-top: var(--mg-v2-space-2);
+  padding-top: 0;
   margin-bottom: var(--mg-v2-space-4);
+}
+
+.consultant-suite .mg-v2-content-header__subtitle {
+  font-size: var(--mg-v2-consultant-card-meta-size);
 }
 
 .consultant-suite__body {
@@ -261,11 +266,21 @@
   box-shadow: var(--mg-v2-shadow-focus);
 }
 
-/* ===== 카드 그리드 ===== */
+/* ===== 카드 그리드 · 세로 리스트 ===== */
 .consultant-suite-card-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: var(--mg-v2-space-3);
+  gap: var(--mg-v2-consultant-card-gap);
+  min-width: 0;
+}
+
+.consultant-suite-card-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-v2-consultant-card-gap);
+  margin: 0;
+  padding: 0;
+  list-style: none;
   min-width: 0;
 }
 
@@ -275,72 +290,175 @@
   }
 }
 
-/* ===== 상담 일지 카드 (records·logs 공유) ===== */
-.consultant-suite-record-card {
+/* ===== 공유 카드 (ConsultantSuiteCard) ===== */
+.consultant-suite-card {
   display: flex;
   flex-direction: column;
-  gap: var(--mg-v2-space-3);
+  gap: var(--mg-v2-consultant-card-gap);
+  box-sizing: border-box;
   min-width: 0;
-  padding: var(--mg-v2-space-4);
+  width: 100%;
+  margin: 0;
+  padding: var(--mg-v2-consultant-card-pad);
   background: var(--mg-v2-consultant-surface-card);
   border: var(--mg-v2-border-width-thin) solid var(--mg-v2-consultant-border-card);
   border-radius: var(--mg-v2-consultant-card-radius);
   box-shadow: none;
+  text-align: left;
+  color: inherit;
+  font: inherit;
 }
 
-.consultant-suite-record-card__head {
+button.consultant-suite-card {
+  cursor: pointer;
+  appearance: none;
+}
+
+button.consultant-suite-card:focus-visible {
+  outline: none;
+  border-color: var(--mg-v2-consultant-selection-border);
+  box-shadow: var(--mg-v2-shadow-focus);
+}
+
+.consultant-suite-card--row {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mg-v2-consultant-row-gap);
+  padding: var(--mg-v2-consultant-row-pad);
+  min-height: var(--mg-v2-consultant-row-min-height);
+}
+
+.consultant-suite-card__head {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--mg-v2-space-2);
+  gap: var(--mg-v2-space-3);
+  min-width: 0;
+  width: 100%;
 }
 
-.consultant-suite-record-card__date {
-  font-size: var(--mg-v2-font-size-body-md);
-  font-weight: var(--mg-v2-font-weight-bold);
-  font-variant-numeric: tabular-nums;
-  color: var(--mg-v2-color-text-primary);
-}
-
-.consultant-suite-record-card__body {
+.consultant-suite-card__head-text {
   display: flex;
-  flex-direction: column;
-  gap: var(--mg-v2-space-1);
-  margin: 0;
-}
-
-.consultant-suite-record-card__row {
-  display: flex;
+  flex: 1 1 auto;
+  align-items: baseline;
   justify-content: space-between;
   gap: var(--mg-v2-space-3);
-  font-size: var(--mg-v2-font-size-body-md);
-}
-
-.consultant-suite-record-card__row dt {
-  color: var(--mg-v2-color-text-tertiary);
-}
-
-.consultant-suite-record-card__row dd {
   min-width: 0;
+}
+
+.consultant-suite-card__title {
   margin: 0;
+  font-size: var(--mg-v2-consultant-card-title-size);
+  font-weight: var(--mg-v2-consultant-card-title-weight);
+  letter-spacing: var(--mg-v2-consultant-card-title-tracking);
+  line-height: var(--mg-v2-font-line-height-heading);
   color: var(--mg-v2-color-text-primary);
-  text-align: right;
   overflow-wrap: anywhere;
 }
 
-.consultant-suite-record-card__client {
-  font-weight: var(--mg-v2-font-weight-semibold);
+.consultant-suite-card__time {
+  flex: 0 0 auto;
+  font-size: var(--mg-v2-consultant-card-time-size);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  color: var(--mg-v2-color-text-tertiary);
 }
 
-.consultant-suite-record-card__row--meta {
-  font-size: var(--mg-v2-font-size-caption);
+.consultant-suite-card__body {
+  font-size: var(--mg-v2-consultant-card-body-size);
+  line-height: var(--mg-v2-font-line-height-body);
+  color: var(--mg-v2-color-text-primary);
+  overflow-wrap: anywhere;
 }
 
-.consultant-suite-record-card__foot {
+.consultant-suite-card__meta {
   display: flex;
-  justify-content: flex-end;
-  padding-top: var(--mg-v2-space-3);
-  border-top: var(--mg-v2-border-width-thin) solid var(--mg-v2-consultant-border-soft);
+  flex-direction: column;
+  gap: var(--mg-v2-consultant-meta-gap);
+  font-size: var(--mg-v2-consultant-card-meta-size);
+  line-height: var(--mg-v2-font-line-height-body);
+  color: var(--mg-v2-color-text-secondary);
+  overflow-wrap: anywhere;
+}
+
+.consultant-suite-card__foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mg-v2-consultant-foot-gap);
+  margin-top: auto;
+  padding-top: var(--mg-v2-consultant-foot-pad-top);
+}
+
+.consultant-suite-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  box-sizing: border-box;
+  padding: var(--mg-v2-consultant-pill-padding);
+  border: 0;
+  border-radius: var(--mg-v2-consultant-pill-radius);
+  background: var(--mg-v2-consultant-chip-neutral-bg);
+  color: var(--mg-v2-consultant-chip-neutral-text);
+  font-size: var(--mg-v2-consultant-pill-size);
+  font-weight: var(--mg-v2-consultant-pill-weight);
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.consultant-suite-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: var(--mg-v2-consultant-avatar-size);
+  height: var(--mg-v2-consultant-avatar-size);
+  border-radius: var(--mg-v2-radius-pill);
+  background: var(--mg-v2-consultant-chip-neutral-bg);
+  color: var(--mg-v2-color-text-primary);
+  font-size: var(--mg-v2-consultant-card-title-size);
+  font-weight: var(--mg-v2-consultant-avatar-weight);
+  box-shadow: none;
+}
+
+.consultant-suite .consultant-suite-icon-btn.mg-button {
+  width: var(--mg-v2-consultant-icon-btn-size);
+  height: var(--mg-v2-consultant-icon-btn-size);
+  min-width: var(--mg-v2-consultant-icon-btn-size);
+  padding: 0;
+}
+
+.consultant-suite .consultant-suite-icon-btn.mg-button .mg-button__content,
+.consultant-suite .consultant-suite-icon-btn.mg-button .mg-button__text {
+  padding: 0 !important;
+}
+
+/* records 카드 body 위계 */
+.consultant-suite-record-card .consultant-suite-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-v2-consultant-meta-gap);
+}
+
+.consultant-suite-record-card__session {
+  margin: 0;
+  font-size: var(--mg-v2-consultant-card-body-size);
+  color: var(--mg-v2-color-text-primary);
+}
+
+.consultant-suite-record-card__client {
+  margin: 0;
+  font-size: var(--mg-v2-consultant-card-body-size);
+  font-weight: var(--mg-v2-font-weight-semibold);
+  color: var(--mg-v2-color-text-primary);
+}
+
+.consultant-suite-pagination {
+  display: flex;
+  justify-content: center;
+  margin-top: var(--mg-v2-space-4);
 }
 
 /* ===== 로딩 ===== */
@@ -348,45 +466,14 @@
   padding: var(--mg-v2-space-8) var(--mg-v2-space-4);
 }
 
-/* ===== 공용 내담자 카드(ClientCard) — 스위트 안에서만 흰 카드 + slate 상태칩 ===== */
-.consultant-suite .mg-client-card.mg-client-card--detailed {
-  background: var(--mg-v2-consultant-surface-card);
-  border: var(--mg-v2-border-width-thin) solid var(--mg-v2-consultant-border-card);
-  border-radius: var(--mg-v2-consultant-card-radius);
-  box-shadow: none;
-  backdrop-filter: none;
-}
-
-.consultant-suite .mg-client-card.mg-client-card--detailed:hover,
-.consultant-suite .mg-client-card.mg-client-card--detailed:focus-visible {
-  border-color: var(--mg-v2-consultant-selection-border);
-  box-shadow: none;
-  transform: none;
-}
-
-/* unified-design-tokens 의 status-badge--active/scheduled/completed/warning 이 background-color !important 로 색을 강제함 */
-.consultant-suite .mg-client-card .mg-client-card__status-badge {
-  background-color: var(--mg-v2-consultant-chip-neutral-bg) !important;
-  color: var(--mg-v2-consultant-chip-neutral-text);
-  border: var(--mg-v2-border-width-thin) solid var(--mg-v2-consultant-border-card);
-  box-shadow: none;
-}
-
-.consultant-suite .mg-client-card .mg-client-card__progress-section {
-  background: var(--mg-v2-consultant-surface-stage);
-}
-
-/* unified-design-tokens 가 768px 이하에서 .mg-client-card--detailed 를 display:none 처리함 */
-@media (max-width: 768px) {
-  .consultant-suite .consultant-suite-card-grid .mg-client-card.mg-client-card--detailed {
-    display: flex;
-  }
-}
-
 /* ===== 모바일 (390 · 가로 스크롤 금지) ===== */
 @media (max-width: 767px) {
   .consultant-suite {
     overflow-x: hidden;
+  }
+
+  .consultant-suite .mg-v2-content-area {
+    padding: var(--mg-v2-consultant-content-pad-mobile);
   }
 
   .consultant-suite-search {
@@ -457,4 +544,15 @@
 .consultant-suite.consultant-logs .consultant-logs__saved-view .mg-v2-saved-view-controls__save-btn:hover,
 .consultant-suite.consultant-logs .consultant-logs__saved-view .mg-v2-saved-view-controls__delete-btn:hover {
   color: var(--mg-v2-color-text-primary);
+}
+
+/* 상담일지 캘린더·테이블 컨테이너 — 흰 r12 slate (admin stone 패널 금지) */
+.consultant-suite.consultant-logs .mg-v2-consultation-log-calendar,
+.consultant-suite.consultant-logs .mg-v2-consultation-log-table,
+.consultant-suite.consultant-logs .consultation-log-calendar-block,
+.consultant-suite.consultant-logs .consultation-log-table-block {
+  background: var(--mg-v2-consultant-surface-card);
+  border: var(--mg-v2-border-width-thin) solid var(--mg-v2-consultant-border-card);
+  border-radius: var(--mg-v2-consultant-card-radius);
+  box-shadow: none;
 }

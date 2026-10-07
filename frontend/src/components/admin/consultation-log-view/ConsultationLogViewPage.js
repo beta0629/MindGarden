@@ -36,6 +36,7 @@ import ConsultationLogTableBlock from './ConsultationLogTableBlock';
 import ConsultationLogModal from '../../consultant/ConsultationLogModal';
 import { getAllConsultantsWithStats, getAllClientsWithStats } from '../../../utils/consultantHelper';
 import SavedViewControls from '../ClientComprehensiveManagement/molecules/SavedViewControls';
+import SaveViewModal from '../ClientComprehensiveManagement/molecules/SaveViewModal';
 import { useSavedViewPreference } from '../../../hooks/useSavedViewPreference';
 import {
   CONSULTATION_LOG_VIEW_DEFAULT_VIEW_MODE,
@@ -47,13 +48,17 @@ import {
 import EmptyState from '../../common/EmptyState';
 import ConsultantSuitePage from '../../consultant/suite/ConsultantSuitePage';
 import ConsultantFilterChips from '../../consultant/suite/ConsultantFilterChips';
+import ConsultantSuiteButton from '../../consultant/suite/ConsultantSuiteButton';
 import ConsultantRecordCard from '../../consultant/suite/ConsultantRecordCard';
 import {
+  CONSULTANT_SUITE_BUTTON_VARIANT,
   CONSULTANT_SUITE_CLASS,
   CONSULTANT_SUITE_NS,
+  CONSULTANT_SUITE_PAGE_SIZE,
   CONSULTANT_SUITE_TEST_ID,
   CONSULTATION_LOG_VIEW_SURFACE
 } from '../../../constants/consultantSuite';
+import { toServerPageIndex } from '../../../utils/consultantSuiteListApi';
 import '../ConsultationLogViewPage.css';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
@@ -317,6 +322,7 @@ const ConsultationLogViewPage = ({ surface }) => {
   );
   const [modalRecordId, setModalRecordId] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
+  const [saveViewModalOpen, setSaveViewModalOpen] = useState(false);
   const [viewMode, setViewMode] = useState(VIEW_MODE_LIST);
   /** Deep link scheduleId 모달 자동 오픈 1회 가드 */
   const deepLinkAutoOpenedRef = useRef(false);
@@ -465,8 +471,16 @@ const ConsultationLogViewPage = ({ surface }) => {
           }
         }
       } else {
+        const params = {
+          page: toServerPageIndex(1),
+          size: CONSULTANT_SUITE_PAGE_SIZE
+        };
+        if (clientId != null) {
+          params.clientId = clientId;
+        }
         const response = await StandardizedApi.get(
-          `/api/v1/admin/consultant-records/${user.id}/consultation-records`
+          `/api/v1/admin/consultant-records/${user.id}/consultation-records`,
+          params
         );
         if (isStale()) return;
         const list = Array.isArray(response) ? response : (response?.data ?? []);
@@ -518,8 +532,17 @@ const ConsultationLogViewPage = ({ surface }) => {
   });
 
   let filteredRecords = records;
-  if (startDate || endDate) {
+  if (startDate || endDate || clientId != null) {
     filteredRecords = records.filter((r) => {
+      if (clientId != null) {
+        const recordClientId = r.clientId ?? r.client?.id;
+        if (String(recordClientId ?? '') !== String(clientId)) {
+          return false;
+        }
+      }
+      if (!startDate && !endDate) {
+        return true;
+      }
       const sd = r.sessionDate ?? r.consultationDate;
       const d = toDateStr(sd);
       if (!d) return false;
@@ -836,6 +859,28 @@ const ConsultationLogViewPage = ({ surface }) => {
   );
 
   if (isConsultantSurface) {
+    const consultantHeaderActions = (
+      <>
+        <ConsultantSuiteButton
+          variant={CONSULTANT_SUITE_BUTTON_VARIANT.GHOST}
+          onClick={handleResetSavedView}
+        >
+          {tSuite('logs.resetView')}
+        </ConsultantSuiteButton>
+        <ConsultantSuiteButton
+          variant={CONSULTANT_SUITE_BUTTON_VARIANT.GHOST}
+          onClick={() => setSaveViewModalOpen(true)}
+        >
+          {tSuite('logs.saveView')}
+        </ConsultantSuiteButton>
+        <ConsultantSuiteButton
+          variant={CONSULTANT_SUITE_BUTTON_VARIANT.GHOST}
+          onClick={loadRecords}
+        >
+          {tSuite('logs.search')}
+        </ConsultantSuiteButton>
+      </>
+    );
     return (
       <>
         <ConsultantSuitePage
@@ -845,12 +890,19 @@ const ConsultationLogViewPage = ({ surface }) => {
           ariaLabel={CONTENT_AREA_ARIA_LABEL}
           className={`${pageClassName} consultant-logs`}
           testId={CONSULTANT_SUITE_TEST_ID.LOGS_PAGE}
+          actions={consultantHeaderActions}
         >
           {consultantViewChips}
           {filterSection}
-          {savedViewRow}
           {resultsBlock}
         </ConsultantSuitePage>
+        {saveViewModalOpen ? (
+          <SaveViewModal
+            isOpen={saveViewModalOpen}
+            onClose={() => setSaveViewModalOpen(false)}
+            onSave={handleSaveNamedView}
+          />
+        ) : null}
         {logModal}
       </>
     );

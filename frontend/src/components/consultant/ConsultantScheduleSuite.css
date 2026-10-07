@@ -12,7 +12,6 @@
 
 .consultant-schedule__panel {
   --consultant-schedule-panel-pad-top: var(--mg-v2-space-4);
-  --consultant-schedule-toolbar-rows: 1;
   --ad-b0kla-card-bg: var(--mg-v2-consultant-surface-card);
   --ad-b0kla-bg: var(--mg-v2-consultant-surface-card);
   --ad-b0kla-border: var(--mg-v2-consultant-border-card);
@@ -30,20 +29,14 @@
 }
 
 /*
- * 상태 칩은 FullCalendar 툴바(공유 컴포넌트 내부) 아래에 놓인다.
- * 툴바 높이 = 행 수 × control-height 로 고정되므로 칩을 그 아래로 띄우고 툴바 하단에 칩 높이만큼 여백을 둔다.
+ * 상태 칩 = 문서 흐름(absolute/고정 툴바 행 수 가정 금지).
+ * 칩은 달력 위 · 툴바는 wrap 으로 긴 주 제목과 월|주 버튼 겹침 방지.
  */
 .consultant-schedule__panel .consultant-schedule__status-chips {
-  position: absolute;
-  top: calc(
-    var(--consultant-schedule-panel-pad-top)
-    + var(--mg-v2-consultant-control-height) * var(--consultant-schedule-toolbar-rows)
-    + var(--mg-v2-space-2) * (var(--consultant-schedule-toolbar-rows) - 1)
-    + var(--mg-v2-space-3)
-  );
-  left: var(--mg-v2-space-6);
-  right: var(--mg-v2-space-6);
-  z-index: 1;
+  position: static;
+  z-index: auto;
+  margin: 0;
+  padding: 0;
 }
 
 .consultant-schedule__panel .mg-v2-schedule-header,
@@ -73,7 +66,7 @@
   align-items: center;
   flex-wrap: wrap;
   gap: var(--mg-v2-space-2);
-  margin-bottom: calc(var(--mg-v2-space-3) * 2 + var(--mg-v2-consultant-chip-height));
+  margin-bottom: 0;
 }
 
 .consultant-schedule__panel .fc .fc-header-toolbar > .fc-toolbar-chunk:first-child,
@@ -269,16 +262,10 @@
   color: var(--mg-v2-color-text-tertiary);
 }
 
-/* 모바일: 1행 ‹ 제목 › 오늘 · 2행 월|주|일 전폭 · 그 아래 상태 칩 */
+/* 모바일: 1행 ‹ 제목 › 오늘 · 2행 월|주|일 전폭 · 그 아래 상태 칩(문서 흐름) */
 @media (max-width: 767px) {
   .consultant-schedule__panel {
     --consultant-schedule-panel-pad-top: var(--mg-v2-space-3);
-    --consultant-schedule-toolbar-rows: 2;
-  }
-
-  .consultant-schedule__panel .consultant-schedule__status-chips {
-    left: var(--mg-v2-space-3);
-    right: var(--mg-v2-space-3);
   }
 
   .consultant-schedule__panel .mg-v2-schedule-calendar-view {

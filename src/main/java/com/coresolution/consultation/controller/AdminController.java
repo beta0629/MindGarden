@@ -18,6 +18,7 @@ import com.coresolution.consultation.validation.OnAdminConsultantRegister;
 import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.constant.ClientEngagementTypeConstants;
 import com.coresolution.consultation.constant.PaymentTimingConstants;
+import com.coresolution.consultation.constant.ScheduleStatus;
 import com.coresolution.consultation.dto.ClientPackagePaymentHistoryResponse;
 import com.coresolution.consultation.dto.ClientRegistrationRequest;
 import com.coresolution.consultation.dto.CheckoutSameDayRequest;
@@ -41,6 +42,7 @@ import com.coresolution.consultation.entity.ConsultationRecord;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.exception.EntityNotFoundException;
 import com.coresolution.consultation.exception.RefundLedgerNotRecordedException;
+import com.coresolution.consultation.repository.ScheduleRepository;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.repository.UserSocialAccountRepository;
 import com.coresolution.consultation.service.AdminBulkMappingPaymentService;
@@ -217,6 +219,7 @@ public class AdminController extends BaseApiController {
             scheduleClientReminderSmsStatusService;
     private final com.coresolution.consultation.repository.ClientRepository clientRepository;
     private final com.coresolution.consultation.repository.ConsultantRepository consultantRepository;
+    private final ScheduleRepository scheduleRepository;
 
     /**
      * /** 상담사 통계 정보 조회 (캐시 사용) /** GET /api/admin/consultants/with-stats/{id}
@@ -583,9 +586,20 @@ public class AdminController extends BaseApiController {
     /**
      * /** 상담사별 매칭된 내담자 목록 조회 (스케줄 등록용)
      */
+    /**
+     * 상담사별 매칭 내담자 목록.
+     * <p>page/size 생략 시 전체(하위 호환). 지정 시 Spring page 0-base로 슬라이스하며
+     * totalElements/totalPages 를 함께 반환한다.
+     * lastSessionDate 는 mapping.getClient()({@link User})가 아니라,
+     * 상담사·내담자 스코프 COMPLETED 일정의 MAX(date) SSOT(없으면 null).
+     * {@link Client#getLastSessionDate()} 는 {@code @Transient} 이므로 DB 조회만으로는 채울 수 없다.
+     */
     @GetMapping("/mappings/consultant/{consultantId}/clients")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getClientsByConsultantMapping(
-            @PathVariable Long consultantId, HttpSession session) {
+            @PathVariable Long consultantId,
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer size,
+            HttpSession session) {
         resourceOwnerAccessGuard.requireConsultantSelfOrManagerAccess(session, consultantId);
         ResponseEntity<?> permissionResponse = PermissionCheckUtils.checkPermission(session,
                 "MAPPING_VIEW", dynamicPermissionService);
@@ -639,6 +653,15 @@ public class AdminController extends BaseApiController {
             log.info("🔍 매칭 상세 - ID: {}, 결제상태: {}, 상태: {}", 
                     m.getId(), m.getPaymentStatus(), m.getStatus());
         }
+
+        // ConsultantServiceImpl 과 동일 SSOT: 상담사·내담자 COMPLETED 일정 MAX(date)
+        List<Long> mappingClientIdsForLastSession = mappings.stream()
+                .map(m -> m.getClient() != null ? m.getClient().getId() : null)
+                .filter(java.util.Objects::nonNull)
+                .distinct()
+                .collect(Collectors.toList());
+        Map<Long, LocalDate> lastSessionDateByClientId = loadLastCompletedSessionDatesByConsultantAndClients(
+                tenantId, consultantId, mappingClientIdsForLastSession);
 
         List<Map<String, Object>> activeMappings = mappings.stream()
                 .filter(mapping -> {
@@ -694,6 +717,11 @@ public class AdminController extends BaseApiController {
                                             mapping.getClient().getCreatedAt() != null
                                                     ? mapping.getClient().getCreatedAt().toString()
                                                     : ""));
+                            // mapping.client 는 User — lastSessionDate 는 스케줄 SSOT 맵에서 채움
+                            LocalDate lastSessionDate =
+                                    lastSessionDateByClientId.get(mapping.getClient().getId());
+                            data.put("lastSessionDate",
+                                    lastSessionDate != null ? lastSessionDate.toString() : null);
                         }
 
                         data.put("totalSessions", mapping.getTotalSessions());
@@ -726,11 +754,74 @@ public class AdminController extends BaseApiController {
             log.warn("⚠️ 매칭 데이터가 있지만 필터링으로 인해 모두 제외되었습니다. 결제상태를 확인하세요.");
         }
 
+        // assignedAt 최신순 (FE 기존 정렬과 동일)
+        activeMappings.sort((a, b) -> {
+            Object aAt = a.get("assignedAt");
+            Object bAt = b.get("assignedAt");
+            String aStr = aAt != null ? aAt.toString() : "";
+            String bStr = bAt != null ? bAt.toString() : "";
+            return bStr.compareTo(aStr);
+        });
+
         Map<String, Object> data = new HashMap<>();
-        data.put("mappings", activeMappings);
-        data.put("count", activeMappings.size());
+        int totalElements = activeMappings.size();
+        if (page != null || size != null) {
+            int pageIndex = page != null && page >= 0 ? page : 0;
+            int pageSize = size != null && size > 0
+                    ? Math.min(size, AdminListPaging.MAX_PAGE_SIZE)
+                    : PaginationUtils.DEFAULT_PAGE_SIZE;
+            int from = Math.min(pageIndex * pageSize, totalElements);
+            int to = Math.min(from + pageSize, totalElements);
+            List<Map<String, Object>> pageSlice = activeMappings.subList(from, to);
+            int totalPages = pageSize <= 0 ? 0 : (int) Math.ceil((double) totalElements / pageSize);
+            data.put("mappings", pageSlice);
+            data.put("count", pageSlice.size());
+            data.put("totalElements", totalElements);
+            data.put("totalPages", totalPages);
+            data.put("currentPage", pageIndex);
+            data.put("size", pageSize);
+        } else {
+            data.put("mappings", activeMappings);
+            data.put("count", totalElements);
+            data.put("totalElements", totalElements);
+        }
 
         return success(data);
+    }
+
+    /**
+     * 상담사·내담자별 COMPLETED 일정 최근일 배치 조회.
+     * {@link com.coresolution.consultation.service.impl.ConsultantServiceImpl} 과 동일 SSOT.
+     *
+     * @param tenantId 테넌트 ID
+     * @param consultantId 상담사 ID
+     * @param clientIds 내담자 ID 목록
+     * @return clientId → MAX(COMPLETED schedule.date)
+     */
+    private Map<Long, LocalDate> loadLastCompletedSessionDatesByConsultantAndClients(
+            String tenantId, Long consultantId, List<Long> clientIds) {
+        if (tenantId == null || tenantId.isBlank() || consultantId == null
+                || clientIds == null || clientIds.isEmpty()) {
+            return Map.of();
+        }
+        try {
+            List<Object[]> rows = scheduleRepository.findMaxCompletedSessionDateByConsultantAndClientIds(
+                    tenantId, consultantId, clientIds, ScheduleStatus.COMPLETED);
+            Map<Long, LocalDate> out = new HashMap<>();
+            for (Object[] row : rows) {
+                if (row == null || row.length < 2 || row[0] == null || row[1] == null) {
+                    continue;
+                }
+                Long cid = ((Number) row[0]).longValue();
+                LocalDate maxDate = (LocalDate) row[1];
+                out.put(cid, maxDate);
+            }
+            return out;
+        } catch (Exception e) {
+            log.warn("⚠️ 상담사 매칭 내담자 lastSessionDate 배치 조회 실패: tenantId={}, consultantId={}, error={}",
+                    tenantId, consultantId, e.getMessage());
+            return Map.of();
+        }
     }
 
     /**

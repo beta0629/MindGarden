@@ -143,7 +143,6 @@
 }
 
 .mg-schedule-marks-legend__status,
-.mg-schedule-marks-legend__institution,
 .mg-schedule-marks-legend__sms,
 .mg-schedule-marks-legend__unresolved {
     display: inline-block;
@@ -158,8 +157,8 @@
 }
 
 .mg-schedule-marks-legend__institution {
-    border-radius: var(--mg-v2-radius-none);
-    background-color: var(--mg-v2-color-semantic-info-dark);
+    flex: none;
+    white-space: nowrap;
 }
 
 .mg-schedule-marks-legend__sms {

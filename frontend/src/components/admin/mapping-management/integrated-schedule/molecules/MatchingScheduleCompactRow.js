@@ -2,6 +2,7 @@
  * MatchingScheduleCompactRow — 사이드바 Compact 밀도 배정 행 (32~36px)
  *
  * 타기관 내담자 배정은 remainingSessions 가 아니라 기관연동 배지로 표시한다.
+ * 기관연계 글자는 끝 표식(ScheduleEventMarks) 배지 한 곳에만 둔다.
  *
  * @author CoreSolution
  * @since 2026-07-06
@@ -23,10 +24,7 @@ import {
   MAPPING_DESYNC_KIND,
   resolveMappingScheduleDesync
 } from '../utils/mappingScheduleDesync';
-import {
-  INSTITUTION_LINK_LABEL,
-  isInstitutionLinkMapping
-} from '../../constants/integratedScheduleSidebarFilterConstants';
+import { isInstitutionLinkMapping } from '../../constants/integratedScheduleSidebarFilterConstants';
 import { resolveScheduleReminderSmsDisplay } from '../utils/scheduleReminderSmsDisplay';
 import ScheduleEventMarks from './ScheduleEventMarks';
 import './MatchingScheduleCompactRow.css';
@@ -68,9 +66,10 @@ const MatchingScheduleCompactRow = ({
   );
   const remainingSessions = mapping?.remainingSessions;
   const pendingSessions = mapping?.pendingSessionExtension?.additionalSessions;
+  const isInstitutionLink = isInstitutionLinkMapping(mapping);
   let secondaryLabel;
-  if (isInstitutionLinkMapping(mapping)) {
-    secondaryLabel = t('integratedSchedule.sidebar.compactInstitutionLink', INSTITUTION_LINK_LABEL);
+  if (isInstitutionLink) {
+    secondaryLabel = '';
   } else if (remainingSessions != null) {
     secondaryLabel = t('integratedSchedule.sidebar.compactRemainingSessions', { count: remainingSessions });
   } else {
@@ -97,7 +96,7 @@ const MatchingScheduleCompactRow = ({
   const smsAria = smsDisplay
     ? t(`schedule:calendar.reminderSms.aria.${smsDisplay.status}`)
     : '';
-  const institutionTitle = isInstitutionLinkMapping(mapping)
+  const institutionTitle = isInstitutionLink
     ? t('mapping.schedule.legend.institutionLink')
     : '';
   const secondaryTitle = [
@@ -178,10 +177,12 @@ const MatchingScheduleCompactRow = ({
         </span>
       )}
       <span className="integrated-schedule__compact-row-secondary" title={secondaryTitle}>
-        <SafeText>{secondaryLabel}</SafeText>
+        {secondaryLabel ? <SafeText>{secondaryLabel}</SafeText> : null}
         {statusSegment ? (
           <>
-            <span className="integrated-schedule__compact-row-sep" aria-hidden="true">|</span>
+            {secondaryLabel ? (
+              <span className="integrated-schedule__compact-row-sep" aria-hidden="true">|</span>
+            ) : null}
             <SafeText
               className={`integrated-schedule__compact-schedule-status ${scheduleStatusClass}`}
             >

@@ -169,7 +169,7 @@ describe('MatchingScheduleCompactRow', () => {
       />
     );
     expect(screen.getByTestId('engagement-type-badge')).toHaveTextContent('기관연계');
-    expect(screen.getAllByText('기관연계').length).toBeGreaterThanOrEqual(2);
+    expect(screen.getAllByText('기관연계')).toHaveLength(1);
     expect(screen.queryByText('남은 0회')).not.toBeInTheDocument();
   });
 });

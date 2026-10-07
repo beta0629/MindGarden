@@ -25,7 +25,13 @@ import notificationManager from '../../utils/notification';
 import { kakaoLogin, naverLogin, googleLogin } from '../../utils/socialLogin';
 import '../../styles/unified-design-tokens.css';
 import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
+import usePasswordPolicyField from '../../hooks/usePasswordPolicyField';
+import PasswordPolicyInput, { PasswordPolicyError, PasswordPolicyHint } from '../common/PasswordPolicyInput';
 import './Academy.css';
+
+const ACADEMY_INPUT_CLASS = 'academy-form-input';
+const ACADEMY_ERROR_CLASS = 'academy-form-error';
+const ACADEMY_HINT_CLASS = 'mg-v2-form-help';
 import { useTranslation } from 'react-i18next';
 
 const ACADEMY_REGISTER_TITLE_ID = 'academy-register-page-title';
@@ -54,6 +60,7 @@ const AcademyRegister = () => {
   const [branches, setBranches] = useState([]);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
+  const passwordField = usePasswordPolicyField({ requireConfirm: true });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
@@ -98,6 +105,10 @@ const AcademyRegister = () => {
       [name]: type === 'checkbox' ? checked : value
     }));
     
+    if (name === 'password' || name === 'confirmPassword') {
+      passwordField.clearError();
+    }
+
     // 에러 메시지 제거
     if (errors[name]) {
       setErrors(prev => ({
@@ -120,17 +131,7 @@ const AcademyRegister = () => {
       newErrors.email = t('common:academy.AcademyRegister.t_60304b0f');
     }
 
-    if (!formData.password) {
-      newErrors.password = t('common:academy.AcademyRegister.t_f2e5e9cb');
-    } else if (formData.password.length < 8) {
-      newErrors.password = t('common:academy.AcademyRegister.t_c1b8b5d4');
-    }
-
-    if (!formData.confirmPassword) {
-      newErrors.confirmPassword = t('common:academy.AcademyRegister.t_ecdaae18');
-    } else if (formData.password !== formData.confirmPassword) {
-      newErrors.confirmPassword = t('common:academy.AcademyRegister.t_c3b85cd6');
-    }
+    const committedPassword = passwordField.validateCommitted(formData.password, formData.confirmPassword);
 
     if (!formData.phone.trim()) {
       newErrors.phone = t('common:academy.AcademyRegister.t_04e284b7');
@@ -145,13 +146,14 @@ const AcademyRegister = () => {
     }
 
     setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    return Object.keys(newErrors).length === 0 && committedPassword.valid ? committedPassword : null;
   };
 
   const handleSubmit = async(e) => {
     e.preventDefault();
     
-    if (!validateForm()) {
+    const committedPassword = validateForm();
+    if (!committedPassword) {
       return;
     }
 
@@ -169,7 +171,11 @@ const AcademyRegister = () => {
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify(formData)
+        body: JSON.stringify({
+          ...formData,
+          password: committedPassword.value,
+          confirmPassword: committedPassword.confirmValue
+        })
       });
 
       const data = await response.json();
@@ -367,14 +373,19 @@ const AcademyRegister = () => {
 
                 <div className="academy-form-row">
                   <div className="academy-form-group">
-                    <label className="academy-form-label">비밀번호 *</label>
+                    <label className="academy-form-label" htmlFor="academy-password">비밀번호 *</label>
                     <div className="academy-form-input-wrapper">
-                      <input
-                        type={showPassword ? 'text' : 'password'}
+                      <PasswordPolicyInput
+                        field={passwordField}
+                        revealed={showPassword}
+                        hintExternal
+                        showError={false}
+                        id="academy-password"
                         name="password"
                         value={formData.password}
                         onChange={handleInputChange}
-                        className="academy-form-input"
+                        className={ACADEMY_INPUT_CLASS}
+                        errorInputClassName=""
                         required
                       />
                       <MGButton
@@ -393,17 +404,23 @@ const AcademyRegister = () => {
                         {showPassword ? '👁️' : '👁️‍🗨️'}
                       </MGButton>
                     </div>
-                    {errors.password && <span className="academy-form-error">{errors.password}</span>}
+                    <PasswordPolicyError field={passwordField} id="academy-password" className={ACADEMY_ERROR_CLASS} />
+                    <PasswordPolicyHint field={passwordField} id="academy-password" className={ACADEMY_HINT_CLASS} />
                   </div>
                   <div className="academy-form-group">
-                    <label className="academy-form-label">비밀번호 확인 *</label>
+                    <label className="academy-form-label" htmlFor="academy-password-confirm">비밀번호 확인 *</label>
                     <div className="academy-form-input-wrapper">
-                      <input
-                        type={showConfirmPassword ? 'text' : 'password'}
+                      <PasswordPolicyInput
+                        field={passwordField}
+                        confirm
+                        revealed={showConfirmPassword}
+                        showError={false}
+                        id="academy-password-confirm"
                         name="confirmPassword"
                         value={formData.confirmPassword}
                         onChange={handleInputChange}
-                        className="academy-form-input"
+                        className={ACADEMY_INPUT_CLASS}
+                        errorInputClassName=""
                         required
                       />
                       <MGButton
@@ -422,7 +439,12 @@ const AcademyRegister = () => {
                         {showConfirmPassword ? '👁️' : '👁️‍🗨️'}
                       </MGButton>
                     </div>
-                    {errors.confirmPassword && <span className="academy-form-error">{errors.confirmPassword}</span>}
+                    <PasswordPolicyError
+                      field={passwordField}
+                      confirm
+                      id="academy-password-confirm"
+                      className={ACADEMY_ERROR_CLASS}
+                    />
                   </div>
                 </div>
 
@@ -494,7 +516,7 @@ const AcademyRegister = () => {
                     type="submit"
                     variant="primary"
                     loading={loading}
-                    disabled={loading}
+                    disabled={loading || passwordField.pending}
                     className={buildErpMgButtonClassName({
                       variant: 'primary',
                       size: 'md',

@@ -70,6 +70,9 @@ import {
   useViewModePreference
 } from '../../hooks/useViewModePreference';
 import { useSavedViewPreference } from '../../hooks/useSavedViewPreference';
+import usePasswordPolicyField from '../../hooks/usePasswordPolicyField';
+import PasswordPolicyInput from '../common/PasswordPolicyInput';
+import { resolveUserFacingApiErrorMessage } from '../../utils/userFacingApiErrorMessage';
 import { useSettingToggleSave } from '../../hooks';
 import {
   USER_MANAGEMENT_SAVED_VIEW_PAGE_IDS,
@@ -221,6 +224,8 @@ const StaffManagement = ({ embedded = false }) => {
   const [staffPhoneCheckStatus, setStaffPhoneCheckStatus] = useState(null);
   const [isCheckingStaffPhone, setIsCheckingStaffPhone] = useState(false);
   const [createFormErrors, setCreateFormErrors] = useState({});
+  const staffPasswordField = usePasswordPolicyField({ allowEmpty: true });
+  const { clearError: clearStaffPasswordError } = staffPasswordField;
   const staffEditPhoneBaselineRef = useRef('');
   const { viewMode, setViewMode } = useViewModePreference({
     storageKey: buildViewModeStorageKey(resolveViewModeStorageScope(), STAFF_VIEW_MODE_PAGE_ID),
@@ -440,6 +445,7 @@ const StaffManagement = ({ embedded = false }) => {
     setStaffEmailCheckStatus(null);
     setStaffPhoneCheckStatus(null);
     setCreateFormErrors({});
+    clearStaffPasswordError();
     setCreateStaffModal({ open: true, submitting: false });
   }, []);
 
@@ -462,7 +468,8 @@ const StaffManagement = ({ embedded = false }) => {
     if (name === 'name') {
       setCreateFormErrors((prev) => (prev.name ? { ...prev, name: '' } : prev));
     }
-  }, []);
+    if (name === 'password') clearStaffPasswordError();
+  }, [clearStaffPasswordError]);
 
   const handleStaffEmailDuplicateCheck = useCallback(async() => {
     const email = (createForm.email || '').trim();
@@ -553,11 +560,16 @@ const StaffManagement = ({ embedded = false }) => {
         setCreateFormErrors(fieldErrors);
         return;
       }
+      const committedPassword = staffPasswordField.validateCommitted(createForm.password);
+      const passwordOk = committedPassword.valid;
       if (Object.keys(fieldErrors).length > 0) {
         setCreateFormErrors(fieldErrors);
         return;
       }
       setCreateFormErrors({});
+      if (!passwordOk) {
+        return;
+      }
       const phoneNorm = normalizeKoreanMobileDigits((createForm.phone || '').trim());
       if (phoneNorm && isValidKoreanMobileDigits(phoneNorm) && staffPhoneCheckStatus !== 'available') {
         showError(VALIDATION_MESSAGES.PHONE_DUPLICATE_CHECK_REQUIRED);
@@ -568,7 +580,7 @@ const StaffManagement = ({ embedded = false }) => {
         const payload = {
           email,
           name,
-          password: (createForm.password || '').trim() || undefined,
+          password: committedPassword.value.trim() || undefined,
           phone: (createForm.phone || '').trim() || undefined,
           profileImageUrl: (createForm.profileImageUrl || '').trim() || undefined,
           rrnFirst6: (createForm.rrnFirst6 || '').trim() || undefined,
@@ -588,12 +600,12 @@ const StaffManagement = ({ embedded = false }) => {
         }
       } catch (err) {
         console.error('스태프 등록 실패:', err);
-        showError(err.message || err.response?.data?.message || STAFF_MGMT_MSG.ERR_STAFF_REGISTER_PROCESS);
+        showError(resolveUserFacingApiErrorMessage(err, STAFF_MGMT_MSG.ERR_STAFF_REGISTER_PROCESS));
       } finally {
         setCreateStaffModal((prev) => ({ ...prev, submitting: false }));
       }
     },
-    [createForm, closeCreateStaffModal, loadUsers, staffPhoneCheckStatus]
+    [createForm, closeCreateStaffModal, loadUsers, staffPhoneCheckStatus, staffPasswordField]
   );
 
   const handleAssignAsStaff = useCallback(
@@ -1399,7 +1411,7 @@ const StaffManagement = ({ embedded = false }) => {
               variant="primary"
               className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: createStaffModal.submitting })}
               onClick={handleCreateStaffSubmit}
-              disabled={createStaffModal.submitting || !(createForm.email || '').trim()}
+              disabled={createStaffModal.submitting || !(createForm.email || '').trim() || staffPasswordField.pending}
               loading={createStaffModal.submitting}
               loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               preventDoubleClick={false}
@@ -1605,17 +1617,14 @@ const StaffManagement = ({ embedded = false }) => {
             </div>
             <div className="mg-v2-form-group">
               <label htmlFor="staff-password" className="mg-v2-form-label">{STAFF_MGMT_FORM_LABEL.PASSWORD}</label>
-              <input
-                type="password"
+              <PasswordPolicyInput
+                field={staffPasswordField}
                 id="staff-password"
                 name="password"
                 value={createForm.password}
                 onChange={handleCreateFormChange}
-                placeholder={STAFF_MGMT_PLACEHOLDER.CREATE_PASSWORD}
-                className="mg-v2-form-input"
                 disabled={createStaffModal.submitting}
               />
-              <small className="mg-v2-form-help">{STAFF_MGMT_HELP.PASSWORD_HINT}</small>
             </div>
           </form>
         </div>

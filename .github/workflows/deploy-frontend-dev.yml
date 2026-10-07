@@ -11,6 +11,7 @@ on:
     paths:
       - 'frontend/**'
       - '.github/workflows/deploy-frontend-dev.yml'
+      - 'src/test/resources/password-policy/login-password-policy-parity.json'
   workflow_dispatch:
     # 수동 실행 가능
 

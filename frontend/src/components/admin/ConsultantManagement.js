@@ -10,6 +10,8 @@ import { FaUserTie, FaPlus, FaTrash, FaEye } from 'react-icons/fa';
 import { getAllConsultantsWithStats } from '../../utils/consultantHelper';
 import SafeText from '../common/SafeText';
 import { generateMgLoginPassword } from '../../utils/generateMgLoginPassword';
+import usePasswordPolicyField from '../../hooks/usePasswordPolicyField';
+import PasswordPolicyInput from '../common/PasswordPolicyInput';
 import StandardizedApi from '../../utils/standardizedApi';
 import {
     DEFAULT_PROFESSIONAL_TYPE_CODE_VALUE,
@@ -26,8 +28,10 @@ import { useTranslation } from 'react-i18next';
 const ERR_USER_ID_REQUIRED = '사용자 ID를 입력해주세요.';
 const ERR_EMAIL_REQUIRED = '이메일을 입력해주세요.';
 const ERR_EMAIL_INVALID = '이메일 형식이 올바르지 않습니다.';
-const ERR_PASSWORD_REQUIRED = '비밀번호를 입력해주세요.';
 const ERR_NAME_REQUIRED = '이름을 입력해주세요.';
+const BOOTSTRAP_INPUT_CLASS = 'form-control';
+const BOOTSTRAP_INVALID_CLASS = 'is-invalid';
+const LEGACY_ERROR_CLASS = 'mg-v2-form-error';
 const ERR_PHONE_REQUIRED = '전화번호를 입력해주세요.';
 const ERR_PHONE_INVALID = '전화번호 형식이 올바르지 않습니다.';
 const ERR_PROFESSIONAL_TYPE_REQUIRED = '전문 유형을 선택해주세요.';
@@ -39,6 +43,8 @@ const ConsultantManagement = ({ onUpdate, showToast }) => {
     const [showModal, setShowModal] = useState(false);
     const [showDetailModal, setShowDetailModal] = useState(false);
     const [formErrors, setFormErrors] = useState({});
+    const passwordField = usePasswordPolicyField();
+    const { clearError: clearPasswordError } = passwordField;
     const [selectedConsultant, setSelectedConsultant] = useState(null);
     const [loading, setLoading] = useState(false);
     const [professionalTypeOptions, setProfessionalTypeOptions] = useState([]);
@@ -161,13 +167,17 @@ const ConsultantManagement = ({ onUpdate, showToast }) => {
             professionalTypeCode: DEFAULT_PROFESSIONAL_TYPE_CODE_VALUE
         });
         setFormErrors({});
+        clearPasswordError();
         setShowModal(true);
-    }, []);
+    }, [clearPasswordError]);
 
     const updateFormField = (field, value) => {
         setForm((prev) => ({ ...prev, [field]: value }));
         if (formErrors[field]) {
             setFormErrors((prev) => ({ ...prev, [field]: '' }));
+        }
+        if (field === 'password') {
+            clearPasswordError();
         }
     };
 
@@ -186,9 +196,6 @@ const ConsultantManagement = ({ onUpdate, showToast }) => {
         } else if (!validateEmail(email)) {
             newErrors.email = ERR_EMAIL_INVALID;
         }
-        if (!(form.password || '').trim()) {
-            newErrors.password = ERR_PASSWORD_REQUIRED;
-        }
         if (!(form.name || '').trim()) {
             newErrors.name = ERR_NAME_REQUIRED;
         }
@@ -202,12 +209,14 @@ const ConsultantManagement = ({ onUpdate, showToast }) => {
             newErrors.professionalTypeCode = ERR_PROFESSIONAL_TYPE_REQUIRED;
         }
         setFormErrors(newErrors);
-        return Object.keys(newErrors).length === 0;
+        const committedPassword = passwordField.validateCommitted(form.password);
+        return Object.keys(newErrors).length === 0 && committedPassword.valid ? committedPassword : null;
     };
 
     const handleSubmit = async(e) => {
         e.preventDefault();
-        if (!validateCreateForm()) {
+        const committedPassword = validateCreateForm();
+        if (!committedPassword) {
             return;
         }
         try {
@@ -219,7 +228,7 @@ const ConsultantManagement = ({ onUpdate, showToast }) => {
             const payload = {
                 userId: (form.userId || '').trim(),
                 email: (form.email || '').trim(),
-                password: form.password,
+                password: committedPassword.value,
                 name: (form.name || '').trim(),
                 phone: (form.phone || '').trim(),
                 specialization: (form.specialization || '').trim(),
@@ -409,15 +418,15 @@ const ConsultantManagement = ({ onUpdate, showToast }) => {
                                 비밀번호
                                 <span className="mg-v2-form-label-required">*</span>
                             </Form.Label>
-                            <Form.Control
-                                type="password"
+                            <PasswordPolicyInput
+                                field={passwordField}
+                                id="legacy-consultant-password"
+                                className={BOOTSTRAP_INPUT_CLASS}
+                                errorInputClassName={BOOTSTRAP_INVALID_CLASS}
+                                errorClassName={LEGACY_ERROR_CLASS}
                                 value={form.password}
                                 onChange={(e) => updateFormField('password', e.target.value)}
-                                isInvalid={!!formErrors.password}
                             />
-                            {formErrors.password ? (
-                                <span className="mg-v2-form-error" role="alert">{formErrors.password}</span>
-                            ) : null}
                         </Form.Group>
                         <Form.Group className="mb-3">
                             <Form.Label>
@@ -482,7 +491,7 @@ const ConsultantManagement = ({ onUpdate, showToast }) => {
                             <Button variant="secondary" onClick={() => setShowModal(false)}>
                                 {t('admin.actions.cancel')}
                             </Button>
-                            <Button variant="primary" type="submit">
+                            <Button variant="primary" type="submit" disabled={passwordField.pending}>
                                 등록
                             </Button>
                         </div>

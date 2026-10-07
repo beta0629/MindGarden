@@ -1,6 +1,7 @@
 package com.coresolution.core.security;
 
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -29,11 +30,16 @@ public final class PasswordPolicy {
 
     private static final String LOGIN_CHARSET_CLASS = "A-Za-z\\d@$!%*?&";
 
-    private static final String[] COMMON_SUBSTRINGS = {
+    /**
+     * 비밀번호에 포함될 수 없는 일반 부분 문자열(대소문자 무시).
+     * {@code src/test/resources/password-policy/login-password-policy-parity.json} 의 commonSubstrings 와 같아야 한다
+     * (PasswordPolicyParityFixtureTest). 프론트 {@code constants/passwordPolicyUi.js} 는 이 픽스처에서만 읽는다.
+     */
+    public static final List<String> LOGIN_PASSWORD_COMMON_SUBSTRINGS = List.of(
         "password", "123456", "qwerty", "admin", "user",
         "password123", "admin123", "test123", "hello123",
         "welcome", "login", "letmein", "master", "secret"
-    };
+    );
 
     private PasswordPolicy() {
     }
@@ -134,7 +140,7 @@ public final class PasswordPolicy {
             return false;
         }
         String lower = password.toLowerCase();
-        for (String p : COMMON_SUBSTRINGS) {
+        for (String p : LOGIN_PASSWORD_COMMON_SUBSTRINGS) {
             if (lower.contains(p)) {
                 return true;
             }

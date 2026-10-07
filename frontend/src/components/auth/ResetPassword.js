@@ -6,7 +6,12 @@ import { apiPost, apiGet } from '../../utils/ajax';
 import notificationManager from '../../utils/notification';
 import MGButton from '../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
+import usePasswordPolicyField from '../../hooks/usePasswordPolicyField';
+import PasswordPolicyInput, { PasswordPolicyError, PasswordPolicyHint } from '../common/PasswordPolicyInput';
+import { resolveUserFacingApiErrorMessage } from '../../utils/userFacingApiErrorMessage';
 import './AuthPageCommon.css';
+
+const AUTH_INPUT_CLASS = 'mg-v2-input';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_AUTH_PASSWORD_RESET_RESET = '/api/v1/auth/password-reset/reset';
@@ -26,6 +31,7 @@ const ResetPassword = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isValidating, setIsValidating] = useState(true);
   const [isPasswordReset, setIsPasswordReset] = useState(false);
+  const passwordField = usePasswordPolicyField({ requireConfirm: true });
 
   // 토큰 검증
   useEffect(() => {
@@ -64,38 +70,14 @@ const ResetPassword = () => {
       ...prev,
       [name]: value
     }));
-  };
-
-  const validatePassword = (password) => {
-    if (password.length < 8) {
-      return '비밀번호는 8자 이상이어야 합니다.';
-    }
-    if (password.length > 100) {
-      return '비밀번호는 100자 이하여야 합니다.';
-    }
-    if (!/(?=.*[a-zA-Z])(?=.*\d)/.test(password)) {
-      return '비밀번호는 영문과 숫자를 포함해야 합니다.';
-    }
-    return null;
+    passwordField.clearError();
   };
 
   const handleSubmit = async(e) => {
     e.preventDefault();
     
-    if (!formData.newPassword || !formData.confirmPassword) {
-      notificationManager.error('모든 필드를 입력해주세요.');
-      return;
-    }
-
-    // 비밀번호 유효성 검사
-    const passwordError = validatePassword(formData.newPassword);
-    if (passwordError) {
-      notificationManager.error(passwordError);
-      return;
-    }
-
-    if (formData.newPassword !== formData.confirmPassword) {
-      notificationManager.error('비밀번호가 일치하지 않습니다.');
+    const committed = passwordField.validateCommitted(formData.newPassword, formData.confirmPassword);
+    if (!committed.valid) {
       return;
     }
 
@@ -104,8 +86,8 @@ const ResetPassword = () => {
     try {
       const response = await apiPost(API_AUTH_PASSWORD_RESET_RESET, {
         token: token,
-        newPassword: formData.newPassword,
-        confirmPassword: formData.confirmPassword
+        newPassword: committed.value,
+        confirmPassword: committed.confirmValue
       });
 
       if (response.success) {
@@ -116,7 +98,7 @@ const ResetPassword = () => {
       }
     } catch (error) {
       console.error('비밀번호 재설정 실패:', error);
-      notificationManager.error('비밀번호 재설정 중 오류가 발생했습니다.');
+      notificationManager.error(resolveUserFacingApiErrorMessage(error));
     } finally {
       setIsLoading(false);
     }
@@ -166,14 +148,16 @@ const ResetPassword = () => {
                 <div className="mg-v2-form-group">
                   <label className="mg-v2-label" htmlFor="newPassword">새 비밀번호</label>
                   <div className="mg-v2-password-wrapper">
-                    <input
+                    <PasswordPolicyInput
+                      field={passwordField}
+                      revealed={showPassword}
+                      hintExternal
+                      showError={false}
                       id="newPassword"
-                      type={showPassword ? 'text' : 'password'}
                       name="newPassword"
                       value={formData.newPassword}
                       onChange={handleInputChange}
-                      placeholder="영문, 숫자 포함 8자 이상"
-                      className="mg-v2-input"
+                      className={AUTH_INPUT_CLASS}
                       disabled={isLoading}
                     />
                     <button
@@ -185,19 +169,23 @@ const ResetPassword = () => {
                       {showPassword ? <EyeOff size={16} strokeWidth={1.75} aria-hidden="true" /> : <Eye size={16} strokeWidth={1.75} aria-hidden="true" />}
                     </button>
                   </div>
+                  <PasswordPolicyError field={passwordField} id="newPassword" />
                 </div>
 
                 <div className="mg-v2-form-group">
                   <label className="mg-v2-label" htmlFor="confirmPassword">비밀번호 확인</label>
                   <div className="mg-v2-password-wrapper">
-                    <input
+                    <PasswordPolicyInput
+                      field={passwordField}
+                      confirm
+                      revealed={showConfirmPassword}
+                      showError={false}
                       id="confirmPassword"
-                      type={showConfirmPassword ? 'text' : 'password'}
                       name="confirmPassword"
                       value={formData.confirmPassword}
                       onChange={handleInputChange}
                       placeholder="비밀번호를 다시 입력해주세요"
-                      className="mg-v2-input"
+                      className={AUTH_INPUT_CLASS}
                       disabled={isLoading}
                     />
                     <button
@@ -209,22 +197,19 @@ const ResetPassword = () => {
                       {showConfirmPassword ? <EyeOff size={16} strokeWidth={1.75} aria-hidden="true" /> : <Eye size={16} strokeWidth={1.75} aria-hidden="true" />}
                     </button>
                   </div>
+                  <PasswordPolicyError field={passwordField} confirm id="confirmPassword" />
                 </div>
 
                 <div className="mg-v2-auth-hint mg-v2-auth-hint--password">
                   <p><Info size={16} strokeWidth={1.75} aria-hidden="true" /> <strong>비밀번호 요구사항</strong></p>
-                  <ul>
-                    <li>8자 이상 100자 이하</li>
-                    <li>영문과 숫자 포함</li>
-                    <li>특수문자 사용 권장</li>
-                  </ul>
+                  <PasswordPolicyHint field={passwordField} id="newPassword" as="p" className="" />
                 </div>
 
                 <MGButton
                   type="submit"
                   variant="primary"
                   className={`${buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: isLoading })} mg-v2-button-primary`}
-                  disabled={isLoading || !formData.newPassword || !formData.confirmPassword}
+                  disabled={isLoading || !formData.newPassword || !formData.confirmPassword || passwordField.pending}
                   loading={isLoading}
                   loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                   preventDoubleClick={false}

@@ -26,10 +26,8 @@ import ContentKpiRow from '../../dashboard-v2/content/ContentKpiRow';
 import { API_ENDPOINTS } from '../../../constants/apiEndpoints';
 import NotificationChannelPreferenceSection from '../../mypage/components/NotificationChannelPreferenceSection';
 import { NOTIFICATION_CHANNEL_PREFERENCE_VALUE } from '../../../constants/notificationChannelPreference';
-import {
-    LOGIN_PASSWORD_FIELD_PLACEHOLDER,
-    LOGIN_PASSWORD_POLICY_HINT_ONE_LINE
-} from '../../../constants/passwordPolicyUi';
+import usePasswordPolicyField from '../../../hooks/usePasswordPolicyField';
+import PasswordPolicyInput from '../../common/PasswordPolicyInput';
 import {
   CLIENT_ENGAGEMENT_TYPE,
   CLIENT_ENGAGEMENT_TYPE_OPTIONS,
@@ -99,6 +97,7 @@ const ClientModal = ({
     const [isCheckingPhone, setIsCheckingPhone] = useState(false);
     const [vehiclePlateError, setVehiclePlateError] = useState('');
     const [errors, setErrors] = useState({});
+    const clientPasswordField = usePasswordPolicyField({ allowEmpty: true });
     const [clientSummary, setClientSummary] = useState(null);
     const [summaryLoading, setSummaryLoading] = useState(false);
     const clientRef = useRef(client);
@@ -287,6 +286,9 @@ const ClientModal = ({
                 setVehiclePlateError('');
             }
         }
+        if (name === 'password') {
+            clientPasswordField.clearError();
+        }
 
         // 이메일 입력 시 중복 확인 상태 초기화
         if (name === 'email') {
@@ -360,7 +362,12 @@ const ClientModal = ({
             }
         }
         setErrors(newErrors);
-        return Object.keys(newErrors).length === 0;
+        const committedPassword = type === 'create' ? clientPasswordField.validateCommitted(formData.password) : null;
+        const passwordOk = !committedPassword || committedPassword.valid;
+        return {
+            ok: Object.keys(newErrors).length === 0 && passwordOk,
+            form: committedPassword ? { ...formData, password: committedPassword.value } : formData
+        };
     };
 
     const handleClientPhoneDuplicateCheck = useCallback(async() => {
@@ -469,9 +476,11 @@ const ClientModal = ({
 
     const handleSubmit = async(e) => {
         e.preventDefault();
-        if (!validateForm()) {
+        const validation = validateForm();
+        if (!validation.ok) {
             return undefined;
         }
+        const submitForm = validation.form;
         const plateRaw = formData.vehiclePlate;
         if (plateRaw != null && String(plateRaw).trim() !== '' && !isValidVehiclePlateOptional(plateRaw)) {
             setVehiclePlateError(VALIDATION_MESSAGES.INVALID_VEHICLE_PLATE);
@@ -493,10 +502,10 @@ const ClientModal = ({
                 return undefined;
             }
         }
-        let payloadForSave = formData;
+        let payloadForSave = submitForm;
         try {
-            payloadForSave = await ensurePartnerInstitutionOnForm(formData);
-            if (payloadForSave !== formData) {
+            payloadForSave = await ensurePartnerInstitutionOnForm(submitForm);
+            if (payloadForSave !== submitForm) {
                 setFormData(payloadForSave);
             }
         } catch (error) {
@@ -981,18 +990,13 @@ const ClientModal = ({
                 {type === 'create' && (
                     <div className="mg-v2-form-group">
                         <label htmlFor="password" className="mg-v2-form-label">{t('admin:clientModal.form.passwordLabel')}</label>
-                        <input
-                            type="password"
+                        <PasswordPolicyInput
+                            field={clientPasswordField}
                             id="password"
                             name="password"
                             value={safeFormData.password}
                             onChange={handleInputChange}
-                            placeholder={LOGIN_PASSWORD_FIELD_PLACEHOLDER}
-                            className="mg-v2-form-input"
                         />
-                        <small className="mg-v2-form-help">
-                            {LOGIN_PASSWORD_POLICY_HINT_ONE_LINE}{t('admin:clientModal.form.passwordHelpSuffix')}
-                        </small>
                     </div>
                 )}
                 <div className="mg-v2-form-group">
@@ -1317,6 +1321,7 @@ const ClientModal = ({
                         }}
                         preventDoubleClick={true}
                         clickDelay={1000}
+                        disabled={type === 'create' && clientPasswordField.pending}
                     >
                         {getSubmitText()}
                     </MGButton>

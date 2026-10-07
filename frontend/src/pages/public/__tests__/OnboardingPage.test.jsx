@@ -10,6 +10,7 @@
  * @since 2026-06-16
  */
 
+import '../../../i18n';
 import React from 'react';
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
@@ -136,6 +137,53 @@ describe('OnboardingPage (Phase C-Refine v2)', () => {
         '/api/v1/public/onboarding/domain-check',
         expect.objectContaining({ domain: 'acme' })
       );
+    });
+  });
+
+  describe('관리자 비밀번호 공통 정책', () => {
+    const fill = (container, name, value) => {
+      const el = container.querySelector(`input[name="${name}"]`);
+      fireEvent.change(el, { target: { name, value } });
+      return el;
+    };
+
+    const goToAdminStep = async (container) => {
+      fill(container, 'tenantName', 'Acme Corp');
+      fireEvent.click(container.querySelector('.mg-v2-onboarding-form__cta'));
+      await waitFor(() => expect(container.querySelector('input[name="domain"]')).toBeInTheDocument());
+      fill(container, 'domain', 'acme');
+      fill(container, 'phone', '01012345678');
+      fill(container, 'email', 'fake.company@example.com');
+      fireEvent.click(container.querySelector('.mg-v2-onboarding-form__cta'));
+      await waitFor(() => expect(container.querySelector('input[name="password"]')).toBeInTheDocument());
+      fill(container, 'adminName', '관리자');
+      fill(container, 'adminEmail', 'fake.admin@example.com');
+      fireEvent.click(container.querySelector('input[name="terms"]'));
+      fireEvent.click(container.querySelector('input[name="privacy"]'));
+    };
+
+    it('대문자 없는 비밀번호는 제출 API 를 부르지 않고 정책 안내를 표시한다', async () => {
+      const { container } = renderPage();
+      await goToAdminStep(container);
+      const pwd = fill(container, 'password', 'noupper1!x');
+      fill(container, 'passwordConfirm', 'noupper1!x');
+      fireEvent.click(container.querySelector('.mg-v2-onboarding-form__cta'));
+
+      const alert = await screen.findByText(/대문자를 포함해야/);
+      expect(alert).toHaveAttribute('role', 'alert');
+      expect(pwd).toHaveAttribute('aria-invalid', 'true');
+      expect(mockPost).not.toHaveBeenCalled();
+    });
+
+    it('정책을 만족하면 제출 API 를 부른다', async () => {
+      const { container } = renderPage();
+      await goToAdminStep(container);
+      fill(container, 'password', 'Fake7!Qzm');
+      fill(container, 'passwordConfirm', 'Fake7!Qzm');
+      fireEvent.click(container.querySelector('.mg-v2-onboarding-form__cta'));
+
+      await waitFor(() => expect(mockPost).toHaveBeenCalledTimes(1));
+      expect(mockPost.mock.calls[0][1].password).toBe('Fake7!Qzm');
     });
   });
 

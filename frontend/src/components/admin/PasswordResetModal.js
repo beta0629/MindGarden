@@ -1,15 +1,15 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import {
-    getFirstLoginPasswordViolationMessage,
-    getPasswordPolicyApiErrorMessage,
-    LOGIN_PASSWORD_FIELD_PLACEHOLDER,
-    LOGIN_PASSWORD_POLICY_HINT_ONE_LINE
-} from '../../constants/passwordPolicyUi';
+import React, { useState, useEffect } from 'react';
+import { resolveUserFacingApiErrorMessage } from '../../utils/userFacingApiErrorMessage';
+import usePasswordPolicyField from '../../hooks/usePasswordPolicyField';
+import PasswordPolicyInput, { PasswordPolicyError, PasswordPolicyHint } from '../common/PasswordPolicyInput';
 import UnifiedModal from '../common/modals/UnifiedModal';
 import MGButton from '../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import './PasswordResetModal.css';
 import { useTranslation } from 'react-i18next';
+
+const RESET_INPUT_ERROR_CLASS = 'mg-v2-form-input-error';
+const RESET_ERROR_CLASS = 'mg-v2-form-error';
 
 /**
  * 비밀번호 초기화 모달 컴포넌트
@@ -24,7 +24,8 @@ const PasswordResetModal = ({
     const [newPassword, setNewPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
-    const [errors, setErrors] = useState({});
+    const passwordField = usePasswordPolicyField({ requireConfirm: true });
+    const { clearError: clearPasswordError } = passwordField;
     const [submitError, setSubmitError] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -32,44 +33,23 @@ const PasswordResetModal = ({
         setNewPassword('');
         setConfirmPassword('');
         setShowPassword(false);
-        setErrors({});
+        clearPasswordError();
         setSubmitError('');
-    }, [user?.id]);
-
-    const validatePassword = useCallback(() => {
-        const newErrors = {};
-
-        if (!newPassword || newPassword.trim().length === 0) {
-            newErrors.newPassword = t('admin:PasswordResetModal.t_b0bdea92');
-        } else {
-            const policyMsg = getFirstLoginPasswordViolationMessage(newPassword);
-            if (policyMsg) {
-                newErrors.newPassword = policyMsg;
-            }
-        }
-
-        if (!confirmPassword || confirmPassword.trim().length === 0) {
-            newErrors.confirmPassword = t('admin:PasswordResetModal.t_61208c3a');
-        } else if (newPassword !== confirmPassword) {
-            newErrors.confirmPassword = t('admin:PasswordResetModal.t_04c6bcf5');
-        }
-
-        setErrors(newErrors);
-        return Object.keys(newErrors).length === 0;
-    }, [newPassword, confirmPassword]);
+    }, [user?.id, clearPasswordError]);
 
     const handleSubmit = async(e) => {
         e.preventDefault();
         setSubmitError('');
 
-        if (!validatePassword()) return;
+        const committed = passwordField.validateCommitted(newPassword, confirmPassword);
+        if (!committed.valid) return;
 
         setIsSubmitting(true);
         try {
-            await onConfirm(newPassword);
+            await onConfirm(committed.value);
         } catch (error) {
             console.error('비밀번호 초기화 요청 오류:', error);
-            setSubmitError(getPasswordPolicyApiErrorMessage(error));
+            setSubmitError(resolveUserFacingApiErrorMessage(error));
         } finally {
             setIsSubmitting(false);
         }
@@ -106,6 +86,7 @@ const PasswordResetModal = ({
                         size="medium"
                         className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: isSubmitting })}
                         loading={isSubmitting}
+                        disabled={passwordField.pending}
                         loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                         preventDoubleClick={false}
                     >
@@ -118,9 +99,7 @@ const PasswordResetModal = ({
                 <p className="mg-v2-info-text">
                     <strong>{userName}</strong> {userTypeLabel}의 비밀번호를 초기화합니다.
                 </p>
-                <p className="mg-v2-info-text">
-                    {LOGIN_PASSWORD_POLICY_HINT_ONE_LINE}
-                </p>
+                <PasswordPolicyHint field={passwordField} id="newPassword" as="p" className="mg-v2-info-text" />
             </div>
 
             <form
@@ -138,20 +117,19 @@ const PasswordResetModal = ({
                         새 비밀번호
                     </label>
                     <div className="mg-v2-form-input-wrapper">
-                        <input
-                            type={showPassword ? 'text' : 'password'}
+                        <PasswordPolicyInput
+                            field={passwordField}
+                            revealed={showPassword}
+                            hintExternal
+                            showError={false}
                             id="newPassword"
-                            className={`mg-v2-form-input ${errors.newPassword ? 'mg-v2-form-input-error' : ''}`}
+                            errorInputClassName={RESET_INPUT_ERROR_CLASS}
                             value={newPassword}
                             onChange={(e) => {
                                 setNewPassword(e.target.value);
                                 setSubmitError('');
-                                if (errors.newPassword) {
-                                    setErrors(prev => ({ ...prev, newPassword: null }));
-                                }
+                                clearPasswordError();
                             }}
-                            placeholder={LOGIN_PASSWORD_FIELD_PLACEHOLDER}
-                            autoComplete="new-password"
                         />
                         <MGButton
                             type="button"
@@ -166,11 +144,7 @@ const PasswordResetModal = ({
                             {showPassword ? '비밀번호 숨기기' : t('admin:PasswordResetModal.t_8f3ebd49')}
                         </MGButton>
                     </div>
-                    {errors.newPassword && (
-                        <span className="mg-v2-form-error" role="alert">
-                            {errors.newPassword}
-                        </span>
-                    )}
+                    <PasswordPolicyError field={passwordField} id="newPassword" className={RESET_ERROR_CLASS} />
                 </div>
 
                 <div className="mg-v2-form-group">
@@ -178,20 +152,20 @@ const PasswordResetModal = ({
                         비밀번호 확인
                     </label>
                     <div className="mg-v2-form-input-wrapper">
-                        <input
-                            type={showPassword ? 'text' : 'password'}
+                        <PasswordPolicyInput
+                            field={passwordField}
+                            confirm
+                            revealed={showPassword}
+                            showError={false}
                             id="confirmPassword"
-                            className={`mg-v2-form-input ${errors.confirmPassword ? 'mg-v2-form-input-error' : ''}`}
+                            errorInputClassName={RESET_INPUT_ERROR_CLASS}
                             value={confirmPassword}
                             onChange={(e) => {
                                 setConfirmPassword(e.target.value);
                                 setSubmitError('');
-                                if (errors.confirmPassword) {
-                                    setErrors(prev => ({ ...prev, confirmPassword: null }));
-                                }
+                                clearPasswordError();
                             }}
                             placeholder="비밀번호를 다시 입력하세요"
-                            autoComplete="new-password"
                         />
                         <MGButton
                             type="button"
@@ -206,11 +180,7 @@ const PasswordResetModal = ({
                             {showPassword ? '비밀번호 숨기기' : t('admin:PasswordResetModal.t_8f3ebd49')}
                         </MGButton>
                     </div>
-                    {errors.confirmPassword && (
-                        <span className="mg-v2-form-error" role="alert">
-                            {errors.confirmPassword}
-                        </span>
-                    )}
+                    <PasswordPolicyError field={passwordField} confirm id="confirmPassword" className={RESET_ERROR_CLASS} />
                 </div>
             </form>
         </UnifiedModal>

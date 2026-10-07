@@ -1,269 +1,154 @@
 /**
- * ConsultantSalarySettlement — 관리자 급여 산정 결과(상담사 조회 전용)
+ * ConsultantSalarySettlement — 관리자 급여 산정 결과(상담사 조회 전용) 본문
  *
- * 금액·문자 필드는 {@link toDisplayString}, {@link toSafeNumber} 경계를 따른다.
- * 카드 레이아웃·구성 행은 ERP 급여 관리(`SalaryManagement`)와 동일 규칙을 사용한다.
+ * 흰 카드 on warm stage · 안내(slate) → 요약 3칸 → 지급 상태 칩(slate) → 월 카드.
+ * 읽기 전용: 승인·지급·계산 CTA 없음. 금액은 「N원」(₩ 금지) · 실수령 ink.
+ * 페이지 제목·부제는 {@link ConsultantSalarySettlementPage}(셸) 또는 상위 AppShell이 담당한다.
  *
  * @author MindGarden
  * @since 2026-05-15
  */
 
-import React, { useMemo } from 'react';
-import { AlertTriangle } from 'lucide-react';
+import React, { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { AlertTriangle, Info, Wallet } from 'lucide-react';
 import { useConsultantSalaryCalculations } from '../../hooks/useConsultantSalaryCalculations';
-import { toDisplayString, toSafeNumber, toErrorMessage } from '../../utils/safeDisplay';
-import { CONSULTANT_SALARY_SETTLEMENT_STRINGS as S } from '../../constants/consultantSalarySettlementStrings';
+import { toErrorMessage } from '../../utils/safeDisplay';
+import { buildSalarySummary, filterSalaryItems } from '../../utils/consultantSalaryView';
+import MGButton from '../common/MGButton';
+import EmptyState from '../common/EmptyState';
+import Skeleton from '../ui/Loading/Skeleton';
+import ConsultantSummaryStrip from '../dashboard-v2/consultant/ConsultantSummaryStrip';
+import ConsultantFilterChips from './suite/ConsultantFilterChips';
+import ConsultantNotice from './suite/ConsultantNotice';
+import ConsultantSalaryMonthCard from './molecules/ConsultantSalaryMonthCard';
+import { formatConsultantMoney } from './suite/ConsultantMoneyText';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import {
-  SALARY_STATUS_LABELS,
-  SALARY_CALC_DETAIL_OPTION_LABEL,
-  SALARY_CALC_DETAIL_CONSULTATION_LABEL,
-  SALARY_CALC_DETAIL_HOURLY_LABEL,
-  SALARY_DETAIL_MONTHLY_SESSION_COUNT_UNIT
-} from '../../constants/salaryConstants';
-import {
-  buildSalaryCalculationComponentRows,
-  normalizeSalaryCalculationStatus,
-  resolveSalaryMonthlySessionCount
-} from '../../utils/salaryCalculationDisplay';
-import '../common/StatusBadge.css';
+  CONSULTANT_SALARY_FILTER,
+  CONSULTANT_SUITE_CLASS,
+  CONSULTANT_SUITE_NS
+} from '../../constants/consultantSuite';
+import '../dashboard-v2/consultant/ConsultantSummaryStrip.css';
+import './suite/ConsultantSuite.css';
 import './ConsultantSalarySettlement.css';
 
-/**
- * @param {*} value
- * @returns {string}
- */
-const formatWon = (value) => {
-  const n = toSafeNumber(value, Number.NaN);
-  if (!Number.isFinite(n)) {
-    return toDisplayString(null, '—');
-  }
-  return new Intl.NumberFormat('ko-KR', { style: 'currency', currency: 'KRW' }).format(n);
-};
-
-/**
- * @param {unknown} value
- * @returns {number}
- */
-const toSalaryNumber = (value) => {
-  if (value == null || value === '') {
-    return 0;
-  }
-  const n = Number(value);
-  return Number.isFinite(n) ? n : 0;
-};
-
-/**
- * @param {Object} item
- * @returns {string}
- */
-const resolvePeriodLabel = (item) => {
-  const direct =
-    item.settlementPeriod
-    ?? item.periodLabel
-    ?? item.period
-    ?? item.payPeriod
-    ?? item.calculationPeriod;
-  if (direct != null && String(direct).trim() !== '') {
-    return toDisplayString(direct, '—');
-  }
-  const start = item.calculationPeriodStart;
-  const end = item.calculationPeriodEnd;
-  if (start != null && end != null) {
-    const s = String(start).split('T')[0];
-    const e = String(end).split('T')[0];
-    if (s && e) {
-      return toDisplayString(`${s} ~ ${e}`, '—');
-    }
-  }
-  const y = item.year ?? item.settlementYear;
-  const m = item.month ?? item.settlementMonth;
-  if (y != null && m != null) {
-    return toDisplayString(`${y}-${String(m).padStart(2, '0')}`, '—');
-  }
-  return '—';
-};
-
-/**
- * @param {unknown} raw
- * @returns {string}
- */
-const getSalaryStatusLabel = (raw) => {
-  const key = normalizeSalaryCalculationStatus(raw);
-  if (key && Object.prototype.hasOwnProperty.call(SALARY_STATUS_LABELS, key)) {
-    return SALARY_STATUS_LABELS[key];
-  }
-  return toDisplayString(raw, S.FALLBACK_STATUS);
-};
-
-/**
- * @param {string} rowLabel
- * @returns {string}
- */
-const mapConsultantComponentLabel = (rowLabel) => {
-  if (
-    rowLabel === SALARY_CALC_DETAIL_OPTION_LABEL
-    || rowLabel === SALARY_CALC_DETAIL_CONSULTATION_LABEL
-    || rowLabel === SALARY_CALC_DETAIL_HOURLY_LABEL
-  ) {
-    return S.LABEL_CONSULTATION_PSYCH;
-  }
-  return rowLabel;
-};
-
-/**
- * @param {Object} item
- * @returns {*}
- */
-const resolveMemo = (item) => item.memo ?? item.note ?? item.description ?? item.remarks;
-
-/**
- * @param {Object} item
- * @returns {string}
- */
-const resolveSettlementMethodDisplay = (item) => {
-  const v = item.paymentMethod ?? item.settlementMethod ?? item.payMethod ?? item.payoutMethod;
-  return toDisplayString(v, '—');
-};
-
-// eslint-disable-next-line react/prop-types -- 행 단위 프레젠테이션 전용
-const SettlementCard = ({ item }) => {
-  const pretaxRows = buildSalaryCalculationComponentRows(item, toSalaryNumber);
-  const bonus = toSalaryNumber(item.bonusEarnings);
-  const taxAmt = toSalaryNumber(item.taxAmount ?? item.deductions);
-  const grossPretax =
-    item.grossSalary != null && item.grossSalary !== ''
-      ? toSalaryNumber(item.grossSalary)
-      : toSalaryNumber(item.totalSalary);
-  const netAfter =
-    item.netSalary != null && item.netSalary !== ''
-      ? toSalaryNumber(item.netSalary)
-      : grossPretax - taxAmt;
-  const memo = resolveMemo(item);
-  const monthlySessionCount = resolveSalaryMonthlySessionCount(item);
-
-  return (
-    <article
-      className="cr-salary-settlement__card"
-      aria-label={`${S.LABEL_PERIOD}: ${resolvePeriodLabel(item)}`}
-    >
-      <div className="cr-salary-settlement__card-header">
-        <h3 className="cr-salary-settlement__card-title">{resolvePeriodLabel(item)}</h3>
-        <span className="mg-v2-status-badge mg-v2-badge--neutral" role="status">
-          {getSalaryStatusLabel(item.status ?? item.settlementStatus ?? item.state)}
-        </span>
-      </div>
-      <div className="cr-salary-settlement__card-details">
-        <div className="cr-salary-settlement__detail-row">
-          <span className="cr-salary-settlement__detail-label">{S.LABEL_MONTHLY_SESSION_COUNT}</span>
-          <span className="cr-salary-settlement__detail-value">
-            {toDisplayString(monthlySessionCount)}
-            {SALARY_DETAIL_MONTHLY_SESSION_COUNT_UNIT}
-          </span>
-        </div>
-        {pretaxRows.map((row, idx) => (
-          <div
-            key={`${row.label}-${idx}`}
-            className="cr-salary-settlement__detail-row"
-          >
-            <span className="cr-salary-settlement__detail-label">
-              {mapConsultantComponentLabel(row.label)}
-            </span>
-            <span className="cr-salary-settlement__detail-value">{formatWon(row.amount)}</span>
-          </div>
-        ))}
-        {bonus > 0 ? (
-          <div className="cr-salary-settlement__detail-row">
-            <span className="cr-salary-settlement__detail-label">{S.LABEL_MEAL_TRANSPORT}</span>
-            <span className="cr-salary-settlement__detail-value">+{formatWon(item.bonusEarnings)}</span>
-          </div>
-        ) : null}
-        <div className="cr-salary-settlement__detail-row">
-          <span className="cr-salary-settlement__detail-label">{S.LABEL_GROSS_PRETAX}</span>
-          <span className="cr-salary-settlement__detail-value">{formatWon(grossPretax)}</span>
-        </div>
-        {taxAmt > 0 ? (
-          <div className="cr-salary-settlement__detail-row cr-salary-settlement__detail-row--tax">
-            <span className="cr-salary-settlement__detail-label">{S.LABEL_TAX_DEDUCTION}</span>
-            <span className="cr-salary-settlement__detail-value">-{formatWon(taxAmt)}</span>
-          </div>
-        ) : null}
-        <div className="cr-salary-settlement__detail-row cr-salary-settlement__detail-row--total">
-          <span className="cr-salary-settlement__detail-label">{S.LABEL_NET_AFTER_TAX}</span>
-          <span className="cr-salary-settlement__detail-value">{formatWon(netAfter)}</span>
-        </div>
-        <div className="cr-salary-settlement__detail-row">
-          <span className="cr-salary-settlement__detail-label">{S.LABEL_SETTLEMENT_METHOD}</span>
-          <span className="cr-salary-settlement__detail-value">{resolveSettlementMethodDisplay(item)}</span>
-        </div>
-        {memo != null && String(memo).trim() !== '' ? (
-          <div className="cr-salary-settlement__grid cr-salary-settlement__memo-block">
-            <div className="cr-salary-settlement__field cr-salary-settlement__field--full">
-              <span className="cr-salary-settlement__label">{S.LABEL_MEMO}</span>
-              <span className="cr-salary-settlement__value">{toDisplayString(memo, '—')}</span>
-            </div>
-          </div>
-        ) : null}
-      </div>
-    </article>
-  );
-};
+const SKELETON_CARD_KEYS = ['summary', 'card-1', 'card-2'];
+const NOTICE_ICON_SIZE = 16;
+const EMPTY_ICON_SIZE = 32;
 
 const ConsultantSalarySettlement = () => {
+  const { t } = useTranslation(CONSULTANT_SUITE_NS);
   const { items, loading, error, refetch, hasItems } = useConsultantSalaryCalculations();
+  const [filterKey, setFilterKey] = useState(CONSULTANT_SALARY_FILTER.ALL);
 
-  const sortedItems = useMemo(() => {
-    if (!Array.isArray(items)) return [];
-    return [...items];
-  }, [items]);
+  const summary = useMemo(() => buildSalarySummary(items), [items]);
+  const visibleItems = useMemo(() => filterSalaryItems(items, filterKey), [items, filterKey]);
+
+  const filterItems = [
+    { key: CONSULTANT_SALARY_FILTER.ALL, label: t('salary.filterAll') },
+    { key: CONSULTANT_SALARY_FILTER.PENDING, label: t('salary.filterPending') },
+    { key: CONSULTANT_SALARY_FILTER.PAID, label: t('salary.filterPaid') }
+  ];
+
+  const summaryItems = [
+    {
+      id: 'latestNet',
+      label: t('salary.summaryLatestNet'),
+      value: summary.latestNet == null ? '—' : formatConsultantMoney(summary.latestNet)
+    },
+    {
+      id: 'pending',
+      label: t('salary.summaryPending'),
+      value: t('salary.countUnit', { count: summary.pendingCount })
+    },
+    {
+      id: 'paid',
+      label: t('salary.summaryPaid'),
+      value: t('salary.countUnit', { count: summary.paidCount })
+    }
+  ];
+
+  const rootClass = `${CONSULTANT_SUITE_CLASS.ROOT} consultant-salary`;
+  const notice = (
+    <ConsultantNotice icon={<Info size={NOTICE_ICON_SIZE} />}>{t('salary.notice')}</ConsultantNotice>
+  );
 
   if (loading) {
     return (
-      <div className="cr-dashboard" aria-busy="true" aria-label="로딩 중">
-        <div className="cr-skeleton cr-skeleton--greeting" />
-        <div className="cr-skeleton cr-skeleton--card" />
-        <div className="cr-skeleton cr-skeleton--card" />
+      <div className={rootClass} aria-busy="true" aria-label={t('salary.loadingAria')}>
+        {notice}
+        {SKELETON_CARD_KEYS.map((key) => (
+          <Skeleton key={key} variant="card" className="consultant-salary__skeleton" />
+        ))}
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="cr-salary-settlement">
-        <div className="cr-salary-settlement__error" role="alert">
-          <AlertTriangle size={40} className="cr-error__icon" aria-hidden />
-          <p className="cr-salary-settlement__value">{toErrorMessage(error, S.LOAD_ERROR)}</p>
-          <button type="button" className="cr-salary-settlement__retry" onClick={() => refetch()}>
-            {S.RETRY}
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  if (!hasItems) {
-    return (
-      <div className="cr-salary-settlement">
-        <p className="cr-salary-settlement__intro">{toDisplayString(S.PAGE_INTRO, '')}</p>
-        <div className="cr-salary-settlement__empty">
-          <div className="cr-salary-settlement__empty-title">{toDisplayString(S.EMPTY_TITLE, '')}</div>
-          <p>{toDisplayString(S.EMPTY_BODY, '')}</p>
-        </div>
+      <div className={rootClass}>
+        {notice}
+        <section className={`${CONSULTANT_SUITE_CLASS.PANEL} consultant-salary__error`} role="alert">
+          <EmptyState
+            className={CONSULTANT_SUITE_CLASS.EMPTY}
+            icon={<AlertTriangle size={EMPTY_ICON_SIZE} aria-hidden />}
+            title={toErrorMessage(error, t('salary.loadError'))}
+            action={(
+              <MGButton
+                type="button"
+                variant="outline"
+                size="medium"
+                className={buildErpMgButtonClassName({ variant: 'outline', size: 'md', loading: false })}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                onClick={() => refetch()}
+                preventDoubleClick={false}
+              >
+                {t('actions.retry')}
+              </MGButton>
+            )}
+          />
+        </section>
       </div>
     );
   }
 
   return (
-    <div className="cr-salary-settlement">
-      <p className="cr-salary-settlement__intro">{toDisplayString(S.PAGE_INTRO, '')}</p>
-      <section className="cr-dashboard__section" aria-label={S.LIST_SECTION}>
-        <h2 className="cr-dashboard__section-title">{S.LIST_SECTION}</h2>
-        {sortedItems.map((row, idx) => (
-          <SettlementCard
-            key={String(row.id ?? row.calculationId ?? row.settlementId ?? `idx-${idx}`)}
-            item={row}
+    <div className={rootClass}>
+      {notice}
+      <ConsultantSummaryStrip
+        items={summaryItems}
+        className={CONSULTANT_SUITE_CLASS.SUMMARY}
+        ariaLabel={t('salary.summaryAria')}
+      />
+      {hasItems ? (
+        <ConsultantFilterChips
+          items={filterItems}
+          activeKey={filterKey}
+          onChange={setFilterKey}
+          ariaLabel={t('salary.filterAria')}
+          testIdPrefix="consultant-salary-filter"
+        />
+      ) : null}
+      {visibleItems.length > 0 ? (
+        <section className="consultant-salary__list" aria-label={t('salary.listAria')}>
+          {visibleItems.map((row, idx) => (
+            <ConsultantSalaryMonthCard
+              key={String(row.id ?? row.calculationId ?? row.settlementId ?? `idx-${idx}`)}
+              item={row}
+            />
+          ))}
+        </section>
+      ) : (
+        <section className={CONSULTANT_SUITE_CLASS.PANEL}>
+          <EmptyState
+            className={CONSULTANT_SUITE_CLASS.EMPTY}
+            icon={<Wallet size={EMPTY_ICON_SIZE} aria-hidden />}
+            title={hasItems ? t('salary.filterEmptyTitle') : t('salary.emptyTitle')}
+            description={hasItems ? null : t('salary.emptyDescription')}
           />
-        ))}
-      </section>
+        </section>
+      )}
     </div>
   );
 };

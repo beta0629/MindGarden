@@ -1,0 +1,56 @@
+{
+  "actions": {
+    "refresh": "새로고침",
+    "retry": "다시 시도"
+  },
+  "schedule": {
+    "title": "내 일정",
+    "subtitle": "나의 상담 일정을 확인합니다",
+    "ariaLabel": "내 일정",
+    "summaryAria": "일정 요약",
+    "summaryToday": "오늘 일정",
+    "summaryWeek": "이번 주",
+    "summaryMissingLogs": "일지 미작성",
+    "countUnit": "{{count}}건",
+    "statusFilterAria": "일정 상태 필터",
+    "statusAll": "전체",
+    "statusScheduled": "예정",
+    "statusCompleted": "완료",
+    "statusCancelled": "취소",
+    "emptyTitle": "이 기간에 일정이 없습니다",
+    "emptyDescription": "가능 시간 설정에서 예약 가능 시간을 확인해 주세요",
+    "footCaption": "공휴일·주말은 날짜 색으로만 구분합니다. 일정 등록·배정은 관리자·스태프 화면에서 처리합니다.",
+    "sessionLoading": "일정을 불러오는 중…",
+    "userLoading": "사용자 정보를 확인하는 중…"
+  },
+  "salary": {
+    "title": "급여 정산",
+    "subtitle": "관리자가 확정한 결과만 표시됩니다",
+    "ariaLabel": "급여 정산",
+    "notice": "일반 매출·수입·지출 리포트는 이 화면에서 제공하지 않습니다. 문의는 센터 관리자에게 해 주세요.",
+    "summaryAria": "급여 요약",
+    "summaryLatestNet": "최근 실수령",
+    "summaryPending": "지급 대기",
+    "summaryPaid": "지급 완료",
+    "countUnit": "{{count}}건",
+    "filterAria": "지급 상태 필터",
+    "filterAll": "전체",
+    "filterPending": "지급 대기",
+    "filterPaid": "지급됨",
+    "listAria": "월별 정산 내역",
+    "periodMonth": "{{year}}년 {{month}}월",
+    "periodRange": "{{start}} ~ {{end}}",
+    "emptyTitle": "확정된 정산 내역이 없습니다",
+    "emptyDescription": "관리자 급여 산정이 반영되면 이 화면에서 확인할 수 있습니다.",
+    "filterEmptyTitle": "선택한 상태의 정산 내역이 없습니다",
+    "loadError": "급여 정산 정보를 불러오지 못했습니다.",
+    "loadingAria": "급여 정산을 불러오는 중",
+    "status": {
+      "PENDING": "대기",
+      "CALCULATED": "승인 대기",
+      "APPROVED": "지급 대기",
+      "PAID": "지급됨",
+      "CANCELLED": "취소"
+    }
+  }
+}

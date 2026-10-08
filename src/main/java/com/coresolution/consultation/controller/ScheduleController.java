@@ -1801,7 +1801,7 @@ public class ScheduleController extends BaseApiController {
                 scheduleListBatchLoader.buildLifetimeSequenceCountByScheduleId(tenantId, schedules);
 
         ScheduleMappingResponseContext emptyMappingContext =
-                new ScheduleMappingResponseContext(null, null, null);
+                ScheduleMappingResponseContext.empty();
 
         List<ScheduleResponse> scheduleResponses = schedules.stream()
                 .map(s -> {
@@ -2472,8 +2472,14 @@ public class ScheduleController extends BaseApiController {
                     schedule.getConsultantId(), schedule.getClientId(), e.getMessage());
         }
 
+        com.coresolution.consultation.entity.Client clientEntity = null;
+        if (schedule.getClientId() != null && tenantId != null && !tenantId.isEmpty()) {
+            clientEntity = scheduleListBatchLoader
+                    .loadClientsById(tenantId, java.util.Set.of(schedule.getClientId()))
+                    .get(schedule.getClientId());
+        }
         ScheduleMappingResponseContext mappingContext = ScheduleMappingContextResolver.resolveForScheduleResponse(
-                schedule, tenantId, consultantClientMappingRepository, mappingLookup);
+                schedule, tenantId, consultantClientMappingRepository, mappingLookup, clientEntity);
         
         ScheduleResponse response = ScheduleResponse.builder()
             .id(schedule.getId())
@@ -2504,6 +2510,8 @@ public class ScheduleController extends BaseApiController {
             .clientScheduleNotesUnresolvedCount(Math.max(0, clientScheduleNotesUnresolvedCount))
             .clientScheduleNotesClientWideUnresolvedCount(Math.max(0, clientScheduleNotesClientWideUnresolvedCount))
             .mappingId(mappingContext.getMappingId())
+            .engagementType(mappingContext.getEngagementType())
+            .paymentTiming(mappingContext.getPaymentTiming())
             .totalSessions(mappingContext.getTotalSessions())
             .remainingSessions(mappingContext.getRemainingSessions())
             .sessionSequence(schedule.getSessionSequence())
@@ -2611,7 +2619,7 @@ public class ScheduleController extends BaseApiController {
         }
 
         ScheduleMappingResponseContext safeMappingContext =
-                mappingContext != null ? mappingContext : new ScheduleMappingResponseContext(null, null, null);
+                mappingContext != null ? mappingContext : ScheduleMappingResponseContext.empty();
 
         ScheduleResponse response = ScheduleResponse.builder()
                 .id(schedule.getId())
@@ -2642,6 +2650,8 @@ public class ScheduleController extends BaseApiController {
                 .clientScheduleNotesUnresolvedCount(Math.max(0, clientScheduleNotesUnresolvedCount))
                 .clientScheduleNotesClientWideUnresolvedCount(Math.max(0, clientScheduleNotesClientWideUnresolvedCount))
                 .mappingId(safeMappingContext.getMappingId())
+                .engagementType(safeMappingContext.getEngagementType())
+                .paymentTiming(safeMappingContext.getPaymentTiming())
                 .totalSessions(safeMappingContext.getTotalSessions())
                 .remainingSessions(safeMappingContext.getRemainingSessions())
                 .sessionSequence(schedule.getSessionSequence())

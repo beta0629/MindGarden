@@ -1,20 +1,20 @@
 /**
- * 주/일 일정 칩 fit 판정 — 시간 우선 단계 (뷰포트·하드코딩 109px·가정 font-size 금지).
+ * 주/일 일정 칩 fit 판정 — 폭(time-first) + 높이(status→title 숨김) 단계.
+ * 뷰포트·하드코딩 109px·가정 font-size 금지.
  *
- * Stages (time first, never truncate/ellipsis time or badge):
- *   1. long + badge     — 로케일 긴 시간(「오전 10:00」) + 기관연계 배지 전부 수용
- *   2. long             — 긴 시간만 (배지 생략, 상세에서 확인)
- *   3. short + badge    — 짧은 시간(「10:00」) + 배지
- *   4. short            — 짧은 시간만 (「11:00」)
- *   5. compact-pad      — 칩 좌우 패딩을 토큰 compact 로 줄여 short 수용
- *   6. hide-time        — 칩에서 시간 텍스트 미렌더; title/aria-label·상세는 전체 시간 유지.
- *                         배지는 4자 전부 수용될 때만.
+ * Width stages (time first, never truncate/ellipsis time or badge):
+ *   1. long + badge → 2. long → 3. short + badge → 4. short
+ *   5. compact-pad → 6. hide-time
  *
- * 측정은 실제 computed font(getComputedStyle) 기준 — 11px 등 가정 금지.
+ * Height stages (combine with width):
+ *   full → hide-status → hide-title → time-detail (title·상세만 / a11y 유지)
  *
  * @author CoreSolution
  * @since 2026-10-08
  */
+
+import { formatNameWithSecondary } from './safeDisplay';
+import { MAPPING_ENGAGEMENT_TYPE_LABELS } from '../constants/mappingEngagementType';
 
 export const WEEK_DAY_CHIP_FIT_STAGE = Object.freeze({
   LONG_BADGE: 'long+badge',
@@ -28,6 +28,13 @@ export const WEEK_DAY_CHIP_FIT_STAGE = Object.freeze({
 export const WEEK_DAY_CHIP_TIME_MODE = Object.freeze({
   LONG: 'long',
   SHORT: 'short'
+});
+
+export const WEEK_DAY_CHIP_HEIGHT_STAGE = Object.freeze({
+  FULL: 'full',
+  HIDE_STATUS: 'hide-status',
+  HIDE_TITLE: 'hide-title',
+  TIME_DETAIL: 'time-detail'
 });
 
 /**
@@ -60,6 +67,72 @@ export function resolveComputedFont(el) {
 }
 
 /**
+ * 높이 단계: 상태 줄 숨김 → 이름 줄 숨김 → title·상세만.
+ *
+ * @param {{
+ *   chipHeight?: number,
+ *   timeRowHeight?: number,
+ *   titleRowHeight?: number,
+ *   statusRowHeight?: number,
+ *   gapY?: number
+ * }} input
+ * @returns {{
+ *   heightStage: string,
+ *   showStatus: boolean,
+ *   showTitle: boolean
+ * }}
+ */
+export function judgeWeekDayChipHeightFit(input = {}) {
+  const chipHeight = Number(input.chipHeight);
+  const timeH = Number(input.timeRowHeight);
+  const titleH = Number(input.titleRowHeight);
+  const statusH = Number(input.statusRowHeight);
+  const gapY = Number.isFinite(Number(input.gapY)) ? Math.max(0, Number(input.gapY)) : 0;
+
+  const safeChip = Number.isFinite(chipHeight) && chipHeight > 0 ? chipHeight : 0;
+  const safeTime = Number.isFinite(timeH) && timeH >= 0 ? timeH : 0;
+  const safeTitle = Number.isFinite(titleH) && titleH >= 0 ? titleH : 0;
+  const safeStatus = Number.isFinite(statusH) && statusH >= 0 ? statusH : 0;
+
+  const fits = (need) => safeChip + 0.5 >= need;
+
+  const fullNeed = safeTime + safeTitle + safeStatus
+    + (safeTitle > 0 && safeTime > 0 ? gapY : 0)
+    + (safeStatus > 0 && (safeTitle > 0 || safeTime > 0) ? gapY : 0);
+  if (fits(fullNeed) || safeChip <= 0) {
+    return {
+      heightStage: WEEK_DAY_CHIP_HEIGHT_STAGE.FULL,
+      showStatus: true,
+      showTitle: true
+    };
+  }
+
+  const withoutStatus = safeTime + safeTitle
+    + (safeTitle > 0 && safeTime > 0 ? gapY : 0);
+  if (fits(withoutStatus)) {
+    return {
+      heightStage: WEEK_DAY_CHIP_HEIGHT_STAGE.HIDE_STATUS,
+      showStatus: false,
+      showTitle: true
+    };
+  }
+
+  if (fits(safeTime + 0.5) || safeTime <= 0) {
+    return {
+      heightStage: WEEK_DAY_CHIP_HEIGHT_STAGE.HIDE_TITLE,
+      showStatus: false,
+      showTitle: false
+    };
+  }
+
+  return {
+    heightStage: WEEK_DAY_CHIP_HEIGHT_STAGE.TIME_DETAIL,
+    showStatus: false,
+    showTitle: false
+  };
+}
+
+/**
  * @param {{
  *   chipWidth: number,
  *   longTimeWidth: number,
@@ -67,14 +140,22 @@ export function resolveComputedFont(el) {
  *   badgeWidth?: number,
  *   gap?: number,
  *   considerBadge?: boolean,
- *   compactChipWidth?: number
+ *   compactChipWidth?: number,
+ *   chipHeight?: number,
+ *   timeRowHeight?: number,
+ *   titleRowHeight?: number,
+ *   statusRowHeight?: number,
+ *   gapY?: number
  * }} input
  * @returns {{
  *   stage: string,
  *   timeMode: 'long'|'short',
  *   showBadge: boolean,
  *   showTime: boolean,
- *   compactPad: boolean
+ *   compactPad: boolean,
+ *   heightStage: string,
+ *   showStatus: boolean,
+ *   showTitle: boolean
  * }}
  */
 export function judgeWeekDayChipFit(input = {}) {
@@ -98,71 +179,101 @@ export function judgeWeekDayChipFit(input = {}) {
 
   const fits = (need, width = safeChip) => width + 0.5 >= need;
 
+  let widthFit;
   if (considerBadge && fits(safeLong + gap + safeBadge)) {
-    return {
+    widthFit = {
       stage: WEEK_DAY_CHIP_FIT_STAGE.LONG_BADGE,
       timeMode: WEEK_DAY_CHIP_TIME_MODE.LONG,
       showBadge: true,
       showTime: true,
       compactPad: false
     };
-  }
-  if (fits(safeLong)) {
-    return {
+  } else if (fits(safeLong)) {
+    widthFit = {
       stage: WEEK_DAY_CHIP_FIT_STAGE.LONG,
       timeMode: WEEK_DAY_CHIP_TIME_MODE.LONG,
       showBadge: false,
       showTime: true,
       compactPad: false
     };
-  }
-  if (considerBadge && fits(safeShort + gap + safeBadge)) {
-    return {
+  } else if (considerBadge && fits(safeShort + gap + safeBadge)) {
+    widthFit = {
       stage: WEEK_DAY_CHIP_FIT_STAGE.SHORT_BADGE,
       timeMode: WEEK_DAY_CHIP_TIME_MODE.SHORT,
       showBadge: true,
       showTime: true,
       compactPad: false
     };
-  }
-  if (fits(safeShort)) {
-    return {
+  } else if (fits(safeShort)) {
+    widthFit = {
       stage: WEEK_DAY_CHIP_FIT_STAGE.SHORT,
       timeMode: WEEK_DAY_CHIP_TIME_MODE.SHORT,
       showBadge: false,
       showTime: true,
       compactPad: false
     };
-  }
-
-  // Stage 5: compact padding — short (±badge) in reduced-pad content width
-  if (considerBadge && fits(safeShort + gap + safeBadge, safeCompact)) {
-    return {
+  } else if (considerBadge && fits(safeShort + gap + safeBadge, safeCompact)) {
+    widthFit = {
       stage: WEEK_DAY_CHIP_FIT_STAGE.COMPACT_PAD,
       timeMode: WEEK_DAY_CHIP_TIME_MODE.SHORT,
       showBadge: true,
       showTime: true,
       compactPad: true
     };
-  }
-  if (fits(safeShort, safeCompact)) {
-    return {
+  } else if (fits(safeShort, safeCompact)) {
+    widthFit = {
       stage: WEEK_DAY_CHIP_FIT_STAGE.COMPACT_PAD,
       timeMode: WEEK_DAY_CHIP_TIME_MODE.SHORT,
       showBadge: false,
       showTime: true,
       compactPad: true
     };
+  } else {
+    widthFit = {
+      stage: WEEK_DAY_CHIP_FIT_STAGE.HIDE_TIME,
+      timeMode: WEEK_DAY_CHIP_TIME_MODE.SHORT,
+      showBadge: considerBadge && fits(safeBadge, safeCompact),
+      showTime: false,
+      compactPad: true
+    };
   }
 
-  // Stage 6: hide time — badge only if full width fits in compact content
-  return {
-    stage: WEEK_DAY_CHIP_FIT_STAGE.HIDE_TIME,
-    timeMode: WEEK_DAY_CHIP_TIME_MODE.SHORT,
-    showBadge: considerBadge && fits(safeBadge, safeCompact),
-    showTime: false,
-    compactPad: true
-  };
+  const heightFit = judgeWeekDayChipHeightFit(input);
+  return { ...widthFit, ...heightFit };
+}
+
+/**
+ * title / aria-label — 시간·이름·상태·기관연계(해당 시). 배지·시간 숨김과 무관.
+ *
+ * @param {{
+ *   timeText?: string,
+ *   clientName?: string,
+ *   statusLabel?: string,
+ *   institutionLabel?: string|null,
+ *   showInstitution?: boolean
+ * }} parts
+ * @returns {string}
+ */
+export function buildWeekDayChipA11yLabel(parts = {}) {
+  const time = formatNameWithSecondary(parts.timeText, '').trim();
+  const name = formatNameWithSecondary(parts.clientName, '').trim();
+  const status = formatNameWithSecondary(parts.statusLabel, '').trim();
+  let institution = '';
+  if (parts.showInstitution) {
+    institution = formatNameWithSecondary(
+      parts.institutionLabel || MAPPING_ENGAGEMENT_TYPE_LABELS.INSTITUTION_LINK,
+      ''
+    ).trim();
+  } else if (parts.institutionLabel) {
+    institution = formatNameWithSecondary(parts.institutionLabel, '').trim();
+  }
+
+  const nameStatus = [name, status].filter(Boolean).join(' - ');
+  const core = [time, nameStatus].filter(Boolean).join(' · ');
+  if (institution) {
+    return core ? `${core} · ${institution}` : institution;
+  }
+  return core;
 }
 
 /**
@@ -268,7 +379,10 @@ export function readChipPadTokens(el) {
 export default {
   WEEK_DAY_CHIP_FIT_STAGE,
   WEEK_DAY_CHIP_TIME_MODE,
+  WEEK_DAY_CHIP_HEIGHT_STAGE,
   judgeWeekDayChipFit,
+  judgeWeekDayChipHeightFit,
+  buildWeekDayChipA11yLabel,
   measureTextWidth,
   resolveComputedFont,
   readHorizontalPadding,

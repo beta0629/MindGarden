@@ -29,7 +29,6 @@ import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp
 import ContentArea from '../../dashboard-v2/content/ContentArea';
 import ContentHeader from '../../dashboard-v2/content/ContentHeader';
 import ConsultationLogFilterSection from './ConsultationLogFilterSection';
-import { toDateStr } from '../../../utils/dateUtils';
 import ConsultationLogListBlock from './ConsultationLogListBlock';
 import ConsultationLogCalendarBlock from './ConsultationLogCalendarBlock';
 import ConsultationLogTableBlock from './ConsultationLogTableBlock';
@@ -59,6 +58,7 @@ import {
   CONSULTATION_LOG_VIEW_SURFACE
 } from '../../../constants/consultantSuite';
 import {
+  clampUiPage,
   fetchConsultantSuitePagedList,
   toServerPageIndex
 } from '../../../utils/consultantSuiteListApi';
@@ -479,10 +479,14 @@ const ConsultationLogViewPage = ({ surface }) => {
           }
         }
       } else {
-        // 상담사: 목록/테이블 = page/size + MGPagination. 캘린더 = 공통 fetch-all(page loop).
-        // 캘린더는 단일 page0 size20 캡 금지(월 초·다건 누락). 엔드포인트만 상담사 스코프.
+        // 상담사: 관리자와 동일하게 startDate/endDate 서버 전달. 목록/테이블 = page/size.
+        // 캘린더 = 기간 스코프 fetch-all(날짜 params 로 페이지 루프 축소).
         const endpoint = `/api/v1/admin/consultant-records/${user.id}/consultation-records`;
-        const baseParams = {};
+        const fallbackRange = computeDefaultDateRange();
+        const baseParams = {
+          startDate: startDate || fallbackRange.startDate,
+          endDate: endDate || fallbackRange.endDate
+        };
         if (clientId != null) {
           baseParams.clientId = clientId;
         }
@@ -501,11 +505,20 @@ const ConsultationLogViewPage = ({ surface }) => {
             itemKeys: ['data', 'content', 'items', 'records']
           });
           if (isStale()) return;
+          const nextTotal = result.totalElements != null
+            ? result.totalElements
+            : (result.items || []).length;
+          const nextTotalPages = result.totalPages != null && result.totalPages > 0
+            ? result.totalPages
+            : Math.max(1, Math.ceil(nextTotal / CONSULTANT_SUITE_PAGE_SIZE));
+          const clamped = clampUiPage(page, nextTotalPages);
+          if (clamped !== page) {
+            setPage(clamped);
+            return;
+          }
           const normalized = normalizeConsultantRecords(result.items || [], user?.name);
           setRecords(normalized);
-          setTotalElements(
-            result.totalElements != null ? result.totalElements : normalized.length
-          );
+          setTotalElements(nextTotal);
         }
       }
     } catch (e) {
@@ -552,9 +565,31 @@ const ConsultationLogViewPage = ({ surface }) => {
     };
   }, [filtersHydrated, loadRecords]);
 
-  useEffect(() => {
+  /** 필터·뷰 변경 시 page 리셋을 같은 갱신에서 — 이전 page 로 요청 나가는 레이스 금지 */
+  const resetPageAnd = useCallback((updater) => {
     setPage(1);
-  }, [clientId, startDate, endDate, viewMode]);
+    updater();
+  }, []);
+
+  const handleConsultantFilterChange = useCallback((value) => {
+    resetPageAnd(() => setConsultantId(value));
+  }, [resetPageAnd]);
+
+  const handleClientFilterChange = useCallback((value) => {
+    resetPageAnd(() => setClientId(value));
+  }, [resetPageAnd]);
+
+  const handleStartDateChange = useCallback((value) => {
+    resetPageAnd(() => setStartDate(value));
+  }, [resetPageAnd]);
+
+  const handleEndDateChange = useCallback((value) => {
+    resetPageAnd(() => setEndDate(value));
+  }, [resetPageAnd]);
+
+  const handleViewModeChange = useCallback((mode) => {
+    resetPageAnd(() => setViewMode(mode));
+  }, [resetPageAnd]);
 
   const clientNameMap = {};
   const consultantNameMap = {};
@@ -569,26 +604,8 @@ const ConsultationLogViewPage = ({ surface }) => {
     if (!Number.isNaN(id)) consultantNameMap[id] = name;
   });
 
-  let filteredRecords = records;
-  if (startDate || endDate || clientId != null) {
-    filteredRecords = records.filter((r) => {
-      if (clientId != null) {
-        const recordClientId = r.clientId ?? r.client?.id;
-        if (String(recordClientId ?? '') !== String(clientId)) {
-          return false;
-        }
-      }
-      if (!startDate && !endDate) {
-        return true;
-      }
-      const sd = r.sessionDate ?? r.consultationDate;
-      const d = toDateStr(sd);
-      if (!d) return false;
-      if (startDate && d < startDate) return false;
-      if (endDate && d > endDate) return false;
-      return true;
-    });
-  }
+  // 서버가 startDate/endDate/clientId 를 처리하므로 클라이언트 재필터 없음.
+  const filteredRecords = records;
 
   const handleOpenModal = (recordId) => {
     if (!canOpenConsultationLog) {
@@ -631,6 +648,7 @@ const ConsultationLogViewPage = ({ surface }) => {
   };
 
   const applySavedViewPayload = useCallback((payload) => {
+    setPage(1);
     if (payload?.viewMode) {
       setViewMode(payload.viewMode);
     }
@@ -765,14 +783,14 @@ const ConsultationLogViewPage = ({ surface }) => {
       isAdmin={isAdmin}
       consultantId={consultantId}
       consultants={consultants}
-      onConsultantChange={setConsultantId}
+      onConsultantChange={handleConsultantFilterChange}
       clientId={clientId}
       clients={clients}
-      onClientChange={setClientId}
+      onClientChange={handleClientFilterChange}
       startDate={startDate}
       endDate={endDate}
-      onStartDateChange={setStartDate}
-      onEndDateChange={setEndDate}
+      onStartDateChange={handleStartDateChange}
+      onEndDateChange={handleEndDateChange}
     />
   );
 
@@ -794,7 +812,7 @@ const ConsultationLogViewPage = ({ surface }) => {
               className: `mg-v2-consultation-log-view-tabs__tab ${isActive ? 'mg-v2-consultation-log-view-tabs__tab--active' : ''}`
             })}
             loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-            onClick={() => setViewMode(mode)}
+            onClick={() => handleViewModeChange(mode)}
             aria-pressed={isActive}
             aria-current={isActive ? 'true' : undefined}
             preventDoubleClick={false}
@@ -810,11 +828,31 @@ const ConsultationLogViewPage = ({ surface }) => {
     <ConsultantFilterChips
       items={VIEW_MODES.map((mode) => ({ key: mode, label: tSuite(`logs.view.${mode}`) }))}
       activeKey={viewMode}
-      onChange={setViewMode}
+      onChange={handleViewModeChange}
       ariaLabel={tSuite('logs.viewToggleAria')}
       testIdPrefix="consultant-logs-view"
     />
   );
+
+  const renderConsultantPager = (totalPages) => {
+    if (!(totalElements > CONSULTANT_SUITE_PAGE_SIZE || totalPages > 1)) {
+      return null;
+    }
+    return (
+      <nav className={CONSULTANT_SUITE_CLASS.PAGINATION} aria-label={tSuite('records.listAria')}>
+        <MGPagination
+          currentPage={clampUiPage(page, totalPages)}
+          totalPages={totalPages}
+          totalItems={totalElements}
+          itemsPerPage={CONSULTANT_SUITE_PAGE_SIZE}
+          onPageChange={setPage}
+          showInfo
+          showItemsPerPage={false}
+          variant="compact"
+        />
+      </nav>
+    );
+  };
 
   const renderListView = () => {
     if (!isConsultantSurface) {
@@ -828,48 +866,35 @@ const ConsultationLogViewPage = ({ surface }) => {
         />
       );
     }
-    if (filteredRecords.length === 0) {
-      return (
-        <section className={CONSULTANT_SUITE_CLASS.PANEL}>
-          <EmptyState
-            className={CONSULTANT_SUITE_CLASS.EMPTY}
-            icon={<FileText size={CONSULTANT_EMPTY_ICON_SIZE} aria-hidden />}
-            title={tSuite('logs.emptyTitle')}
-            description={tSuite('logs.emptyDescription')}
-          />
-        </section>
-      );
-    }
     const totalPages = Math.max(1, Math.ceil((totalElements || 0) / CONSULTANT_SUITE_PAGE_SIZE));
+    // 0행이어도 totalElements>PAGE_SIZE(또는 totalPages>1)이면 페이저 유지 — 빈상태만으로 조기 return 금지
     return (
       <>
-        <section className={CONSULTANT_SUITE_CLASS.CARD_GRID} aria-label={tSuite('records.listAria')}>
-          {filteredRecords.map((record) => (
-            <ConsultantRecordCard
-              key={record.id}
-              record={{
-                ...record,
-                clientName: record.clientName
-                  ?? (record.clientId != null ? clientNameMap[Number(record.clientId)] : undefined)
-              }}
-              onOpen={handleOpenModal}
+        {filteredRecords.length === 0 ? (
+          <section className={CONSULTANT_SUITE_CLASS.PANEL}>
+            <EmptyState
+              className={CONSULTANT_SUITE_CLASS.EMPTY}
+              icon={<FileText size={CONSULTANT_EMPTY_ICON_SIZE} aria-hidden />}
+              title={tSuite('logs.emptyTitle')}
+              description={tSuite('logs.emptyDescription')}
             />
-          ))}
-        </section>
-        {totalElements > CONSULTANT_SUITE_PAGE_SIZE ? (
-          <nav className={CONSULTANT_SUITE_CLASS.PAGINATION} aria-label={tSuite('records.listAria')}>
-            <MGPagination
-              currentPage={page}
-              totalPages={totalPages}
-              totalItems={totalElements}
-              itemsPerPage={CONSULTANT_SUITE_PAGE_SIZE}
-              onPageChange={setPage}
-              showInfo
-              showItemsPerPage={false}
-              variant="compact"
-            />
-          </nav>
-        ) : null}
+          </section>
+        ) : (
+          <section className={CONSULTANT_SUITE_CLASS.CARD_GRID} aria-label={tSuite('records.listAria')}>
+            {filteredRecords.map((record) => (
+              <ConsultantRecordCard
+                key={record.id}
+                record={{
+                  ...record,
+                  clientName: record.clientName
+                    ?? (record.clientId != null ? clientNameMap[Number(record.clientId)] : undefined)
+                }}
+                onOpen={handleOpenModal}
+              />
+            ))}
+          </section>
+        )}
+        {renderConsultantPager(totalPages)}
       </>
     );
   };
@@ -885,20 +910,7 @@ const ConsultationLogViewPage = ({ surface }) => {
           onRowClick={handleOpenModal}
           showAdminWriteBadge={isAdmin}
         />
-        {totalElements > CONSULTANT_SUITE_PAGE_SIZE ? (
-          <nav className={CONSULTANT_SUITE_CLASS.PAGINATION} aria-label={tSuite('records.listAria')}>
-            <MGPagination
-              currentPage={page}
-              totalPages={totalPages}
-              totalItems={totalElements}
-              itemsPerPage={CONSULTANT_SUITE_PAGE_SIZE}
-              onPageChange={setPage}
-              showInfo
-              showItemsPerPage={false}
-              variant="compact"
-            />
-          </nav>
-        ) : null}
+        {renderConsultantPager(totalPages)}
       </>
     );
   };

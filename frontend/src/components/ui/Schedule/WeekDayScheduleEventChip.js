@@ -1,6 +1,6 @@
 /**
- * 주/일 풀 카드 칩 — measure-based time-first fit
- * (long+badge → long → short+badge → short → compact-pad → hide-time).
+ * 주/일 풀 카드 칩 — measure-based time-first + height fit
+ * (폭: long+badge → … → hide-time / 높이: full → hide-status → hide-title).
  * ScheduleCalendarView renderEventContent 주/일 분기에서만 사용 (#1499/#1510 rebase 포인트).
  *
  * @author CoreSolution
@@ -13,7 +13,10 @@ import EngagementTypeBadge from '../../common/EngagementTypeBadge';
 import ScheduleReminderSmsBadge from '../../admin/mapping-management/integrated-schedule/molecules/ScheduleReminderSmsBadge';
 import { formatIntegratedMonthChipShortTime } from './integratedMonthChipCopy';
 import useWeekDayChipFit from '../../../hooks/useWeekDayChipFit';
-import { WEEK_DAY_CHIP_TIME_MODE } from '../../../utils/weekDayChipFit';
+import {
+  WEEK_DAY_CHIP_TIME_MODE,
+  buildWeekDayChipA11yLabel
+} from '../../../utils/weekDayChipFit';
 import { CLIENT_REMINDER_SMS_FIELD } from '../../../constants/scheduleClientReminderSms';
 
 /**
@@ -49,7 +52,13 @@ const WeekDayScheduleEventChip = ({
     ? (fit.timeMode === WEEK_DAY_CHIP_TIME_MODE.LONG ? longTime : shortTime)
     : '';
   const fullTimeForA11y = longTime || shortTime;
-  const chipTitle = `${fullTimeForA11y} · ${clientName} - ${statusLabel}`;
+  const chipTitle = buildWeekDayChipA11yLabel({
+    timeText: fullTimeForA11y,
+    clientName,
+    statusLabel,
+    institutionLabel,
+    showInstitution: Boolean(showInstitutionMark && institutionLabel)
+  });
   const chipClass = [
     'mg-v2-ad-calendar-event',
     'mg-v2-ad-calendar-event--week-day-fit',
@@ -63,6 +72,7 @@ const WeekDayScheduleEventChip = ({
       ref={chipRef}
       className={chipClass}
       data-chip-fit-stage={fit.stage}
+      data-chip-height-stage={fit.heightStage}
       title={chipTitle}
       aria-label={chipTitle}
     >
@@ -84,19 +94,23 @@ const WeekDayScheduleEventChip = ({
           />
         ) : null}
       </div>
-      <div className="mg-v2-ad-calendar-event__title">
-        {sameDayPrefix}
-        <span className="client-name">{clientName}</span>
-        <ScheduleReminderSmsBadge
-          sms={extendedProps?.[CLIENT_REMINDER_SMS_FIELD]}
-          stopPropagation
-          className="mg-v2-ad-calendar-event__reminder-sms"
-        />
-        {consultantName ? (
-          <span className="counselor-name">{consultantName}</span>
-        ) : null}
-      </div>
-      <div className="mg-v2-ad-calendar-event__status">{statusLabel}</div>
+      {fit.showTitle ? (
+        <div className="mg-v2-ad-calendar-event__title">
+          {sameDayPrefix}
+          <span className="client-name">{clientName}</span>
+          <ScheduleReminderSmsBadge
+            sms={extendedProps?.[CLIENT_REMINDER_SMS_FIELD]}
+            stopPropagation
+            className="mg-v2-ad-calendar-event__reminder-sms"
+          />
+          {consultantName ? (
+            <span className="counselor-name">{consultantName}</span>
+          ) : null}
+        </div>
+      ) : null}
+      {fit.showStatus ? (
+        <div className="mg-v2-ad-calendar-event__status">{statusLabel}</div>
+      ) : null}
     </div>
   );
 };

@@ -1,11 +1,22 @@
 /**
- * judgeWeekDayChipFit — time-first stages (incl. compact-pad / hide-time)
+ * judgeWeekDayChipFit — time-first stages (incl. compact-pad / hide-time) + height stages
  */
 import {
   WEEK_DAY_CHIP_FIT_STAGE,
+  WEEK_DAY_CHIP_HEIGHT_STAGE,
   WEEK_DAY_CHIP_TIME_MODE,
-  judgeWeekDayChipFit
+  buildWeekDayChipA11yLabel,
+  judgeWeekDayChipFit,
+  judgeWeekDayChipHeightFit
 } from '../weekDayChipFit';
+import { formatNameWithSecondary } from '../safeDisplay';
+import { MAPPING_ENGAGEMENT_TYPE_LABELS } from '../../constants/mappingEngagementType';
+
+const HEIGHT_FULL = {
+  heightStage: WEEK_DAY_CHIP_HEIGHT_STAGE.FULL,
+  showStatus: true,
+  showTitle: true
+};
 
 describe('judgeWeekDayChipFit', () => {
   const longW = 56; // 「오전 10:00」
@@ -26,7 +37,8 @@ describe('judgeWeekDayChipFit', () => {
       timeMode: WEEK_DAY_CHIP_TIME_MODE.LONG,
       showBadge: true,
       showTime: true,
-      compactPad: false
+      compactPad: false,
+      ...HEIGHT_FULL
     });
   });
 
@@ -59,7 +71,8 @@ describe('judgeWeekDayChipFit', () => {
       timeMode: WEEK_DAY_CHIP_TIME_MODE.SHORT,
       showBadge: false,
       showTime: true,
-      compactPad: false
+      compactPad: false,
+      ...HEIGHT_FULL
     });
   });
 
@@ -76,7 +89,8 @@ describe('judgeWeekDayChipFit', () => {
       timeMode: WEEK_DAY_CHIP_TIME_MODE.SHORT,
       showBadge: true,
       showTime: true,
-      compactPad: false
+      compactPad: false,
+      ...HEIGHT_FULL
     });
   });
 
@@ -172,5 +186,94 @@ describe('judgeWeekDayChipFit', () => {
     expect(fit.showTime).toBe(false);
     // 구코드: 항상 SHORT 반환 → 30 > 18.8 이면 잘림(「11:0」)
     expect(shortReal).toBeGreaterThan(normalContent);
+  });
+});
+
+describe('judgeWeekDayChipHeightFit', () => {
+  test('충분 높이 → full (status+title)', () => {
+    expect(judgeWeekDayChipHeightFit({
+      chipHeight: 64,
+      timeRowHeight: 14,
+      titleRowHeight: 14,
+      statusRowHeight: 14,
+      gapY: 2
+    })).toEqual({
+      heightStage: WEEK_DAY_CHIP_HEIGHT_STAGE.FULL,
+      showStatus: true,
+      showTitle: true
+    });
+  });
+
+  test('상태 줄만 넘치면 hide-status', () => {
+    expect(judgeWeekDayChipHeightFit({
+      chipHeight: 32,
+      timeRowHeight: 14,
+      titleRowHeight: 14,
+      statusRowHeight: 14,
+      gapY: 2
+    })).toEqual({
+      heightStage: WEEK_DAY_CHIP_HEIGHT_STAGE.HIDE_STATUS,
+      showStatus: false,
+      showTitle: true
+    });
+  });
+
+  test('이름 줄도 넘치면 hide-title', () => {
+    expect(judgeWeekDayChipHeightFit({
+      chipHeight: 16,
+      timeRowHeight: 14,
+      titleRowHeight: 14,
+      statusRowHeight: 14,
+      gapY: 2
+    })).toEqual({
+      heightStage: WEEK_DAY_CHIP_HEIGHT_STAGE.HIDE_TITLE,
+      showStatus: false,
+      showTitle: false
+    });
+  });
+
+  test('폭+높이 단계 조합 — judgeWeekDayChipFit 가 둘 다 반환', () => {
+    const fit = judgeWeekDayChipFit({
+      chipWidth: 35,
+      longTimeWidth: 56,
+      shortTimeWidth: 28,
+      badgeWidth: 36,
+      gap: 4,
+      considerBadge: true,
+      chipHeight: 16,
+      timeRowHeight: 14,
+      titleRowHeight: 14,
+      statusRowHeight: 14,
+      gapY: 2
+    });
+    expect(fit.stage).toBe(WEEK_DAY_CHIP_FIT_STAGE.SHORT);
+    expect(fit.showTitle).toBe(false);
+    expect(fit.showStatus).toBe(false);
+  });
+});
+
+describe('buildWeekDayChipA11yLabel + formatNameWithSecondary', () => {
+  test('시간·이름·상태 기본 구성', () => {
+    expect(buildWeekDayChipA11yLabel({
+      timeText: '오전 10:00',
+      clientName: '이내담',
+      statusLabel: '예약됨'
+    })).toBe('오전 10:00 · 이내담 - 예약됨');
+  });
+
+  test('기관연계 포함 — 배지 숨김과 무관하게 showInstitution 시 라벨 유지', () => {
+    expect(buildWeekDayChipA11yLabel({
+      timeText: '10:00',
+      clientName: '이내담',
+      statusLabel: '예약됨',
+      showInstitution: true,
+      institutionLabel: MAPPING_ENGAGEMENT_TYPE_LABELS.INSTITUTION_LINK
+    })).toBe(`10:00 · 이내담 - 예약됨 · ${MAPPING_ENGAGEMENT_TYPE_LABELS.INSTITUTION_LINK}`);
+  });
+
+  test('formatNameWithSecondary — undefined secondary 금지', () => {
+    expect(formatNameWithSecondary('이내담', undefined)).toBe('이내담');
+    expect(formatNameWithSecondary('이내담', '')).toBe('이내담');
+    expect(formatNameWithSecondary('이내담', '이메일')).toBe('이내담 (이메일)');
   });
 });

@@ -23,16 +23,47 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { createRequire } from 'module';
+import { spawnSync } from 'child_process';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '../..');
 /** snap Chromium 은 /tmp 를 못 읽음 — harness 는 레포 루트 하위에 둔다 */
 const HARNESS_DIR = path.join(ROOT, '.tmp-harness');
 const HARNESS_HTML = path.join(HARNESS_DIR, 'mg-engagement-badge-chip-layout.html');
+const WEEK_DAY_CHIP_FIT_SRC = path.join(ROOT, 'frontend/src/utils/weekDayChipFit.js');
+const WEEK_DAY_CHIP_FIT_IIFE = path.join(HARNESS_DIR, 'weekDayChipFit.iife.js');
 const LABEL = '기관연계';
 const SEG_A = LABEL.slice(0, Math.floor(LABEL.length / 2));
 const SEG_B = LABEL.slice(Math.floor(LABEL.length / 2));
 const ALLOWED_LINE_PATTERNS = new Set([LABEL, `${SEG_A}/${SEG_B}`]);
+
+/**
+ * 제품 weekDayChipFit.js 를 IIFE 로 번들 — 판정 로직 복사 금지.
+ *
+ * @returns {string} IIFE 소스
+ */
+function bundleWeekDayChipFitIife() {
+  fs.mkdirSync(HARNESS_DIR, { recursive: true });
+  const result = spawnSync(
+    'npx',
+    [
+      '--yes',
+      'esbuild@0.25.0',
+      WEEK_DAY_CHIP_FIT_SRC,
+      '--bundle',
+      '--format=iife',
+      '--global-name=MgWeekDayChipFit',
+      `--outfile=${WEEK_DAY_CHIP_FIT_IIFE}`
+    ],
+    { cwd: ROOT, encoding: 'utf8' }
+  );
+  if (result.status !== 0) {
+    throw new Error(
+      `esbuild weekDayChipFit 번들 실패: ${result.stderr || result.stdout || result.error}`
+    );
+  }
+  return fs.readFileSync(WEEK_DAY_CHIP_FIT_IIFE, 'utf8');
+}
 
 const MOBILE_VIEWPORT_WIDTH = 390;
 const DESKTOP_VIEWPORT_WIDTH = 1440;
@@ -111,9 +142,13 @@ function inlineStylesheets() {
 }
 
 function buildHarnessHtml() {
+  const chipFitIife = bundleWeekDayChipFitIife();
   return `<!DOCTYPE html>
 <html lang="ko"><head><meta charset="utf-8" />
 ${inlineStylesheets()}
+<script>
+${chipFitIife}
+</script>
 <style>
 :root{--font-size-xs:.75rem;--mg-font-xs:.75rem;--mg-font-size-2xs:.625rem;--mg-radius-full:9999px;--mg-spacing-2:2px;--mg-spacing-8:8px;--mg-spacing-sm:8px;--mg-spacing-xs:4px;--mg-spacing-1:.25rem;--mg-spacing-xl:2rem;--mg-spacing-36:9rem;--mg-badge-status-info-bg:#e8f1fb;--mg-badge-status-info-text:#1d4f91;--mg-v2-color-primary-main:#2f6fed;--mg-v2-color-text-primary:#1a1a1a;--mg-v2-color-text-secondary:#4b5563;--mg-v2-color-neutral-50:#f9fafb;--mg-v2-color-neutral-100:#f3f4f6;--mg-v2-color-neutral-200:#e5e7eb;--mg-v2-color-neutral-500:#6b7280;--mg-v2-color-neutral-600:#4b5563;--mg-v2-border-width-thick:2px;--mg-v2-font-weight-semibold:600;--mg-v2-color-semantic-warning:#b45309;--mg-v2-color-semantic-warning-dark:#92400e;--mg-v2-color-semantic-warning-light:#fef3c7;--mg-v2-color-semantic-success-dark:#166534;--cs-brown-50:#faf8f5;--cs-brown-300:#d4c4b0;--cs-brown-600:#8b6914;--cs-brown-700:#6b4f0f;--mg-text-secondary:#4b5563;--mg-text-primary:#1a1a1a;--mg-secondary-600:#4b5563;--mg-color-text-main:#1a1a1a;--mg-color-text-secondary:#4b5563;--mg-color-border-main:#e5e7eb;--mg-color-background-main:#fff;--mg-color-surface-main:#fff;--mg-color-primary-light:#93c5fd;--mg-color-primary-main:#2f6fed;--mg-primary-700:#1d4ed8;--mg-gray-500:#6b7280;--mg-radius-sm:6px;--mg-month-event-status-color:var(--mg-v2-color-primary-main);--mg-schedule-legend-inline-pad:0}
 body{margin:0;font-family:"Pretendard","Noto Sans KR",sans-serif}
@@ -268,10 +303,14 @@ function readPadTokens(el){
 }
 
 /**
- * products weekDayChipFit.judgeWeekDayChipFit 와 동일 6 stages.
+ * 제품 MgWeekDayChipFit.judgeWeekDayChipFit 직접 호출 (판정 로직 복사 금지).
  * font 는 실제 CSS computed (가정 11px 금지).
  */
 function pickStage(harnessW){
+  const api=globalThis.MgWeekDayChipFit;
+  if(!api || typeof api.judgeWeekDayChipFit!=='function'){
+    throw new Error('MgWeekDayChipFit.judgeWeekDayChipFit missing — product import failed');
+  }
   const probe=ensureFontProbe();
   const timeEl=probe.querySelector('.mg-v2-ad-calendar-event__time-measured');
   const badgeEl=probe.querySelector('.mg-engagement-type-badge');
@@ -284,20 +323,32 @@ function pickStage(harnessW){
   const { normalPadX, compactPadX }=readPadTokens(probe);
   const chipW=Math.max(0, harnessW-normalPadX);
   const compactW=Math.max(0, harnessW-compactPadX);
-  const fits=(need,w)=>w+0.5>=need;
-
-  if(fits(longW+gap+badgeW, chipW)) return {time:'오전 10:00', badge:true, stage:'long+badge', showTime:true, compactPad:false, timeFont, shortW, longW, chipW, compactW};
-  if(fits(longW, chipW)) return {time:'오전 10:00', badge:false, stage:'long', showTime:true, compactPad:false, timeFont, shortW, longW, chipW, compactW};
-  if(fits(shortW+gap+badgeW, chipW)) return {time:'10:00', badge:true, stage:'short+badge', showTime:true, compactPad:false, timeFont, shortW, longW, chipW, compactW};
-  if(fits(shortW, chipW)) return {time:'10:00', badge:false, stage:'short', showTime:true, compactPad:false, timeFont, shortW, longW, chipW, compactW};
-  if(fits(shortW+gap+badgeW, compactW)) return {time:'10:00', badge:true, stage:'compact-pad', showTime:true, compactPad:true, timeFont, shortW, longW, chipW, compactW};
-  if(fits(shortW, compactW)) return {time:'10:00', badge:false, stage:'compact-pad', showTime:true, compactPad:true, timeFont, shortW, longW, chipW, compactW};
+  const judged=api.judgeWeekDayChipFit({
+    chipWidth:chipW,
+    compactChipWidth:compactW,
+    longTimeWidth:longW,
+    shortTimeWidth:shortW,
+    badgeWidth:badgeW,
+    gap,
+    considerBadge:true,
+    chipHeight:HARNESS_H,
+    timeRowHeight:14,
+    titleRowHeight:14,
+    statusRowHeight:14,
+    gapY:2
+  });
+  const time=judged.showTime
+    ? (judged.timeMode==='long' ? '오전 10:00' : '10:00')
+    : '10:00';
   return {
-    time:'10:00',
-    badge:fits(badgeW, compactW),
-    stage:'hide-time',
-    showTime:false,
-    compactPad:true,
+    time,
+    badge:!!judged.showBadge,
+    stage:judged.stage,
+    showTime:!!judged.showTime,
+    compactPad:!!judged.compactPad,
+    showStatus:judged.showStatus!==false,
+    showTitle:judged.showTitle!==false,
+    heightStage:judged.heightStage||'full',
     timeFont, shortW, longW, chipW, compactW
   };
 }
@@ -323,13 +374,23 @@ function weekDayCard(id, stageInfo, displayTimeOverride){
   const compactCls=stageInfo.compactPad?' mg-v2-ad-calendar-event--chip-pad-compact':'';
   const badge=stageInfo.badge?badgeHtml('badge-'+id,'mg-v2-ad-calendar-event__engagement'):'';
   const timeHidden=stageInfo.showTime===false;
+  const showTitle=stageInfo.showTitle!==false;
+  const showStatus=stageInfo.showStatus!==false;
   const a11yTime=displayTime || stageInfo.time;
-  const titleAttr=a11yTime+' · 이내담 - 예약됨';
+  const institutionPart=stageInfo.badge?' · '+LABEL:'';
+  const titleAttr=a11yTime+' · 이내담 - 예약됨'+institutionPart;
   const measureSeed=displayTime || stageInfo.time;
   const timeInner=timeHidden
     ? '<span class="mg-v2-ad-calendar-event__time-text" hidden aria-hidden="true"><span class="mg-v2-ad-calendar-event__time-measured">'+measureSeed+'</span></span>'
     : '<span class="mg-v2-ad-calendar-event__time-text"><span class="mg-v2-ad-calendar-event__time-measured">'+displayTime+'</span></span>';
-  return '<div class="mg-v2-ad-calendar-event mg-v2-ad-calendar-event--week-day-fit'+compactCls+'" id="chip-'+id+'" data-chip-fit-stage="'+stageInfo.stage+'" title="'+titleAttr+'" aria-label="'+titleAttr+'"><div class="mg-v2-ad-calendar-event__time">'+timeInner+badge+'</div><div class="mg-v2-ad-calendar-event__title"><span class="client-name">이내담</span></div><div class="mg-v2-ad-calendar-event__status">예약됨</div></div>';
+  const titleHtml=showTitle
+    ? '<div class="mg-v2-ad-calendar-event__title"><span class="client-name">이내담</span></div>'
+    : '';
+  const statusHtml=showStatus
+    ? '<div class="mg-v2-ad-calendar-event__status">예약됨</div>'
+    : '';
+  const heightStage=stageInfo.heightStage||'full';
+  return '<div class="mg-v2-ad-calendar-event mg-v2-ad-calendar-event--week-day-fit'+compactCls+'" id="chip-'+id+'" data-chip-fit-stage="'+stageInfo.stage+'" data-chip-height-stage="'+heightStage+'" title="'+titleAttr+'" aria-label="'+titleAttr+'"><div class="mg-v2-ad-calendar-event__time">'+timeInner+badge+'</div>'+titleHtml+statusHtml+'</div>';
 }
 
 function legacySiblingCard(id, timeText){
@@ -556,6 +617,38 @@ function measure(chipId,badgeId){
   };
 }
 
+/**
+ * 앞 칩 텍스트가 뒤 칩에 가려지는지 elementFromPoint 로 판정.
+ * 교차 사각형 중앙·시간 텍스트 샘플 포인트에서 상위 칩 id 가 유지되어야 함.
+ */
+function textOcclusionByLaterChip(frontChip, backChip){
+  if(!frontChip||!backChip) return false;
+  const f=frontChip.getBoundingClientRect();
+  const b=backChip.getBoundingClientRect();
+  if(!rectsOverlap(f,b)) return false;
+  const measured=frontChip.querySelector('.mg-v2-ad-calendar-event__time-measured')
+    || frontChip.querySelector('.client-name')
+    || frontChip;
+  const t=measured.getBoundingClientRect();
+  const samples=[
+    {x:(t.left+t.right)/2, y:(t.top+t.bottom)/2},
+    {x:t.left+2, y:t.top+2},
+    {x:Math.min(t.right-2, (f.left+f.right)/2), y:Math.min(t.bottom-2, (f.top+f.bottom)/2)}
+  ];
+  for(const p of samples){
+    if(p.x<f.left||p.x>f.right||p.y<f.top||p.y>f.bottom) continue;
+    if(p.x<b.left||p.x>b.right||p.y<b.top||p.y>b.bottom) continue;
+    const topEl=document.elementFromPoint(p.x, p.y);
+    if(!topEl) continue;
+    if(backChip===topEl || backChip.contains(topEl)){
+      if(!(frontChip===topEl || frontChip.contains(topEl))){
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
 function measurePair(prefix){
   const chipA=document.getElementById('chip-'+prefix+'-a');
   const chipB=document.getElementById('chip-'+prefix+'-b');
@@ -567,6 +660,8 @@ function measurePair(prefix){
   if(!a||!b) return null;
   const hA=ha.getBoundingClientRect(), hB=hb.getBoundingClientRect();
   const cA=chipA.getBoundingClientRect(), cB=chipB.getBoundingClientRect();
+  const textOccludedA=textOcclusionByLaterChip(chipA, chipB);
+  const textOccludedB=textOcclusionByLaterChip(chipB, chipA);
   return {
     a, b,
     harnessH:+hA.height.toFixed(2),
@@ -575,6 +670,9 @@ function measurePair(prefix){
     cardFitsHarnessA:cA.height<=hA.height+0.5,
     cardFitsHarnessB:cB.height<=hB.height+0.5,
     cardsOverlap:rectsOverlap(cA,cB),
+    textOccluded:textOccludedA||textOccludedB,
+    textOccludedA,
+    textOccludedB,
     badgeInTimeA:a.badgeAbsent?true:a.badgeInTime,
     badgeInTimeB:b.badgeAbsent?true:b.badgeInTime,
     hasNegMargin:a.hasNegMargin||b.hasNegMargin,
@@ -737,6 +835,7 @@ function passPair(name, pair, { expectFail = false, requireShortTime = false } =
       reasons.push(`cardH_b ${pair.cardH_b}>harnessH ${pair.harnessH}`);
     }
     if (pair.cardsOverlap) reasons.push('cardsOverlap');
+    if (pair.textOccluded) reasons.push('textOccludedByLaterChip');
     if (pair.hasNegMargin) reasons.push('negMargin');
   } else {
     const failsLegacy =

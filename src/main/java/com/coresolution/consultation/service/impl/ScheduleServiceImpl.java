@@ -4165,8 +4165,14 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         if (tenantId == null || tenantId.isEmpty()) {
             tenantId = TenantContextHolder.getTenantId();
         }
+        com.coresolution.consultation.entity.Client clientEntity = null;
+        if (schedule.getClientId() != null && tenantId != null && !tenantId.isEmpty()) {
+            clientEntity = scheduleListBatchLoader
+                    .loadClientsById(tenantId, java.util.Set.of(schedule.getClientId()))
+                    .get(schedule.getClientId());
+        }
         ScheduleMappingResponseContext mappingContext = ScheduleMappingContextResolver.resolveForScheduleResponse(
-                schedule, tenantId, mappingRepository, mappingLookup);
+                schedule, tenantId, mappingRepository, mappingLookup, clientEntity);
 
         // 누적 = 과거 회기수 + 해당 일정 시점까지의 client lifetime 일정 카운트.
         // 사용자 정의 (2026-06-05): "그 일정 시점의 누적 = 클릭 시점까지 그 내담자가 받은
@@ -4217,7 +4223,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
                 buildVehiclePlateByConsultantId(tenantId, schedules),
                 memoizeCodeName(this::convertScheduleTypeToKorean),
                 memoizeCodeName(this::convertConsultationTypeToKorean));
-        ScheduleMappingResponseContext emptyMappingContext = new ScheduleMappingResponseContext(null, null, null);
+        ScheduleMappingResponseContext emptyMappingContext = ScheduleMappingResponseContext.empty();
 
         List<ScheduleResponse> out = new ArrayList<>(schedules.size());
         for (Schedule schedule : schedules) {
@@ -4322,6 +4328,8 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             .createdAt(schedule.getCreatedAt())
             .updatedAt(schedule.getUpdatedAt())
             .mappingId(mappingContext.getMappingId())
+            .engagementType(mappingContext.getEngagementType())
+            .paymentTiming(mappingContext.getPaymentTiming())
             .totalSessions(mappingContext.getTotalSessions())
             .remainingSessions(mappingContext.getRemainingSessions())
             .sessionSequence(schedule.getSessionSequence())

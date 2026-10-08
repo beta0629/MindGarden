@@ -57,6 +57,8 @@ jobs:
         src/pages/client/shop/__tests__/ClientMallBuyNowNoCartPut.test.js
         src/utils/__tests__/clientMallBuyNow.test.js
         src/utils/__tests__/clientMall.test.js
+        src/utils/__tests__/weekDayChipFit.test.js
+        src/utils/__tests__/safeDisplay.formatNameWithSecondary.test.js
     steps:
       - name: Checkout
         uses: actions/checkout@v4

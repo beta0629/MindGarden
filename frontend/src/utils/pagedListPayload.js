@@ -146,7 +146,23 @@ export function hasMorePagedItems(state) {
   return pageSize > 0 && lastPageCount >= pageSize;
 }
 
+/**
+ * 범위 밖 UI page(1-base) → 마지막 페이지로 보정.
+ *
+ * @param {number} uiPage
+ * @param {number|null|undefined} totalPages
+ * @returns {number}
+ */
+export function clampPagedUiPage(uiPage, totalPages) {
+  const page = Number.isFinite(Number(uiPage)) ? Math.floor(Number(uiPage)) : 1;
+  const safePage = page < 1 ? 1 : page;
+  const tp = Number.isFinite(Number(totalPages)) ? Math.floor(Number(totalPages)) : 1;
+  const safeTotal = tp < 1 ? 1 : tp;
+  return Math.min(safePage, safeTotal);
+}
+
 export default {
   normalizePagedListPayload,
-  hasMorePagedItems
+  hasMorePagedItems,
+  clampPagedUiPage
 };

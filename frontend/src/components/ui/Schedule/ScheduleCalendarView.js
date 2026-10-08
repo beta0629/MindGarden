@@ -65,8 +65,12 @@ const ZOOM_OUT_BUTTON_ID = 'zoomOut';
 /** opacity fade 전용. transform/scale 금지(DnD 히트테스트 보호). --animation-duration-fast(0.15s)와 맞춤 */
 const VIEW_FADE_CLASS = 'mg-v2-schedule-calendar-view--fading';
 const VIEW_FADE_MS = 150;
-/** 일/주 풀 카드 최소 높이(px) — --mg-v2-space-16(4rem)와 정합, 짧은 슬롯 본문 압착 방지 */
-const EVENT_MIN_HEIGHT_PX = 64;
+/**
+ * 일/주 풀 카드 FC eventMinHeight(px).
+ * 64(--mg-v2-space-16) 는 30분 슬롯(~38px)을 넘어 연속 일정 겹침·글자 가림을 유발하므로
+ * 짧은 슬롯 높이 이하로 둔다. 칩은 harness 높이(100%)를 넘지 않게 CSS 로 맞춘다.
+ */
+const EVENT_MIN_HEIGHT_PX = 15;
 
 const prefersReducedMotion = () => {
   if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
@@ -733,6 +737,7 @@ const ScheduleCalendarView = ({
                 droppable={acceptExternalCalendarDrops && isScheduleDropAdminRole(userRole)}
                 height="100%"
                 eventMinHeight={EVENT_MIN_HEIGHT_PX}
+                slotEventOverlap={false}
                 slotMinTime={slotTimeRange.slotMinTime}
                 slotMaxTime={slotTimeRange.slotMaxTime}
                 slotDuration="00:30:00"

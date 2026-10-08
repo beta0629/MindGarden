@@ -1,5 +1,5 @@
 /**
- * 주/일 칩 가용폭 ResizeObserver + 실제 computed font 측정 → judgeWeekDayChipFit.
+ * 주/일 칩 가용폭·높이 ResizeObserver + 실제 computed font 측정 → judgeWeekDayChipFit.
  * DEFAULT_TIME_FONT(11px 등) 가정 금지 — getComputedStyle(timeEl).font 사용.
  *
  * @author CoreSolution
@@ -9,6 +9,7 @@
 import { useLayoutEffect, useState } from 'react';
 import {
   WEEK_DAY_CHIP_FIT_STAGE,
+  WEEK_DAY_CHIP_HEIGHT_STAGE,
   WEEK_DAY_CHIP_TIME_MODE,
   judgeWeekDayChipFit,
   measureTextWidth,
@@ -18,13 +19,17 @@ import {
 
 const DEFAULT_GAP_PX = 4;
 const DEFAULT_BADGE_PAD_X = 8;
+const DEFAULT_GAP_Y_PX = 2;
 
 const INITIAL_FIT = Object.freeze({
   stage: WEEK_DAY_CHIP_FIT_STAGE.SHORT,
   timeMode: WEEK_DAY_CHIP_TIME_MODE.SHORT,
   showBadge: false,
   showTime: true,
-  compactPad: false
+  compactPad: false,
+  heightStage: WEEK_DAY_CHIP_HEIGHT_STAGE.FULL,
+  showStatus: true,
+  showTitle: true
 });
 
 /**
@@ -54,6 +59,18 @@ function resolveBadgeFont(chipEl) {
 }
 
 /**
+ * @param {Element|null} el
+ * @returns {number}
+ */
+function readRowHeight(el) {
+  if (!el) {
+    return 0;
+  }
+  const rect = el.getBoundingClientRect();
+  return rect && Number.isFinite(rect.height) ? rect.height : 0;
+}
+
+/**
  * @param {{
  *   chipRef: { current: Element|null },
  *   timeRef?: { current: Element|null },
@@ -68,7 +85,10 @@ function resolveBadgeFont(chipEl) {
  *   timeMode: 'long'|'short',
  *   showBadge: boolean,
  *   showTime: boolean,
- *   compactPad: boolean
+ *   compactPad: boolean,
+ *   heightStage: string,
+ *   showStatus: boolean,
+ *   showTitle: boolean
  * }}
  */
 export default function useWeekDayChipFit(options) {
@@ -102,6 +122,24 @@ export default function useWeekDayChipFit(options) {
       const outer = el.clientWidth;
       const chipWidth = Math.max(0, outer - normalPadX);
       const compactChipWidth = Math.max(0, outer - compactPadX);
+      // harness(부모) 높이를 가용 높이로 — 숨긴 줄 때문에 chip 이 줄어들며 FULL 로 되돌아가는 플리커 방지
+      const parentH = el.parentElement?.clientHeight || 0;
+      const selfH = el.clientHeight > 0
+        ? el.clientHeight
+        : (el.getBoundingClientRect()?.height || 0);
+      const chipHeight = parentH > 0 ? parentH : selfH;
+
+      const timeRow = el.querySelector('.mg-v2-ad-calendar-event__time');
+      const titleRow = el.querySelector('.mg-v2-ad-calendar-event__title');
+      const statusRow = el.querySelector('.mg-v2-ad-calendar-event__status');
+      const cs = typeof window !== 'undefined' ? window.getComputedStyle(el) : null;
+      const lineH = cs
+        ? (Number.parseFloat(cs.lineHeight) || Number.parseFloat(cs.fontSize) || 14)
+        : 14;
+      // 숨김 행은 getBoundingClientRect=0 → 줄 높이 추정으로 본래 필요 높이 유지
+      const timeRowHeight = readRowHeight(timeRow) || lineH;
+      const titleRowHeight = readRowHeight(titleRow) || lineH;
+      const statusRowHeight = readRowHeight(statusRow) || lineH;
 
       const longTimeWidth = measureTextWidth(longTime, timeFont);
       const shortTimeWidth = measureTextWidth(shortTime, timeFont);
@@ -116,7 +154,12 @@ export default function useWeekDayChipFit(options) {
         shortTimeWidth,
         badgeWidth,
         gap,
-        considerBadge: Boolean(considerBadge && badgeLabel)
+        considerBadge: Boolean(considerBadge && badgeLabel),
+        chipHeight,
+        timeRowHeight,
+        titleRowHeight,
+        statusRowHeight,
+        gapY: DEFAULT_GAP_Y_PX
       }));
     };
 

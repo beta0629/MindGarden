@@ -52,7 +52,10 @@ const CHROME_CANDIDATES = [
   '/usr/local/bin/google-chrome',
   '/usr/bin/google-chrome',
   '/usr/bin/chromium-browser',
-  '/usr/bin/chromium'
+  '/usr/bin/chromium',
+  '/snap/bin/chromium',
+  '/usr/lib/chromium-browser/chromium-browser',
+  '/usr/lib/chromium/chromium'
 ].filter(Boolean);
 
 function findChrome() {

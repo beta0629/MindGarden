@@ -498,9 +498,34 @@ export function buildWeekDayChipA11yLabel(parts = {}) {
   return core;
 }
 
+/** canvas 미사용 시 문자당 추정 폭(px). jsdom/Jest·getContext 실패 fallback. */
+const MEASURE_TEXT_FALLBACK_CHAR_WIDTH = 7;
+
+/**
+ * jsdom/Jest 등 canvas 2d 가 없는 환경 — getContext 호출 자체를 피한다
+ * (jsdom 은 Not implemented 를 console.error 로 출력함).
+ *
+ * @returns {boolean}
+ */
+function isCanvasMeasureUnavailableEnv() {
+  if (typeof process !== 'undefined'
+    && process.env
+    && process.env.JEST_WORKER_ID != null
+    && process.env.JEST_WORKER_ID !== '') {
+    return true;
+  }
+  if (typeof navigator !== 'undefined'
+    && navigator.userAgent
+    && String(navigator.userAgent).includes('jsdom')) {
+    return true;
+  }
+  return false;
+}
+
 /**
  * Canvas 로 텍스트 폭 측정 (DOM 없이 stages 판정용).
  * font 는 호출측이 실제 computed font 를 넘겨야 한다. 가정 11px 금지.
+ * jsdom/Jest 에서는 getContext 를 호출하지 않고 길이 추정 fallback 을 쓴다.
  *
  * @param {string} text
  * @param {string} font CSS font 문자열 (필수에 가깝게 — 미지정 시 길이 추정만)
@@ -510,19 +535,38 @@ export function measureTextWidth(text, font) {
   if (text == null || text === '') {
     return 0;
   }
+  const fallbackWidth = () => String(text).length * MEASURE_TEXT_FALLBACK_CHAR_WIDTH;
+
   if (typeof document === 'undefined') {
-    return String(text).length * 7;
+    return fallbackWidth();
   }
-  const canvas = measureTextWidth._canvas
-    || (measureTextWidth._canvas = document.createElement('canvas'));
-  const ctx = canvas.getContext('2d');
-  if (!ctx) {
-    return String(text).length * 7;
+  // 이전 probe 실패 캐시 — getContext 재호출 금지
+  if (measureTextWidth._canvasUsable === false) {
+    return fallbackWidth();
   }
-  if (font && String(font).trim() !== '') {
-    ctx.font = font;
+  // 첫 호출부터 console.error 방지: Jest/jsdom 은 getContext 자체를 건너뜀
+  if (isCanvasMeasureUnavailableEnv()) {
+    measureTextWidth._canvasUsable = false;
+    return fallbackWidth();
   }
-  return ctx.measureText(String(text)).width;
+
+  try {
+    const canvas = measureTextWidth._canvas
+      || (measureTextWidth._canvas = document.createElement('canvas'));
+    const ctx = canvas.getContext('2d');
+    if (!ctx || typeof ctx.measureText !== 'function') {
+      measureTextWidth._canvasUsable = false;
+      return fallbackWidth();
+    }
+    measureTextWidth._canvasUsable = true;
+    if (font && String(font).trim() !== '') {
+      ctx.font = font;
+    }
+    return ctx.measureText(String(text)).width;
+  } catch (_err) {
+    measureTextWidth._canvasUsable = false;
+    return fallbackWidth();
+  }
 }
 
 /**

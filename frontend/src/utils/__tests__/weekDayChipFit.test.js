@@ -11,6 +11,7 @@ import {
   judgeTitleNameVisibility,
   judgeWeekDayChipFit,
   judgeWeekDayChipHeightFit,
+  measureTextWidth,
   readRowHeight
 } from '../weekDayChipFit';
 import { formatNameWithSecondary } from '../safeDisplay';
@@ -552,5 +553,20 @@ describe('내담자 우선 · showCounselorName', () => {
       considerBadge: true
     });
     expect(fit.showCounselorName).toBe(false);
+  });
+});
+
+describe('measureTextWidth (jsdom)', () => {
+  test('jsdom에서 throw/console.error 없이 숫자(fallback) 반환', () => {
+    const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    let width;
+    expect(() => {
+      width = measureTextWidth('오전 10:00', '400 12px sans-serif');
+    }).not.toThrow();
+    expect(typeof width).toBe('number');
+    expect(Number.isFinite(width)).toBe(true);
+    expect(width).toBe('오전 10:00'.length * 7);
+    expect(errorSpy).not.toHaveBeenCalled();
+    errorSpy.mockRestore();
   });
 });

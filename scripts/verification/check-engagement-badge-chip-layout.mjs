@@ -759,36 +759,40 @@ function measure(chipId,badgeId){
   };
 }
 
-/** 칩 안 시간·이름·상태 줄 — 렌더H vs 글자H(line-height/font-size). 눌림이면 lineCrushed. */
+/** 칩 안 시간·이름·상태 줄 — 글자 노드 렌더H vs line-height/font-size. 눌림이면 lineCrushed. */
 function measureChipRowHeights(chip){
   const api=globalThis.MgWeekDayChipFit;
   const rows=[
-    { key:'time', sel:'.mg-v2-ad-calendar-event__time' },
-    { key:'title', sel:'.mg-v2-ad-calendar-event__title' },
-    { key:'status', sel:'.mg-v2-ad-calendar-event__status' }
+    { key:'time', sel:'.mg-v2-ad-calendar-event__time', textSel:'.mg-v2-ad-calendar-event__time-measured' },
+    { key:'title', sel:'.mg-v2-ad-calendar-event__title', textSel:'.client-name' },
+    { key:'status', sel:'.mg-v2-ad-calendar-event__status', textSel:null }
   ];
   const out={ rows:{}, lineCrushed:false };
-  for(const { key, sel } of rows){
+  for(const { key, sel, textSel } of rows){
     const el=chip.querySelector(sel);
     if(!el){
       out.rows[key]=null;
       continue;
     }
-    const cs=getComputedStyle(el);
+    // 글자 노드 기준(컨테이너 상속 line-height 오탐 방지). 예: title 25.6 vs client-name 13
+    const textEl=(textSel && el.querySelector(textSel)) || el;
+    const cs=getComputedStyle(textEl);
     const fontSize=Number.parseFloat(cs.fontSize)||0;
     let lineH=Number.parseFloat(cs.lineHeight);
     if(!Number.isFinite(lineH)||lineH<=0) lineH=fontSize>0?fontSize*1.2:0;
     const glyphH=Math.max(lineH, fontSize);
-    const renderH=el.getBoundingClientRect().height;
-    const naturalH=(api && typeof api.readRowHeight==='function')
+    const renderH=textEl.getBoundingClientRect().height;
+    const rowNatural=(api && typeof api.readRowHeight==='function')
       ? api.readRowHeight(el)
       : Math.max(glyphH, el.scrollHeight||0);
-    const crushed=renderH+0.5 < glyphH && glyphH>0;
+    // 실제 FAIL 재현: 이름 ~1.8px < font-size. 살짝 작음(line-box)은 허용.
+    const crushed=glyphH>0 && renderH+0.5 < fontSize;
     if(crushed) out.lineCrushed=true;
     out.rows[key]={
       renderH:+renderH.toFixed(2),
       glyphH:+glyphH.toFixed(2),
-      naturalH:+naturalH.toFixed(2),
+      fontSize:+fontSize.toFixed(2),
+      naturalH:+rowNatural.toFixed(2),
       crushed
     };
   }

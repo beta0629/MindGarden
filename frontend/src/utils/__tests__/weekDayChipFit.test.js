@@ -1,11 +1,13 @@
 /**
  * judgeWeekDayChipFit — time-first stages (incl. compact-pad / hide-time) + height stages
+ * (full → hide-status → merge-time-title → hide-title) + 빈 칩 금지
  */
 import {
   WEEK_DAY_CHIP_FIT_STAGE,
   WEEK_DAY_CHIP_HEIGHT_STAGE,
   WEEK_DAY_CHIP_TIME_MODE,
   buildWeekDayChipA11yLabel,
+  enforceNonEmptyChipVisible,
   judgeWeekDayChipFit,
   judgeWeekDayChipHeightFit
 } from '../weekDayChipFit';
@@ -15,7 +17,8 @@ import { MAPPING_ENGAGEMENT_TYPE_LABELS } from '../../constants/mappingEngagemen
 const HEIGHT_FULL = {
   heightStage: WEEK_DAY_CHIP_HEIGHT_STAGE.FULL,
   showStatus: true,
-  showTitle: true
+  showTitle: true,
+  mergeTimeTitle: false
 };
 
 describe('judgeWeekDayChipFit', () => {
@@ -200,7 +203,8 @@ describe('judgeWeekDayChipHeightFit', () => {
     })).toEqual({
       heightStage: WEEK_DAY_CHIP_HEIGHT_STAGE.FULL,
       showStatus: true,
-      showTitle: true
+      showTitle: true,
+      mergeTimeTitle: false
     });
   });
 
@@ -214,13 +218,29 @@ describe('judgeWeekDayChipHeightFit', () => {
     })).toEqual({
       heightStage: WEEK_DAY_CHIP_HEIGHT_STAGE.HIDE_STATUS,
       showStatus: false,
-      showTitle: true
+      showTitle: true,
+      mergeTimeTitle: false
     });
   });
 
-  test('이름 줄도 넘치면 hide-title', () => {
+  test('두 줄은 부족·한 줄은 가능 → merge-time-title', () => {
     expect(judgeWeekDayChipHeightFit({
-      chipHeight: 16,
+      chipHeight: 18,
+      timeRowHeight: 14,
+      titleRowHeight: 14,
+      statusRowHeight: 14,
+      gapY: 2
+    })).toEqual({
+      heightStage: WEEK_DAY_CHIP_HEIGHT_STAGE.MERGE_TIME_TITLE,
+      showStatus: false,
+      showTitle: true,
+      mergeTimeTitle: true
+    });
+  });
+
+  test('한 줄 merge 도 넘치면 hide-title', () => {
+    expect(judgeWeekDayChipHeightFit({
+      chipHeight: 10,
       timeRowHeight: 14,
       titleRowHeight: 14,
       statusRowHeight: 14,
@@ -228,7 +248,8 @@ describe('judgeWeekDayChipHeightFit', () => {
     })).toEqual({
       heightStage: WEEK_DAY_CHIP_HEIGHT_STAGE.HIDE_TITLE,
       showStatus: false,
-      showTitle: false
+      showTitle: false,
+      mergeTimeTitle: false
     });
   });
 
@@ -240,7 +261,7 @@ describe('judgeWeekDayChipHeightFit', () => {
       badgeWidth: 36,
       gap: 4,
       considerBadge: true,
-      chipHeight: 16,
+      chipHeight: 10,
       timeRowHeight: 14,
       titleRowHeight: 14,
       statusRowHeight: 14,
@@ -249,6 +270,60 @@ describe('judgeWeekDayChipHeightFit', () => {
     expect(fit.stage).toBe(WEEK_DAY_CHIP_FIT_STAGE.SHORT);
     expect(fit.showTitle).toBe(false);
     expect(fit.showStatus).toBe(false);
+    expect(fit.showTime).toBe(true);
+  });
+
+  test('merge-time-title 단계가 judgeWeekDayChipFit 결과에 포함', () => {
+    const fit = judgeWeekDayChipFit({
+      chipWidth: 80,
+      longTimeWidth: 56,
+      shortTimeWidth: 28,
+      badgeWidth: 36,
+      gap: 4,
+      considerBadge: true,
+      chipHeight: 18,
+      timeRowHeight: 14,
+      titleRowHeight: 14,
+      statusRowHeight: 14,
+      gapY: 2
+    });
+    expect(fit.heightStage).toBe(WEEK_DAY_CHIP_HEIGHT_STAGE.MERGE_TIME_TITLE);
+    expect(fit.mergeTimeTitle).toBe(true);
+    expect(fit.showTitle).toBe(true);
+    expect(fit.showTime).toBe(true);
+    expect(fit.showStatus).toBe(false);
+  });
+});
+
+describe('빈 칩 금지 lock', () => {
+  test('hide-time + hide-title 조합이면 이름 강제', () => {
+    const enforced = enforceNonEmptyChipVisible({
+      stage: WEEK_DAY_CHIP_FIT_STAGE.HIDE_TIME,
+      showTime: false,
+      showTitle: false,
+      mergeTimeTitle: false,
+      heightStage: WEEK_DAY_CHIP_HEIGHT_STAGE.HIDE_TITLE
+    });
+    expect(enforced.showTime || enforced.showTitle).toBe(true);
+    expect(enforced.showTitle).toBe(true);
+  });
+
+  test('judgeWeekDayChipFit 은 어떤 입력에서도 빈 칩을 반환하지 않는다', () => {
+    const fit = judgeWeekDayChipFit({
+      chipWidth: 8,
+      compactChipWidth: 10,
+      longTimeWidth: 56,
+      shortTimeWidth: 28,
+      badgeWidth: 36,
+      gap: 4,
+      considerBadge: true,
+      chipHeight: 8,
+      timeRowHeight: 14,
+      titleRowHeight: 14,
+      statusRowHeight: 14,
+      gapY: 2
+    });
+    expect(fit.showTime || fit.showTitle).toBe(true);
   });
 });
 

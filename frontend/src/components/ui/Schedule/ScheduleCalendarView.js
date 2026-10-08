@@ -67,10 +67,11 @@ const VIEW_FADE_CLASS = 'mg-v2-schedule-calendar-view--fading';
 const VIEW_FADE_MS = 150;
 /**
  * 일/주 풀 카드 FC eventMinHeight(px).
- * 64(--mg-v2-space-16) 는 30분 슬롯(~38px)을 넘어 연속 일정 겹침·글자 가림을 유발하므로
- * 짧은 슬롯 높이 이하로 둔다. 칩은 harness 높이(100%)를 넘지 않게 CSS 로 맞춘다.
+ * CSS `--mg-v2-calendar-event-min-height`(→ `--mg-v2-space-4` = 1rem) 과 동기.
+ * 슬롯 min-height(`--mg-v2-calendar-slot-min-height`→space-8) 상향 후
+ * 15분 자연 높이(≈16px)를 넘지 않게 두어 연속 일정 겹침·글자 가림을 막는다.
  */
-const EVENT_MIN_HEIGHT_PX = 15;
+const EVENT_MIN_HEIGHT_PX = 16;
 
 const prefersReducedMotion = () => {
   if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {

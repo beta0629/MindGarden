@@ -91,6 +91,7 @@ import com.coresolution.core.service.impl.BaseTenantEntityServiceImpl;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -2624,12 +2625,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         List<Schedule> schedules = findSchedulesByUserRoleAndDate(userId, userRole, date);
         Map<String, ConsultantClientMapping> mappingLookup =
                 ScheduleMappingContextResolver.buildActiveOrExhaustedMappingLookup(tenantId, mappingRepository);
-        Map<Long, String> vehiclePlateByClientId = buildVehiclePlateByClientId(tenantId, schedules);
-        Map<Long, String> vehiclePlateByConsultantId = buildVehiclePlateByConsultantId(tenantId, schedules);
-        return schedules.stream()
-            .map(schedule -> convertToScheduleDto(
-                    schedule, mappingLookup, vehiclePlateByClientId, vehiclePlateByConsultantId))
-            .collect(java.util.stream.Collectors.toList());
+        return convertToScheduleDtosBatched(tenantId, schedules, mappingLookup);
     }
 
     @Override
@@ -2639,12 +2635,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         List<Schedule> schedules = findSchedulesByUserRoleAndDateBetween(userId, userRole, startDate, endDate);
         Map<String, ConsultantClientMapping> mappingLookup =
                 ScheduleMappingContextResolver.buildActiveOrExhaustedMappingLookup(tenantId, mappingRepository);
-        Map<Long, String> vehiclePlateByClientId = buildVehiclePlateByClientId(tenantId, schedules);
-        Map<Long, String> vehiclePlateByConsultantId = buildVehiclePlateByConsultantId(tenantId, schedules);
-        return schedules.stream()
-            .map(schedule -> convertToScheduleDto(
-                    schedule, mappingLookup, vehiclePlateByClientId, vehiclePlateByConsultantId))
-            .collect(java.util.stream.Collectors.toList());
+        return convertToScheduleDtosBatched(tenantId, schedules, mappingLookup);
     }
 
     @Override
@@ -3979,13 +3970,9 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
 
         Map<String, ConsultantClientMapping> mappingLookup =
                 ScheduleMappingContextResolver.buildActiveOrExhaustedMappingLookup(tenantId, mappingRepository);
-        Map<Long, String> vehiclePlateByClientId =
-                buildVehiclePlateByClientId(tenantId, schedulePage.getContent());
-        Map<Long, String> vehiclePlateByConsultantId =
-                buildVehiclePlateByConsultantId(tenantId, schedulePage.getContent());
-        return schedulePage.map(schedule ->
-                convertToScheduleDto(
-                        schedule, mappingLookup, vehiclePlateByClientId, vehiclePlateByConsultantId));
+        List<ScheduleResponse> dtos = convertToScheduleDtosBatched(
+                tenantId, schedulePage.getContent(), mappingLookup);
+        return new PageImpl<>(dtos, schedulePage.getPageable(), schedulePage.getTotalElements());
     }
 
     /**

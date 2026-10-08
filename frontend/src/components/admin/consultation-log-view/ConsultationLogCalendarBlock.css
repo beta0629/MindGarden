@@ -14,15 +14,15 @@
 .mg-v2-content-card.mg-v2-consultation-log-calendar-block__card,
 .mg-v2-consultation-log-calendar-block__card {
   min-height: 36rem;
-  border: 1px solid var(--mg-v2-color-border-default);
+  border: var(--mg-v2-border-width-thin) solid var(--mg-v2-consultant-border-card);
   border-radius: var(--mg-v2-radius-lg);
-  background: var(--mg-v2-color-neutral-50);
+  background: var(--mg-v2-consultant-surface-card);
   box-shadow: none;
   border-left: none !important;
 }
 
 .mg-v2-consultation-log-calendar-wrapper {
-  background: var(--mg-v2-color-neutral-50);
+  background: var(--mg-v2-consultant-surface-card);
   border-radius: var(--mg-v2-radius-md);
   padding: var(--mg-v2-space-4, 1rem);
 }
@@ -35,11 +35,11 @@
 .mg-v2-consultation-log-calendar-wrapper .fc-theme-standard .fc-scrollgrid,
 .mg-v2-consultation-log-calendar-wrapper .fc-theme-standard td,
 .mg-v2-consultation-log-calendar-wrapper .fc-theme-standard th {
-  border-color: var(--mg-v2-color-border-default);
+  border-color: var(--mg-v2-consultant-border-card);
 }
 
 .mg-v2-consultation-log-calendar-wrapper .fc-col-header-cell {
-  background: var(--mg-v2-color-neutral-100);
+  background: var(--mg-v2-consultant-chip-neutral-bg);
   padding: var(--mg-v2-space-2, 0.5rem) 0;
   font-weight: var(--mg-v2-font-weight-semibold, 600);
   color: var(--mg-v2-color-text-secondary);
@@ -58,7 +58,7 @@
 .mg-v2-consultation-log-calendar-wrapper .fc-event {
   border-radius: var(--mg-v2-radius-md);
   border-color: transparent;
-  color: var(--mg-v2-color-neutral-50);
+  color: var(--mg-v2-color-text-inverse);
   padding: var(--mg-v2-space-1, 0.25rem) var(--mg-v2-space-2, 0.5rem);
   font-size: var(--mg-v2-font-size-caption, 0.75rem);
   font-weight: var(--mg-v2-font-weight-semibold, 600);
@@ -73,9 +73,9 @@
 }
 
 .mg-v2-consultation-log-calendar-wrapper .fc-button-primary {
-  background: var(--mg-v2-color-neutral-50) !important;
+  background: var(--mg-v2-consultant-surface-card) !important;
   color: var(--mg-v2-color-text-secondary) !important;
-  border: 1px solid var(--mg-v2-color-border-default) !important;
+  border: var(--mg-v2-border-width-thin) solid var(--mg-v2-consultant-border-card) !important;
   text-transform: capitalize;
   font-weight: var(--mg-v2-font-weight-semibold, 600);
   border-radius: var(--mg-v2-radius-md) !important;
@@ -84,7 +84,7 @@
 }
 
 .mg-v2-consultation-log-calendar-wrapper .fc-button-primary:hover {
-  background: var(--mg-v2-color-neutral-100) !important;
+  background: var(--mg-v2-consultant-chip-neutral-bg) !important;
   color: var(--mg-v2-color-text-primary) !important;
 }
 
@@ -133,8 +133,8 @@
   z-index: 1100;
   min-width: 12.5rem;
   max-width: 20rem;
-  background: var(--mg-v2-color-neutral-50);
-  border: 1px solid var(--mg-v2-color-border-default);
+  background: var(--mg-v2-consultant-surface-card);
+  border: var(--mg-v2-border-width-thin) solid var(--mg-v2-consultant-border-card);
   border-radius: var(--mg-v2-radius-md);
   box-shadow: none;
   padding: var(--mg-v2-space-3, 0.75rem) 0;
@@ -145,7 +145,7 @@
   font-weight: var(--mg-v2-font-weight-semibold, 600);
   color: var(--mg-v2-color-text-secondary);
   padding: 0 var(--mg-v2-space-4, 1rem) var(--mg-v2-space-2, 0.5rem);
-  border-bottom: 1px solid var(--mg-v2-color-border-default);
+  border-bottom: var(--mg-v2-border-width-thin) solid var(--mg-v2-consultant-border-card);
   margin-bottom: var(--mg-v2-space-1, 0.25rem);
 }
 

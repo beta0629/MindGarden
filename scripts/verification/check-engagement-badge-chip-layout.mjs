@@ -76,12 +76,16 @@ const DAY_COL_MOBILE = 320;
 /** 겹침 열 half-width — 「11:00」→「11:0」 FAIL 재현 폭 */
 const WEEK_CHIP_HALF = 34.8;
 
-const SLOT_30_MIN_PX = 38.4;
+/** space-8(2rem) 슬롯 하한과 동기 — 하드코딩 상수가 아니라 토큰 rem→px(16*2) */
+const SLOT_30_MIN_PX = 32;
 const EVENT_50_MIN_HARNESS_PX = (50 / 30) * SLOT_30_MIN_PX;
+const EVENT_30_MIN_HARNESS_PX = SLOT_30_MIN_PX;
+const EVENT_15_MIN_HARNESS_PX = (15 / 30) * SLOT_30_MIN_PX;
 const GAP_10_MIN_PX = (10 / 30) * SLOT_30_MIN_PX;
 
 const HARNESS_CSS_REL_PATHS = [
   'frontend/src/styles/tokens/design-v2-tokens.css',
+  'frontend/src/styles/tokens/design-v2-tokens-refine.css',
   'frontend/src/styles/unified-design-tokens.css',
   'frontend/src/components/common/Badge.css',
   'frontend/src/components/common/EngagementTypeBadge.css',
@@ -179,6 +183,14 @@ body{margin:0;font-family:"Pretendard","Noto Sans KR",sans-serif}
   <div class="lab">half-width 34.8 consecutive overlap column (10:00–10:50 + 11:00)</div>
   <div class="row" id="half-row"></div>
 </div>
+<div class="sec" id="sec-dur-desktop" style="width:100%;box-sizing:border-box">
+  <div class="lab">duration stack 50·30·15 (desktop 1440 week/day widths)</div>
+  <div class="row" id="dur-desktop-row"></div>
+</div>
+<div class="sec" id="sec-dur-mobile" style="width:100%;box-sizing:border-box">
+  <div class="lab">duration stack 50·30·15 (390 week/day)</div>
+  <div class="row" id="dur-mobile-row"></div>
+</div>
 <div class="sec" id="sec-legacy-fail" style="width:100%;box-sizing:border-box">
   <div class="lab">legacy sibling badge (expect FAIL metrics)</div>
   <div class="row" id="legacy-fail-row"></div>
@@ -227,6 +239,8 @@ const DAY_DESKTOP=${DAY_COL_DESKTOP};
 const DAY_MOBILE=${DAY_COL_MOBILE};
 const WEEK_HALF=${WEEK_CHIP_HALF};
 const HARNESS_H=${EVENT_50_MIN_HARNESS_PX};
+const HARNESS_H30=${EVENT_30_MIN_HARNESS_PX};
+const HARNESS_H15=${EVENT_15_MIN_HARNESS_PX};
 const GAP_H=${GAP_10_MIN_PX};
 const LEGACY_TIME_FONT='600 11px "Pretendard", "Noto Sans KR", sans-serif';
 
@@ -348,8 +362,51 @@ function pickStage(harnessW){
     compactPad:!!judged.compactPad,
     showStatus:judged.showStatus!==false,
     showTitle:judged.showTitle!==false,
+    mergeTimeTitle:!!judged.mergeTimeTitle,
     heightStage:judged.heightStage||'full',
     timeFont, shortW, longW, chipW, compactW
+  };
+}
+
+function pickStageForHeight(harnessW, chipH){
+  const base=pickStage(harnessW);
+  const api=globalThis.MgWeekDayChipFit;
+  const probe=ensureFontProbe();
+  const timeEl=probe.querySelector('.mg-v2-ad-calendar-event__time-measured');
+  const badgeEl=probe.querySelector('.mg-engagement-type-badge');
+  const timeFont=resolveFont(timeEl);
+  const badgeFont=resolveFont(badgeEl)||timeFont;
+  const longW=measureText('오전 10:00', timeFont);
+  const shortW=measureText('10:00', timeFont);
+  const badgeW=measureText(LABEL, badgeFont)+8;
+  const { normalPadX, compactPadX }=readPadTokens(probe);
+  const chipW=Math.max(0, harnessW-normalPadX);
+  const compactW=Math.max(0, harnessW-compactPadX);
+  const judged=api.judgeWeekDayChipFit({
+    chipWidth:chipW,
+    compactChipWidth:compactW,
+    longTimeWidth:longW,
+    shortTimeWidth:shortW,
+    badgeWidth:badgeW,
+    gap:4,
+    considerBadge:true,
+    chipHeight:chipH,
+    timeRowHeight:14,
+    titleRowHeight:14,
+    statusRowHeight:14,
+    gapY:2
+  });
+  return {
+    ...base,
+    time:judged.showTime ? (judged.timeMode==='long' ? '오전 10:00' : '10:00') : '10:00',
+    badge:!!judged.showBadge,
+    stage:judged.stage,
+    showTime:!!judged.showTime,
+    compactPad:!!judged.compactPad,
+    showStatus:judged.showStatus!==false,
+    showTitle:judged.showTitle!==false,
+    mergeTimeTitle:!!judged.mergeTimeTitle,
+    heightStage:judged.heightStage||'full'
   };
 }
 
@@ -372,6 +429,7 @@ function legacyPickStage11px(harnessW){
 function weekDayCard(id, stageInfo, displayTimeOverride){
   const displayTime=displayTimeOverride!=null?displayTimeOverride:stageInfo.time;
   const compactCls=stageInfo.compactPad?' mg-v2-ad-calendar-event--chip-pad-compact':'';
+  const mergeCls=stageInfo.mergeTimeTitle?' mg-v2-ad-calendar-event--merge-time-title':'';
   const badge=stageInfo.badge?badgeHtml('badge-'+id,'mg-v2-ad-calendar-event__engagement'):'';
   const timeHidden=stageInfo.showTime===false;
   const showTitle=stageInfo.showTitle!==false;
@@ -390,7 +448,11 @@ function weekDayCard(id, stageInfo, displayTimeOverride){
     ? '<div class="mg-v2-ad-calendar-event__status">예약됨</div>'
     : '';
   const heightStage=stageInfo.heightStage||'full';
-  return '<div class="mg-v2-ad-calendar-event mg-v2-ad-calendar-event--week-day-fit'+compactCls+'" id="chip-'+id+'" data-chip-fit-stage="'+stageInfo.stage+'" data-chip-height-stage="'+heightStage+'" title="'+titleAttr+'" aria-label="'+titleAttr+'"><div class="mg-v2-ad-calendar-event__time">'+timeInner+badge+'</div>'+titleHtml+statusHtml+'</div>';
+  const timeBlock='<div class="mg-v2-ad-calendar-event__time">'+timeInner+badge+'</div>';
+  const body=stageInfo.mergeTimeTitle
+    ? '<div class="mg-v2-ad-calendar-event__merge-row">'+timeBlock+titleHtml+'</div>'
+    : timeBlock+titleHtml;
+  return '<div class="mg-v2-ad-calendar-event mg-v2-ad-calendar-event--week-day-fit'+compactCls+mergeCls+'" id="chip-'+id+'" data-chip-fit-stage="'+stageInfo.stage+'" data-chip-height-stage="'+heightStage+'" title="'+titleAttr+'" aria-label="'+titleAttr+'">'+body+statusHtml+'</div>';
 }
 
 function legacySiblingCard(id, timeText){
@@ -423,6 +485,28 @@ function consecutiveStack(w, idPrefix, useLegacy){
 function fitChip(w,id){
   const stage=pickStage(w);
   return '<div><div class="lab">fit'+w+' '+stage.stage+'</div><div class="harness" style="width:'+w+'px;height:'+HARNESS_H+'px"><div class="fc-timegrid-event-harness" style="position:relative;height:100%">'+weekDayCard(id, stage)+'</div></div></div>';
+}
+
+/** 연속 50·30·15분 스택 — 실제 높이 측정·빈칩·겹침 검사 */
+function durationStack(w, idPrefix){
+  const h50=HARNESS_H;
+  const h30=HARNESS_H30;
+  const h15=HARNESS_H15;
+  const top30=h50+GAP_H;
+  const top15=top30+h30+GAP_H;
+  const stackH=top15+h15;
+  const s50=pickStageForHeight(w, h50);
+  const s30=pickStageForHeight(w, h30);
+  const s15=pickStageForHeight(w, h15);
+  const c50=weekDayCard(idPrefix+'-50', s50, s50.time);
+  const c30=weekDayCard(idPrefix+'-30', s30, s30.time.replace('10:','11:').replace('오전 10','오전 11'));
+  const c15=weekDayCard(idPrefix+'-15', s15, s15.time.replace('10:','12:').replace('오전 10','오후 12'));
+  return '<div><div class="lab">'+idPrefix+' w'+w+' dur50/30/15 '+s50.heightStage+'/'+s30.heightStage+'/'+s15.heightStage+'</div>'
+    +'<div class="slot-stack harness" style="width:'+w+'px;height:'+stackH+'px">'
+    +'<div class="fc-timegrid-event-harness" id="harness-'+idPrefix+'-50" style="top:0;height:'+h50+'px">'+c50+'</div>'
+    +'<div class="fc-timegrid-event-harness" id="harness-'+idPrefix+'-30" style="top:'+top30+'px;height:'+h30+'px">'+c30+'</div>'
+    +'<div class="fc-timegrid-event-harness" id="harness-'+idPrefix+'-15" style="top:'+top15+'px;height:'+h15+'px">'+c15+'</div>'
+    +'</div></div>';
 }
 
 function halfWidthOverlapStack(){
@@ -466,6 +550,14 @@ document.getElementById('mobile-day-row').innerHTML=[
 document.getElementById('fit-row').innerHTML=[35,73.5,78,124,390,WEEK_HALF].map(w=>fitChip(w,'fit'+String(w).replace('.','p'))).join('');
 document.getElementById('half-row').innerHTML=halfWidthOverlapStack();
 document.getElementById('legacy-fail-row').innerHTML=[consecutiveStack(WEEK_COLLAPSED,'legacy',true)].join('');
+document.getElementById('dur-desktop-row').innerHTML=[
+  durationStack(WEEK_OPEN,'dur-wopen'),
+  durationStack(DAY_DESKTOP,'dur-ddesk')
+].join('');
+document.getElementById('dur-mobile-row').innerHTML=[
+  durationStack(390,'dur-w390'),
+  durationStack(DAY_MOBILE,'dur-dmob')
+].join('');
 
 function linePattern(badge){
   const segs=[...badge.querySelectorAll('.mg-engagement-type-badge__seg')];
@@ -518,6 +610,28 @@ function adjacentOverlapCount(chip){
   return n;
 }
 
+/** 칩에 실제로 보이는 텍스트 글자 수(시간·이름·상태). 0이면 빈 칩. */
+function visibleChipTextCount(chip){
+  if(!chip) return 0;
+  let count=0;
+  const selectors=[
+    '.mg-v2-ad-calendar-event__time-measured',
+    '.client-name',
+    '.mg-v2-ad-calendar-event__status'
+  ];
+  for(const sel of selectors){
+    const el=chip.querySelector(sel);
+    if(!el) continue;
+    const wrap=el.closest('.mg-v2-ad-calendar-event__time-text');
+    if(wrap && wrap.hasAttribute('hidden')) continue;
+    const text=String(el.textContent||'').replace(/\\s+/g,'').trim();
+    if(!text) continue;
+    const r=el.getBoundingClientRect();
+    if(r.width>0.5 && r.height>0.5) count+=text.length;
+  }
+  return count;
+}
+
 function visibleTimeMode(chip){
   const stage=chip.getAttribute('data-chip-fit-stage')||'';
   const measured=chip.querySelector('.mg-v2-ad-calendar-event__time-measured');
@@ -567,6 +681,7 @@ function measureChipTimeOnly(chipId){
       chipW:+c.width.toFixed(2), chipH:+c.height.toFixed(2),
       badgeAbsent:true,
       visibleChars:0,
+      visibleChipText:visibleChipTextCount(chip),
       linePattern:'',
       linePatternOk:true,
       badgeInTitle:false,
@@ -613,8 +728,50 @@ function measure(chipId,badgeId){
     segCount:badge.querySelectorAll('.mg-engagement-type-badge__seg').length,
     adjacentOverlap:adjacentOverlapCount(chip),
     badgeAbsent:false,
+    visibleChipText:visibleChipTextCount(chip),
     ...timeMode
   };
+}
+
+function measureDurationStack(prefix){
+  const parts=['50','30','15'];
+  const out={ parts:{} };
+  let empty=false;
+  let overflow=false;
+  let overlap=false;
+  const rects=[];
+  for(const p of parts){
+    const chip=document.getElementById('chip-'+prefix+'-'+p);
+    const harness=document.getElementById('harness-'+prefix+'-'+p);
+    if(!chip||!harness){
+      out.parts[p]=null;
+      empty=true;
+      continue;
+    }
+    const m=measureChipTimeOnly('chip-'+prefix+'-'+p);
+    const h=harness.getBoundingClientRect();
+    const c=chip.getBoundingClientRect();
+    const fits=c.height<=h.height+0.5;
+    if(!fits) overflow=true;
+    if((m.visibleChipText||0)<=0) empty=true;
+    rects.push(c);
+    out.parts[p]={
+      ...m,
+      harnessH:+h.height.toFixed(2),
+      cardH:+c.height.toFixed(2),
+      cardFitsHarness:fits,
+      heightStage:chip.getAttribute('data-chip-height-stage')||''
+    };
+  }
+  for(let i=0;i<rects.length;i++){
+    for(let j=i+1;j<rects.length;j++){
+      if(rectsOverlap(rects[i], rects[j])) overlap=true;
+    }
+  }
+  out.emptyChip=empty;
+  out.overflow=overflow;
+  out.cardsOverlap=overlap;
+  return out;
 }
 
 /**
@@ -728,6 +885,8 @@ window.__collectDesktop=function(){
     fit34p8:measureChipTimeOnly('chip-fit34p8'),
     halfPair:measurePair('half'),
     halfLegacyFail:measureLegacyHalfFail(),
+    durWopen:measureDurationStack('dur-wopen'),
+    durDdesk:measureDurationStack('dur-ddesk'),
     legend:{
       titleLeft:+document.getElementById('legend-title').getBoundingClientRect().left.toFixed(2),
       marksLeft:+document.getElementById('legend-marks').getBoundingClientRect().left.toFixed(2),
@@ -743,6 +902,8 @@ window.__collectMobile=function(){
     mobileWeek40:measureChipTimeOnly('chip-mw40'),
     dayMob390:measurePair('dmob'),
     weekDay390:measurePair('w390'),
+    durW390:measureDurationStack('dur-w390'),
+    durDmob:measureDurationStack('dur-dmob'),
     sidebar:measure('sidebar-row','badge-sidebar'),
     mapping:measure('mapping-card','badge-mapping'),
     detail:measure('detail-wrap','badge-detail')
@@ -774,10 +935,13 @@ function passFitChip(name, m) {
   const reasons = [];
   if (!m.timeFullVisible) reasons.push(`timeTruncated=${m.timeText}`);
   if (!m.timeScrollOk) reasons.push('timeScrollOverflow');
+  if ((m.visibleChipText || 0) <= 0) reasons.push('emptyChip');
   if (m.timeHidden) {
     // hide-time: aria/title must still carry full time
     const a11y = `${m.ariaLabel || ''} ${m.titleAttr || ''}`;
     if (!/\d{1,2}:\d{2}/.test(a11y)) reasons.push('hideTimeMissingA11y');
+    // hide-time 이어도 이름 등 가시 텍스트 필수
+    if ((m.visibleChipText || 0) <= 0) reasons.push('hideTimeEmptyVisible');
   } else if (m.timeText) {
     // visible text must equal full short/long chosen (no 「11:0」)
     if (/^\d{1,2}:\d$/.test(m.timeText)) reasons.push(`truncatedShort=${m.timeText}`);
@@ -794,6 +958,32 @@ function passFitChip(name, m) {
   }
   if (m.adjacentOverlap > 0) reasons.push(`adjacentOverlap=${m.adjacentOverlap}`);
   return { name, ok: reasons.length === 0, reason: reasons.join('; ') || 'ok', metrics: m };
+}
+
+function passDurationStack(name, stack) {
+  if (!stack) return { name, ok: false, reason: 'missing' };
+  const reasons = [];
+  if (stack.emptyChip) reasons.push('emptyChip');
+  if (stack.overflow) reasons.push('cardOverflowHarness');
+  if (stack.cardsOverlap) reasons.push('cardsOverlap');
+  for (const key of ['50', '30', '15']) {
+    const p = stack.parts?.[key];
+    if (!p) {
+      reasons.push(`missing${key}`);
+      continue;
+    }
+    if ((p.visibleChipText || 0) <= 0) reasons.push(`${key}.emptyChip`);
+    if (!p.cardFitsHarness) reasons.push(`${key}.overflow`);
+    if (!p.timeFullVisible && !p.timeHidden) reasons.push(`${key}.timeTruncated`);
+    const a11y = `${p.ariaLabel || ''} ${p.titleAttr || ''}`;
+    if (!/\d{1,2}:\d{2}/.test(a11y)) reasons.push(`${key}.missingA11yTime`);
+  }
+  // 50분(≈53px) 은 시간+이름 두 줄(full 또는 hide-status) 기대
+  const p50 = stack.parts?.['50'];
+  if (p50 && !['full', 'hide-status'].includes(p50.heightStage)) {
+    reasons.push(`50.heightStage=${p50.heightStage}`);
+  }
+  return { name, ok: reasons.length === 0, reason: reasons.join('; ') || 'ok', metrics: stack };
 }
 
 function passPair(name, pair, { expectFail = false, requireShortTime = false } = {}) {
@@ -828,6 +1018,8 @@ function passPair(name, pair, { expectFail = false, requireShortTime = false } =
   if (!expectFail) {
     checkCard('a', pair.a);
     checkCard('b', pair.b);
+    if ((pair.a?.visibleChipText || 0) <= 0) reasons.push('a.emptyChip');
+    if ((pair.b?.visibleChipText || 0) <= 0) reasons.push('b.emptyChip');
     if (!pair.cardFitsHarnessA) {
       reasons.push(`cardH_a ${pair.cardH_a}>harnessH ${pair.harnessH}`);
     }
@@ -953,6 +1145,10 @@ async function main() {
       passFitChip('fit34p8', metrics.fit34p8),
       passPair('half34p8', metrics.halfPair),
       passHalfLegacyFail('half34p8LegacyWouldFail', metrics.halfLegacyFail),
+      passDurationStack('durWopen1440', metrics.durWopen),
+      passDurationStack('durDdesk1440', metrics.durDdesk),
+      passDurationStack('durW390', metrics.durW390),
+      passDurationStack('durDmob390', metrics.durDmob),
       passCase('sidebar390', metrics.sidebar),
       passCase('mapping390', metrics.mapping),
       passCase('detail390', metrics.detail)

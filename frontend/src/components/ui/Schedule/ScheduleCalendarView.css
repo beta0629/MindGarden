@@ -5,6 +5,20 @@
     z-index: 1;
     /* 뷰 전환: opacity만. transform/scale/zoom 금지(DnD 히트테스트 보호) */
     transition: opacity var(--animation-duration-fast) var(--animation-easing-out);
+    /*
+     * timegrid 슬롯·이벤트 최소 높이 — 토큰만 사용(하드코딩 px 금지).
+     * space-8(2rem) → 30분 슬롯 ≈32px → 50분 ≈53px 로 시간+이름 두 줄 확보.
+     * event-min = space-4(1rem) → FC eventMinHeight 16 과 동기.
+     */
+    --mg-v2-calendar-slot-min-height: var(--mg-v2-space-8);
+    --mg-v2-calendar-event-min-height: var(--mg-v2-space-4);
+}
+
+/* FullCalendar 슬롯 높이 하한 — expandRows 압축으로 50분 칩이 ~42px 이하로 줄지 않게 */
+.mg-v2-schedule-calendar-view .fc-timegrid-slot,
+.mg-v2-schedule-calendar-view .fc-timegrid-slot-lane {
+    min-height: var(--mg-v2-calendar-slot-min-height) !important;
+    height: var(--mg-v2-calendar-slot-min-height);
 }
 
 .mg-v2-schedule-calendar-view.mg-v2-schedule-calendar-view--fading {
@@ -153,6 +167,30 @@
 
 .mg-v2-ad-calendar-event--week-day-fit .mg-v2-ad-calendar-event__time-text[hidden] {
     display: none !important;
+}
+
+/* merge-time-title: 시간+이름을 한 줄에 (높이 단계) */
+.mg-v2-ad-calendar-event--week-day-fit.mg-v2-ad-calendar-event--merge-time-title > .mg-v2-ad-calendar-event__merge-row {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: var(--mg-v2-space-1);
+    min-width: 0;
+    width: 100%;
+    flex: 1 1 auto;
+    overflow: hidden;
+}
+
+.mg-v2-ad-calendar-event--week-day-fit.mg-v2-ad-calendar-event--merge-time-title .mg-v2-ad-calendar-event__time {
+    flex: 0 0 auto;
+}
+
+.mg-v2-ad-calendar-event--week-day-fit.mg-v2-ad-calendar-event--merge-time-title .mg-v2-ad-calendar-event__title {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: clip;
+    white-space: nowrap;
 }
 
 /* 월간 뷰 컴팩트 이벤트 (다중 이벤트 시 공간 절약) - core-designer 스펙 */

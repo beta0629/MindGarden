@@ -1,13 +1,15 @@
 /**
- * 주/일 일정 칩 fit 판정 — 폭(time-first) + 높이(status→title 숨김) 단계.
- * 뷰포트·하드코딩 109px·가정 font-size 금지.
+ * 주/일 일정 칩 fit 판정 — 폭(time-first) + 높이(status→merge→title 숨김) 단계.
+ * 뷰포트·하드코딩 109px·가정 font-size 금지. 화면별 분기 금지.
  *
  * Width stages (time first, never truncate/ellipsis time or badge):
  *   1. long + badge → 2. long → 3. short + badge → 4. short
  *   5. compact-pad → 6. hide-time
  *
  * Height stages (combine with width):
- *   full → hide-status → hide-title → time-detail (title·상세만 / a11y 유지)
+ *   full → hide-status → merge-time-title(한 줄) → hide-title → time-detail
+ *
+ * 빈 칩 금지: 어떤 폭·높이에서도 짧은 시간 또는 이름 중 하나 이상 표시.
  *
  * @author CoreSolution
  * @since 2026-10-08
@@ -33,6 +35,7 @@ export const WEEK_DAY_CHIP_TIME_MODE = Object.freeze({
 export const WEEK_DAY_CHIP_HEIGHT_STAGE = Object.freeze({
   FULL: 'full',
   HIDE_STATUS: 'hide-status',
+  MERGE_TIME_TITLE: 'merge-time-title',
   HIDE_TITLE: 'hide-title',
   TIME_DETAIL: 'time-detail'
 });
@@ -67,7 +70,7 @@ export function resolveComputedFont(el) {
 }
 
 /**
- * 높이 단계: 상태 줄 숨김 → 이름 줄 숨김 → title·상세만.
+ * 높이 단계: 상태 숨김 → 시간·이름 한 줄 병합 → 이름 숨김 → title·상세만.
  *
  * @param {{
  *   chipHeight?: number,
@@ -79,7 +82,8 @@ export function resolveComputedFont(el) {
  * @returns {{
  *   heightStage: string,
  *   showStatus: boolean,
- *   showTitle: boolean
+ *   showTitle: boolean,
+ *   mergeTimeTitle: boolean
  * }}
  */
 export function judgeWeekDayChipHeightFit(input = {}) {
@@ -103,7 +107,8 @@ export function judgeWeekDayChipHeightFit(input = {}) {
     return {
       heightStage: WEEK_DAY_CHIP_HEIGHT_STAGE.FULL,
       showStatus: true,
-      showTitle: true
+      showTitle: true,
+      mergeTimeTitle: false
     };
   }
 
@@ -113,7 +118,19 @@ export function judgeWeekDayChipHeightFit(input = {}) {
     return {
       heightStage: WEEK_DAY_CHIP_HEIGHT_STAGE.HIDE_STATUS,
       showStatus: false,
-      showTitle: true
+      showTitle: true,
+      mergeTimeTitle: false
+    };
+  }
+
+  // 한 줄: 시간+이름을 같은 행에 배치 (두 줄 높이 미만)
+  const mergeNeed = Math.max(safeTime, safeTitle, 1);
+  if (fits(mergeNeed)) {
+    return {
+      heightStage: WEEK_DAY_CHIP_HEIGHT_STAGE.MERGE_TIME_TITLE,
+      showStatus: false,
+      showTitle: true,
+      mergeTimeTitle: true
     };
   }
 
@@ -121,15 +138,61 @@ export function judgeWeekDayChipHeightFit(input = {}) {
     return {
       heightStage: WEEK_DAY_CHIP_HEIGHT_STAGE.HIDE_TITLE,
       showStatus: false,
-      showTitle: false
+      showTitle: false,
+      mergeTimeTitle: false
     };
   }
 
   return {
     heightStage: WEEK_DAY_CHIP_HEIGHT_STAGE.TIME_DETAIL,
     showStatus: false,
-    showTitle: false
+    showTitle: false,
+    mergeTimeTitle: false
   };
+}
+
+/**
+ * 빈 칩 금지 — 짧은 시간 또는 이름 중 하나 이상 강제.
+ *
+ * @param {{
+ *   showTime: boolean,
+ *   showTitle: boolean,
+ *   mergeTimeTitle?: boolean,
+ *   heightStage?: string
+ * }} fit
+ * @returns {{
+ *   showTime: boolean,
+ *   showTitle: boolean,
+ *   mergeTimeTitle: boolean,
+ *   heightStage: string
+ * }}
+ */
+export function enforceNonEmptyChipVisible(fit = {}) {
+  let showTime = Boolean(fit.showTime);
+  let showTitle = Boolean(fit.showTitle);
+  let mergeTimeTitle = Boolean(fit.mergeTimeTitle);
+  let heightStage = fit.heightStage || WEEK_DAY_CHIP_HEIGHT_STAGE.FULL;
+
+  // 시간 미표시면 merge 불가
+  if (!showTime && mergeTimeTitle) {
+    mergeTimeTitle = false;
+  }
+
+  if (showTime || showTitle) {
+    return { showTime, showTitle, mergeTimeTitle, heightStage };
+  }
+
+  // 폭이 시간을 숨긴 경우 → 이름 우선. 그 외 → 짧은 시간 우선.
+  if (fit.stage === WEEK_DAY_CHIP_FIT_STAGE.HIDE_TIME) {
+    showTitle = true;
+    mergeTimeTitle = false;
+    heightStage = WEEK_DAY_CHIP_HEIGHT_STAGE.HIDE_TITLE;
+  } else {
+    showTime = true;
+    mergeTimeTitle = false;
+    heightStage = WEEK_DAY_CHIP_HEIGHT_STAGE.HIDE_TITLE;
+  }
+  return { showTime, showTitle, mergeTimeTitle, heightStage };
 }
 
 /**
@@ -155,7 +218,8 @@ export function judgeWeekDayChipHeightFit(input = {}) {
  *   compactPad: boolean,
  *   heightStage: string,
  *   showStatus: boolean,
- *   showTitle: boolean
+ *   showTitle: boolean,
+ *   mergeTimeTitle: boolean
  * }}
  */
 export function judgeWeekDayChipFit(input = {}) {
@@ -239,7 +303,15 @@ export function judgeWeekDayChipFit(input = {}) {
   }
 
   const heightFit = judgeWeekDayChipHeightFit(input);
-  return { ...widthFit, ...heightFit };
+  const combined = { ...widthFit, ...heightFit };
+  const nonEmpty = enforceNonEmptyChipVisible(combined);
+  return {
+    ...combined,
+    showTime: nonEmpty.showTime,
+    showTitle: nonEmpty.showTitle,
+    mergeTimeTitle: nonEmpty.mergeTimeTitle,
+    heightStage: nonEmpty.heightStage
+  };
 }
 
 /**
@@ -382,6 +454,7 @@ export default {
   WEEK_DAY_CHIP_HEIGHT_STAGE,
   judgeWeekDayChipFit,
   judgeWeekDayChipHeightFit,
+  enforceNonEmptyChipVisible,
   buildWeekDayChipA11yLabel,
   measureTextWidth,
   resolveComputedFont,

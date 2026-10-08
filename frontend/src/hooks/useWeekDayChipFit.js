@@ -29,7 +29,8 @@ const INITIAL_FIT = Object.freeze({
   compactPad: false,
   heightStage: WEEK_DAY_CHIP_HEIGHT_STAGE.FULL,
   showStatus: true,
-  showTitle: true
+  showTitle: true,
+  mergeTimeTitle: false
 });
 
 /**
@@ -88,7 +89,8 @@ function readRowHeight(el) {
  *   compactPad: boolean,
  *   heightStage: string,
  *   showStatus: boolean,
- *   showTitle: boolean
+ *   showTitle: boolean,
+ *   mergeTimeTitle: boolean
  * }}
  */
 export default function useWeekDayChipFit(options) {

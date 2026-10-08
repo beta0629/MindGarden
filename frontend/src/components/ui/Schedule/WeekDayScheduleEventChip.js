@@ -1,6 +1,7 @@
 /**
  * 주/일 풀 카드 칩 — measure-based time-first + height fit
- * (폭: long+badge → … → hide-time / 높이: full → hide-status → hide-title).
+ * (폭: long+badge → … → hide-time /
+ *  높이: full → hide-status → merge-time-title → hide-title).
  * ScheduleCalendarView renderEventContent 주/일 분기에서만 사용 (#1499/#1510 rebase 포인트).
  *
  * @author CoreSolution
@@ -14,6 +15,7 @@ import ScheduleReminderSmsBadge from '../../admin/mapping-management/integrated-
 import { formatIntegratedMonthChipShortTime } from './integratedMonthChipCopy';
 import useWeekDayChipFit from '../../../hooks/useWeekDayChipFit';
 import {
+  WEEK_DAY_CHIP_HEIGHT_STAGE,
   WEEK_DAY_CHIP_TIME_MODE,
   buildWeekDayChipA11yLabel
 } from '../../../utils/weekDayChipFit';
@@ -59,13 +61,54 @@ const WeekDayScheduleEventChip = ({
     institutionLabel,
     showInstitution: Boolean(showInstitutionMark && institutionLabel)
   });
+  const mergeTimeTitle = Boolean(fit.mergeTimeTitle)
+    && fit.heightStage === WEEK_DAY_CHIP_HEIGHT_STAGE.MERGE_TIME_TITLE
+    && fit.showTime
+    && fit.showTitle;
   const chipClass = [
     'mg-v2-ad-calendar-event',
     'mg-v2-ad-calendar-event--week-day-fit',
     fit.compactPad ? 'mg-v2-ad-calendar-event--chip-pad-compact' : '',
+    mergeTimeTitle ? 'mg-v2-ad-calendar-event--merge-time-title' : '',
     pastClass,
     cancelledClass
   ].filter(Boolean).join(' ');
+
+  const titleBlock = fit.showTitle ? (
+    <div className="mg-v2-ad-calendar-event__title">
+      {sameDayPrefix}
+      <span className="client-name">{clientName}</span>
+      <ScheduleReminderSmsBadge
+        sms={extendedProps?.[CLIENT_REMINDER_SMS_FIELD]}
+        stopPropagation
+        className="mg-v2-ad-calendar-event__reminder-sms"
+      />
+      {consultantName ? (
+        <span className="counselor-name">{consultantName}</span>
+      ) : null}
+    </div>
+  ) : null;
+
+  const timeBlock = (
+    <div className="mg-v2-ad-calendar-event__time">
+      {/* 측정용 노드는 항상 유지(hide-time 시에도 computed font 확보). 비가시일 때 aria-hidden. */}
+      <span
+        className="mg-v2-ad-calendar-event__time-text"
+        hidden={!fit.showTime}
+        aria-hidden={!fit.showTime}
+      >
+        <span ref={timeRef} className="mg-v2-ad-calendar-event__time-measured">
+          {fit.showTime ? displayTime : shortTime}
+        </span>
+      </span>
+      {fit.showBadge ? (
+        <EngagementTypeBadge
+          source={extendedProps}
+          className="mg-v2-ad-calendar-event__engagement"
+        />
+      ) : null}
+    </div>
+  );
 
   return (
     <div
@@ -76,38 +119,17 @@ const WeekDayScheduleEventChip = ({
       title={chipTitle}
       aria-label={chipTitle}
     >
-      <div className="mg-v2-ad-calendar-event__time">
-        {/* 측정용 노드는 항상 유지(hide-time 시에도 computed font 확보). 비가시일 때 aria-hidden. */}
-        <span
-          className="mg-v2-ad-calendar-event__time-text"
-          hidden={!fit.showTime}
-          aria-hidden={!fit.showTime}
-        >
-          <span ref={timeRef} className="mg-v2-ad-calendar-event__time-measured">
-            {fit.showTime ? displayTime : shortTime}
-          </span>
-        </span>
-        {fit.showBadge ? (
-          <EngagementTypeBadge
-            source={extendedProps}
-            className="mg-v2-ad-calendar-event__engagement"
-          />
-        ) : null}
-      </div>
-      {fit.showTitle ? (
-        <div className="mg-v2-ad-calendar-event__title">
-          {sameDayPrefix}
-          <span className="client-name">{clientName}</span>
-          <ScheduleReminderSmsBadge
-            sms={extendedProps?.[CLIENT_REMINDER_SMS_FIELD]}
-            stopPropagation
-            className="mg-v2-ad-calendar-event__reminder-sms"
-          />
-          {consultantName ? (
-            <span className="counselor-name">{consultantName}</span>
-          ) : null}
+      {mergeTimeTitle ? (
+        <div className="mg-v2-ad-calendar-event__merge-row">
+          {timeBlock}
+          {titleBlock}
         </div>
-      ) : null}
+      ) : (
+        <>
+          {timeBlock}
+          {titleBlock}
+        </>
+      )}
       {fit.showStatus ? (
         <div className="mg-v2-ad-calendar-event__status">{statusLabel}</div>
       ) : null}

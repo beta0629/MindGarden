@@ -5,6 +5,7 @@ name: 🛡️ Guardrails (PR)
 #   2) 프로시저 호출 ↔ 표준 배포 SQL — ProcedureSignatureGuardrailTest
 #   3) 비밀값 커밋                   — gitleaks(PR 새 커밋만) + ApplicationYmlSecretDefaultsTest
 #   4) FE 관리자 목록 전체 조회·page/size 누락 — scripts/verification/check-fe-admin-list-paging.js
+#   4a) FE 상담사 상태 칩 현재 페이지 집계/필터 — scripts/verification/check-fe-consultant-status-chip-paging.js
 #   4b) FE 표시용 시각을 판정 입력으로 사용(래칫)·다국어 JSON ${ 잔존(하드 실패, 허용 목록 없음) — scripts/verification/check-fe-display-string-logic.js
 #   4c) FE 401 공용 처리 우회 로그인 직접 이동 — scripts/verification/check-login-redirect-bypass.js
 #   4d) 발송 수신자 상한 숫자 리터럴(DTO @Size·FE MAX_RECIPIENTS·문구 최대 N명) — scripts/verification/check-recipient-limit-literals.js
@@ -136,6 +137,22 @@ jobs:
 
       - name: Check fetch-all / missing page·size (ratchet baseline)
         run: node scripts/verification/check-fe-admin-list-paging.js
+
+  guardrail-fe-consultant-status-chip-paging:
+    name: Guardrail FE (consultant status chip paging)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Check consultant status chips use server statusCounts (no page aggregation)
+        run: node scripts/verification/check-fe-consultant-status-chip-paging.js
 
   guardrail-fe-display-string-logic:
     name: Guardrail FE (display string as logic input)

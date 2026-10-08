@@ -350,6 +350,7 @@ export function judgeTitleNameVisibility(input = {}) {
  *   gap?: number,
  *   considerBadge?: boolean,
  *   compactChipWidth?: number,
+ *   outerChipWidth?: number,
  *   chipHeight?: number,
  *   timeRowHeight?: number,
  *   titleRowHeight?: number,
@@ -390,6 +391,9 @@ export function judgeWeekDayChipFit(input = {}) {
   const safeCompact = Number.isFinite(compactRaw) && compactRaw > 0
     ? compactRaw
     : safeChip;
+  // outer: 패딩 차감 전 칩 외곽폭. 미측정(jsdom 0)/미제공이면 MARKER 금지
+  const outerRaw = Number(input.outerChipWidth);
+  const safeOuter = Number.isFinite(outerRaw) && outerRaw > 0 ? outerRaw : 0;
   const safeLong = Number.isFinite(longTimeWidth) && longTimeWidth >= 0 ? longTimeWidth : 0;
   const safeShort = Number.isFinite(shortTimeWidth) && shortTimeWidth >= 0 ? shortTimeWidth : 0;
   const safeBadge = considerBadge ? badgeWidth : 0;
@@ -453,7 +457,13 @@ export function judgeWeekDayChipFit(input = {}) {
       compactPad: true,
       markerOnly: false
     };
-  } else if (safeMinGlyph > 0 && !fits(safeMinGlyph, safeCompact)) {
+  } else if (
+    // outer>0(실측) + content에 1글자 불가 → MARKER (content=0이어도 outer>0이면 표식)
+    // outer 미제공/0(jsdom 미측정) → MARKER 금지, HIDE_TIME(+이름 강제)
+    safeOuter > 0
+    && safeMinGlyph > 0
+    && !fits(safeMinGlyph, safeCompact)
+  ) {
     // shortTime 1글자(min glyph)도 compact content 에 못 넣음 → 표식만
     widthFit = {
       stage: WEEK_DAY_CHIP_FIT_STAGE.MARKER,

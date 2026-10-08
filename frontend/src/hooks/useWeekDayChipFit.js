@@ -145,7 +145,7 @@ export default function useWeekDayChipFit(options) {
       const counselorFont = resolveNameFont(el, 'counselor') || clientFont || timeFont;
 
       const { normalPadX, compactPadX } = readChipPadTokens(el);
-      const outer = el.clientWidth;
+      const outer = Math.max(0, el.clientWidth);
       const chipWidth = Math.max(0, outer - normalPadX);
       const compactChipWidth = Math.max(0, outer - compactPadX);
       // harness(부모) 높이를 가용 높이로 — 숨긴 줄 때문에 chip 이 줄어들며 FULL 로 되돌아가는 플리커 방지
@@ -194,6 +194,7 @@ export default function useWeekDayChipFit(options) {
       setFit(judgeWeekDayChipFit({
         chipWidth,
         compactChipWidth,
+        outerChipWidth: outer,
         longTimeWidth,
         shortTimeWidth,
         minTimeGlyphWidth,

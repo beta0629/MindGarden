@@ -396,6 +396,7 @@ describe('marker(표식) 단계 — 12px급', () => {
     const fit = judgeWeekDayChipFit({
       chipWidth: 4,
       compactChipWidth: 6,
+      outerChipWidth: 12,
       longTimeWidth: 56,
       shortTimeWidth: 28,
       minTimeGlyphWidth: 8,
@@ -419,6 +420,78 @@ describe('marker(표식) 단계 — 12px급', () => {
     expect(fit.showCounselorName).toBe(false);
     expect(fit.showBadge).toBe(false);
     expect(fit.showStatus).toBe(false);
+  });
+
+  test('outer=0·content=0(미측정)이면 marker 금지·HIDE_TIME+이름 강제', () => {
+    // jsdom: clientWidth===0 → outer/compact=0 → minGlyph>0 만으로 MARKER 오판 방지
+    const fit = judgeWeekDayChipFit({
+      chipWidth: 0,
+      compactChipWidth: 0,
+      outerChipWidth: 0,
+      longTimeWidth: 56,
+      shortTimeWidth: 28,
+      minTimeGlyphWidth: 8,
+      badgeWidth: 36,
+      gap: 4,
+      considerBadge: true,
+      clientNameWidth: 36,
+      counselorNameWidth: 42,
+      minClientWidth: 12,
+      nameGap: 4,
+      chipHeight: 40,
+      timeRowHeight: 14,
+      titleRowHeight: 14,
+      statusRowHeight: 14,
+      gapY: 2
+    });
+    expect(fit.markerOnly).toBe(false);
+    expect(fit.stage).toBe(WEEK_DAY_CHIP_FIT_STAGE.HIDE_TIME);
+    expect(fit.showTitle).toBe(true);
+    expect(fit.showTime).toBe(false);
+  });
+
+  test('outer=12·content=0(실측 협폭)이면 marker', () => {
+    // harness namePri12: 패딩 차감 후 content≈0이어도 outer>0 → 표식
+    const fit = judgeWeekDayChipFit({
+      chipWidth: 0,
+      compactChipWidth: 0,
+      outerChipWidth: 12,
+      longTimeWidth: 56,
+      shortTimeWidth: 28,
+      minTimeGlyphWidth: 8,
+      badgeWidth: 36,
+      gap: 4,
+      considerBadge: true,
+      clientNameWidth: 36,
+      counselorNameWidth: 42,
+      minClientWidth: 12,
+      nameGap: 4,
+      chipHeight: 40,
+      timeRowHeight: 14,
+      titleRowHeight: 14,
+      statusRowHeight: 14,
+      gapY: 2
+    });
+    expect(fit.stage).toBe(WEEK_DAY_CHIP_FIT_STAGE.MARKER);
+    expect(fit.markerOnly).toBe(true);
+    expect(fit.showTitle).toBe(false);
+    expect(fit.showTime).toBe(false);
+  });
+
+  test('outer=12·compact<minGlyph이면 marker', () => {
+    const fit = judgeWeekDayChipFit({
+      chipWidth: 0,
+      compactChipWidth: 4,
+      outerChipWidth: 12,
+      longTimeWidth: 56,
+      shortTimeWidth: 28,
+      minTimeGlyphWidth: 8,
+      badgeWidth: 36,
+      gap: 4,
+      considerBadge: true
+    });
+    expect(fit.markerOnly).toBe(true);
+    expect(fit.stage).toBe(WEEK_DAY_CHIP_FIT_STAGE.MARKER);
   });
 
   test('이름 1글자 이상 들어가는 폭(29px) — 내담자 말줄임·상담사 숨김 유지', () => {

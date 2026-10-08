@@ -371,6 +371,7 @@ function pickStage(harnessW){
   const judged=api.judgeWeekDayChipFit({
     chipWidth:chipW,
     compactChipWidth:compactW,
+    outerChipWidth:Math.max(0, harnessW),
     longTimeWidth:longW,
     shortTimeWidth:shortW,
     minTimeGlyphWidth:minTimeGlyphW,
@@ -422,6 +423,7 @@ function pickStageForHeight(harnessW, chipH){
   const judged=api.judgeWeekDayChipFit({
     chipWidth:chipW,
     compactChipWidth:compactW,
+    outerChipWidth:Math.max(0, harnessW),
     longTimeWidth:longW,
     shortTimeWidth:shortW,
     minTimeGlyphWidth:minTimeGlyphW,
@@ -540,6 +542,7 @@ function pickStageWithNames(harnessW, opts){
   const judged=api.judgeWeekDayChipFit({
     chipWidth:chipW,
     compactChipWidth:compactW,
+    outerChipWidth:Math.max(0, harnessW),
     longTimeWidth:longW,
     shortTimeWidth:shortW,
     minTimeGlyphWidth:minTimeGlyphW,

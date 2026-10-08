@@ -258,7 +258,8 @@ describe('ConsultantClientList P1 수용', () => {
     expect(screen.queryByText('진행중')).toBeNull();
     expect(StandardizedApi.get).toHaveBeenCalledWith(
       expect.stringContaining('/mappings/consultant/77/clients'),
-      expect.objectContaining({ page: 0, size: expect.any(Number) })
+      expect.objectContaining({ page: 0, size: expect.any(Number) }),
+      expect.objectContaining({ unwrapApiEnvelope: false })
     );
   });
 
@@ -313,7 +314,8 @@ describe('ConsultantMessages P1 수용', () => {
     });
     expect(StandardizedApi.get).toHaveBeenCalledWith(
       expect.stringContaining('/consultation-messages/consultant/77'),
-      expect.objectContaining({ page: 0, size: expect.any(Number) })
+      expect.objectContaining({ page: 0, size: expect.any(Number) }),
+      expect.objectContaining({ unwrapApiEnvelope: false })
     );
   });
 
@@ -358,7 +360,8 @@ describe('ConsultantRecords P1 수용', () => {
     expect(within(cards[0]).queryByText('회기')).toBeNull();
     expect(StandardizedApi.get).toHaveBeenCalledWith(
       expect.stringContaining('/consultation-records'),
-      expect.objectContaining({ page: 0, size: expect.any(Number) })
+      expect.objectContaining({ page: 0, size: expect.any(Number) }),
+      expect.objectContaining({ unwrapApiEnvelope: false })
     );
   });
 

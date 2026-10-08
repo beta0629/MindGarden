@@ -8,8 +8,11 @@ import ConsultantSuiteCard, {
   ConsultantSuitePill,
   toConsultantSuiteAvatarInitials
 } from '../ConsultantSuiteCard';
-import { CONSULTANT_SUITE_CLASS } from '../../../../constants/consultantSuite';
-import { resolveConsultantMessageType, CONSULTANT_MESSAGE_TYPE_FILTER } from '../../../../constants/consultantSuite';
+import {
+  CONSULTANT_MESSAGE_TYPE_FILTER,
+  CONSULTANT_SUITE_CLASS,
+  resolveConsultantMessageType
+} from '../../../../constants/consultantSuite';
 
 describe('toConsultantSuiteAvatarInitials', () => {
   it('한글·영문 이니셜', () => {

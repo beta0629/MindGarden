@@ -16,7 +16,7 @@ describe('fetchConsultantSuitePagedList', () => {
     StandardizedApi.get.mockReset();
   });
 
-  test('unwrapApiEnvelope:false 로 호출하고 엔벨로프 totalElements 를 보존한다', async () => {
+  test('unwrapApiEnvelope:false 로 호출하고 엔벨로프 totalElements 를 보존한다', async() => {
     StandardizedApi.get.mockResolvedValue({
       success: true,
       data: [{ id: 1 }, { id: 2 }],
@@ -39,7 +39,7 @@ describe('fetchConsultantSuitePagedList', () => {
     expect(result.totalPages).toBe(2);
   });
 
-  test('중첩 { data: { messages, totalElements } } 도 동작한다', async () => {
+  test('중첩 { data: { messages, totalElements } } 도 동작한다', async() => {
     StandardizedApi.get.mockResolvedValue({
       success: true,
       data: { messages: [{ id: 'm1' }], totalElements: 3, totalPages: 1 }

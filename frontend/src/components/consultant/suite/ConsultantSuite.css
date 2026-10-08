@@ -570,3 +570,25 @@
   border-radius: var(--mg-v2-consultant-card-radius);
   box-shadow: none;
 }
+
+/*
+ * 캘린더 래퍼·테이블 블록 stone(neutral-50) — suite 에서만 투명/흰 카드.
+ * admin ConsultationLogCalendarBlock.css 기본값은 유지.
+ */
+.consultant-suite.consultant-logs .mg-v2-consultation-log-calendar-wrapper,
+.consultant-suite.consultant-logs .mg-v2-consultation-log-table-block,
+.consultant-suite.consultant-logs .mg-v2-consultation-log-table-block__card {
+  background: transparent;
+}
+
+.consultant-suite.consultant-logs .mg-v2-consultation-log-calendar-wrapper .fc-col-header-cell {
+  background: var(--mg-v2-consultant-surface-card);
+}
+
+.consultant-suite.consultant-logs .mg-v2-consultation-log-calendar-wrapper .fc-button-primary {
+  background: var(--mg-v2-consultant-surface-card) !important;
+}
+
+.consultant-suite.consultant-logs .mg-v2-consultation-log-calendar-popover {
+  background: var(--mg-v2-consultant-surface-card);
+}

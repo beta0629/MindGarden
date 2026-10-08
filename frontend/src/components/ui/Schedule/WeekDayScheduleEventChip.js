@@ -1,5 +1,6 @@
 /**
- * 주/일 풀 카드 칩 — measure-based time-first fit (long+badge → long → short+badge → short).
+ * 주/일 풀 카드 칩 — measure-based time-first fit
+ * (long+badge → long → short+badge → short → compact-pad → hide-time).
  * ScheduleCalendarView renderEventContent 주/일 분기에서만 사용 (#1499/#1510 rebase 포인트).
  *
  * @author CoreSolution
@@ -33,28 +34,48 @@ const WeekDayScheduleEventChip = ({
   institutionLabel
 }) => {
   const chipRef = useRef(null);
+  const timeRef = useRef(null);
   const shortTime = formatIntegratedMonthChipShortTime(eventStart);
+  const longTime = timeText || shortTime;
   const fit = useWeekDayChipFit({
     chipRef,
-    longTime: timeText || '',
+    timeRef,
+    longTime,
     shortTime,
     badgeLabel: showInstitutionMark ? (institutionLabel || '') : '',
     considerBadge: Boolean(showInstitutionMark && institutionLabel)
   });
-  const displayTime = fit.timeMode === WEEK_DAY_CHIP_TIME_MODE.LONG
-    ? (timeText || shortTime)
-    : shortTime;
+  const displayTime = fit.showTime
+    ? (fit.timeMode === WEEK_DAY_CHIP_TIME_MODE.LONG ? longTime : shortTime)
+    : '';
+  const fullTimeForA11y = longTime || shortTime;
+  const chipTitle = `${fullTimeForA11y} · ${clientName} - ${statusLabel}`;
+  const chipClass = [
+    'mg-v2-ad-calendar-event',
+    'mg-v2-ad-calendar-event--week-day-fit',
+    fit.compactPad ? 'mg-v2-ad-calendar-event--chip-pad-compact' : '',
+    pastClass,
+    cancelledClass
+  ].filter(Boolean).join(' ');
 
   return (
     <div
       ref={chipRef}
-      className={`mg-v2-ad-calendar-event mg-v2-ad-calendar-event--week-day-fit${pastClass}${cancelledClass}`.trim()}
+      className={chipClass}
       data-chip-fit-stage={fit.stage}
-      title={`${clientName} - ${statusLabel}`}
+      title={chipTitle}
+      aria-label={chipTitle}
     >
       <div className="mg-v2-ad-calendar-event__time">
-        <span className="mg-v2-ad-calendar-event__time-text">
-          <span className="mg-v2-ad-calendar-event__time-measured">{displayTime}</span>
+        {/* 측정용 노드는 항상 유지(hide-time 시에도 computed font 확보). 비가시일 때 aria-hidden. */}
+        <span
+          className="mg-v2-ad-calendar-event__time-text"
+          hidden={!fit.showTime}
+          aria-hidden={!fit.showTime}
+        >
+          <span ref={timeRef} className="mg-v2-ad-calendar-event__time-measured">
+            {fit.showTime ? displayTime : shortTime}
+          </span>
         </span>
         {fit.showBadge ? (
           <EngagementTypeBadge

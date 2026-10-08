@@ -135,6 +135,18 @@
     white-space: nowrap;
 }
 
+/*
+ * Stage 5 compact-pad: 정상 padding(space-1 / space-2) → 축소(space-0-5 / space-1).
+ * 하드코딩 px 금지 — calendar event padding 토큰만 사용.
+ */
+.mg-v2-ad-calendar-event--week-day-fit.mg-v2-ad-calendar-event--chip-pad-compact {
+    padding: var(--mg-v2-space-0-5) var(--mg-v2-space-1);
+}
+
+.mg-v2-ad-calendar-event--week-day-fit .mg-v2-ad-calendar-event__time-text[hidden] {
+    display: none !important;
+}
+
 /* 월간 뷰 컴팩트 이벤트 (다중 이벤트 시 공간 절약) - core-designer 스펙 */
 .mg-v2-ad-calendar-event--compact {
     min-height: 26px;

@@ -1,23 +1,22 @@
 #!/usr/bin/env node
 /**
- * 기관연계 배지 · 좁은 일정 칩 레이아웃 실측 (로컬 Chromium/Chrome)
+ * 기관연계 배지 · 좁은 일정 칩 레이아웃 실측 (Chromium/Chrome)
  *
- * jsdom 으로는 overflow 잘림을 못 잡으므로, 실제 브라우저에서
- * 배지 rect ⊆ 칩 rect · scrollWidth/Height ≤ client · textContent=「기관연계」·
- * 보이는 글자 4자 · 줄 패턴(기관연계 | 기관/연계 만 허용)을 검사한다.
- * 주/일: measure-based time-first stages (long+badge → long → short+badge → short).
- * 배지=__time 인라인 · 연속 슬롯 cardH≤harnessH · 겹침 0.
- * 시간·배지 ellipsis 금지 — 배지는 4자 전부 또는 부재.
+ * 실제 ScheduleCalendarView.css + design tokens 를 file:// 로 로드하고,
+ * WeekDayScheduleEventChip 과 동일한 클래스·6-stage judge(실제 computed font)로
+ * 시간 잘림·배지 클리핑을 검사한다.
+ *
+ * Stages: long+badge → long → short+badge → short → compact-pad → hide-time
+ * 추가: 34.8px half-width 연속 칩(10:00–10:50 + 11:00 overlap column)
+ * 구코드(11px 가정 font / short 강제)는 34.8 에서 FAIL 해야 함.
  *
  * 사용:
  *   node scripts/verification/check-engagement-badge-chip-layout.mjs
  *
- * 의존: puppeteer-core + 시스템 Chrome/Chromium
- *   (CI 워크플로에는 기본적으로 넣지 않는다. 로컬·에이전트 완료 측정용.)
+ * 의존: puppeteer-core + Chrome/Chromium
+ * CI: .github/workflows/guardrails.yml · Guardrail FE (engagement badge chip layout)
  *
- * 종료 코드: 0=전부 PASS, 1=FAIL 또는 브라우저 불가
- *
- * 호스트 URL 하드코딩 금지 — file:// 하니스만 사용. 뷰포트 폭만 MEDIA_QUERIES 계열.
+ * 종료 코드: 0=PASS, 1=FAIL
  */
 
 import fs from 'fs';
@@ -33,29 +32,19 @@ const SEG_A = LABEL.slice(0, Math.floor(LABEL.length / 2));
 const SEG_B = LABEL.slice(Math.floor(LABEL.length / 2));
 const ALLOWED_LINE_PATTERNS = new Set([LABEL, `${SEG_A}/${SEG_B}`]);
 
-/** breakpoints.js MEDIA_QUERIES.MOBILE_ONLY 와 동일 계열(768-1). 스크립트 뷰포트용. */
 const MOBILE_VIEWPORT_WIDTH = 390;
 const DESKTOP_VIEWPORT_WIDTH = 1440;
 
-/** 실측용 열 폭(사이드바 열림/접힘·일간). 뷰포트 하드코딩이 아니라 하네스/칩 width. */
 const WEEK_COL_OPEN = 164;
 const WEEK_COL_COLLAPSED = 126;
-/** 1440 + LNB 열림 시 주간 timeGrid 열 실측(~78), 카드 내부 ~73.5 */
 const WEEK_COL_SIDEBAR_OPEN = 78;
-const WEEK_CHIP_INNER = 73.5;
-const WEEK_CHIP_TINY = 35;
-const WEEK_CHIP_SIDEBAR_CLOSED = 124;
 const DAY_COL_DESKTOP = 106.8;
 const DAY_COL_MOBILE = 320;
-const MOBILE_WEEK_DAY = 390;
+/** 겹침 열 half-width — 「11:00」→「11:0」 FAIL 재현 폭 */
+const WEEK_CHIP_HALF = 34.8;
 
-/**
- * FC slotDuration 30분 기준 50분 이벤트 하네스 높이.
- * 30분 슬롯 최소 높이 ~38.4px → 50분 ≈ 64px (사용자 FAIL 슬롯 ~64px+).
- */
 const SLOT_30_MIN_PX = 38.4;
 const EVENT_50_MIN_HARNESS_PX = (50 / 30) * SLOT_30_MIN_PX;
-/** 11:00 시작 카드까지의 갭(10분) — 연속 일정 겹침 검사용 */
 const GAP_10_MIN_PX = (10 / 30) * SLOT_30_MIN_PX;
 
 const CHROME_CANDIDATES = [
@@ -111,14 +100,16 @@ ${link('frontend/src/components/schedule/ScheduleB0KlA.css')}
 ${link('frontend/src/components/ui/Schedule/ScheduleLegend.css')}
 <style>
 :root{--font-size-xs:.75rem;--mg-font-xs:.75rem;--mg-font-size-2xs:.625rem;--mg-radius-full:9999px;--mg-spacing-2:2px;--mg-spacing-8:8px;--mg-spacing-sm:8px;--mg-spacing-xs:4px;--mg-spacing-1:.25rem;--mg-spacing-xl:2rem;--mg-spacing-36:9rem;--mg-badge-status-info-bg:#e8f1fb;--mg-badge-status-info-text:#1d4f91;--mg-v2-color-primary-main:#2f6fed;--mg-v2-color-text-primary:#1a1a1a;--mg-v2-color-text-secondary:#4b5563;--mg-v2-color-neutral-50:#f9fafb;--mg-v2-color-neutral-100:#f3f4f6;--mg-v2-color-neutral-200:#e5e7eb;--mg-v2-color-neutral-500:#6b7280;--mg-v2-color-neutral-600:#4b5563;--mg-v2-border-width-thick:2px;--mg-v2-font-weight-semibold:600;--mg-v2-color-semantic-warning:#b45309;--mg-v2-color-semantic-warning-dark:#92400e;--mg-v2-color-semantic-warning-light:#fef3c7;--mg-v2-color-semantic-success-dark:#166534;--cs-brown-50:#faf8f5;--cs-brown-300:#d4c4b0;--cs-brown-600:#8b6914;--cs-brown-700:#6b4f0f;--mg-text-secondary:#4b5563;--mg-text-primary:#1a1a1a;--mg-secondary-600:#4b5563;--mg-color-text-main:#1a1a1a;--mg-color-text-secondary:#4b5563;--mg-color-border-main:#e5e7eb;--mg-color-background-main:#fff;--mg-color-surface-main:#fff;--mg-color-primary-light:#93c5fd;--mg-color-primary-main:#2f6fed;--mg-primary-700:#1d4ed8;--mg-gray-500:#6b7280;--mg-radius-sm:6px;--mg-month-event-status-color:var(--mg-v2-color-primary-main);--mg-schedule-legend-inline-pad:0}
-body{margin:0;font-family:"Noto Sans KR",sans-serif}
+body{margin:0;font-family:"Pretendard","Noto Sans KR",sans-serif}
 .sec{padding:12px;border-bottom:1px solid #ddd}.lab{font-size:11px;margin-bottom:6px}
 .row{display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start}
 .harness{border:0;box-sizing:border-box}
 .slot-stack{position:relative;box-sizing:border-box}
 .fc-timegrid-event-harness{position:absolute;left:0;right:0;box-sizing:border-box}
 .legend-title{font-size:13px;font-weight:600;margin:0 0 8px;padding:0}
+#font-probe-host{position:absolute;left:-9999px;top:0;width:200px}
 </style></head><body>
+<div id="font-probe-host" aria-hidden="true"></div>
 <div class="sec" id="sec-month"><div class="lab">month</div><div class="row" id="month-row"></div></div>
 <div class="sec" id="sec-week-desktop"><div class="lab">week/day consecutive slots (desktop)</div><div class="row" id="week-row"></div></div>
 <div class="sec" id="sec-week-mobile" style="width:100%;box-sizing:border-box">
@@ -130,8 +121,12 @@ body{margin:0;font-family:"Noto Sans KR",sans-serif}
   <div class="row" id="mobile-day-row"></div>
 </div>
 <div class="sec" id="sec-fit-cases" style="width:100%;box-sizing:border-box">
-  <div class="lab">chip-fit widths 35 / 73.5 / 78 / 124 / 390</div>
+  <div class="lab">chip-fit widths 35 / 73.5 / 78 / 124 / 390 / 34.8</div>
   <div class="row" id="fit-row"></div>
+</div>
+<div class="sec" id="sec-half" style="width:100%;box-sizing:border-box">
+  <div class="lab">half-width 34.8 consecutive overlap column (10:00–10:50 + 11:00)</div>
+  <div class="row" id="half-row"></div>
 </div>
 <div class="sec" id="sec-legacy-fail" style="width:100%;box-sizing:border-box">
   <div class="lab">legacy sibling badge (expect FAIL metrics)</div>
@@ -179,41 +174,158 @@ const WEEK_COLLAPSED=${WEEK_COL_COLLAPSED};
 const WEEK_SIDEBAR=${WEEK_COL_SIDEBAR_OPEN};
 const DAY_DESKTOP=${DAY_COL_DESKTOP};
 const DAY_MOBILE=${DAY_COL_MOBILE};
+const WEEK_HALF=${WEEK_CHIP_HALF};
 const HARNESS_H=${EVENT_50_MIN_HARNESS_PX};
 const GAP_H=${GAP_10_MIN_PX};
+const LEGACY_TIME_FONT='600 11px "Pretendard", "Noto Sans KR", sans-serif';
+
 function badgeHtml(id, extraClass){
   const cls='mg-common-badge mg-common-badge--sm mg-common-badge--status mg-common-badge--info mg-engagement-type-badge'+(extraClass?' '+extraClass:'');
   return '<span class="'+cls+'" id="'+id+'" aria-label="'+LABEL+'"><span class="mg-engagement-type-badge__seg" aria-hidden="true">'+SEG_A+'</span><wbr /><span class="mg-engagement-type-badge__seg" aria-hidden="true">'+SEG_B+'</span></span>';
 }
-function monthChip(w,id){
-  return '<div><div class="lab">m'+w+'</div><div class="integrated-schedule__calendar-wrapper--integrated"><div class="fc-daygrid-event-harness harness" style="width:'+w+'px"><div class="mg-v2-ad-calendar-event mg-v2-ad-calendar-event--compact mg-v2-ad-calendar-event--integrated-month mg-v2-ad-calendar-event--status-booked" id="chip-'+id+'"><span class="mg-v2-ad-calendar-event__time"><span class="mg-v2-ad-calendar-event__time-short">14:00</span></span><span class="mg-v2-ad-calendar-event__client">이내담</span><span class="mg-schedule-event-marks"><span class="mg-schedule-event-marks__institution">'+badgeHtml('badge-'+id)+'</span></span></div></div></div></div>';
+
+function resolveFont(el){
+  if(!el) return '';
+  const s=getComputedStyle(el);
+  const weight=s.fontWeight||'400';
+  const size=s.fontSize||'';
+  const family=s.fontFamily||'sans-serif';
+  if(size) return weight+' '+size+' '+family;
+  if(s.font && String(s.font).trim()) return String(s.font).trim();
+  return weight+' 12px '+family;
 }
-/**
- * 주/일 풀 카드 — React WeekDayScheduleEventChip 과 동일하게
- * 선택된 stage 의 시간만 렌더(ellipsis 금지). withBadge 면 배지 인라인.
- */
-function weekDayCard(id, displayTime, withBadge){
-  const badge=withBadge?badgeHtml('badge-'+id,'mg-v2-ad-calendar-event__engagement'):'';
-  return '<div class="mg-v2-ad-calendar-event mg-v2-ad-calendar-event--week-day-fit" id="chip-'+id+'"><div class="mg-v2-ad-calendar-event__time"><span class="mg-v2-ad-calendar-event__time-text"><span class="mg-v2-ad-calendar-event__time-measured">'+displayTime+'</span></span>'+badge+'</div><div class="mg-v2-ad-calendar-event__title"><span class="client-name">이내담</span></div><div class="mg-v2-ad-calendar-event__status">예약됨</div></div>';
+
+function measureText(text, font){
+  const canvas=document.createElement('canvas');
+  const ctx=canvas.getContext('2d');
+  if(!ctx) return String(text).length*7;
+  ctx.font=font;
+  return ctx.measureText(String(text)).width;
 }
+
+/** 실제 WeekDayScheduleEventChip 마크업 미니 프로브 — computed font/pad 토큰 확보 */
+function ensureFontProbe(){
+  const host=document.getElementById('font-probe-host');
+  let chip=host.querySelector('.mg-v2-ad-calendar-event--week-day-fit');
+  if(!chip){
+    chip=document.createElement('div');
+    chip.className='mg-v2-ad-calendar-event mg-v2-ad-calendar-event--week-day-fit';
+    chip.innerHTML='<div class="mg-v2-ad-calendar-event__time"><span class="mg-v2-ad-calendar-event__time-text"><span class="mg-v2-ad-calendar-event__time-measured">11:00</span></span>'+badgeHtml('probe-badge','mg-v2-ad-calendar-event__engagement')+'</div>';
+    host.appendChild(chip);
+  }
+  return chip;
+}
+
+function parseCssLengthToPx(raw, el){
+  const v=String(raw||'').trim();
+  if(!v) return 0;
+  if(v.endsWith('rem')){
+    const rootPx=Number.parseFloat(getComputedStyle(document.documentElement).fontSize)||16;
+    return (Number.parseFloat(v)||0)*rootPx;
+  }
+  if(v.endsWith('em')&&el){
+    const parentPx=Number.parseFloat(getComputedStyle(el).fontSize)||16;
+    return (Number.parseFloat(v)||0)*parentPx;
+  }
+  return Number.parseFloat(v)||0;
+}
+
+function readHorizontalPadding(el){
+  const s=getComputedStyle(el);
+  return (Number.parseFloat(s.paddingLeft)||0)+(Number.parseFloat(s.paddingRight)||0);
+}
+
+function readPadTokens(el){
+  const probe=document.createElement('div');
+  probe.className='mg-v2-ad-calendar-event mg-v2-ad-calendar-event--week-day-fit';
+  probe.style.cssText='position:absolute;left:-9999px;top:0;visibility:hidden;pointer-events:none;';
+  document.body.appendChild(probe);
+  const normalPadX=readHorizontalPadding(probe);
+  probe.classList.add('mg-v2-ad-calendar-event--chip-pad-compact');
+  const compactPadX=readHorizontalPadding(probe);
+  probe.remove();
+  if(normalPadX>0||compactPadX>0) return { normalPadX, compactPadX };
+  const cs=getComputedStyle(el);
+  const s1=parseCssLengthToPx(cs.getPropertyValue('--mg-v2-space-1'), el);
+  const s2=parseCssLengthToPx(cs.getPropertyValue('--mg-v2-space-2'), el);
+  return { normalPadX:s2*2, compactPadX:s1*2 };
+}
+
 /**
- * chip/harness width 기준 stage 시뮬레이션.
- * 카드 좌우 패딩(~24)을 빼 가용폭으로 judge (products useWeekDayChipFit 과 동일 우선순위).
+ * products weekDayChipFit.judgeWeekDayChipFit 와 동일 6 stages.
+ * font 는 실제 CSS computed (가정 11px 금지).
  */
 function pickStage(harnessW){
+  const probe=ensureFontProbe();
+  const timeEl=probe.querySelector('.mg-v2-ad-calendar-event__time-measured');
+  const badgeEl=probe.querySelector('.mg-engagement-type-badge');
+  const timeFont=resolveFont(timeEl);
+  const badgeFont=resolveFont(badgeEl)||timeFont;
+  const longW=measureText('오전 10:00', timeFont);
+  const shortW=measureText('10:00', timeFont);
+  const badgeW=measureText(LABEL, badgeFont)+8;
+  const gap=4;
+  const { normalPadX, compactPadX }=readPadTokens(probe);
+  const chipW=Math.max(0, harnessW-normalPadX);
+  const compactW=Math.max(0, harnessW-compactPadX);
+  const fits=(need,w)=>w+0.5>=need;
+
+  if(fits(longW+gap+badgeW, chipW)) return {time:'오전 10:00', badge:true, stage:'long+badge', showTime:true, compactPad:false, timeFont, shortW, longW, chipW, compactW};
+  if(fits(longW, chipW)) return {time:'오전 10:00', badge:false, stage:'long', showTime:true, compactPad:false, timeFont, shortW, longW, chipW, compactW};
+  if(fits(shortW+gap+badgeW, chipW)) return {time:'10:00', badge:true, stage:'short+badge', showTime:true, compactPad:false, timeFont, shortW, longW, chipW, compactW};
+  if(fits(shortW, chipW)) return {time:'10:00', badge:false, stage:'short', showTime:true, compactPad:false, timeFont, shortW, longW, chipW, compactW};
+  if(fits(shortW+gap+badgeW, compactW)) return {time:'10:00', badge:true, stage:'compact-pad', showTime:true, compactPad:true, timeFont, shortW, longW, chipW, compactW};
+  if(fits(shortW, compactW)) return {time:'10:00', badge:false, stage:'compact-pad', showTime:true, compactPad:true, timeFont, shortW, longW, chipW, compactW};
+  return {
+    time:'10:00',
+    badge:fits(badgeW, compactW),
+    stage:'hide-time',
+    showTime:false,
+    compactPad:true,
+    timeFont, shortW, longW, chipW, compactW
+  };
+}
+
+/** 구 HEAD: 11px 가정 + short 단계까지만(compact/hide 없음) → short 강제 */
+function legacyPickStage11px(harnessW){
   const padX=24;
   const chipW=Math.max(0, harnessW-padX);
-  const longW=56, shortW=28, badgeW=48, gap=4;
-  if(chipW+0.5>=longW+gap+badgeW) return {time:'오전 10:00', badge:true, stage:'long+badge'};
-  if(chipW+0.5>=longW) return {time:'오전 10:00', badge:false, stage:'long'};
-  if(chipW+0.5>=shortW+gap+badgeW) return {time:'10:00', badge:true, stage:'short+badge'};
-  return {time:'10:00', badge:false, stage:'short'};
+  const longW=measureText('오전 10:00', LEGACY_TIME_FONT);
+  const shortW=measureText('10:00', LEGACY_TIME_FONT);
+  const badgeW=measureText(LABEL, '600 10px "Pretendard", "Noto Sans KR", sans-serif')+8;
+  const gap=4;
+  const fits=(need)=>chipW+0.5>=need;
+  if(fits(longW+gap+badgeW)) return {time:'오전 10:00', badge:true, stage:'long+badge', showTime:true};
+  if(fits(longW)) return {time:'오전 10:00', badge:false, stage:'long', showTime:true};
+  if(fits(shortW+gap+badgeW)) return {time:'10:00', badge:true, stage:'short+badge', showTime:true};
+  // 구코드: short 가 실제로 안 맞아도 SHORT 반환 → 클리핑
+  return {time:'10:00', badge:false, stage:'short', showTime:true, shortW, chipW, wouldClip: shortW>chipW+0.5};
 }
-/** 구코드: 배지를 __title 아래 별도 블록 — FAIL 증거용 */
+
+function weekDayCard(id, stageInfo, displayTimeOverride){
+  const displayTime=displayTimeOverride!=null?displayTimeOverride:stageInfo.time;
+  const compactCls=stageInfo.compactPad?' mg-v2-ad-calendar-event--chip-pad-compact':'';
+  const badge=stageInfo.badge?badgeHtml('badge-'+id,'mg-v2-ad-calendar-event__engagement'):'';
+  const timeHidden=stageInfo.showTime===false;
+  const a11yTime=displayTime || stageInfo.time;
+  const titleAttr=a11yTime+' · 이내담 - 예약됨';
+  const measureSeed=displayTime || stageInfo.time;
+  const timeInner=timeHidden
+    ? '<span class="mg-v2-ad-calendar-event__time-text" hidden aria-hidden="true"><span class="mg-v2-ad-calendar-event__time-measured">'+measureSeed+'</span></span>'
+    : '<span class="mg-v2-ad-calendar-event__time-text"><span class="mg-v2-ad-calendar-event__time-measured">'+displayTime+'</span></span>';
+  return '<div class="mg-v2-ad-calendar-event mg-v2-ad-calendar-event--week-day-fit'+compactCls+'" id="chip-'+id+'" data-chip-fit-stage="'+stageInfo.stage+'" title="'+titleAttr+'" aria-label="'+titleAttr+'"><div class="mg-v2-ad-calendar-event__time">'+timeInner+badge+'</div><div class="mg-v2-ad-calendar-event__title"><span class="client-name">이내담</span></div><div class="mg-v2-ad-calendar-event__status">예약됨</div></div>';
+}
+
 function legacySiblingCard(id, timeText){
   const badge=badgeHtml('badge-'+id,'mg-v2-ad-calendar-event__engagement');
   return '<div class="mg-v2-ad-calendar-event" id="chip-'+id+'" style="min-height:4rem;height:auto;overflow:visible;padding:8px 12px;gap:4px"><div class="mg-v2-ad-calendar-event__time">'+timeText+'</div><div class="mg-v2-ad-calendar-event__title"><span class="client-name">이내담</span></div>'+badge+'<div class="mg-v2-ad-calendar-event__status">예약됨</div></div>';
 }
+
+/** 구코드 short 강제 렌더(compact/hide 없음) — 34.8 FAIL 증거용 */
+function legacyShortForcedCard(id, timeText){
+  return '<div class="mg-v2-ad-calendar-event mg-v2-ad-calendar-event--week-day-fit" id="chip-'+id+'" data-chip-fit-stage="legacy-short"><div class="mg-v2-ad-calendar-event__time"><span class="mg-v2-ad-calendar-event__time-text"><span class="mg-v2-ad-calendar-event__time-measured">'+timeText+'</span></span></div><div class="mg-v2-ad-calendar-event__title"><span class="client-name">이내담</span></div><div class="mg-v2-ad-calendar-event__status">예약됨</div></div>';
+}
+
 function consecutiveStack(w, idPrefix, useLegacy){
   const h1=HARNESS_H;
   const top2=HARNESS_H+GAP_H;
@@ -225,15 +337,43 @@ function consecutiveStack(w, idPrefix, useLegacy){
     c1=legacySiblingCard(idPrefix+'-a', '오전 10:00');
     c2=legacySiblingCard(idPrefix+'-b', '오전 11:00');
   }else{
-    c1=weekDayCard(idPrefix+'-a', stage.time, stage.badge);
-    c2=weekDayCard(idPrefix+'-b', timeB, stage.badge);
+    c1=weekDayCard(idPrefix+'-a', stage, stage.time);
+    c2=weekDayCard(idPrefix+'-b', stage, timeB);
   }
   return '<div><div class="lab">'+idPrefix+' w'+w+' '+stage.stage+(useLegacy?' LEGACY':'')+'</div><div class="slot-stack harness" style="width:'+w+'px;height:'+stackH+'px"><div class="fc-timegrid-event-harness" id="harness-'+idPrefix+'-a" style="top:0;height:'+h1+'px">'+c1+'</div><div class="fc-timegrid-event-harness" id="harness-'+idPrefix+'-b" style="top:'+top2+'px;height:'+h1+'px">'+c2+'</div></div></div>';
 }
+
 function fitChip(w,id){
   const stage=pickStage(w);
-  return '<div><div class="lab">fit'+w+' '+stage.stage+'</div><div class="harness" style="width:'+w+'px;height:'+HARNESS_H+'px"><div class="fc-timegrid-event-harness" style="position:relative;height:100%">'+weekDayCard(id, stage.time, stage.badge)+'</div></div></div>';
+  return '<div><div class="lab">fit'+w+' '+stage.stage+'</div><div class="harness" style="width:'+w+'px;height:'+HARNESS_H+'px"><div class="fc-timegrid-event-harness" style="position:relative;height:100%">'+weekDayCard(id, stage)+'</div></div></div>';
 }
+
+function halfWidthOverlapStack(){
+  const w=WEEK_HALF;
+  const stage=pickStage(w);
+  const legacy=legacyPickStage11px(w);
+  const h1=HARNESS_H;
+  const top2=HARNESS_H+GAP_H;
+  const stackH=top2+HARNESS_H;
+  const timeA=stage.time;
+  const timeB=stage.time.replace('10:','11:').replace('오전 10','오전 11');
+  const c1=weekDayCard('half-a', stage, timeA);
+  const c2=weekDayCard('half-b', stage, timeB);
+  const legacyCard=legacyShortForcedCard('half-legacy', '11:00');
+  return '<div><div class="lab">half '+w+' '+stage.stage+' (legacyWouldClip='+!!legacy.wouldClip+')</div>'
+    +'<div class="slot-stack harness" style="width:'+w+'px;height:'+stackH+'px">'
+    +'<div class="fc-timegrid-event-harness" id="harness-half-a" style="top:0;height:'+h1+'px">'+c1+'</div>'
+    +'<div class="fc-timegrid-event-harness" id="harness-half-b" style="top:'+top2+'px;height:'+h1+'px">'+c2+'</div>'
+    +'</div>'
+    +'<div class="harness" style="width:'+w+'px;height:'+h1+'px;margin-top:8px" id="harness-half-legacy">'+legacyCard+'</div>'
+    +'</div>';
+}
+
+function monthChip(w,id){
+  return '<div><div class="lab">m'+w+'</div><div class="integrated-schedule__calendar-wrapper--integrated"><div class="fc-daygrid-event-harness harness" style="width:'+w+'px"><div class="mg-v2-ad-calendar-event mg-v2-ad-calendar-event--compact mg-v2-ad-calendar-event--integrated-month mg-v2-ad-calendar-event--status-booked" id="chip-'+id+'"><span class="mg-v2-ad-calendar-event__time"><span class="mg-v2-ad-calendar-event__time-short">14:00</span></span><span class="mg-v2-ad-calendar-event__client">이내담</span><span class="mg-schedule-event-marks"><span class="mg-schedule-event-marks__institution">'+badgeHtml('badge-'+id)+'</span></span></div></div></div></div>';
+}
+
+ensureFontProbe();
 document.getElementById('month-row').innerHTML=[33,49,60,88,135].map(w=>monthChip(w,'m'+w)).join('');
 document.getElementById('week-row').innerHTML=[
   consecutiveStack(WEEK_OPEN,'wopen',false),
@@ -246,7 +386,8 @@ document.getElementById('mobile-day-row').innerHTML=[
   consecutiveStack(DAY_MOBILE,'dmob',false),
   consecutiveStack(390,'w390',false)
 ].join('');
-document.getElementById('fit-row').innerHTML=[35,73.5,78,124,390].map(w=>fitChip(w,'fit'+String(w).replace('.','p'))).join('');
+document.getElementById('fit-row').innerHTML=[35,73.5,78,124,390,WEEK_HALF].map(w=>fitChip(w,'fit'+String(w).replace('.','p'))).join('');
+document.getElementById('half-row').innerHTML=halfWidthOverlapStack();
 document.getElementById('legacy-fail-row').innerHTML=[consecutiveStack(WEEK_COLLAPSED,'legacy',true)].join('');
 
 function linePattern(badge){
@@ -262,29 +403,7 @@ function linePattern(badge){
     rows.sort((a,b)=>a.top-b.top);
     return rows.map(r=>r.parts.join('')).join('/');
   }
-  const walker=document.createTreeWalker(badge, NodeFilter.SHOW_TEXT, null);
-  const chars=[];
-  let node;
-  while((node=walker.nextNode())){
-    const text=node.textContent||'';
-    for(let i=0;i<text.length;i++){
-      const range=document.createRange();
-      range.setStart(node,i); range.setEnd(node,i+1);
-      const r=range.getBoundingClientRect();
-      if(r.width<=0||r.height<=0) continue;
-      chars.push({ch:text[i], top:Math.round(r.top), left:r.left});
-    }
-  }
-  if(!chars.length) return '';
-  chars.sort((a,b)=>a.top-b.top||a.left-b.left);
-  const rows=[];
-  for(const c of chars){
-    let row=rows.find(r=>Math.abs(r.top-c.top)<=1);
-    if(!row){ row={top:c.top, parts:[]}; rows.push(row); }
-    row.parts.push(c.ch);
-  }
-  rows.sort((a,b)=>a.top-b.top);
-  return rows.map(r=>r.parts.join('')).join('/');
+  return '';
 }
 
 function visibleCharCount(badge, chip){
@@ -323,23 +442,39 @@ function adjacentOverlapCount(chip){
 }
 
 function visibleTimeMode(chip){
+  const stage=chip.getAttribute('data-chip-fit-stage')||'';
   const measured=chip.querySelector('.mg-v2-ad-calendar-event__time-measured');
-  const timeEl=measured||chip.querySelector('.mg-v2-ad-calendar-event__time-text')||chip.querySelector('.mg-v2-ad-calendar-event__time');
-  // NOTE: buildHarnessHtml 은 outer template literal — regex \\ 이스케이프 필수
-  const text=timeEl?String(timeEl.textContent||'').replace(/\\s+/g,' ').trim():'';
+  const timeTextWrap=chip.querySelector('.mg-v2-ad-calendar-event__time-text');
+  const hidden=timeTextWrap && timeTextWrap.hasAttribute('hidden');
+  // NOTE: buildHarnessHtml 은 outer template literal — regex \\\\ 이스케이프
+  const raw=measured?String(measured.textContent||'').replace(/\\s+/g,' ').trim():'';
+  const text=hidden?'':raw;
   const hasEllipsis=text.includes('…')||text.includes('...');
   const isShort=/^\\d{1,2}:\\d{2}$/.test(text);
   const isLong=(text.indexOf('오전')===0||text.indexOf('오후')===0)&&/\\d{1,2}:\\d{2}/.test(text);
-  const patternOk=isShort||isLong;
-  const scrollOk=patternOk&&!hasEllipsis;
+  const patternOk=text===''||isShort||isLong;
+  let scrollOk=true;
+  if(!hidden && measured){
+    scrollOk=measured.scrollWidth<=measured.clientWidth+0.5
+      && (!timeTextWrap || timeTextWrap.scrollWidth<=timeTextWrap.clientWidth+0.5);
+  }
+  // 잘린 글자 감지: 「11:0」 등 초 자릿수 누락
+  const truncatedShort=/^\\d{1,2}:\\d$/.test(text);
+  const timeFullVisible=hidden
+    ? true
+    : (text.length>0&&patternOk&&!hasEllipsis&&!truncatedShort&&scrollOk);
   return {
     timeText:text,
-    timeScrollOk:scrollOk,
-    timeFullVisible:text.length>0&&patternOk&&!hasEllipsis,
+    timeScrollOk:scrollOk&&!truncatedShort,
+    timeFullVisible,
     shortShown:isShort,
     fullShown:isLong,
     shortText:isShort?text:'',
-    fullText:isLong?text:''
+    fullText:isLong?text:'',
+    timeHidden:!!hidden,
+    fitStage:stage,
+    ariaLabel:chip.getAttribute('aria-label')||'',
+    titleAttr:chip.getAttribute('title')||''
   };
 }
 
@@ -432,8 +567,31 @@ function measurePair(prefix){
   };
 }
 
-function measureMobileWeek(chipId){
-  return measureChipTimeOnly(chipId);
+function measureLegacyHalfFail(){
+  const chip=document.getElementById('chip-half-legacy');
+  if(!chip) return null;
+  const measured=chip.querySelector('.mg-v2-ad-calendar-event__time-measured');
+  const timeWrap=chip.querySelector('.mg-v2-ad-calendar-event__time-text');
+  const text=measured?String(measured.textContent||'').trim():'';
+  const scrollOverflow=measured && measured.scrollWidth>measured.clientWidth+0.5;
+  const wrapOverflow=timeWrap && timeWrap.scrollWidth>timeWrap.clientWidth+0.5;
+  const chipOverflow=chip.scrollWidth>chip.clientWidth+0.5;
+  const stageInfo=pickStage(WEEK_HALF);
+  const legacy=legacyPickStage11px(WEEK_HALF);
+  // 실제 12px 폭 vs 정상 content — 구코드가 short 강제하면 잘림
+  const realShortW=stageInfo.shortW;
+  const normalContent=stageInfo.chipW;
+  const wouldFail=realShortW>normalContent+0.5 && legacy.stage==='short' && legacy.showTime;
+  return {
+    text,
+    scrollOverflow:!!(scrollOverflow||wrapOverflow||chipOverflow),
+    wouldFail,
+    realShortW,
+    normalContent,
+    legacyStage:legacy.stage,
+    newStage:stageInfo.stage,
+    timeFont:stageInfo.timeFont
+  };
 }
 
 window.__collectDesktop=function(){
@@ -453,6 +611,9 @@ window.__collectDesktop=function(){
     fit78:measureChipTimeOnly('chip-fit78'),
     fit124:measureChipTimeOnly('chip-fit124'),
     fit390:measureChipTimeOnly('chip-fit390'),
+    fit34p8:measureChipTimeOnly('chip-fit34p8'),
+    halfPair:measurePair('half'),
+    halfLegacyFail:measureLegacyHalfFail(),
     legend:{
       titleLeft:+document.getElementById('legend-title').getBoundingClientRect().left.toFixed(2),
       marksLeft:+document.getElementById('legend-marks').getBoundingClientRect().left.toFixed(2),
@@ -464,8 +625,8 @@ window.__collectDesktop=function(){
 
 window.__collectMobile=function(){
   return {
-    mobileWeek35:measureMobileWeek('chip-mw35'),
-    mobileWeek40:measureMobileWeek('chip-mw40'),
+    mobileWeek35:measureChipTimeOnly('chip-mw35'),
+    mobileWeek40:measureChipTimeOnly('chip-mw40'),
     dayMob390:measurePair('dmob'),
     weekDay390:measurePair('w390'),
     sidebar:measure('sidebar-row','badge-sidebar'),
@@ -499,8 +660,16 @@ function passFitChip(name, m) {
   const reasons = [];
   if (!m.timeFullVisible) reasons.push(`timeTruncated=${m.timeText}`);
   if (!m.timeScrollOk) reasons.push('timeScrollOverflow');
+  if (m.timeHidden) {
+    // hide-time: aria/title must still carry full time
+    const a11y = `${m.ariaLabel || ''} ${m.titleAttr || ''}`;
+    if (!/\d{1,2}:\d{2}/.test(a11y)) reasons.push('hideTimeMissingA11y');
+  } else if (m.timeText) {
+    // visible text must equal full short/long chosen (no 「11:0」)
+    if (/^\d{1,2}:\d$/.test(m.timeText)) reasons.push(`truncatedShort=${m.timeText}`);
+  }
   if (m.badgeAbsent) {
-    // ok — badge omitted by stage
+    // ok
   } else {
     if (m.text !== LABEL) reasons.push(`text=${m.text}`);
     if (m.visibleChars !== 4) reasons.push(`visibleChars=${m.visibleChars}`);
@@ -520,7 +689,7 @@ function passPair(name, pair, { expectFail = false, requireShortTime = false } =
     if (!m.timeFullVisible) reasons.push(`${label}.timeTruncated=${m.timeText}`);
     if (!m.timeScrollOk) reasons.push(`${label}.timeScrollOverflow`);
     if (m.badgeAbsent) {
-      // stage omitted badge — ok
+      // ok
     } else {
       if (m.text !== LABEL) reasons.push(`${label}.text=${m.text}`);
       if (!m.inside) reasons.push(`${label}.badgeOutsideChip`);
@@ -554,7 +723,6 @@ function passPair(name, pair, { expectFail = false, requireShortTime = false } =
     if (pair.cardsOverlap) reasons.push('cardsOverlap');
     if (pair.hasNegMargin) reasons.push('negMargin');
   } else {
-    // 구코드 FAIL 증거: 카드가 하네스를 넘기거나 겹치거나 배지가 __time 밖
     const failsLegacy =
       !pair.cardFitsHarnessA ||
       !pair.cardFitsHarnessB ||
@@ -582,6 +750,20 @@ function passPair(name, pair, { expectFail = false, requireShortTime = false } =
       b: pair.b
     }
   };
+}
+
+function passHalfLegacyFail(name, m) {
+  if (!m) return { name, ok: false, reason: 'missing' };
+  // 구코드가 34.8에서 FAIL 해야 함 (wouldFail=true)
+  if (!m.wouldFail) {
+    return {
+      name,
+      ok: false,
+      reason: `legacyDidNotFail newStage=${m.newStage} realShortW=${m.realShortW} content=${m.normalContent}`,
+      metrics: m
+    };
+  }
+  return { name, ok: true, reason: 'ok', metrics: m };
 }
 
 async function main() {
@@ -647,6 +829,9 @@ async function main() {
       passFitChip('fit78', metrics.fit78),
       passFitChip('fit124', metrics.fit124),
       passFitChip('fit390', metrics.fit390),
+      passFitChip('fit34p8', metrics.fit34p8),
+      passPair('half34p8', metrics.halfPair),
+      passHalfLegacyFail('half34p8LegacyWouldFail', metrics.halfLegacyFail),
       passCase('sidebar390', metrics.sidebar),
       passCase('mapping390', metrics.mapping),
       passCase('detail390', metrics.detail)
@@ -664,41 +849,24 @@ async function main() {
       metrics: legend
     });
 
-    const table = cases
-      .filter((c) => c.metrics && (c.metrics.linePattern != null || c.metrics.linePatternA != null))
-      .map((c) => ({
-        name: c.name,
-        linePattern: c.metrics.linePattern ?? c.metrics.linePatternA,
-        chipW: c.metrics.chipW ?? c.metrics.a?.chipW,
-        cardH: c.metrics.cardH_a ?? c.metrics.chipH,
-        harnessH: c.metrics.harnessH,
-        cardsOverlap: c.metrics.cardsOverlap,
-        visibleChars: c.metrics.visibleChars ?? c.metrics.a?.visibleChars,
-        ok: c.ok
-      }));
-
-    const mobileWeekSummary = [
-      passFitChip('mobileWeek35', metrics.mobileWeek35),
-      passFitChip('mobileWeek40', metrics.mobileWeek40),
-      passFitChip('fit35', metrics.fit35),
-      passFitChip('fit73p5', metrics.fit73p5),
-      passFitChip('fit78', metrics.fit78),
-      passFitChip('fit124', metrics.fit124),
-      passFitChip('fit390', metrics.fit390)
-    ].map((c) => ({
-      name: c.name,
-      badgeAbsent: c.metrics?.badgeAbsent,
-      timeText: c.metrics?.timeText,
-      visibleChars: c.metrics?.visibleChars,
-      ok: c.ok
-    }));
-
     const failed = cases.filter((c) => !c.ok);
     console.log(JSON.stringify({
       chrome,
       cases,
-      linePatternTable: table,
-      mobileWeekSummary,
+      halfSummary: {
+        fit34p8: {
+          stage: metrics.fit34p8?.fitStage,
+          timeText: metrics.fit34p8?.timeText,
+          timeHidden: metrics.fit34p8?.timeHidden,
+          ok: cases.find((c) => c.name === 'fit34p8')?.ok
+        },
+        halfPair: {
+          a: metrics.halfPair?.a?.fitStage,
+          b: metrics.halfPair?.b?.fitStage,
+          ok: cases.find((c) => c.name === 'half34p8')?.ok
+        },
+        legacy: metrics.halfLegacyFail
+      },
       failed: failed.map((f) => f.name)
     }, null, 2));
     if (failed.length) {

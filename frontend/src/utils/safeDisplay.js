@@ -81,6 +81,26 @@ export function toErrorMessage(error, fallback = '오류가 발생했습니다.'
 }
 
 /**
+ * 이름 + 선택적 부가정보(이메일 등) 라벨.
+ * secondary 가 null/undefined/빈 문자열이면 이름만 — `이름 (undefined)`·빈 괄호 금지.
+ *
+ * @param {*} name
+ * @param {*} secondary
+ * @returns {string}
+ */
+export function formatNameWithSecondary(name, secondary) {
+  const primary = toDisplayString(name, '').trim();
+  const extra = toDisplayString(secondary, '').trim();
+  if (!primary) {
+    return extra;
+  }
+  if (!extra) {
+    return primary;
+  }
+  return `${primary} (${extra})`;
+}
+
+/**
  * API 숫자 필드가 객체·문자열로 올 때 JSX `{n}%` / 차트 data 등에 안전한 finite number로
  * (React #130: completedCount·completionRate 등이 객체인 경우 방지)
  * @param {*} value

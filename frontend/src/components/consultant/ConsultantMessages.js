@@ -37,6 +37,7 @@ import {
 } from '../../utils/consultantSuiteListApi';
 import StandardizedApi from '../../utils/standardizedApi';
 import { API_ENDPOINTS } from '../../constants/apiEndpoints';
+import { formatNameWithSecondary } from '../../utils/safeDisplay';
 import './ConsultantMessages.css';
 import { USER_ROLES } from '../../constants/roles';
 import { useTranslation } from 'react-i18next';
@@ -317,7 +318,7 @@ const ConsultantMessages = () => {
               { value: '', label: '내담자를 선택하세요' },
               ...clients.map((client) => ({
                 value: client.id,
-                label: `${client.name} (${client.email})`
+                label: formatNameWithSecondary(client.name, client.email)
               }))
             ]}
             placeholder="내담자를 선택하세요"

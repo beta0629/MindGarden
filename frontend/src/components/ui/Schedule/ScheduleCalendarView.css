@@ -109,6 +109,15 @@
     flex-shrink: 0;
 }
 
+/*
+ * 주/일 풀 카드: 좁은 열(~78px, LNB 열림)에서 오전/오후 timeText 가 「오…」로 잘림.
+ * 컨테이너는 하네스(부모)에 둔다 — 월간 mg-month-event 와 동일 패턴.
+ * 단계 F 경계 109px 재사용. @container px 리터럴은 문서화된 예외.
+ */
+.fc-timegrid-event-harness {
+    container: mg-week-event / inline-size;
+}
+
 /* 주/일 풀 카드: 시간 행에 배지 인라인 (시간 shrink/ellipsis + 배지 flex-shrink:0) */
 .mg-v2-ad-calendar-event:not(.mg-v2-ad-calendar-event--compact) > .mg-v2-ad-calendar-event__time {
     display: flex;
@@ -125,6 +134,20 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+}
+
+.mg-v2-ad-calendar-event:not(.mg-v2-ad-calendar-event--compact) .mg-v2-ad-calendar-event__time-short {
+    display: none;
+}
+
+@container mg-week-event (width < 109px) {
+    .mg-v2-ad-calendar-event:not(.mg-v2-ad-calendar-event--compact) .mg-v2-ad-calendar-event__time-full {
+        display: none;
+    }
+
+    .mg-v2-ad-calendar-event:not(.mg-v2-ad-calendar-event--compact) .mg-v2-ad-calendar-event__time-short {
+        display: inline;
+    }
 }
 
 /* 월간 뷰 컴팩트 이벤트 (다중 이벤트 시 공간 절약) - core-designer 스펙 */

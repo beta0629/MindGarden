@@ -65,10 +65,20 @@ describe('짧은 시간 포맷', () => {
     expect(formatIntegratedMonthChipShortTime('not-a-date')).toBe('');
   });
 
-  test('통합 월간 칩만 전체/짧은 시간 두 칸을 그린다', () => {
+  test('월간·주/일 칩이 전체/짧은 시간 두 칸을 그린다', () => {
     expect(CALENDAR_JS).toContain('mg-v2-ad-calendar-event__time-full');
     expect(CALENDAR_JS).toContain('mg-v2-ad-calendar-event__time-short');
     expect(CALENDAR_JS).toMatch(/integratedMonthEventLayout \? \(\s*<>\s*<span className="mg-v2-ad-calendar-event__time-full">/);
+    expect(CALENDAR_JS).toMatch(
+      /mg-v2-ad-calendar-event__time-text[\s\S]*?mg-v2-ad-calendar-event__time-full[\s\S]*?mg-v2-ad-calendar-event__time-short[\s\S]*?formatIntegratedMonthChipShortTime/
+    );
+  });
+
+  test('주/일 CSS 가 mg-week-event 109px 경계에서 short time 을 보인다', () => {
+    const stage = extractBlock(CALENDAR_CSS, '@container mg-week-event (width < 109px)');
+    expect(stage).toMatch(/__time-full\s*\{\s*display:\s*none;/);
+    expect(stage).toMatch(/__time-short\s*\{\s*display:\s*inline;/);
+    expect(CALENDAR_CSS).toContain('container: mg-week-event / inline-size');
   });
 });
 

@@ -39,6 +39,12 @@ const DESKTOP_VIEWPORT_WIDTH = 1440;
 /** 실측용 열 폭(사이드바 열림/접힘·일간). 뷰포트 하드코딩이 아니라 하네스 width. */
 const WEEK_COL_OPEN = 164;
 const WEEK_COL_COLLAPSED = 126;
+/**
+ * 1440 + LNB 열림 시 주간 timeGrid 열 실측(~78).
+ * WEEK_COL_OPEN(164)은 여유 있는 하네스라 「오…」잘림을 못 잡음 → 좁은 열 케이스 추가.
+ * short-time 전환 경계는 제품 CSS `@container mg-week-event (width < 109px)` (월간 단계 F 와 동일).
+ */
+const WEEK_COL_SIDEBAR_OPEN = 78;
 const DAY_COL_DESKTOP = 106.8;
 const DAY_COL_MOBILE = 320;
 
@@ -165,6 +171,7 @@ const SEG_B=${JSON.stringify(SEG_B)};
 const ALLOWED=${JSON.stringify([...ALLOWED_LINE_PATTERNS])};
 const WEEK_OPEN=${WEEK_COL_OPEN};
 const WEEK_COLLAPSED=${WEEK_COL_COLLAPSED};
+const WEEK_SIDEBAR=${WEEK_COL_SIDEBAR_OPEN};
 const DAY_DESKTOP=${DAY_COL_DESKTOP};
 const DAY_MOBILE=${DAY_COL_MOBILE};
 const HARNESS_H=${EVENT_50_MIN_HARNESS_PX};
@@ -176,32 +183,43 @@ function badgeHtml(id, extraClass){
 function monthChip(w,id){
   return '<div><div class="lab">m'+w+'</div><div class="integrated-schedule__calendar-wrapper--integrated"><div class="fc-daygrid-event-harness harness" style="width:'+w+'px"><div class="mg-v2-ad-calendar-event mg-v2-ad-calendar-event--compact mg-v2-ad-calendar-event--integrated-month mg-v2-ad-calendar-event--status-booked" id="chip-'+id+'"><span class="mg-v2-ad-calendar-event__time"><span class="mg-v2-ad-calendar-event__time-short">14:00</span></span><span class="mg-v2-ad-calendar-event__client">이내담</span><span class="mg-schedule-event-marks"><span class="mg-schedule-event-marks__institution">'+badgeHtml('badge-'+id)+'</span></span></div></div></div></div>';
 }
-/** 주/일 풀 카드: 배지를 __time 안 인라인 */
-function weekDayCard(id, timeText, withBadge){
+/** 주/일 풀 카드: 배지를 __time 안 인라인 + full/short time(월간과 동일 구조) */
+function weekDayCard(id, timeText, withBadge, shortTime){
   const badge=withBadge?badgeHtml('badge-'+id,'mg-v2-ad-calendar-event__engagement'):'';
-  return '<div class="mg-v2-ad-calendar-event" id="chip-'+id+'"><div class="mg-v2-ad-calendar-event__time"><span class="mg-v2-ad-calendar-event__time-text">'+timeText+'</span>'+badge+'</div><div class="mg-v2-ad-calendar-event__title"><span class="client-name">이내담</span></div><div class="mg-v2-ad-calendar-event__status">예약됨</div></div>';
+  const short=shortTime||'10:00';
+  return '<div class="mg-v2-ad-calendar-event" id="chip-'+id+'"><div class="mg-v2-ad-calendar-event__time"><span class="mg-v2-ad-calendar-event__time-text"><span class="mg-v2-ad-calendar-event__time-full">'+timeText+'</span><span class="mg-v2-ad-calendar-event__time-short">'+short+'</span></span>'+badge+'</div><div class="mg-v2-ad-calendar-event__title"><span class="client-name">이내담</span></div><div class="mg-v2-ad-calendar-event__status">예약됨</div></div>';
 }
 /** 구코드: 배지를 __title 아래 별도 블록 — FAIL 증거용 */
 function legacySiblingCard(id, timeText){
   const badge=badgeHtml('badge-'+id,'mg-v2-ad-calendar-event__engagement');
   return '<div class="mg-v2-ad-calendar-event" id="chip-'+id+'" style="min-height:4rem;height:auto;overflow:visible;padding:8px 12px;gap:4px"><div class="mg-v2-ad-calendar-event__time">'+timeText+'</div><div class="mg-v2-ad-calendar-event__title"><span class="client-name">이내담</span></div>'+badge+'<div class="mg-v2-ad-calendar-event__status">예약됨</div></div>';
 }
-function consecutiveStack(w, idPrefix, withBadge, useLegacy){
+function consecutiveStack(w, idPrefix, withBadge, useLegacy, timeFull, timeShort){
   const h1=HARNESS_H;
   const top2=HARNESS_H+GAP_H;
   const stackH=top2+HARNESS_H;
-  const cardFn=useLegacy?legacySiblingCard:weekDayCard;
-  const c1=cardFn(idPrefix+'-a','10:00 - 10:50', withBadge);
-  const c2=cardFn(idPrefix+'-b','11:00 - 11:50', withBadge);
+  const fullA=timeFull||'오전 10:00';
+  const fullB=timeFull?timeFull.replace('10:','11:'):'오전 11:00';
+  const shortA=timeShort||'10:00';
+  const shortB=timeShort?timeShort.replace('10:','11:'):'11:00';
+  let c1, c2;
+  if(useLegacy){
+    c1=legacySiblingCard(idPrefix+'-a', fullA);
+    c2=legacySiblingCard(idPrefix+'-b', fullB);
+  }else{
+    c1=weekDayCard(idPrefix+'-a', fullA, withBadge, shortA);
+    c2=weekDayCard(idPrefix+'-b', fullB, withBadge, shortB);
+  }
   return '<div><div class="lab">'+idPrefix+' w'+w+(withBadge?'':' nobadge')+(useLegacy?' LEGACY':'')+'</div><div class="slot-stack harness" style="width:'+w+'px;height:'+stackH+'px"><div class="fc-timegrid-event-harness" id="harness-'+idPrefix+'-a" style="top:0;height:'+h1+'px">'+c1+'</div><div class="fc-timegrid-event-harness" id="harness-'+idPrefix+'-b" style="top:'+top2+'px;height:'+h1+'px">'+c2+'</div></div></div>';
 }
 function weekChipNoBadge(w,id){
-  return '<div><div class="lab">w'+w+' nobadge</div><div class="harness" style="width:'+w+'px;height:'+HARNESS_H+'px"><div class="mg-v2-ad-calendar-event" id="chip-'+id+'"><div class="mg-v2-ad-calendar-event__time"><span class="mg-v2-ad-calendar-event__time-text">14:00</span></div><div class="mg-v2-ad-calendar-event__title"><span class="client-name">이내담</span></div><div class="mg-v2-ad-calendar-event__status">예약됨</div></div></div></div>';
+  return '<div><div class="lab">w'+w+' nobadge</div><div class="harness" style="width:'+w+'px;height:'+HARNESS_H+'px"><div class="fc-timegrid-event-harness" style="height:100%"><div class="mg-v2-ad-calendar-event" id="chip-'+id+'"><div class="mg-v2-ad-calendar-event__time"><span class="mg-v2-ad-calendar-event__time-text"><span class="mg-v2-ad-calendar-event__time-full">오후 2:00</span><span class="mg-v2-ad-calendar-event__time-short">14:00</span></span></div><div class="mg-v2-ad-calendar-event__title"><span class="client-name">이내담</span></div><div class="mg-v2-ad-calendar-event__status">예약됨</div></div></div></div></div>';
 }
 document.getElementById('month-row').innerHTML=[33,49,60,88,135].map(w=>monthChip(w,'m'+w)).join('');
 document.getElementById('week-row').innerHTML=[
   consecutiveStack(WEEK_OPEN,'wopen',true,false),
   consecutiveStack(WEEK_COLLAPSED,'wfold',true,false),
+  consecutiveStack(WEEK_SIDEBAR,'wnarrow',true,false,'오전 10:00','10:00'),
   consecutiveStack(DAY_DESKTOP,'ddesk',true,false)
 ].join('');
 document.getElementById('mobile-week-row').innerHTML=[26,36].map(w=>weekChipNoBadge(w,'mw'+w)).join('');
@@ -281,6 +299,21 @@ function adjacentOverlapCount(chip){
   return n;
 }
 
+function visibleTimeMode(chip){
+  const full=chip.querySelector('.mg-v2-ad-calendar-event__time-full');
+  const short=chip.querySelector('.mg-v2-ad-calendar-event__time-short');
+  const fullCs=full?getComputedStyle(full):null;
+  const shortCs=short?getComputedStyle(short):null;
+  const fullShown=!!(full&&fullCs&&fullCs.display!=='none'&&fullCs.visibility!=='hidden');
+  const shortShown=!!(short&&shortCs&&shortCs.display!=='none'&&shortCs.visibility!=='hidden');
+  return {
+    fullText:full?full.textContent:'',
+    shortText:short?short.textContent:'',
+    fullShown,
+    shortShown
+  };
+}
+
 function measure(chipId,badgeId){
   const chip=document.getElementById(chipId), badge=document.getElementById(badgeId);
   if(!chip||!badge) return null;
@@ -289,6 +322,7 @@ function measure(chipId,badgeId){
   const pattern=linePattern(badge);
   const time=chip.querySelector('.mg-v2-ad-calendar-event__time');
   const cs=getComputedStyle(badge);
+  const timeMode=visibleTimeMode(chip);
   return {
     text:badge.textContent,
     chipW:+c.width.toFixed(2), chipH:+c.height.toFixed(2),
@@ -307,7 +341,8 @@ function measure(chipId,badgeId){
     marginInline:cs.marginInline|| (cs.marginLeft+' '+cs.marginRight),
     hasNegMargin:/^-/.test(String(cs.marginLeft))||/^-/.test(String(cs.marginRight))||String(cs.marginInline).includes('-'),
     segCount:badge.querySelectorAll('.mg-engagement-type-badge__seg').length,
-    adjacentOverlap:adjacentOverlapCount(chip)
+    adjacentOverlap:adjacentOverlapCount(chip),
+    ...timeMode
   };
 }
 
@@ -357,6 +392,7 @@ window.__collectDesktop=function(){
     month135:measure('chip-m135','badge-m135'),
     weekOpen164:measurePair('wopen'),
     weekFold126:measurePair('wfold'),
+    weekNarrow78:measurePair('wnarrow'),
     dayDesk106:measurePair('ddesk'),
     legacyFail126:measurePair('legacy'),
     legend:{
@@ -399,7 +435,7 @@ function passCase(name, m, { requireOutsideTitle = false, requireInTime = false 
   return { name, ok: reasons.length === 0, reason: reasons.join('; ') || 'ok', metrics: m };
 }
 
-function passPair(name, pair, { expectFail = false } = {}) {
+function passPair(name, pair, { expectFail = false, requireShortTime = false } = {}) {
   if (!pair) return { name, ok: false, reason: 'missing' };
   const reasons = [];
   const checkCard = (label, m) => {
@@ -413,6 +449,13 @@ function passPair(name, pair, { expectFail = false } = {}) {
     if (!m.badgeInTime) reasons.push(`${label}.badgeNotInTime`);
     if (m.hasNegMargin) reasons.push(`${label}.negMargin`);
     if (m.adjacentOverlap > 0) reasons.push(`${label}.adjacentOverlap=${m.adjacentOverlap}`);
+    if (requireShortTime) {
+      if (!m.shortShown) reasons.push(`${label}.shortTimeHidden`);
+      if (m.fullShown) reasons.push(`${label}.fullTimeStillShown`);
+      if (!/^\d{2}:\d{2}$/.test(m.shortText || '')) {
+        reasons.push(`${label}.shortText=${m.shortText}`);
+      }
+    }
   };
   if (!expectFail) {
     checkCard('a', pair.a);
@@ -515,6 +558,7 @@ async function main() {
       passCase('month135', metrics.month135),
       passPair('weekOpen164', metrics.weekOpen164),
       passPair('weekFold126', metrics.weekFold126),
+      passPair('weekNarrow78', metrics.weekNarrow78, { requireShortTime: true }),
       passPair('dayDesk106', metrics.dayDesk106),
       passPair('legacyFail126', metrics.legacyFail126, { expectFail: true }),
       passMobileWeek('mobileWeek26', metrics.mobileWeek26),

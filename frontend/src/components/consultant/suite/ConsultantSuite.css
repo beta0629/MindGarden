@@ -309,24 +309,32 @@
   font: inherit;
 }
 
-button.consultant-suite-card {
+/* 인터랙티브: native button 루트 대신 role=button (+ optional as=button) */
+.consultant-suite-card--interactive {
   cursor: pointer;
   appearance: none;
 }
 
-button.consultant-suite-card:focus-visible {
+.consultant-suite-card--interactive:focus-visible {
   outline: none;
   border-color: var(--mg-v2-consultant-selection-border);
   box-shadow: var(--mg-v2-shadow-focus);
 }
 
+/*
+ * --row: 메시지 등 세로 카드는 패딩(16/24)만, 가로 레이아웃은 body 없는 행 카드에만.
+ * (:has(__body) 가 있으면 기본 column 유지 — 메시지 title/body/foot 깨짐 방지)
+ */
 .consultant-suite-card--row {
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
   gap: var(--mg-v2-consultant-row-gap);
   padding: var(--mg-v2-consultant-row-pad);
   min-height: var(--mg-v2-consultant-row-min-height);
+}
+
+.consultant-suite-card--row:not(:has(.consultant-suite-card__body)) {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
 }
 
 .consultant-suite-card__head {

@@ -1,5 +1,5 @@
 /**
- * page/size 목록 응답 정규화 — 배열·Spring Page·{ notifications|messages, totalElements } 혼용.
+ * page/size 목록 응답 정규화 — 배열·Spring Page·ApiResponse 엔벨로프·{ notifications|messages, totalElements } 혼용.
  *
  * @author CoreSolution
  * @since 2026-10-03
@@ -17,6 +17,22 @@ function toNonNegativeIntOrNull(value) {
   }
   const n = Number(value);
   return Number.isFinite(n) && n >= 0 ? Math.floor(n) : null;
+}
+
+/**
+ * 총계 필드를 객체에서 읽는다 (totalElements → total → totalCount / totalPages).
+ *
+ * @param {object|null|undefined} obj
+ * @returns {{ totalElements: number|null, totalPages: number|null }}
+ */
+function readTotals(obj) {
+  if (obj == null || typeof obj !== 'object') {
+    return { totalElements: null, totalPages: null };
+  }
+  return {
+    totalElements: toNonNegativeIntOrNull(obj.totalElements ?? obj.total ?? obj.totalCount),
+    totalPages: toNonNegativeIntOrNull(obj.totalPages)
+  };
 }
 
 /**
@@ -47,13 +63,27 @@ export function normalizePagedListPayload(raw, options = {}) {
   if (raw == null || typeof raw !== 'object') {
     return { items: [], totalElements: null, totalPages: null };
   }
-  const nested = raw.data && typeof raw.data === 'object' && !Array.isArray(raw.data) ? raw.data : null;
+
+  // ApiResponse 엔벨로프: { success, data: [...], totalElements } — 총계는 외곽
+  if (Array.isArray(raw.data)) {
+    const totals = readTotals(raw);
+    return {
+      items: raw.data.filter((item) => item != null),
+      totalElements: totals.totalElements,
+      totalPages: totals.totalPages
+    };
+  }
+
+  const nested = raw.data && typeof raw.data === 'object' ? raw.data : null;
   const source = nested && findItemArray(nested, itemKeys) ? nested : raw;
   const items = findItemArray(source, itemKeys) || [];
+  // 중첩 data 객체에 총계가 없으면 외곽 엔벨로프에서도 읽는다
+  const sourceTotals = readTotals(source);
+  const outerTotals = nested ? readTotals(raw) : { totalElements: null, totalPages: null };
   return {
     items: items.filter((item) => item != null),
-    totalElements: toNonNegativeIntOrNull(source.totalElements ?? source.total ?? source.totalCount),
-    totalPages: toNonNegativeIntOrNull(source.totalPages)
+    totalElements: sourceTotals.totalElements ?? outerTotals.totalElements,
+    totalPages: sourceTotals.totalPages ?? outerTotals.totalPages
   };
 }
 

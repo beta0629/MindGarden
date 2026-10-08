@@ -427,7 +427,7 @@ const ConsultantMessages = () => {
             return (
               <li key={message.id}>
                 <ConsultantSuiteCard
-                  variant={CONSULTANT_SUITE_CARD_VARIANT.CARD}
+                  variant={CONSULTANT_SUITE_CARD_VARIANT.ROW}
                   className={`consultant-messages__suite-card${message.isRead ? '' : ' consultant-messages__suite-card--unread'}`}
                   testId={CONSULTANT_SUITE_TEST_ID.MESSAGE_ROW}
                   onClick={() => handleMessageClick(message)}

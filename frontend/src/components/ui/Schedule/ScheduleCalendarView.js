@@ -695,7 +695,12 @@ const ScheduleCalendarView = ({
                 title={`${clientName} - ${statusLabel}`}
             >
                 <div className="mg-v2-ad-calendar-event__time">
-                    <span className="mg-v2-ad-calendar-event__time-text">{eventInfo.timeText}</span>
+                    <span className="mg-v2-ad-calendar-event__time-text">
+                        <span className="mg-v2-ad-calendar-event__time-full">{eventInfo.timeText}</span>
+                        <span className="mg-v2-ad-calendar-event__time-short">
+                            {formatIntegratedMonthChipShortTime(event.start)}
+                        </span>
+                    </span>
                     {showEngagementBadgeOnChip ? (
                         <EngagementTypeBadge
                             source={extendedProps}

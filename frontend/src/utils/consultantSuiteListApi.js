@@ -23,10 +23,13 @@ export async function fetchConsultantSuitePagedList(path, params = {}, options =
   const size = Number.isFinite(Number(options.size))
     ? Number(options.size)
     : CONSULTANT_SUITE_PAGE_SIZE;
+  // unwrapApiEnvelope:false — 형제 필드 totalElements/totalPages 보존 (배열만 언랩되면 페이저 소실)
   const raw = await StandardizedApi.get(path, {
     ...params,
     page,
     size
+  }, {
+    unwrapApiEnvelope: false
   });
   const normalized = normalizePagedListPayload(raw, {
     itemKeys: options.itemKeys

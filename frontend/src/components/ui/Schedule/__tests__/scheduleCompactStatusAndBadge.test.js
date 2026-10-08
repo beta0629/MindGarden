@@ -78,6 +78,9 @@ describe('통합스케줄 월간·주간 상태와 컴팩트 배지', () => {
     expect(timeClose).toBeGreaterThan(timeOpen);
     const timeBlock = weekDay.slice(timeOpen, timeClose);
     expect(timeBlock).toMatch(/mg-v2-ad-calendar-event__time-text/);
+    expect(timeBlock).toMatch(/mg-v2-ad-calendar-event__time-full/);
+    expect(timeBlock).toMatch(/mg-v2-ad-calendar-event__time-short/);
+    expect(timeBlock).toMatch(/formatIntegratedMonthChipShortTime/);
     expect(timeBlock).toMatch(/<EngagementTypeBadge[\s\S]*className="mg-v2-ad-calendar-event__engagement"/);
     expect(timeBlock).toMatch(/showEngagementBadgeOnChip/);
 
@@ -147,6 +150,8 @@ describe('통합스케줄 월간·주간 상태와 컴팩트 배지', () => {
       /\.mg-v2-ad-calendar-event__time-text\s*\{[^}]*min-width:\s*0/
     );
     expect(css).toMatch(/text-overflow:\s*ellipsis/);
+    expect(css).toContain('container: mg-week-event / inline-size');
+    expect(css).toContain('@container mg-week-event (width < 109px)');
     const marksCss = fs.readFileSync(
       path.resolve(
         __dirname,

@@ -31,6 +31,7 @@ export const CONSULTANT_SUITE_CLASS = {
   CARD_LIST: 'consultant-suite-card-list',
   CARD: 'consultant-suite-card',
   CARD_ROW: 'consultant-suite-card--row',
+  CARD_INTERACTIVE: 'consultant-suite-card--interactive',
   CARD_HEAD: 'consultant-suite-card__head',
   CARD_HEAD_TEXT: 'consultant-suite-card__head-text',
   CARD_TITLE: 'consultant-suite-card__title',

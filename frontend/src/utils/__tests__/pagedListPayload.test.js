@@ -32,6 +32,26 @@ describe('normalizePagedListPayload', () => {
     expect(result.totalElements).toBe(23);
   });
 
+  test('엔벨로프 { success, data:[...], totalElements } — 외곽 총계 보존', () => {
+    const result = normalizePagedListPayload({
+      success: true,
+      data: [{ id: 1 }, { id: 2 }],
+      totalElements: 25,
+      totalPages: 2
+    });
+    expect(result.items).toEqual([{ id: 1 }, { id: 2 }]);
+    expect(result.totalElements).toBe(25);
+    expect(result.totalPages).toBe(2);
+  });
+
+  test('배열만 오면 totalElements 는 null (언랩 후 경로)', () => {
+    expect(normalizePagedListPayload([{ id: 1 }, { id: 2 }])).toEqual({
+      items: [{ id: 1 }, { id: 2 }],
+      totalElements: null,
+      totalPages: null
+    });
+  });
+
   test('Spring Page content', () => {
     expect(normalizePagedListPayload({ content: [1], totalElements: 1, totalPages: 1 }).items).toEqual([1]);
   });

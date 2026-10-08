@@ -10,6 +10,7 @@
 **/*Payment*Test.java
 **/*Deposit*Test.java
 **/*Refund*Test.java
+**/AdminControllerClientsByConsultantStatusCountsTest.java
 **/AdminServiceImplTerminate*Test.java
 
 # 회기·매핑 회기 동기화

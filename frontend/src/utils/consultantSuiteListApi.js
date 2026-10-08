@@ -6,7 +6,7 @@
  */
 
 import StandardizedApi from './standardizedApi';
-import { normalizePagedListPayload } from './pagedListPayload';
+import { clampPagedUiPage, normalizePagedListPayload } from './pagedListPayload';
 import { PAGED_LIST_FIRST_PAGE } from '../constants/pagedList';
 import { CONSULTANT_SUITE_PAGE_SIZE } from '../constants/consultantSuite';
 
@@ -52,4 +52,15 @@ export function toServerPageIndex(uiPage) {
     return PAGED_LIST_FIRST_PAGE;
   }
   return Math.floor(n) - 1;
+}
+
+/**
+ * 범위 밖 UI page 를 1..totalPages 로 보정 (공용 페이징 SSOT).
+ *
+ * @param {number} uiPage 1-base
+ * @param {number|null|undefined} totalPages
+ * @returns {number}
+ */
+export function clampUiPage(uiPage, totalPages) {
+  return clampPagedUiPage(uiPage, totalPages);
 }

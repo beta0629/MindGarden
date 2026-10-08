@@ -1,8 +1,9 @@
 /**
  * fetchConsultantSuitePagedList — unwrapApiEnvelope:false 로 totalElements 보존
  */
-import { fetchConsultantSuitePagedList } from '../consultantSuiteListApi';
+import { clampUiPage, fetchConsultantSuitePagedList } from '../consultantSuiteListApi';
 import StandardizedApi from '../standardizedApi';
+import { clampPagedUiPage } from '../pagedListPayload';
 
 jest.mock('../standardizedApi', () => ({
   __esModule: true,
@@ -66,5 +67,22 @@ describe('fetchConsultantSuitePagedList', () => {
       { itemKeys: ['mappings'] }
     );
     expect(result.statusCounts).toEqual({ ALL: 9, ACTIVE: 7 });
+  });
+});
+
+describe('clampUiPage / clampPagedUiPage', () => {
+  test('범위 밖 page → 마지막 페이지', () => {
+    expect(clampUiPage(5, 2)).toBe(2);
+    expect(clampPagedUiPage(99, 3)).toBe(3);
+  });
+
+  test('1 미만 → 1', () => {
+    expect(clampUiPage(0, 4)).toBe(1);
+    expect(clampUiPage(-2, 4)).toBe(1);
+  });
+
+  test('totalPages 비정상 → 1', () => {
+    expect(clampUiPage(3, 0)).toBe(1);
+    expect(clampUiPage(3, null)).toBe(1);
   });
 });

@@ -5,6 +5,20 @@
     z-index: 1;
     /* 뷰 전환: opacity만. transform/scale/zoom 금지(DnD 히트테스트 보호) */
     transition: opacity var(--animation-duration-fast) var(--animation-easing-out);
+    /*
+     * timegrid 슬롯·이벤트 최소 높이 — 토큰만 사용(하드코딩 px 금지).
+     * space-8(2rem) → 30분 슬롯 ≈32px → 50분 ≈53px 로 시간+이름 두 줄 확보.
+     * event-min = space-4(1rem) → FC eventMinHeight 16 과 동기.
+     */
+    --mg-v2-calendar-slot-min-height: var(--mg-v2-space-8);
+    --mg-v2-calendar-event-min-height: var(--mg-v2-space-4);
+}
+
+/* FullCalendar 슬롯 높이 하한 — expandRows 압축으로 50분 칩이 ~42px 이하로 줄지 않게 */
+.mg-v2-schedule-calendar-view .fc-timegrid-slot,
+.mg-v2-schedule-calendar-view .fc-timegrid-slot-lane {
+    min-height: var(--mg-v2-calendar-slot-min-height) !important;
+    height: var(--mg-v2-calendar-slot-min-height);
 }
 
 .mg-v2-schedule-calendar-view.mg-v2-schedule-calendar-view--fading {
@@ -34,7 +48,7 @@
     color: inherit !important;
 }
 
-/* 주간/일간 풀 카드 — FC 하네스 높이에 맞춤(배지 블록 height:auto 로 슬롯 초과 금지) */
+/* 주간/일간 풀 카드 — FC 하네스 높이에 맞춤(슬롯 초과·글자 가림 금지) */
 .mg-v2-ad-calendar-event {
     position: relative;
     display: flex;
@@ -49,9 +63,17 @@
     transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
     cursor: pointer;
     min-height: 0;
+    max-height: 100%;
     height: 100%;
     box-sizing: border-box;
     gap: var(--mg-v2-space-0-5, 0.125rem);
+}
+
+/* timegrid harness 안 칩은 일정 시간 높이를 넘지 않음 */
+.mg-v2-schedule-calendar-view .fc-timegrid-event-harness .mg-v2-ad-calendar-event--week-day-fit {
+    max-height: 100%;
+    height: 100%;
+    min-height: 0;
 }
 
 /* 월간 컴팩트는 좌측 악센트 유지 */
@@ -123,6 +145,18 @@
     width: 100%;
 }
 
+/*
+ * 주/일 칩 각 줄(시간·이름·상태) — flex 로 눌려 ~1.8px 가 되지 않도록 shrink 금지.
+ * 높이 판정(readRowHeight)도 자연 줄 높이 기준.
+ */
+.mg-v2-ad-calendar-event--week-day-fit > .mg-v2-ad-calendar-event__time,
+.mg-v2-ad-calendar-event--week-day-fit > .mg-v2-ad-calendar-event__title,
+.mg-v2-ad-calendar-event--week-day-fit > .mg-v2-ad-calendar-event__status,
+.mg-v2-ad-calendar-event--week-day-fit .mg-v2-ad-calendar-event__merge-row > .mg-v2-ad-calendar-event__time,
+.mg-v2-ad-calendar-event--week-day-fit .mg-v2-ad-calendar-event__merge-row > .mg-v2-ad-calendar-event__title {
+    flex-shrink: 0;
+}
+
 .mg-v2-ad-calendar-event--week-day-fit .mg-v2-ad-calendar-event__time-text {
     flex: 0 0 auto;
     min-width: 0;
@@ -136,6 +170,28 @@
 }
 
 /*
+ * 좁은 칩: 내담자 우선 + 상담사 먼저 shrink/ellipsis.
+ * 기관연계 배지는 말줄임 금지(전부 또는 생략).
+ * marker(표식) 단계에서는 min-width:1ch 미적용 — 글자 조각 방지.
+ */
+.mg-v2-ad-calendar-event--week-day-fit:not(.mg-v2-ad-calendar-event--chip-marker)
+  .mg-v2-ad-calendar-event__title .client-name {
+    flex: 1 1 auto;
+    min-width: 1ch;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.mg-v2-ad-calendar-event--week-day-fit .mg-v2-ad-calendar-event__title .counselor-name {
+    flex: 0 3 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/*
  * Stage 5 compact-pad: 정상 padding(space-1 / space-2) → 축소(space-0-5 / space-1).
  * 하드코딩 px 금지 — calendar event padding 토큰만 사용.
  */
@@ -143,8 +199,105 @@
     padding: var(--mg-v2-space-0-5) var(--mg-v2-space-1);
 }
 
+/*
+ * marker(표식) 단계: 글자 0 + 상태 색 막대만.
+ * compact status border 토큰과 동일 계열 재사용 (hex/rgb 금지).
+ */
+.mg-v2-ad-calendar-event--week-day-fit.mg-v2-ad-calendar-event--chip-marker {
+    overflow: hidden;
+    min-width: 0;
+    padding: var(--mg-v2-space-0-5);
+    border-left-width: var(--mg-v2-border-width-thick);
+    border-left-style: solid;
+    border-left-color: var(--mg-v2-color-neutral-600);
+    background-color: color-mix(
+        in srgb,
+        var(--mg-v2-color-neutral-600) 18%,
+        transparent
+    );
+}
+
+.mg-v2-ad-calendar-event--week-day-fit.mg-v2-ad-calendar-event--chip-marker.mg-v2-ad-calendar-event--status-booked {
+    border-left-color: var(--mg-v2-color-primary-main);
+    background-color: color-mix(
+        in srgb,
+        var(--mg-v2-color-primary-main) 18%,
+        transparent
+    );
+}
+
+.mg-v2-ad-calendar-event--week-day-fit.mg-v2-ad-calendar-event--chip-marker.mg-v2-ad-calendar-event--status-confirmed {
+    border-left-color: var(--mg-v2-color-semantic-success-dark);
+    background-color: color-mix(
+        in srgb,
+        var(--mg-v2-color-semantic-success-dark) 18%,
+        transparent
+    );
+}
+
+.mg-v2-ad-calendar-event--week-day-fit.mg-v2-ad-calendar-event--chip-marker.mg-v2-ad-calendar-event--status-completed {
+    border-left-color: var(--mg-v2-color-neutral-600);
+    background-color: color-mix(
+        in srgb,
+        var(--mg-v2-color-neutral-600) 18%,
+        transparent
+    );
+}
+
+.mg-v2-ad-calendar-event--week-day-fit.mg-v2-ad-calendar-event--chip-marker.mg-v2-ad-calendar-event--status-tentative {
+    border-left-color: var(--mg-v2-color-semantic-warning-dark);
+    background-color: color-mix(
+        in srgb,
+        var(--mg-v2-color-semantic-warning-dark) 18%,
+        transparent
+    );
+}
+
+.mg-v2-ad-calendar-event--week-day-fit.mg-v2-ad-calendar-event--chip-marker.mg-v2-ad-calendar-event--status-cancelled {
+    border-left-color: var(--mg-v2-color-neutral-500);
+    background-color: color-mix(
+        in srgb,
+        var(--mg-v2-color-neutral-500) 18%,
+        transparent
+    );
+}
+
+.mg-v2-ad-calendar-event--week-day-fit.mg-v2-ad-calendar-event--chip-marker
+  > .mg-v2-ad-calendar-event__time {
+    position: absolute;
+    width: 0;
+    height: 0;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    pointer-events: none;
+}
+
 .mg-v2-ad-calendar-event--week-day-fit .mg-v2-ad-calendar-event__time-text[hidden] {
     display: none !important;
+}
+
+/* merge-time-title: 시간+이름을 한 줄에 (높이 단계) */
+.mg-v2-ad-calendar-event--week-day-fit.mg-v2-ad-calendar-event--merge-time-title > .mg-v2-ad-calendar-event__merge-row {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: var(--mg-v2-space-1);
+    min-width: 0;
+    width: 100%;
+    flex: 1 1 auto;
+    overflow: hidden;
+}
+
+.mg-v2-ad-calendar-event--week-day-fit.mg-v2-ad-calendar-event--merge-time-title .mg-v2-ad-calendar-event__time {
+    flex: 0 0 auto;
+}
+
+.mg-v2-ad-calendar-event--week-day-fit.mg-v2-ad-calendar-event--merge-time-title .mg-v2-ad-calendar-event__title {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: clip;
+    white-space: nowrap;
 }
 
 /* 월간 뷰 컴팩트 이벤트 (다중 이벤트 시 공간 절약) - core-designer 스펙 */

@@ -6,9 +6,11 @@
  * WeekDayScheduleEventChip 과 동일한 클래스·6-stage judge(실제 computed font)로
  * 시간 잘림·배지 클리핑을 검사한다.
  *
- * Stages: long+badge → long → short+badge → short → compact-pad → hide-time
+ * Stages: long+badge → long → short+badge → short → compact-pad → hide-time → marker
  * 추가: 34.8px half-width 연속 칩(10:00–10:50 + 11:00 overlap column)
  * 구코드(11px 가정 font / short 강제)는 34.8 에서 FAIL 해야 함.
+ * 추가: 내담자+상담사 동시 — 390 주간 12~29px, 1440 34.8·59px (client 우선 / counselor 숨김·ellipsis)
+ * 12px: shortTime 1글자도 불가 → marker(글자 0 + 상태 색 막대). 칩 밖 글자 조각 FAIL.
  *
  * 사용:
  *   node scripts/verification/check-engagement-badge-chip-layout.mjs
@@ -23,16 +25,47 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { createRequire } from 'module';
+import { spawnSync } from 'child_process';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '../..');
 /** snap Chromium 은 /tmp 를 못 읽음 — harness 는 레포 루트 하위에 둔다 */
 const HARNESS_DIR = path.join(ROOT, '.tmp-harness');
 const HARNESS_HTML = path.join(HARNESS_DIR, 'mg-engagement-badge-chip-layout.html');
+const WEEK_DAY_CHIP_FIT_SRC = path.join(ROOT, 'frontend/src/utils/weekDayChipFit.js');
+const WEEK_DAY_CHIP_FIT_IIFE = path.join(HARNESS_DIR, 'weekDayChipFit.iife.js');
 const LABEL = '기관연계';
 const SEG_A = LABEL.slice(0, Math.floor(LABEL.length / 2));
 const SEG_B = LABEL.slice(Math.floor(LABEL.length / 2));
 const ALLOWED_LINE_PATTERNS = new Set([LABEL, `${SEG_A}/${SEG_B}`]);
+
+/**
+ * 제품 weekDayChipFit.js 를 IIFE 로 번들 — 판정 로직 복사 금지.
+ *
+ * @returns {string} IIFE 소스
+ */
+function bundleWeekDayChipFitIife() {
+  fs.mkdirSync(HARNESS_DIR, { recursive: true });
+  const result = spawnSync(
+    'npx',
+    [
+      '--yes',
+      'esbuild@0.25.0',
+      WEEK_DAY_CHIP_FIT_SRC,
+      '--bundle',
+      '--format=iife',
+      '--global-name=MgWeekDayChipFit',
+      `--outfile=${WEEK_DAY_CHIP_FIT_IIFE}`
+    ],
+    { cwd: ROOT, encoding: 'utf8' }
+  );
+  if (result.status !== 0) {
+    throw new Error(
+      `esbuild weekDayChipFit 번들 실패: ${result.stderr || result.stdout || result.error}`
+    );
+  }
+  return fs.readFileSync(WEEK_DAY_CHIP_FIT_IIFE, 'utf8');
+}
 
 const MOBILE_VIEWPORT_WIDTH = 390;
 const DESKTOP_VIEWPORT_WIDTH = 1440;
@@ -45,12 +78,16 @@ const DAY_COL_MOBILE = 320;
 /** 겹침 열 half-width — 「11:00」→「11:0」 FAIL 재현 폭 */
 const WEEK_CHIP_HALF = 34.8;
 
-const SLOT_30_MIN_PX = 38.4;
+/** space-8(2rem) 슬롯 하한과 동기 — 하드코딩 상수가 아니라 토큰 rem→px(16*2) */
+const SLOT_30_MIN_PX = 32;
 const EVENT_50_MIN_HARNESS_PX = (50 / 30) * SLOT_30_MIN_PX;
+const EVENT_30_MIN_HARNESS_PX = SLOT_30_MIN_PX;
+const EVENT_15_MIN_HARNESS_PX = (15 / 30) * SLOT_30_MIN_PX;
 const GAP_10_MIN_PX = (10 / 30) * SLOT_30_MIN_PX;
 
 const HARNESS_CSS_REL_PATHS = [
   'frontend/src/styles/tokens/design-v2-tokens.css',
+  'frontend/src/styles/tokens/design-v2-tokens-refine.css',
   'frontend/src/styles/unified-design-tokens.css',
   'frontend/src/components/common/Badge.css',
   'frontend/src/components/common/EngagementTypeBadge.css',
@@ -111,9 +148,13 @@ function inlineStylesheets() {
 }
 
 function buildHarnessHtml() {
+  const chipFitIife = bundleWeekDayChipFitIife();
   return `<!DOCTYPE html>
 <html lang="ko"><head><meta charset="utf-8" />
 ${inlineStylesheets()}
+<script>
+${chipFitIife}
+</script>
 <style>
 :root{--font-size-xs:.75rem;--mg-font-xs:.75rem;--mg-font-size-2xs:.625rem;--mg-radius-full:9999px;--mg-spacing-2:2px;--mg-spacing-8:8px;--mg-spacing-sm:8px;--mg-spacing-xs:4px;--mg-spacing-1:.25rem;--mg-spacing-xl:2rem;--mg-spacing-36:9rem;--mg-badge-status-info-bg:#e8f1fb;--mg-badge-status-info-text:#1d4f91;--mg-v2-color-primary-main:#2f6fed;--mg-v2-color-text-primary:#1a1a1a;--mg-v2-color-text-secondary:#4b5563;--mg-v2-color-neutral-50:#f9fafb;--mg-v2-color-neutral-100:#f3f4f6;--mg-v2-color-neutral-200:#e5e7eb;--mg-v2-color-neutral-500:#6b7280;--mg-v2-color-neutral-600:#4b5563;--mg-v2-border-width-thick:2px;--mg-v2-font-weight-semibold:600;--mg-v2-color-semantic-warning:#b45309;--mg-v2-color-semantic-warning-dark:#92400e;--mg-v2-color-semantic-warning-light:#fef3c7;--mg-v2-color-semantic-success-dark:#166534;--cs-brown-50:#faf8f5;--cs-brown-300:#d4c4b0;--cs-brown-600:#8b6914;--cs-brown-700:#6b4f0f;--mg-text-secondary:#4b5563;--mg-text-primary:#1a1a1a;--mg-secondary-600:#4b5563;--mg-color-text-main:#1a1a1a;--mg-color-text-secondary:#4b5563;--mg-color-border-main:#e5e7eb;--mg-color-background-main:#fff;--mg-color-surface-main:#fff;--mg-color-primary-light:#93c5fd;--mg-color-primary-main:#2f6fed;--mg-primary-700:#1d4ed8;--mg-gray-500:#6b7280;--mg-radius-sm:6px;--mg-month-event-status-color:var(--mg-v2-color-primary-main);--mg-schedule-legend-inline-pad:0}
 body{margin:0;font-family:"Pretendard","Noto Sans KR",sans-serif}
@@ -143,6 +184,18 @@ body{margin:0;font-family:"Pretendard","Noto Sans KR",sans-serif}
 <div class="sec" id="sec-half" style="width:100%;box-sizing:border-box">
   <div class="lab">half-width 34.8 consecutive overlap column (10:00–10:50 + 11:00)</div>
   <div class="row" id="half-row"></div>
+</div>
+<div class="sec" id="sec-name-priority" style="width:100%;box-sizing:border-box">
+  <div class="lab">name priority client+counselor (12 / 20 / 29 / 34.8 / 59)</div>
+  <div class="row" id="name-priority-row"></div>
+</div>
+<div class="sec" id="sec-dur-desktop" style="width:100%;box-sizing:border-box">
+  <div class="lab">duration stack 50·30·15 (desktop 1440 week/day widths)</div>
+  <div class="row" id="dur-desktop-row"></div>
+</div>
+<div class="sec" id="sec-dur-mobile" style="width:100%;box-sizing:border-box">
+  <div class="lab">duration stack 50·30·15 (390 week/day)</div>
+  <div class="row" id="dur-mobile-row"></div>
 </div>
 <div class="sec" id="sec-legacy-fail" style="width:100%;box-sizing:border-box">
   <div class="lab">legacy sibling badge (expect FAIL metrics)</div>
@@ -192,6 +245,8 @@ const DAY_DESKTOP=${DAY_COL_DESKTOP};
 const DAY_MOBILE=${DAY_COL_MOBILE};
 const WEEK_HALF=${WEEK_CHIP_HALF};
 const HARNESS_H=${EVENT_50_MIN_HARNESS_PX};
+const HARNESS_H30=${EVENT_30_MIN_HARNESS_PX};
+const HARNESS_H15=${EVENT_15_MIN_HARNESS_PX};
 const GAP_H=${GAP_10_MIN_PX};
 const LEGACY_TIME_FONT='600 11px "Pretendard", "Noto Sans KR", sans-serif';
 
@@ -219,17 +274,40 @@ function measureText(text, font){
   return ctx.measureText(String(text)).width;
 }
 
-/** 실제 WeekDayScheduleEventChip 마크업 미니 프로브 — computed font/pad 토큰 확보 */
+/** 실제 WeekDayScheduleEventChip 마크업 미니 프로브 — computed font/pad·줄 높이 확보 */
 function ensureFontProbe(){
   const host=document.getElementById('font-probe-host');
   let chip=host.querySelector('.mg-v2-ad-calendar-event--week-day-fit');
   if(!chip){
     chip=document.createElement('div');
     chip.className='mg-v2-ad-calendar-event mg-v2-ad-calendar-event--week-day-fit';
-    chip.innerHTML='<div class="mg-v2-ad-calendar-event__time"><span class="mg-v2-ad-calendar-event__time-text"><span class="mg-v2-ad-calendar-event__time-measured">11:00</span></span>'+badgeHtml('probe-badge','mg-v2-ad-calendar-event__engagement')+'</div>';
+    chip.innerHTML='<div class="mg-v2-ad-calendar-event__time"><span class="mg-v2-ad-calendar-event__time-text"><span class="mg-v2-ad-calendar-event__time-measured">11:00</span></span>'
+      +badgeHtml('probe-badge','mg-v2-ad-calendar-event__engagement')+'</div>'
+      +'<div class="mg-v2-ad-calendar-event__title"><span class="client-name">라마바</span><span class="counselor-name">상담사A</span></div>'
+      +'<div class="mg-v2-ad-calendar-event__status">예약됨</div>';
     host.appendChild(chip);
   }
   return chip;
+}
+
+/** 프로브에서 제품 readRowHeight 로 자연 줄 높이 측정 */
+function probeRowHeights(probe){
+  const api=globalThis.MgWeekDayChipFit;
+  const read=(sel)=>{
+    const el=probe.querySelector(sel);
+    if(!el) return 14;
+    if(api && typeof api.readRowHeight==='function'){
+      const h=api.readRowHeight(el);
+      return h>0 ? h : 14;
+    }
+    const cs=getComputedStyle(el);
+    return Number.parseFloat(cs.lineHeight)||Number.parseFloat(cs.fontSize)||14;
+  };
+  return {
+    timeRowHeight:read('.mg-v2-ad-calendar-event__time'),
+    titleRowHeight:read('.mg-v2-ad-calendar-event__title'),
+    statusRowHeight:read('.mg-v2-ad-calendar-event__status')
+  };
 }
 
 function parseCssLengthToPx(raw, el){
@@ -268,10 +346,67 @@ function readPadTokens(el){
 }
 
 /**
- * products weekDayChipFit.judgeWeekDayChipFit 와 동일 6 stages.
+ * 제품 MgWeekDayChipFit.judgeWeekDayChipFit 직접 호출 (판정 로직 복사 금지).
  * font 는 실제 CSS computed (가정 11px 금지).
  */
 function pickStage(harnessW){
+  const api=globalThis.MgWeekDayChipFit;
+  if(!api || typeof api.judgeWeekDayChipFit!=='function'){
+    throw new Error('MgWeekDayChipFit.judgeWeekDayChipFit missing — product import failed');
+  }
+  const probe=ensureFontProbe();
+  const timeEl=probe.querySelector('.mg-v2-ad-calendar-event__time-measured');
+  const badgeEl=probe.querySelector('.mg-engagement-type-badge');
+  const timeFont=resolveFont(timeEl);
+  const badgeFont=resolveFont(badgeEl)||timeFont;
+  const longW=measureText('오전 10:00', timeFont);
+  const shortW=measureText('10:00', timeFont);
+  const minTimeGlyphW=measureText('1', timeFont);
+  const badgeW=measureText(LABEL, badgeFont)+8;
+  const gap=4;
+  const { normalPadX, compactPadX }=readPadTokens(probe);
+  const chipW=Math.max(0, harnessW-normalPadX);
+  const compactW=Math.max(0, harnessW-compactPadX);
+  const rowH=probeRowHeights(probe);
+  const judged=api.judgeWeekDayChipFit({
+    chipWidth:chipW,
+    compactChipWidth:compactW,
+    outerChipWidth:Math.max(0, harnessW),
+    longTimeWidth:longW,
+    shortTimeWidth:shortW,
+    minTimeGlyphWidth:minTimeGlyphW,
+    badgeWidth:badgeW,
+    gap,
+    considerBadge:true,
+    chipHeight:HARNESS_H,
+    timeRowHeight:rowH.timeRowHeight,
+    titleRowHeight:rowH.titleRowHeight,
+    statusRowHeight:rowH.statusRowHeight,
+    gapY:2
+  });
+  const markerOnly=!!judged.markerOnly || judged.stage==='marker';
+  const time=judged.showTime
+    ? (judged.timeMode==='long' ? '오전 10:00' : '10:00')
+    : '10:00';
+  return {
+    time,
+    badge:!!judged.showBadge,
+    stage:judged.stage,
+    showTime:!!judged.showTime,
+    compactPad:!!judged.compactPad,
+    showStatus:markerOnly ? false : judged.showStatus!==false,
+    showTitle:markerOnly ? false : judged.showTitle!==false,
+    mergeTimeTitle:!!judged.mergeTimeTitle,
+    heightStage:judged.heightStage||'full',
+    markerOnly,
+    timeFont, shortW, longW, minTimeGlyphW, chipW, compactW,
+    ...rowH
+  };
+}
+
+function pickStageForHeight(harnessW, chipH){
+  const base=pickStage(harnessW);
+  const api=globalThis.MgWeekDayChipFit;
   const probe=ensureFontProbe();
   const timeEl=probe.querySelector('.mg-v2-ad-calendar-event__time-measured');
   const badgeEl=probe.querySelector('.mg-engagement-type-badge');
@@ -280,25 +415,40 @@ function pickStage(harnessW){
   const longW=measureText('오전 10:00', timeFont);
   const shortW=measureText('10:00', timeFont);
   const badgeW=measureText(LABEL, badgeFont)+8;
-  const gap=4;
   const { normalPadX, compactPadX }=readPadTokens(probe);
   const chipW=Math.max(0, harnessW-normalPadX);
   const compactW=Math.max(0, harnessW-compactPadX);
-  const fits=(need,w)=>w+0.5>=need;
-
-  if(fits(longW+gap+badgeW, chipW)) return {time:'오전 10:00', badge:true, stage:'long+badge', showTime:true, compactPad:false, timeFont, shortW, longW, chipW, compactW};
-  if(fits(longW, chipW)) return {time:'오전 10:00', badge:false, stage:'long', showTime:true, compactPad:false, timeFont, shortW, longW, chipW, compactW};
-  if(fits(shortW+gap+badgeW, chipW)) return {time:'10:00', badge:true, stage:'short+badge', showTime:true, compactPad:false, timeFont, shortW, longW, chipW, compactW};
-  if(fits(shortW, chipW)) return {time:'10:00', badge:false, stage:'short', showTime:true, compactPad:false, timeFont, shortW, longW, chipW, compactW};
-  if(fits(shortW+gap+badgeW, compactW)) return {time:'10:00', badge:true, stage:'compact-pad', showTime:true, compactPad:true, timeFont, shortW, longW, chipW, compactW};
-  if(fits(shortW, compactW)) return {time:'10:00', badge:false, stage:'compact-pad', showTime:true, compactPad:true, timeFont, shortW, longW, chipW, compactW};
+  const rowH=probeRowHeights(probe);
+  const minTimeGlyphW=measureText('1', timeFont);
+  const judged=api.judgeWeekDayChipFit({
+    chipWidth:chipW,
+    compactChipWidth:compactW,
+    outerChipWidth:Math.max(0, harnessW),
+    longTimeWidth:longW,
+    shortTimeWidth:shortW,
+    minTimeGlyphWidth:minTimeGlyphW,
+    badgeWidth:badgeW,
+    gap:4,
+    considerBadge:true,
+    chipHeight:chipH,
+    timeRowHeight:rowH.timeRowHeight,
+    titleRowHeight:rowH.titleRowHeight,
+    statusRowHeight:rowH.statusRowHeight,
+    gapY:2
+  });
+  const markerOnly=!!judged.markerOnly || judged.stage==='marker';
   return {
-    time:'10:00',
-    badge:fits(badgeW, compactW),
-    stage:'hide-time',
-    showTime:false,
-    compactPad:true,
-    timeFont, shortW, longW, chipW, compactW
+    ...base,
+    time:judged.showTime ? (judged.timeMode==='long' ? '오전 10:00' : '10:00') : '10:00',
+    badge:!!judged.showBadge,
+    stage:judged.stage,
+    showTime:!!judged.showTime,
+    compactPad:!!judged.compactPad,
+    showStatus:markerOnly ? false : judged.showStatus!==false,
+    showTitle:markerOnly ? false : judged.showTitle!==false,
+    mergeTimeTitle:!!judged.mergeTimeTitle,
+    heightStage:judged.heightStage||'full',
+    markerOnly
   };
 }
 
@@ -320,16 +470,121 @@ function legacyPickStage11px(harnessW){
 
 function weekDayCard(id, stageInfo, displayTimeOverride){
   const displayTime=displayTimeOverride!=null?displayTimeOverride:stageInfo.time;
+  const markerOnly=!!stageInfo.markerOnly || stageInfo.stage==='marker';
   const compactCls=stageInfo.compactPad?' mg-v2-ad-calendar-event--chip-pad-compact':'';
-  const badge=stageInfo.badge?badgeHtml('badge-'+id,'mg-v2-ad-calendar-event__engagement'):'';
-  const timeHidden=stageInfo.showTime===false;
+  const mergeCls=!markerOnly && stageInfo.mergeTimeTitle?' mg-v2-ad-calendar-event--merge-time-title':'';
+  const markerCls=markerOnly?' mg-v2-ad-calendar-event--chip-marker mg-v2-ad-calendar-event--status-booked':'';
+  const badge=!markerOnly && stageInfo.badge?badgeHtml('badge-'+id,'mg-v2-ad-calendar-event__engagement'):'';
+  const timeHidden=markerOnly || stageInfo.showTime===false;
+  const showTitle=!markerOnly && stageInfo.showTitle!==false;
+  const showStatus=!markerOnly && stageInfo.showStatus!==false;
+  const clientLabel=stageInfo.clientLabel||'이내담';
+  const counselorLabel=stageInfo.counselorLabel||'';
+  const showCounselor=!markerOnly && stageInfo.showCounselorName===true && !!counselorLabel;
   const a11yTime=displayTime || stageInfo.time;
-  const titleAttr=a11yTime+' · 이내담 - 예약됨';
+  const institutionPart=(!markerOnly && stageInfo.badge)?' · '+LABEL:'';
+  const a11yName=[clientLabel, counselorLabel].filter(Boolean).join(' ');
+  const titleAttr=a11yTime+' · '+a11yName+' - 예약됨'+institutionPart;
   const measureSeed=displayTime || stageInfo.time;
   const timeInner=timeHidden
     ? '<span class="mg-v2-ad-calendar-event__time-text" hidden aria-hidden="true"><span class="mg-v2-ad-calendar-event__time-measured">'+measureSeed+'</span></span>'
     : '<span class="mg-v2-ad-calendar-event__time-text"><span class="mg-v2-ad-calendar-event__time-measured">'+displayTime+'</span></span>';
-  return '<div class="mg-v2-ad-calendar-event mg-v2-ad-calendar-event--week-day-fit'+compactCls+'" id="chip-'+id+'" data-chip-fit-stage="'+stageInfo.stage+'" title="'+titleAttr+'" aria-label="'+titleAttr+'"><div class="mg-v2-ad-calendar-event__time">'+timeInner+badge+'</div><div class="mg-v2-ad-calendar-event__title"><span class="client-name">이내담</span></div><div class="mg-v2-ad-calendar-event__status">예약됨</div></div>';
+  const counselorHtml=showCounselor
+    ? '<span class="counselor-name">'+counselorLabel+'</span>'
+    : '';
+  const titleHtml=showTitle
+    ? '<div class="mg-v2-ad-calendar-event__title"><span class="client-name">'+clientLabel+'</span>'+counselorHtml+'</div>'
+    : '';
+  const statusHtml=showStatus
+    ? '<div class="mg-v2-ad-calendar-event__status">예약됨</div>'
+    : '';
+  const heightStage=stageInfo.heightStage||'full';
+  const timeBlock='<div class="mg-v2-ad-calendar-event__time"'+(markerOnly?' aria-hidden="true"':'')+'>'+timeInner+badge+'</div>';
+  const body=markerOnly
+    ? timeBlock
+    : (stageInfo.mergeTimeTitle
+      ? '<div class="mg-v2-ad-calendar-event__merge-row">'+timeBlock+titleHtml+'</div>'
+      : timeBlock+titleHtml);
+  const markerAttr=markerOnly?' data-chip-marker="true"':'';
+  return '<div class="mg-v2-ad-calendar-event mg-v2-ad-calendar-event--week-day-fit'+compactCls+mergeCls+markerCls+'" id="chip-'+id+'" data-chip-fit-stage="'+stageInfo.stage+'" data-chip-height-stage="'+heightStage+'" data-show-counselor="'+String(showCounselor)+'"'+markerAttr+' title="'+titleAttr+'" aria-label="'+titleAttr+'">'+body+statusHtml+'</div>';
+}
+
+/** 내담자+상담사 동시 — 공용 judge 로 showCounselorName 반영 */
+function pickStageWithNames(harnessW, opts){
+  const clientLabel=(opts&&opts.clientLabel)||'라마바';
+  const counselorLabel=(opts&&opts.counselorLabel)||'상담사A';
+  const base=pickStage(harnessW);
+  const api=globalThis.MgWeekDayChipFit;
+  if(!api || typeof api.judgeWeekDayChipFit!=='function'){
+    return { ...base, clientLabel, counselorLabel, showCounselorName:false };
+  }
+  const probe=ensureFontProbe();
+  const timeEl=probe.querySelector('.mg-v2-ad-calendar-event__time-measured');
+  const badgeEl=probe.querySelector('.mg-engagement-type-badge');
+  const clientEl=probe.querySelector('.client-name');
+  const counselorEl=probe.querySelector('.counselor-name');
+  const timeFont=resolveFont(timeEl);
+  const badgeFont=resolveFont(badgeEl)||timeFont;
+  const clientFont=resolveFont(clientEl)||timeFont;
+  const counselorFont=resolveFont(counselorEl)||clientFont;
+  const longW=measureText('오전 10:00', timeFont);
+  const shortW=measureText('10:00', timeFont);
+  const minTimeGlyphW=measureText('1', timeFont);
+  const badgeW=measureText(LABEL, badgeFont)+8;
+  const clientW=measureText(clientLabel, clientFont);
+  const counselorW=measureText(counselorLabel, counselorFont);
+  const minClientW=measureText(clientLabel.charAt(0), clientFont);
+  const gap=4;
+  const { normalPadX, compactPadX }=readPadTokens(probe);
+  const chipW=Math.max(0, harnessW-normalPadX);
+  const compactW=Math.max(0, harnessW-compactPadX);
+  const rowH=probeRowHeights(probe);
+  const judged=api.judgeWeekDayChipFit({
+    chipWidth:chipW,
+    compactChipWidth:compactW,
+    outerChipWidth:Math.max(0, harnessW),
+    longTimeWidth:longW,
+    shortTimeWidth:shortW,
+    minTimeGlyphWidth:minTimeGlyphW,
+    badgeWidth:badgeW,
+    gap,
+    considerBadge:true,
+    chipHeight:HARNESS_H,
+    timeRowHeight:rowH.timeRowHeight,
+    titleRowHeight:rowH.titleRowHeight,
+    statusRowHeight:rowH.statusRowHeight,
+    gapY:2,
+    clientNameWidth:clientW,
+    counselorNameWidth:counselorW,
+    minClientWidth:minClientW,
+    nameGap:gap
+  });
+  const markerOnly=!!judged.markerOnly || judged.stage==='marker';
+  return {
+    ...base,
+    time:judged.showTime ? (judged.timeMode==='long' ? '오전 10:00' : '10:00') : '10:00',
+    badge:!!judged.showBadge,
+    stage:judged.stage,
+    showTime:!!judged.showTime,
+    compactPad:!!judged.compactPad,
+    showStatus:markerOnly ? false : judged.showStatus!==false,
+    showTitle:markerOnly ? false : judged.showTitle!==false,
+    mergeTimeTitle:!!judged.mergeTimeTitle,
+    heightStage:judged.heightStage||'full',
+    markerOnly,
+    showCounselorName:!!judged.showCounselorName,
+    clientLabel,
+    counselorLabel,
+    clientW, counselorW, minClientW, chipW, compactW, minTimeGlyphW
+  };
+}
+
+function namePriorityChip(w, id){
+  const stage=pickStageWithNames(w, { clientLabel:'라마바', counselorLabel:'상담사A' });
+  return '<div><div class="lab">namePri'+w+' stage='+stage.stage+' marker='+!!stage.markerOnly+' counselor='+stage.showCounselorName+'</div>'
+    +'<div class="harness" style="width:'+w+'px;height:'+HARNESS_H+'px">'
+    +'<div class="fc-timegrid-event-harness" style="position:relative;height:100%">'+weekDayCard(id, stage)+'</div>'
+    +'</div></div>';
 }
 
 function legacySiblingCard(id, timeText){
@@ -362,6 +617,28 @@ function consecutiveStack(w, idPrefix, useLegacy){
 function fitChip(w,id){
   const stage=pickStage(w);
   return '<div><div class="lab">fit'+w+' '+stage.stage+'</div><div class="harness" style="width:'+w+'px;height:'+HARNESS_H+'px"><div class="fc-timegrid-event-harness" style="position:relative;height:100%">'+weekDayCard(id, stage)+'</div></div></div>';
+}
+
+/** 연속 50·30·15분 스택 — 실제 높이 측정·빈칩·겹침 검사 */
+function durationStack(w, idPrefix){
+  const h50=HARNESS_H;
+  const h30=HARNESS_H30;
+  const h15=HARNESS_H15;
+  const top30=h50+GAP_H;
+  const top15=top30+h30+GAP_H;
+  const stackH=top15+h15;
+  const s50=pickStageForHeight(w, h50);
+  const s30=pickStageForHeight(w, h30);
+  const s15=pickStageForHeight(w, h15);
+  const c50=weekDayCard(idPrefix+'-50', s50, s50.time);
+  const c30=weekDayCard(idPrefix+'-30', s30, s30.time.replace('10:','11:').replace('오전 10','오전 11'));
+  const c15=weekDayCard(idPrefix+'-15', s15, s15.time.replace('10:','12:').replace('오전 10','오후 12'));
+  return '<div><div class="lab">'+idPrefix+' w'+w+' dur50/30/15 '+s50.heightStage+'/'+s30.heightStage+'/'+s15.heightStage+'</div>'
+    +'<div class="slot-stack harness" style="width:'+w+'px;height:'+stackH+'px">'
+    +'<div class="fc-timegrid-event-harness" id="harness-'+idPrefix+'-50" style="top:0;height:'+h50+'px">'+c50+'</div>'
+    +'<div class="fc-timegrid-event-harness" id="harness-'+idPrefix+'-30" style="top:'+top30+'px;height:'+h30+'px">'+c30+'</div>'
+    +'<div class="fc-timegrid-event-harness" id="harness-'+idPrefix+'-15" style="top:'+top15+'px;height:'+h15+'px">'+c15+'</div>'
+    +'</div></div>';
 }
 
 function halfWidthOverlapStack(){
@@ -404,7 +681,16 @@ document.getElementById('mobile-day-row').innerHTML=[
 ].join('');
 document.getElementById('fit-row').innerHTML=[35,73.5,78,124,390,WEEK_HALF].map(w=>fitChip(w,'fit'+String(w).replace('.','p'))).join('');
 document.getElementById('half-row').innerHTML=halfWidthOverlapStack();
+document.getElementById('name-priority-row').innerHTML=[12,20,29,WEEK_HALF,59].map(w=>namePriorityChip(w,'np'+String(w).replace('.','p'))).join('');
 document.getElementById('legacy-fail-row').innerHTML=[consecutiveStack(WEEK_COLLAPSED,'legacy',true)].join('');
+document.getElementById('dur-desktop-row').innerHTML=[
+  durationStack(WEEK_OPEN,'dur-wopen'),
+  durationStack(DAY_DESKTOP,'dur-ddesk')
+].join('');
+document.getElementById('dur-mobile-row').innerHTML=[
+  durationStack(390,'dur-w390'),
+  durationStack(DAY_MOBILE,'dur-dmob')
+].join('');
 
 function linePattern(badge){
   const segs=[...badge.querySelectorAll('.mg-engagement-type-badge__seg')];
@@ -457,6 +743,119 @@ function adjacentOverlapCount(chip){
   return n;
 }
 
+/** 칩에 실제로 보이는 텍스트 글자 수(시간·이름·상태). 0이면 빈 칩(marker 제외). */
+function visibleChipTextCount(chip){
+  if(!chip) return 0;
+  let count=0;
+  const selectors=[
+    '.mg-v2-ad-calendar-event__time-measured',
+    '.client-name',
+    '.mg-v2-ad-calendar-event__status'
+  ];
+  for(const sel of selectors){
+    const el=chip.querySelector(sel);
+    if(!el) continue;
+    const wrap=el.closest('.mg-v2-ad-calendar-event__time-text');
+    if(wrap && wrap.hasAttribute('hidden')) continue;
+    const text=String(el.textContent||'').replace(/\\s+/g,'').trim();
+    if(!text) continue;
+    const r=el.getBoundingClientRect();
+    if(r.width>0.5 && r.height>0.5) count+=text.length;
+  }
+  return count;
+}
+
+/**
+ * ancestor overflow clip 교집합 (chip 자체 overflow 는 제외 — 칩 밖 누출 검사용).
+ */
+function glyphPaintClipRect(el, chip){
+  let left=-Infinity, top=-Infinity, right=Infinity, bottom=Infinity;
+  let node=el;
+  while(node && node!==chip){
+    const cs=getComputedStyle(node);
+    const ox=cs.overflowX||cs.overflow;
+    const oy=cs.overflowY||cs.overflow;
+    const clipsX=ox==='hidden'||ox==='clip'||ox==='scroll'||cs.textOverflow==='ellipsis';
+    const clipsY=oy==='hidden'||oy==='clip'||oy==='scroll';
+    if(clipsX||clipsY){
+      const r=node.getBoundingClientRect();
+      if(clipsX){ left=Math.max(left,r.left); right=Math.min(right,r.right); }
+      if(clipsY){ top=Math.max(top,r.top); bottom=Math.min(bottom,r.bottom); }
+    }
+    node=node.parentElement;
+  }
+  if(!Number.isFinite(left)) left=-1e6;
+  if(!Number.isFinite(top)) top=-1e6;
+  if(!Number.isFinite(right)) right=1e6;
+  if(!Number.isFinite(bottom)) bottom=1e6;
+  return { left, top, right, bottom };
+}
+
+/**
+ * 칩 경계 밖으로 실제로 그려지는 글자 조각 수.
+ * overflow:hidden/ellipsis 로 잘린 레이아웃 좌표는 무시(말줄임 정상).
+ * 칩 overflow 가 visible 일 때 칩 rect 밖으로 페인트되면 → FAIL.
+ */
+function clippedGlyphFragmentCount(chip){
+  if(!chip) return 0;
+  const c=chip.getBoundingClientRect();
+  const chipCs=getComputedStyle(chip);
+  const chipClipsX=(chipCs.overflowX||chipCs.overflow)==='hidden'
+    || (chipCs.overflowX||chipCs.overflow)==='clip'
+    || (chipCs.overflowX||chipCs.overflow)==='scroll';
+  const chipClipsY=(chipCs.overflowY||chipCs.overflow)==='hidden'
+    || (chipCs.overflowY||chipCs.overflow)==='clip'
+    || (chipCs.overflowY||chipCs.overflow)==='scroll';
+  // marker 칩은 overflow:hidden + 글자 0 — 조각 검사 불필요
+  if(chip.classList.contains('mg-v2-ad-calendar-event--chip-marker')) return 0;
+  let clipped=0;
+  const walker=document.createTreeWalker(chip, NodeFilter.SHOW_TEXT, null);
+  let node;
+  while((node=walker.nextNode())){
+    const parent=node.parentElement;
+    if(!parent) continue;
+    if(parent.closest('[hidden], [aria-hidden="true"]')) continue;
+    const pcs=getComputedStyle(parent);
+    if(pcs.visibility==='hidden' || pcs.display==='none') continue;
+    const text=node.textContent||'';
+    const paintClip=glyphPaintClipRect(parent, chip);
+    for(let i=0;i<text.length;i++){
+      if(/\\s/.test(text[i])) continue;
+      const range=document.createRange();
+      range.setStart(node,i); range.setEnd(node,i+1);
+      const r=range.getBoundingClientRect();
+      if(!(r.width>0 && r.height>0)) continue;
+      // ancestor clip 안 페인트 영역
+      const pLeft=Math.max(r.left, paintClip.left);
+      const pTop=Math.max(r.top, paintClip.top);
+      const pRight=Math.min(r.right, paintClip.right);
+      const pBottom=Math.min(r.bottom, paintClip.bottom);
+      if(pRight-pLeft<=0.5 || pBottom-pTop<=0.5) continue;
+      // 칩이 클리핑하면 밖으로 안 그려짐
+      if(chipClipsX && chipClipsY) continue;
+      // 페인트 영역이 칩 밖을 넘으면 조각 누출
+      const outsideX=!chipClipsX && (pLeft<c.left-0.75 || pRight>c.right+0.75);
+      const outsideY=!chipClipsY && (pTop<c.top-0.75 || pBottom>c.bottom+0.75);
+      if(outsideX || outsideY) clipped+=1;
+    }
+  }
+  return clipped;
+}
+
+/** marker 칩 상태 색 막대( border-left ) 가시 여부 */
+function markerBarVisible(chip){
+  if(!chip) return false;
+  const isMarker=chip.classList.contains('mg-v2-ad-calendar-event--chip-marker')
+    || chip.getAttribute('data-chip-marker')==='true'
+    || chip.getAttribute('data-chip-fit-stage')==='marker';
+  if(!isMarker) return false;
+  const cs=getComputedStyle(chip);
+  const bw=Number.parseFloat(cs.borderLeftWidth)||0;
+  const bc=String(cs.borderLeftColor||'');
+  const transparent=bc===''||bc==='transparent'||bc==='rgba(0, 0, 0, 0)';
+  return bw>0.5 && !transparent;
+}
+
 function visibleTimeMode(chip){
   const stage=chip.getAttribute('data-chip-fit-stage')||'';
   const measured=chip.querySelector('.mg-v2-ad-calendar-event__time-measured');
@@ -500,12 +899,20 @@ function measureChipTimeOnly(chipId){
   const badge=chip.querySelector('.mg-engagement-type-badge');
   const timeMode=visibleTimeMode(chip);
   const c=chip.getBoundingClientRect();
+  const clientLayout=clientNameLayoutOk(chip);
+  const counselorLayout=counselorNameLayoutOk(chip);
+  const markerOnly=chip.classList.contains('mg-v2-ad-calendar-event--chip-marker')
+    || chip.getAttribute('data-chip-marker')==='true'
+    || timeMode.fitStage==='marker';
+  const clippedGlyphs=clippedGlyphFragmentCount(chip);
+  const markerBarOk=markerBarVisible(chip);
   if(!badge){
     return {
       text:'',
       chipW:+c.width.toFixed(2), chipH:+c.height.toFixed(2),
       badgeAbsent:true,
       visibleChars:0,
+      visibleChipText:visibleChipTextCount(chip),
       linePattern:'',
       linePatternOk:true,
       badgeInTitle:false,
@@ -516,10 +923,30 @@ function measureChipTimeOnly(chipId){
       fitH:true,
       inside:true,
       scrollW:0, clientW:0, scrollH:0, clientH:0,
+      clientLayout,
+      counselorLayout,
+      markerOnly,
+      clippedGlyphs,
+      markerBarVisible:markerBarOk,
       ...timeMode
     };
   }
   return measure(chipId, badge.id);
+}
+
+/** 내담자+상담사 동시 칩 — client 폭·counselor ellipsis·a11y·marker */
+function measureNamePriority(chipId){
+  const chip=document.getElementById(chipId);
+  if(!chip) return null;
+  const base=measureChipTimeOnly(chipId);
+  const a11y=(chip.getAttribute('aria-label')||'')+' '+(chip.getAttribute('title')||'');
+  return {
+    ...base,
+    showTitle:!!chip.querySelector('.mg-v2-ad-calendar-event__title'),
+    showCounselorInDom:!!chip.querySelector('.counselor-name'),
+    hasCounselorA11y:a11y.indexOf('상담사A')>=0,
+    hasClientA11y:a11y.indexOf('라마바')>=0
+  };
 }
 
 function measure(chipId,badgeId){
@@ -532,6 +959,9 @@ function measure(chipId,badgeId){
   const time=chip.querySelector('.mg-v2-ad-calendar-event__time');
   const cs=getComputedStyle(badge);
   const timeMode=visibleTimeMode(chip);
+  const markerOnly=chip.classList.contains('mg-v2-ad-calendar-event--chip-marker')
+    || chip.getAttribute('data-chip-marker')==='true'
+    || timeMode.fitStage==='marker';
   return {
     text:badge.textContent,
     chipW:+c.width.toFixed(2), chipH:+c.height.toFixed(2),
@@ -552,8 +982,233 @@ function measure(chipId,badgeId){
     segCount:badge.querySelectorAll('.mg-engagement-type-badge__seg').length,
     adjacentOverlap:adjacentOverlapCount(chip),
     badgeAbsent:false,
+    visibleChipText:visibleChipTextCount(chip),
+    clientLayout:clientNameLayoutOk(chip),
+    counselorLayout:counselorNameLayoutOk(chip),
+    markerOnly,
+    clippedGlyphs:clippedGlyphFragmentCount(chip),
+    markerBarVisible:markerBarVisible(chip),
     ...timeMode
   };
+}
+
+/** 칩 안 시간·이름·상태 줄 — 글자 노드 렌더H vs line-height/font-size. 눌림이면 lineCrushed. */
+function measureChipRowHeights(chip){
+  const api=globalThis.MgWeekDayChipFit;
+  const rows=[
+    { key:'time', sel:'.mg-v2-ad-calendar-event__time', textSel:'.mg-v2-ad-calendar-event__time-measured' },
+    { key:'title', sel:'.mg-v2-ad-calendar-event__title', textSel:'.client-name' },
+    { key:'status', sel:'.mg-v2-ad-calendar-event__status', textSel:null }
+  ];
+  const out={ rows:{}, lineCrushed:false };
+  for(const { key, sel, textSel } of rows){
+    const el=chip.querySelector(sel);
+    if(!el){
+      out.rows[key]=null;
+      continue;
+    }
+    // 글자 노드 기준(컨테이너 상속 line-height 오탐 방지). 예: title 25.6 vs client-name 13
+    const textEl=(textSel && el.querySelector(textSel)) || el;
+    const cs=getComputedStyle(textEl);
+    const fontSize=Number.parseFloat(cs.fontSize)||0;
+    let lineH=Number.parseFloat(cs.lineHeight);
+    if(!Number.isFinite(lineH)||lineH<=0) lineH=fontSize>0?fontSize*1.2:0;
+    const glyphH=Math.max(lineH, fontSize);
+    const renderH=textEl.getBoundingClientRect().height;
+    const rowNatural=(api && typeof api.readRowHeight==='function')
+      ? api.readRowHeight(el)
+      : Math.max(glyphH, el.scrollHeight||0);
+    // 실제 FAIL 재현: 이름 ~1.8px < font-size. 살짝 작음(line-box)은 허용.
+    const crushed=glyphH>0 && renderH+0.5 < fontSize;
+    if(crushed) out.lineCrushed=true;
+    out.rows[key]={
+      renderH:+renderH.toFixed(2),
+      glyphH:+glyphH.toFixed(2),
+      fontSize:+fontSize.toFixed(2),
+      naturalH:+rowNatural.toFixed(2),
+      crushed
+    };
+  }
+  return out;
+}
+
+/**
+ * .client-name 렌더 시 폭>0 이고 글자 보이거나 말줄임.
+ * @returns {{ present:boolean, ok:boolean, width:number, reason?:string, truncated?:boolean, ellipsis?:boolean }}
+ */
+function clientNameLayoutOk(chip){
+  const name=chip.querySelector('.client-name');
+  if(!name) return { present:false, ok:true, width:0 };
+  const r=name.getBoundingClientRect();
+  const text=String(name.textContent||'').replace(/\\s+/g,'').trim();
+  const width=+r.width;
+  if(!text.length) return { present:true, ok:false, width, reason:'clientEmptyText' };
+  if(width<=0.5) return { present:true, ok:false, width, reason:'clientWidthZero' };
+  const cs=getComputedStyle(name);
+  const truncated=name.scrollWidth>name.clientWidth+0.5;
+  const ellipsis=cs.textOverflow==='ellipsis'
+    && (cs.overflow==='hidden'||cs.overflowX==='hidden');
+  // 폭>0 + (말줄임 또는 높이로 글자 박스 존재)
+  if(r.height>0.5 && (!truncated || ellipsis)){
+    return { present:true, ok:true, width, truncated, ellipsis };
+  }
+  if(r.height>0.5 && text.length>0 && width>0.5){
+    return { present:true, ok:true, width, truncated, ellipsis };
+  }
+  return { present:true, ok:false, width, reason:'clientInvisible', truncated, ellipsis };
+}
+
+/**
+ * .counselor-name 이 잘리면 반드시 말줄임. 말줄임 없는 잘림 FAIL.
+ */
+function counselorNameLayoutOk(chip){
+  const name=chip.querySelector('.counselor-name');
+  if(!name) return { present:false, ok:true, width:0 };
+  const r=name.getBoundingClientRect();
+  const cs=getComputedStyle(name);
+  const truncated=name.scrollWidth>name.clientWidth+0.5;
+  const ellipsis=cs.textOverflow==='ellipsis'
+    && (cs.overflow==='hidden'||cs.overflowX==='hidden');
+  if(truncated && !ellipsis){
+    return {
+      present:true,
+      ok:false,
+      width:+r.width,
+      reason:'counselorClippedNoEllipsis',
+      scrollW:name.scrollWidth,
+      clientW:name.clientWidth
+    };
+  }
+  return { present:true, ok:true, width:+r.width, truncated, ellipsis };
+}
+
+function clientNameVisible(chip){
+  const layout=clientNameLayoutOk(chip);
+  return layout.present && layout.ok && layout.width>0.5;
+}
+
+/**
+ * 구 readRowHeight(clientHeight/getBoundingClientRect) 시뮬 —
+ * 눌린 높이로 판정하면 50분에서 FULL 오판이어야 함(반례 증명).
+ */
+function simulateCrushedHeightJudge(chip, chipH){
+  const api=globalThis.MgWeekDayChipFit;
+  if(!api || typeof api.judgeWeekDayChipHeightFit!=='function') return null;
+  const time=chip.querySelector('.mg-v2-ad-calendar-event__time');
+  const title=chip.querySelector('.mg-v2-ad-calendar-event__title');
+  const status=chip.querySelector('.mg-v2-ad-calendar-event__status');
+  const crushedH=(el)=>el ? el.getBoundingClientRect().height : 0;
+  const naturalH=(el)=>{
+    if(!el) return 0;
+    if(typeof api.readRowHeight==='function') return api.readRowHeight(el);
+    return crushedH(el);
+  };
+  // 강제로 세 줄을 모두 보이게 한 뒤 측정하는 대신, 현재 DOM +
+  // 눌린 title 이 있으면 crushed 경로가 FULL 이 되는지 검증.
+  // 반례 시나리오: natural 줄(16) + crushed title(1.8)
+  const naturalTime=naturalH(time)||16;
+  const naturalTitle=naturalH(title)||16;
+  const naturalStatus=naturalH(status)||16;
+  const legacyCrushed=api.judgeWeekDayChipHeightFit({
+    chipHeight:chipH,
+    timeRowHeight:naturalTime,
+    titleRowHeight:1.8,
+    statusRowHeight:naturalStatus,
+    gapY:2
+  });
+  const productNatural=api.judgeWeekDayChipHeightFit({
+    chipHeight:chipH,
+    timeRowHeight:naturalTime,
+    titleRowHeight:naturalTitle,
+    statusRowHeight:naturalStatus,
+    gapY:2
+  });
+  return {
+    legacyHeightStage:legacyCrushed.heightStage,
+    productHeightStage:productNatural.heightStage,
+    legacyWouldMisjudgeFull:legacyCrushed.heightStage==='full'
+      && productNatural.heightStage==='hide-status'
+  };
+}
+
+function measureDurationStack(prefix){
+  const parts=['50','30','15'];
+  const out={ parts:{} };
+  let empty=false;
+  let overflow=false;
+  let overlap=false;
+  const rects=[];
+  for(const p of parts){
+    const chip=document.getElementById('chip-'+prefix+'-'+p);
+    const harness=document.getElementById('harness-'+prefix+'-'+p);
+    if(!chip||!harness){
+      out.parts[p]=null;
+      empty=true;
+      continue;
+    }
+    const m=measureChipTimeOnly('chip-'+prefix+'-'+p);
+    const h=harness.getBoundingClientRect();
+    const c=chip.getBoundingClientRect();
+    const fits=c.height<=h.height+0.5;
+    if(!fits) overflow=true;
+    if((m.visibleChipText||0)<=0 && !(m.markerOnly || m.fitStage==='marker')) empty=true;
+    rects.push(c);
+    const rowMetrics=measureChipRowHeights(chip);
+    const nameVisible=clientNameVisible(chip);
+    const crushedSim=p==='50' ? simulateCrushedHeightJudge(chip, h.height) : null;
+    out.parts[p]={
+      ...m,
+      harnessH:+h.height.toFixed(2),
+      cardH:+c.height.toFixed(2),
+      cardFitsHarness:fits,
+      heightStage:chip.getAttribute('data-chip-height-stage')||'',
+      nameVisible,
+      lineCrushed:rowMetrics.lineCrushed,
+      rowHeights:rowMetrics.rows,
+      crushedSim
+    };
+  }
+  for(let i=0;i<rects.length;i++){
+    for(let j=i+1;j<rects.length;j++){
+      if(rectsOverlap(rects[i], rects[j])) overlap=true;
+    }
+  }
+  out.emptyChip=empty;
+  out.overflow=overflow;
+  out.cardsOverlap=overlap;
+  return out;
+}
+
+/**
+ * 앞 칩 텍스트가 뒤 칩에 가려지는지 elementFromPoint 로 판정.
+ * 교차 사각형 중앙·시간 텍스트 샘플 포인트에서 상위 칩 id 가 유지되어야 함.
+ */
+function textOcclusionByLaterChip(frontChip, backChip){
+  if(!frontChip||!backChip) return false;
+  const f=frontChip.getBoundingClientRect();
+  const b=backChip.getBoundingClientRect();
+  if(!rectsOverlap(f,b)) return false;
+  const measured=frontChip.querySelector('.mg-v2-ad-calendar-event__time-measured')
+    || frontChip.querySelector('.client-name')
+    || frontChip;
+  const t=measured.getBoundingClientRect();
+  const samples=[
+    {x:(t.left+t.right)/2, y:(t.top+t.bottom)/2},
+    {x:t.left+2, y:t.top+2},
+    {x:Math.min(t.right-2, (f.left+f.right)/2), y:Math.min(t.bottom-2, (f.top+f.bottom)/2)}
+  ];
+  for(const p of samples){
+    if(p.x<f.left||p.x>f.right||p.y<f.top||p.y>f.bottom) continue;
+    if(p.x<b.left||p.x>b.right||p.y<b.top||p.y>b.bottom) continue;
+    const topEl=document.elementFromPoint(p.x, p.y);
+    if(!topEl) continue;
+    if(backChip===topEl || backChip.contains(topEl)){
+      if(!(frontChip===topEl || frontChip.contains(topEl))){
+        return true;
+      }
+    }
+  }
+  return false;
 }
 
 function measurePair(prefix){
@@ -567,6 +1222,8 @@ function measurePair(prefix){
   if(!a||!b) return null;
   const hA=ha.getBoundingClientRect(), hB=hb.getBoundingClientRect();
   const cA=chipA.getBoundingClientRect(), cB=chipB.getBoundingClientRect();
+  const textOccludedA=textOcclusionByLaterChip(chipA, chipB);
+  const textOccludedB=textOcclusionByLaterChip(chipB, chipA);
   return {
     a, b,
     harnessH:+hA.height.toFixed(2),
@@ -575,6 +1232,9 @@ function measurePair(prefix){
     cardFitsHarnessA:cA.height<=hA.height+0.5,
     cardFitsHarnessB:cB.height<=hB.height+0.5,
     cardsOverlap:rectsOverlap(cA,cB),
+    textOccluded:textOccludedA||textOccludedB,
+    textOccludedA,
+    textOccludedB,
     badgeInTimeA:a.badgeAbsent?true:a.badgeInTime,
     badgeInTimeB:b.badgeAbsent?true:b.badgeInTime,
     hasNegMargin:a.hasNegMargin||b.hasNegMargin,
@@ -630,6 +1290,10 @@ window.__collectDesktop=function(){
     fit34p8:measureChipTimeOnly('chip-fit34p8'),
     halfPair:measurePair('half'),
     halfLegacyFail:measureLegacyHalfFail(),
+    namePri34p8:measureNamePriority('chip-np34p8'),
+    namePri59:measureNamePriority('chip-np59'),
+    durWopen:measureDurationStack('dur-wopen'),
+    durDdesk:measureDurationStack('dur-ddesk'),
     legend:{
       titleLeft:+document.getElementById('legend-title').getBoundingClientRect().left.toFixed(2),
       marksLeft:+document.getElementById('legend-marks').getBoundingClientRect().left.toFixed(2),
@@ -645,6 +1309,11 @@ window.__collectMobile=function(){
     mobileWeek40:measureChipTimeOnly('chip-mw40'),
     dayMob390:measurePair('dmob'),
     weekDay390:measurePair('w390'),
+    namePri12:measureNamePriority('chip-np12'),
+    namePri20:measureNamePriority('chip-np20'),
+    namePri29:measureNamePriority('chip-np29'),
+    durW390:measureDurationStack('dur-w390'),
+    durDmob:measureDurationStack('dur-dmob'),
     sidebar:measure('sidebar-row','badge-sidebar'),
     mapping:measure('mapping-card','badge-mapping'),
     detail:measure('detail-wrap','badge-detail')
@@ -674,12 +1343,23 @@ function passCase(name, m, { requireOutsideTitle = false, requireInTime = false 
 function passFitChip(name, m) {
   if (!m) return { name, ok: false, reason: 'missing' };
   const reasons = [];
+  if ((m.clippedGlyphs || 0) > 0) reasons.push(`clippedGlyphFragments=${m.clippedGlyphs}`);
+  if (m.markerOnly || m.fitStage === 'marker') {
+    if ((m.visibleChipText || 0) > 0) reasons.push(`markerHasVisibleText=${m.visibleChipText}`);
+    if (!m.markerBarVisible) reasons.push('markerBarMissing');
+    const a11y = `${m.ariaLabel || ''} ${m.titleAttr || ''}`;
+    if (!/\d{1,2}:\d{2}/.test(a11y)) reasons.push('markerMissingA11yTime');
+    return { name, ok: reasons.length === 0, reason: reasons.join('; ') || 'ok', metrics: m };
+  }
   if (!m.timeFullVisible) reasons.push(`timeTruncated=${m.timeText}`);
   if (!m.timeScrollOk) reasons.push('timeScrollOverflow');
+  if ((m.visibleChipText || 0) <= 0) reasons.push('emptyChip');
   if (m.timeHidden) {
     // hide-time: aria/title must still carry full time
     const a11y = `${m.ariaLabel || ''} ${m.titleAttr || ''}`;
     if (!/\d{1,2}:\d{2}/.test(a11y)) reasons.push('hideTimeMissingA11y');
+    // hide-time 이어도 이름 등 가시 텍스트 필수(marker 제외)
+    if ((m.visibleChipText || 0) <= 0) reasons.push('hideTimeEmptyVisible');
   } else if (m.timeText) {
     // visible text must equal full short/long chosen (no 「11:0」)
     if (/^\d{1,2}:\d$/.test(m.timeText)) reasons.push(`truncatedShort=${m.timeText}`);
@@ -695,7 +1375,93 @@ function passFitChip(name, m) {
     if (!m.badgeInTime) reasons.push('badgeNotInTime');
   }
   if (m.adjacentOverlap > 0) reasons.push(`adjacentOverlap=${m.adjacentOverlap}`);
+  if (m.clientLayout && m.clientLayout.present && !m.clientLayout.ok) {
+    reasons.push(m.clientLayout.reason || 'clientLayout');
+  }
+  if (m.counselorLayout && m.counselorLayout.present && !m.counselorLayout.ok) {
+    reasons.push(m.counselorLayout.reason || 'counselorLayout');
+  }
   return { name, ok: reasons.length === 0, reason: reasons.join('; ') || 'ok', metrics: m };
+}
+
+function passNamePriority(name, m) {
+  if (!m) return { name, ok: false, reason: 'missing' };
+  const reasons = [];
+  if ((m.clippedGlyphs || 0) > 0) reasons.push(`clippedGlyphFragments=${m.clippedGlyphs}`);
+  if (m.markerOnly || m.fitStage === 'marker') {
+    // 표식 단계: 글자 0 + 색 막대 + aria 이름 → PASS (빈 칩 아님)
+    if ((m.visibleChipText || 0) > 0) reasons.push(`markerHasVisibleText=${m.visibleChipText}`);
+    if (!m.markerBarVisible) reasons.push('markerBarMissing');
+    if (m.showTitle) reasons.push('markerShowTitleDom');
+    if (m.showCounselorInDom) reasons.push('markerShowCounselorDom');
+    if (!m.hasClientA11y) reasons.push('clientMissingA11y');
+    if (!m.hasCounselorA11y) reasons.push('counselorMissingA11y');
+    return { name, ok: reasons.length === 0, reason: reasons.join('; ') || 'ok', metrics: m };
+  }
+  if ((m.visibleChipText || 0) <= 0) reasons.push('emptyChip');
+  if (m.clientLayout && m.clientLayout.present && !m.clientLayout.ok) {
+    reasons.push(m.clientLayout.reason || 'clientLayout');
+  }
+  if (m.showTitle && m.clientLayout && m.clientLayout.present && !(m.clientLayout.width > 0.5)) {
+    reasons.push('clientWidthZero');
+  }
+  if (m.counselorLayout && m.counselorLayout.present && !m.counselorLayout.ok) {
+    reasons.push(m.counselorLayout.reason || 'counselorClippedNoEllipsis');
+  }
+  if (!m.hasCounselorA11y) reasons.push('counselorMissingA11y');
+  if (!m.hasClientA11y) reasons.push('clientMissingA11y');
+  return { name, ok: reasons.length === 0, reason: reasons.join('; ') || 'ok', metrics: m };
+}
+
+function passDurationStack(name, stack) {
+  if (!stack) return { name, ok: false, reason: 'missing' };
+  const reasons = [];
+  if (stack.emptyChip) reasons.push('emptyChip');
+  if (stack.overflow) reasons.push('cardOverflowHarness');
+  if (stack.cardsOverlap) reasons.push('cardsOverlap');
+  for (const key of ['50', '30', '15']) {
+    const p = stack.parts?.[key];
+    if (!p) {
+      reasons.push(`missing${key}`);
+      continue;
+    }
+    if (p.markerOnly || p.fitStage === 'marker') {
+      if ((p.visibleChipText || 0) > 0) reasons.push(`${key}.markerHasVisibleText`);
+      if (!p.markerBarVisible) reasons.push(`${key}.markerBarMissing`);
+    } else if ((p.visibleChipText || 0) <= 0) {
+      reasons.push(`${key}.emptyChip`);
+    }
+    if ((p.clippedGlyphs || 0) > 0) reasons.push(`${key}.clippedGlyphFragments`);
+    if (!p.cardFitsHarness) reasons.push(`${key}.overflow`);
+    if (!p.timeFullVisible && !p.timeHidden && !(p.markerOnly || p.fitStage === 'marker')) {
+      reasons.push(`${key}.timeTruncated`);
+    }
+    if (p.lineCrushed) reasons.push(`${key}.lineCrushed`);
+    const a11y = `${p.ariaLabel || ''} ${p.titleAttr || ''}`;
+    if (!/\d{1,2}:\d{2}/.test(a11y)) reasons.push(`${key}.missingA11yTime`);
+  }
+  // 50분(≈53px) 은 시간+이름 두 줄 → hide-status(또는 full). 이름 텍스트 필수(marker 제외).
+  const p50 = stack.parts?.['50'];
+  if (p50 && !(p50.markerOnly || p50.fitStage === 'marker')) {
+    if (!['full', 'hide-status'].includes(p50.heightStage)) {
+      reasons.push(`50.heightStage=${p50.heightStage}`);
+    }
+    // 재검증 FAIL 보완: 50분은 이름이 보여야 함(눌려 FULL 오판 금지)
+    if (!p50.nameVisible) {
+      reasons.push('50.nameNotVisible');
+    }
+    if (p50.heightStage === 'full' && p50.rowHeights?.title?.crushed) {
+      reasons.push('50.fullWithCrushedTitle');
+    }
+    // 반례: 눌린 titleH(1.8)로 판정하면 FULL, 자연 높이면 hide-status
+    if (p50.crushedSim && !p50.crushedSim.legacyWouldMisjudgeFull) {
+      reasons.push(
+        `50.crushedCounterexampleMissing legacy=${p50.crushedSim.legacyHeightStage}`
+        + ` product=${p50.crushedSim.productHeightStage}`
+      );
+    }
+  }
+  return { name, ok: reasons.length === 0, reason: reasons.join('; ') || 'ok', metrics: stack };
 }
 
 function passPair(name, pair, { expectFail = false, requireShortTime = false } = {}) {
@@ -730,6 +1496,22 @@ function passPair(name, pair, { expectFail = false, requireShortTime = false } =
   if (!expectFail) {
     checkCard('a', pair.a);
     checkCard('b', pair.b);
+    const aMarker = pair.a?.markerOnly || pair.a?.fitStage === 'marker';
+    const bMarker = pair.b?.markerOnly || pair.b?.fitStage === 'marker';
+    if ((pair.a?.clippedGlyphs || 0) > 0) reasons.push(`a.clippedGlyphFragments=${pair.a.clippedGlyphs}`);
+    if ((pair.b?.clippedGlyphs || 0) > 0) reasons.push(`b.clippedGlyphFragments=${pair.b.clippedGlyphs}`);
+    if (aMarker) {
+      if ((pair.a?.visibleChipText || 0) > 0) reasons.push('a.markerHasVisibleText');
+      if (!pair.a?.markerBarVisible) reasons.push('a.markerBarMissing');
+    } else if ((pair.a?.visibleChipText || 0) <= 0) {
+      reasons.push('a.emptyChip');
+    }
+    if (bMarker) {
+      if ((pair.b?.visibleChipText || 0) > 0) reasons.push('b.markerHasVisibleText');
+      if (!pair.b?.markerBarVisible) reasons.push('b.markerBarMissing');
+    } else if ((pair.b?.visibleChipText || 0) <= 0) {
+      reasons.push('b.emptyChip');
+    }
     if (!pair.cardFitsHarnessA) {
       reasons.push(`cardH_a ${pair.cardH_a}>harnessH ${pair.harnessH}`);
     }
@@ -737,6 +1519,7 @@ function passPair(name, pair, { expectFail = false, requireShortTime = false } =
       reasons.push(`cardH_b ${pair.cardH_b}>harnessH ${pair.harnessH}`);
     }
     if (pair.cardsOverlap) reasons.push('cardsOverlap');
+    if (pair.textOccluded) reasons.push('textOccludedByLaterChip');
     if (pair.hasNegMargin) reasons.push('negMargin');
   } else {
     const failsLegacy =
@@ -854,6 +1637,15 @@ async function main() {
       passFitChip('fit34p8', metrics.fit34p8),
       passPair('half34p8', metrics.halfPair),
       passHalfLegacyFail('half34p8LegacyWouldFail', metrics.halfLegacyFail),
+      passNamePriority('namePri12', metrics.namePri12),
+      passNamePriority('namePri20', metrics.namePri20),
+      passNamePriority('namePri29', metrics.namePri29),
+      passNamePriority('namePri34p8', metrics.namePri34p8),
+      passNamePriority('namePri59', metrics.namePri59),
+      passDurationStack('durWopen1440', metrics.durWopen),
+      passDurationStack('durDdesk1440', metrics.durDdesk),
+      passDurationStack('durW390', metrics.durW390),
+      passDurationStack('durDmob390', metrics.durDmob),
       passCase('sidebar390', metrics.sidebar),
       passCase('mapping390', metrics.mapping),
       passCase('detail390', metrics.detail)

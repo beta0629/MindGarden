@@ -11,9 +11,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.coresolution.consultation.entity.Client;
 import com.coresolution.consultation.entity.ConsultantClientMapping;
 import com.coresolution.consultation.entity.Schedule;
 import com.coresolution.consultation.entity.User;
+import com.coresolution.consultation.repository.ClientRepository;
 import com.coresolution.consultation.repository.ConsultantClientMappingRepository;
 import com.coresolution.consultation.repository.ScheduleRepository;
 import com.coresolution.consultation.repository.UserRepository;
@@ -41,6 +43,7 @@ public class ScheduleListBatchLoader {
     private final UserRepository userRepository;
     private final ConsultantClientMappingRepository mappingRepository;
     private final ScheduleRepository scheduleRepository;
+    private final ClientRepository clientRepository;
 
     /**
      * 일정의 상담사·내담자 id 합집합.
@@ -127,6 +130,7 @@ public class ScheduleListBatchLoader {
         Map<Long, ConsultantClientMapping> mappingById = loadMappingsById(tenantId, scheduleMappingIds);
         Map<String, List<ConsultantClientMapping>> bookingCandidatesByPairKey = loadBookingCandidatesByPairKey(
                 tenantId, bookingConsultantIds, bookingClientIds, bookingPairKeys);
+        Map<Long, Client> clientsById = loadClientsById(tenantId, collectClientIds(schedules));
 
         Map<Long, ScheduleMappingResponseContext> out = new HashMap<>();
         for (Schedule schedule : schedules) {
@@ -135,30 +139,87 @@ public class ScheduleListBatchLoader {
             }
             Long mappingId = schedule.getMappingId();
             Integer totalSessions = null;
+            String paymentTiming = null;
+            ConsultantClientMapping displayMapping = null;
             if (mappingId != null) {
-                ConsultantClientMapping mapping = mappingById.get(mappingId);
-                totalSessions = mapping != null ? mapping.getTotalSessions() : null;
+                displayMapping = mappingById.get(mappingId);
+                totalSessions = displayMapping != null ? displayMapping.getTotalSessions() : null;
+                paymentTiming = displayMapping != null ? displayMapping.getPaymentTiming() : null;
             } else if (schedule.getConsultantId() != null && schedule.getClientId() != null) {
                 ConsultantClientMapping effective = resolveEffectiveMappingForBookingAt(
                         bookingCandidatesByPairKey.get(toPairKey(schedule.getConsultantId(), schedule.getClientId())),
                         schedule.getCreatedAt());
                 if (effective != null) {
+                    displayMapping = effective;
                     mappingId = effective.getId();
                     totalSessions = effective.getTotalSessions();
+                    paymentTiming = effective.getPaymentTiming();
                 }
             }
 
             Integer remainingSessions = null;
+            ConsultantClientMapping current = null;
             if (activeOrExhaustedLookup != null
                     && schedule.getConsultantId() != null
                     && schedule.getClientId() != null) {
-                ConsultantClientMapping current = activeOrExhaustedLookup.get(
+                current = activeOrExhaustedLookup.get(
                         toPairKey(schedule.getConsultantId(), schedule.getClientId()));
                 remainingSessions = current != null ? current.getRemainingSessions() : null;
             }
-            out.put(schedule.getId(), new ScheduleMappingResponseContext(mappingId, totalSessions, remainingSessions));
+            if (paymentTiming == null && current != null) {
+                paymentTiming = current.getPaymentTiming();
+            }
+            Client client = schedule.getClientId() != null ? clientsById.get(schedule.getClientId()) : null;
+            String engagementType = ScheduleMappingContextResolver.resolveEngagementType(client, paymentTiming);
+            out.put(schedule.getId(), new ScheduleMappingResponseContext(
+                    mappingId, totalSessions, remainingSessions, paymentTiming, engagementType));
         }
         return out;
+    }
+
+    /**
+     * 일정 목록의 내담자 id 합집합.
+     *
+     * @param schedules 일정
+     * @return clientId 집합
+     */
+    public static Set<Long> collectClientIds(List<Schedule> schedules) {
+        Set<Long> clientIds = new HashSet<>();
+        if (schedules == null) {
+            return clientIds;
+        }
+        for (Schedule schedule : schedules) {
+            if (schedule != null && schedule.getClientId() != null) {
+                clientIds.add(schedule.getClientId());
+            }
+        }
+        return clientIds;
+    }
+
+    /**
+     * 테넌트 안 미삭제 내담자 일괄 조회 (engagementType).
+     *
+     * @param tenantId 테넌트
+     * @param clientIds 내담자 id
+     * @return id → Client
+     */
+    public Map<Long, Client> loadClientsById(String tenantId, Collection<Long> clientIds) {
+        if (isBlank(tenantId) || clientIds == null || clientIds.isEmpty()) {
+            return Map.of();
+        }
+        try {
+            Map<Long, Client> out = new HashMap<>();
+            for (Client client : clientRepository.findByTenantIdAndIdInAndIsDeletedFalse(tenantId, clientIds)) {
+                if (client != null && client.getId() != null) {
+                    out.put(client.getId(), client);
+                }
+            }
+            return out;
+        } catch (Exception e) {
+            log.warn("⚠️ 스케줄 목록 내담자(engagement) 일괄 조회 실패: tenantId={}, error={}",
+                    tenantId, e.getMessage());
+            return Map.of();
+        }
     }
 
     /**

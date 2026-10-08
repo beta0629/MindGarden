@@ -1,20 +1,22 @@
 /**
- * 주/일 일정 칩 fit 판정 — 시간 우선 단계 (뷰포트·하드코딩 109px·가정 font-size 금지).
+ * 주/일 일정 칩 fit 판정 — 폭(time-first) + 높이(status→merge→title 숨김) 단계.
+ * 뷰포트·하드코딩 109px·가정 font-size 금지. 화면별 분기 금지.
  *
- * Stages (time first, never truncate/ellipsis time or badge):
- *   1. long + badge     — 로케일 긴 시간(「오전 10:00」) + 기관연계 배지 전부 수용
- *   2. long             — 긴 시간만 (배지 생략, 상세에서 확인)
- *   3. short + badge    — 짧은 시간(「10:00」) + 배지
- *   4. short            — 짧은 시간만 (「11:00」)
- *   5. compact-pad      — 칩 좌우 패딩을 토큰 compact 로 줄여 short 수용
- *   6. hide-time        — 칩에서 시간 텍스트 미렌더; title/aria-label·상세는 전체 시간 유지.
- *                         배지는 4자 전부 수용될 때만.
+ * Width stages (time first, never truncate/ellipsis time or badge):
+ *   1. long + badge → 2. long → 3. short + badge → 4. short
+ *   5. compact-pad → 6. hide-time → 7. marker (shortTime 1글자도 불가)
  *
- * 측정은 실제 computed font(getComputedStyle) 기준 — 11px 등 가정 금지.
+ * Height stages (combine with width):
+ *   full → hide-status → merge-time-title(한 줄) → hide-title → time-detail
+ *
+ * 빈 칩 금지: 짧은 시간·이름 중 하나 이상, 또는 marker(상태 색 막대만) 표식.
  *
  * @author CoreSolution
  * @since 2026-10-08
  */
+
+import { formatNameWithSecondary } from './safeDisplay';
+import { MAPPING_ENGAGEMENT_TYPE_LABELS } from '../constants/mappingEngagementType';
 
 export const WEEK_DAY_CHIP_FIT_STAGE = Object.freeze({
   LONG_BADGE: 'long+badge',
@@ -22,12 +24,33 @@ export const WEEK_DAY_CHIP_FIT_STAGE = Object.freeze({
   SHORT_BADGE: 'short+badge',
   SHORT: 'short',
   COMPACT_PAD: 'compact-pad',
-  HIDE_TIME: 'hide-time'
+  HIDE_TIME: 'hide-time',
+  /** compact 폭에 shortTime 1글자(min glyph)도 못 넣음 — 상태 색 막대만 */
+  MARKER: 'marker'
 });
+
+/**
+ * @param {{ stage?: string, markerOnly?: boolean }|null|undefined} fit
+ * @returns {boolean}
+ */
+export function isWeekDayChipMarkerOnly(fit) {
+  if (!fit) {
+    return false;
+  }
+  return fit.markerOnly === true || fit.stage === WEEK_DAY_CHIP_FIT_STAGE.MARKER;
+}
 
 export const WEEK_DAY_CHIP_TIME_MODE = Object.freeze({
   LONG: 'long',
   SHORT: 'short'
+});
+
+export const WEEK_DAY_CHIP_HEIGHT_STAGE = Object.freeze({
+  FULL: 'full',
+  HIDE_STATUS: 'hide-status',
+  MERGE_TIME_TITLE: 'merge-time-title',
+  HIDE_TITLE: 'hide-title',
+  TIME_DETAIL: 'time-detail'
 });
 
 /**
@@ -60,6 +83,265 @@ export function resolveComputedFont(el) {
 }
 
 /**
+ * 높이 단계: 상태 숨김 → 시간·이름 한 줄 병합 → 이름 숨김 → title·상세만.
+ *
+ * @param {{
+ *   chipHeight?: number,
+ *   timeRowHeight?: number,
+ *   titleRowHeight?: number,
+ *   statusRowHeight?: number,
+ *   gapY?: number
+ * }} input
+ * @returns {{
+ *   heightStage: string,
+ *   showStatus: boolean,
+ *   showTitle: boolean,
+ *   mergeTimeTitle: boolean
+ * }}
+ */
+export function judgeWeekDayChipHeightFit(input = {}) {
+  const chipHeight = Number(input.chipHeight);
+  const timeH = Number(input.timeRowHeight);
+  const titleH = Number(input.titleRowHeight);
+  const statusH = Number(input.statusRowHeight);
+  const gapY = Number.isFinite(Number(input.gapY)) ? Math.max(0, Number(input.gapY)) : 0;
+
+  const safeChip = Number.isFinite(chipHeight) && chipHeight > 0 ? chipHeight : 0;
+  const safeTime = Number.isFinite(timeH) && timeH >= 0 ? timeH : 0;
+  const safeTitle = Number.isFinite(titleH) && titleH >= 0 ? titleH : 0;
+  const safeStatus = Number.isFinite(statusH) && statusH >= 0 ? statusH : 0;
+
+  const fits = (need) => safeChip + 0.5 >= need;
+
+  const fullNeed = safeTime + safeTitle + safeStatus
+    + (safeTitle > 0 && safeTime > 0 ? gapY : 0)
+    + (safeStatus > 0 && (safeTitle > 0 || safeTime > 0) ? gapY : 0);
+  if (fits(fullNeed) || safeChip <= 0) {
+    return {
+      heightStage: WEEK_DAY_CHIP_HEIGHT_STAGE.FULL,
+      showStatus: true,
+      showTitle: true,
+      mergeTimeTitle: false
+    };
+  }
+
+  const withoutStatus = safeTime + safeTitle
+    + (safeTitle > 0 && safeTime > 0 ? gapY : 0);
+  if (fits(withoutStatus)) {
+    return {
+      heightStage: WEEK_DAY_CHIP_HEIGHT_STAGE.HIDE_STATUS,
+      showStatus: false,
+      showTitle: true,
+      mergeTimeTitle: false
+    };
+  }
+
+  // 한 줄: 시간+이름을 같은 행에 배치 (두 줄 높이 미만)
+  const mergeNeed = Math.max(safeTime, safeTitle, 1);
+  if (fits(mergeNeed)) {
+    return {
+      heightStage: WEEK_DAY_CHIP_HEIGHT_STAGE.MERGE_TIME_TITLE,
+      showStatus: false,
+      showTitle: true,
+      mergeTimeTitle: true
+    };
+  }
+
+  if (fits(safeTime + 0.5) || safeTime <= 0) {
+    return {
+      heightStage: WEEK_DAY_CHIP_HEIGHT_STAGE.HIDE_TITLE,
+      showStatus: false,
+      showTitle: false,
+      mergeTimeTitle: false
+    };
+  }
+
+  return {
+    heightStage: WEEK_DAY_CHIP_HEIGHT_STAGE.TIME_DETAIL,
+    showStatus: false,
+    showTitle: false,
+    mergeTimeTitle: false
+  };
+}
+
+/**
+ * 빈 칩 금지 — 짧은 시간 또는 이름 중 하나 이상 강제.
+ * marker 단계는 텍스트 강제 금지(상태 색 막대 표식만).
+ *
+ * @param {{
+ *   showTime: boolean,
+ *   showTitle: boolean,
+ *   mergeTimeTitle?: boolean,
+ *   heightStage?: string,
+ *   stage?: string,
+ *   markerOnly?: boolean
+ * }} fit
+ * @returns {{
+ *   showTime: boolean,
+ *   showTitle: boolean,
+ *   mergeTimeTitle: boolean,
+ *   heightStage: string,
+ *   markerOnly: boolean
+ * }}
+ */
+export function enforceNonEmptyChipVisible(fit = {}) {
+  if (isWeekDayChipMarkerOnly(fit)) {
+    return {
+      showTime: false,
+      showTitle: false,
+      mergeTimeTitle: false,
+      heightStage: fit.heightStage || WEEK_DAY_CHIP_HEIGHT_STAGE.TIME_DETAIL,
+      markerOnly: true
+    };
+  }
+
+  let showTime = Boolean(fit.showTime);
+  let showTitle = Boolean(fit.showTitle);
+  let mergeTimeTitle = Boolean(fit.mergeTimeTitle);
+  let heightStage = fit.heightStage || WEEK_DAY_CHIP_HEIGHT_STAGE.FULL;
+
+  // 시간 미표시면 merge 불가
+  if (!showTime && mergeTimeTitle) {
+    mergeTimeTitle = false;
+  }
+
+  if (showTime || showTitle) {
+    return { showTime, showTitle, mergeTimeTitle, heightStage, markerOnly: false };
+  }
+
+  // 폭이 시간을 숨친 경우 → 이름 우선. 그 외 → 짧은 시간 우선.
+  if (fit.stage === WEEK_DAY_CHIP_FIT_STAGE.HIDE_TIME) {
+    showTitle = true;
+    mergeTimeTitle = false;
+    heightStage = WEEK_DAY_CHIP_HEIGHT_STAGE.HIDE_TITLE;
+  } else {
+    showTime = true;
+    mergeTimeTitle = false;
+    heightStage = WEEK_DAY_CHIP_HEIGHT_STAGE.HIDE_TITLE;
+  }
+  return { showTime, showTitle, mergeTimeTitle, heightStage, markerOnly: false };
+}
+
+/**
+ * title 줄 이름 예산 — merge 시 시간(+배지) 예약 후 남은 폭, 그 외 content 폭 전체.
+ *
+ * @param {{
+ *   chipWidth?: number,
+ *   compactChipWidth?: number,
+ *   longTimeWidth?: number,
+ *   shortTimeWidth?: number,
+ *   badgeWidth?: number,
+ *   gap?: number
+ * }} input
+ * @param {{
+ *   compactPad?: boolean,
+ *   mergeTimeTitle?: boolean,
+ *   showTime?: boolean,
+ *   showBadge?: boolean,
+ *   timeMode?: string
+ * }} fit
+ * @returns {number}
+ */
+export function resolveTitleNameBudget(input = {}, fit = {}) {
+  const chipWidth = Number(input.chipWidth);
+  const compactRaw = Number(input.compactChipWidth);
+  const safeChip = Number.isFinite(chipWidth) && chipWidth > 0 ? chipWidth : 0;
+  const safeCompact = Number.isFinite(compactRaw) && compactRaw > 0 ? compactRaw : safeChip;
+  const contentW = fit.compactPad ? safeCompact : safeChip;
+  if (!fit.mergeTimeTitle) {
+    return contentW;
+  }
+
+  const gap = Number.isFinite(Number(input.gap)) ? Math.max(0, Number(input.gap)) : 0;
+  const longW = Number.isFinite(Number(input.longTimeWidth)) && Number(input.longTimeWidth) >= 0
+    ? Number(input.longTimeWidth)
+    : 0;
+  const shortW = Number.isFinite(Number(input.shortTimeWidth)) && Number(input.shortTimeWidth) >= 0
+    ? Number(input.shortTimeWidth)
+    : 0;
+  const badgeW = Number.isFinite(Number(input.badgeWidth)) && Number(input.badgeWidth) > 0
+    ? Number(input.badgeWidth)
+    : 0;
+  const timeW = fit.timeMode === WEEK_DAY_CHIP_TIME_MODE.LONG ? longW : shortW;
+
+  let used = 0;
+  if (fit.showTime) {
+    used += timeW;
+  }
+  if (fit.showBadge && badgeW > 0) {
+    used += (fit.showTime ? gap : 0) + badgeW;
+  }
+  if (fit.showTime) {
+    used += gap;
+  }
+  return Math.max(0, contentW - used);
+}
+
+/**
+ * 내담자 우선 title 이름 판정 — 폭 부족 시 상담사 숨김, 1글자도 못 넣으면 showTitle=false.
+ * marker 단계에서는 이름·상담사 모두 숨김.
+ *
+ * @param {{
+ *   showTitle?: boolean,
+ *   clientNameWidth?: number,
+ *   counselorNameWidth?: number,
+ *   minClientWidth?: number,
+ *   nameGap?: number,
+ *   titleNameBudget?: number,
+ *   markerOnly?: boolean,
+ *   stage?: string
+ * }} input
+ * @returns {{ showTitle: boolean, showCounselorName: boolean }}
+ */
+export function judgeTitleNameVisibility(input = {}) {
+  if (isWeekDayChipMarkerOnly(input)) {
+    return { showTitle: false, showCounselorName: false };
+  }
+  const showTitle = input.showTitle !== false;
+  const counselorW = Number(input.counselorNameWidth);
+  const safeCounselor = Number.isFinite(counselorW) && counselorW > 0 ? counselorW : 0;
+  const clientW = Number(input.clientNameWidth);
+  const safeClient = Number.isFinite(clientW) && clientW > 0 ? clientW : 0;
+  const minClientRaw = Number(input.minClientWidth);
+  const minClient = Number.isFinite(minClientRaw) && minClientRaw > 0
+    ? minClientRaw
+    : (safeClient > 0 ? safeClient : 0);
+  const nameGap = Number.isFinite(Number(input.nameGap)) ? Math.max(0, Number(input.nameGap)) : 0;
+  const budgetRaw = Number(input.titleNameBudget);
+  const budget = Number.isFinite(budgetRaw) && budgetRaw >= 0 ? budgetRaw : 0;
+  const hasNameWidths = Number.isFinite(clientW) || Number.isFinite(counselorW);
+
+  if (!showTitle) {
+    return { showTitle: false, showCounselorName: false };
+  }
+  // 이름 폭 미제공(기존 호출) — title 유지, counselor 기본 숨김(미측정)
+  if (!hasNameWidths) {
+    return { showTitle: true, showCounselorName: false };
+  }
+  if (safeClient <= 0 && safeCounselor <= 0) {
+    return { showTitle: true, showCounselorName: false };
+  }
+
+  const fits = (need) => budget + 0.5 >= need;
+
+  // 내담자 1글자조차 불가 → title 숨김(빈 칩 금지와 이후 enforce 정합)
+  if (safeClient > 0 && minClient > 0 && !fits(minClient)) {
+    return { showTitle: false, showCounselorName: false };
+  }
+
+  if (safeCounselor <= 0) {
+    return { showTitle: true, showCounselorName: false };
+  }
+
+  const needBoth = minClient + nameGap + safeCounselor;
+  if (fits(needBoth)) {
+    return { showTitle: true, showCounselorName: true };
+  }
+  // 상담사 풀 폭 불가 → 미렌더(내담자 말줄임 유지)
+  return { showTitle: true, showCounselorName: false };
+}
+
+/**
  * @param {{
  *   chipWidth: number,
  *   longTimeWidth: number,
@@ -67,14 +349,31 @@ export function resolveComputedFont(el) {
  *   badgeWidth?: number,
  *   gap?: number,
  *   considerBadge?: boolean,
- *   compactChipWidth?: number
+ *   compactChipWidth?: number,
+ *   outerChipWidth?: number,
+ *   chipHeight?: number,
+ *   timeRowHeight?: number,
+ *   titleRowHeight?: number,
+ *   statusRowHeight?: number,
+ *   gapY?: number,
+ *   clientNameWidth?: number,
+ *   counselorNameWidth?: number,
+ *   minClientWidth?: number,
+ *   nameGap?: number,
+ *   minTimeGlyphWidth?: number
  * }} input
  * @returns {{
  *   stage: string,
  *   timeMode: 'long'|'short',
  *   showBadge: boolean,
  *   showTime: boolean,
- *   compactPad: boolean
+ *   compactPad: boolean,
+ *   heightStage: string,
+ *   showStatus: boolean,
+ *   showTitle: boolean,
+ *   mergeTimeTitle: boolean,
+ *   showCounselorName: boolean,
+ *   markerOnly: boolean
  * }}
  */
 export function judgeWeekDayChipFit(input = {}) {
@@ -92,82 +391,240 @@ export function judgeWeekDayChipFit(input = {}) {
   const safeCompact = Number.isFinite(compactRaw) && compactRaw > 0
     ? compactRaw
     : safeChip;
+  // outer: 패딩 차감 전 칩 외곽폭. 미측정(jsdom 0)/미제공이면 MARKER 금지
+  const outerRaw = Number(input.outerChipWidth);
+  const safeOuter = Number.isFinite(outerRaw) && outerRaw > 0 ? outerRaw : 0;
   const safeLong = Number.isFinite(longTimeWidth) && longTimeWidth >= 0 ? longTimeWidth : 0;
   const safeShort = Number.isFinite(shortTimeWidth) && shortTimeWidth >= 0 ? shortTimeWidth : 0;
   const safeBadge = considerBadge ? badgeWidth : 0;
+  const minGlyphRaw = Number(input.minTimeGlyphWidth);
+  const safeMinGlyph = Number.isFinite(minGlyphRaw) && minGlyphRaw > 0 ? minGlyphRaw : 0;
 
   const fits = (need, width = safeChip) => width + 0.5 >= need;
 
+  let widthFit;
   if (considerBadge && fits(safeLong + gap + safeBadge)) {
-    return {
+    widthFit = {
       stage: WEEK_DAY_CHIP_FIT_STAGE.LONG_BADGE,
       timeMode: WEEK_DAY_CHIP_TIME_MODE.LONG,
       showBadge: true,
       showTime: true,
-      compactPad: false
+      compactPad: false,
+      markerOnly: false
     };
-  }
-  if (fits(safeLong)) {
-    return {
+  } else if (fits(safeLong)) {
+    widthFit = {
       stage: WEEK_DAY_CHIP_FIT_STAGE.LONG,
       timeMode: WEEK_DAY_CHIP_TIME_MODE.LONG,
       showBadge: false,
       showTime: true,
-      compactPad: false
+      compactPad: false,
+      markerOnly: false
     };
-  }
-  if (considerBadge && fits(safeShort + gap + safeBadge)) {
-    return {
+  } else if (considerBadge && fits(safeShort + gap + safeBadge)) {
+    widthFit = {
       stage: WEEK_DAY_CHIP_FIT_STAGE.SHORT_BADGE,
       timeMode: WEEK_DAY_CHIP_TIME_MODE.SHORT,
       showBadge: true,
       showTime: true,
-      compactPad: false
+      compactPad: false,
+      markerOnly: false
     };
-  }
-  if (fits(safeShort)) {
-    return {
+  } else if (fits(safeShort)) {
+    widthFit = {
       stage: WEEK_DAY_CHIP_FIT_STAGE.SHORT,
       timeMode: WEEK_DAY_CHIP_TIME_MODE.SHORT,
       showBadge: false,
       showTime: true,
-      compactPad: false
+      compactPad: false,
+      markerOnly: false
     };
-  }
-
-  // Stage 5: compact padding — short (±badge) in reduced-pad content width
-  if (considerBadge && fits(safeShort + gap + safeBadge, safeCompact)) {
-    return {
+  } else if (considerBadge && fits(safeShort + gap + safeBadge, safeCompact)) {
+    widthFit = {
       stage: WEEK_DAY_CHIP_FIT_STAGE.COMPACT_PAD,
       timeMode: WEEK_DAY_CHIP_TIME_MODE.SHORT,
       showBadge: true,
       showTime: true,
-      compactPad: true
+      compactPad: true,
+      markerOnly: false
     };
-  }
-  if (fits(safeShort, safeCompact)) {
-    return {
+  } else if (fits(safeShort, safeCompact)) {
+    widthFit = {
       stage: WEEK_DAY_CHIP_FIT_STAGE.COMPACT_PAD,
       timeMode: WEEK_DAY_CHIP_TIME_MODE.SHORT,
       showBadge: false,
       showTime: true,
+      compactPad: true,
+      markerOnly: false
+    };
+  } else if (
+    // outer>0(실측) + content에 1글자 불가 → MARKER (content=0이어도 outer>0이면 표식)
+    // outer 미제공/0(jsdom 미측정) → MARKER 금지, HIDE_TIME(+이름 강제)
+    safeOuter > 0
+    && safeMinGlyph > 0
+    && !fits(safeMinGlyph, safeCompact)
+  ) {
+    // shortTime 1글자(min glyph)도 compact content 에 못 넣음 → 표식만
+    widthFit = {
+      stage: WEEK_DAY_CHIP_FIT_STAGE.MARKER,
+      timeMode: WEEK_DAY_CHIP_TIME_MODE.SHORT,
+      showBadge: false,
+      showTime: false,
+      compactPad: true,
+      markerOnly: true
+    };
+  } else {
+    widthFit = {
+      stage: WEEK_DAY_CHIP_FIT_STAGE.HIDE_TIME,
+      timeMode: WEEK_DAY_CHIP_TIME_MODE.SHORT,
+      showBadge: considerBadge && fits(safeBadge, safeCompact),
+      showTime: false,
+      compactPad: true,
+      markerOnly: false
+    };
+  }
+
+  const heightFit = judgeWeekDayChipHeightFit(input);
+  let combined = { ...widthFit, ...heightFit };
+
+  if (isWeekDayChipMarkerOnly(combined)) {
+    return {
+      ...combined,
+      stage: WEEK_DAY_CHIP_FIT_STAGE.MARKER,
+      markerOnly: true,
+      showTime: false,
+      showTitle: false,
+      showBadge: false,
+      showStatus: false,
+      showCounselorName: false,
+      mergeTimeTitle: false,
       compactPad: true
     };
   }
 
-  // Stage 6: hide time — badge only if full width fits in compact content
-  return {
-    stage: WEEK_DAY_CHIP_FIT_STAGE.HIDE_TIME,
-    timeMode: WEEK_DAY_CHIP_TIME_MODE.SHORT,
-    showBadge: considerBadge && fits(safeBadge, safeCompact),
-    showTime: false,
-    compactPad: true
+  let nonEmpty = enforceNonEmptyChipVisible(combined);
+  combined = {
+    ...combined,
+    showTime: nonEmpty.showTime,
+    showTitle: nonEmpty.showTitle,
+    mergeTimeTitle: nonEmpty.mergeTimeTitle,
+    heightStage: nonEmpty.heightStage,
+    markerOnly: false
   };
+
+  const titleNameBudget = resolveTitleNameBudget(input, combined);
+  const nameGap = Number.isFinite(Number(input.nameGap))
+    ? Math.max(0, Number(input.nameGap))
+    : gap;
+  const nameFit = judgeTitleNameVisibility({
+    showTitle: combined.showTitle,
+    clientNameWidth: input.clientNameWidth,
+    counselorNameWidth: input.counselorNameWidth,
+    minClientWidth: input.minClientWidth,
+    nameGap,
+    titleNameBudget,
+    markerOnly: false,
+    stage: combined.stage
+  });
+  combined = {
+    ...combined,
+    showTitle: nameFit.showTitle,
+    showCounselorName: Boolean(nameFit.showCounselorName && nameFit.showTitle)
+  };
+  nonEmpty = enforceNonEmptyChipVisible(combined);
+  if (nonEmpty.markerOnly) {
+    return {
+      ...combined,
+      stage: WEEK_DAY_CHIP_FIT_STAGE.MARKER,
+      markerOnly: true,
+      showTime: false,
+      showTitle: false,
+      showBadge: false,
+      showStatus: false,
+      showCounselorName: false,
+      mergeTimeTitle: false,
+      heightStage: nonEmpty.heightStage,
+      compactPad: true
+    };
+  }
+  return {
+    ...combined,
+    showTime: nonEmpty.showTime,
+    showTitle: nonEmpty.showTitle,
+    mergeTimeTitle: nonEmpty.mergeTimeTitle,
+    heightStage: nonEmpty.heightStage,
+    markerOnly: false,
+    showCounselorName: Boolean(
+      combined.showCounselorName && nonEmpty.showTitle
+    )
+  };
+}
+
+/**
+ * title / aria-label — 시간·이름·상태·기관연계(해당 시). 배지·시간·상담사 숨김과 무관.
+ *
+ * @param {{
+ *   timeText?: string,
+ *   clientName?: string,
+ *   counselorName?: string,
+ *   statusLabel?: string,
+ *   institutionLabel?: string|null,
+ *   showInstitution?: boolean
+ * }} parts
+ * @returns {string}
+ */
+export function buildWeekDayChipA11yLabel(parts = {}) {
+  const time = formatNameWithSecondary(parts.timeText, '').trim();
+  const client = formatNameWithSecondary(parts.clientName, '').trim();
+  const counselor = formatNameWithSecondary(parts.counselorName, '').trim();
+  const name = [client, counselor].filter(Boolean).join(' ');
+  const status = formatNameWithSecondary(parts.statusLabel, '').trim();
+  let institution = '';
+  if (parts.showInstitution) {
+    institution = formatNameWithSecondary(
+      parts.institutionLabel || MAPPING_ENGAGEMENT_TYPE_LABELS.INSTITUTION_LINK,
+      ''
+    ).trim();
+  } else if (parts.institutionLabel) {
+    institution = formatNameWithSecondary(parts.institutionLabel, '').trim();
+  }
+
+  const nameStatus = [name, status].filter(Boolean).join(' - ');
+  const core = [time, nameStatus].filter(Boolean).join(' · ');
+  if (institution) {
+    return core ? `${core} · ${institution}` : institution;
+  }
+  return core;
+}
+
+/** canvas 미사용 시 문자당 추정 폭(px). jsdom/Jest·getContext 실패 fallback. */
+const MEASURE_TEXT_FALLBACK_CHAR_WIDTH = 7;
+
+/**
+ * jsdom/Jest 등 canvas 2d 가 없는 환경 — getContext 호출 자체를 피한다
+ * (jsdom 은 Not implemented 를 console.error 로 출력함).
+ *
+ * @returns {boolean}
+ */
+function isCanvasMeasureUnavailableEnv() {
+  if (typeof process !== 'undefined'
+    && process.env
+    && process.env.JEST_WORKER_ID != null
+    && process.env.JEST_WORKER_ID !== '') {
+    return true;
+  }
+  if (typeof navigator !== 'undefined'
+    && navigator.userAgent
+    && String(navigator.userAgent).includes('jsdom')) {
+    return true;
+  }
+  return false;
 }
 
 /**
  * Canvas 로 텍스트 폭 측정 (DOM 없이 stages 판정용).
  * font 는 호출측이 실제 computed font 를 넘겨야 한다. 가정 11px 금지.
+ * jsdom/Jest 에서는 getContext 를 호출하지 않고 길이 추정 fallback 을 쓴다.
  *
  * @param {string} text
  * @param {string} font CSS font 문자열 (필수에 가깝게 — 미지정 시 길이 추정만)
@@ -177,19 +634,38 @@ export function measureTextWidth(text, font) {
   if (text == null || text === '') {
     return 0;
   }
+  const fallbackWidth = () => String(text).length * MEASURE_TEXT_FALLBACK_CHAR_WIDTH;
+
   if (typeof document === 'undefined') {
-    return String(text).length * 7;
+    return fallbackWidth();
   }
-  const canvas = measureTextWidth._canvas
-    || (measureTextWidth._canvas = document.createElement('canvas'));
-  const ctx = canvas.getContext('2d');
-  if (!ctx) {
-    return String(text).length * 7;
+  // 이전 probe 실패 캐시 — getContext 재호출 금지
+  if (measureTextWidth._canvasUsable === false) {
+    return fallbackWidth();
   }
-  if (font && String(font).trim() !== '') {
-    ctx.font = font;
+  // 첫 호출부터 console.error 방지: Jest/jsdom 은 getContext 자체를 건너뜀
+  if (isCanvasMeasureUnavailableEnv()) {
+    measureTextWidth._canvasUsable = false;
+    return fallbackWidth();
   }
-  return ctx.measureText(String(text)).width;
+
+  try {
+    const canvas = measureTextWidth._canvas
+      || (measureTextWidth._canvas = document.createElement('canvas'));
+    const ctx = canvas.getContext('2d');
+    if (!ctx || typeof ctx.measureText !== 'function') {
+      measureTextWidth._canvasUsable = false;
+      return fallbackWidth();
+    }
+    measureTextWidth._canvasUsable = true;
+    if (font && String(font).trim() !== '') {
+      ctx.font = font;
+    }
+    return ctx.measureText(String(text)).width;
+  } catch (_err) {
+    measureTextWidth._canvasUsable = false;
+    return fallbackWidth();
+  }
 }
 
 /**
@@ -205,6 +681,38 @@ export function readHorizontalPadding(el) {
   const style = window.getComputedStyle(el);
   return (Number.parseFloat(style.paddingLeft) || 0)
     + (Number.parseFloat(style.paddingRight) || 0);
+}
+
+/**
+ * 칩 안 한 줄의 자연 높이(눌리기 전).
+ * flex 로 눌린 {@code clientHeight}/{@code getBoundingClientRect().height} 단독 사용 금지.
+ * computed {@code line-height}(+ padding/border) 또는 {@code scrollHeight} 중 큰 값.
+ *
+ * @param {Element|null|undefined} el
+ * @returns {number} px. 숨김·미측정이면 0
+ */
+export function readRowHeight(el) {
+  if (!el || typeof window === 'undefined' || typeof window.getComputedStyle !== 'function') {
+    return 0;
+  }
+  const style = window.getComputedStyle(el);
+  if (!style) {
+    return 0;
+  }
+  const fontSize = Number.parseFloat(style.fontSize) || 0;
+  let lineHeight = Number.parseFloat(style.lineHeight);
+  if (!Number.isFinite(lineHeight) || lineHeight <= 0) {
+    // line-height: normal → font-size 기준 추정
+    lineHeight = fontSize > 0 ? fontSize * 1.2 : 0;
+  }
+  const padY = (Number.parseFloat(style.paddingTop) || 0)
+    + (Number.parseFloat(style.paddingBottom) || 0);
+  const borderY = (Number.parseFloat(style.borderTopWidth) || 0)
+    + (Number.parseFloat(style.borderBottomWidth) || 0);
+  const fromLine = lineHeight + padY + borderY;
+  const scrollH = Number.isFinite(el.scrollHeight) ? el.scrollHeight : 0;
+  const natural = Math.max(fromLine, scrollH);
+  return natural > 0 ? natural : 0;
 }
 
 /**
@@ -268,9 +776,17 @@ export function readChipPadTokens(el) {
 export default {
   WEEK_DAY_CHIP_FIT_STAGE,
   WEEK_DAY_CHIP_TIME_MODE,
+  WEEK_DAY_CHIP_HEIGHT_STAGE,
+  isWeekDayChipMarkerOnly,
   judgeWeekDayChipFit,
+  judgeWeekDayChipHeightFit,
+  enforceNonEmptyChipVisible,
+  resolveTitleNameBudget,
+  judgeTitleNameVisibility,
+  buildWeekDayChipA11yLabel,
   measureTextWidth,
   resolveComputedFont,
   readHorizontalPadding,
+  readRowHeight,
   readChipPadTokens
 };

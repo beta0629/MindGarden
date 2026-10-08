@@ -91,6 +91,7 @@ import com.coresolution.core.service.impl.BaseTenantEntityServiceImpl;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -2624,12 +2625,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         List<Schedule> schedules = findSchedulesByUserRoleAndDate(userId, userRole, date);
         Map<String, ConsultantClientMapping> mappingLookup =
                 ScheduleMappingContextResolver.buildActiveOrExhaustedMappingLookup(tenantId, mappingRepository);
-        Map<Long, String> vehiclePlateByClientId = buildVehiclePlateByClientId(tenantId, schedules);
-        Map<Long, String> vehiclePlateByConsultantId = buildVehiclePlateByConsultantId(tenantId, schedules);
-        return schedules.stream()
-            .map(schedule -> convertToScheduleDto(
-                    schedule, mappingLookup, vehiclePlateByClientId, vehiclePlateByConsultantId))
-            .collect(java.util.stream.Collectors.toList());
+        return convertToScheduleDtosBatched(tenantId, schedules, mappingLookup);
     }
 
     @Override
@@ -2639,12 +2635,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         List<Schedule> schedules = findSchedulesByUserRoleAndDateBetween(userId, userRole, startDate, endDate);
         Map<String, ConsultantClientMapping> mappingLookup =
                 ScheduleMappingContextResolver.buildActiveOrExhaustedMappingLookup(tenantId, mappingRepository);
-        Map<Long, String> vehiclePlateByClientId = buildVehiclePlateByClientId(tenantId, schedules);
-        Map<Long, String> vehiclePlateByConsultantId = buildVehiclePlateByConsultantId(tenantId, schedules);
-        return schedules.stream()
-            .map(schedule -> convertToScheduleDto(
-                    schedule, mappingLookup, vehiclePlateByClientId, vehiclePlateByConsultantId))
-            .collect(java.util.stream.Collectors.toList());
+        return convertToScheduleDtosBatched(tenantId, schedules, mappingLookup);
     }
 
     @Override
@@ -3979,13 +3970,9 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
 
         Map<String, ConsultantClientMapping> mappingLookup =
                 ScheduleMappingContextResolver.buildActiveOrExhaustedMappingLookup(tenantId, mappingRepository);
-        Map<Long, String> vehiclePlateByClientId =
-                buildVehiclePlateByClientId(tenantId, schedulePage.getContent());
-        Map<Long, String> vehiclePlateByConsultantId =
-                buildVehiclePlateByConsultantId(tenantId, schedulePage.getContent());
-        return schedulePage.map(schedule ->
-                convertToScheduleDto(
-                        schedule, mappingLookup, vehiclePlateByClientId, vehiclePlateByConsultantId));
+        List<ScheduleResponse> dtos = convertToScheduleDtosBatched(
+                tenantId, schedulePage.getContent(), mappingLookup);
+        return new PageImpl<>(dtos, schedulePage.getPageable(), schedulePage.getTotalElements());
     }
 
     /**
@@ -4165,8 +4152,14 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         if (tenantId == null || tenantId.isEmpty()) {
             tenantId = TenantContextHolder.getTenantId();
         }
+        com.coresolution.consultation.entity.Client clientEntity = null;
+        if (schedule.getClientId() != null && tenantId != null && !tenantId.isEmpty()) {
+            clientEntity = scheduleListBatchLoader
+                    .loadClientsById(tenantId, java.util.Set.of(schedule.getClientId()))
+                    .get(schedule.getClientId());
+        }
         ScheduleMappingResponseContext mappingContext = ScheduleMappingContextResolver.resolveForScheduleResponse(
-                schedule, tenantId, mappingRepository, mappingLookup);
+                schedule, tenantId, mappingRepository, mappingLookup, clientEntity);
 
         // 누적 = 과거 회기수 + 해당 일정 시점까지의 client lifetime 일정 카운트.
         // 사용자 정의 (2026-06-05): "그 일정 시점의 누적 = 클릭 시점까지 그 내담자가 받은
@@ -4217,7 +4210,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
                 buildVehiclePlateByConsultantId(tenantId, schedules),
                 memoizeCodeName(this::convertScheduleTypeToKorean),
                 memoizeCodeName(this::convertConsultationTypeToKorean));
-        ScheduleMappingResponseContext emptyMappingContext = new ScheduleMappingResponseContext(null, null, null);
+        ScheduleMappingResponseContext emptyMappingContext = ScheduleMappingResponseContext.empty();
 
         List<ScheduleResponse> out = new ArrayList<>(schedules.size());
         for (Schedule schedule : schedules) {
@@ -4322,6 +4315,8 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             .createdAt(schedule.getCreatedAt())
             .updatedAt(schedule.getUpdatedAt())
             .mappingId(mappingContext.getMappingId())
+            .engagementType(mappingContext.getEngagementType())
+            .paymentTiming(mappingContext.getPaymentTiming())
             .totalSessions(mappingContext.getTotalSessions())
             .remainingSessions(mappingContext.getRemainingSessions())
             .sessionSequence(schedule.getSessionSequence())

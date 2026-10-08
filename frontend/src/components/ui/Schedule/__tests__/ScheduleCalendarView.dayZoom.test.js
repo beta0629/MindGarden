@@ -324,9 +324,17 @@ describe('ScheduleCalendarView — 날짜 클릭 일간 확대', () => {
     );
   });
 
-  test('FullCalendar eventMinHeight가 전달되어 짧은 슬롯에서도 본문이 눌리지 않는다', () => {
+  test('FullCalendar eventMinHeight가 슬롯 토큰(space-4→16)과 동기되어 연속 일정 겹침을 막는다', () => {
     render(<ScheduleCalendarView {...baseProps()} />);
     const captured = getLastFullCalendarProps();
-    expect(captured.eventMinHeight).toBe(64);
+    expect(captured.eventMinHeight).toBe(16);
+    expect(captured.slotEventOverlap).toBe(false);
+  });
+
+  test('CSS: 슬롯·이벤트 min-height 가 토큰 변수로 정의된다', () => {
+    const css = fs.readFileSync(CSS_PATH, 'utf8');
+    expect(css).toMatch(/--mg-v2-calendar-slot-min-height:\s*var\(--mg-v2-space-8\)/);
+    expect(css).toMatch(/--mg-v2-calendar-event-min-height:\s*var\(--mg-v2-space-4\)/);
+    expect(css).toMatch(/\.fc-timegrid-slot[^{]*\{[^}]*min-height:\s*var\(--mg-v2-calendar-slot-min-height\)/);
   });
 });

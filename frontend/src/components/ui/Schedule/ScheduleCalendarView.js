@@ -65,8 +65,13 @@ const ZOOM_OUT_BUTTON_ID = 'zoomOut';
 /** opacity fade 전용. transform/scale 금지(DnD 히트테스트 보호). --animation-duration-fast(0.15s)와 맞춤 */
 const VIEW_FADE_CLASS = 'mg-v2-schedule-calendar-view--fading';
 const VIEW_FADE_MS = 150;
-/** 일/주 풀 카드 최소 높이(px) — --mg-v2-space-16(4rem)와 정합, 짧은 슬롯 본문 압착 방지 */
-const EVENT_MIN_HEIGHT_PX = 64;
+/**
+ * 일/주 풀 카드 FC eventMinHeight(px).
+ * CSS `--mg-v2-calendar-event-min-height`(→ `--mg-v2-space-4` = 1rem) 과 동기.
+ * 슬롯 min-height(`--mg-v2-calendar-slot-min-height`→space-8) 상향 후
+ * 15분 자연 높이(≈16px)를 넘지 않게 두어 연속 일정 겹침·글자 가림을 막는다.
+ */
+const EVENT_MIN_HEIGHT_PX = 16;
 
 const prefersReducedMotion = () => {
   if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
@@ -691,6 +696,7 @@ const ScheduleCalendarView = ({
                 clientName={clientName}
                 consultantName={consultantName}
                 statusLabel={statusLabel}
+                statusModifier={statusModifier}
                 sameDayPrefix={sameDayPrefix}
                 pastClass={pastClass}
                 cancelledClass={cancelledClass}
@@ -733,6 +739,7 @@ const ScheduleCalendarView = ({
                 droppable={acceptExternalCalendarDrops && isScheduleDropAdminRole(userRole)}
                 height="100%"
                 eventMinHeight={EVENT_MIN_HEIGHT_PX}
+                slotEventOverlap={false}
                 slotMinTime={slotTimeRange.slotMinTime}
                 slotMaxTime={slotTimeRange.slotMaxTime}
                 slotDuration="00:30:00"

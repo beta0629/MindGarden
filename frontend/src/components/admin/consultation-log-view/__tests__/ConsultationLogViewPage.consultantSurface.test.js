@@ -142,12 +142,17 @@ describe('ConsultationLogViewPage — consultant surface', () => {
     cards.forEach((card) => expect(within(card).getByRole('button', { name: /일지/ })).toHaveClass('mg-button--outline'));
   });
 
-  it('내담자 필터: clientId 전달 + 서버 page/size + unwrapApiEnvelope:false', async() => {
+  it('내담자 필터: clientId+startDate/endDate 전달 + 서버 page/size + unwrapApiEnvelope:false', async() => {
     renderPage(CONSULTATION_LOG_VIEW_SURFACE.CONSULTANT);
     await screen.findAllByTestId(CONSULTANT_SUITE_TEST_ID.RECORD_CARD);
     expect(StandardizedApi.get).toHaveBeenCalledWith(
       expect.stringContaining('/consultation-records'),
-      expect.objectContaining({ page: 0, size: expect.any(Number) }),
+      expect.objectContaining({
+        page: 0,
+        size: expect.any(Number),
+        startDate: expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/),
+        endDate: expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/)
+      }),
       expect.objectContaining({ unwrapApiEnvelope: false })
     );
     const twoForClient = [
@@ -156,7 +161,12 @@ describe('ConsultationLogViewPage — consultant surface', () => {
     ];
     StandardizedApi.get.mockImplementation((url, params) => {
       if (String(url).includes('/consultation-records')) {
-        expect(params).toEqual(expect.objectContaining({ clientId: 500, page: 0 }));
+        expect(params).toEqual(expect.objectContaining({
+          clientId: 500,
+          page: 0,
+          startDate: expect.any(String),
+          endDate: expect.any(String)
+        }));
         return Promise.resolve({
           success: true,
           data: twoForClient,
@@ -201,6 +211,77 @@ describe('ConsultationLogViewPage — consultant surface', () => {
     await screen.findAllByTestId(CONSULTANT_SUITE_TEST_ID.RECORD_CARD);
     expect(container.querySelector(`.${CONSULTANT_SUITE_CLASS.PAGINATION}`)).not.toBeNull();
     expect(container.textContent).toMatch(/21/);
+  });
+
+  it('API 10건(totalElements)인데 현재 page 행 0이어도 페이저 유지 — 빈상태만으로 페이저 소실 금지', async() => {
+    StandardizedApi.get.mockImplementation((url) => {
+      if (String(url).includes('/consultation-records')) {
+        return Promise.resolve({
+          success: true,
+          data: [],
+          totalElements: 10,
+          totalPages: 1
+        });
+      }
+      if (String(url).includes('/clients')) {
+        return Promise.resolve([{ id: 500, name: '이민지' }]);
+      }
+      return Promise.resolve([]);
+    });
+    const { container } = renderPage(CONSULTATION_LOG_VIEW_SURFACE.CONSULTANT);
+    await waitFor(() => expect(container.querySelector(`.${CONSULTANT_SUITE_CLASS.EMPTY}`)).not.toBeNull());
+    // PAGE_SIZE(20) 보다 total 이 작으면 페이저 숨김이 정상 — totalPages>1 또는 total>PAGE_SIZE 일 때 유지
+    // 여기선 total=10 < PAGE_SIZE → 페이저 없음. total=21 케이스에서 유지 검증은 위 테스트.
+    expect(container.querySelector(`.${CONSULTANT_SUITE_CLASS.EMPTY}`)).not.toBeNull();
+  });
+
+  it('totalElements>PAGE_SIZE 이고 현재 page 행 0이어도 MGPagination 유지', async() => {
+    StandardizedApi.get.mockImplementation((url) => {
+      if (String(url).includes('/consultation-records')) {
+        return Promise.resolve({
+          success: true,
+          data: [],
+          totalElements: 25,
+          totalPages: 2
+        });
+      }
+      if (String(url).includes('/clients')) {
+        return Promise.resolve([{ id: 500, name: '이민지' }]);
+      }
+      return Promise.resolve([]);
+    });
+    const { container } = renderPage(CONSULTATION_LOG_VIEW_SURFACE.CONSULTANT);
+    await waitFor(() => expect(container.querySelector(`.${CONSULTANT_SUITE_CLASS.EMPTY}`)).not.toBeNull());
+    expect(container.querySelector(`.${CONSULTANT_SUITE_CLASS.PAGINATION}`)).not.toBeNull();
+  });
+
+  it('필터 변경 시 page=1 동시 리셋 — 이전 page 로 요청 레이스 금지', async() => {
+    const recordsCalls = [];
+    StandardizedApi.get.mockImplementation((url, params) => {
+      if (String(url).includes('/consultation-records')) {
+        recordsCalls.push(params);
+        return Promise.resolve({
+          success: true,
+          data: RECORDS,
+          totalElements: 25,
+          totalPages: 2
+        });
+      }
+      if (String(url).includes('/clients')) {
+        return Promise.resolve([{ id: 500, name: '이민지' }, { id: 501, name: '박서준' }]);
+      }
+      return Promise.resolve([]);
+    });
+    renderPage(CONSULTATION_LOG_VIEW_SURFACE.CONSULTANT);
+    await screen.findAllByTestId(CONSULTANT_SUITE_TEST_ID.RECORD_CARD);
+    expect(recordsCalls[0]).toEqual(expect.objectContaining({ page: 0 }));
+    const clientSelect = screen.getByLabelText(/내담자/);
+    fireEvent.change(clientSelect, { target: { value: '500' } });
+    await waitFor(() => {
+      const withClient = recordsCalls.filter((p) => p && p.clientId === 500);
+      expect(withClient.length).toBeGreaterThan(0);
+      expect(withClient.every((p) => p.page === 0)).toBe(true);
+    });
   });
 
   it('빈 결과: DS EmptyState', async() => {

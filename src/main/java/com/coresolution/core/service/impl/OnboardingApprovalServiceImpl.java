@@ -61,6 +61,8 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
             String tenantName, String businessType, String approvedBy, String decisionNote,
             String contactEmail, String adminPasswordHash, String subdomain) {
 
+        // TODO: 테넌트 생성과 그 주소 로그인이 된 뒤에, 결제 모듈과 어떤 상품에 붙일지를 정한다.
+        // TODO: 나중에는 Ops에서 조건이 맞으면 바로 승인한다.
         log.info(OnboardingConstants.LOG_SEPARATOR);
         log.info("🚀 온보딩 승인 프로세스 시작");
         log.info(OnboardingConstants.LOG_SEPARATOR);

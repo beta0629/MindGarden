@@ -11,6 +11,7 @@ name: 🛡️ Guardrails (PR)
 #   4d) 발송 수신자 상한 숫자 리터럴(DTO @Size·FE MAX_RECIPIENTS·문구 최대 N명) — scripts/verification/check-recipient-limit-literals.js
 #   4e) BE 결제·회기·ERP·일정 테스트 묶음 — mvn test -Pci-be-critical (대상: src/test/resources/ci/backend-critical-tests.txt)
 #   4f) FE 기관연계 배지·주/일 칩 fit(34.8 half-width) — scripts/verification/check-engagement-badge-chip-layout.mjs
+#   4g) FE 상담사 slate border(일지 달력·MGPagination·카드) stone 계산값 금지 — scripts/verification/check-consultant-slate-border-tokens.mjs
 #   5) 운영 머지 게이트              — base=release/prod 이면 BE/FE 빌드도 같은 워크플로에서 실행
 #   6) 운영 배포 워크플로 실패 삼킴·옛 DB — scripts/verification/check-prod-deploy-workflows.js (|| true · continue-on-error · non-fatal · mind_garden)
 # 베이스라인·허용 목록: src/test/resources/guardrails/*.txt, 저장소 루트 .gitleaksignore
@@ -289,6 +290,11 @@ jobs:
         env:
           CHROME_PATH: ${{ env.CHROME_PATH }}
         run: node scripts/verification/check-engagement-badge-chip-layout.mjs
+
+      - name: Check consultant slate border tokens (no stone computed colors)
+        env:
+          CHROME_PATH: ${{ env.CHROME_PATH }}
+        run: node scripts/verification/check-consultant-slate-border-tokens.mjs
 
   guardrail-prod-deploy-workflows:
     name: Guardrail deploy workflows (prod static)

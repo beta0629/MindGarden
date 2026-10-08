@@ -60,8 +60,9 @@ class ScheduleDateRangeQueryCountIntegrationTest {
     private static final LocalDate RANGE_END = LocalDate.of(2026, 10, 31);
     private static final LocalDate FIRST_DAY = LocalDate.of(2026, 10, 1);
     private static final int CLIENT_COUNT = 4;
-    private static final int SMALL_ROWS = 1;
-    private static final int LARGE_ROWS = 24;
+    /** 매핑·레거시(null mappingId) 경로를 둘 다 포함해 쿼리 집합을 동일하게 유지 */
+    private static final int SMALL_ROWS = 8;
+    private static final int LARGE_ROWS = 32;
     private static final int TOTAL_SESSIONS = 10;
     private static final int REMAINING_SESSIONS = 6;
 

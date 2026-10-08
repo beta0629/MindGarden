@@ -238,11 +238,26 @@ describe('judgeWeekDayChipHeightFit', () => {
     });
   });
 
-  test('한 줄 merge 도 넘치면 hide-title', () => {
+  test('시간 행 높이도 부족하면 time-detail', () => {
     expect(judgeWeekDayChipHeightFit({
       chipHeight: 10,
       timeRowHeight: 14,
       titleRowHeight: 14,
+      statusRowHeight: 14,
+      gapY: 2
+    })).toEqual({
+      heightStage: WEEK_DAY_CHIP_HEIGHT_STAGE.TIME_DETAIL,
+      showStatus: false,
+      showTitle: false,
+      mergeTimeTitle: false
+    });
+  });
+
+  test('시간은 맞고 이름 행이 더 크면 hide-title (merge 불가)', () => {
+    expect(judgeWeekDayChipHeightFit({
+      chipHeight: 12,
+      timeRowHeight: 10,
+      titleRowHeight: 20,
       statusRowHeight: 14,
       gapY: 2
     })).toEqual({
@@ -261,13 +276,14 @@ describe('judgeWeekDayChipHeightFit', () => {
       badgeWidth: 36,
       gap: 4,
       considerBadge: true,
-      chipHeight: 10,
-      timeRowHeight: 14,
-      titleRowHeight: 14,
+      chipHeight: 12,
+      timeRowHeight: 10,
+      titleRowHeight: 20,
       statusRowHeight: 14,
       gapY: 2
     });
     expect(fit.stage).toBe(WEEK_DAY_CHIP_FIT_STAGE.SHORT);
+    expect(fit.heightStage).toBe(WEEK_DAY_CHIP_HEIGHT_STAGE.HIDE_TITLE);
     expect(fit.showTitle).toBe(false);
     expect(fit.showStatus).toBe(false);
     expect(fit.showTime).toBe(true);

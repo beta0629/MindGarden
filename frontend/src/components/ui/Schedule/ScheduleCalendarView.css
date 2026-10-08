@@ -109,7 +109,11 @@
     flex-shrink: 0;
 }
 
-/* 주/일 풀 카드: 시간 행에 배지 인라인 (시간 shrink/ellipsis + 배지 flex-shrink:0) */
+/*
+ * 주/일 풀 카드: measure-based time-first stages (WeekDayScheduleEventChip).
+ * 뷰포트·@container 109px short-time 토글 제거 — 잘림(ellipsis) 금지.
+ */
+/* 주/일 풀 카드: 시간 행에 배지 인라인 (시간·배지 모두 shrink/ellipsis 금지) */
 .mg-v2-ad-calendar-event:not(.mg-v2-ad-calendar-event--compact) > .mg-v2-ad-calendar-event__time {
     display: flex;
     flex-direction: row;
@@ -119,12 +123,28 @@
     width: 100%;
 }
 
-.mg-v2-ad-calendar-event:not(.mg-v2-ad-calendar-event--compact) .mg-v2-ad-calendar-event__time-text {
+.mg-v2-ad-calendar-event--week-day-fit .mg-v2-ad-calendar-event__time-text {
+    flex: 0 0 auto;
     min-width: 0;
-    flex: 1 1 auto;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    overflow: visible;
+    text-overflow: clip;
     white-space: nowrap;
+}
+
+.mg-v2-ad-calendar-event--week-day-fit .mg-v2-ad-calendar-event__time-measured {
+    white-space: nowrap;
+}
+
+/*
+ * Stage 5 compact-pad: 정상 padding(space-1 / space-2) → 축소(space-0-5 / space-1).
+ * 하드코딩 px 금지 — calendar event padding 토큰만 사용.
+ */
+.mg-v2-ad-calendar-event--week-day-fit.mg-v2-ad-calendar-event--chip-pad-compact {
+    padding: var(--mg-v2-space-0-5) var(--mg-v2-space-1);
+}
+
+.mg-v2-ad-calendar-event--week-day-fit .mg-v2-ad-calendar-event__time-text[hidden] {
+    display: none !important;
 }
 
 /* 월간 뷰 컴팩트 이벤트 (다중 이벤트 시 공간 절약) - core-designer 스펙 */

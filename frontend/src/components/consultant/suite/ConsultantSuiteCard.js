@@ -2,6 +2,9 @@
  * ConsultantSuiteCard — 상담사 스위트 공유 카드 (card | row)
  * 흰 카드 + slate 테두리 · shadow 없음 · 밀도 토큰(--mg-v2-consultant-card-*)
  *
+ * 인터랙티브 카드는 native <button> 루트를 쓰지 않는다.
+ * (전역 모바일 button padding !important 가 카드 밀도를 덮어쓰기 때문)
+ *
  * @author CoreSolution
  * @since 2026-10-07
  */
@@ -15,6 +18,8 @@ export const CONSULTANT_SUITE_CARD_VARIANT = Object.freeze({
   CARD: 'card',
   ROW: 'row'
 });
+
+const INTERACTIVE_FOOT_CONTROL_SELECTOR = 'button, a, input, select, textarea';
 
 /**
  * 이름 이니셜(최대 2자). 비어 있으면 「—」.
@@ -66,13 +71,33 @@ const ConsultantSuiteCard = ({
   as
 }) => {
   const isRow = variant === CONSULTANT_SUITE_CARD_VARIANT.ROW;
-  const Tag = as || (onClick ? 'button' : 'article');
+  const isInteractive = typeof onClick === 'function';
+  const Tag = as || 'article';
+  const useButtonRole = isInteractive && Tag !== 'button';
   const rootClass = [
     CONSULTANT_SUITE_CLASS.CARD,
     isRow ? CONSULTANT_SUITE_CLASS.CARD_ROW : '',
-    onClick && Tag === 'button' ? `${CONSULTANT_SUITE_CLASS.CARD}--interactive` : '',
+    isInteractive ? CONSULTANT_SUITE_CLASS.CARD_INTERACTIVE : '',
     className
   ].filter(Boolean).join(' ');
+
+  const handleKeyDown = (event) => {
+    if (!isInteractive) {
+      return;
+    }
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      onClick(event);
+    }
+  };
+
+  const handleFootClick = isInteractive
+    ? (event) => {
+      if (event.target.closest(INTERACTIVE_FOOT_CONTROL_SELECTOR)) {
+        event.stopPropagation();
+      }
+    }
+    : undefined;
 
   const head = (title != null || time != null || avatar != null || pill != null) ? (
     <header className={CONSULTANT_SUITE_CLASS.CARD_HEAD}>
@@ -98,7 +123,10 @@ const ConsultantSuiteCard = ({
       className={rootClass}
       data-testid={testId}
       type={Tag === 'button' ? 'button' : undefined}
+      role={useButtonRole ? 'button' : undefined}
+      tabIndex={useButtonRole ? 0 : undefined}
       onClick={onClick}
+      onKeyDown={useButtonRole ? handleKeyDown : undefined}
     >
       {head}
       {body != null ? (
@@ -109,7 +137,9 @@ const ConsultantSuiteCard = ({
       ) : null}
       {children}
       {foot != null ? (
-        <footer className={CONSULTANT_SUITE_CLASS.CARD_FOOT}>{foot}</footer>
+        <footer className={CONSULTANT_SUITE_CLASS.CARD_FOOT} onClick={handleFootClick}>
+          {foot}
+        </footer>
       ) : null}
     </Tag>
   );

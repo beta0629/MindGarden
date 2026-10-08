@@ -58,7 +58,11 @@ import {
   CONSULTANT_SUITE_TEST_ID,
   CONSULTATION_LOG_VIEW_SURFACE
 } from '../../../constants/consultantSuite';
-import { toServerPageIndex } from '../../../utils/consultantSuiteListApi';
+import {
+  fetchConsultantSuitePagedList,
+  toServerPageIndex
+} from '../../../utils/consultantSuiteListApi';
+import MGPagination from '../../common/MGPagination';
 import '../ConsultationLogViewPage.css';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
@@ -127,7 +131,9 @@ export const normalizeAdminConsultationRecordsPage = (
     return { data: [], totalCount: 0, totalPages: 1 };
   }
   const data = Array.isArray(response.data) ? response.data : [];
-  const parsedTotalCount = Number(response.totalCount);
+  const parsedTotalCount = Number(
+    response.totalCount ?? response.totalElements ?? response.total
+  );
   const totalCount = Number.isFinite(parsedTotalCount) ? parsedTotalCount : data.length;
   const parsedTotalPages = Number(response.totalPages);
   let totalPages;
@@ -311,6 +317,8 @@ const ConsultationLogViewPage = ({ surface }) => {
   const [consultants, setConsultants] = useState([]);
   const [clients, setClients] = useState([]);
   const [records, setRecords] = useState([]);
+  const [totalElements, setTotalElements] = useState(0);
+  const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [consultantId, setConsultantId] = useState(initialQueryFilter.consultantId);
   const [clientId, setClientId] = useState(initialQueryFilter.clientId);
@@ -471,25 +479,40 @@ const ConsultationLogViewPage = ({ surface }) => {
           }
         }
       } else {
-        const params = {
-          page: toServerPageIndex(1),
-          size: CONSULTANT_SUITE_PAGE_SIZE
-        };
+        // 상담사: 목록/테이블 = page/size + MGPagination. 캘린더 = 공통 fetch-all(page loop).
+        // 캘린더는 단일 page0 size20 캡 금지(월 초·다건 누락). 엔드포인트만 상담사 스코프.
+        const endpoint = `/api/v1/admin/consultant-records/${user.id}/consultation-records`;
+        const baseParams = {};
         if (clientId != null) {
-          params.clientId = clientId;
+          baseParams.clientId = clientId;
         }
-        const response = await StandardizedApi.get(
-          `/api/v1/admin/consultant-records/${user.id}/consultation-records`,
-          params
-        );
-        if (isStale()) return;
-        const list = Array.isArray(response) ? response : (response?.data ?? []);
-        setRecords(normalizeConsultantRecords(list, user?.name));
+        if (viewMode === VIEW_MODE_CALENDAR) {
+          const list = await fetchAllAdminConsultationRecords(StandardizedApi.get, baseParams, {
+            endpoint
+          });
+          if (isStale()) return;
+          const normalized = normalizeConsultantRecords(list, user?.name);
+          setRecords(normalized);
+          setTotalElements(normalized.length);
+        } else {
+          const result = await fetchConsultantSuitePagedList(endpoint, baseParams, {
+            page: toServerPageIndex(page),
+            size: CONSULTANT_SUITE_PAGE_SIZE,
+            itemKeys: ['data', 'content', 'items', 'records']
+          });
+          if (isStale()) return;
+          const normalized = normalizeConsultantRecords(result.items || [], user?.name);
+          setRecords(normalized);
+          setTotalElements(
+            result.totalElements != null ? result.totalElements : normalized.length
+          );
+        }
       }
     } catch (e) {
       if (isStale() || abortController?.signal?.aborted) return;
       console.error('상담일지 목록 로드 실패:', e);
       setRecords([]);
+      setTotalElements(0);
       const message = e?.status === 403
         ? '관리자 권한이 필요합니다. 권한을 확인해주세요.'
         : '상담일지 목록을 불러오는데 실패했습니다.';
@@ -499,7 +522,18 @@ const ConsultationLogViewPage = ({ surface }) => {
         setLoading(false);
       }
     }
-  }, [user?.id, user?.name, isAdmin, consultantId, clientId, startDate, endDate, normalizeConsultantRecords]);
+  }, [
+    user?.id,
+    user?.name,
+    isAdmin,
+    consultantId,
+    clientId,
+    startDate,
+    endDate,
+    normalizeConsultantRecords,
+    viewMode,
+    page
+  ]);
 
   useEffect(() => {
     loadConsultants();
@@ -517,6 +551,10 @@ const ConsultationLogViewPage = ({ surface }) => {
       }
     };
   }, [filtersHydrated, loadRecords]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [clientId, startDate, endDate, viewMode]);
 
   const clientNameMap = {};
   const consultantNameMap = {};
@@ -802,20 +840,66 @@ const ConsultationLogViewPage = ({ surface }) => {
         </section>
       );
     }
+    const totalPages = Math.max(1, Math.ceil((totalElements || 0) / CONSULTANT_SUITE_PAGE_SIZE));
     return (
-      <section className={CONSULTANT_SUITE_CLASS.CARD_GRID} aria-label={tSuite('records.listAria')}>
-        {filteredRecords.map((record) => (
-          <ConsultantRecordCard
-            key={record.id}
-            record={{
-              ...record,
-              clientName: record.clientName
-                ?? (record.clientId != null ? clientNameMap[Number(record.clientId)] : undefined)
-            }}
-            onOpen={handleOpenModal}
-          />
-        ))}
-      </section>
+      <>
+        <section className={CONSULTANT_SUITE_CLASS.CARD_GRID} aria-label={tSuite('records.listAria')}>
+          {filteredRecords.map((record) => (
+            <ConsultantRecordCard
+              key={record.id}
+              record={{
+                ...record,
+                clientName: record.clientName
+                  ?? (record.clientId != null ? clientNameMap[Number(record.clientId)] : undefined)
+              }}
+              onOpen={handleOpenModal}
+            />
+          ))}
+        </section>
+        {totalElements > CONSULTANT_SUITE_PAGE_SIZE ? (
+          <nav className={CONSULTANT_SUITE_CLASS.PAGINATION} aria-label={tSuite('records.listAria')}>
+            <MGPagination
+              currentPage={page}
+              totalPages={totalPages}
+              totalItems={totalElements}
+              itemsPerPage={CONSULTANT_SUITE_PAGE_SIZE}
+              onPageChange={setPage}
+              showInfo
+              showItemsPerPage={false}
+              variant="compact"
+            />
+          </nav>
+        ) : null}
+      </>
+    );
+  };
+
+  const renderConsultantTableWithPager = () => {
+    const totalPages = Math.max(1, Math.ceil((totalElements || 0) / CONSULTANT_SUITE_PAGE_SIZE));
+    return (
+      <>
+        <ConsultationLogTableBlock
+          records={filteredRecords}
+          clientNameMap={clientNameMap}
+          consultantNameMap={consultantNameMap}
+          onRowClick={handleOpenModal}
+          showAdminWriteBadge={isAdmin}
+        />
+        {totalElements > CONSULTANT_SUITE_PAGE_SIZE ? (
+          <nav className={CONSULTANT_SUITE_CLASS.PAGINATION} aria-label={tSuite('records.listAria')}>
+            <MGPagination
+              currentPage={page}
+              totalPages={totalPages}
+              totalItems={totalElements}
+              itemsPerPage={CONSULTANT_SUITE_PAGE_SIZE}
+              onPageChange={setPage}
+              showInfo
+              showItemsPerPage={false}
+              variant="compact"
+            />
+          </nav>
+        ) : null}
+      </>
     );
   };
 
@@ -837,13 +921,15 @@ const ConsultationLogViewPage = ({ surface }) => {
       )}
       {viewMode === VIEW_MODE_LIST && renderListView()}
       {viewMode === VIEW_MODE_TABLE && (
-        <ConsultationLogTableBlock
-          records={filteredRecords}
-          clientNameMap={clientNameMap}
-          consultantNameMap={consultantNameMap}
-          onRowClick={handleOpenModal}
-          showAdminWriteBadge={isAdmin}
-        />
+        isConsultantSurface ? renderConsultantTableWithPager() : (
+          <ConsultationLogTableBlock
+            records={filteredRecords}
+            clientNameMap={clientNameMap}
+            consultantNameMap={consultantNameMap}
+            onRowClick={handleOpenModal}
+            showAdminWriteBadge={isAdmin}
+          />
+        )
       )}
     </>
   );

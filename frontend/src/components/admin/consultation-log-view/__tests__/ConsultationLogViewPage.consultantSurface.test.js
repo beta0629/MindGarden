@@ -78,7 +78,12 @@ beforeEach(() => {
   mockSessionUser = { id: 77, name: '김상담', role: 'CONSULTANT' };
   StandardizedApi.get.mockImplementation((url) => {
     if (String(url).includes('/consultation-records')) {
-      return Promise.resolve(RECORDS);
+      return Promise.resolve({
+        success: true,
+        data: RECORDS,
+        totalElements: RECORDS.length,
+        totalPages: 1
+      });
     }
     if (String(url).includes('/clients')) {
       return Promise.resolve([{ id: 500, name: '이민지' }, { id: 501, name: '박서준' }]);
@@ -137,12 +142,13 @@ describe('ConsultationLogViewPage — consultant surface', () => {
     cards.forEach((card) => expect(within(card).getByRole('button', { name: /일지/ })).toHaveClass('mg-button--outline'));
   });
 
-  it('내담자 필터: clientId 전달 + 클라이언트 필터로 2건 → 2건', async() => {
+  it('내담자 필터: clientId 전달 + 서버 page/size + unwrapApiEnvelope:false', async() => {
     renderPage(CONSULTATION_LOG_VIEW_SURFACE.CONSULTANT);
     await screen.findAllByTestId(CONSULTANT_SUITE_TEST_ID.RECORD_CARD);
     expect(StandardizedApi.get).toHaveBeenCalledWith(
       expect.stringContaining('/consultation-records'),
-      expect.objectContaining({ page: 0, size: expect.any(Number) })
+      expect.objectContaining({ page: 0, size: expect.any(Number) }),
+      expect.objectContaining({ unwrapApiEnvelope: false })
     );
     const twoForClient = [
       { ...RECORDS[0], id: 3100, clientId: 500 },
@@ -150,20 +156,51 @@ describe('ConsultationLogViewPage — consultant surface', () => {
     ];
     StandardizedApi.get.mockImplementation((url, params) => {
       if (String(url).includes('/consultation-records')) {
-        expect(params).toEqual(expect.objectContaining({ clientId: 500 }));
-        return Promise.resolve(twoForClient);
+        expect(params).toEqual(expect.objectContaining({ clientId: 500, page: 0 }));
+        return Promise.resolve({
+          success: true,
+          data: twoForClient,
+          totalElements: 2,
+          totalPages: 1
+        });
       }
       if (String(url).includes('/clients')) {
         return Promise.resolve([{ id: 500, name: '이민지' }, { id: 501, name: '박서준' }]);
       }
       return Promise.resolve([]);
     });
-    // 필터 섹션에서 내담자 선택
     const clientSelect = screen.getByLabelText(/내담자/);
     fireEvent.change(clientSelect, { target: { value: '500' } });
     await waitFor(() => {
       expect(screen.getAllByTestId(CONSULTANT_SUITE_TEST_ID.RECORD_CARD)).toHaveLength(2);
     });
+  });
+
+  it('목록 페이저: totalElements>pageSize 이면 MGPagination 표시', async() => {
+    const many = Array.from({ length: 21 }, (_, i) => ({
+      ...RECORDS[0],
+      id: 4000 + i,
+      clientId: 500,
+      sessionNumber: i + 1
+    }));
+    StandardizedApi.get.mockImplementation((url) => {
+      if (String(url).includes('/consultation-records')) {
+        return Promise.resolve({
+          success: true,
+          data: many.slice(0, 20),
+          totalElements: 21,
+          totalPages: 2
+        });
+      }
+      if (String(url).includes('/clients')) {
+        return Promise.resolve([{ id: 500, name: '이민지' }]);
+      }
+      return Promise.resolve([]);
+    });
+    const { container } = renderPage(CONSULTATION_LOG_VIEW_SURFACE.CONSULTANT);
+    await screen.findAllByTestId(CONSULTANT_SUITE_TEST_ID.RECORD_CARD);
+    expect(container.querySelector(`.${CONSULTANT_SUITE_CLASS.PAGINATION}`)).not.toBeNull();
+    expect(container.textContent).toMatch(/21/);
   });
 
   it('빈 결과: DS EmptyState', async() => {

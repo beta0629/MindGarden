@@ -8,8 +8,11 @@ import ConsultantSuiteCard, {
   ConsultantSuitePill,
   toConsultantSuiteAvatarInitials
 } from '../ConsultantSuiteCard';
-import { CONSULTANT_SUITE_CLASS } from '../../../../constants/consultantSuite';
-import { resolveConsultantMessageType, CONSULTANT_MESSAGE_TYPE_FILTER } from '../../../../constants/consultantSuite';
+import {
+  CONSULTANT_MESSAGE_TYPE_FILTER,
+  CONSULTANT_SUITE_CLASS,
+  resolveConsultantMessageType
+} from '../../../../constants/consultantSuite';
 
 describe('toConsultantSuiteAvatarInitials', () => {
   it('한글·영문 이니셜', () => {
@@ -45,7 +48,7 @@ describe('ConsultantSuiteCard', () => {
     expect(screen.getByText('완료')).toHaveClass(CONSULTANT_SUITE_CLASS.PILL);
   });
 
-  it('row variant + onClick → button', () => {
+  it('row + onClick → article(role=button), native BUTTON 아님', () => {
     const onClick = jest.fn();
     render(
       <ConsultantSuiteCard
@@ -56,9 +59,63 @@ describe('ConsultantSuiteCard', () => {
       />
     );
     const row = screen.getByTestId('suite-row');
-    expect(row.tagName).toBe('BUTTON');
+    expect(row.tagName).not.toBe('BUTTON');
+    expect(row.tagName).toBe('ARTICLE');
+    expect(row).toHaveAttribute('role', 'button');
+    expect(row).toHaveAttribute('tabIndex', '0');
     expect(row).toHaveClass(CONSULTANT_SUITE_CLASS.CARD_ROW);
+    expect(row).toHaveClass(CONSULTANT_SUITE_CLASS.CARD_INTERACTIVE);
     fireEvent.click(row);
-    expect(onClick).toHaveBeenCalled();
+    expect(onClick).toHaveBeenCalledTimes(1);
+  });
+
+  it('Enter / Space 키가 onClick 을 발동한다', () => {
+    const onClick = jest.fn();
+    render(
+      <ConsultantSuiteCard
+        title="메시지"
+        onClick={onClick}
+        testId="suite-key"
+      />
+    );
+    const card = screen.getByTestId('suite-key');
+    fireEvent.keyDown(card, { key: 'Enter' });
+    fireEvent.keyDown(card, { key: ' ' });
+    expect(onClick).toHaveBeenCalledTimes(2);
+  });
+
+  it('foot 안 실제 button 클릭은 카드 onClick 과 분리(중첩 버튼 없음)', () => {
+    const onCardClick = jest.fn();
+    const onFootClick = jest.fn();
+    render(
+      <ConsultantSuiteCard
+        title="기록"
+        onClick={onCardClick}
+        testId="suite-nested"
+        foot={(
+          <button type="button" onClick={onFootClick}>열기</button>
+        )}
+      />
+    );
+    const card = screen.getByTestId('suite-nested');
+    expect(card.tagName).not.toBe('BUTTON');
+    expect(card.querySelector('button')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: '열기' }));
+    expect(onFootClick).toHaveBeenCalledTimes(1);
+    expect(onCardClick).not.toHaveBeenCalled();
+  });
+
+  it('row + body 는 CARD_ROW 클래스(패딩 16/24)를 유지한다', () => {
+    render(
+      <ConsultantSuiteCard
+        variant={CONSULTANT_SUITE_CARD_VARIANT.ROW}
+        title="제목"
+        body={<span>미리보기</span>}
+        testId="suite-msg"
+      />
+    );
+    const card = screen.getByTestId('suite-msg');
+    expect(card).toHaveClass(CONSULTANT_SUITE_CLASS.CARD_ROW);
+    expect(card.querySelector(`.${CONSULTANT_SUITE_CLASS.CARD_BODY}`)).toBeTruthy();
   });
 });

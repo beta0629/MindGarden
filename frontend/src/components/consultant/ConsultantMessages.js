@@ -35,6 +35,9 @@ import {
   fetchConsultantSuitePagedList,
   toServerPageIndex
 } from '../../utils/consultantSuiteListApi';
+import StandardizedApi from '../../utils/standardizedApi';
+import { API_ENDPOINTS } from '../../constants/apiEndpoints';
+import { formatNameWithSecondary } from '../../utils/safeDisplay';
 import './ConsultantMessages.css';
 import { USER_ROLES } from '../../constants/roles';
 import { useTranslation } from 'react-i18next';
@@ -47,7 +50,6 @@ const EMPTY_ICON_SIZE = 40;
 const MESSAGE_PREVIEW_MAX = 100;
 const MESSAGE_TYPE_FILTER_ORDER = Object.values(CONSULTANT_MESSAGE_TYPE_FILTER);
 const MESSAGES_ITEM_KEYS = Object.freeze(['messages', 'content', 'items', 'data']);
-const MAPPINGS_ITEM_KEYS = Object.freeze(['mappings', 'clients', 'content', 'items', 'data']);
 
 const MESSAGE_COUNTERPARTY_COPY = {
   SOURCE_REMINDER_OR_SYSTEM: '출처: 리마인더·알림',
@@ -144,18 +146,18 @@ const ConsultantMessages = () => {
       return;
     }
     try {
-      const result = await fetchConsultantSuitePagedList(
-        `/api/v1/admin/mappings/consultant/${user.id}/clients`,
-        {},
-        {
-          page: 0,
-          size: CONSULTANT_SUITE_PAGE_SIZE,
-          itemKeys: MAPPINGS_ITEM_KEYS
-        }
+      // 수신자: 담당 내담자 전체 목록(ASSIGNED_CLIENTS). page0 size20 캡 금지.
+      const res = await StandardizedApi.get(
+        API_ENDPOINTS.CONSULTANT_RECORDS.ASSIGNED_CLIENTS(user.id)
       );
-      const list = (result.items || [])
-        .map((item) => (item && typeof item === 'object' ? item.client : null))
-        .filter(Boolean);
+      const arr = Array.isArray(res) ? res : (res?.data ?? []);
+      const list = (Array.isArray(arr) ? arr : [])
+        .map((c) => (c && typeof c === 'object' ? {
+          id: c.id,
+          name: c.name ?? c.userName,
+          email: c.email
+        } : null))
+        .filter((c) => c && c.id != null);
       setClients(list);
     } catch (err) {
       console.error('내담자 목록 로드 오류:', err);
@@ -316,7 +318,7 @@ const ConsultantMessages = () => {
               { value: '', label: '내담자를 선택하세요' },
               ...clients.map((client) => ({
                 value: client.id,
-                label: `${client.name} (${client.email})`
+                label: formatNameWithSecondary(client.name, client.email)
               }))
             ]}
             placeholder="내담자를 선택하세요"
@@ -427,7 +429,7 @@ const ConsultantMessages = () => {
             return (
               <li key={message.id}>
                 <ConsultantSuiteCard
-                  variant={CONSULTANT_SUITE_CARD_VARIANT.CARD}
+                  variant={CONSULTANT_SUITE_CARD_VARIANT.ROW}
                   className={`consultant-messages__suite-card${message.isRead ? '' : ' consultant-messages__suite-card--unread'}`}
                   testId={CONSULTANT_SUITE_TEST_ID.MESSAGE_ROW}
                   onClick={() => handleMessageClick(message)}
@@ -449,18 +451,27 @@ const ConsultantMessages = () => {
             );
           })}
         </ul>
-        {totalElements > CONSULTANT_SUITE_PAGE_SIZE ? (
+        {totalElements > 0 ? (
           <nav className={CONSULTANT_SUITE_CLASS.PAGINATION} aria-label={tSuite('messages.listAria')}>
-            <MGPagination
-              currentPage={page}
-              totalPages={totalPages}
-              totalItems={totalElements}
-              itemsPerPage={CONSULTANT_SUITE_PAGE_SIZE}
-              onPageChange={setPage}
-              showInfo={false}
-              showItemsPerPage={false}
-              variant="compact"
-            />
+            {totalElements > CONSULTANT_SUITE_PAGE_SIZE ? (
+              <MGPagination
+                currentPage={page}
+                totalPages={totalPages}
+                totalItems={totalElements}
+                itemsPerPage={CONSULTANT_SUITE_PAGE_SIZE}
+                onPageChange={setPage}
+                showInfo
+                showItemsPerPage={false}
+                variant="compact"
+              />
+            ) : (
+              <p
+                className={CONSULTANT_SUITE_CLASS.SUMMARY}
+                data-testid="consultant-messages-total"
+              >
+                {tSuite('messages.totalCount', { count: totalElements })}
+              </p>
+            )}
           </nav>
         ) : null}
       </>

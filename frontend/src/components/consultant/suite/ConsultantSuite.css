@@ -309,24 +309,32 @@
   font: inherit;
 }
 
-button.consultant-suite-card {
+/* 인터랙티브: native button 루트 대신 role=button (+ optional as=button) */
+.consultant-suite-card--interactive {
   cursor: pointer;
   appearance: none;
 }
 
-button.consultant-suite-card:focus-visible {
+.consultant-suite-card--interactive:focus-visible {
   outline: none;
   border-color: var(--mg-v2-consultant-selection-border);
   box-shadow: var(--mg-v2-shadow-focus);
 }
 
+/*
+ * --row: 메시지 등 세로 카드는 패딩(16/24)만, 가로 레이아웃은 body 없는 행 카드에만.
+ * (:has(__body) 가 있으면 기본 column 유지 — 메시지 title/body/foot 깨짐 방지)
+ */
 .consultant-suite-card--row {
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
   gap: var(--mg-v2-consultant-row-gap);
   padding: var(--mg-v2-consultant-row-pad);
   min-height: var(--mg-v2-consultant-row-min-height);
+}
+
+.consultant-suite-card--row:not(:has(.consultant-suite-card__body)) {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
 }
 
 .consultant-suite-card__head {
@@ -550,9 +558,37 @@ button.consultant-suite-card:focus-visible {
 .consultant-suite.consultant-logs .mg-v2-consultation-log-calendar,
 .consultant-suite.consultant-logs .mg-v2-consultation-log-table,
 .consultant-suite.consultant-logs .consultation-log-calendar-block,
-.consultant-suite.consultant-logs .consultation-log-table-block {
+.consultant-suite.consultant-logs .consultation-log-table-block,
+.consultant-suite.consultant-logs .mg-v2-consultation-log-calendar-block,
+.consultant-suite.consultant-logs .mg-v2-consultation-log-table-block,
+.consultant-suite.consultant-logs .mg-v2-consultation-log-calendar-block__card,
+.consultant-suite.consultant-logs .mg-v2-consultation-log-table-block__card,
+.consultant-suite.consultant-logs .mg-v2-content-card.mg-v2-consultation-log-calendar-block__card,
+.consultant-suite.consultant-logs .mg-v2-content-card.mg-v2-consultation-log-table-block__card {
   background: var(--mg-v2-consultant-surface-card);
   border: var(--mg-v2-border-width-thin) solid var(--mg-v2-consultant-border-card);
   border-radius: var(--mg-v2-consultant-card-radius);
   box-shadow: none;
+}
+
+/*
+ * 캘린더 래퍼·테이블 블록 stone(neutral-50) — suite 에서만 투명/흰 카드.
+ * admin ConsultationLogCalendarBlock.css 기본값은 유지.
+ */
+.consultant-suite.consultant-logs .mg-v2-consultation-log-calendar-wrapper,
+.consultant-suite.consultant-logs .mg-v2-consultation-log-table-block,
+.consultant-suite.consultant-logs .mg-v2-consultation-log-table-block__card {
+  background: transparent;
+}
+
+.consultant-suite.consultant-logs .mg-v2-consultation-log-calendar-wrapper .fc-col-header-cell {
+  background: var(--mg-v2-consultant-surface-card);
+}
+
+.consultant-suite.consultant-logs .mg-v2-consultation-log-calendar-wrapper .fc-button-primary {
+  background: var(--mg-v2-consultant-surface-card) !important;
+}
+
+.consultant-suite.consultant-logs .mg-v2-consultation-log-calendar-popover {
+  background: var(--mg-v2-consultant-surface-card);
 }

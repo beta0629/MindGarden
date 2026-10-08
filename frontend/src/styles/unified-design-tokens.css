@@ -17337,7 +17337,7 @@ button:not(.mg-v2-nav-icon):not(.mg-v2-tenant-header-cluster__menu-trigger):not(
 
 /* 모바일 전용 버튼 최적화 */
 @media (max-width: 768px) {
-  button:not(.mg-v2-nav-icon):not(.mg-v2-tenant-header-cluster__menu-trigger):not(.mg-v2-desktop-lnb__group-chevron):not(.mg-v2-mobile-lnb-drawer__group-chevron):not(.mg-v2-mapping-creation-modal__card):not(.mg-v2-mapping-creation-modal__payment-timing-card):not(.mg-consultant-card--schedule-select):not(.mg-client-card--b0kla-select):not(.mg-v2-entity-row-actions__trigger):not(.mg-merchant-legal-footer__link):not(.mg-v2-header-menu-row):not(.mg-v2-quick-action-item):not(.mg-v2-theme-switch__btn):not(.mg-v2-notification-segmented__tab):not(.mg-v2-schedule-legend__toggle):not([data-gnb-chrome-free="true"]),
+  button:not(.mg-v2-nav-icon):not(.mg-v2-tenant-header-cluster__menu-trigger):not(.mg-v2-desktop-lnb__group-chevron):not(.mg-v2-mobile-lnb-drawer__group-chevron):not(.mg-v2-mapping-creation-modal__card):not(.mg-v2-mapping-creation-modal__payment-timing-card):not(.mg-consultant-card--schedule-select):not(.mg-client-card--b0kla-select):not(.consultant-suite-card):not(.mg-v2-entity-row-actions__trigger):not(.mg-merchant-legal-footer__link):not(.mg-v2-header-menu-row):not(.mg-v2-quick-action-item):not(.mg-v2-theme-switch__btn):not(.mg-v2-notification-segmented__tab):not(.mg-v2-schedule-legend__toggle):not([data-gnb-chrome-free="true"]),
   .btn:not(.mg-v2-entity-row-actions__trigger):not(.mg-merchant-legal-footer__link):not([data-gnb-chrome-free="true"]),
   [class*="btn-"]:not(.mg-v2-entity-row-actions__trigger):not(.mg-merchant-legal-footer__link):not([data-gnb-chrome-free="true"]),
   [class*="mg-btn"]:not(.mg-v2-entity-row-actions__trigger):not(.mg-merchant-legal-footer__link):not([data-gnb-chrome-free="true"]),
@@ -17367,7 +17367,7 @@ button:not(.mg-v2-nav-icon):not(.mg-v2-tenant-header-cluster__menu-trigger):not(
 
 /* 초소형 화면 (480px 이하) 최적화 */
 @media (max-width: 480px) {
-  button:not(.mg-v2-nav-icon):not(.mg-v2-tenant-header-cluster__menu-trigger):not(.mg-v2-desktop-lnb__group-chevron):not(.mg-v2-mobile-lnb-drawer__group-chevron):not(.mg-v2-mapping-creation-modal__card):not(.mg-v2-mapping-creation-modal__payment-timing-card):not(.mg-consultant-card--schedule-select):not(.mg-client-card--b0kla-select):not(.mg-v2-entity-row-actions__trigger):not(.mg-v2-header-menu-row):not(.mg-v2-quick-action-item):not(.mg-v2-theme-switch__btn):not(.mg-v2-notification-segmented__tab):not(.mg-v2-schedule-legend__toggle):not([data-gnb-chrome-free="true"]),
+  button:not(.mg-v2-nav-icon):not(.mg-v2-tenant-header-cluster__menu-trigger):not(.mg-v2-desktop-lnb__group-chevron):not(.mg-v2-mobile-lnb-drawer__group-chevron):not(.mg-v2-mapping-creation-modal__card):not(.mg-v2-mapping-creation-modal__payment-timing-card):not(.mg-consultant-card--schedule-select):not(.mg-client-card--b0kla-select):not(.consultant-suite-card):not(.mg-v2-entity-row-actions__trigger):not(.mg-v2-header-menu-row):not(.mg-v2-quick-action-item):not(.mg-v2-theme-switch__btn):not(.mg-v2-notification-segmented__tab):not(.mg-v2-schedule-legend__toggle):not([data-gnb-chrome-free="true"]),
   .btn:not(.mg-v2-entity-row-actions__trigger):not([data-gnb-chrome-free="true"]),
   [class*="btn-"]:not(.mg-v2-entity-row-actions__trigger):not([data-gnb-chrome-free="true"]),
   [class*="mg-btn"]:not(.mg-v2-entity-row-actions__trigger):not([data-gnb-chrome-free="true"]),

@@ -1919,7 +1919,9 @@
   font-size: 13px;
   font-weight: 600;
   color: var(--mg-text-primary);
-  min-width: 0;
+  /* 내담자 우선: 폭 0 금지, counselor 보다 작은 flex-shrink */
+  flex: 1 1 auto;
+  min-width: 1ch;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -1928,7 +1930,13 @@
 .mg-v2-ad-calendar-event__title .counselor-name {
   font-size: 11px;
   color: var(--mg-secondary-600);
-  margin-left: 4px;
+  margin-left: var(--mg-spacing-xs);
+  /* 상담사 먼저 축소·말줄임 — intrinsic min-width 로 내담자를 0으로 밀지 않음 */
+  flex: 0 3 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .mg-v2-ad-calendar-event__status {

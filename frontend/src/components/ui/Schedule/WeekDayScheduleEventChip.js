@@ -48,7 +48,9 @@ const WeekDayScheduleEventChip = ({
     longTime,
     shortTime,
     badgeLabel: showInstitutionMark ? (institutionLabel || '') : '',
-    considerBadge: Boolean(showInstitutionMark && institutionLabel)
+    considerBadge: Boolean(showInstitutionMark && institutionLabel),
+    clientName,
+    counselorName: consultantName || ''
   });
   const displayTime = fit.showTime
     ? (fit.timeMode === WEEK_DAY_CHIP_TIME_MODE.LONG ? longTime : shortTime)
@@ -57,6 +59,7 @@ const WeekDayScheduleEventChip = ({
   const chipTitle = buildWeekDayChipA11yLabel({
     timeText: fullTimeForA11y,
     clientName,
+    counselorName: consultantName,
     statusLabel,
     institutionLabel,
     showInstitution: Boolean(showInstitutionMark && institutionLabel)
@@ -83,7 +86,7 @@ const WeekDayScheduleEventChip = ({
         stopPropagation
         className="mg-v2-ad-calendar-event__reminder-sms"
       />
-      {consultantName ? (
+      {fit.showCounselorName && consultantName ? (
         <span className="counselor-name">{consultantName}</span>
       ) : null}
     </div>

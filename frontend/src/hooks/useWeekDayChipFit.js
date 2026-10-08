@@ -1,6 +1,7 @@
 /**
  * 주/일 칩 가용폭·높이 ResizeObserver + 실제 computed font 측정 → judgeWeekDayChipFit.
  * DEFAULT_TIME_FONT(11px 등) 가정 금지 — getComputedStyle(timeEl).font 사용.
+ * client/counselor 텍스트 폭도 computed font 로 측정해 showCounselorName 판정.
  *
  * @author CoreSolution
  * @since 2026-10-08
@@ -21,6 +22,7 @@ import {
 const DEFAULT_GAP_PX = 4;
 const DEFAULT_BADGE_PAD_X = 8;
 const DEFAULT_GAP_Y_PX = 2;
+const DEFAULT_NAME_GAP_PX = 4;
 
 const INITIAL_FIT = Object.freeze({
   stage: WEEK_DAY_CHIP_FIT_STAGE.SHORT,
@@ -31,7 +33,8 @@ const INITIAL_FIT = Object.freeze({
   heightStage: WEEK_DAY_CHIP_HEIGHT_STAGE.FULL,
   showStatus: true,
   showTitle: true,
-  mergeTimeTitle: false
+  mergeTimeTitle: false,
+  showCounselorName: false
 });
 
 /**
@@ -61,6 +64,26 @@ function resolveBadgeFont(chipEl) {
 }
 
 /**
+ * title 줄 client/counselor computed font — 미렌더 시 probe 또는 title 상속.
+ *
+ * @param {Element} chipEl
+ * @param {'client'|'counselor'} kind
+ * @returns {string|null}
+ */
+function resolveNameFont(chipEl, kind) {
+  const sel = kind === 'counselor' ? '.counselor-name' : '.client-name';
+  const existing = chipEl.querySelector(sel);
+  if (existing) {
+    return resolveComputedFont(existing);
+  }
+  const title = chipEl.querySelector('.mg-v2-ad-calendar-event__title');
+  if (title) {
+    return resolveComputedFont(title);
+  }
+  return resolveComputedFont(chipEl);
+}
+
+/**
  * @param {{
  *   chipRef: { current: Element|null },
  *   timeRef?: { current: Element|null },
@@ -68,7 +91,10 @@ function resolveBadgeFont(chipEl) {
  *   shortTime: string,
  *   badgeLabel?: string,
  *   considerBadge?: boolean,
- *   gap?: number
+ *   gap?: number,
+ *   clientName?: string,
+ *   counselorName?: string,
+ *   nameGap?: number
  * }} options
  * @returns {{
  *   stage: string,
@@ -79,7 +105,8 @@ function resolveBadgeFont(chipEl) {
  *   heightStage: string,
  *   showStatus: boolean,
  *   showTitle: boolean,
- *   mergeTimeTitle: boolean
+ *   mergeTimeTitle: boolean,
+ *   showCounselorName: boolean
  * }}
  */
 export default function useWeekDayChipFit(options) {
@@ -90,7 +117,10 @@ export default function useWeekDayChipFit(options) {
     shortTime,
     badgeLabel = '',
     considerBadge = true,
-    gap = DEFAULT_GAP_PX
+    gap = DEFAULT_GAP_PX,
+    clientName = '',
+    counselorName = '',
+    nameGap = DEFAULT_NAME_GAP_PX
   } = options || {};
 
   const [fit, setFit] = useState(INITIAL_FIT);
@@ -108,6 +138,8 @@ export default function useWeekDayChipFit(options) {
         || el.querySelector('.mg-v2-ad-calendar-event__time');
       const timeFont = resolveComputedFont(timeEl) || resolveComputedFont(el);
       const badgeFont = resolveBadgeFont(el) || timeFont;
+      const clientFont = resolveNameFont(el, 'client') || timeFont;
+      const counselorFont = resolveNameFont(el, 'counselor') || clientFont || timeFont;
 
       const { normalPadX, compactPadX } = readChipPadTokens(el);
       const outer = el.clientWidth;
@@ -138,6 +170,18 @@ export default function useWeekDayChipFit(options) {
         ? measureTextWidth(badgeLabel, badgeFont) + DEFAULT_BADGE_PAD_X
         : 0;
 
+      const clientText = clientName != null ? String(clientName) : '';
+      const counselorText = counselorName != null ? String(counselorName) : '';
+      const clientNameWidth = clientText
+        ? measureTextWidth(clientText, clientFont)
+        : 0;
+      const counselorNameWidth = counselorText
+        ? measureTextWidth(counselorText, counselorFont)
+        : 0;
+      const minClientWidth = clientText
+        ? measureTextWidth(clientText.charAt(0), clientFont)
+        : 0;
+
       setFit(judgeWeekDayChipFit({
         chipWidth,
         compactChipWidth,
@@ -150,7 +194,11 @@ export default function useWeekDayChipFit(options) {
         timeRowHeight,
         titleRowHeight,
         statusRowHeight,
-        gapY: DEFAULT_GAP_Y_PX
+        gapY: DEFAULT_GAP_Y_PX,
+        clientNameWidth,
+        counselorNameWidth,
+        minClientWidth,
+        nameGap
       }));
     };
 
@@ -174,7 +222,10 @@ export default function useWeekDayChipFit(options) {
     shortTime,
     badgeLabel,
     considerBadge,
-    gap
+    gap,
+    clientName,
+    counselorName,
+    nameGap
   ]);
 
   return fit;

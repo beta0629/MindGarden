@@ -9,6 +9,7 @@
  * Stages: long+badge → long → short+badge → short → compact-pad → hide-time
  * 추가: 34.8px half-width 연속 칩(10:00–10:50 + 11:00 overlap column)
  * 구코드(11px 가정 font / short 강제)는 34.8 에서 FAIL 해야 함.
+ * 추가: 내담자+상담사 동시 — 390 주간 12~29px, 1440 34.8·59px (client 우선 / counselor 숨김·ellipsis)
  *
  * 사용:
  *   node scripts/verification/check-engagement-badge-chip-layout.mjs
@@ -183,6 +184,10 @@ body{margin:0;font-family:"Pretendard","Noto Sans KR",sans-serif}
   <div class="lab">half-width 34.8 consecutive overlap column (10:00–10:50 + 11:00)</div>
   <div class="row" id="half-row"></div>
 </div>
+<div class="sec" id="sec-name-priority" style="width:100%;box-sizing:border-box">
+  <div class="lab">name priority client+counselor (12 / 20 / 29 / 34.8 / 59)</div>
+  <div class="row" id="name-priority-row"></div>
+</div>
 <div class="sec" id="sec-dur-desktop" style="width:100%;box-sizing:border-box">
   <div class="lab">duration stack 50·30·15 (desktop 1440 week/day widths)</div>
   <div class="row" id="dur-desktop-row"></div>
@@ -277,7 +282,7 @@ function ensureFontProbe(){
     chip.className='mg-v2-ad-calendar-event mg-v2-ad-calendar-event--week-day-fit';
     chip.innerHTML='<div class="mg-v2-ad-calendar-event__time"><span class="mg-v2-ad-calendar-event__time-text"><span class="mg-v2-ad-calendar-event__time-measured">11:00</span></span>'
       +badgeHtml('probe-badge','mg-v2-ad-calendar-event__engagement')+'</div>'
-      +'<div class="mg-v2-ad-calendar-event__title"><span class="client-name">이내담</span></div>'
+      +'<div class="mg-v2-ad-calendar-event__title"><span class="client-name">라마바</span><span class="counselor-name">상담사A</span></div>'
       +'<div class="mg-v2-ad-calendar-event__status">예약됨</div>';
     host.appendChild(chip);
   }
@@ -460,15 +465,22 @@ function weekDayCard(id, stageInfo, displayTimeOverride){
   const timeHidden=stageInfo.showTime===false;
   const showTitle=stageInfo.showTitle!==false;
   const showStatus=stageInfo.showStatus!==false;
+  const clientLabel=stageInfo.clientLabel||'이내담';
+  const counselorLabel=stageInfo.counselorLabel||'';
+  const showCounselor=stageInfo.showCounselorName===true && !!counselorLabel;
   const a11yTime=displayTime || stageInfo.time;
   const institutionPart=stageInfo.badge?' · '+LABEL:'';
-  const titleAttr=a11yTime+' · 이내담 - 예약됨'+institutionPart;
+  const a11yName=[clientLabel, counselorLabel].filter(Boolean).join(' ');
+  const titleAttr=a11yTime+' · '+a11yName+' - 예약됨'+institutionPart;
   const measureSeed=displayTime || stageInfo.time;
   const timeInner=timeHidden
     ? '<span class="mg-v2-ad-calendar-event__time-text" hidden aria-hidden="true"><span class="mg-v2-ad-calendar-event__time-measured">'+measureSeed+'</span></span>'
     : '<span class="mg-v2-ad-calendar-event__time-text"><span class="mg-v2-ad-calendar-event__time-measured">'+displayTime+'</span></span>';
+  const counselorHtml=showCounselor
+    ? '<span class="counselor-name">'+counselorLabel+'</span>'
+    : '';
   const titleHtml=showTitle
-    ? '<div class="mg-v2-ad-calendar-event__title"><span class="client-name">이내담</span></div>'
+    ? '<div class="mg-v2-ad-calendar-event__title"><span class="client-name">'+clientLabel+'</span>'+counselorHtml+'</div>'
     : '';
   const statusHtml=showStatus
     ? '<div class="mg-v2-ad-calendar-event__status">예약됨</div>'
@@ -478,7 +490,80 @@ function weekDayCard(id, stageInfo, displayTimeOverride){
   const body=stageInfo.mergeTimeTitle
     ? '<div class="mg-v2-ad-calendar-event__merge-row">'+timeBlock+titleHtml+'</div>'
     : timeBlock+titleHtml;
-  return '<div class="mg-v2-ad-calendar-event mg-v2-ad-calendar-event--week-day-fit'+compactCls+mergeCls+'" id="chip-'+id+'" data-chip-fit-stage="'+stageInfo.stage+'" data-chip-height-stage="'+heightStage+'" title="'+titleAttr+'" aria-label="'+titleAttr+'">'+body+statusHtml+'</div>';
+  return '<div class="mg-v2-ad-calendar-event mg-v2-ad-calendar-event--week-day-fit'+compactCls+mergeCls+'" id="chip-'+id+'" data-chip-fit-stage="'+stageInfo.stage+'" data-chip-height-stage="'+heightStage+'" data-show-counselor="'+String(showCounselor)+'" title="'+titleAttr+'" aria-label="'+titleAttr+'">'+body+statusHtml+'</div>';
+}
+
+/** 내담자+상담사 동시 — 공용 judge 로 showCounselorName 반영 */
+function pickStageWithNames(harnessW, opts){
+  const clientLabel=(opts&&opts.clientLabel)||'라마바';
+  const counselorLabel=(opts&&opts.counselorLabel)||'상담사A';
+  const base=pickStage(harnessW);
+  const api=globalThis.MgWeekDayChipFit;
+  if(!api || typeof api.judgeWeekDayChipFit!=='function'){
+    return { ...base, clientLabel, counselorLabel, showCounselorName:false };
+  }
+  const probe=ensureFontProbe();
+  const timeEl=probe.querySelector('.mg-v2-ad-calendar-event__time-measured');
+  const badgeEl=probe.querySelector('.mg-engagement-type-badge');
+  const clientEl=probe.querySelector('.client-name');
+  const counselorEl=probe.querySelector('.counselor-name');
+  const timeFont=resolveFont(timeEl);
+  const badgeFont=resolveFont(badgeEl)||timeFont;
+  const clientFont=resolveFont(clientEl)||timeFont;
+  const counselorFont=resolveFont(counselorEl)||clientFont;
+  const longW=measureText('오전 10:00', timeFont);
+  const shortW=measureText('10:00', timeFont);
+  const badgeW=measureText(LABEL, badgeFont)+8;
+  const clientW=measureText(clientLabel, clientFont);
+  const counselorW=measureText(counselorLabel, counselorFont);
+  const minClientW=measureText(clientLabel.charAt(0), clientFont);
+  const gap=4;
+  const { normalPadX, compactPadX }=readPadTokens(probe);
+  const chipW=Math.max(0, harnessW-normalPadX);
+  const compactW=Math.max(0, harnessW-compactPadX);
+  const rowH=probeRowHeights(probe);
+  const judged=api.judgeWeekDayChipFit({
+    chipWidth:chipW,
+    compactChipWidth:compactW,
+    longTimeWidth:longW,
+    shortTimeWidth:shortW,
+    badgeWidth:badgeW,
+    gap,
+    considerBadge:true,
+    chipHeight:HARNESS_H,
+    timeRowHeight:rowH.timeRowHeight,
+    titleRowHeight:rowH.titleRowHeight,
+    statusRowHeight:rowH.statusRowHeight,
+    gapY:2,
+    clientNameWidth:clientW,
+    counselorNameWidth:counselorW,
+    minClientWidth:minClientW,
+    nameGap:gap
+  });
+  return {
+    ...base,
+    time:judged.showTime ? (judged.timeMode==='long' ? '오전 10:00' : '10:00') : '10:00',
+    badge:!!judged.showBadge,
+    stage:judged.stage,
+    showTime:!!judged.showTime,
+    compactPad:!!judged.compactPad,
+    showStatus:judged.showStatus!==false,
+    showTitle:judged.showTitle!==false,
+    mergeTimeTitle:!!judged.mergeTimeTitle,
+    heightStage:judged.heightStage||'full',
+    showCounselorName:!!judged.showCounselorName,
+    clientLabel,
+    counselorLabel,
+    clientW, counselorW, minClientW, chipW, compactW
+  };
+}
+
+function namePriorityChip(w, id){
+  const stage=pickStageWithNames(w, { clientLabel:'라마바', counselorLabel:'상담사A' });
+  return '<div><div class="lab">namePri'+w+' stage='+stage.stage+' counselor='+stage.showCounselorName+'</div>'
+    +'<div class="harness" style="width:'+w+'px;height:'+HARNESS_H+'px">'
+    +'<div class="fc-timegrid-event-harness" style="position:relative;height:100%">'+weekDayCard(id, stage)+'</div>'
+    +'</div></div>';
 }
 
 function legacySiblingCard(id, timeText){
@@ -575,6 +660,7 @@ document.getElementById('mobile-day-row').innerHTML=[
 ].join('');
 document.getElementById('fit-row').innerHTML=[35,73.5,78,124,390,WEEK_HALF].map(w=>fitChip(w,'fit'+String(w).replace('.','p'))).join('');
 document.getElementById('half-row').innerHTML=halfWidthOverlapStack();
+document.getElementById('name-priority-row').innerHTML=[12,20,29,WEEK_HALF,59].map(w=>namePriorityChip(w,'np'+String(w).replace('.','p'))).join('');
 document.getElementById('legacy-fail-row').innerHTML=[consecutiveStack(WEEK_COLLAPSED,'legacy',true)].join('');
 document.getElementById('dur-desktop-row').innerHTML=[
   durationStack(WEEK_OPEN,'dur-wopen'),
@@ -701,6 +787,8 @@ function measureChipTimeOnly(chipId){
   const badge=chip.querySelector('.mg-engagement-type-badge');
   const timeMode=visibleTimeMode(chip);
   const c=chip.getBoundingClientRect();
+  const clientLayout=clientNameLayoutOk(chip);
+  const counselorLayout=counselorNameLayoutOk(chip);
   if(!badge){
     return {
       text:'',
@@ -718,10 +806,27 @@ function measureChipTimeOnly(chipId){
       fitH:true,
       inside:true,
       scrollW:0, clientW:0, scrollH:0, clientH:0,
+      clientLayout,
+      counselorLayout,
       ...timeMode
     };
   }
   return measure(chipId, badge.id);
+}
+
+/** 내담자+상담사 동시 칩 — client 폭·counselor ellipsis·a11y */
+function measureNamePriority(chipId){
+  const chip=document.getElementById(chipId);
+  if(!chip) return null;
+  const base=measureChipTimeOnly(chipId);
+  const a11y=(chip.getAttribute('aria-label')||'')+' '+(chip.getAttribute('title')||'');
+  return {
+    ...base,
+    showTitle:!!chip.querySelector('.mg-v2-ad-calendar-event__title'),
+    showCounselorInDom:!!chip.querySelector('.counselor-name'),
+    hasCounselorA11y:a11y.indexOf('상담사A')>=0,
+    hasClientA11y:a11y.indexOf('라마바')>=0
+  };
 }
 
 function measure(chipId,badgeId){
@@ -755,6 +860,8 @@ function measure(chipId,badgeId){
     adjacentOverlap:adjacentOverlapCount(chip),
     badgeAbsent:false,
     visibleChipText:visibleChipTextCount(chip),
+    clientLayout:clientNameLayoutOk(chip),
+    counselorLayout:counselorNameLayoutOk(chip),
     ...timeMode
   };
 }
@@ -799,12 +906,59 @@ function measureChipRowHeights(chip){
   return out;
 }
 
-function clientNameVisible(chip){
+/**
+ * .client-name 렌더 시 폭>0 이고 글자 보이거나 말줄임.
+ * @returns {{ present:boolean, ok:boolean, width:number, reason?:string, truncated?:boolean, ellipsis?:boolean }}
+ */
+function clientNameLayoutOk(chip){
   const name=chip.querySelector('.client-name');
-  if(!name) return false;
+  if(!name) return { present:false, ok:true, width:0 };
   const r=name.getBoundingClientRect();
   const text=String(name.textContent||'').replace(/\\s+/g,'').trim();
-  return text.length>0 && r.width>0.5 && r.height>0.5;
+  const width=+r.width;
+  if(!text.length) return { present:true, ok:false, width, reason:'clientEmptyText' };
+  if(width<=0.5) return { present:true, ok:false, width, reason:'clientWidthZero' };
+  const cs=getComputedStyle(name);
+  const truncated=name.scrollWidth>name.clientWidth+0.5;
+  const ellipsis=cs.textOverflow==='ellipsis'
+    && (cs.overflow==='hidden'||cs.overflowX==='hidden');
+  // 폭>0 + (말줄임 또는 높이로 글자 박스 존재)
+  if(r.height>0.5 && (!truncated || ellipsis)){
+    return { present:true, ok:true, width, truncated, ellipsis };
+  }
+  if(r.height>0.5 && text.length>0 && width>0.5){
+    return { present:true, ok:true, width, truncated, ellipsis };
+  }
+  return { present:true, ok:false, width, reason:'clientInvisible', truncated, ellipsis };
+}
+
+/**
+ * .counselor-name 이 잘리면 반드시 말줄임. 말줄임 없는 잘림 FAIL.
+ */
+function counselorNameLayoutOk(chip){
+  const name=chip.querySelector('.counselor-name');
+  if(!name) return { present:false, ok:true, width:0 };
+  const r=name.getBoundingClientRect();
+  const cs=getComputedStyle(name);
+  const truncated=name.scrollWidth>name.clientWidth+0.5;
+  const ellipsis=cs.textOverflow==='ellipsis'
+    && (cs.overflow==='hidden'||cs.overflowX==='hidden');
+  if(truncated && !ellipsis){
+    return {
+      present:true,
+      ok:false,
+      width:+r.width,
+      reason:'counselorClippedNoEllipsis',
+      scrollW:name.scrollWidth,
+      clientW:name.clientWidth
+    };
+  }
+  return { present:true, ok:true, width:+r.width, truncated, ellipsis };
+}
+
+function clientNameVisible(chip){
+  const layout=clientNameLayoutOk(chip);
+  return layout.present && layout.ok && layout.width>0.5;
 }
 
 /**
@@ -1010,6 +1164,8 @@ window.__collectDesktop=function(){
     fit34p8:measureChipTimeOnly('chip-fit34p8'),
     halfPair:measurePair('half'),
     halfLegacyFail:measureLegacyHalfFail(),
+    namePri34p8:measureNamePriority('chip-np34p8'),
+    namePri59:measureNamePriority('chip-np59'),
     durWopen:measureDurationStack('dur-wopen'),
     durDdesk:measureDurationStack('dur-ddesk'),
     legend:{
@@ -1027,6 +1183,9 @@ window.__collectMobile=function(){
     mobileWeek40:measureChipTimeOnly('chip-mw40'),
     dayMob390:measurePair('dmob'),
     weekDay390:measurePair('w390'),
+    namePri12:measureNamePriority('chip-np12'),
+    namePri20:measureNamePriority('chip-np20'),
+    namePri29:measureNamePriority('chip-np29'),
     durW390:measureDurationStack('dur-w390'),
     durDmob:measureDurationStack('dur-dmob'),
     sidebar:measure('sidebar-row','badge-sidebar'),
@@ -1082,6 +1241,30 @@ function passFitChip(name, m) {
     if (!m.badgeInTime) reasons.push('badgeNotInTime');
   }
   if (m.adjacentOverlap > 0) reasons.push(`adjacentOverlap=${m.adjacentOverlap}`);
+  if (m.clientLayout && m.clientLayout.present && !m.clientLayout.ok) {
+    reasons.push(m.clientLayout.reason || 'clientLayout');
+  }
+  if (m.counselorLayout && m.counselorLayout.present && !m.counselorLayout.ok) {
+    reasons.push(m.counselorLayout.reason || 'counselorLayout');
+  }
+  return { name, ok: reasons.length === 0, reason: reasons.join('; ') || 'ok', metrics: m };
+}
+
+function passNamePriority(name, m) {
+  if (!m) return { name, ok: false, reason: 'missing' };
+  const reasons = [];
+  if ((m.visibleChipText || 0) <= 0) reasons.push('emptyChip');
+  if (m.clientLayout && m.clientLayout.present && !m.clientLayout.ok) {
+    reasons.push(m.clientLayout.reason || 'clientLayout');
+  }
+  if (m.showTitle && m.clientLayout && m.clientLayout.present && !(m.clientLayout.width > 0.5)) {
+    reasons.push('clientWidthZero');
+  }
+  if (m.counselorLayout && m.counselorLayout.present && !m.counselorLayout.ok) {
+    reasons.push(m.counselorLayout.reason || 'counselorClippedNoEllipsis');
+  }
+  if (!m.hasCounselorA11y) reasons.push('counselorMissingA11y');
+  if (!m.hasClientA11y) reasons.push('clientMissingA11y');
   return { name, ok: reasons.length === 0, reason: reasons.join('; ') || 'ok', metrics: m };
 }
 
@@ -1287,6 +1470,11 @@ async function main() {
       passFitChip('fit34p8', metrics.fit34p8),
       passPair('half34p8', metrics.halfPair),
       passHalfLegacyFail('half34p8LegacyWouldFail', metrics.halfLegacyFail),
+      passNamePriority('namePri12', metrics.namePri12),
+      passNamePriority('namePri20', metrics.namePri20),
+      passNamePriority('namePri29', metrics.namePri29),
+      passNamePriority('namePri34p8', metrics.namePri34p8),
+      passNamePriority('namePri59', metrics.namePri59),
       passDurationStack('durWopen1440', metrics.durWopen),
       passDurationStack('durDdesk1440', metrics.durDdesk),
       passDurationStack('durW390', metrics.durW390),

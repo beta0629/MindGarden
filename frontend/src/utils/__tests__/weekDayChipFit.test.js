@@ -8,6 +8,7 @@ import {
   WEEK_DAY_CHIP_TIME_MODE,
   buildWeekDayChipA11yLabel,
   enforceNonEmptyChipVisible,
+  judgeTitleNameVisibility,
   judgeWeekDayChipFit,
   judgeWeekDayChipHeightFit,
   readRowHeight
@@ -19,7 +20,8 @@ const HEIGHT_FULL = {
   heightStage: WEEK_DAY_CHIP_HEIGHT_STAGE.FULL,
   showStatus: true,
   showTitle: true,
-  mergeTimeTitle: false
+  mergeTimeTitle: false,
+  showCounselorName: false
 };
 
 describe('judgeWeekDayChipFit', () => {
@@ -440,6 +442,15 @@ describe('buildWeekDayChipA11yLabel + formatNameWithSecondary', () => {
     })).toBe('오전 10:00 · 이내담 - 예약됨');
   });
 
+  test('상담사 이름 포함 — 칩에서 숨겨도 a11y 라벨 유지', () => {
+    expect(buildWeekDayChipA11yLabel({
+      timeText: '10:00',
+      clientName: '라마바',
+      counselorName: '상담사A',
+      statusLabel: '예약됨'
+    })).toBe('10:00 · 라마바 상담사A - 예약됨');
+  });
+
   test('기관연계 포함 — 배지 숨김과 무관하게 showInstitution 시 라벨 유지', () => {
     expect(buildWeekDayChipA11yLabel({
       timeText: '10:00',
@@ -454,5 +465,92 @@ describe('buildWeekDayChipA11yLabel + formatNameWithSecondary', () => {
     expect(formatNameWithSecondary('이내담', undefined)).toBe('이내담');
     expect(formatNameWithSecondary('이내담', '')).toBe('이내담');
     expect(formatNameWithSecondary('이내담', '이메일')).toBe('이내담 (이메일)');
+  });
+});
+
+describe('내담자 우선 · showCounselorName', () => {
+  test('좁은 폭: counselor 숨김·client 우선', () => {
+    const nameFit = judgeTitleNameVisibility({
+      showTitle: true,
+      clientNameWidth: 36,
+      counselorNameWidth: 42,
+      minClientWidth: 12,
+      nameGap: 4,
+      titleNameBudget: 20
+    });
+    expect(nameFit.showTitle).toBe(true);
+    expect(nameFit.showCounselorName).toBe(false);
+  });
+
+  test('충분 폭: client+counselor 동시', () => {
+    const nameFit = judgeTitleNameVisibility({
+      showTitle: true,
+      clientNameWidth: 36,
+      counselorNameWidth: 42,
+      minClientWidth: 12,
+      nameGap: 4,
+      titleNameBudget: 90
+    });
+    expect(nameFit.showTitle).toBe(true);
+    expect(nameFit.showCounselorName).toBe(true);
+  });
+
+  test('1글자 client 도 불가 → showTitle false', () => {
+    const nameFit = judgeTitleNameVisibility({
+      showTitle: true,
+      clientNameWidth: 36,
+      counselorNameWidth: 42,
+      minClientWidth: 12,
+      nameGap: 4,
+      titleNameBudget: 8
+    });
+    expect(nameFit.showTitle).toBe(false);
+    expect(nameFit.showCounselorName).toBe(false);
+  });
+
+  test('judgeWeekDayChipFit — 좁은 칩에서 counselor 숨김', () => {
+    const fit = judgeWeekDayChipFit({
+      chipWidth: 29,
+      longTimeWidth: 56,
+      shortTimeWidth: 28,
+      badgeWidth: 36,
+      gap: 4,
+      considerBadge: false,
+      clientNameWidth: 39,
+      counselorNameWidth: 48,
+      minClientWidth: 13,
+      nameGap: 4
+    });
+    expect(fit.showTitle).toBe(true);
+    expect(fit.showCounselorName).toBe(false);
+  });
+
+  test('judgeWeekDayChipFit — 넓은 칩에서 counselor 표시', () => {
+    const fit = judgeWeekDayChipFit({
+      chipWidth: 160,
+      longTimeWidth: 56,
+      shortTimeWidth: 28,
+      badgeWidth: 36,
+      gap: 4,
+      considerBadge: false,
+      clientNameWidth: 39,
+      counselorNameWidth: 48,
+      minClientWidth: 13,
+      nameGap: 4
+    });
+    expect(fit.showTitle).toBe(true);
+    expect(fit.showCounselorName).toBe(true);
+  });
+
+  test('이름 폭 미제공 시 showCounselorName 기본 false (기존 toEqual 호환)', () => {
+    const fit = judgeWeekDayChipFit({
+      chipWidth: 124,
+      longTimeWidth: 56,
+      shortTimeWidth: 28,
+      badgeWidth: 36,
+      gap: 4,
+      considerBadge: true
+    });
+    expect(fit.showCounselorName).toBe(false);
   });
 });

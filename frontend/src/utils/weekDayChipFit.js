@@ -196,6 +196,119 @@ export function enforceNonEmptyChipVisible(fit = {}) {
 }
 
 /**
+ * title 줄 이름 예산 — merge 시 시간(+배지) 예약 후 남은 폭, 그 외 content 폭 전체.
+ *
+ * @param {{
+ *   chipWidth?: number,
+ *   compactChipWidth?: number,
+ *   longTimeWidth?: number,
+ *   shortTimeWidth?: number,
+ *   badgeWidth?: number,
+ *   gap?: number
+ * }} input
+ * @param {{
+ *   compactPad?: boolean,
+ *   mergeTimeTitle?: boolean,
+ *   showTime?: boolean,
+ *   showBadge?: boolean,
+ *   timeMode?: string
+ * }} fit
+ * @returns {number}
+ */
+export function resolveTitleNameBudget(input = {}, fit = {}) {
+  const chipWidth = Number(input.chipWidth);
+  const compactRaw = Number(input.compactChipWidth);
+  const safeChip = Number.isFinite(chipWidth) && chipWidth > 0 ? chipWidth : 0;
+  const safeCompact = Number.isFinite(compactRaw) && compactRaw > 0 ? compactRaw : safeChip;
+  const contentW = fit.compactPad ? safeCompact : safeChip;
+  if (!fit.mergeTimeTitle) {
+    return contentW;
+  }
+
+  const gap = Number.isFinite(Number(input.gap)) ? Math.max(0, Number(input.gap)) : 0;
+  const longW = Number.isFinite(Number(input.longTimeWidth)) && Number(input.longTimeWidth) >= 0
+    ? Number(input.longTimeWidth)
+    : 0;
+  const shortW = Number.isFinite(Number(input.shortTimeWidth)) && Number(input.shortTimeWidth) >= 0
+    ? Number(input.shortTimeWidth)
+    : 0;
+  const badgeW = Number.isFinite(Number(input.badgeWidth)) && Number(input.badgeWidth) > 0
+    ? Number(input.badgeWidth)
+    : 0;
+  const timeW = fit.timeMode === WEEK_DAY_CHIP_TIME_MODE.LONG ? longW : shortW;
+
+  let used = 0;
+  if (fit.showTime) {
+    used += timeW;
+  }
+  if (fit.showBadge && badgeW > 0) {
+    used += (fit.showTime ? gap : 0) + badgeW;
+  }
+  if (fit.showTime) {
+    used += gap;
+  }
+  return Math.max(0, contentW - used);
+}
+
+/**
+ * 내담자 우선 title 이름 판정 — 폭 부족 시 상담사 숨김, 1글자도 못 넣으면 showTitle=false.
+ *
+ * @param {{
+ *   showTitle?: boolean,
+ *   clientNameWidth?: number,
+ *   counselorNameWidth?: number,
+ *   minClientWidth?: number,
+ *   nameGap?: number,
+ *   titleNameBudget?: number
+ * }} input
+ * @returns {{ showTitle: boolean, showCounselorName: boolean }}
+ */
+export function judgeTitleNameVisibility(input = {}) {
+  let showTitle = input.showTitle !== false;
+  const counselorW = Number(input.counselorNameWidth);
+  const safeCounselor = Number.isFinite(counselorW) && counselorW > 0 ? counselorW : 0;
+  const clientW = Number(input.clientNameWidth);
+  const safeClient = Number.isFinite(clientW) && clientW > 0 ? clientW : 0;
+  const minClientRaw = Number(input.minClientWidth);
+  const minClient = Number.isFinite(minClientRaw) && minClientRaw > 0
+    ? minClientRaw
+    : (safeClient > 0 ? safeClient : 0);
+  const nameGap = Number.isFinite(Number(input.nameGap)) ? Math.max(0, Number(input.nameGap)) : 0;
+  const budgetRaw = Number(input.titleNameBudget);
+  const budget = Number.isFinite(budgetRaw) && budgetRaw >= 0 ? budgetRaw : 0;
+  const hasNameWidths = Number.isFinite(clientW) || Number.isFinite(counselorW);
+
+  if (!showTitle) {
+    return { showTitle: false, showCounselorName: false };
+  }
+  // 이름 폭 미제공(기존 호출) — title 유지, counselor 기본 숨김(미측정)
+  if (!hasNameWidths) {
+    return { showTitle: true, showCounselorName: false };
+  }
+  if (safeClient <= 0 && safeCounselor <= 0) {
+    return { showTitle: true, showCounselorName: false };
+  }
+
+  const fits = (need) => budget + 0.5 >= need;
+
+  // 내담자 1글자조차 불가 → title 숨김(빈 칩 금지와 이후 enforce 정합)
+  if (safeClient > 0 && minClient > 0 && !fits(minClient)) {
+    return { showTitle: false, showCounselorName: false };
+  }
+
+  if (safeCounselor <= 0) {
+    return { showTitle: true, showCounselorName: false };
+  }
+
+  const needBoth = minClient + nameGap + safeCounselor;
+  if (fits(needBoth)) {
+    return { showTitle: true, showCounselorName: true };
+  }
+  // 상담사 풀 폭 불가 → 미렌더(내담자 말줄임 유지)
+  return { showTitle: true, showCounselorName: false };
+}
+
+/**
  * @param {{
  *   chipWidth: number,
  *   longTimeWidth: number,
@@ -208,7 +321,11 @@ export function enforceNonEmptyChipVisible(fit = {}) {
  *   timeRowHeight?: number,
  *   titleRowHeight?: number,
  *   statusRowHeight?: number,
- *   gapY?: number
+ *   gapY?: number,
+ *   clientNameWidth?: number,
+ *   counselorNameWidth?: number,
+ *   minClientWidth?: number,
+ *   nameGap?: number
  * }} input
  * @returns {{
  *   stage: string,
@@ -219,7 +336,8 @@ export function enforceNonEmptyChipVisible(fit = {}) {
  *   heightStage: string,
  *   showStatus: boolean,
  *   showTitle: boolean,
- *   mergeTimeTitle: boolean
+ *   mergeTimeTitle: boolean,
+ *   showCounselorName: boolean
  * }}
  */
 export function judgeWeekDayChipFit(input = {}) {
@@ -303,23 +421,53 @@ export function judgeWeekDayChipFit(input = {}) {
   }
 
   const heightFit = judgeWeekDayChipHeightFit(input);
-  const combined = { ...widthFit, ...heightFit };
-  const nonEmpty = enforceNonEmptyChipVisible(combined);
-  return {
+  let combined = { ...widthFit, ...heightFit };
+  let nonEmpty = enforceNonEmptyChipVisible(combined);
+  combined = {
     ...combined,
     showTime: nonEmpty.showTime,
     showTitle: nonEmpty.showTitle,
     mergeTimeTitle: nonEmpty.mergeTimeTitle,
     heightStage: nonEmpty.heightStage
   };
+
+  const titleNameBudget = resolveTitleNameBudget(input, combined);
+  const nameGap = Number.isFinite(Number(input.nameGap))
+    ? Math.max(0, Number(input.nameGap))
+    : gap;
+  const nameFit = judgeTitleNameVisibility({
+    showTitle: combined.showTitle,
+    clientNameWidth: input.clientNameWidth,
+    counselorNameWidth: input.counselorNameWidth,
+    minClientWidth: input.minClientWidth,
+    nameGap,
+    titleNameBudget
+  });
+  combined = {
+    ...combined,
+    showTitle: nameFit.showTitle,
+    showCounselorName: Boolean(nameFit.showCounselorName && nameFit.showTitle)
+  };
+  nonEmpty = enforceNonEmptyChipVisible(combined);
+  return {
+    ...combined,
+    showTime: nonEmpty.showTime,
+    showTitle: nonEmpty.showTitle,
+    mergeTimeTitle: nonEmpty.mergeTimeTitle,
+    heightStage: nonEmpty.heightStage,
+    showCounselorName: Boolean(
+      combined.showCounselorName && nonEmpty.showTitle
+    )
+  };
 }
 
 /**
- * title / aria-label — 시간·이름·상태·기관연계(해당 시). 배지·시간 숨김과 무관.
+ * title / aria-label — 시간·이름·상태·기관연계(해당 시). 배지·시간·상담사 숨김과 무관.
  *
  * @param {{
  *   timeText?: string,
  *   clientName?: string,
+ *   counselorName?: string,
  *   statusLabel?: string,
  *   institutionLabel?: string|null,
  *   showInstitution?: boolean
@@ -328,7 +476,9 @@ export function judgeWeekDayChipFit(input = {}) {
  */
 export function buildWeekDayChipA11yLabel(parts = {}) {
   const time = formatNameWithSecondary(parts.timeText, '').trim();
-  const name = formatNameWithSecondary(parts.clientName, '').trim();
+  const client = formatNameWithSecondary(parts.clientName, '').trim();
+  const counselor = formatNameWithSecondary(parts.counselorName, '').trim();
+  const name = [client, counselor].filter(Boolean).join(' ');
   const status = formatNameWithSecondary(parts.statusLabel, '').trim();
   let institution = '';
   if (parts.showInstitution) {
@@ -487,6 +637,8 @@ export default {
   judgeWeekDayChipFit,
   judgeWeekDayChipHeightFit,
   enforceNonEmptyChipVisible,
+  resolveTitleNameBudget,
+  judgeTitleNameVisibility,
   buildWeekDayChipA11yLabel,
   measureTextWidth,
   resolveComputedFont,

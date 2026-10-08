@@ -169,8 +169,20 @@
     white-space: nowrap;
 }
 
-/* 좁은 칩: 이름 텍스트만 ellipsis. 기관연계 배지는 말줄임 금지(전부 또는 생략). */
+/*
+ * 좁은 칩: 내담자 우선 + 상담사 먼저 shrink/ellipsis.
+ * 기관연계 배지는 말줄임 금지(전부 또는 생략).
+ */
 .mg-v2-ad-calendar-event--week-day-fit .mg-v2-ad-calendar-event__title .client-name {
+    flex: 1 1 auto;
+    min-width: 1ch;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.mg-v2-ad-calendar-event--week-day-fit .mg-v2-ad-calendar-event__title .counselor-name {
+    flex: 0 3 auto;
     min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;

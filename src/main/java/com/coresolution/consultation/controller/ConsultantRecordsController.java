@@ -1,5 +1,6 @@
 package com.coresolution.consultation.controller;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -28,6 +29,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -115,13 +117,21 @@ public class ConsultantRecordsController {
      * - 관리자: 모든 상담사의 기록 조회 가능
      * - 상담사: 본인(consultantId = 로그인 사용자 ID) 기록만 조회 가능
      * GET /api/v1/admin/consultant-records/{consultantId}/consultation-records
+     * <p>page/size/clientId/startDate/endDate 생략 시 page=0, size=20, clientId=null, 기간 미적용.
+     * 관리자 상담일지 조회와 동일하게 기간·내담자 필터를 서버에서 적용한다.
      */
     @GetMapping("/{consultantId}/consultation-records")
     public ResponseEntity<Map<String, Object>> getConsultationRecords(
             @PathVariable Long consultantId,
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer size,
+            @RequestParam(required = false) Long clientId,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
             HttpSession session) {
         
-        log.info("상담사 상담 기록 조회: consultantId={}", consultantId);
+        log.info("상담사 상담 기록 조회: consultantId={}, page={}, size={}, clientId={}, period={}~{}",
+                consultantId, page, size, clientId, startDate, endDate);
         
         User currentUser = SessionUtils.getCurrentUser(session);
         if (currentUser == null) {
@@ -140,9 +150,11 @@ public class ConsultantRecordsController {
         final String scopedTenantId = tenantId.trim();
         
         try {
-            // 실제 상담일지 데이터 조회 (최근 20개)
-            Pageable pageable = PageRequest.of(0, 20);
-            var consultationRecords = consultationRecordService.getConsultationRecords(consultantId, null, pageable);
+            int pageIndex = page != null && page >= 0 ? page : 0;
+            int pageSize = size != null && size > 0 ? Math.min(size, 100) : 20;
+            Pageable pageable = PageRequest.of(pageIndex, pageSize);
+            var consultationRecords = consultationRecordService.getConsultationRecords(
+                    consultantId, clientId, startDate, endDate, pageable);
             
             // 상담일지를 상담 기록 형태로 변환 (모든 상담일지 포함)
             List<Map<String, Object>> records = consultationRecords.getContent().stream()
@@ -185,7 +197,11 @@ public class ConsultantRecordsController {
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
             response.put("data", records);
-            response.put("totalCount", records.size());
+            response.put("totalCount", consultationRecords.getTotalElements());
+            response.put("totalElements", consultationRecords.getTotalElements());
+            response.put("totalPages", consultationRecords.getTotalPages());
+            response.put("currentPage", consultationRecords.getNumber());
+            response.put("size", consultationRecords.getSize());
             
             return ResponseEntity.ok(response);
         } catch (Exception e) {

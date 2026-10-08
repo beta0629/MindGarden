@@ -358,6 +358,20 @@ public interface ScheduleService {
         Long userId, String userRole, LocalDate startDate, LocalDate endDate);
 
     /**
+     * {@link #findSchedulesWithNamesByUserRole(Long, String)} 의 날짜 범위 버전 (일정 + 휴가 병합).
+     * 일정·휴가 모두 {@code startDate ≤ date ≤ endDate}(양끝 포함, 서버 LocalDate) 범위만 DB 에서 조회한다.
+     * 권한 스코프는 {@link #findSchedulesByUserRoleAndDateBetween} 와 동일하다.
+     *
+     * @param userId 요청 사용자(또는 대상 상담사) PK
+     * @param userRole 역할 문자열
+     * @param startDate 시작일(포함)
+     * @param endDate 종료일(포함)
+     * @return 일정 DTO 뒤에 휴가 DTO 를 붙인 목록
+     */
+    List<ScheduleResponse> findSchedulesWithNamesByUserRoleAndDateBetween(
+        Long userId, String userRole, LocalDate startDate, LocalDate endDate);
+
+    /**
      * 관리자용 전체 스케줄 통계 조회
      */
     Map<String, Object> getScheduleStatisticsForAdmin(String startDate, String endDate);

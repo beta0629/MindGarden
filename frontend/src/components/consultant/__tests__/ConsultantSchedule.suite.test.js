@@ -2,7 +2,7 @@
  * /consultant/schedule 수용 — 레거시 셸 제거 · 조용한 헤더(ghost 새로고침) · 요약 3칸 · slate 칩 · 통합 스킨 달력
  */
 import React from 'react';
-import { fireEvent, render, screen, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import '../../../i18n';
 import ConsultantSchedule from '../ConsultantSchedule';
 import { CONSULTANT_SUITE_CLASS, CONSULTANT_SUITE_TEST_ID } from '../../../constants/consultantSuite';
@@ -114,12 +114,51 @@ describe('ConsultantSchedule suite 수용', () => {
     expect(panel).toHaveTextContent('일정 등록·배정은 관리자·스태프 화면에서 처리합니다.');
   });
 
+  it('툴바 CSS: status-chips 는 absolute/고정 toolbar-rows 가 아닌 문서 흐름', () => {
+    const fs = require('fs');
+    const path = require('path');
+    const css = fs.readFileSync(
+      path.resolve(__dirname, '../ConsultantScheduleSuite.css'),
+      'utf8'
+    );
+    expect(css).toMatch(/\.consultant-schedule__status-chips\s*\{[^}]*position:\s*static/s);
+    expect(css).not.toMatch(/--consultant-schedule-toolbar-rows/);
+    expect(css).not.toMatch(/position:\s*absolute/);
+  });
+
   it('새로고침: refetchTrigger 증가 + 일지 미작성 재조회', () => {
     render(<ConsultantSchedule />);
     const before = mockUnifiedProps.current.refetchTrigger;
     fireEvent.click(screen.getByRole('button', { name: '새로고침' }));
     expect(mockUnifiedProps.current.refetchTrigger).toBe(before + 1);
     expect(mockReloadMissing).toHaveBeenCalled();
+  });
+
+  it('요약: 이번 주를 덮는 범위 조회로만 갱신 — 다른 달로 이동한 범위 조회는 이전 요약 유지', () => {
+    const ymd = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    const now = new Date();
+    const shift = (days) => new Date(now.getFullYear(), now.getMonth(), now.getDate() + days);
+    const coveringRange = { startDate: ymd(shift(-14)), endDate: ymd(shift(14)) };
+    const farRange = { startDate: ymd(shift(60)), endDate: ymd(shift(100)) };
+    const todayEvent = { id: 1, start: new Date(), extendedProps: { status: 'BOOKED' } };
+
+    const { container } = render(<ConsultantSchedule />);
+    const todayCell = () => container.querySelector(`.${CONSULTANT_SUITE_CLASS.SUMMARY}`);
+
+    act(() => {
+      mockUnifiedProps.current.onScheduleEventsChange([todayEvent], coveringRange);
+    });
+    expect(todayCell()).toHaveTextContent('1건');
+
+    act(() => {
+      mockUnifiedProps.current.onScheduleEventsChange([], farRange);
+    });
+    expect(todayCell()).toHaveTextContent('1건');
+
+    act(() => {
+      mockUnifiedProps.current.onScheduleEventsChange([], coveringRange);
+    });
+    expect(todayCell()).not.toHaveTextContent('1건');
   });
 
   it('세션 로딩 중에는 달력 미마운트', () => {

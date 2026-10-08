@@ -71,10 +71,6 @@ import ScheduleNotesReminderModal from './integrated-schedule/molecules/Schedule
 import { useScheduleNotesReminder } from './integrated-schedule/hooks/useScheduleNotesReminder';
 import PackageExpiryReminderModal from './integrated-schedule/molecules/PackageExpiryReminderModal';
 import { usePackageExpiryReminder } from './integrated-schedule/hooks/usePackageExpiryReminder';
-import {
-  MAPPING_ENGAGEMENT_TYPE,
-  MAPPING_ENGAGEMENT_TYPE_LABELS
-} from '../../../constants/mappingEngagementType';
 import '../../../styles/unified-design-tokens.css';
 import './IntegratedMatchingSchedule.css';
 import {
@@ -1580,36 +1576,18 @@ const IntegratedMatchingSchedule = () => {
                 />
               )}
               sameDayPendingLegendContent={(
-                <>
-                  <p
-                    className="integrated-schedule__legend integrated-schedule__legend--same-day"
-                    role="note"
-                  >
-                    <span
-                      className="integrated-schedule__legend-swatch integrated-schedule__legend-swatch--same-day"
-                      aria-hidden="true"
-                    />
-                    <span className="integrated-schedule__legend-text">
-                      {t('admin:mapping.schedule.legend.sameDayPending')}
-                    </span>
-                  </p>
-                  <p
-                    className="integrated-schedule__legend integrated-schedule__legend--institution-link"
-                    role="note"
-                  >
-                    <span
-                      className="integrated-schedule__legend-swatch integrated-schedule__legend-swatch--institution-link"
-                      aria-hidden="true"
-                    />
-                    <span className="integrated-schedule__legend-text">
-                      {t('admin:mapping.schedule.legend.institutionLink', {
-                        defaultValue: MAPPING_ENGAGEMENT_TYPE_LABELS[
-                          MAPPING_ENGAGEMENT_TYPE.INSTITUTION_LINK
-                        ]
-                      })}
-                    </span>
-                  </p>
-                </>
+                <p
+                  className="integrated-schedule__legend integrated-schedule__legend--same-day"
+                  role="note"
+                >
+                  <span
+                    className="integrated-schedule__legend-swatch integrated-schedule__legend-swatch--same-day"
+                    aria-hidden="true"
+                  />
+                  <span className="integrated-schedule__legend-text">
+                    {t('admin:mapping.schedule.legend.sameDayPending')}
+                  </span>
+                </p>
               )}
             />
           </div>

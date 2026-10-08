@@ -7,6 +7,7 @@ import interactionPlugin from '@fullcalendar/interaction';
 import { Calendar as CalendarIcon, AlertCircle, Info } from 'lucide-react';
 import { toDisplayString } from '../../../utils/safeDisplay';
 import { resolveScheduleStatusDisplayLabel } from '../../../utils/scheduleStatusLabel';
+import { resolveCalendarSlotTimeRange } from '../../../utils/scheduleCalendarSlotRange';
 import {
   CALENDAR_EXTENDED_TYPE_KR_PUBLIC_HOLIDAY,
   CALENDAR_EXTENDED_TYPE_VACATION,
@@ -41,6 +42,7 @@ import {
 } from './integratedMonthChipCopy';
 import { SCHEDULE_CALENDAR_I18N, buildScheduleCalendarTextOptions } from './scheduleCalendarI18n';
 import useCalendarDragEscapeCancel from './useCalendarDragEscapeCancel';
+import WeekDayScheduleEventChip from './WeekDayScheduleEventChip';
 import {
   getKrPublicHolidayNameForLocalDate,
   getKrSubstituteHolidayEveHintForLocalDate
@@ -63,8 +65,13 @@ const ZOOM_OUT_BUTTON_ID = 'zoomOut';
 /** opacity fade 전용. transform/scale 금지(DnD 히트테스트 보호). --animation-duration-fast(0.15s)와 맞춤 */
 const VIEW_FADE_CLASS = 'mg-v2-schedule-calendar-view--fading';
 const VIEW_FADE_MS = 150;
-/** 일/주 풀 카드 최소 높이(px) — --mg-v2-space-16(4rem)와 정합, 짧은 슬롯 본문 압착 방지 */
-const EVENT_MIN_HEIGHT_PX = 64;
+/**
+ * 일/주 풀 카드 FC eventMinHeight(px).
+ * CSS `--mg-v2-calendar-event-min-height`(→ `--mg-v2-space-4` = 1rem) 과 동기.
+ * 슬롯 min-height(`--mg-v2-calendar-slot-min-height`→space-8) 상향 후
+ * 15분 자연 높이(≈16px)를 넘지 않게 두어 연속 일정 겹침·글자 가림을 막는다.
+ */
+const EVENT_MIN_HEIGHT_PX = 16;
 
 const prefersReducedMotion = () => {
   if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
@@ -135,6 +142,8 @@ const ScheduleCalendarView = ({
     const lastViewTypeRef = useRef(null);
     const [isDayZoomed, setIsDayZoomed] = useState(false);
     useCalendarDragEscapeCancel();
+    /** 주·일 시간축 — 업무 종료(20시대 포함) 기본 + 더 늦은/이른 일정까지 */
+    const slotTimeRange = useMemo(() => resolveCalendarSlotTimeRange(events), [events]);
 
     const updateCalendarSize = useCallback(() => {
         const calendarApi = calendarRef.current?.getApi?.();
@@ -678,30 +687,23 @@ const ScheduleCalendarView = ({
         }
 
         // 주간/일간 뷰: 풀 카드 유지 (상태 텍스트로 구분 — 좌측 색 레일 없음)
+        // 기관연계 배지는 __time 안 인라인. fit 은 WeekDayScheduleEventChip(measure 단계) SSOT.
+        // #1499/#1510 rebase: 이 return ~ WeekDayScheduleEventChip 블록만 교체.
         return (
-            <div
-                className={`mg-v2-ad-calendar-event${pastClass}${cancelledClass}`.trim()}
-                title={`${clientName} - ${statusLabel}`}
-            >
-                <div className="mg-v2-ad-calendar-event__time">{eventInfo.timeText}</div>
-                <div className="mg-v2-ad-calendar-event__title">
-                    {sameDayPrefix}
-                    <span className="client-name">{clientName}</span>
-                    <ScheduleReminderSmsBadge
-                        sms={extendedProps?.[CLIENT_REMINDER_SMS_FIELD]}
-                        stopPropagation
-                        className="mg-v2-ad-calendar-event__reminder-sms"
-                    />
-                    <EngagementTypeBadge
-                        source={extendedProps}
-                        className="mg-v2-ad-calendar-event__engagement"
-                    />
-                    {consultantName && (
-                        <span className="counselor-name">{consultantName}</span>
-                    )}
-                </div>
-                <div className="mg-v2-ad-calendar-event__status">{statusLabel}</div>
-            </div>
+            <WeekDayScheduleEventChip
+                timeText={eventInfo.timeText}
+                eventStart={event.start}
+                clientName={clientName}
+                consultantName={consultantName}
+                statusLabel={statusLabel}
+                statusModifier={statusModifier}
+                sameDayPrefix={sameDayPrefix}
+                pastClass={pastClass}
+                cancelledClass={cancelledClass}
+                extendedProps={extendedProps}
+                showInstitutionMark={showInstitutionMark}
+                institutionLabel={institutionLabel}
+            />
         );
     };
 
@@ -737,8 +739,9 @@ const ScheduleCalendarView = ({
                 droppable={acceptExternalCalendarDrops && isScheduleDropAdminRole(userRole)}
                 height="100%"
                 eventMinHeight={EVENT_MIN_HEIGHT_PX}
-                slotMinTime="08:00:00"
-                slotMaxTime="20:00:00"
+                slotEventOverlap={false}
+                slotMinTime={slotTimeRange.slotMinTime}
+                slotMaxTime={slotTimeRange.slotMaxTime}
                 slotDuration="00:30:00"
                 scrollTime="09:00:00"
                 scrollTimeReset={false}

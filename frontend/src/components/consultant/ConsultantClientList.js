@@ -1,138 +1,153 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useSession } from '../../contexts/SessionContext';
 import { useParams, useNavigate } from 'react-router-dom';
-import { apiGet, apiPost } from '../../utils/ajax';
+import { apiPost } from '../../utils/ajax';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import ClientDetailModal from './ClientDetailModal';
 import UnifiedLoading from '../../components/common/UnifiedLoading';
 import notificationManager from '../../utils/notification';
-import { Users, Info, Search, AlertTriangle, List, CheckCircle, XCircle, Clock, CheckCircle2, PauseCircle } from 'lucide-react';
-import FilterBadge from './molecules/FilterBadge';
-import ClientCard from '../ui/Card/ClientCard';
-import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
-import MGButton from '../common/MGButton';
-import { ContentArea, ContentHeader, ContentSection } from '../dashboard-v2/content';
+import { Users, Info, AlertTriangle } from 'lucide-react';
+import EmptyState from '../common/EmptyState';
+import MGPagination from '../common/MGPagination';
+import SafeText from '../common/SafeText';
+import ConsultantSuitePage from './suite/ConsultantSuitePage';
+import ConsultantNotice from './suite/ConsultantNotice';
+import ConsultantSearchField from './suite/ConsultantSearchField';
+import ConsultantFilterChips from './suite/ConsultantFilterChips';
+import ConsultantSuiteButton from './suite/ConsultantSuiteButton';
+import ConsultantSuiteCard, {
+  ConsultantSuitePill,
+  toConsultantSuiteAvatarInitials
+} from './suite/ConsultantSuiteCard';
+import {
+  CONSULTANT_CLIENT_STATUS_FILTER,
+  CONSULTANT_SUITE_CLASS,
+  CONSULTANT_SUITE_NS,
+  CONSULTANT_SUITE_PAGE_SIZE,
+  CONSULTANT_SUITE_TEST_ID
+} from '../../constants/consultantSuite';
+import {
+  fetchConsultantSuitePagedList,
+  toServerPageIndex
+} from '../../utils/consultantSuiteListApi';
 import '../../styles/unified-design-tokens.css';
 import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import './ConsultantClientList.css';
 import { useTranslation } from 'react-i18next';
 
 const CONSULTANT_CLIENT_LIST_TITLE_ID = 'consultant-client-list-title';
+const CONSULTANT_CLIENT_SEARCH_ID = 'consultant-client-search';
+const NOTICE_ICON_SIZE = 16;
+const EMPTY_ICON_SIZE = 40;
+const CLIENT_FILTER_ORDER = Object.values(CONSULTANT_CLIENT_STATUS_FILTER);
+const MAPPINGS_ITEM_KEYS = Object.freeze(['mappings', 'content', 'items', 'data']);
+
+/**
+ * 매핑 API 행 → 카드용 내담자 모델.
+ * status = mapping.status 그대로 (client.status·시뮬레이션 금지).
+ *
+ * @param {object} item
+ * @returns {object|null}
+ */
+const mapMappingItemToClient = (item) => {
+  if (!item || !item.client) {
+    return null;
+  }
+  const mappingStatus = item.status != null
+    ? String(item.status)
+    : CONSULTANT_CLIENT_STATUS_FILTER.ACTIVE;
+  return {
+    id: item.mappingId || item.id,
+    clientId: item.client.id,
+    name: item.client.name,
+    email: item.client.email,
+    phone: item.client.phone,
+    status: mappingStatus,
+    createdAt: item.assignedAt || item.client.createdAt || null,
+    profileImage: item.client.profileImage || null,
+    remainingSessions: item.remainingSessions,
+    totalSessions: item.totalSessions,
+    usedSessions: item.usedSessions,
+    packageName: item.packageName,
+    lastSessionDate: item.lastSessionDate
+      || item.lastConsultationDate
+      || item.client.lastSessionDate
+      || null,
+    paymentStatus: item.paymentStatus,
+    mappingId: item.id
+  };
+};
 
 const ConsultantClientList = () => {
-  const { t } = useTranslation();
+  const { t } = useTranslation(CONSULTANT_SUITE_NS);
   const { user, isLoggedIn, isLoading: sessionLoading } = useSession();
   const { id: clientIdFromUrl } = useParams();
   const navigate = useNavigate();
   const [clients, setClients] = useState([]);
+  const [totalElements, setTotalElements] = useState(0);
+  const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedClient, setSelectedClient] = useState(null);
   const [showClientModal, setShowClientModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterStatus, setFilterStatus] = useState('ALL');
+  const [filterStatus, setFilterStatus] = useState(CONSULTANT_CLIENT_STATUS_FILTER.ALL);
+  const [statusCounts, setStatusCounts] = useState({ ALL: 0 });
   const isModalOpeningRef = useRef(false);
 
-  const FILTER_CONFIG = [
-    { value: 'ALL', label: '전체', icon: List, activeColor: 'var(--mg-color-primary-main)' },
-    { value: 'ACTIVE', label: '활성', icon: CheckCircle, activeColor: 'var(--mg-success-600)' },
-    { value: 'INACTIVE', label: '비활성', icon: XCircle, activeColor: 'var(--mg-secondary-500)' },
-    { value: 'PENDING', label: '대기중', icon: Clock, activeColor: 'var(--mg-warning-600)' },
-    { value: 'COMPLETED', label: '완료', icon: CheckCircle2, activeColor: 'var(--mg-success-700)' },
-    { value: 'SUSPENDED', label: '일시정지', icon: PauseCircle, activeColor: 'var(--mg-error-600)' }
-  ];
-
   const loadClients = useCallback(async() => {
+    if (!user?.id) {
+      return;
+    }
     try {
       setLoading(true);
       setError(null);
-
-      console.log('👤 상담사 ID로 연계된 내담자 목록 로드:', user.id);
-      console.log('👤 사용자 정보 전체:', user);
-
-      const response = await apiGet(`/api/v1/admin/mappings/consultant/${user.id}/clients`);
-      
-      console.log('📡 API 응답 전체:', response);
-      
-      // apiGet은 ApiResponse 래퍼를 처리하여 data만 반환: { mappings: [...], count: N }
-      let clientData = [];
-      if (response) {
-        if (response.mappings && Array.isArray(response.mappings)) {
-          clientData = response.mappings;
-        } else if (Array.isArray(response)) {
-          clientData = response;
-        } else {
-          console.warn('⚠️ 예상하지 못한 응답 구조:', response);
-        }
-      } else {
-        console.warn('⚠️ API 응답이 null입니다. 권한 문제이거나 데이터가 없을 수 있습니다.');
+      const params = {};
+      if (filterStatus && filterStatus !== CONSULTANT_CLIENT_STATUS_FILTER.ALL) {
+        params.status = filterStatus;
       }
-      
-      console.log('✅ 내담자 목록 로드 성공:', clientData);
-      console.log('📊 내담자 수:', clientData.length);
-      
-      if (clientData && clientData.length > 0) {
-        const sortedData = clientData.sort((a, b) => {
-          const dateA = new Date(a.assignedAt || a.client.createdAt || 0);
-          const dateB = new Date(b.assignedAt || b.client.createdAt || 0);
-          return dateB - dateA; // 최신순 정렬
-        });
-        
-        const clientList = sortedData.map((item, index) => {
-          if (item.client) {
-            // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
-            const testStatuses = ['ACTIVE', 'INACTIVE', 'PENDING', 'COMPLETED', 'SUSPENDED'];
-            const simulatedStatus = testStatuses[index % testStatuses.length];
-            
-            console.log(`🔄 상태 시뮬레이션 - 인덱스: ${index}, ID: ${item.client.id}, 할당된 상태: ${simulatedStatus}`);
-            
-            // 보안 라운드 2 (2026-06-03): 상담사 화면에서는 결제 금액/결제일 등 금융 정보를 다루지 않는다.
-            // 백엔드(AdminController.getClientsByConsultantMapping)에서도 동일 필드를 응답에서 제거하므로
-            // 프런트에서도 매핑 단계에서 제외하여 공격 면적을 축소한다.
-            return {
-              id: item.mappingId || item.id, // mappingId를 우선 사용하여 고유성 보장
-              clientId: item.client.id, // 실제 클라이언트 ID는 별도로 저장
-              name: item.client.name,
-              email: item.client.email,
-              phone: item.client.phone,
-              status: item.client.status || simulatedStatus, // 실제 상태 또는 시뮬레이션
-              createdAt: item.assignedAt || item.client.createdAt || new Date().toISOString(),
-              profileImage: item.client.profileImage || null,
-              remainingSessions: item.remainingSessions,
-              totalSessions: item.totalSessions,
-              usedSessions: item.usedSessions,
-              packageName: item.packageName,
-              paymentStatus: item.paymentStatus,
-              mappingId: item.id
-            };
+      const result = await fetchConsultantSuitePagedList(
+        `/api/v1/admin/mappings/consultant/${user.id}/clients`,
+        params,
+        {
+          page: toServerPageIndex(page),
+          size: CONSULTANT_SUITE_PAGE_SIZE,
+          itemKeys: MAPPINGS_ITEM_KEYS
+        }
+      );
+      const clientList = (result.items || [])
+        .map(mapMappingItemToClient)
+        .filter(Boolean);
+      setClients(clientList);
+      setTotalElements(result.totalElements != null ? result.totalElements : clientList.length);
+
+      // 상태 칩 건수: 서버 statusCounts (필터·페이징 전 총계). 페이지 배열 집계 금지.
+      const serverCounts = result.statusCounts && typeof result.statusCounts === 'object'
+        ? result.statusCounts
+        : null;
+      if (serverCounts) {
+        const counts = { ALL: serverCounts.ALL != null ? serverCounts.ALL : 0 };
+        CLIENT_FILTER_ORDER.forEach((key) => {
+          if (key === CONSULTANT_CLIENT_STATUS_FILTER.ALL) {
+            return;
           }
-          return null;
-        }).filter(client => client !== null);
-        
-        setClients(clientList);
-        console.log('✅ 내담자 목록 설정 완료:', clientList.length, '명');
+          counts[key] = serverCounts[key] != null ? serverCounts[key] : 0;
+        });
+        setStatusCounts(counts);
       } else {
-        console.warn('⚠️ 내담자 데이터 없음');
-        setClients([]);
+        setStatusCounts({
+          ALL: result.totalElements != null ? result.totalElements : clientList.length
+        });
       }
     } catch (err) {
       console.error('❌ 내담자 목록 로드 중 오류:', err);
-      setError('내담자 목록을 불러오는 중 오류가 발생했습니다.');
+      setError(t('clients.loadError'));
+      setClients([]);
+      setTotalElements(0);
     } finally {
       setLoading(false);
     }
-  }, [user?.id]);
-
-  const statusCounts = useMemo(() => {
-    return {
-      ALL: clients.length,
-      ACTIVE: clients.filter(c => c.status === 'ACTIVE').length,
-      INACTIVE: clients.filter(c => c.status === 'INACTIVE').length,
-      PENDING: clients.filter(c => c.status === 'PENDING').length,
-      COMPLETED: clients.filter(c => c.status === 'COMPLETED').length,
-      SUSPENDED: clients.filter(c => c.status === 'SUSPENDED').length
-    };
-  }, [clients]);
+  }, [user?.id, page, filterStatus, t]);
 
   useEffect(() => {
     if (isLoggedIn && user?.id) {
@@ -141,8 +156,12 @@ const ConsultantClientList = () => {
   }, [isLoggedIn, user?.id, loadClients]);
 
   useEffect(() => {
+    setPage(1);
+  }, [filterStatus, searchTerm]);
+
+  useEffect(() => {
     if (clientIdFromUrl && clients.length > 0 && !isModalOpeningRef.current) {
-      const client = clients.find(c => c.clientId === Number.parseInt(clientIdFromUrl, 10));
+      const client = clients.find((c) => c.clientId === Number.parseInt(clientIdFromUrl, 10));
       if (client && !showClientModal) {
         isModalOpeningRef.current = true;
         setSelectedClient(client);
@@ -157,32 +176,25 @@ const ConsultantClientList = () => {
     }
   }, [clientIdFromUrl, clients, showClientModal]);
 
+  // 상태 필터는 서버(status param). 검색만 현재 페이지 클라이언트 보조.
   const filteredClients = useMemo(() => {
-    let result = clients;
-
-    if (searchTerm) {
-      result = result.filter(client =>
-        client.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        client.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        client.phone?.includes(searchTerm)
-      );
+    if (!searchTerm) {
+      return clients;
     }
+    const q = searchTerm.toLowerCase();
+    return clients.filter((client) => (
+      client.name?.toLowerCase().includes(q)
+      || client.email?.toLowerCase().includes(q)
+      || client.phone?.includes(searchTerm)
+    ));
+  }, [clients, searchTerm]);
 
-    if (filterStatus !== 'ALL') {
-      result = result.filter(client => client.status === filterStatus);
-    }
-
-    return result;
-  }, [clients, searchTerm, filterStatus]); // clients 의존성 제거 (무한루프 방지)
+  const totalPages = Math.max(1, Math.ceil((totalElements || 0) / CONSULTANT_SUITE_PAGE_SIZE));
 
   const handleViewClient = (client) => {
     setSelectedClient(client);
     setShowClientModal(true);
     navigate(`/consultant/client/${client.clientId}`);
-  };
-
-  const handleFilterClick = (filterValue) => {
-    setFilterStatus(filterValue);
   };
 
   const handleCloseModal = () => {
@@ -193,194 +205,192 @@ const ConsultantClientList = () => {
 
   const handleSaveClient = async(updatedData) => {
     try {
-      console.log('💾 내담자 정보 저장:', updatedData);
-      
       const response = await apiPost(`/api/users/${selectedClient.id}/profile`, updatedData);
-      
       if (response && response.success !== false) {
-        setClients(prevClients => 
-          prevClients.map(client => 
-            client.id === selectedClient.id ? { ...client, ...updatedData } : client
-          )
-        );
-        
-        console.log('✅ 내담자 정보 저장 성공');
+        setClients((prevClients) => prevClients.map((client) => (
+          client.id === selectedClient.id ? { ...client, ...updatedData } : client
+        )));
         handleCloseModal();
       } else {
-        console.error('❌ 내담자 정보 저장 실패:', response?.message || '알 수 없는 오류');
         notificationManager.show(`내담자 정보 저장에 실패했습니다: ${response?.message || '알 수 없는 오류'}`, 'error');
       }
     } catch (err) {
-      console.error('❌ 내담자 정보 저장 실패:', err);
       notificationManager.show(`내담자 정보 저장 중 오류가 발생했습니다: ${err.message}`, 'error');
     }
   };
 
-  const authShell = (mainBody) => (
-    <div className="mg-v2-ad-b0kla">
-      <div className="mg-v2-ad-b0kla__container">
-        <ContentArea ariaLabel="내담자 목록">
-          <ContentHeader
-            title="내담자 목록"
-            subtitle="나와 연계된 내담자들을 조회할 수 있습니다."
-            titleId={CONSULTANT_CLIENT_LIST_TITLE_ID}
-          />
-          <main aria-labelledby={CONSULTANT_CLIENT_LIST_TITLE_ID}>
-            {mainBody}
-          </main>
-        </ContentArea>
-      </div>
-    </div>
+  const statusLabel = (key) => {
+    const i18nKey = `clients.status.${key}`;
+    const label = t(i18nKey);
+    return label === i18nKey ? key : label;
+  };
+
+  const filterItems = CLIENT_FILTER_ORDER.map((key) => ({
+    key,
+    label: t('clients.filterLabel', {
+      label: statusLabel(key),
+      count: statusCounts[key] || 0
+    })
+  }));
+
+  const formatRecentDate = (value) => {
+    if (!value) {
+      return null;
+    }
+    if (typeof value === 'string') {
+      return value.split('T')[0];
+    }
+    return String(value);
+  };
+
+  const renderPage = (body) => (
+    <AdminCommonLayout className="mg-v2-dashboard-layout">
+      <ConsultantSuitePage
+        title={t('clients.title')}
+        subtitle={t('clients.subtitle')}
+        titleId={CONSULTANT_CLIENT_LIST_TITLE_ID}
+        ariaLabel={t('clients.ariaLabel')}
+        testId={CONSULTANT_SUITE_TEST_ID.CLIENTS_PAGE}
+      >
+        {body}
+      </ConsultantSuitePage>
+      {showClientModal && selectedClient && (
+        <ClientDetailModal
+          client={selectedClient}
+          isOpen={showClientModal}
+          onClose={handleCloseModal}
+          onSave={handleSaveClient}
+        />
+      )}
+    </AdminCommonLayout>
   );
 
   if (sessionLoading) {
-    return (
-      <AdminCommonLayout title="내담자 목록">
-        {authShell(
-          <UnifiedLoading type="inline" text="내담자 목록을 불러오는 중..." />
-        )}
-      </AdminCommonLayout>
+    return renderPage(
+      <div className={CONSULTANT_SUITE_CLASS.LOADING} aria-busy="true" aria-live="polite">
+        <UnifiedLoading type="inline" text={t('clients.loading')} />
+      </div>
     );
   }
 
   if (!isLoggedIn) {
-    return (
-      <AdminCommonLayout title="내담자 목록">
-        {authShell(
-          <div className="consultant-client-list-login-required">
-            <h3>로그인이 필요합니다.</h3>
-          </div>
-        )}
-      </AdminCommonLayout>
+    return renderPage(
+      <section className={CONSULTANT_SUITE_CLASS.PANEL}>
+        <EmptyState className={CONSULTANT_SUITE_CLASS.EMPTY} title={t('clients.loginRequired')} />
+      </section>
     );
   }
 
-  return (
-    <AdminCommonLayout title="내담자 목록">
-      <div className="mg-v2-ad-b0kla">
-        <div className="mg-v2-ad-b0kla__container">
-          <ContentArea ariaLabel="내담자 목록">
-            <ContentHeader
-              title="내담자 목록"
-              subtitle="나와 연계된 내담자들을 조회할 수 있습니다."
-              titleId={CONSULTANT_CLIENT_LIST_TITLE_ID}
-            />
-
-            <main aria-labelledby={CONSULTANT_CLIENT_LIST_TITLE_ID}>
-        <div className="mg-v2-alert mg-v2-alert--info">
-          <Info size={20} />
-          내담자 생성, 수정, 삭제는 관리자와 스태프만 가능합니다.
+  const renderList = () => {
+    if (loading) {
+      return (
+        <div className={CONSULTANT_SUITE_CLASS.LOADING} aria-busy="true" aria-live="polite">
+          <UnifiedLoading type="inline" text={t('clients.loading')} />
         </div>
-
-        <ContentSection noCard={true}>
-          <div className="client-list-controls">
-            <div className="client-search-input-wrapper">
-              <Search size={18} />
-              <input
-                type="text"
-                className="client-search-input"
-                placeholder="이름, 이메일, 전화번호로 검색..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
-
-            <div className="client-filter-badges">
-              {FILTER_CONFIG.map(filter => (
-                <FilterBadge
-                  key={filter.value}
-                  label={filter.label}
-                  value={filter.value}
-                  count={statusCounts[filter.value] || 0}
-                  icon={filter.icon}
-                  isActive={filterStatus === filter.value}
-                  onClick={handleFilterClick}
-                  activeColor={filter.activeColor}
-                />
-              ))}
-            </div>
-          </div>
-        </ContentSection>
-
-        <ContentSection noCard={true}>
-          {loading && (
-            <UnifiedLoading type="inline" text="내담자 목록을 불러오는 중..." />
-          )}
-
-          {error && (
-            <div className="client-list-error-state">
-              <AlertTriangle size={48} />
-              <div className="client-list-error-state__message">{error}</div>
-              <MGButton
-                variant="primary"
-                className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: false, className: 'mg-v2-client-view-btn' })}
-                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                onClick={loadClients}
-              >
-                {t('common.labels.retry')}
-              </MGButton>
-            </div>
-          )}
-
-          {!loading && !error && (
-            filteredClients.length === 0 ? (
-              <div 
-                role="status" 
-                aria-live="polite" 
-                className="client-list-empty-state"
-              >
-                <Users size={64} />
-                <h3 className="client-list-empty-state__title">
-                  {clients.length === 0
-                    ? '연계된 내담자가 없습니다'
-                    : `${FILTER_CONFIG.find(f => f.value === filterStatus)?.label || filterStatus} 상태의 내담자가 없습니다`
-                  }
-                </h3>
-                <p className="client-list-empty-state__description">
-                  {clients.length === 0
-                    ? '아직 나와 연계된 내담자가 없습니다.'
-                    : '다른 상태를 선택하거나 검색어를 변경해보세요.'
-                  }
-                </p>
-                {clients.length > 0 && (
-                  <MGButton
-                    variant="primary"
-                    className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: false, className: 'mg-v2-client-view-btn' })}
-                    loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                    onClick={() => setFilterStatus('ALL')}
-                  >
-                    전체 상태 보기
-                  </MGButton>
+      );
+    }
+    if (error) {
+      return (
+        <section className={CONSULTANT_SUITE_CLASS.PANEL} role="alert">
+          <EmptyState
+            className={CONSULTANT_SUITE_CLASS.EMPTY}
+            icon={<AlertTriangle size={EMPTY_ICON_SIZE} aria-hidden />}
+            title={error}
+            action={<ConsultantSuiteButton onClick={loadClients}>{t('actions.retry')}</ConsultantSuiteButton>}
+          />
+        </section>
+      );
+    }
+    if (filteredClients.length === 0) {
+      const hasClients = clients.length > 0 || totalElements > 0;
+      return (
+        <section className={CONSULTANT_SUITE_CLASS.PANEL} role="status" aria-live="polite">
+          <EmptyState
+            className={CONSULTANT_SUITE_CLASS.EMPTY}
+            icon={<Users size={EMPTY_ICON_SIZE} aria-hidden />}
+            title={hasClients
+              ? t('clients.filterEmptyTitle', { label: statusLabel(filterStatus) })
+              : t('clients.emptyTitle')}
+            description={hasClients ? t('clients.filterEmptyDescription') : t('clients.emptyDescription')}
+            action={hasClients ? (
+              <ConsultantSuiteButton onClick={() => setFilterStatus(CONSULTANT_CLIENT_STATUS_FILTER.ALL)}>
+                {t('actions.showAll')}
+              </ConsultantSuiteButton>
+            ) : null}
+          />
+        </section>
+      );
+    }
+    return (
+      <>
+        <section className={CONSULTANT_SUITE_CLASS.CARD_GRID} aria-label={t('clients.listAria')}>
+          {filteredClients.map((client) => {
+            const recent = formatRecentDate(client.lastSessionDate);
+            return (
+              <ConsultantSuiteCard
+                key={client.id}
+                onClick={() => handleViewClient(client)}
+                avatar={toConsultantSuiteAvatarInitials(client.name)}
+                pill={<ConsultantSuitePill>{statusLabel(client.status)}</ConsultantSuitePill>}
+                title={client.name}
+                meta={(
+                  <>
+                    <SafeText>
+                      {recent
+                        ? t('clients.recentConsultation', { date: recent })
+                        : t('clients.recentConsultationDash')}
+                    </SafeText>
+                    <SafeText>
+                      {t('clients.totalSessions', { count: Number(client.totalSessions) || 0 })}
+                    </SafeText>
+                    {client.packageName ? (
+                      <SafeText>{t('clients.packageName', { name: client.packageName })}</SafeText>
+                    ) : null}
+                  </>
                 )}
-              </div>
-            ) : (
-              <div className="client-card-grid">
-                {filteredClients.map(client => (
-                  <ClientCard
-                    key={client.id}
-                    client={client}
-                    onClick={handleViewClient}
-                    variant="detailed"
-                  />
-                ))}
-              </div>
-            )
-          )}
-        </ContentSection>
-            </main>
-
-            {showClientModal && selectedClient && (
-              <ClientDetailModal
-                client={selectedClient}
-                isOpen={showClientModal}
-                onClose={handleCloseModal}
-                onSave={handleSaveClient}
               />
-            )}
-          </ContentArea>
-        </div>
+            );
+          })}
+        </section>
+        {totalElements > CONSULTANT_SUITE_PAGE_SIZE ? (
+          <nav className={CONSULTANT_SUITE_CLASS.PAGINATION} aria-label={t('clients.listAria')}>
+            <MGPagination
+              currentPage={page}
+              totalPages={totalPages}
+              totalItems={totalElements}
+              itemsPerPage={CONSULTANT_SUITE_PAGE_SIZE}
+              onPageChange={setPage}
+              showInfo={false}
+              showItemsPerPage={false}
+              variant="compact"
+            />
+          </nav>
+        ) : null}
+      </>
+    );
+  };
+
+  return renderPage(
+    <>
+      <ConsultantNotice icon={<Info size={NOTICE_ICON_SIZE} />}>{t('clients.notice')}</ConsultantNotice>
+      <div className={CONSULTANT_SUITE_CLASS.TOOLBAR}>
+        <ConsultantSearchField
+          id={CONSULTANT_CLIENT_SEARCH_ID}
+          value={searchTerm}
+          onChange={setSearchTerm}
+          placeholder={t('clients.searchPlaceholder')}
+          ariaLabel={t('clients.searchAria')}
+        />
+        <ConsultantFilterChips
+          items={filterItems}
+          activeKey={filterStatus}
+          onChange={setFilterStatus}
+          ariaLabel={t('clients.filterAria')}
+          testIdPrefix="consultant-clients-filter"
+        />
       </div>
-    </AdminCommonLayout>
+      {renderList()}
+    </>
   );
 };
 

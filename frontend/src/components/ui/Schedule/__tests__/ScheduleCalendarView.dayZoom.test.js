@@ -311,22 +311,30 @@ describe('ScheduleCalendarView — 날짜 클릭 일간 확대', () => {
     expect(fadeBlock?.[0] || '').not.toMatch(/transform:\s*scale|zoom\s*:/);
   });
 
-  test('CSS: 일/주 풀 카드는 overflow visible + 토큰 min-height (클리핑 방지)', () => {
+  test('CSS: 일/주 풀 카드는 슬롯 하네스 맞춤 (overflow hidden · height 100% · min-height 0)', () => {
     const css = fs.readFileSync(CSS_PATH, 'utf8');
     expect(css).toMatch(
-      /\.mg-v2-ad-calendar-event\s*\{[^}]*overflow:\s*visible/
+      /\.mg-v2-ad-calendar-event\s*\{[^}]*overflow:\s*hidden/
     );
     expect(css).toMatch(
-      /\.mg-v2-ad-calendar-event\s*\{[^}]*min-height:\s*var\(--mg-v2-space-16/
-    );
-    expect(css).not.toMatch(
       /\.mg-v2-ad-calendar-event\s*\{[^}]*height:\s*100%/
+    );
+    expect(css).toMatch(
+      /\.mg-v2-ad-calendar-event\s*\{[^}]*min-height:\s*0/
     );
   });
 
-  test('FullCalendar eventMinHeight가 전달되어 짧은 슬롯에서도 본문이 눌리지 않는다', () => {
+  test('FullCalendar eventMinHeight가 슬롯 토큰(space-4→16)과 동기되어 연속 일정 겹침을 막는다', () => {
     render(<ScheduleCalendarView {...baseProps()} />);
     const captured = getLastFullCalendarProps();
-    expect(captured.eventMinHeight).toBe(64);
+    expect(captured.eventMinHeight).toBe(16);
+    expect(captured.slotEventOverlap).toBe(false);
+  });
+
+  test('CSS: 슬롯·이벤트 min-height 가 토큰 변수로 정의된다', () => {
+    const css = fs.readFileSync(CSS_PATH, 'utf8');
+    expect(css).toMatch(/--mg-v2-calendar-slot-min-height:\s*var\(--mg-v2-space-8\)/);
+    expect(css).toMatch(/--mg-v2-calendar-event-min-height:\s*var\(--mg-v2-space-4\)/);
+    expect(css).toMatch(/\.fc-timegrid-slot[^{]*\{[^}]*min-height:\s*var\(--mg-v2-calendar-slot-min-height\)/);
   });
 });

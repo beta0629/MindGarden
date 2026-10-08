@@ -46,6 +46,19 @@ public interface VacationRepository extends JpaRepository<Vacation, Long> {
     );
     
     /**
+     * 테넌트 전체 상담사의 날짜 범위 휴가 목록 조회 (양끝 포함, 테넌트 필터링)
+     */
+    @Query("SELECT v FROM Vacation v WHERE v.tenantId = :tenantId " +
+           "AND v.vacationDate BETWEEN :startDate AND :endDate " +
+           "AND v.isDeleted = false " +
+           "ORDER BY v.vacationDate ASC")
+    List<Vacation> findByTenantIdAndDateRange(
+        @Param("tenantId") String tenantId,
+        @Param("startDate") LocalDate startDate,
+        @Param("endDate") LocalDate endDate
+    );
+
+    /**
      * 모든 상담사의 특정 날짜 휴가 목록 조회
      */
     @Query("SELECT v FROM Vacation v WHERE v.vacationDate = :date " +

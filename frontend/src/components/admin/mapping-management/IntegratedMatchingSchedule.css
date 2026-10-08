@@ -754,15 +754,15 @@
 }
 
 /*
- * Clinic-OS sidebar card selected (SSOT5) — paper/#E2E8F0 → fill #E2E8F0 + border #94A3B8
+ * Clinic-OS sidebar card selected (SSOT5) — fill slate-200 + border slate-400(border-dark) 토큰
  * tabs/status-btn v3 선택 크롬은 이 규칙과 분리 (변경 금지).
  */
 .integrated-schedule__sidebar
   .integrated-schedule__list
   > li.integrated-schedule__card--selected
   .mg-v2-card-container {
-  background-color: #E2E8F0;
-  border: 1px solid #94A3B8;
+  background-color: var(--cs-slate-200);
+  border: var(--mg-v2-border-width-thin) solid var(--mg-v2-color-border-dark);
   box-shadow: none;
 }
 
@@ -1043,34 +1043,6 @@
   color: var(--mg-v2-color-semantic-info-dark);
 }
 
-/* 당일 칩은 「당일」만큼 더 필요. 글자 배지 기준 249px. */
-@container mg-month-event (width < 249px) {
-  .integrated-schedule__calendar-wrapper--integrated .integrated-schedule__event--same-day-pending .mg-v2-ad-calendar-event--integrated-month:has(.mg-schedule-event-marks) {
-    padding-inline-end: var(--mg-schedule-event-marks-reserve);
-  }
-
-  .integrated-schedule__calendar-wrapper--integrated .integrated-schedule__event--same-day-pending .mg-schedule-event-marks {
-    position: absolute;
-    inset-block: 0;
-    inset-inline-end: var(--mg-v2-space-0-5);
-    margin-inline-start: 0;
-    flex-direction: column-reverse;
-    justify-content: center;
-  }
-
-  .integrated-schedule__calendar-wrapper--integrated .integrated-schedule__event--same-day-pending .mg-schedule-event-marks .mg-engagement-type-badge {
-    inline-size: var(--mg-schedule-event-marks-size);
-    block-size: var(--mg-schedule-event-marks-size);
-    min-inline-size: var(--mg-schedule-event-marks-size);
-    padding: 0;
-    overflow: hidden;
-    border-radius: var(--mg-v2-radius-none);
-    background-color: var(--mg-v2-color-semantic-info-dark);
-    color: transparent;
-    font-size: 0;
-  }
-}
-
 /* < 191px: 「당일」 글자 숨김. 점선 테두리와 aria 는 유지. */
 @container mg-month-event (width < 191px) {
   .integrated-schedule__calendar-wrapper--integrated .fc-event.integrated-schedule__event--same-day-pending .mg-v2-ad-calendar-event--integrated-month .mg-v2-ad-calendar-event__same-day {
@@ -1116,7 +1088,7 @@
 
 /*
  * 단계 G < 64px (모바일 390 월 그리드): 시간 줄 전폭, 이름 줄 끝에 표식.
- * 점 대신 시작 테두리로 상태 색을 남긴다. 표식 끝 여백(0,4,0)보다 높은 선택자.
+ * 점 대신 시작 테두리로 상태 색을 남긴다. 칩 기본 padding-inline(0,3,0)보다 높은 선택자.
  */
 @container mg-month-event (width < 64px) {
   .integrated-schedule__calendar-wrapper--integrated .fc-daygrid-event-harness .mg-v2-ad-calendar-event.mg-v2-ad-calendar-event--compact.mg-v2-ad-calendar-event--integrated-month {
@@ -1145,6 +1117,27 @@
   .integrated-schedule__calendar-wrapper--integrated .fc-daygrid-event-harness .mg-v2-ad-calendar-event--integrated-month .mg-schedule-event-marks {
     position: static;
     order: 2;
+  }
+
+  /*
+   * 기관연계 글자 배지는 이름 옆 남는 좁은 폭이나 문자 원 표식 옆에 넣지 않는다.
+   * 표식 래퍼를 풀어 1줄 시간 + 문자 원 표식, 2줄 이름 전폭, 3줄 배지 전폭(「기관연계」 네 글자)으로 둔다.
+   */
+  .integrated-schedule__calendar-wrapper--integrated .fc-daygrid-event-harness .mg-v2-ad-calendar-event--integrated-month .mg-schedule-event-marks:has(.mg-schedule-event-marks__institution) {
+    display: contents;
+  }
+
+  .integrated-schedule__calendar-wrapper--integrated .fc-daygrid-event-harness .mg-v2-ad-calendar-event--integrated-month:has(.mg-schedule-event-marks__institution) .mg-v2-ad-calendar-event__time {
+    flex: 1 1 auto;
+  }
+
+  .integrated-schedule__calendar-wrapper--integrated .fc-daygrid-event-harness .mg-v2-ad-calendar-event--integrated-month:has(.mg-schedule-event-marks__institution) .mg-v2-ad-calendar-event__client {
+    flex: 1 1 100%;
+  }
+
+  .integrated-schedule__calendar-wrapper--integrated .fc-daygrid-event-harness .mg-v2-ad-calendar-event--integrated-month .mg-schedule-event-marks__institution {
+    order: 3;
+    flex-basis: 100%;
   }
 }
 
@@ -1315,7 +1308,8 @@
   align-items: center;
   gap: var(--mg-v2-space-2);
   margin: 0 0 var(--mg-v2-space-2) 0;
-  padding: var(--mg-v2-space-1) var(--mg-v2-space-2);
+  padding-block: var(--mg-v2-space-1);
+  padding-inline: 0;
   font-size: var(--mg-v2-font-size-caption);
   color: var(--mg-v2-color-semantic-warning);
 }
@@ -1357,25 +1351,6 @@
 .fc-event.integrated-schedule__event--institution-link .fc-event-title {
   color: var(--mg-v2-color-semantic-info-dark);
   font-style: normal;
-}
-
-.integrated-schedule__legend--institution-link {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--mg-v2-space-2);
-  margin: 0 0 var(--mg-v2-space-2) 0;
-  padding: var(--mg-v2-space-1) var(--mg-v2-space-2);
-  font-size: var(--mg-v2-font-size-caption);
-  color: var(--mg-v2-color-semantic-info-dark);
-}
-
-.integrated-schedule__legend-swatch--institution-link {
-  display: inline-block;
-  width: var(--mg-size-dot-sm);
-  height: var(--mg-size-dot-sm);
-  border: none;
-  background: var(--mg-v2-color-semantic-info-dark);
-  border-radius: var(--mg-v2-radius-none);
 }
 
 /* 컴팩트 월간: 당일 테두리는 thin 점선. 기관연계 파란 테두리·바탕은 끈다. */

@@ -3,6 +3,7 @@
  */
 import {
   buildConsultantScheduleSummary,
+  doesRangeCoverCurrentWeek,
   startOfLocalWeekMonday
 } from '../consultantScheduleSummary';
 
@@ -41,5 +42,16 @@ describe('consultantScheduleSummary', () => {
     expect(buildConsultantScheduleSummary(null, new Date())).toEqual({ todayCount: 0, weekCount: 0 });
     expect(buildConsultantScheduleSummary([ev('not-a-date'), { start: null }], new Date()))
       .toEqual({ todayCount: 0, weekCount: 0 });
+  });
+
+  it('doesRangeCoverCurrentWeek: 이번 주(월~일) 전체를 덮는 범위만 true, 전량(null)은 true', () => {
+    const now = at(2026, 10, 7, 9);
+    expect(doesRangeCoverCurrentWeek(null, now)).toBe(true);
+    expect(doesRangeCoverCurrentWeek({ startDate: '2026-09-27', endDate: '2026-11-07' }, now)).toBe(true);
+    expect(doesRangeCoverCurrentWeek({ startDate: '2026-10-05', endDate: '2026-10-11' }, now)).toBe(true);
+    expect(doesRangeCoverCurrentWeek({ startDate: '2026-11-01', endDate: '2026-12-12' }, now)).toBe(false);
+    expect(doesRangeCoverCurrentWeek({ startDate: '2026-10-06', endDate: '2026-10-31' }, now)).toBe(false);
+    expect(doesRangeCoverCurrentWeek({ startDate: '2026-09-27', endDate: '2026-10-10' }, now)).toBe(false);
+    expect(doesRangeCoverCurrentWeek({ startDate: '', endDate: '2026-10-31' }, now)).toBe(false);
   });
 });

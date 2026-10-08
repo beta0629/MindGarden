@@ -11,7 +11,9 @@ import {
     SCHEDULE_LEGEND_SESSION_REMAINING_MEANING,
     SCHEDULE_LEGEND_SESSION_REMAINING_SAMPLE
 } from '../../../constants/schedule';
+import { MAPPING_ENGAGEMENT_TYPE } from '../../../constants/mappingEngagementType';
 import { useTranslation } from 'react-i18next';
+import EngagementTypeBadge from '../../common/EngagementTypeBadge';
 import ConsultantCountsBadgeList, {
     hasAnyConsultantCount,
     lookupCount
@@ -213,8 +215,11 @@ const ScheduleLegend = ({
                 {t(INTEGRATED_MONTH_CHIP_I18N.legendStatus)}
             </span>
             <span className="mg-schedule-marks-legend__item">
-                <span className="mg-schedule-marks-legend__institution" aria-hidden="true" />
-                {t('admin:mapping.schedule.legend.institutionLink')}
+                <EngagementTypeBadge
+                    type={MAPPING_ENGAGEMENT_TYPE.INSTITUTION_LINK}
+                    className="mg-schedule-marks-legend__institution"
+                />
+                {t(INTEGRATED_MONTH_CHIP_I18N.legendInstitution)}
             </span>
             <span className="mg-schedule-marks-legend__item">
                 <span className="mg-schedule-marks-legend__sms" aria-hidden="true" />

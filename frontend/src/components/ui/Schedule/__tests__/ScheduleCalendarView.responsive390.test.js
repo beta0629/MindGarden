@@ -65,10 +65,20 @@ describe('짧은 시간 포맷', () => {
     expect(formatIntegratedMonthChipShortTime('not-a-date')).toBe('');
   });
 
-  test('통합 월간 칩만 전체/짧은 시간 두 칸을 그린다', () => {
+  test('월간 칩은 전체/짧은 시간 두 칸, 주/일은 measure fit 컴포넌트', () => {
     expect(CALENDAR_JS).toContain('mg-v2-ad-calendar-event__time-full');
     expect(CALENDAR_JS).toContain('mg-v2-ad-calendar-event__time-short');
     expect(CALENDAR_JS).toMatch(/integratedMonthEventLayout \? \(\s*<>\s*<span className="mg-v2-ad-calendar-event__time-full">/);
+    expect(CALENDAR_JS).toMatch(/WeekDayScheduleEventChip/);
+    expect(CALENDAR_CSS).not.toContain('@container mg-week-event (width < 109px)');
+    expect(CALENDAR_CSS).toContain('mg-v2-ad-calendar-event--week-day-fit');
+  });
+
+  test('주/일 CSS 는 ellipsis 잘림 없이 measure stage 클래스를 쓴다', () => {
+    expect(CALENDAR_CSS).toMatch(/--week-day-fit[\s\S]*?text-overflow:\s*clip/);
+    expect(CALENDAR_CSS).not.toMatch(
+      /\.mg-v2-ad-calendar-event:not\(\.mg-v2-ad-calendar-event--compact\) \.mg-v2-ad-calendar-event__time-text\s*\{[^}]*text-overflow:\s*ellipsis/
+    );
   });
 });
 

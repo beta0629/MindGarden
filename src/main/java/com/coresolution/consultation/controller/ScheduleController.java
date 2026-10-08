@@ -47,6 +47,7 @@ import com.coresolution.consultation.service.InstitutionLinkConsultationLogWrite
 import com.coresolution.consultation.service.DynamicPermissionService;
 import com.coresolution.consultation.constant.admin.AdminServiceUserFacingMessages;
 import com.coresolution.consultation.repository.ConsultantClientMappingRepository;
+import com.coresolution.consultation.service.ScheduleListBatchLoader;
 import com.coresolution.consultation.service.ScheduleListUserFieldsResolver;
 import com.coresolution.consultation.service.ScheduleMappingContextResolver;
 import com.coresolution.consultation.service.ScheduleMappingContextResolver.ScheduleMappingResponseContext;
@@ -158,6 +159,7 @@ public class ScheduleController extends BaseApiController {
     private final DynamicPermissionService dynamicPermissionService;
     private final com.coresolution.consultation.repository.UserRepository userRepository;
     private final ScheduleListUserFieldsResolver scheduleListUserFieldsResolver;
+    private final ScheduleListBatchLoader scheduleListBatchLoader;
     private final ObjectMapper objectMapper;
     private final com.coresolution.consultation.service.ConsultantDashboardService consultantDashboardService;
     private final com.coresolution.consultation.repository.ClientScheduleNoteRepository clientScheduleNoteRepository;
@@ -664,22 +666,8 @@ public class ScheduleController extends BaseApiController {
         
         List<ScheduleResponse> schedules;
         if (startDate != null && endDate != null) {
-            List<Schedule> scheduleList = scheduleService.findSchedulesByUserRoleAndDateBetween(
+            schedules = scheduleService.findSchedulesWithNamesByUserRoleAndDateBetween(
                     consultantId, UserRole.CONSULTANT.name(), startDate, endDate);
-            String tenantId = TenantContextHolder.getTenantId();
-            if (tenantId == null || tenantId.isEmpty()) {
-                tenantId = currentUser.getTenantId();
-            }
-            Map<String, ConsultantClientMapping> mappingLookup =
-                    ScheduleMappingContextResolver.buildActiveOrExhaustedMappingLookup(
-                            tenantId, consultantClientMappingRepository);
-            Map<Long, String> vehiclePlateByClientId = buildVehiclePlateByClientId(tenantId, scheduleList);
-            Map<Long, String> vehiclePlateByConsultantId =
-                    buildVehiclePlateByConsultantId(tenantId, scheduleList);
-            schedules = scheduleList.stream()
-                .map(schedule -> convertToScheduleResponse(
-                        schedule, 0, 0, mappingLookup, vehiclePlateByClientId, vehiclePlateByConsultantId))
-                .collect(java.util.stream.Collectors.toList());
         } else {
             schedules = scheduleService.findSchedulesWithNamesByUserRole(consultantId, UserRole.CONSULTANT.name());
         }
@@ -1802,58 +1790,18 @@ public class ScheduleController extends BaseApiController {
 
         // ==================== (P0) N+1 제거: 사용자/매핑/lifetime 카운트 배치 준비 ====================
 
-        Set<Long> userIds = new HashSet<>();
-        for (Schedule s : schedules) {
-            if (s.getConsultantId() != null) {
-                userIds.add(s.getConsultantId());
-            }
-            if (s.getClientId() != null) {
-                userIds.add(s.getClientId());
-            }
-        }
-
-        Map<Long, ScheduleAdminUserInfo> userInfoById =
-                buildScheduleAdminUserInfoById(tenantId, userIds);
-
-        Set<Long> scheduleMappingIds = new HashSet<>();
-        Set<Long> bookingConsultantIds = new HashSet<>();
-        Set<Long> bookingClientIds = new HashSet<>();
-        Set<String> bookingPairKeys = new HashSet<>();
-        for (Schedule s : schedules) {
-            if (s.getMappingId() != null) {
-                scheduleMappingIds.add(s.getMappingId());
-                continue;
-            }
-            if (s.getConsultantId() == null || s.getClientId() == null) {
-                continue;
-            }
-            bookingConsultantIds.add(s.getConsultantId());
-            bookingClientIds.add(s.getClientId());
-            bookingPairKeys.add(toMappingPairKey(s.getConsultantId(), s.getClientId()));
-        }
-
-        Map<Long, ConsultantClientMapping> mappingById =
-                buildMappingById(tenantId, scheduleMappingIds);
-
-        Map<String, List<ConsultantClientMapping>> bookingMappingCandidatesByPairKey =
-                buildBookingMappingCandidatesByPairKey(
-                        tenantId,
-                        bookingConsultantIds,
-                        bookingClientIds,
-                        bookingPairKeys);
+        Map<Long, ScheduleAdminUserInfo> userInfoById = buildScheduleAdminUserInfoById(
+                scheduleListBatchLoader.loadUsersById(
+                        tenantId, ScheduleListBatchLoader.collectParticipantIds(schedules)));
 
         Map<Long, ScheduleMappingResponseContext> mappingContextByScheduleId =
-                buildScheduleMappingContextByScheduleId(
-                        schedules,
-                        mappingLookup,
-                        mappingById,
-                        bookingMappingCandidatesByPairKey);
+                scheduleListBatchLoader.buildMappingContextByScheduleId(tenantId, schedules, mappingLookup);
 
         Map<Long, Long> lifetimeSequenceCountByScheduleId =
-                buildLifetimeSequenceCountByScheduleId(tenantId, schedules);
+                scheduleListBatchLoader.buildLifetimeSequenceCountByScheduleId(tenantId, schedules);
 
         ScheduleMappingResponseContext emptyMappingContext =
-                new ScheduleMappingResponseContext(null, null, null);
+                ScheduleMappingResponseContext.empty();
 
         List<ScheduleResponse> scheduleResponses = schedules.stream()
                 .map(s -> {
@@ -2524,8 +2472,14 @@ public class ScheduleController extends BaseApiController {
                     schedule.getConsultantId(), schedule.getClientId(), e.getMessage());
         }
 
+        com.coresolution.consultation.entity.Client clientEntity = null;
+        if (schedule.getClientId() != null && tenantId != null && !tenantId.isEmpty()) {
+            clientEntity = scheduleListBatchLoader
+                    .loadClientsById(tenantId, java.util.Set.of(schedule.getClientId()))
+                    .get(schedule.getClientId());
+        }
         ScheduleMappingResponseContext mappingContext = ScheduleMappingContextResolver.resolveForScheduleResponse(
-                schedule, tenantId, consultantClientMappingRepository, mappingLookup);
+                schedule, tenantId, consultantClientMappingRepository, mappingLookup, clientEntity);
         
         ScheduleResponse response = ScheduleResponse.builder()
             .id(schedule.getId())
@@ -2556,6 +2510,8 @@ public class ScheduleController extends BaseApiController {
             .clientScheduleNotesUnresolvedCount(Math.max(0, clientScheduleNotesUnresolvedCount))
             .clientScheduleNotesClientWideUnresolvedCount(Math.max(0, clientScheduleNotesClientWideUnresolvedCount))
             .mappingId(mappingContext.getMappingId())
+            .engagementType(mappingContext.getEngagementType())
+            .paymentTiming(mappingContext.getPaymentTiming())
             .totalSessions(mappingContext.getTotalSessions())
             .remainingSessions(mappingContext.getRemainingSessions())
             .sessionSequence(schedule.getSessionSequence())
@@ -2663,7 +2619,7 @@ public class ScheduleController extends BaseApiController {
         }
 
         ScheduleMappingResponseContext safeMappingContext =
-                mappingContext != null ? mappingContext : new ScheduleMappingResponseContext(null, null, null);
+                mappingContext != null ? mappingContext : ScheduleMappingResponseContext.empty();
 
         ScheduleResponse response = ScheduleResponse.builder()
                 .id(schedule.getId())
@@ -2694,6 +2650,8 @@ public class ScheduleController extends BaseApiController {
                 .clientScheduleNotesUnresolvedCount(Math.max(0, clientScheduleNotesUnresolvedCount))
                 .clientScheduleNotesClientWideUnresolvedCount(Math.max(0, clientScheduleNotesClientWideUnresolvedCount))
                 .mappingId(safeMappingContext.getMappingId())
+                .engagementType(safeMappingContext.getEngagementType())
+                .paymentTiming(safeMappingContext.getPaymentTiming())
                 .totalSessions(safeMappingContext.getTotalSessions())
                 .remainingSessions(safeMappingContext.getRemainingSessions())
                 .sessionSequence(schedule.getSessionSequence())
@@ -2733,306 +2691,18 @@ public class ScheduleController extends BaseApiController {
         }
     }
 
-    private static class SessionSequenceCandidateKey {
-        private final LocalDate date;
-        private final Long scheduleId;
-
-        private SessionSequenceCandidateKey(LocalDate date, Long scheduleId) {
-            this.date = date;
-            this.scheduleId = scheduleId;
-        }
-    }
-
-    private Map<Long, ScheduleAdminUserInfo> buildScheduleAdminUserInfoById(
-            String tenantId,
-            Set<Long> userIds) {
-        if (tenantId == null || tenantId.isEmpty() || userIds == null || userIds.isEmpty()) {
-            return Map.of();
-        }
-
-        try {
-            List<User> users = userRepository.findByTenantIdAndIdInAndIsDeletedFalse(tenantId, userIds);
-            Map<Long, ScheduleAdminUserInfo> out = new HashMap<>();
-            for (User user : users) {
-                if (user == null || user.getId() == null) {
-                    continue;
-                }
-                out.put(
-                        user.getId(),
-                        new ScheduleAdminUserInfo(
-                                scheduleListUserFieldsResolver.resolveDisplayNameForScheduleList(user),
-                                scheduleListUserFieldsResolver.resolvePhoneForScheduleList(user),
-                                scheduleListUserFieldsResolver.resolveEmailForScheduleList(user),
-                                nullableUserProfileImageUrl(user),
-                                resolveProfessionalProviderTypeCode(user),
-                                user.getPastSessionCount()));
-            }
-            return out;
-        } catch (Exception e) {
-            log.warn("⚠️ 스케줄 관리자 사용자 배치 조회 실패: tenantId={}, error={}", tenantId, e.getMessage());
-            return Map.of();
-        }
-    }
-
-    private Map<Long, ConsultantClientMapping> buildMappingById(String tenantId, Set<Long> mappingIds) {
-        if (tenantId == null || tenantId.isEmpty() || mappingIds == null || mappingIds.isEmpty()) {
-            return Map.of();
-        }
-        try {
-            List<ConsultantClientMapping> mappings =
-                    consultantClientMappingRepository.findByTenantIdAndIdInAndIsDeletedFalse(tenantId, mappingIds);
-            Map<Long, ConsultantClientMapping> out = new HashMap<>();
-            for (ConsultantClientMapping mapping : mappings) {
-                if (mapping == null || mapping.getId() == null) {
-                    continue;
-                }
-                out.put(mapping.getId(), mapping);
-            }
-            return out;
-        } catch (Exception e) {
-            log.warn("⚠️ 스케줄 관리자 매핑Id 배치 조회 실패: tenantId={}, error={}", tenantId, e.getMessage());
-            return Map.of();
-        }
-    }
-
-    private Map<String, List<ConsultantClientMapping>> buildBookingMappingCandidatesByPairKey(
-            String tenantId,
-            Set<Long> consultantIds,
-            Set<Long> clientIds,
-            Set<String> bookingPairKeys) {
-        if (tenantId == null
-                || tenantId.isEmpty()
-                || consultantIds == null
-                || clientIds == null
-                || consultantIds.isEmpty()
-                || clientIds.isEmpty()
-                || bookingPairKeys == null
-                || bookingPairKeys.isEmpty()) {
-            return Map.of();
-        }
-
-        try {
-            List<ConsultantClientMapping> candidates =
-                    consultantClientMappingRepository.findAllByTenantIdAndConsultantIdInAndClientIdInOrderByCreatedAtDesc(
-                            tenantId,
-                            new ArrayList<>(consultantIds),
-                            new ArrayList<>(clientIds));
-
-            Map<String, List<ConsultantClientMapping>> out = new HashMap<>();
-            for (ConsultantClientMapping mapping : candidates) {
-                if (mapping == null || mapping.getConsultant() == null || mapping.getClient() == null) {
-                    continue;
-                }
-                Long cid = mapping.getConsultant().getId();
-                Long clientId = mapping.getClient().getId();
-                if (cid == null || clientId == null) {
-                    continue;
-                }
-                String pairKey = toMappingPairKey(cid, clientId);
-                if (!bookingPairKeys.contains(pairKey)) {
-                    continue;
-                }
-                out.computeIfAbsent(pairKey, ignored -> new ArrayList<>()).add(mapping);
-            }
-
-            // resolver와 동일하게 createdAt DESC (max(createdAt) 선택) 정렬을 강제한다.
-            java.util.Comparator<ConsultantClientMapping> byCreatedAtDesc =
-                    java.util.Comparator
-                            .comparing(ConsultantClientMapping::getCreatedAt, java.util.Comparator.nullsLast(java.util.Comparator.naturalOrder()))
-                            .reversed();
-            for (List<ConsultantClientMapping> list : out.values()) {
-                list.sort(byCreatedAtDesc);
-            }
-
-            return out;
-        } catch (Exception e) {
-            log.warn("⚠️ 스케줄 관리자 bookingAt 매핑 배치 조회 실패: tenantId={}, error={}",
-                    tenantId, e.getMessage());
-            return Map.of();
-        }
-    }
-
-    private Map<Long, ScheduleMappingResponseContext> buildScheduleMappingContextByScheduleId(
-            List<Schedule> schedules,
-            Map<String, ConsultantClientMapping> mappingLookup,
-            Map<Long, ConsultantClientMapping> mappingById,
-            Map<String, List<ConsultantClientMapping>> bookingMappingCandidatesByPairKey) {
-        if (schedules == null || schedules.isEmpty()) {
-            return Map.of();
-        }
-        Map<Long, ScheduleMappingResponseContext> out = new HashMap<>();
-        for (Schedule schedule : schedules) {
-            if (schedule == null || schedule.getId() == null) {
-                continue;
-            }
-
-            Long mappingId = schedule.getMappingId();
-            Integer totalSessions = null;
-
-            if (mappingId != null) {
-                ConsultantClientMapping mapping = mappingById.get(mappingId);
-                totalSessions = mapping != null ? mapping.getTotalSessions() : null;
-            } else {
-                if (schedule.getConsultantId() != null && schedule.getClientId() != null) {
-                    String pairKey = toMappingPairKey(schedule.getConsultantId(), schedule.getClientId());
-                    List<ConsultantClientMapping> candidates =
-                            bookingMappingCandidatesByPairKey.get(pairKey);
-                    ConsultantClientMapping effective =
-                            resolveEffectiveMappingForBookingAt(candidates, schedule.getCreatedAt());
-                    if (effective != null) {
-                        mappingId = effective.getId();
-                        totalSessions = effective.getTotalSessions();
-                    }
-                }
-            }
-
-            Integer remainingSessions = null;
-            if (mappingLookup != null
-                    && schedule.getConsultantId() != null
-                    && schedule.getClientId() != null) {
-                String pairKey = toMappingPairKey(schedule.getConsultantId(), schedule.getClientId());
-                ConsultantClientMapping currentMapping = mappingLookup.get(pairKey);
-                remainingSessions = currentMapping != null ? currentMapping.getRemainingSessions() : null;
-            }
-
-            out.put(
-                    schedule.getId(),
-                    new ScheduleMappingResponseContext(mappingId, totalSessions, remainingSessions));
-        }
+    private Map<Long, ScheduleAdminUserInfo> buildScheduleAdminUserInfoById(Map<Long, User> usersById) {
+        Map<Long, ScheduleAdminUserInfo> out = new HashMap<>();
+        usersById.forEach((id, user) -> out.put(
+                id,
+                new ScheduleAdminUserInfo(
+                        scheduleListUserFieldsResolver.resolveDisplayNameForScheduleList(user),
+                        scheduleListUserFieldsResolver.resolvePhoneForScheduleList(user),
+                        scheduleListUserFieldsResolver.resolveEmailForScheduleList(user),
+                        nullableUserProfileImageUrl(user),
+                        resolveProfessionalProviderTypeCode(user),
+                        user.getPastSessionCount())));
         return out;
-    }
-
-    private Map<Long, Long> buildLifetimeSequenceCountByScheduleId(
-            String tenantId,
-            List<Schedule> schedules) {
-        if (tenantId == null || tenantId.isEmpty() || schedules == null || schedules.isEmpty()) {
-            return Map.of();
-        }
-
-        Set<Long> clientIds = new HashSet<>();
-        LocalDate maxDate = null;
-        for (Schedule schedule : schedules) {
-            if (schedule == null || schedule.getId() == null) {
-                continue;
-            }
-            if (schedule.getClientId() == null || schedule.getDate() == null) {
-                continue;
-            }
-            clientIds.add(schedule.getClientId());
-            if (maxDate == null || schedule.getDate().isAfter(maxDate)) {
-                maxDate = schedule.getDate();
-            }
-        }
-        if (clientIds.isEmpty() || maxDate == null) {
-            return Map.of();
-        }
-
-        try {
-            List<Object[]> candidates = scheduleRepository.findSessionSequenceCandidatesByClientIdsUpToDate(
-                    tenantId,
-                    clientIds,
-                    maxDate);
-
-            Map<Long, List<SessionSequenceCandidateKey>> candidatesByClientId = new HashMap<>();
-            for (Object[] row : candidates) {
-                if (row == null || row.length < 3 || row[0] == null || row[1] == null || row[2] == null) {
-                    continue;
-                }
-                Long clientId = ((Number) row[0]).longValue();
-                LocalDate date = (LocalDate) row[1];
-                Long scheduleId = ((Number) row[2]).longValue();
-                candidatesByClientId
-                        .computeIfAbsent(clientId, ignored -> new ArrayList<>())
-                        .add(new SessionSequenceCandidateKey(date, scheduleId));
-            }
-
-            Map<Long, Long> out = new HashMap<>();
-            for (Schedule schedule : schedules) {
-                if (schedule == null || schedule.getId() == null) {
-                    continue;
-                }
-                if (schedule.getClientId() == null || schedule.getDate() == null) {
-                    continue; // 원본은 lifetimeSequenceCount를 null로 둔다.
-                }
-                List<SessionSequenceCandidateKey> list = candidatesByClientId.get(schedule.getClientId());
-                long lifetimeCount = countCandidatesUpToSchedule(list, schedule.getDate(), schedule.getId());
-                out.put(schedule.getId(), lifetimeCount);
-            }
-            return out;
-        } catch (Exception e) {
-            log.warn("⚠️ 스케줄 관리자 lifetime sequence 배치 계산 실패: tenantId={}, error={}",
-                    tenantId, e.getMessage());
-            return Map.of();
-        }
-    }
-
-    private long countCandidatesUpToSchedule(
-            List<SessionSequenceCandidateKey> candidates,
-            LocalDate targetDate,
-            Long targetScheduleId) {
-        if (candidates == null || candidates.isEmpty() || targetDate == null || targetScheduleId == null) {
-            return 0L;
-        }
-
-        int lo = 0;
-        int hi = candidates.size();
-        while (lo < hi) {
-            int mid = (lo + hi) / 2;
-            SessionSequenceCandidateKey midKey = candidates.get(mid);
-            int cmp = compareCandidateKeyToTarget(midKey, targetDate, targetScheduleId);
-            if (cmp <= 0) {
-                lo = mid + 1;
-            } else {
-                hi = mid;
-            }
-        }
-        return (long) lo;
-    }
-
-    /**
-     * candidate.date == targetDate 인 경우 candidate.scheduleId <= targetScheduleId 인가를 결정한다.
-     */
-    private int compareCandidateKeyToTarget(
-            SessionSequenceCandidateKey candidate,
-            LocalDate targetDate,
-            Long targetScheduleId) {
-        int cmpDate = candidate.date.compareTo(targetDate);
-        if (cmpDate != 0) {
-            return cmpDate;
-        }
-        return candidate.scheduleId.compareTo(targetScheduleId);
-    }
-
-    private ConsultantClientMapping resolveEffectiveMappingForBookingAt(
-            List<ConsultantClientMapping> candidates,
-            java.time.LocalDateTime bookingAt) {
-        if (bookingAt == null || candidates == null || candidates.isEmpty()) {
-            return null;
-        }
-        for (ConsultantClientMapping mapping : candidates) {
-            if (isMappingEffectiveAt(mapping, bookingAt)) {
-                return mapping;
-            }
-        }
-        return null;
-    }
-
-    private boolean isMappingEffectiveAt(
-            ConsultantClientMapping mapping,
-            java.time.LocalDateTime instant) {
-        if (mapping == null || instant == null) {
-            return false;
-        }
-        java.time.LocalDateTime mappingCreatedAt = mapping.getCreatedAt();
-        if (mappingCreatedAt != null && instant.isBefore(mappingCreatedAt)) {
-            return false;
-        }
-        java.time.LocalDateTime terminatedAt = mapping.getTerminatedAt();
-        return terminatedAt == null || instant.isBefore(terminatedAt);
-    }
-
-    private static String toMappingPairKey(Long consultantId, Long clientId) {
-        return consultantId + ":" + clientId;
     }
 
     /**

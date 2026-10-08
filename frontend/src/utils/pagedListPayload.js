@@ -51,17 +51,50 @@ function findItemArray(obj, keys) {
 }
 
 /**
+ * statusCounts 맵을 중첩 data·외곽에서 읽는다 (상담사 내담자 칩 SSOT).
+ *
+ * @param {...(object|null|undefined)} sources
+ * @returns {Record<string, number>|null}
+ */
+function readStatusCounts(...sources) {
+  for (let i = 0; i < sources.length; i += 1) {
+    const obj = sources[i];
+    if (obj == null || typeof obj !== 'object') {
+      continue;
+    }
+    const counts = obj.statusCounts;
+    if (counts == null || typeof counts !== 'object' || Array.isArray(counts)) {
+      continue;
+    }
+    const normalized = {};
+    Object.keys(counts).forEach((key) => {
+      const n = toNonNegativeIntOrNull(counts[key]);
+      if (n != null) {
+        normalized[key] = n;
+      }
+    });
+    return normalized;
+  }
+  return null;
+}
+
+/**
  * @param {unknown} raw API 응답 (StandardizedApi 언랩 전·후 모두)
  * @param {{ itemKeys?: ReadonlyArray<string> }} [options]
- * @returns {{ items: Array<unknown>, totalElements: number|null, totalPages: number|null }}
+ * @returns {{
+ *   items: Array<unknown>,
+ *   totalElements: number|null,
+ *   totalPages: number|null,
+ *   statusCounts: Record<string, number>|null
+ * }}
  */
 export function normalizePagedListPayload(raw, options = {}) {
   const itemKeys = options.itemKeys || PAGED_LIST_ITEM_KEYS;
   if (Array.isArray(raw)) {
-    return { items: raw, totalElements: null, totalPages: null };
+    return { items: raw, totalElements: null, totalPages: null, statusCounts: null };
   }
   if (raw == null || typeof raw !== 'object') {
-    return { items: [], totalElements: null, totalPages: null };
+    return { items: [], totalElements: null, totalPages: null, statusCounts: null };
   }
 
   // ApiResponse 엔벨로프: { success, data: [...], totalElements } — 총계는 외곽
@@ -70,7 +103,8 @@ export function normalizePagedListPayload(raw, options = {}) {
     return {
       items: raw.data.filter((item) => item != null),
       totalElements: totals.totalElements,
-      totalPages: totals.totalPages
+      totalPages: totals.totalPages,
+      statusCounts: readStatusCounts(raw)
     };
   }
 
@@ -83,7 +117,8 @@ export function normalizePagedListPayload(raw, options = {}) {
   return {
     items: items.filter((item) => item != null),
     totalElements: sourceTotals.totalElements ?? outerTotals.totalElements,
-    totalPages: sourceTotals.totalPages ?? outerTotals.totalPages
+    totalPages: sourceTotals.totalPages ?? outerTotals.totalPages,
+    statusCounts: readStatusCounts(source, nested, raw)
   };
 }
 

@@ -226,7 +226,13 @@ describe('ConsultantClientList P1 수용', () => {
       mappings: MAPPINGS,
       count: MAPPINGS.length,
       totalElements: MAPPINGS.length,
-      totalPages: 1
+      totalPages: 1,
+      statusCounts: {
+        ALL: MAPPINGS.length,
+        ACTIVE: 1,
+        SESSIONS_EXHAUSTED: 1,
+        PENDING_PAYMENT: 1
+      }
     });
   });
 
@@ -263,6 +269,33 @@ describe('ConsultantClientList P1 수용', () => {
     );
   });
 
+  it('상태 칩 건수는 서버 statusCounts(전체) · 페이지 length 아님', async() => {
+    StandardizedApi.get.mockResolvedValue({
+      mappings: [MAPPINGS[0]],
+      count: 1,
+      totalElements: 1,
+      totalPages: 1,
+      statusCounts: { ALL: 42, ACTIVE: 40, SESSIONS_EXHAUSTED: 1, PENDING_PAYMENT: 1 }
+    });
+    renderWithRouter(<ConsultantClientList />);
+    await screen.findByText('이민지');
+    expect(screen.getByRole('button', { name: /^전체 42$/ })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /^전체 1$/ })).toBeNull();
+  });
+
+  it('상태 칩 클릭 시 status 파라미터로 서버 재조회', async() => {
+    renderWithRouter(<ConsultantClientList />);
+    await screen.findByText('이민지');
+    fireEvent.click(screen.getByTestId('consultant-clients-filter-ACTIVE'));
+    await waitFor(() => {
+      expect(StandardizedApi.get).toHaveBeenCalledWith(
+        expect.stringContaining('/mappings/consultant/77/clients'),
+        expect.objectContaining({ status: 'ACTIVE', page: 0 }),
+        expect.objectContaining({ unwrapApiEnvelope: false })
+      );
+    });
+  });
+
   it('검색어로 카드 필터링', async() => {
     renderWithRouter(<ConsultantClientList />);
     await screen.findByText('이민지');
@@ -281,6 +314,15 @@ describe('ConsultantMessages P1 수용', () => {
           totalElements: MESSAGES.length,
           totalPages: 1
         });
+      }
+      if (String(url).includes('/consultant-records/') && String(url).includes('/clients')) {
+        return Promise.resolve(
+          Array.from({ length: 21 }, (_, i) => ({
+            id: 500 + i,
+            name: `내담자${i}`,
+            email: `c${i}@example.test`
+          }))
+        );
       }
       return Promise.resolve({ mappings: MAPPINGS, totalElements: MAPPINGS.length });
     });
@@ -325,6 +367,25 @@ describe('ConsultantMessages P1 수용', () => {
     const cta = await screen.findByRole('button', { name: '첫 메시지 보내기' });
     expect(cta).toHaveClass('mg-button--outline');
     expect(container.querySelectorAll('.mg-button--primary')).toHaveLength(1);
+  });
+
+  it('메시지 목록 totalElements 표시 · 수신자는 ASSIGNED_CLIENTS(21+)', async() => {
+    renderWithRouter(<ConsultantMessages />);
+    await screen.findByText('이민지님 회기 안내');
+    expect(screen.getByTestId('consultant-messages-total')).toHaveTextContent('전체 3건');
+    expect(StandardizedApi.get).toHaveBeenCalledWith(
+      expect.stringMatching(/\/consultant-records\/77\/clients/)
+    );
+    const mappingCalls = StandardizedApi.get.mock.calls.filter((call) =>
+      String(call[0] || '').includes('/mappings/consultant/')
+    );
+    expect(mappingCalls).toHaveLength(0);
+    fireEvent.click(screen.getByRole('button', { name: '새 메시지' }));
+    await screen.findByText('새 메시지 작성');
+    fireEvent.click(screen.getByText('내담자를 선택하세요'));
+    await waitFor(() => {
+      expect(screen.getByText(/내담자20/)).toBeInTheDocument();
+    });
   });
 });
 

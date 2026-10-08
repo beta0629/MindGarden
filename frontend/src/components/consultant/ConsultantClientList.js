@@ -102,9 +102,13 @@ const ConsultantClientList = () => {
     try {
       setLoading(true);
       setError(null);
+      const params = {};
+      if (filterStatus && filterStatus !== CONSULTANT_CLIENT_STATUS_FILTER.ALL) {
+        params.status = filterStatus;
+      }
       const result = await fetchConsultantSuitePagedList(
         `/api/v1/admin/mappings/consultant/${user.id}/clients`,
-        {},
+        params,
         {
           page: toServerPageIndex(page),
           size: CONSULTANT_SUITE_PAGE_SIZE,
@@ -117,15 +121,24 @@ const ConsultantClientList = () => {
       setClients(clientList);
       setTotalElements(result.totalElements != null ? result.totalElements : clientList.length);
 
-      // 상태 칩 건수: 현재 페이지 기준(서버 all-status facet 없음). ALL 은 totalElements.
-      const counts = { ALL: result.totalElements != null ? result.totalElements : clientList.length };
-      CLIENT_FILTER_ORDER.forEach((key) => {
-        if (key === CONSULTANT_CLIENT_STATUS_FILTER.ALL) {
-          return;
-        }
-        counts[key] = clientList.filter((c) => c.status === key).length;
-      });
-      setStatusCounts(counts);
+      // 상태 칩 건수: 서버 statusCounts (필터·페이징 전 총계). 페이지 배열 집계 금지.
+      const serverCounts = result.statusCounts && typeof result.statusCounts === 'object'
+        ? result.statusCounts
+        : null;
+      if (serverCounts) {
+        const counts = { ALL: serverCounts.ALL != null ? serverCounts.ALL : 0 };
+        CLIENT_FILTER_ORDER.forEach((key) => {
+          if (key === CONSULTANT_CLIENT_STATUS_FILTER.ALL) {
+            return;
+          }
+          counts[key] = serverCounts[key] != null ? serverCounts[key] : 0;
+        });
+        setStatusCounts(counts);
+      } else {
+        setStatusCounts({
+          ALL: result.totalElements != null ? result.totalElements : clientList.length
+        });
+      }
     } catch (err) {
       console.error('❌ 내담자 목록 로드 중 오류:', err);
       setError(t('clients.loadError'));
@@ -134,7 +147,7 @@ const ConsultantClientList = () => {
     } finally {
       setLoading(false);
     }
-  }, [user?.id, page, t]);
+  }, [user?.id, page, filterStatus, t]);
 
   useEffect(() => {
     if (isLoggedIn && user?.id) {
@@ -163,21 +176,18 @@ const ConsultantClientList = () => {
     }
   }, [clientIdFromUrl, clients, showClientModal]);
 
+  // 상태 필터는 서버(status param). 검색만 현재 페이지 클라이언트 보조.
   const filteredClients = useMemo(() => {
-    let result = clients;
-    if (searchTerm) {
-      const q = searchTerm.toLowerCase();
-      result = result.filter((client) => (
-        client.name?.toLowerCase().includes(q)
-        || client.email?.toLowerCase().includes(q)
-        || client.phone?.includes(searchTerm)
-      ));
+    if (!searchTerm) {
+      return clients;
     }
-    if (filterStatus !== CONSULTANT_CLIENT_STATUS_FILTER.ALL) {
-      result = result.filter((client) => client.status === filterStatus);
-    }
-    return result;
-  }, [clients, searchTerm, filterStatus]);
+    const q = searchTerm.toLowerCase();
+    return clients.filter((client) => (
+      client.name?.toLowerCase().includes(q)
+      || client.email?.toLowerCase().includes(q)
+      || client.phone?.includes(searchTerm)
+    ));
+  }, [clients, searchTerm]);
 
   const totalPages = Math.max(1, Math.ceil((totalElements || 0) / CONSULTANT_SUITE_PAGE_SIZE));
 

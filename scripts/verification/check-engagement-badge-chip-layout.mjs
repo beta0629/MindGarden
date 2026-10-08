@@ -5,8 +5,9 @@
  * jsdom 으로는 overflow 잘림을 못 잡으므로, 실제 브라우저에서
  * 배지 rect ⊆ 칩 rect · scrollWidth/Height ≤ client · textContent=「기관연계」·
  * 보이는 글자 4자 · 줄 패턴(기관연계 | 기관/연계 만 허용)을 검사한다.
- * 주/일: 배지=__time 인라인 · 연속 슬롯(10:00~10:50 + 11:00) cardH≤harnessH · 겹침 0.
- * 모바일 주간 칩은 배지 0개(렌더 생략).
+ * 주/일: measure-based time-first stages (long+badge → long → short+badge → short).
+ * 배지=__time 인라인 · 연속 슬롯 cardH≤harnessH · 겹침 0.
+ * 시간·배지 ellipsis 금지 — 배지는 4자 전부 또는 부재.
  *
  * 사용:
  *   node scripts/verification/check-engagement-badge-chip-layout.mjs
@@ -36,17 +37,17 @@ const ALLOWED_LINE_PATTERNS = new Set([LABEL, `${SEG_A}/${SEG_B}`]);
 const MOBILE_VIEWPORT_WIDTH = 390;
 const DESKTOP_VIEWPORT_WIDTH = 1440;
 
-/** 실측용 열 폭(사이드바 열림/접힘·일간). 뷰포트 하드코딩이 아니라 하네스 width. */
+/** 실측용 열 폭(사이드바 열림/접힘·일간). 뷰포트 하드코딩이 아니라 하네스/칩 width. */
 const WEEK_COL_OPEN = 164;
 const WEEK_COL_COLLAPSED = 126;
-/**
- * 1440 + LNB 열림 시 주간 timeGrid 열 실측(~78).
- * WEEK_COL_OPEN(164)은 여유 있는 하네스라 「오…」잘림을 못 잡음 → 좁은 열 케이스 추가.
- * short-time 전환 경계는 제품 CSS `@container mg-week-event (width < 109px)` (월간 단계 F 와 동일).
- */
+/** 1440 + LNB 열림 시 주간 timeGrid 열 실측(~78), 카드 내부 ~73.5 */
 const WEEK_COL_SIDEBAR_OPEN = 78;
+const WEEK_CHIP_INNER = 73.5;
+const WEEK_CHIP_TINY = 35;
+const WEEK_CHIP_SIDEBAR_CLOSED = 124;
 const DAY_COL_DESKTOP = 106.8;
 const DAY_COL_MOBILE = 320;
+const MOBILE_WEEK_DAY = 390;
 
 /**
  * FC slotDuration 30분 기준 50분 이벤트 하네스 높이.
@@ -121,12 +122,16 @@ body{margin:0;font-family:"Noto Sans KR",sans-serif}
 <div class="sec" id="sec-month"><div class="lab">month</div><div class="row" id="month-row"></div></div>
 <div class="sec" id="sec-week-desktop"><div class="lab">week/day consecutive slots (desktop)</div><div class="row" id="week-row"></div></div>
 <div class="sec" id="sec-week-mobile" style="width:100%;box-sizing:border-box">
-  <div class="lab">mobile week (badge omitted)</div>
+  <div class="lab">narrow week chips (measure stages — same judge as day)</div>
   <div class="row" id="mobile-week-row"></div>
 </div>
 <div class="sec" id="sec-day-mobile" style="width:100%;box-sizing:border-box">
-  <div class="lab">mobile day consecutive (badge shown)</div>
+  <div class="lab">mobile day / 390 week-day (measure stages)</div>
   <div class="row" id="mobile-day-row"></div>
+</div>
+<div class="sec" id="sec-fit-cases" style="width:100%;box-sizing:border-box">
+  <div class="lab">chip-fit widths 35 / 73.5 / 78 / 124 / 390</div>
+  <div class="row" id="fit-row"></div>
 </div>
 <div class="sec" id="sec-legacy-fail" style="width:100%;box-sizing:border-box">
   <div class="lab">legacy sibling badge (expect FAIL metrics)</div>
@@ -183,48 +188,66 @@ function badgeHtml(id, extraClass){
 function monthChip(w,id){
   return '<div><div class="lab">m'+w+'</div><div class="integrated-schedule__calendar-wrapper--integrated"><div class="fc-daygrid-event-harness harness" style="width:'+w+'px"><div class="mg-v2-ad-calendar-event mg-v2-ad-calendar-event--compact mg-v2-ad-calendar-event--integrated-month mg-v2-ad-calendar-event--status-booked" id="chip-'+id+'"><span class="mg-v2-ad-calendar-event__time"><span class="mg-v2-ad-calendar-event__time-short">14:00</span></span><span class="mg-v2-ad-calendar-event__client">이내담</span><span class="mg-schedule-event-marks"><span class="mg-schedule-event-marks__institution">'+badgeHtml('badge-'+id)+'</span></span></div></div></div></div>';
 }
-/** 주/일 풀 카드: 배지를 __time 안 인라인 + full/short time(월간과 동일 구조) */
-function weekDayCard(id, timeText, withBadge, shortTime){
+/**
+ * 주/일 풀 카드 — React WeekDayScheduleEventChip 과 동일하게
+ * 선택된 stage 의 시간만 렌더(ellipsis 금지). withBadge 면 배지 인라인.
+ */
+function weekDayCard(id, displayTime, withBadge){
   const badge=withBadge?badgeHtml('badge-'+id,'mg-v2-ad-calendar-event__engagement'):'';
-  const short=shortTime||'10:00';
-  return '<div class="mg-v2-ad-calendar-event" id="chip-'+id+'"><div class="mg-v2-ad-calendar-event__time"><span class="mg-v2-ad-calendar-event__time-text"><span class="mg-v2-ad-calendar-event__time-full">'+timeText+'</span><span class="mg-v2-ad-calendar-event__time-short">'+short+'</span></span>'+badge+'</div><div class="mg-v2-ad-calendar-event__title"><span class="client-name">이내담</span></div><div class="mg-v2-ad-calendar-event__status">예약됨</div></div>';
+  return '<div class="mg-v2-ad-calendar-event mg-v2-ad-calendar-event--week-day-fit" id="chip-'+id+'"><div class="mg-v2-ad-calendar-event__time"><span class="mg-v2-ad-calendar-event__time-text"><span class="mg-v2-ad-calendar-event__time-measured">'+displayTime+'</span></span>'+badge+'</div><div class="mg-v2-ad-calendar-event__title"><span class="client-name">이내담</span></div><div class="mg-v2-ad-calendar-event__status">예약됨</div></div>';
+}
+/**
+ * chip/harness width 기준 stage 시뮬레이션.
+ * 카드 좌우 패딩(~24)을 빼 가용폭으로 judge (products useWeekDayChipFit 과 동일 우선순위).
+ */
+function pickStage(harnessW){
+  const padX=24;
+  const chipW=Math.max(0, harnessW-padX);
+  const longW=56, shortW=28, badgeW=48, gap=4;
+  if(chipW+0.5>=longW+gap+badgeW) return {time:'오전 10:00', badge:true, stage:'long+badge'};
+  if(chipW+0.5>=longW) return {time:'오전 10:00', badge:false, stage:'long'};
+  if(chipW+0.5>=shortW+gap+badgeW) return {time:'10:00', badge:true, stage:'short+badge'};
+  return {time:'10:00', badge:false, stage:'short'};
 }
 /** 구코드: 배지를 __title 아래 별도 블록 — FAIL 증거용 */
 function legacySiblingCard(id, timeText){
   const badge=badgeHtml('badge-'+id,'mg-v2-ad-calendar-event__engagement');
   return '<div class="mg-v2-ad-calendar-event" id="chip-'+id+'" style="min-height:4rem;height:auto;overflow:visible;padding:8px 12px;gap:4px"><div class="mg-v2-ad-calendar-event__time">'+timeText+'</div><div class="mg-v2-ad-calendar-event__title"><span class="client-name">이내담</span></div>'+badge+'<div class="mg-v2-ad-calendar-event__status">예약됨</div></div>';
 }
-function consecutiveStack(w, idPrefix, withBadge, useLegacy, timeFull, timeShort){
+function consecutiveStack(w, idPrefix, useLegacy){
   const h1=HARNESS_H;
   const top2=HARNESS_H+GAP_H;
   const stackH=top2+HARNESS_H;
-  const fullA=timeFull||'오전 10:00';
-  const fullB=timeFull?timeFull.replace('10:','11:'):'오전 11:00';
-  const shortA=timeShort||'10:00';
-  const shortB=timeShort?timeShort.replace('10:','11:'):'11:00';
+  const stage=pickStage(w);
+  const timeB=stage.time.replace('10:','11:').replace('오전 10','오전 11');
   let c1, c2;
   if(useLegacy){
-    c1=legacySiblingCard(idPrefix+'-a', fullA);
-    c2=legacySiblingCard(idPrefix+'-b', fullB);
+    c1=legacySiblingCard(idPrefix+'-a', '오전 10:00');
+    c2=legacySiblingCard(idPrefix+'-b', '오전 11:00');
   }else{
-    c1=weekDayCard(idPrefix+'-a', fullA, withBadge, shortA);
-    c2=weekDayCard(idPrefix+'-b', fullB, withBadge, shortB);
+    c1=weekDayCard(idPrefix+'-a', stage.time, stage.badge);
+    c2=weekDayCard(idPrefix+'-b', timeB, stage.badge);
   }
-  return '<div><div class="lab">'+idPrefix+' w'+w+(withBadge?'':' nobadge')+(useLegacy?' LEGACY':'')+'</div><div class="slot-stack harness" style="width:'+w+'px;height:'+stackH+'px"><div class="fc-timegrid-event-harness" id="harness-'+idPrefix+'-a" style="top:0;height:'+h1+'px">'+c1+'</div><div class="fc-timegrid-event-harness" id="harness-'+idPrefix+'-b" style="top:'+top2+'px;height:'+h1+'px">'+c2+'</div></div></div>';
+  return '<div><div class="lab">'+idPrefix+' w'+w+' '+stage.stage+(useLegacy?' LEGACY':'')+'</div><div class="slot-stack harness" style="width:'+w+'px;height:'+stackH+'px"><div class="fc-timegrid-event-harness" id="harness-'+idPrefix+'-a" style="top:0;height:'+h1+'px">'+c1+'</div><div class="fc-timegrid-event-harness" id="harness-'+idPrefix+'-b" style="top:'+top2+'px;height:'+h1+'px">'+c2+'</div></div></div>';
 }
-function weekChipNoBadge(w,id){
-  return '<div><div class="lab">w'+w+' nobadge</div><div class="harness" style="width:'+w+'px;height:'+HARNESS_H+'px"><div class="fc-timegrid-event-harness" style="height:100%"><div class="mg-v2-ad-calendar-event" id="chip-'+id+'"><div class="mg-v2-ad-calendar-event__time"><span class="mg-v2-ad-calendar-event__time-text"><span class="mg-v2-ad-calendar-event__time-full">오후 2:00</span><span class="mg-v2-ad-calendar-event__time-short">14:00</span></span></div><div class="mg-v2-ad-calendar-event__title"><span class="client-name">이내담</span></div><div class="mg-v2-ad-calendar-event__status">예약됨</div></div></div></div></div>';
+function fitChip(w,id){
+  const stage=pickStage(w);
+  return '<div><div class="lab">fit'+w+' '+stage.stage+'</div><div class="harness" style="width:'+w+'px;height:'+HARNESS_H+'px"><div class="fc-timegrid-event-harness" style="position:relative;height:100%">'+weekDayCard(id, stage.time, stage.badge)+'</div></div></div>';
 }
 document.getElementById('month-row').innerHTML=[33,49,60,88,135].map(w=>monthChip(w,'m'+w)).join('');
 document.getElementById('week-row').innerHTML=[
-  consecutiveStack(WEEK_OPEN,'wopen',true,false),
-  consecutiveStack(WEEK_COLLAPSED,'wfold',true,false),
-  consecutiveStack(WEEK_SIDEBAR,'wnarrow',true,false,'오전 10:00','10:00'),
-  consecutiveStack(DAY_DESKTOP,'ddesk',true,false)
+  consecutiveStack(WEEK_OPEN,'wopen',false),
+  consecutiveStack(WEEK_COLLAPSED,'wfold',false),
+  consecutiveStack(WEEK_SIDEBAR,'wnarrow',false),
+  consecutiveStack(DAY_DESKTOP,'ddesk',false)
 ].join('');
-document.getElementById('mobile-week-row').innerHTML=[26,36].map(w=>weekChipNoBadge(w,'mw'+w)).join('');
-document.getElementById('mobile-day-row').innerHTML=[consecutiveStack(DAY_MOBILE,'dmob',true,false)].join('');
-document.getElementById('legacy-fail-row').innerHTML=[consecutiveStack(WEEK_COLLAPSED,'legacy',true,true)].join('');
+document.getElementById('mobile-week-row').innerHTML=[35,40].map(w=>fitChip(w,'mw'+w)).join('');
+document.getElementById('mobile-day-row').innerHTML=[
+  consecutiveStack(DAY_MOBILE,'dmob',false),
+  consecutiveStack(390,'w390',false)
+].join('');
+document.getElementById('fit-row').innerHTML=[35,73.5,78,124,390].map(w=>fitChip(w,'fit'+String(w).replace('.','p'))).join('');
+document.getElementById('legacy-fail-row').innerHTML=[consecutiveStack(WEEK_COLLAPSED,'legacy',true)].join('');
 
 function linePattern(badge){
   const segs=[...badge.querySelectorAll('.mg-engagement-type-badge__seg')];
@@ -300,23 +323,58 @@ function adjacentOverlapCount(chip){
 }
 
 function visibleTimeMode(chip){
-  const full=chip.querySelector('.mg-v2-ad-calendar-event__time-full');
-  const short=chip.querySelector('.mg-v2-ad-calendar-event__time-short');
-  const fullCs=full?getComputedStyle(full):null;
-  const shortCs=short?getComputedStyle(short):null;
-  const fullShown=!!(full&&fullCs&&fullCs.display!=='none'&&fullCs.visibility!=='hidden');
-  const shortShown=!!(short&&shortCs&&shortCs.display!=='none'&&shortCs.visibility!=='hidden');
+  const measured=chip.querySelector('.mg-v2-ad-calendar-event__time-measured');
+  const timeEl=measured||chip.querySelector('.mg-v2-ad-calendar-event__time-text')||chip.querySelector('.mg-v2-ad-calendar-event__time');
+  // NOTE: buildHarnessHtml 은 outer template literal — regex \\ 이스케이프 필수
+  const text=timeEl?String(timeEl.textContent||'').replace(/\\s+/g,' ').trim():'';
+  const hasEllipsis=text.includes('…')||text.includes('...');
+  const isShort=/^\\d{1,2}:\\d{2}$/.test(text);
+  const isLong=(text.indexOf('오전')===0||text.indexOf('오후')===0)&&/\\d{1,2}:\\d{2}/.test(text);
+  const patternOk=isShort||isLong;
+  const scrollOk=patternOk&&!hasEllipsis;
   return {
-    fullText:full?full.textContent:'',
-    shortText:short?short.textContent:'',
-    fullShown,
-    shortShown
+    timeText:text,
+    timeScrollOk:scrollOk,
+    timeFullVisible:text.length>0&&patternOk&&!hasEllipsis,
+    shortShown:isShort,
+    fullShown:isLong,
+    shortText:isShort?text:'',
+    fullText:isLong?text:''
   };
+}
+
+function measureChipTimeOnly(chipId){
+  const chip=document.getElementById(chipId);
+  if(!chip) return null;
+  const badge=chip.querySelector('.mg-engagement-type-badge');
+  const timeMode=visibleTimeMode(chip);
+  const c=chip.getBoundingClientRect();
+  if(!badge){
+    return {
+      text:'',
+      chipW:+c.width.toFixed(2), chipH:+c.height.toFixed(2),
+      badgeAbsent:true,
+      visibleChars:0,
+      linePattern:'',
+      linePatternOk:true,
+      badgeInTitle:false,
+      badgeInTime:false,
+      hasNegMargin:false,
+      adjacentOverlap:0,
+      fitW:true,
+      fitH:true,
+      inside:true,
+      scrollW:0, clientW:0, scrollH:0, clientH:0,
+      ...timeMode
+    };
+  }
+  return measure(chipId, badge.id);
 }
 
 function measure(chipId,badgeId){
   const chip=document.getElementById(chipId), badge=document.getElementById(badgeId);
-  if(!chip||!badge) return null;
+  if(!chip) return null;
+  if(!badge) return measureChipTimeOnly(chipId);
   const c=chip.getBoundingClientRect(), b=badge.getBoundingClientRect();
   const inside=b.left>=c.left-0.5&&b.top>=c.top-0.5&&b.right<=c.right+0.5&&b.bottom<=c.bottom+0.5;
   const pattern=linePattern(badge);
@@ -342,18 +400,20 @@ function measure(chipId,badgeId){
     hasNegMargin:/^-/.test(String(cs.marginLeft))||/^-/.test(String(cs.marginRight))||String(cs.marginInline).includes('-'),
     segCount:badge.querySelectorAll('.mg-engagement-type-badge__seg').length,
     adjacentOverlap:adjacentOverlapCount(chip),
+    badgeAbsent:false,
     ...timeMode
   };
 }
 
 function measurePair(prefix){
-  const a=measure('chip-'+prefix+'-a','badge-'+prefix+'-a');
-  const b=measure('chip-'+prefix+'-b','badge-'+prefix+'-b');
-  const ha=document.getElementById('harness-'+prefix+'-a');
-  const hb=document.getElementById('harness-'+prefix+'-b');
   const chipA=document.getElementById('chip-'+prefix+'-a');
   const chipB=document.getElementById('chip-'+prefix+'-b');
-  if(!a||!b||!ha||!hb||!chipA||!chipB) return null;
+  const ha=document.getElementById('harness-'+prefix+'-a');
+  const hb=document.getElementById('harness-'+prefix+'-b');
+  if(!chipA||!chipB||!ha||!hb) return null;
+  const a=measureChipTimeOnly('chip-'+prefix+'-a');
+  const b=measureChipTimeOnly('chip-'+prefix+'-b');
+  if(!a||!b) return null;
   const hA=ha.getBoundingClientRect(), hB=hb.getBoundingClientRect();
   const cA=chipA.getBoundingClientRect(), cB=chipB.getBoundingClientRect();
   return {
@@ -364,8 +424,8 @@ function measurePair(prefix){
     cardFitsHarnessA:cA.height<=hA.height+0.5,
     cardFitsHarnessB:cB.height<=hB.height+0.5,
     cardsOverlap:rectsOverlap(cA,cB),
-    badgeInTimeA:a.badgeInTime,
-    badgeInTimeB:b.badgeInTime,
+    badgeInTimeA:a.badgeAbsent?true:a.badgeInTime,
+    badgeInTimeB:b.badgeAbsent?true:b.badgeInTime,
     hasNegMargin:a.hasNegMargin||b.hasNegMargin,
     linePatternA:a.linePattern,
     linePatternB:b.linePattern
@@ -373,14 +433,7 @@ function measurePair(prefix){
 }
 
 function measureMobileWeek(chipId){
-  const chip=document.getElementById(chipId);
-  if(!chip) return null;
-  const badges=chip.querySelectorAll('.mg-engagement-type-badge, [data-testid="engagement-type-badge"]');
-  return {
-    badgeCount:badges.length,
-    adjacentOverlap:adjacentOverlapCount(chip),
-    chipW:+chip.getBoundingClientRect().width.toFixed(2)
-  };
+  return measureChipTimeOnly(chipId);
 }
 
 window.__collectDesktop=function(){
@@ -395,6 +448,11 @@ window.__collectDesktop=function(){
     weekNarrow78:measurePair('wnarrow'),
     dayDesk106:measurePair('ddesk'),
     legacyFail126:measurePair('legacy'),
+    fit35:measureChipTimeOnly('chip-fit35'),
+    fit73p5:measureChipTimeOnly('chip-fit73p5'),
+    fit78:measureChipTimeOnly('chip-fit78'),
+    fit124:measureChipTimeOnly('chip-fit124'),
+    fit390:measureChipTimeOnly('chip-fit390'),
     legend:{
       titleLeft:+document.getElementById('legend-title').getBoundingClientRect().left.toFixed(2),
       marksLeft:+document.getElementById('legend-marks').getBoundingClientRect().left.toFixed(2),
@@ -406,9 +464,10 @@ window.__collectDesktop=function(){
 
 window.__collectMobile=function(){
   return {
-    mobileWeek26:measureMobileWeek('chip-mw26'),
-    mobileWeek36:measureMobileWeek('chip-mw36'),
+    mobileWeek35:measureMobileWeek('chip-mw35'),
+    mobileWeek40:measureMobileWeek('chip-mw40'),
     dayMob390:measurePair('dmob'),
+    weekDay390:measurePair('w390'),
     sidebar:measure('sidebar-row','badge-sidebar'),
     mapping:measure('mapping-card','badge-mapping'),
     detail:measure('detail-wrap','badge-detail')
@@ -435,25 +494,51 @@ function passCase(name, m, { requireOutsideTitle = false, requireInTime = false 
   return { name, ok: reasons.length === 0, reason: reasons.join('; ') || 'ok', metrics: m };
 }
 
+function passFitChip(name, m) {
+  if (!m) return { name, ok: false, reason: 'missing' };
+  const reasons = [];
+  if (!m.timeFullVisible) reasons.push(`timeTruncated=${m.timeText}`);
+  if (!m.timeScrollOk) reasons.push('timeScrollOverflow');
+  if (m.badgeAbsent) {
+    // ok — badge omitted by stage
+  } else {
+    if (m.text !== LABEL) reasons.push(`text=${m.text}`);
+    if (m.visibleChars !== 4) reasons.push(`visibleChars=${m.visibleChars}`);
+    if (m.visibleChars === 2) reasons.push('badgeTruncatedTo2');
+    if (!m.fitW || !m.fitH) reasons.push('badgeScrollOverflow');
+    if (!m.inside) reasons.push('badgeOutsideChip');
+    if (!m.badgeInTime) reasons.push('badgeNotInTime');
+  }
+  if (m.adjacentOverlap > 0) reasons.push(`adjacentOverlap=${m.adjacentOverlap}`);
+  return { name, ok: reasons.length === 0, reason: reasons.join('; ') || 'ok', metrics: m };
+}
+
 function passPair(name, pair, { expectFail = false, requireShortTime = false } = {}) {
   if (!pair) return { name, ok: false, reason: 'missing' };
   const reasons = [];
   const checkCard = (label, m) => {
-    if (m.text !== LABEL) reasons.push(`${label}.text=${m.text}`);
-    if (!m.inside) reasons.push(`${label}.badgeOutsideChip`);
-    if (!m.fitW) reasons.push(`${label}.scrollW`);
-    if (!m.fitH) reasons.push(`${label}.scrollH`);
-    if (m.visibleChars !== 4) reasons.push(`${label}.visibleChars=${m.visibleChars}`);
-    if (m.linePattern !== LABEL) reasons.push(`${label}.linePattern=${m.linePattern}`);
-    if (m.badgeInTitle) reasons.push(`${label}.badgeInTitle`);
-    if (!m.badgeInTime) reasons.push(`${label}.badgeNotInTime`);
+    if (!m.timeFullVisible) reasons.push(`${label}.timeTruncated=${m.timeText}`);
+    if (!m.timeScrollOk) reasons.push(`${label}.timeScrollOverflow`);
+    if (m.badgeAbsent) {
+      // stage omitted badge — ok
+    } else {
+      if (m.text !== LABEL) reasons.push(`${label}.text=${m.text}`);
+      if (!m.inside) reasons.push(`${label}.badgeOutsideChip`);
+      if (!m.fitW) reasons.push(`${label}.scrollW`);
+      if (!m.fitH) reasons.push(`${label}.scrollH`);
+      if (m.visibleChars !== 4) reasons.push(`${label}.visibleChars=${m.visibleChars}`);
+      if (m.visibleChars === 2) reasons.push(`${label}.badgeTruncatedTo2`);
+      if (m.linePattern !== LABEL) reasons.push(`${label}.linePattern=${m.linePattern}`);
+      if (m.badgeInTitle) reasons.push(`${label}.badgeInTitle`);
+      if (!m.badgeInTime) reasons.push(`${label}.badgeNotInTime`);
+    }
     if (m.hasNegMargin) reasons.push(`${label}.negMargin`);
     if (m.adjacentOverlap > 0) reasons.push(`${label}.adjacentOverlap=${m.adjacentOverlap}`);
     if (requireShortTime) {
       if (!m.shortShown) reasons.push(`${label}.shortTimeHidden`);
       if (m.fullShown) reasons.push(`${label}.fullTimeStillShown`);
-      if (!/^\d{2}:\d{2}$/.test(m.shortText || '')) {
-        reasons.push(`${label}.shortText=${m.shortText}`);
+      if (!/^\d{2}:\d{2}$/.test(m.shortText || m.timeText || '')) {
+        reasons.push(`${label}.shortText=${m.shortText || m.timeText}`);
       }
     }
   };
@@ -497,14 +582,6 @@ function passPair(name, pair, { expectFail = false, requireShortTime = false } =
       b: pair.b
     }
   };
-}
-
-function passMobileWeek(name, m) {
-  if (!m) return { name, ok: false, reason: 'missing' };
-  const reasons = [];
-  if (m.badgeCount !== 0) reasons.push(`badgeCount=${m.badgeCount}`);
-  if (m.adjacentOverlap !== 0) reasons.push(`adjacentOverlap=${m.adjacentOverlap}`);
-  return { name, ok: reasons.length === 0, reason: reasons.join('; ') || 'ok', metrics: m };
 }
 
 async function main() {
@@ -558,12 +635,18 @@ async function main() {
       passCase('month135', metrics.month135),
       passPair('weekOpen164', metrics.weekOpen164),
       passPair('weekFold126', metrics.weekFold126),
-      passPair('weekNarrow78', metrics.weekNarrow78, { requireShortTime: true }),
+      passPair('weekNarrow78', metrics.weekNarrow78),
       passPair('dayDesk106', metrics.dayDesk106),
       passPair('legacyFail126', metrics.legacyFail126, { expectFail: true }),
-      passMobileWeek('mobileWeek26', metrics.mobileWeek26),
-      passMobileWeek('mobileWeek36', metrics.mobileWeek36),
+      passFitChip('mobileWeek35', metrics.mobileWeek35),
+      passFitChip('mobileWeek40', metrics.mobileWeek40),
       passPair('dayMob390', metrics.dayMob390),
+      passPair('weekDay390', metrics.weekDay390),
+      passFitChip('fit35', metrics.fit35),
+      passFitChip('fit73p5', metrics.fit73p5),
+      passFitChip('fit78', metrics.fit78),
+      passFitChip('fit124', metrics.fit124),
+      passFitChip('fit390', metrics.fit390),
       passCase('sidebar390', metrics.sidebar),
       passCase('mapping390', metrics.mapping),
       passCase('detail390', metrics.detail)
@@ -595,12 +678,18 @@ async function main() {
       }));
 
     const mobileWeekSummary = [
-      passMobileWeek('mobileWeek26', metrics.mobileWeek26),
-      passMobileWeek('mobileWeek36', metrics.mobileWeek36)
+      passFitChip('mobileWeek35', metrics.mobileWeek35),
+      passFitChip('mobileWeek40', metrics.mobileWeek40),
+      passFitChip('fit35', metrics.fit35),
+      passFitChip('fit73p5', metrics.fit73p5),
+      passFitChip('fit78', metrics.fit78),
+      passFitChip('fit124', metrics.fit124),
+      passFitChip('fit390', metrics.fit390)
     ].map((c) => ({
       name: c.name,
-      badgeCount: c.metrics?.badgeCount,
-      adjacentOverlap: c.metrics?.adjacentOverlap,
+      badgeAbsent: c.metrics?.badgeAbsent,
+      timeText: c.metrics?.timeText,
+      visibleChars: c.metrics?.visibleChars,
       ok: c.ok
     }));
 

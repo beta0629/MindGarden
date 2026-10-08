@@ -558,7 +558,13 @@
 .consultant-suite.consultant-logs .mg-v2-consultation-log-calendar,
 .consultant-suite.consultant-logs .mg-v2-consultation-log-table,
 .consultant-suite.consultant-logs .consultation-log-calendar-block,
-.consultant-suite.consultant-logs .consultation-log-table-block {
+.consultant-suite.consultant-logs .consultation-log-table-block,
+.consultant-suite.consultant-logs .mg-v2-consultation-log-calendar-block,
+.consultant-suite.consultant-logs .mg-v2-consultation-log-table-block,
+.consultant-suite.consultant-logs .mg-v2-consultation-log-calendar-block__card,
+.consultant-suite.consultant-logs .mg-v2-consultation-log-table-block__card,
+.consultant-suite.consultant-logs .mg-v2-content-card.mg-v2-consultation-log-calendar-block__card,
+.consultant-suite.consultant-logs .mg-v2-content-card.mg-v2-consultation-log-table-block__card {
   background: var(--mg-v2-consultant-surface-card);
   border: var(--mg-v2-border-width-thin) solid var(--mg-v2-consultant-border-card);
   border-radius: var(--mg-v2-consultant-card-radius);

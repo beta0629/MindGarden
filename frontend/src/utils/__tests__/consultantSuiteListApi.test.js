@@ -49,4 +49,22 @@ describe('fetchConsultantSuitePagedList', () => {
     expect(result.items).toEqual([{ id: 'm1' }]);
     expect(result.totalElements).toBe(3);
   });
+
+  test('statusCounts 를 중첩 data 에서 표면화한다', async() => {
+    StandardizedApi.get.mockResolvedValue({
+      success: true,
+      data: {
+        mappings: [{ id: 1 }],
+        totalElements: 1,
+        statusCounts: { ALL: 9, ACTIVE: 7 }
+      }
+    });
+
+    const result = await fetchConsultantSuitePagedList(
+      '/api/v1/admin/mappings/consultant/1/clients',
+      {},
+      { itemKeys: ['mappings'] }
+    );
+    expect(result.statusCounts).toEqual({ ALL: 9, ACTIVE: 7 });
+  });
 });

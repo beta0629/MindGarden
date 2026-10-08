@@ -599,6 +599,7 @@ public class AdminController extends BaseApiController {
             @PathVariable Long consultantId,
             @RequestParam(required = false) Integer page,
             @RequestParam(required = false) Integer size,
+            @RequestParam(required = false) String status,
             HttpSession session) {
         resourceOwnerAccessGuard.requireConsultantSelfOrManagerAccess(session, consultantId);
         ResponseEntity<?> permissionResponse = PermissionCheckUtils.checkPermission(session,
@@ -763,7 +764,32 @@ public class AdminController extends BaseApiController {
             return bStr.compareTo(aStr);
         });
 
+        // statusCounts 는 상태 필터·페이징 전 전체 활성 매핑 기준 (칩 ALL/상태별 총계 SSOT)
+        Map<String, Long> statusCounts = new HashMap<>();
+        statusCounts.put("ALL", (long) activeMappings.size());
+        for (Map<String, Object> mappingRow : activeMappings) {
+            Object statusValue = mappingRow.get("status");
+            if (statusValue == null) {
+                continue;
+            }
+            String statusKey = statusValue.toString();
+            statusCounts.merge(statusKey, 1L, Long::sum);
+        }
+
+        String statusFilter = status != null ? status.trim() : "";
+        if (!statusFilter.isEmpty() && !"ALL".equalsIgnoreCase(statusFilter)) {
+            final String wantedStatus = statusFilter;
+            activeMappings = activeMappings.stream()
+                    .filter(mappingRow -> {
+                        Object statusValue = mappingRow.get("status");
+                        return statusValue != null
+                                && wantedStatus.equalsIgnoreCase(statusValue.toString());
+                    })
+                    .collect(Collectors.toList());
+        }
+
         Map<String, Object> data = new HashMap<>();
+        data.put("statusCounts", statusCounts);
         int totalElements = activeMappings.size();
         if (page != null || size != null) {
             int pageIndex = page != null && page >= 0 ? page : 0;

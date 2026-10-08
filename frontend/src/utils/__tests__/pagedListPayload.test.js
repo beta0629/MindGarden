@@ -9,7 +9,12 @@ import { hasMorePagedItems, normalizePagedListPayload } from '../pagedListPayloa
 
 describe('normalizePagedListPayload', () => {
   test('배열 응답 → 총계 없음', () => {
-    expect(normalizePagedListPayload([1, 2])).toEqual({ items: [1, 2], totalElements: null, totalPages: null });
+    expect(normalizePagedListPayload([1, 2])).toEqual({
+      items: [1, 2],
+      totalElements: null,
+      totalPages: null,
+      statusCounts: null
+    });
   });
 
   test('알림 응답 { notifications, totalElements, totalPages }', () => {
@@ -48,7 +53,8 @@ describe('normalizePagedListPayload', () => {
     expect(normalizePagedListPayload([{ id: 1 }, { id: 2 }])).toEqual({
       items: [{ id: 1 }, { id: 2 }],
       totalElements: null,
-      totalPages: null
+      totalPages: null,
+      statusCounts: null
     });
   });
 
@@ -57,13 +63,31 @@ describe('normalizePagedListPayload', () => {
   });
 
   test('null·문자열·음수 총계 → 빈 목록 / null 총계', () => {
-    expect(normalizePagedListPayload(null)).toEqual({ items: [], totalElements: null, totalPages: null });
+    expect(normalizePagedListPayload(null)).toEqual({
+      items: [],
+      totalElements: null,
+      totalPages: null,
+      statusCounts: null
+    });
     expect(normalizePagedListPayload('x').items).toEqual([]);
     expect(normalizePagedListPayload({ items: [], totalElements: -1 }).totalElements).toBeNull();
   });
 
   test('itemKeys 지정', () => {
     expect(normalizePagedListPayload({ rows: [1], list: [2] }, { itemKeys: ['rows'] }).items).toEqual([1]);
+  });
+
+  test('중첩 data.statusCounts 를 표면화', () => {
+    const result = normalizePagedListPayload({
+      success: true,
+      data: {
+        mappings: [{ id: 1 }],
+        totalElements: 1,
+        statusCounts: { ALL: 5, ACTIVE: 3, PENDING_PAYMENT: 2 }
+      }
+    }, { itemKeys: ['mappings'] });
+    expect(result.statusCounts).toEqual({ ALL: 5, ACTIVE: 3, PENDING_PAYMENT: 2 });
+    expect(result.totalElements).toBe(1);
   });
 });
 

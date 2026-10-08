@@ -2,7 +2,7 @@
 /**
  * 기관연계 배지 · 좁은 일정 칩 레이아웃 실측 (Chromium/Chrome)
  *
- * 실제 ScheduleCalendarView.css + design tokens 를 file:// 로 로드하고,
+ * 실제 ScheduleCalendarView.css + design tokens 를 HTML 에 인라인하고,
  * WeekDayScheduleEventChip 과 동일한 클래스·6-stage judge(실제 computed font)로
  * 시간 잘림·배지 클리핑을 검사한다.
  *
@@ -20,13 +20,15 @@
  */
 
 import fs from 'fs';
-import os from 'os';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { createRequire } from 'module';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '../..');
+/** snap Chromium 은 /tmp 를 못 읽음 — harness 는 레포 루트 하위에 둔다 */
+const HARNESS_DIR = path.join(ROOT, '.tmp-harness');
+const HARNESS_HTML = path.join(HARNESS_DIR, 'mg-engagement-badge-chip-layout.html');
 const LABEL = '기관연계';
 const SEG_A = LABEL.slice(0, Math.floor(LABEL.length / 2));
 const SEG_B = LABEL.slice(Math.floor(LABEL.length / 2));
@@ -47,10 +49,24 @@ const SLOT_30_MIN_PX = 38.4;
 const EVENT_50_MIN_HARNESS_PX = (50 / 30) * SLOT_30_MIN_PX;
 const GAP_10_MIN_PX = (10 / 30) * SLOT_30_MIN_PX;
 
+const HARNESS_CSS_REL_PATHS = [
+  'frontend/src/styles/tokens/design-v2-tokens.css',
+  'frontend/src/styles/unified-design-tokens.css',
+  'frontend/src/components/common/Badge.css',
+  'frontend/src/components/common/EngagementTypeBadge.css',
+  'frontend/src/components/admin/mapping-management/integrated-schedule/molecules/ScheduleEventMarks.css',
+  'frontend/src/components/admin/mapping-management/integrated-schedule/molecules/MatchingScheduleCompactRow.css',
+  'frontend/src/components/admin/mapping-management/IntegratedMatchingSchedule.css',
+  'frontend/src/components/ui/Schedule/ScheduleCalendarView.css',
+  'frontend/src/components/schedule/ScheduleB0KlA.css',
+  'frontend/src/components/ui/Schedule/ScheduleLegend.css'
+];
+
 const CHROME_CANDIDATES = [
   process.env.CHROME_PATH,
   '/usr/local/bin/google-chrome',
   '/usr/bin/google-chrome',
+  '/usr/bin/google-chrome-stable',
   '/usr/bin/chromium-browser',
   '/usr/bin/chromium',
   '/snap/bin/chromium',
@@ -86,21 +102,18 @@ function badgeMarkup(id) {
   return `<span class="mg-common-badge mg-common-badge--sm mg-common-badge--status mg-common-badge--info mg-engagement-type-badge" id="${id}" aria-label="${LABEL}"><span class="mg-engagement-type-badge__seg" aria-hidden="true">${SEG_A}</span><wbr /><span class="mg-engagement-type-badge__seg" aria-hidden="true">${SEG_B}</span></span>`;
 }
 
+function inlineStylesheets() {
+  return HARNESS_CSS_REL_PATHS.map((rel) => {
+    const abs = path.join(ROOT, rel);
+    const css = fs.readFileSync(abs, 'utf8');
+    return `<!-- ${rel} -->\n<style>\n${css}\n</style>`;
+  }).join('\n');
+}
+
 function buildHarnessHtml() {
-  const css = (rel) => path.join(ROOT, rel);
-  const link = (rel) => `<link rel="stylesheet" href="file://${css(rel)}" />`;
   return `<!DOCTYPE html>
 <html lang="ko"><head><meta charset="utf-8" />
-${link('frontend/src/styles/tokens/design-v2-tokens.css')}
-${link('frontend/src/styles/unified-design-tokens.css')}
-${link('frontend/src/components/common/Badge.css')}
-${link('frontend/src/components/common/EngagementTypeBadge.css')}
-${link('frontend/src/components/admin/mapping-management/integrated-schedule/molecules/ScheduleEventMarks.css')}
-${link('frontend/src/components/admin/mapping-management/integrated-schedule/molecules/MatchingScheduleCompactRow.css')}
-${link('frontend/src/components/admin/mapping-management/IntegratedMatchingSchedule.css')}
-${link('frontend/src/components/ui/Schedule/ScheduleCalendarView.css')}
-${link('frontend/src/components/schedule/ScheduleB0KlA.css')}
-${link('frontend/src/components/ui/Schedule/ScheduleLegend.css')}
+${inlineStylesheets()}
 <style>
 :root{--font-size-xs:.75rem;--mg-font-xs:.75rem;--mg-font-size-2xs:.625rem;--mg-radius-full:9999px;--mg-spacing-2:2px;--mg-spacing-8:8px;--mg-spacing-sm:8px;--mg-spacing-xs:4px;--mg-spacing-1:.25rem;--mg-spacing-xl:2rem;--mg-spacing-36:9rem;--mg-badge-status-info-bg:#e8f1fb;--mg-badge-status-info-text:#1d4f91;--mg-v2-color-primary-main:#2f6fed;--mg-v2-color-text-primary:#1a1a1a;--mg-v2-color-text-secondary:#4b5563;--mg-v2-color-neutral-50:#f9fafb;--mg-v2-color-neutral-100:#f3f4f6;--mg-v2-color-neutral-200:#e5e7eb;--mg-v2-color-neutral-500:#6b7280;--mg-v2-color-neutral-600:#4b5563;--mg-v2-border-width-thick:2px;--mg-v2-font-weight-semibold:600;--mg-v2-color-semantic-warning:#b45309;--mg-v2-color-semantic-warning-dark:#92400e;--mg-v2-color-semantic-warning-light:#fef3c7;--mg-v2-color-semantic-success-dark:#166534;--cs-brown-50:#faf8f5;--cs-brown-300:#d4c4b0;--cs-brown-600:#8b6914;--cs-brown-700:#6b4f0f;--mg-text-secondary:#4b5563;--mg-text-primary:#1a1a1a;--mg-secondary-600:#4b5563;--mg-color-text-main:#1a1a1a;--mg-color-text-secondary:#4b5563;--mg-color-border-main:#e5e7eb;--mg-color-background-main:#fff;--mg-color-surface-main:#fff;--mg-color-primary-light:#93c5fd;--mg-color-primary-main:#2f6fed;--mg-primary-700:#1d4ed8;--mg-gray-500:#6b7280;--mg-radius-sm:6px;--mg-month-event-status-color:var(--mg-v2-color-primary-main);--mg-schedule-legend-inline-pad:0}
 body{margin:0;font-family:"Pretendard","Noto Sans KR",sans-serif}
@@ -783,13 +796,19 @@ async function main() {
     process.exit(1);
   }
 
-  const htmlPath = path.join(os.tmpdir(), 'mg-engagement-badge-chip-layout.html');
-  fs.writeFileSync(htmlPath, buildHarnessHtml());
+  fs.mkdirSync(HARNESS_DIR, { recursive: true });
+  fs.writeFileSync(HARNESS_HTML, buildHarnessHtml());
 
   const browser = await puppeteer.launch({
     executablePath: chrome,
     headless: 'new',
-    args: ['--no-sandbox', '--disable-gpu', '--allow-file-access-from-files']
+    args: [
+      '--no-sandbox',
+      '--disable-setuid-sandbox',
+      '--disable-dev-shm-usage',
+      '--disable-gpu',
+      '--allow-file-access-from-files'
+    ]
   });
   try {
     const page = await browser.newPage();
@@ -798,7 +817,7 @@ async function main() {
       height: 1200,
       deviceScaleFactor: 1
     });
-    await page.goto(`file://${htmlPath}`, { waitUntil: 'networkidle0' });
+    await page.goto(`file://${HARNESS_HTML}`, { waitUntil: 'networkidle0' });
     await new Promise((r) => setTimeout(r, 300));
     const desktop = await page.evaluate(() => window.__collectDesktop());
 
@@ -855,6 +874,7 @@ async function main() {
     const failed = cases.filter((c) => !c.ok);
     console.log(JSON.stringify({
       chrome,
+      harnessHtml: HARNESS_HTML,
       cases,
       halfSummary: {
         fit34p8: {
@@ -880,6 +900,11 @@ async function main() {
     process.exit(0);
   } finally {
     await browser.close();
+    try {
+      fs.rmSync(HARNESS_DIR, { recursive: true, force: true });
+    } catch {
+      /* ignore cleanup */
+    }
   }
 }
 

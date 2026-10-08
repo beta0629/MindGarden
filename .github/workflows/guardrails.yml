@@ -233,28 +233,53 @@ jobs:
           npm i --no-save puppeteer-core
           test -d /tmp/node_modules/puppeteer-core
 
-      - name: Install Chromium
+      # Prefer google-chrome-stable (apt) over snap chromium — snap cannot read /tmp
+      # and blocks file:// CSS outside confinement. Harness also inlines CSS under repo ROOT.
+      - name: Install Chrome/Chromium
         run: |
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends chromium-browser \
-            || sudo apt-get install -y --no-install-recommends chromium \
-            || sudo snap install chromium
+          set -euo pipefail
           chrome=""
-          for cand in \
-            "$(command -v chromium-browser || true)" \
-            "$(command -v chromium || true)" \
-            /usr/bin/chromium-browser \
-            /usr/bin/chromium \
-            /snap/bin/chromium \
-            /usr/lib/chromium-browser/chromium-browser
-          do
-            if [ -n "$cand" ] && [ -x "$cand" ]; then
-              chrome="$cand"
-              break
+          if command -v google-chrome-stable >/dev/null 2>&1; then
+            chrome="$(command -v google-chrome-stable)"
+          elif command -v google-chrome >/dev/null 2>&1; then
+            chrome="$(command -v google-chrome)"
+          else
+            sudo apt-get update
+            if wget -q -O /tmp/google-chrome-key.pub https://dl.google.com/linux/linux_signing_key.pub \
+              && sudo gpg --dearmor -o /usr/share/keyrings/google-chrome.gpg /tmp/google-chrome-key.pub \
+              && echo "deb [arch=amd64 signed-by=/usr/share/keyrings/google-chrome.gpg] http://dl.google.com/linux/chrome/deb/ stable main" \
+                | sudo tee /etc/apt/sources.list.d/google-chrome.list >/dev/null \
+              && sudo apt-get update \
+              && sudo apt-get install -y --no-install-recommends google-chrome-stable; then
+              chrome="$(command -v google-chrome-stable || command -v google-chrome || true)"
+            else
+              echo "google-chrome-stable install failed; falling back to chromium"
+              sudo apt-get install -y --no-install-recommends chromium-browser \
+                || sudo apt-get install -y --no-install-recommends chromium \
+                || sudo snap install chromium
             fi
-          done
-          if [ -z "$chrome" ]; then
-            echo "Chromium binary not found after install"
+          fi
+          if [ -z "${chrome:-}" ]; then
+            for cand in \
+              "$(command -v google-chrome-stable || true)" \
+              "$(command -v google-chrome || true)" \
+              /usr/bin/google-chrome-stable \
+              /usr/bin/google-chrome \
+              "$(command -v chromium-browser || true)" \
+              "$(command -v chromium || true)" \
+              /usr/bin/chromium-browser \
+              /usr/bin/chromium \
+              /snap/bin/chromium \
+              /usr/lib/chromium-browser/chromium-browser
+            do
+              if [ -n "$cand" ] && [ -x "$cand" ]; then
+                chrome="$cand"
+                break
+              fi
+            done
+          fi
+          if [ -z "${chrome:-}" ]; then
+            echo "Chrome/Chromium binary not found after install"
             exit 1
           fi
           echo "CHROME_PATH=$chrome" >> "$GITHUB_ENV"

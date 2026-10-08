@@ -324,9 +324,9 @@ describe('ScheduleCalendarView — 날짜 클릭 일간 확대', () => {
     );
   });
 
-  test('FullCalendar eventMinHeight가 전달되어 짧은 슬롯에서도 본문이 눌리지 않는다', () => {
+  test('FullCalendar eventMinHeight가 짧은 슬롯 높이 이하로 전달되어 연속 일정 겹침을 막는다', () => {
     render(<ScheduleCalendarView {...baseProps()} />);
     const captured = getLastFullCalendarProps();
-    expect(captured.eventMinHeight).toBe(64);
+    expect(captured.eventMinHeight).toBe(15);
   });
 });

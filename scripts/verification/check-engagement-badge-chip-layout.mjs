@@ -6,10 +6,11 @@
  * WeekDayScheduleEventChip 과 동일한 클래스·6-stage judge(실제 computed font)로
  * 시간 잘림·배지 클리핑을 검사한다.
  *
- * Stages: long+badge → long → short+badge → short → compact-pad → hide-time
+ * Stages: long+badge → long → short+badge → short → compact-pad → hide-time → marker
  * 추가: 34.8px half-width 연속 칩(10:00–10:50 + 11:00 overlap column)
  * 구코드(11px 가정 font / short 강제)는 34.8 에서 FAIL 해야 함.
  * 추가: 내담자+상담사 동시 — 390 주간 12~29px, 1440 34.8·59px (client 우선 / counselor 숨김·ellipsis)
+ * 12px: shortTime 1글자도 불가 → marker(글자 0 + 상태 색 막대). 칩 밖 글자 조각 FAIL.
  *
  * 사용:
  *   node scripts/verification/check-engagement-badge-chip-layout.mjs
@@ -360,6 +361,7 @@ function pickStage(harnessW){
   const badgeFont=resolveFont(badgeEl)||timeFont;
   const longW=measureText('오전 10:00', timeFont);
   const shortW=measureText('10:00', timeFont);
+  const minTimeGlyphW=measureText('1', timeFont);
   const badgeW=measureText(LABEL, badgeFont)+8;
   const gap=4;
   const { normalPadX, compactPadX }=readPadTokens(probe);
@@ -371,6 +373,7 @@ function pickStage(harnessW){
     compactChipWidth:compactW,
     longTimeWidth:longW,
     shortTimeWidth:shortW,
+    minTimeGlyphWidth:minTimeGlyphW,
     badgeWidth:badgeW,
     gap,
     considerBadge:true,
@@ -380,6 +383,7 @@ function pickStage(harnessW){
     statusRowHeight:rowH.statusRowHeight,
     gapY:2
   });
+  const markerOnly=!!judged.markerOnly || judged.stage==='marker';
   const time=judged.showTime
     ? (judged.timeMode==='long' ? '오전 10:00' : '10:00')
     : '10:00';
@@ -389,11 +393,12 @@ function pickStage(harnessW){
     stage:judged.stage,
     showTime:!!judged.showTime,
     compactPad:!!judged.compactPad,
-    showStatus:judged.showStatus!==false,
-    showTitle:judged.showTitle!==false,
+    showStatus:markerOnly ? false : judged.showStatus!==false,
+    showTitle:markerOnly ? false : judged.showTitle!==false,
     mergeTimeTitle:!!judged.mergeTimeTitle,
     heightStage:judged.heightStage||'full',
-    timeFont, shortW, longW, chipW, compactW,
+    markerOnly,
+    timeFont, shortW, longW, minTimeGlyphW, chipW, compactW,
     ...rowH
   };
 }
@@ -413,11 +418,13 @@ function pickStageForHeight(harnessW, chipH){
   const chipW=Math.max(0, harnessW-normalPadX);
   const compactW=Math.max(0, harnessW-compactPadX);
   const rowH=probeRowHeights(probe);
+  const minTimeGlyphW=measureText('1', timeFont);
   const judged=api.judgeWeekDayChipFit({
     chipWidth:chipW,
     compactChipWidth:compactW,
     longTimeWidth:longW,
     shortTimeWidth:shortW,
+    minTimeGlyphWidth:minTimeGlyphW,
     badgeWidth:badgeW,
     gap:4,
     considerBadge:true,
@@ -427,6 +434,7 @@ function pickStageForHeight(harnessW, chipH){
     statusRowHeight:rowH.statusRowHeight,
     gapY:2
   });
+  const markerOnly=!!judged.markerOnly || judged.stage==='marker';
   return {
     ...base,
     time:judged.showTime ? (judged.timeMode==='long' ? '오전 10:00' : '10:00') : '10:00',
@@ -434,10 +442,11 @@ function pickStageForHeight(harnessW, chipH){
     stage:judged.stage,
     showTime:!!judged.showTime,
     compactPad:!!judged.compactPad,
-    showStatus:judged.showStatus!==false,
-    showTitle:judged.showTitle!==false,
+    showStatus:markerOnly ? false : judged.showStatus!==false,
+    showTitle:markerOnly ? false : judged.showTitle!==false,
     mergeTimeTitle:!!judged.mergeTimeTitle,
-    heightStage:judged.heightStage||'full'
+    heightStage:judged.heightStage||'full',
+    markerOnly
   };
 }
 
@@ -459,17 +468,19 @@ function legacyPickStage11px(harnessW){
 
 function weekDayCard(id, stageInfo, displayTimeOverride){
   const displayTime=displayTimeOverride!=null?displayTimeOverride:stageInfo.time;
+  const markerOnly=!!stageInfo.markerOnly || stageInfo.stage==='marker';
   const compactCls=stageInfo.compactPad?' mg-v2-ad-calendar-event--chip-pad-compact':'';
-  const mergeCls=stageInfo.mergeTimeTitle?' mg-v2-ad-calendar-event--merge-time-title':'';
-  const badge=stageInfo.badge?badgeHtml('badge-'+id,'mg-v2-ad-calendar-event__engagement'):'';
-  const timeHidden=stageInfo.showTime===false;
-  const showTitle=stageInfo.showTitle!==false;
-  const showStatus=stageInfo.showStatus!==false;
+  const mergeCls=!markerOnly && stageInfo.mergeTimeTitle?' mg-v2-ad-calendar-event--merge-time-title':'';
+  const markerCls=markerOnly?' mg-v2-ad-calendar-event--chip-marker mg-v2-ad-calendar-event--status-booked':'';
+  const badge=!markerOnly && stageInfo.badge?badgeHtml('badge-'+id,'mg-v2-ad-calendar-event__engagement'):'';
+  const timeHidden=markerOnly || stageInfo.showTime===false;
+  const showTitle=!markerOnly && stageInfo.showTitle!==false;
+  const showStatus=!markerOnly && stageInfo.showStatus!==false;
   const clientLabel=stageInfo.clientLabel||'이내담';
   const counselorLabel=stageInfo.counselorLabel||'';
-  const showCounselor=stageInfo.showCounselorName===true && !!counselorLabel;
+  const showCounselor=!markerOnly && stageInfo.showCounselorName===true && !!counselorLabel;
   const a11yTime=displayTime || stageInfo.time;
-  const institutionPart=stageInfo.badge?' · '+LABEL:'';
+  const institutionPart=(!markerOnly && stageInfo.badge)?' · '+LABEL:'';
   const a11yName=[clientLabel, counselorLabel].filter(Boolean).join(' ');
   const titleAttr=a11yTime+' · '+a11yName+' - 예약됨'+institutionPart;
   const measureSeed=displayTime || stageInfo.time;
@@ -486,11 +497,14 @@ function weekDayCard(id, stageInfo, displayTimeOverride){
     ? '<div class="mg-v2-ad-calendar-event__status">예약됨</div>'
     : '';
   const heightStage=stageInfo.heightStage||'full';
-  const timeBlock='<div class="mg-v2-ad-calendar-event__time">'+timeInner+badge+'</div>';
-  const body=stageInfo.mergeTimeTitle
-    ? '<div class="mg-v2-ad-calendar-event__merge-row">'+timeBlock+titleHtml+'</div>'
-    : timeBlock+titleHtml;
-  return '<div class="mg-v2-ad-calendar-event mg-v2-ad-calendar-event--week-day-fit'+compactCls+mergeCls+'" id="chip-'+id+'" data-chip-fit-stage="'+stageInfo.stage+'" data-chip-height-stage="'+heightStage+'" data-show-counselor="'+String(showCounselor)+'" title="'+titleAttr+'" aria-label="'+titleAttr+'">'+body+statusHtml+'</div>';
+  const timeBlock='<div class="mg-v2-ad-calendar-event__time"'+(markerOnly?' aria-hidden="true"':'')+'>'+timeInner+badge+'</div>';
+  const body=markerOnly
+    ? timeBlock
+    : (stageInfo.mergeTimeTitle
+      ? '<div class="mg-v2-ad-calendar-event__merge-row">'+timeBlock+titleHtml+'</div>'
+      : timeBlock+titleHtml);
+  const markerAttr=markerOnly?' data-chip-marker="true"':'';
+  return '<div class="mg-v2-ad-calendar-event mg-v2-ad-calendar-event--week-day-fit'+compactCls+mergeCls+markerCls+'" id="chip-'+id+'" data-chip-fit-stage="'+stageInfo.stage+'" data-chip-height-stage="'+heightStage+'" data-show-counselor="'+String(showCounselor)+'"'+markerAttr+' title="'+titleAttr+'" aria-label="'+titleAttr+'">'+body+statusHtml+'</div>';
 }
 
 /** 내담자+상담사 동시 — 공용 judge 로 showCounselorName 반영 */
@@ -513,6 +527,7 @@ function pickStageWithNames(harnessW, opts){
   const counselorFont=resolveFont(counselorEl)||clientFont;
   const longW=measureText('오전 10:00', timeFont);
   const shortW=measureText('10:00', timeFont);
+  const minTimeGlyphW=measureText('1', timeFont);
   const badgeW=measureText(LABEL, badgeFont)+8;
   const clientW=measureText(clientLabel, clientFont);
   const counselorW=measureText(counselorLabel, counselorFont);
@@ -527,6 +542,7 @@ function pickStageWithNames(harnessW, opts){
     compactChipWidth:compactW,
     longTimeWidth:longW,
     shortTimeWidth:shortW,
+    minTimeGlyphWidth:minTimeGlyphW,
     badgeWidth:badgeW,
     gap,
     considerBadge:true,
@@ -540,6 +556,7 @@ function pickStageWithNames(harnessW, opts){
     minClientWidth:minClientW,
     nameGap:gap
   });
+  const markerOnly=!!judged.markerOnly || judged.stage==='marker';
   return {
     ...base,
     time:judged.showTime ? (judged.timeMode==='long' ? '오전 10:00' : '10:00') : '10:00',
@@ -547,20 +564,21 @@ function pickStageWithNames(harnessW, opts){
     stage:judged.stage,
     showTime:!!judged.showTime,
     compactPad:!!judged.compactPad,
-    showStatus:judged.showStatus!==false,
-    showTitle:judged.showTitle!==false,
+    showStatus:markerOnly ? false : judged.showStatus!==false,
+    showTitle:markerOnly ? false : judged.showTitle!==false,
     mergeTimeTitle:!!judged.mergeTimeTitle,
     heightStage:judged.heightStage||'full',
+    markerOnly,
     showCounselorName:!!judged.showCounselorName,
     clientLabel,
     counselorLabel,
-    clientW, counselorW, minClientW, chipW, compactW
+    clientW, counselorW, minClientW, chipW, compactW, minTimeGlyphW
   };
 }
 
 function namePriorityChip(w, id){
   const stage=pickStageWithNames(w, { clientLabel:'라마바', counselorLabel:'상담사A' });
-  return '<div><div class="lab">namePri'+w+' stage='+stage.stage+' counselor='+stage.showCounselorName+'</div>'
+  return '<div><div class="lab">namePri'+w+' stage='+stage.stage+' marker='+!!stage.markerOnly+' counselor='+stage.showCounselorName+'</div>'
     +'<div class="harness" style="width:'+w+'px;height:'+HARNESS_H+'px">'
     +'<div class="fc-timegrid-event-harness" style="position:relative;height:100%">'+weekDayCard(id, stage)+'</div>'
     +'</div></div>';
@@ -722,7 +740,7 @@ function adjacentOverlapCount(chip){
   return n;
 }
 
-/** 칩에 실제로 보이는 텍스트 글자 수(시간·이름·상태). 0이면 빈 칩. */
+/** 칩에 실제로 보이는 텍스트 글자 수(시간·이름·상태). 0이면 빈 칩(marker 제외). */
 function visibleChipTextCount(chip){
   if(!chip) return 0;
   let count=0;
@@ -742,6 +760,97 @@ function visibleChipTextCount(chip){
     if(r.width>0.5 && r.height>0.5) count+=text.length;
   }
   return count;
+}
+
+/**
+ * ancestor overflow clip 교집합 (chip 자체 overflow 는 제외 — 칩 밖 누출 검사용).
+ */
+function glyphPaintClipRect(el, chip){
+  let left=-Infinity, top=-Infinity, right=Infinity, bottom=Infinity;
+  let node=el;
+  while(node && node!==chip){
+    const cs=getComputedStyle(node);
+    const ox=cs.overflowX||cs.overflow;
+    const oy=cs.overflowY||cs.overflow;
+    const clipsX=ox==='hidden'||ox==='clip'||ox==='scroll'||cs.textOverflow==='ellipsis';
+    const clipsY=oy==='hidden'||oy==='clip'||oy==='scroll';
+    if(clipsX||clipsY){
+      const r=node.getBoundingClientRect();
+      if(clipsX){ left=Math.max(left,r.left); right=Math.min(right,r.right); }
+      if(clipsY){ top=Math.max(top,r.top); bottom=Math.min(bottom,r.bottom); }
+    }
+    node=node.parentElement;
+  }
+  if(!Number.isFinite(left)) left=-1e6;
+  if(!Number.isFinite(top)) top=-1e6;
+  if(!Number.isFinite(right)) right=1e6;
+  if(!Number.isFinite(bottom)) bottom=1e6;
+  return { left, top, right, bottom };
+}
+
+/**
+ * 칩 경계 밖으로 실제로 그려지는 글자 조각 수.
+ * overflow:hidden/ellipsis 로 잘린 레이아웃 좌표는 무시(말줄임 정상).
+ * 칩 overflow 가 visible 일 때 칩 rect 밖으로 페인트되면 → FAIL.
+ */
+function clippedGlyphFragmentCount(chip){
+  if(!chip) return 0;
+  const c=chip.getBoundingClientRect();
+  const chipCs=getComputedStyle(chip);
+  const chipClipsX=(chipCs.overflowX||chipCs.overflow)==='hidden'
+    || (chipCs.overflowX||chipCs.overflow)==='clip'
+    || (chipCs.overflowX||chipCs.overflow)==='scroll';
+  const chipClipsY=(chipCs.overflowY||chipCs.overflow)==='hidden'
+    || (chipCs.overflowY||chipCs.overflow)==='clip'
+    || (chipCs.overflowY||chipCs.overflow)==='scroll';
+  // marker 칩은 overflow:hidden + 글자 0 — 조각 검사 불필요
+  if(chip.classList.contains('mg-v2-ad-calendar-event--chip-marker')) return 0;
+  let clipped=0;
+  const walker=document.createTreeWalker(chip, NodeFilter.SHOW_TEXT, null);
+  let node;
+  while((node=walker.nextNode())){
+    const parent=node.parentElement;
+    if(!parent) continue;
+    if(parent.closest('[hidden], [aria-hidden="true"]')) continue;
+    const pcs=getComputedStyle(parent);
+    if(pcs.visibility==='hidden' || pcs.display==='none') continue;
+    const text=node.textContent||'';
+    const paintClip=glyphPaintClipRect(parent, chip);
+    for(let i=0;i<text.length;i++){
+      if(/\\s/.test(text[i])) continue;
+      const range=document.createRange();
+      range.setStart(node,i); range.setEnd(node,i+1);
+      const r=range.getBoundingClientRect();
+      if(!(r.width>0 && r.height>0)) continue;
+      // ancestor clip 안 페인트 영역
+      const pLeft=Math.max(r.left, paintClip.left);
+      const pTop=Math.max(r.top, paintClip.top);
+      const pRight=Math.min(r.right, paintClip.right);
+      const pBottom=Math.min(r.bottom, paintClip.bottom);
+      if(pRight-pLeft<=0.5 || pBottom-pTop<=0.5) continue;
+      // 칩이 클리핑하면 밖으로 안 그려짐
+      if(chipClipsX && chipClipsY) continue;
+      // 페인트 영역이 칩 밖을 넘으면 조각 누출
+      const outsideX=!chipClipsX && (pLeft<c.left-0.75 || pRight>c.right+0.75);
+      const outsideY=!chipClipsY && (pTop<c.top-0.75 || pBottom>c.bottom+0.75);
+      if(outsideX || outsideY) clipped+=1;
+    }
+  }
+  return clipped;
+}
+
+/** marker 칩 상태 색 막대( border-left ) 가시 여부 */
+function markerBarVisible(chip){
+  if(!chip) return false;
+  const isMarker=chip.classList.contains('mg-v2-ad-calendar-event--chip-marker')
+    || chip.getAttribute('data-chip-marker')==='true'
+    || chip.getAttribute('data-chip-fit-stage')==='marker';
+  if(!isMarker) return false;
+  const cs=getComputedStyle(chip);
+  const bw=Number.parseFloat(cs.borderLeftWidth)||0;
+  const bc=String(cs.borderLeftColor||'');
+  const transparent=bc===''||bc==='transparent'||bc==='rgba(0, 0, 0, 0)';
+  return bw>0.5 && !transparent;
 }
 
 function visibleTimeMode(chip){
@@ -789,6 +898,11 @@ function measureChipTimeOnly(chipId){
   const c=chip.getBoundingClientRect();
   const clientLayout=clientNameLayoutOk(chip);
   const counselorLayout=counselorNameLayoutOk(chip);
+  const markerOnly=chip.classList.contains('mg-v2-ad-calendar-event--chip-marker')
+    || chip.getAttribute('data-chip-marker')==='true'
+    || timeMode.fitStage==='marker';
+  const clippedGlyphs=clippedGlyphFragmentCount(chip);
+  const markerBarOk=markerBarVisible(chip);
   if(!badge){
     return {
       text:'',
@@ -808,13 +922,16 @@ function measureChipTimeOnly(chipId){
       scrollW:0, clientW:0, scrollH:0, clientH:0,
       clientLayout,
       counselorLayout,
+      markerOnly,
+      clippedGlyphs,
+      markerBarVisible:markerBarOk,
       ...timeMode
     };
   }
   return measure(chipId, badge.id);
 }
 
-/** 내담자+상담사 동시 칩 — client 폭·counselor ellipsis·a11y */
+/** 내담자+상담사 동시 칩 — client 폭·counselor ellipsis·a11y·marker */
 function measureNamePriority(chipId){
   const chip=document.getElementById(chipId);
   if(!chip) return null;
@@ -839,6 +956,9 @@ function measure(chipId,badgeId){
   const time=chip.querySelector('.mg-v2-ad-calendar-event__time');
   const cs=getComputedStyle(badge);
   const timeMode=visibleTimeMode(chip);
+  const markerOnly=chip.classList.contains('mg-v2-ad-calendar-event--chip-marker')
+    || chip.getAttribute('data-chip-marker')==='true'
+    || timeMode.fitStage==='marker';
   return {
     text:badge.textContent,
     chipW:+c.width.toFixed(2), chipH:+c.height.toFixed(2),
@@ -862,6 +982,9 @@ function measure(chipId,badgeId){
     visibleChipText:visibleChipTextCount(chip),
     clientLayout:clientNameLayoutOk(chip),
     counselorLayout:counselorNameLayoutOk(chip),
+    markerOnly,
+    clippedGlyphs:clippedGlyphFragmentCount(chip),
+    markerBarVisible:markerBarVisible(chip),
     ...timeMode
   };
 }
@@ -1025,7 +1148,7 @@ function measureDurationStack(prefix){
     const c=chip.getBoundingClientRect();
     const fits=c.height<=h.height+0.5;
     if(!fits) overflow=true;
-    if((m.visibleChipText||0)<=0) empty=true;
+    if((m.visibleChipText||0)<=0 && !(m.markerOnly || m.fitStage==='marker')) empty=true;
     rects.push(c);
     const rowMetrics=measureChipRowHeights(chip);
     const nameVisible=clientNameVisible(chip);
@@ -1217,6 +1340,14 @@ function passCase(name, m, { requireOutsideTitle = false, requireInTime = false 
 function passFitChip(name, m) {
   if (!m) return { name, ok: false, reason: 'missing' };
   const reasons = [];
+  if ((m.clippedGlyphs || 0) > 0) reasons.push(`clippedGlyphFragments=${m.clippedGlyphs}`);
+  if (m.markerOnly || m.fitStage === 'marker') {
+    if ((m.visibleChipText || 0) > 0) reasons.push(`markerHasVisibleText=${m.visibleChipText}`);
+    if (!m.markerBarVisible) reasons.push('markerBarMissing');
+    const a11y = `${m.ariaLabel || ''} ${m.titleAttr || ''}`;
+    if (!/\d{1,2}:\d{2}/.test(a11y)) reasons.push('markerMissingA11yTime');
+    return { name, ok: reasons.length === 0, reason: reasons.join('; ') || 'ok', metrics: m };
+  }
   if (!m.timeFullVisible) reasons.push(`timeTruncated=${m.timeText}`);
   if (!m.timeScrollOk) reasons.push('timeScrollOverflow');
   if ((m.visibleChipText || 0) <= 0) reasons.push('emptyChip');
@@ -1224,7 +1355,7 @@ function passFitChip(name, m) {
     // hide-time: aria/title must still carry full time
     const a11y = `${m.ariaLabel || ''} ${m.titleAttr || ''}`;
     if (!/\d{1,2}:\d{2}/.test(a11y)) reasons.push('hideTimeMissingA11y');
-    // hide-time 이어도 이름 등 가시 텍스트 필수
+    // hide-time 이어도 이름 등 가시 텍스트 필수(marker 제외)
     if ((m.visibleChipText || 0) <= 0) reasons.push('hideTimeEmptyVisible');
   } else if (m.timeText) {
     // visible text must equal full short/long chosen (no 「11:0」)
@@ -1253,6 +1384,17 @@ function passFitChip(name, m) {
 function passNamePriority(name, m) {
   if (!m) return { name, ok: false, reason: 'missing' };
   const reasons = [];
+  if ((m.clippedGlyphs || 0) > 0) reasons.push(`clippedGlyphFragments=${m.clippedGlyphs}`);
+  if (m.markerOnly || m.fitStage === 'marker') {
+    // 표식 단계: 글자 0 + 색 막대 + aria 이름 → PASS (빈 칩 아님)
+    if ((m.visibleChipText || 0) > 0) reasons.push(`markerHasVisibleText=${m.visibleChipText}`);
+    if (!m.markerBarVisible) reasons.push('markerBarMissing');
+    if (m.showTitle) reasons.push('markerShowTitleDom');
+    if (m.showCounselorInDom) reasons.push('markerShowCounselorDom');
+    if (!m.hasClientA11y) reasons.push('clientMissingA11y');
+    if (!m.hasCounselorA11y) reasons.push('counselorMissingA11y');
+    return { name, ok: reasons.length === 0, reason: reasons.join('; ') || 'ok', metrics: m };
+  }
   if ((m.visibleChipText || 0) <= 0) reasons.push('emptyChip');
   if (m.clientLayout && m.clientLayout.present && !m.clientLayout.ok) {
     reasons.push(m.clientLayout.reason || 'clientLayout');
@@ -1280,16 +1422,24 @@ function passDurationStack(name, stack) {
       reasons.push(`missing${key}`);
       continue;
     }
-    if ((p.visibleChipText || 0) <= 0) reasons.push(`${key}.emptyChip`);
+    if (p.markerOnly || p.fitStage === 'marker') {
+      if ((p.visibleChipText || 0) > 0) reasons.push(`${key}.markerHasVisibleText`);
+      if (!p.markerBarVisible) reasons.push(`${key}.markerBarMissing`);
+    } else if ((p.visibleChipText || 0) <= 0) {
+      reasons.push(`${key}.emptyChip`);
+    }
+    if ((p.clippedGlyphs || 0) > 0) reasons.push(`${key}.clippedGlyphFragments`);
     if (!p.cardFitsHarness) reasons.push(`${key}.overflow`);
-    if (!p.timeFullVisible && !p.timeHidden) reasons.push(`${key}.timeTruncated`);
+    if (!p.timeFullVisible && !p.timeHidden && !(p.markerOnly || p.fitStage === 'marker')) {
+      reasons.push(`${key}.timeTruncated`);
+    }
     if (p.lineCrushed) reasons.push(`${key}.lineCrushed`);
     const a11y = `${p.ariaLabel || ''} ${p.titleAttr || ''}`;
     if (!/\d{1,2}:\d{2}/.test(a11y)) reasons.push(`${key}.missingA11yTime`);
   }
-  // 50분(≈53px) 은 시간+이름 두 줄 → hide-status(또는 full). 이름 텍스트 필수.
+  // 50분(≈53px) 은 시간+이름 두 줄 → hide-status(또는 full). 이름 텍스트 필수(marker 제외).
   const p50 = stack.parts?.['50'];
-  if (p50) {
+  if (p50 && !(p50.markerOnly || p50.fitStage === 'marker')) {
     if (!['full', 'hide-status'].includes(p50.heightStage)) {
       reasons.push(`50.heightStage=${p50.heightStage}`);
     }
@@ -1343,8 +1493,22 @@ function passPair(name, pair, { expectFail = false, requireShortTime = false } =
   if (!expectFail) {
     checkCard('a', pair.a);
     checkCard('b', pair.b);
-    if ((pair.a?.visibleChipText || 0) <= 0) reasons.push('a.emptyChip');
-    if ((pair.b?.visibleChipText || 0) <= 0) reasons.push('b.emptyChip');
+    const aMarker = pair.a?.markerOnly || pair.a?.fitStage === 'marker';
+    const bMarker = pair.b?.markerOnly || pair.b?.fitStage === 'marker';
+    if ((pair.a?.clippedGlyphs || 0) > 0) reasons.push(`a.clippedGlyphFragments=${pair.a.clippedGlyphs}`);
+    if ((pair.b?.clippedGlyphs || 0) > 0) reasons.push(`b.clippedGlyphFragments=${pair.b.clippedGlyphs}`);
+    if (aMarker) {
+      if ((pair.a?.visibleChipText || 0) > 0) reasons.push('a.markerHasVisibleText');
+      if (!pair.a?.markerBarVisible) reasons.push('a.markerBarMissing');
+    } else if ((pair.a?.visibleChipText || 0) <= 0) {
+      reasons.push('a.emptyChip');
+    }
+    if (bMarker) {
+      if ((pair.b?.visibleChipText || 0) > 0) reasons.push('b.markerHasVisibleText');
+      if (!pair.b?.markerBarVisible) reasons.push('b.markerBarMissing');
+    } else if ((pair.b?.visibleChipText || 0) <= 0) {
+      reasons.push('b.emptyChip');
+    }
     if (!pair.cardFitsHarnessA) {
       reasons.push(`cardH_a ${pair.cardH_a}>harnessH ${pair.harnessH}`);
     }

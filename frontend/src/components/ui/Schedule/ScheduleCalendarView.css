@@ -172,8 +172,10 @@
 /*
  * 좁은 칩: 내담자 우선 + 상담사 먼저 shrink/ellipsis.
  * 기관연계 배지는 말줄임 금지(전부 또는 생략).
+ * marker(표식) 단계에서는 min-width:1ch 미적용 — 글자 조각 방지.
  */
-.mg-v2-ad-calendar-event--week-day-fit .mg-v2-ad-calendar-event__title .client-name {
+.mg-v2-ad-calendar-event--week-day-fit:not(.mg-v2-ad-calendar-event--chip-marker)
+  .mg-v2-ad-calendar-event__title .client-name {
     flex: 1 1 auto;
     min-width: 1ch;
     overflow: hidden;
@@ -195,6 +197,79 @@
  */
 .mg-v2-ad-calendar-event--week-day-fit.mg-v2-ad-calendar-event--chip-pad-compact {
     padding: var(--mg-v2-space-0-5) var(--mg-v2-space-1);
+}
+
+/*
+ * marker(표식) 단계: 글자 0 + 상태 색 막대만.
+ * compact status border 토큰과 동일 계열 재사용 (hex/rgb 금지).
+ */
+.mg-v2-ad-calendar-event--week-day-fit.mg-v2-ad-calendar-event--chip-marker {
+    overflow: hidden;
+    min-width: 0;
+    padding: var(--mg-v2-space-0-5);
+    border-left-width: var(--mg-v2-border-width-thick);
+    border-left-style: solid;
+    border-left-color: var(--mg-v2-color-neutral-600);
+    background-color: color-mix(
+        in srgb,
+        var(--mg-v2-color-neutral-600) 18%,
+        transparent
+    );
+}
+
+.mg-v2-ad-calendar-event--week-day-fit.mg-v2-ad-calendar-event--chip-marker.mg-v2-ad-calendar-event--status-booked {
+    border-left-color: var(--mg-v2-color-primary-main);
+    background-color: color-mix(
+        in srgb,
+        var(--mg-v2-color-primary-main) 18%,
+        transparent
+    );
+}
+
+.mg-v2-ad-calendar-event--week-day-fit.mg-v2-ad-calendar-event--chip-marker.mg-v2-ad-calendar-event--status-confirmed {
+    border-left-color: var(--mg-v2-color-semantic-success-dark);
+    background-color: color-mix(
+        in srgb,
+        var(--mg-v2-color-semantic-success-dark) 18%,
+        transparent
+    );
+}
+
+.mg-v2-ad-calendar-event--week-day-fit.mg-v2-ad-calendar-event--chip-marker.mg-v2-ad-calendar-event--status-completed {
+    border-left-color: var(--mg-v2-color-neutral-600);
+    background-color: color-mix(
+        in srgb,
+        var(--mg-v2-color-neutral-600) 18%,
+        transparent
+    );
+}
+
+.mg-v2-ad-calendar-event--week-day-fit.mg-v2-ad-calendar-event--chip-marker.mg-v2-ad-calendar-event--status-tentative {
+    border-left-color: var(--mg-v2-color-semantic-warning-dark);
+    background-color: color-mix(
+        in srgb,
+        var(--mg-v2-color-semantic-warning-dark) 18%,
+        transparent
+    );
+}
+
+.mg-v2-ad-calendar-event--week-day-fit.mg-v2-ad-calendar-event--chip-marker.mg-v2-ad-calendar-event--status-cancelled {
+    border-left-color: var(--mg-v2-color-neutral-500);
+    background-color: color-mix(
+        in srgb,
+        var(--mg-v2-color-neutral-500) 18%,
+        transparent
+    );
+}
+
+.mg-v2-ad-calendar-event--week-day-fit.mg-v2-ad-calendar-event--chip-marker
+  > .mg-v2-ad-calendar-event__time {
+    position: absolute;
+    width: 0;
+    height: 0;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    pointer-events: none;
 }
 
 .mg-v2-ad-calendar-event--week-day-fit .mg-v2-ad-calendar-event__time-text[hidden] {

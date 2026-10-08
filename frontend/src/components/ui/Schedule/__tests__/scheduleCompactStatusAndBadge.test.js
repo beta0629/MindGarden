@@ -74,6 +74,7 @@ describe('통합스케줄 월간·주간 상태와 컴팩트 배지', () => {
     expect(weekDay.length).toBeGreaterThan(0);
     expect(weekDay).toMatch(/<WeekDayScheduleEventChip/);
     expect(weekDay).toMatch(/showInstitutionMark=\{showInstitutionMark\}/);
+    expect(weekDay).toMatch(/statusModifier=\{statusModifier\}/);
     expect(weekDay).not.toMatch(/isWeekView\s*&&\s*isMobileViewport/);
     expect(weekDay).not.toMatch(/showEngagementBadgeOnChip/);
   });

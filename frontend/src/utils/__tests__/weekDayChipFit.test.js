@@ -22,7 +22,8 @@ const HEIGHT_FULL = {
   showStatus: true,
   showTitle: true,
   mergeTimeTitle: false,
-  showCounselorName: false
+  showCounselorName: false,
+  markerOnly: false
 };
 
 describe('judgeWeekDayChipFit', () => {
@@ -354,9 +355,24 @@ describe('빈 칩 금지 lock', () => {
     });
     expect(enforced.showTime || enforced.showTitle).toBe(true);
     expect(enforced.showTitle).toBe(true);
+    expect(enforced.markerOnly).toBe(false);
   });
 
-  test('judgeWeekDayChipFit 은 어떤 입력에서도 빈 칩을 반환하지 않는다', () => {
+  test('marker 단계에서는 텍스트 강제 금지·markerOnly 유지', () => {
+    const enforced = enforceNonEmptyChipVisible({
+      stage: WEEK_DAY_CHIP_FIT_STAGE.MARKER,
+      markerOnly: true,
+      showTime: false,
+      showTitle: false,
+      mergeTimeTitle: false,
+      heightStage: WEEK_DAY_CHIP_HEIGHT_STAGE.TIME_DETAIL
+    });
+    expect(enforced.showTime).toBe(false);
+    expect(enforced.showTitle).toBe(false);
+    expect(enforced.markerOnly).toBe(true);
+  });
+
+  test('judgeWeekDayChipFit 은 텍스트 또는 marker 표식 중 하나를 반환한다', () => {
     const fit = judgeWeekDayChipFit({
       chipWidth: 8,
       compactChipWidth: 10,
@@ -371,7 +387,77 @@ describe('빈 칩 금지 lock', () => {
       statusRowHeight: 14,
       gapY: 2
     });
-    expect(fit.showTime || fit.showTitle).toBe(true);
+    expect(fit.showTime || fit.showTitle || fit.markerOnly).toBe(true);
+  });
+});
+
+describe('marker(표식) 단계 — 12px급', () => {
+  test('compact 에 shortTime 1글자도 못 넣으면 markerOnly·텍스트 강제 없음', () => {
+    const fit = judgeWeekDayChipFit({
+      chipWidth: 4,
+      compactChipWidth: 6,
+      longTimeWidth: 56,
+      shortTimeWidth: 28,
+      minTimeGlyphWidth: 8,
+      badgeWidth: 36,
+      gap: 4,
+      considerBadge: true,
+      clientNameWidth: 36,
+      counselorNameWidth: 42,
+      minClientWidth: 12,
+      nameGap: 4,
+      chipHeight: 40,
+      timeRowHeight: 14,
+      titleRowHeight: 14,
+      statusRowHeight: 14,
+      gapY: 2
+    });
+    expect(fit.stage).toBe(WEEK_DAY_CHIP_FIT_STAGE.MARKER);
+    expect(fit.markerOnly).toBe(true);
+    expect(fit.showTime).toBe(false);
+    expect(fit.showTitle).toBe(false);
+    expect(fit.showCounselorName).toBe(false);
+    expect(fit.showBadge).toBe(false);
+    expect(fit.showStatus).toBe(false);
+  });
+
+  test('이름 1글자 이상 들어가는 폭(29px) — 내담자 말줄임·상담사 숨김 유지', () => {
+    const fit = judgeWeekDayChipFit({
+      chipWidth: 29,
+      longTimeWidth: 56,
+      shortTimeWidth: 28,
+      minTimeGlyphWidth: 8,
+      badgeWidth: 36,
+      gap: 4,
+      considerBadge: false,
+      clientNameWidth: 39,
+      counselorNameWidth: 48,
+      minClientWidth: 13,
+      nameGap: 4
+    });
+    expect(fit.markerOnly).toBe(false);
+    expect(fit.showTitle).toBe(true);
+    expect(fit.showCounselorName).toBe(false);
+  });
+
+  test('더 넓은 폭(59px) — 내담자 표시·상담사 숨김 또는 표시(반례)', () => {
+    const fit = judgeWeekDayChipFit({
+      chipWidth: 59,
+      longTimeWidth: 56,
+      shortTimeWidth: 28,
+      minTimeGlyphWidth: 8,
+      badgeWidth: 36,
+      gap: 4,
+      considerBadge: false,
+      clientNameWidth: 39,
+      counselorNameWidth: 48,
+      minClientWidth: 13,
+      nameGap: 4
+    });
+    expect(fit.markerOnly).toBe(false);
+    expect(fit.showTitle).toBe(true);
+    // 59: client+gap+counselor = 13+4+48=65 > 59 → counselor 숨김
+    expect(fit.showCounselorName).toBe(false);
   });
 });
 

@@ -2,6 +2,7 @@
  * 주/일 칩 가용폭·높이 ResizeObserver + 실제 computed font 측정 → judgeWeekDayChipFit.
  * DEFAULT_TIME_FONT(11px 등) 가정 금지 — getComputedStyle(timeEl).font 사용.
  * client/counselor 텍스트 폭도 computed font 로 측정해 showCounselorName 판정.
+ * shortTime 1글자 폭(minTimeGlyphWidth)으로 marker 단계를 판정한다.
  *
  * @author CoreSolution
  * @since 2026-10-08
@@ -34,7 +35,8 @@ const INITIAL_FIT = Object.freeze({
   showStatus: true,
   showTitle: true,
   mergeTimeTitle: false,
-  showCounselorName: false
+  showCounselorName: false,
+  markerOnly: false
 });
 
 /**
@@ -106,7 +108,8 @@ function resolveNameFont(chipEl, kind) {
  *   showStatus: boolean,
  *   showTitle: boolean,
  *   mergeTimeTitle: boolean,
- *   showCounselorName: boolean
+ *   showCounselorName: boolean,
+ *   markerOnly: boolean
  * }}
  */
 export default function useWeekDayChipFit(options) {
@@ -166,6 +169,12 @@ export default function useWeekDayChipFit(options) {
 
       const longTimeWidth = measureTextWidth(longTime, timeFont);
       const shortTimeWidth = measureTextWidth(shortTime, timeFont);
+      const shortGlyph = shortTime != null && String(shortTime).length > 0
+        ? String(shortTime).charAt(0)
+        : '';
+      const minTimeGlyphWidth = shortGlyph
+        ? measureTextWidth(shortGlyph, timeFont)
+        : 0;
       const badgeWidth = considerBadge && badgeLabel
         ? measureTextWidth(badgeLabel, badgeFont) + DEFAULT_BADGE_PAD_X
         : 0;
@@ -187,6 +196,7 @@ export default function useWeekDayChipFit(options) {
         compactChipWidth,
         longTimeWidth,
         shortTimeWidth,
+        minTimeGlyphWidth,
         badgeWidth,
         gap,
         considerBadge: Boolean(considerBadge && badgeLabel),

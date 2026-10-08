@@ -1,6 +1,6 @@
 /**
  * 주/일 풀 카드 칩 — measure-based time-first + height fit
- * (폭: long+badge → … → hide-time /
+ * (폭: long+badge → … → hide-time → marker /
  *  높이: full → hide-status → merge-time-title → hide-title).
  * ScheduleCalendarView renderEventContent 주/일 분기에서만 사용 (#1499/#1510 rebase 포인트).
  *
@@ -17,7 +17,8 @@ import useWeekDayChipFit from '../../../hooks/useWeekDayChipFit';
 import {
   WEEK_DAY_CHIP_HEIGHT_STAGE,
   WEEK_DAY_CHIP_TIME_MODE,
-  buildWeekDayChipA11yLabel
+  buildWeekDayChipA11yLabel,
+  isWeekDayChipMarkerOnly
 } from '../../../utils/weekDayChipFit';
 import { CLIENT_REMINDER_SMS_FIELD } from '../../../constants/scheduleClientReminderSms';
 
@@ -31,6 +32,7 @@ const WeekDayScheduleEventChip = ({
   clientName,
   consultantName,
   statusLabel,
+  statusModifier,
   sameDayPrefix,
   pastClass,
   cancelledClass,
@@ -52,6 +54,7 @@ const WeekDayScheduleEventChip = ({
     clientName,
     counselorName: consultantName || ''
   });
+  const markerOnly = isWeekDayChipMarkerOnly(fit);
   const displayTime = fit.showTime
     ? (fit.timeMode === WEEK_DAY_CHIP_TIME_MODE.LONG ? longTime : shortTime)
     : '';
@@ -64,18 +67,55 @@ const WeekDayScheduleEventChip = ({
     institutionLabel,
     showInstitution: Boolean(showInstitutionMark && institutionLabel)
   });
-  const mergeTimeTitle = Boolean(fit.mergeTimeTitle)
+  const mergeTimeTitle = !markerOnly
+    && Boolean(fit.mergeTimeTitle)
     && fit.heightStage === WEEK_DAY_CHIP_HEIGHT_STAGE.MERGE_TIME_TITLE
     && fit.showTime
     && fit.showTitle;
+  const statusModClass = statusModifier
+    ? `mg-v2-ad-calendar-event--status-${statusModifier}`
+    : '';
   const chipClass = [
     'mg-v2-ad-calendar-event',
     'mg-v2-ad-calendar-event--week-day-fit',
     fit.compactPad ? 'mg-v2-ad-calendar-event--chip-pad-compact' : '',
     mergeTimeTitle ? 'mg-v2-ad-calendar-event--merge-time-title' : '',
+    markerOnly ? 'mg-v2-ad-calendar-event--chip-marker' : '',
+    statusModClass,
     pastClass,
     cancelledClass
   ].filter(Boolean).join(' ');
+
+  // 측정용 시간 노드 — marker/hide-time 에서도 computed font 확보. 보이는 글자 0.
+  const measureTimeBlock = (
+    <div className="mg-v2-ad-calendar-event__time" aria-hidden="true">
+      <span
+        className="mg-v2-ad-calendar-event__time-text"
+        hidden
+        aria-hidden="true"
+      >
+        <span ref={timeRef} className="mg-v2-ad-calendar-event__time-measured">
+          {shortTime}
+        </span>
+      </span>
+    </div>
+  );
+
+  if (markerOnly) {
+    return (
+      <div
+        ref={chipRef}
+        className={chipClass}
+        data-chip-fit-stage={fit.stage}
+        data-chip-height-stage={fit.heightStage}
+        data-chip-marker="true"
+        title={chipTitle}
+        aria-label={chipTitle}
+      >
+        {measureTimeBlock}
+      </div>
+    );
+  }
 
   const titleBlock = fit.showTitle ? (
     <div className="mg-v2-ad-calendar-event__title">
@@ -150,6 +190,7 @@ WeekDayScheduleEventChip.propTypes = {
   clientName: PropTypes.string.isRequired,
   consultantName: PropTypes.string,
   statusLabel: PropTypes.string.isRequired,
+  statusModifier: PropTypes.string,
   sameDayPrefix: PropTypes.node,
   pastClass: PropTypes.string,
   cancelledClass: PropTypes.string,
@@ -162,6 +203,7 @@ WeekDayScheduleEventChip.defaultProps = {
   timeText: '',
   eventStart: null,
   consultantName: '',
+  statusModifier: '',
   sameDayPrefix: null,
   pastClass: '',
   cancelledClass: '',

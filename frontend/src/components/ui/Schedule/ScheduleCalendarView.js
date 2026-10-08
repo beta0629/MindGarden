@@ -696,6 +696,7 @@ const ScheduleCalendarView = ({
                 clientName={clientName}
                 consultantName={consultantName}
                 statusLabel={statusLabel}
+                statusModifier={statusModifier}
                 sameDayPrefix={sameDayPrefix}
                 pastClass={pastClass}
                 cancelledClass={cancelledClass}

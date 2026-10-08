@@ -4,12 +4,12 @@
  *
  * Width stages (time first, never truncate/ellipsis time or badge):
  *   1. long + badge → 2. long → 3. short + badge → 4. short
- *   5. compact-pad → 6. hide-time
+ *   5. compact-pad → 6. hide-time → 7. marker (shortTime 1글자도 불가)
  *
  * Height stages (combine with width):
  *   full → hide-status → merge-time-title(한 줄) → hide-title → time-detail
  *
- * 빈 칩 금지: 어떤 폭·높이에서도 짧은 시간 또는 이름 중 하나 이상 표시.
+ * 빈 칩 금지: 짧은 시간·이름 중 하나 이상, 또는 marker(상태 색 막대만) 표식.
  *
  * @author CoreSolution
  * @since 2026-10-08
@@ -24,8 +24,21 @@ export const WEEK_DAY_CHIP_FIT_STAGE = Object.freeze({
   SHORT_BADGE: 'short+badge',
   SHORT: 'short',
   COMPACT_PAD: 'compact-pad',
-  HIDE_TIME: 'hide-time'
+  HIDE_TIME: 'hide-time',
+  /** compact 폭에 shortTime 1글자(min glyph)도 못 넣음 — 상태 색 막대만 */
+  MARKER: 'marker'
 });
+
+/**
+ * @param {{ stage?: string, markerOnly?: boolean }|null|undefined} fit
+ * @returns {boolean}
+ */
+export function isWeekDayChipMarkerOnly(fit) {
+  if (!fit) {
+    return false;
+  }
+  return fit.markerOnly === true || fit.stage === WEEK_DAY_CHIP_FIT_STAGE.MARKER;
+}
 
 export const WEEK_DAY_CHIP_TIME_MODE = Object.freeze({
   LONG: 'long',
@@ -153,21 +166,35 @@ export function judgeWeekDayChipHeightFit(input = {}) {
 
 /**
  * 빈 칩 금지 — 짧은 시간 또는 이름 중 하나 이상 강제.
+ * marker 단계는 텍스트 강제 금지(상태 색 막대 표식만).
  *
  * @param {{
  *   showTime: boolean,
  *   showTitle: boolean,
  *   mergeTimeTitle?: boolean,
- *   heightStage?: string
+ *   heightStage?: string,
+ *   stage?: string,
+ *   markerOnly?: boolean
  * }} fit
  * @returns {{
  *   showTime: boolean,
  *   showTitle: boolean,
  *   mergeTimeTitle: boolean,
- *   heightStage: string
+ *   heightStage: string,
+ *   markerOnly: boolean
  * }}
  */
 export function enforceNonEmptyChipVisible(fit = {}) {
+  if (isWeekDayChipMarkerOnly(fit)) {
+    return {
+      showTime: false,
+      showTitle: false,
+      mergeTimeTitle: false,
+      heightStage: fit.heightStage || WEEK_DAY_CHIP_HEIGHT_STAGE.TIME_DETAIL,
+      markerOnly: true
+    };
+  }
+
   let showTime = Boolean(fit.showTime);
   let showTitle = Boolean(fit.showTitle);
   let mergeTimeTitle = Boolean(fit.mergeTimeTitle);
@@ -179,10 +206,10 @@ export function enforceNonEmptyChipVisible(fit = {}) {
   }
 
   if (showTime || showTitle) {
-    return { showTime, showTitle, mergeTimeTitle, heightStage };
+    return { showTime, showTitle, mergeTimeTitle, heightStage, markerOnly: false };
   }
 
-  // 폭이 시간을 숨긴 경우 → 이름 우선. 그 외 → 짧은 시간 우선.
+  // 폭이 시간을 숨친 경우 → 이름 우선. 그 외 → 짧은 시간 우선.
   if (fit.stage === WEEK_DAY_CHIP_FIT_STAGE.HIDE_TIME) {
     showTitle = true;
     mergeTimeTitle = false;
@@ -192,7 +219,7 @@ export function enforceNonEmptyChipVisible(fit = {}) {
     mergeTimeTitle = false;
     heightStage = WEEK_DAY_CHIP_HEIGHT_STAGE.HIDE_TITLE;
   }
-  return { showTime, showTitle, mergeTimeTitle, heightStage };
+  return { showTime, showTitle, mergeTimeTitle, heightStage, markerOnly: false };
 }
 
 /**
@@ -252,6 +279,7 @@ export function resolveTitleNameBudget(input = {}, fit = {}) {
 
 /**
  * 내담자 우선 title 이름 판정 — 폭 부족 시 상담사 숨김, 1글자도 못 넣으면 showTitle=false.
+ * marker 단계에서는 이름·상담사 모두 숨김.
  *
  * @param {{
  *   showTitle?: boolean,
@@ -259,12 +287,17 @@ export function resolveTitleNameBudget(input = {}, fit = {}) {
  *   counselorNameWidth?: number,
  *   minClientWidth?: number,
  *   nameGap?: number,
- *   titleNameBudget?: number
+ *   titleNameBudget?: number,
+ *   markerOnly?: boolean,
+ *   stage?: string
  * }} input
  * @returns {{ showTitle: boolean, showCounselorName: boolean }}
  */
 export function judgeTitleNameVisibility(input = {}) {
-  let showTitle = input.showTitle !== false;
+  if (isWeekDayChipMarkerOnly(input)) {
+    return { showTitle: false, showCounselorName: false };
+  }
+  const showTitle = input.showTitle !== false;
   const counselorW = Number(input.counselorNameWidth);
   const safeCounselor = Number.isFinite(counselorW) && counselorW > 0 ? counselorW : 0;
   const clientW = Number(input.clientNameWidth);
@@ -325,7 +358,8 @@ export function judgeTitleNameVisibility(input = {}) {
  *   clientNameWidth?: number,
  *   counselorNameWidth?: number,
  *   minClientWidth?: number,
- *   nameGap?: number
+ *   nameGap?: number,
+ *   minTimeGlyphWidth?: number
  * }} input
  * @returns {{
  *   stage: string,
@@ -337,7 +371,8 @@ export function judgeTitleNameVisibility(input = {}) {
  *   showStatus: boolean,
  *   showTitle: boolean,
  *   mergeTimeTitle: boolean,
- *   showCounselorName: boolean
+ *   showCounselorName: boolean,
+ *   markerOnly: boolean
  * }}
  */
 export function judgeWeekDayChipFit(input = {}) {
@@ -358,6 +393,8 @@ export function judgeWeekDayChipFit(input = {}) {
   const safeLong = Number.isFinite(longTimeWidth) && longTimeWidth >= 0 ? longTimeWidth : 0;
   const safeShort = Number.isFinite(shortTimeWidth) && shortTimeWidth >= 0 ? shortTimeWidth : 0;
   const safeBadge = considerBadge ? badgeWidth : 0;
+  const minGlyphRaw = Number(input.minTimeGlyphWidth);
+  const safeMinGlyph = Number.isFinite(minGlyphRaw) && minGlyphRaw > 0 ? minGlyphRaw : 0;
 
   const fits = (need, width = safeChip) => width + 0.5 >= need;
 
@@ -368,7 +405,8 @@ export function judgeWeekDayChipFit(input = {}) {
       timeMode: WEEK_DAY_CHIP_TIME_MODE.LONG,
       showBadge: true,
       showTime: true,
-      compactPad: false
+      compactPad: false,
+      markerOnly: false
     };
   } else if (fits(safeLong)) {
     widthFit = {
@@ -376,7 +414,8 @@ export function judgeWeekDayChipFit(input = {}) {
       timeMode: WEEK_DAY_CHIP_TIME_MODE.LONG,
       showBadge: false,
       showTime: true,
-      compactPad: false
+      compactPad: false,
+      markerOnly: false
     };
   } else if (considerBadge && fits(safeShort + gap + safeBadge)) {
     widthFit = {
@@ -384,7 +423,8 @@ export function judgeWeekDayChipFit(input = {}) {
       timeMode: WEEK_DAY_CHIP_TIME_MODE.SHORT,
       showBadge: true,
       showTime: true,
-      compactPad: false
+      compactPad: false,
+      markerOnly: false
     };
   } else if (fits(safeShort)) {
     widthFit = {
@@ -392,7 +432,8 @@ export function judgeWeekDayChipFit(input = {}) {
       timeMode: WEEK_DAY_CHIP_TIME_MODE.SHORT,
       showBadge: false,
       showTime: true,
-      compactPad: false
+      compactPad: false,
+      markerOnly: false
     };
   } else if (considerBadge && fits(safeShort + gap + safeBadge, safeCompact)) {
     widthFit = {
@@ -400,7 +441,8 @@ export function judgeWeekDayChipFit(input = {}) {
       timeMode: WEEK_DAY_CHIP_TIME_MODE.SHORT,
       showBadge: true,
       showTime: true,
-      compactPad: true
+      compactPad: true,
+      markerOnly: false
     };
   } else if (fits(safeShort, safeCompact)) {
     widthFit = {
@@ -408,7 +450,18 @@ export function judgeWeekDayChipFit(input = {}) {
       timeMode: WEEK_DAY_CHIP_TIME_MODE.SHORT,
       showBadge: false,
       showTime: true,
-      compactPad: true
+      compactPad: true,
+      markerOnly: false
+    };
+  } else if (safeMinGlyph > 0 && !fits(safeMinGlyph, safeCompact)) {
+    // shortTime 1글자(min glyph)도 compact content 에 못 넣음 → 표식만
+    widthFit = {
+      stage: WEEK_DAY_CHIP_FIT_STAGE.MARKER,
+      timeMode: WEEK_DAY_CHIP_TIME_MODE.SHORT,
+      showBadge: false,
+      showTime: false,
+      compactPad: true,
+      markerOnly: true
     };
   } else {
     widthFit = {
@@ -416,19 +469,37 @@ export function judgeWeekDayChipFit(input = {}) {
       timeMode: WEEK_DAY_CHIP_TIME_MODE.SHORT,
       showBadge: considerBadge && fits(safeBadge, safeCompact),
       showTime: false,
-      compactPad: true
+      compactPad: true,
+      markerOnly: false
     };
   }
 
   const heightFit = judgeWeekDayChipHeightFit(input);
   let combined = { ...widthFit, ...heightFit };
+
+  if (isWeekDayChipMarkerOnly(combined)) {
+    return {
+      ...combined,
+      stage: WEEK_DAY_CHIP_FIT_STAGE.MARKER,
+      markerOnly: true,
+      showTime: false,
+      showTitle: false,
+      showBadge: false,
+      showStatus: false,
+      showCounselorName: false,
+      mergeTimeTitle: false,
+      compactPad: true
+    };
+  }
+
   let nonEmpty = enforceNonEmptyChipVisible(combined);
   combined = {
     ...combined,
     showTime: nonEmpty.showTime,
     showTitle: nonEmpty.showTitle,
     mergeTimeTitle: nonEmpty.mergeTimeTitle,
-    heightStage: nonEmpty.heightStage
+    heightStage: nonEmpty.heightStage,
+    markerOnly: false
   };
 
   const titleNameBudget = resolveTitleNameBudget(input, combined);
@@ -441,7 +512,9 @@ export function judgeWeekDayChipFit(input = {}) {
     counselorNameWidth: input.counselorNameWidth,
     minClientWidth: input.minClientWidth,
     nameGap,
-    titleNameBudget
+    titleNameBudget,
+    markerOnly: false,
+    stage: combined.stage
   });
   combined = {
     ...combined,
@@ -449,12 +522,28 @@ export function judgeWeekDayChipFit(input = {}) {
     showCounselorName: Boolean(nameFit.showCounselorName && nameFit.showTitle)
   };
   nonEmpty = enforceNonEmptyChipVisible(combined);
+  if (nonEmpty.markerOnly) {
+    return {
+      ...combined,
+      stage: WEEK_DAY_CHIP_FIT_STAGE.MARKER,
+      markerOnly: true,
+      showTime: false,
+      showTitle: false,
+      showBadge: false,
+      showStatus: false,
+      showCounselorName: false,
+      mergeTimeTitle: false,
+      heightStage: nonEmpty.heightStage,
+      compactPad: true
+    };
+  }
   return {
     ...combined,
     showTime: nonEmpty.showTime,
     showTitle: nonEmpty.showTitle,
     mergeTimeTitle: nonEmpty.mergeTimeTitle,
     heightStage: nonEmpty.heightStage,
+    markerOnly: false,
     showCounselorName: Boolean(
       combined.showCounselorName && nonEmpty.showTitle
     )
@@ -678,6 +767,7 @@ export default {
   WEEK_DAY_CHIP_FIT_STAGE,
   WEEK_DAY_CHIP_TIME_MODE,
   WEEK_DAY_CHIP_HEIGHT_STAGE,
+  isWeekDayChipMarkerOnly,
   judgeWeekDayChipFit,
   judgeWeekDayChipHeightFit,
   enforceNonEmptyChipVisible,

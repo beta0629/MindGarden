@@ -14,7 +14,8 @@ import {
   judgeWeekDayChipFit,
   measureTextWidth,
   resolveComputedFont,
-  readChipPadTokens
+  readChipPadTokens,
+  readRowHeight
 } from '../utils/weekDayChipFit';
 
 const DEFAULT_GAP_PX = 4;
@@ -57,18 +58,6 @@ function resolveBadgeFont(chipEl) {
     chipEl.appendChild(probe);
   }
   return resolveComputedFont(probe);
-}
-
-/**
- * @param {Element|null} el
- * @returns {number}
- */
-function readRowHeight(el) {
-  if (!el) {
-    return 0;
-  }
-  const rect = el.getBoundingClientRect();
-  return rect && Number.isFinite(rect.height) ? rect.height : 0;
 }
 
 /**
@@ -138,7 +127,7 @@ export default function useWeekDayChipFit(options) {
       const lineH = cs
         ? (Number.parseFloat(cs.lineHeight) || Number.parseFloat(cs.fontSize) || 14)
         : 14;
-      // 숨김 행은 getBoundingClientRect=0 → 줄 높이 추정으로 본래 필요 높이 유지
+      // 숨김 행·flex 눌림: 공용 readRowHeight(line-height/scrollHeight). clientHeight 금지
       const timeRowHeight = readRowHeight(timeRow) || lineH;
       const titleRowHeight = readRowHeight(titleRow) || lineH;
       const statusRowHeight = readRowHeight(statusRow) || lineH;

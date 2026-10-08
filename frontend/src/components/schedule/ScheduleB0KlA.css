@@ -1919,6 +1919,10 @@
   font-size: 13px;
   font-weight: 600;
   color: var(--mg-text-primary);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .mg-v2-ad-calendar-event__title .counselor-name {

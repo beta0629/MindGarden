@@ -391,6 +391,38 @@ export function readHorizontalPadding(el) {
 }
 
 /**
+ * 칩 안 한 줄의 자연 높이(눌리기 전).
+ * flex 로 눌린 {@code clientHeight}/{@code getBoundingClientRect().height} 단독 사용 금지.
+ * computed {@code line-height}(+ padding/border) 또는 {@code scrollHeight} 중 큰 값.
+ *
+ * @param {Element|null|undefined} el
+ * @returns {number} px. 숨김·미측정이면 0
+ */
+export function readRowHeight(el) {
+  if (!el || typeof window === 'undefined' || typeof window.getComputedStyle !== 'function') {
+    return 0;
+  }
+  const style = window.getComputedStyle(el);
+  if (!style) {
+    return 0;
+  }
+  const fontSize = Number.parseFloat(style.fontSize) || 0;
+  let lineHeight = Number.parseFloat(style.lineHeight);
+  if (!Number.isFinite(lineHeight) || lineHeight <= 0) {
+    // line-height: normal → font-size 기준 추정
+    lineHeight = fontSize > 0 ? fontSize * 1.2 : 0;
+  }
+  const padY = (Number.parseFloat(style.paddingTop) || 0)
+    + (Number.parseFloat(style.paddingBottom) || 0);
+  const borderY = (Number.parseFloat(style.borderTopWidth) || 0)
+    + (Number.parseFloat(style.borderBottomWidth) || 0);
+  const fromLine = lineHeight + padY + borderY;
+  const scrollH = Number.isFinite(el.scrollHeight) ? el.scrollHeight : 0;
+  const natural = Math.max(fromLine, scrollH);
+  return natural > 0 ? natural : 0;
+}
+
+/**
  * CSS 길이(px/rem) → px. parseFloat('0.5rem')===0.5 함정 방지.
  *
  * @param {string} raw
@@ -459,5 +491,6 @@ export default {
   measureTextWidth,
   resolveComputedFont,
   readHorizontalPadding,
+  readRowHeight,
   readChipPadTokens
 };

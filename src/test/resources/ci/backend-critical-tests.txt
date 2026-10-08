@@ -25,4 +25,6 @@
 
 # 일정
 **/*Schedule*Test.java
+**/ScheduleDateRangeQueryCountIntegrationTest.java
+**/ScheduleDateQueryCountIntegrationTest.java
 **/*MergedAddon*Test.java

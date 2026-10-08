@@ -145,6 +145,18 @@
     width: 100%;
 }
 
+/*
+ * 주/일 칩 각 줄(시간·이름·상태) — flex 로 눌려 ~1.8px 가 되지 않도록 shrink 금지.
+ * 높이 판정(readRowHeight)도 자연 줄 높이 기준.
+ */
+.mg-v2-ad-calendar-event--week-day-fit > .mg-v2-ad-calendar-event__time,
+.mg-v2-ad-calendar-event--week-day-fit > .mg-v2-ad-calendar-event__title,
+.mg-v2-ad-calendar-event--week-day-fit > .mg-v2-ad-calendar-event__status,
+.mg-v2-ad-calendar-event--week-day-fit .mg-v2-ad-calendar-event__merge-row > .mg-v2-ad-calendar-event__time,
+.mg-v2-ad-calendar-event--week-day-fit .mg-v2-ad-calendar-event__merge-row > .mg-v2-ad-calendar-event__title {
+    flex-shrink: 0;
+}
+
 .mg-v2-ad-calendar-event--week-day-fit .mg-v2-ad-calendar-event__time-text {
     flex: 0 0 auto;
     min-width: 0;
@@ -154,6 +166,14 @@
 }
 
 .mg-v2-ad-calendar-event--week-day-fit .mg-v2-ad-calendar-event__time-measured {
+    white-space: nowrap;
+}
+
+/* 좁은 칩: 이름 텍스트만 ellipsis. 기관연계 배지는 말줄임 금지(전부 또는 생략). */
+.mg-v2-ad-calendar-event--week-day-fit .mg-v2-ad-calendar-event__title .client-name {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
     white-space: nowrap;
 }
 

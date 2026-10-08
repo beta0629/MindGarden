@@ -268,17 +268,40 @@ function measureText(text, font){
   return ctx.measureText(String(text)).width;
 }
 
-/** 실제 WeekDayScheduleEventChip 마크업 미니 프로브 — computed font/pad 토큰 확보 */
+/** 실제 WeekDayScheduleEventChip 마크업 미니 프로브 — computed font/pad·줄 높이 확보 */
 function ensureFontProbe(){
   const host=document.getElementById('font-probe-host');
   let chip=host.querySelector('.mg-v2-ad-calendar-event--week-day-fit');
   if(!chip){
     chip=document.createElement('div');
     chip.className='mg-v2-ad-calendar-event mg-v2-ad-calendar-event--week-day-fit';
-    chip.innerHTML='<div class="mg-v2-ad-calendar-event__time"><span class="mg-v2-ad-calendar-event__time-text"><span class="mg-v2-ad-calendar-event__time-measured">11:00</span></span>'+badgeHtml('probe-badge','mg-v2-ad-calendar-event__engagement')+'</div>';
+    chip.innerHTML='<div class="mg-v2-ad-calendar-event__time"><span class="mg-v2-ad-calendar-event__time-text"><span class="mg-v2-ad-calendar-event__time-measured">11:00</span></span>'
+      +badgeHtml('probe-badge','mg-v2-ad-calendar-event__engagement')+'</div>'
+      +'<div class="mg-v2-ad-calendar-event__title"><span class="client-name">이내담</span></div>'
+      +'<div class="mg-v2-ad-calendar-event__status">예약됨</div>';
     host.appendChild(chip);
   }
   return chip;
+}
+
+/** 프로브에서 제품 readRowHeight 로 자연 줄 높이 측정 */
+function probeRowHeights(probe){
+  const api=globalThis.MgWeekDayChipFit;
+  const read=(sel)=>{
+    const el=probe.querySelector(sel);
+    if(!el) return 14;
+    if(api && typeof api.readRowHeight==='function'){
+      const h=api.readRowHeight(el);
+      return h>0 ? h : 14;
+    }
+    const cs=getComputedStyle(el);
+    return Number.parseFloat(cs.lineHeight)||Number.parseFloat(cs.fontSize)||14;
+  };
+  return {
+    timeRowHeight:read('.mg-v2-ad-calendar-event__time'),
+    titleRowHeight:read('.mg-v2-ad-calendar-event__title'),
+    statusRowHeight:read('.mg-v2-ad-calendar-event__status')
+  };
 }
 
 function parseCssLengthToPx(raw, el){
@@ -337,6 +360,7 @@ function pickStage(harnessW){
   const { normalPadX, compactPadX }=readPadTokens(probe);
   const chipW=Math.max(0, harnessW-normalPadX);
   const compactW=Math.max(0, harnessW-compactPadX);
+  const rowH=probeRowHeights(probe);
   const judged=api.judgeWeekDayChipFit({
     chipWidth:chipW,
     compactChipWidth:compactW,
@@ -346,9 +370,9 @@ function pickStage(harnessW){
     gap,
     considerBadge:true,
     chipHeight:HARNESS_H,
-    timeRowHeight:14,
-    titleRowHeight:14,
-    statusRowHeight:14,
+    timeRowHeight:rowH.timeRowHeight,
+    titleRowHeight:rowH.titleRowHeight,
+    statusRowHeight:rowH.statusRowHeight,
     gapY:2
   });
   const time=judged.showTime
@@ -364,7 +388,8 @@ function pickStage(harnessW){
     showTitle:judged.showTitle!==false,
     mergeTimeTitle:!!judged.mergeTimeTitle,
     heightStage:judged.heightStage||'full',
-    timeFont, shortW, longW, chipW, compactW
+    timeFont, shortW, longW, chipW, compactW,
+    ...rowH
   };
 }
 
@@ -382,6 +407,7 @@ function pickStageForHeight(harnessW, chipH){
   const { normalPadX, compactPadX }=readPadTokens(probe);
   const chipW=Math.max(0, harnessW-normalPadX);
   const compactW=Math.max(0, harnessW-compactPadX);
+  const rowH=probeRowHeights(probe);
   const judged=api.judgeWeekDayChipFit({
     chipWidth:chipW,
     compactChipWidth:compactW,
@@ -391,9 +417,9 @@ function pickStageForHeight(harnessW, chipH){
     gap:4,
     considerBadge:true,
     chipHeight:chipH,
-    timeRowHeight:14,
-    titleRowHeight:14,
-    statusRowHeight:14,
+    timeRowHeight:rowH.timeRowHeight,
+    titleRowHeight:rowH.titleRowHeight,
+    statusRowHeight:rowH.statusRowHeight,
     gapY:2
   });
   return {
@@ -733,6 +759,94 @@ function measure(chipId,badgeId){
   };
 }
 
+/** 칩 안 시간·이름·상태 줄 — 렌더H vs 글자H(line-height/font-size). 눌림이면 lineCrushed. */
+function measureChipRowHeights(chip){
+  const api=globalThis.MgWeekDayChipFit;
+  const rows=[
+    { key:'time', sel:'.mg-v2-ad-calendar-event__time' },
+    { key:'title', sel:'.mg-v2-ad-calendar-event__title' },
+    { key:'status', sel:'.mg-v2-ad-calendar-event__status' }
+  ];
+  const out={ rows:{}, lineCrushed:false };
+  for(const { key, sel } of rows){
+    const el=chip.querySelector(sel);
+    if(!el){
+      out.rows[key]=null;
+      continue;
+    }
+    const cs=getComputedStyle(el);
+    const fontSize=Number.parseFloat(cs.fontSize)||0;
+    let lineH=Number.parseFloat(cs.lineHeight);
+    if(!Number.isFinite(lineH)||lineH<=0) lineH=fontSize>0?fontSize*1.2:0;
+    const glyphH=Math.max(lineH, fontSize);
+    const renderH=el.getBoundingClientRect().height;
+    const naturalH=(api && typeof api.readRowHeight==='function')
+      ? api.readRowHeight(el)
+      : Math.max(glyphH, el.scrollHeight||0);
+    const crushed=renderH+0.5 < glyphH && glyphH>0;
+    if(crushed) out.lineCrushed=true;
+    out.rows[key]={
+      renderH:+renderH.toFixed(2),
+      glyphH:+glyphH.toFixed(2),
+      naturalH:+naturalH.toFixed(2),
+      crushed
+    };
+  }
+  return out;
+}
+
+function clientNameVisible(chip){
+  const name=chip.querySelector('.client-name');
+  if(!name) return false;
+  const r=name.getBoundingClientRect();
+  const text=String(name.textContent||'').replace(/\\s+/g,'').trim();
+  return text.length>0 && r.width>0.5 && r.height>0.5;
+}
+
+/**
+ * 구 readRowHeight(clientHeight/getBoundingClientRect) 시뮬 —
+ * 눌린 높이로 판정하면 50분에서 FULL 오판이어야 함(반례 증명).
+ */
+function simulateCrushedHeightJudge(chip, chipH){
+  const api=globalThis.MgWeekDayChipFit;
+  if(!api || typeof api.judgeWeekDayChipHeightFit!=='function') return null;
+  const time=chip.querySelector('.mg-v2-ad-calendar-event__time');
+  const title=chip.querySelector('.mg-v2-ad-calendar-event__title');
+  const status=chip.querySelector('.mg-v2-ad-calendar-event__status');
+  const crushedH=(el)=>el ? el.getBoundingClientRect().height : 0;
+  const naturalH=(el)=>{
+    if(!el) return 0;
+    if(typeof api.readRowHeight==='function') return api.readRowHeight(el);
+    return crushedH(el);
+  };
+  // 강제로 세 줄을 모두 보이게 한 뒤 측정하는 대신, 현재 DOM +
+  // 눌린 title 이 있으면 crushed 경로가 FULL 이 되는지 검증.
+  // 반례 시나리오: natural 줄(16) + crushed title(1.8)
+  const naturalTime=naturalH(time)||16;
+  const naturalTitle=naturalH(title)||16;
+  const naturalStatus=naturalH(status)||16;
+  const legacyCrushed=api.judgeWeekDayChipHeightFit({
+    chipHeight:chipH,
+    timeRowHeight:naturalTime,
+    titleRowHeight:1.8,
+    statusRowHeight:naturalStatus,
+    gapY:2
+  });
+  const productNatural=api.judgeWeekDayChipHeightFit({
+    chipHeight:chipH,
+    timeRowHeight:naturalTime,
+    titleRowHeight:naturalTitle,
+    statusRowHeight:naturalStatus,
+    gapY:2
+  });
+  return {
+    legacyHeightStage:legacyCrushed.heightStage,
+    productHeightStage:productNatural.heightStage,
+    legacyWouldMisjudgeFull:legacyCrushed.heightStage==='full'
+      && productNatural.heightStage==='hide-status'
+  };
+}
+
 function measureDurationStack(prefix){
   const parts=['50','30','15'];
   const out={ parts:{} };
@@ -755,12 +869,19 @@ function measureDurationStack(prefix){
     if(!fits) overflow=true;
     if((m.visibleChipText||0)<=0) empty=true;
     rects.push(c);
+    const rowMetrics=measureChipRowHeights(chip);
+    const nameVisible=clientNameVisible(chip);
+    const crushedSim=p==='50' ? simulateCrushedHeightJudge(chip, h.height) : null;
     out.parts[p]={
       ...m,
       harnessH:+h.height.toFixed(2),
       cardH:+c.height.toFixed(2),
       cardFitsHarness:fits,
-      heightStage:chip.getAttribute('data-chip-height-stage')||''
+      heightStage:chip.getAttribute('data-chip-height-stage')||'',
+      nameVisible,
+      lineCrushed:rowMetrics.lineCrushed,
+      rowHeights:rowMetrics.rows,
+      crushedSim
     };
   }
   for(let i=0;i<rects.length;i++){
@@ -975,13 +1096,30 @@ function passDurationStack(name, stack) {
     if ((p.visibleChipText || 0) <= 0) reasons.push(`${key}.emptyChip`);
     if (!p.cardFitsHarness) reasons.push(`${key}.overflow`);
     if (!p.timeFullVisible && !p.timeHidden) reasons.push(`${key}.timeTruncated`);
+    if (p.lineCrushed) reasons.push(`${key}.lineCrushed`);
     const a11y = `${p.ariaLabel || ''} ${p.titleAttr || ''}`;
     if (!/\d{1,2}:\d{2}/.test(a11y)) reasons.push(`${key}.missingA11yTime`);
   }
-  // 50분(≈53px) 은 시간+이름 두 줄(full 또는 hide-status) 기대
+  // 50분(≈53px) 은 시간+이름 두 줄 → hide-status(또는 full). 이름 텍스트 필수.
   const p50 = stack.parts?.['50'];
-  if (p50 && !['full', 'hide-status'].includes(p50.heightStage)) {
-    reasons.push(`50.heightStage=${p50.heightStage}`);
+  if (p50) {
+    if (!['full', 'hide-status'].includes(p50.heightStage)) {
+      reasons.push(`50.heightStage=${p50.heightStage}`);
+    }
+    // 재검증 FAIL 보완: 50분은 이름이 보여야 함(눌려 FULL 오판 금지)
+    if (!p50.nameVisible) {
+      reasons.push('50.nameNotVisible');
+    }
+    if (p50.heightStage === 'full' && p50.rowHeights?.title?.crushed) {
+      reasons.push('50.fullWithCrushedTitle');
+    }
+    // 반례: 눌린 titleH(1.8)로 판정하면 FULL, 자연 높이면 hide-status
+    if (p50.crushedSim && !p50.crushedSim.legacyWouldMisjudgeFull) {
+      reasons.push(
+        `50.crushedCounterexampleMissing legacy=${p50.crushedSim.legacyHeightStage}`
+        + ` product=${p50.crushedSim.productHeightStage}`
+      );
+    }
   }
   return { name, ok: reasons.length === 0, reason: reasons.join('; ') || 'ok', metrics: stack };
 }

@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 /**
  * 일지 달력·MGPagination·상담사 카드 — stone 계산값(#D4CFC8 / #FAF9F7) 금지,
- * slate(--mg-v2-consultant-border-card → --cs-slate-200 #e2e8f0) 강제.
+ * slate(--mg-v2-border-card / --mg-v2-consultant-border-card → --cs-slate-200 #e2e8f0) 강제.
+ * MGPagination 은 공용 --mg-v2-border-card 만 사용(consultant 토큰 직접 참조 금지).
  *
  * 사용: node scripts/verification/check-consultant-slate-border-tokens.mjs
  * 종료: 0=PASS, 1=FAIL

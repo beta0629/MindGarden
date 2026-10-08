@@ -9,7 +9,8 @@ import {
   buildWeekDayChipA11yLabel,
   enforceNonEmptyChipVisible,
   judgeWeekDayChipFit,
-  judgeWeekDayChipHeightFit
+  judgeWeekDayChipHeightFit,
+  readRowHeight
 } from '../weekDayChipFit';
 import { formatNameWithSecondary } from '../safeDisplay';
 import { MAPPING_ENGAGEMENT_TYPE_LABELS } from '../../constants/mappingEngagementType';
@@ -223,6 +224,34 @@ describe('judgeWeekDayChipHeightFit', () => {
     });
   });
 
+  test('50분(~51px): 자연 줄 높이면 hide-status, 눌린 clientHeight면 FULL 오판', () => {
+    // 실제 버그: title clientHeight≈1.8 로 합산하면 fullNeed 가 칩보다 작아 FULL
+    const crushedTitleH = 1.8;
+    const naturalRowH = 16;
+    const chipH = 51;
+    const gapY = 2;
+    const crushed = judgeWeekDayChipHeightFit({
+      chipHeight: chipH,
+      timeRowHeight: naturalRowH,
+      titleRowHeight: crushedTitleH,
+      statusRowHeight: naturalRowH,
+      gapY
+    });
+    expect(crushed.heightStage).toBe(WEEK_DAY_CHIP_HEIGHT_STAGE.FULL);
+    expect(crushed.showStatus).toBe(true);
+
+    const natural = judgeWeekDayChipHeightFit({
+      chipHeight: chipH,
+      timeRowHeight: naturalRowH,
+      titleRowHeight: naturalRowH,
+      statusRowHeight: naturalRowH,
+      gapY
+    });
+    expect(natural.heightStage).toBe(WEEK_DAY_CHIP_HEIGHT_STAGE.HIDE_STATUS);
+    expect(natural.showStatus).toBe(false);
+    expect(natural.showTitle).toBe(true);
+  });
+
   test('두 줄은 부족·한 줄은 가능 → merge-time-title', () => {
     expect(judgeWeekDayChipHeightFit({
       chipHeight: 18,
@@ -340,6 +369,65 @@ describe('빈 칩 금지 lock', () => {
       gapY: 2
     });
     expect(fit.showTime || fit.showTitle).toBe(true);
+  });
+});
+
+describe('readRowHeight — 눌린 clientHeight 무시', () => {
+  test('line-height 가 crushed clientHeight 보다 크면 line-height 반환', () => {
+    const el = document.createElement('div');
+    el.textContent = '이내담';
+    el.style.cssText = 'font-size:13px;line-height:16px;height:2px;overflow:hidden;padding:0;border:0;';
+    document.body.appendChild(el);
+    try {
+      const h = readRowHeight(el);
+      expect(h).toBeGreaterThanOrEqual(15);
+      // getBoundingClientRect 는 눌린 값(~2) — 그대로 쓰면 FULL 오판
+      const crushed = el.getBoundingClientRect().height;
+      expect(crushed).toBeLessThan(8);
+      expect(h).toBeGreaterThan(crushed + 4);
+    } finally {
+      el.remove();
+    }
+  });
+
+  test('눌린 clientHeight 합으로 판정하면 FULL, readRowHeight 합이면 hide-status', () => {
+    const chipH = 51;
+    const gapY = 2;
+    const makeRow = (text, crushedPx) => {
+      const el = document.createElement('div');
+      el.textContent = text;
+      el.style.cssText =
+        `font-size:13px;line-height:16px;height:${crushedPx}px;overflow:hidden;padding:0;border:0;`;
+      document.body.appendChild(el);
+      return el;
+    };
+    const timeRow = makeRow('10:00', 16);
+    const titleRow = makeRow('이내담', 1.8);
+    const statusRow = makeRow('예약됨', 16);
+    try {
+      const crushedJudge = judgeWeekDayChipHeightFit({
+        chipHeight: chipH,
+        timeRowHeight: timeRow.getBoundingClientRect().height,
+        titleRowHeight: titleRow.getBoundingClientRect().height,
+        statusRowHeight: statusRow.getBoundingClientRect().height,
+        gapY
+      });
+      expect(crushedJudge.heightStage).toBe(WEEK_DAY_CHIP_HEIGHT_STAGE.FULL);
+
+      const naturalJudge = judgeWeekDayChipHeightFit({
+        chipHeight: chipH,
+        timeRowHeight: readRowHeight(timeRow),
+        titleRowHeight: readRowHeight(titleRow),
+        statusRowHeight: readRowHeight(statusRow),
+        gapY
+      });
+      expect(naturalJudge.heightStage).toBe(WEEK_DAY_CHIP_HEIGHT_STAGE.HIDE_STATUS);
+      expect(naturalJudge.showTitle).toBe(true);
+    } finally {
+      timeRow.remove();
+      titleRow.remove();
+      statusRow.remove();
+    }
   });
 });
 

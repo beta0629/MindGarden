@@ -21,6 +21,7 @@ import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.repository.UserAddressRepository;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.AuditLogService;
+import com.coresolution.consultation.service.ClientProfilePhoneVerificationService;
 import com.coresolution.consultation.service.EmailOtpVerificationService;
 import com.coresolution.consultation.service.ProfileImageStorageService;
 import com.coresolution.consultation.service.RefreshTokenService;
@@ -85,6 +86,8 @@ class MyPageServiceImplEmailChangeTest {
     private RefreshTokenService refreshTokenService;
     @Mock
     private AuditLogService auditLogService;
+    @Mock
+    private ClientProfilePhoneVerificationService clientProfilePhoneVerificationService;
 
     @InjectMocks
     private MyPageServiceImpl myPageService;

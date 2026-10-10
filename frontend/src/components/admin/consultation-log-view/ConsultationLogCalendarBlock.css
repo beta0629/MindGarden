@@ -12,7 +12,7 @@
 
 .mg-v2-content-card.mg-v2-consultation-log-calendar-block__card,
 .mg-v2-consultation-log-calendar-block__card {
-  border: var(--mg-v2-border-width-thin) solid var(--mg-v2-color-border-subtle);
+  border: var(--mg-v2-border-width-thin) solid var(--mg-v2-consultant-border-card);
   border-radius: var(--mg-v2-radius-lg);
   background: var(--mg-v2-color-surface-card);
   box-shadow: none;
@@ -76,10 +76,11 @@
   color: var(--mg-v2-color-text-secondary);
 }
 
-.mg-v2-consultation-log-calendar-wrapper .fc .fc-button {
+.mg-v2-consultation-log-calendar-wrapper .fc .fc-button,
+.mg-v2-consultation-log-calendar-wrapper .fc .fc-button-primary {
   background: var(--mg-v2-color-surface-card);
   color: var(--mg-v2-color-text-secondary);
-  border: var(--mg-v2-border-width-thin) solid var(--mg-v2-color-border-subtle);
+  border: var(--mg-v2-border-width-thin) solid var(--mg-v2-consultant-border-card);
   border-radius: var(--mg-v2-radius-md);
   box-shadow: none;
   font-weight: var(--mg-v2-font-weight-semibold);

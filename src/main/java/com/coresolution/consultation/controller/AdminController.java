@@ -3904,6 +3904,9 @@ public class AdminController extends BaseApiController {
             @RequestParam(required = false) Long clientId,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+            @RequestParam(required = false) Boolean sessionCompleted,
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) String matchedClientIds,
             @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "20") int size,
             HttpSession session) {
         try {
@@ -3941,8 +3944,8 @@ public class AdminController extends BaseApiController {
             Pageable pageable = PageRequest.of(validPage, validSize);
 
             Page<ConsultationRecord> consultationRecords =
-                    consultationRecordService.getConsultationRecords(consultantId, clientId,
-                            startDate, endDate, pageable);
+                    consultationRecordService.getConsultationRecordsForLogView(consultantId, clientId,
+                            startDate, endDate, sessionCompleted, keyword, matchedClientIds, pageable);
 
             // 목록은 식별자·일자·작성자·상태만. 본문은 단건 상세(공용 가드 판정)에서만 받는다.
             List<ConsultationRecordListItemResponse> metaItems = consultationRecords.getContent().stream()

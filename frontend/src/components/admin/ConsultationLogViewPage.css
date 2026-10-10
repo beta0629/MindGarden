@@ -1,11 +1,9 @@
 /**
- * 상담일지 조회 페이지 — Clinic-OS chrome
- * SSOT: docs/design-system/CLINIC_OS_ADMIN_VISUAL_SSOT.md
- * Handoff: docs/design-system/CONSULTATION_LOG_VIEW_CLINIC_OS_HANDOFF.md
+ * 상담일지 조회 — 관리자 한 줄 필터·결과 그리드, 상담사 레거시 필터.
  *
  * @author Core Solution
  * @since 2025-03-02
- * @updated 2026-09-05 — B0KlA → Clinic-OS tokens
+ * @updated 2026-10-10
  */
 
 .mg-v2-consultation-log-view,
@@ -13,269 +11,278 @@
   min-height: 100%;
   background: transparent;
   padding: 0;
-  max-width: none;
   width: 100%;
 }
 
-/* 뷰 전환 탭 — active = dusty teal primary-solid */
-.mg-v2-consultation-log-view-tabs {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--mg-v2-space-1, 0.25rem);
-  margin-bottom: var(--mg-v2-space-6, 1.5rem);
-}
-
-.mg-v2-consultation-log-view-tabs__tab {
-  padding: var(--mg-v2-space-2, 0.5rem) var(--mg-v2-space-4, 1rem);
-  font-size: var(--mg-v2-font-size-body-md, 0.875rem);
-  font-weight: var(--mg-v2-font-weight-semibold, 600);
-  color: var(--mg-v2-color-text-secondary);
-  background: var(--mg-v2-color-neutral-50);
-  border: 1px solid var(--mg-v2-color-neutral-300);
+.mg-v2-consultation-log-view-toggle {
+  display: inline-flex;
+  gap: var(--mg-v2-space-1);
+  padding: var(--mg-v2-space-1);
+  background: var(--mg-v2-color-neutral-100);
   border-radius: var(--mg-v2-radius-md);
-  cursor: pointer;
-  transition: background 0.2s, border-color 0.2s, color 0.2s;
-  min-height: var(--button-height-sm, var(--mg-v2-touch-target-min, 40px));
 }
 
-.mg-v2-consultation-log-view-tabs__tab:hover {
+.mg-v2-consultation-log-view-toggle__button[aria-pressed='true'] {
+  background: var(--mg-v2-color-surface-card);
   color: var(--mg-v2-color-text-primary);
-  border-color: var(--mg-v2-color-primary-main);
+  border-color: var(--mg-v2-color-border-subtle);
 }
 
-.mg-v2-consultation-log-view-tabs__tab--active,
-.mg-v2-consultation-log-view-tabs .mg-v2-consultation-log-view-tabs__tab--active {
-  color: var(--mg-v2-color-neutral-50);
-  background: var(--mg-v2-color-primary-solid);
-  border-color: var(--mg-v2-color-primary-solid);
-}
-
-.mg-v2-consultation-log-view-tabs__tab--active:hover {
-  color: var(--mg-v2-color-neutral-50);
-  background: var(--mg-v2-color-primary-dark, var(--mg-v2-color-primary-solid));
-  border-color: var(--mg-v2-color-primary-dark, var(--mg-v2-color-primary-solid));
-}
-
-/* 필터 섹션 */
 .mg-v2-consultation-log-filter {
-  margin-bottom: var(--mg-v2-space-6, 1.5rem);
+  margin-bottom: var(--mg-v2-space-4);
 }
 
 .mg-v2-consultation-log-filter__row {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr));
-  gap: var(--mg-v2-space-4, 1rem);
+  grid-template-columns: repeat(auto-fill, minmax(var(--mg-v2-space-20), 1fr));
+  gap: var(--mg-v2-space-4);
   align-items: end;
 }
 
-@media (min-width: 768px) {
-  .mg-v2-consultation-log-filter__row {
-    grid-template-columns: repeat(4, 1fr);
-  }
-}
-
-@media (min-width: 1280px) {
-  .mg-v2-consultation-log-filter__row {
-    gap: var(--mg-v2-space-5, 1.25rem);
-  }
-}
-
-.mg-v2-consultation-log-filter__field {
+.mg-v2-consultation-log-filter__field,
+.mg-v2-consultation-log-query__field,
+.mg-v2-consultation-log-query__period {
   display: flex;
   flex-direction: column;
-  gap: var(--mg-v2-space-1, 0.375rem);
+  gap: var(--mg-v2-space-1);
+  min-width: 0;
 }
 
-.mg-v2-consultation-log-filter__label {
-  font-size: var(--mg-v2-font-size-caption, 0.75rem);
+.mg-v2-consultation-log-filter__label,
+.mg-v2-consultation-log-query__label {
+  font-size: var(--mg-v2-font-size-caption);
   color: var(--mg-v2-color-text-secondary);
-  font-weight: var(--mg-v2-font-weight-semibold, 600);
+  font-weight: var(--mg-v2-font-weight-semibold);
 }
 
 .mg-v2-consultation-log-filter__select,
 .mg-v2-consultation-log-filter__input {
-  padding: var(--mg-v2-space-2, 0.5rem) var(--mg-v2-space-3, 0.75rem);
-  font-size: var(--mg-v2-font-size-body-md, 0.875rem);
-  border: 1px solid var(--mg-v2-color-neutral-300);
+  padding: var(--mg-v2-space-2) var(--mg-v2-space-3);
+  font-size: var(--mg-v2-font-size-body-md);
+  border: var(--mg-v2-border-width-thin) solid var(--mg-v2-color-border-subtle);
   border-radius: var(--mg-v2-radius-md);
-  background: var(--mg-v2-color-neutral-50);
+  background: var(--mg-v2-color-surface-card);
   color: var(--mg-v2-color-text-primary);
+  width: 100%;
 }
 
 .mg-v2-consultation-log-filter__select:focus,
-.mg-v2-consultation-log-filter__input:focus {
+.mg-v2-consultation-log-filter__input:focus,
+.mg-v2-consultation-log-view-toggle__button:focus-visible,
+.mg-v2-consultation-log-saved__trigger:focus-visible,
+.mg-v2-consultation-log-saved__item:focus-visible {
   outline: none;
-  border-color: var(--mg-v2-color-primary-main);
+  border-color: var(--mg-v2-color-border-focus);
+  box-shadow: var(--mg-v2-shadow-focus);
 }
 
-/* 목록 블록 — Clinic-OS main stage */
-.mg-v2-consultation-log-list-block {
-  margin-bottom: 0;
+.mg-v2-consultation-log-query {
+  margin-bottom: var(--mg-v2-space-4);
 }
 
-.mg-v2-content-card.mg-v2-consultation-log-list-block__card-wrap,
-.mg-v2-consultation-log-list-block__card-wrap {
-  min-height: 36rem;
-  border: 1px solid var(--mg-v2-color-neutral-300);
-  border-radius: var(--mg-v2-radius-lg);
-  background: var(--mg-v2-color-neutral-50);
-  box-shadow: none;
-  border-left: none !important;
+.mg-v2-consultation-log-query__mobile {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--mg-v2-space-2);
 }
 
-.mg-v2-consultation-log-list-block__grid {
+.mg-v2-consultation-log-query__summary {
+  flex: 1 1 100%;
+  margin: 0;
+  color: var(--mg-v2-color-text-secondary);
+  font-size: var(--mg-v2-font-size-caption);
+}
+
+.mg-v2-consultation-log-query__fields {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-v2-space-3);
+}
+
+.mg-v2-consultation-log-query__fields.is-open {
+  position: fixed;
+  inset: 0;
+  z-index: var(--mg-v2-z-modal);
+  background: var(--mg-v2-color-surface-card);
+  padding: var(--mg-v2-space-4);
+  overflow: auto;
+}
+
+.mg-v2-consultation-log-query__sheet-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mg-v2-space-3);
+}
+
+.mg-v2-consultation-log-query__sheet-title {
+  margin: 0;
+  font-size: var(--mg-v2-font-size-body-md);
+  font-weight: var(--mg-v2-font-weight-bold);
+  color: var(--mg-v2-color-text-primary);
+}
+
+.mg-v2-consultation-log-query__period-inputs {
+  display: flex;
+  align-items: center;
+  gap: var(--mg-v2-space-2);
+}
+
+.mg-v2-consultation-log-query__period-inputs .mg-v2-consultation-log-filter__input {
+  flex: 1 1 0;
+}
+
+.mg-v2-consultation-log-query__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--mg-v2-space-2);
+}
+
+.mg-v2-consultation-log-saved {
+  position: relative;
+}
+
+.mg-v2-consultation-log-saved__menu {
+  position: absolute;
+  z-index: var(--mg-v2-z-dropdown);
+  inset-inline-end: 0;
+  margin: var(--mg-v2-space-1) 0 0;
+  padding: var(--mg-v2-space-1);
+  list-style: none;
+  min-width: calc(var(--mg-v2-space-20) * 2);
+  background: var(--mg-v2-color-surface-card);
+  border: var(--mg-v2-border-width-thin) solid var(--mg-v2-color-border-subtle);
+  border-radius: var(--mg-v2-radius-md);
+  box-shadow: var(--mg-v2-shadow-lg);
+}
+
+.mg-v2-consultation-log-saved__item,
+.mg-v2-consultation-log-saved__empty {
+  display: block;
+  width: 100%;
+  text-align: start;
+  padding: var(--mg-v2-space-2) var(--mg-v2-space-3);
+  border: 0;
+  background: transparent;
+  color: var(--mg-v2-color-text-primary);
+  font-size: var(--mg-v2-font-size-body-md);
+  border-radius: var(--mg-v2-radius-sm);
+}
+
+.mg-v2-consultation-log-saved__empty {
+  color: var(--mg-v2-color-text-tertiary);
+}
+
+.mg-v2-consultation-log-saved__item:hover {
+  background: var(--mg-v2-color-neutral-100);
+}
+
+.mg-v2-consultation-log-results {
   display: grid;
-  grid-template-columns: 1fr;
-  gap: var(--mg-v2-space-4, 1rem);
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--mg-v2-space-4);
+  align-items: start;
+}
+
+.mg-v2-consultation-log-results__main {
+  min-width: 0;
+}
+
+.mg-v2-consultation-log-pagination {
+  margin-top: var(--mg-v2-space-3);
+}
+
+.mg-v2-consultation-log-state {
+  min-height: calc(var(--mg-v2-space-20) * 4);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--mg-v2-space-2);
+}
+
+.mg-v2-consultation-log-state__desc {
+  margin: 0;
+  color: var(--mg-v2-color-text-secondary);
+  font-size: var(--mg-v2-font-size-body-md);
+}
+
+.mg-v2-consultation-log-state__icon {
+  width: var(--mg-v2-space-10);
+  height: var(--mg-v2-space-10);
+  color: var(--mg-v2-color-text-tertiary);
+}
+
+.mg-v2-consultation-log-calendar-note {
+  margin: 0 0 var(--mg-v2-space-3);
+  color: var(--mg-v2-color-text-secondary);
+  font-size: var(--mg-v2-font-size-body-md);
 }
 
 @media (min-width: 768px) {
-  .mg-v2-consultation-log-list-block__grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: var(--mg-v2-space-5, 1.25rem);
+  .mg-v2-consultation-log-filter__row {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .mg-v2-consultation-log-query__fields {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: flex-end;
+  }
+
+  .mg-v2-consultation-log-query__fields.is-open {
+    position: static;
+    inset: auto;
+    z-index: auto;
+    padding: 0;
+    overflow: visible;
+    background: transparent;
+  }
+
+  .mg-v2-consultation-log-query__field {
+    flex: 1 1 calc(var(--mg-v2-space-16) + var(--mg-v2-space-8) + var(--mg-v2-space-6) + var(--mg-v2-space-4));
+  }
+
+  .mg-v2-consultation-log-query__period {
+    flex: 1 1 calc(var(--mg-v2-space-20) * 3);
+  }
+
+  .mg-v2-consultation-log-query__field--keyword {
+    flex: 1 1 calc(var(--mg-v2-space-12) * 3);
   }
 }
 
 @media (min-width: 1280px) {
-  .mg-v2-consultation-log-list-block__grid {
-    grid-template-columns: repeat(3, 1fr);
-    gap: var(--mg-v2-space-6, 1.5rem);
+  .mg-v2-consultation-log-filter__row {
+    gap: var(--mg-v2-space-5);
+  }
+
+  .mg-v2-consultation-log-query__fields {
+    flex-wrap: nowrap;
+  }
+
+  .mg-v2-consultation-log-results--with-panel {
+    grid-template-columns: minmax(0, 1fr) calc(var(--mg-v2-space-20) * 5);
+    gap: var(--mg-layout-gap-desktop);
   }
 }
 
-/* 목록 아이템 카드 — interaction container */
-.mg-v2-consultation-log-list-block__card {
-  display: block;
-  width: 100%;
-  text-align: left;
-  padding: var(--mg-v2-space-6, 1.5rem);
-  background: var(--mg-v2-color-neutral-50);
-  border: 1px solid var(--mg-v2-color-neutral-300);
-  border-radius: var(--mg-v2-radius-md);
-  cursor: pointer;
-  transition: box-shadow 0.2s, border-color 0.2s;
-}
-
-.mg-v2-consultation-log-list-block__card:hover {
-  border-color: var(--mg-v2-color-primary-main);
-  box-shadow: none;
-}
-
-.mg-v2-consultation-log-list-block__card:focus {
-  outline: none;
-  border-color: var(--mg-v2-color-primary-main);
-}
-
-.mg-v2-consultation-log-list-block__card-inner {
-  display: flex;
-  flex-direction: column;
-  gap: var(--mg-v2-space-2, 0.5rem);
-}
-
-.mg-v2-consultation-log-list-block__card-row {
-  font-size: var(--mg-v2-font-size-body-md, 0.875rem);
-  color: var(--mg-v2-color-text-primary);
-}
-
-.mg-v2-consultation-log-list-block__card-row--date {
-  font-size: var(--mg-v2-font-size-body-md, 0.875rem);
-  font-weight: var(--mg-v2-font-weight-semibold, 600);
-}
-
-.mg-v2-consultation-log-list-block__card-row--name {
-  font-weight: var(--mg-v2-font-weight-semibold, 600);
-}
-
-.mg-v2-consultation-log-list-block__card-row--secondary,
-.mg-v2-consultation-log-list-block__card-row--meta {
-  font-size: var(--mg-v2-font-size-caption, 0.75rem);
-  color: var(--mg-v2-color-text-secondary);
-}
-
-.mg-v2-badge {
-  display: inline-block;
-  padding: var(--mg-v2-space-1, 0.25rem) var(--mg-v2-space-2, 0.5rem);
-  font-size: var(--mg-v2-font-size-caption, 0.75rem);
-  font-weight: var(--mg-v2-font-weight-semibold, 600);
-  border-radius: var(--mg-v2-radius-md);
-}
-
-.mg-v2-badge--success {
-  background: var(--mg-v2-color-semantic-success, var(--mg-success-500));
-  color: var(--mg-v2-color-neutral-50);
-}
-
-.mg-v2-badge--warning {
-  background: var(--mg-v2-color-semantic-warning, var(--mg-warning-500));
-  color: var(--mg-v2-color-neutral-50);
-}
-
-/* 빈 상태 */
-.mg-v2-consultation-log-list-block__empty {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: var(--mg-v2-space-8, 3rem) var(--mg-v2-space-6, 2rem);
-  text-align: center;
-}
-
-.mg-v2-consultation-log-list-block__empty-icon {
-  width: 5rem;
-  height: 5rem;
-  border-radius: var(--mg-v2-radius-lg);
-  background: color-mix(in srgb, var(--mg-v2-color-primary-solid) 12%, transparent);
-  color: var(--mg-v2-color-primary-solid);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: var(--mg-v2-space-5, 1.25rem);
-}
-
-.mg-v2-consultation-log-list-block__empty-title {
-  font-size: var(--mg-v2-font-size-h2, 1.375rem);
-  font-weight: var(--mg-v2-font-weight-bold, 700);
-  color: var(--mg-v2-color-text-primary);
-  margin: 0 0 var(--mg-v2-space-2, 0.5rem) 0;
-}
-
-.mg-v2-consultation-log-list-block__empty-desc {
-  font-size: var(--mg-v2-font-size-body-md, 0.875rem);
-  color: var(--mg-v2-color-text-secondary);
-  margin: 0;
-}
-
-/* Admin Dark Mode — 상담일지 필터·탭 cascade */
-[data-theme="dark"] .mg-v2-consultation-log-view-tabs__tab {
-  background: var(--mg-dark-chip-bg);
-  color: var(--mg-dark-chip-text);
-  border-color: var(--mg-dark-toolbar-border);
-}
-
-[data-theme="dark"] .mg-v2-consultation-log-view-tabs__tab:hover {
-  color: var(--mg-dark-chip-active-text);
-  border-color: var(--mg-v2-color-primary-main);
-}
-
-[data-theme="dark"] .mg-v2-consultation-log-view-tabs__tab--active {
-  background: var(--mg-v2-color-primary-solid);
-  color: var(--mg-v2-color-neutral-50);
-  border-color: var(--mg-v2-color-primary-solid);
-}
-
-[data-theme="dark"] .mg-v2-consultation-log-filter__select,
-[data-theme="dark"] .mg-v2-consultation-log-filter__input {
+[data-theme='dark'] .mg-v2-consultation-log-filter__select,
+[data-theme='dark'] .mg-v2-consultation-log-filter__input {
   background: var(--mg-v2-form-input-bg);
   color: var(--mg-v2-form-text);
   border-color: var(--mg-v2-form-border);
 }
 
-[data-theme="dark"] .mg-v2-consultation-log-filter__select:focus,
-[data-theme="dark"] .mg-v2-consultation-log-filter__input:focus {
+[data-theme='dark'] .mg-v2-consultation-log-filter__select:focus,
+[data-theme='dark'] .mg-v2-consultation-log-filter__input:focus {
   border-color: var(--mg-v2-form-focus-ring);
-  box-shadow: 0 0 0 2px var(--mg-v2-form-focus-ring);
+  box-shadow: var(--mg-v2-shadow-focus);
 }
 
-[data-theme="dark"] .mg-v2-consultation-log-filter__label {
+[data-theme='dark'] .mg-v2-consultation-log-filter__label,
+[data-theme='dark'] .mg-v2-consultation-log-query__label {
   color: var(--mg-v2-form-label);
 }

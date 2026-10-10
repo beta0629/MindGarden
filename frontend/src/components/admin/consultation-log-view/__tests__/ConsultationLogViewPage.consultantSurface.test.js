@@ -309,7 +309,7 @@ describe('ConsultationLogViewPage — admin surface 불변', () => {
         <ConsultationLogViewPage />
       </MemoryRouter>
     );
-    await waitFor(() => expect(container.querySelector('.mg-v2-consultation-log-view-tabs')).not.toBeNull());
+    await waitFor(() => expect(container.querySelector('.mg-v2-consultation-log-view-toggle')).not.toBeNull());
     expect(container.querySelector(`.${CONSULTANT_SUITE_CLASS.ROOT}`)).toBeNull();
     expect(screen.queryByTestId(CONSULTANT_SUITE_TEST_ID.LOGS_PAGE)).toBeNull();
   });

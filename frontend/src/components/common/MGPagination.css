@@ -207,3 +207,10 @@
     min-width: var(--mg-v2-space-4);
   }
 }
+
+.mg-pagination__button--current-neutral.mg-v2-button-outline {
+  background: var(--mg-v2-color-surface-stone);
+  color: var(--mg-v2-color-text-primary);
+  border-color: var(--mg-v2-color-border-strong);
+  font-weight: var(--mg-v2-font-weight-bold);
+}

@@ -26,7 +26,8 @@
         <hibernate.version>6.4.0.Final</hibernate.version>
         <antlr4.version>4.13.0</antlr4.version>
         <mysql.version>8.0.33</mysql.version>
-        <testcontainers.version>1.20.4</testcontainers.version>
+        <!-- testcontainers.version: Spring Boot 3.2.1 parent BOM (1.19.3). Do not override;
+             mvn -o (guardrail hook) has no network and local .m2 may lack newer BOMs. -->
         <!-- local-mysql 태그는 기본 CI에서 제외. 로컬 실행 시 -Djunit.excludedGroups=none -->
         <junit.excludedGroups>local-mysql</junit.excludedGroups>
         <jwt.version>0.11.5</jwt.version>

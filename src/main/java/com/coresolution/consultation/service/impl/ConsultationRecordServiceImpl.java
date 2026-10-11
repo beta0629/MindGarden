@@ -892,7 +892,7 @@ public class ConsultationRecordServiceImpl implements ConsultationRecordService 
 
     /**
      * 일정의 sessionSequence를 SSOT로 확보한다. 이미 있으면 그대로 반환.
-     * 가예약(SAME_DAY_CARD/PENDING_PAYMENT)이고 null이면 remaining 차감 없이 부여한다.
+     * 가예약이면 차감 없이 매핑 회차 재정렬로 번호를 부여한다.
      * 일반 매핑의 remaining=0·회차 없음은 부여하지 않는다.
      *
      * @param schedule 대상 일정
@@ -905,16 +905,19 @@ public class ConsultationRecordServiceImpl implements ConsultationRecordService 
             return existing;
         }
         ConsultantClientMapping mapping = resolveMappingForSessionGrant(schedule);
-        Integer granted = ProvisionalConsultationLogSession.computeSequenceWithoutDeduction(mapping);
+        if (!ProvisionalConsultationLogSession.isProvisionalWithoutDeduction(mapping)) {
+            throw new ValidationException(
+                    "sessionSequence",
+                    null,
+                    "일정 회차(sessionSequence)가 없습니다: " + schedule.getId());
+        }
+        Integer granted = scheduleService.reorderOccupyingSessionSequences(mapping, schedule);
         if (granted == null) {
             throw new ValidationException(
                     "sessionSequence",
                     null,
                     "일정 회차(sessionSequence)가 없습니다: " + schedule.getId());
         }
-        schedule.setMappingId(mapping.getId());
-        schedule.setSessionSequence(granted);
-        scheduleRepository.save(schedule);
         log.info("가예약 일지 회차 부여(잔여 미차감): scheduleId={}, mappingId={}, sessionSequence={}, remaining={}",
                 schedule.getId(), mapping.getId(), granted, mapping.getRemainingSessions());
         return granted;

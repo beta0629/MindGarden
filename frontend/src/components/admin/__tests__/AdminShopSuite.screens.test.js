@@ -105,7 +105,7 @@ describe('admin shop suite screens (v3.2)', () => {
   });
 
   test('legacy product routes redirect to 상품, 상품 조합 빌더 routes open PackagePricingDetailPage', () => {
-    expect(APP).toMatch(/path="package-pricing\/new" element={<PackagePricingDetailPage \/>}/);
+    expect(APP).toMatch(/path="package-pricing\/new" element={<PackagePricingDetailPage isNew \/>}/);
     expect(APP).toMatch(/path="package-pricing\/:id" element={<PackagePricingDetailPage \/>}/);
     expect(APP).toMatch(/lazy\(\(\) => import\('\.\/components\/admin\/package-pricing\/pages\/PackagePricingDetailPage'\)\)/);
     expect(APP).not.toMatch(/<RedirectToShopProductEdit paramName="id" \/>/);

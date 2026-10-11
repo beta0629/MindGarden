@@ -122,9 +122,10 @@
   },
   "jest": {
     "moduleNameMapper": {
+      "^axios$": "<rootDir>/node_modules/axios/dist/node/axios.cjs",
       "^react-router-dom$": "<rootDir>/node_modules/react-router-dom/dist/index.js",
       "^react-router/dom$": "<rootDir>/node_modules/react-router/dist/development/dom-export.js",
-      "^@portone/browser-sdk/v2$": "<rootDir>/node_modules/@portone/browser-sdk/dist/v2.cjs",
+      "^@portone/browser-sdk/v2$": "<rootDir>/src/test-utils/portoneBrowserSdkV2.mock.js",
       "^react-router$": "<rootDir>/node_modules/react-router/dist/development/index.js"
     }
   }

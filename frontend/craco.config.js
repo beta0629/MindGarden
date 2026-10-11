@@ -9,6 +9,14 @@
  * @see .cursor/skills/core-solution-frontend
  */
 
+const fs = require('fs');
+const path = require('path');
+
+const PORTONE_V2_CJS = path.join(__dirname, 'node_modules/@portone/browser-sdk/dist/v2.cjs');
+const PORTONE_V2_JEST_MAP = fs.existsSync(PORTONE_V2_CJS)
+  ? '<rootDir>/node_modules/@portone/browser-sdk/dist/v2.cjs'
+  : '<rootDir>/src/test-utils/portoneBrowserSdkV2.mock.js';
+
 module.exports = {
   webpack: {
     configure: (webpackConfig) => {
@@ -25,12 +33,12 @@ module.exports = {
     configure: (jestConfig) => {
       jestConfig.moduleNameMapper = {
         ...jestConfig.moduleNameMapper,
+        '^axios$': '<rootDir>/node_modules/axios/dist/node/axios.cjs',
         '^react-router-dom$': '<rootDir>/node_modules/react-router-dom/dist/index.js',
         '^react-router$': '<rootDir>/node_modules/react-router/dist/development/index.js',
         '^react-router/dom$':
           '<rootDir>/node_modules/react-router/dist/development/dom-export.js',
-        '^@portone/browser-sdk/v2$':
-          '<rootDir>/node_modules/@portone/browser-sdk/dist/v2.cjs'
+        '^@portone/browser-sdk/v2$': PORTONE_V2_JEST_MAP
       };
       return jestConfig;
     }

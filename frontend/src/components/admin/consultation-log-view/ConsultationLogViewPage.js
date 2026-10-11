@@ -65,7 +65,7 @@ import MGPagination from '../../common/MGPagination';
 import {
   API_ADMIN_CONSULTATION_RECORDS,
   CONSULTATION_LOG_STATUS_ALL,
-  CONSULTATION_LOG_TABLE_PAGE_SIZE,
+  consultationLogListPageSize,
   buildConsultationLogQueryParams,
   computeDefaultDateRange,
   fetchAllAdminConsultationRecords,
@@ -552,7 +552,7 @@ const ConsultationLogViewPage = ({ surface }) => {
           buildAdminListParams({
             ...query,
             page: toServerPageIndex(page),
-            size: CONSULTATION_LOG_TABLE_PAGE_SIZE
+            size: consultationLogListPageSize(appliedFilters.clientId, appliedFilters.consultantId)
           })
         );
         if (isStale()) return;
@@ -1171,9 +1171,13 @@ const ConsultationLogViewPage = ({ surface }) => {
         ? 'empty'
         : null;
 
+  const adminListPageSize = consultationLogListPageSize(
+    appliedFilters.clientId,
+    appliedFilters.consultantId
+  );
   const adminTotalPages = Math.max(
     1,
-    Math.ceil((totalElements || 0) / CONSULTATION_LOG_TABLE_PAGE_SIZE)
+    Math.ceil((totalElements || 0) / adminListPageSize)
   );
 
   const detailLabels = {
@@ -1283,7 +1287,7 @@ const ConsultationLogViewPage = ({ surface }) => {
                 currentPage={clampUiPage(page, adminTotalPages)}
                 totalPages={adminTotalPages}
                 totalItems={totalElements}
-                itemsPerPage={CONSULTATION_LOG_TABLE_PAGE_SIZE}
+                itemsPerPage={adminListPageSize}
                 onPageChange={setPage}
                 showInfo
                 showItemsPerPage={false}

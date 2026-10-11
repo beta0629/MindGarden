@@ -7,11 +7,31 @@
 
 import { ADMIN_LIST_DRAIN_PAGE_SIZE, buildAdminListParams } from '../../../api/adminListFetch';
 import { CONSULTANT_SUITE_PAGE_SIZE } from '../../../constants/consultantSuite';
+import {
+  CONSULTATION_LOG_GROUP_MODE,
+  consultationLogGroupModeFromFilters
+} from './consultationLogGrouping';
 
 export const API_ADMIN_CONSULTATION_RECORDS = '/api/v1/admin/consultation-records';
 
-/** 표 한 페이지. 상담사 스위트 목록과 같은 크기. */
+/** 표 한 페이지. 상담사 스위트 목록과 같은 크기. 미선택 목록도 이 크기. */
 export const CONSULTATION_LOG_TABLE_PAGE_SIZE = CONSULTANT_SUITE_PAGE_SIZE;
+
+/** 시안 17. 내담자·상담사를 고른 타임라인은 쪽당 10건(30회기면 3쪽). */
+export const CONSULTATION_LOG_TIMELINE_PAGE_SIZE = 10;
+
+/**
+ * 타임라인(내담자·상담사·둘 다)만 10. 선택이 없으면 표와 같이 20.
+ *
+ * @param {number|string|null|undefined} clientId
+ * @param {number|string|null|undefined} consultantId
+ * @returns {number}
+ */
+export const consultationLogListPageSize = (clientId, consultantId) => (
+  consultationLogGroupModeFromFilters(clientId, consultantId) === CONSULTATION_LOG_GROUP_MODE.NONE
+    ? CONSULTATION_LOG_TABLE_PAGE_SIZE
+    : CONSULTATION_LOG_TIMELINE_PAGE_SIZE
+);
 
 /** 캘린더 월 범위 한 번에 받는 크기. 공통 목록 상한. */
 export const CONSULTATION_LOG_CALENDAR_PAGE_SIZE = ADMIN_LIST_DRAIN_PAGE_SIZE;

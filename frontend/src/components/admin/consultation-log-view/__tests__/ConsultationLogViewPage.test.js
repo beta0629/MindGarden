@@ -186,9 +186,13 @@ import ConsultationLogViewPage, {
   ADMIN_CONSULTATION_RECORDS_PAGE_SIZE,
   ADMIN_CONSULTATION_RECORDS_MAX_PAGES
 } from '../ConsultationLogViewPage';
-import { CONSULTATION_LOG_TABLE_PAGE_SIZE } from '../consultationLogQuery';
+import {
+  CONSULTATION_LOG_TABLE_PAGE_SIZE,
+  CONSULTATION_LOG_TIMELINE_PAGE_SIZE
+} from '../consultationLogQuery';
 import StandardizedApi from '../../../../utils/standardizedApi';
 import notificationManager from '../../../../utils/notification';
+import { getAllClientsWithStats } from '../../../../utils/consultantHelper';
 
 const installDesktopMedia = () => {
   window.matchMedia = jest.fn().mockImplementation((query) => ({
@@ -214,6 +218,8 @@ describe('ConsultationLogViewPage — P0 핫픽스 회귀 가드 (2026-05-29)', 
     });
     notificationManager.error.mockClear();
     notificationManager.info.mockClear();
+    getAllClientsWithStats.mockReset();
+    getAllClientsWithStats.mockResolvedValue([]);
   });
 
   describe('computeDefaultDateRange', () => {
@@ -511,6 +517,51 @@ describe('ConsultationLogViewPage — P0 핫픽스 회귀 가드 (2026-05-29)', 
     }));
   });
 
+  test('내담자·상담사를 고르면 쪽 크기 10이고 30건은 3쪽, 미선택은 20이다', async () => {
+    getAllClientsWithStats.mockResolvedValue([{ id: 11, name: '서지후' }]);
+    StandardizedApi.get.mockImplementation(() => Promise.resolve({
+      success: true,
+      data: [{
+        id: 1,
+        sessionDate: '2026-10-08',
+        clientName: '서지후',
+        consultantName: '박지안',
+        isSessionCompleted: true,
+        summaryPreview: '요약'
+      }],
+      totalCount: 30,
+      totalPages: 30
+    }));
+
+    await act(async () => {
+      render(<ConsultationLogViewPage />);
+    });
+
+    await waitFor(() => expect(StandardizedApi.get).toHaveBeenCalledTimes(1));
+    expect(StandardizedApi.get.mock.calls[0][1]).toEqual(expect.objectContaining({
+      size: CONSULTATION_LOG_TABLE_PAGE_SIZE
+    }));
+    expect(screen.getByRole('button', { name: '2쪽' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: '3쪽' })).toBeNull();
+
+    expect(await screen.findByRole('option', { name: '서지후' })).toBeInTheDocument();
+    await act(async () => {
+      fireEvent.change(screen.getByLabelText('내담자'), { target: { value: '11' } });
+    });
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: '조회' }));
+    });
+
+    await waitFor(() => expect(StandardizedApi.get).toHaveBeenCalledTimes(2));
+    expect(StandardizedApi.get.mock.calls[1][1]).toEqual(expect.objectContaining({
+      page: 0,
+      size: CONSULTATION_LOG_TIMELINE_PAGE_SIZE,
+      clientId: 11
+    }));
+    expect(screen.getByRole('button', { name: '3쪽' })).toBeInTheDocument();
+    expect(CONSULTATION_LOG_TIMELINE_PAGE_SIZE).toBeLessThan(CONSULTATION_LOG_TABLE_PAGE_SIZE);
+  });
+
   test('사용자가 기간을 비운 뒤 조회하면 기본 기간으로 보완한다', async () => {
     await act(async () => {
       render(<ConsultationLogViewPage />);
@@ -700,7 +751,7 @@ describe('ConsultationLogViewPage — saved view restore race (그록 P0)', () =
         startDate: '2026-03-01',
         endDate: '2026-03-07',
         consultantId: 12,
-        size: CONSULTATION_LOG_TABLE_PAGE_SIZE
+        size: CONSULTATION_LOG_TIMELINE_PAGE_SIZE
       }));
     });
 

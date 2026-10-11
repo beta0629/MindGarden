@@ -62,6 +62,7 @@ const AdminDashboardV2 = lazy(() => import('./components/dashboard-v2/AdminDashb
 const ClientDashboard = lazy(() => import('./components/client/ClientDashboard'));
 const CommonDashboard = lazy(() => import('./components/dashboard/CommonDashboard'));
 const ConsultantDashboardV2 = lazy(() => import('./components/dashboard-v2/consultant/ConsultantDashboardV2'));
+const PackagePricingDetailPage = lazy(() => import('./components/admin/package-pricing/pages/PackagePricingDetailPage'));
 const AdminKakaoAlimtalkSettingsPage = lazy(() => import('./components/admin/AdminKakaoAlimtalkSettingsPage'));
 const AdminTenantSmsSettingsPage = lazy(() => import('./components/admin/AdminTenantSmsSettingsPage'));
 const AdminTestNotificationPage = lazy(() => import('./components/admin/system/AdminTestNotificationPage'));
@@ -797,8 +798,9 @@ function AppContent() {
               />
               {/* path 문자열 필수: scripts/verify-quick-action-routes.mjs (ADMIN_ROUTES.TENANT_COMMON_CODES 와 동일 세그먼트) */}
               <Route path="tenant-common-codes" element={<TenantCommonCodeManager />} />
-              <Route path="package-pricing/new" element={<Navigate to={ADMIN_SHOP_PRODUCT_ROUTES.NEW} replace />} />
-              <Route path="package-pricing/:id" element={<RedirectToShopProductEdit paramName="id" />} />
+              {/* 상품 조합(구성) 빌더 — 새 「상품」 편집 화면에 구성 입력이 없어 기존 빌더로 직접 연결 */}
+              <Route path="package-pricing/new" element={<PackagePricingDetailPage />} />
+              <Route path="package-pricing/:id" element={<PackagePricingDetailPage />} />
               <Route path="package-pricing" element={<Navigate to={ADMIN_SHOP_PRODUCT_ROUTES.LIST} replace />} />
               <Route
                 path="menu-permissions"

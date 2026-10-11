@@ -11,6 +11,18 @@ import { apiGet, apiPost } from '../../../utils/ajax';
 import { SANITIZED_INTERNAL_SERVER_ERROR_MESSAGE } from '../../../constants/genericServerErrorMessages';
 import '../../../i18n';
 
+jest.mock('axios', () => ({
+  __esModule: true,
+  default: {
+    get: jest.fn(() => Promise.resolve({ data: {} })),
+    post: jest.fn(() => Promise.resolve({ data: {} })),
+    interceptors: {
+      request: { use: jest.fn(), eject: jest.fn() },
+      response: { use: jest.fn(), eject: jest.fn() }
+    }
+  }
+}));
+
 jest.mock('../../../utils/ajax', () => {
   const actual = jest.requireActual('../../../utils/ajax');
   return {

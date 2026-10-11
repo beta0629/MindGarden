@@ -27,11 +27,14 @@ import '../../../i18n';
 
 const NS = 'adminConsultationLogs';
 
-const personOptions = (rows) => (rows || []).map((row) => (
-  <option key={row.id} value={row.id}>
-    {row.name || row.userName || ''}
-  </option>
-));
+const personOptions = (rows, unknownName) => (rows || []).map((row) => {
+  const name = String(row.name || row.userName || '').trim();
+  return (
+    <option key={row.id} value={row.id}>
+      {name || unknownName}
+    </option>
+  );
+});
 
 const LegacyFilter = ({
   isAdmin,
@@ -61,7 +64,7 @@ const LegacyFilter = ({
             onChange={(event) => onConsultantChange(event.target.value ? Number(event.target.value) : null)}
           >
             <option value="">{t('filter.all')}</option>
-            {personOptions(consultants)}
+            {personOptions(consultants, t('people.unknownName'))}
           </select>
         </div>
       ) : null}
@@ -76,7 +79,7 @@ const LegacyFilter = ({
           onChange={(event) => onClientChange(event.target.value ? Number(event.target.value) : null)}
         >
           <option value="">{t('filter.all')}</option>
-          {personOptions(clients)}
+          {personOptions(clients, t('people.unknownName'))}
         </select>
       </div>
       <div className="mg-v2-consultation-log-filter__field">
@@ -179,7 +182,7 @@ const QueryFilter = (props) => {
             onChange={(event) => props.onConsultantChange(event.target.value ? Number(event.target.value) : null)}
           >
             <option value="">{t('filter.all')}</option>
-            {personOptions(props.consultants)}
+            {personOptions(props.consultants, t('people.unknownName'))}
           </select>
         </div>
       ) : null}
@@ -194,7 +197,7 @@ const QueryFilter = (props) => {
           onChange={(event) => props.onClientChange(event.target.value ? Number(event.target.value) : null)}
         >
           <option value="">{t('filter.all')}</option>
-          {personOptions(props.clients)}
+          {personOptions(props.clients, t('people.unknownName'))}
         </select>
       </div>
       <div className="mg-v2-consultation-log-query__field">

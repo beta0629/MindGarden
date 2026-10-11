@@ -249,6 +249,7 @@ const ConsultationLogViewPage = ({ surface }) => {
   const [consultants, setConsultants] = useState([]);
   const [clients, setClients] = useState([]);
   const [records, setRecords] = useState([]);
+  const [groupSummary, setGroupSummary] = useState(null);
   const [totalElements, setTotalElements] = useState(0);
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
@@ -510,6 +511,7 @@ const ConsultationLogViewPage = ({ surface }) => {
         if (!range) {
           if (isStale()) return;
           setRecords([]);
+          setGroupSummary(null);
           setTotalElements(0);
           setCalendarTruncated(false);
           return;
@@ -524,6 +526,7 @@ const ConsultationLogViewPage = ({ surface }) => {
           ? result.records
           : normalizeConsultantRecords(result.records, user?.name);
         setRecords(rows);
+        setGroupSummary(null);
         setTotalElements(result.totalCount);
         setCalendarTruncated(result.truncated);
       } else {
@@ -546,6 +549,7 @@ const ConsultationLogViewPage = ({ surface }) => {
           ? result.data
           : normalizeConsultantRecords(result.data, user?.name);
         setRecords(rows);
+        setGroupSummary(result.groupSummary || null);
         setTotalElements(result.totalCount);
         setCalendarTruncated(false);
       }
@@ -553,6 +557,7 @@ const ConsultationLogViewPage = ({ surface }) => {
       if (isStale()) return;
       console.error('상담일지 목록 로드 실패:', e);
       setRecords([]);
+      setGroupSummary(null);
       setTotalElements(0);
       setCalendarTruncated(false);
       setLoadError(true);
@@ -1197,6 +1202,13 @@ const ConsultationLogViewPage = ({ surface }) => {
               consultantNameMap={consultantNameMap}
               selectedLogId={selectedLogId}
               onOpenRow={handleOpenRow}
+              grouping={{
+                clientId: appliedFilters.clientId,
+                consultantId: appliedFilters.consultantId,
+                periodFrom: appliedFilters.startDate,
+                periodTo: appliedFilters.endDate,
+                summary: groupSummary
+              }}
             />
             <nav className="mg-v2-consultation-log-pagination" aria-label={t('pagination.label')}>
               <MGPagination

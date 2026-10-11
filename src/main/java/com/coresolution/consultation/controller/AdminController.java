@@ -26,6 +26,8 @@ import com.coresolution.consultation.dto.ConsultantClientMappingCreateRequest;
 import com.coresolution.consultation.dto.ConsultantClientMappingResponse;
 import com.coresolution.consultation.dto.admin.BulkMappingPaymentResult;
 import com.coresolution.consultation.dto.ConsultantRegistrationRequest;
+import com.coresolution.consultation.dto.ConsultationLogGroupSummaryResponse;
+import com.coresolution.consultation.dto.ConsultationLogGroupedPage;
 import com.coresolution.consultation.dto.ConsultationRecordListItemResponse;
 import com.coresolution.consultation.dto.ConsultationsByDayOfWeekResponse;
 import com.coresolution.consultation.dto.CounselingEnabledUpdateRequest;
@@ -56,6 +58,7 @@ import com.coresolution.consultation.service.ConsultantRatingService;
 import com.coresolution.consultation.service.ConsultantStatsService;
 import com.coresolution.consultation.service.ConsultationRecordPersonNameResolver;
 import com.coresolution.consultation.service.ConsultationRecordService;
+import com.coresolution.consultation.util.ConsultationLogGroupMode;
 import com.coresolution.consultation.service.DynamicPermissionService;
 import com.coresolution.consultation.service.erp.ErpService;
 import com.coresolution.consultation.service.erp.financial.FinancialTransactionService;
@@ -3945,9 +3948,21 @@ public class AdminController extends BaseApiController {
             }
             Pageable pageable = PageRequest.of(validPage, validSize);
 
-            Page<ConsultationRecord> consultationRecords =
-                    consultationRecordService.getConsultationRecordsForLogView(consultantId, clientId,
-                            startDate, endDate, sessionCompleted, keyword, matchedClientIds, pageable);
+            ConsultationLogGroupMode groupMode = ConsultationLogGroupMode.from(consultantId, clientId);
+            Page<ConsultationRecord> consultationRecords;
+            ConsultationLogGroupSummaryResponse groupSummary;
+            if (groupMode == ConsultationLogGroupMode.NONE) {
+                consultationRecords = consultationRecordService.getConsultationRecordsForLogView(
+                        consultantId, clientId, startDate, endDate, sessionCompleted, keyword,
+                        matchedClientIds, pageable);
+                groupSummary = ConsultationLogGroupSummaryResponse.none();
+            } else {
+                ConsultationLogGroupedPage grouped = consultationRecordService.getGroupedConsultationLogPage(
+                        consultantId, clientId, startDate, endDate, sessionCompleted, keyword,
+                        matchedClientIds, pageable);
+                consultationRecords = grouped.getPage();
+                groupSummary = grouped.getSummary();
+            }
 
             // 본문은 단건 상세에서만. 내담자·상담사 표시명은 목록 메타로, 같은 테넌트를 한 번에 채운다.
             List<ConsultationRecord> pageContent = consultationRecords.getContent();
@@ -3968,6 +3983,7 @@ public class AdminController extends BaseApiController {
             response.put("totalPages", consultationRecords.getTotalPages());
             response.put("currentPage", consultationRecords.getNumber());
             response.put("size", consultationRecords.getSize());
+            response.put("groupSummary", groupSummary);
 
             return ResponseEntity.ok(response);
 

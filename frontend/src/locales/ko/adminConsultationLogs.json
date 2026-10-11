@@ -101,5 +101,28 @@
     "dayList": "{{date}} 상담일지",
     "truncated": "이 달의 상담일지가 많아 일부만 표시합니다. 기간이나 조건을 좁혀 주세요.",
     "openRecord": "{{name}} 상담일지 열기"
+  },
+  "group": {
+    "summary": {
+      "label": "내담자 요약",
+      "client": "내담자 이름",
+      "sessions": "기간 내 상담 수",
+      "first": "기간 내 첫 상담일",
+      "last": "기간 내 최근 상담일",
+      "period": "조회 기간 {{from}} ~ {{to}} 기준",
+      "count": "{{n}}건",
+      "announce": "내담자 {{name}}, 기간 내 상담 {{n}}건"
+    },
+    "caption": {
+      "client": "{{name}} 내담자의 상담일지 (회기 번호 순)",
+      "counselor": "{{name}} 상담사의 상담일지 (내담자별, 회기 번호 순)",
+      "repeat": "상담일지 목록 (같은 내담자가 이어지면 이름은 첫 행에만 표시)"
+    },
+    "counselorChange": "상담사 변경 · {{name}}",
+    "head": {
+      "sessions": "기간 내 {{n}}건",
+      "last": "최근 상담일 {{date}}",
+      "joiner": " · "
+    }
   }
 }

@@ -34,9 +34,12 @@ import org.springframework.transaction.annotation.Transactional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.nullValue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -184,8 +187,8 @@ class AdminControllerConsultationRecordsDateRangeIntegrationTest {
     }
 
     @Test
-    @DisplayName("consultantId + 기간 — 4-인자 Repository (Consultant + sessionDate BETWEEN) 호출")
-    void consultantPlusDateRange_callsConsultantBetweenRepository() throws Exception {
+    @DisplayName("consultantId + 기간 — 같은 조건의 기간 집계와 정렬 키를 조회하고 날짜 내림차순 목록은 쓰지 않는다")
+    void consultantPlusDateRange_usesPeriodAggregateNotDateDescPage() throws Exception {
         Long consultantId = 77L;
 
         mockMvc.perform(get("/api/v1/admin/consultation-records")
@@ -195,15 +198,32 @@ class AdminControllerConsultationRecordsDateRangeIntegrationTest {
                         .param("size", "100")
                         .sessionAttr(SessionConstants.USER_OBJECT, adminUser)
                         .sessionAttr(SessionConstants.TENANT_ID, TEST_TENANT_ID))
-                .andExpect(status().isOk());
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.groupSummary.mode").value("COUNSELOR"));
 
-        verify(consultationRecordRepository)
+        verify(consultationRecordRepository).aggregateConsultationLogByClient(
+                eq(TEST_TENANT_ID),
+                eq(consultantId),
+                isNull(),
+                eq(LocalDate.of(2026, 4, 1)),
+                eq(LocalDate.of(2026, 4, 30)),
+                isNull(),
+                eq(false),
+                eq("%"),
+                anyList());
+        verify(consultationRecordRepository).findConsultationLogSortKeys(
+                eq(TEST_TENANT_ID),
+                eq(consultantId),
+                isNull(),
+                eq(LocalDate.of(2026, 4, 1)),
+                eq(LocalDate.of(2026, 4, 30)),
+                isNull(),
+                eq(false),
+                eq("%"),
+                anyList());
+        verify(consultationRecordRepository, never())
                 .findByTenantIdAndConsultantIdAndSessionDateBetweenAndIsDeletedFalseOrderBySessionDateDesc(
-                        eq(TEST_TENANT_ID),
-                        eq(consultantId),
-                        eq(LocalDate.of(2026, 4, 1)),
-                        eq(LocalDate.of(2026, 4, 30)),
-                        any(Pageable.class));
+                        anyString(), anyLong(), any(LocalDate.class), any(LocalDate.class), any(Pageable.class));
     }
 
     @Test

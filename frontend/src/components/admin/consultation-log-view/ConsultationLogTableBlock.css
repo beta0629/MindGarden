@@ -3,20 +3,30 @@
   width: 100%;
 }
 
-.mg-v2-consultation-log-table th:nth-child(1),
-.mg-v2-consultation-log-table td:nth-child(1) {
+.mg-v2-consultation-log-table-block .mg-v2-content-section__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-v2-space-5);
+}
+
+.mg-v2-consultation-log-table-block .mg-v2-list-block__table-wrapper .mg-v2-consultation-log-table {
+  min-width: 0;
+}
+
+.mg-v2-consultation-log-table th[data-column="date"],
+.mg-v2-consultation-log-table td[data-column="date"] {
   width: calc(var(--mg-v2-space-16) + var(--mg-v2-space-8) + var(--mg-v2-space-6) + var(--mg-v2-space-4));
 }
 
-.mg-v2-consultation-log-table th:nth-child(2),
-.mg-v2-consultation-log-table td:nth-child(2),
-.mg-v2-consultation-log-table th:nth-child(3),
-.mg-v2-consultation-log-table td:nth-child(3) {
+.mg-v2-consultation-log-table th[data-column="clientName"],
+.mg-v2-consultation-log-table td[data-column="clientName"],
+.mg-v2-consultation-log-table th[data-column="consultantName"],
+.mg-v2-consultation-log-table td[data-column="consultantName"] {
   width: calc(var(--mg-v2-space-16) * 2);
 }
 
-.mg-v2-consultation-log-table th:nth-child(4),
-.mg-v2-consultation-log-table td:nth-child(4) {
+.mg-v2-consultation-log-table th[data-column="status"],
+.mg-v2-consultation-log-table td[data-column="status"] {
   width: calc(var(--mg-v2-space-20) + var(--mg-v2-space-8) + var(--mg-v2-space-2));
 }
 
@@ -136,5 +146,264 @@
   .mg-v2-consultation-log-summary {
     display: block;
     white-space: nowrap;
+  }
+
+  .mg-v2-consultation-log-table tr.mg-v2-consultation-log-group-row,
+  .mg-v2-consultation-log-table tr.mg-v2-consultation-log-counselor-change {
+    display: table-row;
+    padding: 0;
+    background: transparent;
+  }
+
+  .mg-v2-consultation-log-table tr.mg-v2-consultation-log-row--repeat td[data-column="clientName"] {
+    position: relative;
+    width: calc(var(--mg-v2-space-16) * 2);
+    height: auto;
+    overflow: visible;
+    clip: auto;
+  }
+
+  .mg-v2-consultation-log-repeat-tick {
+    position: absolute;
+    inset-block: 0;
+    inset-inline-start: 0;
+    display: block;
+    border-inline-start: var(--mg-v2-border-width-thin) solid var(--mg-v2-color-border-default);
+  }
+
+  .mg-v2-consultation-log-summary-strip__list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .mg-v2-consultation-log-summary-strip__item--name {
+    grid-column: auto;
+  }
+}
+
+@media (min-width: 1280px) {
+  .mg-v2-consultation-log-summary-strip__list {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.mg-v2-consultation-log-table--client td[data-column="date"],
+.mg-v2-consultation-log-table--both td[data-column="date"],
+.mg-v2-consultation-log-table--counselor td[data-column="date"] {
+  order: 1;
+  flex: 1 1 auto;
+}
+
+.mg-v2-consultation-log-table--client td[data-column="consultantName"] {
+  order: 2;
+}
+
+.mg-v2-consultation-log-table--client td[data-column="status"],
+.mg-v2-consultation-log-table--both td[data-column="status"],
+.mg-v2-consultation-log-table--counselor td[data-column="status"] {
+  order: 3;
+  margin-left: auto;
+}
+
+.mg-v2-consultation-log-table--both td[data-column="status"],
+.mg-v2-consultation-log-table--counselor td[data-column="status"] {
+  order: 2;
+}
+
+.mg-v2-consultation-log-table--client td[data-column="summary"],
+.mg-v2-consultation-log-table--both td[data-column="summary"],
+.mg-v2-consultation-log-table--counselor td[data-column="summary"] {
+  order: 4;
+  flex: 1 1 100%;
+}
+
+.mg-v2-consultation-log-table tr.mg-v2-consultation-log-row--repeat td[data-column="clientName"] {
+  position: absolute;
+  width: var(--mg-v2-space-1);
+  height: var(--mg-v2-space-1);
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+}
+
+.mg-v2-consultation-log-table tr.mg-v2-consultation-log-row--repeat td[data-column="date"] {
+  order: 1;
+  flex: 1 1 auto;
+}
+
+.mg-v2-consultation-log-table tr.mg-v2-consultation-log-row--repeat td[data-column="consultantName"] {
+  order: 2;
+}
+
+.mg-v2-consultation-log-table tr.mg-v2-consultation-log-row--repeat td[data-column="status"] {
+  order: 3;
+  margin-left: auto;
+}
+
+.mg-v2-consultation-log-table tr.mg-v2-consultation-log-row--repeat td[data-column="summary"] {
+  order: 4;
+  flex: 1 1 100%;
+}
+
+.mg-v2-consultation-log-repeat-tick {
+  display: none;
+}
+
+.mg-v2-consultation-log-name-missing {
+  color: var(--mg-v2-color-text-secondary);
+  font-weight: var(--mg-v2-font-weight-regular);
+  font-style: normal;
+}
+
+.mg-v2-consultation-log-summary-strip__period {
+  margin: 0 0 var(--mg-v2-space-3);
+  color: var(--mg-v2-color-text-secondary);
+  font-size: var(--mg-v2-font-size-caption);
+}
+
+.mg-v2-consultation-log-summary-strip__list {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--mg-v2-space-3);
+  margin: 0;
+}
+
+.mg-v2-consultation-log-summary-strip__item {
+  min-width: 0;
+}
+
+.mg-v2-consultation-log-summary-strip__item--name {
+  grid-column: 1 / -1;
+}
+
+.mg-v2-consultation-log-summary-strip__item dt {
+  color: var(--mg-v2-color-text-secondary);
+  font-size: var(--mg-v2-font-size-caption);
+  font-weight: var(--mg-v2-font-weight-regular);
+}
+
+.mg-v2-consultation-log-summary-strip__item dd {
+  margin: var(--mg-v2-space-1) 0 0;
+  color: var(--mg-v2-color-text-primary);
+  font-size: var(--mg-v2-font-size-body-md);
+  font-weight: var(--mg-v2-font-weight-bold);
+}
+
+.mg-v2-consultation-log-summary-strip__name {
+  font-size: var(--mg-v2-font-size-h2);
+  font-weight: var(--mg-v2-font-weight-regular);
+}
+
+.mg-v2-consultation-log-table tr.mg-v2-consultation-log-group-row,
+.mg-v2-consultation-log-table tr.mg-v2-consultation-log-counselor-change {
+  display: flex;
+  width: 100%;
+  padding: var(--mg-v2-space-2) 0;
+}
+
+.mg-v2-consultation-log-table tr.mg-v2-consultation-log-group-row {
+  background: var(--mg-v2-color-neutral-50);
+}
+
+.mg-v2-consultation-log-table tr.mg-v2-consultation-log-group-row th,
+.mg-v2-consultation-log-table tr.mg-v2-consultation-log-counselor-change th {
+  flex: 1 1 100%;
+  border-block: var(--mg-v2-border-width-thin) solid var(--mg-v2-color-border-default);
+  font-weight: var(--mg-v2-font-weight-regular);
+  text-align: start;
+}
+
+.mg-v2-consultation-log-table tr.mg-v2-consultation-log-group-row th {
+  background: var(--mg-v2-color-neutral-50);
+  block-size: auto;
+  min-block-size: var(--mg-v2-space-10);
+  padding-block: 0;
+}
+
+.mg-v2-consultation-log-table tr.mg-v2-consultation-log-counselor-change th {
+  border-top: var(--mg-v2-border-width-thin) solid var(--mg-v2-color-border-strong);
+  color: var(--mg-v2-color-text-secondary);
+  font-size: var(--mg-v2-font-size-caption);
+}
+
+.mg-v2-list-block__table.mg-v2-consultation-log-table tbody tr.mg-v2-consultation-log-group-row:hover,
+.mg-v2-list-block__table.mg-v2-consultation-log-table tbody tr.mg-v2-consultation-log-counselor-change:hover {
+  background: var(--mg-v2-color-neutral-50);
+}
+
+.mg-v2-list-block__table.mg-v2-consultation-log-table tbody tr.mg-v2-consultation-log-counselor-change:hover {
+  background: transparent;
+}
+
+.mg-v2-consultation-log-group-head {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--mg-v2-space-1);
+  min-width: 0;
+}
+
+.mg-v2-consultation-log-group-head__name {
+  font-weight: var(--mg-v2-font-weight-bold);
+}
+
+.mg-v2-consultation-log-group-head__meta {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--mg-v2-space-3);
+  color: var(--mg-v2-color-text-secondary);
+  font-size: var(--mg-v2-font-size-caption);
+  font-weight: var(--mg-v2-font-weight-regular);
+}
+
+.mg-v2-consultation-log-group-head__rule {
+  display: none;
+  inline-size: 0;
+  block-size: var(--mg-v2-space-3);
+  border-inline-start: var(--mg-v2-border-width-thin) solid var(--mg-v2-color-border-default);
+}
+
+@media (min-width: 768px) {
+  .mg-v2-consultation-log-table tr.mg-v2-consultation-log-group-row,
+  .mg-v2-consultation-log-table tr.mg-v2-consultation-log-counselor-change {
+    display: table-row;
+    width: auto;
+    padding: 0;
+  }
+
+  .mg-v2-consultation-log-table tr.mg-v2-consultation-log-group-row {
+    background: var(--mg-v2-color-neutral-50);
+  }
+
+  .mg-v2-consultation-log-table tr.mg-v2-consultation-log-counselor-change {
+    background: transparent;
+  }
+
+  .mg-v2-consultation-log-table tr.mg-v2-consultation-log-row--repeat td[data-column="clientName"] {
+    position: relative;
+    width: calc(var(--mg-v2-space-16) * 2);
+    height: auto;
+    overflow: visible;
+    clip: auto;
+  }
+
+  .mg-v2-consultation-log-repeat-tick {
+    position: absolute;
+    inset-block: 0;
+    inset-inline-start: 0;
+    display: block;
+  }
+
+  .mg-v2-consultation-log-table tr.mg-v2-consultation-log-group-row th {
+    block-size: var(--mg-v2-space-10);
+  }
+
+  .mg-v2-consultation-log-group-head {
+    display: inline-flex;
+    flex-direction: row;
+    align-items: center;
+    gap: var(--mg-v2-space-3);
+  }
+
+  .mg-v2-consultation-log-group-head__rule {
+    display: inline-block;
   }
 }

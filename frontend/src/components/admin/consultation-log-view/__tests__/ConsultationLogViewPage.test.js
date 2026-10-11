@@ -243,7 +243,8 @@ describe('ConsultationLogViewPage — P0 핫픽스 회귀 가드 (2026-05-29)', 
       expect(normalized).toEqual({
         data: [{ id: 1 }],
         totalCount: 201,
-        totalPages: 2
+        totalPages: 2,
+        groupSummary: null
       });
     });
 
@@ -252,7 +253,8 @@ describe('ConsultationLogViewPage — P0 핫픽스 회귀 가드 (2026-05-29)', 
       expect(normalized).toEqual({
         data: [{ id: 9 }],
         totalCount: 1,
-        totalPages: 1
+        totalPages: 1,
+        groupSummary: null
       });
     });
 

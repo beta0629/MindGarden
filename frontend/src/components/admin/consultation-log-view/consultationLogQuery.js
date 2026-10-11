@@ -123,11 +123,12 @@ export const normalizeAdminConsultationRecordsPage = (
     return {
       data: response,
       totalCount: response.length,
-      totalPages: 1
+      totalPages: 1,
+      groupSummary: null
     };
   }
   if (!response || typeof response !== 'object') {
-    return { data: [], totalCount: 0, totalPages: 1 };
+    return { data: [], totalCount: 0, totalPages: 1, groupSummary: null };
   }
   const data = Array.isArray(response.data) ? response.data : [];
   const parsedTotalCount = Number(
@@ -143,7 +144,13 @@ export const normalizeAdminConsultationRecordsPage = (
   } else {
     totalPages = 1;
   }
-  return { data, totalCount, totalPages };
+  const groupSummary = !Array.isArray(response)
+    && response
+    && typeof response.groupSummary === 'object'
+    && response.groupSummary
+    ? response.groupSummary
+    : null;
+  return { data, totalCount, totalPages, groupSummary };
 };
 
 /**

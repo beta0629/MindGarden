@@ -3,6 +3,7 @@ package com.coresolution.consultation.service;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
+import com.coresolution.consultation.dto.ConsultationLogGroupedPage;
 import com.coresolution.consultation.entity.ConsultationRecord;
 import com.coresolution.consultation.service.support.ConsultationRecordWriter;
 import org.springframework.data.domain.Page;
@@ -55,6 +56,27 @@ public interface ConsultationRecordService {
      * @return 세션일 내림차순 페이지
      */
     Page<ConsultationRecord> getConsultationRecordsForLogView(Long consultantId, Long clientId,
+        LocalDate startDate, LocalDate endDate, Boolean sessionCompleted, String keyword,
+        String matchedClientIds, Pageable pageable);
+
+    /**
+     * 관리자 상담일지 조회의 묶음 페이지.
+     *
+     * <p>내담자 선택(둘 다 포함)은 회기 오름차순 페이지와, 같은 필터의 기간 전체 건수·첫·최근 상담일을 돌려준다.
+     * 상담사만 선택하면 최근 상담일·표시명 순 묶음으로 자른 페이지와, 그 페이지에 나온 내담자의 기간 집계를 돌려준다.
+     * 선택 없음은 이 메서드를 쓰지 않고 {@link #getConsultationRecordsForLogView} 의 상담일 내림차순을 유지한다.</p>
+     *
+     * @param consultantId 상담사 ID (nullable)
+     * @param clientId 내담자 ID (nullable). 둘 중 하나는 있어야 한다
+     * @param startDate 세션 일자 시작 (nullable)
+     * @param endDate 세션 일자 종료 (nullable)
+     * @param sessionCompleted 완료 여부 (nullable = 전체)
+     * @param keyword 검색어 (nullable)
+     * @param matchedClientIds 이름 매칭 내담자 id CSV (nullable)
+     * @param pageable 페이지
+     * @return 정렬된 페이지와 기간 집계
+     */
+    ConsultationLogGroupedPage getGroupedConsultationLogPage(Long consultantId, Long clientId,
         LocalDate startDate, LocalDate endDate, Boolean sessionCompleted, String keyword,
         String matchedClientIds, Pageable pageable);
     

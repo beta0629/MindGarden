@@ -204,12 +204,12 @@ public interface ConsultationRecordRepository extends JpaRepository<Consultation
             @Param("matchedClientIds") List<Long> matchedClientIds);
 
     /**
-     * 상담사 선택 정렬용 키. 본문 컬럼은 싣지 않는다.
+     * 묶음·타임라인 정렬용 키. 본문 컬럼은 싣지 않는다.
      *
-     * @return id, 내담자, 회기, 상담일
+     * @return id, 내담자, 상담사, 회기, 상담일
      */
-    @Query("SELECT r.id AS id, r.clientId AS clientId, r.sessionNumber AS sessionNumber, "
-            + "r.sessionDate AS sessionDate "
+    @Query("SELECT r.id AS id, r.clientId AS clientId, r.consultantId AS consultantId, "
+            + "r.sessionNumber AS sessionNumber, r.sessionDate AS sessionDate "
             + "FROM ConsultationRecord r " + CONSULTATION_LOG_VIEW_WHERE)
     List<ConsultationLogSortKey> findConsultationLogSortKeys(
             @Param("tenantId") String tenantId,

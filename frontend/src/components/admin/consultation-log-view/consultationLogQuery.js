@@ -124,11 +124,12 @@ export const normalizeAdminConsultationRecordsPage = (
       data: response,
       totalCount: response.length,
       totalPages: 1,
-      groupSummary: null
+      groupSummary: null,
+      timelineBoundary: null
     };
   }
   if (!response || typeof response !== 'object') {
-    return { data: [], totalCount: 0, totalPages: 1, groupSummary: null };
+    return { data: [], totalCount: 0, totalPages: 1, groupSummary: null, timelineBoundary: null };
   }
   const data = Array.isArray(response.data) ? response.data : [];
   const parsedTotalCount = Number(
@@ -150,7 +151,13 @@ export const normalizeAdminConsultationRecordsPage = (
     && response.groupSummary
     ? response.groupSummary
     : null;
-  return { data, totalCount, totalPages, groupSummary };
+  const timelineBoundary = !Array.isArray(response)
+    && response
+    && typeof response.timelineBoundary === 'object'
+    && response.timelineBoundary
+    ? response.timelineBoundary
+    : null;
+  return { data, totalCount, totalPages, groupSummary, timelineBoundary };
 };
 
 /**
@@ -277,6 +284,9 @@ export const buildConsultationLogQueryParams = (filters) => {
     params.keyword = keyword;
     const ids = findClientIdsByName(filters.clients, keyword);
     params.matchedClientIds = ids.length > 0 ? ids.join(',') : UNMATCHED_CLIENT_ID;
+  }
+  if (filters.timelineSort === 'recent' || filters.timelineSort === 'session') {
+    params.timelineSort = filters.timelineSort;
   }
   return params;
 };

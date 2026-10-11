@@ -28,6 +28,7 @@ import com.coresolution.consultation.dto.admin.BulkMappingPaymentResult;
 import com.coresolution.consultation.dto.ConsultantRegistrationRequest;
 import com.coresolution.consultation.dto.ConsultationLogGroupSummaryResponse;
 import com.coresolution.consultation.dto.ConsultationLogGroupedPage;
+import com.coresolution.consultation.dto.ConsultationLogTimelineBoundaryResponse;
 import com.coresolution.consultation.dto.ConsultationRecordListItemResponse;
 import com.coresolution.consultation.dto.ConsultationsByDayOfWeekResponse;
 import com.coresolution.consultation.dto.CounselingEnabledUpdateRequest;
@@ -59,6 +60,7 @@ import com.coresolution.consultation.service.ConsultantStatsService;
 import com.coresolution.consultation.service.ConsultationRecordPersonNameResolver;
 import com.coresolution.consultation.service.ConsultationRecordService;
 import com.coresolution.consultation.util.ConsultationLogGroupMode;
+import com.coresolution.consultation.util.ConsultationLogTimelineSort;
 import com.coresolution.consultation.service.DynamicPermissionService;
 import com.coresolution.consultation.service.erp.ErpService;
 import com.coresolution.consultation.service.erp.financial.FinancialTransactionService;
@@ -3912,6 +3914,7 @@ public class AdminController extends BaseApiController {
             @RequestParam(required = false) Boolean sessionCompleted,
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) String matchedClientIds,
+            @RequestParam(required = false) String timelineSort,
             @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "20") int size,
             HttpSession session) {
         try {
@@ -3951,6 +3954,7 @@ public class AdminController extends BaseApiController {
             ConsultationLogGroupMode groupMode = ConsultationLogGroupMode.from(consultantId, clientId);
             Page<ConsultationRecord> consultationRecords;
             ConsultationLogGroupSummaryResponse groupSummary;
+            ConsultationLogTimelineBoundaryResponse timelineBoundary = null;
             if (groupMode == ConsultationLogGroupMode.NONE) {
                 consultationRecords = consultationRecordService.getConsultationRecordsForLogView(
                         consultantId, clientId, startDate, endDate, sessionCompleted, keyword,
@@ -3959,9 +3963,10 @@ public class AdminController extends BaseApiController {
             } else {
                 ConsultationLogGroupedPage grouped = consultationRecordService.getGroupedConsultationLogPage(
                         consultantId, clientId, startDate, endDate, sessionCompleted, keyword,
-                        matchedClientIds, pageable);
+                        matchedClientIds, pageable, ConsultationLogTimelineSort.from(timelineSort));
                 consultationRecords = grouped.getPage();
                 groupSummary = grouped.getSummary();
+                timelineBoundary = grouped.getBoundary();
             }
 
             // 본문은 단건 상세에서만. 내담자·상담사 표시명은 목록 메타로, 같은 테넌트를 한 번에 채운다.
@@ -3984,6 +3989,7 @@ public class AdminController extends BaseApiController {
             response.put("currentPage", consultationRecords.getNumber());
             response.put("size", consultationRecords.getSize());
             response.put("groupSummary", groupSummary);
+            response.put("timelineBoundary", timelineBoundary);
 
             return ResponseEntity.ok(response);
 

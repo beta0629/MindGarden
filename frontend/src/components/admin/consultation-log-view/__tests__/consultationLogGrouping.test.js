@@ -68,7 +68,7 @@ describe('상담일지 묶음', () => {
     expect(view.sections[1].rows[0].row.sessionNumber).toBe(6);
   });
 
-  it('상담사 선택은 최근 상담일·이름 순 묶음이고 머리 건수는 기간 집계다', () => {
+  it('상담사 선택은 최근 상담일 순 묶음이고 묶음 안도 최근 순이며 머리 건수는 기간 집계다', () => {
     const view = buildConsultationLogGroupView({
       mode: CONSULTATION_LOG_GROUP_MODE.COUNSELOR,
       missingNameLabel: MISSING,
@@ -105,7 +105,7 @@ describe('상담일지 묶음', () => {
     expect(view.sections[0].header.sessionCount).toBe(3);
     expect(view.sections[0].header.countsReady).toBe(true);
     expect(view.sections[0].rows).toHaveLength(1);
-    expect(view.sections[1].rows.map((entry) => entry.row.sessionNumber)).toEqual([1, 3]);
+    expect(view.sections[1].rows.map((entry) => entry.row.sessionNumber)).toEqual([3, 1]);
     expect(view.sections[1].header.sessionCount).toBe(9);
     expect(view.summary).toBeNull();
   });

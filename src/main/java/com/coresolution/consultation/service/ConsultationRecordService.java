@@ -6,6 +6,7 @@ import java.util.Map;
 import com.coresolution.consultation.dto.ConsultationLogGroupedPage;
 import com.coresolution.consultation.entity.ConsultationRecord;
 import com.coresolution.consultation.service.support.ConsultationRecordWriter;
+import com.coresolution.consultation.util.ConsultationLogTimelineSort;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -62,8 +63,10 @@ public interface ConsultationRecordService {
     /**
      * 관리자 상담일지 조회의 묶음 페이지.
      *
-     * <p>내담자 선택(둘 다 포함)은 회기 오름차순 페이지와, 같은 필터의 기간 전체 건수·첫·최근 상담일을 돌려준다.
-     * 상담사만 선택하면 최근 상담일·표시명 순 묶음으로 자른 페이지와, 그 페이지에 나온 내담자의 기간 집계를 돌려준다.
+     * <p>내담자 선택(둘 다 포함)은 {@code timelineSort} 로 최근 순(기본) 또는 회기 순 페이지와,
+     * 같은 필터의 기간 전체 건수·첫·최근 상담일을 돌려준다.
+     * 상담사만 선택하면 최근 상담일·표시명 순 묶음이고, 묶음 안은 최근 순이다. 이 모드는 {@code timelineSort} 를 쓰지 않는다.
+     * 정렬 키만 모아 자른 뒤 그 쪽의 본문을 다시 읽는다. 응답 경계에는 이전 쪽 마지막 행의 상담사·내담자를 싣는다.
      * 선택 없음은 이 메서드를 쓰지 않고 {@link #getConsultationRecordsForLogView} 의 상담일 내림차순을 유지한다.</p>
      *
      * @param consultantId 상담사 ID (nullable)
@@ -74,11 +77,12 @@ public interface ConsultationRecordService {
      * @param keyword 검색어 (nullable)
      * @param matchedClientIds 이름 매칭 내담자 id CSV (nullable)
      * @param pageable 페이지
-     * @return 정렬된 페이지와 기간 집계
+     * @param timelineSort 내담자 선택 정렬. null 이면 최근 순. 상담사만 선택하면 무시한다
+     * @return 정렬된 페이지, 기간 집계, 쪽 경계
      */
     ConsultationLogGroupedPage getGroupedConsultationLogPage(Long consultantId, Long clientId,
         LocalDate startDate, LocalDate endDate, Boolean sessionCompleted, String keyword,
-        String matchedClientIds, Pageable pageable);
+        String matchedClientIds, Pageable pageable, ConsultationLogTimelineSort timelineSort);
     
     /**
      * 상담일지 상세 조회

@@ -23,8 +23,8 @@ class ConsultationLogGroupOrderingTest {
     private static final LocalDate LATE = LocalDate.of(2026, 10, 8);
 
     @Test
-    @DisplayName("최근 상담일이 늦은 내담자가 먼저이고, 묶음 안은 회기·상담일 오름차순이다")
-    void ordersGroupsByLastDateThenSessionsAscending() {
+    @DisplayName("최근 상담일이 늦은 내담자가 먼저이고, 묶음 안은 최근 순이다")
+    void ordersGroupsByLastDateThenRecentWithinGroup() {
         List<ConsultationLogSortRow> rows = List.of(
                 row(3L, 20L, 3, LATE),
                 row(1L, 10L, 2, MID),
@@ -36,7 +36,7 @@ class ConsultationLogGroupOrderingTest {
                 10L, "한서윤",
                 20L, "오세아")).stream().map(ConsultationLogSortRow::id).toList();
 
-        assertThat(ids).containsExactly(4L, 3L, 2L, 1L);
+        assertThat(ids).containsExactly(3L, 4L, 1L, 2L);
     }
 
     @Test
@@ -56,21 +56,22 @@ class ConsultationLogGroupOrderingTest {
     }
 
     @Test
-    @DisplayName("회기가 없거나 0 이하면 같은 내담자 묶음 안에서 뒤로 간다")
-    void missingSessionNumberSortsAfterRealSessions() {
+    @DisplayName("같은 날이면 회기 없음은 뒤로 가고, 상담일이 더 늦으면 회기가 없어도 앞으로 간다")
+    void recentWithinGroupPrefersLaterDateOverMissingSession() {
         List<ConsultationLogSortRow> rows = List.of(
                 row(1L, 10L, null, LATE),
                 row(2L, 10L, 0, MID),
-                row(3L, 10L, 1, EARLY));
+                row(3L, 10L, 2, LATE),
+                row(4L, 10L, 1, EARLY));
 
         List<Long> ids = ConsultationLogGroupOrdering.orderByClientGroup(
                 rows, Map.of(10L, LATE), Map.of(10L, "한서윤"))
                 .stream().map(ConsultationLogSortRow::id).toList();
 
-        assertThat(ids).containsExactly(3L, 2L, 1L);
+        assertThat(ids).containsExactly(3L, 1L, 2L, 4L);
     }
 
     private static ConsultationLogSortRow row(Long id, Long clientId, Integer sessionNumber, LocalDate sessionDate) {
-        return new ConsultationLogSortRow(id, clientId, sessionNumber, sessionDate);
+        return new ConsultationLogSortRow(id, clientId, null, sessionNumber, sessionDate);
     }
 }

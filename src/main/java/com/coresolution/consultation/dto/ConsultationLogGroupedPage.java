@@ -19,4 +19,5 @@ public class ConsultationLogGroupedPage {
 
     private final Page<ConsultationRecord> page;
     private final ConsultationLogGroupSummaryResponse summary;
+    private final ConsultationLogTimelineBoundaryResponse boundary;
 }

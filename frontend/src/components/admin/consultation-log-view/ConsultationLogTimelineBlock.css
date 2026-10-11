@@ -1,0 +1,102 @@
+.mg-v2-consultation-log-timeline .mg-v2-content-section__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-v2-space-5);
+  min-width: 0;
+}
+
+.mg-v2-consultation-log-timeline__toolbar {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: var(--mg-v2-space-3);
+}
+
+.mg-v2-consultation-log-timeline__sort-label {
+  color: var(--mg-v2-color-text-secondary);
+  font-size: var(--mg-v2-font-size-caption);
+}
+
+.mg-v2-consultation-log-timeline__sort-group {
+  display: inline-flex;
+  gap: var(--mg-v2-space-1);
+  padding: var(--mg-v2-space-1);
+  background: var(--mg-v2-color-neutral-100);
+  border-radius: var(--mg-v2-radius-md);
+}
+
+.mg-v2-consultation-log-timeline__sort-button[aria-pressed='true'] {
+  background: var(--mg-v2-color-surface-card);
+  color: var(--mg-v2-color-text-primary);
+  border-color: var(--mg-v2-color-border-subtle);
+}
+
+.mg-v2-consultation-log-timeline__sort-button:focus-visible {
+  box-shadow: var(--mg-v2-shadow-focus);
+}
+
+.mg-v2-consultation-log-timeline__board {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-timeline-group-gap);
+  min-width: 0;
+}
+
+.mg-v2-consultation-log-timeline__group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-v2-space-3);
+  min-width: 0;
+}
+
+.mg-v2-consultation-log-timeline__group-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--mg-v2-space-3);
+  margin: 0;
+}
+
+.mg-v2-consultation-log-timeline__group-name {
+  margin: 0;
+  color: var(--mg-v2-color-text-primary);
+  font-size: var(--mg-timeline-group-name-size);
+  font-weight: var(--mg-v2-font-weight-bold);
+  line-height: var(--mg-v2-font-line-height-heading);
+}
+
+.mg-v2-consultation-log-timeline__group-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--mg-v2-space-3);
+  margin: 0;
+  color: var(--mg-v2-color-text-secondary);
+  font-size: var(--mg-v2-font-size-caption);
+}
+
+.mg-v2-consultation-log-timeline__group-rule {
+  width: var(--mg-v2-border-width-thin);
+  align-self: stretch;
+  background: var(--mg-v2-color-border-default);
+}
+
+.mg-v2-consultation-log-timeline .mg-v2-consultation-log-name-missing {
+  color: var(--mg-v2-color-text-secondary);
+  font-weight: var(--mg-v2-font-weight-regular);
+  font-style: normal;
+}
+
+@media (max-width: 767px) {
+  .mg-v2-consultation-log-timeline__group-head {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .mg-v2-consultation-log-timeline__group-name {
+    font-size: var(--mg-v2-font-size-body-md);
+  }
+
+  .mg-v2-consultation-log-timeline__group-rule {
+    display: none;
+  }
+}

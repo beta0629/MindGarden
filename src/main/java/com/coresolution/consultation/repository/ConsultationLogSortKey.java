@@ -21,6 +21,11 @@ public interface ConsultationLogSortKey {
     Long getClientId();
 
     /**
+     * @return 상담사 users.id. 없으면 null
+     */
+    Long getConsultantId();
+
+    /**
      * @return 회기 번호. 없으면 null
      */
     Integer getSessionNumber();

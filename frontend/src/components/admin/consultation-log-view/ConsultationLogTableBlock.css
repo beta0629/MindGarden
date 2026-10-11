@@ -15,7 +15,7 @@
 
 .mg-v2-consultation-log-table th[data-column="date"],
 .mg-v2-consultation-log-table td[data-column="date"] {
-  width: calc(var(--mg-v2-space-16) + var(--mg-v2-space-8) + var(--mg-v2-space-6) + var(--mg-v2-space-4));
+  width: var(--mg-table-col-date);
 }
 
 .mg-v2-consultation-log-table th[data-column="clientName"],
@@ -27,7 +27,7 @@
 
 .mg-v2-consultation-log-table th[data-column="status"],
 .mg-v2-consultation-log-table td[data-column="status"] {
-  width: calc(var(--mg-v2-space-20) + var(--mg-v2-space-8) + var(--mg-v2-space-2));
+  width: var(--mg-table-col-status);
 }
 
 .mg-v2-consultation-log-date-button {

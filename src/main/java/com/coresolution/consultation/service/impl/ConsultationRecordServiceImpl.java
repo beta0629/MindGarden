@@ -14,6 +14,7 @@ import com.coresolution.consultation.constant.consultation.ConsultationRecordAcc
 import com.coresolution.consultation.dto.ConsultationLogClientPeriodResponse;
 import com.coresolution.consultation.dto.ConsultationLogGroupSummaryResponse;
 import com.coresolution.consultation.dto.ConsultationLogGroupedPage;
+import com.coresolution.consultation.dto.ConsultationLogTimelineBoundaryResponse;
 import com.coresolution.consultation.entity.ConsultantClientMapping;
 import com.coresolution.consultation.entity.ConsultationRecord;
 import com.coresolution.consultation.exception.ConsultationRecordDuplicateException;
@@ -39,6 +40,8 @@ import com.coresolution.consultation.util.ConsultationLogGroupMode;
 import com.coresolution.consultation.util.ConsultationLogGroupOrdering;
 import com.coresolution.consultation.util.ConsultationLogListFilters;
 import com.coresolution.consultation.util.ConsultationLogSortRow;
+import com.coresolution.consultation.util.ConsultationLogTimelineOrdering;
+import com.coresolution.consultation.util.ConsultationLogTimelineSort;
 import com.coresolution.consultation.util.ConsultationRecordChangedFields;
 import com.coresolution.consultation.util.ConsultationRecordLinkedScheduleCompletion;
 import com.coresolution.consultation.util.ProvisionalConsultationLogSession;
@@ -196,15 +199,18 @@ public class ConsultationRecordServiceImpl implements ConsultationRecordService 
     @Override
     public ConsultationLogGroupedPage getGroupedConsultationLogPage(Long consultantId, Long clientId,
             LocalDate startDate, LocalDate endDate, Boolean sessionCompleted, String keyword,
-            String matchedClientIds, Pageable pageable) {
+            String matchedClientIds, Pageable pageable, ConsultationLogTimelineSort timelineSort) {
         ConsultationLogGroupMode mode = ConsultationLogGroupMode.from(consultantId, clientId);
         if (mode == ConsultationLogGroupMode.NONE) {
             throw new IllegalArgumentException("묶음 조회는 내담자 또는 상담사 선택이 필요합니다.");
         }
         String tenantId = TenantContextHolder.getRequiredTenantId();
         LogViewQuery query = logViewQuery(keyword, matchedClientIds);
-        log.info("상담일지 묶음 조회 - mode={}, page={}, size={}",
-                mode, pageable.getPageNumber(), pageable.getPageSize());
+        ConsultationLogTimelineSort requested = timelineSort == null
+                ? ConsultationLogTimelineSort.RECENT
+                : timelineSort;
+        log.info("상담일지 묶음 조회 - mode={}, sort={}, page={}, size={}",
+                mode, requested, pageable.getPageNumber(), pageable.getPageSize());
         List<ConsultationLogClientAggregate> aggregates = consultationRecordRepository.aggregateConsultationLogByClient(
                 tenantId, consultantId, clientId, startDate, endDate, sessionCompleted,
                 query.applyKeyword(), query.pattern(), query.matchedClientIds());
@@ -212,31 +218,34 @@ public class ConsultationRecordServiceImpl implements ConsultationRecordService 
             return counselorGroupedPage(tenantId, consultantId, clientId, startDate, endDate, sessionCompleted,
                     query, aggregates, pageable);
         }
-        Page<ConsultationRecord> page = consultationRecordRepository.findForConsultationLogViewBySessionAsc(
-                tenantId, consultantId, clientId, startDate, endDate, sessionCompleted,
-                query.applyKeyword(), query.pattern(), query.matchedClientIds(), pageable);
-        return new ConsultationLogGroupedPage(page, summaryForSelectedClient(mode, clientId, aggregates));
+        return clientTimelinePage(tenantId, consultantId, clientId, startDate, endDate, sessionCompleted,
+                query, aggregates, pageable, mode, requested);
+    }
+
+    private ConsultationLogGroupedPage clientTimelinePage(String tenantId, Long consultantId, Long clientId,
+            LocalDate startDate, LocalDate endDate, Boolean sessionCompleted, LogViewQuery query,
+            List<ConsultationLogClientAggregate> aggregates, Pageable pageable, ConsultationLogGroupMode mode,
+            ConsultationLogTimelineSort timelineSort) {
+        List<ConsultationLogSortRow> ordered = ConsultationLogTimelineOrdering.order(
+                loadSortRows(tenantId, consultantId, clientId, startDate, endDate, sessionCompleted, query),
+                timelineSort);
+        OrderedPage orderedPage = cutPage(tenantId, ordered, pageable);
+        return new ConsultationLogGroupedPage(
+                orderedPage.page(),
+                summaryForSelectedClient(mode, clientId, aggregates),
+                boundary(tenantId, timelineSort, orderedPage.preceding()));
     }
 
     private ConsultationLogGroupedPage counselorGroupedPage(String tenantId, Long consultantId, Long clientId,
             LocalDate startDate, LocalDate endDate, Boolean sessionCompleted, LogViewQuery query,
             List<ConsultationLogClientAggregate> aggregates, Pageable pageable) {
         Map<Long, ConsultationLogClientAggregate> byClient = indexAggregates(aggregates);
-        List<ConsultationLogSortKey> sortKeys = consultationRecordRepository.findConsultationLogSortKeys(
-                tenantId, consultantId, clientId, startDate, endDate, sessionCompleted,
-                query.applyKeyword(), query.pattern(), query.matchedClientIds());
+        List<ConsultationLogSortRow> rows = loadSortRows(
+                tenantId, consultantId, clientId, startDate, endDate, sessionCompleted, query);
         Set<Long> nameIds = new LinkedHashSet<>(byClient.keySet());
-        List<ConsultationLogSortRow> rows = new ArrayList<>();
-        if (sortKeys != null) {
-            for (ConsultationLogSortKey key : sortKeys) {
-                if (key == null || key.getId() == null) {
-                    continue;
-                }
-                if (key.getClientId() != null) {
-                    nameIds.add(key.getClientId());
-                }
-                rows.add(new ConsultationLogSortRow(
-                        key.getId(), key.getClientId(), key.getSessionNumber(), key.getSessionDate()));
+        for (ConsultationLogSortRow row : rows) {
+            if (row.clientId() != null) {
+                nameIds.add(row.clientId());
             }
         }
         Map<Long, String> names = consultationRecordPersonNameResolver == null
@@ -250,18 +259,69 @@ public class ConsultationRecordServiceImpl implements ConsultationRecordService 
             lastDates.put(entry.getKey(), entry.getValue().getLastSessionDate());
         }
         List<ConsultationLogSortRow> ordered = ConsultationLogGroupOrdering.orderByClientGroup(rows, lastDates, names);
-        int total = ordered.size();
-        int from = (int) Math.min(Math.max(pageable.getOffset(), 0), total);
-        int to = (int) Math.min(from + (long) pageable.getPageSize(), total);
-        List<Long> pageIds = ordered.subList(from, to).stream()
-                .map(ConsultationLogSortRow::id)
-                .toList();
+        OrderedPage orderedPage = cutPage(tenantId, ordered, pageable);
+        return new ConsultationLogGroupedPage(
+                orderedPage.page(),
+                summaryForCounselorPage(orderedPage.page().getContent(), byClient),
+                boundary(tenantId, ConsultationLogTimelineSort.RECENT, orderedPage.preceding()));
+    }
+
+    private List<ConsultationLogSortRow> loadSortRows(String tenantId, Long consultantId, Long clientId,
+            LocalDate startDate, LocalDate endDate, Boolean sessionCompleted, LogViewQuery query) {
+        List<ConsultationLogSortKey> sortKeys = consultationRecordRepository.findConsultationLogSortKeys(
+                tenantId, consultantId, clientId, startDate, endDate, sessionCompleted,
+                query.applyKeyword(), query.pattern(), query.matchedClientIds());
+        List<ConsultationLogSortRow> rows = new ArrayList<>();
+        if (sortKeys == null) {
+            return rows;
+        }
+        for (ConsultationLogSortKey key : sortKeys) {
+            if (key == null || key.getId() == null) {
+                continue;
+            }
+            rows.add(new ConsultationLogSortRow(
+                    key.getId(), key.getClientId(), key.getConsultantId(), key.getSessionNumber(),
+                    key.getSessionDate()));
+        }
+        return rows;
+    }
+
+    private OrderedPage cutPage(String tenantId, List<ConsultationLogSortRow> ordered, Pageable pageable) {
+        ConsultationLogTimelineOrdering.Slice slice = ConsultationLogTimelineOrdering.page(
+                ordered, pageable.getPageNumber(), pageable.getPageSize());
+        List<Long> pageIds = slice.rows().stream().map(ConsultationLogSortRow::id).toList();
         List<ConsultationRecord> content = loadRecordsInIdOrder(tenantId, pageIds);
         Pageable safePageable = pageable.getPageSize() > 0
                 ? pageable
-                : PageRequest.of(pageable.getPageNumber(), 1);
-        Page<ConsultationRecord> page = new PageImpl<>(content, safePageable, total);
-        return new ConsultationLogGroupedPage(page, summaryForCounselorPage(content, byClient));
+                : PageRequest.of(Math.max(pageable.getPageNumber(), 0), 1);
+        return new OrderedPage(new PageImpl<>(content, safePageable, slice.total()), slice.preceding());
+    }
+
+    private ConsultationLogTimelineBoundaryResponse boundary(String tenantId, ConsultationLogTimelineSort sort,
+            ConsultationLogSortRow preceding) {
+        if (preceding == null) {
+            return ConsultationLogTimelineBoundaryResponse.of(sort, null, null, null);
+        }
+        return ConsultationLogTimelineBoundaryResponse.of(
+                sort,
+                preceding.consultantId(),
+                resolveDisplayName(tenantId, preceding.consultantId()),
+                preceding.clientId());
+    }
+
+    private String resolveDisplayName(String tenantId, Long userId) {
+        if (userId == null || consultationRecordPersonNameResolver == null) {
+            return null;
+        }
+        Map<Long, String> names = consultationRecordPersonNameResolver.resolveDisplayNames(tenantId, Set.of(userId));
+        String name = ConsultationRecordPersonNameResolver.nameOrNull(names, userId);
+        if (name == null || name.isBlank()) {
+            return null;
+        }
+        return name.trim();
+    }
+
+    private record OrderedPage(Page<ConsultationRecord> page, ConsultationLogSortRow preceding) {
     }
 
     private List<ConsultationRecord> loadRecordsInIdOrder(String tenantId, List<Long> pageIds) {

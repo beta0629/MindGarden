@@ -3,9 +3,10 @@ package com.coresolution.consultation.controller;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
+import java.util.Set;
 import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.exception.EntityNotFoundException;
 import com.coresolution.consultation.entity.ConsultantClientMapping;
@@ -13,12 +14,12 @@ import com.coresolution.consultation.entity.Schedule;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.repository.ConsultantClientMappingRepository;
 import com.coresolution.consultation.service.ClientStatsService;
+import com.coresolution.consultation.service.ConsultationRecordPersonNameResolver;
 import com.coresolution.consultation.service.ConsultationRecordService;
 import com.coresolution.consultation.service.DynamicPermissionService;
 import com.coresolution.consultation.service.ScheduleService;
 import com.coresolution.consultation.service.support.ClientPathAccessGuard;
 import com.coresolution.consultation.service.support.ConsultationRecordAccessGuard;
-import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.util.ConsultationLogListFilters;
 import com.coresolution.consultation.util.PermissionCheckUtils;
 import com.coresolution.consultation.utils.SessionUtils;
@@ -54,10 +55,9 @@ public class ConsultantRecordsController {
     private final ConsultationRecordService consultationRecordService;
     private final ConsultationRecordAccessGuard consultationRecordAccessGuard;
     private final DynamicPermissionService dynamicPermissionService;
-    private final UserRepository userRepository;
     private final ScheduleService scheduleService;
-    private final com.coresolution.consultation.service.UserPersonalDataCacheService userPersonalDataCacheService;
     private final ClientStatsService clientStatsService;
+    private final ConsultationRecordPersonNameResolver consultationRecordPersonNameResolver;
     private final ClientPathAccessGuard clientPathAccessGuard;
     private final ConsultantClientMappingRepository consultantClientMappingRepository;
 
@@ -160,16 +160,22 @@ public class ConsultantRecordsController {
             var consultationRecords = consultationRecordService.getConsultationRecordsForLogView(
                     consultantId, clientId, startDate, endDate, sessionCompleted, keyword, matchedClientIds,
                     pageable);
-            
+
+            Map<Long, String> resolvedNames = consultationRecordPersonNameResolver
+                    .resolveForRecords(scopedTenantId, consultationRecords.getContent());
+            Map<Long, String> displayNames = resolvedNames != null ? resolvedNames : Map.of();
+
             // 상담일지를 상담 기록 형태로 변환 (모든 상담일지 포함)
             List<Map<String, Object>> records = consultationRecords.getContent().stream()
                     .map(record -> {
                         Map<String, Object> recordMap = new HashMap<>();
                         recordMap.put("id", record.getId());
                         recordMap.put("title", "상담일지 #" + record.getSessionNumber());
-                        // 실제 내담자 이름 조회
-                        String clientName = getClientName(scopedTenantId, record.getClientId());
-                        recordMap.put("clientName", clientName);
+                        recordMap.put("clientName",
+                                ConsultationRecordPersonNameResolver.nameOrNull(displayNames, record.getClientId()));
+                        recordMap.put("consultantName",
+                                ConsultationRecordPersonNameResolver.nameOrNull(displayNames,
+                                        record.getConsultantId()));
                         String sessionDateStr = record.getSessionDate().toString();
                         recordMap.put("sessionDate", sessionDateStr);
                         recordMap.put("consultationDate", sessionDateStr);
@@ -366,13 +372,25 @@ public class ConsultantRecordsController {
                 return ResponseEntity.status(403).body(response);
             }
             
+            Set<Long> personIds = new LinkedHashSet<>();
+            if (record.getClientId() != null) {
+                personIds.add(record.getClientId());
+            }
+            if (record.getConsultantId() != null) {
+                personIds.add(record.getConsultantId());
+            }
+            Map<Long, String> resolvedNames = consultationRecordPersonNameResolver
+                    .resolveDisplayNames(tenantId, personIds);
+            Map<Long, String> displayNames = resolvedNames != null ? resolvedNames : Map.of();
+
             // 상담기록을 상세 조회 형태로 변환
             Map<String, Object> recordMap = new HashMap<>();
             recordMap.put("id", record.getId());
             recordMap.put("title", "상담일지 #" + record.getSessionNumber());
-            // 실제 내담자 이름 조회
-            String clientName = getClientName(tenantId, record.getClientId());
-            recordMap.put("clientName", clientName);
+            recordMap.put("clientName",
+                    ConsultationRecordPersonNameResolver.nameOrNull(displayNames, record.getClientId()));
+            recordMap.put("consultantName",
+                    ConsultationRecordPersonNameResolver.nameOrNull(displayNames, record.getConsultantId()));
             recordMap.put("clientId", record.getClientId());
             recordMap.put("consultantId", record.getConsultantId());
             recordMap.put("consultationId", record.getConsultationId());
@@ -577,30 +595,6 @@ public class ConsultantRecordsController {
             
             return ResponseEntity.badRequest().body(response);
         }
-    }
-    
-    /**
-     * 내담자 이름 조회 헬퍼 메서드
-     */
-    private String getClientName(String tenantId, Long clientId) {
-        try {
-            if (tenantId == null || tenantId.isEmpty() || clientId == null) {
-                return clientId != null ? "내담자 ID: " + clientId : "알 수 없음";
-            }
-            Optional<User> clientOpt = userRepository.findByTenantIdAndId(tenantId.trim(), clientId);
-            if (clientOpt.isPresent()) {
-                User client = clientOpt.get();
-                Map<String, String> decryptedData = userPersonalDataCacheService.getDecryptedUserData(client);
-                String name = decryptedData.get("name");
-                if (name != null && !name.isEmpty()) {
-                    return name;
-                }
-                return client.getUserId() != null ? client.getUserId() : "내담자 ID: " + clientId;
-            }
-        } catch (Exception e) {
-            log.warn("내담자 이름 조회 실패: clientId={}, error={}", clientId, e.getMessage());
-        }
-        return "내담자 ID: " + clientId;
     }
     
     /**

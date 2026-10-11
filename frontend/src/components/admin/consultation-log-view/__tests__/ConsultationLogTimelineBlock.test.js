@@ -183,4 +183,77 @@ describe('ConsultationLogTimelineBlock', () => {
     expect(dates[0]).toContain('2026-09-10');
     expect(dates[1]).toContain('2026-10-06');
   });
+
+  it('요약은 이름·상담 수·첫 상담일·최근 상담일 네 칸이고 이름은 제목 글자 클래스다', () => {
+    render(
+      <ConsultationLogTimelineBlock
+        records={[
+          record({
+            id: 9, sessionDate: '2026-10-08', sessionNumber: 9, clientId: 11, consultantId: 8,
+            clientName: '한서윤', consultantName: '최하린'
+          })
+        ]}
+        onOpenRow={jest.fn()}
+        grouping={{
+          clientId: 11,
+          consultantId: null,
+          periodFrom: '2026-08-01',
+          periodTo: '2026-10-31',
+          summary: {
+            mode: 'CLIENT',
+            sessionCount: 9,
+            firstSessionDate: '2026-08-13',
+            lastSessionDate: '2026-10-08'
+          }
+        }}
+      />
+    );
+
+    expect(screen.getAllByRole('term').map((node) => node.textContent)).toEqual([
+      '내담자 이름',
+      '기간 내 상담 수',
+      '기간 내 첫 상담일',
+      '기간 내 최근 상담일'
+    ]);
+    expect(screen.getByText('한서윤')).toHaveClass('mg-v2-consultation-log-summary-strip__name');
+    expect(screen.getByText('9건')).toBeInTheDocument();
+    expect(screen.getByText('2026-08-13')).toBeInTheDocument();
+    expect(screen.getByText('2026-10-08', { selector: 'dd' })).toBeInTheDocument();
+  });
+
+  it('회기 글자는 목록 sessionNumber만 쓰고 값이 없으면 1회기로 채우지 않는다', () => {
+    render(
+      <ConsultationLogTimelineBlock
+        records={[
+          record({
+            id: 1, sessionDate: '2026-09-22', sessionNumber: 1, clientId: 11, consultantId: 7,
+            clientName: '한서윤', consultantName: '박지안'
+          }),
+          record({
+            id: 2, sessionDate: '2026-09-08', sessionNumber: 4, clientId: 11, consultantId: 7,
+            clientName: '한서윤', consultantName: '박지안'
+          }),
+          record({
+            id: 3, sessionDate: '2026-09-01', sessionNumber: null, clientId: 11, consultantId: 7,
+            clientName: '한서윤', consultantName: '박지안'
+          })
+        ]}
+        onOpenRow={jest.fn()}
+        grouping={{
+          clientId: 11,
+          consultantId: null,
+          summary: {
+            mode: 'CLIENT',
+            sessionCount: 3,
+            firstSessionDate: '2026-09-01',
+            lastSessionDate: '2026-09-22'
+          }
+        }}
+      />
+    );
+
+    expect(screen.getByRole('button', { name: /2026-09-22 1회기/ })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /2026-09-08 4회기/ })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /2026-09-01/ })).not.toHaveTextContent('회기');
+  });
 });

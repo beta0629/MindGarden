@@ -252,6 +252,11 @@
   .mg-v2-consultation-log-query__field--keyword {
     flex: 1 1 calc(var(--mg-v2-space-12) * 3);
   }
+
+  .mg-v2-consultation-log-query__actions {
+    flex: 0 0 auto;
+    flex-wrap: nowrap;
+  }
 }
 
 @media (min-width: 1280px) {
@@ -261,6 +266,19 @@
 
   .mg-v2-consultation-log-query__fields {
     flex-wrap: nowrap;
+  }
+
+  .mg-v2-consultation-log-query__period {
+    flex: 0 0 calc(var(--mg-v2-space-20) * 3);
+  }
+
+  .mg-v2-consultation-log-query__field {
+    flex: 0 0 calc(var(--mg-v2-space-16) + var(--mg-v2-space-8) + var(--mg-v2-space-6) + var(--mg-v2-space-4));
+  }
+
+  .mg-v2-consultation-log-query__field--keyword {
+    flex: 1 1 calc(var(--mg-v2-space-12) * 3);
+    min-width: 0;
   }
 
   .mg-v2-consultation-log-results--with-panel {

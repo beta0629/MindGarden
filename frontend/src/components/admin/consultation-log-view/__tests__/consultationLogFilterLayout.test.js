@@ -33,10 +33,17 @@ describe('상담일지 필터·정렬 시안', () => {
     expect(timelineCss).not.toContain('!important');
   });
 
-  it('눌린 정렬만 카드 채움과 기본 테두리를 쓴다', () => {
+  it('눌린 정렬만 stone 채움과 진한 테두리를 쓴다', () => {
     expect(timelineCss).toContain('border-color: transparent');
-    expect(timelineCss).toContain("[aria-pressed='true']");
-    expect(timelineCss).toContain('background-color: var(--mg-v2-color-surface-card)');
-    expect(timelineCss).toContain('border-color: var(--mg-v2-color-border-default)');
+    expect(timelineCss).toContain('background: var(--mg-v2-color-neutral-200)');
+    expect(timelineCss).toMatch(
+      /\[aria-pressed='true'\][\s\S]*?background-color:\s*var\(--mg-v2-color-surface-stone\)/
+    );
+    expect(timelineCss).toMatch(
+      /\[aria-pressed='true'\][\s\S]*?border-color:\s*var\(--mg-v2-color-border-strong\)/
+    );
+    expect(timelineCss).not.toMatch(
+      /sort-button\[aria-pressed='true'\][\s\S]*?background-color:\s*var\(--mg-v2-color-surface-card\)/
+    );
   });
 });

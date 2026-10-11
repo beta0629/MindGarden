@@ -21,7 +21,7 @@
   display: inline-flex;
   gap: var(--mg-v2-space-1);
   padding: var(--mg-v2-space-1);
-  background: var(--mg-v2-color-neutral-100);
+  background: var(--mg-v2-color-neutral-200);
   border-radius: var(--mg-v2-radius-md);
 }
 
@@ -40,9 +40,9 @@
 
 .mg-v2-consultation-log-timeline__sort-group > .mg-button.mg-v2-consultation-log-timeline__sort-button[aria-pressed='true'],
 .mg-v2-consultation-log-timeline__sort-group > .mg-button.mg-v2-consultation-log-timeline__sort-button[aria-pressed='true']:hover:not(:disabled):not(.mg-button--disabled):not(.mg-button--loading) {
-  background-color: var(--mg-v2-color-surface-card);
+  background-color: var(--mg-v2-color-surface-stone);
   color: var(--mg-v2-color-text-primary);
-  border-color: var(--mg-v2-color-border-default);
+  border-color: var(--mg-v2-color-border-strong);
   transform: none;
 }
 

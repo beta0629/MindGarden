@@ -181,6 +181,11 @@
   cursor: pointer;
 }
 
+.mg-v2-list-block__table tbody tr.mg-v2-list-block__row--selected {
+  background: var(--mg-v2-color-surface-stone);
+  box-shadow: inset 0 0 0 var(--mg-v2-border-width-thin) var(--mg-v2-color-border-strong);
+}
+
 /* 반응형: 작은 화면에서 가로 스크롤 허용 (테이블 래퍼) */
 .mg-v2-list-block__table-wrapper,
 .mg-v2-list-block__list-wrapper {

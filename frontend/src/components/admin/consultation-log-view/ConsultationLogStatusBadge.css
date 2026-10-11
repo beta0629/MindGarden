@@ -1,0 +1,37 @@
+.mg-v2-consultation-log-status {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--mg-v2-space-2);
+  padding: var(--mg-v2-space-1) var(--mg-v2-space-3);
+  border-radius: var(--mg-v2-radius-pill);
+  font-size: var(--mg-v2-font-size-caption);
+  line-height: var(--mg-v2-font-line-height-caption);
+  white-space: nowrap;
+}
+
+.mg-v2-consultation-log-status__shape {
+  width: var(--mg-v2-space-2);
+  height: var(--mg-v2-space-2);
+  border-radius: var(--mg-v2-radius-pill);
+  flex: none;
+}
+
+.mg-v2-consultation-log-status--done {
+  background: var(--mg-v2-color-primary-subtle);
+  color: var(--mg-v2-color-primary-main);
+}
+
+.mg-v2-consultation-log-status--done .mg-v2-consultation-log-status__shape {
+  background: var(--mg-v2-color-primary-main);
+}
+
+.mg-v2-consultation-log-status--pending {
+  background: var(--mg-v2-color-surface-card);
+  color: var(--mg-v2-color-text-secondary);
+  border: var(--mg-v2-border-width-thin) solid var(--mg-v2-color-neutral-400);
+}
+
+.mg-v2-consultation-log-status--pending .mg-v2-consultation-log-status__shape {
+  background: transparent;
+  border: var(--mg-v2-border-width-thin) solid var(--mg-v2-color-neutral-400);
+}

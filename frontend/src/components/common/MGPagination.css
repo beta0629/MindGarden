@@ -207,3 +207,12 @@
     min-width: var(--mg-v2-space-4);
   }
 }
+
+/* outline 버튼 규칙(0,3,0)·호버(0,4,0)보다 높여 현재 쪽만 남긴다. */
+.mg-pagination .mg-pagination__button.mg-button[aria-current='page'].mg-pagination__button--current-neutral,
+.mg-pagination .mg-pagination__button.mg-button[aria-current='page'].mg-pagination__button--current-neutral:hover:not(.mg-button--disabled):not(.mg-button--loading) {
+  background-color: var(--mg-v2-color-surface-stone);
+  color: var(--mg-v2-color-text-primary);
+  border-color: var(--mg-v2-color-border-strong);
+  font-weight: var(--mg-v2-font-weight-bold);
+}

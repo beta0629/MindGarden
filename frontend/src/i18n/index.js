@@ -40,6 +40,7 @@ import koMypage from '../locales/ko/mypage.json';
 import koCommunity from '../locales/ko/community.json';
 import koAccountDeletion from '../locales/ko/accountDeletion.json';
 import koConsultantSuite from '../locales/ko/consultantSuite.json';
+import koAdminConsultationLogs from '../locales/ko/adminConsultationLogs.json';
 
 const SUPPORTED_LANGUAGES = ['ko'];
 const FALLBACK_LANGUAGE = 'ko';
@@ -127,7 +128,8 @@ i18n
         mypage: koMypage,
         community: koCommunity,
         accountDeletion: koAccountDeletion,
-        consultantSuite: koConsultantSuite
+        consultantSuite: koConsultantSuite,
+        adminConsultationLogs: koAdminConsultationLogs
       }
     },
     supportedLngs: SUPPORTED_LANGUAGES,
@@ -151,7 +153,8 @@ i18n
       'mypage',
       'community',
       'accountDeletion',
-      'consultantSuite'
+      'consultantSuite',
+      'adminConsultationLogs'
     ],
     interpolation: {
       escapeValue: false

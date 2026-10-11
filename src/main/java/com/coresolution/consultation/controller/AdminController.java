@@ -26,6 +26,9 @@ import com.coresolution.consultation.dto.ConsultantClientMappingCreateRequest;
 import com.coresolution.consultation.dto.ConsultantClientMappingResponse;
 import com.coresolution.consultation.dto.admin.BulkMappingPaymentResult;
 import com.coresolution.consultation.dto.ConsultantRegistrationRequest;
+import com.coresolution.consultation.dto.ConsultationLogGroupSummaryResponse;
+import com.coresolution.consultation.dto.ConsultationLogGroupedPage;
+import com.coresolution.consultation.dto.ConsultationLogTimelineBoundaryResponse;
 import com.coresolution.consultation.dto.ConsultationRecordListItemResponse;
 import com.coresolution.consultation.dto.ConsultationsByDayOfWeekResponse;
 import com.coresolution.consultation.dto.CounselingEnabledUpdateRequest;
@@ -54,7 +57,10 @@ import com.coresolution.consultation.service.CommonCodeService;
 import com.coresolution.consultation.service.RoleCommonCodeAuthorizationService;
 import com.coresolution.consultation.service.ConsultantRatingService;
 import com.coresolution.consultation.service.ConsultantStatsService;
+import com.coresolution.consultation.service.ConsultationRecordPersonNameResolver;
 import com.coresolution.consultation.service.ConsultationRecordService;
+import com.coresolution.consultation.util.ConsultationLogGroupMode;
+import com.coresolution.consultation.util.ConsultationLogTimelineSort;
 import com.coresolution.consultation.service.DynamicPermissionService;
 import com.coresolution.consultation.service.erp.ErpService;
 import com.coresolution.consultation.service.erp.financial.FinancialTransactionService;
@@ -198,6 +204,7 @@ public class AdminController extends BaseApiController {
     private final OpsAccessGuard opsAccessGuard;
     private final ConsultationRecordAccessGuard consultationRecordAccessGuard;
     private final ConsultationRecordService consultationRecordService;
+    private final ConsultationRecordPersonNameResolver consultationRecordPersonNameResolver;
     private final DynamicPermissionService dynamicPermissionService;
     private final MenuService menuService;
     private final FinancialTransactionService financialTransactionService;
@@ -3904,6 +3911,10 @@ public class AdminController extends BaseApiController {
             @RequestParam(required = false) Long clientId,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+            @RequestParam(required = false) Boolean sessionCompleted,
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) String matchedClientIds,
+            @RequestParam(required = false) String timelineSort,
             @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "20") int size,
             HttpSession session) {
         try {
@@ -3940,13 +3951,34 @@ public class AdminController extends BaseApiController {
             }
             Pageable pageable = PageRequest.of(validPage, validSize);
 
-            Page<ConsultationRecord> consultationRecords =
-                    consultationRecordService.getConsultationRecords(consultantId, clientId,
-                            startDate, endDate, pageable);
+            ConsultationLogGroupMode groupMode = ConsultationLogGroupMode.from(consultantId, clientId);
+            Page<ConsultationRecord> consultationRecords;
+            ConsultationLogGroupSummaryResponse groupSummary;
+            ConsultationLogTimelineBoundaryResponse timelineBoundary = null;
+            if (groupMode == ConsultationLogGroupMode.NONE) {
+                consultationRecords = consultationRecordService.getConsultationRecordsForLogView(
+                        consultantId, clientId, startDate, endDate, sessionCompleted, keyword,
+                        matchedClientIds, pageable);
+                groupSummary = ConsultationLogGroupSummaryResponse.none();
+            } else {
+                ConsultationLogGroupedPage grouped = consultationRecordService.getGroupedConsultationLogPage(
+                        consultantId, clientId, startDate, endDate, sessionCompleted, keyword,
+                        matchedClientIds, pageable, ConsultationLogTimelineSort.from(timelineSort));
+                consultationRecords = grouped.getPage();
+                groupSummary = grouped.getSummary();
+                timelineBoundary = grouped.getBoundary();
+            }
 
-            // 목록은 식별자·일자·작성자·상태만. 본문은 단건 상세(공용 가드 판정)에서만 받는다.
-            List<ConsultationRecordListItemResponse> metaItems = consultationRecords.getContent().stream()
-                    .map(ConsultationRecordListItemResponse::fromEntity)
+            // 본문은 단건 상세에서만. 내담자·상담사 표시명은 목록 메타로, 같은 테넌트를 한 번에 채운다.
+            List<ConsultationRecord> pageContent = consultationRecords.getContent();
+            Map<Long, String> resolvedNames = consultationRecordPersonNameResolver
+                    .resolveForRecords(tenantId, pageContent);
+            Map<Long, String> displayNames = resolvedNames != null ? resolvedNames : Map.of();
+            List<ConsultationRecordListItemResponse> metaItems = pageContent.stream()
+                    .map(record -> ConsultationRecordListItemResponse.fromEntity(
+                            record,
+                            ConsultationRecordPersonNameResolver.nameOrNull(displayNames, record.getClientId()),
+                            ConsultationRecordPersonNameResolver.nameOrNull(displayNames, record.getConsultantId())))
                     .toList();
 
             Map<String, Object> response = new HashMap<>();
@@ -3956,6 +3988,8 @@ public class AdminController extends BaseApiController {
             response.put("totalPages", consultationRecords.getTotalPages());
             response.put("currentPage", consultationRecords.getNumber());
             response.put("size", consultationRecords.getSize());
+            response.put("groupSummary", groupSummary);
+            response.put("timelineBoundary", timelineBoundary);
 
             return ResponseEntity.ok(response);
 

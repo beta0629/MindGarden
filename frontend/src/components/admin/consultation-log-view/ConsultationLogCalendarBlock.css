@@ -1,10 +1,9 @@
 /**
- * 상담일지 조회 - 캘린더 뷰 블록 스타일 (Clinic-OS)
- * SSOT: docs/design-system/CLINIC_OS_ADMIN_VISUAL_SSOT.md
+ * 상담일지 조회 — 월 달력. 완료/미완료는 상태 모양으로만 구분한다.
  *
  * @author Core Solution
  * @since 2025-03-02
- * @updated 2026-09-05 — B0KlA → Clinic-OS tokens
+ * @updated 2026-10-10
  */
 
 .mg-v2-consultation-log-calendar-block {
@@ -13,18 +12,16 @@
 
 .mg-v2-content-card.mg-v2-consultation-log-calendar-block__card,
 .mg-v2-consultation-log-calendar-block__card {
-  min-height: 36rem;
   border: var(--mg-v2-border-width-thin) solid var(--mg-v2-consultant-border-card);
   border-radius: var(--mg-v2-radius-lg);
-  background: var(--mg-v2-consultant-surface-card);
+  background: var(--mg-v2-color-surface-card);
   box-shadow: none;
-  border-left: none !important;
 }
 
 .mg-v2-consultation-log-calendar-wrapper {
-  background: var(--mg-v2-consultant-surface-card);
+  background: var(--mg-v2-color-surface-card);
   border-radius: var(--mg-v2-radius-md);
-  padding: var(--mg-v2-space-4, 1rem);
+  padding: var(--mg-v2-space-4);
 }
 
 .mg-v2-consultation-log-calendar-wrapper .fc {
@@ -32,121 +29,97 @@
   color: var(--mg-v2-color-text-primary);
 }
 
-.mg-v2-consultation-log-calendar-wrapper .fc-theme-standard .fc-scrollgrid,
-.mg-v2-consultation-log-calendar-wrapper .fc-theme-standard td,
-.mg-v2-consultation-log-calendar-wrapper .fc-theme-standard th {
-  border-color: var(--mg-v2-consultant-border-card);
+.mg-v2-consultation-log-calendar-wrapper .fc .fc-scrollgrid,
+.mg-v2-consultation-log-calendar-wrapper .fc .fc-theme-standard td,
+.mg-v2-consultation-log-calendar-wrapper .fc .fc-theme-standard th {
+  border-color: var(--mg-v2-color-border-subtle);
 }
 
-.mg-v2-consultation-log-calendar-wrapper .fc-col-header-cell {
-  background: var(--mg-v2-consultant-chip-neutral-bg);
-  padding: var(--mg-v2-space-2, 0.5rem) 0;
-  font-weight: var(--mg-v2-font-weight-semibold, 600);
+.mg-v2-consultation-log-calendar-wrapper .fc .fc-col-header-cell {
+  background: var(--mg-v2-color-neutral-100);
+  padding: var(--mg-v2-space-2) 0;
+  font-weight: var(--mg-v2-font-weight-semibold);
   color: var(--mg-v2-color-text-secondary);
 }
 
-.mg-v2-consultation-log-calendar-wrapper .fc-daygrid-day-number {
+.mg-v2-consultation-log-calendar-wrapper .fc .fc-daygrid-day-number {
   color: var(--mg-v2-color-text-primary);
-  font-weight: var(--mg-v2-font-weight-medium, 500);
-  padding: var(--mg-v2-space-2, 0.5rem);
+  font-weight: var(--mg-v2-font-weight-medium);
+  padding: var(--mg-v2-space-2);
 }
 
-.mg-v2-consultation-log-calendar-wrapper .fc-day-today {
-  background: color-mix(in srgb, var(--mg-v2-color-primary-solid) 12%, transparent) !important;
+.mg-v2-consultation-log-calendar-wrapper .fc .fc-daygrid-day-frame {
+  min-height: calc(var(--mg-v2-space-20) + var(--mg-v2-space-6));
 }
 
-.mg-v2-consultation-log-calendar-wrapper .fc-event {
-  border-radius: var(--mg-v2-radius-md);
-  border-color: transparent;
-  color: var(--mg-v2-color-text-inverse);
-  padding: var(--mg-v2-space-1, 0.25rem) var(--mg-v2-space-2, 0.5rem);
-  font-size: var(--mg-v2-font-size-caption, 0.75rem);
-  font-weight: var(--mg-v2-font-weight-semibold, 600);
-  font-family: inherit;
-  box-shadow: none;
+.mg-v2-consultation-log-calendar-wrapper .fc .fc-day-today {
+  background: var(--mg-v2-color-neutral-200);
+}
+
+.mg-v2-consultation-log-calendar-wrapper .fc .fc-daygrid-event {
+  border-radius: var(--mg-v2-radius-pill);
+  padding: var(--mg-v2-space-1) var(--mg-v2-space-2);
+  font-size: var(--mg-v2-font-size-caption);
+  font-weight: var(--mg-v2-font-weight-semibold);
   cursor: pointer;
-  transition: opacity 0.2s;
 }
 
-.mg-v2-consultation-log-calendar-wrapper .fc-event:hover {
-  opacity: 0.95;
+.mg-v2-consultation-log-calendar-wrapper .fc .mg-v2-consultation-log-cal-event--done {
+  background: var(--mg-v2-color-primary-subtle);
+  border-color: var(--mg-v2-color-primary-subtle);
+  color: var(--mg-v2-color-primary-main);
 }
 
-.mg-v2-consultation-log-calendar-wrapper .fc-button-primary {
-  background: var(--mg-v2-consultant-surface-card) !important;
-  color: var(--mg-v2-color-text-secondary) !important;
-  border: var(--mg-v2-border-width-thin) solid var(--mg-v2-consultant-border-card) !important;
-  text-transform: capitalize;
-  font-weight: var(--mg-v2-font-weight-semibold, 600);
-  border-radius: var(--mg-v2-radius-md) !important;
-  box-shadow: none !important;
-  transition: all 0.2s;
-}
-
-.mg-v2-consultation-log-calendar-wrapper .fc-button-primary:hover {
-  background: var(--mg-v2-consultant-chip-neutral-bg) !important;
-  color: var(--mg-v2-color-text-primary) !important;
-}
-
-.mg-v2-consultation-log-calendar-wrapper .fc-toolbar-title {
-  font-size: var(--mg-v2-font-size-h2, 1.375rem) !important;
-  font-weight: var(--mg-v2-font-weight-bold, 700);
-  color: var(--mg-v2-color-text-primary);
-}
-
-.mg-v2-consultation-log-calendar-block__empty {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: var(--mg-v2-space-8, 3rem) var(--mg-v2-space-6, 2rem);
-  text-align: center;
-}
-
-.mg-v2-consultation-log-calendar-block__empty-icon {
-  width: 5rem;
-  height: 5rem;
-  border-radius: var(--mg-v2-radius-lg);
-  background: color-mix(in srgb, var(--mg-v2-color-primary-solid) 12%, transparent);
-  color: var(--mg-v2-color-primary-solid);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: var(--mg-v2-space-5, 1.25rem);
-}
-
-.mg-v2-consultation-log-calendar-block__empty-title {
-  font-size: var(--mg-v2-font-size-h2, 1.375rem);
-  font-weight: var(--mg-v2-font-weight-bold, 700);
-  color: var(--mg-v2-color-text-primary);
-  margin: 0 0 var(--mg-v2-space-2, 0.5rem) 0;
-}
-
-.mg-v2-consultation-log-calendar-block__empty-desc {
-  font-size: var(--mg-v2-font-size-body-md, 0.875rem);
+.mg-v2-consultation-log-calendar-wrapper .fc .mg-v2-consultation-log-cal-event--pending {
+  background: var(--mg-v2-color-surface-card);
+  border: var(--mg-v2-border-width-thin) solid var(--mg-v2-color-neutral-400);
   color: var(--mg-v2-color-text-secondary);
-  margin: 0;
 }
 
-.mg-v2-consultation-log-calendar-popover {
-  position: fixed;
-  z-index: 1100;
-  min-width: 12.5rem;
-  max-width: 20rem;
-  background: var(--mg-v2-consultant-surface-card);
+.mg-v2-consultation-log-calendar-wrapper .fc .fc-button,
+.mg-v2-consultation-log-calendar-wrapper .fc .fc-button-primary {
+  background: var(--mg-v2-color-surface-card);
+  color: var(--mg-v2-color-text-secondary);
   border: var(--mg-v2-border-width-thin) solid var(--mg-v2-consultant-border-card);
   border-radius: var(--mg-v2-radius-md);
   box-shadow: none;
-  padding: var(--mg-v2-space-3, 0.75rem) 0;
+  font-weight: var(--mg-v2-font-weight-semibold);
+  text-transform: none;
+}
+
+.mg-v2-consultation-log-calendar-wrapper .fc .fc-button:hover {
+  background: var(--mg-v2-color-neutral-100);
+  color: var(--mg-v2-color-text-primary);
+}
+
+.mg-v2-consultation-log-calendar-wrapper .fc .fc-button:focus {
+  box-shadow: var(--mg-v2-shadow-focus);
+}
+
+.mg-v2-consultation-log-calendar-wrapper .fc .fc-toolbar-title {
+  font-size: var(--mg-v2-font-size-h2);
+  font-weight: var(--mg-v2-font-weight-bold);
+  color: var(--mg-v2-color-text-primary);
+}
+
+.mg-v2-consultation-log-calendar-popover {
+  position: relative;
+  z-index: var(--mg-v2-z-dropdown);
+  margin-top: var(--mg-v2-space-3);
+  background: var(--mg-v2-color-surface-card);
+  border: var(--mg-v2-border-width-thin) solid var(--mg-v2-color-border-subtle);
+  border-radius: var(--mg-v2-radius-md);
+  box-shadow: var(--mg-v2-shadow-lg);
+  padding: var(--mg-v2-space-3) 0;
 }
 
 .mg-v2-consultation-log-calendar-popover__title {
-  font-size: var(--mg-v2-font-size-caption, 0.75rem);
-  font-weight: var(--mg-v2-font-weight-semibold, 600);
+  font-size: var(--mg-v2-font-size-caption);
+  font-weight: var(--mg-v2-font-weight-semibold);
   color: var(--mg-v2-color-text-secondary);
-  padding: 0 var(--mg-v2-space-4, 1rem) var(--mg-v2-space-2, 0.5rem);
-  border-bottom: var(--mg-v2-border-width-thin) solid var(--mg-v2-consultant-border-card);
-  margin-bottom: var(--mg-v2-space-1, 0.25rem);
+  padding: 0 var(--mg-v2-space-4) var(--mg-v2-space-2);
+  border-bottom: var(--mg-v2-border-width-thin) solid var(--mg-v2-color-border-subtle);
+  margin-bottom: var(--mg-v2-space-1);
 }
 
 .mg-v2-consultation-log-calendar-popover__list {
@@ -158,17 +131,5 @@
 .mg-v2-consultation-log-calendar-popover__item {
   display: block;
   width: 100%;
-  padding: var(--mg-v2-space-2, 0.5rem) var(--mg-v2-space-4, 1rem);
-  text-align: left;
-  font-size: var(--mg-v2-font-size-body-md, 0.875rem);
-  color: var(--mg-v2-color-text-primary);
-  background: none;
-  border: none;
-  cursor: pointer;
-  transition: background 0.15s;
-}
-
-.mg-v2-consultation-log-calendar-popover__item:hover {
-  background: color-mix(in srgb, var(--mg-v2-color-primary-solid) 12%, transparent);
-  color: var(--mg-v2-color-text-primary);
+  text-align: start;
 }

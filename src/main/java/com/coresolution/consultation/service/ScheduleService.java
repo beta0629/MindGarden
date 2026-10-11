@@ -497,6 +497,21 @@ public interface ScheduleService {
     boolean assignProvisionalSessionSequenceWithoutDeduction(Schedule schedule);
 
     /**
+     * 같은 매핑의 점유 상담 일정 회차를 날짜·시작 시각·id 순으로 1..N 재부여한다.
+     *
+     * <p>usedSessions·remainingSessions·매핑 상태는 바꾸지 않는다.
+     * 회차가 바뀐 일정의 활성 상담일지 sessionNumber만 같은 테넌트에서 맞춘다.
+     * 취소된 일정과 다른 매핑의 일정은 포함하지 않는다.</p>
+     *
+     * @param mapping 대상 매핑. null이면 focus의 mappingId로 찾는다
+     * @param focus 이번에 포함할 일정. null이면 이미 회차가 있는 점유 일정만 재부여한다
+     * @return focus에 부여된 회차. focus가 없거나 매핑을 못 찾으면 null
+     * @author MindGarden
+     * @since 2026-10-11
+     */
+    Integer reorderOccupyingSessionSequences(ConsultantClientMapping mapping, Schedule focus);
+
+    /**
      * 일정 완료(COMPLETED) 전환 *직전* 멱등 회기 차감 시도.
      *
      * <p>패치 7.3: {@code ConsultationServiceImpl.syncScheduleStatus} 와

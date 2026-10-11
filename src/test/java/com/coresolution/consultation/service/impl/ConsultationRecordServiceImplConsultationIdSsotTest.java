@@ -483,7 +483,12 @@ class ConsultationRecordServiceImplConsultationIdSsotTest {
                 .thenReturn(Optional.of(schedule));
         when(mappingRepository.findByTenantIdAndId(TENANT_ID, mappingId))
                 .thenReturn(Optional.of(mapping));
-        when(scheduleRepository.save(any(Schedule.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(scheduleService.reorderOccupyingSessionSequences(any(ConsultantClientMapping.class), any(Schedule.class)))
+                .thenAnswer(inv -> {
+                    Schedule target = inv.getArgument(1);
+                    target.setSessionSequence(1);
+                    return 1;
+                });
         when(consultationRecordRepository.save(any(ConsultationRecord.class)))
                 .thenAnswer(inv -> inv.getArgument(0));
         when(consultationRecordAlertService.resolveConsultationRecordAlert(eq(scheduleId), any()))
@@ -508,9 +513,7 @@ class ConsultationRecordServiceImplConsultationIdSsotTest {
         }
 
         verify(mappingRepository, never()).save(any());
-        ArgumentCaptor<Schedule> scheduleCaptor = ArgumentCaptor.forClass(Schedule.class);
-        verify(scheduleRepository).save(scheduleCaptor.capture());
-        assertThat(scheduleCaptor.getValue().getSessionSequence()).isEqualTo(1);
+        verify(scheduleService).reorderOccupyingSessionSequences(mapping, schedule);
     }
 
     @Test
@@ -545,7 +548,12 @@ class ConsultationRecordServiceImplConsultationIdSsotTest {
                 .thenReturn(Optional.of(schedule));
         when(mappingRepository.findByTenantIdAndId(TENANT_ID, mappingId))
                 .thenReturn(Optional.of(mapping));
-        when(scheduleRepository.save(any(Schedule.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(scheduleService.reorderOccupyingSessionSequences(any(ConsultantClientMapping.class), any(Schedule.class)))
+                .thenAnswer(inv -> {
+                    Schedule target = inv.getArgument(1);
+                    target.setSessionSequence(1);
+                    return 1;
+                });
         when(consultationRecordRepository.save(any(ConsultationRecord.class)))
                 .thenAnswer(inv -> inv.getArgument(0));
         when(consultationRecordAlertService.resolveConsultationRecordAlert(eq(scheduleId), any()))
@@ -570,6 +578,7 @@ class ConsultationRecordServiceImplConsultationIdSsotTest {
         }
 
         verify(mappingRepository, never()).save(any());
+        verify(scheduleService).reorderOccupyingSessionSequences(mapping, schedule);
     }
 
     @Test

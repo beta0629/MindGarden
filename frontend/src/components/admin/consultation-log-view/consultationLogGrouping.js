@@ -108,6 +108,29 @@ const compareSession = (left, right) => {
  * @param {object} right
  * @returns {number}
  */
+const compareRecent = (left, right) => {
+  const leftDate = consultationLogIsoDate(left.sessionDate);
+  const rightDate = consultationLogIsoDate(right.sessionDate);
+  if (leftDate !== rightDate) {
+    if (!leftDate) {
+      return 1;
+    }
+    if (!rightDate) {
+      return -1;
+    }
+    return leftDate < rightDate ? 1 : -1;
+  }
+  const leftMissing = sessionRank(left.sessionNumber) === MISSING_SESSION_RANK;
+  const rightMissing = sessionRank(right.sessionNumber) === MISSING_SESSION_RANK;
+  if (leftMissing !== rightMissing) {
+    return leftMissing ? 1 : -1;
+  }
+  if (!leftMissing && sessionRank(left.sessionNumber) !== sessionRank(right.sessionNumber)) {
+    return sessionRank(right.sessionNumber) - sessionRank(left.sessionNumber);
+  }
+  return (Number(right.id) || 0) - (Number(left.id) || 0);
+};
+
 const compareDateDesc = (left, right) => {
   const byDate = consultationLogIsoDate(right.sessionDate).localeCompare(consultationLogIsoDate(left.sessionDate));
   if (byDate !== 0) {
@@ -243,7 +266,7 @@ const sortCounselorGroups = (rows, periodByClient) => {
   });
   metas.sort(compareCounselorGroups);
   metas.forEach((meta) => {
-    meta.members.sort(compareSession);
+    meta.members.sort(compareRecent);
   });
   return metas.flatMap((meta) => meta.members);
 };

@@ -31,7 +31,8 @@ const ConsultationLogDetailPanel = ({
   loading,
   onClose,
   onEdit,
-  returnFocusId
+  returnFocusId,
+  panelId
 }) => {
   const panelRef = useRef(null);
   const isDesktop = useMediaQuery(CONSULTATION_LOG_MEDIA_DESKTOP_UP);
@@ -65,6 +66,7 @@ const ConsultationLogDetailPanel = ({
   return (
     <aside
       ref={panelRef}
+      id={panelId}
       className={`mg-v2-consultation-log-detail${isModalSheet ? ' mg-v2-consultation-log-detail--sheet' : ''}`}
       aria-labelledby={titleId}
       role={isModalSheet ? 'dialog' : undefined}
@@ -190,7 +192,8 @@ ConsultationLogDetailPanel.propTypes = {
   loading: PropTypes.bool,
   onClose: PropTypes.func.isRequired,
   onEdit: PropTypes.func.isRequired,
-  returnFocusId: PropTypes.string
+  returnFocusId: PropTypes.string,
+  panelId: PropTypes.string
 };
 
 ConsultationLogDetailPanel.defaultProps = {
@@ -203,7 +206,8 @@ ConsultationLogDetailPanel.defaultProps = {
   summary: '',
   content: '',
   loading: false,
-  returnFocusId: ''
+  returnFocusId: '',
+  panelId: 'consultation-log-detail-panel'
 };
 
 export default ConsultationLogDetailPanel;

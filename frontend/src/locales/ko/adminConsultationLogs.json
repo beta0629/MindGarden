@@ -123,6 +123,18 @@
       "sessions": "기간 내 {{n}}건",
       "last": "최근 상담일 {{date}}",
       "joiner": " · "
+    },
+    "timeline": {
+      "start": "상담사 · {{name}}",
+      "change": "상담사 변경 · {{from}} → {{to}}",
+      "srCounselor": "상담사 {{name}}",
+      "listLabel": "{{name}} 내담자 상담일지",
+      "captionClient": "{{name}} 내담자의 상담일지 (최근 순, 타임라인)",
+      "captionClientSession": "{{name}} 내담자의 상담일지 (회기 순, 타임라인)",
+      "captionCounselor": "{{name}} 상담사의 상담일지 (내담자별 타임라인)",
+      "sortLabel": "정렬 순서",
+      "sortRecent": "최근 순",
+      "sortSession": "회기 순"
     }
   }
 }

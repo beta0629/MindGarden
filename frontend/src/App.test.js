@@ -49,6 +49,19 @@ jest.mock('./components/common/ProtectedRoute', () => ({
   default: ({ children }) => children
 }));
 
+jest.mock(
+  '@portone/browser-sdk/v2',
+  () => ({
+    requestPayment: jest.fn()
+  }),
+  { virtual: true }
+);
+
+jest.mock('./pages/client/shop/ShopCheckoutPage', () => ({
+  __esModule: true,
+  default: () => null
+}));
+
 import App from './App';
 
 describe('App', () => {

@@ -1,0 +1,201 @@
+# 개발 도메인 TLS 도달 비교 (읽기 전용, pull_request 1회)
+#
+# 목적: 공용 IP에서 TLS 직후 끊기는 두 개발 도메인이
+#       DEV 서버·운영 서버에서는 열리는지 한 번씩만 비교한다.
+#       설정 변경, 재기동, 파일 쓰기, 운영 DB 접속은 하지 않는다.
+#
+# 승인: 재학님 2026-10-11 15:22 KST — 운영·개발 서버 읽기 전용 연결 확인.
+#       저장소 SSOT는 KST 11–19 예방 점검(스냅샷·롤링 재시작·DB spot check)을 금지한다.
+#       이 파일은 그 예방 작업이 아니다. 도메인당 curl 1회·openssl 1회인
+#       장애 진단이며, 운영 DB·배포와 무관하다. 예방 가드를 force_incident 로 우회하지 않는다.
+#
+# SSH:
+#   DEV  — check-dev-server-logs.yml 과 동일
+#          secrets.DEV_SERVER_HOST / DEV_SERVER_USER / DEV_SERVER_SSH_KEY
+#          environment 키 없음
+#   운영 — ops-health-snapshot.yml 과 동일
+#          secrets.PRODUCTION_HOST / PRODUCTION_USER / PRODUCTION_SSH_KEY
+#          environment 키 없음 (그 워크플로가 environment 를 선언하지 않음)
+#   prod-db-readonly-spot-check.yml 의 environment: production 과 PRODUCTION_DB_* 는
+#   운영 DB 잡이므로 사용하지 않는다.
+#   deploy-production.yml 의 environment: prod 는 release/prod 브랜치만 허용한다.
+#   그 정책은 바꾸지 않고, 이 잡에 붙이지도 않는다.
+#
+# 트리거: pull_request, base release/dev, 이 파일 경로만.
+#         도메인 2개 × 서버 2대, 각 명령 1회. 재실행하면 호출이 다시 나간다.
+
+name: Net reach compare (read-only PR)
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+    branches:
+      - release/dev
+    paths:
+      - .github/workflows/net-reach-compare-readonly-pr-run.yml
+
+permissions:
+  contents: read
+
+concurrency:
+  group: net-reach-compare-readonly-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  dev-reach:
+    name: DEV server read-only reach
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: DEV SSH 시크릿 존재 확인 (값 미출력)
+        env:
+          DEV_SERVER_HOST: ${{ secrets.DEV_SERVER_HOST }}
+          DEV_SERVER_USER: ${{ secrets.DEV_SERVER_USER }}
+          DEV_SERVER_SSH_KEY: ${{ secrets.DEV_SERVER_SSH_KEY }}
+        run: |
+          set -euo pipefail
+          missing=0
+          if [ -z "${DEV_SERVER_HOST}" ]; then
+            echo "::error::DEV_SERVER_HOST 시크릿이 비어 있습니다."
+            missing=1
+          fi
+          if [ -z "${DEV_SERVER_USER}" ]; then
+            echo "::error::DEV_SERVER_USER 시크릿이 비어 있습니다."
+            missing=1
+          fi
+          if [ -z "${DEV_SERVER_SSH_KEY}" ]; then
+            echo "::error::DEV_SERVER_SSH_KEY 시크릿이 비어 있습니다."
+            missing=1
+          fi
+          if [ "$missing" -ne 0 ]; then
+            exit 1
+          fi
+          echo "DEV SSH secret names present"
+
+      - name: DEV에서 개발 도메인 2개 1회 조회
+        uses: appleboy/ssh-action@c4f70287fc37c43b14b30b407224bbbc8e8c6327 # master 2026-08-16 (v1.2.5+10) 고정
+        with:
+          host: ${{ secrets.DEV_SERVER_HOST }}
+          username: ${{ secrets.DEV_SERVER_USER }}
+          key: ${{ secrets.DEV_SERVER_SSH_KEY }}
+          port: 22
+          timeout: 60s
+          command_timeout: 3m
+          script_stop: false
+          script: |
+            set +e
+            mask_sensitive() {
+              sed -E \
+                -e 's/(Bearer[[:space:]]+)[^[:space:]]+/\1***MASKED***/g' \
+                -e 's/([Cc]ookie|[Ss]et-[Cc]ookie|[Aa]uthorization|[Tt]oken|[Pp]assword|[Ss]ecret)[=:][^[:space:]]+/\1=***MASKED***/g'
+            }
+            probe_domain() {
+              domain="$1"
+              echo "========== domain=${domain} =========="
+              echo "--- getent hosts ---"
+              getent_ec=0
+              getent_out="$(getent hosts "$domain" 2>&1)" || getent_ec=$?
+              printf '%s\n' "$getent_out" | mask_sensitive || true
+              echo "getent_exit=${getent_ec}"
+              echo "--- curl -sv -m 15 -o /dev/null (once) ---"
+              curl_ec=0
+              curl_out="$(curl -sv -m 15 -o /dev/null "https://${domain}/" 2>&1)" || curl_ec=$?
+              printf '%s\n' "$curl_out" | grep -E 'SSL connection using|subject:|expire date:|SSL certificate verify|^< HTTP/|TLS handshake, Server hello|^curl: \(|Recv failure|Connection reset|Connection refused|timed out|Could not resolve|SSL_ERROR|OpenSSL SSL_connect|command not found' | mask_sensitive || true
+              echo "curl_exit=${curl_ec}"
+              unset curl_out
+              echo "--- openssl s_client (once) ---"
+              ossl_ec=0
+              if command -v timeout >/dev/null 2>&1; then
+                ossl_out="$(echo | timeout 20 openssl s_client -connect "${domain}:443" -servername "${domain}" 2>&1)" || ossl_ec=$?
+              else
+                echo "timeout_cmd=missing"
+                ossl_out="$(echo | openssl s_client -connect "${domain}:443" -servername "${domain}" 2>&1)" || ossl_ec=$?
+              fi
+              printf '%s\n' "$ossl_out" | grep -E 'Verify return code:|^[[:space:]]*Protocol[[:space:]]*:|^[[:space:]]*Cipher[[:space:]]*:|Cipher is |connect:errno|write:errno|SSL handshake|Connection refused|timed out|command not found' | mask_sensitive || true
+              echo "openssl_exit=${ossl_ec}"
+              unset ossl_out
+              echo "========== domain=${domain} done =========="
+            }
+            echo "role=DEV readonly=1 db=no"
+            probe_domain "mindgarden.dev.core-solution.co.kr" || true
+            probe_domain "ops.dev.e-trinity.co.kr" || true
+            exit 0
+
+  prod-reach:
+    name: PROD server read-only reach
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: 운영 SSH 시크릿 존재 확인 (값 미출력)
+        env:
+          PRODUCTION_HOST: ${{ secrets.PRODUCTION_HOST }}
+          PRODUCTION_USER: ${{ secrets.PRODUCTION_USER }}
+          PRODUCTION_SSH_KEY: ${{ secrets.PRODUCTION_SSH_KEY }}
+        run: |
+          set -euo pipefail
+          missing=0
+          if [ -z "${PRODUCTION_HOST}" ]; then
+            echo "::error::PRODUCTION_HOST 시크릿이 비어 있습니다."
+            missing=1
+          fi
+          if [ -z "${PRODUCTION_USER}" ]; then
+            echo "::error::PRODUCTION_USER 시크릿이 비어 있습니다."
+            missing=1
+          fi
+          if [ -z "${PRODUCTION_SSH_KEY}" ]; then
+            echo "::error::PRODUCTION_SSH_KEY 시크릿이 비어 있습니다."
+            missing=1
+          fi
+          if [ "$missing" -ne 0 ]; then
+            exit 1
+          fi
+          echo "PRODUCTION SSH secret names present (no DB secrets used)"
+
+      - name: 운영 서버에서 개발 도메인 2개 1회 조회
+        uses: appleboy/ssh-action@c4f70287fc37c43b14b30b407224bbbc8e8c6327 # master 2026-08-16 (v1.2.5+10) 고정
+        with:
+          host: ${{ secrets.PRODUCTION_HOST }}
+          username: ${{ secrets.PRODUCTION_USER }}
+          key: ${{ secrets.PRODUCTION_SSH_KEY }}
+          port: 22
+          timeout: 60s
+          command_timeout: 3m
+          script_stop: false
+          script: |
+            set +e
+            mask_sensitive() {
+              sed -E \
+                -e 's/(Bearer[[:space:]]+)[^[:space:]]+/\1***MASKED***/g' \
+                -e 's/([Cc]ookie|[Ss]et-[Cc]ookie|[Aa]uthorization|[Tt]oken|[Pp]assword|[Ss]ecret)[=:][^[:space:]]+/\1=***MASKED***/g'
+            }
+            probe_domain() {
+              domain="$1"
+              echo "========== domain=${domain} =========="
+              echo "--- getent hosts ---"
+              getent_ec=0
+              getent_out="$(getent hosts "$domain" 2>&1)" || getent_ec=$?
+              printf '%s\n' "$getent_out" | mask_sensitive || true
+              echo "getent_exit=${getent_ec}"
+              echo "--- curl -sv -m 15 -o /dev/null (once) ---"
+              curl_ec=0
+              curl_out="$(curl -sv -m 15 -o /dev/null "https://${domain}/" 2>&1)" || curl_ec=$?
+              printf '%s\n' "$curl_out" | grep -E 'SSL connection using|subject:|expire date:|SSL certificate verify|^< HTTP/|TLS handshake, Server hello|^curl: \(|Recv failure|Connection reset|Connection refused|timed out|Could not resolve|SSL_ERROR|OpenSSL SSL_connect|command not found' | mask_sensitive || true
+              echo "curl_exit=${curl_ec}"
+              unset curl_out
+              echo "--- openssl s_client (once) ---"
+              ossl_ec=0
+              if command -v timeout >/dev/null 2>&1; then
+                ossl_out="$(echo | timeout 20 openssl s_client -connect "${domain}:443" -servername "${domain}" 2>&1)" || ossl_ec=$?
+              else
+                echo "timeout_cmd=missing"
+                ossl_out="$(echo | openssl s_client -connect "${domain}:443" -servername "${domain}" 2>&1)" || ossl_ec=$?
+              fi
+              printf '%s\n' "$ossl_out" | grep -E 'Verify return code:|^[[:space:]]*Protocol[[:space:]]*:|^[[:space:]]*Cipher[[:space:]]*:|Cipher is |connect:errno|write:errno|SSL handshake|Connection refused|timed out|command not found' | mask_sensitive || true
+              echo "openssl_exit=${ossl_ec}"
+              unset ossl_out
+              echo "========== domain=${domain} done =========="
+            }
+            echo "role=PROD readonly=1 db=no"
+            probe_domain "mindgarden.dev.core-solution.co.kr" || true
+            probe_domain "ops.dev.e-trinity.co.kr" || true
+            exit 0

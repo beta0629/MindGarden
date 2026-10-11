@@ -1,0 +1,165 @@
+# 내담자 회기 순번 진단 — 개발 전용·읽기 전용·일회성
+#
+# 목적: 지정 로그인(워크플로에 고정)의 같은 테넌트 일정·매칭·상담일지만 SELECT 한다.
+#       출력은 ID 와 마스킹된 로그인명뿐이다. 이름·연락처·주소·이메일·일지 본문은 선택하지 않는다.
+#
+# 안전 장치 (dev-deposit-erp-diagnose.yml · consultation-log-duplicate-count.yml 과 같은 방식):
+#   - 개발 서버(DEV_* secret)만 대상. 운영 서버·운영 DB 를 가리키는 입력 없음.
+#   - release/prod · production 환경 선언 없음. DB 이름이 mind_garden* 이면 중단.
+#   - SQL 은 이 파일에 고정. 입력으로 쿼리를 바꾸지 않는다.
+#   - mysql 세션을 --init-command 로 READ ONLY 고정. 쓰기 구문이 있으면 접속 전에 중단.
+#   - 호스트·계정·DB 이름·비밀번호는 secret. 비밀번호는 stdin 스크립트로만 넘긴다(ps 노출 방지).
+#   - 드래프트 PR(base release/dev, opened 1회) 또는 workflow_dispatch. 재실행·synchronize 트리거 없음.
+#   - 실행 승인(environment protection) 은 선언하지 않는다. 승인이 필요한 게이트가 생기면 우회하지 않는다.
+name: 회기 순번 진단 (읽기 전용·개발·일회성)
+
+on:
+  pull_request:
+    types: [opened]
+    branches: ['release/dev']
+    paths:
+      - '.github/workflows/dev-session-seq-diagnose-readonly-pr-run.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dev-session-seq-diagnose-readonly
+  cancel-in-progress: false
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    if: >
+      github.ref != 'refs/heads/release/prod' &&
+      github.base_ref != 'release/prod' &&
+      (
+        github.event_name == 'workflow_dispatch' ||
+        (
+          github.event_name == 'pull_request' &&
+          github.event.pull_request.draft == true &&
+          github.base_ref == 'release/dev' &&
+          github.event.pull_request.head.repo.full_name == github.repository
+        )
+      )
+    steps:
+      - name: 개발 DB SELECT (READ ONLY)
+        env:
+          SERVER_HOST: ${{ secrets.DEV_SERVER_HOST }}
+          SERVER_USER: ${{ secrets.DEV_SERVER_USER }}
+          SERVER_SSH_KEY: ${{ secrets.DEV_SERVER_SSH_KEY }}
+          DB_HOST: ${{ secrets.DEV_DB_HOST }}
+          DB_USER: ${{ secrets.DEV_DB_USER }}
+          DB_NAME: ${{ secrets.DEV_DB_NAME }}
+          DB_PASSWORD: ${{ secrets.DEV_DB_PASSWORD }}
+        run: |
+          set -euo pipefail
+          for name in SERVER_HOST SERVER_USER SERVER_SSH_KEY DB_HOST DB_USER DB_NAME DB_PASSWORD; do
+            if [ -z "${!name:-}" ]; then
+              echo "::error title=접속 정보 누락::DEV_${name} secret 을 확인하세요."
+              exit 1
+            fi
+          done
+          case "$DB_NAME" in
+            mind_garden|mind_garden_legacy_*)
+              echo "::error title=대상 DB 차단::개발 core_solution 스키마만 조회합니다."
+              exit 1
+              ;;
+          esac
+
+          SQL_FILE=$(mktemp)
+          KEY_FILE=$(mktemp)
+          trap 'rm -f "$SQL_FILE" "$KEY_FILE"' EXIT
+          cat > "$SQL_FILE" <<'SQL'
+          SELECT '== identity (id, tenant, role, masked login only) ==' AS section;
+          SELECT u.id,
+                 u.tenant_id,
+                 u.role,
+                 u.is_deleted,
+                 CASE WHEN u.user_id = 'DevUser-000058' THEN 'user_id' ELSE 'name' END AS match_on,
+                 CONCAT(LEFT(u.user_id, 4), '***', RIGHT(u.user_id, 3)) AS login_masked
+            FROM users u
+           WHERE u.user_id = 'DevUser-000058' OR u.name = 'DevUser-000058'
+           ORDER BY u.tenant_id, u.id;
+          SELECT '== tenant gate (CLIENT, same tenant only) ==' AS section;
+          SELECT COUNT(*) AS client_rows,
+                 COUNT(DISTINCT u.tenant_id) AS tenant_count,
+                 CASE
+                   WHEN COUNT(*) = 0 THEN 'NO_MATCH'
+                   WHEN COUNT(DISTINCT u.tenant_id) = 1 THEN 'PROCEED'
+                   ELSE 'AMBIGUOUS_TENANT'
+                 END AS tenant_gate
+            FROM users u
+           WHERE u.role = 'CLIENT'
+             AND (u.user_id = 'DevUser-000058' OR u.name = 'DevUser-000058');
+          SELECT '== schedules ==' AS section;
+          SELECT s.id, s.date, s.start_time, s.end_time, s.status, s.mapping_id,
+                 s.session_sequence, s.schedule_type, s.is_deleted, s.consultant_id
+            FROM schedules s
+            INNER JOIN users u
+                    ON u.id = s.client_id
+                   AND u.tenant_id = s.tenant_id
+                   AND u.role = 'CLIENT'
+           WHERE (u.user_id = 'DevUser-000058' OR u.name = 'DevUser-000058')
+             AND (SELECT COUNT(DISTINCT tenant_id) FROM users
+                   WHERE role = 'CLIENT'
+                     AND (user_id = 'DevUser-000058' OR name = 'DevUser-000058')) = 1
+           ORDER BY s.date, s.start_time, s.id;
+          SELECT '== consultant_client_mappings ==' AS section;
+          SELECT m.id, m.status, m.total_sessions, m.used_sessions, m.remaining_sessions,
+                 m.payment_status, m.created_at
+            FROM consultant_client_mappings m
+            INNER JOIN users u
+                    ON u.id = m.client_id
+                   AND u.tenant_id = m.tenant_id
+                   AND u.role = 'CLIENT'
+           WHERE (u.user_id = 'DevUser-000058' OR u.name = 'DevUser-000058')
+             AND (SELECT COUNT(DISTINCT tenant_id) FROM users
+                   WHERE role = 'CLIENT'
+                     AND (user_id = 'DevUser-000058' OR name = 'DevUser-000058')) = 1
+           ORDER BY m.created_at, m.id;
+          SELECT '== consultation_records ==' AS section;
+          SELECT r.id,
+                 r.consultation_id,
+                 r.session_number,
+                 r.session_date,
+                 r.is_session_completed,
+                 s.status AS schedule_status,
+                 CASE WHEN s.status IN ('BOOKED', 'CONFIRMED') THEN 1 ELSE 0 END AS journal_on_incomplete_schedule
+            FROM consultation_records r
+            INNER JOIN users u
+                    ON u.id = r.client_id
+                   AND u.tenant_id = r.tenant_id
+                   AND u.role = 'CLIENT'
+            LEFT JOIN schedules s
+                   ON s.id = r.consultation_id
+                  AND s.tenant_id = r.tenant_id
+           WHERE (u.user_id = 'DevUser-000058' OR u.name = 'DevUser-000058')
+             AND (SELECT COUNT(DISTINCT tenant_id) FROM users
+                   WHERE role = 'CLIENT'
+                     AND (user_id = 'DevUser-000058' OR name = 'DevUser-000058')) = 1
+           ORDER BY r.session_date, r.id;
+          SQL
+
+          if grep -qiE '(^|[^a-z_@])(insert|update|delete|drop|alter|truncate|create|replace|grant|call|set)[[:space:]]' "$SQL_FILE"; then
+            echo "::error title=SELECT 전용 위반::고정 SQL 에 쓰기 구문이 있어 중단합니다."
+            exit 1
+          fi
+
+          printf '%s\n' "$SERVER_SSH_KEY" > "$KEY_FILE"
+          chmod 600 "$KEY_FILE"
+          mkdir -p ~/.ssh
+          ssh-keyscan -H "$SERVER_HOST" >> ~/.ssh/known_hosts 2>/dev/null || true
+
+          echo "=== dev session sequence diagnose (READ ONLY, masked login) ==="
+          {
+            printf 'set -euo pipefail\n'
+            printf 'export MYSQL_PWD=%q\n' "$DB_PASSWORD"
+            printf 'mysql --init-command=%q -h %q -u %q %q --batch --raw <<'"'"'__DIAG_SQL__'"'"'\n' \
+              "SET SESSION TRANSACTION READ ONLY" "$DB_HOST" "$DB_USER" "$DB_NAME"
+            cat "$SQL_FILE"
+            printf '__DIAG_SQL__\n'
+          } | ssh -i "$KEY_FILE" -o BatchMode=yes "${SERVER_USER}@${SERVER_HOST}" 'bash -s'
+          echo "=== 끝 — ID와 마스킹된 로그인명만 ==="

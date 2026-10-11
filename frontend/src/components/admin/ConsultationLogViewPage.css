@@ -79,15 +79,18 @@
 .mg-v2-consultation-log-query__field .mg-v2-consultation-log-filter__select {
   appearance: none;
   padding-inline-start: var(--mg-v2-space-2);
-  padding-inline-end: var(--mg-v2-space-3);
+  padding-inline-end: var(--mg-v2-space-6);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   background-color: var(--mg-v2-color-surface-card);
   background-image:
     linear-gradient(45deg, transparent 50%, var(--mg-v2-color-text-secondary) 50%),
     linear-gradient(135deg, var(--mg-v2-color-text-secondary) 50%, transparent 50%);
   background-position:
-    calc(100% - var(--mg-v2-space-3)) center,
-    calc(100% - var(--mg-v2-space-2)) center;
-  background-size: var(--mg-v2-space-1) var(--mg-v2-space-1);
+    calc(100% - var(--mg-v2-space-4)) center,
+    calc(100% - var(--mg-v2-space-3)) center;
+  background-size: var(--mg-v2-space-2) var(--mg-v2-space-2);
   background-repeat: no-repeat;
 }
 

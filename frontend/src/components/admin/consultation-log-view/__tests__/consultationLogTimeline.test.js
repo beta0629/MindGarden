@@ -12,10 +12,11 @@ import {
   CONSULTATION_LOG_TIMELINE_SORT,
   buildConsultationLogTimelineView
 } from '../consultationLogTimeline';
+import { CONSULTATION_LOG_TIMELINE_PAGE_SIZE } from '../consultationLogQuery';
 
 const MISSING = '이름 없음';
 const SESSION_COUNT = 30;
-const PAGE_SIZE = 10;
+const PAGE_SIZE = CONSULTATION_LOG_TIMELINE_PAGE_SIZE;
 
 const row = (fields) => ({
   id: fields.id,
@@ -265,6 +266,8 @@ describe('상담일지 타임라인', () => {
       { session: 24, kind: 'start', name: '박지안', fromName: '' }
     ]);
 
+    expect(Math.ceil(SESSION_COUNT / PAGE_SIZE)).toBe(3);
+
     const page = ordered.slice(PAGE_SIZE, PAGE_SIZE * 2);
     const continued = buildConsultationLogTimelineView({
       mode: CONSULTATION_LOG_GROUP_MODE.CLIENT,
@@ -279,18 +282,25 @@ describe('상담일지 타임라인', () => {
       rows: page
     });
 
+    const pageStartSession = SESSION_COUNT - PAGE_SIZE;
     expect(continued.groups[0].items.map((item) => item.row.sessionNumber)).toEqual(
-      [20, 19, 18, 17, 16, 15, 14, 13, 12, 11]
+      Array.from({ length: PAGE_SIZE }, (_, index) => pageStartSession - index)
     );
     expect(labelsOf(continued)).toEqual([
-      { session: 20, kind: 'continue', name: '박지안', fromName: '' }
+      { session: pageStartSession, kind: 'continue', name: '박지안', fromName: '' }
     ]);
   });
 
   it('회기 순 쪽 경계에서 상담사가 바뀌면 변경 라벨을 쓰고 같으면 이름을 다시 그린다', () => {
     const all = thirtyRows().slice().sort((left, right) => left.sessionNumber - right.sessionNumber);
-    const boundaryPage = all.slice(20, 30);
-    const preceding = all[19];
+    const changeIndex = all.findIndex((item, index) => (
+      index > 0 && item.consultantId !== all[index - 1].consultantId
+    ));
+    const pageIndex = Math.floor(changeIndex / PAGE_SIZE);
+    const pageStart = pageIndex * PAGE_SIZE;
+    const boundaryPage = all.slice(pageStart, pageStart + PAGE_SIZE);
+    const preceding = all[pageStart - 1];
+    const changeRow = all[changeIndex];
     const view = buildConsultationLogTimelineView({
       mode: CONSULTATION_LOG_GROUP_MODE.CLIENT,
       sort: CONSULTATION_LOG_TIMELINE_SORT.SESSION,
@@ -305,8 +315,18 @@ describe('상담일지 타임라인', () => {
     });
 
     expect(labelsOf(view)).toEqual([
-      { session: 21, kind: 'continue', name: '박지안', fromName: '' },
-      { session: 25, kind: 'change', name: '최하린', fromName: '박지안' }
+      {
+        session: boundaryPage[0].sessionNumber,
+        kind: 'continue',
+        name: preceding.consultantName,
+        fromName: ''
+      },
+      {
+        session: changeRow.sessionNumber,
+        kind: 'change',
+        name: changeRow.consultantName,
+        fromName: preceding.consultantName
+      }
     ]);
   });
 });

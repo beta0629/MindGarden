@@ -14,6 +14,7 @@ const read = (relativePath) => fs.readFileSync(path.resolve(__dirname, relativeP
 describe('상담일지 필터·정렬 시안', () => {
   const pageCss = read('../../ConsultationLogViewPage.css');
   const timelineCss = read('../ConsultationLogTimelineBlock.css');
+  const railCss = read('../../../common/timeline/Timeline.css');
   const tokens = read('../../../../styles/tokens/design-v2-tokens.css');
 
   it('기간 15rem·선택 8.5rem·검색어만 가변이고 날짜 칸은 줄어들지 않는다', () => {
@@ -44,6 +45,25 @@ describe('상담일지 필터·정렬 시안', () => {
     );
     expect(timelineCss).not.toMatch(
       /sort-button\[aria-pressed='true'\][\s\S]*?background-color:\s*var\(--mg-v2-color-surface-card\)/
+    );
+  });
+
+  it('상담사 구간 라벨은 글자 오른쪽으로 가는 선이 이어지고 위쪽 전폭 선은 없다', () => {
+    expect(tokens).toContain('--mg-timeline-label-gap: var(--mg-v2-space-3)');
+    expect(railCss).toContain('gap: var(--mg-v2-space-3)');
+    expect(railCss).toContain('margin: 0 0 var(--mg-timeline-label-gap)');
+    expect(railCss).toMatch(/\.mg-v2-timeline__label::after\s*\{[^}]*height:\s*var\(--mg-v2-border-width-thin\)/);
+    expect(railCss).toMatch(/\.mg-v2-timeline__label::after\s*\{[^}]*background:\s*var\(--mg-v2-color-border-default\)/);
+    expect(railCss).not.toMatch(/\.mg-v2-timeline__label\s*\{[^}]*border-block-start/);
+    expect(railCss).not.toContain('!important');
+  });
+
+  it('내담자 선택은 화살표 여백과 말줄임을 둔다', () => {
+    expect(pageCss).toMatch(
+      /\.mg-v2-consultation-log-query__field \.mg-v2-consultation-log-filter__select\s*\{[^}]*padding-inline-end:\s*var\(--mg-v2-space-6\)/
+    );
+    expect(pageCss).toMatch(
+      /\.mg-v2-consultation-log-query__field \.mg-v2-consultation-log-filter__select\s*\{[^}]*text-overflow:\s*ellipsis/
     );
   });
 });

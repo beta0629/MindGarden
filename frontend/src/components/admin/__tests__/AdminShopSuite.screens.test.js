@@ -104,9 +104,11 @@ describe('admin shop suite screens (v3.2)', () => {
     expect(REWARD).toMatch(/softRefresh\(loadPolicies\)/);
   });
 
-  test('legacy product routes redirect to 상품', () => {
-    expect(APP).toMatch(/path="package-pricing\/new" element={<Navigate to={ADMIN_SHOP_PRODUCT_ROUTES\.NEW} replace \/>}/);
-    expect(APP).toMatch(/path="package-pricing\/:id" element={<RedirectToShopProductEdit paramName="id" \/>}/);
+  test('legacy product routes redirect to 상품, 상품 조합 빌더 routes open PackagePricingDetailPage', () => {
+    expect(APP).toMatch(/path="package-pricing\/new" element={<PackagePricingDetailPage \/>}/);
+    expect(APP).toMatch(/path="package-pricing\/:id" element={<PackagePricingDetailPage \/>}/);
+    expect(APP).toMatch(/lazy\(\(\) => import\('\.\/components\/admin\/package-pricing\/pages\/PackagePricingDetailPage'\)\)/);
+    expect(APP).not.toMatch(/<RedirectToShopProductEdit paramName="id" \/>/);
     expect(APP).toMatch(/path="package-pricing" element={<Navigate to={ADMIN_SHOP_PRODUCT_ROUTES\.LIST} replace \/>}/);
     expect(APP).toMatch(/<RedirectToShopProductEdit paramName="packageCode" \/>/);
     expect(APP).toMatch(/<AdminShopProductsPage \/>/);

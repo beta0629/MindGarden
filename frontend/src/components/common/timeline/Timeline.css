@@ -55,7 +55,7 @@
   align-items: center;
   min-height: var(--mg-timeline-label-height);
   margin: 0 0 var(--mg-timeline-label-gap);
-  border-block-start: var(--mg-v2-border-width-thin) solid var(--mg-v2-color-border-strong);
+  border-block-start: var(--mg-v2-border-width-thin) solid var(--mg-v2-color-border-default);
   color: var(--mg-v2-color-text-primary);
   font-size: var(--mg-v2-font-size-body-md);
   font-weight: var(--mg-v2-font-weight-bold);

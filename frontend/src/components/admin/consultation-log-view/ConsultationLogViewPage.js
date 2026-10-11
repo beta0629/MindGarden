@@ -356,7 +356,9 @@ const ConsultationLogViewPage = ({ surface }) => {
       consultationDate: r.consultationDate,
       sessionNumber: r.sessionNumber,
       clientName: r.clientName,
-      consultantName: consultantDisplayName ?? r.consultantName,
+      consultantName: String(r.consultantName || '').trim()
+        ? r.consultantName
+        : consultantDisplayName,
       isSessionCompleted: r.isSessionCompleted,
       createdAt: r.createdAt,
       updatedAt: r.updatedAt,

@@ -54,6 +54,7 @@ import com.coresolution.consultation.service.CommonCodeService;
 import com.coresolution.consultation.service.RoleCommonCodeAuthorizationService;
 import com.coresolution.consultation.service.ConsultantRatingService;
 import com.coresolution.consultation.service.ConsultantStatsService;
+import com.coresolution.consultation.service.ConsultationRecordPersonNameResolver;
 import com.coresolution.consultation.service.ConsultationRecordService;
 import com.coresolution.consultation.service.DynamicPermissionService;
 import com.coresolution.consultation.service.erp.ErpService;
@@ -198,6 +199,7 @@ public class AdminController extends BaseApiController {
     private final OpsAccessGuard opsAccessGuard;
     private final ConsultationRecordAccessGuard consultationRecordAccessGuard;
     private final ConsultationRecordService consultationRecordService;
+    private final ConsultationRecordPersonNameResolver consultationRecordPersonNameResolver;
     private final DynamicPermissionService dynamicPermissionService;
     private final MenuService menuService;
     private final FinancialTransactionService financialTransactionService;
@@ -3947,9 +3949,16 @@ public class AdminController extends BaseApiController {
                     consultationRecordService.getConsultationRecordsForLogView(consultantId, clientId,
                             startDate, endDate, sessionCompleted, keyword, matchedClientIds, pageable);
 
-            // 목록은 식별자·일자·작성자·상태만. 본문은 단건 상세(공용 가드 판정)에서만 받는다.
-            List<ConsultationRecordListItemResponse> metaItems = consultationRecords.getContent().stream()
-                    .map(ConsultationRecordListItemResponse::fromEntity)
+            // 본문은 단건 상세에서만. 내담자·상담사 표시명은 목록 메타로, 같은 테넌트를 한 번에 채운다.
+            List<ConsultationRecord> pageContent = consultationRecords.getContent();
+            Map<Long, String> resolvedNames = consultationRecordPersonNameResolver
+                    .resolveForRecords(tenantId, pageContent);
+            Map<Long, String> displayNames = resolvedNames != null ? resolvedNames : Map.of();
+            List<ConsultationRecordListItemResponse> metaItems = pageContent.stream()
+                    .map(record -> ConsultationRecordListItemResponse.fromEntity(
+                            record,
+                            ConsultationRecordPersonNameResolver.nameOrNull(displayNames, record.getClientId()),
+                            ConsultationRecordPersonNameResolver.nameOrNull(displayNames, record.getConsultantId())))
                     .toList();
 
             Map<String, Object> response = new HashMap<>();

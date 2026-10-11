@@ -53,7 +53,7 @@ class ConsultantRecordsControllerAssignedClientsTest {
 
         // 이 엔드포인트가 쓰지 않는 협력자는 null 로 둔다 (검증 대상은 가드·매칭 조회뿐).
         controller = new ConsultantRecordsController(
-            null, null, null, null, null, null, null,
+            null, null, null, null, null, null,
             clientPathAccessGuard, mappingRepository);
     }
 

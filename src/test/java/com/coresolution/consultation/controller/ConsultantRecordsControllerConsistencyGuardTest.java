@@ -67,7 +67,7 @@ class ConsultantRecordsControllerConsistencyGuardTest {
         session = mock(HttpSession.class);
         ClientPathAccessGuard guard = new ClientPathAccessGuard(mappingRepository, userRepository);
         controller = new ConsultantRecordsController(
-            recordService, null, null, userRepository, scheduleService, null, null, guard, mappingRepository);
+            recordService, null, null, scheduleService, null, null, guard, mappingRepository);
         TenantContextHolder.clear();
     }
 

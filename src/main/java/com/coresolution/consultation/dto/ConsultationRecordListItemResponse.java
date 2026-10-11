@@ -18,6 +18,11 @@ import lombok.Getter;
  * 위험도·진척·목표 달성·다음 일정 같은 평가 항목도 목록에서는 빼고, Expo·웹 목록은 탭 시 단건
  * 상세 API 로 받는다.</p>
  *
+ * <p>2026-10-11: {@code clientName}·{@code consultantName} 은 임상 본문이 아니라 목록 메타다.
+ * 같은 테넌트의 미삭제 사용자 표시명만 싣고, 없으면 null 이다. 비어 있을 때의 화면 문구는
+ * locale {@code adminConsultationLogs.people.unknownName} 이다. 마지막 작성자의 표시명은
+ * 계속 싣지 않는다.</p>
+ *
  * @author CoreSolution
  * @since 2026-10-04
  */
@@ -29,12 +34,16 @@ public class ConsultationRecordListItemResponse {
     private final Long consultationId;
     private final Long clientId;
     private final Long consultantId;
+    /** 같은 테넌트 미삭제 내담자 표시명. 목록 메타이며 본문 보호 대상이 아니다. 없으면 null. */
+    private final String clientName;
+    /** 같은 테넌트 미삭제 상담사 표시명. 목록 메타이며 본문 보호 대상이 아니다. 없으면 null. */
+    private final String consultantName;
     private final LocalDate sessionDate;
     private final Integer sessionNumber;
     private final Boolean isSessionCompleted;
     private final LocalDateTime createdAt;
     private final LocalDateTime updatedAt;
-    /** 마지막 작성·수정자 users.id (이름은 싣지 않는다). */
+    /** 마지막 작성·수정자 users.id. 작성자 표시명은 목록 메타에 포함하지 않는다. */
     private final Long lastEditedById;
     /** 마지막 작성·수정자 역할명. */
     private final String lastEditedByRole;
@@ -50,15 +59,33 @@ public class ConsultationRecordListItemResponse {
     /**
      * 엔티티 → 목록 항목 변환.
      *
+     * 이름 없이 요약·메타만 변환한다. 표시명이 필요하면
+     * {@link #fromEntity(ConsultationRecord, String, String)} 를 쓴다.
+     *
      * @param entity 상담일지 엔티티
-     * @return 요약·메타 항목
+     * @return 요약·메타 항목. clientName·consultantName 은 null
      */
     public static ConsultationRecordListItemResponse fromEntity(ConsultationRecord entity) {
+        return fromEntity(entity, null, null);
+    }
+
+    /**
+     * 엔티티와 이미 조회한 표시명으로 목록 항목을 만든다.
+     *
+     * @param entity         상담일지 엔티티
+     * @param clientName     내담자 표시명. 없으면 null
+     * @param consultantName 상담사 표시명. 없으면 null
+     * @return 요약·메타 항목
+     */
+    public static ConsultationRecordListItemResponse fromEntity(ConsultationRecord entity, String clientName,
+            String consultantName) {
         return ConsultationRecordListItemResponse.builder()
                 .id(entity.getId())
                 .consultationId(entity.getConsultationId())
                 .clientId(entity.getClientId())
                 .consultantId(entity.getConsultantId())
+                .clientName(clientName)
+                .consultantName(consultantName)
                 .sessionDate(entity.getSessionDate())
                 .sessionNumber(entity.getSessionNumber())
                 .isSessionCompleted(entity.getIsSessionCompleted())

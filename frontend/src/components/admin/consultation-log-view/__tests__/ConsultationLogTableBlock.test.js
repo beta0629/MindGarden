@@ -56,4 +56,30 @@ describe('ConsultationLogTableBlock', () => {
     fireEvent.click(screen.getByRole('button', { name: '2026-10-01 내담자A 상담일지 열기' }));
     expect(onOpenRow).toHaveBeenCalledWith(101);
   });
+
+  it('응답 이름을 명단 맵보다 먼저 쓰고, 맵이 비어도 응답 이름을 보여 준다', () => {
+    render(
+      <ConsultationLogTableBlock
+        records={[{
+          id: 201,
+          sessionDate: '2026-10-03',
+          sessionNumber: 1,
+          clientId: 11,
+          consultantId: 22,
+          clientName: '응답내담',
+          consultantName: '응답상담',
+          isSessionCompleted: true,
+          summaryPreview: '응답 요약'
+        }]}
+        clientNameMap={{ 11: '맵내담' }}
+        consultantNameMap={{}}
+        onOpenRow={jest.fn()}
+      />
+    );
+
+    expect(screen.getByText('응답내담')).toBeInTheDocument();
+    expect(screen.getByText('응답상담')).toBeInTheDocument();
+    expect(screen.queryByText('맵내담')).not.toBeInTheDocument();
+    expect(screen.queryByText('이름 없음')).not.toBeInTheDocument();
+  });
 });

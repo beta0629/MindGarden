@@ -9,7 +9,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import './ConsultationLogStatusBadge.css';
 
-const ConsultationLogStatusBadge = ({ done, doneLabel, pendingLabel }) => {
+const ConsultationLogStatusBadge = ({ done = false, doneLabel, pendingLabel }) => {
   const className = done
     ? 'mg-v2-consultation-log-status mg-v2-consultation-log-status--done'
     : 'mg-v2-consultation-log-status mg-v2-consultation-log-status--pending';
@@ -25,10 +25,6 @@ ConsultationLogStatusBadge.propTypes = {
   done: PropTypes.bool,
   doneLabel: PropTypes.string.isRequired,
   pendingLabel: PropTypes.string.isRequired
-};
-
-ConsultationLogStatusBadge.defaultProps = {
-  done: false
 };
 
 export default ConsultationLogStatusBadge;

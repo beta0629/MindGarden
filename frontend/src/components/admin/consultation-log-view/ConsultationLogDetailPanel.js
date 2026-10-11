@@ -20,18 +20,18 @@ import './ConsultationLogDetailPanel.css';
 const ConsultationLogDetailPanel = ({
   titleId,
   labels,
-  dateText,
-  sessionText,
-  clientName,
-  consultantName,
-  done,
-  writtenAt,
-  summary,
-  content,
-  loading,
+  dateText = '',
+  sessionText = '',
+  clientName = '',
+  consultantName = '',
+  done = false,
+  writtenAt = '',
+  summary = '',
+  content = '',
+  loading = false,
   onClose,
   onEdit,
-  returnFocusId
+  returnFocusId = ''
 }) => {
   const panelRef = useRef(null);
   const isDesktop = useMediaQuery(CONSULTATION_LOG_MEDIA_DESKTOP_UP);
@@ -191,19 +191,6 @@ ConsultationLogDetailPanel.propTypes = {
   onClose: PropTypes.func.isRequired,
   onEdit: PropTypes.func.isRequired,
   returnFocusId: PropTypes.string
-};
-
-ConsultationLogDetailPanel.defaultProps = {
-  dateText: '',
-  sessionText: '',
-  clientName: '',
-  consultantName: '',
-  done: false,
-  writtenAt: '',
-  summary: '',
-  content: '',
-  loading: false,
-  returnFocusId: ''
 };
 
 export default ConsultationLogDetailPanel;

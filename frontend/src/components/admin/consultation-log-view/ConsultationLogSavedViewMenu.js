@@ -15,8 +15,8 @@ const ConsultationLogSavedViewMenu = ({
   emptyLabel,
   saveLabel,
   deleteLabel,
-  views,
-  activeViewId,
+  views = [],
+  activeViewId = '',
   onSelectView,
   onSaveCurrent,
   onDeleteView
@@ -140,11 +140,6 @@ ConsultationLogSavedViewMenu.propTypes = {
   onSelectView: PropTypes.func.isRequired,
   onSaveCurrent: PropTypes.func.isRequired,
   onDeleteView: PropTypes.func.isRequired
-};
-
-ConsultationLogSavedViewMenu.defaultProps = {
-  views: [],
-  activeViewId: ''
 };
 
 export default ConsultationLogSavedViewMenu;

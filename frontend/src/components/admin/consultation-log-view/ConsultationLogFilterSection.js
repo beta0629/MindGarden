@@ -300,12 +300,61 @@ const QueryFilter = (props) => {
   );
 };
 
-const ConsultationLogFilterSection = (props) => {
+const ConsultationLogFilterSection = ({
+  layout = 'legacy',
+  isAdmin,
+  consultantId = null,
+  consultants = [],
+  onConsultantChange,
+  clientId = null,
+  clients = [],
+  onClientChange,
+  startDate = '',
+  endDate = '',
+  onStartDateChange,
+  onEndDateChange,
+  status = CONSULTATION_LOG_STATUS_ALL,
+  onStatusChange,
+  keyword = '',
+  onKeywordChange,
+  onSearch,
+  onReset,
+  savedViews = [],
+  activeViewId = '',
+  onSelectSavedView,
+  onSaveCurrentView,
+  onDeleteSavedView
+}) => {
   const { t } = useTranslation(NS);
-  if (props.layout === 'query') {
-    return <QueryFilter {...props} />;
+  const filterProps = {
+    layout,
+    isAdmin,
+    consultantId,
+    consultants,
+    onConsultantChange,
+    clientId,
+    clients,
+    onClientChange,
+    startDate,
+    endDate,
+    onStartDateChange,
+    onEndDateChange,
+    status,
+    onStatusChange,
+    keyword,
+    onKeywordChange,
+    onSearch,
+    onReset,
+    savedViews,
+    activeViewId,
+    onSelectSavedView,
+    onSaveCurrentView,
+    onDeleteSavedView
+  };
+  if (layout === 'query') {
+    return <QueryFilter {...filterProps} />;
   }
-  return <LegacyFilter {...props} t={t} />;
+  return <LegacyFilter {...filterProps} t={t} />;
 };
 
 const idShape = PropTypes.arrayOf(PropTypes.shape({
@@ -338,27 +387,6 @@ ConsultationLogFilterSection.propTypes = {
   onSelectSavedView: PropTypes.func,
   onSaveCurrentView: PropTypes.func,
   onDeleteSavedView: PropTypes.func
-};
-
-ConsultationLogFilterSection.defaultProps = {
-  layout: 'legacy',
-  consultantId: null,
-  consultants: [],
-  clientId: null,
-  clients: [],
-  startDate: '',
-  endDate: '',
-  status: CONSULTATION_LOG_STATUS_ALL,
-  onStatusChange: undefined,
-  keyword: '',
-  onKeywordChange: undefined,
-  onSearch: undefined,
-  onReset: undefined,
-  savedViews: [],
-  activeViewId: '',
-  onSelectSavedView: undefined,
-  onSaveCurrentView: undefined,
-  onDeleteSavedView: undefined
 };
 
 export default ConsultationLogFilterSection;

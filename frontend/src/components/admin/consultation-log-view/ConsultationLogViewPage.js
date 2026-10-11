@@ -211,7 +211,7 @@ const consultantRecordsEndpoint = (consultantId) => (
   `/api/v1/admin/consultant-records/${consultantId}/consultation-records`
 );
 
-const ConsultationLogViewPage = ({ surface }) => {
+const ConsultationLogViewPage = ({ surface = CONSULTATION_LOG_VIEW_SURFACE.ADMIN }) => {
   const { t } = useTranslation(NS);
   const { t: tSuite } = useTranslation(CONSULTANT_SUITE_NS);
   const { user } = useSession();
@@ -1346,10 +1346,6 @@ const ConsultationLogViewPage = ({ surface }) => {
 
 ConsultationLogViewPage.propTypes = {
   surface: PropTypes.oneOf(Object.values(CONSULTATION_LOG_VIEW_SURFACE))
-};
-
-ConsultationLogViewPage.defaultProps = {
-  surface: CONSULTATION_LOG_VIEW_SURFACE.ADMIN
 };
 
 export default ConsultationLogViewPage;

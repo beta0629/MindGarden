@@ -113,9 +113,4 @@ ConsultationLogResultsState.propTypes = {
   onRetry: PropTypes.func
 };
 
-ConsultationLogResultsState.defaultProps = {
-  onReset: undefined,
-  onRetry: undefined
-};
-
 export default ConsultationLogResultsState;

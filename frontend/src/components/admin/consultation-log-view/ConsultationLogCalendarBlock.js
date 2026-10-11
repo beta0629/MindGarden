@@ -57,12 +57,12 @@ export const computeCalendarInitialDate = (startDate, records) => {
 };
 
 const ConsultationLogCalendarBlock = ({
-  records,
-  clientNameMap,
-  consultantNameMap,
+  records = [],
+  clientNameMap = {},
+  consultantNameMap = {},
   onOpenModal,
-  startDate,
-  endDate,
+  startDate = '',
+  endDate = '',
   onVisibleRangeChange
 }) => {
   const { t } = useTranslation(NS);
@@ -272,15 +272,6 @@ ConsultationLogCalendarBlock.propTypes = {
   startDate: PropTypes.string,
   endDate: PropTypes.string,
   onVisibleRangeChange: PropTypes.func
-};
-
-ConsultationLogCalendarBlock.defaultProps = {
-  records: [],
-  clientNameMap: {},
-  consultantNameMap: {},
-  startDate: '',
-  endDate: '',
-  onVisibleRangeChange: undefined
 };
 
 export default ConsultationLogCalendarBlock;

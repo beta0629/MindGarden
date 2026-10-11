@@ -27,10 +27,10 @@ import './ConsultationLogTableBlock.css';
 const NS = 'adminConsultationLogs';
 
 const ConsultationLogTableBlock = ({
-  records,
-  clientNameMap,
-  consultantNameMap,
-  selectedLogId,
+  records = [],
+  clientNameMap = {},
+  consultantNameMap = {},
+  selectedLogId = null,
   onOpenRow
 }) => {
   const { t } = useTranslation(NS);
@@ -131,13 +131,6 @@ ConsultationLogTableBlock.propTypes = {
   consultantNameMap: PropTypes.object,
   selectedLogId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   onOpenRow: PropTypes.func.isRequired
-};
-
-ConsultationLogTableBlock.defaultProps = {
-  records: [],
-  clientNameMap: {},
-  consultantNameMap: {},
-  selectedLogId: null
 };
 
 export default ConsultationLogTableBlock;

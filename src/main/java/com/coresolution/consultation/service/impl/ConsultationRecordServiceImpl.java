@@ -26,6 +26,7 @@ import com.coresolution.consultation.service.SalaryLateSessionAutoSyncService;
 import com.coresolution.consultation.service.ScheduleService;
 import com.coresolution.consultation.service.support.ConsultationRecordEditAuditService;
 import com.coresolution.consultation.service.support.ConsultationRecordWriter;
+import com.coresolution.consultation.util.ConsultationLogListFilters;
 import com.coresolution.consultation.util.ConsultationRecordChangedFields;
 import com.coresolution.consultation.util.ConsultationRecordLinkedScheduleCompletion;
 import com.coresolution.consultation.util.ProvisionalConsultationLogSession;
@@ -151,6 +152,26 @@ public class ConsultationRecordServiceImpl implements ConsultationRecordService 
             }
             return consultationRecordRepository.findByTenantIdAndIsDeletedFalseOrderBySessionDateDesc(tenantId, pageable);
         }
+    }
+
+    @Override
+    public Page<ConsultationRecord> getConsultationRecordsForLogView(Long consultantId, Long clientId,
+            LocalDate startDate, LocalDate endDate, Boolean sessionCompleted, String keyword,
+            String matchedClientIds, Pageable pageable) {
+        boolean applyKeyword = ConsultationLogListFilters.hasText(keyword);
+        if (!applyKeyword && sessionCompleted == null) {
+            return getConsultationRecords(consultantId, clientId, startDate, endDate, pageable);
+        }
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        List<Long> ids = ConsultationLogListFilters.parseMatchedClientIds(matchedClientIds);
+        if (ids.isEmpty()) {
+            ids = List.of(ConsultationLogListFilters.UNMATCHED_CLIENT_ID);
+        }
+        String pattern = applyKeyword ? ConsultationLogListFilters.likePattern(keyword) : "%";
+        log.info("📝 상담일지 조회 필터 - 상태: {}, 검색어 적용: {}", sessionCompleted, applyKeyword);
+        return consultationRecordRepository.findForConsultationLogView(
+                tenantId, consultantId, clientId, startDate, endDate, sessionCompleted, applyKeyword, pattern,
+                ids, pageable);
     }
 
     @Override

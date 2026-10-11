@@ -19,6 +19,7 @@ import com.coresolution.consultation.service.ScheduleService;
 import com.coresolution.consultation.service.support.ClientPathAccessGuard;
 import com.coresolution.consultation.service.support.ConsultationRecordAccessGuard;
 import com.coresolution.consultation.repository.UserRepository;
+import com.coresolution.consultation.util.ConsultationLogListFilters;
 import com.coresolution.consultation.util.PermissionCheckUtils;
 import com.coresolution.consultation.utils.SessionUtils;
 import org.springframework.data.domain.PageRequest;
@@ -128,6 +129,9 @@ public class ConsultantRecordsController {
             @RequestParam(required = false) Long clientId,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+            @RequestParam(required = false) Boolean sessionCompleted,
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) String matchedClientIds,
             HttpSession session) {
         
         log.info("상담사 상담 기록 조회: consultantId={}, page={}, size={}, clientId={}, period={}~{}",
@@ -153,8 +157,9 @@ public class ConsultantRecordsController {
             int pageIndex = page != null && page >= 0 ? page : 0;
             int pageSize = size != null && size > 0 ? Math.min(size, 100) : 20;
             Pageable pageable = PageRequest.of(pageIndex, pageSize);
-            var consultationRecords = consultationRecordService.getConsultationRecords(
-                    consultantId, clientId, startDate, endDate, pageable);
+            var consultationRecords = consultationRecordService.getConsultationRecordsForLogView(
+                    consultantId, clientId, startDate, endDate, sessionCompleted, keyword, matchedClientIds,
+                    pageable);
             
             // 상담일지를 상담 기록 형태로 변환 (모든 상담일지 포함)
             List<Map<String, Object>> records = consultationRecords.getContent().stream()
@@ -185,7 +190,9 @@ public class ConsultantRecordsController {
                         recordMap.put("startTime", startTimeStr);
                         recordMap.put("endTime", endTimeStr);
                         recordMap.put("status", record.getIsSessionCompleted() ? "COMPLETED" : "PENDING");
-                        // 목록에는 서술형 본문(관찰사항 등) 미리보기를 싣지 않는다 — 본문은 단건 조회에서만.
+                        // 목록 요약은 주요 이슈 첫 줄만. 관찰·의료·위험 본문은 단건 조회에서만.
+                        recordMap.put("summaryPreview",
+                                ConsultationLogListFilters.preview(record.getMainIssues()));
                         recordMap.put("consultationType", "INDIVIDUAL"); // 기본값
                         recordMap.put("isSessionCompleted", record.getIsSessionCompleted());
                         recordMap.put("sessionNumber", record.getSessionNumber());

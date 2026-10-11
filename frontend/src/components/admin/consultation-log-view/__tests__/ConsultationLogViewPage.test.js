@@ -69,7 +69,13 @@ jest.mock('../../../dashboard-v2/content/ContentArea', () => ({
 
 jest.mock('../../../dashboard-v2/content/ContentHeader', () => ({
   __esModule: true,
-  default: ({ title }) => <h1 data-testid="content-header">{title}</h1>
+  default: ({ title, subtitle, actions }) => (
+    <header data-testid="content-header">
+      <h1>{title}</h1>
+      {subtitle ? <p>{subtitle}</p> : null}
+      {actions}
+    </header>
+  )
 }));
 
 jest.mock('../../../dashboard-v2/content/ContentSection', () => ({
@@ -84,29 +90,57 @@ jest.mock('../../../dashboard-v2/content/ContentCard', () => ({
 
 jest.mock('../../../common/UnifiedLoading', () => ({
   __esModule: true,
-  default: () => <div data-testid="loading" />
+  default: ({ text }) => <div data-testid="loading" role="status">{text}</div>
 }));
 
 jest.mock('../../../common/MGButton', () => ({
   __esModule: true,
-  default: ({ children, onClick, type = 'button', 'aria-label': ariaLabel }) => (
-    <button type={type} onClick={onClick} aria-label={ariaLabel}>{children}</button>
+  default: ({
+    children,
+    onClick,
+    type = 'button',
+    'aria-label': ariaLabel,
+    'aria-pressed': ariaPressed,
+    disabled,
+    id
+  }) => (
+    <button
+      type={type}
+      onClick={onClick}
+      aria-label={ariaLabel}
+      aria-pressed={ariaPressed}
+      disabled={disabled}
+      id={id}
+    >
+      {children}
+    </button>
   )
 }));
 
 jest.mock('../../../common/EmptyState', () => ({
   __esModule: true,
-  default: ({ title }) => <div data-testid="empty-state">{title}</div>
+  default: ({ title, description, action }) => (
+    <div data-testid="empty-state">
+      <p>{title}</p>
+      <p>{description}</p>
+      {action}
+    </div>
+  )
 }));
 
 jest.mock('../../../common/ListTableView', () => ({
   __esModule: true,
-  default: ({ data }) => (
+  default: ({ data, columns, renderCell, caption, selectedRowKey }) => (
     <table data-testid="list-table">
+      <caption>{caption}</caption>
       <tbody>
         {(data || []).map((row, i) => (
-          <tr key={row.id ?? i} data-testid={`row-${row.id ?? i}`}>
-            <td>{row.sessionDate}</td>
+          <tr key={row.id ?? i} data-testid={`row-${row.id ?? i}`} aria-selected={selectedRowKey === row.id}>
+            {(columns || []).map((column) => (
+              <td key={column.key}>
+                {renderCell ? renderCell(column.key, row) : row[column.key]}
+              </td>
+            ))}
           </tr>
         ))}
       </tbody>
@@ -134,25 +168,43 @@ jest.mock('react-router-dom', () => ({
 
 jest.mock('../../../consultant/ConsultationLogModal', () => ({
   __esModule: true,
-  default: ({ isOpen }) => (isOpen ? <div data-testid="record-modal" /> : null)
+  default: ({ isOpen, editOnly }) => (
+    isOpen ? <div data-testid="record-modal" data-edit-only={editOnly ? 'true' : 'false'} /> : null
+  )
 }));
 
 jest.mock('../../ConsultationLogViewPage.css', () => ({}), { virtual: true });
 jest.mock('../ConsultationLogTableBlock.css', () => ({}), { virtual: true });
 jest.mock('../ConsultationLogCalendarBlock.css', () => ({}), { virtual: true });
 
+import '../../../../i18n';
 import ConsultationLogViewPage, {
   computeDefaultDateRange,
   fetchAllAdminConsultationRecords,
+  fetchConsultationRecordPages,
   normalizeAdminConsultationRecordsPage,
   ADMIN_CONSULTATION_RECORDS_PAGE_SIZE,
   ADMIN_CONSULTATION_RECORDS_MAX_PAGES
 } from '../ConsultationLogViewPage';
+import { CONSULTATION_LOG_TABLE_PAGE_SIZE } from '../consultationLogQuery';
 import StandardizedApi from '../../../../utils/standardizedApi';
 import notificationManager from '../../../../utils/notification';
 
+const installDesktopMedia = () => {
+  window.matchMedia = jest.fn().mockImplementation((query) => ({
+    matches: true,
+    media: query,
+    addEventListener: jest.fn(),
+    removeEventListener: jest.fn(),
+    addListener: jest.fn(),
+    removeListener: jest.fn(),
+    dispatchEvent: jest.fn()
+  }));
+};
+
 describe('ConsultationLogViewPage — P0 핫픽스 회귀 가드 (2026-05-29)', () => {
   beforeEach(() => {
+    installDesktopMedia();
     StandardizedApi.get.mockReset();
     StandardizedApi.get.mockResolvedValue({
       success: true,
@@ -160,6 +212,8 @@ describe('ConsultationLogViewPage — P0 핫픽스 회귀 가드 (2026-05-29)', 
       totalCount: 0,
       totalPages: 1
     });
+    notificationManager.error.mockClear();
+    notificationManager.info.mockClear();
   });
 
   describe('computeDefaultDateRange', () => {
@@ -258,9 +312,26 @@ describe('ConsultationLogViewPage — P0 핫픽스 회귀 가드 (2026-05-29)', 
         expect(params.size).toBe(200);
       });
     });
+
+    test('안전 상한을 넘기면 truncated 로 알리고 침묵 절단하지 않는다', async() => {
+      const apiGet = jest.fn().mockResolvedValue({
+        success: true,
+        data: [{ id: 1 }],
+        totalCount: 100000,
+        totalPages: 100000
+      });
+      const result = await fetchConsultationRecordPages(apiGet, '/api/v1/admin/consultation-records', {
+        startDate: '2026-08-01',
+        endDate: '2026-09-30'
+      }, { maxPages: 2, pageSize: 200 });
+      expect(apiGet).toHaveBeenCalledTimes(2);
+      expect(result.truncated).toBe(true);
+      expect(result.totalCount).toBe(100000);
+      expect(result.records).toHaveLength(2);
+    });
   });
 
-  test('진입 시 startDate/endDate 가 default range 로 API 호출 params 에 포함된다 (size=200)', async () => {
+  test('진입 시 startDate/endDate 가 default range 로 API 호출 params 에 포함된다 (표 size)', async () => {
     await act(async () => {
       render(<ConsultationLogViewPage />);
     });
@@ -271,7 +342,7 @@ describe('ConsultationLogViewPage — P0 핫픽스 회귀 가드 (2026-05-29)', 
     expect(firstCall[0]).toBe('/api/v1/admin/consultation-records');
     expect(firstCall[1]).toEqual(expect.objectContaining({
       page: 0,
-      size: 200,
+      size: CONSULTATION_LOG_TABLE_PAGE_SIZE,
       startDate: expect.stringMatching(/^\d{4}-\d{2}-01$/),
       endDate: expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/)
     }));
@@ -282,7 +353,7 @@ describe('ConsultationLogViewPage — P0 핫픽스 회귀 가드 (2026-05-29)', 
     expect(firstCall[1].endDate).toBe(expected.endDate);
   });
 
-  test('사용자가 startDate 를 변경하면 새 값으로 재호출된다', async () => {
+  test('기간 입력만으로는 재조회하지 않고 조회 버튼을 눌러야 새 기간으로 호출한다', async () => {
     await act(async () => {
       render(<ConsultationLogViewPage />);
     });
@@ -290,26 +361,32 @@ describe('ConsultationLogViewPage — P0 핫픽스 회귀 가드 (2026-05-29)', 
     await waitFor(() => expect(StandardizedApi.get).toHaveBeenCalledTimes(1));
 
     const startInput = screen.getByLabelText('시작일');
-    // default 와 다른 값으로 변경 (default = 지난 달 1일)
     const newStart = '2024-01-15';
     await act(async () => {
       fireEvent.change(startInput, { target: { value: newStart } });
     });
+    expect(StandardizedApi.get).toHaveBeenCalledTimes(1);
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: '조회' }));
+    });
 
     await waitFor(() => expect(StandardizedApi.get).toHaveBeenCalledTimes(2));
     const lastCall = StandardizedApi.get.mock.calls[StandardizedApi.get.mock.calls.length - 1];
-    expect(lastCall[1]).toEqual(expect.objectContaining({ startDate: newStart, size: 200 }));
+    expect(lastCall[1]).toEqual(expect.objectContaining({
+      startDate: newStart,
+      size: CONSULTATION_LOG_TABLE_PAGE_SIZE
+    }));
     expect(lastCall[2]).toEqual({ unwrapApiEnvelope: false });
   });
 
-  test('백엔드 응답 records 가 렌더링된다 (4월 데이터 노출 회귀 가드)', async () => {
-    // 현재 default range 안에 들도록 sessionDate 를 지난 달로 설정 (테스트 결정적 보장)
+  test('백엔드 응답 records 가 표에 렌더링된다', async () => {
     const range = computeDefaultDateRange();
-    const inRangeDate = range.startDate; // 지난 달 1일
+    const inRangeDate = range.startDate;
     StandardizedApi.get.mockResolvedValue({
       success: true,
       data: [
-        { id: 101, sessionDate: inRangeDate, clientName: '내담자A', consultantName: '상담사A', isSessionCompleted: true },
+        { id: 101, sessionDate: inRangeDate, clientName: '내담자A', consultantName: '상담사A', isSessionCompleted: true, summaryPreview: '요약A' },
         { id: 102, sessionDate: inRangeDate, clientName: '내담자B', consultantName: '상담사B', isSessionCompleted: false }
       ],
       totalCount: 2,
@@ -320,12 +397,9 @@ describe('ConsultationLogViewPage — P0 핫픽스 회귀 가드 (2026-05-29)', 
       render(<ConsultationLogViewPage />);
     });
 
-    await waitFor(() => expect(StandardizedApi.get).toHaveBeenCalled());
-    await waitFor(() => {
-      expect(screen.queryByText('등록된 상담일지가 없습니다.')).toBeNull();
-    });
-    // 렌더링된 카드의 aria-label 에 내담자명 포함
-    expect(screen.getByLabelText(new RegExp(`상담일지 ${inRangeDate} 내담자A 수정`))).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: `${inRangeDate} 내담자A 상담일지 열기` })).toBeInTheDocument();
+    expect(screen.getByText('요약A')).toBeInTheDocument();
+    expect(screen.getByText(`총 2건`)).toBeInTheDocument();
   });
 
   test('records=[] 빈 응답 — EmptyState 표시 및 React #130 미발생', async () => {
@@ -351,45 +425,118 @@ describe('ConsultationLogViewPage — P0 핫픽스 회귀 가드 (2026-05-29)', 
       });
 
       await waitFor(() => expect(StandardizedApi.get).toHaveBeenCalled());
+      expect(await screen.findByText('조건에 맞는 상담일지가 없습니다')).toBeInTheDocument();
+      expect(screen.getAllByRole('button', { name: '초기화' }).length).toBeGreaterThan(0);
       expect(renderError).toBeNull();
     } finally {
       console.error = originalError;
     }
   });
 
-  test('사용자가 startDate/endDate 를 모두 지워도 기본 기간으로 보완 — 기간 없는 전체 조회 금지', async () => {
+  test('불러오는 중에는 로딩 문구를 보여 준다', async () => {
+    let resolveGet;
+    StandardizedApi.get.mockImplementation(() => new Promise((resolve) => {
+      resolveGet = resolve;
+    }));
+    await act(async () => {
+      render(<ConsultationLogViewPage />);
+    });
+    expect(screen.getByText('상담일지를 불러오는 중입니다')).toBeInTheDocument();
+    await act(async () => {
+      resolveGet({ success: true, data: [], totalCount: 0, totalPages: 1 });
+    });
+    expect(await screen.findByText('조건에 맞는 상담일지가 없습니다')).toBeInTheDocument();
+  });
+
+  test('조회 실패(403)는 상담사 API로 다시 부르지 않고 다시 시도를 보여 준다', async () => {
+    const forbidden = Object.assign(new Error('forbidden'), { status: 403 });
+    StandardizedApi.get.mockRejectedValueOnce(forbidden);
+    StandardizedApi.get.mockResolvedValue({
+      success: true,
+      data: [],
+      totalCount: 0,
+      totalPages: 1
+    });
+
+    await act(async () => {
+      render(<ConsultationLogViewPage />);
+    });
+
+    expect(await screen.findByText('상담일지를 불러오지 못했습니다')).toBeInTheDocument();
+    expect(screen.getByText('네트워크 연결을 확인한 뒤 다시 시도해 주세요.')).toBeInTheDocument();
+    expect(screen.queryByText('조건에 맞는 상담일지가 없습니다')).toBeNull();
+    expect(notificationManager.error).not.toHaveBeenCalled();
+    expect(StandardizedApi.get.mock.calls.some((call) => String(call[0]).includes('consultant-records'))).toBe(false);
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: '다시 시도' }));
+    });
+
+    await waitFor(() => expect(StandardizedApi.get).toHaveBeenCalledTimes(2));
+    expect(await screen.findByText('조건에 맞는 상담일지가 없습니다')).toBeInTheDocument();
+    expect(StandardizedApi.get.mock.calls.every((call) => call[0] === '/api/v1/admin/consultation-records')).toBe(true);
+  });
+
+  test('표는 현재 페이지만 요청하고 다음 페이지는 page 인덱스를 올린다', async () => {
+    StandardizedApi.get.mockImplementation((_endpoint, params) => Promise.resolve({
+      success: true,
+      data: [{ id: params.page === 0 ? 1 : 2, sessionDate: '2026-09-01', clientName: '내담자A', isSessionCompleted: true }],
+      totalCount: 40,
+      totalPages: 2
+    }));
+
+    await act(async () => {
+      render(<ConsultationLogViewPage />);
+    });
+
+    await waitFor(() => expect(StandardizedApi.get).toHaveBeenCalledTimes(1));
+    expect(StandardizedApi.get.mock.calls[0][1]).toEqual(expect.objectContaining({
+      page: 0,
+      size: CONSULTATION_LOG_TABLE_PAGE_SIZE
+    }));
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: '다음' }));
+    });
+
+    await waitFor(() => expect(StandardizedApi.get).toHaveBeenCalledTimes(2));
+    expect(StandardizedApi.get.mock.calls[1][1]).toEqual(expect.objectContaining({
+      page: 1,
+      size: CONSULTATION_LOG_TABLE_PAGE_SIZE
+    }));
+  });
+
+  test('사용자가 기간을 비운 뒤 조회하면 기본 기간으로 보완한다', async () => {
     await act(async () => {
       render(<ConsultationLogViewPage />);
     });
 
     await waitFor(() => expect(StandardizedApi.get).toHaveBeenCalledTimes(1));
 
-    const startInput = screen.getByLabelText('시작일');
     await act(async () => {
-      fireEvent.change(startInput, { target: { value: '' } });
+      fireEvent.change(screen.getByLabelText('시작일'), { target: { value: '' } });
+      fireEvent.change(screen.getByLabelText('종료일'), { target: { value: '' } });
     });
+    expect(StandardizedApi.get).toHaveBeenCalledTimes(1);
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: '조회' }));
+    });
+
     await waitFor(() => expect(StandardizedApi.get).toHaveBeenCalledTimes(2));
-
-    const endInput = screen.getByLabelText('종료일');
-    await act(async () => {
-      fireEvent.change(endInput, { target: { value: '' } });
-    });
-    await waitFor(() => expect(StandardizedApi.get).toHaveBeenCalledTimes(3));
-
     const last = StandardizedApi.get.mock.calls[StandardizedApi.get.mock.calls.length - 1];
     const fallback = computeDefaultDateRange();
     expect(last[1]).toEqual(expect.objectContaining({
       page: 0,
-      size: 200,
+      size: CONSULTATION_LOG_TABLE_PAGE_SIZE,
       startDate: fallback.startDate,
       endDate: fallback.endDate
     }));
-    expect(last[2]).toEqual({ unwrapApiEnvelope: false });
   });
 
-  test('월 초 레코드가 다음 페이지에 있어도 list/calendar SSOT 에 포함된다 (early-month truncation)', async () => {
+  test('표는 한 페이지만 보여주고 캘린더는 월 범위를 이어서 받는다', async () => {
     const range = computeDefaultDateRange();
-    const earlyDate = range.startDate; // 지난 달 1일
+    const earlyDate = range.startDate;
     const [y, m] = range.startDate.split('-');
     const lateDate = `${y}-${m}-20`;
     const earlyRecord = {
@@ -431,33 +578,67 @@ describe('ConsultationLogViewPage — P0 핫픽스 회귀 가드 (2026-05-29)', 
       render(<ConsultationLogViewPage />);
     });
 
-    await waitFor(() => {
-      expect(StandardizedApi.get.mock.calls.filter(
-        (c) => c[0] === '/api/v1/admin/consultation-records'
-      ).length).toBeGreaterThanOrEqual(2);
-    });
+    await waitFor(() => expect(StandardizedApi.get).toHaveBeenCalledTimes(1));
+    expect(StandardizedApi.get.mock.calls[0][1]).toEqual(expect.objectContaining({
+      page: 0,
+      size: CONSULTATION_LOG_TABLE_PAGE_SIZE,
+      startDate: range.startDate,
+      endDate: range.endDate
+    }));
+    expect(screen.getByRole('button', { name: `${lateDate} 월후내담자 상담일지 열기` })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: `${earlyDate} 월초내담자 상담일지 열기` })).toBeNull();
 
-    const adminCalls = StandardizedApi.get.mock.calls.filter(
-      (c) => c[0] === '/api/v1/admin/consultation-records'
-    );
-    expect(adminCalls.some((c) => c[1]?.page === 0 && c[1]?.size === 200)).toBe(true);
-    expect(adminCalls.some((c) => c[1]?.page === 1 && c[1]?.size === 200)).toBe(true);
-    expect(adminCalls[0][1].startDate).toMatch(/^\d{4}-\d{2}-01$/);
-    expect(adminCalls[0][1].startDate).toBe(range.startDate);
-    expect(adminCalls[0][1].endDate).toBe(range.endDate);
-
-    await waitFor(() => {
-      expect(screen.getByLabelText(new RegExp(`상담일지 ${earlyDate} 월초내담자 수정`))).toBeInTheDocument();
-    });
-    expect(screen.getByLabelText(new RegExp(`상담일지 ${lateDate} 월후내담자 수정`))).toBeInTheDocument();
-
-    // 캘린더 탭도 동일 filteredRecords SSOT 사용
     await act(async () => {
       fireEvent.click(screen.getByRole('button', { name: '캘린더' }));
     });
+
     await waitFor(() => {
-      expect(screen.getByTestId('full-calendar')).toBeInTheDocument();
+      const pages = StandardizedApi.get.mock.calls.map((call) => call[1]?.page);
+      expect(pages).toEqual(expect.arrayContaining([0, 1]));
     });
+    const calendarCalls = StandardizedApi.get.mock.calls.filter((call) => call[1]?.size === ADMIN_CONSULTATION_RECORDS_PAGE_SIZE);
+    expect(calendarCalls.length).toBeGreaterThanOrEqual(2);
+    expect(screen.getByTestId('full-calendar')).toBeInTheDocument();
+  });
+
+  test('행은 상세 패널만 열고 수정 버튼이 수정 모달을 연다', async () => {
+    const range = computeDefaultDateRange();
+    const row = {
+      id: 101,
+      sessionDate: range.startDate,
+      clientName: '내담자A',
+      consultantName: '상담사A',
+      isSessionCompleted: true,
+      summaryPreview: '요약A'
+    };
+    StandardizedApi.get.mockImplementation((url) => {
+      if (String(url).includes('/consultation-records/')) {
+        return Promise.resolve({ success: true, data: { ...row, mainIssues: '본문' } });
+      }
+      return Promise.resolve({ success: true, data: [row], totalCount: 1, totalPages: 1 });
+    });
+
+    await act(async () => {
+      render(<ConsultationLogViewPage />);
+    });
+
+    const opener = await screen.findByRole('button', { name: `${range.startDate} 내담자A 상담일지 열기` });
+    await act(async () => {
+      fireEvent.click(opener);
+    });
+    expect(screen.getByRole('heading', { name: '상담일지 상세' })).toBeInTheDocument();
+    expect(screen.queryByTestId('record-modal')).toBeNull();
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: '수정' }));
+    });
+    const modal = screen.getByTestId('record-modal');
+    expect(modal).toHaveAttribute('data-edit-only', 'true');
+
+    await act(async () => {
+      fireEvent.click(opener);
+    });
+    expect(screen.queryByRole('heading', { name: '상담일지 상세' })).toBeNull();
   });
 });
 
@@ -465,6 +646,7 @@ describe('ConsultationLogViewPage — saved view restore race (그록 P0)', () =
   const originalSessionManager = window.sessionManager;
 
   beforeEach(() => {
+    installDesktopMedia();
     StandardizedApi.get.mockReset();
     StandardizedApi.get.mockResolvedValue({
       success: true,
@@ -501,7 +683,6 @@ describe('ConsultationLogViewPage — saved view restore race (그록 P0)', () =
       render(<ConsultationLogViewPage />);
     });
 
-    // 로딩 중에도 필터 UI 유지 (통째 early return 제거)
     expect(screen.getByLabelText('시작일')).toBeInTheDocument();
 
     await waitFor(() => {
@@ -514,11 +695,10 @@ describe('ConsultationLogViewPage — saved view restore race (그록 P0)', () =
         startDate: '2026-03-01',
         endDate: '2026-03-07',
         consultantId: 12,
-        size: 200
+        size: CONSULTATION_LOG_TABLE_PAGE_SIZE
       }));
     });
 
-    // default range 로만 호출된 적 없어야 함 (restore 전 fetch 스킵)
     const defaultRange = computeDefaultDateRange();
     const adminCalls = StandardizedApi.get.mock.calls.filter(
       (c) => c[0] === '/api/v1/admin/consultation-records'
@@ -541,6 +721,7 @@ describe('ConsultationLogViewPage — 상담일지 본문 진입 권한 (사무�
   };
 
   beforeEach(() => {
+    installDesktopMedia();
     StandardizedApi.get.mockReset();
     notificationManager.info.mockClear();
   });
@@ -549,30 +730,32 @@ describe('ConsultationLogViewPage — 상담일지 본문 진입 권한 (사무�
     mockSessionUser = MOCK_ADMIN_USER;
   });
 
-  test('ADMIN — 카드 클릭 시 상담일지 모달이 열린다', async () => {
+  test('ADMIN — 행은 상세 패널을 열고 모달은 수정에서만 연다', async () => {
     mockSessionUser = MOCK_ADMIN_USER;
     StandardizedApi.get.mockResolvedValue({ success: true, data: [row], totalCount: 1, totalPages: 1 });
     await act(async () => {
       render(<ConsultationLogViewPage />);
     });
-    const card = await screen.findByLabelText(new RegExp(`상담일지 ${range.startDate} 내담자S`));
+    const opener = await screen.findByRole('button', { name: `${range.startDate} 내담자S 상담일지 열기` });
     await act(async () => {
-      fireEvent.click(card);
+      fireEvent.click(opener);
     });
-    expect(screen.getByTestId('record-modal')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: '상담일지 상세' })).toBeInTheDocument();
+    expect(screen.queryByTestId('record-modal')).toBeNull();
     expect(notificationManager.info).not.toHaveBeenCalled();
   });
 
-  test('STAFF — 카드를 눌러도 모달(본문)이 열리지 않고 안내만 보인다', async () => {
+  test('STAFF — 행을 눌러도 패널과 모달이 열리지 않고 안내만 보인다', async () => {
     mockSessionUser = { id: 2, name: '사무원', role: 'STAFF' };
     StandardizedApi.get.mockResolvedValue([row]);
     await act(async () => {
       render(<ConsultationLogViewPage />);
     });
-    const card = await screen.findByLabelText(new RegExp(`상담일지 ${range.startDate} 내담자S`));
+    const opener = await screen.findByRole('button', { name: `${range.startDate} 내담자S 상담일지 열기` });
     await act(async () => {
-      fireEvent.click(card);
+      fireEvent.click(opener);
     });
+    expect(screen.queryByRole('heading', { name: '상담일지 상세' })).toBeNull();
     expect(screen.queryByTestId('record-modal')).toBeNull();
     expect(notificationManager.info).toHaveBeenCalledTimes(1);
   });

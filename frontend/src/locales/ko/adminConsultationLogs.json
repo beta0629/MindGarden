@@ -1,0 +1,105 @@
+{
+  "page": {
+    "title": "상담일지 조회",
+    "regionLabel": "상담일지 조회 콘텐츠"
+  },
+  "view": {
+    "label": "보기 전환",
+    "list": "목록",
+    "calendar": "캘린더"
+  },
+  "filter": {
+    "label": "상담일지 검색 조건",
+    "period": "기간",
+    "periodFrom": "시작일",
+    "periodTo": "종료일",
+    "consultant": "상담사",
+    "client": "내담자",
+    "status": "상태",
+    "keyword": "검색어",
+    "keywordPlaceholder": "내담자 이름 또는 요약",
+    "all": "전체",
+    "search": "조회",
+    "reset": "초기화",
+    "savedViews": "저장된 보기",
+    "savedViewsNone": "저장된 보기 없음",
+    "savedViewSaveCurrent": "현재 조건 저장",
+    "savedViewDelete": "이 보기 삭제",
+    "mobileButton": "필터",
+    "mobileSheetTitle": "검색 조건",
+    "mobileClose": "닫기"
+  },
+  "status": {
+    "done": "완료",
+    "pending": "미완료"
+  },
+  "people": {
+    "unknownName": "이름 없음"
+  },
+  "table": {
+    "caption": "상담일지 목록",
+    "colDate": "상담일",
+    "colClient": "내담자",
+    "colConsultant": "상담사",
+    "colStatus": "상태",
+    "colSummary": "요약",
+    "sessionN": "{{n}}회기",
+    "summaryTotal": "총 {{n}}건",
+    "openRow": "{{date}} {{name}} 상담일지 열기"
+  },
+  "pagination": {
+    "label": "페이지 이동",
+    "prev": "이전",
+    "next": "다음",
+    "page": "{{n}}쪽",
+    "current": "현재 {{n}}쪽"
+  },
+  "detail": {
+    "title": "상담일지 상세",
+    "close": "닫기",
+    "back": "목록으로",
+    "date": "상담일",
+    "session": "회기",
+    "client": "내담자",
+    "consultant": "상담사",
+    "status": "상태",
+    "writtenAt": "작성일",
+    "summary": "요약",
+    "content": "상담 내용",
+    "edit": "수정"
+  },
+  "edit": {
+    "title": "상담일지 수정",
+    "close": "닫기",
+    "cancel": "취소",
+    "save": "저장",
+    "readonlyNote": "상담일·내담자·상담사는 수정할 수 없습니다.",
+    "status": "상태",
+    "summary": "요약",
+    "content": "상담 내용"
+  },
+  "states": {
+    "loadingTitle": "상담일지를 불러오는 중입니다",
+    "loadingDesc": "잠시만 기다려 주세요.",
+    "emptyTitle": "조건에 맞는 상담일지가 없습니다",
+    "emptyDesc": "기간이나 검색어를 바꾸거나 조건을 초기화해 보세요.",
+    "emptyAction": "초기화",
+    "errorTitle": "상담일지를 불러오지 못했습니다",
+    "errorDesc": "네트워크 연결을 확인한 뒤 다시 시도해 주세요.",
+    "errorAction": "다시 시도",
+    "labelLoading": "불러오는 중",
+    "labelEmpty": "결과 없음",
+    "labelError": "조회 실패"
+  },
+  "calendar": {
+    "toolbar": "달력 이동",
+    "prev": "이전 달",
+    "next": "다음 달",
+    "today": "오늘",
+    "more": "{{n}}건 더 보기",
+    "dayCount": "{{n}}건",
+    "dayList": "{{date}} 상담일지",
+    "truncated": "이 달의 상담일지가 많아 일부만 표시합니다. 기간이나 조건을 좁혀 주세요.",
+    "openRecord": "{{name}} 상담일지 열기"
+  }
+}

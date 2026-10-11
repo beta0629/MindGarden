@@ -3,6 +3,7 @@ package com.coresolution.consultation.dto;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import com.coresolution.consultation.entity.ConsultationRecord;
+import com.coresolution.consultation.util.ConsultationLogListFilters;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -43,6 +44,8 @@ public class ConsultationRecordListItemResponse {
     private final boolean writtenByAdmin;
     /** 마지막 수정자가 같은 테넌트 관리자 계열인지. */
     private final boolean editedByAdmin;
+    /** 주요 이슈 첫 줄. 임상 본문 전문은 포함하지 않는다. */
+    private final String summaryPreview;
 
     /**
      * 엔티티 → 목록 항목 변환.
@@ -66,6 +69,7 @@ public class ConsultationRecordListItemResponse {
                 .lastEditedAt(entity.getLastEditedAt())
                 .writtenByAdmin(entity.isWrittenByAdmin())
                 .editedByAdmin(entity.isEditedByAdmin())
+                .summaryPreview(ConsultationLogListFilters.preview(entity.getMainIssues()))
                 .build();
     }
 }

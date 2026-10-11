@@ -37,6 +37,11 @@ const MGPagination = ({
   showInfo = true,
   showItemsPerPage = true,
   itemsPerPageOptions = [10, 20, 50, 100],
+  summaryLabel = '',
+  prevLabel = PAGINATION_LABELS.PREV,
+  nextLabel = PAGINATION_LABELS.NEXT,
+  pageAriaLabel = null,
+  activePageTone = 'brand',
   ...props
 }) => {
   const handlePageChange = (page) => {
@@ -113,7 +118,7 @@ const MGPagination = ({
       {showInfo && totalItems > 0 && (
         <div className="mg-pagination__info">
           <span className="mg-pagination__info-text">
-            {startItem}-{endItem} / {totalItems}개 항목
+            {summaryLabel || `${startItem}-${endItem} / ${totalItems}개 항목`}
           </span>
         </div>
       )}
@@ -127,8 +132,8 @@ const MGPagination = ({
           onClick={() => handlePageChange(currentPage - 1)}
           disabled={currentPage <= 1 || loading}
           className={buildPaginationButtonClassName('outline', 'mg-pagination__button--nav mg-pagination__button--prev')}
-          title={PAGINATION_LABELS.PREV}
-          aria-label={PAGINATION_LABELS.PREV}
+          title={prevLabel}
+          aria-label={prevLabel}
           preventDoubleClick={false}
           loadingText={ERP_MG_BUTTON_LOADING_TEXT}
         >
@@ -146,15 +151,16 @@ const MGPagination = ({
               <MGButton
                 key={page}
                 type="button"
-                variant={page === currentPage ? 'primary' : 'outline'}
+                variant={page === currentPage && activePageTone !== 'neutral' ? 'primary' : 'outline'}
                 size="small"
                 onClick={() => handlePageChange(page)}
                 disabled={loading}
                 className={buildPaginationButtonClassName(
-                  page === currentPage ? 'primary' : 'outline',
-                  `mg-pagination__button--page${page === currentPage ? ' mg-pagination__button--active' : ''}`
+                  page === currentPage && activePageTone !== 'neutral' ? 'primary' : 'outline',
+                  `mg-pagination__button--page${page === currentPage ? ' mg-pagination__button--active' : ''}${page === currentPage && activePageTone === 'neutral' ? ' mg-pagination__button--current-neutral' : ''}`
                 )}
                 aria-current={page === currentPage ? 'page' : undefined}
+                aria-label={pageAriaLabel ? pageAriaLabel(page, page === currentPage) : undefined}
                 preventDoubleClick={false}
                 loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               >
@@ -172,8 +178,8 @@ const MGPagination = ({
           onClick={() => handlePageChange(currentPage + 1)}
           disabled={currentPage >= totalPages || loading}
           className={buildPaginationButtonClassName('outline', 'mg-pagination__button--nav mg-pagination__button--next')}
-          title={PAGINATION_LABELS.NEXT}
-          aria-label={PAGINATION_LABELS.NEXT}
+          title={nextLabel}
+          aria-label={nextLabel}
           preventDoubleClick={false}
           loadingText={ERP_MG_BUTTON_LOADING_TEXT}
         >

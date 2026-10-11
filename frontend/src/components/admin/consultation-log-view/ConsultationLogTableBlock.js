@@ -1,169 +1,143 @@
 /**
- * 상담일지 조회 - 테이블 뷰 블록 (ListTableView 기반)
- * 컬럼: 세션일자, 회기, 내담자명, 상담사명, 완료여부, 작성일. 행 클릭 시 모달(본문은 단건 상세에서 조회).
+ * 상담일지 표. 행의 상담일 버튼이 상세를 연다.
  *
  * @author Core Solution
  * @since 2025-03-02
+ * @updated 2026-10-10 — 열 5개, 선택 행, 이름 없음
  */
 
 import React from 'react';
 import PropTypes from 'prop-types';
+import { useTranslation } from 'react-i18next';
 import ContentSection from '../../dashboard-v2/content/ContentSection';
 import ContentCard from '../../dashboard-v2/content/ContentCard';
 import ListTableView from '../../common/ListTableView';
-import EmptyState from '../../common/EmptyState';
-import ConsultationLogAdminWriteBadge from '../../consultant/molecules/ConsultationLogAdminWriteBadge';
+import MGButton from '../../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
+import ConsultationLogStatusBadge from './ConsultationLogStatusBadge';
+import {
+  formatDisplayDate,
+  resolvePersonName,
+  resolveSummaryText,
+  visibleSessionNumber
+} from './consultationLogQuery';
+import '../../../i18n';
 import './ConsultationLogTableBlock.css';
 
-const EMPTY_TITLE = '등록된 상담일지가 없습니다.';
-const EMPTY_DESC = '다른 필터를 적용해 보시거나, 스케줄에서 상담일지를 작성해 주세요.';
-const BADGE_COMPLETED = '완료';
-const BADGE_INCOMPLETE = '미완료';
-const SESSION_SUFFIX = '회기';
-const MOBILE_HINT = '가로 스크롤하여 전체 컬럼을 확인할 수 있습니다.';
-
-const COLUMNS = [
-  { key: 'sessionDate', label: '세션일자' },
-  { key: 'sessionNumber', label: '회기' },
-  { key: 'clientName', label: '내담자명' },
-  { key: 'consultantName', label: '상담사명' },
-  { key: 'isSessionCompleted', label: '완료여부' },
-  { key: 'createdAt', label: '작성일' }
-];
-
-const ADMIN_WRITE_COLUMN = { key: 'adminWrite', label: '관리자 작성·수정' };
-
-const formatDate = (val) => {
-  if (!val) return '-';
-  if (typeof val === 'string') return val.split('T')[0];
-  return val;
-};
+const NS = 'adminConsultationLogs';
 
 const ConsultationLogTableBlock = ({
   records,
   clientNameMap,
   consultantNameMap,
-  onRowClick,
-  showAdminWriteBadge = false
+  selectedLogId,
+  onOpenRow
 }) => {
-  const isEmpty = !records || records.length === 0;
+  const { t } = useTranslation(NS);
+  const columns = [
+    { key: 'date', label: t('table.colDate') },
+    { key: 'clientName', label: t('table.colClient') },
+    { key: 'consultantName', label: t('table.colConsultant') },
+    { key: 'status', label: t('table.colStatus') },
+    { key: 'summary', label: t('table.colSummary') }
+  ];
+  const unknownName = t('people.unknownName');
 
-  if (isEmpty) {
-    return (
-      <ContentSection noCard className="mg-v2-consultation-log-table-block">
-        <ContentCard className="mg-v2-consultation-log-table-block__card">
-          <EmptyState
-            className="mg-v2-consultation-log-table-block__empty"
-            title={EMPTY_TITLE}
-            description={EMPTY_DESC}
-          />
-        </ContentCard>
-      </ContentSection>
+  const data = (records || []).map((record) => {
+    const sessionDate = formatDisplayDate(record.sessionDate ?? record.consultationDate);
+    const clientName = resolvePersonName(record.clientName, record.clientId, clientNameMap, unknownName);
+    const consultantName = resolvePersonName(
+      record.consultantName,
+      record.consultantId,
+      consultantNameMap,
+      unknownName
     );
-  }
-
-  const data = records.map((record) => {
-    const sessionDate = record.sessionDate ?? record.consultationDate;
-    const clientName =
-      record.clientName ??
-      (record.clientId && clientNameMap
-        ? clientNameMap[Number(record.clientId)]
-        : null) ??
-      `내담자 #${record.clientId}`;
-    const consultantName =
-      record.consultantName ??
-      (record.consultantId && consultantNameMap
-        ? consultantNameMap[Number(record.consultantId)]
-        : null) ??
-      `상담사 #${record.consultantId}`;
     return {
       ...record,
       sessionDate,
-      sessionNumber: record.sessionNumber ?? 0,
       clientName,
       consultantName,
-      createdAt: record.createdAt ?? record.updatedAt
+      summaryText: resolveSummaryText(record),
+      sessionCount: visibleSessionNumber(record.sessionNumber)
     };
   });
 
   const renderCell = (columnKey, item) => {
-    switch (columnKey) {
-      case 'sessionDate':
-        return formatDate(item.sessionDate);
-      case 'sessionNumber':
-        return `${item.sessionNumber}${SESSION_SUFFIX}`;
-      case 'clientName':
-        return item.clientName;
-      case 'consultantName':
-        return item.consultantName;
-      case 'isSessionCompleted': {
-        const isCompleted = item.isSessionCompleted === true;
-        return (
-          <span
-            className={
-              isCompleted
-                ? 'mg-v2-badge mg-v2-badge--success'
-                : 'mg-v2-badge mg-v2-badge--warning'
-            }
-          >
-            {isCompleted ? BADGE_COMPLETED : BADGE_INCOMPLETE}
-          </span>
-        );
-      }
-      case 'createdAt':
-        return formatDate(item.createdAt);
-      case 'adminWrite':
-        return <ConsultationLogAdminWriteBadge record={item} />;
-      default:
-        return item[columnKey] ?? '-';
+    if (columnKey === 'date') {
+      const sessionLabel = item.sessionCount == null
+        ? ''
+        : t('table.sessionN', { n: item.sessionCount });
+      return (
+        <MGButton
+          type="button"
+          variant="ghost"
+          size="small"
+          id={`consultation-log-row-${item.id}`}
+          className={buildErpMgButtonClassName({
+            variant: 'ghost',
+            size: 'sm',
+            loading: false,
+            className: 'mg-v2-consultation-log-date-button'
+          })}
+          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+          aria-label={t('table.openRow', { date: item.sessionDate, name: item.clientName })}
+          onClick={() => onOpenRow(item.id)}
+          preventDoubleClick={false}
+        >
+          <span>{item.sessionDate}</span>
+          {sessionLabel ? <span className="mg-v2-consultation-log-date-button__session">{sessionLabel}</span> : null}
+        </MGButton>
+      );
     }
+    if (columnKey === 'status') {
+      return (
+        <ConsultationLogStatusBadge
+          done={item.isSessionCompleted === true}
+          doneLabel={t('status.done')}
+          pendingLabel={t('status.pending')}
+        />
+      );
+    }
+    if (columnKey === 'summary') {
+      return (
+        <span className="mg-v2-consultation-log-summary" title={item.summaryText}>
+          {item.summaryText}
+        </span>
+      );
+    }
+    return item[columnKey] || unknownName;
   };
 
   return (
     <ContentSection noCard className="mg-v2-consultation-log-table-block">
       <ContentCard className="mg-v2-consultation-log-table-block__card">
-        <p className="mg-v2-consultation-log-table-block__mobile-hint" aria-hidden="true">
-          {MOBILE_HINT}
-        </p>
-        <div className="mg-v2-consultation-log-table-block__scroll">
-          <ListTableView
-            columns={showAdminWriteBadge ? [...COLUMNS, ADMIN_WRITE_COLUMN] : COLUMNS}
-            data={data}
-            renderCell={renderCell}
-            onRowClick={(item) => onRowClick(item.id)}
-            className="mg-v2-consultation-log-table"
-            rowKeyField="id"
-          />
-        </div>
+        <ListTableView
+          columns={columns}
+          data={data}
+          renderCell={renderCell}
+          caption={t('table.caption')}
+          selectedRowKey={selectedLogId}
+          className="mg-v2-consultation-log-table"
+          rowKeyField="id"
+        />
       </ContentCard>
     </ContentSection>
   );
 };
 
 ConsultationLogTableBlock.propTypes = {
-  records: PropTypes.arrayOf(
-    PropTypes.shape({
-      id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-      sessionDate: PropTypes.string,
-      consultationDate: PropTypes.string,
-      sessionNumber: PropTypes.number,
-      clientId: PropTypes.number,
-      clientName: PropTypes.string,
-      consultantId: PropTypes.number,
-      consultantName: PropTypes.string,
-      isSessionCompleted: PropTypes.bool,
-      createdAt: PropTypes.string,
-      updatedAt: PropTypes.string,
-      writtenByAdmin: PropTypes.bool,
-      editedByAdmin: PropTypes.bool,
-      lastEditedByRole: PropTypes.string,
-      lastEditedAt: PropTypes.string
-    })
-  ),
+  records: PropTypes.arrayOf(PropTypes.object),
   clientNameMap: PropTypes.object,
   consultantNameMap: PropTypes.object,
-  onRowClick: PropTypes.func.isRequired,
-  showAdminWriteBadge: PropTypes.bool
+  selectedLogId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  onOpenRow: PropTypes.func.isRequired
+};
+
+ConsultationLogTableBlock.defaultProps = {
+  records: [],
+  clientNameMap: {},
+  consultantNameMap: {},
+  selectedLogId: null
 };
 
 export default ConsultationLogTableBlock;

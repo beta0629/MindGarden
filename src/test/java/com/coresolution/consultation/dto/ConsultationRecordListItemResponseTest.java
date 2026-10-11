@@ -37,7 +37,8 @@ class ConsultationRecordListItemResponseTest {
         "incompletionReason", "followUpActions", "riskAssessment", "progressScore", "goalAchievement",
         "nextSessionDate", "homeworkDueDate", "followUpDueDate", "completionTime");
 
-    private static final String BODY_TEXT = "본문 유출 감지 문구";
+    private static final String BODY_TEXT =
+        "본문유출감지문구는목록응답의서술필드에그대로실리면안되고요약미리보기는첫줄여든자까지만남고나머지는목록에포함되지않아야한다추가문장으로길이를여든자보다길게만든다끝";
 
     @Test
     @DisplayName("DTO 필드 목록에 서술형 본문 필드가 없다")
@@ -75,6 +76,7 @@ class ConsultationRecordListItemResponseTest {
         for (String field : BODY_FIELDS) {
             assertThat(json).doesNotContain("\"" + field + "\"");
         }
+        assertThat(json).contains("\"summaryPreview\":\"본문유출감지문구는목록응답의서술필드에그대로실리면안되고요약미리보기는첫줄여든자까지만남고나머지는목록에포");
         // 메타는 그대로 쓸 수 있어야 한다 (목록 화면 회귀 방지).
         assertThat(json).contains("\"sessionNumber\":3").contains("\"consultantId\":22");
     }

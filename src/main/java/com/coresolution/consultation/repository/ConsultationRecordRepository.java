@@ -98,6 +98,49 @@ public interface ConsultationRecordRepository extends JpaRepository<Consultation
      */
     Page<ConsultationRecord> findByTenantIdAndConsultantIdAndClientIdAndSessionDateBetweenAndIsDeletedFalseOrderBySessionDateDesc(
         String tenantId, Long consultantId, Long clientId, LocalDate startDate, LocalDate endDate, Pageable pageable);
+
+    /**
+     * 상담일지 조회 화면용. 상태·요약 검색·이름 매칭 id 를 선택적으로 적용한다.
+     * 키워드가 없으면 {@code applyKeyword=false} 로 호출해 기간·상태만 거른다.
+     *
+     * @param tenantId 테넌트
+     * @param consultantId 상담사 (nullable)
+     * @param clientId 내담자 단일 선택 (nullable)
+     * @param startDate 시작일 (nullable)
+     * @param endDate 종료일 (nullable)
+     * @param sessionCompleted 완료 여부 (nullable = 전체)
+     * @param applyKeyword 검색어 적용 여부
+     * @param keywordPattern ESCAPE 처리된 LIKE 패턴
+     * @param matchedClientIds 이름 일치 내담자 id. 비어 있으면 안 된다
+     * @param pageable 페이지
+     * @return 세션일 내림차순 페이지
+     */
+    @Query("SELECT r FROM ConsultationRecord r "
+            + "WHERE r.tenantId = :tenantId "
+            + "AND r.isDeleted = false "
+            + "AND (:consultantId IS NULL OR r.consultantId = :consultantId) "
+            + "AND (:clientId IS NULL OR r.clientId = :clientId) "
+            + "AND (:startDate IS NULL OR r.sessionDate >= :startDate) "
+            + "AND (:endDate IS NULL OR r.sessionDate <= :endDate) "
+            + "AND (:sessionCompleted IS NULL "
+            + "     OR (:sessionCompleted = true AND r.isSessionCompleted = true) "
+            + "     OR (:sessionCompleted = false AND (r.isSessionCompleted = false "
+            + "         OR r.isSessionCompleted IS NULL))) "
+            + "AND (:applyKeyword = false "
+            + "     OR LOWER(COALESCE(r.mainIssues, '')) LIKE :keywordPattern ESCAPE '\\' "
+            + "     OR r.clientId IN :matchedClientIds) "
+            + "ORDER BY r.sessionDate DESC, r.id DESC")
+    Page<ConsultationRecord> findForConsultationLogView(
+            @Param("tenantId") String tenantId,
+            @Param("consultantId") Long consultantId,
+            @Param("clientId") Long clientId,
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate,
+            @Param("sessionCompleted") Boolean sessionCompleted,
+            @Param("applyKeyword") boolean applyKeyword,
+            @Param("keywordPattern") String keywordPattern,
+            @Param("matchedClientIds") List<Long> matchedClientIds,
+            Pageable pageable);
     
     /**
      * 세션 날짜 범위로 상담일지 조회 (tenantId 필터링)

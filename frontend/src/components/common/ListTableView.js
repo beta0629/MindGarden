@@ -31,7 +31,9 @@ function ListTableView({
   renderCell,
   onRowClick,
   className = '',
-  rowKeyField = 'id'
+  rowKeyField = 'id',
+  caption = '',
+  selectedRowKey = null
 }) {
   const tableClass = [TABLE_CLASS, className].filter(Boolean).join(' ');
   const getCellContent = (columnKey, item) => {
@@ -45,11 +47,13 @@ function ListTableView({
   return (
     <div className={WRAPPER_CLASS}>
       <table className={tableClass}>
+        {caption ? <caption className="sr-only">{caption}</caption> : null}
         <thead>
           <tr>
             {columns.map((col) => (
               <th
                 key={col.key}
+                scope="col"
                 className={col.hideOnMobile ? 'mg-v2-list-block__col--hide-mobile' : ''}
               >
                 <SafeText tag="span">{col.label}</SafeText>
@@ -60,6 +64,7 @@ function ListTableView({
         <tbody>
           {data.map((item) => {
             const key = item[rowKeyField] ?? item.id;
+            const isSelected = selectedRowKey != null && String(selectedRowKey) === String(key);
             const rowProps = onRowClick
               ? {
                   role: 'button',
@@ -73,11 +78,18 @@ function ListTableView({
                   }
                 }
               : {};
+            const rowClassName = isSelected ? 'mg-v2-list-block__row--selected' : undefined;
             return (
-              <tr key={key} {...rowProps}>
+              <tr
+                key={key}
+                className={rowClassName}
+                aria-selected={isSelected ? 'true' : undefined}
+                {...rowProps}
+              >
                 {columns.map((col) => (
                   <td
                     key={col.key}
+                    data-column={col.key}
                     className={col.hideOnMobile ? 'mg-v2-list-block__col--hide-mobile' : ''}
                   >
                     {getCellContent(col.key, item)}
@@ -104,14 +116,18 @@ ListTableView.propTypes = {
   renderCell: PropTypes.func,
   onRowClick: PropTypes.func,
   className: PropTypes.string,
-  rowKeyField: PropTypes.string
+  rowKeyField: PropTypes.string,
+  caption: PropTypes.string,
+  selectedRowKey: PropTypes.oneOfType([PropTypes.string, PropTypes.number])
 };
 
 ListTableView.defaultProps = {
   renderCell: null,
   onRowClick: null,
   className: '',
-  rowKeyField: 'id'
+  rowKeyField: 'id',
+  caption: '',
+  selectedRowKey: null
 };
 
 export default ListTableView;

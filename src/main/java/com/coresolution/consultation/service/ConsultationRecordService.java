@@ -40,6 +40,23 @@ public interface ConsultationRecordService {
      */
     Page<ConsultationRecord> getConsultationRecords(Long consultantId, Long clientId,
         LocalDate startDate, LocalDate endDate, Pageable pageable);
+
+    /**
+     * 상담일지 조회. 상태·검색어가 없으면 기간 조회와 같다.
+     *
+     * @param consultantId 상담사 ID (nullable)
+     * @param clientId 내담자 ID (nullable)
+     * @param startDate 세션 일자 시작 (nullable)
+     * @param endDate 세션 일자 종료 (nullable)
+     * @param sessionCompleted 완료 여부 (nullable = 전체)
+     * @param keyword 내담자 이름(매칭 id) 또는 요약 검색어 (nullable)
+     * @param matchedClientIds 화면이 고른 내담자 id CSV (nullable)
+     * @param pageable 페이징
+     * @return 세션일 내림차순 페이지
+     */
+    Page<ConsultationRecord> getConsultationRecordsForLogView(Long consultantId, Long clientId,
+        LocalDate startDate, LocalDate endDate, Boolean sessionCompleted, String keyword,
+        String matchedClientIds, Pageable pageable);
     
     /**
      * 상담일지 상세 조회

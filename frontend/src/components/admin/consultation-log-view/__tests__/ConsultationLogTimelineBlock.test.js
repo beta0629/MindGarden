@@ -11,6 +11,17 @@ import '../../../../i18n';
 import ConsultationLogTimelineBlock from '../ConsultationLogTimelineBlock';
 import { CONSULTATION_LOG_TIMELINE_SORT } from '../consultationLogTimeline';
 
+jest.mock('../../../../constants/environment', () => ({
+  __esModule: true,
+  default: { API_BASE_URL: 'http://localhost:8080' },
+  createApiUrl: (endpoint) => `http://localhost:8080${endpoint}`,
+  createOAuthUrl: () => 'http://localhost:8080'
+}));
+
+jest.spyOn(console, 'log').mockImplementation(() => {});
+jest.spyOn(console, 'warn').mockImplementation(() => {});
+jest.spyOn(console, 'error').mockImplementation(() => {});
+
 jest.mock('../../../common/MGButton', () => ({
   __esModule: true,
   default: ({ children, onClick, 'aria-pressed': ariaPressed }) => (

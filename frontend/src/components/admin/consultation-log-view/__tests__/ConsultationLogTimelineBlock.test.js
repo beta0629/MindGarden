@@ -255,5 +255,27 @@ describe('ConsultationLogTimelineBlock', () => {
     expect(screen.getByRole('button', { name: /2026-09-22 1회기/ })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /2026-09-08 4회기/ })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /2026-09-01/ })).not.toHaveTextContent('회기');
+    expect(screen.getByRole('button', { name: '최근 순' })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByRole('button', { name: '회기 순' })).toHaveAttribute('aria-pressed', 'false');
+  });
+
+  it('회기 순을 고르면 그 버튼만 눌린다', () => {
+    render(
+      <ConsultationLogTimelineBlock
+        records={[
+          record({
+            id: 1, sessionDate: '2026-08-13', sessionNumber: 1, clientId: 11, consultantId: 7,
+            clientName: '한서윤', consultantName: '박지안'
+          })
+        ]}
+        sort={CONSULTATION_LOG_TIMELINE_SORT.SESSION}
+        onSortChange={jest.fn()}
+        onOpenRow={jest.fn()}
+        grouping={{ clientId: 11, consultantId: null }}
+      />
+    );
+
+    expect(screen.getByRole('button', { name: '최근 순' })).toHaveAttribute('aria-pressed', 'false');
+    expect(screen.getByRole('button', { name: '회기 순' })).toHaveAttribute('aria-pressed', 'true');
   });
 });

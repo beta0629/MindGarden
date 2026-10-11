@@ -3,7 +3,7 @@
  *
  * @author Core Solution
  * @since 2025-03-02
- * @updated 2026-10-10
+ * @updated 2026-10-11
  */
 
 .mg-v2-consultation-log-view,
@@ -45,7 +45,15 @@
   display: flex;
   flex-direction: column;
   gap: var(--mg-v2-space-1);
+}
+
+.mg-v2-consultation-log-filter__field,
+.mg-v2-consultation-log-query__field {
   min-width: 0;
+}
+
+.mg-v2-consultation-log-query__period {
+  min-width: max(var(--mg-consultation-log-filter-period), min-content);
 }
 
 .mg-v2-consultation-log-filter__label,
@@ -57,6 +65,7 @@
 
 .mg-v2-consultation-log-filter__select,
 .mg-v2-consultation-log-filter__input {
+  box-sizing: border-box;
   padding: var(--mg-v2-space-2) var(--mg-v2-space-3);
   font-size: var(--mg-v2-font-size-body-md);
   border: var(--mg-v2-border-width-thin) solid var(--mg-v2-color-border-subtle);
@@ -64,6 +73,22 @@
   background: var(--mg-v2-color-surface-card);
   color: var(--mg-v2-color-text-primary);
   width: 100%;
+  max-width: 100%;
+}
+
+.mg-v2-consultation-log-query__field .mg-v2-consultation-log-filter__select {
+  appearance: none;
+  padding-inline-start: var(--mg-v2-space-2);
+  padding-inline-end: var(--mg-v2-space-3);
+  background-color: var(--mg-v2-color-surface-card);
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--mg-v2-color-text-secondary) 50%),
+    linear-gradient(135deg, var(--mg-v2-color-text-secondary) 50%, transparent 50%);
+  background-position:
+    calc(100% - var(--mg-v2-space-3)) center,
+    calc(100% - var(--mg-v2-space-2)) center;
+  background-size: var(--mg-v2-space-1) var(--mg-v2-space-1);
+  background-repeat: no-repeat;
 }
 
 .mg-v2-consultation-log-filter__select:focus,
@@ -125,12 +150,36 @@
 
 .mg-v2-consultation-log-query__period-inputs {
   display: flex;
+  flex-wrap: nowrap;
   align-items: center;
   gap: var(--mg-v2-space-2);
+  min-width: min-content;
 }
 
-.mg-v2-consultation-log-query__period-inputs .mg-v2-consultation-log-filter__input {
-  flex: 1 1 0;
+.mg-v2-consultation-log-query__period-inputs > .mg-date-input {
+  flex: 1 0 var(--mg-consultation-log-filter-date);
+  width: auto;
+  min-width: var(--mg-consultation-log-filter-date);
+  max-width: none;
+  box-sizing: border-box;
+  font-size: var(--mg-v2-font-size-body-md);
+}
+
+.mg-v2-consultation-log-query__period-inputs > span {
+  flex: none;
+}
+
+.mg-v2-consultation-log-query__period-inputs .mg-date-input__native {
+  box-sizing: border-box;
+  min-width: 0;
+}
+
+.mg-v2-consultation-log-query__period-inputs .mg-date-input__display {
+  padding-block: var(--mg-v2-space-2);
+  padding-inline-start: var(--mg-v2-space-3);
+  padding-inline-end: calc(var(--mg-v2-space-3) + var(--mg-v2-space-6));
+  overflow: visible;
+  text-overflow: clip;
 }
 
 .mg-v2-consultation-log-query__actions {
@@ -242,15 +291,21 @@
   }
 
   .mg-v2-consultation-log-query__field {
-    flex: 1 1 calc(var(--mg-v2-space-16) + var(--mg-v2-space-8) + var(--mg-v2-space-6) + var(--mg-v2-space-4));
+    flex: 0 0 var(--mg-consultation-log-filter-select);
+    min-width: var(--mg-consultation-log-filter-select);
+    max-width: var(--mg-consultation-log-filter-select);
   }
 
   .mg-v2-consultation-log-query__period {
-    flex: 1 1 calc(var(--mg-v2-space-20) * 3);
+    flex: 0 0 var(--mg-consultation-log-filter-period);
+    min-width: max(var(--mg-consultation-log-filter-period), min-content);
+    max-width: none;
   }
 
   .mg-v2-consultation-log-query__field--keyword {
-    flex: 1 1 calc(var(--mg-v2-space-12) * 3);
+    flex: 1 1 var(--mg-consultation-log-filter-keyword);
+    min-width: 0;
+    max-width: none;
   }
 
   .mg-v2-consultation-log-query__actions {
@@ -268,19 +323,6 @@
     flex-wrap: nowrap;
   }
 
-  .mg-v2-consultation-log-query__period {
-    flex: 0 0 calc(var(--mg-v2-space-20) * 3);
-  }
-
-  .mg-v2-consultation-log-query__field {
-    flex: 0 0 calc(var(--mg-v2-space-16) + var(--mg-v2-space-8) + var(--mg-v2-space-6) + var(--mg-v2-space-4));
-  }
-
-  .mg-v2-consultation-log-query__field--keyword {
-    flex: 1 1 calc(var(--mg-v2-space-12) * 3);
-    min-width: 0;
-  }
-
   .mg-v2-consultation-log-results--with-panel {
     grid-template-columns: minmax(0, 1fr) calc(var(--mg-v2-space-20) * 5);
     gap: var(--mg-layout-gap-desktop);
@@ -289,7 +331,7 @@
 
 [data-theme='dark'] .mg-v2-consultation-log-filter__select,
 [data-theme='dark'] .mg-v2-consultation-log-filter__input {
-  background: var(--mg-v2-form-input-bg);
+  background-color: var(--mg-v2-form-input-bg);
   color: var(--mg-v2-form-text);
   border-color: var(--mg-v2-form-border);
 }

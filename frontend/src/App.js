@@ -799,7 +799,7 @@ function AppContent() {
               {/* path 문자열 필수: scripts/verify-quick-action-routes.mjs (ADMIN_ROUTES.TENANT_COMMON_CODES 와 동일 세그먼트) */}
               <Route path="tenant-common-codes" element={<TenantCommonCodeManager />} />
               {/* 상품 조합(구성) 빌더 — 새 「상품」 편집 화면에 구성 입력이 없어 기존 빌더로 직접 연결 */}
-              <Route path="package-pricing/new" element={<PackagePricingDetailPage />} />
+              <Route path="package-pricing/new" element={<PackagePricingDetailPage isNew />} />
               <Route path="package-pricing/:id" element={<PackagePricingDetailPage />} />
               <Route path="package-pricing" element={<Navigate to={ADMIN_SHOP_PRODUCT_ROUTES.LIST} replace />} />
               <Route

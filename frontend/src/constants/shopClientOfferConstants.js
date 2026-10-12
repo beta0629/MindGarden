@@ -28,8 +28,11 @@ export const SHOP_CLIENT_OFFER_API = Object.freeze({
   ADMIN_CLIENT_SEARCH: '/api/v1/admin/clients/search'
 });
 
-/** 관리자 내담자 검색 한 번에 받는 최대 건수 (BE AdminClientSearchConstants.MAX_PAGE_SIZE) */
-export const ADMIN_CLIENT_SEARCH_MAX_SIZE = 1000;
+/** 관리자 내담자 검색 한 번에 받는 건수 (입력할 때마다 서버 검색, BE AdminClientSearchConstants.DEFAULT_PAGE_SIZE) */
+export const ADMIN_CLIENT_SEARCH_PAGE_SIZE = 20;
+
+/** 관리자 내담자 검색 입력 디바운스 (ms) */
+export const ADMIN_CLIENT_SEARCH_DEBOUNCE_MS = 300;
 
 export const SHOP_CLIENT_OFFER_DISCOUNT_TYPE = Object.freeze({
   AMOUNT: 'AMOUNT',

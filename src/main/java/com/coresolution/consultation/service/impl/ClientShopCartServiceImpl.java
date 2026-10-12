@@ -18,9 +18,9 @@ import com.coresolution.consultation.entity.ShopCartLine;
 import com.coresolution.consultation.entity.ShopCatalogSku;
 import com.coresolution.consultation.repository.ShopCartLineRepository;
 import com.coresolution.consultation.repository.ShopCartRepository;
-import com.coresolution.consultation.repository.ShopCatalogSkuRepository;
 import com.coresolution.consultation.service.ClientShopCartService;
 import com.coresolution.consultation.service.ShopCatalogPackageOfferResolver;
+import com.coresolution.consultation.service.ShopOrderableSkuService;
 import org.springframework.util.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -38,7 +38,7 @@ public class ClientShopCartServiceImpl implements ClientShopCartService {
 
     private final ShopCartRepository shopCartRepository;
     private final ShopCartLineRepository shopCartLineRepository;
-    private final ShopCatalogSkuRepository shopCatalogSkuRepository;
+    private final ShopOrderableSkuService shopOrderableSkuService;
     private final ShopCatalogPackageOfferResolver shopCatalogPackageOfferResolver;
 
     @Override
@@ -104,8 +104,8 @@ public class ClientShopCartServiceImpl implements ClientShopCartService {
         shopCartLineRepository.flush();
 
         for (Map.Entry<String, Integer> e : merged.entrySet()) {
-            ShopCatalogSku sku = shopCatalogSkuRepository
-                    .findActiveByTenantAndSkuCode(tenantId, e.getKey())
+            ShopCatalogSku sku = shopOrderableSkuService
+                    .findOrderableForClient(tenantId, e.getKey(), clientId)
                     .orElseThrow(() -> new IllegalArgumentException("유효하지 않은 상품 코드입니다: " + e.getKey()));
             ShopCatalogOffer offer = resolveOffer(tenantId, sku);
             if (!offer.sellable()) {

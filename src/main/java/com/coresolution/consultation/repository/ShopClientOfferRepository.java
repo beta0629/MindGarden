@@ -36,4 +36,7 @@ public interface ShopClientOfferRepository extends JpaRepository<ShopClientOffer
             String tenantId, Long clientId, String status);
 
     Optional<ShopClientOffer> findByTenantIdAndIdAndIsDeletedFalse(String tenantId, Long id);
+
+    boolean existsByTenantIdAndClientIdAndOfferSkuCodeAndStatusAndIsDeletedFalse(
+            String tenantId, Long clientId, String offerSkuCode, String status);
 }

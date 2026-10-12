@@ -60,6 +60,7 @@ import com.coresolution.consultation.service.PaymentService;
 import com.coresolution.consultation.service.PointTenantPolicyService;
 import com.coresolution.consultation.service.ShopNotificationHelper;
 import com.coresolution.consultation.service.ShopOrderFulfillmentService;
+import com.coresolution.consultation.service.ShopOrderableSkuService;
 import com.coresolution.consultation.service.portone.PortOneChannelKeyResolver;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.domain.enums.PgProvider;
@@ -106,6 +107,7 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
     private final TenantPgConfigurationService tenantPgConfigurationService;
     private final ShopCatalogPackageOfferResolver shopCatalogPackageOfferResolver;
     private final ClientShopCatalogService clientShopCatalogService;
+    private final ShopOrderableSkuService shopOrderableSkuService;
     /** afterCommit 이행을 부모 트랜잭션과 분리된 REQUIRES_NEW 로 실행 */
     private final PlatformTransactionManager transactionManager;
 
@@ -125,7 +127,7 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
 
         boolean buyNow = request.getLines() != null && !request.getLines().isEmpty();
         List<CheckoutLine> cartLines = buyNow
-                ? resolveBuyNowLines(tenantId, request.getLines())
+                ? resolveBuyNowLines(tenantId, clientUserId, request.getLines())
                 : loadCartCheckoutLines(tenantId, clientUserId);
 
         List<PricedCartLine> pricedLines = new ArrayList<>();
@@ -382,11 +384,13 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
      * 검증은 장바구니 저장({@code ClientShopCartServiceImpl#replaceCart})과 같다.
      *
      * @param tenantId 테넌트 ID
+     * @param clientUserId 주문하는 내담자 users.id
      * @param requested 요청 라인 (한 SKU)
      * @return 체크아웃 라인 1개
      * @throws IllegalArgumentException SKU 가 없거나 둘 이상·수량 범위 밖·판매 중 아님
      */
-    private List<CheckoutLine> resolveBuyNowLines(String tenantId, List<ShopCartLineRequest> requested) {
+    private List<CheckoutLine> resolveBuyNowLines(
+            String tenantId, Long clientUserId, List<ShopCartLineRequest> requested) {
         String skuCode = null;
         int quantity = 0;
         for (ShopCartLineRequest line : requested) {
@@ -406,7 +410,7 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
         if (quantity < 1 || quantity > ShopCheckoutConstants.MAX_LINE_QUANTITY) {
             throw new IllegalArgumentException(ShopCheckoutConstants.MSG_BUY_NOW_INVALID_QUANTITY);
         }
-        ShopCatalogSku sku = shopCatalogSkuRepository.findActiveByTenantAndSkuCode(tenantId, skuCode)
+        ShopCatalogSku sku = shopOrderableSkuService.findOrderableForClient(tenantId, skuCode, clientUserId)
                 .orElseThrow(() -> new IllegalArgumentException(ShopCheckoutConstants.MSG_BUY_NOW_INVALID_SKU));
         return List.of(new CheckoutLine(sku, quantity));
     }

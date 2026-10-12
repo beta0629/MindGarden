@@ -20,6 +20,28 @@ import {
 } from '../constants/tenantCodeConstants';
 
 const API_BASE = '/api/v1/common-codes';
+
+/** 관리자 목록에서 비활성 코드까지 받기 위한 조회 파라미터 이름(서버 CommonCodeController 와 동일) */
+export const COMMON_CODE_INCLUDE_INACTIVE_PARAM = 'includeInactive';
+
+/**
+ * 목록 조회 URL 에 codeGroup·includeInactive 쿼리를 붙인다.
+ * @param {string} base - 기본 경로
+ * @param {string|null} codeGroup - 코드 그룹
+ * @param {boolean} includeInactive - 비활성 포함 여부
+ * @returns {string} 조회 URL
+ */
+const buildCodeListUrl = (base, codeGroup, includeInactive) => {
+    const params = new URLSearchParams();
+    if (codeGroup) {
+        params.set('codeGroup', codeGroup);
+    }
+    if (includeInactive) {
+        params.set(COMMON_CODE_INCLUDE_INACTIVE_PARAM, 'true');
+    }
+    const query = params.toString();
+    return query ? `${base}?${query}` : base;
+};
 /** 테넌트 컨텍스트로 생성·수정·삭제 (TenantCommonCodeController) */
 const TENANT_CODES_WRITE_BASE = '/api/v1/tenant/common-codes';
 
@@ -81,22 +103,25 @@ const normalizeDeleteResponse = (response, failMessage) => {
 /**
  * @param {boolean|null} forceTenant - true: 항상 /tenant, false: 통합·코어 분기, null: 자동(하이브리드 그룹은 통합 조회)
 /**
+ * @param {{ includeInactive?: boolean }} options - includeInactive: 관리자 목록용 비활성 포함
+/**
  * @returns {Promise<Array>} 공통코드 목록
  */
-export const getCommonCodes = async(codeGroup = null, forceTenant = null) => {
+export const getCommonCodes = async(codeGroup = null, forceTenant = null, options = {}) => {
     try {
         const useTenantApi = shouldUseTenantOnlyReadPath(codeGroup, forceTenant);
+        const includeInactive = options.includeInactive === true;
         
         let url;
         if (useTenantApi) {
             // 테넌트 코드 전용 API (코어 코드 폴백 없음 - 독립성 보장)
-            url = codeGroup ? `${API_BASE}/tenant?codeGroup=${codeGroup}` : `${API_BASE}/tenant`;
+            url = buildCodeListUrl(`${API_BASE}/tenant`, codeGroup, includeInactive);
         } else if (codeGroup && CORE_CODE_GROUPS.includes(codeGroup)) {
             // 코어 코드 전용 API
             url = `${API_BASE}/core/groups/${codeGroup}`;
         } else {
             // 통합 조회 API (테넌트 우선 + 코어 폴백, 하이브리드 재무 그룹 등)
-            url = codeGroup ? `${API_BASE}?codeGroup=${codeGroup}` : API_BASE;
+            url = buildCodeListUrl(API_BASE, codeGroup, includeInactive);
         }
         
         const response = await StandardizedApi.get(url);

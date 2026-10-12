@@ -530,4 +530,45 @@ class AdminShopCatalogSkuServiceImplTest {
         assertEquals(1, response.unlinkedSkus().size());
         assertEquals("LEGACY-1", response.unlinkedSkus().get(0).skuCode());
     }
+
+    private static ShopCatalogSku offerSku(Long id) {
+        ShopCatalogSku row = existingSku(id);
+        row.setSkuCode(com.coresolution.consultation.constant.ShopClientOfferConstants.SKU_CODE_PREFIX + "ZZ1");
+        row.setCatalogVisible(false);
+        return row;
+    }
+
+    @Test
+    @DisplayName("listAllForTenant — 내담자 전용 SKU 는 제외")
+    void listAllForTenant_excludesClientOfferSku() {
+        when(shopCatalogSkuRepository.findByTenantIdAndIsDeletedFalseOrderBySortOrderAscIdAsc(TENANT))
+                .thenReturn(java.util.List.of(existingSku(1L), offerSku(2L)));
+
+        var items = adminShopCatalogSkuService.listAllForTenant(TENANT);
+
+        assertEquals(1, items.size());
+        assertEquals("PKG-01", items.get(0).skuCode());
+    }
+
+    @Test
+    @DisplayName("patchCatalogVisible — 내담자 전용 SKU 노출 전환은 거부, 저장 없음")
+    void patchCatalogVisible_clientOfferSku_rejected() {
+        when(shopCatalogSkuRepository.findByIdAndTenantIdAndIsDeletedFalse(eq(2L), eq(TENANT)))
+                .thenReturn(Optional.of(offerSku(2L)));
+
+        assertThrows(EntityNotFoundException.class,
+                () -> adminShopCatalogSkuService.patchCatalogVisible(TENANT, 2L, true));
+        verify(shopCatalogSkuRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("update — 내담자 전용 SKU 수정은 거부, 저장 없음")
+    void update_clientOfferSku_rejected() {
+        when(shopCatalogSkuRepository.findByIdAndTenantIdAndIsDeletedFalse(eq(2L), eq(TENANT)))
+                .thenReturn(Optional.of(offerSku(2L)));
+
+        assertThrows(EntityNotFoundException.class,
+                () -> adminShopCatalogSkuService.update(TENANT, 2L, upsert("PKG-01", 10000L)));
+        verify(shopCatalogSkuRepository, never()).save(any());
+    }
 }

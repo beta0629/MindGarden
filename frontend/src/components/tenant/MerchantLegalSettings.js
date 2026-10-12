@@ -8,6 +8,8 @@
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
+import { ADMIN_SHOP_PRODUCT_ROUTES } from '../../constants/adminShopSuite';
 import { useSession } from '../../contexts/SessionContext';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import {
@@ -117,6 +119,7 @@ function normalizeGuideFields(raw = {}) {
 }
 
 const MerchantLegalSettings = () => {
+  const { t } = useTranslation('admin');
   const navigate = useNavigate();
   const { user, isLoggedIn, isLoading: sessionLoading } = useSession();
   const tenantId = user?.tenantId || user?.tenant_id;
@@ -612,10 +615,11 @@ const MerchantLegalSettings = () => {
                     </p>
                   )}
                   <p className="mg-v2-settings-field__hint">
-                    고객에게 보이는 상품·가격 목록은 「패키지 요금」에 등록된 항목이며, 공개 페이지
-                    {' '}
+                    {t('shopProductGuide.merchantProductListHintPrefix')}
+                    <Link to={ADMIN_SHOP_PRODUCT_ROUTES.LIST}>{t('shopProductGuide.productsMenuLabel')}</Link>
+                    {t('shopProductGuide.merchantProductListHintMiddle')}
                     <Link to={LEGAL_PUBLIC_PATHS.PRODUCTS}>{LEGAL_PUBLIC_LABELS.PRODUCTS}</Link>
-                    에서 확인합니다.
+                    {t('shopProductGuide.merchantProductListHintSuffix')}
                   </p>
                 </SettingsSectionPanel>
 

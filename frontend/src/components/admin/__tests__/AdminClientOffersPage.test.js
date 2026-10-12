@@ -2,7 +2,6 @@ import React from 'react';
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import AdminClientOffersPage from '../AdminClientOffersPage';
-import { adminClientsWithMappingGetAll } from '../../../api/adminListFetch';
 import * as offerService from '../../../services/shopClientOfferService';
 
 jest.mock('react-i18next', () => {
@@ -31,16 +30,13 @@ jest.mock('../../../contexts/SessionContext', () => ({
   SessionContext: require('react').createContext(null),
   useSession: () => ({ user: { id: 1, role: 'ADMIN' }, isLoggedIn: true, isLoading: false })
 }));
-jest.mock('../../../api/adminListFetch', () => ({
-  adminClientsWithMappingGetAll: jest.fn()
-}));
 jest.mock('../../../services/shopClientOfferService');
 
 const renderPage = () => render(<MemoryRouter><AdminClientOffersPage /></MemoryRouter>);
 
 describe('AdminClientOffersPage', () => {
   beforeEach(() => {
-    adminClientsWithMappingGetAll.mockResolvedValue([{ id: 7, name: '한서윤', phone: '010-1111-1234' }]);
+    offerService.searchAdminClients.mockResolvedValue([{ id: 7, name: '한서윤', phoneLast4: '1234', maskedPhone: '010-****-1234' }]);
     offerService.listAdminOfferSourceOptions.mockResolvedValue([
       { skuCode: 'SRC1', title: '부부상담 4회 패키지', unitPriceMinor: 440000, sessionCount: 4 }
     ]);

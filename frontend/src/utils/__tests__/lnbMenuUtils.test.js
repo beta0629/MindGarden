@@ -396,10 +396,32 @@ describe('filterHiddenAdminLnbItems', () => {
       ADMIN_ROUTES.SHOP_POINT_POLICIES,
       ADMIN_ROUTES.SHOP_CLIENT_OFFERS
     ]);
-    expect(shop.children.map((c) => c.label)).toEqual(['온라인 주문', '상품', '리워드 정책', '내담자별 결제 상품']);
+    expect(shop.children.map((c) => c.label)).toEqual(['온라인 주문', '상품 관리', '리워드 정책', '내담자별 결제 상품']);
     expect(shop.children[1].end).toBe(false);
     expect(settings.children).toHaveLength(1);
     expect(settings.children[0].label).toBe('결제 연결');
+  });
+
+  test('쇼핑 스위트: 구 SKU 경로와 상품 경로가 함께 와도 「상품 관리」는 하나만 남긴다', () => {
+    const items = [
+      {
+        to: ADMIN_ROUTES.SHOP_CATALOG_SKUS,
+        label: '쇼핑·리워드',
+        icon: 'SHOPPING_BAG',
+        end: false,
+        children: [
+          { to: ADMIN_ROUTES.SHOP_PRODUCTS, label: '상품 관리', icon: 'PACKAGE', end: true },
+          { to: ADMIN_ROUTES.SHOP_CATALOG_SKUS, label: '상품(SKU) 관리', icon: 'PACKAGE', end: true },
+          { to: ADMIN_ROUTES.SHOP_ORDERS, label: '주문', icon: 'RECEIPT', end: true }
+        ]
+      }
+    ];
+
+    const [shop] = filterHiddenAdminLnbItems(items);
+    const productItems = shop.children.filter((c) => c.to === ADMIN_ROUTES.SHOP_PRODUCTS);
+
+    expect(productItems).toHaveLength(1);
+    expect(productItems[0].label).toBe('상품 관리');
   });
 
   test('루트에 숨김 경로가 있으면 해당 항목 제거', () => {

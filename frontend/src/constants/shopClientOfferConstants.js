@@ -15,11 +15,21 @@ export const CLIENT_OFFER_ROUTES = Object.freeze({
 /** 휴대폰 인증하러 설정에 다녀오는 동안 선택·동의를 유지하는 sessionStorage 키 (사용자 id 접미) */
 export const CLIENT_OFFERS_DRAFT_STORAGE_KEY = 'mg.clientOffers.draft';
 
+/** BE ShopClientOfferConstants.SKU_CODE_PREFIX — 지정 상품 주문(결제 출처 /client/offers) 판별 */
+export const SHOP_CLIENT_OFFER_SKU_CODE_PREFIX = 'OFFER_';
+
+/** 모바일 결제 복귀 실패 시 /client/offers 로 넘기는 router state 키 (실패 사유) */
+export const CLIENT_OFFERS_PAY_FAILURE_STATE_KEY = 'clientOffersPayFailureReason';
+
 export const SHOP_CLIENT_OFFER_API = Object.freeze({
   ADMIN: '/api/v1/admin/shop/client-offers',
   ADMIN_SOURCE_OPTIONS: '/api/v1/admin/shop/client-offers/source-options',
-  CLIENT: '/api/v1/clients/me/shop-offers'
+  CLIENT: '/api/v1/clients/me/shop-offers',
+  ADMIN_CLIENT_SEARCH: '/api/v1/admin/clients/search'
 });
+
+/** 관리자 내담자 검색 한 번에 받는 최대 건수 (BE AdminClientSearchConstants.MAX_PAGE_SIZE) */
+export const ADMIN_CLIENT_SEARCH_MAX_SIZE = 1000;
 
 export const SHOP_CLIENT_OFFER_DISCOUNT_TYPE = Object.freeze({
   AMOUNT: 'AMOUNT',

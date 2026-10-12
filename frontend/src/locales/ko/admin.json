@@ -619,7 +619,6 @@
       "tenantCommonCodes": "센터 코드",
       "pgConfig": "PG 설정",
       "aiProvider": "AI 프로바이더",
-      "packagePricing": "패키지 요금 관리",
       "testNotification": "알림 테스트 발송",
       "manualNotification": "수동 알림 발송",
       "smsTemplates": "SMS 템플릿 관리",
@@ -3852,5 +3851,13 @@
   },
   "menu": {
     "pendingPaymentCleanup": "디러티 배정 정리"
+  },
+  "shopProductGuide": {
+    "productsMenuLabel": "상품 관리",
+    "packageEmptyWarning": "등록된 상담 패키지가 없습니다. 상품 관리에서 상품을 등록해 주세요.",
+    "packageEmptyHelpSuffix": "에서 상품을 등록해 주세요.",
+    "merchantProductListHintPrefix": "고객에게 보이는 상품·가격 목록은 ",
+    "merchantProductListHintMiddle": "에 등록된 상품이며, 공개 페이지 ",
+    "merchantProductListHintSuffix": "에서 확인합니다."
   }
 }

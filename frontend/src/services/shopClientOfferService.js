@@ -43,6 +43,17 @@ export const createAdminClientOffer = async(body) =>
 export const cancelAdminClientOffer = async(offerId) =>
   toObject(await StandardizedApi.post(`${SHOP_CLIENT_OFFER_API.ADMIN}/${encodeURIComponent(offerId)}/cancel`, {}));
 
+/**
+ * 관리자 내담자 검색 (이름·연락처 뒷자리). 응답에는 전체 연락처가 없다.
+ *
+ * @param {{ q?: string, page?: number, size?: number }} params
+ * @returns {Promise<{ id: number, name: string, phoneLast4: string|null, maskedPhone: string|null }[]>}
+ */
+export const searchAdminClients = async(params = {}) => {
+  const page = toObject(await StandardizedApi.get(SHOP_CLIENT_OFFER_API.ADMIN_CLIENT_SEARCH, params));
+  return Array.isArray(page?.items) ? page.items : [];
+};
+
 /** @returns {Promise<object[]>} */
 export const listMyClientOffers = async() =>
   toArray(await StandardizedApi.get(SHOP_CLIENT_OFFER_API.CLIENT));

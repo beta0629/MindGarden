@@ -1,6 +1,25 @@
 /**
  * 상담사 등록 — 비밀번호 정책 실패는 제출을 막고, 서버 문구는 일반 500 보다 우선한다.
  */
+jest.mock('axios', () => ({
+  __esModule: true,
+  default: {
+    get: jest.fn(() => Promise.resolve({ data: {} })),
+    post: jest.fn(() => Promise.resolve({ data: {} })),
+    put: jest.fn(() => Promise.resolve({ data: {} })),
+    delete: jest.fn(() => Promise.resolve({ data: {} })),
+    create: jest.fn(() => ({
+      get: jest.fn(() => Promise.resolve({ data: {} })),
+      post: jest.fn(() => Promise.resolve({ data: {} })),
+      interceptors: { request: { use: jest.fn() }, response: { use: jest.fn() } }
+    })),
+    interceptors: {
+      request: { use: jest.fn(), eject: jest.fn() },
+      response: { use: jest.fn(), eject: jest.fn() }
+    }
+  }
+}));
+
 import React from 'react';
 import { webcrypto } from 'crypto';
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';

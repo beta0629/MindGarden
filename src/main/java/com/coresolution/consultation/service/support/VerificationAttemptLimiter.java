@@ -4,6 +4,7 @@ import java.time.Duration;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.LongSupplier;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import com.coresolution.consultation.config.MindgardenSecurityProperties;
 
@@ -29,6 +30,7 @@ public class VerificationAttemptLimiter {
     private final LongSupplier nowMillis;
     private final Map<String, Entry> entries = new ConcurrentHashMap<>();
 
+    @Autowired
     public VerificationAttemptLimiter(MindgardenSecurityProperties properties) {
         this(properties, System::currentTimeMillis);
     }

@@ -85,7 +85,6 @@ const AdminShopClientOffersPage = () => {
       return;
     }
     if (!isLoggedIn || !user) {
-      navigate('/login', { replace: true });
       return;
     }
     if (!allowed) {

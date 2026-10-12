@@ -30,7 +30,7 @@ module.exports = {
         '^react-router/dom$':
           '<rootDir>/node_modules/react-router/dist/development/dom-export.js',
         '^@portone/browser-sdk/v2$':
-          '<rootDir>/node_modules/@portone/browser-sdk/dist/v2.cjs',
+          '<rootDir>/src/test-utils/portoneBrowserSdkV2.mock.js',
         // axios 1.x ESM entry breaks Jest (import outside module)
         '^axios$': '<rootDir>/node_modules/axios/dist/node/axios.cjs'
       };

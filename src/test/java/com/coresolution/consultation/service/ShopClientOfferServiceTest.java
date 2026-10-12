@@ -94,6 +94,9 @@ class ShopClientOfferServiceTest {
     private void stubBase(ShopCatalogSku src) {
         when(userRepository.findByTenantIdAndId(TENANT, CLIENT)).thenReturn(Optional.of(client()));
         when(skuRepository.findActiveByTenantAndSkuCode(TENANT, "SRC-1")).thenReturn(Optional.of(src));
+    }
+
+    private void stubPersistedSaves() {
         when(skuRepository.save(any(ShopCatalogSku.class))).thenAnswer(i -> i.getArgument(0));
         when(offerRepository.save(any(ShopClientOffer.class))).thenAnswer(i -> i.getArgument(0));
     }
@@ -103,6 +106,7 @@ class ShopClientOfferServiceTest {
     void create_serverConfirmsPrice() {
         ShopCatalogSku src = source(ShopCatalogCategory.CONSULTATION);
         stubBase(src);
+        stubPersistedSaves();
         when(consultantMappingService.listActiveMappings(TENANT, CLIENT)).thenReturn(List.of());
         when(clientShopCatalogService.isVisibleForClientMappings(any(), any(), anyList())).thenReturn(true);
 
@@ -207,6 +211,7 @@ class ShopClientOfferServiceTest {
 
     private void stubCreatable() {
         stubBase(source(ShopCatalogCategory.CONSULTATION));
+        stubPersistedSaves();
         when(consultantMappingService.listActiveMappings(TENANT, CLIENT)).thenReturn(List.of());
         when(clientShopCatalogService.isVisibleForClientMappings(any(), any(), anyList())).thenReturn(true);
     }
@@ -268,7 +273,10 @@ class ShopClientOfferServiceTest {
     @Test
     @DisplayName("경합 — 직렬화된 두 번째 지정은 첫 지정을 보고 차단된다")
     void create_secondSerializedCallBlocked() {
-        stubCreatable();
+        stubBase(source(ShopCatalogCategory.CONSULTATION));
+        when(skuRepository.save(any(ShopCatalogSku.class))).thenAnswer(i -> i.getArgument(0));
+        when(consultantMappingService.listActiveMappings(TENANT, CLIENT)).thenReturn(List.of());
+        when(clientShopCatalogService.isVisibleForClientMappings(any(), any(), anyList())).thenReturn(true);
         List<ShopClientOffer> store = new ArrayList<>();
         when(offerRepository.save(any(ShopClientOffer.class))).thenAnswer(i -> {
             ShopClientOffer saved = i.getArgument(0);

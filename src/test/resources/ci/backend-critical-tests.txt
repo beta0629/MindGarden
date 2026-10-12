@@ -28,3 +28,4 @@
 **/ScheduleDateRangeQueryCountIntegrationTest.java
 **/ScheduleDateQueryCountIntegrationTest.java
 **/*MergedAddon*Test.java
+**/ShopPackageCompositionServiceTest.java

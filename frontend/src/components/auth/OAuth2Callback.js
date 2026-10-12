@@ -4,6 +4,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import notificationManager from '../../utils/notification';
 import { sessionManager } from '../../utils/sessionManager';
+import { redirectToLoginPageOnce } from '../../utils/sessionRedirect';
 import { useSession } from '../../contexts/SessionContext';
 import { redirectToDynamicDashboard } from '../../utils/dashboardUtils';
 import SocialSignupModal from './SocialSignupModal';
@@ -818,7 +819,7 @@ const OAuth2Callback = () => {
               return;
             }
             notificationManager.show(t('auth:AccountIntegrationModal.reloginRequired'), 'success');
-            navigate('/login', { replace: true });
+            redirectToLoginPageOnce();
           }}
         />
       </>

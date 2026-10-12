@@ -9,7 +9,6 @@
 import {
   SHOP_CLIENT_OFFER_DISCOUNT_TYPE,
   SHOP_CLIENT_OFFER_RATE_MAX_PERCENT,
-  CLIENT_SEARCH_PHONE_TAIL_LENGTH,
   CLIENT_OFFERS_DRAFT_STORAGE_KEY,
   SHOP_CLIENT_OFFER_STATUS
 } from '../constants/shopClientOfferConstants';
@@ -58,7 +57,8 @@ export const buildClientOptions = (clients, formatLabel) => (Array.isArray(clien
   .filter((c) => c && c.id != null)
   .map((c) => {
     const name = String(c.name || c.clientName || '').trim();
-    const tail = digitsOf(c.phoneLast4).slice(-CLIENT_SEARCH_PHONE_TAIL_LENGTH);
+    // 서버가 준 뒷자리를 그대로 쓴다 (FE 에서 자르거나 마스킹하지 않음)
+    const tail = c.phoneLast4 ? String(c.phoneLast4) : '';
     return {
       value: String(c.id),
       name,

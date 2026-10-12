@@ -33,11 +33,11 @@ export const ERP_LNB_PATH_PREFIXES = Object.freeze([
  *   4. 알림·메시지        (단독/그룹, sort=20) — DUP-2 fix (path=/admin/notifications)
  *   5. 배정·결제·환불     (그룹, sort=25) — Q9 권고 (배정/결제 강등)
  *   6. 사용자/권한        (그룹, sort=30) — ADM_USERS 유지 (숏컷과 병존)
- *   7. 디러티 배정 정리    (단독, 폴백 전용 보조)
- *   8. 콘텐츠·커뮤니티     (그룹, sort=35) — DUP-3 신설
- *   9. 쇼핑·리워드        (그룹, sort=40)
- *  10. 운영·재무 (ERP)    (그룹, sort=45)
- *  11. 시스템·설정        (그룹, sort=50) — 공통코드·알림 테스트·메시지 발송 제외 (P0/P1)
+ *   7. 콘텐츠·커뮤니티     (그룹, sort=35) — DUP-3 신설
+ *   8. 쇼핑·리워드        (그룹, sort=40)
+ *   9. 운영·재무 (ERP)    (그룹, sort=45)
+ *  10. 시스템·설정        (그룹, sort=50) — 공통코드·알림 테스트·메시지 발송 제외 (P0/P1)
+ *  디러티 배정 정리는 1차가 아니라 배정·결제·환불 children 에만 둔다.
  *
  * Flyway: V20260606_008__lnb_ia_restructure.sql + V20260727_001__lnb_admin_user_management_shortcut.sql
  *          + V20260907_001__lnb_menu_name_matching_to_baejung.sql
@@ -101,12 +101,6 @@ const DEFAULT_MENU_ITEMS = [
       { to: '/admin/accounts', icon: 'BOOK_USER', label: '계좌 관리', end: true },
       { to: ADMIN_ROUTES.DORMANT_USERS, icon: 'MOON', label: '휴면 사용자', end: true }
     ]
-  },
-  {
-    to: ADMIN_ROUTES.MAPPINGS_PENDING_PAYMENT_CLEANUP,
-    icon: 'TRASH',
-    label: '디러티 배정 정리',
-    end: true
   },
   {
     to: ADMIN_ROUTES.COMMUNITY_MODERATION,

@@ -298,6 +298,41 @@ public interface CommonCodeRepository extends BaseRepository<CommonCode, Long> {
            "AND c.isActive = true AND c.isDeleted = false " +
            "ORDER BY c.tenantId DESC NULLS LAST, c.sortOrder ASC")
     List<CommonCode> findCodesByGroupWithFallback(@Param("tenantId") String tenantId, @Param("codeGroup") String codeGroup);
+
+    // ==================== 관리자 목록용 (비활성 포함, 미소거만) ====================
+
+    /**
+     * 코어 코드 그룹별 조회 — 관리자 목록용으로 비활성도 포함한다(소거 제외).
+     */
+    @Query("SELECT c FROM CommonCode c WHERE c.tenantId IS NULL AND c.codeGroup = :codeGroup "
+            + "AND c.isDeleted = false ORDER BY c.sortOrder ASC")
+    List<CommonCode> findCoreCodesByGroupIncludingInactive(@Param("codeGroup") String codeGroup);
+
+    /**
+     * 테넌트 코드 그룹별 조회 — 관리자 목록용으로 비활성도 포함한다(소거 제외).
+     */
+    @Query("SELECT c FROM CommonCode c WHERE c.tenantId = :tenantId AND c.codeGroup = :codeGroup "
+            + "AND c.isDeleted = false ORDER BY c.sortOrder ASC")
+    List<CommonCode> findTenantCodesByGroupIncludingInactive(@Param("tenantId") String tenantId,
+            @Param("codeGroup") String codeGroup);
+
+    /**
+     * 테넌트 전체 코드 조회 — 관리자 목록용으로 비활성도 포함한다(소거 제외).
+     */
+    @Query("SELECT c FROM CommonCode c WHERE c.tenantId = :tenantId AND c.isDeleted = false "
+            + "ORDER BY c.codeGroup ASC, c.sortOrder ASC")
+    List<CommonCode> findAllTenantCodesIncludingInactive(@Param("tenantId") String tenantId);
+
+    /**
+     * 테넌트 우선·코어 폴백 그룹 조회 — 관리자 목록용으로 비활성도 포함한다(소거 제외).
+     */
+    @Query("SELECT c FROM CommonCode c WHERE "
+            + "((c.tenantId = :tenantId AND c.codeGroup = :codeGroup) OR "
+            + "(c.tenantId IS NULL AND c.codeGroup = :codeGroup)) "
+            + "AND c.isDeleted = false "
+            + "ORDER BY c.tenantId DESC NULLS LAST, c.sortOrder ASC")
+    List<CommonCode> findCodesByGroupWithFallbackIncludingInactive(@Param("tenantId") String tenantId,
+            @Param("codeGroup") String codeGroup);
     
     /**
      * 현재 테넌트 컨텍스트 기반 코드 조회 (값으로)

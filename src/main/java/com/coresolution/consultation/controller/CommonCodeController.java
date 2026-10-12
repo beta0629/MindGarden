@@ -67,6 +67,20 @@ public class CommonCodeController extends BaseApiController {
     private static final String OP_CREATE = "생성";
     private static final String OP_DEACTIVATE = "비활성화";
 
+    /** 관리자 목록에서 비활성 코드까지 받기 위한 조회 파라미터 이름. */
+    static final String PARAM_INCLUDE_INACTIVE = "includeInactive";
+
+    /**
+     * 비활성 포함 조회는 로그인한 사용자에게만 허용한다. 비로그인(공개 조회)은 기존처럼 활성 코드만 받는다.
+     *
+     * @param requested 요청 파라미터 값
+     * @param session HTTP 세션
+     * @return 실제로 비활성을 포함할지 여부
+     */
+    private static boolean resolveIncludeInactive(boolean requested, HttpSession session) {
+        return requested && session != null && SessionUtils.getCurrentUser(session) != null;
+    }
+
     /**
      * 쓰기 API 공통 가드: 세션 로그인 사용자 확인.
      *
@@ -296,7 +310,10 @@ public class CommonCodeController extends BaseApiController {
     })
     @GetMapping
     public ResponseEntity<ApiResponse<CommonCodeListResponse>> findAll(
-            @RequestParam(required = false) String codeGroup) {
+            @RequestParam(required = false) String codeGroup,
+            @RequestParam(name = PARAM_INCLUDE_INACTIVE, required = false, defaultValue = "false")
+            boolean includeInactive,
+            HttpSession session) {
         // 파라미터 정제 및 검증
         if (codeGroup != null) {
             // 콜론(:) 이후 제거 (잘못된 형식 처리: NOTIFICATION_TYPE:1 -> NOTIFICATION_TYPE)
@@ -317,7 +334,8 @@ public class CommonCodeController extends BaseApiController {
         log.info("공통코드 목록 조회 요청: codeGroup={}", codeGroup);
         
         try {
-            CommonCodeListResponse response = commonCodeService.findAll(codeGroup);
+            CommonCodeListResponse response = commonCodeService.findAll(
+                    codeGroup, resolveIncludeInactive(includeInactive, session));
             log.info("공통코드 목록 조회 완료: totalCount={}", response.getTotalCount());
             return success(response);
         } catch (Exception e) {
@@ -513,18 +531,22 @@ public class CommonCodeController extends BaseApiController {
      */
     @GetMapping("/tenant")
     public ResponseEntity<ApiResponse<CommonCodeListResponse>> getTenantCodes(
-            @RequestParam(required = false) String codeGroup) {
+            @RequestParam(required = false) String codeGroup,
+            @RequestParam(name = PARAM_INCLUDE_INACTIVE, required = false, defaultValue = "false")
+            boolean includeInactive,
+            HttpSession session) {
+        boolean withInactive = resolveIncludeInactive(includeInactive, session);
         log.info("테넌트별 코드 조회 요청 (독립성 보장): codeGroup={}", codeGroup);
         
         if (codeGroup == null || codeGroup.trim().isEmpty()) {
             // 코드 그룹이 없으면 전체 테넌트 코드 조회
-            CommonCodeListResponse response = commonCodeService.findAllTenantCodes();
+            CommonCodeListResponse response = commonCodeService.findAllTenantCodes(withInactive);
             log.info("테넌트별 전체 코드 조회 완료: {} 개", response.getTotalCount());
             return success(response);
         }
         
         // 특정 그룹의 테넌트 코드만 조회 (코어 코드 폴백 없음)
-        List<CommonCode> codes = commonCodeService.getCurrentTenantCodesByGroup(codeGroup);
+        List<CommonCode> codes = commonCodeService.getCurrentTenantCodesByGroup(codeGroup, withInactive);
         log.info("테넌트별 코드 그룹 조회 완료 (독립성 보장): {} 개", codes.size());
         
         List<CommonCodeResponse> codeResponses = codes.stream()

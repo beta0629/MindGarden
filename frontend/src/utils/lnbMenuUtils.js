@@ -217,7 +217,8 @@ export function mergeShopAdminLnbItems(items, options = {}) {
     ADMIN_ROUTES.SHOP_PRODUCTS,
     ADMIN_ROUTES.SHOP_CATALOG_SKUS,
     ADMIN_ROUTES.SHOP_POINT_POLICIES,
-    ADMIN_ROUTES.SHOP_ORDERS
+    ADMIN_ROUTES.SHOP_ORDERS,
+    ADMIN_ROUTES.SHOP_CLIENT_OFFERS
   ]);
   const hasShop = items.some((item) => {
     if (shopPaths.has(item.to)) {
@@ -241,7 +242,8 @@ export function mergeShopAdminLnbItems(items, options = {}) {
       children: [
         { to: ADMIN_ROUTES.SHOP_ORDERS, icon: 'RECEIPT', label: SHOP_ADMIN_LNB_CHILD_LABELS.ORDERS, end: true },
         { to: ADMIN_ROUTES.SHOP_PRODUCTS, icon: 'PACKAGE', label: SHOP_ADMIN_LNB_CHILD_LABELS.PRODUCTS, end: false },
-        { to: ADMIN_ROUTES.SHOP_POINT_POLICIES, icon: 'GIFT', label: SHOP_ADMIN_LNB_CHILD_LABELS.REWARDS, end: true }
+        { to: ADMIN_ROUTES.SHOP_POINT_POLICIES, icon: 'GIFT', label: SHOP_ADMIN_LNB_CHILD_LABELS.REWARDS, end: true },
+        { to: ADMIN_ROUTES.SHOP_CLIENT_OFFERS, icon: 'USERS', label: SHOP_ADMIN_LNB_CHILD_LABELS.CLIENT_OFFERS, end: true }
       ]
     }
   ];
@@ -251,7 +253,8 @@ export function mergeShopAdminLnbItems(items, options = {}) {
 export const SHOP_ADMIN_LNB_CHILD_LABELS = Object.freeze({
   ORDERS: '온라인 주문',
   PRODUCTS: '상품',
-  REWARDS: '리워드 정책'
+  REWARDS: '리워드 정책',
+  CLIENT_OFFERS: '내담자별 결제 상품'
 });
 
 export const PG_CONFIGURATION_LNB_PATH = '/tenant/pg-configurations';
@@ -276,7 +279,8 @@ export const STAFF_RESTRICTED_LNB_PATH_PREFIXES = Object.freeze([
 const SHOP_LNB_CHILD_ORDER = Object.freeze([
   ADMIN_ROUTES.SHOP_ORDERS,
   ADMIN_ROUTES.SHOP_PRODUCTS,
-  ADMIN_ROUTES.SHOP_POINT_POLICIES
+  ADMIN_ROUTES.SHOP_POINT_POLICIES,
+  ADMIN_ROUTES.SHOP_CLIENT_OFFERS
 ]);
 
 /**
@@ -311,6 +315,9 @@ export function normalizeShopSuiteLnbItems(items) {
     if (path === ADMIN_ROUTES.SHOP_POINT_POLICIES) {
       return { ...item, label: SHOP_ADMIN_LNB_CHILD_LABELS.REWARDS };
     }
+    if (path === ADMIN_ROUTES.SHOP_CLIENT_OFFERS) {
+      return { ...item, label: SHOP_ADMIN_LNB_CHILD_LABELS.CLIENT_OFFERS };
+    }
     if (path === PG_CONFIGURATION_LNB_PATH) {
       return { ...item, label: PG_CONFIGURATION_LNB_LABEL };
     }
@@ -336,6 +343,14 @@ export function normalizeShopSuiteLnbItems(items) {
       .map((child, index) => ({ child, index }))
       .sort((a, b) => (rank(a.child) - rank(b.child)) || (a.index - b.index))
       .map(({ child }) => child);
+    if (!ordered.some((c) => normalizeLnbPath(c?.to) === ADMIN_ROUTES.SHOP_CLIENT_OFFERS)) {
+      ordered.push({
+        to: ADMIN_ROUTES.SHOP_CLIENT_OFFERS,
+        icon: 'USERS',
+        label: SHOP_ADMIN_LNB_CHILD_LABELS.CLIENT_OFFERS,
+        end: true
+      });
+    }
     const parentPath = normalizeLnbPath(item.to);
     const to = parentPath === ADMIN_ROUTES.SHOP_CATALOG_SKUS ? ADMIN_ROUTES.SHOP_ORDERS : item.to;
     return { ...item, to, children: ordered };

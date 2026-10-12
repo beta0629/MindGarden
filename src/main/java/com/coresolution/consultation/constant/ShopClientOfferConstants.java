@@ -26,13 +26,15 @@ public final class ShopClientOfferConstants {
     /** 할인율 상한(%) — 100 미만만 허용 */
     public static final long RATE_MAX_PERCENT = 99L;
 
-    public static final String MSG_CLIENT_NOT_FOUND = "대상 내담자를 찾을 수 없어요.";
-    public static final String MSG_SOURCE_NOT_FOUND = "지정할 상품을 찾을 수 없어요.";
-    public static final String MSG_SOURCE_NOT_SELLABLE = "판매할 수 없는 상품이에요.";
-    public static final String MSG_DISCOUNT_TYPE_INVALID = "할인 방식이 올바르지 않아요.";
-    public static final String MSG_DISCOUNT_VALUE_INVALID = "할인 값이 올바르지 않아요.";
-    public static final String MSG_FINAL_PRICE_INVALID = "할인 후 금액이 결제 가능 최소 금액보다 작아요.";
+    public static final String MSG_CLIENT_NOT_FOUND = "대상 내담자를 찾을 수 없습니다.";
+    public static final String MSG_SOURCE_NOT_FOUND = "지정할 상품을 찾을 수 없습니다.";
+    public static final String MSG_SOURCE_NOT_SELLABLE = "판매할 수 없는 상품입니다.";
+    public static final String MSG_DISCOUNT_TYPE_INVALID = "할인 방식이 올바르지 않습니다.";
+    public static final String MSG_DISCOUNT_VALUE_INVALID = "할인 값이 올바르지 않습니다.";
+    public static final String MSG_FINAL_PRICE_INVALID = "할인 후 금액이 결제 가능 최소 금액보다 작습니다.";
     public static final String MSG_CLIENT_NOT_ELIGIBLE =
-            "이 내담자의 상담 배정과 맞지 않는 상품이라 지정할 수 없어요.";
-    public static final String MSG_OFFER_NOT_FOUND = "지정 내역을 찾을 수 없어요.";
+            "이 내담자의 상담 배정과 맞지 않는 상품이라 지정할 수 없습니다.";
+    public static final String MSG_OFFER_ALREADY_PENDING =
+            "이 내담자에게 같은 상품이 이미 결제 대기 중입니다. 결제 완료 또는 지정 취소 후 다시 지정해 주십시오.";
+    public static final String MSG_OFFER_NOT_FOUND = "지정 내역을 찾을 수 없습니다.";
 }

@@ -23,6 +23,16 @@ jest.mock('axios', () => ({
   }
 }));
 
+jest.mock(
+  '@portone/browser-sdk/v2',
+  () => ({
+    __esModule: true,
+    requestPayment: jest.fn(),
+    loadIssueBillingKeyUI: jest.fn()
+  }),
+  { virtual: true }
+);
+
 jest.mock('./hooks/useTenantBranding', () => ({
   useTenantBranding: () => ({
     hasCustomBranding: false,

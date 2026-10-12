@@ -7,6 +7,8 @@ import { fetchConsultantMappings } from '../../../../services/clientShopService'
 import { runShopCheckoutWithPortOneGuard } from '../../../../utils/shopCheckoutPortOneGuard';
 import { useClientShopAuth } from '../../../../hooks/useClientShopAuth';
 
+import { CLIENT_MALL_PHONE_COPY, CLIENT_MALL_USAGE_BANNER_EXAMPLE } from '../../../../constants/clientMallConstants';
+
 jest.mock('react-i18next', () => {
   // eslint-disable-next-line global-require
   const ko = require('../../../../locales/ko/clientOffers.json');
@@ -26,6 +28,7 @@ jest.mock('../../../../components/shop/templates/ShopClientLayout', () => ({ tit
   <main><h1>{title}</h1>{children}</main>
 ));
 jest.mock('../../../../components/shop/templates/ShopClientSessionLoading', () => () => <div>loading</div>);
+jest.mock('../../../../contexts/SessionContext', () => ({ useSession: () => ({ checkSession: jest.fn() }) }));
 jest.mock('../../../../hooks/useClientShopAuth', () => ({ useClientShopAuth: jest.fn() }));
 jest.mock('../../../../hooks/useShopPaymentCancelNotice', () => () => ({ visible: false, dismiss: () => {} }));
 jest.mock('../../../../services/shopClientOfferService', () => ({ listMyClientOffers: jest.fn() }));
@@ -116,7 +119,7 @@ describe('ClientOffersPage', () => {
     expect(runShopCheckoutWithPortOneGuard.mock.calls[0][0].mappingIdForCheckout).toBe('1');
   });
 
-  test('설정에서 돌아오면 선택·동의가 유지된다', async() => {
+  test('결제창 취소 복귀 등으로 다시 열면 선택·동의가 유지된다', async() => {
     listMyClientOffers.mockResolvedValue([OFFER(1), OFFER(2)]);
     window.sessionStorage.setItem('mg.clientOffers.draft.5', JSON.stringify({
       skuCode: 'OFFER_2', agreements: { purchase: true }, mappingId: ''
@@ -126,12 +129,13 @@ describe('ClientOffersPage', () => {
     expect(screen.getAllByTestId('client-offers-card')[1].getAttribute('aria-checked')).toBe('true');
   });
 
-  test('휴대폰 미인증이면 설정 이동 링크(returnTo=/client/offers)', async() => {
+  test('휴대폰 미인증이면 화면 안 몰 인증(「인증하기」) · 설정 이동 링크 없음 · 이용기간 배너', async() => {
     useClientShopAuth.mockReturnValue({ sessionLoading: false, isLoggedIn: true, user: { id: 5, name: '한서윤' } });
     listMyClientOffers.mockResolvedValue([OFFER(1)]);
     renderPage();
-    const link = await screen.findByRole('link', { name: '설정으로 이동' });
-    expect(decodeURIComponent(link.getAttribute('href'))).toContain('returnTo=/client/offers');
+    expect(await screen.findByRole('button', { name: CLIENT_MALL_PHONE_COPY.START })).toBeTruthy();
+    expect(screen.queryByRole('link', { name: '설정으로 이동' })).toBeNull();
+    expect(screen.getByText(CLIENT_MALL_USAGE_BANNER_EXAMPLE, { exact: false })).toBeTruthy();
   });
 
   test('목록 실패 시 다시 시도', async() => {

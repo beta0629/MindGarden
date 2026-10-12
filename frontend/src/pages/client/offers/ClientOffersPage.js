@@ -19,6 +19,8 @@ import MallPrice from '../../../components/shop/molecules/MallPrice';
 import MallPayFailedAlert from '../../../components/shop/molecules/MallPayFailedAlert';
 import MallPaymentCancelNotice from '../../../components/shop/molecules/MallPaymentCancelNotice';
 import MallAgreements from '../../../components/shop/organisms/MallAgreements';
+import MallPhoneVerifyInline from '../../../components/shop/organisms/MallPhoneVerifyInline';
+import MallUsageBanner from '../../../components/shop/molecules/MallUsageBanner';
 import MGButton from '../../../components/common/MGButton';
 import SafeText from '../../../components/common/SafeText';
 import {
@@ -26,6 +28,8 @@ import {
   CLIENT_MALL_AGREEMENT_KEYS,
   CLIENT_MALL_THIRD_PARTY_BODY,
   CLIENT_REFUND_NOTICE,
+  CLIENT_MALL_USAGE_BANNER,
+  CLIENT_MALL_USAGE_BANNER_EXAMPLE,
   buildClientMallProductUsageNotice
 } from '../../../constants/clientMallConstants';
 import {
@@ -44,7 +48,10 @@ import {
   SHOP_CLIENT_OFFER_DISCOUNT_TYPE
 } from '../../../constants/shopClientOfferConstants';
 import { CONSULTATION_PACKAGE_PAYMENT_TYPE_NOTE } from '../../../constants/legalPublic';
+import { useSession } from '../../../contexts/SessionContext';
 import { useClientShopAuth } from '../../../hooks/useClientShopAuth';
+import usePhoneVerifyFlow from '../../../hooks/usePhoneVerifyFlow';
+import { applyVerifiedPhoneToSession } from '../../../utils/clientPhoneVerifiedSession';
 import useShopPaymentCancelNotice from '../../../hooks/useShopPaymentCancelNotice';
 import {
   cancelShopOrder,
@@ -75,7 +82,6 @@ import {
 } from '../../../utils/clientShopCheckoutMapping';
 import { formatMallNumber } from '../../../utils/clientMall';
 import { toBuyNowCheckoutLines } from '../../../utils/clientMallBuyNow';
-import { buildSettingsPathWithReturnTo } from '../../../utils/clientSettingsReturnTo';
 import {
   readClientOffersDraft,
   selectPayableOffers,
@@ -97,6 +103,7 @@ const ClientOffersPage = () => {
     requireLogin: true,
     loginRedirectPath: CLIENT_OFFER_ROUTES.OFFERS
   });
+  const { checkSession } = useSession();
   const navigate = useNavigate();
   const location = useLocation();
   const baseId = useId();
@@ -179,7 +186,16 @@ const ClientOffersPage = () => {
   const showMappingPicker = shouldShowConsultantMappingPicker(mappings);
   const pickerOptions = useMemo(() => buildConsultantPickerOptions(mappings, titles), [mappings, titles]);
   const allAgreed = CLIENT_MALL_AGREEMENT_ITEMS.every((item) => agreements[item.key]);
-  const phoneVerified = portOneCustomerGate.ready;
+  const phoneFlow = usePhoneVerifyFlow({
+    initialPhoneDigits: resolveSessionPhoneNumber(user) || '',
+    initiallyVerified: portOneCustomerGate.ready,
+    onVerified: ({ phoneDigits, response }) => applyVerifiedPhoneToSession({
+      phoneDigits,
+      phoneVerifiedAt: response?.phoneVerifiedAt ?? null,
+      checkSession
+    })
+  });
+  const phoneVerified = portOneCustomerGate.ready && phoneFlow.isVerified;
   const noMapping = mappings.length === 0;
   const needsConsultant = showMappingPicker && !selectedMappingId;
 
@@ -353,16 +369,7 @@ const ClientOffersPage = () => {
     ...(!noMapping ? [{
       key: 'phone',
       label: t('buyer.phone'),
-      value: phoneVerified ? (
-        <span className="client-mall-phone__done-text">
-          {t('buyer.verified', { phone: resolveSessionPhoneNumber(user) || '' })}
-        </span>
-      ) : (
-        <span className="client-mall-phone__needs">
-          {t('buyer.needsVerifyText')}{' '}
-          <Link to={buildSettingsPathWithReturnTo(`${location.pathname}${location.search}`)}>{t('buyer.settingsLink')}</Link>
-        </span>
-      )
+      value: <MallPhoneVerifyInline flow={phoneFlow} />
     }] : [])
   ] : [];
 
@@ -408,6 +415,7 @@ const ClientOffersPage = () => {
       ) : null}
       {loadState === 'ready' && payable.length > 0 ? (
         <>
+          <MallUsageBanner text={CLIENT_MALL_USAGE_BANNER} example={CLIENT_MALL_USAGE_BANNER_EXAMPLE} />
           <section aria-labelledby={`${baseId}-list`}>
             <p className="client-offers__list-head" id={`${baseId}-list`}>{t('listHead', { count: payable.length })}</p>
             <ul className="client-offers__grid" role="radiogroup" aria-labelledby={`${baseId}-list`}>

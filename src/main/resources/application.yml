@@ -254,6 +254,11 @@ mindgarden:
     account-integration:
       email-verification-cooldown-seconds: 60
       email-verification-daily-limit: 10
+      verify-max-attempts-per-email: 5
+      verify-lock-minutes: 10
+      verify-max-failures-per-ip: 20
+      send-max-requests-per-ip: 10
+      ip-window-minutes: 10
     rate-limit:
       integration-path-prefix: /api/v1/accounts/integration/
       integration-requests-per-minute: 20

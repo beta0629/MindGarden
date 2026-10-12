@@ -3,6 +3,25 @@
  */
 import React from 'react';
 import { webcrypto } from 'crypto';
+
+jest.mock('axios', () => ({
+  __esModule: true,
+  default: {
+    get: jest.fn(() => Promise.resolve({ data: {} })),
+    post: jest.fn(() => Promise.resolve({ data: {} })),
+    put: jest.fn(() => Promise.resolve({ data: {} })),
+    delete: jest.fn(() => Promise.resolve({ data: {} })),
+    create: jest.fn(() => ({
+      get: jest.fn(() => Promise.resolve({ data: {} })),
+      post: jest.fn(() => Promise.resolve({ data: {} })),
+      interceptors: { request: { use: jest.fn() }, response: { use: jest.fn() } }
+    })),
+    interceptors: {
+      request: { use: jest.fn(), eject: jest.fn() },
+      response: { use: jest.fn(), eject: jest.fn() }
+    }
+  }
+}));
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';

@@ -12,6 +12,9 @@ export const PAGED_LIST_FIRST_PAGE = 0;
 /** 내담자 목록 기본 page size */
 export const CLIENT_LIST_PAGE_SIZE = 20;
 
+/** 무한 스크롤: 목록 끝에서 이 거리(px) 안에 들어오면 다음 페이지를 부른다 */
+export const INFINITE_SCROLL_END_THRESHOLD_PX = 24;
+
 /** 목록 배열을 찾을 응답 키 (앞에서부터) */
 export const PAGED_LIST_ITEM_KEYS = Object.freeze([
   'content',

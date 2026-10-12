@@ -28,7 +28,7 @@ export const SHOP_CLIENT_OFFER_API = Object.freeze({
   ADMIN_CLIENT_SEARCH: '/api/v1/admin/clients/search'
 });
 
-/** 관리자 내담자 검색 한 번에 받는 건수 (입력할 때마다 서버 검색, BE AdminClientSearchConstants.DEFAULT_PAGE_SIZE) */
+/** 관리자 내담자 검색 한 페이지 건수 — 결과는 자르지 않고 스크롤하면 다음 페이지를 이어 받는다 (BE AdminClientSearchConstants.DEFAULT_PAGE_SIZE) */
 export const ADMIN_CLIENT_SEARCH_PAGE_SIZE = 20;
 
 /** 관리자 내담자 검색 입력 디바운스 (ms) */

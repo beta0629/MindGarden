@@ -34,6 +34,7 @@
     "clientSearchPlaceholder": "이름 또는 연락처 뒷자리로 검색",
     "clientEmpty": "일치하는 내담자가 없습니다",
     "clientSearching": "내담자를 검색하고 있습니다",
+    "clientLoadingMore": "내담자를 더 불러오고 있습니다",
     "clientOption": "{{name}} · {{phoneTail}}",
     "summary": "{{name}} 님에게 {{amount}}원으로 지정합니다"
   },

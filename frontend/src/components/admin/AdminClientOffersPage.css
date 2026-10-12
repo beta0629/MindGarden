@@ -143,6 +143,14 @@ select.aco-ctl { appearance: none; padding-inline-end: var(--mg-v2-space-8); }
 .aco-combo__option { display: flex; align-items: center; min-block-size: var(--mg-control-height-sm); padding-inline: var(--mg-v2-space-3); border-radius: var(--mg-v2-radius-sm); cursor: pointer; }
 .aco-combo__option[aria-selected="true"] { background: var(--cs-slate-200); font-weight: var(--mg-v2-font-weight-semibold); }
 .aco-combo__empty { padding: var(--mg-v2-space-3); color: var(--cs-slate-600); }
+/*
+ * 글로벌 `_dropdowns.css` 의 `[role="listbox"]`(position: relative) 와 `[role="listbox"] > *`(position: fixed; transform; will-change)
+ * 가 목록을 흐름 안으로 끌어내리고 항목을 같은 좌표에 포개 그리던 회귀를 컴포넌트 범위에서만 되돌린다.
+ * 선택자 특이도(0,2,0)로 글로벌 규칙(0,1,0)보다 우선한다. 스크롤 컨테이너(onScroll·무한 스크롤)는 이 ul 이다.
+ */
+.aco-combo > .aco-combo__list { position: absolute; z-index: var(--mg-v2-z-sticky); isolation: auto; }
+.aco-combo__list > .aco-combo__option,
+.aco-combo__list > .aco-combo__empty { position: static; z-index: auto; transform: none; will-change: auto; isolation: auto; }
 .aco-toast-slot { position: fixed; inset-block-end: var(--mg-v2-space-6); inset-inline: 0; display: flex; justify-content: center; z-index: var(--mg-v2-z-overlay); pointer-events: none; }
 .aco-toast-slot > .aco-toast { pointer-events: auto; }
 .aco-btn-block { inline-size: auto; }

@@ -17,8 +17,8 @@ describe('previewOfferFinalPrice', () => {
 
 describe('client combobox options', () => {
   const opts = buildClientOptions([
-    { id: 1, name: '한서윤', phone: '010-1111-1234' },
-    { id: 2, name: '김민준', phone: '010-2222-5678' },
+    { id: 1, name: '한서윤', phoneLast4: '1234', maskedPhone: '010-****-1234' },
+    { id: 2, name: '김민준', phoneLast4: '5678', maskedPhone: '010-****-5678' },
     { id: 3, name: '이하늘' }
   ], (n, tail) => `${n} · ${tail}`);
 
@@ -30,5 +30,8 @@ describe('client combobox options', () => {
     expect(filterClientOptions(opts, '5678').map((o) => o.value)).toEqual(['2']);
     expect(filterClientOptions(opts, '').length).toBe(3);
     expect(filterClientOptions(opts, '0000')).toEqual([]);
+  });
+  test('옵션에 전체 연락처가 남지 않는다', () => {
+    expect(JSON.stringify(opts)).not.toMatch(/010|\*/);
   });
 });

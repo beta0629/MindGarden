@@ -24,8 +24,12 @@ export const CLIENT_OFFERS_PAY_FAILURE_STATE_KEY = 'clientOffersPayFailureReason
 export const SHOP_CLIENT_OFFER_API = Object.freeze({
   ADMIN: '/api/v1/admin/shop/client-offers',
   ADMIN_SOURCE_OPTIONS: '/api/v1/admin/shop/client-offers/source-options',
-  CLIENT: '/api/v1/clients/me/shop-offers'
+  CLIENT: '/api/v1/clients/me/shop-offers',
+  ADMIN_CLIENT_SEARCH: '/api/v1/admin/clients/search'
 });
+
+/** 관리자 내담자 검색 한 번에 받는 최대 건수 (BE AdminClientSearchConstants.MAX_PAGE_SIZE) */
+export const ADMIN_CLIENT_SEARCH_MAX_SIZE = 1000;
 
 export const SHOP_CLIENT_OFFER_DISCOUNT_TYPE = Object.freeze({
   AMOUNT: 'AMOUNT',

@@ -1,5 +1,6 @@
 /**
  * ClientSearchCombobox — 이름·연락처 뒷자리로 검색하는 단일 선택 콤보박스 (APG combobox/listbox)
+ * onQueryChange 를 주면 검색은 서버가 하고(options = 서버 결과), 없으면 options 를 화면에서 거른다.
  *
  * @author CoreSolution
  * @since 2026-10-12
@@ -12,16 +13,31 @@ import SafeText from '../../common/SafeText';
 import { filterClientOptions } from '../../../utils/shopClientOffer';
 
 const ClientSearchCombobox = ({
-  options, value, onChange, label, placeholder, emptyText, disabled, testId
+  options, value, selectedOption, onChange, onQueryChange, loading, loadingText,
+  label, placeholder, emptyText, disabled, testId
 }) => {
   const listId = useId();
   const inputId = useId();
   const rootRef = useRef(null);
-  const selected = useMemo(() => options.find((o) => o.value === value) || null, [options, value]);
+  const selected = useMemo(
+    () => selectedOption || options.find((o) => o.value === value) || null,
+    [selectedOption, options, value]
+  );
+  const remote = typeof onQueryChange === 'function';
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [active, setActive] = useState(0);
-  const filtered = useMemo(() => filterClientOptions(options, query), [options, query]);
+  const filtered = useMemo(
+    () => (remote ? options : filterClientOptions(options, query)),
+    [remote, options, query]
+  );
+
+  const updateQuery = (next) => {
+    setQuery(next);
+    if (remote) {
+      onQueryChange(next);
+    }
+  };
 
   useEffect(() => {
     if (!open) {
@@ -30,7 +46,7 @@ const ClientSearchCombobox = ({
     const onDown = (e) => {
       if (rootRef.current && !rootRef.current.contains(e.target)) {
         setOpen(false);
-        setQuery('');
+        updateQuery('');
       }
     };
     document.addEventListener('mousedown', onDown);
@@ -40,7 +56,7 @@ const ClientSearchCombobox = ({
   const choose = (option) => {
     onChange(option.value);
     setOpen(false);
-    setQuery('');
+    updateQuery('');
   };
 
   const onKeyDown = (e) => {
@@ -56,7 +72,7 @@ const ClientSearchCombobox = ({
       choose(filtered[active]);
     } else if (e.key === 'Escape') {
       setOpen(false);
-      setQuery('');
+      updateQuery('');
     }
   };
 
@@ -78,15 +94,17 @@ const ClientSearchCombobox = ({
           placeholder={selected ? selected.label : placeholder}
           value={open ? query : (selected ? selected.label : '')}
           onFocus={() => setOpen(true)}
-          onChange={(e) => { setQuery(e.target.value); setActive(0); setOpen(true); }}
+          onChange={(e) => { updateQuery(e.target.value); setActive(0); setOpen(true); }}
           onKeyDown={onKeyDown}
           data-testid={testId}
         />
         <ChevronDown className="aco-icon" aria-hidden="true" />
       </span>
       {open ? (
-        <ul id={listId} role="listbox" aria-label={label} className="aco-combo__list">
-          {filtered.length === 0 ? (
+        <ul id={listId} role="listbox" aria-label={label} aria-busy={loading} className="aco-combo__list">
+          {loading && filtered.length === 0 ? (
+            <li className="aco-combo__empty" role="option" aria-selected="false" aria-disabled="true">{loadingText}</li>
+          ) : filtered.length === 0 ? (
             <li className="aco-combo__empty" role="option" aria-selected="false" aria-disabled="true">{emptyText}</li>
           ) : filtered.map((o, i) => (
             <li
@@ -114,6 +132,10 @@ ClientSearchCombobox.propTypes = {
     searchText: PropTypes.string
   })).isRequired,
   value: PropTypes.string,
+  selectedOption: PropTypes.shape({ value: PropTypes.string, label: PropTypes.string }),
+  onQueryChange: PropTypes.func,
+  loading: PropTypes.bool,
+  loadingText: PropTypes.string,
   onChange: PropTypes.func.isRequired,
   label: PropTypes.string.isRequired,
   placeholder: PropTypes.string,
@@ -123,7 +145,8 @@ ClientSearchCombobox.propTypes = {
 };
 
 ClientSearchCombobox.defaultProps = {
-  value: '', placeholder: '', emptyText: '', disabled: false, testId: undefined
+  value: '', selectedOption: null, onQueryChange: undefined, loading: false, loadingText: '',
+  placeholder: '', emptyText: '', disabled: false, testId: undefined
 };
 
 export default ClientSearchCombobox;

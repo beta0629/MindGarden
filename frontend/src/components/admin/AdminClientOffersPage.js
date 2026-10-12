@@ -26,7 +26,8 @@ import {
 } from '../../services/shopClientOfferService';
 import {
   ADMIN_CLIENT_OFFERS_I18N_NS,
-  ADMIN_CLIENT_SEARCH_MAX_SIZE,
+  ADMIN_CLIENT_SEARCH_DEBOUNCE_MS,
+  ADMIN_CLIENT_SEARCH_PAGE_SIZE,
   ADMIN_CLIENT_OFFERS_TEST_IDS,
   SHOP_CLIENT_OFFER_DISCOUNT_TYPE,
   SHOP_CLIENT_OFFER_RATE_MAX_PERCENT,
@@ -35,6 +36,7 @@ import {
 import { ADMIN_ROUTES } from '../../constants/adminRoutes';
 import { RoleUtils } from '../../constants/roles';
 import { useSession } from '../../contexts/SessionContext';
+import useDebounce from '../../hooks/useDebounce';
 import { buildClientOptions, previewOfferFinalPrice } from '../../utils/shopClientOffer';
 import '../../styles/unified-design-tokens.css';
 import '../../styles/tokens/shop-offer-tokens.css';
@@ -61,6 +63,10 @@ const AdminClientOffersPage = () => {
 
   const [booting, setBooting] = useState(true);
   const [clients, setClients] = useState([]);
+  const [clientQuery, setClientQuery] = useState('');
+  const [clientSearching, setClientSearching] = useState(false);
+  const [clientSearchError, setClientSearchError] = useState('');
+  const [selectedClient, setSelectedClient] = useState(null);
   const [sources, setSources] = useState([]);
   const [bootError, setBootError] = useState('');
   const [offers, setOffers] = useState([]);
@@ -79,7 +85,7 @@ const AdminClientOffersPage = () => {
     () => buildClientOptions(clients, (name, tail) => t('form.clientOption', { name, phoneTail: tail })),
     [clients, t]
   );
-  const selectedClient = clientOptions.find((o) => o.value === clientId) || null;
+  const debouncedClientQuery = useDebounce(clientQuery.trim(), ADMIN_CLIENT_SEARCH_DEBOUNCE_MS);
   const selectedSource = useMemo(
     () => sources.find((s) => s.skuCode === sourceSkuCode) || null,
     [sources, sourceSkuCode]
@@ -107,12 +113,8 @@ const AdminClientOffersPage = () => {
     let cancelled = false;
     (async() => {
       try {
-        const [clientsRaw, sourceRows] = await Promise.all([
-          searchAdminClients({ size: ADMIN_CLIENT_SEARCH_MAX_SIZE }),
-          listAdminOfferSourceOptions()
-        ]);
+        const sourceRows = await listAdminOfferSourceOptions();
         if (!cancelled) {
-          setClients(clientsRaw);
           setSources(sourceRows);
         }
       } catch (e) {
@@ -127,6 +129,36 @@ const AdminClientOffersPage = () => {
     })();
     return () => { cancelled = true; };
   }, [sessionLoading, isLoggedIn, user?.id, allowed, navigate, t]);
+
+  useEffect(() => {
+    if (sessionLoading || !isLoggedIn || !allowed) {
+      return undefined;
+    }
+    let cancelled = false;
+    setClientSearching(true);
+    setClientSearchError('');
+    (async() => {
+      try {
+        const rows = await searchAdminClients({
+          q: debouncedClientQuery || undefined,
+          size: ADMIN_CLIENT_SEARCH_PAGE_SIZE
+        });
+        if (!cancelled) {
+          setClients(rows);
+        }
+      } catch (e) {
+        if (!cancelled) {
+          setClients([]);
+          setClientSearchError(e?.message || t('states.clientsLoadFailed'));
+        }
+      } finally {
+        if (!cancelled) {
+          setClientSearching(false);
+        }
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [debouncedClientQuery, sessionLoading, isLoggedIn, allowed, t]);
 
   useEffect(() => {
     if (!toast) {
@@ -154,6 +186,7 @@ const AdminClientOffersPage = () => {
 
   const handleClientChange = (value) => {
     setClientId(value);
+    setSelectedClient(clientOptions.find((o) => o.value === value) || null);
     setSaveError('');
     loadOffers(value);
   };
@@ -381,10 +414,14 @@ const AdminClientOffersPage = () => {
                   <ClientSearchCombobox
                     options={clientOptions}
                     value={clientId}
+                    selectedOption={selectedClient}
                     onChange={handleClientChange}
+                    onQueryChange={setClientQuery}
+                    loading={clientSearching}
+                    loadingText={t('form.clientSearching')}
                     label={t('form.clientLabel')}
                     placeholder={t('form.clientSearchPlaceholder')}
-                    emptyText={t('form.clientEmpty')}
+                    emptyText={clientSearchError || t('form.clientEmpty')}
                     disabled={saving || booting}
                     testId={T.CLIENT_COMBO}
                   />

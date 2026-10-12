@@ -59,6 +59,16 @@ describe('AdminClientOffersPage', () => {
     await waitFor(() => expect(offerService.listAdminClientOffers).toHaveBeenCalledWith('7'));
   };
 
+  test('입력할 때마다 서버에서 최대 20건만 검색한다 (?q=, 디바운스)', async() => {
+    renderPage();
+    await waitFor(() => expect(offerService.searchAdminClients).toHaveBeenCalledWith({ q: undefined, size: 20 }));
+    const combo = await screen.findByTestId('admin-client-offers-client');
+    fireEvent.focus(combo);
+    fireEvent.change(combo, { target: { value: '한서' } });
+    await waitFor(() => expect(offerService.searchAdminClients).toHaveBeenLastCalledWith({ q: '한서', size: 20 }));
+    expect(offerService.searchAdminClients).not.toHaveBeenCalledWith(expect.objectContaining({ size: 1000 }));
+  });
+
   test('내담자 미선택이면 지정하기가 비활성이고 안내가 보인다', async() => {
     renderPage();
     expect((await screen.findAllByText('먼저 내담자를 선택해 주세요')).length).toBe(2);

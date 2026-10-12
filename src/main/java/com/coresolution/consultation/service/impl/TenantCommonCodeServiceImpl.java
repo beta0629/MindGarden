@@ -14,6 +14,7 @@ import com.coresolution.consultation.repository.CodeGroupMetadataRepository;
 import com.coresolution.consultation.repository.CommonCodeRepository;
 import com.coresolution.consultation.repository.RecurringExpenseRepository;
 import com.coresolution.consultation.repository.erp.financial.FinancialTransactionRepository;
+import com.coresolution.consultation.service.CommonCodeDeletionGuard;
 import com.coresolution.consultation.service.TenantCommonCodeService;
 import com.coresolution.consultation.util.CommonCodeSubcategoryParents;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -60,6 +61,7 @@ public class TenantCommonCodeServiceImpl implements TenantCommonCodeService {
     private final RecurringExpenseRepository recurringExpenseRepository;
     private final ObjectMapper objectMapper;
     private final TenantCommonCodeCacheEvictor tenantCommonCodeCacheEvictor;
+    private final CommonCodeDeletionGuard commonCodeDeletionGuard;
     /** 자동 발급 충돌 재시도용(없으면 단일 트랜잭션 저장). */
     private final PlatformTransactionManager transactionManager;
 
@@ -263,6 +265,7 @@ public class TenantCommonCodeServiceImpl implements TenantCommonCodeService {
         }
 
         assertExpenseIncomeCodeDeletable(tenantId, code);
+        commonCodeDeletionGuard.assertDeletable(tenantId, code);
 
         code.delete();
         code.setIsActive(false);

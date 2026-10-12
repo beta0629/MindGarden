@@ -22,6 +22,13 @@ public final class ConsultationPackageCodeConstants {
 
     public static final String DUPLICATE_CODE_MESSAGE_FMT = "이미 존재하는 코드입니다: %s.%s";
 
+    /** 삭제 차단 — 주문·결제 이력 */
+    public static final String MSG_DELETE_BLOCKED_BY_ORDERS =
+            "이 상품으로 주문·결제된 이력이 있어 삭제할 수 없습니다. 판매를 멈추려면 비활성으로 바꿔 주십시오.";
+    /** 삭제 차단 — 회기(상담 매칭) 이력 */
+    public static final String MSG_DELETE_BLOCKED_BY_SESSIONS =
+            "이 상품으로 등록된 회기 이력이 있어 삭제할 수 없습니다. 판매를 멈추려면 비활성으로 바꿔 주십시오.";
+
     public static final String CODE_VALUE_REQUIRED_MESSAGE = "코드 값은 필수입니다.";
 
     public static final String AUTO_GENERATION_FAILED_MESSAGE =

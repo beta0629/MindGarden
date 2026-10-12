@@ -533,7 +533,7 @@ function PackagePricingDetailPage({ isNew: isNewProp }) {
                     <input
                       type="number"
                       min="0"
-                      max="100"
+                      max="99"
                       className="mg-v2-form-input mg-v2-package-pricing__discount-input"
                       value={form.discountRate === 0 ? '' : form.discountRate}
                       onChange={handleDiscountChange}

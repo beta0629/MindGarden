@@ -1136,3 +1136,41 @@
   color: var(--cs-slate-900);
   font-weight: var(--mg-v2-font-weight-semibold);
 }
+
+/* 상품 구성 카드 개선 — 제목 단계·잠금 표시 (시안 shop-offers C) */
+.admin-shop-suite__layout--editor .admin-shop-suite__card-title {
+  font-size: var(--mg-card-title-size);
+}
+
+.admin-shop-suite__label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mg-v2-space-2);
+}
+
+.admin-shop-suite__lock-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--mg-v2-space-1);
+  color: var(--cs-slate-600);
+  font-size: var(--mg-v2-font-size-caption);
+}
+
+.admin-shop-suite__lock-tag svg {
+  width: var(--mg-icon-size-sm);
+  height: var(--mg-icon-size-sm);
+}
+
+.admin-shop-suite__field--locked .admin-shop-suite__input,
+.admin-shop-suite__field--locked .admin-shop-suite__stepper,
+.admin-shop-suite__field--locked .admin-shop-suite__stepper input {
+  background: var(--cs-slate-100);
+  border-color: var(--cs-slate-200);
+}
+
+.admin-shop-suite__field--locked .admin-shop-suite__stepper button {
+  background: var(--cs-slate-100);
+  color: var(--cs-slate-500);
+  cursor: not-allowed;
+}

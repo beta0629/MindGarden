@@ -50,3 +50,8 @@
 **/GlobalExceptionHandlerCommonCodeInUseTest.java
 # 내담자 검색 (#1575)
 **/AdminClientSearchServiceTest.java
+
+# 2026-10-12 추가 (#1587 내담자 가시성 필터)
+**/ClientVisibilityPolicyTest.java
+**/AdminClientSearchServiceVisibilityTest.java
+**/ShopClientOfferCreateVisibilityTest.java

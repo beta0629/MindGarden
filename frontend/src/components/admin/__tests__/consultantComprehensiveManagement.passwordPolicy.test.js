@@ -6,6 +6,11 @@ import { webcrypto } from 'crypto';
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
+
+jest.mock('../../../utils/menuApi', () => ({
+  getLnbMenus: jest.fn().mockResolvedValue([])
+}));
+
 import ConsultantComprehensiveManagement from '../ConsultantComprehensiveManagement';
 import { apiGet, apiPost } from '../../../utils/ajax';
 import { SANITIZED_INTERNAL_SERVER_ERROR_MESSAGE } from '../../../constants/genericServerErrorMessages';

@@ -33,6 +33,7 @@ import com.coresolution.consultation.constant.MappingStatusConstants;
 import com.coresolution.consultation.constant.PaymentTimingConstants;
 import com.coresolution.consultation.constant.ScheduleServiceUserFacingMessages;
 import com.coresolution.consultation.constant.ScheduleStatus;
+import com.coresolution.consultation.constant.ClientVisibilityPolicy;
 import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.constant.admin.AdminServiceUserFacingMessages;
 import com.coresolution.consultation.constant.userprofile.UserProfileServiceUserFacingMessages;
@@ -5823,32 +5824,6 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             .collect(Collectors.toList());
     }
 
-    /**
-     * with-mapping-info 가시 필터에서 제외할 lifecycle (DELETED_BY_ADMIN + terminal).
-     */
-    private static final List<LifecycleState> CLIENT_MAPPING_LIST_EXCLUDED_LIFECYCLES = List.of(
-            LifecycleState.DELETED_BY_ADMIN,
-            LifecycleState.ANONYMIZED,
-            LifecycleState.HARD_DELETED);
-
-    /**
-     * 통합 내담자 데이터(with-mapping-info) 목록에 노출할 내담자만 포함.
-     * DELETED_BY_ADMIN / ANONYMIZED / HARD_DELETED 는 삭제·종료 전용 화면으로 분리.
-     */
-    private boolean isVisibleInClientMappingList(User user) {
-        if (user == null) {
-            return false;
-        }
-        if (Boolean.FALSE.equals(user.getIsActive()) || Boolean.TRUE.equals(user.getIsDeleted())) {
-            return false;
-        }
-        LifecycleState state = user.getLifecycleState();
-        if (state == null) {
-            return true;
-        }
-        return state != LifecycleState.DELETED_BY_ADMIN && !state.isTerminal();
-    }
-
     private static boolean isSummaryClientsWithMappingView(String view) {
         return view != null
                 && ("summary".equalsIgnoreCase(view.trim())
@@ -5869,7 +5844,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
 
             String tenantId = getTenantId();
             List<User> clientUsers = userRepository.findByRole(tenantId, UserRole.CLIENT).stream()
-                    .filter(this::isVisibleInClientMappingList)
+                    .filter(ClientVisibilityPolicy::isVisible)
                     .collect(Collectors.toList());
             log.info("🔍 내담자 수: {}", clientUsers.size());
 
@@ -5893,7 +5868,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             String tenantId = getTenantId();
             Pageable safePageable = pageable != null ? pageable : org.springframework.data.domain.PageRequest.of(0, 20);
             Page<User> clientPage = userRepository.findVisibleClientsForMappingList(
-                    tenantId, UserRole.CLIENT, CLIENT_MAPPING_LIST_EXCLUDED_LIFECYCLES, safePageable);
+                    tenantId, UserRole.CLIENT, ClientVisibilityPolicy.EXCLUDED_LIFECYCLES, safePageable);
             List<User> clientUsers = clientPage.getContent();
             log.info("🔍 통합 내담자 페이지 조회 view={}, page={}, size={}, total={}",
                     summary ? "summary" : "full",

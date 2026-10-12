@@ -1,5 +1,6 @@
 package com.coresolution.consultation.service;
 
+import com.coresolution.consultation.constant.ClientVisibilityPolicy;
 import com.coresolution.consultation.constant.ShopCatalogCategory;
 import com.coresolution.consultation.constant.ShopClientOfferConstants;
 import com.coresolution.consultation.constant.ShopClientOrderStatus;
@@ -86,6 +87,8 @@ public class ShopClientOfferService {
         offerRepository.lockClientRow(tenantId, request.clientId());
         User client = userRepository.findByTenantIdAndId(tenantId, request.clientId())
                 .filter(u -> u.getRole() != null && u.getRole().isClient())
+                // 비활성·삭제·익명화 내담자에게는 지정하지 않는다 (관리자 검색·목록과 같은 조건)
+                .filter(ClientVisibilityPolicy::isVisible)
                 .orElseThrow(() -> new IllegalArgumentException(ShopClientOfferConstants.MSG_CLIENT_NOT_FOUND));
         ShopCatalogSku source = skuRepository.findActiveByTenantAndSkuCode(tenantId, request.sourceSkuCode().trim())
                 .filter(s -> !ShopClientOfferSkuPolicy.isClientOfferSku(s))

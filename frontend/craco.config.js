@@ -30,8 +30,13 @@ module.exports = {
         '^react-router/dom$':
           '<rootDir>/node_modules/react-router/dist/development/dom-export.js',
         '^@portone/browser-sdk/v2$':
-          '<rootDir>/node_modules/@portone/browser-sdk/dist/v2.cjs'
+          '<rootDir>/src/test-utils/portoneBrowserSdkV2Stub.cjs'
       };
+      // CRA 기본 node_modules ignore에서 axios만 제외해 ESM import를 변환한다.
+      jestConfig.transformIgnorePatterns = [
+        '[/\\\\]node_modules[/\\\\](?!axios/).+\\.(js|jsx|mjs|cjs|ts|tsx)$',
+        '^.+\\.module\\.(css|sass|scss)$'
+      ];
       return jestConfig;
     }
   }

@@ -6,10 +6,32 @@ import { webcrypto } from 'crypto';
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
-import ConsultantComprehensiveManagement from '../ConsultantComprehensiveManagement';
 import { apiGet, apiPost } from '../../../utils/ajax';
 import { SANITIZED_INTERNAL_SERVER_ERROR_MESSAGE } from '../../../constants/genericServerErrorMessages';
 import '../../../i18n';
+
+jest.mock('axios', () => ({
+  __esModule: true,
+  default: {
+    get: jest.fn(() => Promise.resolve({ data: {} })),
+    post: jest.fn(() => Promise.resolve({ data: {} })),
+    put: jest.fn(() => Promise.resolve({ data: {} })),
+    delete: jest.fn(() => Promise.resolve({ data: {} })),
+    create: jest.fn(() => ({
+      get: jest.fn(() => Promise.resolve({ data: {} })),
+      post: jest.fn(() => Promise.resolve({ data: {} })),
+      interceptors: { request: { use: jest.fn() }, response: { use: jest.fn() } }
+    })),
+    interceptors: {
+      request: { use: jest.fn(), eject: jest.fn() },
+      response: { use: jest.fn(), eject: jest.fn() }
+    }
+  }
+}));
+
+jest.mock('../../../utils/menuApi', () => ({
+  getLnbMenus: jest.fn().mockResolvedValue([])
+}));
 
 jest.mock('../../../utils/ajax', () => {
   const actual = jest.requireActual('../../../utils/ajax');
@@ -49,6 +71,8 @@ jest.mock('../../../utils/sessionManager', () => ({
     setUser: jest.fn()
   }
 }));
+
+import ConsultantComprehensiveManagement from '../ConsultantComprehensiveManagement';
 
 jest.setTimeout(20000);
 

@@ -19,6 +19,14 @@ import ENV from './environment';
 export const getApiBaseUrl = () => ENV.API_BASE_URL;
 export const { API_BASE_URL } = ENV; // 하위 호환성을 위해 유지 (getter로 동작)
 
+// 계정 연동 API (서버 AccountIntegrationApiPaths 와 동일 경로. 이 상수 한 곳만 쓴다)
+const ACCOUNT_INTEGRATION_BASE = '/api/v1/accounts/integration';
+export const ACCOUNT_INTEGRATION_API = {
+  SEND_VERIFICATION_CODE: `${ACCOUNT_INTEGRATION_BASE}/send-verification-code`,
+  VERIFY_CODE: `${ACCOUNT_INTEGRATION_BASE}/verify-code`,
+  INTEGRATE: `${ACCOUNT_INTEGRATION_BASE}/integrate`
+};
+
 // 인증 관련 API (표준 경로: /api/v1/auth)
 export const AUTH_API = {
   // 일반 로그인/회원가입

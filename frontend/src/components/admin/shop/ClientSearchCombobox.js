@@ -2,6 +2,7 @@
  * ClientSearchCombobox — 이름·연락처 뒷자리로 검색하는 단일 선택 콤보박스 (APG combobox/listbox)
  * onLoadMore·hasMore 를 주면 목록 끝까지 스크롤할 때 다음 페이지를 이어 부른다 (무한 스크롤).
  * onQueryChange 를 주면 검색은 서버가 하고(options = 서버 결과), 없으면 options 를 화면에서 거른다.
+ * 입력값은 사용자가 친 검색어(query)만 담는다. 선택 라벨은 placeholder 로만 보여 주고 검색어로 보내지 않는다.
  *
  * @author CoreSolution
  * @since 2026-10-12
@@ -97,8 +98,9 @@ const ClientSearchCombobox = ({
           autoComplete="off"
           disabled={disabled}
           placeholder={selected ? selected.label : placeholder}
-          value={open ? query : (selected ? selected.label : '')}
+          value={query}
           onFocus={() => setOpen(true)}
+          onClick={() => setOpen(true)}
           onChange={(e) => { updateQuery(e.target.value); setActive(0); setOpen(true); }}
           onKeyDown={onKeyDown}
           data-testid={testId}

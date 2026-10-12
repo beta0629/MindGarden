@@ -180,4 +180,98 @@ describe('AdminClientOffersPage', () => {
     fireEvent.click(screen.getAllByRole('button', { name: '지정 취소' }).pop());
     await waitFor(() => expect(offerService.cancelAdminClientOffer).toHaveBeenCalledWith(11));
   });
+
+  describe('빈 칸으로 열면 전체 목록 + 스크롤 더 불러오기 (80명, 20명×4페이지)', () => {
+    const TOTAL = 80;
+    const PAGE_SIZE = 20;
+    // 실제 응답: ApiResponse<AdminClientSearchPage> → StandardizedApi 가 data 를 벗긴 {items, page, size, totalElements}
+    const pageOf = (page) => ({
+      items: Array.from({ length: PAGE_SIZE }, (_, i) => {
+        const n = page * PAGE_SIZE + i + 1;
+        return { id: n, name: `내담자${n}`, phoneLast4: null, maskedPhone: null };
+      }),
+      page,
+      size: PAGE_SIZE,
+      totalElements: TOTAL
+    });
+
+    beforeEach(() => {
+      offerService.searchAdminClientsPage.mockImplementation(({ q, page }) => Promise.resolve(
+        q ? { items: [], page, size: PAGE_SIZE, totalElements: 0 } : pageOf(page)
+      ));
+    });
+
+    const openCombo = async() => {
+      const combo = await screen.findByTestId('admin-client-offers-client');
+      await waitFor(() => expect(combo.disabled).toBe(false));
+      fireEvent.focus(combo);
+      return screen.findByRole('listbox');
+    };
+
+    const scrollToEnd = (list) => {
+      Object.defineProperty(list, 'scrollHeight', { configurable: true, value: 1000 });
+      Object.defineProperty(list, 'clientHeight', { configurable: true, value: 200 });
+      list.scrollTop = 800;
+      fireEvent.scroll(list);
+    };
+
+    test('열자마자 목록 표시', async() => {
+      renderPage();
+      const list = await openCombo();
+      await waitFor(() => expect(within(list).getAllByRole('option', { name: /내담자/ })).toHaveLength(PAGE_SIZE));
+      expect(offerService.searchAdminClientsPage).toHaveBeenCalledWith(
+        expect.objectContaining({ page: 0, size: PAGE_SIZE })
+      );
+      expect(offerService.searchAdminClientsPage.mock.calls[0][0].q).toBeFalsy();
+    });
+
+    test('끝까지 스크롤하면 80건 모두 표시', async() => {
+      renderPage();
+      const list = await openCombo();
+      for (let loaded = PAGE_SIZE; loaded <= TOTAL; loaded += PAGE_SIZE) {
+        // eslint-disable-next-line no-await-in-loop
+        await waitFor(() => expect(within(list).getAllByRole('option', { name: /내담자/ })).toHaveLength(loaded));
+        if (loaded < TOTAL) {
+          // eslint-disable-next-line no-await-in-loop
+          await act(async() => { scrollToEnd(list); });
+        }
+      }
+      await act(async() => { scrollToEnd(list); });
+      expect(within(list).getAllByRole('option', { name: /내담자/ })).toHaveLength(TOTAL);
+      expect(offerService.searchAdminClientsPage).toHaveBeenCalledTimes(TOTAL / PAGE_SIZE);
+    });
+
+    test('선택 후 다시 열면 라벨 문자열로 요청하지 않고 전체 목록을 보여 준다', async() => {
+      renderPage();
+      const list = await openCombo();
+      await waitFor(() => expect(within(list).getAllByRole('option', { name: /내담자/ })).toHaveLength(PAGE_SIZE));
+      fireEvent.mouseDown(within(list).getByRole('option', { name: '내담자3' }));
+      const combo = screen.getByTestId('admin-client-offers-client');
+      expect(combo.value).toBe('');
+      expect(combo.getAttribute('placeholder')).toBe('내담자3');
+
+      fireEvent.click(combo);
+      const reopened = await screen.findByRole('listbox');
+      await waitFor(() => expect(within(reopened).getAllByRole('option', { name: /내담자/ })).toHaveLength(PAGE_SIZE));
+      expect(within(reopened).getByRole('option', { name: '내담자3' }).getAttribute('aria-selected')).toBe('true');
+      offerService.searchAdminClientsPage.mock.calls.forEach(([params]) => {
+        expect(params.q || '').not.toContain('내담자3');
+      });
+    });
+
+    test('선택 후 글자를 치면 라벨 없이 친 글자만 검색어로 보낸다', async() => {
+      renderPage();
+      const list = await openCombo();
+      await waitFor(() => expect(within(list).getAllByRole('option', { name: /내담자/ })).toHaveLength(PAGE_SIZE));
+      fireEvent.mouseDown(within(list).getByRole('option', { name: '내담자3' }));
+      const combo = screen.getByTestId('admin-client-offers-client');
+      fireEvent.change(combo, { target: { value: '7' } });
+      await waitFor(() => expect(offerService.searchAdminClientsPage).toHaveBeenCalledWith(
+        expect.objectContaining({ q: '7' })
+      ));
+      offerService.searchAdminClientsPage.mock.calls.forEach(([params]) => {
+        expect(params.q || '').not.toContain('내담자3');
+      });
+    });
+  });
 });

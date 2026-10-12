@@ -252,7 +252,7 @@ export function mergeShopAdminLnbItems(items, options = {}) {
 /** 쇼핑 스위트 LNB 하위 라벨 (주문 → 상품 → 리워드 순) */
 export const SHOP_ADMIN_LNB_CHILD_LABELS = Object.freeze({
   ORDERS: '온라인 주문',
-  PRODUCTS: '상품',
+  PRODUCTS: '상품 관리',
   REWARDS: '리워드 정책',
   CLIENT_OFFERS: '내담자별 결제 상품'
 });
@@ -339,7 +339,19 @@ export function normalizeShopSuiteLnbItems(items) {
     if (!isShopGroup) {
       return { ...item, children };
     }
-    const ordered = children
+    const seenPaths = new Set();
+    const uniqueChildren = children.filter((child) => {
+      const path = normalizeLnbPath(child?.to);
+      if (!path || !SHOP_LNB_CHILD_ORDER.includes(path)) {
+        return true;
+      }
+      if (seenPaths.has(path)) {
+        return false;
+      }
+      seenPaths.add(path);
+      return true;
+    });
+    const ordered = uniqueChildren
       .map((child, index) => ({ child, index }))
       .sort((a, b) => (rank(a.child) - rank(b.child)) || (a.index - b.index))
       .map(({ child }) => child);

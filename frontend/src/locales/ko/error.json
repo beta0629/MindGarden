@@ -219,9 +219,6 @@
   "admin": {
     "ClientComprehensiveManagement": {
       "t_740a4e2f": "등록 응답이 없습니다."
-    },
-    "AdminShopCatalogSkuEditorPage": {
-      "t_405708ea": "상품 ID를 확인할 수 없습니다."
     }
   },
   "dashboard": {

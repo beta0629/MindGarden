@@ -1,6 +1,7 @@
 package com.coresolution.consultation.service;
 
 import com.coresolution.consultation.constant.AdminClientSearchConstants;
+import com.coresolution.consultation.constant.ClientVisibilityPolicy;
 import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.dto.admin.client.AdminClientSearchItem;
 import com.coresolution.consultation.dto.admin.client.AdminClientSearchPage;
@@ -46,6 +47,7 @@ public class AdminClientSearchService {
         boolean tailQuery = qDigits.length() == AdminClientSearchConstants.PHONE_TAIL_LENGTH
                 && qDigits.equals(q.replaceAll("[\\s-]", ""));
         List<AdminClientSearchItem> matched = userRepository.findByRole(tenantId, UserRole.CLIENT).stream()
+                .filter(ClientVisibilityPolicy::isVisible)
                 .filter(u -> q.isEmpty() || nameMatches(u, qLower) || (tailQuery && digits(u.getPhone()).endsWith(qDigits)))
                 .sorted(Comparator.comparing(u -> u.getName() == null ? "" : u.getName()))
                 .map(this::toItem)

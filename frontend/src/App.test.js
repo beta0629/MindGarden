@@ -4,6 +4,14 @@
 import React from 'react';
 import { render, waitFor } from '@testing-library/react';
 
+jest.mock(
+  '@portone/browser-sdk/v2',
+  () => ({
+    requestPayment: jest.fn(() => Promise.resolve({}))
+  }),
+  { virtual: true }
+);
+
 jest.mock('axios', () => ({
   __esModule: true,
   default: {

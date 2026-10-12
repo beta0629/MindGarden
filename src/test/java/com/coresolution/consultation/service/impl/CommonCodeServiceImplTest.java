@@ -155,6 +155,29 @@ class CommonCodeServiceImplTest {
         assertEquals("RENT", result.get(0).getCodeValue());
     }
 
+    @Test
+    @DisplayName("deactivateCommonCodes: 지정 테넌트의 같은 코드값만 비활성화하고 전체 조회는 쓰지 않는다")
+    void deactivateCommonCodes_onlyGivenTenant() {
+        CommonCode row = baseCodeBuilder().isActive(true).build();
+        row.setTenantId(TENANT);
+        when(commonCodeRepository.findByTenantIdAndCodeValue(TENANT, "V")).thenReturn(List.of(row));
+
+        int count = commonCodeService.deactivateCommonCodes(TENANT, List.of("V"));
+
+        assertEquals(1, count);
+        assertEquals(false, row.getIsActive());
+        verify(commonCodeRepository).save(row);
+        verify(commonCodeRepository, never()).findByCodeValue(anyString());
+    }
+
+    @Test
+    @DisplayName("deactivateCommonCodes: 테넌트가 없으면 거부한다")
+    void deactivateCommonCodes_withoutTenant_throws() {
+        assertThrows(IllegalArgumentException.class,
+            () -> commonCodeService.deactivateCommonCodes("", List.of("V")));
+        verify(commonCodeRepository, never()).findByTenantIdAndCodeValue(anyString(), anyString());
+    }
+
     private static CommonCode.CommonCodeBuilder baseCodeBuilder() {
         return CommonCode.builder()
             .codeGroup("G")

@@ -489,15 +489,18 @@ public class CommonCodeServiceImpl implements CommonCodeService {
     }
 
     @Override
-    public int deactivateCommonCodes(List<String> codeValues) {
-        log.info("🔧 공통코드 비활성화 시작: {} 개", codeValues.size());
+    public int deactivateCommonCodes(String tenantId, List<String> codeValues) {
+        if (tenantId == null || tenantId.isEmpty()) {
+            throw new IllegalArgumentException("테넌트 정보가 없어 공통코드를 비활성화할 수 없습니다.");
+        }
+        log.info("🔧 공통코드 비활성화 시작: tenantId={}, {} 개", tenantId, codeValues.size());
         
         int deactivatedCount = 0;
         
         for (String codeValue : codeValues) {
             try {
-                // 해당 코드값을 가진 모든 공통코드 조회
-                List<CommonCode> codes = commonCodeRepository.findByCodeValue(codeValue);
+                // 해당 테넌트의 같은 코드값만 조회 (코어·타 테넌트 제외)
+                List<CommonCode> codes = commonCodeRepository.findByTenantIdAndCodeValue(tenantId, codeValue);
                 
                 for (CommonCode code : codes) {
                     if (code.getIsActive()) {

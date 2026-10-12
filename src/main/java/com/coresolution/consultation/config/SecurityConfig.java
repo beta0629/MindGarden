@@ -6,6 +6,7 @@ import com.coresolution.core.constants.SecurityRoleConstants;
 import com.coresolution.core.filter.TenantContextFilter;
 import com.coresolution.consultation.config.filter.JwtAuthenticationFilter;
 import com.coresolution.consultation.config.security.BearerTokenAuthCsrfMatcher;
+import com.coresolution.consultation.constant.AccountIntegrationApiPaths;
 import com.coresolution.consultation.constant.SessionManagementConstants;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
@@ -163,7 +164,8 @@ public class SecurityConfig {
                     // 포트원 등 PG 웹훅 (서명 검증, 인증 없음)
                     .requestMatchers("/api/v1/payments/webhooks/**").permitAll()
                     // 계정 통합 API는 허용 (온보딩 이메일 인증 등)
-                    .requestMatchers("/api/v1/accounts/integration/**").permitAll()
+                    .requestMatchers(HttpMethod.POST, AccountIntegrationApiPaths.PUBLIC_SEND_VERIFICATION_CODE,
+                        AccountIntegrationApiPaths.PUBLIC_VERIFY_CODE, AccountIntegrationApiPaths.PUBLIC_INTEGRATE).permitAll()
                     // 공통코드: 비로그인 GET 은 화이트리스트 그룹(PublicApiPathPolicy)만. 그 외 조회·쓰기는 anyRequest 인증 + 컨트롤러 권한 가드
                     .requestMatchers(new PublicCommonCodeRequestMatcher()).permitAll()
                     // 업종 카테고리 API는 허용 (온보딩에서 사용)
@@ -306,7 +308,8 @@ public class SecurityConfig {
                     // 포트원 등 PG 웹훅 (서명 검증, 인증 없음)
                     .requestMatchers("/api/v1/payments/webhooks/**").permitAll()
                     // 계정 통합 API는 허용 (온보딩 이메일 인증 등)
-                    .requestMatchers("/api/v1/accounts/integration/**").permitAll()
+                    .requestMatchers(HttpMethod.POST, AccountIntegrationApiPaths.PUBLIC_SEND_VERIFICATION_CODE,
+                        AccountIntegrationApiPaths.PUBLIC_VERIFY_CODE, AccountIntegrationApiPaths.PUBLIC_INTEGRATE).permitAll()
                     // 공통코드: 비로그인 GET 은 화이트리스트 그룹(PublicApiPathPolicy)만. 그 외 조회·쓰기는 anyRequest 인증 + 컨트롤러 권한 가드
                     .requestMatchers(new PublicCommonCodeRequestMatcher()).permitAll()
                     // 업종 카테고리 API는 허용 (온보딩에서 사용)
@@ -390,7 +393,7 @@ public class SecurityConfig {
             // 재무 거래 DELETE만 CSRF 제외(SPA가 axios DELETE 시 헤더 미포함 등). v1 실제 경로와 레거시 경로 모두.
             new AntPathRequestMatcher("/api/erp/finance/transactions/**", HttpMethod.DELETE.name()),
             new AntPathRequestMatcher("/api/v1/erp/finance/transactions/**", HttpMethod.DELETE.name()),
-            new AntPathRequestMatcher("/api/v1/accounts/integration/**"),
+            new AntPathRequestMatcher(AccountIntegrationApiPaths.BASE + "/**"),
             new AntPathRequestMatcher("/api/v1/onboarding/**"),
             new AntPathRequestMatcher("/api/v1/public/kr-public-data/**"),
             new AntPathRequestMatcher("/api/v1/ops/onboarding/**"),

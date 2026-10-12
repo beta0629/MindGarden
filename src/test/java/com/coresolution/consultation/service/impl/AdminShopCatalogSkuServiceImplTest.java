@@ -505,4 +505,29 @@ class AdminShopCatalogSkuServiceImplTest {
         assertNull(item.consultantId());
         verify(userRepository, never()).findByTenantIdAndId(any(), any());
     }
+
+    @Test
+    @DisplayName("listPackageFees — 내담자 전용 SKU(OFFER_·비노출)는 미연결 목록에서 제외")
+    void listPackageFees_excludesClientOfferSku() {
+        when(shopCatalogPackageOfferResolver.listActivePackages(TENANT)).thenReturn(List.of());
+        ShopCatalogSku legacy = new ShopCatalogSku();
+        legacy.setId(1L);
+        legacy.setSkuCode("LEGACY-1");
+        legacy.setTitle("직접 등록");
+        legacy.setUnitPriceMinor(50000L);
+        legacy.setCatalogVisible(false);
+        ShopCatalogSku offer = new ShopCatalogSku();
+        offer.setId(2L);
+        offer.setSkuCode("OFFER_ABC123");
+        offer.setTitle("전용");
+        offer.setUnitPriceMinor(40000L);
+        offer.setCatalogVisible(false);
+        when(shopCatalogSkuRepository.findByTenantIdAndIsDeletedFalseOrderBySortOrderAscIdAsc(TENANT))
+                .thenReturn(List.of(legacy, offer));
+
+        var response = adminShopCatalogSkuService.listPackageFees(TENANT);
+
+        assertEquals(1, response.unlinkedSkus().size());
+        assertEquals("LEGACY-1", response.unlinkedSkus().get(0).skuCode());
+    }
 }

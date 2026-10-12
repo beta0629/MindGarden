@@ -190,4 +190,21 @@ class AdminShopProductServiceImplTest {
                         false)));
         verify(commonCodeRepository, never()).save(any());
     }
+
+    @Test
+    @DisplayName("listProducts — 내담자 전용 SKU(OFFER_·비노출)는 목록에서 제외하고 일반 직접 등록 SKU는 유지")
+    void listProducts_excludesClientOfferSkuOnly() {
+        when(commonCodeRepository.findByTenantIdAndCodeGroupOrderBySortOrderAsc(TENANT, GROUP))
+                .thenReturn(List.of());
+        when(shopCatalogSkuRepository.findByTenantIdAndIsDeletedFalseOrderBySortOrderAscIdAsc(TENANT))
+                .thenReturn(List.of(
+                        sku(20L, "LEGACY-HIDDEN", null, false),
+                        sku(21L, "OFFER_ABC123", null, false),
+                        sku(22L, "OFFER_VISIBLE", null, true)));
+
+        ShopAdminProductListResponse page = service.listProducts(TENANT, 0, 10, null, null);
+
+        assertEquals(2L, page.totalElements());
+        assertTrue(page.products().stream().noneMatch(p -> "OFFER_ABC123".equals(p.code())));
+    }
 }

@@ -1,5 +1,6 @@
 package com.coresolution.consultation.service.impl;
 
+import com.coresolution.consultation.util.ShopClientOfferSkuPolicy;
 import com.coresolution.consultation.constant.BankTransferConstants;
 import com.coresolution.consultation.constant.ShopAdminOrderConstants;
 import com.coresolution.consultation.constant.ShopCatalogCategory;
@@ -90,7 +91,8 @@ public class AdminShopCatalogSkuServiceImpl implements AdminShopCatalogSkuServic
                 shopCatalogSkuRepository.findByTenantIdAndIsDeletedFalseOrderBySortOrderAscIdAsc(tid);
         List<ShopCatalogLegacySkuItem> unlinked = new ArrayList<>();
         for (ShopCatalogSku row : rows) {
-            if (StringUtils.hasText(row.getSourcePackageCode())) {
+            if (StringUtils.hasText(row.getSourcePackageCode())
+                    || ShopClientOfferSkuPolicy.isClientOfferSku(row)) {
                 continue;
             }
             unlinked.add(new ShopCatalogLegacySkuItem(

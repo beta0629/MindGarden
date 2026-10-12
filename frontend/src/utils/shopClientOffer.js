@@ -11,7 +11,9 @@ import {
   SHOP_CLIENT_OFFER_RATE_MAX_PERCENT,
   CLIENT_SEARCH_PHONE_TAIL_LENGTH,
   CLIENT_OFFERS_DRAFT_STORAGE_KEY,
-  SHOP_CLIENT_OFFER_STATUS
+  SHOP_CLIENT_OFFER_STATUS,
+  SHOP_CLIENT_OFFER_SKU_CODE_PREFIX,
+  CLIENT_OFFERS_PAY_FAILURE_STATE_KEY
 } from '../constants/shopClientOfferConstants';
 import { MIN_PAYMENT_AMOUNT } from '../constants/paymentAmountConstants';
 
@@ -133,3 +135,51 @@ export const writeClientOffersDraft = (userId, draft) => {
  */
 export const selectPayableOffers = (offers) => (Array.isArray(offers) ? offers : [])
   .filter((o) => o && !o.paid && o.status === SHOP_CLIENT_OFFER_STATUS.ACTIVE);
+
+/**
+ * 주문이 /client/offers(내담자별 지정 상품)에서 시작한 결제인지 — 주문 라인 SKU 접두로 판별(서버 값 기준).
+ *
+ * @param {{ lines?: Array<{ skuCode?: string }> }|null|undefined} order
+ * @returns {boolean}
+ */
+export const isClientOfferOrder = (order) => {
+  const lines = Array.isArray(order?.lines) ? order.lines : [];
+  return lines.length > 0 && lines.every(
+    (line) => typeof line?.skuCode === 'string' && line.skuCode.startsWith(SHOP_CLIENT_OFFER_SKU_CODE_PREFIX)
+  );
+};
+
+/**
+ * @param {string} reason 결제 실패 사유
+ * @returns {{ [key: string]: string }}
+ */
+export const buildClientOffersPayFailureState = (reason) => ({
+  [CLIENT_OFFERS_PAY_FAILURE_STATE_KEY]: reason || ''
+});
+
+/**
+ * @param {*} state location.state
+ * @returns {string} 실패 사유 또는 ''
+ */
+export const readClientOffersPayFailureReason = (state) => {
+  const value = state && typeof state === 'object' ? state[CLIENT_OFFERS_PAY_FAILURE_STATE_KEY] : '';
+  return typeof value === 'string' ? value : '';
+};
+
+/**
+ * 결제 복귀 화면에서 주문 출처가 /client/offers 인지 확인한다. 조회 실패면 false (기존 몰 동작 유지).
+ *
+ * @param {string|null} orderPublicId
+ * @param {(id: string) => Promise<object|null>} fetchOrder
+ * @returns {Promise<boolean>}
+ */
+export const resolveIsClientOfferOrder = async(orderPublicId, fetchOrder) => {
+  if (!orderPublicId) {
+    return false;
+  }
+  try {
+    return isClientOfferOrder(await fetchOrder(orderPublicId));
+  } catch {
+    return false;
+  }
+};

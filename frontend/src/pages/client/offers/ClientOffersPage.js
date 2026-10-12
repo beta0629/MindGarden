@@ -79,7 +79,8 @@ import { buildSettingsPathWithReturnTo } from '../../../utils/clientSettingsRetu
 import {
   readClientOffersDraft,
   selectPayableOffers,
-  writeClientOffersDraft
+  writeClientOffersDraft,
+  readClientOffersPayFailureReason
 } from '../../../utils/shopClientOffer';
 import '../../../styles/tokens/shop-offer-tokens.css';
 import './ClientOffersPage.css';
@@ -104,7 +105,7 @@ const ClientOffersPage = () => {
   const [loadState, setLoadState] = useState('loading');
   const [paying, setPaying] = useState(false);
   const [message, setMessage] = useState('');
-  const [payFailureReason, setPayFailureReason] = useState('');
+  const [payFailureReason, setPayFailureReason] = useState(() => readClientOffersPayFailureReason(location.state));
   const [selectedSkuCode, setSelectedSkuCode] = useState('');
   const [mappings, setMappings] = useState([]);
   const [selectedMappingId, setSelectedMappingId] = useState('');

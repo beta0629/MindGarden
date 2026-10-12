@@ -483,7 +483,8 @@ public class AdminShopCatalogSkuServiceImpl implements AdminShopCatalogSkuServic
                 sessionCount,
                 ShopSessionCountConstants.resolvePackageType(sessionCount),
                 row.getFieldCode(),
-                row.getConsultantId());
+                row.getConsultantId(),
+                row.getSourcePackageCode());
     }
 
     private static ShopCatalogSkuAdminDetail toDetail(ShopCatalogSku row) {

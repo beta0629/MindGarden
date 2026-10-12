@@ -31,6 +31,7 @@ import com.coresolution.consultation.repository.ShopCatalogSkuPriceHistoryReposi
 import com.coresolution.consultation.repository.ShopCatalogSkuRepository;
 import com.coresolution.consultation.service.ShopCatalogSkuCodeGenerator;
 import com.coresolution.consultation.service.ShopCatalogSkuThumbnailService;
+import com.coresolution.consultation.dto.shop.admin.ShopCatalogSkuAdminItem;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
@@ -570,5 +571,20 @@ class AdminShopCatalogSkuServiceImplTest {
         assertThrows(EntityNotFoundException.class,
                 () -> adminShopCatalogSkuService.update(TENANT, 2L, upsert("PKG-01", 10000L)));
         verify(shopCatalogSkuRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("목록 응답에 연결된 상담 패키지 코드(sourcePackageCode)를 담는다")
+    void listAllForTenant_includesSourcePackageCode() {
+        ShopCatalogSku linked = existingSku(11L);
+        linked.setSourcePackageCode("PACKAGE001");
+        ShopCatalogSku unlinked = existingSku(12L);
+        when(shopCatalogSkuRepository.findByTenantIdAndIsDeletedFalseOrderBySortOrderAscIdAsc(TENANT))
+                .thenReturn(List.of(linked, unlinked));
+
+        List<ShopCatalogSkuAdminItem> items = adminShopCatalogSkuService.listAllForTenant(TENANT);
+
+        assertEquals("PACKAGE001", items.get(0).sourcePackageCode());
+        assertNull(items.get(1).sourcePackageCode());
     }
 }

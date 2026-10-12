@@ -344,7 +344,7 @@ export const ADMIN_SHOP_PRODUCTS_COPY = Object.freeze({
   UNDO: '되돌리기',
   TOGGLE_FAILED: '노출 설정을 바꾸지 못했어요.',
   STOP_TITLE: '‘{productName}’을(를) 판매 중지할까요?',
-  STOP_IMPACT: '판매 중지하면 홈·몰에서 숨겨지고, 기존 구매분은 유지돼요.',
+  STOP_IMPACT: '판매 중지하면 홈·몰에서 숨겨지고, 기존 구매분은 유지됩니다.',
   STOP_CONFIRM: '판매 중지',
   STOP_DONE: '판매를 중지했어요',
   STOP_KEPT_TOAST: '기존 구매분은 유지돼요',
@@ -435,7 +435,9 @@ export const ADMIN_SHOP_COMPOSITION_COPY = Object.freeze({
   PRICE_CHANGED: '가격 변경됨',
   RECALC: '다시 계산',
   LEGACY_NOTICE: '예전 방식으로 저장된 구성입니다. 몰 상품으로 다시 담아 저장하면 예전 구성은 사라집니다.',
-  LEGACY_LIST_LABEL: '예전 구성 항목'
+  LEGACY_LIST_LABEL: '예전 구성 항목',
+  /** SPEC W20 — 구성이 있을 때 가격·회기 잠금 안내 (copy.json adminShopCompositionPanel.locked) */
+  LOCKED_NOTICE: '담은 상품으로 자동 계산되므로 회기·판매가는 직접 수정할 수 없습니다. 직접 입력하려면 담은 상품을 모두 빼 주세요.'
 });
 
 /** 상품 편집 — 상단·켜고 끄기 (시안 C-02 §4.2) */
@@ -677,6 +679,7 @@ export const ADMIN_SHOP_SUITE_TEST_IDS = Object.freeze({
   PRODUCT_HOME_TOGGLE: 'admin-shop-product-home-toggle',
   PRODUCT_EDITOR: 'admin-shop-product-editor',
   PRODUCT_EDITOR_SAVE: 'admin-shop-product-editor-save',
+  PRODUCT_EDITOR_LOCKED_NOTICE: 'admin-shop-product-editor-locked-notice',
   PRODUCT_EDITOR_SESSIONS: 'admin-shop-product-editor-sessions',
   REWARD_PAGE: 'admin-shop-reward-page',
   REWARD_SAVE: 'admin-shop-reward-save',

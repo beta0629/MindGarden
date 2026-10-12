@@ -39,6 +39,7 @@ import {
   ADMIN_SHOP_PRODUCT_DESCRIPTION_MAX,
   ADMIN_SHOP_PRODUCT_EDITOR_COPY,
   ADMIN_SHOP_PRODUCT_EDITOR_V2_COPY,
+  ADMIN_SHOP_COMPOSITION_COPY,
   ADMIN_SHOP_PRODUCT_ROUTES,
   ADMIN_SHOP_PRODUCT_SESSION_MIN,
   ADMIN_SHOP_PRODUCTS_COPY,
@@ -586,6 +587,14 @@ function AdminShopProductEditorPage({ isNew }) {
                   </h2>
                   <span className="admin-shop-suite__card-hint">{ADMIN_SHOP_PRODUCT_EDITOR_COPY.SECTION_PRICE_HINT}</span>
                 </div>
+                {hasComposition ? (
+                  <AdminShopNotice
+                    icon={<Lock aria-hidden="true" focusable="false" />}
+                    testId={ADMIN_SHOP_SUITE_TEST_IDS.PRODUCT_EDITOR_LOCKED_NOTICE}
+                  >
+                    <p>{ADMIN_SHOP_COMPOSITION_COPY.LOCKED_NOTICE}</p>
+                  </AdminShopNotice>
+                ) : null}
                 <div className="admin-shop-suite__grid-3">
                   <div className={`admin-shop-suite__field${hasComposition ? ' admin-shop-suite__field--locked' : ''}`}>
                     <div className="admin-shop-suite__label-row">

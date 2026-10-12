@@ -143,6 +143,8 @@ import { ADMIN_SHOP_PRODUCT_ROUTES, buildAdminShopProductEditRoute } from './con
 import AdminShopProductEditorPage from './components/admin/AdminShopProductEditorPage';
 import AdminShopPointPoliciesPage from './components/admin/AdminShopPointPoliciesPage';
 import AdminClientOffersPage from './components/admin/AdminClientOffersPage';
+import ClientOffersPage from './pages/client/offers/ClientOffersPage';
+import { CLIENT_OFFER_ROUTES } from './constants/shopClientOfferConstants';
 import AdminShopOrdersPage from './components/admin/AdminShopOrdersPage';
 import MindfulnessGuide from './components/wellness/MindfulnessGuide';
 import TenantProfile from './components/tenant/TenantProfile';
@@ -551,6 +553,16 @@ function AppContent() {
               </Route>
 
               {/* Shop 보호 경로 — ClientAppShell 밖, ShopClientLayout 이 ClientWebPageShell 담당 */}
+              <Route
+                path={CLIENT_OFFER_ROUTES.OFFERS}
+                element={(
+                  <ProtectedRoute requiredRoles={[USER_ROLES.CLIENT]}>
+                    <ClientTenantComponentGate componentCode={PLATFORM_COMPONENT_CODES.CLIENT_SHOP}>
+                      <ClientOffersPage />
+                    </ClientTenantComponentGate>
+                  </ProtectedRoute>
+                )}
+              />
               <Route
                 path={CLIENT_SHOP_ROUTES.CART}
                 element={(

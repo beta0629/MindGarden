@@ -94,7 +94,15 @@ class ShopClientOfferServiceTest {
     private void stubBase(ShopCatalogSku src) {
         when(userRepository.findByTenantIdAndId(TENANT, CLIENT)).thenReturn(Optional.of(client()));
         when(skuRepository.findActiveByTenantAndSkuCode(TENANT, "SRC-1")).thenReturn(Optional.of(src));
+    }
+
+    /** 저장까지 가는 테스트만 호출한다(거부 경로에서 쓰지 않는 스텁을 두지 않기 위함). */
+    private void stubSkuSave() {
         when(skuRepository.save(any(ShopCatalogSku.class))).thenAnswer(i -> i.getArgument(0));
+    }
+
+    private void stubSaves() {
+        stubSkuSave();
         when(offerRepository.save(any(ShopClientOffer.class))).thenAnswer(i -> i.getArgument(0));
     }
 
@@ -103,6 +111,7 @@ class ShopClientOfferServiceTest {
     void create_serverConfirmsPrice() {
         ShopCatalogSku src = source(ShopCatalogCategory.CONSULTATION);
         stubBase(src);
+        stubSaves();
         when(consultantMappingService.listActiveMappings(TENANT, CLIENT)).thenReturn(List.of());
         when(clientShopCatalogService.isVisibleForClientMappings(any(), any(), anyList())).thenReturn(true);
 
@@ -233,6 +242,7 @@ class ShopClientOfferServiceTest {
     @DisplayName("중복 — 기존 지정이 결제 완료면 재지정 가능")
     void create_allowedWhenPreviousPaid() {
         stubCreatable();
+        stubSaves();
         when(offerRepository.findByTenantIdAndClientIdAndSourceSkuCodeAndStatusAndIsDeletedFalse(
                 TENANT, CLIENT, "SRC-1", ShopClientOfferConstants.STATUS_ACTIVE))
                 .thenReturn(List.of(existing(1L, CLIENT, "SRC-1", "OFFER_A")));
@@ -246,6 +256,7 @@ class ShopClientOfferServiceTest {
     @DisplayName("중복 — 취소된 지정은 ACTIVE 조회에 없어 재지정 가능, 다른 내담자·다른 상품도 가능")
     void create_allowedWhenNoActiveForSameClientAndSku() {
         stubCreatable();
+        stubSaves();
         // 취소·다른 내담자·다른 상품은 (내담자, 원본 상품, ACTIVE) 조회에 잡히지 않는다
         assertEquals(CLIENT, service.create(TENANT, ADMIN, request()).clientId());
         verify(offerRepository).findByTenantIdAndClientIdAndSourceSkuCodeAndStatusAndIsDeletedFalse(
@@ -256,6 +267,7 @@ class ShopClientOfferServiceTest {
     @DisplayName("경합 — 내담자 잠금이 모든 조회보다 먼저 호출된다")
     void create_locksClientBeforeAnyRead() {
         stubCreatable();
+        stubSaves();
         service.create(TENANT, ADMIN, request());
         InOrder order = inOrder(offerRepository, userRepository);
         order.verify(offerRepository).lockClientRow(TENANT, CLIENT);
@@ -269,6 +281,7 @@ class ShopClientOfferServiceTest {
     @DisplayName("경합 — 직렬화된 두 번째 지정은 첫 지정을 보고 차단된다")
     void create_secondSerializedCallBlocked() {
         stubCreatable();
+        stubSkuSave();
         List<ShopClientOffer> store = new ArrayList<>();
         when(offerRepository.save(any(ShopClientOffer.class))).thenAnswer(i -> {
             ShopClientOffer saved = i.getArgument(0);

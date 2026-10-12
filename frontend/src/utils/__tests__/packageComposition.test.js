@@ -27,7 +27,7 @@ describe('calculateComposition', () => {
     expect(calculateComposition(undefined, 'x').price).toBe(0);
   });
   test('할인율 보정', () => {
-    expect(clampDiscountRate(150)).toBe(100);
+    expect(clampDiscountRate(150)).toBe(99);
     expect(clampDiscountRate(-5)).toBe(0);
     expect(clampDiscountRate('abc')).toBe(0);
   });

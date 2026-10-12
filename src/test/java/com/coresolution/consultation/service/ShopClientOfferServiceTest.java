@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -94,8 +95,9 @@ class ShopClientOfferServiceTest {
     private void stubBase(ShopCatalogSku src) {
         when(userRepository.findByTenantIdAndId(TENANT, CLIENT)).thenReturn(Optional.of(client()));
         when(skuRepository.findActiveByTenantAndSkuCode(TENANT, "SRC-1")).thenReturn(Optional.of(src));
-        when(skuRepository.save(any(ShopCatalogSku.class))).thenAnswer(i -> i.getArgument(0));
-        when(offerRepository.save(any(ShopClientOffer.class))).thenAnswer(i -> i.getArgument(0));
+        // 검증 실패 경로는 save 전에 끝나므로 공통 스텁은 lenient
+        lenient().when(skuRepository.save(any(ShopCatalogSku.class))).thenAnswer(i -> i.getArgument(0));
+        lenient().when(offerRepository.save(any(ShopClientOffer.class))).thenAnswer(i -> i.getArgument(0));
     }
 
     @Test

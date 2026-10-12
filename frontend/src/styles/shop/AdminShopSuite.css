@@ -514,6 +514,12 @@
   margin: 0;
 }
 
+.admin-shop-suite__notice > svg {
+  flex-shrink: 0;
+  width: var(--mg-icon-size-sm);
+  height: var(--mg-icon-size-sm);
+}
+
 /* —— 모달: 정보 그리드·미니 원장·기록 —— */
 .admin-shop-suite__modal-title {
   display: inline-flex;

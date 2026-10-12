@@ -62,8 +62,6 @@ describe('문구 (SPEC copy.json 대조)', () => {
     expect(compositionKo.final).toBe('최종 판매가');
     expect(compositionKo.emptyTitle).toBe('담은 상품이 없습니다');
     expect(compositionKo.countCaption).toBe('{{count}}개 담김');
-    expect(compositionKo.priceChanged).toBe('가격 변경됨');
-    expect(compositionKo.recalc).toBe('다시 계산');
     const all = JSON.stringify(compositionKo);
     ['상품 추가', '할인 후 판매가', '총 원가', '개 담음'].forEach((old) => expect(all).not.toContain(old));
   });
@@ -75,5 +73,31 @@ describe('문구 (SPEC copy.json 대조)', () => {
     expect(ADMIN_SHOP_PRODUCT_EDITOR_COPY.SESSIONS_HINT).toBe('결제되면 이 수만큼 회기가 부여됩니다');
     expect(ADMIN_SHOP_PRODUCT_EDITOR_COPY.SECTION_MALL_HINT).toBe('내담자 몰 상품 카드에 보입니다');
     Object.values(ADMIN_SHOP_PRODUCT_EDITOR_COPY).forEach((v) => expect(String(v)).not.toMatch(/(보여요|돼요|어요)$/));
+  });
+});
+
+describe('예전 구성 이름 · 편집 화면 상단/스위치', () => {
+  const fs = require('fs');
+  const path = require('path');
+  const { resolveLegacyCompositionLabels } = require('../packageComposition');
+  const { ADMIN_SHOP_PRODUCT_EDITOR_V2_COPY } = require('../../constants/adminShopSuite');
+  const EDITOR = fs.readFileSync(path.join(__dirname, '..', '..', 'components', 'admin', 'AdminShopProductEditorPage.js'), 'utf8');
+
+  test('extraData.items 에서 이름만 뽑는다', () => {
+    expect(resolveLegacyCompositionLabels(JSON.stringify({ items: [{ value: 'A', label: '검사 A' }, { value: 'B' }] })))
+      .toEqual(['검사 A', 'B']);
+    expect(resolveLegacyCompositionLabels(null)).toEqual([]);
+  });
+
+  test('「‹ 상품 목록」 링크는 저장하지 않은 변경 확인(goList)을 거친다, 「목록」 버튼은 없다', () => {
+    expect(ADMIN_SHOP_PRODUCT_EDITOR_V2_COPY.BACK_TO_LIST).toBe('상품 목록');
+    expect(EDITOR).toMatch(/admin-shop-suite__back-link[\s\S]*goList\(\)/);
+    expect(EDITOR).not.toMatch(/ADMIN_SHOP_PRODUCT_EDITOR_COPY\.LIST\}/);
+  });
+
+  test('스위치 옆 켜짐·꺼짐 글자', () => {
+    expect(ADMIN_SHOP_PRODUCT_EDITOR_V2_COPY.TOGGLE_ON).toBe('켜짐');
+    expect(ADMIN_SHOP_PRODUCT_EDITOR_V2_COPY.TOGGLE_OFF).toBe('꺼짐');
+    expect(EDITOR).toMatch(/TOGGLE_ON : ADMIN_SHOP_PRODUCT_EDITOR_V2_COPY\.TOGGLE_OFF/);
   });
 });

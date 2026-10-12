@@ -1222,3 +1222,38 @@
     align-items: stretch;
   }
 }
+
+/* 상품 편집 — 조용한 뒤로 링크 · 스위치 옆 켜짐/꺼짐 글자 (시안 C-02 §4.2) */
+.admin-shop-suite__back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--mg-v2-space-1);
+  align-self: flex-start;
+  min-block-size: var(--mg-v2-touch-target-min);
+  color: var(--cs-slate-700);
+  font-size: var(--mg-v2-font-size-body-md);
+  text-decoration: none;
+}
+
+.admin-shop-suite__back-link:hover,
+.admin-shop-suite__back-link:focus-visible {
+  color: var(--cs-slate-900);
+  text-decoration: underline;
+}
+
+.admin-shop-suite__back-link svg {
+  inline-size: var(--mg-icon-size-sm);
+  block-size: var(--mg-icon-size-sm);
+}
+
+.admin-shop-suite__toggle-ctl {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--mg-v2-space-2);
+}
+
+.admin-shop-suite__toggle-state {
+  color: var(--cs-slate-700);
+  font-size: var(--mg-v2-font-size-caption);
+  font-weight: var(--mg-v2-font-weight-semibold);
+}

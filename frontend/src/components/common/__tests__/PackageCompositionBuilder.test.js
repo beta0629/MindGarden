@@ -126,3 +126,24 @@ describe('PackageCompositionBuilder (몰 SKU 구성)', () => {
     });
   });
 });
+
+describe('PackageCompositionBuilder — 리더 확정 문구·예전 구성 안내', () => {
+  test('「가격 변경됨」「다시 계산」은 상수, 「다시 계산」은 previewErrorRetry 와 같은 글자', () => {
+    const { ADMIN_SHOP_COMPOSITION_COPY } = require('../../../constants/adminShopSuite');
+    expect(ADMIN_SHOP_COMPOSITION_COPY.PRICE_CHANGED).toBe('가격 변경됨');
+    expect(ADMIN_SHOP_COMPOSITION_COPY.RECALC).toBe('다시 계산');
+  });
+
+  test('예전 구성 항목이 있으면 안내 한 줄과 이름 목록을 보여 준다', () => {
+    setup({ legacyLabels: ['검사 A', '상담 B'] });
+    expect(screen.getByText('예전 방식으로 저장된 구성입니다. 몰 상품으로 다시 담아 저장하면 예전 구성은 사라집니다.')).toBeTruthy();
+    const list = screen.getByRole('list', { name: '예전 구성 항목' });
+    expect(within(list).getByText('검사 A')).toBeTruthy();
+    expect(within(list).getByText('상담 B')).toBeTruthy();
+  });
+
+  test('예전 구성이 없으면 안내가 없다', () => {
+    setup();
+    expect(screen.queryByText(/예전 방식으로 저장된 구성/)).toBeNull();
+  });
+});

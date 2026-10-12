@@ -430,6 +430,21 @@ export const ADMIN_SHOP_PRODUCT_EDITOR_COPY = Object.freeze({
   UPDATED_AT_PREFIX: '마지막 수정'
 });
 
+/** 상품 구성 — 리더 확정 문구(2026-10-12). 「다시 계산」은 copy.json previewErrorRetry 와 같은 글자. */
+export const ADMIN_SHOP_COMPOSITION_COPY = Object.freeze({
+  PRICE_CHANGED: '가격 변경됨',
+  RECALC: '다시 계산',
+  LEGACY_NOTICE: '예전 방식으로 저장된 구성입니다. 몰 상품으로 다시 담아 저장하면 예전 구성은 사라집니다.',
+  LEGACY_LIST_LABEL: '예전 구성 항목'
+});
+
+/** 상품 편집 — 상단·켜고 끄기 (시안 C-02 §4.2) */
+export const ADMIN_SHOP_PRODUCT_EDITOR_V2_COPY = Object.freeze({
+  BACK_TO_LIST: '상품 목록',
+  TOGGLE_ON: '켜짐',
+  TOGGLE_OFF: '꺼짐'
+});
+
 export const ADMIN_SHOP_REWARD_COPY = Object.freeze({
   TITLE: '리워드 정책',
   SUBTITLE: '결제 금액에 따라 포인트를 쌓고 쓰는 규칙이에요. 모든 변경은 저장해야 반영돼요.',

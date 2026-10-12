@@ -338,3 +338,16 @@ export function buildCompositionSaveBody(items) {
 export function isMallCompositionChanged(items, initialItems) {
   return JSON.stringify(buildCompositionSaveBody(items)) !== JSON.stringify(buildCompositionSaveBody(initialItems));
 }
+
+/**
+ * 예전 방식(공통코드 extraData.items)으로 저장된 구성 항목 이름.
+ *
+ * @param {string|object|null} extraData 공통코드 extraData
+ * @returns {Array<string>}
+ */
+export function resolveLegacyCompositionLabels(extraData) {
+  const items = parseExtraData(extraData).items;
+  return (Array.isArray(items) ? items : [])
+    .map((row) => toDisplayString(row?.label || row?.koreanName || row?.codeLabel || row?.value, ''))
+    .filter(Boolean);
+}

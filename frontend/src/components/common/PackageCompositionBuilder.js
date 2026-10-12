@@ -22,6 +22,7 @@ import {
   resolveCompositionCandidateState
 } from '../../utils/packageComposition';
 import { COMPOSITION_FETCH_STATUS } from '../../hooks/useCompositionCandidates';
+import { ADMIN_SHOP_COMPOSITION_COPY } from '../../constants/adminShopSuite';
 import '../../i18n';
 import './PackageCompositionBuilder.css';
 
@@ -64,7 +65,8 @@ function PackageCompositionBuilder({
   onDiscountChange,
   onRecalc,
   registerHref,
-  onRegisterClick
+  onRegisterClick,
+  legacyLabels
 }) {
   const { t } = useTranslation(NS);
   const baseId = useId();
@@ -203,6 +205,17 @@ function PackageCompositionBuilder({
         </span>
         {popOpen ? renderPop() : null}
       </div>
+      {legacyLabels.length > 0 ? (
+        <div className="mg-package-composition__notice" role="note">
+          <AlertCircle className="mg-package-composition__notice-icon" aria-hidden="true" focusable="false" />
+          <span className="mg-package-composition__notice-text">{ADMIN_SHOP_COMPOSITION_COPY.LEGACY_NOTICE}</span>
+          <ul className="mg-package-composition__legacy" aria-label={ADMIN_SHOP_COMPOSITION_COPY.LEGACY_LIST_LABEL}>
+            {legacyLabels.map((label, index) => (
+              <li key={`${label}-${index}`}><SafeText>{label}</SafeText></li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
       {noCandidates ? (
         <div className="mg-package-composition__state" role="status">
           <PackageOpen className="mg-package-composition__state-icon" aria-hidden="true" focusable="false" />
@@ -247,7 +260,7 @@ function PackageCompositionBuilder({
                     className="mg-package-composition__badge"
                     aria-label={t('priceChangedAria', { label: item.label, price: money(item.currentUnitPrice) })}
                   >
-                    {t('priceChanged')}
+                    {ADMIN_SHOP_COMPOSITION_COPY.PRICE_CHANGED}
                   </span>
                 ) : null}
               </span>
@@ -299,7 +312,7 @@ function PackageCompositionBuilder({
           <span className="mg-package-composition__notice-text">{t('priceChangedNotice')}</span>
           <button type="button" className="mg-package-composition__btn" disabled={disabled} onClick={onRecalc}>
             <RefreshCw aria-hidden="true" focusable="false" />
-            {t('recalc')}
+            {ADMIN_SHOP_COMPOSITION_COPY.RECALC}
           </button>
         </div>
       ) : null}
@@ -397,7 +410,8 @@ PackageCompositionBuilder.propTypes = {
   onDiscountChange: PropTypes.func.isRequired,
   onRecalc: PropTypes.func,
   registerHref: PropTypes.string,
-  onRegisterClick: PropTypes.func
+  onRegisterClick: PropTypes.func,
+  legacyLabels: PropTypes.arrayOf(PropTypes.string)
 };
 
 PackageCompositionBuilder.defaultProps = {
@@ -411,7 +425,8 @@ PackageCompositionBuilder.defaultProps = {
   disabled: false,
   onRecalc: undefined,
   registerHref: '',
-  onRegisterClick: undefined
+  onRegisterClick: undefined,
+  legacyLabels: []
 };
 
 export default PackageCompositionBuilder;

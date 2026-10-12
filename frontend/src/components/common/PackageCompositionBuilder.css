@@ -574,3 +574,10 @@
     margin-inline-start: 0;
   }
 }
+
+.mg-package-composition__legacy {
+  flex-basis: 100%;
+  margin: 0;
+  padding-inline-start: var(--mg-v2-space-6);
+  color: var(--cs-slate-700);
+}

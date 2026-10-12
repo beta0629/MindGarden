@@ -9,7 +9,7 @@
 import React, { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Info, Lock } from 'lucide-react';
+import { ChevronLeft, Info, Lock } from 'lucide-react';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import { ContentArea, ContentHeader } from '../dashboard-v2/content';
 import SafeText from '../common/SafeText';
@@ -23,6 +23,7 @@ import {
   recalcMallCompositionPrices,
   removeMallCompositionItem,
   resolveCompositionPricingForSave,
+  resolveLegacyCompositionLabels,
   setMallCompositionQuantity
 } from '../../utils/packageComposition';
 import useCompositionCandidates from '../../hooks/useCompositionCandidates';
@@ -37,6 +38,7 @@ import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/co
 import {
   ADMIN_SHOP_PRODUCT_DESCRIPTION_MAX,
   ADMIN_SHOP_PRODUCT_EDITOR_COPY,
+  ADMIN_SHOP_PRODUCT_EDITOR_V2_COPY,
   ADMIN_SHOP_PRODUCT_ROUTES,
   ADMIN_SHOP_PRODUCT_SESSION_MIN,
   ADMIN_SHOP_PRODUCTS_COPY,
@@ -277,6 +279,11 @@ function AdminShopProductEditorPage({ isNew }) {
     enabled: !loading && allowed
   });
 
+  const legacyCompositionLabels = useMemo(
+    () => resolveLegacyCompositionLabels(product?.codeRow?.extraData),
+    [product]
+  );
+
   const handleCompositionAdd = (candidate) => setForm((prev) => (
     applyAdminShopProductComposition(prev, addMallCompositionItem(prev.items, candidate))
   ));
@@ -489,6 +496,14 @@ function AdminShopProductEditorPage({ isNew }) {
     <AdminCommonLayout title={title} loading={loading}>
       <ContentArea className="admin-shop-clinic-os admin-shop-suite" ariaLabel={title}>
         <div className="admin-shop-suite" data-testid={ADMIN_SHOP_SUITE_TEST_IDS.PRODUCT_EDITOR}>
+          <a
+            className="admin-shop-suite__back-link"
+            href={ADMIN_SHOP_PRODUCT_ROUTES.LIST}
+            onClick={(e) => { e.preventDefault(); if (!saving) { goList(); } }}
+          >
+            <ChevronLeft aria-hidden="true" focusable="false" />
+            {ADMIN_SHOP_PRODUCT_EDITOR_V2_COPY.BACK_TO_LIST}
+          </a>
           <ContentHeader
             titleId={PAGE_TITLE_ID}
             title={isNew ? title : (
@@ -514,15 +529,6 @@ function AdminShopProductEditorPage({ isNew }) {
                     {tEditor('unsaved')}
                   </span>
                 ) : null}
-                <MGButton
-                  type="button"
-                  variant="secondary"
-                  className={buildErpMgButtonClassName({ variant: 'secondary', size: 'md' })}
-                  onClick={goList}
-                  disabled={saving}
-                >
-                  {ADMIN_SHOP_PRODUCT_EDITOR_COPY.LIST}
-                </MGButton>
                 <MGButton
                   type="button"
                   variant="primary"
@@ -567,6 +573,7 @@ function AdminShopProductEditorPage({ isNew }) {
                   onRecalc={handleCompositionRecalc}
                   onRemove={handleCompositionRemove}
                   onDiscountChange={handleDiscountChange}
+                  legacyLabels={legacyCompositionLabels}
                   registerHref={ADMIN_SHOP_PRODUCT_ROUTES.NEW}
                   onRegisterClick={() => navigate(ADMIN_SHOP_PRODUCT_ROUTES.NEW)}
                 />
@@ -895,7 +902,10 @@ function AdminShopProductEditorPage({ isNew }) {
                         {mallBlocked ? ADMIN_SHOP_PRODUCTS_COPY.MALL_BLOCKED_HINT : row.hint}
                       </span>
                     </span>
-                    <span className={mallBlocked ? 'admin-shop-suite__toggle-blocked' : undefined}>
+                    <span className={`admin-shop-suite__toggle-ctl${mallBlocked ? ' admin-shop-suite__toggle-blocked' : ''}`}>
+                      <span className="admin-shop-suite__toggle-state" aria-hidden="true">
+                        {form[row.key] ? ADMIN_SHOP_PRODUCT_EDITOR_V2_COPY.TOGGLE_ON : ADMIN_SHOP_PRODUCT_EDITOR_V2_COPY.TOGGLE_OFF}
+                      </span>
                       <Switch
                         checked={Boolean(form[row.key])}
                         disabled={mallBlocked || saving || (row.key === 'active' && saleToggleBusy)}

@@ -29,8 +29,7 @@ module.exports = {
         '^react-router$': '<rootDir>/node_modules/react-router/dist/development/index.js',
         '^react-router/dom$':
           '<rootDir>/node_modules/react-router/dist/development/dom-export.js',
-        '^@portone/browser-sdk/v2$':
-          '<rootDir>/node_modules/@portone/browser-sdk/dist/v2.cjs'
+        '^@portone/browser-sdk/v2$': '<rootDir>/src/test-stubs/portoneBrowserSdkV2.js'
       };
       return jestConfig;
     }

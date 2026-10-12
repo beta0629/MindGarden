@@ -30,8 +30,15 @@ module.exports = {
         '^react-router/dom$':
           '<rootDir>/node_modules/react-router/dist/development/dom-export.js',
         '^@portone/browser-sdk/v2$':
-          '<rootDir>/node_modules/@portone/browser-sdk/dist/v2.cjs'
+          '<rootDir>/src/test-stubs/portone-browser-sdk-v2.cjs'
       };
+      // axios 1.x ESM: node_modules 기본 ignore 시 import 구문 SyntaxError
+      const axiosAllow = '[/\\\\]node_modules[/\\\\](?!(axios)/).+\\.(js|jsx|mjs|cjs|ts|tsx)$';
+      const existingIgnore = jestConfig.transformIgnorePatterns || [];
+      jestConfig.transformIgnorePatterns = [
+        axiosAllow,
+        ...existingIgnore.filter((pattern) => !/node_modules/.test(pattern))
+      ];
       return jestConfig;
     }
   }

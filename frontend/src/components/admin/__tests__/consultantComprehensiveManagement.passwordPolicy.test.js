@@ -11,6 +11,10 @@ import { apiGet, apiPost } from '../../../utils/ajax';
 import { SANITIZED_INTERNAL_SERVER_ERROR_MESSAGE } from '../../../constants/genericServerErrorMessages';
 import '../../../i18n';
 
+jest.mock('../../../utils/menuApi', () => ({
+  getLnbMenus: jest.fn().mockResolvedValue({ success: true, data: [] })
+}));
+
 jest.mock('../../../utils/ajax', () => {
   const actual = jest.requireActual('../../../utils/ajax');
   return {

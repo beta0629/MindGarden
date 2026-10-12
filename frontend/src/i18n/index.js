@@ -43,6 +43,7 @@ import koConsultantSuite from '../locales/ko/consultantSuite.json';
 import koAdminConsultationLogs from '../locales/ko/adminConsultationLogs.json';
 import koAdminShopComposition from '../locales/ko/adminShopComposition.json';
 import koAdminClientOffers from '../locales/ko/adminClientOffers.json';
+import koClientOffers from '../locales/ko/clientOffers.json';
 
 const SUPPORTED_LANGUAGES = ['ko'];
 const FALLBACK_LANGUAGE = 'ko';
@@ -133,7 +134,8 @@ i18n
         consultantSuite: koConsultantSuite,
         adminConsultationLogs: koAdminConsultationLogs,
         adminShopComposition: koAdminShopComposition,
-        adminClientOffers: koAdminClientOffers
+        adminClientOffers: koAdminClientOffers,
+        clientOffers: koClientOffers
       }
     },
     supportedLngs: SUPPORTED_LANGUAGES,
@@ -160,7 +162,8 @@ i18n
       'consultantSuite',
       'adminConsultationLogs',
       'adminShopComposition',
-      'adminClientOffers'
+      'adminClientOffers',
+      'clientOffers'
     ],
     interpolation: {
       escapeValue: false

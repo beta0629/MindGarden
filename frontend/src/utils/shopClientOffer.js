@@ -9,7 +9,9 @@
 import {
   SHOP_CLIENT_OFFER_DISCOUNT_TYPE,
   SHOP_CLIENT_OFFER_RATE_MAX_PERCENT,
-  CLIENT_SEARCH_PHONE_TAIL_LENGTH
+  CLIENT_SEARCH_PHONE_TAIL_LENGTH,
+  CLIENT_OFFERS_DRAFT_STORAGE_KEY,
+  SHOP_CLIENT_OFFER_STATUS
 } from '../constants/shopClientOfferConstants';
 import { MIN_PAYMENT_AMOUNT } from '../constants/paymentAmountConstants';
 
@@ -82,3 +84,52 @@ export const filterClientOptions = (options, query) => {
   return options.filter((o) => (o.searchText || '').includes(q)
     || (qDigits.length > 0 && qDigits === q.replace(/[\s-]/g, '') && (o.phoneDigits || '').endsWith(qDigits)));
 };
+
+/**
+ * 휴대폰 인증하러 설정에 다녀오는 동안 /client/offers 의 선택·동의·상담사를 유지한다(sessionStorage, 사용자별).
+ */
+const draftKey = (userId) => `${CLIENT_OFFERS_DRAFT_STORAGE_KEY}.${userId}`;
+
+/**
+ * @param {string|number} userId
+ * @returns {{ skuCode?: string, agreements?: Record<string, boolean>, mappingId?: string }|null}
+ */
+export const readClientOffersDraft = (userId) => {
+  if (userId == null) {
+    return null;
+  }
+  try {
+    const raw = window.sessionStorage.getItem(draftKey(userId));
+    const parsed = raw ? JSON.parse(raw) : null;
+    return parsed && typeof parsed === 'object' ? parsed : null;
+  } catch {
+    return null;
+  }
+};
+
+/**
+ * @param {string|number} userId
+ * @param {{ skuCode: string, agreements: Record<string, boolean>, mappingId: string }|null} draft null 이면 지운다
+ */
+export const writeClientOffersDraft = (userId, draft) => {
+  if (userId == null) {
+    return;
+  }
+  try {
+    if (draft) {
+      window.sessionStorage.setItem(draftKey(userId), JSON.stringify(draft));
+    } else {
+      window.sessionStorage.removeItem(draftKey(userId));
+    }
+  } catch {
+    // 저장소를 못 쓰면 유지만 포기한다
+  }
+};
+
+/**
+ * 결제 가능한(미결제·지정 중) 항목만.
+ *
+ * @param {Array<object>} offers
+ */
+export const selectPayableOffers = (offers) => (Array.isArray(offers) ? offers : [])
+  .filter((o) => o && !o.paid && o.status === SHOP_CLIENT_OFFER_STATUS.ACTIVE);

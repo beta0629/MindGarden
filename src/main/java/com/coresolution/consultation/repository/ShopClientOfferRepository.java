@@ -1,6 +1,7 @@
 package com.coresolution.consultation.repository;
 
 import com.coresolution.consultation.entity.ShopClientOffer;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -39,4 +40,16 @@ public interface ShopClientOfferRepository extends JpaRepository<ShopClientOffer
 
     boolean existsByTenantIdAndClientIdAndOfferSkuCodeAndStatusAndIsDeletedFalse(
             String tenantId, Long clientId, String offerSkuCode, String status);
+
+    /**
+     * 원본 SKU 에서 만든 지정 SKU 코드 (삭제 가드용). 지정이 취소·삭제돼도 주문 이력은 남으므로 상태와 무관하게 조회한다.
+     *
+     * @param tenantId 테넌트 ID
+     * @param sourceSkuCodes 원본 SKU 코드
+     * @return 지정 SKU 코드
+     */
+    @Query("SELECT DISTINCT o.offerSkuCode FROM ShopClientOffer o "
+            + "WHERE o.tenantId = :tenantId AND o.sourceSkuCode IN :sourceSkuCodes")
+    List<String> findOfferSkuCodesBySourceSkuCodes(
+            @Param("tenantId") String tenantId, @Param("sourceSkuCodes") Collection<String> sourceSkuCodes);
 }

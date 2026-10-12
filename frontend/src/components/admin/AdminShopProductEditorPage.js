@@ -14,6 +14,14 @@ import AdminCommonLayout from '../layout/AdminCommonLayout';
 import { ContentArea, ContentHeader } from '../dashboard-v2/content';
 import SafeText from '../common/SafeText';
 import MGButton from '../common/MGButton';
+import PackageCompositionBuilder from '../common/PackageCompositionBuilder';
+import {
+  addCompositionItem,
+  clampDiscountRate,
+  mapShopProductsToCompositionOptions,
+  removeCompositionItem
+} from '../../utils/packageComposition';
+import { useTranslation } from 'react-i18next';
 import Switch from '../common/Switch';
 import EntityRowActions from '../common/molecules/EntityRowActions';
 import ShopProductImageUpload from '../shop/organisms/ShopProductImageUpload';
@@ -54,6 +62,8 @@ import {
   computeAdminShopPerSessionPrice,
   emptyAdminShopProductForm,
   mapAdminShopProductToForm,
+  applyAdminShopProductComposition,
+  clearAdminShopProductComposition,
   mergeAdminShopProducts,
   validateAdminShopProductForm
 } from '../../utils/adminShopSuite';
@@ -245,6 +255,25 @@ function AdminShopProductEditorPage({ isNew }) {
   const showErrors = touched;
   const perSession = computeAdminShopPerSessionPrice(validation.price, validation.sessions);
   const hasComposition = form.items.length > 0;
+  const { t: tComposition } = useTranslation('adminShopComposition');
+  const compositionOptions = useMemo(
+    () => mapShopProductsToCompositionOptions(products, product?.code || ''),
+    [products, product]
+  );
+
+  const handleCompositionAdd = (item) => setForm((prev) => (
+    applyAdminShopProductComposition(prev, addCompositionItem(prev.items, item))
+  ));
+  const handleCompositionRemove = (index) => setForm((prev) => {
+    const next = removeCompositionItem(prev.items, index);
+    return next.length === 0
+      ? clearAdminShopProductComposition(prev)
+      : applyAdminShopProductComposition(prev, next);
+  });
+  const handleDiscountChange = (raw) => setForm((prev) => applyAdminShopProductComposition(
+    { ...prev, discountRate: raw === '' ? 0 : clampDiscountRate(raw) },
+    prev.items
+  ));
 
   const pendingPreviewUrl = useMemo(
     () => (pendingImageFile ? URL.createObjectURL(pendingImageFile) : null),
@@ -446,6 +475,24 @@ function AdminShopProductEditorPage({ isNew }) {
 
           <div className="admin-shop-suite__layout admin-shop-suite__layout--editor">
             <div className="admin-shop-suite__form-stack">
+              <section className="admin-shop-suite__card" aria-labelledby={`${baseId}-composition`}>
+                <div className="admin-shop-suite__card-head">
+                  <h2 id={`${baseId}-composition`} className="admin-shop-suite__card-title">
+                    {tComposition('title')}
+                  </h2>
+                </div>
+                <PackageCompositionBuilder
+                  items={form.items}
+                  options={compositionOptions}
+                  originalPrice={form.originalPrice || 0}
+                  discountRate={form.discountRate}
+                  disabled={saving}
+                  onAdd={handleCompositionAdd}
+                  onRemove={handleCompositionRemove}
+                  onDiscountChange={handleDiscountChange}
+                />
+              </section>
+
               <section className="admin-shop-suite__card" aria-labelledby={`${baseId}-price`}>
                 <div className="admin-shop-suite__card-head">
                   <h2 id={`${baseId}-price`} className="admin-shop-suite__card-title">

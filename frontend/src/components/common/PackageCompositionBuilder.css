@@ -1,0 +1,90 @@
+.mg-package-composition {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-v2-space-3);
+  min-width: 0;
+}
+
+.mg-package-composition__hint {
+  margin: 0;
+  font-size: var(--mg-v2-font-size-body-sm, var(--mg-v2-font-size-body-md));
+  color: var(--cs-slate-600);
+}
+
+.mg-package-composition__select,
+.mg-package-composition__discount {
+  min-height: var(--mg-v2-space-8);
+  padding: 0 var(--mg-v2-space-3);
+  border: var(--mg-v2-border-width-thin) solid var(--cs-slate-300);
+  border-radius: var(--mg-v2-radius-md);
+  background: var(--mg-v2-color-surface-card);
+  color: var(--cs-slate-900);
+  font-size: var(--mg-v2-font-size-body-md);
+  box-sizing: border-box;
+}
+
+.mg-package-composition__select {
+  width: 100%;
+}
+
+.mg-package-composition__discount {
+  width: calc(var(--mg-v2-space-8) * 2);
+  text-align: right;
+}
+
+.mg-package-composition__list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-v2-space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.mg-package-composition__item {
+  display: flex;
+  align-items: center;
+  gap: var(--mg-v2-space-3);
+  padding: var(--mg-v2-space-2) var(--mg-v2-space-3);
+  border: var(--mg-v2-border-width-thin) solid var(--cs-slate-200);
+  border-radius: var(--mg-v2-radius-md);
+  background: var(--mg-v2-color-surface-stone);
+}
+
+.mg-package-composition__item-label {
+  flex: 1;
+  min-width: 0;
+  color: var(--cs-slate-900);
+}
+
+.mg-package-composition__item-meta {
+  color: var(--cs-slate-600);
+  white-space: nowrap;
+}
+
+.mg-package-composition__remove {
+  border: 0;
+  background: transparent;
+  color: var(--cs-slate-600);
+  cursor: pointer;
+  font-size: var(--mg-v2-font-size-body-md);
+}
+
+.mg-package-composition__remove:hover:not(:disabled) {
+  color: var(--mg-v2-color-semantic-error);
+}
+
+.mg-package-composition__summary {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-v2-space-2);
+}
+
+.mg-package-composition__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mg-v2-space-3);
+  color: var(--cs-slate-900);
+  font-size: var(--mg-v2-font-size-body-md);
+}

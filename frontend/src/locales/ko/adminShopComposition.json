@@ -1,0 +1,15 @@
+{
+  "title": "상품 구성",
+  "hint": "쇼핑몰에 등록된 상품을 골라 담으면 회기·판매가가 자동 계산돼요. 비워 두면 아래에서 직접 입력해요.",
+  "addPlaceholder": "+ 상품 추가",
+  "addLabel": "구성에 추가할 상품",
+  "noOptions": "추가할 수 있는 상품이 없어요.",
+  "optionText": "{{label}} ({{sessions}}회, {{price}}원)",
+  "itemMeta": "{{sessions}}회 · {{price}}원",
+  "remove": "{{label}} 제거",
+  "listLabel": "담은 상품",
+  "originalPrice": "총 원가",
+  "discountRate": "할인율(%)",
+  "lockedNotice": "구성이 있으면 회기·판매가는 자동 계산되어 직접 고칠 수 없어요.",
+  "priceText": "{{price}}원"
+}

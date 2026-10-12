@@ -265,6 +265,76 @@ class TenantCommonCodeServiceImplTest {
     }
 
     @Test
+    @DisplayName("createTenantCode: 연속 점유(010·011·012 비활성/삭제) 시 다음 미사용 PACKAGE_013 발급")
+    void createTenantCode_packageBlankCode_skipsConsecutiveOccupiedValues() {
+        stubTenantGroupMetadata(ConsultationPackageCodeConstants.CODE_GROUP);
+        when(commonCodeRepository.findTenantCodesByGroup(TENANT, ConsultationPackageCodeConstants.CODE_GROUP))
+            .thenReturn(List.of(packageRow("PACKAGE_001")));
+        when(commonCodeRepository.findAllCodeValuesIncludingInactiveAndDeleted(
+                TENANT, ConsultationPackageCodeConstants.CODE_GROUP))
+            .thenReturn(List.of("PACKAGE_001", "PACKAGE_010", "PACKAGE_011", "PACKAGE_012"));
+        when(commonCodeRepository.findTenantCodeByGroupAndValue(
+                eq(TENANT), eq(ConsultationPackageCodeConstants.CODE_GROUP), eq("PACKAGE_013")))
+            .thenReturn(Optional.empty());
+        when(commonCodeRepository.save(any(CommonCode.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        var response = tenantCommonCodeService.createTenantCode(TENANT, autoPackageRequest());
+
+        assertEquals("PACKAGE_013", response.getCodeValue());
+    }
+
+    @Test
+    @DisplayName("createTenantCode: 동시 저장으로 유니크 충돌 시 충돌 번호를 제외하고 재발급해 저장 (400 아님)")
+    void createTenantCode_packageBlankCode_retriesOnConcurrentUniqueViolation() {
+        stubTenantGroupMetadata(ConsultationPackageCodeConstants.CODE_GROUP);
+        when(commonCodeRepository.findTenantCodesByGroup(TENANT, ConsultationPackageCodeConstants.CODE_GROUP))
+            .thenReturn(List.of(packageRow("PACKAGE_001")));
+        when(commonCodeRepository.findTenantCodeByGroupAndValue(
+                eq(TENANT), eq(ConsultationPackageCodeConstants.CODE_GROUP), any()))
+            .thenReturn(Optional.empty());
+        List<String> attempted = new ArrayList<>();
+        when(commonCodeRepository.save(any(CommonCode.class))).thenAnswer(inv -> {
+            CommonCode c = inv.getArgument(0);
+            attempted.add(c.getCodeValue());
+            if (attempted.size() <= 2) {
+                throw new org.springframework.dao.DataIntegrityViolationException("uk_tenant_code_group_value");
+            }
+            return c;
+        });
+
+        var response = tenantCommonCodeService.createTenantCode(TENANT, autoPackageRequest());
+
+        assertEquals(List.of("PACKAGE_002", "PACKAGE_003", "PACKAGE_004"), attempted);
+        assertEquals("PACKAGE_004", response.getCodeValue());
+    }
+
+    @Test
+    @DisplayName("createTenantCode: 재시도 한도까지 계속 충돌하면 중복 코드 메시지로 실패")
+    void createTenantCode_packageBlankCode_givesUpAfterMaxAttempts() {
+        stubTenantGroupMetadata(ConsultationPackageCodeConstants.CODE_GROUP);
+        when(commonCodeRepository.findTenantCodesByGroup(TENANT, ConsultationPackageCodeConstants.CODE_GROUP))
+            .thenReturn(List.of());
+        when(commonCodeRepository.findTenantCodeByGroupAndValue(
+                eq(TENANT), eq(ConsultationPackageCodeConstants.CODE_GROUP), any()))
+            .thenReturn(Optional.empty());
+        when(commonCodeRepository.save(any(CommonCode.class)))
+            .thenThrow(new org.springframework.dao.DataIntegrityViolationException("uk_tenant_code_group_value"));
+
+        assertThrows(IllegalArgumentException.class,
+            () -> tenantCommonCodeService.createTenantCode(TENANT, autoPackageRequest()));
+        verify(commonCodeRepository, times(TenantCommonCodeAutoValueConstants.GENERATION_MAX_ATTEMPTS))
+            .save(any(CommonCode.class));
+    }
+
+    private static CommonCodeCreateRequest autoPackageRequest() {
+        return CommonCodeCreateRequest.builder()
+            .codeGroup(ConsultationPackageCodeConstants.CODE_GROUP)
+            .codeLabel("신규")
+            .koreanName("신규")
+            .build();
+    }
+
+    @Test
     @DisplayName("createTenantCode: 수동 codeValue trim 후 중복이면 예외")
     void createTenantCode_manualDuplicate_throws() {
         stubTenantGroupMetadata(ConsultationPackageCodeConstants.CODE_GROUP);

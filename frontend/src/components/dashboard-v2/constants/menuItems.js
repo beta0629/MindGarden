@@ -130,7 +130,8 @@ const DEFAULT_MENU_ITEMS = [
     children: [
       { to: ADMIN_ROUTES.SHOP_ORDERS, icon: 'RECEIPT', label: '온라인 주문', end: true },
       { to: ADMIN_ROUTES.SHOP_PRODUCTS, icon: 'PACKAGE', label: '상품', end: false },
-      { to: ADMIN_ROUTES.SHOP_POINT_POLICIES, icon: 'GIFT', label: '리워드 정책', end: true }
+      { to: ADMIN_ROUTES.SHOP_POINT_POLICIES, icon: 'GIFT', label: '리워드 정책', end: true },
+      { to: ADMIN_ROUTES.SHOP_CLIENT_OFFERS, icon: 'USERS', label: '내담자별 결제 상품', end: true }
     ]
   },
   {

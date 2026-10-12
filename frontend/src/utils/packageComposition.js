@@ -10,11 +10,11 @@ import { toDisplayString } from './safeDisplay';
 
 const PERCENT_FULL = 100;
 
-/** 할인율(%) 입력 상한 */
-export const COMPOSITION_DISCOUNT_MAX = PERCENT_FULL;
+/** 할인율(%) 입력 상한 (100% 무료 상품 방지) */
+export const COMPOSITION_DISCOUNT_MAX = PERCENT_FULL - 1;
 
 /**
- * 할인율 입력값 → 0~100 정수 범위로 보정.
+ * 할인율 입력값 → 0~99 정수 범위로 보정.
  *
  * @param {string|number|null|undefined} raw
  * @returns {number}

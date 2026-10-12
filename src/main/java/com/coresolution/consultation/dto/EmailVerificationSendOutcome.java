@@ -24,6 +24,8 @@ public final class EmailVerificationSendOutcome {
         COOLDOWN,
         /** 일일 상한 초과 */
         DAILY_LIMIT,
+        /** IP 단위 요청 한도 초과 */
+        IP_LIMIT,
         /** 메일 발송 실패 등 */
         EMAIL_SEND_FAILED
     }
@@ -62,6 +64,15 @@ public final class EmailVerificationSendOutcome {
      */
     public static EmailVerificationSendOutcome dailyLimit() {
         return new EmailVerificationSendOutcome(Status.DAILY_LIMIT, 0L);
+    }
+
+    /**
+     * IP 단위 요청 한도 초과 결과를 반환합니다.
+     *
+     * @return IP 한도 결과
+     */
+    public static EmailVerificationSendOutcome ipLimit() {
+        return new EmailVerificationSendOutcome(Status.IP_LIMIT, 0L);
     }
 
     /**

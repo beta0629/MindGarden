@@ -59,16 +59,6 @@ public class AccountIntegrationResponse {
     private String profileImageUrl;
     
     /**
-     * JWT 액세스 토큰
-     */
-    private String accessToken;
-    
-    /**
-     * JWT 리프레시 토큰
-     */
-    private String refreshToken;
-    
-    /**
      * 통합 상태
      */
     private IntegrationStatus status;
@@ -111,8 +101,7 @@ public class AccountIntegrationResponse {
      * 성공 응답 생성
      */
     public static AccountIntegrationResponse success(String message, Long userId, String email, 
-                                                   String name, String nickname, String role,
-                                                   String accessToken, String refreshToken) {
+                                                   String name, String nickname, String role) {
         return AccountIntegrationResponse.builder()
             .success(true)
             .message(message)
@@ -121,8 +110,6 @@ public class AccountIntegrationResponse {
             .name(name)
             .nickname(nickname)
             .role(role)
-            .accessToken(accessToken)
-            .refreshToken(refreshToken)
             .status(IntegrationStatus.SUCCESS)
             .build();
     }

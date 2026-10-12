@@ -164,9 +164,9 @@ public class SecurityConfig {
                     .requestMatchers("/api/v1/payments/webhooks/**").permitAll()
                     // 계정 통합 API는 허용 (온보딩 이메일 인증 등)
                     .requestMatchers("/api/v1/accounts/integration/**").permitAll()
-                    // 공통코드 API는 허용 (온보딩에서 사용)
-                    .requestMatchers("/api/common-codes/**").permitAll()
-                    .requestMatchers("/api/v1/common-codes/**").permitAll()
+                    // 공통코드 조회(GET)만 공개 (온보딩에서 사용). 쓰기(POST/PUT/PATCH/DELETE)는 anyRequest 인증 + 컨트롤러 권한 가드
+                    .requestMatchers(HttpMethod.GET, "/api/common-codes/**").permitAll()
+                    .requestMatchers(HttpMethod.GET, "/api/v1/common-codes/**").permitAll()
                     // 업종 카테고리 API는 허용 (온보딩에서 사용)
                     // 표준화 원칙: 온보딩 프로세스는 로그인 전 접근이 필요하므로 공개 API로 설정
                     .requestMatchers("/api/v1/business-categories/**").permitAll()
@@ -308,8 +308,8 @@ public class SecurityConfig {
                     .requestMatchers("/api/v1/payments/webhooks/**").permitAll()
                     // 계정 통합 API는 허용 (온보딩 이메일 인증 등)
                     .requestMatchers("/api/v1/accounts/integration/**").permitAll()
-                    // 공통코드 API는 허용 (온보딩에서 사용)
-                    .requestMatchers("/api/v1/common-codes/**").permitAll()
+                    // 공통코드 조회(GET)만 공개 (온보딩에서 사용). 쓰기(POST/PUT/PATCH/DELETE)는 anyRequest 인증 + 컨트롤러 권한 가드
+                    .requestMatchers(HttpMethod.GET, "/api/v1/common-codes/**").permitAll()
                     // 업종 카테고리 API는 허용 (온보딩에서 사용)
                     .requestMatchers("/api/v1/business-categories/**").permitAll()
                     .requestMatchers("/api/business-categories/**").permitAll() // 레거시 경로 지원 (하위 호환성)

@@ -138,8 +138,8 @@ public interface CommonCodeService {
     // 특정 그룹과 값으로 공통코드 조회
     CommonCode getCommonCode(String groupCode, String codeValue);
     
-    // 공통코드 비활성화
-    int deactivateCommonCodes(List<String> codeValues);
+    // 공통코드 비활성화 (지정 테넌트의 코드만, 코어·타 테넌트 코드는 대상 아님)
+    int deactivateCommonCodes(String tenantId, List<String> codeValues);
     
     // ==================== 코어솔루션 코드 조회 ====================
     

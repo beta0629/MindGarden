@@ -15,6 +15,7 @@ import com.coresolution.consultation.service.CommonCodeService;
 import com.coresolution.consultation.service.CommonCodePermissionService;
 import com.coresolution.consultation.utils.SessionUtils;
 import com.coresolution.core.controller.BaseApiController;
+import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.dto.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -24,6 +25,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -54,6 +56,72 @@ public class CommonCodeController extends BaseApiController {
 
     private final CommonCodeService commonCodeService;
     private final CommonCodePermissionService permissionService;
+
+    private static final String MSG_LOGIN_REQUIRED = "로그인이 필요합니다.";
+    private static final String MSG_CODE_NOT_FOUND = "코드를 찾을 수 없습니다.";
+    private static final String MSG_TENANT_REQUIRED = "테넌트 정보가 없어 요청을 처리할 수 없습니다.";
+    private static final String CODE_TYPE_CORE = "코어";
+    private static final String CODE_TYPE_TENANT = "테넌트";
+    private static final String OP_UPDATE = "수정";
+    private static final String OP_DELETE = "삭제";
+    private static final String OP_CREATE = "생성";
+    private static final String OP_DEACTIVATE = "비활성화";
+
+    /**
+     * 쓰기 API 공통 가드: 세션 로그인 사용자 확인.
+     *
+     * @param session HTTP 세션
+     * @return 현재 사용자
+     * @throws AccessDeniedException 로그인하지 않은 경우
+     */
+    private User requireLoggedInUser(HttpSession session) {
+        User currentUser = SessionUtils.getCurrentUser(session);
+        if (currentUser == null) {
+            throw new AccessDeniedException(MSG_LOGIN_REQUIRED);
+        }
+        return currentUser;
+    }
+
+    /**
+     * ID로 공통코드를 조회한다. 없으면 예외.
+     */
+    private CommonCode requireCode(Long id) {
+        CommonCode code = commonCodeService.getCommonCodeById(id);
+        if (code == null) {
+            throw new RuntimeException(MSG_CODE_NOT_FOUND);
+        }
+        return code;
+    }
+
+    /**
+     * 생성 요청의 테넌트 범위에 대한 생성 권한(코어는 HQ만, 테넌트는 해당 테넌트 관리자만)을 확인한다.
+     */
+    private void requireCreatePermission(User currentUser, CommonCodeCreateRequest request) {
+        String tenantId = request.getTenantId();
+        if (!permissionService.canCreateCode(currentUser, tenantId)) {
+            String codeType = tenantId == null || tenantId.isEmpty() ? CODE_TYPE_CORE : CODE_TYPE_TENANT;
+            throw permissionDenied(codeType, OP_CREATE);
+        }
+    }
+
+    /**
+     * 대상 코드의 수정 권한(코어는 HQ만, 테넌트는 해당 테넌트 관리자만)을 확인한다. 상태 토글도 수정으로 본다.
+     */
+    private CommonCode requireUpdatePermission(User currentUser, Long id) {
+        CommonCode code = requireCode(id);
+        if (!permissionService.canUpdateCode(currentUser, code)) {
+            throw permissionDenied(codeTypeLabel(code), OP_UPDATE);
+        }
+        return code;
+    }
+
+    private static String codeTypeLabel(CommonCode code) {
+        return code.isCoreCode() ? CODE_TYPE_CORE : CODE_TYPE_TENANT;
+    }
+
+    private static AccessDeniedException permissionDenied(String codeType, String operation) {
+        return new AccessDeniedException(codeType + " 코드 " + operation + " 권한이 없습니다.");
+    }
     
     // ==================== 표준화된 CRUD API ====================
     
@@ -81,17 +149,8 @@ public class CommonCodeController extends BaseApiController {
             HttpSession session) {
         log.info("공통코드 생성 요청: {} - {}", request.getCodeGroup(), request.getCodeValue());
         
-        User currentUser = SessionUtils.getCurrentUser(session);
-        if (currentUser == null) {
-            throw new org.springframework.security.access.AccessDeniedException("로그인이 필요합니다.");
-        }
-        
-        // 권한 검증
-        String tenantId = request.getTenantId();
-        if (!permissionService.canCreateCode(currentUser, tenantId)) {
-            String codeType = tenantId == null || tenantId.isEmpty() ? "코어" : "테넌트";
-            throw new org.springframework.security.access.AccessDeniedException(codeType + " 코드 생성 권한이 없습니다.");
-        }
+        User currentUser = requireLoggedInUser(session);
+        requireCreatePermission(currentUser, request);
             
         String createdBy = currentUser.getId().toString();
         CommonCodeResponse response = commonCodeService.create(request, createdBy);
@@ -127,21 +186,8 @@ public class CommonCodeController extends BaseApiController {
             HttpSession session) {
         log.info("공통코드 수정 요청: id={}", id);
         
-        User currentUser = SessionUtils.getCurrentUser(session);
-        if (currentUser == null) {
-            throw new org.springframework.security.access.AccessDeniedException("로그인이 필요합니다.");
-        }
-        
-        // 공통코드 조회 및 권한 검증
-        CommonCode code = commonCodeService.getCommonCodeById(id);
-        if (code == null) {
-            throw new RuntimeException("코드를 찾을 수 없습니다.");
-        }
-        
-        if (!permissionService.canUpdateCode(currentUser, code)) {
-            String codeType = code.isCoreCode() ? "코어" : "테넌트";
-            throw new org.springframework.security.access.AccessDeniedException(codeType + " 코드 수정 권한이 없습니다.");
-        }
+        User currentUser = requireLoggedInUser(session);
+        requireUpdatePermission(currentUser, id);
         
         String updatedBy = currentUser.getId().toString();
         CommonCodeResponse response = commonCodeService.update(id, request, updatedBy);
@@ -194,20 +240,10 @@ public class CommonCodeController extends BaseApiController {
             HttpSession session) {
         log.info("공통코드 삭제 요청: id={}", id);
         
-        User currentUser = SessionUtils.getCurrentUser(session);
-        if (currentUser == null) {
-            throw new org.springframework.security.access.AccessDeniedException("로그인이 필요합니다.");
-        }
-        
-        // 공통코드 조회 및 권한 검증
-        CommonCode code = commonCodeService.getCommonCodeById(id);
-        if (code == null) {
-            throw new RuntimeException("코드를 찾을 수 없습니다.");
-        }
-        
+        User currentUser = requireLoggedInUser(session);
+        CommonCode code = requireCode(id);
         if (!permissionService.canDeleteCode(currentUser, code)) {
-            String codeType = code.isCoreCode() ? "코어" : "테넌트";
-            throw new org.springframework.security.access.AccessDeniedException(codeType + " 코드 삭제 권한이 없습니다.");
+            throw permissionDenied(codeTypeLabel(code), OP_DELETE);
         }
         
         String deletedBy = currentUser.getId().toString();
@@ -313,6 +349,7 @@ public class CommonCodeController extends BaseApiController {
             HttpSession session) {
         log.info("공통코드 상태 토글 요청: id={}", id);
         
+        requireUpdatePermission(requireLoggedInUser(session), id);
         CommonCode code = commonCodeService.toggleCommonCodeStatus(id);
         CommonCodeResponse response = CommonCodeResponse.fromEntity(code);
         
@@ -344,9 +381,9 @@ public class CommonCodeController extends BaseApiController {
             HttpSession session) {
         log.info("공통코드 일괄 생성 요청: {} 개", requests.size());
         
-        String createdBy = SessionUtils.getCurrentUser(session) != null 
-            ? SessionUtils.getCurrentUser(session).getId().toString() 
-            : "system";
+        User currentUser = requireLoggedInUser(session);
+        requests.forEach(request -> requireCreatePermission(currentUser, request));
+        String createdBy = currentUser.getId().toString();
         
         List<CommonCodeResponse> responses = requests.stream()
                 .map(request -> commonCodeService.create(request, createdBy))
@@ -616,8 +653,18 @@ public class CommonCodeController extends BaseApiController {
      */
     @PutMapping("/deactivate")
     public ResponseEntity<ApiResponse<Map<String, Object>>> deactivateCommonCodes(
-            @RequestBody Map<String, Object> request) {
+            @RequestBody Map<String, Object> request,
+            HttpSession session) {
         log.info("공통코드 비활성화 요청: {}", request);
+
+        User currentUser = requireLoggedInUser(session);
+        String tenantId = TenantContextHolder.getTenantId();
+        if (tenantId == null || tenantId.isEmpty()) {
+            throw new AccessDeniedException(MSG_TENANT_REQUIRED);
+        }
+        if (!permissionService.canUpdateTenantCode(currentUser, tenantId)) {
+            throw permissionDenied(CODE_TYPE_TENANT, OP_DEACTIVATE);
+        }
         
         @SuppressWarnings("unchecked")
         List<String> codeValues = (List<String>) request.get("codeValues");
@@ -626,7 +673,7 @@ public class CommonCodeController extends BaseApiController {
             throw new IllegalArgumentException("비활성화할 코드값이 없습니다.");
         }
         
-        int deactivatedCount = commonCodeService.deactivateCommonCodes(codeValues);
+        int deactivatedCount = commonCodeService.deactivateCommonCodes(tenantId, codeValues);
         
         log.info("공통코드 비활성화 완료: {} 개", deactivatedCount);
         

@@ -129,6 +129,13 @@ public interface CommonCodeRepository extends BaseRepository<CommonCode, Long> {
     
     // 코드값으로 조회
     List<CommonCode> findByCodeValue(String codeValue);
+
+    /**
+     * 테넌트 범위로 한정한 코드값 조회 (코어 코드·타 테넌트 코드 제외).
+     */
+    @Query("SELECT cc FROM CommonCode cc WHERE cc.tenantId = :tenantId AND cc.codeValue = :codeValue")
+    List<CommonCode> findByTenantIdAndCodeValue(@Param("tenantId") String tenantId,
+            @Param("codeValue") String codeValue);
     
     // ==================== 코어솔루션 코드 조회 ====================
     

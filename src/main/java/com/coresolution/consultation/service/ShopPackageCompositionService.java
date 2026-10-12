@@ -198,12 +198,11 @@ public class ShopPackageCompositionService {
         }
     }
 
-    /** 같은 테넌트 SKU 만 조회한다(다른 테넌트 id 는 없는 것으로 본다). 삭제 SKU 도 포함해 사유를 구분한다. */
+    /** 같은 테넌트·미삭제 SKU 만 조회한다(다른 테넌트·삭제 SKU 는 없는 것으로 본다). */
     private Map<Long, ShopCatalogSku> loadSkus(String tenantId, Collection<Long> ids) {
         Map<Long, ShopCatalogSku> out = new LinkedHashMap<>();
         for (Long id : ids) {
-            skuRepository.findById(id)
-                    .filter(sku -> tenantId.equals(sku.getTenantId()))
+            skuRepository.findByIdAndTenantIdAndIsDeletedFalse(id, tenantId)
                     .ifPresent(sku -> out.put(id, sku));
         }
         return out;
@@ -248,7 +247,7 @@ public class ShopPackageCompositionService {
     /** 몰 판매가: 패키지 연결 SKU 는 패키지 단가, 아니면 SKU 단가 (몰 표시와 같은 공통 해석). */
     private long priceOf(String tenantId, ShopCatalogSku sku) {
         ShopCatalogOffer offer = offerResolver.resolveLinked(tenantId, sku);
-        return offer.unitPriceMinor() != null ? offer.unitPriceMinor() : 0L;
+        return offer.unitPriceMinor();
     }
 
     /** 상담 상품만 회기를 갖는다. 실물·검사 등은 0. */
@@ -257,7 +256,7 @@ public class ShopPackageCompositionService {
             return ShopPackageCompositionConstants.NON_SESSION_COUNT;
         }
         ShopCatalogOffer offer = offerResolver.resolveLinked(tenantId, sku);
-        return offer.sessionCount() != null ? offer.sessionCount() : ShopPackageCompositionConstants.NON_SESSION_COUNT;
+        return offer.sessionCount();
     }
 
     private Optional<CommonCode> packageRow(String tenantId, String packageCode) {

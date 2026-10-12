@@ -101,7 +101,8 @@ class ShopPackageCompositionServiceTest {
         s.setSessionCount(sessions);
         s.setActive(true);
         s.setIsDeleted(false);
-        lenient().when(skuRepository.findById(id)).thenReturn(Optional.of(s));
+        lenient().when(skuRepository.findByIdAndTenantIdAndIsDeletedFalse(id, tenant))
+                .thenAnswer(inv -> Boolean.TRUE.equals(s.getIsDeleted()) ? Optional.empty() : Optional.of(s));
         return s;
     }
 
@@ -162,7 +163,7 @@ class ShopPackageCompositionServiceTest {
         sku(2L, TENANT, "B", ShopCatalogCategory.CONSULTATION, 1_000L, 1).setIsDeleted(true);
         assertEquals(ShopPackageCompositionConstants.MSG_ITEM_INACTIVE, assertThrows(IllegalArgumentException.class,
                 () -> service.save(TENANT, PKG, request(1L, 1L))).getMessage());
-        assertEquals(ShopPackageCompositionConstants.MSG_ITEM_INACTIVE, assertThrows(IllegalArgumentException.class,
+        assertEquals(ShopPackageCompositionConstants.MSG_ITEM_NOT_FOUND, assertThrows(IllegalArgumentException.class,
                 () -> service.save(TENANT, PKG, request(2L, 1L))).getMessage());
     }
 

@@ -1354,7 +1354,7 @@ class ClientShopCheckoutServiceImplTest {
     void checkout_buyNow_invalidLines_rejectBeforeOrderSave() {
         when(shopClientOrderRepository.findByTenantClientAndCheckoutKey(eq(TENANT), eq(CLIENT_ID), anyString()))
                 .thenReturn(Optional.empty());
-        when(shopOrderableSkuService.findOrderableForClient(TENANT, "NOPE"), CLIENT_ID).thenReturn(Optional.empty());
+        when(shopOrderableSkuService.findOrderableForClient(TENANT, "NOPE", CLIENT_ID)).thenReturn(Optional.empty());
 
         IllegalArgumentException zeroQty = assertThrows(IllegalArgumentException.class, () -> service.checkout(
                 TENANT, CLIENT_ID, buyNowRequest("idem-bn-0", List.of(buyNowLine("SKU-1", 0)))));

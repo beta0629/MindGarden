@@ -549,11 +549,20 @@ public class CommonCodeServiceImpl implements CommonCodeService {
     @Override
     @Transactional(readOnly = true)
     public List<CommonCode> getCurrentTenantCodesByGroup(String codeGroup) {
+        return getCurrentTenantCodesByGroup(codeGroup, false);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<CommonCode> getCurrentTenantCodesByGroup(String codeGroup, boolean includeInactive) {
         String tenantId = TenantContextHolder.getTenantId();
         if (tenantId == null || tenantId.isEmpty()) {
             // 테넌트 독립성 보장: 테넌트 컨텍스트가 없으면 빈 리스트 반환 (코어 코드 폴백 없음)
             log.warn("⚠️ 테넌트 컨텍스트가 없어 빈 리스트를 반환합니다 (독립성 보장): {}", codeGroup);
             return Collections.emptyList();
+        }
+        if (includeInactive) {
+            return commonCodeRepository.findTenantCodesByGroupIncludingInactive(tenantId, codeGroup);
         }
         return getTenantCodesByGroup(tenantId, codeGroup);
     }
@@ -561,6 +570,12 @@ public class CommonCodeServiceImpl implements CommonCodeService {
     @Override
     @Transactional(readOnly = true)
     public CommonCodeListResponse findAllTenantCodes() {
+        return findAllTenantCodes(false);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public CommonCodeListResponse findAllTenantCodes(boolean includeInactive) {
         String tenantId = TenantContextHolder.getTenantId();
         if (tenantId == null || tenantId.isEmpty()) {
             // 테넌트 독립성 보장: 테넌트 컨텍스트가 없으면 빈 리스트 반환
@@ -573,7 +588,9 @@ public class CommonCodeServiceImpl implements CommonCodeService {
                     .build();
         }
         
-        List<CommonCode> codes = commonCodeRepository.findAllTenantCodes(tenantId);
+        List<CommonCode> codes = includeInactive
+                ? commonCodeRepository.findAllTenantCodesIncludingInactive(tenantId)
+                : commonCodeRepository.findAllTenantCodes(tenantId);
         List<CommonCodeResponse> responses = codes.stream()
                 .map(CommonCodeResponse::fromEntity)
                 .collect(Collectors.toList());
@@ -620,6 +637,26 @@ public class CommonCodeServiceImpl implements CommonCodeService {
         }
         // 테넌트 컨텍스트가 없으면 코어 코드만
         return getCoreCodesByGroup(codeGroup);
+    }
+
+    /**
+     * {@link #getCodesByGroupWithCurrentTenant(String)}와 같은 테넌트 우선·코어 폴백 규칙으로 조회하되
+     * 비활성 코드도 포함한다(관리자 목록용, 소거 제외).
+     */
+    private List<CommonCode> getCodesByGroupWithCurrentTenantIncludingInactive(String codeGroup) {
+        String tenantId = TenantContextHolder.getTenantId();
+        if (tenantId == null || tenantId.isEmpty()) {
+            return commonCodeRepository.findCoreCodesByGroupIncludingInactive(codeGroup);
+        }
+        if (ExpenseCommonCodeSsotConstants.isTenantOperationalSsotGroup(codeGroup)) {
+            long tenantCount = commonCodeRepository
+                    .countByTenantIdAndCodeGroupAndIsDeletedFalse(tenantId, codeGroup);
+            if (tenantCount > 0) {
+                return commonCodeRepository.findTenantCodesByGroupIncludingInactive(tenantId, codeGroup);
+            }
+            return commonCodeRepository.findCoreCodesByGroupIncludingInactive(codeGroup);
+        }
+        return commonCodeRepository.findCodesByGroupWithFallbackIncludingInactive(tenantId, codeGroup);
     }
     
     @Override
@@ -872,11 +909,19 @@ public class CommonCodeServiceImpl implements CommonCodeService {
     @Override
     @Transactional(readOnly = true)
     public CommonCodeListResponse findAll(String codeGroup) {
-        log.info("🔍 공통코드 목록 조회 (표준화): codeGroup={}", codeGroup);
+        return findAll(codeGroup, false);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public CommonCodeListResponse findAll(String codeGroup, boolean includeInactive) {
+        log.info("🔍 공통코드 목록 조회 (표준화): codeGroup={}, includeInactive={}", codeGroup, includeInactive);
         
         List<CommonCode> codes;
         if (codeGroup != null && !codeGroup.trim().isEmpty()) {
-            codes = getCodesByGroupWithCurrentTenant(codeGroup);
+            codes = includeInactive
+                    ? getCodesByGroupWithCurrentTenantIncludingInactive(codeGroup)
+                    : getCodesByGroupWithCurrentTenant(codeGroup);
         } else {
             codes = getAllCommonCodes();
         }

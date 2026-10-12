@@ -4,7 +4,8 @@ import {
   clampDiscountRate,
   mapPackageCodesToCompositionOptions,
   mapShopProductsToCompositionOptions,
-  removeCompositionItem
+  removeCompositionItem,
+  resolveCompositionPricingForSave
 } from '../packageComposition';
 import {
   applyAdminShopProductComposition,
@@ -74,5 +75,22 @@ describe('상품 폼 구성 적용·저장 바디', () => {
   test('구성을 모두 제거하면 회기·가격·할인율 초기화', () => {
     const form = clearAdminShopProductComposition(applyAdminShopProductComposition(emptyAdminShopProductForm(), [A]));
     expect(form).toMatchObject({ items: [], sessions: '', price: '', discountRate: 0, originalPrice: null });
+  });
+});
+
+describe('resolveCompositionPricingForSave', () => {
+  test('구성이 있으면 합산 원가·보정된 할인율', () => {
+    expect(resolveCompositionPricingForSave({ items: [A], originalPrice: 100000, discountRate: 10 }, {}, 90000))
+      .toEqual({ originalPrice: 100000, discountRate: 10 });
+  });
+  test('구성을 모두 비우면 원가=판매가, 할인율 0 (편집 전 75000 이 남지 않는다)', () => {
+    const form = clearAdminShopProductComposition(applyAdminShopProductComposition(emptyAdminShopProductForm(), [A]));
+    expect(resolveCompositionPricingForSave(form, { items: [A], originalPrice: 75000 }, 123000))
+      .toEqual({ originalPrice: 123000, discountRate: 0 });
+  });
+  test('처음부터 구성이 없던 상품은 기존 값 보존', () => {
+    expect(resolveCompositionPricingForSave({ items: [], discountRate: 0 }, { originalPrice: 150000 }, 120000))
+      .toEqual({ originalPrice: 150000, discountRate: 0 });
+    expect(resolveCompositionPricingForSave({ items: [], discountRate: 0 }, {}, 120000).originalPrice).toBe(120000);
   });
 });

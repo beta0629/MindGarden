@@ -236,6 +236,35 @@ class TenantCommonCodeServiceImplTest {
     }
 
     @Test
+    @DisplayName("createTenantCode: 비활성·삭제 행이 점유한 PACKAGE_010 을 건너뛰고 PACKAGE_011 발급 (유니크 키 충돌 400 방지)")
+    void createTenantCode_packageBlankCode_skipsInactiveOrDeletedOccupiedValues() {
+        stubTenantGroupMetadata(ConsultationPackageCodeConstants.CODE_GROUP);
+        when(commonCodeRepository.findTenantCodesByGroup(TENANT, ConsultationPackageCodeConstants.CODE_GROUP))
+            .thenReturn(List.of(packageRow("PACKAGE_001"), packageRow("PACKAGE_003")));
+        when(commonCodeRepository.findAllCodeValuesIncludingInactiveAndDeleted(
+                TENANT, ConsultationPackageCodeConstants.CODE_GROUP))
+            .thenReturn(List.of("PACKAGE_001", "PACKAGE_003", "PACKAGE_010"));
+        when(commonCodeRepository.findTenantCodeByGroupAndValue(
+                eq(TENANT), eq(ConsultationPackageCodeConstants.CODE_GROUP), eq("PACKAGE_011")))
+            .thenReturn(Optional.empty());
+        when(commonCodeRepository.save(any(CommonCode.class))).thenAnswer(inv -> {
+            CommonCode saved = inv.getArgument(0);
+            saved.setId(101L);
+            return saved;
+        });
+
+        CommonCodeCreateRequest request = CommonCodeCreateRequest.builder()
+            .codeGroup(ConsultationPackageCodeConstants.CODE_GROUP)
+            .codeLabel("신규")
+            .koreanName("신규")
+            .build();
+
+        var response = tenantCommonCodeService.createTenantCode(TENANT, request);
+
+        assertEquals("PACKAGE_011", response.getCodeValue());
+    }
+
+    @Test
     @DisplayName("createTenantCode: 수동 codeValue trim 후 중복이면 예외")
     void createTenantCode_manualDuplicate_throws() {
         stubTenantGroupMetadata(ConsultationPackageCodeConstants.CODE_GROUP);

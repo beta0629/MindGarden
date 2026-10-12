@@ -26,8 +26,10 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -590,10 +592,20 @@ public class TenantCommonCodeServiceImpl implements TenantCommonCodeService {
      */
     private String generateCodeValue(String tenantId, String codeGroup, String prefix) {
         List<CommonCode> existingCodes = commonCodeRepository.findTenantCodesByGroup(tenantId, codeGroup);
+        // 비활성·소프트삭제 행도 유니크 키(uk_tenant_code_group_value)를 점유하므로 번호 산정에 포함한다.
+        List<String> occupiedValues = commonCodeRepository
+            .findAllCodeValuesIncludingInactiveAndDeleted(tenantId, codeGroup);
+        Set<String> occupied = new HashSet<>();
+        if (occupiedValues != null) {
+            occupied.addAll(occupiedValues);
+        }
         String sequencePrefix = prefix + "_";
         int maxSeq = 0;
         for (CommonCode existing : existingCodes) {
-            int seq = parseSequenceSuffix(existing.getCodeValue(), sequencePrefix);
+            occupied.add(existing.getCodeValue());
+        }
+        for (String value : occupied) {
+            int seq = parseSequenceSuffix(value, sequencePrefix);
             if (seq > maxSeq) {
                 maxSeq = seq;
             }
@@ -605,7 +617,8 @@ public class TenantCommonCodeServiceImpl implements TenantCommonCodeService {
                 "%s_%0" + TenantCommonCodeAutoValueConstants.CODE_SEQ_WIDTH + "d",
                 prefix,
                 nextSeq);
-            if (commonCodeRepository.findTenantCodeByGroupAndValue(tenantId, codeGroup, candidate).isEmpty()) {
+            if (!occupied.contains(candidate)
+                    && commonCodeRepository.findTenantCodeByGroupAndValue(tenantId, codeGroup, candidate).isEmpty()) {
                 return candidate;
             }
         }

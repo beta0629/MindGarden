@@ -19,7 +19,8 @@ import {
   addCompositionItem,
   clampDiscountRate,
   mapShopProductsToCompositionOptions,
-  removeCompositionItem
+  removeCompositionItem,
+  resolveCompositionPricingForSave
 } from '../../utils/packageComposition';
 import { useTranslation } from 'react-i18next';
 import Switch from '../common/Switch';
@@ -339,13 +340,14 @@ function AdminShopProductEditorPage({ isNew }) {
       }
     }
     const prevExtra = parseExtraData(product?.codeRow?.extraData);
+    const pricing = resolveCompositionPricingForSave(form, prevExtra, validation.price);
     const extraData = buildExtraDataString(
       validation.sessions,
       validation.price,
       form.remark.trim(),
       form.items,
-      form.discountRate,
-      hasComposition ? form.originalPrice : (prevExtra.originalPrice ?? validation.price),
+      pricing.discountRate,
+      pricing.originalPrice,
       form.homePublic
     );
     const name = form.name.trim();

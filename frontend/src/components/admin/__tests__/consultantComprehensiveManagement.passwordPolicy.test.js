@@ -11,6 +11,15 @@ import { apiGet, apiPost } from '../../../utils/ajax';
 import { SANITIZED_INTERNAL_SERVER_ERROR_MESSAGE } from '../../../constants/genericServerErrorMessages';
 import '../../../i18n';
 
+jest.mock('../../../utils/menuApi', () => ({
+  getUserMenus: jest.fn().mockResolvedValue({ success: true, data: [] }),
+  getAdminMenus: jest.fn().mockResolvedValue({ success: true, data: [] }),
+  getAllMenus: jest.fn().mockResolvedValue({ success: true, data: [] }),
+  getMenuByCode: jest.fn().mockResolvedValue({ success: true, data: null }),
+  getLnbMenus: jest.fn().mockResolvedValue({ success: true, data: [] }),
+  getMenuByPath: jest.fn().mockResolvedValue({ success: true, data: null })
+}));
+
 jest.mock('../../../utils/ajax', () => {
   const actual = jest.requireActual('../../../utils/ajax');
   return {

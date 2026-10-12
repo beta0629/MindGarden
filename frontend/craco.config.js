@@ -30,8 +30,12 @@ module.exports = {
         '^react-router/dom$':
           '<rootDir>/node_modules/react-router/dist/development/dom-export.js',
         '^@portone/browser-sdk/v2$':
-          '<rootDir>/node_modules/@portone/browser-sdk/dist/v2.cjs'
+          '<rootDir>/src/test-shims/portone-browser-sdk-v2.cjs'
       };
+      jestConfig.transformIgnorePatterns = [
+        '[/\\\\]node_modules[/\\\\](?!(axios)/).+\\.(js|jsx|mjs|cjs|ts|tsx)$',
+        '^.+\\.module\\.(css|sass|scss)$'
+      ];
       return jestConfig;
     }
   }

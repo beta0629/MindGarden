@@ -72,6 +72,9 @@ public class AdminShopCatalogSkuServiceImpl implements AdminShopCatalogSkuServic
                 shopCatalogSkuRepository.findByTenantIdAndIsDeletedFalseOrderBySortOrderAscIdAsc(tid);
         List<ShopCatalogSkuAdminItem> out = new ArrayList<>(rows.size());
         for (ShopCatalogSku row : rows) {
+            if (ShopClientOfferSkuPolicy.isClientOfferSku(row)) {
+                continue;
+            }
             out.add(toItem(row));
         }
         return out;
@@ -160,6 +163,7 @@ public class AdminShopCatalogSkuServiceImpl implements AdminShopCatalogSkuServic
         ShopCatalogSku row = findOrCreateLinked(tid, identity);
         Long previousPrice = row.getId() == null ? null : row.getUnitPriceMinor();
         applyPackageIdentity(row, identity);
+        rejectClientOfferSku(row, id);
         row.setCatalogVisible(catalogVisible);
         if (catalogVisible) {
             requireThumbnailUrl(row);
@@ -217,6 +221,7 @@ public class AdminShopCatalogSkuServiceImpl implements AdminShopCatalogSkuServic
         String tid = requireTenant(tenantId);
         ShopCatalogSku row = shopCatalogSkuRepository.findByIdAndTenantIdAndIsDeletedFalse(id, tid)
                 .orElseThrow(() -> new EntityNotFoundException(ENTITY_NAME, id));
+        rejectClientOfferSku(row, id);
         Long previousUnitPriceMinor = row.getUnitPriceMinor();
         applyUpsert(row, request);
         ShopCatalogSku saved = shopCatalogSkuRepository.save(row);
@@ -246,6 +251,13 @@ public class AdminShopCatalogSkuServiceImpl implements AdminShopCatalogSkuServic
             requireThumbnailUrl(row);
         }
         shopCatalogSkuRepository.save(row);
+    }
+
+    /** 내담자 전용 SKU 는 관리자 상품 화면에서 수정·노출 전환할 수 없다(몰 공개 방지). */
+    private static void rejectClientOfferSku(ShopCatalogSku row, Long id) {
+        if (ShopClientOfferSkuPolicy.isClientOfferSku(row)) {
+            throw new EntityNotFoundException(ENTITY_NAME, id);
+        }
     }
 
     private String resolveSkuCodeForCreate(String tenantId, String requestedSkuCode) {

@@ -135,6 +135,44 @@ class ShopClientOfferServiceTest {
     }
 
     @Test
+    @DisplayName("생성 — 할인 없음(정가 그대로): 정가로 확정, 값은 0으로 기록, 원본 몰 상품 가격은 그대로")
+    void create_noDiscount() {
+        ShopCatalogSku src = source(ShopCatalogCategory.CONSULTATION);
+        long srcPrice = src.getUnitPriceMinor() == null ? 0L : src.getUnitPriceMinor();
+        stubBase(src);
+        stubSaves();
+        when(consultantMappingService.listActiveMappings(TENANT, CLIENT)).thenReturn(List.of());
+        when(clientShopCatalogService.isVisibleForClientMappings(any(), any(), anyList())).thenReturn(true);
+
+        ShopClientOfferResponse res = service.create(TENANT, ADMIN, new ShopClientOfferCreateRequest(
+                CLIENT, "SRC-1", ShopClientOfferConstants.DISCOUNT_TYPE_NONE, null));
+
+        assertEquals(100000L, res.finalPriceMinor());
+        ArgumentCaptor<ShopClientOffer> row = ArgumentCaptor.forClass(ShopClientOffer.class);
+        verify(offerRepository).save(row.capture());
+        assertEquals(0L, row.getValue().getDiscountValue());
+        assertEquals(srcPrice, src.getUnitPriceMinor() == null ? 0L : src.getUnitPriceMinor());
+    }
+
+    @Test
+    @DisplayName("생성 — 직접 입력 판매 금액: 정가 이하로 확정하고 그 금액을 기록")
+    void create_directPrice() {
+        ShopCatalogSku src = source(ShopCatalogCategory.CONSULTATION);
+        stubBase(src);
+        stubSaves();
+        when(consultantMappingService.listActiveMappings(TENANT, CLIENT)).thenReturn(List.of());
+        when(clientShopCatalogService.isVisibleForClientMappings(any(), any(), anyList())).thenReturn(true);
+
+        ShopClientOfferResponse res = service.create(TENANT, ADMIN, new ShopClientOfferCreateRequest(
+                CLIENT, "SRC-1", ShopClientOfferConstants.DISCOUNT_TYPE_PRICE, 70000L));
+
+        assertEquals(70000L, res.finalPriceMinor());
+        ArgumentCaptor<ShopClientOffer> row = ArgumentCaptor.forClass(ShopClientOffer.class);
+        verify(offerRepository).save(row.capture());
+        assertEquals(70000L, row.getValue().getDiscountValue());
+    }
+
+    @Test
     @DisplayName("생성 — 내담자 배정과 맞지 않으면 저장하지 않는다")
     void create_notEligible() {
         ShopCatalogSku src = source(ShopCatalogCategory.CONSULTATION);

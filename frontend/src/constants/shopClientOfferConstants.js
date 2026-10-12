@@ -34,7 +34,10 @@ export const ADMIN_CLIENT_SEARCH_PAGE_SIZE = 20;
 /** 관리자 내담자 검색 입력 디바운스 (ms) */
 export const ADMIN_CLIENT_SEARCH_DEBOUNCE_MS = 300;
 
+/** BE ShopClientOfferConstants.DISCOUNT_TYPE_* — NONE: 정가 그대로, PRICE: 판매 금액 직접 입력(정가 이하) */
 export const SHOP_CLIENT_OFFER_DISCOUNT_TYPE = Object.freeze({
+  NONE: 'NONE',
+  PRICE: 'PRICE',
   AMOUNT: 'AMOUNT',
   RATE: 'RATE'
 });

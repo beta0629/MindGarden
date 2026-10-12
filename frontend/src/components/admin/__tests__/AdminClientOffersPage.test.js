@@ -149,6 +149,7 @@ describe('AdminClientOffersPage', () => {
     renderPage();
     await pickClient();
     fireEvent.change(screen.getByLabelText('상품'), { target: { value: 'SRC1' } });
+    fireEvent.click(screen.getByRole('radio', { name: '비율' }));
     fireEvent.change(screen.getByLabelText('할인 값'), { target: { value: '10' } });
     expect((await screen.findAllByText('396,000원'))[0]).toBeTruthy();
     expect(screen.getByText('한서윤 님에게 396,000원으로 지정합니다')).toBeTruthy();
@@ -158,11 +159,39 @@ describe('AdminClientOffersPage', () => {
     }));
   });
 
+  test('기본은 정가 그대로: 값 없이 정가로 지정한다', async() => {
+    renderPage();
+    await pickClient();
+    fireEvent.change(screen.getByLabelText('상품'), { target: { value: 'SRC1' } });
+    expect(screen.getByText('할인 없음 · 정가')).toBeTruthy();
+    expect(screen.getByText('한서윤 님에게 440,000원으로 지정합니다')).toBeTruthy();
+    fireEvent.click(screen.getByTestId('admin-client-offers-save'));
+    await waitFor(() => expect(offerService.createAdminClientOffer).toHaveBeenCalledWith({
+      clientId: 7, sourceSkuCode: 'SRC1', discountType: 'NONE', discountValue: null
+    }));
+  });
+
+  test('직접 입력: 정가와 같은 금액 허용, 정가 초과는 지정하기 비활성', async() => {
+    renderPage();
+    await pickClient();
+    fireEvent.change(screen.getByLabelText('상품'), { target: { value: 'SRC1' } });
+    fireEvent.click(screen.getByRole('radio', { name: '직접 입력' }));
+    fireEvent.change(screen.getByLabelText('판매 금액'), { target: { value: '440001' } });
+    expect(screen.getByTestId('admin-client-offers-save').disabled).toBe(true);
+    fireEvent.change(screen.getByLabelText('판매 금액'), { target: { value: '300000' } });
+    expect(screen.getByText('한서윤 님에게 300,000원으로 지정합니다')).toBeTruthy();
+    fireEvent.click(screen.getByTestId('admin-client-offers-save'));
+    await waitFor(() => expect(offerService.createAdminClientOffer).toHaveBeenCalledWith({
+      clientId: 7, sourceSkuCode: 'SRC1', discountType: 'PRICE', discountValue: 300000
+    }));
+  });
+
   test('저장 실패는 서버 문구를 그대로 보여 준다', async() => {
     offerService.createAdminClientOffer.mockRejectedValue(new Error('서버가 준 중복 안내 문구'));
     renderPage();
     await pickClient();
     fireEvent.change(screen.getByLabelText('상품'), { target: { value: 'SRC1' } });
+    fireEvent.click(screen.getByRole('radio', { name: '비율' }));
     fireEvent.change(screen.getByLabelText('할인 값'), { target: { value: '10' } });
     fireEvent.click(await screen.findByTestId('admin-client-offers-save'));
     expect(await screen.findByText('서버가 준 중복 안내 문구')).toBeTruthy();

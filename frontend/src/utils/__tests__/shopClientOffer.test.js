@@ -1,4 +1,11 @@
-import { buildClientOptions, filterClientOptions, previewOfferFinalPrice } from '../shopClientOffer';
+import {
+  buildClientOptions,
+  describeOfferDiscount,
+  filterClientOptions,
+  isOfferValueInRange,
+  previewOfferFinalPrice,
+  toOfferRequestValue
+} from '../shopClientOffer';
 import { MIN_PAYMENT_AMOUNT } from '../../constants/paymentAmountConstants';
 
 describe('previewOfferFinalPrice', () => {
@@ -33,5 +40,35 @@ describe('client combobox options', () => {
   });
   test('옵션에 전체 연락처가 남지 않는다', () => {
     expect(JSON.stringify(opts)).not.toMatch(/010|\*/);
+  });
+});
+
+describe('할인 없음·직접 입력 (BE ShopClientOfferPricing 과 같은 규칙)', () => {
+  it('정가 그대로: 비우면 정가', () => {
+    expect(previewOfferFinalPrice(90000, 'NONE', '')).toBe(90000);
+    expect(previewOfferFinalPrice(90000, 'NONE', 5)).toBeNull();
+    expect(toOfferRequestValue('NONE', '123')).toBeNull();
+  });
+  it('직접 입력: 비우면 정가, 정가와 같거나 낮으면 허용', () => {
+    expect(previewOfferFinalPrice(90000, 'PRICE', '')).toBe(90000);
+    expect(previewOfferFinalPrice(90000, 'PRICE', '90000')).toBe(90000);
+    expect(previewOfferFinalPrice(90000, 'PRICE', '70000')).toBe(70000);
+    expect(toOfferRequestValue('PRICE', '')).toBeNull();
+    expect(toOfferRequestValue('PRICE', '70000')).toBe(70000);
+  });
+  it('직접 입력: 0원·음수·정가 초과·최소 금액 미만 거부', () => {
+    expect(previewOfferFinalPrice(90000, 'PRICE', '0')).toBeNull();
+    expect(previewOfferFinalPrice(90000, 'PRICE', '-1')).toBeNull();
+    expect(previewOfferFinalPrice(90000, 'PRICE', '90001')).toBeNull();
+    expect(previewOfferFinalPrice(90000, 'PRICE', MIN_PAYMENT_AMOUNT - 1)).toBeNull();
+    expect(isOfferValueInRange(90000, 'PRICE', MIN_PAYMENT_AMOUNT - 1)).toBe(true);
+    expect(isOfferValueInRange(90000, 'PRICE', 90001)).toBe(false);
+  });
+  it('할인 표시: 할인이 없으면 null', () => {
+    expect(describeOfferDiscount({ discountType: 'NONE', discountValue: 0, originalPriceMinor: 9000, finalPriceMinor: 9000 })).toBeNull();
+    expect(describeOfferDiscount({ discountType: 'PRICE', discountValue: 7000, originalPriceMinor: 9000, finalPriceMinor: 7000 }))
+      .toEqual({ kind: 'amount', value: 2000 });
+    expect(describeOfferDiscount({ discountType: 'RATE', discountValue: 10, originalPriceMinor: 9000, finalPriceMinor: 8100 }))
+      .toEqual({ kind: 'rate', value: 10 });
   });
 });

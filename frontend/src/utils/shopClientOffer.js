@@ -1,5 +1,5 @@
 /**
- * 내담자별 할인 미리보기 계산.
+ * 내담자별 판매 금액(정가 그대로·직접 입력·할인) 미리보기 계산.
  * 화면 표시용일 뿐이며 결제 금액은 서버가 확정한다 (BE ShopClientOfferPricing 과 같은 규칙: 율은 내림).
  *
  * @author CoreSolution
@@ -16,17 +16,35 @@ import {
 } from '../constants/shopClientOfferConstants';
 import { MIN_PAYMENT_AMOUNT } from '../constants/paymentAmountConstants';
 
+const isBlank = (rawValue) => rawValue == null || String(rawValue).trim() === '';
+
 /**
+ * BE ShopClientOfferPricing.finalPrice 와 같은 규칙.
+ * NONE: 비우면 정가 · PRICE: 판매 금액(비우면 정가, 1원 이상·정가 이하) · AMOUNT: 할인 금액(원가 미만) · RATE: 1~99%(내림)
+ *
  * @param {number} originalMinor 원가(원)
- * @param {string} type AMOUNT | RATE
+ * @param {string} type NONE | PRICE | AMOUNT | RATE
  * @param {number|string} rawValue 입력 값
  * @returns {number|null} 최종가. 잘못된 입력이면 null
  */
 export const previewOfferFinalPrice = (originalMinor, type, rawValue) => {
   const original = Number(originalMinor);
-  const value = Number(rawValue);
-  if (!Number.isInteger(original) || original <= 0 || !Number.isInteger(value) || value <= 0) {
+  if (!Number.isInteger(original) || original <= 0) {
     return null;
+  }
+  const payable = (result) => (result >= MIN_PAYMENT_AMOUNT ? result : null);
+  if (type === SHOP_CLIENT_OFFER_DISCOUNT_TYPE.NONE) {
+    return isBlank(rawValue) || Number(rawValue) === 0 ? payable(original) : null;
+  }
+  if (type === SHOP_CLIENT_OFFER_DISCOUNT_TYPE.PRICE && isBlank(rawValue)) {
+    return payable(original);
+  }
+  const value = Number(rawValue);
+  if (isBlank(rawValue) || !Number.isInteger(value) || value <= 0) {
+    return null;
+  }
+  if (type === SHOP_CLIENT_OFFER_DISCOUNT_TYPE.PRICE) {
+    return value <= original ? payable(value) : null;
   }
   let discount;
   if (type === SHOP_CLIENT_OFFER_DISCOUNT_TYPE.AMOUNT) {
@@ -42,8 +60,64 @@ export const previewOfferFinalPrice = (originalMinor, type, rawValue) => {
   } else {
     return null;
   }
-  const result = original - discount;
-  return result >= MIN_PAYMENT_AMOUNT ? result : null;
+  return payable(original - discount);
+};
+
+/**
+ * 입력 값이 방식별 범위 안인지(최소 결제 금액은 보지 않음). 범위 안인데 미리보기가 null 이면 최소 금액 미만이다.
+ *
+ * @param {number} originalMinor
+ * @param {string} type
+ * @param {number|string} rawValue
+ * @returns {boolean}
+ */
+export const isOfferValueInRange = (originalMinor, type, rawValue) => {
+  const original = Number(originalMinor);
+  if (type === SHOP_CLIENT_OFFER_DISCOUNT_TYPE.NONE) {
+    return isBlank(rawValue);
+  }
+  if (type === SHOP_CLIENT_OFFER_DISCOUNT_TYPE.PRICE && isBlank(rawValue)) {
+    return true;
+  }
+  const value = Number(rawValue);
+  if (type === SHOP_CLIENT_OFFER_DISCOUNT_TYPE.PRICE) {
+    return value >= 1 && value <= original;
+  }
+  if (type === SHOP_CLIENT_OFFER_DISCOUNT_TYPE.AMOUNT) {
+    return value >= 1 && value < original;
+  }
+  return value >= 1 && value <= SHOP_CLIENT_OFFER_RATE_MAX_PERCENT;
+};
+
+/**
+ * 생성 요청 값: 비운 입력은 null(서버가 정가 적용), NONE 은 항상 null.
+ *
+ * @param {string} type
+ * @param {number|string} rawValue
+ * @returns {number|null}
+ */
+export const toOfferRequestValue = (type, rawValue) => (
+  type === SHOP_CLIENT_OFFER_DISCOUNT_TYPE.NONE || isBlank(rawValue) ? null : Number(rawValue)
+);
+
+/**
+ * 지정 내역·내담자 카드의 할인 표시. 할인이 없으면 null.
+ *
+ * @param {{ discountType?: string, discountValue?: number, originalPriceMinor?: number, finalPriceMinor?: number }} offer
+ * @returns {{ kind: 'rate'|'amount', value: number }|null}
+ */
+export const describeOfferDiscount = (offer) => {
+  if (!offer) {
+    return null;
+  }
+  if (offer.discountType === SHOP_CLIENT_OFFER_DISCOUNT_TYPE.RATE) {
+    return { kind: 'rate', value: Number(offer.discountValue) };
+  }
+  if (offer.discountType === SHOP_CLIENT_OFFER_DISCOUNT_TYPE.AMOUNT) {
+    return { kind: 'amount', value: Number(offer.discountValue) };
+  }
+  const amount = Number(offer.originalPriceMinor) - Number(offer.finalPriceMinor);
+  return Number.isFinite(amount) && amount > 0 ? { kind: 'amount', value: amount } : null;
 };
 
 const digitsOf = (text) => String(text ?? '').replace(/\D/g, '');

@@ -166,6 +166,21 @@ public class ShopClientOfferService {
         return toResponse(row, sku, false);
     }
 
+    /**
+     * 내담자 전용 SKU 가 해당 내담자에게 활성 지정되어 있는지.
+     *
+     * @param tenantId 테넌트 ID
+     * @param clientId 내담자 users.id
+     * @param offerSkuCode 전용 SKU 코드
+     * @return 활성 지정이면 true
+     */
+    @Transactional(readOnly = true)
+    public boolean isActiveOfferForClient(String tenantId, Long clientId, String offerSkuCode) {
+        return clientId != null && StringUtils.hasText(offerSkuCode)
+                && offerRepository.existsByTenantIdAndClientIdAndOfferSkuCodeAndStatusAndIsDeletedFalse(
+                        tenantId, clientId, offerSkuCode, ShopClientOfferConstants.STATUS_ACTIVE);
+    }
+
     private void requireEligible(String tenantId, Long clientId, ShopCatalogSku clone) {
         if (!ShopCatalogCategory.CONSULTATION.equals(clone.getCatalogCategory())) {
             return;

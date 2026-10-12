@@ -167,18 +167,22 @@ public class ShopClientOfferService {
     }
 
     /**
-     * 내담자 전용 SKU 가 해당 내담자에게 활성 지정되어 있는지.
+     * 내담자 전용 SKU 가 해당 내담자에게 활성 지정되어 있고 아직 결제 완료되지 않았는지.
      *
      * @param tenantId 테넌트 ID
      * @param clientId 내담자 users.id
      * @param offerSkuCode 전용 SKU 코드
-     * @return 활성 지정이면 true
+     * @return 활성 지정이며 미결제이면 true
      */
     @Transactional(readOnly = true)
     public boolean isActiveOfferForClient(String tenantId, Long clientId, String offerSkuCode) {
-        return clientId != null && StringUtils.hasText(offerSkuCode)
-                && offerRepository.existsByTenantIdAndClientIdAndOfferSkuCodeAndStatusAndIsDeletedFalse(
-                        tenantId, clientId, offerSkuCode, ShopClientOfferConstants.STATUS_ACTIVE);
+        if (clientId == null || !StringUtils.hasText(offerSkuCode)
+                || !offerRepository.existsByTenantIdAndClientIdAndOfferSkuCodeAndStatusAndIsDeletedFalse(
+                        tenantId, clientId, offerSkuCode, ShopClientOfferConstants.STATUS_ACTIVE)) {
+            return false;
+        }
+        return paidLookupRepository.findSkuCodesByClientAndStatus(
+                tenantId, clientId, ShopClientOrderStatus.PAID, Set.of(offerSkuCode)).isEmpty();
     }
 
     private void requireEligible(String tenantId, Long clientId, ShopCatalogSku clone) {

@@ -156,4 +156,34 @@ class ShopClientOfferServiceTest {
         assertTrue(service.listForClient(TENANT, CLIENT, true).isEmpty());
         verify(offerRepository, never()).findByTenantIdAndClientIdAndIsDeletedFalseOrderByIdDesc(any(), any());
     }
+
+    @Test
+    @DisplayName("전용 SKU 주문 가능 — 활성 지정·미결제만 true, 타 내담자·취소·결제 완료는 false")
+    void isActiveOfferForClient_cases() {
+        String code = ShopClientOfferConstants.SKU_CODE_PREFIX + "X1";
+        String active = ShopClientOfferConstants.STATUS_ACTIVE;
+        when(offerRepository.existsByTenantIdAndClientIdAndOfferSkuCodeAndStatusAndIsDeletedFalse(
+                TENANT, CLIENT, code, active)).thenReturn(true);
+        when(offerRepository.existsByTenantIdAndClientIdAndOfferSkuCodeAndStatusAndIsDeletedFalse(
+                TENANT, 99L, code, active)).thenReturn(false);
+        when(paidLookupRepository.findSkuCodesByClientAndStatus(
+                TENANT, CLIENT, com.coresolution.consultation.constant.ShopClientOrderStatus.PAID,
+                java.util.Set.of(code))).thenReturn(List.of());
+        assertTrue(service.isActiveOfferForClient(TENANT, CLIENT, code));
+        assertFalse(service.isActiveOfferForClient(TENANT, 99L, code));
+        assertFalse(service.isActiveOfferForClient(TENANT, null, code));
+
+        String canceled = ShopClientOfferConstants.SKU_CODE_PREFIX + "X2";
+        when(offerRepository.existsByTenantIdAndClientIdAndOfferSkuCodeAndStatusAndIsDeletedFalse(
+                TENANT, CLIENT, canceled, active)).thenReturn(false);
+        assertFalse(service.isActiveOfferForClient(TENANT, CLIENT, canceled));
+
+        String paid = ShopClientOfferConstants.SKU_CODE_PREFIX + "X3";
+        when(offerRepository.existsByTenantIdAndClientIdAndOfferSkuCodeAndStatusAndIsDeletedFalse(
+                TENANT, CLIENT, paid, active)).thenReturn(true);
+        when(paidLookupRepository.findSkuCodesByClientAndStatus(
+                TENANT, CLIENT, com.coresolution.consultation.constant.ShopClientOrderStatus.PAID,
+                java.util.Set.of(paid))).thenReturn(List.of(paid));
+        assertFalse(service.isActiveOfferForClient(TENANT, CLIENT, paid));
+    }
 }

@@ -137,7 +137,7 @@ function PackageCompositionBuilder({
     return (
       <div className="mg-package-composition__pop" id={listId}>
         <p className="mg-package-composition__count">{t('resultCount', { n: candidates.length })}</p>
-        <ul className="mg-package-composition__results" role="listbox" aria-label={t('resultsLabel')}>
+        <ul className="mg-package-composition__results mg-listbox--inline" role="listbox" aria-label={t('resultsLabel')}>
           {candidates.map((c) => {
             const added = addedIds.has(c.skuId);
             const blocked = added || c.composed;

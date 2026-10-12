@@ -11,8 +11,12 @@
 
 import React from 'react';
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import PackageSelector from '../PackageSelector';
 import { CODE_GROUP_CONSULTATION_PACKAGE } from '../../../constants/packagePricingConstants';
+import { ADMIN_SHOP_PRODUCT_ROUTES } from '../../../constants/adminShopSuite';
+
+const renderSelector = (ui) => render(<MemoryRouter>{ui}</MemoryRouter>);
 
 jest.mock('../../../utils/notification', () => ({
   __esModule: true,
@@ -48,7 +52,7 @@ describe('PackageSelector SSOT', () => {
       }
     ]);
 
-    render(<PackageSelector value="" onChange={jest.fn()} />);
+    renderSelector(<PackageSelector value="" onChange={jest.fn()} />);
 
     await waitFor(() => {
       expect(screen.getByText(/표준 패키지 \(10회기, 350,000원\)/)).toBeInTheDocument();
@@ -69,7 +73,7 @@ describe('PackageSelector SSOT', () => {
     ]);
     const onChange = jest.fn();
 
-    render(<PackageSelector value="" onChange={onChange} />);
+    renderSelector(<PackageSelector value="" onChange={onChange} />);
 
     await waitFor(() => {
       expect(screen.getByText(/표준 패키지/)).toBeInTheDocument();
@@ -88,10 +92,10 @@ describe('PackageSelector SSOT', () => {
   test('조회 실패 시 빈 목록이며 BASIC/SINGLE 하드코딩 폴백이 없다', async() => {
     mockGetTenantCodes.mockRejectedValue(new Error('network'));
 
-    render(<PackageSelector value="" onChange={jest.fn()} />);
+    renderSelector(<PackageSelector value="" onChange={jest.fn()} />);
 
     await waitFor(() => {
-      expect(screen.getByText(/패키지 요금 관리에서 활성 패키지를/)).toBeInTheDocument();
+      expect(screen.getByRole('link')).toHaveAttribute('href', ADMIN_SHOP_PRODUCT_ROUTES.LIST);
     });
 
     expect(screen.queryByText(/BASIC_20/)).not.toBeInTheDocument();

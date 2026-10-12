@@ -48,22 +48,21 @@ export const previewOfferFinalPrice = (originalMinor, type, rawValue) => {
 const digitsOf = (text) => String(text ?? '').replace(/\D/g, '');
 
 /**
- * with-mapping-info 응답 → 콤보박스 옵션 (이름 + 연락처 뒷자리). 내부 id 는 value 로만 쓰고 화면에 보이지 않는다.
+ * 관리자 내담자 검색 응답 → 콤보박스 옵션 (이름 + 연락처 뒷자리). 전체 연락처는 받지도 보관하지도 않는다.
  *
  * @param {Array<object>} clients
  * @param {(name: string, phoneTail: string) => string} formatLabel 연락처가 있을 때의 표시 문구
- * @returns {{ value: string, label: string, searchText: string, phoneDigits: string, name: string }[]}
+ * @returns {{ value: string, label: string, searchText: string, phoneLast4: string, name: string }[]}
  */
 export const buildClientOptions = (clients, formatLabel) => (Array.isArray(clients) ? clients : [])
   .filter((c) => c && c.id != null)
   .map((c) => {
     const name = String(c.name || c.clientName || '').trim();
-    const phoneDigits = digitsOf(c.phone || c.phoneNumber);
-    const tail = phoneDigits.slice(-CLIENT_SEARCH_PHONE_TAIL_LENGTH);
+    const tail = digitsOf(c.phoneLast4).slice(-CLIENT_SEARCH_PHONE_TAIL_LENGTH);
     return {
       value: String(c.id),
       name,
-      phoneDigits,
+      phoneLast4: tail,
       label: tail ? formatLabel(name, tail) : name,
       searchText: name.toLowerCase()
     };
@@ -72,7 +71,7 @@ export const buildClientOptions = (clients, formatLabel) => (Array.isArray(clien
 /**
  * 이름 부분 일치 또는 연락처 뒷자리(숫자) 일치.
  *
- * @param {Array<{ searchText?: string, phoneDigits?: string }>} options
+ * @param {Array<{ searchText?: string, phoneLast4?: string }>} options
  * @param {string} query
  */
 export const filterClientOptions = (options, query) => {
@@ -82,7 +81,7 @@ export const filterClientOptions = (options, query) => {
   }
   const qDigits = digitsOf(q);
   return options.filter((o) => (o.searchText || '').includes(q)
-    || (qDigits.length > 0 && qDigits === q.replace(/[\s-]/g, '') && (o.phoneDigits || '').endsWith(qDigits)));
+    || (qDigits.length > 0 && qDigits === q.replace(/[\s-]/g, '') && (o.phoneLast4 || '').endsWith(qDigits)));
 };
 
 /**

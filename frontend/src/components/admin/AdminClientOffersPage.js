@@ -17,16 +17,16 @@ import MGButton from '../common/MGButton';
 import SafeText from '../common/SafeText';
 import UnifiedModal from '../common/modals/UnifiedModal';
 import ClientSearchCombobox from './shop/ClientSearchCombobox';
-import { adminClientsWithMappingGetAll } from '../../api/adminListFetch';
-import { asArray } from '../../utils/apiResponseNormalize';
 import {
   cancelAdminClientOffer,
   createAdminClientOffer,
   listAdminClientOffers,
-  listAdminOfferSourceOptions
+  listAdminOfferSourceOptions,
+  searchAdminClients
 } from '../../services/shopClientOfferService';
 import {
   ADMIN_CLIENT_OFFERS_I18N_NS,
+  ADMIN_CLIENT_SEARCH_MAX_SIZE,
   ADMIN_CLIENT_OFFERS_TEST_IDS,
   SHOP_CLIENT_OFFER_DISCOUNT_TYPE,
   SHOP_CLIENT_OFFER_RATE_MAX_PERCENT,
@@ -108,11 +108,11 @@ const AdminClientOffersPage = () => {
     (async() => {
       try {
         const [clientsRaw, sourceRows] = await Promise.all([
-          adminClientsWithMappingGetAll(),
+          searchAdminClients({ size: ADMIN_CLIENT_SEARCH_MAX_SIZE }),
           listAdminOfferSourceOptions()
         ]);
         if (!cancelled) {
-          setClients(asArray(clientsRaw, 'clients'));
+          setClients(clientsRaw);
           setSources(sourceRows);
         }
       } catch (e) {

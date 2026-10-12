@@ -174,9 +174,15 @@ public class ShopPackageCompositionService {
                 .map(sku -> new ShopCompositionCandidateItem(
                         sku.getId(), sku.getSkuCode(), sku.getTitle(), sku.getCatalogCategory(),
                         priceOf(tenantId, sku), sessionsOf(tenantId, sku),
-                        composed.contains(trimOrNull(sku.getSourcePackageCode()))))
+                        isComposed(composed, sku)))
                 .toList();
         return new ShopCompositionCandidateListResponse(items, pool.size());
+    }
+
+    /** 원본 패키지가 없는 SKU 는 구성 대상이 아니다(불변 Set 의 null 조회 NPE 방지). */
+    private static boolean isComposed(Set<String> composed, ShopCatalogSku sku) {
+        String source = trimOrNull(sku.getSourcePackageCode());
+        return source != null && composed.contains(source);
     }
 
     private void requireAddable(String packageCode, ShopCatalogSku sku, Set<String> composed) {

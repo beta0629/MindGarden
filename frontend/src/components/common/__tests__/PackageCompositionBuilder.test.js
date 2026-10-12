@@ -45,9 +45,32 @@ describe('PackageCompositionBuilder', () => {
     expect(screen.queryByLabelText('담은 상품')).toBeNull();
   });
 
-  test('옵션이 없으면 이유 안내가 보인다', () => {
-    setup({ options: [] });
-    expect(screen.getByText('이미 모두 담았거나, 담을 수 있는 다른 상품이 없습니다.')).toBeTruthy();
+  test('후보가 0건이면 「후보 없음」: 검색 잠금 + 몰 등록 링크', () => {
+    const onRegisterClick = jest.fn();
+    setup({ options: [], registerHref: '/admin/shop/products/new', onRegisterClick });
+    expect(screen.getByText('담을 수 있는 몰 상품이 없습니다')).toBeTruthy();
+    expect(screen.getByLabelText('몰 상품 검색').disabled).toBe(true);
+    fireEvent.click(screen.getByText('몰에 상품 등록하기'));
+    expect(onRegisterClick).toHaveBeenCalled();
+    expect(screen.queryByText(/일치하는 몰 상품이 없습니다/)).toBeNull();
+  });
+
+  test('검색어와 맞는 후보가 없으면 「검색 결과 없음」: 입력 유지, 후보 없음 안내는 없다', () => {
+    setup();
+    const search = screen.getByLabelText('몰 상품 검색');
+    fireEvent.change(search, { target: { value: '커플' } });
+    expect(screen.getByText('「커플」와 일치하는 몰 상품이 없습니다.')).toBeTruthy();
+    expect(search.value).toBe('커플');
+    expect(search.disabled).toBe(false);
+    expect(screen.queryByText('담을 수 있는 몰 상품이 없습니다')).toBeNull();
+  });
+
+  test('검색어로 선택 목록을 거른다', () => {
+    setup();
+    fireEvent.change(screen.getByLabelText('몰 상품 검색'), { target: { value: '상담' } });
+    const select = screen.getByLabelText('구성에 추가할 상품');
+    expect(select.querySelectorAll('option[value="B"]').length).toBe(1);
+    expect(select.querySelectorAll('option[value="A"]').length).toBe(0);
   });
 
   test('구성이 있으면 잠금 안내와 할인 후 판매가가 보인다', () => {

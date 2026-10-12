@@ -16,7 +16,7 @@
   --mg-card-title-size: 1.125rem;
   --mg-offer-field-client: 16rem;
   --mg-offer-field-product: 26rem;
-  --mg-offer-field-mode: 10rem;
+  --mg-offer-field-mode: 14rem; /* 판매 금액 방식 4개 선택지가 2줄(2×2) 안에 겹치지 않게 */
   --mg-offer-field-value: 12rem;
   --mg-offer-col-discount: 10rem;
   --mg-offer-col-amount: 10rem;

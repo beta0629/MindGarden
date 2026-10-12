@@ -109,8 +109,6 @@ import ShopOrderDetailPage from './pages/client/shop/ShopOrderDetailPage';
 import ShopPaymentReturnPage from './pages/client/shop/ShopPaymentReturnPage';
 import ShopPaymentCompletePage from './pages/client/shop/ShopPaymentCompletePage';
 import ShopSkuDetailPage from './pages/client/shop/ShopSkuDetailPage';
-import ClientOffersPage from './pages/client/offers/ClientOffersPage';
-import AdminShopClientOffersPage from './components/admin/AdminShopClientOffersPage';
 import ClientTenantComponentGate from './components/shop/templates/ClientTenantComponentGate';
 import AdminTenantComponentGate from './components/shop/templates/AdminTenantComponentGate';
 import { PLATFORM_COMPONENT_CODES } from './constants/tenantComponentApi';
@@ -156,7 +154,6 @@ import PgApprovalManagement from './components/ops/PgApprovalManagement';
 import AdminLayout from './components/layout/AdminLayout';
 import TenantCommonCodeManager from './components/admin/TenantCommonCodeManager';
 import ProtectedRoute from './components/common/ProtectedRoute';
-import { CLIENT_OFFER_ROUTES } from './constants/shopClientOfferConstants';
 import { isClient } from './utils/RoleUtils';
 import SuperAdminTenantComponentPage from './components/super-admin/SuperAdminTenantComponentPage';
 import { SUPER_ADMIN_ROLE, SUPER_ADMIN_ROUTES } from './constants/superAdminRoutes';
@@ -635,16 +632,6 @@ function AppContent() {
               )}
             />
             <Route
-              path={CLIENT_OFFER_ROUTES.OFFERS}
-              element={(
-                <ProtectedRoute requiredRoles={[USER_ROLES.CLIENT]}>
-                  <ClientTenantComponentGate componentCode={PLATFORM_COMPONENT_CODES.CLIENT_SHOP}>
-                    <ClientOffersPage />
-                  </ClientTenantComponentGate>
-                </ProtectedRoute>
-              )}
-            />
-            <Route
               path="/client/shop-catalog"
               element={<Navigate to={CLIENT_SHOP_ROUTES.CATALOG} replace />}
             />
@@ -876,14 +863,6 @@ function AppContent() {
               <Route
                 path={toAdminRelativePath(ADMIN_ROUTES.SHOP_PRODUCTS)}
                 element={<AdminShopProductsPage />}
-              />
-              <Route
-                path={toAdminRelativePath(ADMIN_ROUTES.SHOP_CLIENT_OFFERS)}
-                element={
-                  <AdminTenantComponentGate componentCode={PLATFORM_COMPONENT_CODES.ADMIN_SHOP_CATALOG}>
-                    <AdminShopClientOffersPage />
-                  </AdminTenantComponentGate>
-                }
               />
               <Route
                 path={toAdminRelativePath(ADMIN_ROUTES.SHOP_POINT_POLICIES)}

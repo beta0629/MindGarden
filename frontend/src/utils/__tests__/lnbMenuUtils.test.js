@@ -117,7 +117,6 @@ describe('mergeShopAdminLnbItems', () => {
       expect(group.children.map((c) => c.to)).toEqual([
         ADMIN_ROUTES.SHOP_ORDERS,
         ADMIN_ROUTES.SHOP_PRODUCTS,
-        ADMIN_ROUTES.SHOP_CLIENT_OFFERS,
         ADMIN_ROUTES.SHOP_POINT_POLICIES
       ]);
     });
@@ -393,10 +392,9 @@ describe('filterHiddenAdminLnbItems', () => {
     expect(shop.children.map((c) => c.to)).toEqual([
       ADMIN_ROUTES.SHOP_ORDERS,
       ADMIN_ROUTES.SHOP_PRODUCTS,
-      ADMIN_ROUTES.SHOP_CLIENT_OFFERS,
       ADMIN_ROUTES.SHOP_POINT_POLICIES
     ]);
-    expect(shop.children.map((c) => c.label)).toEqual(['온라인 주문', '상품', '내담자별 결제', '리워드 정책']);
+    expect(shop.children.map((c) => c.label)).toEqual(['온라인 주문', '상품', '리워드 정책']);
     expect(shop.children[1].end).toBe(false);
     expect(settings.children).toHaveLength(1);
     expect(settings.children[0].label).toBe('결제 연결');

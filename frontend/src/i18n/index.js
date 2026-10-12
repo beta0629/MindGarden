@@ -42,7 +42,6 @@ import koAccountDeletion from '../locales/ko/accountDeletion.json';
 import koConsultantSuite from '../locales/ko/consultantSuite.json';
 import koAdminConsultationLogs from '../locales/ko/adminConsultationLogs.json';
 import koAdminShopComposition from '../locales/ko/adminShopComposition.json';
-import koShopClientOffers from '../locales/ko/shopClientOffers.json';
 
 const SUPPORTED_LANGUAGES = ['ko'];
 const FALLBACK_LANGUAGE = 'ko';
@@ -132,8 +131,7 @@ i18n
         accountDeletion: koAccountDeletion,
         consultantSuite: koConsultantSuite,
         adminConsultationLogs: koAdminConsultationLogs,
-        adminShopComposition: koAdminShopComposition,
-        shopClientOffers: koShopClientOffers
+        adminShopComposition: koAdminShopComposition
       }
     },
     supportedLngs: SUPPORTED_LANGUAGES,
@@ -159,8 +157,7 @@ i18n
       'accountDeletion',
       'consultantSuite',
       'adminConsultationLogs',
-      'adminShopComposition',
-      'shopClientOffers'
+      'adminShopComposition'
     ],
     interpolation: {
       escapeValue: false

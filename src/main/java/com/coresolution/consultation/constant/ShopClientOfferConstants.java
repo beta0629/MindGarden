@@ -35,7 +35,8 @@ public final class ShopClientOfferConstants {
     public static final String MSG_SOURCE_NOT_SELLABLE = "판매할 수 없는 상품입니다.";
     public static final String MSG_DISCOUNT_TYPE_INVALID = "할인 방식이 올바르지 않습니다.";
     public static final String MSG_DISCOUNT_VALUE_INVALID = "할인 값이 올바르지 않습니다.";
-    public static final String MSG_OFFER_PRICE_INVALID = "판매 금액은 1원 이상이며 정가 이하여야 합니다.";
+    public static final String MSG_OFFER_PRICE_INVALID = String.format(
+            "판매 금액은 %,d원 이상이며 정가 이하여야 합니다.", PaymentConstants.MIN_PAYMENT_AMOUNT);
     public static final String MSG_FINAL_PRICE_INVALID = "할인 후 금액이 결제 가능 최소 금액보다 작습니다.";
     public static final String MSG_CLIENT_NOT_ELIGIBLE =
             "이 내담자의 상담 배정과 맞지 않는 상품이라 지정할 수 없습니다.";

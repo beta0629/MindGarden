@@ -42,16 +42,17 @@
     "valueLabelPrice": "판매 금액",
     "valuePlaceholderPrice": "비우면 정가",
     "valueHintNone": "할인 없이 정가로 지정합니다.",
-    "valueHintPrice": "정수 · 1원 이상, 정가 이하 · 비우면 정가",
-    "previewNoDiscount": "할인 없음 · 정가"
+    "valueHintPrice": "정수 · {{min}}원 이상, 정가 이하 · 비우면 정가",
+    "previewNoDiscount": "할인 없음 · 정가",
+    "previewFinalPrice": "판매 금액"
   },
   "rules": {
     "title": "지정 규칙",
     "none": "정가 그대로는 할인 없이 정가로 지정합니다.",
-    "price": "직접 입력한 판매 금액은 1원 이상이며 정가 이하여야 합니다. 비우면 정가가 적용됩니다.",
+    "price": "직접 입력한 판매 금액은 {{min}}원 이상이며 정가 이하여야 합니다. 비우면 정가가 적용됩니다.",
     "amount": "금액 할인은 1원 이상이며 원가보다 작아야 합니다.",
     "rate": "비율 할인은 1~99%입니다.",
-    "min": "할인 후 금액은 결제 가능 최소 금액 이상이어야 합니다."
+    "min": "결제 금액은 결제 가능 최소 금액({{min}}원) 이상이어야 합니다."
   },
   "states": {
     "noClientTitle": "먼저 내담자를 선택해 주세요",
@@ -62,8 +63,8 @@
     "previewErrorTitle": "미리보기를 계산하지 못했어요",
     "previewErrorText": "잠시 후 다시 시도해 주세요. 계속되면 상품을 다시 선택해 주세요.",
     "previewErrorRetry": "다시 계산",
-    "minAmountTitle": "결제 금액이 너무 낮습니다",
-    "minAmountText": "결제 금액은 결제 가능 최소 금액 이상이어야 합니다. 금액을 다시 확인해 주십시오.",
+    "minAmountTitle": "결제 금액이 최소 금액보다 낮습니다",
+    "minAmountText": "결제 금액은 결제 가능 최소 금액({{min}}원) 이상이어야 합니다. 금액을 다시 확인해 주시기 바랍니다.",
     "saveFailTitle": "지정하지 못했어요",
     "saveFailFallback": "잠시 후 다시 시도해 주세요.",
     "toastSaved": "{{name}} 님에게 상품을 지정했습니다",

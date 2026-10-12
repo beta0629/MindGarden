@@ -34,6 +34,7 @@ import {
   SHOP_CLIENT_OFFER_STATUS
 } from '../../constants/shopClientOfferConstants';
 import { ADMIN_ROUTES } from '../../constants/adminRoutes';
+import { MIN_PAYMENT_AMOUNT } from '../../constants/paymentAmountConstants';
 import { RoleUtils } from '../../constants/roles';
 import { useSession } from '../../contexts/SessionContext';
 import useDebounce from '../../hooks/useDebounce';
@@ -265,7 +266,7 @@ const AdminClientOffersPage = () => {
       return t('form.valueHintNone');
     }
     if (isPrice) {
-      return t('form.valueHintPrice');
+      return t('form.valueHintPrice', { min: num(MIN_PAYMENT_AMOUNT) });
     }
     return isRate ? t('form.valueHintRate') : t('form.valueHintAmount');
   };
@@ -282,7 +283,7 @@ const AdminClientOffersPage = () => {
             </span>
           </div>
           <div className="aco-preview__cell">
-            <span className="aco-preview__cap">{t('form.previewFinal')}</span>
+            <span className="aco-preview__cap">{isPrice ? t('form.previewFinalPrice') : t('form.previewFinal')}</span>
             <span className="aco-preview__value aco-preview__value--empty">—</span>
             <span className="aco-preview__sub">{t('form.previewEmpty')}</span>
           </div>
@@ -296,7 +297,7 @@ const AdminClientOffersPage = () => {
           <span className="aco-preview__value aco-preview__value--orig"><SafeText>{won(selectedSource.unitPriceMinor)}</SafeText></span>
         </div>
         <div className="aco-preview__cell">
-          <span className="aco-preview__cap">{t('form.previewFinal')}</span>
+          <span className="aco-preview__cap">{isPrice ? t('form.previewFinalPrice') : t('form.previewFinal')}</span>
           <span className="aco-preview__value"><SafeText>{won(previewPrice)}</SafeText></span>
           <span className="aco-preview__sub">{previewSubText()}</span>
         </div>
@@ -512,7 +513,7 @@ const AdminClientOffersPage = () => {
                       <Info className="aco-icon" aria-hidden="true" />
                       <div className="aco-notice__body">
                         <span className="aco-notice__title">{t('states.minAmountTitle')}</span>
-                        <span className="aco-notice__text">{t('states.minAmountText')}</span>
+                        <span className="aco-notice__text">{t('states.minAmountText', { min: num(MIN_PAYMENT_AMOUNT) })}</span>
                       </div>
                     </div>
                   ) : null}
@@ -551,10 +552,10 @@ const AdminClientOffersPage = () => {
                   <p className="aco-rules__title"><Info className="aco-icon" aria-hidden="true" />{t('rules.title')}</p>
                   <ul className="aco-rules__list">
                     <li>{t('rules.none')}</li>
-                    <li>{t('rules.price')}</li>
+                    <li>{t('rules.price', { min: num(MIN_PAYMENT_AMOUNT) })}</li>
                     <li>{t('rules.amount')}</li>
                     <li>{t('rules.rate')}</li>
-                    <li>{t('rules.min')}</li>
+                    <li>{t('rules.min', { min: num(MIN_PAYMENT_AMOUNT) })}</li>
                   </ul>
                 </section>
                 <div className="aco-foot-action">

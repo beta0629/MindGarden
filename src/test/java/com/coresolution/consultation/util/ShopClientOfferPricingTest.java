@@ -77,4 +77,12 @@ class ShopClientOfferPricingTest {
         assertThrows(IllegalArgumentException.class,
                 () -> ShopClientOfferPricing.finalPrice(100000L, ShopClientOfferConstants.DISCOUNT_TYPE_AMOUNT, null));
     }
+
+    @Test
+    @DisplayName("직접 입력: 결제 최소 금액 경계 999 거부 · 1000 허용")
+    void priceMinBoundary() {
+        String type = ShopClientOfferConstants.DISCOUNT_TYPE_PRICE;
+        assertThrows(IllegalArgumentException.class, () -> ShopClientOfferPricing.finalPrice(100000L, type, 999L));
+        assertEquals(1000L, ShopClientOfferPricing.finalPrice(100000L, type, 1000L));
+    }
 }

@@ -34,8 +34,8 @@ public final class ShopClientOfferPricing {
             if (rawValue == null) {
                 return requirePayable(originalMinor);
             }
-            // 0원·음수 거부, 정가 초과 거부(정가 이하만 허용)
-            if (rawValue <= 0L || rawValue > originalMinor) {
+            // 결제 최소 금액 미만(0원·음수 포함)·정가 초과 거부(정가 이하만 허용)
+            if (rawValue < ShopCheckoutConstants.MIN_CASH_FOR_PAYMENT_GATEWAY || rawValue > originalMinor) {
                 throw new IllegalArgumentException(ShopClientOfferConstants.MSG_OFFER_PRICE_INVALID);
             }
             return requirePayable(rawValue);

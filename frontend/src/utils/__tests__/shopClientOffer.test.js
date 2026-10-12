@@ -72,3 +72,11 @@ describe('할인 없음·직접 입력 (BE ShopClientOfferPricing 과 같은 규
       .toEqual({ kind: 'rate', value: 10 });
   });
 });
+
+describe('직접 입력 결제 최소 금액 경계 (BE 999 거부 · 1000 허용)', () => {
+  it('최소 금액 미만은 null, 최소 금액은 허용', () => {
+    expect(previewOfferFinalPrice(90000, 'PRICE', MIN_PAYMENT_AMOUNT - 1)).toBeNull();
+    expect(previewOfferFinalPrice(90000, 'PRICE', MIN_PAYMENT_AMOUNT)).toBe(MIN_PAYMENT_AMOUNT);
+    expect(previewOfferFinalPrice(90000, 'PRICE', '1000')).toBe(1000);
+  });
+});

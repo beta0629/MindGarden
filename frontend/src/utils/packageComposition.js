@@ -130,3 +130,42 @@ export function resolveCompositionPricingForSave(form, prevExtra, price) {
     discountRate: clampDiscountRate(form?.discountRate)
   };
 }
+
+/** 구성 후보 상태 — 후보 없음(카탈로그 비어 있음)과 검색 결과 없음을 구분한다. */
+export const COMPOSITION_CANDIDATE_STATE = Object.freeze({
+  READY: 'READY',
+  NO_CANDIDATES: 'NO_CANDIDATES',
+  NO_RESULTS: 'NO_RESULTS'
+});
+
+/**
+ * 후보 API 응답 규약 `{items, totalActive}` 과 같은 판정.
+ * totalActive 0 → 후보 없음, items 0 이고 totalActive > 0 → 검색 결과 없음.
+ *
+ * @param {{ totalActive: number, matchedCount: number }} args
+ * @returns {string} COMPOSITION_CANDIDATE_STATE 값
+ */
+export function resolveCompositionCandidateState({ totalActive, matchedCount }) {
+  if (!totalActive || totalActive <= 0) {
+    return COMPOSITION_CANDIDATE_STATE.NO_CANDIDATES;
+  }
+  if (!matchedCount || matchedCount <= 0) {
+    return COMPOSITION_CANDIDATE_STATE.NO_RESULTS;
+  }
+  return COMPOSITION_CANDIDATE_STATE.READY;
+}
+
+/**
+ * 상품명 일부로 후보를 거른다(대소문자·앞뒤 공백 무시).
+ *
+ * @param {Array<{label?: string}>} options
+ * @param {string} query
+ * @returns {Array}
+ */
+export function filterCompositionOptions(options, query) {
+  const q = String(query || '').trim().toLowerCase();
+  if (!q) {
+    return options;
+  }
+  return options.filter((o) => String(o.label || '').toLowerCase().includes(q));
+}

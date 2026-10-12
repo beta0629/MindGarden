@@ -42,6 +42,7 @@ import koAccountDeletion from '../locales/ko/accountDeletion.json';
 import koConsultantSuite from '../locales/ko/consultantSuite.json';
 import koAdminConsultationLogs from '../locales/ko/adminConsultationLogs.json';
 import koAdminShopComposition from '../locales/ko/adminShopComposition.json';
+import koAdminShopProductEditor from '../locales/ko/adminShopProductEditor.json';
 import koAdminClientOffers from '../locales/ko/adminClientOffers.json';
 import koClientOffers from '../locales/ko/clientOffers.json';
 
@@ -134,6 +135,7 @@ i18n
         consultantSuite: koConsultantSuite,
         adminConsultationLogs: koAdminConsultationLogs,
         adminShopComposition: koAdminShopComposition,
+        adminShopProductEditor: koAdminShopProductEditor,
         adminClientOffers: koAdminClientOffers,
         clientOffers: koClientOffers
       }
@@ -162,6 +164,7 @@ i18n
       'consultantSuite',
       'adminConsultationLogs',
       'adminShopComposition',
+      'adminShopProductEditor',
       'adminClientOffers',
       'clientOffers'
     ],

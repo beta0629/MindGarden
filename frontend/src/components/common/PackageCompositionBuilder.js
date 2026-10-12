@@ -10,8 +10,14 @@ import React, { useId, useState } from 'react';
 import PropTypes from 'prop-types';
 import { useTranslation } from 'react-i18next';
 import SafeText from './SafeText';
-import { ChevronDown, Lock, X } from 'lucide-react';
-import { calculateComposition, COMPOSITION_DISCOUNT_MAX } from '../../utils/packageComposition';
+import { ChevronDown, Lock, PackageOpen, SearchX, X } from 'lucide-react';
+import {
+  calculateComposition,
+  COMPOSITION_CANDIDATE_STATE,
+  COMPOSITION_DISCOUNT_MAX,
+  filterCompositionOptions,
+  resolveCompositionCandidateState
+} from '../../utils/packageComposition';
 import '../../i18n';
 import './PackageCompositionBuilder.css';
 
@@ -25,13 +31,22 @@ function PackageCompositionBuilder({
   disabled,
   onAdd,
   onRemove,
-  onDiscountChange
+  onDiscountChange,
+  registerHref,
+  onRegisterClick
 }) {
   const { t } = useTranslation(NS);
   const baseId = useId();
   const [overRange, setOverRange] = useState(false);
+  const [query, setQuery] = useState('');
   const hasItems = items.length > 0;
-  const selectable = options;
+  const selectable = filterCompositionOptions(options, query);
+  const candidateState = resolveCompositionCandidateState({
+    totalActive: options.length,
+    matchedCount: selectable.length
+  });
+  const noCandidates = candidateState === COMPOSITION_CANDIDATE_STATE.NO_CANDIDATES;
+  const noResults = candidateState === COMPOSITION_CANDIDATE_STATE.NO_RESULTS;
 
   const handleSelect = (event) => {
     const option = selectable.find((o) => o.value === event.target.value);
@@ -42,16 +57,27 @@ function PackageCompositionBuilder({
 
   const { price: finalPrice } = calculateComposition(items, discountRate);
   const noOptions = selectable.length === 0;
-  let addHint = null;
-  if (noOptions) {
-    addHint = t('noOptionsHint');
-  } else if (!hasItems) {
-    addHint = t('emptyHint');
-  }
+  const addHint = !noOptions && !hasItems ? t('emptyHint') : null;
 
   return (
     <div className="mg-package-composition" aria-busy={disabled ? 'true' : undefined}>
       <div className="mg-package-composition__add">
+        <label className="mg-package-composition__label" htmlFor={`${baseId}-search`}>
+          {t('searchLabel')}
+        </label>
+        <input
+          id={`${baseId}-search`}
+          type="search"
+          className="mg-package-composition__search"
+          value={query}
+          placeholder={t('searchPlaceholder')}
+          disabled={disabled || noCandidates}
+          aria-describedby={`${baseId}-search-hint`}
+          onChange={(e) => setQuery(e.target.value)}
+        />
+        <span id={`${baseId}-search-hint`} className="mg-package-composition__hint">
+          {t('searchHint')}
+        </span>
         <label className="mg-package-composition__label" htmlFor={`${baseId}-add`}>
           {t('addLabelVisible')}
         </label>
@@ -76,6 +102,31 @@ function PackageCompositionBuilder({
         </span>
         {addHint ? <span className="mg-package-composition__hint">{addHint}</span> : null}
       </div>
+      {noCandidates ? (
+        <div className="mg-package-composition__state" role="status">
+          <PackageOpen className="mg-package-composition__state-icon" aria-hidden="true" focusable="false" />
+          <strong className="mg-package-composition__state-title">{t('noCandTitle')}</strong>
+          <span className="mg-package-composition__hint">{t('noCandBody')}</span>
+          {registerHref ? (
+            <a
+              className="mg-package-composition__state-link"
+              href={registerHref}
+              onClick={onRegisterClick ? (e) => { e.preventDefault(); onRegisterClick(); } : undefined}
+            >
+              {t('noCandLink')}
+            </a>
+          ) : null}
+        </div>
+      ) : null}
+      {noResults ? (
+        <div className="mg-package-composition__state" role="status">
+          <SearchX className="mg-package-composition__state-icon" aria-hidden="true" focusable="false" />
+          <strong className="mg-package-composition__state-title">
+            <SafeText>{t('noResult', { q: query.trim() })}</SafeText>
+          </strong>
+          <span className="mg-package-composition__hint">{t('noResultHint')}</span>
+        </div>
+      ) : null}
       {hasItems ? (
         <ul className="mg-package-composition__list" aria-label={t('listLabel')}>
           <li className="mg-package-composition__head" aria-hidden="true">
@@ -186,7 +237,9 @@ PackageCompositionBuilder.propTypes = {
   disabled: PropTypes.bool,
   onAdd: PropTypes.func.isRequired,
   onRemove: PropTypes.func.isRequired,
-  onDiscountChange: PropTypes.func.isRequired
+  onDiscountChange: PropTypes.func.isRequired,
+  registerHref: PropTypes.string,
+  onRegisterClick: PropTypes.func
 };
 
 PackageCompositionBuilder.defaultProps = {
@@ -194,7 +247,9 @@ PackageCompositionBuilder.defaultProps = {
   options: [],
   originalPrice: 0,
   discountRate: 0,
-  disabled: false
+  disabled: false,
+  registerHref: '',
+  onRegisterClick: undefined
 };
 
 export default PackageCompositionBuilder;

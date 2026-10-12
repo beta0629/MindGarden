@@ -24,7 +24,6 @@ import {
 } from '../../utils/packageComposition';
 import { useTranslation } from 'react-i18next';
 import Switch from '../common/Switch';
-import EntityRowActions from '../common/molecules/EntityRowActions';
 import ShopProductImageUpload from '../shop/organisms/ShopProductImageUpload';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import {
@@ -257,6 +256,8 @@ function AdminShopProductEditorPage({ isNew }) {
   const perSession = computeAdminShopPerSessionPrice(validation.price, validation.sessions);
   const hasComposition = form.items.length > 0;
   const { t: tComposition } = useTranslation('adminShopComposition');
+  const { t: tEditor } = useTranslation('adminShopProductEditor');
+  const [saleToggleBusy, setSaleToggleBusy] = useState(false);
   const compositionOptions = useMemo(
     () => mapShopProductsToCompositionOptions(products, product?.code || ''),
     [products, product]
@@ -297,6 +298,50 @@ function AdminShopProductEditorPage({ isNew }) {
     const current = Number.parseInt(form.sessions, 10);
     const base = Number.isFinite(current) ? current : 0;
     setField('sessions', String(Math.max(0, base + delta)));
+  };
+
+  const applySaleState = async(next) => {
+    setSaleToggleBusy(true);
+    try {
+      await updateAdminShopProductCode(
+        product.codeRow.id,
+        buildAdminShopProductCodePutBody(product.codeRow, { isActive: next })
+      );
+      setProduct((prev) => (prev ? { ...prev, codeRow: { ...prev.codeRow, isActive: next } } : prev));
+      setForm((prev) => ({ ...prev, active: next }));
+      setInitialForm((prev) => ({ ...prev, active: next }));
+      notificationManager.success(next ? tEditor('resumedToast') : tEditor('stoppedToast'));
+    } catch (e) {
+      notificationManager.error(e?.message != null ? String(e.message) : tEditor('toggleFailed'));
+    } finally {
+      setSaleToggleBusy(false);
+    }
+  };
+
+  const handleSaleToggle = async(next) => {
+    if (isNew || !product?.codeRow) {
+      setField('active', next);
+      return;
+    }
+    if (!next) {
+      const ok = await confirm({
+        title: tEditor('stopModalTitle'),
+        message: (
+          <>
+            <span>{tEditor('stopModalBody')}</span>
+            <br />
+            <strong>{tEditor('stopModalTiming')}</strong>
+          </>
+        ),
+        confirmLabel: tEditor('stopConfirm'),
+        cancelLabel: tEditor('stopCancel'),
+        variant: 'warning'
+      });
+      if (!ok) {
+        return;
+      }
+    }
+    await applySaleState(next);
   };
 
   const goList = async() => {
@@ -445,20 +490,6 @@ function AdminShopProductEditorPage({ isNew }) {
                 >
                   {ADMIN_SHOP_PRODUCT_EDITOR_COPY.LIST}
                 </MGButton>
-                {!isNew && product ? (
-                  <EntityRowActions
-                    ariaLabel={ADMIN_SHOP_PRODUCT_EDITOR_COPY.MENU_ARIA}
-                    items={[
-                      {
-                        id: 'stop',
-                        label: ADMIN_SHOP_PRODUCT_EDITOR_COPY.MENU_STOP,
-                        variant: 'destructive',
-                        hidden: !form.active,
-                        onClick: () => setForm((prev) => ({ ...prev, active: false, homePublic: false, mallVisible: false }))
-                      }
-                    ]}
-                  />
-                ) : null}
                 <MGButton
                   type="button"
                   variant="primary"
@@ -497,6 +528,8 @@ function AdminShopProductEditorPage({ isNew }) {
                   onAdd={handleCompositionAdd}
                   onRemove={handleCompositionRemove}
                   onDiscountChange={handleDiscountChange}
+                  registerHref={ADMIN_SHOP_PRODUCT_ROUTES.NEW}
+                  onRegisterClick={() => navigate(ADMIN_SHOP_PRODUCT_ROUTES.NEW)}
                 />
               </section>
 
@@ -793,7 +826,7 @@ function AdminShopProductEditorPage({ isNew }) {
               {[
                 { key: 'homePublic', label: ADMIN_SHOP_PRODUCT_EDITOR_COPY.TOGGLE_HOME, hint: ADMIN_SHOP_PRODUCT_EDITOR_COPY.TOGGLE_HOME_HINT },
                 { key: 'mallVisible', label: ADMIN_SHOP_PRODUCT_EDITOR_COPY.TOGGLE_MALL, hint: ADMIN_SHOP_PRODUCT_EDITOR_COPY.TOGGLE_MALL_HINT },
-                { key: 'active', label: ADMIN_SHOP_PRODUCT_EDITOR_COPY.TOGGLE_ACTIVE, hint: ADMIN_SHOP_PRODUCT_EDITOR_COPY.TOGGLE_ACTIVE_HINT }
+                { key: 'active', label: ADMIN_SHOP_PRODUCT_EDITOR_COPY.TOGGLE_ACTIVE, hint: isNew ? ADMIN_SHOP_PRODUCT_EDITOR_COPY.TOGGLE_ACTIVE_HINT : tEditor('onSaleHint') }
               ].map((row) => {
                 const mallBlocked = row.key === 'mallVisible' && Boolean(validation.errors.sessions) && !form.mallVisible;
                 return (
@@ -807,9 +840,9 @@ function AdminShopProductEditorPage({ isNew }) {
                     <span className={mallBlocked ? 'admin-shop-suite__toggle-blocked' : undefined}>
                       <Switch
                         checked={Boolean(form[row.key])}
-                        disabled={mallBlocked || saving}
+                        disabled={mallBlocked || saving || (row.key === 'active' && saleToggleBusy)}
                         ariaLabel={row.label}
-                        onCheckedChange={(next) => setField(row.key, next)}
+                        onCheckedChange={(next) => (row.key === 'active' ? handleSaleToggle(next) : setField(row.key, next))}
                       />
                     </span>
                   </div>

@@ -54,14 +54,6 @@ jest.mock('./pages/client/offers/ClientOffersPage', () => ({
   default: () => null
 }));
 
-jest.mock(
-  '@portone/browser-sdk/v2',
-  () => ({
-    requestPayment: jest.fn()
-  }),
-  { virtual: true }
-);
-
 import App from './App';
 
 describe('App', () => {

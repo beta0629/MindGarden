@@ -30,8 +30,19 @@ module.exports = {
         '^react-router/dom$':
           '<rootDir>/node_modules/react-router/dist/development/dom-export.js',
         '^@portone/browser-sdk/v2$':
-          '<rootDir>/node_modules/@portone/browser-sdk/dist/v2.cjs'
+          '<rootDir>/node_modules/@portone/browser-sdk/dist/v2.cjs',
+        '^axios$': '<rootDir>/node_modules/axios/dist/node/axios.cjs'
       };
+      const ignore = jestConfig.transformIgnorePatterns || [];
+      jestConfig.transformIgnorePatterns = ignore.map((pattern) => {
+        if (typeof pattern === 'string' && pattern.includes('node_modules')) {
+          return pattern.replace(
+            'node_modules',
+            'node_modules/(?!(axios|@portone)/)'
+          );
+        }
+        return pattern;
+      });
       return jestConfig;
     }
   }

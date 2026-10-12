@@ -142,6 +142,7 @@ import AdminShopProductsPage from './components/admin/AdminShopProductsPage';
 import { ADMIN_SHOP_PRODUCT_ROUTES, buildAdminShopProductEditRoute } from './constants/adminShopSuite';
 import AdminShopProductEditorPage from './components/admin/AdminShopProductEditorPage';
 import AdminShopPointPoliciesPage from './components/admin/AdminShopPointPoliciesPage';
+import AdminClientOffersPage from './components/admin/AdminClientOffersPage';
 import AdminShopOrdersPage from './components/admin/AdminShopOrdersPage';
 import MindfulnessGuide from './components/wellness/MindfulnessGuide';
 import TenantProfile from './components/tenant/TenantProfile';
@@ -869,6 +870,14 @@ function AppContent() {
                 element={
                   <AdminTenantComponentGate componentCode={PLATFORM_COMPONENT_CODES.ADMIN_SHOP_CATALOG}>
                     <AdminShopPointPoliciesPage />
+                  </AdminTenantComponentGate>
+                }
+              />
+              <Route
+                path={toAdminRelativePath(ADMIN_ROUTES.SHOP_CLIENT_OFFERS)}
+                element={
+                  <AdminTenantComponentGate componentCode={PLATFORM_COMPONENT_CODES.ADMIN_SHOP_CATALOG}>
+                    <AdminClientOffersPage />
                   </AdminTenantComponentGate>
                 }
               />

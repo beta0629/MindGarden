@@ -101,3 +101,32 @@ export function mapShopProductsToCompositionOptions(products, excludeCode = '') 
       price: Number(p.price) || 0
     }));
 }
+
+/**
+ * 저장할 원가·할인율 결정.
+ * - 구성이 있으면 구성 합산값.
+ * - 구성이 있다가 모두 비워졌으면 판매가=원가, 할인율 0 (이전 구성값이 남지 않게).
+ * - 처음부터 구성이 없던 상품은 기존 저장값을 보존.
+ *
+ * @param {{ items: Array, discountRate: (string|number), originalPrice: (number|null) }} form
+ * @param {{ items?: Array, originalPrice?: (number|null) }} prevExtra 저장돼 있던 extraData(parse 결과)
+ * @param {number} price 저장할 판매가
+ * @returns {{ originalPrice: number, discountRate: number }}
+ */
+export function resolveCompositionPricingForSave(form, prevExtra, price) {
+  const hasItems = Array.isArray(form?.items) && form.items.length > 0;
+  if (hasItems) {
+    return {
+      originalPrice: Number(form.originalPrice) || 0,
+      discountRate: clampDiscountRate(form.discountRate)
+    };
+  }
+  const hadItems = Array.isArray(prevExtra?.items) && prevExtra.items.length > 0;
+  if (hadItems) {
+    return { originalPrice: price, discountRate: 0 };
+  }
+  return {
+    originalPrice: prevExtra?.originalPrice ?? price,
+    discountRate: clampDiscountRate(form?.discountRate)
+  };
+}

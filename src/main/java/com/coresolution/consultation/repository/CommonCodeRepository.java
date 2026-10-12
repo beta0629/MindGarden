@@ -173,6 +173,19 @@ public interface CommonCodeRepository extends BaseRepository<CommonCode, Long> {
             @Param("id") Long id);
     
     /**
+     * 테넌트·그룹의 모든 codeValue (비활성·소프트삭제 포함).
+     * uk_tenant_code_group_value 는 이 행들까지 포함하므로 자동 발급 충돌 회피용.
+     *
+     * @param tenantId 테넌트 ID
+     * @param codeGroup 코드 그룹
+     * @return codeValue 목록 (삭제·비활성 포함)
+     */
+    @Query("SELECT c.codeValue FROM CommonCode c WHERE c.tenantId = :tenantId AND c.codeGroup = :codeGroup")
+    List<String> findAllCodeValuesIncludingInactiveAndDeleted(
+            @Param("tenantId") String tenantId,
+            @Param("codeGroup") String codeGroup);
+
+    /**
      * 테넌트별 코드 그룹별 조회 (활성·미소거만)
      */
     @Query("SELECT c FROM CommonCode c WHERE c.tenantId = :tenantId AND c.codeGroup = :codeGroup "

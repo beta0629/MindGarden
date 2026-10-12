@@ -163,7 +163,6 @@ public class AdminShopCatalogSkuServiceImpl implements AdminShopCatalogSkuServic
         ShopCatalogSku row = findOrCreateLinked(tid, identity);
         Long previousPrice = row.getId() == null ? null : row.getUnitPriceMinor();
         applyPackageIdentity(row, identity);
-        rejectClientOfferSku(row, id);
         row.setCatalogVisible(catalogVisible);
         if (catalogVisible) {
             requireThumbnailUrl(row);
@@ -246,6 +245,7 @@ public class AdminShopCatalogSkuServiceImpl implements AdminShopCatalogSkuServic
         String tid = requireTenant(tenantId);
         ShopCatalogSku row = shopCatalogSkuRepository.findByIdAndTenantIdAndIsDeletedFalse(id, tid)
                 .orElseThrow(() -> new EntityNotFoundException(ENTITY_NAME, id));
+        rejectClientOfferSku(row, id);
         row.setCatalogVisible(catalogVisible);
         if (catalogVisible) {
             requireThumbnailUrl(row);

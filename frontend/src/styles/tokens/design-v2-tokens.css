@@ -731,3 +731,19 @@
     --mg-v2-transition-slow: 0ms var(--mg-v2-transition-easing-default);
   }
 }
+
+/* ================================================================
+   5. 쇼핑 어드민 — 상품 구성 카드 (시안 shop-offers C, 2026-10)
+   ================================================================ */
+:root {
+  --mg-v2-touch-target-min: 2.75rem;
+  --mg-control-height-sm: var(--mg-v2-space-8);
+  --mg-card-title-size: 1.125rem;
+  --mg-icon-size-sm: var(--mg-v2-space-4);
+  --mg-comp-remove-size: var(--mg-v2-space-8);
+  --mg-comp-discount-width: 7.5rem;
+  --mg-comp-row-height: 2.75rem;
+  --mg-comp-col-sessions: 5rem;
+  --mg-comp-col-price: 8rem;
+  --mg-comp-select-max: 32rem;
+}

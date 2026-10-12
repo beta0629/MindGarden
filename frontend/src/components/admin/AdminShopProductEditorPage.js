@@ -9,7 +9,7 @@
 import React, { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Info } from 'lucide-react';
+import { Info, Lock } from 'lucide-react';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import { ContentArea, ContentHeader } from '../dashboard-v2/content';
 import SafeText from '../common/SafeText';
@@ -482,6 +482,11 @@ function AdminShopProductEditorPage({ isNew }) {
                   <h2 id={`${baseId}-composition`} className="admin-shop-suite__card-title">
                     {tComposition('title')}
                   </h2>
+                  <span className="admin-shop-suite__card-hint">
+                    {hasComposition
+                      ? tComposition('countCaption', { count: form.items.length })
+                      : tComposition('hintShort')}
+                  </span>
                 </div>
                 <PackageCompositionBuilder
                   items={form.items}
@@ -503,11 +508,19 @@ function AdminShopProductEditorPage({ isNew }) {
                   <span className="admin-shop-suite__card-hint">{ADMIN_SHOP_PRODUCT_EDITOR_COPY.SECTION_PRICE_HINT}</span>
                 </div>
                 <div className="admin-shop-suite__grid-3">
-                  <div className="admin-shop-suite__field">
-                    <label className="admin-shop-suite__label" htmlFor={`${baseId}-sessions`}>
-                      {ADMIN_SHOP_PRODUCT_EDITOR_COPY.SESSIONS}
-                      <span className="admin-shop-suite__required" aria-hidden="true">*</span>
-                    </label>
+                  <div className={`admin-shop-suite__field${hasComposition ? ' admin-shop-suite__field--locked' : ''}`}>
+                    <div className="admin-shop-suite__label-row">
+                      <label className="admin-shop-suite__label" htmlFor={`${baseId}-sessions`}>
+                        {ADMIN_SHOP_PRODUCT_EDITOR_COPY.SESSIONS}
+                        <span className="admin-shop-suite__required" aria-hidden="true">*</span>
+                      </label>
+                      {hasComposition ? (
+                        <span className="admin-shop-suite__lock-tag">
+                          <Lock aria-hidden="true" focusable="false" />
+                          {tComposition('lockedTag')}
+                        </span>
+                      ) : null}
+                    </div>
                     <div className={`admin-shop-suite__stepper${sessionsInvalid || validation.errors.sessions ? ' admin-shop-suite__stepper--error' : ''}`}>
                       <button
                         type="button"
@@ -541,11 +554,19 @@ function AdminShopProductEditorPage({ isNew }) {
                         : ADMIN_SHOP_PRODUCT_EDITOR_COPY.SESSIONS_HINT}
                     </span>
                   </div>
-                  <div className="admin-shop-suite__field">
-                    <label className="admin-shop-suite__label" htmlFor={`${baseId}-price-input`}>
-                      {ADMIN_SHOP_PRODUCT_EDITOR_COPY.PRICE}
-                      <span className="admin-shop-suite__required" aria-hidden="true">*</span>
-                    </label>
+                  <div className={`admin-shop-suite__field${hasComposition ? ' admin-shop-suite__field--locked' : ''}`}>
+                    <div className="admin-shop-suite__label-row">
+                      <label className="admin-shop-suite__label" htmlFor={`${baseId}-price-input`}>
+                        {ADMIN_SHOP_PRODUCT_EDITOR_COPY.PRICE}
+                        <span className="admin-shop-suite__required" aria-hidden="true">*</span>
+                      </label>
+                      {hasComposition ? (
+                        <span className="admin-shop-suite__lock-tag">
+                          <Lock aria-hidden="true" focusable="false" />
+                          {tComposition('lockedTag')}
+                        </span>
+                      ) : null}
+                    </div>
                     <input
                       id={`${baseId}-price-input`}
                       className={`admin-shop-suite__input admin-shop-suite__num${showErrors && validation.errors.price ? ' admin-shop-suite__input--error' : ''}`}

@@ -16,12 +16,20 @@ import SafeText from '../common/SafeText';
 import MGButton from '../common/MGButton';
 import PackageCompositionBuilder from '../common/PackageCompositionBuilder';
 import {
-  addCompositionItem,
+  addMallCompositionItem,
   clampDiscountRate,
-  mapShopProductsToCompositionOptions,
-  removeCompositionItem,
-  resolveCompositionPricingForSave
+  isMallCompositionChanged,
+  mapSavedCompositionItem,
+  recalcMallCompositionPrices,
+  removeMallCompositionItem,
+  resolveCompositionPricingForSave,
+  setMallCompositionQuantity
 } from '../../utils/packageComposition';
+import useCompositionCandidates from '../../hooks/useCompositionCandidates';
+import {
+  getPackageComposition,
+  savePackageComposition
+} from '../../services/adminShopCompositionService';
 import { useTranslation } from 'react-i18next';
 import Switch from '../common/Switch';
 import ShopProductImageUpload from '../shop/organisms/ShopProductImageUpload';
@@ -155,7 +163,11 @@ function AdminShopProductEditorPage({ isNew }) {
         navigate(ADMIN_SHOP_PRODUCT_ROUTES.LIST, { replace: true });
         return;
       }
-      const next = mapAdminShopProductToForm(found);
+      const composition = await getPackageComposition(found.code).catch(() => null);
+      const next = {
+        ...mapAdminShopProductToForm(found),
+        items: (Array.isArray(composition?.items) ? composition.items : []).map(mapSavedCompositionItem)
+      };
       setProduct(found);
       setForm(next);
       setInitialForm(next);
@@ -258,16 +270,24 @@ function AdminShopProductEditorPage({ isNew }) {
   const { t: tComposition } = useTranslation('adminShopComposition');
   const { t: tEditor } = useTranslation('adminShopProductEditor');
   const [saleToggleBusy, setSaleToggleBusy] = useState(false);
-  const compositionOptions = useMemo(
-    () => mapShopProductsToCompositionOptions(products, product?.code || ''),
-    [products, product]
-  );
+  const [compositionQuery, setCompositionQuery] = useState('');
+  const compositionCandidates = useCompositionCandidates({
+    query: compositionQuery,
+    excludePackageCode: product?.code || '',
+    enabled: !loading && allowed
+  });
 
-  const handleCompositionAdd = (item) => setForm((prev) => (
-    applyAdminShopProductComposition(prev, addCompositionItem(prev.items, item))
+  const handleCompositionAdd = (candidate) => setForm((prev) => (
+    applyAdminShopProductComposition(prev, addMallCompositionItem(prev.items, candidate))
   ));
-  const handleCompositionRemove = (index) => setForm((prev) => {
-    const next = removeCompositionItem(prev.items, index);
+  const handleCompositionQuantity = (skuId, quantity) => setForm((prev) => (
+    applyAdminShopProductComposition(prev, setMallCompositionQuantity(prev.items, skuId, quantity))
+  ));
+  const handleCompositionRecalc = () => setForm((prev) => (
+    applyAdminShopProductComposition(prev, recalcMallCompositionPrices(prev.items))
+  ));
+  const handleCompositionRemove = (skuId) => setForm((prev) => {
+    const next = removeMallCompositionItem(prev.items, skuId);
     return next.length === 0
       ? clearAdminShopProductComposition(prev)
       : applyAdminShopProductComposition(prev, next);
@@ -384,13 +404,17 @@ function AdminShopProductEditorPage({ isNew }) {
         return;
       }
     }
-    const prevExtra = parseExtraData(product?.codeRow?.extraData);
+    if (initialForm.items.length > 0 && form.items.length === 0) {
+      notificationManager.show(tComposition('clearUnsupported'), 'warning');
+      return;
+    }
+    const prevExtra = { ...parseExtraData(product?.codeRow?.extraData), items: initialForm.items };
     const pricing = resolveCompositionPricingForSave(form, prevExtra, validation.price);
     const extraData = buildExtraDataString(
       validation.sessions,
       validation.price,
       form.remark.trim(),
-      form.items,
+      [],
       pricing.discountRate,
       pricing.originalPrice,
       form.homePublic
@@ -417,6 +441,9 @@ function AdminShopProductEditorPage({ isNew }) {
           isActive: form.active,
           extraData
         }));
+      }
+      if (packageCode && form.items.length > 0 && isMallCompositionChanged(form.items, initialForm.items)) {
+        await savePackageComposition(packageCode, form.items);
       }
       if (packageCode && needsContent) {
         const visibleOnFirstPut = form.mallVisible && Boolean(savedThumb) && !pendingImageFile;
@@ -481,6 +508,12 @@ function AdminShopProductEditorPage({ isNew }) {
               })}
             actions={(
               <div className="admin-shop-suite__header-actions">
+                {dirty && !saving ? (
+                  <span className="admin-shop-suite__save-state" role="status">
+                    <span className="admin-shop-suite__save-state-dot" aria-hidden="true" />
+                    {tEditor('unsaved')}
+                  </span>
+                ) : null}
                 <MGButton
                   type="button"
                   variant="secondary"
@@ -513,7 +546,7 @@ function AdminShopProductEditorPage({ isNew }) {
                   <h2 id={`${baseId}-composition`} className="admin-shop-suite__card-title">
                     {tComposition('title')}
                   </h2>
-                  <span className="admin-shop-suite__card-hint">
+                  <span className={`admin-shop-suite__card-hint${hasComposition ? ' admin-shop-suite__card-hint--strong' : ''}`}>
                     {hasComposition
                       ? tComposition('countCaption', { count: form.items.length })
                       : tComposition('hintShort')}
@@ -521,11 +554,17 @@ function AdminShopProductEditorPage({ isNew }) {
                 </div>
                 <PackageCompositionBuilder
                   items={form.items}
-                  options={compositionOptions}
-                  originalPrice={form.originalPrice || 0}
+                  candidates={compositionCandidates.candidates}
+                  totalActive={compositionCandidates.totalActive}
+                  status={compositionCandidates.status}
+                  query={compositionQuery}
+                  onQueryChange={setCompositionQuery}
+                  onRetry={compositionCandidates.retry}
                   discountRate={form.discountRate}
                   disabled={saving}
                   onAdd={handleCompositionAdd}
+                  onQuantityChange={handleCompositionQuantity}
+                  onRecalc={handleCompositionRecalc}
                   onRemove={handleCompositionRemove}
                   onDiscountChange={handleDiscountChange}
                   registerHref={ADMIN_SHOP_PRODUCT_ROUTES.NEW}
@@ -555,36 +594,42 @@ function AdminShopProductEditorPage({ isNew }) {
                       ) : null}
                     </div>
                     <div className={`admin-shop-suite__stepper${sessionsInvalid || validation.errors.sessions ? ' admin-shop-suite__stepper--error' : ''}`}>
-                      <button
-                        type="button"
-                        aria-label={ADMIN_SHOP_PRODUCT_EDITOR_COPY.SESSIONS_DEC}
-                        disabled={hasComposition || saving}
-                        onClick={() => stepSessions(-1)}
-                      >
-                        −
-                      </button>
+                      {hasComposition ? null : (
+                        <button
+                          type="button"
+                          aria-label={ADMIN_SHOP_PRODUCT_EDITOR_COPY.SESSIONS_DEC}
+                          disabled={saving}
+                          onClick={() => stepSessions(-1)}
+                        >
+                          {ADMIN_SHOP_PRODUCT_EDITOR_COPY.STEP_DEC}
+                        </button>
+                      )}
                       <input
                         id={`${baseId}-sessions`}
                         inputMode="numeric"
                         value={form.sessions}
                         readOnly={hasComposition}
+                        aria-readonly={hasComposition ? true : undefined}
+                        aria-label={hasComposition ? tEditor('sessionsReadonlyAria') : undefined}
                         aria-invalid={validation.errors.sessions ? true : undefined}
                         data-testid={ADMIN_SHOP_SUITE_TEST_IDS.PRODUCT_EDITOR_SESSIONS}
                         onChange={(e) => setField('sessions', e.target.value.replace(/\D/g, ''))}
                       />
-                      <button
-                        type="button"
-                        aria-label={ADMIN_SHOP_PRODUCT_EDITOR_COPY.SESSIONS_INC}
-                        disabled={hasComposition || saving}
-                        onClick={() => stepSessions(1)}
-                      >
-                        +
-                      </button>
+                      {hasComposition ? null : (
+                        <button
+                          type="button"
+                          aria-label={ADMIN_SHOP_PRODUCT_EDITOR_COPY.SESSIONS_INC}
+                          disabled={saving}
+                          onClick={() => stepSessions(1)}
+                        >
+                          {ADMIN_SHOP_PRODUCT_EDITOR_COPY.STEP_INC}
+                        </button>
+                      )}
                     </div>
                     <span className={`admin-shop-suite__hint${validation.errors.sessions ? ' admin-shop-suite__hint--error' : ''}`}>
                       {validation.errors.sessions
                         ? ADMIN_SHOP_PRODUCT_EDITOR_COPY.SESSIONS_ERROR
-                        : ADMIN_SHOP_PRODUCT_EDITOR_COPY.SESSIONS_HINT}
+                        : (hasComposition ? tEditor('sessionsHintLocked') : ADMIN_SHOP_PRODUCT_EDITOR_COPY.SESSIONS_HINT)}
                     </span>
                   </div>
                   <div className={`admin-shop-suite__field${hasComposition ? ' admin-shop-suite__field--locked' : ''}`}>
@@ -783,6 +828,19 @@ function AdminShopProductEditorPage({ isNew }) {
                 </div>
               </section>
 
+              <section className="admin-shop-suite__card" aria-labelledby={`${baseId}-manage`}>
+                <div className="admin-shop-suite__card-head">
+                  <h2 id={`${baseId}-manage`} className="admin-shop-suite__card-title">
+                    {tEditor('sectionManage')}
+                  </h2>
+                </div>
+                <div className="admin-shop-suite__manage-row">
+                  <div className="admin-shop-suite__manage-text">
+                    <span className="admin-shop-suite__manage-title">{tEditor('noDeleteTitle')}</span>
+                    <span className="admin-shop-suite__hint">{tEditor('noDeleteNote')}</span>
+                  </div>
+                </div>
+              </section>
             </div>
 
             <aside className="admin-shop-suite__card admin-shop-suite__card--paper admin-shop-suite__sticky">

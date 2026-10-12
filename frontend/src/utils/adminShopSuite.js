@@ -27,7 +27,7 @@ import {
   SHOP_CATALOG_CATEGORY
 } from '../constants/clientShopConstants';
 import { isPublicVisible, parseExtraData } from './packagePricing';
-import { calculateComposition } from './packageComposition';
+import { computeMallComposition } from './packageComposition';
 import { isShopCatalogPlaceholderUrl } from './shopCatalogThumbnail';
 import { toDisplayString } from './safeDisplay';
 
@@ -900,7 +900,8 @@ export function mapAdminShopProductToForm(product) {
     sessions: product.sessions != null ? String(product.sessions) : '',
     price: product.price != null ? String(product.price) : '',
     remark: extra.remark || '',
-    items: Array.isArray(extra.items) ? extra.items : [],
+    /** 구성은 package-compositions API 에서 따로 불러온다(레거시 extraData.items 는 쓰지 않음) */
+    items: [],
     discountRate: extra.discountRate || 0,
     originalPrice: extra.originalPrice,
     homePublic: product.homePublic === true,
@@ -917,23 +918,23 @@ export function mapAdminShopProductToForm(product) {
 }
 
 /**
- * 구성(조합 패키지) → 회기·가격 합산. 할인율(%) 적용.
+ * 구성(몰 SKU) → 회기·가격 자동 계산. 몰 판매가 × 수량 합계에 할인율(%) 적용.
  *
  * @param {object} form
- * @param {Array<{ sessions: number, price: number }>} items
+ * @param {Array<{ unitPrice: number, sessions: number, quantity: number }>} items
  * @returns {object}
  */
 export function applyAdminShopProductComposition(form, items) {
   if (!items || items.length === 0) {
     return { ...form, items: [], originalPrice: null };
   }
-  const { sessions, originalPrice, price } = calculateComposition(items, form.discountRate);
+  const { subtotal, sessions, finalPrice } = computeMallComposition(items, form.discountRate);
   return {
     ...form,
     items,
     sessions: String(sessions),
-    originalPrice,
-    price: String(price)
+    originalPrice: subtotal,
+    price: String(finalPrice)
   };
 }
 

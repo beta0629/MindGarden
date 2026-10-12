@@ -6,6 +6,7 @@ import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.util.EmailLogMasking;
 import com.coresolution.consultation.utils.SessionUtils;
+import com.coresolution.core.constant.PublicApiPathPolicy;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.util.HttpRequestClientIp;
 import com.coresolution.core.util.LocalProfileGuard;
@@ -71,6 +72,10 @@ public class TenantContextFilter implements Filter {
      * 세션에서 tenant_id를 저장하는 키
      */
     private static final String SESSION_TENANT_ID = "tenantId";
+
+    /** nginx 가 같은 서버에서 프록시할 때의 직접 연결 주소. */
+    private static final java.util.Set<String> LOOPBACK_ADDRESSES =
+            java.util.Set.of("127.0.0.1", "0:0:0:0:0:0:0:1", "::1");
 
     @Override
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
@@ -237,56 +242,11 @@ public class TenantContextFilter implements Filter {
      * @see com.coresolution.consultation.config.SecurityConfig
      */
     private boolean isPublicApi(String requestURI) {
-        // 쿼리 파라미터 제거 (예: /api/v1/common-codes?codeGroup=NOTIFICATION_TYPE -> /api/v1/common-codes)
-        String path = requestURI;
-        if (path.contains("?")) {
-            path = path.substring(0, path.indexOf("?"));
+        boolean publicApi = PublicApiPathPolicy.isPublicApi(requestURI);
+        if (publicApi) {
+            log.debug("공개 경로 매칭: {}", requestURI);
         }
-
-        // HTML·정적 리소스·SPA 라우트(/, /login, /register, /tablet/** 등)는 /api 가 아니므로 테넌트 강제 검증 제외
-        // (SessionBasedAuthenticationFilter·JwtAuthenticationFilter의 정적 경로 제외와 동일한 취지)
-        if (!path.startsWith("/api/") && !"/api".equals(path)) {
-            log.debug("비-API 경로 - tenantId 검증 생략: {}", path);
-            return true;
-        }
-
-        // 공개 API 경로 목록 (SecurityConfig의 permitAll 경로와 일치해야 함)
-        // 표준화 원칙: 온보딩 관련 API는 공개 API로 설정
-        // Ops Portal API는 테넌트별 시스템이 아니므로 tenantId 검증 불필요
-        // OAuth 콜백은 로그인 전 단계이므로 tenantId 검증 불필요
-        String[] publicPaths = {"/api/v1/mobile/app-version", // 모바일 버전 검사(테넌트 무관)
-                "/api/v1/onboarding", // 온보딩 API (테넌트 등록)
-                "/api/v1/public/kr-public-data", // 비로그인 국세청·도로명주소 프록시
-                "/api/v1/ops", // Ops Portal API 전체 (테넌트별 시스템 아님)
-                "/api/v1/ops/plans/active", // 활성화된 요금제 목록 (온보딩에서 사용)
-                "/api/v1/ops/plans/code", // plan_code로 요금제 조회 (온보딩에서 사용)
-                "/api/v1/ops/auth", // Ops Portal 인증 API
-                "/api/v1/auth", // 인증 API (표준 경로)
-                "/api/auth", // 인증 API (레거시 경로, OAuth 콜백 포함)
-                "/api/v1/accounts/integration", // 계정 통합 API (온보딩 이메일 인증 등)
-                "/api/v1/common-codes", // 공통코드 API
-                "/api/common-codes", // 공통코드 API (레거시, SecurityConfig permitAll과 정합)
-                "/api/v1/business-categories", // 업종 카테고리 API (온보딩에서 사용)
-                "/api/business-categories", // 레거시 업종 카테고리 API (하위 호환성)
-                "/api/v1/admin/css-themes", // CSS 테마 API
-                "/api/v1/health", // 애플리케이션 헬스 (모니터링, /server·/database 등 하위 포함)
-                "/api/health", // 레거시 헬스 경로 (SessionBasedAuthenticationFilter 제외와 정합)
-                "/api/v1/test", // 테스트 API (개발 환경 전용, 비밀번호 재설정 등)
-                "/api/v1/payments/webhooks", // PG 웹훅 (포트원 V2 등, 테넌트 헤더 없음)
-                "/api/v1/shop/catalog", // 공개 쇼핑 카탈로그 PLP·PDP (Host/서브도메인·X-Tenant-Id)
-                "/api/v1/files", // 카탈로그 썸네일·로고 (FileController, OPS placeholder)
-                "/actuator/health", // 헬스체크
-                "/actuator/info" // 정보 조회
-        };
-
-        for (String publicPath : publicPaths) {
-            if (path.equals(publicPath) || path.startsWith(publicPath + "/")) {
-                log.debug("공개 API 매칭: {} -> {}", requestURI, publicPath);
-                return true;
-            }
-        }
-
-        return false;
+        return publicApi;
     }
 
     /**
@@ -417,8 +377,15 @@ public class TenantContextFilter implements Filter {
             }
         }
 
+        // STRICT 공개 데이터 경로(카탈로그·파일·공통코드 등): 비로그인은 Host 로만 테넌트를 해석한다.
+        // 클라이언트가 정하는 X-Tenant-Id·X-Tenant-Subdomain 은 타 테넌트 조회에 쓰일 수 있어 무시한다.
+        boolean strictHost = PublicApiPathPolicy.isStrictHostPath(request.getRequestURI());
+
         // 2. HTTP 헤더에서 추출 (우선순위 2)
-        String tenantId = request.getHeader(TENANT_ID_HEADER);
+        String tenantId = strictHost ? null : request.getHeader(TENANT_ID_HEADER);
+        if (strictHost && request.getHeader(TENANT_ID_HEADER) != null) {
+            log.warn("STRICT 공개 경로에서 X-Tenant-Id 헤더 무시: URI={}", request.getRequestURI());
+        }
         log.info("🔍 Tenant ID 추출 시도: 헤더={}, 모든 헤더={}", tenantId, getHeadersAsString(request));
         if (tenantId != null && !tenantId.isEmpty()) {
             // ⚠️ 잘못된 값 체크: Promise 객체나 잘못된 형식 필터링
@@ -481,6 +448,10 @@ public class TenantContextFilter implements Filter {
         // 3.4. Host가 localhost이거나 서브도메인을 못 뽑은 경우 X-Forwarded-Host로 재시도
         // (nginx 등이 Host를 localhost로 넘기고 X-Forwarded-Host에 실제 도메인을 넣는 경우)
         String forwardedHost = request.getHeader("X-Forwarded-Host");
+        // STRICT 경로는 nginx(루프백)가 $host 로 덮어쓴 값만 신뢰한다. 8080 직접 접근 등 외부 직접 요청의 값은 무시.
+        if (strictHost && !isLoopbackPeer(request)) {
+            forwardedHost = null;
+        }
         if (forwardedHost != null && !forwardedHost.isEmpty()) {
             String firstForwardedHost = forwardedHost.split(",")[0].trim();
             boolean hostIsLocalOrMissing = host == null || host.isEmpty()
@@ -496,7 +467,7 @@ public class TenantContextFilter implements Filter {
         }
 
         // 3.5. X-Tenant-Subdomain 헤더 (API가 다른 호스트일 때 프론트에서 현재 페이지 서브도메인 전달)
-        String subdomainHeader = request.getHeader("X-Tenant-Subdomain");
+        String subdomainHeader = strictHost ? null : request.getHeader("X-Tenant-Subdomain");
         if (subdomainHeader != null && !subdomainHeader.isEmpty()) {
             try {
                 return tenantRepository.findBySubdomainIgnoreCase(subdomainHeader.trim())
@@ -531,6 +502,15 @@ public class TenantContextFilter implements Filter {
         // 5. tenant_id를 찾을 수 없는 경우
         log.warn("❌ Tenant ID not found in request");
         return null;
+    }
+
+    /**
+     * 직접 연결한 상대가 루프백(같은 서버의 nginx)인지. X-Forwarded-Host 신뢰 판단에 쓴다.
+     * {@code server.forward-headers-strategy} 를 쓰지 않으므로 remoteAddr 는 실제 연결 상대다.
+     */
+    private static boolean isLoopbackPeer(HttpServletRequest request) {
+        String remote = request.getRemoteAddr();
+        return LOOPBACK_ADDRESSES.contains(remote);
     }
 
     /**

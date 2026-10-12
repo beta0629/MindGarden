@@ -17,12 +17,13 @@ import MGButton from '../common/MGButton';
 import SafeText from '../common/SafeText';
 import UnifiedModal from '../common/modals/UnifiedModal';
 import ClientSearchCombobox from './shop/ClientSearchCombobox';
+import { usePagedList } from '../../hooks/usePagedList';
 import {
   cancelAdminClientOffer,
   createAdminClientOffer,
   listAdminClientOffers,
   listAdminOfferSourceOptions,
-  searchAdminClients
+  searchAdminClientsPage
 } from '../../services/shopClientOfferService';
 import {
   ADMIN_CLIENT_OFFERS_I18N_NS,
@@ -62,10 +63,7 @@ const AdminClientOffersPage = () => {
   const allowed = RoleUtils.isAdmin(user) || RoleUtils.isStaff(user);
 
   const [booting, setBooting] = useState(true);
-  const [clients, setClients] = useState([]);
   const [clientQuery, setClientQuery] = useState('');
-  const [clientSearching, setClientSearching] = useState(false);
-  const [clientSearchError, setClientSearchError] = useState('');
   const [selectedClient, setSelectedClient] = useState(null);
   const [sources, setSources] = useState([]);
   const [bootError, setBootError] = useState('');
@@ -81,11 +79,23 @@ const AdminClientOffersPage = () => {
   const [cancelTarget, setCancelTarget] = useState(null);
   const [canceling, setCanceling] = useState(false);
 
+  const debouncedClientQuery = useDebounce(clientQuery.trim(), ADMIN_CLIENT_SEARCH_DEBOUNCE_MS);
+  const fetchClientPage = useCallback(
+    (page, size) => searchAdminClientsPage({ q: debouncedClientQuery || undefined, page, size }),
+    [debouncedClientQuery]
+  );
+  const clientSearch = usePagedList({
+    fetchPage: fetchClientPage,
+    pageSize: ADMIN_CLIENT_SEARCH_PAGE_SIZE,
+    enabled: !sessionLoading && isLoggedIn && allowed,
+    resetKey: debouncedClientQuery
+  });
+  const clients = clientSearch.items;
+  const clientSearchError = clientSearch.error ? (clientSearch.error.message || t('states.clientsLoadFailed')) : '';
   const clientOptions = useMemo(
     () => buildClientOptions(clients, (name, tail) => t('form.clientOption', { name, phoneTail: tail })),
     [clients, t]
   );
-  const debouncedClientQuery = useDebounce(clientQuery.trim(), ADMIN_CLIENT_SEARCH_DEBOUNCE_MS);
   const selectedSource = useMemo(
     () => sources.find((s) => s.skuCode === sourceSkuCode) || null,
     [sources, sourceSkuCode]
@@ -130,35 +140,6 @@ const AdminClientOffersPage = () => {
     return () => { cancelled = true; };
   }, [sessionLoading, isLoggedIn, user?.id, allowed, navigate, t]);
 
-  useEffect(() => {
-    if (sessionLoading || !isLoggedIn || !allowed) {
-      return undefined;
-    }
-    let cancelled = false;
-    setClientSearching(true);
-    setClientSearchError('');
-    (async() => {
-      try {
-        const rows = await searchAdminClients({
-          q: debouncedClientQuery || undefined,
-          size: ADMIN_CLIENT_SEARCH_PAGE_SIZE
-        });
-        if (!cancelled) {
-          setClients(rows);
-        }
-      } catch (e) {
-        if (!cancelled) {
-          setClients([]);
-          setClientSearchError(e?.message || t('states.clientsLoadFailed'));
-        }
-      } finally {
-        if (!cancelled) {
-          setClientSearching(false);
-        }
-      }
-    })();
-    return () => { cancelled = true; };
-  }, [debouncedClientQuery, sessionLoading, isLoggedIn, allowed, t]);
 
   useEffect(() => {
     if (!toast) {
@@ -417,8 +398,12 @@ const AdminClientOffersPage = () => {
                     selectedOption={selectedClient}
                     onChange={handleClientChange}
                     onQueryChange={setClientQuery}
-                    loading={clientSearching}
+                    loading={clientSearch.loading}
                     loadingText={t('form.clientSearching')}
+                    onLoadMore={clientSearch.loadMore}
+                    hasMore={clientSearch.hasMore}
+                    loadingMore={clientSearch.loadingMore}
+                    loadingMoreText={t('form.clientLoadingMore')}
                     label={t('form.clientLabel')}
                     placeholder={t('form.clientSearchPlaceholder')}
                     emptyText={clientSearchError || t('form.clientEmpty')}

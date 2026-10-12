@@ -1,5 +1,6 @@
 /**
  * ClientSearchCombobox — 이름·연락처 뒷자리로 검색하는 단일 선택 콤보박스 (APG combobox/listbox)
+ * onLoadMore·hasMore 를 주면 목록 끝까지 스크롤할 때 다음 페이지를 이어 부른다 (무한 스크롤).
  * onQueryChange 를 주면 검색은 서버가 하고(options = 서버 결과), 없으면 options 를 화면에서 거른다.
  *
  * @author CoreSolution
@@ -11,9 +12,11 @@ import PropTypes from 'prop-types';
 import { ChevronDown } from 'lucide-react';
 import SafeText from '../../common/SafeText';
 import { filterClientOptions } from '../../../utils/shopClientOffer';
+import { useScrollEndLoadMore } from '../../../hooks/useScrollEndLoadMore';
 
 const ClientSearchCombobox = ({
   options, value, selectedOption, onChange, onQueryChange, loading, loadingText,
+  onLoadMore, hasMore, loadingMore, loadingMoreText,
   label, placeholder, emptyText, disabled, testId
 }) => {
   const listId = useId();
@@ -31,6 +34,8 @@ const ClientSearchCombobox = ({
     () => (remote ? options : filterClientOptions(options, query)),
     [remote, options, query]
   );
+
+  const onListScroll = useScrollEndLoadMore({ onLoadMore, hasMore, loadingMore });
 
   const updateQuery = (next) => {
     setQuery(next);
@@ -101,7 +106,14 @@ const ClientSearchCombobox = ({
         <ChevronDown className="aco-icon" aria-hidden="true" />
       </span>
       {open ? (
-        <ul id={listId} role="listbox" aria-label={label} aria-busy={loading} className="aco-combo__list">
+        <ul
+          id={listId}
+          role="listbox"
+          aria-label={label}
+          aria-busy={loading || loadingMore}
+          className="aco-combo__list"
+          onScroll={onListScroll}
+        >
           {loading && filtered.length === 0 ? (
             <li className="aco-combo__empty" role="option" aria-selected="false" aria-disabled="true">{loadingText}</li>
           ) : filtered.length === 0 ? (
@@ -119,6 +131,11 @@ const ClientSearchCombobox = ({
               <SafeText>{o.label}</SafeText>
             </li>
           ))}
+          {loadingMore && filtered.length > 0 ? (
+            <li className="aco-combo__empty" role="option" aria-selected="false" aria-disabled="true" aria-live="polite">
+              {loadingMoreText}
+            </li>
+          ) : null}
         </ul>
       ) : null}
     </div>
@@ -136,6 +153,10 @@ ClientSearchCombobox.propTypes = {
   onQueryChange: PropTypes.func,
   loading: PropTypes.bool,
   loadingText: PropTypes.string,
+  onLoadMore: PropTypes.func,
+  hasMore: PropTypes.bool,
+  loadingMore: PropTypes.bool,
+  loadingMoreText: PropTypes.string,
   onChange: PropTypes.func.isRequired,
   label: PropTypes.string.isRequired,
   placeholder: PropTypes.string,
@@ -146,6 +167,7 @@ ClientSearchCombobox.propTypes = {
 
 ClientSearchCombobox.defaultProps = {
   value: '', selectedOption: null, onQueryChange: undefined, loading: false, loadingText: '',
+  onLoadMore: undefined, hasMore: false, loadingMore: false, loadingMoreText: '',
   placeholder: '', emptyText: '', disabled: false, testId: undefined
 };
 

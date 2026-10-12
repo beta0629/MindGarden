@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, waitFor, fireEvent } from '@testing-library/react';
+import { act, render, within, screen, waitFor, fireEvent } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import AdminClientOffersPage from '../AdminClientOffersPage';
 import * as offerService from '../../../services/shopClientOfferService';
@@ -36,7 +36,9 @@ const renderPage = () => render(<MemoryRouter><AdminClientOffersPage /></MemoryR
 
 describe('AdminClientOffersPage', () => {
   beforeEach(() => {
-    offerService.searchAdminClients.mockResolvedValue([{ id: 7, name: '한서윤', phoneLast4: '1234', maskedPhone: '010-****-1234' }]);
+    offerService.searchAdminClientsPage.mockResolvedValue({
+      items: [{ id: 7, name: '한서윤', phoneLast4: '1234', maskedPhone: '010-****-1234' }], page: 0, size: 20, totalElements: 1
+    });
     offerService.listAdminOfferSourceOptions.mockResolvedValue([
       { skuCode: 'SRC1', title: '부부상담 4회 패키지', unitPriceMinor: 440000, sessionCount: 4 }
     ]);
@@ -59,14 +61,82 @@ describe('AdminClientOffersPage', () => {
     await waitFor(() => expect(offerService.listAdminClientOffers).toHaveBeenCalledWith('7'));
   };
 
-  test('입력할 때마다 서버에서 최대 20건만 검색한다 (?q=, 디바운스)', async() => {
-    renderPage();
-    await waitFor(() => expect(offerService.searchAdminClients).toHaveBeenCalledWith({ q: undefined, size: 20 }));
+  const makeClients = (from, count) => Array.from({ length: count }, (_, i) => ({
+    id: from + i, name: `내담자${from + i}`, phoneLast4: '0000', maskedPhone: '010-****-0000'
+  }));
+  const pageOf = (total) => ({ page, size }) => {
+    const from = page * size;
+    return Promise.resolve({
+      items: makeClients(from + 1, Math.max(Math.min(size, total - from), 0)), page, size, totalElements: total
+    });
+  };
+  const scrollToEnd = (list) => {
+    Object.defineProperty(list, 'scrollHeight', { configurable: true, value: 1000 });
+    Object.defineProperty(list, 'clientHeight', { configurable: true, value: 200 });
+    Object.defineProperty(list, 'scrollTop', { configurable: true, writable: true, value: 800 });
+    fireEvent.scroll(list);
+  };
+  const openList = async() => {
     const combo = await screen.findByTestId('admin-client-offers-client');
+    await waitFor(() => expect(combo.disabled).toBe(false));
     fireEvent.focus(combo);
+    return combo;
+  };
+
+  test('첫 페이지를 page 0·size 20 으로 받고, 결과를 자르지 않는다', async() => {
+    renderPage();
+    await waitFor(() => expect(offerService.searchAdminClientsPage).toHaveBeenCalledWith({ q: undefined, page: 0, size: 20 }));
+    expect(offerService.searchAdminClientsPage).not.toHaveBeenCalledWith(expect.objectContaining({ size: 1000 }));
+  });
+
+  test('목록 끝까지 스크롤하면 다음 페이지를 이어 붙인다', async() => {
+    offerService.searchAdminClientsPage.mockImplementation(pageOf(45));
+    renderPage();
+    await openList();
+    expect(await screen.findAllByRole('option', { name: /내담자\d+/ })).toHaveLength(20);
+    scrollToEnd(screen.getByRole('listbox'));
+    await waitFor(() => expect(offerService.searchAdminClientsPage).toHaveBeenCalledWith({ q: undefined, page: 1, size: 20 }));
+    await waitFor(() => expect(screen.getAllByRole('option', { name: /내담자\d+/ })).toHaveLength(40));
+  });
+
+  test('마지막 페이지까지 받으면 더 요청하지 않는다', async() => {
+    offerService.searchAdminClientsPage.mockImplementation(pageOf(25));
+    renderPage();
+    await openList();
+    await screen.findAllByRole('option', { name: /내담자\d+/ });
+    scrollToEnd(screen.getByRole('listbox'));
+    await waitFor(() => expect(screen.getAllByRole('option', { name: /내담자\d+/ })).toHaveLength(25));
+    const calls = offerService.searchAdminClientsPage.mock.calls.length;
+    scrollToEnd(screen.getByRole('listbox'));
+    scrollToEnd(screen.getByRole('listbox'));
+    await new Promise((r) => setTimeout(r, 50));
+    expect(offerService.searchAdminClientsPage.mock.calls.length).toBe(calls);
+    expect(offerService.searchAdminClientsPage).not.toHaveBeenCalledWith(expect.objectContaining({ page: 2 }));
+  });
+
+  test('검색어가 바뀌면 첫 페이지부터 다시 받고, 늦게 온 이전 응답은 결과를 덮지 않는다', async() => {
+    let releaseOld;
+    offerService.searchAdminClientsPage.mockImplementation(({ q, page, size }) => {
+      if (q === '한서') {
+        return Promise.resolve({ items: [{ id: 7, name: '한서윤', phoneLast4: '1234', maskedPhone: '010-****-1234' }], page, size, totalElements: 1 });
+      }
+      if (page === 1) {
+        return new Promise((resolve) => { releaseOld = () => resolve({ items: makeClients(21, 20), page, size, totalElements: 45 }); });
+      }
+      return pageOf(45)({ q, page, size });
+    });
+    renderPage();
+    const combo = await openList();
+    await screen.findAllByRole('option', { name: /내담자\d+/ });
+    scrollToEnd(screen.getByRole('listbox'));
+    await waitFor(() => expect(offerService.searchAdminClientsPage).toHaveBeenCalledWith({ q: undefined, page: 1, size: 20 }));
+    expect(screen.getByText('내담자를 더 불러오고 있습니다')).toBeTruthy();
     fireEvent.change(combo, { target: { value: '한서' } });
-    await waitFor(() => expect(offerService.searchAdminClients).toHaveBeenLastCalledWith({ q: '한서', size: 20 }));
-    expect(offerService.searchAdminClients).not.toHaveBeenCalledWith(expect.objectContaining({ size: 1000 }));
+    await waitFor(() => expect(offerService.searchAdminClientsPage).toHaveBeenLastCalledWith({ q: '한서', page: 0, size: 20 }));
+    expect(await screen.findByRole('option', { name: /한서윤/ })).toBeTruthy();
+    await act(async() => { releaseOld(); });
+    expect(within(screen.getByRole('listbox')).getAllByRole('option')).toHaveLength(1);
+    expect(screen.queryByRole('option', { name: /내담자21/ })).toBeNull();
   });
 
   test('내담자 미선택이면 지정하기가 비활성이고 안내가 보인다', async() => {

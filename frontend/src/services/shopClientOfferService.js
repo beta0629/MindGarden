@@ -54,6 +54,14 @@ export const searchAdminClients = async(params = {}) => {
   return Array.isArray(page?.items) ? page.items : [];
 };
 
+/**
+ * 관리자 내담자 검색 한 페이지 — 응답 원본 {items, page, size, totalElements} 그대로 (usePagedList 용)
+ * @param {{ q?: string, page: number, size: number }} params
+ * @returns {Promise<object>}
+ */
+export const searchAdminClientsPage = async(params) =>
+  toObject(await StandardizedApi.get(SHOP_CLIENT_OFFER_API.ADMIN_CLIENT_SEARCH, params));
+
 /** @returns {Promise<object[]>} */
 export const listMyClientOffers = async() =>
   toArray(await StandardizedApi.get(SHOP_CLIENT_OFFER_API.CLIENT));

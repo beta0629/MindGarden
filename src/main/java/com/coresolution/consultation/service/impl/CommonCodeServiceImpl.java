@@ -18,6 +18,7 @@ import com.coresolution.consultation.entity.CommonCode;
 import com.coresolution.consultation.entity.CodeGroupMetadata;
 import com.coresolution.consultation.repository.CommonCodeRepository;
 import com.coresolution.consultation.repository.CodeGroupMetadataRepository;
+import com.coresolution.consultation.service.CommonCodeDeletionGuard;
 import com.coresolution.consultation.service.CommonCodeService;
 import com.coresolution.consultation.service.CommonCodePermissionService;
 import com.coresolution.consultation.entity.User;
@@ -49,6 +50,7 @@ public class CommonCodeServiceImpl implements CommonCodeService {
     private final CodeGroupMetadataRepository codeGroupMetadataRepository;
     private final CommonCodePermissionService permissionService;
     private final UserRepository userRepository;
+    private final CommonCodeDeletionGuard commonCodeDeletionGuard;
 
     @Override
     @Transactional(readOnly = true)
@@ -236,6 +238,7 @@ public class CommonCodeServiceImpl implements CommonCodeService {
         log.info("🗑️ 공통코드 삭제: {}", id);
         
         CommonCode commonCode = getCommonCodeById(id);
+        commonCodeDeletionGuard.assertDeletable(commonCode);
         commonCodeRepository.delete(commonCode);
     }
 
@@ -884,6 +887,8 @@ public class CommonCodeServiceImpl implements CommonCodeService {
             throw new SecurityException(message);
         }
         
+        commonCodeDeletionGuard.assertDeletable(code);
+
         // 활성 코드는 비활성화 후 삭제
         if (code.getIsActive() != null && code.getIsActive()) {
             log.warn("⚠️ 활성 코드는 먼저 비활성화 후 삭제해야 합니다. 비활성화 처리합니다.");

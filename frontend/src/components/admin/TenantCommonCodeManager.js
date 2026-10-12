@@ -32,6 +32,7 @@ import {
 import { nextCommonCodeSortOrder } from '../../utils/commonCodeSortOrder';
 import { normalizeTenantCommonCodeRow } from '../../constants/professionalProviderRoles';
 import notificationManager from '../../utils/notification';
+import { resolveUserFacingApiErrorMessage } from '../../utils/userFacingApiErrorMessage';
 import { useConfirm } from '../../hooks/useConfirm';
 import {
   getParentCodeGroupForSubcategory,
@@ -400,7 +401,8 @@ const TenantCommonCodeManager = () => {
       }
     } catch (err) {
       console.error(t('admin:tenantCommonCode.msg.logCodeDelete'), err);
-      setError(t('admin:tenantCommonCode.msg.errCodeDelete'));
+      // 409(이력 있는 상품 등)은 서버 문구를 그대로 보여 준다 — 공통 오류 문구 처리.
+      setError(resolveUserFacingApiErrorMessage(err, t('admin:tenantCommonCode.msg.errCodeDelete')));
     } finally {
       setLoading(false);
     }

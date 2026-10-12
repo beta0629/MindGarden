@@ -442,6 +442,22 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
     }
 
+    /**
+     * 이력이 있어 삭제할 수 없는 공통코드 — 서버 문구를 그대로 409 로 전달한다.
+     */
+    @ExceptionHandler(CommonCodeInUseException.class)
+    public ResponseEntity<ErrorResponse> handleCommonCodeInUse(
+            CommonCodeInUseException e, HttpServletRequest request) {
+        log.warn("Common code in use: path={}", request.getRequestURI());
+        ErrorResponse error = ErrorResponse.of(
+                e.getMessage(),
+                CommonCodeInUseException.ERROR_CODE,
+                HttpStatus.CONFLICT.value(),
+                request.getRequestURI(),
+                request.getMethod());
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
+    }
+
     private static boolean isEmailUniqueConstraint(String lowerMessage) {
         if (lowerMessage == null || lowerMessage.isBlank()) {
             return false;

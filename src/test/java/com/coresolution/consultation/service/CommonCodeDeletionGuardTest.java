@@ -15,6 +15,7 @@ import com.coresolution.consultation.entity.ShopCatalogSku;
 import com.coresolution.consultation.exception.CommonCodeInUseException;
 import com.coresolution.consultation.repository.ConsultationPackageUsageRepository;
 import com.coresolution.consultation.repository.ShopCatalogSkuRepository;
+import com.coresolution.consultation.repository.ShopClientOfferRepository;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -32,6 +33,8 @@ class CommonCodeDeletionGuardTest {
     private ShopCatalogSkuRepository skuRepository;
     @Mock
     private ConsultationPackageUsageRepository usageRepository;
+    @Mock
+    private ShopClientOfferRepository clientOfferRepository;
     @InjectMocks
     private CommonCodeDeletionGuard guard;
 
@@ -89,5 +92,41 @@ class CommonCodeDeletionGuardTest {
         c.setCodeGroup("OTHER_GROUP");
         assertDoesNotThrow(() -> guard.assertDeletable(TENANT, c));
         verifyNoInteractions(skuRepository, usageRepository);
+    }
+
+    @Test
+    @DisplayName("지정(OFFER_) SKU 로 들어온 주문도 원본 상품의 이력으로 보고 409")
+    void blockedByClientOfferOrders() {
+        stubSku();
+        when(clientOfferRepository.findOfferSkuCodesBySourceSkuCodes(eq(TENANT), argThat(c -> c.contains("SKU-1"))))
+                .thenReturn(List.of("OFFER_ABC"));
+        ShopCatalogSku offerSku = new ShopCatalogSku();
+        offerSku.setSkuCode("OFFER_ABC");
+        offerSku.setTitle("10회기 패키지 (지정)");
+        when(skuRepository.findByTenantIdAndSkuCodeIn(eq(TENANT), argThat(c -> c.contains("OFFER_ABC"))))
+                .thenReturn(List.of(offerSku));
+        when(usageRepository.countOrderLinesBySkuCodes(eq(TENANT),
+                argThat(c -> c.contains("OFFER_ABC") && c.contains("SKU-1")))).thenReturn(1L);
+        CommonCodeInUseException ex = assertThrows(CommonCodeInUseException.class,
+                () -> guard.assertDeletable(TENANT, packageCode()));
+        assertEquals(ConsultationPackageCodeConstants.MSG_DELETE_BLOCKED_BY_ORDERS, ex.getMessage());
+    }
+
+    @Test
+    @DisplayName("지정 SKU 이름으로 만든 회기(매칭)도 원본 상품의 이력으로 보고 409")
+    void blockedByClientOfferSessions() {
+        stubSku();
+        when(clientOfferRepository.findOfferSkuCodesBySourceSkuCodes(eq(TENANT), anyCollection()))
+                .thenReturn(List.of("OFFER_ABC"));
+        ShopCatalogSku offerSku = new ShopCatalogSku();
+        offerSku.setSkuCode("OFFER_ABC");
+        offerSku.setTitle("10회기 패키지 (지정)");
+        when(skuRepository.findByTenantIdAndSkuCodeIn(eq(TENANT), anyCollection())).thenReturn(List.of(offerSku));
+        when(usageRepository.countOrderLinesBySkuCodes(eq(TENANT), anyCollection())).thenReturn(0L);
+        when(usageRepository.countMappingsByPackageNames(eq(TENANT),
+                argThat(c -> c.contains("10회기 패키지 (지정)")))).thenReturn(1L);
+        CommonCodeInUseException ex = assertThrows(CommonCodeInUseException.class,
+                () -> guard.assertDeletable(TENANT, packageCode()));
+        assertEquals(ConsultationPackageCodeConstants.MSG_DELETE_BLOCKED_BY_SESSIONS, ex.getMessage());
     }
 }

@@ -18,11 +18,11 @@ import './PackageCompositionBuilder.css';
 const NS = 'adminShopComposition';
 
 function PackageCompositionBuilder({
-  items,
-  options,
-  originalPrice,
-  discountRate,
-  disabled,
+  items = [],
+  options = [],
+  originalPrice = 0,
+  discountRate = 0,
+  disabled = false,
   onAdd,
   onRemove,
   onDiscountChange
@@ -187,14 +187,6 @@ PackageCompositionBuilder.propTypes = {
   onAdd: PropTypes.func.isRequired,
   onRemove: PropTypes.func.isRequired,
   onDiscountChange: PropTypes.func.isRequired
-};
-
-PackageCompositionBuilder.defaultProps = {
-  items: [],
-  options: [],
-  originalPrice: 0,
-  discountRate: 0,
-  disabled: false
 };
 
 export default PackageCompositionBuilder;

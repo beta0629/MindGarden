@@ -32,6 +32,11 @@ module.exports = {
         '^@portone/browser-sdk/v2$':
           '<rootDir>/node_modules/@portone/browser-sdk/dist/v2.cjs'
       };
+      // axios 1.x 는 ESM 전용이라 CRA 기본 node_modules ignore 에서 SyntaxError 가 난다.
+      jestConfig.transformIgnorePatterns = [
+        '[/\\\\]node_modules[/\\\\](?!axios[/\\\\]).+\\.(js|jsx|mjs|cjs|ts|tsx)$',
+        '^.+\\.module\\.(css|sass|scss)$'
+      ];
       return jestConfig;
     }
   }

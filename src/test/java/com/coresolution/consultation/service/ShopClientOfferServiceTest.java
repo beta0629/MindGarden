@@ -91,8 +91,6 @@ class ShopClientOfferServiceTest {
     private void stubBase(ShopCatalogSku src) {
         when(userRepository.findByTenantIdAndId(TENANT, CLIENT)).thenReturn(Optional.of(client()));
         when(skuRepository.findActiveByTenantAndSkuCode(TENANT, "SRC-1")).thenReturn(Optional.of(src));
-        when(skuRepository.save(any(ShopCatalogSku.class))).thenAnswer(i -> i.getArgument(0));
-        when(offerRepository.save(any(ShopClientOffer.class))).thenAnswer(i -> i.getArgument(0));
     }
 
     @Test
@@ -100,6 +98,8 @@ class ShopClientOfferServiceTest {
     void create_serverConfirmsPrice() {
         ShopCatalogSku src = source(ShopCatalogCategory.CONSULTATION);
         stubBase(src);
+        when(skuRepository.save(any(ShopCatalogSku.class))).thenAnswer(i -> i.getArgument(0));
+        when(offerRepository.save(any(ShopClientOffer.class))).thenAnswer(i -> i.getArgument(0));
         when(consultantMappingService.listActiveMappings(TENANT, CLIENT)).thenReturn(List.of());
         when(clientShopCatalogService.isVisibleForClientMappings(any(), any(), anyList())).thenReturn(true);
 

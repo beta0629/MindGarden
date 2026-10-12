@@ -20,7 +20,8 @@ class ShopClientOfferPricingTest {
     @DisplayName("율 할인(내림)")
     void rate() {
         assertEquals(90000L, ShopClientOfferPricing.finalPrice(100000L, ShopClientOfferConstants.DISCOUNT_TYPE_RATE, 10L));
-        assertEquals(66667L, ShopClientOfferPricing.finalPrice(100001L, ShopClientOfferConstants.DISCOUNT_TYPE_RATE, 33L));
+        // 할인액은 original * rate / 100 정수 나눗셈(내림). 100001 * 33 / 100 = 33000 → 최종가 67001
+        assertEquals(67001L, ShopClientOfferPricing.finalPrice(100001L, ShopClientOfferConstants.DISCOUNT_TYPE_RATE, 33L));
     }
 
     @Test

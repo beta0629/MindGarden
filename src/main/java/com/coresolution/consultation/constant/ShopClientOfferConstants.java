@@ -34,5 +34,7 @@ public final class ShopClientOfferConstants {
     public static final String MSG_FINAL_PRICE_INVALID = "할인 후 금액이 결제 가능 최소 금액보다 작아요.";
     public static final String MSG_CLIENT_NOT_ELIGIBLE =
             "이 내담자의 상담 배정과 맞지 않는 상품이라 지정할 수 없어요.";
+    public static final String MSG_OFFER_ALREADY_PENDING =
+            "이 내담자에게 같은 상품이 이미 결제 대기 중이에요. 결제 완료 또는 지정 취소 후 다시 지정해 주세요.";
     public static final String MSG_OFFER_NOT_FOUND = "지정 내역을 찾을 수 없어요.";
 }

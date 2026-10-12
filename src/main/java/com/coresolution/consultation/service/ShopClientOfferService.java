@@ -82,12 +82,15 @@ public class ShopClientOfferService {
      */
     @Transactional
     public ShopClientOfferResponse create(String tenantId, Long adminUserId, ShopClientOfferCreateRequest request) {
+        // 같은 내담자 동시 지정 직렬화 — 트랜잭션의 첫 조회여야 이후 검사가 먼저 커밋된 지정을 본다
+        offerRepository.lockClientRow(tenantId, request.clientId());
         User client = userRepository.findByTenantIdAndId(tenantId, request.clientId())
                 .filter(u -> u.getRole() != null && u.getRole().isClient())
                 .orElseThrow(() -> new IllegalArgumentException(ShopClientOfferConstants.MSG_CLIENT_NOT_FOUND));
         ShopCatalogSku source = skuRepository.findActiveByTenantAndSkuCode(tenantId, request.sourceSkuCode().trim())
                 .filter(s -> !ShopClientOfferSkuPolicy.isClientOfferSku(s))
                 .orElseThrow(() -> new IllegalArgumentException(ShopClientOfferConstants.MSG_SOURCE_NOT_FOUND));
+        requireNoPendingOffer(tenantId, client.getId(), source.getSkuCode());
         ShopCatalogOffer offer = resolveOffer(tenantId, source);
         if (!offer.sellable() || offer.unitPriceMinor() <= 0L) {
             throw new IllegalArgumentException(ShopClientOfferConstants.MSG_SOURCE_NOT_SELLABLE);
@@ -199,6 +202,26 @@ public class ShopClientOfferService {
         clone.setFieldCode(source.getFieldCode());
         clone.setConsultantId(source.getConsultantId());
         return clone;
+    }
+
+    /**
+     * 같은 내담자·같은 원본 상품에 결제 대기(ACTIVE 이며 미결제) 지정이 있으면 막는다.
+     * 결제 완료·취소된 지정은 재지정을 막지 않는다.
+     */
+    private void requireNoPendingOffer(String tenantId, Long clientId, String sourceSkuCode) {
+        List<ShopClientOffer> active = offerRepository
+                .findByTenantIdAndClientIdAndSourceSkuCodeAndStatusAndIsDeletedFalse(
+                        tenantId, clientId, sourceSkuCode, ShopClientOfferConstants.STATUS_ACTIVE);
+        if (active.isEmpty()) {
+            return;
+        }
+        Set<String> codes = new HashSet<>();
+        active.forEach(r -> codes.add(r.getOfferSkuCode()));
+        Set<String> paid = new HashSet<>(paidLookupRepository.findSkuCodesByClientAndStatus(
+                tenantId, clientId, ShopClientOrderStatus.PAID, codes));
+        if (!paid.containsAll(codes)) {
+            throw new IllegalArgumentException(ShopClientOfferConstants.MSG_OFFER_ALREADY_PENDING);
+        }
     }
 
     private ShopCatalogOffer resolveOffer(String tenantId, ShopCatalogSku sku) {

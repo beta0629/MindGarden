@@ -4,6 +4,10 @@
 import React from 'react';
 import { render, waitFor } from '@testing-library/react';
 
+jest.mock('./utils/portonePayment', () => ({
+  requestPortOnePayment: jest.fn()
+}));
+
 jest.mock('axios', () => ({
   __esModule: true,
   default: {

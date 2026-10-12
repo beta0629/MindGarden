@@ -27,6 +27,7 @@ import {
   SHOP_CATALOG_CATEGORY
 } from '../constants/clientShopConstants';
 import { isPublicVisible, parseExtraData } from './packagePricing';
+import { calculateComposition } from './packageComposition';
 import { isShopCatalogPlaceholderUrl } from './shopCatalogThumbnail';
 import { toDisplayString } from './safeDisplay';
 
@@ -39,7 +40,6 @@ const MS_PER_DAY = 24 * 60 * 60 * 1000;
 const ISO_DATE_PATTERN = /^(\d{4})-(\d{2})-(\d{2})/;
 const DATE_DISPLAY_SEPARATOR = '.';
 const BPS_SCALE = ADMIN_SHOP_BPS_PER_PERCENT * ADMIN_SHOP_BPS_PER_PERCENT;
-const PERCENT_FULL = 100;
 
 /**
  * 주문 공개 ID → 헤더·목록용 짧은 ID (`#앞4·뒤4`).
@@ -927,16 +927,24 @@ export function applyAdminShopProductComposition(form, items) {
   if (!items || items.length === 0) {
     return { ...form, items: [], originalPrice: null };
   }
-  const sessions = items.reduce((acc, item) => acc + (Number(item.sessions) || 0), 0);
-  const originalPrice = items.reduce((acc, item) => acc + (Number(item.price) || 0), 0);
-  const rate = Number(form.discountRate) || 0;
+  const { sessions, originalPrice, price } = calculateComposition(items, form.discountRate);
   return {
     ...form,
     items,
     sessions: String(sessions),
     originalPrice,
-    price: String(Math.floor((originalPrice * (PERCENT_FULL - rate)) / PERCENT_FULL))
+    price: String(price)
   };
+}
+
+/**
+ * 구성을 모두 비웠을 때: 자동 계산된 회기·가격·할인율을 비워 직접 입력으로 되돌린다.
+ *
+ * @param {object} form
+ * @returns {object}
+ */
+export function clearAdminShopProductComposition(form) {
+  return { ...form, items: [], sessions: '', price: '', originalPrice: null, discountRate: 0 };
 }
 
 /**

@@ -241,6 +241,7 @@ export function mergeShopAdminLnbItems(items, options = {}) {
       children: [
         { to: ADMIN_ROUTES.SHOP_ORDERS, icon: 'RECEIPT', label: SHOP_ADMIN_LNB_CHILD_LABELS.ORDERS, end: true },
         { to: ADMIN_ROUTES.SHOP_PRODUCTS, icon: 'PACKAGE', label: SHOP_ADMIN_LNB_CHILD_LABELS.PRODUCTS, end: false },
+        { to: ADMIN_ROUTES.SHOP_CLIENT_OFFERS, icon: 'USERS', label: SHOP_ADMIN_LNB_CHILD_LABELS.CLIENT_OFFERS, end: true },
         { to: ADMIN_ROUTES.SHOP_POINT_POLICIES, icon: 'GIFT', label: SHOP_ADMIN_LNB_CHILD_LABELS.REWARDS, end: true }
       ]
     }
@@ -251,6 +252,7 @@ export function mergeShopAdminLnbItems(items, options = {}) {
 export const SHOP_ADMIN_LNB_CHILD_LABELS = Object.freeze({
   ORDERS: '온라인 주문',
   PRODUCTS: '상품',
+  CLIENT_OFFERS: '내담자별 결제',
   REWARDS: '리워드 정책'
 });
 
@@ -276,6 +278,7 @@ export const STAFF_RESTRICTED_LNB_PATH_PREFIXES = Object.freeze([
 const SHOP_LNB_CHILD_ORDER = Object.freeze([
   ADMIN_ROUTES.SHOP_ORDERS,
   ADMIN_ROUTES.SHOP_PRODUCTS,
+  ADMIN_ROUTES.SHOP_CLIENT_OFFERS,
   ADMIN_ROUTES.SHOP_POINT_POLICIES
 ]);
 
@@ -331,6 +334,15 @@ export function normalizeShopSuiteLnbItems(items) {
     const isShopGroup = children.some((c) => SHOP_LNB_CHILD_ORDER.includes(normalizeLnbPath(c?.to)));
     if (!isShopGroup) {
       return { ...item, children };
+    }
+    // DB 메뉴에 없는 「내담자별 결제」는 FE 에서만 덧붙인다 (메뉴 시드 변경 없음)
+    if (!children.some((c) => normalizeLnbPath(c?.to) === ADMIN_ROUTES.SHOP_CLIENT_OFFERS)) {
+      children.push({
+        to: ADMIN_ROUTES.SHOP_CLIENT_OFFERS,
+        icon: 'USERS',
+        label: SHOP_ADMIN_LNB_CHILD_LABELS.CLIENT_OFFERS,
+        end: true
+      });
     }
     const ordered = children
       .map((child, index) => ({ child, index }))

@@ -112,7 +112,8 @@ public class ShopClientOfferService {
         row.setSourceSkuCode(source.getSkuCode());
         row.setOfferSkuCode(clone.getSkuCode());
         row.setDiscountType(request.discountType());
-        row.setDiscountValue(request.discountValue());
+        row.setDiscountValue(ShopClientOfferPricing.storedValue(
+                request.discountType(), request.discountValue(), finalPrice));
         row.setOriginalPriceMinor(original);
         row.setFinalPriceMinor(finalPrice);
         row.setStatus(ShopClientOfferConstants.STATUS_ACTIVE);

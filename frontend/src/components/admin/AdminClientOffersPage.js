@@ -31,14 +31,20 @@ import {
   ADMIN_CLIENT_SEARCH_PAGE_SIZE,
   ADMIN_CLIENT_OFFERS_TEST_IDS,
   SHOP_CLIENT_OFFER_DISCOUNT_TYPE,
-  SHOP_CLIENT_OFFER_RATE_MAX_PERCENT,
   SHOP_CLIENT_OFFER_STATUS
 } from '../../constants/shopClientOfferConstants';
 import { ADMIN_ROUTES } from '../../constants/adminRoutes';
+import { MIN_PAYMENT_AMOUNT } from '../../constants/paymentAmountConstants';
 import { RoleUtils } from '../../constants/roles';
 import { useSession } from '../../contexts/SessionContext';
 import useDebounce from '../../hooks/useDebounce';
-import { buildClientOptions, previewOfferFinalPrice } from '../../utils/shopClientOffer';
+import {
+  buildClientOptions,
+  describeOfferDiscount,
+  isOfferValueInRange,
+  previewOfferFinalPrice,
+  toOfferRequestValue
+} from '../../utils/shopClientOffer';
 import '../../styles/unified-design-tokens.css';
 import '../../styles/tokens/shop-offer-tokens.css';
 import '../../styles/shop/AdminShopClinicOs.css';
@@ -71,7 +77,7 @@ const AdminClientOffersPage = () => {
   const [listState, setListState] = useState('idle');
   const [clientId, setClientId] = useState('');
   const [sourceSkuCode, setSourceSkuCode] = useState('');
-  const [discountType, setDiscountType] = useState(SHOP_CLIENT_OFFER_DISCOUNT_TYPE.RATE);
+  const [discountType, setDiscountType] = useState(SHOP_CLIENT_OFFER_DISCOUNT_TYPE.NONE);
   const [discountValue, setDiscountValue] = useState('');
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState('');
@@ -101,12 +107,15 @@ const AdminClientOffersPage = () => {
     [sources, sourceSkuCode]
   );
   const isRate = discountType === SHOP_CLIENT_OFFER_DISCOUNT_TYPE.RATE;
-  const hasValue = discountValue !== '' && Number(discountValue) > 0;
+  const isNone = discountType === SHOP_CLIENT_OFFER_DISCOUNT_TYPE.NONE;
+  const isPrice = discountType === SHOP_CLIENT_OFFER_DISCOUNT_TYPE.PRICE;
+  // 정가 그대로·직접 입력은 비워도 정가로 계산된다
+  const hasValue = isNone || isPrice || (discountValue !== '' && Number(discountValue) > 0);
   const previewPrice = selectedSource
     ? previewOfferFinalPrice(selectedSource.unitPriceMinor, discountType, discountValue)
     : null;
   const previewDiscount = previewPrice != null ? selectedSource.unitPriceMinor - previewPrice : null;
-  const belowMin = Boolean(selectedSource) && hasValue && previewPrice == null && isInRange(
+  const belowMin = Boolean(selectedSource) && hasValue && previewPrice == null && isOfferValueInRange(
     selectedSource.unitPriceMinor, discountType, discountValue
   );
   const canSave = Boolean(selectedClient && selectedSource && previewPrice != null) && !saving;
@@ -184,7 +193,7 @@ const AdminClientOffersPage = () => {
         clientId: Number(clientId),
         sourceSkuCode,
         discountType,
-        discountValue: Number(discountValue)
+        discountValue: toOfferRequestValue(discountType, discountValue)
       });
       setToast({ name: selectedClient.name });
       setDiscountValue('');
@@ -235,9 +244,32 @@ const AdminClientOffersPage = () => {
       ? { cls: 'paid', text: t('list.statusPaid') }
       : { cls: 'pending', text: t('list.statusPending') };
   };
-  const discountText = (offer) => (offer.discountType === SHOP_CLIENT_OFFER_DISCOUNT_TYPE.RATE
-    ? t('list.discountRate', { value: offer.discountValue })
-    : t('list.discountAmount', { value: num(offer.discountValue) }));
+  const discountText = (offer) => {
+    const d = describeOfferDiscount(offer);
+    if (!d) {
+      return t('list.discountNone');
+    }
+    return d.kind === 'rate'
+      ? t('list.discountRate', { value: d.value })
+      : t('list.discountAmount', { value: num(d.value) });
+  };
+  const previewSubText = () => {
+    if (!previewDiscount) {
+      return t('form.previewNoDiscount');
+    }
+    return isRate
+      ? t('form.previewDiscountRate', { value: discountValue, amount: num(previewDiscount) })
+      : t('form.previewDiscountAmount', { value: num(previewDiscount) });
+  };
+  const valueHint = () => {
+    if (isNone) {
+      return t('form.valueHintNone');
+    }
+    if (isPrice) {
+      return t('form.valueHintPrice', { min: num(MIN_PAYMENT_AMOUNT) });
+    }
+    return isRate ? t('form.valueHintRate') : t('form.valueHintAmount');
+  };
   const dateText = (offer) => (offer.createdAt ? String(offer.createdAt).slice(0, 10) : '');
 
   const renderPreview = () => {
@@ -251,7 +283,7 @@ const AdminClientOffersPage = () => {
             </span>
           </div>
           <div className="aco-preview__cell">
-            <span className="aco-preview__cap">{t('form.previewFinal')}</span>
+            <span className="aco-preview__cap">{isPrice ? t('form.previewFinalPrice') : t('form.previewFinal')}</span>
             <span className="aco-preview__value aco-preview__value--empty">—</span>
             <span className="aco-preview__sub">{t('form.previewEmpty')}</span>
           </div>
@@ -265,13 +297,9 @@ const AdminClientOffersPage = () => {
           <span className="aco-preview__value aco-preview__value--orig"><SafeText>{won(selectedSource.unitPriceMinor)}</SafeText></span>
         </div>
         <div className="aco-preview__cell">
-          <span className="aco-preview__cap">{t('form.previewFinal')}</span>
+          <span className="aco-preview__cap">{isPrice ? t('form.previewFinalPrice') : t('form.previewFinal')}</span>
           <span className="aco-preview__value"><SafeText>{won(previewPrice)}</SafeText></span>
-          <span className="aco-preview__sub">
-            {isRate
-              ? t('form.previewDiscountRate', { value: discountValue, amount: num(previewDiscount) })
-              : t('form.previewDiscountAmount', { value: num(previewDiscount) })}
-          </span>
+          <span className="aco-preview__sub">{previewSubText()}</span>
         </div>
       </div>
     );
@@ -439,6 +467,8 @@ const AdminClientOffersPage = () => {
                   <span className="aco-field__label" id={`${baseId}-lbl-mode`}>{t('form.modeLabel')}</span>
                   <div className="aco-seg" role="radiogroup" aria-labelledby={`${baseId}-lbl-mode`} aria-disabled={noClient || saving}>
                     {[
+                      [SHOP_CLIENT_OFFER_DISCOUNT_TYPE.NONE, t('form.modeNone')],
+                      [SHOP_CLIENT_OFFER_DISCOUNT_TYPE.PRICE, t('form.modePrice')],
                       [SHOP_CLIENT_OFFER_DISCOUNT_TYPE.AMOUNT, t('form.modeAmount')],
                       [SHOP_CLIENT_OFFER_DISCOUNT_TYPE.RATE, t('form.modeRate')]
                     ].map(([type, text]) => (
@@ -457,7 +487,9 @@ const AdminClientOffersPage = () => {
                   </div>
                 </div>
                 <div className="aco-field">
-                  <label className="aco-field__label" htmlFor={`${baseId}-value`}>{t('form.valueLabel')}</label>
+                  <label className="aco-field__label" htmlFor={`${baseId}-value`}>
+                    {isPrice ? t('form.valueLabelPrice') : t('form.valueLabel')}
+                  </label>
                   <div className="aco-affix">
                     <input
                       id={`${baseId}-value`}
@@ -465,13 +497,13 @@ const AdminClientOffersPage = () => {
                       type="text"
                       inputMode="numeric"
                       value={discountValue}
-                      placeholder={t('form.valuePlaceholder')}
-                      disabled={noClient || saving}
+                      placeholder={isPrice ? t('form.valuePlaceholderPrice') : t('form.valuePlaceholder')}
+                      disabled={noClient || saving || isNone}
                       onChange={(e) => setDiscountValue(e.target.value.replace(/\D/g, ''))}
                     />
                     <span className="aco-affix__unit">{isRate ? t('form.unitRate') : t('form.unitAmount')}</span>
                   </div>
-                  <span className="aco-field__hint">{isRate ? t('form.valueHintRate') : t('form.valueHintAmount')}</span>
+                  <span className="aco-field__hint">{valueHint()}</span>
                 </div>
                 <section className="aco-preview" aria-labelledby={`${baseId}-lbl-prev`} aria-live="polite">
                   <span className="aco-preview__label" id={`${baseId}-lbl-prev`}>{t('form.previewLabel')}</span>
@@ -481,7 +513,7 @@ const AdminClientOffersPage = () => {
                       <Info className="aco-icon" aria-hidden="true" />
                       <div className="aco-notice__body">
                         <span className="aco-notice__title">{t('states.minAmountTitle')}</span>
-                        <span className="aco-notice__text">{t('states.minAmountText')}</span>
+                        <span className="aco-notice__text">{t('states.minAmountText', { min: num(MIN_PAYMENT_AMOUNT) })}</span>
                       </div>
                     </div>
                   ) : null}
@@ -519,9 +551,11 @@ const AdminClientOffersPage = () => {
                 <section className="aco-rules" aria-label={t('rules.title')}>
                   <p className="aco-rules__title"><Info className="aco-icon" aria-hidden="true" />{t('rules.title')}</p>
                   <ul className="aco-rules__list">
+                    <li>{t('rules.none')}</li>
+                    <li>{t('rules.price', { min: num(MIN_PAYMENT_AMOUNT) })}</li>
                     <li>{t('rules.amount')}</li>
                     <li>{t('rules.rate')}</li>
-                    <li>{t('rules.min')}</li>
+                    <li>{t('rules.min', { min: num(MIN_PAYMENT_AMOUNT) })}</li>
                   </ul>
                 </section>
                 <div className="aco-foot-action">
@@ -599,14 +633,5 @@ const AdminClientOffersPage = () => {
     </AdminCommonLayout>
   );
 };
-
-/** 값이 규칙 범위 안(원가 미만 / 1~99)인지: 범위 안인데 미리보기가 null 이면 최소 금액 미만이다 */
-function isInRange(original, type, rawValue) {
-  const value = Number(rawValue);
-  if (type === SHOP_CLIENT_OFFER_DISCOUNT_TYPE.AMOUNT) {
-    return value >= 1 && value < original;
-  }
-  return value >= 1 && value <= SHOP_CLIENT_OFFER_RATE_MAX_PERCENT;
-}
 
 export default AdminClientOffersPage;

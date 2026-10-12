@@ -33,7 +33,7 @@ select.aco-ctl { appearance: none; padding-inline-end: var(--mg-v2-space-8); }
 .aco-affix { display: flex; align-items: center; gap: var(--mg-v2-space-2); }
 .aco-affix .aco-ctl { text-align: end; font-variant-numeric: tabular-nums; }
 .aco-affix__unit { flex: none; color: var(--cs-slate-700); min-inline-size: var(--mg-v2-space-4); }
-.aco-seg { display: inline-flex; padding: var(--mg-v2-space-0-5); gap: var(--mg-v2-space-0-5); border: var(--mg-v2-border-width-thin) solid var(--cs-slate-300); border-radius: var(--mg-v2-radius-lg); background: var(--mg-v2-color-surface-card); }
+.aco-seg { display: inline-flex; flex-wrap: wrap; padding: var(--mg-v2-space-0-5); gap: var(--mg-v2-space-0-5); border: var(--mg-v2-border-width-thin) solid var(--cs-slate-300); border-radius: var(--mg-v2-radius-lg); background: var(--mg-v2-color-surface-card); }
 .aco-seg__btn { flex: 1 1 0; display: inline-flex; align-items: center; justify-content: center; gap: var(--mg-v2-space-1); block-size: calc(var(--mg-control-height-sm) - var(--mg-v2-space-1) - 2 * var(--mg-v2-border-width-thin)); padding-inline: var(--mg-v2-space-4); border: var(--mg-v2-border-width-thin) solid transparent; border-radius: var(--mg-v2-radius-md); background: transparent; color: var(--cs-slate-700); cursor: pointer; white-space: nowrap; }
 .aco-seg__btn[aria-checked="true"] { background: var(--cs-slate-200); border-color: var(--cs-slate-400); color: var(--cs-slate-900); font-weight: var(--mg-v2-font-weight-semibold); }
 .aco-seg[aria-disabled="true"] { border-style: dashed; }

@@ -44,8 +44,7 @@ import {
 import {
   CLIENT_OFFERS_I18N_NS,
   CLIENT_OFFERS_TEST_IDS,
-  CLIENT_OFFER_ROUTES,
-  SHOP_CLIENT_OFFER_DISCOUNT_TYPE
+  CLIENT_OFFER_ROUTES
 } from '../../../constants/shopClientOfferConstants';
 import { CONSULTATION_PACKAGE_PAYMENT_TYPE_NOTE } from '../../../constants/legalPublic';
 import { useSession } from '../../../contexts/SessionContext';
@@ -83,6 +82,7 @@ import {
 import { formatMallNumber } from '../../../utils/clientMall';
 import { toBuyNowCheckoutLines } from '../../../utils/clientMallBuyNow';
 import {
+  describeOfferDiscount,
   readClientOffersDraft,
   selectPayableOffers,
   writeClientOffersDraft,
@@ -295,9 +295,16 @@ const ClientOffersPage = () => {
     return <ShopClientSessionLoading title={t('pageTitle')} />;
   }
 
-  const discountText = (offer) => (offer.discountType === SHOP_CLIENT_OFFER_DISCOUNT_TYPE.RATE
-    ? t('card.discountRate', { value: offer.discountValue })
-    : t('card.discountAmount', { value: formatMallNumber(offer.discountValue) }));
+  // 할인 없는 지정(정가 그대로·정가와 같은 직접 입력)은 정가 취소선과 할인 문구를 숨긴다
+  const discountText = (offer) => {
+    const d = describeOfferDiscount(offer);
+    if (!d) {
+      return null;
+    }
+    return d.kind === 'rate'
+      ? t('card.discountRate', { value: d.value })
+      : t('card.discountAmount', { value: formatMallNumber(d.value) });
+  };
 
   const renderCard = (offer) => {
     const selected = offer.offerSkuCode === selectedSkuCode;
@@ -320,11 +327,15 @@ const ClientOffersPage = () => {
             ) : null}
           </div>
           <h3 className="client-mall-card__title" id={`${baseId}-t-${offer.id}`}><SafeText>{offer.title}</SafeText></h3>
-          <p className="client-offers__orig">
-            <span className="sr-only">{t('card.originalSr')}</span>
-            <s>{`${formatMallNumber(offer.originalPriceMinor)}${t('card.won')}`}</s>
-          </p>
-          <p className="client-offers__off">{discountText(offer)}</p>
+          {discountText(offer) ? (
+            <>
+              <p className="client-offers__orig">
+                <span className="sr-only">{t('card.originalSr')}</span>
+                <s>{`${formatMallNumber(offer.originalPriceMinor)}${t('card.won')}`}</s>
+              </p>
+              <p className="client-offers__off">{discountText(offer)}</p>
+            </>
+          ) : null}
           <MallPrice amountMinor={Number(offer.finalPriceMinor) || 0} sessionCount={offer.sessionCount || 1} />
           {rows.length ? <MallInfoRows rows={rows} className="client-mall-card__rows" /> : null}
           <MGButton

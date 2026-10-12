@@ -55,3 +55,4 @@
 **/ClientVisibilityPolicyTest.java
 **/AdminClientSearchServiceVisibilityTest.java
 **/ShopClientOfferCreateVisibilityTest.java
+**/ShopClientOfferPricingTest.java

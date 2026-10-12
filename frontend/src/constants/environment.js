@@ -41,13 +41,21 @@ const oauthSecretFromEnv = (envKey) => {
   return '';
 };
 
+const isJestTestEnv = process.env.NODE_ENV === 'test' || process.env.JEST_WORKER_ID !== undefined;
+
+const logEnv = (...args) => {
+  if (!isJestTestEnv) {
+    console.log(...args);
+  }
+};
+
 // 현재 환경에 따른 동적 URL 생성
 const getBaseUrl = () => {
   if (process.env.REACT_APP_API_BASE_URL) {
-    console.log('🔧 API_BASE_URL from env:', process.env.REACT_APP_API_BASE_URL);
+    logEnv('🔧 API_BASE_URL from env:', process.env.REACT_APP_API_BASE_URL);
     const envUrl = process.env.REACT_APP_API_BASE_URL.trim();
     if (envUrl === '' || envUrl === '""' || envUrl === "''") {
-      console.log('🔧 환경변수가 빈 문자열 - 상대 경로 사용');
+      logEnv('🔧 환경변수가 빈 문자열 - 상대 경로 사용');
       return '';
     }
     return envUrl;
@@ -55,17 +63,17 @@ const getBaseUrl = () => {
 
   if (typeof window !== 'undefined') {
     if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
-      console.log('🔧 서버 환경: Nginx 프록시 사용 (상대 경로)', window.location.hostname);
+      logEnv('🔧 서버 환경: Nginx 프록시 사용 (상대 경로)', window.location.hostname);
       return '';
     }
   }
 
   if (process.env.NODE_ENV === 'production') {
-    console.log('🔧 프로덕션 환경: Nginx 프록시 사용 (상대 경로)');
+    logEnv('🔧 프로덕션 환경: Nginx 프록시 사용 (상대 경로)');
     return '';
   }
 
-  console.log('🔧 로컬 개발 환경: 백엔드 직접 연결 (8080 포트)');
+  logEnv('🔧 로컬 개발 환경: 백엔드 직접 연결 (8080 포트)');
   return 'http://localhost:8080';
 };
 

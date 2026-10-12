@@ -20,7 +20,7 @@ class ShopClientOfferPricingTest {
     @DisplayName("율 할인(내림)")
     void rate() {
         assertEquals(90000L, ShopClientOfferPricing.finalPrice(100000L, ShopClientOfferConstants.DISCOUNT_TYPE_RATE, 10L));
-        assertEquals(66667L, ShopClientOfferPricing.finalPrice(100001L, ShopClientOfferConstants.DISCOUNT_TYPE_RATE, 33L));
+        assertEquals(67001L, ShopClientOfferPricing.finalPrice(100001L, ShopClientOfferConstants.DISCOUNT_TYPE_RATE, 33L));
     }
 
     @Test

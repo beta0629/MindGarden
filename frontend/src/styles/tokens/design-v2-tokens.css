@@ -746,4 +746,10 @@
   --mg-comp-col-sessions: 5rem;
   --mg-comp-col-price: 8rem;
   --mg-comp-select-max: 32rem;
+  --mg-msearch-max: 40rem;
+  --mg-msearch-pop-max-h: 20rem;
+  --mg-mlist-col-unit: 8rem;
+  --mg-mlist-col-qty: 7.5rem;
+  --mg-mlist-col-sub: 8rem;
+  --mg-msum-max: 34rem;
 }

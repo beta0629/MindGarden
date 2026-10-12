@@ -60,15 +60,17 @@ describe('옵션 매핑', () => {
 });
 
 describe('상품 폼 구성 적용·저장 바디', () => {
-  test('구성 추가 → 회기·판매가 자동, 저장 extraData 에 items 포함', () => {
+  test('구성 추가 → 회기·판매가 자동(몰 판매가 × 수량), 할인율 반영', () => {
+    const MA = { skuId: 1, label: '검사 A', unitPrice: 100000, sessions: 2, quantity: 1 };
+    const MB = { skuId: 2, label: '상담 B', unitPrice: 200000, sessions: 4, quantity: 2 };
     let form = emptyAdminShopProductForm();
-    form = applyAdminShopProductComposition(form, [A, B]);
+    form = applyAdminShopProductComposition(form, [MA, MB]);
     form = applyAdminShopProductComposition({ ...form, discountRate: 20 }, form.items);
     expect(form.sessions).toBe('10');
     expect(form.originalPrice).toBe(500000);
     expect(form.price).toBe('400000');
-    const extra = parseExtraData(buildExtraDataString(10, 400000, '', form.items, form.discountRate, form.originalPrice, true));
-    expect(extra.items).toEqual([A, B]);
+    const extra = parseExtraData(buildExtraDataString(10, 400000, '', [], form.discountRate, form.originalPrice, true));
+    expect(extra.items).toEqual([]);
     expect(extra.discountRate).toBe(20);
     expect(extra.originalPrice).toBe(500000);
   });

@@ -366,7 +366,7 @@ export const ADMIN_SHOP_PRODUCTS_COPY = Object.freeze({
 
 export const ADMIN_SHOP_PRODUCT_EDITOR_COPY = Object.freeze({
   TITLE_NEW: '상품 등록',
-  SUBTITLE_NEW: '가격·회기 수를 먼저 넣고, 몰 내용은 나중에 채워도 돼요.',
+  SUBTITLE_NEW: '가격·회기 수를 먼저 입력하고, 몰 내용은 나중에 채워도 됩니다.',
   LIST: '목록',
   SAVE: '저장',
   SUBTITLE_EDIT: '온라인 판매 상품 · {code}',
@@ -375,31 +375,33 @@ export const ADMIN_SHOP_PRODUCT_EDITOR_COPY = Object.freeze({
   SECTION_PRICE: '가격·회기',
   SECTION_PRICE_HINT: '결제 = 회기 부여의 기준',
   SESSIONS: '회기 수',
-  SESSIONS_HINT: '결제되면 이 수만큼 회기가 붙어요',
-  SESSIONS_ERROR: '회기 수는 1 이상이어야 저장돼요.',
+  SESSIONS_HINT: '결제되면 이 수만큼 회기가 부여됩니다',
+  SESSIONS_ERROR: '회기 수는 1 이상이어야 저장됩니다.',
   SESSIONS_DEC: '회기 수 줄이기',
   SESSIONS_INC: '회기 수 늘리기',
+  STEP_DEC: '−',
+  STEP_INC: '+',
   PRICE: '가격',
   PRICE_HINT: '부가세 포함 판매가',
-  PRICE_ERROR: '가격을 0원 이상으로 넣어 주세요.',
+  PRICE_ERROR: '가격을 0원 이상으로 입력해 주세요.',
   PER_SESSION: '회당 단가',
   PER_SESSION_HINT: '자동 계산',
   VALIDITY: '유효기간',
   VALIDITY_PREFIX: '결제일부터',
   VALIDITY_SUFFIX: '개월',
-  VALIDITY_HINT: '1 이상 정수 · 비워 두면 기한 없음 · 저장한 뒤 결제한 주문부터 적용돼요',
-  VALIDITY_ERROR: '유효기간은 1 이상의 정수로 넣어 주세요.',
+  VALIDITY_HINT: '1 이상 정수 · 비워 두면 기한 없음 · 저장한 뒤 결제한 주문부터 적용됩니다',
+  VALIDITY_ERROR: '유효기간은 1 이상의 정수로 입력해 주세요.',
   SECTION_BASIC: '기본 정보',
   NAME: '상품명',
-  NAME_ERROR: '상품명을 넣어 주세요.',
+  NAME_ERROR: '상품명을 입력해 주세요.',
   CATEGORY: '구분',
   FIELD_MULTI_HINT: '하나 선택',
   CONSULTANT: '상담 선생님',
   CONSULTANT_PLACEHOLDER: '선생님 선택',
   CODE: '상품 코드',
-  CODE_AUTO: '저장하면 자동으로 만들어져요',
+  CODE_AUTO: '저장하면 자동으로 만들어집니다',
   SECTION_MALL: '몰 내용',
-  SECTION_MALL_HINT: '내담자 몰 상품 카드에 보여요',
+  SECTION_MALL_HINT: '내담자 몰 상품 카드에 보입니다',
   DESCRIPTION: '설명',
   PREVIEW_EYEBROW: '내담자 결제 미리보기',
   PREVIEW_PRICE: '가격',
@@ -412,20 +414,35 @@ export const ADMIN_SHOP_PRODUCT_EDITOR_COPY = Object.freeze({
   FLOW_POINTS: '포인트',
   FLOW_POINTS_NOTE: '리워드 정책 적립',
   TOGGLE_HOME: '홈 공개',
-  TOGGLE_HOME_HINT: '센터 홈 상품 안내에 보여요',
+  TOGGLE_HOME_HINT: '센터 홈 상품 안내에 보입니다',
   TOGGLE_MALL: '몰 노출',
-  TOGGLE_MALL_HINT: '내담자 몰에서 결제 가능',
+  TOGGLE_MALL_HINT: '내담자 몰에서 결제할 수 있습니다',
   TOGGLE_ACTIVE: '판매 중',
-  TOGGLE_ACTIVE_HINT: '끄면 판매 중지 · 기존 구매분은 유지돼요',
+  TOGGLE_ACTIVE_HINT: '끄면 판매 중지 · 기존 구매분은 유지됩니다',
   MALL_NEEDS_IMAGE: '몰에 노출하려면 대표 이미지를 올려 주세요.',
-  LEAVE_TITLE: '저장하지 않은 변경이 있어요',
-  LEAVE_MESSAGE: '목록으로 나가면 바꾼 내용이 사라져요.',
+  LEAVE_TITLE: '저장하지 않은 변경 사항이 있습니다',
+  LEAVE_MESSAGE: '목록으로 나가면 바꾼 내용이 사라집니다.',
   LEAVE_CONFIRM: '나가기',
   LEAVE_CANCEL: '계속 편집',
-  SAVED: '상품을 저장했어요',
-  SAVE_FAILED: '상품을 저장하지 못했어요.',
-  NOT_FOUND: '상품을 찾을 수 없어요.',
+  SAVED: '상품을 저장했습니다',
+  SAVE_FAILED: '상품을 저장하지 못했습니다.',
+  NOT_FOUND: '상품을 찾을 수 없습니다.',
   UPDATED_AT_PREFIX: '마지막 수정'
+});
+
+/** 상품 구성 — 리더 확정 문구(2026-10-12). 「다시 계산」은 copy.json previewErrorRetry 와 같은 글자. */
+export const ADMIN_SHOP_COMPOSITION_COPY = Object.freeze({
+  PRICE_CHANGED: '가격 변경됨',
+  RECALC: '다시 계산',
+  LEGACY_NOTICE: '예전 방식으로 저장된 구성입니다. 몰 상품으로 다시 담아 저장하면 예전 구성은 사라집니다.',
+  LEGACY_LIST_LABEL: '예전 구성 항목'
+});
+
+/** 상품 편집 — 상단·켜고 끄기 (시안 C-02 §4.2) */
+export const ADMIN_SHOP_PRODUCT_EDITOR_V2_COPY = Object.freeze({
+  BACK_TO_LIST: '상품 목록',
+  TOGGLE_ON: '켜짐',
+  TOGGLE_OFF: '꺼짐'
 });
 
 export const ADMIN_SHOP_REWARD_COPY = Object.freeze({

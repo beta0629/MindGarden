@@ -8,12 +8,16 @@
 
 import { ADMIN_ROUTES } from './adminRoutes';
 
-/** @type {Readonly<{ CATALOG_SKUS: string, POINT_POLICIES: string, ORDERS: string, PRODUCTS: string }>} */
+/** @type {Readonly<Record<string, string>>} */
 export const ADMIN_SHOP_API = {
   CATALOG_SKUS: '/api/v1/admin/shop/catalog-skus',
   POINT_POLICIES: '/api/v1/admin/shop/point-policies',
   ORDERS: '/api/v1/admin/shop/orders',
-  PRODUCTS: '/api/v1/admin/shop/products'
+  PRODUCTS: '/api/v1/admin/shop/products',
+  /** 상품 구성 조회·저장 — `${PACKAGE_COMPOSITIONS}/{packageCode}` (GET·PUT) */
+  PACKAGE_COMPOSITIONS: '/api/v1/admin/shop/package-compositions',
+  /** 상품 구성 후보(몰 판매 중 SKU) — 응답 `{ items, totalActive }` */
+  COMPOSITION_CANDIDATES: '/api/v1/admin/shop/catalog-skus/composition-candidates'
 };
 
 export const ADMIN_SHOP_ROUTES = {

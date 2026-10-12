@@ -1174,3 +1174,86 @@
   color: var(--cs-slate-500);
   cursor: not-allowed;
 }
+
+/* 상품 편집 — 저장 상태 글자 · 상품 관리 카드 (시안 shop-offers C-02 §4.2) */
+.admin-shop-suite__save-state {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--mg-v2-space-1);
+  color: var(--cs-slate-700);
+  font-size: var(--mg-v2-font-size-caption);
+}
+
+.admin-shop-suite__save-state-dot {
+  inline-size: var(--mg-v2-space-2);
+  block-size: var(--mg-v2-space-2);
+  border: var(--mg-v2-border-width-thick) solid var(--cs-slate-500);
+  border-radius: var(--mg-v2-radius-sm);
+}
+
+.admin-shop-suite__card-hint--strong {
+  color: var(--cs-slate-900);
+  font-weight: var(--mg-v2-font-weight-semibold);
+}
+
+.admin-shop-suite__manage-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mg-v2-space-4);
+  padding-block-start: var(--mg-v2-space-3);
+  border-block-start: var(--mg-v2-border-width-thin) solid var(--cs-slate-200);
+}
+
+.admin-shop-suite__manage-text {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-v2-space-0-5);
+  min-inline-size: 0;
+}
+
+.admin-shop-suite__manage-title {
+  font-weight: var(--mg-v2-font-weight-semibold);
+}
+
+@media (max-width: 768px) {
+  .admin-shop-suite__manage-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
+/* 상품 편집 — 조용한 뒤로 링크 · 스위치 옆 켜짐/꺼짐 글자 (시안 C-02 §4.2) */
+.admin-shop-suite__back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--mg-v2-space-1);
+  align-self: flex-start;
+  min-block-size: var(--mg-v2-touch-target-min);
+  color: var(--cs-slate-700);
+  font-size: var(--mg-v2-font-size-body-md);
+  text-decoration: none;
+}
+
+.admin-shop-suite__back-link:hover,
+.admin-shop-suite__back-link:focus-visible {
+  color: var(--cs-slate-900);
+  text-decoration: underline;
+}
+
+.admin-shop-suite__back-link svg {
+  inline-size: var(--mg-icon-size-sm);
+  block-size: var(--mg-icon-size-sm);
+}
+
+.admin-shop-suite__toggle-ctl {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--mg-v2-space-2);
+}
+
+.admin-shop-suite__toggle-state {
+  color: var(--cs-slate-700);
+  font-size: var(--mg-v2-font-size-caption);
+  font-weight: var(--mg-v2-font-weight-semibold);
+}

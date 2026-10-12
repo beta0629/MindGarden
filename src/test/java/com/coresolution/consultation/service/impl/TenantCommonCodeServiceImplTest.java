@@ -1,5 +1,7 @@
 package com.coresolution.consultation.service.impl;
 
+import com.coresolution.consultation.exception.CommonCodeInUseException;
+import com.coresolution.consultation.service.CommonCodeDeletionGuard;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -69,8 +71,29 @@ class TenantCommonCodeServiceImplTest {
     @Mock
     private TenantCommonCodeCacheEvictor tenantCommonCodeCacheEvictor;
 
+    @Mock
+    private CommonCodeDeletionGuard commonCodeDeletionGuard;
+
     @InjectMocks
     private TenantCommonCodeServiceImpl tenantCommonCodeService;
+
+    @Test
+    @DisplayName("deleteTenantCode: 상품 이력 검사(공통 가드)가 막으면 409 예외 그대로, save never")
+    void deleteTenantCode_packageInUse_blocked() {
+        CommonCode row = baseRow(77L, TENANT);
+        row.setCodeGroup(ConsultationPackageCodeConstants.CODE_GROUP);
+        row.setCodeValue("PACKAGE001");
+        when(commonCodeRepository.findByTenantIdAndIdIgnoringDeleted(TENANT, 77L)).thenReturn(Optional.of(row));
+        org.mockito.Mockito.doThrow(new CommonCodeInUseException(
+                ConsultationPackageCodeConstants.MSG_DELETE_BLOCKED_BY_ORDERS))
+            .when(commonCodeDeletionGuard).assertDeletable(TENANT, row);
+
+        CommonCodeInUseException ex = org.junit.jupiter.api.Assertions.assertThrows(CommonCodeInUseException.class,
+            () -> tenantCommonCodeService.deleteTenantCode(TENANT, 77L));
+        org.junit.jupiter.api.Assertions.assertEquals(
+            ConsultationPackageCodeConstants.MSG_DELETE_BLOCKED_BY_ORDERS, ex.getMessage());
+        verify(commonCodeRepository, org.mockito.Mockito.never()).save(any(CommonCode.class));
+    }
 
     @Test
     @DisplayName("getTenantCodeGroups: code_type=TENANT 이면 PROFESSIONAL_PROVIDER_TYPE 이 목록에 포함된다")

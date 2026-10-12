@@ -13,6 +13,19 @@ const toArray = (res) => {
   return Array.isArray(data) ? data : [];
 };
 
+/**
+ * 빈 검색어(undefined·null·공백)는 보내지 않는다.
+ * URLSearchParams 가 undefined 를 문자열 "undefined" 로 보내 서버가 그 글자로 검색하던 결함 방지 → 빈 칸이면 전체 목록.
+ *
+ * @param {{ q?: string|null, page?: number, size?: number }} [params]
+ * @returns {object}
+ */
+export const toSearchParams = (params = {}) => {
+  const { q, ...rest } = params || {};
+  const trimmed = typeof q === 'string' ? q.trim() : '';
+  return trimmed ? { ...rest, q: trimmed } : rest;
+};
+
 const toObject = (res) => {
   const data = res && typeof res === 'object' && 'data' in res ? res.data : res;
   return data && typeof data === 'object' ? data : null;
@@ -50,7 +63,7 @@ export const cancelAdminClientOffer = async(offerId) =>
  * @returns {Promise<{ id: number, name: string, phoneLast4: string|null, maskedPhone: string|null }[]>}
  */
 export const searchAdminClients = async(params = {}) => {
-  const page = toObject(await StandardizedApi.get(SHOP_CLIENT_OFFER_API.ADMIN_CLIENT_SEARCH, params));
+  const page = toObject(await StandardizedApi.get(SHOP_CLIENT_OFFER_API.ADMIN_CLIENT_SEARCH, toSearchParams(params)));
   return Array.isArray(page?.items) ? page.items : [];
 };
 
@@ -60,7 +73,7 @@ export const searchAdminClients = async(params = {}) => {
  * @returns {Promise<object>}
  */
 export const searchAdminClientsPage = async(params) =>
-  toObject(await StandardizedApi.get(SHOP_CLIENT_OFFER_API.ADMIN_CLIENT_SEARCH, params));
+  toObject(await StandardizedApi.get(SHOP_CLIENT_OFFER_API.ADMIN_CLIENT_SEARCH, toSearchParams(params)));
 
 /** @returns {Promise<object[]>} */
 export const listMyClientOffers = async() =>

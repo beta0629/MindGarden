@@ -3,7 +3,8 @@ import {
   cancelAdminClientOffer,
   createAdminClientOffer,
   listAdminClientOffers,
-  listMyClientOffers
+  listMyClientOffers,
+  searchAdminClientsPage
 } from '../shopClientOfferService';
 import { SHOP_CLIENT_OFFER_API } from '../../constants/shopClientOfferConstants';
 
@@ -36,5 +37,17 @@ describe('shopClientOfferService', () => {
     StandardizedApi.post.mockResolvedValue({ data: { id: 3 } });
     await cancelAdminClientOffer(3);
     expect(StandardizedApi.post).toHaveBeenCalledWith(`${SHOP_CLIENT_OFFER_API.ADMIN}/3/cancel`, {});
+  });
+
+  test.each([undefined, null, '', '   '])('빈 검색어(%p)는 q 를 보내지 않아 전체 첫 페이지를 받는다', async(q) => {
+    StandardizedApi.get.mockResolvedValue({ items: [], page: 0, size: 20, totalElements: 80 });
+    await searchAdminClientsPage({ q, page: 0, size: 20 });
+    expect(StandardizedApi.get).toHaveBeenCalledWith(SHOP_CLIENT_OFFER_API.ADMIN_CLIENT_SEARCH, { page: 0, size: 20 });
+  });
+
+  test('검색어는 앞뒤 공백을 지우고 보낸다', async() => {
+    StandardizedApi.get.mockResolvedValue({ items: [], page: 0, size: 20, totalElements: 0 });
+    await searchAdminClientsPage({ q: ' 한서 ', page: 1, size: 20 });
+    expect(StandardizedApi.get).toHaveBeenCalledWith(SHOP_CLIENT_OFFER_API.ADMIN_CLIENT_SEARCH, { page: 1, size: 20, q: '한서' });
   });
 });

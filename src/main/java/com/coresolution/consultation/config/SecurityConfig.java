@@ -3,8 +3,11 @@ package com.coresolution.consultation.config;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import com.coresolution.core.constants.SecurityRoleConstants;
 import com.coresolution.core.filter.TenantContextFilter;
+import com.coresolution.core.util.TenantHostSubdomainUtil;
 import com.coresolution.consultation.config.filter.JwtAuthenticationFilter;
 import com.coresolution.consultation.config.security.BearerTokenAuthCsrfMatcher;
 import com.coresolution.consultation.constant.AccountIntegrationApiPaths;
@@ -249,7 +252,9 @@ public class SecurityConfig {
         } else {
             // 개발 환경: 편의성 우선 (운영 환경과 분리)
             http
-                // CSRF 비활성화 (개발 편의성)
+                // CSRF 비활성화 (개발 편의성).
+                // 별칭 호스트(tenant.host-aliases) 로그인 POST 는 CORS origin 허용이 게이트이며
+                // CSRF 검사가 아니다. 운영 프로필 CSRF 정책은 변경하지 않는다.
                 .csrf(csrf -> csrf.disable())
                 
                 // 세션 관리 활성화 (매칭 생성 등을 위해)
@@ -486,7 +491,11 @@ public class SecurityConfig {
                 "http://localhost:3001",
                 "http://localhost:4300"  // Ops Portal 프론트엔드
             ));
-            // Cloudflare 프록시 별칭 등 exact origin (CORS_ALLOWED_ORIGINS) — 패턴에 합류
+            // Cloudflare 프록시 별칭: tenant.host-aliases / TENANT_HOST_ALIASES (yml 기본값 포함)
+            // — CORS_ALLOWED_ORIGINS 가 비어 있어도 별칭 호스트를 exact origin 으로 합류.
+            // Spring Environment 프로퍼티를 직접 읽어 TenantHostAliasesInitializer PostConstruct 레이스를 피한다.
+            mergeTenantHostAliasOriginsFromEnvironment(devOriginPatterns);
+            // 선택적 추가 exact origin (CORS_ALLOWED_ORIGINS)
             mergeCorsAllowedOriginsFromEnv(devOriginPatterns);
             configuration.setAllowedOriginPatterns(devOriginPatterns);
             log.info("🌐 CORS 허용 OriginPatterns (dev): {}", devOriginPatterns);
@@ -585,8 +594,61 @@ public class SecurityConfig {
     }
 
     /**
+     * {@code tenant.host-aliases}(또는 {@code TENANT_HOST_ALIASES})에서 호스트를 읽어
+     * CORS 허용 목록에 {@code https://}/{@code http://} exact origin 으로 합친다.
+     * Spring 이 yml 기본값을 해석한 프로퍼티를 쓰므로 env 미설정·재시작 후에도 별칭이 반영된다.
+     *
+     * @param target 기존 허용 origin/pattern 목록 (변경됨)
+     */
+    private void mergeTenantHostAliasOriginsFromEnvironment(List<String> target) {
+        String raw = environment.getProperty("tenant.host-aliases");
+        if (raw == null || raw.isBlank()) {
+            raw = environment.getProperty("TENANT_HOST_ALIASES");
+        }
+        Set<String> hosts = TenantHostSubdomainUtil.parseHostAliases(raw).keySet();
+        int added = mergeTenantHostAliasOrigins(target, raw);
+        log.info("🌐 CORS tenant.host-aliases 합류: added={}, hosts={}", added, hosts);
+    }
+
+    /**
+     * {@code host:subdomain[,...]} 별칭 문자열의 hostname 을 CORS exact origin 으로 합친다.
+     * 단위 테스트·패키지 내 재사용용. 시크릿이 아닌 hostname 만 다룬다.
+     *
+     * @param target 기존 허용 origin/pattern 목록 (변경됨)
+     * @param rawAliases {@code TENANT_HOST_ALIASES} / {@code tenant.host-aliases} 원문
+     * @return 새로 추가된 origin 개수
+     */
+    static int mergeTenantHostAliasOrigins(List<String> target, String rawAliases) {
+        if (target == null) {
+            return 0;
+        }
+        Map<String, String> aliases = TenantHostSubdomainUtil.parseHostAliases(rawAliases);
+        if (aliases.isEmpty()) {
+            return 0;
+        }
+        int added = 0;
+        for (String host : aliases.keySet()) {
+            if (host == null || host.isBlank()) {
+                continue;
+            }
+            String httpsOrigin = "https://" + host;
+            String httpOrigin = "http://" + host;
+            if (!target.contains(httpsOrigin)) {
+                target.add(httpsOrigin);
+                added++;
+            }
+            if (!target.contains(httpOrigin)) {
+                target.add(httpOrigin);
+                added++;
+            }
+        }
+        return added;
+    }
+
+    /**
      * {@code CORS_ALLOWED_ORIGINS}(쉼표 구분 exact origin)를 허용 목록에 합친다.
-     * Spring Environment 우선, 없으면 프로세스 환경변수.
+     * Spring Environment 우선, 없으면 프로세스 환경변수. 선택적 추가분이며
+     * 별칭 CORS 의 SSOT 는 {@link #mergeTenantHostAliasOriginsFromEnvironment}.
      *
      * @param target 기존 허용 origin/pattern 목록 (변경됨)
      */

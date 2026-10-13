@@ -120,6 +120,8 @@ class TenantHostSubdomainUtilTest {
                 "mindgarden-dev.core-solution.co.kr")).isTrue();
         assertThat(TenantHostSubdomainUtil.resolveConfiguredAliasLabel(
                 "MindGarden-Dev.core-solution.co.kr")).isEqualTo("mindgarden");
+        assertThat(TenantHostSubdomainUtil.getConfiguredAliasHosts())
+                .containsExactly("mindgarden-dev.core-solution.co.kr");
     }
 
     @Test

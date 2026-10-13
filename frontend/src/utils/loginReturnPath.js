@@ -11,7 +11,7 @@
  */
 
 import { LOGIN_RETURN_URL_PARAM } from '../constants/consultationLogAutosaveConstants';
-import { sanitizeSameOriginReturnPath } from './sessionRedirect';
+import { sanitizeSameOriginReturnPath } from './sameOriginReturnPath';
 
 /** 소셜 로그인 왕복 동안 돌아갈 주소를 맡기는 sessionStorage 키 */
 export const LOGIN_RETURN_PATH_STORAGE_KEY = 'mg.loginReturnPath';

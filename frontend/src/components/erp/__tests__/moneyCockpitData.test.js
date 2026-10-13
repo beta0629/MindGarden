@@ -244,6 +244,58 @@ describe('moneyCockpitData mix builders (날조 금지 · 0원 유지)', () => {
     });
   });
 
+  test('outflow: breakdown CARD_MERCHANT_FEE 를 쓰고 tx fee와 이중합산하지 않음', () => {
+    const items = buildOutflowMixItems(
+      { RENT: 50000, CARD_MERCHANT_FEE: 2500 },
+      [{ type: 'INCOME', amount: 100000, cardMerchantFeeAmount: 2500 }]
+    );
+    expect(items.find((i) => i.id === 'cardMerchantFee')?.amount).toBe(2500);
+    expect(items.find((i) => i.id === 'rentUtility')?.amount).toBe(50000);
+    const sum = items.reduce((s, i) => s + i.amount, 0);
+    expect(sum).toBe(52500);
+  });
+
+  test('outflow: TAX·MEAL·동적 카테고리 모두 표시 (6키 하드코딩 없음)', () => {
+    const breakdown = {
+      SALARY: 10000,
+      RENT: 20000,
+      UTILITY: 5000,
+      TAX: 3000,
+      MEAL: 4000,
+      EQUIPMENT: 6000,
+      OFFICE_SUPPLIES: 7000,
+      CUSTOM_ADS: 8000
+    };
+    const items = buildOutflowMixItems(breakdown, []);
+    expect(items.find((i) => i.id === 'salary')?.amount).toBe(10000);
+    expect(items.find((i) => i.id === 'rentUtility')?.amount).toBe(25000);
+    expect(items.some((i) => i.label === '세금' && i.amount === 3000)).toBe(true);
+    expect(items.some((i) => i.label === '식대' && i.amount === 4000)).toBe(true);
+    expect(items.some((i) => i.amount === 8000)).toBe(true);
+    expect(items.length).toBeGreaterThanOrEqual(7);
+    const sum = items.reduce((s, i) => s + i.amount, 0);
+    expect(sum).toBe(Object.values(breakdown).reduce((a, b) => a + b, 0));
+  });
+
+  test('income/outflow: sum(items) === sum(breakdown) 불변식', () => {
+    const expenseBreakdown = {
+      SALARY: 100000,
+      RENT: 1540000,
+      TAX: 50000,
+      MEAL: 20000,
+      CARD_MERCHANT_FEE: 2500
+    };
+    const incomeBreakdown = { 상담료: 1800000, OTHER: 100000 };
+    const expenseItems = buildOutflowMixItems(expenseBreakdown, []);
+    const incomeItems = buildIncomeMixItems(incomeBreakdown, []);
+    expect(expenseItems.reduce((s, i) => s + i.amount, 0)).toBe(
+      Object.values(expenseBreakdown).reduce((a, b) => a + b, 0)
+    );
+    expect(incomeItems.reduce((s, i) => s + i.amount, 0)).toBe(
+      Object.values(incomeBreakdown).reduce((a, b) => a + b, 0)
+    );
+  });
+
   test('미지급 급여 net은 나간 곳 mix에 넣지 않는다', () => {
     const pendingNet = sumPendingSalaryNet([
       { status: 'PENDING', netSalary: 999999 }

@@ -290,5 +290,279 @@ jobs:
             fi
             echo "BLOCK_IP_140.248.50.66 $VERDICT"
             echo "EVIDENCE fail2ban=$FB_BLOCK firewall_drop_or_deny=$FW_BLOCK nginx_deny_or_geo=$NGINX_BLOCK"
+
+            # --- A/B/C 추가 진단 (읽기 전용). 재기동·방화벽 변경·파일 쓰기 없음 ---
+            IP_PREFIX="140.248.50."
+            LAST_SEEN_EXACT="NONE"
+            LAST_SEEN_PREFIX="NONE"
+            PREFIX_SAMPLE_IP=""
+            IPSET_HAS_140248="N/A"
+            RAW_MANGLE_HAS_DROP_FOR_IP="NO"
+            RP_FILTER="unknown"
+            TC_RULES="NO"
+
+            echo "===== STEP 8 nginx last-seen (7d) ====="
+            # 7일 일자 토큰 (common/combined ISO·슬래시 형식)
+            DAYS7=""
+            i=0
+            while [ "$i" -le 7 ]; do
+              DAYS7="${DAYS7}$(date -d "${i} day ago" '+%d/%b/%Y')|"
+              DAYS7="${DAYS7}$(date -d "${i} day ago" '+%Y-%m-%d')|"
+              DAYS7="${DAYS7}$(date -d "${i} day ago" '+%Y/%m/%d')|"
+              i=$((i + 1))
+            done
+            DAYS7_RE=$(printf '%s' "$DAYS7" | sed 's/|$//')
+            echo "WINDOW_HEURISTIC last_7d"
+
+            ACCESS_LOG_FILES=$(
+              {
+                sudo find /var/log/nginx \( -type f -o -type l \) \( \
+                    -name 'access.log' -o -name 'access.log.*' -o -name '*.access.log' -o -name '*.access.log.*' \
+                    -o -name '*access.log*' \
+                  \) -printf '%T@ %p\n' 2>/dev/null
+                sudo nginx -T 2>/dev/null | awk '$1=="access_log" { p=$2; gsub(/[";]/, "", p); if (p ~ /^\//) print p }' | sort -u | while IFS= read -r p; do
+                  case "$p" in
+                    /var/*|/opt/*|/usr/*|/home/*) ;;
+                    *) continue ;;
+                  esac
+                  dir=$(dirname "$p")
+                  base=$(basename "$p")
+                  sudo find "$dir" -maxdepth 1 \( -type f -o -type l \) \( -name "$base" -o -name "$base.*" -o -name "$base-*" \) -printf '%T@ %p\n' 2>/dev/null
+                done
+              } | awk 'NF>=2 && !seen[$2]++ { print }' | sort -n | sed 's/^[^ ]* //'
+            )
+            if [ -z "$(printf '%s\n' "$ACCESS_LOG_FILES" | sed '/^$/d')" ]; then
+              ACCESS_LOG_FILES=$(sudo sh -c 'ls -1tr /var/log/nginx/*access.log* /var/log/nginx/access.log* 2>/dev/null' || true)
+            fi
+            echo "ACCESS_LOG_FILE_COUNT $(printf '%s\n' "$ACCESS_LOG_FILES" | sed '/^$/d' | wc -l | tr -d ' ')"
+            echo "ACCESS_LOG_FILES_BEGIN"
+            # mindgarden.dev 우선 표시 후 나머지
+            printf '%s\n' "$ACCESS_LOG_FILES" | sed '/^$/d' | grep -F 'mindgarden.dev.core-solution.co.kr.access.log' || true
+            printf '%s\n' "$ACCESS_LOG_FILES" | sed '/^$/d' | grep -vF 'mindgarden.dev.core-solution.co.kr.access.log' || true
+            echo "ACCESS_LOG_FILES_END"
+
+            # 타임스탬프 추출 → epoch 정렬용 키. 실패 시 원문 유지
+            extract_ts_epoch() {
+              # stdin: log lines → stdout: epoch<TAB>ts_raw<TAB>line
+              awk '
+                {
+                  line=$0
+                  ts=""
+                  if (match(line, /\[[0-9]{2}\/[A-Za-z]{3}\/[0-9]{4}:[0-9]{2}:[0-9]{2}:[0-9]{2}[^\]]*\]/)) {
+                    ts=substr(line, RSTART+1, RLENGTH-2)
+                  } else if (match(line, /[0-9]{4}-[0-9]{2}-[0-9]{2}[T ][0-9]{2}:[0-9]{2}:[0-9]{2}/)) {
+                    ts=substr(line, RSTART, RLENGTH)
+                  }
+                  print ts "\t" line
+                }
+              ' | while IFS= read -r row; do
+                ts=$(printf '%s' "$row" | cut -f1)
+                rest=$(printf '%s' "$row" | cut -f2-)
+                epoch=0
+                if [ -n "$ts" ]; then
+                  # nginx: 13/Oct/2026:07:19:00 +0900 → date -d 호환
+                  norm=$(printf '%s' "$ts" | sed -E 's/^([0-9]{2})\/([A-Za-z]{3})\/([0-9]{4}):/\1 \2 \3 /')
+                  epoch=$(date -d "$norm" '+%s' 2>/dev/null || date -d "$ts" '+%s' 2>/dev/null || echo 0)
+                fi
+                printf '%s\t%s\t%s\n' "${epoch:-0}" "${ts:-NONE}" "$rest"
+              done
+            }
+
+            collect_access_hits() {
+              needle=$1
+              mode=$2
+              prefer=$(printf '%s\n' "$ACCESS_LOG_FILES" | sed '/^$/d' | grep -F 'mindgarden.dev.core-solution.co.kr.access.log' || true)
+              rest=$(printf '%s\n' "$ACCESS_LOG_FILES" | sed '/^$/d' | grep -vF 'mindgarden.dev.core-solution.co.kr.access.log' || true)
+              ordered=$(printf '%s\n%s\n' "$prefer" "$rest" | sed '/^$/d')
+              {
+                printf '%s\n' "$ordered" | while IFS= read -r f; do
+                  case "$f" in
+                    *.gz) sudo zgrep -a -F -h -- "$needle" "$f" 2>/dev/null || true ;;
+                    *.xz) sudo xzgrep -a -F -h -- "$needle" "$f" 2>/dev/null || true ;;
+                    *) sudo grep -a -F -h -- "$needle" "$f" 2>/dev/null || true ;;
+                  esac
+                done
+              } | grep -a -E -e "$DAYS7_RE" 2>/dev/null || true
+            }
+
+            echo "----- exact IP last-seen (7d) -----"
+            EXACT_HITS=$(collect_access_hits "$IP" exact || true)
+            if [ -n "$(printf '%s\n' "$EXACT_HITS" | sed '/^$/d')" ]; then
+              EXACT_RANKED=$(printf '%s\n' "$EXACT_HITS" | extract_ts_epoch | sort -n -k1,1)
+              LAST_EXACT_ROW=$(printf '%s\n' "$EXACT_RANKED" | sed '/^$/d' | tail -n 1)
+              LAST_SEEN_EXACT=$(printf '%s' "$LAST_EXACT_ROW" | cut -f2)
+              [ -n "$LAST_SEEN_EXACT" ] || LAST_SEEN_EXACT="NONE"
+              echo "LAST_SEEN_EXACT_140.248.50.66 $LAST_SEEN_EXACT"
+              echo "EXACT_SAMPLE_BEGIN"
+              printf '%s\n' "$EXACT_RANKED" | sed '/^$/d' | tail -n 20 | cut -f3- | emit_sensitive || true
+              echo "EXACT_SAMPLE_END"
+            else
+              echo "LAST_SEEN_EXACT_140.248.50.66 NONE"
+              LAST_SEEN_EXACT="NONE"
+            fi
+
+            echo "----- prefix ${IP_PREFIX} last-seen (7d) -----"
+            # prefix 매칭: 140.248.50. 포함. exact 와 동일 줄도 허용(샘플용)
+            PREFIX_HITS=$(collect_access_hits "$IP_PREFIX" prefix || true)
+            if [ -n "$(printf '%s\n' "$PREFIX_HITS" | sed '/^$/d')" ]; then
+              PREFIX_RANKED=$(printf '%s\n' "$PREFIX_HITS" | extract_ts_epoch | sort -n -k1,1)
+              LAST_PREFIX_ROW=$(printf '%s\n' "$PREFIX_RANKED" | sed '/^$/d' | tail -n 1)
+              LAST_SEEN_PREFIX=$(printf '%s' "$LAST_PREFIX_ROW" | cut -f2)
+              [ -n "$LAST_SEEN_PREFIX" ] || LAST_SEEN_PREFIX="NONE"
+              sample_line=$(printf '%s' "$LAST_PREFIX_ROW" | cut -f3-)
+              PREFIX_SAMPLE_IP=$(printf '%s' "$sample_line" | grep -oE '140\.248\.50\.[0-9]+' | head -n 1 || true)
+              echo "LAST_SEEN_PREFIX_140.248.50 $LAST_SEEN_PREFIX ${PREFIX_SAMPLE_IP}"
+              echo "PREFIX_SAMPLE_BEGIN"
+              printf '%s\n' "$PREFIX_RANKED" | sed '/^$/d' | tail -n 20 | cut -f3- | emit_sensitive || true
+              echo "PREFIX_SAMPLE_END"
+            else
+              echo "LAST_SEEN_PREFIX_140.248.50 NONE"
+              LAST_SEEN_PREFIX="NONE"
+            fi
+
+            echo "===== STEP 9 deep network (read-only) ====="
+            echo "----- ipset -----"
+            if command -v ipset >/dev/null 2>&1; then
+              IPSET_OUT=$(sudo ipset list 2>&1 || ipset list 2>&1 || true)
+              ipset_rc=$?
+              echo "COMMAND_EXIT ipset $ipset_rc"
+              # 세트 이름·멤버 수 요약
+              printf '%s\n' "$IPSET_OUT" | awk '
+                /^Name:/{ name=$2; members=""; next }
+                /^Number of entries:/{ members=$4; print "IPSET_SET " name " members=" members; next }
+              ' || true
+              if printf '%s\n' "$IPSET_OUT" | grep -F '140.248' >/dev/null 2>&1; then
+                IPSET_HAS_140248="YES"
+                echo "IPSET_HAS_140248 YES"
+                echo "EVIDENCE_IPSET_BEGIN"
+                printf '%s\n' "$IPSET_OUT" | grep -F '140.248' | head -n 50 | emit_light || true
+                echo "EVIDENCE_IPSET_END"
+              else
+                IPSET_HAS_140248="NO"
+                echo "IPSET_HAS_140248 NO"
+              fi
+              # 전체 목록이 과도하면 헤드만
+              echo "IPSET_LIST_HEAD_BEGIN"
+              printf '%s\n' "$IPSET_OUT" | head -n 80 | emit_light || true
+              echo "IPSET_LIST_HEAD_END"
+            else
+              echo "ipset: not installed"
+              IPSET_HAS_140248="N/A"
+            fi
+
+            echo "----- iptables raw / mangle -----"
+            RAW_OUT=$(sudo iptables -t raw -S 2>&1 || true)
+            raw_rc=$?
+            raw_n=$(printf '%s\n' "$RAW_OUT" | sed '/^$/d' | wc -l | tr -d ' ')
+            echo "COMMAND_EXIT iptables_raw $raw_rc"
+            echo "RULE_LINE_COUNT iptables_raw $raw_n"
+            RAW_HITS=$(printf '%s\n' "$RAW_OUT" | grep -E '140\.248|DROP|REJECT|NOTRACK' || true)
+            if [ -n "$RAW_HITS" ]; then
+              echo "FILTER_HEAD iptables_raw BEGIN"
+              printf '%s\n' "$RAW_HITS" | head -n 40 | emit_light || true
+              echo "FILTER_HEAD iptables_raw END"
+              if printf '%s\n' "$RAW_OUT" | grep -E '140\.248' | grep -E 'DROP|REJECT' >/dev/null 2>&1; then
+                RAW_MANGLE_HAS_DROP_FOR_IP="YES"
+              fi
+            else
+              echo "FILTER_HEAD iptables_raw (none)"
+            fi
+
+            MANGLE_OUT=$(sudo iptables -t mangle -S 2>&1 || true)
+            mangle_rc=$?
+            mangle_n=$(printf '%s\n' "$MANGLE_OUT" | sed '/^$/d' | wc -l | tr -d ' ')
+            echo "COMMAND_EXIT iptables_mangle $mangle_rc"
+            echo "RULE_LINE_COUNT iptables_mangle $mangle_n"
+            MANGLE_HITS=$(printf '%s\n' "$MANGLE_OUT" | grep -E '140\.248|DROP|REJECT|NOTRACK' || true)
+            if [ -n "$MANGLE_HITS" ]; then
+              echo "FILTER_HEAD iptables_mangle BEGIN"
+              printf '%s\n' "$MANGLE_HITS" | head -n 40 | emit_light || true
+              echo "FILTER_HEAD iptables_mangle END"
+              if printf '%s\n' "$MANGLE_OUT" | grep -E '140\.248' | grep -E 'DROP|REJECT' >/dev/null 2>&1; then
+                RAW_MANGLE_HAS_DROP_FOR_IP="YES"
+              fi
+            else
+              echo "FILTER_HEAD iptables_mangle (none)"
+            fi
+            echo "RAW_MANGLE_HAS_DROP_FOR_IP $RAW_MANGLE_HAS_DROP_FOR_IP"
+
+            echo "----- conntrack limits -----"
+            sysctl net.netfilter.nf_conntrack_max 2>/dev/null || echo "nf_conntrack_max: unavailable"
+            sysctl net.netfilter.nf_conntrack_buckets 2>/dev/null || true
+            if [ -r /proc/sys/net/netfilter/nf_conntrack_count ]; then
+              echo "nf_conntrack_count $(cat /proc/sys/net/netfilter/nf_conntrack_count 2>/dev/null)"
+            else
+              echo "nf_conntrack_count: unavailable"
+            fi
+            if command -v conntrack >/dev/null 2>&1; then
+              CT_COUNT=$(sudo conntrack -C 2>/dev/null || true)
+              echo "conntrack_C ${CT_COUNT:-unavailable}"
+              CT_HITS=$(sudo conntrack -L 2>/dev/null | grep -F '140.248' | head -n 20 || true)
+              if [ -n "$CT_HITS" ]; then
+                echo "CONNTRACK_140248_SAMPLE_BEGIN"
+                printf '%s\n' "$CT_HITS" | emit_light || true
+                echo "CONNTRACK_140248_SAMPLE_END"
+              else
+                echo "CONNTRACK_140248_SAMPLE (none or empty)"
+              fi
+            else
+              echo "conntrack: not installed"
+            fi
+
+            echo "----- rp_filter -----"
+            RP_ALL=$(sysctl -n net.ipv4.conf.all.rp_filter 2>/dev/null || echo '?')
+            RP_DEF=$(sysctl -n net.ipv4.conf.default.rp_filter 2>/dev/null || echo '?')
+            RP_FILTER="all=${RP_ALL} default=${RP_DEF}"
+            echo "sysctl net.ipv4.conf.all.rp_filter=$RP_ALL"
+            echo "sysctl net.ipv4.conf.default.rp_filter=$RP_DEF"
+            for iface_path in /proc/sys/net/ipv4/conf/*/rp_filter; do
+              [ -r "$iface_path" ] || continue
+              iface=$(printf '%s' "$iface_path" | sed -E 's|.*/conf/([^/]+)/rp_filter|\1|')
+              case "$iface" in
+                all|default|lo) continue ;;
+              esac
+              val=$(cat "$iface_path" 2>/dev/null || echo '?')
+              echo "sysctl net.ipv4.conf.${iface}.rp_filter=$val"
+              RP_FILTER="${RP_FILTER} ${iface}=${val}"
+            done
+
+            echo "----- tc qdisc / filter -----"
+            if command -v tc >/dev/null 2>&1; then
+              TC_Q=$(tc qdisc show 2>&1 || true)
+              TC_F=$(
+                for iface_path in /sys/class/net/*; do
+                  [ -e "$iface_path" ] || continue
+                  iface=$(basename "$iface_path")
+                  [ "$iface" = "lo" ] && continue
+                  printf '--- dev %s ---\n' "$iface"
+                  tc filter show dev "$iface" 2>&1 || true
+                done
+              )
+              if printf '%s\n' "$TC_F" | grep -Eiq '^filter'; then
+                TC_RULES="YES"
+              elif printf '%s\n' "$TC_Q" | grep -Eiq 'tbf|htb|prio|red|netem|ingress|clsact'; then
+                TC_RULES="YES"
+              else
+                TC_RULES="NO"
+              fi
+              echo "TC_RULES $TC_RULES"
+              echo "TC_QDISC_BEGIN"
+              printf '%s\n' "$TC_Q" | head -n 40 | emit_light || true
+              echo "TC_QDISC_END"
+              echo "TC_FILTER_BEGIN"
+              printf '%s\n' "$TC_F" | head -n 80 | emit_light || true
+              echo "TC_FILTER_END"
+            else
+              echo "tc: not installed"
+              TC_RULES="NO"
+            fi
+
+            echo "===== SUMMARY ====="
+            echo "LAST_SEEN_EXACT=$LAST_SEEN_EXACT"
+            echo "LAST_SEEN_PREFIX=$LAST_SEEN_PREFIX${PREFIX_SAMPLE_IP:+ $PREFIX_SAMPLE_IP}"
+            echo "IPSET_HAS_140248=$IPSET_HAS_140248"
+            echo "RAW_MANGLE_HAS_DROP_FOR_IP=$RAW_MANGLE_HAS_DROP_FOR_IP"
+            echo "RP_FILTER=$RP_FILTER"
+            echo "TC_RULES=$TC_RULES"
             echo "DIAG_COMPLETE"
             exit 0

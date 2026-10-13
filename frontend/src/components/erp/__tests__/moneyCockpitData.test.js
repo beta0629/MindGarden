@@ -24,12 +24,14 @@ import {
   buildStoredTaxCaption,
   parsePreConfirmWarningPayload,
   resolveSalaryPayDayFromCodes,
+  sumBreakdownValues,
   sumPendingConsultationFees,
   sumPendingSalaryNet
 } from '../organisms/moneyCockpit/moneyCockpitData';
 import {
   OFD_HERO,
   OFD_LEDGER,
+  OFD_OUTFLOW_CONSULTATION_REFUND_LABEL,
   OFD_SALARY_CHECKLIST
 } from '../../../constants/operatorFinanceDashboardStrings';
 import { SALARY_LATE_NOTES_LABELS, SALARY_TYPE } from '../../../constants/salaryConstants';
@@ -425,6 +427,40 @@ describe('moneyCockpitData mix builders (날조 금지 · 0원 유지)', () => {
       []
     );
     expect(items.find((i) => i.id === 'rentUtility')?.amount).toBe(250000);
+  });
+
+  test('outflow: expense 상담료(환불)를 버리지 않고 환불(상담료)로 표시 · total==sum(items)', () => {
+    const expenseBreakdown = {
+      RENT: 1540000,
+      SALARY: 1000000,
+      TAX: 421293,
+      상담료: 91000
+    };
+    const items = buildOutflowMixItems(expenseBreakdown, []);
+    const consultationRefund = items.find(
+      (i) => i.label === OFD_OUTFLOW_CONSULTATION_REFUND_LABEL
+    );
+    expect(consultationRefund).toBeDefined();
+    expect(consultationRefund.amount).toBe(91000);
+    expect(items.find((i) => i.id === 'refund')).toBeUndefined();
+    const itemSum = items.reduce((s, i) => s + i.amount, 0);
+    expect(itemSum).toBe(sumBreakdownValues(expenseBreakdown));
+    expect(itemSum).toBe(3052293);
+  });
+
+  test('outflow: CONSULTATION_REFUND 는 기존 환불 버킷 유지', () => {
+    const items = buildOutflowMixItems(
+      { RENT: 100000, CONSULTATION_REFUND: 50000, 상담료: 91000 },
+      []
+    );
+    expect(items.find((i) => i.id === 'refund')).toEqual({
+      id: 'refund',
+      label: '환불',
+      amount: 50000
+    });
+    expect(items.find((i) => i.label === OFD_OUTFLOW_CONSULTATION_REFUND_LABEL)?.amount)
+      .toBe(91000);
+    expect(items.reduce((s, i) => s + i.amount, 0)).toBe(241000);
   });
 });
 

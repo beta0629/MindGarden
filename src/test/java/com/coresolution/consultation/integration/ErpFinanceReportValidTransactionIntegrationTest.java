@@ -25,11 +25,12 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * 재무 리포트·대시보드·결산 합계의 유효 거래 조건 일치 — H2 실제 리포지토리·서비스.
+ * 재무 리포트·대시보드·결산 합계의 유효 거래 조건 — H2 실제 리포지토리·서비스.
  *
  * <p>같은 날짜에 완료·대기·승인 수입, 취소·거부 수입, soft delete 수입, 완료·취소 지출을 둔다.
- * 일·월·연 리포트, 운영자 기간 대시보드, 결산 합계, COMPLETED 재무 대시보드 SUM 은 모두
- * {@code FinancialTransactionValidity} (미삭제 COMPLETED) 로 같은 숫자다.</p>
+ * 일·연 리포트·결산·COMPLETED 재무 대시보드 SUM 은 {@code FinancialTransactionValidity}
+ * (미삭제 COMPLETED) 를 쓴다. 월간 리포트·운영자 기간 대시보드(머니 콕핏)는
+ * {@code OperatorFinanceAggregation} (PENDING/APPROVED/COMPLETED) 를 쓴다.</p>
  *
  * @author CoreSolution
  * @since 2026-10-06
@@ -42,8 +43,11 @@ class ErpFinanceReportValidTransactionIntegrationTest {
 
     private static final LocalDate REPORT_DATE = LocalDate.of(2026, 3, 15);
     private static final BigDecimal COMPLETED_INCOME = BigDecimal.valueOf(100_000L);
+    /** PENDING 20_000 + APPROVED 15_000 + COMPLETED 100_000 (삭제·취소·거부 제외) */
+    private static final BigDecimal OPERATOR_INCOME = BigDecimal.valueOf(135_000L);
     private static final BigDecimal EXPECTED_EXPENSE = BigDecimal.valueOf(40_000L);
     private static final BigDecimal EXPECTED_NET = COMPLETED_INCOME.subtract(EXPECTED_EXPENSE);
+    private static final BigDecimal OPERATOR_NET = OPERATOR_INCOME.subtract(EXPECTED_EXPENSE);
 
     @Autowired private FinancialTransactionRepository financialTransactionRepository;
     @Autowired private ErpService erpService;
@@ -75,7 +79,7 @@ class ErpFinanceReportValidTransactionIntegrationTest {
     }
 
     @Test
-    @DisplayName("일간·월간 리포트와 재무 대시보드 합계가 같다 (PENDING/APPROVED/CANCELLED/REJECTED 존재)")
+    @DisplayName("일간=COMPLETED 대시보드, 월간·운영자 대시보드=OperatorFinanceAggregation")
     void dailyAndMonthlyReports_matchDashboardCompletedTotals() {
         FinancialDashboardResponse dashboard =
                 financialTransactionService.getFinancialDashboard(REPORT_DATE, REPORT_DATE);
@@ -89,10 +93,13 @@ class ErpFinanceReportValidTransactionIntegrationTest {
         assertThat(total(daily, "dailyIncome")).isEqualByComparingTo(dashboard.getTotalIncome());
         assertThat(total(daily, "dailyExpenses")).isEqualByComparingTo(dashboard.getTotalExpense());
         assertThat((BigDecimal) daily.get("dailyNetIncome")).isEqualByComparingTo(dashboard.getNetProfit());
-        assertThat(total(monthly, "monthlyIncome")).isEqualByComparingTo(dashboard.getTotalIncome());
-        assertThat(total(monthly, "monthlyExpenses")).isEqualByComparingTo(dashboard.getTotalExpense());
-        assertThat((BigDecimal) monthly.get("monthlyNetIncome")).isEqualByComparingTo(dashboard.getNetProfit());
-        assertThat((BigDecimal) daily.get("dailyNetIncome")).isEqualByComparingTo(operatorDashboardNet());
+
+        // 머니 콕핏 월간·기간 대시보드: PENDING/APPROVED 포함
+        assertThat(total(monthly, "monthlyIncome")).isEqualByComparingTo(OPERATOR_INCOME);
+        assertThat(total(monthly, "monthlyExpenses")).isEqualByComparingTo(EXPECTED_EXPENSE);
+        assertThat((BigDecimal) monthly.get("monthlyNetIncome")).isEqualByComparingTo(OPERATOR_NET);
+        assertThat(operatorDashboardNet()).isEqualByComparingTo(OPERATOR_NET);
+        assertThat(operatorDashboardRevenue()).isEqualByComparingTo(OPERATOR_INCOME);
     }
 
     @Test
@@ -132,11 +139,20 @@ class ErpFinanceReportValidTransactionIntegrationTest {
     }
 
     private BigDecimal operatorDashboardNet() {
+        Map<String, Object> summary = operatorDashboardSummary();
+        return BigDecimal.valueOf(((Number) summary.get("netProfit")).longValue());
+    }
+
+    private BigDecimal operatorDashboardRevenue() {
+        Map<String, Object> summary = operatorDashboardSummary();
+        return BigDecimal.valueOf(((Number) summary.get("totalRevenue")).longValue());
+    }
+
+    @SuppressWarnings("unchecked")
+    private Map<String, Object> operatorDashboardSummary() {
         Map<String, Object> data = financialTransactionService.getBranchFinancialData(
                 null, REPORT_DATE, REPORT_DATE, null, null);
-        @SuppressWarnings("unchecked")
-        Map<String, Object> summary = (Map<String, Object>) data.get("summary");
-        return BigDecimal.valueOf(((Number) summary.get("netProfit")).longValue());
+        return (Map<String, Object>) data.get("summary");
     }
 
     @SuppressWarnings("unchecked")

@@ -24,12 +24,14 @@ import {
   buildStoredTaxCaption,
   parsePreConfirmWarningPayload,
   resolveSalaryPayDayFromCodes,
+  sumBreakdownValues,
   sumPendingConsultationFees,
   sumPendingSalaryNet
 } from '../organisms/moneyCockpit/moneyCockpitData';
 import {
   OFD_HERO,
   OFD_LEDGER,
+  OFD_OUTFLOW_CONSULTATION_REFUND_LABEL,
   OFD_SALARY_CHECKLIST
 } from '../../../constants/operatorFinanceDashboardStrings';
 import { SALARY_LATE_NOTES_LABELS, SALARY_TYPE } from '../../../constants/salaryConstants';
@@ -244,6 +246,58 @@ describe('moneyCockpitData mix builders (날조 금지 · 0원 유지)', () => {
     });
   });
 
+  test('outflow: breakdown CARD_MERCHANT_FEE 를 쓰고 tx fee와 이중합산하지 않음', () => {
+    const items = buildOutflowMixItems(
+      { RENT: 50000, CARD_MERCHANT_FEE: 2500 },
+      [{ type: 'INCOME', amount: 100000, cardMerchantFeeAmount: 2500 }]
+    );
+    expect(items.find((i) => i.id === 'cardMerchantFee')?.amount).toBe(2500);
+    expect(items.find((i) => i.id === 'rentUtility')?.amount).toBe(50000);
+    const sum = items.reduce((s, i) => s + i.amount, 0);
+    expect(sum).toBe(52500);
+  });
+
+  test('outflow: TAX·MEAL·동적 카테고리 모두 표시 (6키 하드코딩 없음)', () => {
+    const breakdown = {
+      SALARY: 10000,
+      RENT: 20000,
+      UTILITY: 5000,
+      TAX: 3000,
+      MEAL: 4000,
+      EQUIPMENT: 6000,
+      OFFICE_SUPPLIES: 7000,
+      CUSTOM_ADS: 8000
+    };
+    const items = buildOutflowMixItems(breakdown, []);
+    expect(items.find((i) => i.id === 'salary')?.amount).toBe(10000);
+    expect(items.find((i) => i.id === 'rentUtility')?.amount).toBe(25000);
+    expect(items.some((i) => i.label === '세금' && i.amount === 3000)).toBe(true);
+    expect(items.some((i) => i.label === '식대' && i.amount === 4000)).toBe(true);
+    expect(items.some((i) => i.amount === 8000)).toBe(true);
+    expect(items.length).toBeGreaterThanOrEqual(7);
+    const sum = items.reduce((s, i) => s + i.amount, 0);
+    expect(sum).toBe(Object.values(breakdown).reduce((a, b) => a + b, 0));
+  });
+
+  test('income/outflow: sum(items) === sum(breakdown) 불변식', () => {
+    const expenseBreakdown = {
+      SALARY: 100000,
+      RENT: 1540000,
+      TAX: 50000,
+      MEAL: 20000,
+      CARD_MERCHANT_FEE: 2500
+    };
+    const incomeBreakdown = { 상담료: 1800000, OTHER: 100000 };
+    const expenseItems = buildOutflowMixItems(expenseBreakdown, []);
+    const incomeItems = buildIncomeMixItems(incomeBreakdown, []);
+    expect(expenseItems.reduce((s, i) => s + i.amount, 0)).toBe(
+      Object.values(expenseBreakdown).reduce((a, b) => a + b, 0)
+    );
+    expect(incomeItems.reduce((s, i) => s + i.amount, 0)).toBe(
+      Object.values(incomeBreakdown).reduce((a, b) => a + b, 0)
+    );
+  });
+
   test('미지급 급여 net은 나간 곳 mix에 넣지 않는다', () => {
     const pendingNet = sumPendingSalaryNet([
       { status: 'PENDING', netSalary: 999999 }
@@ -373,6 +427,40 @@ describe('moneyCockpitData mix builders (날조 금지 · 0원 유지)', () => {
       []
     );
     expect(items.find((i) => i.id === 'rentUtility')?.amount).toBe(250000);
+  });
+
+  test('outflow: expense 상담료(환불)를 버리지 않고 환불(상담료)로 표시 · total==sum(items)', () => {
+    const expenseBreakdown = {
+      RENT: 1540000,
+      SALARY: 1000000,
+      TAX: 421293,
+      상담료: 91000
+    };
+    const items = buildOutflowMixItems(expenseBreakdown, []);
+    const consultationRefund = items.find(
+      (i) => i.label === OFD_OUTFLOW_CONSULTATION_REFUND_LABEL
+    );
+    expect(consultationRefund).toBeDefined();
+    expect(consultationRefund.amount).toBe(91000);
+    expect(items.find((i) => i.id === 'refund')).toBeUndefined();
+    const itemSum = items.reduce((s, i) => s + i.amount, 0);
+    expect(itemSum).toBe(sumBreakdownValues(expenseBreakdown));
+    expect(itemSum).toBe(3052293);
+  });
+
+  test('outflow: CONSULTATION_REFUND 는 기존 환불 버킷 유지', () => {
+    const items = buildOutflowMixItems(
+      { RENT: 100000, CONSULTATION_REFUND: 50000, 상담료: 91000 },
+      []
+    );
+    expect(items.find((i) => i.id === 'refund')).toEqual({
+      id: 'refund',
+      label: '환불',
+      amount: 50000
+    });
+    expect(items.find((i) => i.label === OFD_OUTFLOW_CONSULTATION_REFUND_LABEL)?.amount)
+      .toBe(91000);
+    expect(items.reduce((s, i) => s + i.amount, 0)).toBe(241000);
   });
 });
 

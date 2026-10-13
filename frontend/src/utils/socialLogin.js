@@ -26,6 +26,7 @@ import {
 } from '../constants/oauth2';
 import { setLoginSession, redirectToDashboard, logSessionInfo } from './session';
 import { redirectToLoginPageOnce } from './sessionRedirect';
+import { rememberLoginReturnPathFromUrl } from './loginReturnPath';
 import notificationManager from './notification';
 import { cachedApiCall, CACHE_CONFIG } from './apiCache';
 import i18n from '../i18n';
@@ -91,6 +92,8 @@ const generateRandomState = (length = 32) => {
  * 카카오 로그인
  */
 export const kakaoLogin = async() => {
+  // 외부 인증 화면을 다녀와도 /login?redirect= 주소로 돌아오게 맡긴다
+  rememberLoginReturnPathFromUrl();
   try {
     logger.log('=== 카카오 로그인 시작 ===');
     
@@ -180,6 +183,8 @@ export const kakaoLogin = async() => {
  * 네이버 로그인
  */
 export const naverLogin = async() => {
+  // 외부 인증 화면을 다녀와도 /login?redirect= 주소로 돌아오게 맡긴다
+  rememberLoginReturnPathFromUrl();
   try {
     logger.log('=== 네이버 로그인 시작 ===');
     
@@ -274,6 +279,8 @@ export const naverLogin = async() => {
  * origin 와일드카드 미지원으로 `origin_mismatch` 가 발생하여 폐기됐다.</p>
  */
 export const googleLogin = async() => {
+  // 외부 인증 화면을 다녀와도 /login?redirect= 주소로 돌아오게 맡긴다
+  rememberLoginReturnPathFromUrl();
   try {
     logger.log('=== 구글 로그인 시작 ===');
 
@@ -368,6 +375,8 @@ export const googleLogin = async() => {
  * "오류로 인해 요청을 완료할 수 없습니다" 빨간 배너로 거절되어 폐기됐다.</p>
  */
 export const appleLogin = async() => {
+  // 외부 인증 화면을 다녀와도 /login?redirect= 주소로 돌아오게 맡긴다
+  rememberLoginReturnPathFromUrl();
   try {
     logger.log('=== Apple 로그인 시작 ===');
 
@@ -450,6 +459,8 @@ export const appleLogin = async() => {
  * 페이스북 로그인
  */
 export const facebookLogin = () => {
+  // 외부 인증 화면을 다녀와도 /login?redirect= 주소로 돌아오게 맡긴다
+  rememberLoginReturnPathFromUrl();
   try {
     // 직접 FACEBOOK_OAUTH2_CONFIG 사용
     const config = FACEBOOK_OAUTH2_CONFIG;

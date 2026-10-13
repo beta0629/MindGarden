@@ -34,6 +34,7 @@ import com.coresolution.consultation.service.SalaryTaxRateLookupService;
 import com.coresolution.consultation.service.UserService;
 import com.coresolution.consultation.util.ErpMonthlyTaxBreakdownHelper;
 import com.coresolution.consultation.util.FinancialTransactionValidity;
+import com.coresolution.consultation.util.OperatorFinanceAggregation;
 import com.coresolution.consultation.util.TaxCalculationUtil;
 import com.coresolution.core.service.impl.BaseTenantAwareService;
 import org.springframework.stereotype.Service;
@@ -1816,106 +1817,93 @@ public class ErpServiceImpl extends BaseTenantAwareService implements ErpService
         
         List<FinancialTransaction> allTransactions = financialTransactionRepository
             .findByTenantIdAndTransactionDateBetweenAndIsDeletedFalse(tenantId, startDate, endDate);
-        
-        List<FinancialTransaction> monthlyTransactions = allTransactions.stream()
+
+        // 머니 콕핏 차트 SSOT: PENDING/APPROVED/COMPLETED + 전 카테고리 (OperatorFinanceAggregation)
+        OperatorFinanceAggregation.Result agg = OperatorFinanceAggregation.aggregate(allTransactions);
+        List<FinancialTransaction> monthlyTransactions = agg.copyTransactions();
+        // 세금 계열 SSOT: FinancialTransactionValidity (미삭제 COMPLETED only). 지출 콕핏과 분리.
+        List<FinancialTransaction> validForTax = allTransactions.stream()
             .filter(FinancialTransactionValidity::isValid)
             .collect(Collectors.toList());
-        
-        log.info("📊 월간 리포트 - 전체 거래: {}건 (tenantId: {})", 
-            allTransactions.size(), tenantId);
-        
+
+        log.info("📊 월간 리포트 - 전체 거래: {}건, 운영자 집계: {}건, 세금 Validity: {}건 (tenantId: {})",
+            allTransactions.size(), monthlyTransactions.size(), validForTax.size(), tenantId);
+
         Map<String, Object> monthlyIncome = new HashMap<>();
         BigDecimal consultationRevenue = monthlyTransactions.stream()
             .filter(t -> t.getTransactionType() == FinancialTransaction.TransactionType.INCOME)
             .filter(t -> FinancialTransactionConstants.isConsultationCategory(t.getCategory()))
             .map(FinancialTransaction::getAmount)
             .reduce(BigDecimal.ZERO, BigDecimal::add);
-        
+
         BigDecimal otherRevenue = monthlyTransactions.stream()
             .filter(t -> t.getTransactionType() == FinancialTransaction.TransactionType.INCOME)
             .filter(t -> !FinancialTransactionConstants.isConsultationCategory(t.getCategory()))
             .map(FinancialTransaction::getAmount)
             .reduce(BigDecimal.ZERO, BigDecimal::add);
-            
+
         monthlyIncome.put("consultationRevenue", consultationRevenue);
         monthlyIncome.put("salaryIncome", BigDecimal.ZERO); // 급여는 지출 항목
         monthlyIncome.put("otherRevenue", otherRevenue);
-        BigDecimal totalMonthlyIncome = consultationRevenue.add(otherRevenue);
+        // 콕핏 차트 total = 모듈 전 카테고리 합 (consultation+other 와 동일해야 함)
+        BigDecimal totalMonthlyIncome = agg.getTotalIncome();
         monthlyIncome.put("total", totalMonthlyIncome);
+        monthlyIncome.put("incomeCategoryBreakdown", agg.copyIncomeByCategory());
         monthlyReport.put("monthlyIncome", monthlyIncome);
-        
+
         Map<String, Object> monthlyExpenses = new HashMap<>();
-        BigDecimal salaryExpense = monthlyTransactions.stream()
+        // 레거시 6키 — IntegratedFinanceDashboard 하위호환 (참고용, total 산식에는 쓰지 않음)
+        // taxExpense 만 Validity(COMPLETED). 나머지 키는 Operator 집계 참고용 유지.
+        BigDecimal salaryExpense = agg.expenseOf(FinancialTransactionConstants.CATEGORY_SALARY);
+        BigDecimal rentExpense = agg.expenseOf(FinancialTransactionConstants.CATEGORY_RENT);
+        BigDecimal utilityExpense = agg.expenseOf(FinancialTransactionConstants.CATEGORY_UTILITY);
+        BigDecimal officeExpense = agg.expenseOf("OFFICE_SUPPLIES");
+        BigDecimal taxExpense = validForTax.stream()
             .filter(t -> t.getTransactionType() == FinancialTransaction.TransactionType.EXPENSE)
-            .filter(t -> "SALARY".equals(t.getCategory()))
+            .filter(t -> FinancialTransactionConstants.CATEGORY_TAX.equals(t.getCategory()))
             .map(FinancialTransaction::getAmount)
             .reduce(BigDecimal.ZERO, BigDecimal::add);
-            
-        BigDecimal rentExpense = monthlyTransactions.stream()
-            .filter(t -> t.getTransactionType() == FinancialTransaction.TransactionType.EXPENSE)
-            .filter(t -> "RENT".equals(t.getCategory()))
-            .map(FinancialTransaction::getAmount)
-            .reduce(BigDecimal.ZERO, BigDecimal::add);
-            
-        BigDecimal utilityExpense = monthlyTransactions.stream()
-            .filter(t -> t.getTransactionType() == FinancialTransaction.TransactionType.EXPENSE)
-            .filter(t -> "UTILITY".equals(t.getCategory()))
-            .map(FinancialTransaction::getAmount)
-            .reduce(BigDecimal.ZERO, BigDecimal::add);
-            
-        BigDecimal officeExpense = monthlyTransactions.stream()
-            .filter(t -> t.getTransactionType() == FinancialTransaction.TransactionType.EXPENSE)
-            .filter(t -> "OFFICE_SUPPLIES".equals(t.getCategory()))
-            .map(FinancialTransaction::getAmount)
-            .reduce(BigDecimal.ZERO, BigDecimal::add);
-            
-        BigDecimal taxExpense = monthlyTransactions.stream()
-            .filter(t -> t.getTransactionType() == FinancialTransaction.TransactionType.EXPENSE)
-            .filter(t -> "TAX".equals(t.getCategory()))
-            .map(FinancialTransaction::getAmount)
-            .reduce(BigDecimal.ZERO, BigDecimal::add);
-            
-        BigDecimal purchaseExpense = monthlyTransactions.stream()
-            .filter(t -> t.getTransactionType() == FinancialTransaction.TransactionType.EXPENSE)
-            .filter(t -> "EQUIPMENT".equals(t.getCategory()))
-            .map(FinancialTransaction::getAmount)
-            .reduce(BigDecimal.ZERO, BigDecimal::add);
-            
+        BigDecimal purchaseExpense = agg.expenseOf(FinancialTransactionConstants.CATEGORY_EQUIPMENT);
+
         monthlyExpenses.put("salaryExpense", salaryExpense);
         monthlyExpenses.put("rentExpense", rentExpense);
         monthlyExpenses.put("utilityExpense", utilityExpense);
         monthlyExpenses.put("officeExpense", officeExpense);
         monthlyExpenses.put("taxExpense", taxExpense);
         monthlyExpenses.put("purchaseExpense", purchaseExpense);
-        BigDecimal totalMonthlyExpenses = salaryExpense.add(rentExpense).add(utilityExpense)
-            .add(officeExpense).add(taxExpense).add(purchaseExpense);
+        // 콕핏: 전 카테고리 + 카드수수료 (PENDING 포함). total == sum(expenseCategoryBreakdown)
+        BigDecimal totalMonthlyExpenses = agg.getTotalExpense();
         monthlyExpenses.put("total", totalMonthlyExpenses);
+        monthlyExpenses.put("expenseCategoryBreakdown", agg.copyExpenseByCategory());
         monthlyReport.put("monthlyExpenses", monthlyExpenses);
-        
-        BigDecimal monthlyNetIncome = totalMonthlyIncome.subtract(totalMonthlyExpenses);
+        monthlyReport.put("expenseCategoryBreakdown", agg.copyExpenseByCategory());
+        monthlyReport.put("incomeCategoryBreakdown", agg.copyIncomeByCategory());
+
+        BigDecimal monthlyNetIncome = agg.getNetProfit();
         monthlyReport.put("monthlyNetIncome", monthlyNetIncome);
-        
+
         Map<String, Object> monthlyStats = new HashMap<>();
-        
+
         long totalConsultations = monthlyTransactions.stream()
             .filter(t -> t.getTransactionType() == FinancialTransaction.TransactionType.INCOME)
             .filter(t -> FinancialTransactionConstants.isConsultationCategory(t.getCategory()))
             .count();
-            
+
         long totalPurchases = monthlyTransactions.stream()
             .filter(t -> t.getTransactionType() == FinancialTransaction.TransactionType.EXPENSE)
-            .filter(t -> "OFFICE_SUPPLIES".equals(t.getCategory()) || "EQUIPMENT".equals(t.getCategory()))
+            .filter(t -> "OFFICE_SUPPLIES".equals(t.getCategory())
+                    || FinancialTransactionConstants.CATEGORY_EQUIPMENT.equals(t.getCategory()))
             .count();
-            
+
         long totalPayments = monthlyTransactions.size();
-        
+
         int daysInMonth = endDate.getDayOfMonth();
         monthlyStats.put("totalConsultations", (int) totalConsultations);
         monthlyStats.put("totalPurchases", (int) totalPurchases);
         monthlyStats.put("totalPayments", (int) totalPayments);
-        monthlyStats.put("averageDailyIncome", 
+        monthlyStats.put("averageDailyIncome",
             daysInMonth > 0 ? totalMonthlyIncome.divide(BigDecimal.valueOf(daysInMonth), 0, java.math.RoundingMode.HALF_UP) : BigDecimal.ZERO);
-        monthlyStats.put("averageDailyExpense", 
+        monthlyStats.put("averageDailyExpense",
             daysInMonth > 0 ? totalMonthlyExpenses.divide(BigDecimal.valueOf(daysInMonth), 0, java.math.RoundingMode.HALF_UP) : BigDecimal.ZERO);
         monthlyReport.put("monthlyStats", monthlyStats);
 
@@ -1926,8 +1914,8 @@ public class ErpServiceImpl extends BaseTenantAwareService implements ErpService
         transactionCount.put("payments", (int) totalPayments);
         monthlyReport.put("transactionCount", transactionCount);
 
-        monthlyReport.put("monthlyTaxBreakdown", ErpMonthlyTaxBreakdownHelper.buildBreakdown(monthlyTransactions));
-        
+        monthlyReport.put("monthlyTaxBreakdown", ErpMonthlyTaxBreakdownHelper.buildBreakdown(validForTax));
+
         return monthlyReport;
     }
 

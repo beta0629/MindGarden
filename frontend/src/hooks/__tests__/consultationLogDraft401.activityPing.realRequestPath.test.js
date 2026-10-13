@@ -213,12 +213,12 @@ describe('[실수 유형: 공용 401 처리를 건너뛰는 로그인 이동] �
     expect(candidate.snapshot.formData.mainIssues).toBe(LAST_TEXT);
   });
 
-  test('반례: 저장 안 된 입력이 없으면 백업·returnUrl 없이 로그인으로 이동한다', async() => {
+  test('반례: 저장 안 된 입력이 없으면 백업 없이 현재 화면 주소만 붙여 로그인으로 이동한다', async() => {
     const { view } = await openEditorThenExpire(EMPTY_SNAPSHOT);
 
     fireEvent.keyDown(document, { key: 'a' });
 
-    await waitFor(() => expect(window.location.href).toBe(`${ORIGIN}/login`));
+    await waitFor(() => expect(window.location.href).toBe(`${ORIGIN}/login?redirect=${encodeURIComponent(`${PAGE_PATH}${PAGE_SEARCH}`)}` /* 복귀 주소 없으면 현재 화면 */));
     expect(rescueEntries()).toHaveLength(0);
     view.unmount();
   });

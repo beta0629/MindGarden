@@ -10,6 +10,9 @@ import {
   LOGIN_REDIRECT_RESCUE_TIMEOUT_MS,
   LOGIN_RETURN_URL_PARAM
 } from '../constants/consultationLogAutosaveConstants';
+// 순환 import: 아래 함수들은 호출 시점에만 쓰므로 모듈 초기화 순서와 무관하다.
+// eslint-disable-next-line import/no-cycle
+import { sanitizeLoginReturnPath } from './loginReturnPath';
 
 let redirectScheduled = false;
 
@@ -50,9 +53,23 @@ export const sanitizeSameOriginReturnPath = (value) => {
  * @returns {string} 검증 통과 시 `?redirect=...`, 아니면 빈 문자열
  */
 export const buildLoginReturnSearch = (returnUrl) => {
-  const safePath = sanitizeSameOriginReturnPath(returnUrl);
+  // 복귀 주소 검증은 sanitizeLoginReturnPath 한 곳(외부·스킴·인코딩 우회·로그인 경로 차단, 토큰·개인정보 쿼리 제거)
+  const safePath = sanitizeLoginReturnPath(returnUrl);
   if (!safePath) return '';
   return `?${LOGIN_RETURN_URL_PARAM}=${encodeURIComponent(safePath)}`;
+};
+
+/**
+ * 지금 보고 있는 화면 주소(경로+쿼리). 401·세션 만료로 로그인에 보낼 때 따로 받은 복귀 주소가 없으면 이 값을 쓴다.
+ *
+ * @returns {string}
+ */
+export const getCurrentLocationReturnUrl = () => {
+  try {
+    return `${window.location.pathname || ''}${window.location.search || ''}`;
+  } catch {
+    return '';
+  }
 };
 
 /** 다음 로그인 이동에 붙일 복귀 경로 — 다른 경로(세션 재확인 등)가 먼저 이동해도 returnUrl 을 잃지 않게 한다. */
@@ -140,7 +157,8 @@ export const redirectToLoginPageOnce = (options = {}) => {
   const explicitSearch = typeof options.search === 'string' ? options.search : '';
   const navigate = (rescueReturnPath) => {
     const search = explicitSearch
-      || buildLoginReturnSearch(options.returnUrl || rescueReturnPath || pendingReturnPath);
+      || buildLoginReturnSearch(options.returnUrl || rescueReturnPath || pendingReturnPath
+        || getCurrentLocationReturnUrl());
     window.location.href = `${window.location.origin}/login${search}`;
   };
   const pending = startLoginRedirectRescues();

@@ -96,7 +96,7 @@ describe('ajax throwOnUnauthorized (공용 요청 모듈 401 opt-in)', () => {
     const result = await ajax.apiPut(TARGET, { a: 1 });
 
     expect(result).toBeNull();
-    expect(window.location.href).toBe(`${ORIGIN}/login`);
+    expect(window.location.href).toBe(`${ORIGIN}/login?redirect=${encodeURIComponent(PAGE)}` /* 복귀 주소 없으면 현재 화면 */);
   });
 
   test.each([
@@ -183,7 +183,7 @@ describe('ajax throwOnUnauthorized (공용 요청 모듈 401 opt-in)', () => {
     const result = await ajax.apiPut(TARGET, { a: 1 });
 
     expect(result).toBeNull();
-    expect(window.location.href).toBe(`${ORIGIN}/login`);
+    expect(window.location.href).toBe(`${ORIGIN}/login?redirect=${encodeURIComponent(PAGE)}` /* 복귀 주소 없으면 현재 화면 */);
   });
 
   test('StandardizedApi 를 거쳐도 401 구분 표식(authRequired·code)이 유지된다', async() => {

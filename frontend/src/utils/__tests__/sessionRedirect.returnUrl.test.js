@@ -76,7 +76,7 @@ describe('redirectToLoginPageOnce + 예약 복귀 경로', () => {
 
     redirectToLoginPageOnce();
 
-    expect(window.location.href).toBe(`${ORIGIN}/login`);
+    expect(window.location.href).toBe(`${ORIGIN}/login?redirect=${encodeURIComponent('/consultant/schedule')}` /* 복귀 주소 없으면 현재 화면 */);
   });
 
   test('예약을 지우면 붙지 않고, 명시 search(중복 로그인 등)는 예약보다 우선한다', () => {
@@ -84,7 +84,7 @@ describe('redirectToLoginPageOnce + 예약 복귀 경로', () => {
     first.setPendingLoginReturnUrl('/consultant/schedule');
     first.clearPendingLoginReturnUrl();
     first.redirectToLoginPageOnce();
-    expect(window.location.href).toBe(`${ORIGIN}/login`);
+    expect(window.location.href).toBe(`${ORIGIN}/login?redirect=${encodeURIComponent('/consultant/schedule')}` /* 복귀 주소 없으면 현재 화면 */);
 
     const second = loadModule();
     second.setPendingLoginReturnUrl('/consultant/schedule');

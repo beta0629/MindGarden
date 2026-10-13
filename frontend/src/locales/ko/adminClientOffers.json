@@ -26,6 +26,8 @@
     "previewOriginal": "원가",
     "previewFinal": "할인 후 결제 금액",
     "previewEmpty": "상품과 금액을 넣으면 보입니다",
+    "previewSelectProduct": "먼저 상품을 선택해 주세요",
+    "previewExceedsOriginal": "판매 금액은 정가({{amount}}) 이하로 입력해 주세요",
     "previewDiscountAmount": "{{value}}원 할인",
     "previewDiscountRate": "{{value}}% 할인 · {{amount}}원 할인",
     "money": "{{value}}원",

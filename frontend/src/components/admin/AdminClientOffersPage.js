@@ -272,6 +272,17 @@ const AdminClientOffersPage = () => {
   };
   const dateText = (offer) => (offer.createdAt ? String(offer.createdAt).slice(0, 10) : '');
 
+  // 미리보기를 못 그릴 때 이유를 알려 준다: 상품 미선택 → 직접 입력 정가 초과 → 기본 안내
+  const previewEmptyHint = () => {
+    if (!selectedSource) {
+      return t('form.previewSelectProduct');
+    }
+    if (isPrice && String(discountValue).trim() !== '' && Number(discountValue) > selectedSource.unitPriceMinor) {
+      return t('form.previewExceedsOriginal', { amount: won(selectedSource.unitPriceMinor) });
+    }
+    return t('form.previewEmpty');
+  };
+
   const renderPreview = () => {
     if (!selectedSource || previewPrice == null) {
       return (
@@ -285,7 +296,7 @@ const AdminClientOffersPage = () => {
           <div className="aco-preview__cell">
             <span className="aco-preview__cap">{isPrice ? t('form.previewFinalPrice') : t('form.previewFinal')}</span>
             <span className="aco-preview__value aco-preview__value--empty">—</span>
-            <span className="aco-preview__sub">{t('form.previewEmpty')}</span>
+            <span className="aco-preview__sub" data-testid="admin-client-offers-preview-hint">{previewEmptyHint()}</span>
           </div>
         </div>
       );

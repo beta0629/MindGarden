@@ -227,6 +227,19 @@ export const getLegacyDashboardPath = (role) => {
 };
 
 /**
+ * 로그인 후 복귀 허용 접두 — 역할 기본 화면의 첫 구역(예: /client/dashboard → /client/).
+ *
+ * @param {Object} user
+ * @returns {string[]}
+ */
+export const resolveLoginReturnAllowedPrefixes = (user) => {
+  if (!user) return [];
+  const landing = resolvePostLoginLandingPath(user);
+  const section = typeof landing === 'string' ? landing.split('/')[1] : '';
+  return section ? [`/${section}/`] : [];
+};
+
+/**
  * 동적 대시보드 라우팅 (우선순위: 동적 조회 > 레거시)
 /**
  * 
@@ -239,8 +252,8 @@ export const getLegacyDashboardPath = (role) => {
  */
 export const redirectToDynamicDashboard = async(authResponse, navigate) => {
   // 로그인 전에 열려던 내부 주소(?redirect= 또는 소셜 로그인 왕복 중 맡긴 값)가 있으면 그리로 돌아간다.
-  // 역할에 맞지 않는 주소면 그 화면의 ProtectedRoute 가 역할 대시보드로 보낸다.
-  const returnPath = consumeLoginReturnPath();
+  // 역할 허용 목록(역할 기본 화면과 같은 구역, 예: 내담자 /client/) 밖이면 역할 기본 화면으로 간다.
+  const returnPath = consumeLoginReturnPath(resolveLoginReturnAllowedPrefixes(authResponse?.user));
   if (returnPath) {
     navigate(returnPath, { replace: true });
     return;

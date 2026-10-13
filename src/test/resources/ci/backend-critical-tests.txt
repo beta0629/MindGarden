@@ -28,3 +28,31 @@
 **/ScheduleDateRangeQueryCountIntegrationTest.java
 **/ScheduleDateQueryCountIntegrationTest.java
 **/*MergedAddon*Test.java
+**/ShopPackageCompositionServiceTest.java
+
+# 2026-10-12 추가 (#1563·#1564·#1572·#1575·#1576·#1582)
+# 보안·테넌트 (#1563)
+**/CommonCodeReadWhitelistMvcTest.java
+**/PublicApiPathPolicyTest.java
+**/TenantContextFilterStrictHostTest.java
+# 몰·지정 상품 (#1564·#1582)
+**/ShopClientOfferServiceTest.java
+**/ShopOrderableSkuServiceTest.java
+**/AdminShopCatalogSkuServiceImplTest.java
+**/AdminShopCatalogSkuControllerMvcTest.java
+**/ClientShopCheckoutServiceImplTest.java
+# 공통코드 비활성·삭제 가드 (#1572·#1576·#1582)
+**/CommonCodeAdminListInactiveTest.java
+**/CommonCodeServiceIncludeInactiveTest.java
+**/CommonCodeDeletionGuardTest.java
+**/CommonCodeServiceDeletionGuardTest.java
+**/TenantCommonCodeServiceImplTest.java
+**/GlobalExceptionHandlerCommonCodeInUseTest.java
+# 내담자 검색 (#1575)
+**/AdminClientSearchServiceTest.java
+
+# 2026-10-12 추가 (#1587 내담자 가시성 필터)
+**/ClientVisibilityPolicyTest.java
+**/AdminClientSearchServiceVisibilityTest.java
+**/ShopClientOfferCreateVisibilityTest.java
+**/ShopClientOfferPricingTest.java

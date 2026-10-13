@@ -41,6 +41,10 @@ import koCommunity from '../locales/ko/community.json';
 import koAccountDeletion from '../locales/ko/accountDeletion.json';
 import koConsultantSuite from '../locales/ko/consultantSuite.json';
 import koAdminConsultationLogs from '../locales/ko/adminConsultationLogs.json';
+import koAdminShopComposition from '../locales/ko/adminShopComposition.json';
+import koAdminShopProductEditor from '../locales/ko/adminShopProductEditor.json';
+import koAdminClientOffers from '../locales/ko/adminClientOffers.json';
+import koClientOffers from '../locales/ko/clientOffers.json';
 
 const SUPPORTED_LANGUAGES = ['ko'];
 const FALLBACK_LANGUAGE = 'ko';
@@ -129,7 +133,11 @@ i18n
         community: koCommunity,
         accountDeletion: koAccountDeletion,
         consultantSuite: koConsultantSuite,
-        adminConsultationLogs: koAdminConsultationLogs
+        adminConsultationLogs: koAdminConsultationLogs,
+        adminShopComposition: koAdminShopComposition,
+        adminShopProductEditor: koAdminShopProductEditor,
+        adminClientOffers: koAdminClientOffers,
+        clientOffers: koClientOffers
       }
     },
     supportedLngs: SUPPORTED_LANGUAGES,
@@ -154,7 +162,11 @@ i18n
       'community',
       'accountDeletion',
       'consultantSuite',
-      'adminConsultationLogs'
+      'adminConsultationLogs',
+      'adminShopComposition',
+      'adminShopProductEditor',
+      'adminClientOffers',
+      'clientOffers'
     ],
     interpolation: {
       escapeValue: false

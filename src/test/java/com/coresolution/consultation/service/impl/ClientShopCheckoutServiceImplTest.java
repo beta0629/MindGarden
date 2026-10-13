@@ -72,6 +72,7 @@ import com.coresolution.consultation.service.AdminService;
 import com.coresolution.consultation.service.ClientPointWalletService;
 import com.coresolution.consultation.service.ClientProfilePhoneVerificationService;
 import com.coresolution.consultation.service.ClientShopCatalogService;
+import com.coresolution.consultation.service.ShopOrderableSkuService;
 import com.coresolution.consultation.service.ClientShopConsultantMappingService;
 import com.coresolution.consultation.service.PaymentService;
 import com.coresolution.consultation.service.PointTenantPolicyService;
@@ -153,6 +154,9 @@ class ClientShopCheckoutServiceImplTest {
 
     @Mock
     private ClientShopCatalogService clientShopCatalogService;
+
+    @Mock
+    private ShopOrderableSkuService shopOrderableSkuService;
 
     @Mock
     private PlatformTransactionManager transactionManager;
@@ -1278,7 +1282,7 @@ class ClientShopCheckoutServiceImplTest {
         ShopCatalogSku sku = cartLine(unitPrice).getSku();
         when(shopClientOrderRepository.findByTenantClientAndCheckoutKey(TENANT, CLIENT_ID, idemKey))
                 .thenReturn(Optional.empty());
-        when(shopCatalogSkuRepository.findActiveByTenantAndSkuCode(TENANT, sku.getSkuCode()))
+        when(shopOrderableSkuService.findOrderableForClient(TENANT, sku.getSkuCode(), CLIENT_ID))
                 .thenReturn(Optional.of(sku));
         stubPolicies(true, true, 0L, 0L);
         when(clientPointWalletService.getBalance(TENANT, CLIENT_ID))
@@ -1327,7 +1331,22 @@ class ClientShopCheckoutServiceImplTest {
                 ShopCheckoutRequest.builder().idempotencyKey(idemKey).pointsToRedeemMinor(0L).build());
 
         assertEquals(ShopCheckoutConstants.CHECKOUT_SOURCE_CART, orderCaptor.getValue().getCheckoutSource());
-        verify(shopCatalogSkuRepository, never()).findActiveByTenantAndSkuCode(any(), any());
+        verify(shopOrderableSkuService, never()).findOrderableForClient(any(), any(), any());
+    }
+
+    @Test
+    @DisplayName("바로 구매 — 주문 불가(비공개·미지정 전용) SKU 는 주문 저장 전 거부")
+    void checkout_buyNow_notOrderableSku_rejectBeforeOrderSave() {
+        when(shopClientOrderRepository.findByTenantClientAndCheckoutKey(TENANT, CLIENT_ID, "idem-bn-hidden"))
+                .thenReturn(Optional.empty());
+        when(shopOrderableSkuService.findOrderableForClient(TENANT, "HIDDEN-1", CLIENT_ID))
+                .thenReturn(Optional.empty());
+
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> service.checkout(
+                TENANT, CLIENT_ID, buyNowRequest("idem-bn-hidden", List.of(buyNowLine("HIDDEN-1", 1)))));
+
+        assertEquals(ShopCheckoutConstants.MSG_BUY_NOW_INVALID_SKU, ex.getMessage());
+        verify(shopClientOrderRepository, never()).save(any());
     }
 
     @Test
@@ -1335,7 +1354,7 @@ class ClientShopCheckoutServiceImplTest {
     void checkout_buyNow_invalidLines_rejectBeforeOrderSave() {
         when(shopClientOrderRepository.findByTenantClientAndCheckoutKey(eq(TENANT), eq(CLIENT_ID), anyString()))
                 .thenReturn(Optional.empty());
-        when(shopCatalogSkuRepository.findActiveByTenantAndSkuCode(TENANT, "NOPE")).thenReturn(Optional.empty());
+        when(shopOrderableSkuService.findOrderableForClient(TENANT, "NOPE", CLIENT_ID)).thenReturn(Optional.empty());
 
         IllegalArgumentException zeroQty = assertThrows(IllegalArgumentException.class, () -> service.checkout(
                 TENANT, CLIENT_ID, buyNowRequest("idem-bn-0", List.of(buyNowLine("SKU-1", 0)))));
@@ -1369,7 +1388,7 @@ class ClientShopCheckoutServiceImplTest {
         ShopCatalogSku sku = consultationCartLine(30_000L).getSku();
         when(shopClientOrderRepository.findByTenantClientAndCheckoutKey(TENANT, CLIENT_ID, idemKey))
                 .thenReturn(Optional.empty());
-        when(shopCatalogSkuRepository.findActiveByTenantAndSkuCode(TENANT, sku.getSkuCode()))
+        when(shopOrderableSkuService.findOrderableForClient(TENANT, sku.getSkuCode(), CLIENT_ID))
                 .thenReturn(Optional.of(sku));
         stubPolicies(true, true, 0L, 0L);
         when(clientPointWalletService.getBalance(TENANT, CLIENT_ID))
@@ -2175,7 +2194,7 @@ class ClientShopCheckoutServiceImplTest {
         buyNowOrder.setPublicId("order-buy-now-open");
         when(shopClientOrderRepository.findByTenantClientAndCheckoutKey(TENANT, CLIENT_ID, idemKey))
                 .thenReturn(Optional.empty());
-        when(shopCatalogSkuRepository.findActiveByTenantAndSkuCode(TENANT, sku.getSkuCode()))
+        when(shopOrderableSkuService.findOrderableForClient(TENANT, sku.getSkuCode(), CLIENT_ID))
                 .thenReturn(Optional.of(sku));
         when(shopClientOrderRepository.findOpenOrdersByTenantAndClient(eq(TENANT), eq(CLIENT_ID), any()))
                 .thenReturn(List.of(cartOrder, buyNowOrder));

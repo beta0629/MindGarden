@@ -4,8 +4,6 @@
 
 LOGIN_NAV frontend/src/components/academy/AcademyRegister.js :: navigate x1
 LOGIN_NAV frontend/src/components/admin/AdminKakaoAlimtalkSettingsPage.js :: navigate x1
-LOGIN_NAV frontend/src/components/admin/AdminShopCatalogSkuEditorPage.js :: navigate x1
-LOGIN_NAV frontend/src/components/admin/AdminShopCatalogSkusPage.js :: navigate x1
 LOGIN_NAV frontend/src/components/admin/AdminShopOrdersPage.js :: navigate x1
 LOGIN_NAV frontend/src/components/admin/AdminShopPointPoliciesPage.js :: navigate x1
 LOGIN_NAV frontend/src/components/admin/AdminShopProductEditorPage.js :: navigate x1

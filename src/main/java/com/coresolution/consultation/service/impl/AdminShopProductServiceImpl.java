@@ -1,5 +1,6 @@
 package com.coresolution.consultation.service.impl;
 
+import com.coresolution.consultation.util.ShopClientOfferSkuPolicy;
 import com.coresolution.consultation.constant.ConsultationPackageCodeConstants;
 import com.coresolution.consultation.constant.ShopAdminProductConstants;
 import com.coresolution.consultation.dto.shop.ShopCatalogPackageIdentity;
@@ -161,6 +162,9 @@ public class AdminShopProductServiceImpl implements AdminShopProductService {
         Map<String, ShopCatalogSku> linkedByCode = new HashMap<>();
         List<ShopCatalogSku> legacy = new ArrayList<>();
         for (ShopCatalogSku sku : skus) {
+            if (ShopClientOfferSkuPolicy.isClientOfferSku(sku)) {
+                continue;
+            }
             if (StringUtils.hasText(sku.getSourcePackageCode())) {
                 linkedByCode.putIfAbsent(sku.getSourcePackageCode().trim(), sku);
             } else {

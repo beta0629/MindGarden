@@ -134,7 +134,7 @@ import {
   DASHBOARD_SCHEDULE_PENDING_LIST_LOAD_ERROR
 } from '../../constants/adminDashboardWidgetConstants';
 import {
-  adminClientsWithMappingGet,
+  adminClientsWithMappingGetAll,
   adminSchedulesListGet,
   buildAdminListUrl,
   adminMappingsListGet,
@@ -737,7 +737,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
   const loadUnassignedClientsAndConsultants = useCallback(async() => {
     setMatchingQueueLoading(true);
     try {
-      const clientsRes = await adminClientsWithMappingGet();
+      const clientsRes = await adminClientsWithMappingGetAll();
       const clientsRaw = clientsRes?.clients ?? clientsRes?.data?.clients ?? [];
       const clients = Array.isArray(clientsRaw) ? clientsRaw : [];
       const unassigned = filterManualMatchingQueueClients(clients);

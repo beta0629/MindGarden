@@ -26,6 +26,8 @@ import {
   SHOP_USER_CANCEL_OUTCOME
 } from '../../../../constants/clientShopConstants';
 import { buildBuyNowCheckoutPath } from '../../../../utils/clientMallBuyNow';
+import { CLIENT_OFFER_ROUTES } from '../../../../constants/shopClientOfferConstants';
+import { readClientOffersPayFailureReason } from '../../../../utils/shopClientOffer';
 import { runShopPortOnePaymentIfReady } from '../../../../utils/shopPortOneCheckout';
 
 const mockUseSession = jest.fn();
@@ -321,6 +323,75 @@ describe('redirect 복귀 (ShopPaymentReturnPage)', () => {
     expect(alert).toHaveTextContent(CLIENT_MALL_CHECKOUT_COPY.PAY_FAILED_TITLE);
     expect(alert).toHaveTextContent('카드 거절');
     expect(mockService.cancelShopPaymentByUser).not.toHaveBeenCalled();
+  });
+});
+
+const OfferStateProbe = () => {
+  const location = useLocation();
+  return <div data-testid="offers-failure-reason">{readClientOffersPayFailureReason(location.state)}</div>;
+};
+
+const renderReturnWithOffers = (initialEntry) => render(
+  <MemoryRouter initialEntries={[initialEntry]}>
+    <Routes>
+      <Route path={CLIENT_SHOP_ROUTES.CART} element={<div />} />
+      <Route path={`${CLIENT_SHOP_ROUTES.SKU_DETAIL}/:skuCode`} element={<div />} />
+      <Route path={CLIENT_SHOP_ROUTES.PAYMENT_RETURN} element={<ShopPaymentReturnPage />} />
+      <Route path={CLIENT_OFFER_ROUTES.OFFERS} element={<OfferStateProbe />} />
+    </Routes>
+    <LocationProbe />
+  </MemoryRouter>
+);
+
+const OFFER_ORDER = { orderPublicId: 'ord-1', lines: [{ skuCode: 'OFFER_ABC123', quantity: 1 }] };
+const MALL_ORDER = { orderPublicId: 'ord-1', checkoutSource: 'BUY_NOW', lines: [{ skuCode: 'PKG10', quantity: 1 }] };
+
+describe('redirect 복귀 출처 — /client/offers 에서 시작한 결제', () => {
+  test('지정 상품 주문 취소 → /client/offers 로 복귀 · 몰 화면으로 가지 않음', async() => {
+    mockService.cancelShopPaymentByUser.mockResolvedValue({
+      outcome: SHOP_USER_CANCEL_OUTCOME.CANCELLED, checkoutSource: 'BUY_NOW', skuCodes: ['OFFER_ABC123']
+    });
+    mockService.fetchShopOrder.mockResolvedValue(OFFER_ORDER);
+    renderReturnWithOffers(`${CLIENT_SHOP_ROUTES.PAYMENT_RETURN}?orderPublicId=ord-1&code=${PORTONE_USER_CANCEL_CODE}`);
+
+    await waitFor(() => expect(screen.getByTestId('location-probe')).toHaveTextContent(CLIENT_OFFER_ROUTES.OFFERS));
+    expect(mockService.cancelShopPaymentByUser).toHaveBeenCalledWith('ord-1');
+  });
+
+  test('지정 상품 주문 실패 → /client/offers 로 복귀하며 실패 사유 전달', async() => {
+    mockService.fetchShopOrder.mockResolvedValue(OFFER_ORDER);
+    renderReturnWithOffers(`${CLIENT_SHOP_ROUTES.PAYMENT_RETURN}?orderPublicId=ord-1&code=FAILURE_TYPE_PG&message=%5BPG%5D%20카드%20거절`);
+
+    await waitFor(() => expect(screen.getByTestId('location-probe')).toHaveTextContent(CLIENT_OFFER_ROUTES.OFFERS));
+    expect(screen.getByTestId('offers-failure-reason')).toHaveTextContent('카드 거절');
+  });
+
+  test('몰 주문 취소는 그대로 상품 상세로 (출처 판별이 몰 동작을 바꾸지 않음)', async() => {
+    mockService.cancelShopPaymentByUser.mockResolvedValue({
+      outcome: SHOP_USER_CANCEL_OUTCOME.CANCELLED, checkoutSource: 'BUY_NOW', skuCodes: ['PKG10']
+    });
+    mockService.fetchShopOrder.mockResolvedValue(MALL_ORDER);
+    renderReturnWithOffers(`${CLIENT_SHOP_ROUTES.PAYMENT_RETURN}?orderPublicId=ord-1&code=${PORTONE_USER_CANCEL_CODE}`);
+
+    await waitFor(() => expect(screen.getByTestId('location-probe')).toHaveTextContent(buildShopSkuDetailPath('PKG10')));
+  });
+
+  test('몰 주문 실패는 그대로 복귀 화면에 빨간 안내', async() => {
+    mockService.fetchShopOrder.mockResolvedValue(MALL_ORDER);
+    renderReturnWithOffers(`${CLIENT_SHOP_ROUTES.PAYMENT_RETURN}?orderPublicId=ord-1&code=FAILURE_TYPE_PG&message=%5BPG%5D%20카드%20거절`);
+
+    expect(await screen.findByTestId(CLIENT_MALL_TEST_IDS.CHECKOUT_PAY_FAILED)).toHaveTextContent('카드 거절');
+    expect(screen.getByTestId('location-probe')).toHaveTextContent(CLIENT_SHOP_ROUTES.PAYMENT_RETURN);
+  });
+
+  test('주문 조회 실패면 기존 몰 동작(장바구니)', async() => {
+    mockService.cancelShopPaymentByUser.mockResolvedValue({
+      outcome: SHOP_USER_CANCEL_OUTCOME.CANCELLED, checkoutSource: 'CART', skuCodes: ['PKG10']
+    });
+    mockService.fetchShopOrder.mockRejectedValue(new Error('network'));
+    renderReturnWithOffers(`${CLIENT_SHOP_ROUTES.PAYMENT_RETURN}?orderPublicId=ord-1&code=${PORTONE_USER_CANCEL_CODE}`);
+
+    await waitFor(() => expect(screen.getByTestId('location-probe')).toHaveTextContent(CLIENT_SHOP_ROUTES.CART));
   });
 });
 

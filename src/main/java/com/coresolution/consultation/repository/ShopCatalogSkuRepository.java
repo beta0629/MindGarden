@@ -1,5 +1,6 @@
 package com.coresolution.consultation.repository;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import com.coresolution.consultation.entity.ShopCatalogSku;
@@ -64,4 +65,6 @@ public interface ShopCatalogSkuRepository extends BaseRepository<ShopCatalogSku,
     Optional<ShopCatalogSku> findVisibleByTenantAndSkuCode(
             @Param("tenantId") String tenantId,
             @Param("skuCode") String skuCode);
+
+    List<ShopCatalogSku> findByTenantIdAndSkuCodeIn(String tenantId, Collection<String> skuCodes);
 }

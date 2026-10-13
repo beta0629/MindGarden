@@ -104,7 +104,7 @@ import {
   ADMIN_DASHBOARD_CLIENTS_WITH_MAPPING_QUERY
 } from '../../constants/adminDashboardWidgetConstants';
 import {
-  adminClientsWithMappingGet,
+  adminClientsWithMappingGetAll,
   adminSchedulesListGet,
   buildAdminListUrl,
   adminPendingDepositMappingsGetAll
@@ -445,7 +445,7 @@ const AdminDashboard = ({ user: propUser }) => {
     const loadUnassignedClientsAndConsultants = useCallback(async() => {
         setMatchingQueueLoading(true);
         try {
-            const clientsRes = await adminClientsWithMappingGet();
+            const clientsRes = await adminClientsWithMappingGetAll();
             const clientsRaw = clientsRes?.clients ?? clientsRes?.data?.clients ?? [];
             const clients = Array.isArray(clientsRaw) ? clientsRaw : [];
             const unassigned = filterManualMatchingQueueClients(clients);

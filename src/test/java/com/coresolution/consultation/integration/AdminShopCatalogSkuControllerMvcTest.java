@@ -109,7 +109,8 @@ class AdminShopCatalogSkuControllerMvcTest {
                 10,
                 "PACKAGE",
                 null,
-                null);
+                null,
+                "PACKAGE001");
 
         when(tenantComponentActivationService.isComponentActive(tenantId, PlatformComponentCodes.ADMIN_SHOP_CATALOG))
                 .thenReturn(true);
@@ -117,7 +118,8 @@ class AdminShopCatalogSkuControllerMvcTest {
 
         mockMvc.perform(get(LIST_PATH))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data[0].skuCode").value("SKU-UT"));
+                .andExpect(jsonPath("$.data[0].skuCode").value("SKU-UT"))
+                .andExpect(jsonPath("$.data[0].sourcePackageCode").value("PACKAGE001"));
 
         verify(adminShopCatalogSkuService).listAllForTenant(tenantId);
         verify(adminShopCatalogSkuService, never()).listAllForTenant(eq(otherTenantId));

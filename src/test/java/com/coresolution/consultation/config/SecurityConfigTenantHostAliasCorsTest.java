@@ -1,11 +1,6 @@
 package com.coresolution.consultation.config;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hamcrest.Matchers.containsString;
-import static org.hamcrest.Matchers.not;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
@@ -14,15 +9,10 @@ import java.util.List;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.springframework.http.HttpHeaders;
 import org.springframework.mock.env.MockEnvironment;
-import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.setup.MockMvcBuilders;
-import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
-import org.springframework.web.filter.CorsFilter;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import com.coresolution.core.util.TenantHostSubdomainUtil;
 
@@ -31,6 +21,10 @@ import com.coresolution.core.util.TenantHostSubdomainUtil;
  *
  * <p>재현: {@code Origin: https://mindgarden-dev.core-solution.co.kr} 이
  * {@code *.dev.core-solution.co.kr} 패턴에 안 맞아 403 Invalid CORS request 가 나던 회귀.</p>
+ *
+ * <p>MockMvc·{@code @Controller} 더미는 쓰지 않는다 — 컴포넌트 스캔에 잡히면
+ * {@code OAuth2ConfigController} 등과 ambiguous mapping 충돌이 난다.
+ * {@link CorsConfigurationSource} 의 allowedOriginPatterns 만 단언한다.</p>
  *
  * <p>Dev 프로필은 CSRF disable — 별칭 호스트 로그인 POST 게이트는 CORS 이며 CSRF 가 아니다.
  * 세션 쿠키는 DEV host-only({@code SessionCookieSupport}) 이므로 Domain 변경 불필요.</p>
@@ -47,8 +41,6 @@ class SecurityConfigTenantHostAliasCorsTest {
             "https://mindgarden-dev.core-solution.co.kr";
     private static final String ALIAS_HTTP =
             "http://mindgarden-dev.core-solution.co.kr";
-    private static final String CANONICAL_DEV_HTTPS =
-            "https://mindgarden.dev.core-solution.co.kr";
 
     @AfterEach
     void clearAliases() {
@@ -93,8 +85,8 @@ class SecurityConfigTenantHostAliasCorsTest {
     }
 
     @Test
-    @DisplayName("dev CorsFilter: tenant.host-aliases Origin 허용 (CORS_ALLOWED_ORIGINS 비어 있음)")
-    void corsConfigurationSource_allowsAliasOriginFromTenantHostAliasesProperty() throws Exception {
+    @DisplayName("corsConfigurationSource(dev): tenant.host-aliases Origin 패턴 포함 (CORS_ALLOWED_ORIGINS 비어 있음)")
+    void corsConfigurationSource_includesAliasOriginFromTenantHostAliasesProperty() throws Exception {
         SecurityConfig securityConfig = new SecurityConfig(null, null, null, null);
 
         MockEnvironment env = new MockEnvironment();
@@ -106,19 +98,17 @@ class SecurityConfigTenantHostAliasCorsTest {
         environmentField.set(securityConfig, env);
 
         CorsConfigurationSource source = securityConfig.corsConfigurationSource();
-        MockMvc mockMvc = MockMvcBuilders.standaloneSetup(new Oauth2ConfigDummy())
-                .addFilter(new CorsFilter(source))
-                .build();
+        assertThat(source).isInstanceOf(UrlBasedCorsConfigurationSource.class);
 
-        mockMvc.perform(get("/api/v1/auth/config/oauth2")
-                .header(HttpHeaders.ORIGIN, ALIAS_HTTPS))
-                .andExpect(status().isOk())
-                .andExpect(content().string(not(containsString("Invalid CORS request"))));
-
-        mockMvc.perform(get("/api/v1/auth/config/oauth2")
-                .header(HttpHeaders.ORIGIN, CANONICAL_DEV_HTTPS))
-                .andExpect(status().isOk())
-                .andExpect(content().string(not(containsString("Invalid CORS request"))));
+        CorsConfiguration configuration = ((UrlBasedCorsConfigurationSource) source)
+                .getCorsConfigurations()
+                .get("/**");
+        assertThat(configuration).isNotNull();
+        assertThat(configuration.getAllowedOriginPatterns())
+                .contains(ALIAS_HTTPS, ALIAS_HTTP, "https://*.dev.core-solution.co.kr");
+        assertThat(configuration.checkOrigin(ALIAS_HTTPS)).isEqualTo(ALIAS_HTTPS);
+        assertThat(configuration.checkOrigin("https://mindgarden.dev.core-solution.co.kr"))
+                .isEqualTo("https://mindgarden.dev.core-solution.co.kr");
     }
 
     @Test
@@ -128,18 +118,5 @@ class SecurityConfigTenantHostAliasCorsTest {
 
         assertThat(TenantHostSubdomainUtil.getConfiguredAliasHosts())
                 .containsExactly("mindgarden-dev.core-solution.co.kr");
-    }
-
-    /**
-     * CorsFilter 경로만 검증하는 더미 컨트롤러.
-     */
-    @Controller
-    static class Oauth2ConfigDummy {
-
-        @GetMapping("/api/v1/auth/config/oauth2")
-        @ResponseBody
-        String oauth2Config() {
-            return "ok";
-        }
     }
 }

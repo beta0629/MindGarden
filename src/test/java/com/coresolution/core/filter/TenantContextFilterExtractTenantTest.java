@@ -9,6 +9,7 @@ import static org.mockito.Mockito.when;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.domain.Tenant;
 import com.coresolution.core.repository.TenantRepository;
+import com.coresolution.core.util.TenantHostSubdomainUtil;
 import jakarta.servlet.FilterChain;
 import java.lang.reflect.Method;
 import java.util.Optional;
@@ -38,6 +39,9 @@ class TenantContextFilterExtractTenantTest {
     private static final String FIXTURE_TENANT_ID = "tenant-test-counseling-001";
     private static final String FIXTURE_SUBDOMAIN = "mindgarden";
     private static final String FIXTURE_DEV_HOST = "mindgarden.dev.core-solution.co.kr";
+    private static final String FIXTURE_ALIAS_HOST = "mindgarden-dev.core-solution.co.kr";
+    private static final String FIXTURE_HOST_ALIASES =
+            "mindgarden-dev.core-solution.co.kr:mindgarden";
     private static final String AUTH_LOGIN_URI = "/api/v1/auth/login";
 
     @Mock
@@ -50,6 +54,7 @@ class TenantContextFilterExtractTenantTest {
 
     @BeforeEach
     void setUp() {
+        TenantHostSubdomainUtil.configureHostAliases(null);
         filter = new TenantContextFilter(tenantRepository, environment);
         ReflectionTestUtils.setField(filter, "localDefaultTenantId", "");
         TenantContextHolder.clear();
@@ -58,6 +63,7 @@ class TenantContextFilterExtractTenantTest {
     @AfterEach
     void tearDown() {
         TenantContextHolder.clear();
+        TenantHostSubdomainUtil.configureHostAliases(null);
     }
 
     @Test
@@ -164,6 +170,43 @@ class TenantContextFilterExtractTenantTest {
         assertThat(invokeExtractTenantSubdomain("core-solution.co.kr")).isNull();
         assertThat(invokeExtractTenantSubdomain("apply.e-trinity.co.kr")).isNull();
         assertThat(invokeExtractTenantSubdomain("dev.e-trinity.co.kr")).isNull();
+    }
+
+    @Test
+    @DisplayName("extractTenantSubdomain: TENANT_HOST_ALIASES 위임 — mindgarden-dev → mindgarden")
+    void extractTenantSubdomain_aliasHost_resolvesViaUtil() throws Exception {
+        TenantHostSubdomainUtil.configureHostAliases(FIXTURE_HOST_ALIASES);
+
+        assertThat(invokeExtractTenantSubdomain(FIXTURE_ALIAS_HOST)).isEqualTo(FIXTURE_SUBDOMAIN);
+        assertThat(invokeExtractTenantSubdomain(FIXTURE_ALIAS_HOST + ":443"))
+                .isEqualTo(FIXTURE_SUBDOMAIN);
+        // util SSOT 과 동일해야 함 — 필터 중복 파서 재도입 회귀 방지
+        assertThat(invokeExtractTenantSubdomain(FIXTURE_ALIAS_HOST))
+                .isEqualTo(TenantHostSubdomainUtil.extractTenantSubdomain(FIXTURE_ALIAS_HOST));
+    }
+
+    @Test
+    @DisplayName("extractTenantSubdomain: 별칭 미설정 시 mindgarden-dev 라벨은 mindgarden-dev")
+    void extractTenantSubdomain_aliasHostWithoutConfig_keepsLiteralLabel() throws Exception {
+        assertThat(invokeExtractTenantSubdomain(FIXTURE_ALIAS_HOST)).isEqualTo("mindgarden-dev");
+        assertThat(invokeExtractTenantSubdomain(FIXTURE_ALIAS_HOST))
+                .isEqualTo(TenantHostSubdomainUtil.extractTenantSubdomain(FIXTURE_ALIAS_HOST));
+    }
+
+    @Test
+    @DisplayName("Host=mindgarden-dev.core-solution.co.kr + aliases → mindgarden 테넌트 조회")
+    void extract_aliasHost_resolvesTenantViaUtil() throws Exception {
+        TenantHostSubdomainUtil.configureHostAliases(FIXTURE_HOST_ALIASES);
+        when(environment.getActiveProfiles()).thenReturn(new String[] {"dev"});
+        stubTenantBySubdomain(FIXTURE_SUBDOMAIN, FIXTURE_TENANT_ID);
+
+        String captured = runPublicAuthAndCaptureTenant(req -> {
+            req.addHeader("Host", FIXTURE_ALIAS_HOST);
+        });
+
+        assertThat(captured).isEqualTo(FIXTURE_TENANT_ID);
+        verify(tenantRepository).findBySubdomainIgnoreCase(eq(FIXTURE_SUBDOMAIN));
+        verify(tenantRepository, never()).findBySubdomainIgnoreCase(eq("mindgarden-dev"));
     }
 
     @Test

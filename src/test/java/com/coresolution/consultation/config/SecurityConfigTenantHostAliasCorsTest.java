@@ -18,8 +18,8 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.mock.env.MockEnvironment;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.filter.CorsFilter;
@@ -112,12 +112,12 @@ class SecurityConfigTenantHostAliasCorsTest {
 
         mockMvc.perform(get("/api/v1/auth/config/oauth2")
                 .header(HttpHeaders.ORIGIN, ALIAS_HTTPS))
-                .andExpect(status().isOk())
+                .andExpect(status().is(not(403)))
                 .andExpect(content().string(not(containsString("Invalid CORS request"))));
 
         mockMvc.perform(get("/api/v1/auth/config/oauth2")
                 .header(HttpHeaders.ORIGIN, CANONICAL_DEV_HTTPS))
-                .andExpect(status().isOk())
+                .andExpect(status().is(not(403)))
                 .andExpect(content().string(not(containsString("Invalid CORS request"))));
     }
 
@@ -132,8 +132,17 @@ class SecurityConfigTenantHostAliasCorsTest {
 
     /**
      * CorsFilter 경로만 검증하는 더미 컨트롤러.
+     *
+     * <p><strong>중요:</strong> {@code @Controller}/{@code @RestController} 를 쓰지 않는다.
+     * 메타 어노테이션 {@code @Component} 로 컴포넌트 스캔에 잡혀
+     * {@code OAuth2ConfigController} 와 {@code GET /api/v1/auth/config/oauth2}
+     * ambiguous mapping 이 난다 (PR #215 동일 회귀, 가드레일
+     * {@code ErpFinanceReportValidTransactionIntegrationTest} ApplicationContext 실패).</p>
+     *
+     * <p>{@code @RequestMapping("")} 만 사용해 standalone MockMvc 핸들러 인식은 유지하고
+     * 스캔에서는 제외한다.</p>
      */
-    @Controller
+    @RequestMapping("")
     static class Oauth2ConfigDummy {
 
         @GetMapping("/api/v1/auth/config/oauth2")

@@ -59,4 +59,13 @@ class SecurityConfigCorsCallbackDummyNotScannedTest {
                 .as("PR #215 회귀 — DummyController 가 'dummyController' 빈 이름으로 등록되면 ambiguous mapping 충돌 발생")
                 .isFalse();
     }
+
+    @Test
+    @DisplayName("Oauth2ConfigDummy 도 컴포넌트 스캔에 잡히면 안 된다")
+    void oauth2ConfigDummy_isNotRegisteredAsBeanByType() {
+        assertThat(applicationContext.getBeansOfType(
+                SecurityConfigTenantHostAliasCorsTest.Oauth2ConfigDummy.class))
+                .as("tenant-host-alias CORS 더미가 스캔되면 OAuth2ConfigController 와 mapping 충돌")
+                .isEmpty();
+    }
 }

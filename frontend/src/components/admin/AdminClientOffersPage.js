@@ -278,7 +278,7 @@ const AdminClientOffersPage = () => {
       return t('form.previewSelectProduct');
     }
     if (isPrice && String(discountValue).trim() !== '' && Number(discountValue) > selectedSource.unitPriceMinor) {
-      return t('form.previewExceedsOriginal', { amount: won(selectedSource.unitPriceMinor) });
+      return t('form.previewExceedsOriginal', { amount: num(selectedSource.unitPriceMinor) });
     }
     return t('form.previewEmpty');
   };

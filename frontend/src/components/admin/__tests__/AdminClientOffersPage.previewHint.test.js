@@ -75,6 +75,6 @@ describe('AdminClientOffersPage 미리보기 안내', () => {
     fireEvent.change(screen.getByLabelText('판매 금액'), { target: { value: '100000' } });
     expect(screen.getAllByText('100,000원').length).toBeGreaterThan(0);
     fireEvent.change(screen.getByLabelText('판매 금액'), { target: { value: '440001' } });
-    expect(hint()).toBe('판매 금액은 정가(440,000원) 이하로 입력해 주세요');
+    expect(hint()).toBe('정가보다 높게 정할 수 없습니다(정가 440,000원)');
   });
 });

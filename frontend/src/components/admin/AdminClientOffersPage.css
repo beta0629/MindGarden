@@ -80,7 +80,11 @@ select.aco-ctl { appearance: none; padding-inline-end: var(--mg-v2-space-8); }
 .aco-table-foot { display: flex; align-items: center; justify-content: space-between; padding: var(--mg-v2-space-3) var(--mg-v2-space-4); border-block-start: var(--mg-v2-border-width-thin) solid var(--cs-slate-200); color: var(--cs-slate-500); font-size: var(--mg-v2-font-size-caption); }
 .aco-card__title { white-space: nowrap; }
 .aco-offer-form { display: flex; flex-direction: column; gap: var(--mg-v2-space-4); }
-.aco-offer-form__fields { display: grid; grid-template-columns: var(--mg-offer-field-client) var(--mg-offer-field-product) var(--mg-offer-field-mode) var(--mg-offer-field-value) minmax(var(--mg-offer-preview-min), 1fr); gap: var(--mg-v2-space-4); align-items: start; }
+.aco-offer-form__fields { display: grid; grid-template-columns: minmax(0, var(--mg-offer-field-client)) minmax(0, var(--mg-offer-field-product)) minmax(0, var(--mg-offer-field-mode)) minmax(0, var(--mg-offer-field-value)) minmax(var(--mg-offer-preview-min), 1fr); gap: var(--mg-v2-space-4); align-items: start; }
+/* 카드 폭이 좁아도 입력칸·안내가 카드 밖으로 넘치지 않게 칸 안에서 줄인다 */
+.aco-offer-form__fields > .aco-field { min-inline-size: 0; }
+.aco-offer-form__fields .aco-ctl { inline-size: 100%; max-inline-size: 100%; box-sizing: border-box; }
+.aco-offer-form__fields .aco-field__hint { overflow-wrap: anywhere; }
 .aco-offer-form__foot { display: flex; align-items: flex-end; justify-content: space-between; gap: var(--mg-v2-space-6); }
 .aco-offer-form__foot .aco-mg-btn--primary { min-inline-size: calc(var(--mg-v2-space-10) * 4); }
 .aco-offer-form[aria-busy="true"] .aco-ctl, .aco-offer-form[aria-busy="true"] .aco-seg { border-style: dashed; background: var(--cs-slate-100); }

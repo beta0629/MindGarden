@@ -9,8 +9,8 @@ import org.springframework.context.annotation.Profile;
 
 /**
  * DEV 전용: {@code tenant.host-aliases} / {@code TENANT_HOST_ALIASES} 를
- * {@link TenantHostSubdomainUtil} 에 주입한다 (필터가 Spring 없이 env 만으로도 동작 가능하도록
- * util 자체도 env 를 읽지만, yml 기본값을 앱 기동 시 반영한다).
+ * {@link TenantHostSubdomainUtil} 에 주입한다. 별칭을 켜는 유일한 경로다
+ * (util 은 환경변수를 직접 읽지 않으므로 운영 프로필에서는 env 가 있어도 별칭이 꺼져 있다).
  *
  * @author CoreSolution
  * @since 2026-10-13

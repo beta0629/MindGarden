@@ -13,7 +13,8 @@ import jakarta.servlet.http.HttpServletRequest;
  * {@code TenantContextFilter.extractTenantSubdomain} · {@code OAuth2DomainUtil} 과 동일 suffix·예약 라벨 규칙.
  *
  * <p>DEV Cloudflare 프록시 별칭 등 {@code TENANT_HOST_ALIASES}({@code host:subdomain[,...]}) 는
- * suffix 파싱보다 먼저 적용한다. 시스템 프로퍼티 / 환경변수 / {@link #configureHostAliases(String)} 로 주입.</p>
+ * suffix 파싱보다 먼저 적용한다. {@code @Profile("dev")} {@code TenantHostAliasesInitializer} 가 {@link #configureHostAliases(String)} 로만 주입한다.
+ * 환경변수·시스템 프로퍼티는 자동으로 읽지 않는다(운영 프로필에서는 항상 꺼짐).</p>
  *
  * @author CoreSolution
  * @since 2026-09-10
@@ -33,28 +34,16 @@ public final class TenantHostSubdomainUtil {
     /** 인프라·온보딩 예약 라벨 (테넌트 아님) */
     private static final Set<String> NON_TENANT_SUBDOMAIN_LABELS;
 
-    /** hostname(소문자, 포트 없음) → 테넌트 라벨. 환경/설정에서 로드. */
+    /** hostname(소문자, 포트 없음) → 테넌트 라벨. dev Initializer 만 설정. 기본 비어 있음. */
     private static volatile Map<String, String> hostAliases = Collections.emptyMap();
 
     static {
         Set<String> labels = new HashSet<>();
         Collections.addAll(labels, "dev", "app", "api", "staging", "www", "admin", "ops", "apply");
         NON_TENANT_SUBDOMAIN_LABELS = Collections.unmodifiableSet(labels);
-        refreshHostAliasesFromEnvironment();
     }
 
     private TenantHostSubdomainUtil() {
-    }
-
-    /**
-     * 시스템 프로퍼티 {@code TENANT_HOST_ALIASES} 우선, 없으면 환경변수에서 별칭 맵을 다시 읽는다.
-     */
-    public static void refreshHostAliasesFromEnvironment() {
-        String raw = System.getProperty("TENANT_HOST_ALIASES");
-        if (raw == null || raw.isBlank()) {
-            raw = System.getenv("TENANT_HOST_ALIASES");
-        }
-        configureHostAliases(raw);
     }
 
     /**

@@ -13,6 +13,7 @@ import {
   isStaff,
   isClient
 } from './RoleUtils';
+import { consumeLoginReturnPath } from './loginReturnPath';
 
 const TENANT_DASHBOARDS_BASE = '/api/v1/tenant/dashboards';
 
@@ -237,6 +238,13 @@ export const getLegacyDashboardPath = (role) => {
  * @returns {Promise<void>}
  */
 export const redirectToDynamicDashboard = async(authResponse, navigate) => {
+  // 로그인 전에 열려던 내부 주소(?redirect= 또는 소셜 로그인 왕복 중 맡긴 값)가 있으면 그리로 돌아간다.
+  // 역할에 맞지 않는 주소면 그 화면의 ProtectedRoute 가 역할 대시보드로 보낸다.
+  const returnPath = consumeLoginReturnPath();
+  if (returnPath) {
+    navigate(returnPath, { replace: true });
+    return;
+  }
   try {
     const user = authResponse?.user;
     const roleLandingPath = resolvePostLoginLandingPath(user);

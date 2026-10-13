@@ -1,0 +1,294 @@
+# DEV 차단 진단 1회용. 이 파일만 바꾸는 release/dev pull_request 에서만 돈다.
+# 읽기 전용만 한다. 설정 변경·재기동·ban 해제·파일 쓰기·운영 서버 접속은 없다.
+# SSH 는 DEV_SERVER_HOST / DEV_SERVER_USER / DEV_SERVER_SSH_KEY 만 사용한다.
+# 머지하지 않는다. 실행이 끝나면 이 PR 을 닫는다.
+name: DEV 차단 진단 (읽기 전용)
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches: [release/dev]
+    paths:
+      - '.github/workflows/dev-block-diagnose-readonly-pr-run.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dev-block-diagnose-readonly-pr-run-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+
+jobs:
+  diagnose:
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+    name: DEV SSH read-only block diagnose
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Read-only diagnose on DEV
+        uses: appleboy/ssh-action@c4f70287fc37c43b14b30b407224bbbc8e8c6327 # master 2026-08-16 (v1.2.5+10) 고정
+        with:
+          host: ${{ secrets.DEV_SERVER_HOST }}
+          username: ${{ secrets.DEV_SERVER_USER }}
+          key: ${{ secrets.DEV_SERVER_SSH_KEY }}
+          port: 22
+          timeout: 60s
+          command_timeout: 20m
+          script_stop: false
+          script: |
+            set +e
+            export TZ=Asia/Seoul
+            IP="140.248.50.66"
+            FB_BLOCK=NO
+            FW_BLOCK=NO
+            NGINX_BLOCK=NO
+
+            mask_light() {
+              sed -E \
+                -e 's/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/[email]/g' \
+                -e 's/([Tt]oken|[Pp]assword|[Pp]asswd|[Ss]ecret|[Aa]ccess[_-]?[Kk]ey|[Aa]pi[_-]?[Kk]ey)[=:][^[:space:],;&"]+/\1=[redacted]/g' \
+                -e 's/eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+/[jwt]/g' \
+                -e 's/-----BEGIN [A-Z ]*PRIVATE KEY-----.*/[redacted-pem]/g'
+            }
+            mask_sensitive() {
+              mask_light | sed -E \
+                -e 's/[Bb]earer[[:space:]]+[^[:space:]"]+/Bearer [redacted]/g' \
+                -e 's/[Aa]uthorization[=:][[:space:]]*[^[:space:];,"]+/Authorization=[redacted]/g' \
+                -e 's/[Cc]ookie[=:][[:space:]]*[^[:space:];,"]+/Cookie=[redacted]/g' \
+                -e 's/[Ss]et-[Cc]ookie[=:][[:space:]]*[^[:space:];,"]+/Set-Cookie=[redacted]/g' \
+                -e 's/\?[^[:space:]"]+/?[redacted]/g' \
+                -e 's/,([A-Za-z0-9_+/=-]{16,})/,[redacted]/g'
+            }
+            emit_light() {
+              _m=$(mask_light)
+              _rc=$?
+              if [ "$_rc" -ne 0 ]; then
+                echo "[mask failed, output suppressed]"
+                return 0
+              fi
+              printf '%s\n' "$_m"
+            }
+            emit_sensitive() {
+              _m=$(mask_sensitive)
+              _rc=$?
+              if [ "$_rc" -ne 0 ]; then
+                echo "[mask failed, output suppressed]"
+                return 0
+              fi
+              printf '%s\n' "$_m"
+            }
+
+            echo "===== STEP 1 systemctl ====="
+            echo "HOST $(hostname 2>/dev/null)"
+            echo "DATE $(date '+%F %T %Z' 2>/dev/null)"
+            systemctl is-active nginx fail2ban || true
+            if ! command -v fail2ban-client >/dev/null 2>&1; then
+              echo "fail2ban-client: not installed"
+            fi
+
+            echo "===== STEP 2 fail2ban ====="
+            if ! command -v fail2ban-client >/dev/null 2>&1; then
+              echo "fail2ban-client: not installed"
+              echo "BLOCK_IP_IN_FAIL2BAN NO"
+            else
+              sudo fail2ban-client status 2>&1 | emit_light || true
+              JAIL_LINE=$(sudo fail2ban-client status 2>/dev/null | sed -n 's/.*[Jj]ail list:[[:space:]]*//p' | head -n 1)
+              JAILS=$(printf '%s\n' "$JAIL_LINE" | tr ',' ' ')
+              echo "JAIL_LIST ${JAIL_LINE:-<empty>}"
+              set -f
+              for j in $JAILS; do
+                j=$(printf '%s' "$j" | tr -d '[:space:]')
+                [ -n "$j" ] || continue
+                echo "----- jail $j -----"
+                OUT=$(sudo fail2ban-client status "$j" 2>&1)
+                printf '%s\n' "$OUT" | emit_light || true
+                if printf '%s\n' "$OUT" | grep -F "$IP" >/dev/null 2>&1; then
+                  FB_BLOCK=YES
+                  echo "JAIL_CONTAINS_IP $j YES"
+                  echo "EVIDENCE_FAIL2BAN_BEGIN"
+                  printf '%s\n' "$OUT" | grep -F "$IP" | emit_light || true
+                  echo "EVIDENCE_FAIL2BAN_END"
+                else
+                  echo "JAIL_CONTAINS_IP $j NO"
+                fi
+              done
+              set +f
+              echo "BLOCK_IP_IN_FAIL2BAN $FB_BLOCK"
+            fi
+
+            echo "===== STEP 3 firewall ====="
+            collect_fw() {
+              name=$1
+              shift
+              if ! command -v "$name" >/dev/null 2>&1; then
+                echo "$name: not installed"
+                echo "RULE_LINE_COUNT $name 0"
+                echo "IP_PRESENT_IN_$name NO"
+                return 0
+              fi
+              out=$(sudo "$@" 2>&1)
+              rc=$?
+              n=$(printf '%s\n' "$out" | sed '/^$/d' | wc -l | tr -d ' ')
+              echo "COMMAND_EXIT $name $rc"
+              echo "RULE_LINE_COUNT $name $n"
+              hits=$(printf '%s\n' "$out" | grep -F "$IP" || true)
+              if [ -n "$hits" ]; then
+                hit_n=$(printf '%s\n' "$hits" | sed '/^$/d' | wc -l | tr -d ' ')
+                echo "IP_PRESENT_IN_$name YES"
+                echo "IP_LINE_COUNT $name $hit_n"
+                echo "EVIDENCE_${name}_BEGIN"
+                printf '%s\n' "$hits" | sed '/^$/d' | head -n 50 | emit_light || true
+                echo "EVIDENCE_${name}_END"
+                if printf '%s\n' "$hits" | grep -Ei 'drop|reject|deny|block' >/dev/null 2>&1; then
+                  FW_BLOCK=YES
+                  echo "IP_DROP_OR_DENY_IN_$name YES"
+                else
+                  echo "IP_DROP_OR_DENY_IN_$name NO"
+                fi
+              else
+                echo "IP_PRESENT_IN_$name NO"
+              fi
+            }
+            collect_fw ufw ufw status numbered || true
+            collect_fw iptables iptables -S || true
+            collect_fw nft nft list ruleset || true
+            echo "BLOCK_IP_IN_FIREWALL $FW_BLOCK"
+
+            echo "===== STEP 4 nginx logs ====="
+            # last 48h 휴리스틱: 오늘·어제·그제(경계) 일자 토큰으로 윈도 요약
+            D0=$(date '+%d/%b/%Y')
+            D1=$(date -d '1 day ago' '+%d/%b/%Y')
+            D2=$(date -d '2 days ago' '+%d/%b/%Y')
+            I0=$(date '+%Y-%m-%d')
+            I1=$(date -d '1 day ago' '+%Y-%m-%d')
+            I2=$(date -d '2 days ago' '+%Y-%m-%d')
+            S0=$(date '+%Y/%m/%d')
+            S1=$(date -d '1 day ago' '+%Y/%m/%d')
+            S2=$(date -d '2 days ago' '+%Y/%m/%d')
+            TIME_RE="${D0}|${D1}|${D2}|${I0}|${I1}|${I2}|${S0}|${S1}|${S2}"
+            echo "WINDOW_HEURISTIC last_48h days=${D2},${D1},${D0}"
+            LOG_FILES=$(
+              {
+                sudo find /var/log/nginx \( -type f -o -type l \) \( \
+                    -name 'access.log' -o -name 'access.log.*' -o -name '*.access.log' -o -name '*.access.log.*' \
+                    -o -name 'error.log' -o -name 'error.log.*' -o -name '*.error.log' -o -name '*.error.log.*' \
+                  \) -printf '%T@ %p\n' 2>/dev/null
+                sudo nginx -T 2>/dev/null | awk '$1=="access_log" || $1=="error_log" { p=$2; gsub(/[";]/, "", p); if (p ~ /^\//) print p }' | sort -u | while IFS= read -r p; do
+                  case "$p" in
+                    /var/*|/opt/*|/usr/*|/home/*) ;;
+                    *) continue ;;
+                  esac
+                  dir=$(dirname "$p")
+                  base=$(basename "$p")
+                  sudo find "$dir" -maxdepth 1 \( -type f -o -type l \) \( -name "$base" -o -name "$base.*" -o -name "$base-*" \) -printf '%T@ %p\n' 2>/dev/null
+                done
+              } | awk 'NF>=2 && !seen[$2]++ { print }' | sort -n | sed 's/^[^ ]* //'
+            )
+            if [ -z "$(printf '%s\n' "$LOG_FILES" | sed '/^$/d')" ]; then
+              LOG_FILES=$(sudo sh -c 'ls -1tr /var/log/nginx/*access.log* /var/log/nginx/*error.log* /var/log/nginx/access.log* /var/log/nginx/error.log* 2>/dev/null' || true)
+            fi
+            echo "LOG_FILE_COUNT $(printf '%s\n' "$LOG_FILES" | sed '/^$/d' | wc -l | tr -d ' ')"
+            echo "LOG_FILES_BEGIN"
+            printf '%s\n' "$LOG_FILES" | sed '/^$/d' || true
+            echo "LOG_FILES_END"
+            echo "----- IP lines last 100 (oldest-to-newest, then tail) -----"
+            {
+              printf '%s\n' "$LOG_FILES" | sed '/^$/d' | while IFS= read -r f; do
+                case "$f" in
+                  *.gz) sudo zgrep -a -F -h -- "$IP" "$f" 2>/dev/null || true ;;
+                  *.xz) sudo xzgrep -a -F -h -- "$IP" "$f" 2>/dev/null || true ;;
+                  *) sudo grep -a -F -h -- "$IP" "$f" 2>/dev/null || true ;;
+                esac
+              done
+            } | tail -n 100 | emit_sensitive || true
+            echo "----- status summary last 48h -----"
+            {
+              printf '%s\n' "$LOG_FILES" | sed '/^$/d' | while IFS= read -r f; do
+                case "$f" in
+                  *.gz) sudo zgrep -a -E -h -e "$TIME_RE" "$f" 2>/dev/null || true ;;
+                  *.xz) sudo xzgrep -a -E -h -e "$TIME_RE" "$f" 2>/dev/null || true ;;
+                  *) sudo grep -a -E -h -e "$TIME_RE" "$f" 2>/dev/null || true ;;
+                esac
+              done
+            } | awk -v ipaddr="$IP" '
+              BEGIN { total=0; ipn=0; c4=0; c5=0; c444=0; c499=0 }
+              {
+                total++
+                if (index($0, ipaddr) > 0) ipn++
+                code=""
+                if (match($0, /"[^"]*" [0-9][0-9][0-9]/)) {
+                  snippet=substr($0, RSTART, RLENGTH)
+                  code=substr(snippet, length(snippet)-2, 3)
+                }
+                if (code ~ /^4/) c4++
+                if (code ~ /^5/) c5++
+                if (code == "444") c444++
+                if (code == "499") c499++
+                if (code != "") sc[code]++
+              }
+              END {
+                print "WINDOW_LINES " total
+                print "WINDOW_LINES_WITH_IP " ipn
+                print "STATUS_4xx " c4
+                print "STATUS_5xx " c5
+                print "STATUS_444 " c444
+                print "STATUS_499 " c499
+                for (k in sc) print "STATUS_CODE " k " " sc[k]
+              }
+            ' || true
+
+            echo "===== STEP 5 nginx limits ====="
+            sudo nginx -T 2>/dev/null | grep -nE 'limit_req_zone|limit_req|limit_conn|(^|[[:space:]])deny[[:space:]]|(^|[[:space:]])allow[[:space:]]|(^|[[:space:]])geo[[:space:]]|map[[:space:]]+\$remote_addr' | emit_light || true
+            echo "----- nginx -T lines containing IP -----"
+            NGINX_IP=$(sudo nginx -T 2>/dev/null | grep -nF "$IP" || true)
+            if [ -n "$NGINX_IP" ]; then
+              printf '%s\n' "$NGINX_IP" | emit_light || true
+              if printf '%s\n' "$NGINX_IP" | grep -Ei '(^|[[:space:];])deny[[:space:]]|drop|reject|[[:space:]]1;' >/dev/null 2>&1; then
+                NGINX_BLOCK=YES
+              fi
+            else
+              echo "(no nginx -T line contains $IP)"
+            fi
+            echo "BLOCK_IP_IN_NGINX $NGINX_BLOCK"
+
+            echo "===== STEP 6 certificates ====="
+            certs=$(sudo nginx -T 2>/dev/null | awk '$1=="ssl_certificate" { p=$2; gsub(/[";]/, "", p); if (p ~ /^\//) print p }' | sort -u)
+            if [ -z "$certs" ]; then
+              echo "(no ssl_certificate path)"
+            fi
+            printf '%s\n' "$certs" | sed '/^$/d' | while IFS= read -r cert; do
+              echo "CERT_PATH $cert"
+              sudo openssl x509 -in "$cert" -noout -enddate -subject 2>&1 | emit_light || true
+            done
+
+            echo "===== STEP 7 connections journal ====="
+            SS_OUT=$(sudo ss -tn state established '( sport = :443 )' 2>&1)
+            ss_rc=$?
+            if [ "$ss_rc" -ne 0 ]; then
+              SS_OUT=$(ss -tn state established '( sport = :443 )' 2>&1)
+              ss_rc=$?
+            fi
+            echo "SS_EXIT $ss_rc"
+            SS_HITS=$(printf '%s\n' "$SS_OUT" | grep -F "$IP" || true)
+            SS_COUNT=$(printf '%s\n' "$SS_HITS" | sed '/^$/d' | wc -l | tr -d ' ')
+            echo "ESTABLISHED_443_FROM_IP ${SS_COUNT:-0}"
+            if [ -n "$SS_HITS" ]; then
+              printf '%s\n' "$SS_HITS" | emit_light || true
+            fi
+            echo "----- journalctl -u nginx errors last 48h -----"
+            ERR_COUNT=$(sudo journalctl -u nginx --since '48 hours ago' --no-pager -o short-iso 2>/dev/null | grep -ciE 'error|emerg|crit|alert|fail|refused|timed out|reset|unexpected eof|no live upstreams' || true)
+            echo "JOURNAL_ERROR_LINE_COUNT ${ERR_COUNT:-0}"
+            sudo journalctl -u nginx --since '48 hours ago' --no-pager -o short-iso 2>/dev/null \
+              | grep -iE 'error|emerg|crit|alert|fail|refused|timed out|reset|unexpected eof|no live upstreams' \
+              | emit_sensitive \
+              | tail -n 200 || true
+
+            echo "===== VERDICT ====="
+            VERDICT=NO
+            if [ "$FB_BLOCK" = YES ] || [ "$FW_BLOCK" = YES ] || [ "$NGINX_BLOCK" = YES ]; then
+              VERDICT=YES
+            fi
+            echo "BLOCK_IP_140.248.50.66 $VERDICT"
+            echo "EVIDENCE fail2ban=$FB_BLOCK firewall_drop_or_deny=$FW_BLOCK nginx_deny_or_geo=$NGINX_BLOCK"
+            echo "DIAG_COMPLETE"
+            exit 0

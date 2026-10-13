@@ -61,6 +61,9 @@ jobs:
   dev-screen-verify:
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    # Without `environment: dev`, ${{ secrets.X }} only resolves repository-level secrets.
+    # E2E_* credentials live in the GitHub Environment `dev` (same pattern as deploy-backend-dev.yml).
+    environment: dev
     steps:
       - name: Checkout
         uses: actions/checkout@v4

@@ -12,8 +12,10 @@ import {
   getDashboardComponentName,
   getDynamicDashboardPath,
   resolvePostLoginLandingPath,
+  resolveLoginReturnAllowedPrefixes,
   redirectToDynamicDashboard
 } from '../dashboardUtils';
+import { ERP_LOGIN_RETURN_PATH_PREFIXES } from '../roleAccessiblePathPrefixes';
 
 jest.mock('../ajax', () => ({
   apiGet: jest.fn()
@@ -81,6 +83,27 @@ describe('dashboardUtils — landing / role routing SSOT', () => {
 
     test('CLIENT → /client/dashboard', () => {
       expect(resolvePostLoginLandingPath({ role: 'CLIENT' })).toBe('/client/dashboard');
+    });
+  });
+
+  describe('resolveLoginReturnAllowedPrefixes — 역할 접근 구역 SSOT', () => {
+    test('ADMIN 은 /admin/ 과 ERP 접두를 허용한다', () => {
+      expect(resolveLoginReturnAllowedPrefixes({ role: 'ADMIN' })).toEqual([
+        '/admin/',
+        ...ERP_LOGIN_RETURN_PATH_PREFIXES
+      ]);
+      expect(ERP_LOGIN_RETURN_PATH_PREFIXES).toContain('/erp/');
+    });
+
+    test('STAFF 는 /admin/ 만 허용하고 /erp/ 는 없다', () => {
+      expect(resolveLoginReturnAllowedPrefixes({ role: 'STAFF' })).toEqual(['/admin/']);
+      expect(resolveLoginReturnAllowedPrefixes({ role: 'STAFF' }))
+        .not.toEqual(expect.arrayContaining(['/erp/']));
+    });
+
+    test('CLIENT·CONSULTANT 랜딩 구역 유지', () => {
+      expect(resolveLoginReturnAllowedPrefixes({ role: 'CLIENT' })).toEqual(['/client/']);
+      expect(resolveLoginReturnAllowedPrefixes({ role: 'CONSULTANT' })).toEqual(['/consultant/']);
     });
   });
 

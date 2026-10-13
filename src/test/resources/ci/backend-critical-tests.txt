@@ -56,3 +56,5 @@
 **/AdminClientSearchServiceVisibilityTest.java
 **/ShopClientOfferCreateVisibilityTest.java
 **/ShopClientOfferPricingTest.java
+**/TenantHostSubdomainUtilTest.java
+**/TenantHostAliasesProdOffTest.java

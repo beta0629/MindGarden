@@ -15,7 +15,17 @@ jobs:
   deploy-nginx:
     name: 🌐 Nginx 설정 배포
     runs-on: [self-hosted, linux, deploy]
-    
+    # `environment: dev` 없으면 ${{ secrets.X }} 가 repository-level secret 만 해석한다.
+    # MINDGARDEN_DEV_ORIGIN_CERT / MINDGARDEN_DEV_ORIGIN_KEY 는 GitHub Environment `dev` 에만 등록된다.
+    # 본 선언으로 env-level secret 을 정상 해석한다.
+    # DEV_SERVER_HOST / USER / SSH_KEY 는 repo-level 이어도 environment job 에서 상속된다
+    # (동일 키가 env-level 에도 있으면 env-level 이 우선 — GitHub 정책).
+    # 패턴 참고: deploy-backend-dev.yml (environment:dev 주석, APPLE_PRIVATE_KEY + appleboy envs).
+    environment: dev
+    env:
+      MINDGARDEN_DEV_ORIGIN_CERT: ${{ secrets.MINDGARDEN_DEV_ORIGIN_CERT }}
+      MINDGARDEN_DEV_ORIGIN_KEY: ${{ secrets.MINDGARDEN_DEV_ORIGIN_KEY }}
+
     steps:
     - name: 📥 코드 체크아웃
       uses: actions/checkout@v4
@@ -43,6 +53,50 @@ jobs:
         source: "config/nginx/dev.m-garden.co.kr.conf"
         target: "/tmp/"
         overwrite: true
+
+    - name: 🔐 Cloudflare Origin CA 설치 (mindgarden-dev)
+      uses: appleboy/ssh-action@c4f70287fc37c43b14b30b407224bbbc8e8c6327 # master 2026-08-16 (v1.2.5+10) 고정
+      with:
+        host: ${{ secrets.DEV_SERVER_HOST }}
+        username: ${{ secrets.DEV_SERVER_USER }}
+        key: ${{ secrets.DEV_SERVER_SSH_KEY }}
+        port: 22
+        timeout: 60s
+        # 워크플로 env(=GitHub Environment `dev` Secrets) 를 SSH 세션으로 export.
+        # PEM 본문은 로그에 echo/cat 하지 않는다 (길이·openssl 메타만).
+        envs: MINDGARDEN_DEV_ORIGIN_CERT,MINDGARDEN_DEV_ORIGIN_KEY
+        script: |
+          set -e
+          MG_ALIAS_DIR="/etc/ssl/cloudflare/mindgarden-dev.core-solution.co.kr"
+          MG_ALIAS_CERT="${MG_ALIAS_DIR}/cert.pem"
+          MG_ALIAS_KEY="${MG_ALIAS_DIR}/privkey.pem"
+
+          if [ -z "${MINDGARDEN_DEV_ORIGIN_CERT:-}" ] || [ -z "${MINDGARDEN_DEV_ORIGIN_KEY:-}" ]; then
+            echo "❌ GitHub Environment 'dev' Secrets MINDGARDEN_DEV_ORIGIN_CERT / MINDGARDEN_DEV_ORIGIN_KEY 가 비어 있습니다."
+            echo "   Settings → Environments → dev → Environment secrets 에 PEM 을 등록한 뒤 재실행하세요."
+            echo "   (값·길이 이외의 PEM 내용은 출력하지 않습니다.)"
+            exit 1
+          fi
+
+          echo "🔐 mindgarden-dev Origin CA 설치 중..."
+          echo "   cert env length: ${#MINDGARDEN_DEV_ORIGIN_CERT} chars"
+          echo "   key env length: ${#MINDGARDEN_DEV_ORIGIN_KEY} chars"
+
+          sudo mkdir -p "$MG_ALIAS_DIR"
+          # printf | tee >/dev/null — stdout 에 PEM 미노출
+          printf '%s\n' "$MINDGARDEN_DEV_ORIGIN_CERT" | sudo tee "$MG_ALIAS_CERT" >/dev/null
+          printf '%s\n' "$MINDGARDEN_DEV_ORIGIN_KEY" | sudo tee "$MG_ALIAS_KEY" >/dev/null
+          sudo chown root:root "$MG_ALIAS_CERT" "$MG_ALIAS_KEY"
+          sudo chmod 644 "$MG_ALIAS_CERT"
+          sudo chmod 600 "$MG_ALIAS_KEY"
+
+          echo "🔍 Origin CA cert 메타 검증 (subject/dates only; private key 미덤프)..."
+          sudo openssl x509 -noout -subject -dates -in "$MG_ALIAS_CERT"
+          if ! sudo openssl x509 -noout -text -in "$MG_ALIAS_CERT" | grep -Fq 'mindgarden-dev.core-solution.co.kr'; then
+            echo "❌ Origin CA SAN/CN 에 mindgarden-dev.core-solution.co.kr 가 없습니다."
+            exit 1
+          fi
+          echo "✅ mindgarden-dev Origin CA 설치·검증 완료 ($MG_ALIAS_CERT, $MG_ALIAS_KEY)"
         
     - name: 🔄 Nginx 설정 적용 및 재시작
       uses: appleboy/ssh-action@c4f70287fc37c43b14b30b407224bbbc8e8c6327 # master 2026-08-16 (v1.2.5+10) 고정
@@ -51,7 +105,7 @@ jobs:
         username: ${{ secrets.DEV_SERVER_USER }}
         key: ${{ secrets.DEV_SERVER_SSH_KEY }}
         port: 22
-        timeout: 30s
+        timeout: 120s
         script: |
           echo "🌐 Nginx 설정 업데이트 시작..."
           
@@ -214,7 +268,9 @@ jobs:
               echo "⚠️ WARNING: Cloudflare Origin CA missing for mindgarden-dev.core-solution.co.kr"
               echo "   Expected: $MG_ALIAS_CERT"
               echo "   Expected: $MG_ALIAS_KEY"
-              echo "   Manual steps:"
+              echo "   Prefer: deploy-nginx-dev Origin CA install step (GitHub Environment 'dev' Secrets"
+              echo "           MINDGARDEN_DEV_ORIGIN_CERT / MINDGARDEN_DEV_ORIGIN_KEY)."
+              echo "   Manual fallback (local/manual runs without Secrets):"
               echo "     1) Cloudflare Dashboard → SSL/TLS → Origin Server → Create Certificate"
               echo "        (host: mindgarden-dev.core-solution.co.kr)"
               echo "     2) Install PEM to the paths above (cert.pem + privkey.pem)"

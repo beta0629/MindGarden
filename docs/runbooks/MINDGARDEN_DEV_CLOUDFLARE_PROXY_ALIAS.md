@@ -19,6 +19,21 @@ Zone: `core-solution.co.kr`
 
 프록시 호스트에는 **certbot HTTP-01 을 쓰지 않는다** (Cloudflare 가 challenge 를 가로챔).
 
+### 권장: GitHub Environment `dev` Secrets → `deploy-nginx-dev`
+
+`deploy-nginx-dev.yml` 은 job 에 `environment: dev` 를 두고, 배포 시 Origin CA PEM 을 서버에 설치한다.
+
+| GitHub Environment `dev` Secret (이름만) | 서버 경로 |
+|------------------------------------------|-----------|
+| `MINDGARDEN_DEV_ORIGIN_CERT` | `/etc/ssl/cloudflare/mindgarden-dev.core-solution.co.kr/cert.pem` (mode 644) |
+| `MINDGARDEN_DEV_ORIGIN_KEY` | `/etc/ssl/cloudflare/mindgarden-dev.core-solution.co.kr/privkey.pem` (mode 600) |
+
+- Secret **값·PEM 본문은 문서·로그에 남기지 않는다.**
+- `DEV_SERVER_HOST` / `DEV_SERVER_USER` / `DEV_SERVER_SSH_KEY` 는 repository-level 이어도 `environment: dev` job 에서 상속된다. 동일 키가 Environment 에도 있으면 Environment 값이 우선한다.
+- Secrets 가 비어 있으면 Origin CA 설치 step 이 실패한다 (값 미출력).
+
+### 수동 설치 (로컬/시크릿 없는 수동 실행용)
+
 1. Cloudflare Dashboard → SSL/TLS → Origin Server → Create Certificate  
    - Hostnames: `mindgarden-dev.core-solution.co.kr`
 2. 서버에 설치:
@@ -31,7 +46,7 @@ sudo install -m 600 privkey.pem /etc/ssl/cloudflare/mindgarden-dev.core-solution
 sudo nginx -t && sudo systemctl reload nginx
 ```
 
-`deploy-nginx-dev.yml` 은 위 PEM 이 없으면 mindgarden-dev **HTTPS** 블록만 제거하고 경고 후 나머지 vhost 는 정상 reload 한다. PEM 설치 후 nginx 배포를 다시 돌리거나 수동 `nginx -t && reload` 한다. **nginx stop / 앱 restart 금지**.
+`deploy-nginx-dev.yml` 적용 step 은 위 PEM 이 없으면 mindgarden-dev **HTTPS** 블록만 제거하고 경고 후 나머지 vhost 는 정상 reload 한다 (시크릿 없는 로컬/수동 폴백). CI 에서는 설치 step 이 먼저 돌아가 PEM 이 있으면 HTTPS 블록을 유지한다. **nginx stop / 앱 restart 금지**.
 
 ## 3. 앱 설정 (DEV)
 

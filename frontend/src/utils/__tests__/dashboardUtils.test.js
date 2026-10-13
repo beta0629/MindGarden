@@ -101,8 +101,12 @@ describe('dashboardUtils — landing / role routing SSOT', () => {
         .not.toEqual(expect.arrayContaining(['/erp/']));
     });
 
-    test('CLIENT·CONSULTANT 랜딩 구역 유지', () => {
-      expect(resolveLoginReturnAllowedPrefixes({ role: 'CLIENT' })).toEqual(['/client/']);
+    test('CLIENT·CONSULTANT 랜딩 구역 유지(CLIENT는 몰·오퍼 접두 포함)', () => {
+      expect(resolveLoginReturnAllowedPrefixes({ role: 'CLIENT' })).toEqual([
+        '/client/',
+        '/client/shop/',
+        '/client/offers/'
+      ]);
       expect(resolveLoginReturnAllowedPrefixes({ role: 'CONSULTANT' })).toEqual(['/consultant/']);
     });
   });

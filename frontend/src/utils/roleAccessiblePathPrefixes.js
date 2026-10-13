@@ -5,7 +5,7 @@
  * - `/erp/*` = ADMIN 전용 (STAFF 불가)
  * - ADMIN(+ HQ_ADMIN 등 관리자 계열): `/admin/` + ERP LNB 접두
  * - STAFF: `/admin/` 만 (ERP 접두 제외)
- * - CLIENT / CONSULTANT: 각 랜딩 구역
+ * - CLIENT / CONSULTANT: 각 랜딩 구역 (+ CLIENT 몰·오퍼 접두 SSOT)
  *
  * 접두는 {@link isReturnPathAllowedForPrefixes} 규칙에 맞게 trailing `/` 로 정규화한다.
  *
@@ -14,6 +14,8 @@
  */
 
 import { ERP_LNB_PATH_PREFIXES } from '../components/dashboard-v2/constants/menuItems';
+import { CLIENT_SHOP_ROUTES } from '../constants/clientShopConstants';
+import { CLIENT_OFFER_ROUTES } from '../constants/shopClientOfferConstants';
 import {
   getNormalizedRole,
   hasCounselorCapability,
@@ -26,6 +28,10 @@ import {
   ROLE_CONSULTANT,
   ROLE_STAFF
 } from './RoleUtils';
+import {
+  isReturnPathAllowedForPrefixes,
+  sanitizeLoginReturnPath
+} from './loginReturnPath';
 
 /** @param {string} prefix */
 const withTrailingSlash = (prefix) => {
@@ -33,6 +39,26 @@ const withTrailingSlash = (prefix) => {
     return '';
   }
   return prefix.endsWith('/') ? prefix : `${prefix}/`;
+};
+
+/**
+ * trailing-slash 정규화 후 동일 접두 제거(순서 유지).
+ *
+ * @param {ReadonlyArray<string>} prefixes
+ * @returns {string[]}
+ */
+const dedupeNormalizedPrefixes = (prefixes) => {
+  const seen = new Set();
+  const out = [];
+  prefixes.forEach((raw) => {
+    const prefix = withTrailingSlash(raw);
+    if (!prefix || seen.has(prefix)) {
+      return;
+    }
+    seen.add(prefix);
+    out.push(prefix);
+  });
+  return out;
 };
 
 const PATH_ZONE = Object.freeze({
@@ -52,13 +78,28 @@ export const ERP_LOGIN_RETURN_PATH_PREFIXES = Object.freeze(
 );
 
 /**
+ * 내담자 몰·맞춤 오퍼 로그인 복귀 접두 — App.js 라우트 상수에서 파생.
+ * `/client/` 만으로도 하위는 통과하지만, SSOT·문서·테스트용으로 명시한다.
+ * (CATALOG=`/client/shop` → `/client/shop/`, OFFERS=`/client/offers` → `/client/offers/`)
+ */
+export const CLIENT_LOGIN_RETURN_PATH_PREFIXES = Object.freeze(
+  dedupeNormalizedPrefixes([
+    CLIENT_SHOP_ROUTES.CATALOG,
+    CLIENT_OFFER_ROUTES.OFFERS
+  ])
+);
+
+/**
  * 정규화 역할 → 로그인 복귀 허용 접두 (불변).
  * STAFF 에 ERP 접두를 넣지 않는다 (STAFF_PERMISSION_POLICY / ProtectedRoute ADMIN only).
+ * CLIENT 는 구역 `/client/` + 몰·오퍼 접두(중복 정규화·dedupe).
  */
 export const ROLE_LOGIN_RETURN_ALLOWED_PREFIXES = Object.freeze({
   [ROLE_ADMIN]: Object.freeze([PATH_ZONE.ADMIN, ...ERP_LOGIN_RETURN_PATH_PREFIXES]),
   [ROLE_STAFF]: Object.freeze([PATH_ZONE.ADMIN]),
-  [ROLE_CLIENT]: Object.freeze([PATH_ZONE.CLIENT]),
+  [ROLE_CLIENT]: Object.freeze(
+    dedupeNormalizedPrefixes([PATH_ZONE.CLIENT, ...CLIENT_LOGIN_RETURN_PATH_PREFIXES])
+  ),
   [ROLE_CONSULTANT]: Object.freeze([PATH_ZONE.CONSULTANT])
 });
 
@@ -93,6 +134,25 @@ export const resolveRoleLoginReturnAllowedPrefixes = (user) => {
     return [...ROLE_LOGIN_RETURN_ALLOWED_PREFIXES[normalized]];
   }
   return [];
+};
+
+/**
+ * 로그인 복귀 경로 단일 판정 API — sanitize + 역할 접두 허용을 한곳에서 수행.
+ * 새 sanitize/allowlist 로직을 복붙하지 말고 이 함수를 재사용한다.
+ *
+ * @param {unknown} path 원시 복귀 경로(?redirect= 또는 저장값)
+ * @param {{ role?: string, counselingEnabled?: boolean, hasOperatorRole?: boolean, hasCounselorRole?: boolean }|null|undefined} user
+ * @returns {boolean}
+ */
+export const isLoginReturnPathAllowedForUser = (path, user) => {
+  const sanitized = sanitizeLoginReturnPath(path);
+  if (!sanitized) {
+    return false;
+  }
+  return isReturnPathAllowedForPrefixes(
+    sanitized,
+    resolveRoleLoginReturnAllowedPrefixes(user)
+  );
 };
 
 export { PATH_ZONE };

@@ -81,6 +81,13 @@ export const OFD_MIX_CATEGORY = {
   INCOME: '수입'
 };
 
+/**
+ * 지출 breakdown 에 상담료 계열 키가 있을 때(환불) 나간 곳 mix 라벨.
+ * CONSULTATION_REFUND 등 OFD_REFUND_SUBCATEGORIES 병합 버킷과 구분.
+ */
+export const OFD_OUTFLOW_CONSULTATION_REFUND_LABEL =
+  `${OFD_MIX_CATEGORY.REFUND}(${OFD_MIX_CATEGORY.CONSULTATION})`;
+
 /** categoryBreakdown / tx.category 코드 → 클리닉 라벨 (존재하는 키만 매핑) */
 export const OFD_CATEGORY_LABELS = {
   상담료: OFD_MIX_CATEGORY.CONSULTATION,

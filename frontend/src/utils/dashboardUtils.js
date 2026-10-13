@@ -14,6 +14,7 @@ import {
   isClient
 } from './RoleUtils';
 import { consumeLoginReturnPath } from './loginReturnPath';
+import { resolveRoleLoginReturnAllowedPrefixes } from './roleAccessiblePathPrefixes';
 
 const TENANT_DASHBOARDS_BASE = '/api/v1/tenant/dashboards';
 
@@ -227,17 +228,16 @@ export const getLegacyDashboardPath = (role) => {
 };
 
 /**
- * 로그인 후 복귀 허용 접두 — 역할 기본 화면의 첫 구역(예: /client/dashboard → /client/).
+ * 로그인 후 복귀 허용 접두 — 역할별 접근 가능 내부 경로 SSOT
+ * ({@link resolveRoleLoginReturnAllowedPrefixes}).
+ * ADMIN 은 `/admin/` + ERP(`/erp/`), STAFF 는 `/admin/` 만(ERP 불가).
  *
  * @param {Object} user
  * @returns {string[]}
  */
-export const resolveLoginReturnAllowedPrefixes = (user) => {
-  if (!user) return [];
-  const landing = resolvePostLoginLandingPath(user);
-  const section = typeof landing === 'string' ? landing.split('/')[1] : '';
-  return section ? [`/${section}/`] : [];
-};
+export const resolveLoginReturnAllowedPrefixes = (user) => (
+  resolveRoleLoginReturnAllowedPrefixes(user)
+);
 
 /**
  * 동적 대시보드 라우팅 (우선순위: 동적 조회 > 레거시)

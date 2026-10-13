@@ -5,6 +5,8 @@
  * @since 2026-10-13
  */
 
+import { buildShopSkuDetailPath } from '../../constants/clientShopConstants';
+import { CLIENT_OFFER_ROUTES } from '../../constants/shopClientOfferConstants';
 import {
   LOGIN_RETURN_PATH_STORAGE_KEY,
   LOGIN_RETURN_PATH_TTL_MS,
@@ -14,8 +16,14 @@ import {
   sanitizeLoginReturnPath
 } from '../loginReturnPath';
 import { redirectToDynamicDashboard, resolveLoginReturnAllowedPrefixes } from '../dashboardUtils';
+import {
+  CLIENT_LOGIN_RETURN_PATH_PREFIXES,
+  isLoginReturnPathAllowedForUser,
+  resolveRoleLoginReturnAllowedPrefixes
+} from '../roleAccessiblePathPrefixes';
 
 const CLIENT = ['/client/'];
+const CLIENT_WITH_SHOP_OFFER = resolveRoleLoginReturnAllowedPrefixes({ role: 'CLIENT' });
 
 jest.mock('../ajax', () => ({ apiGet: jest.fn() }));
 
@@ -95,10 +103,49 @@ describe('역할 허용 목록', () => {
     expect(isReturnPathAllowedForPrefixes('/client/offers', [])).toBe(false);
   });
 
-  it('역할 기본 화면 구역을 허용 접두로 쓴다', () => {
-    expect(resolveLoginReturnAllowedPrefixes({ role: 'CLIENT' })).toEqual(['/client/']);
-    expect(resolveLoginReturnAllowedPrefixes({ role: 'ADMIN' })).toEqual(['/admin/']);
+  it('역할별 접근 구역 SSOT를 허용 접두로 쓴다', () => {
+    expect(resolveLoginReturnAllowedPrefixes({ role: 'CLIENT' })).toEqual([
+      '/client/',
+      ...CLIENT_LOGIN_RETURN_PATH_PREFIXES
+    ]);
+    expect(CLIENT_LOGIN_RETURN_PATH_PREFIXES).toEqual(['/client/shop/', '/client/offers/']);
+    expect(resolveLoginReturnAllowedPrefixes({ role: 'ADMIN' })).toEqual(['/admin/', '/erp/']);
+    expect(resolveLoginReturnAllowedPrefixes({ role: 'STAFF' })).toEqual(['/admin/']);
+    expect(resolveLoginReturnAllowedPrefixes({ role: 'CONSULTANT' })).toEqual(['/consultant/']);
     expect(resolveLoginReturnAllowedPrefixes(null)).toEqual([]);
+  });
+
+  it('CLIENT 몰 SKU·오퍼 경로를 역할 접두로 허용한다', () => {
+    const skuPath = buildShopSkuDetailPath('PKG-1');
+    expect(skuPath).toBe('/client/shop/sku/PKG-1');
+    expect(isReturnPathAllowedForPrefixes(skuPath, CLIENT_WITH_SHOP_OFFER)).toBe(true);
+    expect(isReturnPathAllowedForPrefixes(CLIENT_OFFER_ROUTES.OFFERS, CLIENT_WITH_SHOP_OFFER)).toBe(true);
+    expect(isReturnPathAllowedForPrefixes('/client/offers?tab=2', CLIENT_WITH_SHOP_OFFER)).toBe(true);
+  });
+
+  it('isLoginReturnPathAllowedForUser — sanitize + 역할 접두 단일 판정', () => {
+    const client = { role: 'CLIENT' };
+    expect(isLoginReturnPathAllowedForUser(buildShopSkuDetailPath('PKG-1'), client)).toBe(true);
+    expect(isLoginReturnPathAllowedForUser('/client/offers', client)).toBe(true);
+    expect(isLoginReturnPathAllowedForUser('/client/offers?tab=2&token=x', client)).toBe(true);
+    expect(isLoginReturnPathAllowedForUser('//evil.com', client)).toBe(false);
+    expect(isLoginReturnPathAllowedForUser('/admin/dashboard', client)).toBe(false);
+    expect(isLoginReturnPathAllowedForUser('/erp/dashboard', { role: 'ADMIN' })).toBe(true);
+    expect(isLoginReturnPathAllowedForUser('/erp/dashboard', { role: 'STAFF' })).toBe(false);
+  });
+
+  it('ADMIN 은 /erp/dashboard?month= 복귀를 허용하고 STAFF 는 /erp/ 를 거부', () => {
+    const adminPrefixes = resolveLoginReturnAllowedPrefixes({ role: 'ADMIN' });
+    const staffPrefixes = resolveLoginReturnAllowedPrefixes({ role: 'STAFF' });
+    expect(isReturnPathAllowedForPrefixes('/erp/dashboard?month=2026-09', adminPrefixes)).toBe(true);
+    expect(isReturnPathAllowedForPrefixes('/erp/dashboard?month=2026-09', staffPrefixes)).toBe(false);
+    expect(isReturnPathAllowedForPrefixes('/admin/dashboard', staffPrefixes)).toBe(true);
+  });
+
+  it('HQ_ADMIN 등 관리자 계열도 /erp/ 복귀 허용', () => {
+    const prefixes = resolveLoginReturnAllowedPrefixes({ role: 'HQ_ADMIN' });
+    expect(prefixes).toEqual(['/admin/', '/erp/']);
+    expect(isReturnPathAllowedForPrefixes('/erp/financial', prefixes)).toBe(true);
   });
 });
 
@@ -165,6 +212,34 @@ describe('redirectToDynamicDashboard — 원래 주소 복귀', () => {
     expect(navigate).toHaveBeenCalledWith('/client/offers', { replace: true });
   });
 
+  it('CLIENT 가 상품 SKU 상세·오퍼 쿼리로 복귀한다', async() => {
+    const skuPath = buildShopSkuDetailPath('PKG-1');
+    setUrl(`/login?redirect=${encodeURIComponent(skuPath)}`);
+    const navigateSku = jest.fn();
+    await redirectToDynamicDashboard({ user: { role: 'CLIENT' } }, navigateSku);
+    expect(navigateSku).toHaveBeenCalledWith('/client/shop/sku/PKG-1', { replace: true });
+
+    setUrl(`/login?redirect=${encodeURIComponent('/client/offers?tab=2')}`);
+    const navigateOffers = jest.fn();
+    await redirectToDynamicDashboard({ user: { role: 'CLIENT' } }, navigateOffers);
+    expect(navigateOffers).toHaveBeenCalledWith('/client/offers?tab=2', { replace: true });
+  });
+
+  it('ADMIN 이 /erp/dashboard?month=2026-09 로 복귀한다', async() => {
+    setUrl(`/login?redirect=${encodeURIComponent('/erp/dashboard?month=2026-09')}`);
+    const navigate = jest.fn();
+    await redirectToDynamicDashboard({ user: { role: 'ADMIN' } }, navigate);
+    expect(navigate).toHaveBeenCalledWith('/erp/dashboard?month=2026-09', { replace: true });
+  });
+
+  it('STAFF 가 /erp/ 로 가려 하면 역할 기본 화면으로 간다', async() => {
+    setUrl(`/login?redirect=${encodeURIComponent('/erp/dashboard?month=2026-09')}`);
+    const navigate = jest.fn();
+    jest.spyOn(console, 'log').mockImplementation(() => {});
+    await redirectToDynamicDashboard({ user: { role: 'STAFF' } }, navigate);
+    expect(navigate).toHaveBeenCalledWith('/admin/dashboard', { replace: true });
+  });
+
   it('내담자가 /admin 으로 가려 하면 역할 기본 화면으로 간다', async() => {
     setUrl(`/login?redirect=${encodeURIComponent('/admin/dashboard')}`);
     const navigate = jest.fn();
@@ -173,12 +248,27 @@ describe('redirectToDynamicDashboard — 원래 주소 복귀', () => {
     expect(navigate).toHaveBeenCalledWith('/client/dashboard', { replace: true });
   });
 
-  it('외부 주소면 기존대로 역할 대시보드로 간다', async() => {
+  it('외부 주소·프로토콜 상대(//) 는 역할 대시보드로 간다', async() => {
     setUrl(`/login?redirect=${encodeURIComponent('https://evil.example')}`);
     const navigate = jest.fn();
     jest.spyOn(console, 'log').mockImplementation(() => {});
     await redirectToDynamicDashboard({ user: { role: 'CLIENT' } }, navigate);
     expect(navigate).toHaveBeenCalledTimes(1);
     expect(navigate.mock.calls[0][0]).not.toContain('evil');
+
+    setUrl(`/login?redirect=${encodeURIComponent('//evil.com/phish')}`);
+    const navigate2 = jest.fn();
+    await redirectToDynamicDashboard({ user: { role: 'ADMIN' } }, navigate2);
+    expect(navigate2).toHaveBeenCalledWith('/admin/dashboard', { replace: true });
+  });
+
+  it('소셜 remember+consume: ADMIN /erp/ 복귀가 동일 허용 접두로 통과', async() => {
+    setUrl(`/login?redirect=${encodeURIComponent('/erp/dashboard?month=2026-09')}`);
+    rememberLoginReturnPathFromUrl();
+    setUrl('/auth/oauth2/callback?code=abc');
+    const navigate = jest.fn();
+    await redirectToDynamicDashboard({ user: { role: 'ADMIN' } }, navigate);
+    expect(navigate).toHaveBeenCalledWith('/erp/dashboard?month=2026-09', { replace: true });
+    expect(window.sessionStorage.getItem(LOGIN_RETURN_PATH_STORAGE_KEY)).toBeNull();
   });
 });

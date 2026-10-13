@@ -20,6 +20,7 @@ import {
   OFD_LEDGER,
   OFD_MAPPING_ENTITY,
   OFD_MIX_CATEGORY,
+  OFD_OUTFLOW_CONSULTATION_REFUND_LABEL,
   OFD_REFUND_SUBCATEGORIES,
   OFD_SALARY_CHECKLIST,
   OFD_SALARY_PAID_STATUS,
@@ -281,13 +282,25 @@ function hasBreakdownKey(map, key) {
 }
 
 /**
+ * 상담료 계열(수입 별칭·결제수단-as-category) 키 여부.
+ * @param {string} key
+ * @returns {boolean}
+ */
+function isConsultationCategoryAliasKey(key) {
+  const raw = String(key || '').trim();
+  if (!raw) return false;
+  return CONSULTATION_CATEGORY_ALIASES.has(raw)
+    || CONSULTATION_CATEGORY_ALIASES.has(raw.toUpperCase());
+}
+
+/**
  * @param {string} key
  * @returns {boolean}
  */
 function isIncomeCategoryKey(key) {
   const raw = String(key || '').trim();
   if (!raw) return false;
-  if (CONSULTATION_CATEGORY_ALIASES.has(raw) || CONSULTATION_CATEGORY_ALIASES.has(raw.toUpperCase())) {
+  if (isConsultationCategoryAliasKey(raw)) {
     return true;
   }
   const upper = raw.toUpperCase();
@@ -303,7 +316,7 @@ function isIncomeCategoryKey(key) {
 function canonicalizeIncomeCategoryKey(key) {
   const raw = String(key || '').trim();
   if (!raw) return '';
-  if (CONSULTATION_CATEGORY_ALIASES.has(raw) || CONSULTATION_CATEGORY_ALIASES.has(raw.toUpperCase())) {
+  if (isConsultationCategoryAliasKey(raw)) {
     return INCOME_CONSULTATION_CANONICAL;
   }
   return raw.toUpperCase();
@@ -408,7 +421,8 @@ export function sumBreakdownValues(map) {
 
 /**
  * 나간 곳 mix — 서버 expenseCategoryBreakdown 을 SSOT로 쓴다.
- * 별칭(급여·임대·관리·환불)만 표시용 병합하고, 나머지 카테고리는 키별 항목으로 전부 표시.
+ * 별칭(급여·임대·관리·환불 서브카테고리)만 표시용 병합하고, 나머지 카테고리는 키별 항목으로 전부 표시.
+ * 지출 breakdown 의 상담료 계열은 수입 별칭으로 거르지 않고 `환불(상담료)` 항목으로 표시.
  * 카드 수수료는 breakdown 키 우선, 없으면 INCOME tx fee 합(레거시).
  * @param {Record<string, number>} categoryBreakdown
  * @param {Array<object>} transactions
@@ -471,8 +485,10 @@ export function buildOutflowMixItems(categoryBreakdown, transactions) {
       if (OUTFLOW_MERGED_ALIAS_KEYS.has(raw) || OUTFLOW_MERGED_ALIAS_KEYS.has(raw.toUpperCase())) {
         return;
       }
-      if (isIncomeCategoryKey(raw)) return;
-      const canonical = canonicalizeOutflowCategoryKey(raw) || raw.toUpperCase();
+      // 지출 breakdown 키는 수입 별칭으로 버리지 않음(상담료 환불 누락 방지)
+      const canonical = isConsultationCategoryAliasKey(raw)
+        ? INCOME_CONSULTATION_CANONICAL
+        : (canonicalizeOutflowCategoryKey(raw) || raw.toUpperCase());
       remainingCanonical[canonical] =
         (remainingCanonical[canonical] || 0) + toSafeNumber(breakdown[key]);
     });
@@ -531,6 +547,13 @@ export function buildOutflowMixItems(categoryBreakdown, transactions) {
  * @returns {string}
  */
 function resolveOutflowCategoryLabel(key) {
+  const raw = String(key || '').trim();
+  if (
+    isConsultationCategoryAliasKey(raw)
+    || raw === INCOME_CONSULTATION_CANONICAL
+  ) {
+    return OFD_OUTFLOW_CONSULTATION_REFUND_LABEL;
+  }
   const canonical = canonicalizeOutflowCategoryKey(key);
   if (canonical === 'TAX' || TAX_CATEGORY_ALIASES.has(key)) {
     return OFD_CATEGORY_LABELS.TAX || '세금';

@@ -45,3 +45,32 @@ jobs:
           else
             echo "⚠️ login body unexpected; HTTP 200 still OK"
           fi
+
+      - name: Tenant resolution via /api/v1/tenants/current
+        run: |
+          set -euo pipefail
+          URL="https://mindgarden-dev.core-solution.co.kr/api/v1/tenants/current"
+          BODY=/tmp/mg-alias-tenants-current.json
+          echo "GET $URL"
+          CODE=$(curl -sS -o "$BODY" -w '%{http_code}' --max-time 30 \
+            -H 'Accept: application/json' "$URL" || true)
+          echo "HTTP $CODE"
+          # Truncate body for logs — no cookies/Authorization were sent
+          head -c 800 "$BODY" || true
+          echo
+
+          if grep -q 'TENANT_ID_REQUIRED' "$BODY"; then
+            echo "❌ TENANT_ID_REQUIRED — alias host not mapped to mindgarden tenant"
+            exit 1
+          fi
+
+          if grep -q 'redirectToLogin' "$BODY" \
+            || grep -q '인증이 필요합니다' "$BODY" \
+            || [ "$CODE" = "401" ] \
+            || [ "$CODE" = "403" ]; then
+            echo "✅ tenant resolved on alias (auth required / unauthenticated) — HTTP $CODE"
+            exit 0
+          fi
+
+          echo "❌ unexpected tenants/current response — neither TENANT_ID_REQUIRED nor auth-required signal"
+          exit 1

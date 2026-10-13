@@ -61,9 +61,14 @@ sudo nginx -t && sudo systemctl reload nginx
 curl -sS -o /dev/null -w '%{http_code}\n' https://mindgarden-dev.core-solution.co.kr/actuator/health
 curl -sS -o /dev/null -w '%{http_code}\n' https://mindgarden-dev.core-solution.co.kr/login
 # 기대: 200
+
+# 테넌트 판별 신호 (별칭 미적용 시 TENANT_ID_REQUIRED)
+curl -sS https://mindgarden-dev.core-solution.co.kr/api/v1/tenants/current
+# 기대: TENANT_ID_REQUIRED 없음. redirectToLogin / 인증이 필요합니다 또는 401/403
+# (mindgarden.dev 와 동일하게 테넌트는 잡히고 미인증인 상태)
 ```
 
-수동 workflow: `.github/workflows/verify-mindgarden-dev-alias.yml` (`workflow_dispatch`).
+수동 workflow: `.github/workflows/verify-mindgarden-dev-alias.yml` (`workflow_dispatch`) — health, login, **`/api/v1/tenants/current` 테넌트 판별** 3단계.
 
 ## 6. 관련 메모
 

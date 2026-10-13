@@ -1821,9 +1821,13 @@ public class ErpServiceImpl extends BaseTenantAwareService implements ErpService
         // 머니 콕핏 차트 SSOT: PENDING/APPROVED/COMPLETED + 전 카테고리 (OperatorFinanceAggregation)
         OperatorFinanceAggregation.Result agg = OperatorFinanceAggregation.aggregate(allTransactions);
         List<FinancialTransaction> monthlyTransactions = agg.copyTransactions();
+        // 세금 계열 SSOT: FinancialTransactionValidity (미삭제 COMPLETED only). 지출 콕핏과 분리.
+        List<FinancialTransaction> validForTax = allTransactions.stream()
+            .filter(FinancialTransactionValidity::isValid)
+            .collect(Collectors.toList());
 
-        log.info("📊 월간 리포트 - 전체 거래: {}건, 운영자 집계: {}건 (tenantId: {})",
-            allTransactions.size(), monthlyTransactions.size(), tenantId);
+        log.info("📊 월간 리포트 - 전체 거래: {}건, 운영자 집계: {}건, 세금 Validity: {}건 (tenantId: {})",
+            allTransactions.size(), monthlyTransactions.size(), validForTax.size(), tenantId);
 
         Map<String, Object> monthlyIncome = new HashMap<>();
         BigDecimal consultationRevenue = monthlyTransactions.stream()
@@ -1849,11 +1853,16 @@ public class ErpServiceImpl extends BaseTenantAwareService implements ErpService
 
         Map<String, Object> monthlyExpenses = new HashMap<>();
         // 레거시 6키 — IntegratedFinanceDashboard 하위호환 (참고용, total 산식에는 쓰지 않음)
+        // taxExpense 만 Validity(COMPLETED). 나머지 키는 Operator 집계 참고용 유지.
         BigDecimal salaryExpense = agg.expenseOf(FinancialTransactionConstants.CATEGORY_SALARY);
         BigDecimal rentExpense = agg.expenseOf(FinancialTransactionConstants.CATEGORY_RENT);
         BigDecimal utilityExpense = agg.expenseOf(FinancialTransactionConstants.CATEGORY_UTILITY);
         BigDecimal officeExpense = agg.expenseOf("OFFICE_SUPPLIES");
-        BigDecimal taxExpense = agg.expenseOf(FinancialTransactionConstants.CATEGORY_TAX);
+        BigDecimal taxExpense = validForTax.stream()
+            .filter(t -> t.getTransactionType() == FinancialTransaction.TransactionType.EXPENSE)
+            .filter(t -> FinancialTransactionConstants.CATEGORY_TAX.equals(t.getCategory()))
+            .map(FinancialTransaction::getAmount)
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
         BigDecimal purchaseExpense = agg.expenseOf(FinancialTransactionConstants.CATEGORY_EQUIPMENT);
 
         monthlyExpenses.put("salaryExpense", salaryExpense);
@@ -1905,7 +1914,7 @@ public class ErpServiceImpl extends BaseTenantAwareService implements ErpService
         transactionCount.put("payments", (int) totalPayments);
         monthlyReport.put("transactionCount", transactionCount);
 
-        monthlyReport.put("monthlyTaxBreakdown", ErpMonthlyTaxBreakdownHelper.buildBreakdown(monthlyTransactions));
+        monthlyReport.put("monthlyTaxBreakdown", ErpMonthlyTaxBreakdownHelper.buildBreakdown(validForTax));
 
         return monthlyReport;
     }

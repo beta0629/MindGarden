@@ -7,6 +7,7 @@ import java.time.LocalDate;
 import java.util.Map;
 import java.util.UUID;
 
+import com.coresolution.consultation.constant.FinancialTransactionConstants;
 import com.coresolution.consultation.dto.FinancialDashboardResponse;
 import com.coresolution.consultation.entity.erp.financial.FinancialTransaction;
 import com.coresolution.consultation.entity.erp.financial.FinancialTransaction.TransactionStatus;
@@ -29,8 +30,9 @@ import org.springframework.transaction.annotation.Transactional;
  *
  * <p>같은 날짜에 완료·대기·승인 수입, 취소·거부 수입, soft delete 수입, 완료·취소 지출을 둔다.
  * 일·연 리포트·결산·COMPLETED 재무 대시보드 SUM 은 {@code FinancialTransactionValidity}
- * (미삭제 COMPLETED) 를 쓴다. 월간 리포트·운영자 기간 대시보드(머니 콕핏)는
- * {@code OperatorFinanceAggregation} (PENDING/APPROVED/COMPLETED) 를 쓴다.</p>
+ * (미삭제 COMPLETED) 를 쓴다. 월간 리포트의 수입·지출 콕핏(total·카테고리 breakdown)과
+ * 운영자 기간 대시보드는 {@code OperatorFinanceAggregation} (PENDING/APPROVED/COMPLETED) 를 쓰고,
+ * 월간 {@code taxExpense}·{@code monthlyTaxBreakdown} 만 Validity(COMPLETED) 다.</p>
  *
  * @author CoreSolution
  * @since 2026-10-06
@@ -138,6 +140,62 @@ class ErpFinanceReportValidTransactionIntegrationTest {
                 .isEqualByComparingTo(dashboard.getTotalExpense());
     }
 
+    @Test
+    @DisplayName("월간 taxExpense·monthlyTaxBreakdown=COMPLETED만, 지출 total/breakdown은 Operator(PENDING·APPROVED 포함)")
+    void monthlyTaxFields_completedOnly_whileOperatorExpenseKeepsPendingApproved() {
+        // setUp: COMPLETED OFFICE_SUPPLIES 40_000. TAX·세액 필드는 이 테스트에서만 추가.
+        BigDecimal completedTaxExpense = BigDecimal.valueOf(10_000L);
+        BigDecimal pendingTaxExpense = BigDecimal.valueOf(7_000L);
+        BigDecimal approvedTaxExpense = BigDecimal.valueOf(3_000L);
+        BigDecimal completedExpenseVat = BigDecimal.valueOf(5_000L);
+        BigDecimal pendingExpenseVat = BigDecimal.valueOf(2_000L);
+        BigDecimal approvedExpenseVat = BigDecimal.valueOf(1_000L);
+
+        saveExpense(tenantId, FinancialTransactionConstants.CATEGORY_TAX, TransactionStatus.COMPLETED,
+                completedTaxExpense.longValue(), BigDecimal.ZERO);
+        saveExpense(tenantId, FinancialTransactionConstants.CATEGORY_TAX, TransactionStatus.PENDING,
+                pendingTaxExpense.longValue(), BigDecimal.ZERO);
+        saveExpense(tenantId, FinancialTransactionConstants.CATEGORY_TAX, TransactionStatus.APPROVED,
+                approvedTaxExpense.longValue(), BigDecimal.ZERO);
+        // monthlyTaxBreakdown 은 카테고리와 무관하게 세액 필드 합 — COMPLETED만 포함되어야 함
+        saveExpense(tenantId, "OFFICE_SUPPLIES", TransactionStatus.COMPLETED, 1_000L, completedExpenseVat);
+        saveExpense(tenantId, "OFFICE_SUPPLIES", TransactionStatus.PENDING, 1_000L, pendingExpenseVat);
+        saveExpense(tenantId, "OFFICE_SUPPLIES", TransactionStatus.APPROVED, 1_000L, approvedExpenseVat);
+        financialTransactionRepository.flush();
+
+        Map<String, Object> monthly = erpService.getMonthlyFinanceReport(
+                String.valueOf(REPORT_DATE.getYear()), String.valueOf(REPORT_DATE.getMonthValue()), null);
+
+        @SuppressWarnings("unchecked")
+        Map<String, Object> monthlyExpenses = (Map<String, Object>) monthly.get("monthlyExpenses");
+        assertThat((BigDecimal) monthlyExpenses.get("taxExpense"))
+                .as("taxExpense는 Validity(COMPLETED) TAX만")
+                .isEqualByComparingTo(completedTaxExpense);
+
+        @SuppressWarnings("unchecked")
+        Map<String, Object> taxBreakdown = (Map<String, Object>) monthly.get("monthlyTaxBreakdown");
+        assertThat((BigDecimal) taxBreakdown.get("expenseVatTotal"))
+                .as("monthlyTaxBreakdown expenseVat는 COMPLETED 세액만")
+                .isEqualByComparingTo(completedExpenseVat);
+        assertThat((BigDecimal) taxBreakdown.get("vatTotal")).isEqualByComparingTo(BigDecimal.ZERO);
+        assertThat((BigDecimal) taxBreakdown.get("withholdingTotal")).isEqualByComparingTo(BigDecimal.ZERO);
+
+        // 지출 콕핏: setUp 40_000 + TAX 20_000 + OFFICE 세액시드 amount 3_000 = 63_000
+        BigDecimal operatorExpenseTotal = EXPECTED_EXPENSE
+                .add(completedTaxExpense).add(pendingTaxExpense).add(approvedTaxExpense)
+                .add(BigDecimal.valueOf(3_000L));
+        assertThat(total(monthly, "monthlyExpenses"))
+                .as("월간 지출 total은 Operator(PENDING/APPROVED 포함) 유지")
+                .isEqualByComparingTo(operatorExpenseTotal);
+
+        @SuppressWarnings("unchecked")
+        Map<String, BigDecimal> expenseBreakdown =
+                (Map<String, BigDecimal>) monthlyExpenses.get("expenseCategoryBreakdown");
+        assertThat(expenseBreakdown.get(FinancialTransactionConstants.CATEGORY_TAX))
+                .as("expenseCategoryBreakdown TAX는 Operator 합(COMPLETED+PENDING+APPROVED)")
+                .isEqualByComparingTo(completedTaxExpense.add(pendingTaxExpense).add(approvedTaxExpense));
+    }
+
     private BigDecimal operatorDashboardNet() {
         Map<String, Object> summary = operatorDashboardSummary();
         return BigDecimal.valueOf(((Number) summary.get("netProfit")).longValue());
@@ -176,6 +234,26 @@ class ErpFinanceReportValidTransactionIntegrationTest {
                 .build();
         tx.setTenantId(tenant);
         tx.setIsDeleted(deleted);
+        financialTransactionRepository.save(tx);
+    }
+
+    private void saveExpense(String tenant, String category, TransactionStatus status, long amount,
+            BigDecimal taxAmount) {
+        FinancialTransaction tx = FinancialTransaction.builder()
+                .transactionType(TransactionType.EXPENSE)
+                .category(category)
+                .amount(BigDecimal.valueOf(amount))
+                .description("erpv-it-tax")
+                .transactionDate(REPORT_DATE)
+                .taxIncluded(false)
+                .taxAmount(taxAmount)
+                .withholdingTaxAmount(BigDecimal.ZERO)
+                .amountBeforeTax(BigDecimal.valueOf(amount))
+                .cardMerchantFeeAmount(BigDecimal.ZERO)
+                .status(status)
+                .build();
+        tx.setTenantId(tenant);
+        tx.setIsDeleted(false);
         financialTransactionRepository.save(tx);
     }
 }

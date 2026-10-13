@@ -1,5 +1,6 @@
 package com.coresolution.consultation.config;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import com.coresolution.core.constants.SecurityRoleConstants;
@@ -468,11 +469,11 @@ public class SecurityConfig {
             log.info("🌐 CORS 설정: 개발 환경 - 개발 도메인 + 서브도메인 + localhost 허용");
             // 개발: 실제 개발 도메인들 + 서브도메인 패턴 + localhost
             // 서브도메인 패턴 사용 (예: *.dev.core-solution.co.kr, *.dev.e-trinity.co.kr 등)
-            configuration.setAllowedOriginPatterns(Arrays.asList(
+            List<String> devOriginPatterns = new ArrayList<>(Arrays.asList(
                 "https://*.dev.core-solution.co.kr",  // 서브도메인 패턴 (mindgarden.dev.core-solution.co.kr 등)
                 "http://*.dev.core-solution.co.kr",
                 "https://dev.core-solution.co.kr",    // 기본 도메인도 명시적으로 허용
-                "http://dev.core-solution.co.kr", 
+                "http://dev.core-solution.co.kr",
                 "https://*.dev.e-trinity.co.kr",
                 "http://*.dev.e-trinity.co.kr",
                 "https://dev.e-trinity.co.kr",        // apex (와일드카드 *.dev.e-trinity.co.kr 미매칭)
@@ -481,10 +482,14 @@ public class SecurityConfig {
                 "http://apply.dev.e-trinity.co.kr",
                 "https://ops.dev.e-trinity.co.kr",
                 "http://ops.dev.e-trinity.co.kr",
-                "http://localhost:3000", 
+                "http://localhost:3000",
                 "http://localhost:3001",
                 "http://localhost:4300"  // Ops Portal 프론트엔드
             ));
+            // Cloudflare 프록시 별칭 등 exact origin (CORS_ALLOWED_ORIGINS) — 패턴에 합류
+            mergeCorsAllowedOriginsFromEnv(devOriginPatterns);
+            configuration.setAllowedOriginPatterns(devOriginPatterns);
+            log.info("🌐 CORS 허용 OriginPatterns (dev): {}", devOriginPatterns);
         } else {
             // 로컬: localhost 명시적으로 허용 (와일드카드와 credentials 충돌 방지)
             log.info("🌐 CORS 설정: 로컬 환경 - localhost 허용");
@@ -577,6 +582,35 @@ public class SecurityConfig {
         log.info("✅ CORS 설정 완료: 모든 경로(/**)에 적용됨");
         
         return source;
+    }
+
+    /**
+     * {@code CORS_ALLOWED_ORIGINS}(쉼표 구분 exact origin)를 허용 목록에 합친다.
+     * Spring Environment 우선, 없으면 프로세스 환경변수.
+     *
+     * @param target 기존 허용 origin/pattern 목록 (변경됨)
+     */
+    private void mergeCorsAllowedOriginsFromEnv(List<String> target) {
+        if (target == null) {
+            return;
+        }
+        String raw = environment.getProperty("CORS_ALLOWED_ORIGINS");
+        if (raw == null || raw.isBlank()) {
+            raw = System.getenv("CORS_ALLOWED_ORIGINS");
+        }
+        if (raw == null || raw.isBlank()) {
+            return;
+        }
+        for (String part : raw.split(",")) {
+            if (part == null) {
+                continue;
+            }
+            String origin = part.trim();
+            if (origin.isEmpty() || target.contains(origin)) {
+                continue;
+            }
+            target.add(origin);
+        }
     }
     
     // 비밀번호 인코더는 PasswordPolicyConfig에서 관리

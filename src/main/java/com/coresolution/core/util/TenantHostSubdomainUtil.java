@@ -1,14 +1,19 @@
 package com.coresolution.core.util;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 import jakarta.servlet.http.HttpServletRequest;
 
 /**
  * Host / X-Forwarded-Host 에서 테넌트 서브도메인 라벨을 추출한다.
  * {@code TenantContextFilter.extractTenantSubdomain} · {@code OAuth2DomainUtil} 과 동일 suffix·예약 라벨 규칙.
+ *
+ * <p>DEV Cloudflare 프록시 별칭 등 {@code TENANT_HOST_ALIASES}({@code host:subdomain[,...]}) 는
+ * suffix 파싱보다 먼저 적용한다. 시스템 프로퍼티 / 환경변수 / {@link #configureHostAliases(String)} 로 주입.</p>
  *
  * @author CoreSolution
  * @since 2026-09-10
@@ -28,13 +33,95 @@ public final class TenantHostSubdomainUtil {
     /** 인프라·온보딩 예약 라벨 (테넌트 아님) */
     private static final Set<String> NON_TENANT_SUBDOMAIN_LABELS;
 
+    /** hostname(소문자, 포트 없음) → 테넌트 라벨. 환경/설정에서 로드. */
+    private static volatile Map<String, String> hostAliases = Collections.emptyMap();
+
     static {
         Set<String> labels = new HashSet<>();
         Collections.addAll(labels, "dev", "app", "api", "staging", "www", "admin", "ops", "apply");
         NON_TENANT_SUBDOMAIN_LABELS = Collections.unmodifiableSet(labels);
+        refreshHostAliasesFromEnvironment();
     }
 
     private TenantHostSubdomainUtil() {
+    }
+
+    /**
+     * 시스템 프로퍼티 {@code TENANT_HOST_ALIASES} 우선, 없으면 환경변수에서 별칭 맵을 다시 읽는다.
+     */
+    public static void refreshHostAliasesFromEnvironment() {
+        String raw = System.getProperty("TENANT_HOST_ALIASES");
+        if (raw == null || raw.isBlank()) {
+            raw = System.getenv("TENANT_HOST_ALIASES");
+        }
+        configureHostAliases(raw);
+    }
+
+    /**
+     * {@code host:subdomain[,host:subdomain...]} 형식의 별칭을 설정한다.
+     * null/blank 이면 별칭을 비운다 (운영·미설정 동작).
+     *
+     * @param raw 별칭 설정 문자열
+     */
+    public static void configureHostAliases(String raw) {
+        hostAliases = Collections.unmodifiableMap(parseHostAliases(raw));
+    }
+
+    /**
+     * 별칭 설정 문자열을 맵으로 파싱한다.
+     *
+     * @param raw {@code host:subdomain[,...]} 또는 null/blank
+     * @return hostname → tenant label (소문자). 불변이 아닐 수 있음(호출측에서 wrap)
+     */
+    public static Map<String, String> parseHostAliases(String raw) {
+        Map<String, String> map = new HashMap<>();
+        if (raw == null || raw.isBlank()) {
+            return map;
+        }
+        for (String part : raw.split(",")) {
+            if (part == null) {
+                continue;
+            }
+            String entry = part.trim();
+            if (entry.isEmpty()) {
+                continue;
+            }
+            int colon = entry.indexOf(':');
+            if (colon <= 0 || colon >= entry.length() - 1) {
+                continue;
+            }
+            String host = entry.substring(0, colon).trim().toLowerCase(Locale.ROOT);
+            String label = entry.substring(colon + 1).trim().toLowerCase(Locale.ROOT);
+            if (host.isEmpty() || label.isEmpty() || label.contains(".")) {
+                continue;
+            }
+            map.put(host, label);
+        }
+        return map;
+    }
+
+    /**
+     * 호스트가 설정된 별칭인지 여부.
+     *
+     * @param host Host 또는 hostname (포트·콤마 허용)
+     * @return 별칭이면 true
+     */
+    public static boolean isConfiguredAliasHost(String host) {
+        return resolveConfiguredAliasLabel(host) != null;
+    }
+
+    /**
+     * 별칭 호스트에 매핑된 테넌트 라벨을 반환한다 (suffix 파싱 없음).
+     *
+     * @param host Host 또는 hostname (포트·콤마 허용)
+     * @return 테넌트 라벨 또는 null
+     */
+    public static String resolveConfiguredAliasLabel(String host) {
+        String hostWithoutPort = normalizeHostWithoutPort(host);
+        if (hostWithoutPort == null) {
+            return null;
+        }
+        return hostAliases.get(hostWithoutPort);
     }
 
     /**
@@ -76,6 +163,7 @@ public final class TenantHostSubdomainUtil {
 
     /**
      * Host 값에서 테넌트 서브도메인 라벨을 추출한다.
+     * 별칭({@code TENANT_HOST_ALIASES})이 있으면 suffix 파싱보다 먼저 적용한다.
      *
      * @param host Host 또는 X-Forwarded-Host (포트·콤마 허용)
      * @return 테넌트 라벨 또는 null
@@ -84,9 +172,14 @@ public final class TenantHostSubdomainUtil {
         if (host == null || host.isBlank() || isNginxRegexServerName(host)) {
             return null;
         }
-        String hostWithoutPort = host.split(",")[0].trim().split(":")[0].trim().toLowerCase(Locale.ROOT);
-        if (hostWithoutPort.isEmpty() || isNginxRegexServerName(hostWithoutPort)) {
+        String hostWithoutPort = normalizeHostWithoutPort(host);
+        if (hostWithoutPort == null || isNginxRegexServerName(hostWithoutPort)) {
             return null;
+        }
+
+        String aliasLabel = hostAliases.get(hostWithoutPort);
+        if (aliasLabel != null && !aliasLabel.isBlank()) {
+            return aliasLabel;
         }
 
         for (String suffix : TENANT_PARENT_DOMAIN_SUFFIXES) {
@@ -103,6 +196,17 @@ public final class TenantHostSubdomainUtil {
             return label;
         }
         return null;
+    }
+
+    private static String normalizeHostWithoutPort(String host) {
+        if (host == null || host.isBlank() || isNginxRegexServerName(host)) {
+            return null;
+        }
+        String hostWithoutPort = host.split(",")[0].trim().split(":")[0].trim().toLowerCase(Locale.ROOT);
+        if (hostWithoutPort.isEmpty()) {
+            return null;
+        }
+        return hostWithoutPort;
     }
 
     private static String usableHostToken(String raw) {

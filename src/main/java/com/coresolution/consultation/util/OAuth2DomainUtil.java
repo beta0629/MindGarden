@@ -1,9 +1,6 @@
 package com.coresolution.consultation.util;
 
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
-
+import com.coresolution.core.util.TenantHostSubdomainUtil;
 import jakarta.annotation.PostConstruct;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -17,6 +14,9 @@ import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 import java.util.stream.Collectors;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
 
 /**
  * OAuth2 도메인 변환 유틸리티
@@ -38,17 +38,10 @@ public class OAuth2DomainUtil {
      */
     private static final Set<String> OAUTH_INFRA_SUBDOMAIN_LABELS;
 
-    /** TenantContextFilter 예약 라벨 + 온보딩 reserved (admin, ops, apply) */
-    private static final Set<String> NON_TENANT_SUBDOMAIN_LABELS;
-
     static {
         Set<String> labels = new HashSet<>();
         Collections.addAll(labels, "dev", "app", "api", "staging", "www");
         OAUTH_INFRA_SUBDOMAIN_LABELS = Collections.unmodifiableSet(labels);
-
-        Set<String> nonTenantLabels = new HashSet<>(labels);
-        Collections.addAll(nonTenantLabels, "admin", "ops", "apply");
-        NON_TENANT_SUBDOMAIN_LABELS = Collections.unmodifiableSet(nonTenantLabels);
     }
 
     @Value("${spring.security.oauth2.domain.main-domains:${OAUTH2_MAIN_DOMAINS:}}")
@@ -208,6 +201,10 @@ public class OAuth2DomainUtil {
         }
 
         String hostWithoutPort = requestHost.split(":")[0].trim().toLowerCase();
+        // 별칭 호스트는 {label}.{parent} 형태가 아니므로 substring 으로 parent 를 만들지 않는다.
+        if (TenantHostSubdomainUtil.isConfiguredAliasHost(hostWithoutPort)) {
+            return resolveFallbackTenantParentDomain();
+        }
         String tenantLabel = extractTenantSubdomainLabel(hostWithoutPort);
         String parentDomain = hostWithoutPort;
         if (tenantLabel != null) {
@@ -258,23 +255,8 @@ public class OAuth2DomainUtil {
     }
 
     private String extractTenantSubdomainLabel(String hostWithoutPort) {
-        if (hostWithoutPort == null || hostWithoutPort.isEmpty()) {
-            return null;
-        }
-        for (String suffix : tenantParentDomainSuffixes) {
-            if (!hostWithoutPort.endsWith(suffix)) {
-                continue;
-            }
-            String label = hostWithoutPort.substring(0, hostWithoutPort.length() - suffix.length());
-            if (label.isEmpty() || label.contains(".")) {
-                return null;
-            }
-            if (NON_TENANT_SUBDOMAIN_LABELS.contains(label)) {
-                return null;
-            }
-            return label;
-        }
-        return null;
+        // TENANT_HOST_ALIASES 포함 — TenantHostSubdomainUtil 과 동일 SSOT
+        return TenantHostSubdomainUtil.extractTenantSubdomain(hostWithoutPort);
     }
 
     private String resolveFallbackTenantParentDomain() {

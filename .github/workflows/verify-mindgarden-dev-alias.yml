@@ -1,0 +1,47 @@
+# Read-only smoke: Cloudflare-proxied DEV alias host
+# No secrets required beyond public HTTPS. Does not restart services.
+name: 🔎 Verify mindgarden-dev alias
+
+on:
+  workflow_dispatch:
+
+jobs:
+  verify-alias:
+    name: Curl alias health + login
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Actuator health
+        run: |
+          set -euo pipefail
+          URL="https://mindgarden-dev.core-solution.co.kr/actuator/health"
+          echo "GET $URL"
+          CODE=$(curl -sS -o /tmp/mg-alias-health.json -w '%{http_code}' --max-time 30 "$URL" || true)
+          echo "HTTP $CODE"
+          head -c 500 /tmp/mg-alias-health.json || true
+          echo
+          if [ "$CODE" != "200" ]; then
+            echo "❌ expected HTTP 200 from actuator/health, got $CODE"
+            exit 1
+          fi
+          echo "✅ actuator/health 200"
+
+      - name: Login / SPA shell
+        run: |
+          set -euo pipefail
+          URL="https://mindgarden-dev.core-solution.co.kr/login"
+          echo "GET $URL"
+          CODE=$(curl -sS -o /tmp/mg-alias-login.html -w '%{http_code}' --max-time 30 -L "$URL" || true)
+          echo "HTTP $CODE"
+          head -c 300 /tmp/mg-alias-login.html || true
+          echo
+          if [ "$CODE" != "200" ]; then
+            echo "❌ expected HTTP 200 from /login, got $CODE"
+            exit 1
+          fi
+          # Soft signal only — HTML may be SPA shell without tenant string
+          if grep -qi 'mindgarden\|root\|<!DOCTYPE html' /tmp/mg-alias-login.html; then
+            echo "✅ login response looks like HTML shell"
+          else
+            echo "⚠️ login body unexpected; HTTP 200 still OK"
+          fi

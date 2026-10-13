@@ -1,10 +1,13 @@
-# .dev 전용 읽기 전용 화면 검증 (verification bot / workflow_dispatch)
+# .dev 전용 읽기 전용 화면 검증
+#
+# Triggers:
+#   - workflow_dispatch (primary) — full inputs
+#   - pull_request → release/dev when this workflow or the collector script changes
+#     (fixed safe defaults; collector mode only)
 #
 # mode:
-#   - inputs.spec_file 비움 → tests/e2e/scripts/dev-screen-verify.mjs 수집기 실행
-#     (로그인 후 path×viewport 스크린샷·콘솔 에러·HTTP≥400·summary.json/md)
-#   - inputs.spec_file 설정 → 해당 Playwright 스펙만 실행
-#     (playwright.manual.config.ts, webServer 없음; BASE_URL=.dev)
+#   - spec_file 비움 → tests/e2e/scripts/dev-screen-verify.mjs 수집기 실행
+#   - spec_file 설정 → 해당 Playwright 스펙만 실행 (playwright.manual.config.ts)
 #
 # 시크릿 SSOT: .cursor/skills/core-solution-testing/SKILL.md
 # 호스트: 스크립트 allowlist — mindgarden.dev.core-solution.co.kr 또는 *.dev.core-solution.co.kr 만
@@ -47,6 +50,12 @@ on:
         required: false
         type: string
         default: '2000'
+  pull_request:
+    branches:
+      - release/dev
+    paths:
+      - '.github/workflows/dev-screen-verify.yml'
+      - 'tests/e2e/scripts/dev-screen-verify.mjs'
 
 jobs:
   dev-screen-verify:
@@ -56,35 +65,58 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Resolve mode and base URL
+      - name: Resolve inputs (dispatch inputs or PR defaults)
         id: resolve
         env:
-          INPUT_BASE_URL: ${{ inputs.base_url }}
+          EVENT_NAME: ${{ github.event_name }}
+          INPUT_PATHS: ${{ github.event_name == 'workflow_dispatch' && inputs.paths || '' }}
+          INPUT_VIEWPORTS: ${{ github.event_name == 'workflow_dispatch' && inputs.viewports || '' }}
+          INPUT_ROLE: ${{ github.event_name == 'workflow_dispatch' && inputs.role || '' }}
+          INPUT_BASE_URL: ${{ github.event_name == 'workflow_dispatch' && inputs.base_url || '' }}
+          INPUT_SPEC_FILE: ${{ github.event_name == 'workflow_dispatch' && inputs.spec_file || '' }}
+          INPUT_WAIT_MS: ${{ github.event_name == 'workflow_dispatch' && inputs.wait_ms || '' }}
           SECRET_E2E_BASE_URL: ${{ secrets.E2E_BASE_URL }}
-          SPEC_FILE_INPUT: ${{ inputs.spec_file }}
         run: |
           set -euo pipefail
-          BASE="${INPUT_BASE_URL:-}"
-          if [ -z "${BASE}" ]; then
-            BASE="https://mindgarden.dev.core-solution.co.kr"
+          # PR / non-dispatch: fixed safe defaults (collector against .dev)
+          PATHS_VAL="${INPUT_PATHS:-}"
+          VIEWPORTS_VAL="${INPUT_VIEWPORTS:-}"
+          ROLE_VAL="${INPUT_ROLE:-}"
+          BASE_VAL="${INPUT_BASE_URL:-}"
+          SPEC_VAL="${INPUT_SPEC_FILE:-}"
+          WAIT_VAL="${INPUT_WAIT_MS:-}"
+
+          if [ "${EVENT_NAME}" != "workflow_dispatch" ]; then
+            PATHS_VAL="/login,/admin/dashboard"
+            VIEWPORTS_VAL="390,1440"
+            ROLE_VAL="admin"
+            BASE_VAL="https://mindgarden.dev.core-solution.co.kr"
+            SPEC_VAL=""
+            WAIT_VAL="2000"
           fi
-          # Prefer input base_url. Optionally adopt E2E_BASE_URL secret only if it looks like .dev.
+
+          if [ -z "${PATHS_VAL}" ]; then PATHS_VAL="/login,/admin/dashboard"; fi
+          if [ -z "${VIEWPORTS_VAL}" ]; then VIEWPORTS_VAL="390,1440"; fi
+          if [ -z "${ROLE_VAL}" ]; then ROLE_VAL="admin"; fi
+          if [ -z "${BASE_VAL}" ]; then BASE_VAL="https://mindgarden.dev.core-solution.co.kr"; fi
+          if [ -z "${WAIT_VAL}" ]; then WAIT_VAL="2000"; fi
+
+          # Prefer resolved base_url. Optionally adopt E2E_BASE_URL secret only if it looks like .dev.
           if [ -n "${SECRET_E2E_BASE_URL:-}" ]; then
             case "${SECRET_E2E_BASE_URL}" in
               *mindgarden.dev.core-solution.co.kr*|*'.dev.core-solution.co.kr'*)
-                # Keep input as primary; secret is available to script as E2E_BASE_URL only when .dev
                 echo "secret_e2e_base_url_is_dev=true" >> "$GITHUB_OUTPUT"
                 ;;
               *)
                 echo "secret_e2e_base_url_is_dev=false" >> "$GITHUB_OUTPUT"
-                echo "::warning::E2E_BASE_URL secret is set but not a .dev host; ignoring secret (input base_url wins)."
+                echo "::warning::E2E_BASE_URL secret is set but not a .dev host; ignoring secret (resolved base_url wins)."
                 ;;
             esac
           else
             echo "secret_e2e_base_url_is_dev=false" >> "$GITHUB_OUTPUT"
           fi
-          echo "base_url=${BASE}" >> "$GITHUB_OUTPUT"
-          SPEC_TRIMMED="$(printf '%s' "${SPEC_FILE_INPUT:-}" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')"
+
+          SPEC_TRIMMED="$(printf '%s' "${SPEC_VAL}" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')"
           if [ -n "${SPEC_TRIMMED}" ]; then
             echo "mode=spec" >> "$GITHUB_OUTPUT"
             echo "spec_file=${SPEC_TRIMMED}" >> "$GITHUB_OUTPUT"
@@ -92,12 +124,23 @@ jobs:
             echo "mode=collector" >> "$GITHUB_OUTPUT"
             echo "spec_file=" >> "$GITHUB_OUTPUT"
           fi
-          echo "Resolved mode and base_url host gate will be enforced by script/spec env."
+
+          {
+            echo "paths=${PATHS_VAL}"
+            echo "viewports=${VIEWPORTS_VAL}"
+            echo "role=${ROLE_VAL}"
+            echo "base_url=${BASE_VAL}"
+            echo "wait_ms=${WAIT_VAL}"
+            echo "event_name=${EVENT_NAME}"
+          } >> "$GITHUB_OUTPUT"
+
+          echo "Resolved: event=${EVENT_NAME} mode=$( [ -n "${SPEC_TRIMMED}" ] && echo spec || echo collector ) role=${ROLE_VAL} paths=${PATHS_VAL} viewports=${VIEWPORTS_VAL} wait_ms=${WAIT_VAL}"
+          echo "base_url host gate enforced by collector/spec step (dev-only)."
 
       - name: Credential gate (presence only — no secrets logged)
         id: cred_gate
         env:
-          ROLE: ${{ inputs.role }}
+          ROLE: ${{ steps.resolve.outputs.role }}
           E2E_TEST_EMAIL: ${{ secrets.E2E_TEST_EMAIL }}
           E2E_TEST_PASSWORD: ${{ secrets.E2E_TEST_PASSWORD }}
           E2E_ADMIN_USERNAME: ${{ secrets.E2E_ADMIN_USERNAME }}
@@ -172,9 +215,9 @@ jobs:
         env:
           CI: 'true'
           ROLE: ${{ steps.cred_gate.outputs.role }}
-          PATHS: ${{ inputs.paths }}
-          VIEWPORTS: ${{ inputs.viewports }}
-          WAIT_MS: ${{ inputs.wait_ms }}
+          PATHS: ${{ steps.resolve.outputs.paths }}
+          VIEWPORTS: ${{ steps.resolve.outputs.viewports }}
+          WAIT_MS: ${{ steps.resolve.outputs.wait_ms }}
           BASE_URL: ${{ steps.resolve.outputs.base_url }}
           E2E_BASE_URL: ${{ steps.resolve.outputs.secret_e2e_base_url_is_dev == 'true' && secrets.E2E_BASE_URL || '' }}
           E2E_TENANT_ID: ${{ secrets.E2E_TENANT_ID }}

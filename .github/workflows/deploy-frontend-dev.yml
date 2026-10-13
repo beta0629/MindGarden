@@ -55,6 +55,8 @@ jobs:
           REACT_APP_APPLE_REDIRECT_URI: ${{ secrets.REACT_APP_APPLE_REDIRECT_URI }}
           REACT_APP_PRIVACY_CONTACT_EMAIL: ${{ vars.PRIVACY_CONTACT_EMAIL }}
           REACT_APP_PRIVACY_CONTACT_PHONE: ${{ vars.PRIVACY_CONTACT_PHONE }}
+          # DEV Cloudflare 프록시 별칭 → mindgarden (plain value, not secret)
+          REACT_APP_TENANT_HOST_ALIASES: mindgarden-dev.core-solution.co.kr:mindgarden
         run: |
           cd frontend
           npm run build:ci

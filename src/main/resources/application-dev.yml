@@ -147,4 +147,9 @@ mindgarden:
 monitoring:
   discord:
     webhook-url: ${DISCORD_WEBHOOK_URL:}
+
+# DEV Cloudflare 프록시 별칭 → 테넌트 라벨 (prod 프로파일에는 두지 않음)
+# 예: mindgarden-dev.core-solution.co.kr → mindgarden
+tenant:
+  host-aliases: ${TENANT_HOST_ALIASES:mindgarden-dev.core-solution.co.kr:mindgarden}
 # noop trigger: retrigger Onboarding BE .dev after AdminShop duplicate fix (639203240, 2026-09-17)

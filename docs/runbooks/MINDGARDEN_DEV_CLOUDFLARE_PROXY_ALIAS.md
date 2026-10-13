@@ -54,10 +54,12 @@ sudo nginx -t && sudo systemctl reload nginx
 |------|-----|--------|
 | `config/environments/development/dev.env` | `TENANT_HOST_ALIASES` | `mindgarden-dev.core-solution.co.kr:mindgarden` |
 | `application-dev.yml` | `tenant.host-aliases` | `${TENANT_HOST_ALIASES:...}` |
-| `dev.env` | `CORS_ALLOWED_ORIGINS` | `...`에 `https://mindgarden-dev.core-solution.co.kr` 포함 |
+| `dev.env` | `CORS_ALLOWED_ORIGINS` | (optional) extra exact origins |
 | FE 빌드 (`deploy-frontend-dev.yml`) | `REACT_APP_TENANT_HOST_ALIASES` | 동일 형식 |
 
 호스트명 매핑은 env/yml 만 사용한다. Java/JS 비즈니스 로직에 호스트 하드코딩 금지.
+
+DEV CORS 는 `tenant.host-aliases` / `TENANT_HOST_ALIASES` 호스트를 자동으로 exact origin(`https://`·`http://`)에 합류한다 — `CORS_ALLOWED_ORIGINS` 가 비어 있어도 별칭 Origin 이 허용된다.
 
 - OAuth apex·Kakao/Naver redirect URI 는 `dev.core-solution.co.kr` 유지.
 - 쿠키는 DEV host-only — 별칭 호스트에서 Domain 변경 불필요.

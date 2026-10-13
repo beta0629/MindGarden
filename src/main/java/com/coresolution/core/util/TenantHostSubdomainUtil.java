@@ -90,6 +90,18 @@ public final class TenantHostSubdomainUtil {
     }
 
     /**
+     * 현재 설정된 별칭 hostname 집합(소문자, 포트 없음).
+     * {@link #configureHostAliases(String)} 미호출·운영 시 비어 있다.
+     * CORS 빈은 PostConstruct 레이스를 피하려고 Spring {@code tenant.host-aliases} 를
+     * 직접 읽는 쪽을 우선한다 — 본 메서드는 필터·테스트·진단용 SSOT 조회다.
+     *
+     * @return 불변 Set (비어 있을 수 있음)
+     */
+    public static Set<String> getConfiguredAliasHosts() {
+        return hostAliases.keySet();
+    }
+
+    /**
      * 호스트가 설정된 별칭인지 여부.
      *
      * @param host Host 또는 hostname (포트·콤마 허용)

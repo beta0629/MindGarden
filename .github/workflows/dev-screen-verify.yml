@@ -10,7 +10,7 @@
 #   - spec_file 설정 → 해당 Playwright 스펙만 실행 (playwright.manual.config.ts)
 #
 # 시크릿 SSOT: .cursor/skills/core-solution-testing/SKILL.md
-# 호스트: 스크립트 allowlist — mindgarden.dev.core-solution.co.kr 또는 *.dev.core-solution.co.kr 만
+# 호스트: 스크립트 allowlist — mindgarden.dev.core-solution.co.kr, Cloudflare 별칭 mindgarden-dev.core-solution.co.kr, 또는 *.dev.core-solution.co.kr 만
 name: Dev screen verify (read-only)
 
 on:
@@ -107,7 +107,7 @@ jobs:
           # Prefer resolved base_url. Optionally adopt E2E_BASE_URL secret only if it looks like .dev.
           if [ -n "${SECRET_E2E_BASE_URL:-}" ]; then
             case "${SECRET_E2E_BASE_URL}" in
-              *mindgarden.dev.core-solution.co.kr*|*'.dev.core-solution.co.kr'*)
+              *mindgarden.dev.core-solution.co.kr*|*mindgarden-dev.core-solution.co.kr*|*'.dev.core-solution.co.kr'*)
                 echo "secret_e2e_base_url_is_dev=true" >> "$GITHUB_OUTPUT"
                 ;;
               *)
@@ -289,6 +289,7 @@ jobs:
             const host = new URL(process.env.BASE_URL).hostname.toLowerCase();
             const ok =
               host === "mindgarden.dev.core-solution.co.kr" ||
+              host === "mindgarden-dev.core-solution.co.kr" ||
               host.endsWith(".dev.core-solution.co.kr");
             if (!ok || host === "localhost" || host === "127.0.0.1") {
               console.error("BASE_URL host rejected (dev-only)");

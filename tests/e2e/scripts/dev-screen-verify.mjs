@@ -29,6 +29,8 @@ import { chromium } from 'playwright';
 
 /** .dev allowlist — 호스트 게이트 상수만 허용 (프로덕션·localhost 거부). §17 하드코딩 게이트 예외. */
 const ALLOWED_DEV_HOST_EXACT = 'mindgarden.dev.core-solution.co.kr';
+/** Cloudflare 별칭 (하이픈). `*.dev.core-solution.co.kr` suffix 와는 별도 exact. */
+const ALLOWED_DEV_HOST_ALIAS_EXACT = 'mindgarden-dev.core-solution.co.kr';
 const ALLOWED_DEV_HOST_SUFFIX = '.dev.core-solution.co.kr';
 
 const UNIFIED_LOGIN_IDENTIFIER_SELECTOR =
@@ -72,10 +74,11 @@ function assertDevOnlyBaseUrl(raw) {
     throw new Error(`Rejected BASE_URL host: localhost is not allowed (dev-only)`);
   }
   const isExact = host === ALLOWED_DEV_HOST_EXACT;
+  const isAliasExact = host === ALLOWED_DEV_HOST_ALIAS_EXACT;
   const isSuffix = host.endsWith(ALLOWED_DEV_HOST_SUFFIX);
-  if (!isExact && !isSuffix) {
+  if (!isExact && !isAliasExact && !isSuffix) {
     throw new Error(
-      `Rejected BASE_URL host: must be ${ALLOWED_DEV_HOST_EXACT} or *.${ALLOWED_DEV_HOST_SUFFIX.slice(1)} (got host rejected)`
+      `Rejected BASE_URL host: must be ${ALLOWED_DEV_HOST_EXACT}, ${ALLOWED_DEV_HOST_ALIAS_EXACT}, or *.${ALLOWED_DEV_HOST_SUFFIX.slice(1)} (got host rejected)`
     );
   }
   // Strip trailing slash for consistent joins

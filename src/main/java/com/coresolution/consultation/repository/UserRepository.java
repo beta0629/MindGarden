@@ -37,6 +37,20 @@ public interface UserRepository extends BaseRepository<User, Long> {
     Optional<User> findByTenantIdAndIdIgnoringDeleted(@Param("tenantId") String tenantId, @Param("id") Long id);
 
     /**
+     * 관리자 수동 매칭 배정(createMappingFromAdmin) 동시 요청을 내담자 단위로 직렬화한다 (users 행 잠금).
+     * 트랜잭션의 첫 조회로 호출해야 이후 짧은 시간창 중복 가드가 먼저 커밋된 매칭을 본다.
+     *
+     * @param tenantId 테넌트 ID
+     * @param clientId 내담자 users.id
+     * @return 잠근 행 id (없으면 빈 목록)
+     * @author MindGarden
+     * @since 2026-10-14
+     */
+    @Query(value = "SELECT u.id FROM users u WHERE u.tenant_id = :tenantId AND u.id = :clientId FOR UPDATE",
+            nativeQuery = true)
+    List<Long> lockClientRowForMappingCreate(@Param("tenantId") String tenantId, @Param("clientId") Long clientId);
+
+    /**
      * Apple Sign in with Apple {@code sub} 식별자로 사용자 조회.
      *
      * <p>Apple App Store 4.8 (T1) 대응 — Apple identityToken 의 {@code sub} 는 전역·영구 식별자.

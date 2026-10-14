@@ -73,17 +73,21 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
- * 관리자 매칭 생성(createMapping) 짧은 시간창 내 동일 상품 중복 생성 가드 검증.
+ * 관리자 수동 배정(createMappingFromAdmin) 짧은 시간창 내 동일 상품 중복 생성 가드 검증.
  *
  * <p>요구사항: 같은 tenant + 상담사 + 내담자 + 동일 packageName(trim 정규화) 매칭이 짧은 시간창
  * (기본 30초) 안에 이미 있으면 신규 생성을 거부한다. 서로 다른 packageName 은 짧은 시간 안에도
  * 허용된다. 결제·환불·ERP·회기 차감 로직은 검증 대상이 아니다.</p>
  *
+ * <p>가드는 관리자 수동 배정 경로({@code createMappingFromAdmin})에만 적용되며, 결제 확정
+ * (PaymentServiceImpl) 등 기존 호출자가 쓰는 {@code createMapping}에는 적용되지 않는다
+ * (부분 성공 방지, #1616 후속).</p>
+ *
  * @author MindGarden
  * @since 2026-10-14
  */
 @ExtendWith(MockitoExtension.class)
-@DisplayName("AdminServiceImpl createMapping 짧은 시간창 중복 생성 가드")
+@DisplayName("AdminServiceImpl createMappingFromAdmin 짧은 시간창 중복 생성 가드")
 class AdminServiceImplCreateMappingDuplicateWindowTest {
 
     private static final String TEST_TENANT_ID = "tenant-duplicate-window-" + UUID.randomUUID();
@@ -199,6 +203,8 @@ class AdminServiceImplCreateMappingDuplicateWindowTest {
                 .thenReturn(Optional.of(consultant));
         when(userRepository.findByTenantIdAndId(eq(TEST_TENANT_ID), eq(CLIENT_ID)))
                 .thenReturn(Optional.of(client));
+        org.mockito.Mockito.lenient().when(userRepository.lockClientRowForMappingCreate(eq(TEST_TENANT_ID), eq(CLIENT_ID)))
+                .thenReturn(List.of(CLIENT_ID));
         when(mappingRepository.findByTenantIdAndConsultantAndClientAndStatusIn(
                 eq(TEST_TENANT_ID), eq(consultant), eq(client), anyCollection()))
                 .thenReturn(List.<ConsultantClientMapping>of());
@@ -230,15 +236,15 @@ class AdminServiceImplCreateMappingDuplicateWindowTest {
 
     @Test
     @DisplayName("동일 상담사·내담자·동일 packageName — 두 번째 생성 시 짧은 시간창 내 중복으로 거부(save 1회만)")
-    void createMapping_sameConsultantClientAndPackageName_rejectsSecondCallWithinWindow() {
+    void createMappingFromAdmin_sameConsultantClientAndPackageName_rejectsSecondCallWithinWindow() {
         when(mappingRepository
                 .existsByTenantIdAndConsultant_IdAndClient_IdAndPackageNameAndCreatedAtGreaterThanEqual(
                         eq(TEST_TENANT_ID), eq(CONSULTANT_ID), eq(CLIENT_ID), eq("표준 패키지"), any()))
                 .thenReturn(false, true);
 
-        adminService.createMapping(newRequest("표준 패키지"));
+        adminService.createMappingFromAdmin(newRequest("표준 패키지"));
 
-        assertThatThrownBy(() -> adminService.createMapping(newRequest("표준 패키지")))
+        assertThatThrownBy(() -> adminService.createMappingFromAdmin(newRequest("표준 패키지")))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage(AdminServiceUserFacingMessages.MSG_MAPPING_CREATE_DUPLICATE_WINDOW);
 
@@ -247,14 +253,14 @@ class AdminServiceImplCreateMappingDuplicateWindowTest {
 
     @Test
     @DisplayName("동일 상담사·내담자·서로 다른 packageName — 두 번 모두 저장 성공")
-    void createMapping_differentPackageNames_bothSucceed() {
+    void createMappingFromAdmin_differentPackageNames_bothSucceed() {
         when(mappingRepository
                 .existsByTenantIdAndConsultant_IdAndClient_IdAndPackageNameAndCreatedAtGreaterThanEqual(
                         eq(TEST_TENANT_ID), eq(CONSULTANT_ID), eq(CLIENT_ID), any(String.class), any()))
                 .thenReturn(false);
 
-        ConsultantClientMapping first = adminService.createMapping(newRequest("표준 패키지"));
-        ConsultantClientMapping second = adminService.createMapping(newRequest("프리미엄 패키지"));
+        ConsultantClientMapping first = adminService.createMappingFromAdmin(newRequest("표준 패키지"));
+        ConsultantClientMapping second = adminService.createMappingFromAdmin(newRequest("프리미엄 패키지"));
 
         assertThat(first.getPackageName()).isEqualTo("표준 패키지");
         assertThat(second.getPackageName()).isEqualTo("프리미엄 패키지");
@@ -263,18 +269,64 @@ class AdminServiceImplCreateMappingDuplicateWindowTest {
 
     @Test
     @DisplayName("packageName 앞뒤 공백은 trim 후 비교 — 공백만 다른 동일 상품은 중복으로 거부")
-    void createMapping_packageNameWhitespaceTrimmed_treatedAsDuplicate() {
+    void createMappingFromAdmin_packageNameWhitespaceTrimmed_treatedAsDuplicate() {
         when(mappingRepository
                 .existsByTenantIdAndConsultant_IdAndClient_IdAndPackageNameAndCreatedAtGreaterThanEqual(
                         eq(TEST_TENANT_ID), eq(CONSULTANT_ID), eq(CLIENT_ID), eq("표준 패키지"), any()))
                 .thenReturn(false, true);
 
-        adminService.createMapping(newRequest("표준 패키지"));
+        adminService.createMappingFromAdmin(newRequest("표준 패키지"));
 
-        assertThatThrownBy(() -> adminService.createMapping(newRequest("  표준 패키지  ")))
+        assertThatThrownBy(() -> adminService.createMappingFromAdmin(newRequest("  표준 패키지  ")))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage(AdminServiceUserFacingMessages.MSG_MAPPING_CREATE_DUPLICATE_WINDOW);
 
         verify(mappingRepository, times(1)).save(any(ConsultantClientMapping.class));
+    }
+
+    @Test
+    @DisplayName("동일 상담사·내담자·동일 packageName — 30초 경과(창 밖) 후 재요청은 두 번째도 성공(save 2회)")
+    void createMappingFromAdmin_secondCallAfterWindowElapsed_bothSucceed() {
+        // exists 쿼리가 창 밖(false)을 반환하도록 모킹 — 첫 생성 후 30초가 지나 창이 닫힌 상황을 흉내낸다.
+        when(mappingRepository
+                .existsByTenantIdAndConsultant_IdAndClient_IdAndPackageNameAndCreatedAtGreaterThanEqual(
+                        eq(TEST_TENANT_ID), eq(CONSULTANT_ID), eq(CLIENT_ID), eq("표준 패키지"), any()))
+                .thenReturn(false, false);
+
+        ConsultantClientMapping first = adminService.createMappingFromAdmin(newRequest("표준 패키지"));
+        ConsultantClientMapping second = adminService.createMappingFromAdmin(newRequest("표준 패키지"));
+
+        assertThat(first.getPackageName()).isEqualTo("표준 패키지");
+        assertThat(second.getPackageName()).isEqualTo("표준 패키지");
+        verify(mappingRepository, times(2)).save(any(ConsultantClientMapping.class));
+    }
+
+    @Test
+    @DisplayName("createMappingFromAdmin — 내담자 행 잠금(lockClientRowForMappingCreate)을 호출한다")
+    void createMappingFromAdmin_locksClientRow() {
+        when(mappingRepository
+                .existsByTenantIdAndConsultant_IdAndClient_IdAndPackageNameAndCreatedAtGreaterThanEqual(
+                        eq(TEST_TENANT_ID), eq(CONSULTANT_ID), eq(CLIENT_ID), any(String.class), any()))
+                .thenReturn(false);
+
+        adminService.createMappingFromAdmin(newRequest("표준 패키지"));
+
+        verify(userRepository).lockClientRowForMappingCreate(TEST_TENANT_ID, CLIENT_ID);
+    }
+
+    @Test
+    @DisplayName("createMapping(비관리자, 결제 경로) — 짧은 시간창 중복 가드 미적용: exists 호출 없음, 중복이어도 save 성공")
+    void createMapping_paymentPath_doesNotApplyDuplicateWindowGuard() {
+        ConsultantClientMapping first = adminService.createMapping(newRequest("표준 패키지"));
+        ConsultantClientMapping second = adminService.createMapping(newRequest("표준 패키지"));
+
+        assertThat(first.getPackageName()).isEqualTo("표준 패키지");
+        assertThat(second.getPackageName()).isEqualTo("표준 패키지");
+        verify(mappingRepository, times(2)).save(any(ConsultantClientMapping.class));
+        verify(mappingRepository, org.mockito.Mockito.never())
+                .existsByTenantIdAndConsultant_IdAndClient_IdAndPackageNameAndCreatedAtGreaterThanEqual(
+                        any(), any(), any(), any(), any());
+        verify(userRepository, org.mockito.Mockito.never())
+                .lockClientRowForMappingCreate(any(), any());
     }
 }

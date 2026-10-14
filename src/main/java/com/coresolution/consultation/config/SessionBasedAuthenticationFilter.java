@@ -8,6 +8,7 @@ import java.util.List;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.entity.UserSession;
 import com.coresolution.consultation.constant.SessionConstants;
+import com.coresolution.consultation.constant.auth.PasswordChangeGate;
 import com.coresolution.consultation.constant.SessionManagementConstants;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.UserSessionService;
@@ -78,6 +79,7 @@ public class SessionBasedAuthenticationFilter extends OncePerRequestFilter {
         }
         
         HttpServletRequest requestToUse = request; // 기본값은 원본 요청
+        boolean sessionRequiresPasswordChange = false;
         
         try {
             // 쿠키에서 JSESSIONID 확인
@@ -252,6 +254,9 @@ public class SessionBasedAuthenticationFilter extends OncePerRequestFilter {
                 }
 
                 if (session != null && user != null) {
+                    if (Boolean.FALSE.equals(user.getIsPasswordChanged())) {
+                        sessionRequiresPasswordChange = true;
+                    }
                     // 기존 인증 정보 확인
                     Authentication existingAuth = SecurityContextHolder.getContext().getAuthentication();
                     log.info("🔍 기존 인증 정보: {}", existingAuth != null ? existingAuth.getName() : "null");
@@ -317,6 +322,13 @@ public class SessionBasedAuthenticationFilter extends OncePerRequestFilter {
             SecurityContextHolder.clearContext();
         }
         
+        if (sessionRequiresPasswordChange && !PasswordChangeGate.isAllowed(requestToUse)) {
+            log.info("비밀번호 변경 전 세션 거부: path={}", requestToUse.getRequestURI());
+            SecurityContextHolder.clearContext();
+            PasswordChangeGate.writeForbidden(response);
+            return;
+        }
+
         // 다음 필터로 진행 (모바일 앱인 경우 래핑된 요청 사용, 웹은 원본 요청 사용)
         filterChain.doFilter(requestToUse, response);
     }

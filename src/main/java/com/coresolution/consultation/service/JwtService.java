@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.function.Function;
 import com.coresolution.consultation.constant.SessionManagementConstants;
+import com.coresolution.consultation.constant.auth.PasswordChangeGate;
 import com.coresolution.consultation.constant.oauth.OAuthJwtClaimKeys;
 import com.coresolution.consultation.constant.oauth.OAuthJwtClaimValues;
 import com.coresolution.consultation.dto.OAuthPhoneAccountSelectionClaims;
@@ -123,6 +124,7 @@ public class JwtService {
         }
 
         claims.put(SessionManagementConstants.JWT_CLAIM_SESSION_ID, bindPendingSessionId(user));
+        putPasswordChangeClaim(claims, user);
         
         log.debug("JWT 토큰 생성: userId={}, tenantId={}, permissions={}", 
             user.getId(), user.getTenantId(), 
@@ -204,7 +206,35 @@ public class JwtService {
             claims.put("tenantId", user.getTenantId());
         }
         claims.put(SessionManagementConstants.JWT_CLAIM_REFRESH_TOKEN_ID, resolvedTokenId);
+        putPasswordChangeClaim(claims, user);
         return buildToken(claims, user.getUserId(), refreshExpiration);
+    }
+
+    /**
+     * 비밀번호 변경 전 계정이면 Access·Refresh 모두에 제한 클레임을 넣는다.
+     * null·true 는 클레임을 넣지 않아 기존 로그인과 같다.
+     */
+    private static void putPasswordChangeClaim(Map<String, Object> claims, User user) {
+        if (user != null && Boolean.FALSE.equals(user.getIsPasswordChanged())) {
+            claims.put(PasswordChangeGate.CLAIM, Boolean.TRUE);
+        }
+    }
+
+    /**
+     * @param token Access 또는 Refresh JWT
+     * @return {@code pwd_change_required=true} 이면 true. 파싱 실패·클레임 없음은 false
+     */
+    public boolean isPasswordChangeRequired(String token) {
+        if (token == null || token.isBlank()) {
+            return false;
+        }
+        try {
+            Boolean required = extractClaim(token, claims -> claims.get(PasswordChangeGate.CLAIM, Boolean.class));
+            return Boolean.TRUE.equals(required);
+        } catch (Exception e) {
+            log.debug("비밀번호 변경 클레임 확인 실패: {}", e.getMessage());
+            return false;
+        }
     }
 
     /**

@@ -1,9 +1,12 @@
 package com.coresolution.consultation.controller;
 
+import java.util.HashMap;
 import java.util.Map;
+import com.coresolution.consultation.dto.AuthResponse;
 import com.coresolution.consultation.dto.PasswordChangeRequest;
 import com.coresolution.consultation.dto.PasswordResetRequest;
 import com.coresolution.consultation.entity.User;
+import com.coresolution.consultation.service.AuthService;
 import com.coresolution.consultation.service.PasswordConfigService;
 import com.coresolution.consultation.service.PasswordResetService;
 import com.coresolution.consultation.service.PasswordValidationService;
@@ -17,6 +20,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -40,6 +44,7 @@ public class PasswordManagementController {
     private final PasswordResetService passwordResetService;
     private final UserService userService;
     private final PasswordService passwordService;
+    private final AuthService authService;
     
     /**
      * 비밀번호 정책 요구사항 조회
@@ -119,7 +124,8 @@ public class PasswordManagementController {
      * 비밀번호 변경
      */
     @PostMapping("/change")
-    public ResponseEntity<Map<String, Object>> changePassword(@RequestBody PasswordChangeRequest request, HttpSession session) {
+    public ResponseEntity<Map<String, Object>> changePassword(@RequestBody PasswordChangeRequest request,
+            HttpSession session, HttpServletRequest httpRequest) {
         try {
             User currentUser = SessionUtils.getCurrentUser(session);
             if (currentUser == null) {
@@ -176,11 +182,27 @@ public class PasswordManagementController {
             );
             
             log.info("✅ 비밀번호 변경 성공: userId={}", currentUser.getId());
-            
-            return ResponseEntity.ok(Map.of(
-                "success", true,
-                "message", "비밀번호가 성공적으로 변경되었습니다."
-            ));
+
+            currentUser.setIsPasswordChanged(Boolean.TRUE);
+            SessionUtils.setCurrentUser(session, currentUser);
+
+            Map<String, Object> body = new HashMap<>();
+            body.put("success", true);
+            body.put("message", "비밀번호가 성공적으로 변경되었습니다.");
+            body.put("requiresPasswordChange", false);
+            try {
+                AuthResponse issued = authService.issueTokensForUser(currentUser, httpRequest);
+                if (issued != null && issued.getToken() != null) {
+                    body.put("accessToken", issued.getToken());
+                }
+                if (issued != null && issued.getRefreshToken() != null) {
+                    body.put("refreshToken", issued.getRefreshToken());
+                }
+            } catch (Exception tokenError) {
+                log.warn("비밀번호 변경 후 토큰 재발급 실패: userId={}, error={}",
+                    currentUser.getId(), tokenError.getMessage());
+            }
+            return ResponseEntity.ok(body);
 
         } catch (PasswordService.InvalidPasswordException e) {
             log.warn("비밀번호 변경 정책 거절: {}", e.getMessage());

@@ -5,7 +5,9 @@
 #   운영 시크릿은 참조하지 않는다. DEV_DB_NAME 이 옛 운영 스키마 이름이면 접속 전에 중단한다.
 #
 # 안전 장치:
-#   - workflow_dispatch 만. push / pull_request 트리거 없음.
+#   - workflow_dispatch. 이 파일이 default branch(main)에 없으면
+#     `gh workflow run --ref` 가 404 이므로, dev-deposit-erp-diagnose 첫 실행과 같이
+#     이 파일만 바꾸는 release/dev pull_request 로 1회 실행한다. push 트리거 없음.
 #   - mysql 세션은 --init-command 로 SET SESSION TRANSACTION READ ONLY.
 #   - SQL 은 이 파일에 고정. 집계 전에 information_schema 로 컬럼·타입을 확인하고,
 #     transaction_date 가 DATETIME/TIMESTAMP 이면 끝 조건을 < 다음날(2026-11-01)로 바꾼다.
@@ -15,6 +17,10 @@ name: 1627 개발 DB Q1-Q4 (읽기 전용)
 
 on:
   workflow_dispatch:
+  pull_request:
+    branches: [release/dev]
+    paths:
+      - '.github/workflows/dev-1627-q1-q4-readonly.yml'
 
 permissions:
   contents: read

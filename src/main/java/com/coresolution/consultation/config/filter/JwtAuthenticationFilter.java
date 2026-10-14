@@ -6,6 +6,7 @@ import java.util.Collection;
 import java.util.List;
 import com.coresolution.consultation.config.DuplicateLoginAccessBlockRegistry;
 import com.coresolution.consultation.constant.LifecycleState;
+import com.coresolution.consultation.constant.auth.PasswordChangeGate;
 import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.repository.UserRepository;
@@ -95,6 +96,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 }
 
                 if (isValid) {
+                    if (jwtService.isPasswordChangeRequired(token)
+                            && !PasswordChangeGate.isAllowed(request)) {
+                        log.info("비밀번호 변경 전 토큰 거부: path={}", requestPath);
+                        PasswordChangeGate.writeForbidden(response);
+                        return;
+                    }
                     String userId = jwtService.extractUsername(token);
 
                     // Ops Portal API인 경우 JWT 토큰을 항상 우선 적용 (기존 인증 정보 덮어쓰기)

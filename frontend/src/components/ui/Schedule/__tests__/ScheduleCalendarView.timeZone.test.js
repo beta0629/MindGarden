@@ -38,9 +38,6 @@ jest.mock('@fullcalendar/react', () => {
 jest.mock('@fullcalendar/daygrid', () => ({ __esModule: true, default: { id: 'daygrid' } }));
 jest.mock('@fullcalendar/timegrid', () => ({ __esModule: true, default: { id: 'timegrid' } }));
 jest.mock('@fullcalendar/interaction', () => ({ __esModule: true, default: { id: 'interaction' } }));
-jest.mock('@fullcalendar/luxon3', () => ({ __esModule: true, default: { id: 'luxon3' } }), {
-  virtual: true
-});
 
 import ScheduleCalendarView from '../ScheduleCalendarView';
 
@@ -69,7 +66,7 @@ describe('ScheduleCalendarView timeZone Asia/Seoul', () => {
     expect(captured.timeZone).toBe(DEFAULT_ZONE);
     expect(captured.timeZone).toBe('Asia/Seoul');
     expect(captured.nowIndicator).toBe(true);
-    expect(captured.plugins.some((p) => p && p.id === 'luxon3')).toBe(true);
+    expect(captured.plugins.some((p) => p && p.name === '@fullcalendar/luxon3')).toBe(true);
   });
 
   test('절대 ISO 휴가는 floating KST로 정규화되어 LA/Seoul 벽시계가 같다', () => {

@@ -32,6 +32,8 @@ class PublicApiPathPolicyTest {
     void isPublicApi() {
         assertThat(PublicApiPathPolicy.isPublicApi("/api/v1/auth/login")).isTrue();
         assertThat(PublicApiPathPolicy.isPublicApi("/login")).isTrue();
+        assertThat(PublicApiPathPolicy.isPublicApi("/api/v1/time")).isTrue();
+        assertThat(PublicApiPathPolicy.isPublicApi("/api/v1/time?x=1")).isTrue();
         assertThat(PublicApiPathPolicy.isPublicApi("/api/v1/admin/users")).isFalse();
     }
 

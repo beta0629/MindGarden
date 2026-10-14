@@ -500,12 +500,34 @@ class TenantPgConfigurationServiceImplTest {
     }
 
     @Test
-    @DisplayName("테스트 모드 PATCH — IAMPORT OFF 시 라이브 channelKey 있으면 성공")
-    void patchTestMode_iamportOffWithLiveKey_succeeds() {
+    @DisplayName("테스트 모드 PATCH — IAMPORT OFF 시 웹훅 시크릿 없으면 fail-closed")
+    void patchTestMode_iamportOffWithoutWebhookSecret_throws() {
         testConfiguration.setPgProvider(PgProvider.IAMPORT);
         testConfiguration.setTestMode(true);
         testConfiguration.setSettingsJson(
                 "{\"portoneChannelKey\":\"channel-key-live-xxxxx\",\"portoneChannelKeyTest\":\"channel-key-test-xxxxx\"}");
+
+        when(configurationRepository.findByConfigIdAndIsDeletedFalse(testConfigId))
+                .thenReturn(Optional.of(testConfiguration));
+        doNothing().when(accessControlService)
+                .validateConfigurationAccess(any(TenantPgConfiguration.class), eq(testTenantId));
+
+        assertThatThrownBy(() -> service.patchTestMode(testTenantId, testConfigId, false))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("웹훅 시크릿");
+
+        verify(configurationRepository, never()).save(any(TenantPgConfiguration.class));
+    }
+
+    @Test
+    @DisplayName("테스트 모드 PATCH — IAMPORT OFF 시 라이브 키+웹훅 시크릿 있으면 성공")
+    void patchTestMode_iamportOffWithLiveKeyAndWebhookSecret_succeeds() {
+        testConfiguration.setPgProvider(PgProvider.IAMPORT);
+        testConfiguration.setTestMode(true);
+        testConfiguration.setSettingsJson(
+                "{\"portoneChannelKey\":\"channel-key-live-xxxxx\","
+                        + "\"portoneChannelKeyTest\":\"channel-key-test-xxxxx\","
+                        + "\"portoneWebhookSecret\":\"ENC(whsec_configured)\"}");
         testConfiguration.setApprovalStatus(ApprovalStatus.PENDING);
 
         when(configurationRepository.findByConfigIdAndIsDeletedFalse(testConfigId))
@@ -521,6 +543,141 @@ class TenantPgConfigurationServiceImplTest {
         assertThat(result.getTestMode()).isFalse();
         assertThat(result.getApprovalStatus()).isEqualTo(ApprovalStatus.PENDING);
         verify(configurationRepository).save(any(TenantPgConfiguration.class));
+    }
+
+    @Test
+    @DisplayName("테스트 모드 PATCH — true 롤백은 라이브 키/시크릿 검사 없이 허용")
+    void patchTestMode_rollbackToTrue_okWithoutLiveChecks() {
+        testConfiguration.setPgProvider(PgProvider.IAMPORT);
+        testConfiguration.setTestMode(false);
+        testConfiguration.setSettingsJson("{\"portoneChannelKeyTest\":\"channel-key-test-xxxxx\"}");
+        testConfiguration.setStatus(PgConfigurationStatus.ACTIVE);
+        testConfiguration.setApprovalStatus(ApprovalStatus.APPROVED);
+
+        when(configurationRepository.findByConfigIdAndIsDeletedFalse(testConfigId))
+                .thenReturn(Optional.of(testConfiguration));
+        when(configurationRepository.save(any(TenantPgConfiguration.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+        doNothing().when(accessControlService)
+                .validateConfigurationAccess(any(TenantPgConfiguration.class), eq(testTenantId));
+        doNothing().when(historyService).saveHistory(any(), any(), any(), any(), any(), any());
+
+        TenantPgConfigurationResponse result = service.patchTestMode(testTenantId, testConfigId, true);
+
+        assertThat(result.getTestMode()).isTrue();
+        assertThat(result.getStatus()).isEqualTo(PgConfigurationStatus.ACTIVE);
+        assertThat(result.getApprovalStatus()).isEqualTo(ApprovalStatus.APPROVED);
+    }
+
+    @Test
+    @DisplayName("PG 설정 수정 — ACTIVE 유지 + approvalStatus PENDING (재승인)")
+    void updateConfiguration_activeKeepsActiveAndPendingApproval() {
+        testConfiguration.setStatus(PgConfigurationStatus.ACTIVE);
+        testConfiguration.setApprovalStatus(ApprovalStatus.APPROVED);
+        testConfiguration.setPgProvider(PgProvider.IAMPORT);
+        testConfiguration.setTestMode(true);
+        testConfiguration.setSettingsJson(
+                "{\"portoneChannelKeyTest\":\"channel-key-test-xxxxx\",\"portoneWebhookSecret\":\"ENC(whsec)\"}");
+
+        TenantPgConfigurationRequest request = TenantPgConfigurationRequest.builder()
+                .pgProvider(PgProvider.IAMPORT)
+                .pgName("포트원")
+                .apiKey("test-api-key")
+                .secretKey("test-secret-key")
+                .testMode(true)
+                .settingsJson("{\"portoneChannelKeyTest\":\"channel-key-test-yyyyy\"}")
+                .build();
+
+        when(configurationRepository.findByConfigIdAndIsDeletedFalse(testConfigId))
+                .thenReturn(Optional.of(testConfiguration));
+        when(encryptionService.encrypt(any(String.class)))
+                .thenAnswer(invocation -> "encrypted-" + invocation.getArgument(0));
+        when(encryptionService.isEncrypted(any(String.class))).thenReturn(true);
+        when(encryptionService.ensureActiveKey(any(String.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+        when(configurationRepository.save(any(TenantPgConfiguration.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+        doNothing().when(accessControlService)
+                .validateConfigurationAccess(any(TenantPgConfiguration.class), eq(testTenantId));
+        doNothing().when(historyService).saveHistory(any(), any(), any(), any(), any(), any());
+
+        TenantPgConfigurationResponse result =
+                service.updateConfiguration(testTenantId, testConfigId, request);
+
+        assertThat(result.getStatus()).isEqualTo(PgConfigurationStatus.ACTIVE);
+        assertThat(result.getApprovalStatus()).isEqualTo(ApprovalStatus.PENDING);
+
+        ArgumentCaptor<String> notesCaptor = ArgumentCaptor.forClass(String.class);
+        verify(historyService).saveHistory(
+                eq(testConfigId),
+                eq(TenantPgConfigurationHistory.ChangeType.UPDATED),
+                eq("ACTIVE"),
+                eq("ACTIVE"),
+                any(),
+                notesCaptor.capture());
+        assertThat(notesCaptor.getValue()).contains("재승인");
+        assertThat(notesCaptor.getValue()).contains("ACTIVE 유지");
+    }
+
+    @Test
+    @DisplayName("PG 설정 승인 — ACTIVE 재승인 시 status ACTIVE 유지")
+    void approveConfiguration_activeStaysActive() {
+        testConfiguration.setStatus(PgConfigurationStatus.ACTIVE);
+        testConfiguration.setApprovalStatus(ApprovalStatus.PENDING);
+
+        PgConfigurationApproveRequest request = PgConfigurationApproveRequest.builder()
+                .approvedBy("ops-user")
+                .approvalNote("재승인")
+                .testConnection(false)
+                .build();
+
+        when(configurationRepository.findByConfigIdAndIsDeletedFalse(testConfigId))
+                .thenReturn(Optional.of(testConfiguration));
+        when(configurationRepository.save(any(TenantPgConfiguration.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+        doNothing().when(historyService).saveHistory(any(), any(), any(), any(), any(), any());
+
+        TenantPgConfigurationResponse result = service.approveConfiguration(testConfigId, request);
+
+        assertThat(result.getStatus()).isEqualTo(PgConfigurationStatus.ACTIVE);
+        assertThat(result.getApprovalStatus()).isEqualTo(ApprovalStatus.APPROVED);
+        verify(historyService).saveHistory(
+                eq(testConfigId),
+                eq(TenantPgConfigurationHistory.ChangeType.APPROVED),
+                eq("ACTIVE"),
+                eq("ACTIVE"),
+                eq("ops-user"),
+                org.mockito.ArgumentMatchers.contains("ACTIVE 유지"));
+    }
+
+    @Test
+    @DisplayName("PG 설정 거부 — ACTIVE 재승인 거부 시 status ACTIVE + approval REJECTED")
+    void rejectConfiguration_activeKeepsActiveAndRejected() {
+        testConfiguration.setStatus(PgConfigurationStatus.ACTIVE);
+        testConfiguration.setApprovalStatus(ApprovalStatus.PENDING);
+
+        PgConfigurationRejectRequest request = PgConfigurationRejectRequest.builder()
+                .rejectedBy("ops-user")
+                .rejectionReason("재승인 거부 사유는 10자 이상")
+                .build();
+
+        when(configurationRepository.findByConfigIdAndIsDeletedFalse(testConfigId))
+                .thenReturn(Optional.of(testConfiguration));
+        when(configurationRepository.save(any(TenantPgConfiguration.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+        doNothing().when(historyService).saveHistory(any(), any(), any(), any(), any(), any());
+
+        TenantPgConfigurationResponse result = service.rejectConfiguration(testConfigId, request);
+
+        assertThat(result.getStatus()).isEqualTo(PgConfigurationStatus.ACTIVE);
+        assertThat(result.getApprovalStatus()).isEqualTo(ApprovalStatus.REJECTED);
+        verify(historyService).saveHistory(
+                eq(testConfigId),
+                eq(TenantPgConfigurationHistory.ChangeType.REJECTED),
+                eq("ACTIVE"),
+                eq("ACTIVE"),
+                eq("ops-user"),
+                org.mockito.ArgumentMatchers.contains("ACTIVE 유지"));
     }
 
     @Test

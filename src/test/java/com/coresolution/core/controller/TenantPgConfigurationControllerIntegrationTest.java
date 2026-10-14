@@ -333,6 +333,8 @@ class TenantPgConfigurationControllerIntegrationTest {
     @DisplayName("웹훅 시크릿 PATCH - ADMIN 이어도 운영자 전용 403, 서비스 호출 없음")
     @WithMockUser(roles = {"ADMIN"})
     void testPatchWebhookSecret_OpsOnlyForbidden() throws Exception {
+        when(tenantAccessControlService.hasOpsRole()).thenReturn(false);
+
         PgConfigurationWebhookSecretPatchRequest request = PgConfigurationWebhookSecretPatchRequest.builder()
                 .webhookSecret("whsec_patch")
                 .build();
@@ -348,6 +350,44 @@ class TenantPgConfigurationControllerIntegrationTest {
 
         verify(pgConfigurationService, never())
                 .patchWebhookSecret(anyString(), anyString(), anyString());
+    }
+
+    @Test
+    @DisplayName("웹훅 시크릿 PATCH - OPS 성공, 평문 시크릿 미응답")
+    @WithMockUser(roles = {"OPS"})
+    void testPatchWebhookSecret_OpsAllowed() throws Exception {
+        when(tenantAccessControlService.hasOpsRole()).thenReturn(true);
+        doNothing().when(tenantAccessControlService).validateTenantAccess(eq(testTenantId));
+
+        TenantPgConfigurationResponse patched = TenantPgConfigurationResponse.builder()
+                .configId(testConfigId)
+                .tenantId(testTenantId)
+                .pgProvider(PgProvider.IAMPORT)
+                .status(PgConfigurationStatus.ACTIVE)
+                .approvalStatus(ApprovalStatus.APPROVED)
+                .portoneWebhookSecretConfigured(true)
+                .testMode(false)
+                .createdAt(LocalDateTime.now())
+                .updatedAt(LocalDateTime.now())
+                .build();
+        when(pgConfigurationService.patchWebhookSecret(eq(testTenantId), eq(testConfigId), eq("whsec_patch")))
+                .thenReturn(patched);
+
+        PgConfigurationWebhookSecretPatchRequest request = PgConfigurationWebhookSecretPatchRequest.builder()
+                .webhookSecret("whsec_patch")
+                .build();
+
+        mockMvc.perform(patch("/api/v1/tenants/{tenantId}/pg-configurations/{configId}/webhook-secret",
+                        testTenantId, testConfigId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .header("X-Tenant-Id", testTenantId)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.portoneWebhookSecretConfigured").value(true))
+                .andExpect(content().string(
+                        org.hamcrest.Matchers.not(org.hamcrest.Matchers.containsString("whsec_patch"))));
+
+        verify(pgConfigurationService).patchWebhookSecret(eq(testTenantId), eq(testConfigId), eq("whsec_patch"));
     }
 
     @Test
@@ -414,6 +454,8 @@ class TenantPgConfigurationControllerIntegrationTest {
     @DisplayName("테스트 모드 PATCH - ADMIN 이어도 운영자 전용 403, PortOne 모드 불변")
     @WithMockUser(roles = {"ADMIN"})
     void testPatchTestMode_OpsOnlyForbidden() throws Exception {
+        when(tenantAccessControlService.hasOpsRole()).thenReturn(false);
+
         PgConfigurationTestModePatchRequest request = PgConfigurationTestModePatchRequest.builder()
                 .testMode(true)
                 .build();
@@ -427,6 +469,41 @@ class TenantPgConfigurationControllerIntegrationTest {
 
         verify(pgConfigurationService, never())
                 .patchTestMode(anyString(), anyString(), any());
+    }
+
+    @Test
+    @DisplayName("테스트 모드 PATCH - OPS 성공")
+    @WithMockUser(roles = {"OPS"})
+    void testPatchTestMode_OpsAllowed() throws Exception {
+        when(tenantAccessControlService.hasOpsRole()).thenReturn(true);
+        doNothing().when(tenantAccessControlService).validateTenantAccess(eq(testTenantId));
+
+        TenantPgConfigurationResponse patched = TenantPgConfigurationResponse.builder()
+                .configId(testConfigId)
+                .tenantId(testTenantId)
+                .pgProvider(PgProvider.IAMPORT)
+                .status(PgConfigurationStatus.ACTIVE)
+                .approvalStatus(ApprovalStatus.APPROVED)
+                .testMode(false)
+                .createdAt(LocalDateTime.now())
+                .updatedAt(LocalDateTime.now())
+                .build();
+        when(pgConfigurationService.patchTestMode(eq(testTenantId), eq(testConfigId), eq(false)))
+                .thenReturn(patched);
+
+        PgConfigurationTestModePatchRequest request = PgConfigurationTestModePatchRequest.builder()
+                .testMode(false)
+                .build();
+
+        mockMvc.perform(patch("/api/v1/tenants/{tenantId}/pg-configurations/{configId}/test-mode",
+                        testTenantId, testConfigId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .header("X-Tenant-Id", testTenantId)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.testMode").value(false));
+
+        verify(pgConfigurationService).patchTestMode(eq(testTenantId), eq(testConfigId), eq(false));
     }
 
     @Test

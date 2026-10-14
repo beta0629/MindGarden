@@ -195,6 +195,8 @@ public class TenantPgConfigurationServiceImpl implements TenantPgConfigurationSe
         accessControlService.validateConfigurationAccess(configuration, tenantId);
         
         String oldStatus = configuration.getStatus().name();
+        boolean keepActiveServing = configuration.getStatus() == PgConfigurationStatus.ACTIVE;
+        String updatedBy = getCurrentUserId();
         
         String newEncryptedApiKey = encryptionService.encrypt(request.getApiKey());
         String newEncryptedSecretKey = encryptionService.encrypt(request.getSecretKey());
@@ -211,6 +213,15 @@ public class TenantPgConfigurationServiceImpl implements TenantPgConfigurationSe
         
         boolean apiKeyChanged = !newEncryptedApiKey.equals(configuration.getApiKeyEncrypted());
         boolean secretKeyChanged = !newEncryptedSecretKey.equals(configuration.getSecretKeyEncrypted());
+
+        String mergedSettingsJson = mergeSettingsJsonPreservingWebhookSecret(
+                configuration.getSettingsJson(),
+                normalizeSettingsJson(request.getSettingsJson()));
+        boolean nextTestMode = request.getTestMode() != null ? request.getTestMode() : false;
+        validateIamportLiveReadyIfNeeded(
+                request.getPgProvider() != null ? request.getPgProvider() : configuration.getPgProvider(),
+                nextTestMode,
+                mergedSettingsJson);
         
         configuration.setPgProvider(request.getPgProvider());
         configuration.setPgName(request.getPgName());
@@ -221,21 +232,25 @@ public class TenantPgConfigurationServiceImpl implements TenantPgConfigurationSe
         configuration.setWebhookUrl(request.getWebhookUrl());
         configuration.setReturnUrl(request.getReturnUrl());
         configuration.setCancelUrl(request.getCancelUrl());
-        configuration.setTestMode(request.getTestMode() != null ? request.getTestMode() : false);
-        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
-        configuration.setStatus(PgConfigurationStatus.PENDING);
-        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
+        configuration.setTestMode(nextTestMode);
+        // ACTIVE 운영 설정은 재승인 대기 중에도 결제·웹훅을 계속 서빙한다.
+        if (keepActiveServing) {
+            configuration.setStatus(PgConfigurationStatus.ACTIVE);
+        } else {
+            configuration.setStatus(PgConfigurationStatus.PENDING);
+        }
         configuration.setApprovalStatus(ApprovalStatus.PENDING);
-        configuration.setSettingsJson(normalizeSettingsJson(request.getSettingsJson()));
+        configuration.setSettingsJson(mergedSettingsJson);
         configuration.setNotes(request.getNotes());
         
         configuration = configurationRepository.save(configuration);
         
-        String changeNotes = String.format("PG 설정 수정 - 재승인 필요%s%s", 
+        String changeNotes = String.format(
+                "PG 설정 수정 - 재승인 필요 (actor=%s)%s%s%s",
+                updatedBy,
+                keepActiveServing ? " (ACTIVE 유지·재승인 대기)" : "",
                 apiKeyChanged ? " (API Key 변경됨)" : "",
                 secretKeyChanged ? " (Secret Key 변경됨)" : "");
-        
-        String updatedBy = getCurrentUserId();
         
         historyService.saveHistory(configuration.getConfigId(), 
                 TenantPgConfigurationHistory.ChangeType.UPDATED,
@@ -244,7 +259,8 @@ public class TenantPgConfigurationServiceImpl implements TenantPgConfigurationSe
                 updatedBy,
                 changeNotes);
         
-        log.info("테넌트 PG 설정 수정 완료: configId={}", configuration.getConfigId());
+        log.info("테넌트 PG 설정 수정 완료: configId={}, status={}, approvalStatus={}",
+                configuration.getConfigId(), configuration.getStatus(), configuration.getApprovalStatus());
         return toResponse(configuration);
     }
 
@@ -274,15 +290,11 @@ public class TenantPgConfigurationServiceImpl implements TenantPgConfigurationSe
             return toResponse(configuration);
         }
 
-        if (configuration.getPgProvider() == PgProvider.IAMPORT && !nextTestMode) {
-            String liveChannelKey = com.coresolution.consultation.service.portone.PortOneChannelKeyResolver
-                    .resolveChannelKey(configuration.getSettingsJson(), false);
-            if (liveChannelKey == null || liveChannelKey.isBlank()) {
-                throw new IllegalArgumentException(
-                        "테스트 모드를 끄려면 운영(라이브) 채널 키("
-                                + TenantPgSettingsJsonKeys.PORTONE_CHANNEL_KEY
-                                + ")가 필요합니다.");
-            }
+        if (!nextTestMode) {
+            validateIamportLiveReadyIfNeeded(
+                    configuration.getPgProvider(),
+                    false,
+                    configuration.getSettingsJson());
         }
 
         String oldStatus = configuration.getStatus() != null ? configuration.getStatus().name() : null;
@@ -438,27 +450,38 @@ public class TenantPgConfigurationServiceImpl implements TenantPgConfigurationSe
         }
         
         String oldStatus = configuration.getStatus().name();
+        boolean keepActiveServing = configuration.getStatus() == PgConfigurationStatus.ACTIVE;
         
-        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
         configuration.setApprovalStatus(ApprovalStatus.APPROVED);
-        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
-        configuration.setStatus(PgConfigurationStatus.APPROVED);
+        // 재승인: ACTIVE 는 APPROVED 로 강등하지 않고 운영 서빙을 유지한다.
+        if (keepActiveServing) {
+            configuration.setStatus(PgConfigurationStatus.ACTIVE);
+        } else {
+            configuration.setStatus(PgConfigurationStatus.APPROVED);
+        }
         configuration.setApprovedBy(request.getApprovedBy());
         configuration.setApprovedAt(LocalDateTime.now());
         
         configuration = configurationRepository.save(configuration);
+
+        String approvalNotes = request.getApprovalNote();
+        if (keepActiveServing) {
+            String reapprovalNote = "재승인 완료 (ACTIVE 유지)";
+            approvalNotes = (approvalNotes == null || approvalNotes.isBlank())
+                    ? reapprovalNote
+                    : approvalNotes + " — " + reapprovalNote;
+        }
         
         historyService.saveHistory(configuration.getConfigId(), 
-                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
                 TenantPgConfigurationHistory.ChangeType.APPROVED,
                 oldStatus, 
                 configuration.getStatus().name(),
                 request.getApprovedBy(),
-                request.getApprovalNote());
+                approvalNotes);
         
         sendApprovalNotification(configuration, request.getApprovalNote());
         
-        log.info("PG 설정 승인 완료: configId={}", configId);
+        log.info("PG 설정 승인 완료: configId={}, status={}", configId, configuration.getStatus());
         return toResponse(configuration);
     }
     
@@ -475,26 +498,32 @@ public class TenantPgConfigurationServiceImpl implements TenantPgConfigurationSe
         validateRejectionRequest(configuration, request);
         
         String oldStatus = configuration.getStatus().name();
+        boolean keepActiveServing = configuration.getStatus() == PgConfigurationStatus.ACTIVE;
         
-        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
         configuration.setApprovalStatus(ApprovalStatus.REJECTED);
-        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
-        configuration.setStatus(PgConfigurationStatus.REJECTED);
+        // 재승인 거부: ACTIVE 운영 설정은 유지하고 승인 상태만 REJECTED.
+        if (!keepActiveServing) {
+            configuration.setStatus(PgConfigurationStatus.REJECTED);
+        }
         configuration.setRejectionReason(request.getRejectionReason());
         
         configuration = configurationRepository.save(configuration);
+
+        String rejectionNotes = request.getRejectionReason();
+        if (keepActiveServing) {
+            rejectionNotes = rejectionNotes + " — 재승인 거부 (ACTIVE 유지)";
+        }
         
         historyService.saveHistory(configuration.getConfigId(), 
-                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
                 TenantPgConfigurationHistory.ChangeType.REJECTED,
                 oldStatus, 
                 configuration.getStatus().name(),
                 request.getRejectedBy(),
-                request.getRejectionReason());
+                rejectionNotes);
         
         sendRejectionNotification(configuration, request.getRejectionReason());
         
-        log.info("PG 설정 거부 완료: configId={}", configId);
+        log.info("PG 설정 거부 완료: configId={}, status={}", configId, configuration.getStatus());
         return toResponse(configuration);
     }
     
@@ -579,6 +608,97 @@ public class TenantPgConfigurationServiceImpl implements TenantPgConfigurationSe
     }
     
     
+    /**
+     * IAMPORT 실결제(testMode=false) 전환 시 라이브 채널 키·웹훅 시크릿이 모두 있어야 한다.
+     *
+     * @param pgProvider PG 제공자
+     * @param testMode 다음 테스트 모드 값
+     * @param settingsJson 검사할 settings_json
+     * @throws IllegalArgumentException 라이브 키 또는 웹훅 시크릿 미설정
+     */
+    private void validateIamportLiveReadyIfNeeded(
+            PgProvider pgProvider,
+            boolean testMode,
+            String settingsJson) {
+        if (pgProvider != PgProvider.IAMPORT || testMode) {
+            return;
+        }
+        String liveChannelKey = com.coresolution.consultation.service.portone.PortOneChannelKeyResolver
+                .resolveChannelKey(settingsJson, false);
+        if (liveChannelKey == null || liveChannelKey.isBlank()) {
+            throw new IllegalArgumentException(
+                    "테스트 모드를 끄려면 운영(라이브) 채널 키("
+                            + TenantPgSettingsJsonKeys.PORTONE_CHANNEL_KEY
+                            + ")가 필요합니다.");
+        }
+        if (!isWebhookSecretConfigured(settingsJson)) {
+            throw new IllegalArgumentException(
+                    "테스트 모드를 끄려면 웹훅 시크릿("
+                            + TenantPgSettingsJsonKeys.PORTONE_WEBHOOK_SECRET
+                            + ")이 필요합니다.");
+        }
+    }
+
+    /**
+     * settings_json 에 웹훅 시크릿이 non-blank 로 설정되어 있는지 판별한다.
+     * (응답 마스킹과 동일 기준 — 값은 로그에 남기지 않음)
+     *
+     * @param settingsJson 원본 settings_json
+     * @return 시크릿 설정 여부
+     */
+    private boolean isWebhookSecretConfigured(String settingsJson) {
+        return maskWebhookSecretInSettingsJson(settingsJson).configured();
+    }
+
+    /**
+     * 요청 settings_json 에 웹훅 시크릿이 없으면 기존 암호화 값을 보존한다.
+     * 테넌트 수정 폼은 시크릿을 응답에서 받지 못하므로 공란 저장 시 기존 값을 유지해야 한다.
+     *
+     * @param existingSettingsJson 저장되어 있던 settings_json
+     * @param incomingNormalized 요청을 normalize 한 settings_json
+     * @return 병합된 settings_json
+     */
+    private String mergeSettingsJsonPreservingWebhookSecret(
+            String existingSettingsJson,
+            String incomingNormalized) {
+        if (incomingNormalized == null || incomingNormalized.isBlank()) {
+            if (isWebhookSecretConfigured(existingSettingsJson)) {
+                return existingSettingsJson;
+            }
+            return incomingNormalized;
+        }
+        try {
+            JsonNode incomingRoot = objectMapper.readTree(incomingNormalized.trim());
+            if (!incomingRoot.isObject()) {
+                return incomingNormalized;
+            }
+            ObjectNode incomingObj = (ObjectNode) incomingRoot;
+            JsonNode incomingSecret = incomingObj.get(TenantPgSettingsJsonKeys.PORTONE_WEBHOOK_SECRET);
+            boolean incomingHasSecret = incomingSecret != null
+                    && !incomingSecret.isNull()
+                    && !incomingSecret.asText("").isBlank();
+            if (incomingHasSecret) {
+                return incomingNormalized;
+            }
+            if (existingSettingsJson == null || existingSettingsJson.isBlank()) {
+                return incomingNormalized;
+            }
+            JsonNode existingRoot = objectMapper.readTree(existingSettingsJson.trim());
+            if (!existingRoot.isObject()) {
+                return incomingNormalized;
+            }
+            JsonNode existingSecret = existingRoot.get(TenantPgSettingsJsonKeys.PORTONE_WEBHOOK_SECRET);
+            if (existingSecret != null && !existingSecret.isNull() && !existingSecret.asText("").isBlank()) {
+                incomingObj.set(TenantPgSettingsJsonKeys.PORTONE_WEBHOOK_SECRET, existingSecret);
+                return objectMapper.writeValueAsString(incomingObj);
+            }
+            return incomingNormalized;
+        } catch (Exception e) {
+            log.warn("settings_json 웹훅 시크릿 병합 실패, incoming 유지: {}", e.getMessage());
+            return incomingNormalized;
+        }
+    }
+
     /**
      * MySQL JSON 컬럼은 빈 문자열을 허용하지 않으므로 공백·빈 값은 null로 저장한다.
      * 포트원 웹훅 시크릿 등 민감 값은 평문이면 {@code secret_key_encrypted} 와 동일 방식으로 암호화한다.
@@ -1148,26 +1268,12 @@ public class TenantPgConfigurationServiceImpl implements TenantPgConfigurationSe
                             // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
                             PgConfigurationStatus.ACTIVE);
             
-            if (config.isPresent()) {
-                // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
-                if (config.get().getApprovalStatus() == ApprovalStatus.APPROVED) {
-                    configurations = List.of(config.get());
-                } else {
-                    configurations = List.of();
-                }
-            } else {
-                configurations = List.of();
-            }
+            // ACTIVE 이면 재승인(approvalStatus=PENDING/REJECTED) 중이어도 운영 서빙을 유지한다.
+            configurations = config.map(List::of).orElseGet(List::of);
         } else {
             configurations = configurationRepository.findActiveConfigurations(
                     tenantId, 
-                    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
                     PgConfigurationStatus.ACTIVE);
-            
-            configurations = configurations.stream()
-                    // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
-                    .filter(c -> c.getApprovalStatus() == ApprovalStatus.APPROVED)
-                    .collect(Collectors.toList());
         }
         
         log.debug("활성화된 PG 설정 조회 완료: tenantId={}, count={}", tenantId, configurations.size());
@@ -1199,13 +1305,7 @@ public class TenantPgConfigurationServiceImpl implements TenantPgConfigurationSe
         }
         
         TenantPgConfiguration configuration = config.get();
-        
-        // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
-        if (configuration.getApprovalStatus() != ApprovalStatus.APPROVED) {
-            log.debug("PG 설정이 승인되지 않음: tenantId={}, pgProvider={}, approvalStatus={}", 
-                    tenantId, pgProvider, configuration.getApprovalStatus());
-            return null;
-        }
+        // ACTIVE 서빙은 approvalStatus 와 무관 (재승인 대기·거부 후에도 운영 결제 유지).
         
         accessControlService.validateConfigurationAccess(configuration, tenantId);
         

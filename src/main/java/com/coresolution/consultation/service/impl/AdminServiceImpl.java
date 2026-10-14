@@ -35,6 +35,7 @@ import com.coresolution.consultation.constant.ScheduleServiceUserFacingMessages;
 import com.coresolution.consultation.constant.ScheduleStatus;
 import com.coresolution.consultation.constant.ClientVisibilityPolicy;
 import com.coresolution.consultation.constant.UserRole;
+import com.coresolution.consultation.constant.admin.AdminMappingCreateDuplicateWindowConstants;
 import com.coresolution.consultation.constant.admin.AdminServiceUserFacingMessages;
 import com.coresolution.consultation.constant.userprofile.UserProfileServiceUserFacingMessages;
 import com.coresolution.consultation.dto.AdminListPageResult;
@@ -1009,7 +1010,12 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         // 신규 매칭: 입금 확인 전까지 사용 가능 회기는 0 (입금 확인 시 confirmDeposit에서 채움)
         mapping.setRemainingSessions(0);
         mapping.setUsedSessions(0);
-        mapping.setPackageName(dto.getPackageName() != null ? dto.getPackageName()
+        // 요청 정규화: packageName trim. 비어 있으면 기존 DEFAULT_PACKAGE_NAME 처리 유지.
+        String normalizedPackageName = dto.getPackageName() != null ? dto.getPackageName().trim() : null;
+        if (normalizedPackageName != null && normalizedPackageName.isEmpty()) {
+            normalizedPackageName = null;
+        }
+        mapping.setPackageName(normalizedPackageName != null ? normalizedPackageName
                 : AdminServiceUserFacingMessages.DEFAULT_PACKAGE_NAME);
         mapping.setPackagePrice(dto.getPackagePrice() != null ? dto.getPackagePrice() : 0L);
         String tenantIdForPayment = getTenantId();
@@ -1034,6 +1040,18 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         // 내담자 등록 유형이 SSOT. 타기관이면 기관연계만, 일반이면 회기·가예약만.
         mapping.setPaymentTiming(resolvePaymentTimingForNewMapping(
                 tenantIdForPayment, clientUser.getId(), dto.getPaymentTiming()));
+
+        // 짧은 시간창 중복 생성 가드: 같은 tenant + 상담사 + 내담자 + 동일 packageName(trim 정규화) 매칭이
+        // 시간창(기본 30초) 안에 이미 있으면 신규 생성을 거부한다. 서로 다른 packageName 은 허용.
+        LocalDateTime duplicateWindowStart = LocalDateTime.now()
+                .minusSeconds(AdminMappingCreateDuplicateWindowConstants.MAPPING_CREATE_DUPLICATE_WINDOW_SECONDS);
+        boolean duplicateWithinWindow = mappingRepository
+                .existsByTenantIdAndConsultant_IdAndClient_IdAndPackageNameAndCreatedAtGreaterThanEqual(
+                        tenantId, consultant.getId(), clientUser.getId(), mapping.getPackageName(),
+                        duplicateWindowStart);
+        if (duplicateWithinWindow) {
+            throw new IllegalArgumentException(AdminServiceUserFacingMessages.MSG_MAPPING_CREATE_DUPLICATE_WINDOW);
+        }
 
         ConsultantClientMapping savedMapping = mappingRepository.save(mapping);
 

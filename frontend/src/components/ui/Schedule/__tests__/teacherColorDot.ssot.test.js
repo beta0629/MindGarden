@@ -74,4 +74,27 @@ describe('선생님 색 점 SSOT·회귀 가드', () => {
     const nowCssTest = read(ROOT, '__tests__', 'ScheduleCalendarView.nowIndicator.test.js');
     expect(nowCssTest).toMatch(/nowIndicator/);
   });
+
+  test('with-vacation BE는 비활성 포함(findByTenantIdAndIsDeletedFalse) — 활성만 조회 금지', () => {
+    const impl = read(
+      REPO_ROOT,
+      'src',
+      'main',
+      'java',
+      'com',
+      'coresolution',
+      'consultation',
+      'service',
+      'impl',
+      'AdminServiceImpl.java'
+    );
+    const methodMatch = impl.match(
+      /getAllConsultantsWithVacationInfo\([\s\S]*?return rows;\s*\}/
+    );
+    expect(methodMatch).toBeTruthy();
+    const methodBody = methodMatch[0];
+    expect(methodBody).toContain('findByTenantIdAndIsDeletedFalse');
+    expect(methodBody).not.toContain('findActiveConsultantsByTenantId');
+    expect(methodBody).toContain('isActive');
+  });
 });

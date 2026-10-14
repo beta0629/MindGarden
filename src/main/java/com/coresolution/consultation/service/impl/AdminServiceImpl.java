@@ -5498,12 +5498,21 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         return rows;
     }
     
-     /**
-     * 휴무 정보를 포함한 상담사 목록 조회 (관리자 스케줄링용)
+    /**
+     * 휴무 정보를 포함한 상담사 목록 조회 (관리자 스케줄링·선생님 색 팔레트용).
+     *
+     * <p>색 순번({@code getTeacherColor}) SSOT를 위해 <strong>비활성 상담사를 포함한다</strong>.
+     * 제외 기준은 {@code isDeleted = false} 만이다(삭제·소프트삭제 제외).
+     * Consultant/User에 퇴사 전용 상태 필드가 없으므로 퇴사는 {@code isDeleted}로만 배제한다.
+     * {@code isActive} 필드는 응답 Map에 유지되어 필터·칩·범례가 동일 배열로 색을 매기면서
+     * UI에서 활성만 표시할 수 있다.</p>
+     *
+     * @param date 휴무 조회 기준일 (yyyy-MM-dd)
+     * @return 상담사 Map 목록 (비활성 포함, isActive 유지)
      */
     @Override
     public List<Map<String, Object>> getAllConsultantsWithVacationInfo(String date) {
-        log.info("휴무 정보를 포함한 상담사 목록 조회: date={}", date);
+        log.info("휴무 정보를 포함한 상담사 목록 조회(비활성 포함·삭제 제외): date={}", date);
         
         // 표준화 2025-12-05: tenantId 필터링 필수
         String tenantId = getTenantIdOrNull();
@@ -5512,7 +5521,8 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             throw new IllegalStateException(AdminServiceUserFacingMessages.MSG_TENANT_ID_REQUIRED_IN_CONTEXT);
         }
         log.info("✅ tenantId 확인: {}", tenantId);
-        List<Consultant> consultants = consultantRepository.findActiveConsultantsByTenantId(tenantId);
+        // 색 팔레트: 비활성 포함 / 삭제(isDeleted=true)만 제외. findActive* 사용 금지(#1613).
+        List<Consultant> consultants = consultantRepository.findByTenantIdAndIsDeletedFalse(tenantId);
         
         Map<String, Object> allVacations = consultantAvailabilityService.getAllConsultantsVacations(date);
 

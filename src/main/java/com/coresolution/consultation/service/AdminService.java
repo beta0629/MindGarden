@@ -62,7 +62,11 @@ public interface AdminService {
     List<Map<String, Object>> getAllConsultantsWithSpecialty();
     
     /**
-     * 휴무 정보를 포함한 상담사 목록 조회 (관리자 스케줄링용)
+     * 휴무 정보를 포함한 상담사 목록 조회 (관리자 스케줄링·선생님 색 팔레트용).
+     * 비활성 포함, {@code isDeleted=false}(삭제)만 제외. 응답 {@code isActive} 유지.
+     *
+     * @param date 휴무 조회 기준일 (yyyy-MM-dd)
+     * @return 상담사 Map 목록 (비활성 포함)
      */
     List<Map<String, Object>> getAllConsultantsWithVacationInfo(String date);
 

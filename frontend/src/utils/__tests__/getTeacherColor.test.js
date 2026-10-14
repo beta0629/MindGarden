@@ -116,6 +116,39 @@ describe('getTeacherColor', () => {
     expect(stillFull.hollow).toBe(before.hollow);
   });
 
+  test('비활성 id가 중간에 있어도 활성 상담사 색이 안 밀리고, 비활성도 자기 순번 색', () => {
+    // id 오름차순: 1(활성), 2(비활성), 3(활성) — 2가 중간
+    const mixed = [
+      { id: 3, name: 'Active-after', isActive: true },
+      { id: 1, name: 'Active-first', isActive: true },
+      { id: 2, name: 'Inactive-mid', isActive: false }
+    ];
+
+    const inactiveMid = getTeacherColor({ consultantId: 2, consultants: mixed });
+    expect(inactiveMid).toMatchObject({
+      token: 'var(--mg-v2-teacher-2)',
+      paletteIndex: 1,
+      ordinal: 1,
+      hollow: false
+    });
+
+    const activeAfter = getTeacherColor({ consultantId: 3, consultants: mixed });
+    expect(activeAfter).toMatchObject({
+      token: 'var(--mg-v2-teacher-3)',
+      paletteIndex: 2,
+      ordinal: 2,
+      hollow: false
+    });
+
+    // 비활성을 빼면 활성 id=3 이 teacher-2 로 밀림 — 포함 유지가 필수
+    const withoutInactive = mixed.filter((c) => c.isActive !== false);
+    const shifted = getTeacherColor({ consultantId: 3, consultants: withoutInactive });
+    expect(shifted.ordinal).toBe(1);
+    expect(shifted.token).toBe('var(--mg-v2-teacher-2)');
+    expect(shifted.ordinal).not.toBe(activeAfter.ordinal);
+    expect(shifted.token).not.toBe(activeAfter.token);
+  });
+
   test('해시/modulo 문자열 해시 패턴을 쓰지 않는다 (순번만)', () => {
     const source = require('fs').readFileSync(
       require('path').resolve(__dirname, '..', 'getTeacherColor.js'),

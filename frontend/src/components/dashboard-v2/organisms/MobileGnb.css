@@ -2,8 +2,9 @@
  * MobileGnb - GNB 56px
  * RESPONSIVE_LAYOUT_SPEC: 모바일 헤더 56px
  *
- * 3열 grid: 왼쪽(메뉴+로고) | 시계 | 오른쪽(알림+프로필).
+ * 3열 대칭 grid: 왼쪽(메뉴+로고) | 시계 | 오른쪽(알림+프로필).
  * absolute 중앙 배치는 자리를 안 잡아 시계·알림이 겹치므로 사용하지 않는다.
+ * 양옆 1fr 대칭으로 시계를 헤더 중앙에 두고, 좁은 폭에서는 브랜드 글자를 숨겨 침범을 막는다.
  *
  * @author CoreSolution
  * @since 2025-02-22
@@ -12,9 +13,8 @@
 .mg-v2-mobile-gnb {
   position: relative;
   display: grid;
-  /* 오른쪽은 min-content 이하로 줄지 않아 알림·프로필이 시계 갭을 침범하지 않음.
-     남는 폭은 왼쪽(브랜드)이 흡수·축소. 가능하면 1fr·1fr로 시각적 가운데 유지. */
-  grid-template-columns: minmax(0, 1fr) auto minmax(min-content, 1fr);
+  /* 좌·우 대칭 1fr — 시계(auto)가 헤더 중앙. 넘치는 브랜드는 왼쪽 overflow로 차단. */
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   align-items: center;
   column-gap: var(--mg-v2-now-chip-gap-sides);
   height: var(--mg-layout-header-height-mobile, 56px);
@@ -29,6 +29,8 @@
   display: flex;
   align-items: center;
   min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
   justify-self: start;
   z-index: 2;
 }
@@ -39,12 +41,13 @@
 }
 
 .mg-v2-mobile-gnb__logo {
-  flex: 0 1 auto;
+  flex: 1 1 auto;
   display: flex;
   justify-content: flex-start;
   align-items: center;
   gap: var(--mg-spacing-sm);
   min-width: 0;
+  overflow: hidden;
   z-index: 2;
 }
 
@@ -62,6 +65,7 @@
   font-size: var(--mg-v2-font-size-body-md);
   font-weight: var(--mg-v2-font-weight-bold);
   color: var(--mg-color-text-main);
+  min-width: 0;
   max-width: min(28vw, 10ch);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -107,7 +111,9 @@
   align-items: center;
   justify-content: flex-end;
   gap: var(--mg-v2-space-1);
-  min-width: min-content;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
   justify-self: end;
   z-index: 2;
 }
@@ -118,15 +124,12 @@
   flex-shrink: 0;
 }
 
-/* 공간 부족 시 축소 순서: 프로필 이름 → 검색(본문) → 브랜드명. 시계 유지 */
+/*
+ * ≤414: 브랜드 글자 숨김 (메뉴·로고 그래픽만).
+ * 미디어 쿼리는 var() 미지원 — 기존 MobileGnb 414px 패턴 유지.
+ * 공간 부족 시 축소 순서: 프로필 이름 → 검색(본문) → 브랜드명. 시계 유지.
+ */
 @media (max-width: 414px) {
-  .mg-v2-mobile-gnb__brand-name,
-  .mg-v2-mobile-gnb__logo-text {
-    max-width: min(18vw, 6ch);
-  }
-}
-
-@media (max-width: 390px) {
   .mg-v2-mobile-gnb__brand-name,
   .mg-v2-mobile-gnb__logo-text {
     display: none;

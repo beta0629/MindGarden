@@ -6,9 +6,9 @@ export const PASSWORD_CHANGE_REQUIRED_EVENT = 'mindgarden:password-change-requir
 
 /**
  * @param {unknown} body 응답 JSON
- * @returns {boolean} 비밀번호 변경이 필요한 403이면 true
+ * @returns {boolean} 자격 증명 변경이 필요한 403이면 true
  */
-export function isPasswordChangeRequiredBody(body) {
+export function bodyRequiresCredentialChange(body) {
   return Boolean(body && typeof body === 'object' && body.errorCode === PASSWORD_CHANGE_REQUIRED_CODE);
 }
 

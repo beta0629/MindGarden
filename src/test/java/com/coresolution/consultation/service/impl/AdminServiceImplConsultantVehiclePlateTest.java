@@ -175,7 +175,6 @@ class AdminServiceImplConsultantVehiclePlateTest {
         when(userPersonalDataCacheService.decryptAndCacheUserPersonalData(any(User.class)))
                 .thenReturn(Collections.emptyMap());
         doNothing().when(consultantStatsService).evictAllConsultantStatsCache();
-        when(passwordResetService.sendPasswordResetEmail(anyString())).thenReturn(true);
         when(userRepository.save(any(User.class))).thenAnswer(inv -> {
             User u = inv.getArgument(0);
             u.setId(88_001L);

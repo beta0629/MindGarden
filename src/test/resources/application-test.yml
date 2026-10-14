@@ -78,6 +78,9 @@ spring:
           auto: ${SPRING_JPA_PROPERTIES_HIBERNATE_HBM2DDL_AUTO:update}
         format_sql: true
         use_sql_comments: true
+        # 쿼리 수 회귀 테스트: 전역 Statistics 대신 요청 스레드 스코프 StatementInspector
+        session_factory:
+          statement_inspector: com.coresolution.integrationtest.support.RequestScopedStatementCounter
   task:
     scheduling:
       enabled: false

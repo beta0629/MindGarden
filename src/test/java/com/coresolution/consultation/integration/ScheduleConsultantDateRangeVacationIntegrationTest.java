@@ -30,12 +30,10 @@ import com.coresolution.consultation.repository.ScheduleRepository;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.repository.VacationRepository;
 import com.coresolution.core.context.TenantContextHolder;
+import com.coresolution.integrationtest.support.RequestScopedStatementCounter;
 import com.coresolution.integrationtest.support.WithMockAdminSecurityContext;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.persistence.EntityManagerFactory;
-import org.hibernate.SessionFactory;
-import org.hibernate.stat.Statistics;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -81,7 +79,6 @@ class ScheduleConsultantDateRangeVacationIntegrationTest {
     @Autowired private MockMvc mockMvc;
     @Autowired private ObjectMapper objectMapper;
     @Autowired private UserRepository userRepository;
-    @Autowired private EntityManagerFactory entityManagerFactory;
     @SpyBean private ScheduleRepository scheduleRepository;
     @SpyBean private VacationRepository vacationRepository;
 
@@ -250,14 +247,10 @@ class ScheduleConsultantDateRangeVacationIntegrationTest {
     }
 
     private Measured measure(MockHttpServletRequestBuilder request) throws Exception {
-        Statistics statistics = entityManagerFactory.unwrap(SessionFactory.class).getStatistics();
-        statistics.setStatisticsEnabled(true);
-        statistics.clear();
-        MvcResult result = perform(request, selfCaller());
-        long statements = statistics.getPrepareStatementCount();
-        statistics.setStatisticsEnabled(false);
-        int bytes = result.getResponse().getContentAsByteArray().length;
-        return new Measured(schedulesOf(result).size(), statements, bytes);
+        RequestScopedStatementCounter.Measured<MvcResult> counted =
+                RequestScopedStatementCounter.measure(() -> perform(request, selfCaller()));
+        int bytes = counted.value().getResponse().getContentAsByteArray().length;
+        return new Measured(schedulesOf(counted.value()).size(), counted.statements(), bytes);
     }
 
     private MockHttpServletRequestBuilder rangeRequest(Long consultantId) {

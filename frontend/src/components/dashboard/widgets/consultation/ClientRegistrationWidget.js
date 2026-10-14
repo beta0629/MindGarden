@@ -25,9 +25,16 @@ import './ClientRegistrationWidget.css';
 import MGButton from '../../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../../erp/common/erpMgButtonProps';
 import { generateMgLoginPassword } from '../../../../utils/generateMgLoginPassword';
+import usePasswordPolicyField from '../../../../hooks/usePasswordPolicyField';
+import PasswordPolicyInput from '../../../common/PasswordPolicyInput';
+import { resolveUserFacingApiErrorMessage } from '../../../../utils/userFacingApiErrorMessage';
 import { useTranslation } from 'react-i18next';
 
 const CLIENT_REGISTER_API = '/api/v1/admin/clients';
+
+const WIDGET_INPUT_CLASS = 'form-control';
+const WIDGET_INPUT_ERROR_CLASS = 'error';
+const WIDGET_FIELD_ERROR_CLASS = 'field-error';
 
 const ClientRegistrationWidget = ({ widget, user }) => {
   const { t } = useTranslation();
@@ -54,6 +61,7 @@ const ClientRegistrationWidget = ({ widget, user }) => {
     notes: ''
   });
   const [validationErrors, setValidationErrors] = useState({});
+  const passwordField = usePasswordPolicyField();
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState(null);
 
@@ -73,6 +81,10 @@ const ClientRegistrationWidget = ({ widget, user }) => {
     const newErrors = { ...validationErrors };
     
     switch (name) {
+      case 'password':
+        passwordField.clearError();
+        delete newErrors[name];
+        break;
       case 'email':
         if (value && !validateEmail(value)) {
           newErrors[name] = '올바른 이메일 형식이 아닙니다.';
@@ -112,7 +124,7 @@ const ClientRegistrationWidget = ({ widget, user }) => {
         break;
       default:
         // 필수 필드 검사 (이메일·휴대폰은 택1이므로 여기서 단독 필수 처리하지 않음)
-        if (['userId', 'name', 'password'].includes(name) && !value.trim()) {
+        if (['userId', 'name'].includes(name) && !value.trim()) {
           newErrors[name] = '이 필드는 필수입니다.';
         } else {
           delete newErrors[name];
@@ -169,11 +181,15 @@ const ClientRegistrationWidget = ({ widget, user }) => {
       return;
     }
 
-    const requiredFields = ['userId', 'name', 'password'];
+    const requiredFields = ['userId', 'name'];
     const missingFields = requiredFields.filter(field => !formData[field]?.trim());
 
     if (missingFields.length > 0) {
       showNotification('필수 항목을 모두 입력해주세요.', 'warning');
+      return;
+    }
+    const committedPassword = passwordField.validateCommitted(formData.password);
+    if (!committedPassword.valid) {
       return;
     }
     
@@ -201,7 +217,7 @@ const ClientRegistrationWidget = ({ widget, user }) => {
     const requestData = {
       userId: formData.userId?.trim(),
       email: emailTrim,
-      password: formData.password,
+      password: committedPassword.value,
       name: formData.name?.trim(),
       phone: phoneTrim,
       role: USER_ROLES.CLIENT,
@@ -225,7 +241,7 @@ const ClientRegistrationWidget = ({ widget, user }) => {
       handleRegistrationSuccess(response);
     } catch (error) {
       console.error('❌ 내담자 등록 실패:', error);
-      const message = error.message || '내담자 등록 중 오류가 발생했습니다.';
+      const message = resolveUserFacingApiErrorMessage(error, t('common:dashboard.ClientRegistrationWidget.registerFailed'));
       setSubmitError(message);
       showNotification(message, 'error');
     } finally {
@@ -254,6 +270,7 @@ const ClientRegistrationWidget = ({ widget, user }) => {
       notes: ''
     });
     setValidationErrors({});
+    passwordField.clearError();
   };
 
   // 폼 닫기
@@ -403,22 +420,17 @@ const ClientRegistrationWidget = ({ widget, user }) => {
                     <label htmlFor="password" className="form-label">
                       {t('common:dashboard.ClientRegistrationWidget.t_81973897')} <span className="required">*</span>
                     </label>
-                    <input
-                      type="password"
+                    <PasswordPolicyInput
+                      field={passwordField}
                       id="password"
                       name="password"
                       value={formData.password}
                       onChange={handleInputChange}
                       required
-                      className={`form-control ${getFieldError('password') ? 'error' : ''}`}
-                      placeholder={t('common:dashboard.ClientRegistrationWidget.t_6669670d')}
+                      className={WIDGET_INPUT_CLASS}
+                      errorInputClassName={WIDGET_INPUT_ERROR_CLASS}
+                      errorClassName={WIDGET_FIELD_ERROR_CLASS}
                     />
-                    {getFieldError('password') && (
-                      <div className="field-error">
-                        
-                        {getFieldError('password')}
-                      </div>
-                    )}
                   </div>
 
                   <div className="form-group">
@@ -683,7 +695,7 @@ const ClientRegistrationWidget = ({ widget, user }) => {
                 <MGButton
                   type="submit"
                   variant="primary"
-                  disabled={submitting || Object.keys(validationErrors).length > 0}
+                  disabled={submitting || Object.keys(validationErrors).length > 0 || passwordField.pending}
                   className={buildErpMgButtonClassName({
                     variant: 'primary',
                     size: 'md',

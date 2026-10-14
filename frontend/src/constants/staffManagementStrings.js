@@ -28,7 +28,6 @@ export const STAFF_MGMT_PLACEHOLDER = {
   CREATE_ADDRESS_DETAIL: '동, 호수, 상세 주소를 입력하세요.',
   CREATE_POSTAL: '00000',
   CREATE_EMAIL: 'example@email.com',
-  CREATE_PASSWORD: '비밀번호를 입력하지 않으면 자동 생성됩니다',
   RRN_FIRST6: '900101',
   RRN_LAST1: '1',
   EDIT_PHONE_CLEAR: '비우면 전화번호 없음으로 저장'
@@ -147,7 +146,6 @@ export const STAFF_MGMT_FORM_LABEL = {
 export const STAFF_MGMT_HELP = {
   PASSWORD_AUTO_INFO: '비밀번호를 입력하지 않으면 임시 비밀번호가 자동으로 생성됩니다.',
   PROFILE_IMAGE: '이미지 파일만 가능, 최대 2MB (리사이즈·크롭 적용)',
-  PASSWORD_HINT: '비밀번호를 입력하지 않으면 임시 비밀번호가 자동으로 생성됩니다.',
   ADMIN_COUNSELING_DUAL_ROLE: '원장/관리자가 상담 일정에도 배정됩니다.'
 };
 

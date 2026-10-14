@@ -32,6 +32,14 @@ public final class ScheduleServiceUserFacingMessages {
     public static final String MSG_INSTITUTION_LINK_NOT_PROVISIONAL =
             "기관연계 일정은 가예약으로 등록할 수 없습니다.";
 
+    /** 같은 상담사·날짜에 이미 점유 중인 시간과 겹칠 때. */
+    public static final String MSG_TIME_SLOT_ALREADY_OCCUPIED =
+            "해당 시간대에 이미 스케줄이 존재합니다.";
+
+    /** 점유 시간과 겹치거나 최소 간격(휴식)을 지키지 못할 때. */
+    public static final String MSG_TIME_SLOT_CONFLICT_OR_TOO_CLOSE =
+            "해당 시간대에 이미 스케줄이 존재하거나 시간이 충돌합니다.";
+
     /**
      * 같은 테넌트에서 연결 매칭을 찾을 수 없는 가예약 일정은 확정·점유 전환하지 않는다.
      * 결제 대기 매칭의 가예약 확정은 허용한다(회기 차감은 결제 후).

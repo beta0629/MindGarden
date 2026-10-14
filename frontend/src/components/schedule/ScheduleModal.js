@@ -15,6 +15,7 @@ import ActionBarButton from '../common/ActionBarButton';
 import notificationManager from '../../utils/notification';
 import { useSession } from '../../contexts/SessionContext';
 import StandardizedApi from '../../utils/standardizedApi';
+import { resolveServerFailureMessage } from '../../utils/serverFailureMessage';
 import '../../styles/modules/schedule-modal.css';
 import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import './ScheduleB0KlA.css';
@@ -246,7 +247,7 @@ const ScheduleModalNew = ({
             }
 
             const response = await StandardizedApi.post(API_SCHEDULES_CONSULTANT, scheduleData);
-            
+
             notificationManager.success(response?.message || '스케줄이 성공적으로 생성되었습니다!');
             // 옵션 B: 부모에서 새로 생성된 schedule.id 를 사용해 후속 모달(CheckoutSameDayModal)
             // 자동 진입 흐름에 prefill 한다. 응답 형식에 따른 호환성: data 또는 schedule 또는 root 객체.
@@ -255,21 +256,12 @@ const ScheduleModalNew = ({
             handleClose();
         } catch (error) {
             console.error('스케줄 생성 오류:', error);
-            const body = error?.response?.data;
-            const fromBody =
-                body && typeof body === 'object'
-                    ? (typeof body.message === 'string' && body.message.trim()
-                        ? body.message.trim()
-                        : (typeof body.error === 'string' && body.error.trim()
-                            ? body.error.trim()
-                            : ''))
-                    : '';
-            const fromMessage =
-                typeof error?.message === 'string' && error.message.trim()
-                    ? error.message.trim()
-                    : '';
-            const displayMessage =
-                fromBody || fromMessage || '스케줄 생성 중 오류가 발생했습니다.';
+            const displayMessage = resolveServerFailureMessage(
+                t,
+                error,
+                'schedule:ScheduleModal.createFailedWithMessage',
+                'schedule:ScheduleModal.createFailed'
+            );
             notificationManager.error(displayMessage);
             if (
                 displayMessage.includes('회기') ||
@@ -470,6 +462,7 @@ const ScheduleModalNew = ({
                                     onTimeSlotSelect={handleTimeSlotSelect}
                                     onCodeOptionsLoaded={handleCodeOptionsLoaded}
                                     calendarEvents={calendarEvents}
+                                    onOccupancyLoadFailed={() => setSelectedTimeSlot(null)}
                                 />
                             </div>
                         </div>

@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import com.coresolution.consultation.constant.ClientRegistrationConstants;
 import com.coresolution.consultation.constant.EmailConstants;
 import com.coresolution.consultation.constant.LifecycleState;
 import com.coresolution.consultation.constant.UserRole;
@@ -537,6 +538,17 @@ public class UserServiceImpl implements UserService {
     @Override
     public boolean existsPhoneDuplicate(String normalizedDigits, String tenantIdOrNull, Long excludeUserIdOrNull) {
         return existsPhoneDuplicateInternal(normalizedDigits, tenantIdOrNull, excludeUserIdOrNull, false);
+    }
+
+    @Override
+    public void rejectIfPhoneAlreadyRegistered(String rawPhone, String tenantId, Long excludeUserIdOrNull) {
+        if (!StringUtils.hasText(rawPhone)) {
+            return;
+        }
+        String normalized = LoginIdentifierUtils.normalizeKoreanMobileDigits(rawPhone);
+        if (existsPhoneDuplicate(normalized, tenantId, excludeUserIdOrNull)) {
+            throw new IllegalArgumentException(ClientRegistrationConstants.MSG_PHONE_ALREADY_REGISTERED);
+        }
     }
 
     /**

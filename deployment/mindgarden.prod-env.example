@@ -168,6 +168,13 @@ SSL_KEYSTORE_PATH=
 SSL_KEYSTORE_PASSWORD=
 SSL_KEY_ALIAS=
 
+# 공공데이터(국세청 사업자 진위·상태 / 도로명주소). 값은 호스트·GitHub Secrets 에만.
+# NTS_BIZ_API_SERVICE_KEY 우선. DATA_GO_KR_SERVICE_KEY 는 하위호환 fallback.
+# 미설정 시 사업자 조회는 미확인(신청 허용). 진위 불일치·폐업·미등록은 온보딩 차단.
+NTS_BIZ_API_SERVICE_KEY=
+DATA_GO_KR_SERVICE_KEY=
+JUSO_CONFM_KEY=
+
 # Expo 푸시: application.yml의 mindgarden.mobile.push.expo 및 Expo Push API 호출에 쓰는 액세스 토큰(호스트 env에만 설정).
 EXPO_ACCESS_TOKEN=
 # Push API URL. 이 줄을 생략하면 앱 기본값 사용. EXPO_PUSH_API_URL= 처럼 빈 할당은 피할 것(빈 env가 Spring 기본값을 덮어씀).

@@ -30,6 +30,7 @@ import java.util.UUID;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -359,6 +360,88 @@ class TenantPgConfigurationOpsControllerIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.success").value(false))
                 .andExpect(jsonPath("$.data.result").value("FAILED"));
+    }
+
+    @Test
+    @DisplayName("웹훅 시크릿 PATCH (운영 포털) - OPS+HQ 성공, 평문 미응답")
+    @WithMockUser(roles = {"OPS"})
+    void testPatchWebhookSecret_Success() throws Exception {
+        TenantPgConfigurationDetailResponse detail = new TenantPgConfigurationDetailResponse();
+        detail.setConfigId(testConfigId);
+        detail.setTenantId("center-tenant-id");
+        detail.setPortoneWebhookSecretConfigured(false);
+
+        TenantPgConfigurationResponse patched = TenantPgConfigurationResponse.builder()
+                .configId(testConfigId)
+                .tenantId("center-tenant-id")
+                .portoneWebhookSecretConfigured(true)
+                .status(PgConfigurationStatus.ACTIVE)
+                .approvalStatus(ApprovalStatus.APPROVED)
+                .build();
+
+        when(pgConfigurationService.getConfigurationDetail(isNull(), eq(testConfigId)))
+                .thenReturn(detail);
+        when(pgConfigurationService.patchWebhookSecret(
+                eq("center-tenant-id"), eq(testConfigId), eq("whsec_ops")))
+                .thenReturn(patched);
+
+        PgConfigurationWebhookSecretPatchRequest request = PgConfigurationWebhookSecretPatchRequest.builder()
+                .webhookSecret("whsec_ops")
+                .build();
+
+        mockMvc.perform(patch("/api/v1/ops/pg-configurations/{configId}/webhook-secret", testConfigId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.portoneWebhookSecretConfigured").value(true))
+                .andExpect(content().string(
+                        org.hamcrest.Matchers.not(org.hamcrest.Matchers.containsString("whsec_ops"))));
+    }
+
+    @Test
+    @DisplayName("테스트 모드 PATCH (운영 포털) - OPS+HQ 성공")
+    @WithMockUser(roles = {"OPS"})
+    void testPatchTestMode_Success() throws Exception {
+        TenantPgConfigurationDetailResponse detail = new TenantPgConfigurationDetailResponse();
+        detail.setConfigId(testConfigId);
+        detail.setTenantId("center-tenant-id");
+
+        TenantPgConfigurationResponse patched = TenantPgConfigurationResponse.builder()
+                .configId(testConfigId)
+                .tenantId("center-tenant-id")
+                .testMode(false)
+                .status(PgConfigurationStatus.ACTIVE)
+                .approvalStatus(ApprovalStatus.APPROVED)
+                .build();
+
+        when(pgConfigurationService.getConfigurationDetail(isNull(), eq(testConfigId)))
+                .thenReturn(detail);
+        when(pgConfigurationService.patchTestMode(eq("center-tenant-id"), eq(testConfigId), eq(false)))
+                .thenReturn(patched);
+
+        PgConfigurationTestModePatchRequest request = PgConfigurationTestModePatchRequest.builder()
+                .testMode(false)
+                .build();
+
+        mockMvc.perform(patch("/api/v1/ops/pg-configurations/{configId}/test-mode", testConfigId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.testMode").value(false));
+    }
+
+    @Test
+    @DisplayName("웹훅 시크릿 PATCH (운영 포털) - 센터 ADMIN 403")
+    @WithMockUser(roles = {"ADMIN"})
+    void testPatchWebhookSecret_AdminForbidden() throws Exception {
+        PgConfigurationWebhookSecretPatchRequest request = PgConfigurationWebhookSecretPatchRequest.builder()
+                .webhookSecret("whsec_ops")
+                .build();
+
+        mockMvc.perform(patch("/api/v1/ops/pg-configurations/{configId}/webhook-secret", testConfigId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isForbidden());
     }
 
     @Test

@@ -2,21 +2,35 @@
  * MobileGnb - GNB 56px
  * RESPONSIVE_LAYOUT_SPEC: 모바일 헤더 56px
  *
+ * 3열 grid: 왼쪽(메뉴+로고) | 시계 | 오른쪽(알림+프로필).
+ * absolute 중앙 배치는 자리를 안 잡아 시계·알림이 겹치므로 사용하지 않는다.
+ *
  * @author CoreSolution
  * @since 2025-02-22
  */
 
 .mg-v2-mobile-gnb {
   position: relative;
-  display: flex;
+  display: grid;
+  /* 오른쪽은 min-content 이하로 줄지 않아 알림·프로필이 시계 갭을 침범하지 않음.
+     남는 폭은 왼쪽(브랜드)이 흡수·축소. 가능하면 1fr·1fr로 시각적 가운데 유지. */
+  grid-template-columns: minmax(0, 1fr) auto minmax(min-content, 1fr);
   align-items: center;
-  justify-content: space-between;
+  column-gap: var(--mg-v2-now-chip-gap-sides);
   height: var(--mg-layout-header-height-mobile, 56px);
   padding: 0 var(--mg-v2-space-4);
   background: var(--mg-layout-header-bg, var(--mg-color-background-main));
   border-bottom: var(--mg-v2-border-width-thin) solid var(--mg-layout-header-border, var(--mg-color-border-main));
   z-index: var(--mg-v2-z-header, var(--z-header, 1000));
   overflow: visible;
+}
+
+.mg-v2-mobile-gnb__left {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  justify-self: start;
+  z-index: 2;
 }
 
 .mg-v2-mobile-gnb__menu {
@@ -31,7 +45,6 @@
   align-items: center;
   gap: var(--mg-spacing-sm);
   min-width: 0;
-  margin-right: var(--mg-v2-now-chip-gap-sides);
   z-index: 2;
 }
 
@@ -74,28 +87,43 @@
   vertical-align: middle;
 }
 
-/* 390 등 좁은 폭에서도 시계를 화면 가운데 — 숨김·축소 금지 */
+/* 시계는 줄바꿈·숨김·축소 금지. 양옆은 column-gap(--mg-v2-now-chip-gap-sides)으로 ≥24px */
 .mg-v2-mobile-gnb__center {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  justify-self: center;
   z-index: 1;
   pointer-events: auto;
+}
+
+.mg-v2-mobile-gnb__center .mg-v2-current-time-chip {
+  flex-shrink: 0;
 }
 
 .mg-v2-mobile-gnb__actions {
   display: flex;
   align-items: center;
+  justify-content: flex-end;
   gap: var(--mg-v2-space-1);
-  flex-shrink: 0;
-  margin-left: auto;
-  padding-left: var(--mg-v2-now-chip-gap-sides);
+  min-width: min-content;
+  justify-self: end;
   z-index: 2;
+}
+
+.mg-v2-mobile-gnb__actions .mg-v2-notification-dropdown,
+.mg-v2-mobile-gnb__actions .mg-v2-notification-trigger,
+.mg-v2-mobile-gnb__actions .mg-v2-profile-dropdown {
+  flex-shrink: 0;
+}
+
+/* 공간 부족 시 축소 순서: 프로필 이름 → 검색(본문) → 브랜드명. 시계 유지 */
+@media (max-width: 414px) {
+  .mg-v2-mobile-gnb__brand-name,
+  .mg-v2-mobile-gnb__logo-text {
+    max-width: min(18vw, 6ch);
+  }
 }
 
 @media (max-width: 390px) {

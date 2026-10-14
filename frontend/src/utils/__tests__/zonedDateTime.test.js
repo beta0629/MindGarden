@@ -3,7 +3,8 @@ import {
   formatDateTimeKeyInZone,
   parseScheduleDateKey,
   parseScheduleTimeKey,
-  parseScheduleTimeMinutes
+  parseScheduleTimeMinutes,
+  toFloatingDateTimeInZone
 } from '../zonedDateTime';
 
 describe('parseScheduleTimeKey', () => {
@@ -67,5 +68,12 @@ describe('date keys (KST 경계)', () => {
     expect(parseScheduleDateKey([2026, 1, 2])).toBe('2026-01-02');
     expect(parseScheduleDateKey('오후 07:00')).toBeNull();
     expect(parseScheduleDateKey(null)).toBeNull();
+  });
+
+  test('toFloatingDateTimeInZone: absolute ISO → KST floating, floating 유지', () => {
+    expect(toFloatingDateTimeInZone('2026-10-14T00:00:00+09:00')).toBe('2026-10-14T00:00:00');
+    expect(toFloatingDateTimeInZone('2026-10-13T15:00:00.000Z')).toBe('2026-10-14T00:00:00');
+    expect(toFloatingDateTimeInZone('2026-10-14T14:00:00')).toBe('2026-10-14T14:00:00');
+    expect(toFloatingDateTimeInZone('2026-10-14')).toBe('2026-10-14');
   });
 });

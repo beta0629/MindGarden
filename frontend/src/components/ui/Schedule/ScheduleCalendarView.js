@@ -7,7 +7,10 @@ import interactionPlugin from '@fullcalendar/interaction';
 import { Calendar as CalendarIcon, AlertCircle, Info } from 'lucide-react';
 import { toDisplayString } from '../../../utils/safeDisplay';
 import { resolveScheduleStatusDisplayLabel } from '../../../utils/scheduleStatusLabel';
-import { resolveCalendarSlotTimeRange } from '../../../utils/scheduleCalendarSlotRange';
+import {
+  resolveCalendarScrollTime,
+  resolveCalendarSlotTimeRange
+} from '../../../utils/scheduleCalendarSlotRange';
 import {
   CALENDAR_EXTENDED_TYPE_KR_PUBLIC_HOLIDAY,
   CALENDAR_EXTENDED_TYPE_VACATION,
@@ -144,6 +147,11 @@ const ScheduleCalendarView = ({
     useCalendarDragEscapeCancel();
     /** 주·일 시간축 — 업무 종료(20시대 포함) 기본 + 더 늦은/이른 일정까지 */
     const slotTimeRange = useMemo(() => resolveCalendarSlotTimeRange(events), [events]);
+    /** 초기 스크롤: Asia/Seoul 현재시 − 2h (slotMin 클램프). 마운트 시점 기준 */
+    const scrollTime = useMemo(
+        () => resolveCalendarScrollTime(new Date(), slotTimeRange.slotMinTime),
+        [slotTimeRange.slotMinTime]
+    );
 
     const updateCalendarSize = useCallback(() => {
         const calendarApi = calendarRef.current?.getApi?.();
@@ -743,7 +751,8 @@ const ScheduleCalendarView = ({
                 slotMinTime={slotTimeRange.slotMinTime}
                 slotMaxTime={slotTimeRange.slotMaxTime}
                 slotDuration="00:30:00"
-                scrollTime="09:00:00"
+                nowIndicator={true}
+                scrollTime={scrollTime}
                 scrollTimeReset={false}
                 allDaySlot={true}
                 eventDidMount={handleEventDidMount}

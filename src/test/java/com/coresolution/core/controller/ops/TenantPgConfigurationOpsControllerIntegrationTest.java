@@ -159,6 +159,51 @@ class TenantPgConfigurationOpsControllerIntegrationTest {
     }
 
     @Test
+    @DisplayName("승인 대기 목록 — hasPendingEdit·pendingEditDiff 필드 포함")
+    @WithMockUser(roles = {"OPS"})
+    void testGetPendingApprovals_IncludesPendingEditDiff() throws Exception {
+        TenantPgPendingEditDiff diff = TenantPgPendingEditDiff.builder()
+                .current(TenantPgPendingEditValues.builder()
+                        .provider("TOSS")
+                        .storeId("****ive")
+                        .merchantId("****ant")
+                        .channelKeyMasked("****ABCD")
+                        .build())
+                .pending(TenantPgPendingEditValues.builder()
+                        .provider("TOSS")
+                        .storeId("****ing")
+                        .merchantId("****new")
+                        .channelKeyMasked("****WXYZ")
+                        .build())
+                .apiKeyChanged(true)
+                .secretKeyChanged(false)
+                .build();
+        TenantPgConfigurationResponse pendingItem = TenantPgConfigurationResponse.builder()
+                .configId(testConfigId)
+                .tenantId("center-tenant-id")
+                .pgProvider(PgProvider.TOSS)
+                .status(PgConfigurationStatus.ACTIVE)
+                .approvalStatus(ApprovalStatus.APPROVED)
+                .hasPendingEdit(true)
+                .pendingRequestedAt(LocalDateTime.now())
+                .pendingEditDiff(diff)
+                .build();
+        when(pgConfigurationService.getPendingApprovals(null, null))
+                .thenReturn(List.of(pendingItem));
+
+        mockMvc.perform(get("/api/v1/ops/pg-configurations/pending")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data[0].hasPendingEdit").value(true))
+                .andExpect(jsonPath("$.data[0].pendingEditDiff.apiKeyChanged").value(true))
+                .andExpect(jsonPath("$.data[0].pendingEditDiff.secretKeyChanged").value(false))
+                .andExpect(jsonPath("$.data[0].pendingEditDiff.current.channelKeyMasked")
+                        .value("****ABCD"))
+                .andExpect(jsonPath("$.data[0].pendingEditDiff.pending.channelKeyMasked")
+                        .value("****WXYZ"));
+    }
+
+    @Test
     @DisplayName("승인 대기 목록 조회 - OPS+tenant 미설정(HQ JWT) 200")
     @WithMockUser(roles = {"OPS"})
     void testGetPendingApprovals_OpsWithoutTenantId_Success() throws Exception {
@@ -226,6 +271,26 @@ class TenantPgConfigurationOpsControllerIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.configId").value(testConfigId))
                 .andExpect(jsonPath("$.data.approvalStatus").value("APPROVED"));
+    }
+
+    @Test
+    @DisplayName("PG 설정 승인 — 연결테스트 실패 시 4xx, 서비스 예외 전파")
+    @WithMockUser(roles = {"OPS"})
+    void testApproveConfiguration_ConnectionTestFailed_ReturnsBadRequest() throws Exception {
+        PgConfigurationApproveRequest request = PgConfigurationApproveRequest.builder()
+                .approvedBy("ops-user")
+                .approvalNote("재승인")
+                .testConnection(true)
+                .build();
+
+        when(pgConfigurationService.approveConfiguration(eq(testConfigId), any(PgConfigurationApproveRequest.class)))
+                .thenThrow(new IllegalStateException(
+                        "PG 연결 테스트 실패로 승인을 중단했습니다: API Key 유효하지 않음"));
+
+        mockMvc.perform(post("/api/v1/ops/pg-configurations/{configId}/approve", testConfigId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest());
     }
 
     @Test
@@ -377,6 +442,29 @@ class TenantPgConfigurationOpsControllerIntegrationTest {
                 .andExpect(jsonPath("$.data.success").value(true))
                 .andExpect(jsonPath("$.data.result").value("SUCCESS"))
                 .andExpect(jsonPath("$.data.message").value("연결 성공"));
+    }
+
+    @Test
+    @DisplayName("PG 연결 테스트 (운영 포털) — testConnectionBeforeApproval 호출(pending 경로 포함)")
+    @WithMockUser(roles = {"OPS"})
+    void testTestConnection_InvokesBeforeApprovalService() throws Exception {
+        ConnectionTestResponse connectionResponse = ConnectionTestResponse.builder()
+                .success(true)
+                .result("SUCCESS")
+                .message("pending 자격 증명 테스트 성공")
+                .testedAt(LocalDateTime.now())
+                .build();
+
+        when(pgConfigurationService.testConnectionBeforeApproval(testConfigId))
+                .thenReturn(connectionResponse);
+
+        mockMvc.perform(post("/api/v1/ops/pg-configurations/{configId}/test-connection", testConfigId)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.message").value("pending 자격 증명 테스트 성공"));
+
+        org.mockito.Mockito.verify(pgConfigurationService)
+                .testConnectionBeforeApproval(testConfigId);
     }
 
     @Test

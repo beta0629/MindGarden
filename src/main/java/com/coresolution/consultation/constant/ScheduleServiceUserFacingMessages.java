@@ -39,6 +39,14 @@ public final class ScheduleServiceUserFacingMessages {
     public static final String MSG_TENTATIVE_WITHOUT_MAPPING_CONFIRM_DENIED =
             "연결된 매칭을 찾을 수 없어 가예약 일정을 확정할 수 없습니다. 매칭을 확인한 뒤 다시 시도해 주세요.";
 
+    /** 취소·휴가·완료·진행 중 등 확정할 수 없는 상태의 일정에 확정을 요청한 경우 (회기 변경 없음). */
+    public static final String MSG_SCHEDULE_STATUS_NOT_CONFIRMABLE =
+            "현재 상태에서는 일정을 확정할 수 없습니다. 예약됨 또는 가예약 일정만 확정할 수 있습니다.";
+
+    /** 취소·완료된 일정을 예약·확정·진행 중으로 되돌리려 한 경우 (회기 변경 없음). */
+    public static final String MSG_SCHEDULE_TERMINAL_REOCCUPY_DENIED =
+            "취소되었거나 완료된 일정은 다시 예약·확정 상태로 바꿀 수 없습니다. 새 일정을 등록해 주세요.";
+
     /** 같은 테넌트에 없는 일정 id로 확정·당일 결제 대상을 지정한 경우. */
     public static final String MSG_SCHEDULE_NOT_FOUND = "일정을 찾을 수 없습니다.";
 

@@ -81,6 +81,13 @@ export const OFD_MIX_CATEGORY = {
   INCOME: '수입'
 };
 
+/**
+ * 지출 breakdown 에 상담료 계열 키가 있을 때(환불) 나간 곳 mix 라벨.
+ * CONSULTATION_REFUND 등 OFD_REFUND_SUBCATEGORIES 병합 버킷과 구분.
+ */
+export const OFD_OUTFLOW_CONSULTATION_REFUND_LABEL =
+  `${OFD_MIX_CATEGORY.REFUND}(${OFD_MIX_CATEGORY.CONSULTATION})`;
+
 /** categoryBreakdown / tx.category 코드 → 클리닉 라벨 (존재하는 키만 매핑) */
 export const OFD_CATEGORY_LABELS = {
   상담료: OFD_MIX_CATEGORY.CONSULTATION,
@@ -88,9 +95,19 @@ export const OFD_CATEGORY_LABELS = {
   CONSULTATION_FEE: OFD_MIX_CATEGORY.CONSULTATION_FEE,
   INCOME: OFD_MIX_CATEGORY.INCOME,
   SALARY: OFD_MIX_CATEGORY.SALARY,
+  급여: OFD_MIX_CATEGORY.SALARY,
   RENT: '임대',
+  임대료: '임대',
   UTILITY: '관리',
   MANAGEMENT_FEE: '관리',
+  관리비: '관리',
+  TAX: '세금',
+  세금: '세금',
+  MEAL: '식대',
+  식대: '식대',
+  EQUIPMENT: '장비',
+  OFFICE_SUPPLIES: '사무용품',
+  CARD_MERCHANT_FEE: '카드 가맹점 수수료',
   CONSULTATION_REFUND: OFD_MIX_CATEGORY.REFUND,
   OTHER: OFD_MIX_CATEGORY.OTHER
 };

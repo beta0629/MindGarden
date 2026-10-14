@@ -33,8 +33,8 @@ import { useSession } from '../../contexts/SessionContext';
 import { authAPI } from '../../utils/ajax';
 import { sessionManager } from '../../utils/sessionManager';
 import { markJustLoggedIn } from '../../utils/sessionAuthPolicy';
-import { sanitizeSameOriginReturnPath } from '../../utils/sessionRedirect';
 import { appleLogin, googleLogin, kakaoLogin, naverLogin } from '../../utils/socialLogin';
+import { readLoginReturnPathFromUrl } from '../../utils/loginReturnPath';
 import {
   OAUTH2_LOGIN_UI,
   isGoogleWebClientIdConfigured
@@ -509,26 +509,16 @@ const UnifiedLogin = () => {
         return;
       }
 
-      // 단일 테넌트 또는 멀티 테넌트가 아닌 경우: redirect 파라미터 확인 후 리다이렉트
-      const searchParams = new URLSearchParams(location.search);
-      const redirectPath = sanitizeSameOriginReturnPath(searchParams.get('redirect'));
-
+      // 단일 테넌트: 복귀 주소(?redirect=)는 공통 착지점 redirectToDynamicDashboard 가
+      // sanitizeLoginReturnPath·역할 허용 목록으로 검사해 쓴다(직접 navigate 하지 않음).
       try {
         await mergeGuestShopCartIntoServer();
       } catch (mergeError) {
         console.warn('게스트 장바구니 병합 실패:', mergeError);
       }
 
-      if (redirectPath) {
-        navigate(redirectPath, { replace: true });
-      } else {
-        const { redirectToDynamicDashboard } = await import('../../utils/dashboardUtils');
-        const authResponse = {
-          user: user,
-          isMultiTenant: false
-        };
-        await redirectToDynamicDashboard(authResponse, navigate);
-      }
+      const { redirectToDynamicDashboard } = await import('../../utils/dashboardUtils');
+      await redirectToDynamicDashboard({ user: user, isMultiTenant: false }, navigate);
     } catch (error) {
       console.error('멀티 테넌트 확인 오류:', error);
     }
@@ -684,9 +674,9 @@ const UnifiedLogin = () => {
           return;
         }
 
-        // 단일 테넌트 사용자: redirect 파라미터 확인 후 리다이렉트
-        const searchParams = new URLSearchParams(location.search);
-        const redirectPath = sanitizeSameOriginReturnPath(searchParams.get('redirect'));
+        // 단일 테넌트 사용자: 복귀 주소(?redirect=)는 공통 착지점 redirectToDynamicDashboard 가
+        // sanitizeLoginReturnPath·역할 허용 목록으로 검사해 쓴다(직접 navigate 하지 않음).
+        const hasReturnPath = Boolean(readLoginReturnPathFromUrl());
 
         try {
           await mergeGuestShopCartIntoServer();
@@ -695,13 +685,11 @@ const UnifiedLogin = () => {
         }
 
         try {
-          if (redirectPath) {
-            navigate(redirectPath, { replace: true });
-          } else {
+          if (!hasReturnPath) {
             await new Promise((resolve) => setTimeout(resolve, 300));
-            const { redirectToDynamicDashboard } = await import('../../utils/dashboardUtils');
-            await redirectToDynamicDashboard(loginData, navigate);
           }
+          const { redirectToDynamicDashboard } = await import('../../utils/dashboardUtils');
+          await redirectToDynamicDashboard(loginData, navigate);
         } finally {
           // navigate 직후에도 로딩 스피너가 남는 경우(세션·라우팅 지연) 방지
           setIsLoading(false);

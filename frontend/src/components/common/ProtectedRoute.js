@@ -14,6 +14,7 @@ import { useSession } from '../../contexts/SessionContext';
 import RoleUtils from '../../utils/RoleUtils';
 import { resolvePostLoginLandingPath } from '../../utils/dashboardUtils';
 import UnifiedLoading from './UnifiedLoading';
+import { buildLoginReturnSearch } from '../../utils/sessionRedirect';
 
 const getRoleDashboardRedirectPath = (user) => resolvePostLoginLandingPath(user);
 
@@ -38,10 +39,11 @@ const ProtectedRoute = ({
   }
 
   if (!user) {
-    const redirectTarget = `${location.pathname}${location.search || ''}`;
+    // 복귀 주소는 sanitizeLoginReturnPath 를 거친 값만(토큰·개인정보 쿼리 제거, 로그인 경로 제외)
+    const loginSearch = buildLoginReturnSearch(`${location.pathname}${location.search || ''}`);
     return (
       <Navigate
-        to={`/login?redirect=${encodeURIComponent(redirectTarget)}`}
+        to={`/login${loginSearch}`}
         replace
       />
     );

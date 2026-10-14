@@ -1,0 +1,124 @@
+/**
+ * ConsultantFilterSelect — ScheduleHeader 상담사 필터.
+ * ClientFilterMultiSelect 와 동일 슬레이트 선택 상태 토큰.
+ */
+
+.mg-consultant-filter--trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--mg-v2-teacher-dot-gap);
+  min-width: 120px;
+  max-width: 200px;
+  height: var(--mg-v2-component-height-md);
+  padding-block: 0;
+  padding-inline: var(--mg-v2-space-3);
+  font-size: var(--mg-v2-font-size-body-md);
+  font-family: inherit;
+  font-weight: var(--mg-v2-font-weight-medium);
+  background: var(--mg-v2-color-neutral-100);
+  border: var(--mg-v2-border-width-thin) solid var(--mg-v2-color-neutral-300);
+  border-radius: var(--mg-v2-radius-md);
+  color: var(--mg-v2-color-text-primary);
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.mg-consultant-filter--trigger:focus {
+  outline: none;
+  border-color: var(--mg-v2-color-primary-main);
+}
+
+.mg-consultant-filter--trigger:hover:not(:disabled) {
+  background: var(--mg-v2-color-neutral-50);
+  border-color: var(--mg-v2-color-primary-main);
+}
+
+.mg-consultant-filter--open {
+  border-color: var(--mg-v2-color-primary-main);
+  background: var(--mg-v2-color-neutral-50);
+}
+
+.mg-consultant-filter--disabled {
+  opacity: var(--mg-v2-opacity-disabled);
+  cursor: not-allowed;
+}
+
+.mg-consultant-filter--empty .mg-consultant-filter__label {
+  color: var(--mg-v2-color-text-secondary);
+}
+
+.mg-consultant-filter__label {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: left;
+}
+
+.mg-consultant-filter__caret {
+  flex: 0 0 auto;
+  font-size: var(--mg-v2-font-size-body-sm);
+  line-height: 1;
+  color: var(--mg-v2-color-text-secondary);
+}
+
+.mg-consultant-filter__popover {
+  /* ClientFilterMultiSelect 와 동일 팝오버 층 */
+  z-index: var(--z-popover, 1060);
+  max-height: 240px;
+  overflow: auto;
+  background: var(--mg-v2-color-surface-overlay);
+  border: var(--mg-v2-border-width-thin) solid var(--mg-v2-color-neutral-300);
+  border-radius: var(--mg-v2-radius-md);
+  box-shadow: var(--mg-v2-shadow-md);
+  contain: layout paint;
+  isolation: isolate;
+}
+
+.mg-consultant-filter__options {
+  list-style: none;
+  margin: 0;
+  padding: var(--mg-v2-space-1);
+}
+
+.mg-consultant-filter__option {
+  display: flex;
+  align-items: center;
+  gap: var(--mg-v2-teacher-dot-gap);
+  padding: var(--mg-v2-space-2) var(--mg-v2-space-3);
+  border-radius: var(--mg-v2-radius-sm);
+  cursor: pointer;
+  color: var(--mg-v2-color-text-primary);
+  font-size: var(--mg-v2-font-size-body-md);
+}
+
+.mg-consultant-filter__option:hover {
+  background: var(--mg-v2-color-surface-hover);
+}
+
+.mg-consultant-filter__option--selected {
+  background: var(--mg-v2-color-surface-active);
+  font-weight: var(--mg-v2-font-weight-medium);
+}
+
+.mg-consultant-filter__option--disabled {
+  cursor: default;
+  color: var(--mg-v2-color-text-secondary);
+}
+
+.mg-consultant-filter__option-label {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mg-consultant-filter__dot-spacer {
+  flex: 0 0 auto;
+  inline-size: var(--mg-v2-teacher-dot-size);
+  block-size: var(--mg-v2-teacher-dot-size);
+}

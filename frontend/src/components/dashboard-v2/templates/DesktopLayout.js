@@ -7,6 +7,7 @@
  */
 
 import React from 'react';
+import { SearchInput } from '../atoms';
 import { DesktopGnb, DesktopLnb } from '../organisms';
 import './DesktopLayout.css';
 
@@ -33,8 +34,6 @@ const DesktopLayout = ({
         logoUrl={logoUrl}
         logoHomePath={logoHomePath}
         logoBrandingLoading={logoBrandingLoading}
-        searchValue={searchValue}
-        onSearchChange={onSearchChange}
         onCalendarClick={onCalendarClick}
         onBellClick={onBellClick}
         onMoonClick={onMoonClick}
@@ -44,6 +43,9 @@ const DesktopLayout = ({
       <div className="mg-v2-desktop-layout__body">
         <DesktopLnb menuItems={menuItems} headerTitle={headerTitle} />
         <main className="mg-v2-desktop-layout__main" role="main">
+          <div className="mg-v2-desktop-layout__search">
+            <SearchInput value={searchValue} onChange={onSearchChange} />
+          </div>
           {children}
         </main>
       </div>

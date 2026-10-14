@@ -18,6 +18,7 @@ import com.coresolution.consultation.validation.OnAdminConsultantRegister;
 import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.constant.ClientEngagementTypeConstants;
 import com.coresolution.consultation.constant.PaymentTimingConstants;
+import com.coresolution.consultation.constant.ScheduleStatus;
 import com.coresolution.consultation.dto.ClientPackagePaymentHistoryResponse;
 import com.coresolution.consultation.dto.ClientRegistrationRequest;
 import com.coresolution.consultation.dto.CheckoutSameDayRequest;
@@ -25,15 +26,24 @@ import com.coresolution.consultation.dto.ConsultantClientMappingCreateRequest;
 import com.coresolution.consultation.dto.ConsultantClientMappingResponse;
 import com.coresolution.consultation.dto.admin.BulkMappingPaymentResult;
 import com.coresolution.consultation.dto.ConsultantRegistrationRequest;
+import com.coresolution.consultation.dto.ConsultationLogGroupSummaryResponse;
+import com.coresolution.consultation.dto.ConsultationLogGroupedPage;
+import com.coresolution.consultation.dto.ConsultationLogTimelineBoundaryResponse;
 import com.coresolution.consultation.dto.ConsultationRecordListItemResponse;
 import com.coresolution.consultation.dto.ConsultationsByDayOfWeekResponse;
 import com.coresolution.consultation.dto.CounselingEnabledUpdateRequest;
 import com.coresolution.consultation.dto.ConsultantTransferRequest;
 import com.coresolution.consultation.dto.NewClientsStatisticsResponse;
+import com.coresolution.consultation.dto.MappingStatusCloseRequest;
+import com.coresolution.consultation.dto.MappingStatusCloseResponse;
 import com.coresolution.consultation.dto.PendingPaymentPackageUpdateRequest;
 import com.coresolution.consultation.dto.WeeklyReservationsResponse;
 import com.coresolution.consultation.dto.StaffRegistrationRequest;
+import com.coresolution.consultation.constant.AuditAction;
+import com.coresolution.consultation.entity.AuditLog;
+import com.coresolution.consultation.service.AuditLogService;
 import com.coresolution.consultation.service.ClientPackagePaymentHistoryService;
+import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.consultation.entity.Client;
 // 표준화 2025-12-05: 역할 체크를 공통코드 기반 동적 조회로 변경 (COMMON_CODE_SYSTEM_STANDARD.md 준수)
 import com.coresolution.consultation.entity.ConsultantClientMapping;
@@ -41,6 +51,7 @@ import com.coresolution.consultation.entity.ConsultationRecord;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.exception.EntityNotFoundException;
 import com.coresolution.consultation.exception.RefundLedgerNotRecordedException;
+import com.coresolution.consultation.repository.ScheduleRepository;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.repository.UserSocialAccountRepository;
 import com.coresolution.consultation.service.AdminBulkMappingPaymentService;
@@ -52,7 +63,10 @@ import com.coresolution.consultation.service.CommonCodeService;
 import com.coresolution.consultation.service.RoleCommonCodeAuthorizationService;
 import com.coresolution.consultation.service.ConsultantRatingService;
 import com.coresolution.consultation.service.ConsultantStatsService;
+import com.coresolution.consultation.service.ConsultationRecordPersonNameResolver;
 import com.coresolution.consultation.service.ConsultationRecordService;
+import com.coresolution.consultation.util.ConsultationLogGroupMode;
+import com.coresolution.consultation.util.ConsultationLogTimelineSort;
 import com.coresolution.consultation.service.DynamicPermissionService;
 import com.coresolution.consultation.service.erp.ErpService;
 import com.coresolution.consultation.service.erp.financial.FinancialTransactionService;
@@ -185,6 +199,7 @@ public class AdminController extends BaseApiController {
     private final AdminService adminService;
     private final AdminBulkMappingPaymentService adminBulkMappingPaymentService;
     private final MappingTerminationService mappingTerminationService;
+    private final AuditLogService auditLogService;
     private final MappingUpdateService mappingUpdateService;
     private final ClientPackagePaymentHistoryService clientPackagePaymentHistoryService;
     private final ClientMappingListPayloadService clientMappingListPayloadService;
@@ -196,6 +211,7 @@ public class AdminController extends BaseApiController {
     private final OpsAccessGuard opsAccessGuard;
     private final ConsultationRecordAccessGuard consultationRecordAccessGuard;
     private final ConsultationRecordService consultationRecordService;
+    private final ConsultationRecordPersonNameResolver consultationRecordPersonNameResolver;
     private final DynamicPermissionService dynamicPermissionService;
     private final MenuService menuService;
     private final FinancialTransactionService financialTransactionService;
@@ -217,6 +233,7 @@ public class AdminController extends BaseApiController {
             scheduleClientReminderSmsStatusService;
     private final com.coresolution.consultation.repository.ClientRepository clientRepository;
     private final com.coresolution.consultation.repository.ConsultantRepository consultantRepository;
+    private final ScheduleRepository scheduleRepository;
 
     /**
      * /** 상담사 통계 정보 조회 (캐시 사용) /** GET /api/admin/consultants/with-stats/{id}
@@ -583,9 +600,21 @@ public class AdminController extends BaseApiController {
     /**
      * /** 상담사별 매칭된 내담자 목록 조회 (스케줄 등록용)
      */
+    /**
+     * 상담사별 매칭 내담자 목록.
+     * <p>page/size 생략 시 전체(하위 호환). 지정 시 Spring page 0-base로 슬라이스하며
+     * totalElements/totalPages 를 함께 반환한다.
+     * lastSessionDate 는 mapping.getClient()({@link User})가 아니라,
+     * 상담사·내담자 스코프 COMPLETED 일정의 MAX(date) SSOT(없으면 null).
+     * {@link Client#getLastSessionDate()} 는 {@code @Transient} 이므로 DB 조회만으로는 채울 수 없다.
+     */
     @GetMapping("/mappings/consultant/{consultantId}/clients")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getClientsByConsultantMapping(
-            @PathVariable Long consultantId, HttpSession session) {
+            @PathVariable Long consultantId,
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer size,
+            @RequestParam(required = false) String status,
+            HttpSession session) {
         resourceOwnerAccessGuard.requireConsultantSelfOrManagerAccess(session, consultantId);
         ResponseEntity<?> permissionResponse = PermissionCheckUtils.checkPermission(session,
                 "MAPPING_VIEW", dynamicPermissionService);
@@ -639,6 +668,15 @@ public class AdminController extends BaseApiController {
             log.info("🔍 매칭 상세 - ID: {}, 결제상태: {}, 상태: {}", 
                     m.getId(), m.getPaymentStatus(), m.getStatus());
         }
+
+        // ConsultantServiceImpl 과 동일 SSOT: 상담사·내담자 COMPLETED 일정 MAX(date)
+        List<Long> mappingClientIdsForLastSession = mappings.stream()
+                .map(m -> m.getClient() != null ? m.getClient().getId() : null)
+                .filter(java.util.Objects::nonNull)
+                .distinct()
+                .collect(Collectors.toList());
+        Map<Long, LocalDate> lastSessionDateByClientId = loadLastCompletedSessionDatesByConsultantAndClients(
+                tenantId, consultantId, mappingClientIdsForLastSession);
 
         List<Map<String, Object>> activeMappings = mappings.stream()
                 .filter(mapping -> {
@@ -694,6 +732,11 @@ public class AdminController extends BaseApiController {
                                             mapping.getClient().getCreatedAt() != null
                                                     ? mapping.getClient().getCreatedAt().toString()
                                                     : ""));
+                            // mapping.client 는 User — lastSessionDate 는 스케줄 SSOT 맵에서 채움
+                            LocalDate lastSessionDate =
+                                    lastSessionDateByClientId.get(mapping.getClient().getId());
+                            data.put("lastSessionDate",
+                                    lastSessionDate != null ? lastSessionDate.toString() : null);
                         }
 
                         data.put("totalSessions", mapping.getTotalSessions());
@@ -726,11 +769,99 @@ public class AdminController extends BaseApiController {
             log.warn("⚠️ 매칭 데이터가 있지만 필터링으로 인해 모두 제외되었습니다. 결제상태를 확인하세요.");
         }
 
+        // assignedAt 최신순 (FE 기존 정렬과 동일)
+        activeMappings.sort((a, b) -> {
+            Object aAt = a.get("assignedAt");
+            Object bAt = b.get("assignedAt");
+            String aStr = aAt != null ? aAt.toString() : "";
+            String bStr = bAt != null ? bAt.toString() : "";
+            return bStr.compareTo(aStr);
+        });
+
+        // statusCounts 는 상태 필터·페이징 전 전체 활성 매핑 기준 (칩 ALL/상태별 총계 SSOT)
+        Map<String, Long> statusCounts = new HashMap<>();
+        statusCounts.put("ALL", (long) activeMappings.size());
+        for (Map<String, Object> mappingRow : activeMappings) {
+            Object statusValue = mappingRow.get("status");
+            if (statusValue == null) {
+                continue;
+            }
+            String statusKey = statusValue.toString();
+            statusCounts.merge(statusKey, 1L, Long::sum);
+        }
+
+        String statusFilter = status != null ? status.trim() : "";
+        if (!statusFilter.isEmpty() && !"ALL".equalsIgnoreCase(statusFilter)) {
+            final String wantedStatus = statusFilter;
+            activeMappings = activeMappings.stream()
+                    .filter(mappingRow -> {
+                        Object statusValue = mappingRow.get("status");
+                        return statusValue != null
+                                && wantedStatus.equalsIgnoreCase(statusValue.toString());
+                    })
+                    .collect(Collectors.toList());
+        }
+
         Map<String, Object> data = new HashMap<>();
-        data.put("mappings", activeMappings);
-        data.put("count", activeMappings.size());
+        data.put("statusCounts", statusCounts);
+        int totalElements = activeMappings.size();
+        if (page != null || size != null) {
+            int pageIndex = page != null && page >= 0 ? page : 0;
+            int pageSize = size != null && size > 0
+                    ? Math.min(size, AdminListPaging.MAX_PAGE_SIZE)
+                    : PaginationUtils.DEFAULT_PAGE_SIZE;
+            int from = Math.min(pageIndex * pageSize, totalElements);
+            int to = Math.min(from + pageSize, totalElements);
+            List<Map<String, Object>> pageSlice = activeMappings.subList(from, to);
+            int totalPages = pageSize <= 0 ? 0 : (int) Math.ceil((double) totalElements / pageSize);
+            data.put("mappings", pageSlice);
+            data.put("count", pageSlice.size());
+            data.put("totalElements", totalElements);
+            data.put("totalPages", totalPages);
+            data.put("currentPage", pageIndex);
+            data.put("size", pageSize);
+        } else {
+            data.put("mappings", activeMappings);
+            data.put("count", totalElements);
+            data.put("totalElements", totalElements);
+        }
 
         return success(data);
+    }
+
+    /**
+     * 상담사·내담자별 COMPLETED 일정 최근일 배치 조회.
+     * {@link com.coresolution.consultation.service.impl.ConsultantServiceImpl} 과 동일 SSOT.
+     *
+     * @param tenantId 테넌트 ID
+     * @param consultantId 상담사 ID
+     * @param clientIds 내담자 ID 목록
+     * @return clientId → MAX(COMPLETED schedule.date)
+     */
+    private Map<Long, LocalDate> loadLastCompletedSessionDatesByConsultantAndClients(
+            String tenantId, Long consultantId, List<Long> clientIds) {
+        if (tenantId == null || tenantId.isBlank() || consultantId == null
+                || clientIds == null || clientIds.isEmpty()) {
+            return Map.of();
+        }
+        try {
+            List<Object[]> rows = scheduleRepository.findMaxCompletedSessionDateByConsultantAndClientIds(
+                    tenantId, consultantId, clientIds, ScheduleStatus.COMPLETED);
+            Map<Long, LocalDate> out = new HashMap<>();
+            for (Object[] row : rows) {
+                if (row == null || row.length < 2 || row[0] == null || row[1] == null) {
+                    continue;
+                }
+                Long cid = ((Number) row[0]).longValue();
+                LocalDate maxDate = (LocalDate) row[1];
+                out.put(cid, maxDate);
+            }
+            return out;
+        } catch (Exception e) {
+            log.warn("⚠️ 상담사 매칭 내담자 lastSessionDate 배치 조회 실패: tenantId={}, consultantId={}, error={}",
+                    tenantId, consultantId, e.getMessage());
+            return Map.of();
+        }
     }
 
     /**
@@ -2205,7 +2336,8 @@ public class AdminController extends BaseApiController {
         String currentBranchCode = currentUser.getBranchCode();
         log.info("🔧 현재 사용자 지점코드: {}", currentBranchCode);
 
-        ConsultantClientMapping mapping = DeferredExternalCalls.run(() -> adminService.createMapping(request));
+        ConsultantClientMapping mapping =
+                DeferredExternalCalls.run(() -> adminService.createMappingFromAdmin(request));
 
         log.info("🔧 생성된 매칭 지점코드: {}", mapping.getBranchCode());
 
@@ -2558,6 +2690,88 @@ public class AdminController extends BaseApiController {
         String reason = (String) requestBody.get("reason");
         DeferredExternalCalls.run(() -> mappingTerminationService.terminate(id, reason));
         return success("매칭이 성공적으로 종료되었습니다");
+    }
+
+    /**
+     * 매칭 상태-only 종료 (환불·회기·결제·ERP 변경 없음).
+     *
+     * <p>전액 환불 {@code POST .../terminate} 와 분리. ADMIN + 동일 테넌트만.
+     * 이미 TERMINATED/CANCELLED면 멱등 성공.</p>
+     */
+    @PostMapping("/mappings/{id}/status-close")
+    public ResponseEntity<ApiResponse<MappingStatusCloseResponse>> closeMappingStatusOnly(
+            @PathVariable Long id,
+            @Valid @RequestBody MappingStatusCloseRequest request,
+            HttpSession session) {
+        User actor = resourceOwnerAccessGuard.requireMappingAdminActor(session, id);
+        String reason = request != null ? request.getReason() : null;
+        if (!StringUtils.hasText(reason)) {
+            throw new IllegalArgumentException(AdminServiceUserFacingMessages.MSG_STATUS_CLOSE_REASON_REQUIRED);
+        }
+        String terminatedBy = resolveStatusCloseActorLabel(actor);
+        log.info("🔧 매칭 상태-only 종료: ID={}, by={}", id, terminatedBy);
+        MappingStatusCloseResponse result = adminService.closeMappingStatusOnly(id, reason.trim(), terminatedBy);
+        if (result != null && !result.isAlreadyClosed()) {
+            recordMappingStatusCloseAudit(actor, id, reason.trim(), result);
+        }
+        return success(AdminServiceUserFacingMessages.MSG_STATUS_CLOSE_SUCCESS, result);
+    }
+
+    private static String resolveStatusCloseActorLabel(User actor) {
+        if (actor == null) {
+            return "ADMIN";
+        }
+        if (StringUtils.hasText(actor.getEmail())) {
+            return actor.getEmail().trim();
+        }
+        if (StringUtils.hasText(actor.getName())) {
+            return actor.getName().trim();
+        }
+        return actor.getId() != null ? String.valueOf(actor.getId()) : "ADMIN";
+    }
+
+    private void recordMappingStatusCloseAudit(
+            User actor, Long mappingId, String reason, MappingStatusCloseResponse result) {
+        try {
+            String tenantId = TenantContextHolder.getTenantId();
+            if (!StringUtils.hasText(tenantId) && actor != null) {
+                tenantId = actor.getTenantId();
+            }
+            if (!StringUtils.hasText(tenantId)) {
+                log.warn("상태 종료 audit 생략: tenantId 없음 mappingId={}", mappingId);
+                return;
+            }
+            String metadataJson = String.format(
+                    "{\"reason\":%s,\"cancelledScheduleCount\":%d,\"remainingSessions\":%s}",
+                    quoteJson(reason),
+                    result.getCancelledScheduleCount(),
+                    result.getRemainingSessions() != null ? result.getRemainingSessions() : "null");
+            AuditLog entry = AuditLog.builder()
+                    .tenantId(tenantId)
+                    .actorUserId(actor != null ? actor.getId() : null)
+                    .actorRole(actor != null && actor.getRole() != null ? actor.getRole().name() : UserRole.ADMIN.name())
+                    .targetUserId(null)
+                    .action(AuditAction.MAPPING_STATUS_CLOSE)
+                    .entityType("MAPPING")
+                    .entityId(mappingId)
+                    .metadataJson(metadataJson)
+                    .build();
+            auditLogService.record(entry);
+        } catch (RuntimeException ex) {
+            log.warn("상태 종료 audit 기록 실패: mappingId={}, error={}", mappingId, ex.getMessage());
+        }
+    }
+
+    private static String quoteJson(String value) {
+        if (value == null) {
+            return "null";
+        }
+        String escaped = value
+                .replace("\\", "\\\\")
+                .replace("\"", "\\\"")
+                .replace("\n", "\\n")
+                .replace("\r", "\\r");
+        return "\"" + escaped + "\"";
     }
 
     /**
@@ -3787,6 +4001,10 @@ public class AdminController extends BaseApiController {
             @RequestParam(required = false) Long clientId,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+            @RequestParam(required = false) Boolean sessionCompleted,
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) String matchedClientIds,
+            @RequestParam(required = false) String timelineSort,
             @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "20") int size,
             HttpSession session) {
         try {
@@ -3823,13 +4041,34 @@ public class AdminController extends BaseApiController {
             }
             Pageable pageable = PageRequest.of(validPage, validSize);
 
-            Page<ConsultationRecord> consultationRecords =
-                    consultationRecordService.getConsultationRecords(consultantId, clientId,
-                            startDate, endDate, pageable);
+            ConsultationLogGroupMode groupMode = ConsultationLogGroupMode.from(consultantId, clientId);
+            Page<ConsultationRecord> consultationRecords;
+            ConsultationLogGroupSummaryResponse groupSummary;
+            ConsultationLogTimelineBoundaryResponse timelineBoundary = null;
+            if (groupMode == ConsultationLogGroupMode.NONE) {
+                consultationRecords = consultationRecordService.getConsultationRecordsForLogView(
+                        consultantId, clientId, startDate, endDate, sessionCompleted, keyword,
+                        matchedClientIds, pageable);
+                groupSummary = ConsultationLogGroupSummaryResponse.none();
+            } else {
+                ConsultationLogGroupedPage grouped = consultationRecordService.getGroupedConsultationLogPage(
+                        consultantId, clientId, startDate, endDate, sessionCompleted, keyword,
+                        matchedClientIds, pageable, ConsultationLogTimelineSort.from(timelineSort));
+                consultationRecords = grouped.getPage();
+                groupSummary = grouped.getSummary();
+                timelineBoundary = grouped.getBoundary();
+            }
 
-            // 목록은 식별자·일자·작성자·상태만. 본문은 단건 상세(공용 가드 판정)에서만 받는다.
-            List<ConsultationRecordListItemResponse> metaItems = consultationRecords.getContent().stream()
-                    .map(ConsultationRecordListItemResponse::fromEntity)
+            // 본문은 단건 상세에서만. 내담자·상담사 표시명은 목록 메타로, 같은 테넌트를 한 번에 채운다.
+            List<ConsultationRecord> pageContent = consultationRecords.getContent();
+            Map<Long, String> resolvedNames = consultationRecordPersonNameResolver
+                    .resolveForRecords(tenantId, pageContent);
+            Map<Long, String> displayNames = resolvedNames != null ? resolvedNames : Map.of();
+            List<ConsultationRecordListItemResponse> metaItems = pageContent.stream()
+                    .map(record -> ConsultationRecordListItemResponse.fromEntity(
+                            record,
+                            ConsultationRecordPersonNameResolver.nameOrNull(displayNames, record.getClientId()),
+                            ConsultationRecordPersonNameResolver.nameOrNull(displayNames, record.getConsultantId())))
                     .toList();
 
             Map<String, Object> response = new HashMap<>();
@@ -3839,6 +4078,8 @@ public class AdminController extends BaseApiController {
             response.put("totalPages", consultationRecords.getTotalPages());
             response.put("currentPage", consultationRecords.getNumber());
             response.put("size", consultationRecords.getSize());
+            response.put("groupSummary", groupSummary);
+            response.put("timelineBoundary", timelineBoundary);
 
             return ResponseEntity.ok(response);
 

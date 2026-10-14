@@ -30,6 +30,7 @@ import ConsultantClientManagementRenewal from './components/consultant/Consultan
 import ConsultantRecordsRenewal from './components/consultant/ConsultantRecordsRenewal';
 import ConsultantMoreHub from './components/consultant/ConsultantMoreHub';
 import ConsultantSalarySettlement from './components/consultant/ConsultantSalarySettlement';
+import ConsultantSalarySettlementPage from './components/consultant/ConsultantSalarySettlementPage';
 import ConsultantSessionKpiPage from './components/consultant/ConsultantSessionKpiPage';
 import ConsultantMindWeatherInboxPage from './components/consultant/ConsultantMindWeatherInboxPage';
 import ClientMessageScreen from './components/client/ClientMessageScreen';
@@ -43,6 +44,7 @@ import UserManagementPage from './components/admin/UserManagementPage';
 import MappingManagement from './components/admin/MappingManagement';
 import InstitutionLinkAdminPage from './components/admin/institution-link/InstitutionLinkAdminPage';
 import ConsultationLogView from './components/admin/ConsultationLogView';
+import { CONSULTATION_LOG_VIEW_SURFACE } from './constants/consultantSuite';
 import IntegratedMatchingScheduleManagement from './components/admin/IntegratedMatchingScheduleManagement';
 import CommonCodeManagement from './components/admin/CommonCodeManagement';
 import StatisticsModal from './components/common/StatisticsModal';
@@ -60,6 +62,7 @@ const AdminDashboardV2 = lazy(() => import('./components/dashboard-v2/AdminDashb
 const ClientDashboard = lazy(() => import('./components/client/ClientDashboard'));
 const CommonDashboard = lazy(() => import('./components/dashboard/CommonDashboard'));
 const ConsultantDashboardV2 = lazy(() => import('./components/dashboard-v2/consultant/ConsultantDashboardV2'));
+const PackagePricingDetailPage = lazy(() => import('./components/admin/package-pricing/pages/PackagePricingDetailPage'));
 const AdminKakaoAlimtalkSettingsPage = lazy(() => import('./components/admin/AdminKakaoAlimtalkSettingsPage'));
 const AdminTenantSmsSettingsPage = lazy(() => import('./components/admin/AdminTenantSmsSettingsPage'));
 const AdminTestNotificationPage = lazy(() => import('./components/admin/system/AdminTestNotificationPage'));
@@ -139,6 +142,9 @@ import AdminShopProductsPage from './components/admin/AdminShopProductsPage';
 import { ADMIN_SHOP_PRODUCT_ROUTES, buildAdminShopProductEditRoute } from './constants/adminShopSuite';
 import AdminShopProductEditorPage from './components/admin/AdminShopProductEditorPage';
 import AdminShopPointPoliciesPage from './components/admin/AdminShopPointPoliciesPage';
+import AdminClientOffersPage from './components/admin/AdminClientOffersPage';
+import ClientOffersPage from './pages/client/offers/ClientOffersPage';
+import { CLIENT_OFFER_ROUTES } from './constants/shopClientOfferConstants';
 import AdminShopOrdersPage from './components/admin/AdminShopOrdersPage';
 import MindfulnessGuide from './components/wellness/MindfulnessGuide';
 import TenantProfile from './components/tenant/TenantProfile';
@@ -548,6 +554,16 @@ function AppContent() {
 
               {/* Shop 보호 경로 — ClientAppShell 밖, ShopClientLayout 이 ClientWebPageShell 담당 */}
               <Route
+                path={CLIENT_OFFER_ROUTES.OFFERS}
+                element={(
+                  <ProtectedRoute requiredRoles={[USER_ROLES.CLIENT]}>
+                    <ClientTenantComponentGate componentCode={PLATFORM_COMPONENT_CODES.CLIENT_SHOP}>
+                      <ClientOffersPage />
+                    </ClientTenantComponentGate>
+                  </ProtectedRoute>
+                )}
+              />
+              <Route
                 path={CLIENT_SHOP_ROUTES.CART}
                 element={(
                   <ClientTenantComponentGate componentCode={PLATFORM_COMPONENT_CODES.CLIENT_SHOP}>
@@ -687,12 +703,8 @@ function AppContent() {
               path="/consultant/salary-settlement"
               element={(
                 <ProtectedRoute requiredRoles={[USER_ROLES.CONSULTANT]}>
-                  <AdminCommonLayout title={t('common:misc.App.t_943bafd7')}>
-                    <div className="mg-v2-ad-b0kla">
-                      <div className="mg-v2-ad-b0kla__container">
-                        <ConsultantSalarySettlement />
-                      </div>
-                    </div>
+                  <AdminCommonLayout title={t('common:misc.App.t_943bafd7')} className="mg-v2-dashboard-layout">
+                    <ConsultantSalarySettlementPage />
                   </AdminCommonLayout>
                 </ProtectedRoute>
               )}
@@ -799,8 +811,9 @@ function AppContent() {
               />
               {/* path 문자열 필수: scripts/verify-quick-action-routes.mjs (ADMIN_ROUTES.TENANT_COMMON_CODES 와 동일 세그먼트) */}
               <Route path="tenant-common-codes" element={<TenantCommonCodeManager />} />
-              <Route path="package-pricing/new" element={<Navigate to={ADMIN_SHOP_PRODUCT_ROUTES.NEW} replace />} />
-              <Route path="package-pricing/:id" element={<RedirectToShopProductEdit paramName="id" />} />
+              {/* 상품 조합(구성) 빌더 — 새 「상품」 편집 화면에 구성 입력이 없어 기존 빌더로 직접 연결 */}
+              <Route path="package-pricing/new" element={<PackagePricingDetailPage isNew />} />
+              <Route path="package-pricing/:id" element={<PackagePricingDetailPage />} />
               <Route path="package-pricing" element={<Navigate to={ADMIN_SHOP_PRODUCT_ROUTES.LIST} replace />} />
               <Route
                 path="menu-permissions"
@@ -869,6 +882,14 @@ function AppContent() {
                 element={
                   <AdminTenantComponentGate componentCode={PLATFORM_COMPONENT_CODES.ADMIN_SHOP_CATALOG}>
                     <AdminShopPointPoliciesPage />
+                  </AdminTenantComponentGate>
+                }
+              />
+              <Route
+                path={toAdminRelativePath(ADMIN_ROUTES.SHOP_CLIENT_OFFERS)}
+                element={
+                  <AdminTenantComponentGate componentCode={PLATFORM_COMPONENT_CODES.ADMIN_SHOP_CATALOG}>
+                    <AdminClientOffersPage />
                   </AdminTenantComponentGate>
                 }
               />
@@ -1023,7 +1044,7 @@ function AppContent() {
             <Route path="/consultant/client/:id" element={<ConsultantClientList />} />
             <Route path="/consultant/availability" element={<ConsultantAvailability />} />
             <Route path="/consultant/consultation-records" element={<ConsultantRecords />} />
-            <Route path="/consultant/consultation-logs" element={<ConsultationLogView />} />
+            <Route path="/consultant/consultation-logs" element={<ConsultationLogView surface={CONSULTATION_LOG_VIEW_SURFACE.CONSULTANT} />} />
             <Route path="/consultant/reports" element={<ConsultantRecords />} />
             <Route path="/consultant/messages" element={<ConsultantMessages />} />
             

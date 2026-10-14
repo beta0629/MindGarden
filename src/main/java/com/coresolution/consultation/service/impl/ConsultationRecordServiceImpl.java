@@ -1,18 +1,27 @@
 package com.coresolution.consultation.service.impl;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.constant.consultation.ConsultationRecordAccessAudit;
+import com.coresolution.consultation.dto.ConsultationLogClientPeriodResponse;
+import com.coresolution.consultation.dto.ConsultationLogGroupSummaryResponse;
+import com.coresolution.consultation.dto.ConsultationLogGroupedPage;
+import com.coresolution.consultation.dto.ConsultationLogTimelineBoundaryResponse;
 import com.coresolution.consultation.entity.ConsultantClientMapping;
 import com.coresolution.consultation.entity.ConsultationRecord;
 import com.coresolution.consultation.exception.ConsultationRecordDuplicateException;
 import com.coresolution.consultation.exception.ValidationException;
 import com.coresolution.consultation.repository.ConsultantClientMappingRepository;
+import com.coresolution.consultation.repository.ConsultationLogClientAggregate;
+import com.coresolution.consultation.repository.ConsultationLogSortKey;
 import com.coresolution.consultation.repository.ConsultationRecordRepository;
 import com.coresolution.consultation.repository.ConsultationRepository;
 import com.coresolution.consultation.repository.ScheduleRepository;
@@ -20,12 +29,19 @@ import com.coresolution.consultation.constant.ScheduleStatus;
 import com.coresolution.consultation.entity.Schedule;
 import com.coresolution.consultation.service.ConsultationLogExistenceSsot;
 import com.coresolution.consultation.service.ConsultationRecordDraftService;
+import com.coresolution.consultation.service.ConsultationRecordPersonNameResolver;
 import com.coresolution.consultation.service.ConsultationRecordService;
 import com.coresolution.consultation.service.PlSqlConsultationRecordAlertService;
 import com.coresolution.consultation.service.SalaryLateSessionAutoSyncService;
 import com.coresolution.consultation.service.ScheduleService;
 import com.coresolution.consultation.service.support.ConsultationRecordEditAuditService;
 import com.coresolution.consultation.service.support.ConsultationRecordWriter;
+import com.coresolution.consultation.util.ConsultationLogGroupMode;
+import com.coresolution.consultation.util.ConsultationLogGroupOrdering;
+import com.coresolution.consultation.util.ConsultationLogListFilters;
+import com.coresolution.consultation.util.ConsultationLogSortRow;
+import com.coresolution.consultation.util.ConsultationLogTimelineOrdering;
+import com.coresolution.consultation.util.ConsultationLogTimelineSort;
 import com.coresolution.consultation.util.ConsultationRecordChangedFields;
 import com.coresolution.consultation.util.ConsultationRecordLinkedScheduleCompletion;
 import com.coresolution.consultation.util.ProvisionalConsultationLogSession;
@@ -35,6 +51,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
@@ -105,6 +122,12 @@ public class ConsultationRecordServiceImpl implements ConsultationRecordService 
     @Autowired
     private ConsultationRecordEditAuditService consultationRecordEditAuditService;
 
+    /**
+     * 상담사 선택 묶음의 표시명 정렬. 목록 응답의 이름 해석과 같은 테넌트 범위다.
+     */
+    @Autowired
+    private ConsultationRecordPersonNameResolver consultationRecordPersonNameResolver;
+
     @Override
     public Page<ConsultationRecord> getConsultationRecords(Long consultantId, Long clientId, Pageable pageable) {
         return getConsultationRecords(consultantId, clientId, null, null, pageable);
@@ -151,6 +174,260 @@ public class ConsultationRecordServiceImpl implements ConsultationRecordService 
             }
             return consultationRecordRepository.findByTenantIdAndIsDeletedFalseOrderBySessionDateDesc(tenantId, pageable);
         }
+    }
+
+    @Override
+    public Page<ConsultationRecord> getConsultationRecordsForLogView(Long consultantId, Long clientId,
+            LocalDate startDate, LocalDate endDate, Boolean sessionCompleted, String keyword,
+            String matchedClientIds, Pageable pageable) {
+        boolean applyKeyword = ConsultationLogListFilters.hasText(keyword);
+        if (!applyKeyword && sessionCompleted == null) {
+            return getConsultationRecords(consultantId, clientId, startDate, endDate, pageable);
+        }
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        List<Long> ids = ConsultationLogListFilters.parseMatchedClientIds(matchedClientIds);
+        if (ids.isEmpty()) {
+            ids = List.of(ConsultationLogListFilters.UNMATCHED_CLIENT_ID);
+        }
+        String pattern = applyKeyword ? ConsultationLogListFilters.likePattern(keyword) : "%";
+        log.info("📝 상담일지 조회 필터 - 상태: {}, 검색어 적용: {}", sessionCompleted, applyKeyword);
+        return consultationRecordRepository.findForConsultationLogView(
+                tenantId, consultantId, clientId, startDate, endDate, sessionCompleted, applyKeyword, pattern,
+                ids, pageable);
+    }
+
+    @Override
+    public ConsultationLogGroupedPage getGroupedConsultationLogPage(Long consultantId, Long clientId,
+            LocalDate startDate, LocalDate endDate, Boolean sessionCompleted, String keyword,
+            String matchedClientIds, Pageable pageable, ConsultationLogTimelineSort timelineSort) {
+        ConsultationLogGroupMode mode = ConsultationLogGroupMode.from(consultantId, clientId);
+        if (mode == ConsultationLogGroupMode.NONE) {
+            throw new IllegalArgumentException("묶음 조회는 내담자 또는 상담사 선택이 필요합니다.");
+        }
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        LogViewQuery query = logViewQuery(keyword, matchedClientIds);
+        ConsultationLogTimelineSort requested = timelineSort == null
+                ? ConsultationLogTimelineSort.RECENT
+                : timelineSort;
+        log.info("상담일지 묶음 조회 - mode={}, sort={}, page={}, size={}",
+                mode, requested, pageable.getPageNumber(), pageable.getPageSize());
+        List<ConsultationLogClientAggregate> aggregates = consultationRecordRepository.aggregateConsultationLogByClient(
+                tenantId, consultantId, clientId, startDate, endDate, sessionCompleted,
+                query.applyKeyword(), query.pattern(), query.matchedClientIds());
+        if (mode == ConsultationLogGroupMode.COUNSELOR) {
+            return counselorGroupedPage(tenantId, consultantId, clientId, startDate, endDate, sessionCompleted,
+                    query, aggregates, pageable);
+        }
+        return clientTimelinePage(tenantId, consultantId, clientId, startDate, endDate, sessionCompleted,
+                query, aggregates, pageable, mode, requested);
+    }
+
+    private ConsultationLogGroupedPage clientTimelinePage(String tenantId, Long consultantId, Long clientId,
+            LocalDate startDate, LocalDate endDate, Boolean sessionCompleted, LogViewQuery query,
+            List<ConsultationLogClientAggregate> aggregates, Pageable pageable, ConsultationLogGroupMode mode,
+            ConsultationLogTimelineSort timelineSort) {
+        List<ConsultationLogSortRow> ordered = ConsultationLogTimelineOrdering.order(
+                loadSortRows(tenantId, consultantId, clientId, startDate, endDate, sessionCompleted, query),
+                timelineSort);
+        OrderedPage orderedPage = cutPage(tenantId, ordered, pageable);
+        return new ConsultationLogGroupedPage(
+                orderedPage.page(),
+                summaryForSelectedClient(mode, clientId, aggregates),
+                boundary(tenantId, timelineSort, orderedPage.preceding()));
+    }
+
+    private ConsultationLogGroupedPage counselorGroupedPage(String tenantId, Long consultantId, Long clientId,
+            LocalDate startDate, LocalDate endDate, Boolean sessionCompleted, LogViewQuery query,
+            List<ConsultationLogClientAggregate> aggregates, Pageable pageable) {
+        Map<Long, ConsultationLogClientAggregate> byClient = indexAggregates(aggregates);
+        List<ConsultationLogSortRow> rows = loadSortRows(
+                tenantId, consultantId, clientId, startDate, endDate, sessionCompleted, query);
+        Set<Long> nameIds = new LinkedHashSet<>(byClient.keySet());
+        for (ConsultationLogSortRow row : rows) {
+            if (row.clientId() != null) {
+                nameIds.add(row.clientId());
+            }
+        }
+        Map<Long, String> names = consultationRecordPersonNameResolver == null
+                ? Map.of()
+                : consultationRecordPersonNameResolver.resolveDisplayNames(tenantId, nameIds);
+        if (names == null) {
+            names = Map.of();
+        }
+        Map<Long, LocalDate> lastDates = new HashMap<>();
+        for (Map.Entry<Long, ConsultationLogClientAggregate> entry : byClient.entrySet()) {
+            lastDates.put(entry.getKey(), entry.getValue().getLastSessionDate());
+        }
+        List<ConsultationLogSortRow> ordered = ConsultationLogGroupOrdering.orderByClientGroup(rows, lastDates, names);
+        OrderedPage orderedPage = cutPage(tenantId, ordered, pageable);
+        return new ConsultationLogGroupedPage(
+                orderedPage.page(),
+                summaryForCounselorPage(orderedPage.page().getContent(), byClient),
+                boundary(tenantId, ConsultationLogTimelineSort.RECENT, orderedPage.preceding()));
+    }
+
+    private List<ConsultationLogSortRow> loadSortRows(String tenantId, Long consultantId, Long clientId,
+            LocalDate startDate, LocalDate endDate, Boolean sessionCompleted, LogViewQuery query) {
+        List<ConsultationLogSortKey> sortKeys = consultationRecordRepository.findConsultationLogSortKeys(
+                tenantId, consultantId, clientId, startDate, endDate, sessionCompleted,
+                query.applyKeyword(), query.pattern(), query.matchedClientIds());
+        List<ConsultationLogSortRow> rows = new ArrayList<>();
+        if (sortKeys == null) {
+            return rows;
+        }
+        for (ConsultationLogSortKey key : sortKeys) {
+            if (key == null || key.getId() == null) {
+                continue;
+            }
+            rows.add(new ConsultationLogSortRow(
+                    key.getId(), key.getClientId(), key.getConsultantId(), key.getSessionNumber(),
+                    key.getSessionDate()));
+        }
+        return rows;
+    }
+
+    private OrderedPage cutPage(String tenantId, List<ConsultationLogSortRow> ordered, Pageable pageable) {
+        ConsultationLogTimelineOrdering.Slice slice = ConsultationLogTimelineOrdering.page(
+                ordered, pageable.getPageNumber(), pageable.getPageSize());
+        List<Long> pageIds = slice.rows().stream().map(ConsultationLogSortRow::id).toList();
+        List<ConsultationRecord> content = loadRecordsInIdOrder(tenantId, pageIds);
+        Pageable safePageable = pageable.getPageSize() > 0
+                ? pageable
+                : PageRequest.of(Math.max(pageable.getPageNumber(), 0), 1);
+        return new OrderedPage(new PageImpl<>(content, safePageable, slice.total()), slice.preceding());
+    }
+
+    private ConsultationLogTimelineBoundaryResponse boundary(String tenantId, ConsultationLogTimelineSort sort,
+            ConsultationLogSortRow preceding) {
+        if (preceding == null) {
+            return ConsultationLogTimelineBoundaryResponse.of(sort, null, null, null);
+        }
+        return ConsultationLogTimelineBoundaryResponse.of(
+                sort,
+                preceding.consultantId(),
+                resolveDisplayName(tenantId, preceding.consultantId()),
+                preceding.clientId());
+    }
+
+    private String resolveDisplayName(String tenantId, Long userId) {
+        if (userId == null || consultationRecordPersonNameResolver == null) {
+            return null;
+        }
+        Map<Long, String> names = consultationRecordPersonNameResolver.resolveDisplayNames(tenantId, Set.of(userId));
+        String name = ConsultationRecordPersonNameResolver.nameOrNull(names, userId);
+        if (name == null || name.isBlank()) {
+            return null;
+        }
+        return name.trim();
+    }
+
+    private record OrderedPage(Page<ConsultationRecord> page, ConsultationLogSortRow preceding) {
+    }
+
+    private List<ConsultationRecord> loadRecordsInIdOrder(String tenantId, List<Long> pageIds) {
+        if (pageIds.isEmpty()) {
+            return List.of();
+        }
+        List<ConsultationRecord> loaded = consultationRecordRepository
+                .findByTenantIdAndIdInAndIsDeletedFalse(tenantId, pageIds);
+        Map<Long, ConsultationRecord> byId = new HashMap<>();
+        if (loaded != null) {
+            for (ConsultationRecord record : loaded) {
+                if (record != null && record.getId() != null) {
+                    byId.put(record.getId(), record);
+                }
+            }
+        }
+        List<ConsultationRecord> ordered = new ArrayList<>();
+        for (Long id : pageIds) {
+            ConsultationRecord record = byId.get(id);
+            if (record != null) {
+                ordered.add(record);
+            }
+        }
+        return ordered;
+    }
+
+    private static ConsultationLogGroupSummaryResponse summaryForSelectedClient(ConsultationLogGroupMode mode,
+            Long clientId, List<ConsultationLogClientAggregate> aggregates) {
+        ConsultationLogClientAggregate match = null;
+        if (aggregates != null && clientId != null) {
+            for (ConsultationLogClientAggregate aggregate : aggregates) {
+                if (aggregate != null && clientId.equals(aggregate.getClientId())) {
+                    match = aggregate;
+                    break;
+                }
+            }
+        }
+        long count = match == null || match.getSessionCount() == null ? 0L : match.getSessionCount();
+        List<ConsultationLogClientPeriodResponse> clients = match == null
+                ? List.of()
+                : List.of(periodOf(match));
+        return ConsultationLogGroupSummaryResponse.builder()
+                .mode(mode.name())
+                .sessionCount(count)
+                .firstSessionDate(match == null ? null : match.getFirstSessionDate())
+                .lastSessionDate(match == null ? null : match.getLastSessionDate())
+                .clients(clients)
+                .build();
+    }
+
+    private static ConsultationLogGroupSummaryResponse summaryForCounselorPage(List<ConsultationRecord> content,
+            Map<Long, ConsultationLogClientAggregate> byClient) {
+        List<ConsultationLogClientPeriodResponse> clients = new ArrayList<>();
+        Set<Long> seen = new LinkedHashSet<>();
+        for (ConsultationRecord record : content) {
+            if (record == null || record.getClientId() == null || !seen.add(record.getClientId())) {
+                continue;
+            }
+            ConsultationLogClientAggregate aggregate = byClient.get(record.getClientId());
+            if (aggregate == null || aggregate.getSessionCount() == null) {
+                continue;
+            }
+            clients.add(periodOf(aggregate));
+        }
+        return ConsultationLogGroupSummaryResponse.builder()
+                .mode(ConsultationLogGroupMode.COUNSELOR.name())
+                .clients(clients)
+                .build();
+    }
+
+    private static Map<Long, ConsultationLogClientAggregate> indexAggregates(
+            List<ConsultationLogClientAggregate> aggregates) {
+        Map<Long, ConsultationLogClientAggregate> byClient = new HashMap<>();
+        if (aggregates == null) {
+            return byClient;
+        }
+        for (ConsultationLogClientAggregate aggregate : aggregates) {
+            if (aggregate != null && aggregate.getClientId() != null) {
+                byClient.put(aggregate.getClientId(), aggregate);
+            }
+        }
+        return byClient;
+    }
+
+    private static ConsultationLogClientPeriodResponse periodOf(ConsultationLogClientAggregate aggregate) {
+        return ConsultationLogClientPeriodResponse.builder()
+                .clientId(aggregate.getClientId())
+                .sessionCount(aggregate.getSessionCount())
+                .firstSessionDate(aggregate.getFirstSessionDate())
+                .lastSessionDate(aggregate.getLastSessionDate())
+                .build();
+    }
+
+    private static LogViewQuery logViewQuery(String keyword, String matchedClientIds) {
+        boolean applyKeyword = ConsultationLogListFilters.hasText(keyword);
+        List<Long> ids = applyKeyword
+                ? ConsultationLogListFilters.parseMatchedClientIds(matchedClientIds)
+                : List.of();
+        if (ids.isEmpty()) {
+            ids = List.of(ConsultationLogListFilters.UNMATCHED_CLIENT_ID);
+        }
+        String pattern = applyKeyword ? ConsultationLogListFilters.likePattern(keyword) : "%";
+        return new LogViewQuery(applyKeyword, pattern, ids);
+    }
+
+    private record LogViewQuery(boolean applyKeyword, String pattern, List<Long> matchedClientIds) {
     }
 
     @Override
@@ -615,7 +892,7 @@ public class ConsultationRecordServiceImpl implements ConsultationRecordService 
 
     /**
      * 일정의 sessionSequence를 SSOT로 확보한다. 이미 있으면 그대로 반환.
-     * 가예약(SAME_DAY_CARD/PENDING_PAYMENT)이고 null이면 remaining 차감 없이 부여한다.
+     * 가예약이면 차감 없이 매핑 회차 재정렬로 번호를 부여한다.
      * 일반 매핑의 remaining=0·회차 없음은 부여하지 않는다.
      *
      * @param schedule 대상 일정
@@ -628,16 +905,19 @@ public class ConsultationRecordServiceImpl implements ConsultationRecordService 
             return existing;
         }
         ConsultantClientMapping mapping = resolveMappingForSessionGrant(schedule);
-        Integer granted = ProvisionalConsultationLogSession.computeSequenceWithoutDeduction(mapping);
+        if (!ProvisionalConsultationLogSession.isProvisionalWithoutDeduction(mapping)) {
+            throw new ValidationException(
+                    "sessionSequence",
+                    null,
+                    "일정 회차(sessionSequence)가 없습니다: " + schedule.getId());
+        }
+        Integer granted = scheduleService.reorderOccupyingSessionSequences(mapping, schedule);
         if (granted == null) {
             throw new ValidationException(
                     "sessionSequence",
                     null,
                     "일정 회차(sessionSequence)가 없습니다: " + schedule.getId());
         }
-        schedule.setMappingId(mapping.getId());
-        schedule.setSessionSequence(granted);
-        scheduleRepository.save(schedule);
         log.info("가예약 일지 회차 부여(잔여 미차감): scheduleId={}, mappingId={}, sessionSequence={}, remaining={}",
                 schedule.getId(), mapping.getId(), granted, mapping.getRemainingSessions());
         return granted;

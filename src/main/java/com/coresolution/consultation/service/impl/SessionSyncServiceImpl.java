@@ -12,6 +12,7 @@ import com.coresolution.consultation.repository.ConsultantClientMappingRepositor
 import com.coresolution.consultation.repository.ScheduleRepository;
 import com.coresolution.consultation.repository.SessionExtensionRequestRepository;
 import com.coresolution.consultation.service.SessionSyncService;
+import com.coresolution.consultation.util.MappingSessionsExhaustedRule;
 import com.coresolution.core.service.impl.BaseTenantAwareService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -300,10 +301,10 @@ public class SessionSyncServiceImpl extends BaseTenantAwareService implements Se
     }
     
      /**
-     * 매핑 상태 검증
+     * 매핑 상태 검증. 회기 소진 전이는 {@link MappingSessionsExhaustedRule} 판정(활성 매핑만)으로만 한다.
      */
     private void validateMappingStatus(ConsultantClientMapping mapping) {
-        if (mapping.getRemainingSessions() <= 0 && mapping.getStatus() != ConsultantClientMapping.MappingStatus.SESSIONS_EXHAUSTED) {
+        if (MappingSessionsExhaustedRule.shouldMarkExhausted(mapping.getStatus(), mapping.getRemainingSessions())) {
             log.warn("⚠️ 매핑 상태 불일치: mappingId={}, remainingSessions={}, status={}", 
                     mapping.getId(), mapping.getRemainingSessions(), mapping.getStatus());
             

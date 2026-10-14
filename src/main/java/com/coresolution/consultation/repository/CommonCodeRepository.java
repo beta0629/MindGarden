@@ -129,6 +129,13 @@ public interface CommonCodeRepository extends BaseRepository<CommonCode, Long> {
     
     // 코드값으로 조회
     List<CommonCode> findByCodeValue(String codeValue);
+
+    /**
+     * 테넌트 범위로 한정한 코드값 조회 (코어 코드·타 테넌트 코드 제외).
+     */
+    @Query("SELECT cc FROM CommonCode cc WHERE cc.tenantId = :tenantId AND cc.codeValue = :codeValue")
+    List<CommonCode> findByTenantIdAndCodeValue(@Param("tenantId") String tenantId,
+            @Param("codeValue") String codeValue);
     
     // ==================== 코어솔루션 코드 조회 ====================
     
@@ -172,6 +179,19 @@ public interface CommonCodeRepository extends BaseRepository<CommonCode, Long> {
             @Param("tenantId") String tenantId,
             @Param("id") Long id);
     
+    /**
+     * 테넌트·그룹의 모든 codeValue (비활성·소프트삭제 포함).
+     * uk_tenant_code_group_value 는 이 행들까지 포함하므로 자동 발급 충돌 회피용.
+     *
+     * @param tenantId 테넌트 ID
+     * @param codeGroup 코드 그룹
+     * @return codeValue 목록 (삭제·비활성 포함)
+     */
+    @Query("SELECT c.codeValue FROM CommonCode c WHERE c.tenantId = :tenantId AND c.codeGroup = :codeGroup")
+    List<String> findAllCodeValuesIncludingInactiveAndDeleted(
+            @Param("tenantId") String tenantId,
+            @Param("codeGroup") String codeGroup);
+
     /**
      * 테넌트별 코드 그룹별 조회 (활성·미소거만)
      */
@@ -278,6 +298,41 @@ public interface CommonCodeRepository extends BaseRepository<CommonCode, Long> {
            "AND c.isActive = true AND c.isDeleted = false " +
            "ORDER BY c.tenantId DESC NULLS LAST, c.sortOrder ASC")
     List<CommonCode> findCodesByGroupWithFallback(@Param("tenantId") String tenantId, @Param("codeGroup") String codeGroup);
+
+    // ==================== 관리자 목록용 (비활성 포함, 미소거만) ====================
+
+    /**
+     * 코어 코드 그룹별 조회 — 관리자 목록용으로 비활성도 포함한다(소거 제외).
+     */
+    @Query("SELECT c FROM CommonCode c WHERE c.tenantId IS NULL AND c.codeGroup = :codeGroup "
+            + "AND c.isDeleted = false ORDER BY c.sortOrder ASC")
+    List<CommonCode> findCoreCodesByGroupIncludingInactive(@Param("codeGroup") String codeGroup);
+
+    /**
+     * 테넌트 코드 그룹별 조회 — 관리자 목록용으로 비활성도 포함한다(소거 제외).
+     */
+    @Query("SELECT c FROM CommonCode c WHERE c.tenantId = :tenantId AND c.codeGroup = :codeGroup "
+            + "AND c.isDeleted = false ORDER BY c.sortOrder ASC")
+    List<CommonCode> findTenantCodesByGroupIncludingInactive(@Param("tenantId") String tenantId,
+            @Param("codeGroup") String codeGroup);
+
+    /**
+     * 테넌트 전체 코드 조회 — 관리자 목록용으로 비활성도 포함한다(소거 제외).
+     */
+    @Query("SELECT c FROM CommonCode c WHERE c.tenantId = :tenantId AND c.isDeleted = false "
+            + "ORDER BY c.codeGroup ASC, c.sortOrder ASC")
+    List<CommonCode> findAllTenantCodesIncludingInactive(@Param("tenantId") String tenantId);
+
+    /**
+     * 테넌트 우선·코어 폴백 그룹 조회 — 관리자 목록용으로 비활성도 포함한다(소거 제외).
+     */
+    @Query("SELECT c FROM CommonCode c WHERE "
+            + "((c.tenantId = :tenantId AND c.codeGroup = :codeGroup) OR "
+            + "(c.tenantId IS NULL AND c.codeGroup = :codeGroup)) "
+            + "AND c.isDeleted = false "
+            + "ORDER BY c.tenantId DESC NULLS LAST, c.sortOrder ASC")
+    List<CommonCode> findCodesByGroupWithFallbackIncludingInactive(@Param("tenantId") String tenantId,
+            @Param("codeGroup") String codeGroup);
     
     /**
      * 현재 테넌트 컨텍스트 기반 코드 조회 (값으로)

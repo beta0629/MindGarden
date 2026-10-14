@@ -1,0 +1,594 @@
+/**
+ * Consultant suite — /consultant/* 공유 셸·카드·칩·버튼 (SSOT: /consultant/dashboard mg-v2)
+ * 흰 카드 + slate 테두리 on warm stage · shadow 없음 · 콘텐츠 선택 slate · 버튼 h36 r8 · 칩 h32 r8
+ * 토큰: styles/tokens/design-v2-tokens-refine.css (--mg-v2-consultant-*)
+ *
+ * @author CoreSolution
+ * @since 2026-10-07
+ */
+
+.consultant-suite {
+  --button-height-default: var(--mg-v2-consultant-control-height);
+  --button-height-sm: var(--mg-v2-consultant-chip-height);
+  --mg-button-radius: var(--mg-v2-consultant-control-radius);
+  width: 100%;
+  min-width: 0;
+  color: var(--mg-v2-color-text-primary);
+}
+
+.consultant-suite__container {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  min-width: 0;
+}
+
+.consultant-suite .mg-v2-content-area {
+  background-color: var(--mg-v2-consultant-surface-stage);
+  padding: var(--mg-v2-consultant-content-pad);
+}
+
+.consultant-suite .mg-v2-content-header {
+  padding-top: 0;
+  margin-bottom: var(--mg-v2-space-4);
+}
+
+.consultant-suite .mg-v2-content-header__subtitle {
+  font-size: var(--mg-v2-consultant-card-meta-size);
+}
+
+.consultant-suite__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-v2-space-4);
+  width: 100%;
+  min-width: 0;
+}
+
+/* ===== 카드 · 패널 ===== */
+.consultant-suite__panel {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  padding: var(--mg-v2-space-4) var(--mg-v2-space-6) var(--mg-v2-space-6);
+  background: var(--mg-v2-consultant-surface-card);
+  border: var(--mg-v2-border-width-thin) solid var(--mg-v2-consultant-border-card);
+  border-radius: var(--mg-v2-consultant-card-radius);
+  box-shadow: none;
+}
+
+/* ===== 요약 (ConsultantSummaryStrip 재사용 · 셀 = 개별 흰 카드) ===== */
+.consultant-suite .consultant-summary-strip.consultant-suite__summary {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--mg-v2-space-3);
+  padding: 0;
+  margin-bottom: 0;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+}
+
+.consultant-suite .consultant-suite__summary .consultant-summary-strip__cell {
+  padding: var(--mg-v2-space-3) var(--mg-v2-space-4);
+  background: var(--mg-v2-consultant-surface-card);
+  border: var(--mg-v2-border-width-thin) solid var(--mg-v2-consultant-border-card);
+  border-radius: var(--mg-v2-consultant-card-radius);
+  box-shadow: none;
+}
+
+.consultant-suite .consultant-suite__summary .consultant-summary-strip__label {
+  color: var(--mg-v2-color-text-tertiary);
+}
+
+.consultant-suite .consultant-suite__summary .consultant-summary-strip__value {
+  color: var(--mg-v2-consultant-money-ink);
+}
+
+/* ===== 버튼 (MGButton h36 r8 · ghost = 흰 + slate 테두리 · teal hover wash 금지) ===== */
+.consultant-suite .mg-button.mg-button--outline,
+.consultant-suite .mg-button.mg-button--ghost:not(.consultant-summary-strip__cell) {
+  background-color: var(--mg-v2-consultant-surface-card);
+  color: var(--mg-v2-color-text-primary);
+  border-color: var(--mg-v2-consultant-border-card);
+  font-weight: var(--mg-v2-font-weight-bold);
+  box-shadow: none;
+}
+
+.consultant-suite .mg-button.mg-button--outline:hover:not(.mg-button--disabled):not(.mg-button--loading),
+.consultant-suite .mg-button.mg-button--ghost:not(.consultant-summary-strip__cell):hover:not(.mg-button--disabled):not(.mg-button--loading) {
+  background-color: var(--mg-v2-consultant-chip-neutral-bg);
+  color: var(--mg-v2-color-text-primary);
+  box-shadow: none;
+}
+
+.consultant-suite .mg-button.mg-button--primary:hover:not(.mg-button--disabled):not(.mg-button--loading) {
+  box-shadow: none;
+}
+
+.consultant-suite .mg-button.mg-button--with-icon {
+  gap: var(--mg-v2-space-2);
+}
+
+/* ===== 필터·뷰 토글 칩 (h32 r8 · 선택 slate) ===== */
+.consultant-suite-chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--mg-v2-space-2);
+  min-width: 0;
+}
+
+.consultant-suite .consultant-suite-chips .mg-button.consultant-suite-chip {
+  width: auto;
+  flex: 0 0 auto;
+  font-size: var(--mg-v2-font-size-caption);
+  font-weight: var(--mg-v2-font-weight-bold);
+  color: var(--mg-v2-color-text-tertiary);
+}
+
+/* unified-design-tokens 모바일 [class*="mg-button"] padding !important 가 내부 span 까지 잡아 칩이 3중 패딩이 됨 */
+.consultant-suite .consultant-suite-chips .mg-button.consultant-suite-chip .mg-button__content,
+.consultant-suite .consultant-suite-chips .mg-button.consultant-suite-chip .mg-button__text {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 !important;
+}
+
+.consultant-suite .consultant-suite-chips .mg-button.consultant-suite-chip.consultant-suite-chip--selected,
+.consultant-suite .consultant-suite-chips .mg-button.consultant-suite-chip.consultant-suite-chip--selected:hover:not(.mg-button--disabled) {
+  background-color: var(--mg-v2-consultant-selection-bg);
+  border-color: var(--mg-v2-consultant-selection-border);
+  color: var(--mg-v2-color-text-primary);
+}
+
+/* ===== 안내 (slate notice) ===== */
+.consultant-suite-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--mg-v2-space-2);
+  margin: 0;
+  padding: var(--mg-v2-space-3) var(--mg-v2-space-4);
+  background: var(--mg-v2-consultant-notice-bg);
+  border: var(--mg-v2-border-width-thin) solid var(--mg-v2-consultant-notice-border);
+  border-radius: var(--mg-v2-consultant-card-radius);
+  font-size: var(--mg-v2-font-size-caption);
+  line-height: var(--mg-v2-font-line-height-body);
+  color: var(--mg-v2-color-text-secondary);
+}
+
+.consultant-suite-notice__icon {
+  display: inline-flex;
+  flex-shrink: 0;
+  color: var(--mg-v2-color-text-tertiary);
+}
+
+.consultant-suite-notice__text {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+/* ===== 상태 칩 (StatusBadge 재사용 · slate · 틸/초록 필 금지) ===== */
+.consultant-suite .mg-v2-status-badge.consultant-suite-status {
+  background-color: var(--mg-v2-consultant-chip-neutral-bg);
+  color: var(--mg-v2-consultant-chip-neutral-text);
+  border: 0;
+  font-size: var(--mg-v2-font-size-caption);
+  font-weight: var(--mg-v2-font-weight-bold);
+  white-space: nowrap;
+}
+
+.consultant-suite .mg-v2-status-badge.consultant-suite-status span {
+  color: var(--mg-v2-consultant-chip-neutral-text);
+}
+
+/* ===== 금액 「N원」 ===== */
+.consultant-suite-money {
+  font-variant-numeric: tabular-nums;
+  font-weight: var(--mg-v2-font-weight-semibold);
+  letter-spacing: var(--mg-v2-font-letter-spacing-tight);
+  color: var(--mg-v2-consultant-money-ink);
+  white-space: nowrap;
+}
+
+.consultant-suite-money--strong {
+  font-size: var(--mg-v2-font-size-h2);
+  font-weight: var(--mg-v2-font-weight-bold);
+}
+
+.consultant-suite-money--out {
+  color: var(--mg-v2-consultant-money-out);
+}
+
+.consultant-suite-money--muted {
+  font-weight: var(--mg-v2-font-weight-medium);
+  color: var(--mg-v2-color-text-tertiary);
+}
+
+/* ===== Empty · caption ===== */
+.consultant-suite .mg-v2-empty-state.consultant-suite-empty {
+  padding: var(--mg-v2-space-8) var(--mg-v2-space-4);
+  color: var(--mg-v2-color-text-tertiary);
+}
+
+.consultant-suite-caption {
+  margin: var(--mg-v2-space-3) 0 0;
+  font-size: var(--mg-v2-font-size-caption);
+  line-height: var(--mg-v2-font-line-height-body);
+  color: var(--mg-v2-color-text-tertiary);
+}
+
+/* ===== 툴바 (검색 + 칩 한 줄) ===== */
+.consultant-suite-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--mg-v2-space-3);
+  min-width: 0;
+}
+
+.consultant-suite-search {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex: 1 1 var(--mg-v2-breakpoint-sm);
+  min-width: 0;
+  max-width: var(--mg-v2-breakpoint-sm);
+}
+
+.consultant-suite-search__icon {
+  position: absolute;
+  left: var(--mg-v2-space-3);
+  display: inline-flex;
+  color: var(--mg-v2-color-text-tertiary);
+  pointer-events: none;
+}
+
+.consultant-suite-search__input {
+  width: 100%;
+  height: var(--mg-v2-consultant-control-height);
+  box-sizing: border-box;
+  padding: 0 var(--mg-v2-space-3) 0 var(--mg-v2-space-10);
+  background: var(--mg-v2-consultant-surface-card);
+  border: var(--mg-v2-border-width-thin) solid var(--mg-v2-consultant-border-card);
+  border-radius: var(--mg-v2-consultant-control-radius);
+  font-size: var(--mg-v2-font-size-body-md);
+  color: var(--mg-v2-color-text-primary);
+  box-shadow: none;
+}
+
+.consultant-suite-search__input::placeholder {
+  color: var(--mg-v2-color-text-placeholder);
+}
+
+.consultant-suite-search__input:focus-visible {
+  outline: none;
+  border-color: var(--mg-v2-consultant-selection-border);
+  box-shadow: var(--mg-v2-shadow-focus);
+}
+
+/* ===== 카드 그리드 · 세로 리스트 ===== */
+.consultant-suite-card-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--mg-v2-consultant-card-gap);
+  min-width: 0;
+}
+
+.consultant-suite-card-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-v2-consultant-card-gap);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  min-width: 0;
+}
+
+@media (max-width: 1199px) {
+  .consultant-suite-card-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* ===== 공유 카드 (ConsultantSuiteCard) ===== */
+.consultant-suite-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-v2-consultant-card-gap);
+  box-sizing: border-box;
+  min-width: 0;
+  width: 100%;
+  margin: 0;
+  padding: var(--mg-v2-consultant-card-pad);
+  background: var(--mg-v2-consultant-surface-card);
+  border: var(--mg-v2-border-width-thin) solid var(--mg-v2-consultant-border-card);
+  border-radius: var(--mg-v2-consultant-card-radius);
+  box-shadow: none;
+  text-align: left;
+  color: inherit;
+  font: inherit;
+}
+
+/* 인터랙티브: native button 루트 대신 role=button (+ optional as=button) */
+.consultant-suite-card--interactive {
+  cursor: pointer;
+  appearance: none;
+}
+
+.consultant-suite-card--interactive:focus-visible {
+  outline: none;
+  border-color: var(--mg-v2-consultant-selection-border);
+  box-shadow: var(--mg-v2-shadow-focus);
+}
+
+/*
+ * --row: 메시지 등 세로 카드는 패딩(16/24)만, 가로 레이아웃은 body 없는 행 카드에만.
+ * (:has(__body) 가 있으면 기본 column 유지 — 메시지 title/body/foot 깨짐 방지)
+ */
+.consultant-suite-card--row {
+  gap: var(--mg-v2-consultant-row-gap);
+  padding: var(--mg-v2-consultant-row-pad);
+  min-height: var(--mg-v2-consultant-row-min-height);
+}
+
+.consultant-suite-card--row:not(:has(.consultant-suite-card__body)) {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.consultant-suite-card__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mg-v2-space-3);
+  min-width: 0;
+  width: 100%;
+}
+
+.consultant-suite-card__head-text {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--mg-v2-space-3);
+  min-width: 0;
+}
+
+.consultant-suite-card__title {
+  margin: 0;
+  font-size: var(--mg-v2-consultant-card-title-size);
+  font-weight: var(--mg-v2-consultant-card-title-weight);
+  letter-spacing: var(--mg-v2-consultant-card-title-tracking);
+  line-height: var(--mg-v2-font-line-height-heading);
+  color: var(--mg-v2-color-text-primary);
+  overflow-wrap: anywhere;
+}
+
+.consultant-suite-card__time {
+  flex: 0 0 auto;
+  font-size: var(--mg-v2-consultant-card-time-size);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  color: var(--mg-v2-color-text-tertiary);
+}
+
+.consultant-suite-card__body {
+  font-size: var(--mg-v2-consultant-card-body-size);
+  line-height: var(--mg-v2-font-line-height-body);
+  color: var(--mg-v2-color-text-primary);
+  overflow-wrap: anywhere;
+}
+
+.consultant-suite-card__meta {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-v2-consultant-meta-gap);
+  font-size: var(--mg-v2-consultant-card-meta-size);
+  line-height: var(--mg-v2-font-line-height-body);
+  color: var(--mg-v2-color-text-secondary);
+  overflow-wrap: anywhere;
+}
+
+.consultant-suite-card__foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mg-v2-consultant-foot-gap);
+  margin-top: auto;
+  padding-top: var(--mg-v2-consultant-foot-pad-top);
+}
+
+.consultant-suite-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  box-sizing: border-box;
+  padding: var(--mg-v2-consultant-pill-padding);
+  border: 0;
+  border-radius: var(--mg-v2-consultant-pill-radius);
+  background: var(--mg-v2-consultant-chip-neutral-bg);
+  color: var(--mg-v2-consultant-chip-neutral-text);
+  font-size: var(--mg-v2-consultant-pill-size);
+  font-weight: var(--mg-v2-consultant-pill-weight);
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.consultant-suite-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: var(--mg-v2-consultant-avatar-size);
+  height: var(--mg-v2-consultant-avatar-size);
+  border-radius: var(--mg-v2-radius-pill);
+  background: var(--mg-v2-consultant-chip-neutral-bg);
+  color: var(--mg-v2-color-text-primary);
+  font-size: var(--mg-v2-consultant-card-title-size);
+  font-weight: var(--mg-v2-consultant-avatar-weight);
+  box-shadow: none;
+}
+
+.consultant-suite .consultant-suite-icon-btn.mg-button {
+  width: var(--mg-v2-consultant-icon-btn-size);
+  height: var(--mg-v2-consultant-icon-btn-size);
+  min-width: var(--mg-v2-consultant-icon-btn-size);
+  padding: 0;
+}
+
+.consultant-suite .consultant-suite-icon-btn.mg-button .mg-button__content,
+.consultant-suite .consultant-suite-icon-btn.mg-button .mg-button__text {
+  padding: 0 !important;
+}
+
+/* records 카드 body 위계 */
+.consultant-suite-record-card .consultant-suite-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-v2-consultant-meta-gap);
+}
+
+.consultant-suite-record-card__session {
+  margin: 0;
+  font-size: var(--mg-v2-consultant-card-body-size);
+  color: var(--mg-v2-color-text-primary);
+}
+
+.consultant-suite-record-card__client {
+  margin: 0;
+  font-size: var(--mg-v2-consultant-card-body-size);
+  font-weight: var(--mg-v2-font-weight-semibold);
+  color: var(--mg-v2-color-text-primary);
+}
+
+.consultant-suite-pagination {
+  display: flex;
+  justify-content: center;
+  margin-top: var(--mg-v2-space-4);
+}
+
+/* ===== 로딩 ===== */
+.consultant-suite-loading {
+  padding: var(--mg-v2-space-8) var(--mg-v2-space-4);
+}
+
+/* ===== 모바일 (390 · 가로 스크롤 금지) ===== */
+@media (max-width: 767px) {
+  .consultant-suite {
+    overflow-x: hidden;
+  }
+
+  .consultant-suite .mg-v2-content-area {
+    padding: var(--mg-v2-consultant-content-pad-mobile);
+  }
+
+  .consultant-suite-search {
+    flex-basis: 100%;
+    max-width: none;
+  }
+
+  .consultant-suite-card-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .consultant-suite .consultant-summary-strip.consultant-suite__summary {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .consultant-suite__panel {
+    padding: var(--mg-v2-space-3);
+  }
+}
+
+/* ===== 상담 일지 조회(consultant surface) — 필터 h36 slate · 저장 뷰 강등 ===== */
+.consultant-suite.consultant-logs .mg-v2-consultation-log-filter {
+  margin-bottom: 0;
+}
+
+.consultant-suite.consultant-logs .mg-v2-consultation-log-filter__select,
+.consultant-suite.consultant-logs .mg-v2-consultation-log-filter__input {
+  height: var(--mg-v2-consultant-control-height);
+  padding: 0 var(--mg-v2-space-3);
+  font-size: var(--mg-v2-font-size-body-md);
+  background: var(--mg-v2-consultant-surface-card);
+  border: var(--mg-v2-border-width-thin) solid var(--mg-v2-consultant-border-card);
+  border-radius: var(--mg-v2-consultant-control-radius);
+}
+
+.consultant-suite.consultant-logs .mg-v2-consultation-log-filter__select:focus,
+.consultant-suite.consultant-logs .mg-v2-consultation-log-filter__input:focus {
+  border-color: var(--mg-v2-consultant-selection-border);
+  box-shadow: var(--mg-v2-shadow-focus);
+}
+
+.consultant-suite.consultant-logs .consultant-logs__saved-view .mg-v2-saved-view-controls {
+  flex-wrap: wrap;
+  gap: var(--mg-v2-space-2);
+}
+
+.consultant-suite.consultant-logs .consultant-logs__saved-view .mg-v2-saved-view-chip,
+.consultant-suite.consultant-logs .consultant-logs__saved-view .mg-v2-saved-view-chip-wrap {
+  background: var(--mg-v2-consultant-chip-neutral-bg);
+  border-color: var(--mg-v2-consultant-border-card);
+  color: var(--mg-v2-consultant-chip-neutral-text);
+}
+
+.consultant-suite.consultant-logs .consultant-logs__saved-view .mg-v2-saved-view-chip--active,
+.consultant-suite.consultant-logs .consultant-logs__saved-view .mg-v2-saved-view-chip-wrap--active,
+.consultant-suite.consultant-logs .consultant-logs__saved-view .mg-v2-saved-view-chip-wrap--active .mg-v2-saved-view-chip {
+  background: var(--mg-v2-consultant-chip-neutral-bg);
+  border-color: var(--mg-v2-consultant-border-card);
+  color: var(--mg-v2-color-text-primary);
+}
+
+.consultant-suite.consultant-logs .consultant-logs__saved-view .mg-v2-saved-view-controls__save-btn,
+.consultant-suite.consultant-logs .consultant-logs__saved-view .mg-v2-saved-view-controls__delete-btn {
+  color: var(--mg-v2-color-text-secondary);
+  font-weight: var(--mg-v2-font-weight-semibold);
+}
+
+.consultant-suite.consultant-logs .consultant-logs__saved-view .mg-v2-saved-view-controls__save-btn:hover,
+.consultant-suite.consultant-logs .consultant-logs__saved-view .mg-v2-saved-view-controls__delete-btn:hover {
+  color: var(--mg-v2-color-text-primary);
+}
+
+/* 상담일지 캘린더·테이블 컨테이너 — 흰 r12 slate (admin stone 패널 금지) */
+.consultant-suite.consultant-logs .mg-v2-consultation-log-calendar,
+.consultant-suite.consultant-logs .mg-v2-consultation-log-table,
+.consultant-suite.consultant-logs .consultation-log-calendar-block,
+.consultant-suite.consultant-logs .consultation-log-table-block,
+.consultant-suite.consultant-logs .mg-v2-consultation-log-calendar-block,
+.consultant-suite.consultant-logs .mg-v2-consultation-log-table-block,
+.consultant-suite.consultant-logs .mg-v2-consultation-log-calendar-block__card,
+.consultant-suite.consultant-logs .mg-v2-consultation-log-table-block__card,
+.consultant-suite.consultant-logs .mg-v2-content-card.mg-v2-consultation-log-calendar-block__card,
+.consultant-suite.consultant-logs .mg-v2-content-card.mg-v2-consultation-log-table-block__card {
+  background: var(--mg-v2-consultant-surface-card);
+  border: var(--mg-v2-border-width-thin) solid var(--mg-v2-consultant-border-card);
+  border-radius: var(--mg-v2-consultant-card-radius);
+  box-shadow: none;
+}
+
+/*
+ * 캘린더 래퍼·테이블 블록 stone(neutral-50) — suite 에서만 투명/흰 카드.
+ * admin ConsultationLogCalendarBlock.css 기본값은 유지.
+ */
+.consultant-suite.consultant-logs .mg-v2-consultation-log-calendar-wrapper,
+.consultant-suite.consultant-logs .mg-v2-consultation-log-table-block,
+.consultant-suite.consultant-logs .mg-v2-consultation-log-table-block__card {
+  background: transparent;
+}
+
+.consultant-suite.consultant-logs .mg-v2-consultation-log-calendar-wrapper .fc-col-header-cell {
+  background: var(--mg-v2-consultant-surface-card);
+}
+
+.consultant-suite.consultant-logs .mg-v2-consultation-log-calendar-wrapper .fc-button-primary {
+  background: var(--mg-v2-consultant-surface-card) !important;
+}
+
+.consultant-suite.consultant-logs .mg-v2-consultation-log-calendar-popover {
+  background: var(--mg-v2-consultant-surface-card);
+}

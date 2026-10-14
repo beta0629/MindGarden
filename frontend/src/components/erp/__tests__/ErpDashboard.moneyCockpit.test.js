@@ -6,7 +6,7 @@
  */
 
 import React from 'react';
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import {
   OFD_CHART,
@@ -14,10 +14,12 @@ import {
   OFD_LEDGER,
   OFD_LINKS,
   OFD_PAGE_TITLE,
+  OFD_PERIOD,
   OFD_SALARY_CHECKLIST,
   OFD_WORKBENCH
 } from '../../../constants/operatorFinanceDashboardStrings';
 import { SALARY_TYPE } from '../../../constants/salaryConstants';
+import { getPeriodRange } from '../organisms/moneyCockpit/moneyCockpitPeriod';
 
 jest.mock('../../layout/AdminCommonLayout', () => ({
   __esModule: true,
@@ -160,11 +162,12 @@ jest.mock('../../../utils/commonCodeApi', () => ({
   getCommonCodes: (...args) => mockGetCommonCodes(...args)
 }));
 
-import ErpDashboard from '../ErpDashboard';
+import ErpDashboard, { resetRolling12ChartMemoryCacheForTests } from '../ErpDashboard';
 
 describe('ErpDashboard money cockpit', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    resetRolling12ChartMemoryCacheForTests();
     mockGetCommonCodes.mockResolvedValue([
       {
         codeValue: 'TENTH',
@@ -575,5 +578,161 @@ describe('ErpDashboard money cockpit', () => {
     expect(screen.queryByText('거래·정산')).not.toBeInTheDocument();
     expect(screen.queryByText('승인센터')).not.toBeInTheDocument();
     expect(screen.queryByText(/\(터넌트:/)).not.toBeInTheDocument();
+  });
+
+  test('기간 칩 경합: 느린 이전 응답이 와도 hero는 최신 period 값을 유지한다', async() => {
+    const thisMonthRange = getPeriodRange(OFD_PERIOD.THIS_MONTH);
+    const lastMonthRange = getPeriodRange(OFD_PERIOD.LAST_MONTH);
+    const THIS_MONTH_REVENUE = 5_555_000;
+    const LAST_MONTH_REVENUE = 11_927_200;
+
+    /** @type {{ startDate: string, resolve: (v: *) => void }[]} */
+    const financeResolvers = [];
+    let deferFinance = false;
+
+    const financePayload = (revenue) => ({
+      financialData: {
+        summary: {
+          totalRevenue: revenue,
+          totalExpenses: 100000,
+          netProfit: revenue - 100000
+        },
+        transactions: [],
+        categoryBreakdown: {}
+      }
+    });
+
+    mockGet.mockImplementation((url, params = {}) => {
+      const path = String(url);
+      if (
+        path.includes('/auth/')
+        || path.includes('current-user')
+        || /\/me(?:\?|$)/.test(path)
+      ) {
+        return Promise.resolve({ id: 1, role: 'ADMIN', tenantId: 't1' });
+      }
+      if (path.includes('/finance/monthly-report')) {
+        return Promise.resolve({
+          monthlyIncome: { total: 100000 },
+          monthlyExpenses: { total: 50000 }
+        });
+      }
+      if (path.includes('/finance/dashboard')) {
+        const startDate = String(params?.startDate || '');
+        if (!deferFinance) {
+          if (startDate === thisMonthRange.startDate) {
+            return Promise.resolve(financePayload(THIS_MONTH_REVENUE));
+          }
+          return Promise.resolve(financePayload(0));
+        }
+        return new Promise((resolve) => {
+          financeResolvers.push({ startDate, resolve });
+        });
+      }
+      if (path.includes('pending-payment')) {
+        return Promise.resolve([]);
+      }
+      if (path.includes('salary/calculations/period')) {
+        return Promise.resolve([]);
+      }
+      if (path.includes('salary/profiles')) {
+        return Promise.resolve([]);
+      }
+      return Promise.resolve({});
+    });
+
+    renderPage();
+
+    await waitFor(() => {
+      expect(screen.getByText('5,555,000원')).toBeInTheDocument();
+    });
+
+    deferFinance = true;
+    const periodSelect = screen.getByTestId('badge-select');
+    fireEvent.click(within(periodSelect).getByRole('button', { name: '지난달' }));
+
+    await waitFor(() => {
+      expect(
+        financeResolvers.some((entry) => entry.startDate === lastMonthRange.startDate)
+      ).toBe(true);
+    });
+
+    // 지난달 primary 요청 핸들을 붙잡은 뒤, 이번 달로 재전환 (경합)
+    const staleLastMonthPrimary = financeResolvers.find(
+      (entry) => entry.startDate === lastMonthRange.startDate
+    );
+    expect(staleLastMonthPrimary).toBeTruthy();
+
+    fireEvent.click(within(periodSelect).getByRole('button', { name: '이번 달' }));
+    await waitFor(() => {
+      expect(
+        financeResolvers.some((entry) => entry.startDate === thisMonthRange.startDate)
+      ).toBe(true);
+    });
+
+    // 최신(이번 달) primary 먼저 도착 → 이후 prev 비교 호출이 enqueue 됨
+    financeResolvers
+      .filter((entry) => entry.startDate === thisMonthRange.startDate)
+      .forEach((entry) => entry.resolve(financePayload(THIS_MONTH_REVENUE)));
+
+    await waitFor(() => {
+      expect(
+        financeResolvers.some(
+          (entry) => entry !== staleLastMonthPrimary
+            && entry.startDate === lastMonthRange.startDate
+        )
+      ).toBe(true);
+    });
+    financeResolvers
+      .filter((entry) => entry !== staleLastMonthPrimary
+        && entry.startDate === lastMonthRange.startDate)
+      .forEach((entry) => entry.resolve(financePayload(0)));
+
+    await waitFor(() => {
+      const hero = screen.getByTestId('money-hero-band');
+      expect(hero).toHaveAttribute('aria-busy', 'false');
+      expect(within(hero).getByText('5,555,000원')).toBeInTheDocument();
+    });
+
+    // 느린 지난달 primary 가 뒤에 도착해도 hero 를 덮지 않음
+    staleLastMonthPrimary.resolve(financePayload(LAST_MONTH_REVENUE));
+    await waitFor(() => {
+      const hero = screen.getByTestId('money-hero-band');
+      expect(within(hero).getByText('5,555,000원')).toBeInTheDocument();
+    });
+    expect(screen.queryByText('11,927,200원')).not.toBeInTheDocument();
+  });
+
+  test('기간 칩 전환 시 monthly-report 를 재호출하지 않는다', async() => {
+    renderPage();
+
+    await waitFor(() => {
+      expect(screen.getByTestId('money-hero-band')).toBeInTheDocument();
+    });
+    await waitFor(() => {
+      const monthlyCalls = mockGet.mock.calls.filter((call) =>
+        String(call[0]).includes('/finance/monthly-report')
+      );
+      expect(monthlyCalls.length).toBeGreaterThan(0);
+    });
+
+    const monthlyBefore = mockGet.mock.calls.filter((call) =>
+      String(call[0]).includes('/finance/monthly-report')
+    ).length;
+
+    const periodSelect = screen.getByTestId('badge-select');
+    fireEvent.click(within(periodSelect).getByRole('button', { name: '지난달' }));
+    await waitFor(() => {
+      expect(periodSelect).toHaveAttribute('data-value', OFD_PERIOD.LAST_MONTH);
+    });
+    fireEvent.click(within(periodSelect).getByRole('button', { name: '이번 달' }));
+    await waitFor(() => {
+      expect(periodSelect).toHaveAttribute('data-value', OFD_PERIOD.THIS_MONTH);
+    });
+
+    const monthlyAfter = mockGet.mock.calls.filter((call) =>
+      String(call[0]).includes('/finance/monthly-report')
+    ).length;
+    expect(monthlyAfter - monthlyBefore).toBe(0);
   });
 });

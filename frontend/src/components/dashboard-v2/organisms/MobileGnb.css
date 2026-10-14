@@ -1,28 +1,59 @@
 /**
  * MobileGnb - GNB 56px
- * RESPONSIVE_LAYOUT_SPEC: 모바일 헤더 56px, 패딩 16px
+ * RESPONSIVE_LAYOUT_SPEC: 모바일 헤더 56px
+ *
+ * 3열 대칭 grid: 왼쪽(메뉴+로고) | 시계 | 오른쪽(알림+프로필).
+ * absolute 중앙 배치는 자리를 안 잡아 시계·알림이 겹치므로 사용하지 않는다.
+ * 양옆은 side-min 이상으로 대칭 확보해 알림·프로필이 잘리지 않게 하고,
+ * 좁은 폭에서는 브랜드 글자 숨김 + 시계 글자 축소로 겹침을 막는다.
  *
  * @author CoreSolution
  * @since 2025-02-22
  */
 
 .mg-v2-mobile-gnb {
+  position: relative;
+  display: grid;
+  /* 좌·우 대칭 side-min — 시계(auto)가 헤더 중앙. 넘치는 브랜드는 왼쪽 overflow로 차단. */
+  grid-template-columns:
+    minmax(var(--mg-v2-mobile-gnb-side-min), 1fr)
+    auto
+    minmax(var(--mg-v2-mobile-gnb-side-min), 1fr);
+  align-items: center;
+  column-gap: var(--mg-v2-mobile-gnb-chip-gap-sides);
+  height: var(--mg-layout-header-height-mobile, 56px);
+  padding: 0 var(--mg-v2-mobile-gnb-edge-pad);
+  background: var(--mg-layout-header-bg, var(--mg-color-background-main));
+  border-bottom: var(--mg-v2-border-width-thin) solid var(--mg-layout-header-border, var(--mg-color-border-main));
+  z-index: var(--mg-v2-z-header, var(--z-header, 1000));
+  overflow: visible;
+  box-sizing: border-box;
+}
+
+.mg-v2-mobile-gnb__left {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  height: var(--mg-layout-header-height-mobile, 56px);
-  padding: 0 16px;
-  background: var(--mg-layout-header-bg, var(--mg-color-background-main));
-  border-bottom: 1px solid var(--mg-layout-header-border, var(--mg-color-border-main));
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  justify-self: start;
+  z-index: 2;
+}
+
+.mg-v2-mobile-gnb__menu {
+  z-index: 2;
+  flex-shrink: 0;
 }
 
 .mg-v2-mobile-gnb__logo {
-  flex: 1;
+  flex: 1 1 auto;
   display: flex;
-  justify-content: center;
+  justify-content: flex-start;
   align-items: center;
   gap: var(--mg-spacing-sm);
   min-width: 0;
+  overflow: hidden;
+  z-index: 2;
 }
 
 .mg-v2-mobile-gnb__logo-img {
@@ -36,17 +67,22 @@
 }
 
 .mg-v2-mobile-gnb__logo-text {
-  font-size: 16px;
-  font-weight: 700;
+  font-size: var(--mg-v2-font-size-body-md);
+  font-weight: var(--mg-v2-font-weight-bold);
   color: var(--mg-color-text-main);
+  min-width: 0;
+  max-width: min(28vw, 10ch);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .mg-v2-mobile-gnb__brand-name {
-  font-size: 16px;
-  font-weight: 700;
+  font-size: var(--mg-v2-font-size-body-md);
+  font-weight: var(--mg-v2-font-weight-bold);
   color: var(--mg-color-text-main);
   min-width: 0;
-  max-width: min(42vw, 14ch);
+  max-width: min(28vw, 10ch);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -60,8 +96,50 @@
   vertical-align: middle;
 }
 
+/* 시계는 줄바꿈·숨김 금지. 글자 축소는 CurrentTimeChip 모바일 토큰. */
+.mg-v2-mobile-gnb__center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  justify-self: center;
+  z-index: 1;
+  pointer-events: auto;
+}
+
+.mg-v2-mobile-gnb__center .mg-v2-current-time-chip {
+  flex-shrink: 0;
+}
+
 .mg-v2-mobile-gnb__actions {
   display: flex;
   align-items: center;
-  gap: 4px;
+  justify-content: flex-end;
+  gap: var(--mg-v2-mobile-gnb-actions-gap);
+  /* min-width 0 및 클립 overflow 금지 — 알림·프로필 잘림 방지 */
+  justify-self: end;
+  z-index: 2;
+  overflow: visible;
+}
+
+.mg-v2-mobile-gnb__actions .mg-v2-notification-dropdown,
+.mg-v2-mobile-gnb__actions .mg-v2-notification-trigger,
+.mg-v2-mobile-gnb__actions .mg-v2-profile-dropdown {
+  flex-shrink: 0;
+}
+
+.mg-v2-mobile-gnb__actions .mg-v2-tenant-header-cluster {
+  gap: var(--mg-v2-mobile-gnb-profile-cluster-gap);
+}
+
+/*
+ * ≤414: 브랜드 글자 숨김 (메뉴·로고 그래픽만).
+ * 미디어 쿼리는 var() 미지원 — 기존 MobileGnb 414px 패턴 유지.
+ * 공간 부족 시 축소 순서: 프로필 이름 → 검색(본문) → 브랜드명 → 시계 글자. 시계 숨김 금지.
+ */
+@media (max-width: 414px) {
+  .mg-v2-mobile-gnb__brand-name,
+  .mg-v2-mobile-gnb__logo-text {
+    display: none;
+  }
 }

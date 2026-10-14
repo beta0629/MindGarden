@@ -51,8 +51,13 @@ const initialProviderForm = (provider) => ({
   model: provider.defaultModel || ''
 });
 
-const getConfigValue = (response) =>
-  response && response.success ? (response.configValue || '') : '';
+/** apiGet unwrap 후 config DTO의 configValue 직접 사용 */
+const getConfigValue = (response) => {
+  if (response == null || response.success === false) {
+    return '';
+  }
+  return response.configValue || '';
+};
 
 const AiProviderManagementPage = () => {
   const { user, isLoggedIn } = useSession();
@@ -112,7 +117,8 @@ const AiProviderManagementPage = () => {
 
     try {
       const defaultProviderRes = await apiGet(API_AI_DEFAULT_PROVIDER);
-      if (defaultProviderRes?.success && defaultProviderRes.providerId) {
+      if (defaultProviderRes != null && defaultProviderRes.success !== false
+          && defaultProviderRes.providerId) {
         setActiveProvider(defaultProviderRes.providerId);
       }
     } catch (e) {

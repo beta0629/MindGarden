@@ -11,12 +11,15 @@ import {
     SCHEDULE_LEGEND_SESSION_REMAINING_MEANING,
     SCHEDULE_LEGEND_SESSION_REMAINING_SAMPLE
 } from '../../../constants/schedule';
+import { MAPPING_ENGAGEMENT_TYPE } from '../../../constants/mappingEngagementType';
 import { useTranslation } from 'react-i18next';
+import EngagementTypeBadge from '../../common/EngagementTypeBadge';
 import ConsultantCountsBadgeList, {
     hasAnyConsultantCount,
     lookupCount
 } from './ConsultantCountsBadgeList';
 import MissingConsultationLogsList from './MissingConsultationLogsList';
+import { INTEGRATED_MONTH_CHIP_I18N } from './integratedMonthChipCopy';
 import './ScheduleLegend.css';
 
 const LEGEND_COLLAPSED_STORAGE_KEY = 'mg.integratedSchedule.legendCollapsed';
@@ -205,6 +208,33 @@ const ScheduleLegend = ({
         ['확인됨', '결제확인', '완료', '취소됨', '승인됨'].includes(option.label)
     ) || [];
 
+    const marksLegend = isIntegrated ? (
+        <p className="mg-schedule-marks-legend">
+            <span className="mg-schedule-marks-legend__item">
+                <span className="mg-schedule-marks-legend__status" aria-hidden="true" />
+                {t(INTEGRATED_MONTH_CHIP_I18N.legendStatus)}
+            </span>
+            <span className="mg-schedule-marks-legend__item">
+                <EngagementTypeBadge
+                    type={MAPPING_ENGAGEMENT_TYPE.INSTITUTION_LINK}
+                    className="mg-schedule-marks-legend__institution"
+                />
+                {t(INTEGRATED_MONTH_CHIP_I18N.legendInstitution)}
+            </span>
+            <span className="mg-schedule-marks-legend__item">
+                <span className="mg-schedule-marks-legend__sms" aria-hidden="true" />
+                {t(INTEGRATED_MONTH_CHIP_I18N.legendSms)}
+            </span>
+            <span className="mg-schedule-marks-legend__item">
+                <span className="mg-schedule-marks-legend__unresolved" aria-hidden="true" />
+                {t(INTEGRATED_MONTH_CHIP_I18N.legendUnresolved)}
+            </span>
+            <span className="mg-schedule-marks-legend__hint">
+                {t(INTEGRATED_MONTH_CHIP_I18N.legendHint)}
+            </span>
+        </p>
+    ) : null;
+
     const bodyContent = (
         <>
             <div className="mg-v2-legend-section mg-v2-legend-section--kr-public-holiday">
@@ -384,6 +414,7 @@ const ScheduleLegend = ({
                     aria-hidden="true"
                 />
             </button>
+            {marksLegend}
             <div
                 id={bodyId}
                 className="mg-v2-schedule-legend__body"

@@ -9,7 +9,12 @@ import { hasMorePagedItems, normalizePagedListPayload } from '../pagedListPayloa
 
 describe('normalizePagedListPayload', () => {
   test('배열 응답 → 총계 없음', () => {
-    expect(normalizePagedListPayload([1, 2])).toEqual({ items: [1, 2], totalElements: null, totalPages: null });
+    expect(normalizePagedListPayload([1, 2])).toEqual({
+      items: [1, 2],
+      totalElements: null,
+      totalPages: null,
+      statusCounts: null
+    });
   });
 
   test('알림 응답 { notifications, totalElements, totalPages }', () => {
@@ -32,18 +37,57 @@ describe('normalizePagedListPayload', () => {
     expect(result.totalElements).toBe(23);
   });
 
+  test('엔벨로프 { success, data:[...], totalElements } — 외곽 총계 보존', () => {
+    const result = normalizePagedListPayload({
+      success: true,
+      data: [{ id: 1 }, { id: 2 }],
+      totalElements: 25,
+      totalPages: 2
+    });
+    expect(result.items).toEqual([{ id: 1 }, { id: 2 }]);
+    expect(result.totalElements).toBe(25);
+    expect(result.totalPages).toBe(2);
+  });
+
+  test('배열만 오면 totalElements 는 null (언랩 후 경로)', () => {
+    expect(normalizePagedListPayload([{ id: 1 }, { id: 2 }])).toEqual({
+      items: [{ id: 1 }, { id: 2 }],
+      totalElements: null,
+      totalPages: null,
+      statusCounts: null
+    });
+  });
+
   test('Spring Page content', () => {
     expect(normalizePagedListPayload({ content: [1], totalElements: 1, totalPages: 1 }).items).toEqual([1]);
   });
 
   test('null·문자열·음수 총계 → 빈 목록 / null 총계', () => {
-    expect(normalizePagedListPayload(null)).toEqual({ items: [], totalElements: null, totalPages: null });
+    expect(normalizePagedListPayload(null)).toEqual({
+      items: [],
+      totalElements: null,
+      totalPages: null,
+      statusCounts: null
+    });
     expect(normalizePagedListPayload('x').items).toEqual([]);
     expect(normalizePagedListPayload({ items: [], totalElements: -1 }).totalElements).toBeNull();
   });
 
   test('itemKeys 지정', () => {
     expect(normalizePagedListPayload({ rows: [1], list: [2] }, { itemKeys: ['rows'] }).items).toEqual([1]);
+  });
+
+  test('중첩 data.statusCounts 를 표면화', () => {
+    const result = normalizePagedListPayload({
+      success: true,
+      data: {
+        mappings: [{ id: 1 }],
+        totalElements: 1,
+        statusCounts: { ALL: 5, ACTIVE: 3, PENDING_PAYMENT: 2 }
+      }
+    }, { itemKeys: ['mappings'] });
+    expect(result.statusCounts).toEqual({ ALL: 5, ACTIVE: 3, PENDING_PAYMENT: 2 });
+    expect(result.totalElements).toBe(1);
   });
 });
 

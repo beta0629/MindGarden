@@ -121,4 +121,11 @@
   line-height: 1.4;
 }
 
+.integrated-schedule-side-peek-stub__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--mg-spacing-sm);
+  align-items: center;
+}
+
 

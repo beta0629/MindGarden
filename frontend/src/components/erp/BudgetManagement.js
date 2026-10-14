@@ -277,8 +277,12 @@ const BudgetManagement = () => {
       }
 
       const response = await StandardizedApi.get(ERP_API.BUDGETS);
-      if (response?.success) {
-        setBudgets(response.data || []);
+      // StandardizedApi.get unwrap → 예산 배열/래핑 객체 직접 수용
+      if (response != null && response.success !== false) {
+        const list = Array.isArray(response)
+          ? response
+          : (Array.isArray(response.data) ? response.data : (response.budgets || []));
+        setBudgets(Array.isArray(list) ? list : []);
       } else {
         setBudgets([]);
       }
@@ -297,8 +301,14 @@ const BudgetManagement = () => {
 
       try {
         const response = await StandardizedApi.get(COMMON_CODE_API.BASE, { codeGroup: 'BUDGET_CATEGORY' });
-        if (response?.success && response.data?.length > 0) {
-          setBudgetCategories(response.data);
+        // unwrap → codes 배열/배열 직접 수용
+        const codes = Array.isArray(response)
+          ? response
+          : (Array.isArray(response?.codes)
+            ? response.codes
+            : (Array.isArray(response?.data) ? response.data : []));
+        if (codes.length > 0) {
+          setBudgetCategories(codes);
         } else {
           setBudgetCategories(DEFAULT_BUDGET_CATEGORIES);
         }

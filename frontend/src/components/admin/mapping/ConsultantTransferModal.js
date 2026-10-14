@@ -10,9 +10,13 @@ import CustomSelect from '../../common/CustomSelect';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import { useTranslation } from 'react-i18next';
 import { formatDateKeyInZone } from '../../../utils/zonedDateTime';
+import { selectActiveConsultants } from '../../../utils/selectActiveConsultants';
+import StandardizedApi from '../../../utils/standardizedApi';
+import { normalizeConsultantsPayload } from '../../../utils/apiResponseNormalize';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_ADMIN_MAPPINGS_TRANSFER = '/api/v1/admin/mappings/transfer';
+const API_ADMIN_CONSULTANTS_WITH_VACATION = '/api/v1/admin/consultants/with-vacation';
 const MSG_USER_REQUIRED = '사용자 정보를 찾을 수 없습니다. 다시 로그인해주세요.';
 
 /**
@@ -74,16 +78,15 @@ const ConsultantTransferModal = ({
   const loadConsultants = async() => {
     try {
       const today = formatDateKeyInZone();
-      const response = await fetch(`/api/admin/consultants/with-vacation?date=${today}`);
-      const data = await response.json();
-      
-      if (data.success) {
-        // 현재 상담사 제외
-        const filteredConsultants = data.data.filter(
-          consultant => consultant.id !== currentMapping?.consultantId
-        );
-        setConsultants(filteredConsultants);
-      }
+      // StandardizedApi.get unwrap → { consultants } / 배열 직접 수용
+      const payload = await StandardizedApi.get(API_ADMIN_CONSULTANTS_WITH_VACATION, {
+        date: today
+      });
+      const raw = normalizeConsultantsPayload(payload);
+      const filteredConsultants = selectActiveConsultants(raw).filter(
+        (consultant) => consultant.id !== currentMapping?.consultantId
+      );
+      setConsultants(filteredConsultants);
     } catch (error) {
       console.error('상담사 목록 로드 실패:', error);
     }

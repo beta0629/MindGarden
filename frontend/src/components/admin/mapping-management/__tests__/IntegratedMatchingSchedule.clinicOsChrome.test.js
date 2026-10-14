@@ -253,9 +253,13 @@ describe('IntegratedMatchingSchedule Clinic-OS chrome', () => {
     expect(scheduleCss).toMatch(/\.integrated-schedule__saved-view-details\s*\{/);
   });
 
-  test('same-day pending calendar prefix has no emoji', () => {
+  test('same-day pending calendar prefix has no emoji and no CSS content string', () => {
     expect(scheduleCss).not.toMatch(/content:\s*"🕐"/);
-    expect(scheduleCss).toMatch(/content:\s*"당일"/);
+    expect(scheduleCss).not.toMatch(/content:\s*"당일"/);
+    const calendarJs = read('src/components/ui/Schedule/ScheduleCalendarView.js');
+    const chipCopy = read('src/components/ui/Schedule/integratedMonthChipCopy.js');
+    expect(calendarJs).toMatch(/mg-v2-ad-calendar-event__same-day/);
+    expect(chipCopy).toMatch(/schedule:calendar\.compact\.sameDayPrefix/);
   });
 
   test('회기·가예약·기관연계 칩 색은 semantic 토큰만 (hex 없음)', () => {
@@ -274,7 +278,21 @@ describe('IntegratedMatchingSchedule Clinic-OS chrome', () => {
     expect(institutionBlock[0]).toMatch(/solid/);
     expect(institutionBlock[0]).not.toMatch(/dashed/);
     expect(institutionBlock[0]).not.toMatch(/#[0-9A-Fa-f]{3,8}/);
-    expect(scheduleJs).toMatch(/legend-swatch--institution-link/);
+    // 기관연계 범례는 ScheduleLegend 글자 배지 하나만 — ■ 사각 범례는 두지 않는다
+    expect(scheduleJs).not.toMatch(/legend-swatch--institution-link/);
     expect(scheduleJs).toMatch(/legend-swatch--same-day/);
+  });
+
+  test('당일결제 범례는 가로 padding(space-2)이 없고 안내 줄과 같은 시작선이다', () => {
+    const sameDayLegend = scheduleCss.match(
+      /\.integrated-schedule__legend--same-day\s*\{[^}]+\}/
+    );
+    expect(sameDayLegend).not.toBeNull();
+    expect(sameDayLegend[0]).toMatch(/padding-block:\s*var\(--mg-v2-space-1\)/);
+    expect(sameDayLegend[0]).toMatch(/padding-inline:\s*0/);
+    expect(sameDayLegend[0]).not.toMatch(/padding:\s*var\(--mg-v2-space-1\)\s+var\(--mg-v2-space-2\)/);
+    expect(sameDayLegend[0]).not.toMatch(/padding-left:\s*var\(--mg-v2-space-2\)/);
+    expect(sameDayLegend[0]).not.toMatch(/padding-inline:\s*var\(--mg-v2-space-2\)/);
+    expect(sameDayLegend[0]).not.toMatch(/8px/);
   });
 });

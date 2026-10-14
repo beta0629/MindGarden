@@ -42,6 +42,8 @@ import {
   resolveShopPaymentVerifyAmount
 } from '../../../utils/clientShopPaymentReturn';
 import { verifyShopPaymentWithRetry } from '../../../utils/shopPaymentVerifyRetry';
+import { CLIENT_OFFER_ROUTES } from '../../../constants/shopClientOfferConstants';
+import { buildClientOffersPayFailureState, resolveIsClientOfferOrder } from '../../../utils/shopClientOffer';
 import { requestClientHomeMappingsSoftRefresh } from '../../../utils/clientHomeSoftRefresh';
 
 const ShopPaymentReturnPage = () => {
@@ -74,18 +76,23 @@ const ShopPaymentReturnPage = () => {
           fetchShopOrder
         });
         if (!settled.paidPaymentId) {
-          navigate(settled.destination, { replace: true, state: buildShopPaymentCancelNavigationState() });
+          // /client/offers 에서 시작한 결제는 그 화면으로(선택·동의는 그 화면 sessionStorage 로 유지)
+          const fromOffers = await resolveIsClientOfferOrder(query.orderPublicId, fetchShopOrder);
+          navigate(fromOffers ? CLIENT_OFFER_ROUTES.OFFERS : settled.destination, { replace: true, state: buildShopPaymentCancelNavigationState() });
           return;
         }
         paidAfterCancelPaymentId = settled.paidPaymentId;
       } else if (query.code) {
-        setError(true);
-        setPayFailureReason(
-          resolvePortOneFailureReason(
-            { message: query.message, pgMessage: searchParams.get('pgMessage') },
-            CLIENT_MALL_CHECKOUT_COPY.PAY_FAILED_REASON_FALLBACK
-          )
+        const failureReason = resolvePortOneFailureReason(
+          { message: query.message, pgMessage: searchParams.get('pgMessage') },
+          CLIENT_MALL_CHECKOUT_COPY.PAY_FAILED_REASON_FALLBACK
         );
+        if (await resolveIsClientOfferOrder(query.orderPublicId, fetchShopOrder)) {
+          navigate(CLIENT_OFFER_ROUTES.OFFERS, { replace: true, state: buildClientOffersPayFailureState(failureReason) });
+          return;
+        }
+        setError(true);
+        setPayFailureReason(failureReason);
         return;
       }
 

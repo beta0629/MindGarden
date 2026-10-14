@@ -8,16 +8,19 @@
 
 import { ADMIN_ROUTES } from './adminRoutes';
 
-/** @type {Readonly<{ CATALOG_SKUS: string, POINT_POLICIES: string, ORDERS: string, PRODUCTS: string }>} */
+/** @type {Readonly<Record<string, string>>} */
 export const ADMIN_SHOP_API = {
   CATALOG_SKUS: '/api/v1/admin/shop/catalog-skus',
   POINT_POLICIES: '/api/v1/admin/shop/point-policies',
   ORDERS: '/api/v1/admin/shop/orders',
-  PRODUCTS: '/api/v1/admin/shop/products'
+  PRODUCTS: '/api/v1/admin/shop/products',
+  /** 상품 구성 조회·저장 — `${PACKAGE_COMPOSITIONS}/{packageCode}` (GET·PUT) */
+  PACKAGE_COMPOSITIONS: '/api/v1/admin/shop/package-compositions',
+  /** 상품 구성 후보(몰 판매 중 SKU) — 응답 `{ items, totalActive }` */
+  COMPOSITION_CANDIDATES: '/api/v1/admin/shop/catalog-skus/composition-candidates'
 };
 
 export const ADMIN_SHOP_ROUTES = {
-  CATALOG_SKUS: ADMIN_ROUTES.SHOP_CATALOG_SKUS,
   POINT_POLICIES: ADMIN_ROUTES.SHOP_POINT_POLICIES,
   ORDERS: ADMIN_ROUTES.SHOP_ORDERS
 };
@@ -263,23 +266,6 @@ export function buildAdminShopCatalogSkuThumbnailPath(skuId) {
 /**
  * @returns {string}
  */
-export function buildAdminShopCatalogSkuNewRoute() {
-  return `${ADMIN_SHOP_ROUTES.CATALOG_SKUS}/new`;
-}
-
-/**
- * 패키지 요금 행의 온라인 내용 편집 경로.
- *
- * @param {string} packageCode 패키지 코드
- * @returns {string}
- */
-export function buildAdminShopPackageContentRoute(packageCode) {
-  return `${ADMIN_SHOP_ROUTES.CATALOG_SKUS}/package/${encodeURIComponent(String(packageCode))}`;
-}
-
-/**
- * @returns {string}
- */
 export function buildAdminShopPackageFeesPath() {
   return `${ADMIN_SHOP_API.CATALOG_SKUS}/package-fees`;
 }
@@ -298,14 +284,6 @@ export function buildAdminShopPackageFeePath(packageCode) {
  */
 export function buildAdminShopPackageFeeVisiblePath(packageCode) {
   return `${buildAdminShopPackageFeePath(packageCode)}/catalog-visible`;
-}
-
-/**
- * @param {string|number} skuId
- * @returns {string}
- */
-export function buildAdminShopCatalogSkuEditRoute(skuId) {
-  return `${ADMIN_SHOP_ROUTES.CATALOG_SKUS}/${encodeURIComponent(String(skuId))}/edit`;
 }
 
 /**

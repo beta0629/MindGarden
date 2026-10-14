@@ -30,7 +30,9 @@ export const buildConsultationLogViewDefaultSavedView = (
     consultantId: CONSULTATION_LOG_VIEW_DEFAULT_CONSULTANT_ID,
     clientId: CONSULTATION_LOG_VIEW_DEFAULT_CLIENT_ID,
     startDate,
-    endDate
+    endDate,
+    status: null,
+    keyword: ''
   },
   sort: {},
   density: CONSULTATION_LOG_VIEW_SAVED_VIEW_DENSITY_COMFORTABLE

@@ -132,6 +132,15 @@ jest.mock('../../common/BadgeSelect', () => ({
           {o.label}
         </button>
       ))}
+      {multiple && options.length > 0 && (
+        <button
+          type="button"
+          data-testid="badge-select-mock-duplicate-select"
+          onClick={() => onChange?.([options[0].value, options[0].value])}
+        >
+          duplicate-select-first
+        </button>
+      )}
     </div>
   )
 }));
@@ -158,6 +167,13 @@ jest.mock('../../dashboard-v2/atoms/SearchInput', () => ({
       placeholder={placeholder}
     />
   )
+}));
+
+const mockConfirm = jest.fn();
+jest.mock('../../../hooks/useConfirm', () => ({
+  __esModule: true,
+  useConfirm: () => [mockConfirm, () => null],
+  default: () => [mockConfirm, () => null]
 }));
 
 import MappingCreationModal from '../MappingCreationModal';
@@ -195,6 +211,16 @@ const packageCodeFixture = [
     codeLabel: '표준 패키지',
     koreanName: '표준 패키지',
     extraData: JSON.stringify({ price: 300000, sessions: 5 })
+  }
+];
+
+const multiPackageCodeFixture = [
+  ...packageCodeFixture,
+  {
+    codeValue: 'TEST_PKG_2',
+    codeLabel: '프리미엄 패키지',
+    koreanName: '프리미엄 패키지',
+    extraData: JSON.stringify({ price: 500000, sessions: 10 })
   }
 ];
 
@@ -877,5 +903,134 @@ describe('MappingCreationModal — person picker cards', () => {
     fireEvent.change(search, { target: { value: '내담자21' } });
     await waitFor(() => expect(screen.getByText('내담자21')).toBeInTheDocument());
     expect(screen.queryByText('내담자20')).not.toBeInTheDocument();
+  });
+});
+
+// 다중 상품(패키지) 선택 등록 전 확인 모달 (useConfirm) 회귀 가드.
+describe('MappingCreationModal — 다중 상품 선택 등록 전 확인 모달', () => {
+  beforeEach(() => {
+    getAllConsultantsWithStats.mockReset();
+    getAllConsultantsWithStats.mockResolvedValue(consultantFixture);
+    adminClientsWithMappingGetAll.mockReset();
+    adminClientsWithMappingGetAll.mockResolvedValue({ clients: clientFixture });
+    adminMappingsListGetAll.mockReset();
+    adminMappingsListGetAll.mockResolvedValue({ mappings: [] });
+    apiPost.mockReset();
+    apiPost.mockResolvedValue({ data: { id: 9002 } });
+    getTenantCodes.mockReset();
+    getTenantCodes.mockImplementation((group) => {
+      if (group === 'CONSULTATION_PACKAGE') return Promise.resolve(multiPackageCodeFixture);
+      return Promise.resolve([]);
+    });
+    notificationManager.success.mockClear();
+    notificationManager.error.mockClear();
+    notificationManager.warning.mockClear();
+    mockConfirm.mockReset();
+  });
+
+  const advanceToStep3AndSelectTwoPackages = async () => {
+    renderModal();
+    await waitFor(() => expect(screen.getByText('상담사A')).toBeInTheDocument());
+    fireEvent.click(screen.getByText('상담사A'));
+    await act(async () => {
+      fireEvent.click(screen.getByText('common:action.next'));
+    });
+    await waitFor(() => expect(screen.getByText('내담자A')).toBeInTheDocument());
+    fireEvent.click(screen.getByText('내담자A'));
+    await act(async () => {
+      fireEvent.click(screen.getByText('common:action.next'));
+    });
+    await waitFor(() => expect(screen.getByText('표준 패키지 (5회, 300,000원)')).toBeInTheDocument());
+    fireEvent.click(screen.getByText('표준 패키지 (5회, 300,000원)'));
+    fireEvent.click(screen.getByText('프리미엄 패키지 (10회, 500,000원)'));
+    await act(async () => {
+      fireEvent.click(screen.getByText('common:action.next'));
+    });
+    await waitFor(() => expect(screen.getByText('admin:mappingCreation.createMapping')).toBeInTheDocument());
+  };
+
+  test('상품 2개 선택 후 등록 클릭 → confirm 호출, 취소(false) 시 apiPost 미호출', async () => {
+    mockConfirm.mockResolvedValue(false);
+    await advanceToStep3AndSelectTwoPackages();
+
+    await act(async () => {
+      fireEvent.click(screen.getByText('admin:mappingCreation.createMapping'));
+    });
+
+    await waitFor(() => expect(mockConfirm).toHaveBeenCalledTimes(1));
+    expect(apiPost).not.toHaveBeenCalled();
+  });
+
+  test('상품 2개 선택 후 등록 클릭 → confirm 확인(true) 시 apiPost 1회 호출', async () => {
+    mockConfirm.mockResolvedValue(true);
+    await advanceToStep3AndSelectTwoPackages();
+
+    await act(async () => {
+      fireEvent.click(screen.getByText('admin:mappingCreation.createMapping'));
+    });
+
+    await waitFor(() => expect(apiPost).toHaveBeenCalledTimes(1));
+    expect(mockConfirm).toHaveBeenCalledTimes(1);
+    const [, postedBody] = apiPost.mock.calls[0];
+    expect(postedBody.packageName).toContain('표준 패키지');
+    expect(postedBody.packageName).toContain('프리미엄 패키지');
+  });
+
+  test('상품 1개만 선택하면 confirm 미호출 — 바로 apiPost', async () => {
+    renderModal();
+    await waitFor(() => expect(screen.getByText('상담사A')).toBeInTheDocument());
+    fireEvent.click(screen.getByText('상담사A'));
+    await act(async () => {
+      fireEvent.click(screen.getByText('common:action.next'));
+    });
+    await waitFor(() => expect(screen.getByText('내담자A')).toBeInTheDocument());
+    fireEvent.click(screen.getByText('내담자A'));
+    await act(async () => {
+      fireEvent.click(screen.getByText('common:action.next'));
+    });
+    await waitFor(() => expect(screen.getByText('표준 패키지 (5회, 300,000원)')).toBeInTheDocument());
+    fireEvent.click(screen.getByText('표준 패키지 (5회, 300,000원)'));
+    await act(async () => {
+      fireEvent.click(screen.getByText('common:action.next'));
+    });
+    await waitFor(() => expect(screen.getByText('admin:mappingCreation.createMapping')).toBeInTheDocument());
+
+    await act(async () => {
+      fireEvent.click(screen.getByText('admin:mappingCreation.createMapping'));
+    });
+
+    await waitFor(() => expect(apiPost).toHaveBeenCalledTimes(1));
+    expect(mockConfirm).not.toHaveBeenCalled();
+  });
+
+  test('요청 내 동일 상품이 중복으로 전달돼도 handlePackageSelection 이 value 기준 dedupe — 확인 모달 미노출, apiPost 1회', async () => {
+    renderModal();
+    await waitFor(() => expect(screen.getByText('상담사A')).toBeInTheDocument());
+    fireEvent.click(screen.getByText('상담사A'));
+    await act(async () => {
+      fireEvent.click(screen.getByText('common:action.next'));
+    });
+    await waitFor(() => expect(screen.getByText('내담자A')).toBeInTheDocument());
+    fireEvent.click(screen.getByText('내담자A'));
+    await act(async () => {
+      fireEvent.click(screen.getByText('common:action.next'));
+    });
+    await waitFor(() => expect(screen.getByText('표준 패키지 (5회, 300,000원)')).toBeInTheDocument());
+    // BadgeSelect onChange 에 동일 value 가 두 번 담긴 배열을 직접 전달 — dedupe 회귀 가드.
+    fireEvent.click(screen.getByTestId('badge-select-mock-duplicate-select'));
+    await act(async () => {
+      fireEvent.click(screen.getByText('common:action.next'));
+    });
+    await waitFor(() => expect(screen.getByText('admin:mappingCreation.createMapping')).toBeInTheDocument());
+
+    await act(async () => {
+      fireEvent.click(screen.getByText('admin:mappingCreation.createMapping'));
+    });
+
+    await waitFor(() => expect(apiPost).toHaveBeenCalledTimes(1));
+    expect(mockConfirm).not.toHaveBeenCalled();
+    const [, postedBody] = apiPost.mock.calls[0];
+    expect(postedBody.packageName).toBe('표준 패키지');
+    expect(postedBody.totalSessions).toBe(5);
   });
 });

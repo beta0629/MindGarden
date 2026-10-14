@@ -131,9 +131,12 @@ const ScheduleList = ({
     try {
       setLoadingConsultants(true);
       const response = await apiGet(API_ENDPOINTS.ADMIN.CONSULTANTS.LIST);
-      
-      if (response && response.success) {
-        setConsultants(response.data || []);
+      // apiGet unwrap → { consultants } / 배열 직접 수용
+      if (response != null && response.success !== false) {
+        const list = Array.isArray(response)
+          ? response
+          : (response.consultants || response.data || []);
+        setConsultants(Array.isArray(list) ? list : []);
       }
     } catch (error) {
       console.error('상담사 목록 로드 실패:', error);
@@ -178,10 +181,15 @@ const ScheduleList = ({
           userRole: userRole
         };
         const response = await apiGet(url, params);
-
-        if (response.success) {
-          setSchedules(response.data || []);
-          setTotalCount(response.data?.length || 0);
+        // apiGet unwrap → schedules 배열/래핑 객체 직접 수용
+        if (response != null && response.success !== false) {
+          const list = Array.isArray(response)
+            ? response
+            : (Array.isArray(response.schedules)
+              ? response.schedules
+              : (Array.isArray(response.data) ? response.data : []));
+          setSchedules(list);
+          setTotalCount(list.length);
         } else {
           setError(true);
         }

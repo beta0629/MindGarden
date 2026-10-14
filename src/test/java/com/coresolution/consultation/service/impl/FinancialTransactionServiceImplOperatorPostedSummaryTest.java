@@ -37,6 +37,7 @@ import com.coresolution.consultation.service.RealTimeStatisticsService;
 import com.coresolution.consultation.service.UserPersonalDataCacheService;
 import com.coresolution.consultation.service.erp.accounting.AccountingService;
 import com.coresolution.consultation.service.erp.financial.CardMerchantFeeResolutionService;
+import com.coresolution.consultation.util.OperatorFinanceAggregation;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.core.context.TenantContextHolder;
 
@@ -143,7 +144,7 @@ class FinancialTransactionServiceImplOperatorPostedSummaryTest {
     }
 
     @Test
-    @DisplayName("getBranchFinancialData: 카드수수료는 totalExpensesEffective에 포함")
+    @DisplayName("getBranchFinancialData: 카드수수료는 totalExpenses·expenseCategoryBreakdown 양쪽에 동일 반영")
     void getBranchFinancialData_includesCardFeeInExpenses() {
         FinancialTransaction incomeWithFee = income(
                 FinancialTransactionConstants.CATEGORY_CONSULTATION_FEE, "100000",
@@ -160,6 +161,63 @@ class FinancialTransactionServiceImplOperatorPostedSummaryTest {
         assertThat(summary.get("totalCardMerchantFee")).isEqualTo(2_500L);
         assertThat(summary.get("totalExpenses")).isEqualTo(2_500L);
         assertThat(summary.get("netProfit")).isEqualTo(97_500L);
+
+        @SuppressWarnings("unchecked")
+        Map<String, BigDecimal> expenseBreakdown =
+                (Map<String, BigDecimal>) result.get("expenseCategoryBreakdown");
+        assertThat(expenseBreakdown.get(OperatorFinanceAggregation.CATEGORY_CARD_MERCHANT_FEE))
+                .isEqualByComparingTo(new BigDecimal("2500"));
+        BigDecimal breakdownSum = expenseBreakdown.values().stream()
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        assertThat(breakdownSum).isEqualByComparingTo(new BigDecimal("2500"));
+    }
+
+    @Test
+    @DisplayName("getBranchFinancialData: PENDING 지출 포함, CANCELLED 제외, total==sum(breakdown)")
+    void getBranchFinancialData_includesPendingExpenseAndAllCategories() {
+        List<FinancialTransaction> rows = new ArrayList<>();
+        rows.add(expense(FinancialTransactionConstants.CATEGORY_RENT, "100000",
+                FinancialTransaction.TransactionStatus.PENDING, LocalDate.of(2026, 8, 2)));
+        rows.add(expense(FinancialTransactionConstants.CATEGORY_SALARY, "200000",
+                FinancialTransaction.TransactionStatus.COMPLETED, LocalDate.of(2026, 8, 3)));
+        rows.add(expense(FinancialTransactionConstants.CATEGORY_TAX, "30000",
+                FinancialTransaction.TransactionStatus.APPROVED, LocalDate.of(2026, 8, 4)));
+        rows.add(expense(FinancialTransactionConstants.CATEGORY_MEAL, "15000",
+                FinancialTransaction.TransactionStatus.COMPLETED, LocalDate.of(2026, 8, 5)));
+        rows.add(expense(FinancialTransactionConstants.CATEGORY_EQUIPMENT, "40000",
+                FinancialTransaction.TransactionStatus.PENDING, LocalDate.of(2026, 8, 6)));
+        rows.add(expense("OFFICE_SUPPLIES", "10000",
+                FinancialTransaction.TransactionStatus.COMPLETED, LocalDate.of(2026, 8, 7)));
+        rows.add(expense("CUSTOM_MARKETING", "5000",
+                FinancialTransaction.TransactionStatus.COMPLETED, LocalDate.of(2026, 8, 8)));
+        rows.add(expense(FinancialTransactionConstants.CATEGORY_RENT, "999000",
+                FinancialTransaction.TransactionStatus.CANCELLED, LocalDate.of(2026, 8, 9)));
+        rows.add(income(FinancialTransactionConstants.CATEGORY_CONSULTATION_FEE, "500000",
+                FinancialTransaction.TransactionStatus.PENDING, LocalDate.of(2026, 8, 10)));
+
+        when(financialTransactionRepository.findByTenantIdAndIsDeletedFalse(eq(TENANT_ID)))
+                .thenReturn(rows);
+
+        Map<String, Object> result = service.getBranchFinancialData(null, START, END, null, null);
+        @SuppressWarnings("unchecked")
+        Map<String, Object> summary = (Map<String, Object>) result.get("summary");
+        assertThat(summary.get("totalRevenue")).isEqualTo(500_000L);
+        assertThat(summary.get("totalExpenses")).isEqualTo(400_000L);
+
+        @SuppressWarnings("unchecked")
+        Map<String, BigDecimal> expenseBreakdown =
+                (Map<String, BigDecimal>) result.get("expenseCategoryBreakdown");
+        assertThat(expenseBreakdown.size()).isGreaterThanOrEqualTo(7);
+        BigDecimal expenseSum = expenseBreakdown.values().stream()
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        assertThat(expenseSum).isEqualByComparingTo(new BigDecimal("400000"));
+
+        @SuppressWarnings("unchecked")
+        Map<String, BigDecimal> incomeBreakdown =
+                (Map<String, BigDecimal>) result.get("incomeCategoryBreakdown");
+        BigDecimal incomeSum = incomeBreakdown.values().stream()
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        assertThat(incomeSum).isEqualByComparingTo(new BigDecimal("500000"));
     }
 
     @Test

@@ -84,6 +84,15 @@ public interface CommonCodeService {
      * @return 공통코드 목록 응답
      */
     CommonCodeListResponse findAll(String codeGroup);
+
+    /**
+     * 공통코드 목록 조회. {@code includeInactive}가 true면 비활성 코드도 포함한다(관리자 목록용, 소거 제외).
+     *
+     * @param codeGroup 코드 그룹 (선택)
+     * @param includeInactive 비활성 포함 여부
+     * @return 공통코드 목록 응답
+     */
+    CommonCodeListResponse findAll(String codeGroup, boolean includeInactive);
     
     // ==================== 기존 메서드 (하위 호환성) ====================
     
@@ -138,8 +147,8 @@ public interface CommonCodeService {
     // 특정 그룹과 값으로 공통코드 조회
     CommonCode getCommonCode(String groupCode, String codeValue);
     
-    // 공통코드 비활성화
-    int deactivateCommonCodes(List<String> codeValues);
+    // 공통코드 비활성화 (지정 테넌트의 코드만, 코어·타 테넌트 코드는 대상 아님)
+    int deactivateCommonCodes(String tenantId, List<String> codeValues);
     
     // ==================== 코어솔루션 코드 조회 ====================
     
@@ -164,11 +173,21 @@ public interface CommonCodeService {
      * 현재 테넌트의 코드 그룹별 조회
      */
     List<CommonCode> getCurrentTenantCodesByGroup(String codeGroup);
+
+    /**
+     * 현재 테넌트의 코드 그룹별 조회. {@code includeInactive}가 true면 비활성도 포함한다(관리자 목록용).
+     */
+    List<CommonCode> getCurrentTenantCodesByGroup(String codeGroup, boolean includeInactive);
     
     /**
      * 현재 테넌트의 전체 코드 조회
      */
     CommonCodeListResponse findAllTenantCodes();
+
+    /**
+     * 현재 테넌트의 전체 코드 조회. {@code includeInactive}가 true면 비활성도 포함한다(관리자 목록용).
+     */
+    CommonCodeListResponse findAllTenantCodes(boolean includeInactive);
     
     /**
      * 테넌트별 코드 그룹과 값으로 조회

@@ -42,6 +42,30 @@ export const STATUS_LABELS = {
   [STATUS.TENTATIVE_PENDING_PAYMENT]: '가예약'
 };
 
+/**
+ * 월간 컴팩트 칩의 상태 modifier.
+ * 색은 CSS `__dot--*` / `--status-*` 와 v2 토큰이 담당한다.
+ * STATUS_COLORS 는 주간·일간 등 다른 화면이 쓰므로 값을 바꾸지 않는다.
+ *
+ * @param {unknown} status
+ * @returns {'booked'|'confirmed'|'completed'|'cancelled'|'tentative'|''}
+ */
+export function resolveCompactScheduleStatusModifier(status) {
+  const code = status == null ? '' : String(status).trim().toUpperCase();
+  if (code === STATUS.TENTATIVE_PENDING_PAYMENT) {
+    return 'tentative';
+  }
+  if (
+    code === STATUS.BOOKED
+    || code === STATUS.CONFIRMED
+    || code === STATUS.COMPLETED
+    || code === STATUS.CANCELLED
+  ) {
+    return code.toLowerCase();
+  }
+  return '';
+}
+
 export const STATUS_COLORS = {
   [STATUS.AVAILABLE]: 'var(--mg-success-500)',    // 초록색
   // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
@@ -755,6 +779,15 @@ export const BUSINESS_HOURS_DISPLAY = {
   START: '10:00',  // 기본값, 실제로는 서버에서 로딩
   END: '21:00',    // 기본값, 실제로는 서버에서 로딩
   LUNCH: '12:00 - 13:00'  // 기본값, 실제로는 서버에서 로딩
+};
+
+/**
+ * 주·일 캘린더 시간축 기본 범위(HH:mm). 끝은 업무 종료(20시대 마지막 슬롯 포함).
+ * 범위 밖 일정이 있으면 resolveCalendarSlotTimeRange 가 그 일정이 보이도록 정시 단위로 넓힌다.
+ */
+export const CALENDAR_SLOT_TIME_RANGE = {
+  MIN: '08:00',
+  MAX: BUSINESS_HOURS.END
 };
 
 export const TIME_SLOT_INTERVAL = 30; // 30분 간격

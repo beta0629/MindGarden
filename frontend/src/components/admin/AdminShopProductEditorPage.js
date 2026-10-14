@@ -9,18 +9,37 @@
 import React, { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Info } from 'lucide-react';
+import { ChevronLeft, Info, Lock } from 'lucide-react';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import { ContentArea, ContentHeader } from '../dashboard-v2/content';
 import SafeText from '../common/SafeText';
 import MGButton from '../common/MGButton';
+import PackageCompositionBuilder from '../common/PackageCompositionBuilder';
+import {
+  addMallCompositionItem,
+  clampDiscountRate,
+  isMallCompositionChanged,
+  mapSavedCompositionItem,
+  recalcMallCompositionPrices,
+  removeMallCompositionItem,
+  resolveCompositionPricingForSave,
+  resolveLegacyCompositionLabels,
+  setMallCompositionQuantity
+} from '../../utils/packageComposition';
+import useCompositionCandidates from '../../hooks/useCompositionCandidates';
+import {
+  getPackageComposition,
+  savePackageComposition
+} from '../../services/adminShopCompositionService';
+import { useTranslation } from 'react-i18next';
 import Switch from '../common/Switch';
-import EntityRowActions from '../common/molecules/EntityRowActions';
 import ShopProductImageUpload from '../shop/organisms/ShopProductImageUpload';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import {
   ADMIN_SHOP_PRODUCT_DESCRIPTION_MAX,
   ADMIN_SHOP_PRODUCT_EDITOR_COPY,
+  ADMIN_SHOP_PRODUCT_EDITOR_V2_COPY,
+  ADMIN_SHOP_COMPOSITION_COPY,
   ADMIN_SHOP_PRODUCT_ROUTES,
   ADMIN_SHOP_PRODUCT_SESSION_MIN,
   ADMIN_SHOP_PRODUCTS_COPY,
@@ -54,6 +73,8 @@ import {
   computeAdminShopPerSessionPrice,
   emptyAdminShopProductForm,
   mapAdminShopProductToForm,
+  applyAdminShopProductComposition,
+  clearAdminShopProductComposition,
   mergeAdminShopProducts,
   validateAdminShopProductForm
 } from '../../utils/adminShopSuite';
@@ -145,7 +166,11 @@ function AdminShopProductEditorPage({ isNew }) {
         navigate(ADMIN_SHOP_PRODUCT_ROUTES.LIST, { replace: true });
         return;
       }
-      const next = mapAdminShopProductToForm(found);
+      const composition = await getPackageComposition(found.code).catch(() => null);
+      const next = {
+        ...mapAdminShopProductToForm(found),
+        items: (Array.isArray(composition?.items) ? composition.items : []).map(mapSavedCompositionItem)
+      };
       setProduct(found);
       setForm(next);
       setInitialForm(next);
@@ -245,6 +270,40 @@ function AdminShopProductEditorPage({ isNew }) {
   const showErrors = touched;
   const perSession = computeAdminShopPerSessionPrice(validation.price, validation.sessions);
   const hasComposition = form.items.length > 0;
+  const { t: tComposition } = useTranslation('adminShopComposition');
+  const { t: tEditor } = useTranslation('adminShopProductEditor');
+  const [saleToggleBusy, setSaleToggleBusy] = useState(false);
+  const [compositionQuery, setCompositionQuery] = useState('');
+  const compositionCandidates = useCompositionCandidates({
+    query: compositionQuery,
+    excludePackageCode: product?.code || '',
+    enabled: !loading && allowed
+  });
+
+  const legacyCompositionLabels = useMemo(
+    () => resolveLegacyCompositionLabels(product?.codeRow?.extraData),
+    [product]
+  );
+
+  const handleCompositionAdd = (candidate) => setForm((prev) => (
+    applyAdminShopProductComposition(prev, addMallCompositionItem(prev.items, candidate))
+  ));
+  const handleCompositionQuantity = (skuId, quantity) => setForm((prev) => (
+    applyAdminShopProductComposition(prev, setMallCompositionQuantity(prev.items, skuId, quantity))
+  ));
+  const handleCompositionRecalc = () => setForm((prev) => (
+    applyAdminShopProductComposition(prev, recalcMallCompositionPrices(prev.items))
+  ));
+  const handleCompositionRemove = (skuId) => setForm((prev) => {
+    const next = removeMallCompositionItem(prev.items, skuId);
+    return next.length === 0
+      ? clearAdminShopProductComposition(prev)
+      : applyAdminShopProductComposition(prev, next);
+  });
+  const handleDiscountChange = (raw) => setForm((prev) => applyAdminShopProductComposition(
+    { ...prev, discountRate: raw === '' ? 0 : clampDiscountRate(raw) },
+    prev.items
+  ));
 
   const pendingPreviewUrl = useMemo(
     () => (pendingImageFile ? URL.createObjectURL(pendingImageFile) : null),
@@ -267,6 +326,50 @@ function AdminShopProductEditorPage({ isNew }) {
     const current = Number.parseInt(form.sessions, 10);
     const base = Number.isFinite(current) ? current : 0;
     setField('sessions', String(Math.max(0, base + delta)));
+  };
+
+  const applySaleState = async(next) => {
+    setSaleToggleBusy(true);
+    try {
+      await updateAdminShopProductCode(
+        product.codeRow.id,
+        buildAdminShopProductCodePutBody(product.codeRow, { isActive: next })
+      );
+      setProduct((prev) => (prev ? { ...prev, codeRow: { ...prev.codeRow, isActive: next } } : prev));
+      setForm((prev) => ({ ...prev, active: next }));
+      setInitialForm((prev) => ({ ...prev, active: next }));
+      notificationManager.success(next ? tEditor('resumedToast') : tEditor('stoppedToast'));
+    } catch (e) {
+      notificationManager.error(e?.message != null ? String(e.message) : tEditor('toggleFailed'));
+    } finally {
+      setSaleToggleBusy(false);
+    }
+  };
+
+  const handleSaleToggle = async(next) => {
+    if (isNew || !product?.codeRow) {
+      setField('active', next);
+      return;
+    }
+    if (!next) {
+      const ok = await confirm({
+        title: tEditor('stopModalTitle'),
+        message: (
+          <>
+            <span>{tEditor('stopModalBody')}</span>
+            <br />
+            <strong>{tEditor('stopModalTiming')}</strong>
+          </>
+        ),
+        confirmLabel: tEditor('stopConfirm'),
+        cancelLabel: tEditor('stopCancel'),
+        variant: 'warning'
+      });
+      if (!ok) {
+        return;
+      }
+    }
+    await applySaleState(next);
   };
 
   const goList = async() => {
@@ -309,14 +412,19 @@ function AdminShopProductEditorPage({ isNew }) {
         return;
       }
     }
-    const prevExtra = parseExtraData(product?.codeRow?.extraData);
+    if (initialForm.items.length > 0 && form.items.length === 0) {
+      notificationManager.show(tComposition('clearUnsupported'), 'warning');
+      return;
+    }
+    const prevExtra = { ...parseExtraData(product?.codeRow?.extraData), items: initialForm.items };
+    const pricing = resolveCompositionPricingForSave(form, prevExtra, validation.price);
     const extraData = buildExtraDataString(
       validation.sessions,
       validation.price,
       form.remark.trim(),
-      form.items,
-      form.discountRate,
-      hasComposition ? form.originalPrice : (prevExtra.originalPrice ?? validation.price),
+      [],
+      pricing.discountRate,
+      pricing.originalPrice,
       form.homePublic
     );
     const name = form.name.trim();
@@ -341,6 +449,9 @@ function AdminShopProductEditorPage({ isNew }) {
           isActive: form.active,
           extraData
         }));
+      }
+      if (packageCode && form.items.length > 0 && isMallCompositionChanged(form.items, initialForm.items)) {
+        await savePackageComposition(packageCode, form.items);
       }
       if (packageCode && needsContent) {
         const visibleOnFirstPut = form.mallVisible && Boolean(savedThumb) && !pendingImageFile;
@@ -386,6 +497,14 @@ function AdminShopProductEditorPage({ isNew }) {
     <AdminCommonLayout title={title} loading={loading}>
       <ContentArea className="admin-shop-clinic-os admin-shop-suite" ariaLabel={title}>
         <div className="admin-shop-suite" data-testid={ADMIN_SHOP_SUITE_TEST_IDS.PRODUCT_EDITOR}>
+          <a
+            className="admin-shop-suite__back-link"
+            href={ADMIN_SHOP_PRODUCT_ROUTES.LIST}
+            onClick={(e) => { e.preventDefault(); if (!saving) { goList(); } }}
+          >
+            <ChevronLeft aria-hidden="true" focusable="false" />
+            {ADMIN_SHOP_PRODUCT_EDITOR_V2_COPY.BACK_TO_LIST}
+          </a>
           <ContentHeader
             titleId={PAGE_TITLE_ID}
             title={isNew ? title : (
@@ -405,28 +524,11 @@ function AdminShopProductEditorPage({ isNew }) {
               })}
             actions={(
               <div className="admin-shop-suite__header-actions">
-                <MGButton
-                  type="button"
-                  variant="secondary"
-                  className={buildErpMgButtonClassName({ variant: 'secondary', size: 'md' })}
-                  onClick={goList}
-                  disabled={saving}
-                >
-                  {ADMIN_SHOP_PRODUCT_EDITOR_COPY.LIST}
-                </MGButton>
-                {!isNew && product ? (
-                  <EntityRowActions
-                    ariaLabel={ADMIN_SHOP_PRODUCT_EDITOR_COPY.MENU_ARIA}
-                    items={[
-                      {
-                        id: 'stop',
-                        label: ADMIN_SHOP_PRODUCT_EDITOR_COPY.MENU_STOP,
-                        variant: 'destructive',
-                        hidden: !form.active,
-                        onClick: () => setForm((prev) => ({ ...prev, active: false, homePublic: false, mallVisible: false }))
-                      }
-                    ]}
-                  />
+                {dirty && !saving ? (
+                  <span className="admin-shop-suite__save-state" role="status">
+                    <span className="admin-shop-suite__save-state-dot" aria-hidden="true" />
+                    {tEditor('unsaved')}
+                  </span>
                 ) : null}
                 <MGButton
                   type="button"
@@ -446,6 +548,38 @@ function AdminShopProductEditorPage({ isNew }) {
 
           <div className="admin-shop-suite__layout admin-shop-suite__layout--editor">
             <div className="admin-shop-suite__form-stack">
+              <section className="admin-shop-suite__card" aria-labelledby={`${baseId}-composition`}>
+                <div className="admin-shop-suite__card-head">
+                  <h2 id={`${baseId}-composition`} className="admin-shop-suite__card-title">
+                    {tComposition('title')}
+                  </h2>
+                  <span className={`admin-shop-suite__card-hint${hasComposition ? ' admin-shop-suite__card-hint--strong' : ''}`}>
+                    {hasComposition
+                      ? tComposition('countCaption', { count: form.items.length })
+                      : tComposition('hintShort')}
+                  </span>
+                </div>
+                <PackageCompositionBuilder
+                  items={form.items}
+                  candidates={compositionCandidates.candidates}
+                  totalActive={compositionCandidates.totalActive}
+                  status={compositionCandidates.status}
+                  query={compositionQuery}
+                  onQueryChange={setCompositionQuery}
+                  onRetry={compositionCandidates.retry}
+                  discountRate={form.discountRate}
+                  disabled={saving}
+                  onAdd={handleCompositionAdd}
+                  onQuantityChange={handleCompositionQuantity}
+                  onRecalc={handleCompositionRecalc}
+                  onRemove={handleCompositionRemove}
+                  onDiscountChange={handleDiscountChange}
+                  legacyLabels={legacyCompositionLabels}
+                  registerHref={ADMIN_SHOP_PRODUCT_ROUTES.NEW}
+                  onRegisterClick={() => navigate(ADMIN_SHOP_PRODUCT_ROUTES.NEW)}
+                />
+              </section>
+
               <section className="admin-shop-suite__card" aria-labelledby={`${baseId}-price`}>
                 <div className="admin-shop-suite__card-head">
                   <h2 id={`${baseId}-price`} className="admin-shop-suite__card-title">
@@ -453,50 +587,80 @@ function AdminShopProductEditorPage({ isNew }) {
                   </h2>
                   <span className="admin-shop-suite__card-hint">{ADMIN_SHOP_PRODUCT_EDITOR_COPY.SECTION_PRICE_HINT}</span>
                 </div>
+                {hasComposition ? (
+                  <AdminShopNotice
+                    icon={<Lock aria-hidden="true" focusable="false" />}
+                    testId={ADMIN_SHOP_SUITE_TEST_IDS.PRODUCT_EDITOR_LOCKED_NOTICE}
+                  >
+                    <p>{ADMIN_SHOP_COMPOSITION_COPY.LOCKED_NOTICE}</p>
+                  </AdminShopNotice>
+                ) : null}
                 <div className="admin-shop-suite__grid-3">
-                  <div className="admin-shop-suite__field">
-                    <label className="admin-shop-suite__label" htmlFor={`${baseId}-sessions`}>
-                      {ADMIN_SHOP_PRODUCT_EDITOR_COPY.SESSIONS}
-                      <span className="admin-shop-suite__required" aria-hidden="true">*</span>
-                    </label>
+                  <div className={`admin-shop-suite__field${hasComposition ? ' admin-shop-suite__field--locked' : ''}`}>
+                    <div className="admin-shop-suite__label-row">
+                      <label className="admin-shop-suite__label" htmlFor={`${baseId}-sessions`}>
+                        {ADMIN_SHOP_PRODUCT_EDITOR_COPY.SESSIONS}
+                        <span className="admin-shop-suite__required" aria-hidden="true">*</span>
+                      </label>
+                      {hasComposition ? (
+                        <span className="admin-shop-suite__lock-tag">
+                          <Lock aria-hidden="true" focusable="false" />
+                          {tComposition('lockedTag')}
+                        </span>
+                      ) : null}
+                    </div>
                     <div className={`admin-shop-suite__stepper${sessionsInvalid || validation.errors.sessions ? ' admin-shop-suite__stepper--error' : ''}`}>
-                      <button
-                        type="button"
-                        aria-label={ADMIN_SHOP_PRODUCT_EDITOR_COPY.SESSIONS_DEC}
-                        disabled={hasComposition || saving}
-                        onClick={() => stepSessions(-1)}
-                      >
-                        −
-                      </button>
+                      {hasComposition ? null : (
+                        <button
+                          type="button"
+                          aria-label={ADMIN_SHOP_PRODUCT_EDITOR_COPY.SESSIONS_DEC}
+                          disabled={saving}
+                          onClick={() => stepSessions(-1)}
+                        >
+                          {ADMIN_SHOP_PRODUCT_EDITOR_COPY.STEP_DEC}
+                        </button>
+                      )}
                       <input
                         id={`${baseId}-sessions`}
                         inputMode="numeric"
                         value={form.sessions}
                         readOnly={hasComposition}
+                        aria-readonly={hasComposition ? true : undefined}
+                        aria-label={hasComposition ? tEditor('sessionsReadonlyAria') : undefined}
                         aria-invalid={validation.errors.sessions ? true : undefined}
                         data-testid={ADMIN_SHOP_SUITE_TEST_IDS.PRODUCT_EDITOR_SESSIONS}
                         onChange={(e) => setField('sessions', e.target.value.replace(/\D/g, ''))}
                       />
-                      <button
-                        type="button"
-                        aria-label={ADMIN_SHOP_PRODUCT_EDITOR_COPY.SESSIONS_INC}
-                        disabled={hasComposition || saving}
-                        onClick={() => stepSessions(1)}
-                      >
-                        +
-                      </button>
+                      {hasComposition ? null : (
+                        <button
+                          type="button"
+                          aria-label={ADMIN_SHOP_PRODUCT_EDITOR_COPY.SESSIONS_INC}
+                          disabled={saving}
+                          onClick={() => stepSessions(1)}
+                        >
+                          {ADMIN_SHOP_PRODUCT_EDITOR_COPY.STEP_INC}
+                        </button>
+                      )}
                     </div>
                     <span className={`admin-shop-suite__hint${validation.errors.sessions ? ' admin-shop-suite__hint--error' : ''}`}>
                       {validation.errors.sessions
                         ? ADMIN_SHOP_PRODUCT_EDITOR_COPY.SESSIONS_ERROR
-                        : ADMIN_SHOP_PRODUCT_EDITOR_COPY.SESSIONS_HINT}
+                        : (hasComposition ? tEditor('sessionsHintLocked') : ADMIN_SHOP_PRODUCT_EDITOR_COPY.SESSIONS_HINT)}
                     </span>
                   </div>
-                  <div className="admin-shop-suite__field">
-                    <label className="admin-shop-suite__label" htmlFor={`${baseId}-price-input`}>
-                      {ADMIN_SHOP_PRODUCT_EDITOR_COPY.PRICE}
-                      <span className="admin-shop-suite__required" aria-hidden="true">*</span>
-                    </label>
+                  <div className={`admin-shop-suite__field${hasComposition ? ' admin-shop-suite__field--locked' : ''}`}>
+                    <div className="admin-shop-suite__label-row">
+                      <label className="admin-shop-suite__label" htmlFor={`${baseId}-price-input`}>
+                        {ADMIN_SHOP_PRODUCT_EDITOR_COPY.PRICE}
+                        <span className="admin-shop-suite__required" aria-hidden="true">*</span>
+                      </label>
+                      {hasComposition ? (
+                        <span className="admin-shop-suite__lock-tag">
+                          <Lock aria-hidden="true" focusable="false" />
+                          {tComposition('lockedTag')}
+                        </span>
+                      ) : null}
+                    </div>
                     <input
                       id={`${baseId}-price-input`}
                       className={`admin-shop-suite__input admin-shop-suite__num${showErrors && validation.errors.price ? ' admin-shop-suite__input--error' : ''}`}
@@ -680,6 +844,19 @@ function AdminShopProductEditorPage({ isNew }) {
                 </div>
               </section>
 
+              <section className="admin-shop-suite__card" aria-labelledby={`${baseId}-manage`}>
+                <div className="admin-shop-suite__card-head">
+                  <h2 id={`${baseId}-manage`} className="admin-shop-suite__card-title">
+                    {tEditor('sectionManage')}
+                  </h2>
+                </div>
+                <div className="admin-shop-suite__manage-row">
+                  <div className="admin-shop-suite__manage-text">
+                    <span className="admin-shop-suite__manage-title">{tEditor('noDeleteTitle')}</span>
+                    <span className="admin-shop-suite__hint">{tEditor('noDeleteNote')}</span>
+                  </div>
+                </div>
+              </section>
             </div>
 
             <aside className="admin-shop-suite__card admin-shop-suite__card--paper admin-shop-suite__sticky">
@@ -723,7 +900,7 @@ function AdminShopProductEditorPage({ isNew }) {
               {[
                 { key: 'homePublic', label: ADMIN_SHOP_PRODUCT_EDITOR_COPY.TOGGLE_HOME, hint: ADMIN_SHOP_PRODUCT_EDITOR_COPY.TOGGLE_HOME_HINT },
                 { key: 'mallVisible', label: ADMIN_SHOP_PRODUCT_EDITOR_COPY.TOGGLE_MALL, hint: ADMIN_SHOP_PRODUCT_EDITOR_COPY.TOGGLE_MALL_HINT },
-                { key: 'active', label: ADMIN_SHOP_PRODUCT_EDITOR_COPY.TOGGLE_ACTIVE, hint: ADMIN_SHOP_PRODUCT_EDITOR_COPY.TOGGLE_ACTIVE_HINT }
+                { key: 'active', label: ADMIN_SHOP_PRODUCT_EDITOR_COPY.TOGGLE_ACTIVE, hint: isNew ? ADMIN_SHOP_PRODUCT_EDITOR_COPY.TOGGLE_ACTIVE_HINT : tEditor('onSaleHint') }
               ].map((row) => {
                 const mallBlocked = row.key === 'mallVisible' && Boolean(validation.errors.sessions) && !form.mallVisible;
                 return (
@@ -734,12 +911,15 @@ function AdminShopProductEditorPage({ isNew }) {
                         {mallBlocked ? ADMIN_SHOP_PRODUCTS_COPY.MALL_BLOCKED_HINT : row.hint}
                       </span>
                     </span>
-                    <span className={mallBlocked ? 'admin-shop-suite__toggle-blocked' : undefined}>
+                    <span className={`admin-shop-suite__toggle-ctl${mallBlocked ? ' admin-shop-suite__toggle-blocked' : ''}`}>
+                      <span className="admin-shop-suite__toggle-state" aria-hidden="true">
+                        {form[row.key] ? ADMIN_SHOP_PRODUCT_EDITOR_V2_COPY.TOGGLE_ON : ADMIN_SHOP_PRODUCT_EDITOR_V2_COPY.TOGGLE_OFF}
+                      </span>
                       <Switch
                         checked={Boolean(form[row.key])}
-                        disabled={mallBlocked || saving}
+                        disabled={mallBlocked || saving || (row.key === 'active' && saleToggleBusy)}
                         ariaLabel={row.label}
-                        onCheckedChange={(next) => setField(row.key, next)}
+                        onCheckedChange={(next) => (row.key === 'active' ? handleSaleToggle(next) : setField(row.key, next))}
                       />
                     </span>
                   </div>

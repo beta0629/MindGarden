@@ -201,7 +201,8 @@ const ConsultationLogModal = ({
   onSave,
   recordId,
   isAdmin = false,
-  routeLeaveGuard = false
+  routeLeaveGuard = false,
+  editOnly = false
 }) => {
   const { t } = useTranslation();
   const { user } = useSession();
@@ -1310,7 +1311,9 @@ const ConsultationLogModal = ({
     return null;
   }
 
-  const modalTitle = `상담일지 작성${isEditMode ? ' (수정 모드)' : ''}`;
+  const modalTitle = editOnly
+    ? t('adminConsultationLogs:edit.title')
+    : `상담일지 작성${isEditMode ? ' (수정 모드)' : ''}`;
 
   /** 닫기 직전 서버 초안으로 한 번 flush (실패 시 훅이 암호화 백업에 보관) */
   const finalizeCloseWithDraftFlush = () => {
@@ -1343,10 +1346,10 @@ const ConsultationLogModal = ({
       </MGButton>
       <MGButton
         type="button"
-        variant="outline"
+        variant={editOnly ? 'primary' : 'outline'}
         size="medium"
         className={buildErpMgButtonClassName({
-          variant: 'outline',
+          variant: editOnly ? 'primary' : 'outline',
           size: 'md',
           loading: saving,
           className: 'consultation-log-modal__footer-btn consultation-log-modal__footer-btn--save'
@@ -1357,26 +1360,28 @@ const ConsultationLogModal = ({
         loadingText={ERP_MG_BUTTON_LOADING_TEXT}
         preventDoubleClick={false}
       >
-        저장
+        {editOnly ? t('adminConsultationLogs:edit.save') : '저장'}
       </MGButton>
-      <MGButton
-        type="button"
-        variant="primary"
-        size="medium"
-        className={buildErpMgButtonClassName({
-          variant: 'primary',
-          size: 'md',
-          loading: saving,
-          className: 'consultation-log-modal__footer-btn consultation-log-modal__footer-btn--complete'
-        })}
-        onClick={handleComplete}
-        disabled={saving}
-        loading={saving}
-        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-        preventDoubleClick={false}
-      >
-        완료
-      </MGButton>
+      {editOnly ? null : (
+        <MGButton
+          type="button"
+          variant="primary"
+          size="medium"
+          className={buildErpMgButtonClassName({
+            variant: 'primary',
+            size: 'md',
+            loading: saving,
+            className: 'consultation-log-modal__footer-btn consultation-log-modal__footer-btn--complete'
+          })}
+          onClick={handleComplete}
+          disabled={saving}
+          loading={saving}
+          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+          preventDoubleClick={false}
+        >
+          완료
+        </MGButton>
+      )}
     </div>
   );
 
@@ -1499,6 +1504,11 @@ const ConsultationLogModal = ({
     >
       {isOpen ? (
       <div className="mg-v2-consultation-log-modal">
+        {editOnly ? (
+          <p className="mg-v2-text-sm mg-v2-text-secondary" role="note">
+            {t('adminConsultationLogs:edit.readonlyNote')}
+          </p>
+        ) : null}
         {autosaveStatusText ? (
           <p
             className={[

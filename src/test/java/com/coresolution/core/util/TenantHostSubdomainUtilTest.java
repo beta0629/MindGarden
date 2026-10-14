@@ -2,6 +2,8 @@ package com.coresolution.core.util;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.mock.web.MockHttpServletRequest;
@@ -18,6 +20,16 @@ class TenantHostSubdomainUtilTest {
     /** 운영 vhost regex server_name. 요청 호스트가 아니다. */
     private static final String NGINX_REGEX_SERVER_NAME =
             "~^" + "[^.]" + "+\\.core-solution\\.co\\.kr$";
+
+    @BeforeEach
+    void clearAliases() {
+        TenantHostSubdomainUtil.configureHostAliases(null);
+    }
+
+    @AfterEach
+    void resetAliases() {
+        TenantHostSubdomainUtil.configureHostAliases(null);
+    }
 
     @Test
     @DisplayName("dev 테넌트 호스트에서 라벨 추출")
@@ -92,6 +104,81 @@ class TenantHostSubdomainUtilTest {
         assertThat(TenantHostSubdomainUtil.extractTenantSubdomain(request)).isEqualTo("clinic-a");
         assertThat(TenantHostSubdomainUtil.resolveRequestHost(request))
                 .doesNotContain("~");
+    }
+
+    @Test
+    @DisplayName("별칭 호스트는 suffix 파싱 전 mindgarden 으로 해석")
+    void aliasHostResolvesToMindgardenBeforeSuffixParse() {
+        TenantHostSubdomainUtil.configureHostAliases(
+                "mindgarden-dev.core-solution.co.kr:mindgarden");
+
+        assertThat(TenantHostSubdomainUtil.extractTenantSubdomain(
+                "mindgarden-dev.core-solution.co.kr")).isEqualTo("mindgarden");
+        assertThat(TenantHostSubdomainUtil.extractTenantSubdomain(
+                "mindgarden-dev.core-solution.co.kr:443")).isEqualTo("mindgarden");
+        assertThat(TenantHostSubdomainUtil.isConfiguredAliasHost(
+                "mindgarden-dev.core-solution.co.kr")).isTrue();
+        assertThat(TenantHostSubdomainUtil.resolveConfiguredAliasLabel(
+                "MindGarden-Dev.core-solution.co.kr")).isEqualTo("mindgarden");
+        assertThat(TenantHostSubdomainUtil.getConfiguredAliasHosts())
+                .containsExactly("mindgarden-dev.core-solution.co.kr");
+    }
+
+    @Test
+    @DisplayName("별칭 미설정 시 mindgarden-dev 라벨은 mindgarden-dev (prod suffix)")
+    void withoutAliasesMindgardenDevLabelIsNotMindgarden() {
+        assertThat(TenantHostSubdomainUtil.extractTenantSubdomain(
+                "mindgarden-dev.core-solution.co.kr")).isEqualTo("mindgarden-dev");
+        assertThat(TenantHostSubdomainUtil.extractTenantSubdomain(
+                "mindgarden.dev.core-solution.co.kr")).isEqualTo("mindgarden");
+        assertThat(TenantHostSubdomainUtil.extractTenantSubdomain(
+                "mindgarden.core-solution.co.kr")).isEqualTo("mindgarden");
+    }
+
+    @Test
+    @DisplayName("별칭이 있어도 일반 suffix 호스트 동작은 유지")
+    void aliasesDoNotBreakNormalSuffixHosts() {
+        TenantHostSubdomainUtil.configureHostAliases(
+                "mindgarden-dev.core-solution.co.kr:mindgarden");
+
+        assertThat(TenantHostSubdomainUtil.extractTenantSubdomain(
+                "clinic-a.dev.core-solution.co.kr")).isEqualTo("clinic-a");
+        assertThat(TenantHostSubdomainUtil.extractTenantSubdomain(
+                "clinic-a.core-solution.co.kr")).isEqualTo("clinic-a");
+    }
+
+    @Test
+    @DisplayName("isNonProductionHost: -dev 접미·dev/staging parent 는 비운영")
+    void isNonProductionHost_detectsDevAliasAndNonProdParents() {
+        assertThat(TenantHostSubdomainUtil.isNonProductionHost(
+                "mindgarden-dev.core-solution.co.kr")).isTrue();
+        assertThat(TenantHostSubdomainUtil.isNonProductionHost(
+                "https://mindgarden-dev.core-solution.co.kr")).isTrue();
+        assertThat(TenantHostSubdomainUtil.isNonProductionHost(
+                "mindgarden.dev.core-solution.co.kr")).isTrue();
+        assertThat(TenantHostSubdomainUtil.isNonProductionHost(
+                "https://mindgarden.dev.core-solution.co.kr")).isTrue();
+        assertThat(TenantHostSubdomainUtil.isNonProductionHost(
+                "clinic.staging.core-solution.co.kr")).isTrue();
+        assertThat(TenantHostSubdomainUtil.isNonProductionHost(
+                "dev.core-solution.co.kr")).isTrue();
+    }
+
+    @Test
+    @DisplayName("isProductionTenantHost: 운영 테넌트만 true")
+    void isProductionTenantHost_allowsOnlyProdTenantHosts() {
+        assertThat(TenantHostSubdomainUtil.isProductionTenantHost(
+                "mindgarden.core-solution.co.kr")).isTrue();
+        assertThat(TenantHostSubdomainUtil.isProductionTenantHost(
+                "https://mindgarden.core-solution.co.kr")).isTrue();
+        assertThat(TenantHostSubdomainUtil.isProductionTenantHost(
+                "mindgarden-dev.core-solution.co.kr")).isFalse();
+        assertThat(TenantHostSubdomainUtil.isProductionTenantHost(
+                "mindgarden.dev.core-solution.co.kr")).isFalse();
+        assertThat(TenantHostSubdomainUtil.isProductionTenantHost(
+                "app.core-solution.co.kr")).isFalse();
+        assertThat(TenantHostSubdomainUtil.isProductionTenantHost(
+                "core-solution.co.kr")).isFalse();
     }
 
     private static MockHttpServletRequest regexOnlyRequest() {

@@ -4,6 +4,7 @@ import { useConfirm } from '../../hooks/useConfirm';
 import { useSession } from '../../contexts/SessionContext';
 import { apiGet } from '../../utils/ajax';
 import { getAllConsultantsWithStats } from '../../utils/consultantHelper';
+import { selectActiveConsultants } from '../../utils/selectActiveConsultants';
 import { API_BASE_URL } from '../../constants/api';
 import csrfTokenManager from '../../utils/csrfTokenManager';
 import StandardizedApi from '../../utils/standardizedApi';
@@ -146,7 +147,7 @@ const VacationManagementModal = ({
             
             if (consultantsList && consultantsList.length > 0) {
                 // 응답 데이터 변환: Map.of() 구조 파싱
-                const consultantsData = consultantsList.map(item => {
+                const consultantsData = selectActiveConsultants(consultantsList.map((item) => {
                     const consultantEntity = item.consultant || {};
                     return {
                         id: consultantEntity.id,
@@ -166,7 +167,7 @@ const VacationManagementModal = ({
                         currentClients: item.currentClients || 0,
                         totalClients: item.totalClients || 0
                     };
-                }).filter(c => c.isActive); // 활성 상담사만 필터링
+                }));
                 
                 setConsultants(consultantsData);
                 console.log('✅ 활성 상담사 목록 설정 완료:', consultantsData.length, '명');

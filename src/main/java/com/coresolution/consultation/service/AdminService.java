@@ -10,6 +10,7 @@ import com.coresolution.consultation.dto.ClientRegistrationRequest;
 import com.coresolution.consultation.dto.ConsultantClientMappingCreateRequest;
 import com.coresolution.consultation.dto.ConsultantClientMappingResponse;
 import com.coresolution.consultation.dto.ConsultantRegistrationRequest;
+import com.coresolution.consultation.dto.MappingStatusCloseResponse;
 import com.coresolution.consultation.dto.PendingPaymentPackageUpdateRequest;
 import com.coresolution.consultation.dto.StaffRegistrationRequest;
 import com.coresolution.consultation.dto.ConsultantTransferRequest;
@@ -46,9 +47,24 @@ public interface AdminService {
     User registerStaff(StaffRegistrationRequest request);
 
     /**
-     * 상담사-내담자 매칭 생성
+     * 상담사-내담자 매칭 생성. 결제(PaymentServiceImpl)·TestData 등 기존 호출자 호환용이며,
+     * 짧은 시간창 중복 생성 가드가 없다. 관리자 수동 배정 UI 경로는 {@link #createMappingFromAdmin}을 사용한다.
      */
     ConsultantClientMapping createMapping(ConsultantClientMappingCreateRequest request);
+
+    /**
+     * 관리자 수동 매칭 배정(AdminController) 전용 매칭 생성.
+     *
+     * <p>내담자 users 행을 FOR UPDATE로 잠가 동시 요청을 직렬화한 뒤, 짧은 시간창(기본 30초) 내
+     * 동일 상담사·내담자·packageName 매칭이 이미 있으면 신규 생성을 거부한다. 그 외 동작은
+     * {@link #createMapping}과 동일하다.</p>
+     *
+     * @param request 매칭 생성 요청
+     * @return 생성된 매칭
+     * @author MindGarden
+     * @since 2026-10-14
+     */
+    ConsultantClientMapping createMappingFromAdmin(ConsultantClientMappingCreateRequest request);
 
     /**
      * 모든 상담사 조회
@@ -61,7 +77,11 @@ public interface AdminService {
     List<Map<String, Object>> getAllConsultantsWithSpecialty();
     
     /**
-     * 휴무 정보를 포함한 상담사 목록 조회 (관리자 스케줄링용)
+     * 휴무 정보를 포함한 상담사 목록 조회 (관리자 스케줄링·선생님 색 팔레트용).
+     * 비활성 포함, {@code isDeleted=false}(삭제)만 제외. 응답 {@code isActive} 유지.
+     *
+     * @param date 휴무 조회 기준일 (yyyy-MM-dd)
+     * @return 상담사 Map 목록 (비활성 포함)
      */
     List<Map<String, Object>> getAllConsultantsWithVacationInfo(String date);
 
@@ -357,6 +377,20 @@ public interface AdminService {
      * 매칭 강제 종료 (환불 처리)
      */
     void terminateMapping(Long id, String reason);
+
+    /**
+     * 매칭 상태-only 종료 (환불·회기·결제·ERP 변경 없음).
+     *
+     * <p>{@link com.coresolution.consultation.entity.ConsultantClientMapping#terminate(String, String)}
+     * 를 재사용한다. 이미 TERMINATED/CANCELLED면 멱등 성공을 반환한다
+     * (환불 terminate의 ALREADY_CLOSED 409와 구분).</p>
+     *
+     * @param id           매핑 ID
+     * @param reason       종료 사유 (blank 불가)
+     * @param terminatedBy 종료 처리자 (이메일·이름 등)
+     * @return 종료 결과 (멱등 여부·취소된 미래 일정 수 포함)
+     */
+    MappingStatusCloseResponse closeMappingStatusOnly(Long id, String reason, String terminatedBy);
 
     /**
      * desync-cleanup — 매핑 상태와 무관하게 미래 점유 일정만 CANCELLED 전이.

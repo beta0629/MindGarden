@@ -146,7 +146,16 @@ describe('missingConsultationLogNavigation', () => {
     }, '2026-09-01')).toEqual({ scheduleId: 902, clientId: 2 });
   });
 
-  test('resolveMissingLogSchedule — scheduleId 있으면 API 미호출', async() => {
+  test('resolveMissingLogSchedule — scheduleId 있으면 목록 조회로 회차를 채운다', async() => {
+    StandardizedApi.get.mockResolvedValueOnce([
+      {
+        id: 99,
+        consultantId: 3,
+        clientId: 7,
+        date: '2026-05-08',
+        sessionSequence: 15
+      }
+    ]);
     const result = await resolveMissingLogSchedule({
       consultantId: 3,
       date: '2026-05-08',

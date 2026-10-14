@@ -1,168 +1,23 @@
 /**
- * ConsultantSalarySettlement — 관리자 급여 산정 결과(상담사 조회 전용)
+ * ConsultantSalarySettlement — 본문 스택 (공유 토큰·카드는 suite/ConsultantSuite.css)
  *
- * @author MindGarden
- * @since 2026-05-15
+ * @author CoreSolution
+ * @since 2026-10-07
  */
 
-.cr-salary-settlement {
-  padding-left: var(--mg-spacing-md);
-  padding-right: var(--mg-spacing-md);
-  padding-top: var(--mg-spacing-lg);
-  padding-bottom: var(--mg-spacing-2xl);
+.consultant-salary {
   display: flex;
   flex-direction: column;
-  gap: var(--mg-spacing-lg);
+  gap: var(--mg-v2-space-4);
 }
 
-.cr-salary-settlement__intro {
-  font-size: var(--mg-font-size-sm);
-  color: var(--mg-color-text-muted);
-  line-height: var(--mg-line-height-relaxed, 1.55);
-}
-
-.cr-salary-settlement__card {
-  padding: var(--mg-spacing-lg);
-  border-radius: var(--mg-radius-lg);
-  background: var(--mg-consultant-surface);
-  box-shadow: var(--mg-shadow-sm);
+.consultant-salary__list {
   display: flex;
   flex-direction: column;
-  gap: var(--mg-spacing-md);
-  border: 1px solid var(--mg-color-border-main);
-}
-
-.cr-salary-settlement__card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: var(--mg-spacing-md);
-}
-
-.cr-salary-settlement__card-title {
-  margin: 0;
-  font-size: var(--mg-font-size-base);
-  font-weight: var(--mg-font-weight-semibold);
-  color: var(--mg-color-text-main);
-  flex: 1;
+  gap: var(--mg-v2-space-3);
   min-width: 0;
 }
 
-.cr-salary-settlement__card-details {
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-}
-
-.cr-salary-settlement__detail-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: var(--mg-spacing-xs) 0;
-  font-size: var(--mg-font-size-sm);
-  color: var(--mg-color-text-main);
-  gap: var(--mg-spacing-md);
-}
-
-.cr-salary-settlement__detail-row--tax,
-.cr-salary-settlement__detail-row--total {
-  font-weight: var(--mg-font-weight-semibold);
-}
-
-.cr-salary-settlement__detail-row--total .cr-salary-settlement__detail-value {
-  font-size: var(--mg-font-size-base);
-  color: var(--mg-consultant-primary);
-}
-
-.cr-salary-settlement__detail-label {
-  color: var(--mg-color-text-muted);
-  flex: 1;
-  min-width: 0;
-}
-
-.cr-salary-settlement__detail-value {
-  text-align: right;
-  flex-shrink: 0;
-  font-variant-numeric: tabular-nums;
-}
-
-.cr-salary-settlement__grid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: var(--mg-spacing-sm);
-}
-
-@media (min-width: 640px) {
-  .cr-salary-settlement__grid {
-    grid-template-columns: 1fr 1fr;
-  }
-}
-
-.cr-salary-settlement__field {
-  display: flex;
-  flex-direction: column;
-  gap: var(--mg-spacing-2xs);
-}
-
-.cr-salary-settlement__field--full {
-  grid-column: 1 / -1;
-}
-
-.cr-salary-settlement__label {
-  font-size: var(--mg-font-size-xs);
-  color: var(--mg-color-text-muted);
-  font-weight: var(--mg-font-weight-medium);
-}
-
-.cr-salary-settlement__value {
-  font-size: var(--mg-font-size-base);
-  color: var(--mg-color-text-main);
-  word-break: break-word;
-}
-
-.cr-salary-settlement__value--emph {
-  font-size: var(--mg-font-size-lg);
-  font-weight: var(--mg-font-weight-semibold);
-  color: var(--mg-consultant-primary);
-}
-
-.cr-salary-settlement__empty {
-  text-align: center;
-  padding: var(--mg-spacing-2xl) var(--mg-spacing-md);
-  color: var(--mg-color-text-muted);
-}
-
-.cr-salary-settlement__empty-title {
-  font-size: var(--mg-font-size-lg);
-  font-weight: var(--mg-font-weight-semibold);
-  color: var(--mg-color-text-main);
-  margin-bottom: var(--mg-spacing-sm);
-}
-
-.cr-salary-settlement__error {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--mg-spacing-md);
-  padding: var(--mg-spacing-xl);
-  text-align: center;
-}
-
-.cr-salary-settlement__retry {
-  padding: var(--mg-spacing-sm) var(--mg-spacing-lg);
-  border-radius: var(--mg-radius-md);
-  border: none;
-  background: var(--mg-consultant-primary);
-  color: var(--mg-warm-gray-50);
-  font-weight: var(--mg-font-weight-medium);
-  cursor: pointer;
-}
-
-.cr-salary-settlement__retry:focus-visible {
-  outline: 2px solid var(--mg-consultant-primary);
-  outline-offset: 2px;
-}
-
-.cr-salary-settlement__memo-block {
-  margin-top: var(--mg-spacing-sm);
+.consultant-salary__skeleton {
+  border-radius: var(--mg-v2-consultant-card-radius);
 }

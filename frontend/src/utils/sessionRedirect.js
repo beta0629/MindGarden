@@ -10,38 +10,12 @@ import {
   LOGIN_REDIRECT_RESCUE_TIMEOUT_MS,
   LOGIN_RETURN_URL_PARAM
 } from '../constants/consultationLogAutosaveConstants';
+import { sanitizeLoginReturnPath } from './loginReturnPath';
+import { sanitizeSameOriginReturnPath } from './sameOriginReturnPath';
 
 let redirectScheduled = false;
 
-/** 브라우저가 경로에서 지우거나 `/` 로 바꾸는 문자(역슬래시·제어문자) — `/\evil.com`, `/\t/evil.com` 차단용 */
-const hasUnsafeReturnPathChar = (value) => {
-  for (let i = 0; i < value.length; i += 1) {
-    const code = value.charCodeAt(i);
-    if (value[i] === '\\' || code < 0x20 || code === 0x7f) return true;
-  }
-  return false;
-};
-
-/**
- * 로그인 후 돌아갈 경로를 같은 오리진의 상대 경로로만 통과시킨다(오픈 리다이렉트 방지).
- * `/`로 시작하고 `//`·역슬래시·제어문자가 없으며, 현재 오리진 기준으로 해석해도 오리진이 같아야 한다.
- *
- * @param {unknown} value
- * @returns {string} 안전한 경로(pathname+search+hash), 아니면 빈 문자열
- */
-export const sanitizeSameOriginReturnPath = (value) => {
-  if (typeof value !== 'string') return '';
-  const trimmed = value.trim();
-  if (!trimmed.startsWith('/') || trimmed.startsWith('//') || hasUnsafeReturnPathChar(trimmed)) return '';
-  try {
-    const { origin } = window.location;
-    const resolved = new URL(trimmed, origin);
-    if (resolved.origin !== origin) return '';
-    return `${resolved.pathname}${resolved.search}${resolved.hash}`;
-  } catch {
-    return '';
-  }
-};
+export { sanitizeSameOriginReturnPath };
 
 /**
  * 돌아올 경로를 로그인 URL 쿼리로 만든다. {@link sanitizeSameOriginReturnPath} 를 통과한 경로만 붙인다.
@@ -50,9 +24,23 @@ export const sanitizeSameOriginReturnPath = (value) => {
  * @returns {string} 검증 통과 시 `?redirect=...`, 아니면 빈 문자열
  */
 export const buildLoginReturnSearch = (returnUrl) => {
-  const safePath = sanitizeSameOriginReturnPath(returnUrl);
+  // 복귀 주소 검증은 sanitizeLoginReturnPath 한 곳(외부·스킴·인코딩 우회·로그인 경로 차단, 토큰·개인정보 쿼리 제거)
+  const safePath = sanitizeLoginReturnPath(returnUrl);
   if (!safePath) return '';
   return `?${LOGIN_RETURN_URL_PARAM}=${encodeURIComponent(safePath)}`;
+};
+
+/**
+ * 지금 보고 있는 화면 주소(경로+쿼리). 401·세션 만료로 로그인에 보낼 때 따로 받은 복귀 주소가 없으면 이 값을 쓴다.
+ *
+ * @returns {string}
+ */
+export const getCurrentLocationReturnUrl = () => {
+  try {
+    return `${window.location.pathname || ''}${window.location.search || ''}`;
+  } catch {
+    return '';
+  }
 };
 
 /** 다음 로그인 이동에 붙일 복귀 경로 — 다른 경로(세션 재확인 등)가 먼저 이동해도 returnUrl 을 잃지 않게 한다. */
@@ -140,7 +128,8 @@ export const redirectToLoginPageOnce = (options = {}) => {
   const explicitSearch = typeof options.search === 'string' ? options.search : '';
   const navigate = (rescueReturnPath) => {
     const search = explicitSearch
-      || buildLoginReturnSearch(options.returnUrl || rescueReturnPath || pendingReturnPath);
+      || buildLoginReturnSearch(options.returnUrl || rescueReturnPath || pendingReturnPath
+        || getCurrentLocationReturnUrl());
     window.location.href = `${window.location.origin}/login${search}`;
   };
   const pending = startLoginRedirectRescues();

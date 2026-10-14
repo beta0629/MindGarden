@@ -134,7 +134,7 @@ class ScheduleServiceImplConfirmScheduleSessionDeductionTest {
         alreadyOccupiedSeq1.setMappingId(MAPPING_ID);
         alreadyOccupiedSeq1.setSessionSequence(1);
 
-        when(scheduleRepository.findByTenantIdAndId(eq(TENANT_ID), eq(SCHEDULE_ID)))
+        when(scheduleRepository.findByTenantIdAndIdForUpdate(eq(TENANT_ID), eq(SCHEDULE_ID)))
                 .thenReturn(Optional.of(schedule));
         when(scheduleRepository.save(any(Schedule.class))).thenAnswer(inv -> inv.getArgument(0));
         when(mappingRepository.findActiveOrExhaustedListByTenantIdAndConsultantIdAndClientId(
@@ -167,7 +167,7 @@ class ScheduleServiceImplConfirmScheduleSessionDeductionTest {
         Schedule schedule = consultationScheduleBookedWithoutSequence();
         schedule.setSessionSequence(1);
 
-        when(scheduleRepository.findByTenantIdAndId(eq(TENANT_ID), eq(SCHEDULE_ID)))
+        when(scheduleRepository.findByTenantIdAndIdForUpdate(eq(TENANT_ID), eq(SCHEDULE_ID)))
                 .thenReturn(Optional.of(schedule));
         when(scheduleRepository.save(any(Schedule.class))).thenAnswer(inv -> inv.getArgument(0));
 

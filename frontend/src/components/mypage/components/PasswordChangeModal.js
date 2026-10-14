@@ -134,6 +134,16 @@ const PasswordChangeModal = ({ isOpen, onClose, onSuccess, tempPassword }) => {
         confirmPassword: committed.confirmValue
       });
       if (result && result.success) {
+        if (result.accessToken) {
+          const sessionManager = (await import('../../../utils/sessionManager')).default;
+          const currentUser = sessionManager.getUser();
+          if (currentUser) {
+            sessionManager.setUser(currentUser, {
+              accessToken: result.accessToken,
+              refreshToken: result.refreshToken
+            });
+          }
+        }
         notificationManager.show(t('common:mypage.PasswordChangeModal.t_3c574e69'), 'info');
         onSuccess?.();
         onClose();

@@ -174,6 +174,7 @@ import { DarkModeProvider } from './contexts/DarkModeContext';
 import { NotificationProvider, useNotification } from './contexts/NotificationContext';
 import { ToastProvider } from './contexts/ToastContext';
 import AppToast from './components/common/AppToast';
+import PasswordChangeRequiredHost from './components/auth/PasswordChangeRequiredHost';
 import { sessionManager } from './utils/sessionManager';
 import duplicateLoginManager from './utils/duplicateLoginManager';
 import notificationManager from './utils/notification';
@@ -437,6 +438,7 @@ function AppContent() {
         )}
         <div className="App">
           <AppToast />
+          <PasswordChangeRequiredHost />
           <UnifiedNotification type="toast" position="top-right" />
           <WithdrawalPendingBanner />
           <Suspense fallback={<div className="mg-loading" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '200px' }}>{t('common.messages.loading')}</div>}>

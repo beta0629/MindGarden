@@ -537,6 +537,9 @@ export const apiGet = async(endpoint, params = {}, options = {}) => {
       }
       // 403 오류: 응답 body의 message가 있으면 그대로 전달, 없으면 기본 문구
       if (response.status === 403) {
+        if (jsonData && typeof jsonData === 'object' && jsonData.errorCode === 'PASSWORD_CHANGE_REQUIRED') {
+          window.dispatchEvent(new CustomEvent('mindgarden:password-change-required'));
+        }
         const serverMessage = (jsonData && typeof jsonData === 'object' && jsonData.message)
           ? String(jsonData.message)
           : AJAX_ACCESS_DENIED_DEFAULT;

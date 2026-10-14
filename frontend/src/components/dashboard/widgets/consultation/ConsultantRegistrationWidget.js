@@ -24,20 +24,14 @@ import {
 } from '../../../../constants/professionalProviderRoles';
 import { useNotification } from '../../../../contexts/NotificationContext';
 import { validateEmail, validatePhone } from '../../../../utils/validationUtils';
-import { generateMgLoginPassword } from '../../../../utils/generateMgLoginPassword';
-import usePasswordPolicyField from '../../../../hooks/usePasswordPolicyField';
-import PasswordPolicyInput from '../../../common/PasswordPolicyInput';
 import { resolveUserFacingApiErrorMessage } from '../../../../utils/userFacingApiErrorMessage';
+import { tempPasswordSmsNotice } from '../../../../utils/tempPasswordSmsNotice';
 import StandardizedApi from '../../../../utils/standardizedApi';
 import './ConsultantRegistrationWidget.css';
 import MGButton from '../../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../../erp/common/erpMgButtonProps';
 import { API_ENDPOINTS } from '../../../../constants/apiEndpoints';
 import { useTranslation } from 'react-i18next';
-
-const WIDGET_INPUT_CLASS = 'form-control';
-const WIDGET_INPUT_ERROR_CLASS = 'error';
-const WIDGET_FIELD_ERROR_CLASS = 'field-error';
 
 const ConsultantRegistrationWidget = ({ widget, user }) => {
   const { t } = useTranslation();
@@ -48,7 +42,6 @@ const ConsultantRegistrationWidget = ({ widget, user }) => {
   const [formData, setFormData] = useState({
     userId: '',
     email: '',
-    password: generateMgLoginPassword(),
     name: '',
     phone: '',
     rrnFirst6: '',
@@ -63,7 +56,6 @@ const ConsultantRegistrationWidget = ({ widget, user }) => {
     professionalTypeCode: DEFAULT_PROFESSIONAL_TYPE_CODE_VALUE
   });
   const [validationErrors, setValidationErrors] = useState({});
-  const passwordField = usePasswordPolicyField();
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState(null);
   const [professionalTypeOptions, setProfessionalTypeOptions] = useState([]);
@@ -111,10 +103,6 @@ const ConsultantRegistrationWidget = ({ widget, user }) => {
     const newErrors = { ...validationErrors };
     
     switch (name) {
-      case 'password':
-        passwordField.clearError();
-        delete newErrors[name];
-        break;
       case 'email':
         if (value && !validateEmail(value)) {
           newErrors[name] = '올바른 이메일 형식이 아닙니다.';
@@ -162,7 +150,8 @@ const ConsultantRegistrationWidget = ({ widget, user }) => {
 
   // 등록 성공 핸들러
   const handleRegistrationSuccess = (response) => {
-    showNotification('상담사가 성공적으로 등록되었습니다.', 'success');
+    const smsNotice = tempPasswordSmsNotice(t, response);
+    showNotification(smsNotice || '상담사가 성공적으로 등록되었습니다.', 'success');
     
     // 폼 초기화
     handleReset();
@@ -195,11 +184,6 @@ const ConsultantRegistrationWidget = ({ widget, user }) => {
       showNotification('필수 항목을 모두 입력해주세요.', 'warning');
       return;
     }
-    const committedPassword = passwordField.validateCommitted(formData.password);
-    if (!committedPassword.valid) {
-      return;
-    }
-    
     // 유효성 검사
     if (Object.keys(validationErrors).length > 0) {
       showNotification('입력 오류를 수정해주세요.', 'error');
@@ -224,7 +208,6 @@ const ConsultantRegistrationWidget = ({ widget, user }) => {
     const requestData = {
       userId: formData.userId?.trim(),
       email: formData.email?.trim(),
-      password: committedPassword.value,
       name: formData.name?.trim(),
       phone: formData.phone?.trim(),
       professionalTypeCode: formData.professionalTypeCode || DEFAULT_PROFESSIONAL_TYPE_CODE_VALUE,
@@ -259,7 +242,6 @@ const ConsultantRegistrationWidget = ({ widget, user }) => {
     setFormData({
       userId: '',
       email: '',
-      password: generateMgLoginPassword(),
       name: '',
       phone: '',
       rrnFirst6: '',
@@ -274,7 +256,6 @@ const ConsultantRegistrationWidget = ({ widget, user }) => {
       professionalTypeCode: professionalTypeOptions[0]?.value || DEFAULT_PROFESSIONAL_TYPE_CODE_VALUE
     });
     setValidationErrors({});
-    passwordField.clearError();
   };
 
   // 폼 닫기
@@ -445,22 +426,7 @@ const ConsultantRegistrationWidget = ({ widget, user }) => {
                     )}
                   </div>
 
-                  <div className="form-group">
-                    <label htmlFor="password" className="form-label">
-                      {t('common:dashboard.ConsultantRegistrationWidget.t_81973897')} <span className="required">*</span>
-                    </label>
-                    <PasswordPolicyInput
-                      field={passwordField}
-                      id="password"
-                      name="password"
-                      value={formData.password}
-                      onChange={handleInputChange}
-                      required
-                      className={WIDGET_INPUT_CLASS}
-                      errorInputClassName={WIDGET_INPUT_ERROR_CLASS}
-                      errorClassName={WIDGET_FIELD_ERROR_CLASS}
-                    />
-                  </div>
+                  <p className="field-help">{t('auth:tempPasswordSms.resetHelp')}</p>
 
                   <div className="form-group">
                     <label htmlFor="phone" className="form-label">
@@ -706,7 +672,7 @@ const ConsultantRegistrationWidget = ({ widget, user }) => {
                 <MGButton
                   type="submit"
                   variant="primary"
-                  disabled={submitting || Object.keys(validationErrors).length > 0 || passwordField.pending}
+                  disabled={submitting || Object.keys(validationErrors).length > 0}
                   className={buildErpMgButtonClassName({
                     variant: 'primary',
                     size: 'md',

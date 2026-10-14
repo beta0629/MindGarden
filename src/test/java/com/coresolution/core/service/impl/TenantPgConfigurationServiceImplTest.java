@@ -728,6 +728,70 @@ class TenantPgConfigurationServiceImplTest {
     }
 
     @Test
+    @DisplayName("승인 — ACTIVE+pending 적용 시 live 웹훅 시크릿 유지, 다른 pending 필드는 적용")
+    void approveConfiguration_activeWithPending_keepsLiveWebhookSecret() throws Exception {
+        testConfiguration.setStatus(PgConfigurationStatus.ACTIVE);
+        testConfiguration.setApprovalStatus(ApprovalStatus.APPROVED);
+        testConfiguration.setStoreId("live-store");
+        testConfiguration.setApiKeyEncrypted("encrypted-live-api");
+        testConfiguration.setSecretKeyEncrypted("encrypted-live-secret");
+        testConfiguration.setTestMode(true);
+        testConfiguration.setSettingsJson(
+                "{\"portoneChannelKeyTest\":\"channel-key-live\","
+                        + "\"portoneWebhookSecret\":\"enc:live-webhook\"}");
+        String pendingSettingsJson =
+                "{\"portoneChannelKeyTest\":\"channel-key-pending\","
+                        + "\"portoneWebhookSecret\":\"enc:pending-webhook\"}";
+        testConfiguration.setPendingRequestJson(
+                "{\"pgProvider\":\"TOSS\",\"pgName\":\"토스\","
+                        + "\"apiKeyEncrypted\":\"encrypted-pending-api\","
+                        + "\"secretKeyEncrypted\":\"encrypted-pending-secret\","
+                        + "\"storeId\":\"pending-store\","
+                        + "\"settingsJson\":"
+                        + objectMapper.writeValueAsString(pendingSettingsJson)
+                        + ",\"notes\":null}");
+        testConfiguration.setPendingRequestedBy("admin-user");
+        testConfiguration.setPendingRequestedAt(LocalDateTime.now());
+
+        PgConfigurationApproveRequest request = PgConfigurationApproveRequest.builder()
+                .approvedBy("ops-user")
+                .approvalNote("재승인 — 웹훅 시크릿 live 유지")
+                .testConnection(false)
+                .build();
+
+        when(configurationRepository.findByConfigIdAndIsDeletedFalse(testConfigId))
+                .thenReturn(Optional.of(testConfiguration));
+        when(configurationRepository.save(any(TenantPgConfiguration.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+        doNothing().when(historyService).saveHistory(any(), any(), any(), any(), any(), any());
+
+        TenantPgConfigurationResponse result = service.approveConfiguration(testConfigId, request);
+
+        assertThat(result.getStatus()).isEqualTo(PgConfigurationStatus.ACTIVE);
+        assertThat(result.getApprovalStatus()).isEqualTo(ApprovalStatus.APPROVED);
+        assertThat(result.getHasPendingEdit()).isFalse();
+        assertThat(result.getStoreId()).isEqualTo("pending-store");
+
+        ArgumentCaptor<TenantPgConfiguration> savedCaptor =
+                ArgumentCaptor.forClass(TenantPgConfiguration.class);
+        verify(configurationRepository).save(savedCaptor.capture());
+        TenantPgConfiguration saved = savedCaptor.getValue();
+        assertThat(saved.getPendingRequestJson()).isNull();
+        assertThat(saved.getPendingRequestedBy()).isNull();
+        assertThat(saved.getPendingRequestedAt()).isNull();
+        assertThat(saved.getStoreId()).isEqualTo("pending-store");
+        assertThat(saved.getStatus()).isEqualTo(PgConfigurationStatus.ACTIVE);
+        assertThat(saved.getApprovalStatus()).isEqualTo(ApprovalStatus.APPROVED);
+
+        JsonNode liveSettings = objectMapper.readTree(saved.getSettingsJson());
+        assertThat(liveSettings.get(TenantPgSettingsJsonKeys.PORTONE_WEBHOOK_SECRET).asText())
+                .isEqualTo("enc:live-webhook");
+        assertThat(liveSettings.get("portoneChannelKeyTest").asText())
+                .isEqualTo("channel-key-pending");
+        assertThat(saved.getSettingsJson()).doesNotContain("enc:pending-webhook");
+    }
+
+    @Test
     @DisplayName("거부 — ACTIVE+pending 폐기, live 유지, ACTIVE+APPROVED")
     void rejectConfiguration_activeWithPending_discardsKeepsLiveApproved() {
         testConfiguration.setStatus(PgConfigurationStatus.ACTIVE);

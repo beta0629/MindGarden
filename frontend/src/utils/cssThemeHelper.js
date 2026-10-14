@@ -77,9 +77,13 @@ export const getAllActiveThemes = async() => {
         if (cached) return cached;
 
         const response = await apiGet(API_ADMIN_CSS_THEMES_THEMES);
-        if (response?.success && response.data) {
-            setToCache(cacheKey, response.data);
-            return response.data;
+        // apiGet unwrap → 테마 배열/객체 직접 수용
+        if (response != null && response.success !== false) {
+            const themes = Array.isArray(response)
+                ? response
+                : (response.data != null ? response.data : response);
+            setToCache(cacheKey, themes);
+            return themes;
         }
         return [];
     } catch (error) {
@@ -100,9 +104,10 @@ export const getDefaultTheme = async() => {
         if (cached) return cached;
 
         const response = await apiGet(API_ADMIN_CSS_THEMES_THEMES_DEFAULT);
-        if (response?.success && response.data) {
-            setToCache(cacheKey, response.data);
-            return response.data;
+        if (response != null && response.success !== false) {
+            const theme = response.data != null ? response.data : response;
+            setToCache(cacheKey, theme);
+            return theme;
         }
         return null;
     } catch (error) {
@@ -125,9 +130,10 @@ export const getThemeColors = async(themeName) => {
         if (cached) return cached;
 
         const response = await apiGet(`/api/v1/admin/css-themes/themes/${themeName}/colors`);
-        if (response?.success && response.data) {
-            setToCache(cacheKey, response.data);
-            return response.data;
+        if (response != null && response.success !== false) {
+            const colors = response.data != null ? response.data : response;
+            setToCache(cacheKey, colors);
+            return colors;
         }
         return {};
     } catch (error) {
@@ -152,9 +158,12 @@ export const getThemeColor = async(themeName, colorKey) => {
         if (cached) return cached;
 
         const response = await apiGet(`/api/v1/admin/css-themes/themes/${themeName}/colors/${colorKey}`);
-        if (response?.success && response.colorValue) {
-            setToCache(cacheKey, response.colorValue);
-            return response.colorValue;
+        if (response != null && response.success !== false) {
+            const colorValue = response.colorValue ?? response.data?.colorValue ?? null;
+            if (colorValue != null) {
+                setToCache(cacheKey, colorValue);
+                return colorValue;
+            }
         }
         return null;
     } catch (error) {
@@ -179,9 +188,12 @@ export const getThemeColorsByCategory = async(themeName, category) => {
         if (cached) return cached;
 
         const response = await apiGet(`/api/v1/admin/css-themes/themes/${themeName}/categories/${category}`);
-        if (response?.success && response.data) {
-            setToCache(cacheKey, response.data);
-            return response.data;
+        if (response != null && response.success !== false) {
+            const colors = Array.isArray(response)
+                ? response
+                : (response.data != null ? response.data : response);
+            setToCache(cacheKey, colors);
+            return colors;
         }
         return [];
     } catch (error) {
@@ -200,7 +212,11 @@ export const getThemeColorsByCategory = async(themeName, category) => {
 export const isThemeExists = async(themeName) => {
     try {
         const response = await apiGet(`/api/v1/admin/css-themes/themes/${themeName}/exists`);
-        return Boolean(response?.success && response.exists);
+        // unwrap → { exists } 직접 사용
+        if (response == null || response.success === false) {
+            return false;
+        }
+        return Boolean(response.exists ?? response.data?.exists);
     } catch (error) {
         console.error(`🎨 테마 존재 여부 확인 실패: ${themeName}`, error);
         return false;

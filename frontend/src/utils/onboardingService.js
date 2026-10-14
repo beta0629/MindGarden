@@ -149,19 +149,18 @@ export const getCommonCodesByGroup = async(codeGroup) => {
     // 표준 API 사용
     const response = await apiGet(`${COMMON_CODE_API.BY_GROUP}?codeGroup=${codeGroup}`);
     
-    // { success: true, data: { codes: [...] } } 형식
-    if (response && response.success && response.data && response.data.codes) {
-      return response.data.codes;
-    }
-    
-    // { success: true, data: [...] } 형식
-    if (response && response.data && Array.isArray(response.data)) {
-      return response.data;
-    }
-    
-    // 배열 형식 (하위 호환성)
+    // apiGet unwrap → { codes } / data 배열 / 배열 직접 수용
     if (Array.isArray(response)) {
       return response;
+    }
+    if (response && Array.isArray(response.codes)) {
+      return response.codes;
+    }
+    if (response && response.data && Array.isArray(response.data.codes)) {
+      return response.data.codes;
+    }
+    if (response && Array.isArray(response.data)) {
+      return response.data;
     }
     
     return [];

@@ -82,10 +82,14 @@ export function generateCallbackUrl(status, customerKey, tenantId) {
 export async function getPaymentMethods(tenantId) {
   try {
     const response = await apiGet(BILLING_API.PAYMENT_METHODS.LIST(tenantId));
-    if (response && response.success) {
-      return response.data || [];
+    // apiGet unwrap → 배열/래핑 객체 직접 수용
+    if (response == null || response.success === false) {
+      return [];
     }
-    return [];
+    if (Array.isArray(response)) {
+      return response;
+    }
+    return Array.isArray(response.data) ? response.data : [];
   } catch (err) {
     console.error('결제 수단 목록 조회 실패:', err);
     throw err;
@@ -134,10 +138,13 @@ export async function registerPaymentMethod(params) {
 export async function getSubscriptions(tenantId) {
   try {
     const response = await apiGet(BILLING_API.SUBSCRIPTIONS.LIST(tenantId));
-    if (response && response.success) {
-      return response.data || [];
+    if (response == null || response.success === false) {
+      return [];
     }
-    return [];
+    if (Array.isArray(response)) {
+      return response;
+    }
+    return Array.isArray(response.data) ? response.data : [];
   } catch (err) {
     console.error('구독 목록 조회 실패:', err);
     throw err;
@@ -237,8 +244,8 @@ export async function getActivePricingPlans() {
     if (Array.isArray(response)) {
       return response;
     }
-    if (response && response.success) {
-      return response.data || [];
+    if (response != null && response.success !== false) {
+      return Array.isArray(response.data) ? response.data : [];
     }
     return [];
   } catch (err) {

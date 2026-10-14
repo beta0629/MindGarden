@@ -217,9 +217,9 @@ export const getTenantCodes = async(codeGroup = null) => {
 export const getCommonCodeById = async(id) => {
     try {
         const response = await StandardizedApi.get(`${API_BASE}/${id}`);
-        
-        if (response.success && response.data) {
-            return response.data;
+        // unwrap → 공통코드 DTO 직접 반환
+        if (response != null && response.success !== false) {
+            return response.data != null ? response.data : response;
         }
         
         return null;
@@ -379,12 +379,14 @@ export const getCodeGroups = async() => {
     try {
         // 새로운 API 시도
         const response = await StandardizedApi.get(`${API_BASE}?codeGroup=`);
-        
-        if (response.success && response.data) {
-            // 코드 그룹 목록 추출
-            const codes = response.data.codes || [];
-            const groups = [...new Set(codes.map(code => code.codeGroup))];
-            return groups;
+        // unwrap → { codes } / 배열에서 codeGroup 추출
+        if (response != null && response.success !== false) {
+            const codes = Array.isArray(response)
+                ? response
+                : (response.codes || response.data?.codes || []);
+            if (Array.isArray(codes) && codes.length > 0) {
+                return [...new Set(codes.map(code => code.codeGroup).filter(Boolean))];
+            }
         }
         
         // 하위 호환성: 기존 API 사용
@@ -410,12 +412,7 @@ export const getCodeGroups = async() => {
 export const getCoreCodesAPI = async(codeGroup) => {
     try {
         const response = await StandardizedApi.get(`${API_BASE}?codeGroup=${codeGroup}`);
-        
-        if (response?.data?.codes && Array.isArray(response.data.codes)) {
-            return response.data.codes;
-        }
-        
-        return [];
+        return unwrapCommonCodeRows(response);
     } catch (error) {
         console.error('코어 코드 조회 실패:', error);
         return [];

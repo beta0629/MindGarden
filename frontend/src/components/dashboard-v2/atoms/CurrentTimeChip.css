@@ -104,5 +104,17 @@
 @media (max-width: 767px) {
   .mg-v2-current-time-chip {
     height: var(--mg-v2-now-chip-height-mobile);
+    padding: 0 var(--mg-v2-now-chip-padding-x-mobile);
+    gap: var(--mg-v2-now-chip-gap-mobile);
+  }
+
+  .mg-v2-current-time-chip__icon,
+  .mg-v2-current-time-chip__lucide {
+    width: var(--mg-v2-now-chip-icon-size-mobile);
+    height: var(--mg-v2-now-chip-icon-size-mobile);
+  }
+
+  .mg-v2-current-time-chip__label--compact {
+    font-size: var(--mg-v2-now-chip-time-size-mobile);
   }
 }

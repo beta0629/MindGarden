@@ -53,6 +53,8 @@ jest.mock('./components/common/ProtectedRoute', () => ({
   default: ({ children }) => children
 }));
 
+jest.mock('@fullcalendar/luxon3', () => ({ __esModule: true, default: { id: 'luxon3' } }));
+
 import App from './App';
 
 describe('App', () => {

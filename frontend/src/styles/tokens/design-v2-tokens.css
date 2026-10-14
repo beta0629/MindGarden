@@ -378,6 +378,24 @@
   --mg-v2-today-col-bg: var(--cs-slate-50, #F8FAFC);
 
   /* ----------------------------------------------------------
+     11c. COMPONENT — teacher color dots (schedule chips / filter)
+     Separate from §11b now-chip / now-line. Palette SSOT for
+     getTeacherColor ordinal mapping (not hash).
+     ---------------------------------------------------------- */
+  --mg-v2-teacher-1: #2563EB;
+  --mg-v2-teacher-2: #7C3AED;
+  --mg-v2-teacher-3: #B45309;
+  --mg-v2-teacher-4: #0284C7;
+  --mg-v2-teacher-5: #A21CAF;
+  --mg-v2-teacher-6: #4D7C0F;
+  --mg-v2-teacher-7: #C2410C;
+  --mg-v2-teacher-8: #78716C;
+  --mg-v2-teacher-dot-size: 8px;
+  --mg-v2-teacher-dot-ring: 1px;
+  --mg-v2-teacher-dot-gap: 4px;
+  --mg-v2-teacher-dot-hollow-border: 2px;
+
+  /* ----------------------------------------------------------
      12. OPACITY
      ---------------------------------------------------------- */
   --mg-v2-opacity-disabled: 0.5;

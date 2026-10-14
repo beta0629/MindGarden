@@ -36,16 +36,15 @@ export const getBusinessTimeSettings = async(useCache = true) => {
     
     try {
         console.log('🕐 서버에서 업무 시간 설정 조회');
-        const response = await apiGet('/api/admin/business-time/settings');
-        
-        if (response && response.success && response.data) {
-            businessTimeCache = response.data;
+        const response = await apiGet('/api/v1/admin/business-time/settings');
+        // apiGet unwrap → 설정 객체 직접 사용
+        if (response != null && response.success !== false) {
+            businessTimeCache = response.data != null ? response.data : response;
             lastCacheTime = now;
             console.log('✅ 업무 시간 설정 로드 완료:', businessTimeCache);
             return businessTimeCache;
-        } else {
-            throw new Error(i18n.t('error:utils.businessTimeUtils.t_fd32839f'));
         }
+        throw new Error(i18n.t('error:utils.businessTimeUtils.t_fd32839f'));
     } catch (error) {
         console.error('❌ 업무 시간 설정 조회 실패:', error);
         
@@ -77,18 +76,16 @@ export const updateBusinessTimeSettings = async(settings) => {
     try {
         console.log('🕐 업무 시간 설정 업데이트 요청:', settings);
         
-        const response = await apiPost('/api/admin/business-time/settings', settings);
+        const response = await apiPost('/api/v1/admin/business-time/settings', settings);
         
-        if (response && response.success) {
-            // 캐시 초기화
+        if (response != null && response.success !== false) {
             businessTimeCache = null;
             lastCacheTime = 0;
             
             console.log('✅ 업무 시간 설정 업데이트 성공');
             return true;
-        } else {
-            throw new Error(response?.message || '업무 시간 설정 업데이트에 실패했습니다.');
         }
+        throw new Error(response?.message || '업무 시간 설정 업데이트에 실패했습니다.');
     } catch (error) {
         console.error('❌ 업무 시간 설정 업데이트 실패:', error);
         throw error;
@@ -104,13 +101,12 @@ export const updateBusinessTimeSettings = async(settings) => {
  */
 export const checkBusinessTime = async(time) => {
     try {
-        const response = await apiGet(`/api/admin/business-time/check-time?time=${time}`);
+        const response = await apiGet(`/api/v1/admin/business-time/check-time?time=${time}`);
         
-        if (response && response.success) {
-            return response.data;
-        } else {
-            throw new Error(response?.message || '업무 시간 확인에 실패했습니다.');
+        if (response != null && response.success !== false) {
+            return response.data != null ? response.data : response;
         }
+        throw new Error(response?.message || '업무 시간 확인에 실패했습니다.');
     } catch (error) {
         console.error('❌ 업무 시간 확인 실패:', error);
         throw error;

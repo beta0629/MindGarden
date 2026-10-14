@@ -233,7 +233,7 @@ const ConsultantFilterSelect = ({
     >
       <ul className="mg-consultant-filter__options" role="presentation">
         {loading ? (
-          <li className="mg-consultant-filter__option mg-consultant-filter__option--disabled" role="option" aria-disabled="true">
+          <li className="mg-consultant-filter__option mg-consultant-filter__option--disabled" role="option" aria-selected={false} aria-disabled="true">
             {loadingLabel}
           </li>
         ) : options.map((option) => {

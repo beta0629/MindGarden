@@ -3,7 +3,7 @@
  */
 
 import { KR_PUBLIC_DATA_PATHS } from '../content/krPublicData';
-import { apiGet } from './api';
+import { apiGet, apiPost } from './api';
 
 export interface KrPublicDataCapabilities {
   businessLookupEnabled: boolean;
@@ -13,6 +13,17 @@ export interface KrPublicDataCapabilities {
 export interface AddressItem {
   roadAddress: string;
   zipCode: string;
+}
+
+export interface BusinessVerificationResult {
+  authenticityMatch?: boolean | null;
+  businessStatus?: string | null;
+  taxType?: string | null;
+  checkedAt?: string | null;
+  overallStatus?: string | null;
+  verificationStatus?: string | null;
+  resultCode?: string | null;
+  suspendedWarning?: boolean | null;
 }
 
 interface AddressSearchResult {
@@ -28,4 +39,12 @@ export async function searchPublicAddresses(keyword: string): Promise<AddressIte
   const query = `${KR_PUBLIC_DATA_PATHS.ADDRESSES}?keyword=${encodeURIComponent(keyword)}`;
   const result = await apiGet<AddressSearchResult>(query);
   return result?.items ?? [];
+}
+
+export async function lookupPublicBusinessRegistration(payload: {
+  businessRegistrationNumber: string;
+  openingDate: string;
+  representativeName: string;
+}): Promise<BusinessVerificationResult> {
+  return apiPost<BusinessVerificationResult>(KR_PUBLIC_DATA_PATHS.LOOKUP, payload);
 }

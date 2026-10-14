@@ -7,7 +7,10 @@ import { COMPONENT_CSS } from "../../constants/css-variables";
 import { KR_PUBLIC_DATA_COPY } from "../../content/krPublicData";
 import { TRINITY_CONSTANTS } from "../../constants/trinity";
 import type { OnboardingFormData } from "../../hooks/useOnboarding";
-import type { AddressItem } from "../../utils/krPublicDataApi";
+import type {
+  AddressItem,
+  BusinessVerificationResult,
+} from "../../utils/krPublicDataApi";
 import {
   BUSINESS_REGISTRATION_INVALID_MESSAGE,
   formatBusinessRegistrationNumber,
@@ -24,6 +27,12 @@ interface StepMerchantLegalProps {
   setBizNumberError: (error: string | null) => void;
   addressSearchEnabled?: boolean;
   onSearchAddress?: (keyword: string) => Promise<AddressItem[]>;
+  businessLookupEnabled?: boolean;
+  onLookupBusiness?: (payload: {
+    businessRegistrationNumber: string;
+    openingDate: string;
+    representativeName: string;
+  }) => Promise<BusinessVerificationResult>;
 }
 
 const ML = TRINITY_CONSTANTS.MERCHANT_LEGAL;
@@ -35,12 +44,21 @@ export default function StepMerchantLegal({
   setBizNumberError,
   addressSearchEnabled = false,
   onSearchAddress,
+  businessLookupEnabled = false,
+  onLookupBusiness,
 }: StepMerchantLegalProps) {
   const [addressHits, setAddressHits] = useState<AddressItem[]>([]);
   const [addressMessage, setAddressMessage] = useState<string | null>(null);
   const [addressSearching, setAddressSearching] = useState(false);
+  const [verification, setVerification] = useState<BusinessVerificationResult | null>(
+    null
+  );
+  const [verificationMessage, setVerificationMessage] = useState<string | null>(null);
+  const [verifying, setVerifying] = useState(false);
   const updateField = (key: keyof OnboardingFormData, value: string) => {
     setFormData((prev) => ({ ...prev, [key]: value }));
+    setVerification(null);
+    setVerificationMessage(null);
   };
 
   const handleBizNumberChange = (value: string) => {
@@ -83,6 +101,37 @@ export default function StepMerchantLegal({
       setAddressMessage(KR_PUBLIC_DATA_COPY.ADDRESS_FAILED);
     } finally {
       setAddressSearching(false);
+    }
+  };
+
+  const lookupBusiness = async () => {
+    if (!onLookupBusiness) {
+      return;
+    }
+    const biz = formData.businessRegistrationNumber?.trim() || "";
+    const opening = formData.openingDate?.trim() || "";
+    const rep = formData.representativeName?.trim() || "";
+    if (!biz || !opening || !rep) {
+      return;
+    }
+    setVerifying(true);
+    setVerificationMessage(null);
+    try {
+      const formatted = formatBusinessRegistrationNumber(biz);
+      const result = await onLookupBusiness({
+        businessRegistrationNumber: formatted,
+        openingDate: opening,
+        representativeName: rep,
+      });
+      setVerification(result || null);
+      if (result?.suspendedWarning) {
+        setVerificationMessage(KR_PUBLIC_DATA_COPY.WARNING_SUSPENDED);
+      }
+    } catch {
+      setVerification(null);
+      setVerificationMessage(KR_PUBLIC_DATA_COPY.VERIFY_FAILED);
+    } finally {
+      setVerifying(false);
     }
   };
 
@@ -181,6 +230,56 @@ export default function StepMerchantLegal({
             data-testid="onboarding-merchant-legal-opening-date"
           />
         </div>
+
+        {businessLookupEnabled && onLookupBusiness && (
+          <div
+            className="trinity-merchant-legal__verification"
+            data-testid="onboarding-merchant-legal-verification"
+          >
+            <span className={COMPONENT_CSS.ONBOARDING.LABEL}>
+              {KR_PUBLIC_DATA_COPY.LABEL_VERIFICATION}
+            </span>
+            <button
+              type="button"
+              className="trinity-merchant-legal__verify"
+              onClick={lookupBusiness}
+              disabled={verifying}
+              data-testid="onboarding-merchant-legal-verify"
+            >
+              {verifying
+                ? KR_PUBLIC_DATA_COPY.VERIFYING
+                : KR_PUBLIC_DATA_COPY.VERIFY}
+            </button>
+            {verification && (
+              <div className="trinity-merchant-legal__verification-result">
+                <p>
+                  {KR_PUBLIC_DATA_COPY.LABEL_MATCH}{" "}
+                  {verification.overallStatus || KR_PUBLIC_DATA_COPY.OVERALL_UNCONFIRMED}
+                </p>
+                <p>
+                  {KR_PUBLIC_DATA_COPY.LABEL_STATUS}{" "}
+                  {verification.businessStatus || KR_PUBLIC_DATA_COPY.OVERALL_UNCONFIRMED}
+                </p>
+                <p>
+                  {KR_PUBLIC_DATA_COPY.LABEL_CHECKED_AT}{" "}
+                  {verification.checkedAt || KR_PUBLIC_DATA_COPY.OVERALL_UNCONFIRMED}
+                </p>
+              </div>
+            )}
+            {verificationMessage && (
+              <p
+                className={
+                  verification?.suspendedWarning
+                    ? "trinity-merchant-legal__warning"
+                    : COMPONENT_CSS.ONBOARDING.TEXT_SECONDARY
+                }
+                role={verification?.suspendedWarning ? "status" : undefined}
+              >
+                {verificationMessage}
+              </p>
+            )}
+          </div>
+        )}
 
         <div className={COMPONENT_CSS.ONBOARDING.FIELD}>
           <label className={COMPONENT_CSS.ONBOARDING.LABEL} htmlFor="ml-landline">

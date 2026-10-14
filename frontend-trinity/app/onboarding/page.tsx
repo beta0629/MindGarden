@@ -35,7 +35,11 @@ import {
   isValidBusinessRegistrationNumber,
 } from "../../utils/businessRegistrationNumber";
 import { openingDateError, representativeNameError } from "../../utils/merchantLegalFields";
-import { fetchPublicCapabilities, searchPublicAddresses } from "../../utils/krPublicDataApi";
+import {
+  fetchPublicCapabilities,
+  lookupPublicBusinessRegistration,
+  searchPublicAddresses,
+} from "../../utils/krPublicDataApi";
 
 function getStepHeader(step: number): { title: string; subtitle: string } {
   const headers = TRINITY_CONSTANTS.ONBOARDING_V2.STEP_HEADERS as Record<
@@ -66,6 +70,7 @@ export default function OnboardingPage() {
   const [transitionDirection, setTransitionDirection] = useState<"forward" | "backward">("forward");
   const [bizNumberError, setBizNumberError] = useState<string | null>(null);
   const [addressSearchEnabled, setAddressSearchEnabled] = useState(false);
+  const [businessLookupEnabled, setBusinessLookupEnabled] = useState(false);
 
   const {
     step,
@@ -136,11 +141,13 @@ export default function OnboardingPage() {
       .then((caps) => {
         if (!cancelled) {
           setAddressSearchEnabled(Boolean(caps?.addressSearchEnabled));
+          setBusinessLookupEnabled(Boolean(caps?.businessLookupEnabled));
         }
       })
       .catch(() => {
         if (!cancelled) {
           setAddressSearchEnabled(false);
+          setBusinessLookupEnabled(false);
         }
       });
     return () => {
@@ -598,6 +605,8 @@ export default function OnboardingPage() {
                   setBizNumberError={setBizNumberError}
                   addressSearchEnabled={addressSearchEnabled}
                   onSearchAddress={searchPublicAddresses}
+                  businessLookupEnabled={businessLookupEnabled}
+                  onLookupBusiness={lookupPublicBusinessRegistration}
                 />
               )}
             </StepTransition>

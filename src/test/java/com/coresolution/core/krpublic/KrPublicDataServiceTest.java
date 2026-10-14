@@ -88,7 +88,8 @@ class KrPublicDataServiceTest {
         properties.getJuso().setApiUrl(urls.getProperty("juso.api-url"));
         properties.getJuso().setMaxResults(2);
         properties.setMinOpeningYear(1900);
-        service = new KrPublicDataService(krPublicDataClient, properties, objectMapper, CLOCK, new MockEnvironment());
+        service = new KrPublicDataService(krPublicDataClient, properties, objectMapper, CLOCK, new MockEnvironment(),
+                new BusinessRegistrationVerifier());
         lenient().when(hikariDataSource.getHikariPoolMXBean()).thenReturn(hikariPoolMXBean);
         lenient().when(hikariPoolMXBean.getActiveConnections()).thenAnswer(invocation -> 0);
     }
@@ -203,7 +204,7 @@ class KrPublicDataServiceTest {
     }
 
     @Test
-    @DisplayName("온보딩 checklist 에 조회 결과를 넣고 번호가 없으면 400")
+    @DisplayName("온보딩 checklist: 휴업+일치는 허용하고 경고 플래그를 넣는다")
     void enrichRequiresNumberAndStoresResult() throws Exception {
         when(krPublicDataClient.isBusinessLookupConfigured()).thenReturn(true);
         when(krPublicDataClient.fetchStatus(anyString())).thenReturn(Optional.of(statusBody("02", "면세")));
@@ -219,9 +220,91 @@ class KrPublicDataServiceTest {
         assertEquals(KrPublicDataMessages.overallMatch(), verification.path("overallStatus").asText());
         assertEquals(KrPublicDataMessages.businessSuspended(), verification.path("businessStatus").asText());
         assertTrue(verification.path("authenticityMatch").asBoolean());
+        assertEquals(BusinessRegistrationVerifier.STATUS_SUSPENDED, verification.path("verificationStatus").asText());
+        assertTrue(verification.path("suspendedWarning").asBoolean());
+        assertEquals("b_stt_cd=02;valid=01", verification.path("resultCode").asText());
 
         org.junit.jupiter.api.Assertions.assertThrows(IllegalArgumentException.class,
                 () -> service.enrichOnboardingChecklist("{\"planId\":\"p\"}"));
+    }
+
+    @Test
+    @DisplayName("온보딩 게이트: 진위 불일치면 등록을 차단한다")
+    void enrichBlocksMismatch() {
+        when(krPublicDataClient.isBusinessLookupConfigured()).thenReturn(true);
+        when(krPublicDataClient.fetchStatus(anyString())).thenReturn(Optional.of(statusBody("01", "일반과세자")));
+        when(krPublicDataClient.fetchValidate(anyString(), anyString(), anyString()))
+                .thenReturn(Optional.of("{\"status_code\":\"OK\",\"data\":[{\"valid\":\"02\"}]}"));
+
+        IllegalArgumentException ex = org.junit.jupiter.api.Assertions.assertThrows(
+                IllegalArgumentException.class,
+                () -> service.enrichOnboardingChecklist(merchantLegalChecklist()));
+        assertEquals(KrPublicDataMessages.gateMismatch(), ex.getMessage());
+    }
+
+    @Test
+    @DisplayName("온보딩 게이트: 폐업이면 등록을 차단한다")
+    void enrichBlocksClosed() {
+        when(krPublicDataClient.isBusinessLookupConfigured()).thenReturn(true);
+        when(krPublicDataClient.fetchStatus(anyString())).thenReturn(Optional.of(statusBody("03", "")));
+        when(krPublicDataClient.fetchValidate(anyString(), anyString(), anyString()))
+                .thenReturn(Optional.of("{\"status_code\":\"OK\",\"data\":[{\"valid\":\"01\"}]}"));
+
+        IllegalArgumentException ex = org.junit.jupiter.api.Assertions.assertThrows(
+                IllegalArgumentException.class,
+                () -> service.enrichOnboardingChecklist(merchantLegalChecklist()));
+        assertEquals(KrPublicDataMessages.gateClosed(), ex.getMessage());
+    }
+
+    @Test
+    @DisplayName("온보딩 게이트: 미등록이면 등록을 차단한다")
+    void enrichBlocksUnregistered() {
+        when(krPublicDataClient.isBusinessLookupConfigured()).thenReturn(true);
+        when(krPublicDataClient.fetchStatus(anyString()))
+                .thenReturn(Optional.of("{\"status_code\":\"OK\",\"data\":[{\"b_no\":\"1208147521\",\"b_stt_cd\":\"\"}]}"));
+
+        IllegalArgumentException ex = org.junit.jupiter.api.Assertions.assertThrows(
+                IllegalArgumentException.class,
+                () -> service.enrichOnboardingChecklist(merchantLegalChecklist()));
+        assertEquals(KrPublicDataMessages.gateUnregistered(), ex.getMessage());
+    }
+
+    @Test
+    @DisplayName("온보딩 게이트: 키 미설정(미확인)이면 등록을 허용한다")
+    void enrichAllowsUnconfirmedWhenKeyMissing() throws Exception {
+        when(krPublicDataClient.isBusinessLookupConfigured()).thenReturn(false);
+
+        String json = service.enrichOnboardingChecklist(merchantLegalChecklist());
+        JsonNode verification = objectMapper.readTree(json).path("merchantLegal").path("businessVerification");
+        assertEquals(KrPublicDataMessages.overallUnconfirmed(), verification.path("overallStatus").asText());
+        assertEquals(BusinessRegistrationVerifier.STATUS_UNCONFIRMED, verification.path("verificationStatus").asText());
+    }
+
+    @Test
+    @DisplayName("온보딩 게이트: API 장애(미확인)이면 등록을 허용한다")
+    void enrichAllowsUnconfirmedOnRemoteFailure() throws Exception {
+        when(krPublicDataClient.isBusinessLookupConfigured()).thenReturn(true);
+        when(krPublicDataClient.fetchStatus(anyString())).thenReturn(Optional.empty());
+
+        String json = service.enrichOnboardingChecklist(merchantLegalChecklist());
+        JsonNode verification = objectMapper.readTree(json).path("merchantLegal").path("businessVerification");
+        assertEquals(KrPublicDataMessages.overallUnconfirmed(), verification.path("overallStatus").asText());
+        assertEquals(BusinessRegistrationVerifier.STATUS_UNCONFIRMED, verification.path("verificationStatus").asText());
+    }
+
+    @Test
+    @DisplayName("온보딩 게이트: 계속사업자+일치면 등록을 허용한다")
+    void enrichAllowsContinueMatch() throws Exception {
+        when(krPublicDataClient.isBusinessLookupConfigured()).thenReturn(true);
+        when(krPublicDataClient.fetchStatus(anyString())).thenReturn(Optional.of(statusBody("01", "일반과세자")));
+        when(krPublicDataClient.fetchValidate(anyString(), anyString(), anyString()))
+                .thenReturn(Optional.of("{\"status_code\":\"OK\",\"data\":[{\"valid\":\"01\"}]}"));
+
+        String json = service.enrichOnboardingChecklist(merchantLegalChecklist());
+        JsonNode verification = objectMapper.readTree(json).path("merchantLegal").path("businessVerification");
+        assertEquals(KrPublicDataMessages.overallMatch(), verification.path("overallStatus").asText());
+        assertEquals(BusinessRegistrationVerifier.STATUS_MATCH, verification.path("verificationStatus").asText());
+        assertFalse(verification.path("suspendedWarning").asBoolean());
     }
 
     @Test
@@ -360,7 +443,8 @@ class KrPublicDataServiceTest {
         rebuild("dev");
         assertEquals(KrPublicDataMessages.overallUnconfirmed(), service.lookup(validRequest()).getOverallStatus());
 
-        service = new KrPublicDataService(krPublicDataClient, properties, objectMapper, CLOCK, null);
+        service = new KrPublicDataService(krPublicDataClient, properties, objectMapper, CLOCK, null,
+                new BusinessRegistrationVerifier());
         properties.getStub().setProfile("dev");
         assertEquals(KrPublicDataMessages.overallUnconfirmed(), service.lookup(validRequest()).getOverallStatus());
         verify(krPublicDataClient, never()).fetchStatus(anyString());
@@ -504,6 +588,13 @@ class KrPublicDataServiceTest {
         assertEquals(0, hikariDataSource.getHikariPoolMXBean().getActiveConnections());
     }
 
+    private static String merchantLegalChecklist() {
+        return "{\"merchantLegal\":{"
+                + "\"businessRegistrationNumber\":\"" + BIZ + "\","
+                + "\"openingDate\":\"" + OPENING + "\","
+                + "\"representativeName\":\"" + REP + "\"}}";
+    }
+
     private static BusinessLookupRequest validRequest() {
         return requestOn(OPENING);
     }
@@ -527,7 +618,8 @@ class KrPublicDataServiceTest {
         if (activeProfiles.length > 0) {
             env.setActiveProfiles(activeProfiles);
         }
-        service = new KrPublicDataService(krPublicDataClient, properties, objectMapper, CLOCK, env);
+        service = new KrPublicDataService(krPublicDataClient, properties, objectMapper, CLOCK, env,
+                new BusinessRegistrationVerifier());
     }
 
     private static String statusBody(String code, String taxType) {

@@ -10,12 +10,16 @@ import '../../styles/unified-design-tokens.css';
 import './PgConfigurationForm.css';
 import PgConfigurationForm from './PgConfigurationForm';
 import { useTranslation } from 'react-i18next';
+import { ADMIN_SHOP_PG_COPY } from '../../constants/adminShopSuite';
 
 /**
  * PG 설정 수정 페이지
  *
+ * <p>승인·운영 후에도 수정 가능. 저장 시 재승인(approvalStatus=PENDING)이 되며
+ * ACTIVE 설정은 운영 결제를 유지한다.</p>
+ *
  * @author CoreSolution
- * @version 1.0.0
+ * @version 1.1.0
  * @since 2025-01-XX
  */
 const PgConfigurationEdit = () => {
@@ -50,14 +54,6 @@ const PgConfigurationEdit = () => {
       loadConfig();
     }
   }, [tenantId, configId, sessionLoading, isLoggedIn, user, navigate]);
-
-  useEffect(() => {
-    if (!config) return;
-    if (config.approvalStatus !== 'PENDING') {
-      showNotification('승인 대기 상태인 설정만 수정할 수 있습니다.', 'error');
-      navigate(`/tenant/pg-configurations/${configId}`, { replace: true });
-    }
-  }, [config, configId, navigate]);
 
   const handleSave = async(formData) => {
     if (!tenantId || !configId) {
@@ -100,15 +96,10 @@ const PgConfigurationEdit = () => {
     );
   }
 
-  if (config.approvalStatus !== 'PENDING') {
-    return (
-      <AdminCommonLayout
-        title={t('admin.actions.editPgSettings')}
-        loading
-        loadingText="상세 화면으로 이동합니다..."
-      />
-    );
-  }
+  const showReapprovalSubtitle = config.status === 'ACTIVE'
+    || config.status === 'APPROVED'
+    || config.approvalStatus === 'APPROVED'
+    || config.approvalStatus === 'REJECTED';
 
   return (
     <AdminCommonLayout title={t('admin.actions.editPgSettings')}>
@@ -118,7 +109,9 @@ const PgConfigurationEdit = () => {
       >
         <ContentHeader
           title="결제 연결"
-          subtitle="카드·간편결제 · 승인 후 사용 · 승인 대기만 수정"
+          subtitle={showReapprovalSubtitle
+            ? ADMIN_SHOP_PG_COPY.EDIT_REAPPROVAL_NOTICE
+            : '카드·간편결제 · 저장 후 승인 요청'}
           titleId="pg-config-edit-title"
         />
         <div className="pg-config-form-stage">
@@ -138,4 +131,3 @@ const PgConfigurationEdit = () => {
 };
 
 export default PgConfigurationEdit;
-

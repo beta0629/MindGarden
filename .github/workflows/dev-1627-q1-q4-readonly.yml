@@ -1,0 +1,335 @@
+# #1627 개발 DB Q1~Q4 — 읽기 전용 1회 조회
+#
+# dev-deposit-erp-diagnose.yml / consultation-log-duplicate-count.yml 과 같은 접속:
+#   개발 서버 SSH(DEV_SERVER_*) 경유, 개발 DB(DEV_DB_*)만 사용.
+#   운영 시크릿은 참조하지 않는다. DEV_DB_NAME 이 옛 운영 스키마 이름이면 접속 전에 중단한다.
+#
+# 안전 장치:
+#   - workflow_dispatch 만. push / pull_request 트리거 없음.
+#   - mysql 세션은 --init-command 로 SET SESSION TRANSACTION READ ONLY.
+#   - SQL 은 이 파일에 고정. 집계 전에 information_schema 로 컬럼·타입을 확인하고,
+#     transaction_date 가 DATETIME/TIMESTAMP 이면 끝 조건을 < 다음날(2026-11-01)로 바꾼다.
+#   - 호스트·계정·DB 이름·비밀번호는 secret. 비밀번호는 stdin 스크립트의 MYSQL_PWD 로만 전달한다.
+
+name: 1627 개발 DB Q1-Q4 (읽기 전용)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dev-1627-q1-q4-readonly
+  cancel-in-progress: false
+
+jobs:
+  q1-q4:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: 개발 DB SELECT Q1~Q4 (READ ONLY)
+        env:
+          SERVER_HOST: ${{ secrets.DEV_SERVER_HOST }}
+          SERVER_USER: ${{ secrets.DEV_SERVER_USER }}
+          SERVER_SSH_KEY: ${{ secrets.DEV_SERVER_SSH_KEY }}
+          DB_HOST: ${{ secrets.DEV_DB_HOST }}
+          DB_USER: ${{ secrets.DEV_DB_USER }}
+          DB_NAME: ${{ secrets.DEV_DB_NAME }}
+          DB_PASSWORD: ${{ secrets.DEV_DB_PASSWORD }}
+        run: |
+          set -euo pipefail
+          for name in SERVER_HOST SERVER_USER SERVER_SSH_KEY DB_HOST DB_USER DB_NAME DB_PASSWORD; do
+            if [ -z "${!name:-}" ]; then
+              echo "::error title=접속 정보 누락::DEV_${name} secret 을 확인하세요."
+              exit 1
+            fi
+          done
+          # 한 줄 값만 마스크한다. SSH 키는 여러 줄이라 로그에 찍지 않는다.
+          for name in SERVER_HOST SERVER_USER DB_HOST DB_USER DB_NAME DB_PASSWORD; do
+            case "${!name}" in
+              *$'\n'*) ;;
+              *) printf '%s\n' "::add-mask::${!name}" ;;
+            esac
+          done
+          case "$DB_NAME" in
+            mind_garden|mind_garden_legacy_*)
+              echo "::error title=대상 DB 차단::개발 core_solution 스키마만 조회합니다."
+              exit 1
+              ;;
+          esac
+
+          WORK=$(mktemp -d)
+          KEY_FILE=$(mktemp)
+          trap 'rm -rf "$WORK" "$KEY_FILE"' EXIT
+
+          guard_select_only() {
+            local f="$1"
+            if grep -qiE '(^|[^a-z_])(insert|update|delete|drop|alter|truncate|create|replace|grant|call|set)[[:space:]]' "$f"; then
+              echo "::error title=SELECT 전용 위반::고정 SQL 에 쓰기 구문이 있어 중단합니다."
+              exit 1
+            fi
+            if grep -qiE 'into[[:space:]]+(outfile|dumpfile)|load_file[[:space:]]*\(|for[[:space:]]+update|lock[[:space:]]+tables' "$f"; then
+              echo "::error title=SELECT 전용 위반::파일 쓰기·잠금 구문이 있어 중단합니다."
+              exit 1
+            fi
+          }
+
+          cat > "$WORK/schema.sql" <<'SQL'
+          SELECT COLUMN_NAME, DATA_TYPE, COLUMN_TYPE
+          FROM information_schema.COLUMNS
+          WHERE TABLE_SCHEMA = DATABASE()
+            AND TABLE_NAME = 'financial_transactions'
+            AND COLUMN_NAME IN (
+              'tenant_id', 'is_deleted', 'status', 'transaction_type', 'amount',
+              'card_merchant_fee_amount', 'transaction_date', 'category'
+            )
+          ORDER BY COLUMN_NAME;
+          SQL
+          cat > "$WORK/readonly.sql" <<'SQL'
+          SELECT @@SESSION.transaction_read_only AS transaction_read_only;
+          SQL
+          guard_select_only "$WORK/schema.sql"
+          guard_select_only "$WORK/readonly.sql"
+
+          printf '%s\n' "$SERVER_SSH_KEY" > "$KEY_FILE"
+          chmod 600 "$KEY_FILE"
+          mkdir -p ~/.ssh
+          ssh-keyscan -H "$SERVER_HOST" >> ~/.ssh/known_hosts 2>/dev/null || true
+
+          build_remote() {
+            local out="$1"
+            shift
+            {
+              printf 'set -euo pipefail\n'
+              printf 'export MYSQL_PWD=%q\n' "$DB_PASSWORD"
+              local title file
+              while [ "$#" -gt 0 ]; do
+                title="$1"
+                file="$2"
+                shift 2
+                printf 'echo %q\n' "===== ${title} ====="
+                printf 'mysql --connect-timeout=20 --init-command=%q -h %q -u %q %q --batch --raw <<%q\n' \
+                  "SET SESSION TRANSACTION READ ONLY" "$DB_HOST" "$DB_USER" "$DB_NAME" "__SQL_${title}__"
+                cat "$file"
+                printf '%s\n' "__SQL_${title}__"
+                printf 'echo %q\n' "===== END ${title} ====="
+              done
+            } > "$out"
+          }
+
+          ssh_mysql() {
+            local remote="$1"
+            local dest="$2"
+            ssh -i "$KEY_FILE" -o BatchMode=yes -o ConnectTimeout=20 \
+              "${SERVER_USER}@${SERVER_HOST}" 'bash -s' < "$remote" > "$dest"
+          }
+
+          build_remote "$WORK/remote-schema.sh" SCHEMA "$WORK/schema.sql" READONLY "$WORK/readonly.sql"
+          ssh_mysql "$WORK/remote-schema.sh" "$WORK/schema.out"
+
+          MODE=$(python3 - "$WORK/schema.out" <<'PY'
+          import sys
+          text = open(sys.argv[1], encoding="utf-8", errors="replace").read()
+
+          def section(name):
+              start = f"===== {name} ====="
+              end = f"===== END {name} ====="
+              i = text.find(start)
+              j = text.find(end)
+              if i < 0 or j < 0 or j < i:
+                  sys.stderr.write(f"missing section {name}\n")
+                  sys.exit(1)
+              return text[i + len(start):j].strip("\n")
+
+          lines = [ln for ln in section("SCHEMA").splitlines() if ln.strip()]
+          if len(lines) < 2:
+              sys.stderr.write("financial_transactions columns not found\n")
+              sys.exit(1)
+          header = lines[0].split("\t")
+          rows = []
+          for ln in lines[1:]:
+              cells = ln.split("\t")
+              if len(cells) < len(header):
+                  cells += [""] * (len(header) - len(cells))
+              rows.append(dict(zip(header, cells)))
+          need = {
+              "tenant_id", "is_deleted", "status", "transaction_type", "amount",
+              "card_merchant_fee_amount", "transaction_date", "category",
+          }
+          found = {r.get("COLUMN_NAME", "") for r in rows}
+          missing = sorted(need - found)
+          if missing:
+              sys.stderr.write("missing columns: " + ", ".join(missing) + "\n")
+              sys.exit(1)
+          ro_lines = [ln.strip() for ln in section("READONLY").splitlines() if ln.strip()]
+          if len(ro_lines) < 2 or ro_lines[-1] != "1":
+              sys.stderr.write("session is not READ ONLY\n")
+              sys.exit(1)
+          types = {r["COLUMN_NAME"]: r.get("DATA_TYPE", "").strip().lower() for r in rows}
+          dt = types["transaction_date"]
+          if dt not in {"date", "datetime", "timestamp"}:
+              sys.stderr.write("unexpected transaction_date DATA_TYPE: " + dt + "\n")
+              sys.exit(1)
+          sys.stdout.write(dt)
+          PY
+          )
+          echo "transaction_date DATA_TYPE=${MODE}"
+
+          case "$MODE" in
+            date)
+              OCT_FILTER="transaction_date BETWEEN '2026-10-01' AND '2026-10-31'"
+              SPAN_FILTER="transaction_date BETWEEN '2025-11-01' AND '2026-10-31'"
+              CORRECTION="없음. information_schema DATA_TYPE=date 이고 엔티티 transactionDate 는 LocalDate 라서, 첨부 SQL 의 inclusive BETWEEN 을 그대로 사용."
+              ;;
+            datetime|timestamp)
+              OCT_FILTER="transaction_date >= '2026-10-01' AND transaction_date < '2026-11-01'"
+              SPAN_FILTER="transaction_date >= '2025-11-01' AND transaction_date < '2026-11-01'"
+              CORRECTION="transaction_date DATA_TYPE=${MODE}. Q1~Q3 끝 조건을 < '2026-11-01', Q4 끝 조건을 < '2026-11-01' 로 변경 (시작은 2026-10-01 / 2025-11-01 유지)."
+              ;;
+            *)
+              echo "::error title=컬럼 타입::transaction_date 타입을 해석하지 못했습니다."
+              exit 1
+              ;;
+          esac
+
+          python3 - "$WORK" "$OCT_FILTER" "$SPAN_FILTER" <<'PY'
+          import pathlib, sys
+          work, oct_filter, span_filter = sys.argv[1:]
+          root = pathlib.Path(work)
+          template = r'''
+          SELECT
+            TRUNCATE(COALESCE(SUM(CASE WHEN transaction_type='INCOME' THEN amount END),0),0) AS totalRevenue,
+            TRUNCATE(COALESCE(SUM(CASE WHEN transaction_type='EXPENSE' THEN amount END),0)
+                   + COALESCE(SUM(CASE WHEN transaction_type='INCOME' THEN card_merchant_fee_amount END),0),0) AS totalExpenses,
+            TRUNCATE(COALESCE(SUM(CASE WHEN transaction_type='INCOME' THEN card_merchant_fee_amount END),0),0) AS totalCardMerchantFee,
+            TRUNCATE(COALESCE(SUM(CASE WHEN transaction_type='INCOME' THEN amount END),0)
+                   - COALESCE(SUM(CASE WHEN transaction_type='EXPENSE' THEN amount END),0)
+                   - COALESCE(SUM(CASE WHEN transaction_type='INCOME' THEN card_merchant_fee_amount END),0),0) AS netProfit,
+            COUNT(*) AS cnt
+          FROM financial_transactions
+          WHERE tenant_id='tenant-incheon-counseling-001' AND is_deleted=FALSE AND status='COMPLETED'
+            AND __OCT_FILTER__;
+          '''
+          q2 = r'''
+          SELECT transaction_type, COALESCE(NULLIF(TRIM(category),''),'OTHER') AS category,
+                 TRUNCATE(SUM(amount),0) AS total, COUNT(*) AS cnt
+          FROM financial_transactions
+          WHERE tenant_id='tenant-incheon-counseling-001' AND is_deleted=FALSE AND status='COMPLETED'
+            AND __OCT_FILTER__
+          GROUP BY transaction_type, COALESCE(NULLIF(TRIM(category),''),'OTHER')
+          UNION ALL
+          SELECT 'EXPENSE','CARD_MERCHANT_FEE', TRUNCATE(COALESCE(SUM(card_merchant_fee_amount),0),0), COUNT(*)
+          FROM financial_transactions
+          WHERE tenant_id='tenant-incheon-counseling-001' AND is_deleted=FALSE AND status='COMPLETED'
+            AND transaction_type='INCOME' AND __OCT_FILTER__
+          ORDER BY 1,2;
+          '''
+          q3 = r'''
+          SELECT status, transaction_type, is_deleted, COUNT(*) AS cnt,
+                 TRUNCATE(COALESCE(SUM(amount),0),0) AS amount_sum,
+                 TRUNCATE(COALESCE(SUM(card_merchant_fee_amount),0),0) AS fee_sum
+          FROM financial_transactions
+          WHERE tenant_id='tenant-incheon-counseling-001'
+            AND __OCT_FILTER__
+          GROUP BY status, transaction_type, is_deleted
+          ORDER BY status, transaction_type, is_deleted;
+          '''
+          q4 = r'''
+          SELECT DATE_FORMAT(transaction_date,'%Y-%m') AS ym,
+            TRUNCATE(COALESCE(SUM(CASE WHEN transaction_type='INCOME' THEN amount END),0),0) AS income_total,
+            TRUNCATE(COALESCE(SUM(CASE WHEN transaction_type='EXPENSE' THEN amount END),0)
+                   + COALESCE(SUM(CASE WHEN transaction_type='INCOME' THEN card_merchant_fee_amount END),0),0) AS expense_total
+          FROM financial_transactions
+          WHERE tenant_id='tenant-incheon-counseling-001' AND is_deleted=FALSE AND status='COMPLETED'
+            AND __SPAN_FILTER__
+          GROUP BY ym ORDER BY ym;
+          '''
+          def fill(sql):
+              return sql.replace("__OCT_FILTER__", oct_filter).replace("__SPAN_FILTER__", span_filter)
+          (root / "q1.sql").write_text(fill(template), encoding="utf-8")
+          (root / "q2.sql").write_text(fill(q2), encoding="utf-8")
+          (root / "q3.sql").write_text(fill(q3), encoding="utf-8")
+          (root / "q4.sql").write_text(fill(q4), encoding="utf-8")
+          PY
+          guard_select_only "$WORK/q1.sql"
+          guard_select_only "$WORK/q2.sql"
+          guard_select_only "$WORK/q3.sql"
+          guard_select_only "$WORK/q4.sql"
+
+          build_remote "$WORK/remote-query.sh" \
+            Q1 "$WORK/q1.sql" Q2 "$WORK/q2.sql" Q3 "$WORK/q3.sql" Q4 "$WORK/q4.sql"
+          ssh_mysql "$WORK/remote-query.sh" "$WORK/query.out"
+
+          python3 - "$WORK/schema.out" "$WORK/query.out" "$CORRECTION" "$MODE" <<'PY'
+          import os, sys
+          schema_text = open(sys.argv[1], encoding="utf-8", errors="replace").read()
+          query_text = open(sys.argv[2], encoding="utf-8", errors="replace").read()
+          correction = sys.argv[3]
+          mode = sys.argv[4]
+
+          def section(text, name):
+              start = f"===== {name} ====="
+              end = f"===== END {name} ====="
+              i = text.find(start)
+              j = text.find(end)
+              if i < 0 or j < 0 or j < i:
+                  sys.stderr.write(f"missing section {name}\n")
+                  sys.exit(1)
+              body = text[i + len(start):j].strip("\n")
+              lines = [ln for ln in body.splitlines() if ln.strip() != ""]
+              return lines
+
+          def md_table(lines):
+              if not lines:
+                  return "_(no rows)_"
+              rows = [ln.split("\t") for ln in lines]
+              width = max(len(r) for r in rows)
+              rows = [r + [""] * (width - len(r)) for r in rows]
+              def esc(cell):
+                  return cell.replace("|", "\\|")
+              header = rows[0]
+              body = rows[1:]
+              out = [
+                  "| " + " | ".join(esc(c) for c in header) + " |",
+                  "| " + " | ".join("---" for _ in header) + " |",
+              ]
+              if not body:
+                  out.append("| " + " | ".join("" for _ in header) + " |")
+              for r in body:
+                  out.append("| " + " | ".join(esc(c) for c in r) + " |")
+              return "\n".join(out)
+
+          parts = []
+          parts.append("## #1627 dev DB Q1~Q4 (READ ONLY)")
+          parts.append("")
+          parts.append(f"- transaction_date DATA_TYPE: `{mode}`")
+          parts.append(f"- SQL correction: {correction}")
+          parts.append("- Session: `SET SESSION TRANSACTION READ ONLY` (`@@SESSION.transaction_read_only=1`).")
+          parts.append("")
+          parts.append("### Schema")
+          parts.append("")
+          parts.append(md_table(section(schema_text, "SCHEMA")))
+          parts.append("")
+          parts.append("### Read-only probe")
+          parts.append("")
+          parts.append(md_table(section(schema_text, "READONLY")))
+          parts.append("")
+          for name, title in (
+              ("Q1", "Q1 카드 (2026-10)"),
+              ("Q2", "Q2 카테고리별 (2026-10)"),
+              ("Q3", "Q3 상태별 (2026-10)"),
+              ("Q4", "Q4 월별 (2025-11 ~ 2026-10)"),
+          ):
+              parts.append(f"### {title}")
+              parts.append("")
+              parts.append(md_table(section(query_text, name)))
+              parts.append("")
+          report = "\n".join(parts).rstrip() + "\n"
+          sys.stdout.write(report)
+          summary = os.environ.get("GITHUB_STEP_SUMMARY")
+          if summary:
+              with open(summary, "a", encoding="utf-8") as fh:
+                  fh.write(report)
+          PY
+          echo "=== 끝 ==="

@@ -49,7 +49,11 @@ export const PG_TEST_MODE_LIVE_CHANNEL_KEY_REQUIRED =
 
 /** 수정 모드 테스트 모드 안내 — 저장 시 재승인 요청으로 제출되고 운영자 승인 후 반영 */
 export const PG_TEST_MODE_REAPPROVAL_NOTICE =
-  '테스트 모드 변경은 저장하면 재승인 요청으로 제출되고, 운영자 승인 후 반영돼요.';
+  '테스트 모드 변경은 저장하면 재승인 요청으로 제출되고, 운영자 승인 후 반영돼요. ACTIVE 설정은 승인 전까지 결제가 유지됩니다.';
+
+/** 승인·운영 설정 수정 시 상단 재승인 안내 */
+export const PG_EDIT_REAPPROVAL_NOTICE =
+  '승인·운영 중인 설정을 수정하면 재승인이 필요합니다. ACTIVE 설정은 승인 전까지 계속 결제됩니다.';
 
 /**
  * settings_json 에서 KICC 이지페이 호스트 오버라이드 분리
@@ -653,12 +657,23 @@ const PgConfigurationForm = ({
             </div>
           </div>
         )}
-        {mode === 'edit' && !hideFooter && initialData?.approvalStatus === 'PENDING' && (
-          <div className="form-warning-box">
+        {mode === 'edit' && !hideFooter && (
+          <div className="form-warning-box" data-testid="pg-edit-reapproval-notice">
             <AlertCircleIcon size={18} />
             <div>
-              <strong>{t('common:tenant.PgConfigurationForm.t_b1e3631b')}</strong>
-              <p>{t('common:tenant.PgConfigurationForm.t_989f1eea')}</p>
+              <strong>{t('common:tenant.PgConfigurationForm.t_b1e3631b', {
+                defaultValue: '재승인 안내'
+              })}</strong>
+              <p>
+                {initialData?.status === 'ACTIVE'
+                  || initialData?.status === 'APPROVED'
+                  || initialData?.approvalStatus === 'APPROVED'
+                  || initialData?.approvalStatus === 'REJECTED'
+                  ? PG_EDIT_REAPPROVAL_NOTICE
+                  : t('common:tenant.PgConfigurationForm.t_989f1eea', {
+                    defaultValue: '수정 내용을 저장하면 승인 대기 상태로 제출됩니다.'
+                  })}
+              </p>
             </div>
           </div>
         )}

@@ -547,21 +547,17 @@
     text-decoration: none;
 }
 
-[data-calendar-skin="integrated"] .mg-v2-schedule-calendar.mg-v2-ad-b0kla .mg-v2-schedule-calendar-view .fc-daygrid-day-top .mg-v2-ad-calendar-day-substitute-eve-badge {
-    flex: 1 0 100%;
-    order: 2;
-    max-width: 100%;
-}
-
 /*
- * 월간 dayGrid: 토요일만 연한 파랑. 일요일·공휴일은 셀 배경을 덮지 않는다.
+ * 월간 dayGrid: 토요일 칸·머리글은 평일과 같다. 일요일·토요일 아닌 공휴일만 숫자 보조색.
  */
-[data-calendar-skin="integrated"] .mg-v2-schedule-calendar.mg-v2-ad-b0kla .mg-v2-schedule-calendar-view td.fc-daygrid-day.mg-v2-ad-calendar-day--weekend-sat {
-    background-color: var(--mg-calendar-weekend-sat-bg) !important;
+[data-calendar-skin="integrated"] .mg-v2-schedule-calendar.mg-v2-ad-b0kla .mg-v2-schedule-calendar-view .fc-col-header-cell,
+[data-calendar-skin="integrated"] .mg-v2-schedule-calendar.mg-v2-ad-b0kla .mg-v2-schedule-calendar-view .fc-col-header-cell .fc-col-header-cell-cushion {
+    background-color: var(--ad-b0kla-bg);
+    color: var(--ad-b0kla-title-color);
 }
 
 [data-calendar-skin="integrated"] .mg-v2-schedule-calendar.mg-v2-ad-b0kla .mg-v2-schedule-calendar-view td.fc-daygrid-day.mg-v2-ad-calendar-day--weekend-sun .fc-daygrid-day-number,
-[data-calendar-skin="integrated"] .mg-v2-schedule-calendar.mg-v2-ad-b0kla .mg-v2-schedule-calendar-view td.fc-daygrid-day.mg-v2-ad-calendar-day--kr-public-holiday .fc-daygrid-day-number {
+[data-calendar-skin="integrated"] .mg-v2-schedule-calendar.mg-v2-ad-b0kla .mg-v2-schedule-calendar-view td.fc-daygrid-day.mg-v2-ad-calendar-day--kr-public-holiday:not(.fc-day-sat) .fc-daygrid-day-number {
     color: var(--mg-v2-color-text-secondary);
     font-weight: var(--mg-v2-font-weight-regular);
 }
@@ -595,12 +591,15 @@
  * Refs: core-debugger 보고서 §9, R-3 b8336cf11, R-4 7d7567550,
  *       ScheduleB0KlA.css:628·634, ScheduleCalendarView.css:293·301
  */
-[data-calendar-skin="integrated"] .mg-v2-schedule-calendar.mg-v2-ad-b0kla .mg-v2-schedule-calendar-view td.fc-daygrid-day.mg-v2-ad-calendar-day--weekend-sat .fc-non-business,
 [data-calendar-skin="integrated"] .mg-v2-schedule-calendar.mg-v2-ad-b0kla .mg-v2-schedule-calendar-view td.fc-daygrid-day.mg-v2-ad-calendar-day--weekend-sun .fc-non-business {
     background: transparent !important;
 }
 
-/* 통합: 공휴일 이름은 날짜 숫자 옆 캡션. 좁으면 말줄임, 전체 이름은 title. */
+/* 통합: 공휴일 이름은 날짜 숫자와 같은 기준선. 좁으면 말줄임, 전체 이름은 title. */
+[data-calendar-skin="integrated"] .mg-v2-schedule-calendar.mg-v2-ad-b0kla .mg-v2-schedule-calendar-view .fc-daygrid-day-top:has(.mg-v2-ad-calendar-day-holiday-badge) {
+    align-items: baseline;
+}
+
 [data-calendar-skin="integrated"] .mg-v2-schedule-calendar.mg-v2-ad-b0kla .mg-v2-schedule-calendar-view .fc-daygrid-day-top:has(.mg-v2-ad-calendar-day-holiday-badge) .fc-daygrid-day-number {
     order: 1;
 }
@@ -646,26 +645,6 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-}
-
-[data-calendar-skin="integrated"] .mg-v2-schedule-calendar.mg-v2-ad-b0kla .mg-v2-schedule-calendar-view .fc-daygrid-day-top .mg-v2-ad-calendar-day-substitute-eve-badge {
-    box-sizing: border-box;
-    display: block;
-    width: 100%;
-    margin-top: 2px;
-    padding: 2px var(--mg-spacing-xs, 4px);
-    border-radius: var(--cs-radius-sm, 4px);
-    font-size: var(--cs-text-2xs, 0.625rem);
-    font-weight: var(--cs-font-semibold, 600);
-    line-height: 1.25;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    pointer-events: none;
-    text-align: center;
-    background-color: color-mix(in srgb, var(--mg-info-400) 14%, var(--mg-color-surface-main, var(--mg-white)));
-    color: var(--mg-color-text-secondary, var(--mg-info-600));
-    border: 1px solid color-mix(in srgb, var(--mg-info-400) 28%, transparent);
 }
 
 /* 월간 공휴일명: day-top 일반 흐름(절대배치 금지 — 이벤트·bg z-index에 가려짐). 비통합 스킨은 primary 유지 */
